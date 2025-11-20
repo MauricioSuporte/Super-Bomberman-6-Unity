@@ -134,7 +134,7 @@ GameObject:
   - component: {fileID: 186242886}
   - component: {fileID: 186242887}
   - component: {fileID: 186242888}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Rigth
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1177,7 +1177,7 @@ GameObject:
   - component: {fileID: 465215029}
   - component: {fileID: 465215030}
   - component: {fileID: 465215031}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Left
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1409,7 +1409,7 @@ GameObject:
   - component: {fileID: 792000750}
   - component: {fileID: 792000752}
   - component: {fileID: 792000751}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Death
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3634,7 +3634,7 @@ GameObject:
   - component: {fileID: 1260808863}
   - component: {fileID: 1260808866}
   - component: {fileID: 1260808867}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Player
   m_TagString: Player
   m_Icon: {fileID: 0}
@@ -3754,7 +3754,7 @@ GameObject:
   - component: {fileID: 1451369465}
   - component: {fileID: 1451369466}
   - component: {fileID: 1451369467}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Down
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3858,7 +3858,7 @@ GameObject:
   - component: {fileID: 1762784659}
   - component: {fileID: 1762784660}
   - component: {fileID: 1762784661}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Up
   m_TagString: Untagged
   m_Icon: {fileID: 0}
