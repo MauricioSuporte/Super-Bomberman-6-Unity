@@ -72,7 +72,6 @@ public class MovementController : MonoBehaviour
     {
         enabled = false;
         GetComponent<BombController>().enabled = false;
-        //GetComponent<MovementController>().enabled = false;
 
         spriteRendererUp.enabled = false;
         spriteRendererDown.enabled = false;
