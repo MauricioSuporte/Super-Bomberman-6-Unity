@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 2727780941473249229}
   - component: {fileID: 2727780941473249228}
   - component: {fileID: 2727780941473249227}
+  - component: {fileID: 3750686511081856235}
   m_Layer: 9
   m_Name: ItemExtraBomb
   m_TagString: Untagged
@@ -73,7 +74,7 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 2
-  m_Sprite: {fileID: 21300000, guid: 73a418fb8dba0254ab41027dc55da273, type: 3}
+  m_Sprite: {fileID: 6170810104741690288, guid: 4ff4afedda9fa1949af624da82c728b9, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -123,3 +124,22 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   type: 0
+--- !u!114 &3750686511081856235
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2727780941473249226}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3a4b55e1b961d144197e1a7a4a391956, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  idleSprite: {fileID: 6170810104741690288, guid: 4ff4afedda9fa1949af624da82c728b9, type: 3}
+  animationSprite:
+  - {fileID: 6170810104741690288, guid: 4ff4afedda9fa1949af624da82c728b9, type: 3}
+  - {fileID: 2622779622545646311, guid: 4ff4afedda9fa1949af624da82c728b9, type: 3}
+  animationTime: 0.01
+  loop: 1
+  idle: 0
