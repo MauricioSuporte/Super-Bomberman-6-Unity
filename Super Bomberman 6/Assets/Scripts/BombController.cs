@@ -30,11 +30,11 @@ public class BombController : MonoBehaviour
     {
         if (bombsRemaining > 0 && Input.GetKeyDown(inputKey))
         {
-            StartCoroutine(PlaceBomb());
+            PlaceBomb();
         }
     }
 
-    private IEnumerator PlaceBomb()
+    private void PlaceBomb()
     {
         Vector2 position = transform.position;
         position.x = Mathf.Round(position.x);
@@ -43,9 +43,36 @@ public class BombController : MonoBehaviour
         GameObject bomb = Instantiate(bombPrefab, position, Quaternion.identity);
         bombsRemaining--;
 
-        yield return new WaitForSeconds(bombFuseTime);
+        var bombComponent = bomb.GetComponent<Bomb>();
+        if (bombComponent == null)
+            bombComponent = bomb.AddComponent<Bomb>();
 
-        position = bomb.transform.position;
+        bombComponent.Initialize(this);
+
+        StartCoroutine(BombFuse(bomb));
+    }
+
+    private IEnumerator BombFuse(GameObject bomb)
+    {
+        yield return new WaitForSeconds(bombFuseTime);
+        ExplodeBomb(bomb);
+    }
+
+    public void ExplodeBomb(GameObject bomb)
+    {
+        if (bomb == null)
+            return;
+
+        var bombComponent = bomb.GetComponent<Bomb>();
+        if (bombComponent != null)
+        {
+            if (bombComponent.HasExploded)
+                return;
+
+            bombComponent.MarkAsExploded();
+        }
+
+        Vector2 position = bomb.transform.position;
         position.x = Mathf.Round(position.x);
         position.y = Mathf.Round(position.y);
 
@@ -64,18 +91,16 @@ public class BombController : MonoBehaviour
 
     private void OnTriggerExit2D(Collider2D other)
     {
-       if (other.gameObject.layer == LayerMask.NameToLayer("Bomb"))
-       {
+        if (other.gameObject.layer == LayerMask.NameToLayer("Bomb"))
+        {
             other.isTrigger = false;
-       }
+        }
     }
 
     private void Explode(Vector2 position, Vector2 direction, int length)
     {
         if (length <= 0)
-        {
             return;
-        }
 
         position += direction;
 
@@ -96,10 +121,9 @@ public class BombController : MonoBehaviour
     private void ClearDestructible(Vector2 position)
     {
         Vector3Int cell = destructibleTiles.WorldToCell(position);
-
         TileBase tile = destructibleTiles.GetTile(cell);
 
-        if ( tile != null)
+        if (tile != null)
         {
             Instantiate(destructiblePrefab, position, Quaternion.identity);
             destructibleTiles.SetTile(cell, null);
