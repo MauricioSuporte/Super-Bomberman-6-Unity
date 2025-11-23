@@ -11,7 +11,7 @@ public class RedRobot : MonoBehaviour
     public AnimatedSpriteRenderer spriteUp;
     public AnimatedSpriteRenderer spriteDown;
     public AnimatedSpriteRenderer spriteLeft;
-    public AnimatedSpriteRenderer spriteRight;
+    public AnimatedSpriteRenderer spriteRight; // pode ficar sem usar
 
     private AnimatedSpriteRenderer activeSprite;
     private Rigidbody2D rb;
@@ -73,24 +73,34 @@ public class RedRobot : MonoBehaviour
         direction = dirs[Random.Range(0, dirs.Length)];
     }
 
-    // --- TROCA DE SPRITES (igual MovementController) ---
+    // --- TROCA DE SPRITES COM FLIP PARA A DIREITA ---
     void UpdateSpriteDirection(Vector2 dir)
     {
         spriteUp.enabled = false;
         spriteDown.enabled = false;
         spriteLeft.enabled = false;
-        spriteRight.enabled = false;
+        spriteRight.enabled = false; // não vamos usar, mas desliga por garantia
 
         if (dir == Vector2.up)
+        {
             activeSprite = spriteUp;
+        }
         else if (dir == Vector2.down)
+        {
             activeSprite = spriteDown;
-        else if (dir == Vector2.left)
+        }
+        else if (dir == Vector2.left || dir == Vector2.right)
+        {
+            // usa SEMPRE o sprite da esquerda
             activeSprite = spriteLeft;
-        else if (dir == Vector2.right)
-            activeSprite = spriteRight;
+        }
 
         activeSprite.enabled = true;
+
+        // aplica flip horizontal só se estiver indo para a direita
+        var sr = activeSprite.GetComponent<SpriteRenderer>();
+        if (sr != null)
+            sr.flipX = (dir == Vector2.right);
     }
 
     // --- IA DE MOVIMENTO EM GRID ---
