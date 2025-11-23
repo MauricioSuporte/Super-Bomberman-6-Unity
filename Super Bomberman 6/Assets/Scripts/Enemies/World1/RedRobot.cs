@@ -5,9 +5,15 @@ using UnityEngine;
 public class RedRobot : MonoBehaviour
 {
     public float speed = 2f;
-    public LayerMask obstacleMask;   // Stage + Destructible + Bomb
+    public LayerMask obstacleMask;
     public float tileSize = 1f;
 
+    public AnimatedSpriteRenderer spriteUp;
+    public AnimatedSpriteRenderer spriteDown;
+    public AnimatedSpriteRenderer spriteLeft;
+    public AnimatedSpriteRenderer spriteRight;
+
+    private AnimatedSpriteRenderer activeSprite;
     private Rigidbody2D rb;
     private Vector2 direction;
     private Vector2 targetTile;
@@ -15,12 +21,14 @@ public class RedRobot : MonoBehaviour
     private void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
+        activeSprite = spriteDown;
     }
 
     private void Start()
     {
         SnapToGrid();
         ChooseInitialDirection();
+        UpdateSpriteDirection(direction);
         DecideNextTile();
     }
 
@@ -65,11 +73,31 @@ public class RedRobot : MonoBehaviour
         direction = dirs[Random.Range(0, dirs.Length)];
     }
 
-    // decide qual será o próximo tile e, se precisar, muda de direção
+    // --- TROCA DE SPRITES (igual MovementController) ---
+    void UpdateSpriteDirection(Vector2 dir)
+    {
+        spriteUp.enabled = false;
+        spriteDown.enabled = false;
+        spriteLeft.enabled = false;
+        spriteRight.enabled = false;
+
+        if (dir == Vector2.up)
+            activeSprite = spriteUp;
+        else if (dir == Vector2.down)
+            activeSprite = spriteDown;
+        else if (dir == Vector2.left)
+            activeSprite = spriteLeft;
+        else if (dir == Vector2.right)
+            activeSprite = spriteRight;
+
+        activeSprite.enabled = true;
+    }
+
+    // --- IA DE MOVIMENTO EM GRID ---
     void DecideNextTile()
     {
-        // 1) verifica o tile à frente, na direção atual
         Vector2 forwardTile = rb.position + direction * tileSize;
+
         bool blockedForward = Physics2D.OverlapBox(
             forwardTile,
             Vector2.one * (tileSize * 0.8f),
@@ -79,18 +107,16 @@ public class RedRobot : MonoBehaviour
 
         if (!blockedForward)
         {
-            // caminho livre, continua reto
             targetTile = forwardTile;
             return;
         }
 
-        // 2) caminho na frente está bloqueado → escolher outra direção
         Vector2[] dirs = { Vector2.up, Vector2.down, Vector2.left, Vector2.right };
         var freeDirs = new List<Vector2>();
 
         foreach (var dir in dirs)
         {
-            if (dir == direction) // já sabemos que na direção atual está bloqueado
+            if (dir == direction)
                 continue;
 
             Vector2 checkTile = rb.position + dir * tileSize;
@@ -106,15 +132,11 @@ public class RedRobot : MonoBehaviour
         }
 
         if (freeDirs.Count == 0)
-        {
-            // beco sem saída: volta para trás
             direction = -direction;
-        }
         else
-        {
             direction = freeDirs[Random.Range(0, freeDirs.Count)];
-        }
 
+        UpdateSpriteDirection(direction);
         targetTile = rb.position + direction * tileSize;
     }
 }
