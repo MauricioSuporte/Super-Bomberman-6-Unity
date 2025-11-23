@@ -1,403 +1,466 @@
 fileFormatVersion: 2
-guid: 4ba1785888b8d5049b10f219db351e04
+guid: 411abfcc6fa4c6b40ac863b28557d7bb
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -5512188224477226035
-    second: Enimies World 1_0
+      213: 2029763148790593638
+    second: World1Enemies 1_0
   - first:
-      213: -2916481190705450314
-    second: Enimies World 1_1
+      213: 6831922312995083299
+    second: World1Enemies 1_1
   - first:
-      213: 5460795946590090005
-    second: Enimies World 1_2
+      213: -8097711714970901700
+    second: World1Enemies 1_2
   - first:
-      213: 5663302745818277585
-    second: Enimies World 1_3
+      213: -4678441568589341420
+    second: World1Enemies 1_3
   - first:
-      213: -6085094718771832059
-    second: Enimies World 1_4
+      213: 878344645159287265
+    second: World1Enemies 1_4
   - first:
-      213: 4910524930626173903
-    second: Enimies World 1_5
+      213: -4252694295140264297
+    second: World1Enemies 1_5
   - first:
-      213: -2191787333770097586
-    second: Enimies World 1_6
+      213: -6356008559738738136
+    second: World1Enemies 1_6
   - first:
-      213: 4418626083378019468
-    second: Enimies World 1_7
+      213: 421717147492694110
+    second: World1Enemies 1_7
   - first:
-      213: 22442291263715796
-    second: Enimies World 1_8
+      213: 1018207344097565651
+    second: World1Enemies 1_8
   - first:
-      213: 5323261439371823148
-    second: Enimies World 1_9
+      213: 6519412241210706599
+    second: World1Enemies 1_9
   - first:
-      213: -1861139536901673022
-    second: Enimies World 1_10
+      213: 2404699311797528360
+    second: World1Enemies 1_10
   - first:
-      213: -6887522753865665262
-    second: Enimies World 1_11
+      213: -4150945302609823401
+    second: World1Enemies 1_11
   - first:
-      213: 6964494780284760017
-    second: Enimies World 1_12
+      213: -4029575579624530851
+    second: World1Enemies 1_82
   - first:
-      213: 454289331400887414
-    second: Enimies World 1_13
+      213: -7181089444952352841
+    second: World1Enemies 1_83
   - first:
-      213: -6619039157304518657
-    second: Enimies World 1_14
+      213: 8513675630890915907
+    second: World1Enemies 1_84
   - first:
-      213: -480514843832975245
-    second: Enimies World 1_15
+      213: 3399971671930016613
+    second: World1Enemies 1_85
   - first:
-      213: 6508192169597446291
-    second: Enimies World 1_16
+      213: -8099097597812011668
+    second: World1Enemies 1_86
   - first:
-      213: -5335129884094842813
-    second: Enimies World 1_17
+      213: 4571567342573035168
+    second: World1Enemies 1_87
   - first:
-      213: 8216980483800417295
-    second: Enimies World 1_18
+      213: 5619320126163298227
+    second: World1Enemies 1_88
   - first:
-      213: -6273788216321863790
-    second: Enimies World 1_19
+      213: 7247420535711379602
+    second: World1Enemies 1_89
   - first:
-      213: 6995491901617356888
-    second: Enimies World 1_20
+      213: 2925486301515620620
+    second: World1Enemies 1_90
   - first:
-      213: 1444698686170867797
-    second: Enimies World 1_21
+      213: -316012180994660632
+    second: World1Enemies 1_91
   - first:
-      213: 5642603558543474056
-    second: Enimies World 1_22
+      213: 6061695248495218128
+    second: World1Enemies 1_92
   - first:
-      213: 3516702133568571408
-    second: Enimies World 1_23
+      213: 2964745230418444338
+    second: World1Enemies 1_93
   - first:
-      213: -689040766767934903
-    second: Enimies World 1_24
+      213: -4129362127735203618
+    second: World1Enemies 1_94
   - first:
-      213: -3687064691931999051
-    second: Enimies World 1_25
+      213: 4941742069025220933
+    second: World1Enemies 1_95
   - first:
-      213: 3727692307546167389
-    second: Enimies World 1_26
+      213: 45617366975817855
+    second: World1Enemies 1_96
   - first:
-      213: 7116466580673117100
-    second: Enimies World 1_27
+      213: 8892728619938804680
+    second: World1Enemies 1_97
   - first:
-      213: 4619342858722777689
-    second: Enimies World 1_28
+      213: -8357391056210265400
+    second: World1Enemies 1_98
   - first:
-      213: -8749967118217338655
-    second: Enimies World 1_29
+      213: -6048156818125038590
+    second: World1Enemies 1_100
   - first:
-      213: 1819814619523898119
-    second: Enimies World 1_30
+      213: -558415344662840666
+    second: World1Enemies 1_101
   - first:
-      213: -8744058768306230367
-    second: Enimies World 1_31
+      213: -8485393132358188962
+    second: World1Enemies 1_102
   - first:
-      213: -7274413275015292330
-    second: Enimies World 1_32
+      213: -5944324511929600873
+    second: World1Enemies 1_103
   - first:
-      213: 2442023718599019668
-    second: Enimies World 1_33
+      213: 380349752191518590
+    second: World1Enemies 1_104
   - first:
-      213: 8475101510379753897
-    second: Enimies World 1_34
+      213: -3400708920629886872
+    second: World1Enemies 1_105
   - first:
-      213: 9153848284666799265
-    second: Enimies World 1_35
+      213: -2141957069614642853
+    second: World1Enemies 1_106
   - first:
-      213: -2038318653127797706
-    second: Enimies World 1_36
+      213: -4200622969826304328
+    second: World1Enemies 1_107
   - first:
-      213: 4838720333809171808
-    second: Enimies World 1_37
+      213: -2601212898393912868
+    second: World1Enemies 1_108
   - first:
-      213: 4870179694941697070
-    second: Enimies World 1_38
+      213: -6631822275531124952
+    second: World1Enemies 1_109
   - first:
-      213: 8618745790616325628
-    second: Enimies World 1_39
+      213: -7697629378190189841
+    second: World1Enemies 1_110
   - first:
-      213: -7443247507551676459
-    second: Enimies World 1_40
+      213: -1545277575559397048
+    second: World1Enemies 1_111
   - first:
-      213: 2055717564277282005
-    second: Enimies World 1_41
+      213: -7404182919154191169
+    second: World1Enemies 1_112
   - first:
-      213: 3465631603511056606
-    second: Enimies World 1_42
+      213: -7808452648561289451
+    second: World1Enemies 1_113
   - first:
-      213: 4215701538949436037
-    second: Enimies World 1_43
+      213: -707062667462701049
+    second: World1Enemies 1_114
   - first:
-      213: -5283955687892623383
-    second: Enimies World 1_44
+      213: 3964722616193619854
+    second: World1Enemies 1_115
   - first:
-      213: -5920204525576905928
-    second: Enimies World 1_45
+      213: -314937714184349174
+    second: World1Enemies 1_116
   - first:
-      213: 5625160933357716794
-    second: Enimies World 1_46
+      213: -3370988629556301140
+    second: World1Enemies 1_117
   - first:
-      213: 7155677220186859729
-    second: Enimies World 1_47
+      213: 8538039439000342366
+    second: World1Enemies 1_118
   - first:
-      213: 2930947137623651387
-    second: Enimies World 1_48
+      213: 8605847411419455217
+    second: World1Enemies 1_119
   - first:
-      213: -4014403936124288308
-    second: Enimies World 1_49
+      213: -2193164835964758718
+    second: World1Enemies 1_120
   - first:
-      213: 2047214955230633786
-    second: Enimies World 1_50
+      213: -6051525181221785409
+    second: World1Enemies 1_121
   - first:
-      213: 4927917657065055527
-    second: Enimies World 1_51
+      213: -962663773115980079
+    second: World1Enemies 1_122
   - first:
-      213: 6140705492208577294
-    second: Enimies World 1_52
+      213: 8501370041935592529
+    second: World1Enemies 1_123
   - first:
-      213: 4114927561332728564
-    second: Enimies World 1_53
+      213: -946182520732208427
+    second: World1Enemies 1_124
   - first:
-      213: -40996207473442342
-    second: Enimies World 1_54
+      213: 8716577221493368381
+    second: World1Enemies 1_125
   - first:
-      213: -2978249407275055066
-    second: Enimies World 1_55
+      213: 4670798780596210276
+    second: World1Enemies 1_126
   - first:
-      213: 7158235371388465788
-    second: Enimies World 1_56
+      213: 200224927886150900
+    second: World1Enemies 1_127
   - first:
-      213: 6638263254753000159
-    second: Enimies World 1_57
+      213: -3182066722671932994
+    second: World1Enemies 1_128
   - first:
-      213: 6268128716453212680
-    second: Enimies World 1_58
+      213: -5298793553209383659
+    second: World1Enemies 1_129
   - first:
-      213: -104332925117330604
-    second: Enimies World 1_59
+      213: 721577555674271192
+    second: World1Enemies 1_130
   - first:
-      213: 4408703419224909878
-    second: Enimies World 1_60
+      213: -6567375140595827330
+    second: World1Enemies 1_131
   - first:
-      213: 7207092648896334682
-    second: Enimies World 1_61
+      213: 8790586322352443186
+    second: World1Enemies 1_132
   - first:
-      213: -2331095641062651846
-    second: Enimies World 1_62
+      213: -3886191581071593228
+    second: World1Enemies 1_133
   - first:
-      213: -3572866769512992441
-    second: Enimies World 1_63
+      213: 3416738543692826251
+    second: World1Enemies 1_134
   - first:
-      213: -2056186807036818233
-    second: Enimies World 1_64
+      213: -8922595823848624545
+    second: World1Enemies 1_135
   - first:
-      213: -6741008986219518042
-    second: Enimies World 1_65
+      213: -4335864368423995190
+    second: World1Enemies 1_136
   - first:
-      213: 3542253129660823322
-    second: Enimies World 1_66
+      213: 5886493844664698840
+    second: World1Enemies 1_137
   - first:
-      213: -1675285760268542100
-    second: Enimies World 1_67
+      213: 2869405007489134911
+    second: World1Enemies 1_138
   - first:
-      213: -3770686298113798253
-    second: Enimies World 1_68
+      213: 8496131675700039542
+    second: World1Enemies 1_139
   - first:
-      213: 1992244380119166754
-    second: Enimies World 1_69
+      213: 2334825434421201609
+    second: World1Enemies 1_140
   - first:
-      213: 2750933098084993145
-    second: Enimies World 1_70
+      213: -1128444562224716344
+    second: World1Enemies 1_141
   - first:
-      213: 8546909456986128976
-    second: Enimies World 1_71
+      213: 178762306605396779
+    second: World1Enemies 1_142
   - first:
-      213: 5432113959817062643
-    second: Enimies World 1_72
+      213: 689422911427666794
+    second: World1Enemies 1_143
   - first:
-      213: -5548650595556719089
-    second: Enimies World 1_73
+      213: 379112621212911556
+    second: World1Enemies 1_144
   - first:
-      213: 6122802447922402013
-    second: Enimies World 1_74
+      213: -4724021497584732733
+    second: World1Enemies 1_145
   - first:
-      213: 267622097722691836
-    second: Enimies World 1_75
+      213: -7150867935334106199
+    second: World1Enemies 1_146
   - first:
-      213: 1625537755908528229
-    second: Enimies World 1_76
+      213: -3413072646140550456
+    second: World1Enemies 1_147
   - first:
-      213: -2549206633819918463
-    second: Enimies World 1_77
+      213: -1790574714810359205
+    second: World1Enemies 1_148
   - first:
-      213: 8703417034199386216
-    second: Enimies World 1_78
+      213: 2138423449447192044
+    second: World1Enemies 1_149
   - first:
-      213: 1817501108342618840
-    second: Enimies World 1_79
+      213: 7738113958707179726
+    second: World1Enemies 1_150
   - first:
-      213: -3533755481343104746
-    second: Enimies World 1_80
+      213: 1154132905787264804
+    second: World1Enemies 1_151
   - first:
-      213: 6970593661351175408
-    second: Enimies World 1_81
+      213: 7896056660971488730
+    second: World1Enemies 1_152
   - first:
-      213: 8433126936058681673
-    second: Enimies World 1_82
+      213: -7824675570000203111
+    second: World1Enemies 1_153
   - first:
-      213: 3677904833543702589
-    second: Enimies World 1_83
+      213: 3765357680529036614
+    second: World1Enemies 1_154
   - first:
-      213: -3503822610646420294
-    second: Enimies World 1_84
+      213: -7858148018640627872
+    second: World1Enemies 1_155
   - first:
-      213: -7173679082831350987
-    second: Enimies World 1_85
+      213: 6742961756137729189
+    second: World1Enemies 1_156
   - first:
-      213: 4272060207318463957
-    second: Enimies World 1_86
+      213: -6046744302931979771
+    second: World1Enemies 1_157
   - first:
-      213: 2925937593793173031
-    second: Enimies World 1_87
+      213: 8846121996157524147
+    second: World1Enemies 1_158
   - first:
-      213: -7897069540423403545
-    second: Enimies World 1_88
+      213: 7771498569309989590
+    second: World1Enemies 1_159
   - first:
-      213: -1406399927638621260
-    second: Enimies World 1_89
+      213: 7994948960480551811
+    second: World1Enemies 1_160
   - first:
-      213: 2010946617635422530
-    second: Enimies World 1_90
+      213: -3357676508835176955
+    second: World1Enemies 1_161
   - first:
-      213: -9116432718939321884
-    second: Enimies World 1_91
+      213: 5941116105371202969
+    second: World1Enemies 1_162
   - first:
-      213: -8283827561726849242
-    second: Enimies World 1_92
+      213: -1591866221094795976
+    second: World1Enemies 1_163
   - first:
-      213: 1290343806126214047
-    second: Enimies World 1_93
+      213: 6050318542416919772
+    second: World1Enemies 1_164
   - first:
-      213: -6995403543242747390
-    second: Enimies World 1_94
+      213: -6075595142099800161
+    second: World1Enemies 1_165
   - first:
-      213: 2245705445109986820
-    second: Enimies World 1_95
+      213: 6993119639902649660
+    second: World1Enemies 1_166
   - first:
-      213: 3089979067059004884
-    second: Enimies World 1_96
+      213: 3795051160473766104
+    second: World1Enemies 1_167
   - first:
-      213: -7469783023734280167
-    second: Enimies World 1_97
+      213: 3517898523370840187
+    second: World1Enemies 1_168
   - first:
-      213: -552210383338516218
-    second: Enimies World 1_98
+      213: 4559565222839117003
+    second: World1Enemies 1_169
   - first:
-      213: 6564322047684354414
-    second: Enimies World 1_99
+      213: -2586501953869055515
+    second: World1Enemies 1_170
   - first:
-      213: 5388823216965576071
-    second: Enimies World 1_100
+      213: 6498511867663503954
+    second: World1Enemies 1_171
   - first:
-      213: 5696802388224309657
-    second: Enimies World 1_101
+      213: -1580344120887838082
+    second: World1Enemies 1_172
   - first:
-      213: -8433646194235565165
-    second: Enimies World 1_102
+      213: 7848904588848593224
+    second: World1Enemies 1_173
   - first:
-      213: 6816099015002077108
-    second: Enimies World 1_103
+      213: -8503678004120321237
+    second: World1Enemies 1_174
   - first:
-      213: 2144605303982036356
-    second: Enimies World 1_104
+      213: 6489635142723438002
+    second: World1Enemies 1_175
   - first:
-      213: 5740344531066242536
-    second: Enimies World 1_105
+      213: -3121619216816852005
+    second: World1Enemies 1_176
   - first:
-      213: 1889239119748663924
-    second: Enimies World 1_106
+      213: -5849620607802861912
+    second: World1Enemies 1_177
   - first:
-      213: -3172539218880708164
-    second: Enimies World 1_107
+      213: -773184273525690598
+    second: World1Enemies 1_178
   - first:
-      213: 9191814222714308921
-    second: Enimies World 1_108
+      213: -2375848991884377665
+    second: World1Enemies 1_179
   - first:
-      213: 3251137951844615770
-    second: Enimies World 1_109
+      213: -3961519300944333912
+    second: World1Enemies 1_180
   - first:
-      213: 6542785996855392476
-    second: Enimies World 1_110
+      213: 3356727097332887709
+    second: World1Enemies 1_181
   - first:
-      213: -295385527816705343
-    second: Enimies World 1_111
+      213: 4198355752590702254
+    second: World1Enemies 1_182
   - first:
-      213: 2570526599458661871
-    second: Enimies World 1_112
+      213: -7741345930928419382
+    second: World1Enemies 1_183
   - first:
-      213: 3400514421960708772
-    second: Enimies World 1_113
+      213: -4918294384941286697
+    second: World1Enemies 1_184
   - first:
-      213: 5919402103316371989
-    second: Enimies World 1_114
+      213: 7282480631924701977
+    second: World1Enemies 1_185
   - first:
-      213: -9155005511737782244
-    second: Enimies World 1_115
+      213: 2462132360143960845
+    second: World1Enemies 1_186
   - first:
-      213: 5326773010775815499
-    second: Enimies World 1_116
+      213: 6073381550542069088
+    second: World1Enemies 1_187
   - first:
-      213: -4621430442840444030
-    second: Enimies World 1_117
+      213: 7886554960540704800
+    second: World1Enemies 1_188
   - first:
-      213: -7725582721804393947
-    second: Enimies World 1_118
+      213: -2589000339492059619
+    second: World1Enemies 1_189
   - first:
-      213: 8288380057871627521
-    second: Enimies World 1_119
+      213: -7026120540353407422
+    second: World1Enemies 1_190
   - first:
-      213: 6259282767207056853
-    second: Enimies World 1_120
+      213: 5866232671425924775
+    second: World1Enemies 1_191
   - first:
-      213: -2953179327406676555
-    second: Enimies World 1_121
+      213: 7486564129546584021
+    second: World1Enemies 1_192
   - first:
-      213: -2324511085232239072
-    second: Enimies World 1_122
+      213: 7972690688545960152
+    second: World1Enemies 1_193
   - first:
-      213: 2420495452704062178
-    second: Enimies World 1_123
+      213: 7827424481972869234
+    second: World1Enemies 1_194
   - first:
-      213: 7231732639709667772
-    second: Enimies World 1_124
+      213: 7629340743731391021
+    second: World1Enemies 1_195
   - first:
-      213: 4377345231180517897
-    second: Enimies World 1_125
+      213: -8487172394680510418
+    second: World1Enemies 1_196
   - first:
-      213: -8858056386632466297
-    second: Enimies World 1_126
+      213: 5238064391332031100
+    second: World1Enemies 1_197
   - first:
-      213: 1279319148649690242
-    second: Enimies World 1_127
+      213: 8021609148847683331
+    second: World1Enemies 1_198
   - first:
-      213: -6627326794186744702
-    second: Enimies World 1_128
+      213: -2393887249547713175
+    second: World1Enemies 1_199
   - first:
-      213: 424281073083777321
-    second: Enimies World 1_129
+      213: -3944802592240815782
+    second: World1Enemies 1_200
   - first:
-      213: -5248489547419079490
-    second: Enimies World 1_130
+      213: -7606451178251583715
+    second: World1Enemies 1_201
   - first:
-      213: 1507358766305017438
-    second: Enimies World 1_131
+      213: -8696145654431221725
+    second: World1Enemies 1_202
+  - first:
+      213: -7518221115150522170
+    second: World1Enemies 1_203
+  - first:
+      213: -6420323522571765149
+    second: World1Enemies 1_204
+  - first:
+      213: -3295483347300408319
+    second: World1Enemies 1_205
+  - first:
+      213: -4859208774595099023
+    second: World1Enemies 1_206
+  - first:
+      213: 380843922411323851
+    second: World1Enemies 1_207
+  - first:
+      213: -4788287097894586671
+    second: World1Enemies 1_208
+  - first:
+      213: 8351798785328937656
+    second: World1Enemies 1_209
+  - first:
+      213: -4063502081404534376
+    second: World1Enemies 1_210
+  - first:
+      213: -831304944144019571
+    second: World1Enemies 1_211
+  - first:
+      213: -2699175030381715200
+    second: World1Enemies 1_212
+  - first:
+      213: 561742103291038531
+    second: World1Enemies 1_213
+  - first:
+      213: -6505506513103913279
+    second: World1Enemies 1_214
+  - first:
+      213: 937908867721198278
+    second: World1Enemies 1_215
+  - first:
+      213: -443403219853086933
+    second: World1Enemies 1_216
+  - first:
+      213: -6164039901761381475
+    second: World1Enemies 1_217
+  - first:
+      213: 1033020173013529025
+    second: World1Enemies 1_218
+  - first:
+      213: 6923214825540264561
+    second: World1Enemies 1_219
+  - first:
+      213: 485342335862555651
+    second: World1Enemies 1_220
+  - first:
+      213: 6441080529988329116
+    second: World1Enemies 1_221
+  - first:
+      213: 4594081772332681770
+    second: World1Enemies 1_222
+  - first:
+      213: -8048047866717946855
+    second: World1Enemies 1_223
   externalObjects: {}
   serializedVersion: 11
   mipmaps:
@@ -464,7 +527,7 @@ TextureImporter:
     maxTextureSize: 2048
     resizeAlgorithm: 0
     textureFormat: -1
-    textureCompression: 0
+    textureCompression: 1
     compressionQuality: 50
     crunchedCompression: 0
     allowsAlphaSplitting: 0
@@ -476,7 +539,7 @@ TextureImporter:
     maxTextureSize: 2048
     resizeAlgorithm: 0
     textureFormat: -1
-    textureCompression: 0
+    textureCompression: 1
     compressionQuality: 50
     crunchedCompression: 0
     allowsAlphaSplitting: 0
@@ -487,7 +550,7 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Enimies World 1_0
+      name: World1Enemies 1_0
       rect:
         serializedVersion: 2
         x: 2
@@ -501,14 +564,14 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: dcb91f0c306c083b0800000000000000
-      internalID: -5512188224477226035
+      spriteID: 66877d564da2b2c10800000000000000
+      internalID: 2029763148790593638
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Enimies World 1_1
+      name: World1Enemies 1_1
       rect:
         serializedVersion: 2
         x: 20
@@ -522,14 +585,14 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 6b2b4e92fc39687d0800000000000000
-      internalID: -2916481190705450314
+      spriteID: 3241327852ddfce50800000000000000
+      internalID: 6831922312995083299
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Enimies World 1_2
+      name: World1Enemies 1_2
       rect:
         serializedVersion: 2
         x: 38
@@ -543,14 +606,14 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 513356b1bf4a8cb40800000000000000
-      internalID: 5460795946590090005
+      spriteID: c33e3a749162f9f80800000000000000
+      internalID: -8097711714970901700
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Enimies World 1_3
+      name: World1Enemies 1_3
       rect:
         serializedVersion: 2
         x: 56
@@ -564,14 +627,14 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 1d62ef387d7189e40800000000000000
-      internalID: 5663302745818277585
+      spriteID: 41d9fc94e26d21fb0800000000000000
+      internalID: -4678441568589341420
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Enimies World 1_4
+      name: World1Enemies 1_4
       rect:
         serializedVersion: 2
         x: 74
@@ -585,14 +648,14 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 50bdffee7966d8ba0800000000000000
-      internalID: -6085094718771832059
+      spriteID: 1e9f5151dc1803c00800000000000000
+      internalID: 878344645159287265
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Enimies World 1_5
+      name: World1Enemies 1_5
       rect:
         serializedVersion: 2
         x: 92
@@ -606,14 +669,14 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: fcb3ca64860b52440800000000000000
-      internalID: 4910524930626173903
+      spriteID: 79695dff1156bf4c0800000000000000
+      internalID: -4252694295140264297
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Enimies World 1_6
+      name: World1Enemies 1_6
       rect:
         serializedVersion: 2
         x: 110
@@ -627,14 +690,14 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: e4cce6358053591e0800000000000000
-      internalID: -2191787333770097586
+      spriteID: 82a2e67f3ebeac7a0800000000000000
+      internalID: -6356008559738738136
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Enimies World 1_7
+      name: World1Enemies 1_7
       rect:
         serializedVersion: 2
         x: 128
@@ -648,14 +711,14 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: c8cb50f030d125d30800000000000000
-      internalID: 4418626083378019468
+      spriteID: e583ef3e28d3ad500800000000000000
+      internalID: 421717147492694110
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Enimies World 1_8
+      name: World1Enemies 1_8
       rect:
         serializedVersion: 2
         x: 146
@@ -669,14 +732,14 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 4d938be152bbf4000800000000000000
-      internalID: 22442291263715796
+      spriteID: 3db11ac4f26612e00800000000000000
+      internalID: 1018207344097565651
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Enimies World 1_9
+      name: World1Enemies 1_9
       rect:
         serializedVersion: 2
         x: 164
@@ -690,14 +753,14 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: c28ca44431600e940800000000000000
-      internalID: 5323261439371823148
+      spriteID: 7aa82bd54ea997a50800000000000000
+      internalID: 6519412241210706599
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Enimies World 1_10
+      name: World1Enemies 1_10
       rect:
         serializedVersion: 2
         x: 182
@@ -711,14 +774,14 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 2cf6a81b377eb26e0800000000000000
-      internalID: -1861139536901673022
+      spriteID: 827615f88453f5120800000000000000
+      internalID: 2404699311797528360
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Enimies World 1_11
+      name: World1Enemies 1_11
       rect:
         serializedVersion: 2
         x: 200
@@ -732,20 +795,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 215ba690c8a9a60a0800000000000000
-      internalID: -6887522753865665262
+      spriteID: 7597ddb6d31e466c0800000000000000
+      internalID: -4150945302609823401
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Enimies World 1_12
+      name: World1Enemies 1_82
       rect:
         serializedVersion: 2
         x: 2
-        y: 323
+        y: 221
         width: 16
-        height: 16
+        height: 24
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -753,20 +816,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 1df6fea6a1bd6a060800000000000000
-      internalID: 6964494780284760017
+      spriteID: d5c14e42c521418c0800000000000000
+      internalID: -4029575579624530851
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Enimies World 1_13
+      name: World1Enemies 1_83
       rect:
         serializedVersion: 2
         x: 20
-        y: 323
+        y: 221
         width: 16
-        height: 16
+        height: 24
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -774,20 +837,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 67c466f6db5fd4600800000000000000
-      internalID: 454289331400887414
+      spriteID: 7b7de456235a75c90800000000000000
+      internalID: -7181089444952352841
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Enimies World 1_14
+      name: World1Enemies 1_84
       rect:
         serializedVersion: 2
         x: 38
-        y: 323
+        y: 221
         width: 16
-        height: 16
+        height: 24
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -795,20 +858,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: ff79672a4f27424a0800000000000000
-      internalID: -6619039157304518657
+      spriteID: 348172001e6a62670800000000000000
+      internalID: 8513675630890915907
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Enimies World 1_15
+      name: World1Enemies 1_85
       rect:
         serializedVersion: 2
         x: 56
-        y: 323
+        y: 221
         width: 16
-        height: 16
+        height: 24
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -816,20 +879,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 3708800ab4ed459f0800000000000000
-      internalID: -480514843832975245
+      spriteID: 56397c7c8302f2f20800000000000000
+      internalID: 3399971671930016613
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Enimies World 1_16
+      name: World1Enemies 1_86
       rect:
         serializedVersion: 2
         x: 74
-        y: 323
+        y: 221
         width: 16
-        height: 16
+        height: 24
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -837,20 +900,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 398a5dedb4eb15a50800000000000000
-      internalID: 6508192169597446291
+      spriteID: c6d023945a93a9f80800000000000000
+      internalID: -8099097597812011668
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Enimies World 1_17
+      name: World1Enemies 1_87
       rect:
         serializedVersion: 2
         x: 92
-        y: 323
+        y: 221
         width: 16
-        height: 16
+        height: 24
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -858,20 +921,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 348b4fb13afc5f5b0800000000000000
-      internalID: -5335129884094842813
+      spriteID: 0ae97d0e648717f30800000000000000
+      internalID: 4571567342573035168
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Enimies World 1_18
+      name: World1Enemies 1_88
       rect:
         serializedVersion: 2
         x: 110
-        y: 323
+        y: 221
         width: 16
-        height: 16
+        height: 24
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -879,20 +942,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: f04cd3fe634980270800000000000000
-      internalID: 8216980483800417295
+      spriteID: 3b7aa2fd1e5dbfd40800000000000000
+      internalID: 5619320126163298227
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Enimies World 1_19
+      name: World1Enemies 1_89
       rect:
         serializedVersion: 2
         x: 128
-        y: 323
+        y: 221
         width: 16
-        height: 16
+        height: 24
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -900,20 +963,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 29f8a127bd60fe8a0800000000000000
-      internalID: -6273788216321863790
+      spriteID: 290b2f82492049460800000000000000
+      internalID: 7247420535711379602
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Enimies World 1_20
+      name: World1Enemies 1_90
       rect:
         serializedVersion: 2
         x: 146
-        y: 323
+        y: 221
         width: 16
-        height: 16
+        height: 24
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -921,60 +984,18 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 850460122daf41160800000000000000
-      internalID: 6995491901617356888
+      spriteID: c012c159a4a699820800000000000000
+      internalID: 2925486301515620620
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Enimies World 1_21
+      name: World1Enemies 1_91
       rect:
         serializedVersion: 2
         x: 164
-        y: 323
-        width: 16
-        height: 16
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 55820bcfcc99c0410800000000000000
-      internalID: 1444698686170867797
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Enimies World 1_22
-      rect:
-        serializedVersion: 2
-        x: 188
-        y: 239
-        width: 128
-        height: 96
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 88db65b6a0e8e4e40800000000000000
-      internalID: 5642603558543474056
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Enimies World 1_23
-      rect:
-        serializedVersion: 2
-        x: 2
-        y: 297
+        y: 221
         width: 16
         height: 24
       alignment: 0
@@ -984,18 +1005,18 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 018863c45f5ddc030800000000000000
-      internalID: 3516702133568571408
+      spriteID: 8e6ed1f789c4d9bf0800000000000000
+      internalID: -316012180994660632
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Enimies World 1_24
+      name: World1Enemies 1_92
       rect:
         serializedVersion: 2
-        x: 20
-        y: 297
+        x: 182
+        y: 221
         width: 16
         height: 24
       alignment: 0
@@ -1005,18 +1026,18 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 942d805c2190076f0800000000000000
-      internalID: -689040766767934903
+      spriteID: 0dd0b3756b77f1450800000000000000
+      internalID: 6061695248495218128
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Enimies World 1_25
+      name: World1Enemies 1_93
       rect:
         serializedVersion: 2
-        x: 38
-        y: 297
+        x: 200
+        y: 221
         width: 16
         height: 24
       alignment: 0
@@ -1026,18 +1047,18 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 5b41285923ae4dcc0800000000000000
-      internalID: -3687064691931999051
+      spriteID: 23000a44414e42920800000000000000
+      internalID: 2964745230418444338
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Enimies World 1_26
+      name: World1Enemies 1_94
       rect:
         serializedVersion: 2
-        x: 56
-        y: 297
+        x: 218
+        y: 221
         width: 16
         height: 24
       alignment: 0
@@ -1047,923 +1068,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: d58de3f476c6bb330800000000000000
-      internalID: 3727692307546167389
+      spriteID: ed8546be50f81b6c0800000000000000
+      internalID: -4129362127735203618
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Enimies World 1_27
-      rect:
-        serializedVersion: 2
-        x: 74
-        y: 297
-        width: 16
-        height: 24
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: cabb5f486a4c2c260800000000000000
-      internalID: 7116466580673117100
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Enimies World 1_28
-      rect:
-        serializedVersion: 2
-        x: 92
-        y: 297
-        width: 16
-        height: 24
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 95a98ed0bd33b1040800000000000000
-      internalID: 4619342858722777689
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Enimies World 1_29
-      rect:
-        serializedVersion: 2
-        x: 110
-        y: 297
-        width: 16
-        height: 24
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 1e0ae4ae34fd19680800000000000000
-      internalID: -8749967118217338655
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Enimies World 1_30
-      rect:
-        serializedVersion: 2
-        x: 128
-        y: 297
-        width: 16
-        height: 24
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 70bd8c131c7414910800000000000000
-      internalID: 1819814619523898119
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Enimies World 1_31
-      rect:
-        serializedVersion: 2
-        x: 146
-        y: 297
-        width: 16
-        height: 24
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 1aba7f3d0ecd6a680800000000000000
-      internalID: -8744058768306230367
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Enimies World 1_32
-      rect:
-        serializedVersion: 2
-        x: 2
-        y: 271
-        width: 16
-        height: 24
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 65ad359faa71c0b90800000000000000
-      internalID: -7274413275015292330
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Enimies World 1_33
-      rect:
-        serializedVersion: 2
-        x: 20
-        y: 271
-        width: 16
-        height: 24
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 49c4c2832afc3e120800000000000000
-      internalID: 2442023718599019668
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Enimies World 1_34
-      rect:
-        serializedVersion: 2
-        x: 38
-        y: 271
-        width: 16
-        height: 24
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 9a1df81bbeb9d9570800000000000000
-      internalID: 8475101510379753897
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Enimies World 1_35
-      rect:
-        serializedVersion: 2
-        x: 56
-        y: 271
-        width: 16
-        height: 24
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 1a422670480090f70800000000000000
-      internalID: 9153848284666799265
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Enimies World 1_36
-      rect:
-        serializedVersion: 2
-        x: 74
-        y: 271
-        width: 16
-        height: 24
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 634d3450cff66b3e0800000000000000
-      internalID: -2038318653127797706
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Enimies World 1_37
-      rect:
-        serializedVersion: 2
-        x: 92
-        y: 271
-        width: 16
-        height: 24
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 06db728c186962340800000000000000
-      internalID: 4838720333809171808
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Enimies World 1_38
-      rect:
-        serializedVersion: 2
-        x: 110
-        y: 271
-        width: 16
-        height: 24
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: e24f15511aa569340800000000000000
-      internalID: 4870179694941697070
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Enimies World 1_39
-      rect:
-        serializedVersion: 2
-        x: 128
-        y: 271
-        width: 16
-        height: 24
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: cfd441be1afeb9770800000000000000
-      internalID: 8618745790616325628
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Enimies World 1_40
-      rect:
-        serializedVersion: 2
-        x: 146
-        y: 271
-        width: 16
-        height: 24
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 5d71211f3d544b890800000000000000
-      internalID: -7443247507551676459
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Enimies World 1_41
-      rect:
-        serializedVersion: 2
-        x: 2
-        y: 245
-        width: 16
-        height: 24
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 5d45749ab30678c10800000000000000
-      internalID: 2055717564277282005
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Enimies World 1_42
-      rect:
-        serializedVersion: 2
-        x: 20
-        y: 245
-        width: 16
-        height: 24
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: ed8d4a9e495681030800000000000000
-      internalID: 3465631603511056606
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Enimies World 1_43
-      rect:
-        serializedVersion: 2
-        x: 38
-        y: 245
-        width: 16
-        height: 24
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 5821624c63e218a30800000000000000
-      internalID: 4215701538949436037
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Enimies World 1_44
-      rect:
-        serializedVersion: 2
-        x: 56
-        y: 245
-        width: 16
-        height: 24
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 9ef51462c4e9ba6b0800000000000000
-      internalID: -5283955687892623383
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Enimies World 1_45
-      rect:
-        serializedVersion: 2
-        x: 74
-        y: 245
-        width: 16
-        height: 24
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 83b145fb95537dda0800000000000000
-      internalID: -5920204525576905928
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Enimies World 1_46
-      rect:
-        serializedVersion: 2
-        x: 92
-        y: 245
-        width: 16
-        height: 24
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: a350135c016901e40800000000000000
-      internalID: 5625160933357716794
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Enimies World 1_47
-      rect:
-        serializedVersion: 2
-        x: 110
-        y: 245
-        width: 16
-        height: 24
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 1d8a794f4821e4360800000000000000
-      internalID: 7155677220186859729
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Enimies World 1_48
-      rect:
-        serializedVersion: 2
-        x: 128
-        y: 245
-        width: 16
-        height: 24
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: b34718194e0dca820800000000000000
-      internalID: 2930947137623651387
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Enimies World 1_49
-      rect:
-        serializedVersion: 2
-        x: 146
-        y: 245
-        width: 16
-        height: 24
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: cc2c16aa3e8f948c0800000000000000
-      internalID: -4014403936124288308
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Enimies World 1_50
-      rect:
-        serializedVersion: 2
-        x: 164
-        y: 245
-        width: 16
-        height: 24
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: a3f9369b72b296c10800000000000000
-      internalID: 2047214955230633786
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Enimies World 1_51
-      rect:
-        serializedVersion: 2
-        x: 2
-        y: 227
-        width: 16
-        height: 16
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 725ecb7fffa736440800000000000000
-      internalID: 4927917657065055527
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Enimies World 1_52
-      rect:
-        serializedVersion: 2
-        x: 20
-        y: 227
-        width: 16
-        height: 16
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: e0be16d3c1b283550800000000000000
-      internalID: 6140705492208577294
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Enimies World 1_53
-      rect:
-        serializedVersion: 2
-        x: 38
-        y: 227
-        width: 16
-        height: 16
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 4f2a3b1b0d82b1930800000000000000
-      internalID: 4114927561332728564
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Enimies World 1_54
-      rect:
-        serializedVersion: 2
-        x: 56
-        y: 227
-        width: 16
-        height: 16
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: ad14860aa2a5e6ff0800000000000000
-      internalID: -40996207473442342
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Enimies World 1_55
-      rect:
-        serializedVersion: 2
-        x: 74
-        y: 227
-        width: 16
-        height: 16
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 6284ada81f12ba6d0800000000000000
-      internalID: -2978249407275055066
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Enimies World 1_56
-      rect:
-        serializedVersion: 2
-        x: 92
-        y: 227
-        width: 16
-        height: 16
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: c72fe32f429275360800000000000000
-      internalID: 7158235371388465788
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Enimies World 1_57
-      rect:
-        serializedVersion: 2
-        x: 110
-        y: 231
-        width: 8
-        height: 8
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: fdab4195249df1c50800000000000000
-      internalID: 6638263254753000159
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Enimies World 1_58
-      rect:
-        serializedVersion: 2
-        x: 120
-        y: 227
-        width: 16
-        height: 16
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 8027e9e8bdddcf650800000000000000
-      internalID: 6268128716453212680
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Enimies World 1_59
-      rect:
-        serializedVersion: 2
-        x: 138
-        y: 227
-        width: 16
-        height: 16
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 45b0104e1c55d8ef0800000000000000
-      internalID: -104332925117330604
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Enimies World 1_60
-      rect:
-        serializedVersion: 2
-        x: 156
-        y: 227
-        width: 16
-        height: 8
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 63863f6c66cde2d30800000000000000
-      internalID: 4408703419224909878
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Enimies World 1_61
-      rect:
-        serializedVersion: 2
-        x: 2
-        y: 193
-        width: 32
-        height: 32
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: a5b8bc0549cb40460800000000000000
-      internalID: 7207092648896334682
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Enimies World 1_62
-      rect:
-        serializedVersion: 2
-        x: 36
-        y: 193
-        width: 32
-        height: 32
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: a38cff87dd846afd0800000000000000
-      internalID: -2331095641062651846
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Enimies World 1_63
-      rect:
-        serializedVersion: 2
-        x: 70
-        y: 193
-        width: 32
-        height: 32
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 741716d5a90aa6ec0800000000000000
-      internalID: -3572866769512992441
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Enimies World 1_64
-      rect:
-        serializedVersion: 2
-        x: 104
-        y: 193
-        width: 32
-        height: 32
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 7ccc9be3ef4f673e0800000000000000
-      internalID: -2056186807036818233
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Enimies World 1_65
-      rect:
-        serializedVersion: 2
-        x: 138
-        y: 193
-        width: 32
-        height: 32
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 6a76bacda002372a0800000000000000
-      internalID: -6741008986219518042
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Enimies World 1_66
-      rect:
-        serializedVersion: 2
-        x: 172
-        y: 190
-        width: 40
-        height: 35
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: a17f2f9247c982130800000000000000
-      internalID: 3542253129660823322
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Enimies World 1_67
-      rect:
-        serializedVersion: 2
-        x: 206
-        y: 217
-        width: 8
-        height: 8
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: c6f5ce12a7030c8e0800000000000000
-      internalID: -1675285760268542100
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Enimies World 1_68
-      rect:
-        serializedVersion: 2
-        x: 216
-        y: 217
-        width: 8
-        height: 8
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 39f8e713ac4dbabc0800000000000000
-      internalID: -3770686298113798253
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Enimies World 1_69
-      rect:
-        serializedVersion: 2
-        x: 226
-        y: 217
-        width: 8
-        height: 8
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 22f65c655bfd5ab10800000000000000
-      internalID: 1992244380119166754
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Enimies World 1_70
+      name: World1Enemies 1_95
       rect:
         serializedVersion: 2
         x: 236
-        y: 217
-        width: 8
-        height: 8
+        y: 221
+        width: 16
+        height: 24
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -1971,20 +1089,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 9788830e3174d2620800000000000000
-      internalID: 2750933098084993145
+      spriteID: 5492ad3ba38949440800000000000000
+      internalID: 4941742069025220933
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Enimies World 1_71
+      name: World1Enemies 1_96
       rect:
         serializedVersion: 2
-        x: 246
-        y: 217
-        width: 8
-        height: 8
+        x: 254
+        y: 221
+        width: 16
+        height: 24
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -1992,20 +1110,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 052c51f1ed8bc9670800000000000000
-      internalID: 8546909456986128976
+      spriteID: f78ae2ae0c012a000800000000000000
+      internalID: 45617366975817855
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Enimies World 1_72
+      name: World1Enemies 1_97
       rect:
         serializedVersion: 2
-        x: 209
-        y: 200
-        width: 18
-        height: 9
+        x: 272
+        y: 221
+        width: 16
+        height: 24
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -2013,167 +1131,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 3f8265aaddeb26b40800000000000000
-      internalID: 5432113959817062643
+      spriteID: 8c3f66b6091596b70800000000000000
+      internalID: 8892728619938804680
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Enimies World 1_73
-      rect:
-        serializedVersion: 2
-        x: 228
-        y: 200
-        width: 9
-        height: 6
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: f06051d6eab3ff2b0800000000000000
-      internalID: -5548650595556719089
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Enimies World 1_74
-      rect:
-        serializedVersion: 2
-        x: 238
-        y: 200
-        width: 9
-        height: 9
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: dd29e4ae26098f450800000000000000
-      internalID: 6122802447922402013
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Enimies World 1_75
-      rect:
-        serializedVersion: 2
-        x: 251
-        y: 187
-        width: 8
-        height: 22
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: cf05ec441e8c6b300800000000000000
-      internalID: 267622097722691836
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Enimies World 1_76
-      rect:
-        serializedVersion: 2
-        x: 258
-        y: 200
-        width: 5
-        height: 6
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 568d9edf9f11f8610800000000000000
-      internalID: 1625537755908528229
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Enimies World 1_77
-      rect:
-        serializedVersion: 2
-        x: 264
-        y: 200
-        width: 6
-        height: 6
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 18f2814a2166f9cd0800000000000000
-      internalID: -2549206633819918463
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Enimies World 1_78
-      rect:
-        serializedVersion: 2
-        x: 271
-        y: 200
-        width: 5
-        height: 6
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 868c98f0eafb8c870800000000000000
-      internalID: 8703417034199386216
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Enimies World 1_79
-      rect:
-        serializedVersion: 2
-        x: 277
-        y: 200
-        width: 11
-        height: 9
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 8daf3a5e0af093910800000000000000
-      internalID: 1817501108342618840
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Enimies World 1_80
+      name: World1Enemies 1_98
       rect:
         serializedVersion: 2
         x: 290
-        y: 200
-        width: 5
-        height: 6
+        y: 221
+        width: 16
+        height: 24
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -2181,41 +1152,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 6196473cc1495fec0800000000000000
-      internalID: -3533755481343104746
+      spriteID: 8ca7f8d1d15940c80800000000000000
+      internalID: -8357391056210265400
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Enimies World 1_81
-      rect:
-        serializedVersion: 2
-        x: 296
-        y: 200
-        width: 12
-        height: 6
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 0f42d62d0068cb060800000000000000
-      internalID: 6970593661351175408
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Enimies World 1_82
+      name: World1Enemies 1_100
       rect:
         serializedVersion: 2
         x: 2
-        y: 175
+        y: 197
         width: 16
-        height: 16
+        height: 24
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -2223,20 +1173,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 9495e89844c780570800000000000000
-      internalID: 8433126936058681673
+      spriteID: 20cdccd1b61a01ca0800000000000000
+      internalID: -6048156818125038590
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Enimies World 1_83
+      name: World1Enemies 1_101
       rect:
         serializedVersion: 2
         x: 20
-        y: 175
+        y: 197
         width: 16
-        height: 16
+        height: 24
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -2244,20 +1194,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: d388011b5fa8a0330800000000000000
-      internalID: 3677904833543702589
+      spriteID: 6aa7e30e33c1048f0800000000000000
+      internalID: -558415344662840666
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Enimies World 1_84
+      name: World1Enemies 1_102
       rect:
         serializedVersion: 2
         x: 38
-        y: 175
+        y: 197
         width: 16
-        height: 16
+        height: 24
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -2265,20 +1215,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: ab4307056ebef5fc0800000000000000
-      internalID: -3503822610646420294
+      spriteID: e50404657e3dd3a80800000000000000
+      internalID: -8485393132358188962
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Enimies World 1_85
+      name: World1Enemies 1_103
       rect:
         serializedVersion: 2
         x: 56
-        y: 175
+        y: 197
         width: 16
-        height: 16
+        height: 24
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -2286,20 +1236,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 533ff27c1e8f17c90800000000000000
-      internalID: -7173679082831350987
+      spriteID: 794f9ccc954818da0800000000000000
+      internalID: -5944324511929600873
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Enimies World 1_86
+      name: World1Enemies 1_104
       rect:
         serializedVersion: 2
         x: 74
-        y: 175
+        y: 197
         width: 16
-        height: 16
+        height: 24
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -2307,20 +1257,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 5d57c4ccf18694b30800000000000000
-      internalID: 4272060207318463957
+      spriteID: e7788cd9516474500800000000000000
+      internalID: 380349752191518590
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Enimies World 1_87
+      name: World1Enemies 1_105
       rect:
         serializedVersion: 2
         x: 92
-        y: 175
+        y: 197
         width: 16
-        height: 16
+        height: 24
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -2328,20 +1278,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 726d0014db40b9820800000000000000
-      internalID: 2925937593793173031
+      spriteID: 8608a5121414ec0d0800000000000000
+      internalID: -3400708920629886872
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Enimies World 1_88
+      name: World1Enemies 1_106
       rect:
         serializedVersion: 2
         x: 110
-        y: 175
+        y: 197
         width: 16
-        height: 16
+        height: 24
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -2349,20 +1299,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 7e7718ce719f76290800000000000000
-      internalID: -7897069540423403545
+      spriteID: b598b7dc46d3642e0800000000000000
+      internalID: -2141957069614642853
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Enimies World 1_89
+      name: World1Enemies 1_107
       rect:
         serializedVersion: 2
         x: 128
-        y: 175
+        y: 197
         width: 16
-        height: 16
+        height: 24
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -2370,20 +1320,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 4b307fc97b67b7ce0800000000000000
-      internalID: -1406399927638621260
+      spriteID: 8be18203aa364b5c0800000000000000
+      internalID: -4200622969826304328
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Enimies World 1_90
+      name: World1Enemies 1_108
       rect:
         serializedVersion: 2
         x: 146
-        y: 175
+        y: 197
         width: 16
-        height: 16
+        height: 24
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -2391,20 +1341,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 241ce665b4158eb10800000000000000
-      internalID: 2010946617635422530
+      spriteID: cd9011696a2a6ebd0800000000000000
+      internalID: -2601212898393912868
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Enimies World 1_91
+      name: World1Enemies 1_109
       rect:
         serializedVersion: 2
         x: 164
-        y: 175
+        y: 197
         width: 16
-        height: 16
+        height: 24
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -2412,20 +1362,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 4e98fd83ebceb7180800000000000000
-      internalID: -9116432718939321884
+      spriteID: 82fc17df6c807f3a0800000000000000
+      internalID: -6631822275531124952
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Enimies World 1_92
+      name: World1Enemies 1_110
       rect:
         serializedVersion: 2
-        x: 216
-        y: 185
-        width: 13
-        height: 11
+        x: 182
+        y: 197
+        width: 16
+        height: 24
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -2433,20 +1383,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 62f4ea2e8bee90d80800000000000000
-      internalID: -8283827561726849242
+      spriteID: feadc544dd68c2590800000000000000
+      internalID: -7697629378190189841
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Enimies World 1_93
+      name: World1Enemies 1_111
       rect:
         serializedVersion: 2
-        x: 230
-        y: 185
-        width: 6
-        height: 8
+        x: 200
+        y: 197
+        width: 16
+        height: 24
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -2454,20 +1404,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: f9b474aead838e110800000000000000
-      internalID: 1290343806126214047
+      spriteID: 841c7657b321e8ae0800000000000000
+      internalID: -1545277575559397048
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Enimies World 1_94
+      name: World1Enemies 1_112
       rect:
         serializedVersion: 2
-        x: 237
-        y: 187
-        width: 5
-        height: 6
+        x: 218
+        y: 197
+        width: 16
+        height: 24
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -2475,20 +1425,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 202d1886a855bee90800000000000000
-      internalID: -6995403543242747390
+      spriteID: fb4bcc33dde0f3990800000000000000
+      internalID: -7404182919154191169
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Enimies World 1_95
+      name: World1Enemies 1_113
       rect:
         serializedVersion: 2
-        x: 243
-        y: 187
-        width: 6
-        height: 9
+        x: 236
+        y: 197
+        width: 16
+        height: 24
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -2496,20 +1446,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 406f0fd34395a2f10800000000000000
-      internalID: 2245705445109986820
+      spriteID: 517db05efadc2a390800000000000000
+      internalID: -7808452648561289451
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Enimies World 1_96
+      name: World1Enemies 1_114
       rect:
         serializedVersion: 2
-        x: 260
-        y: 185
-        width: 5
-        height: 8
+        x: 254
+        y: 197
+        width: 16
+        height: 24
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -2517,20 +1467,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 4d5e17f079fc1ea20800000000000000
-      internalID: 3089979067059004884
+      spriteID: 70012f700420036f0800000000000000
+      internalID: -707062667462701049
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Enimies World 1_97
+      name: World1Enemies 1_115
       rect:
         serializedVersion: 2
-        x: 269
-        y: 187
-        width: 7
-        height: 9
+        x: 272
+        y: 197
+        width: 16
+        height: 24
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -2538,62 +1488,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 9103311aaeff55890800000000000000
-      internalID: -7469783023734280167
+      spriteID: e879d23a636850730800000000000000
+      internalID: 3964722616193619854
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Enimies World 1_98
-      rect:
-        serializedVersion: 2
-        x: 277
-        y: 187
-        width: 5
-        height: 6
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 60153d305972658f0800000000000000
-      internalID: -552210383338516218
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Enimies World 1_99
-      rect:
-        serializedVersion: 2
-        x: 283
-        y: 185
-        width: 6
-        height: 8
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: e61ad738f18291b50800000000000000
-      internalID: 6564322047684354414
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Enimies World 1_100
+      name: World1Enemies 1_116
       rect:
         serializedVersion: 2
         x: 290
-        y: 187
-        width: 5
-        height: 6
+        y: 197
+        width: 16
+        height: 24
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -2601,41 +1509,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 7856c942a22f8ca40800000000000000
-      internalID: 5388823216965576071
+      spriteID: a0a1bab41dd11abf0800000000000000
+      internalID: -314937714184349174
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Enimies World 1_101
-      rect:
-        serializedVersion: 2
-        x: 296
-        y: 185
-        width: 12
-        height: 8
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 999f4b1d69b1f0f40800000000000000
-      internalID: 5696802388224309657
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Enimies World 1_102
+      name: World1Enemies 1_117
       rect:
         serializedVersion: 2
         x: 2
-        y: 157
+        y: 173
         width: 16
-        height: 16
+        height: 24
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -2643,20 +1530,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 39b934f387ba5fa80800000000000000
-      internalID: -8433646194235565165
+      spriteID: ca27a61a3b7d731d0800000000000000
+      internalID: -3370988629556301140
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Enimies World 1_103
+      name: World1Enemies 1_118
       rect:
         serializedVersion: 2
         x: 20
-        y: 157
+        y: 173
         width: 16
-        height: 16
+        height: 24
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -2664,20 +1551,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 4b7b61fd0f5a79e50800000000000000
-      internalID: 6816099015002077108
+      spriteID: e5f04ef12a53d7670800000000000000
+      internalID: 8538039439000342366
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Enimies World 1_104
+      name: World1Enemies 1_119
       rect:
         serializedVersion: 2
         x: 38
-        y: 157
+        y: 173
         width: 16
-        height: 16
+        height: 24
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -2685,20 +1572,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 485944f492b23cd10800000000000000
-      internalID: 2144605303982036356
+      spriteID: 1fe1fdcff9c1e6770800000000000000
+      internalID: 8605847411419455217
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Enimies World 1_105
+      name: World1Enemies 1_120
       rect:
         serializedVersion: 2
         x: 56
-        y: 157
+        y: 173
         width: 16
-        height: 16
+        height: 24
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -2706,20 +1593,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 8e54f86ffecc9af40800000000000000
-      internalID: 5740344531066242536
+      spriteID: 245517a93305091e0800000000000000
+      internalID: -2193164835964758718
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Enimies World 1_106
+      name: World1Enemies 1_121
       rect:
         serializedVersion: 2
         x: 74
-        y: 157
+        y: 173
         width: 16
-        height: 16
+        height: 24
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -2727,20 +1614,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 47a046448fce73a10800000000000000
-      internalID: 1889239119748663924
+      spriteID: fb0b1f7f8e9a40ca0800000000000000
+      internalID: -6051525181221785409
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Enimies World 1_107
+      name: World1Enemies 1_122
       rect:
         serializedVersion: 2
         x: 92
-        y: 157
+        y: 173
         width: 16
-        height: 16
+        height: 24
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -2748,20 +1635,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: cb1ce96a360e8f3d0800000000000000
-      internalID: -3172539218880708164
+      spriteID: 1d6e845166ee3a2f0800000000000000
+      internalID: -962663773115980079
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Enimies World 1_108
+      name: World1Enemies 1_123
       rect:
         serializedVersion: 2
         x: 110
-        y: 157
+        y: 173
         width: 16
-        height: 16
+        height: 24
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -2769,20 +1656,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 9390542d552ef8f70800000000000000
-      internalID: 9191814222714308921
+      spriteID: 15cf7bdc20feaf570800000000000000
+      internalID: 8501370041935592529
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Enimies World 1_109
+      name: World1Enemies 1_124
       rect:
         serializedVersion: 2
         x: 128
-        y: 157
+        y: 173
         width: 16
-        height: 16
+        height: 24
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -2790,20 +1677,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: a564d7fedbc5e1d20800000000000000
-      internalID: 3251137951844615770
+      spriteID: 5d2b21fa20c7ed2f0800000000000000
+      internalID: -946182520732208427
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Enimies World 1_110
+      name: World1Enemies 1_125
       rect:
         serializedVersion: 2
         x: 146
-        y: 157
+        y: 173
         width: 16
-        height: 16
+        height: 24
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -2811,20 +1698,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: cd837ffe235acca50800000000000000
-      internalID: 6542785996855392476
+      spriteID: d36af50fcc087f870800000000000000
+      internalID: 8716577221493368381
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Enimies World 1_111
+      name: World1Enemies 1_126
       rect:
         serializedVersion: 2
         x: 164
-        y: 157
+        y: 173
         width: 16
-        height: 16
+        height: 24
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -2832,20 +1719,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 1caa1be6d6496ebf0800000000000000
-      internalID: -295385527816705343
+      spriteID: 46ac3c67eb202d040800000000000000
+      internalID: 4670798780596210276
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Enimies World 1_112
+      name: World1Enemies 1_127
       rect:
         serializedVersion: 2
-        x: 83
-        y: 54
-        width: 56
-        height: 100
+        x: 182
+        y: 173
+        width: 16
+        height: 24
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -2853,20 +1740,335 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: fe52d6ea2585ca320800000000000000
-      internalID: 2570526599458661871
+      spriteID: 4fc05d5d28757c200800000000000000
+      internalID: 200224927886150900
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Enimies World 1_113
+      name: World1Enemies 1_128
+      rect:
+        serializedVersion: 2
+        x: 200
+        y: 173
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: eb94c8fcc2707d3d0800000000000000
+      internalID: -3182066722671932994
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: World1Enemies 1_129
+      rect:
+        serializedVersion: 2
+        x: 218
+        y: 173
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 51523da6657e676b0800000000000000
+      internalID: -5298793553209383659
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: World1Enemies 1_130
+      rect:
+        serializedVersion: 2
+        x: 236
+        y: 173
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 8dd0cdbb6fe830a00800000000000000
+      internalID: 721577555674271192
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: World1Enemies 1_131
+      rect:
+        serializedVersion: 2
+        x: 254
+        y: 173
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: e7dfd06ea1ffbd4a0800000000000000
+      internalID: -6567375140595827330
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: World1Enemies 1_132
+      rect:
+        serializedVersion: 2
+        x: 272
+        y: 173
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 23f89378faf6ef970800000000000000
+      internalID: 8790586322352443186
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: World1Enemies 1_133
+      rect:
+        serializedVersion: 2
+        x: 290
+        y: 173
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 4f03d11d859711ac0800000000000000
+      internalID: -3886191581071593228
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: World1Enemies 1_134
+      rect:
+        serializedVersion: 2
+        x: 2
+        y: 149
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: b8642335a91ba6f20800000000000000
+      internalID: 3416738543692826251
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: World1Enemies 1_135
+      rect:
+        serializedVersion: 2
+        x: 20
+        y: 149
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: f5e6e154f529c2480800000000000000
+      internalID: -8922595823848624545
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: World1Enemies 1_136
+      rect:
+        serializedVersion: 2
+        x: 38
+        y: 149
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: ac870dd445ae3d3c0800000000000000
+      internalID: -4335864368423995190
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: World1Enemies 1_137
+      rect:
+        serializedVersion: 2
+        x: 56
+        y: 149
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 8d743c7b6f601b150800000000000000
+      internalID: 5886493844664698840
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: World1Enemies 1_138
+      rect:
+        serializedVersion: 2
+        x: 74
+        y: 149
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: f31fd1cc6ac22d720800000000000000
+      internalID: 2869405007489134911
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: World1Enemies 1_139
+      rect:
+        serializedVersion: 2
+        x: 92
+        y: 149
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 67f8b0f9eb258e570800000000000000
+      internalID: 8496131675700039542
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: World1Enemies 1_140
+      rect:
+        serializedVersion: 2
+        x: 110
+        y: 149
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 9ca0937bc57f66020800000000000000
+      internalID: 2334825434421201609
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: World1Enemies 1_141
+      rect:
+        serializedVersion: 2
+        x: 128
+        y: 149
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 8c5efdf36a5f650f0800000000000000
+      internalID: -1128444562224716344
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: World1Enemies 1_142
+      rect:
+        serializedVersion: 2
+        x: 146
+        y: 149
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: b23b178ee571b7200800000000000000
+      internalID: 178762306605396779
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: World1Enemies 1_143
       rect:
         serializedVersion: 2
         x: 164
         y: 149
-        width: 15
-        height: 6
+        width: 16
+        height: 24
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -2874,20 +2076,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 4a29f8e99dd013f20800000000000000
-      internalID: 3400514421960708772
+      spriteID: a6369a73c72519900800000000000000
+      internalID: 689422911427666794
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Enimies World 1_114
+      name: World1Enemies 1_144
       rect:
         serializedVersion: 2
-        x: 180
+        x: 182
         y: 149
-        width: 4
-        height: 4
+        width: 16
+        height: 24
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -2895,62 +2097,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 51a5fd2c9d0f52250800000000000000
-      internalID: 5919402103316371989
+      spriteID: 4c7434d9be0e24500800000000000000
+      internalID: 379112621212911556
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Enimies World 1_115
-      rect:
-        serializedVersion: 2
-        x: 185
-        y: 149
-        width: 9
-        height: 6
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: c10502c0ef2e2f080800000000000000
-      internalID: -9155005511737782244
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Enimies World 1_116
-      rect:
-        serializedVersion: 2
-        x: 195
-        y: 149
-        width: 4
-        height: 4
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: b453e62b4df7ce940800000000000000
-      internalID: 5326773010775815499
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Enimies World 1_117
+      name: World1Enemies 1_145
       rect:
         serializedVersion: 2
         x: 200
         y: 149
-        width: 4
-        height: 4
+        width: 16
+        height: 24
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -2958,62 +2118,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 283b1546f716ddfb0800000000000000
-      internalID: -4621430442840444030
+      spriteID: 3c537251a77e07eb0800000000000000
+      internalID: -4724021497584732733
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Enimies World 1_118
+      name: World1Enemies 1_146
       rect:
         serializedVersion: 2
-        x: 205
-        y: 129
-        width: 26
-        height: 26
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 52224f7427739c490800000000000000
-      internalID: -7725582721804393947
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Enimies World 1_119
-      rect:
-        serializedVersion: 2
-        x: 232
-        y: 147
-        width: 10
-        height: 8
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 105bed8bfbd360370800000000000000
-      internalID: 8288380057871627521
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Enimies World 1_120
-      rect:
-        serializedVersion: 2
-        x: 243
+        x: 218
         y: 149
-        width: 4
-        height: 4
+        width: 16
+        height: 24
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -3021,20 +2139,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 5d5c91083807dd650800000000000000
-      internalID: 6259282767207056853
+      spriteID: 9abfdaeef7303cc90800000000000000
+      internalID: -7150867935334106199
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Enimies World 1_121
+      name: World1Enemies 1_147
       rect:
         serializedVersion: 2
-        x: 248
+        x: 236
         y: 149
-        width: 9
-        height: 4
+        width: 16
+        height: 24
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -3042,20 +2160,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 5b5e5ef5c033407d0800000000000000
-      internalID: -2953179327406676555
+      spriteID: 8c2a036f28452a0d0800000000000000
+      internalID: -3413072646140550456
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Enimies World 1_122
+      name: World1Enemies 1_148
       rect:
         serializedVersion: 2
-        x: 258
+        x: 254
         y: 149
-        width: 26
-        height: 6
+        width: 16
+        height: 24
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -3063,20 +2181,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 02e4648db7dadbfd0800000000000000
-      internalID: -2324511085232239072
+      spriteID: b52aee3a8c99627e0800000000000000
+      internalID: -1790574714810359205
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Enimies World 1_123
+      name: World1Enemies 1_149
       rect:
         serializedVersion: 2
-        x: 285
+        x: 272
         y: 149
-        width: 8
-        height: 6
+        width: 16
+        height: 24
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -3084,20 +2202,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 2eabfd63ac3579120800000000000000
-      internalID: 2420495452704062178
+      spriteID: ce55aa32cc43dad10800000000000000
+      internalID: 2138423449447192044
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Enimies World 1_124
+      name: World1Enemies 1_150
       rect:
         serializedVersion: 2
-        x: 294
+        x: 290
         y: 149
-        width: 15
-        height: 6
+        width: 16
+        height: 24
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -3105,20 +2223,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: cb12e7c35864c5460800000000000000
-      internalID: 7231732639709667772
+      spriteID: ec0bb3ca5ad436b60800000000000000
+      internalID: 7738113958707179726
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Enimies World 1_125
+      name: World1Enemies 1_151
       rect:
         serializedVersion: 2
-        x: 310
+        x: 308
         y: 149
-        width: 17
-        height: 6
+        width: 16
+        height: 24
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -3126,20 +2244,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 902d3cbab447fbc30800000000000000
-      internalID: 4377345231180517897
+      spriteID: 42f0a0153cd440010800000000000000
+      internalID: 1154132905787264804
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Enimies World 1_126
+      name: World1Enemies 1_152
       rect:
         serializedVersion: 2
-        x: 328
+        x: 326
         y: 149
-        width: 14
-        height: 6
+        width: 16
+        height: 24
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -3147,62 +2265,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 780446af5acd11580800000000000000
-      internalID: -8858056386632466297
+      spriteID: ad50093b2bd649d60800000000000000
+      internalID: 7896056660971488730
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Enimies World 1_127
-      rect:
-        serializedVersion: 2
-        x: 145
-        y: 54
-        width: 56
-        height: 83
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 284be91dcfd01c110800000000000000
-      internalID: 1279319148649690242
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Enimies World 1_128
-      rect:
-        serializedVersion: 2
-        x: 235
-        y: 134
-        width: 6
-        height: 7
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 28c121ec4610704a0800000000000000
-      internalID: -6627326794186744702
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Enimies World 1_129
+      name: World1Enemies 1_153
       rect:
         serializedVersion: 2
         x: 2
-        y: 54
-        width: 77
-        height: 76
+        y: 125
+        width: 16
+        height: 24
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -3210,20 +2286,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 9218416536953e500800000000000000
-      internalID: 424281073083777321
+      spriteID: 992f577a60b296390800000000000000
+      internalID: -7824675570000203111
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Enimies World 1_130
+      name: World1Enemies 1_154
       rect:
         serializedVersion: 2
-        x: 206
-        y: 2
-        width: 58
-        height: 116
+        x: 20
+        y: 125
+        width: 16
+        height: 24
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -3231,20 +2307,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: ebc2cb6709e9927b0800000000000000
-      internalID: -5248489547419079490
+      spriteID: 645d8385cdc314430800000000000000
+      internalID: 3765357680529036614
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Enimies World 1_131
+      name: World1Enemies 1_155
       rect:
         serializedVersion: 2
-        x: 271
-        y: 54
-        width: 77
-        height: 76
+        x: 92
+        y: 125
+        width: 16
+        height: 24
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -3252,8 +2328,1436 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: e5e7ea6cfc63be410800000000000000
-      internalID: 1507358766305017438
+      spriteID: 0675c74e20042f290800000000000000
+      internalID: -7858148018640627872
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: World1Enemies 1_156
+      rect:
+        serializedVersion: 2
+        x: 110
+        y: 125
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 5ac22a0ddffc39d50800000000000000
+      internalID: 6742961756137729189
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: World1Enemies 1_157
+      rect:
+        serializedVersion: 2
+        x: 164
+        y: 125
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 5025f10f716a51ca0800000000000000
+      internalID: -6046744302931979771
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: World1Enemies 1_158
+      rect:
+        serializedVersion: 2
+        x: 182
+        y: 125
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 3b81db4361db3ca70800000000000000
+      internalID: 8846121996157524147
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: World1Enemies 1_159
+      rect:
+        serializedVersion: 2
+        x: 218
+        y: 125
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 6daad2c06c8e9db60800000000000000
+      internalID: 7771498569309989590
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: World1Enemies 1_160
+      rect:
+        serializedVersion: 2
+        x: 236
+        y: 125
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 38362d278b3c3fe60800000000000000
+      internalID: 7994948960480551811
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: World1Enemies 1_161
+      rect:
+        serializedVersion: 2
+        x: 272
+        y: 125
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 50e943441032761d0800000000000000
+      internalID: -3357676508835176955
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: World1Enemies 1_162
+      rect:
+        serializedVersion: 2
+        x: 290
+        y: 125
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 995b006de95137250800000000000000
+      internalID: 5941116105371202969
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: World1Enemies 1_163
+      rect:
+        serializedVersion: 2
+        x: 2
+        y: 101
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 83583b12b1e88e9e0800000000000000
+      internalID: -1591866221094795976
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: World1Enemies 1_164
+      rect:
+        serializedVersion: 2
+        x: 20
+        y: 101
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: cdc38ba88ac07f350800000000000000
+      internalID: 6050318542416919772
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: World1Enemies 1_165
+      rect:
+        serializedVersion: 2
+        x: 38
+        y: 101
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: f9f6d0c78662faba0800000000000000
+      internalID: -6075595142099800161
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: World1Enemies 1_166
+      rect:
+        serializedVersion: 2
+        x: 56
+        y: 101
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: c3d7438e24d8c0160800000000000000
+      internalID: 6993119639902649660
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: World1Enemies 1_167
+      rect:
+        serializedVersion: 2
+        x: 74
+        y: 101
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 8d809746ceabaa430800000000000000
+      internalID: 3795051160473766104
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: World1Enemies 1_168
+      rect:
+        serializedVersion: 2
+        x: 92
+        y: 101
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: b70e361811612d030800000000000000
+      internalID: 3517898523370840187
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: World1Enemies 1_169
+      rect:
+        serializedVersion: 2
+        x: 110
+        y: 101
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: bc4ec8d9964d64f30800000000000000
+      internalID: 4559565222839117003
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: World1Enemies 1_170
+      rect:
+        serializedVersion: 2
+        x: 128
+        y: 101
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 5e9f7c44d26ea1cd0800000000000000
+      internalID: -2586501953869055515
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: World1Enemies 1_171
+      rect:
+        serializedVersion: 2
+        x: 146
+        y: 101
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 2525eb0fc1a5f2a50800000000000000
+      internalID: 6498511867663503954
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: World1Enemies 1_172
+      rect:
+        serializedVersion: 2
+        x: 164
+        y: 101
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: e7a7a93256d711ae0800000000000000
+      internalID: -1580344120887838082
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: World1Enemies 1_173
+      rect:
+        serializedVersion: 2
+        x: 182
+        y: 101
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 849f0466329ecec60800000000000000
+      internalID: 7848904588848593224
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: World1Enemies 1_174
+      rect:
+        serializedVersion: 2
+        x: 200
+        y: 101
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: b230b10e8eddcf980800000000000000
+      internalID: -8503678004120321237
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: World1Enemies 1_175
+      rect:
+        serializedVersion: 2
+        x: 218
+        y: 101
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 2b50ceb57c0df0a50800000000000000
+      internalID: 6489635142723438002
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: World1Enemies 1_176
+      rect:
+        serializedVersion: 2
+        x: 236
+        y: 101
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: bd339918cd7cda4d0800000000000000
+      internalID: -3121619216816852005
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: World1Enemies 1_177
+      rect:
+        serializedVersion: 2
+        x: 254
+        y: 101
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 8a61b11cc09f1dea0800000000000000
+      internalID: -5849620607802861912
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: World1Enemies 1_178
+      rect:
+        serializedVersion: 2
+        x: 272
+        y: 101
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: a1f259eeff81545f0800000000000000
+      internalID: -773184273525690598
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: World1Enemies 1_179
+      rect:
+        serializedVersion: 2
+        x: 290
+        y: 101
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: fb103cefde9470fd0800000000000000
+      internalID: -2375848991884377665
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: World1Enemies 1_180
+      rect:
+        serializedVersion: 2
+        x: 308
+        y: 101
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 8a3fb505f2bd509c0800000000000000
+      internalID: -3961519300944333912
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: World1Enemies 1_181
+      rect:
+        serializedVersion: 2
+        x: 326
+        y: 101
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: d907474a28d759e20800000000000000
+      internalID: 3356727097332887709
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: World1Enemies 1_182
+      rect:
+        serializedVersion: 2
+        x: 2
+        y: 77
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: ea6f2e9205e834a30800000000000000
+      internalID: 4198355752590702254
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: World1Enemies 1_183
+      rect:
+        serializedVersion: 2
+        x: 20
+        y: 77
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: acd889724e6319490800000000000000
+      internalID: -7741345930928419382
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: World1Enemies 1_184
+      rect:
+        serializedVersion: 2
+        x: 38
+        y: 77
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 7dab6cca055bebbb0800000000000000
+      internalID: -4918294384941286697
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: World1Enemies 1_185
+      rect:
+        serializedVersion: 2
+        x: 56
+        y: 77
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 91bb88dec81901560800000000000000
+      internalID: 7282480631924701977
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: World1Enemies 1_186
+      rect:
+        serializedVersion: 2
+        x: 74
+        y: 77
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: d0bff5c26504b2220800000000000000
+      internalID: 2462132360143960845
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: World1Enemies 1_187
+      rect:
+        serializedVersion: 2
+        x: 92
+        y: 77
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 06d9871975cf84450800000000000000
+      internalID: 6073381550542069088
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: World1Enemies 1_188
+      rect:
+        serializedVersion: 2
+        x: 110
+        y: 77
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 020af9ca3fba27d60800000000000000
+      internalID: 7886554960540704800
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: World1Enemies 1_189
+      rect:
+        serializedVersion: 2
+        x: 128
+        y: 77
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: d16c53988e5021cd0800000000000000
+      internalID: -2589000339492059619
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: World1Enemies 1_190
+      rect:
+        serializedVersion: 2
+        x: 146
+        y: 77
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 246d82338943e7e90800000000000000
+      internalID: -7026120540353407422
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: World1Enemies 1_191
+      rect:
+        serializedVersion: 2
+        x: 164
+        y: 77
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 7ae0226b88b096150800000000000000
+      internalID: 5866232671425924775
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: World1Enemies 1_192
+      rect:
+        serializedVersion: 2
+        x: 182
+        y: 77
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 5df3ec9096e95e760800000000000000
+      internalID: 7486564129546584021
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: World1Enemies 1_193
+      rect:
+        serializedVersion: 2
+        x: 200
+        y: 77
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 8d0b8daa0ffa4ae60800000000000000
+      internalID: 7972690688545960152
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: World1Enemies 1_194
+      rect:
+        serializedVersion: 2
+        x: 218
+        y: 77
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 278503a481990ac60800000000000000
+      internalID: 7827424481972869234
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: World1Enemies 1_195
+      rect:
+        serializedVersion: 2
+        x: 236
+        y: 77
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: d2a26840cfcd0e960800000000000000
+      internalID: 7629340743731391021
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: World1Enemies 1_196
+      rect:
+        serializedVersion: 2
+        x: 254
+        y: 77
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: e28119b8ca1873a80800000000000000
+      internalID: -8487172394680510418
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: World1Enemies 1_197
+      rect:
+        serializedVersion: 2
+        x: 272
+        y: 77
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: c7ae7fbbfc751b840800000000000000
+      internalID: 5238064391332031100
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: World1Enemies 1_198
+      rect:
+        serializedVersion: 2
+        x: 290
+        y: 77
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 307f614450b725f60800000000000000
+      internalID: 8021609148847683331
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: World1Enemies 1_199
+      rect:
+        serializedVersion: 2
+        x: 308
+        y: 77
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 9652f5ada3437ced0800000000000000
+      internalID: -2393887249547713175
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: World1Enemies 1_200
+      rect:
+        serializedVersion: 2
+        x: 326
+        y: 77
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: a51327c51fe3149c0800000000000000
+      internalID: -3944802592240815782
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: World1Enemies 1_201
+      rect:
+        serializedVersion: 2
+        x: 2
+        y: 53
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: d1f76fe34f4707690800000000000000
+      internalID: -7606451178251583715
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: World1Enemies 1_202
+      rect:
+        serializedVersion: 2
+        x: 20
+        y: 53
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 328f198f995115780800000000000000
+      internalID: -8696145654431221725
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: World1Enemies 1_203
+      rect:
+        serializedVersion: 2
+        x: 38
+        y: 53
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 6c8ac90aab9e9a790800000000000000
+      internalID: -7518221115150522170
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: World1Enemies 1_204
+      rect:
+        serializedVersion: 2
+        x: 56
+        y: 53
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 36a7606c5cd66e6a0800000000000000
+      internalID: -6420323522571765149
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: World1Enemies 1_205
+      rect:
+        serializedVersion: 2
+        x: 74
+        y: 53
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 104a1f81b571442d0800000000000000
+      internalID: -3295483347300408319
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: World1Enemies 1_206
+      rect:
+        serializedVersion: 2
+        x: 92
+        y: 53
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 1764ccc5d5f909cb0800000000000000
+      internalID: -4859208774595099023
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: World1Enemies 1_207
+      rect:
+        serializedVersion: 2
+        x: 110
+        y: 53
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: bc181369787094500800000000000000
+      internalID: 380843922411323851
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: World1Enemies 1_208
+      rect:
+        serializedVersion: 2
+        x: 128
+        y: 53
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 1d6386ff0469c8db0800000000000000
+      internalID: -4788287097894586671
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: World1Enemies 1_209
+      rect:
+        serializedVersion: 2
+        x: 146
+        y: 53
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 8baf11bdebc87e370800000000000000
+      internalID: 8351798785328937656
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: World1Enemies 1_210
+      rect:
+        serializedVersion: 2
+        x: 164
+        y: 53
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 89182d5e26a8b97c0800000000000000
+      internalID: -4063502081404534376
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: World1Enemies 1_211
+      rect:
+        serializedVersion: 2
+        x: 182
+        y: 53
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: d8f0548ce8c9674f0800000000000000
+      internalID: -831304944144019571
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: World1Enemies 1_212
+      rect:
+        serializedVersion: 2
+        x: 200
+        y: 53
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 0016e775c9a9a8ad0800000000000000
+      internalID: -2699175030381715200
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: World1Enemies 1_213
+      rect:
+        serializedVersion: 2
+        x: 218
+        y: 53
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 34b0b0a7775bbc700800000000000000
+      internalID: 561742103291038531
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: World1Enemies 1_214
+      rect:
+        serializedVersion: 2
+        x: 236
+        y: 53
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 1ce73724b4cc7b5a0800000000000000
+      internalID: -6505506513103913279
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: World1Enemies 1_215
+      rect:
+        serializedVersion: 2
+        x: 254
+        y: 53
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 6caf53c552f140d00800000000000000
+      internalID: 937908867721198278
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: World1Enemies 1_216
+      rect:
+        serializedVersion: 2
+        x: 272
+        y: 53
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: b2f646cee17b8d9f0800000000000000
+      internalID: -443403219853086933
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: World1Enemies 1_217
+      rect:
+        serializedVersion: 2
+        x: 290
+        y: 53
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: d9bdd2a2e5ee47aa0800000000000000
+      internalID: -6164039901761381475
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: World1Enemies 1_218
+      rect:
+        serializedVersion: 2
+        x: 308
+        y: 53
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 1c1b84acf56065e00800000000000000
+      internalID: 1033020173013529025
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: World1Enemies 1_219
+      rect:
+        serializedVersion: 2
+        x: 326
+        y: 53
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 172ab0cf333341060800000000000000
+      internalID: 6923214825540264561
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: World1Enemies 1_220
+      rect:
+        serializedVersion: 2
+        x: 218
+        y: 29
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 304cb8378484cb600800000000000000
+      internalID: 485342335862555651
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: World1Enemies 1_221
+      rect:
+        serializedVersion: 2
+        x: 236
+        y: 29
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: c9e93af9d90536950800000000000000
+      internalID: 6441080529988329116
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: World1Enemies 1_222
+      rect:
+        serializedVersion: 2
+        x: 218
+        y: 5
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: a2a8cfc080571cf30800000000000000
+      internalID: 4594081772332681770
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: World1Enemies 1_223
+      rect:
+        serializedVersion: 2
+        x: 236
+        y: 5
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 91cbfe80b179f4090800000000000000
+      internalID: -8048047866717946855
       vertices: []
       indices: 
       edges: []
