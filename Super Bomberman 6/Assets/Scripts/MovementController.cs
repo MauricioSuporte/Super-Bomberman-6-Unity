@@ -62,9 +62,11 @@ public class MovementController : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D other)
     {
-        if (other.gameObject.layer == LayerMask.NameToLayer("Explosion"))
+        int layer = other.gameObject.layer;
+
+        if (layer == LayerMask.NameToLayer("Explosion") || layer == LayerMask.NameToLayer("Enemy"))
         {
-            DeathSequence();    
+            DeathSequence();
         }
     }
 
