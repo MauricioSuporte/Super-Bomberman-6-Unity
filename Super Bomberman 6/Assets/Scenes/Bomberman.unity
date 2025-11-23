@@ -4749,7 +4749,7 @@ MonoBehaviour:
   speed: 2
   obstacleMask:
     serializedVersion: 2
-    m_Bits: 64
+    m_Bits: 192
   tileSize: 1
 --- !u!58 &1712504707
 CircleCollider2D:
@@ -4761,7 +4761,7 @@ CircleCollider2D:
   m_Enabled: 1
   m_Density: 1
   m_Material: {fileID: 6200000, guid: 55f48b5f7b2a23949a11de8a8f24b7e2, type: 2}
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_UsedByEffector: 0
   m_UsedByComposite: 0
   m_Offset: {x: 0, y: 0}
@@ -4775,7 +4775,7 @@ Rigidbody2D:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1712504704}
-  m_BodyType: 0
+  m_BodyType: 1
   m_Simulated: 1
   m_UseFullKinematicContacts: 0
   m_UseAutoMass: 0
