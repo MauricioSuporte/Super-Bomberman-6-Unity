@@ -2,29 +2,39 @@
 using UnityEngine;
 
 [RequireComponent(typeof(Rigidbody2D))]
-public class RedRobot : MonoBehaviour
+[RequireComponent(typeof(Collider2D))]
+public class EnemyMovementController : MonoBehaviour
 {
+    [Header("Stats")]
     public float speed = 2f;
-    public LayerMask obstacleMask;
+    public int life = 1;
     public float tileSize = 1f;
 
+    [Header("Sprites")]
     public AnimatedSpriteRenderer spriteUp;
     public AnimatedSpriteRenderer spriteDown;
     public AnimatedSpriteRenderer spriteLeft;
-    public AnimatedSpriteRenderer spriteRight; // pode ficar sem usar
+    public AnimatedSpriteRenderer spriteDeath;
 
-    private AnimatedSpriteRenderer activeSprite;
-    private Rigidbody2D rb;
-    private Vector2 direction;
-    private Vector2 targetTile;
+    [Header("Layers")]
+    public LayerMask obstacleMask;
 
-    private void Awake()
+    protected AnimatedSpriteRenderer activeSprite;
+    protected Rigidbody2D rb;
+    protected Vector2 direction;
+    protected Vector2 targetTile;
+    protected bool isDead;
+
+    protected virtual void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
         activeSprite = spriteDown;
+
+        if (obstacleMask.value == 0)
+            obstacleMask = LayerMask.GetMask("Bomb", "Stage");
     }
 
-    private void Start()
+    protected virtual void Start()
     {
         SnapToGrid();
         ChooseInitialDirection();
@@ -32,8 +42,11 @@ public class RedRobot : MonoBehaviour
         DecideNextTile();
     }
 
-    private void FixedUpdate()
+    protected virtual void FixedUpdate()
     {
+        if (isDead)
+            return;
+
         MoveTowardsTile();
 
         if (ReachedTile())
@@ -43,13 +56,60 @@ public class RedRobot : MonoBehaviour
         }
     }
 
-    private void OnTriggerEnter2D(Collider2D other)
+    protected virtual void OnTriggerEnter2D(Collider2D other)
     {
+        if (isDead)
+            return;
+
         if (other.gameObject.layer == LayerMask.NameToLayer("Explosion"))
-            Destroy(gameObject);
+            TakeDamage(1);
     }
 
-    void SnapToGrid()
+    public virtual void TakeDamage(int amount)
+    {
+        if (isDead)
+            return;
+
+        life -= amount;
+        if (life <= 0)
+            Die();
+    }
+
+    protected virtual void Die()
+    {
+        isDead = true;
+
+        rb.velocity = Vector2.zero;
+        var col = GetComponent<Collider2D>();
+        if (col != null)
+            col.enabled = false;
+
+        spriteUp.enabled = false;
+        spriteDown.enabled = false;
+        spriteLeft.enabled = false;
+
+        if (spriteDeath != null)
+        {
+            activeSprite = spriteDeath;
+            spriteDeath.enabled = true;
+            spriteDeath.idle = false;
+            spriteDeath.animationTime = 0.1f;
+            spriteDeath.loop = false;
+
+            var sr = spriteDeath.GetComponent<SpriteRenderer>();
+            if (sr != null)
+                sr.flipX = false;
+        }
+
+        Invoke(nameof(OnDeathAnimationEnded), 0.7f);
+    }
+
+    protected virtual void OnDeathAnimationEnded()
+    {
+        Destroy(gameObject);
+    }
+
+    protected void SnapToGrid()
     {
         Vector2 pos = rb.position;
         pos.x = Mathf.Round(pos.x / tileSize) * tileSize;
@@ -57,54 +117,49 @@ public class RedRobot : MonoBehaviour
         rb.position = pos;
     }
 
-    void MoveTowardsTile()
+    protected void MoveTowardsTile()
     {
         rb.MovePosition(Vector2.MoveTowards(rb.position, targetTile, speed * Time.fixedDeltaTime));
     }
 
-    bool ReachedTile()
+    protected bool ReachedTile()
     {
         return Vector2.Distance(rb.position, targetTile) < 0.01f;
     }
 
-    void ChooseInitialDirection()
+    protected void ChooseInitialDirection()
     {
         Vector2[] dirs = { Vector2.up, Vector2.down, Vector2.left, Vector2.right };
         direction = dirs[Random.Range(0, dirs.Length)];
     }
 
-    // --- TROCA DE SPRITES COM FLIP PARA A DIREITA ---
-    void UpdateSpriteDirection(Vector2 dir)
+    protected void UpdateSpriteDirection(Vector2 dir)
     {
         spriteUp.enabled = false;
         spriteDown.enabled = false;
         spriteLeft.enabled = false;
-        spriteRight.enabled = false; // não vamos usar, mas desliga por garantia
+        if (spriteDeath != null && spriteDeath != activeSprite)
+            spriteDeath.enabled = false;
 
         if (dir == Vector2.up)
-        {
             activeSprite = spriteUp;
-        }
         else if (dir == Vector2.down)
-        {
             activeSprite = spriteDown;
-        }
         else if (dir == Vector2.left || dir == Vector2.right)
-        {
-            // usa SEMPRE o sprite da esquerda
             activeSprite = spriteLeft;
+
+        if (activeSprite != null)
+        {
+            activeSprite.enabled = true;
+            activeSprite.idle = false;
+
+            var sr = activeSprite.GetComponent<SpriteRenderer>();
+            if (sr != null)
+                sr.flipX = (dir == Vector2.right);
         }
-
-        activeSprite.enabled = true;
-
-        // aplica flip horizontal só se estiver indo para a direita
-        var sr = activeSprite.GetComponent<SpriteRenderer>();
-        if (sr != null)
-            sr.flipX = (dir == Vector2.right);
     }
 
-    // --- IA DE MOVIMENTO EM GRID ---
-    void DecideNextTile()
+    protected void DecideNextTile()
     {
         Vector2 forwardTile = rb.position + direction * tileSize;
 
@@ -148,5 +203,17 @@ public class RedRobot : MonoBehaviour
 
         UpdateSpriteDirection(direction);
         targetTile = rb.position + direction * tileSize;
+    }
+
+    protected virtual void OnDrawGizmosSelected()
+    {
+        if (!Application.isPlaying)
+            return;
+
+        Gizmos.color = Color.red;
+        Gizmos.DrawWireCube(
+            rb.position + direction * tileSize,
+            Vector2.one * (tileSize * 0.8f)
+        );
     }
 }
