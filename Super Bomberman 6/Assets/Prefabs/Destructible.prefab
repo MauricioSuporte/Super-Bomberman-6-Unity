@@ -132,7 +132,7 @@ MonoBehaviour:
   - {fileID: -5598041726246172800, guid: b4c7e330ffd1dfe498ab4ba6eb628534, type: 3}
   - {fileID: -5070355926835817348, guid: b4c7e330ffd1dfe498ab4ba6eb628534, type: 3}
   - {fileID: -5028786312047504514, guid: b4c7e330ffd1dfe498ab4ba6eb628534, type: 3}
-  animationTime: 0.16666667
+  animationTime: 0.071428575
   loop: 0
   idle: 0
 --- !u!114 &3440613785117735154

@@ -105,7 +105,7 @@ MonoBehaviour:
   - {fileID: 6008817306966069758, guid: 868733e9f407cab46a41f3326155fb03, type: 3}
   - {fileID: 3891889430353354993, guid: 868733e9f407cab46a41f3326155fb03, type: 3}
   - {fileID: 6285860838762689335, guid: 868733e9f407cab46a41f3326155fb03, type: 3}
-  animationTime: 0.125
+  animationTime: 0.0625
   loop: 1
   idle: 0
 --- !u!1 &6808800731990316043
@@ -289,7 +289,7 @@ MonoBehaviour:
   - {fileID: 9118549529482997128, guid: dea460387940f46408b46d8dc59a6108, type: 3}
   - {fileID: -4830720148593167457, guid: dea460387940f46408b46d8dc59a6108, type: 3}
   - {fileID: 2363799373831751792, guid: dea460387940f46408b46d8dc59a6108, type: 3}
-  animationTime: 0.125
+  animationTime: 0.0625
   loop: 1
   idle: 0
 --- !u!1 &8992946389446785346
@@ -397,6 +397,6 @@ MonoBehaviour:
   - {fileID: 1960144569077839259, guid: 002f6d2fc73e37d4bb8fd3d29517b658, type: 3}
   - {fileID: -3175918128893223224, guid: 002f6d2fc73e37d4bb8fd3d29517b658, type: 3}
   - {fileID: -6771676236449578781, guid: 002f6d2fc73e37d4bb8fd3d29517b658, type: 3}
-  animationTime: 0.125
+  animationTime: 0.0625
   loop: 1
   idle: 0
