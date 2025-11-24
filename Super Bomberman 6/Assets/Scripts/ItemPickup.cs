@@ -35,5 +35,9 @@ public class ItemPickup : MonoBehaviour
         {
             OnItemPickup(other.gameObject);
         }
+        else if (other.CompareTag("Explosion"))
+        {
+            Destroy(gameObject);
+        }
     }
 }

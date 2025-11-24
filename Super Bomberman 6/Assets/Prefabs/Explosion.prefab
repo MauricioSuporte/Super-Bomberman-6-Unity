@@ -119,9 +119,10 @@ GameObject:
   - component: {fileID: 6380748379181955697}
   - component: {fileID: 3262222071986927519}
   - component: {fileID: -38777085001033807}
+  - component: {fileID: 1743110654645821925}
   m_Layer: 8
   m_Name: Explosion
-  m_TagString: Untagged
+  m_TagString: Explosion
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -184,6 +185,27 @@ MonoBehaviour:
   start: {fileID: 7202751292448453280}
   middle: {fileID: 7205957583967581245}
   end: {fileID: 4814171930701571145}
+--- !u!50 &1743110654645821925
+Rigidbody2D:
+  serializedVersion: 4
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6808800731990316043}
+  m_BodyType: 1
+  m_Simulated: 1
+  m_UseFullKinematicContacts: 0
+  m_UseAutoMass: 0
+  m_Mass: 1
+  m_LinearDrag: 0
+  m_AngularDrag: 0.05
+  m_GravityScale: 1
+  m_Material: {fileID: 0}
+  m_Interpolate: 0
+  m_SleepingMode: 1
+  m_CollisionDetection: 0
+  m_Constraints: 4
 --- !u!1 &7509791017686141940
 GameObject:
   m_ObjectHideFlags: 0
