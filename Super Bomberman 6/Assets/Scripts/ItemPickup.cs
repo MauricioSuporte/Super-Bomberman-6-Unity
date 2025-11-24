@@ -46,19 +46,16 @@ public class ItemPickup : MonoBehaviour
         }
     }
 
-    private void DestroyWithAnimation()
+    public void DestroyWithAnimation()
     {
         if (isBeingDestroyed) return;
         isBeingDestroyed = true;
 
-        // desativa sprite normal do item
         idleRenderer.enabled = false;
 
-        // ativa animação de destruição
         destroyRenderer.enabled = true;
         destroyRenderer.idle = false;
 
-        // destrói depois de 0.5s (ou tempo que quiser)
         Destroy(gameObject, 0.5f);
     }
 }

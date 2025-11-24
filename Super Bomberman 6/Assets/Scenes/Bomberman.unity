@@ -224,6 +224,9 @@ MonoBehaviour:
   explosionRadius: 2
   destructibleTiles: {fileID: 285353618}
   destructiblePrefab: {fileID: 3440613785117735154, guid: 227477c28434b21439475c6f07347eda, type: 3}
+  itemLayerMask:
+    serializedVersion: 2
+    m_Bits: 0
 --- !u!114 &127221601
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3706,6 +3709,9 @@ MonoBehaviour:
   explosionRadius: 2
   destructibleTiles: {fileID: 285353618}
   destructiblePrefab: {fileID: 3440613785117735154, guid: 227477c28434b21439475c6f07347eda, type: 3}
+  itemLayerMask:
+    serializedVersion: 2
+    m_Bits: 512
 --- !u!1 &1451369464
 GameObject:
   m_ObjectHideFlags: 0

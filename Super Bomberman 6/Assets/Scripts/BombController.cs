@@ -21,6 +21,9 @@ public class BombController : MonoBehaviour
     public Tilemap destructibleTiles;
     public Destructible destructiblePrefab;
 
+    [Header("Items")]
+    public LayerMask itemLayerMask;
+
     private void OnEnable()
     {
         bombsRemaining = bombAmout;
@@ -126,6 +129,24 @@ public class BombController : MonoBehaviour
             return;
 
         position += direction;
+
+        var itemHit = Physics2D.OverlapBox(
+            position,
+            Vector2.one * 0.5f,
+            0f,
+            itemLayerMask
+        );
+
+        if (itemHit != null)
+        {
+            var item = itemHit.GetComponent<ItemPickup>();
+            if (item != null)
+            {
+                item.DestroyWithAnimation();
+            }
+
+            return;
+        }
 
         if (Physics2D.OverlapBox(position, Vector2.one * 0.5f, 0f, explosionLayerMask))
         {
