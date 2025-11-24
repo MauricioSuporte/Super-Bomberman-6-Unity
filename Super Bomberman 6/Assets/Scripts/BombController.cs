@@ -69,6 +69,10 @@ public class BombController : MonoBehaviour
             bombComponent.MarkAsExploded();
         }
 
+        HideBombVisuals(bomb);
+
+        bomb.GetComponent<AudioSource>()?.Play();
+
         Vector2 position = bomb.transform.position;
         position.x = Mathf.Round(position.x);
         position.y = Mathf.Round(position.y);
@@ -87,7 +91,8 @@ public class BombController : MonoBehaviour
         Explode(position, Vector2.left, explosionRadius);
         Explode(position, Vector2.right, explosionRadius);
 
-        Destroy(bomb);
+        Destroy(bomb, bomb.GetComponent<AudioSource>().clip.length);
+
         bombsRemaining++;
     }
 
@@ -189,5 +194,24 @@ public class BombController : MonoBehaviour
             Instantiate(destructiblePrefab, position, Quaternion.identity);
             destructibleTiles.SetTile(cell, null);
         }
+    }
+
+    private void HideBombVisuals(GameObject bomb)
+    {
+        var sprite = bomb.GetComponent<SpriteRenderer>();
+        if (sprite != null)
+            sprite.enabled = false;
+
+        var collider = bomb.GetComponent<Collider2D>();
+        if (collider != null)
+            collider.enabled = false;
+
+        var anim = bomb.GetComponent<AnimatedSpriteRenderer>();
+        if (anim != null)
+            anim.enabled = false;
+
+        var bombScript = bomb.GetComponent<Bomb>();
+        if (bombScript != null)
+            bombScript.enabled = false;
     }
 }

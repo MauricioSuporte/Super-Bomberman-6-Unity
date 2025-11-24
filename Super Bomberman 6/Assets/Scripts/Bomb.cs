@@ -6,6 +6,12 @@ public class Bomb : MonoBehaviour
 {
     private BombController owner;
     public bool HasExploded { get; private set; }
+    public AudioSource audioSource;
+
+    private void Awake()
+    {
+        audioSource = GetComponent<AudioSource>();
+    }
 
     public void MarkAsExploded()
     {
