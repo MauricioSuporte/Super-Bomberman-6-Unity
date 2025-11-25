@@ -102,11 +102,14 @@ public class BombController : MonoBehaviour
 
     private void PlaceBomb()
     {
-        playerAudioSource.PlayOneShot(placeBombSfx);
-
         Vector2 position = transform.position;
         position.x = Mathf.Round(position.x);
         position.y = Mathf.Round(position.y);
+
+        if (TileHasBomb(position))
+            return;
+
+        playerAudioSource.PlayOneShot(placeBombSfx);
 
         GameObject bomb = Instantiate(bombPrefab, position, Quaternion.identity);
         bombsRemaining--;
@@ -118,6 +121,14 @@ public class BombController : MonoBehaviour
         bombComponent.Initialize(this);
 
         StartCoroutine(BombFuse(bomb));
+    }
+
+    private bool TileHasBomb(Vector2 position)
+    {
+        int bombLayer = LayerMask.NameToLayer("Bomb");
+        int mask = 1 << bombLayer;
+
+        return Physics2D.OverlapBox(position, Vector2.one * 0.4f, 0f, mask) != null;
     }
 
     private IEnumerator BombFuse(GameObject bomb)
