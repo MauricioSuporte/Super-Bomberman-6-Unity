@@ -2,9 +2,14 @@ using UnityEngine;
 
 public class MovementController : MonoBehaviour
 {
+    [Header("SFX")]
+    public AudioClip deathSfx;
+
     public new Rigidbody2D rigidbody { get; private set; }
     private Vector2 direction = Vector2.down;
     public float speed = 5f;
+
+    private AudioSource audioSource;
 
     public KeyCode inputUp = KeyCode.W;
     public KeyCode inputDown = KeyCode.S;
@@ -22,19 +27,29 @@ public class MovementController : MonoBehaviour
     {
         rigidbody = GetComponent<Rigidbody2D>();
         activeSpriteRenderer = spriteRendererDown;
+        audioSource = GetComponent<AudioSource>();
     }
 
     private void Update()
     {
-        if (Input.GetKey(inputUp)) {
+        if (Input.GetKey(inputUp))
+        {
             SetDirection(Vector2.up, spriteRendererUp);
-        } else if (Input.GetKey(inputDown)) {
+        }
+        else if (Input.GetKey(inputDown))
+        {
             SetDirection(Vector2.down, spriteRendererDown);
-        } else if (Input.GetKey(inputLeft)) {
+        }
+        else if (Input.GetKey(inputLeft))
+        {
             SetDirection(Vector2.left, spriteRendererLeft);
-        } else if (Input.GetKey(inputRight)) {
+        }
+        else if (Input.GetKey(inputRight))
+        {
             SetDirection(Vector2.right, spriteRendererRight);
-        } else {
+        }
+        else
+        {
             SetDirection(Vector2.zero, activeSpriteRenderer);
         }
     }
@@ -43,7 +58,6 @@ public class MovementController : MonoBehaviour
     {
         Vector2 position = rigidbody.position;
         Vector2 translation = speed * Time.fixedDeltaTime * direction;
-
         rigidbody.MovePosition(position + translation);
     }
 
@@ -74,6 +88,9 @@ public class MovementController : MonoBehaviour
     {
         enabled = false;
         GetComponent<BombController>().enabled = false;
+
+        if (audioSource != null && deathSfx != null)
+            audioSource.PlayOneShot(deathSfx);
 
         spriteRendererUp.enabled = false;
         spriteRendererDown.enabled = false;
