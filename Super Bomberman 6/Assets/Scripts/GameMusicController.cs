@@ -30,7 +30,9 @@ public class GameMusicController : MonoBehaviour
     public void PlayMusic(AudioClip clip, float volume = 1f)
     {
         if (clip == null) return;
-        if (audioSource.clip == clip) return;
+
+        if (audioSource.clip == clip && audioSource.isPlaying)
+            return;
 
         audioSource.clip = clip;
         audioSource.volume = volume;

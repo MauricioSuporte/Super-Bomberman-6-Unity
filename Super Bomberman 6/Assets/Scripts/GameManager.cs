@@ -19,8 +19,13 @@ public class GameManager : MonoBehaviour
 
         if (aliveCount <= 1)
         {
-            Invoke(nameof(NewRound), 3f);
+            EndStage();
         }
+    }
+
+    public void EndStage()
+    {
+        Invoke(nameof(NewRound), 4f);
     }
 
     private void NewRound()
