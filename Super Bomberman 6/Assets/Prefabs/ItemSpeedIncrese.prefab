@@ -124,9 +124,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 376665fd527b5c04e9b39d41cc80c035, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  type: 2
+  collectSfx: {fileID: 8300000, guid: 9fbf9eaeca42e304495130d4b2f83633, type: 3}
   idleRenderer: {fileID: -470072179518323026}
   destroyRenderer: {fileID: 4200252698884628086}
+  type: 2
 --- !u!114 &-470072179518323026
 MonoBehaviour:
   m_ObjectHideFlags: 0

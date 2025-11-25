@@ -2,6 +2,12 @@ using UnityEngine;
 
 public class ItemPickup : MonoBehaviour
 {
+    [Header("SFX")]
+    public AudioClip collectSfx;
+
+    public AnimatedSpriteRenderer idleRenderer;
+    public AnimatedSpriteRenderer destroyRenderer;
+
     public enum ItemType
     {
         ExtraBomb,
@@ -11,21 +17,26 @@ public class ItemPickup : MonoBehaviour
 
     public ItemType type;
 
-    public AnimatedSpriteRenderer idleRenderer;
-    public AnimatedSpriteRenderer destroyRenderer;
-
     private bool isBeingDestroyed = false;
 
     private void OnItemPickup(GameObject player)
     {
+        var audio = player.GetComponent<AudioSource>();
+        if (audio != null && collectSfx != null)
+        {
+            audio.PlayOneShot(collectSfx);
+        }
+
         switch (type)
         {
             case ItemType.ExtraBomb:
                 player.GetComponent<BombController>().AddBomb();
                 break;
+
             case ItemType.BlastRadius:
                 player.GetComponent<BombController>().explosionRadius++;
                 break;
+
             case ItemType.SpeedIncrese:
                 player.GetComponent<MovementController>().speed++;
                 break;
@@ -48,7 +59,9 @@ public class ItemPickup : MonoBehaviour
 
     public void DestroyWithAnimation()
     {
-        if (isBeingDestroyed) return;
+        if (isBeingDestroyed)
+            return;
+
         isBeingDestroyed = true;
 
         idleRenderer.enabled = false;

@@ -232,9 +232,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 376665fd527b5c04e9b39d41cc80c035, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  type: 1
+  collectSfx: {fileID: 8300000, guid: 9fbf9eaeca42e304495130d4b2f83633, type: 3}
   idleRenderer: {fileID: 7535927048605856034}
   destroyRenderer: {fileID: 1735519002939741838}
+  type: 1
 --- !u!114 &7535927048605856034
 MonoBehaviour:
   m_ObjectHideFlags: 0
