@@ -92,6 +92,9 @@ public class MovementController : MonoBehaviour
         if (audioSource != null && deathSfx != null)
             audioSource.PlayOneShot(deathSfx);
 
+        if (GameMusicController.Instance != null && GameMusicController.Instance.deathMusic != null)
+            GameMusicController.Instance.PlayMusic(GameMusicController.Instance.deathMusic);
+
         spriteRendererUp.enabled = false;
         spriteRendererDown.enabled = false;
         spriteRendererLeft.enabled = false;
@@ -100,6 +103,7 @@ public class MovementController : MonoBehaviour
 
         Invoke(nameof(OnDeathSequenceEnded), 1f);
     }
+
 
     private void OnDeathSequenceEnded()
     {

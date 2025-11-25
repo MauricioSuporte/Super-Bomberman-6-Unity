@@ -9,7 +9,7 @@ public class GameManager : MonoBehaviour
     {
         int aliveCount = 0;
 
-        foreach(GameObject player in players)
+        foreach (GameObject player in players)
         {
             if (player.activeSelf)
             {
@@ -17,7 +17,7 @@ public class GameManager : MonoBehaviour
             }
         }
 
-        if(aliveCount <= 1)
+        if (aliveCount <= 1)
         {
             Invoke(nameof(NewRound), 3f);
         }
@@ -25,6 +25,14 @@ public class GameManager : MonoBehaviour
 
     private void NewRound()
     {
+        if (GameMusicController.Instance != null &&
+            GameMusicController.Instance.defaultMusic != null)
+        {
+            GameMusicController.Instance.PlayMusic(
+                GameMusicController.Instance.defaultMusic
+            );
+        }
+
         SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
 }

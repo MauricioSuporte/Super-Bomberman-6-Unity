@@ -6,6 +6,10 @@ public class GameMusicController : MonoBehaviour
 
     private AudioSource audioSource;
 
+    [Header("Music Tracks")]
+    public AudioClip defaultMusic;
+    public AudioClip deathMusic;
+
     private void Awake()
     {
         audioSource = GetComponent<AudioSource>();
@@ -19,19 +23,23 @@ public class GameMusicController : MonoBehaviour
         Instance = this;
         DontDestroyOnLoad(gameObject);
 
-        if (audioSource.clip != null)
-            audioSource.Play();   // Toca direto, sem PlayMusic
+        if (defaultMusic != null)
+            PlayMusic(defaultMusic);
     }
 
     public void PlayMusic(AudioClip clip, float volume = 1f)
     {
         if (clip == null) return;
-
         if (audioSource.clip == clip) return;
 
         audioSource.clip = clip;
         audioSource.volume = volume;
         audioSource.loop = true;
         audioSource.Play();
+    }
+
+    public void StopMusic()
+    {
+        audioSource.Stop();
     }
 }
