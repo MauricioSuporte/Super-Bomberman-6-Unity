@@ -24,6 +24,10 @@ public class BombController : MonoBehaviour
     [Header("Items")]
     public LayerMask itemLayerMask;
 
+    [Header("SFX")]
+    public AudioClip placeBombSfx;
+    public AudioSource playerAudioSource;
+
     private void OnEnable()
     {
         bombsRemaining = bombAmout;
@@ -98,6 +102,8 @@ public class BombController : MonoBehaviour
 
     private void PlaceBomb()
     {
+        playerAudioSource.PlayOneShot(placeBombSfx);
+
         Vector2 position = transform.position;
         position.x = Mathf.Round(position.x);
         position.y = Mathf.Round(position.y);
