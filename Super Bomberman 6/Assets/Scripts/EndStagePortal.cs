@@ -95,6 +95,11 @@ public class EndStagePortal : MonoBehaviour
             GameMusicController.Instance.PlayMusic(endStageMusic, 1f);
         }
 
+        if (StageIntroTransition.Instance != null)
+        {
+            StageIntroTransition.Instance.StartFadeOut(3f);
+        }
+
         if (gameManager != null)
         {
             gameManager.EndStage();
