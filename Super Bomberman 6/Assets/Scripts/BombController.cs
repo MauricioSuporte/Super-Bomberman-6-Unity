@@ -35,6 +35,9 @@ public class BombController : MonoBehaviour
 
     private void Update()
     {
+        if (GamePauseController.IsPaused)
+            return;
+
         if (bombsRemaining > 0 && Input.GetKeyDown(inputKey))
         {
             PlaceBomb();

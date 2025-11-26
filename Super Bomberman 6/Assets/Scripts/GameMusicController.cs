@@ -29,7 +29,8 @@ public class GameMusicController : MonoBehaviour
 
     public void PlayMusic(AudioClip clip, float volume = 1f)
     {
-        if (clip == null) return;
+        if (clip == null)
+            return;
 
         if (audioSource.clip == clip && audioSource.isPlaying)
             return;
@@ -43,5 +44,17 @@ public class GameMusicController : MonoBehaviour
     public void StopMusic()
     {
         audioSource.Stop();
+    }
+
+    public void PauseMusic()
+    {
+        if (audioSource.isPlaying)
+            audioSource.Pause();
+    }
+
+    public void ResumeMusic()
+    {
+        if (!audioSource.isPlaying && audioSource.clip != null)
+            audioSource.UnPause();
     }
 }

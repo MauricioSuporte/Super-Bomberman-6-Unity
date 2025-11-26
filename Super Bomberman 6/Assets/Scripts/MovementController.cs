@@ -40,7 +40,7 @@ public class MovementController : MonoBehaviour
 
     private void Update()
     {
-        if (inputLocked)
+        if (inputLocked || GamePauseController.IsPaused)
             return;
 
         if (Input.GetKey(inputUp))
@@ -67,7 +67,7 @@ public class MovementController : MonoBehaviour
 
     private void FixedUpdate()
     {
-        if (inputLocked)
+        if (inputLocked || GamePauseController.IsPaused)
             return;
 
         Vector2 position = rigidbody.position;

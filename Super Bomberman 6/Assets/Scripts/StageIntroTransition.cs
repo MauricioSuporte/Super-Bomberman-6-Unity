@@ -10,6 +10,8 @@ public class StageIntroTransition : MonoBehaviour
     public float duration = 3f;
     public AudioClip introMusic;
 
+    public bool IntroRunning { get; private set; }
+
     private MovementController[] movementControllers;
     private BombController[] bombControllers;
 
@@ -26,6 +28,8 @@ public class StageIntroTransition : MonoBehaviour
 
     private void Start()
     {
+        IntroRunning = true;
+
         movementControllers = FindObjectsOfType<MovementController>();
         bombControllers = FindObjectsOfType<BombController>();
 
@@ -91,6 +95,8 @@ public class StageIntroTransition : MonoBehaviour
 
         if (fadeImage != null)
             fadeImage.gameObject.SetActive(false);
+
+        IntroRunning = false;
     }
 
     public void StartFadeOut(float fadeDuration)
