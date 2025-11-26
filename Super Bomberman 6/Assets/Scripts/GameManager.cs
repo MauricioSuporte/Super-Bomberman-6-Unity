@@ -1,9 +1,30 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using System;
 
 public class GameManager : MonoBehaviour
 {
     public GameObject[] players;
+
+    public int EnemiesAlive { get; private set; }
+
+    public event Action OnAllEnemiesDefeated;
+
+    private void Start()
+    {
+        EnemiesAlive = FindObjectsOfType<EnemyMovementController>().Length;
+    }
+
+    public void NotifyEnemyDied()
+    {
+        EnemiesAlive--;
+        if (EnemiesAlive <= 0)
+        {
+            EnemiesAlive = 0;
+
+            OnAllEnemiesDefeated?.Invoke();
+        }
+    }
 
     public void CheckWinState()
     {

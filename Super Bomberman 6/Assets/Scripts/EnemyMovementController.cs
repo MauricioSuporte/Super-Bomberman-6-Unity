@@ -77,6 +77,9 @@ public class EnemyMovementController : MonoBehaviour
 
     protected virtual void Die()
     {
+        if (isDead)
+            return;
+
         isDead = true;
 
         rb.velocity = Vector2.zero;
@@ -99,6 +102,12 @@ public class EnemyMovementController : MonoBehaviour
             var sr = spriteDeath.GetComponent<SpriteRenderer>();
             if (sr != null)
                 sr.flipX = false;
+        }
+
+        var gameManager = FindObjectOfType<GameManager>();
+        if (gameManager != null)
+        {
+            gameManager.NotifyEnemyDied();
         }
 
         Invoke(nameof(OnDeathAnimationEnded), 0.7f);

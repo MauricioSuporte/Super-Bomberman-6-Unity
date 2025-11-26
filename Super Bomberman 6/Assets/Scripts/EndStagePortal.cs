@@ -12,10 +12,53 @@ public class EndStagePortal : MonoBehaviour
     public AnimatedSpriteRenderer idleRenderer;
 
     private bool isActivated;
+    private bool isUnlocked;
+
+    private GameManager gameManager;
+
+    private void Awake()
+    {
+        if (idleRenderer == null)
+            idleRenderer = GetComponent<AnimatedSpriteRenderer>();
+    }
+
+    private void Start()
+    {
+        if (idleRenderer != null)
+        {
+            idleRenderer.idle = true;
+            idleRenderer.loop = false;
+        }
+
+        gameManager = FindObjectOfType<GameManager>();
+        if (gameManager != null)
+        {
+            gameManager.OnAllEnemiesDefeated += HandleAllEnemiesDefeated;
+        }
+    }
+
+    private void OnDestroy()
+    {
+        if (gameManager != null)
+        {
+            gameManager.OnAllEnemiesDefeated -= HandleAllEnemiesDefeated;
+        }
+    }
+
+    private void HandleAllEnemiesDefeated()
+    {
+        isUnlocked = true;
+
+        if (idleRenderer != null)
+        {
+            idleRenderer.idle = false;
+            idleRenderer.loop = true;
+        }
+    }
 
     private void OnTriggerEnter2D(Collider2D other)
     {
-        if (isActivated)
+        if (!isUnlocked || isActivated)
             return;
 
         if (!other.CompareTag("Player"))
@@ -23,27 +66,22 @@ public class EndStagePortal : MonoBehaviour
 
         isActivated = true;
 
-        // toca som no player
         var audio = other.GetComponent<AudioSource>();
         if (audio != null && enterSfx != null)
         {
             audio.PlayOneShot(enterSfx);
         }
 
-        // PARA a música atual da fase
         if (GameMusicController.Instance != null)
         {
             GameMusicController.Instance.StopMusic();
         }
 
-        // toca música de vitória
         if (endStageMusic != null && GameMusicController.Instance != null)
         {
             GameMusicController.Instance.PlayMusic(endStageMusic, 1f);
         }
 
-        // chama o GameManager para avançar a fase
-        var gameManager = FindObjectOfType<GameManager>();
         if (gameManager != null)
         {
             gameManager.EndStage();
