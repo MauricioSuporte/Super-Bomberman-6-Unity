@@ -2,11 +2,7 @@ using UnityEngine;
 
 public class Destructible : MonoBehaviour
 {
-    public float destructionTime = 1f;
-
-    [Range(0f, 1f)]
-    public float itemSpawnChance = 0.2f;
-    public GameObject[] spwnableItems;
+    public float destructionTime = 0.5f;
 
     private void Start()
     {
@@ -15,10 +11,14 @@ public class Destructible : MonoBehaviour
 
     private void OnDestroy()
     {
-        if (spwnableItems.Length > 0 && Random.value < itemSpawnChance)
+        var gameManager = FindObjectOfType<GameManager>();
+        if (gameManager == null)
+            return;
+
+        var prefab = gameManager.GetSpawnForDestroyedBlock();
+        if (prefab != null)
         {
-            int randomIndex = Random.Range(0, spwnableItems.Length);
-            Instantiate(spwnableItems[randomIndex], transform.position, Quaternion.identity);
+            Instantiate(prefab, transform.position, Quaternion.identity);
         }
     }
 }

@@ -362,6 +362,8 @@ MonoBehaviour:
   spriteRendererRight: {fileID: 2090079648}
   spriteRendererDeath: {fileID: 2091435449}
   spriteRendererEndStage: {fileID: 0}
+  endStageTotalTime: 1
+  endStageFrameCount: 9
 --- !u!58 &127221602
 CircleCollider2D:
   m_ObjectHideFlags: 0
@@ -568,6 +570,11 @@ MonoBehaviour:
   players:
   - {fileID: 1260808862}
   - {fileID: 127221599}
+  endStagePortalPrefab: {fileID: 6173519295973572242, guid: be5c87718a207a74f9463f10551c5cf6, type: 3}
+  extraBombItemPrefab: {fileID: 2727780941473249227, guid: 2c7394d5814f6284da1d799a66d95686, type: 3}
+  blastRadiusItemPrefab: {fileID: 6871244334814668705, guid: bdad95ff62d39d44fbcbb3b171a603bb, type: 3}
+  speedIncreaseItemPrefab: {fileID: 4209327807185772322, guid: 218d29a1a19c6864e8d870f01df7f91b, type: 3}
+  destructibleTilemap: {fileID: 285353618}
 --- !u!1 &285353614
 GameObject:
   m_ObjectHideFlags: 0
@@ -3792,6 +3799,8 @@ MonoBehaviour:
   spriteRendererRight: {fileID: 186242888}
   spriteRendererDeath: {fileID: 792000751}
   spriteRendererEndStage: {fileID: 84142601}
+  endStageTotalTime: 1
+  endStageFrameCount: 9
 --- !u!114 &1260808867
 MonoBehaviour:
   m_ObjectHideFlags: 0
