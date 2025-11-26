@@ -2,7 +2,7 @@ using UnityEngine;
 
 public class Destructible : MonoBehaviour
 {
-    public float destructionTime = 1f;
+    public float destructionTime = 0.5f;
 
     private void Start()
     {
