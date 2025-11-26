@@ -208,10 +208,8 @@ public class BombController : MonoBehaviour
 
         if (tile != null)
         {
-            // animação do bloco quebrando
             Instantiate(destructiblePrefab, position, Quaternion.identity);
 
-            // pergunta para o GameManager se esse bloco deve ter portal/item
             var gameManager = FindObjectOfType<GameManager>();
             if (gameManager != null)
             {
@@ -222,7 +220,6 @@ public class BombController : MonoBehaviour
                 }
             }
 
-            // remove o tile do tilemap
             destructibleTiles.SetTile(cell, null);
         }
     }
