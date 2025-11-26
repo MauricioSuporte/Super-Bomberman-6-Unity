@@ -34,6 +34,9 @@ public class EndStagePortal : MonoBehaviour
         if (gameManager != null)
         {
             gameManager.OnAllEnemiesDefeated += HandleAllEnemiesDefeated;
+
+            if (gameManager.EnemiesAlive <= 0)
+                HandleAllEnemiesDefeated();
         }
     }
 
@@ -65,6 +68,16 @@ public class EndStagePortal : MonoBehaviour
             return;
 
         isActivated = true;
+
+        var movement = other.GetComponent<MovementController>();
+        if (movement != null)
+        {
+            Vector2 portalCenter = new Vector2(
+                Mathf.Round(transform.position.x),
+                Mathf.Round(transform.position.y)
+            );
+            movement.PlayEndStageSequence(portalCenter);
+        }
 
         var audio = other.GetComponent<AudioSource>();
         if (audio != null && enterSfx != null)
