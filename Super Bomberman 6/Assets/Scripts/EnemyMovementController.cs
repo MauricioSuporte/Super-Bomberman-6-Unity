@@ -106,9 +106,7 @@ public class EnemyMovementController : MonoBehaviour
 
         var gameManager = FindObjectOfType<GameManager>();
         if (gameManager != null)
-        {
             gameManager.NotifyEnemyDied();
-        }
 
         Invoke(nameof(OnDeathAnimationEnded), 0.7f);
     }
@@ -147,6 +145,7 @@ public class EnemyMovementController : MonoBehaviour
         spriteUp.enabled = false;
         spriteDown.enabled = false;
         spriteLeft.enabled = false;
+
         if (spriteDeath != null && spriteDeath != activeSprite)
             spriteDeath.enabled = false;
 
@@ -206,10 +205,13 @@ public class EnemyMovementController : MonoBehaviour
         }
 
         if (freeDirs.Count == 0)
-            direction = -direction;
-        else
-            direction = freeDirs[Random.Range(0, freeDirs.Count)];
+        {
+            targetTile = rb.position;
+            UpdateSpriteDirection(direction);
+            return;
+        }
 
+        direction = freeDirs[Random.Range(0, freeDirs.Count)];
         UpdateSpriteDirection(direction);
         targetTile = rb.position + direction * tileSize;
     }
