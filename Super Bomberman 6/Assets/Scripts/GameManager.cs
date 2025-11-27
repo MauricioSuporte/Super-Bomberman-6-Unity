@@ -132,6 +132,11 @@ public class GameManager : MonoBehaviour
 
         if (aliveCount <= 1)
         {
+            if (StageIntroTransition.Instance != null)
+            {
+                StageIntroTransition.Instance.StartFadeOut(3f);
+            }
+
             EndStage();
         }
     }

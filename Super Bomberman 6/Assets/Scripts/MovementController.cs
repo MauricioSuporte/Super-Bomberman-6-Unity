@@ -158,6 +158,7 @@ public class MovementController : MonoBehaviour
 
             activeSpriteRenderer = endSprite;
 
+
             Invoke(nameof(HideEndStageSprite), endStageTotalTime);
         }
     }
