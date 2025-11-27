@@ -10,7 +10,7 @@ public class GameManager : MonoBehaviour
 
     public int EnemiesAlive { get; private set; }
 
-    public event Action OnAllEnemiesDefeated;
+    public event System.Action OnAllEnemiesDefeated;
 
     [Header("Hidden Objects Prefabs")]
     public EndStagePortal endStagePortalPrefab;
@@ -21,18 +21,24 @@ public class GameManager : MonoBehaviour
     [Header("Stage")]
     public Tilemap destructibleTilemap;
 
-    private int totalDestructibleBlocks;
-    private int destroyedDestructibleBlocks;
+    [Header("Ground")]
+    public Tilemap groundTilemap;
+    public TileBase groundTile;
+    public TileBase groundShadowTile;
 
-    private int portalSpawnOrder = -1;
-    private int extraBombSpawnOrder = -1;
-    private int blastRadiusSpawnOrder = -1;
-    private int speedIncreaseSpawnOrder = -1;
+    int totalDestructibleBlocks;
+    int destroyedDestructibleBlocks;
 
-    private void Start()
+    int portalSpawnOrder = -1;
+    int extraBombSpawnOrder = -1;
+    int blastRadiusSpawnOrder = -1;
+    int speedIncreaseSpawnOrder = -1;
+
+    void Start()
     {
         EnemiesAlive = FindObjectsOfType<EnemyMovementController>().Length;
         SetupHiddenObjects();
+        ApplyDestructibleShadows();
     }
 
     private void SetupHiddenObjects()
@@ -146,5 +152,44 @@ public class GameManager : MonoBehaviour
         }
 
         SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+    }
+
+    void ApplyDestructibleShadows()
+    {
+        if (destructibleTilemap == null ||
+            groundTilemap == null ||
+            groundTile == null ||
+            groundShadowTile == null)
+            return;
+
+        var bounds = destructibleTilemap.cellBounds;
+
+        foreach (var pos in bounds.allPositionsWithin)
+        {
+            if (destructibleTilemap.GetTile(pos) == null)
+                continue;
+
+            var below = new Vector3Int(pos.x, pos.y - 1, pos.z);
+
+            var currentGround = groundTilemap.GetTile(below);
+
+            if (currentGround == groundTile)
+                groundTilemap.SetTile(below, groundShadowTile);
+        }
+    }
+
+    public void OnDestructibleDestroyed(Vector3Int cell)
+    {
+        if (groundTilemap == null ||
+            groundTile == null ||
+            groundShadowTile == null)
+            return;
+
+        var below = new Vector3Int(cell.x, cell.y - 1, cell.z);
+
+        var current = groundTilemap.GetTile(below);
+
+        if (current == groundShadowTile)
+            groundTilemap.SetTile(below, groundTile);
     }
 }

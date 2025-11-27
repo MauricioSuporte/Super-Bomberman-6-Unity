@@ -209,22 +209,24 @@ public class BombController : MonoBehaviour
         Vector3Int cell = destructibleTiles.WorldToCell(position);
         TileBase tile = destructibleTiles.GetTile(cell);
 
-        if (tile != null)
+        if (tile == null)
+            return;
+
+        var gameManager = FindObjectOfType<GameManager>();
+
+        if (gameManager != null)
+            gameManager.OnDestructibleDestroyed(cell);
+
+        Instantiate(destructiblePrefab, position, Quaternion.identity);
+
+        if (gameManager != null)
         {
-            Instantiate(destructiblePrefab, position, Quaternion.identity);
-
-            var gameManager = FindObjectOfType<GameManager>();
-            if (gameManager != null)
-            {
-                GameObject spawnPrefab = gameManager.GetSpawnForDestroyedBlock();
-                if (spawnPrefab != null)
-                {
-                    Instantiate(spawnPrefab, position, Quaternion.identity);
-                }
-            }
-
-            destructibleTiles.SetTile(cell, null);
+            GameObject spawnPrefab = gameManager.GetSpawnForDestroyedBlock();
+            if (spawnPrefab != null)
+                Instantiate(spawnPrefab, position, Quaternion.identity);
         }
+
+        destructibleTiles.SetTile(cell, null);
     }
 
     private void HideBombVisuals(GameObject bomb)
