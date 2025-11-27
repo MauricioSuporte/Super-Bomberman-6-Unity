@@ -30,6 +30,7 @@ public class MovementController : MonoBehaviour
 
     private AnimatedSpriteRenderer activeSpriteRenderer;
     private bool inputLocked;
+    private bool isDying;
 
     private void Awake()
     {
@@ -90,6 +91,9 @@ public class MovementController : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D other)
     {
+        if (isDying)
+            return;
+
         int layer = other.gameObject.layer;
 
         if (layer == LayerMask.NameToLayer("Explosion") ||
@@ -101,22 +105,44 @@ public class MovementController : MonoBehaviour
 
     private void DeathSequence()
     {
+        if (isDying)
+            return;
+
+        isDying = true;
         inputLocked = true;
-        GetComponent<BombController>().enabled = false;
+
+        var bombController = GetComponent<BombController>();
+        if (bombController != null)
+            bombController.enabled = false;
+
+        rigidbody.velocity = Vector2.zero;
+        rigidbody.simulated = false;
+
+        var col = GetComponent<Collider2D>();
+        if (col != null)
+            col.enabled = false;
 
         if (audioSource != null && deathSfx != null)
             audioSource.PlayOneShot(deathSfx);
 
-        if (GameMusicController.Instance != null && GameMusicController.Instance.deathMusic != null)
-            GameMusicController.Instance.PlayMusic(GameMusicController.Instance.deathMusic);
+        if (GameMusicController.Instance != null &&
+            GameMusicController.Instance.deathMusic != null)
+        {
+            GameMusicController.Instance.PlayMusic(
+                GameMusicController.Instance.deathMusic);
+        }
 
         spriteRendererUp.enabled = false;
         spriteRendererDown.enabled = false;
         spriteRendererLeft.enabled = false;
         spriteRendererRight.enabled = false;
-        spriteRendererDeath.enabled = true;
-        spriteRendererDeath.idle = false;
-        spriteRendererDeath.loop = false;
+
+        if (spriteRendererDeath != null)
+        {
+            spriteRendererDeath.enabled = true;
+            spriteRendererDeath.idle = false;
+            spriteRendererDeath.loop = false;
+        }
 
         Invoke(nameof(OnDeathSequenceEnded), 1f);
     }
@@ -130,7 +156,10 @@ public class MovementController : MonoBehaviour
     public void PlayEndStageSequence(Vector2 portalCenter)
     {
         inputLocked = true;
-        GetComponent<BombController>().enabled = false;
+
+        var bombController = GetComponent<BombController>();
+        if (bombController != null)
+            bombController.enabled = false;
 
         rigidbody.velocity = Vector2.zero;
         rigidbody.position = portalCenter;
@@ -157,8 +186,6 @@ public class MovementController : MonoBehaviour
                 endSprite.animationTime = endStageTotalTime / endStageFrameCount;
 
             activeSpriteRenderer = endSprite;
-
-
             Invoke(nameof(HideEndStageSprite), endStageTotalTime);
         }
     }
