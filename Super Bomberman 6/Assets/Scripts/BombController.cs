@@ -152,7 +152,6 @@ public class BombController : MonoBehaviour
         var bomb = other.GetComponent<Bomb>();
         if (bomb != null && bomb.Owner == this)
         {
-            // agora que o dono saiu do tile, a bomba vira sólida
             other.isTrigger = false;
         }
     }

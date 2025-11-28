@@ -447,6 +447,7 @@ MonoBehaviour:
   extraBombItemPrefab: {fileID: 2727780941473249227, guid: 2c7394d5814f6284da1d799a66d95686, type: 3}
   blastRadiusItemPrefab: {fileID: 6871244334814668705, guid: bdad95ff62d39d44fbcbb3b171a603bb, type: 3}
   speedIncreaseItemPrefab: {fileID: 4209327807185772322, guid: 218d29a1a19c6864e8d870f01df7f91b, type: 3}
+  kickBombItemPrefab: {fileID: 6871244334814668705, guid: 8688e05eefe87c143a46fe4f721b8c80, type: 3}
   destructibleTilemap: {fileID: 285353618}
   groundTilemap: {fileID: 672307155}
   groundTile: {fileID: 11400000, guid: ada74cfa1fdef9e4c86ccafaa1b2ae66, type: 2}
@@ -4764,11 +4765,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   deathSfx: {fileID: 8300000, guid: d09be99ae21a8d540ac21a0593b254f5, type: 3}
+  kickBombSfx: {fileID: 8300000, guid: fd7073b98a175b640bff17cf708a99ce, type: 3}
   speed: 5
   tileSize: 1
   obstacleMask:
     serializedVersion: 2
     m_Bits: 0
+  canKickBombs: 0
   inputUp: 119
   inputDown: 115
   inputLeft: 97

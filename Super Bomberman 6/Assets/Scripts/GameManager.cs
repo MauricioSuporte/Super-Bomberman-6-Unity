@@ -17,6 +17,7 @@ public class GameManager : MonoBehaviour
     public ItemPickup extraBombItemPrefab;
     public ItemPickup blastRadiusItemPrefab;
     public ItemPickup speedIncreaseItemPrefab;
+    public ItemPickup kickBombItemPrefab;
 
     [Header("Stage")]
     public Tilemap destructibleTilemap;
@@ -33,6 +34,7 @@ public class GameManager : MonoBehaviour
     int extraBombSpawnOrder = -1;
     int blastRadiusSpawnOrder = -1;
     int speedIncreaseSpawnOrder = -1;
+    int kickBombSpawnOrder = -1;
 
     void Start()
     {
@@ -83,6 +85,9 @@ public class GameManager : MonoBehaviour
 
         if (speedIncreaseItemPrefab != null && cursor < indices.Count)
             speedIncreaseSpawnOrder = indices[cursor++];
+
+        if (kickBombItemPrefab != null && cursor < indices.Count)
+            kickBombSpawnOrder = indices[cursor++];
     }
 
     public GameObject GetSpawnForDestroyedBlock()
@@ -104,6 +109,9 @@ public class GameManager : MonoBehaviour
 
         if (order == speedIncreaseSpawnOrder && speedIncreaseItemPrefab != null)
             return speedIncreaseItemPrefab.gameObject;
+
+        if (order == kickBombSpawnOrder && kickBombItemPrefab != null)
+            return kickBombItemPrefab.gameObject;
 
         return null;
     }

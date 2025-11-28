@@ -12,7 +12,8 @@ public class ItemPickup : MonoBehaviour
     {
         ExtraBomb,
         BlastRadius,
-        SpeedIncrese
+        SpeedIncrese,
+        BombKick
     }
 
     public ItemType type;
@@ -39,6 +40,10 @@ public class ItemPickup : MonoBehaviour
 
             case ItemType.SpeedIncrese:
                 player.GetComponent<MovementController>().speed++;
+                break;
+
+            case ItemType.BombKick:
+                player.GetComponent<MovementController>().EnableBombKick();
                 break;
         }
 

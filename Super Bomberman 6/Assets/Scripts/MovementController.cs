@@ -4,11 +4,15 @@ public class MovementController : MonoBehaviour
 {
     [Header("SFX")]
     public AudioClip deathSfx;
+    public AudioClip kickBombSfx;
 
     [Header("Stats")]
     public float speed = 5f;
     public float tileSize = 1f;
     public LayerMask obstacleMask;
+
+    [Header("Abilities")]
+    public bool canKickBombs = false;
 
     public new Rigidbody2D rigidbody { get; private set; }
     private Vector2 direction = Vector2.down;
@@ -260,11 +264,33 @@ public class MovementController : MonoBehaviour
             if (hit.gameObject.layer == LayerMask.NameToLayer("Bomb"))
             {
                 var bomb = hit.GetComponent<Bomb>();
+
                 if (bomb != null && bomb.Owner == bombController)
                 {
                     var bombCollider = bomb.GetComponent<Collider2D>();
                     if (bombCollider != null && bombCollider.isTrigger)
                         continue;
+                }
+
+                if (canKickBombs && bomb != null)
+                {
+                    LayerMask bombObstacles =
+                        obstacleMask | LayerMask.GetMask("Enemy");
+
+                    bool kicked = bomb.StartKick(
+                        direction,
+                        tileSize,
+                        bombObstacles,
+                        bombController != null ? bombController.destructibleTiles : null
+                    );
+
+                    if (kicked)
+                    {
+                        if (audioSource != null && kickBombSfx != null)
+                            audioSource.PlayOneShot(kickBombSfx);
+
+                        continue;
+                    }
                 }
             }
 
@@ -394,5 +420,10 @@ public class MovementController : MonoBehaviour
     {
         if (spriteRendererEndStage != null)
             spriteRendererEndStage.enabled = false;
+    }
+
+    public void EnableBombKick()
+    {
+        canKickBombs = true;
     }
 }
