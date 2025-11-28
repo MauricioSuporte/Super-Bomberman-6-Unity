@@ -148,14 +148,6 @@ public class GameManager : MonoBehaviour
 
     private void NewRound()
     {
-        if (GameMusicController.Instance != null &&
-            GameMusicController.Instance.defaultMusic != null)
-        {
-            GameMusicController.Instance.PlayMusic(
-                GameMusicController.Instance.defaultMusic
-            );
-        }
-
         SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
 

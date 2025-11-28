@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 public class GameMusicController : MonoBehaviour
 {
@@ -6,7 +6,6 @@ public class GameMusicController : MonoBehaviour
 
     private AudioSource audioSource;
 
-    [Header("Music Tracks")]
     public AudioClip defaultMusic;
     public AudioClip deathMusic;
 
@@ -23,38 +22,50 @@ public class GameMusicController : MonoBehaviour
         Instance = this;
         DontDestroyOnLoad(gameObject);
 
-        if (defaultMusic != null)
-            PlayMusic(defaultMusic);
+        if (audioSource != null)
+        {
+            audioSource.playOnAwake = false;
+            audioSource.loop = true;
+            audioSource.clip = null;
+        }
     }
 
-    public void PlayMusic(AudioClip clip, float volume = 1f)
+    public void PlayMusic(AudioClip clip, float volume = 1f, bool loop = true)
     {
-        if (clip == null)
+        if (clip == null || audioSource == null)
             return;
 
-        if (audioSource.clip == clip && audioSource.isPlaying)
-            return;
-
+        audioSource.loop = loop;
         audioSource.clip = clip;
         audioSource.volume = volume;
-        audioSource.loop = true;
         audioSource.Play();
+    }
+
+    public void PlaySfx(AudioClip clip, float volume = 1f)
+    {
+        if (clip == null || audioSource == null)
+            return;
+
+        audioSource.PlayOneShot(clip, volume);
     }
 
     public void StopMusic()
     {
+        if (audioSource == null)
+            return;
+
         audioSource.Stop();
     }
 
     public void PauseMusic()
     {
-        if (audioSource.isPlaying)
+        if (audioSource != null && audioSource.isPlaying)
             audioSource.Pause();
     }
 
     public void ResumeMusic()
     {
-        if (!audioSource.isPlaying && audioSource.clip != null)
+        if (audioSource != null && !audioSource.isPlaying && audioSource.clip != null)
             audioSource.UnPause();
     }
 }

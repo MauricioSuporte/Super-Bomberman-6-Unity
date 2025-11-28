@@ -56,6 +56,13 @@ public class MovementController : MonoBehaviour
 
         if (obstacleMask.value == 0)
             obstacleMask = LayerMask.GetMask("Stage", "Bomb");
+
+        if (audioSource != null)
+        {
+            audioSource.playOnAwake = false;
+            audioSource.loop = false;
+            audioSource.clip = null;
+        }
     }
 
     private void Update()
@@ -321,7 +328,7 @@ public class MovementController : MonoBehaviour
             GameMusicController.Instance.deathMusic != null)
         {
             GameMusicController.Instance.PlayMusic(
-                GameMusicController.Instance.deathMusic);
+                GameMusicController.Instance.deathMusic, 1f, false);
         }
 
         spriteRendererUp.enabled = false;

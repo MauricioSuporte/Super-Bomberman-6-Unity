@@ -92,7 +92,7 @@ public class EndStagePortal : MonoBehaviour
 
         if (endStageMusic != null && GameMusicController.Instance != null)
         {
-            GameMusicController.Instance.PlayMusic(endStageMusic, 1f);
+            GameMusicController.Instance.PlayMusic(endStageMusic, 1f, false);
         }
 
         if (StageIntroTransition.Instance != null)
