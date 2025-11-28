@@ -370,7 +370,7 @@ public class MovementController : MonoBehaviour
             activeSpriteRenderer = spriteRendererDeath;
         }
 
-        Invoke(nameof(OnDeathSequenceEnded), 1f);
+        Invoke(nameof(OnDeathSequenceEnded), 2f);
     }
 
     private void OnDeathSequenceEnded()

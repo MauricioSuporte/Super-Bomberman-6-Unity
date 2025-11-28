@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -10,7 +11,7 @@ public class GameManager : MonoBehaviour
 
     public int EnemiesAlive { get; private set; }
 
-    public event System.Action OnAllEnemiesDefeated;
+    public event Action OnAllEnemiesDefeated;
 
     [Header("Hidden Objects Prefabs")]
     public EndStagePortal endStagePortalPrefab;
@@ -43,7 +44,7 @@ public class GameManager : MonoBehaviour
         ApplyDestructibleShadows();
     }
 
-    private void SetupHiddenObjects()
+    void SetupHiddenObjects()
     {
         if (destructibleTilemap == null)
             return;
@@ -142,21 +143,41 @@ public class GameManager : MonoBehaviour
         {
             if (StageIntroTransition.Instance != null)
             {
-                StageIntroTransition.Instance.StartFadeOut(3f);
+                StageIntroTransition.Instance.StartFadeOut(2f);
             }
 
-            EndStage();
+            StartCoroutine(RestartRoundRoutine());
         }
+    }
+
+    IEnumerator RestartRoundRoutine()
+    {
+        yield return new WaitForSecondsRealtime(2f);
+
+        StageIntroTransition.SkipTitleScreenOnNextLoad();
+
+        Scene current = SceneManager.GetActiveScene();
+        SceneManager.LoadScene(current.buildIndex);
     }
 
     public void EndStage()
     {
-        Invoke(nameof(NewRound), 4f);
+        StartCoroutine(EndStageRoutine());
     }
 
-    private void NewRound()
+    IEnumerator EndStageRoutine()
     {
-        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+        yield return new WaitForSecondsRealtime(5f);
+
+        if (StageIntroTransition.Instance != null)
+        {
+            StageIntroTransition.Instance.StartEndingScreenSequence();
+        }
+        else
+        {
+            Scene current = SceneManager.GetActiveScene();
+            SceneManager.LoadScene(current.buildIndex);
+        }
     }
 
     void ApplyDestructibleShadows()

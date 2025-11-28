@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using UnityEngine.Video;
 
@@ -16,17 +17,29 @@ public class StageIntroTransition : MonoBehaviour
     public AudioClip hudsonFx;
 
     [Header("Title Screen (Video)")]
-    public RawImage titleScreenRawImage;      // RawImage que mostra o vídeo
-    public VideoPlayer titleVideoPlayer;      // VideoPlayer com o MP4
-    public AudioClip titleMusic;              // música da tela de título (opcional)
-    public KeyCode startKey = KeyCode.Return; // tecla para "PRESS ENTER"
+    public RawImage titleScreenRawImage;
+    public VideoPlayer titleVideoPlayer;
+    public AudioClip titleMusic;
+    public KeyCode startKey = KeyCode.Return;
+
+    [Header("Ending Screen")]
+    public Image endingScreenImage;
+    public AudioClip endingScreenMusic;
+    public KeyCode restartKey = KeyCode.Return;
 
     public bool IntroRunning { get; private set; }
 
     static bool hasPlayedLogoIntro;
+    static bool skipTitleNextRound;
 
     MovementController[] movementControllers;
     BombController[] bombControllers;
+
+    public static void SkipTitleScreenOnNextLoad()
+    {
+        skipTitleNextRound = true;
+        hasPlayedLogoIntro = true;
+    }
 
     void Awake()
     {
@@ -53,6 +66,7 @@ public class StageIntroTransition : MonoBehaviour
         foreach (var m in movementControllers) m.enabled = false;
         foreach (var b in bombControllers) b.enabled = false;
 
+        GamePauseController.ClearPauseFlag();
         Time.timeScale = 0f;
 
         if (fadeImage != null)
@@ -61,6 +75,20 @@ public class StageIntroTransition : MonoBehaviour
             c.a = 1f;
             fadeImage.color = c;
             fadeImage.gameObject.SetActive(true);
+        }
+
+        if (endingScreenImage != null)
+        {
+            endingScreenImage.gameObject.SetActive(false);
+        }
+
+        if (skipTitleNextRound)
+        {
+            skipTitleNextRound = false;
+            if (introLogoImage != null)
+                introLogoImage.enabled = false;
+            StartCoroutine(FadeInToGame());
+            return;
         }
 
         if (!hasPlayedLogoIntro && introLogoImage != null)
@@ -82,20 +110,17 @@ public class StageIntroTransition : MonoBehaviour
     {
         hasPlayedLogoIntro = true;
 
-        // Logo UDISOM
         yield return FadeLogo(2f, 0f, 1f);
         yield return LogoWithHudsonFx();
         yield return FadeLogo(2f, 1f, 0f);
 
         introLogoImage.enabled = false;
 
-        // Depois do logo, sempre mostra a tela de título
         yield return ShowTitleScreen();
     }
 
     IEnumerator StageIntroOnlySequence()
     {
-        // Quando recarrega o round, pula o logo mas mostra a tela de título
         yield return ShowTitleScreen();
     }
 
@@ -131,30 +156,22 @@ public class StageIntroTransition : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Tela de título com vídeo + música, esperando o jogador apertar ENTER.
-    /// </summary>
     IEnumerator ShowTitleScreen()
     {
         if (titleScreenRawImage == null || titleVideoPlayer == null)
         {
-            // Se não estiver configurado, cai pro comportamento antigo
             yield return FadeInToGame();
             yield break;
         }
 
-        // Garante que o fade não fique tampando a tela
         if (fadeImage != null)
             fadeImage.gameObject.SetActive(false);
 
-        // Ativa RawImage da tela de título
         titleScreenRawImage.gameObject.SetActive(true);
 
-        // Música da tela de título (se quiser usar uma faixa separada)
         if (titleMusic != null && GameMusicController.Instance != null)
             GameMusicController.Instance.PlayMusic(titleMusic, 1f, true);
 
-        // Prepara vídeo
         titleVideoPlayer.isLooping = true;
         titleVideoPlayer.playOnAwake = false;
         titleVideoPlayer.Stop();
@@ -170,15 +187,12 @@ public class StageIntroTransition : MonoBehaviour
             yield return null;
         }
 
-        // Parar música da tela de título
         if (GameMusicController.Instance != null)
             GameMusicController.Instance.StopMusic();
 
-        // Parar vídeo
         titleVideoPlayer.Stop();
         titleScreenRawImage.gameObject.SetActive(false);
 
-        // Volta o fade pra fazer o efeito de entrada
         if (fadeImage != null)
         {
             fadeImage.gameObject.SetActive(true);
@@ -187,7 +201,6 @@ public class StageIntroTransition : MonoBehaviour
             fadeImage.color = c;
         }
 
-        // Agora faz o fade-in e libera o jogo
         yield return FadeInToGame();
     }
 
@@ -198,6 +211,7 @@ public class StageIntroTransition : MonoBehaviour
 
         if (fadeImage == null)
         {
+            GamePauseController.ClearPauseFlag();
             Time.timeScale = 1f;
             EnableGameplay();
             yield break;
@@ -217,9 +231,9 @@ public class StageIntroTransition : MonoBehaviour
 
         fadeImage.gameObject.SetActive(false);
 
-        // "Get Ready!"
         yield return new WaitForSecondsRealtime(2f);
 
+        GamePauseController.ClearPauseFlag();
         Time.timeScale = 1f;
         EnableGameplay();
 
@@ -266,5 +280,97 @@ public class StageIntroTransition : MonoBehaviour
             fadeImage.color = new Color(baseColor.r, baseColor.g, baseColor.b, a);
             yield return null;
         }
+    }
+
+    public void StartEndingScreenSequence()
+    {
+        StopAllCoroutines();
+        StartCoroutine(EndingScreenSequence());
+    }
+
+    IEnumerator EndingScreenSequence()
+    {
+        GamePauseController.ClearPauseFlag();
+        Time.timeScale = 0f;
+
+        if (fadeImage != null)
+        {
+            fadeImage.gameObject.SetActive(true);
+            var fc = fadeImage.color;
+            fc.a = 1f;
+            fadeImage.color = fc;
+        }
+
+        if (titleScreenRawImage != null)
+            titleScreenRawImage.gameObject.SetActive(false);
+
+        if (introLogoImage != null)
+            introLogoImage.enabled = false;
+
+        if (endingScreenImage != null)
+        {
+            endingScreenImage.enabled = true;
+            endingScreenImage.gameObject.SetActive(true);
+
+            Color c = endingScreenImage.color;
+            c.a = 0f;
+            endingScreenImage.color = c;
+
+            if (endingScreenMusic != null && GameMusicController.Instance != null)
+                GameMusicController.Instance.PlayMusic(endingScreenMusic, 1f, true);
+
+            float duration = 2f;
+            float t = 0f;
+
+            while (t < duration)
+            {
+                t += Time.unscaledDeltaTime;
+                float progress = Mathf.Clamp01(t / duration);
+
+                c.a = progress;
+                endingScreenImage.color = c;
+
+                if (fadeImage != null)
+                {
+                    var fc = fadeImage.color;
+                    fc.a = 1f - progress;
+                    fadeImage.color = fc;
+                }
+
+                yield return null;
+            }
+
+            if (fadeImage != null)
+                fadeImage.gameObject.SetActive(false);
+        }
+        else
+        {
+            if (endingScreenMusic != null && GameMusicController.Instance != null)
+                GameMusicController.Instance.PlayMusic(endingScreenMusic, 1f, true);
+        }
+
+        bool pressed = false;
+
+        while (!pressed)
+        {
+            if (Input.GetKeyDown(restartKey))
+                pressed = true;
+
+            yield return null;
+        }
+
+        if (GameMusicController.Instance != null)
+            GameMusicController.Instance.StopMusic();
+
+        if (endingScreenImage != null)
+            endingScreenImage.gameObject.SetActive(false);
+
+        GamePauseController.ClearPauseFlag();
+        Time.timeScale = 1f;
+
+        skipTitleNextRound = true;
+
+        Scene currentScene = SceneManager.GetActiveScene();
+        SceneManager.LoadScene(currentScene.buildIndex);
     }
 }

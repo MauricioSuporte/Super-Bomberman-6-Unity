@@ -10,6 +10,11 @@ public class GamePauseController : MonoBehaviour
     public AudioClip pauseSfx;
     public AudioSource sfxSource;
 
+    public static void ClearPauseFlag()
+    {
+        IsPaused = false;
+    }
+
     private void Update()
     {
         if (Input.GetKeyDown(pauseKey))
