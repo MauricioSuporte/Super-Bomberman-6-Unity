@@ -5,11 +5,16 @@ public class MovementController : MonoBehaviour
     [Header("SFX")]
     public AudioClip deathSfx;
 
+    [Header("Stats")]
+    public float speed = 5f;
+    public float tileSize = 1f;
+    public LayerMask obstacleMask;
+
     public new Rigidbody2D rigidbody { get; private set; }
     private Vector2 direction = Vector2.down;
-    public float speed = 5f;
 
     private AudioSource audioSource;
+    private BombController bombController;
 
     public KeyCode inputUp = KeyCode.W;
     public KeyCode inputDown = KeyCode.S;
@@ -30,18 +35,32 @@ public class MovementController : MonoBehaviour
 
     private AnimatedSpriteRenderer activeSpriteRenderer;
     private bool inputLocked;
-    private bool isDying;
+    private bool isDead;
+
+    private bool isXAxisLocked;
+    private bool isYAxisLocked;
+    private float lockedX;
+    private float lockedY;
+
+    private bool softAlignXActive;
+    private float softAlignX;
+    private bool softAlignYActive;
+    private float softAlignY;
 
     private void Awake()
     {
         rigidbody = GetComponent<Rigidbody2D>();
+        bombController = GetComponent<BombController>();
         activeSpriteRenderer = spriteRendererDown;
         audioSource = GetComponent<AudioSource>();
+
+        if (obstacleMask.value == 0)
+            obstacleMask = LayerMask.GetMask("Stage", "Bomb");
     }
 
     private void Update()
     {
-        if (inputLocked || GamePauseController.IsPaused)
+        if (inputLocked || GamePauseController.IsPaused || isDead)
             return;
 
         if (Input.GetKey(inputUp))
@@ -68,12 +87,184 @@ public class MovementController : MonoBehaviour
 
     private void FixedUpdate()
     {
-        if (inputLocked || GamePauseController.IsPaused)
+        if (inputLocked || GamePauseController.IsPaused || isDead)
+            return;
+
+        if (direction == Vector2.zero)
             return;
 
         Vector2 position = rigidbody.position;
+
+        bool blockLeft = IsSolidAt(position + Vector2.left * tileSize);
+        bool blockRight = IsSolidAt(position + Vector2.right * tileSize);
+        bool blockUp = IsSolidAt(position + Vector2.up * tileSize);
+        bool blockDown = IsSolidAt(position + Vector2.down * tileSize);
+
+        bool canLockXNow = blockLeft && blockRight;
+        bool canLockYNow = blockUp && blockDown;
+
+        if (!isXAxisLocked)
+        {
+            if (Mathf.Abs(direction.y) > 0f && canLockXNow)
+            {
+                isXAxisLocked = true;
+                lockedX = Mathf.Round(position.x / tileSize) * tileSize;
+            }
+        }
+        else
+        {
+            if (!canLockXNow)
+                isXAxisLocked = false;
+        }
+
+        if (!isYAxisLocked)
+        {
+            if (Mathf.Abs(direction.x) > 0f && canLockYNow)
+            {
+                isYAxisLocked = true;
+                lockedY = Mathf.Round(position.y / tileSize) * tileSize;
+            }
+        }
+        else
+        {
+            if (!canLockYNow)
+                isYAxisLocked = false;
+        }
+
+        if (isXAxisLocked)
+        {
+            position.x = lockedX;
+            softAlignXActive = false;
+        }
+
+        if (isYAxisLocked)
+        {
+            position.y = lockedY;
+            softAlignYActive = false;
+        }
+
+        rigidbody.position = position;
+
+        if (!isXAxisLocked && Mathf.Abs(direction.y) > 0f)
+        {
+            float targetX = Mathf.Round(position.x / tileSize) * tileSize;
+            if (!Mathf.Approximately(targetX, position.x))
+            {
+                softAlignXActive = true;
+                softAlignX = targetX;
+            }
+        }
+        else
+        {
+            softAlignXActive = false;
+        }
+
+        if (!isYAxisLocked && Mathf.Abs(direction.x) > 0f)
+        {
+            float targetY = Mathf.Round(position.y / tileSize) * tileSize;
+            if (!Mathf.Approximately(targetY, position.y))
+            {
+                softAlignYActive = true;
+                softAlignY = targetY;
+            }
+        }
+        else
+        {
+            softAlignYActive = false;
+        }
+
         Vector2 translation = speed * Time.fixedDeltaTime * direction;
-        rigidbody.MovePosition(position + translation);
+
+        if (isXAxisLocked)
+            translation.x = 0f;
+
+        if (isYAxisLocked)
+            translation.y = 0f;
+
+        Vector2 targetPosition = position + translation;
+
+        float alignStep = speed * Time.fixedDeltaTime;
+
+        if (softAlignXActive)
+            targetPosition.x = Mathf.MoveTowards(targetPosition.x, softAlignX, alignStep);
+
+        if (softAlignYActive)
+            targetPosition.y = Mathf.MoveTowards(targetPosition.y, softAlignY, alignStep);
+
+        if (!IsBlocked(targetPosition))
+            rigidbody.MovePosition(targetPosition);
+    }
+
+    private bool IsSolidAt(Vector2 worldPosition)
+    {
+        Vector2 size = Vector2.one * (tileSize * 0.6f);
+
+        Collider2D[] hits = Physics2D.OverlapBoxAll(worldPosition, size, 0f, obstacleMask);
+        if (hits == null || hits.Length == 0)
+            return false;
+
+        foreach (var hit in hits)
+        {
+            if (hit == null)
+                continue;
+
+            if (hit.gameObject == gameObject)
+                continue;
+
+            if (hit.gameObject.layer == LayerMask.NameToLayer("Bomb"))
+            {
+                var bomb = hit.GetComponent<Bomb>();
+                if (bomb != null && bomb.Owner == bombController)
+                {
+                    var bombCollider = bomb.GetComponent<Collider2D>();
+                    if (bombCollider != null && bombCollider.isTrigger)
+                        continue;
+                }
+            }
+
+            if (hit.isTrigger)
+                continue;
+
+            return true;
+        }
+
+        return false;
+    }
+
+    private bool IsBlocked(Vector2 targetPosition)
+    {
+        Vector2 size;
+
+        if (Mathf.Abs(direction.x) > 0f)
+            size = new Vector2(tileSize * 0.6f, tileSize * 0.2f);
+        else
+            size = new Vector2(tileSize * 0.2f, tileSize * 0.6f);
+
+        Collider2D[] hits = Physics2D.OverlapBoxAll(targetPosition, size, 0f, obstacleMask);
+
+        if (hits == null || hits.Length == 0)
+            return false;
+
+        foreach (var hit in hits)
+        {
+            if (hit == null)
+                continue;
+
+            if (hit.gameObject.layer == LayerMask.NameToLayer("Bomb"))
+            {
+                var bomb = hit.GetComponent<Bomb>();
+                if (bomb != null && bomb.Owner == bombController)
+                {
+                    var bombCollider = bomb.GetComponent<Collider2D>();
+                    if (bombCollider != null && bombCollider.isTrigger)
+                        continue;
+                }
+            }
+
+            return true;
+        }
+
+        return false;
     }
 
     private void SetDirection(Vector2 newDirection, AnimatedSpriteRenderer spriteRenderer)
@@ -86,12 +277,14 @@ public class MovementController : MonoBehaviour
         spriteRendererRight.enabled = spriteRenderer == spriteRendererRight;
 
         activeSpriteRenderer = spriteRenderer;
-        activeSpriteRenderer.idle = direction == Vector2.zero;
+
+        if (activeSpriteRenderer != null)
+            activeSpriteRenderer.idle = direction == Vector2.zero;
     }
 
     private void OnTriggerEnter2D(Collider2D other)
     {
-        if (isDying)
+        if (isDead)
             return;
 
         int layer = other.gameObject.layer;
@@ -105,13 +298,12 @@ public class MovementController : MonoBehaviour
 
     private void DeathSequence()
     {
-        if (isDying)
+        if (isDead)
             return;
 
-        isDying = true;
+        isDead = true;
         inputLocked = true;
 
-        var bombController = GetComponent<BombController>();
         if (bombController != null)
             bombController.enabled = false;
 
@@ -142,6 +334,7 @@ public class MovementController : MonoBehaviour
             spriteRendererDeath.enabled = true;
             spriteRendererDeath.idle = false;
             spriteRendererDeath.loop = false;
+            activeSpriteRenderer = spriteRendererDeath;
         }
 
         Invoke(nameof(OnDeathSequenceEnded), 1f);
@@ -157,7 +350,6 @@ public class MovementController : MonoBehaviour
     {
         inputLocked = true;
 
-        var bombController = GetComponent<BombController>();
         if (bombController != null)
             bombController.enabled = false;
 
@@ -186,6 +378,7 @@ public class MovementController : MonoBehaviour
                 endSprite.animationTime = endStageTotalTime / endStageFrameCount;
 
             activeSpriteRenderer = endSprite;
+
             Invoke(nameof(HideEndStageSprite), endStageTotalTime);
         }
     }

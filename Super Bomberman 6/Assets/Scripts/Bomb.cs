@@ -5,12 +5,19 @@ using UnityEngine;
 public class Bomb : MonoBehaviour
 {
     private BombController owner;
+    public BombController Owner => owner;
     public bool HasExploded { get; private set; }
     public AudioSource audioSource;
+
+    private Collider2D bombCollider;
 
     private void Awake()
     {
         audioSource = GetComponent<AudioSource>();
+        bombCollider = GetComponent<Collider2D>();
+
+        if (bombCollider != null)
+            bombCollider.isTrigger = true;
     }
 
     public void MarkAsExploded()

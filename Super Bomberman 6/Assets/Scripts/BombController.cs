@@ -123,6 +123,10 @@ public class BombController : MonoBehaviour
 
         bombComponent.Initialize(this);
 
+        var bombCollider = bomb.GetComponent<Collider2D>();
+        if (bombCollider != null)
+            bombCollider.isTrigger = true;
+
         StartCoroutine(BombFuse(bomb));
     }
 
@@ -142,8 +146,13 @@ public class BombController : MonoBehaviour
 
     private void OnTriggerExit2D(Collider2D other)
     {
-        if (other.gameObject.layer == LayerMask.NameToLayer("Bomb"))
+        if (other.gameObject.layer != LayerMask.NameToLayer("Bomb"))
+            return;
+
+        var bomb = other.GetComponent<Bomb>();
+        if (bomb != null && bomb.Owner == this)
         {
+            // agora que o dono saiu do tile, a bomba vira sólida
             other.isTrigger = false;
         }
     }
