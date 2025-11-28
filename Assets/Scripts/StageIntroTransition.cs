@@ -27,6 +27,9 @@ public class StageIntroTransition : MonoBehaviour
     public AudioClip endingScreenMusic;
     public KeyCode restartKey = KeyCode.Return;
 
+    [Header("Gameplay Root")]
+    public GameObject gameplayRoot;
+
     public bool IntroRunning { get; private set; }
 
     static bool hasPlayedLogoIntro;
@@ -48,15 +51,14 @@ public class StageIntroTransition : MonoBehaviour
             Destroy(gameObject);
             return;
         }
+
         Instance = this;
     }
 
     void Start()
     {
         if (GameMusicController.Instance != null)
-        {
             GameMusicController.Instance.StopMusic();
-        }
 
         IntroRunning = true;
 
@@ -69,6 +71,9 @@ public class StageIntroTransition : MonoBehaviour
         GamePauseController.ClearPauseFlag();
         Time.timeScale = 0f;
 
+        if (gameplayRoot != null)
+            gameplayRoot.SetActive(false);
+
         if (fadeImage != null)
         {
             var c = fadeImage.color;
@@ -78,9 +83,7 @@ public class StageIntroTransition : MonoBehaviour
         }
 
         if (endingScreenImage != null)
-        {
             endingScreenImage.gameObject.SetActive(false);
-        }
 
         if (skipTitleNextRound)
         {
@@ -211,11 +214,17 @@ public class StageIntroTransition : MonoBehaviour
 
         if (fadeImage == null)
         {
+            if (gameplayRoot != null)
+                gameplayRoot.SetActive(true);
+
             GamePauseController.ClearPauseFlag();
             Time.timeScale = 1f;
             EnableGameplay();
             yield break;
         }
+
+        if (gameplayRoot != null)
+            gameplayRoot.SetActive(true);
 
         float duration = 1f;
         float t = 0f;
@@ -292,6 +301,9 @@ public class StageIntroTransition : MonoBehaviour
     {
         GamePauseController.ClearPauseFlag();
         Time.timeScale = 0f;
+
+        if (gameplayRoot != null)
+            gameplayRoot.SetActive(false);
 
         if (fadeImage != null)
         {
