@@ -111,7 +111,7 @@ public class EnemyMovementController : MonoBehaviour
 
         isDead = true;
 
-        rb.velocity = Vector2.zero;
+        rb.linearVelocity = Vector2.zero;
         var col = GetComponent<Collider2D>();
         if (col != null)
             col.enabled = false;

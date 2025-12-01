@@ -340,7 +340,7 @@ public class MovementController : MonoBehaviour
         if (bombController != null)
             bombController.enabled = false;
 
-        rigidbody.velocity = Vector2.zero;
+        rigidbody.linearVelocity = Vector2.zero;
         rigidbody.simulated = false;
 
         var col = GetComponent<Collider2D>();
@@ -386,7 +386,7 @@ public class MovementController : MonoBehaviour
         if (bombController != null)
             bombController.enabled = false;
 
-        rigidbody.velocity = Vector2.zero;
+        rigidbody.linearVelocity = Vector2.zero;
         rigidbody.position = portalCenter;
         direction = Vector2.zero;
 

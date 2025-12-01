@@ -1056,7 +1056,7 @@ TextureImporter:
       213: -5474405637554420807
     second: SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_350
   externalObjects: {}
-  serializedVersion: 11
+  serializedVersion: 13
   mipmaps:
     mipMapMode: 0
     enableMipMap: 0
@@ -1073,10 +1073,12 @@ TextureImporter:
     externalNormalMap: 0
     heightScale: 0.25
     normalMapFilter: 0
+    flipGreenChannel: 0
   isReadable: 0
   streamingMipmaps: 0
   streamingMipmapsPriority: 0
   vTOnly: 0
+  ignoreMipmapLimit: 0
   grayScaleToAlpha: 0
   generateCubemap: 6
   cubemapConvolution: 0
@@ -1115,8 +1117,10 @@ TextureImporter:
   textureFormatSet: 0
   ignorePngGamma: 0
   applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 1
   platformSettings:
-  - serializedVersion: 3
+  - serializedVersion: 4
     buildTarget: DefaultTexturePlatform
     maxTextureSize: 2048
     resizeAlgorithm: 0
@@ -1126,9 +1130,10 @@ TextureImporter:
     crunchedCompression: 0
     allowsAlphaSplitting: 0
     overridden: 0
+    ignorePlatformSupport: 0
     androidETC2FallbackOverride: 0
     forceMaximumCompressionQuality_BC6H_BC7: 0
-  - serializedVersion: 3
+  - serializedVersion: 4
     buildTarget: Standalone
     maxTextureSize: 2048
     resizeAlgorithm: 0
@@ -1138,6 +1143,7 @@ TextureImporter:
     crunchedCompression: 0
     allowsAlphaSplitting: 0
     overridden: 0
+    ignorePlatformSupport: 0
     androidETC2FallbackOverride: 0
     forceMaximumCompressionQuality_BC6H_BC7: 0
   spriteSheet:
@@ -1154,6 +1160,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -1175,6 +1182,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -1196,6 +1204,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -1217,6 +1226,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -1238,6 +1248,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -1259,6 +1270,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -1280,6 +1292,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -1301,6 +1314,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -1322,6 +1336,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -1343,6 +1358,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -1364,6 +1380,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -1385,6 +1402,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -1406,6 +1424,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -1427,6 +1446,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -1448,6 +1468,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -1469,6 +1490,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -1490,6 +1512,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -1511,6 +1534,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -1532,6 +1556,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -1553,6 +1578,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -1574,6 +1600,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -1595,6 +1622,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -1616,6 +1644,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -1637,6 +1666,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -1658,6 +1688,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -1679,6 +1710,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -1700,6 +1732,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -1721,6 +1754,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -1742,6 +1776,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -1763,6 +1798,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -1784,6 +1820,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -1805,6 +1842,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -1826,6 +1864,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -1847,6 +1886,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -1868,6 +1908,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -1889,6 +1930,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -1910,6 +1952,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -1931,6 +1974,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -1952,6 +1996,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -1973,6 +2018,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -1994,6 +2040,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -2015,6 +2062,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -2036,6 +2084,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -2057,6 +2106,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -2078,6 +2128,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -2099,6 +2150,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -2120,6 +2172,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -2141,6 +2194,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -2162,6 +2216,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -2183,6 +2238,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -2204,6 +2260,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -2225,6 +2282,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -2246,6 +2304,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -2267,6 +2326,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -2288,6 +2348,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -2309,6 +2370,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -2330,6 +2392,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -2351,6 +2414,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -2372,6 +2436,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -2393,6 +2458,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -2414,6 +2480,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -2435,6 +2502,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -2456,6 +2524,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -2477,6 +2546,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -2498,6 +2568,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -2519,6 +2590,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -2540,6 +2612,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -2561,6 +2634,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -2582,6 +2656,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -2603,6 +2678,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -2624,6 +2700,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -2645,6 +2722,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -2666,6 +2744,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -2687,6 +2766,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -2708,6 +2788,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -2729,6 +2810,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -2750,6 +2832,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -2771,6 +2854,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -2792,6 +2876,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -2813,6 +2898,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -2834,6 +2920,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -2855,6 +2942,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -2876,6 +2964,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -2897,6 +2986,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -2918,6 +3008,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -2939,6 +3030,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -2960,6 +3052,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -2981,6 +3074,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -3002,6 +3096,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -3023,6 +3118,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -3044,6 +3140,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -3065,6 +3162,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -3086,6 +3184,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -3107,6 +3206,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -3128,6 +3228,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -3149,6 +3250,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -3170,6 +3272,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -3191,6 +3294,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -3212,6 +3316,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -3233,6 +3338,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -3254,6 +3360,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -3275,6 +3382,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -3296,6 +3404,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -3317,6 +3426,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -3338,6 +3448,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -3359,6 +3470,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -3380,6 +3492,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -3401,6 +3514,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -3422,6 +3536,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -3443,6 +3558,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -3464,6 +3580,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -3485,6 +3602,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -3506,6 +3624,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -3527,6 +3646,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -3548,6 +3668,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -3569,6 +3690,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -3590,6 +3712,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -3611,6 +3734,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -3632,6 +3756,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -3653,6 +3778,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -3674,6 +3800,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -3695,6 +3822,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -3716,6 +3844,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -3737,6 +3866,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -3758,6 +3888,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -3779,6 +3910,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -3800,6 +3932,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -3821,6 +3954,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -3842,6 +3976,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -3863,6 +3998,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -3884,6 +4020,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -3905,6 +4042,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -3926,6 +4064,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -3947,6 +4086,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -3968,6 +4108,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -3989,6 +4130,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -4010,6 +4152,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -4031,6 +4174,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -4052,6 +4196,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -4073,6 +4218,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -4094,6 +4240,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -4115,6 +4262,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -4136,6 +4284,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -4157,6 +4306,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -4178,6 +4328,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -4199,6 +4350,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -4220,6 +4372,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -4241,6 +4394,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -4262,6 +4416,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -4283,6 +4438,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -4304,6 +4460,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -4325,6 +4482,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -4346,6 +4504,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -4367,6 +4526,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -4388,6 +4548,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -4409,6 +4570,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -4430,6 +4592,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -4451,6 +4614,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -4472,6 +4636,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -4493,6 +4658,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -4514,6 +4680,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -4535,6 +4702,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -4556,6 +4724,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -4577,6 +4746,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -4598,6 +4768,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -4619,6 +4790,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -4640,6 +4812,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -4661,6 +4834,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -4682,6 +4856,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -4703,6 +4878,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -4724,6 +4900,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -4745,6 +4922,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -4766,6 +4944,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -4787,6 +4966,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -4808,6 +4988,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -4829,6 +5010,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -4850,6 +5032,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -4871,6 +5054,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -4892,6 +5076,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -4913,6 +5098,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -4934,6 +5120,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -4955,6 +5142,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -4976,6 +5164,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -4997,6 +5186,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -5018,6 +5208,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -5039,6 +5230,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -5060,6 +5252,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -5081,6 +5274,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -5102,6 +5296,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -5123,6 +5318,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -5144,6 +5340,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -5165,6 +5362,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -5186,6 +5384,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -5207,6 +5406,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -5228,6 +5428,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -5249,6 +5450,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -5270,6 +5472,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -5291,6 +5494,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -5312,6 +5516,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -5333,6 +5538,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -5354,6 +5560,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -5375,6 +5582,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -5396,6 +5604,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -5417,6 +5626,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -5438,6 +5648,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -5459,6 +5670,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -5480,6 +5692,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -5501,6 +5714,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -5522,6 +5736,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -5543,6 +5758,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -5564,6 +5780,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -5585,6 +5802,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -5606,6 +5824,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -5627,6 +5846,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -5648,6 +5868,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -5669,6 +5890,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -5690,6 +5912,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -5711,6 +5934,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -5732,6 +5956,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -5753,6 +5978,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -5774,6 +6000,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -5795,6 +6022,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -5816,6 +6044,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -5837,6 +6066,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -5858,6 +6088,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -5879,6 +6110,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -5900,6 +6132,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -5921,6 +6154,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -5942,6 +6176,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -5963,6 +6198,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -5984,6 +6220,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -6005,6 +6242,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -6026,6 +6264,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -6047,6 +6286,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -6068,6 +6308,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -6089,6 +6330,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -6110,6 +6352,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -6131,6 +6374,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -6152,6 +6396,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -6173,6 +6418,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -6194,6 +6440,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -6215,6 +6462,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -6236,6 +6484,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -6257,6 +6506,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -6278,6 +6528,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -6299,6 +6550,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -6320,6 +6572,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -6341,6 +6594,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -6362,6 +6616,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -6383,6 +6638,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -6404,6 +6660,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -6425,6 +6682,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -6446,6 +6704,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -6467,6 +6726,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -6488,6 +6748,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -6509,6 +6770,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -6530,6 +6792,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -6551,6 +6814,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -6572,6 +6836,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -6593,6 +6858,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -6614,6 +6880,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -6635,6 +6902,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -6656,6 +6924,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -6677,6 +6946,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -6698,6 +6968,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -6719,6 +6990,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -6740,6 +7012,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -6761,6 +7034,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -6782,6 +7056,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -6803,6 +7078,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -6824,6 +7100,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -6845,6 +7122,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -6866,6 +7144,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -6887,6 +7166,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -6908,6 +7188,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -6929,6 +7210,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -6950,6 +7232,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -6971,6 +7254,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -6992,6 +7276,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -7013,6 +7298,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -7034,6 +7320,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -7055,6 +7342,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -7076,6 +7364,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -7097,6 +7386,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -7118,6 +7408,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -7139,6 +7430,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -7160,6 +7452,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -7181,6 +7474,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -7202,6 +7496,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -7223,6 +7518,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -7244,6 +7540,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -7265,6 +7562,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -7286,6 +7584,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -7307,6 +7606,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -7328,6 +7628,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -7349,6 +7650,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -7370,6 +7672,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -7391,6 +7694,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -7412,6 +7716,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -7433,6 +7738,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -7454,6 +7760,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -7475,6 +7782,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -7496,6 +7804,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -7517,6 +7826,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -7538,6 +7848,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -7559,6 +7870,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -7580,6 +7892,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -7601,6 +7914,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -7622,6 +7936,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -7643,6 +7958,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -7664,6 +7980,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -7685,6 +8002,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -7706,6 +8024,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -7727,6 +8046,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -7748,6 +8068,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -7769,6 +8090,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -7790,6 +8112,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -7811,6 +8134,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -7832,6 +8156,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -7853,6 +8178,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -7874,6 +8200,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -7895,6 +8222,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -7916,6 +8244,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -7937,6 +8266,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -7958,6 +8288,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -7979,6 +8310,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -8000,6 +8332,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -8021,6 +8354,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -8042,6 +8376,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -8063,6 +8398,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -8084,6 +8420,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -8105,6 +8442,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -8126,6 +8464,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -8147,6 +8486,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -8168,6 +8508,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -8189,6 +8530,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -8210,6 +8552,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -8231,6 +8574,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -8252,6 +8596,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -8273,6 +8618,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -8294,6 +8640,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -8315,6 +8662,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -8336,6 +8684,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -8357,6 +8706,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -8378,6 +8728,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -8399,6 +8750,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -8420,6 +8772,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -8441,6 +8794,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -8462,6 +8816,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -8483,6 +8838,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -8504,6 +8860,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
@@ -8515,6 +8872,7 @@ TextureImporter:
       edges: []
       weights: []
     outline: []
+    customData: 
     physicsShape: []
     bones: []
     spriteID: 5e97eb03825dee720800000000000000
@@ -8524,9 +8882,362 @@ TextureImporter:
     edges: []
     weights: []
     secondaryTextures: []
-  spritePackingTag: 
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      Items: -5468733422323843102
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_1: -4555609774977636346
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_10: 8328538753689871618
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_100: -7484646408362146078
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_101: 6405353110936366475
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_102: -6244241861496462864
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_103: -4477006550730385662
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_104: 2884114319719365270
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_105: 2941760380935704402
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_106: 2487779699428749010
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_107: 667537579798396898
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_108: 7312947203264529923
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_109: -7683502640568851308
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_11: 273279855967454724
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_110: -5061906289916697031
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_111: -3989024523560742631
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_112: -885702533326746873
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_113: -4835483355520397900
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_114: 2201824378158841407
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_115: 8929630716071212608
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_116: -6514396710657343961
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_117: 2836537697392977979
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_118: -4390254792967254095
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_119: 4717634005124117886
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_12: 4016971372939940458
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_120: 4281011418321704581
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_121: -1947368401605461034
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_122: -5887751642776359390
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_123: 9098702699155360886
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_124: 1281014030777871252
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_125: 5947148996534003301
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_126: -4746885303917722097
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_127: -8375673320410220058
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_128: -701989412772120899
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_129: -1408817956290937174
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_13: -1280905620375070201
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_130: -439119860223990874
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_131: 6964919571947642685
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_132: -7397943770360048860
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_133: 1094364935300226613
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_134: 6075637796770003994
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_135: 6462888400171905953
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_136: -6364525167537096962
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_137: -2871512092238990796
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_138: 1125855670401604729
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_139: 4045513491429652890
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_14: 5547239302683360412
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_140: -2357874460902496034
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_141: -4798134648666573189
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_142: -4299234914637140278
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_143: 8710585639334016916
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_144: 4725304373614525237
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_145: -5438822261277020886
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_146: 93053963844006068
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_147: -6873923399760963807
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_148: -5783499341012839717
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_149: -6703679361176087961
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_15: -9091734294096796163
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_150: -745635404500024167
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_151: 5688580657950704712
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_152: -2951639641441636094
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_153: -7933226075436397214
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_154: -1173278176254702702
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_155: 485973681969236248
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_156: -7433996138675243590
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_157: 6856365909372406604
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_158: -8014899594656014749
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_159: -5058109529449768581
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_16: -8716386336529375323
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_160: -3394387512720974221
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_161: -173044391263525338
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_162: -7375439479822631799
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_163: -3467293471970729814
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_164: 6210704927289423897
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_165: 8550128646053736145
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_166: 6115761655149297835
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_167: 7775367077003339727
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_168: -5069073436823615235
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_169: -5181221582932279909
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_17: 4484231146830819562
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_170: 2716911087100051275
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_171: -7599411170808100278
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_172: 1549675072091340580
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_173: 2634570274379686058
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_174: 1258223600102426016
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_175: -4858716631769921255
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_176: -3139170395509337217
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_177: -8048467830445813058
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_178: -2010835764869501249
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_179: -6093011994535639866
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_18: 1266577492301061128
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_180: -8219258950598363676
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_181: 9171544908068997491
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_182: -4411827316048786948
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_183: -7885469692282623464
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_184: 2578818045413604790
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_185: 4697910068017016848
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_186: 8786563267251198144
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_187: -2672315856255892344
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_188: 5300637089391449983
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_189: 8048707999170144487
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_19: 9119677200328281060
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_190: 8959859773063875568
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_191: -6474426185586654760
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_192: -3280929387835247695
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_193: 8571000853724350870
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_194: -3420681911368549991
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_195: 1685304962758146937
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_196: -107520976998610722
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_197: -1806352762047632505
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_198: -4070045783492019144
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_199: -5160591612849806345
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_2: -6089900082548235981
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_20: -8883678247548598708
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_200: -4212950513435795179
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_201: -952364602648090350
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_202: -4648276742059297195
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_203: -3925851014403048662
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_204: 379117038127473792
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_205: -656672021873371987
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_206: 3094540538927232162
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_207: 1303209228606239447
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_208: -5536725690925345846
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_209: -4115255096886459476
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_21: -5451036220061082943
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_210: 172575621437642829
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_211: 7538772441543582901
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_212: 6568359294889252259
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_213: -8099182352952021646
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_214: -8831747551943776318
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_215: -7545423053510007422
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_216: -5524994200588085232
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_217: 3501081545022540558
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_218: 5621445243384911017
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_219: 213528048618774626
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_22: -3358177332431934161
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_220: -2250378423938787833
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_221: -7458455867318509155
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_222: 5470202541416035062
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_223: -7862038328538360744
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_224: 8916247938689254084
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_225: -835063418707611029
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_226: 3748441577106123204
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_227: -680568950687173454
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_228: 5682759834115126132
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_229: -6853279060710714437
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_23: 6453488996741539808
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_230: -8726977776190140754
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_231: 7796975102069860404
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_232: -4346045375520542088
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_233: 4889482703309024569
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_234: -8616459020042621250
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_235: -6967361333008735725
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_236: -3789219768988030723
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_237: 8325375369714196841
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_238: -4664399038253794901
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_239: 4483597004835407559
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_24: 3572745377546407918
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_240: 8673349084806559865
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_241: -8344858491405636986
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_242: 4053804132215873256
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_243: -905445317585922187
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_244: -8950823127304245203
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_245: 5440242111989096824
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_246: -78033582413710010
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_247: 7150866065964080361
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_248: -3355599523326708158
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_249: -6920376966088361356
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_25: 4378387788401051090
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_250: 8845993124611262790
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_251: 6122813156232178185
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_252: -4518442583056463886
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_253: -6814776948787258510
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_254: 2333760918821802042
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_255: 9100528235205944708
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_256: -2927264391937162386
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_257: 1691065683515058743
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_258: -8691019728669057096
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_259: -7563660733592935731
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_26: -2643828997709757752
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_260: -7421665678448785625
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_261: 8944962602127964964
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_262: 901240353101333962
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_263: -4659323685535869671
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_264: -7089627883814521570
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_265: 5548745065890235601
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_266: -1383979416492305802
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_267: -7886433625861670497
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_268: -469114316334607123
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_269: -493690255333691658
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_27: 8526234851622321326
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_270: -9001466799008404806
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_271: 5260285054218547730
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_272: -6859224228923075978
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_273: 7210839412328773626
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_274: 3273673999085714373
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_275: 83851065573785683
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_276: 5334510265619704797
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_277: 8410446225257929462
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_278: 6569327957312612426
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_279: -6627535735353434130
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_28: -6451381615086907263
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_280: 4884265888272665465
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_281: -9068398741309733282
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_282: -414819695880991025
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_283: 681086561932855697
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_284: 1615114986337366910
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_285: -1933223592890427944
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_286: -2380929275382718775
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_287: 1935926408519966140
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_288: 2771376631719492464
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_289: -1657332736291179751
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_29: 4094912908796867626
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_290: -5231394056654667322
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_291: -4596498445079583844
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_292: 8660354579841492671
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_293: 1704876581981731308
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_294: -5872722730213366261
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_295: 3913249706070233958
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_296: -1419723303442509498
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_297: -5020865725738404999
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_298: 861165263092029862
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_299: 8094065296533754543
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_3: 3180682715080431578
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_30: -1875118348981383414
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_300: 2911979835586622
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_301: 5920538543239119021
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_302: -333993941118137173
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_303: 4311436420603127231
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_304: -8408779386414067580
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_305: 7074252273153858731
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_306: 1513023152750534634
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_307: 742790844239104482
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_308: 728829012169712612
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_309: -1060987581274925383
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_31: -8570443889437944926
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_310: -2663245066498393428
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_311: 6660633650398462737
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_312: -4114679260245058621
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_313: 393169954638844230
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_314: -2074928442436001438
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_315: -3395696071399125699
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_316: 923786767518164763
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_317: 2760142492673344944
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_318: 375915264613633666
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_319: 3497934407830102514
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_32: 2831742393556189387
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_320: -6076380879173388102
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_321: -8589500328720733170
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_322: -7726534721245925399
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_323: -6237447338331762320
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_324: -6554245921363221599
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_325: -6043293192070379963
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_326: -5289954051392984157
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_327: -321142614345106544
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_328: -4587895198450654869
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_329: -2144182592013166971
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_33: 9139294066990385313
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_330: -2013990126820408704
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_331: -8569594424426760447
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_332: 8237886811012204424
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_333: 4109206604025826604
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_334: 8028863494467018024
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_335: 1947346611346588927
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_336: -4350437528473854182
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_337: -7477904130998912918
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_338: 3211335526029153291
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_339: -8957780545005546430
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_34: 339601960787074597
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_340: -2668318083551423453
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_341: 5957051870419429703
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_342: 1955954547514695940
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_343: 7409921591356618189
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_344: 5889851785037081827
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_345: 9070091335492909395
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_346: 5462003542650389105
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_347: -4382217750959671276
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_348: 6071693700643740286
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_349: -3329799888856391308
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_35: -717473144415691263
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_350: -5474405637554420807
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_36: 42295762783529594
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_37: 2622779622545646311
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_38: -7973531371692935312
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_39: -1060279828463115942
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_4: -4608532563629812331
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_40: 3390977971881087710
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_41: -9029318843641167161
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_42: -3984708740727934533
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_43: -7784966348123367133
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_44: 6034962913566841705
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_45: 890213164362261511
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_46: -547281515190548521
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_47: -8437804798678819351
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_48: 707849253363021680
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_49: 1151720689525753808
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_5: 2340935460885757102
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_50: -3005575536207666600
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_51: -9176544630538356742
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_52: -5900000836629976051
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_53: -6584329849305120520
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_54: -2942687663492675461
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_55: 6170810104741690288
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_56: 7396352260110882063
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_57: -3639390781438482211
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_58: 4264103402115719646
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_59: 7157663697685978576
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_6: -2339586281014257070
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_60: -1930422369034721930
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_61: -8635365070137918285
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_62: -9027695295412988549
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_63: -7801004331696827964
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_64: 2650335249026588239
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_65: -1948808569580109397
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_66: -8303332910807864820
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_67: 3919217692526175617
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_68: -8892400780901411432
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_69: -8022220692884731374
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_7: 1730737408410102359
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_70: 8684695798982758981
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_71: -5294627710444693311
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_72: 30196656762236721
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_73: 7326888061925976464
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_74: -5204222585785840746
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_75: 8109801620019137050
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_76: -7520348565014560927
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_77: -6217954070530393456
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_78: 2727568694874073583
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_79: -7261769831214149205
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_8: -8824557747620604262
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_80: 5465560195661846902
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_81: -8854552440575633280
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_82: -1385797227136283359
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_83: 7402916231013048314
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_84: -2136070123026938183
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_85: 79931897886727319
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_86: -3799914927788549074
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_87: 8131978996787924794
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_88: 6588283593558833458
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_89: -40894292334802279
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_9: -4174672512797181554
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_90: -6239054696908209659
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_91: -8982428921563239791
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_92: 5702364104341334034
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_93: 7769749565331115071
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_94: 5830879293280336605
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_95: 5260320868587230559
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_96: 6875428831685346176
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_97: -5829189819692915026
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_98: 7659096199733600452
+      SNES - Super Bomberman - Enemies & Bosses - World 1 Enemies and Items_99: -3422581551477201444
+  mipmapLimitGroupName: 
   pSDRemoveMatte: 0
-  pSDShowRemoveMatteOption: 0
   userData: 
   assetBundleName: 
   assetBundleVariant: 
