@@ -74,7 +74,7 @@ CircleCollider2D:
   m_UsedByComposite: 0
   m_Offset: {x: 0, y: 0}
   serializedVersion: 2
-  m_Radius: 0.05
+  m_Radius: 0.3
 --- !u!114 &1228606389669354654
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -96,7 +96,13 @@ MonoBehaviour:
   spriteDeath: {fileID: 1228606391467010645}
   obstacleMask:
     serializedVersion: 2
-    m_Bits: 192
+    m_Bits: 1216
+  bombLayerMask:
+    serializedVersion: 2
+    m_Bits: 128
+  enemyLayerMask:
+    serializedVersion: 2
+    m_Bits: 1024
 --- !u!1 &1228606389785476330
 GameObject:
   m_ObjectHideFlags: 0

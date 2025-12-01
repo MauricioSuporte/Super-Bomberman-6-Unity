@@ -18,6 +18,8 @@ public class EnemyMovementController : MonoBehaviour
 
     [Header("Layers")]
     public LayerMask obstacleMask;
+    public LayerMask bombLayerMask;
+    public LayerMask enemyLayerMask;
 
     protected AnimatedSpriteRenderer activeSprite;
     protected Rigidbody2D rb;
@@ -31,7 +33,13 @@ public class EnemyMovementController : MonoBehaviour
         activeSprite = spriteDown;
 
         if (obstacleMask.value == 0)
-            obstacleMask = LayerMask.GetMask("Bomb", "Stage");
+            obstacleMask = LayerMask.GetMask("Bomb", "Stage", "Enemy");
+
+        if (bombLayerMask.value == 0)
+            bombLayerMask = LayerMask.GetMask("Bomb");
+
+        if (enemyLayerMask.value == 0)
+            enemyLayerMask = LayerMask.GetMask("Enemy");
     }
 
     protected virtual void Start()
@@ -46,6 +54,11 @@ public class EnemyMovementController : MonoBehaviour
     {
         if (isDead)
             return;
+
+        if (HasBombAt(targetTile))
+        {
+            HandleBombAhead();
+        }
 
         MoveTowardsTile();
 
@@ -62,7 +75,23 @@ public class EnemyMovementController : MonoBehaviour
             return;
 
         if (other.gameObject.layer == LayerMask.NameToLayer("Explosion"))
+        {
             TakeDamage(1);
+            return;
+        }
+
+        if (other.gameObject.layer == LayerMask.NameToLayer("Bomb"))
+        {
+            HandleBombCollisionOnContact();
+            return;
+        }
+
+        if (other.gameObject.layer == LayerMask.NameToLayer("Enemy"))
+        {
+            var otherEnemy = other.GetComponent<EnemyMovementController>();
+            HandleEnemyCollision(otherEnemy);
+            return;
+        }
     }
 
     public virtual void TakeDamage(int amount)
@@ -171,14 +200,7 @@ public class EnemyMovementController : MonoBehaviour
     {
         Vector2 forwardTile = rb.position + direction * tileSize;
 
-        bool blockedForward = Physics2D.OverlapBox(
-            forwardTile,
-            Vector2.one * (tileSize * 0.8f),
-            0f,
-            obstacleMask
-        );
-
-        if (!blockedForward)
+        if (!IsTileBlocked(forwardTile))
         {
             targetTile = forwardTile;
             return;
@@ -193,14 +215,7 @@ public class EnemyMovementController : MonoBehaviour
                 continue;
 
             Vector2 checkTile = rb.position + dir * tileSize;
-            Collider2D hit = Physics2D.OverlapBox(
-                checkTile,
-                Vector2.one * (tileSize * 0.8f),
-                0f,
-                obstacleMask
-            );
-
-            if (hit == null)
+            if (!IsTileBlocked(checkTile))
                 freeDirs.Add(dir);
         }
 
@@ -216,9 +231,111 @@ public class EnemyMovementController : MonoBehaviour
         targetTile = rb.position + direction * tileSize;
     }
 
+    protected bool IsTileBlocked(Vector2 tileCenter)
+    {
+        Vector2 size = Vector2.one * (tileSize * 0.8f);
+        Collider2D[] hits = Physics2D.OverlapBoxAll(tileCenter, size, 0f, obstacleMask);
+
+        if (hits == null || hits.Length == 0)
+            return false;
+
+        foreach (var hit in hits)
+        {
+            if (hit == null)
+                continue;
+
+            if (hit.gameObject == gameObject)
+                continue;
+
+            return true;
+        }
+
+        return false;
+    }
+
+    protected bool HasBombAt(Vector2 tileCenter)
+    {
+        Vector2 size = Vector2.one * (tileSize * 0.8f);
+        var hit = Physics2D.OverlapBox(tileCenter, size, 0f, bombLayerMask);
+        return hit != null;
+    }
+
+    protected void HandleBombAhead()
+    {
+        SnapToGrid();
+
+        Vector2 backwardDir = -direction;
+        Vector2 backwardTile = rb.position + backwardDir * tileSize;
+
+        if (!IsTileBlocked(backwardTile))
+        {
+            direction = backwardDir;
+            UpdateSpriteDirection(direction);
+            targetTile = backwardTile;
+            return;
+        }
+
+        Vector2[] dirs = { Vector2.up, Vector2.down, Vector2.left, Vector2.right };
+        var freeDirs = new List<Vector2>();
+
+        foreach (var dir in dirs)
+        {
+            if (dir == direction || dir == -direction)
+                continue;
+
+            Vector2 checkTile = rb.position + dir * tileSize;
+            if (!IsTileBlocked(checkTile))
+                freeDirs.Add(dir);
+        }
+
+        if (freeDirs.Count > 0)
+        {
+            direction = freeDirs[Random.Range(0, freeDirs.Count)];
+            UpdateSpriteDirection(direction);
+            targetTile = rb.position + direction * tileSize;
+        }
+        else
+        {
+            targetTile = rb.position;
+        }
+    }
+
+    protected void HandleBombCollisionOnContact()
+    {
+        HandleBombAhead();
+    }
+
+    protected void HandleEnemyCollision(EnemyMovementController otherEnemy)
+    {
+        if (otherEnemy == null)
+            return;
+
+        if (GetInstanceID() < otherEnemy.GetInstanceID())
+            return;
+
+        SnapToGrid();
+
+        Vector2[] dirs = { Vector2.up, Vector2.down, Vector2.left, Vector2.right };
+        var freeDirs = new List<Vector2>();
+
+        foreach (var dir in dirs)
+        {
+            Vector2 checkTile = rb.position + dir * tileSize;
+            if (!IsTileBlocked(checkTile))
+                freeDirs.Add(dir);
+        }
+
+        if (freeDirs.Count == 0)
+            return;
+
+        direction = freeDirs[Random.Range(0, freeDirs.Count)];
+        UpdateSpriteDirection(direction);
+        targetTile = rb.position + direction * tileSize;
+    }
+
     protected virtual void OnDrawGizmosSelected()
     {
-        if (!Application.isPlaying)
+        if (!Application.isPlaying || rb == null)
             return;
 
         Gizmos.color = Color.red;
