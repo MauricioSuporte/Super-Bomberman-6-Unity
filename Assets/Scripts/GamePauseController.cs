@@ -6,7 +6,6 @@ public class GamePauseController : MonoBehaviour
 
     public KeyCode pauseKey = KeyCode.Return;
 
-    [Header("Pause SFX")]
     public AudioClip pauseSfx;
     public AudioSource sfxSource;
 
@@ -43,6 +42,17 @@ public class GamePauseController : MonoBehaviour
 
         if (GameMusicController.Instance != null)
             GameMusicController.Instance.PauseMusic();
+
+        if (StageIntroTransition.Instance != null &&
+            StageIntroTransition.Instance.stageLabel != null)
+        {
+            var label = StageIntroTransition.Instance.stageLabel;
+            label.gameObject.SetActive(true);
+            label.SetPauseText(
+                StageIntroTransition.Instance.world,
+                StageIntroTransition.Instance.stageNumber
+            );
+        }
     }
 
     private void ResumeGame()
@@ -51,6 +61,18 @@ public class GamePauseController : MonoBehaviour
 
         if (GameMusicController.Instance != null)
             GameMusicController.Instance.ResumeMusic();
+
+        if (StageIntroTransition.Instance != null &&
+            StageIntroTransition.Instance.stageLabel != null)
+        {
+            var label = StageIntroTransition.Instance.stageLabel;
+            label.SetStage(
+                StageIntroTransition.Instance.world,
+                StageIntroTransition.Instance.stageNumber
+            );
+
+            label.gameObject.SetActive(false);
+        }
     }
 
     private void PlayPauseSfx()
