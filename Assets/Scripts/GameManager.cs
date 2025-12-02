@@ -7,8 +7,8 @@ using UnityEngine.Tilemaps;
 
 public class GameManager : MonoBehaviour
 {
-    private static WaitForSecondsRealtime _waitForSecondsRealtime5 = new(5f);
-    private static WaitForSecondsRealtime _waitForSecondsRealtime2 = new(2f);
+    private static readonly WaitForSecondsRealtime _waitForSecondsRealtime5 = new(5f);
+    private static readonly WaitForSecondsRealtime _waitForSecondsRealtime2 = new(2f);
     public GameObject[] players;
 
     public int EnemiesAlive { get; private set; }

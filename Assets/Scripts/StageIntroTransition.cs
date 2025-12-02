@@ -6,7 +6,7 @@ using UnityEngine.Video;
 
 public class StageIntroTransition : MonoBehaviour
 {
-    private static WaitForSecondsRealtime _waitForSecondsRealtime2 = new WaitForSecondsRealtime(2f);
+    private static readonly WaitForSecondsRealtime _waitForSecondsRealtime2 = new(2f);
     public static StageIntroTransition Instance;
 
     [Header("Fade / Logo")]
@@ -22,6 +22,11 @@ public class StageIntroTransition : MonoBehaviour
     public VideoPlayer titleVideoPlayer;
     public AudioClip titleMusic;
     public KeyCode startKey = KeyCode.Return;
+
+    [Header("Stage Intro")]
+    public StageLabel stageLabel;
+    public int world = 1;
+    public int stageNumber = 1;
 
     [Header("Ending Screen")]
     public Image endingScreenImage;
@@ -62,6 +67,9 @@ public class StageIntroTransition : MonoBehaviour
             GameMusicController.Instance.StopMusic();
 
         IntroRunning = true;
+
+        if (stageLabel != null)
+            stageLabel.gameObject.SetActive(false);
 
         movementControllers = Object.FindObjectsByType<MovementController>(
             FindObjectsInactive.Exclude,
@@ -225,6 +233,12 @@ public class StageIntroTransition : MonoBehaviour
             if (gameplayRoot != null)
                 gameplayRoot.SetActive(true);
 
+            if (stageLabel != null)
+            {
+                stageLabel.gameObject.SetActive(true);
+                stageLabel.SetStage(world, stageNumber);
+            }
+
             GamePauseController.ClearPauseFlag();
             Time.timeScale = 1f;
             EnableGameplay();
@@ -243,12 +257,22 @@ public class StageIntroTransition : MonoBehaviour
             t += Time.unscaledDeltaTime;
             float a = 1f - Mathf.Clamp01(t / duration);
             fadeImage.color = new Color(baseColor.r, baseColor.g, baseColor.b, a);
+
+            if (stageLabel != null && !stageLabel.gameObject.activeSelf && t >= 0.5f)
+            {
+                stageLabel.gameObject.SetActive(true);
+                stageLabel.SetStage(world, stageNumber);
+            }
+
             yield return null;
         }
 
         fadeImage.gameObject.SetActive(false);
 
         yield return _waitForSecondsRealtime2;
+
+        if (stageLabel != null)
+            stageLabel.gameObject.SetActive(false);
 
         GamePauseController.ClearPauseFlag();
         Time.timeScale = 1f;
