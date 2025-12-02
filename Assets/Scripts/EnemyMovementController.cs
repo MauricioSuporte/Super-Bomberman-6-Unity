@@ -112,8 +112,7 @@ public class EnemyMovementController : MonoBehaviour
         isDead = true;
 
         rb.linearVelocity = Vector2.zero;
-        var col = GetComponent<Collider2D>();
-        if (col != null)
+        if (TryGetComponent<Collider2D>(out var col))
             col.enabled = false;
 
         spriteUp.enabled = false;
@@ -128,12 +127,11 @@ public class EnemyMovementController : MonoBehaviour
             spriteDeath.animationTime = 0.1f;
             spriteDeath.loop = false;
 
-            var sr = spriteDeath.GetComponent<SpriteRenderer>();
-            if (sr != null)
+            if (spriteDeath.TryGetComponent<SpriteRenderer>(out var sr))
                 sr.flipX = false;
         }
 
-        var gameManager = FindObjectOfType<GameManager>();
+        var gameManager = FindFirstObjectByType<GameManager>();
         if (gameManager != null)
             gameManager.NotifyEnemyDied();
 
@@ -190,8 +188,7 @@ public class EnemyMovementController : MonoBehaviour
             activeSprite.enabled = true;
             activeSprite.idle = false;
 
-            var sr = activeSprite.GetComponent<SpriteRenderer>();
-            if (sr != null)
+            if (activeSprite.TryGetComponent<SpriteRenderer>(out var sr))
                 sr.flipX = (dir == Vector2.right);
         }
     }

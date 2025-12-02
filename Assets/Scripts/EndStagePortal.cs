@@ -1,5 +1,6 @@
 using UnityEngine;
 
+[RequireComponent(typeof(AnimatedSpriteRenderer))]
 public class EndStagePortal : MonoBehaviour
 {
     [Header("SFX")]
@@ -30,7 +31,8 @@ public class EndStagePortal : MonoBehaviour
             idleRenderer.loop = false;
         }
 
-        gameManager = FindObjectOfType<GameManager>();
+        gameManager = FindFirstObjectByType<GameManager>();
+
         if (gameManager != null)
         {
             gameManager.OnAllEnemiesDefeated += HandleAllEnemiesDefeated;
@@ -69,10 +71,9 @@ public class EndStagePortal : MonoBehaviour
 
         isActivated = true;
 
-        var movement = other.GetComponent<MovementController>();
-        if (movement != null)
+        if (other.TryGetComponent<MovementController>(out var movement))
         {
-            Vector2 portalCenter = new Vector2(
+            Vector2 portalCenter = new(
                 Mathf.Round(transform.position.x),
                 Mathf.Round(transform.position.y)
             );

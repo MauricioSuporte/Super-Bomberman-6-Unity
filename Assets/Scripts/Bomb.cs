@@ -35,7 +35,7 @@ public class Bomb : MonoBehaviour
         {
             rb.gravityScale = 0f;
             rb.constraints = RigidbodyConstraints2D.FreezeRotation;
-            rb.isKinematic = true;
+            rb.bodyType = RigidbodyType2D.Kinematic;
         }
     }
 
@@ -45,7 +45,7 @@ public class Bomb : MonoBehaviour
             return;
 
         Vector2 position = rb.position;
-        Vector2 step = kickDirection * kickSpeed * Time.fixedDeltaTime;
+        Vector2 step = kickSpeed * Time.fixedDeltaTime * kickDirection;
         Vector2 target = position + step;
 
         if (IsKickBlocked(target))

@@ -1,5 +1,8 @@
 ﻿using UnityEngine;
 
+[RequireComponent(typeof(AudioSource))]
+[RequireComponent(typeof(BombController))]
+[RequireComponent(typeof(Rigidbody2D))]
 public class MovementController : MonoBehaviour
 {
     [Header("SFX")]
@@ -343,8 +346,7 @@ public class MovementController : MonoBehaviour
         rigidbody.linearVelocity = Vector2.zero;
         rigidbody.simulated = false;
 
-        var col = GetComponent<Collider2D>();
-        if (col != null)
+        if (TryGetComponent<Collider2D>(out var col))
             col.enabled = false;
 
         if (audioSource != null && deathSfx != null)
@@ -376,7 +378,10 @@ public class MovementController : MonoBehaviour
     private void OnDeathSequenceEnded()
     {
         gameObject.SetActive(false);
-        FindObjectOfType<GameManager>().CheckWinState();
+
+        var gameManager = FindFirstObjectByType<GameManager>();
+        if (gameManager != null)
+            gameManager.CheckWinState();
     }
 
     public void PlayEndStageSequence(Vector2 portalCenter)

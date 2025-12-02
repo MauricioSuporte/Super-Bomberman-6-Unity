@@ -67,8 +67,7 @@ public class BombController : MonoBehaviour
         if (bomb == null)
             return;
 
-        var bombComponent = bomb.GetComponent<Bomb>();
-        if (bombComponent != null)
+        if (bomb.TryGetComponent<Bomb>(out var bombComponent))
         {
             if (bombComponent.HasExploded)
                 return;
@@ -117,14 +116,12 @@ public class BombController : MonoBehaviour
         GameObject bomb = Instantiate(bombPrefab, position, Quaternion.identity);
         bombsRemaining--;
 
-        var bombComponent = bomb.GetComponent<Bomb>();
-        if (bombComponent == null)
+        if (!bomb.TryGetComponent<Bomb>(out var bombComponent))
             bombComponent = bomb.AddComponent<Bomb>();
 
         bombComponent.Initialize(this);
 
-        var bombCollider = bomb.GetComponent<Collider2D>();
-        if (bombCollider != null)
+        if (bomb.TryGetComponent<Collider2D>(out var bombCollider))
             bombCollider.isTrigger = true;
 
         StartCoroutine(BombFuse(bomb));
@@ -172,8 +169,7 @@ public class BombController : MonoBehaviour
 
         if (itemHit != null)
         {
-            var item = itemHit.GetComponent<ItemPickup>();
-            if (item != null)
+            if (itemHit.TryGetComponent<ItemPickup>(out var item))
             {
                 item.DestroyWithAnimation();
             }
@@ -220,7 +216,7 @@ public class BombController : MonoBehaviour
         if (tile == null)
             return;
 
-        var gameManager = FindObjectOfType<GameManager>();
+        var gameManager = FindFirstObjectByType<GameManager>();
 
         if (gameManager != null)
             gameManager.OnDestructibleDestroyed(cell);
@@ -239,20 +235,16 @@ public class BombController : MonoBehaviour
 
     private void HideBombVisuals(GameObject bomb)
     {
-        var sprite = bomb.GetComponent<SpriteRenderer>();
-        if (sprite != null)
+        if (bomb.TryGetComponent<SpriteRenderer>(out var sprite))
             sprite.enabled = false;
 
-        var collider = bomb.GetComponent<Collider2D>();
-        if (collider != null)
+        if (bomb.TryGetComponent<Collider2D>(out var collider))
             collider.enabled = false;
 
-        var anim = bomb.GetComponent<AnimatedSpriteRenderer>();
-        if (anim != null)
+        if (bomb.TryGetComponent<AnimatedSpriteRenderer>(out var anim))
             anim.enabled = false;
 
-        var bombScript = bomb.GetComponent<Bomb>();
-        if (bombScript != null)
+        if (bomb.TryGetComponent<Bomb>(out var bombScript))
             bombScript.enabled = false;
     }
 }

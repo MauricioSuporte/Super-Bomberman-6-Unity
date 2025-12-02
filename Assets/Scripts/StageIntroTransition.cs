@@ -6,6 +6,7 @@ using UnityEngine.Video;
 
 public class StageIntroTransition : MonoBehaviour
 {
+    private static WaitForSecondsRealtime _waitForSecondsRealtime2 = new WaitForSecondsRealtime(2f);
     public static StageIntroTransition Instance;
 
     [Header("Fade / Logo")]
@@ -62,11 +63,18 @@ public class StageIntroTransition : MonoBehaviour
 
         IntroRunning = true;
 
-        movementControllers = FindObjectsOfType<MovementController>();
-        bombControllers = FindObjectsOfType<BombController>();
+        movementControllers = Object.FindObjectsByType<MovementController>(
+            FindObjectsInactive.Exclude,
+            FindObjectsSortMode.None
+        );
 
-        foreach (var m in movementControllers) m.enabled = false;
-        foreach (var b in bombControllers) b.enabled = false;
+        bombControllers = Object.FindObjectsByType<BombController>(
+            FindObjectsInactive.Exclude,
+            FindObjectsSortMode.None
+        );
+
+        foreach (var m in movementControllers) if (m) m.enabled = false;
+        foreach (var b in bombControllers) if (b) b.enabled = false;
 
         GamePauseController.ClearPauseFlag();
         Time.timeScale = 0f;
@@ -240,7 +248,7 @@ public class StageIntroTransition : MonoBehaviour
 
         fadeImage.gameObject.SetActive(false);
 
-        yield return new WaitForSecondsRealtime(2f);
+        yield return _waitForSecondsRealtime2;
 
         GamePauseController.ClearPauseFlag();
         Time.timeScale = 1f;

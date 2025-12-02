@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 
+[RequireComponent(typeof(AudioSource))]
 public class GameMusicController : MonoBehaviour
 {
     public static GameMusicController Instance;

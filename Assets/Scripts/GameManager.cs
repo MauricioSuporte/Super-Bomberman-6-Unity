@@ -7,6 +7,8 @@ using UnityEngine.Tilemaps;
 
 public class GameManager : MonoBehaviour
 {
+    private static WaitForSecondsRealtime _waitForSecondsRealtime5 = new(5f);
+    private static WaitForSecondsRealtime _waitForSecondsRealtime2 = new(2f);
     public GameObject[] players;
 
     public int EnemiesAlive { get; private set; }
@@ -39,7 +41,11 @@ public class GameManager : MonoBehaviour
 
     void Start()
     {
-        EnemiesAlive = FindObjectsOfType<EnemyMovementController>().Length;
+        EnemiesAlive = FindObjectsByType<EnemyMovementController>(
+            FindObjectsInactive.Exclude,
+            FindObjectsSortMode.None
+        ).Length;
+
         SetupHiddenObjects();
         ApplyDestructibleShadows();
     }
@@ -152,7 +158,7 @@ public class GameManager : MonoBehaviour
 
     IEnumerator RestartRoundRoutine()
     {
-        yield return new WaitForSecondsRealtime(2f);
+        yield return _waitForSecondsRealtime2;
 
         StageIntroTransition.SkipTitleScreenOnNextLoad();
 
@@ -167,7 +173,7 @@ public class GameManager : MonoBehaviour
 
     IEnumerator EndStageRoutine()
     {
-        yield return new WaitForSecondsRealtime(5f);
+        yield return _waitForSecondsRealtime5;
 
         if (StageIntroTransition.Instance != null)
         {
