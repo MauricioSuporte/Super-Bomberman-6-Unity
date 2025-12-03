@@ -7,7 +7,6 @@ using UnityEngine.Tilemaps;
 
 public class GameManager : MonoBehaviour
 {
-    private static readonly WaitForSecondsRealtime _waitForSecondsRealtime5 = new(5f);
     private static readonly WaitForSecondsRealtime _waitForSecondsRealtime2 = new(2f);
     public GameObject[] players;
 
@@ -24,6 +23,11 @@ public class GameManager : MonoBehaviour
 
     [Header("Stage")]
     public Tilemap destructibleTilemap;
+
+    [Header("Stage Flow")]
+    public string nextStageSceneName;
+
+    static readonly WaitForSecondsRealtime waitNextStageDelay = new(4f);
 
     [Header("Ground")]
     public Tilemap groundTilemap;
@@ -168,21 +172,37 @@ public class GameManager : MonoBehaviour
 
     public void EndStage()
     {
-        StartCoroutine(EndStageRoutine());
+        if (string.IsNullOrEmpty(nextStageSceneName))
+        {
+            StartCoroutine(ShowEndingAfterDelayRoutine());
+            return;
+        }
+
+        StartCoroutine(LoadNextStageRoutine());
     }
 
-    IEnumerator EndStageRoutine()
+    IEnumerator LoadNextStageRoutine()
     {
-        yield return _waitForSecondsRealtime5;
+        yield return waitNextStageDelay;
+
+        GamePauseController.ClearPauseFlag();
+        Time.timeScale = 1f;
+
+        StageIntroTransition.SkipTitleScreenOnNextLoad();
+
+        SceneManager.LoadScene(nextStageSceneName);
+    }
+
+    IEnumerator ShowEndingAfterDelayRoutine()
+    {
+        yield return waitNextStageDelay;
+
+        GamePauseController.ClearPauseFlag();
+        Time.timeScale = 1f;
 
         if (StageIntroTransition.Instance != null)
         {
             StageIntroTransition.Instance.StartEndingScreenSequence();
-        }
-        else
-        {
-            Scene current = SceneManager.GetActiveScene();
-            SceneManager.LoadScene(current.buildIndex);
         }
     }
 
