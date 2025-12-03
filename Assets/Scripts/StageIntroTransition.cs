@@ -281,8 +281,12 @@ public class StageIntroTransition : MonoBehaviour
         if (GameMusicController.Instance != null &&
             GameMusicController.Instance.defaultMusic != null)
         {
+            float volume = GameMusicController.Instance.defaultMusicVolume;
+
             GameMusicController.Instance.PlayMusic(
-                GameMusicController.Instance.defaultMusic, 1f, true);
+                GameMusicController.Instance.defaultMusic,
+                volume,
+                true);
         }
     }
 

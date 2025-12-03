@@ -10,6 +10,9 @@ public class GameMusicController : MonoBehaviour
     public AudioClip defaultMusic;
     public AudioClip deathMusic;
 
+    [Range(0f, 1f)]
+    public float defaultMusicVolume = 1f;
+
     private void Awake()
     {
         audioSource = GetComponent<AudioSource>();
