@@ -5226,7 +5226,7 @@ MonoBehaviour:
   explosionDuration: 0.5
   explosionRadius: 2
   destructibleTiles: {fileID: 285353618}
-  destructiblePrefab: {fileID: 3440613785117735154, guid: 227477c28434b21439475c6f07347eda, type: 3}
+  destructiblePrefab: {fileID: 3440613785117735154, guid: 01ca0d46fddaa1f419f732eb2be82694, type: 3}
   itemLayerMask:
     serializedVersion: 2
     m_Bits: 512
