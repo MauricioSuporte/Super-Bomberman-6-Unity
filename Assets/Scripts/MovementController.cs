@@ -135,25 +135,13 @@ public class MovementController : MonoBehaviour
         if (movingVertical && blockLeft && blockRight)
         {
             float targetX = Mathf.Round(position.x / tileSize) * tileSize;
-
-            if (Mathf.Abs(position.x - targetX) > CenterEpsilon)
-            {
-                position.x = Mathf.MoveTowards(position.x, targetX, moveSpeed);
-                Rigidbody.MovePosition(position);
-                return;
-            }
+            position.x = Mathf.MoveTowards(position.x, targetX, moveSpeed);
         }
 
         if (movingHorizontal && blockUp && blockDown)
         {
             float targetY = Mathf.Round(position.y / tileSize) * tileSize;
-
-            if (Mathf.Abs(position.y - targetY) > CenterEpsilon)
-            {
-                position.y = Mathf.MoveTowards(position.y, targetY, moveSpeed);
-                Rigidbody.MovePosition(position);
-                return;
-            }
+            position.y = Mathf.MoveTowards(position.y, targetY, moveSpeed);
         }
 
         Vector2 targetPosition = position + direction * moveSpeed;
