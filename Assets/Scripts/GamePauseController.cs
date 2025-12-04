@@ -22,9 +22,14 @@ public class GamePauseController : MonoBehaviour
 
     private void TogglePause()
     {
-        if (StageIntroTransition.Instance != null &&
-            StageIntroTransition.Instance.IntroRunning)
-            return;
+        if (StageIntroTransition.Instance != null)
+        {
+            if (StageIntroTransition.Instance.IntroRunning ||
+                StageIntroTransition.Instance.EndingRunning)
+            {
+                return;
+            }
+        }
 
         IsPaused = !IsPaused;
 

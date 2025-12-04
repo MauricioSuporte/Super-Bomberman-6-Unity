@@ -41,6 +41,9 @@ public class StageIntroTransition : MonoBehaviour
 
     public bool IntroRunning { get; private set; }
 
+    // >>> NOVO: indica que o Ending Screen está em execução
+    public bool EndingRunning { get; private set; }
+
     static bool hasPlayedLogoIntro;
     static bool skipTitleNextRound;
 
@@ -70,6 +73,7 @@ public class StageIntroTransition : MonoBehaviour
             GameMusicController.Instance.StopMusic();
 
         IntroRunning = true;
+        EndingRunning = false;
 
         if (stageLabel != null)
             stageLabel.gameObject.SetActive(false);
@@ -332,6 +336,8 @@ public class StageIntroTransition : MonoBehaviour
 
     public void StartEndingScreenSequence()
     {
+        EndingRunning = true;
+
         StopAllCoroutines();
         StartCoroutine(EndingScreenSequence());
     }
@@ -429,6 +435,8 @@ public class StageIntroTransition : MonoBehaviour
         if (stageLabel != null)
             stageLabel.gameObject.SetActive(false);
 
+        EndingRunning = false;
+
         if (!string.IsNullOrEmpty(firstStageSceneName))
         {
             SceneManager.LoadScene(firstStageSceneName);
@@ -439,5 +447,4 @@ public class StageIntroTransition : MonoBehaviour
             SceneManager.LoadScene(currentScene.buildIndex);
         }
     }
-
 }
