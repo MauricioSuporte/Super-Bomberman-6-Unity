@@ -221,13 +221,23 @@ public class BombController : MonoBehaviour
         if (gameManager != null)
             gameManager.OnDestructibleDestroyed(cell);
 
-        Instantiate(destructiblePrefab, position, Quaternion.identity);
+        Transform parent = destructibleTiles != null ? destructibleTiles.transform : null;
+
+        if (parent != null)
+            Instantiate(destructiblePrefab, position, Quaternion.identity, parent);
+        else
+            Instantiate(destructiblePrefab, position, Quaternion.identity);
 
         if (gameManager != null)
         {
             GameObject spawnPrefab = gameManager.GetSpawnForDestroyedBlock();
             if (spawnPrefab != null)
-                Instantiate(spawnPrefab, position, Quaternion.identity);
+            {
+                if (parent != null)
+                    Instantiate(spawnPrefab, position, Quaternion.identity, parent);
+                else
+                    Instantiate(spawnPrefab, position, Quaternion.identity);
+            }
         }
 
         destructibleTiles.SetTile(cell, null);
