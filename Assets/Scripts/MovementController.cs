@@ -44,15 +44,7 @@ public class MovementController : MonoBehaviour
     private bool inputLocked;
     private bool isDead;
 
-    private bool isXAxisLocked;
-    private bool isYAxisLocked;
-    private float lockedX;
-    private float lockedY;
-
-    private bool softAlignXActive;
-    private float softAlignX;
-    private bool softAlignYActive;
-    private float softAlignY;
+    private const float CenterEpsilon = 0.01f;
 
     private void Awake()
     {
@@ -107,103 +99,44 @@ public class MovementController : MonoBehaviour
         if (direction == Vector2.zero)
             return;
 
+        float dt = Time.fixedDeltaTime;
+        float moveSpeed = speed * dt;
+
         Vector2 position = rigidbody.position;
 
-        bool blockLeft = IsSolidAt(position + Vector2.left * tileSize);
-        bool blockRight = IsSolidAt(position + Vector2.right * tileSize);
-        bool blockUp = IsSolidAt(position + Vector2.up * tileSize);
-        bool blockDown = IsSolidAt(position + Vector2.down * tileSize);
+        bool blockLeft = IsSolidAt(position + Vector2.left * (tileSize * 0.5f));
+        bool blockRight = IsSolidAt(position + Vector2.right * (tileSize * 0.5f));
+        bool blockUp = IsSolidAt(position + Vector2.up * (tileSize * 0.5f));
+        bool blockDown = IsSolidAt(position + Vector2.down * (tileSize * 0.5f));
 
-        bool canLockXNow = blockLeft && blockRight;
-        bool canLockYNow = blockUp && blockDown;
+        bool movingVertical = Mathf.Abs(direction.y) > 0.01f;
+        bool movingHorizontal = Mathf.Abs(direction.x) > 0.01f;
 
-        if (!isXAxisLocked)
-        {
-            if (Mathf.Abs(direction.y) > 0f && canLockXNow)
-            {
-                isXAxisLocked = true;
-                lockedX = Mathf.Round(position.x / tileSize) * tileSize;
-            }
-        }
-        else
-        {
-            if (!canLockXNow)
-                isXAxisLocked = false;
-        }
-
-        if (!isYAxisLocked)
-        {
-            if (Mathf.Abs(direction.x) > 0f && canLockYNow)
-            {
-                isYAxisLocked = true;
-                lockedY = Mathf.Round(position.y / tileSize) * tileSize;
-            }
-        }
-        else
-        {
-            if (!canLockYNow)
-                isYAxisLocked = false;
-        }
-
-        if (isXAxisLocked)
-        {
-            position.x = lockedX;
-            softAlignXActive = false;
-        }
-
-        if (isYAxisLocked)
-        {
-            position.y = lockedY;
-            softAlignYActive = false;
-        }
-
-        rigidbody.position = position;
-
-        if (!isXAxisLocked && Mathf.Abs(direction.y) > 0f)
+        if (movingVertical && blockLeft && blockRight)
         {
             float targetX = Mathf.Round(position.x / tileSize) * tileSize;
-            if (!Mathf.Approximately(targetX, position.x))
+
+            if (Mathf.Abs(position.x - targetX) > CenterEpsilon)
             {
-                softAlignXActive = true;
-                softAlignX = targetX;
+                position.x = Mathf.MoveTowards(position.x, targetX, moveSpeed);
+                rigidbody.MovePosition(position);
+                return;
             }
         }
-        else
-        {
-            softAlignXActive = false;
-        }
 
-        if (!isYAxisLocked && Mathf.Abs(direction.x) > 0f)
+        if (movingHorizontal && blockUp && blockDown)
         {
             float targetY = Mathf.Round(position.y / tileSize) * tileSize;
-            if (!Mathf.Approximately(targetY, position.y))
+
+            if (Mathf.Abs(position.y - targetY) > CenterEpsilon)
             {
-                softAlignYActive = true;
-                softAlignY = targetY;
+                position.y = Mathf.MoveTowards(position.y, targetY, moveSpeed);
+                rigidbody.MovePosition(position);
+                return;
             }
         }
-        else
-        {
-            softAlignYActive = false;
-        }
 
-        Vector2 translation = speed * Time.fixedDeltaTime * direction;
-
-        if (isXAxisLocked)
-            translation.x = 0f;
-
-        if (isYAxisLocked)
-            translation.y = 0f;
-
-        Vector2 targetPosition = position + translation;
-
-        float alignStep = speed * Time.fixedDeltaTime;
-
-        if (softAlignXActive)
-            targetPosition.x = Mathf.MoveTowards(targetPosition.x, softAlignX, alignStep);
-
-        if (softAlignYActive)
-            targetPosition.y = Mathf.MoveTowards(targetPosition.y, softAlignY, alignStep);
+        Vector2 targetPosition = position + direction * moveSpeed;
 
         if (!IsBlocked(targetPosition))
             rigidbody.MovePosition(targetPosition);
