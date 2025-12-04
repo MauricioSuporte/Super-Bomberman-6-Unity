@@ -17,8 +17,9 @@ public class MovementController : MonoBehaviour
     [Header("Abilities")]
     public bool canKickBombs = false;
 
-    public new Rigidbody2D rigidbody { get; private set; }
-    private Vector2 direction = Vector2.down;
+    public Rigidbody2D Rigidbody { get; private set; }
+
+    private Vector2 direction = Vector2.zero;
 
     private AudioSource audioSource;
     private BombController bombController;
@@ -48,11 +49,16 @@ public class MovementController : MonoBehaviour
 
     private float SlideDeadZone => tileSize * 0.25f;
 
+    private bool hasInput;
+
     private void Awake()
     {
-        rigidbody = GetComponent<Rigidbody2D>();
+        Rigidbody = GetComponent<Rigidbody2D>();
         bombController = GetComponent<BombController>();
+
         activeSpriteRenderer = spriteRendererDown;
+        direction = Vector2.zero;
+
         audioSource = GetComponent<AudioSource>();
 
         if (obstacleMask.value == 0)
@@ -66,25 +72,37 @@ public class MovementController : MonoBehaviour
         }
     }
 
+    private void OnEnable()
+    {
+        direction = Vector2.zero;
+        hasInput = false;
+    }
+
     private void Update()
     {
         if (inputLocked || GamePauseController.IsPaused || isDead)
             return;
 
+        hasInput = false;
+
         if (Input.GetKey(inputUp))
         {
+            hasInput = true;
             SetDirection(Vector2.up, spriteRendererUp);
         }
         else if (Input.GetKey(inputDown))
         {
+            hasInput = true;
             SetDirection(Vector2.down, spriteRendererDown);
         }
         else if (Input.GetKey(inputLeft))
         {
+            hasInput = true;
             SetDirection(Vector2.left, spriteRendererLeft);
         }
         else if (Input.GetKey(inputRight))
         {
+            hasInput = true;
             SetDirection(Vector2.right, spriteRendererRight);
         }
         else
@@ -98,13 +116,13 @@ public class MovementController : MonoBehaviour
         if (inputLocked || GamePauseController.IsPaused || isDead)
             return;
 
-        if (direction == Vector2.zero)
+        if (!hasInput || direction == Vector2.zero)
             return;
 
         float dt = Time.fixedDeltaTime;
         float moveSpeed = speed * dt;
 
-        Vector2 position = rigidbody.position;
+        Vector2 position = Rigidbody.position;
 
         bool blockLeft = IsSolidAt(position + Vector2.left * (tileSize * 0.5f));
         bool blockRight = IsSolidAt(position + Vector2.right * (tileSize * 0.5f));
@@ -121,7 +139,7 @@ public class MovementController : MonoBehaviour
             if (Mathf.Abs(position.x - targetX) > CenterEpsilon)
             {
                 position.x = Mathf.MoveTowards(position.x, targetX, moveSpeed);
-                rigidbody.MovePosition(position);
+                Rigidbody.MovePosition(position);
                 return;
             }
         }
@@ -133,7 +151,7 @@ public class MovementController : MonoBehaviour
             if (Mathf.Abs(position.y - targetY) > CenterEpsilon)
             {
                 position.y = Mathf.MoveTowards(position.y, targetY, moveSpeed);
-                rigidbody.MovePosition(position);
+                Rigidbody.MovePosition(position);
                 return;
             }
         }
@@ -142,7 +160,7 @@ public class MovementController : MonoBehaviour
 
         if (!IsBlocked(targetPosition))
         {
-            rigidbody.MovePosition(targetPosition);
+            Rigidbody.MovePosition(targetPosition);
             return;
         }
 
@@ -193,13 +211,13 @@ public class MovementController : MonoBehaviour
         if (Mathf.Abs(position.x - targetX) > CenterEpsilon)
         {
             float newX = Mathf.MoveTowards(position.x, targetX, moveSpeed);
-            rigidbody.MovePosition(new Vector2(newX, position.y));
+            Rigidbody.MovePosition(new Vector2(newX, position.y));
         }
         else
         {
             Vector2 newPos = new Vector2(targetX, position.y) + verticalStep;
             if (!IsBlocked(newPos))
-                rigidbody.MovePosition(newPos);
+                Rigidbody.MovePosition(newPos);
         }
     }
 
@@ -232,13 +250,13 @@ public class MovementController : MonoBehaviour
         if (Mathf.Abs(position.y - targetY) > CenterEpsilon)
         {
             float newY = Mathf.MoveTowards(position.y, targetY, moveSpeed);
-            rigidbody.MovePosition(new Vector2(position.x, newY));
+            Rigidbody.MovePosition(new Vector2(position.x, newY));
         }
         else
         {
             Vector2 newPos = new Vector2(position.x, targetY) + horizontalStep;
             if (!IsBlocked(newPos))
-                rigidbody.MovePosition(newPos);
+                Rigidbody.MovePosition(newPos);
         }
     }
 
@@ -376,8 +394,8 @@ public class MovementController : MonoBehaviour
         if (bombController != null)
             bombController.enabled = false;
 
-        rigidbody.linearVelocity = Vector2.zero;
-        rigidbody.simulated = false;
+        Rigidbody.linearVelocity = Vector2.zero;
+        Rigidbody.simulated = false;
 
         if (TryGetComponent<Collider2D>(out var col))
             col.enabled = false;
@@ -424,8 +442,8 @@ public class MovementController : MonoBehaviour
         if (bombController != null)
             bombController.enabled = false;
 
-        rigidbody.linearVelocity = Vector2.zero;
-        rigidbody.position = portalCenter;
+        Rigidbody.linearVelocity = Vector2.zero;
+        Rigidbody.position = portalCenter;
         direction = Vector2.zero;
 
         spriteRendererUp.enabled = false;
