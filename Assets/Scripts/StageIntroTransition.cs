@@ -28,6 +28,9 @@ public class StageIntroTransition : MonoBehaviour
     public int world = 1;
     public int stageNumber = 1;
 
+    [Header("First Stage")]
+    public string firstStageSceneName = "Stage_1-1";
+
     [Header("Ending Screen")]
     public Image endingScreenImage;
     public AudioClip endingScreenMusic;
@@ -338,6 +341,9 @@ public class StageIntroTransition : MonoBehaviour
         GamePauseController.ClearPauseFlag();
         Time.timeScale = 0f;
 
+        if (stageLabel != null)
+            stageLabel.gameObject.SetActive(false);
+
         if (gameplayRoot != null)
             gameplayRoot.SetActive(false);
 
@@ -416,9 +422,22 @@ public class StageIntroTransition : MonoBehaviour
         GamePauseController.ClearPauseFlag();
         Time.timeScale = 1f;
 
+        PlayerPersistentStats.ResetToDefaults();
+
         skipTitleNextRound = true;
 
-        Scene currentScene = SceneManager.GetActiveScene();
-        SceneManager.LoadScene(currentScene.buildIndex);
+        if (stageLabel != null)
+            stageLabel.gameObject.SetActive(false);
+
+        if (!string.IsNullOrEmpty(firstStageSceneName))
+        {
+            SceneManager.LoadScene(firstStageSceneName);
+        }
+        else
+        {
+            Scene currentScene = SceneManager.GetActiveScene();
+            SceneManager.LoadScene(currentScene.buildIndex);
+        }
     }
+
 }

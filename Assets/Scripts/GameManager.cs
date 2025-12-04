@@ -172,6 +172,13 @@ public class GameManager : MonoBehaviour
 
     public void EndStage()
     {
+        if (players != null && players.Length > 0 && players[0] != null)
+        {
+            var movement = players[0].GetComponent<MovementController>();
+            var bomb = players[0].GetComponent<BombController>();
+            PlayerPersistentStats.SaveFrom(movement, bomb);
+        }
+
         if (string.IsNullOrEmpty(nextStageSceneName))
         {
             StartCoroutine(ShowEndingAfterDelayRoutine());

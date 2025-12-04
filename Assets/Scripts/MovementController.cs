@@ -56,6 +56,8 @@ public class MovementController : MonoBehaviour
         Rigidbody = GetComponent<Rigidbody2D>();
         bombController = GetComponent<BombController>();
 
+        PlayerPersistentStats.LoadInto(this, bombController);
+
         activeSpriteRenderer = spriteRendererDown;
         direction = Vector2.zero;
 
@@ -378,6 +380,9 @@ public class MovementController : MonoBehaviour
 
         isDead = true;
         inputLocked = true;
+
+        canKickBombs = false;
+        PlayerPersistentStats.CanKickBombs = false;
 
         if (bombController != null)
             bombController.enabled = false;
