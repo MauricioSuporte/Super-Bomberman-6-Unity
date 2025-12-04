@@ -46,6 +46,8 @@ public class MovementController : MonoBehaviour
 
     private const float CenterEpsilon = 0.01f;
 
+    private float SlideDeadZone => tileSize * 0.25f;
+
     private void Awake()
     {
         rigidbody = GetComponent<Rigidbody2D>();
@@ -139,7 +141,105 @@ public class MovementController : MonoBehaviour
         Vector2 targetPosition = position + direction * moveSpeed;
 
         if (!IsBlocked(targetPosition))
+        {
             rigidbody.MovePosition(targetPosition);
+            return;
+        }
+
+        if (movingVertical)
+        {
+            float currentCenterX = Mathf.Round(position.x / tileSize) * tileSize;
+            float offsetX = Mathf.Abs(position.x - currentCenterX);
+
+            if (offsetX > SlideDeadZone)
+                TrySlideHorizontally(position, moveSpeed);
+        }
+        else if (movingHorizontal)
+        {
+            float currentCenterY = Mathf.Round(position.y / tileSize) * tileSize;
+            float offsetY = Mathf.Abs(position.y - currentCenterY);
+
+            if (offsetY > SlideDeadZone)
+                TrySlideVertically(position, moveSpeed);
+        }
+    }
+
+    private void TrySlideHorizontally(Vector2 position, float moveSpeed)
+    {
+        float leftCenter = Mathf.Floor(position.x / tileSize) * tileSize;
+        float rightCenter = Mathf.Ceil(position.x / tileSize) * tileSize;
+
+        Vector2 verticalStep = new(0f, direction.y * moveSpeed);
+
+        bool leftFree = !IsBlocked(new Vector2(leftCenter, position.y) + verticalStep);
+        bool rightFree = !IsBlocked(new Vector2(rightCenter, position.y) + verticalStep);
+
+        if (!leftFree && !rightFree)
+            return;
+
+        float targetX;
+
+        if (leftFree && !rightFree)
+            targetX = leftCenter;
+        else if (rightFree && !leftFree)
+            targetX = rightCenter;
+        else
+        {
+            targetX = Mathf.Abs(position.x - leftCenter) <= Mathf.Abs(position.x - rightCenter)
+                ? leftCenter
+                : rightCenter;
+        }
+
+        if (Mathf.Abs(position.x - targetX) > CenterEpsilon)
+        {
+            float newX = Mathf.MoveTowards(position.x, targetX, moveSpeed);
+            rigidbody.MovePosition(new Vector2(newX, position.y));
+        }
+        else
+        {
+            Vector2 newPos = new Vector2(targetX, position.y) + verticalStep;
+            if (!IsBlocked(newPos))
+                rigidbody.MovePosition(newPos);
+        }
+    }
+
+    private void TrySlideVertically(Vector2 position, float moveSpeed)
+    {
+        float bottomCenter = Mathf.Floor(position.y / tileSize) * tileSize;
+        float topCenter = Mathf.Ceil(position.y / tileSize) * tileSize;
+
+        Vector2 horizontalStep = new(direction.x * moveSpeed, 0f);
+
+        bool bottomFree = !IsBlocked(new Vector2(position.x, bottomCenter) + horizontalStep);
+        bool topFree = !IsBlocked(new Vector2(position.x, topCenter) + horizontalStep);
+
+        if (!bottomFree && !topFree)
+            return;
+
+        float targetY;
+
+        if (bottomFree && !topFree)
+            targetY = bottomCenter;
+        else if (topFree && !bottomFree)
+            targetY = topCenter;
+        else
+        {
+            targetY = Mathf.Abs(position.y - bottomCenter) <= Mathf.Abs(position.y - topCenter)
+                ? bottomCenter
+                : topCenter;
+        }
+
+        if (Mathf.Abs(position.y - targetY) > CenterEpsilon)
+        {
+            float newY = Mathf.MoveTowards(position.y, targetY, moveSpeed);
+            rigidbody.MovePosition(new Vector2(position.x, newY));
+        }
+        else
+        {
+            Vector2 newPos = new Vector2(position.x, targetY) + horizontalStep;
+            if (!IsBlocked(newPos))
+                rigidbody.MovePosition(newPos);
+        }
     }
 
     private bool IsSolidAt(Vector2 worldPosition)
