@@ -30,6 +30,22 @@ public class AnimatedSpriteRenderer : MonoBehaviour
     private int animationFrame;
     private Vector3 initialLocalPosition;
 
+    public int CurrentFrame
+    {
+        get => animationFrame;
+        set
+        {
+            animationFrame = value;
+            if (animationSprite != null && animationSprite.Length > 0)
+            {
+                if (animationFrame < 0)
+                    animationFrame = 0;
+                if (animationFrame >= animationSprite.Length)
+                    animationFrame = animationSprite.Length - 1;
+            }
+        }
+    }
+
     private void Awake()
     {
         spriteRenderer = GetComponent<SpriteRenderer>();
@@ -39,7 +55,7 @@ public class AnimatedSpriteRenderer : MonoBehaviour
     private void OnEnable()
     {
         spriteRenderer.enabled = true;
-        animationFrame = 0;
+        transform.localPosition = initialLocalPosition;
     }
 
     private void OnDisable()
@@ -59,12 +75,16 @@ public class AnimatedSpriteRenderer : MonoBehaviour
         InvokeRepeating(nameof(NextFrame), animationTime, animationTime);
     }
 
+    public void RefreshFrame()
+    {
+        ApplyFrame();
+    }
+
     private void NextFrame()
     {
         if (idle)
         {
-            spriteRenderer.sprite = idleSprite;
-            transform.localPosition = initialLocalPosition;
+            ApplyFrame();
             return;
         }
 
@@ -75,6 +95,21 @@ public class AnimatedSpriteRenderer : MonoBehaviour
 
         if (loop && animationFrame >= animationSprite.Length)
             animationFrame = 0;
+
+        ApplyFrame();
+    }
+
+    private void ApplyFrame()
+    {
+        if (idle)
+        {
+            spriteRenderer.sprite = idleSprite;
+            transform.localPosition = initialLocalPosition;
+            return;
+        }
+
+        if (animationSprite == null || animationSprite.Length == 0)
+            return;
 
         if (animationFrame < 0 || animationFrame >= animationSprite.Length)
             return;

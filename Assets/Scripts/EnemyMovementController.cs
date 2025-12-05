@@ -169,6 +169,8 @@ public class EnemyMovementController : MonoBehaviour
 
     protected void UpdateSpriteDirection(Vector2 dir)
     {
+        AnimatedSpriteRenderer previousSprite = activeSprite;
+
         spriteUp.enabled = false;
         spriteDown.enabled = false;
         spriteLeft.enabled = false;
@@ -185,6 +187,21 @@ public class EnemyMovementController : MonoBehaviour
 
         if (activeSprite != null)
         {
+            if (previousSprite != null && previousSprite != activeSprite)
+            {
+                int frame = previousSprite.CurrentFrame;
+
+                if (activeSprite.animationSprite != null && activeSprite.animationSprite.Length > 0)
+                {
+                    if (frame >= activeSprite.animationSprite.Length)
+                        frame = frame % activeSprite.animationSprite.Length;
+                }
+
+                activeSprite.CurrentFrame = frame;
+                activeSprite.idle = previousSprite.idle;
+                activeSprite.RefreshFrame();
+            }
+
             activeSprite.enabled = true;
             activeSprite.idle = false;
 
