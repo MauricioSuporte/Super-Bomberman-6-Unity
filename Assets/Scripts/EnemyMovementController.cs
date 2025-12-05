@@ -210,7 +210,7 @@ public class EnemyMovementController : MonoBehaviour
         }
     }
 
-    protected void DecideNextTile()
+    protected virtual void DecideNextTile()
     {
         Vector2 forwardTile = rb.position + direction * tileSize;
 
@@ -245,7 +245,7 @@ public class EnemyMovementController : MonoBehaviour
         targetTile = rb.position + direction * tileSize;
     }
 
-    protected bool IsTileBlocked(Vector2 tileCenter)
+    protected virtual bool IsTileBlocked(Vector2 tileCenter)
     {
         Vector2 size = Vector2.one * (tileSize * 0.8f);
         Collider2D[] hits = Physics2D.OverlapBoxAll(tileCenter, size, 0f, obstacleMask);
