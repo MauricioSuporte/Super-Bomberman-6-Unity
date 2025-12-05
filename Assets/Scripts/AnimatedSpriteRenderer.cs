@@ -5,50 +5,90 @@ public class AnimatedSpriteRenderer : MonoBehaviour
 {
     private SpriteRenderer spriteRenderer;
 
+    [Header("Sprites")]
     public Sprite idleSprite;
     public Sprite[] animationSprite;
 
+    [Header("Timing")]
+    [Tooltip("Time between frames (used when 'useSequenceDuration' is false).")]
     public float animationTime = 0.25f;
-    private int animationFrame;
 
+    [Tooltip("When true, 'sequenceDuration' defines the total duration of the animation cycle.")]
+    public bool useSequenceDuration = false;
+
+    [Tooltip("Total animation cycle duration (only used when 'useSequenceDuration' is true).")]
+    public float sequenceDuration = 0.5f;
+
+    [Header("Loop / Idle")]
     public bool loop = true;
     public bool idle = true;
+
+    [Header("Frame Offsets")]
+    [Tooltip("Optional local offset applied per frame. If empty or length differs from animationSprite, no offset is applied.")]
+    public Vector2[] frameOffsets;
+
+    private int animationFrame;
+    private Vector3 initialLocalPosition;
 
     private void Awake()
     {
         spriteRenderer = GetComponent<SpriteRenderer>();
+        initialLocalPosition = transform.localPosition;
     }
 
     private void OnEnable()
     {
         spriteRenderer.enabled = true;
+        animationFrame = 0;
     }
 
     private void OnDisable()
     {
         spriteRenderer.enabled = false;
+        transform.localPosition = initialLocalPosition;
     }
 
     private void Start()
     {
+        if (useSequenceDuration && animationSprite != null && animationSprite.Length > 0)
+        {
+            sequenceDuration = Mathf.Max(sequenceDuration, 0.0001f);
+            animationTime = sequenceDuration / animationSprite.Length;
+        }
+
         InvokeRepeating(nameof(NextFrame), animationTime, animationTime);
     }
 
     private void NextFrame()
     {
-        animationFrame++;
-
-        if (loop && animationFrame >= animationSprite.Length)
-        {
-            animationFrame = 0;
-        }
-
         if (idle)
         {
             spriteRenderer.sprite = idleSprite;
-        } else if (animationFrame >= 0 && animationFrame < animationSprite.Length)
+            transform.localPosition = initialLocalPosition;
+            return;
+        }
+
+        if (animationSprite == null || animationSprite.Length == 0)
+            return;
+
+        animationFrame++;
+
+        if (loop && animationFrame >= animationSprite.Length)
+            animationFrame = 0;
+
+        if (animationFrame < 0 || animationFrame >= animationSprite.Length)
+            return;
+
+        spriteRenderer.sprite = animationSprite[animationFrame];
+
+        if (frameOffsets != null && frameOffsets.Length == animationSprite.Length)
         {
-            spriteRenderer.sprite = animationSprite[animationFrame];
+            Vector2 offset = frameOffsets[animationFrame];
+            transform.localPosition = initialLocalPosition + (Vector3)offset;
+        }
+        else
+        {
+            transform.localPosition = initialLocalPosition;
         }
     }
 }
