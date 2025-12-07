@@ -41,7 +41,6 @@ public class StageIntroTransition : MonoBehaviour
 
     public bool IntroRunning { get; private set; }
 
-    // >>> NOVO: indica que o Ending Screen está em execução
     public bool EndingRunning { get; private set; }
 
     static bool hasPlayedLogoIntro;
