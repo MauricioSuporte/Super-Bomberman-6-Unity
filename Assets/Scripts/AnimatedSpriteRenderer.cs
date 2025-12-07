@@ -104,7 +104,6 @@ public class AnimatedSpriteRenderer : MonoBehaviour
         if (idle)
         {
             spriteRenderer.sprite = idleSprite;
-            transform.localPosition = initialLocalPosition;
             return;
         }
 
@@ -120,10 +119,6 @@ public class AnimatedSpriteRenderer : MonoBehaviour
         {
             Vector2 offset = frameOffsets[animationFrame];
             transform.localPosition = initialLocalPosition + (Vector3)offset;
-        }
-        else
-        {
-            transform.localPosition = initialLocalPosition;
         }
     }
 }

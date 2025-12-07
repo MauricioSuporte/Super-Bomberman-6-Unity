@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
@@ -7,8 +8,9 @@ public class Bomb : MonoBehaviour
 {
     private BombController owner;
     public BombController Owner => owner;
+
     public bool HasExploded { get; private set; }
-    public AudioSource audioSource;
+    public bool IsBeingKicked => isKicked;
 
     private Collider2D bombCollider;
     private Rigidbody2D rb;
@@ -21,40 +23,31 @@ public class Bomb : MonoBehaviour
     private float kickTileSize = 1f;
     private LayerMask kickObstacleMask;
     private Tilemap kickDestructibleTilemap;
+    private Coroutine kickRoutine;
+    private Vector2 currentTileCenter;
+    private Vector2 lastPos;
 
     private void Awake()
     {
-        audioSource = GetComponent<AudioSource>();
         bombCollider = GetComponent<Collider2D>();
         rb = GetComponent<Rigidbody2D>();
 
-        if (bombCollider != null)
-            bombCollider.isTrigger = true;
+        bombCollider.isTrigger = true;
 
-        if (rb != null)
-        {
-            rb.gravityScale = 0f;
-            rb.constraints = RigidbodyConstraints2D.FreezeRotation;
-            rb.bodyType = RigidbodyType2D.Kinematic;
-        }
+        rb.gravityScale = 0f;
+        rb.constraints = RigidbodyConstraints2D.FreezeRotation;
+        rb.bodyType = RigidbodyType2D.Kinematic;
+
+        lastPos = rb.position;
     }
 
-    private void FixedUpdate()
+    private bool TileHasBomb(Vector2 pos)
     {
-        if (!isKicked || rb == null)
-            return;
+        int bombLayer = LayerMask.NameToLayer("Bomb");
+        int bombMask = 1 << bombLayer;
 
-        Vector2 position = rb.position;
-        Vector2 step = kickSpeed * Time.fixedDeltaTime * kickDirection;
-        Vector2 target = position + step;
-
-        if (IsKickBlocked(target))
-        {
-            isKicked = false;
-            return;
-        }
-
-        rb.MovePosition(target);
+        Collider2D hit = Physics2D.OverlapBox(pos, Vector2.one * 0.6f, 0f, bombMask);
+        return hit != null && hit.gameObject != gameObject;
     }
 
     private bool IsKickBlocked(Vector2 target)
@@ -62,19 +55,28 @@ public class Bomb : MonoBehaviour
         Vector2 size = Vector2.one * (kickTileSize * 0.6f);
         Collider2D[] hits = Physics2D.OverlapBoxAll(target, size, 0f, kickObstacleMask);
 
-        if (hits != null)
+        int enemyLayer = LayerMask.NameToLayer("Enemy");
+        int bombLayer = LayerMask.NameToLayer("Bomb");
+
+        foreach (var hit in hits)
         {
-            foreach (var hit in hits)
-            {
-                if (hit == null)
-                    continue;
+            if (hit == null || hit.gameObject == gameObject)
+                continue;
 
-                if (hit.gameObject == gameObject)
-                    continue;
-
+            if (hit.gameObject.layer == enemyLayer)
                 return true;
-            }
+
+            if (hit.gameObject.layer == bombLayer)
+                return true;
+
+            if (hit.isTrigger)
+                continue;
+
+            return true;
         }
+
+        if (TileHasBomb(target))
+            return true;
 
         if (kickDestructibleTilemap != null)
         {
@@ -86,44 +88,84 @@ public class Bomb : MonoBehaviour
         return false;
     }
 
-    public void MarkAsExploded()
-    {
-        HasExploded = true;
-    }
-
     public void Initialize(BombController owner)
     {
         this.owner = owner;
+        lastPos = rb.position;
     }
 
-    public bool StartKick(
-        Vector2 direction,
-        float tileSize,
-        LayerMask obstacleMask,
-        Tilemap destructibleTilemap)
+    public Vector2 GetLogicalPosition() => lastPos;
+
+    public bool StartKick(Vector2 direction, float tileSize, LayerMask obstacleMask, Tilemap destructibleTilemap)
     {
-        if (HasExploded)
-            return false;
-
-        if (isKicked)
-            return false;
-
-        if (direction == Vector2.zero)
+        if (HasExploded || isKicked || direction == Vector2.zero)
             return false;
 
         kickDirection = direction.normalized;
         kickTileSize = tileSize;
-        kickObstacleMask = obstacleMask;
+
+        kickObstacleMask = obstacleMask | LayerMask.GetMask("Enemy");
+
         kickDestructibleTilemap = destructibleTilemap;
 
-        Vector2 origin = rb != null ? rb.position : (Vector2)transform.position;
-        Vector2 firstTarget = origin + kickDirection * kickTileSize;
-
-        if (IsKickBlocked(firstTarget))
+        if (IsKickBlocked(rb.position + kickDirection * kickTileSize))
             return false;
 
+        Vector2 origin = rb.position;
+        origin.x = Mathf.Round(origin.x / tileSize) * tileSize;
+        origin.y = Mathf.Round(origin.y / tileSize) * tileSize;
+
+        currentTileCenter = origin;
+        lastPos = origin;
+
+        rb.position = origin;
+
+        if (kickRoutine != null)
+            StopCoroutine(kickRoutine);
+
         isKicked = true;
+        kickRoutine = StartCoroutine(KickRoutine());
+
         return true;
+    }
+
+    private IEnumerator KickRoutine()
+    {
+        while (true)
+        {
+            if (HasExploded)
+                break;
+
+            Vector2 next = currentTileCenter + kickDirection * kickTileSize;
+
+            if (IsKickBlocked(next))
+                break;
+
+            float t = 0f;
+            float travelTime = kickTileSize / kickSpeed;
+            Vector2 start = currentTileCenter;
+
+            while (t < travelTime)
+            {
+                t += Time.deltaTime;
+                Vector2 pos = Vector2.Lerp(start, next, t / travelTime);
+                lastPos = pos;
+                rb.MovePosition(pos);
+                yield return null;
+            }
+
+            currentTileCenter = next;
+            lastPos = next;
+        }
+
+        rb.position = currentTileCenter;
+        isKicked = false;
+        kickRoutine = null;
+    }
+
+    public void MarkAsExploded()
+    {
+        HasExploded = true;
     }
 
     private void OnTriggerEnter2D(Collider2D other)
@@ -132,11 +174,6 @@ public class Bomb : MonoBehaviour
             return;
 
         if (other.gameObject.layer == LayerMask.NameToLayer("Explosion"))
-        {
-            if (owner != null)
-            {
-                owner.ExplodeBomb(gameObject);
-            }
-        }
+            owner.ExplodeBomb(gameObject);
     }
 }

@@ -67,19 +67,30 @@ public class BombController : MonoBehaviour
         if (bomb == null)
             return;
 
-        if (bomb.TryGetComponent<Bomb>(out var bombComponent))
+        var bombComp = bomb.GetComponent<Bomb>();
+
+        Vector2 logicalPos = bombComp != null
+            ? bombComp.GetLogicalPosition()
+            : (Vector2)bomb.transform.position;
+
+        bomb.transform.position = logicalPos;
+
+        if (bomb.TryGetComponent<Rigidbody2D>(out var rb))
+            rb.position = logicalPos;
+
+        if (bombComp != null)
         {
-            if (bombComponent.HasExploded)
+            if (bombComp.HasExploded)
                 return;
 
-            bombComponent.MarkAsExploded();
+            bombComp.MarkAsExploded();
         }
 
         HideBombVisuals(bomb);
 
         bomb.GetComponent<AudioSource>()?.Play();
 
-        Vector2 position = bomb.transform.position;
+        Vector2 position = logicalPos;
         position.x = Mathf.Round(position.x);
         position.y = Mathf.Round(position.y);
 
@@ -116,7 +127,8 @@ public class BombController : MonoBehaviour
         GameObject bomb = Instantiate(bombPrefab, position, Quaternion.identity);
         bombsRemaining--;
 
-        if (!bomb.TryGetComponent<Bomb>(out var bombComponent))
+        var bombComponent = bomb.GetComponent<Bomb>();
+        if (bombComponent == null)
             bombComponent = bomb.AddComponent<Bomb>();
 
         bombComponent.Initialize(this);
@@ -147,10 +159,11 @@ public class BombController : MonoBehaviour
             return;
 
         var bomb = other.GetComponent<Bomb>();
-        if (bomb != null && bomb.Owner == this)
-        {
+        if (bomb == null)
+            return;
+
+        if (bomb.Owner == this && !bomb.IsBeingKicked)
             other.isTrigger = false;
-        }
     }
 
     private void Explode(Vector2 position, Vector2 direction, int length)
@@ -170,9 +183,7 @@ public class BombController : MonoBehaviour
         if (itemHit != null)
         {
             if (itemHit.TryGetComponent<ItemPickup>(out var item))
-            {
                 item.DestroyWithAnimation();
-            }
 
             return;
         }
@@ -187,9 +198,7 @@ public class BombController : MonoBehaviour
         if (existing != null)
         {
             if (length > 1)
-            {
                 existing.UpgradeToMiddleIfNeeded();
-            }
 
             Explode(position, direction, length - 1);
             return;
