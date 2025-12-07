@@ -111,13 +111,20 @@ public class EnemyMovementController : MonoBehaviour
 
         isDead = true;
 
-        rb.linearVelocity = Vector2.zero;
+        if (rb != null)
+            rb.linearVelocity = Vector2.zero;
+
         if (TryGetComponent<Collider2D>(out var col))
             col.enabled = false;
 
-        spriteUp.enabled = false;
-        spriteDown.enabled = false;
-        spriteLeft.enabled = false;
+        if (spriteUp != null)
+            spriteUp.enabled = false;
+
+        if (spriteDown != null)
+            spriteDown.enabled = false;
+
+        if (spriteLeft != null)
+            spriteLeft.enabled = false;
 
         if (spriteDeath != null)
         {
@@ -167,7 +174,7 @@ public class EnemyMovementController : MonoBehaviour
         direction = dirs[Random.Range(0, dirs.Length)];
     }
 
-    protected void UpdateSpriteDirection(Vector2 dir)
+    protected virtual void UpdateSpriteDirection(Vector2 dir)
     {
         AnimatedSpriteRenderer previousSprite = activeSprite;
 
