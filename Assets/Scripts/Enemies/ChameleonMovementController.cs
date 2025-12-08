@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 [RequireComponent(typeof(SpriteRenderer))]
@@ -11,15 +12,50 @@ public class ChameleonMovementController : EnemyMovementController
     public float blinkMinInterval = 2f;
     public float blinkMaxInterval = 3f;
     public float blinkDuration = 0.2f;
+    public int blinksToDisguise = 2;
 
-    private Coroutine blinkRoutine;
+    [Header("Disguise (Player Form)")]
+    public AnimatedSpriteRenderer disguiseSpriteUp;
+    public AnimatedSpriteRenderer disguiseSpriteDown;
+    public AnimatedSpriteRenderer disguiseSpriteLeft;
+    public AnimatedSpriteRenderer disguiseSpriteRight;
+    public float disguiseMinDuration = 4f;
+    public float disguiseMaxDuration = 5f;
+    public float disguisedSpeed = 5f;
+
+    [Header("Disguise Movement AI")]
+    public float minDirectionChangeTime = 0.5f;
+    public float maxDirectionChangeTime = 1.5f;
+
+    [Header("Transform Blink")]
+    public float transformDuration = 1f;
+    public float transformBlinkInterval = 0.05f;
+
+    private Coroutine behaviourRoutine;
+    private bool isDisguised;
+    private bool isTransforming;
+
+    private Vector2 disguisedDirection = Vector2.zero;
+    private float directionChangeTimer;
+    private bool hasDisguisedInput;
+
+    private const float CenterEpsilon = 0.01f;
+    private float SlideDeadZone => tileSize * 0.25f;
+
+    private float originalSpeed;
+
+    private AnimatedSpriteRenderer activeDisguiseSprite;
 
     protected override void Awake()
     {
         base.Awake();
 
+        originalSpeed = speed;
+
         if (!spriteRenderer)
             spriteRenderer = GetComponent<SpriteRenderer>();
+
+        DisableDisguiseSprites();
     }
 
     protected override void Start()
@@ -29,55 +65,95 @@ public class ChameleonMovementController : EnemyMovementController
         if (spriteRenderer && idleSprite)
             spriteRenderer.sprite = idleSprite;
 
-        StartBlinkLoop();
+        StartBehaviourLoop();
     }
 
     private void OnEnable()
     {
-        if (spriteRenderer && idleSprite)
+        if (spriteRenderer && idleSprite && !isDisguised)
+        {
+            spriteRenderer.enabled = true;
             spriteRenderer.sprite = idleSprite;
+        }
 
-        StartBlinkLoop();
+        DisableDisguiseSprites();
+
+        StartBehaviourLoop();
     }
 
     private void OnDisable()
     {
-        StopBlinkLoop();
+        StopBehaviourLoop();
+    }
+
+    private void Update()
+    {
+        if (isDead || isTransforming)
+            return;
+
+        if (isDisguised)
+            UpdateDisguisedDirection();
+    }
+
+    protected override void FixedUpdate()
+    {
+        if (isDead || isTransforming)
+            return;
+
+        if (isDisguised)
+        {
+            DoDisguisedMovement();
+        }
+        else
+        {
+            base.FixedUpdate();
+        }
     }
 
     protected override void UpdateSpriteDirection(Vector2 dir)
     {
     }
 
-    private void StartBlinkLoop()
+    private void StartBehaviourLoop()
     {
-        if (blinkRoutine != null)
-            StopCoroutine(blinkRoutine);
+        if (behaviourRoutine != null)
+            StopCoroutine(behaviourRoutine);
 
         if (gameObject.activeInHierarchy)
-            blinkRoutine = StartCoroutine(BlinkLoop());
+            behaviourRoutine = StartCoroutine(BehaviourLoop());
     }
 
-    private void StopBlinkLoop()
+    private void StopBehaviourLoop()
     {
-        if (blinkRoutine != null)
+        if (behaviourRoutine != null)
         {
-            StopCoroutine(blinkRoutine);
-            blinkRoutine = null;
+            StopCoroutine(behaviourRoutine);
+            behaviourRoutine = null;
         }
     }
 
-    private IEnumerator BlinkLoop()
+    private IEnumerator BehaviourLoop()
     {
         while (!isDead)
         {
-            float wait = Random.Range(blinkMinInterval, blinkMaxInterval);
-            yield return new WaitForSeconds(wait);
+            int blinkCount = 0;
 
-            yield return BlinkOnce();
+            while (blinkCount < blinksToDisguise && !isDead)
+            {
+                float wait = Random.Range(blinkMinInterval, blinkMaxInterval);
+                yield return new WaitForSeconds(wait);
+
+                yield return BlinkOnce();
+                blinkCount++;
+            }
+
+            if (isDead)
+                break;
+
+            yield return DisguiseAsPlayer();
         }
 
-        blinkRoutine = null;
+        behaviourRoutine = null;
     }
 
     private IEnumerator BlinkOnce()
@@ -94,8 +170,383 @@ public class ChameleonMovementController : EnemyMovementController
             yield return new WaitForSeconds(frameTime);
         }
 
-        if (idleSprite)
+        if (!isDisguised && idleSprite)
             spriteRenderer.sprite = idleSprite;
+    }
+
+    private IEnumerator TransformBlink()
+    {
+        if (spriteRenderer == null || idleSprite == null)
+            yield break;
+
+        Sprite playerIdle = null;
+
+        if (disguiseSpriteDown != null)
+            playerIdle = disguiseSpriteDown.idleSprite;
+
+        if (playerIdle == null && disguiseSpriteDown != null)
+        {
+            if (disguiseSpriteDown.TryGetComponent<SpriteRenderer>(out var sr))
+                playerIdle = sr.sprite;
+        }
+
+        if (playerIdle == null)
+            yield break;
+
+        float elapsed = 0f;
+        bool useChameleon = true;
+
+        while (elapsed < transformDuration)
+        {
+            spriteRenderer.sprite = useChameleon ? idleSprite : playerIdle;
+            useChameleon = !useChameleon;
+
+            float wait = transformBlinkInterval;
+            elapsed += wait;
+            yield return new WaitForSeconds(wait);
+        }
+    }
+
+    private IEnumerator DisguiseAsPlayer()
+    {
+        isTransforming = true;
+        isDisguised = false;
+        speed = 0f;
+
+        DisableDisguiseSprites();
+
+        if (spriteRenderer != null)
+        {
+            spriteRenderer.enabled = true;
+            if (idleSprite != null)
+                spriteRenderer.sprite = idleSprite;
+        }
+
+        disguisedDirection = Vector2.zero;
+        hasDisguisedInput = false;
+
+        yield return TransformBlink();
+
+        isTransforming = false;
+        isDisguised = true;
+        speed = disguisedSpeed;
+
+        if (spriteRenderer != null)
+            spriteRenderer.enabled = false;
+
+        SetDisguiseDirection(Vector2.down);
+
+        disguisedDirection = Vector2.zero;
+        hasDisguisedInput = false;
+        ResetDirectionTimer();
+
+        float disguiseTime = Random.Range(disguiseMinDuration, disguiseMaxDuration);
+        float elapsed = 0f;
+
+        while (elapsed < disguiseTime && !isDead)
+        {
+            elapsed += Time.deltaTime;
+            yield return null;
+        }
+
+        isDisguised = false;
+        isTransforming = true;
+        speed = 0f;
+
+        DisableDisguiseSprites();
+
+        if (spriteRenderer != null)
+        {
+            spriteRenderer.enabled = true;
+            if (idleSprite != null)
+                spriteRenderer.sprite = idleSprite;
+        }
+
+        yield return TransformBlink();
+
+        isTransforming = false;
+        speed = originalSpeed;
+
+        if (!isDead && spriteRenderer && idleSprite)
+        {
+            spriteRenderer.enabled = true;
+            spriteRenderer.sprite = idleSprite;
+        }
+    }
+
+    private void DisableDisguiseSprites()
+    {
+        if (disguiseSpriteUp != null) disguiseSpriteUp.enabled = false;
+        if (disguiseSpriteDown != null) disguiseSpriteDown.enabled = false;
+        if (disguiseSpriteLeft != null) disguiseSpriteLeft.enabled = false;
+        if (disguiseSpriteRight != null) disguiseSpriteRight.enabled = false;
+
+        activeDisguiseSprite = null;
+    }
+
+    private void SetDisguiseDirection(Vector2 dir)
+    {
+        if (!isDisguised)
+            return;
+
+        AnimatedSpriteRenderer newSprite = activeDisguiseSprite;
+
+        if (dir.y > 0.1f)
+            newSprite = disguiseSpriteUp;
+        else if (dir.y < -0.1f)
+            newSprite = disguiseSpriteDown;
+        else if (dir.x < -0.1f)
+            newSprite = disguiseSpriteLeft;
+        else if (dir.x > 0.1f)
+            newSprite = disguiseSpriteRight;
+
+        if (newSprite != activeDisguiseSprite)
+        {
+            if (activeDisguiseSprite != null)
+                activeDisguiseSprite.enabled = false;
+
+            activeDisguiseSprite = newSprite;
+
+            if (activeDisguiseSprite != null)
+            {
+                activeDisguiseSprite.enabled = true;
+                activeDisguiseSprite.idle = false;
+            }
+        }
+
+        if (activeDisguiseSprite != null)
+            activeDisguiseSprite.idle = dir == Vector2.zero;
+    }
+
+    private void ResetDirectionTimer()
+    {
+        directionChangeTimer = Random.Range(minDirectionChangeTime, maxDirectionChangeTime);
+    }
+
+    private void UpdateDisguisedDirection()
+    {
+        directionChangeTimer -= Time.deltaTime;
+
+        if (!hasDisguisedInput || directionChangeTimer <= 0f)
+        {
+            Vector2[] dirs = { Vector2.up, Vector2.down, Vector2.left, Vector2.right };
+            var validDirs = new List<Vector2>();
+
+            foreach (var dir in dirs)
+            {
+                Vector2 checkPos = rb.position + dir * tileSize;
+                if (!IsBlockedDisguised(checkPos))
+                    validDirs.Add(dir);
+            }
+
+            if (validDirs.Count == 0)
+            {
+                disguisedDirection = Vector2.zero;
+                hasDisguisedInput = false;
+            }
+            else
+            {
+                disguisedDirection = validDirs[Random.Range(0, validDirs.Count)];
+                hasDisguisedInput = true;
+            }
+
+            ResetDirectionTimer();
+        }
+
+        SetDisguiseDirection(disguisedDirection);
+    }
+
+    private void DoDisguisedMovement()
+    {
+        if (!hasDisguisedInput || disguisedDirection == Vector2.zero)
+        {
+            SetDisguiseDirection(Vector2.zero);
+            return;
+        }
+
+        float dt = Time.fixedDeltaTime;
+        float moveSpeed = disguisedSpeed * dt;
+
+        Vector2 position = rb.position;
+
+        bool blockLeft = IsSolidAtDisguised(position + Vector2.left * (tileSize * 0.5f));
+        bool blockRight = IsSolidAtDisguised(position + Vector2.right * (tileSize * 0.5f));
+        bool blockUp = IsSolidAtDisguised(position + Vector2.up * (tileSize * 0.5f));
+        bool blockDown = IsSolidAtDisguised(position + Vector2.down * (tileSize * 0.5f));
+
+        bool movingVertical = Mathf.Abs(disguisedDirection.y) > 0.01f;
+        bool movingHorizontal = Mathf.Abs(disguisedDirection.x) > 0.01f;
+
+        if (movingVertical && blockLeft && blockRight)
+        {
+            float targetX = Mathf.Round(position.x / tileSize) * tileSize;
+            position.x = Mathf.MoveTowards(position.x, targetX, moveSpeed);
+        }
+
+        if (movingHorizontal && blockUp && blockDown)
+        {
+            float targetY = Mathf.Round(position.y / tileSize) * tileSize;
+            position.y = Mathf.MoveTowards(position.y, targetY, moveSpeed);
+        }
+
+        Vector2 targetPosition = position + disguisedDirection * moveSpeed;
+
+        if (!IsBlockedDisguised(targetPosition))
+        {
+            rb.MovePosition(targetPosition);
+            return;
+        }
+
+        if (movingVertical)
+        {
+            float currentCenterX = Mathf.Round(position.x / tileSize) * tileSize;
+            float offsetX = Mathf.Abs(position.x - currentCenterX);
+
+            if (offsetX > SlideDeadZone)
+                TrySlideHorizontally(position, moveSpeed);
+        }
+        else if (movingHorizontal)
+        {
+            float currentCenterY = Mathf.Round(position.y / tileSize) * tileSize;
+            float offsetY = Mathf.Abs(position.y - currentCenterY);
+
+            if (offsetY > SlideDeadZone)
+                TrySlideVertically(position, moveSpeed);
+        }
+    }
+
+    private void TrySlideHorizontally(Vector2 position, float moveSpeed)
+    {
+        float leftCenter = Mathf.Floor(position.x / tileSize) * tileSize;
+        float rightCenter = Mathf.Ceil(position.x / tileSize) * tileSize;
+
+        Vector2 verticalStep = new(0f, disguisedDirection.y * moveSpeed);
+
+        bool leftFree = !IsBlockedDisguised(new Vector2(leftCenter, position.y) + verticalStep);
+        bool rightFree = !IsBlockedDisguised(new Vector2(rightCenter, position.y) + verticalStep);
+
+        if (!leftFree && !rightFree)
+            return;
+
+        float targetX;
+
+        if (leftFree && !rightFree)
+            targetX = leftCenter;
+        else if (rightFree && !leftFree)
+            targetX = rightCenter;
+        else
+        {
+            targetX = Mathf.Abs(position.x - leftCenter) <= Mathf.Abs(position.x - rightCenter)
+                ? leftCenter
+                : rightCenter;
+        }
+
+        if (Mathf.Abs(position.x - targetX) > CenterEpsilon)
+        {
+            float newX = Mathf.MoveTowards(position.x, targetX, moveSpeed);
+            rb.MovePosition(new Vector2(newX, position.y));
+        }
+        else
+        {
+            Vector2 newPos = new Vector2(targetX, position.y) + verticalStep;
+            if (!IsBlockedDisguised(newPos))
+                rb.MovePosition(newPos);
+        }
+    }
+
+    private void TrySlideVertically(Vector2 position, float moveSpeed)
+    {
+        float bottomCenter = Mathf.Floor(position.y / tileSize) * tileSize;
+        float topCenter = Mathf.Ceil(position.y / tileSize) * tileSize;
+
+        Vector2 horizontalStep = new(disguisedDirection.x * moveSpeed, 0f);
+
+        bool bottomFree = !IsBlockedDisguised(new Vector2(position.x, bottomCenter) + horizontalStep);
+        bool topFree = !IsBlockedDisguised(new Vector2(position.x, topCenter) + horizontalStep);
+
+        if (!bottomFree && !topFree)
+            return;
+
+        float targetY;
+
+        if (bottomFree && !topFree)
+            targetY = bottomCenter;
+        else if (topFree && !bottomFree)
+            targetY = topCenter;
+        else
+        {
+            targetY = Mathf.Abs(position.y - bottomCenter) <= Mathf.Abs(position.y - topCenter)
+                ? bottomCenter
+                : topCenter;
+        }
+
+        if (Mathf.Abs(position.y - targetY) > CenterEpsilon)
+        {
+            float newY = Mathf.MoveTowards(position.y, targetY, moveSpeed);
+            rb.MovePosition(new Vector2(position.x, newY));
+        }
+        else
+        {
+            Vector2 newPos = new Vector2(position.x, targetY) + horizontalStep;
+            if (!IsBlockedDisguised(newPos))
+                rb.MovePosition(newPos);
+        }
+    }
+
+    private bool IsSolidAtDisguised(Vector2 worldPosition)
+    {
+        Vector2 size = Vector2.one * (tileSize * 0.6f);
+
+        Collider2D[] hits = Physics2D.OverlapBoxAll(worldPosition, size, 0f, obstacleMask);
+        if (hits == null || hits.Length == 0)
+            return false;
+
+        foreach (var hit in hits)
+        {
+            if (hit == null)
+                continue;
+
+            if (hit.gameObject == gameObject)
+                continue;
+
+            if (hit.isTrigger)
+                continue;
+
+            return true;
+        }
+
+        return false;
+    }
+
+    private bool IsBlockedDisguised(Vector2 targetPosition)
+    {
+        Vector2 size;
+
+        if (Mathf.Abs(disguisedDirection.x) > 0f)
+            size = new Vector2(tileSize * 0.6f, tileSize * 0.2f);
+        else
+            size = new Vector2(tileSize * 0.2f, tileSize * 0.6f);
+
+        Collider2D[] hits = Physics2D.OverlapBoxAll(targetPosition, size, 0f, obstacleMask);
+
+        if (hits == null || hits.Length == 0)
+            return false;
+
+        foreach (var hit in hits)
+        {
+            if (hit == null)
+                continue;
+
+            if (hit.gameObject == gameObject)
+                continue;
+
+            if (hit.isTrigger)
+                continue;
+
+            return true;
+        }
+
+        return false;
     }
 
     protected override void Die()
@@ -103,10 +554,12 @@ public class ChameleonMovementController : EnemyMovementController
         if (isDead)
             return;
 
-        StopBlinkLoop();
+        StopBehaviourLoop();
 
         if (spriteRenderer != null)
             spriteRenderer.enabled = false;
+
+        DisableDisguiseSprites();
 
         base.Die();
     }
