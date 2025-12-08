@@ -27,7 +27,12 @@ public class AnimatedSpriteRenderer : MonoBehaviour
     [Tooltip("Optional local offset applied per frame. If empty or length differs from animationSprite, no offset is applied.")]
     public Vector2[] frameOffsets;
 
+    [Header("Ping Pong")]
+    [Tooltip("If true, animation plays 0..N..0 (ping-pong) instead of looping 0..N-1.")]
+    public bool pingPong = false;
+
     private int animationFrame;
+    private int direction = 1;          // 1 indo pra frente, -1 voltando
     private Vector3 initialLocalPosition;
 
     public int CurrentFrame
@@ -56,6 +61,9 @@ public class AnimatedSpriteRenderer : MonoBehaviour
     {
         spriteRenderer.enabled = true;
         transform.localPosition = initialLocalPosition;
+        animationFrame = 0;
+        direction = 1;
+        ApplyFrame();
     }
 
     private void OnDisable()
@@ -66,10 +74,26 @@ public class AnimatedSpriteRenderer : MonoBehaviour
 
     private void Start()
     {
-        if (useSequenceDuration && animationSprite != null && animationSprite.Length > 0)
+        if (animationSprite != null && animationSprite.Length > 0)
         {
-            sequenceDuration = Mathf.Max(sequenceDuration, 0.0001f);
-            animationTime = sequenceDuration / animationSprite.Length;
+            if (useSequenceDuration)
+            {
+                sequenceDuration = Mathf.Max(sequenceDuration, 0.0001f);
+
+                int framesInCycle;
+
+                if (pingPong && animationSprite.Length > 1)
+                {
+                    // Ex: 6 sprites -> 0,1,2,3,4,5,4,3,2,1 -> 10 frames
+                    framesInCycle = animationSprite.Length * 2 - 2;
+                }
+                else
+                {
+                    framesInCycle = animationSprite.Length;
+                }
+
+                animationTime = sequenceDuration / framesInCycle;
+            }
         }
 
         InvokeRepeating(nameof(NextFrame), animationTime, animationTime);
@@ -91,10 +115,28 @@ public class AnimatedSpriteRenderer : MonoBehaviour
         if (animationSprite == null || animationSprite.Length == 0)
             return;
 
-        animationFrame++;
+        if (!pingPong)
+        {
+            animationFrame++;
 
-        if (loop && animationFrame >= animationSprite.Length)
-            animationFrame = 0;
+            if (loop && animationFrame >= animationSprite.Length)
+                animationFrame = 0;
+        }
+        else
+        {
+            animationFrame += direction;
+
+            if (animationFrame >= animationSprite.Length)
+            {
+                animationFrame = animationSprite.Length - 2;
+                direction = -1;
+            }
+            else if (animationFrame < 0)
+            {
+                animationFrame = 1;
+                direction = 1;
+            }
+        }
 
         ApplyFrame();
     }
@@ -119,6 +161,10 @@ public class AnimatedSpriteRenderer : MonoBehaviour
         {
             Vector2 offset = frameOffsets[animationFrame];
             transform.localPosition = initialLocalPosition + (Vector3)offset;
+        }
+        else
+        {
+            transform.localPosition = initialLocalPosition;
         }
     }
 }

@@ -147,17 +147,17 @@ TextureImporter:
         serializedVersion: 2
         x: 0
         y: 0
-        width: 17
+        width: 16
         height: 23
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: 74a0520f4cb8eb7a0800000000000000
+      spriteID: 58bcf3366e3edc64db90518a7031c554
       internalID: -6359491945841751481
       vertices: []
       indices: 
@@ -167,19 +167,19 @@ TextureImporter:
       name: MetalHorn_1
       rect:
         serializedVersion: 2
-        x: 18
+        x: 19
         y: 0
-        width: 18
+        width: 16
         height: 23
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: 9b2fd6c1e739a9400800000000000000
+      spriteID: 0389fd7447005f94b927c1d4e61401b3
       internalID: 331739692417282745
       vertices: []
       indices: 
@@ -189,19 +189,19 @@ TextureImporter:
       name: MetalHorn_2
       rect:
         serializedVersion: 2
-        x: 37
+        x: 38
         y: 0
-        width: 18
+        width: 16
         height: 23
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: 23464c692019f9bb0800000000000000
+      spriteID: d382c8606c19adf458cf8c0a9966c47a
       internalID: -4927060027014618062
       vertices: []
       indices: 
@@ -211,19 +211,19 @@ TextureImporter:
       name: MetalHorn_3
       rect:
         serializedVersion: 2
-        x: 56
+        x: 57
         y: 0
-        width: 23
+        width: 21
         height: 23
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: e061eb3379bbb8980800000000000000
+      spriteID: 842c7621bae695c4599a24ee9d330336
       internalID: -8535522410668091890
       vertices: []
       indices: 
@@ -233,19 +233,19 @@ TextureImporter:
       name: MetalHorn_4
       rect:
         serializedVersion: 2
-        x: 80
+        x: 81
         y: 0
-        width: 23
+        width: 21
         height: 23
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: 354c9073d70d3e520800000000000000
+      spriteID: d1a015800c828b04b9a914dbb609abf7
       internalID: 2730255035329528915
       vertices: []
       indices: 
@@ -255,42 +255,20 @@ TextureImporter:
       name: MetalHorn_5
       rect:
         serializedVersion: 2
-        x: 104
+        x: 105
         y: 0
-        width: 23
+        width: 21
         height: 23
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: e5f6bc2f4c588bb10800000000000000
+      spriteID: 80acf4a2c89292e4f92ea317b6ec3f76
       internalID: 1997493515672317790
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: MetalHorn_6
-      rect:
-        serializedVersion: 2
-        x: 128
-        y: 0
-        width: 23
-        height: 23
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: c36fd872ef3a96d00800000000000000
-      internalID: 966483907028317756
       vertices: []
       indices: 
       edges: []
@@ -299,19 +277,19 @@ TextureImporter:
       name: MetalHorn_7
       rect:
         serializedVersion: 2
-        x: 152
+        x: 129
         y: 0
-        width: 23
+        width: 21
         height: 23
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: f3d93afa291b5dfc0800000000000000
+      spriteID: 215167885c53e9844ba31b2fc037a332
       internalID: -3470672694249022145
       vertices: []
       indices: 
@@ -321,19 +299,19 @@ TextureImporter:
       name: MetalHorn_8
       rect:
         serializedVersion: 2
-        x: 176
+        x: 153
         y: 0
-        width: 23
+        width: 21
         height: 23
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: 8398a80e723c21a10800000000000000
+      spriteID: 911a458c1bd3e7241bf825b991b7e355
       internalID: 1878778570605234488
       vertices: []
       indices: 
@@ -343,19 +321,19 @@ TextureImporter:
       name: MetalHorn_9
       rect:
         serializedVersion: 2
-        x: 200
+        x: 177
         y: 0
-        width: 18
+        width: 21
         height: 23
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: e4cf3504e64c91760800000000000000
+      spriteID: 362baec2058baf54fa938bacdcee893c
       internalID: 7429185038129036366
       vertices: []
       indices: 
@@ -365,19 +343,19 @@ TextureImporter:
       name: MetalHorn_10
       rect:
         serializedVersion: 2
-        x: 219
+        x: 201
         y: 0
-        width: 18
+        width: 16
         height: 23
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: b41e1d67150f60c30800000000000000
+      spriteID: 0bd25f44bf43b6447865de17f9adb705
       internalID: 4325408724812423499
       vertices: []
       indices: 
@@ -387,19 +365,19 @@ TextureImporter:
       name: MetalHorn_11
       rect:
         serializedVersion: 2
-        x: 238
+        x: 220
         y: 0
-        width: 18
+        width: 16
         height: 23
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: c713d6853187c6f40800000000000000
+      spriteID: 5680f1452b49d5048a540c95b2e5fcb8
       internalID: 5723081250964320636
       vertices: []
       indices: 
@@ -409,19 +387,19 @@ TextureImporter:
       name: MetalHorn_12
       rect:
         serializedVersion: 2
-        x: 257
+        x: 239
         y: 0
-        width: 18
+        width: 16
         height: 23
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: 3397bdc65fab2df80800000000000000
+      spriteID: dcaa0c14d148a34488102dda92541b5e
       internalID: -8083192817920542413
       vertices: []
       indices: 
@@ -431,19 +409,19 @@ TextureImporter:
       name: MetalHorn_13
       rect:
         serializedVersion: 2
-        x: 276
+        x: 258
         y: 0
-        width: 18
+        width: 16
         height: 23
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: af3faac4150c742b0800000000000000
+      spriteID: 03c3623ab7a13ea41935796f8cc34fb8
       internalID: -5600296156200766470
       vertices: []
       indices: 
@@ -453,20 +431,42 @@ TextureImporter:
       name: MetalHorn_14
       rect:
         serializedVersion: 2
-        x: 295
+        x: 277
         y: 0
-        width: 17
+        width: 16
         height: 23
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: 8ff584296daf4cc10800000000000000
+      spriteID: 0718cde14629cd946ad0e091a47d6db7
       internalID: 2073057527981432824
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MetalHorn_15
+      rect:
+        serializedVersion: 2
+        x: 296
+        y: 0
+        width: 16
+        height: 23
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 5de9e7f593b0df842935107e926ea019
+      internalID: 1869524795
       vertices: []
       indices: 
       edges: []
@@ -475,7 +475,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 
+    spriteID: f0a4fed4f3b59ee4ea40be31d8f90463
     internalID: 0
     vertices: []
     indices: 
@@ -483,7 +483,9 @@ TextureImporter:
     weights: []
     secondaryTextures: []
     spriteCustomMetadata:
-      entries: []
+      entries:
+      - key: SpriteEditor.SliceSettings
+        value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":16.0,"y":23.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":3.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":1,"keepEmptyRects":false,"isAlternate":false}'
     nameFileIdTable:
       MetalHorn_0: -6359491945841751481
       MetalHorn_1: 331739692417282745
@@ -492,11 +494,12 @@ TextureImporter:
       MetalHorn_12: -8083192817920542413
       MetalHorn_13: -5600296156200766470
       MetalHorn_14: 2073057527981432824
+      MetalHorn_15: 1869524795
       MetalHorn_2: -4927060027014618062
       MetalHorn_3: -8535522410668091890
       MetalHorn_4: 2730255035329528915
       MetalHorn_5: 1997493515672317790
-      MetalHorn_6: 966483907028317756
+      MetalHorn_6: -257944173
       MetalHorn_7: -3470672694249022145
       MetalHorn_8: 1878778570605234488
       MetalHorn_9: 7429185038129036366
