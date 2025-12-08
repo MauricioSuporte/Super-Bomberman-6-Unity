@@ -120,7 +120,7 @@ MonoBehaviour:
   spriteUp: {fileID: 1228606389785476324}
   spriteDown: {fileID: 1228606389785476324}
   spriteLeft: {fileID: 1228606389785476324}
-  spriteDeath: {fileID: 1228606389785476324}
+  spriteDeath: {fileID: 1228606391467010645}
   obstacleMask:
     serializedVersion: 2
     m_Bits: 1216
