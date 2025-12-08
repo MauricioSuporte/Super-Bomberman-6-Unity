@@ -8,7 +8,7 @@ public class StageMusicConfigurator : MonoBehaviour
     [Range(0f, 1f)]
     public float musicVolume = 1f;
 
-    private void Start()
+    void Awake()
     {
         if (GameMusicController.Instance == null)
             return;
