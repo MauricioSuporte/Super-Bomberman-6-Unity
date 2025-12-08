@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 1228606389669354653}
   - component: {fileID: 1228606389669354648}
   - component: {fileID: 1228606389669354655}
-  - component: {fileID: 7231739500861378241}
+  - component: {fileID: -3084971832037153437}
   m_Layer: 10
   m_Name: MetalHorn
   m_TagString: Untagged
@@ -102,7 +102,7 @@ CircleCollider2D:
   m_CompositeOrder: 0
   m_Offset: {x: 0, y: 0}
   m_Radius: 0.3
---- !u!114 &7231739500861378241
+--- !u!114 &-3084971832037153437
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -111,15 +111,15 @@ MonoBehaviour:
   m_GameObject: {fileID: 1228606389669354652}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 291cab34b7816b741bb1e1d2d716c4e4, type: 3}
+  m_Script: {fileID: 11500000, guid: 54fe6ce5c2c2ff544841776cebb9cd0c, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PersecutingEnemyMovementController
+  m_EditorClassIdentifier: Assembly-CSharp::MetalHornMovementController
   speed: 2
   life: 1
   tileSize: 1
   spriteUp: {fileID: 1228606390294117671}
   spriteDown: {fileID: 1228606389785476324}
-  spriteLeft: {fileID: 1228606390223914643}
+  spriteLeft: {fileID: 1228606390696233727}
   spriteDeath: {fileID: 1228606391467010645}
   obstacleMask:
     serializedVersion: 2
@@ -134,6 +134,8 @@ MonoBehaviour:
   playerLayerMask:
     serializedVersion: 2
     m_Bits: 8
+  chargePauseDuration: 0.5
+  chargeSpeedMultiplier: 2
 --- !u!1 &1228606389785476330
 GameObject:
   m_ObjectHideFlags: 0

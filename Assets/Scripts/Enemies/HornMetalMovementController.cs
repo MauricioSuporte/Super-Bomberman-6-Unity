@@ -1,27 +1,21 @@
 using UnityEngine;
 
-public class HornMetalMovementController : EnemyMovementController
+public class MetalHornMovementController : PersecutingEnemyMovementController
 {
-    [Header("HornMetal (Charge Settings)")]
-    public float chargeMultiplier = 2f;
+    [Header("Metal Horn Settings")]
     public float chargePauseDuration = 0.5f;
-    public float visionDistance = 10f;
-    public LayerMask playerLayerMask;
+    public float chargeSpeedMultiplier = 2f;
 
-    private bool isCharging;
     private bool isPreparingCharge;
-    private float chargePauseTimer;
+    private bool isCharging;
+    private float chargeTimer;
     private Vector2 chargeDirection;
     private float baseSpeed;
 
     protected override void Start()
     {
         base.Start();
-
         baseSpeed = speed;
-
-        if (playerLayerMask.value == 0)
-            playerLayerMask = LayerMask.GetMask("Player");
     }
 
     protected override void FixedUpdate()
@@ -32,9 +26,9 @@ public class HornMetalMovementController : EnemyMovementController
         if (isPreparingCharge)
         {
             rb.linearVelocity = Vector2.zero;
-            chargePauseTimer -= Time.fixedDeltaTime;
+            chargeTimer -= Time.fixedDeltaTime;
 
-            if (chargePauseTimer <= 0f)
+            if (chargeTimer <= 0f)
             {
                 isPreparingCharge = false;
                 isCharging = true;
@@ -51,9 +45,12 @@ public class HornMetalMovementController : EnemyMovementController
 
         if (isCharging)
         {
-            if (!IsPlayerInSight(chargeDirection))
+            speed = baseSpeed * chargeSpeedMultiplier;
+
+            if (!HasPlayerInDirection(chargeDirection))
             {
-                StopCharging();
+                isCharging = false;
+                speed = baseSpeed;
                 base.FixedUpdate();
                 return;
             }
@@ -61,13 +58,11 @@ public class HornMetalMovementController : EnemyMovementController
             if (HasBombAt(targetTile))
                 HandleBombAhead();
 
-            float currentSpeed = baseSpeed * chargeMultiplier;
-
             rb.MovePosition(
                 Vector2.MoveTowards(
                     rb.position,
                     targetTile,
-                    currentSpeed * Time.fixedDeltaTime
+                    speed * Time.fixedDeltaTime
                 )
             );
 
@@ -80,27 +75,34 @@ public class HornMetalMovementController : EnemyMovementController
             return;
         }
 
+        speed = baseSpeed;
         base.FixedUpdate();
-
-        if (!isCharging && !isPreparingCharge)
-            TryStartCharge();
     }
 
-    private void TryStartCharge()
+    protected override void DecideNextTile()
     {
-        if (HasLineOfSightToPlayer(out Vector2 dirToPlayer))
+        if (isPreparingCharge || isCharging)
+            return;
+
+        if (MetalHornTryGetPlayerDirection(out Vector2 playerDir))
         {
             isPreparingCharge = true;
             isCharging = false;
-            chargePauseTimer = chargePauseDuration;
-            chargeDirection = dirToPlayer;
+            chargeTimer = chargePauseDuration;
+            chargeDirection = playerDir;
+
+            direction = chargeDirection;
+            UpdateSpriteDirection(direction);
 
             rb.linearVelocity = Vector2.zero;
             SnapToGrid();
+            return;
         }
+
+        base.DecideNextTile();
     }
 
-    private bool HasLineOfSightToPlayer(out Vector2 dirToPlayer)
+    private bool MetalHornTryGetPlayerDirection(out Vector2 dirToPlayer)
     {
         dirToPlayer = Vector2.zero;
 
@@ -112,47 +114,67 @@ public class HornMetalMovementController : EnemyMovementController
             Vector2.right
         };
 
+        int maxSteps = Mathf.Max(1, Mathf.RoundToInt(visionDistance / tileSize));
+        Vector2 boxSize = Vector2.one * (tileSize * 0.8f);
+
         foreach (var dir in dirs)
         {
-            RaycastHit2D hit = Physics2D.Raycast(
-                rb.position,
-                dir,
-                visionDistance,
-                obstacleMask | playerLayerMask
-            );
-
-            if (hit.collider == null)
-                continue;
-
-            if (((1 << hit.collider.gameObject.layer) & playerLayerMask) != 0)
+            for (int step = 1; step <= maxSteps; step++)
             {
-                dirToPlayer = dir;
-                return true;
+                Vector2 tileCenter = rb.position + step * tileSize * dir;
+
+                Collider2D playerHit = Physics2D.OverlapBox(
+                    tileCenter,
+                    boxSize,
+                    0f,
+                    playerLayerMask
+                );
+
+                if (playerHit != null)
+                {
+                    dirToPlayer = dir;
+                    return true;
+                }
+
+                if (IsTileBlocked(tileCenter))
+                    break;
             }
         }
 
         return false;
     }
 
-    private bool IsPlayerInSight(Vector2 dir)
+    private bool HasPlayerInDirection(Vector2 dir)
     {
-        RaycastHit2D hit = Physics2D.Raycast(
-            rb.position,
-            dir,
-            visionDistance,
-            obstacleMask | playerLayerMask
-        );
+        int maxSteps = Mathf.Max(1, Mathf.RoundToInt(visionDistance / tileSize));
+        Vector2 boxSize = Vector2.one * (tileSize * 0.8f);
 
-        if (hit.collider == null)
-            return false;
+        for (int step = 1; step <= maxSteps; step++)
+        {
+            Vector2 tileCenter = rb.position + step * tileSize * dir;
 
-        return ((1 << hit.collider.gameObject.layer) & playerLayerMask) != 0;
+            Collider2D playerHit = Physics2D.OverlapBox(
+                tileCenter,
+                boxSize,
+                0f,
+                playerLayerMask
+            );
+
+            if (playerHit != null)
+                return true;
+
+            if (IsTileBlocked(tileCenter))
+                break;
+        }
+
+        return false;
     }
 
-    private void StopCharging()
+    protected override void Die()
     {
-        isCharging = false;
         isPreparingCharge = false;
+        isCharging = false;
         speed = baseSpeed;
+        base.Die();
     }
 }
