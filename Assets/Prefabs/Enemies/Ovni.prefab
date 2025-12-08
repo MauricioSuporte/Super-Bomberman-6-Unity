@@ -11,9 +11,9 @@ GameObject:
   - component: {fileID: 1228606389669354653}
   - component: {fileID: 1228606389669354648}
   - component: {fileID: 1228606389669354655}
-  - component: {fileID: -3084971832037153437}
+  - component: {fileID: 7910990393126542317}
   m_Layer: 10
-  m_Name: MetalHorn
+  m_Name: Ovni
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -102,7 +102,7 @@ CircleCollider2D:
   m_CompositeOrder: 0
   m_Offset: {x: 0, y: 0}
   m_Radius: 0.3
---- !u!114 &-3084971832037153437
+--- !u!114 &7910990393126542317
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -111,16 +111,16 @@ MonoBehaviour:
   m_GameObject: {fileID: 1228606389669354652}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 54fe6ce5c2c2ff544841776cebb9cd0c, type: 3}
+  m_Script: {fileID: 11500000, guid: 291cab34b7816b741bb1e1d2d716c4e4, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::MetalHornMovementController
-  speed: 2
+  m_EditorClassIdentifier: Assembly-CSharp::PersecutingEnemyMovementController
+  speed: 1.75
   life: 1
   tileSize: 1
-  spriteUp: {fileID: 1228606390294117671}
+  spriteUp: {fileID: 1228606389785476324}
   spriteDown: {fileID: 1228606389785476324}
-  spriteLeft: {fileID: 1228606390696233727}
-  spriteDeath: {fileID: 1228606391467010645}
+  spriteLeft: {fileID: 1228606389785476324}
+  spriteDeath: {fileID: 1228606389785476324}
   obstacleMask:
     serializedVersion: 2
     m_Bits: 1216
@@ -133,9 +133,7 @@ MonoBehaviour:
   visionDistance: 10
   playerLayerMask:
     serializedVersion: 2
-    m_Bits: 8
-  chargePauseDuration: 0.5
-  chargeSpeedMultiplier: 2
+    m_Bits: 0
 --- !u!1 &1228606389785476330
 GameObject:
   m_ObjectHideFlags: 0
@@ -216,7 +214,7 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 5
-  m_Sprite: {fileID: 4325408724812423499, guid: 159a1b2b1e1e9964ba86df6d5d275321, type: 3}
+  m_Sprite: {fileID: 7833501694746432437, guid: 308386b38e9a9284c8d22727dffdf2be, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -239,17 +237,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a4b55e1b961d144197e1a7a4a391956, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  idleSprite: {fileID: 4325408724812423499, guid: 159a1b2b1e1e9964ba86df6d5d275321, type: 3}
+  idleSprite: {fileID: 7833501694746432437, guid: 308386b38e9a9284c8d22727dffdf2be, type: 3}
   animationSprite:
-  - {fileID: 4325408724812423499, guid: 159a1b2b1e1e9964ba86df6d5d275321, type: 3}
-  - {fileID: 5723081250964320636, guid: 159a1b2b1e1e9964ba86df6d5d275321, type: 3}
-  - {fileID: -8083192817920542413, guid: 159a1b2b1e1e9964ba86df6d5d275321, type: 3}
-  - {fileID: -5600296156200766470, guid: 159a1b2b1e1e9964ba86df6d5d275321, type: 3}
-  - {fileID: 2073057527981432824, guid: 159a1b2b1e1e9964ba86df6d5d275321, type: 3}
-  - {fileID: 1869524795, guid: 159a1b2b1e1e9964ba86df6d5d275321, type: 3}
-  animationTime: 0.16666667
+  - {fileID: 7833501694746432437, guid: 308386b38e9a9284c8d22727dffdf2be, type: 3}
+  - {fileID: -6299443853617283203, guid: 308386b38e9a9284c8d22727dffdf2be, type: 3}
+  - {fileID: 849424708527508533, guid: 308386b38e9a9284c8d22727dffdf2be, type: 3}
+  - {fileID: -5412173313919294577, guid: 308386b38e9a9284c8d22727dffdf2be, type: 3}
+  animationTime: 0.5
   useSequenceDuration: 1
-  sequenceDuration: 1
+  sequenceDuration: 2
   loop: 1
   idle: 0
   frameOffsets: []
@@ -334,7 +330,7 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 5
-  m_Sprite: {fileID: -8535522410668091890, guid: 159a1b2b1e1e9964ba86df6d5d275321, type: 3}
+  m_Sprite: {fileID: 7833501694746432437, guid: 308386b38e9a9284c8d22727dffdf2be, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -357,17 +353,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a4b55e1b961d144197e1a7a4a391956, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  idleSprite: {fileID: -8535522410668091890, guid: 159a1b2b1e1e9964ba86df6d5d275321, type: 3}
+  idleSprite: {fileID: 7833501694746432437, guid: 308386b38e9a9284c8d22727dffdf2be, type: 3}
   animationSprite:
-  - {fileID: -8535522410668091890, guid: 159a1b2b1e1e9964ba86df6d5d275321, type: 3}
-  - {fileID: 2730255035329528915, guid: 159a1b2b1e1e9964ba86df6d5d275321, type: 3}
-  - {fileID: 1997493515672317790, guid: 159a1b2b1e1e9964ba86df6d5d275321, type: 3}
-  - {fileID: -3470672694249022145, guid: 159a1b2b1e1e9964ba86df6d5d275321, type: 3}
-  - {fileID: 1878778570605234488, guid: 159a1b2b1e1e9964ba86df6d5d275321, type: 3}
-  - {fileID: 7429185038129036366, guid: 159a1b2b1e1e9964ba86df6d5d275321, type: 3}
-  animationTime: 0.16666667
+  - {fileID: 7833501694746432437, guid: 308386b38e9a9284c8d22727dffdf2be, type: 3}
+  - {fileID: -6299443853617283203, guid: 308386b38e9a9284c8d22727dffdf2be, type: 3}
+  - {fileID: 849424708527508533, guid: 308386b38e9a9284c8d22727dffdf2be, type: 3}
+  - {fileID: -5412173313919294577, guid: 308386b38e9a9284c8d22727dffdf2be, type: 3}
+  animationTime: 0.5
   useSequenceDuration: 1
-  sequenceDuration: 1
+  sequenceDuration: 2
   loop: 1
   idle: 0
   frameOffsets: []
@@ -452,7 +446,7 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 5
-  m_Sprite: {fileID: -6359491945841751481, guid: 159a1b2b1e1e9964ba86df6d5d275321, type: 3}
+  m_Sprite: {fileID: 7833501694746432437, guid: 308386b38e9a9284c8d22727dffdf2be, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -475,18 +469,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a4b55e1b961d144197e1a7a4a391956, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  idleSprite: {fileID: -6359491945841751481, guid: 159a1b2b1e1e9964ba86df6d5d275321, type: 3}
+  idleSprite: {fileID: 7833501694746432437, guid: 308386b38e9a9284c8d22727dffdf2be, type: 3}
   animationSprite:
-  - {fileID: -6359491945841751481, guid: 159a1b2b1e1e9964ba86df6d5d275321, type: 3}
-  - {fileID: 331739692417282745, guid: 159a1b2b1e1e9964ba86df6d5d275321, type: 3}
-  - {fileID: -4927060027014618062, guid: 159a1b2b1e1e9964ba86df6d5d275321, type: 3}
-  animationTime: 0.033333335
-  useSequenceDuration: 0
-  sequenceDuration: 0.5
+  - {fileID: 7833501694746432437, guid: 308386b38e9a9284c8d22727dffdf2be, type: 3}
+  - {fileID: -6299443853617283203, guid: 308386b38e9a9284c8d22727dffdf2be, type: 3}
+  - {fileID: 849424708527508533, guid: 308386b38e9a9284c8d22727dffdf2be, type: 3}
+  - {fileID: -5412173313919294577, guid: 308386b38e9a9284c8d22727dffdf2be, type: 3}
+  animationTime: 0.5
+  useSequenceDuration: 1
+  sequenceDuration: 2
   loop: 1
   idle: 0
   frameOffsets: []
-  pingPong: 0
+  pingPong: 1
 --- !u!1 &1228606390696233725
 GameObject:
   m_ObjectHideFlags: 0
@@ -567,7 +562,7 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 5
-  m_Sprite: {fileID: -8535522410668091890, guid: 159a1b2b1e1e9964ba86df6d5d275321, type: 3}
+  m_Sprite: {fileID: 7833501694746432437, guid: 308386b38e9a9284c8d22727dffdf2be, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -590,17 +585,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a4b55e1b961d144197e1a7a4a391956, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  idleSprite: {fileID: -8535522410668091890, guid: 159a1b2b1e1e9964ba86df6d5d275321, type: 3}
+  idleSprite: {fileID: 7833501694746432437, guid: 308386b38e9a9284c8d22727dffdf2be, type: 3}
   animationSprite:
-  - {fileID: -8535522410668091890, guid: 159a1b2b1e1e9964ba86df6d5d275321, type: 3}
-  - {fileID: 2730255035329528915, guid: 159a1b2b1e1e9964ba86df6d5d275321, type: 3}
-  - {fileID: 1997493515672317790, guid: 159a1b2b1e1e9964ba86df6d5d275321, type: 3}
-  - {fileID: -3470672694249022145, guid: 159a1b2b1e1e9964ba86df6d5d275321, type: 3}
-  - {fileID: 1878778570605234488, guid: 159a1b2b1e1e9964ba86df6d5d275321, type: 3}
-  - {fileID: 7429185038129036366, guid: 159a1b2b1e1e9964ba86df6d5d275321, type: 3}
-  animationTime: 0.16666667
+  - {fileID: 7833501694746432437, guid: 308386b38e9a9284c8d22727dffdf2be, type: 3}
+  - {fileID: -6299443853617283203, guid: 308386b38e9a9284c8d22727dffdf2be, type: 3}
+  - {fileID: 849424708527508533, guid: 308386b38e9a9284c8d22727dffdf2be, type: 3}
+  - {fileID: -5412173313919294577, guid: 308386b38e9a9284c8d22727dffdf2be, type: 3}
+  animationTime: 0.5
   useSequenceDuration: 1
-  sequenceDuration: 1
+  sequenceDuration: 2
   loop: 1
   idle: 0
   frameOffsets: []

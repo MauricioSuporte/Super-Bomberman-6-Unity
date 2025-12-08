@@ -32,7 +32,7 @@ public class AnimatedSpriteRenderer : MonoBehaviour
     public bool pingPong = false;
 
     private int animationFrame;
-    private int direction = 1;          // 1 indo pra frente, -1 voltando
+    private int direction = 1;
     private Vector3 initialLocalPosition;
 
     public int CurrentFrame
@@ -61,8 +61,6 @@ public class AnimatedSpriteRenderer : MonoBehaviour
     {
         spriteRenderer.enabled = true;
         transform.localPosition = initialLocalPosition;
-        animationFrame = 0;
-        direction = 1;
         ApplyFrame();
     }
 
@@ -84,7 +82,6 @@ public class AnimatedSpriteRenderer : MonoBehaviour
 
                 if (pingPong && animationSprite.Length > 1)
                 {
-                    // Ex: 6 sprites -> 0,1,2,3,4,5,4,3,2,1 -> 10 frames
                     framesInCycle = animationSprite.Length * 2 - 2;
                 }
                 else
