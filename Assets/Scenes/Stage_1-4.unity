@@ -181,6 +181,7 @@ MonoBehaviour:
   loop: 0
   idle: 0
   frameOffsets: []
+  pingPong: 0
 --- !u!212 &84142602
 SpriteRenderer:
   m_ObjectHideFlags: 0
@@ -354,6 +355,7 @@ MonoBehaviour:
   loop: 1
   idle: 1
   frameOffsets: []
+  pingPong: 0
 --- !u!1 &268450098
 GameObject:
   m_ObjectHideFlags: 0
@@ -1024,7 +1026,7 @@ Tilemap:
       - {fileID: 597665950, guid: f1e5692e3d10a804d897441da1a7fe2c, type: 3}
       - {fileID: -567632026, guid: f1e5692e3d10a804d897441da1a7fe2c, type: 3}
       - {fileID: 918707804, guid: f1e5692e3d10a804d897441da1a7fe2c, type: 3}
-      m_AnimationSpeed: 10
+      m_AnimationSpeed: 10.000001
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: -6, y: -2, z: 0}
@@ -1046,7 +1048,7 @@ Tilemap:
       - {fileID: 597665950, guid: f1e5692e3d10a804d897441da1a7fe2c, type: 3}
       - {fileID: -567632026, guid: f1e5692e3d10a804d897441da1a7fe2c, type: 3}
       - {fileID: 918707804, guid: f1e5692e3d10a804d897441da1a7fe2c, type: 3}
-      m_AnimationSpeed: 10
+      m_AnimationSpeed: 10.000001
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: -3, y: -2, z: 0}
@@ -1211,7 +1213,7 @@ Tilemap:
       - {fileID: 1015330559, guid: f1e5692e3d10a804d897441da1a7fe2c, type: 3}
       - {fileID: 566355664, guid: f1e5692e3d10a804d897441da1a7fe2c, type: 3}
       - {fileID: 1530234348, guid: f1e5692e3d10a804d897441da1a7fe2c, type: 3}
-      m_AnimationSpeed: 10
+      m_AnimationSpeed: 10.000001
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: 0, y: 2, z: 0}
@@ -1266,7 +1268,7 @@ Tilemap:
       - {fileID: 597665950, guid: f1e5692e3d10a804d897441da1a7fe2c, type: 3}
       - {fileID: -567632026, guid: f1e5692e3d10a804d897441da1a7fe2c, type: 3}
       - {fileID: 918707804, guid: f1e5692e3d10a804d897441da1a7fe2c, type: 3}
-      m_AnimationSpeed: 10.000001
+      m_AnimationSpeed: 10
       m_AnimationTimeOffset: 0
       m_Flags: 0
   m_TileAssetArray:
@@ -1617,11 +1619,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1228606389669354653, guid: 272cab50b0784c94092fa4d66245e403, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -0.46
+      value: -4.58
       objectReference: {fileID: 0}
     - target: {fileID: 1228606389669354653, guid: 272cab50b0784c94092fa4d66245e403, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -5.4603715
+      value: 0.6
       objectReference: {fileID: 0}
     - target: {fileID: 1228606389669354653, guid: 272cab50b0784c94092fa4d66245e403, type: 3}
       propertyPath: m_LocalPosition.z
@@ -1908,6 +1910,7 @@ MonoBehaviour:
   loop: 1
   idle: 1
   frameOffsets: []
+  pingPong: 0
 --- !u!1 &519420028
 GameObject:
   m_ObjectHideFlags: 0
@@ -3638,6 +3641,7 @@ MonoBehaviour:
   loop: 0
   idle: 0
   frameOffsets: []
+  pingPong: 0
 --- !u!212 &792000752
 SpriteRenderer:
   m_ObjectHideFlags: 0
@@ -5932,6 +5936,7 @@ MonoBehaviour:
   loop: 1
   idle: 1
   frameOffsets: []
+  pingPong: 0
 --- !u!1 &1560934949
 GameObject:
   m_ObjectHideFlags: 0
@@ -6238,6 +6243,7 @@ MonoBehaviour:
   loop: 1
   idle: 1
   frameOffsets: []
+  pingPong: 0
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
