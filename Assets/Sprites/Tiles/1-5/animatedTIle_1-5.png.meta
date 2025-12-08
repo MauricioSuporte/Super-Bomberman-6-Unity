@@ -1,0 +1,364 @@
+fileFormatVersion: 2
+guid: 06452edbd7f90e142b7b7e27f8a0f3ab
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -2683130906362532856
+    second: animatedTIle_1-5_0
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 16
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: animatedTIle_1-5_3
+      rect:
+        serializedVersion: 2
+        x: 51
+        y: 170
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 7139546ca5e882045afec7520b497651
+      internalID: -153167992
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: animatedTIle_1-5_4
+      rect:
+        serializedVersion: 2
+        x: 68
+        y: 170
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: bfc78cac8ad73e941b9d0719393e1775
+      internalID: 577700417
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: animatedTIle_1-5_60
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 6c0b3905b4235a041b83c22f9cf9e0fe
+      internalID: 1428807481
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: animatedTIle_1-5_61
+      rect:
+        serializedVersion: 2
+        x: 17
+        y: 0
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 273bdbf747298c24f8da83085de3fedc
+      internalID: -1206423744
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: animatedTIle_1-5_62
+      rect:
+        serializedVersion: 2
+        x: 34
+        y: 0
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 21fa274827023824b825534eea4ac004
+      internalID: 1655829177
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: animatedTIle_1-5_63
+      rect:
+        serializedVersion: 2
+        x: 51
+        y: 0
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 8ab651010cc58e548ad4a3601edffd30
+      internalID: 1680961249
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: animatedTIle_1-5_64
+      rect:
+        serializedVersion: 2
+        x: 68
+        y: 0
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: eb2858ee7fe691949b0760f32f357d59
+      internalID: 1355492646
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: animatedTIle_1-5_65
+      rect:
+        serializedVersion: 2
+        x: 85
+        y: 0
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 4172fdf7b90e91e4fbc99ee3ffef7ee1
+      internalID: 1085249219
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 026aa8536d1cf6a458ecb81f8719890d
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries:
+      - key: SpriteEditor.SliceSettings
+        value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":16.0,"y":16.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":1.0,"y":1.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":1,"keepEmptyRects":false,"isAlternate":false}'
+    nameFileIdTable:
+      animatedTIle_1-5_0: -2683130906362532856
+      animatedTIle_1-5_1: -1893669729
+      animatedTIle_1-5_10: 1690740875
+      animatedTIle_1-5_11: 1435014870
+      animatedTIle_1-5_12: 532268906
+      animatedTIle_1-5_13: -1428094525
+      animatedTIle_1-5_14: -793392394
+      animatedTIle_1-5_15: 618787106
+      animatedTIle_1-5_16: -974345006
+      animatedTIle_1-5_17: 2064551602
+      animatedTIle_1-5_18: 3022099
+      animatedTIle_1-5_19: -1985995576
+      animatedTIle_1-5_2: -977141380
+      animatedTIle_1-5_20: -542183019
+      animatedTIle_1-5_21: -1936003836
+      animatedTIle_1-5_22: -59897476
+      animatedTIle_1-5_23: -55552944
+      animatedTIle_1-5_24: -1799151686
+      animatedTIle_1-5_25: -1785903679
+      animatedTIle_1-5_26: 1515866070
+      animatedTIle_1-5_27: 1895240503
+      animatedTIle_1-5_28: -1087249553
+      animatedTIle_1-5_29: -1915986626
+      animatedTIle_1-5_3: -153167992
+      animatedTIle_1-5_30: 2146739705
+      animatedTIle_1-5_31: 1246664924
+      animatedTIle_1-5_32: 626529583
+      animatedTIle_1-5_33: -2069321743
+      animatedTIle_1-5_34: 1884413207
+      animatedTIle_1-5_35: 269831822
+      animatedTIle_1-5_36: 246654194
+      animatedTIle_1-5_37: 196550332
+      animatedTIle_1-5_38: 696830851
+      animatedTIle_1-5_39: -1492791317
+      animatedTIle_1-5_4: 577700417
+      animatedTIle_1-5_40: 1154046653
+      animatedTIle_1-5_41: -567791946
+      animatedTIle_1-5_42: -2018039009
+      animatedTIle_1-5_43: -87865684
+      animatedTIle_1-5_44: -468541926
+      animatedTIle_1-5_45: -2081601959
+      animatedTIle_1-5_46: -848281168
+      animatedTIle_1-5_47: -337674017
+      animatedTIle_1-5_48: 1609950726
+      animatedTIle_1-5_49: 645867610
+      animatedTIle_1-5_5: 1354364692
+      animatedTIle_1-5_50: -998861338
+      animatedTIle_1-5_51: -1034633548
+      animatedTIle_1-5_52: 438571378
+      animatedTIle_1-5_53: 1836550259
+      animatedTIle_1-5_54: -2066107429
+      animatedTIle_1-5_55: 514872304
+      animatedTIle_1-5_56: 1221081072
+      animatedTIle_1-5_57: 566164458
+      animatedTIle_1-5_58: -651071143
+      animatedTIle_1-5_59: -743396763
+      animatedTIle_1-5_6: -270840895
+      animatedTIle_1-5_60: 1428807481
+      animatedTIle_1-5_61: -1206423744
+      animatedTIle_1-5_62: 1655829177
+      animatedTIle_1-5_63: 1680961249
+      animatedTIle_1-5_64: 1355492646
+      animatedTIle_1-5_65: 1085249219
+      animatedTIle_1-5_7: -624229828
+      animatedTIle_1-5_8: 2140289376
+      animatedTIle_1-5_9: 539239708
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
