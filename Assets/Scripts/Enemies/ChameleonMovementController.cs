@@ -2,6 +2,15 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+[System.Serializable]
+public class DisguiseSpriteSet
+{
+    public AnimatedSpriteRenderer up;
+    public AnimatedSpriteRenderer down;
+    public AnimatedSpriteRenderer left;
+    public AnimatedSpriteRenderer right;
+}
+
 [RequireComponent(typeof(SpriteRenderer))]
 public class ChameleonMovementController : EnemyMovementController
 {
@@ -15,10 +24,7 @@ public class ChameleonMovementController : EnemyMovementController
     public int blinksToDisguise = 2;
 
     [Header("Disguise (Player Form)")]
-    public AnimatedSpriteRenderer disguiseSpriteUp;
-    public AnimatedSpriteRenderer disguiseSpriteDown;
-    public AnimatedSpriteRenderer disguiseSpriteLeft;
-    public AnimatedSpriteRenderer disguiseSpriteRight;
+    public DisguiseSpriteSet[] disguiseSets;
     public float disguiseMinDuration = 4f;
     public float disguiseMaxDuration = 5f;
     public float disguisedSpeed = 5f;
@@ -29,7 +35,7 @@ public class ChameleonMovementController : EnemyMovementController
 
     [Header("Transform Blink")]
     public float transformDuration = 1f;
-    public float transformBlinkInterval = 0.05f;
+    public float transformBlinkInterval = 0.1f;
 
     private Coroutine behaviourRoutine;
     private bool isDisguised;
@@ -45,6 +51,7 @@ public class ChameleonMovementController : EnemyMovementController
     private float originalSpeed;
 
     private AnimatedSpriteRenderer activeDisguiseSprite;
+    private DisguiseSpriteSet currentDisguiseSet;
 
     protected override void Awake()
     {
@@ -174,23 +181,27 @@ public class ChameleonMovementController : EnemyMovementController
             spriteRenderer.sprite = idleSprite;
     }
 
-    private IEnumerator TransformBlink()
+    private Sprite GetCurrentPlayerIdleSprite()
     {
-        if (spriteRenderer == null || idleSprite == null)
-            yield break;
+        if (currentDisguiseSet == null)
+            return null;
 
-        Sprite playerIdle = null;
+        if (currentDisguiseSet.down != null && currentDisguiseSet.down.idleSprite != null)
+            return currentDisguiseSet.down.idleSprite;
 
-        if (disguiseSpriteDown != null)
-            playerIdle = disguiseSpriteDown.idleSprite;
-
-        if (playerIdle == null && disguiseSpriteDown != null)
+        if (currentDisguiseSet.down != null)
         {
-            if (disguiseSpriteDown.TryGetComponent<SpriteRenderer>(out var sr))
-                playerIdle = sr.sprite;
+            var sr = currentDisguiseSet.down.GetComponent<SpriteRenderer>();
+            if (sr != null)
+                return sr.sprite;
         }
 
-        if (playerIdle == null)
+        return null;
+    }
+
+    private IEnumerator TransformBlink(Sprite playerIdleSprite)
+    {
+        if (spriteRenderer == null || idleSprite == null || playerIdleSprite == null)
             yield break;
 
         float elapsed = 0f;
@@ -198,17 +209,24 @@ public class ChameleonMovementController : EnemyMovementController
 
         while (elapsed < transformDuration)
         {
-            spriteRenderer.sprite = useChameleon ? idleSprite : playerIdle;
+            spriteRenderer.sprite = useChameleon ? idleSprite : playerIdleSprite;
             useChameleon = !useChameleon;
 
             float wait = transformBlinkInterval;
             elapsed += wait;
             yield return new WaitForSeconds(wait);
         }
+
+        spriteRenderer.sprite = idleSprite;
     }
 
     private IEnumerator DisguiseAsPlayer()
     {
+        if (disguiseSets == null || disguiseSets.Length == 0)
+            yield break;
+
+        currentDisguiseSet = disguiseSets[Random.Range(0, disguiseSets.Length)];
+
         isTransforming = true;
         isDisguised = false;
         speed = 0f;
@@ -225,7 +243,9 @@ public class ChameleonMovementController : EnemyMovementController
         disguisedDirection = Vector2.zero;
         hasDisguisedInput = false;
 
-        yield return TransformBlink();
+        Sprite playerIdle = GetCurrentPlayerIdleSprite();
+        if (playerIdle != null)
+            yield return TransformBlink(playerIdle);
 
         isTransforming = false;
         isDisguised = true;
@@ -262,7 +282,8 @@ public class ChameleonMovementController : EnemyMovementController
                 spriteRenderer.sprite = idleSprite;
         }
 
-        yield return TransformBlink();
+        if (playerIdle != null)
+            yield return TransformBlink(playerIdle);
 
         isTransforming = false;
         speed = originalSpeed;
@@ -276,29 +297,42 @@ public class ChameleonMovementController : EnemyMovementController
 
     private void DisableDisguiseSprites()
     {
-        if (disguiseSpriteUp != null) disguiseSpriteUp.enabled = false;
-        if (disguiseSpriteDown != null) disguiseSpriteDown.enabled = false;
-        if (disguiseSpriteLeft != null) disguiseSpriteLeft.enabled = false;
-        if (disguiseSpriteRight != null) disguiseSpriteRight.enabled = false;
+        if (disguiseSets == null)
+        {
+            activeDisguiseSprite = null;
+            currentDisguiseSet = null;
+            return;
+        }
+
+        for (int i = 0; i < disguiseSets.Length; i++)
+        {
+            var set = disguiseSets[i];
+            if (set == null) continue;
+
+            if (set.up != null) set.up.enabled = false;
+            if (set.down != null) set.down.enabled = false;
+            if (set.left != null) set.left.enabled = false;
+            if (set.right != null) set.right.enabled = false;
+        }
 
         activeDisguiseSprite = null;
     }
 
     private void SetDisguiseDirection(Vector2 dir)
     {
-        if (!isDisguised)
+        if (!isDisguised || currentDisguiseSet == null)
             return;
 
         AnimatedSpriteRenderer newSprite = activeDisguiseSprite;
 
         if (dir.y > 0.1f)
-            newSprite = disguiseSpriteUp;
+            newSprite = currentDisguiseSet.up;
         else if (dir.y < -0.1f)
-            newSprite = disguiseSpriteDown;
+            newSprite = currentDisguiseSet.down;
         else if (dir.x < -0.1f)
-            newSprite = disguiseSpriteLeft;
+            newSprite = currentDisguiseSet.left;
         else if (dir.x > 0.1f)
-            newSprite = disguiseSpriteRight;
+            newSprite = currentDisguiseSet.right;
 
         if (newSprite != activeDisguiseSprite)
         {
@@ -420,7 +454,7 @@ public class ChameleonMovementController : EnemyMovementController
         float leftCenter = Mathf.Floor(position.x / tileSize) * tileSize;
         float rightCenter = Mathf.Ceil(position.x / tileSize) * tileSize;
 
-        Vector2 verticalStep = new(0f, disguisedDirection.y * moveSpeed);
+        Vector2 verticalStep = new Vector2(0f, disguisedDirection.y * moveSpeed);
 
         bool leftFree = !IsBlockedDisguised(new Vector2(leftCenter, position.y) + verticalStep);
         bool rightFree = !IsBlockedDisguised(new Vector2(rightCenter, position.y) + verticalStep);
@@ -459,7 +493,7 @@ public class ChameleonMovementController : EnemyMovementController
         float bottomCenter = Mathf.Floor(position.y / tileSize) * tileSize;
         float topCenter = Mathf.Ceil(position.y / tileSize) * tileSize;
 
-        Vector2 horizontalStep = new(disguisedDirection.x * moveSpeed, 0f);
+        Vector2 horizontalStep = new Vector2(disguisedDirection.x * moveSpeed, 0f);
 
         bool bottomFree = !IsBlockedDisguised(new Vector2(position.x, bottomCenter) + horizontalStep);
         bool topFree = !IsBlockedDisguised(new Vector2(position.x, topCenter) + horizontalStep);
