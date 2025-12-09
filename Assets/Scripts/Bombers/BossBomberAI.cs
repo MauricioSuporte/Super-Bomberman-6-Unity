@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 [RequireComponent(typeof(MovementController))]
 [RequireComponent(typeof(BombController))]
@@ -14,6 +14,7 @@ public class BossBomberAI : MonoBehaviour
 
     private float thinkTimer;
     private Vector2 lastDirection = Vector2.zero;
+    private bool isEvading;
 
     private void Awake()
     {
@@ -42,17 +43,33 @@ public class BossBomberAI : MonoBehaviour
     private void Think()
     {
         Vector2 myPos = RoundToTile(transform.position);
-
         Bomb[] bombs = FindObjectsOfType<Bomb>();
-        if (IsInDangerFromBombs(myPos, bombs))
+
+        bool inDanger = IsInDangerFromBombs(myPos, bombs);
+
+        if (inDanger)
         {
-            lastDirection = GetBestEscapeDirection(myPos, bombs);
+            isEvading = true;
+            lastDirection = GetBestSafeDirectionOrStay(myPos, bombs);
             return;
+        }
+
+        if (isEvading)
+        {
+            float safetyHere = GetSafetyScore(myPos, bombs);
+
+            if (bombs.Length > 0 && safetyHere < 5f)
+            {
+                lastDirection = GetBestSafeDirectionOrStay(myPos, bombs);
+                return;
+            }
+
+            isEvading = false;
         }
 
         if (target == null)
         {
-            lastDirection = GetRandomDirection();
+            lastDirection = GetBestDirectionAvoidingExplosion(myPos);
             return;
         }
 
@@ -65,7 +82,12 @@ public class BossBomberAI : MonoBehaviour
 
         if (manhattan > maxChaseDistance)
         {
-            lastDirection = GetStepTowards(delta);
+            Vector2 dir = GetStepTowards(delta);
+            Vector2 targetTile = myPos + dir;
+
+            lastDirection = IsTileWithExplosion(targetTile)
+                ? GetBestDirectionAvoidingExplosion(myPos)
+                : dir;
             return;
         }
 
@@ -73,18 +95,31 @@ public class BossBomberAI : MonoBehaviour
         {
             if (manhattan > 1.01f)
             {
-                lastDirection = GetStepTowards(delta);
+                Vector2 dir = GetStepTowards(delta);
+                Vector2 targetTile = myPos + dir;
+
+                lastDirection = IsTileWithExplosion(targetTile)
+                    ? GetBestDirectionAvoidingExplosion(myPos)
+                    : dir;
                 return;
             }
 
             bomb.RequestBombFromAI();
 
             bombs = FindObjectsOfType<Bomb>();
-            lastDirection = GetBestEscapeDirection(myPos, bombs);
+            isEvading = true;
+            lastDirection = GetBestSafeDirectionOrStay(myPos, bombs);
             return;
         }
 
-        lastDirection = GetStepTowards(delta);
+        {
+            Vector2 dir = GetStepTowards(delta);
+            Vector2 targetTile = myPos + dir;
+
+            lastDirection = IsTileWithExplosion(targetTile)
+                ? GetBestDirectionAvoidingExplosion(myPos)
+                : dir;
+        }
     }
 
     private bool IsInDangerFromBombs(Vector2 myPos, Bomb[] bombs)
@@ -112,9 +147,7 @@ public class BossBomberAI : MonoBehaviour
         if (!sameRow && !sameCol)
             return false;
 
-        int radius = 2;
-        if (bomb.Owner != null)
-            radius = bomb.Owner.explosionRadius;
+        int radius = bomb.Owner != null ? bomb.Owner.explosionRadius : 2;
 
         float dist = sameRow ? Mathf.Abs(delta.x) : Mathf.Abs(delta.y);
 
@@ -133,9 +166,7 @@ public class BossBomberAI : MonoBehaviour
             Vector2 bombPos = RoundToTile(b.GetLogicalPosition());
             Vector2 delta = candidatePos - bombPos;
 
-            int radius = 2;
-            if (b.Owner != null)
-                radius = b.Owner.explosionRadius;
+            int radius = b.Owner != null ? b.Owner.explosionRadius : 2;
 
             bool sameRow = Mathf.Abs(delta.y) < 0.1f;
             bool sameCol = Mathf.Abs(delta.x) < 0.1f;
@@ -143,7 +174,6 @@ public class BossBomberAI : MonoBehaviour
             float dist = Mathf.Abs(delta.x) + Mathf.Abs(delta.y);
 
             float margin;
-
             if (sameRow || sameCol)
             {
                 float linearDist = sameRow ? Mathf.Abs(delta.x) : Mathf.Abs(delta.y);
@@ -164,15 +194,19 @@ public class BossBomberAI : MonoBehaviour
         return minMargin;
     }
 
-    private Vector2 GetBestEscapeDirection(Vector2 myPos, Bomb[] bombs)
+    private Vector2 GetBestSafeDirectionOrStay(Vector2 myPos, Bomb[] bombs)
     {
         Vector2[] dirs = { Vector2.up, Vector2.down, Vector2.left, Vector2.right };
-        float bestScore = float.NegativeInfinity;
+
+        float bestScore = GetSafetyScore(myPos, bombs);
         Vector2 bestDir = Vector2.zero;
 
         foreach (var d in dirs)
         {
             Vector2 candidate = myPos + d;
+
+            if (IsTileWithExplosion(candidate))
+                continue;
 
             bool blocked = Physics2D.OverlapBox(
                 candidate,
@@ -185,17 +219,31 @@ public class BossBomberAI : MonoBehaviour
 
             float safety = GetSafetyScore(candidate, bombs);
 
-            if (safety > bestScore)
+            if (safety > bestScore + 0.1f)
             {
                 bestScore = safety;
                 bestDir = d;
             }
         }
 
-        if (bestDir == Vector2.zero)
-            bestDir = GetRandomDirection();
-
         return bestDir;
+    }
+
+    private Vector2 GetBestDirectionAvoidingExplosion(Vector2 myPos)
+    {
+        return GetBestSafeDirectionOrStay(myPos, System.Array.Empty<Bomb>());
+    }
+
+    private bool IsTileWithExplosion(Vector2 tilePos)
+    {
+        int explosionLayer = LayerMask.NameToLayer("Explosion");
+        int mask = 1 << explosionLayer;
+
+        return Physics2D.OverlapBox(
+            tilePos,
+            Vector2.one * 0.4f,
+            0f,
+            mask) != null;
     }
 
     private Vector2 RoundToTile(Vector2 p)
