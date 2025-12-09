@@ -114,30 +114,26 @@ public class MetalHornMovementController : PersecutingEnemyMovementController
             Vector2.right
         };
 
-        int maxSteps = Mathf.Max(1, Mathf.RoundToInt(visionDistance / tileSize));
-        Vector2 boxSize = Vector2.one * (tileSize * 0.8f);
+        int mask = obstacleMask | playerLayerMask;
 
         foreach (var dir in dirs)
         {
-            for (int step = 1; step <= maxSteps; step++)
+            Vector2 origin = rb.position + dir * (tileSize * 0.5f);
+
+            RaycastHit2D hit = Physics2D.Raycast(
+                origin,
+                dir,
+                visionDistance,
+                mask
+            );
+
+            if (hit.collider == null)
+                continue;
+
+            if (((1 << hit.collider.gameObject.layer) & playerLayerMask) != 0)
             {
-                Vector2 tileCenter = rb.position + step * tileSize * dir;
-
-                Collider2D playerHit = Physics2D.OverlapBox(
-                    tileCenter,
-                    boxSize,
-                    0f,
-                    playerLayerMask
-                );
-
-                if (playerHit != null)
-                {
-                    dirToPlayer = dir;
-                    return true;
-                }
-
-                if (IsTileBlocked(tileCenter))
-                    break;
+                dirToPlayer = dir;
+                return true;
             }
         }
 
@@ -146,28 +142,23 @@ public class MetalHornMovementController : PersecutingEnemyMovementController
 
     private bool HasPlayerInDirection(Vector2 dir)
     {
-        int maxSteps = Mathf.Max(1, Mathf.RoundToInt(visionDistance / tileSize));
-        Vector2 boxSize = Vector2.one * (tileSize * 0.8f);
+        if (dir == Vector2.zero)
+            return false;
 
-        for (int step = 1; step <= maxSteps; step++)
-        {
-            Vector2 tileCenter = rb.position + step * tileSize * dir;
+        int mask = obstacleMask | playerLayerMask;
+        Vector2 origin = rb.position + dir.normalized * (tileSize * 0.5f);
 
-            Collider2D playerHit = Physics2D.OverlapBox(
-                tileCenter,
-                boxSize,
-                0f,
-                playerLayerMask
-            );
+        RaycastHit2D hit = Physics2D.Raycast(
+            origin,
+            dir.normalized,
+            visionDistance,
+            mask
+        );
 
-            if (playerHit != null)
-                return true;
+        if (hit.collider == null)
+            return false;
 
-            if (IsTileBlocked(tileCenter))
-                break;
-        }
-
-        return false;
+        return ((1 << hit.collider.gameObject.layer) & playerLayerMask) != 0;
     }
 
     protected override void Die()
