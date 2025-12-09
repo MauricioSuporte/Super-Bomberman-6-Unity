@@ -28,6 +28,10 @@ public class BombController : MonoBehaviour
     public AudioClip placeBombSfx;
     public AudioSource playerAudioSource;
 
+    [Header("Control")]
+    public bool useAIInput = false;
+    private bool bombRequested;
+
     private void OnEnable()
     {
         bombsRemaining = bombAmout;
@@ -38,9 +42,23 @@ public class BombController : MonoBehaviour
         if (GamePauseController.IsPaused)
             return;
 
-        if (bombsRemaining > 0 && Input.GetKeyDown(inputKey))
+        if (bombsRemaining <= 0)
+            return;
+
+        if (!useAIInput)
         {
-            PlaceBomb();
+            if (Input.GetKeyDown(inputKey))
+            {
+                PlaceBomb();
+            }
+        }
+        else
+        {
+            if (bombRequested)
+            {
+                PlaceBomb();
+                bombRequested = false;
+            }
         }
     }
 
@@ -153,19 +171,6 @@ public class BombController : MonoBehaviour
         ExplodeBomb(bomb);
     }
 
-    private void OnTriggerExit2D(Collider2D other)
-    {
-        if (other.gameObject.layer != LayerMask.NameToLayer("Bomb"))
-            return;
-
-        var bomb = other.GetComponent<Bomb>();
-        if (bomb == null)
-            return;
-
-        if (bomb.Owner == this && !bomb.IsBeingKicked)
-            other.isTrigger = false;
-    }
-
     private void Explode(Vector2 position, Vector2 direction, int length)
     {
         if (length <= 0)
@@ -265,5 +270,10 @@ public class BombController : MonoBehaviour
 
         if (bomb.TryGetComponent<Bomb>(out var bombScript))
             bombScript.enabled = false;
+    }
+
+    public void RequestBombFromAI()
+    {
+        bombRequested = true;
     }
 }

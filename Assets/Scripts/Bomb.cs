@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
@@ -26,6 +27,8 @@ public class Bomb : MonoBehaviour
     private Coroutine kickRoutine;
     private Vector2 currentTileCenter;
     private Vector2 lastPos;
+
+    private readonly HashSet<Collider2D> charactersInside = new();
 
     private void Awake()
     {
@@ -92,6 +95,28 @@ public class Bomb : MonoBehaviour
     {
         this.owner = owner;
         lastPos = rb.position;
+
+        charactersInside.Clear();
+
+        int playerLayer = LayerMask.NameToLayer("Player");
+        int enemyLayer = LayerMask.NameToLayer("Enemy");
+        int charMask = LayerMask.GetMask("Player", "Enemy");
+
+        Collider2D[] cols = Physics2D.OverlapBoxAll(rb.position, Vector2.one * 0.4f, 0f, charMask);
+
+        if (cols != null)
+        {
+            foreach (var c in cols)
+            {
+                if (c == null)
+                    continue;
+
+                if (c.gameObject.layer == playerLayer || c.gameObject.layer == enemyLayer)
+                    charactersInside.Add(c);
+            }
+        }
+
+        bombCollider.isTrigger = charactersInside.Count > 0;
     }
 
     public Vector2 GetLogicalPosition() => lastPos;
@@ -173,7 +198,38 @@ public class Bomb : MonoBehaviour
         if (HasExploded)
             return;
 
-        if (other.gameObject.layer == LayerMask.NameToLayer("Explosion"))
+        int explosionLayer = LayerMask.NameToLayer("Explosion");
+        int playerLayer = LayerMask.NameToLayer("Player");
+        int enemyLayer = LayerMask.NameToLayer("Enemy");
+
+        if (other.gameObject.layer == explosionLayer)
+        {
             owner.ExplodeBomb(gameObject);
+            return;
+        }
+
+        if (other.gameObject.layer == playerLayer ||
+            other.gameObject.layer == enemyLayer)
+        {
+            charactersInside.Add(other);
+        }
+    }
+
+    private void OnTriggerExit2D(Collider2D other)
+    {
+        if (HasExploded || isKicked)
+            return;
+
+        int playerLayer = LayerMask.NameToLayer("Player");
+        int enemyLayer = LayerMask.NameToLayer("Enemy");
+
+        int layer = other.gameObject.layer;
+        if (layer != playerLayer && layer != enemyLayer)
+            return;
+
+        charactersInside.Remove(other);
+
+        if (charactersInside.Count == 0)
+            bombCollider.isTrigger = false;
     }
 }

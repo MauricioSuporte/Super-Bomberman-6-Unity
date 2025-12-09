@@ -6,6 +6,7 @@ TagManager:
   tags:
   - Explosion
   - Destructibles
+  - BossBomber
   layers:
   - Default
   - TransparentFX

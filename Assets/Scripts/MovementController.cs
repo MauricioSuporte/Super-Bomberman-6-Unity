@@ -41,6 +41,11 @@ public class MovementController : MonoBehaviour
     public float endStageTotalTime = 1f;
     public int endStageFrameCount = 9;
 
+    [Header("Control")]
+    public bool useAIInput = false;
+    [HideInInspector]
+    public Vector2 aiDirection = Vector2.zero;
+
     private AnimatedSpriteRenderer activeSpriteRenderer;
     private bool inputLocked;
     private bool isDead;
@@ -87,6 +92,25 @@ public class MovementController : MonoBehaviour
 
         hasInput = false;
 
+        if (useAIInput)
+        {
+            Vector2 dir = aiDirection;
+            if (dir.sqrMagnitude > 0.01f)
+            {
+                if (Mathf.Abs(dir.x) > Mathf.Abs(dir.y))
+                    dir = new Vector2(Mathf.Sign(dir.x), 0f);
+                else
+                    dir = new Vector2(0f, Mathf.Sign(dir.y));
+            }
+            else
+            {
+                dir = Vector2.zero;
+            }
+
+            ApplyDirectionFromVector(dir);
+            return;
+        }
+
         if (Input.GetKey(inputUp))
         {
             hasInput = true;
@@ -111,6 +135,22 @@ public class MovementController : MonoBehaviour
         {
             SetDirection(Vector2.zero, activeSpriteRenderer);
         }
+    }
+
+    private void ApplyDirectionFromVector(Vector2 dir)
+    {
+        hasInput = dir != Vector2.zero;
+
+        if (dir == Vector2.up)
+            SetDirection(Vector2.up, spriteRendererUp);
+        else if (dir == Vector2.down)
+            SetDirection(Vector2.down, spriteRendererDown);
+        else if (dir == Vector2.left)
+            SetDirection(Vector2.left, spriteRendererLeft);
+        else if (dir == Vector2.right)
+            SetDirection(Vector2.right, spriteRendererRight);
+        else
+            SetDirection(Vector2.zero, activeSpriteRenderer);
     }
 
     private void FixedUpdate()
@@ -338,6 +378,9 @@ public class MovementController : MonoBehaviour
                 }
             }
 
+            if (hit.isTrigger)
+                continue;
+
             return true;
         }
 
@@ -474,5 +517,10 @@ public class MovementController : MonoBehaviour
     public void EnableBombKick()
     {
         canKickBombs = true;
+    }
+
+    public void SetAIDirection(Vector2 dir)
+    {
+        aiDirection = dir;
     }
 }
