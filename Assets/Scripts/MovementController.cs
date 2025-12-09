@@ -1,10 +1,13 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 
 [RequireComponent(typeof(AudioSource))]
 [RequireComponent(typeof(BombController))]
 [RequireComponent(typeof(Rigidbody2D))]
 public class MovementController : MonoBehaviour
 {
+    public event Action<MovementController> Died;
+
     [Header("SFX")]
     public AudioClip deathSfx;
     public AudioClip kickBombSfx;
@@ -19,10 +22,10 @@ public class MovementController : MonoBehaviour
 
     public Rigidbody2D Rigidbody { get; private set; }
 
-    private Vector2 direction = Vector2.zero;
+    protected Vector2 direction = Vector2.zero;
 
-    private AudioSource audioSource;
-    private BombController bombController;
+    protected AudioSource audioSource;
+    protected BombController bombController;
 
     public KeyCode inputUp = KeyCode.W;
     public KeyCode inputDown = KeyCode.S;
@@ -41,22 +44,17 @@ public class MovementController : MonoBehaviour
     public float endStageTotalTime = 1f;
     public int endStageFrameCount = 9;
 
-    [Header("Control")]
-    public bool useAIInput = false;
-    [HideInInspector]
-    public Vector2 aiDirection = Vector2.zero;
+    protected AnimatedSpriteRenderer activeSpriteRenderer;
+    protected bool inputLocked;
+    protected bool isDead;
 
-    private AnimatedSpriteRenderer activeSpriteRenderer;
-    private bool inputLocked;
-    private bool isDead;
+    const float CenterEpsilon = 0.01f;
 
-    private const float CenterEpsilon = 0.01f;
+    float SlideDeadZone => tileSize * 0.25f;
 
-    private float SlideDeadZone => tileSize * 0.25f;
+    protected bool hasInput;
 
-    private bool hasInput;
-
-    private void Awake()
+    protected virtual void Awake()
     {
         Rigidbody = GetComponent<Rigidbody2D>();
         bombController = GetComponent<BombController>();
@@ -80,38 +78,23 @@ public class MovementController : MonoBehaviour
         }
     }
 
-    private void OnEnable()
+    protected virtual void OnEnable()
     {
         direction = Vector2.zero;
         hasInput = false;
     }
 
-    private void Update()
+    protected virtual void Update()
     {
         if (inputLocked || GamePauseController.IsPaused || isDead)
             return;
 
         hasInput = false;
+        HandleInput();
+    }
 
-        if (useAIInput)
-        {
-            Vector2 dir = aiDirection;
-            if (dir.sqrMagnitude > 0.01f)
-            {
-                if (Mathf.Abs(dir.x) > Mathf.Abs(dir.y))
-                    dir = new Vector2(Mathf.Sign(dir.x), 0f);
-                else
-                    dir = new Vector2(0f, Mathf.Sign(dir.y));
-            }
-            else
-            {
-                dir = Vector2.zero;
-            }
-
-            ApplyDirectionFromVector(dir);
-            return;
-        }
-
+    protected virtual void HandleInput()
+    {
         if (Input.GetKey(inputUp))
         {
             hasInput = true;
@@ -138,7 +121,7 @@ public class MovementController : MonoBehaviour
         }
     }
 
-    private void ApplyDirectionFromVector(Vector2 dir)
+    protected void ApplyDirectionFromVector(Vector2 dir)
     {
         hasInput = dir != Vector2.zero;
 
@@ -154,7 +137,7 @@ public class MovementController : MonoBehaviour
             SetDirection(Vector2.zero, activeSpriteRenderer);
     }
 
-    private void FixedUpdate()
+    protected virtual void FixedUpdate()
     {
         if (inputLocked || GamePauseController.IsPaused || isDead)
             return;
@@ -213,7 +196,7 @@ public class MovementController : MonoBehaviour
         }
     }
 
-    private void TrySlideHorizontally(Vector2 position, float moveSpeed)
+    void TrySlideHorizontally(Vector2 position, float moveSpeed)
     {
         float leftCenter = Mathf.Floor(position.x / tileSize) * tileSize;
         float rightCenter = Mathf.Ceil(position.x / tileSize) * tileSize;
@@ -252,7 +235,7 @@ public class MovementController : MonoBehaviour
         }
     }
 
-    private void TrySlideVertically(Vector2 position, float moveSpeed)
+    void TrySlideVertically(Vector2 position, float moveSpeed)
     {
         float bottomCenter = Mathf.Floor(position.y / tileSize) * tileSize;
         float topCenter = Mathf.Ceil(position.y / tileSize) * tileSize;
@@ -291,7 +274,7 @@ public class MovementController : MonoBehaviour
         }
     }
 
-    private bool IsSolidAt(Vector2 worldPosition)
+    protected bool IsSolidAt(Vector2 worldPosition)
     {
         Vector2 size = Vector2.one * (tileSize * 0.6f);
 
@@ -327,7 +310,7 @@ public class MovementController : MonoBehaviour
         return false;
     }
 
-    private bool IsBlocked(Vector2 targetPosition)
+    protected bool IsBlocked(Vector2 targetPosition)
     {
         Vector2 size;
 
@@ -388,7 +371,7 @@ public class MovementController : MonoBehaviour
         return false;
     }
 
-    private void SetDirection(Vector2 newDirection, AnimatedSpriteRenderer spriteRenderer)
+    protected void SetDirection(Vector2 newDirection, AnimatedSpriteRenderer spriteRenderer)
     {
         direction = newDirection;
 
@@ -403,38 +386,27 @@ public class MovementController : MonoBehaviour
             activeSpriteRenderer.idle = direction == Vector2.zero;
     }
 
-    private void OnTriggerEnter2D(Collider2D other)
+    protected virtual void OnTriggerEnter2D(Collider2D other)
     {
         if (isDead)
             return;
 
         int layer = other.gameObject.layer;
-        bool isBoss = CompareTag("BossBomber");
 
-        if (layer == LayerMask.NameToLayer("Explosion"))
+        if (layer == LayerMask.NameToLayer("Explosion") ||
+            layer == LayerMask.NameToLayer("Enemy"))
         {
-            if (isBoss && TryGetComponent<BossBomberHealth>(out var bossHealth))
-                bossHealth.TakeDamage(1);
-            else
-                DeathSequence();
-
-            return;
-        }
-
-        if (layer == LayerMask.NameToLayer("Enemy"))
-        {
-            if (!isBoss)
-                DeathSequence();
+            DeathSequence();
         }
     }
 
-    public void Kill()
+    public virtual void Kill()
     {
         if (!isDead)
             DeathSequence();
     }
 
-    private void DeathSequence()
+    protected virtual void DeathSequence()
     {
         if (isDead)
             return;
@@ -480,9 +452,14 @@ public class MovementController : MonoBehaviour
         Invoke(nameof(OnDeathSequenceEnded), 2f);
     }
 
-    private void OnDeathSequenceEnded()
+    protected virtual void OnDeathSequenceEnded()
     {
         gameObject.SetActive(false);
+
+        Died?.Invoke(this);
+
+        if (CompareTag("BossBomber"))
+            return;
 
         var gameManager = FindFirstObjectByType<GameManager>();
         if (gameManager != null)
@@ -526,7 +503,7 @@ public class MovementController : MonoBehaviour
         }
     }
 
-    private void HideEndStageSprite()
+    void HideEndStageSprite()
     {
         if (spriteRendererEndStage != null)
             spriteRendererEndStage.enabled = false;
@@ -535,10 +512,5 @@ public class MovementController : MonoBehaviour
     public void EnableBombKick()
     {
         canKickBombs = true;
-    }
-
-    public void SetAIDirection(Vector2 dir)
-    {
-        aiDirection = dir;
     }
 }

@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-[RequireComponent(typeof(MovementController))]
+[RequireComponent(typeof(AIMovementController))]
 [RequireComponent(typeof(BombController))]
 public class BossBomberAI : MonoBehaviour
 {
@@ -10,24 +10,34 @@ public class BossBomberAI : MonoBehaviour
     public float safeDistanceAfterBomb = 3f;
     public float bombChainCooldown = 0.3f;
 
-    private MovementController movement;
-    private BombController bomb;
+    AIMovementController movement;
+    BombController bomb;
 
-    private float thinkTimer;
-    private Vector2 lastDirection = Vector2.zero;
-    private bool isEvading;
-    private float lastBombTime;
+    float thinkTimer;
+    Vector2 lastDirection = Vector2.zero;
+    bool isEvading;
+    float lastBombTime;
 
-    private void Awake()
+    void Awake()
     {
-        movement = GetComponent<MovementController>();
+        movement = GetComponent<AIMovementController>();
         bomb = GetComponent<BombController>();
 
-        movement.useAIInput = true;
         bomb.useAIInput = true;
+        movement.isBoss = true;
     }
 
-    private void Update()
+    void Start()
+    {
+        if (target == null)
+        {
+            var player = GameObject.FindWithTag("Player");
+            if (player != null)
+                target = player.transform;
+        }
+    }
+
+    void Update()
     {
         if (GamePauseController.IsPaused)
             return;
@@ -42,7 +52,7 @@ public class BossBomberAI : MonoBehaviour
         movement.SetAIDirection(lastDirection);
     }
 
-    private void Think()
+    void Think()
     {
         Vector2 myPos = RoundToTile(transform.position);
         Bomb[] bombs = FindObjectsOfType<Bomb>();
@@ -122,7 +132,7 @@ public class BossBomberAI : MonoBehaviour
             : dir;
     }
 
-    private void TryPlaceBombChain(Vector2 myPos)
+    void TryPlaceBombChain(Vector2 myPos)
     {
         if (bomb == null)
             return;
@@ -140,7 +150,7 @@ public class BossBomberAI : MonoBehaviour
         lastBombTime = Time.time;
     }
 
-    private bool IsInDangerFromBombs(Vector2 myPos, Bomb[] bombs)
+    bool IsInDangerFromBombs(Vector2 myPos, Bomb[] bombs)
     {
         foreach (var b in bombs)
         {
@@ -154,7 +164,7 @@ public class BossBomberAI : MonoBehaviour
         return false;
     }
 
-    private bool IsTileInBombDanger(Vector2 tilePos, Bomb bombInstance)
+    bool IsTileInBombDanger(Vector2 tilePos, Bomb bombInstance)
     {
         Vector2 bombPos = RoundToTile(bombInstance.GetLogicalPosition());
         Vector2 delta = tilePos - bombPos;
@@ -172,7 +182,7 @@ public class BossBomberAI : MonoBehaviour
         return dist <= radius + safeDistanceAfterBomb;
     }
 
-    private float GetSafetyScore(Vector2 candidatePos, Bomb[] bombs)
+    float GetSafetyScore(Vector2 candidatePos, Bomb[] bombs)
     {
         float minMargin = float.PositiveInfinity;
 
@@ -212,7 +222,7 @@ public class BossBomberAI : MonoBehaviour
         return minMargin;
     }
 
-    private Vector2 GetBestSafeDirectionOrStay(Vector2 myPos, Bomb[] bombs)
+    Vector2 GetBestSafeDirectionOrStay(Vector2 myPos, Bomb[] bombs)
     {
         Vector2[] dirs = { Vector2.up, Vector2.down, Vector2.left, Vector2.right };
 
@@ -247,12 +257,12 @@ public class BossBomberAI : MonoBehaviour
         return bestDir;
     }
 
-    private Vector2 GetBestDirectionAvoidingExplosion(Vector2 myPos)
+    Vector2 GetBestDirectionAvoidingExplosion(Vector2 myPos)
     {
         return GetBestSafeDirectionOrStay(myPos, System.Array.Empty<Bomb>());
     }
 
-    private bool IsTileWithExplosion(Vector2 tilePos)
+    bool IsTileWithExplosion(Vector2 tilePos)
     {
         int explosionLayer = LayerMask.NameToLayer("Explosion");
         int mask = 1 << explosionLayer;
@@ -264,7 +274,7 @@ public class BossBomberAI : MonoBehaviour
             mask) != null;
     }
 
-    private bool IsTileWithBomb(Vector2 tilePos)
+    bool IsTileWithBomb(Vector2 tilePos)
     {
         int bombLayer = LayerMask.NameToLayer("Bomb");
         int mask = 1 << bombLayer;
@@ -276,12 +286,12 @@ public class BossBomberAI : MonoBehaviour
             mask) != null;
     }
 
-    private Vector2 RoundToTile(Vector2 p)
+    Vector2 RoundToTile(Vector2 p)
     {
         return new Vector2(Mathf.Round(p.x), Mathf.Round(p.y));
     }
 
-    private Vector2 GetStepTowards(Vector2 delta)
+    Vector2 GetStepTowards(Vector2 delta)
     {
         if (Mathf.Abs(delta.x) > Mathf.Abs(delta.y))
             return new Vector2(Mathf.Sign(delta.x), 0f);

@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 8741466755873979984}
   - component: {fileID: 7068160060089364389}
   - component: {fileID: 4260053146293450057}
-  - component: {fileID: 6261750521133772370}
+  - component: {fileID: 2281332030675466770}
   - component: {fileID: 8243230538853254392}
   - component: {fileID: 4730492100800285400}
   - component: {fileID: 9003568192130577715}
@@ -107,7 +107,7 @@ CircleCollider2D:
   m_CompositeOrder: 0
   m_Offset: {x: 0, y: 0}
   m_Radius: 0.5
---- !u!114 &6261750521133772370
+--- !u!114 &2281332030675466770
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -116,10 +116,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 444576652216317808}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ee9b3a4a2762bec41ad14632b1521049, type: 3}
+  m_Script: {fileID: 11500000, guid: 5704045885c5fbb40ad9f0c6dc80db9f, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: 
-  deathSfx: {fileID: 8300000, guid: d09be99ae21a8d540ac21a0593b254f5, type: 3}
+  m_EditorClassIdentifier: Assembly-CSharp::AIMovementController
+  deathSfx: {fileID: 8300000, guid: 1bca940f057193a408297f3bb1132673, type: 3}
   kickBombSfx: {fileID: 8300000, guid: fd7073b98a175b640bff17cf708a99ce, type: 3}
   speed: 3
   tileSize: 1
@@ -139,8 +139,8 @@ MonoBehaviour:
   spriteRendererEndStage: {fileID: 4652177394112457859}
   endStageTotalTime: 1
   endStageFrameCount: 9
-  useAIInput: 1
   aiDirection: {x: 0, y: 0}
+  isBoss: 1
 --- !u!114 &8243230538853254392
 MonoBehaviour:
   m_ObjectHideFlags: 0
