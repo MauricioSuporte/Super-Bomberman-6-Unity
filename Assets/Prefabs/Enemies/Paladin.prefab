@@ -120,7 +120,7 @@ MonoBehaviour:
   spriteUp: {fileID: 1228606390294117671}
   spriteDown: {fileID: 1228606389785476324}
   spriteLeft: {fileID: 1228606390696233727}
-  spriteDeath: {fileID: 1228606390223914643}
+  spriteDeath: {fileID: 1228606391467010645}
   obstacleMask:
     serializedVersion: 2
     m_Bits: 1216
@@ -130,6 +130,8 @@ MonoBehaviour:
   enemyLayerMask:
     serializedVersion: 2
     m_Bits: 1024
+  hitInvulnerableDuration: 3
+  hitBlinkInterval: 0.1
   visionDistance: 10
   playerLayerMask:
     serializedVersion: 2
