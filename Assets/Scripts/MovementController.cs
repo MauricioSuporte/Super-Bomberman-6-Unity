@@ -61,7 +61,8 @@ public class MovementController : MonoBehaviour
         Rigidbody = GetComponent<Rigidbody2D>();
         bombController = GetComponent<BombController>();
 
-        PlayerPersistentStats.LoadInto(this, bombController);
+        if (CompareTag("Player"))
+            PlayerPersistentStats.LoadInto(this, bombController);
 
         activeSpriteRenderer = spriteRendererDown;
         direction = Vector2.zero;

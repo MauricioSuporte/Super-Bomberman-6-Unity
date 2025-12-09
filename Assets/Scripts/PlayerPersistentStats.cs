@@ -22,13 +22,13 @@ public static class PlayerPersistentStats
 
     public static void SaveFrom(MovementController movement, BombController bomb)
     {
-        if (movement != null)
+        if (movement != null && movement.CompareTag("Player"))
         {
             Speed = movement.speed;
             CanKickBombs = movement.canKickBombs;
         }
 
-        if (bomb != null)
+        if (bomb != null && bomb.CompareTag("Player"))
         {
             BombAmount = bomb.bombAmout;
             ExplosionRadius = bomb.explosionRadius;

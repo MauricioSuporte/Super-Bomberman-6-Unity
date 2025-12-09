@@ -8,6 +8,7 @@ public class BossBomberAI : MonoBehaviour
     public float thinkInterval = 0.2f;
     public float maxChaseDistance = 20f;
     public float safeDistanceAfterBomb = 3f;
+    public float bombChainCooldown = 0.3f;
 
     private MovementController movement;
     private BombController bomb;
@@ -15,6 +16,7 @@ public class BossBomberAI : MonoBehaviour
     private float thinkTimer;
     private Vector2 lastDirection = Vector2.zero;
     private bool isEvading;
+    private float lastBombTime;
 
     private void Awake()
     {
@@ -82,12 +84,12 @@ public class BossBomberAI : MonoBehaviour
 
         if (manhattan > maxChaseDistance)
         {
-            Vector2 dir = GetStepTowards(delta);
-            Vector2 targetTile = myPos + dir;
+            Vector2 dirFar = GetStepTowards(delta);
+            Vector2 targetTileFar = myPos + dirFar;
 
-            lastDirection = IsTileWithExplosion(targetTile)
+            lastDirection = IsTileWithExplosion(targetTileFar)
                 ? GetBestDirectionAvoidingExplosion(myPos)
-                : dir;
+                : dirFar;
             return;
         }
 
@@ -95,16 +97,16 @@ public class BossBomberAI : MonoBehaviour
         {
             if (manhattan > 1.01f)
             {
-                Vector2 dir = GetStepTowards(delta);
-                Vector2 targetTile = myPos + dir;
+                Vector2 dirTo = GetStepTowards(delta);
+                Vector2 targetTileTo = myPos + dirTo;
 
-                lastDirection = IsTileWithExplosion(targetTile)
+                lastDirection = IsTileWithExplosion(targetTileTo)
                     ? GetBestDirectionAvoidingExplosion(myPos)
-                    : dir;
+                    : dirTo;
                 return;
             }
 
-            bomb.RequestBombFromAI();
+            TryPlaceBombChain(myPos);
 
             bombs = FindObjectsOfType<Bomb>();
             isEvading = true;
@@ -112,14 +114,30 @@ public class BossBomberAI : MonoBehaviour
             return;
         }
 
-        {
-            Vector2 dir = GetStepTowards(delta);
-            Vector2 targetTile = myPos + dir;
+        Vector2 dir = GetStepTowards(delta);
+        Vector2 targetTile = myPos + dir;
 
-            lastDirection = IsTileWithExplosion(targetTile)
-                ? GetBestDirectionAvoidingExplosion(myPos)
-                : dir;
-        }
+        lastDirection = IsTileWithExplosion(targetTile)
+            ? GetBestDirectionAvoidingExplosion(myPos)
+            : dir;
+    }
+
+    private void TryPlaceBombChain(Vector2 myPos)
+    {
+        if (bomb == null)
+            return;
+
+        if (bomb.BombsRemaining <= 0)
+            return;
+
+        if (Time.time - lastBombTime < bombChainCooldown)
+            return;
+
+        if (IsTileWithBomb(myPos))
+            return;
+
+        bomb.RequestBombFromAI();
+        lastBombTime = Time.time;
     }
 
     private bool IsInDangerFromBombs(Vector2 myPos, Bomb[] bombs)
@@ -136,9 +154,9 @@ public class BossBomberAI : MonoBehaviour
         return false;
     }
 
-    private bool IsTileInBombDanger(Vector2 tilePos, Bomb bomb)
+    private bool IsTileInBombDanger(Vector2 tilePos, Bomb bombInstance)
     {
-        Vector2 bombPos = RoundToTile(bomb.GetLogicalPosition());
+        Vector2 bombPos = RoundToTile(bombInstance.GetLogicalPosition());
         Vector2 delta = tilePos - bombPos;
 
         bool sameRow = Mathf.Abs(delta.y) < 0.1f;
@@ -147,7 +165,7 @@ public class BossBomberAI : MonoBehaviour
         if (!sameRow && !sameCol)
             return false;
 
-        int radius = bomb.Owner != null ? bomb.Owner.explosionRadius : 2;
+        int radius = bombInstance.Owner != null ? bombInstance.Owner.explosionRadius : 2;
 
         float dist = sameRow ? Mathf.Abs(delta.x) : Mathf.Abs(delta.y);
 
@@ -246,6 +264,18 @@ public class BossBomberAI : MonoBehaviour
             mask) != null;
     }
 
+    private bool IsTileWithBomb(Vector2 tilePos)
+    {
+        int bombLayer = LayerMask.NameToLayer("Bomb");
+        int mask = 1 << bombLayer;
+
+        return Physics2D.OverlapBox(
+            tilePos,
+            Vector2.one * 0.4f,
+            0f,
+            mask) != null;
+    }
+
     private Vector2 RoundToTile(Vector2 p)
     {
         return new Vector2(Mathf.Round(p.x), Mathf.Round(p.y));
@@ -259,15 +289,9 @@ public class BossBomberAI : MonoBehaviour
             return new Vector2(0f, Mathf.Sign(delta.y));
     }
 
-    private Vector2 GetRandomDirection()
+    private bool IsCenteredOnTile(Vector2 pos, float epsilon = 0.05f)
     {
-        int i = Random.Range(0, 4);
-        return i switch
-        {
-            0 => Vector2.up,
-            1 => Vector2.down,
-            2 => Vector2.left,
-            _ => Vector2.right,
-        };
+        return Mathf.Abs(pos.x - Mathf.Round(pos.x)) <= epsilon &&
+               Mathf.Abs(pos.y - Mathf.Round(pos.y)) <= epsilon;
     }
 }

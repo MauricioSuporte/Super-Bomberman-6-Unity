@@ -11,6 +11,8 @@ public class BombController : MonoBehaviour
     public int bombAmout = 1;
     private int bombsRemaining = 0;
 
+    public int BombsRemaining => bombsRemaining;
+
     [Header("Explosion")]
     public Explosion explosionPrefab;
     public LayerMask explosionLayerMask;
@@ -48,9 +50,7 @@ public class BombController : MonoBehaviour
         if (!useAIInput)
         {
             if (Input.GetKeyDown(inputKey))
-            {
                 PlaceBomb();
-            }
         }
         else
         {
@@ -140,7 +140,8 @@ public class BombController : MonoBehaviour
         if (TileHasBomb(position))
             return;
 
-        playerAudioSource.PlayOneShot(placeBombSfx);
+        if (playerAudioSource != null && placeBombSfx != null)
+            playerAudioSource.PlayOneShot(placeBombSfx);
 
         GameObject bomb = Instantiate(bombPrefab, position, Quaternion.identity);
         bombsRemaining--;
