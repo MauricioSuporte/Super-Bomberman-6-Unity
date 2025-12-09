@@ -409,12 +409,29 @@ public class MovementController : MonoBehaviour
             return;
 
         int layer = other.gameObject.layer;
+        bool isBoss = CompareTag("BossBomber");
 
-        if (layer == LayerMask.NameToLayer("Explosion") ||
-            layer == LayerMask.NameToLayer("Enemy"))
+        if (layer == LayerMask.NameToLayer("Explosion"))
         {
-            DeathSequence();
+            if (isBoss && TryGetComponent<BossBomberHealth>(out var bossHealth))
+                bossHealth.TakeDamage(1);
+            else
+                DeathSequence();
+
+            return;
         }
+
+        if (layer == LayerMask.NameToLayer("Enemy"))
+        {
+            if (!isBoss)
+                DeathSequence();
+        }
+    }
+
+    public void Kill()
+    {
+        if (!isDead)
+            DeathSequence();
     }
 
     private void DeathSequence()

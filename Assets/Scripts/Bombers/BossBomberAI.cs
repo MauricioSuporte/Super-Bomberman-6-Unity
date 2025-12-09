@@ -288,10 +288,4 @@ public class BossBomberAI : MonoBehaviour
         else
             return new Vector2(0f, Mathf.Sign(delta.y));
     }
-
-    private bool IsCenteredOnTile(Vector2 pos, float epsilon = 0.05f)
-    {
-        return Mathf.Abs(pos.x - Mathf.Round(pos.x)) <= epsilon &&
-               Mathf.Abs(pos.y - Mathf.Round(pos.y)) <= epsilon;
-    }
 }
