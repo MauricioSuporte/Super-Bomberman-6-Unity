@@ -468,7 +468,13 @@ public class StageIntroTransition : MonoBehaviour
             float t = 0f;
             while (t < halfDuration)
             {
-                t += Time.unscaledDeltaTime;
+                if (GamePauseController.IsPaused)
+                {
+                    yield return null;
+                    continue;
+                }
+
+                t += Time.deltaTime;
                 float a = Mathf.Clamp01(t / halfDuration);
                 fadeImage.color = new Color(baseColor.r, baseColor.g, baseColor.b, a);
                 yield return null;
@@ -507,12 +513,29 @@ public class StageIntroTransition : MonoBehaviour
                 }
             }
 
-            yield return new WaitForSecondsRealtime(blackHold);
+            float hold = 0f;
+            while (hold < blackHold)
+            {
+                if (GamePauseController.IsPaused)
+                {
+                    yield return null;
+                    continue;
+                }
+
+                hold += Time.deltaTime;
+                yield return null;
+            }
 
             t = 0f;
             while (t < halfDuration)
             {
-                t += Time.unscaledDeltaTime;
+                if (GamePauseController.IsPaused)
+                {
+                    yield return null;
+                    continue;
+                }
+
+                t += Time.deltaTime;
                 float a = 1f - Mathf.Clamp01(t / halfDuration);
                 fadeImage.color = new Color(baseColor.r, baseColor.g, baseColor.b, a);
                 yield return null;
