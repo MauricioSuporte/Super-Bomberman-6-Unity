@@ -14,7 +14,6 @@ GameObject:
   - component: {fileID: 2281332030675466770}
   - component: {fileID: 8243230538853254392}
   - component: {fileID: 4730492100800285400}
-  - component: {fileID: 9003568192130577715}
   - component: {fileID: 3101258277916350091}
   m_Layer: 10
   m_Name: WhiteMechaBomber
@@ -188,21 +187,6 @@ MonoBehaviour:
   maxChaseDistance: 20
   safeDistanceAfterBomb: 3
   bombChainCooldown: 0.3
---- !u!114 &9003568192130577715
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 444576652216317808}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d65b54d63aab5f64a801afd51db8401d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::BossBomberHealth
-  life: 1
-  hitInvulnerableDuration: 3
-  hitBlinkInterval: 0.1
 --- !u!82 &3101258277916350091
 AudioSource:
   m_ObjectHideFlags: 0

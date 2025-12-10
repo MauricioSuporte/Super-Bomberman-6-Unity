@@ -429,11 +429,17 @@ public class MovementController : MonoBehaviour, IKillable
         if (audioSource != null && deathSfx != null)
             audioSource.PlayOneShot(deathSfx);
 
-        if (GameMusicController.Instance != null &&
-            GameMusicController.Instance.deathMusic != null)
+        if (audioSource != null && deathSfx != null)
+            audioSource.PlayOneShot(deathSfx);
+
+        if (CompareTag("Player"))
         {
-            GameMusicController.Instance.PlayMusic(
-                GameMusicController.Instance.deathMusic, 1f, false);
+            if (GameMusicController.Instance != null &&
+                GameMusicController.Instance.deathMusic != null)
+            {
+                GameMusicController.Instance.PlayMusic(
+                    GameMusicController.Instance.deathMusic, 1f, false);
+            }
         }
 
         spriteRendererUp.enabled = false;
@@ -512,5 +518,24 @@ public class MovementController : MonoBehaviour, IKillable
     public void EnableBombKick()
     {
         canKickBombs = true;
+    }
+
+    public void SetInputLocked(bool locked)
+    {
+        inputLocked = locked;
+
+        if (locked)
+            ForceIdleUp();
+    }
+
+    public void ForceIdleUp()
+    {
+        direction = Vector2.zero;
+        hasInput = false;
+
+        if (spriteRendererUp != null)
+            SetDirection(Vector2.zero, spriteRendererUp);
+        else
+            SetDirection(Vector2.zero, activeSpriteRenderer);
     }
 }
