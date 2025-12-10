@@ -334,8 +334,12 @@ public class MechaBossSequence : MonoBehaviour
     void ReplaceCrowdWithEmpty(bool setEmpty)
     {
         if (standsTilemap == null) return;
-        if (crowdTiles == null || crowdTiles.Length == 0) return;
-        if (emptyTiles == null || emptyTiles.Length == 0) return;
+        if (crowdTiles == null || emptyTiles == null) return;
+        if (crowdTiles.Length != emptyTiles.Length)
+        {
+            Debug.LogError("CrowdTiles e EmptyTiles needs be same size");
+            return;
+        }
 
         BoundsInt bounds = standsTilemap.cellBounds;
 
@@ -349,29 +353,30 @@ public class MechaBossSequence : MonoBehaviour
 
                 if (setEmpty)
                 {
-                    if (Array.IndexOf(crowdTiles, current) >= 0)
+                    for (int i = 0; i < crowdTiles.Length; i++)
                     {
-                        if (!originalCrowdTiles.ContainsKey(cell))
-                            originalCrowdTiles[cell] = current;
-
-                        int hash = originalCrowdTiles[cell].GetInstanceID();
-                        TileBase replacement = emptyTiles[Mathf.Abs(hash) % emptyTiles.Length];
-                        standsTilemap.SetTile(cell, replacement);
+                        if (current == crowdTiles[i])
+                        {
+                            standsTilemap.SetTile(cell, emptyTiles[i]);
+                            break;
+                        }
                     }
                 }
                 else
                 {
-                    if (originalCrowdTiles.TryGetValue(cell, out var originalTile))
+                    for (int i = 0; i < emptyTiles.Length; i++)
                     {
-                        standsTilemap.SetTile(cell, originalTile);
+                        if (current == emptyTiles[i])
+                        {
+                            standsTilemap.SetTile(cell, crowdTiles[i]);
+                            break;
+                        }
                     }
                 }
             }
         }
-
-        if (!setEmpty)
-            originalCrowdTiles.Clear();
     }
+
 
     void LockPlayer(bool locked)
     {

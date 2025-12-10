@@ -2735,10 +2735,17 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 1055d621accba494e8680bf5fbb47645, type: 2}
   - {fileID: 11400000, guid: bb4945f86a3ebbc46a9626d64b317b9c, type: 2}
   - {fileID: 11400000, guid: d728dd11473a03b4ea9bed1139f511f0, type: 2}
+  - {fileID: 11400000, guid: c71322d6170695945999ed2264d7fc85, type: 2}
+  - {fileID: 11400000, guid: 40b270acf262b3d42a26bfc3d2e01f4d, type: 2}
   emptyTiles:
-  - {fileID: 11400000, guid: a4a41ed352067fa4badc8356a5cf098d, type: 2}
-  - {fileID: 11400000, guid: da84df06d2327c34dbf6419582a7def0, type: 2}
+  - {fileID: 11400000, guid: 16425537efa08354288585af4f271cd9, type: 2}
   - {fileID: 11400000, guid: 173d5bc66c6596f49a34c1a63f0e90dd, type: 2}
+  - {fileID: 11400000, guid: 892d40d53d5aa4840aaaff570a624510, type: 2}
+  - {fileID: 11400000, guid: 892d40d53d5aa4840aaaff570a624510, type: 2}
+  - {fileID: 11400000, guid: 16425537efa08354288585af4f271cd9, type: 2}
+  - {fileID: 11400000, guid: 173d5bc66c6596f49a34c1a63f0e90dd, type: 2}
+  - {fileID: 11400000, guid: d0ee5ce5b90b883409e5e95e8cc37bf7, type: 2}
+  - {fileID: 11400000, guid: f6d84690b52c3bb47b2dfb90184b4896, type: 2}
 --- !u!1 &732032079
 GameObject:
   m_ObjectHideFlags: 0
@@ -4379,7 +4386,7 @@ Tilemap:
       m_AnimatedSprites:
       - {fileID: -4194490761759567601, guid: 914f6dd52fc1d3f428738756d19d329e, type: 3}
       - {fileID: 1710983818, guid: 914f6dd52fc1d3f428738756d19d329e, type: 3}
-      m_AnimationSpeed: 3.5
+      m_AnimationSpeed: 3.5000002
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: 7, y: -3, z: 0}
@@ -4388,7 +4395,7 @@ Tilemap:
       m_AnimatedSprites:
       - {fileID: -4876822446513763925, guid: 1a57a821cb78e0f4d8f8f366d155df5b, type: 3}
       - {fileID: 920322489, guid: 1a57a821cb78e0f4d8f8f366d155df5b, type: 3}
-      m_AnimationSpeed: 3.5000002
+      m_AnimationSpeed: 3.5
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: -9, y: -2, z: 0}
@@ -4568,7 +4575,7 @@ Tilemap:
       m_AnimatedSprites:
       - {fileID: 413118391, guid: 914f6dd52fc1d3f428738756d19d329e, type: 3}
       - {fileID: -414010142, guid: 914f6dd52fc1d3f428738756d19d329e, type: 3}
-      m_AnimationSpeed: 3.0000002
+      m_AnimationSpeed: 3
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: 4, y: 4, z: 0}
@@ -5667,6 +5674,7 @@ MonoBehaviour:
   endingScreenMusic: {fileID: 8300000, guid: e3b8c8f8710bcda4c9ca251a09b52d37, type: 3}
   restartKey: 13
   gameplayRoot: {fileID: 679601670}
+  mechaBossSequence: {fileID: 0}
 --- !u!114 &1389130173
 MonoBehaviour:
   m_ObjectHideFlags: 0
