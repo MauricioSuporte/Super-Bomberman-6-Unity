@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
@@ -22,6 +23,11 @@ public class MechaBossSequence : MonoBehaviour
     public Vector3Int gateCell;
     public float gateStepDelay = 0.1f;
 
+    [Header("Stands (Crowd / Empty)")]
+    public Tilemap standsTilemap;          // pode ser o mesmo do Indestructibles
+    public TileBase[] crowdTiles;          // tiles de pessoas
+    public TileBase[] emptyTiles;          // tiles de bancos vazios
+
     MovementController[] mechas;
     GameManager gameManager;
     BombController playerBomb;
@@ -36,6 +42,8 @@ public class MechaBossSequence : MonoBehaviour
 
     Vector3Int gateLeftCell;
     Vector3Int gateRightCell;
+
+    readonly Dictionary<Vector3Int, TileBase> originalCrowdTiles = new();
 
     void Awake()
     {
@@ -228,6 +236,22 @@ public class MechaBossSequence : MonoBehaviour
         mecha.ApplyDirectionFromVector(Vector2.down);
 
         float distance = Mathf.Abs(to.y - from.y);
+        if (distance <= Mathf.Epsilon || speed <= 0f)
+        {
+            if (mecha.Rigidbody != null)
+            {
+                mecha.Rigidbody.position = to;
+                mecha.Rigidbody.linearVelocity = Vector2.zero;
+            }
+            else
+            {
+                mecha.transform.position = to;
+            }
+
+            mecha.ApplyDirectionFromVector(Vector2.zero);
+            yield break;
+        }
+
         float duration = distance / speed;
         float t = 0f;
 
@@ -300,6 +324,53 @@ public class MechaBossSequence : MonoBehaviour
             yield return new WaitForSeconds(gateStepDelay);
 
         indestructibleTilemap.SetTile(gateCell, gateCenterTile);
+    }
+
+    public void SetStandsEmpty(bool empty)
+    {
+        ReplaceCrowdWithEmpty(empty);
+    }
+
+    void ReplaceCrowdWithEmpty(bool setEmpty)
+    {
+        if (standsTilemap == null) return;
+        if (crowdTiles == null || crowdTiles.Length == 0) return;
+        if (emptyTiles == null || emptyTiles.Length == 0) return;
+
+        BoundsInt bounds = standsTilemap.cellBounds;
+
+        for (int x = bounds.xMin; x < bounds.xMax; x++)
+        {
+            for (int y = bounds.yMin; y < bounds.yMax; y++)
+            {
+                Vector3Int cell = new Vector3Int(x, y, 0);
+                TileBase current = standsTilemap.GetTile(cell);
+                if (current == null) continue;
+
+                if (setEmpty)
+                {
+                    if (Array.IndexOf(crowdTiles, current) >= 0)
+                    {
+                        if (!originalCrowdTiles.ContainsKey(cell))
+                            originalCrowdTiles[cell] = current;
+
+                        int hash = originalCrowdTiles[cell].GetInstanceID();
+                        TileBase replacement = emptyTiles[Mathf.Abs(hash) % emptyTiles.Length];
+                        standsTilemap.SetTile(cell, replacement);
+                    }
+                }
+                else
+                {
+                    if (originalCrowdTiles.TryGetValue(cell, out var originalTile))
+                    {
+                        standsTilemap.SetTile(cell, originalTile);
+                    }
+                }
+            }
+        }
+
+        if (!setEmpty)
+            originalCrowdTiles.Clear();
     }
 
     void LockPlayer(bool locked)

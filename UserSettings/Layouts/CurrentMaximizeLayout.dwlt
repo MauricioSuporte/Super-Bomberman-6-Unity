@@ -24,7 +24,7 @@ MonoBehaviour:
   m_MinSize: {x: 300, y: 100}
   m_MaxSize: {x: 24288, y: 16192}
   vertical: 0
-  controlID: 12283
+  controlID: 15738
   draggingID: 0
 --- !u!114 &2
 MonoBehaviour:
@@ -153,7 +153,7 @@ MonoBehaviour:
   m_MinSize: {x: 200, y: 100}
   m_MaxSize: {x: 16192, y: 16192}
   vertical: 1
-  controlID: 12238
+  controlID: 15690
   draggingID: 0
 --- !u!114 &4
 MonoBehaviour:
@@ -179,7 +179,7 @@ MonoBehaviour:
   m_MinSize: {x: 200, y: 50}
   m_MaxSize: {x: 16192, y: 8096}
   vertical: 0
-  controlID: 12229
+  controlID: 15681
   draggingID: 0
 --- !u!114 &5
 MonoBehaviour:
@@ -929,7 +929,7 @@ MonoBehaviour:
     m_SkipHidden: 0
     m_SearchArea: 1
     m_Folders:
-    - Assets/Prefabs
+    - Assets/Sprites/Tiles/1-6
     m_Globs: []
     m_ProductIds: 
     m_AnyWithAssetOrigin: 0
@@ -939,16 +939,16 @@ MonoBehaviour:
   m_ViewMode: 1
   m_StartGridSize: 96
   m_LastFolders:
-  - Assets/Prefabs
+  - Assets/Sprites/Tiles/1-6
   m_LastFoldersGridSize: 96
   m_LastProjectPath: C:\Users\mauri\source\repos\SuperBomberman6
   m_LockTracker:
     m_IsLocked: 0
   m_FolderTreeState:
-    scrollPos: {x: 0, y: 0}
-    m_SelectedIDs: da840000
-    m_LastClickedID: 34010
-    m_ExpandedIDs: 00000000cc840000ce840000d0840000d2840000d4840000d6840000d8840000
+    scrollPos: {x: 0, y: 180}
+    m_SelectedIDs: 58f30000
+    m_LastClickedID: 62296
+    m_ExpandedIDs: 00000000cc840000ce840000d0840000d2840000d4840000d6840000d884000046850000
     m_RenameOverlay:
       m_UserAcceptedRename: 0
       m_Name: 

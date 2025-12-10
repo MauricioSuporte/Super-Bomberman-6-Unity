@@ -39,6 +39,9 @@ public class StageIntroTransition : MonoBehaviour
     [Header("Gameplay Root")]
     public GameObject gameplayRoot;
 
+    [Header("Boss / Mecha")]
+    public MechaBossSequence mechaBossSequence;
+
     public bool IntroRunning { get; private set; }
 
     public bool EndingRunning { get; private set; }
@@ -64,6 +67,9 @@ public class StageIntroTransition : MonoBehaviour
         }
 
         Instance = this;
+
+        if (mechaBossSequence == null)
+            mechaBossSequence = FindFirstObjectByType<MechaBossSequence>();
     }
 
     void Start()
@@ -455,7 +461,6 @@ public class StageIntroTransition : MonoBehaviour
         fadeImage.gameObject.SetActive(true);
 
         Color baseColor = fadeImage.color;
-
         float blackHold = 0.5f;
 
         for (int i = 0; i < cycles; i++)
@@ -470,6 +475,15 @@ public class StageIntroTransition : MonoBehaviour
             }
 
             fadeImage.color = new Color(baseColor.r, baseColor.g, baseColor.b, 1f);
+
+            if (mechaBossSequence == null)
+                mechaBossSequence = FindFirstObjectByType<MechaBossSequence>();
+
+            if (mechaBossSequence != null)
+            {
+                bool empty = (i == cycles - 1) || (i % 2 == 0);
+                mechaBossSequence.SetStandsEmpty(empty);
+            }
 
             if (i == cycles - 1)
             {
