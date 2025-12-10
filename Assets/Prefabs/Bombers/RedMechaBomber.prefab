@@ -137,8 +137,10 @@ MonoBehaviour:
   spriteRendererRight: {fileID: 4427367602280399939}
   spriteRendererDeath: {fileID: 4595467764902937718}
   spriteRendererEndStage: {fileID: 4652177394112457859}
+  spriteRendererCheering: {fileID: 0}
   endStageTotalTime: 1
   endStageFrameCount: 9
+  isDead: 0
   aiDirection: {x: 0, y: 0}
   isBoss: 1
 --- !u!114 &8243230538853254392
@@ -200,7 +202,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 205f7fc6fe6408f419811c6c486b9cd6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CharacterHealth
-  life: 3
+  life: 2
   hitInvulnerableDuration: 3
   hitBlinkInterval: 0.1
 --- !u!82 &3101258277916350091

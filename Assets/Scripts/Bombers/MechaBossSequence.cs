@@ -1,10 +1,11 @@
 using System;
 using System.Collections;
 using UnityEngine;
+using UnityEngine.Tilemaps;
 
 public class MechaBossSequence : MonoBehaviour
 {
-    private static WaitForSeconds _waitForSeconds1 = new WaitForSeconds(1f);
+    private static readonly WaitForSeconds _waitForSeconds1 = new(1f);
     private static readonly WaitForSeconds _waitForSeconds2 = new(2f);
 
     public MovementController whiteMecha;
@@ -16,6 +17,11 @@ public class MechaBossSequence : MonoBehaviour
     [Header("Music")]
     public AudioClip bossCheeringMusic;
 
+    [Header("Gate")]
+    public Tilemap indestructibleTilemap;
+    public Vector3Int gateCell;
+    public float gateStepDelay = 0.1f;
+
     MovementController[] mechas;
     GameManager gameManager;
     BombController playerBomb;
@@ -23,6 +29,13 @@ public class MechaBossSequence : MonoBehaviour
     bool initialized;
     bool sequenceStarted;
     bool finalSequenceStarted;
+
+    TileBase gateCenterTile;
+    TileBase gateLeftTile;
+    TileBase gateRightTile;
+
+    Vector3Int gateLeftCell;
+    Vector3Int gateRightCell;
 
     void Awake()
     {
@@ -43,6 +56,17 @@ public class MechaBossSequence : MonoBehaviour
 
         if (player != null)
             playerBomb = player.GetComponent<BombController>();
+
+        if (indestructibleTilemap != null)
+        {
+            gateCenterTile = indestructibleTilemap.GetTile(gateCell);
+
+            gateLeftCell = new Vector3Int(gateCell.x - 1, gateCell.y, gateCell.z);
+            gateRightCell = new Vector3Int(gateCell.x + 1, gateCell.y, gateCell.z);
+
+            gateLeftTile = indestructibleTilemap.GetTile(gateLeftCell);
+            gateRightTile = indestructibleTilemap.GetTile(gateRightCell);
+        }
     }
 
     void Start()
@@ -92,6 +116,8 @@ public class MechaBossSequence : MonoBehaviour
     IEnumerator MechaIntroRoutine(MovementController mecha)
     {
         LockPlayer(true);
+
+        yield return StartCoroutine(OpenGateRoutine());
 
         mecha.SetExplosionInvulnerable(true);
 
@@ -155,7 +181,38 @@ public class MechaBossSequence : MonoBehaviour
         if (bossAI != null) bossAI.enabled = true;
 
         mecha.SetExplosionInvulnerable(false);
+
+        yield return StartCoroutine(CloseGateRoutine());
+
         LockPlayer(false);
+    }
+
+    IEnumerator OpenGateRoutine()
+    {
+        if (indestructibleTilemap == null)
+            yield break;
+
+        indestructibleTilemap.SetTile(gateCell, null);
+
+        if (gateStepDelay > 0f)
+            yield return new WaitForSeconds(gateStepDelay);
+
+        indestructibleTilemap.SetTile(gateLeftCell, null);
+        indestructibleTilemap.SetTile(gateRightCell, null);
+    }
+
+    IEnumerator CloseGateRoutine()
+    {
+        if (indestructibleTilemap == null)
+            yield break;
+
+        indestructibleTilemap.SetTile(gateLeftCell, gateLeftTile);
+        indestructibleTilemap.SetTile(gateRightCell, gateRightTile);
+
+        if (gateStepDelay > 0f)
+            yield return new WaitForSeconds(gateStepDelay);
+
+        indestructibleTilemap.SetTile(gateCell, gateCenterTile);
     }
 
     void LockPlayer(bool locked)
