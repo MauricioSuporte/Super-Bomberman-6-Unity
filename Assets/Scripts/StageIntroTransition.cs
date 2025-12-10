@@ -446,4 +446,69 @@ public class StageIntroTransition : MonoBehaviour
             SceneManager.LoadScene(currentScene.buildIndex);
         }
     }
+
+    public IEnumerator Flash(float halfDuration, int cycles)
+    {
+        if (fadeImage == null)
+            yield break;
+
+        fadeImage.gameObject.SetActive(true);
+
+        Color baseColor = fadeImage.color;
+
+        float blackHold = 0.5f;
+
+        for (int i = 0; i < cycles; i++)
+        {
+            float t = 0f;
+            while (t < halfDuration)
+            {
+                t += Time.unscaledDeltaTime;
+                float a = Mathf.Clamp01(t / halfDuration);
+                fadeImage.color = new Color(baseColor.r, baseColor.g, baseColor.b, a);
+                yield return null;
+            }
+
+            fadeImage.color = new Color(baseColor.r, baseColor.g, baseColor.b, 1f);
+
+            if (i == cycles - 1)
+            {
+                var playerGo = GameObject.FindGameObjectWithTag("Player");
+                if (playerGo != null &&
+                    playerGo.TryGetComponent<MovementController>(out var playerCtrl))
+                {
+                    Vector2 targetPos = new(-3f, -6f);
+
+                    if (playerCtrl.Rigidbody != null)
+                    {
+                        playerCtrl.Rigidbody.position = targetPos;
+                        playerCtrl.Rigidbody.linearVelocity = Vector2.zero;
+                    }
+                    else
+                    {
+                        playerCtrl.transform.position = targetPos;
+                    }
+
+                    playerCtrl.ForceIdleUp();
+                }
+            }
+
+            yield return new WaitForSecondsRealtime(blackHold);
+
+            t = 0f;
+            while (t < halfDuration)
+            {
+                t += Time.unscaledDeltaTime;
+                float a = 1f - Mathf.Clamp01(t / halfDuration);
+                fadeImage.color = new Color(baseColor.r, baseColor.g, baseColor.b, a);
+                yield return null;
+            }
+
+            fadeImage.color = new Color(baseColor.r, baseColor.g, baseColor.b, 0f);
+            yield return null;
+        }
+
+        fadeImage.color = new Color(baseColor.r, baseColor.g, baseColor.b, 0f);
+        fadeImage.gameObject.SetActive(false);
+    }
 }

@@ -124,7 +124,7 @@ public class MovementController : MonoBehaviour, IKillable
         }
     }
 
-    protected void ApplyDirectionFromVector(Vector2 dir)
+    public void ApplyDirectionFromVector(Vector2 dir)
     {
         hasInput = dir != Vector2.zero;
 

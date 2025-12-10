@@ -119,6 +119,16 @@ public class MechaBossSequence : MonoBehaviour
 
         yield return StartCoroutine(OpenGateRoutine());
 
+        bool isRed = mecha == redMecha;
+
+        if (isRed)
+        {
+            yield return _waitForSeconds2;
+
+            if (StageIntroTransition.Instance != null)
+                yield return StageIntroTransition.Instance.Flash(0.5f, 5);
+        }
+
         mecha.SetExplosionInvulnerable(true);
 
         var bossAI = mecha.GetComponent<BossBomberAI>();
@@ -128,6 +138,7 @@ public class MechaBossSequence : MonoBehaviour
         if (aiMove != null) aiMove.enabled = true;
 
         Vector2 startPos = new(-1f, 5f);
+        Vector2 midPos = new(-1f, 4f);
         Vector2 endPos = new(-1f, 0f);
 
         if (mecha.Rigidbody != null)
@@ -143,34 +154,56 @@ public class MechaBossSequence : MonoBehaviour
 
         mecha.gameObject.SetActive(true);
 
-        if (aiMove != null)
-            aiMove.SetAIDirection(Vector2.down);
-
-        while (true)
+        if (!isRed)
         {
-            if (mecha == null) yield break;
-
-            Vector2 pos = mecha.Rigidbody != null
-                ? mecha.Rigidbody.position
-                : (Vector2)mecha.transform.position;
-
-            if (pos.y <= endPos.y + 0.05f)
-                break;
-
             if (aiMove != null)
                 aiMove.SetAIDirection(Vector2.down);
 
-            yield return null;
-        }
+            while (true)
+            {
+                if (mecha == null) yield break;
 
-        if (mecha.Rigidbody != null)
-        {
-            mecha.Rigidbody.position = endPos;
-            mecha.Rigidbody.linearVelocity = Vector2.zero;
+                Vector2 pos = mecha.Rigidbody != null
+                    ? mecha.Rigidbody.position
+                    : (Vector2)mecha.transform.position;
+
+                if (pos.y <= endPos.y + 0.05f)
+                    break;
+
+                if (aiMove != null)
+                    aiMove.SetAIDirection(Vector2.down);
+
+                yield return null;
+            }
+
+            if (mecha.Rigidbody != null)
+            {
+                mecha.Rigidbody.position = endPos;
+                mecha.Rigidbody.linearVelocity = Vector2.zero;
+            }
+            else
+            {
+                mecha.transform.position = endPos;
+            }
         }
         else
         {
-            mecha.transform.position = endPos;
+            if (aiMove != null)
+            {
+                aiMove.SetAIDirection(Vector2.zero);
+                aiMove.enabled = false;
+            }
+
+            float moveSpeed = mecha.speed > 0f ? mecha.speed : 2f;
+
+            yield return MoveMechaVertically(mecha, startPos, midPos, moveSpeed);
+
+            yield return _waitForSeconds2;
+
+            yield return MoveMechaVertically(mecha, midPos, endPos, moveSpeed);
+
+            if (aiMove != null)
+                aiMove.enabled = true;
         }
 
         if (aiMove != null)
@@ -185,6 +218,60 @@ public class MechaBossSequence : MonoBehaviour
         yield return StartCoroutine(CloseGateRoutine());
 
         LockPlayer(false);
+    }
+
+    IEnumerator MoveMechaVertically(MovementController mecha, Vector2 from, Vector2 to, float speed)
+    {
+        if (mecha == null)
+            yield break;
+
+        mecha.ApplyDirectionFromVector(Vector2.down);
+
+        float distance = Mathf.Abs(to.y - from.y);
+        float duration = distance / speed;
+        float t = 0f;
+
+        while (t < duration)
+        {
+            if (mecha == null) yield break;
+
+            t += Time.deltaTime;
+            float lerp = Mathf.Clamp01(t / duration);
+            float newY = Mathf.Lerp(from.y, to.y, lerp);
+
+            if (mecha.Rigidbody != null)
+            {
+                Vector2 pos = mecha.Rigidbody.position;
+                pos.x = from.x;
+                pos.y = newY;
+                mecha.Rigidbody.position = pos;
+                mecha.Rigidbody.linearVelocity = Vector2.zero;
+            }
+            else
+            {
+                Vector3 pos = mecha.transform.position;
+                pos.x = from.x;
+                pos.y = newY;
+                mecha.transform.position = pos;
+            }
+
+            yield return null;
+        }
+
+        if (mecha != null)
+        {
+            if (mecha.Rigidbody != null)
+            {
+                mecha.Rigidbody.position = to;
+                mecha.Rigidbody.linearVelocity = Vector2.zero;
+            }
+            else
+            {
+                mecha.transform.position = to;
+            }
+        }
+
+        mecha.ApplyDirectionFromVector(Vector2.zero);
     }
 
     IEnumerator OpenGateRoutine()
