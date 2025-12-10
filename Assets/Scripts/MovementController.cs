@@ -39,6 +39,7 @@ public class MovementController : MonoBehaviour, IKillable
     public AnimatedSpriteRenderer spriteRendererRight;
     public AnimatedSpriteRenderer spriteRendererDeath;
     public AnimatedSpriteRenderer spriteRendererEndStage;
+    public AnimatedSpriteRenderer spriteRendererCheering;
 
     [Header("End Stage Animation")]
     public float endStageTotalTime = 1f;
@@ -46,7 +47,7 @@ public class MovementController : MonoBehaviour, IKillable
 
     protected AnimatedSpriteRenderer activeSpriteRenderer;
     protected bool inputLocked;
-    protected bool isDead;
+    public bool isDead;
 
     const float CenterEpsilon = 0.01f;
 
@@ -382,6 +383,15 @@ public class MovementController : MonoBehaviour, IKillable
         spriteRendererLeft.enabled = spriteRenderer == spriteRendererLeft;
         spriteRendererRight.enabled = spriteRenderer == spriteRendererRight;
 
+        if (spriteRendererDeath != null)
+            spriteRendererDeath.enabled = spriteRenderer == spriteRendererDeath;
+
+        if (spriteRendererEndStage != null)
+            spriteRendererEndStage.enabled = spriteRenderer == spriteRendererEndStage;
+
+        if (spriteRendererCheering != null)
+            spriteRendererCheering.enabled = spriteRenderer == spriteRendererCheering;
+
         activeSpriteRenderer = spriteRenderer;
 
         if (activeSpriteRenderer != null)
@@ -455,6 +465,12 @@ public class MovementController : MonoBehaviour, IKillable
         spriteRendererLeft.enabled = false;
         spriteRendererRight.enabled = false;
 
+        if (spriteRendererCheering != null)
+            spriteRendererCheering.enabled = false;
+
+        if (spriteRendererEndStage != null)
+            spriteRendererEndStage.enabled = false;
+
         if (spriteRendererDeath != null)
         {
             spriteRendererDeath.enabled = true;
@@ -495,8 +511,12 @@ public class MovementController : MonoBehaviour, IKillable
         spriteRendererDown.enabled = false;
         spriteRendererLeft.enabled = false;
         spriteRendererRight.enabled = false;
+
         if (spriteRendererDeath != null)
             spriteRendererDeath.enabled = false;
+
+        if (spriteRendererCheering != null)
+            spriteRendererCheering.enabled = false;
 
         var endSprite = spriteRendererEndStage != null
             ? spriteRendererEndStage
@@ -550,5 +570,38 @@ public class MovementController : MonoBehaviour, IKillable
     public void SetExplosionInvulnerable(bool value)
     {
         explosionInvulnerable = value;
+    }
+
+    public void StartCheering()
+    {
+        if (isDead)
+            return;
+
+        SetExplosionInvulnerable(true);
+        inputLocked = true;
+
+        if (bombController != null)
+            bombController.enabled = false;
+
+        direction = Vector2.zero;
+        hasInput = false;
+
+        if (Rigidbody != null)
+            Rigidbody.linearVelocity = Vector2.zero;
+
+        if (spriteRendererUp != null) spriteRendererUp.enabled = false;
+        if (spriteRendererDown != null) spriteRendererDown.enabled = false;
+        if (spriteRendererLeft != null) spriteRendererLeft.enabled = false;
+        if (spriteRendererRight != null) spriteRendererRight.enabled = false;
+        if (spriteRendererDeath != null) spriteRendererDeath.enabled = false;
+        if (spriteRendererEndStage != null) spriteRendererEndStage.enabled = false;
+
+        if (spriteRendererCheering != null)
+        {
+            spriteRendererCheering.enabled = true;
+            spriteRendererCheering.idle = false;
+            spriteRendererCheering.loop = true;
+            activeSpriteRenderer = spriteRendererCheering;
+        }
     }
 }

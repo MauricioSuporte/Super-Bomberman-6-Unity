@@ -4,14 +4,17 @@ using UnityEngine;
 
 public class MechaBossSequence : MonoBehaviour
 {
+    private static WaitForSeconds _waitForSeconds1 = new WaitForSeconds(1f);
     private static readonly WaitForSeconds _waitForSeconds2 = new(2f);
-    private static readonly WaitForSeconds _waitForSeconds5 = new(5f);
 
     public MovementController whiteMecha;
     public MovementController blackMecha;
     public MovementController redMecha;
 
     public MovementController player;
+
+    [Header("Music")]
+    public AudioClip bossCheeringMusic;
 
     MovementController[] mechas;
     GameManager gameManager;
@@ -191,11 +194,28 @@ public class MechaBossSequence : MonoBehaviour
 
     IEnumerator FinalBossDefeatedRoutine()
     {
+        yield return _waitForSeconds1;
 
-        yield return _waitForSeconds5;
+        if (player == null || player.isDead)
+            yield break;
+
+        player.StartCheering();
+
+        if (GameMusicController.Instance != null && bossCheeringMusic != null)
+            GameMusicController.Instance.PlayMusic(bossCheeringMusic, 1f, false);
+
+        float cheeringDuration = 4f;
+        float fadeDuration = 1f;
+        float timeBeforeFade = Mathf.Max(0f, cheeringDuration - fadeDuration);
+
+        if (timeBeforeFade > 0f)
+            yield return new WaitForSeconds(timeBeforeFade);
 
         if (StageIntroTransition.Instance != null)
-            StageIntroTransition.Instance.StartFadeOut(3f);
+            StageIntroTransition.Instance.StartFadeOut(fadeDuration);
+
+        if (fadeDuration > 0f)
+            yield return new WaitForSeconds(fadeDuration);
 
         if (gameManager != null)
             gameManager.EndStage();
