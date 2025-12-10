@@ -87,6 +87,8 @@ public class MechaBossSequence : MonoBehaviour
     {
         LockPlayer(true);
 
+        mecha.SetExplosionInvulnerable(true);
+
         var bossAI = mecha.GetComponent<BossBomberAI>();
         var aiMove = mecha.GetComponent<AIMovementController>();
 
@@ -146,13 +148,17 @@ public class MechaBossSequence : MonoBehaviour
 
         if (bossAI != null) bossAI.enabled = true;
 
+        mecha.SetExplosionInvulnerable(false);
         LockPlayer(false);
     }
 
     void LockPlayer(bool locked)
     {
         if (player != null)
+        {
             player.SetInputLocked(locked);
+            player.SetExplosionInvulnerable(locked);
+        }
 
         if (playerBomb != null)
             playerBomb.enabled = !locked;

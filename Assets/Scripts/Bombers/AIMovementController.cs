@@ -34,10 +34,14 @@ public class AIMovementController : MovementController
 
         if (layer == LayerMask.NameToLayer("Explosion"))
         {
+            if (explosionInvulnerable)
+                return;
+
             if (TryGetComponent<CharacterHealth>(out var health))
                 health.TakeDamage(1);
             else
                 Kill();
+
             return;
         }
 
@@ -47,6 +51,7 @@ public class AIMovementController : MovementController
                 health.TakeDamage(1);
             else
                 Kill();
+
             return;
         }
 

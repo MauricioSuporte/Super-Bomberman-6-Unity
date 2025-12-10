@@ -54,6 +54,8 @@ public class MovementController : MonoBehaviour, IKillable
 
     protected bool hasInput;
 
+    protected bool explosionInvulnerable;
+
     protected virtual void Awake()
     {
         Rigidbody = GetComponent<Rigidbody2D>();
@@ -393,8 +395,14 @@ public class MovementController : MonoBehaviour, IKillable
 
         int layer = other.gameObject.layer;
 
-        if (layer == LayerMask.NameToLayer("Explosion") ||
-            layer == LayerMask.NameToLayer("Enemy"))
+        if (layer == LayerMask.NameToLayer("Explosion"))
+        {
+            if (explosionInvulnerable)
+                return;
+
+            DeathSequence();
+        }
+        else if (layer == LayerMask.NameToLayer("Enemy"))
         {
             DeathSequence();
         }
@@ -537,5 +545,10 @@ public class MovementController : MonoBehaviour, IKillable
             SetDirection(Vector2.zero, spriteRendererUp);
         else
             SetDirection(Vector2.zero, activeSpriteRenderer);
+    }
+
+    public void SetExplosionInvulnerable(bool value)
+    {
+        explosionInvulnerable = value;
     }
 }
