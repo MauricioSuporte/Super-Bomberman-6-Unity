@@ -24,9 +24,9 @@ public class MechaBossSequence : MonoBehaviour
     public float gateStepDelay = 0.1f;
 
     [Header("Stands (Crowd / Empty)")]
-    public Tilemap standsTilemap;          // pode ser o mesmo do Indestructibles
-    public TileBase[] crowdTiles;          // tiles de pessoas
-    public TileBase[] emptyTiles;          // tiles de bancos vazios
+    public Tilemap standsTilemap;
+    public TileBase[] crowdTiles;
+    public TileBase[] emptyTiles;
 
     MovementController[] mechas;
     GameManager gameManager;
@@ -43,7 +43,7 @@ public class MechaBossSequence : MonoBehaviour
     Vector3Int gateLeftCell;
     Vector3Int gateRightCell;
 
-    readonly Dictionary<Vector3Int, TileBase> originalCrowdTiles = new();
+    readonly Dictionary<Vector3Int, int> changedStandCells = new();
 
     void Awake()
     {
@@ -145,9 +145,9 @@ public class MechaBossSequence : MonoBehaviour
         if (bossAI != null) bossAI.enabled = false;
         if (aiMove != null) aiMove.enabled = true;
 
-        Vector2 startPos = new(-1f, 5f);
-        Vector2 midPos = new(-1f, 4f);
-        Vector2 endPos = new(-1f, 0f);
+        Vector2 startPos = new Vector2(-1f, 5f);
+        Vector2 midPos = new Vector2(-1f, 4f);
+        Vector2 endPos = new Vector2(-1f, 0f);
 
         if (mecha.Rigidbody != null)
         {
@@ -337,46 +337,52 @@ public class MechaBossSequence : MonoBehaviour
         if (crowdTiles == null || emptyTiles == null) return;
         if (crowdTiles.Length != emptyTiles.Length)
         {
-            Debug.LogError("CrowdTiles e EmptyTiles needs be same size");
+            Debug.LogError("CrowdTiles e EmptyTiles needs be same syze.");
             return;
         }
 
-        BoundsInt bounds = standsTilemap.cellBounds;
-
-        for (int x = bounds.xMin; x < bounds.xMax; x++)
+        if (setEmpty)
         {
-            for (int y = bounds.yMin; y < bounds.yMax; y++)
-            {
-                Vector3Int cell = new Vector3Int(x, y, 0);
-                TileBase current = standsTilemap.GetTile(cell);
-                if (current == null) continue;
+            changedStandCells.Clear();
 
-                if (setEmpty)
+            BoundsInt bounds = standsTilemap.cellBounds;
+
+            for (int x = bounds.xMin; x < bounds.xMax; x++)
+            {
+                for (int y = bounds.yMin; y < bounds.yMax; y++)
                 {
+                    Vector3Int cell = new(x, y, 0);
+                    TileBase current = standsTilemap.GetTile(cell);
+                    if (current == null) continue;
+
                     for (int i = 0; i < crowdTiles.Length; i++)
                     {
                         if (current == crowdTiles[i])
                         {
                             standsTilemap.SetTile(cell, emptyTiles[i]);
-                            break;
-                        }
-                    }
-                }
-                else
-                {
-                    for (int i = 0; i < emptyTiles.Length; i++)
-                    {
-                        if (current == emptyTiles[i])
-                        {
-                            standsTilemap.SetTile(cell, crowdTiles[i]);
+                            changedStandCells[cell] = i;
                             break;
                         }
                     }
                 }
             }
         }
-    }
+        else
+        {
+            foreach (var kvp in changedStandCells)
+            {
+                Vector3Int cell = kvp.Key;
+                int index = kvp.Value;
 
+                if (index >= 0 && index < crowdTiles.Length)
+                {
+                    standsTilemap.SetTile(cell, crowdTiles[index]);
+                }
+            }
+
+            changedStandCells.Clear();
+        }
+    }
 
     void LockPlayer(bool locked)
     {
