@@ -93,8 +93,6 @@ public class MechaBossSequence : MonoBehaviour
         if (bossAI != null) bossAI.enabled = false;
         if (aiMove != null) aiMove.enabled = true;
 
-        mecha.gameObject.SetActive(true);
-
         Vector2 startPos = new(-1f, 5f);
         Vector2 endPos = new(-1f, 0f);
 
@@ -108,6 +106,8 @@ public class MechaBossSequence : MonoBehaviour
         {
             mecha.transform.position = startPos;
         }
+
+        mecha.gameObject.SetActive(true);
 
         if (aiMove != null)
             aiMove.SetAIDirection(Vector2.down);
