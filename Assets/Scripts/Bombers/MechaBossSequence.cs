@@ -5,6 +5,8 @@ using UnityEngine;
 public class MechaBossSequence : MonoBehaviour
 {
     private static readonly WaitForSeconds _waitForSeconds2 = new(2f);
+    private static readonly WaitForSeconds _waitForSeconds5 = new(5f);
+
     public MovementController whiteMecha;
     public MovementController blackMecha;
     public MovementController redMecha;
@@ -17,6 +19,7 @@ public class MechaBossSequence : MonoBehaviour
 
     bool initialized;
     bool sequenceStarted;
+    bool finalSequenceStarted;
 
     void Awake()
     {
@@ -175,7 +178,26 @@ public class MechaBossSequence : MonoBehaviour
             return;
         }
 
+        if (sender == redMecha && !finalSequenceStarted)
+        {
+            finalSequenceStarted = true;
+            StartCoroutine(FinalBossDefeatedRoutine());
+            return;
+        }
+
         if (gameManager != null)
             gameManager.CheckWinState();
+    }
+
+    IEnumerator FinalBossDefeatedRoutine()
+    {
+
+        yield return _waitForSeconds5;
+
+        if (StageIntroTransition.Instance != null)
+            StageIntroTransition.Instance.StartFadeOut(3f);
+
+        if (gameManager != null)
+            gameManager.EndStage();
     }
 }

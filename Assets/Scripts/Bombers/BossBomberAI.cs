@@ -55,7 +55,7 @@ public class BossBomberAI : MonoBehaviour
     void Think()
     {
         Vector2 myPos = RoundToTile(transform.position);
-        Bomb[] bombs = FindObjectsOfType<Bomb>();
+        Bomb[] bombs = FindObjectsByType<Bomb>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
 
         bool inDanger = IsInDangerFromBombs(myPos, bombs);
 
@@ -118,7 +118,7 @@ public class BossBomberAI : MonoBehaviour
 
             TryPlaceBombChain(myPos);
 
-            bombs = FindObjectsOfType<Bomb>();
+            bombs = FindObjectsByType<Bomb>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
             isEvading = true;
             lastDirection = GetBestSafeDirectionOrStay(myPos, bombs);
             return;
