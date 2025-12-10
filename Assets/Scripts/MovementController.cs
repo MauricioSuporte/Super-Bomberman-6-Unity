@@ -4,7 +4,7 @@ using UnityEngine;
 [RequireComponent(typeof(AudioSource))]
 [RequireComponent(typeof(BombController))]
 [RequireComponent(typeof(Rigidbody2D))]
-public class MovementController : MonoBehaviour
+public class MovementController : MonoBehaviour, IKillable
 {
     public event Action<MovementController> Died;
 

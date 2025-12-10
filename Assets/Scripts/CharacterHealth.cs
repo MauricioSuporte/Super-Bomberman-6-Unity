@@ -1,10 +1,14 @@
-using System.Collections;
+﻿using System.Collections;
 using UnityEngine;
 
-[RequireComponent(typeof(MovementController))]
-public class BossBomberHealth : MonoBehaviour
+[RequireComponent(typeof(Collider2D))]
+[RequireComponent(typeof(IKillable))]
+public class CharacterHealth : MonoBehaviour
 {
-    public int life = 3;
+    [Header("Health")]
+    public int life = 1;
+
+    [Header("Hit / Invulnerability")]
     public float hitInvulnerableDuration = 3f;
     public float hitBlinkInterval = 0.1f;
 
@@ -14,11 +18,12 @@ public class BossBomberHealth : MonoBehaviour
     SpriteRenderer[] spriteRenderers;
     Color[] originalColors;
     Coroutine hitRoutine;
-    MovementController movement;
+
+    IKillable killable;
 
     void Awake()
     {
-        movement = GetComponent<MovementController>();
+        killable = GetComponent<IKillable>();
 
         spriteRenderers = GetComponentsInChildren<SpriteRenderer>();
         originalColors = new Color[spriteRenderers.Length];
@@ -46,6 +51,13 @@ public class BossBomberHealth : MonoBehaviour
 
         if (hitInvulnerableDuration > 0f)
             StartHitInvulnerability();
+    }
+
+    public void AddLife(int amount)
+    {
+        life += amount;
+        if (life < 0)
+            life = 0;
     }
 
     void StartHitInvulnerability()
@@ -111,8 +123,8 @@ public class BossBomberHealth : MonoBehaviour
             if (spriteRenderers[i] != null)
                 spriteRenderers[i].color = originalColors[i];
 
-        if (movement != null)
-            movement.Kill();
+        if (killable != null)
+            killable.Kill();
         else
             Destroy(gameObject);
     }

@@ -14,8 +14,8 @@ GameObject:
   - component: {fileID: 6261750521133772370}
   - component: {fileID: 8243230538853254392}
   - component: {fileID: 4730492100800285400}
-  - component: {fileID: 9003568192130577715}
   - component: {fileID: 3101258277916350091}
+  - component: {fileID: 1907593265075809238}
   m_Layer: 10
   m_Name: BlackMechaBomber
   m_TagString: BossBomber
@@ -139,8 +139,6 @@ MonoBehaviour:
   spriteRendererEndStage: {fileID: 4652177394112457859}
   endStageTotalTime: 1
   endStageFrameCount: 9
-  useAIInput: 1
-  aiDirection: {x: 0, y: 0}
 --- !u!114 &8243230538853254392
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -188,21 +186,6 @@ MonoBehaviour:
   maxChaseDistance: 20
   safeDistanceAfterBomb: 3
   bombChainCooldown: 0.3
---- !u!114 &9003568192130577715
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 444576652216317808}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d65b54d63aab5f64a801afd51db8401d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::BossBomberHealth
-  life: 1
-  hitInvulnerableDuration: 3
-  hitBlinkInterval: 0.1
 --- !u!82 &3101258277916350091
 AudioSource:
   m_ObjectHideFlags: 0
@@ -300,6 +283,40 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+--- !u!114 &1907593265075809238
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 444576652216317808}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5704045885c5fbb40ad9f0c6dc80db9f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AIMovementController
+  deathSfx: {fileID: 0}
+  kickBombSfx: {fileID: 0}
+  speed: 5
+  tileSize: 1
+  obstacleMask:
+    serializedVersion: 2
+    m_Bits: 0
+  canKickBombs: 0
+  inputUp: 119
+  inputDown: 115
+  inputLeft: 97
+  inputRight: 100
+  spriteRendererUp: {fileID: 0}
+  spriteRendererDown: {fileID: 0}
+  spriteRendererLeft: {fileID: 0}
+  spriteRendererRight: {fileID: 0}
+  spriteRendererDeath: {fileID: 0}
+  spriteRendererEndStage: {fileID: 0}
+  endStageTotalTime: 1
+  endStageFrameCount: 9
+  aiDirection: {x: 0, y: 0}
+  isBoss: 0
 --- !u!1 &2245651300953625166
 GameObject:
   m_ObjectHideFlags: 0

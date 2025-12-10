@@ -3,11 +3,11 @@ using UnityEngine;
 
 [RequireComponent(typeof(Rigidbody2D))]
 [RequireComponent(typeof(Collider2D))]
-public class EnemyMovementController : MonoBehaviour
+[RequireComponent(typeof(CharacterHealth))]
+public class EnemyMovementController : MonoBehaviour, IKillable
 {
     [Header("Stats")]
     public float speed = 2f;
-    public int life = 1;
     public float tileSize = 1f;
 
     [Header("Sprites")]
@@ -21,20 +21,13 @@ public class EnemyMovementController : MonoBehaviour
     public LayerMask bombLayerMask;
     public LayerMask enemyLayerMask;
 
-    [Header("Hit / Invulnerability")]
-    public float hitInvulnerableDuration = 3f;
-    public float hitBlinkInterval = 0.1f;
-
     protected AnimatedSpriteRenderer activeSprite;
     protected Rigidbody2D rb;
     protected Vector2 direction;
     protected Vector2 targetTile;
     protected bool isDead;
 
-    protected bool isInvulnerable;
-    SpriteRenderer[] spriteRenderers;
-    Color[] originalColors;
-    Coroutine hitRoutine;
+    CharacterHealth health;
 
     protected virtual void Awake()
     {
@@ -50,10 +43,7 @@ public class EnemyMovementController : MonoBehaviour
         if (enemyLayerMask.value == 0)
             enemyLayerMask = LayerMask.GetMask("Enemy");
 
-        spriteRenderers = GetComponentsInChildren<SpriteRenderer>();
-        originalColors = new Color[spriteRenderers.Length];
-        for (int i = 0; i < spriteRenderers.Length; i++)
-            originalColors[i] = spriteRenderers[i].color;
+        health = GetComponent<CharacterHealth>();
     }
 
     protected virtual void Start()
@@ -70,9 +60,7 @@ public class EnemyMovementController : MonoBehaviour
             return;
 
         if (HasBombAt(targetTile))
-        {
             HandleBombAhead();
-        }
 
         MoveTowardsTile();
 
@@ -88,20 +76,22 @@ public class EnemyMovementController : MonoBehaviour
         if (isDead)
             return;
 
-        if (other.gameObject.layer == LayerMask.NameToLayer("Explosion"))
+        int layer = other.gameObject.layer;
+
+        if (layer == LayerMask.NameToLayer("Explosion"))
         {
-            if (!isInvulnerable)
-                TakeDamage(1);
+            if (health != null)
+                health.TakeDamage(1);
             return;
         }
 
-        if (other.gameObject.layer == LayerMask.NameToLayer("Bomb"))
+        if (layer == LayerMask.NameToLayer("Bomb"))
         {
             HandleBombCollisionOnContact();
             return;
         }
 
-        if (other.gameObject.layer == LayerMask.NameToLayer("Enemy"))
+        if (layer == LayerMask.NameToLayer("Enemy"))
         {
             var otherEnemy = other.GetComponent<EnemyMovementController>();
             HandleEnemyCollision(otherEnemy);
@@ -109,66 +99,9 @@ public class EnemyMovementController : MonoBehaviour
         }
     }
 
-    public virtual void TakeDamage(int amount)
+    public void Kill()
     {
-        if (isDead)
-            return;
-
-        life -= amount;
-
-        if (life <= 0)
-        {
-            life = 0;
-            Die();
-            return;
-        }
-
-        if (!isInvulnerable && hitInvulnerableDuration > 0f)
-            StartHitInvulnerability();
-    }
-
-    void StartHitInvulnerability()
-    {
-        if (hitRoutine != null)
-            StopCoroutine(hitRoutine);
-
-        hitRoutine = StartCoroutine(HitInvulnerabilityRoutine());
-    }
-
-    System.Collections.IEnumerator HitInvulnerabilityRoutine()
-    {
-        isInvulnerable = true;
-        float elapsed = 0f;
-        bool faded = false;
-
-        while (elapsed < hitInvulnerableDuration)
-        {
-            faded = !faded;
-
-            for (int i = 0; i < spriteRenderers.Length; i++)
-            {
-                if (spriteRenderers[i] == null)
-                    continue;
-
-                Color baseColor = originalColors[i];
-
-                if (faded)
-                    spriteRenderers[i].color = new Color(baseColor.r, baseColor.g, baseColor.b, 0.2f);
-                else
-                    spriteRenderers[i].color = baseColor;
-            }
-
-            float wait = hitBlinkInterval > 0f ? hitBlinkInterval : 0.05f;
-            yield return new WaitForSeconds(wait);
-            elapsed += wait;
-        }
-
-        for (int i = 0; i < spriteRenderers.Length; i++)
-            if (spriteRenderers[i] != null)
-                spriteRenderers[i].color = originalColors[i];
-
-        isInvulnerable = false;
-        hitRoutine = null;
+        Die();
     }
 
     protected virtual void Die()
@@ -177,18 +110,6 @@ public class EnemyMovementController : MonoBehaviour
             return;
 
         isDead = true;
-
-        if (hitRoutine != null)
-        {
-            StopCoroutine(hitRoutine);
-            hitRoutine = null;
-        }
-
-        isInvulnerable = false;
-
-        for (int i = 0; i < spriteRenderers.Length; i++)
-            if (spriteRenderers[i] != null)
-                spriteRenderers[i].color = originalColors[i];
 
         if (rb != null)
             rb.linearVelocity = Vector2.zero;

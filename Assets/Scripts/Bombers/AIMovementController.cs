@@ -34,19 +34,19 @@ public class AIMovementController : MovementController
 
         if (layer == LayerMask.NameToLayer("Explosion"))
         {
-            if (isBoss && TryGetComponent<BossBomberHealth>(out var bossHealth))
-                bossHealth.TakeDamage(1);
+            if (TryGetComponent<CharacterHealth>(out var health))
+                health.TakeDamage(1);
             else
                 Kill();
-
             return;
         }
 
         if (layer == LayerMask.NameToLayer("Enemy"))
         {
-            if (!isBoss)
+            if (TryGetComponent<CharacterHealth>(out var health))
+                health.TakeDamage(1);
+            else
                 Kill();
-
             return;
         }
 
