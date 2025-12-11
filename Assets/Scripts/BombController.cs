@@ -36,6 +36,7 @@ public class BombController : MonoBehaviour
 
     private void OnEnable()
     {
+        bombAmout = Mathf.Min(bombAmout, PlayerPersistentStats.MaxBombAmount);
         bombsRemaining = bombAmout;
     }
 
@@ -64,8 +65,11 @@ public class BombController : MonoBehaviour
 
     public void AddBomb()
     {
+        if (bombAmout >= PlayerPersistentStats.MaxBombAmount)
+            return;
+
         bombAmout++;
-        bombsRemaining++;
+        bombsRemaining = Mathf.Min(bombsRemaining + 1, bombAmout);
     }
 
     private Explosion GetExplosionAt(Vector2 position)

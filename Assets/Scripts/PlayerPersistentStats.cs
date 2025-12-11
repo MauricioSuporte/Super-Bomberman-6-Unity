@@ -1,5 +1,11 @@
+using UnityEngine;
+
 public static class PlayerPersistentStats
 {
+    public const int MaxBombAmount = 9;
+    public const int MaxExplosionRadius = 9;
+    public const float MaxSpeed = 9f;
+
     public static int BombAmount = 1;
     public static int ExplosionRadius = 2;
     public static float Speed = 3f;
@@ -7,6 +13,10 @@ public static class PlayerPersistentStats
 
     public static void LoadInto(MovementController movement, BombController bomb)
     {
+        BombAmount = Mathf.Min(BombAmount, MaxBombAmount);
+        ExplosionRadius = Mathf.Min(ExplosionRadius, MaxExplosionRadius);
+        Speed = Mathf.Min(Speed, MaxSpeed);
+
         if (movement != null)
         {
             movement.speed = Speed;
@@ -24,14 +34,14 @@ public static class PlayerPersistentStats
     {
         if (movement != null && movement.CompareTag("Player"))
         {
-            Speed = movement.speed;
+            Speed = Mathf.Min(movement.speed, MaxSpeed);
             CanKickBombs = movement.canKickBombs;
         }
 
         if (bomb != null && bomb.CompareTag("Player"))
         {
-            BombAmount = bomb.bombAmout;
-            ExplosionRadius = bomb.explosionRadius;
+            BombAmount = Mathf.Min(bomb.bombAmout, MaxBombAmount);
+            ExplosionRadius = Mathf.Min(bomb.explosionRadius, MaxExplosionRadius);
         }
     }
 

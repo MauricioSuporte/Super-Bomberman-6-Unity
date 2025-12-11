@@ -31,20 +31,42 @@ public class ItemPickup : MonoBehaviour
         switch (type)
         {
             case ItemType.ExtraBomb:
-                player.GetComponent<BombController>().AddBomb();
-                break;
+                {
+                    if (player.TryGetComponent<BombController>(out var bomb))
+                        bomb.AddBomb();
+                    break;
+                }
 
             case ItemType.BlastRadius:
-                player.GetComponent<BombController>().explosionRadius++;
-                break;
+                {
+                    var bomb = player.GetComponent<BombController>();
+                    if (bomb != null && bomb.explosionRadius < PlayerPersistentStats.MaxExplosionRadius)
+                    {
+                        bomb.explosionRadius = Mathf.Min(
+                            bomb.explosionRadius + 1,
+                            PlayerPersistentStats.MaxExplosionRadius);
+                    }
+                    break;
+                }
 
             case ItemType.SpeedIncrese:
-                player.GetComponent<MovementController>().speed++;
-                break;
+                {
+                    var movement = player.GetComponent<MovementController>();
+                    if (movement != null && movement.speed < PlayerPersistentStats.MaxSpeed)
+                    {
+                        movement.speed = Mathf.Min(
+                            movement.speed + 1f,
+                            PlayerPersistentStats.MaxSpeed);
+                    }
+                    break;
+                }
 
             case ItemType.BombKick:
-                player.GetComponent<MovementController>().EnableBombKick();
-                break;
+                {
+                    if (player.TryGetComponent<MovementController>(out var movement))
+                        movement.EnableBombKick();
+                    break;
+                }
         }
 
         Destroy(gameObject);
