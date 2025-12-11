@@ -332,6 +332,9 @@ public class MovementController : MonoBehaviour, IKillable
             if (hit == null)
                 continue;
 
+            if (hit.gameObject == gameObject)
+                continue;
+
             if (hit.gameObject.layer == LayerMask.NameToLayer("Bomb"))
             {
                 var bomb = hit.GetComponent<Bomb>();
@@ -343,24 +346,27 @@ public class MovementController : MonoBehaviour, IKillable
                         continue;
                 }
 
-                if (canKickBombs && bomb != null)
+                if (canKickBombs && bomb != null && !bomb.IsBeingKicked)
                 {
-                    LayerMask bombObstacles =
-                        obstacleMask | LayerMask.GetMask("Enemy");
-
-                    bool kicked = bomb.StartKick(
-                        direction,
-                        tileSize,
-                        bombObstacles,
-                        bombController != null ? bombController.destructibleTiles : null
-                    );
-
-                    if (kicked)
+                    var bombCollider = bomb.GetComponent<Collider2D>();
+                    if (bombCollider != null && !bombCollider.isTrigger)
                     {
-                        if (audioSource != null && kickBombSfx != null)
-                            audioSource.PlayOneShot(kickBombSfx);
+                        LayerMask bombObstacles = obstacleMask | LayerMask.GetMask("Enemy");
 
-                        continue;
+                        bool kicked = bomb.StartKick(
+                            direction,
+                            tileSize,
+                            bombObstacles,
+                            bombController != null ? bombController.destructibleTiles : null
+                        );
+
+                        if (kicked)
+                        {
+                            if (audioSource != null && kickBombSfx != null)
+                                audioSource.PlayOneShot(kickBombSfx);
+
+                            return true;
+                        }
                     }
                 }
             }
@@ -373,6 +379,7 @@ public class MovementController : MonoBehaviour, IKillable
 
         return false;
     }
+
 
     protected void SetDirection(Vector2 newDirection, AnimatedSpriteRenderer spriteRenderer)
     {
