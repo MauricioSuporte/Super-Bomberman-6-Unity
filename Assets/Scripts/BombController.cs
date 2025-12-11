@@ -34,6 +34,8 @@ public class BombController : MonoBehaviour
     public bool useAIInput = false;
     private bool bombRequested;
 
+    private static AudioSource currentExplosionAudio;
+
     private void OnEnable()
     {
         bombAmout = Mathf.Min(bombAmout, PlayerPersistentStats.MaxBombAmount);
@@ -72,18 +74,6 @@ public class BombController : MonoBehaviour
         bombsRemaining = Mathf.Min(bombsRemaining + 1, bombAmout);
     }
 
-    private Explosion GetExplosionAt(Vector2 position)
-    {
-        int explosionLayer = LayerMask.NameToLayer("Explosion");
-        int mask = 1 << explosionLayer;
-
-        var hit = Physics2D.OverlapBox(position, Vector2.one * 0.4f, 0f, mask);
-        if (hit != null)
-            return hit.GetComponent<Explosion>();
-
-        return null;
-    }
-
     public void ExplodeBomb(GameObject bomb)
     {
         if (bomb == null)
@@ -110,27 +100,32 @@ public class BombController : MonoBehaviour
 
         HideBombVisuals(bomb);
 
-        bomb.GetComponent<AudioSource>()?.Play();
+        if (bomb.TryGetComponent<AudioSource>(out var explosionAudio))
+        {
+            if (currentExplosionAudio != null && currentExplosionAudio.isPlaying)
+                currentExplosionAudio.Stop();
+
+            currentExplosionAudio = explosionAudio;
+            currentExplosionAudio.Play();
+        }
 
         Vector2 position = logicalPos;
         position.x = Mathf.Round(position.x);
         position.y = Mathf.Round(position.y);
 
-        Explosion explosion = GetExplosionAt(position);
-        if (explosion == null)
-        {
-            explosion = Instantiate(explosionPrefab, position, Quaternion.identity);
-            explosion.DestroyAfter(explosionDuration);
-        }
-
-        explosion.SetStart();
+        Explosion centerExplosion = Instantiate(explosionPrefab, position, Quaternion.identity);
+        centerExplosion.Play(Explosion.ExplosionPart.Start, Vector2.zero, 0f, explosionDuration);
 
         Explode(position, Vector2.up, explosionRadius);
         Explode(position, Vector2.down, explosionRadius);
         Explode(position, Vector2.left, explosionRadius);
         Explode(position, Vector2.right, explosionRadius);
 
-        Destroy(bomb, bomb.GetComponent<AudioSource>().clip.length);
+        float destroyDelay = 0.1f;
+        if (explosionAudio != null && explosionAudio.clip != null)
+            destroyDelay = explosionAudio.clip.length;
+
+        Destroy(bomb, destroyDelay);
 
         bombsRemaining++;
     }
@@ -176,12 +171,12 @@ public class BombController : MonoBehaviour
         ExplodeBomb(bomb);
     }
 
-    private void Explode(Vector2 position, Vector2 direction, int length)
+    private void Explode(Vector2 origin, Vector2 direction, int length)
     {
         if (length <= 0)
             return;
 
-        position += direction;
+        Vector2 position = origin + direction;
 
         var itemHit = Physics2D.OverlapBox(
             position,
@@ -204,25 +199,20 @@ public class BombController : MonoBehaviour
             return;
         }
 
-        var existing = GetExplosionAt(position);
-        if (existing != null)
-        {
-            if (length > 1)
-                existing.UpgradeToMiddleIfNeeded();
-
-            Explode(position, direction, length - 1);
-            return;
-        }
-
         Explosion explosion = Instantiate(explosionPrefab, position, Quaternion.identity);
 
-        if (length > 1)
-            explosion.SetMiddle();
-        else
-            explosion.SetEnd();
+        Explosion.ExplosionPart part = length > 1
+            ? Explosion.ExplosionPart.Middle
+            : Explosion.ExplosionPart.End;
 
-        explosion.SetDirection(direction);
-        explosion.DestroyAfter(explosionDuration);
+        explosion.Play(part, direction, 0f, explosionDuration);
+
+        int bombLayer = LayerMask.NameToLayer("Bomb");
+        int bombMask = 1 << bombLayer;
+        var bombHit = Physics2D.OverlapBox(position, Vector2.one * 0.5f, 0f, bombMask);
+
+        if (bombHit != null)
+            return;
 
         Explode(position, direction, length - 1);
     }

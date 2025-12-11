@@ -17,7 +17,10 @@ public class Bomb : MonoBehaviour
     private Rigidbody2D rb;
 
     [Header("Kick")]
-    public float kickSpeed = 7.5f;
+    public float kickSpeed = 9f;
+
+    [Header("Chain Explosion")]
+    public float chainStepDelay = 0.1f;
 
     private bool isKicked;
     private Vector2 kickDirection;
@@ -29,6 +32,7 @@ public class Bomb : MonoBehaviour
     private Vector2 lastPos;
 
     private readonly HashSet<Collider2D> charactersInside = new();
+    private bool chainExplosionScheduled;
 
     private void Awake()
     {
@@ -204,7 +208,11 @@ public class Bomb : MonoBehaviour
 
         if (other.gameObject.layer == explosionLayer)
         {
-            owner.ExplodeBomb(gameObject);
+            if (!chainExplosionScheduled && owner != null)
+            {
+                chainExplosionScheduled = true;
+                StartCoroutine(DelayedChainExplosion(chainStepDelay));
+            }
             return;
         }
 
@@ -213,6 +221,14 @@ public class Bomb : MonoBehaviour
         {
             charactersInside.Add(other);
         }
+    }
+
+    private IEnumerator DelayedChainExplosion(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+
+        if (!HasExploded && owner != null)
+            owner.ExplodeBomb(gameObject);
     }
 
     private void OnTriggerExit2D(Collider2D other)
