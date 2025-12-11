@@ -2746,6 +2746,20 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 173d5bc66c6596f49a34c1a63f0e90dd, type: 2}
   - {fileID: 11400000, guid: d0ee5ce5b90b883409e5e95e8cc37bf7, type: 2}
   - {fileID: 11400000, guid: f6d84690b52c3bb47b2dfb90184b4896, type: 2}
+  groundTilemap: {fileID: 672307155}
+  destructibleTilemap: {fileID: 285353618}
+  itemPrefabs:
+  - {fileID: 6871244334814668705, guid: bdad95ff62d39d44fbcbb3b171a603bb, type: 3}
+  - {fileID: 2727780941473249227, guid: 2c7394d5814f6284da1d799a66d95686, type: 3}
+  - {fileID: 4209327807185772322, guid: 218d29a1a19c6864e8d870f01df7f91b, type: 3}
+  - {fileID: 6871244334814668705, guid: 8688e05eefe87c143a46fe4f721b8c80, type: 3}
+  spawnMinX: -7
+  spawnMaxX: 5
+  spawnMinY: -6
+  spawnMaxY: 2
+  minSpawnInterval: 20
+  maxSpawnInterval: 40
+  maxTriesPerSpawn: 50
 --- !u!1 &732032079
 GameObject:
   m_ObjectHideFlags: 0
@@ -4386,7 +4400,7 @@ Tilemap:
       m_AnimatedSprites:
       - {fileID: -4194490761759567601, guid: 914f6dd52fc1d3f428738756d19d329e, type: 3}
       - {fileID: 1710983818, guid: 914f6dd52fc1d3f428738756d19d329e, type: 3}
-      m_AnimationSpeed: 3.5000002
+      m_AnimationSpeed: 3.5
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: 7, y: -3, z: 0}
@@ -4692,7 +4706,7 @@ Tilemap:
       m_AnimatedSprites:
       - {fileID: 413118391, guid: 914f6dd52fc1d3f428738756d19d329e, type: 3}
       - {fileID: -414010142, guid: 914f6dd52fc1d3f428738756d19d329e, type: 3}
-      m_AnimationSpeed: 3
+      m_AnimationSpeed: 3.0000002
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: 5, y: 5, z: 0}

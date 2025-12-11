@@ -28,6 +28,20 @@ public class MechaBossSequence : MonoBehaviour
     public TileBase[] crowdTiles;
     public TileBase[] emptyTiles;
 
+    [Header("Item Spawner")]
+    public Tilemap groundTilemap;
+    public Tilemap destructibleTilemap;
+    public ItemPickup[] itemPrefabs;
+
+    public int spawnMinX = -7;
+    public int spawnMaxX = 5;
+    public int spawnMinY = -6;
+    public int spawnMaxY = 2;
+
+    public float minSpawnInterval = 20f;
+    public float maxSpawnInterval = 40f;
+    public int maxTriesPerSpawn = 50;
+
     MovementController[] mechas;
     GameManager gameManager;
     BombController playerBomb;
@@ -35,6 +49,8 @@ public class MechaBossSequence : MonoBehaviour
     bool initialized;
     bool sequenceStarted;
     bool finalSequenceStarted;
+    bool itemLoopStarted;
+    bool itemSpawnEnabled = true;
 
     TileBase gateCenterTile;
     TileBase gateLeftTile;
@@ -44,6 +60,7 @@ public class MechaBossSequence : MonoBehaviour
     Vector3Int gateRightCell;
 
     readonly Dictionary<Vector3Int, int> changedStandCells = new();
+    readonly List<Vector3Int> spawnableCells = new();
 
     void Awake()
     {
@@ -86,6 +103,9 @@ public class MechaBossSequence : MonoBehaviour
         for (int i = 0; i < mechas.Length; i++)
             if (mechas[i] != null)
                 mechas[i].gameObject.SetActive(false);
+
+        if (groundTilemap != null && itemPrefabs != null && itemPrefabs.Length > 0)
+            RebuildSpawnableCells();
     }
 
     void OnEnable()
@@ -123,6 +143,7 @@ public class MechaBossSequence : MonoBehaviour
 
     IEnumerator MechaIntroRoutine(MovementController mecha)
     {
+        SetItemSpawnEnabled(false);
         LockPlayer(true);
 
         yield return StartCoroutine(OpenGateRoutine());
@@ -145,9 +166,9 @@ public class MechaBossSequence : MonoBehaviour
         if (bossAI != null) bossAI.enabled = false;
         if (aiMove != null) aiMove.enabled = true;
 
-        Vector2 startPos = new Vector2(-1f, 5f);
-        Vector2 midPos = new Vector2(-1f, 4f);
-        Vector2 endPos = new Vector2(-1f, 0f);
+        Vector2 startPos = new(-1f, 5f);
+        Vector2 midPos = new(-1f, 4f);
+        Vector2 endPos = new(-1f, 0f);
 
         if (mecha.Rigidbody != null)
         {
@@ -225,6 +246,13 @@ public class MechaBossSequence : MonoBehaviour
 
         yield return StartCoroutine(CloseGateRoutine());
 
+        if (!itemLoopStarted && groundTilemap != null && itemPrefabs != null && itemPrefabs.Length > 0)
+        {
+            itemLoopStarted = true;
+            StartCoroutine(ItemSpawnLoop());
+        }
+
+        SetItemSpawnEnabled(true);
         LockPlayer(false);
     }
 
@@ -335,11 +363,7 @@ public class MechaBossSequence : MonoBehaviour
     {
         if (standsTilemap == null) return;
         if (crowdTiles == null || emptyTiles == null) return;
-        if (crowdTiles.Length != emptyTiles.Length)
-        {
-            Debug.LogError("CrowdTiles e EmptyTiles needs be same syze.");
-            return;
-        }
+        if (crowdTiles.Length != emptyTiles.Length) return;
 
         if (setEmpty)
         {
@@ -375,13 +399,93 @@ public class MechaBossSequence : MonoBehaviour
                 int index = kvp.Value;
 
                 if (index >= 0 && index < crowdTiles.Length)
-                {
                     standsTilemap.SetTile(cell, crowdTiles[index]);
-                }
             }
 
             changedStandCells.Clear();
         }
+    }
+
+    void RebuildSpawnableCells()
+    {
+        spawnableCells.Clear();
+
+        if (groundTilemap == null)
+            return;
+
+        for (int x = spawnMinX; x <= spawnMaxX; x++)
+        {
+            for (int y = spawnMinY; y <= spawnMaxY; y++)
+            {
+                Vector3Int cell = new Vector3Int(x, y, 0);
+
+                if (!groundTilemap.HasTile(cell))
+                    continue;
+
+                if (destructibleTilemap != null && destructibleTilemap.HasTile(cell))
+                    continue;
+
+                if (indestructibleTilemap != null && indestructibleTilemap.HasTile(cell))
+                    continue;
+
+                spawnableCells.Add(cell);
+            }
+        }
+    }
+
+    IEnumerator ItemSpawnLoop()
+    {
+        while (!finalSequenceStarted)
+        {
+            float waitTime = UnityEngine.Random.Range(minSpawnInterval, maxSpawnInterval);
+            float elapsed = 0f;
+
+            while (elapsed < waitTime && !finalSequenceStarted)
+            {
+                if (!GamePauseController.IsPaused && itemSpawnEnabled)
+                    elapsed += Time.deltaTime;
+
+                yield return null;
+            }
+
+            if (finalSequenceStarted || !itemSpawnEnabled)
+                continue;
+
+            TrySpawnItem();
+        }
+    }
+
+    void TrySpawnItem()
+    {
+        if (itemPrefabs == null || itemPrefabs.Length == 0)
+            return;
+
+        if (groundTilemap == null)
+            return;
+
+        if (spawnableCells == null || spawnableCells.Count == 0)
+            return;
+
+        for (int i = 0; i < maxTriesPerSpawn; i++)
+        {
+            int index = UnityEngine.Random.Range(0, spawnableCells.Count);
+            Vector3Int cell = spawnableCells[index];
+
+            Vector3 worldPos = groundTilemap.GetCellCenterWorld(cell);
+            Collider2D hit = Physics2D.OverlapCircle(worldPos, 0.2f);
+
+            if (hit != null && hit.GetComponent<ItemPickup>() != null)
+                continue;
+
+            ItemPickup prefab = itemPrefabs[UnityEngine.Random.Range(0, itemPrefabs.Length)];
+            Instantiate(prefab, worldPos, Quaternion.identity);
+            return;
+        }
+    }
+
+    void SetItemSpawnEnabled(bool enabled)
+    {
+        itemSpawnEnabled = enabled;
     }
 
     void LockPlayer(bool locked)
