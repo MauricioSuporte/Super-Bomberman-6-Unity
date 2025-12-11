@@ -1,9 +1,9 @@
 public static class PlayerPersistentStats
 {
-    public static int BombAmount = 9;
-    public static int ExplosionRadius = 9;
-    public static float Speed = 5f;
-    public static bool CanKickBombs = true;
+    public static int BombAmount = 1;
+    public static int ExplosionRadius = 2;
+    public static float Speed = 3f;
+    public static bool CanKickBombs = false;
 
     public static void LoadInto(MovementController movement, BombController bomb)
     {
