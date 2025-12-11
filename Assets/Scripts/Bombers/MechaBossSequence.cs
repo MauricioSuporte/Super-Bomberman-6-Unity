@@ -11,7 +11,7 @@ public class MechaBossSequence : MonoBehaviour
 
     public MovementController whiteMecha;
     public MovementController blackMecha;
-    public MovementController redMecha;
+    public MovementController goldenMecha;
 
     public MovementController player;
 
@@ -64,7 +64,7 @@ public class MechaBossSequence : MonoBehaviour
 
     void Awake()
     {
-        mechas = new[] { whiteMecha, blackMecha, redMecha };
+        mechas = new[] { whiteMecha, blackMecha, goldenMecha };
         gameManager = FindFirstObjectByType<GameManager>();
 
         foreach (var m in mechas)
@@ -148,9 +148,9 @@ public class MechaBossSequence : MonoBehaviour
 
         yield return StartCoroutine(OpenGateRoutine());
 
-        bool isRed = mecha == redMecha;
+        bool isGolden = mecha == goldenMecha;
 
-        if (isRed)
+        if (isGolden)
         {
             yield return _waitForSeconds2;
 
@@ -183,7 +183,7 @@ public class MechaBossSequence : MonoBehaviour
 
         mecha.gameObject.SetActive(true);
 
-        if (!isRed)
+        if (!isGolden)
         {
             if (aiMove != null)
                 aiMove.SetAIDirection(Vector2.down);
@@ -511,7 +511,7 @@ public class MechaBossSequence : MonoBehaviour
             return;
         }
 
-        if (sender == redMecha && !finalSequenceStarted)
+        if (sender == goldenMecha && !finalSequenceStarted)
         {
             finalSequenceStarted = true;
             StartCoroutine(FinalBossDefeatedRoutine());
