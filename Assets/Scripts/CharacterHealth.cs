@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using UnityEngine;
 
 [RequireComponent(typeof(Collider2D))]
@@ -11,6 +12,9 @@ public class CharacterHealth : MonoBehaviour
     [Header("Hit / Invulnerability")]
     public float hitInvulnerableDuration = 3f;
     public float hitBlinkInterval = 0.1f;
+
+    public event Action<int> Damaged;
+    public event Action Died;
 
     bool isInvulnerable;
     bool isDead;
@@ -41,6 +45,8 @@ public class CharacterHealth : MonoBehaviour
             return;
 
         life -= amount;
+
+        Damaged?.Invoke(amount);
 
         if (life <= 0)
         {
@@ -122,6 +128,8 @@ public class CharacterHealth : MonoBehaviour
         for (int i = 0; i < spriteRenderers.Length; i++)
             if (spriteRenderers[i] != null)
                 spriteRenderers[i].color = originalColors[i];
+
+        Died?.Invoke();
 
         if (killable != null)
             killable.Kill();

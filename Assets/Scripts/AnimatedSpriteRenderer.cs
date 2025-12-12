@@ -44,21 +44,32 @@ public class AnimatedSpriteRenderer : MonoBehaviour
         }
     }
 
+    void EnsureSpriteRenderer()
+    {
+        if (spriteRenderer == null)
+            spriteRenderer = GetComponent<SpriteRenderer>();
+    }
+
     private void Awake()
     {
-        spriteRenderer = GetComponent<SpriteRenderer>();
+        EnsureSpriteRenderer();
         initialLocalPosition = transform.localPosition;
     }
 
     private void OnEnable()
     {
-        spriteRenderer.enabled = true;
+        EnsureSpriteRenderer();
+        if (spriteRenderer != null)
+            spriteRenderer.enabled = true;
+
         ApplyFrame();
     }
 
     private void OnDisable()
     {
-        spriteRenderer.enabled = false;
+        EnsureSpriteRenderer();
+        if (spriteRenderer != null)
+            spriteRenderer.enabled = false;
     }
 
     private void Start()
@@ -72,13 +83,9 @@ public class AnimatedSpriteRenderer : MonoBehaviour
                 int framesInCycle;
 
                 if (pingPong && animationSprite.Length > 1)
-                {
                     framesInCycle = animationSprite.Length * 2 - 2;
-                }
                 else
-                {
                     framesInCycle = animationSprite.Length;
-                }
 
                 animationTime = sequenceDuration / framesInCycle;
             }
@@ -131,6 +138,10 @@ public class AnimatedSpriteRenderer : MonoBehaviour
 
     private void ApplyFrame()
     {
+        EnsureSpriteRenderer();
+        if (spriteRenderer == null)
+            return;
+
         if (idle)
         {
             spriteRenderer.sprite = idleSprite;
@@ -146,10 +157,16 @@ public class AnimatedSpriteRenderer : MonoBehaviour
             spriteRenderer.sprite = animationSprite[animationFrame];
         }
 
-        if (frameOffsets != null && frameOffsets.Length == animationSprite.Length)
+        if (!idle && frameOffsets != null && animationSprite != null &&
+            frameOffsets.Length == animationSprite.Length &&
+            animationFrame >= 0 && animationFrame < frameOffsets.Length)
         {
             Vector2 offset = frameOffsets[animationFrame];
             transform.localPosition = initialLocalPosition + (Vector3)offset;
+        }
+        else
+        {
+            transform.localPosition = initialLocalPosition;
         }
     }
 }
