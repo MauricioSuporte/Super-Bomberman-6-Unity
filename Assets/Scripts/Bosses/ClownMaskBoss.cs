@@ -32,6 +32,12 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
     public float hurtAnimationDuration = 0.5f;
     public float hurtWalkDuration = 3f;
 
+    [Header("Attack")]
+    public ClownStarProjectile clownStarProjectile;
+    public float starSpeed = 6f;
+    public float starLifeTime = 3f;
+    public float starSpawnRadius = 0.5f;
+
     bool isDead;
     bool introFinished;
     bool inDamageSequence;
@@ -180,6 +186,8 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
         if (clownMovement != null)
             clownMovement.OnHit();
 
+        SpawnStarBurst();
+
         float invulDuration = characterHealth != null ? characterHealth.hitInvulnerableDuration : 0f;
 
         if (useHurtIdleDuringInvuln)
@@ -263,6 +271,36 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
 
         if (!isDead && idleRenderer != null)
             EnableOnly(idleRenderer);
+    }
+
+    void SpawnStarBurst()
+    {
+        if (clownStarProjectile == null)
+            return;
+
+        Vector2 origin = transform.position;
+
+        Vector2[] dirs =
+        {
+            Vector2.up,
+            Vector2.down,
+            Vector2.left,
+            Vector2.right,
+            new Vector2(1f, 1f).normalized,
+            new Vector2(1f, -1f).normalized,
+            new Vector2(-1f, 1f).normalized,
+            new Vector2(-1f, -1f).normalized
+        };
+
+        for (int i = 0; i < dirs.Length; i++)
+        {
+            Vector2 dir = dirs[i];
+            Vector2 spawnPos = origin + dir * starSpawnRadius;
+
+            ClownStarProjectile proj = Instantiate(clownStarProjectile, spawnPos, Quaternion.identity);
+            if (proj != null)
+                proj.Initialize(dir, starSpeed, starLifeTime);
+        }
     }
 
     void OnHealthDied()
