@@ -235,6 +235,9 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
             yield return new WaitForSeconds(duration);
 
         if (StageIntroTransition.Instance != null)
+            yield return StageIntroTransition.Instance.FadeSpotlightAlphaAndWait(0f, 0.5f);
+
+        if (StageIntroTransition.Instance != null)
             StageIntroTransition.Instance.DisableSpotlight();
 
         EnableOnly(idleRenderer);

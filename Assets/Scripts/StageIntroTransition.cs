@@ -89,6 +89,9 @@ public class StageIntroTransition : MonoBehaviour
         {
             spotlightMatInstance = Instantiate(spotlightImage.material);
             spotlightImage.material = spotlightMatInstance;
+
+            spotlightMatInstance.SetColor("_Color", new Color(0f, 0f, 0f, 0f));
+
             spotlightImage.gameObject.SetActive(false);
         }
     }
@@ -666,7 +669,7 @@ public class StageIntroTransition : MonoBehaviour
 
         while (t < d)
         {
-            t += Time.deltaTime;
+            t += Time.unscaledDeltaTime;
             float a = Mathf.Lerp(0f, endA, Mathf.Clamp01(t / d));
             spotlightMatInstance.SetColor("_Color", new Color(0f, 0f, 0f, a));
             yield return null;
@@ -695,6 +698,30 @@ public class StageIntroTransition : MonoBehaviour
         spotlightMatInstance.SetFloat("_Radius", 0.001f);
         spotlightMatInstance.SetFloat("_Softness", 0.001f);
 
+        spotlightMatInstance.SetColor("_Color", new Color(0f, 0f, 0f, 0f));
+        spotlightImage.gameObject.SetActive(true);
+
+        float t = 0f;
+
+        while (t < d)
+        {
+            t += Time.unscaledDeltaTime;
+            float a = Mathf.Lerp(0f, endA, Mathf.Clamp01(t / d));
+            spotlightMatInstance.SetColor("_Color", new Color(0f, 0f, 0f, a));
+            yield return null;
+        }
+
+        spotlightMatInstance.SetColor("_Color", new Color(0f, 0f, 0f, endA));
+    }
+
+    public IEnumerator FadeSpotlightAlphaAndWait(float targetAlpha, float duration)
+    {
+        if (spotlightImage == null || spotlightMatInstance == null)
+            yield break;
+
+        float endA = Mathf.Clamp01(targetAlpha);
+        float d = Mathf.Max(0.001f, duration);
+
         spotlightImage.gameObject.SetActive(true);
 
         float startA = spotlightMatInstance.GetColor("_Color").a;
@@ -702,7 +729,7 @@ public class StageIntroTransition : MonoBehaviour
 
         while (t < d)
         {
-            t += Time.deltaTime;
+            t += Time.unscaledDeltaTime;
             float a = Mathf.Lerp(startA, endA, Mathf.Clamp01(t / d));
             spotlightMatInstance.SetColor("_Color", new Color(0f, 0f, 0f, a));
             yield return null;
