@@ -12,6 +12,7 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
     public BossEndStageSequence bossEndSequence;
 
     [Header("Renderers")]
+    SpriteRenderer[] bossSpriteRenderers;
     public AnimatedSpriteRenderer introRenderer;
     public AnimatedSpriteRenderer idleRenderer;
     public AnimatedSpriteRenderer specialRenderer;
@@ -107,6 +108,8 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
         bossCollider = GetComponent<Collider2D>();
         bossRb = GetComponent<Rigidbody2D>();
 
+        bossSpriteRenderers = GetComponentsInChildren<SpriteRenderer>(true);
+
         var playerGo = GameObject.FindGameObjectWithTag("Player");
         if (playerGo != null)
         {
@@ -175,6 +178,7 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
         }
 
         SetAllRenderers(false);
+        SetBossSpriteRenderersVisible(false);
     }
 
     IEnumerator IntroSequence()
@@ -746,8 +750,16 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
         if (hurtRenderer != null) hurtRenderer.enabled = (target == hurtRenderer);
         if (deathRenderer != null) deathRenderer.enabled = (target == deathRenderer);
 
+        SetBossSpriteRenderersVisible(false);
+
         if (target != null)
+        {
             target.RefreshFrame();
+
+            var sr = target.GetComponent<SpriteRenderer>();
+            if (sr != null)
+                sr.enabled = true;
+        }
     }
 
     AnimatedSpriteRenderer GetCurrentRenderer()
@@ -784,6 +796,19 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
 
             if (other.TryGetComponent<CharacterHealth>(out var health))
                 health.TakeDamage(health.life);
+        }
+    }
+
+    void SetBossSpriteRenderersVisible(bool visible)
+    {
+        if (bossSpriteRenderers == null)
+            bossSpriteRenderers = GetComponentsInChildren<SpriteRenderer>(true);
+
+        for (int i = 0; i < bossSpriteRenderers.Length; i++)
+        {
+            var sr = bossSpriteRenderers[i];
+            if (sr != null)
+                sr.enabled = visible;
         }
     }
 }
