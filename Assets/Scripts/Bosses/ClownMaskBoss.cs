@@ -15,7 +15,7 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
     public AnimatedSpriteRenderer idleRenderer;
     public AnimatedSpriteRenderer specialRenderer;
     public AnimatedSpriteRenderer hurtRenderer;
-    public AnimatedSpriteRenderer attackRenderer;
+    public AnimatedSpriteRenderer deathRenderer;
 
     [Header("Intro")]
     public float introDuration = 2f;
@@ -38,6 +38,9 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
     public float starLifeTime = 3f;
     public float starSpawnRadius = 0.5f;
 
+    [Header("Death")]
+    public float deathDuration = 5f;
+
     bool isDead;
     bool introFinished;
     bool inDamageSequence;
@@ -45,6 +48,7 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
 
     Coroutine specialRoutine;
     Coroutine damageSequenceRoutine;
+    Coroutine deathRoutine;
 
     void Awake()
     {
@@ -330,10 +334,49 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
         if (clownMovement != null)
             clownMovement.enabled = false;
 
+        if (characterHealth != null)
+            characterHealth.enabled = false;
+
+        Collider2D col = GetComponent<Collider2D>();
+        if (col != null)
+            col.enabled = false;
+
+        if (deathRoutine != null)
+            StopCoroutine(deathRoutine);
+
+        deathRoutine = StartCoroutine(DeathSequence());
+    }
+
+    IEnumerator DeathSequence()
+    {
+        AnimatedSpriteRenderer target = deathRenderer != null ? deathRenderer : idleRenderer;
+        EnableOnly(target);
+
+        SpriteRenderer sr = null;
+        if (target != null)
+            sr = target.GetComponent<SpriteRenderer>();
+
+        float blinkInterval = characterHealth != null && characterHealth.hitBlinkInterval > 0f
+            ? characterHealth.hitBlinkInterval
+            : 0.1f;
+
+        float elapsed = 0f;
+        bool visible = true;
+
+        while (elapsed < deathDuration)
+        {
+            visible = !visible;
+            if (sr != null)
+                sr.enabled = visible;
+
+            yield return new WaitForSeconds(blinkInterval);
+            elapsed += blinkInterval;
+        }
+
         if (bossEndSequence != null)
             bossEndSequence.StartBossDefeatedSequence();
 
-        Destroy(gameObject, 0.5f);
+        Destroy(gameObject);
     }
 
     void EnableOnly(AnimatedSpriteRenderer target)
@@ -350,8 +393,8 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
         if (hurtRenderer != null)
             hurtRenderer.enabled = (target == hurtRenderer);
 
-        if (attackRenderer != null)
-            attackRenderer.enabled = (target == attackRenderer);
+        if (deathRenderer != null)
+            deathRenderer.enabled = (target == deathRenderer);
 
         if (target != null)
             target.RefreshFrame();
@@ -371,8 +414,8 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
         if (hurtRenderer != null && hurtRenderer.enabled)
             return hurtRenderer;
 
-        if (attackRenderer != null && attackRenderer.enabled)
-            return attackRenderer;
+        if (deathRenderer != null && deathRenderer.enabled)
+            return deathRenderer;
 
         return null;
     }
