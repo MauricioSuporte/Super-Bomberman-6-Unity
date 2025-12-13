@@ -42,8 +42,22 @@ public class StageIntroTransition : MonoBehaviour
     [Header("Boss / Mecha")]
     public MechaBossSequence mechaBossSequence;
 
-    public bool IntroRunning { get; private set; }
+    [Header("Spotlight (Boss Intro)")]
+    public Image spotlightImage;
 
+    [Header("Spotlight Offset")]
+    public float spotlightYOffsetWorld = -0.8f;
+
+    [Header("Spotlight Ellipse")]
+    public float spotlightEllipseX = 0.3f;
+    public float spotlightEllipseY = 0.3f;
+
+    [Header("Spotlight Fade")]
+    public float spotlightFadeInDuration = 0.6f;
+
+    Material spotlightMatInstance;
+
+    public bool IntroRunning { get; private set; }
     public bool EndingRunning { get; private set; }
 
     static bool hasPlayedLogoIntro;
@@ -70,6 +84,13 @@ public class StageIntroTransition : MonoBehaviour
 
         if (mechaBossSequence == null)
             mechaBossSequence = FindFirstObjectByType<MechaBossSequence>();
+
+        if (spotlightImage != null && spotlightImage.material != null)
+        {
+            spotlightMatInstance = Instantiate(spotlightImage.material);
+            spotlightImage.material = spotlightMatInstance;
+            spotlightImage.gameObject.SetActive(false);
+        }
     }
 
     void Start()
@@ -240,11 +261,11 @@ public class StageIntroTransition : MonoBehaviour
         if (introMusic != null && GameMusicController.Instance != null)
             GameMusicController.Instance.PlaySfx(introMusic, 1f);
 
+        if (gameplayRoot != null)
+            gameplayRoot.SetActive(true);
+
         if (fadeImage == null)
         {
-            if (gameplayRoot != null)
-                gameplayRoot.SetActive(true);
-
             if (stageLabel != null)
             {
                 stageLabel.gameObject.SetActive(true);
@@ -256,9 +277,6 @@ public class StageIntroTransition : MonoBehaviour
             EnableGameplay();
             yield break;
         }
-
-        if (gameplayRoot != null)
-            gameplayRoot.SetActive(true);
 
         float duration = 1f;
         float t = 0f;
@@ -337,6 +355,102 @@ public class StageIntroTransition : MonoBehaviour
             fadeImage.color = new Color(baseColor.r, baseColor.g, baseColor.b, a);
             yield return null;
         }
+    }
+
+    public IEnumerator Flash(float halfDuration, int cycles)
+    {
+        if (fadeImage == null)
+            yield break;
+
+        fadeImage.gameObject.SetActive(true);
+
+        Color baseColor = fadeImage.color;
+        float blackHold = 0.5f;
+
+        for (int i = 0; i < cycles; i++)
+        {
+            float t = 0f;
+            while (t < halfDuration)
+            {
+                if (GamePauseController.IsPaused)
+                {
+                    yield return null;
+                    continue;
+                }
+
+                t += Time.deltaTime;
+                float a = Mathf.Clamp01(t / halfDuration);
+                fadeImage.color = new Color(baseColor.r, baseColor.g, baseColor.b, a);
+                yield return null;
+            }
+
+            fadeImage.color = new Color(baseColor.r, baseColor.g, baseColor.b, 1f);
+
+            if (mechaBossSequence == null)
+                mechaBossSequence = FindFirstObjectByType<MechaBossSequence>();
+
+            if (mechaBossSequence != null)
+            {
+                bool empty = (i == cycles - 1) || (i % 2 == 0);
+                mechaBossSequence.SetStandsEmpty(empty);
+            }
+
+            if (i == cycles - 1)
+            {
+                var playerGo = GameObject.FindGameObjectWithTag("Player");
+                if (playerGo != null &&
+                    playerGo.TryGetComponent<MovementController>(out var playerCtrl))
+                {
+                    Vector2 targetPos = new(-3f, -6f);
+
+                    if (playerCtrl.Rigidbody != null)
+                    {
+                        playerCtrl.Rigidbody.position = targetPos;
+                        playerCtrl.Rigidbody.linearVelocity = Vector2.zero;
+                    }
+                    else
+                    {
+                        playerCtrl.transform.position = targetPos;
+                    }
+
+                    playerCtrl.ForceIdleUp();
+                }
+            }
+
+            float hold = 0f;
+            while (hold < blackHold)
+            {
+                if (GamePauseController.IsPaused)
+                {
+                    yield return null;
+                    continue;
+                }
+
+                hold += Time.deltaTime;
+                yield return null;
+            }
+
+            t = 0f;
+            while (t < halfDuration)
+            {
+                if (GamePauseController.IsPaused)
+                {
+                    yield return null;
+                    continue;
+                }
+
+                t += Time.deltaTime;
+                float a = 1f - Mathf.Clamp01(t / halfDuration);
+                fadeImage.color = new Color(baseColor.r, baseColor.g, baseColor.b, a);
+                yield return null;
+            }
+
+            fadeImage.color = new Color(baseColor.r, baseColor.g, baseColor.b, 0f);
+            yield return null;
+        }
+
+        fadeImage.color = new Color(baseColor.r, baseColor.g, baseColor.b, 0f);
+        fadeImage.gameObject.SetActive(false);
     }
 
     public void StartEndingScreenSequence()
@@ -453,99 +567,147 @@ public class StageIntroTransition : MonoBehaviour
         }
     }
 
-    public IEnumerator Flash(float halfDuration, int cycles)
+    public void SetFullDarkness(float alpha)
     {
-        if (fadeImage == null)
+        if (spotlightImage == null || spotlightMatInstance == null) return;
+
+        spotlightMatInstance.SetFloat("_EllipseX", Mathf.Max(spotlightEllipseX, 1e-5f));
+        spotlightMatInstance.SetFloat("_EllipseY", Mathf.Max(spotlightEllipseY, 1e-5f));
+
+        spotlightMatInstance.SetColor("_Color", new Color(0f, 0f, 0f, Mathf.Clamp01(alpha)));
+        spotlightMatInstance.SetVector("_Center", new Vector4(-10f, -10f, 0f, 0f));
+        spotlightMatInstance.SetFloat("_Radius", 0.001f);
+        spotlightMatInstance.SetFloat("_Softness", 0.001f);
+
+        spotlightImage.gameObject.SetActive(true);
+    }
+
+    public void SetSpotlightWorld(Vector3 worldCenter, float radiusWorld, float darknessAlpha, float softnessWorld)
+    {
+        if (spotlightImage == null || spotlightMatInstance == null) return;
+
+        var cam = Camera.main;
+        if (cam == null) return;
+
+        worldCenter.y += spotlightYOffsetWorld;
+
+        Vector3 vp = cam.WorldToViewportPoint(worldCenter);
+
+        float radiusVp = WorldRadiusToViewportRadius(cam, worldCenter, Mathf.Max(0.01f, radiusWorld));
+        float softVp = WorldRadiusToViewportRadius(cam, worldCenter, Mathf.Max(0.001f, softnessWorld));
+
+        softVp = Mathf.Min(softVp, radiusVp * 0.25f);
+
+        spotlightMatInstance.SetFloat("_EllipseX", Mathf.Max(spotlightEllipseX, 1e-5f));
+        spotlightMatInstance.SetFloat("_EllipseY", Mathf.Max(spotlightEllipseY, 1e-5f));
+
+        spotlightMatInstance.SetColor("_Color", new Color(0f, 0f, 0f, Mathf.Clamp01(darknessAlpha)));
+        spotlightMatInstance.SetVector("_Center", new Vector4(vp.x, vp.y, 0f, 0f));
+        spotlightMatInstance.SetFloat("_Radius", Mathf.Clamp(radiusVp, 0.001f, 2f));
+        spotlightMatInstance.SetFloat("_Softness", Mathf.Clamp(softVp, 0.001f, 2f));
+
+        spotlightImage.gameObject.SetActive(true);
+    }
+
+    public void DisableSpotlight()
+    {
+        if (spotlightImage != null)
+            spotlightImage.gameObject.SetActive(false);
+    }
+
+    float WorldRadiusToViewportRadius(Camera cam, Vector3 worldCenter, float radiusWorld)
+    {
+        Vector3 a = worldCenter;
+        Vector3 b = worldCenter + Vector3.right * radiusWorld;
+
+        Vector3 av = cam.WorldToViewportPoint(a);
+        Vector3 bv = cam.WorldToViewportPoint(b);
+
+        return Mathf.Abs(bv.x - av.x);
+    }
+
+    public Coroutine FadeInSpotlightWorld(Vector3 worldCenter, float radiusWorld, float targetDarknessAlpha, float softnessWorld, float duration)
+    {
+        if (spotlightImage == null || spotlightMatInstance == null)
+            return null;
+
+        StopCoroutine(nameof(FadeInSpotlightWorldRoutine));
+        return StartCoroutine(FadeInSpotlightWorldRoutine(worldCenter, radiusWorld, targetDarknessAlpha, softnessWorld, duration));
+    }
+
+    IEnumerator FadeInSpotlightWorldRoutine(Vector3 worldCenter, float radiusWorld, float targetDarknessAlpha, float softnessWorld, float duration)
+    {
+        if (spotlightImage == null || spotlightMatInstance == null)
             yield break;
 
-        fadeImage.gameObject.SetActive(true);
+        var cam = Camera.main;
+        if (cam == null)
+            yield break;
 
-        Color baseColor = fadeImage.color;
-        float blackHold = 0.5f;
+        worldCenter.y += spotlightYOffsetWorld;
 
-        for (int i = 0; i < cycles; i++)
+        Vector3 vp = cam.WorldToViewportPoint(worldCenter);
+
+        float radiusVp = WorldRadiusToViewportRadius(cam, worldCenter, Mathf.Max(0.01f, radiusWorld));
+        float softVp = WorldRadiusToViewportRadius(cam, worldCenter, Mathf.Max(0.001f, softnessWorld));
+        softVp = Mathf.Min(softVp, radiusVp * 0.25f);
+
+        spotlightMatInstance.SetFloat("_EllipseX", Mathf.Max(spotlightEllipseX, 1e-5f));
+        spotlightMatInstance.SetFloat("_EllipseY", Mathf.Max(spotlightEllipseY, 1e-5f));
+        spotlightMatInstance.SetVector("_Center", new Vector4(vp.x, vp.y, 0f, 0f));
+        spotlightMatInstance.SetFloat("_Radius", Mathf.Clamp(radiusVp, 0.001f, 2f));
+        spotlightMatInstance.SetFloat("_Softness", Mathf.Clamp(softVp, 0.001f, 2f));
+
+        spotlightImage.gameObject.SetActive(true);
+
+        float endA = Mathf.Clamp01(targetDarknessAlpha);
+        float t = 0f;
+        float d = Mathf.Max(0.001f, duration);
+
+        while (t < d)
         {
-            float t = 0f;
-            while (t < halfDuration)
-            {
-                if (GamePauseController.IsPaused)
-                {
-                    yield return null;
-                    continue;
-                }
-
-                t += Time.deltaTime;
-                float a = Mathf.Clamp01(t / halfDuration);
-                fadeImage.color = new Color(baseColor.r, baseColor.g, baseColor.b, a);
-                yield return null;
-            }
-
-            fadeImage.color = new Color(baseColor.r, baseColor.g, baseColor.b, 1f);
-
-            if (mechaBossSequence == null)
-                mechaBossSequence = FindFirstObjectByType<MechaBossSequence>();
-
-            if (mechaBossSequence != null)
-            {
-                bool empty = (i == cycles - 1) || (i % 2 == 0);
-                mechaBossSequence.SetStandsEmpty(empty);
-            }
-
-            if (i == cycles - 1)
-            {
-                var playerGo = GameObject.FindGameObjectWithTag("Player");
-                if (playerGo != null &&
-                    playerGo.TryGetComponent<MovementController>(out var playerCtrl))
-                {
-                    Vector2 targetPos = new(-3f, -6f);
-
-                    if (playerCtrl.Rigidbody != null)
-                    {
-                        playerCtrl.Rigidbody.position = targetPos;
-                        playerCtrl.Rigidbody.linearVelocity = Vector2.zero;
-                    }
-                    else
-                    {
-                        playerCtrl.transform.position = targetPos;
-                    }
-
-                    playerCtrl.ForceIdleUp();
-                }
-            }
-
-            float hold = 0f;
-            while (hold < blackHold)
-            {
-                if (GamePauseController.IsPaused)
-                {
-                    yield return null;
-                    continue;
-                }
-
-                hold += Time.deltaTime;
-                yield return null;
-            }
-
-            t = 0f;
-            while (t < halfDuration)
-            {
-                if (GamePauseController.IsPaused)
-                {
-                    yield return null;
-                    continue;
-                }
-
-                t += Time.deltaTime;
-                float a = 1f - Mathf.Clamp01(t / halfDuration);
-                fadeImage.color = new Color(baseColor.r, baseColor.g, baseColor.b, a);
-                yield return null;
-            }
-
-            fadeImage.color = new Color(baseColor.r, baseColor.g, baseColor.b, 0f);
+            t += Time.deltaTime;
+            float a = Mathf.Lerp(0f, endA, Mathf.Clamp01(t / d));
+            spotlightMatInstance.SetColor("_Color", new Color(0f, 0f, 0f, a));
             yield return null;
         }
 
-        fadeImage.color = new Color(baseColor.r, baseColor.g, baseColor.b, 0f);
-        fadeImage.gameObject.SetActive(false);
+        spotlightMatInstance.SetColor("_Color", new Color(0f, 0f, 0f, endA));
+    }
+
+    public IEnumerator FadeInSpotlightWorldAndWait(Vector3 worldCenter, float radiusWorld, float targetDarknessAlpha, float softnessWorld, float duration)
+    {
+        yield return FadeInSpotlightWorldRoutine(worldCenter, radiusWorld, targetDarknessAlpha, softnessWorld, duration);
+    }
+
+    public IEnumerator FadeToFullDarknessAndWait(float targetAlpha, float duration)
+    {
+        if (spotlightImage == null || spotlightMatInstance == null)
+            yield break;
+
+        float endA = Mathf.Clamp01(targetAlpha);
+        float d = Mathf.Max(0.001f, duration);
+
+        spotlightMatInstance.SetFloat("_EllipseX", Mathf.Max(spotlightEllipseX, 1e-5f));
+        spotlightMatInstance.SetFloat("_EllipseY", Mathf.Max(spotlightEllipseY, 1e-5f));
+
+        spotlightMatInstance.SetVector("_Center", new Vector4(-10f, -10f, 0f, 0f));
+        spotlightMatInstance.SetFloat("_Radius", 0.001f);
+        spotlightMatInstance.SetFloat("_Softness", 0.001f);
+
+        spotlightImage.gameObject.SetActive(true);
+
+        float startA = spotlightMatInstance.GetColor("_Color").a;
+        float t = 0f;
+
+        while (t < d)
+        {
+            t += Time.deltaTime;
+            float a = Mathf.Lerp(startA, endA, Mathf.Clamp01(t / d));
+            spotlightMatInstance.SetColor("_Color", new Color(0f, 0f, 0f, a));
+            yield return null;
+        }
+
+        spotlightMatInstance.SetColor("_Color", new Color(0f, 0f, 0f, endA));
     }
 }

@@ -21,6 +21,18 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
     [Header("Intro")]
     public float introDuration = 2f;
 
+    [Header("Boss Intro Setup")]
+    public Vector2 bossIntroPosition = new Vector2(-1f, 2f);
+    public float delayAfterStageIntroToShowPlayer = 1f;
+    public Vector2 playerIntroPosition = new Vector2(-3f, -6f);
+    public float introWaitAfterPlayerShown = 1f;
+
+    [Header("Spotlight")]
+    public float introDarknessAlpha = 0.9f;
+    public float introWaitBeforeSpotlight = 1f;
+    public float introSpotlightRadiusTiles = 4f;
+    public float introSpotlightSoftnessTiles = 1f;
+
     [Header("Special Animation")]
     public float minSpecialInterval = 5f;
     public float maxSpecialInterval = 12f;
@@ -61,13 +73,21 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
     bool introFinished;
     bool inDamageSequence;
     bool isInHurtWalk;
+    bool bossSpawned;
 
+    Coroutine introRoutine;
     Coroutine specialRoutine;
     Coroutine damageSequenceRoutine;
     Coroutine deathRoutine;
 
     AudioSource audioSource;
     float nextDeathSfxTime;
+
+    MovementController player;
+    BombController playerBomb;
+
+    Collider2D bossCollider;
+    Rigidbody2D bossRb;
 
     void Awake()
     {
@@ -84,13 +104,24 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
         if (audioSource != null)
             audioSource.playOnAwake = false;
 
+        bossCollider = GetComponent<Collider2D>();
+        bossRb = GetComponent<Rigidbody2D>();
+
+        var playerGo = GameObject.FindGameObjectWithTag("Player");
+        if (playerGo != null)
+        {
+            player = playerGo.GetComponent<MovementController>();
+            playerBomb = playerGo.GetComponent<BombController>();
+        }
+
         if (characterHealth != null)
         {
             characterHealth.Damaged += OnHealthDamaged;
             characterHealth.Died += OnHealthDied;
         }
 
-        EnableOnly(introRenderer);
+        ResetBossState();
+        MoveBossToIntroPosition();
     }
 
     void OnDestroy()
@@ -104,47 +135,263 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
 
     void OnEnable()
     {
-        StartCoroutine(IntroSequence());
+        if (introRoutine != null)
+            StopCoroutine(introRoutine);
+
+        introRoutine = StartCoroutine(IntroSequence());
+    }
+
+    void OnDisable()
+    {
+        ResetBossState();
+    }
+
+    void ResetBossState()
+    {
+        if (introRoutine != null) { StopCoroutine(introRoutine); introRoutine = null; }
+        if (specialRoutine != null) { StopCoroutine(specialRoutine); specialRoutine = null; }
+        if (damageSequenceRoutine != null) { StopCoroutine(damageSequenceRoutine); damageSequenceRoutine = null; }
+        if (deathRoutine != null) { StopCoroutine(deathRoutine); deathRoutine = null; }
+
+        isDead = false;
+        introFinished = false;
+        inDamageSequence = false;
+        isInHurtWalk = false;
+        bossSpawned = false;
+
+        if (clownMovement != null)
+            clownMovement.enabled = false;
+
+        if (characterHealth != null)
+            characterHealth.enabled = false;
+
+        if (bossCollider != null)
+            bossCollider.enabled = false;
+
+        if (bossRb != null)
+        {
+            bossRb.simulated = false;
+            bossRb.linearVelocity = Vector2.zero;
+        }
+
+        SetAllRenderers(false);
     }
 
     IEnumerator IntroSequence()
     {
-        if (clownMovement != null)
-            clownMovement.enabled = false;
+        ResetBossState();
+        MoveBossToIntroPosition();
+
+        LockPlayer(true);
+        SetPlayerHidden(true);
+
+        while (StageIntroTransition.Instance != null &&
+               StageIntroTransition.Instance.IntroRunning)
+            yield return null;
+
+        float waitAfterStageIntro = Mathf.Max(0f, delayAfterStageIntroToShowPlayer);
+        if (waitAfterStageIntro > 0f)
+            yield return new WaitForSeconds(waitAfterStageIntro);
+
+        SpawnPlayerForBossIntro();
+        ShowPlayerIdleUpOnly();
+
+        float waitAfterShowPlayer = Mathf.Max(0f, introWaitAfterPlayerShown);
+        if (waitAfterShowPlayer > 0f)
+            yield return new WaitForSeconds(waitAfterShowPlayer);
 
         if (StageIntroTransition.Instance != null)
-        {
-            while (StageIntroTransition.Instance.IntroRunning)
-                yield return null;
-        }
+            yield return StageIntroTransition.Instance.FadeToFullDarknessAndWait(
+                introDarknessAlpha,
+                StageIntroTransition.Instance.spotlightFadeInDuration
+            );
+
+        yield return new WaitForSeconds(1f);
+
+        SpawnBossForIntroOnly();
+
+        if (StageIntroTransition.Instance != null)
+            StageIntroTransition.Instance.SetSpotlightWorld(
+                new Vector3(bossIntroPosition.x, bossIntroPosition.y, 0f),
+                introSpotlightRadiusTiles,
+                introDarknessAlpha,
+                introSpotlightSoftnessTiles
+            );
 
         EnableOnly(introRenderer);
 
         float duration = introDuration;
-
-        if (introRenderer != null)
+        if (introRenderer != null && duration <= 0f)
         {
-            if (duration <= 0f)
-            {
-                if (introRenderer.useSequenceDuration && introRenderer.sequenceDuration > 0f)
-                    duration = introRenderer.sequenceDuration;
-                else if (introRenderer.animationSprite != null && introRenderer.animationSprite.Length > 0)
-                    duration = introRenderer.animationTime * introRenderer.animationSprite.Length;
-                else
-                    duration = 2f;
-            }
+            if (introRenderer.useSequenceDuration && introRenderer.sequenceDuration > 0f)
+                duration = introRenderer.sequenceDuration;
+            else if (introRenderer.animationSprite != null && introRenderer.animationSprite.Length > 0)
+                duration = introRenderer.animationTime * introRenderer.animationSprite.Length;
+            else
+                duration = 2f;
         }
 
         if (duration > 0f)
             yield return new WaitForSeconds(duration);
 
+        if (StageIntroTransition.Instance != null)
+            StageIntroTransition.Instance.DisableSpotlight();
+
         EnableOnly(idleRenderer);
+
+        EnableBossCombat();
+
+        LockPlayer(false);
+        SetPlayerHidden(false);
+        if (player != null)
+            player.ForceIdleUp();
+
+        introFinished = true;
+        specialRoutine = StartCoroutine(SpecialLoop());
+    }
+
+    void SpawnBossForIntroOnly()
+    {
+        bossSpawned = true;
+
+        MoveBossToIntroPosition();
+
+        if (bossRb != null)
+        {
+            bossRb.simulated = false;
+            bossRb.linearVelocity = Vector2.zero;
+        }
+
+        if (bossCollider != null)
+            bossCollider.enabled = false;
+
+        if (characterHealth != null)
+            characterHealth.enabled = false;
+
+        if (clownMovement != null)
+            clownMovement.enabled = false;
+    }
+
+    void EnableBossCombat()
+    {
+        if (isDead)
+            return;
+
+        if (bossRb != null)
+        {
+            bossRb.simulated = true;
+            bossRb.linearVelocity = Vector2.zero;
+        }
+
+        if (bossCollider != null)
+            bossCollider.enabled = true;
+
+        if (characterHealth != null)
+            characterHealth.enabled = true;
 
         if (clownMovement != null)
             clownMovement.enabled = true;
 
-        introFinished = true;
-        specialRoutine = StartCoroutine(SpecialLoop());
+        bossSpawned = true;
+    }
+
+    void MoveBossToIntroPosition()
+    {
+        if (bossRb != null)
+        {
+            bossRb.position = bossIntroPosition;
+            bossRb.linearVelocity = Vector2.zero;
+        }
+        else
+        {
+            transform.position = new Vector3(bossIntroPosition.x, bossIntroPosition.y, transform.position.z);
+        }
+    }
+
+    void SpawnPlayerForBossIntro()
+    {
+        if (player == null)
+        {
+            var go = GameObject.FindGameObjectWithTag("Player");
+            if (go != null)
+            {
+                player = go.GetComponent<MovementController>();
+                playerBomb = go.GetComponent<BombController>();
+            }
+        }
+
+        if (player == null)
+            return;
+
+        if (player.Rigidbody != null)
+        {
+            player.Rigidbody.simulated = true;
+            player.Rigidbody.position = playerIntroPosition;
+            player.Rigidbody.linearVelocity = Vector2.zero;
+        }
+        else
+        {
+            player.transform.position = new Vector3(playerIntroPosition.x, playerIntroPosition.y, player.transform.position.z);
+        }
+
+        player.ForceIdleUp();
+    }
+
+    void SetPlayerHidden(bool hidden)
+    {
+        if (player == null) return;
+
+        var srs = player.GetComponentsInChildren<SpriteRenderer>(true);
+        for (int i = 0; i < srs.Length; i++)
+            if (srs[i] != null)
+                srs[i].enabled = !hidden;
+
+        var anims = player.GetComponentsInChildren<AnimatedSpriteRenderer>(true);
+        for (int i = 0; i < anims.Length; i++)
+            if (anims[i] != null)
+                anims[i].enabled = !hidden;
+    }
+
+    void ShowPlayerIdleUpOnly()
+    {
+        if (player == null)
+            return;
+
+        player.ForceIdleUp();
+
+        var anims = player.GetComponentsInChildren<AnimatedSpriteRenderer>(true);
+        for (int i = 0; i < anims.Length; i++)
+            if (anims[i] != null)
+                anims[i].enabled = false;
+
+        var srs = player.GetComponentsInChildren<SpriteRenderer>(true);
+        for (int i = 0; i < srs.Length; i++)
+            if (srs[i] != null)
+                srs[i].enabled = false;
+
+        if (player.spriteRendererUp != null)
+        {
+            player.spriteRendererUp.enabled = true;
+            player.spriteRendererUp.idle = true;
+            player.spriteRendererUp.loop = true;
+            player.spriteRendererUp.RefreshFrame();
+
+            var upSr = player.spriteRendererUp.GetComponent<SpriteRenderer>();
+            if (upSr != null)
+                upSr.enabled = true;
+        }
+    }
+
+    void LockPlayer(bool locked)
+    {
+        if (player != null)
+        {
+            player.SetInputLocked(locked);
+            player.SetExplosionInvulnerable(locked);
+        }
+
+        if (playerBomb != null)
+            playerBomb.enabled = !locked;
     }
 
     IEnumerator SpecialLoop()
@@ -154,7 +401,7 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
             float wait = Random.Range(minSpecialInterval, maxSpecialInterval);
             yield return new WaitForSeconds(wait);
 
-            if (isDead || !introFinished || inDamageSequence)
+            if (isDead || !introFinished || inDamageSequence || !bossSpawned)
                 continue;
 
             yield return PlaySpecialOnce();
@@ -171,7 +418,6 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
         EnableOnly(specialRenderer);
 
         float duration;
-
         if (specialRenderer.useSequenceDuration && specialRenderer.sequenceDuration > 0f)
             duration = specialRenderer.sequenceDuration;
         else if (specialRenderer.animationSprite != null && specialRenderer.animationSprite.Length > 0)
@@ -192,7 +438,7 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
 
     void OnHealthDamaged(int amount)
     {
-        if (isDead)
+        if (isDead || !bossSpawned || !introFinished)
             return;
 
         bool wasInHurtWalk = isInHurtWalk;
@@ -360,8 +606,8 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
         if (characterHealth != null)
             characterHealth.enabled = false;
 
-        if (TryGetComponent<Collider2D>(out var col))
-            col.enabled = false;
+        if (bossCollider != null)
+            bossCollider.enabled = false;
 
         if (deathRoutine != null)
             StopCoroutine(deathRoutine);
@@ -480,22 +726,22 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
         audioSource.pitch = 1f;
     }
 
+    void SetAllRenderers(bool value)
+    {
+        if (introRenderer) introRenderer.enabled = value;
+        if (idleRenderer) idleRenderer.enabled = value;
+        if (specialRenderer) specialRenderer.enabled = value;
+        if (hurtRenderer) hurtRenderer.enabled = value;
+        if (deathRenderer) deathRenderer.enabled = value;
+    }
+
     void EnableOnly(AnimatedSpriteRenderer target)
     {
-        if (introRenderer != null)
-            introRenderer.enabled = (target == introRenderer);
-
-        if (idleRenderer != null)
-            idleRenderer.enabled = (target == idleRenderer);
-
-        if (specialRenderer != null)
-            specialRenderer.enabled = (target == specialRenderer);
-
-        if (hurtRenderer != null)
-            hurtRenderer.enabled = (target == hurtRenderer);
-
-        if (deathRenderer != null)
-            deathRenderer.enabled = (target == deathRenderer);
+        if (introRenderer != null) introRenderer.enabled = (target == introRenderer);
+        if (idleRenderer != null) idleRenderer.enabled = (target == idleRenderer);
+        if (specialRenderer != null) specialRenderer.enabled = (target == specialRenderer);
+        if (hurtRenderer != null) hurtRenderer.enabled = (target == hurtRenderer);
+        if (deathRenderer != null) deathRenderer.enabled = (target == deathRenderer);
 
         if (target != null)
             target.RefreshFrame();
@@ -503,27 +749,17 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
 
     AnimatedSpriteRenderer GetCurrentRenderer()
     {
-        if (introRenderer != null && introRenderer.enabled)
-            return introRenderer;
-
-        if (idleRenderer != null && idleRenderer.enabled)
-            return idleRenderer;
-
-        if (specialRenderer != null && specialRenderer.enabled)
-            return specialRenderer;
-
-        if (hurtRenderer != null && hurtRenderer.enabled)
-            return hurtRenderer;
-
-        if (deathRenderer != null && deathRenderer.enabled)
-            return deathRenderer;
-
+        if (introRenderer != null && introRenderer.enabled) return introRenderer;
+        if (idleRenderer != null && idleRenderer.enabled) return idleRenderer;
+        if (specialRenderer != null && specialRenderer.enabled) return specialRenderer;
+        if (hurtRenderer != null && hurtRenderer.enabled) return hurtRenderer;
+        if (deathRenderer != null && deathRenderer.enabled) return deathRenderer;
         return null;
     }
 
     void OnTriggerEnter2D(Collider2D other)
     {
-        if (isDead)
+        if (isDead || !bossSpawned || !introFinished)
             return;
 
         int layer = other.gameObject.layer;
