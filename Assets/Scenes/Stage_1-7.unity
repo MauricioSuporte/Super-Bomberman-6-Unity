@@ -5108,6 +5108,8 @@ MonoBehaviour:
   spotlightYOffsetWorld: -1.9
   spotlightEllipseX: 1.7
   spotlightEllipseY: 0.85
+  spotlightFadeInDuration: 0.6
+  stage17SceneName: Stage_1-7
 --- !u!114 &1389130173
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5848,6 +5850,14 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 8300000, guid: e20ff4560223b6145b03f9dc1214e8be, type: 3}
     - target: {fileID: 4345945350099860788, guid: dcd85deef67c12d47961870105bc2f37, type: 3}
+      propertyPath: maxSpecialInterval
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 4345945350099860788, guid: dcd85deef67c12d47961870105bc2f37, type: 3}
+      propertyPath: minSpecialInterval
+      value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 4345945350099860788, guid: dcd85deef67c12d47961870105bc2f37, type: 3}
       propertyPath: deathExplosionSfxInterval
       value: 0.3
       objectReference: {fileID: 0}
@@ -5855,13 +5865,17 @@ PrefabInstance:
       propertyPath: introSpotlightRadiusTiles
       value: 1.5
       objectReference: {fileID: 0}
+    - target: {fileID: 5268678205777254639, guid: dcd85deef67c12d47961870105bc2f37, type: 3}
+      propertyPath: m_Radius
+      value: 2.17
+      objectReference: {fileID: 0}
     - target: {fileID: 6315403340219294976, guid: dcd85deef67c12d47961870105bc2f37, type: 3}
       propertyPath: m_Name
       value: ClownMask
       objectReference: {fileID: 0}
     - target: {fileID: 7131596331579481284, guid: dcd85deef67c12d47961870105bc2f37, type: 3}
       propertyPath: life
-      value: 1
+      value: 8
       objectReference: {fileID: 0}
     - target: {fileID: 8276969253174048720, guid: dcd85deef67c12d47961870105bc2f37, type: 3}
       propertyPath: m_LocalPosition.x
