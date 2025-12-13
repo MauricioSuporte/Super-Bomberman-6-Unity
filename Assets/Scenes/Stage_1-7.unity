@@ -5763,6 +5763,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: ClownMask
       objectReference: {fileID: 0}
+    - target: {fileID: 7131596331579481284, guid: dcd85deef67c12d47961870105bc2f37, type: 3}
+      propertyPath: life
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 8276969253174048720, guid: dcd85deef67c12d47961870105bc2f37, type: 3}
       propertyPath: m_LocalPosition.x
       value: -1

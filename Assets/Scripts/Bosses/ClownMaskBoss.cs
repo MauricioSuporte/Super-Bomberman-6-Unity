@@ -41,6 +41,13 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
     [Header("Death")]
     public float deathDuration = 5f;
 
+    [Header("Death Explosions")]
+    public ClownExplosionVfx explosionPrefab;
+    public float explosionSpawnInterval = 0.05f;
+    public float explosionSpawnRadius = 1.2f;
+    public float explosionMinScale = 0.7f;
+    public float explosionMaxScale = 1.2f;
+
     bool isDead;
     bool introFinished;
     bool inDamageSequence;
@@ -337,8 +344,7 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
         if (characterHealth != null)
             characterHealth.enabled = false;
 
-        Collider2D col = GetComponent<Collider2D>();
-        if (col != null)
+        if (TryGetComponent<Collider2D>(out var col))
             col.enabled = false;
 
         if (deathRoutine != null)
@@ -360,6 +366,10 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
             ? characterHealth.hitBlinkInterval
             : 0.1f;
 
+        Coroutine explosions = null;
+        if (explosionPrefab != null)
+            explosions = StartCoroutine(SpawnDeathExplosions());
+
         float elapsed = 0f;
         bool visible = true;
 
@@ -373,10 +383,40 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
             elapsed += blinkInterval;
         }
 
+        if (explosions != null)
+            StopCoroutine(explosions);
+
         if (bossEndSequence != null)
             bossEndSequence.StartBossDefeatedSequence();
 
         Destroy(gameObject);
+    }
+
+    IEnumerator SpawnDeathExplosions()
+    {
+        float elapsed = 0f;
+
+        while (elapsed < deathDuration)
+        {
+            SpawnOneExplosion();
+            yield return new WaitForSeconds(explosionSpawnInterval);
+            elapsed += explosionSpawnInterval;
+        }
+    }
+
+    void SpawnOneExplosion()
+    {
+        if (explosionPrefab == null)
+            return;
+
+        Vector2 origin = transform.position;
+        Vector2 offset = Random.insideUnitCircle * explosionSpawnRadius;
+        Vector3 pos = new(origin.x + offset.x, origin.y + offset.y, transform.position.z);
+
+        ClownExplosionVfx fx = Instantiate(explosionPrefab, pos, Quaternion.identity);
+
+        float scale = Random.Range(explosionMinScale, explosionMaxScale);
+        fx.transform.localScale = new Vector3(scale, scale, 1f);
     }
 
     void EnableOnly(AnimatedSpriteRenderer target)

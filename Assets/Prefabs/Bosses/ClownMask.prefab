@@ -636,6 +636,11 @@ MonoBehaviour:
   starLifeTime: 5
   starSpawnRadius: 0.1
   deathDuration: 5
+  explosionPrefab: {fileID: 2886134669517775153, guid: 66b7ed489683a994eac3b1045b00af9c, type: 3}
+  explosionSpawnInterval: 0.1
+  explosionSpawnRadius: 3
+  explosionMinScale: 0.9
+  explosionMaxScale: 1.1
 --- !u!1 &8537170913170299511
 GameObject:
   m_ObjectHideFlags: 0
