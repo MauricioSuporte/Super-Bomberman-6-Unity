@@ -1,5 +1,6 @@
 using UnityEngine;
 
+[RequireComponent(typeof(SpriteRenderer))]
 public class ClownExplosionVfx : MonoBehaviour
 {
     public Sprite[] frames;
@@ -22,8 +23,7 @@ public class ClownExplosionVfx : MonoBehaviour
     {
         if (frames == null || frames.Length == 0)
         {
-            var anim = GetComponent<AnimatedSpriteRenderer>();
-            if (anim == null)
+            if (!TryGetComponent<AnimatedSpriteRenderer>(out var anim))
                 anim = GetComponentInChildren<AnimatedSpriteRenderer>(true);
 
             if (anim != null && anim.animationSprite != null && anim.animationSprite.Length > 0)

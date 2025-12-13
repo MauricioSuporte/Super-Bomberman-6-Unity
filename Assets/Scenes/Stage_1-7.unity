@@ -5759,6 +5759,18 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 679601671}
     m_Modifications:
+    - target: {fileID: 4345945350099860788, guid: dcd85deef67c12d47961870105bc2f37, type: 3}
+      propertyPath: deathDuration
+      value: 8
+      objectReference: {fileID: 0}
+    - target: {fileID: 4345945350099860788, guid: dcd85deef67c12d47961870105bc2f37, type: 3}
+      propertyPath: deathExplosionSfx
+      value: 
+      objectReference: {fileID: 8300000, guid: e20ff4560223b6145b03f9dc1214e8be, type: 3}
+    - target: {fileID: 4345945350099860788, guid: dcd85deef67c12d47961870105bc2f37, type: 3}
+      propertyPath: deathExplosionSfxInterval
+      value: 0.3
+      objectReference: {fileID: 0}
     - target: {fileID: 6315403340219294976, guid: dcd85deef67c12d47961870105bc2f37, type: 3}
       propertyPath: m_Name
       value: ClownMask

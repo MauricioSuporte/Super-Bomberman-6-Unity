@@ -3,6 +3,7 @@ using UnityEngine;
 
 [RequireComponent(typeof(CharacterHealth))]
 [RequireComponent(typeof(ClownMaskMovement))]
+[RequireComponent(typeof(AudioSource))]
 public class ClownMaskBoss : MonoBehaviour, IKillable
 {
     [Header("References")]
@@ -48,6 +49,14 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
     public float explosionMinScale = 0.7f;
     public float explosionMaxScale = 1.2f;
 
+    [Header("Death Explosion SFX")]
+    public AudioClip deathExplosionSfx;
+    public float deathExplosionSfxInterval = 0.12f;
+    [Range(0f, 1f)] public float deathExplosionSfxVolume = 1f;
+    public Vector2 deathExplosionPitchRange = new Vector2(0.95f, 1.05f);
+    public bool deathSfxUseTempAudioObject = true;
+    public float deathSfxSpatialBlend = 0f;
+
     bool isDead;
     bool introFinished;
     bool inDamageSequence;
@@ -56,6 +65,9 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
     Coroutine specialRoutine;
     Coroutine damageSequenceRoutine;
     Coroutine deathRoutine;
+
+    AudioSource audioSource;
+    float nextDeathSfxTime;
 
     void Awake()
     {
@@ -67,6 +79,10 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
 
         if (!bossEndSequence)
             bossEndSequence = FindFirstObjectByType<BossEndStageSequence>();
+
+        audioSource = GetComponent<AudioSource>();
+        if (audioSource != null)
+            audioSource.playOnAwake = false;
 
         if (characterHealth != null)
         {
@@ -350,6 +366,7 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
         if (deathRoutine != null)
             StopCoroutine(deathRoutine);
 
+        nextDeathSfxTime = 0f;
         deathRoutine = StartCoroutine(DeathSequence());
     }
 
@@ -378,6 +395,8 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
             visible = !visible;
             if (sr != null)
                 sr.enabled = visible;
+
+            TryPlayDeathExplosionSfx();
 
             yield return new WaitForSeconds(blinkInterval);
             elapsed += blinkInterval;
@@ -417,6 +436,48 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
 
         float scale = Random.Range(explosionMinScale, explosionMaxScale);
         fx.transform.localScale = new Vector3(scale, scale, 1f);
+
+        TryPlayDeathExplosionSfx();
+    }
+
+    void TryPlayDeathExplosionSfx()
+    {
+        if (deathExplosionSfx == null)
+            return;
+
+        float interval = deathExplosionSfxInterval <= 0f ? 0.01f : deathExplosionSfxInterval;
+        if (Time.time < nextDeathSfxTime)
+            return;
+
+        nextDeathSfxTime = Time.time + interval;
+
+        float pitch = Random.Range(deathExplosionPitchRange.x, deathExplosionPitchRange.y);
+        Vector3 pos = transform.position;
+
+        if (deathSfxUseTempAudioObject)
+        {
+            GameObject go = new GameObject("ClownDeathSfx");
+            go.transform.position = pos;
+
+            AudioSource s = go.AddComponent<AudioSource>();
+            s.playOnAwake = false;
+            s.spatialBlend = deathSfxSpatialBlend;
+            s.volume = deathExplosionSfxVolume;
+            s.pitch = pitch;
+
+            s.PlayOneShot(deathExplosionSfx, 1f);
+
+            float clipDuration = deathExplosionSfx.length / Mathf.Max(0.01f, Mathf.Abs(pitch));
+            Destroy(go, clipDuration + 0.1f);
+            return;
+        }
+
+        if (audioSource == null)
+            return;
+
+        audioSource.pitch = pitch;
+        audioSource.PlayOneShot(deathExplosionSfx, deathExplosionSfxVolume);
+        audioSource.pitch = 1f;
     }
 
     void EnableOnly(AnimatedSpriteRenderer target)
