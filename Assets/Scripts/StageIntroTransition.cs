@@ -55,6 +55,9 @@ public class StageIntroTransition : MonoBehaviour
     [Header("Spotlight Fade")]
     public float spotlightFadeInDuration = 0.6f;
 
+    [Header("Only Stage_1-7")]
+    public string stage17SceneName = "Stage_1-7";
+
     Material spotlightMatInstance;
 
     public bool IntroRunning { get; private set; }
@@ -65,6 +68,8 @@ public class StageIntroTransition : MonoBehaviour
 
     MovementController[] movementControllers;
     BombController[] bombControllers;
+
+    bool defaultMusicStarted;
 
     public static void SkipTitleScreenOnNextLoad()
     {
@@ -98,6 +103,8 @@ public class StageIntroTransition : MonoBehaviour
 
     void Start()
     {
+        defaultMusicStarted = false;
+
         if (GameMusicController.Instance != null)
             GameMusicController.Instance.StopMusic();
 
@@ -158,6 +165,33 @@ public class StageIntroTransition : MonoBehaviour
                 introLogoImage.enabled = false;
 
             StartCoroutine(StageIntroOnlySequence());
+        }
+    }
+
+    bool IsStage17()
+    {
+        var scene = SceneManager.GetActiveScene();
+        return scene.IsValid() && scene.name == stage17SceneName;
+    }
+
+    public void StartDefaultMusicOnce()
+    {
+        if (!IsStage17())
+            return;
+
+        if (defaultMusicStarted)
+            return;
+
+        defaultMusicStarted = true;
+
+        if (GameMusicController.Instance != null &&
+            GameMusicController.Instance.defaultMusic != null)
+        {
+            GameMusicController.Instance.PlayMusic(
+                GameMusicController.Instance.defaultMusic,
+                GameMusicController.Instance.defaultMusicVolume,
+                true
+            );
         }
     }
 
@@ -278,6 +312,10 @@ public class StageIntroTransition : MonoBehaviour
             GamePauseController.ClearPauseFlag();
             Time.timeScale = 1f;
             EnableGameplay();
+
+            if (!IsStage17())
+                TryStartDefaultMusicNormalFlow();
+
             yield break;
         }
 
@@ -311,6 +349,12 @@ public class StageIntroTransition : MonoBehaviour
         Time.timeScale = 1f;
         EnableGameplay();
 
+        if (!IsStage17())
+            TryStartDefaultMusicNormalFlow();
+    }
+
+    void TryStartDefaultMusicNormalFlow()
+    {
         if (GameMusicController.Instance != null &&
             GameMusicController.Instance.defaultMusic != null)
         {
@@ -319,7 +363,8 @@ public class StageIntroTransition : MonoBehaviour
             GameMusicController.Instance.PlayMusic(
                 GameMusicController.Instance.defaultMusic,
                 volume,
-                true);
+                true
+            );
         }
     }
 

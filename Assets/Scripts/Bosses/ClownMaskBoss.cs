@@ -200,6 +200,9 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
         SpawnPlayerForBossIntro();
         ShowPlayerIdleUpOnly();
 
+        if (StageIntroTransition.Instance != null)
+            StageIntroTransition.Instance.StartDefaultMusicOnce();
+
         float waitAfterShowPlayer = Mathf.Max(0f, introWaitAfterPlayerShown);
         if (waitAfterShowPlayer > 0f)
             yield return new WaitForSeconds(waitAfterShowPlayer);
