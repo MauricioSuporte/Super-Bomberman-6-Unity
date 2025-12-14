@@ -9,7 +9,7 @@ public static class PlayerPersistentStats
     public static int BombAmount = 9;
     public static int ExplosionRadius = 9;
     public static float Speed = 5f;
-    public static bool CanKickBombs = true;
+    public static bool CanKickBombs = false;
 
     public static void LoadInto(MovementController movement, BombController bomb)
     {
@@ -18,15 +18,30 @@ public static class PlayerPersistentStats
         Speed = Mathf.Min(Speed, MaxSpeed);
 
         if (movement != null)
-        {
             movement.speed = Speed;
-            movement.canKickBombs = CanKickBombs;
-        }
 
         if (bomb != null)
         {
             bomb.bombAmout = BombAmount;
             bomb.explosionRadius = ExplosionRadius;
+        }
+
+        if (movement != null && movement.CompareTag("Player"))
+        {
+            var kickAbility = movement.GetComponent<BombKickAbility>();
+
+            if (CanKickBombs)
+            {
+                if (kickAbility == null)
+                    kickAbility = movement.gameObject.AddComponent<BombKickAbility>();
+
+                kickAbility.EnableBombKick();
+            }
+            else
+            {
+                if (kickAbility != null)
+                    kickAbility.DisableBombKick();
+            }
         }
     }
 
@@ -35,7 +50,9 @@ public static class PlayerPersistentStats
         if (movement != null && movement.CompareTag("Player"))
         {
             Speed = Mathf.Min(movement.speed, MaxSpeed);
-            CanKickBombs = movement.canKickBombs;
+
+            var kickAbility = movement.GetComponent<BombKickAbility>();
+            CanKickBombs = kickAbility != null && kickAbility.CanKickBombs;
         }
 
         if (bomb != null && bomb.CompareTag("Player"))

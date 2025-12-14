@@ -24,9 +24,7 @@ public class ItemPickup : MonoBehaviour
     {
         var audio = player.GetComponent<AudioSource>();
         if (audio != null && collectSfx != null)
-        {
             audio.PlayOneShot(collectSfx);
-        }
 
         switch (type)
         {
@@ -63,8 +61,11 @@ public class ItemPickup : MonoBehaviour
 
             case ItemType.BombKick:
                 {
-                    if (player.TryGetComponent<MovementController>(out var movement))
-                        movement.EnableBombKick();
+                    var ability = player.GetComponent<BombKickAbility>();
+                    if (ability == null)
+                        ability = player.AddComponent<BombKickAbility>();
+
+                    ability.EnableBombKick();
                     break;
                 }
         }

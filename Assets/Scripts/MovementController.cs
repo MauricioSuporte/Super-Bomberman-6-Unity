@@ -10,15 +10,11 @@ public class MovementController : MonoBehaviour, IKillable
 
     [Header("SFX")]
     public AudioClip deathSfx;
-    public AudioClip kickBombSfx;
 
     [Header("Stats")]
     public float speed = 5f;
     public float tileSize = 1f;
     public LayerMask obstacleMask;
-
-    [Header("Abilities")]
-    public bool canKickBombs = false;
 
     public Rigidbody2D Rigidbody { get; private set; }
 
@@ -26,6 +22,7 @@ public class MovementController : MonoBehaviour, IKillable
 
     protected AudioSource audioSource;
     protected BombController bombController;
+    protected BombKickAbility bombKickAbility;
 
     public KeyCode inputUp = KeyCode.W;
     public KeyCode inputDown = KeyCode.S;
@@ -50,17 +47,16 @@ public class MovementController : MonoBehaviour, IKillable
     public bool isDead;
 
     const float CenterEpsilon = 0.01f;
-
     float SlideDeadZone => tileSize * 0.25f;
 
     protected bool hasInput;
-
     protected bool explosionInvulnerable;
 
     protected virtual void Awake()
     {
         Rigidbody = GetComponent<Rigidbody2D>();
         bombController = GetComponent<BombController>();
+        bombKickAbility = GetComponent<BombKickAbility>();
 
         if (CompareTag("Player"))
             PlayerPersistentStats.LoadInto(this, bombController);
@@ -346,28 +342,11 @@ public class MovementController : MonoBehaviour, IKillable
                         continue;
                 }
 
-                if (canKickBombs && bomb != null && !bomb.IsBeingKicked)
+                if (bombKickAbility != null && bomb != null)
                 {
-                    var bombCollider = bomb.GetComponent<Collider2D>();
-                    if (bombCollider != null && !bombCollider.isTrigger)
-                    {
-                        LayerMask bombObstacles = obstacleMask | LayerMask.GetMask("Enemy");
-
-                        bool kicked = bomb.StartKick(
-                            direction,
-                            tileSize,
-                            bombObstacles,
-                            bombController != null ? bombController.destructibleTiles : null
-                        );
-
-                        if (kicked)
-                        {
-                            if (audioSource != null && kickBombSfx != null)
-                                audioSource.PlayOneShot(kickBombSfx);
-
-                            return true;
-                        }
-                    }
+                    bool kicked = bombKickAbility.TryKickBomb(bomb, direction, tileSize, obstacleMask);
+                    if (kicked)
+                        return true;
                 }
             }
 
@@ -379,7 +358,6 @@ public class MovementController : MonoBehaviour, IKillable
 
         return false;
     }
-
 
     protected void SetDirection(Vector2 newDirection, AnimatedSpriteRenderer spriteRenderer)
     {
@@ -439,8 +417,8 @@ public class MovementController : MonoBehaviour, IKillable
         isDead = true;
         inputLocked = true;
 
-        canKickBombs = false;
-        PlayerPersistentStats.CanKickBombs = false;
+        if (bombKickAbility != null)
+            bombKickAbility.DisableBombKick();
 
         if (bombController != null)
             bombController.enabled = false;
@@ -450,9 +428,6 @@ public class MovementController : MonoBehaviour, IKillable
 
         if (TryGetComponent<Collider2D>(out var col))
             col.enabled = false;
-
-        if (audioSource != null && deathSfx != null)
-            audioSource.PlayOneShot(deathSfx);
 
         if (audioSource != null && deathSfx != null)
             audioSource.PlayOneShot(deathSfx);
@@ -548,11 +523,6 @@ public class MovementController : MonoBehaviour, IKillable
     {
         if (spriteRendererEndStage != null)
             spriteRendererEndStage.enabled = false;
-    }
-
-    public void EnableBombKick()
-    {
-        canKickBombs = true;
     }
 
     public void SetInputLocked(bool locked)
