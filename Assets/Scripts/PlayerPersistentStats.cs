@@ -9,7 +9,7 @@ public static class PlayerPersistentStats
     public static int BombAmount = 9;
     public static int ExplosionRadius = 9;
     public static float Speed = 5f;
-    public static bool CanKickBombs = false;
+    public static bool CanKickBombs = true;
 
     public static void LoadInto(MovementController movement, BombController bomb)
     {
@@ -28,20 +28,13 @@ public static class PlayerPersistentStats
 
         if (movement != null && movement.CompareTag("Player"))
         {
-            var kickAbility = movement.GetComponent<BombKickAbility>();
+            if (!movement.TryGetComponent<AbilitySystem>(out var abilitySystem))
+                abilitySystem = movement.gameObject.AddComponent<AbilitySystem>();
 
             if (CanKickBombs)
-            {
-                if (kickAbility == null)
-                    kickAbility = movement.gameObject.AddComponent<BombKickAbility>();
-
-                kickAbility.EnableBombKick();
-            }
+                abilitySystem.Enable(BombKickAbility.AbilityId);
             else
-            {
-                if (kickAbility != null)
-                    kickAbility.DisableBombKick();
-            }
+                abilitySystem.Disable(BombKickAbility.AbilityId);
         }
     }
 
@@ -51,8 +44,9 @@ public static class PlayerPersistentStats
         {
             Speed = Mathf.Min(movement.speed, MaxSpeed);
 
-            var kickAbility = movement.GetComponent<BombKickAbility>();
-            CanKickBombs = kickAbility != null && kickAbility.CanKickBombs;
+            var abilitySystem = movement.GetComponent<AbilitySystem>();
+            var kick = abilitySystem != null ? abilitySystem.Get<BombKickAbility>(BombKickAbility.AbilityId) : null;
+            CanKickBombs = kick != null && kick.IsEnabled;
         }
 
         if (bomb != null && bomb.CompareTag("Player"))

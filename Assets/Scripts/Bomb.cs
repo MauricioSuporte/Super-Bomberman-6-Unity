@@ -34,6 +34,11 @@ public class Bomb : MonoBehaviour
     private readonly HashSet<Collider2D> charactersInside = new();
     private bool chainExplosionScheduled;
 
+    private static readonly WaitForFixedUpdate waitFixed = new WaitForFixedUpdate();
+
+    public bool IsSolid => bombCollider != null && !bombCollider.isTrigger;
+    public bool CanBeKicked => !HasExploded && !isKicked && IsSolid && charactersInside.Count == 0;
+
     private void Awake()
     {
         bombCollider = GetComponent<Collider2D>();
@@ -44,6 +49,8 @@ public class Bomb : MonoBehaviour
         rb.gravityScale = 0f;
         rb.constraints = RigidbodyConstraints2D.FreezeRotation;
         rb.bodyType = RigidbodyType2D.Kinematic;
+
+        rb.interpolation = RigidbodyInterpolation2D.Interpolate;
 
         lastPos = rb.position;
     }
@@ -127,38 +134,38 @@ public class Bomb : MonoBehaviour
 
     public bool StartKick(Vector2 direction, float tileSize, LayerMask obstacleMask, Tilemap destructibleTilemap)
     {
-        if (HasExploded || isKicked || direction == Vector2.zero)
+        if (!CanBeKicked || direction == Vector2.zero)
             return false;
 
         kickDirection = direction.normalized;
         kickTileSize = tileSize;
 
         kickObstacleMask = obstacleMask | LayerMask.GetMask("Enemy");
-
         kickDestructibleTilemap = destructibleTilemap;
-
-        if (IsKickBlocked(rb.position + kickDirection * kickTileSize))
-            return false;
 
         Vector2 origin = rb.position;
         origin.x = Mathf.Round(origin.x / tileSize) * tileSize;
         origin.y = Mathf.Round(origin.y / tileSize) * tileSize;
 
+        if (IsKickBlocked(origin + kickDirection * kickTileSize))
+            return false;
+
         currentTileCenter = origin;
         lastPos = origin;
 
         rb.position = origin;
+        transform.position = origin;
 
         if (kickRoutine != null)
             StopCoroutine(kickRoutine);
 
         isKicked = true;
-        kickRoutine = StartCoroutine(KickRoutine());
+        kickRoutine = StartCoroutine(KickRoutineFixed());
 
         return true;
     }
 
-    private IEnumerator KickRoutine()
+    private IEnumerator KickRoutineFixed()
     {
         while (true)
         {
@@ -170,24 +177,41 @@ public class Bomb : MonoBehaviour
             if (IsKickBlocked(next))
                 break;
 
-            float t = 0f;
-            float travelTime = kickTileSize / kickSpeed;
+            float travelTime = kickTileSize / Mathf.Max(0.0001f, kickSpeed);
+            float elapsed = 0f;
             Vector2 start = currentTileCenter;
 
-            while (t < travelTime)
+            while (elapsed < travelTime)
             {
-                t += Time.deltaTime;
-                Vector2 pos = Vector2.Lerp(start, next, t / travelTime);
+                if (HasExploded)
+                    break;
+
+                elapsed += Time.fixedDeltaTime;
+
+                float a = Mathf.Clamp01(elapsed / travelTime);
+                Vector2 pos = Vector2.Lerp(start, next, a);
+
                 lastPos = pos;
                 rb.MovePosition(pos);
-                yield return null;
+
+                yield return waitFixed;
             }
+
+            if (HasExploded)
+                break;
 
             currentTileCenter = next;
             lastPos = next;
+
+            rb.position = next;
+            transform.position = next;
         }
 
         rb.position = currentTileCenter;
+        transform.position = currentTileCenter;
+
+        lastPos = currentTileCenter;
+
         isKicked = false;
         kickRoutine = null;
     }

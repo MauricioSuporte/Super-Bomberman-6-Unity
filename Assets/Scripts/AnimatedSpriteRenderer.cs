@@ -26,7 +26,10 @@ public class AnimatedSpriteRenderer : MonoBehaviour
 
     private int animationFrame;
     private int direction = 1;
-    private Vector3 initialLocalPosition;
+
+    private Transform visualTransform;
+    private Vector3 initialVisualLocalPosition;
+    private bool canMoveVisualLocal;
 
     public int CurrentFrame
     {
@@ -36,10 +39,8 @@ public class AnimatedSpriteRenderer : MonoBehaviour
             animationFrame = value;
             if (animationSprite != null && animationSprite.Length > 0)
             {
-                if (animationFrame < 0)
-                    animationFrame = 0;
-                if (animationFrame >= animationSprite.Length)
-                    animationFrame = animationSprite.Length - 1;
+                if (animationFrame < 0) animationFrame = 0;
+                if (animationFrame >= animationSprite.Length) animationFrame = animationSprite.Length - 1;
             }
         }
     }
@@ -53,45 +54,57 @@ public class AnimatedSpriteRenderer : MonoBehaviour
     private void Awake()
     {
         EnsureSpriteRenderer();
-        initialLocalPosition = transform.localPosition;
+
+        visualTransform = spriteRenderer != null ? spriteRenderer.transform : transform;
+        initialVisualLocalPosition = visualTransform.localPosition;
+
+        canMoveVisualLocal = visualTransform != null && visualTransform != transform && visualTransform.parent == transform;
     }
 
     private void OnEnable()
     {
         EnsureSpriteRenderer();
+
         if (spriteRenderer != null)
             spriteRenderer.enabled = true;
+
+        direction = 1;
+
+        SetupTiming();
+        CancelInvoke(nameof(NextFrame));
+        InvokeRepeating(nameof(NextFrame), animationTime, animationTime);
 
         ApplyFrame();
     }
 
     private void OnDisable()
     {
+        CancelInvoke(nameof(NextFrame));
+
         EnsureSpriteRenderer();
         if (spriteRenderer != null)
             spriteRenderer.enabled = false;
     }
 
-    private void Start()
+    private void SetupTiming()
     {
-        if (animationSprite != null && animationSprite.Length > 0)
-        {
-            if (useSequenceDuration)
-            {
-                sequenceDuration = Mathf.Max(sequenceDuration, 0.0001f);
+        if (animationSprite == null || animationSprite.Length == 0)
+            return;
 
-                int framesInCycle;
+        if (!useSequenceDuration)
+            return;
 
-                if (pingPong && animationSprite.Length > 1)
-                    framesInCycle = animationSprite.Length * 2 - 2;
-                else
-                    framesInCycle = animationSprite.Length;
+        sequenceDuration = Mathf.Max(sequenceDuration, 0.0001f);
 
-                animationTime = sequenceDuration / framesInCycle;
-            }
-        }
+        int framesInCycle;
 
-        InvokeRepeating(nameof(NextFrame), animationTime, animationTime);
+        if (pingPong && animationSprite.Length > 1)
+            framesInCycle = animationSprite.Length * 2 - 2;
+        else
+            framesInCycle = animationSprite.Length;
+
+        animationTime = sequenceDuration / Mathf.Max(1, framesInCycle);
+        animationTime = Mathf.Max(animationTime, 0.0001f);
     }
 
     public void RefreshFrame()
@@ -116,6 +129,8 @@ public class AnimatedSpriteRenderer : MonoBehaviour
 
             if (loop && animationFrame >= animationSprite.Length)
                 animationFrame = 0;
+            else if (!loop && animationFrame >= animationSprite.Length)
+                animationFrame = animationSprite.Length - 1;
         }
         else
         {
@@ -123,13 +138,27 @@ public class AnimatedSpriteRenderer : MonoBehaviour
 
             if (animationFrame >= animationSprite.Length)
             {
-                animationFrame = animationSprite.Length - 2;
-                direction = -1;
+                if (animationSprite.Length == 1)
+                {
+                    animationFrame = 0;
+                }
+                else
+                {
+                    animationFrame = animationSprite.Length - 2;
+                    direction = -1;
+                }
             }
             else if (animationFrame < 0)
             {
-                animationFrame = 1;
-                direction = 1;
+                if (animationSprite.Length == 1)
+                {
+                    animationFrame = 0;
+                }
+                else
+                {
+                    animationFrame = 1;
+                    direction = 1;
+                }
             }
         }
 
@@ -157,16 +186,22 @@ public class AnimatedSpriteRenderer : MonoBehaviour
             spriteRenderer.sprite = animationSprite[animationFrame];
         }
 
+        if (visualTransform == null)
+            visualTransform = spriteRenderer.transform;
+
+        if (!canMoveVisualLocal)
+            return;
+
         if (!idle && frameOffsets != null && animationSprite != null &&
             frameOffsets.Length == animationSprite.Length &&
             animationFrame >= 0 && animationFrame < frameOffsets.Length)
         {
             Vector2 offset = frameOffsets[animationFrame];
-            transform.localPosition = initialLocalPosition + (Vector3)offset;
+            visualTransform.localPosition = initialVisualLocalPosition + (Vector3)offset;
         }
         else
         {
-            transform.localPosition = initialLocalPosition;
+            visualTransform.localPosition = initialVisualLocalPosition;
         }
     }
 }

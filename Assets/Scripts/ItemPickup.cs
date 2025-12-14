@@ -61,11 +61,10 @@ public class ItemPickup : MonoBehaviour
 
             case ItemType.BombKick:
                 {
-                    var ability = player.GetComponent<BombKickAbility>();
-                    if (ability == null)
-                        ability = player.AddComponent<BombKickAbility>();
+                    if (!player.TryGetComponent<AbilitySystem>(out var abilitySystem))
+                        abilitySystem = player.AddComponent<AbilitySystem>();
 
-                    ability.EnableBombKick();
+                    abilitySystem.Enable(BombKickAbility.AbilityId);
                     break;
                 }
         }

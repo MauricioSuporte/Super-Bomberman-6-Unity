@@ -4,6 +4,7 @@ using UnityEngine;
 [RequireComponent(typeof(AudioSource))]
 [RequireComponent(typeof(BombController))]
 [RequireComponent(typeof(Rigidbody2D))]
+[RequireComponent(typeof(AbilitySystem))]
 public class MovementController : MonoBehaviour, IKillable
 {
     public event Action<MovementController> Died;
@@ -23,6 +24,7 @@ public class MovementController : MonoBehaviour, IKillable
     protected AudioSource audioSource;
     protected BombController bombController;
     protected BombKickAbility bombKickAbility;
+    protected AbilitySystem abilitySystem;
 
     public KeyCode inputUp = KeyCode.W;
     public KeyCode inputDown = KeyCode.S;
@@ -56,7 +58,10 @@ public class MovementController : MonoBehaviour, IKillable
     {
         Rigidbody = GetComponent<Rigidbody2D>();
         bombController = GetComponent<BombController>();
-        bombKickAbility = GetComponent<BombKickAbility>();
+
+        abilitySystem = GetComponent<AbilitySystem>();
+        if (abilitySystem == null)
+            abilitySystem = gameObject.AddComponent<AbilitySystem>();
 
         if (CompareTag("Player"))
             PlayerPersistentStats.LoadInto(this, bombController);
@@ -323,6 +328,8 @@ public class MovementController : MonoBehaviour, IKillable
         if (hits == null || hits.Length == 0)
             return false;
 
+        var monos = GetComponents<MonoBehaviour>();
+
         foreach (var hit in hits)
         {
             if (hit == null)
@@ -331,27 +338,17 @@ public class MovementController : MonoBehaviour, IKillable
             if (hit.gameObject == gameObject)
                 continue;
 
-            if (hit.gameObject.layer == LayerMask.NameToLayer("Bomb"))
+            if (hit.isTrigger)
+                continue;
+
+            for (int i = 0; i < monos.Length; i++)
             {
-                var bomb = hit.GetComponent<Bomb>();
-
-                if (bomb != null && bomb.Owner == bombController)
+                if (monos[i] is IMovementAbility ability && ability.IsEnabled)
                 {
-                    var bombCollider = bomb.GetComponent<Collider2D>();
-                    if (bombCollider != null && bombCollider.isTrigger)
-                        continue;
-                }
-
-                if (bombKickAbility != null && bomb != null)
-                {
-                    bool kicked = bombKickAbility.TryKickBomb(bomb, direction, tileSize, obstacleMask);
-                    if (kicked)
+                    if (ability.TryHandleBlockedHit(hit, direction, tileSize, obstacleMask))
                         return true;
                 }
             }
-
-            if (hit.isTrigger)
-                continue;
 
             return true;
         }
@@ -417,8 +414,8 @@ public class MovementController : MonoBehaviour, IKillable
         isDead = true;
         inputLocked = true;
 
-        if (bombKickAbility != null)
-            bombKickAbility.DisableBombKick();
+        if (abilitySystem != null)
+            abilitySystem.Disable(BombKickAbility.AbilityId);
 
         if (bombController != null)
             bombController.enabled = false;

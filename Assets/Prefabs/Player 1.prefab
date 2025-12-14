@@ -478,9 +478,9 @@ GameObject:
   - component: {fileID: 8689873400551580866}
   - component: {fileID: 4063543003117991542}
   - component: {fileID: 6013594429678645981}
-  - component: {fileID: 4355169886650050822}
   - component: {fileID: 2372813969180496726}
   - component: {fileID: 4627430260018096140}
+  - component: {fileID: 5869552212916937176}
   m_Layer: 3
   m_Name: Player 1
   m_TagString: Player
@@ -604,20 +604,6 @@ MonoBehaviour:
   endStageTotalTime: 1
   endStageFrameCount: 9
   isDead: 0
---- !u!114 &4355169886650050822
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4947014498081102474}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f63760a13a08f664e873ba399d2c2fca, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::BombKickAbility
-  kickBombSfx: {fileID: 8300000, guid: fd7073b98a175b640bff17cf708a99ce, type: 3}
-  canKickBombs: 0
 --- !u!114 &2372813969180496726
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -745,6 +731,18 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+--- !u!114 &5869552212916937176
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4947014498081102474}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7058ad72d26750f468fe6b34b4fccf32, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AbilitySystem
 --- !u!1 &7187687357521038210
 GameObject:
   m_ObjectHideFlags: 0
