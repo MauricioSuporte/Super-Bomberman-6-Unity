@@ -1,0 +1,5205 @@
+fileFormatVersion: 2
+guid: 77e6e42c2f9c34c489f692741ef2f39c
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 1368141986660978707
+    second: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_0
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 16
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_0
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 192
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 310993d53ed9cf210800000000000000
+      internalID: 1368141986660978707
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_1
+      rect:
+        serializedVersion: 2
+        x: 16
+        y: 192
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: f26a5f1d09e93e54889fac08970736c0
+      internalID: -2140852054
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_2
+      rect:
+        serializedVersion: 2
+        x: 32
+        y: 192
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: d7568763e3676f84ebf49eea16769581
+      internalID: 1997096992
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_3
+      rect:
+        serializedVersion: 2
+        x: 48
+        y: 192
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: ebbced4b630185640bf2d18fa1ab62ab
+      internalID: 948470906
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_4
+      rect:
+        serializedVersion: 2
+        x: 64
+        y: 192
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: af62fa8bb58b9ae429e5cc0eeb5de80c
+      internalID: -1871863515
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_5
+      rect:
+        serializedVersion: 2
+        x: 80
+        y: 192
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 39bf1a01bf119984eadfb1a1df522eb5
+      internalID: 1271477367
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_6
+      rect:
+        serializedVersion: 2
+        x: 96
+        y: 192
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 0f9b27019c806864f8620431cdcce2f3
+      internalID: -2139709314
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_7
+      rect:
+        serializedVersion: 2
+        x: 112
+        y: 192
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 39b0f9497114897449688fd2c1adfeb1
+      internalID: 2133361784
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_8
+      rect:
+        serializedVersion: 2
+        x: 128
+        y: 192
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 686b681812bcd914e88b7b9c97757339
+      internalID: -997373264
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_9
+      rect:
+        serializedVersion: 2
+        x: 144
+        y: 192
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 74b469186fd1e2948a8f05b16e7bbd91
+      internalID: -1622013493
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_10
+      rect:
+        serializedVersion: 2
+        x: 160
+        y: 192
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 074f50afa599ee442971e19d9b7e7546
+      internalID: 287066377
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_11
+      rect:
+        serializedVersion: 2
+        x: 176
+        y: 192
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 868c3dadb96910147be86adeffff0a7a
+      internalID: -604162689
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_12
+      rect:
+        serializedVersion: 2
+        x: 192
+        y: 192
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: fc86006746eba534fb1b484b3ea02c5a
+      internalID: -912248873
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_13
+      rect:
+        serializedVersion: 2
+        x: 208
+        y: 192
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: ebafd2b961391a34eb07bb986a722891
+      internalID: -1643545520
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_14
+      rect:
+        serializedVersion: 2
+        x: 224
+        y: 192
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: fec3aa044d5791348af45ba8e061be53
+      internalID: -122615735
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_15
+      rect:
+        serializedVersion: 2
+        x: 240
+        y: 192
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 1aaf2611579ec6349913a915be480b6c
+      internalID: -519282810
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_16
+      rect:
+        serializedVersion: 2
+        x: 256
+        y: 192
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: b180bae20fa0f334db107247bf106e41
+      internalID: -196149699
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_17
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 176
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 2eadda138a401034590e5071467f3121
+      internalID: 2079646167
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_18
+      rect:
+        serializedVersion: 2
+        x: 16
+        y: 176
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 2e02042b9054b0f4a9e4ef54124eeff5
+      internalID: 789533896
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_19
+      rect:
+        serializedVersion: 2
+        x: 32
+        y: 176
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 1bd6794945fce4845b1d5e278e0c34c3
+      internalID: -34792632
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_20
+      rect:
+        serializedVersion: 2
+        x: 48
+        y: 176
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: ab3e25450c49f8d4d95f3c782f5105b0
+      internalID: 525837785
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_21
+      rect:
+        serializedVersion: 2
+        x: 64
+        y: 176
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: bb9aab445f1383948807c7af4a61f9c2
+      internalID: 1082324774
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_22
+      rect:
+        serializedVersion: 2
+        x: 80
+        y: 176
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: b4f153528ac518f4b84106ee7994e3b6
+      internalID: 861021287
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_23
+      rect:
+        serializedVersion: 2
+        x: 96
+        y: 176
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: d66da6acef588814d8b358b688d96ce5
+      internalID: 2118227014
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_24
+      rect:
+        serializedVersion: 2
+        x: 112
+        y: 176
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: ee59f018a61d2764f87c1827548b44fe
+      internalID: 2108270114
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_25
+      rect:
+        serializedVersion: 2
+        x: 128
+        y: 176
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: bdecf33eeb15e7f4f9c7d045aedac040
+      internalID: 1664914144
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_26
+      rect:
+        serializedVersion: 2
+        x: 144
+        y: 176
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 0efafd436469b384b8d326256e12fc66
+      internalID: 818327111
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_27
+      rect:
+        serializedVersion: 2
+        x: 160
+        y: 176
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 43a1792e2989fdd4ca437946b86a38f9
+      internalID: 1075838561
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_28
+      rect:
+        serializedVersion: 2
+        x: 176
+        y: 176
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 61a279e693d383e4097aa63007bb376b
+      internalID: -1878179553
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_29
+      rect:
+        serializedVersion: 2
+        x: 192
+        y: 176
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 9314636a497282d4db89657642e054eb
+      internalID: -1134451420
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_30
+      rect:
+        serializedVersion: 2
+        x: 208
+        y: 176
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 7adc6984b6e63124f896262844a55d6f
+      internalID: 901239959
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_31
+      rect:
+        serializedVersion: 2
+        x: 224
+        y: 176
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 17fd864b9fbdf274e90f6b9df5d1ddfc
+      internalID: 135759165
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_32
+      rect:
+        serializedVersion: 2
+        x: 240
+        y: 176
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: ab2f269ae920e674791eabcc68df5475
+      internalID: -672983959
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_33
+      rect:
+        serializedVersion: 2
+        x: 256
+        y: 176
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 4a81fb0b71982e84ebd5a3cc1ee4f874
+      internalID: -425628700
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_34
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 160
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: c176deb771a09fb41bccf1c489c06513
+      internalID: 1181556526
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_35
+      rect:
+        serializedVersion: 2
+        x: 16
+        y: 160
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: b00b164c6f405e14bba1c9e20805481e
+      internalID: 124430982
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_36
+      rect:
+        serializedVersion: 2
+        x: 32
+        y: 160
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 1302f904a0ed1114d9aa31b871b13b89
+      internalID: 2034704777
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_37
+      rect:
+        serializedVersion: 2
+        x: 48
+        y: 160
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: cdc135b0bb7bc4c4297be3f9b132ab7b
+      internalID: -1210952962
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_38
+      rect:
+        serializedVersion: 2
+        x: 64
+        y: 160
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 5bc0cf809b60a24488c1a1d430ed09ab
+      internalID: -525139101
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_39
+      rect:
+        serializedVersion: 2
+        x: 80
+        y: 160
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 59ae76aacfc2e7f409d3db7b62f5bfca
+      internalID: -1383976733
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_40
+      rect:
+        serializedVersion: 2
+        x: 96
+        y: 160
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 722ca68b5b9a0554db404d7a1938dbf7
+      internalID: -1333937314
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_41
+      rect:
+        serializedVersion: 2
+        x: 112
+        y: 160
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 70f833974344fc94b8c61bd0a6e36858
+      internalID: -25234590
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_42
+      rect:
+        serializedVersion: 2
+        x: 128
+        y: 160
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 3a7d37f12587ad842850c81a319b92f9
+      internalID: 1036447716
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_43
+      rect:
+        serializedVersion: 2
+        x: 144
+        y: 160
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 12a4cf50c27a85e43a4e82d8993aaa96
+      internalID: 1428744655
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_44
+      rect:
+        serializedVersion: 2
+        x: 160
+        y: 160
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 06d139a18a39ec440b9b13520d304207
+      internalID: 1938227944
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_45
+      rect:
+        serializedVersion: 2
+        x: 176
+        y: 160
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 284d263ac16923e4ea1dff27f2596b85
+      internalID: 801837775
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_46
+      rect:
+        serializedVersion: 2
+        x: 192
+        y: 160
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 698c8df1e044962448dfd30fd36351fc
+      internalID: 1753266425
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_47
+      rect:
+        serializedVersion: 2
+        x: 208
+        y: 160
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 40366f3377ba6ac4e97694325840540b
+      internalID: 709771552
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_48
+      rect:
+        serializedVersion: 2
+        x: 224
+        y: 160
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 8431907664498dd4189911177de3b55b
+      internalID: -448390404
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_49
+      rect:
+        serializedVersion: 2
+        x: 240
+        y: 160
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: d4c92786a676c2e4fa539dbd0926e2e8
+      internalID: -1795598344
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_50
+      rect:
+        serializedVersion: 2
+        x: 256
+        y: 160
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: d80925d985a4f5c47943b68e02fa7219
+      internalID: 1561657602
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_51
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 144
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 569fa39c69f6caf479b76fbdef6e0f6a
+      internalID: 710771666
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_52
+      rect:
+        serializedVersion: 2
+        x: 16
+        y: 144
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 36ee19a273cb5ca4e825785a60d848fe
+      internalID: 1709807968
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_53
+      rect:
+        serializedVersion: 2
+        x: 32
+        y: 144
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: fbac93c3f0cacd843bc5f31d604d7045
+      internalID: 347121461
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_54
+      rect:
+        serializedVersion: 2
+        x: 48
+        y: 144
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 81da2ed87d6ac1a46affc6786ec4bade
+      internalID: 1805050919
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_55
+      rect:
+        serializedVersion: 2
+        x: 64
+        y: 144
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 43450dfc28e7be744bfbf14444f5ac99
+      internalID: -1156969002
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_56
+      rect:
+        serializedVersion: 2
+        x: 80
+        y: 144
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 413c03ec136f9fc4180cf5c7b248c261
+      internalID: -1815646501
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_57
+      rect:
+        serializedVersion: 2
+        x: 96
+        y: 144
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: b27cc8f08e4e6ae4d9008eb79464a92e
+      internalID: 116670599
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_58
+      rect:
+        serializedVersion: 2
+        x: 112
+        y: 144
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: b3627d96793307d4eba8ea0ad286bf9f
+      internalID: -1454160429
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_59
+      rect:
+        serializedVersion: 2
+        x: 128
+        y: 144
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 289e8fe9ce9ce8a43b6e24f21527fb87
+      internalID: -427663304
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_60
+      rect:
+        serializedVersion: 2
+        x: 144
+        y: 144
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 94fa18e69e0016e489592c56f0856d46
+      internalID: 974220075
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_61
+      rect:
+        serializedVersion: 2
+        x: 160
+        y: 144
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 8cbf5df29f2f97e40aa9389f51fda2af
+      internalID: 396179724
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_62
+      rect:
+        serializedVersion: 2
+        x: 176
+        y: 144
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 41ca5b9468a92be4eb295aaa6f7f0289
+      internalID: 1197055010
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_63
+      rect:
+        serializedVersion: 2
+        x: 192
+        y: 144
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: ba631014bd4fd7841b6e0e477ab8dbab
+      internalID: -1017618698
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_64
+      rect:
+        serializedVersion: 2
+        x: 208
+        y: 144
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 29862fb426555ab40bacbeec08ac9e37
+      internalID: -1814776456
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_65
+      rect:
+        serializedVersion: 2
+        x: 224
+        y: 144
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 4b099ca9a4272f14698ca495d26089dc
+      internalID: 2022625581
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_66
+      rect:
+        serializedVersion: 2
+        x: 240
+        y: 144
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 3b31047c00cf09c4e95e595ebb2ca270
+      internalID: 1902758154
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_67
+      rect:
+        serializedVersion: 2
+        x: 256
+        y: 144
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: f341568aca685594abb66734792839cf
+      internalID: -369545086
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_68
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 128
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: b0a1abd4fdd242942b113d34a27459a9
+      internalID: 1468239504
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_69
+      rect:
+        serializedVersion: 2
+        x: 16
+        y: 128
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: bca3514b4f275124082c0fcb7065afd9
+      internalID: 1988543604
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_70
+      rect:
+        serializedVersion: 2
+        x: 32
+        y: 128
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 22a65c5ec58ee7f49a67f9551a8956ff
+      internalID: -2113270150
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_71
+      rect:
+        serializedVersion: 2
+        x: 48
+        y: 128
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: f6c0a65c79fb0014c99532ae56e14bf4
+      internalID: -1445084611
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_72
+      rect:
+        serializedVersion: 2
+        x: 64
+        y: 128
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: fd2b334773e7f9a419974cf73b507591
+      internalID: 747916146
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_73
+      rect:
+        serializedVersion: 2
+        x: 80
+        y: 128
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: da062421a5d800c4981fe3c840079093
+      internalID: -74303262
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_74
+      rect:
+        serializedVersion: 2
+        x: 96
+        y: 128
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 3ed740bd4f551cd4ab053c511be0a119
+      internalID: 1690694584
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_75
+      rect:
+        serializedVersion: 2
+        x: 112
+        y: 128
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: d4f061261d9038b468714fd8a69159fa
+      internalID: 663422508
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_76
+      rect:
+        serializedVersion: 2
+        x: 128
+        y: 128
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: efc1fd58220ad1644a54998e5c8bd249
+      internalID: 213173717
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_77
+      rect:
+        serializedVersion: 2
+        x: 144
+        y: 128
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: b8bbb783aa46d2e49b32c1f56e40b842
+      internalID: 93923870
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_78
+      rect:
+        serializedVersion: 2
+        x: 160
+        y: 128
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 953df9f96f3573a4695dfcd86dab40b3
+      internalID: 756552987
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_79
+      rect:
+        serializedVersion: 2
+        x: 176
+        y: 128
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 9e74ebba3ba96df4b9d564a9c1c4848e
+      internalID: -253472467
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_80
+      rect:
+        serializedVersion: 2
+        x: 192
+        y: 128
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 11d9db9f7305989489febbe1def5deae
+      internalID: -1377875873
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_81
+      rect:
+        serializedVersion: 2
+        x: 208
+        y: 128
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 982e10c9ca396c14185d01dc6fa72be3
+      internalID: -754628414
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_82
+      rect:
+        serializedVersion: 2
+        x: 224
+        y: 128
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 3e57486bf82b1c44b9e29d6277896d6e
+      internalID: 1566549280
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_83
+      rect:
+        serializedVersion: 2
+        x: 240
+        y: 128
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: c79509fe7c6fac44e9e6fa9f1d475d2a
+      internalID: -178000244
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_84
+      rect:
+        serializedVersion: 2
+        x: 256
+        y: 128
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 4de74d38961d6bd45accc6858a4f4d89
+      internalID: -427855788
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_85
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 112
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 34f9ae59c8e89564f8af6fc0b70832e2
+      internalID: -1109496933
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_86
+      rect:
+        serializedVersion: 2
+        x: 16
+        y: 112
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 30b6922d05427bc47975a26bed5f4eb2
+      internalID: -516161742
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_87
+      rect:
+        serializedVersion: 2
+        x: 32
+        y: 112
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: e5c50d5036d278844b387ea26c2278e7
+      internalID: -1548518121
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_88
+      rect:
+        serializedVersion: 2
+        x: 48
+        y: 112
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 64810f68eb6ebbe4fb06ee795ce937e2
+      internalID: -1679250490
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_89
+      rect:
+        serializedVersion: 2
+        x: 64
+        y: 112
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: e4a7ffe98b7e7bf45b05afcc4f86883a
+      internalID: 1855097875
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_90
+      rect:
+        serializedVersion: 2
+        x: 80
+        y: 112
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: d7547b6e5e5fe064ea165a16937b9933
+      internalID: -1917253885
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_91
+      rect:
+        serializedVersion: 2
+        x: 96
+        y: 112
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 65009683bc272194abddd4b8ab0e9fd4
+      internalID: -657650539
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_92
+      rect:
+        serializedVersion: 2
+        x: 112
+        y: 112
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 19550e10039b3c24f80445afc587e46d
+      internalID: -61322222
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_93
+      rect:
+        serializedVersion: 2
+        x: 128
+        y: 112
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 95c54c491a96fbf4c96253cf6911d4cf
+      internalID: 998756542
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_94
+      rect:
+        serializedVersion: 2
+        x: 144
+        y: 112
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 72c184fa74c7a734baa14db109baf2c0
+      internalID: 1165044331
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_95
+      rect:
+        serializedVersion: 2
+        x: 160
+        y: 112
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 1e72b4194287e1f43b109ae3c33de018
+      internalID: -1305887886
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_96
+      rect:
+        serializedVersion: 2
+        x: 176
+        y: 112
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 2ad57da8b3eed8f4d889a162b2ed5734
+      internalID: -962768597
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_97
+      rect:
+        serializedVersion: 2
+        x: 192
+        y: 112
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 5db8d9d1e3415944fb91ec97a7fe9d37
+      internalID: 1233117846
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_98
+      rect:
+        serializedVersion: 2
+        x: 208
+        y: 112
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 3ba32c089579f2a498e3b572d7985a3e
+      internalID: 1766621454
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_99
+      rect:
+        serializedVersion: 2
+        x: 224
+        y: 112
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 5bbf05cefd4d8484581cbe489bf9c480
+      internalID: 629568206
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_100
+      rect:
+        serializedVersion: 2
+        x: 240
+        y: 112
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: d3b435d5d2a44ef47b2e377327557797
+      internalID: 581011077
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_101
+      rect:
+        serializedVersion: 2
+        x: 256
+        y: 112
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 65c88eb34be265741bb02236af1435a8
+      internalID: -2010108083
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_102
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 96
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 3144c6b1bd003964baafd7e4a0b53846
+      internalID: 82069409
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_103
+      rect:
+        serializedVersion: 2
+        x: 16
+        y: 96
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: b8025af5e65d35f4d943d2d7d3a67d8d
+      internalID: -1131442803
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_104
+      rect:
+        serializedVersion: 2
+        x: 32
+        y: 96
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 9fe32f3eab853a74895b6ee99c3e516f
+      internalID: -1367938106
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_105
+      rect:
+        serializedVersion: 2
+        x: 48
+        y: 96
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: c3c6590ef8f11ed42ad66a53c56a4605
+      internalID: -1636215779
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_106
+      rect:
+        serializedVersion: 2
+        x: 64
+        y: 96
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 1259d0e2fe618e747b4641586d8baea2
+      internalID: -1073706017
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_107
+      rect:
+        serializedVersion: 2
+        x: 80
+        y: 96
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 0027d209cab8fc04db61e70f460d74bc
+      internalID: 1956880105
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_108
+      rect:
+        serializedVersion: 2
+        x: 96
+        y: 96
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 1bb58828a1213b247bf31370400bf7e0
+      internalID: 1180772248
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_109
+      rect:
+        serializedVersion: 2
+        x: 112
+        y: 96
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 1bdd0204f54478b43a28fe916a3717e5
+      internalID: 1155458147
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_110
+      rect:
+        serializedVersion: 2
+        x: 128
+        y: 96
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 2f2ec58fe7c574048ae46022782333ed
+      internalID: -2142220517
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_111
+      rect:
+        serializedVersion: 2
+        x: 144
+        y: 96
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 0e0ceafc0e2ca6b4ca82f6808b20c9b1
+      internalID: -2032088700
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_112
+      rect:
+        serializedVersion: 2
+        x: 160
+        y: 96
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: b8b805395da88684d9cc60aa40235038
+      internalID: -415673273
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_113
+      rect:
+        serializedVersion: 2
+        x: 176
+        y: 96
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 4712f041618ac8441ad76275f9fd48ee
+      internalID: 1725872624
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_114
+      rect:
+        serializedVersion: 2
+        x: 192
+        y: 96
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: a8066ecdbd608434282ea52907108b2a
+      internalID: -1224587861
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_115
+      rect:
+        serializedVersion: 2
+        x: 208
+        y: 96
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: c06851d76bdc88540973282c6d7aa3d6
+      internalID: -1287583012
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_116
+      rect:
+        serializedVersion: 2
+        x: 224
+        y: 96
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 25d127d191878bf4a8f7de5cceb38fd5
+      internalID: 1847154837
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_117
+      rect:
+        serializedVersion: 2
+        x: 240
+        y: 96
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: bd18959b615a7014f80b53dd1b086399
+      internalID: 1731732483
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_118
+      rect:
+        serializedVersion: 2
+        x: 256
+        y: 96
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: dba61419813941f45b18c3ed35431aae
+      internalID: -1616167285
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_119
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 80
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 11ef47480f2eb9442a2ad66f6c028ea2
+      internalID: 1681547433
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_120
+      rect:
+        serializedVersion: 2
+        x: 16
+        y: 80
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 978c5d09c2bbec141a07cd184dfa0629
+      internalID: 540605200
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_121
+      rect:
+        serializedVersion: 2
+        x: 32
+        y: 80
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: a13d151252f4ed1469d17df4f8038697
+      internalID: -730133130
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_122
+      rect:
+        serializedVersion: 2
+        x: 48
+        y: 80
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 1af68c04fe3bfcb46ab60a6faa585ee1
+      internalID: -827570842
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_123
+      rect:
+        serializedVersion: 2
+        x: 64
+        y: 80
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 7a4a108fb9ef1b44b95537ef8ae97053
+      internalID: -1141019369
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_124
+      rect:
+        serializedVersion: 2
+        x: 80
+        y: 80
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 33884caa46683854390efa2443f75721
+      internalID: -1203810880
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_125
+      rect:
+        serializedVersion: 2
+        x: 96
+        y: 80
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: fb3f0035cfc3e5145b04ae8c24d2cecf
+      internalID: -96153732
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_126
+      rect:
+        serializedVersion: 2
+        x: 112
+        y: 80
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: df3ecf31f40ef25489efdca8c554287c
+      internalID: 1119062930
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_127
+      rect:
+        serializedVersion: 2
+        x: 128
+        y: 80
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: e94c86ddbd146fc47b53f3f76d56b212
+      internalID: 864805216
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_128
+      rect:
+        serializedVersion: 2
+        x: 144
+        y: 80
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: d396c2de8c27e4d4c88af042c06a35a8
+      internalID: -208391599
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_129
+      rect:
+        serializedVersion: 2
+        x: 160
+        y: 80
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 5436d9cd1e49e0a428879b5c6c8c506e
+      internalID: -2105224260
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_130
+      rect:
+        serializedVersion: 2
+        x: 176
+        y: 80
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: a5447e959ecf3a2449e4eb8b6b7dc1f8
+      internalID: -2112608743
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_131
+      rect:
+        serializedVersion: 2
+        x: 192
+        y: 80
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 423a8d5288c698049ba0207c3948e7c9
+      internalID: -853348862
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_132
+      rect:
+        serializedVersion: 2
+        x: 208
+        y: 80
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 2f28b1b16820fc746984345d9413c98d
+      internalID: 2077116683
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_133
+      rect:
+        serializedVersion: 2
+        x: 224
+        y: 80
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: e204d94e7bd7c6b4f80e2852373c9e3a
+      internalID: 1821732489
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_134
+      rect:
+        serializedVersion: 2
+        x: 240
+        y: 80
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: da0b74104ebbf5e449ed2cfee6562886
+      internalID: -701161769
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_135
+      rect:
+        serializedVersion: 2
+        x: 256
+        y: 80
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 9644bc3797c43cb4785f1f71246fc6e2
+      internalID: -372586947
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_136
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 64
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: d4663cee78961cd44a0f68976f7deb4d
+      internalID: -1466664196
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_137
+      rect:
+        serializedVersion: 2
+        x: 16
+        y: 64
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: c83ae9d0993f69f41a2c7b269743eabf
+      internalID: -1317125607
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_138
+      rect:
+        serializedVersion: 2
+        x: 32
+        y: 64
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 53d322dbe3d56bf44928415b39998ac3
+      internalID: -2075516424
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_139
+      rect:
+        serializedVersion: 2
+        x: 48
+        y: 64
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: b78a383689ebd32448ec57f2794705e4
+      internalID: -1579046428
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_140
+      rect:
+        serializedVersion: 2
+        x: 64
+        y: 64
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: d96887bb999f68f42a3a843f5d09c9bd
+      internalID: 2060643343
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_141
+      rect:
+        serializedVersion: 2
+        x: 80
+        y: 64
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 4818abaea7a90fd4ca4565e07b215738
+      internalID: 897453733
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_142
+      rect:
+        serializedVersion: 2
+        x: 96
+        y: 64
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: b2c2272874635dd40998ac33b96afd0c
+      internalID: -281153309
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_143
+      rect:
+        serializedVersion: 2
+        x: 112
+        y: 64
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: d23cbf40a7f2d5442a056e5c7114a171
+      internalID: -1583116506
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_144
+      rect:
+        serializedVersion: 2
+        x: 128
+        y: 64
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 109f833c6da5ad841b7ab3ed3327c7d2
+      internalID: 1996423653
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_145
+      rect:
+        serializedVersion: 2
+        x: 144
+        y: 64
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 4fc738fef85e33c46ac54943c41df96a
+      internalID: 1783761913
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_146
+      rect:
+        serializedVersion: 2
+        x: 160
+        y: 64
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: b2946607a8d957843be9af897796fd15
+      internalID: -2025459747
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_147
+      rect:
+        serializedVersion: 2
+        x: 176
+        y: 64
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 8658a610500963544a872495be751141
+      internalID: 442758402
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_148
+      rect:
+        serializedVersion: 2
+        x: 192
+        y: 64
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 9274a23566cd9314db863fbbc36efffb
+      internalID: -1893262242
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_149
+      rect:
+        serializedVersion: 2
+        x: 208
+        y: 64
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 622b50702096fe744870607a7c81d178
+      internalID: -773672993
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_150
+      rect:
+        serializedVersion: 2
+        x: 224
+        y: 64
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 18193941bc0ce824cb793b1c1216953d
+      internalID: -850814421
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_151
+      rect:
+        serializedVersion: 2
+        x: 240
+        y: 64
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: b4be2153f846c7747b008585b0a6dafb
+      internalID: 505677440
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_152
+      rect:
+        serializedVersion: 2
+        x: 256
+        y: 64
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: a3fd5f01fe57abd42a98f71384918531
+      internalID: 1638792279
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_153
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 48
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: c0abcf391be391a4a9b20050f7eb5755
+      internalID: -1170550072
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_154
+      rect:
+        serializedVersion: 2
+        x: 16
+        y: 48
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 32b1c0d3d4d3bc843b3ef303e8819615
+      internalID: 1771812723
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_155
+      rect:
+        serializedVersion: 2
+        x: 32
+        y: 48
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 22e79c6de6ea109439185f5a987db442
+      internalID: 270227554
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_156
+      rect:
+        serializedVersion: 2
+        x: 48
+        y: 48
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 64e5b5c735e2364428d77cf88b3aa68d
+      internalID: -1058067001
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_157
+      rect:
+        serializedVersion: 2
+        x: 64
+        y: 48
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 49e74f34b5c8fd24e8260321c4ad8432
+      internalID: 466744437
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_158
+      rect:
+        serializedVersion: 2
+        x: 80
+        y: 48
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: fa2d7dab94a8b3a42955de98e4998646
+      internalID: -1530289986
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_159
+      rect:
+        serializedVersion: 2
+        x: 96
+        y: 48
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 2b3f89977d5d60a4ca3315b57f67baca
+      internalID: 175691110
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_160
+      rect:
+        serializedVersion: 2
+        x: 112
+        y: 48
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 8f36de869ad1ad94596addfe87ae71b0
+      internalID: -997930448
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_161
+      rect:
+        serializedVersion: 2
+        x: 128
+        y: 48
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 4f3252ea7543b3946aa302dd0c809011
+      internalID: 642534589
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_162
+      rect:
+        serializedVersion: 2
+        x: 144
+        y: 48
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 8d551e4131fb73a46b79a7ab53da653a
+      internalID: 1174241968
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_163
+      rect:
+        serializedVersion: 2
+        x: 160
+        y: 48
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 1f0b6f0c6a3f2c54da5cadf8fb77bb6e
+      internalID: -1064256139
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_164
+      rect:
+        serializedVersion: 2
+        x: 176
+        y: 48
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 36bec1ef3bbb9bf4f9ed1d2cfaaf29ca
+      internalID: 2025732816
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_165
+      rect:
+        serializedVersion: 2
+        x: 192
+        y: 48
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 5b357d8963bba0e4d9f338e7a3a55457
+      internalID: -360616140
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_166
+      rect:
+        serializedVersion: 2
+        x: 208
+        y: 48
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: fbecae1fd3efb0f40b6741b1f5f3ba8b
+      internalID: 1758400273
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_167
+      rect:
+        serializedVersion: 2
+        x: 224
+        y: 48
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: e9ee1fbfe27bd1c498dcd4524deb5d94
+      internalID: -172089895
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_168
+      rect:
+        serializedVersion: 2
+        x: 240
+        y: 48
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: dbc1ad88b08851a4e93b05386b479878
+      internalID: -1941234094
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_169
+      rect:
+        serializedVersion: 2
+        x: 256
+        y: 48
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 8eda438cab38026408d81a8a2f9a6171
+      internalID: -267739856
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_170
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 32
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 8951210ff4b7b6d48af2eb63cb7fd41c
+      internalID: -340944261
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_171
+      rect:
+        serializedVersion: 2
+        x: 16
+        y: 32
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 075f7756501020244ba8ccb0efb51beb
+      internalID: 2091282239
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_172
+      rect:
+        serializedVersion: 2
+        x: 32
+        y: 32
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 8fae28f52b31cdc4f9ab99784504bc9f
+      internalID: 828528973
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_173
+      rect:
+        serializedVersion: 2
+        x: 48
+        y: 32
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 9adfef6315a2249418e37e778ced0680
+      internalID: -473378503
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_174
+      rect:
+        serializedVersion: 2
+        x: 64
+        y: 32
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 57c757f004696134288e3d4f8ec01646
+      internalID: 195020315
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_175
+      rect:
+        serializedVersion: 2
+        x: 80
+        y: 32
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: d570f6ad24b8cd84e9cbdda611d51684
+      internalID: -472174532
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_176
+      rect:
+        serializedVersion: 2
+        x: 96
+        y: 32
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 05d37e16f48422c4bb6661a6f26d07c3
+      internalID: -1600135193
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_177
+      rect:
+        serializedVersion: 2
+        x: 112
+        y: 32
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 0710b8700bdd814419e2a68021f7753d
+      internalID: -490139953
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_178
+      rect:
+        serializedVersion: 2
+        x: 128
+        y: 32
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 0497ad91b29314640887acbbe76a134a
+      internalID: 1457657949
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_179
+      rect:
+        serializedVersion: 2
+        x: 144
+        y: 32
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 8bd4f438b3913834aaae72255efb4800
+      internalID: -88085460
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_180
+      rect:
+        serializedVersion: 2
+        x: 160
+        y: 32
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: f5928f7d6d578f04c8b360506175422f
+      internalID: -1685250305
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_181
+      rect:
+        serializedVersion: 2
+        x: 176
+        y: 32
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 5b682e774fafcc44aabb5d209ff17dba
+      internalID: -1808557354
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_182
+      rect:
+        serializedVersion: 2
+        x: 192
+        y: 32
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: b380f2fb33c362348b836fe9a7450f85
+      internalID: -2039382162
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_183
+      rect:
+        serializedVersion: 2
+        x: 208
+        y: 32
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: b491045e74609374c8cf317605b7b5a2
+      internalID: 2102801348
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_184
+      rect:
+        serializedVersion: 2
+        x: 224
+        y: 32
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 8c92ee34e7b55d947a55971307913d6f
+      internalID: 191372117
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_185
+      rect:
+        serializedVersion: 2
+        x: 240
+        y: 32
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: e92b5e6a04525964a9ed314cd3137512
+      internalID: 1563561529
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_186
+      rect:
+        serializedVersion: 2
+        x: 256
+        y: 32
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 02f0924d5c6d0534983aa81de8cd28b5
+      internalID: -845384826
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_187
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 16
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 9cdf66d3b0b66964f886fd5e1639e3a0
+      internalID: -1867580428
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_188
+      rect:
+        serializedVersion: 2
+        x: 16
+        y: 16
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: a0be727c06b8e89468550b65ef25a446
+      internalID: -1377203662
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_189
+      rect:
+        serializedVersion: 2
+        x: 32
+        y: 16
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 31f9bea108e14ba479ee441b038b2641
+      internalID: -385333028
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_190
+      rect:
+        serializedVersion: 2
+        x: 48
+        y: 16
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 500f10c8de46fc74fbb99977a517be9b
+      internalID: -715924867
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_191
+      rect:
+        serializedVersion: 2
+        x: 64
+        y: 16
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: aee158307a390384ba83604e7fb14c05
+      internalID: -1010216363
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_192
+      rect:
+        serializedVersion: 2
+        x: 80
+        y: 16
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 83a230d4ad31592469a7e14afdf6228b
+      internalID: -1701728573
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_193
+      rect:
+        serializedVersion: 2
+        x: 96
+        y: 16
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: b80a559b1be538f4591fe1830243fb59
+      internalID: -1005257289
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_194
+      rect:
+        serializedVersion: 2
+        x: 112
+        y: 16
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 3a573852b2f85bb4599e5c49ac121b18
+      internalID: -861832929
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_195
+      rect:
+        serializedVersion: 2
+        x: 128
+        y: 16
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 7eb825edc89ea4e44aecf2f5ea782258
+      internalID: 1754424973
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_196
+      rect:
+        serializedVersion: 2
+        x: 144
+        y: 16
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 0d7601d456688bf409e84b87f3222d8f
+      internalID: -1307469742
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_197
+      rect:
+        serializedVersion: 2
+        x: 160
+        y: 16
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 79bd83b9293c5614fac6f47ea77ff665
+      internalID: -1719961160
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_198
+      rect:
+        serializedVersion: 2
+        x: 176
+        y: 16
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: fa515d184fce973438899cc65e983177
+      internalID: 1820148589
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_199
+      rect:
+        serializedVersion: 2
+        x: 192
+        y: 16
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 25c24fc2524564944ad201074831b52b
+      internalID: 1341686463
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_200
+      rect:
+        serializedVersion: 2
+        x: 208
+        y: 16
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: d35936e7d57bc3b41ae8515e5a8db4a4
+      internalID: -2057158540
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_201
+      rect:
+        serializedVersion: 2
+        x: 224
+        y: 16
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 6f7dc1cafda7d5f43ac6eb8c3470ccc6
+      internalID: -151298059
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_202
+      rect:
+        serializedVersion: 2
+        x: 240
+        y: 16
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 308c21bd8db4d3b459bfc12fe3961a7d
+      internalID: -961594608
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_203
+      rect:
+        serializedVersion: 2
+        x: 256
+        y: 16
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 5d152ec16854ecb43a48f501c0772d0e
+      internalID: 1089776164
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_204
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 649f293a0791d2e499ae648a9097bea1
+      internalID: -230204678
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_205
+      rect:
+        serializedVersion: 2
+        x: 16
+        y: 0
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 97986505bd5b9bf43a170b362016ebf5
+      internalID: 815645571
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_206
+      rect:
+        serializedVersion: 2
+        x: 32
+        y: 0
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 8d9015474c033504d9d46d657bac37d2
+      internalID: 808046442
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_207
+      rect:
+        serializedVersion: 2
+        x: 48
+        y: 0
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: e3da113b87ecbf84282ab599c5227711
+      internalID: 175725864
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_208
+      rect:
+        serializedVersion: 2
+        x: 64
+        y: 0
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: a4861510b1f602a40af361311dd8e5a5
+      internalID: -2100383056
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_209
+      rect:
+        serializedVersion: 2
+        x: 80
+        y: 0
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 48d3335bf737b69409c8e7920c2ffad3
+      internalID: -705911405
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_210
+      rect:
+        serializedVersion: 2
+        x: 96
+        y: 0
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 314e39d4f7d7a6e47973c8e8a643d4d0
+      internalID: 1042016793
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_211
+      rect:
+        serializedVersion: 2
+        x: 112
+        y: 0
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: f72c9455a169cf349992164871af6b2d
+      internalID: 1040002635
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_212
+      rect:
+        serializedVersion: 2
+        x: 128
+        y: 0
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 44031463cf920cd4eb2406d7c0beb0c2
+      internalID: 669527634
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_213
+      rect:
+        serializedVersion: 2
+        x: 144
+        y: 0
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 02d0ccc3891c95c44b5abe73d4e51102
+      internalID: -1312937679
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_214
+      rect:
+        serializedVersion: 2
+        x: 160
+        y: 0
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 8c9bb6931e73fb54e9a0958f6db39037
+      internalID: 1027529849
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_215
+      rect:
+        serializedVersion: 2
+        x: 176
+        y: 0
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 625792aa7e813d24db32de897005864a
+      internalID: 519346863
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_216
+      rect:
+        serializedVersion: 2
+        x: 192
+        y: 0
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 9833c81dc7825c5499ffacddaa295127
+      internalID: -1923373866
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_217
+      rect:
+        serializedVersion: 2
+        x: 208
+        y: 0
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 8802d7cbe84368a4a9b31cbd45586f21
+      internalID: 58279792
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_218
+      rect:
+        serializedVersion: 2
+        x: 224
+        y: 0
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 6206e264e7acf9c4185753e9b8712b09
+      internalID: -1600028266
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_219
+      rect:
+        serializedVersion: 2
+        x: 240
+        y: 0
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: f7a2df11484717a42a642ad3e59adc5b
+      internalID: 1208416971
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_220
+      rect:
+        serializedVersion: 2
+        x: 256
+        y: 0
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 7e513343d70a49e43bb79f54293153e9
+      internalID: 327387403
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 07864701fdad9964cb8663e4acb2e467
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries:
+      - key: SpriteEditor.SliceSettings
+        value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":16.0,"y":16.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":1,"keepEmptyRects":false,"isAlternate":false}'
+    nameFileIdTable:
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_0: 1368141986660978707
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_1: -2140852054
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_10: 287066377
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_100: 581011077
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_101: -2010108083
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_102: 82069409
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_103: -1131442803
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_104: -1367938106
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_105: -1636215779
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_106: -1073706017
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_107: 1956880105
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_108: 1180772248
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_109: 1155458147
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_11: -604162689
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_110: -2142220517
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_111: -2032088700
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_112: -415673273
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_113: 1725872624
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_114: -1224587861
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_115: -1287583012
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_116: 1847154837
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_117: 1731732483
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_118: -1616167285
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_119: 1681547433
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_12: -912248873
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_120: 540605200
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_121: -730133130
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_122: -827570842
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_123: -1141019369
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_124: -1203810880
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_125: -96153732
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_126: 1119062930
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_127: 864805216
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_128: -208391599
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_129: -2105224260
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_13: -1643545520
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_130: -2112608743
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_131: -853348862
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_132: 2077116683
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_133: 1821732489
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_134: -701161769
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_135: -372586947
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_136: -1466664196
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_137: -1317125607
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_138: -2075516424
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_139: -1579046428
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_14: -122615735
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_140: 2060643343
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_141: 897453733
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_142: -281153309
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_143: -1583116506
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_144: 1996423653
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_145: 1783761913
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_146: -2025459747
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_147: 442758402
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_148: -1893262242
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_149: -773672993
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_15: -519282810
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_150: -850814421
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_151: 505677440
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_152: 1638792279
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_153: -1170550072
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_154: 1771812723
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_155: 270227554
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_156: -1058067001
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_157: 466744437
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_158: -1530289986
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_159: 175691110
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_16: -196149699
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_160: -997930448
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_161: 642534589
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_162: 1174241968
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_163: -1064256139
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_164: 2025732816
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_165: -360616140
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_166: 1758400273
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_167: -172089895
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_168: -1941234094
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_169: -267739856
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_17: 2079646167
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_170: -340944261
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_171: 2091282239
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_172: 828528973
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_173: -473378503
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_174: 195020315
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_175: -472174532
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_176: -1600135193
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_177: -490139953
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_178: 1457657949
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_179: -88085460
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_18: 789533896
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_180: -1685250305
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_181: -1808557354
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_182: -2039382162
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_183: 2102801348
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_184: 191372117
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_185: 1563561529
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_186: -845384826
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_187: -1867580428
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_188: -1377203662
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_189: -385333028
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_19: -34792632
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_190: -715924867
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_191: -1010216363
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_192: -1701728573
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_193: -1005257289
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_194: -861832929
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_195: 1754424973
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_196: -1307469742
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_197: -1719961160
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_198: 1820148589
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_199: 1341686463
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_2: 1997096992
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_20: 525837785
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_200: -2057158540
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_201: -151298059
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_202: -961594608
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_203: 1089776164
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_204: -230204678
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_205: 815645571
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_206: 808046442
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_207: 175725864
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_208: -2100383056
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_209: -705911405
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_21: 1082324774
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_210: 1042016793
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_211: 1040002635
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_212: 669527634
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_213: -1312937679
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_214: 1027529849
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_215: 519346863
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_216: -1923373866
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_217: 58279792
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_218: -1600028266
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_219: 1208416971
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_22: 861021287
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_220: 327387403
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_23: 2118227014
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_24: 2108270114
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_25: 1664914144
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_26: 818327111
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_27: 1075838561
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_28: -1878179553
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_29: -1134451420
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_3: 948470906
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_30: 901239959
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_31: 135759165
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_32: -672983959
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_33: -425628700
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_34: 1181556526
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_35: 124430982
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_36: 2034704777
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_37: -1210952962
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_38: -525139101
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_39: -1383976733
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_4: -1871863515
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_40: -1333937314
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_41: -25234590
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_42: 1036447716
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_43: 1428744655
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_44: 1938227944
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_45: 801837775
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_46: 1753266425
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_47: 709771552
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_48: -448390404
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_49: -1795598344
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_5: 1271477367
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_50: 1561657602
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_51: 710771666
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_52: 1709807968
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_53: 347121461
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_54: 1805050919
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_55: -1156969002
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_56: -1815646501
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_57: 116670599
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_58: -1454160429
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_59: -427663304
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_6: -2139709314
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_60: 974220075
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_61: 396179724
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_62: 1197055010
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_63: -1017618698
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_64: -1814776456
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_65: 2022625581
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_66: 1902758154
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_67: -369545086
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_68: 1468239504
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_69: 1988543604
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_7: 2133361784
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_70: -2113270150
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_71: -1445084611
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_72: 747916146
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_73: -74303262
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_74: 1690694584
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_75: 663422508
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_76: 213173717
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_77: 93923870
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_78: 756552987
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_79: -253472467
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_8: -997373264
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_80: -1377875873
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_81: -754628414
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_82: 1566549280
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_83: -178000244
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_84: -427855788
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_85: -1109496933
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_86: -516161742
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_87: -1548518121
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_88: -1679250490
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_89: 1855097875
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_9: -1622013493
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_90: -1917253885
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_91: -657650539
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_92: -61322222
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_93: 998756542
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_94: 1165044331
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_95: -1305887886
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_96: -962768597
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_97: 1233117846
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_98: 1766621454
+      SNES - Super Bomberman - Battle Stages - Battle Stage 10_ Power Zone_99: 629568206
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

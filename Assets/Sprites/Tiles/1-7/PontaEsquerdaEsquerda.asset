@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 647854dae32d7cd4d816594a34fcb443, type: 3}
+  m_Name: PontaEsquerdaEsquerda
+  m_EditorClassIdentifier: Assembly-CSharp::AnimatedTile
+  m_AnimatedSprites:
+  - {fileID: 1997096992, guid: 77e6e42c2f9c34c489f692741ef2f39c, type: 3}
+  - {fileID: -1104975557, guid: 271eb6691df942f45ace9088b503d63b, type: 3}
+  m_MinSpeed: 30
+  m_MaxSpeed: 30
+  m_AnimationStartTime: 0
+  m_TileColliderType: 1
