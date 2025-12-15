@@ -54,6 +54,9 @@ public class MovementController : MonoBehaviour, IKillable
     protected bool hasInput;
     protected bool explosionInvulnerable;
 
+    public Vector2 Direction => direction;
+
+
     protected virtual void Awake()
     {
         Rigidbody = GetComponent<Rigidbody2D>();
@@ -522,13 +525,19 @@ public class MovementController : MonoBehaviour, IKillable
             spriteRendererEndStage.enabled = false;
     }
 
-    public void SetInputLocked(bool locked)
+    public void SetInputLocked(bool locked, bool forceIdle)
     {
         inputLocked = locked;
 
-        if (locked)
+        if (locked && forceIdle)
             ForceIdleUp();
     }
+
+    public void SetInputLocked(bool locked)
+    {
+        SetInputLocked(locked, true);
+    }
+
 
     public void ForceIdleUp()
     {

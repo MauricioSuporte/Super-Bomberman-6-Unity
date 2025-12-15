@@ -1,0 +1,3677 @@
+fileFormatVersion: 2
+guid: b53052968eedfcc4ca54185504d18378
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 839480661369839303
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_0
+  - first:
+      213: 7715353549728619682
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_1
+  - first:
+      213: -2934457026921612665
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_2
+  - first:
+      213: 6405223179726961080
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_3
+  - first:
+      213: -6109759357697421314
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_4
+  - first:
+      213: 8859092427357454555
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_5
+  - first:
+      213: 3928491786315237807
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_6
+  - first:
+      213: 2909299466634943712
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_7
+  - first:
+      213: -3583211635252234954
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_8
+  - first:
+      213: -9086765451838215592
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_9
+  - first:
+      213: -2406940869656815373
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_10
+  - first:
+      213: 6022700277314408960
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_11
+  - first:
+      213: -7492657559428429178
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_12
+  - first:
+      213: -3650619427602544615
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_13
+  - first:
+      213: -5931567606703691782
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_14
+  - first:
+      213: -4804515546758233885
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_15
+  - first:
+      213: 7918158992978471330
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_16
+  - first:
+      213: -4093870922293711543
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_17
+  - first:
+      213: -6121050047549619159
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_18
+  - first:
+      213: -6839938557623423731
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_19
+  - first:
+      213: -2216522047782315106
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_20
+  - first:
+      213: -5051338731431443991
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_21
+  - first:
+      213: -4210893270237848523
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_22
+  - first:
+      213: 8556271013399102238
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_23
+  - first:
+      213: -5276228130242217993
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_24
+  - first:
+      213: 4864727462394853185
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_25
+  - first:
+      213: 2727277468459845282
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_26
+  - first:
+      213: -1596366514704718780
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_27
+  - first:
+      213: 5380205855478847328
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_28
+  - first:
+      213: -3708548775887424772
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_29
+  - first:
+      213: -9206971867144697313
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_30
+  - first:
+      213: 1967868010018601673
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_31
+  - first:
+      213: -292503090095441206
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_32
+  - first:
+      213: 154323351105511327
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_33
+  - first:
+      213: -8628270188245712642
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_34
+  - first:
+      213: 5997579965295458435
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_35
+  - first:
+      213: 3219178031475432488
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_36
+  - first:
+      213: -1023182489693886962
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_37
+  - first:
+      213: 958851883921043557
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_38
+  - first:
+      213: 1420406443480053310
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_39
+  - first:
+      213: -1284556774642101444
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_40
+  - first:
+      213: 889251570522764478
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_41
+  - first:
+      213: -3212943485260715183
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_42
+  - first:
+      213: 5023498850380406047
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_43
+  - first:
+      213: 3067662216291724909
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_44
+  - first:
+      213: 7438535811358732464
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_45
+  - first:
+      213: 1990779611476847331
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_46
+  - first:
+      213: 1888502707518647838
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_47
+  - first:
+      213: 3114416853960327251
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_48
+  - first:
+      213: 3124591636184167263
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_49
+  - first:
+      213: -7135412441393516905
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_50
+  - first:
+      213: -9143708108077160333
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_51
+  - first:
+      213: -39442319395601126
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_52
+  - first:
+      213: 1927334541182138286
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_53
+  - first:
+      213: -1651335140780065227
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_54
+  - first:
+      213: -1987730328198837137
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_55
+  - first:
+      213: 3998117258121604857
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_56
+  - first:
+      213: 809323537878474155
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_57
+  - first:
+      213: 7884079134557600113
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_58
+  - first:
+      213: 4285415233442558256
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_59
+  - first:
+      213: 1102283757835082243
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_60
+  - first:
+      213: 130900858323171617
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_61
+  - first:
+      213: -3645884601849361223
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_62
+  - first:
+      213: 3832277650643876446
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_63
+  - first:
+      213: -4033452639197440477
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_64
+  - first:
+      213: 6477793630741144190
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_65
+  - first:
+      213: -1085377461812854896
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_66
+  - first:
+      213: 5534615663090423486
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_67
+  - first:
+      213: -963197324505247546
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_68
+  - first:
+      213: 6265225042573183539
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_69
+  - first:
+      213: -5622646485415800955
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_70
+  - first:
+      213: 6995085180593322427
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_71
+  - first:
+      213: 7354104298010596947
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_72
+  - first:
+      213: 6929847365927509829
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_73
+  - first:
+      213: 6304051428852111376
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_74
+  - first:
+      213: -5640442434326843963
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_75
+  - first:
+      213: 9001564476510229250
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_76
+  - first:
+      213: 3304471950904010460
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_77
+  - first:
+      213: -6632597984753496596
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_78
+  - first:
+      213: -4363652376812169841
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_79
+  - first:
+      213: 6103823648184399786
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_80
+  - first:
+      213: -7759105381065817771
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_81
+  - first:
+      213: 1248253696432768922
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_82
+  - first:
+      213: 7828677885858573926
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_83
+  - first:
+      213: -6069030458340499485
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_84
+  - first:
+      213: -463735383507741344
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_85
+  - first:
+      213: -2894732106545634241
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_86
+  - first:
+      213: 1488045459618825398
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_87
+  - first:
+      213: 8231489507310766577
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_88
+  - first:
+      213: 3666309760298070285
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_89
+  - first:
+      213: -5438949174844683606
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_90
+  - first:
+      213: 8353458432003848295
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_91
+  - first:
+      213: -105298776441599213
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_92
+  - first:
+      213: 8014358149514261078
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_93
+  - first:
+      213: 6400031394476843665
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_94
+  - first:
+      213: 6484893174932162046
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_95
+  - first:
+      213: 2900637316521837369
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_96
+  - first:
+      213: -6319943405070489391
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_97
+  - first:
+      213: 2165732781369966331
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_98
+  - first:
+      213: 6751502231635416511
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_99
+  - first:
+      213: -5494854207032216259
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_100
+  - first:
+      213: -3749403331643380674
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_101
+  - first:
+      213: -2632531153624655239
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_102
+  - first:
+      213: 2911275382192832260
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_103
+  - first:
+      213: 3966500691277281795
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_104
+  - first:
+      213: 1950572652974087205
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_105
+  - first:
+      213: 1945018556473797111
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_106
+  - first:
+      213: 1131666113044379011
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_107
+  - first:
+      213: 3374405519982845478
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_108
+  - first:
+      213: -4796841558238145030
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_109
+  - first:
+      213: 8320562698922746298
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_110
+  - first:
+      213: -7698791824692645526
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_111
+  - first:
+      213: -8222308273744691609
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_112
+  - first:
+      213: 4482152200150452923
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_113
+  - first:
+      213: 314436769041051602
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_114
+  - first:
+      213: 8475342808566721652
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_115
+  - first:
+      213: 1641966271307586014
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_116
+  - first:
+      213: 456292213624256794
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_117
+  - first:
+      213: 6680407669657033453
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_118
+  - first:
+      213: 8698597006495106453
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_119
+  - first:
+      213: -2366443685908379381
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_120
+  - first:
+      213: -8393108027456683193
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_121
+  - first:
+      213: -7640250949809597883
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_122
+  - first:
+      213: 9025238125122513051
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_123
+  - first:
+      213: 7921359812272939772
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_124
+  - first:
+      213: 589129080416807122
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_125
+  - first:
+      213: -2008505935384213090
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_126
+  - first:
+      213: 4676820084880095767
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_127
+  - first:
+      213: -4758156485840236061
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_128
+  - first:
+      213: -5010367158321156895
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_129
+  - first:
+      213: -3385554045064549662
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_130
+  - first:
+      213: -7339720252111559308
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_131
+  - first:
+      213: -4898784520838844005
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_132
+  - first:
+      213: -8983230468491909756
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_133
+  - first:
+      213: 1486028950128627776
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_134
+  - first:
+      213: -2129853431428867665
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_135
+  - first:
+      213: 5893893084453815114
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_136
+  - first:
+      213: 4091167270281951825
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_137
+  - first:
+      213: 7872314260082290143
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_138
+  - first:
+      213: 2605647939861311323
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_139
+  - first:
+      213: 5814385784766959111
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_140
+  - first:
+      213: -7219083510727449205
+    second: SNES - Super Bomberman 2 - Playable Characters - Bomberman_141
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 16
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_0
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 895
+        width: 16
+        height: 27
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7ce52c8b63f66ab00800000000000000
+      internalID: 839480661369839303
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_1
+      rect:
+        serializedVersion: 2
+        x: 15
+        y: 895
+        width: 17
+        height: 27
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2ac9f100d21721b60800000000000000
+      internalID: 7715353549728619682
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_2
+      rect:
+        serializedVersion: 2
+        x: 31
+        y: 895
+        width: 17
+        height: 27
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 78a30b5a1e6b647d0800000000000000
+      internalID: -2934457026921612665
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_3
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 864
+        width: 49
+        height: 28
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8b939beab8ce3e850800000000000000
+      internalID: 6405223179726961080
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_4
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 832
+        width: 16
+        height: 28
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: eff835d2c36c53ba0800000000000000
+      internalID: -6109759357697421314
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_5
+      rect:
+        serializedVersion: 2
+        x: 15
+        y: 832
+        width: 17
+        height: 28
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bd08efc00a1d1fa70800000000000000
+      internalID: 8859092427357454555
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_6
+      rect:
+        serializedVersion: 2
+        x: 31
+        y: 831
+        width: 17
+        height: 29
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fa90c52377ec48630800000000000000
+      internalID: 3928491786315237807
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_7
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 800
+        width: 17
+        height: 28
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0ec52066378ef5820800000000000000
+      internalID: 2909299466634943712
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_8
+      rect:
+        serializedVersion: 2
+        x: 15
+        y: 800
+        width: 18
+        height: 26
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6357ebd9000e54ec0800000000000000
+      internalID: -3583211635252234954
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_9
+      rect:
+        serializedVersion: 2
+        x: 31
+        y: 800
+        width: 33
+        height: 27
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 85a24ed17f255e180800000000000000
+      internalID: -9086765451838215592
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_10
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 767
+        width: 16
+        height: 27
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3f85cb41804d89ed0800000000000000
+      internalID: -2406940869656815373
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_11
+      rect:
+        serializedVersion: 2
+        x: 15
+        y: 767
+        width: 17
+        height: 27
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 002d8f91efde49350800000000000000
+      internalID: 6022700277314408960
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_12
+      rect:
+        serializedVersion: 2
+        x: 31
+        y: 767
+        width: 17
+        height: 26
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 68a8f92c5abb40890800000000000000
+      internalID: -7492657559428429178
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_13
+      rect:
+        serializedVersion: 2
+        x: 47
+        y: 768
+        width: 17
+        height: 25
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9184c9fe8f4665dc0800000000000000
+      internalID: -3650619427602544615
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_14
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 736
+        width: 17
+        height: 28
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: af7663140b6deada0800000000000000
+      internalID: -5931567606703691782
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_15
+      rect:
+        serializedVersion: 2
+        x: 15
+        y: 736
+        width: 18
+        height: 28
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3e042adc09ee25db0800000000000000
+      internalID: -4804515546758233885
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_16
+      rect:
+        serializedVersion: 2
+        x: 32
+        y: 736
+        width: 32
+        height: 28
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2a9eb83e6a3f2ed60800000000000000
+      internalID: 7918158992978471330
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_17
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 704
+        width: 16
+        height: 28
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 94de1602616af27c0800000000000000
+      internalID: -4093870922293711543
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_18
+      rect:
+        serializedVersion: 2
+        x: 15
+        y: 704
+        width: 17
+        height: 28
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 924ca679969ad0ba0800000000000000
+      internalID: -6121050047549619159
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_19
+      rect:
+        serializedVersion: 2
+        x: 31
+        y: 704
+        width: 17
+        height: 29
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d0dab531f18a311a0800000000000000
+      internalID: -6839938557623423731
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_20
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 672
+        width: 17
+        height: 28
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e9b1d11f0f45d31e0800000000000000
+      internalID: -2216522047782315106
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_21
+      rect:
+        serializedVersion: 2
+        x: 15
+        y: 672
+        width: 18
+        height: 28
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9e14bd8df2a06e9b0800000000000000
+      internalID: -5051338731431443991
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_22
+      rect:
+        serializedVersion: 2
+        x: 31
+        y: 672
+        width: 17
+        height: 28
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 53cd36881e6ef85c0800000000000000
+      internalID: -4210893270237848523
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_23
+      rect:
+        serializedVersion: 2
+        x: 48
+        y: 672
+        width: 17
+        height: 27
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e1300a3572bfdb670800000000000000
+      internalID: 8556271013399102238
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_24
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 639
+        width: 16
+        height: 27
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7f73dfe587217c6b0800000000000000
+      internalID: -5276228130242217993
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_25
+      rect:
+        serializedVersion: 2
+        x: 15
+        y: 639
+        width: 17
+        height: 27
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 147f1254adbf28340800000000000000
+      internalID: 4864727462394853185
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_26
+      rect:
+        serializedVersion: 2
+        x: 31
+        y: 640
+        width: 18
+        height: 27
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2a6c977686c39d520800000000000000
+      internalID: 2727277468459845282
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_27
+      rect:
+        serializedVersion: 2
+        x: 47
+        y: 640
+        width: 18
+        height: 26
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 44462bfdc1198d9e0800000000000000
+      internalID: -1596366514704718780
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_28
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 607
+        width: 32
+        height: 29
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0671b4258b45aaa40800000000000000
+      internalID: 5380205855478847328
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_29
+      rect:
+        serializedVersion: 2
+        x: 31
+        y: 608
+        width: 18
+        height: 26
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: cf2350d7986988cc0800000000000000
+      internalID: -3708548775887424772
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_30
+      rect:
+        serializedVersion: 2
+        x: 47
+        y: 608
+        width: 18
+        height: 27
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f1a43d11ed34a3080800000000000000
+      internalID: -9206971867144697313
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_31
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 576
+        width: 16
+        height: 28
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9ca730667854f4b10800000000000000
+      internalID: 1967868010018601673
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_32
+      rect:
+        serializedVersion: 2
+        x: 15
+        y: 576
+        width: 34
+        height: 28
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: aca38234df1d0fbf0800000000000000
+      internalID: -292503090095441206
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_33
+      rect:
+        serializedVersion: 2
+        x: 47
+        y: 576
+        width: 17
+        height: 28
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f9f113b2544442200800000000000000
+      internalID: 154323351105511327
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_34
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 544
+        width: 16
+        height: 26
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ef085837af9324880800000000000000
+      internalID: -8628270188245712642
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_35
+      rect:
+        serializedVersion: 2
+        x: 15
+        y: 544
+        width: 17
+        height: 26
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3887f6fa33fab3350800000000000000
+      internalID: 5997579965295458435
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_36
+      rect:
+        serializedVersion: 2
+        x: 31
+        y: 544
+        width: 17
+        height: 26
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 82c95da1d51dcac20800000000000000
+      internalID: 3219178031475432488
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_37
+      rect:
+        serializedVersion: 2
+        x: 47
+        y: 544
+        width: 17
+        height: 26
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e06656952fcecc1f0800000000000000
+      internalID: -1023182489693886962
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_38
+      rect:
+        serializedVersion: 2
+        x: 63
+        y: 544
+        width: 17
+        height: 26
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 560f35d45b68e4d00800000000000000
+      internalID: 958851883921043557
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_39
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 516
+        width: 17
+        height: 22
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e36fd4c722c46b310800000000000000
+      internalID: 1420406443480053310
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_40
+      rect:
+        serializedVersion: 2
+        x: 15
+        y: 514
+        width: 17
+        height: 24
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c33d2a95b665c2ee0800000000000000
+      internalID: -1284556774642101444
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_41
+      rect:
+        serializedVersion: 2
+        x: 31
+        y: 513
+        width: 17
+        height: 26
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: eb4b7f88791475c00800000000000000
+      internalID: 889251570522764478
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_42
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 481
+        width: 65
+        height: 26
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 15b21ad4ce45963d0800000000000000
+      internalID: -3212943485260715183
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_43
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 457
+        width: 15
+        height: 22
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f1dd18ab69d07b540800000000000000
+      internalID: 5023498850380406047
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_44
+      rect:
+        serializedVersion: 2
+        x: 16
+        y: 457
+        width: 15
+        height: 23
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d6ea4f45886829a20800000000000000
+      internalID: 3067662216291724909
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_45
+      rect:
+        serializedVersion: 2
+        x: 32
+        y: 447
+        width: 15
+        height: 18
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0b03f0dc8ecfa3760800000000000000
+      internalID: 7438535811358732464
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_46
+      rect:
+        serializedVersion: 2
+        x: 47
+        y: 449
+        width: 17
+        height: 15
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3eaea20528ba0ab10800000000000000
+      internalID: 1990779611476847331
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_47
+      rect:
+        serializedVersion: 2
+        x: 64
+        y: 447
+        width: 15
+        height: 18
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e1e230fe43f453a10800000000000000
+      internalID: 1888502707518647838
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_48
+      rect:
+        serializedVersion: 2
+        x: 80
+        y: 455
+        width: 15
+        height: 20
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3508bc6b0a1a83b20800000000000000
+      internalID: 3114416853960327251
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_49
+      rect:
+        serializedVersion: 2
+        x: 97
+        y: 457
+        width: 14
+        height: 19
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f53f9eec987cc5b20800000000000000
+      internalID: 3124591636184167263
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_50
+      rect:
+        serializedVersion: 2
+        x: 112
+        y: 458
+        width: 15
+        height: 15
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 79e26d8803ce9fc90800000000000000
+      internalID: -7135412441393516905
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_51
+      rect:
+        serializedVersion: 2
+        x: 127
+        y: 456
+        width: 17
+        height: 17
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 378a330dbe50b1180800000000000000
+      internalID: -9143708108077160333
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_52
+      rect:
+        serializedVersion: 2
+        x: 144
+        y: 459
+        width: 15
+        height: 20
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a15ce436b6fd37ff0800000000000000
+      internalID: -39442319395601126
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_53
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 417
+        width: 16
+        height: 26
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ea77082cd844fba10800000000000000
+      internalID: 1927334541182138286
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_54
+      rect:
+        serializedVersion: 2
+        x: 15
+        y: 416
+        width: 17
+        height: 25
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 53e3fa840774519e0800000000000000
+      internalID: -1651335140780065227
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_55
+      rect:
+        serializedVersion: 2
+        x: 31
+        y: 416
+        width: 17
+        height: 17
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f6c00764cc92a64e0800000000000000
+      internalID: -1987730328198837137
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_56
+      rect:
+        serializedVersion: 2
+        x: 37
+        y: 432
+        width: 6
+        height: 6
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9fe62bc967a2c7730800000000000000
+      internalID: 3998117258121604857
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_57
+      rect:
+        serializedVersion: 2
+        x: 53
+        y: 427
+        width: 6
+        height: 6
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: baddb9f387b4b3b00800000000000000
+      internalID: 809323537878474155
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_58
+      rect:
+        serializedVersion: 2
+        x: 48
+        y: 416
+        width: 16
+        height: 12
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 179ff548330e96d60800000000000000
+      internalID: 7884079134557600113
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_59
+      rect:
+        serializedVersion: 2
+        x: 65
+        y: 416
+        width: 14
+        height: 8
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0313460237ad87b30800000000000000
+      internalID: 4285415233442558256
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_60
+      rect:
+        serializedVersion: 2
+        x: 69
+        y: 423
+        width: 6
+        height: 6
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 30a5173dc391c4f00800000000000000
+      internalID: 1102283757835082243
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_61
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 384
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 129752913ad01d100800000000000000
+      internalID: 130900858323171617
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_62
+      rect:
+        serializedVersion: 2
+        x: 15
+        y: 384
+        width: 17
+        height: 25
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9bcc3b67547376dc0800000000000000
+      internalID: -3645884601849361223
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_63
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 354
+        width: 15
+        height: 22
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e5afb4f083cfe2530800000000000000
+      internalID: 3832277650643876446
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_64
+      rect:
+        serializedVersion: 2
+        x: 15
+        y: 352
+        width: 17
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 326564ed13c4608c0800000000000000
+      internalID: -4033452639197440477
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_65
+      rect:
+        serializedVersion: 2
+        x: 31
+        y: 351
+        width: 17
+        height: 18
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e722d908cfeb5e950800000000000000
+      internalID: 6477793630741144190
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_66
+      rect:
+        serializedVersion: 2
+        x: 47
+        y: 355
+        width: 17
+        height: 20
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 09ffd65f2f6ffe0f0800000000000000
+      internalID: -1085377461812854896
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_67
+      rect:
+        serializedVersion: 2
+        x: 63
+        y: 354
+        width: 17
+        height: 22
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: eb651d63f97eecc40800000000000000
+      internalID: 5534615663090423486
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_68
+      rect:
+        serializedVersion: 2
+        x: 79
+        y: 354
+        width: 16
+        height: 22
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6c01248f22902a2f0800000000000000
+      internalID: -963197324505247546
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_69
+      rect:
+        serializedVersion: 2
+        x: 95
+        y: 355
+        width: 16
+        height: 19
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 33ac47c4bfc82f650800000000000000
+      internalID: 6265225042573183539
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_70
+      rect:
+        serializedVersion: 2
+        x: 111
+        y: 352
+        width: 17
+        height: 17
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 58f4133cfc858f1b0800000000000000
+      internalID: -5622646485415800955
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_71
+      rect:
+        serializedVersion: 2
+        x: 127
+        y: 356
+        width: 17
+        height: 22
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bb93dd209e8831160800000000000000
+      internalID: 6995085180593322427
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_72
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 325
+        width: 16
+        height: 19
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 356581435e60f0660800000000000000
+      internalID: 7354104298010596947
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_73
+      rect:
+        serializedVersion: 2
+        x: 15
+        y: 323
+        width: 17
+        height: 21
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 54f19c1a673cb2060800000000000000
+      internalID: 6929847365927509829
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_74
+      rect:
+        serializedVersion: 2
+        x: 31
+        y: 322
+        width: 18
+        height: 23
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 018168ecf5d7c7750800000000000000
+      internalID: 6304051428852111376
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_75
+      rect:
+        serializedVersion: 2
+        x: 47
+        y: 321
+        width: 50
+        height: 26
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5cda8e58d7f19b1b0800000000000000
+      internalID: -5640442434326843963
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_76
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 294
+        width: 16
+        height: 20
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 203da25f23bfbec70800000000000000
+      internalID: 9001564476510229250
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_77
+      rect:
+        serializedVersion: 2
+        x: 15
+        y: 293
+        width: 33
+        height: 24
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: cd620e34bb7dbdd20800000000000000
+      internalID: 3304471950904010460
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_78
+      rect:
+        serializedVersion: 2
+        x: 47
+        y: 293
+        width: 18
+        height: 24
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: cedcbcc164744f3a0800000000000000
+      internalID: -6632597984753496596
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_79
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 259
+        width: 16
+        height: 25
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f8552dc68413173c0800000000000000
+      internalID: -4363652376812169841
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_80
+      rect:
+        serializedVersion: 2
+        x: 15
+        y: 259
+        width: 17
+        height: 27
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: aa7f8a1c44325b450800000000000000
+      internalID: 6103823648184399786
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_81
+      rect:
+        serializedVersion: 2
+        x: 31
+        y: 260
+        width: 17
+        height: 22
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 55100c2f3ce125490800000000000000
+      internalID: -7759105381065817771
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_82
+      rect:
+        serializedVersion: 2
+        x: 47
+        y: 260
+        width: 17
+        height: 22
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a9781759f10b25110800000000000000
+      internalID: 1248253696432768922
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_83
+      rect:
+        serializedVersion: 2
+        x: 63
+        y: 258
+        width: 18
+        height: 26
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 66e6e8f1f0d05ac60800000000000000
+      internalID: 7828677885858573926
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_84
+      rect:
+        serializedVersion: 2
+        x: 80
+        y: 258
+        width: 33
+        height: 27
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3ef969704f876cba0800000000000000
+      internalID: -6069030458340499485
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_85
+      rect:
+        serializedVersion: 2
+        x: 111
+        y: 259
+        width: 17
+        height: 26
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 065dd3c202b7099f0800000000000000
+      internalID: -463735383507741344
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_86
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 225
+        width: 16
+        height: 25
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f34ed6d6c78d3d7d0800000000000000
+      internalID: -2894732106545634241
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_87
+      rect:
+        serializedVersion: 2
+        x: 15
+        y: 225
+        width: 33
+        height: 27
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6b48636267996a410800000000000000
+      internalID: 1488045459618825398
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_88
+      rect:
+        serializedVersion: 2
+        x: 47
+        y: 225
+        width: 18
+        height: 25
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1f90d9738102c3270800000000000000
+      internalID: 8231489507310766577
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_89
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 192
+        width: 16
+        height: 26
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d013d135d4951e230800000000000000
+      internalID: 3666309760298070285
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_90
+      rect:
+        serializedVersion: 2
+        x: 15
+        y: 191
+        width: 33
+        height: 29
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: aaa8af1da88f484b0800000000000000
+      internalID: -5438949174844683606
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_91
+      rect:
+        serializedVersion: 2
+        x: 47
+        y: 192
+        width: 18
+        height: 28
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 768b4957f227de370800000000000000
+      internalID: 8353458432003848295
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_92
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 159
+        width: 16
+        height: 27
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 31b4aea1257e98ef0800000000000000
+      internalID: -105298776441599213
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_93
+      rect:
+        serializedVersion: 2
+        x: 15
+        y: 159
+        width: 17
+        height: 27
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 652fd8c6648b83f60800000000000000
+      internalID: 8014358149514261078
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_94
+      rect:
+        serializedVersion: 2
+        x: 31
+        y: 159
+        width: 49
+        height: 31
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 192e32bf4aa71d850800000000000000
+      internalID: 6400031394476843665
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_95
+      rect:
+        serializedVersion: 2
+        x: 79
+        y: 159
+        width: 17
+        height: 31
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ef5cf22fbf7fef950800000000000000
+      internalID: 6484893174932162046
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_96
+      rect:
+        serializedVersion: 2
+        x: 95
+        y: 160
+        width: 34
+        height: 29
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 933c6896542214820800000000000000
+      internalID: 2900637316521837369
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_98
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 99
+        width: 16
+        height: 24
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bfeb9f77d7a3e0e10800000000000000
+      internalID: 2165732781369966331
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_100
+      rect:
+        serializedVersion: 2
+        x: 15
+        y: 95
+        width: 17
+        height: 18
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d35b841363b5eb3b0800000000000000
+      internalID: -5494854207032216259
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_102
+      rect:
+        serializedVersion: 2
+        x: 33
+        y: 97
+        width: 13
+        height: 15
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 97a9d001dde577bd0800000000000000
+      internalID: -2632531153624655239
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_104
+      rect:
+        serializedVersion: 2
+        x: 50
+        y: 101
+        width: 11
+        height: 11
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 30a7ce00d57db0730800000000000000
+      internalID: 3966500691277281795
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_107
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 63
+        width: 33
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3857b50855c74bf00800000000000000
+      internalID: 1131666113044379011
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_108
+      rect:
+        serializedVersion: 2
+        x: 32
+        y: 64
+        width: 17
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 62ed1ba21fb44de20800000000000000
+      internalID: 3374405519982845478
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_109
+      rect:
+        serializedVersion: 2
+        x: 48
+        y: 64
+        width: 17
+        height: 14
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: af5526d74023e6db0800000000000000
+      internalID: -4796841558238145030
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_110
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 32
+        width: 32
+        height: 29
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ab1e7a0c0b3987370800000000000000
+      internalID: 8320562698922746298
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_111
+      rect:
+        serializedVersion: 2
+        x: 31
+        y: 32
+        width: 17
+        height: 28
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a61738910a5682590800000000000000
+      internalID: -7698791824692645526
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_112
+      rect:
+        serializedVersion: 2
+        x: 3
+        y: 19
+        width: 6
+        height: 10
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 76e31bd403e74ed80800000000000000
+      internalID: -8222308273744691609
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_113
+      rect:
+        serializedVersion: 2
+        x: 8
+        y: 17
+        width: 6
+        height: 10
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bba0437bdadc33e30800000000000000
+      internalID: 4482152200150452923
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_114
+      rect:
+        serializedVersion: 2
+        x: 13
+        y: 17
+        width: 6
+        height: 10
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2df6303539a1d5400800000000000000
+      internalID: 314436769041051602
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_115
+      rect:
+        serializedVersion: 2
+        x: 18
+        y: 19
+        width: 6
+        height: 8
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 47ce74e41677e9570800000000000000
+      internalID: 8475342808566721652
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_116
+      rect:
+        serializedVersion: 2
+        x: 23
+        y: 19
+        width: 6
+        height: 10
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ed9167ecf9f69c610800000000000000
+      internalID: 1641966271307586014
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_117
+      rect:
+        serializedVersion: 2
+        x: 31
+        y: 19
+        width: 6
+        height: 10
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a19b9dac953155600800000000000000
+      internalID: 456292213624256794
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_118
+      rect:
+        serializedVersion: 2
+        x: 36
+        y: 17
+        width: 7
+        height: 10
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: dead3b8916395bc50800000000000000
+      internalID: 6680407669657033453
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_119
+      rect:
+        serializedVersion: 2
+        x: 45
+        y: 19
+        width: 9
+        height: 8
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 595ca68e3ef97b870800000000000000
+      internalID: 8698597006495106453
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_120
+      rect:
+        serializedVersion: 2
+        x: 53
+        y: 19
+        width: 6
+        height: 8
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b0907707104b82fd0800000000000000
+      internalID: -2366443685908379381
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_121
+      rect:
+        serializedVersion: 2
+        x: 58
+        y: 19
+        width: 6
+        height: 8
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 74307f5b7b0b58b80800000000000000
+      internalID: -8393108027456683193
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_122
+      rect:
+        serializedVersion: 2
+        x: 63
+        y: 19
+        width: 6
+        height: 8
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 54212cdad3068f590800000000000000
+      internalID: -7640250949809597883
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_123
+      rect:
+        serializedVersion: 2
+        x: 68
+        y: 19
+        width: 6
+        height: 8
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b986d3dc146104d70800000000000000
+      internalID: 9025238125122513051
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_124
+      rect:
+        serializedVersion: 2
+        x: 73
+        y: 19
+        width: 6
+        height: 8
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: cf26594b7c25eed60800000000000000
+      internalID: 7921359812272939772
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_125
+      rect:
+        serializedVersion: 2
+        x: 81
+        y: 19
+        width: 6
+        height: 8
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2d8a81df6c10d2800800000000000000
+      internalID: 589129080416807122
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_126
+      rect:
+        serializedVersion: 2
+        x: 86
+        y: 19
+        width: 6
+        height: 8
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e9909284e7a5024e0800000000000000
+      internalID: -2008505935384213090
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_127
+      rect:
+        serializedVersion: 2
+        x: 91
+        y: 19
+        width: 9
+        height: 8
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 71ab0bd961767e040800000000000000
+      internalID: 4676820084880095767
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_128
+      rect:
+        serializedVersion: 2
+        x: 102
+        y: 19
+        width: 6
+        height: 10
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3e195cbc2e1a7fdb0800000000000000
+      internalID: -4758156485840236061
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_129
+      rect:
+        serializedVersion: 2
+        x: 107
+        y: 19
+        width: 10
+        height: 10
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1ecebf59d99977ab0800000000000000
+      internalID: -5010367158321156895
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_130
+      rect:
+        serializedVersion: 2
+        x: 117
+        y: 19
+        width: 6
+        height: 10
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2ea6a0098881401d0800000000000000
+      internalID: -3385554045064549662
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_131
+      rect:
+        serializedVersion: 2
+        x: 3
+        y: 3
+        width: 6
+        height: 8
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 47566267153142a90800000000000000
+      internalID: -7339720252111559308
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_132
+      rect:
+        serializedVersion: 2
+        x: 8
+        y: 3
+        width: 7
+        height: 8
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b91f734ee65040cb0800000000000000
+      internalID: -4898784520838844005
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_133
+      rect:
+        serializedVersion: 2
+        x: 14
+        y: 3
+        width: 6
+        height: 8
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 485e21eeb77255380800000000000000
+      internalID: -8983230468491909756
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_134
+      rect:
+        serializedVersion: 2
+        x: 19
+        y: 1
+        width: 19
+        height: 12
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0401d52f47f6f9410800000000000000
+      internalID: 1486028950128627776
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_135
+      rect:
+        serializedVersion: 2
+        x: 37
+        y: 3
+        width: 6
+        height: 8
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fa9190ca69d3172e0800000000000000
+      internalID: -2129853431428867665
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_136
+      rect:
+        serializedVersion: 2
+        x: 42
+        y: 1
+        width: 6
+        height: 10
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a43400b78805bc150800000000000000
+      internalID: 5893893084453815114
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_137
+      rect:
+        serializedVersion: 2
+        x: 50
+        y: 3
+        width: 8
+        height: 10
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 15a3cd5d4feb6c830800000000000000
+      internalID: 4091167270281951825
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_138
+      rect:
+        serializedVersion: 2
+        x: 60
+        y: 3
+        width: 11
+        height: 10
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fdd62783c14104d60800000000000000
+      internalID: 7872314260082290143
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_139
+      rect:
+        serializedVersion: 2
+        x: 70
+        y: 3
+        width: 7
+        height: 8
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b5f6929fefe192420800000000000000
+      internalID: 2605647939861311323
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_140
+      rect:
+        serializedVersion: 2
+        x: 76
+        y: 3
+        width: 6
+        height: 10
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 70e8d18b019d0b050800000000000000
+      internalID: 5814385784766959111
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SNES - Super Bomberman 2 - Playable Characters - Bomberman_141
+      rect:
+        serializedVersion: 2
+        x: 81
+        y: 3
+        width: 6
+        height: 10
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b85e53b9bc9a0db90800000000000000
+      internalID: -7219083510727449205
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: ec6b8c24be962fc468e8ce9d1562a6d0
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_0: 839480661369839303
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_1: 7715353549728619682
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_10: -2406940869656815373
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_100: -5494854207032216259
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_101: -3749403331643380674
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_102: -2632531153624655239
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_103: 2911275382192832260
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_104: 3966500691277281795
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_105: 1950572652974087205
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_106: 1945018556473797111
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_107: 1131666113044379011
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_108: 3374405519982845478
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_109: -4796841558238145030
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_11: 6022700277314408960
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_110: 8320562698922746298
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_111: -7698791824692645526
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_112: -8222308273744691609
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_113: 4482152200150452923
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_114: 314436769041051602
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_115: 8475342808566721652
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_116: 1641966271307586014
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_117: 456292213624256794
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_118: 6680407669657033453
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_119: 8698597006495106453
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_12: -7492657559428429178
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_120: -2366443685908379381
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_121: -8393108027456683193
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_122: -7640250949809597883
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_123: 9025238125122513051
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_124: 7921359812272939772
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_125: 589129080416807122
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_126: -2008505935384213090
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_127: 4676820084880095767
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_128: -4758156485840236061
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_129: -5010367158321156895
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_13: -3650619427602544615
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_130: -3385554045064549662
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_131: -7339720252111559308
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_132: -4898784520838844005
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_133: -8983230468491909756
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_134: 1486028950128627776
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_135: -2129853431428867665
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_136: 5893893084453815114
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_137: 4091167270281951825
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_138: 7872314260082290143
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_139: 2605647939861311323
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_14: -5931567606703691782
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_140: 5814385784766959111
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_141: -7219083510727449205
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_15: -4804515546758233885
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_16: 7918158992978471330
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_17: -4093870922293711543
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_18: -6121050047549619159
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_19: -6839938557623423731
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_2: -2934457026921612665
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_20: -2216522047782315106
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_21: -5051338731431443991
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_22: -4210893270237848523
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_23: 8556271013399102238
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_24: -5276228130242217993
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_25: 4864727462394853185
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_26: 2727277468459845282
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_27: -1596366514704718780
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_28: 5380205855478847328
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_29: -3708548775887424772
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_3: 6405223179726961080
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_30: -9206971867144697313
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_31: 1967868010018601673
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_32: -292503090095441206
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_33: 154323351105511327
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_34: -8628270188245712642
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_35: 5997579965295458435
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_36: 3219178031475432488
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_37: -1023182489693886962
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_38: 958851883921043557
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_39: 1420406443480053310
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_4: -6109759357697421314
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_40: -1284556774642101444
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_41: 889251570522764478
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_42: -3212943485260715183
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_43: 5023498850380406047
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_44: 3067662216291724909
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_45: 7438535811358732464
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_46: 1990779611476847331
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_47: 1888502707518647838
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_48: 3114416853960327251
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_49: 3124591636184167263
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_5: 8859092427357454555
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_50: -7135412441393516905
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_51: -9143708108077160333
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_52: -39442319395601126
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_53: 1927334541182138286
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_54: -1651335140780065227
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_55: -1987730328198837137
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_56: 3998117258121604857
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_57: 809323537878474155
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_58: 7884079134557600113
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_59: 4285415233442558256
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_6: 3928491786315237807
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_60: 1102283757835082243
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_61: 130900858323171617
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_62: -3645884601849361223
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_63: 3832277650643876446
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_64: -4033452639197440477
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_65: 6477793630741144190
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_66: -1085377461812854896
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_67: 5534615663090423486
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_68: -963197324505247546
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_69: 6265225042573183539
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_7: 2909299466634943712
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_70: -5622646485415800955
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_71: 6995085180593322427
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_72: 7354104298010596947
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_73: 6929847365927509829
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_74: 6304051428852111376
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_75: -5640442434326843963
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_76: 9001564476510229250
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_77: 3304471950904010460
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_78: -6632597984753496596
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_79: -4363652376812169841
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_8: -3583211635252234954
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_80: 6103823648184399786
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_81: -7759105381065817771
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_82: 1248253696432768922
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_83: 7828677885858573926
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_84: -6069030458340499485
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_85: -463735383507741344
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_86: -2894732106545634241
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_87: 1488045459618825398
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_88: 8231489507310766577
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_89: 3666309760298070285
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_9: -9086765451838215592
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_90: -5438949174844683606
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_91: 8353458432003848295
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_92: -105298776441599213
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_93: 8014358149514261078
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_94: 6400031394476843665
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_95: 6484893174932162046
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_96: 2900637316521837369
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_97: -6319943405070489391
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_98: 2165732781369966331
+      SNES - Super Bomberman 2 - Playable Characters - Bomberman_99: 6751502231635416511
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class AbilitySystem : MonoBehaviour
 {
-    private readonly Dictionary<string, IPlayerAbility> cache = new Dictionary<string, IPlayerAbility>();
+    private readonly Dictionary<string, IPlayerAbility> cache = new();
 
     private void Awake()
     {

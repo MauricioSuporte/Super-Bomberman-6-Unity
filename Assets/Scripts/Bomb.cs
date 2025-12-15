@@ -25,6 +25,17 @@ public class Bomb : MonoBehaviour
     [Header("Chain Explosion")]
     public float chainStepDelay = 0.1f;
 
+    [Header("Punch")]
+    public float punchDuration = 0.22f;
+    public float punchArcHeight = 0.9f;
+
+    private bool isPunched;
+    public bool IsBeingPunched => isPunched;
+
+    public bool CanBePunched => !HasExploded && !isKicked && !isPunched && IsSolid && charactersInside.Count == 0;
+
+    private Coroutine punchRoutine;
+
     private bool isKicked;
     private Vector2 kickDirection;
     private float kickTileSize = 1f;
@@ -53,10 +64,31 @@ public class Bomb : MonoBehaviour
         rb.gravityScale = 0f;
         rb.constraints = RigidbodyConstraints2D.FreezeRotation;
         rb.bodyType = RigidbodyType2D.Kinematic;
-
         rb.interpolation = RigidbodyInterpolation2D.Interpolate;
 
         lastPos = rb.position;
+    }
+
+    private void RecalculateCharactersInsideAt(Vector2 worldPos)
+    {
+        charactersInside.Clear();
+
+        int charMask = LayerMask.GetMask("Player", "Enemy");
+        Collider2D[] cols = Physics2D.OverlapBoxAll(worldPos, Vector2.one * 0.4f, 0f, charMask);
+
+        if (cols == null)
+            return;
+
+        for (int i = 0; i < cols.Length; i++)
+        {
+            var c = cols[i];
+            if (c == null)
+                continue;
+
+            int layer = c.gameObject.layer;
+            if (layer == LayerMask.NameToLayer("Player") || layer == LayerMask.NameToLayer("Enemy"))
+                charactersInside.Add(c);
+        }
     }
 
     private bool TileHasBomb(Vector2 pos)
@@ -106,6 +138,130 @@ public class Bomb : MonoBehaviour
         return false;
     }
 
+    private bool IsPunchLandingBlocked(Vector2 target)
+    {
+        Vector2 size = Vector2.one * (kickTileSize * 0.6f);
+        Collider2D[] hits = Physics2D.OverlapBoxAll(target, size, 0f, kickObstacleMask);
+
+        int enemyLayer = LayerMask.NameToLayer("Enemy");
+        int bombLayer = LayerMask.NameToLayer("Bomb");
+
+        foreach (var hit in hits)
+        {
+            if (hit == null || hit.gameObject == gameObject)
+                continue;
+
+            if (hit.gameObject.layer == enemyLayer)
+                return true;
+
+            if (hit.gameObject.layer == bombLayer)
+                return true;
+
+            if (hit.isTrigger)
+                continue;
+
+            return true;
+        }
+
+        if (TileHasBomb(target))
+            return true;
+
+        if (kickDestructibleTilemap != null)
+        {
+            Vector3Int cell = kickDestructibleTilemap.WorldToCell(target);
+            if (kickDestructibleTilemap.GetTile(cell) != null)
+                return true;
+        }
+
+        return false;
+    }
+
+    public bool StartPunch(Vector2 direction, float tileSize, int distanceTiles, LayerMask obstacleMask, Tilemap destructibleTilemap)
+    {
+        if (!CanBePunched || direction == Vector2.zero)
+            return false;
+
+        kickDirection = direction.normalized;
+        kickTileSize = tileSize;
+
+        kickObstacleMask = obstacleMask | LayerMask.GetMask("Enemy");
+        kickDestructibleTilemap = destructibleTilemap;
+
+        Vector2 origin = rb.position;
+        origin.x = Mathf.Round(origin.x / tileSize) * tileSize;
+        origin.y = Mathf.Round(origin.y / tileSize) * tileSize;
+
+        Vector2 landing = origin + kickDirection * kickTileSize * Mathf.Max(1, distanceTiles);
+
+        if (IsPunchLandingBlocked(landing))
+            return false;
+
+        currentTileCenter = origin;
+        lastPos = origin;
+
+        rb.position = origin;
+        transform.position = origin;
+
+        if (kickRoutine != null)
+            StopCoroutine(kickRoutine);
+
+        if (punchRoutine != null)
+            StopCoroutine(punchRoutine);
+
+        isPunched = true;
+        charactersInside.Clear();
+        bombCollider.isTrigger = true;
+
+        if (anim != null)
+            anim.SetFrozen(true);
+
+        punchRoutine = StartCoroutine(PunchRoutineFixed(origin, landing, punchDuration, punchArcHeight));
+        return true;
+    }
+
+    private IEnumerator PunchRoutineFixed(Vector2 start, Vector2 end, float duration, float arcHeight)
+    {
+        float t = 0f;
+        float inv = 1f / Mathf.Max(0.0001f, duration);
+
+        while (t < duration)
+        {
+            if (HasExploded)
+                break;
+
+            t += Time.fixedDeltaTime;
+            float a = Mathf.Clamp01(t * inv);
+
+            Vector2 pos = Vector2.Lerp(start, end, a);
+            float arc = Mathf.Sin(a * Mathf.PI) * arcHeight;
+            pos.y += arc;
+
+            lastPos = pos;
+            rb.MovePosition(pos);
+
+            yield return waitFixed;
+        }
+
+        rb.position = end;
+        transform.position = end;
+        lastPos = end;
+
+        isPunched = false;
+        punchRoutine = null;
+
+        if (!HasExploded)
+        {
+            RecalculateCharactersInsideAt(end);
+            bombCollider.isTrigger = charactersInside.Count > 0;
+        }
+
+        if (anim != null)
+        {
+            anim.SetFrozen(false);
+            anim.RefreshFrame();
+        }
+    }
+
     public void Initialize(BombController owner)
     {
         this.owner = owner;
@@ -113,25 +269,7 @@ public class Bomb : MonoBehaviour
 
         lastPos = rb.position;
 
-        charactersInside.Clear();
-
-        int charMask = LayerMask.GetMask("Player", "Enemy");
-        Collider2D[] cols = Physics2D.OverlapBoxAll(rb.position, Vector2.one * 0.4f, 0f, charMask);
-
-        if (cols != null)
-        {
-            for (int i = 0; i < cols.Length; i++)
-            {
-                var c = cols[i];
-                if (c == null)
-                    continue;
-
-                int layer = c.gameObject.layer;
-                if (layer == LayerMask.NameToLayer("Player") || layer == LayerMask.NameToLayer("Enemy"))
-                    charactersInside.Add(c);
-            }
-        }
-
+        RecalculateCharactersInsideAt(rb.position);
         bombCollider.isTrigger = charactersInside.Count > 0;
     }
 
@@ -269,7 +407,7 @@ public class Bomb : MonoBehaviour
 
     private void OnTriggerExit2D(Collider2D other)
     {
-        if (HasExploded || isKicked)
+        if (HasExploded || isKicked || isPunched)
             return;
 
         int layer = other.gameObject.layer;
