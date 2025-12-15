@@ -24,12 +24,16 @@ public class AnimatedSpriteRenderer : MonoBehaviour
     [Header("Ping Pong")]
     public bool pingPong = false;
 
+    [Header("Safety")]
+    public bool disableOffsetsIfThisObjectHasRigidbody2D = true;
+
     private int animationFrame;
     private int direction = 1;
 
     private Transform visualTransform;
     private Vector3 initialVisualLocalPosition;
     private bool canMoveVisualLocal;
+    private bool frozen;
 
     public int CurrentFrame
     {
@@ -48,7 +52,11 @@ public class AnimatedSpriteRenderer : MonoBehaviour
     void EnsureSpriteRenderer()
     {
         if (spriteRenderer == null)
+        {
             spriteRenderer = GetComponent<SpriteRenderer>();
+            if (spriteRenderer == null)
+                spriteRenderer = GetComponentInChildren<SpriteRenderer>(true);
+        }
     }
 
     private void Awake()
@@ -56,9 +64,10 @@ public class AnimatedSpriteRenderer : MonoBehaviour
         EnsureSpriteRenderer();
 
         visualTransform = spriteRenderer != null ? spriteRenderer.transform : transform;
-        initialVisualLocalPosition = visualTransform.localPosition;
+        initialVisualLocalPosition = visualTransform != null ? visualTransform.localPosition : Vector3.zero;
 
-        canMoveVisualLocal = visualTransform != null && visualTransform != transform && visualTransform.parent == transform;
+        bool hasRbHere = disableOffsetsIfThisObjectHasRigidbody2D && GetComponent<Rigidbody2D>() != null;
+        canMoveVisualLocal = visualTransform != null && !hasRbHere;
     }
 
     private void OnEnable()
@@ -80,6 +89,8 @@ public class AnimatedSpriteRenderer : MonoBehaviour
     private void OnDisable()
     {
         CancelInvoke(nameof(NextFrame));
+
+        ResetOffset();
 
         EnsureSpriteRenderer();
         if (spriteRenderer != null)
@@ -112,8 +123,22 @@ public class AnimatedSpriteRenderer : MonoBehaviour
         ApplyFrame();
     }
 
+    public void SetFrozen(bool value)
+    {
+        frozen = value;
+
+        if (frozen)
+        {
+            ApplyFrame();
+            ResetOffset();
+        }
+    }
+
     private void NextFrame()
     {
+        if (frozen)
+            return;
+
         if (idle)
         {
             ApplyFrame();
@@ -186,22 +211,24 @@ public class AnimatedSpriteRenderer : MonoBehaviour
             spriteRenderer.sprite = animationSprite[animationFrame];
         }
 
-        if (visualTransform == null)
-            visualTransform = spriteRenderer.transform;
-
-        if (!canMoveVisualLocal)
+        if (!canMoveVisualLocal || visualTransform == null)
             return;
 
-        if (!idle && frameOffsets != null && animationSprite != null &&
-            frameOffsets.Length == animationSprite.Length &&
-            animationFrame >= 0 && animationFrame < frameOffsets.Length)
+        if (!idle && frameOffsets != null && frameOffsets.Length > 0)
         {
-            Vector2 offset = frameOffsets[animationFrame];
+            int idx = Mathf.Clamp(animationFrame, 0, frameOffsets.Length - 1);
+            Vector2 offset = frameOffsets[idx];
             visualTransform.localPosition = initialVisualLocalPosition + (Vector3)offset;
         }
         else
         {
-            visualTransform.localPosition = initialVisualLocalPosition;
+            ResetOffset();
         }
+    }
+
+    private void ResetOffset()
+    {
+        if (visualTransform != null)
+            visualTransform.localPosition = initialVisualLocalPosition;
     }
 }

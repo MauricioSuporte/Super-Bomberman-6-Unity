@@ -17,6 +17,7 @@ public class Bomb : MonoBehaviour
 
     private Collider2D bombCollider;
     private Rigidbody2D rb;
+    private AnimatedSpriteRenderer anim;
 
     [Header("Kick")]
     public float kickSpeed = 9f;
@@ -45,6 +46,7 @@ public class Bomb : MonoBehaviour
     {
         bombCollider = GetComponent<Collider2D>();
         rb = GetComponent<Rigidbody2D>();
+        anim = GetComponent<AnimatedSpriteRenderer>();
 
         bombCollider.isTrigger = true;
 
@@ -113,20 +115,19 @@ public class Bomb : MonoBehaviour
 
         charactersInside.Clear();
 
-        int playerLayer = LayerMask.NameToLayer("Player");
-        int enemyLayer = LayerMask.NameToLayer("Enemy");
         int charMask = LayerMask.GetMask("Player", "Enemy");
-
         Collider2D[] cols = Physics2D.OverlapBoxAll(rb.position, Vector2.one * 0.4f, 0f, charMask);
 
         if (cols != null)
         {
-            foreach (var c in cols)
+            for (int i = 0; i < cols.Length; i++)
             {
+                var c = cols[i];
                 if (c == null)
                     continue;
 
-                if (c.gameObject.layer == playerLayer || c.gameObject.layer == enemyLayer)
+                int layer = c.gameObject.layer;
+                if (layer == LayerMask.NameToLayer("Player") || layer == LayerMask.NameToLayer("Enemy"))
                     charactersInside.Add(c);
             }
         }
@@ -164,6 +165,10 @@ public class Bomb : MonoBehaviour
             StopCoroutine(kickRoutine);
 
         isKicked = true;
+
+        if (anim != null)
+            anim.SetFrozen(true);
+
         kickRoutine = StartCoroutine(KickRoutineFixed());
 
         return true;
@@ -218,6 +223,12 @@ public class Bomb : MonoBehaviour
 
         isKicked = false;
         kickRoutine = null;
+
+        if (anim != null)
+        {
+            anim.SetFrozen(false);
+            anim.RefreshFrame();
+        }
     }
 
     public void MarkAsExploded()
@@ -230,11 +241,9 @@ public class Bomb : MonoBehaviour
         if (HasExploded)
             return;
 
-        int explosionLayer = LayerMask.NameToLayer("Explosion");
-        int playerLayer = LayerMask.NameToLayer("Player");
-        int enemyLayer = LayerMask.NameToLayer("Enemy");
+        int layer = other.gameObject.layer;
 
-        if (other.gameObject.layer == explosionLayer)
+        if (layer == LayerMask.NameToLayer("Explosion"))
         {
             if (!chainExplosionScheduled && owner != null)
             {
@@ -244,8 +253,7 @@ public class Bomb : MonoBehaviour
             return;
         }
 
-        if (other.gameObject.layer == playerLayer ||
-            other.gameObject.layer == enemyLayer)
+        if (layer == LayerMask.NameToLayer("Player") || layer == LayerMask.NameToLayer("Enemy"))
         {
             charactersInside.Add(other);
         }
@@ -264,11 +272,8 @@ public class Bomb : MonoBehaviour
         if (HasExploded || isKicked)
             return;
 
-        int playerLayer = LayerMask.NameToLayer("Player");
-        int enemyLayer = LayerMask.NameToLayer("Enemy");
-
         int layer = other.gameObject.layer;
-        if (layer != playerLayer && layer != enemyLayer)
+        if (layer != LayerMask.NameToLayer("Player") && layer != LayerMask.NameToLayer("Enemy"))
             return;
 
         charactersInside.Remove(other);
