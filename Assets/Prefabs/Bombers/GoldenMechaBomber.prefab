@@ -16,6 +16,8 @@ GameObject:
   - component: {fileID: 4730492100800285400}
   - component: {fileID: 2258062271764064381}
   - component: {fileID: 3101258277916350091}
+  - component: {fileID: 3989780119984243601}
+  - component: {fileID: 264801553817921034}
   m_Layer: 10
   m_Name: GoldenMechaBomber
   m_TagString: BossBomber
@@ -120,13 +122,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AIMovementController
   deathSfx: {fileID: 0}
-  kickBombSfx: {fileID: 8300000, guid: fd7073b98a175b640bff17cf708a99ce, type: 3}
   speed: 5
   tileSize: 1
   obstacleMask:
     serializedVersion: 2
     m_Bits: 0
-  canKickBombs: 1
   inputUp: 119
   inputDown: 115
   inputLeft: 97
@@ -190,6 +190,10 @@ MonoBehaviour:
   maxChaseDistance: 20
   safeDistanceAfterBomb: 3
   bombChainCooldown: 0.3
+  opportunisticKickChance: 0.25
+  opportunisticKickMaxBombAge: 0.9
+  kickDecisionCooldown: 0.35
+  minSafetyAfterKick: 1.5
 --- !u!114 &2258062271764064381
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -302,6 +306,31 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+--- !u!114 &3989780119984243601
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 444576652216317808}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7058ad72d26750f468fe6b34b4fccf32, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AbilitySystem
+--- !u!114 &264801553817921034
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 444576652216317808}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f63760a13a08f664e873ba399d2c2fca, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BombKickAbility
+  enabledAbility: 1
 --- !u!1 &2245651300953625166
 GameObject:
   m_ObjectHideFlags: 0

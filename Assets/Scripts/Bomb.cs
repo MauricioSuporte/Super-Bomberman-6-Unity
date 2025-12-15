@@ -13,6 +13,8 @@ public class Bomb : MonoBehaviour
     public bool HasExploded { get; private set; }
     public bool IsBeingKicked => isKicked;
 
+    public float PlacedTime { get; private set; }
+
     private Collider2D bombCollider;
     private Rigidbody2D rb;
 
@@ -105,6 +107,8 @@ public class Bomb : MonoBehaviour
     public void Initialize(BombController owner)
     {
         this.owner = owner;
+        PlacedTime = Time.time;
+
         lastPos = rb.position;
 
         charactersInside.Clear();

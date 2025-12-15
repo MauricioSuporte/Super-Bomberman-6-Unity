@@ -10,18 +10,28 @@ public class BossBomberAI : MonoBehaviour
     public float safeDistanceAfterBomb = 3f;
     public float bombChainCooldown = 0.3f;
 
+    [Header("Kick Behavior")]
+    [Range(0f, 1f)] public float opportunisticKickChance = 0.25f;
+    public float opportunisticKickMaxBombAge = 0.9f;
+    public float kickDecisionCooldown = 0.35f;
+    public float minSafetyAfterKick = 1.5f;
+
     AIMovementController movement;
     BombController bomb;
+    BombKickAbility kickAbility;
 
     float thinkTimer;
     Vector2 lastDirection = Vector2.zero;
     bool isEvading;
     float lastBombTime;
 
+    float lastKickDecisionTime;
+
     void Awake()
     {
         movement = GetComponent<AIMovementController>();
         bomb = GetComponent<BombController>();
+        kickAbility = GetComponent<BombKickAbility>();
 
         bomb.useAIInput = true;
         movement.isBoss = true;
@@ -58,6 +68,15 @@ public class BossBomberAI : MonoBehaviour
         Bomb[] bombs = FindObjectsByType<Bomb>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
 
         bool inDanger = IsInDangerFromBombs(myPos, bombs);
+
+        if (HasKickAbility())
+        {
+            if (TryTrappedKickIfNeeded(myPos, bombs, inDanger))
+                return;
+
+            if (TryOpportunisticKickPlayerNewest(myPos, bombs, inDanger))
+                return;
+        }
 
         if (inDanger)
         {
@@ -130,6 +149,113 @@ public class BossBomberAI : MonoBehaviour
         lastDirection = IsTileWithExplosion(targetTile)
             ? GetBestDirectionAvoidingExplosion(myPos)
             : dir;
+    }
+
+    bool HasKickAbility()
+    {
+        return kickAbility != null && kickAbility.IsEnabled;
+    }
+
+    bool TryOpportunisticKickPlayerNewest(Vector2 myPos, Bomb[] bombs, bool inDanger)
+    {
+        if (Time.time - lastKickDecisionTime < kickDecisionCooldown)
+            return false;
+
+        if (inDanger)
+            return false;
+
+        if (Random.value > opportunisticKickChance)
+            return false;
+
+        Bomb newestPlayerBomb = null;
+        float bestTime = float.NegativeInfinity;
+
+        for (int i = 0; i < bombs.Length; i++)
+        {
+            var b = bombs[i];
+            if (b == null || b.HasExploded || !b.CanBeKicked || b.Owner == null)
+                continue;
+
+            if (!b.Owner.CompareTag("Player"))
+                continue;
+
+            float age = Time.time - b.PlacedTime;
+            if (age > opportunisticKickMaxBombAge)
+                continue;
+
+            if (b.PlacedTime > bestTime)
+            {
+                bestTime = b.PlacedTime;
+                newestPlayerBomb = b;
+            }
+        }
+
+        if (newestPlayerBomb == null)
+            return false;
+
+        Vector2 bombPos = RoundToTile(newestPlayerBomb.GetLogicalPosition());
+        Vector2 delta = bombPos - myPos;
+
+        if (Mathf.Abs(delta.x) + Mathf.Abs(delta.y) != 1f)
+            return false;
+
+        Vector2 escapeDir = GetBestSafeDirectionOrStay(myPos, bombs);
+        if (escapeDir == Vector2.zero)
+            return false;
+
+        float escapeSafety = GetSafetyScore(myPos + escapeDir, bombs);
+        if (escapeSafety < minSafetyAfterKick)
+            return false;
+
+        lastKickDecisionTime = Time.time;
+        isEvading = true;
+        lastDirection = delta;
+        return true;
+    }
+
+    bool TryTrappedKickIfNeeded(Vector2 myPos, Bomb[] bombs, bool inDanger)
+    {
+        if (!inDanger)
+            return false;
+
+        if (Time.time - lastKickDecisionTime < kickDecisionCooldown)
+            return false;
+
+        Vector2 bestSafe = GetBestSafeDirectionOrStay(myPos, bombs);
+        if (bestSafe != Vector2.zero)
+            return false;
+
+        Bomb bestBomb = null;
+        float bestTime = float.NegativeInfinity;
+        Vector2 bestDir = Vector2.zero;
+
+        for (int i = 0; i < bombs.Length; i++)
+        {
+            var b = bombs[i];
+            if (b == null || b.HasExploded || !b.CanBeKicked)
+                continue;
+
+            Vector2 bombPos = RoundToTile(b.GetLogicalPosition());
+            Vector2 delta = bombPos - myPos;
+
+            if (Mathf.Abs(delta.x) + Mathf.Abs(delta.y) != 1f)
+                continue;
+
+            if (b.PlacedTime > bestTime)
+            {
+                bestTime = b.PlacedTime;
+                bestBomb = b;
+                bestDir = delta;
+            }
+        }
+
+        if (bestBomb == null)
+            return false;
+
+        lastKickDecisionTime = Time.time;
+        isEvading = true;
+        lastDirection = bestDir;
+        return true;
     }
 
     void TryPlaceBombChain(Vector2 myPos)
