@@ -16,6 +16,13 @@ public class Explosion : MonoBehaviour
 
     public ExplosionPart CurrentPart { get; private set; }
 
+    public Vector2 Origin { get; private set; }
+
+    public void SetOrigin(Vector2 origin)
+    {
+        Origin = origin;
+    }
+
     public void SetStart()
     {
         SetRenderer(start, ExplosionPart.Start);
@@ -57,8 +64,9 @@ public class Explosion : MonoBehaviour
         Destroy(gameObject, seconds);
     }
 
-    public void Play(ExplosionPart part, Vector2 direction, float delay, float duration)
+    public void Play(ExplosionPart part, Vector2 direction, float delay, float duration, Vector2 origin)
     {
+        SetOrigin(origin);
         SetDirection(direction);
         StartCoroutine(PlayRoutine(part, delay, duration));
     }

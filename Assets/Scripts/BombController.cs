@@ -114,7 +114,7 @@ public class BombController : MonoBehaviour
         position.y = Mathf.Round(position.y);
 
         Explosion centerExplosion = Instantiate(explosionPrefab, position, Quaternion.identity);
-        centerExplosion.Play(Explosion.ExplosionPart.Start, Vector2.zero, 0f, explosionDuration);
+        centerExplosion.Play(Explosion.ExplosionPart.Start, Vector2.zero, 0f, explosionDuration, position);
 
         Explode(position, Vector2.up, explosionRadius);
         Explode(position, Vector2.down, explosionRadius);
@@ -205,7 +205,7 @@ public class BombController : MonoBehaviour
             ? Explosion.ExplosionPart.Middle
             : Explosion.ExplosionPart.End;
 
-        explosion.Play(part, direction, 0f, explosionDuration);
+        explosion.Play(part, direction, 0f, explosionDuration, origin);
 
         int bombLayer = LayerMask.NameToLayer("Bomb");
         int bombMask = 1 << bombLayer;

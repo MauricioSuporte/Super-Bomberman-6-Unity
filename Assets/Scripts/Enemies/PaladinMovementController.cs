@@ -9,14 +9,19 @@ public class PaladinMovementController : MetalHornMovementController
 
         if (other.gameObject.layer == LayerMask.NameToLayer("Explosion"))
         {
-            if (IsExplosionInFront(other.transform.position))
+            Vector2 origin = other.transform.position;
+
+            if (other.TryGetComponent<Explosion>(out var explosion))
+                origin = explosion.Origin;
+
+            if (IsExplosionOriginInFront(origin))
                 return;
         }
 
         base.OnTriggerEnter2D(other);
     }
 
-    bool IsExplosionInFront(Vector2 explosionPosition)
+    private bool IsExplosionOriginInFront(Vector2 originPosition)
     {
         if (rb == null)
             return false;
@@ -25,14 +30,14 @@ public class PaladinMovementController : MetalHornMovementController
         if (forward == Vector2.zero)
             return false;
 
-        Vector2 toExplosion = explosionPosition - rb.position;
-        if (toExplosion.sqrMagnitude < 0.0001f)
+        Vector2 toOrigin = originPosition - rb.position;
+        if (toOrigin.sqrMagnitude < 0.0001f)
             return false;
 
         forward.Normalize();
-        toExplosion.Normalize();
+        toOrigin.Normalize();
 
-        float dot = Vector2.Dot(forward, toExplosion);
+        float dot = Vector2.Dot(forward, toOrigin);
         return dot > 0.7f;
     }
 }
