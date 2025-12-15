@@ -115,6 +115,8 @@ MonoBehaviour:
   loop: 1
   idle: 1
   frameOffsets: []
+  pingPong: 0
+  disableOffsetsIfThisObjectHasRigidbody2D: 1
 --- !u!1 &735504541268453317
 GameObject:
   m_ObjectHideFlags: 0
@@ -230,6 +232,8 @@ MonoBehaviour:
   loop: 1
   idle: 1
   frameOffsets: []
+  pingPong: 0
+  disableOffsetsIfThisObjectHasRigidbody2D: 1
 --- !u!1 &1228606389669354652
 GameObject:
   m_ObjectHideFlags: 0
@@ -243,6 +247,8 @@ GameObject:
   - component: {fileID: 1228606389669354655}
   - component: {fileID: 2921366655620267994}
   - component: {fileID: 3118841832716318177}
+  - component: {fileID: 8638696913730581265}
+  - component: {fileID: 1351269766690977818}
   m_Layer: 10
   m_Name: Chameleon
   m_TagString: Untagged
@@ -358,7 +364,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ChameleonMovementController
   speed: 1.75
-  life: 1
   tileSize: 1
   spriteUp: {fileID: 6401397598171666485}
   spriteDown: {fileID: 5909034797559237052}
@@ -373,6 +378,7 @@ MonoBehaviour:
   enemyLayerMask:
     serializedVersion: 2
     m_Bits: 1024
+  deathSfx: {fileID: 8300000, guid: 95fa76ce6d1f33c498e5165cec574d98, type: 3}
   spriteRenderer: {fileID: 3118841832716318177}
   idleSprite: {fileID: -3551205180599332140, guid: f93a4aa358f3fca46906798a17c305c0, type: 3}
   blinkSprites:
@@ -465,6 +471,118 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
+--- !u!114 &8638696913730581265
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1228606389669354652}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 205f7fc6fe6408f419811c6c486b9cd6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CharacterHealth
+  life: 1
+  hitInvulnerableDuration: 3
+  hitBlinkInterval: 0.1
+--- !u!82 &1351269766690977818
+AudioSource:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1228606389669354652}
+  m_Enabled: 1
+  serializedVersion: 4
+  OutputAudioMixerGroup: {fileID: 0}
+  m_audioClip: {fileID: 0}
+  m_Resource: {fileID: 0}
+  m_PlayOnAwake: 1
+  m_Volume: 1
+  m_Pitch: 1
+  Loop: 0
+  Mute: 0
+  Spatialize: 0
+  SpatializePostEffects: 0
+  Priority: 128
+  DopplerLevel: 1
+  MinDistance: 1
+  MaxDistance: 500
+  Pan2D: 0
+  rolloffMode: 0
+  BypassEffects: 0
+  BypassListenerEffects: 0
+  BypassReverbZones: 0
+  rolloffCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 1
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  panLevelCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  spreadCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  reverbZoneMixCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
 --- !u!1 &1376296718594008270
 GameObject:
   m_ObjectHideFlags: 0
@@ -580,6 +698,8 @@ MonoBehaviour:
   loop: 1
   idle: 1
   frameOffsets: []
+  pingPong: 0
+  disableOffsetsIfThisObjectHasRigidbody2D: 1
 --- !u!1 &2391931892512023170
 GameObject:
   m_ObjectHideFlags: 0
@@ -695,6 +815,8 @@ MonoBehaviour:
   loop: 1
   idle: 1
   frameOffsets: []
+  pingPong: 0
+  disableOffsetsIfThisObjectHasRigidbody2D: 1
 --- !u!1 &4672264581870566176
 GameObject:
   m_ObjectHideFlags: 0
@@ -810,6 +932,8 @@ MonoBehaviour:
   loop: 1
   idle: 1
   frameOffsets: []
+  pingPong: 0
+  disableOffsetsIfThisObjectHasRigidbody2D: 1
 --- !u!1 &4765624063352861309
 GameObject:
   m_ObjectHideFlags: 0
@@ -925,6 +1049,8 @@ MonoBehaviour:
   loop: 1
   idle: 1
   frameOffsets: []
+  pingPong: 0
+  disableOffsetsIfThisObjectHasRigidbody2D: 1
 --- !u!1 &5161195224798678685
 GameObject:
   m_ObjectHideFlags: 0
@@ -1040,6 +1166,8 @@ MonoBehaviour:
   loop: 1
   idle: 1
   frameOffsets: []
+  pingPong: 0
+  disableOffsetsIfThisObjectHasRigidbody2D: 1
 --- !u!1 &5621115061846483727
 GameObject:
   m_ObjectHideFlags: 0
@@ -1155,6 +1283,8 @@ MonoBehaviour:
   loop: 1
   idle: 1
   frameOffsets: []
+  pingPong: 0
+  disableOffsetsIfThisObjectHasRigidbody2D: 1
 --- !u!1 &5869817974977703231
 GameObject:
   m_ObjectHideFlags: 0
@@ -1270,6 +1400,8 @@ MonoBehaviour:
   loop: 1
   idle: 1
   frameOffsets: []
+  pingPong: 0
+  disableOffsetsIfThisObjectHasRigidbody2D: 1
 --- !u!1 &5942163148780632029
 GameObject:
   m_ObjectHideFlags: 0
@@ -1385,6 +1517,8 @@ MonoBehaviour:
   loop: 1
   idle: 1
   frameOffsets: []
+  pingPong: 0
+  disableOffsetsIfThisObjectHasRigidbody2D: 1
 --- !u!1 &5967632563306156536
 GameObject:
   m_ObjectHideFlags: 0
@@ -1500,6 +1634,8 @@ MonoBehaviour:
   loop: 1
   idle: 1
   frameOffsets: []
+  pingPong: 0
+  disableOffsetsIfThisObjectHasRigidbody2D: 1
 --- !u!1 &5972182404247028045
 GameObject:
   m_ObjectHideFlags: 0
@@ -1615,6 +1751,8 @@ MonoBehaviour:
   loop: 1
   idle: 1
   frameOffsets: []
+  pingPong: 0
+  disableOffsetsIfThisObjectHasRigidbody2D: 1
 --- !u!1 &6989680416941828342
 GameObject:
   m_ObjectHideFlags: 0
@@ -1733,6 +1871,8 @@ MonoBehaviour:
   loop: 0
   idle: 0
   frameOffsets: []
+  pingPong: 0
+  disableOffsetsIfThisObjectHasRigidbody2D: 1
 --- !u!1 &8413335359794813276
 GameObject:
   m_ObjectHideFlags: 0
@@ -1848,6 +1988,8 @@ MonoBehaviour:
   loop: 1
   idle: 1
   frameOffsets: []
+  pingPong: 0
+  disableOffsetsIfThisObjectHasRigidbody2D: 1
 --- !u!1 &8445496951490422614
 GameObject:
   m_ObjectHideFlags: 0
@@ -1963,6 +2105,8 @@ MonoBehaviour:
   loop: 1
   idle: 1
   frameOffsets: []
+  pingPong: 0
+  disableOffsetsIfThisObjectHasRigidbody2D: 1
 --- !u!1 &8966993648348316054
 GameObject:
   m_ObjectHideFlags: 0
@@ -2078,6 +2222,8 @@ MonoBehaviour:
   loop: 1
   idle: 1
   frameOffsets: []
+  pingPong: 0
+  disableOffsetsIfThisObjectHasRigidbody2D: 1
 --- !u!1 &9030875923462066033
 GameObject:
   m_ObjectHideFlags: 0
@@ -2193,3 +2339,5 @@ MonoBehaviour:
   loop: 1
   idle: 1
   frameOffsets: []
+  pingPong: 0
+  disableOffsetsIfThisObjectHasRigidbody2D: 1

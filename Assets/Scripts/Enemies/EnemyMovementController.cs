@@ -4,6 +4,7 @@ using UnityEngine;
 [RequireComponent(typeof(Rigidbody2D))]
 [RequireComponent(typeof(Collider2D))]
 [RequireComponent(typeof(CharacterHealth))]
+[RequireComponent(typeof(AudioSource))]
 public class EnemyMovementController : MonoBehaviour, IKillable
 {
     [Header("Stats")]
@@ -21,6 +22,9 @@ public class EnemyMovementController : MonoBehaviour, IKillable
     public LayerMask bombLayerMask;
     public LayerMask enemyLayerMask;
 
+    [Header("SFX")]
+    public AudioClip deathSfx;
+
     protected AnimatedSpriteRenderer activeSprite;
     protected Rigidbody2D rb;
     protected Vector2 direction;
@@ -28,6 +32,7 @@ public class EnemyMovementController : MonoBehaviour, IKillable
     protected bool isDead;
 
     CharacterHealth health;
+    AudioSource audioSource;
 
     protected virtual void Awake()
     {
@@ -44,6 +49,13 @@ public class EnemyMovementController : MonoBehaviour, IKillable
             enemyLayerMask = LayerMask.GetMask("Enemy");
 
         health = GetComponent<CharacterHealth>();
+
+        audioSource = GetComponent<AudioSource>();
+        if (audioSource != null)
+        {
+            audioSource.playOnAwake = false;
+            audioSource.loop = false;
+        }
     }
 
     protected virtual void Start()
@@ -111,6 +123,9 @@ public class EnemyMovementController : MonoBehaviour, IKillable
 
         isDead = true;
 
+        if (audioSource != null && deathSfx != null)
+            audioSource.PlayOneShot(deathSfx);
+
         if (rb != null)
             rb.linearVelocity = Vector2.zero;
 
@@ -147,6 +162,12 @@ public class EnemyMovementController : MonoBehaviour, IKillable
 
     protected virtual void OnDeathAnimationEnded()
     {
+        if (audioSource != null && audioSource.isPlaying)
+        {
+            Destroy(gameObject, 0.05f);
+            return;
+        }
+
         Destroy(gameObject);
     }
 
