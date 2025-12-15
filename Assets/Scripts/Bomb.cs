@@ -5,6 +5,7 @@ using UnityEngine.Tilemaps;
 
 [RequireComponent(typeof(Collider2D))]
 [RequireComponent(typeof(Rigidbody2D))]
+[RequireComponent(typeof(AudioSource))]
 public class Bomb : MonoBehaviour
 {
     private BombController owner;
@@ -18,6 +19,11 @@ public class Bomb : MonoBehaviour
     private Collider2D bombCollider;
     private Rigidbody2D rb;
     private AnimatedSpriteRenderer anim;
+    private AudioSource audioSource;
+
+    [Header("SFX")]
+    public AudioClip punchSfx;
+    [Range(0f, 1f)] public float punchSfxVolume = 1f;
 
     [Header("Kick")]
     public float kickSpeed = 9f;
@@ -58,6 +64,7 @@ public class Bomb : MonoBehaviour
         bombCollider = GetComponent<Collider2D>();
         rb = GetComponent<Rigidbody2D>();
         anim = GetComponent<AnimatedSpriteRenderer>();
+        audioSource = GetComponent<AudioSource>();
 
         bombCollider.isTrigger = true;
 
@@ -65,6 +72,12 @@ public class Bomb : MonoBehaviour
         rb.constraints = RigidbodyConstraints2D.FreezeRotation;
         rb.bodyType = RigidbodyType2D.Kinematic;
         rb.interpolation = RigidbodyInterpolation2D.Interpolate;
+
+        if (audioSource != null)
+        {
+            audioSource.playOnAwake = false;
+            audioSource.loop = false;
+        }
 
         lastPos = rb.position;
     }
@@ -211,6 +224,9 @@ public class Bomb : MonoBehaviour
         isPunched = true;
         charactersInside.Clear();
         bombCollider.isTrigger = true;
+
+        if (audioSource != null && punchSfx != null)
+            audioSource.PlayOneShot(punchSfx, punchSfxVolume);
 
         if (anim != null)
             anim.SetFrozen(true);
