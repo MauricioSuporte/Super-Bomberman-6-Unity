@@ -172,6 +172,7 @@ MonoBehaviour:
   blastRadiusItemPrefab: {fileID: 6871244334814668705, guid: bdad95ff62d39d44fbcbb3b171a603bb, type: 3}
   speedIncreaseItemPrefab: {fileID: 4209327807185772322, guid: 218d29a1a19c6864e8d870f01df7f91b, type: 3}
   kickBombItemPrefab: {fileID: 6871244334814668705, guid: 8688e05eefe87c143a46fe4f721b8c80, type: 3}
+  punchBombItemPrefab: {fileID: 6871244334814668705, guid: 5d9a731da7e790c45a7a1d311cea3d8c, type: 3}
   destructibleTilemap: {fileID: 285353618}
   nextStageSceneName: Stage_1-7
   groundTilemap: {fileID: 672307155}
@@ -2373,7 +2374,7 @@ MonoBehaviour:
   bossCheeringMusic: {fileID: 8300000, guid: d3943f4848bd8744c938c91b24684287, type: 3}
   indestructibleTilemap: {fileID: 818279435}
   gateCell: {x: -1, y: 3, z: 0}
-  gateStepDelay: 0.1
+  gateStepDelay: 0.15
   standsTilemap: {fileID: 818279435}
   crowdTiles:
   - {fileID: 11400000, guid: 714e175b458f4604ca50c61afb890f1a, type: 2}
@@ -2400,12 +2401,13 @@ MonoBehaviour:
   - {fileID: 2727780941473249227, guid: 2c7394d5814f6284da1d799a66d95686, type: 3}
   - {fileID: 4209327807185772322, guid: 218d29a1a19c6864e8d870f01df7f91b, type: 3}
   - {fileID: 6871244334814668705, guid: 8688e05eefe87c143a46fe4f721b8c80, type: 3}
+  - {fileID: 6871244334814668705, guid: 5d9a731da7e790c45a7a1d311cea3d8c, type: 3}
   spawnMinX: -7
   spawnMaxX: 5
   spawnMinY: -6
   spawnMaxY: 2
   minSpawnInterval: 20
-  maxSpawnInterval: 40
+  maxSpawnInterval: 30
   maxTriesPerSpawn: 50
 --- !u!1 &732032079
 GameObject:
@@ -3952,7 +3954,7 @@ Tilemap:
       m_AnimatedSprites:
       - {fileID: 1766967165, guid: 914f6dd52fc1d3f428738756d19d329e, type: 3}
       - {fileID: -60461963, guid: 914f6dd52fc1d3f428738756d19d329e, type: 3}
-      m_AnimationSpeed: 3.5000002
+      m_AnimationSpeed: 3.5
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: 7, y: -2, z: 0}
@@ -4033,7 +4035,7 @@ Tilemap:
       m_AnimatedSprites:
       - {fileID: 1909338682, guid: 1a57a821cb78e0f4d8f8f366d155df5b, type: 3}
       - {fileID: -1456098706, guid: 1a57a821cb78e0f4d8f8f366d155df5b, type: 3}
-      m_AnimationSpeed: 3.5
+      m_AnimationSpeed: 3.5000002
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: -9, y: 3, z: 0}
@@ -4123,7 +4125,7 @@ Tilemap:
       m_AnimatedSprites:
       - {fileID: 413118391, guid: 914f6dd52fc1d3f428738756d19d329e, type: 3}
       - {fileID: -414010142, guid: 914f6dd52fc1d3f428738756d19d329e, type: 3}
-      m_AnimationSpeed: 3
+      m_AnimationSpeed: 3.0000002
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: 4, y: 4, z: 0}
@@ -4861,6 +4863,10 @@ PrefabInstance:
       propertyPath: destructibleTiles
       value: 
       objectReference: {fileID: 285353618}
+    - target: {fileID: 2526613175017405581, guid: a0c9407e33176584981a9df061a537bc, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 3797169763190965992, guid: a0c9407e33176584981a9df061a537bc, type: 3}
       propertyPath: m_LocalPosition.x
       value: -3
@@ -4908,6 +4914,10 @@ PrefabInstance:
     - target: {fileID: 4947014498081102474, guid: a0c9407e33176584981a9df061a537bc, type: 3}
       propertyPath: m_Name
       value: Player 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7187687357521038210, guid: a0c9407e33176584981a9df061a537bc, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 7386431164675418775, guid: a0c9407e33176584981a9df061a537bc, type: 3}
       propertyPath: m_Enabled

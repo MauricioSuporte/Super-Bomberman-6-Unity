@@ -237,6 +237,7 @@ MonoBehaviour:
   blastRadiusItemPrefab: {fileID: 6871244334814668705, guid: bdad95ff62d39d44fbcbb3b171a603bb, type: 3}
   speedIncreaseItemPrefab: {fileID: 4209327807185772322, guid: 218d29a1a19c6864e8d870f01df7f91b, type: 3}
   kickBombItemPrefab: {fileID: 6871244334814668705, guid: 8688e05eefe87c143a46fe4f721b8c80, type: 3}
+  punchBombItemPrefab: {fileID: 6871244334814668705, guid: 5d9a731da7e790c45a7a1d311cea3d8c, type: 3}
   destructibleTilemap: {fileID: 285353618}
   nextStageSceneName: Stage_1-2
   groundTilemap: {fileID: 672307155}
