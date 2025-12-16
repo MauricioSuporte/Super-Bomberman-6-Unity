@@ -362,16 +362,7 @@ MonoBehaviour:
   sequenceDuration: 2
   loop: 1
   idle: 0
-  frameOffsets:
-  - {x: 0, y: 0}
-  - {x: 0, y: 0.2}
-  - {x: 0, y: 0.5}
-  - {x: 0, y: 0}
-  - {x: 0, y: 0.2}
-  - {x: 0, y: 0.8}
-  - {x: 0, y: 0}
-  - {x: 0, y: 0}
-  - {x: 0, y: 0.4}
+  frameOffsets: []
   pingPong: 0
   disableOffsetsIfThisObjectHasRigidbody2D: 1
 --- !u!1 &1228606390223914641
@@ -492,16 +483,7 @@ MonoBehaviour:
   sequenceDuration: 2
   loop: 1
   idle: 0
-  frameOffsets:
-  - {x: 0, y: 0}
-  - {x: 0, y: 0.2}
-  - {x: 0, y: 0.5}
-  - {x: 0, y: 0}
-  - {x: 0, y: 0.2}
-  - {x: 0, y: 0.8}
-  - {x: 0, y: 0}
-  - {x: 0, y: 0}
-  - {x: 0, y: 0.4}
+  frameOffsets: []
   pingPong: 0
   disableOffsetsIfThisObjectHasRigidbody2D: 1
 --- !u!1 &1228606390294117669
@@ -622,16 +604,7 @@ MonoBehaviour:
   sequenceDuration: 2
   loop: 1
   idle: 0
-  frameOffsets:
-  - {x: 0, y: 0}
-  - {x: 0, y: 0.2}
-  - {x: 0, y: 0.5}
-  - {x: 0, y: 0}
-  - {x: 0, y: 0.2}
-  - {x: 0, y: 0.8}
-  - {x: 0, y: 0}
-  - {x: 0, y: 0}
-  - {x: 0, y: 0.4}
+  frameOffsets: []
   pingPong: 0
   disableOffsetsIfThisObjectHasRigidbody2D: 1
 --- !u!1 &1228606390696233725
@@ -752,16 +725,7 @@ MonoBehaviour:
   sequenceDuration: 2
   loop: 1
   idle: 0
-  frameOffsets:
-  - {x: 0, y: 0}
-  - {x: 0, y: 0.2}
-  - {x: 0, y: 0.5}
-  - {x: 0, y: 0}
-  - {x: 0, y: 0.2}
-  - {x: 0, y: 0.8}
-  - {x: 0, y: 0}
-  - {x: 0, y: 0}
-  - {x: 0, y: 0.4}
+  frameOffsets: []
   pingPong: 0
   disableOffsetsIfThisObjectHasRigidbody2D: 1
 --- !u!1 &6989680416941828342
