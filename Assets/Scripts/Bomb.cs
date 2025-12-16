@@ -316,30 +316,72 @@ public class Bomb : MonoBehaviour
         Vector2 cur = start;
         int steps = Mathf.Max(1, forwardSteps);
 
-        // 1) AVANÇO PRINCIPAL DO PUNCH (direto)
-        Vector2 target = cur;
-        for (int i = 0; i < steps; i++)
+        bool wrapsDuringForward = false;
         {
-            if (!TryStepWithWrap(target, out var next, out var didWrap))
-                goto FINISH;
-
-            if (didWrap)
+            Vector2 sim = cur;
+            for (int i = 0; i < steps; i++)
             {
-                TeleportTo(next);
-                target = next;
-                continue;
-            }
+                if (!TryStepWithWrap(sim, out var n, out var didWrap))
+                    break;
 
-            target = next;
+                if (didWrap)
+                {
+                    wrapsDuringForward = true;
+                    break;
+                }
+
+                sim = n;
+            }
         }
 
-        if (HasExploded)
-            goto FINISH;
+        if (!wrapsDuringForward)
+        {
+            Vector2 target = cur;
+            for (int i = 0; i < steps; i++)
+            {
+                if (!TryStepWithWrap(target, out var n, out var didWrap))
+                    goto FINISH;
 
-        yield return PunchArcSegmentFixed(cur, target, duration, arcHeight);
-        cur = target;
+                if (didWrap)
+                {
+                    TeleportTo(n);
+                    target = n;
+                    continue;
+                }
 
-        // 2) BOUNCE APENAS SE O TILE FINAL FOR INVÁLIDO
+                target = n;
+            }
+
+            if (HasExploded)
+                goto FINISH;
+
+            yield return PunchArcSegmentFixed(cur, target, duration, arcHeight);
+            cur = target;
+        }
+        else
+        {
+            float segDuration = duration / Mathf.Max(1, steps);
+
+            for (int i = 0; i < steps; i++)
+            {
+                if (HasExploded)
+                    goto FINISH;
+
+                if (!TryStepWithWrap(cur, out var next, out var didWrap))
+                    goto FINISH;
+
+                if (didWrap)
+                {
+                    TeleportTo(next);
+                    cur = next;
+                    continue;
+                }
+
+                yield return PunchArcSegmentFixed(cur, next, segDuration, arcHeight);
+                cur = next;
+            }
+        }
+
         for (int b = 0; b < Mathf.Max(0, maxExtraBounces); b++)
         {
             if (HasExploded)
