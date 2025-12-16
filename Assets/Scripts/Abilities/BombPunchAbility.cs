@@ -64,6 +64,13 @@ public class BombPunchAbility : MonoBehaviour, IPlayerAbility
         if (movement == null || movement.isDead)
             return;
 
+        if (StageIntroTransition.Instance != null &&
+            (StageIntroTransition.Instance.IntroRunning || StageIntroTransition.Instance.EndingRunning))
+            return;
+
+        if (movement.InputLocked)
+            return;
+
         Vector2 moveDir = movement.Direction;
         if (moveDir != Vector2.zero)
             lastFacingDir = moveDir;

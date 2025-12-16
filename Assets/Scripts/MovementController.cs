@@ -52,6 +52,7 @@ public class MovementController : MonoBehaviour, IKillable
     protected bool explosionInvulnerable;
 
     public bool isDead;
+    public bool InputLocked => inputLocked;
 
     private const float CenterEpsilon = 0.01f;
     private float SlideDeadZone => tileSize * 0.25f;
@@ -417,8 +418,10 @@ public class MovementController : MonoBehaviour, IKillable
         inputLocked = true;
 
         if (abilitySystem != null)
+        {
             abilitySystem.Disable(BombKickAbility.AbilityId);
             abilitySystem.Disable(BombPunchAbility.AbilityId);
+        }
 
         if (bombController != null)
             bombController.enabled = false;

@@ -62,6 +62,7 @@ public class StageIntroTransition : MonoBehaviour
 
     public bool IntroRunning { get; private set; }
     public bool EndingRunning { get; private set; }
+    public bool FlashRunning { get; private set; }
 
     static bool hasPlayedLogoIntro;
     static bool skipTitleNextRound;
@@ -410,95 +411,104 @@ public class StageIntroTransition : MonoBehaviour
         if (fadeImage == null)
             yield break;
 
-        fadeImage.gameObject.SetActive(true);
+        FlashRunning = true;
 
-        Color baseColor = fadeImage.color;
-        float blackHold = 0.5f;
-
-        for (int i = 0; i < cycles; i++)
+        try
         {
-            float t = 0f;
-            while (t < halfDuration)
+            fadeImage.gameObject.SetActive(true);
+
+            Color baseColor = fadeImage.color;
+            float blackHold = 0.5f;
+
+            for (int i = 0; i < cycles; i++)
             {
-                if (GamePauseController.IsPaused)
+                float t = 0f;
+                while (t < halfDuration)
                 {
-                    yield return null;
-                    continue;
-                }
-
-                t += Time.deltaTime;
-                float a = Mathf.Clamp01(t / halfDuration);
-                fadeImage.color = new Color(baseColor.r, baseColor.g, baseColor.b, a);
-                yield return null;
-            }
-
-            fadeImage.color = new Color(baseColor.r, baseColor.g, baseColor.b, 1f);
-
-            if (mechaBossSequence == null)
-                mechaBossSequence = FindFirstObjectByType<MechaBossSequence>();
-
-            if (mechaBossSequence != null)
-            {
-                bool empty = (i == cycles - 1) || (i % 2 == 0);
-                mechaBossSequence.SetStandsEmpty(empty);
-            }
-
-            if (i == cycles - 1)
-            {
-                var playerGo = GameObject.FindGameObjectWithTag("Player");
-                if (playerGo != null &&
-                    playerGo.TryGetComponent<MovementController>(out var playerCtrl))
-                {
-                    Vector2 targetPos = new(-3f, -6f);
-
-                    if (playerCtrl.Rigidbody != null)
+                    if (GamePauseController.IsPaused)
                     {
-                        playerCtrl.Rigidbody.position = targetPos;
-                        playerCtrl.Rigidbody.linearVelocity = Vector2.zero;
-                    }
-                    else
-                    {
-                        playerCtrl.transform.position = targetPos;
+                        yield return null;
+                        continue;
                     }
 
-                    playerCtrl.ForceIdleUp();
-                }
-            }
-
-            float hold = 0f;
-            while (hold < blackHold)
-            {
-                if (GamePauseController.IsPaused)
-                {
+                    t += Time.deltaTime;
+                    float a = Mathf.Clamp01(t / halfDuration);
+                    fadeImage.color = new Color(baseColor.r, baseColor.g, baseColor.b, a);
                     yield return null;
-                    continue;
                 }
 
-                hold += Time.deltaTime;
-                yield return null;
-            }
+                fadeImage.color = new Color(baseColor.r, baseColor.g, baseColor.b, 1f);
 
-            t = 0f;
-            while (t < halfDuration)
-            {
-                if (GamePauseController.IsPaused)
+                if (mechaBossSequence == null)
+                    mechaBossSequence = FindFirstObjectByType<MechaBossSequence>();
+
+                if (mechaBossSequence != null)
                 {
-                    yield return null;
-                    continue;
+                    bool empty = (i == cycles - 1) || (i % 2 == 0);
+                    mechaBossSequence.SetStandsEmpty(empty);
                 }
 
-                t += Time.deltaTime;
-                float a = 1f - Mathf.Clamp01(t / halfDuration);
-                fadeImage.color = new Color(baseColor.r, baseColor.g, baseColor.b, a);
+                if (i == cycles - 1)
+                {
+                    var playerGo = GameObject.FindGameObjectWithTag("Player");
+                    if (playerGo != null &&
+                        playerGo.TryGetComponent<MovementController>(out var playerCtrl))
+                    {
+                        Vector2 targetPos = new(-3f, -6f);
+
+                        if (playerCtrl.Rigidbody != null)
+                        {
+                            playerCtrl.Rigidbody.position = targetPos;
+                            playerCtrl.Rigidbody.linearVelocity = Vector2.zero;
+                        }
+                        else
+                        {
+                            playerCtrl.transform.position = targetPos;
+                        }
+
+                        playerCtrl.ForceIdleUp();
+                    }
+                }
+
+                float hold = 0f;
+                while (hold < blackHold)
+                {
+                    if (GamePauseController.IsPaused)
+                    {
+                        yield return null;
+                        continue;
+                    }
+
+                    hold += Time.deltaTime;
+                    yield return null;
+                }
+
+                t = 0f;
+                while (t < halfDuration)
+                {
+                    if (GamePauseController.IsPaused)
+                    {
+                        yield return null;
+                        continue;
+                    }
+
+                    t += Time.deltaTime;
+                    float a = 1f - Mathf.Clamp01(t / halfDuration);
+                    fadeImage.color = new Color(baseColor.r, baseColor.g, baseColor.b, a);
+                    yield return null;
+                }
+
+                fadeImage.color = new Color(baseColor.r, baseColor.g, baseColor.b, 0f);
                 yield return null;
             }
 
             fadeImage.color = new Color(baseColor.r, baseColor.g, baseColor.b, 0f);
-            yield return null;
+            fadeImage.gameObject.SetActive(false);
         }
-
-        fadeImage.color = new Color(baseColor.r, baseColor.g, baseColor.b, 0f);
-        fadeImage.gameObject.SetActive(false);
+        finally
+        {
+            FlashRunning = false;
+        }
     }
 
     public void StartEndingScreenSequence()
