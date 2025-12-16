@@ -2,6 +2,7 @@
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
+[RequireComponent(typeof(MovementController))]
 public class BombController : MonoBehaviour
 {
     [Header("Input")]
@@ -48,6 +49,17 @@ public class BombController : MonoBehaviour
 
     private void Update()
     {
+        if (ClownMaskBoss.BossIntroRunning)
+            return;
+
+        if (StageIntroTransition.Instance != null &&
+            (StageIntroTransition.Instance.IntroRunning || StageIntroTransition.Instance.EndingRunning))
+            return;
+
+        var movement = GetComponent<MovementController>();
+        if (movement != null && movement.InputLocked)
+            return;
+
         if (GamePauseController.IsPaused)
             return;
 

@@ -61,6 +61,9 @@ public class BombPunchAbility : MonoBehaviour, IPlayerAbility
         if (GamePauseController.IsPaused)
             return;
 
+        if (ClownMaskBoss.BossIntroRunning)
+            return;
+
         if (movement == null || movement.isDead)
             return;
 
@@ -151,6 +154,7 @@ public class BombPunchAbility : MonoBehaviour, IPlayerAbility
         bool globalLock =
             GamePauseController.IsPaused ||
             MechaBossSequence.MechaIntroRunning ||
+            ClownMaskBoss.BossIntroRunning ||
             (StageIntroTransition.Instance != null &&
              (StageIntroTransition.Instance.IntroRunning || StageIntroTransition.Instance.EndingRunning));
 
@@ -216,6 +220,33 @@ public class BombPunchAbility : MonoBehaviour, IPlayerAbility
         {
             StopCoroutine(punchLockRoutine);
             punchLockRoutine = null;
+        }
+    }
+
+    public void ForceResetPunchSprites()
+    {
+        if (punchLockRoutine != null)
+        {
+            StopCoroutine(punchLockRoutine);
+            punchLockRoutine = null;
+        }
+
+        SetPunchSprites(false);
+
+        if (movement == null)
+            return;
+
+        SetMoveSprites(false);
+
+        var sprite = GetMoveSprite(lastFacingDir);
+        if (sprite == null) sprite = movement.spriteRendererDown;
+
+        if (sprite != null)
+        {
+            sprite.enabled = true;
+            sprite.idle = true;
+            sprite.loop = true;
+            sprite.RefreshFrame();
         }
     }
 }

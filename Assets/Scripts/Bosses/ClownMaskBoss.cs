@@ -4,8 +4,11 @@ using UnityEngine;
 [RequireComponent(typeof(CharacterHealth))]
 [RequireComponent(typeof(ClownMaskMovement))]
 [RequireComponent(typeof(AudioSource))]
+[RequireComponent(typeof(Collider2D))]
+[RequireComponent(typeof(Rigidbody2D))]
 public class ClownMaskBoss : MonoBehaviour, IKillable
 {
+    private static readonly WaitForSeconds _waitForSeconds1 = new(1f);
     [Header("References")]
     public CharacterHealth characterHealth;
     public ClownMaskMovement clownMovement;
@@ -23,9 +26,9 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
     public float introDuration = 2f;
 
     [Header("Boss Intro Setup")]
-    public Vector2 bossIntroPosition = new Vector2(-1f, 2f);
+    public Vector2 bossIntroPosition = new(-1f, 2f);
     public float delayAfterStageIntroToShowPlayer = 1f;
-    public Vector2 playerIntroPosition = new Vector2(-3f, -6f);
+    public Vector2 playerIntroPosition = new(-3f, -6f);
     public float introWaitAfterPlayerShown = 1f;
 
     [Header("Spotlight")]
@@ -66,9 +69,10 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
     public AudioClip deathExplosionSfx;
     public float deathExplosionSfxInterval = 0.12f;
     [Range(0f, 1f)] public float deathExplosionSfxVolume = 1f;
-    public Vector2 deathExplosionPitchRange = new Vector2(0.95f, 1.05f);
+    public Vector2 deathExplosionPitchRange = new(0.95f, 1.05f);
     public bool deathSfxUseTempAudioObject = true;
     public float deathSfxSpatialBlend = 0f;
+    public static bool BossIntroRunning { get; private set; }
 
     bool isDead;
     bool introFinished;
@@ -183,9 +187,12 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
 
     IEnumerator IntroSequence()
     {
+        BossIntroRunning = true;
+
         ResetBossState();
         MoveBossToIntroPosition();
 
+        EnsurePlayerRefs();
         LockPlayer(true);
         SetPlayerHidden(true);
 
@@ -193,11 +200,17 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
                StageIntroTransition.Instance.IntroRunning)
             yield return null;
 
+        EnsurePlayerRefs();
+        LockPlayer(true);
+        SetPlayerHidden(true);
+
         float waitAfterStageIntro = Mathf.Max(0f, delayAfterStageIntroToShowPlayer);
         if (waitAfterStageIntro > 0f)
             yield return new WaitForSeconds(waitAfterStageIntro);
 
+        EnsurePlayerRefs();
         SpawnPlayerForBossIntro();
+        LockPlayer(true);
         ShowPlayerIdleUpOnly();
 
         if (StageIntroTransition.Instance != null)
@@ -213,13 +226,13 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
                 StageIntroTransition.Instance.spotlightFadeInDuration
             );
 
-        yield return new WaitForSeconds(1f);
+        yield return _waitForSeconds1;
 
         SpawnBossForIntroOnly();
 
         if (StageIntroTransition.Instance != null)
             StageIntroTransition.Instance.SetSpotlightWorld(
-                new Vector3(bossIntroPosition.x, bossIntroPosition.y, 0f),
+                bossIntroPosition,
                 introSpotlightRadiusTiles,
                 introDarknessAlpha,
                 introSpotlightSoftnessTiles
@@ -248,15 +261,14 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
             StageIntroTransition.Instance.DisableSpotlight();
 
         EnableOnly(idleRenderer);
-
         EnableBossCombat();
 
+        RestorePlayerAfterBossIntro();
         LockPlayer(false);
-        SetPlayerHidden(false);
-        if (player != null)
-            player.ForceIdleUp();
 
         introFinished = true;
+        BossIntroRunning = false;
+
         specialRoutine = StartCoroutine(SpecialLoop());
     }
 
@@ -345,21 +357,74 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
         }
 
         player.ForceIdleUp();
+
+        if (playerBomb != null)
+            playerBomb.enabled = false;
+    }
+
+    void RestorePlayerAfterBossIntro()
+    {
+        EnsurePlayerRefs();
+
+        if (player == null)
+            return;
+
+        SetPlayerHidden(false);
+
+        if (player.TryGetComponent<BombPunchAbility>(out var punch))
+            punch.ForceResetPunchSprites();
+
+        DisableAllPlayerSpritesExcept(player.spriteRendererUp);
+
+        if (player.spriteRendererUp != null)
+        {
+            player.spriteRendererUp.enabled = true;
+            player.spriteRendererUp.idle = true;
+            player.spriteRendererUp.loop = true;
+            player.spriteRendererUp.RefreshFrame();
+
+            var upSr = player.spriteRendererUp.GetComponent<SpriteRenderer>();
+            if (upSr != null)
+                upSr.enabled = true;
+        }
+
+        player.ForceIdleUp();
+    }
+
+    void DisableAllPlayerSpritesExcept(AnimatedSpriteRenderer keep)
+    {
+        if (player == null) return;
+
+        var anims = player.GetComponentsInChildren<AnimatedSpriteRenderer>(true);
+        for (int i = 0; i < anims.Length; i++)
+            if (anims[i] != null)
+                anims[i].enabled = (anims[i] == keep);
+
+        var srs = player.GetComponentsInChildren<SpriteRenderer>(true);
+        for (int i = 0; i < srs.Length; i++)
+            if (srs[i] != null)
+                srs[i].enabled = false;
+
+        if (keep != null)
+        {
+            if (keep.TryGetComponent<SpriteRenderer>(out var sr))
+                sr.enabled = true;
+        }
     }
 
     void SetPlayerHidden(bool hidden)
     {
         if (player == null) return;
 
-        var srs = player.GetComponentsInChildren<SpriteRenderer>(true);
-        for (int i = 0; i < srs.Length; i++)
-            if (srs[i] != null)
-                srs[i].enabled = !hidden;
-
         var anims = player.GetComponentsInChildren<AnimatedSpriteRenderer>(true);
         for (int i = 0; i < anims.Length; i++)
             if (anims[i] != null)
                 anims[i].enabled = !hidden;
+
+        var srs = player.GetComponentsInChildren<SpriteRenderer>(true);
+        for (int i = 0; i < srs.Length; i++)
+            if (srs[i] != null)
+                srs[i].enabled = !hidden;
     }
 
     void ShowPlayerIdleUpOnly()
@@ -712,7 +777,7 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
 
         if (deathSfxUseTempAudioObject)
         {
-            GameObject go = new GameObject("ClownDeathSfx");
+            GameObject go = new("ClownDeathSfx");
             go.transform.position = pos;
 
             AudioSource s = go.AddComponent<AudioSource>();
@@ -804,8 +869,7 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
 
     void SetBossSpriteRenderersVisible(bool visible)
     {
-        if (bossSpriteRenderers == null)
-            bossSpriteRenderers = GetComponentsInChildren<SpriteRenderer>(true);
+        bossSpriteRenderers ??= GetComponentsInChildren<SpriteRenderer>(true);
 
         for (int i = 0; i < bossSpriteRenderers.Length; i++)
         {
@@ -813,5 +877,21 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
             if (sr != null)
                 sr.enabled = visible;
         }
+    }
+
+    void EnsurePlayerRefs()
+    {
+        if (player != null && playerBomb != null)
+            return;
+
+        var go = GameObject.FindGameObjectWithTag("Player");
+        if (go == null)
+            return;
+
+        if (player == null)
+            player = go.GetComponent<MovementController>();
+
+        if (playerBomb == null)
+            playerBomb = go.GetComponent<BombController>();
     }
 }
