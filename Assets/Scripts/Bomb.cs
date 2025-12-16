@@ -46,6 +46,8 @@ public class Bomb : MonoBehaviour
 
     [Header("Stage Wrap")]
     [SerializeField] private Tilemap stageBoundsTilemap;
+    private bool wrapBoundsReady;
+    private int wrapMinX, wrapMaxX, wrapMinY, wrapMaxY;
 
     private bool stageBoundsReady;
     private BoundsInt stageCellBounds;
@@ -118,16 +120,19 @@ public class Bomb : MonoBehaviour
 
     private Vector2 WrapToStage(Vector2 worldPos)
     {
-        if (stageBoundsTilemap == null)
+        EnsureStageBounds();
+
+        if (!stageBoundsReady)
             return worldPos;
 
-        var bounds = stageBoundsTilemap.cellBounds;
-        Vector3Int cell = stageBoundsTilemap.WorldToCell(worldPos);
+        Vector3Int cell = stageBoundsTilemap != null
+            ? stageBoundsTilemap.WorldToCell(worldPos)
+            : new Vector3Int(Mathf.RoundToInt(worldPos.x / kickTileSize), Mathf.RoundToInt(worldPos.y / kickTileSize), 0);
 
-        int minX = bounds.xMin;
-        int maxX = bounds.xMax - 1;
-        int minY = bounds.yMin;
-        int maxY = bounds.yMax - 1;
+        int minX = wrapBoundsReady ? wrapMinX : stageCellBounds.xMin;
+        int maxX = wrapBoundsReady ? wrapMaxX : (stageCellBounds.xMax - 1);
+        int minY = wrapBoundsReady ? wrapMinY : stageCellBounds.yMin;
+        int maxY = wrapBoundsReady ? wrapMaxY : (stageCellBounds.yMax - 1);
 
         if (cell.x < minX) cell.x = maxX;
         else if (cell.x > maxX) cell.x = minX;
@@ -135,7 +140,13 @@ public class Bomb : MonoBehaviour
         if (cell.y < minY) cell.y = maxY;
         else if (cell.y > maxY) cell.y = minY;
 
-        Vector3 center = stageBoundsTilemap.GetCellCenterWorld(cell);
+        Vector3 center;
+
+        if (stageBoundsTilemap != null)
+            center = stageBoundsTilemap.GetCellCenterWorld(cell);
+        else
+            center = new Vector3(cell.x * kickTileSize, cell.y * kickTileSize, transform.position.z);
+
         center.z = transform.position.z;
         return (Vector2)center;
     }
@@ -305,59 +316,30 @@ public class Bomb : MonoBehaviour
         Vector2 cur = start;
         int steps = Mathf.Max(1, forwardSteps);
 
-        bool wrapsDuringForward = false;
+        // 1) AVANÇO PRINCIPAL DO PUNCH (direto)
+        Vector2 target = cur;
+        for (int i = 0; i < steps; i++)
         {
-            Vector2 sim = start;
-            int done = 0;
-            while (done < steps)
+            if (!TryStepWithWrap(target, out var next, out var didWrap))
+                goto FINISH;
+
+            if (didWrap)
             {
-                if (!TryStepWithWrap(sim, out var n, out var didWrap))
-                    break;
-
-                if (didWrap)
-                {
-                    wrapsDuringForward = true;
-                    break;
-                }
-
-                sim = n;
-                done++;
+                TeleportTo(next);
+                target = next;
+                continue;
             }
+
+            target = next;
         }
 
-        if (!wrapsDuringForward)
-        {
-            Vector2 target = start + kickTileSize * steps * kickDirection;
-            yield return PunchArcSegmentFixed(start, target, duration, arcHeight);
-            cur = target;
-        }
-        else
-        {
-            int done = 0;
-            while (done < steps)
-            {
-                if (HasExploded)
-                    goto FINISH;
+        if (HasExploded)
+            goto FINISH;
 
-                if (!TryStepWithWrap(cur, out var next, out var didWrap))
-                    goto FINISH;
+        yield return PunchArcSegmentFixed(cur, target, duration, arcHeight);
+        cur = target;
 
-                if (didWrap)
-                {
-                    TeleportTo(next);
-                    cur = next;
-                    continue;
-                }
-
-                if (audioSource != null && bounceSfx != null)
-                    audioSource.PlayOneShot(bounceSfx, bounceSfxVolume);
-
-                yield return PunchArcSegmentFixed(cur, next, duration, arcHeight);
-                cur = next;
-                done++;
-            }
-        }
-
+        // 2) BOUNCE APENAS SE O TILE FINAL FOR INVÁLIDO
         for (int b = 0; b < Mathf.Max(0, maxExtraBounces); b++)
         {
             if (HasExploded)
@@ -415,6 +397,7 @@ public class Bomb : MonoBehaviour
             stageBoundsTilemap.CompressBounds();
             stageCellBounds = stageBoundsTilemap.cellBounds;
             stageBoundsReady = true;
+            ComputeWrapBoundsFromIndestructible();
             return;
         }
 
@@ -447,6 +430,9 @@ public class Bomb : MonoBehaviour
 
             stageCellBounds = new BoundsInt(xMin, yMin, 0, xMax - xMin, yMax - yMin, 1);
             stageBoundsReady = true;
+
+            stageBoundsTilemap = ind;
+            ComputeWrapBoundsFromIndestructible();
             return;
         }
 
@@ -455,7 +441,90 @@ public class Bomb : MonoBehaviour
         {
             stageCellBounds = fallback.cellBounds;
             stageBoundsReady = true;
+
+            if (stageBoundsTilemap == null && ind != null)
+                stageBoundsTilemap = ind;
+
+            ComputeWrapBoundsFromIndestructible();
         }
+    }
+
+    private void ComputeWrapBoundsFromIndestructible()
+    {
+        wrapBoundsReady = false;
+
+        if (stageBoundsTilemap == null)
+            return;
+
+        var outer = stageCellBounds;
+
+        int outerMinX = outer.xMin;
+        int outerMaxX = outer.xMax - 1;
+        int outerMinY = outer.yMin;
+        int outerMaxY = outer.yMax - 1;
+
+        bool RowFull(int y)
+        {
+            for (int x = outerMinX; x <= outerMaxX; x++)
+            {
+                if (stageBoundsTilemap.GetTile(new Vector3Int(x, y, 0)) == null)
+                    return false;
+            }
+            return true;
+        }
+
+        bool ColFull(int x)
+        {
+            for (int y = outerMinY; y <= outerMaxY; y++)
+            {
+                if (stageBoundsTilemap.GetTile(new Vector3Int(x, y, 0)) == null)
+                    return false;
+            }
+            return true;
+        }
+
+        int top = 0;
+        for (int y = outerMaxY; y >= outerMinY; y--)
+        {
+            if (!RowFull(y)) break;
+            top++;
+        }
+
+        int bottom = 0;
+        for (int y = outerMinY; y <= outerMaxY; y++)
+        {
+            if (!RowFull(y)) break;
+            bottom++;
+        }
+
+        int left = 0;
+        for (int x = outerMinX; x <= outerMaxX; x++)
+        {
+            if (!ColFull(x)) break;
+            left++;
+        }
+
+        int right = 0;
+        for (int x = outerMaxX; x >= outerMinX; x--)
+        {
+            if (!ColFull(x)) break;
+            right++;
+        }
+
+        int minX = outerMinX + left;
+        int maxX = outerMaxX - right;
+        int minY = outerMinY + bottom;
+        int maxY = outerMaxY - top;
+
+        if (minX > maxX || minY > maxY)
+            return;
+
+        wrapMinX = minX;
+        wrapMaxX = maxX;
+        wrapMinY = minY;
+        wrapMaxY = maxY;
+
+        wrapBoundsReady = true;
     }
 
     private bool TryStepWithWrap(Vector2 from, out Vector2 next, out bool didWrap)
@@ -486,22 +555,23 @@ public class Bomb : MonoBehaviour
         if (cell.y < minY) { cell.y = maxY; didWrap = true; }
         else if (cell.y > maxY) { cell.y = minY; didWrap = true; }
 
-        if (didWrap)
+        if (!didWrap)
         {
-            if (stageBoundsTilemap != null)
-            {
-                Vector3 c = stageBoundsTilemap.GetCellCenterWorld(cell);
-                c.z = transform.position.z;
-                next = (Vector2)c;
-            }
-            else
-            {
-                next = new Vector2(cell.x * kickTileSize, cell.y * kickTileSize);
-            }
+            next = raw;
             return true;
         }
 
-        next = raw;
+        if (stageBoundsTilemap != null)
+        {
+            Vector3 c = stageBoundsTilemap.GetCellCenterWorld(cell);
+            c.z = transform.position.z;
+            next = (Vector2)c;
+        }
+        else
+        {
+            next = new Vector2(cell.x * kickTileSize, cell.y * kickTileSize);
+        }
+
         return true;
     }
 
