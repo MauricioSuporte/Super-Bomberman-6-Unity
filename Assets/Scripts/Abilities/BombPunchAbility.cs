@@ -100,7 +100,7 @@ public class BombPunchAbility : MonoBehaviour, IPlayerAbility
         if (bomb == null || !bomb.CanBePunched)
             return;
 
-        LayerMask obstacles = movement.obstacleMask | LayerMask.GetMask("Enemy", "Bomb");
+        LayerMask obstacles = movement.obstacleMask | LayerMask.GetMask("Enemy", "Bomb", "Player");
 
         bomb.StartPunch(
             dir,

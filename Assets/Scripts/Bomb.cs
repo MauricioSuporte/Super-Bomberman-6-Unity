@@ -25,6 +25,9 @@ public class Bomb : MonoBehaviour
     public AudioClip punchSfx;
     [Range(0f, 1f)] public float punchSfxVolume = 1f;
 
+    public AudioClip bounceSfx;
+    [Range(0f, 1f)] public float bounceSfxVolume = 1f;
+
     [Header("Kick")]
     public float kickSpeed = 9f;
 
@@ -54,6 +57,9 @@ public class Bomb : MonoBehaviour
     private readonly HashSet<Collider2D> charactersInside = new();
     private bool chainExplosionScheduled;
 
+    private bool fusePaused;
+    private float fusePauseStartedAt;
+
     private static readonly WaitForFixedUpdate waitFixed = new WaitForFixedUpdate();
 
     public bool IsSolid => bombCollider != null && !bombCollider.isTrigger;
@@ -80,6 +86,27 @@ public class Bomb : MonoBehaviour
         }
 
         lastPos = rb.position;
+    }
+
+    private void PauseFuse()
+    {
+        if (fusePaused)
+            return;
+
+        fusePaused = true;
+        fusePauseStartedAt = Time.time;
+    }
+
+    private void ResumeFuse()
+    {
+        if (!fusePaused)
+            return;
+
+        float paused = Time.time - fusePauseStartedAt;
+        PlacedTime += paused;
+
+        fusePaused = false;
+        fusePauseStartedAt = 0f;
     }
 
     private void RecalculateCharactersInsideAt(Vector2 worldPos)
@@ -111,6 +138,13 @@ public class Bomb : MonoBehaviour
 
         Collider2D hit = Physics2D.OverlapBox(pos, Vector2.one * 0.6f, 0f, bombMask);
         return hit != null && hit.gameObject != gameObject;
+    }
+
+    private bool TileHasCharacter(Vector2 pos)
+    {
+        int charMask = LayerMask.GetMask("Player", "Enemy");
+        Collider2D hit = Physics2D.OverlapBox(pos, Vector2.one * (kickTileSize * 0.6f), 0f, charMask);
+        return hit != null;
     }
 
     private bool IsKickBlocked(Vector2 target)
@@ -179,6 +213,9 @@ public class Bomb : MonoBehaviour
         if (TileHasBomb(target))
             return true;
 
+        if (TileHasCharacter(target))
+            return true;
+
         if (kickDestructibleTilemap != null)
         {
             Vector3Int cell = kickDestructibleTilemap.WorldToCell(target);
@@ -186,6 +223,25 @@ public class Bomb : MonoBehaviour
                 return true;
         }
 
+        return false;
+    }
+
+    private bool TryFindBounceLanding(Vector2 startLanding, Vector2 dir, int maxBounces, out Vector2 finalLanding)
+    {
+        Vector2 candidate = startLanding;
+
+        for (int i = 0; i <= Mathf.Max(0, maxBounces); i++)
+        {
+            if (!IsPunchLandingBlocked(candidate))
+            {
+                finalLanding = candidate;
+                return true;
+            }
+
+            candidate += dir * kickTileSize;
+        }
+
+        finalLanding = startLanding;
         return false;
     }
 
@@ -197,16 +253,16 @@ public class Bomb : MonoBehaviour
         kickDirection = direction.normalized;
         kickTileSize = tileSize;
 
-        kickObstacleMask = obstacleMask | LayerMask.GetMask("Enemy");
+        kickObstacleMask = obstacleMask | LayerMask.GetMask("Enemy", "Player");
         kickDestructibleTilemap = destructibleTilemap;
 
         Vector2 origin = rb.position;
         origin.x = Mathf.Round(origin.x / tileSize) * tileSize;
         origin.y = Mathf.Round(origin.y / tileSize) * tileSize;
 
-        Vector2 landing = origin + kickDirection * kickTileSize * Mathf.Max(1, distanceTiles);
+        Vector2 initialLanding = origin + kickDirection * kickTileSize * Mathf.Max(1, distanceTiles);
 
-        if (IsPunchLandingBlocked(landing))
+        if (!TryFindBounceLanding(initialLanding, kickDirection, 40, out var finalLanding))
             return false;
 
         currentTileCenter = origin;
@@ -225,17 +281,70 @@ public class Bomb : MonoBehaviour
         charactersInside.Clear();
         bombCollider.isTrigger = true;
 
+        PauseFuse();
+
         if (audioSource != null && punchSfx != null)
             audioSource.PlayOneShot(punchSfx, punchSfxVolume);
 
         if (anim != null)
             anim.SetFrozen(true);
 
-        punchRoutine = StartCoroutine(PunchRoutineFixed(origin, landing, punchDuration, punchArcHeight));
+        punchRoutine = StartCoroutine(PunchBounceRoutineFixed(origin, initialLanding, finalLanding, punchDuration, punchArcHeight));
         return true;
     }
 
-    private IEnumerator PunchRoutineFixed(Vector2 start, Vector2 end, float duration, float arcHeight)
+    private IEnumerator PunchBounceRoutineFixed(
+        Vector2 start,
+        Vector2 initialLanding,
+        Vector2 finalLanding,
+        float duration,
+        float arcHeight)
+    {
+        Vector2 segStart = start;
+        Vector2 segTarget = initialLanding;
+
+        while (true)
+        {
+            yield return PunchArcSegmentFixed(segStart, segTarget, duration, arcHeight);
+
+            if (HasExploded)
+                break;
+
+            if (segTarget == finalLanding)
+                break;
+
+            segStart = segTarget;
+            segTarget = segTarget + kickDirection * kickTileSize;
+
+            if (audioSource != null && bounceSfx != null)
+                audioSource.PlayOneShot(bounceSfx, bounceSfxVolume);
+        }
+
+        Vector2 end = finalLanding;
+
+        rb.position = end;
+        transform.position = end;
+        lastPos = end;
+
+        isPunched = false;
+        punchRoutine = null;
+
+        ResumeFuse();
+
+        if (!HasExploded)
+        {
+            RecalculateCharactersInsideAt(end);
+            bombCollider.isTrigger = charactersInside.Count > 0;
+        }
+
+        if (anim != null)
+        {
+            anim.SetFrozen(false);
+            anim.RefreshFrame();
+        }
+    }
+
+    private IEnumerator PunchArcSegmentFixed(Vector2 start, Vector2 end, float duration, float arcHeight)
     {
         float t = 0f;
         float inv = 1f / Mathf.Max(0.0001f, duration);
@@ -243,7 +352,7 @@ public class Bomb : MonoBehaviour
         while (t < duration)
         {
             if (HasExploded)
-                break;
+                yield break;
 
             t += Time.fixedDeltaTime;
             float a = Mathf.Clamp01(t * inv);
@@ -261,21 +370,6 @@ public class Bomb : MonoBehaviour
         rb.position = end;
         transform.position = end;
         lastPos = end;
-
-        isPunched = false;
-        punchRoutine = null;
-
-        if (!HasExploded)
-        {
-            RecalculateCharactersInsideAt(end);
-            bombCollider.isTrigger = charactersInside.Count > 0;
-        }
-
-        if (anim != null)
-        {
-            anim.SetFrozen(false);
-            anim.RefreshFrame();
-        }
     }
 
     public void Initialize(BombController owner)
@@ -399,6 +493,13 @@ public class Bomb : MonoBehaviour
 
         if (layer == LayerMask.NameToLayer("Explosion"))
         {
+            if (isPunched)
+            {
+                if (owner != null)
+                    owner.ExplodeBomb(gameObject);
+                return;
+            }
+
             if (!chainExplosionScheduled && owner != null)
             {
                 chainExplosionScheduled = true;

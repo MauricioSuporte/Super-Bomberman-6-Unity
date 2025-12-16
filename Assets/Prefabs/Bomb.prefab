@@ -197,6 +197,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   punchSfx: {fileID: 8300000, guid: eb9a01003738e194f8ec5cd63776f014, type: 3}
+  punchSfxVolume: 1
+  bounceSfx: {fileID: 8300000, guid: 691a993233a939b4d8601560e159cf0a, type: 3}
+  bounceSfxVolume: 1
   kickSpeed: 7.5
   chainStepDelay: 0.1
   punchDuration: 0.22
