@@ -138,6 +138,8 @@ public class BombPunchAbility : MonoBehaviour, IPlayerAbility
             activePunchSprite.enabled = true;
             activePunchSprite.idle = false;
             activePunchSprite.loop = false;
+            activePunchSprite.CurrentFrame = 0;
+            activePunchSprite.RefreshFrame();
         }
 
         yield return new WaitForSeconds(punchLockTime);
