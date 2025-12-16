@@ -13,10 +13,16 @@ public class Bomb : MonoBehaviour
     public BombController Owner => owner;
 
     public bool HasExploded { get; private set; }
-    public bool IsBeingKicked => isKicked;
-
     public float PlacedTime { get; private set; }
 
+    public bool IsBeingKicked => isKicked;
+    public bool IsBeingPunched => isPunched;
+
+    public bool IsSolid => bombCollider != null && !bombCollider.isTrigger;
+    public bool CanBeKicked => !HasExploded && !isKicked && IsSolid && charactersInside.Count == 0;
+    public bool CanBePunched => !HasExploded && !isKicked && !isPunched && IsSolid && charactersInside.Count == 0;
+
+    [Header("References")]
     private Collider2D bombCollider;
     private Rigidbody2D rb;
     private AnimatedSpriteRenderer anim;
@@ -25,39 +31,36 @@ public class Bomb : MonoBehaviour
     [Header("SFX")]
     public AudioClip punchSfx;
     [Range(0f, 1f)] public float punchSfxVolume = 1f;
-
     public AudioClip bounceSfx;
     [Range(0f, 1f)] public float bounceSfxVolume = 1f;
 
     [Header("Kick")]
     public float kickSpeed = 9f;
 
-    [Header("Chain Explosion")]
-    public float chainStepDelay = 0.1f;
-
     [Header("Punch")]
     public float punchDuration = 0.22f;
     public float punchArcHeight = 0.9f;
 
+    [Header("Chain Explosion")]
+    public float chainStepDelay = 0.1f;
+
     [Header("Stage Wrap")]
     [SerializeField] private Tilemap stageBoundsTilemap;
-
-    private bool isPunched;
-    public bool IsBeingPunched => isPunched;
-
-    public bool CanBePunched => !HasExploded && !isKicked && !isPunched && IsSolid && charactersInside.Count == 0;
-
-    private Coroutine punchRoutine;
 
     private bool stageBoundsReady;
     private BoundsInt stageCellBounds;
 
     private bool isKicked;
+    private bool isPunched;
+
     private Vector2 kickDirection;
     private float kickTileSize = 1f;
     private LayerMask kickObstacleMask;
     private Tilemap kickDestructibleTilemap;
+
     private Coroutine kickRoutine;
+    private Coroutine punchRoutine;
+
     private Vector2 currentTileCenter;
     private Vector2 lastPos;
 
@@ -68,9 +71,6 @@ public class Bomb : MonoBehaviour
     private float fusePauseStartedAt;
 
     private static readonly WaitForFixedUpdate waitFixed = new();
-
-    public bool IsSolid => bombCollider != null && !bombCollider.isTrigger;
-    public bool CanBeKicked => !HasExploded && !isKicked && IsSolid && charactersInside.Count == 0;
 
     private void Awake()
     {

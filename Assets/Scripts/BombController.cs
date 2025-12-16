@@ -4,20 +4,28 @@ using UnityEngine.Tilemaps;
 
 public class BombController : MonoBehaviour
 {
-    [Header("Bomb")]
+    [Header("Input")]
     public KeyCode inputKey = KeyCode.Space;
+    public bool useAIInput = false;
+    private bool bombRequested;
+
+    [Header("Bomb Settings")]
     public GameObject bombPrefab;
     public float bombFuseTime = 3f;
     public int bombAmout = 1;
-    private int bombsRemaining = 0;
 
+    private int bombsRemaining = 0;
     public int BombsRemaining => bombsRemaining;
 
-    [Header("Explosion")]
+    [Header("Explosion Settings")]
     public Explosion explosionPrefab;
     public LayerMask explosionLayerMask;
     public float explosionDuration = 1f;
     public int explosionRadius = 2;
+
+    [Header("Stage & Tiles")]
+    public Tilemap groundTiles;
+    public Tilemap stageBoundsTiles;
 
     [Header("Destructible")]
     public Tilemap destructibleTiles;
@@ -30,14 +38,7 @@ public class BombController : MonoBehaviour
     public AudioClip placeBombSfx;
     public AudioSource playerAudioSource;
 
-    [Header("Control")]
-    public bool useAIInput = false;
-    private bool bombRequested;
-
     private static AudioSource currentExplosionAudio;
-
-    public Tilemap groundTiles;
-    public Tilemap stageBoundsTiles;
 
     private void OnEnable()
     {

@@ -17,15 +17,7 @@ public class MovementController : MonoBehaviour, IKillable
     public float tileSize = 1f;
     public LayerMask obstacleMask;
 
-    public Rigidbody2D Rigidbody { get; private set; }
-
-    protected Vector2 direction = Vector2.zero;
-
-    protected AudioSource audioSource;
-    protected BombController bombController;
-    protected BombKickAbility bombKickAbility;
-    protected AbilitySystem abilitySystem;
-
+    [Header("Input")]
     public KeyCode inputUp = KeyCode.W;
     public KeyCode inputDown = KeyCode.S;
     public KeyCode inputLeft = KeyCode.A;
@@ -44,18 +36,25 @@ public class MovementController : MonoBehaviour, IKillable
     public float endStageTotalTime = 1f;
     public int endStageFrameCount = 9;
 
-    protected AnimatedSpriteRenderer activeSpriteRenderer;
-    protected bool inputLocked;
-    public bool isDead;
-
-    const float CenterEpsilon = 0.01f;
-    float SlideDeadZone => tileSize * 0.25f;
-
-    protected bool hasInput;
-    protected bool explosionInvulnerable;
-
+    public Rigidbody2D Rigidbody { get; private set; }
     public Vector2 Direction => direction;
 
+    protected AudioSource audioSource;
+    protected BombController bombController;
+    protected AbilitySystem abilitySystem;
+    protected BombKickAbility bombKickAbility;
+
+    protected AnimatedSpriteRenderer activeSpriteRenderer;
+
+    protected Vector2 direction = Vector2.zero;
+    protected bool hasInput;
+    protected bool inputLocked;
+    protected bool explosionInvulnerable;
+
+    public bool isDead;
+
+    private const float CenterEpsilon = 0.01f;
+    private float SlideDeadZone => tileSize * 0.25f;
 
     protected virtual void Awake()
     {
