@@ -120,6 +120,8 @@ public class BombPunchAbility : MonoBehaviour, IPlayerAbility
 
     private IEnumerator PunchAnimLock(Vector2 dir)
     {
+        bool wasLocked = movement.InputLocked;
+
         movement.SetInputLocked(true, false);
 
         prevMoveSprite = GetMoveSprite(dir);
@@ -146,7 +148,13 @@ public class BombPunchAbility : MonoBehaviour, IPlayerAbility
             prevMoveSprite.idle = true;
         }
 
-        movement.SetInputLocked(false, false);
+        bool globalLock =
+            GamePauseController.IsPaused ||
+            MechaBossSequence.MechaIntroRunning ||
+            (StageIntroTransition.Instance != null &&
+             (StageIntroTransition.Instance.IntroRunning || StageIntroTransition.Instance.EndingRunning));
+
+        movement.SetInputLocked(globalLock || wasLocked, false);
         punchLockRoutine = null;
     }
 

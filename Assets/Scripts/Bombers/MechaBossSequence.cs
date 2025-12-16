@@ -59,6 +59,8 @@ public class MechaBossSequence : MonoBehaviour
     Vector3Int gateLeftCell;
     Vector3Int gateRightCell;
 
+    public static bool MechaIntroRunning { get; private set; }
+
     readonly Dictionary<Vector3Int, int> changedStandCells = new();
     readonly List<Vector3Int> spawnableCells = new();
 
@@ -138,11 +140,16 @@ public class MechaBossSequence : MonoBehaviour
         if (index < 0 || index >= mechas.Length) return;
         if (mechas[index] == null) return;
 
+        MechaIntroRunning = true;
+        LockPlayer(true);
+
         StartCoroutine(MechaIntroRoutine(mechas[index]));
     }
 
     IEnumerator MechaIntroRoutine(MovementController mecha)
     {
+        MechaIntroRunning = true;
+
         SetItemSpawnEnabled(false);
         LockPlayer(true);
 
@@ -254,6 +261,8 @@ public class MechaBossSequence : MonoBehaviour
 
         SetItemSpawnEnabled(true);
         LockPlayer(false);
+
+        MechaIntroRunning = false;
     }
 
     IEnumerator MoveMechaVertically(MovementController mecha, Vector2 from, Vector2 to, float speed)
