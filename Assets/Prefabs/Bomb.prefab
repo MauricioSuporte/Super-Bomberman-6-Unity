@@ -84,7 +84,7 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 3
-  m_Sprite: {fileID: -1483665779731714255, guid: 91461f8e85fe5864bb2f49209254b5c4, type: 3}
+  m_Sprite: {fileID: -4414887171315466595, guid: aaeb7740db057114f9b159291607444b, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -170,12 +170,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a4b55e1b961d144197e1a7a4a391956, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  idleSprite: {fileID: -1483665779731714255, guid: 91461f8e85fe5864bb2f49209254b5c4, type: 3}
+  idleSprite: {fileID: -4414887171315466595, guid: aaeb7740db057114f9b159291607444b, type: 3}
   animationSprite:
-  - {fileID: -1483665779731714255, guid: 91461f8e85fe5864bb2f49209254b5c4, type: 3}
-  - {fileID: -1902917897002446259, guid: 91461f8e85fe5864bb2f49209254b5c4, type: 3}
-  - {fileID: -5839540051515997725, guid: 91461f8e85fe5864bb2f49209254b5c4, type: 3}
-  - {fileID: -5337159410277229379, guid: 91461f8e85fe5864bb2f49209254b5c4, type: 3}
+  - {fileID: -4414887171315466595, guid: aaeb7740db057114f9b159291607444b, type: 3}
+  - {fileID: -553045829102223622, guid: aaeb7740db057114f9b159291607444b, type: 3}
+  - {fileID: 5826098684181310055, guid: aaeb7740db057114f9b159291607444b, type: 3}
+  - {fileID: -553045829102223622, guid: aaeb7740db057114f9b159291607444b, type: 3}
   animationTime: 0.25
   useSequenceDuration: 0
   sequenceDuration: 0
@@ -201,9 +201,10 @@ MonoBehaviour:
   bounceSfx: {fileID: 8300000, guid: 691a993233a939b4d8601560e159cf0a, type: 3}
   bounceSfxVolume: 1
   kickSpeed: 7.5
-  chainStepDelay: 0.1
   punchDuration: 0.22
   punchArcHeight: 0.9
+  chainStepDelay: 0.1
+  stageBoundsTilemap: {fileID: 0}
 --- !u!82 &4491695425928016186
 AudioSource:
   m_ObjectHideFlags: 0
