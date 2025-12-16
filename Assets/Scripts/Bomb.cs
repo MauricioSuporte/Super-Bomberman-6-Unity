@@ -6,6 +6,7 @@ using UnityEngine.Tilemaps;
 [RequireComponent(typeof(Collider2D))]
 [RequireComponent(typeof(Rigidbody2D))]
 [RequireComponent(typeof(AudioSource))]
+[RequireComponent(typeof(AnimatedSpriteRenderer))]
 public class Bomb : MonoBehaviour
 {
     private BombController owner;
@@ -38,12 +39,18 @@ public class Bomb : MonoBehaviour
     public float punchDuration = 0.22f;
     public float punchArcHeight = 0.9f;
 
+    [Header("Stage Wrap")]
+    [SerializeField] private Tilemap stageBoundsTilemap;
+
     private bool isPunched;
     public bool IsBeingPunched => isPunched;
 
     public bool CanBePunched => !HasExploded && !isKicked && !isPunched && IsSolid && charactersInside.Count == 0;
 
     private Coroutine punchRoutine;
+
+    private bool stageBoundsReady;
+    private BoundsInt stageCellBounds;
 
     private bool isKicked;
     private Vector2 kickDirection;
@@ -60,7 +67,7 @@ public class Bomb : MonoBehaviour
     private bool fusePaused;
     private float fusePauseStartedAt;
 
-    private static readonly WaitForFixedUpdate waitFixed = new WaitForFixedUpdate();
+    private static readonly WaitForFixedUpdate waitFixed = new();
 
     public bool IsSolid => bombCollider != null && !bombCollider.isTrigger;
     public bool CanBeKicked => !HasExploded && !isKicked && IsSolid && charactersInside.Count == 0;
@@ -107,6 +114,30 @@ public class Bomb : MonoBehaviour
 
         fusePaused = false;
         fusePauseStartedAt = 0f;
+    }
+
+    private Vector2 WrapToStage(Vector2 worldPos)
+    {
+        if (stageBoundsTilemap == null)
+            return worldPos;
+
+        var bounds = stageBoundsTilemap.cellBounds;
+        Vector3Int cell = stageBoundsTilemap.WorldToCell(worldPos);
+
+        int minX = bounds.xMin;
+        int maxX = bounds.xMax - 1;
+        int minY = bounds.yMin;
+        int maxY = bounds.yMax - 1;
+
+        if (cell.x < minX) cell.x = maxX;
+        else if (cell.x > maxX) cell.x = minX;
+
+        if (cell.y < minY) cell.y = maxY;
+        else if (cell.y > maxY) cell.y = minY;
+
+        Vector3 center = stageBoundsTilemap.GetCellCenterWorld(cell);
+        center.z = transform.position.z;
+        return (Vector2)center;
     }
 
     private void RecalculateCharactersInsideAt(Vector2 worldPos)
@@ -226,25 +257,6 @@ public class Bomb : MonoBehaviour
         return false;
     }
 
-    private bool TryFindBounceLanding(Vector2 startLanding, Vector2 dir, int maxBounces, out Vector2 finalLanding)
-    {
-        Vector2 candidate = startLanding;
-
-        for (int i = 0; i <= Mathf.Max(0, maxBounces); i++)
-        {
-            if (!IsPunchLandingBlocked(candidate))
-            {
-                finalLanding = candidate;
-                return true;
-            }
-
-            candidate += dir * kickTileSize;
-        }
-
-        finalLanding = startLanding;
-        return false;
-    }
-
     public bool StartPunch(Vector2 direction, float tileSize, int distanceTiles, LayerMask obstacleMask, Tilemap destructibleTilemap)
     {
         if (!CanBePunched || direction == Vector2.zero)
@@ -259,11 +271,6 @@ public class Bomb : MonoBehaviour
         Vector2 origin = rb.position;
         origin.x = Mathf.Round(origin.x / tileSize) * tileSize;
         origin.y = Mathf.Round(origin.y / tileSize) * tileSize;
-
-        Vector2 initialLanding = origin + kickDirection * kickTileSize * Mathf.Max(1, distanceTiles);
-
-        if (!TryFindBounceLanding(initialLanding, kickDirection, 40, out var finalLanding))
-            return false;
 
         currentTileCenter = origin;
         lastPos = origin;
@@ -289,42 +296,96 @@ public class Bomb : MonoBehaviour
         if (anim != null)
             anim.SetFrozen(true);
 
-        punchRoutine = StartCoroutine(PunchBounceRoutineFixed(origin, initialLanding, finalLanding, punchDuration, punchArcHeight));
+        punchRoutine = StartCoroutine(PunchRoutineFixed_Hybrid(origin, distanceTiles, 80, punchDuration, punchArcHeight));
         return true;
     }
 
-    private IEnumerator PunchBounceRoutineFixed(
-        Vector2 start,
-        Vector2 initialLanding,
-        Vector2 finalLanding,
-        float duration,
-        float arcHeight)
+    private IEnumerator PunchRoutineFixed_Hybrid(Vector2 start, int forwardSteps, int maxExtraBounces, float duration, float arcHeight)
     {
-        Vector2 segStart = start;
-        Vector2 segTarget = initialLanding;
+        Vector2 cur = start;
+        int steps = Mathf.Max(1, forwardSteps);
 
-        while (true)
+        bool wrapsDuringForward = false;
         {
-            yield return PunchArcSegmentFixed(segStart, segTarget, duration, arcHeight);
+            Vector2 sim = start;
+            int done = 0;
+            while (done < steps)
+            {
+                if (!TryStepWithWrap(sim, out var n, out var didWrap))
+                    break;
 
+                if (didWrap)
+                {
+                    wrapsDuringForward = true;
+                    break;
+                }
+
+                sim = n;
+                done++;
+            }
+        }
+
+        if (!wrapsDuringForward)
+        {
+            Vector2 target = start + kickTileSize * steps * kickDirection;
+            yield return PunchArcSegmentFixed(start, target, duration, arcHeight);
+            cur = target;
+        }
+        else
+        {
+            int done = 0;
+            while (done < steps)
+            {
+                if (HasExploded)
+                    goto FINISH;
+
+                if (!TryStepWithWrap(cur, out var next, out var didWrap))
+                    goto FINISH;
+
+                if (didWrap)
+                {
+                    TeleportTo(next);
+                    cur = next;
+                    continue;
+                }
+
+                if (audioSource != null && bounceSfx != null)
+                    audioSource.PlayOneShot(bounceSfx, bounceSfxVolume);
+
+                yield return PunchArcSegmentFixed(cur, next, duration, arcHeight);
+                cur = next;
+                done++;
+            }
+        }
+
+        for (int b = 0; b < Mathf.Max(0, maxExtraBounces); b++)
+        {
             if (HasExploded)
+                goto FINISH;
+
+            if (!IsPunchLandingBlocked(cur))
                 break;
 
-            if (segTarget == finalLanding)
+            if (!TryStepWithWrap(cur, out var next, out var didWrap))
                 break;
 
-            segStart = segTarget;
-            segTarget = segTarget + kickDirection * kickTileSize;
+            if (didWrap)
+            {
+                TeleportTo(next);
+                cur = next;
+                b--;
+                continue;
+            }
 
             if (audioSource != null && bounceSfx != null)
                 audioSource.PlayOneShot(bounceSfx, bounceSfxVolume);
+
+            yield return PunchArcSegmentFixed(cur, next, duration, arcHeight);
+            cur = next;
         }
 
-        Vector2 end = finalLanding;
-
-        rb.position = end;
-        transform.position = end;
-        lastPos = end;
+    FINISH:
+        TeleportTo(cur);
 
         isPunched = false;
         punchRoutine = null;
@@ -333,7 +394,7 @@ public class Bomb : MonoBehaviour
 
         if (!HasExploded)
         {
-            RecalculateCharactersInsideAt(end);
+            RecalculateCharactersInsideAt(cur);
             bombCollider.isTrigger = charactersInside.Count > 0;
         }
 
@@ -342,6 +403,140 @@ public class Bomb : MonoBehaviour
             anim.SetFrozen(false);
             anim.RefreshFrame();
         }
+    }
+
+    private void EnsureStageBounds()
+    {
+        if (stageBoundsReady)
+            return;
+
+        if (stageBoundsTilemap != null)
+        {
+            stageBoundsTilemap.CompressBounds();
+            stageCellBounds = stageBoundsTilemap.cellBounds;
+            stageBoundsReady = true;
+            return;
+        }
+
+        var tilemaps = FindObjectsByType<Tilemap>(FindObjectsSortMode.None);
+        Tilemap ground = null;
+        Tilemap ind = null;
+
+        for (int i = 0; i < tilemaps.Length; i++)
+        {
+            var tm = tilemaps[i];
+            if (tm == null) continue;
+
+            string n = tm.name.ToLowerInvariant();
+            if (ground == null && n.Contains("ground")) ground = tm;
+            if (ind == null && n.Contains("indestruct")) ind = tm;
+        }
+
+        if (ground != null) ground.CompressBounds();
+        if (ind != null) ind.CompressBounds();
+
+        if (ground != null && ind != null)
+        {
+            var a = ground.cellBounds;
+            var b = ind.cellBounds;
+
+            int xMin = Mathf.Min(a.xMin, b.xMin);
+            int xMax = Mathf.Max(a.xMax, b.xMax);
+            int yMin = Mathf.Min(a.yMin, b.yMin);
+            int yMax = Mathf.Max(a.yMax, b.yMax);
+
+            stageCellBounds = new BoundsInt(xMin, yMin, 0, xMax - xMin, yMax - yMin, 1);
+            stageBoundsReady = true;
+            return;
+        }
+
+        var fallback = ground != null ? ground : (ind != null ? ind : null);
+        if (fallback != null)
+        {
+            stageCellBounds = fallback.cellBounds;
+            stageBoundsReady = true;
+        }
+    }
+
+    private bool TryStepWithWrap(Vector2 from, out Vector2 next, out bool didWrap)
+    {
+        EnsureStageBounds();
+
+        Vector2 raw = from + kickDirection * kickTileSize;
+        didWrap = false;
+
+        if (!stageBoundsReady)
+        {
+            next = raw;
+            return true;
+        }
+
+        Vector3Int cell = stageBoundsTilemap != null
+            ? stageBoundsTilemap.WorldToCell(raw)
+            : new Vector3Int(Mathf.RoundToInt(raw.x / kickTileSize), Mathf.RoundToInt(raw.y / kickTileSize), 0);
+
+        int minX = stageCellBounds.xMin;
+        int maxX = stageCellBounds.xMax - 1;
+        int minY = stageCellBounds.yMin;
+        int maxY = stageCellBounds.yMax - 1;
+
+        if (cell.x < minX) { cell.x = maxX; didWrap = true; }
+        else if (cell.x > maxX) { cell.x = minX; didWrap = true; }
+
+        if (cell.y < minY) { cell.y = maxY; didWrap = true; }
+        else if (cell.y > maxY) { cell.y = minY; didWrap = true; }
+
+        if (didWrap)
+        {
+            if (stageBoundsTilemap != null)
+            {
+                Vector3 c = stageBoundsTilemap.GetCellCenterWorld(cell);
+                c.z = transform.position.z;
+                next = (Vector2)c;
+            }
+            else
+            {
+                next = new Vector2(cell.x * kickTileSize, cell.y * kickTileSize);
+            }
+            return true;
+        }
+
+        next = raw;
+        return true;
+    }
+
+    private void TeleportTo(Vector2 pos)
+    {
+        rb.position = pos;
+        transform.position = pos;
+        lastPos = pos;
+    }
+
+
+    private bool TryGetNextBounceTarget(Vector2 from, out Vector2 next, out bool wrapped)
+    {
+        Vector2 raw = from + kickDirection * kickTileSize;
+        wrapped = false;
+
+        if (stageBoundsTilemap == null)
+        {
+            next = raw;
+            return true;
+        }
+
+        var bounds = stageBoundsTilemap.cellBounds;
+        Vector3Int cell = stageBoundsTilemap.WorldToCell(raw);
+
+        int minX = bounds.xMin;
+        int maxX = bounds.xMax - 1;
+        int minY = bounds.yMin;
+        int maxY = bounds.yMax - 1;
+
+        if (cell.x < minX || cell.x > maxX || cell.y < minY || cell.y > maxY)
+            wrapped = true;
+
+        next = wrapped ? WrapToStage(raw) : raw;
+        return true;
     }
 
     private IEnumerator PunchArcSegmentFixed(Vector2 start, Vector2 end, float duration, float arcHeight)
@@ -372,8 +567,41 @@ public class Bomb : MonoBehaviour
         lastPos = end;
     }
 
+    public void SetStageBoundsTilemap(Tilemap tilemap)
+    {
+        stageBoundsTilemap = tilemap;
+    }
+
+    private void ResolveStageBoundsTilemapIfNeeded()
+    {
+        if (stageBoundsTilemap != null)
+            return;
+
+        var tilemaps = FindObjectsByType<Tilemap>(FindObjectsSortMode.None);
+        if (tilemaps == null || tilemaps.Length == 0)
+            return;
+
+        for (int i = 0; i < tilemaps.Length; i++)
+        {
+            var tm = tilemaps[i];
+            if (tm == null)
+                continue;
+
+            string n = tm.name.ToLowerInvariant();
+            if (n.Contains("ground"))
+            {
+                stageBoundsTilemap = tm;
+                return;
+            }
+        }
+
+        stageBoundsTilemap = tilemaps[0];
+    }
+
     public void Initialize(BombController owner)
     {
+        ResolveStageBoundsTilemapIfNeeded();
+
         this.owner = owner;
         PlacedTime = Time.time;
 

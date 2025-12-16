@@ -36,6 +36,9 @@ public class BombController : MonoBehaviour
 
     private static AudioSource currentExplosionAudio;
 
+    public Tilemap groundTiles;
+    public Tilemap stageBoundsTiles;
+
     private void OnEnable()
     {
         bombAmout = Mathf.Min(bombAmout, PlayerPersistentStats.MaxBombAmount);
@@ -62,6 +65,43 @@ public class BombController : MonoBehaviour
                 PlaceBomb();
                 bombRequested = false;
             }
+        }
+    }
+
+    private void Awake()
+    {
+        var tilemaps = FindObjectsByType<Tilemap>(FindObjectsSortMode.None);
+
+        if (groundTiles == null)
+        {
+            for (int i = 0; i < tilemaps.Length; i++)
+            {
+                var tm = tilemaps[i];
+                if (tm != null && tm.name.ToLowerInvariant().Contains("ground"))
+                {
+                    groundTiles = tm;
+                    break;
+                }
+            }
+
+            if (groundTiles == null && tilemaps.Length > 0)
+                groundTiles = tilemaps[0];
+        }
+
+        if (stageBoundsTiles == null)
+        {
+            for (int i = 0; i < tilemaps.Length; i++)
+            {
+                var tm = tilemaps[i];
+                if (tm != null && tm.name.ToLowerInvariant().Contains("indestruct"))
+                {
+                    stageBoundsTiles = tm;
+                    break;
+                }
+            }
+
+            if (stageBoundsTiles == null)
+                stageBoundsTiles = groundTiles;
         }
     }
 
@@ -145,10 +185,10 @@ public class BombController : MonoBehaviour
         GameObject bomb = Instantiate(bombPrefab, position, Quaternion.identity);
         bombsRemaining--;
 
-        var bombComponent = bomb.GetComponent<Bomb>();
-        if (bombComponent == null)
+        if (!bomb.TryGetComponent<Bomb>(out var bombComponent))
             bombComponent = bomb.AddComponent<Bomb>();
 
+        bombComponent.SetStageBoundsTilemap(stageBoundsTiles);
         bombComponent.Initialize(this);
 
         if (bomb.TryGetComponent<Collider2D>(out var bombCollider))
