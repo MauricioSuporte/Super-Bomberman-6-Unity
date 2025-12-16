@@ -20,6 +20,7 @@ public class GameManager : MonoBehaviour
     public ItemPickup blastRadiusItemPrefab;
     public ItemPickup speedIncreaseItemPrefab;
     public ItemPickup kickBombItemPrefab;
+    public ItemPickup punchBombItemPrefab;
 
     [Header("Stage")]
     public Tilemap destructibleTilemap;
@@ -42,6 +43,7 @@ public class GameManager : MonoBehaviour
     int blastRadiusSpawnOrder = -1;
     int speedIncreaseSpawnOrder = -1;
     int kickBombSpawnOrder = -1;
+    int punchBombSpawnOrder = -1;
 
     void Start()
     {
@@ -78,9 +80,7 @@ public class GameManager : MonoBehaviour
         for (int i = indices.Count - 1; i > 0; i--)
         {
             int j = UnityEngine.Random.Range(0, i + 1);
-            int temp = indices[i];
-            indices[i] = indices[j];
-            indices[j] = temp;
+            (indices[j], indices[i]) = (indices[i], indices[j]);
         }
 
         int cursor = 0;
@@ -99,6 +99,9 @@ public class GameManager : MonoBehaviour
 
         if (kickBombItemPrefab != null && cursor < indices.Count)
             kickBombSpawnOrder = indices[cursor++];
+
+        if (punchBombItemPrefab != null && cursor < indices.Count)
+            punchBombSpawnOrder = indices[cursor++];
     }
 
     public GameObject GetSpawnForDestroyedBlock()
@@ -123,6 +126,9 @@ public class GameManager : MonoBehaviour
 
         if (order == kickBombSpawnOrder && kickBombItemPrefab != null)
             return kickBombItemPrefab.gameObject;
+
+        if (order == punchBombSpawnOrder && punchBombItemPrefab != null)
+            return punchBombItemPrefab.gameObject;
 
         return null;
     }

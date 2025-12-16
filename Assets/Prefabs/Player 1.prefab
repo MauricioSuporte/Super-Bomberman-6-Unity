@@ -856,7 +856,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 259dc96ea2e08cc4fa2829ffac0aef71, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  inputKey: 32
+  inputKey: 109
+  useAIInput: 0
   bombPrefab: {fileID: 147425199346742615, guid: b141cb2d60d85504dad495e1a188c108, type: 3}
   bombFuseTime: 2
   bombAmout: 1
@@ -866,6 +867,8 @@ MonoBehaviour:
     m_Bits: 64
   explosionDuration: 0.5
   explosionRadius: 2
+  groundTiles: {fileID: 0}
+  stageBoundsTiles: {fileID: 0}
   destructibleTiles: {fileID: 0}
   destructiblePrefab: {fileID: 3440613785117735154, guid: 227477c28434b21439475c6f07347eda, type: 3}
   itemLayerMask:
@@ -873,7 +876,6 @@ MonoBehaviour:
     m_Bits: 512
   placeBombSfx: {fileID: 8300000, guid: da95ad1eaf576a54599d96cc59b94c11, type: 3}
   playerAudioSource: {fileID: 4627430260018096140}
-  useAIInput: 0
 --- !u!82 &4627430260018096140
 AudioSource:
   m_ObjectHideFlags: 0
@@ -996,7 +998,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BombPunchAbility
   enabledAbility: 0
-  punchKey: 104
+  punchKey: 98
   punchDistanceTiles: 3
   punchLockTime: 0.25
   punchUp: {fileID: 1334802762771057975}

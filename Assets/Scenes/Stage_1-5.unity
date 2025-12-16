@@ -172,6 +172,7 @@ MonoBehaviour:
   blastRadiusItemPrefab: {fileID: 6871244334814668705, guid: bdad95ff62d39d44fbcbb3b171a603bb, type: 3}
   speedIncreaseItemPrefab: {fileID: 4209327807185772322, guid: 218d29a1a19c6864e8d870f01df7f91b, type: 3}
   kickBombItemPrefab: {fileID: 6871244334814668705, guid: 8688e05eefe87c143a46fe4f721b8c80, type: 3}
+  punchBombItemPrefab: {fileID: 6871244334814668705, guid: 5d9a731da7e790c45a7a1d311cea3d8c, type: 3}
   destructibleTilemap: {fileID: 285353618}
   nextStageSceneName: Stage_1-6
   groundTilemap: {fileID: 672307155}
@@ -2862,6 +2863,14 @@ PrefabInstance:
       propertyPath: destructiblePrefab
       value: 
       objectReference: {fileID: 3440613785117735154, guid: 0db9b9963032895418bfd9382b2692f7, type: 3}
+    - target: {fileID: 3128802035174165778, guid: a0c9407e33176584981a9df061a537bc, type: 3}
+      propertyPath: m_Enabled
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3128802035174165778, guid: a0c9407e33176584981a9df061a537bc, type: 3}
+      propertyPath: enabledAbility
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 3797169763190965992, guid: a0c9407e33176584981a9df061a537bc, type: 3}
       propertyPath: m_LocalPosition.x
       value: -7
