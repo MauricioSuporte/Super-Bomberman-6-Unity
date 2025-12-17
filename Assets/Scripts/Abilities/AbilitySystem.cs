@@ -34,6 +34,12 @@ public class AbilitySystem : MonoBehaviour
         return Get(id) as T;
     }
 
+    public bool IsEnabled(string id)
+    {
+        var a = Get(id);
+        return a != null && a.IsEnabled;
+    }
+
     public void Enable(string id)
     {
         if (!AbilityRegistry.TryGetType(id, out var type))

@@ -310,6 +310,7 @@ MonoBehaviour:
   speedIncreaseItemPrefab: {fileID: 4209327807185772322, guid: 218d29a1a19c6864e8d870f01df7f91b, type: 3}
   kickBombItemPrefab: {fileID: 6871244334814668705, guid: 8688e05eefe87c143a46fe4f721b8c80, type: 3}
   punchBombItemPrefab: {fileID: 6871244334814668705, guid: 5d9a731da7e790c45a7a1d311cea3d8c, type: 3}
+  pierceBombItemPrefab: {fileID: 2727780941473249227, guid: 5ae02590c78b5f341801e38d8b723efd, type: 3}
   destructibleTilemap: {fileID: 285353618}
   nextStageSceneName: Stage_1-4
   groundTilemap: {fileID: 672307155}

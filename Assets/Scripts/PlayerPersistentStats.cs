@@ -9,8 +9,10 @@ public static class PlayerPersistentStats
     public static int BombAmount = 9;
     public static int ExplosionRadius = 9;
     public static float Speed = 5f;
+
     public static bool CanKickBombs = true;
     public static bool CanPunchBombs = true;
+    public static bool HasPierceBombs = false;
 
     public static void LoadInto(MovementController movement, BombController bomb)
     {
@@ -32,15 +34,14 @@ public static class PlayerPersistentStats
             if (!movement.TryGetComponent<AbilitySystem>(out var abilitySystem))
                 abilitySystem = movement.gameObject.AddComponent<AbilitySystem>();
 
-            if (CanKickBombs)
-                abilitySystem.Enable(BombKickAbility.AbilityId);
-            else
-                abilitySystem.Disable(BombKickAbility.AbilityId);
+            if (CanKickBombs) abilitySystem.Enable(BombKickAbility.AbilityId);
+            else abilitySystem.Disable(BombKickAbility.AbilityId);
 
-            if (CanPunchBombs)
-                abilitySystem.Enable(BombPunchAbility.AbilityId);
-            else
-                abilitySystem.Disable(BombPunchAbility.AbilityId);
+            if (CanPunchBombs) abilitySystem.Enable(BombPunchAbility.AbilityId);
+            else abilitySystem.Disable(BombPunchAbility.AbilityId);
+
+            if (HasPierceBombs) abilitySystem.Enable(PierceBombAbility.AbilityId);
+            else abilitySystem.Disable(PierceBombAbility.AbilityId);
         }
     }
 
@@ -51,10 +52,15 @@ public static class PlayerPersistentStats
             Speed = Mathf.Min(movement.speed, MaxSpeed);
 
             var abilitySystem = movement.GetComponent<AbilitySystem>();
+
             var kick = abilitySystem != null ? abilitySystem.Get<BombKickAbility>(BombKickAbility.AbilityId) : null;
             CanKickBombs = kick != null && kick.IsEnabled;
+
             var punch = abilitySystem != null ? abilitySystem.Get<BombPunchAbility>(BombPunchAbility.AbilityId) : null;
             CanPunchBombs = punch != null && punch.IsEnabled;
+
+            var pierce = abilitySystem != null ? abilitySystem.Get<PierceBombAbility>(PierceBombAbility.AbilityId) : null;
+            HasPierceBombs = pierce != null && pierce.IsEnabled;
         }
 
         if (bomb != null && bomb.CompareTag("Player"))
@@ -69,7 +75,9 @@ public static class PlayerPersistentStats
         BombAmount = 1;
         ExplosionRadius = 1;
         Speed = 3f;
+
         CanKickBombs = false;
         CanPunchBombs = false;
+        HasPierceBombs = false;
     }
 }

@@ -6,7 +6,8 @@ public static class AbilityRegistry
     private static readonly Dictionary<string, Type> map = new()
     {
         { BombKickAbility.AbilityId, typeof(BombKickAbility) },
-        { BombPunchAbility.AbilityId, typeof(BombPunchAbility) }
+        { BombPunchAbility.AbilityId, typeof(BombPunchAbility) },
+        { PierceBombAbility.AbilityId, typeof(PierceBombAbility) }
     };
 
     public static bool TryGetType(string id, out Type type)

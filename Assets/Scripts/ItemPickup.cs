@@ -17,7 +17,8 @@ public class ItemPickup : MonoBehaviour
         BlastRadius,
         SpeedIncrese,
         BombKick,
-        BombPunch
+        BombPunch,
+        PierceBomb
     }
 
     public ItemType type;
@@ -89,6 +90,15 @@ public class ItemPickup : MonoBehaviour
                         abilitySystem = player.AddComponent<AbilitySystem>();
 
                     abilitySystem.Enable(BombPunchAbility.AbilityId);
+                    break;
+                }
+
+            case ItemType.PierceBomb:
+                {
+                    if (!player.TryGetComponent<AbilitySystem>(out var abilitySystem))
+                        abilitySystem = player.AddComponent<AbilitySystem>();
+
+                    abilitySystem.Enable(PierceBombAbility.AbilityId);
                     break;
                 }
         }

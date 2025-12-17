@@ -992,6 +992,7 @@ MonoBehaviour:
   inputKey: 109
   useAIInput: 0
   bombPrefab: {fileID: 147425199346742615, guid: b141cb2d60d85504dad495e1a188c108, type: 3}
+  pierceBombPrefab: {fileID: 147425199346742615, guid: d594648b2cf33354cb5de0fb314588c7, type: 3}
   bombFuseTime: 2
   bombAmout: 1
   explosionPrefab: {fileID: -38777085001033807, guid: 8280631722d6ef14fb951aaaf859563b, type: 3}

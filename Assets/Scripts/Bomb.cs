@@ -21,6 +21,7 @@ public class Bomb : MonoBehaviour
     public bool IsSolid => bombCollider != null && !bombCollider.isTrigger;
     public bool CanBeKicked => !HasExploded && !isKicked && IsSolid && charactersInside.Count == 0;
     public bool CanBePunched => !HasExploded && !isKicked && !isPunched && IsSolid && charactersInside.Count == 0;
+    public bool IsPierceBomb { get; set; }
 
     [Header("References")]
     private Collider2D bombCollider;
