@@ -18,6 +18,7 @@ public class BombController : MonoBehaviour
     public int bombAmout = 1;
     private static readonly WaitForSeconds chainExplosionWait = new(0.1f);
     private readonly HashSet<int> scheduledChainBombs = new();
+    private static readonly WaitForSeconds _waitDestructibleSpawnDelayFallback = new(0.5f);
 
     private int bombsRemaining = 0;
     public int BombsRemaining => bombsRemaining;
@@ -291,10 +292,13 @@ public class BombController : MonoBehaviour
                 continue;
             }
 
-            bool hitDestructible = HasDestructibleAt(position);
-            if (hitDestructible)
+            bool hitDestructibleTile = HasDestructibleAt(position);
+            bool hitDestroyingDestructible = HasDestroyingDestructibleAt(position);
+
+            if (hitDestructibleTile || hitDestroyingDestructible)
             {
-                ClearDestructible(position);
+                if (hitDestructibleTile)
+                    ClearDestructible(position);
 
                 if (pierce)
                 {
@@ -369,10 +373,8 @@ public class BombController : MonoBehaviour
             GameObject spawnPrefab = gameManager.GetSpawnForDestroyedBlock();
             if (spawnPrefab != null)
             {
-                if (parent != null)
-                    Instantiate(spawnPrefab, position, Quaternion.identity, parent);
-                else
-                    Instantiate(spawnPrefab, position, Quaternion.identity);
+                float delay = GetDestructibleDestroyTime();
+                StartCoroutine(SpawnHiddenObjectAfterDelay(spawnPrefab, position, parent, delay));
             }
         }
 
@@ -424,5 +426,44 @@ public class BombController : MonoBehaviour
             yield break;
 
         ExplodeBomb(bomb);
+    }
+
+    private bool HasDestroyingDestructibleAt(Vector2 worldPos)
+    {
+        int mask = LayerMask.GetMask("Stage");
+
+        Collider2D hit = Physics2D.OverlapBox(
+            worldPos,
+            Vector2.one * 0.6f,
+            0f,
+            mask
+        );
+
+        if (hit == null)
+            return false;
+
+        return hit.GetComponent<Destructible>() != null;
+    }
+
+    private IEnumerator SpawnHiddenObjectAfterDelay(GameObject prefab, Vector2 position, Transform parent, float delay)
+    {
+        if (prefab == null)
+            yield break;
+
+        if (delay > 0f)
+            yield return new WaitForSeconds(delay);
+
+        if (parent != null)
+            Instantiate(prefab, position, Quaternion.identity, parent);
+        else
+            Instantiate(prefab, position, Quaternion.identity);
+    }
+
+    private float GetDestructibleDestroyTime()
+    {
+        if (destructiblePrefab != null)
+            return Mathf.Max(0f, destructiblePrefab.destructionTime);
+
+        return 0.5f;
     }
 }

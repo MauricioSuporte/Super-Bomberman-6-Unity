@@ -67,6 +67,18 @@ public class AbilitySystem : MonoBehaviour
         ability?.Disable();
     }
 
+    public void DisableAll()
+    {
+        RebuildCache();
+
+        foreach (var kv in cache)
+        {
+            var a = kv.Value;
+            if (a != null && a.IsEnabled)
+                a.Disable();
+        }
+    }
+
     private IPlayerAbility EnsureAbilityComponent(string id, Type type)
     {
         if (cache.TryGetValue(id, out var cached) && cached != null)

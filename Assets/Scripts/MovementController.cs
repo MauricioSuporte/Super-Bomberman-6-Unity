@@ -418,10 +418,7 @@ public class MovementController : MonoBehaviour, IKillable
         inputLocked = true;
 
         if (abilitySystem != null)
-        {
-            abilitySystem.Disable(BombKickAbility.AbilityId);
-            abilitySystem.Disable(BombPunchAbility.AbilityId);
-        }
+            abilitySystem.DisableAll();
 
         if (bombController != null)
             bombController.enabled = false;
