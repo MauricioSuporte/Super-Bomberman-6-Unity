@@ -12,7 +12,7 @@ public static class PlayerPersistentStats
 
     public static bool CanKickBombs = true;
     public static bool CanPunchBombs = true;
-    public static bool HasPierceBombs = false;
+    public static bool HasPierceBombs = true;
 
     public static void LoadInto(MovementController movement, BombController bomb)
     {

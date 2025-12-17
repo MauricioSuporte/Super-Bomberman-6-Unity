@@ -420,6 +420,13 @@ public class MovementController : MonoBehaviour, IKillable
         if (abilitySystem != null)
             abilitySystem.DisableAll();
 
+        if (CompareTag("Player"))
+        {
+            PlayerPersistentStats.CanKickBombs = false;
+            PlayerPersistentStats.CanPunchBombs = false;
+            PlayerPersistentStats.HasPierceBombs = false;
+        }
+
         if (bombController != null)
             bombController.enabled = false;
 
