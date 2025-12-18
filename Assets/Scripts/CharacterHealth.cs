@@ -13,6 +13,11 @@ public class CharacterHealth : MonoBehaviour
     public float hitInvulnerableDuration = 3f;
     public float hitBlinkInterval = 0.1f;
 
+    [Header("Temporary Invulnerability Visual")]
+    [Range(0f, 1f)]
+    public float tempSlowdownStartNormalized = 0.7f;
+    public float tempEndBlinkMultiplier = 4f;
+
     public event Action<int> Damaged;
     public event Action Died;
 
@@ -98,6 +103,9 @@ public class CharacterHealth : MonoBehaviour
         float elapsed = 0f;
         bool faded = false;
 
+        float baseInterval = hitBlinkInterval > 0f ? hitBlinkInterval : 0.05f;
+        float endInterval = baseInterval * Mathf.Max(1f, tempEndBlinkMultiplier);
+
         while (elapsed < seconds)
         {
             faded = !faded;
@@ -115,7 +123,10 @@ public class CharacterHealth : MonoBehaviour
                     spriteRenderers[i].color = baseColor;
             }
 
-            float wait = hitBlinkInterval > 0f ? hitBlinkInterval : 0.05f;
+            float t = seconds > 0f ? Mathf.Clamp01(elapsed / seconds) : 1f;
+            float slowT = Mathf.InverseLerp(tempSlowdownStartNormalized, 1f, t);
+            float wait = Mathf.Lerp(baseInterval, endInterval, slowT);
+
             yield return new WaitForSeconds(wait);
             elapsed += wait;
         }

@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using UnityEngine;
 
+[RequireComponent(typeof(CharacterHealth))]
 public class InvincibleSuitAbility : MonoBehaviour, IPlayerAbility
 {
     public const string AbilityId = "InvincibleSuit";
