@@ -6,15 +6,16 @@ public static class PlayerPersistentStats
     public const int MaxExplosionRadius = 9;
     public const float MaxSpeed = 9f;
 
-    public static int BombAmount = 9;
-    public static int ExplosionRadius = 9;
+    public static int BombAmount = 3;
+    public static int ExplosionRadius = 1;
     public static float Speed = 5f;
 
     public static bool CanKickBombs = true;
     public static bool CanPunchBombs = true;
 
     public static bool HasPierceBombs = false;
-    public static bool HasControlBombs = true;
+    public static bool HasControlBombs = false;
+    public static bool HasFullFire = true;
 
     public static void LoadInto(MovementController movement, BombController bomb)
     {
@@ -41,6 +42,9 @@ public static class PlayerPersistentStats
 
             if (CanPunchBombs) abilitySystem.Enable(BombPunchAbility.AbilityId);
             else abilitySystem.Disable(BombPunchAbility.AbilityId);
+
+            if (HasFullFire) abilitySystem.Enable(FullFireAbility.AbilityId);
+            else abilitySystem.Disable(FullFireAbility.AbilityId);
 
             if (HasControlBombs)
             {
@@ -80,6 +84,9 @@ public static class PlayerPersistentStats
             var control = abilitySystem != null ? abilitySystem.Get<ControlBombAbility>(ControlBombAbility.AbilityId) : null;
             HasControlBombs = control != null && control.IsEnabled;
 
+            var fullFire = abilitySystem != null ? abilitySystem.Get<FullFireAbility>(FullFireAbility.AbilityId) : null;
+            HasFullFire = fullFire != null && fullFire.IsEnabled;
+
             if (HasControlBombs)
                 HasPierceBombs = false;
             else if (HasPierceBombs)
@@ -104,5 +111,6 @@ public static class PlayerPersistentStats
 
         HasPierceBombs = false;
         HasControlBombs = false;
+        HasFullFire = false;
     }
 }

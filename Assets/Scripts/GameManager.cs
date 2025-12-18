@@ -23,6 +23,7 @@ public class GameManager : MonoBehaviour
     public ItemPickup punchBombItemPrefab;
     public ItemPickup pierceBombItemPrefab;
     public ItemPickup controlBombItemPrefab;
+    public ItemPickup fullFireItemPrefab;
 
     [Header("Stage")]
     public Tilemap destructibleTilemap;
@@ -48,6 +49,7 @@ public class GameManager : MonoBehaviour
     int punchBombSpawnOrder = -1;
     int pierceBombSpawnOrder = -1;
     int controlBombSpawnOrder = -1;
+    int fullFireSpawnOrder = -1;
 
     void Start()
     {
@@ -112,6 +114,9 @@ public class GameManager : MonoBehaviour
 
         if (controlBombItemPrefab != null && cursor < indices.Count)
             controlBombSpawnOrder = indices[cursor++];
+
+        if (fullFireItemPrefab != null && cursor < indices.Count)
+            fullFireSpawnOrder = indices[cursor++];
     }
 
     public GameObject GetSpawnForDestroyedBlock()
@@ -145,6 +150,9 @@ public class GameManager : MonoBehaviour
 
         if (order == controlBombSpawnOrder && controlBombItemPrefab != null)
             return controlBombItemPrefab.gameObject;
+
+        if (order == fullFireSpawnOrder && fullFireItemPrefab != null)
+            return fullFireItemPrefab.gameObject;
 
         return null;
     }

@@ -201,10 +201,14 @@ public class BombController : MonoBehaviour
         Explosion centerExplosion = Instantiate(explosionPrefab, position, Quaternion.identity);
         centerExplosion.Play(Explosion.ExplosionPart.Start, Vector2.zero, 0f, explosionDuration, position);
 
-        Explode(position, Vector2.up, explosionRadius, pierce);
-        Explode(position, Vector2.down, explosionRadius, pierce);
-        Explode(position, Vector2.left, explosionRadius, pierce);
-        Explode(position, Vector2.right, explosionRadius, pierce);
+        int effectiveRadius = IsFullFireEnabled()
+            ? PlayerPersistentStats.MaxExplosionRadius
+            : explosionRadius;
+
+        Explode(position, Vector2.up, effectiveRadius, pierce);
+        Explode(position, Vector2.down, effectiveRadius, pierce);
+        Explode(position, Vector2.left, effectiveRadius, pierce);
+        Explode(position, Vector2.right, effectiveRadius, pierce);
 
         float destroyDelay = 0.1f;
         if (explosionAudio != null && explosionAudio.clip != null)
@@ -565,5 +569,13 @@ public class BombController : MonoBehaviour
         }
 
         plantedBombs.Clear();
+    }
+
+    private bool IsFullFireEnabled()
+    {
+        if (TryGetComponent<AbilitySystem>(out var abilitySystem))
+            return abilitySystem.IsEnabled(FullFireAbility.AbilityId);
+
+        return false;
     }
 }
