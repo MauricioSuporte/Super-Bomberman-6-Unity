@@ -26,6 +26,7 @@ public class GameManager : MonoBehaviour
     public ItemPickup fullFireItemPrefab;
     public ItemPickup bombPassItemPrefab;
     public ItemPickup destructiblePassItemPrefab;
+    public ItemPickup invincibleSuitItemPrefab;
 
     [Header("Stage")]
     public Tilemap destructibleTilemap;
@@ -54,6 +55,7 @@ public class GameManager : MonoBehaviour
     int fullFireSpawnOrder = -1;
     int bombPassSpawnOrder = -1;
     int destructiblePassSpawnOrder = -1;
+    int invincibleSuitSpawnOrder = -1;
 
     void Start()
     {
@@ -127,6 +129,9 @@ public class GameManager : MonoBehaviour
 
         if (destructiblePassItemPrefab != null && cursor < indices.Count)
             destructiblePassSpawnOrder = indices[cursor++];
+
+        if (invincibleSuitItemPrefab != null && cursor < indices.Count)
+            invincibleSuitSpawnOrder = indices[cursor++];
     }
 
     public GameObject GetSpawnForDestroyedBlock()
@@ -169,6 +174,9 @@ public class GameManager : MonoBehaviour
 
         if (order == destructiblePassSpawnOrder && destructiblePassItemPrefab != null)
             return destructiblePassItemPrefab.gameObject;
+
+        if (order == invincibleSuitSpawnOrder && invincibleSuitItemPrefab != null)
+            return invincibleSuitItemPrefab.gameObject;
 
         return null;
     }
@@ -220,6 +228,9 @@ public class GameManager : MonoBehaviour
     {
         if (players != null && players.Length > 0 && players[0] != null)
         {
+            if (players[0].TryGetComponent<AbilitySystem>(out var abilitySystem))
+                abilitySystem.Disable(InvincibleSuitAbility.AbilityId);
+
             var movement = players[0].GetComponent<MovementController>();
             var bomb = players[0].GetComponent<BombController>();
             PlayerPersistentStats.SaveFrom(movement, bomb);

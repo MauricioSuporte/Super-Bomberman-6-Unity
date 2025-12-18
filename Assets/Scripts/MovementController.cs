@@ -404,15 +404,17 @@ public class MovementController : MonoBehaviour, IKillable
 
         int layer = other.gameObject.layer;
 
-        if (layer == LayerMask.NameToLayer("Explosion"))
+        if (layer == LayerMask.NameToLayer("Explosion") || layer == LayerMask.NameToLayer("Enemy"))
         {
-            if (explosionInvulnerable)
+            if (TryGetComponent<CharacterHealth>(out var health))
+            {
+                health.TakeDamage(1);
+                return;
+            }
+
+            if (layer == LayerMask.NameToLayer("Explosion") && explosionInvulnerable)
                 return;
 
-            DeathSequence();
-        }
-        else if (layer == LayerMask.NameToLayer("Enemy"))
-        {
             DeathSequence();
         }
     }

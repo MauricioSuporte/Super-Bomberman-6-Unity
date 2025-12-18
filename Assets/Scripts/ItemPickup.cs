@@ -22,7 +22,8 @@ public class ItemPickup : MonoBehaviour
         ControlBomb,
         FullFire,
         BombPass,
-        DestructiblePass
+        DestructiblePass,
+        InvincibleSuit,
     }
 
     public ItemType type;
@@ -149,6 +150,16 @@ public class ItemPickup : MonoBehaviour
                     abilitySystem.RebuildCache();
 
                     abilitySystem.Enable(DestructiblePassAbility.AbilityId);
+                    break;
+                }
+
+            case ItemType.InvincibleSuit:
+                {
+                    if (!player.TryGetComponent<AbilitySystem>(out var abilitySystem))
+                        abilitySystem = player.AddComponent<AbilitySystem>();
+
+                    abilitySystem.RebuildCache();
+                    abilitySystem.Enable(InvincibleSuitAbility.AbilityId);
                     break;
                 }
         }

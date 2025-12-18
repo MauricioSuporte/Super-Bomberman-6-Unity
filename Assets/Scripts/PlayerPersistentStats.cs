@@ -7,15 +7,15 @@ public static class PlayerPersistentStats
     public const float MaxSpeed = 9f;
 
     public static int BombAmount = 9;
-    public static int ExplosionRadius = 1;
+    public static int ExplosionRadius = 9;
     public static float Speed = 5f;
 
     public static bool CanKickBombs = false;
     public static bool CanPunchBombs = true;
     public static bool CanPassBombs = true;
     public static bool CanPassDestructibles = true;
-    public static bool HasPierceBombs = false;
-    public static bool HasControlBombs = true;
+    public static bool HasPierceBombs = true;
+    public static bool HasControlBombs = false;
     public static bool HasFullFire = false;
 
     public static void LoadInto(MovementController movement, BombController bomb)

@@ -849,6 +849,7 @@ GameObject:
   - component: {fileID: 4627430260018096140}
   - component: {fileID: 5869552212916937176}
   - component: {fileID: 3128802035174165778}
+  - component: {fileID: 50652477360605129}
   m_Layer: 3
   m_Name: Player 1
   m_TagString: Player
@@ -1141,6 +1142,21 @@ MonoBehaviour:
   punchDown: {fileID: 9127359846835089177}
   punchLeft: {fileID: 398357160787023457}
   punchRight: {fileID: 6145754032599246800}
+--- !u!114 &50652477360605129
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4947014498081102474}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 205f7fc6fe6408f419811c6c486b9cd6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CharacterHealth
+  life: 1
+  hitInvulnerableDuration: 3
+  hitBlinkInterval: 0.1
 --- !u!1 &6530556802187073845
 GameObject:
   m_ObjectHideFlags: 0
