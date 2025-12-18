@@ -53,6 +53,8 @@ public class MovementController : MonoBehaviour, IKillable
 
     public bool isDead;
     public bool InputLocked => inputLocked;
+    private bool isEndingStage;
+    public bool IsEndingStage => isEndingStage;
 
     private const float CenterEpsilon = 0.01f;
     private float SlideDeadZone => tileSize * 0.25f;
@@ -399,7 +401,7 @@ public class MovementController : MonoBehaviour, IKillable
 
     protected virtual void OnTriggerEnter2D(Collider2D other)
     {
-        if (isDead)
+        if (isDead || isEndingStage)
             return;
 
         int layer = other.gameObject.layer;
@@ -421,13 +423,16 @@ public class MovementController : MonoBehaviour, IKillable
 
     public virtual void Kill()
     {
+        if (isEndingStage)
+            return;
+
         if (!isDead)
             DeathSequence();
     }
 
     protected virtual void DeathSequence()
     {
-        if (isDead)
+        if (isDead || isEndingStage)
             return;
 
         isDead = true;
@@ -507,6 +512,9 @@ public class MovementController : MonoBehaviour, IKillable
 
     public void PlayEndStageSequence(Vector2 portalCenter)
     {
+        isEndingStage = true;
+        SetExplosionInvulnerable(true);
+
         inputLocked = true;
 
         if (bombController != null)
@@ -527,9 +535,7 @@ public class MovementController : MonoBehaviour, IKillable
         if (spriteRendererCheering != null)
             spriteRendererCheering.enabled = false;
 
-        var endSprite = spriteRendererEndStage != null
-            ? spriteRendererEndStage
-            : spriteRendererDown;
+        var endSprite = spriteRendererEndStage != null ? spriteRendererEndStage : spriteRendererDown;
 
         if (endSprite != null)
         {
