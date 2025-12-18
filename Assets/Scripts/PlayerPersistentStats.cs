@@ -7,7 +7,7 @@ public static class PlayerPersistentStats
     public const float MaxSpeed = 9f;
 
     public static int BombAmount = 9;
-    public static int ExplosionRadius = 9;
+    public static int ExplosionRadius = 1;
     public static float Speed = 5f;
 
     public static bool CanKickBombs = false;

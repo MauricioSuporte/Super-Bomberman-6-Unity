@@ -349,15 +349,12 @@ public class BombController : MonoBehaviour
 
             if (bombHit != null)
             {
-                if (i < length - 1)
-                {
-                    GameObject otherBombGo = bombHit.attachedRigidbody != null
-                        ? bombHit.attachedRigidbody.gameObject
-                        : bombHit.gameObject;
+                GameObject otherBombGo = bombHit.attachedRigidbody != null
+                    ? bombHit.attachedRigidbody.gameObject
+                    : bombHit.gameObject;
 
-                    if (otherBombGo != null && otherBombGo != gameObject)
-                        ScheduleChainExplosion(otherBombGo);
-                }
+                if (otherBombGo != null && otherBombGo != gameObject)
+                    ScheduleChainExplosion(otherBombGo);
 
                 break;
             }
