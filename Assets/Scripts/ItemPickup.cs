@@ -24,6 +24,7 @@ public class ItemPickup : MonoBehaviour
         BombPass,
         DestructiblePass,
         InvincibleSuit,
+        Heart,
     }
 
     public ItemType type;
@@ -162,6 +163,11 @@ public class ItemPickup : MonoBehaviour
                     abilitySystem.Enable(InvincibleSuitAbility.AbilityId);
                     break;
                 }
+
+            case ItemType.Heart:
+                if (player.TryGetComponent<CharacterHealth>(out var health))
+                    health.AddLife(1);
+                break;
         }
 
         Destroy(gameObject);

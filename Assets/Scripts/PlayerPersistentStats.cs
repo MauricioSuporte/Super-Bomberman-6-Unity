@@ -10,6 +10,8 @@ public static class PlayerPersistentStats
     public static int ExplosionRadius = 9;
     public static float Speed = 5f;
 
+    public static int Life = 1;
+
     public static bool CanKickBombs = false;
     public static bool CanPunchBombs = true;
     public static bool CanPassBombs = true;
@@ -23,6 +25,7 @@ public static class PlayerPersistentStats
         BombAmount = Mathf.Min(BombAmount, MaxBombAmount);
         ExplosionRadius = Mathf.Min(ExplosionRadius, MaxExplosionRadius);
         Speed = Mathf.Min(Speed, MaxSpeed);
+        Life = Mathf.Max(1, Life);
 
         if (movement != null)
             movement.speed = Speed;
@@ -35,6 +38,9 @@ public static class PlayerPersistentStats
 
         if (movement != null && movement.CompareTag("Player"))
         {
+            if (movement.TryGetComponent<CharacterHealth>(out var health))
+                health.life = Mathf.Max(1, Life);
+
             if (!movement.TryGetComponent<AbilitySystem>(out var abilitySystem))
                 abilitySystem = movement.gameObject.AddComponent<AbilitySystem>();
 
@@ -77,6 +83,9 @@ public static class PlayerPersistentStats
         {
             Speed = Mathf.Min(movement.speed, MaxSpeed);
 
+            if (movement.TryGetComponent<CharacterHealth>(out var health))
+                Life = Mathf.Max(1, health.life);
+
             var abilitySystem = movement.GetComponent<AbilitySystem>();
 
             var kick = abilitySystem != null ? abilitySystem.Get<BombKickAbility>(BombKickAbility.AbilityId) : null;
@@ -118,6 +127,8 @@ public static class PlayerPersistentStats
         BombAmount = 1;
         ExplosionRadius = 1;
         Speed = 3f;
+
+        Life = 1;
 
         CanKickBombs = false;
         CanPunchBombs = false;

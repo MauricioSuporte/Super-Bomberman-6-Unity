@@ -244,6 +244,7 @@ MonoBehaviour:
   bombPassItemPrefab: {fileID: 2727780941473249227, guid: 60d73a0d38dd5ab44b2ed223467d82df, type: 3}
   destructiblePassItemPrefab: {fileID: 6871244334814668705, guid: 798c1b972c40ad843b055470747362cd, type: 3}
   invincibleSuitItemPrefab: {fileID: 2727780941473249227, guid: 643a4102bf1d3264fb044119e1ef1be0, type: 3}
+  heartItemPrefab: {fileID: 2727780941473249227, guid: 0c359f5866b02ae49a6ab6bd0423459e, type: 3}
   destructibleTilemap: {fileID: 285353618}
   nextStageSceneName: Stage_1-2
   groundTilemap: {fileID: 672307155}

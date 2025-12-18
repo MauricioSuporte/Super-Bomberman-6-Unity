@@ -27,6 +27,7 @@ public class GameManager : MonoBehaviour
     public ItemPickup bombPassItemPrefab;
     public ItemPickup destructiblePassItemPrefab;
     public ItemPickup invincibleSuitItemPrefab;
+    public ItemPickup heartItemPrefab;
 
     [Header("Stage")]
     public Tilemap destructibleTilemap;
@@ -56,6 +57,7 @@ public class GameManager : MonoBehaviour
     int bombPassSpawnOrder = -1;
     int destructiblePassSpawnOrder = -1;
     int invincibleSuitSpawnOrder = -1;
+    int heartSpawnOrder = -1;
 
     void Start()
     {
@@ -132,6 +134,9 @@ public class GameManager : MonoBehaviour
 
         if (invincibleSuitItemPrefab != null && cursor < indices.Count)
             invincibleSuitSpawnOrder = indices[cursor++];
+
+        if (heartItemPrefab != null && cursor < indices.Count)
+            heartSpawnOrder = indices[cursor++];
     }
 
     public GameObject GetSpawnForDestroyedBlock()
@@ -177,6 +182,9 @@ public class GameManager : MonoBehaviour
 
         if (order == invincibleSuitSpawnOrder && invincibleSuitItemPrefab != null)
             return invincibleSuitItemPrefab.gameObject;
+
+        if (order == heartSpawnOrder && heartItemPrefab != null)
+            return heartItemPrefab.gameObject;
 
         return null;
     }
