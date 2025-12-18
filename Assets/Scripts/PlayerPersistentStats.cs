@@ -12,7 +12,9 @@ public static class PlayerPersistentStats
 
     public static bool CanKickBombs = true;
     public static bool CanPunchBombs = true;
-    public static bool HasPierceBombs = true;
+
+    public static bool HasPierceBombs = false;
+    public static bool HasControlBombs = true;
 
     public static void LoadInto(MovementController movement, BombController bomb)
     {
@@ -40,8 +42,21 @@ public static class PlayerPersistentStats
             if (CanPunchBombs) abilitySystem.Enable(BombPunchAbility.AbilityId);
             else abilitySystem.Disable(BombPunchAbility.AbilityId);
 
-            if (HasPierceBombs) abilitySystem.Enable(PierceBombAbility.AbilityId);
-            else abilitySystem.Disable(PierceBombAbility.AbilityId);
+            if (HasControlBombs)
+            {
+                abilitySystem.Enable(ControlBombAbility.AbilityId);
+                abilitySystem.Disable(PierceBombAbility.AbilityId);
+            }
+            else if (HasPierceBombs)
+            {
+                abilitySystem.Enable(PierceBombAbility.AbilityId);
+                abilitySystem.Disable(ControlBombAbility.AbilityId);
+            }
+            else
+            {
+                abilitySystem.Disable(PierceBombAbility.AbilityId);
+                abilitySystem.Disable(ControlBombAbility.AbilityId);
+            }
         }
     }
 
@@ -61,6 +76,14 @@ public static class PlayerPersistentStats
 
             var pierce = abilitySystem != null ? abilitySystem.Get<PierceBombAbility>(PierceBombAbility.AbilityId) : null;
             HasPierceBombs = pierce != null && pierce.IsEnabled;
+
+            var control = abilitySystem != null ? abilitySystem.Get<ControlBombAbility>(ControlBombAbility.AbilityId) : null;
+            HasControlBombs = control != null && control.IsEnabled;
+
+            if (HasControlBombs)
+                HasPierceBombs = false;
+            else if (HasPierceBombs)
+                HasControlBombs = false;
         }
 
         if (bomb != null && bomb.CompareTag("Player"))
@@ -78,6 +101,8 @@ public static class PlayerPersistentStats
 
         CanKickBombs = false;
         CanPunchBombs = false;
+
         HasPierceBombs = false;
+        HasControlBombs = false;
     }
 }

@@ -14,14 +14,18 @@ public class BombController : MonoBehaviour
     [Header("Bomb Settings")]
     public GameObject bombPrefab;
     public GameObject pierceBombPrefab;
+    public GameObject controlBombPrefab;
     public float bombFuseTime = 3f;
     public int bombAmout = 1;
     private static readonly WaitForSeconds chainExplosionWait = new(0.1f);
     private readonly HashSet<int> scheduledChainBombs = new();
-    private static readonly WaitForSeconds _waitDestructibleSpawnDelayFallback = new(0.5f);
 
     private int bombsRemaining = 0;
     public int BombsRemaining => bombsRemaining;
+
+    [Header("Control Bomb")]
+    public KeyCode controlDetonateKey = KeyCode.N;
+    private readonly List<GameObject> plantedBombs = new();
 
     [Header("Explosion Settings")]
     public Explosion explosionPrefab;
@@ -68,16 +72,24 @@ public class BombController : MonoBehaviour
         if (GamePauseController.IsPaused)
             return;
 
-        if (bombsRemaining <= 0)
-            return;
+        bool controlEnabled = IsControlEnabled();
 
         if (!useAIInput)
         {
+            if (controlEnabled && Input.GetKeyDown(controlDetonateKey))
+                TryExplodeOldestControlledBomb();
+
+            if (bombsRemaining <= 0)
+                return;
+
             if (Input.GetKeyDown(inputKey))
                 PlaceBomb();
         }
         else
         {
+            if (bombsRemaining <= 0)
+                return;
+
             if (bombRequested)
             {
                 PlaceBomb();
@@ -145,7 +157,12 @@ public class BombController : MonoBehaviour
         if (bomb == null)
             return;
 
+        UnregisterBomb(bomb);
+
         var bombComp = bomb.GetComponent<Bomb>();
+
+        if (bombComp != null && bombComp.Owner != null && bombComp.Owner != this)
+            bombComp.Owner.UnregisterBomb(bomb);
 
         Vector2 logicalPos = bombComp != null
             ? bombComp.GetLogicalPosition()
@@ -210,8 +227,13 @@ public class BombController : MonoBehaviour
         if (playerAudioSource != null && placeBombSfx != null)
             playerAudioSource.PlayOneShot(placeBombSfx);
 
-        bool pierceEnabled = IsPierceEnabled();
-        GameObject prefabToUse = (pierceEnabled && pierceBombPrefab != null) ? pierceBombPrefab : bombPrefab;
+        bool controlEnabled = IsControlEnabled();
+        bool pierceEnabled = !controlEnabled && IsPierceEnabled();
+
+        GameObject prefabToUse =
+            controlEnabled && controlBombPrefab != null ? controlBombPrefab :
+            (pierceEnabled && pierceBombPrefab != null) ? pierceBombPrefab :
+            bombPrefab;
 
         GameObject bomb = Instantiate(prefabToUse, position, Quaternion.identity);
         bombsRemaining--;
@@ -220,6 +242,7 @@ public class BombController : MonoBehaviour
             bombComponent = bomb.AddComponent<Bomb>();
 
         bombComponent.IsPierceBomb = pierceEnabled;
+        bombComponent.IsControlBomb = controlEnabled;
 
         bombComponent.SetStageBoundsTilemap(stageBoundsTiles);
         bombComponent.Initialize(this);
@@ -227,7 +250,11 @@ public class BombController : MonoBehaviour
         if (bomb.TryGetComponent<Collider2D>(out var bombCollider))
             bombCollider.isTrigger = true;
 
-        StartCoroutine(BombFuse(bomb));
+        if (controlEnabled)
+            RegisterBomb(bomb);
+
+        if (!controlEnabled)
+            StartCoroutine(BombFuse(bomb));
     }
 
     private bool TileHasBomb(Vector2 position)
@@ -465,5 +492,78 @@ public class BombController : MonoBehaviour
             return Mathf.Max(0f, destructiblePrefab.destructionTime);
 
         return 0.5f;
+    }
+
+    private bool IsControlEnabled()
+    {
+        if (TryGetComponent<AbilitySystem>(out var abilitySystem))
+            return abilitySystem.IsEnabled(ControlBombAbility.AbilityId);
+
+        return false;
+    }
+
+    private void RegisterBomb(GameObject bomb)
+    {
+        if (bomb == null)
+            return;
+
+        plantedBombs.Add(bomb);
+    }
+
+    private void UnregisterBomb(GameObject bomb)
+    {
+        if (bomb == null)
+            return;
+
+        plantedBombs.Remove(bomb);
+    }
+
+    private void CleanupNullBombs()
+    {
+        for (int i = plantedBombs.Count - 1; i >= 0; i--)
+        {
+            if (plantedBombs[i] == null)
+                plantedBombs.RemoveAt(i);
+        }
+    }
+
+    private bool TryExplodeOldestControlledBomb()
+    {
+        CleanupNullBombs();
+
+        for (int i = 0; i < plantedBombs.Count; i++)
+        {
+            var bomb = plantedBombs[i];
+            if (bomb == null)
+                continue;
+
+            if (!bomb.TryGetComponent<Bomb>(out var bombComp) || bombComp == null || !bombComp.IsControlBomb)
+                continue;
+
+            plantedBombs.RemoveAt(i);
+            ExplodeBomb(bomb);
+            return true;
+        }
+
+        return false;
+    }
+
+    public void ClearPlantedBombsOnStageEnd(bool explodeInstead = false)
+    {
+        CleanupNullBombs();
+
+        for (int i = 0; i < plantedBombs.Count; i++)
+        {
+            var b = plantedBombs[i];
+            if (b == null)
+                continue;
+
+            if (explodeInstead)
+                ExplodeBomb(b);
+            else
+                Destroy(b);
+        }
+
+        plantedBombs.Clear();
     }
 }

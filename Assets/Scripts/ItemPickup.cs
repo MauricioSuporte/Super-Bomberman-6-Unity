@@ -18,7 +18,8 @@ public class ItemPickup : MonoBehaviour
         SpeedIncrese,
         BombKick,
         BombPunch,
-        PierceBomb
+        PierceBomb,
+        ControlBomb
     }
 
     public ItemType type;
@@ -98,7 +99,22 @@ public class ItemPickup : MonoBehaviour
                     if (!player.TryGetComponent<AbilitySystem>(out var abilitySystem))
                         abilitySystem = player.AddComponent<AbilitySystem>();
 
+                    abilitySystem.RebuildCache();
+
                     abilitySystem.Enable(PierceBombAbility.AbilityId);
+                    abilitySystem.Disable(ControlBombAbility.AbilityId);
+                    break;
+                }
+
+            case ItemType.ControlBomb:
+                {
+                    if (!player.TryGetComponent<AbilitySystem>(out var abilitySystem))
+                        abilitySystem = player.AddComponent<AbilitySystem>();
+
+                    abilitySystem.RebuildCache();
+
+                    abilitySystem.Enable(ControlBombAbility.AbilityId);
+                    abilitySystem.Disable(PierceBombAbility.AbilityId);
                     break;
                 }
         }

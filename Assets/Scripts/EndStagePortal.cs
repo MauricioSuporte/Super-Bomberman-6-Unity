@@ -71,6 +71,9 @@ public class EndStagePortal : MonoBehaviour
 
         isActivated = true;
 
+        if (other.TryGetComponent<BombController>(out var bombController))
+            bombController.ClearPlantedBombsOnStageEnd(false);
+
         if (other.TryGetComponent<MovementController>(out var movement))
         {
             Vector2 portalCenter = new(

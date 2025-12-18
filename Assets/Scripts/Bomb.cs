@@ -14,6 +14,7 @@ public class Bomb : MonoBehaviour
 
     public bool HasExploded { get; private set; }
     public float PlacedTime { get; private set; }
+    public bool IsControlBomb { get; set; }
 
     public bool IsBeingKicked => isKicked;
     public bool IsBeingPunched => isPunched;

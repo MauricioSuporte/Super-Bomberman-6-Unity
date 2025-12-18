@@ -425,6 +425,7 @@ public class MovementController : MonoBehaviour, IKillable
             PlayerPersistentStats.CanKickBombs = false;
             PlayerPersistentStats.CanPunchBombs = false;
             PlayerPersistentStats.HasPierceBombs = false;
+            PlayerPersistentStats.HasControlBombs = false;
         }
 
         if (bombController != null)
