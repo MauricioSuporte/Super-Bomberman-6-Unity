@@ -228,6 +228,9 @@ public class BombController : MonoBehaviour
         if (TileHasBomb(position))
             return;
 
+        if (HasDestructibleAt(position))
+            return;
+
         if (playerAudioSource != null && placeBombSfx != null)
             playerAudioSource.PlayOneShot(placeBombSfx);
 

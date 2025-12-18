@@ -289,12 +289,22 @@ public class MovementController : MonoBehaviour, IKillable
         if (hits == null || hits.Length == 0)
             return false;
 
+        bool canPassDestructibles =
+            abilitySystem != null &&
+            abilitySystem.IsEnabled(DestructiblePassAbility.AbilityId);
+
         foreach (var hit in hits)
         {
             if (hit == null)
                 continue;
 
             if (hit.gameObject == gameObject)
+                continue;
+
+            if (hit.isTrigger)
+                continue;
+
+            if (canPassDestructibles && hit.CompareTag("Destructibles"))
                 continue;
 
             if (hit.gameObject.layer == LayerMask.NameToLayer("Bomb"))
@@ -307,9 +317,6 @@ public class MovementController : MonoBehaviour, IKillable
                         continue;
                 }
             }
-
-            if (hit.isTrigger)
-                continue;
 
             return true;
         }
@@ -331,6 +338,10 @@ public class MovementController : MonoBehaviour, IKillable
         if (hits == null || hits.Length == 0)
             return false;
 
+        bool canPassDestructibles =
+            abilitySystem != null &&
+            abilitySystem.IsEnabled(DestructiblePassAbility.AbilityId);
+
         var monos = GetComponents<MonoBehaviour>();
 
         foreach (var hit in hits)
@@ -342,6 +353,9 @@ public class MovementController : MonoBehaviour, IKillable
                 continue;
 
             if (hit.isTrigger)
+                continue;
+
+            if (canPassDestructibles && hit.CompareTag("Destructibles"))
                 continue;
 
             for (int i = 0; i < monos.Length; i++)
@@ -427,6 +441,8 @@ public class MovementController : MonoBehaviour, IKillable
             PlayerPersistentStats.HasPierceBombs = false;
             PlayerPersistentStats.HasControlBombs = false;
             PlayerPersistentStats.HasFullFire = false;
+            PlayerPersistentStats.CanPassBombs = false;
+            PlayerPersistentStats.CanPassDestructibles = false;
         }
 
         if (bombController != null)

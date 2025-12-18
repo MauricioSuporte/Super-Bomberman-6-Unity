@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+[RequireComponent(typeof(Collider2D))]
 public class CrazyCupMovementController : EnemyMovementController
 {
     private Collider2D selfCollider;

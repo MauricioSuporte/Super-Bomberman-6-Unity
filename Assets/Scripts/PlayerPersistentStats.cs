@@ -6,17 +6,17 @@ public static class PlayerPersistentStats
     public const int MaxExplosionRadius = 9;
     public const float MaxSpeed = 9f;
 
-    public static int BombAmount = 3;
-    public static int ExplosionRadius = 1;
+    public static int BombAmount = 9;
+    public static int ExplosionRadius = 9;
     public static float Speed = 5f;
 
-    public static bool CanKickBombs = true;
+    public static bool CanKickBombs = false;
     public static bool CanPunchBombs = true;
-    public static bool CanPassBombs = false;
-
+    public static bool CanPassBombs = true;
+    public static bool CanPassDestructibles = true;
     public static bool HasPierceBombs = false;
-    public static bool HasControlBombs = false;
-    public static bool HasFullFire = true;
+    public static bool HasControlBombs = true;
+    public static bool HasFullFire = false;
 
     public static void LoadInto(MovementController movement, BombController bomb)
     {
@@ -49,6 +49,9 @@ public static class PlayerPersistentStats
 
             if (CanPassBombs) abilitySystem.Enable(BombPassAbility.AbilityId);
             else abilitySystem.Disable(BombPassAbility.AbilityId);
+
+            if (CanPassDestructibles) abilitySystem.Enable(DestructiblePassAbility.AbilityId);
+            else abilitySystem.Disable(DestructiblePassAbility.AbilityId);
 
             if (HasControlBombs)
             {
@@ -91,8 +94,11 @@ public static class PlayerPersistentStats
             var fullFire = abilitySystem != null ? abilitySystem.Get<FullFireAbility>(FullFireAbility.AbilityId) : null;
             HasFullFire = fullFire != null && fullFire.IsEnabled;
 
-            var pass = abilitySystem != null ? abilitySystem.Get<BombPassAbility>(BombPassAbility.AbilityId) : null;
-            CanPassBombs = pass != null && pass.IsEnabled;
+            var passBomb = abilitySystem != null ? abilitySystem.Get<BombPassAbility>(BombPassAbility.AbilityId) : null;
+            CanPassBombs = passBomb != null && passBomb.IsEnabled;
+
+            var passDestructibles = abilitySystem != null ? abilitySystem.Get<DestructiblePassAbility>(DestructiblePassAbility.AbilityId) : null;
+            CanPassDestructibles = passDestructibles != null && passDestructibles.IsEnabled;
 
             if (HasControlBombs)
                 HasPierceBombs = false;
@@ -115,10 +121,10 @@ public static class PlayerPersistentStats
 
         CanKickBombs = false;
         CanPunchBombs = false;
-
+        CanPassBombs = false;
+        CanPassDestructibles = false;
         HasPierceBombs = false;
         HasControlBombs = false;
         HasFullFire = false;
-        CanPassBombs = false;
     }
 }

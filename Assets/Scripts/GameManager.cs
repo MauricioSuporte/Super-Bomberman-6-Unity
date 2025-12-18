@@ -25,6 +25,7 @@ public class GameManager : MonoBehaviour
     public ItemPickup controlBombItemPrefab;
     public ItemPickup fullFireItemPrefab;
     public ItemPickup bombPassItemPrefab;
+    public ItemPickup destructiblePassItemPrefab;
 
     [Header("Stage")]
     public Tilemap destructibleTilemap;
@@ -52,6 +53,7 @@ public class GameManager : MonoBehaviour
     int controlBombSpawnOrder = -1;
     int fullFireSpawnOrder = -1;
     int bombPassSpawnOrder = -1;
+    int destructiblePassSpawnOrder = -1;
 
     void Start()
     {
@@ -122,6 +124,9 @@ public class GameManager : MonoBehaviour
 
         if (bombPassItemPrefab != null && cursor < indices.Count)
             bombPassSpawnOrder = indices[cursor++];
+
+        if (destructiblePassItemPrefab != null && cursor < indices.Count)
+            destructiblePassSpawnOrder = indices[cursor++];
     }
 
     public GameObject GetSpawnForDestroyedBlock()
@@ -161,6 +166,9 @@ public class GameManager : MonoBehaviour
 
         if (order == bombPassSpawnOrder && bombPassItemPrefab != null)
             return bombPassItemPrefab.gameObject;
+
+        if (order == destructiblePassSpawnOrder && destructiblePassItemPrefab != null)
+            return destructiblePassItemPrefab.gameObject;
 
         return null;
     }
