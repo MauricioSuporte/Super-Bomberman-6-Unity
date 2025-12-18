@@ -31,6 +31,9 @@ public class BombKickAbility : MonoBehaviour, IMovementAbility
     {
         enabledAbility = true;
 
+        if (TryGetComponent<AbilitySystem>(out var abilitySystem))
+            abilitySystem.Disable(BombPassAbility.AbilityId);
+
         if (CompareTag("Player"))
             PlayerPersistentStats.CanKickBombs = true;
     }

@@ -20,7 +20,8 @@ public class ItemPickup : MonoBehaviour
         BombPunch,
         PierceBomb,
         ControlBomb,
-        FullFire
+        FullFire,
+        BombPass
     }
 
     public ItemType type;
@@ -126,6 +127,16 @@ public class ItemPickup : MonoBehaviour
 
                     abilitySystem.RebuildCache();
                     abilitySystem.Enable(FullFireAbility.AbilityId);
+                    break;
+                }
+
+            case ItemType.BombPass:
+                {
+                    if (!player.TryGetComponent<AbilitySystem>(out var abilitySystem))
+                        abilitySystem = player.AddComponent<AbilitySystem>();
+
+                    abilitySystem.RebuildCache();
+                    abilitySystem.Enable(BombPassAbility.AbilityId);
                     break;
                 }
         }

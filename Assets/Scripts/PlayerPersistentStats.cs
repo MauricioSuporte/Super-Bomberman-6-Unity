@@ -12,6 +12,7 @@ public static class PlayerPersistentStats
 
     public static bool CanKickBombs = true;
     public static bool CanPunchBombs = true;
+    public static bool CanPassBombs = false;
 
     public static bool HasPierceBombs = false;
     public static bool HasControlBombs = false;
@@ -45,6 +46,9 @@ public static class PlayerPersistentStats
 
             if (HasFullFire) abilitySystem.Enable(FullFireAbility.AbilityId);
             else abilitySystem.Disable(FullFireAbility.AbilityId);
+
+            if (CanPassBombs) abilitySystem.Enable(BombPassAbility.AbilityId);
+            else abilitySystem.Disable(BombPassAbility.AbilityId);
 
             if (HasControlBombs)
             {
@@ -87,6 +91,9 @@ public static class PlayerPersistentStats
             var fullFire = abilitySystem != null ? abilitySystem.Get<FullFireAbility>(FullFireAbility.AbilityId) : null;
             HasFullFire = fullFire != null && fullFire.IsEnabled;
 
+            var pass = abilitySystem != null ? abilitySystem.Get<BombPassAbility>(BombPassAbility.AbilityId) : null;
+            CanPassBombs = pass != null && pass.IsEnabled;
+
             if (HasControlBombs)
                 HasPierceBombs = false;
             else if (HasPierceBombs)
@@ -112,5 +119,6 @@ public static class PlayerPersistentStats
         HasPierceBombs = false;
         HasControlBombs = false;
         HasFullFire = false;
+        CanPassBombs = false;
     }
 }

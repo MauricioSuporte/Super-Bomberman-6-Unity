@@ -9,7 +9,8 @@ public static class AbilityRegistry
         { BombPunchAbility.AbilityId, typeof(BombPunchAbility) },
         { PierceBombAbility.AbilityId, typeof(PierceBombAbility) },
         { ControlBombAbility.AbilityId, typeof(ControlBombAbility) },
-        { FullFireAbility.AbilityId, typeof(FullFireAbility) }
+        { FullFireAbility.AbilityId, typeof(FullFireAbility) },
+        { BombPassAbility.AbilityId, typeof(BombPassAbility) }
     };
 
     public static bool TryGetType(string id, out Type type)
