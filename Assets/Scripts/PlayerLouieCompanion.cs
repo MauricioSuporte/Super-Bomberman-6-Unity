@@ -1,53 +1,79 @@
 ﻿using UnityEngine;
 
+[RequireComponent(typeof(MovementController))]
 public class PlayerLouieCompanion : MonoBehaviour
 {
-    [Header("Prefab")]
+    [Header("Prefab (Louie Root)")]
     public GameObject louiePrefab;
 
-    [Header("Follow Offset")]
-    public Vector2 offset = new Vector2(-0.35f, -0.15f);
+    [Header("Local Offset")]
+    public Vector2 localOffset = new(0f, -0.15f);
 
-    private MovementController playerMovement;
+    private MovementController movement;
     private GameObject currentLouie;
 
     private void Awake()
     {
-        playerMovement = GetComponent<MovementController>();
+        movement = GetComponent<MovementController>();
     }
 
-    public void SpawnOrRefreshLouie()
+    public void MountLouie()
     {
-        if (louiePrefab == null || playerMovement == null)
+        if (louiePrefab == null || movement == null)
             return;
 
-        // se já tem, destrói e recria (ou você pode só manter)
         if (currentLouie != null)
-            Destroy(currentLouie);
+            return;
 
-        Vector2 pos = playerMovement.Rigidbody != null
-            ? playerMovement.Rigidbody.position + offset
-            : (Vector2)transform.position + offset;
+        currentLouie = Instantiate(louiePrefab, transform);
+        currentLouie.transform.SetLocalPositionAndRotation(localOffset, Quaternion.identity);
+        currentLouie.transform.localScale = Vector3.one;
 
-        currentLouie = Instantiate(louiePrefab, pos, Quaternion.identity);
+        if (currentLouie.TryGetComponent<LouieMovementController>(out var louieMove))
+            louieMove.BindOwner(movement, localOffset);
 
-        var louieMove = currentLouie.GetComponent<LouieMovementController>();
         if (louieMove != null)
-            louieMove.BindOwner(playerMovement, offset);
+            louieMove.enabled = false;
 
-        // se o player morrer, some com o Louie
-        playerMovement.Died += HandlePlayerDied;
+        if (currentLouie.TryGetComponent<Rigidbody2D>(out var rb))
+            rb.simulated = false;
+
+        if (currentLouie.TryGetComponent<Collider2D>(out var col))
+            col.enabled = false;
+
+        if (currentLouie.TryGetComponent<BombController>(out var bc))
+            bc.enabled = false;
+
+        movement.SetMountedOnLouie(true);
+
+        if (currentLouie.TryGetComponent<LouieRiderVisual>(out var visual))
+        {
+            visual.localOffset = localOffset;
+            visual.Bind(movement);
+        }
+
+        movement.Died += OnPlayerDied;
     }
 
-    private void HandlePlayerDied(MovementController _)
+    public void UnmountLouie()
     {
         if (currentLouie != null)
             Destroy(currentLouie);
+
+        currentLouie = null;
+
+        if (movement != null)
+            movement.SetMountedOnLouie(false);
+    }
+
+    private void OnPlayerDied(MovementController _)
+    {
+        UnmountLouie();
     }
 
     private void OnDestroy()
     {
-        if (playerMovement != null)
-            playerMovement.Died -= HandlePlayerDied;
+        if (movement != null)
+            movement.Died -= OnPlayerDied;
     }
 }

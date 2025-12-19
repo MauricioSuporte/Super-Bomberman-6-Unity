@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 [RequireComponent(typeof(SpriteRenderer))]
 public class AnimatedSpriteRenderer : MonoBehaviour
@@ -199,30 +199,26 @@ public class AnimatedSpriteRenderer : MonoBehaviour
         if (idle)
         {
             spriteRenderer.sprite = idleSprite;
-        }
-        else
-        {
-            if (animationSprite == null || animationSprite.Length == 0)
-                return;
 
-            if (animationFrame < 0 || animationFrame >= animationSprite.Length)
-                return;
-
-            spriteRenderer.sprite = animationSprite[animationFrame];
+            return;
         }
+
+        if (animationSprite == null || animationSprite.Length == 0)
+            return;
+
+        if (animationFrame < 0 || animationFrame >= animationSprite.Length)
+            return;
+
+        spriteRenderer.sprite = animationSprite[animationFrame];
 
         if (!canMoveVisualLocal || visualTransform == null)
             return;
 
-        if (!idle && frameOffsets != null && frameOffsets.Length > 0)
+        if (frameOffsets != null && frameOffsets.Length > 0)
         {
             int idx = Mathf.Clamp(animationFrame, 0, frameOffsets.Length - 1);
             Vector2 offset = frameOffsets[idx];
             visualTransform.localPosition = initialVisualLocalPosition + (Vector3)offset;
-        }
-        else
-        {
-            ResetOffset();
         }
     }
 

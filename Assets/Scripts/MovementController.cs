@@ -32,6 +32,17 @@ public class MovementController : MonoBehaviour, IKillable
     public AnimatedSpriteRenderer spriteRendererEndStage;
     public AnimatedSpriteRenderer spriteRendererCheering;
 
+    [Header("Mounted On Louie")]
+    public AnimatedSpriteRenderer mountedSpriteUp;
+    public AnimatedSpriteRenderer mountedSpriteDown;
+    public AnimatedSpriteRenderer mountedSpriteLeft;
+
+    protected Vector2 facingDirection = Vector2.down;
+    public Vector2 FacingDirection => facingDirection;
+
+    private bool isMountedOnLouie;
+    public bool IsMountedOnLouie => isMountedOnLouie;
+
     [Header("End Stage Animation")]
     public float endStageTotalTime = 1f;
     public int endStageFrameCount = 9;
@@ -105,34 +116,48 @@ public class MovementController : MonoBehaviour, IKillable
     protected virtual void HandleInput()
     {
         if (Input.GetKey(inputUp))
-        {
-            hasInput = true;
-            SetDirection(Vector2.up, spriteRendererUp);
-        }
+            ApplyDirectionFromVector(Vector2.up);
         else if (Input.GetKey(inputDown))
-        {
-            hasInput = true;
-            SetDirection(Vector2.down, spriteRendererDown);
-        }
+            ApplyDirectionFromVector(Vector2.down);
         else if (Input.GetKey(inputLeft))
-        {
-            hasInput = true;
-            SetDirection(Vector2.left, spriteRendererLeft);
-        }
+            ApplyDirectionFromVector(Vector2.left);
         else if (Input.GetKey(inputRight))
-        {
-            hasInput = true;
-            SetDirection(Vector2.right, spriteRendererRight);
-        }
+            ApplyDirectionFromVector(Vector2.right);
         else
-        {
-            SetDirection(Vector2.zero, activeSpriteRenderer);
-        }
+            ApplyDirectionFromVector(Vector2.zero);
     }
 
     public void ApplyDirectionFromVector(Vector2 dir)
     {
         hasInput = dir != Vector2.zero;
+
+        if (dir != Vector2.zero)
+            facingDirection = dir;
+
+        if (isMountedOnLouie)
+        {
+            if (dir == Vector2.up)
+                SetDirection(Vector2.up, mountedSpriteUp != null ? mountedSpriteUp : spriteRendererUp);
+            else if (dir == Vector2.down)
+                SetDirection(Vector2.down, mountedSpriteDown != null ? mountedSpriteDown : spriteRendererDown);
+            else if (dir == Vector2.left)
+                SetDirection(Vector2.left, mountedSpriteLeft != null ? mountedSpriteLeft : spriteRendererLeft);
+            else if (dir == Vector2.right)
+                SetDirection(Vector2.right, mountedSpriteLeft != null ? mountedSpriteLeft : spriteRendererLeft);
+            else
+            {
+                Vector2 face = facingDirection;
+
+                if (face == Vector2.up)
+                    SetDirection(Vector2.zero, mountedSpriteUp != null ? mountedSpriteUp : spriteRendererUp);
+                else if (face == Vector2.down)
+                    SetDirection(Vector2.zero, mountedSpriteDown != null ? mountedSpriteDown : spriteRendererDown);
+                else
+                    SetDirection(Vector2.zero, mountedSpriteLeft != null ? mountedSpriteLeft : spriteRendererLeft);
+            }
+
+            return;
+        }
 
         if (dir == Vector2.up)
             SetDirection(Vector2.up, spriteRendererUp);
@@ -143,7 +168,20 @@ public class MovementController : MonoBehaviour, IKillable
         else if (dir == Vector2.right)
             SetDirection(Vector2.right, spriteRendererRight);
         else
-            SetDirection(Vector2.zero, activeSpriteRenderer);
+        {
+            Vector2 face = facingDirection;
+
+            if (face == Vector2.up)
+                SetDirection(Vector2.zero, spriteRendererUp);
+            else if (face == Vector2.down)
+                SetDirection(Vector2.zero, spriteRendererDown);
+            else if (face == Vector2.left)
+                SetDirection(Vector2.zero, spriteRendererLeft);
+            else if (face == Vector2.right)
+                SetDirection(Vector2.zero, spriteRendererRight);
+            else
+                SetDirection(Vector2.zero, activeSpriteRenderer);
+        }
     }
 
     protected virtual void FixedUpdate()
@@ -379,26 +417,28 @@ public class MovementController : MonoBehaviour, IKillable
     {
         direction = newDirection;
 
-        spriteRendererUp.enabled = spriteRenderer == spriteRendererUp;
-        spriteRendererDown.enabled = spriteRenderer == spriteRendererDown;
-        spriteRendererLeft.enabled = spriteRenderer == spriteRendererLeft;
-        spriteRendererRight.enabled = spriteRenderer == spriteRendererRight;
+        if (newDirection != Vector2.zero)
+            facingDirection = newDirection;
 
-        if (spriteRendererDeath != null)
-            spriteRendererDeath.enabled = spriteRenderer == spriteRendererDeath;
+        if (spriteRenderer == null)
+        {
+            if (activeSpriteRenderer != null)
+                activeSpriteRenderer.idle = (direction == Vector2.zero);
 
-        if (spriteRendererEndStage != null)
-            spriteRendererEndStage.enabled = spriteRenderer == spriteRendererEndStage;
+            return;
+        }
 
-        if (spriteRendererCheering != null)
-            spriteRendererCheering.enabled = spriteRenderer == spriteRendererCheering;
+        if (activeSpriteRenderer != spriteRenderer)
+        {
+            if (activeSpriteRenderer != null)
+                activeSpriteRenderer.enabled = false;
 
-        activeSpriteRenderer = spriteRenderer;
+            spriteRenderer.enabled = true;
+            activeSpriteRenderer = spriteRenderer;
+        }
 
-        if (activeSpriteRenderer != null)
-            activeSpriteRenderer.idle = direction == Vector2.zero;
-
-        ApplyFlipForHorizontal(direction);
+        activeSpriteRenderer.idle = (direction == Vector2.zero);
+        ApplyFlipForHorizontal(facingDirection);
     }
 
     protected virtual void OnTriggerEnter2D(Collider2D other)
@@ -631,5 +671,12 @@ public class MovementController : MonoBehaviour, IKillable
             if (dir == Vector2.right) sr.flipX = true;
             else if (dir == Vector2.left) sr.flipX = false;
         }
+    }
+
+    public void SetMountedOnLouie(bool mounted)
+    {
+        isMountedOnLouie = mounted;
+
+        ApplyDirectionFromVector(direction);
     }
 }

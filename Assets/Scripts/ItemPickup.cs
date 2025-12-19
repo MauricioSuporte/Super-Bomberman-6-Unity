@@ -173,7 +173,7 @@ public class ItemPickup : MonoBehaviour
             case ItemType.Egg:
                 {
                     if (player.TryGetComponent<PlayerLouieCompanion>(out var louie))
-                        louie.SpawnOrRefreshLouie();
+                        louie.MountLouie();
                     break;
                 }
         }

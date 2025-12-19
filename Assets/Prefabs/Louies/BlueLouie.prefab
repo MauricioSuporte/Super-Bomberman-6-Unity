@@ -15,6 +15,7 @@ GameObject:
   - component: {fileID: 8712672524481065922}
   - component: {fileID: 5649779946888286329}
   - component: {fileID: -5936940310258290347}
+  - component: {fileID: 2870228645174432188}
   m_Layer: 0
   m_Name: BlueLouie
   m_TagString: Untagged
@@ -278,12 +279,32 @@ MonoBehaviour:
   spriteRendererDeath: {fileID: 5440623971944223000}
   spriteRendererEndStage: {fileID: 0}
   spriteRendererCheering: {fileID: 0}
+  mountedSpriteUp: {fileID: 0}
+  mountedSpriteDown: {fileID: 0}
+  mountedSpriteLeft: {fileID: 0}
   endStageTotalTime: 1
   endStageFrameCount: 9
   isDead: 0
   owner: {fileID: 0}
   followOffset: {x: -0.35, y: -0.15}
   followLerp: 25
+--- !u!114 &2870228645174432188
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2273416014071709654}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 11ac4bff6f89b7d4586c261fcb6ac7f1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::LouieRiderVisual
+  owner: {fileID: 6013594429678645981, guid: a0c9407e33176584981a9df061a537bc, type: 3}
+  localOffset: {x: 0, y: -0.15}
+  louieUp: {fileID: 6685445590595473310}
+  louieDown: {fileID: 4170285985975590271}
+  louieLeft: {fileID: 5930063177854299457}
 --- !u!1 &2445788475736444126
 GameObject:
   m_ObjectHideFlags: 0
@@ -301,7 +322,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &57579042699043240
 Transform:
   m_ObjectHideFlags: 0
@@ -311,7 +332,7 @@ Transform:
   m_GameObject: {fileID: 2445788475736444126}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: 0.5, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -363,7 +384,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 5
+  m_SortingOrder: 4
   m_Sprite: {fileID: -963909947, guid: c236633130736f84ca67d6f96842db5f, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
@@ -486,7 +507,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 5
+  m_SortingOrder: 4
   m_Sprite: {fileID: -1849437013432248988, guid: 6c2583beff5fe6444abe5f6a150dcc63, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
@@ -552,7 +573,7 @@ Transform:
   m_GameObject: {fileID: 7806644560918232893}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: 0.5, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -604,7 +625,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 5
+  m_SortingOrder: 4
   m_Sprite: {fileID: 1832498247770838788, guid: c236633130736f84ca67d6f96842db5f, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
@@ -628,7 +649,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a4b55e1b961d144197e1a7a4a391956, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  idleSprite: {fileID: 1832498247770838788, guid: c236633130736f84ca67d6f96842db5f, type: 3}
+  idleSprite: {fileID: -1089979344, guid: c236633130736f84ca67d6f96842db5f, type: 3}
   animationSprite:
   - {fileID: 1832498247770838788, guid: c236633130736f84ca67d6f96842db5f, type: 3}
   - {fileID: 1380292242, guid: c236633130736f84ca67d6f96842db5f, type: 3}
@@ -675,7 +696,7 @@ Transform:
   m_GameObject: {fileID: 8198935378081891372}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: 0.5, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -727,7 +748,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 5
+  m_SortingOrder: 4
   m_Sprite: {fileID: -963909947, guid: c236633130736f84ca67d6f96842db5f, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
@@ -751,7 +772,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a4b55e1b961d144197e1a7a4a391956, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  idleSprite: {fileID: -963909947, guid: c236633130736f84ca67d6f96842db5f, type: 3}
+  idleSprite: {fileID: -18529243, guid: c236633130736f84ca67d6f96842db5f, type: 3}
   animationSprite:
   - {fileID: -963909947, guid: c236633130736f84ca67d6f96842db5f, type: 3}
   - {fileID: -2087972456, guid: c236633130736f84ca67d6f96842db5f, type: 3}
@@ -798,7 +819,7 @@ Transform:
   m_GameObject: {fileID: 8576435209940862137}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: 0.5, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -850,7 +871,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 5
+  m_SortingOrder: 4
   m_Sprite: {fileID: -638315982, guid: c236633130736f84ca67d6f96842db5f, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
@@ -874,7 +895,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a4b55e1b961d144197e1a7a4a391956, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  idleSprite: {fileID: -638315982, guid: c236633130736f84ca67d6f96842db5f, type: 3}
+  idleSprite: {fileID: -1524668026, guid: c236633130736f84ca67d6f96842db5f, type: 3}
   animationSprite:
   - {fileID: -638315982, guid: c236633130736f84ca67d6f96842db5f, type: 3}
   - {fileID: -713367307, guid: c236633130736f84ca67d6f96842db5f, type: 3}
