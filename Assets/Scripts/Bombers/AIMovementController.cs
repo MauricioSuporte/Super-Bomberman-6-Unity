@@ -6,6 +6,17 @@ public class AIMovementController : MovementController
     public Vector2 aiDirection = Vector2.zero;
     public bool isBoss = false;
 
+    protected override void Awake()
+    {
+        base.Awake();
+
+        if (isBoss)
+        {
+            if (obstacleMask.value == 0)
+                obstacleMask = LayerMask.GetMask("Bomb", "Stage", "Enemy");
+        }
+    }
+
     protected override void HandleInput()
     {
         Vector2 dir = aiDirection;

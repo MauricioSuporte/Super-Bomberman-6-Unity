@@ -17,7 +17,6 @@ GameObject:
   - component: {fileID: 2258062271764064381}
   - component: {fileID: 3101258277916350091}
   - component: {fileID: 3989780119984243601}
-  - component: {fileID: 264801553817921034}
   m_Layer: 10
   m_Name: GoldenMechaBomber
   m_TagString: BossBomber
@@ -156,15 +155,21 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   inputKey: 32
+  useAIInput: 1
   bombPrefab: {fileID: 147425199346742615, guid: b141cb2d60d85504dad495e1a188c108, type: 3}
+  pierceBombPrefab: {fileID: 0}
+  controlBombPrefab: {fileID: 0}
   bombFuseTime: 2
   bombAmout: 3
+  controlDetonateKey: 110
   explosionPrefab: {fileID: -38777085001033807, guid: 8280631722d6ef14fb951aaaf859563b, type: 3}
   explosionLayerMask:
     serializedVersion: 2
     m_Bits: 64
   explosionDuration: 0.5
   explosionRadius: 5
+  groundTiles: {fileID: 0}
+  stageBoundsTiles: {fileID: 0}
   destructibleTiles: {fileID: 0}
   destructiblePrefab: {fileID: 3440613785117735154, guid: 0db9b9963032895418bfd9382b2692f7, type: 3}
   itemLayerMask:
@@ -172,7 +177,6 @@ MonoBehaviour:
     m_Bits: 512
   placeBombSfx: {fileID: 8300000, guid: da95ad1eaf576a54599d96cc59b94c11, type: 3}
   playerAudioSource: {fileID: 3101258277916350091}
-  useAIInput: 1
 --- !u!114 &4730492100800285400
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -209,6 +213,8 @@ MonoBehaviour:
   life: 2
   hitInvulnerableDuration: 3
   hitBlinkInterval: 0.1
+  tempSlowdownStartNormalized: 0.7
+  tempEndBlinkMultiplier: 4
 --- !u!82 &3101258277916350091
 AudioSource:
   m_ObjectHideFlags: 0
@@ -318,19 +324,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7058ad72d26750f468fe6b34b4fccf32, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AbilitySystem
---- !u!114 &264801553817921034
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 444576652216317808}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f63760a13a08f664e873ba399d2c2fca, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::BombKickAbility
-  enabledAbility: 1
 --- !u!1 &2245651300953625166
 GameObject:
   m_ObjectHideFlags: 0
@@ -447,6 +440,7 @@ MonoBehaviour:
   idle: 1
   frameOffsets: []
   pingPong: 0
+  disableOffsetsIfThisObjectHasRigidbody2D: 1
 --- !u!1 &3427337980659989041
 GameObject:
   m_ObjectHideFlags: 0
@@ -563,6 +557,7 @@ MonoBehaviour:
   idle: 1
   frameOffsets: []
   pingPong: 0
+  disableOffsetsIfThisObjectHasRigidbody2D: 1
 --- !u!1 &5360819268598013452
 GameObject:
   m_ObjectHideFlags: 0
@@ -683,6 +678,7 @@ MonoBehaviour:
   idle: 0
   frameOffsets: []
   pingPong: 0
+  disableOffsetsIfThisObjectHasRigidbody2D: 1
 --- !u!1 &5962348387130672823
 GameObject:
   m_ObjectHideFlags: 0
@@ -799,6 +795,7 @@ MonoBehaviour:
   idle: 1
   frameOffsets: []
   pingPong: 0
+  disableOffsetsIfThisObjectHasRigidbody2D: 1
 --- !u!1 &6140526923295798328
 GameObject:
   m_ObjectHideFlags: 0
@@ -920,6 +917,7 @@ MonoBehaviour:
   idle: 0
   frameOffsets: []
   pingPong: 0
+  disableOffsetsIfThisObjectHasRigidbody2D: 1
 --- !u!1 &7536653507105177419
 GameObject:
   m_ObjectHideFlags: 0
@@ -1036,3 +1034,4 @@ MonoBehaviour:
   idle: 1
   frameOffsets: []
   pingPong: 0
+  disableOffsetsIfThisObjectHasRigidbody2D: 1

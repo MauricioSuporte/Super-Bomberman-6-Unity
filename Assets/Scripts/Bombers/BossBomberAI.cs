@@ -2,6 +2,7 @@
 
 [RequireComponent(typeof(AIMovementController))]
 [RequireComponent(typeof(BombController))]
+[RequireComponent(typeof(BombKickAbility))]
 public class BossBomberAI : MonoBehaviour
 {
     public Transform target;
@@ -24,7 +25,6 @@ public class BossBomberAI : MonoBehaviour
     Vector2 lastDirection = Vector2.zero;
     bool isEvading;
     float lastBombTime;
-
     float lastKickDecisionTime;
 
     void Awake()
@@ -71,10 +71,10 @@ public class BossBomberAI : MonoBehaviour
 
         if (HasKickAbility())
         {
-            if (TryTrappedKickIfNeeded(myPos, bombs, inDanger))
+            if (TryTrappedKickIfNeeded(myPos, bombs))
                 return;
 
-            if (TryOpportunisticKickPlayerNewest(myPos, bombs, inDanger))
+            if (TryOpportunisticKickPlayerAdjacent(myPos, bombs, inDanger))
                 return;
         }
 
@@ -156,7 +156,7 @@ public class BossBomberAI : MonoBehaviour
         return kickAbility != null && kickAbility.IsEnabled;
     }
 
-    bool TryOpportunisticKickPlayerNewest(Vector2 myPos, Bomb[] bombs, bool inDanger)
+    bool TryOpportunisticKickPlayerAdjacent(Vector2 myPos, Bomb[] bombs, bool inDanger)
     {
         if (Time.time - lastKickDecisionTime < kickDecisionCooldown)
             return false;
@@ -167,37 +167,50 @@ public class BossBomberAI : MonoBehaviour
         if (Random.value > opportunisticKickChance)
             return false;
 
-        Bomb newestPlayerBomb = null;
-        float bestTime = float.NegativeInfinity;
+        Bomb bestAdjPlayerBomb = null;
+        float bestPlaced = float.NegativeInfinity;
 
         for (int i = 0; i < bombs.Length; i++)
         {
             var b = bombs[i];
-            if (b == null || b.HasExploded || !b.CanBeKicked || b.Owner == null)
+            if (b == null)
+                continue;
+
+            if (b.HasExploded)
+                continue;
+
+            if (!b.CanBeKicked)
+                continue;
+
+            if (b.Owner == null)
                 continue;
 
             if (!b.Owner.CompareTag("Player"))
+                continue;
+
+            Vector2 bombPos = RoundToTile(b.GetLogicalPosition());
+            Vector2 delta = bombPos - myPos;
+
+            float manhattan = Mathf.Abs(delta.x) + Mathf.Abs(delta.y);
+            if (manhattan != 1f)
                 continue;
 
             float age = Time.time - b.PlacedTime;
             if (age > opportunisticKickMaxBombAge)
                 continue;
 
-            if (b.PlacedTime > bestTime)
+            if (b.PlacedTime > bestPlaced)
             {
-                bestTime = b.PlacedTime;
-                newestPlayerBomb = b;
+                bestPlaced = b.PlacedTime;
+                bestAdjPlayerBomb = b;
             }
         }
 
-        if (newestPlayerBomb == null)
+        if (bestAdjPlayerBomb == null)
             return false;
 
-        Vector2 bombPos = RoundToTile(newestPlayerBomb.GetLogicalPosition());
-        Vector2 delta = bombPos - myPos;
-
-        if (Mathf.Abs(delta.x) + Mathf.Abs(delta.y) != 1f)
-            return false;
+        Vector2 bestBombPos2 = RoundToTile(bestAdjPlayerBomb.GetLogicalPosition());
+        Vector2 kickDir = bestBombPos2 - myPos;
 
         Vector2 escapeDir = GetBestSafeDirectionOrStay(myPos, bombs);
         if (escapeDir == Vector2.zero)
@@ -209,15 +222,12 @@ public class BossBomberAI : MonoBehaviour
 
         lastKickDecisionTime = Time.time;
         isEvading = true;
-        lastDirection = delta;
+        lastDirection = kickDir;
         return true;
     }
 
-    bool TryTrappedKickIfNeeded(Vector2 myPos, Bomb[] bombs, bool inDanger)
+    bool TryTrappedKickIfNeeded(Vector2 myPos, Bomb[] bombs)
     {
-        if (!inDanger)
-            return false;
-
         if (Time.time - lastKickDecisionTime < kickDecisionCooldown)
             return false;
 
@@ -232,13 +242,20 @@ public class BossBomberAI : MonoBehaviour
         for (int i = 0; i < bombs.Length; i++)
         {
             var b = bombs[i];
-            if (b == null || b.HasExploded || !b.CanBeKicked)
+            if (b == null)
                 continue;
 
             Vector2 bombPos = RoundToTile(b.GetLogicalPosition());
             Vector2 delta = bombPos - myPos;
+            float manhattan = Mathf.Abs(delta.x) + Mathf.Abs(delta.y);
 
-            if (Mathf.Abs(delta.x) + Mathf.Abs(delta.y) != 1f)
+            if (manhattan != 1f)
+                continue;
+
+            if (b.HasExploded)
+                continue;
+
+            if (!b.CanBeKicked)
                 continue;
 
             if (b.PlacedTime > bestTime)
@@ -302,7 +319,6 @@ public class BossBomberAI : MonoBehaviour
             return false;
 
         int radius = bombInstance.Owner != null ? bombInstance.Owner.explosionRadius : 2;
-
         float dist = sameRow ? Mathf.Abs(delta.x) : Mathf.Abs(delta.y);
 
         return dist <= radius + safeDistanceAfterBomb;
@@ -393,11 +409,7 @@ public class BossBomberAI : MonoBehaviour
         int explosionLayer = LayerMask.NameToLayer("Explosion");
         int mask = 1 << explosionLayer;
 
-        return Physics2D.OverlapBox(
-            tilePos,
-            Vector2.one * 0.4f,
-            0f,
-            mask) != null;
+        return Physics2D.OverlapBox(tilePos, Vector2.one * 0.4f, 0f, mask) != null;
     }
 
     bool IsTileWithBomb(Vector2 tilePos)
@@ -405,11 +417,7 @@ public class BossBomberAI : MonoBehaviour
         int bombLayer = LayerMask.NameToLayer("Bomb");
         int mask = 1 << bombLayer;
 
-        return Physics2D.OverlapBox(
-            tilePos,
-            Vector2.one * 0.4f,
-            0f,
-            mask) != null;
+        return Physics2D.OverlapBox(tilePos, Vector2.one * 0.4f, 0f, mask) != null;
     }
 
     Vector2 RoundToTile(Vector2 p)
