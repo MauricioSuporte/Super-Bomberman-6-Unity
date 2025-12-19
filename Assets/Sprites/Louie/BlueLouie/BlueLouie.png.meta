@@ -1,0 +1,1477 @@
+fileFormatVersion: 2
+guid: 6c2583beff5fe6444abe5f6a150dcc63
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -2000980153753490969
+    second: BlueLouie_0
+  - first:
+      213: -3416361648125240299
+    second: BlueLouie_1
+  - first:
+      213: -8497079087510071597
+    second: BlueLouie_2
+  - first:
+      213: 1119629783477881050
+    second: BlueLouie_3
+  - first:
+      213: 3702594274277692692
+    second: BlueLouie_4
+  - first:
+      213: -955215474778195357
+    second: BlueLouie_5
+  - first:
+      213: -6812425683795056039
+    second: BlueLouie_6
+  - first:
+      213: 7827724574298244603
+    second: BlueLouie_7
+  - first:
+      213: -7087466531003879436
+    second: BlueLouie_8
+  - first:
+      213: 1243466142256581585
+    second: BlueLouie_9
+  - first:
+      213: 6132578430029193570
+    second: BlueLouie_10
+  - first:
+      213: 1794685147305307122
+    second: BlueLouie_11
+  - first:
+      213: 805843215853580616
+    second: BlueLouie_12
+  - first:
+      213: 3799789696278801465
+    second: BlueLouie_13
+  - first:
+      213: 4135703909809996457
+    second: BlueLouie_14
+  - first:
+      213: -8986491364306053705
+    second: BlueLouie_15
+  - first:
+      213: 6370912256617178395
+    second: BlueLouie_16
+  - first:
+      213: -5734609453429056739
+    second: BlueLouie_17
+  - first:
+      213: 970284261184856212
+    second: BlueLouie_18
+  - first:
+      213: 4625864005876167233
+    second: BlueLouie_19
+  - first:
+      213: -2557627086121361051
+    second: BlueLouie_20
+  - first:
+      213: -7996856322865326289
+    second: BlueLouie_21
+  - first:
+      213: -5269210822398020991
+    second: BlueLouie_22
+  - first:
+      213: -4325309370306493542
+    second: BlueLouie_23
+  - first:
+      213: 7074906532455565564
+    second: BlueLouie_24
+  - first:
+      213: 6661021556329420043
+    second: BlueLouie_25
+  - first:
+      213: 4880478885945468614
+    second: BlueLouie_26
+  - first:
+      213: -3919242870475481186
+    second: BlueLouie_27
+  - first:
+      213: -1235864593337297166
+    second: BlueLouie_28
+  - first:
+      213: -3667394898769189280
+    second: BlueLouie_29
+  - first:
+      213: -7066661832748943217
+    second: BlueLouie_30
+  - first:
+      213: 684228657201983056
+    second: BlueLouie_31
+  - first:
+      213: -98522161327547462
+    second: BlueLouie_32
+  - first:
+      213: -8437158233399947024
+    second: BlueLouie_33
+  - first:
+      213: 4030877398456453602
+    second: BlueLouie_34
+  - first:
+      213: -325544901195419643
+    second: BlueLouie_35
+  - first:
+      213: -7984326240779282306
+    second: BlueLouie_36
+  - first:
+      213: -7182289794377891914
+    second: BlueLouie_37
+  - first:
+      213: 4125367589802747612
+    second: BlueLouie_38
+  - first:
+      213: -7530889283253221764
+    second: BlueLouie_39
+  - first:
+      213: 1286520096214672182
+    second: BlueLouie_40
+  - first:
+      213: 8398571854080710589
+    second: BlueLouie_41
+  - first:
+      213: -5939996028765991666
+    second: BlueLouie_42
+  - first:
+      213: 2880218433942844319
+    second: BlueLouie_43
+  - first:
+      213: 8562432990980506233
+    second: BlueLouie_44
+  - first:
+      213: 5728915761960334695
+    second: BlueLouie_45
+  - first:
+      213: 8782549825017592994
+    second: BlueLouie_46
+  - first:
+      213: -4540834619822041172
+    second: BlueLouie_47
+  - first:
+      213: -6202956229582365456
+    second: BlueLouie_48
+  - first:
+      213: 4839053562899250579
+    second: BlueLouie_49
+  - first:
+      213: 7017285028237078814
+    second: BlueLouie_50
+  - first:
+      213: 5174149440336939397
+    second: BlueLouie_51
+  - first:
+      213: -1324826936645727195
+    second: BlueLouie_52
+  - first:
+      213: -2705312520418047510
+    second: BlueLouie_53
+  - first:
+      213: -9172987376493016001
+    second: BlueLouie_54
+  - first:
+      213: -6995948862246634596
+    second: BlueLouie_55
+  - first:
+      213: -5061489562764319078
+    second: BlueLouie_56
+  - first:
+      213: 1333022928408162779
+    second: BlueLouie_57
+  - first:
+      213: -7798412426677980202
+    second: BlueLouie_58
+  - first:
+      213: -4443071562554660426
+    second: BlueLouie_59
+  - first:
+      213: -9196714194336999755
+    second: BlueLouie_60
+  - first:
+      213: 3344248788354784210
+    second: BlueLouie_61
+  - first:
+      213: -6175037588321259131
+    second: BlueLouie_62
+  - first:
+      213: -1849437013432248988
+    second: BlueLouie_63
+  - first:
+      213: 2994463499808515098
+    second: BlueLouie_64
+  - first:
+      213: 8938612675602813580
+    second: BlueLouie_65
+  - first:
+      213: 1623328804204451248
+    second: BlueLouie_66
+  - first:
+      213: -7120037537520132152
+    second: BlueLouie_67
+  - first:
+      213: -2527460784977015867
+    second: BlueLouie_68
+  - first:
+      213: 2407504135353693159
+    second: BlueLouie_69
+  - first:
+      213: 5850796073404887610
+    second: BlueLouie_70
+  - first:
+      213: -5951040380253363138
+    second: BlueLouie_71
+  - first:
+      213: 7310582781444303188
+    second: BlueLouie_72
+  - first:
+      213: -8374082762468238033
+    second: BlueLouie_73
+  - first:
+      213: 7359211955781405432
+    second: BlueLouie_74
+  - first:
+      213: 1367799143532891581
+    second: BlueLouie_75
+  - first:
+      213: -6054894006112725216
+    second: BlueLouie_76
+  - first:
+      213: -3270236841065513016
+    second: BlueLouie_77
+  - first:
+      213: -8816966555728862508
+    second: BlueLouie_78
+  - first:
+      213: 6545605238785919562
+    second: BlueLouie_79
+  - first:
+      213: 4943398457860257100
+    second: BlueLouie_80
+  - first:
+      213: 8412680162793273398
+    second: BlueLouie_81
+  - first:
+      213: -4067693515283845994
+    second: BlueLouie_82
+  - first:
+      213: 7276201088542716745
+    second: BlueLouie_83
+  - first:
+      213: 7284364341572916247
+    second: BlueLouie_84
+  - first:
+      213: 2143872156243667816
+    second: BlueLouie_85
+  - first:
+      213: 2367038341459353260
+    second: BlueLouie_86
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 16
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: BlueLouie_1
+      rect:
+        serializedVersion: 2
+        x: 75
+        y: 132
+        width: 16
+        height: 25
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 51c1a338e25a690d0800000000000000
+      internalID: -3416361648125240299
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BlueLouie_2
+      rect:
+        serializedVersion: 2
+        x: 108
+        y: 132
+        width: 16
+        height: 25
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3d6df80e69f441a80800000000000000
+      internalID: -8497079087510071597
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BlueLouie_3
+      rect:
+        serializedVersion: 2
+        x: 141
+        y: 133
+        width: 16
+        height: 25
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ad885242b59b98f00800000000000000
+      internalID: 1119629783477881050
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BlueLouie_4
+      rect:
+        serializedVersion: 2
+        x: 174
+        y: 133
+        width: 16
+        height: 25
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 41597b110e1426330800000000000000
+      internalID: 3702594274277692692
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BlueLouie_5
+      rect:
+        serializedVersion: 2
+        x: 207
+        y: 132
+        width: 16
+        height: 25
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 36ab3ed26946eb2f0800000000000000
+      internalID: -955215474778195357
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BlueLouie_6
+      rect:
+        serializedVersion: 2
+        x: 240
+        y: 133
+        width: 16
+        height: 25
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 95ae5a23fe66571a0800000000000000
+      internalID: -6812425683795056039
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BlueLouie_13
+      rect:
+        serializedVersion: 2
+        x: 602
+        y: 133
+        width: 18
+        height: 26
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 93c23ebb8909bb430800000000000000
+      internalID: 3799789696278801465
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BlueLouie_14
+      rect:
+        serializedVersion: 2
+        x: 636
+        y: 134
+        width: 18
+        height: 26
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9a24b684bc8f46930800000000000000
+      internalID: 4135703909809996457
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BlueLouie_15
+      rect:
+        serializedVersion: 2
+        x: 669
+        y: 135
+        width: 16
+        height: 26
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7b51c6577b1994380800000000000000
+      internalID: -8986491364306053705
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BlueLouie_17
+      rect:
+        serializedVersion: 2
+        x: 73
+        y: 99
+        width: 22
+        height: 27
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d1b93cad5139a60b0800000000000000
+      internalID: -5734609453429056739
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BlueLouie_18
+      rect:
+        serializedVersion: 2
+        x: 106
+        y: 99
+        width: 22
+        height: 27
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 490631f0564277d00800000000000000
+      internalID: 970284261184856212
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BlueLouie_19
+      rect:
+        serializedVersion: 2
+        x: 139
+        y: 99
+        width: 22
+        height: 27
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 142b381fdce523040800000000000000
+      internalID: 4625864005876167233
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BlueLouie_20
+      rect:
+        serializedVersion: 2
+        x: 172
+        y: 99
+        width: 22
+        height: 27
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 561a1df47bb718cd0800000000000000
+      internalID: -2557627086121361051
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BlueLouie_21
+      rect:
+        serializedVersion: 2
+        x: 205
+        y: 99
+        width: 22
+        height: 27
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f2796c32b85750190800000000000000
+      internalID: -7996856322865326289
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BlueLouie_22
+      rect:
+        serializedVersion: 2
+        x: 239
+        y: 99
+        width: 22
+        height: 27
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 182725caca000e6b0800000000000000
+      internalID: -5269210822398020991
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BlueLouie_29
+      rect:
+        serializedVersion: 2
+        x: 601
+        y: 99
+        width: 22
+        height: 28
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 06668cf25cbca1dc0800000000000000
+      internalID: -3667394898769189280
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BlueLouie_30
+      rect:
+        serializedVersion: 2
+        x: 634
+        y: 99
+        width: 22
+        height: 28
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f88303ff08c2eed90800000000000000
+      internalID: -7066661832748943217
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BlueLouie_31
+      rect:
+        serializedVersion: 2
+        x: 667
+        y: 99
+        width: 22
+        height: 28
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 05eaaa9a65ede7900800000000000000
+      internalID: 684228657201983056
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BlueLouie_33
+      rect:
+        serializedVersion: 2
+        x: 75
+        y: 65
+        width: 16
+        height: 27
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0f01f68e94139ea80800000000000000
+      internalID: -8437158233399947024
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BlueLouie_34
+      rect:
+        serializedVersion: 2
+        x: 108
+        y: 66
+        width: 16
+        height: 27
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2e9c52c23ad80f730800000000000000
+      internalID: 4030877398456453602
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BlueLouie_35
+      rect:
+        serializedVersion: 2
+        x: 141
+        y: 66
+        width: 16
+        height: 27
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 500becd13ae6b7bf0800000000000000
+      internalID: -325544901195419643
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BlueLouie_36
+      rect:
+        serializedVersion: 2
+        x: 174
+        y: 66
+        width: 16
+        height: 27
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e7855873699f13190800000000000000
+      internalID: -7984326240779282306
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BlueLouie_37
+      rect:
+        serializedVersion: 2
+        x: 207
+        y: 66
+        width: 16
+        height: 27
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6bf31344c71635c90800000000000000
+      internalID: -7182289794377891914
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BlueLouie_38
+      rect:
+        serializedVersion: 2
+        x: 240
+        y: 65
+        width: 16
+        height: 27
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: cd62a1e37ff304930800000000000000
+      internalID: 4125367589802747612
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BlueLouie_45
+      rect:
+        serializedVersion: 2
+        x: 602
+        y: 66
+        width: 17
+        height: 28
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 76538cb4882318f40800000000000000
+      internalID: 5728915761960334695
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BlueLouie_46
+      rect:
+        serializedVersion: 2
+        x: 635
+        y: 66
+        width: 17
+        height: 28
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2acb75ea882e1e970800000000000000
+      internalID: 8782549825017592994
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BlueLouie_47
+      rect:
+        serializedVersion: 2
+        x: 667
+        y: 66
+        width: 17
+        height: 28
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ca716bdb8f6bbf0c0800000000000000
+      internalID: -4540834619822041172
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BlueLouie_52
+      rect:
+        serializedVersion: 2
+        x: 172
+        y: 33
+        width: 20
+        height: 28
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 52ccc5c9be44d9de0800000000000000
+      internalID: -1324826936645727195
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BlueLouie_53
+      rect:
+        serializedVersion: 2
+        x: 204
+        y: 33
+        width: 20
+        height: 28
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ae9c016989cc47ad0800000000000000
+      internalID: -2705312520418047510
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BlueLouie_54
+      rect:
+        serializedVersion: 2
+        x: 238
+        y: 33
+        width: 20
+        height: 28
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f3ccdf6e49003b080800000000000000
+      internalID: -9172987376493016001
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BlueLouie_55
+      rect:
+        serializedVersion: 2
+        x: 304
+        y: 33
+        width: 20
+        height: 25
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c9bbdfe639569ee90800000000000000
+      internalID: -6995948862246634596
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BlueLouie_56
+      rect:
+        serializedVersion: 2
+        x: 339
+        y: 33
+        width: 20
+        height: 25
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a96e5114f0af1c9b0800000000000000
+      internalID: -5061489562764319078
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BlueLouie_57
+      rect:
+        serializedVersion: 2
+        x: 371
+        y: 33
+        width: 20
+        height: 25
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bd1383d6a49df7210800000000000000
+      internalID: 1333022928408162779
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BlueLouie_58
+      rect:
+        serializedVersion: 2
+        x: 400
+        y: 1
+        width: 25
+        height: 31
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6d3fdd7373976c390800000000000000
+      internalID: -7798412426677980202
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BlueLouie_59
+      rect:
+        serializedVersion: 2
+        x: 467
+        y: 1
+        width: 25
+        height: 31
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6b92a4a44f90752c0800000000000000
+      internalID: -4443071562554660426
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BlueLouie_63
+      rect:
+        serializedVersion: 2
+        x: 5
+        y: 2
+        width: 24
+        height: 29
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 46559e3c5da7556e0800000000000000
+      internalID: -1849437013432248988
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BlueLouie_64
+      rect:
+        serializedVersion: 2
+        x: 41
+        y: 3
+        width: 16
+        height: 26
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a14a5fe00b87e8920800000000000000
+      internalID: 2994463499808515098
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BlueLouie_65
+      rect:
+        serializedVersion: 2
+        x: 74
+        y: 4
+        width: 18
+        height: 20
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c821c12aed45c0c70800000000000000
+      internalID: 8938612675602813580
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BlueLouie_66
+      rect:
+        serializedVersion: 2
+        x: 110
+        y: 9
+        width: 12
+        height: 14
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0b5144852f8378610800000000000000
+      internalID: 1623328804204451248
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BlueLouie_67
+      rect:
+        serializedVersion: 2
+        x: 146
+        y: 13
+        width: 6
+        height: 6
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8cf5aac459b803d90800000000000000
+      internalID: -7120037537520132152
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BlueLouie_68
+      rect:
+        serializedVersion: 2
+        x: 203
+        y: 2
+        width: 24
+        height: 29
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5cb07bf9ec7acecd0800000000000000
+      internalID: -2527460784977015867
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BlueLouie_69
+      rect:
+        serializedVersion: 2
+        x: 239
+        y: 3
+        width: 16
+        height: 26
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7e37a0f614c296120800000000000000
+      internalID: 2407504135353693159
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BlueLouie_70
+      rect:
+        serializedVersion: 2
+        x: 272
+        y: 4
+        width: 18
+        height: 20
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a327c88a704323150800000000000000
+      internalID: 5850796073404887610
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BlueLouie_71
+      rect:
+        serializedVersion: 2
+        x: 308
+        y: 9
+        width: 12
+        height: 14
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e342efadd48a96da0800000000000000
+      internalID: -5951040380253363138
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BlueLouie_72
+      rect:
+        serializedVersion: 2
+        x: 344
+        y: 13
+        width: 6
+        height: 6
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 459231d7e48647560800000000000000
+      internalID: 7310582781444303188
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: BlueLouie_73
+      rect:
+        serializedVersion: 2
+        x: 433
+        y: 0
+        width: 26
+        height: 27
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f2ddb57681849cb80800000000000000
+      internalID: -8374082762468238033
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 942b2df07d6a9954ca8e8d0500cfa4a7
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      BlueLouie_0: -2000980153753490969
+      BlueLouie_1: -3416361648125240299
+      BlueLouie_10: 6132578430029193570
+      BlueLouie_11: 1794685147305307122
+      BlueLouie_12: 805843215853580616
+      BlueLouie_13: 3799789696278801465
+      BlueLouie_14: 4135703909809996457
+      BlueLouie_15: -8986491364306053705
+      BlueLouie_16: 6370912256617178395
+      BlueLouie_17: -5734609453429056739
+      BlueLouie_18: 970284261184856212
+      BlueLouie_19: 4625864005876167233
+      BlueLouie_2: -8497079087510071597
+      BlueLouie_20: -2557627086121361051
+      BlueLouie_21: -7996856322865326289
+      BlueLouie_22: -5269210822398020991
+      BlueLouie_23: -4325309370306493542
+      BlueLouie_24: 7074906532455565564
+      BlueLouie_25: 6661021556329420043
+      BlueLouie_26: 4880478885945468614
+      BlueLouie_27: -3919242870475481186
+      BlueLouie_28: -1235864593337297166
+      BlueLouie_29: -3667394898769189280
+      BlueLouie_3: 1119629783477881050
+      BlueLouie_30: -7066661832748943217
+      BlueLouie_31: 684228657201983056
+      BlueLouie_32: -98522161327547462
+      BlueLouie_33: -8437158233399947024
+      BlueLouie_34: 4030877398456453602
+      BlueLouie_35: -325544901195419643
+      BlueLouie_36: -7984326240779282306
+      BlueLouie_37: -7182289794377891914
+      BlueLouie_38: 4125367589802747612
+      BlueLouie_39: -7530889283253221764
+      BlueLouie_4: 3702594274277692692
+      BlueLouie_40: 1286520096214672182
+      BlueLouie_41: 8398571854080710589
+      BlueLouie_42: -5939996028765991666
+      BlueLouie_43: 2880218433942844319
+      BlueLouie_44: 8562432990980506233
+      BlueLouie_45: 5728915761960334695
+      BlueLouie_46: 8782549825017592994
+      BlueLouie_47: -4540834619822041172
+      BlueLouie_48: -6202956229582365456
+      BlueLouie_49: 4839053562899250579
+      BlueLouie_5: -955215474778195357
+      BlueLouie_50: 7017285028237078814
+      BlueLouie_51: 5174149440336939397
+      BlueLouie_52: -1324826936645727195
+      BlueLouie_53: -2705312520418047510
+      BlueLouie_54: -9172987376493016001
+      BlueLouie_55: -6995948862246634596
+      BlueLouie_56: -5061489562764319078
+      BlueLouie_57: 1333022928408162779
+      BlueLouie_58: -7798412426677980202
+      BlueLouie_59: -4443071562554660426
+      BlueLouie_6: -6812425683795056039
+      BlueLouie_60: -9196714194336999755
+      BlueLouie_61: 3344248788354784210
+      BlueLouie_62: -6175037588321259131
+      BlueLouie_63: -1849437013432248988
+      BlueLouie_64: 2994463499808515098
+      BlueLouie_65: 8938612675602813580
+      BlueLouie_66: 1623328804204451248
+      BlueLouie_67: -7120037537520132152
+      BlueLouie_68: -2527460784977015867
+      BlueLouie_69: 2407504135353693159
+      BlueLouie_7: 7827724574298244603
+      BlueLouie_70: 5850796073404887610
+      BlueLouie_71: -5951040380253363138
+      BlueLouie_72: 7310582781444303188
+      BlueLouie_73: -8374082762468238033
+      BlueLouie_74: 7359211955781405432
+      BlueLouie_75: 1367799143532891581
+      BlueLouie_76: -6054894006112725216
+      BlueLouie_77: -3270236841065513016
+      BlueLouie_78: -8816966555728862508
+      BlueLouie_79: 6545605238785919562
+      BlueLouie_8: -7087466531003879436
+      BlueLouie_80: 4943398457860257100
+      BlueLouie_81: 8412680162793273398
+      BlueLouie_82: -4067693515283845994
+      BlueLouie_83: 7276201088542716745
+      BlueLouie_84: 7284364341572916247
+      BlueLouie_85: 2143872156243667816
+      BlueLouie_86: 2367038341459353260
+      BlueLouie_9: 1243466142256581585
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

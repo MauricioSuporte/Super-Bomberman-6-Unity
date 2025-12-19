@@ -397,6 +397,8 @@ public class MovementController : MonoBehaviour, IKillable
 
         if (activeSpriteRenderer != null)
             activeSpriteRenderer.idle = direction == Vector2.zero;
+
+        ApplyFlipForHorizontal(direction);
     }
 
     protected virtual void OnTriggerEnter2D(Collider2D other)
@@ -618,6 +620,16 @@ public class MovementController : MonoBehaviour, IKillable
             spriteRendererCheering.idle = false;
             spriteRendererCheering.loop = true;
             activeSpriteRenderer = spriteRendererCheering;
+        }
+    }
+
+    protected void ApplyFlipForHorizontal(Vector2 dir)
+    {
+        if (activeSpriteRenderer != null &&
+            activeSpriteRenderer.TryGetComponent<SpriteRenderer>(out var sr))
+        {
+            if (dir == Vector2.right) sr.flipX = true;
+            else if (dir == Vector2.left) sr.flipX = false;
         }
     }
 }

@@ -505,8 +505,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2962464941700320510}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.32, z: 0}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0.32000017, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -850,6 +850,7 @@ GameObject:
   - component: {fileID: 5869552212916937176}
   - component: {fileID: 3128802035174165778}
   - component: {fileID: 50652477360605129}
+  - component: {fileID: 2619861201639318036}
   m_Layer: 3
   m_Name: Player 1
   m_TagString: Player
@@ -873,8 +874,8 @@ Transform:
   - {fileID: 6068429678962062310}
   - {fileID: 8734142640566033103}
   - {fileID: 4061120973416566473}
-  - {fileID: 4075204487323161309}
   - {fileID: 6011558228647604768}
+  - {fileID: 4075204487323161309}
   - {fileID: 55679647558521991}
   - {fileID: 249999716892061584}
   - {fileID: 8358644154423574236}
@@ -971,7 +972,7 @@ MonoBehaviour:
   spriteRendererUp: {fileID: 1091894747361695229}
   spriteRendererDown: {fileID: 3988283045612322344}
   spriteRendererLeft: {fileID: 2494865831759049152}
-  spriteRendererRight: {fileID: 3473117096942564384}
+  spriteRendererRight: {fileID: 2494865831759049152}
   spriteRendererDeath: {fileID: 1022835944329553709}
   spriteRendererEndStage: {fileID: 7919669202012837895}
   spriteRendererCheering: {fileID: 8647236082727130149}
@@ -1157,6 +1158,22 @@ MonoBehaviour:
   life: 1
   hitInvulnerableDuration: 3
   hitBlinkInterval: 0.1
+  tempSlowdownStartNormalized: 0.7
+  tempEndBlinkMultiplier: 4
+--- !u!114 &2619861201639318036
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4947014498081102474}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9d88fdcd2238f694c8121110c69c853f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerLouieCompanion
+  louiePrefab: {fileID: 2273416014071709654, guid: b0695b92e5b71c1408e0fbafd895d235, type: 3}
+  offset: {x: -0.35, y: -0.15}
 --- !u!1 &6530556802187073845
 GameObject:
   m_ObjectHideFlags: 0

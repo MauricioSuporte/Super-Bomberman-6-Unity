@@ -25,6 +25,7 @@ public class ItemPickup : MonoBehaviour
         DestructiblePass,
         InvincibleSuit,
         Heart,
+        Egg,
     }
 
     public ItemType type;
@@ -168,6 +169,13 @@ public class ItemPickup : MonoBehaviour
                 if (player.TryGetComponent<CharacterHealth>(out var health))
                     health.AddLife(1);
                 break;
+
+            case ItemType.Egg:
+                {
+                    if (player.TryGetComponent<PlayerLouieCompanion>(out var louie))
+                        louie.SpawnOrRefreshLouie();
+                    break;
+                }
         }
 
         Destroy(gameObject);
