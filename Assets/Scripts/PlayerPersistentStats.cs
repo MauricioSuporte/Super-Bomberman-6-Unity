@@ -10,7 +10,7 @@ public static class PlayerPersistentStats
     public static int ExplosionRadius = 9;
     public static float Speed = 5f;
 
-    public static int Life = 1;
+    public static int Life = 9;
 
     public static bool CanKickBombs = false;
     public static bool CanPunchBombs = true;
@@ -105,8 +105,7 @@ public static class PlayerPersistentStats
             if (movement.TryGetComponent<CharacterHealth>(out var health))
                 Life = Mathf.Max(1, health.life);
 
-            var abilitySystem = movement.GetComponent<AbilitySystem>();
-            if (abilitySystem != null)
+            if (movement.TryGetComponent<AbilitySystem>(out var abilitySystem))
                 abilitySystem.RebuildCache();
 
             var kick = abilitySystem != null ? abilitySystem.Get<BombKickAbility>(BombKickAbility.AbilityId) : null;

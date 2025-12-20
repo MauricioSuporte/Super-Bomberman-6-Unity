@@ -176,6 +176,7 @@ MonoBehaviour:
   - {fileID: -2043206538, guid: aaeb7740db057114f9b159291607444b, type: 3}
   - {fileID: 797024360, guid: aaeb7740db057114f9b159291607444b, type: 3}
   - {fileID: 400431611, guid: aaeb7740db057114f9b159291607444b, type: 3}
+  allowFlipX: 1
   animationTime: 0.25
   useSequenceDuration: 0
   sequenceDuration: 0
@@ -203,7 +204,7 @@ MonoBehaviour:
   kickSpeed: 7.5
   punchDuration: 0.22
   punchArcHeight: 0.9
-  chainStepDelay: 0.1
+  chainStepDelay: 0.5
   stageBoundsTilemap: {fileID: 0}
 --- !u!82 &4491695425928016186
 AudioSource:

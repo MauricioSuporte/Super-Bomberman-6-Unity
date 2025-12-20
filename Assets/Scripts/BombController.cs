@@ -48,6 +48,15 @@ public class BombController : MonoBehaviour
     public AudioClip placeBombSfx;
     public AudioSource playerAudioSource;
 
+    public AudioClip explosionSfxSmall;
+    [Range(0f, 1f)] public float explosionSfxSmallVolume = 1f;
+
+    public AudioClip explosionSfxMedium;
+    [Range(0f, 1f)] public float explosionSfxMediumVolume = 1f;
+
+    public AudioClip explosionSfxMax;
+    [Range(0f, 1f)] public float explosionSfxMaxVolume = 1f;
+
     private static AudioSource currentExplosionAudio;
 
     private void OnEnable()
@@ -181,6 +190,10 @@ public class BombController : MonoBehaviour
             bombComp.MarkAsExploded();
         }
 
+        int effectiveRadius = IsFullFireEnabled()
+            ? PlayerPersistentStats.MaxExplosionRadius
+            : explosionRadius;
+
         HideBombVisuals(bomb);
 
         if (bomb.TryGetComponent<AudioSource>(out var explosionAudio))
@@ -189,7 +202,28 @@ public class BombController : MonoBehaviour
                 currentExplosionAudio.Stop();
 
             currentExplosionAudio = explosionAudio;
-            currentExplosionAudio.Play();
+
+            AudioClip clip;
+            float vol;
+
+            if (effectiveRadius == 9)
+            {
+                clip = explosionSfxMax != null ? explosionSfxMax : currentExplosionAudio.clip;
+                vol = explosionSfxMaxVolume;
+            }
+            else if (effectiveRadius >= 5)
+            {
+                clip = explosionSfxMedium != null ? explosionSfxMedium : currentExplosionAudio.clip;
+                vol = explosionSfxMediumVolume;
+            }
+            else
+            {
+                clip = explosionSfxSmall != null ? explosionSfxSmall : currentExplosionAudio.clip;
+                vol = explosionSfxSmallVolume;
+            }
+
+            if (clip != null)
+                currentExplosionAudio.PlayOneShot(clip, vol);
         }
 
         Vector2 position = logicalPos;
@@ -201,18 +235,34 @@ public class BombController : MonoBehaviour
         Explosion centerExplosion = Instantiate(explosionPrefab, position, Quaternion.identity);
         centerExplosion.Play(Explosion.ExplosionPart.Start, Vector2.zero, 0f, explosionDuration, position);
 
-        int effectiveRadius = IsFullFireEnabled()
-            ? PlayerPersistentStats.MaxExplosionRadius
-            : explosionRadius;
-
         Explode(position, Vector2.up, effectiveRadius, pierce);
         Explode(position, Vector2.down, effectiveRadius, pierce);
         Explode(position, Vector2.left, effectiveRadius, pierce);
         Explode(position, Vector2.right, effectiveRadius, pierce);
 
         float destroyDelay = 0.1f;
-        if (explosionAudio != null && explosionAudio.clip != null)
-            destroyDelay = explosionAudio.clip.length;
+
+        if (effectiveRadius == 9)
+        {
+            if (explosionSfxMax != null)
+                destroyDelay = explosionSfxMax.length;
+            else if (explosionAudio != null && explosionAudio.clip != null)
+                destroyDelay = explosionAudio.clip.length;
+        }
+        else if (effectiveRadius >= 5)
+        {
+            if (explosionSfxMedium != null)
+                destroyDelay = explosionSfxMedium.length;
+            else if (explosionAudio != null && explosionAudio.clip != null)
+                destroyDelay = explosionAudio.clip.length;
+        }
+        else
+        {
+            if (explosionSfxSmall != null)
+                destroyDelay = explosionSfxSmall.length;
+            else if (explosionAudio != null && explosionAudio.clip != null)
+                destroyDelay = explosionAudio.clip.length;
+        }
 
         Destroy(bomb, destroyDelay);
 

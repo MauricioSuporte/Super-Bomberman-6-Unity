@@ -1263,6 +1263,12 @@ MonoBehaviour:
     m_Bits: 512
   placeBombSfx: {fileID: 8300000, guid: da95ad1eaf576a54599d96cc59b94c11, type: 3}
   playerAudioSource: {fileID: 4627430260018096140}
+  explosionSfxSmall: {fileID: 8300000, guid: 382df354fe4ffa947a507667894bb52c, type: 3}
+  explosionSfxSmallVolume: 1
+  explosionSfxMedium: {fileID: 8300000, guid: f4d1c068ab5783349b5c617309c6fc37, type: 3}
+  explosionSfxMediumVolume: 1
+  explosionSfxMax: {fileID: 8300000, guid: 569cd9f94e40d1140b214f321bf208b4, type: 3}
+  explosionSfxMaxVolume: 1
 --- !u!82 &4627430260018096140
 AudioSource:
   m_ObjectHideFlags: 0
