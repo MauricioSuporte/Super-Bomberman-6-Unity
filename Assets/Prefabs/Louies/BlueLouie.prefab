@@ -275,13 +275,14 @@ MonoBehaviour:
   spriteRendererUp: {fileID: 6685445590595473310}
   spriteRendererDown: {fileID: 4170285985975590271}
   spriteRendererLeft: {fileID: 5930063177854299457}
-  spriteRendererRight: {fileID: 5930063177854299457}
+  spriteRendererRight: {fileID: 5517004560909071985}
   spriteRendererDeath: {fileID: 5440623971944223000}
   spriteRendererEndStage: {fileID: 0}
   spriteRendererCheering: {fileID: 0}
   mountedSpriteUp: {fileID: 0}
   mountedSpriteDown: {fileID: 0}
   mountedSpriteLeft: {fileID: 0}
+  mountedSpriteRight: {fileID: 0}
   endStageTotalTime: 1
   endStageFrameCount: 9
   isDead: 0
@@ -332,7 +333,7 @@ Transform:
   m_GameObject: {fileID: 2445788475736444126}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.5, z: 0}
+  m_LocalPosition: {x: 0, y: 0.71, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -420,6 +421,7 @@ MonoBehaviour:
   - {fileID: -426565899, guid: c236633130736f84ca67d6f96842db5f, type: 3}
   - {fileID: -18529243, guid: c236633130736f84ca67d6f96842db5f, type: 3}
   - {fileID: -2087972456, guid: c236633130736f84ca67d6f96842db5f, type: 3}
+  allowFlipX: 1
   animationTime: 0.05
   useSequenceDuration: 0
   sequenceDuration: 0.5
@@ -538,6 +540,7 @@ MonoBehaviour:
   - {fileID: 8938612675602813580, guid: 6c2583beff5fe6444abe5f6a150dcc63, type: 3}
   - {fileID: 1623328804204451248, guid: 6c2583beff5fe6444abe5f6a150dcc63, type: 3}
   - {fileID: -7120037537520132152, guid: 6c2583beff5fe6444abe5f6a150dcc63, type: 3}
+  allowFlipX: 0
   animationTime: 0.1
   useSequenceDuration: 0
   sequenceDuration: 0.5
@@ -573,7 +576,7 @@ Transform:
   m_GameObject: {fileID: 7806644560918232893}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.5, z: 0}
+  m_LocalPosition: {x: 0, y: 0.62, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -625,7 +628,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 4
+  m_SortingOrder: 5
   m_Sprite: {fileID: 1832498247770838788, guid: c236633130736f84ca67d6f96842db5f, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
@@ -661,6 +664,7 @@ MonoBehaviour:
   - {fileID: -2129741697, guid: c236633130736f84ca67d6f96842db5f, type: 3}
   - {fileID: -1089979344, guid: c236633130736f84ca67d6f96842db5f, type: 3}
   - {fileID: 1380292242, guid: c236633130736f84ca67d6f96842db5f, type: 3}
+  allowFlipX: 0
   animationTime: 0.05
   useSequenceDuration: 0
   sequenceDuration: 0.5
@@ -696,7 +700,7 @@ Transform:
   m_GameObject: {fileID: 8198935378081891372}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.5, z: 0}
+  m_LocalPosition: {x: 0, y: 0.71, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -784,6 +788,7 @@ MonoBehaviour:
   - {fileID: -426565899, guid: c236633130736f84ca67d6f96842db5f, type: 3}
   - {fileID: -18529243, guid: c236633130736f84ca67d6f96842db5f, type: 3}
   - {fileID: -2087972456, guid: c236633130736f84ca67d6f96842db5f, type: 3}
+  allowFlipX: 0
   animationTime: 0.05
   useSequenceDuration: 0
   sequenceDuration: 0.5
@@ -907,6 +912,7 @@ MonoBehaviour:
   - {fileID: 1441010029, guid: c236633130736f84ca67d6f96842db5f, type: 3}
   - {fileID: -1524668026, guid: c236633130736f84ca67d6f96842db5f, type: 3}
   - {fileID: -713367307, guid: c236633130736f84ca67d6f96842db5f, type: 3}
+  allowFlipX: 0
   animationTime: 0.05
   useSequenceDuration: 0
   sequenceDuration: 0.5

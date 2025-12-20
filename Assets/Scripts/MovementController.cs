@@ -36,6 +36,7 @@ public class MovementController : MonoBehaviour, IKillable
     public AnimatedSpriteRenderer mountedSpriteUp;
     public AnimatedSpriteRenderer mountedSpriteDown;
     public AnimatedSpriteRenderer mountedSpriteLeft;
+    public AnimatedSpriteRenderer mountedSpriteRight;
 
     protected Vector2 facingDirection = Vector2.down;
     public Vector2 FacingDirection => facingDirection;
@@ -143,7 +144,7 @@ public class MovementController : MonoBehaviour, IKillable
             else if (dir == Vector2.left)
                 SetDirection(Vector2.left, mountedSpriteLeft != null ? mountedSpriteLeft : spriteRendererLeft);
             else if (dir == Vector2.right)
-                SetDirection(Vector2.right, mountedSpriteLeft != null ? mountedSpriteLeft : spriteRendererLeft);
+                SetDirection(Vector2.right, mountedSpriteRight != null ? mountedSpriteRight : spriteRendererRight);
             else
             {
                 Vector2 face = facingDirection;
@@ -152,8 +153,12 @@ public class MovementController : MonoBehaviour, IKillable
                     SetDirection(Vector2.zero, mountedSpriteUp != null ? mountedSpriteUp : spriteRendererUp);
                 else if (face == Vector2.down)
                     SetDirection(Vector2.zero, mountedSpriteDown != null ? mountedSpriteDown : spriteRendererDown);
-                else
+                else if (face == Vector2.left)
                     SetDirection(Vector2.zero, mountedSpriteLeft != null ? mountedSpriteLeft : spriteRendererLeft);
+                else if (face == Vector2.right)
+                    SetDirection(Vector2.zero, mountedSpriteRight != null ? mountedSpriteRight : spriteRendererRight);
+                else
+                    SetDirection(Vector2.zero, mountedSpriteDown != null ? mountedSpriteDown : spriteRendererDown);
             }
 
             return;
@@ -423,21 +428,30 @@ public class MovementController : MonoBehaviour, IKillable
         if (spriteRenderer == null)
         {
             if (activeSpriteRenderer != null)
+            {
                 activeSpriteRenderer.idle = (direction == Vector2.zero);
-
+                activeSpriteRenderer.RefreshFrame();
+            }
             return;
         }
+
+        bool isIdle = (direction == Vector2.zero);
 
         if (activeSpriteRenderer != spriteRenderer)
         {
             if (activeSpriteRenderer != null)
                 activeSpriteRenderer.enabled = false;
 
+            spriteRenderer.idle = isIdle;
             spriteRenderer.enabled = true;
             activeSpriteRenderer = spriteRenderer;
         }
+        else
+        {
+            activeSpriteRenderer.idle = isIdle;
+        }
 
-        activeSpriteRenderer.idle = (direction == Vector2.zero);
+        activeSpriteRenderer.RefreshFrame();
         ApplyFlipForHorizontal(facingDirection);
     }
 
@@ -665,12 +679,22 @@ public class MovementController : MonoBehaviour, IKillable
 
     protected void ApplyFlipForHorizontal(Vector2 dir)
     {
-        if (activeSpriteRenderer != null &&
-            activeSpriteRenderer.TryGetComponent<SpriteRenderer>(out var sr))
+        if (activeSpriteRenderer == null)
+            return;
+
+        if (!activeSpriteRenderer.TryGetComponent<SpriteRenderer>(out var sr))
+            return;
+
+        if (!activeSpriteRenderer.allowFlipX)
         {
-            if (dir == Vector2.right) sr.flipX = true;
-            else if (dir == Vector2.left) sr.flipX = false;
+            sr.flipX = false;
+            return;
         }
+
+        if (dir == Vector2.right)
+            sr.flipX = true;
+        else if (dir == Vector2.left)
+            sr.flipX = false;
     }
 
     public void SetMountedOnLouie(bool mounted)

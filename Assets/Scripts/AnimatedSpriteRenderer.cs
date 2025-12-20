@@ -9,6 +9,9 @@ public class AnimatedSpriteRenderer : MonoBehaviour
     public Sprite idleSprite;
     public Sprite[] animationSprite;
 
+    [Header("Flip")]
+    public bool allowFlipX = false;
+
     [Header("Timing")]
     public float animationTime = 0.25f;
     public bool useSequenceDuration = false;
@@ -218,6 +221,10 @@ public class AnimatedSpriteRenderer : MonoBehaviour
         {
             int idx = Mathf.Clamp(animationFrame, 0, frameOffsets.Length - 1);
             Vector2 offset = frameOffsets[idx];
+
+            if (spriteRenderer.flipX)
+                offset.x = -offset.x;
+
             visualTransform.localPosition = initialVisualLocalPosition + (Vector3)offset;
         }
     }

@@ -109,6 +109,7 @@ MonoBehaviour:
   - {fileID: 1227387053424607353, guid: 777d34104478f5b49a30793d5330234a, type: 3}
   - {fileID: 4228603840019539244, guid: 777d34104478f5b49a30793d5330234a, type: 3}
   - {fileID: -9177389288040520022, guid: 777d34104478f5b49a30793d5330234a, type: 3}
+  allowFlipX: 0
   animationTime: 0.16666667
   useSequenceDuration: 0
   sequenceDuration: 0.5
@@ -238,6 +239,7 @@ MonoBehaviour:
   - {fileID: -4385441247006874283, guid: ecbb513c1570e704a8660b285fb0c5ef, type: 3}
   - {fileID: 1751679697067594395, guid: ecbb513c1570e704a8660b285fb0c5ef, type: 3}
   - {fileID: 959543487423659731, guid: ecbb513c1570e704a8660b285fb0c5ef, type: 3}
+  allowFlipX: 0
   animationTime: 0.0625
   useSequenceDuration: 0
   sequenceDuration: 0.5
@@ -354,6 +356,7 @@ MonoBehaviour:
   - {fileID: -4117084902901351310, guid: ad2cf0bfb625610438f9cc87249f7722, type: 3}
   - {fileID: 5701136776990779719, guid: ad2cf0bfb625610438f9cc87249f7722, type: 3}
   - {fileID: -4117084902901351310, guid: ad2cf0bfb625610438f9cc87249f7722, type: 3}
+  allowFlipX: 0
   animationTime: 0.083333336
   useSequenceDuration: 0
   sequenceDuration: 0.25
@@ -441,7 +444,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 5
+  m_SortingOrder: 4
   m_Sprite: {fileID: 8473586589768175895, guid: 6075a7b46b668394f9af57011c5460d9, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
@@ -468,6 +471,7 @@ MonoBehaviour:
   idleSprite: {fileID: 8473586589768175895, guid: 6075a7b46b668394f9af57011c5460d9, type: 3}
   animationSprite:
   - {fileID: 8473586589768175895, guid: 6075a7b46b668394f9af57011c5460d9, type: 3}
+  allowFlipX: 0
   animationTime: 0.16666667
   useSequenceDuration: 0
   sequenceDuration: 0.5
@@ -586,6 +590,7 @@ MonoBehaviour:
   - {fileID: -4838763863378666313, guid: 777d34104478f5b49a30793d5330234a, type: 3}
   - {fileID: 5742505401775786626, guid: 777d34104478f5b49a30793d5330234a, type: 3}
   - {fileID: -2236306000557871359, guid: 777d34104478f5b49a30793d5330234a, type: 3}
+  allowFlipX: 0
   animationTime: 0.16666667
   useSequenceDuration: 0
   sequenceDuration: 0.5
@@ -703,6 +708,7 @@ MonoBehaviour:
   - {fileID: 7320275842084746454, guid: 777d34104478f5b49a30793d5330234a, type: 3}
   - {fileID: 4794426086629081376, guid: 777d34104478f5b49a30793d5330234a, type: 3}
   - {fileID: -7472294743960569232, guid: 777d34104478f5b49a30793d5330234a, type: 3}
+  allowFlipX: 0
   animationTime: 0.16666667
   useSequenceDuration: 0
   sequenceDuration: 0.5
@@ -823,6 +829,7 @@ MonoBehaviour:
   - {fileID: -1095517460, guid: 376b6f58dac9d744baa3093ec61cf526, type: 3}
   - {fileID: 1817677920, guid: 376b6f58dac9d744baa3093ec61cf526, type: 3}
   - {fileID: 1287740854, guid: 376b6f58dac9d744baa3093ec61cf526, type: 3}
+  allowFlipX: 0
   animationTime: 0.071428575
   useSequenceDuration: 0
   sequenceDuration: 0.5
@@ -940,6 +947,7 @@ MonoBehaviour:
   - {fileID: -1955984481447874758, guid: 777d34104478f5b49a30793d5330234a, type: 3}
   - {fileID: -2311726692851788914, guid: 777d34104478f5b49a30793d5330234a, type: 3}
   - {fileID: 530038992663894971, guid: 777d34104478f5b49a30793d5330234a, type: 3}
+  allowFlipX: 0
   animationTime: 0.16666667
   useSequenceDuration: 0
   sequenceDuration: 0.5
@@ -975,7 +983,7 @@ Transform:
   m_GameObject: {fileID: 4774286793582261755}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0.39, y: 0.32000017, z: 0}
+  m_LocalPosition: {x: 0.4, y: 0.32000017, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1054,6 +1062,7 @@ MonoBehaviour:
   idleSprite: {fileID: -697793799, guid: 6075a7b46b668394f9af57011c5460d9, type: 3}
   animationSprite:
   - {fileID: -697793799, guid: 6075a7b46b668394f9af57011c5460d9, type: 3}
+  allowFlipX: 0
   animationTime: 0.16666667
   useSequenceDuration: 0
   sequenceDuration: 0.5
@@ -1107,6 +1116,7 @@ Transform:
   - {fileID: 249999716892061584}
   - {fileID: 4879042736869971838}
   - {fileID: 3641954070810276797}
+  - {fileID: 1720660965702459137}
   - {fileID: 6019990748563987964}
   - {fileID: 8734142640566033103}
   - {fileID: 4075204487323161309}
@@ -1205,13 +1215,14 @@ MonoBehaviour:
   spriteRendererUp: {fileID: 1091894747361695229}
   spriteRendererDown: {fileID: 3988283045612322344}
   spriteRendererLeft: {fileID: 2494865831759049152}
-  spriteRendererRight: {fileID: 2494865831759049152}
+  spriteRendererRight: {fileID: 3473117096942564384}
   spriteRendererDeath: {fileID: 1022835944329553709}
   spriteRendererEndStage: {fileID: 7919669202012837895}
   spriteRendererCheering: {fileID: 8647236082727130149}
   mountedSpriteUp: {fileID: 5850744692750669427}
   mountedSpriteDown: {fileID: 500731651036015959}
   mountedSpriteLeft: {fileID: 530947641134278556}
+  mountedSpriteRight: {fileID: 1472820644573264970}
   endStageTotalTime: 1
   endStageFrameCount: 9
   isDead: 0
@@ -1516,6 +1527,7 @@ MonoBehaviour:
   idleSprite: {fileID: -8365789709237027486, guid: 6075a7b46b668394f9af57011c5460d9, type: 3}
   animationSprite:
   - {fileID: -8365789709237027486, guid: 6075a7b46b668394f9af57011c5460d9, type: 3}
+  allowFlipX: 0
   animationTime: 0.16666667
   useSequenceDuration: 0
   sequenceDuration: 0.5
@@ -1633,6 +1645,7 @@ MonoBehaviour:
   - {fileID: 5581604305214882544, guid: ad2cf0bfb625610438f9cc87249f7722, type: 3}
   - {fileID: -5260469477441531411, guid: ad2cf0bfb625610438f9cc87249f7722, type: 3}
   - {fileID: 5581604305214882544, guid: ad2cf0bfb625610438f9cc87249f7722, type: 3}
+  allowFlipX: 0
   animationTime: 0.083333336
   useSequenceDuration: 0
   sequenceDuration: 0.25
@@ -1755,6 +1768,7 @@ MonoBehaviour:
   - {fileID: 7000587847891052219, guid: fade6ceffc1de7f43bfaea37f5587562, type: 3}
   - {fileID: 5938443313494947175, guid: fade6ceffc1de7f43bfaea37f5587562, type: 3}
   - {fileID: -5346151025070888229, guid: fade6ceffc1de7f43bfaea37f5587562, type: 3}
+  allowFlipX: 0
   animationTime: 0.11111111
   useSequenceDuration: 0
   sequenceDuration: 0.5
@@ -1871,6 +1885,7 @@ MonoBehaviour:
   - {fileID: -7053481326016676531, guid: ad2cf0bfb625610438f9cc87249f7722, type: 3}
   - {fileID: -8940337718075396223, guid: ad2cf0bfb625610438f9cc87249f7722, type: 3}
   - {fileID: -7053481326016676531, guid: ad2cf0bfb625610438f9cc87249f7722, type: 3}
+  allowFlipX: 0
   animationTime: 0.083333336
   useSequenceDuration: 0
   sequenceDuration: 0.25
@@ -1987,11 +2002,128 @@ MonoBehaviour:
   - {fileID: 1986582472000671287, guid: ad2cf0bfb625610438f9cc87249f7722, type: 3}
   - {fileID: 1552499072881142186, guid: ad2cf0bfb625610438f9cc87249f7722, type: 3}
   - {fileID: 1986582472000671287, guid: ad2cf0bfb625610438f9cc87249f7722, type: 3}
+  allowFlipX: 0
   animationTime: 0.083333336
   useSequenceDuration: 0
   sequenceDuration: 0.25
   loop: 0
   idle: 0
   frameOffsets: []
+  pingPong: 0
+  disableOffsetsIfThisObjectHasRigidbody2D: 1
+--- !u!1 &9014292581269105957
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1720660965702459137}
+  - component: {fileID: 1379318847406737067}
+  - component: {fileID: 1472820644573264970}
+  m_Layer: 3
+  m_Name: MoutedRigth
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1720660965702459137
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9014292581269105957}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -0.7, y: 0.3200002, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 3797169763190965992}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!212 &1379318847406737067
+SpriteRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9014292581269105957}
+  m_Enabled: 0
+  m_CastShadows: 0
+  m_ReceiveShadows: 0
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 0
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 10754, guid: 0000000000000000f000000000000000, type: 0}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 0
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 5
+  m_Sprite: {fileID: 5419068107307890807, guid: 6075a7b46b668394f9af57011c5460d9, type: 3}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_FlipX: 0
+  m_FlipY: 0
+  m_DrawMode: 0
+  m_Size: {x: 1, y: 1.5}
+  m_AdaptiveModeThreshold: 0.5
+  m_SpriteTileMode: 0
+  m_WasSpriteAssigned: 1
+  m_MaskInteraction: 0
+  m_SpriteSortPoint: 0
+--- !u!114 &1472820644573264970
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9014292581269105957}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3a4b55e1b961d144197e1a7a4a391956, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  idleSprite: {fileID: 5419068107307890807, guid: 6075a7b46b668394f9af57011c5460d9, type: 3}
+  animationSprite:
+  - {fileID: 5419068107307890807, guid: 6075a7b46b668394f9af57011c5460d9, type: 3}
+  allowFlipX: 0
+  animationTime: 0.16666667
+  useSequenceDuration: 0
+  sequenceDuration: 0.5
+  loop: 0
+  idle: 1
+  frameOffsets:
+  - {x: 0.15, y: 0.5}
   pingPong: 0
   disableOffsetsIfThisObjectHasRigidbody2D: 1
