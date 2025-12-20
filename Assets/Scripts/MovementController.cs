@@ -599,16 +599,49 @@ public class MovementController : MonoBehaviour, IKillable
         Rigidbody.position = portalCenter;
         direction = Vector2.zero;
 
-        spriteRendererUp.enabled = false;
-        spriteRendererDown.enabled = false;
-        spriteRendererLeft.enabled = false;
-        spriteRendererRight.enabled = false;
+        if (spriteRendererUp != null) spriteRendererUp.enabled = false;
+        if (spriteRendererDown != null) spriteRendererDown.enabled = false;
+        if (spriteRendererLeft != null) spriteRendererLeft.enabled = false;
+        if (spriteRendererRight != null) spriteRendererRight.enabled = false;
 
         if (spriteRendererDeath != null)
             spriteRendererDeath.enabled = false;
 
         if (spriteRendererCheering != null)
             spriteRendererCheering.enabled = false;
+
+        if (spriteRendererEndStage != null)
+            spriteRendererEndStage.enabled = false;
+
+        if (isMountedOnLouie)
+        {
+            facingDirection = Vector2.down;
+            direction = Vector2.zero;
+            hasInput = false;
+
+            if (mountedSpriteUp != null) mountedSpriteUp.enabled = false;
+            if (mountedSpriteLeft != null) mountedSpriteLeft.enabled = false;
+            if (mountedSpriteRight != null) mountedSpriteRight.enabled = false;
+
+            var mountedDown = mountedSpriteDown != null ? mountedSpriteDown : spriteRendererDown;
+
+            if (mountedDown != null)
+            {
+                mountedDown.enabled = true;
+                mountedDown.idle = true;
+                mountedDown.loop = false;
+                mountedDown.RefreshFrame();
+
+                activeSpriteRenderer = mountedDown;
+            }
+
+            bool playedOnLouie = false;
+
+            if (TryGetComponent<PlayerLouieCompanion>(out var companion) && companion != null)
+                playedOnLouie = companion.TryPlayMountedLouieEndStage(endStageTotalTime, endStageFrameCount);
+
+            return;
+        }
 
         var endSprite = spriteRendererEndStage != null ? spriteRendererEndStage : spriteRendererDown;
 

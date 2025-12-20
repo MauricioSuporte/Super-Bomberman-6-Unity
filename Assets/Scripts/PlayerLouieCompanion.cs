@@ -379,4 +379,18 @@ public class PlayerLouieCompanion : MonoBehaviour
 
         MountBlackLouie();
     }
+
+    public bool TryPlayMountedLouieEndStage(float totalTime, int frameCount)
+    {
+        if (currentLouie == null)
+            return false;
+
+        if (!currentLouie.TryGetComponent<LouieRiderVisual>(out var visual) || visual == null)
+            visual = currentLouie.GetComponentInChildren<LouieRiderVisual>(true);
+
+        if (visual == null)
+            return false;
+
+        return visual.TryPlayEndStage(totalTime, frameCount);
+    }
 }

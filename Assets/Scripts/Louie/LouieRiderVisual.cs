@@ -13,11 +13,16 @@ public class LouieRiderVisual : MonoBehaviour
     public AnimatedSpriteRenderer louieDown;
     public AnimatedSpriteRenderer louieLeft;
 
+    [Header("End Stage (Louie)")]
+    public AnimatedSpriteRenderer louieEndStage;
+
     private AnimatedSpriteRenderer active;
+    private bool playingEndStage;
 
     public void Bind(MovementController movement)
     {
         owner = movement;
+        playingEndStage = false;
         ApplyDirection(Vector2.down, true);
     }
 
@@ -30,6 +35,9 @@ public class LouieRiderVisual : MonoBehaviour
         }
 
         transform.localPosition = localOffset;
+
+        if (playingEndStage)
+            return;
 
         bool isIdle = owner.Direction == Vector2.zero;
         Vector2 faceDir = isIdle ? owner.FacingDirection : owner.Direction;
@@ -67,5 +75,30 @@ public class LouieRiderVisual : MonoBehaviour
             if (faceDir == Vector2.right) sr.flipX = true;
             else if (faceDir == Vector2.left) sr.flipX = false;
         }
+    }
+
+    public bool TryPlayEndStage(float totalTime, int frameCount)
+    {
+        if (louieEndStage == null)
+            return false;
+
+        playingEndStage = true;
+
+        if (louieUp != null) louieUp.enabled = false;
+        if (louieDown != null) louieDown.enabled = false;
+        if (louieLeft != null) louieLeft.enabled = false;
+
+        louieEndStage.enabled = true;
+        louieEndStage.idle = false;
+        louieEndStage.loop = true;
+        louieEndStage.CurrentFrame = 0;
+        louieEndStage.RefreshFrame();
+
+        if (frameCount > 0)
+            louieEndStage.animationTime = totalTime / frameCount;
+
+        active = louieEndStage;
+
+        return true;
     }
 }
