@@ -20,20 +20,23 @@ public class PlayerLouieCompanion : MonoBehaviour
     [Header("Visual Sync")]
     public bool blinkPlayerTogetherWithLouie = true;
 
-    private MovementController movement;
-    private GameObject currentLouie;
+    MovementController movement;
+    GameObject currentLouie;
 
-    private int mountedLouieHp;
-    private CharacterHealth mountedLouieHealth;
+    int mountedLouieHp;
+    CharacterHealth mountedLouieHealth;
 
-    private CharacterHealth playerHealth;
-    private float playerOriginalBlinkInterval;
-    private float playerOriginalTempSlowdownStartNormalized;
-    private float playerOriginalTempEndBlinkMultiplier;
-    private Coroutine restorePlayerBlinkRoutine;
+    CharacterHealth playerHealth;
+    float playerOriginalBlinkInterval;
+    float playerOriginalTempSlowdownStartNormalized;
+    float playerOriginalTempEndBlinkMultiplier;
+    Coroutine restorePlayerBlinkRoutine;
 
-    private bool hadPunchBeforeMount;
-    private BombPunchAbility punchAbility;
+    AbilitySystem abilitySystem;
+    BombPunchAbility punchAbility;
+
+    bool punchOwned;
+    bool mountedIsBlue;
 
     private void Awake()
     {
@@ -47,17 +50,25 @@ public class PlayerLouieCompanion : MonoBehaviour
             playerOriginalTempEndBlinkMultiplier = playerHealth.tempEndBlinkMultiplier;
         }
 
-        if (!TryGetComponent<AbilitySystem>(out var ab))
-            ab = gameObject.AddComponent<AbilitySystem>();
+        if (!TryGetComponent(out abilitySystem))
+            abilitySystem = gameObject.AddComponent<AbilitySystem>();
 
-        ab.RebuildCache();
-        punchAbility = ab.Get<BombPunchAbility>(BombPunchAbility.AbilityId);
+        abilitySystem.RebuildCache();
+        punchAbility = abilitySystem.Get<BombPunchAbility>(BombPunchAbility.AbilityId);
+
+        punchOwned = abilitySystem.IsEnabled(BombPunchAbility.AbilityId);
     }
 
-    public void MountBlueLouie() => MountLouieInternal(blueLouiePrefab);
-    public void MountBlackLouie() => MountLouieInternal(blackLouiePrefab);
+    private void Update()
+    {
+        if (currentLouie != null && !mountedIsBlue)
+            EnforceNoPunchWhileMountedNonBlue();
+    }
 
-    private void MountLouieInternal(GameObject prefab)
+    public void MountBlueLouie() => MountLouieInternal(blueLouiePrefab, true);
+    public void MountBlackLouie() => MountLouieInternal(blackLouiePrefab, false);
+
+    private void MountLouieInternal(GameObject prefab, bool isBlue)
     {
         if (prefab == null || movement == null)
             return;
@@ -65,11 +76,12 @@ public class PlayerLouieCompanion : MonoBehaviour
         if (currentLouie != null)
             return;
 
+        mountedIsBlue = isBlue;
+
         currentLouie = Instantiate(prefab, transform);
         currentLouie.transform.SetLocalPositionAndRotation(localOffset, Quaternion.identity);
         currentLouie.transform.localScale = Vector3.one;
 
-        // Pode estar no root ou em child
         mountedLouieHealth = currentLouie.GetComponentInChildren<CharacterHealth>(true);
 
         mountedLouieHp = 1;
@@ -99,9 +111,67 @@ public class PlayerLouieCompanion : MonoBehaviour
             visual.Bind(movement);
         }
 
-        EnsurePunchBombWhileMounted(currentLouie);
+        abilitySystem.RebuildCache();
+        punchAbility = abilitySystem.Get<BombPunchAbility>(BombPunchAbility.AbilityId);
+
+        punchOwned |= abilitySystem.IsEnabled(BombPunchAbility.AbilityId);
+
+        ApplyPunchRulesForCurrentMount();
 
         movement.Died += OnPlayerDied;
+    }
+
+    private void ApplyPunchRulesForCurrentMount()
+    {
+        if (mountedIsBlue)
+        {
+            var external = currentLouie != null
+                ? currentLouie.GetComponentInChildren<IBombPunchExternalAnimator>(true)
+                : null;
+
+            abilitySystem.Enable(BombPunchAbility.AbilityId);
+
+            punchAbility = abilitySystem.Get<BombPunchAbility>(BombPunchAbility.AbilityId);
+            if (punchAbility != null)
+                punchAbility.SetExternalAnimator(external);
+
+            return;
+        }
+
+        if (punchAbility != null)
+            punchAbility.SetExternalAnimator(null);
+
+        abilitySystem.Disable(BombPunchAbility.AbilityId);
+    }
+
+    private void EnforceNoPunchWhileMountedNonBlue()
+    {
+        abilitySystem.RebuildCache();
+
+        if (abilitySystem.IsEnabled(BombPunchAbility.AbilityId))
+        {
+            punchOwned = true;
+
+            punchAbility = abilitySystem.Get<BombPunchAbility>(BombPunchAbility.AbilityId);
+            if (punchAbility != null)
+                punchAbility.SetExternalAnimator(null);
+
+            abilitySystem.Disable(BombPunchAbility.AbilityId);
+        }
+    }
+
+    private void RestorePunchAfterUnmount()
+    {
+        abilitySystem.RebuildCache();
+
+        punchAbility = abilitySystem.Get<BombPunchAbility>(BombPunchAbility.AbilityId);
+        if (punchAbility != null)
+            punchAbility.SetExternalAnimator(null);
+
+        if (punchOwned)
+            abilitySystem.Enable(BombPunchAbility.AbilityId);
+        else
+            abilitySystem.Disable(BombPunchAbility.AbilityId);
     }
 
     public void OnMountedLouieHit(int damage)
@@ -111,17 +181,14 @@ public class PlayerLouieCompanion : MonoBehaviour
 
         int dmg = Mathf.Max(1, damage);
 
-        // Fonte da verdade: CharacterHealth do Louie (pra blink/invuln funcionar)
         if (mountedLouieHealth != null)
         {
-            // Precisa do public bool IsInvulnerable => isInvulnerable; no CharacterHealth
             if (mountedLouieHealth.IsInvulnerable)
                 return;
 
             mountedLouieHealth.TakeDamage(dmg);
             mountedLouieHp = Mathf.Max(0, mountedLouieHealth.life);
 
-            // Se ainda está vivo, sincroniza o blink do player com o do Louie
             if (mountedLouieHealth.life > 0)
                 SyncPlayerBlinkWithLouie();
 
@@ -131,7 +198,6 @@ public class PlayerLouieCompanion : MonoBehaviour
             return;
         }
 
-        // Fallback (se por algum motivo não houver CharacterHealth)
         mountedLouieHp -= dmg;
         if (mountedLouieHp <= 0)
             LoseLouie();
@@ -149,16 +215,12 @@ public class PlayerLouieCompanion : MonoBehaviour
         if (seconds <= 0f)
             return;
 
-        // Ajusta visual do Player pra bater com o Louie
         playerHealth.hitBlinkInterval = mountedLouieHealth.hitBlinkInterval;
         playerHealth.tempSlowdownStartNormalized = mountedLouieHealth.tempSlowdownStartNormalized;
         playerHealth.tempEndBlinkMultiplier = mountedLouieHealth.tempEndBlinkMultiplier;
 
-        // Dispara o blink no player (isso também seta invulnerável, mas enquanto montado
-        // o dano já está sendo roteado pro Louie, então aqui é basicamente visual)
         playerHealth.StartTemporaryInvulnerability(seconds);
 
-        // Restaura os valores depois, pra não “poluir” as configs do player
         if (restorePlayerBlinkRoutine != null)
             StopCoroutine(restorePlayerBlinkRoutine);
 
@@ -179,48 +241,6 @@ public class PlayerLouieCompanion : MonoBehaviour
         restorePlayerBlinkRoutine = null;
     }
 
-    private void EnsurePunchBombWhileMounted(GameObject louieRoot)
-    {
-        if (!TryGetComponent<AbilitySystem>(out var ab))
-            ab = gameObject.AddComponent<AbilitySystem>();
-
-        ab.RebuildCache();
-
-        hadPunchBeforeMount = ab.IsEnabled(BombPunchAbility.AbilityId);
-
-        var external = louieRoot.GetComponentInChildren<IBombPunchExternalAnimator>(true);
-
-        if (external != null)
-        {
-            ab.Enable(BombPunchAbility.AbilityId);
-
-            punchAbility = ab.Get<BombPunchAbility>(BombPunchAbility.AbilityId);
-            if (punchAbility != null)
-                punchAbility.SetExternalAnimator(external);
-        }
-        else
-        {
-            ab.Disable(BombPunchAbility.AbilityId);
-        }
-    }
-
-    private void RestorePunchBombAfterUnmount()
-    {
-        if (!TryGetComponent<AbilitySystem>(out var ab))
-            return;
-
-        ab.RebuildCache();
-
-        punchAbility = ab.Get<BombPunchAbility>(BombPunchAbility.AbilityId);
-        if (punchAbility != null)
-            punchAbility.SetExternalAnimator(null);
-
-        if (!hadPunchBeforeMount)
-            ab.Disable(BombPunchAbility.AbilityId);
-
-        hadPunchBeforeMount = false;
-    }
-
     public void LoseLouie()
     {
         if (currentLouie == null)
@@ -235,9 +255,10 @@ public class PlayerLouieCompanion : MonoBehaviour
         louie.transform.GetPositionAndRotation(out var worldPos, out var worldRot);
 
         movement.SetMountedOnLouie(false);
-        RestorePunchBombAfterUnmount();
+        mountedIsBlue = false;
 
-        // Aqui sim é invulnerabilidade “real” pós-perda do Louie
+        RestorePunchAfterUnmount();
+
         if (movement.TryGetComponent<CharacterHealth>(out var health))
             health.StartTemporaryInvulnerability(playerInvulnerabilityAfterLoseLouieSeconds);
 
@@ -279,7 +300,9 @@ public class PlayerLouieCompanion : MonoBehaviour
         mountedLouieHealth = null;
 
         movement.SetMountedOnLouie(false);
-        RestorePunchBombAfterUnmount();
+        mountedIsBlue = false;
+
+        RestorePunchAfterUnmount();
     }
 
     private void OnDestroy()
