@@ -13,6 +13,9 @@ public class PlayerLouieCompanion : MonoBehaviour
     [Header("Louie Death")]
     public float louieDeathSeconds = 0.5f;
 
+    [Header("Player Invulnerability After Losing Louie")]
+    public float playerInvulnerabilityAfterLoseLouieSeconds = 0.8f;
+
     private MovementController movement;
     private GameObject currentLouie;
 
@@ -72,11 +75,14 @@ public class PlayerLouieCompanion : MonoBehaviour
         var louie = currentLouie;
         currentLouie = null;
 
-        Vector3 worldPos = louie.transform.position;
-        Quaternion worldRot = louie.transform.rotation;
-
+        louie.transform.GetPositionAndRotation(out Vector3 worldPos, out Quaternion worldRot);
         if (movement != null)
+        {
             movement.SetMountedOnLouie(false);
+
+            if (movement.TryGetComponent<CharacterHealth>(out var health))
+                health.StartTemporaryInvulnerability(playerInvulnerabilityAfterLoseLouieSeconds);
+        }
 
         louie.transform.SetParent(null, true);
         louie.transform.SetPositionAndRotation(worldPos, worldRot);
