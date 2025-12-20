@@ -30,6 +30,8 @@ public class CharacterHealth : MonoBehaviour
 
     IKillable killable;
 
+    public bool IsInvulnerable => isInvulnerable;
+
     void Awake()
     {
         killable = GetComponent<IKillable>();

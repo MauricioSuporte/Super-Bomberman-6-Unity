@@ -28,7 +28,8 @@ public class GameManager : MonoBehaviour
     public ItemPickup destructiblePassItemPrefab;
     public ItemPickup invincibleSuitItemPrefab;
     public ItemPickup heartItemPrefab;
-    public ItemPickup eggItemPrefab;
+    public ItemPickup blueLouieEggItemPrefab;
+    public ItemPickup blackLouieEggItemPrefab;
 
     [Header("Stage")]
     public Tilemap destructibleTilemap;
@@ -59,7 +60,8 @@ public class GameManager : MonoBehaviour
     int destructiblePassSpawnOrder = -1;
     int invincibleSuitSpawnOrder = -1;
     int heartSpawnOrder = -1;
-    int eggSpawnOrder = -1;
+    int blueLouieEggSpawnOrder = -1;
+    int blackLouieEggSpawnOrder = -1;
 
     void Start()
     {
@@ -140,8 +142,11 @@ public class GameManager : MonoBehaviour
         if (heartItemPrefab != null && cursor < indices.Count)
             heartSpawnOrder = indices[cursor++];
 
-        if (eggItemPrefab != null && cursor < indices.Count)
-            eggSpawnOrder = indices[cursor++];
+        if (blueLouieEggItemPrefab != null && cursor < indices.Count)
+            blueLouieEggSpawnOrder = indices[cursor++];
+
+        if (blackLouieEggItemPrefab != null && cursor < indices.Count)
+            blackLouieEggSpawnOrder = indices[cursor++];
     }
 
     public GameObject GetSpawnForDestroyedBlock()
@@ -191,8 +196,11 @@ public class GameManager : MonoBehaviour
         if (order == heartSpawnOrder && heartItemPrefab != null)
             return heartItemPrefab.gameObject;
 
-        if (order == eggSpawnOrder && eggItemPrefab != null)
-            return eggItemPrefab.gameObject;
+        if (order == blueLouieEggSpawnOrder && blueLouieEggItemPrefab != null)
+            return blueLouieEggItemPrefab.gameObject;
+
+        if (order == blackLouieEggSpawnOrder && blackLouieEggItemPrefab != null)
+            return blackLouieEggItemPrefab.gameObject;
 
         return null;
     }

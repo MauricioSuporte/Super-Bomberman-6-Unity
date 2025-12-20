@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: 2727780941473249227}
   - component: {fileID: 3750686511081856235}
   m_Layer: 9
-  m_Name: Egg
+  m_Name: BlueLouieEgg
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

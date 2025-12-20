@@ -472,7 +472,9 @@ public class MovementController : MonoBehaviour, IKillable
             if (CompareTag("Player") && isMountedOnLouie)
             {
                 if (TryGetComponent<PlayerLouieCompanion>(out var companion))
-                    companion.LoseLouie();
+                    companion.OnMountedLouieHit(1);
+                else
+                    DeathSequence();
 
                 return;
             }

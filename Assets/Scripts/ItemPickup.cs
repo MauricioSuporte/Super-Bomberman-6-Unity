@@ -28,7 +28,8 @@ public class ItemPickup : MonoBehaviour
         DestructiblePass,
         InvincibleSuit,
         Heart,
-        Egg,
+        BlueLouieEgg,
+        BlackLouieEgg
     }
 
     public ItemType type;
@@ -173,10 +174,17 @@ public class ItemPickup : MonoBehaviour
                     health.AddLife(1);
                 break;
 
-            case ItemType.Egg:
+            case ItemType.BlueLouieEgg:
                 {
                     if (player.TryGetComponent<PlayerLouieCompanion>(out var louie))
-                        louie.MountLouie();
+                        louie.MountBlueLouie();
+                    break;
+                }
+
+            case ItemType.BlackLouieEgg:
+                {
+                    if (player.TryGetComponent<PlayerLouieCompanion>(out var louie))
+                        louie.MountBlackLouie();
                     break;
                 }
         }

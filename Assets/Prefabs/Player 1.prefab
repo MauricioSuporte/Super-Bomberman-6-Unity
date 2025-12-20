@@ -1223,6 +1223,8 @@ MonoBehaviour:
   mountedSpriteDown: {fileID: 500731651036015959}
   mountedSpriteLeft: {fileID: 530947641134278556}
   mountedSpriteRight: {fileID: 1472820644573264970}
+  deathDisableSeconds: 2
+  checkWinStateOnDeath: 1
   endStageTotalTime: 1
   endStageFrameCount: 9
   isDead: 0
@@ -1419,9 +1421,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9d88fdcd2238f694c8121110c69c853f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerLouieCompanion
-  louiePrefab: {fileID: 2273416014071709654, guid: b0695b92e5b71c1408e0fbafd895d235, type: 3}
+  blueLouiePrefab: {fileID: 2273416014071709654, guid: b0695b92e5b71c1408e0fbafd895d235, type: 3}
+  blackLouiePrefab: {fileID: 2273416014071709654, guid: 4d11d2e957185b14a8a90544ec4660b0, type: 3}
   localOffset: {x: 0, y: -0.15}
   louieDeathSeconds: 0.5
+  playerInvulnerabilityAfterLoseLouieSeconds: 0.8
 --- !u!1 &6183660032571719661
 GameObject:
   m_ObjectHideFlags: 0
