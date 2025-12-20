@@ -68,6 +68,33 @@ public class PlayerLouieCompanion : MonoBehaviour
     public void MountBlueLouie() => MountLouieInternal(blueLouiePrefab, true);
     public void MountBlackLouie() => MountLouieInternal(blackLouiePrefab, false);
 
+    public int GetMountedLouieLife()
+    {
+        if (currentLouie == null)
+            return 0;
+
+        if (mountedLouieHealth != null)
+            return mountedLouieHealth.life;
+
+        return mountedLouieHp;
+    }
+
+    public void SetMountedLouieLife(int life)
+    {
+        if (currentLouie == null)
+            return;
+
+        int v = Mathf.Max(1, life);
+
+        if (mountedLouieHealth != null)
+            mountedLouieHealth.life = v;
+
+        mountedLouieHp = v;
+
+        if (!mountedIsBlue)
+            PlayerPersistentStats.MountedLouieLife = v;
+    }
+
     private void MountLouieInternal(GameObject prefab, bool isBlue)
     {
         if (prefab == null || movement == null)
@@ -87,6 +114,11 @@ public class PlayerLouieCompanion : MonoBehaviour
         mountedLouieHp = 1;
         if (mountedLouieHealth != null)
             mountedLouieHp = Mathf.Max(1, mountedLouieHealth.life);
+
+        if (!mountedIsBlue && PlayerPersistentStats.MountedLouieLife > 0)
+            SetMountedLouieLife(PlayerPersistentStats.MountedLouieLife);
+        else if (!mountedIsBlue)
+            PlayerPersistentStats.MountedLouieLife = Mathf.Max(1, mountedLouieHp);
 
         if (currentLouie.TryGetComponent<LouieMovementController>(out var lm))
         {
@@ -189,6 +221,9 @@ public class PlayerLouieCompanion : MonoBehaviour
             mountedLouieHealth.TakeDamage(dmg);
             mountedLouieHp = Mathf.Max(0, mountedLouieHealth.life);
 
+            if (!mountedIsBlue)
+                PlayerPersistentStats.MountedLouieLife = Mathf.Max(0, mountedLouieHp);
+
             if (mountedLouieHealth.life > 0)
                 SyncPlayerBlinkWithLouie();
 
@@ -199,6 +234,10 @@ public class PlayerLouieCompanion : MonoBehaviour
         }
 
         mountedLouieHp -= dmg;
+
+        if (!mountedIsBlue)
+            PlayerPersistentStats.MountedLouieLife = Mathf.Max(0, mountedLouieHp);
+
         if (mountedLouieHp <= 0)
             LoseLouie();
     }
@@ -252,6 +291,8 @@ public class PlayerLouieCompanion : MonoBehaviour
         mountedLouieHp = 0;
         mountedLouieHealth = null;
 
+        PlayerPersistentStats.MountedLouieLife = 0;
+
         louie.transform.GetPositionAndRotation(out var worldPos, out var worldRot);
 
         movement.SetMountedOnLouie(false);
@@ -298,6 +339,8 @@ public class PlayerLouieCompanion : MonoBehaviour
 
         mountedLouieHp = 0;
         mountedLouieHealth = null;
+
+        PlayerPersistentStats.MountedLouieLife = 0;
 
         movement.SetMountedOnLouie(false);
         mountedIsBlue = false;

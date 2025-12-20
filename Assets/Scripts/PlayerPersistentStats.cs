@@ -28,6 +28,7 @@ public static class PlayerPersistentStats
     }
 
     public static MountedLouieType MountedLouie = MountedLouieType.None;
+    public static int MountedLouieLife = 0;
 
     public static void LoadInto(MovementController movement, BombController bomb)
     {
@@ -89,9 +90,16 @@ public static class PlayerPersistentStats
             if (movement.TryGetComponent<PlayerLouieCompanion>(out var louieCompanion))
             {
                 if (MountedLouie == MountedLouieType.Blue)
+                {
                     louieCompanion.RestoreMountedBlueLouie();
+                }
                 else if (MountedLouie == MountedLouieType.Black)
+                {
                     louieCompanion.RestoreMountedBlackLouie();
+
+                    if (MountedLouieLife > 0)
+                        louieCompanion.SetMountedLouieLife(MountedLouieLife);
+                }
             }
         }
     }
@@ -135,9 +143,15 @@ public static class PlayerPersistentStats
                 HasControlBombs = false;
 
             MountedLouie = MountedLouieType.None;
+            MountedLouieLife = 0;
 
             if (movement.TryGetComponent<PlayerLouieCompanion>(out var louieCompanion))
+            {
                 MountedLouie = louieCompanion.GetMountedLouieType();
+
+                if (MountedLouie == MountedLouieType.Black)
+                    MountedLouieLife = Mathf.Max(1, louieCompanion.GetMountedLouieLife());
+            }
         }
 
         if (bomb != null && bomb.CompareTag("Player"))
@@ -164,5 +178,6 @@ public static class PlayerPersistentStats
         HasFullFire = false;
 
         MountedLouie = MountedLouieType.None;
+        MountedLouieLife = 0;
     }
 }
