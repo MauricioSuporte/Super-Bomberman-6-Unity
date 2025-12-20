@@ -88,6 +88,9 @@ public class DestructiblePassAbility : MonoBehaviour, IPlayerAbility
             if (col == null || col == selfCollider)
                 continue;
 
+            if (col.isTrigger)
+                continue;
+
             int id = col.GetInstanceID();
             if (!ignoredColliderIds.Add(id))
                 continue;
@@ -112,6 +115,9 @@ public class DestructiblePassAbility : MonoBehaviour, IPlayerAbility
             {
                 var col = cols[i];
                 if (col == null || col == selfCollider)
+                    continue;
+
+                if (col.isTrigger)
                     continue;
 
                 int id = col.GetInstanceID();
