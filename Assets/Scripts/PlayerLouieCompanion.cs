@@ -1,5 +1,4 @@
-﻿using System.Collections;
-using UnityEngine;
+﻿using UnityEngine;
 
 [RequireComponent(typeof(MovementController))]
 public class PlayerLouieCompanion : MonoBehaviour
@@ -19,9 +18,18 @@ public class PlayerLouieCompanion : MonoBehaviour
     private MovementController movement;
     private GameObject currentLouie;
 
+    private bool hadPunchBeforeMount;
+    private BombPunchAbility punchAbility;
+
     private void Awake()
     {
         movement = GetComponent<MovementController>();
+
+        if (!TryGetComponent<AbilitySystem>(out var ab))
+            ab = gameObject.AddComponent<AbilitySystem>();
+
+        ab.RebuildCache();
+        punchAbility = ab.Get<BombPunchAbility>(BombPunchAbility.AbilityId);
     }
 
     public void MountLouie()
@@ -64,7 +72,46 @@ public class PlayerLouieCompanion : MonoBehaviour
             visual.Bind(movement);
         }
 
+        EnsurePunchBombWhileMounted(currentLouie);
+
         movement.Died += OnPlayerDied;
+    }
+
+    private void EnsurePunchBombWhileMounted(GameObject louieRoot)
+    {
+        if (!TryGetComponent<AbilitySystem>(out var ab))
+            ab = gameObject.AddComponent<AbilitySystem>();
+
+        ab.RebuildCache();
+
+        hadPunchBeforeMount = ab.IsEnabled(BombPunchAbility.AbilityId);
+
+        ab.Enable(BombPunchAbility.AbilityId);
+
+        punchAbility = ab.Get<BombPunchAbility>(BombPunchAbility.AbilityId);
+
+        if (punchAbility != null && louieRoot != null)
+        {
+            var external = louieRoot.GetComponentInChildren<IBombPunchExternalAnimator>(true);
+            punchAbility.SetExternalAnimator(external);
+        }
+    }
+
+    private void RestorePunchBombAfterUnmount()
+    {
+        if (!TryGetComponent<AbilitySystem>(out var ab))
+            return;
+
+        ab.RebuildCache();
+
+        punchAbility = ab.Get<BombPunchAbility>(BombPunchAbility.AbilityId);
+        if (punchAbility != null)
+            punchAbility.SetExternalAnimator(null);
+
+        if (!hadPunchBeforeMount)
+            ab.Disable(BombPunchAbility.AbilityId);
+
+        hadPunchBeforeMount = false;
     }
 
     public void LoseLouie()
@@ -76,9 +123,12 @@ public class PlayerLouieCompanion : MonoBehaviour
         currentLouie = null;
 
         louie.transform.GetPositionAndRotation(out Vector3 worldPos, out Quaternion worldRot);
+
         if (movement != null)
         {
             movement.SetMountedOnLouie(false);
+
+            RestorePunchBombAfterUnmount();
 
             if (movement.TryGetComponent<CharacterHealth>(out var health))
                 health.StartTemporaryInvulnerability(playerInvulnerabilityAfterLoseLouieSeconds);
@@ -114,7 +164,10 @@ public class PlayerLouieCompanion : MonoBehaviour
         currentLouie = null;
 
         if (movement != null)
+        {
             movement.SetMountedOnLouie(false);
+            RestorePunchBombAfterUnmount();
+        }
     }
 
     private void OnPlayerDied(MovementController _)

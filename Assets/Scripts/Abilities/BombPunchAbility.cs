@@ -21,7 +21,7 @@ public class BombPunchAbility : MonoBehaviour, IPlayerAbility
     public int punchDistanceTiles = 3;
     public float punchLockTime = 0.25f;
 
-    [Header("Punch Sprites")]
+    [Header("Punch Sprites (PLAYER)")]
     public AnimatedSpriteRenderer punchUp;
     public AnimatedSpriteRenderer punchDown;
     public AnimatedSpriteRenderer punchLeft;
@@ -37,6 +37,8 @@ public class BombPunchAbility : MonoBehaviour, IPlayerAbility
     private Vector2 lastFacingDir = Vector2.down;
     private Coroutine punchLockRoutine;
 
+    private IBombPunchExternalAnimator externalAnimator;
+
     public string Id => AbilityId;
     public bool IsEnabled => enabledAbility;
 
@@ -48,6 +50,11 @@ public class BombPunchAbility : MonoBehaviour, IPlayerAbility
 
         if (cachedPunchClip == null)
             cachedPunchClip = Resources.Load<AudioClip>(PunchClipResourcesPath);
+    }
+
+    public void SetExternalAnimator(IBombPunchExternalAnimator animator)
+    {
+        externalAnimator = animator;
     }
 
     private void Update()
@@ -127,6 +134,22 @@ public class BombPunchAbility : MonoBehaviour, IPlayerAbility
 
         movement.SetInputLocked(true, false);
 
+        if (externalAnimator != null)
+        {
+            yield return externalAnimator.Play(dir, punchLockTime);
+
+            bool globalLock =
+                GamePauseController.IsPaused ||
+                MechaBossSequence.MechaIntroRunning ||
+                ClownMaskBoss.BossIntroRunning ||
+                (StageIntroTransition.Instance != null &&
+                 (StageIntroTransition.Instance.IntroRunning || StageIntroTransition.Instance.EndingRunning));
+
+            movement.SetInputLocked(globalLock || wasLocked, false);
+            punchLockRoutine = null;
+            yield break;
+        }
+
         prevMoveSprite = GetMoveSprite(dir);
         activePunchSprite = GetPunchSprite(dir);
 
@@ -153,14 +176,14 @@ public class BombPunchAbility : MonoBehaviour, IPlayerAbility
             prevMoveSprite.idle = true;
         }
 
-        bool globalLock =
+        bool globalLock2 =
             GamePauseController.IsPaused ||
             MechaBossSequence.MechaIntroRunning ||
             ClownMaskBoss.BossIntroRunning ||
             (StageIntroTransition.Instance != null &&
              (StageIntroTransition.Instance.IntroRunning || StageIntroTransition.Instance.EndingRunning));
 
-        movement.SetInputLocked(globalLock || wasLocked, false);
+        movement.SetInputLocked(globalLock2 || wasLocked, false);
         punchLockRoutine = null;
     }
 
@@ -218,6 +241,8 @@ public class BombPunchAbility : MonoBehaviour, IPlayerAbility
 
         SetPunchSprites(false);
 
+        externalAnimator?.ForceStop();
+
         if (punchLockRoutine != null)
         {
             StopCoroutine(punchLockRoutine);
@@ -232,6 +257,8 @@ public class BombPunchAbility : MonoBehaviour, IPlayerAbility
             StopCoroutine(punchLockRoutine);
             punchLockRoutine = null;
         }
+
+        externalAnimator?.ForceStop();
 
         SetPunchSprites(false);
 
