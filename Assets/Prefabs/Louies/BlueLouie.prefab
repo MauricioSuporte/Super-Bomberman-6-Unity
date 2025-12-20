@@ -283,6 +283,8 @@ MonoBehaviour:
   mountedSpriteDown: {fileID: 0}
   mountedSpriteLeft: {fileID: 0}
   mountedSpriteRight: {fileID: 0}
+  deathDisableSeconds: 1
+  checkWinStateOnDeath: 0
   endStageTotalTime: 1
   endStageFrameCount: 9
   isDead: 0
@@ -509,7 +511,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 4
+  m_SortingOrder: 5
   m_Sprite: {fileID: -1849437013432248988, guid: 6c2583beff5fe6444abe5f6a150dcc63, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
@@ -540,6 +542,7 @@ MonoBehaviour:
   - {fileID: 8938612675602813580, guid: 6c2583beff5fe6444abe5f6a150dcc63, type: 3}
   - {fileID: 1623328804204451248, guid: 6c2583beff5fe6444abe5f6a150dcc63, type: 3}
   - {fileID: -7120037537520132152, guid: 6c2583beff5fe6444abe5f6a150dcc63, type: 3}
+  - {fileID: 0}
   allowFlipX: 0
   animationTime: 0.1
   useSequenceDuration: 0

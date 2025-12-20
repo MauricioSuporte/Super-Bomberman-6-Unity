@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System.Collections;
+using UnityEngine;
 
 [RequireComponent(typeof(MovementController))]
 public class PlayerLouieCompanion : MonoBehaviour
@@ -8,6 +9,9 @@ public class PlayerLouieCompanion : MonoBehaviour
 
     [Header("Local Offset")]
     public Vector2 localOffset = new(0f, -0.15f);
+
+    [Header("Louie Death")]
+    public float louieDeathSeconds = 0.5f;
 
     private MovementController movement;
     private GameObject currentLouie;
@@ -29,7 +33,12 @@ public class PlayerLouieCompanion : MonoBehaviour
         currentLouie.transform.SetLocalPositionAndRotation(localOffset, Quaternion.identity);
         currentLouie.transform.localScale = Vector3.one;
 
-        if (currentLouie.TryGetComponent<LouieMovementController>(out var louieMove))
+        LouieMovementController louieMove = null;
+
+        if (currentLouie.TryGetComponent<LouieMovementController>(out var lm))
+            louieMove = lm;
+
+        if (louieMove != null)
             louieMove.BindOwner(movement, localOffset);
 
         if (louieMove != null)
@@ -53,6 +62,42 @@ public class PlayerLouieCompanion : MonoBehaviour
         }
 
         movement.Died += OnPlayerDied;
+    }
+
+    public void LoseLouie()
+    {
+        if (currentLouie == null)
+            return;
+
+        var louie = currentLouie;
+        currentLouie = null;
+
+        Vector3 worldPos = louie.transform.position;
+        Quaternion worldRot = louie.transform.rotation;
+
+        if (movement != null)
+            movement.SetMountedOnLouie(false);
+
+        louie.transform.SetParent(null, true);
+        louie.transform.SetPositionAndRotation(worldPos, worldRot);
+
+        if (louie.TryGetComponent<LouieRiderVisual>(out var riderVisual))
+            Destroy(riderVisual);
+
+        if (louie.TryGetComponent<LouieMovementController>(out var louieMovement))
+        {
+            louieMovement.enabled = true;
+            louieMovement.Kill();
+        }
+        else if (louie.TryGetComponent<MovementController>(out var mc))
+        {
+            mc.enabled = true;
+            mc.Kill();
+        }
+        else
+        {
+            Destroy(louie);
+        }
     }
 
     public void UnmountLouie()

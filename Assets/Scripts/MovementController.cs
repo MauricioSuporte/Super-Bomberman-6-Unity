@@ -38,6 +38,11 @@ public class MovementController : MonoBehaviour, IKillable
     public AnimatedSpriteRenderer mountedSpriteLeft;
     public AnimatedSpriteRenderer mountedSpriteRight;
 
+    [Header("Death Timing")]
+    public float deathDisableSeconds = 2f;
+    [Header("Death Behavior")]
+    public bool checkWinStateOnDeath = true;
+
     protected Vector2 facingDirection = Vector2.down;
     public Vector2 FacingDirection => facingDirection;
 
@@ -464,6 +469,14 @@ public class MovementController : MonoBehaviour, IKillable
 
         if (layer == LayerMask.NameToLayer("Explosion") || layer == LayerMask.NameToLayer("Enemy"))
         {
+            if (CompareTag("Player") && isMountedOnLouie)
+            {
+                if (TryGetComponent<PlayerLouieCompanion>(out var companion))
+                    companion.LoseLouie();
+
+                return;
+            }
+
             if (TryGetComponent<CharacterHealth>(out var health))
             {
                 health.TakeDamage(1);
@@ -484,6 +497,11 @@ public class MovementController : MonoBehaviour, IKillable
 
         if (!isDead)
             DeathSequence();
+    }
+
+    private void ClearExplosionInvulnerabilityAfterLouieHit()
+    {
+        explosionInvulnerable = false;
     }
 
     protected virtual void DeathSequence()
@@ -549,7 +567,7 @@ public class MovementController : MonoBehaviour, IKillable
             activeSpriteRenderer = spriteRendererDeath;
         }
 
-        Invoke(nameof(OnDeathSequenceEnded), 2f);
+        Invoke(nameof(OnDeathSequenceEnded), deathDisableSeconds);
     }
 
     protected virtual void OnDeathSequenceEnded()
@@ -559,6 +577,9 @@ public class MovementController : MonoBehaviour, IKillable
         Died?.Invoke(this);
 
         if (CompareTag("BossBomber"))
+            return;
+
+        if (!checkWinStateOnDeath)
             return;
 
         var gameManager = FindFirstObjectByType<GameManager>();

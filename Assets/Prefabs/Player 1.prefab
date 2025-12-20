@@ -1421,6 +1421,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerLouieCompanion
   louiePrefab: {fileID: 2273416014071709654, guid: b0695b92e5b71c1408e0fbafd895d235, type: 3}
   localOffset: {x: 0, y: -0.15}
+  louieDeathSeconds: 0.5
 --- !u!1 &6183660032571719661
 GameObject:
   m_ObjectHideFlags: 0

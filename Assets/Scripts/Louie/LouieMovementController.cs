@@ -32,6 +32,9 @@ public class LouieMovementController : MovementController
         if (GamePauseController.IsPaused)
             return;
 
+        if (isDead)
+            return;
+
         if (owner == null || owner.isDead)
         {
             Destroy(gameObject);
@@ -52,6 +55,9 @@ public class LouieMovementController : MovementController
     protected override void FixedUpdate()
     {
         if (GamePauseController.IsPaused)
+            return;
+
+        if (isDead)
             return;
 
         if (owner == null)
