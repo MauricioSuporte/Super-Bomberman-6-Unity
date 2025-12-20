@@ -47,8 +47,27 @@ public class ItemPickup : MonoBehaviour
         return Time.time - spawnTime < spawnImmunitySeconds;
     }
 
+    private bool IsLouieEgg(ItemType t)
+    {
+        return t == ItemType.BlueLouieEgg || t == ItemType.BlackLouieEgg;
+    }
+
+    private bool PlayerAlreadyMounted(GameObject player)
+    {
+        if (player.TryGetComponent<MovementController>(out var movement) && movement.IsMountedOnLouie)
+            return true;
+
+        if (player.TryGetComponent<PlayerLouieCompanion>(out var louieCompanion))
+            return louieCompanion.GetMountedLouieType() != PlayerPersistentStats.MountedLouieType.None;
+
+        return false;
+    }
+
     private void OnItemPickup(GameObject player)
     {
+        if (IsLouieEgg(type) && PlayerAlreadyMounted(player))
+            return;
+
         var audio = player.GetComponent<AudioSource>();
         if (audio != null && collectSfx != null)
             audio.PlayOneShot(collectSfx, collectVolume);
