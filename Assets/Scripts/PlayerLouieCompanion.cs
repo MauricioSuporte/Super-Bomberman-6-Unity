@@ -310,4 +310,30 @@ public class PlayerLouieCompanion : MonoBehaviour
         if (movement != null)
             movement.Died -= OnPlayerDied;
     }
+
+    public PlayerPersistentStats.MountedLouieType GetMountedLouieType()
+    {
+        if (currentLouie == null)
+            return PlayerPersistentStats.MountedLouieType.None;
+
+        return mountedIsBlue
+            ? PlayerPersistentStats.MountedLouieType.Blue
+            : PlayerPersistentStats.MountedLouieType.Black;
+    }
+
+    public void RestoreMountedBlueLouie()
+    {
+        if (currentLouie != null)
+            return;
+
+        MountBlueLouie();
+    }
+
+    public void RestoreMountedBlackLouie()
+    {
+        if (currentLouie != null)
+            return;
+
+        MountBlackLouie();
+    }
 }

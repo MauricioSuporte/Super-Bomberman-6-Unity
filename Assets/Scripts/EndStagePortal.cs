@@ -71,10 +71,16 @@ public class EndStagePortal : MonoBehaviour
 
         isActivated = true;
 
-        if (other.TryGetComponent<BombController>(out var bombController))
+        var movement = other.GetComponent<MovementController>();
+        var bombController = other.GetComponent<BombController>();
+
+        if (movement != null)
+            PlayerPersistentStats.SaveFrom(movement, bombController);
+
+        if (bombController != null)
             bombController.ClearPlantedBombsOnStageEnd(false);
 
-        if (other.TryGetComponent<MovementController>(out var movement))
+        if (movement != null)
         {
             Vector2 portalCenter = new(
                 Mathf.Round(transform.position.x),
@@ -85,28 +91,18 @@ public class EndStagePortal : MonoBehaviour
 
         var audio = other.GetComponent<AudioSource>();
         if (audio != null && enterSfx != null)
-        {
             audio.PlayOneShot(enterSfx);
-        }
 
         if (GameMusicController.Instance != null)
-        {
             GameMusicController.Instance.StopMusic();
-        }
 
         if (endStageMusic != null && GameMusicController.Instance != null)
-        {
             GameMusicController.Instance.PlayMusic(endStageMusic, 1f, false);
-        }
 
         if (StageIntroTransition.Instance != null)
-        {
             StageIntroTransition.Instance.StartFadeOut(3f);
-        }
 
         if (gameManager != null)
-        {
             gameManager.EndStage();
-        }
     }
 }

@@ -20,6 +20,15 @@ public static class PlayerPersistentStats
     public static bool HasControlBombs = false;
     public static bool HasFullFire = false;
 
+    public enum MountedLouieType
+    {
+        None = 0,
+        Blue = 1,
+        Black = 2
+    }
+
+    public static MountedLouieType MountedLouie = MountedLouieType.None;
+
     public static void LoadInto(MovementController movement, BombController bomb)
     {
         BombAmount = Mathf.Min(BombAmount, MaxBombAmount);
@@ -43,6 +52,8 @@ public static class PlayerPersistentStats
 
             if (!movement.TryGetComponent<AbilitySystem>(out var abilitySystem))
                 abilitySystem = movement.gameObject.AddComponent<AbilitySystem>();
+
+            abilitySystem.RebuildCache();
 
             if (CanKickBombs) abilitySystem.Enable(BombKickAbility.AbilityId);
             else abilitySystem.Disable(BombKickAbility.AbilityId);
@@ -74,6 +85,14 @@ public static class PlayerPersistentStats
                 abilitySystem.Disable(PierceBombAbility.AbilityId);
                 abilitySystem.Disable(ControlBombAbility.AbilityId);
             }
+
+            if (movement.TryGetComponent<PlayerLouieCompanion>(out var louieCompanion))
+            {
+                if (MountedLouie == MountedLouieType.Blue)
+                    louieCompanion.RestoreMountedBlueLouie();
+                else if (MountedLouie == MountedLouieType.Black)
+                    louieCompanion.RestoreMountedBlackLouie();
+            }
         }
     }
 
@@ -87,6 +106,8 @@ public static class PlayerPersistentStats
                 Life = Mathf.Max(1, health.life);
 
             var abilitySystem = movement.GetComponent<AbilitySystem>();
+            if (abilitySystem != null)
+                abilitySystem.RebuildCache();
 
             var kick = abilitySystem != null ? abilitySystem.Get<BombKickAbility>(BombKickAbility.AbilityId) : null;
             CanKickBombs = kick != null && kick.IsEnabled;
@@ -113,6 +134,11 @@ public static class PlayerPersistentStats
                 HasPierceBombs = false;
             else if (HasPierceBombs)
                 HasControlBombs = false;
+
+            MountedLouie = MountedLouieType.None;
+
+            if (movement.TryGetComponent<PlayerLouieCompanion>(out var louieCompanion))
+                MountedLouie = louieCompanion.GetMountedLouieType();
         }
 
         if (bomb != null && bomb.CompareTag("Player"))
@@ -137,5 +163,7 @@ public static class PlayerPersistentStats
         HasPierceBombs = false;
         HasControlBombs = false;
         HasFullFire = false;
+
+        MountedLouie = MountedLouieType.None;
     }
 }

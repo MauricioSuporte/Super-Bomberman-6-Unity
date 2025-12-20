@@ -501,11 +501,6 @@ public class MovementController : MonoBehaviour, IKillable
             DeathSequence();
     }
 
-    private void ClearExplosionInvulnerabilityAfterLouieHit()
-    {
-        explosionInvulnerable = false;
-    }
-
     protected virtual void DeathSequence()
     {
         if (isDead || isEndingStage)
@@ -526,6 +521,7 @@ public class MovementController : MonoBehaviour, IKillable
             PlayerPersistentStats.HasFullFire = false;
             PlayerPersistentStats.CanPassBombs = false;
             PlayerPersistentStats.CanPassDestructibles = false;
+            PlayerPersistentStats.MountedLouie = PlayerPersistentStats.MountedLouieType.None;
         }
 
         if (bombController != null)
