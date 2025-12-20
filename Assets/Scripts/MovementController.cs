@@ -622,15 +622,7 @@ public class MovementController : MonoBehaviour, IKillable
                 endSprite.animationTime = endStageTotalTime / endStageFrameCount;
 
             activeSpriteRenderer = endSprite;
-
-            Invoke(nameof(HideEndStageSprite), endStageTotalTime);
         }
-    }
-
-    void HideEndStageSprite()
-    {
-        if (spriteRendererEndStage != null)
-            spriteRendererEndStage.enabled = false;
     }
 
     public void SetInputLocked(bool locked, bool forceIdle)

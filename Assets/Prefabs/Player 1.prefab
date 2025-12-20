@@ -1426,6 +1426,7 @@ MonoBehaviour:
   localOffset: {x: 0, y: -0.15}
   louieDeathSeconds: 0.5
   playerInvulnerabilityAfterLoseLouieSeconds: 0.8
+  blinkPlayerTogetherWithLouie: 1
 --- !u!1 &6183660032571719661
 GameObject:
   m_ObjectHideFlags: 0
@@ -1686,8 +1687,8 @@ Transform:
   m_GameObject: {fileID: 7187687357521038210}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.32, z: 0}
-  m_LocalScale: {x: 5.9475293, y: 6.2828975, z: 1}
+  m_LocalPosition: {x: -0.06, y: 0.42, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 3797169763190965992}
@@ -1739,7 +1740,7 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 5
-  m_Sprite: {fileID: 7989726764552653357, guid: fade6ceffc1de7f43bfaea37f5587562, type: 3}
+  m_Sprite: {fileID: -7698791824692645526, guid: b53052968eedfcc4ca54185504d18378, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -1762,17 +1763,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a4b55e1b961d144197e1a7a4a391956, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  idleSprite: {fileID: 7989726764552653357, guid: fade6ceffc1de7f43bfaea37f5587562, type: 3}
+  idleSprite: {fileID: -7698791824692645526, guid: b53052968eedfcc4ca54185504d18378, type: 3}
   animationSprite:
-  - {fileID: 7989726764552653357, guid: fade6ceffc1de7f43bfaea37f5587562, type: 3}
-  - {fileID: -5544047867329422265, guid: fade6ceffc1de7f43bfaea37f5587562, type: 3}
-  - {fileID: 7613375738205434763, guid: fade6ceffc1de7f43bfaea37f5587562, type: 3}
-  - {fileID: -5964143668052350665, guid: fade6ceffc1de7f43bfaea37f5587562, type: 3}
-  - {fileID: -2829635012457729080, guid: fade6ceffc1de7f43bfaea37f5587562, type: 3}
-  - {fileID: -3114333361142243260, guid: fade6ceffc1de7f43bfaea37f5587562, type: 3}
-  - {fileID: 7000587847891052219, guid: fade6ceffc1de7f43bfaea37f5587562, type: 3}
-  - {fileID: 5938443313494947175, guid: fade6ceffc1de7f43bfaea37f5587562, type: 3}
-  - {fileID: -5346151025070888229, guid: fade6ceffc1de7f43bfaea37f5587562, type: 3}
+  - {fileID: -7698791824692645526, guid: b53052968eedfcc4ca54185504d18378, type: 3}
+  - {fileID: -7698791824692645526, guid: b53052968eedfcc4ca54185504d18378, type: 3}
+  - {fileID: 1131666113044379011, guid: b53052968eedfcc4ca54185504d18378, type: 3}
+  - {fileID: -7698791824692645526, guid: b53052968eedfcc4ca54185504d18378, type: 3}
+  - {fileID: 8320562698922746298, guid: b53052968eedfcc4ca54185504d18378, type: 3}
+  - {fileID: -7698791824692645526, guid: b53052968eedfcc4ca54185504d18378, type: 3}
+  - {fileID: 1131666113044379011, guid: b53052968eedfcc4ca54185504d18378, type: 3}
+  - {fileID: -7698791824692645526, guid: b53052968eedfcc4ca54185504d18378, type: 3}
+  - {fileID: 8320562698922746298, guid: b53052968eedfcc4ca54185504d18378, type: 3}
   allowFlipX: 0
   animationTime: 0.11111111
   useSequenceDuration: 0
