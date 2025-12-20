@@ -152,7 +152,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 376665fd527b5c04e9b39d41cc80c035, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  collectSfx: {fileID: 8300000, guid: 9fbf9eaeca42e304495130d4b2f83633, type: 3}
+  collectSfx: {fileID: 8300000, guid: 2f57962a33d24494ab2ed3f4faa02bc2, type: 3}
+  collectVolume: 0.5
   idleRenderer: {fileID: 3750686511081856235}
   destroyRenderer: {fileID: 4647420896281376823}
   spawnImmunitySeconds: 0.5

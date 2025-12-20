@@ -5,6 +5,9 @@ public class ItemPickup : MonoBehaviour
     [Header("SFX")]
     public AudioClip collectSfx;
 
+    [Range(0f, 1f)]
+    public float collectVolume = 1f;
+
     public AnimatedSpriteRenderer idleRenderer;
     public AnimatedSpriteRenderer destroyRenderer;
 
@@ -47,7 +50,7 @@ public class ItemPickup : MonoBehaviour
     {
         var audio = player.GetComponent<AudioSource>();
         if (audio != null && collectSfx != null)
-            audio.PlayOneShot(collectSfx);
+            audio.PlayOneShot(collectSfx, collectVolume);
 
         switch (type)
         {
