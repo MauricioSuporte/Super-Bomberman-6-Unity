@@ -199,34 +199,41 @@ public class AnimatedSpriteRenderer : MonoBehaviour
         if (spriteRenderer == null)
             return;
 
+        int frameToUse = animationFrame;
+
         if (idle)
         {
             spriteRenderer.sprite = idleSprite;
+        }
+        else
+        {
+            if (animationSprite == null || animationSprite.Length == 0)
+                return;
 
-            return;
+            if (animationFrame < 0 || animationFrame >= animationSprite.Length)
+                return;
+
+            spriteRenderer.sprite = animationSprite[animationFrame];
         }
 
-        if (animationSprite == null || animationSprite.Length == 0)
-            return;
+        ApplyOffset(frameToUse);
+    }
 
-        if (animationFrame < 0 || animationFrame >= animationSprite.Length)
-            return;
-
-        spriteRenderer.sprite = animationSprite[animationFrame];
-
+    private void ApplyOffset(int frame)
+    {
         if (!canMoveVisualLocal || visualTransform == null)
             return;
 
-        if (frameOffsets != null && frameOffsets.Length > 0)
-        {
-            int idx = Mathf.Clamp(animationFrame, 0, frameOffsets.Length - 1);
-            Vector2 offset = frameOffsets[idx];
+        if (frameOffsets == null || frameOffsets.Length == 0)
+            return;
 
-            if (spriteRenderer.flipX)
-                offset.x = -offset.x;
+        int idx = Mathf.Clamp(frame, 0, frameOffsets.Length - 1);
+        Vector2 offset = frameOffsets[idx];
 
-            visualTransform.localPosition = initialVisualLocalPosition + (Vector3)offset;
-        }
+        if (spriteRenderer.flipX)
+            offset.x = -offset.x;
+
+        visualTransform.localPosition = initialVisualLocalPosition + (Vector3)offset;
     }
 
     private void ResetOffset()
