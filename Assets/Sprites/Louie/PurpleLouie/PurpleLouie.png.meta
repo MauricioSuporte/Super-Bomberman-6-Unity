@@ -1,0 +1,2280 @@
+fileFormatVersion: 2
+guid: 2836fada62e7e904aa29c5136add64a4
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 5434860408108936249
+    second: PurpleLouie_0
+  - first:
+      213: 3367192741625922295
+    second: PurpleLouie_1
+  - first:
+      213: 4674051944041330478
+    second: PurpleLouie_2
+  - first:
+      213: -4298570564193539415
+    second: PurpleLouie_3
+  - first:
+      213: 4103541763111675624
+    second: PurpleLouie_4
+  - first:
+      213: 1537794811575900019
+    second: PurpleLouie_5
+  - first:
+      213: -7924477354893372540
+    second: PurpleLouie_6
+  - first:
+      213: -8249691551875043206
+    second: PurpleLouie_7
+  - first:
+      213: 5812824690096128199
+    second: PurpleLouie_8
+  - first:
+      213: -8982184009038559457
+    second: PurpleLouie_9
+  - first:
+      213: -4347641615908613966
+    second: PurpleLouie_10
+  - first:
+      213: -4970874511870003228
+    second: PurpleLouie_11
+  - first:
+      213: 1581622275665858789
+    second: PurpleLouie_12
+  - first:
+      213: -1623116992382645050
+    second: PurpleLouie_13
+  - first:
+      213: -3944241175033052038
+    second: PurpleLouie_14
+  - first:
+      213: -3119415117765301328
+    second: PurpleLouie_15
+  - first:
+      213: 7329578529954141923
+    second: PurpleLouie_16
+  - first:
+      213: -7479213046829061626
+    second: PurpleLouie_17
+  - first:
+      213: 6005540202983268190
+    second: PurpleLouie_18
+  - first:
+      213: 2839507557817499278
+    second: PurpleLouie_19
+  - first:
+      213: 8138401188766045
+    second: PurpleLouie_20
+  - first:
+      213: -4239790475898266516
+    second: PurpleLouie_21
+  - first:
+      213: -7541857703458663546
+    second: PurpleLouie_22
+  - first:
+      213: 7598780282971161286
+    second: PurpleLouie_23
+  - first:
+      213: -7265506995430504474
+    second: PurpleLouie_24
+  - first:
+      213: 7056504602016145903
+    second: PurpleLouie_25
+  - first:
+      213: -7398922160171703186
+    second: PurpleLouie_26
+  - first:
+      213: -866133384047789857
+    second: PurpleLouie_27
+  - first:
+      213: 3143568402328326064
+    second: PurpleLouie_28
+  - first:
+      213: 6129702264918099263
+    second: PurpleLouie_29
+  - first:
+      213: -4236844313183192839
+    second: PurpleLouie_30
+  - first:
+      213: 3751167043688972403
+    second: PurpleLouie_31
+  - first:
+      213: 7018179570890608574
+    second: PurpleLouie_32
+  - first:
+      213: 5135145280675718487
+    second: PurpleLouie_33
+  - first:
+      213: 8193552705363424720
+    second: PurpleLouie_34
+  - first:
+      213: 3743846200521760999
+    second: PurpleLouie_35
+  - first:
+      213: -7987036120483543687
+    second: PurpleLouie_36
+  - first:
+      213: -3573376634966976526
+    second: PurpleLouie_37
+  - first:
+      213: -1354668994244086993
+    second: PurpleLouie_38
+  - first:
+      213: 2745137322687779928
+    second: PurpleLouie_39
+  - first:
+      213: 6542757895150427491
+    second: PurpleLouie_40
+  - first:
+      213: 1725640717738844828
+    second: PurpleLouie_41
+  - first:
+      213: 6024210113125267656
+    second: PurpleLouie_42
+  - first:
+      213: -795388141211382698
+    second: PurpleLouie_43
+  - first:
+      213: 9030135499620763680
+    second: PurpleLouie_44
+  - first:
+      213: 8444597626932110601
+    second: PurpleLouie_45
+  - first:
+      213: 1419523571717855168
+    second: PurpleLouie_46
+  - first:
+      213: -9061108241867395531
+    second: PurpleLouie_47
+  - first:
+      213: 2348486137083635994
+    second: PurpleLouie_48
+  - first:
+      213: -5610973782883793448
+    second: PurpleLouie_49
+  - first:
+      213: 8428747202814673278
+    second: PurpleLouie_50
+  - first:
+      213: -9030477357050066893
+    second: PurpleLouie_51
+  - first:
+      213: -8024733494210669610
+    second: PurpleLouie_52
+  - first:
+      213: 6850141353260989548
+    second: PurpleLouie_53
+  - first:
+      213: 19593232614711361
+    second: PurpleLouie_54
+  - first:
+      213: 8756458176381822447
+    second: PurpleLouie_55
+  - first:
+      213: 8288744977283765243
+    second: PurpleLouie_56
+  - first:
+      213: -8761956848156769474
+    second: PurpleLouie_57
+  - first:
+      213: -8311749028268373931
+    second: PurpleLouie_58
+  - first:
+      213: -736472285001031048
+    second: PurpleLouie_59
+  - first:
+      213: 3751298160427328649
+    second: PurpleLouie_60
+  - first:
+      213: 6879494550563581768
+    second: PurpleLouie_61
+  - first:
+      213: 6298785421143165605
+    second: PurpleLouie_62
+  - first:
+      213: -5126217591362974432
+    second: PurpleLouie_63
+  - first:
+      213: 4765226097215520941
+    second: PurpleLouie_64
+  - first:
+      213: 7411781982387869537
+    second: PurpleLouie_65
+  - first:
+      213: 333995002380523952
+    second: PurpleLouie_66
+  - first:
+      213: 1948901550215291402
+    second: PurpleLouie_67
+  - first:
+      213: -4781807832667019896
+    second: PurpleLouie_68
+  - first:
+      213: -5860347132709871340
+    second: PurpleLouie_69
+  - first:
+      213: 144187963944420540
+    second: PurpleLouie_70
+  - first:
+      213: -1569486773216372353
+    second: PurpleLouie_71
+  - first:
+      213: -2132386253533951194
+    second: PurpleLouie_72
+  - first:
+      213: -91535466087088789
+    second: PurpleLouie_73
+  - first:
+      213: -9017630058324406162
+    second: PurpleLouie_74
+  - first:
+      213: 3669495667429076904
+    second: PurpleLouie_75
+  - first:
+      213: -5585887200314094739
+    second: PurpleLouie_76
+  - first:
+      213: 7585562901153041348
+    second: PurpleLouie_77
+  - first:
+      213: 3969457713066382503
+    second: PurpleLouie_78
+  - first:
+      213: -2062582882947508570
+    second: PurpleLouie_79
+  - first:
+      213: -5643166258339819489
+    second: PurpleLouie_80
+  - first:
+      213: 4858338350327153617
+    second: PurpleLouie_81
+  - first:
+      213: -4948024961714962399
+    second: PurpleLouie_82
+  - first:
+      213: 4070099218731470328
+    second: PurpleLouie_83
+  - first:
+      213: 8229898452292514398
+    second: PurpleLouie_84
+  - first:
+      213: -839672964673710008
+    second: PurpleLouie_85
+  - first:
+      213: 9190738750846449389
+    second: PurpleLouie_86
+  - first:
+      213: -2548423905894298850
+    second: PurpleLouie_87
+  - first:
+      213: -6901477702466121842
+    second: PurpleLouie_88
+  - first:
+      213: 352139793348587381
+    second: PurpleLouie_89
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 16
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: PurpleLouie_0
+      rect:
+        serializedVersion: 2
+        x: 1
+        y: 157
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 93cea2dfeb08c6b40800000000000000
+      internalID: 5434860408108936249
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PurpleLouie_1
+      rect:
+        serializedVersion: 2
+        x: 67
+        y: 157
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7f203e655fbaabe20800000000000000
+      internalID: 3367192741625922295
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PurpleLouie_2
+      rect:
+        serializedVersion: 2
+        x: 100
+        y: 157
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e27be4a9a719dd040800000000000000
+      internalID: 4674051944041330478
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PurpleLouie_3
+      rect:
+        serializedVersion: 2
+        x: 133
+        y: 157
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9aa2b4fb8d86854c0800000000000000
+      internalID: -4298570564193539415
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PurpleLouie_4
+      rect:
+        serializedVersion: 2
+        x: 166
+        y: 157
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8e66047fd75b2f830800000000000000
+      internalID: 4103541763111675624
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PurpleLouie_5
+      rect:
+        serializedVersion: 2
+        x: 199
+        y: 157
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3779b69cb38575510800000000000000
+      internalID: 1537794811575900019
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PurpleLouie_6
+      rect:
+        serializedVersion: 2
+        x: 232
+        y: 157
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 48314f6d4d9960290800000000000000
+      internalID: -7924477354893372540
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PurpleLouie_7
+      rect:
+        serializedVersion: 2
+        x: 298
+        y: 157
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a7072f70e35338d80800000000000000
+      internalID: -8249691551875043206
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PurpleLouie_8
+      rect:
+        serializedVersion: 2
+        x: 331
+        y: 157
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7c0ccca024d4ba050800000000000000
+      internalID: 5812824690096128199
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PurpleLouie_9
+      rect:
+        serializedVersion: 2
+        x: 364
+        y: 157
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f170012cb3fd85380800000000000000
+      internalID: -8982184009038559457
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PurpleLouie_10
+      rect:
+        serializedVersion: 2
+        x: 430
+        y: 157
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2b0df013cf21aa3c0800000000000000
+      internalID: -4347641615908613966
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PurpleLouie_11
+      rect:
+        serializedVersion: 2
+        x: 463
+        y: 157
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4e7f1f0e7f7e30bb0800000000000000
+      internalID: -4970874511870003228
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PurpleLouie_12
+      rect:
+        serializedVersion: 2
+        x: 529
+        y: 157
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5e098e5741d03f510800000000000000
+      internalID: 1581622275665858789
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PurpleLouie_13
+      rect:
+        serializedVersion: 2
+        x: 580
+        y: 161
+        width: 14
+        height: 11
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6ccc120f1b78979e0800000000000000
+      internalID: -1623116992382645050
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PurpleLouie_14
+      rect:
+        serializedVersion: 2
+        x: 595
+        y: 157
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a748fad7c8d3349c0800000000000000
+      internalID: -3944241175033052038
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PurpleLouie_15
+      rect:
+        serializedVersion: 2
+        x: 628
+        y: 157
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0bbad9e4a7c95b4d0800000000000000
+      internalID: -3119415117765301328
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PurpleLouie_16
+      rect:
+        serializedVersion: 2
+        x: 661
+        y: 157
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3e61f37d6d4e7b560800000000000000
+      internalID: 7329578529954141923
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PurpleLouie_17
+      rect:
+        serializedVersion: 2
+        x: 1
+        y: 124
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 60a69484c5f743890800000000000000
+      internalID: -7479213046829061626
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PurpleLouie_18
+      rect:
+        serializedVersion: 2
+        x: 67
+        y: 124
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e5f1523fef6f75350800000000000000
+      internalID: 6005540202983268190
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PurpleLouie_19
+      rect:
+        serializedVersion: 2
+        x: 100
+        y: 124
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e8ebfb85415f76720800000000000000
+      internalID: 2839507557817499278
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PurpleLouie_20
+      rect:
+        serializedVersion: 2
+        x: 133
+        y: 124
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d5165ef25d9ec1000800000000000000
+      internalID: 8138401188766045
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PurpleLouie_21
+      rect:
+        serializedVersion: 2
+        x: 166
+        y: 124
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c6cdff9860d3925c0800000000000000
+      internalID: -4239790475898266516
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PurpleLouie_22
+      rect:
+        serializedVersion: 2
+        x: 199
+        y: 124
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6839dce8060f55790800000000000000
+      internalID: -7541857703458663546
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PurpleLouie_23
+      rect:
+        serializedVersion: 2
+        x: 232
+        y: 124
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6c20db4486a447960800000000000000
+      internalID: 7598780282971161286
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PurpleLouie_24
+      rect:
+        serializedVersion: 2
+        x: 298
+        y: 124
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6e7cf38c1ebbb2b90800000000000000
+      internalID: -7265506995430504474
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PurpleLouie_25
+      rect:
+        serializedVersion: 2
+        x: 331
+        y: 124
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fe1e41f6c8dbde160800000000000000
+      internalID: 7056504602016145903
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PurpleLouie_26
+      rect:
+        serializedVersion: 2
+        x: 364
+        y: 124
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e64233a1f7fb15990800000000000000
+      internalID: -7398922160171703186
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PurpleLouie_27
+      rect:
+        serializedVersion: 2
+        x: 430
+        y: 124
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fd879b3b640eaf3f0800000000000000
+      internalID: -866133384047789857
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PurpleLouie_28
+      rect:
+        serializedVersion: 2
+        x: 463
+        y: 124
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0bf0ceb7ec230ab20800000000000000
+      internalID: 3143568402328326064
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PurpleLouie_29
+      rect:
+        serializedVersion: 2
+        x: 529
+        y: 124
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f35c95fbbb3111550800000000000000
+      internalID: 6129702264918099263
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PurpleLouie_30
+      rect:
+        serializedVersion: 2
+        x: 595
+        y: 124
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9f8f4108b84b335c0800000000000000
+      internalID: -4236844313183192839
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PurpleLouie_31
+      rect:
+        serializedVersion: 2
+        x: 628
+        y: 124
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 370cb3c3d82de0430800000000000000
+      internalID: 3751167043688972403
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PurpleLouie_32
+      rect:
+        serializedVersion: 2
+        x: 661
+        y: 124
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ebf86d4c225956160800000000000000
+      internalID: 7018179570890608574
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PurpleLouie_33
+      rect:
+        serializedVersion: 2
+        x: 1
+        y: 91
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 75523b4fc63b34740800000000000000
+      internalID: 5135145280675718487
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PurpleLouie_34
+      rect:
+        serializedVersion: 2
+        x: 67
+        y: 91
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0d5b0a336c855b170800000000000000
+      internalID: 8193552705363424720
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PurpleLouie_35
+      rect:
+        serializedVersion: 2
+        x: 100
+        y: 91
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7e0abcb9840d4f330800000000000000
+      internalID: 3743846200521760999
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PurpleLouie_36
+      rect:
+        serializedVersion: 2
+        x: 133
+        y: 91
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9754d5e27f8582190800000000000000
+      internalID: -7987036120483543687
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PurpleLouie_37
+      rect:
+        serializedVersion: 2
+        x: 166
+        y: 91
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2f7dc1012e0d86ec0800000000000000
+      internalID: -3573376634966976526
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PurpleLouie_38
+      rect:
+        serializedVersion: 2
+        x: 199
+        y: 91
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f2378d12abf333de0800000000000000
+      internalID: -1354668994244086993
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PurpleLouie_39
+      rect:
+        serializedVersion: 2
+        x: 232
+        y: 91
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 854d872c9dfa81620800000000000000
+      internalID: 2745137322687779928
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PurpleLouie_40
+      rect:
+        serializedVersion: 2
+        x: 298
+        y: 91
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 36dd2dff3ab8cca50800000000000000
+      internalID: 6542757895150427491
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PurpleLouie_41
+      rect:
+        serializedVersion: 2
+        x: 331
+        y: 91
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c9226c60715b2f710800000000000000
+      internalID: 1725640717738844828
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PurpleLouie_42
+      rect:
+        serializedVersion: 2
+        x: 364
+        y: 91
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8c8b5252e2b4a9350800000000000000
+      internalID: 6024210113125267656
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PurpleLouie_43
+      rect:
+        serializedVersion: 2
+        x: 430
+        y: 91
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 65c898023b636f4f0800000000000000
+      internalID: -795388141211382698
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PurpleLouie_44
+      rect:
+        serializedVersion: 2
+        x: 463
+        y: 91
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0284a88a46c715d70800000000000000
+      internalID: 9030135499620763680
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PurpleLouie_45
+      rect:
+        serializedVersion: 2
+        x: 529
+        y: 91
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9052560eccc313570800000000000000
+      internalID: 8444597626932110601
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PurpleLouie_46
+      rect:
+        serializedVersion: 2
+        x: 595
+        y: 91
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0c75982ea2923b310800000000000000
+      internalID: 1419523571717855168
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PurpleLouie_47
+      rect:
+        serializedVersion: 2
+        x: 628
+        y: 91
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 53e2124df0a704280800000000000000
+      internalID: -9061108241867395531
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PurpleLouie_48
+      rect:
+        serializedVersion: 2
+        x: 661
+        y: 91
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a19acc8e2bf779020800000000000000
+      internalID: 2348486137083635994
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PurpleLouie_49
+      rect:
+        serializedVersion: 2
+        x: 1
+        y: 34
+        width: 32
+        height: 49
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8d58e2b9211d122b0800000000000000
+      internalID: -5610973782883793448
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PurpleLouie_50
+      rect:
+        serializedVersion: 2
+        x: 34
+        y: 34
+        width: 32
+        height: 49
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e71065d6cece8f470800000000000000
+      internalID: 8428747202814673278
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PurpleLouie_51
+      rect:
+        serializedVersion: 2
+        x: 67
+        y: 34
+        width: 32
+        height: 49
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 33882d470bc4da280800000000000000
+      internalID: -9030477357050066893
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PurpleLouie_52
+      rect:
+        serializedVersion: 2
+        x: 100
+        y: 34
+        width: 32
+        height: 49
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6d3d464676b62a090800000000000000
+      internalID: -8024733494210669610
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PurpleLouie_53
+      rect:
+        serializedVersion: 2
+        x: 133
+        y: 34
+        width: 32
+        height: 49
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c6cb5566447901f50800000000000000
+      internalID: 6850141353260989548
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PurpleLouie_54
+      rect:
+        serializedVersion: 2
+        x: 199
+        y: 35
+        width: 32
+        height: 49
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1406006f0fb954000800000000000000
+      internalID: 19593232614711361
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PurpleLouie_55
+      rect:
+        serializedVersion: 2
+        x: 232
+        y: 35
+        width: 32
+        height: 49
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fe5adc55150358970800000000000000
+      internalID: 8756458176381822447
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PurpleLouie_56
+      rect:
+        serializedVersion: 2
+        x: 265
+        y: 35
+        width: 32
+        height: 49
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bf35dc424a9870370800000000000000
+      internalID: 8288744977283765243
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PurpleLouie_57
+      rect:
+        serializedVersion: 2
+        x: 298
+        y: 35
+        width: 32
+        height: 49
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e3380506ba6476680800000000000000
+      internalID: -8761956848156769474
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PurpleLouie_58
+      rect:
+        serializedVersion: 2
+        x: 331
+        y: 35
+        width: 32
+        height: 49
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5588ddbdb4cb6ac80800000000000000
+      internalID: -8311749028268373931
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PurpleLouie_59
+      rect:
+        serializedVersion: 2
+        x: 364
+        y: 35
+        width: 32
+        height: 49
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 872e799db5687c5f0800000000000000
+      internalID: -736472285001031048
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PurpleLouie_60
+      rect:
+        serializedVersion: 2
+        x: 397
+        y: 35
+        width: 32
+        height: 49
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 984e8da3dc94f0430800000000000000
+      internalID: 3751298160427328649
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PurpleLouie_61
+      rect:
+        serializedVersion: 2
+        x: 527
+        y: 1
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 84fe39838dfd87f50800000000000000
+      internalID: 6879494550563581768
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PurpleLouie_62
+      rect:
+        serializedVersion: 2
+        x: 563
+        y: 0
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5aac5a7d7f7c96750800000000000000
+      internalID: 6298785421143165605
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PurpleLouie_63
+      rect:
+        serializedVersion: 2
+        x: 515
+        y: 76
+        width: 13
+        height: 6
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 02d8371b2440cd8b0800000000000000
+      internalID: -5126217591362974432
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PurpleLouie_64
+      rect:
+        serializedVersion: 2
+        x: 528
+        y: 75
+        width: 13
+        height: 6
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: da0c3fe53eb712240800000000000000
+      internalID: 4765226097215520941
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PurpleLouie_65
+      rect:
+        serializedVersion: 2
+        x: 546
+        y: 76
+        width: 13
+        height: 6
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1679ed49170fbd660800000000000000
+      internalID: 7411781982387869537
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PurpleLouie_67
+      rect:
+        serializedVersion: 2
+        x: 1
+        y: 1
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a026aca52a3eb0b10800000000000000
+      internalID: 1948901550215291402
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PurpleLouie_68
+      rect:
+        serializedVersion: 2
+        x: 34
+        y: 1
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 885a3bd7c1b93adb0800000000000000
+      internalID: -4781807832667019896
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PurpleLouie_69
+      rect:
+        serializedVersion: 2
+        x: 67
+        y: 1
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 411695e055ddbaea0800000000000000
+      internalID: -5860347132709871340
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PurpleLouie_70
+      rect:
+        serializedVersion: 2
+        x: 100
+        y: 1
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: cb44bc37032400200800000000000000
+      internalID: 144187963944420540
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PurpleLouie_71
+      rect:
+        serializedVersion: 2
+        x: 133
+        y: 1
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f7993c26810183ae0800000000000000
+      internalID: -1569486773216372353
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PurpleLouie_72
+      rect:
+        serializedVersion: 2
+        x: 199
+        y: 1
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 62bce22100e3862e0800000000000000
+      internalID: -2132386253533951194
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PurpleLouie_73
+      rect:
+        serializedVersion: 2
+        x: 232
+        y: 1
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b6d77838afccabef0800000000000000
+      internalID: -91535466087088789
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PurpleLouie_74
+      rect:
+        serializedVersion: 2
+        x: 265
+        y: 1
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e6050b94d31fad280800000000000000
+      internalID: -9017630058324406162
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PurpleLouie_75
+      rect:
+        serializedVersion: 2
+        x: 298
+        y: 1
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8afe1f12edaace230800000000000000
+      internalID: 3669495667429076904
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PurpleLouie_76
+      rect:
+        serializedVersion: 2
+        x: 331
+        y: 1
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d6b80e5cf21fa72b0800000000000000
+      internalID: -5585887200314094739
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PurpleLouie_77
+      rect:
+        serializedVersion: 2
+        x: 396
+        y: 1
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4cbcb90c445554960800000000000000
+      internalID: 7585562901153041348
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PurpleLouie_78
+      rect:
+        serializedVersion: 2
+        x: 430
+        y: 1
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7a4914a42c8561730800000000000000
+      internalID: 3969457713066382503
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PurpleLouie_79
+      rect:
+        serializedVersion: 2
+        x: 463
+        y: 1
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6a6dc16cbcb3063e0800000000000000
+      internalID: -2062582882947508570
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PurpleLouie_80
+      rect:
+        serializedVersion: 2
+        x: 463
+        y: 34
+        width: 32
+        height: 35
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f105f23df227fa1b0800000000000000
+      internalID: -5643166258339819489
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PurpleLouie_81
+      rect:
+        serializedVersion: 2
+        x: 496
+        y: 34
+        width: 32
+        height: 35
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1d348e13df84c6340800000000000000
+      internalID: 4858338350327153617
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PurpleLouie_82
+      rect:
+        serializedVersion: 2
+        x: 529
+        y: 34
+        width: 32
+        height: 35
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 120c6395385155bb0800000000000000
+      internalID: -4948024961714962399
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 95f2c9f004ce41d4dae600fe166d92f0
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries:
+      - key: SpriteEditor.SliceSettings
+        value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":32.0,"y":32.0},"gridSpriteOffset":{"x":1.0,"y":1.0},"gridSpritePadding":{"x":1.0,"y":1.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":1,"keepEmptyRects":false,"isAlternate":false}'
+    nameFileIdTable:
+      PurpleLouie_0: 5434860408108936249
+      PurpleLouie_1: 3367192741625922295
+      PurpleLouie_10: -4347641615908613966
+      PurpleLouie_11: -4970874511870003228
+      PurpleLouie_12: 1581622275665858789
+      PurpleLouie_13: -1623116992382645050
+      PurpleLouie_14: -3944241175033052038
+      PurpleLouie_15: -3119415117765301328
+      PurpleLouie_16: 7329578529954141923
+      PurpleLouie_17: -7479213046829061626
+      PurpleLouie_18: 6005540202983268190
+      PurpleLouie_19: 2839507557817499278
+      PurpleLouie_2: 4674051944041330478
+      PurpleLouie_20: 8138401188766045
+      PurpleLouie_21: -4239790475898266516
+      PurpleLouie_22: -7541857703458663546
+      PurpleLouie_23: 7598780282971161286
+      PurpleLouie_24: -7265506995430504474
+      PurpleLouie_25: 7056504602016145903
+      PurpleLouie_26: -7398922160171703186
+      PurpleLouie_27: -866133384047789857
+      PurpleLouie_28: 3143568402328326064
+      PurpleLouie_29: 6129702264918099263
+      PurpleLouie_3: -4298570564193539415
+      PurpleLouie_30: -4236844313183192839
+      PurpleLouie_31: 3751167043688972403
+      PurpleLouie_32: 7018179570890608574
+      PurpleLouie_33: 5135145280675718487
+      PurpleLouie_34: 8193552705363424720
+      PurpleLouie_35: 3743846200521760999
+      PurpleLouie_36: -7987036120483543687
+      PurpleLouie_37: -3573376634966976526
+      PurpleLouie_38: -1354668994244086993
+      PurpleLouie_39: 2745137322687779928
+      PurpleLouie_4: 4103541763111675624
+      PurpleLouie_40: 6542757895150427491
+      PurpleLouie_41: 1725640717738844828
+      PurpleLouie_42: 6024210113125267656
+      PurpleLouie_43: -795388141211382698
+      PurpleLouie_44: 9030135499620763680
+      PurpleLouie_45: 8444597626932110601
+      PurpleLouie_46: 1419523571717855168
+      PurpleLouie_47: -9061108241867395531
+      PurpleLouie_48: 2348486137083635994
+      PurpleLouie_49: -5610973782883793448
+      PurpleLouie_5: 1537794811575900019
+      PurpleLouie_50: 8428747202814673278
+      PurpleLouie_51: -9030477357050066893
+      PurpleLouie_52: -8024733494210669610
+      PurpleLouie_53: 6850141353260989548
+      PurpleLouie_54: 19593232614711361
+      PurpleLouie_55: 8756458176381822447
+      PurpleLouie_56: 8288744977283765243
+      PurpleLouie_57: -8761956848156769474
+      PurpleLouie_58: -8311749028268373931
+      PurpleLouie_59: -736472285001031048
+      PurpleLouie_6: -7924477354893372540
+      PurpleLouie_60: 3751298160427328649
+      PurpleLouie_61: 6879494550563581768
+      PurpleLouie_62: 6298785421143165605
+      PurpleLouie_63: -5126217591362974432
+      PurpleLouie_64: 4765226097215520941
+      PurpleLouie_65: 7411781982387869537
+      PurpleLouie_66: 333995002380523952
+      PurpleLouie_67: 1948901550215291402
+      PurpleLouie_68: -4781807832667019896
+      PurpleLouie_69: -5860347132709871340
+      PurpleLouie_7: -8249691551875043206
+      PurpleLouie_70: 144187963944420540
+      PurpleLouie_71: -1569486773216372353
+      PurpleLouie_72: -2132386253533951194
+      PurpleLouie_73: -91535466087088789
+      PurpleLouie_74: -9017630058324406162
+      PurpleLouie_75: 3669495667429076904
+      PurpleLouie_76: -5585887200314094739
+      PurpleLouie_77: 7585562901153041348
+      PurpleLouie_78: 3969457713066382503
+      PurpleLouie_79: -2062582882947508570
+      PurpleLouie_8: 5812824690096128199
+      PurpleLouie_80: -5643166258339819489
+      PurpleLouie_81: 4858338350327153617
+      PurpleLouie_82: -4948024961714962399
+      PurpleLouie_83: 4070099218731470328
+      PurpleLouie_84: 8229898452292514398
+      PurpleLouie_85: -839672964673710008
+      PurpleLouie_86: 9190738750846449389
+      PurpleLouie_9: -8982184009038559457
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

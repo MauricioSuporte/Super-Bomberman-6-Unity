@@ -658,4 +658,68 @@ public class BombController : MonoBehaviour
                 Object.Destroy(b.gameObject);
         }
     }
+
+    public bool TryPlaceBombAt(Vector2 worldPos)
+    {
+        if (ClownMaskBoss.BossIntroRunning)
+            return false;
+
+        if (StageIntroTransition.Instance != null &&
+            (StageIntroTransition.Instance.IntroRunning || StageIntroTransition.Instance.EndingRunning))
+            return false;
+
+        var movement = GetComponent<MovementController>();
+        if (movement != null && movement.InputLocked)
+            return false;
+
+        if (GamePauseController.IsPaused)
+            return false;
+
+        if (bombsRemaining <= 0)
+            return false;
+
+        Vector2 position = worldPos;
+        position.x = Mathf.Round(position.x);
+        position.y = Mathf.Round(position.y);
+
+        if (TileHasBomb(position))
+            return false;
+
+        if (HasDestructibleAt(position))
+            return false;
+
+        if (playerAudioSource != null && placeBombSfx != null)
+            playerAudioSource.PlayOneShot(placeBombSfx);
+
+        bool controlEnabled = IsControlEnabled();
+        bool pierceEnabled = !controlEnabled && IsPierceEnabled();
+
+        GameObject prefabToUse =
+            controlEnabled && controlBombPrefab != null ? controlBombPrefab :
+            (pierceEnabled && pierceBombPrefab != null) ? pierceBombPrefab :
+            bombPrefab;
+
+        GameObject bomb = Instantiate(prefabToUse, position, Quaternion.identity);
+        bombsRemaining--;
+
+        if (!bomb.TryGetComponent<Bomb>(out var bombComponent))
+            bombComponent = bomb.AddComponent<Bomb>();
+
+        bombComponent.IsPierceBomb = pierceEnabled;
+        bombComponent.IsControlBomb = controlEnabled;
+
+        bombComponent.SetStageBoundsTilemap(stageBoundsTiles);
+        bombComponent.Initialize(this);
+
+        if (bomb.TryGetComponent<Collider2D>(out var bombCollider))
+            bombCollider.isTrigger = true;
+
+        if (controlEnabled)
+            RegisterBomb(bomb);
+
+        if (!controlEnabled)
+            StartCoroutine(BombFuse(bomb));
+
+        return true;
+    }
 }

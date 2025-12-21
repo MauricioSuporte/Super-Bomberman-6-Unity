@@ -2,11 +2,13 @@
 using UnityEngine;
 
 [RequireComponent(typeof(MovementController))]
+[RequireComponent(typeof(CharacterHealth))]
 public class PlayerLouieCompanion : MonoBehaviour
 {
     [Header("Louie Prefabs")]
     public GameObject blueLouiePrefab;
     public GameObject blackLouiePrefab;
+    public GameObject purpleLouiePrefab;
 
     [Header("Local Offset")]
     public Vector2 localOffset = new(0f, -0.15f);
@@ -36,7 +38,8 @@ public class PlayerLouieCompanion : MonoBehaviour
     BombPunchAbility punchAbility;
 
     bool punchOwned;
-    bool mountedIsBlue;
+
+    PlayerPersistentStats.MountedLouieType mountedType = PlayerPersistentStats.MountedLouieType.None;
 
     private void Awake()
     {
@@ -61,12 +64,14 @@ public class PlayerLouieCompanion : MonoBehaviour
 
     private void Update()
     {
-        if (currentLouie != null && !mountedIsBlue)
+        // Regra: qualquer Louie NÃO-blue não pode ficar com Punch habilitado
+        if (currentLouie != null && mountedType != PlayerPersistentStats.MountedLouieType.Blue)
             EnforceNoPunchWhileMountedNonBlue();
     }
 
-    public void MountBlueLouie() => MountLouieInternal(blueLouiePrefab, true);
-    public void MountBlackLouie() => MountLouieInternal(blackLouiePrefab, false);
+    public void MountBlueLouie() => MountLouieInternal(blueLouiePrefab, PlayerPersistentStats.MountedLouieType.Blue);
+    public void MountBlackLouie() => MountLouieInternal(blackLouiePrefab, PlayerPersistentStats.MountedLouieType.Black);
+    public void MountPurpleLouie() => MountLouieInternal(purpleLouiePrefab, PlayerPersistentStats.MountedLouieType.Purple);
 
     public int GetMountedLouieLife()
     {
@@ -91,11 +96,13 @@ public class PlayerLouieCompanion : MonoBehaviour
 
         mountedLouieHp = v;
 
-        if (!mountedIsBlue)
+        if (mountedType == PlayerPersistentStats.MountedLouieType.Black)
+        {
             PlayerPersistentStats.MountedLouieLife = v;
+        }
     }
 
-    private void MountLouieInternal(GameObject prefab, bool isBlue)
+    private void MountLouieInternal(GameObject prefab, PlayerPersistentStats.MountedLouieType type)
     {
         if (prefab == null || movement == null)
             return;
@@ -103,7 +110,7 @@ public class PlayerLouieCompanion : MonoBehaviour
         if (currentLouie != null)
             return;
 
-        mountedIsBlue = isBlue;
+        mountedType = type;
 
         currentLouie = Instantiate(prefab, transform);
         currentLouie.transform.SetLocalPositionAndRotation(localOffset, Quaternion.identity);
@@ -115,10 +122,15 @@ public class PlayerLouieCompanion : MonoBehaviour
         if (mountedLouieHealth != null)
             mountedLouieHp = Mathf.Max(1, mountedLouieHealth.life);
 
-        if (!mountedIsBlue && PlayerPersistentStats.MountedLouieLife > 0)
-            SetMountedLouieLife(PlayerPersistentStats.MountedLouieLife);
-        else if (!mountedIsBlue)
-            PlayerPersistentStats.MountedLouieLife = Mathf.Max(1, mountedLouieHp);
+        // Black e Purple: restauram vida persistida
+        if (mountedType == PlayerPersistentStats.MountedLouieType.Black ||
+            mountedType == PlayerPersistentStats.MountedLouieType.Purple)
+        {
+            if (PlayerPersistentStats.MountedLouieLife > 0)
+                SetMountedLouieLife(PlayerPersistentStats.MountedLouieLife);
+            else
+                PlayerPersistentStats.MountedLouieLife = Mathf.Max(1, mountedLouieHp);
+        }
 
         if (currentLouie.TryGetComponent<LouieMovementController>(out var lm))
         {
@@ -148,14 +160,14 @@ public class PlayerLouieCompanion : MonoBehaviour
 
         punchOwned |= abilitySystem.IsEnabled(BombPunchAbility.AbilityId);
 
-        ApplyPunchRulesForCurrentMount();
+        ApplyRulesForCurrentMount();
 
         movement.Died += OnPlayerDied;
     }
 
-    private void ApplyPunchRulesForCurrentMount()
+    private void ApplyRulesForCurrentMount()
     {
-        if (mountedIsBlue)
+        if (mountedType == PlayerPersistentStats.MountedLouieType.Blue)
         {
             var external = currentLouie != null
                 ? currentLouie.GetComponentInChildren<IBombPunchExternalAnimator>(true)
@@ -167,6 +179,8 @@ public class PlayerLouieCompanion : MonoBehaviour
             if (punchAbility != null)
                 punchAbility.SetExternalAnimator(external);
 
+            abilitySystem.Disable(PurpleLouieBombLineAbility.AbilityId);
+
             return;
         }
 
@@ -174,6 +188,27 @@ public class PlayerLouieCompanion : MonoBehaviour
             punchAbility.SetExternalAnimator(null);
 
         abilitySystem.Disable(BombPunchAbility.AbilityId);
+
+        if (mountedType == PlayerPersistentStats.MountedLouieType.Purple)
+        {
+            abilitySystem.Enable(PurpleLouieBombLineAbility.AbilityId);
+
+            var purpleAbility = abilitySystem.Get<PurpleLouieBombLineAbility>(PurpleLouieBombLineAbility.AbilityId);
+            if (purpleAbility != null)
+            {
+                purpleAbility.triggerKey = KeyCode.B;
+
+                var anim = currentLouie != null
+                    ? currentLouie.GetComponentInChildren<IPurpleLouieBombLineExternalAnimator>(true)
+                    : null;
+
+                purpleAbility.SetExternalAnimator(anim);
+            }
+
+            return;
+        }
+
+        abilitySystem.Disable(PurpleLouieBombLineAbility.AbilityId);
     }
 
     private void EnforceNoPunchWhileMountedNonBlue()
@@ -221,8 +256,11 @@ public class PlayerLouieCompanion : MonoBehaviour
             mountedLouieHealth.TakeDamage(dmg);
             mountedLouieHp = Mathf.Max(0, mountedLouieHealth.life);
 
-            if (!mountedIsBlue)
+            if (mountedType == PlayerPersistentStats.MountedLouieType.Black ||
+                mountedType == PlayerPersistentStats.MountedLouieType.Purple)
+            {
                 PlayerPersistentStats.MountedLouieLife = Mathf.Max(0, mountedLouieHp);
+            }
 
             if (mountedLouieHealth.life > 0)
                 SyncPlayerBlinkWithLouie();
@@ -235,8 +273,11 @@ public class PlayerLouieCompanion : MonoBehaviour
 
         mountedLouieHp -= dmg;
 
-        if (!mountedIsBlue)
+        if (mountedType == PlayerPersistentStats.MountedLouieType.Black ||
+            mountedType == PlayerPersistentStats.MountedLouieType.Purple)
+        {
             PlayerPersistentStats.MountedLouieLife = Mathf.Max(0, mountedLouieHp);
+        }
 
         if (mountedLouieHp <= 0)
             LoseLouie();
@@ -296,8 +337,9 @@ public class PlayerLouieCompanion : MonoBehaviour
         louie.transform.GetPositionAndRotation(out var worldPos, out var worldRot);
 
         movement.SetMountedOnLouie(false);
-        mountedIsBlue = false;
+        mountedType = PlayerPersistentStats.MountedLouieType.None;
 
+        abilitySystem.Disable(PurpleLouieBombLineAbility.AbilityId);
         RestorePunchAfterUnmount();
 
         if (movement.TryGetComponent<CharacterHealth>(out var health))
@@ -343,8 +385,9 @@ public class PlayerLouieCompanion : MonoBehaviour
         PlayerPersistentStats.MountedLouieLife = 0;
 
         movement.SetMountedOnLouie(false);
-        mountedIsBlue = false;
+        mountedType = PlayerPersistentStats.MountedLouieType.None;
 
+        abilitySystem.Disable(PurpleLouieBombLineAbility.AbilityId);
         RestorePunchAfterUnmount();
     }
 
@@ -356,12 +399,9 @@ public class PlayerLouieCompanion : MonoBehaviour
 
     public PlayerPersistentStats.MountedLouieType GetMountedLouieType()
     {
-        if (currentLouie == null)
-            return PlayerPersistentStats.MountedLouieType.None;
-
-        return mountedIsBlue
-            ? PlayerPersistentStats.MountedLouieType.Blue
-            : PlayerPersistentStats.MountedLouieType.Black;
+        return currentLouie == null
+            ? PlayerPersistentStats.MountedLouieType.None
+            : mountedType;
     }
 
     public void RestoreMountedBlueLouie()
@@ -378,6 +418,14 @@ public class PlayerLouieCompanion : MonoBehaviour
             return;
 
         MountBlackLouie();
+    }
+
+    public void RestoreMountedPurpleLouie()
+    {
+        if (currentLouie != null)
+            return;
+
+        MountPurpleLouie();
     }
 
     public bool TryPlayMountedLouieEndStage(float totalTime, int frameCount)

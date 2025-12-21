@@ -29,7 +29,8 @@ public class ItemPickup : MonoBehaviour
         InvincibleSuit,
         Heart,
         BlueLouieEgg,
-        BlackLouieEgg
+        BlackLouieEgg,
+        PurpleLouieEgg
     }
 
     public ItemType type;
@@ -49,7 +50,7 @@ public class ItemPickup : MonoBehaviour
 
     private bool IsLouieEgg(ItemType t)
     {
-        return t == ItemType.BlueLouieEgg || t == ItemType.BlackLouieEgg;
+        return t == ItemType.BlueLouieEgg || t == ItemType.BlackLouieEgg || t == ItemType.PurpleLouieEgg;
     }
 
     private bool PlayerAlreadyMounted(GameObject player)
@@ -81,27 +82,17 @@ public class ItemPickup : MonoBehaviour
 
             case ItemType.BlastRadius:
                 {
-                    var bombController2 = player.GetComponent<BombController>();
-                    if (bombController2 != null && bombController2.explosionRadius < PlayerPersistentStats.MaxExplosionRadius)
-                    {
-                        bombController2.explosionRadius = Mathf.Min(
-                            bombController2.explosionRadius + 1,
-                            PlayerPersistentStats.MaxExplosionRadius
-                        );
-                    }
+                    var bc = player.GetComponent<BombController>();
+                    if (bc != null && bc.explosionRadius < PlayerPersistentStats.MaxExplosionRadius)
+                        bc.explosionRadius = Mathf.Min(bc.explosionRadius + 1, PlayerPersistentStats.MaxExplosionRadius);
                     break;
                 }
 
             case ItemType.SpeedIncrese:
                 {
-                    var movement = player.GetComponent<MovementController>();
-                    if (movement != null && movement.speed < PlayerPersistentStats.MaxSpeed)
-                    {
-                        movement.speed = Mathf.Min(
-                            movement.speed + 1f,
-                            PlayerPersistentStats.MaxSpeed
-                        );
-                    }
+                    var mv = player.GetComponent<MovementController>();
+                    if (mv != null && mv.speed < PlayerPersistentStats.MaxSpeed)
+                        mv.speed = Mathf.Min(mv.speed + 1f, PlayerPersistentStats.MaxSpeed);
                     break;
                 }
 
@@ -129,7 +120,6 @@ public class ItemPickup : MonoBehaviour
                         abilitySystem = player.AddComponent<AbilitySystem>();
 
                     abilitySystem.RebuildCache();
-
                     abilitySystem.Enable(PierceBombAbility.AbilityId);
                     abilitySystem.Disable(ControlBombAbility.AbilityId);
                     break;
@@ -141,7 +131,6 @@ public class ItemPickup : MonoBehaviour
                         abilitySystem = player.AddComponent<AbilitySystem>();
 
                     abilitySystem.RebuildCache();
-
                     abilitySystem.Enable(ControlBombAbility.AbilityId);
                     abilitySystem.Disable(PierceBombAbility.AbilityId);
                     break;
@@ -173,7 +162,6 @@ public class ItemPickup : MonoBehaviour
                         abilitySystem = player.AddComponent<AbilitySystem>();
 
                     abilitySystem.RebuildCache();
-
                     abilitySystem.Enable(DestructiblePassAbility.AbilityId);
                     break;
                 }
@@ -194,18 +182,19 @@ public class ItemPickup : MonoBehaviour
                 break;
 
             case ItemType.BlueLouieEgg:
-                {
-                    if (player.TryGetComponent<PlayerLouieCompanion>(out var louie))
-                        louie.MountBlueLouie();
-                    break;
-                }
+                if (player.TryGetComponent<PlayerLouieCompanion>(out var louieBlue))
+                    louieBlue.MountBlueLouie();
+                break;
 
             case ItemType.BlackLouieEgg:
-                {
-                    if (player.TryGetComponent<PlayerLouieCompanion>(out var louie))
-                        louie.MountBlackLouie();
-                    break;
-                }
+                if (player.TryGetComponent<PlayerLouieCompanion>(out var louieBlack))
+                    louieBlack.MountBlackLouie();
+                break;
+
+            case ItemType.PurpleLouieEgg:
+                if (player.TryGetComponent<PlayerLouieCompanion>(out var louiePurple))
+                    louiePurple.MountPurpleLouie();
+                break;
         }
 
         Destroy(gameObject);

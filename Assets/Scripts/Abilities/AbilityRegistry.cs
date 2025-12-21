@@ -13,6 +13,7 @@ public static class AbilityRegistry
         { BombPassAbility.AbilityId, typeof(BombPassAbility) },
         { DestructiblePassAbility.AbilityId, typeof(DestructiblePassAbility) },
         { InvincibleSuitAbility.AbilityId, typeof(InvincibleSuitAbility) },
+        { PurpleLouieBombLineAbility.AbilityId, typeof(PurpleLouieBombLineAbility) },
     };
 
     public static bool TryGetType(string id, out Type type)

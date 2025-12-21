@@ -30,6 +30,7 @@ public class GameManager : MonoBehaviour
     public ItemPickup heartItemPrefab;
     public ItemPickup blueLouieEggItemPrefab;
     public ItemPickup blackLouieEggItemPrefab;
+    public ItemPickup purpleLouieEggItemPrefab;
 
     [Header("Stage")]
     public Tilemap destructibleTilemap;
@@ -62,6 +63,7 @@ public class GameManager : MonoBehaviour
     int heartSpawnOrder = -1;
     int blueLouieEggSpawnOrder = -1;
     int blackLouieEggSpawnOrder = -1;
+    int purpleLouieEggSpawnOrder = -1;
 
     void Start()
     {
@@ -147,6 +149,9 @@ public class GameManager : MonoBehaviour
 
         if (blackLouieEggItemPrefab != null && cursor < indices.Count)
             blackLouieEggSpawnOrder = indices[cursor++];
+
+        if (purpleLouieEggItemPrefab != null && cursor < indices.Count)
+            purpleLouieEggSpawnOrder = indices[cursor++];
     }
 
     public GameObject GetSpawnForDestroyedBlock()
@@ -201,6 +206,9 @@ public class GameManager : MonoBehaviour
 
         if (order == blackLouieEggSpawnOrder && blackLouieEggItemPrefab != null)
             return blackLouieEggItemPrefab.gameObject;
+
+        if (order == purpleLouieEggSpawnOrder && purpleLouieEggItemPrefab != null)
+            return purpleLouieEggItemPrefab.gameObject;
 
         return null;
     }

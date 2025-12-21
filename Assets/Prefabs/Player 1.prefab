@@ -1429,6 +1429,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerLouieCompanion
   blueLouiePrefab: {fileID: 2273416014071709654, guid: b0695b92e5b71c1408e0fbafd895d235, type: 3}
   blackLouiePrefab: {fileID: 2273416014071709654, guid: 4d11d2e957185b14a8a90544ec4660b0, type: 3}
+  purpleLouiePrefab: {fileID: 2273416014071709654, guid: 4c1f15aebbfb67f4e861c0b651c9d20b, type: 3}
   localOffset: {x: 0, y: -0.15}
   louieDeathSeconds: 0.5
   playerInvulnerabilityAfterLoseLouieSeconds: 0.8

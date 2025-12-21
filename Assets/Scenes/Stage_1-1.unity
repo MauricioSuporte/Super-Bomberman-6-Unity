@@ -247,6 +247,7 @@ MonoBehaviour:
   heartItemPrefab: {fileID: 2727780941473249227, guid: 0c359f5866b02ae49a6ab6bd0423459e, type: 3}
   blueLouieEggItemPrefab: {fileID: 2727780941473249227, guid: 5b7ba3460134f51478ae6a4f1af88339, type: 3}
   blackLouieEggItemPrefab: {fileID: 2727780941473249227, guid: e7aeb2c9c62a7714f9d21fc00db57eb2, type: 3}
+  purpleLouieEggItemPrefab: {fileID: 2727780941473249227, guid: ff12c90d66631134faac0aa5afa14a34, type: 3}
   destructibleTilemap: {fileID: 285353618}
   nextStageSceneName: Stage_1-2
   groundTilemap: {fileID: 672307155}

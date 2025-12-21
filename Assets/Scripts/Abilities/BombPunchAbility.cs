@@ -15,7 +15,7 @@ public class BombPunchAbility : MonoBehaviour, IPlayerAbility
     [SerializeField] private bool enabledAbility;
 
     [Header("Input")]
-    public KeyCode punchKey = KeyCode.H;
+    public KeyCode punchKey = KeyCode.B;
 
     [Header("Punch Settings")]
     public int punchDistanceTiles = 3;
