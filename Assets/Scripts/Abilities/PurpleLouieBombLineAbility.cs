@@ -11,7 +11,7 @@ public class PurpleLouieBombLineAbility : MonoBehaviour, IPlayerAbility
     [SerializeField] private bool enabledAbility;
 
     [Header("Input (usa a mesma tecla do Punch)")]
-    public KeyCode triggerKey = KeyCode.H;
+    public KeyCode triggerKey = KeyCode.B;
 
     [Header("Behavior")]
     public float lockSeconds = 0.25f;
