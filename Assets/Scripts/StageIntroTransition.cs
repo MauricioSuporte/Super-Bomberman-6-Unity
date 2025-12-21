@@ -72,6 +72,10 @@ public class StageIntroTransition : MonoBehaviour
 
     bool defaultMusicStarted;
 
+    bool titleScreenRunning;
+    bool logoPhaseRunning;
+    bool ignoreStartKeyUntilRelease;
+
     public static void SkipTitleScreenOnNextLoad()
     {
         skipTitleNextRound = true;
@@ -97,7 +101,6 @@ public class StageIntroTransition : MonoBehaviour
             spotlightImage.material = spotlightMatInstance;
 
             spotlightMatInstance.SetColor("_Color", new Color(0f, 0f, 0f, 0f));
-
             spotlightImage.gameObject.SetActive(false);
         }
     }
@@ -105,6 +108,9 @@ public class StageIntroTransition : MonoBehaviour
     void Start()
     {
         defaultMusicStarted = false;
+        titleScreenRunning = false;
+        logoPhaseRunning = false;
+        ignoreStartKeyUntilRelease = false;
 
         if (GameMusicController.Instance != null)
             GameMusicController.Instance.StopMusic();
@@ -115,15 +121,8 @@ public class StageIntroTransition : MonoBehaviour
         if (stageLabel != null)
             stageLabel.gameObject.SetActive(false);
 
-        movementControllers = Object.FindObjectsByType<MovementController>(
-            FindObjectsInactive.Exclude,
-            FindObjectsSortMode.None
-        );
-
-        bombControllers = Object.FindObjectsByType<BombController>(
-            FindObjectsInactive.Exclude,
-            FindObjectsSortMode.None
-        );
+        movementControllers = Object.FindObjectsByType<MovementController>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+        bombControllers = Object.FindObjectsByType<BombController>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
 
         foreach (var m in movementControllers) if (m) m.enabled = false;
         foreach (var b in bombControllers) if (b) b.enabled = false;
@@ -185,8 +184,7 @@ public class StageIntroTransition : MonoBehaviour
 
         defaultMusicStarted = true;
 
-        if (GameMusicController.Instance != null &&
-            GameMusicController.Instance.defaultMusic != null)
+        if (GameMusicController.Instance != null && GameMusicController.Instance.defaultMusic != null)
         {
             GameMusicController.Instance.PlayMusic(
                 GameMusicController.Instance.defaultMusic,
@@ -199,12 +197,19 @@ public class StageIntroTransition : MonoBehaviour
     IEnumerator FullIntroSequence()
     {
         hasPlayedLogoIntro = true;
+        logoPhaseRunning = true;
 
         yield return FadeLogo(2f, 0f, 1f);
-        yield return LogoWithHudsonFx();
-        yield return FadeLogo(2f, 1f, 0f);
+        if (!logoPhaseRunning) yield break;
 
-        introLogoImage.enabled = false;
+        yield return LogoWithHudsonFx();
+        if (!logoPhaseRunning) yield break;
+
+        yield return FadeLogo(2f, 1f, 0f);
+        if (!logoPhaseRunning) yield break;
+
+        logoPhaseRunning = false;
+        ForceHideLogo();
 
         yield return ShowTitleScreen();
     }
@@ -223,6 +228,12 @@ public class StageIntroTransition : MonoBehaviour
 
         while (t < time)
         {
+            if (logoPhaseRunning && !titleScreenRunning && Input.GetKeyDown(startKey))
+            {
+                SkipLogoToTitle();
+                yield break;
+            }
+
             t += Time.unscaledDeltaTime;
             float a = Mathf.Lerp(startA, endA, t / time);
             introLogoImage.color = new Color(baseColor.r, baseColor.g, baseColor.b, a);
@@ -241,16 +252,48 @@ public class StageIntroTransition : MonoBehaviour
 
         while (timer < 2f)
         {
+            if (logoPhaseRunning && !titleScreenRunning && Input.GetKeyDown(startKey))
+            {
+                SkipLogoToTitle();
+                yield break;
+            }
+
             timer += Time.unscaledDeltaTime;
             yield return null;
         }
     }
 
+    void SkipLogoToTitle()
+    {
+        if (titleScreenRunning)
+            return;
+
+        logoPhaseRunning = false;
+        ignoreStartKeyUntilRelease = true;
+
+        StopAllCoroutines();
+
+        ForceHideLogo();
+
+        if (fadeImage != null)
+            fadeImage.gameObject.SetActive(false);
+
+        StartCoroutine(ShowTitleScreen());
+    }
+
+    void ForceHideLogo()
+    {
+        if (introLogoImage != null)
+            introLogoImage.enabled = false;
+    }
+
     IEnumerator ShowTitleScreen()
     {
+        titleScreenRunning = true;
+
         if (titleScreenRawImage == null || titleVideoPlayer == null)
         {
-            yield return FadeInToGame();
+            titleScreenRunning = false;
             yield break;
         }
 
@@ -267,8 +310,15 @@ public class StageIntroTransition : MonoBehaviour
         titleVideoPlayer.Stop();
         titleVideoPlayer.Play();
 
-        bool pressed = false;
+        if (ignoreStartKeyUntilRelease)
+        {
+            ignoreStartKeyUntilRelease = false;
+            while (Input.GetKey(startKey))
+                yield return null;
+            yield return null;
+        }
 
+        bool pressed = false;
         while (!pressed)
         {
             if (Input.GetKeyDown(startKey))
@@ -276,6 +326,8 @@ public class StageIntroTransition : MonoBehaviour
 
             yield return null;
         }
+
+        titleScreenRunning = false;
 
         if (GameMusicController.Instance != null)
             GameMusicController.Instance.StopMusic();
@@ -356,8 +408,7 @@ public class StageIntroTransition : MonoBehaviour
 
     void TryStartDefaultMusicNormalFlow()
     {
-        if (GameMusicController.Instance != null &&
-            GameMusicController.Instance.defaultMusic != null)
+        if (GameMusicController.Instance != null && GameMusicController.Instance.defaultMusic != null)
         {
             float volume = GameMusicController.Instance.defaultMusicVolume;
 
@@ -451,8 +502,7 @@ public class StageIntroTransition : MonoBehaviour
                 if (i == cycles - 1)
                 {
                     var playerGo = GameObject.FindGameObjectWithTag("Player");
-                    if (playerGo != null &&
-                        playerGo.TryGetComponent<MovementController>(out var playerCtrl))
+                    if (playerGo != null && playerGo.TryGetComponent<MovementController>(out var playerCtrl))
                     {
                         Vector2 targetPos = new(-3f, -6f);
 
