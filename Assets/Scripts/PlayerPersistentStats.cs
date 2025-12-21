@@ -10,7 +10,7 @@ public static class PlayerPersistentStats
     public static int ExplosionRadius = 9;
     public static float Speed = 5f;
 
-    public static int Life = 9;
+    public static int Life = 1;
 
     public static bool CanKickBombs = false;
     public static bool CanPunchBombs = true;
@@ -27,8 +27,8 @@ public static class PlayerPersistentStats
         Black = 2
     }
 
-    public static MountedLouieType MountedLouie = MountedLouieType.Black;
-    public static int MountedLouieLife = 2;
+    public static MountedLouieType MountedLouie = MountedLouieType.Blue;
+    public static int MountedLouieLife = 1;
 
     public static void LoadInto(MovementController movement, BombController bomb)
     {

@@ -12,6 +12,9 @@ public class BossEndStageSequence : MonoBehaviour
     GameManager gameManager;
     bool sequenceStarted;
 
+    Collider2D cachedPlayerCollider;
+    bool cachedColliderEnabled;
+
     void Awake()
     {
         if (player == null)
@@ -43,7 +46,17 @@ public class BossEndStageSequence : MonoBehaviour
         if (player == null || player.isDead)
             yield break;
 
-        player.StartCheering();
+        Vector2 center = new(
+            Mathf.Round(player.transform.position.x),
+            Mathf.Round(player.transform.position.y)
+        );
+
+        if (player.IsMountedOnLouie)
+            player.PlayEndStageSequence(center);
+        else
+            player.StartCheering();
+
+        MakePlayerSafeForCelebration();
 
         if (GameMusicController.Instance != null && bossCheeringMusic != null)
             GameMusicController.Instance.PlayMusic(bossCheeringMusic, 1f, false);
@@ -61,5 +74,26 @@ public class BossEndStageSequence : MonoBehaviour
 
         if (gameManager != null)
             gameManager.EndStage();
+    }
+
+    void MakePlayerSafeForCelebration()
+    {
+        if (player == null)
+            return;
+
+        player.SetExplosionInvulnerable(true);
+        player.SetInputLocked(true, false);
+
+        if (cachedPlayerCollider == null)
+            cachedPlayerCollider = player.GetComponent<Collider2D>();
+
+        if (cachedPlayerCollider != null)
+        {
+            cachedColliderEnabled = cachedPlayerCollider.enabled;
+            cachedPlayerCollider.enabled = false;
+        }
+
+        if (player.TryGetComponent<CharacterHealth>(out var health) && health != null)
+            health.StopInvulnerability();
     }
 }
