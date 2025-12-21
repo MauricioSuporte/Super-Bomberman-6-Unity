@@ -708,6 +708,39 @@ public class MovementController : MonoBehaviour, IKillable
         }
     }
 
+    public void ForceMountedUpExclusive()
+    {
+        direction = Vector2.zero;
+        hasInput = false;
+
+        facingDirection = Vector2.up;
+
+        if (!isMountedOnLouie)
+        {
+            ForceIdleUp();
+            return;
+        }
+
+        DisableAllFootSprites();
+        DisableAllMountedSprites();
+
+        var up = mountedSpriteUp != null ? mountedSpriteUp : spriteRendererUp;
+
+        if (up != null)
+        {
+            up.enabled = true;
+            up.idle = true;
+            up.loop = false;
+            up.RefreshFrame();
+
+            activeSpriteRenderer = up;
+        }
+
+        var rider = GetComponentInChildren<LouieRiderVisual>(true);
+        if (rider != null)
+            rider.ForceOnlyUpEnabled();
+    }
+
     public void SetExplosionInvulnerable(bool value)
     {
         explosionInvulnerable = value;

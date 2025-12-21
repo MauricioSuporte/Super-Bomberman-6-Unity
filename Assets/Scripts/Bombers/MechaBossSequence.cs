@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -102,6 +102,8 @@ public class MechaBossSequence : MonoBehaviour
 
         LockPlayer(true);
 
+        ForcePlayerMountedUpIfNeeded();
+
         for (int i = 0; i < mechas.Length; i++)
             if (mechas[i] != null)
                 mechas[i].gameObject.SetActive(false);
@@ -115,6 +117,9 @@ public class MechaBossSequence : MonoBehaviour
         if (initialized && !sequenceStarted)
         {
             sequenceStarted = true;
+
+            ForcePlayerMountedUpIfNeeded();
+
             StartCoroutine(SpawnFirstMechaAfterStageStart());
         }
     }
@@ -122,13 +127,20 @@ public class MechaBossSequence : MonoBehaviour
     IEnumerator SpawnFirstMechaAfterStageStart()
     {
         if (StageIntroTransition.Instance != null)
+        {
             while (StageIntroTransition.Instance.IntroRunning)
+            {
+                ForcePlayerMountedUpIfNeeded();
                 yield return null;
+            }
+        }
 
         while (GamePauseController.IsPaused)
             yield return null;
 
         LockPlayer(true);
+
+        ForcePlayerMountedUpIfNeeded();
 
         yield return _waitForSeconds2;
 
@@ -143,6 +155,8 @@ public class MechaBossSequence : MonoBehaviour
         MechaIntroRunning = true;
         LockPlayer(true);
 
+        ForcePlayerMountedUpIfNeeded();
+
         StartCoroutine(MechaIntroRoutine(mechas[index]));
     }
 
@@ -153,7 +167,11 @@ public class MechaBossSequence : MonoBehaviour
         SetItemSpawnEnabled(false);
         LockPlayer(true);
 
+        ForcePlayerMountedUpIfNeeded();
+
         yield return StartCoroutine(OpenGateRoutine());
+
+        ForcePlayerMountedUpIfNeeded();
 
         bool isGolden = mecha == goldenMecha;
 
@@ -558,5 +576,16 @@ public class MechaBossSequence : MonoBehaviour
 
         if (gameManager != null)
             gameManager.EndStage();
+    }
+
+    void ForcePlayerMountedUpIfNeeded()
+    {
+        if (player == null)
+            return;
+
+        if (player.IsMountedOnLouie)
+            player.ForceMountedUpExclusive();
+        else
+            player.ForceIdleUp();
     }
 }
