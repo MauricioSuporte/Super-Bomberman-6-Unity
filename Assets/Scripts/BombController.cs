@@ -166,12 +166,16 @@ public class BombController : MonoBehaviour
         if (bomb == null)
             return;
 
+        Bomb bombComp = bomb.GetComponent<Bomb>();
+        BombController realOwner = bombComp != null ? bombComp.Owner : null;
+
+        if (realOwner != null && realOwner != this)
+        {
+            realOwner.ExplodeBomb(bomb);
+            return;
+        }
+
         UnregisterBomb(bomb);
-
-        var bombComp = bomb.GetComponent<Bomb>();
-
-        if (bombComp != null && bombComp.Owner != null && bombComp.Owner != this)
-            bombComp.Owner.UnregisterBomb(bomb);
 
         Vector2 logicalPos = bombComp != null
             ? bombComp.GetLogicalPosition()
