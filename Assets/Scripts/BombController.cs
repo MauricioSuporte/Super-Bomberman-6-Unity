@@ -442,7 +442,6 @@ public class BombController : MonoBehaviour
             return;
 
         var gameManager = FindFirstObjectByType<GameManager>();
-
         if (gameManager != null)
             gameManager.OnDestructibleDestroyed(cell);
 
@@ -688,9 +687,6 @@ public class BombController : MonoBehaviour
         if (HasDestructibleAt(position))
             return false;
 
-        if (playerAudioSource != null && placeBombSfx != null)
-            playerAudioSource.PlayOneShot(placeBombSfx);
-
         bool controlEnabled = IsControlEnabled();
         bool pierceEnabled = !controlEnabled && IsPierceEnabled();
 
@@ -698,6 +694,9 @@ public class BombController : MonoBehaviour
             controlEnabled && controlBombPrefab != null ? controlBombPrefab :
             (pierceEnabled && pierceBombPrefab != null) ? pierceBombPrefab :
             bombPrefab;
+
+        if (prefabToUse == null)
+            return false;
 
         GameObject bomb = Instantiate(prefabToUse, position, Quaternion.identity);
         bombsRemaining--;
@@ -721,5 +720,24 @@ public class BombController : MonoBehaviour
             StartCoroutine(BombFuse(bomb));
 
         return true;
+    }
+
+    public bool TryPlaceBombAtIgnoringInputLock(Vector2 worldPos)
+    {
+        var movement = GetComponent<MovementController>();
+
+        bool previousLock = false;
+        if (movement != null)
+        {
+            previousLock = movement.InputLocked;
+            movement.SetInputLocked(false, false);
+        }
+
+        bool result = TryPlaceBombAt(worldPos);
+
+        if (movement != null)
+            movement.SetInputLocked(previousLock, false);
+
+        return result;
     }
 }

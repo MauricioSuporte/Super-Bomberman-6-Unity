@@ -3,22 +3,17 @@ using UnityEngine;
 
 [DisallowMultipleComponent]
 [RequireComponent(typeof(MovementController))]
-[RequireComponent(typeof(BombController))]
 public class PurpleLouieBombLineAbility : MonoBehaviour, IPlayerAbility
 {
     public const string AbilityId = "PurpleLouieBombLine";
 
     [SerializeField] private bool enabledAbility;
 
-    [Header("Input (usa a mesma tecla do Punch)")]
     public KeyCode triggerKey = KeyCode.B;
-
-    [Header("Behavior")]
     public float lockSeconds = 0.25f;
 
     MovementController movement;
     BombController bomb;
-
     Vector2 lastFacingDir = Vector2.down;
     Coroutine routine;
 
@@ -30,9 +25,7 @@ public class PurpleLouieBombLineAbility : MonoBehaviour, IPlayerAbility
     void Awake()
     {
         movement = GetComponent<MovementController>();
-
-        if (movement != null)
-            bomb = movement.GetComponent<BombController>();
+        bomb = movement != null ? movement.GetComponent<BombController>() : null;
     }
 
     public void SetExternalAnimator(IPurpleLouieBombLineExternalAnimator animator)
@@ -61,13 +54,15 @@ public class PurpleLouieBombLineAbility : MonoBehaviour, IPlayerAbility
         if (movement == null || movement.isDead || movement.InputLocked)
             return;
 
-        // Mantém direção "encarada"
         Vector2 moveDir = movement.Direction;
         if (moveDir != Vector2.zero)
             lastFacingDir = moveDir;
 
         if (!Input.GetKeyDown(triggerKey))
             return;
+
+        if (bomb == null)
+            bomb = movement.GetComponent<BombController>();
 
         if (routine != null)
             StopCoroutine(routine);
@@ -80,18 +75,15 @@ public class PurpleLouieBombLineAbility : MonoBehaviour, IPlayerAbility
         bool wasLocked = movement.InputLocked;
         movement.SetInputLocked(true, false);
 
-        Vector2 dir = lastFacingDir;
-        if (dir == Vector2.zero)
-            dir = Vector2.down;
+        Vector2 dir = lastFacingDir == Vector2.zero ? Vector2.down : lastFacingDir;
 
-        // animação no Louie (opcional)
+        DropBombsInFrontLine(dir);
+        PlayPlaceBombSfxOnce();
+
         if (externalAnimator != null)
             yield return externalAnimator.Play(dir, lockSeconds);
         else
             yield return new WaitForSeconds(lockSeconds);
-
-        // Solta todas as bombas restantes em linha
-        DropBombsInFrontLine(dir);
 
         bool globalLock =
             GamePauseController.IsPaused ||
@@ -104,6 +96,15 @@ public class PurpleLouieBombLineAbility : MonoBehaviour, IPlayerAbility
         routine = null;
     }
 
+    private void PlayPlaceBombSfxOnce()
+    {
+        if (bomb == null)
+            return;
+
+        if (bomb.playerAudioSource != null && bomb.placeBombSfx != null)
+            bomb.playerAudioSource.PlayOneShot(bomb.placeBombSfx);
+    }
+
     void DropBombsInFrontLine(Vector2 dir)
     {
         if (bomb == null || movement == null)
@@ -113,40 +114,39 @@ public class PurpleLouieBombLineAbility : MonoBehaviour, IPlayerAbility
         if (count <= 0)
             return;
 
-        Vector2 origin = movement.Rigidbody != null ? movement.Rigidbody.position : (Vector2)transform.position;
+        Vector2 origin = movement.Rigidbody != null
+            ? movement.Rigidbody.position
+            : (Vector2)transform.position;
+
         origin.x = Mathf.Round(origin.x / movement.tileSize) * movement.tileSize;
         origin.y = Mathf.Round(origin.y / movement.tileSize) * movement.tileSize;
 
-        // começa no tile da frente
         Vector2 pos = origin + dir * movement.tileSize;
 
         for (int i = 0; i < count; i++)
         {
-            // tenta colocar no tile atual
-            bool placed = bomb.TryPlaceBombAt(pos);
+            if (HasIndestructibleAt(pos))
+                break;
 
-            // Se não conseguiu colocar (obstáculo/bomba/tile destrutível/etc), para a linha aqui.
+            if (HasEnemyAt(pos))
+                break;
+
+            bool placed = bomb.TryPlaceBombAtIgnoringInputLock(pos);
             if (!placed)
                 break;
 
-            // próximo tile na mesma direção
             pos += dir * movement.tileSize;
 
-            // se acabou bombsRemaining, para
             if (bomb.BombsRemaining <= 0)
                 break;
         }
     }
 
-    public void Enable()
-    {
-        enabledAbility = true;
-    }
+    public void Enable() => enabledAbility = true;
 
     public void Disable()
     {
         enabledAbility = false;
-
         externalAnimator?.ForceStop();
 
         if (routine != null)
@@ -154,5 +154,17 @@ public class PurpleLouieBombLineAbility : MonoBehaviour, IPlayerAbility
             StopCoroutine(routine);
             routine = null;
         }
+    }
+
+    private bool HasIndestructibleAt(Vector2 worldPos)
+    {
+        int mask = 1 << LayerMask.NameToLayer("Stage");
+        return Physics2D.OverlapBox(worldPos, Vector2.one * 0.4f, 0f, mask) != null;
+    }
+
+    private bool HasEnemyAt(Vector2 worldPos)
+    {
+        int mask = 1 << LayerMask.NameToLayer("Enemy");
+        return Physics2D.OverlapBox(worldPos, Vector2.one * 0.4f, 0f, mask) != null;
     }
 }

@@ -28,7 +28,7 @@ public static class PlayerPersistentStats
         Purple = 3
     }
 
-    public static MountedLouieType MountedLouie = MountedLouieType.None;
+    public static MountedLouieType MountedLouie = MountedLouieType.Purple;
     public static int MountedLouieLife = 0;
 
     public static void LoadInto(MovementController movement, BombController bomb)
