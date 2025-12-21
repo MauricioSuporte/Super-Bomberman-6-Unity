@@ -59,7 +59,6 @@ public class MovementController : MonoBehaviour, IKillable
     protected AudioSource audioSource;
     protected BombController bombController;
     protected AbilitySystem abilitySystem;
-    protected BombKickAbility bombKickAbility;
 
     protected AnimatedSpriteRenderer activeSpriteRenderer;
 
@@ -635,10 +634,8 @@ public class MovementController : MonoBehaviour, IKillable
                 activeSpriteRenderer = mountedDown;
             }
 
-            bool playedOnLouie = false;
-
             if (TryGetComponent<PlayerLouieCompanion>(out var companion) && companion != null)
-                playedOnLouie = companion.TryPlayMountedLouieEndStage(endStageTotalTime, endStageFrameCount);
+                companion.TryPlayMountedLouieEndStage(endStageTotalTime, endStageFrameCount);
 
             return;
         }
@@ -670,7 +667,6 @@ public class MovementController : MonoBehaviour, IKillable
     {
         SetInputLocked(locked, true);
     }
-
 
     public void ForceIdleUp()
     {
@@ -817,7 +813,6 @@ public class MovementController : MonoBehaviour, IKillable
         }
 
         DisableAllMountedSprites();
-
         ApplyDirectionFromVector(direction);
     }
 

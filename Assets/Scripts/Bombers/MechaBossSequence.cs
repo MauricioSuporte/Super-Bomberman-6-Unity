@@ -64,6 +64,11 @@ public class MechaBossSequence : MonoBehaviour
     readonly Dictionary<Vector3Int, int> changedStandCells = new();
     readonly List<Vector3Int> spawnableCells = new();
 
+    Collider2D cachedPlayerCollider;
+    bool cachedColliderEnabled;
+    bool cachedColliderEnabledValid;
+    int playerSafetyLocks;
+
     void Awake()
     {
         mechas = new[] { whiteMecha, blackMecha, goldenMecha };
@@ -101,7 +106,6 @@ public class MechaBossSequence : MonoBehaviour
         initialized = true;
 
         LockPlayer(true);
-
         ForcePlayerMountedUpIfNeeded();
 
         for (int i = 0; i < mechas.Length; i++)
@@ -117,9 +121,7 @@ public class MechaBossSequence : MonoBehaviour
         if (initialized && !sequenceStarted)
         {
             sequenceStarted = true;
-
             ForcePlayerMountedUpIfNeeded();
-
             StartCoroutine(SpawnFirstMechaAfterStageStart());
         }
     }
@@ -128,21 +130,26 @@ public class MechaBossSequence : MonoBehaviour
     {
         if (StageIntroTransition.Instance != null)
         {
+            PushPlayerSafety();
+
             while (StageIntroTransition.Instance.IntroRunning)
             {
                 ForcePlayerMountedUpIfNeeded();
                 yield return null;
             }
+
+            PopPlayerSafety();
         }
 
         while (GamePauseController.IsPaused)
             yield return null;
 
         LockPlayer(true);
-
         ForcePlayerMountedUpIfNeeded();
 
+        PushPlayerSafety();
         yield return _waitForSeconds2;
+        PopPlayerSafety();
 
         StartMechaIntro(0);
     }
@@ -156,6 +163,7 @@ public class MechaBossSequence : MonoBehaviour
         LockPlayer(true);
 
         ForcePlayerMountedUpIfNeeded();
+        PushPlayerSafety();
 
         StartCoroutine(MechaIntroRoutine(mechas[index]));
     }
@@ -270,6 +278,8 @@ public class MechaBossSequence : MonoBehaviour
         mecha.SetExplosionInvulnerable(false);
 
         yield return StartCoroutine(CloseGateRoutine());
+
+        PopPlayerSafety();
 
         if (!itemLoopStarted && groundTilemap != null && itemPrefabs != null && itemPrefabs.Length > 0)
         {
@@ -556,26 +566,108 @@ public class MechaBossSequence : MonoBehaviour
         if (player == null || player.isDead)
             yield break;
 
-        player.StartCheering();
+        Vector2 center = new(
+            Mathf.Round(player.transform.position.x),
+            Mathf.Round(player.transform.position.y)
+        );
+
+        if (player.IsMountedOnLouie)
+            player.PlayEndStageSequence(center);
+        else
+            player.StartCheering();
+
+        // ✅ sem blink durante cheering (igual ClownMaskBoss)
+        MakePlayerSafeForCelebration();
 
         if (GameMusicController.Instance != null && bossCheeringMusic != null)
             GameMusicController.Instance.PlayMusic(bossCheeringMusic, 1f, false);
 
-        float cheeringDuration = 4f;
-        float fadeDuration = 1f;
-        float timeBeforeFade = Mathf.Max(0f, cheeringDuration - fadeDuration);
+        float cheeringDurationLocal = 4f;
+        float fadeDurationLocal = 1f;
+        float timeBeforeFade = Mathf.Max(0f, cheeringDurationLocal - fadeDurationLocal);
 
         if (timeBeforeFade > 0f)
             yield return new WaitForSeconds(timeBeforeFade);
 
         if (StageIntroTransition.Instance != null)
-            StageIntroTransition.Instance.StartFadeOut(fadeDuration);
+            StageIntroTransition.Instance.StartFadeOut(fadeDurationLocal);
 
-        if (fadeDuration > 0f)
-            yield return new WaitForSeconds(fadeDuration);
+        if (fadeDurationLocal > 0f)
+            yield return new WaitForSeconds(fadeDurationLocal);
 
         if (gameManager != null)
             gameManager.EndStage();
+    }
+
+    void PushPlayerSafety()
+    {
+        if (player == null)
+            return;
+
+        playerSafetyLocks++;
+
+        if (playerSafetyLocks > 1)
+            return;
+
+        player.SetExplosionInvulnerable(true);
+        player.SetInputLocked(true, false);
+
+        if (cachedPlayerCollider == null)
+            cachedPlayerCollider = player.GetComponent<Collider2D>();
+
+        if (cachedPlayerCollider != null)
+        {
+            cachedColliderEnabled = cachedPlayerCollider.enabled;
+            cachedColliderEnabledValid = true;
+            cachedPlayerCollider.enabled = false;
+        }
+
+        if (player.TryGetComponent<CharacterHealth>(out var health) && health != null)
+            health.StopInvulnerability(); // garante que não existe blink rodando
+    }
+
+    void PopPlayerSafety()
+    {
+        if (player == null)
+            return;
+
+        if (playerSafetyLocks <= 0)
+            return;
+
+        playerSafetyLocks--;
+
+        if (playerSafetyLocks > 0)
+            return;
+
+        if (cachedPlayerCollider == null)
+            cachedPlayerCollider = player.GetComponent<Collider2D>();
+
+        if (cachedPlayerCollider != null && cachedColliderEnabledValid)
+            cachedPlayerCollider.enabled = cachedColliderEnabled;
+
+        cachedColliderEnabledValid = false;
+    }
+
+    void MakePlayerSafeForCelebration()
+    {
+        if (player == null)
+            return;
+
+        player.SetExplosionInvulnerable(true);
+        player.SetInputLocked(true, false);
+
+        if (cachedPlayerCollider == null)
+            cachedPlayerCollider = player.GetComponent<Collider2D>();
+
+        if (cachedPlayerCollider != null)
+        {
+            cachedColliderEnabled = cachedPlayerCollider.enabled;
+            cachedColliderEnabledValid = true;
+            cachedPlayerCollider.enabled = false;
+        }
+
+        if (player.TryGetComponent<CharacterHealth>(out var health) && health != null)
+            health.StopInvulnerability();
     }
 
     void ForcePlayerMountedUpIfNeeded()
