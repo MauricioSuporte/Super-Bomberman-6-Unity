@@ -9,6 +9,7 @@ using UnityEngine;
 public class ClownMaskBoss : MonoBehaviour, IKillable
 {
     private static readonly WaitForSeconds _waitForSeconds1 = new(1f);
+
     [Header("References")]
     public CharacterHealth characterHealth;
     public ClownMaskMovement clownMovement;
@@ -72,6 +73,13 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
     public Vector2 deathExplosionPitchRange = new(0.95f, 1.05f);
     public bool deathSfxUseTempAudioObject = true;
     public float deathSfxSpatialBlend = 0f;
+
+    [Header("Touch Damage")]
+    public int touchDamage = 1;
+    public float touchDamageCooldown = 0.35f;
+
+    float nextTouchDamageTime;
+
     public static bool BossIntroRunning { get; private set; }
 
     bool isDead;
@@ -826,8 +834,7 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
         {
             target.RefreshFrame();
 
-            var sr = target.GetComponent<SpriteRenderer>();
-            if (sr != null)
+            if (target.TryGetComponent<SpriteRenderer>(out var sr))
                 sr.enabled = true;
         }
     }
@@ -844,29 +851,85 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
 
     void OnTriggerEnter2D(Collider2D other)
     {
+        TryApplyExplosionDamage(other);
+        TryApplyTouchDamage(other);
+    }
+
+    void OnTriggerStay2D(Collider2D other)
+    {
+        TryApplyTouchDamage(other);
+    }
+
+    void TryApplyExplosionDamage(Collider2D other)
+    {
         if (isDead || !bossSpawned || !introFinished)
             return;
 
-        int layer = other.gameObject.layer;
-
-        if (layer == LayerMask.NameToLayer("Explosion"))
-        {
-            if (characterHealth != null)
-                characterHealth.TakeDamage(1);
+        if (other.gameObject.layer != LayerMask.NameToLayer("Explosion"))
             return;
+
+        if (characterHealth == null || !characterHealth.enabled)
+            return;
+
+        if (characterHealth.IsInvulnerable)
+            return;
+
+        characterHealth.TakeDamage(1);
+    }
+
+    void TryApplyTouchDamage(Collider2D other)
+    {
+        if (isDead || !bossSpawned || !introFinished)
+            return;
+
+        if (!other.CompareTag("Player") && other.gameObject.layer != LayerMask.NameToLayer("Player"))
+            return;
+
+        if (Time.time < nextTouchDamageTime)
+            return;
+
+        if (!other.TryGetComponent<MovementController>(out var movement) || movement == null)
+            return;
+
+        if (movement.isDead || movement.IsEndingStage)
+            return;
+
+        if (movement.TryGetComponent<CharacterHealth>(out var playerHealth) && playerHealth != null)
+        {
+            if (playerHealth.IsInvulnerable)
+                return;
         }
 
-        if (layer == LayerMask.NameToLayer("Player") || other.CompareTag("Player"))
+        if (movement.IsMountedOnLouie)
         {
-            if (other.TryGetComponent<MovementController>(out var movement))
+            if (movement.TryGetComponent<PlayerLouieCompanion>(out var companion) && companion != null)
             {
-                movement.Kill();
+                companion.OnMountedLouieHit(touchDamage);
+                nextTouchDamageTime = Time.time + touchDamageCooldown;
                 return;
             }
 
-            if (other.TryGetComponent<CharacterHealth>(out var health))
-                health.TakeDamage(health.life);
+            if (playerHealth != null)
+            {
+                playerHealth.TakeDamage(touchDamage);
+                nextTouchDamageTime = Time.time + touchDamageCooldown;
+                return;
+            }
+
+            movement.Kill();
+            nextTouchDamageTime = Time.time + touchDamageCooldown;
+            return;
         }
+
+        if (playerHealth != null)
+        {
+            playerHealth.TakeDamage(touchDamage);
+            nextTouchDamageTime = Time.time + touchDamageCooldown;
+            return;
+        }
+
+        movement.Kill();
+        nextTouchDamageTime = Time.time + touchDamageCooldown;
     }
 
     void SetBossSpriteRenderersVisible(bool visible)

@@ -55,18 +55,56 @@ public class ClownStarProjectile : MonoBehaviour
 
         if (layer == LayerMask.NameToLayer("Player") || other.CompareTag("Player"))
         {
-            if (other.TryGetComponent<MovementController>(out var movement))
-                movement.Kill();
-            else if (other.TryGetComponent<CharacterHealth>(out var health))
-                health.TakeDamage(damage);
+            if (TryApplyPlayerHit(other))
+                Destroy(gameObject);
 
-            Destroy(gameObject);
             return;
         }
 
         if (((1 << layer) & obstacleMask.value) != 0)
-        {
             Destroy(gameObject);
+    }
+
+    bool TryApplyPlayerHit(Collider2D other)
+    {
+        if (!other.TryGetComponent<MovementController>(out var movement) || movement == null)
+            return false;
+
+        if (movement.isDead || movement.IsEndingStage)
+            return false;
+
+        CharacterHealth playerHealth = null;
+        if (movement.TryGetComponent<CharacterHealth>(out var h) && h != null)
+            playerHealth = h;
+
+        if (playerHealth != null && playerHealth.IsInvulnerable)
+            return false;
+
+        if (movement.IsMountedOnLouie)
+        {
+            if (movement.TryGetComponent<PlayerLouieCompanion>(out var companion) && companion != null)
+            {
+                companion.OnMountedLouieHit(damage);
+                return true;
+            }
+
+            if (playerHealth != null)
+            {
+                playerHealth.TakeDamage(damage);
+                return true;
+            }
+
+            movement.Kill();
+            return true;
         }
+
+        if (playerHealth != null)
+        {
+            playerHealth.TakeDamage(damage);
+            return true;
+        }
+
+        movement.Kill();
+        return true;
     }
 }
