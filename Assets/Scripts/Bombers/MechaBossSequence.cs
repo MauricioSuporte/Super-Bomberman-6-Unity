@@ -162,6 +162,8 @@ public class MechaBossSequence : MonoBehaviour
         MechaIntroRunning = true;
         LockPlayer(true);
 
+        BombController.ExplodeAllControlBombsInStage();
+
         ForcePlayerMountedUpIfNeeded();
         PushPlayerSafety();
 

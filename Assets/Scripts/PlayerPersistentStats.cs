@@ -16,8 +16,8 @@ public static class PlayerPersistentStats
     public static bool CanPunchBombs = true;
     public static bool CanPassBombs = true;
     public static bool CanPassDestructibles = true;
-    public static bool HasPierceBombs = true;
-    public static bool HasControlBombs = false;
+    public static bool HasPierceBombs = false;
+    public static bool HasControlBombs = true;
     public static bool HasFullFire = false;
 
     public enum MountedLouieType

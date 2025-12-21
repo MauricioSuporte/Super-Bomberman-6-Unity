@@ -632,4 +632,30 @@ public class BombController : MonoBehaviour
 
         return false;
     }
+
+    public static void ExplodeAllControlBombsInStage()
+    {
+        var bombs = FindObjectsByType<Bomb>(FindObjectsSortMode.None);
+        if (bombs == null || bombs.Length == 0)
+            return;
+
+        for (int i = 0; i < bombs.Length; i++)
+        {
+            var b = bombs[i];
+            if (b == null)
+                continue;
+
+            if (!b.IsControlBomb)
+                continue;
+
+            if (b.HasExploded)
+                continue;
+
+            var owner = b.Owner;
+            if (owner != null)
+                owner.ExplodeBomb(b.gameObject);
+            else
+                Object.Destroy(b.gameObject);
+        }
+    }
 }
