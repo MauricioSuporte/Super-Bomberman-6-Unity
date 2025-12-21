@@ -683,6 +683,31 @@ public class MovementController : MonoBehaviour, IKillable
             SetDirection(Vector2.zero, activeSpriteRenderer);
     }
 
+    public void ForceIdleUpConsideringMount()
+    {
+        direction = Vector2.zero;
+        hasInput = false;
+
+        facingDirection = Vector2.up;
+
+        if (isMountedOnLouie)
+        {
+            var up = mountedSpriteUp != null ? mountedSpriteUp : spriteRendererUp;
+            SetDirection(Vector2.zero, up);
+
+            var rider = GetComponentInChildren<LouieRiderVisual>(true);
+            if (rider != null)
+                rider.ForceIdleUp();
+        }
+        else
+        {
+            if (spriteRendererUp != null)
+                SetDirection(Vector2.zero, spriteRendererUp);
+            else
+                SetDirection(Vector2.zero, activeSpriteRenderer);
+        }
+    }
+
     public void SetExplosionInvulnerable(bool value)
     {
         explosionInvulnerable = value;

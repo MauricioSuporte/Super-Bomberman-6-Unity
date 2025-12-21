@@ -27,7 +27,7 @@ public static class PlayerPersistentStats
         Black = 2
     }
 
-    public static MountedLouieType MountedLouie = MountedLouieType.Black;
+    public static MountedLouieType MountedLouie = MountedLouieType.None;
     public static int MountedLouieLife = 1;
 
     public static void LoadInto(MovementController movement, BombController bomb)

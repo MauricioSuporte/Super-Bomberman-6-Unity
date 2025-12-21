@@ -466,7 +466,7 @@ public class StageIntroTransition : MonoBehaviour
                             playerCtrl.transform.position = targetPos;
                         }
 
-                        playerCtrl.ForceIdleUp();
+                        playerCtrl.ForceIdleUpConsideringMount();
                     }
                 }
 

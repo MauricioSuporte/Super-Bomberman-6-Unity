@@ -23,6 +23,8 @@ public class LouieRiderVisual : MonoBehaviour
     {
         owner = movement;
         playingEndStage = false;
+
+        SetExclusive(louieDown != null ? louieDown : louieUp);
         ApplyDirection(Vector2.down, true);
     }
 
@@ -60,13 +62,7 @@ public class LouieRiderVisual : MonoBehaviour
             return;
 
         if (active != target)
-        {
-            if (active != null)
-                active.enabled = false;
-
-            target.enabled = true;
-            active = target;
-        }
+            SetExclusive(target);
 
         active.idle = isIdle;
 
@@ -75,6 +71,35 @@ public class LouieRiderVisual : MonoBehaviour
             if (faceDir == Vector2.right) sr.flipX = true;
             else if (faceDir == Vector2.left) sr.flipX = false;
         }
+
+        active.RefreshFrame();
+    }
+
+    private void SetExclusive(AnimatedSpriteRenderer keep)
+    {
+        var anims = GetComponentsInChildren<AnimatedSpriteRenderer>(true);
+        for (int i = 0; i < anims.Length; i++)
+        {
+            var a = anims[i];
+            if (a == null) continue;
+
+            bool on = (a == keep);
+            a.enabled = on;
+
+            if (a.TryGetComponent<SpriteRenderer>(out var sr))
+                sr.enabled = on;
+        }
+
+        if (louieUp != null && louieUp != keep) louieUp.enabled = false;
+        if (louieDown != null && louieDown != keep) louieDown.enabled = false;
+        if (louieLeft != null && louieLeft != keep) louieLeft.enabled = false;
+        if (louieEndStage != null && louieEndStage != keep) louieEndStage.enabled = false;
+
+        keep.enabled = true;
+        if (keep.TryGetComponent<SpriteRenderer>(out var keepSr))
+            keepSr.enabled = true;
+
+        active = keep;
     }
 
     public bool TryPlayEndStage(float totalTime, int frameCount)
@@ -84,11 +109,8 @@ public class LouieRiderVisual : MonoBehaviour
 
         playingEndStage = true;
 
-        if (louieUp != null) louieUp.enabled = false;
-        if (louieDown != null) louieDown.enabled = false;
-        if (louieLeft != null) louieLeft.enabled = false;
+        SetExclusive(louieEndStage);
 
-        louieEndStage.enabled = true;
         louieEndStage.idle = false;
         louieEndStage.loop = true;
         louieEndStage.CurrentFrame = 0;
@@ -97,8 +119,25 @@ public class LouieRiderVisual : MonoBehaviour
         if (frameCount > 0)
             louieEndStage.animationTime = totalTime / frameCount;
 
-        active = louieEndStage;
-
         return true;
+    }
+
+    public void ForceIdleUp()
+    {
+        playingEndStage = false;
+
+        if (louieUp == null)
+            return;
+
+        SetExclusive(louieUp);
+
+        louieUp.idle = true;
+        louieUp.loop = false;
+        louieUp.RefreshFrame();
+    }
+
+    public void ForceOnlyUpEnabled()
+    {
+        ForceIdleUp();
     }
 }

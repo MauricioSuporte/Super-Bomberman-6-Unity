@@ -374,41 +374,58 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
         if (player.TryGetComponent<BombPunchAbility>(out var punch))
             punch.ForceResetPunchSprites();
 
-        DisableAllPlayerSpritesExcept(player.spriteRendererUp);
+        var keep = player.IsMountedOnLouie
+            ? (player.mountedSpriteUp != null ? player.mountedSpriteUp : player.spriteRendererUp)
+            : player.spriteRendererUp;
 
-        if (player.spriteRendererUp != null)
+        DisableAllPlayerSpritesExcept(keep, keepLouieVisual: true);
+
+        if (keep != null)
         {
-            player.spriteRendererUp.enabled = true;
-            player.spriteRendererUp.idle = true;
-            player.spriteRendererUp.loop = true;
-            player.spriteRendererUp.RefreshFrame();
+            keep.enabled = true;
+            keep.idle = true;
+            keep.loop = true;
+            keep.RefreshFrame();
 
-            var upSr = player.spriteRendererUp.GetComponent<SpriteRenderer>();
-            if (upSr != null)
-                upSr.enabled = true;
+            if (keep.TryGetComponent<SpriteRenderer>(out var sr))
+                sr.enabled = true;
         }
 
-        player.ForceIdleUp();
+        player.ForceIdleUpConsideringMount();
     }
 
-    void DisableAllPlayerSpritesExcept(AnimatedSpriteRenderer keep)
+    void DisableAllPlayerSpritesExcept(AnimatedSpriteRenderer keep, bool keepLouieVisual)
     {
         if (player == null) return;
 
         var anims = player.GetComponentsInChildren<AnimatedSpriteRenderer>(true);
         for (int i = 0; i < anims.Length; i++)
-            if (anims[i] != null)
-                anims[i].enabled = (anims[i] == keep);
+        {
+            var a = anims[i];
+            if (a == null) continue;
+
+            if (keepLouieVisual && a.GetComponentInParent<LouieRiderVisual>(true) != null)
+                continue;
+
+            a.enabled = (a == keep);
+        }
 
         var srs = player.GetComponentsInChildren<SpriteRenderer>(true);
         for (int i = 0; i < srs.Length; i++)
-            if (srs[i] != null)
-                srs[i].enabled = false;
+        {
+            var sr = srs[i];
+            if (sr == null) continue;
+
+            if (keepLouieVisual && sr.GetComponentInParent<LouieRiderVisual>(true) != null)
+                continue;
+
+            sr.enabled = false;
+        }
 
         if (keep != null)
         {
-            if (keep.TryGetComponent<SpriteRenderer>(out var sr))
-                sr.enabled = true;
+            if (keep.TryGetComponent<SpriteRenderer>(out var keepSr))
+                keepSr.enabled = true;
         }
     }
 
@@ -432,29 +449,14 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
         if (player == null)
             return;
 
-        player.ForceIdleUp();
+        player.ForceIdleUpConsideringMount();
 
-        var anims = player.GetComponentsInChildren<AnimatedSpriteRenderer>(true);
-        for (int i = 0; i < anims.Length; i++)
-            if (anims[i] != null)
-                anims[i].enabled = false;
-
-        var srs = player.GetComponentsInChildren<SpriteRenderer>(true);
-        for (int i = 0; i < srs.Length; i++)
-            if (srs[i] != null)
-                srs[i].enabled = false;
-
-        if (player.spriteRendererUp != null)
-        {
-            player.spriteRendererUp.enabled = true;
-            player.spriteRendererUp.idle = true;
-            player.spriteRendererUp.loop = true;
-            player.spriteRendererUp.RefreshFrame();
-
-            var upSr = player.spriteRendererUp.GetComponent<SpriteRenderer>();
-            if (upSr != null)
-                upSr.enabled = true;
-        }
+        DisableAllPlayerSpritesExcept(
+            player.IsMountedOnLouie
+                ? (player.mountedSpriteUp != null ? player.mountedSpriteUp : player.spriteRendererUp)
+                : player.spriteRendererUp,
+            keepLouieVisual: true
+        );
     }
 
     void LockPlayer(bool locked)
