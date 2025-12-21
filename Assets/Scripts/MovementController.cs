@@ -745,6 +745,37 @@ public class MovementController : MonoBehaviour, IKillable
     {
         isMountedOnLouie = mounted;
 
+        if (mounted)
+        {
+            DisableAllFootSprites();
+            DisableAllMountedSprites();
+
+            facingDirection = Vector2.down;
+            direction = Vector2.zero;
+            hasInput = false;
+
+            ApplyDirectionFromVector(Vector2.zero);
+            return;
+        }
+
+        DisableAllMountedSprites();
+
         ApplyDirectionFromVector(direction);
+    }
+
+    private void DisableAllFootSprites()
+    {
+        if (spriteRendererUp != null) spriteRendererUp.enabled = false;
+        if (spriteRendererDown != null) spriteRendererDown.enabled = false;
+        if (spriteRendererLeft != null) spriteRendererLeft.enabled = false;
+        if (spriteRendererRight != null) spriteRendererRight.enabled = false;
+    }
+
+    private void DisableAllMountedSprites()
+    {
+        if (mountedSpriteUp != null) mountedSpriteUp.enabled = false;
+        if (mountedSpriteDown != null) mountedSpriteDown.enabled = false;
+        if (mountedSpriteLeft != null) mountedSpriteLeft.enabled = false;
+        if (mountedSpriteRight != null) mountedSpriteRight.enabled = false;
     }
 }
