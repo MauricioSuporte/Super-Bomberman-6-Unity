@@ -240,6 +240,9 @@ public class YellowLouieDestructibleKickAbility : MonoBehaviour, IPlayerAbility
             if (hit.gameObject == gameObject)
                 continue;
 
+            if (enemyLayer >= 0 && hit.gameObject.layer == enemyLayer)
+                return true;
+
             if (hit.isTrigger)
                 continue;
 
