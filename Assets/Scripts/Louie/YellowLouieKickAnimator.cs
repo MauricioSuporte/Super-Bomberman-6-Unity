@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-[RequireComponent(typeof(LouieRiderVisual))]
 public class YellowLouieKickAnimator : MonoBehaviour, IYellowLouieDestructibleKickExternalAnimator
 {
     public AnimatedSpriteRenderer kickUp;
@@ -24,6 +23,16 @@ public class YellowLouieKickAnimator : MonoBehaviour, IYellowLouieDestructibleKi
     void Awake()
     {
         riderVisual = GetComponent<LouieRiderVisual>();
+    }
+
+    void OnDisable()
+    {
+        Stop();
+    }
+
+    void OnDestroy()
+    {
+        Stop();
     }
 
     public void Play(Vector2 dir)
@@ -83,32 +92,6 @@ public class YellowLouieKickAnimator : MonoBehaviour, IYellowLouieDestructibleKi
 
         if (riderVisual != null)
             riderVisual.enabled = true;
-
-        if (riderVisual != null)
-        {
-            var owner = riderVisual.owner;
-            if (owner != null && !owner.isDead)
-            {
-                var isIdle = owner.Direction == Vector2.zero;
-                var faceDir = isIdle ? owner.FacingDirection : owner.Direction;
-
-                AnimatedSpriteRenderer target;
-                if (faceDir == Vector2.up) target = riderVisual.louieUp;
-                else if (faceDir == Vector2.down) target = riderVisual.louieDown;
-                else target = riderVisual.louieLeft;
-
-                if (target != null)
-                {
-                    target.idle = isIdle;
-                    if (target.TryGetComponent<SpriteRenderer>(out var tsr))
-                    {
-                        if (faceDir == Vector2.right) tsr.flipX = true;
-                        else if (faceDir == Vector2.left) tsr.flipX = false;
-                    }
-                    target.RefreshFrame();
-                }
-            }
-        }
 
         playing = false;
     }

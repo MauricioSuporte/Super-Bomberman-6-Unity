@@ -22,6 +22,7 @@ public class YellowLouieDestructibleKickAbility : MonoBehaviour, IPlayerAbility
     public float kickCooldownSeconds = 0.25f;
 
     [Header("Chain")]
+    public float chainTransferDelaySeconds = 0.2f;
     public int maxChainTransfers = 32;
 
     [Header("SFX")]
@@ -33,6 +34,7 @@ public class YellowLouieDestructibleKickAbility : MonoBehaviour, IPlayerAbility
     AudioSource audioSource;
 
     Coroutine routine;
+    Coroutine kickVisualRoutine;
     bool kickActive;
     float nextAllowedKickTime;
 
@@ -113,27 +115,35 @@ public class YellowLouieDestructibleKickAbility : MonoBehaviour, IPlayerAbility
         if (dir == Vector2.zero)
             dir = Vector2.down;
 
-        Vector3Int step = new Vector3Int(Mathf.RoundToInt(dir.x), Mathf.RoundToInt(dir.y), 0);
+        Vector3Int step = new(Mathf.RoundToInt(dir.x), Mathf.RoundToInt(dir.y), 0);
         if (step == Vector3Int.zero)
         {
             routine = null;
             yield break;
         }
 
-        kickActive = true;
-        externalAnimator?.Play(dir);
+        StartKickVisuals(dir);
 
         float animEndTime = Time.time + kickCooldownSeconds;
+        bool inputUnlockedAfterAnim = false;
 
         var gm = FindFirstObjectByType<GameManager>();
         var tilemap = gm != null ? gm.destructibleTilemap : null;
 
+        movement.SetInputLocked(true, false);
+
         if (tilemap == null)
         {
-            float w = animEndTime - Time.time;
-            if (w > 0f) yield return new WaitForSeconds(w);
+            yield return WaitSecondsAndReleaseInput(kickCooldownSeconds, animEndTime, () =>
+            {
+                if (!inputUnlockedAfterAnim)
+                {
+                    inputUnlockedAfterAnim = true;
+                    if (movement != null) movement.SetInputLocked(false);
+                }
+            });
 
-            StopKickVisuals();
+            if (movement != null) movement.SetInputLocked(false);
             routine = null;
             yield break;
         }
@@ -142,13 +152,18 @@ public class YellowLouieDestructibleKickAbility : MonoBehaviour, IPlayerAbility
         Vector3Int hitCell = playerCell + step;
 
         TileBase movingTile = tilemap.GetTile(hitCell);
-
         if (movingTile == null)
         {
-            float w = animEndTime - Time.time;
-            if (w > 0f) yield return new WaitForSeconds(w);
+            yield return WaitSecondsAndReleaseInput(kickCooldownSeconds, animEndTime, () =>
+            {
+                if (!inputUnlockedAfterAnim)
+                {
+                    inputUnlockedAfterAnim = true;
+                    if (movement != null) movement.SetInputLocked(false);
+                }
+            });
 
-            StopKickVisuals();
+            if (movement != null) movement.SetInputLocked(false);
             routine = null;
             yield break;
         }
@@ -159,17 +174,20 @@ public class YellowLouieDestructibleKickAbility : MonoBehaviour, IPlayerAbility
         tilemap.SetTile(hitCell, null);
         tilemap.RefreshTile(hitCell);
 
-        movement.SetInputLocked(true, false);
-
         GameObject ghost = CreateGhost(tilemap, hitCell, movingTile);
 
         Vector3Int currentCell = hitCell;
-
         float stepSeconds = cellsPerSecond <= 0.01f ? 0.05f : (1f / cellsPerSecond);
         int transfers = 0;
 
         while (enabledAbility && movement != null && !movement.isDead)
         {
+            if (!inputUnlockedAfterAnim && Time.time >= animEndTime)
+            {
+                inputUnlockedAfterAnim = true;
+                movement.SetInputLocked(false);
+            }
+
             Vector3Int nextCell = currentCell + step;
 
             TileBase blockingTile;
@@ -181,7 +199,7 @@ public class YellowLouieDestructibleKickAbility : MonoBehaviour, IPlayerAbility
             if (blockType == BlockType.Destructible)
             {
                 transfers++;
-                if (transfers > Mathf.Max(0, maxChainTransfers))
+                if (transfers > maxChainTransfers)
                     break;
 
                 tilemap.SetTile(currentCell, movingTile);
@@ -190,6 +208,15 @@ public class YellowLouieDestructibleKickAbility : MonoBehaviour, IPlayerAbility
                 if (ghost != null)
                     Destroy(ghost);
 
+                yield return WaitSecondsAndReleaseInput(chainTransferDelaySeconds, animEndTime, () =>
+                {
+                    if (!inputUnlockedAfterAnim)
+                    {
+                        inputUnlockedAfterAnim = true;
+                        if (movement != null) movement.SetInputLocked(false);
+                    }
+                });
+
                 movingTile = blockingTile;
                 currentCell = nextCell;
 
@@ -197,7 +224,6 @@ public class YellowLouieDestructibleKickAbility : MonoBehaviour, IPlayerAbility
                 tilemap.RefreshTile(currentCell);
 
                 ghost = CreateGhost(tilemap, currentCell, movingTile);
-
                 continue;
             }
 
@@ -210,20 +236,40 @@ public class YellowLouieDestructibleKickAbility : MonoBehaviour, IPlayerAbility
                 if (!enabledAbility || movement == null || movement.isDead)
                     break;
 
+                if (!inputUnlockedAfterAnim && Time.time >= animEndTime)
+                {
+                    inputUnlockedAfterAnim = true;
+                    movement.SetInputLocked(false);
+                }
+
                 tMove += Time.deltaTime / Mathf.Max(0.0001f, stepSeconds);
-
-                if (ghost != null)
-                    ghost.transform.position = Vector3.Lerp(from, to, Mathf.Clamp01(tMove));
-
+                ghost.transform.position = Vector3.Lerp(from, to, Mathf.Clamp01(tMove));
                 yield return null;
             }
 
             currentCell = nextCell;
         }
 
-        float finalWait = animEndTime - Time.time;
+        float finalWait = Mathf.Max(0f, animEndTime - Time.time);
         if (finalWait > 0f)
-            yield return new WaitForSeconds(finalWait);
+        {
+            yield return WaitSecondsAndReleaseInput(finalWait, animEndTime, () =>
+            {
+                if (!inputUnlockedAfterAnim)
+                {
+                    inputUnlockedAfterAnim = true;
+                    if (movement != null) movement.SetInputLocked(false);
+                }
+            });
+        }
+        else
+        {
+            if (!inputUnlockedAfterAnim && movement != null)
+            {
+                inputUnlockedAfterAnim = true;
+                movement.SetInputLocked(false);
+            }
+        }
 
         if (ghost != null)
             Destroy(ghost);
@@ -237,13 +283,69 @@ public class YellowLouieDestructibleKickAbility : MonoBehaviour, IPlayerAbility
         if (movement != null)
             movement.SetInputLocked(false);
 
-        StopKickVisuals();
         routine = null;
+    }
+
+    void StartKickVisuals(Vector2 dir)
+    {
+        kickActive = true;
+
+        if (kickVisualRoutine != null)
+            StopCoroutine(kickVisualRoutine);
+
+        externalAnimator?.Play(dir);
+
+        kickVisualRoutine = StartCoroutine(StopKickVisualsAfter(kickCooldownSeconds));
+    }
+
+    IEnumerator StopKickVisualsAfter(float seconds)
+    {
+        float end = Time.time + Mathf.Max(0.01f, seconds);
+
+        while (Time.time < end)
+        {
+            if (!enabledAbility || movement == null || movement.isDead)
+                break;
+
+            yield return null;
+        }
+
+        StopKickVisuals();
+    }
+
+    void StopKickVisuals()
+    {
+        if (!kickActive)
+            return;
+
+        kickActive = false;
+        externalAnimator?.Stop();
+
+        if (kickVisualRoutine != null)
+        {
+            StopCoroutine(kickVisualRoutine);
+            kickVisualRoutine = null;
+        }
+    }
+
+    IEnumerator WaitSecondsAndReleaseInput(float seconds, float animEndTime, System.Action releaseInputIfNeeded)
+    {
+        float end = Time.time + Mathf.Max(0f, seconds);
+        while (Time.time < end)
+        {
+            if (Time.time >= animEndTime)
+                releaseInputIfNeeded?.Invoke();
+
+            yield return null;
+        }
+
+        if (Time.time >= animEndTime)
+            releaseInputIfNeeded?.Invoke();
     }
 
     GameObject CreateGhost(Tilemap tilemap, Vector3Int cell, TileBase tile)
     {
-        GameObject ghost = new GameObject("YellowKickBlock_Ghost");
+        GameObject ghost = new("YellowKickBlock_Ghost");
         ghost.transform.position = tilemap.GetCellCenterWorld(cell);
 
         var sr = ghost.AddComponent<SpriteRenderer>();
@@ -257,8 +359,6 @@ public class YellowLouieDestructibleKickAbility : MonoBehaviour, IPlayerAbility
 
     BlockType GetBlockType(Tilemap destructibleTilemap, Vector3Int cell, Vector2 dir, out TileBase blockingTile)
     {
-        blockingTile = null;
-
         blockingTile = destructibleTilemap.GetTile(cell);
         if (blockingTile != null)
             return BlockType.Destructible;
@@ -270,7 +370,6 @@ public class YellowLouieDestructibleKickAbility : MonoBehaviour, IPlayerAbility
             : new Vector2(movement.tileSize * 0.2f, movement.tileSize * 0.6f);
 
         int mask = movement.obstacleMask.value;
-
         int enemyLayer = LayerMask.NameToLayer("Enemy");
         if (enemyLayer >= 0)
             mask |= 1 << enemyLayer;
@@ -282,28 +381,13 @@ public class YellowLouieDestructibleKickAbility : MonoBehaviour, IPlayerAbility
         for (int i = 0; i < hits.Length; i++)
         {
             var hit = hits[i];
-            if (hit == null)
+            if (hit == null || hit.isTrigger || hit.gameObject == gameObject)
                 continue;
-
-            if (hit.gameObject == gameObject)
-                continue;
-
-            if (hit.isTrigger)
-                continue;
-
-            if (enemyLayer >= 0 && hit.gameObject.layer == enemyLayer)
-                return BlockType.Solid;
 
             return BlockType.Solid;
         }
 
         return BlockType.None;
-    }
-
-    void StopKickVisuals()
-    {
-        kickActive = false;
-        externalAnimator?.Stop();
     }
 
     void CancelKick()
@@ -314,8 +398,7 @@ public class YellowLouieDestructibleKickAbility : MonoBehaviour, IPlayerAbility
             routine = null;
         }
 
-        kickActive = false;
-        externalAnimator?.Stop();
+        StopKickVisuals();
 
         if (movement != null)
             movement.SetInputLocked(false);
