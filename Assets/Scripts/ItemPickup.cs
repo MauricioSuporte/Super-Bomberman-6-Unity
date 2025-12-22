@@ -32,7 +32,8 @@ public class ItemPickup : MonoBehaviour
         BlackLouieEgg,
         PurpleLouieEgg,
         GreenLouieEgg,
-        YellowLouieEgg
+        YellowLouieEgg,
+        PinkLouieEgg // NEW
     }
 
     public ItemType type;
@@ -56,7 +57,8 @@ public class ItemPickup : MonoBehaviour
             || t == ItemType.BlackLouieEgg
             || t == ItemType.PurpleLouieEgg
             || t == ItemType.GreenLouieEgg
-            || t == ItemType.YellowLouieEgg;
+            || t == ItemType.YellowLouieEgg
+            || t == ItemType.PinkLouieEgg; // NEW
     }
 
     private bool PlayerAlreadyMounted(GameObject player)
@@ -205,6 +207,11 @@ public class ItemPickup : MonoBehaviour
             case ItemType.YellowLouieEgg:
                 if (player.TryGetComponent<PlayerLouieCompanion>(out var louieYellow))
                     louieYellow.MountYellowLouie();
+                break;
+
+            case ItemType.PinkLouieEgg:
+                if (player.TryGetComponent<PlayerLouieCompanion>(out var louiePink))
+                    louiePink.MountPinkLouie();
                 break;
         }
 

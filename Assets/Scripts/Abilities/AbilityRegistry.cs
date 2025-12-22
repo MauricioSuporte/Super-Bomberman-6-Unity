@@ -16,6 +16,7 @@ public static class AbilityRegistry
         { PurpleLouieBombLineAbility.AbilityId, typeof(PurpleLouieBombLineAbility) },
         { GreenLouieDashAbility.AbilityId, typeof(GreenLouieDashAbility) },
         { YellowLouieDestructibleKickAbility.AbilityId, typeof(YellowLouieDestructibleKickAbility) },
+        { PinkLouieJumpAbility.AbilityId, typeof(PinkLouieJumpAbility) },
     };
 
     public static bool TryGetType(string id, out Type type)

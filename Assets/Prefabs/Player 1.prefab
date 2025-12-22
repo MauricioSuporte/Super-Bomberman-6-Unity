@@ -1432,6 +1432,7 @@ MonoBehaviour:
   purpleLouiePrefab: {fileID: 2273416014071709654, guid: 4c1f15aebbfb67f4e861c0b651c9d20b, type: 3}
   greenLouiePrefab: {fileID: 2273416014071709654, guid: ae3de5f5097f5ba40b045745d253586a, type: 3}
   yellowLouiePrefab: {fileID: 2273416014071709654, guid: 18a28a73f2f20a349aba53112f2f4a07, type: 3}
+  pinkLouiePrefab: {fileID: 2273416014071709654, guid: 077a9ad657bf9be4fb1728d85f02354c, type: 3}
   localOffset: {x: 0, y: -0.15}
   louieDeathSeconds: 0.5
   playerInvulnerabilityAfterLoseLouieSeconds: 0.8

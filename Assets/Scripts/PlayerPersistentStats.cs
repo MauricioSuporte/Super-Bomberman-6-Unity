@@ -15,7 +15,7 @@ public static class PlayerPersistentStats
     public static bool CanKickBombs = false;
     public static bool CanPunchBombs = true;
     public static bool CanPassBombs = true;
-    public static bool CanPassDestructibles = true;
+    public static bool CanPassDestructibles = false;
     public static bool HasPierceBombs = true;
     public static bool HasControlBombs = false;
     public static bool HasFullFire = false;
@@ -27,10 +27,11 @@ public static class PlayerPersistentStats
         Black = 2,
         Purple = 3,
         Green = 4,
-        Yellow = 5
+        Yellow = 5,
+        Pink = 6
     }
 
-    public static MountedLouieType MountedLouie = MountedLouieType.Yellow;
+    public static MountedLouieType MountedLouie = MountedLouieType.Pink;
     public static int MountedLouieLife = 2;
 
     public static void LoadInto(MovementController movement, BombController bomb)
@@ -118,6 +119,10 @@ public static class PlayerPersistentStats
 
                     case MountedLouieType.Yellow:
                         louieCompanion.RestoreMountedYellowLouie();
+                        break;
+
+                    case MountedLouieType.Pink:
+                        louieCompanion.RestoreMountedPinkLouie();
                         break;
                 }
             }

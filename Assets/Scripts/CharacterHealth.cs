@@ -74,6 +74,9 @@ public class CharacterHealth : MonoBehaviour
     }
 
     public void StartTemporaryInvulnerability(float seconds)
+        => StartTemporaryInvulnerability(seconds, withBlink: true);
+
+    public void StartTemporaryInvulnerability(float seconds, bool withBlink)
     {
         if (seconds <= 0f)
             return;
@@ -81,7 +84,10 @@ public class CharacterHealth : MonoBehaviour
         if (hitRoutine != null)
             StopCoroutine(hitRoutine);
 
-        hitRoutine = StartCoroutine(TemporaryInvulnerabilityRoutine(seconds));
+        if (withBlink)
+            hitRoutine = StartCoroutine(TemporaryInvulnerabilityRoutine(seconds));
+        else
+            hitRoutine = StartCoroutine(TemporaryInvulnerabilityNoBlinkRoutine(seconds));
     }
 
     public void StopInvulnerability()
@@ -97,6 +103,24 @@ public class CharacterHealth : MonoBehaviour
         for (int i = 0; i < spriteRenderers.Length; i++)
             if (spriteRenderers[i] != null)
                 spriteRenderers[i].color = originalColors[i];
+    }
+
+    IEnumerator TemporaryInvulnerabilityNoBlinkRoutine(float seconds)
+    {
+        isInvulnerable = true;
+
+        for (int i = 0; i < spriteRenderers.Length; i++)
+            if (spriteRenderers[i] != null)
+                spriteRenderers[i].color = originalColors[i];
+
+        yield return new WaitForSeconds(seconds);
+
+        for (int i = 0; i < spriteRenderers.Length; i++)
+            if (spriteRenderers[i] != null)
+                spriteRenderers[i].color = originalColors[i];
+
+        isInvulnerable = false;
+        hitRoutine = null;
     }
 
     IEnumerator TemporaryInvulnerabilityRoutine(float seconds)

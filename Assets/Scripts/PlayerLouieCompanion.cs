@@ -12,6 +12,7 @@ public class PlayerLouieCompanion : MonoBehaviour
     public GameObject purpleLouiePrefab;
     public GameObject greenLouiePrefab;
     public GameObject yellowLouiePrefab;
+    public GameObject pinkLouiePrefab;
 
     [Header("Local Offset")]
     public Vector2 localOffset = new(0f, -0.15f);
@@ -75,6 +76,7 @@ public class PlayerLouieCompanion : MonoBehaviour
     public void MountPurpleLouie() => MountLouieInternal(purpleLouiePrefab, PlayerPersistentStats.MountedLouieType.Purple);
     public void MountGreenLouie() => MountLouieInternal(greenLouiePrefab, PlayerPersistentStats.MountedLouieType.Green);
     public void MountYellowLouie() => MountLouieInternal(yellowLouiePrefab, PlayerPersistentStats.MountedLouieType.Yellow);
+    public void MountPinkLouie() => MountLouieInternal(pinkLouiePrefab, PlayerPersistentStats.MountedLouieType.Pink);
 
     public int GetMountedLouieLife()
     {
@@ -172,6 +174,7 @@ public class PlayerLouieCompanion : MonoBehaviour
         abilitySystem.Disable(PurpleLouieBombLineAbility.AbilityId);
         abilitySystem.Disable(GreenLouieDashAbility.AbilityId);
         abilitySystem.Disable(YellowLouieDestructibleKickAbility.AbilityId);
+        abilitySystem.Disable(PinkLouieJumpAbility.AbilityId);
 
         if (mountedType == PlayerPersistentStats.MountedLouieType.Blue)
         {
@@ -261,6 +264,34 @@ public class PlayerLouieCompanion : MonoBehaviour
                     kick.SetKickSfx(cfg.abilitySfx, cfg.abilityVolume);
                 else
                     kick.SetKickSfx(null, 1f);
+            }
+
+            return;
+        }
+
+        if (mountedType == PlayerPersistentStats.MountedLouieType.Pink)
+        {
+            abilitySystem.Enable(PinkLouieJumpAbility.AbilityId);
+
+            var jump = abilitySystem.Get<PinkLouieJumpAbility>(PinkLouieJumpAbility.AbilityId);
+            if (jump != null)
+            {
+                jump.triggerKey = KeyCode.B;
+
+                var anim = currentLouie != null
+                    ? currentLouie.GetComponentInChildren<IPinkLouieJumpExternalAnimator>(true)
+                    : null;
+
+                jump.SetExternalAnimator(anim);
+
+                var cfg = currentLouie != null
+                    ? currentLouie.GetComponentInChildren<LouieAbilitySfxConfig>(true)
+                    : null;
+
+                if (cfg != null)
+                    jump.SetJumpSfx(cfg.abilitySfx, cfg.abilityVolume);
+                else
+                    jump.SetJumpSfx(null, 1f);
             }
 
             return;
@@ -392,6 +423,7 @@ public class PlayerLouieCompanion : MonoBehaviour
         abilitySystem.Disable(PurpleLouieBombLineAbility.AbilityId);
         abilitySystem.Disable(GreenLouieDashAbility.AbilityId);
         abilitySystem.Disable(YellowLouieDestructibleKickAbility.AbilityId);
+        abilitySystem.Disable(PinkLouieJumpAbility.AbilityId);
 
         var kick = abilitySystem.Get<YellowLouieDestructibleKickAbility>(YellowLouieDestructibleKickAbility.AbilityId);
         if (kick != null)
@@ -405,6 +437,13 @@ public class PlayerLouieCompanion : MonoBehaviour
         {
             dash.SetExternalAnimator(null);
             dash.SetDashSfx(null, 1f);
+        }
+
+        var jump = abilitySystem.Get<PinkLouieJumpAbility>(PinkLouieJumpAbility.AbilityId);
+        if (jump != null)
+        {
+            jump.SetExternalAnimator(null);
+            jump.SetJumpSfx(null, 1f);
         }
 
         RestorePunchAfterUnmount();
@@ -453,8 +492,8 @@ public class PlayerLouieCompanion : MonoBehaviour
 
         abilitySystem.Disable(PurpleLouieBombLineAbility.AbilityId);
         abilitySystem.Disable(GreenLouieDashAbility.AbilityId);
-
         abilitySystem.Disable(YellowLouieDestructibleKickAbility.AbilityId);
+        abilitySystem.Disable(PinkLouieJumpAbility.AbilityId);
 
         var kick = abilitySystem.Get<YellowLouieDestructibleKickAbility>(YellowLouieDestructibleKickAbility.AbilityId);
         if (kick != null)
@@ -468,6 +507,13 @@ public class PlayerLouieCompanion : MonoBehaviour
         {
             dash.SetExternalAnimator(null);
             dash.SetDashSfx(null, 1f);
+        }
+
+        var jump = abilitySystem.Get<PinkLouieJumpAbility>(PinkLouieJumpAbility.AbilityId);
+        if (jump != null)
+        {
+            jump.SetExternalAnimator(null);
+            jump.SetJumpSfx(null, 1f);
         }
 
         RestorePunchAfterUnmount();
@@ -524,6 +570,14 @@ public class PlayerLouieCompanion : MonoBehaviour
             return;
 
         MountYellowLouie();
+    }
+
+    public void RestoreMountedPinkLouie()
+    {
+        if (currentLouie != null)
+            return;
+
+        MountPinkLouie();
     }
 
     public bool TryPlayMountedLouieEndStage(float totalTime, int frameCount)

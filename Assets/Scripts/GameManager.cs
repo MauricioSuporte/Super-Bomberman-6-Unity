@@ -33,9 +33,11 @@ public class GameManager : MonoBehaviour
     public ItemPickup purpleLouieEggItemPrefab;
     public ItemPickup greenLouieEggItemPrefab;
     public ItemPickup yellowLouieEggItemPrefab;
+    public ItemPickup pinkLouieEggItemPrefab; // NEW
 
     [Header("Stage")]
     public Tilemap destructibleTilemap;
+    public Tilemap indestructibleTilemap;
 
     [Header("Stage Flow")]
     public string nextStageSceneName;
@@ -68,6 +70,7 @@ public class GameManager : MonoBehaviour
     int purpleLouieEggSpawnOrder = -1;
     int greenLouieEggSpawnOrder = -1;
     int yellowLouieEggSpawnOrder = -1;
+    int pinkLouieEggSpawnOrder = -1; // NEW
 
     void Start()
     {
@@ -162,6 +165,9 @@ public class GameManager : MonoBehaviour
 
         if (yellowLouieEggItemPrefab != null && cursor < indices.Count)
             yellowLouieEggSpawnOrder = indices[cursor++];
+
+        if (pinkLouieEggItemPrefab != null && cursor < indices.Count) // NEW
+            pinkLouieEggSpawnOrder = indices[cursor++];
     }
 
     public GameObject GetSpawnForDestroyedBlock()
@@ -226,6 +232,9 @@ public class GameManager : MonoBehaviour
         if (order == yellowLouieEggSpawnOrder && yellowLouieEggItemPrefab != null)
             return yellowLouieEggItemPrefab.gameObject;
 
+        if (order == pinkLouieEggSpawnOrder && pinkLouieEggItemPrefab != null) // NEW
+            return pinkLouieEggItemPrefab.gameObject;
+
         return null;
     }
 
@@ -246,17 +255,13 @@ public class GameManager : MonoBehaviour
         foreach (GameObject player in players)
         {
             if (player.activeSelf)
-            {
                 aliveCount++;
-            }
         }
 
         if (aliveCount <= 1)
         {
             if (StageIntroTransition.Instance != null)
-            {
                 StageIntroTransition.Instance.StartFadeOut(2f);
-            }
 
             StartCoroutine(RestartRoundRoutine());
         }
@@ -313,9 +318,7 @@ public class GameManager : MonoBehaviour
         Time.timeScale = 1f;
 
         if (StageIntroTransition.Instance != null)
-        {
             StageIntroTransition.Instance.StartEndingScreenSequence();
-        }
     }
 
     void ApplyDestructibleShadows()
