@@ -1,5 +1,6 @@
 ﻿using Assets.Scripts.Interface;
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
@@ -43,6 +44,8 @@ public class YellowLouieDestructibleKickAbility : MonoBehaviour, IPlayerAbility
     float nextAllowedKickTime;
 
     IYellowLouieDestructibleKickExternalAnimator externalAnimator;
+
+    static readonly HashSet<Vector3Int> _reservedCells = new HashSet<Vector3Int>();
 
     public string Id => AbilityId;
     public bool IsEnabled => enabledAbility;
@@ -102,7 +105,7 @@ public class YellowLouieDestructibleKickAbility : MonoBehaviour, IPlayerAbility
         nextAllowedKickTime = Time.time + kickCooldownSeconds;
 
         if (routine != null)
-            StopCoroutine(routine);
+            return;
 
         routine = StartCoroutine(KickRoutine());
     }
@@ -119,7 +122,7 @@ public class YellowLouieDestructibleKickAbility : MonoBehaviour, IPlayerAbility
         if (dir == Vector2.zero)
             dir = Vector2.down;
 
-        Vector3Int step = new(Mathf.RoundToInt(dir.x), Mathf.RoundToInt(dir.y), 0);
+        Vector3Int step = new Vector3Int(Mathf.RoundToInt(dir.x), Mathf.RoundToInt(dir.y), 0);
         if (step == Vector3Int.zero)
         {
             routine = null;
@@ -175,146 +178,182 @@ public class YellowLouieDestructibleKickAbility : MonoBehaviour, IPlayerAbility
         if (audioSource != null && kickSfx != null)
             audioSource.PlayOneShot(kickSfx, kickSfxVolume);
 
-        tilemap.SetTile(hitCell, null);
-        tilemap.RefreshTile(hitCell);
-
-        GameObject ghost = CreateGhost(tilemap, hitCell, movingTile);
-
+        GameObject ghost = null;
+        bool tileRemovedFromMap = false;
         Vector3Int currentCell = hitCell;
-        float stepSeconds = cellsPerSecond <= 0.01f ? 0.05f : (1f / cellsPerSecond);
-        int transfers = 0;
 
-        bool endedBySolid = false;
+        var reservedLocal = new HashSet<Vector3Int>();
 
-        while (enabledAbility && movement != null && !movement.isDead)
+        System.Action<Vector3Int> reserve = c =>
         {
-            if (!inputUnlockedAfterAnim && Time.time >= animEndTime)
+            _reservedCells.Add(c);
+            reservedLocal.Add(c);
+        };
+
+        System.Action<Vector3Int> release = c =>
+        {
+            _reservedCells.Remove(c);
+            reservedLocal.Remove(c);
+        };
+
+        try
+        {
+            tilemap.SetTile(hitCell, null);
+            tilemap.RefreshTile(hitCell);
+            tileRemovedFromMap = true;
+
+            ghost = CreateGhost(tilemap, hitCell, movingTile);
+            reserve(currentCell);
+
+            float stepSeconds = cellsPerSecond <= 0.01f ? 0.05f : (1f / cellsPerSecond);
+            int transfers = 0;
+
+            bool endedBySolid = false;
+
+            while (enabledAbility && movement != null && !movement.isDead)
             {
-                inputUnlockedAfterAnim = true;
-                movement.SetInputLocked(false);
-            }
-
-            Vector3Int nextCell = currentCell + step;
-
-            TileBase blockingTile;
-            var blockType = GetBlockType(tilemap, nextCell, dir, out blockingTile);
-
-            if (blockType == BlockType.Solid)
-            {
-                endedBySolid = true;
-                break;
-            }
-
-            if (blockType == BlockType.Destructible)
-            {
-                transfers++;
-                if (transfers > maxChainTransfers)
-                    break;
-
-                Vector3 basePos = tilemap.GetCellCenterWorld(currentCell);
-
-                if (ghost != null)
-                {
-                    yield return ShakeGhost(ghost, basePos, chainTransferDelaySeconds, stopShakeAmplitude, stopShakeFrequency);
-                    if (ghost != null)
-                        ghost.transform.position = basePos;
-                }
-                else
-                {
-                    yield return WaitSecondsAndReleaseInput(chainTransferDelaySeconds, animEndTime, () =>
-                    {
-                        if (!inputUnlockedAfterAnim)
-                        {
-                            inputUnlockedAfterAnim = true;
-                            if (movement != null) movement.SetInputLocked(false);
-                        }
-                    });
-                }
-
-                tilemap.SetTile(currentCell, movingTile);
-                tilemap.RefreshTile(currentCell);
-
-                if (ghost != null)
-                    Destroy(ghost);
-
-                movingTile = blockingTile;
-                currentCell = nextCell;
-
-                tilemap.SetTile(currentCell, null);
-                tilemap.RefreshTile(currentCell);
-
-                ghost = CreateGhost(tilemap, currentCell, movingTile);
-                continue;
-            }
-
-            Vector3 from = tilemap.GetCellCenterWorld(currentCell);
-            Vector3 to = tilemap.GetCellCenterWorld(nextCell);
-
-            float tMove = 0f;
-            while (tMove < 1f)
-            {
-                if (!enabledAbility || movement == null || movement.isDead)
-                    break;
-
                 if (!inputUnlockedAfterAnim && Time.time >= animEndTime)
                 {
                     inputUnlockedAfterAnim = true;
                     movement.SetInputLocked(false);
                 }
 
-                tMove += Time.deltaTime / Mathf.Max(0.0001f, stepSeconds);
+                Vector3Int nextCell = currentCell + step;
 
-                if (ghost != null)
-                    ghost.transform.position = Vector3.Lerp(from, to, Mathf.Clamp01(tMove));
+                TileBase blockingTile;
+                var blockType = GetBlockType(tilemap, nextCell, dir, out blockingTile);
 
-                yield return null;
+                if (blockType == BlockType.Solid)
+                {
+                    endedBySolid = true;
+                    break;
+                }
+
+                if (blockType == BlockType.Destructible)
+                {
+                    transfers++;
+                    if (transfers > maxChainTransfers)
+                        break;
+
+                    Vector3 basePos = tilemap.GetCellCenterWorld(currentCell);
+
+                    if (ghost != null)
+                    {
+                        yield return ShakeGhost(ghost, basePos, chainTransferDelaySeconds, stopShakeAmplitude, stopShakeFrequency);
+                        if (ghost != null)
+                            ghost.transform.position = basePos;
+                    }
+                    else
+                    {
+                        yield return WaitSecondsAndReleaseInput(chainTransferDelaySeconds, animEndTime, () =>
+                        {
+                            if (!inputUnlockedAfterAnim)
+                            {
+                                inputUnlockedAfterAnim = true;
+                                if (movement != null) movement.SetInputLocked(false);
+                            }
+                        });
+                    }
+
+                    tilemap.SetTile(currentCell, movingTile);
+                    tilemap.RefreshTile(currentCell);
+                    tileRemovedFromMap = false;
+
+                    if (ghost != null)
+                        Destroy(ghost);
+                    ghost = null;
+
+                    release(currentCell);
+
+                    movingTile = blockingTile;
+                    currentCell = nextCell;
+
+                    tilemap.SetTile(currentCell, null);
+                    tilemap.RefreshTile(currentCell);
+                    tileRemovedFromMap = true;
+
+                    ghost = CreateGhost(tilemap, currentCell, movingTile);
+                    reserve(currentCell);
+                    continue;
+                }
+
+                reserve(nextCell);
+
+                Vector3 from = tilemap.GetCellCenterWorld(currentCell);
+                Vector3 to = tilemap.GetCellCenterWorld(nextCell);
+
+                float tMove = 0f;
+                while (tMove < 1f)
+                {
+                    if (!enabledAbility || movement == null || movement.isDead)
+                        break;
+
+                    if (!inputUnlockedAfterAnim && Time.time >= animEndTime)
+                    {
+                        inputUnlockedAfterAnim = true;
+                        movement.SetInputLocked(false);
+                    }
+
+                    tMove += Time.deltaTime / Mathf.Max(0.0001f, stepSeconds);
+
+                    if (ghost != null)
+                        ghost.transform.position = Vector3.Lerp(from, to, Mathf.Clamp01(tMove));
+
+                    yield return null;
+                }
+
+                release(currentCell);
+                currentCell = nextCell;
             }
 
-            currentCell = nextCell;
-        }
-
-        float finalWait = Mathf.Max(0f, animEndTime - Time.time);
-        if (finalWait > 0f)
-        {
-            yield return WaitSecondsAndReleaseInput(finalWait, animEndTime, () =>
+            float finalWait = Mathf.Max(0f, animEndTime - Time.time);
+            if (finalWait > 0f)
             {
-                if (!inputUnlockedAfterAnim)
+                yield return WaitSecondsAndReleaseInput(finalWait, animEndTime, () =>
+                {
+                    if (!inputUnlockedAfterAnim)
+                    {
+                        inputUnlockedAfterAnim = true;
+                        if (movement != null) movement.SetInputLocked(false);
+                    }
+                });
+            }
+            else
+            {
+                if (!inputUnlockedAfterAnim && movement != null)
                 {
                     inputUnlockedAfterAnim = true;
-                    if (movement != null) movement.SetInputLocked(false);
+                    movement.SetInputLocked(false);
                 }
-            });
-        }
-        else
-        {
-            if (!inputUnlockedAfterAnim && movement != null)
+            }
+
+            if (endedBySolid && ghost != null && enabledAbility && movement != null && !movement.isDead)
             {
-                inputUnlockedAfterAnim = true;
-                movement.SetInputLocked(false);
+                Vector3 basePos = tilemap.GetCellCenterWorld(currentCell);
+                yield return ShakeGhost(ghost, basePos, chainTransferDelaySeconds, stopShakeAmplitude, stopShakeFrequency);
+                if (ghost != null)
+                    ghost.transform.position = basePos;
             }
         }
-
-        if (endedBySolid && ghost != null && enabledAbility && movement != null && !movement.isDead)
+        finally
         {
-            Vector3 basePos = tilemap.GetCellCenterWorld(currentCell);
-            yield return ShakeGhost(ghost, basePos, chainTransferDelaySeconds, stopShakeAmplitude, stopShakeFrequency);
             if (ghost != null)
-                ghost.transform.position = basePos;
+                Destroy(ghost);
+
+            foreach (var c in reservedLocal)
+                _reservedCells.Remove(c);
+
+            if (tilemap != null && tileRemovedFromMap)
+            {
+                tilemap.SetTile(currentCell, movingTile);
+                tilemap.RefreshTile(currentCell);
+            }
+
+            if (movement != null)
+                movement.SetInputLocked(false);
+
+            routine = null;
         }
-
-        if (ghost != null)
-            Destroy(ghost);
-
-        if (tilemap != null)
-        {
-            tilemap.SetTile(currentCell, movingTile);
-            tilemap.RefreshTile(currentCell);
-        }
-
-        if (movement != null)
-            movement.SetInputLocked(false);
-
-        routine = null;
     }
 
     void StartKickVisuals(Vector2 dir)
@@ -404,7 +443,7 @@ public class YellowLouieDestructibleKickAbility : MonoBehaviour, IPlayerAbility
 
     GameObject CreateGhost(Tilemap tilemap, Vector3Int cell, TileBase tile)
     {
-        GameObject ghost = new("YellowKickBlock_Ghost");
+        GameObject ghost = new GameObject("YellowKickBlock_Ghost");
         ghost.transform.position = tilemap.GetCellCenterWorld(cell);
 
         var sr = ghost.AddComponent<SpriteRenderer>();
@@ -421,6 +460,9 @@ public class YellowLouieDestructibleKickAbility : MonoBehaviour, IPlayerAbility
         blockingTile = destructibleTilemap.GetTile(cell);
         if (blockingTile != null)
             return BlockType.Destructible;
+
+        if (_reservedCells.Contains(cell))
+            return BlockType.Solid;
 
         Vector3 center = destructibleTilemap.GetCellCenterWorld(cell);
 
