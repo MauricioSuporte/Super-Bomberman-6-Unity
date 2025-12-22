@@ -38,8 +38,16 @@ public class MovementController : MonoBehaviour, IKillable
     public AnimatedSpriteRenderer mountedSpriteLeft;
     public AnimatedSpriteRenderer mountedSpriteRight;
 
+    [Header("Contact Damage")]
+    public float contactDamageCooldownSeconds = 0.15f;
+
+    float nextContactDamageTime;
+
+    readonly System.Collections.Generic.HashSet<Collider2D> touchingHazards = new();
+
     [Header("Death Timing")]
     public float deathDisableSeconds = 2f;
+
     [Header("Death Behavior")]
     public bool checkWinStateOnDeath = true;
 
@@ -107,6 +115,12 @@ public class MovementController : MonoBehaviour, IKillable
     {
         direction = Vector2.zero;
         hasInput = false;
+        touchingHazards.Clear();
+    }
+
+    protected virtual void OnDisable()
+    {
+        touchingHazards.Clear();
     }
 
     protected virtual void Update()
@@ -461,34 +475,106 @@ public class MovementController : MonoBehaviour, IKillable
 
     protected virtual void OnTriggerEnter2D(Collider2D other)
     {
-        if (isDead || isEndingStage)
+        RegisterHazard(other);
+        TryApplyHazardDamage(other);
+    }
+
+    protected virtual void OnTriggerStay2D(Collider2D other)
+    {
+        RegisterHazard(other);
+        TryApplyHazardDamage(other);
+    }
+
+    protected virtual void OnTriggerExit2D(Collider2D other)
+    {
+        if (other == null)
+            return;
+
+        touchingHazards.Remove(other);
+    }
+
+    void RegisterHazard(Collider2D other)
+    {
+        if (other == null)
             return;
 
         int layer = other.gameObject.layer;
+        if (layer != LayerMask.NameToLayer("Explosion") && layer != LayerMask.NameToLayer("Enemy"))
+            return;
 
-        if (layer == LayerMask.NameToLayer("Explosion") || layer == LayerMask.NameToLayer("Enemy"))
+        touchingHazards.Add(other);
+    }
+
+    void TryApplyHazardDamage(Collider2D other)
+    {
+        if (isDead || isEndingStage)
+            return;
+
+        if (other == null)
+            return;
+
+        int layer = other.gameObject.layer;
+        if (layer != LayerMask.NameToLayer("Explosion") && layer != LayerMask.NameToLayer("Enemy"))
+            return;
+
+        if (Time.time < nextContactDamageTime)
+            return;
+
+        if (layer == LayerMask.NameToLayer("Explosion") && explosionInvulnerable)
+            return;
+
+        CharacterHealth playerHealth = null;
+
+        if (TryGetComponent<CharacterHealth>(out var ph) && ph != null)
         {
-            if (CompareTag("Player") && isMountedOnLouie)
-            {
-                if (TryGetComponent<PlayerLouieCompanion>(out var companion))
-                    companion.OnMountedLouieHit(1);
-                else
-                    DeathSequence();
-
+            playerHealth = ph;
+            if (playerHealth.IsInvulnerable)
                 return;
-            }
-
-            if (TryGetComponent<CharacterHealth>(out var health))
-            {
-                health.TakeDamage(1);
-                return;
-            }
-
-            if (layer == LayerMask.NameToLayer("Explosion") && explosionInvulnerable)
-                return;
-
-            DeathSequence();
         }
+
+        if (CompareTag("Player") && isMountedOnLouie)
+        {
+            var mountedHealth = GetMountedLouieHealth();
+            if (mountedHealth != null && mountedHealth.IsInvulnerable)
+                return;
+
+            if (TryGetComponent<PlayerLouieCompanion>(out var companion) && companion != null)
+            {
+                companion.OnMountedLouieHit(1);
+                nextContactDamageTime = Time.time + Mathf.Max(0.01f, contactDamageCooldownSeconds);
+                return;
+            }
+
+            if (playerHealth != null)
+            {
+                playerHealth.TakeDamage(1);
+                nextContactDamageTime = Time.time + Mathf.Max(0.01f, contactDamageCooldownSeconds);
+                return;
+            }
+
+            Kill();
+            nextContactDamageTime = Time.time + Mathf.Max(0.01f, contactDamageCooldownSeconds);
+            return;
+        }
+
+        if (playerHealth != null)
+        {
+            playerHealth.TakeDamage(1);
+            nextContactDamageTime = Time.time + Mathf.Max(0.01f, contactDamageCooldownSeconds);
+            return;
+        }
+
+        DeathSequence();
+        nextContactDamageTime = Time.time + Mathf.Max(0.01f, contactDamageCooldownSeconds);
+    }
+
+    CharacterHealth GetMountedLouieHealth()
+    {
+        var louieMove = GetComponentInChildren<LouieMovementController>(true);
+        if (louieMove == null)
+            return null;
+
+        return louieMove.GetComponent<CharacterHealth>();
     }
 
     public virtual void Kill()
@@ -507,6 +593,8 @@ public class MovementController : MonoBehaviour, IKillable
 
         isDead = true;
         inputLocked = true;
+
+        touchingHazards.Clear();
 
         if (abilitySystem != null)
             abilitySystem.DisableAll();

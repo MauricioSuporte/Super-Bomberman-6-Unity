@@ -23,7 +23,7 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
 
     [Header("Invulnerability")]
     public bool invulnerableDuringJump = true;
-    public float postLandingInvulnerableSeconds = 1f;
+    public float postLandingInvulnerableSeconds = 0f;
 
     [Header("SFX")]
     public AudioClip jumpSfx;
@@ -161,15 +161,7 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
         movement.SetInputLocked(true, false);
 
         if (invulnerableDuringJump)
-        {
-            float invulnSeconds = Mathf.Max(0.01f, jumpDurationSeconds + Mathf.Max(0f, postLandingInvulnerableSeconds));
-
-            if (playerHealth != null)
-                playerHealth.StartTemporaryInvulnerability(invulnSeconds, withBlink: false);
-
-            if (mountedLouieHealth != null)
-                mountedLouieHealth.StartTemporaryInvulnerability(invulnSeconds, withBlink: false);
-        }
+            StartJumpInvulnerabilityOnly(mountedLouieHealth);
 
         if (audioSource != null && jumpSfx != null)
             audioSource.PlayOneShot(jumpSfx, jumpSfxVolume);
@@ -213,12 +205,48 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
 
         rb.position = endPos;
 
+        if (invulnerableDuringJump)
+            ApplyPostLandingInvulnerability(mountedLouieHealth);
+
         StopJumpVisuals();
 
         if (movement != null)
             movement.SetInputLocked(false);
 
         routine = null;
+    }
+
+    void StartJumpInvulnerabilityOnly(CharacterHealth mountedLouieHealth)
+    {
+        float seconds = Mathf.Max(0.01f, jumpDurationSeconds);
+
+        if (playerHealth != null)
+            playerHealth.StartTemporaryInvulnerability(seconds, withBlink: false);
+
+        if (mountedLouieHealth != null)
+            mountedLouieHealth.StartTemporaryInvulnerability(seconds, withBlink: false);
+    }
+
+    void ApplyPostLandingInvulnerability(CharacterHealth mountedLouieHealth)
+    {
+        float post = Mathf.Max(0f, postLandingInvulnerableSeconds);
+
+        if (post <= 0f)
+        {
+            if (playerHealth != null)
+                playerHealth.StopInvulnerability();
+
+            if (mountedLouieHealth != null)
+                mountedLouieHealth.StopInvulnerability();
+
+            return;
+        }
+
+        if (playerHealth != null)
+            playerHealth.StartTemporaryInvulnerability(post, withBlink: false);
+
+        if (mountedLouieHealth != null)
+            mountedLouieHealth.StartTemporaryInvulnerability(post, withBlink: false);
     }
 
     CharacterHealth GetMountedLouieHealth()
