@@ -21,6 +21,9 @@ public class YellowLouieDestructibleKickAbility : MonoBehaviour, IPlayerAbility
     [Header("Kick Timing")]
     public float kickCooldownSeconds = 0.25f;
 
+    [Header("Chain")]
+    public int maxChainTransfers = 32;
+
     [Header("SFX")]
     public AudioClip kickSfx;
     [Range(0f, 1f)] public float kickSfxVolume = 1f;
@@ -37,6 +40,13 @@ public class YellowLouieDestructibleKickAbility : MonoBehaviour, IPlayerAbility
 
     public string Id => AbilityId;
     public bool IsEnabled => enabledAbility;
+
+    enum BlockType
+    {
+        None = 0,
+        Solid = 1,
+        Destructible = 2
+    }
 
     void Awake()
     {
@@ -103,7 +113,7 @@ public class YellowLouieDestructibleKickAbility : MonoBehaviour, IPlayerAbility
         if (dir == Vector2.zero)
             dir = Vector2.down;
 
-        Vector3Int step = new(Mathf.RoundToInt(dir.x), Mathf.RoundToInt(dir.y), 0);
+        Vector3Int step = new Vector3Int(Mathf.RoundToInt(dir.x), Mathf.RoundToInt(dir.y), 0);
         if (step == Vector3Int.zero)
         {
             routine = null;
@@ -120,7 +130,9 @@ public class YellowLouieDestructibleKickAbility : MonoBehaviour, IPlayerAbility
 
         if (tilemap == null)
         {
-            yield return new WaitForSeconds(kickCooldownSeconds);
+            float w = animEndTime - Time.time;
+            if (w > 0f) yield return new WaitForSeconds(w);
+
             StopKickVisuals();
             routine = null;
             yield break;
@@ -129,12 +141,12 @@ public class YellowLouieDestructibleKickAbility : MonoBehaviour, IPlayerAbility
         Vector3Int playerCell = tilemap.WorldToCell(rb.position);
         Vector3Int hitCell = playerCell + step;
 
-        var hitTile = tilemap.GetTile(hitCell);
+        TileBase movingTile = tilemap.GetTile(hitCell);
 
-        if (hitTile == null)
+        if (movingTile == null)
         {
-            float wait = animEndTime - Time.time;
-            if (wait > 0f) yield return new WaitForSeconds(wait);
+            float w = animEndTime - Time.time;
+            if (w > 0f) yield return new WaitForSeconds(w);
 
             StopKickVisuals();
             routine = null;
@@ -149,24 +161,45 @@ public class YellowLouieDestructibleKickAbility : MonoBehaviour, IPlayerAbility
 
         movement.SetInputLocked(true, false);
 
-        GameObject ghost = new("YellowKickBlock_Ghost");
-        ghost.transform.position = tilemap.GetCellCenterWorld(hitCell);
-
-        var sr = ghost.AddComponent<SpriteRenderer>();
-        sr.sortingOrder = 10;
-
-        if (hitTile is Tile t && t.sprite != null)
-            sr.sprite = t.sprite;
+        GameObject ghost = CreateGhost(tilemap, hitCell, movingTile);
 
         Vector3Int currentCell = hitCell;
+
         float stepSeconds = cellsPerSecond <= 0.01f ? 0.05f : (1f / cellsPerSecond);
+        int transfers = 0;
 
         while (enabledAbility && movement != null && !movement.isDead)
         {
             Vector3Int nextCell = currentCell + step;
 
-            if (IsCellBlocked(tilemap, nextCell, dir))
+            TileBase blockingTile;
+            var blockType = GetBlockType(tilemap, nextCell, dir, out blockingTile);
+
+            if (blockType == BlockType.Solid)
                 break;
+
+            if (blockType == BlockType.Destructible)
+            {
+                transfers++;
+                if (transfers > Mathf.Max(0, maxChainTransfers))
+                    break;
+
+                tilemap.SetTile(currentCell, movingTile);
+                tilemap.RefreshTile(currentCell);
+
+                if (ghost != null)
+                    Destroy(ghost);
+
+                movingTile = blockingTile;
+                currentCell = nextCell;
+
+                tilemap.SetTile(currentCell, null);
+                tilemap.RefreshTile(currentCell);
+
+                ghost = CreateGhost(tilemap, currentCell, movingTile);
+
+                continue;
+            }
 
             Vector3 from = tilemap.GetCellCenterWorld(currentCell);
             Vector3 to = tilemap.GetCellCenterWorld(nextCell);
@@ -178,7 +211,10 @@ public class YellowLouieDestructibleKickAbility : MonoBehaviour, IPlayerAbility
                     break;
 
                 tMove += Time.deltaTime / Mathf.Max(0.0001f, stepSeconds);
-                ghost.transform.position = Vector3.Lerp(from, to, Mathf.Clamp01(tMove));
+
+                if (ghost != null)
+                    ghost.transform.position = Vector3.Lerp(from, to, Mathf.Clamp01(tMove));
+
                 yield return null;
             }
 
@@ -194,7 +230,7 @@ public class YellowLouieDestructibleKickAbility : MonoBehaviour, IPlayerAbility
 
         if (tilemap != null)
         {
-            tilemap.SetTile(currentCell, hitTile);
+            tilemap.SetTile(currentCell, movingTile);
             tilemap.RefreshTile(currentCell);
         }
 
@@ -205,16 +241,27 @@ public class YellowLouieDestructibleKickAbility : MonoBehaviour, IPlayerAbility
         routine = null;
     }
 
-    void StopKickVisuals()
+    GameObject CreateGhost(Tilemap tilemap, Vector3Int cell, TileBase tile)
     {
-        kickActive = false;
-        externalAnimator?.Stop();
+        GameObject ghost = new GameObject("YellowKickBlock_Ghost");
+        ghost.transform.position = tilemap.GetCellCenterWorld(cell);
+
+        var sr = ghost.AddComponent<SpriteRenderer>();
+        sr.sortingOrder = 10;
+
+        if (tile is Tile t && t.sprite != null)
+            sr.sprite = t.sprite;
+
+        return ghost;
     }
 
-    bool IsCellBlocked(Tilemap destructibleTilemap, Vector3Int cell, Vector2 dir)
+    BlockType GetBlockType(Tilemap destructibleTilemap, Vector3Int cell, Vector2 dir, out TileBase blockingTile)
     {
-        if (destructibleTilemap.GetTile(cell) != null)
-            return true;
+        blockingTile = null;
+
+        blockingTile = destructibleTilemap.GetTile(cell);
+        if (blockingTile != null)
+            return BlockType.Destructible;
 
         Vector3 center = destructibleTilemap.GetCellCenterWorld(cell);
 
@@ -223,13 +270,14 @@ public class YellowLouieDestructibleKickAbility : MonoBehaviour, IPlayerAbility
             : new Vector2(movement.tileSize * 0.2f, movement.tileSize * 0.6f);
 
         int mask = movement.obstacleMask.value;
+
         int enemyLayer = LayerMask.NameToLayer("Enemy");
         if (enemyLayer >= 0)
             mask |= 1 << enemyLayer;
 
         var hits = Physics2D.OverlapBoxAll(center, size, 0f, mask);
         if (hits == null || hits.Length == 0)
-            return false;
+            return BlockType.None;
 
         for (int i = 0; i < hits.Length; i++)
         {
@@ -240,16 +288,22 @@ public class YellowLouieDestructibleKickAbility : MonoBehaviour, IPlayerAbility
             if (hit.gameObject == gameObject)
                 continue;
 
-            if (enemyLayer >= 0 && hit.gameObject.layer == enemyLayer)
-                return true;
-
             if (hit.isTrigger)
                 continue;
 
-            return true;
+            if (enemyLayer >= 0 && hit.gameObject.layer == enemyLayer)
+                return BlockType.Solid;
+
+            return BlockType.Solid;
         }
 
-        return false;
+        return BlockType.None;
+    }
+
+    void StopKickVisuals()
+    {
+        kickActive = false;
+        externalAnimator?.Stop();
     }
 
     void CancelKick()
