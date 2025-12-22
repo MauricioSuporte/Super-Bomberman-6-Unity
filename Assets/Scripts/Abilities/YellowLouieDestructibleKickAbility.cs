@@ -103,7 +103,7 @@ public class YellowLouieDestructibleKickAbility : MonoBehaviour, IPlayerAbility
         if (dir == Vector2.zero)
             dir = Vector2.down;
 
-        Vector3Int step = new Vector3Int(Mathf.RoundToInt(dir.x), Mathf.RoundToInt(dir.y), 0);
+        Vector3Int step = new(Mathf.RoundToInt(dir.x), Mathf.RoundToInt(dir.y), 0);
         if (step == Vector3Int.zero)
         {
             routine = null;
@@ -149,7 +149,7 @@ public class YellowLouieDestructibleKickAbility : MonoBehaviour, IPlayerAbility
 
         movement.SetInputLocked(true, false);
 
-        GameObject ghost = new GameObject("YellowKickBlock_Ghost");
+        GameObject ghost = new("YellowKickBlock_Ghost");
         ghost.transform.position = tilemap.GetCellCenterWorld(hitCell);
 
         var sr = ghost.AddComponent<SpriteRenderer>();
