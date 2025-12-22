@@ -16,11 +16,10 @@ public class YellowLouieDestructibleKickAbility : MonoBehaviour, IPlayerAbility
     public KeyCode triggerKey = KeyCode.B;
 
     [Header("Move")]
-    [Tooltip("Células por segundo.")]
     public float cellsPerSecond = 10f;
 
-    [Header("Collision")]
-    public string destructiblesTag = "Destructibles";
+    [Header("Kick Timing")]
+    public float kickCooldownSeconds = 0.25f;
 
     [Header("SFX")]
     public AudioClip kickSfx;
@@ -32,6 +31,7 @@ public class YellowLouieDestructibleKickAbility : MonoBehaviour, IPlayerAbility
 
     Coroutine routine;
     bool kickActive;
+    float nextAllowedKickTime;
 
     IYellowLouieDestructibleKickExternalAnimator externalAnimator;
 
@@ -67,7 +67,10 @@ public class YellowLouieDestructibleKickAbility : MonoBehaviour, IPlayerAbility
         if (!CompareTag("Player"))
             return;
 
-        if (movement == null || movement.isDead || movement.InputLocked)
+        if (movement == null || movement.isDead)
+            return;
+
+        if (Time.time < nextAllowedKickTime)
             return;
 
         if (GamePauseController.IsPaused ||
@@ -80,6 +83,8 @@ public class YellowLouieDestructibleKickAbility : MonoBehaviour, IPlayerAbility
         if (!Input.GetKeyDown(triggerKey))
             return;
 
+        nextAllowedKickTime = Time.time + kickCooldownSeconds;
+
         if (routine != null)
             StopCoroutine(routine);
 
@@ -89,15 +94,6 @@ public class YellowLouieDestructibleKickAbility : MonoBehaviour, IPlayerAbility
     IEnumerator KickRoutine()
     {
         if (movement == null || rb == null)
-        {
-            routine = null;
-            yield break;
-        }
-
-        var gm = FindFirstObjectByType<GameManager>();
-        var tilemap = gm != null ? gm.destructibleTilemap : null;
-
-        if (tilemap == null)
         {
             routine = null;
             yield break;
@@ -114,24 +110,42 @@ public class YellowLouieDestructibleKickAbility : MonoBehaviour, IPlayerAbility
             yield break;
         }
 
-        Vector3Int playerCell = tilemap.WorldToCell(rb.position);
-        Vector3Int hitCell = playerCell + step;
+        kickActive = true;
+        externalAnimator?.Play(dir);
 
-        var hitTile = tilemap.GetTile(hitCell);
-        if (hitTile == null)
+        float animEndTime = Time.time + kickCooldownSeconds;
+
+        var gm = FindFirstObjectByType<GameManager>();
+        var tilemap = gm != null ? gm.destructibleTilemap : null;
+
+        if (tilemap == null)
         {
+            yield return new WaitForSeconds(kickCooldownSeconds);
+            StopKickVisuals();
             routine = null;
             yield break;
         }
 
-        // remove tile do mapa para liberar collider durante o movimento
-        tilemap.SetTile(hitCell, null);
-        tilemap.RefreshTile(hitCell);
+        Vector3Int playerCell = tilemap.WorldToCell(rb.position);
+        Vector3Int hitCell = playerCell + step;
 
-        kickActive = true;
+        var hitTile = tilemap.GetTile(hitCell);
+
+        if (hitTile == null)
+        {
+            float wait = animEndTime - Time.time;
+            if (wait > 0f) yield return new WaitForSeconds(wait);
+
+            StopKickVisuals();
+            routine = null;
+            yield break;
+        }
 
         if (audioSource != null && kickSfx != null)
             audioSource.PlayOneShot(kickSfx, kickSfxVolume);
+
+        tilemap.SetTile(hitCell, null);
+        tilemap.RefreshTile(hitCell);
 
         movement.SetInputLocked(true, false);
 
@@ -139,70 +153,66 @@ public class YellowLouieDestructibleKickAbility : MonoBehaviour, IPlayerAbility
         ghost.transform.position = tilemap.GetCellCenterWorld(hitCell);
 
         var sr = ghost.AddComponent<SpriteRenderer>();
-        sr.sortingOrder = 10; // ajuste se precisar
+        sr.sortingOrder = 10;
 
-        // tenta extrair sprite do tile (Tile)
         if (hitTile is Tile t && t.sprite != null)
             sr.sprite = t.sprite;
 
-        externalAnimator?.Play(dir);
-
         Vector3Int currentCell = hitCell;
+        float stepSeconds = cellsPerSecond <= 0.01f ? 0.05f : (1f / cellsPerSecond);
 
-        try
+        while (enabledAbility && movement != null && !movement.isDead)
         {
-            float stepSeconds = cellsPerSecond <= 0.01f ? 0.05f : (1f / cellsPerSecond);
+            Vector3Int nextCell = currentCell + step;
 
-            while (enabledAbility && movement != null && !movement.isDead)
+            if (IsCellBlocked(tilemap, nextCell, dir))
+                break;
+
+            Vector3 from = tilemap.GetCellCenterWorld(currentCell);
+            Vector3 to = tilemap.GetCellCenterWorld(nextCell);
+
+            float tMove = 0f;
+            while (tMove < 1f)
             {
-                Vector3Int nextCell = currentCell + step;
-
-                if (IsCellBlocked(tilemap, nextCell, dir))
+                if (!enabledAbility || movement == null || movement.isDead)
                     break;
 
-                Vector3 from = tilemap.GetCellCenterWorld(currentCell);
-                Vector3 to = tilemap.GetCellCenterWorld(nextCell);
-
-                float tMove = 0f;
-                while (tMove < 1f)
-                {
-                    if (!enabledAbility || movement == null || movement.isDead)
-                        yield break;
-
-                    tMove += Time.deltaTime / Mathf.Max(0.0001f, stepSeconds);
-                    ghost.transform.position = Vector3.Lerp(from, to, Mathf.Clamp01(tMove));
-                    yield return null;
-                }
-
-                currentCell = nextCell;
+                tMove += Time.deltaTime / Mathf.Max(0.0001f, stepSeconds);
+                ghost.transform.position = Vector3.Lerp(from, to, Mathf.Clamp01(tMove));
+                yield return null;
             }
+
+            currentCell = nextCell;
         }
-        finally
+
+        float finalWait = animEndTime - Time.time;
+        if (finalWait > 0f)
+            yield return new WaitForSeconds(finalWait);
+
+        if (ghost != null)
+            Destroy(ghost);
+
+        if (tilemap != null)
         {
-            kickActive = false;
-
-            externalAnimator?.Stop();
-
-            if (ghost != null)
-                Destroy(ghost);
-
-            // coloca o tile na última célula livre
-            if (tilemap != null)
-            {
-                tilemap.SetTile(currentCell, hitTile);
-                tilemap.RefreshTile(currentCell);
-            }
-
-            if (movement != null)
-                movement.SetInputLocked(false);
-
-            routine = null;
+            tilemap.SetTile(currentCell, hitTile);
+            tilemap.RefreshTile(currentCell);
         }
+
+        if (movement != null)
+            movement.SetInputLocked(false);
+
+        StopKickVisuals();
+        routine = null;
+    }
+
+    void StopKickVisuals()
+    {
+        kickActive = false;
+        externalAnimator?.Stop();
     }
 
     bool IsCellBlocked(Tilemap destructibleTilemap, Vector3Int cell, Vector2 dir)
     {
-        // já tem outro destrutível ali
         if (destructibleTilemap.GetTile(cell) != null)
             return true;
 
@@ -212,7 +222,6 @@ public class YellowLouieDestructibleKickAbility : MonoBehaviour, IPlayerAbility
             ? new Vector2(movement.tileSize * 0.6f, movement.tileSize * 0.2f)
             : new Vector2(movement.tileSize * 0.2f, movement.tileSize * 0.6f);
 
-        // usa obstacleMask do movement (Stage/Bomb) e adiciona Enemy
         int mask = movement.obstacleMask.value;
         int enemyLayer = LayerMask.NameToLayer("Enemy");
         if (enemyLayer >= 0)
@@ -234,8 +243,6 @@ public class YellowLouieDestructibleKickAbility : MonoBehaviour, IPlayerAbility
             if (hit.isTrigger)
                 continue;
 
-            // NÃO atravessa destrutíveis (a habilidade é “chutar”, não “passar”)
-            // então qualquer collider sólido encontrado bloqueia.
             return true;
         }
 
@@ -250,14 +257,11 @@ public class YellowLouieDestructibleKickAbility : MonoBehaviour, IPlayerAbility
             routine = null;
         }
 
-        if (kickActive)
-        {
-            kickActive = false;
-            externalAnimator?.Stop();
+        kickActive = false;
+        externalAnimator?.Stop();
 
-            if (movement != null)
-                movement.SetInputLocked(false);
-        }
+        if (movement != null)
+            movement.SetInputLocked(false);
     }
 
     public void Enable() => enabledAbility = true;

@@ -226,11 +226,11 @@ public class PlayerLouieCompanion : MonoBehaviour
                 dash.SetExternalAnimator(anim);
 
                 var cfg = currentLouie != null
-                    ? currentLouie.GetComponentInChildren<GreenLouieDashSfxConfig>(true)
+                    ? currentLouie.GetComponentInChildren<LouieAbilitySfxConfig>(true)
                     : null;
 
                 if (cfg != null)
-                    dash.SetDashSfx(cfg.dashSfx, cfg.dashVolume);
+                    dash.SetDashSfx(cfg.abilitySfx, cfg.abilityVolume);
                 else
                     dash.SetDashSfx(null, 1f);
             }
@@ -253,8 +253,14 @@ public class PlayerLouieCompanion : MonoBehaviour
 
                 kick.SetExternalAnimator(anim);
 
-                // se você criar um config tipo GreenLouieDashSfxConfig, pode setar aqui também
-                // kick.SetKickSfx(...);
+                var cfg = currentLouie != null
+                    ? currentLouie.GetComponentInChildren<LouieAbilitySfxConfig>(true)
+                    : null;
+
+                if (cfg != null)
+                    kick.SetKickSfx(cfg.abilitySfx, cfg.abilityVolume);
+                else
+                    kick.SetKickSfx(null, 1f);
             }
 
             return;
@@ -389,7 +395,10 @@ public class PlayerLouieCompanion : MonoBehaviour
 
         var kick = abilitySystem.Get<YellowLouieDestructibleKickAbility>(YellowLouieDestructibleKickAbility.AbilityId);
         if (kick != null)
+        {
             kick.SetExternalAnimator(null);
+            kick.SetKickSfx(null, 1f);
+        }
 
         var dash = abilitySystem.Get<GreenLouieDashAbility>(GreenLouieDashAbility.AbilityId);
         if (dash != null)
@@ -449,7 +458,10 @@ public class PlayerLouieCompanion : MonoBehaviour
 
         var kick = abilitySystem.Get<YellowLouieDestructibleKickAbility>(YellowLouieDestructibleKickAbility.AbilityId);
         if (kick != null)
+        {
             kick.SetExternalAnimator(null);
+            kick.SetKickSfx(null, 1f);
+        }
 
         var dash = abilitySystem.Get<GreenLouieDashAbility>(GreenLouieDashAbility.AbilityId);
         if (dash != null)

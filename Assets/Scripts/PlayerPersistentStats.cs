@@ -30,7 +30,7 @@ public static class PlayerPersistentStats
         Yellow = 5
     }
 
-    public static MountedLouieType MountedLouie = MountedLouieType.Green;
+    public static MountedLouieType MountedLouie = MountedLouieType.Yellow;
     public static int MountedLouieLife = 2;
 
     public static void LoadInto(MovementController movement, BombController bomb)

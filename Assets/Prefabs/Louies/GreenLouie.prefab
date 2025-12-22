@@ -710,8 +710,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: aeb569e071432dc49b0dbbadfb27af27, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GreenLouieDashSfxConfig
-  dashSfx: {fileID: 8300000, guid: 4458d9a4d63699d4889659881b717da6, type: 3}
-  dashVolume: 1
+  abilitySfx: {fileID: 8300000, guid: 4458d9a4d63699d4889659881b717da6, type: 3}
+  abilityVolume: 1
 --- !u!1 &2445788475736444126
 GameObject:
   m_ObjectHideFlags: 0

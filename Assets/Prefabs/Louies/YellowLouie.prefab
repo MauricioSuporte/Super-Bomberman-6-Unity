@@ -374,6 +374,7 @@ GameObject:
   - component: {fileID: -5936940310258290347}
   - component: {fileID: 2870228645174432188}
   - component: {fileID: -4538169248466786654}
+  - component: {fileID: 3822240261114814580}
   m_Layer: 0
   m_Name: YellowLouie
   m_TagString: Untagged
@@ -694,6 +695,20 @@ MonoBehaviour:
   kickDown: {fileID: 5471246735332489006}
   kickLeft: {fileID: 4507174183192697291}
   kickRight: {fileID: 2897987350496308459}
+--- !u!114 &3822240261114814580
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2273416014071709654}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aeb569e071432dc49b0dbbadfb27af27, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::LouieAbilitySfxConfig
+  abilitySfx: {fileID: 8300000, guid: e034fabfe2601e34fa9c46707e3d6da3, type: 3}
+  abilityVolume: 1
 --- !u!1 &2445788475736444126
 GameObject:
   m_ObjectHideFlags: 0
