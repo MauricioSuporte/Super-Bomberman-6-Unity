@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 public class ItemPickup : MonoBehaviour
 {
@@ -30,7 +30,9 @@ public class ItemPickup : MonoBehaviour
         Heart,
         BlueLouieEgg,
         BlackLouieEgg,
-        PurpleLouieEgg
+        PurpleLouieEgg,
+        GreenLouieEgg,
+        YellowLouieEgg
     }
 
     public ItemType type;
@@ -50,7 +52,11 @@ public class ItemPickup : MonoBehaviour
 
     private bool IsLouieEgg(ItemType t)
     {
-        return t == ItemType.BlueLouieEgg || t == ItemType.BlackLouieEgg || t == ItemType.PurpleLouieEgg;
+        return t == ItemType.BlueLouieEgg
+            || t == ItemType.BlackLouieEgg
+            || t == ItemType.PurpleLouieEgg
+            || t == ItemType.GreenLouieEgg
+            || t == ItemType.YellowLouieEgg;
     }
 
     private bool PlayerAlreadyMounted(GameObject player)
@@ -62,6 +68,15 @@ public class ItemPickup : MonoBehaviour
             return louieCompanion.GetMountedLouieType() != PlayerPersistentStats.MountedLouieType.None;
 
         return false;
+    }
+
+    private AbilitySystem GetOrCreateAbilitySystem(GameObject player)
+    {
+        if (!player.TryGetComponent<AbilitySystem>(out var abilitySystem))
+            abilitySystem = player.AddComponent<AbilitySystem>();
+
+        abilitySystem.RebuildCache();
+        return abilitySystem;
     }
 
     private void OnItemPickup(GameObject player)
@@ -98,28 +113,21 @@ public class ItemPickup : MonoBehaviour
 
             case ItemType.BombKick:
                 {
-                    if (!player.TryGetComponent<AbilitySystem>(out var abilitySystem))
-                        abilitySystem = player.AddComponent<AbilitySystem>();
-
+                    var abilitySystem = GetOrCreateAbilitySystem(player);
                     abilitySystem.Enable(BombKickAbility.AbilityId);
                     break;
                 }
 
             case ItemType.BombPunch:
                 {
-                    if (!player.TryGetComponent<AbilitySystem>(out var abilitySystem))
-                        abilitySystem = player.AddComponent<AbilitySystem>();
-
+                    var abilitySystem = GetOrCreateAbilitySystem(player);
                     abilitySystem.Enable(BombPunchAbility.AbilityId);
                     break;
                 }
 
             case ItemType.PierceBomb:
                 {
-                    if (!player.TryGetComponent<AbilitySystem>(out var abilitySystem))
-                        abilitySystem = player.AddComponent<AbilitySystem>();
-
-                    abilitySystem.RebuildCache();
+                    var abilitySystem = GetOrCreateAbilitySystem(player);
                     abilitySystem.Enable(PierceBombAbility.AbilityId);
                     abilitySystem.Disable(ControlBombAbility.AbilityId);
                     break;
@@ -127,10 +135,7 @@ public class ItemPickup : MonoBehaviour
 
             case ItemType.ControlBomb:
                 {
-                    if (!player.TryGetComponent<AbilitySystem>(out var abilitySystem))
-                        abilitySystem = player.AddComponent<AbilitySystem>();
-
-                    abilitySystem.RebuildCache();
+                    var abilitySystem = GetOrCreateAbilitySystem(player);
                     abilitySystem.Enable(ControlBombAbility.AbilityId);
                     abilitySystem.Disable(PierceBombAbility.AbilityId);
                     break;
@@ -138,40 +143,28 @@ public class ItemPickup : MonoBehaviour
 
             case ItemType.FullFire:
                 {
-                    if (!player.TryGetComponent<AbilitySystem>(out var abilitySystem))
-                        abilitySystem = player.AddComponent<AbilitySystem>();
-
-                    abilitySystem.RebuildCache();
+                    var abilitySystem = GetOrCreateAbilitySystem(player);
                     abilitySystem.Enable(FullFireAbility.AbilityId);
                     break;
                 }
 
             case ItemType.BombPass:
                 {
-                    if (!player.TryGetComponent<AbilitySystem>(out var abilitySystem))
-                        abilitySystem = player.AddComponent<AbilitySystem>();
-
-                    abilitySystem.RebuildCache();
+                    var abilitySystem = GetOrCreateAbilitySystem(player);
                     abilitySystem.Enable(BombPassAbility.AbilityId);
                     break;
                 }
 
             case ItemType.DestructiblePass:
                 {
-                    if (!player.TryGetComponent<AbilitySystem>(out var abilitySystem))
-                        abilitySystem = player.AddComponent<AbilitySystem>();
-
-                    abilitySystem.RebuildCache();
+                    var abilitySystem = GetOrCreateAbilitySystem(player);
                     abilitySystem.Enable(DestructiblePassAbility.AbilityId);
                     break;
                 }
 
             case ItemType.InvincibleSuit:
                 {
-                    if (!player.TryGetComponent<AbilitySystem>(out var abilitySystem))
-                        abilitySystem = player.AddComponent<AbilitySystem>();
-
-                    abilitySystem.RebuildCache();
+                    var abilitySystem = GetOrCreateAbilitySystem(player);
                     abilitySystem.Enable(InvincibleSuitAbility.AbilityId);
                     break;
                 }
@@ -193,7 +186,25 @@ public class ItemPickup : MonoBehaviour
 
             case ItemType.PurpleLouieEgg:
                 if (player.TryGetComponent<PlayerLouieCompanion>(out var louiePurple))
+                {
                     louiePurple.MountPurpleLouie();
+
+                    if (PlayerPersistentStats.MountedLouieLife <= 0)
+                    {
+                        int currentLife = louiePurple.GetMountedLouieLife();
+                        PlayerPersistentStats.MountedLouieLife = Mathf.Clamp(currentLife, 1, 2);
+                    }
+                }
+                break;
+
+            case ItemType.GreenLouieEgg:
+                if (player.TryGetComponent<PlayerLouieCompanion>(out var louieGreen))
+                    louieGreen.MountGreenLouie();
+                break;
+
+            case ItemType.YellowLouieEgg:
+                if (player.TryGetComponent<PlayerLouieCompanion>(out var louieYellow))
+                    louieYellow.MountYellowLouie();
                 break;
         }
 

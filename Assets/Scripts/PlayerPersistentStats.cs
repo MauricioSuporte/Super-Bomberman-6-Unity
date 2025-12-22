@@ -25,11 +25,13 @@ public static class PlayerPersistentStats
         None = 0,
         Blue = 1,
         Black = 2,
-        Purple = 3
+        Purple = 3,
+        Green = 4,
+        Yellow = 5
     }
 
-    public static MountedLouieType MountedLouie = MountedLouieType.Purple;
-    public static int MountedLouieLife = 0;
+    public static MountedLouieType MountedLouie = MountedLouieType.Green;
+    public static int MountedLouieLife = 2;
 
     public static void LoadInto(MovementController movement, BombController bomb)
     {
@@ -107,6 +109,16 @@ public static class PlayerPersistentStats
                         if (MountedLouieLife > 0)
                             louieCompanion.SetMountedLouieLife(MountedLouieLife);
                         break;
+
+                    case MountedLouieType.Green:
+                        louieCompanion.RestoreMountedGreenLouie();
+                        if (MountedLouieLife > 0)
+                            louieCompanion.SetMountedLouieLife(MountedLouieLife);
+                        break;
+
+                    case MountedLouieType.Yellow:
+                        louieCompanion.RestoreMountedYellowLouie();
+                        break;
                 }
             }
         }
@@ -158,8 +170,12 @@ public static class PlayerPersistentStats
             {
                 MountedLouie = louieCompanion.GetMountedLouieType();
 
-                if (MountedLouie == MountedLouieType.Black || MountedLouie == MountedLouieType.Purple)
+                if (MountedLouie == MountedLouieType.Black ||
+                    MountedLouie == MountedLouieType.Purple ||
+                    MountedLouie == MountedLouieType.Green)
+                {
                     MountedLouieLife = Mathf.Max(1, louieCompanion.GetMountedLouieLife());
+                }
             }
         }
 
