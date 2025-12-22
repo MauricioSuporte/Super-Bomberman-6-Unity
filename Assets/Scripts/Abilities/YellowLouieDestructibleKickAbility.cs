@@ -205,6 +205,8 @@ public class YellowLouieDestructibleKickAbility : MonoBehaviour, IPlayerAbility
             ghost = CreateGhost(tilemap, hitCell, movingTile);
             reserve(currentCell);
 
+            ApplyShadowForCell(currentCell);
+
             float stepSeconds = cellsPerSecond <= 0.01f ? 0.05f : (1f / cellsPerSecond);
             int transfers = 0;
 
@@ -264,6 +266,7 @@ public class YellowLouieDestructibleKickAbility : MonoBehaviour, IPlayerAbility
                     ghost = null;
 
                     release(currentCell);
+                    ApplyShadowForCell(currentCell);
 
                     movingTile = blockingTile;
                     currentCell = nextCell;
@@ -274,10 +277,14 @@ public class YellowLouieDestructibleKickAbility : MonoBehaviour, IPlayerAbility
 
                     ghost = CreateGhost(tilemap, currentCell, movingTile);
                     reserve(currentCell);
+
+                    ApplyShadowForCell(currentCell);
+
                     continue;
                 }
 
                 reserve(nextCell);
+                ApplyShadowForCell(nextCell);
 
                 Vector3 from = tilemap.GetCellCenterWorld(currentCell);
                 Vector3 to = tilemap.GetCellCenterWorld(nextCell);
@@ -303,6 +310,8 @@ public class YellowLouieDestructibleKickAbility : MonoBehaviour, IPlayerAbility
                 }
 
                 release(currentCell);
+                ApplyShadowForCell(currentCell);
+
                 currentCell = nextCell;
             }
 
@@ -348,6 +357,8 @@ public class YellowLouieDestructibleKickAbility : MonoBehaviour, IPlayerAbility
                 tilemap.SetTile(currentCell, movingTile);
                 tilemap.RefreshTile(currentCell);
             }
+
+            ApplyShadowForCell(currentCell);
 
             if (movement != null)
                 movement.SetInputLocked(false);
@@ -465,6 +476,32 @@ public class YellowLouieDestructibleKickAbility : MonoBehaviour, IPlayerAbility
             return at.m_AnimatedSprites[0];
 
         return null;
+    }
+
+    void ApplyShadowForCell(Vector3Int cell)
+    {
+        var gm = FindFirstObjectByType<GameManager>();
+        if (gm == null || gm.groundTilemap == null || gm.groundTile == null || gm.groundShadowTile == null)
+            return;
+
+        if (gm.destructibleTilemap == null)
+            return;
+
+        var below = new Vector3Int(cell.x, cell.y - 1, cell.z);
+        var currentGround = gm.groundTilemap.GetTile(below);
+
+        bool hasBlock = gm.destructibleTilemap.GetTile(cell) != null || _reservedCells.Contains(cell);
+
+        if (hasBlock)
+        {
+            if (currentGround == gm.groundTile)
+                gm.groundTilemap.SetTile(below, gm.groundShadowTile);
+        }
+        else
+        {
+            if (currentGround == gm.groundShadowTile)
+                gm.groundTilemap.SetTile(below, gm.groundTile);
+        }
     }
 
     BlockType GetBlockType(Tilemap destructibleTilemap, Vector3Int cell, Vector2 dir, out TileBase blockingTile)
