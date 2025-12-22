@@ -251,12 +251,13 @@ MonoBehaviour:
   greenLouieEggItemPrefab: {fileID: 2727780941473249227, guid: 7470da3ab77fb8e4799abdcb3b10ec1c, type: 3}
   yellowLouieEggItemPrefab: {fileID: 2727780941473249227, guid: a6fd0930a192f1b4591a1d5e377a1575, type: 3}
   pinkLouieEggItemPrefab: {fileID: 2727780941473249227, guid: 1074c7bdea3923b458e28e888a7e2750, type: 3}
-  destructibleTilemap: {fileID: 285353618}
+  destructibleTilemap: {fileID: 0}
   indestructibleTilemap: {fileID: 0}
   nextStageSceneName: Stage_1-2
   groundTilemap: {fileID: 672307155}
   groundTile: {fileID: 11400000, guid: ada74cfa1fdef9e4c86ccafaa1b2ae66, type: 2}
   groundShadowTile: {fileID: 11400000, guid: e0f633282caacc742af95bdd334dd0cf, type: 2}
+  autoResolveStageTilemaps: 1
 --- !u!114 &268450101
 MonoBehaviour:
   m_ObjectHideFlags: 0

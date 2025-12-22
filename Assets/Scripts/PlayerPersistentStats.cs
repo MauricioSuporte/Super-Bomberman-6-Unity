@@ -14,8 +14,8 @@ public static class PlayerPersistentStats
 
     public static bool CanKickBombs = false;
     public static bool CanPunchBombs = true;
-    public static bool CanPassBombs = true;
-    public static bool CanPassDestructibles = true;
+    public static bool CanPassBombs = false;
+    public static bool CanPassDestructibles = false;
     public static bool HasPierceBombs = true;
     public static bool HasControlBombs = false;
     public static bool HasFullFire = false;

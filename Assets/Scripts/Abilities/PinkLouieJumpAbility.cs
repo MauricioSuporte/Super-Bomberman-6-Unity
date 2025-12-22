@@ -35,6 +35,7 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
 
     CharacterHealth playerHealth;
     PlayerLouieCompanion companion;
+    AbilitySystem abilitySystem;
 
     Coroutine routine;
     Coroutine visualRoutine;
@@ -54,6 +55,7 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
 
         playerHealth = GetComponent<CharacterHealth>();
         TryGetComponent(out companion);
+        TryGetComponent(out abilitySystem);
     }
 
     void OnDisable() => CancelJump();
@@ -128,6 +130,7 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
         var gm = FindFirstObjectByType<GameManager>();
         var destructible = gm != null ? gm.destructibleTilemap : null;
         var indestructible = gm != null ? gm.indestructibleTilemap : null;
+        var ground = gm != null ? gm.groundTilemap : null;
 
         Vector3Int startCell = destructible != null
             ? destructible.WorldToCell(rb.position)
@@ -142,7 +145,7 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
 
             Vector3Int candidateFar = startCell + (step * maxCells);
 
-            if (IsLandingFree(candidateFar, destructible, indestructible))
+            if (IsLandingAllowed(candidateFar, destructible, indestructible, ground))
             {
                 targetCell = candidateFar;
             }
@@ -150,13 +153,13 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
             {
                 Vector3Int candidateNear = startCell + step;
 
-                if (IsLandingFree(candidateNear, destructible, indestructible))
+                if (IsLandingAllowed(candidateNear, destructible, indestructible, ground))
                     targetCell = candidateNear;
             }
         }
 
-        Vector3 startPos = CellCenter(startCell, destructible, indestructible);
-        Vector3 endPos = CellCenter(targetCell, destructible, indestructible);
+        Vector3 startPos = CellCenter(startCell, destructible, indestructible, ground);
+        Vector3 endPos = CellCenter(targetCell, destructible, indestructible, ground);
 
         movement.SetInputLocked(true, false);
 
@@ -190,7 +193,7 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
 
             if (wasMountedAtStart && !movement.IsMountedOnLouie)
             {
-                HandleLoseLouieMidJump(projectedGroundPos, startCell, destructible, indestructible);
+                HandleLoseLouieMidJump(projectedGroundPos, startCell, destructible, indestructible, ground);
                 StopJumpVisuals();
 
                 if (movement != null)
@@ -261,28 +264,33 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
         return louieMove.GetComponent<CharacterHealth>();
     }
 
-    void HandleLoseLouieMidJump(Vector3 projectedGroundPos, Vector3Int startCell, Tilemap destructible, Tilemap indestructible)
+    void HandleLoseLouieMidJump(Vector3 projectedGroundPos, Vector3Int startCell, Tilemap destructible, Tilemap indestructible, Tilemap ground)
     {
         if (rb == null)
             return;
 
         Vector3Int safeCell;
 
-        if (destructible != null)
+        if (ground != null)
+            safeCell = ground.WorldToCell(projectedGroundPos);
+        else if (destructible != null)
             safeCell = destructible.WorldToCell(projectedGroundPos);
         else if (indestructible != null)
             safeCell = indestructible.WorldToCell(projectedGroundPos);
         else
             safeCell = new Vector3Int(Mathf.RoundToInt(projectedGroundPos.x), Mathf.RoundToInt(projectedGroundPos.y), 0);
 
-        if (!IsLandingFree(safeCell, destructible, indestructible))
+        if (!IsLandingAllowed(safeCell, destructible, indestructible, ground))
             safeCell = startCell;
 
-        rb.position = CellCenter(safeCell, destructible, indestructible);
+        rb.position = CellCenter(safeCell, destructible, indestructible, ground);
     }
 
-    Vector3 CellCenter(Vector3Int cell, Tilemap destructible, Tilemap indestructible)
+    Vector3 CellCenter(Vector3Int cell, Tilemap destructible, Tilemap indestructible, Tilemap ground)
     {
+        if (ground != null)
+            return ground.GetCellCenterWorld(cell);
+
         if (destructible != null)
             return destructible.GetCellCenterWorld(cell);
 
@@ -292,15 +300,80 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
         return new Vector3(cell.x + 0.5f, cell.y + 0.5f, 0f);
     }
 
-    bool IsLandingFree(Vector3Int cell, Tilemap destructible, Tilemap indestructible)
+    bool IsLandingAllowed(Vector3Int cell, Tilemap destructible, Tilemap indestructible, Tilemap ground)
     {
-        if (destructible != null && destructible.GetTile(cell) != null)
+        if (!IsInsideStage(cell, ground, destructible, indestructible))
             return false;
 
         if (indestructible != null && indestructible.GetTile(cell) != null)
             return false;
 
+        bool hasDestructibleTile = destructible != null && destructible.GetTile(cell) != null;
+        if (hasDestructibleTile && !CanLandOnDestructibles())
+            return false;
+
+        Vector3 center = CellCenter(cell, destructible, indestructible, ground);
+        if (HasBombAt(center) && !CanLandOnBombs())
+            return false;
+
         return true;
+    }
+
+    bool IsInsideStage(Vector3Int cell, Tilemap ground, Tilemap destructible, Tilemap indestructible)
+    {
+        Tilemap boundsSource = ground != null ? ground : (destructible != null ? destructible : indestructible);
+        if (boundsSource == null)
+            return true;
+
+        var bounds = boundsSource.cellBounds;
+        if (!bounds.Contains(cell))
+            return false;
+
+        if (ground != null && ground.GetTile(cell) == null)
+            return false;
+
+        return true;
+    }
+
+    bool CanLandOnDestructibles()
+    {
+        if (abilitySystem != null)
+            return abilitySystem.IsEnabled(DestructiblePassAbility.AbilityId);
+
+        return PlayerPersistentStats.CanPassDestructibles;
+    }
+
+    bool CanLandOnBombs()
+    {
+        if (abilitySystem != null)
+            return abilitySystem.IsEnabled(BombPassAbility.AbilityId);
+
+        return PlayerPersistentStats.CanPassBombs;
+    }
+
+    bool HasBombAt(Vector3 worldCenter)
+    {
+        float tile = movement != null && movement.tileSize > 0f ? movement.tileSize : 1f;
+        Vector2 size = Vector2.one * (tile * 0.9f);
+
+        int bombMask = LayerMask.GetMask("Bomb");
+        if (bombMask == 0)
+            return false;
+
+        var hits = Physics2D.OverlapBoxAll(worldCenter, size, 0f, bombMask);
+        if (hits == null || hits.Length == 0)
+            return false;
+
+        for (int i = 0; i < hits.Length; i++)
+        {
+            var c = hits[i];
+            if (c == null)
+                continue;
+
+            return true;
+        }
+
+        return false;
     }
 
     void StartJumpVisuals(Vector2 dir)

@@ -8,6 +8,8 @@ using UnityEngine.Tilemaps;
 public class GameManager : MonoBehaviour
 {
     private static readonly WaitForSecondsRealtime _waitForSecondsRealtime2 = new(2f);
+    static readonly WaitForSecondsRealtime waitNextStageDelay = new(4f);
+
     public GameObject[] players;
 
     public int EnemiesAlive { get; private set; }
@@ -33,7 +35,7 @@ public class GameManager : MonoBehaviour
     public ItemPickup purpleLouieEggItemPrefab;
     public ItemPickup greenLouieEggItemPrefab;
     public ItemPickup yellowLouieEggItemPrefab;
-    public ItemPickup pinkLouieEggItemPrefab; // NEW
+    public ItemPickup pinkLouieEggItemPrefab;
 
     [Header("Stage")]
     public Tilemap destructibleTilemap;
@@ -42,12 +44,13 @@ public class GameManager : MonoBehaviour
     [Header("Stage Flow")]
     public string nextStageSceneName;
 
-    static readonly WaitForSecondsRealtime waitNextStageDelay = new(4f);
-
     [Header("Ground")]
     public Tilemap groundTilemap;
     public TileBase groundTile;
     public TileBase groundShadowTile;
+
+    [Header("Auto Resolve (Stage Tilemaps)")]
+    [SerializeField] private bool autoResolveStageTilemaps = true;
 
     int totalDestructibleBlocks;
     int destroyedDestructibleBlocks;
@@ -70,7 +73,13 @@ public class GameManager : MonoBehaviour
     int purpleLouieEggSpawnOrder = -1;
     int greenLouieEggSpawnOrder = -1;
     int yellowLouieEggSpawnOrder = -1;
-    int pinkLouieEggSpawnOrder = -1; // NEW
+    int pinkLouieEggSpawnOrder = -1;
+
+    void Awake()
+    {
+        if (autoResolveStageTilemaps)
+            ResolveStageTilemapsIfNeeded();
+    }
 
     void Start()
     {
@@ -81,6 +90,73 @@ public class GameManager : MonoBehaviour
 
         SetupHiddenObjects();
         ApplyDestructibleShadows();
+    }
+
+    void ResolveStageTilemapsIfNeeded()
+    {
+        if (destructibleTilemap != null && indestructibleTilemap != null && groundTilemap != null)
+            return;
+
+        var gameplayRoot = GameObject.Find("GameplayRoot");
+        Transform stageRoot = gameplayRoot != null ? gameplayRoot.transform.Find("Stage") : null;
+
+        if (stageRoot != null)
+        {
+            if (destructibleTilemap == null)
+                destructibleTilemap = FindTilemapUnder(stageRoot, "Destructibles");
+
+            if (indestructibleTilemap == null)
+                indestructibleTilemap = FindTilemapUnder(stageRoot, "Indestructibles");
+
+            if (groundTilemap == null)
+                groundTilemap = FindTilemapUnder(stageRoot, "Ground");
+        }
+
+        if (destructibleTilemap == null)
+            destructibleTilemap = FindTilemapByNameFallback("Destructibles");
+
+        if (indestructibleTilemap == null)
+            indestructibleTilemap = FindTilemapByNameFallback("Indestructibles");
+
+        if (groundTilemap == null)
+            groundTilemap = FindTilemapByNameFallback("Ground");
+    }
+
+    Tilemap FindTilemapUnder(Transform root, string childName)
+    {
+        if (root == null)
+            return null;
+
+        var t = root.Find(childName);
+        if (t == null)
+            return null;
+
+        var tm = t.GetComponent<Tilemap>();
+        if (tm != null)
+            return tm;
+
+        return t.GetComponentInChildren<Tilemap>(true);
+    }
+
+    Tilemap FindTilemapByNameFallback(string exactName)
+    {
+        var all = FindObjectsByType<Tilemap>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+
+        for (int i = 0; i < all.Length; i++)
+        {
+            var tm = all[i];
+            if (tm != null && tm.name == exactName)
+                return tm;
+        }
+
+        for (int i = 0; i < all.Length; i++)
+        {
+            var tm = all[i];
+            if (tm != null && tm.name != null && tm.name.IndexOf(exactName, StringComparison.OrdinalIgnoreCase) >= 0)
+                return tm;
+        }
+
+        return null;
     }
 
     void SetupHiddenObjects()
@@ -111,6 +187,26 @@ public class GameManager : MonoBehaviour
         }
 
         int cursor = 0;
+
+        portalSpawnOrder = -1;
+        extraBombSpawnOrder = -1;
+        blastRadiusSpawnOrder = -1;
+        speedIncreaseSpawnOrder = -1;
+        kickBombSpawnOrder = -1;
+        punchBombSpawnOrder = -1;
+        pierceBombSpawnOrder = -1;
+        controlBombSpawnOrder = -1;
+        fullFireSpawnOrder = -1;
+        bombPassSpawnOrder = -1;
+        destructiblePassSpawnOrder = -1;
+        invincibleSuitSpawnOrder = -1;
+        heartSpawnOrder = -1;
+        blueLouieEggSpawnOrder = -1;
+        blackLouieEggSpawnOrder = -1;
+        purpleLouieEggSpawnOrder = -1;
+        greenLouieEggSpawnOrder = -1;
+        yellowLouieEggSpawnOrder = -1;
+        pinkLouieEggSpawnOrder = -1;
 
         if (endStagePortalPrefab != null && cursor < indices.Count)
             portalSpawnOrder = indices[cursor++];
@@ -166,7 +262,7 @@ public class GameManager : MonoBehaviour
         if (yellowLouieEggItemPrefab != null && cursor < indices.Count)
             yellowLouieEggSpawnOrder = indices[cursor++];
 
-        if (pinkLouieEggItemPrefab != null && cursor < indices.Count) // NEW
+        if (pinkLouieEggItemPrefab != null && cursor < indices.Count)
             pinkLouieEggSpawnOrder = indices[cursor++];
     }
 
@@ -232,7 +328,7 @@ public class GameManager : MonoBehaviour
         if (order == yellowLouieEggSpawnOrder && yellowLouieEggItemPrefab != null)
             return yellowLouieEggItemPrefab.gameObject;
 
-        if (order == pinkLouieEggSpawnOrder && pinkLouieEggItemPrefab != null) // NEW
+        if (order == pinkLouieEggSpawnOrder && pinkLouieEggItemPrefab != null)
             return pinkLouieEggItemPrefab.gameObject;
 
         return null;
