@@ -448,11 +448,23 @@ public class YellowLouieDestructibleKickAbility : MonoBehaviour, IPlayerAbility
 
         var sr = ghost.AddComponent<SpriteRenderer>();
         sr.sortingOrder = 10;
-
-        if (tile is Tile t && t.sprite != null)
-            sr.sprite = t.sprite;
+        sr.sprite = GetPreviewSprite(tile);
 
         return ghost;
+    }
+
+    Sprite GetPreviewSprite(TileBase tile)
+    {
+        if (tile == null)
+            return null;
+
+        if (tile is Tile t && t.sprite != null)
+            return t.sprite;
+
+        if (tile is AnimatedTile at && at.m_AnimatedSprites != null && at.m_AnimatedSprites.Length > 0)
+            return at.m_AnimatedSprites[0];
+
+        return null;
     }
 
     BlockType GetBlockType(Tilemap destructibleTilemap, Vector3Int cell, Vector2 dir, out TileBase blockingTile)
