@@ -25,6 +25,10 @@ public class YellowLouieDestructibleKickAbility : MonoBehaviour, IPlayerAbility
     public float chainTransferDelaySeconds = 0.2f;
     public int maxChainTransfers = 32;
 
+    [Header("Stop Shake (visual feedback)")]
+    public float stopShakeAmplitude = 0.03f;
+    public float stopShakeFrequency = 22f;
+
     [Header("SFX")]
     public AudioClip kickSfx;
     [Range(0f, 1f)] public float kickSfxVolume = 1f;
@@ -180,6 +184,8 @@ public class YellowLouieDestructibleKickAbility : MonoBehaviour, IPlayerAbility
         float stepSeconds = cellsPerSecond <= 0.01f ? 0.05f : (1f / cellsPerSecond);
         int transfers = 0;
 
+        bool endedBySolid = false;
+
         while (enabledAbility && movement != null && !movement.isDead)
         {
             if (!inputUnlockedAfterAnim && Time.time >= animEndTime)
@@ -194,7 +200,10 @@ public class YellowLouieDestructibleKickAbility : MonoBehaviour, IPlayerAbility
             var blockType = GetBlockType(tilemap, nextCell, dir, out blockingTile);
 
             if (blockType == BlockType.Solid)
+            {
+                endedBySolid = true;
                 break;
+            }
 
             if (blockType == BlockType.Destructible)
             {
@@ -202,20 +211,31 @@ public class YellowLouieDestructibleKickAbility : MonoBehaviour, IPlayerAbility
                 if (transfers > maxChainTransfers)
                     break;
 
+                Vector3 basePos = tilemap.GetCellCenterWorld(currentCell);
+
+                if (ghost != null)
+                {
+                    yield return ShakeGhost(ghost, basePos, chainTransferDelaySeconds, stopShakeAmplitude, stopShakeFrequency);
+                    if (ghost != null)
+                        ghost.transform.position = basePos;
+                }
+                else
+                {
+                    yield return WaitSecondsAndReleaseInput(chainTransferDelaySeconds, animEndTime, () =>
+                    {
+                        if (!inputUnlockedAfterAnim)
+                        {
+                            inputUnlockedAfterAnim = true;
+                            if (movement != null) movement.SetInputLocked(false);
+                        }
+                    });
+                }
+
                 tilemap.SetTile(currentCell, movingTile);
                 tilemap.RefreshTile(currentCell);
 
                 if (ghost != null)
                     Destroy(ghost);
-
-                yield return WaitSecondsAndReleaseInput(chainTransferDelaySeconds, animEndTime, () =>
-                {
-                    if (!inputUnlockedAfterAnim)
-                    {
-                        inputUnlockedAfterAnim = true;
-                        if (movement != null) movement.SetInputLocked(false);
-                    }
-                });
 
                 movingTile = blockingTile;
                 currentCell = nextCell;
@@ -243,7 +263,10 @@ public class YellowLouieDestructibleKickAbility : MonoBehaviour, IPlayerAbility
                 }
 
                 tMove += Time.deltaTime / Mathf.Max(0.0001f, stepSeconds);
-                ghost.transform.position = Vector3.Lerp(from, to, Mathf.Clamp01(tMove));
+
+                if (ghost != null)
+                    ghost.transform.position = Vector3.Lerp(from, to, Mathf.Clamp01(tMove));
+
                 yield return null;
             }
 
@@ -269,6 +292,14 @@ public class YellowLouieDestructibleKickAbility : MonoBehaviour, IPlayerAbility
                 inputUnlockedAfterAnim = true;
                 movement.SetInputLocked(false);
             }
+        }
+
+        if (endedBySolid && ghost != null && enabledAbility && movement != null && !movement.isDead)
+        {
+            Vector3 basePos = tilemap.GetCellCenterWorld(currentCell);
+            yield return ShakeGhost(ghost, basePos, chainTransferDelaySeconds, stopShakeAmplitude, stopShakeFrequency);
+            if (ghost != null)
+                ghost.transform.position = basePos;
         }
 
         if (ghost != null)
@@ -341,6 +372,34 @@ public class YellowLouieDestructibleKickAbility : MonoBehaviour, IPlayerAbility
 
         if (Time.time >= animEndTime)
             releaseInputIfNeeded?.Invoke();
+    }
+
+    IEnumerator ShakeGhost(GameObject ghost, Vector3 basePos, float duration, float amplitude, float frequencyHz)
+    {
+        float dur = Mathf.Max(0.01f, duration);
+        float amp = Mathf.Max(0f, amplitude);
+        float hz = Mathf.Max(1f, frequencyHz);
+
+        float end = Time.time + dur;
+        float seed = Random.value * 1000f;
+
+        while (Time.time < end)
+        {
+            if (!enabledAbility || movement == null || movement.isDead || ghost == null)
+                yield break;
+
+            float t = (Time.time - (end - dur));
+            float phase = (t * hz) * (Mathf.PI * 2f);
+
+            float x = Mathf.Sin(phase + seed) * amp;
+            float y = Mathf.Cos(phase * 1.23f + seed) * amp;
+
+            ghost.transform.position = basePos + new Vector3(x, y, 0f);
+            yield return null;
+        }
+
+        if (ghost != null)
+            ghost.transform.position = basePos;
     }
 
     GameObject CreateGhost(Tilemap tilemap, Vector3Int cell, TileBase tile)
