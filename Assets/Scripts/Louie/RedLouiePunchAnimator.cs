@@ -2,18 +2,14 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class PinkLouieJumpAnimator : MonoBehaviour, IPinkLouieJumpExternalAnimator
+public class RedLouiePunchAnimator : MonoBehaviour, IRedLouiePunchExternalAnimator
 {
-    public AnimatedSpriteRenderer jumpUp;
-    public AnimatedSpriteRenderer jumpDown;
-    public AnimatedSpriteRenderer jumpLeft;
-    public AnimatedSpriteRenderer jumpRight;
+    public AnimatedSpriteRenderer punchUp;
+    public AnimatedSpriteRenderer punchDown;
+    public AnimatedSpriteRenderer punchLeft;
+    public AnimatedSpriteRenderer punchRight;
 
-    [Header("Fix Right Local X")]
-    public bool fixRightLocalX = true;
-    public float rightLocalX = -0.3f;
-
-    AnimatedSpriteRenderer active;
+    AnimatedSpriteRenderer activePunch;
     LouieRiderVisual riderVisual;
 
     readonly List<AnimatedSpriteRenderer> cachedAnimators = new();
@@ -29,8 +25,15 @@ public class PinkLouieJumpAnimator : MonoBehaviour, IPinkLouieJumpExternalAnimat
         riderVisual = GetComponent<LouieRiderVisual>();
     }
 
-    void OnDisable() => Stop();
-    void OnDestroy() => Stop();
+    void OnDisable()
+    {
+        Stop();
+    }
+
+    void OnDestroy()
+    {
+        Stop();
+    }
 
     public void Play(Vector2 dir)
     {
@@ -47,29 +50,21 @@ public class PinkLouieJumpAnimator : MonoBehaviour, IPinkLouieJumpExternalAnimat
 
         DisableAllRenderers();
 
-        active = GetSprite(dir);
+        activePunch = GetPunchSprite(dir);
 
-        if (active != null)
+        if (activePunch != null)
         {
-            if (active.TryGetComponent<SpriteRenderer>(out var sr))
+            if (activePunch.TryGetComponent<SpriteRenderer>(out var sr))
                 sr.flipX = (dir == Vector2.right);
 
-            if (fixRightLocalX)
-            {
-                if (dir == Vector2.right)
-                    active.SetRuntimeBaseLocalX(rightLocalX);
-                else
-                    active.ClearRuntimeBaseLocalX();
-            }
+            activePunch.enabled = true;
+            activePunch.idle = false;
+            activePunch.loop = false;
+            activePunch.CurrentFrame = 0;
+            activePunch.RefreshFrame();
 
-            active.enabled = true;
-            active.idle = false;
-            active.loop = true;
-            active.CurrentFrame = 0;
-            active.RefreshFrame();
-
-            if (active.TryGetComponent<SpriteRenderer>(out var asr))
-                asr.enabled = true;
+            if (activePunch.TryGetComponent<SpriteRenderer>(out var psr))
+                psr.enabled = true;
         }
 
         playing = true;
@@ -80,21 +75,18 @@ public class PinkLouieJumpAnimator : MonoBehaviour, IPinkLouieJumpExternalAnimat
         if (!playing)
             return;
 
-        if (active != null)
+        if (activePunch != null)
         {
-            if (active.TryGetComponent<SpriteRenderer>(out var sr))
+            if (activePunch.TryGetComponent<SpriteRenderer>(out var sr))
                 sr.flipX = false;
 
-            if (fixRightLocalX)
-                active.ClearRuntimeBaseLocalX();
+            activePunch.enabled = false;
 
-            active.enabled = false;
-
-            if (active.TryGetComponent<SpriteRenderer>(out var asr))
-                asr.enabled = false;
+            if (activePunch.TryGetComponent<SpriteRenderer>(out var psr))
+                psr.enabled = false;
         }
 
-        active = null;
+        activePunch = null;
 
         RestoreEnabledStates();
 
@@ -104,13 +96,13 @@ public class PinkLouieJumpAnimator : MonoBehaviour, IPinkLouieJumpExternalAnimat
         playing = false;
     }
 
-    AnimatedSpriteRenderer GetSprite(Vector2 dir)
+    AnimatedSpriteRenderer GetPunchSprite(Vector2 dir)
     {
-        if (dir == Vector2.up) return jumpUp;
-        if (dir == Vector2.down) return jumpDown;
-        if (dir == Vector2.left) return jumpLeft;
-        if (dir == Vector2.right) return jumpRight;
-        return jumpDown;
+        if (dir == Vector2.up) return punchUp;
+        if (dir == Vector2.down) return punchDown;
+        if (dir == Vector2.left) return punchLeft;
+        if (dir == Vector2.right) return punchRight;
+        return punchDown;
     }
 
     void CacheEnabledStates()
@@ -138,18 +130,30 @@ public class PinkLouieJumpAnimator : MonoBehaviour, IPinkLouieJumpExternalAnimat
     void DisableAllRenderers()
     {
         for (int i = 0; i < cachedAnimators.Count; i++)
-            if (cachedAnimators[i] != null) cachedAnimators[i].enabled = false;
+        {
+            if (cachedAnimators[i] != null)
+                cachedAnimators[i].enabled = false;
+        }
 
         for (int i = 0; i < cachedSpriteRenderers.Count; i++)
-            if (cachedSpriteRenderers[i] != null) cachedSpriteRenderers[i].enabled = false;
+        {
+            if (cachedSpriteRenderers[i] != null)
+                cachedSpriteRenderers[i].enabled = false;
+        }
     }
 
     void RestoreEnabledStates()
     {
         for (int i = 0; i < cachedAnimators.Count; i++)
-            if (cachedAnimators[i] != null) cachedAnimators[i].enabled = cachedAnimatorEnabled[i];
+        {
+            if (cachedAnimators[i] != null)
+                cachedAnimators[i].enabled = cachedAnimatorEnabled[i];
+        }
 
         for (int i = 0; i < cachedSpriteRenderers.Count; i++)
-            if (cachedSpriteRenderers[i] != null) cachedSpriteRenderers[i].enabled = cachedSpriteEnabled[i];
+        {
+            if (cachedSpriteRenderers[i] != null)
+                cachedSpriteRenderers[i].enabled = cachedSpriteEnabled[i];
+        }
     }
 }

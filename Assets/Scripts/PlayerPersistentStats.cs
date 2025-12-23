@@ -14,8 +14,8 @@ public static class PlayerPersistentStats
 
     public static bool CanKickBombs = false;
     public static bool CanPunchBombs = true;
-    public static bool CanPassBombs = false;
-    public static bool CanPassDestructibles = false;
+    public static bool CanPassBombs = true;
+    public static bool CanPassDestructibles = true;
     public static bool HasPierceBombs = true;
     public static bool HasControlBombs = false;
     public static bool HasFullFire = false;
@@ -28,11 +28,12 @@ public static class PlayerPersistentStats
         Purple = 3,
         Green = 4,
         Yellow = 5,
-        Pink = 6
+        Pink = 6,
+        Red = 7
     }
 
-    public static MountedLouieType MountedLouie = MountedLouieType.Pink;
-    public static int MountedLouieLife = 2;
+    public static MountedLouieType MountedLouie = MountedLouieType.Red;
+    public static int MountedLouieLife = 1;
 
     public static void LoadInto(MovementController movement, BombController bomb)
     {
@@ -107,14 +108,10 @@ public static class PlayerPersistentStats
 
                     case MountedLouieType.Purple:
                         louieCompanion.RestoreMountedPurpleLouie();
-                        if (MountedLouieLife > 0)
-                            louieCompanion.SetMountedLouieLife(MountedLouieLife);
                         break;
 
                     case MountedLouieType.Green:
                         louieCompanion.RestoreMountedGreenLouie();
-                        if (MountedLouieLife > 0)
-                            louieCompanion.SetMountedLouieLife(MountedLouieLife);
                         break;
 
                     case MountedLouieType.Yellow:
@@ -123,6 +120,10 @@ public static class PlayerPersistentStats
 
                     case MountedLouieType.Pink:
                         louieCompanion.RestoreMountedPinkLouie();
+                        break;
+
+                    case MountedLouieType.Red:
+                        louieCompanion.RestoreMountedRedLouie();
                         break;
                 }
             }
@@ -138,8 +139,7 @@ public static class PlayerPersistentStats
             if (movement.TryGetComponent<CharacterHealth>(out var health))
                 Life = Mathf.Max(1, health.life);
 
-            AbilitySystem abilitySystem = null;
-            if (movement.TryGetComponent(out abilitySystem))
+            if (movement.TryGetComponent(out AbilitySystem abilitySystem))
                 abilitySystem.RebuildCache();
 
             var kick = abilitySystem != null ? abilitySystem.Get<BombKickAbility>(BombKickAbility.AbilityId) : null;
@@ -175,9 +175,7 @@ public static class PlayerPersistentStats
             {
                 MountedLouie = louieCompanion.GetMountedLouieType();
 
-                if (MountedLouie == MountedLouieType.Black ||
-                    MountedLouie == MountedLouieType.Purple ||
-                    MountedLouie == MountedLouieType.Green)
+                if (MountedLouie == MountedLouieType.Black)
                 {
                     MountedLouieLife = Mathf.Max(1, louieCompanion.GetMountedLouieLife());
                 }

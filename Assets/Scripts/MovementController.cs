@@ -5,6 +5,7 @@ using UnityEngine;
 [RequireComponent(typeof(BombController))]
 [RequireComponent(typeof(Rigidbody2D))]
 [RequireComponent(typeof(AbilitySystem))]
+[RequireComponent(typeof(StunReceiver))]
 public class MovementController : MonoBehaviour, IKillable
 {
     public event Action<MovementController> Died;
@@ -62,6 +63,8 @@ public class MovementController : MonoBehaviour, IKillable
     private bool isMountedOnLouie;
     public bool IsMountedOnLouie => isMountedOnLouie;
 
+    StunReceiver stunReceiver;
+
     [Header("End Stage Animation")]
     public float endStageTotalTime = 1f;
     public int endStageFrameCount = 9;
@@ -91,6 +94,7 @@ public class MovementController : MonoBehaviour, IKillable
     protected virtual void Awake()
     {
         Rigidbody = GetComponent<Rigidbody2D>();
+        stunReceiver = GetComponent<StunReceiver>();
         bombController = GetComponent<BombController>();
 
         abilitySystem = GetComponent<AbilitySystem>();
@@ -130,6 +134,20 @@ public class MovementController : MonoBehaviour, IKillable
 
     protected virtual void Update()
     {
+        if (stunReceiver != null && stunReceiver.IsStunned)
+        {
+            hasInput = false;
+            direction = Vector2.zero;
+
+            if (activeSpriteRenderer != null)
+            {
+                activeSpriteRenderer.idle = true;
+                activeSpriteRenderer.RefreshFrame();
+            }
+
+            return;
+        }
+
         if (inputLocked || GamePauseController.IsPaused || isDead)
             return;
 
@@ -219,6 +237,14 @@ public class MovementController : MonoBehaviour, IKillable
 
         if (!hasInput || direction == Vector2.zero)
             return;
+
+        if (stunReceiver != null && stunReceiver.IsStunned)
+        {
+            if (Rigidbody != null)
+                Rigidbody.linearVelocity = Vector2.zero;
+
+            return;
+        }
 
         float dt = Time.fixedDeltaTime;
         float moveSpeed = speed * dt;

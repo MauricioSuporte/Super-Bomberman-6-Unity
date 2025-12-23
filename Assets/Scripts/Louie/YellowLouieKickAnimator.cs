@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+[DisallowMultipleComponent]
 public class YellowLouieKickAnimator : MonoBehaviour, IYellowLouieDestructibleKickExternalAnimator
 {
     public AnimatedSpriteRenderer kickUp;

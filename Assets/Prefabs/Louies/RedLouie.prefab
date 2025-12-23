@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 4725985995669604674}
   - component: {fileID: 7677378060523124291}
   m_Layer: 3
-  m_Name: JumpUp
+  m_Name: PunchUp
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -27,7 +27,7 @@ Transform:
   m_GameObject: {fileID: 572746456710372226}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 1.3, z: 0}
+  m_LocalPosition: {x: 0, y: 0.77, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -80,7 +80,7 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 4
-  m_Sprite: {fileID: -812582051, guid: 242e9e1d39c8a0e488695bffb494ed5c, type: 3}
+  m_Sprite: {fileID: -779242100, guid: 68508f5db59727244b49d067c55da6de, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -103,15 +103,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a4b55e1b961d144197e1a7a4a391956, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  idleSprite: {fileID: -812582051, guid: 242e9e1d39c8a0e488695bffb494ed5c, type: 3}
+  idleSprite: {fileID: -779242100, guid: 68508f5db59727244b49d067c55da6de, type: 3}
   animationSprite:
-  - {fileID: -2066261133, guid: 242e9e1d39c8a0e488695bffb494ed5c, type: 3}
-  - {fileID: 735113067, guid: 242e9e1d39c8a0e488695bffb494ed5c, type: 3}
-  - {fileID: -158956318, guid: 242e9e1d39c8a0e488695bffb494ed5c, type: 3}
-  - {fileID: 735113067, guid: 242e9e1d39c8a0e488695bffb494ed5c, type: 3}
-  - {fileID: -2066261133, guid: 242e9e1d39c8a0e488695bffb494ed5c, type: 3}
+  - {fileID: -779242100, guid: 68508f5db59727244b49d067c55da6de, type: 3}
+  - {fileID: -979498099, guid: 68508f5db59727244b49d067c55da6de, type: 3}
+  - {fileID: -779242100, guid: 68508f5db59727244b49d067c55da6de, type: 3}
   allowFlipX: 0
-  animationTime: 0.2
+  animationTime: 0.083333336
   useSequenceDuration: 0
   sequenceDuration: 0.5
   loop: 0
@@ -146,7 +144,7 @@ Transform:
   m_GameObject: {fileID: 1325912214487135527}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 1.3, z: 0}
+  m_LocalPosition: {x: 0, y: 0.75, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -199,7 +197,7 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 5
-  m_Sprite: {fileID: -1254268155, guid: 242e9e1d39c8a0e488695bffb494ed5c, type: 3}
+  m_Sprite: {fileID: -1643085895, guid: 68508f5db59727244b49d067c55da6de, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -222,15 +220,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a4b55e1b961d144197e1a7a4a391956, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  idleSprite: {fileID: -1254268155, guid: 242e9e1d39c8a0e488695bffb494ed5c, type: 3}
+  idleSprite: {fileID: -1643085895, guid: 68508f5db59727244b49d067c55da6de, type: 3}
   animationSprite:
-  - {fileID: -1254268155, guid: 242e9e1d39c8a0e488695bffb494ed5c, type: 3}
-  - {fileID: 1878671816, guid: 242e9e1d39c8a0e488695bffb494ed5c, type: 3}
-  - {fileID: 1156641756, guid: 242e9e1d39c8a0e488695bffb494ed5c, type: 3}
-  - {fileID: 1878671816, guid: 242e9e1d39c8a0e488695bffb494ed5c, type: 3}
-  - {fileID: -1254268155, guid: 242e9e1d39c8a0e488695bffb494ed5c, type: 3}
+  - {fileID: -1643085895, guid: 68508f5db59727244b49d067c55da6de, type: 3}
+  - {fileID: -1676634435, guid: 68508f5db59727244b49d067c55da6de, type: 3}
+  - {fileID: 1757430879, guid: 68508f5db59727244b49d067c55da6de, type: 3}
+  - {fileID: -1676634435, guid: 68508f5db59727244b49d067c55da6de, type: 3}
+  - {fileID: -1643085895, guid: 68508f5db59727244b49d067c55da6de, type: 3}
   allowFlipX: 0
-  animationTime: 0.1
+  animationTime: 0.15
   useSequenceDuration: 0
   sequenceDuration: 0.5
   loop: 1
@@ -250,7 +248,7 @@ GameObject:
   - component: {fileID: 4511529953207216220}
   - component: {fileID: 5471246735332489006}
   m_Layer: 3
-  m_Name: JumpDown
+  m_Name: PunchDown
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -265,7 +263,7 @@ Transform:
   m_GameObject: {fileID: 1631831775219934293}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 1.3, z: 0}
+  m_LocalPosition: {x: 0, y: 0.71, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -318,7 +316,7 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 5
-  m_Sprite: {fileID: -3319331744604369094, guid: 242e9e1d39c8a0e488695bffb494ed5c, type: 3}
+  m_Sprite: {fileID: 1629632632, guid: 68508f5db59727244b49d067c55da6de, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -341,15 +339,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a4b55e1b961d144197e1a7a4a391956, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  idleSprite: {fileID: -3319331744604369094, guid: 242e9e1d39c8a0e488695bffb494ed5c, type: 3}
+  idleSprite: {fileID: 1629632632, guid: 68508f5db59727244b49d067c55da6de, type: 3}
   animationSprite:
-  - {fileID: -630933539, guid: 242e9e1d39c8a0e488695bffb494ed5c, type: 3}
-  - {fileID: -2112823579, guid: 242e9e1d39c8a0e488695bffb494ed5c, type: 3}
-  - {fileID: 1626035503, guid: 242e9e1d39c8a0e488695bffb494ed5c, type: 3}
-  - {fileID: -2112823579, guid: 242e9e1d39c8a0e488695bffb494ed5c, type: 3}
-  - {fileID: -630933539, guid: 242e9e1d39c8a0e488695bffb494ed5c, type: 3}
+  - {fileID: 1629632632, guid: 68508f5db59727244b49d067c55da6de, type: 3}
+  - {fileID: -815500014, guid: 68508f5db59727244b49d067c55da6de, type: 3}
+  - {fileID: 1629632632, guid: 68508f5db59727244b49d067c55da6de, type: 3}
   allowFlipX: 0
-  animationTime: 0.2
+  animationTime: 0.083333336
   useSequenceDuration: 0
   sequenceDuration: 0.5
   loop: 0
@@ -373,12 +369,10 @@ GameObject:
   - component: {fileID: 5649779946888286329}
   - component: {fileID: -5936940310258290347}
   - component: {fileID: 2870228645174432188}
-  - component: {fileID: 8906398120230729490}
-  - component: {fileID: 7875369066394701604}
-  - component: {fileID: 1229083401490666440}
-  - component: {fileID: 6543421237453546391}
+  - component: {fileID: 3822240261114814580}
+  - component: {fileID: 1187755275880992955}
   m_Layer: 0
-  m_Name: PinkLouie
+  m_Name: RedLouie
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -685,47 +679,7 @@ MonoBehaviour:
   louieEndStage: {fileID: 7247875284509425039}
   enablePinkRightFix: 1
   pinkRightFixedLocalX: -1
---- !u!114 &8906398120230729490
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2273416014071709654}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6cd24d41ceb21ad4f9598b6feaad791d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PinkLouieJumpAbility
-  enabledAbility: 1
-  triggerKey: 98
-  jumpDurationSeconds: 1
-  forwardCells: 2
-  jumpArcHeight: 1
-  jumpCooldownSeconds: 0.25
-  invulnerableDuringJump: 1
-  postLandingInvulnerableSeconds: 0
-  jumpSfx: {fileID: 8300000, guid: 95d5c4a1f9f75bc47a6022ec1e355617, type: 3}
-  jumpSfxVolume: 1
---- !u!114 &7875369066394701604
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2273416014071709654}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ce7098dfeefee6a4cb9195bf34ff8d02, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PinkLouieJumpAnimator
-  jumpUp: {fileID: 7677378060523124291}
-  jumpDown: {fileID: 5471246735332489006}
-  jumpLeft: {fileID: 4507174183192697291}
-  jumpRight: {fileID: 2897987350496308459}
-  fixRightLocalX: 1
-  rightLocalX: -0.3
---- !u!114 &1229083401490666440
+--- !u!114 &3822240261114814580
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -737,9 +691,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: aeb569e071432dc49b0dbbadfb27af27, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LouieAbilitySfxConfig
-  abilitySfx: {fileID: 8300000, guid: 95d5c4a1f9f75bc47a6022ec1e355617, type: 3}
+  abilitySfx: {fileID: 8300000, guid: bce0a0ce6d519a945aebabc5896d5189, type: 3}
   abilityVolume: 1
---- !u!114 &6543421237453546391
+--- !u!114 &1187755275880992955
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -748,14 +702,13 @@ MonoBehaviour:
   m_GameObject: {fileID: 2273416014071709654}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 205f7fc6fe6408f419811c6c486b9cd6, type: 3}
+  m_Script: {fileID: 11500000, guid: 22398e11363f64846b48bae6c41e156a, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::CharacterHealth
-  life: 1
-  hitInvulnerableDuration: 3
-  hitBlinkInterval: 0.1
-  tempSlowdownStartNormalized: 0.7
-  tempEndBlinkMultiplier: 4
+  m_EditorClassIdentifier: Assembly-CSharp::RedLouiePunchAnimator
+  punchUp: {fileID: 7677378060523124291}
+  punchDown: {fileID: 5471246735332489006}
+  punchLeft: {fileID: 4507174183192697291}
+  punchRight: {fileID: 2897987350496308459}
 --- !u!1 &2445788475736444126
 GameObject:
   m_ObjectHideFlags: 0
@@ -783,7 +736,7 @@ Transform:
   m_GameObject: {fileID: 2445788475736444126}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.3, y: 1.3, z: 0}
+  m_LocalPosition: {x: 0, y: 0.77, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -836,7 +789,7 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 4
-  m_Sprite: {fileID: 2092707103, guid: 242e9e1d39c8a0e488695bffb494ed5c, type: 3}
+  m_Sprite: {fileID: -886405942, guid: 68508f5db59727244b49d067c55da6de, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -859,14 +812,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a4b55e1b961d144197e1a7a4a391956, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  idleSprite: {fileID: 2092707103, guid: 242e9e1d39c8a0e488695bffb494ed5c, type: 3}
+  idleSprite: {fileID: -886405942, guid: 68508f5db59727244b49d067c55da6de, type: 3}
   animationSprite:
-  - {fileID: 1830129253, guid: 242e9e1d39c8a0e488695bffb494ed5c, type: 3}
-  - {fileID: 1355478188, guid: 242e9e1d39c8a0e488695bffb494ed5c, type: 3}
-  - {fileID: 865333172, guid: 242e9e1d39c8a0e488695bffb494ed5c, type: 3}
-  - {fileID: 1355478188, guid: 242e9e1d39c8a0e488695bffb494ed5c, type: 3}
+  - {fileID: 2079744557, guid: 68508f5db59727244b49d067c55da6de, type: 3}
+  - {fileID: 1884628265, guid: 68508f5db59727244b49d067c55da6de, type: 3}
+  - {fileID: -1871750693, guid: 68508f5db59727244b49d067c55da6de, type: 3}
+  - {fileID: 721900334, guid: 68508f5db59727244b49d067c55da6de, type: 3}
+  - {fileID: -848606845, guid: 68508f5db59727244b49d067c55da6de, type: 3}
+  - {fileID: 1225377390, guid: 68508f5db59727244b49d067c55da6de, type: 3}
+  - {fileID: -848606845, guid: 68508f5db59727244b49d067c55da6de, type: 3}
+  - {fileID: 721900334, guid: 68508f5db59727244b49d067c55da6de, type: 3}
+  - {fileID: -1871750693, guid: 68508f5db59727244b49d067c55da6de, type: 3}
+  - {fileID: 1884628265, guid: 68508f5db59727244b49d067c55da6de, type: 3}
   allowFlipX: 1
-  animationTime: 0.1
+  animationTime: 0.05
   useSequenceDuration: 0
   sequenceDuration: 0.5
   loop: 1
@@ -886,7 +845,7 @@ GameObject:
   - component: {fileID: 2427265833389128986}
   - component: {fileID: 4507174183192697291}
   m_Layer: 3
-  m_Name: JumpLeft
+  m_Name: PunchLeft
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -901,7 +860,7 @@ Transform:
   m_GameObject: {fileID: 2676629547538051348}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.18, y: 1.3, z: 0}
+  m_LocalPosition: {x: 0, y: 0.77, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -954,7 +913,7 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 4
-  m_Sprite: {fileID: 2092707103, guid: 242e9e1d39c8a0e488695bffb494ed5c, type: 3}
+  m_Sprite: {fileID: 1158241304, guid: 68508f5db59727244b49d067c55da6de, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -977,15 +936,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a4b55e1b961d144197e1a7a4a391956, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  idleSprite: {fileID: 2092707103, guid: 242e9e1d39c8a0e488695bffb494ed5c, type: 3}
+  idleSprite: {fileID: 1158241304, guid: 68508f5db59727244b49d067c55da6de, type: 3}
   animationSprite:
-  - {fileID: 1830129253, guid: 242e9e1d39c8a0e488695bffb494ed5c, type: 3}
-  - {fileID: 1355478188, guid: 242e9e1d39c8a0e488695bffb494ed5c, type: 3}
-  - {fileID: 865333172, guid: 242e9e1d39c8a0e488695bffb494ed5c, type: 3}
-  - {fileID: 1355478188, guid: 242e9e1d39c8a0e488695bffb494ed5c, type: 3}
-  - {fileID: 1830129253, guid: 242e9e1d39c8a0e488695bffb494ed5c, type: 3}
+  - {fileID: 1158241304, guid: 68508f5db59727244b49d067c55da6de, type: 3}
+  - {fileID: 1918526590, guid: 68508f5db59727244b49d067c55da6de, type: 3}
+  - {fileID: 1158241304, guid: 68508f5db59727244b49d067c55da6de, type: 3}
   allowFlipX: 0
-  animationTime: 0.2
+  animationTime: 0.083333336
   useSequenceDuration: 0
   sequenceDuration: 0.5
   loop: 0
@@ -1020,7 +977,7 @@ Transform:
   m_GameObject: {fileID: 2918505583802702556}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.06, y: 1.3, z: 0}
+  m_LocalPosition: {x: 0, y: 0.42, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1073,7 +1030,7 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 5
-  m_Sprite: {fileID: -1878796710, guid: 242e9e1d39c8a0e488695bffb494ed5c, type: 3}
+  m_Sprite: {fileID: -1638634923, guid: 68508f5db59727244b49d067c55da6de, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -1096,13 +1053,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a4b55e1b961d144197e1a7a4a391956, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  idleSprite: {fileID: -1878796710, guid: 242e9e1d39c8a0e488695bffb494ed5c, type: 3}
+  idleSprite: {fileID: -1638634923, guid: 68508f5db59727244b49d067c55da6de, type: 3}
   animationSprite:
-  - {fileID: -1878796710, guid: 242e9e1d39c8a0e488695bffb494ed5c, type: 3}
-  - {fileID: 1683681741, guid: 242e9e1d39c8a0e488695bffb494ed5c, type: 3}
-  - {fileID: 161751480, guid: 242e9e1d39c8a0e488695bffb494ed5c, type: 3}
-  - {fileID: -1321087257, guid: 242e9e1d39c8a0e488695bffb494ed5c, type: 3}
-  - {fileID: 223540935, guid: 242e9e1d39c8a0e488695bffb494ed5c, type: 3}
+  - {fileID: -1638634923, guid: 68508f5db59727244b49d067c55da6de, type: 3}
+  - {fileID: -946428947, guid: 68508f5db59727244b49d067c55da6de, type: 3}
+  - {fileID: 264247489, guid: 68508f5db59727244b49d067c55da6de, type: 3}
+  - {fileID: -2059224728, guid: 68508f5db59727244b49d067c55da6de, type: 3}
+  - {fileID: -1422094967, guid: 68508f5db59727244b49d067c55da6de, type: 3}
   - {fileID: 0}
   allowFlipX: 0
   animationTime: 0.1
@@ -1140,7 +1097,7 @@ Transform:
   m_GameObject: {fileID: 7806644560918232893}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 1.3, z: 0}
+  m_LocalPosition: {x: 0, y: 0.74, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1193,7 +1150,7 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 5
-  m_Sprite: {fileID: -3319331744604369094, guid: 242e9e1d39c8a0e488695bffb494ed5c, type: 3}
+  m_Sprite: {fileID: 2528615717590499171, guid: 68508f5db59727244b49d067c55da6de, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -1216,14 +1173,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a4b55e1b961d144197e1a7a4a391956, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  idleSprite: {fileID: -3319331744604369094, guid: 242e9e1d39c8a0e488695bffb494ed5c, type: 3}
+  idleSprite: {fileID: 2528615717590499171, guid: 68508f5db59727244b49d067c55da6de, type: 3}
   animationSprite:
-  - {fileID: -630933539, guid: 242e9e1d39c8a0e488695bffb494ed5c, type: 3}
-  - {fileID: -2112823579, guid: 242e9e1d39c8a0e488695bffb494ed5c, type: 3}
-  - {fileID: 1626035503, guid: 242e9e1d39c8a0e488695bffb494ed5c, type: 3}
-  - {fileID: -2112823579, guid: 242e9e1d39c8a0e488695bffb494ed5c, type: 3}
+  - {fileID: 809223499, guid: 68508f5db59727244b49d067c55da6de, type: 3}
+  - {fileID: 516016291, guid: 68508f5db59727244b49d067c55da6de, type: 3}
+  - {fileID: 1584295112, guid: 68508f5db59727244b49d067c55da6de, type: 3}
+  - {fileID: -889569270, guid: 68508f5db59727244b49d067c55da6de, type: 3}
+  - {fileID: -1472758217, guid: 68508f5db59727244b49d067c55da6de, type: 3}
+  - {fileID: 1083134530, guid: 68508f5db59727244b49d067c55da6de, type: 3}
+  - {fileID: -1472758217, guid: 68508f5db59727244b49d067c55da6de, type: 3}
+  - {fileID: -889569270, guid: 68508f5db59727244b49d067c55da6de, type: 3}
+  - {fileID: 1584295112, guid: 68508f5db59727244b49d067c55da6de, type: 3}
+  - {fileID: 516016291, guid: 68508f5db59727244b49d067c55da6de, type: 3}
   allowFlipX: 0
-  animationTime: 0.1
+  animationTime: 0.05
   useSequenceDuration: 0
   sequenceDuration: 0.5
   loop: 1
@@ -1258,7 +1221,7 @@ Transform:
   m_GameObject: {fileID: 8198935378081891372}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.21, y: 1.3, z: 0}
+  m_LocalPosition: {x: 0, y: 0.741, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1311,7 +1274,7 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 4
-  m_Sprite: {fileID: 2092707103, guid: 242e9e1d39c8a0e488695bffb494ed5c, type: 3}
+  m_Sprite: {fileID: -886405942, guid: 68508f5db59727244b49d067c55da6de, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -1334,14 +1297,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a4b55e1b961d144197e1a7a4a391956, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  idleSprite: {fileID: 2092707103, guid: 242e9e1d39c8a0e488695bffb494ed5c, type: 3}
+  idleSprite: {fileID: -886405942, guid: 68508f5db59727244b49d067c55da6de, type: 3}
   animationSprite:
-  - {fileID: 1830129253, guid: 242e9e1d39c8a0e488695bffb494ed5c, type: 3}
-  - {fileID: 1355478188, guid: 242e9e1d39c8a0e488695bffb494ed5c, type: 3}
-  - {fileID: 865333172, guid: 242e9e1d39c8a0e488695bffb494ed5c, type: 3}
-  - {fileID: 1355478188, guid: 242e9e1d39c8a0e488695bffb494ed5c, type: 3}
+  - {fileID: 2079744557, guid: 68508f5db59727244b49d067c55da6de, type: 3}
+  - {fileID: 1884628265, guid: 68508f5db59727244b49d067c55da6de, type: 3}
+  - {fileID: -1871750693, guid: 68508f5db59727244b49d067c55da6de, type: 3}
+  - {fileID: 721900334, guid: 68508f5db59727244b49d067c55da6de, type: 3}
+  - {fileID: -848606845, guid: 68508f5db59727244b49d067c55da6de, type: 3}
+  - {fileID: 1225377390, guid: 68508f5db59727244b49d067c55da6de, type: 3}
+  - {fileID: -848606845, guid: 68508f5db59727244b49d067c55da6de, type: 3}
+  - {fileID: 721900334, guid: 68508f5db59727244b49d067c55da6de, type: 3}
+  - {fileID: -1871750693, guid: 68508f5db59727244b49d067c55da6de, type: 3}
+  - {fileID: 1884628265, guid: 68508f5db59727244b49d067c55da6de, type: 3}
   allowFlipX: 0
-  animationTime: 0.1
+  animationTime: 0.05
   useSequenceDuration: 0
   sequenceDuration: 0.5
   loop: 1
@@ -1376,7 +1345,7 @@ Transform:
   m_GameObject: {fileID: 8576435209940862137}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 1.3, z: 0}
+  m_LocalPosition: {x: 0, y: 0.77, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1429,7 +1398,7 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 4
-  m_Sprite: {fileID: -812582051, guid: 242e9e1d39c8a0e488695bffb494ed5c, type: 3}
+  m_Sprite: {fileID: -7846450, guid: 68508f5db59727244b49d067c55da6de, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -1452,14 +1421,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a4b55e1b961d144197e1a7a4a391956, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  idleSprite: {fileID: -812582051, guid: 242e9e1d39c8a0e488695bffb494ed5c, type: 3}
+  idleSprite: {fileID: -7846450, guid: 68508f5db59727244b49d067c55da6de, type: 3}
   animationSprite:
-  - {fileID: -2066261133, guid: 242e9e1d39c8a0e488695bffb494ed5c, type: 3}
-  - {fileID: 735113067, guid: 242e9e1d39c8a0e488695bffb494ed5c, type: 3}
-  - {fileID: -158956318, guid: 242e9e1d39c8a0e488695bffb494ed5c, type: 3}
-  - {fileID: 735113067, guid: 242e9e1d39c8a0e488695bffb494ed5c, type: 3}
+  - {fileID: 1931771709, guid: 68508f5db59727244b49d067c55da6de, type: 3}
+  - {fileID: -1051296174, guid: 68508f5db59727244b49d067c55da6de, type: 3}
+  - {fileID: -974299032, guid: 68508f5db59727244b49d067c55da6de, type: 3}
+  - {fileID: -1399818204, guid: 68508f5db59727244b49d067c55da6de, type: 3}
+  - {fileID: -1884510319, guid: 68508f5db59727244b49d067c55da6de, type: 3}
+  - {fileID: 463977701, guid: 68508f5db59727244b49d067c55da6de, type: 3}
+  - {fileID: -1884510319, guid: 68508f5db59727244b49d067c55da6de, type: 3}
+  - {fileID: -1399818204, guid: 68508f5db59727244b49d067c55da6de, type: 3}
+  - {fileID: -974299032, guid: 68508f5db59727244b49d067c55da6de, type: 3}
+  - {fileID: -1051296174, guid: 68508f5db59727244b49d067c55da6de, type: 3}
   allowFlipX: 0
-  animationTime: 0.1
+  animationTime: 0.05
   useSequenceDuration: 0
   sequenceDuration: 0.5
   loop: 1
@@ -1479,7 +1454,7 @@ GameObject:
   - component: {fileID: 908191367289619404}
   - component: {fileID: 2897987350496308459}
   m_Layer: 3
-  m_Name: JumpRigth
+  m_Name: PunchRigth
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1494,7 +1469,7 @@ Transform:
   m_GameObject: {fileID: 8682246085614095336}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.3, y: 1.3, z: 0}
+  m_LocalPosition: {x: 0, y: 0.77, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1547,7 +1522,7 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 4
-  m_Sprite: {fileID: 2092707103, guid: 242e9e1d39c8a0e488695bffb494ed5c, type: 3}
+  m_Sprite: {fileID: 1158241304, guid: 68508f5db59727244b49d067c55da6de, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -1570,15 +1545,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a4b55e1b961d144197e1a7a4a391956, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  idleSprite: {fileID: 2092707103, guid: 242e9e1d39c8a0e488695bffb494ed5c, type: 3}
+  idleSprite: {fileID: 1158241304, guid: 68508f5db59727244b49d067c55da6de, type: 3}
   animationSprite:
-  - {fileID: 1830129253, guid: 242e9e1d39c8a0e488695bffb494ed5c, type: 3}
-  - {fileID: 1355478188, guid: 242e9e1d39c8a0e488695bffb494ed5c, type: 3}
-  - {fileID: 865333172, guid: 242e9e1d39c8a0e488695bffb494ed5c, type: 3}
-  - {fileID: 1355478188, guid: 242e9e1d39c8a0e488695bffb494ed5c, type: 3}
-  - {fileID: 1830129253, guid: 242e9e1d39c8a0e488695bffb494ed5c, type: 3}
+  - {fileID: 1158241304, guid: 68508f5db59727244b49d067c55da6de, type: 3}
+  - {fileID: 1918526590, guid: 68508f5db59727244b49d067c55da6de, type: 3}
+  - {fileID: 1158241304, guid: 68508f5db59727244b49d067c55da6de, type: 3}
   allowFlipX: 1
-  animationTime: 0.2
+  animationTime: 0.083333336
   useSequenceDuration: 0
   sequenceDuration: 0.5
   loop: 0

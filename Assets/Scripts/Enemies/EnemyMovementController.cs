@@ -5,6 +5,7 @@ using UnityEngine;
 [RequireComponent(typeof(Collider2D))]
 [RequireComponent(typeof(CharacterHealth))]
 [RequireComponent(typeof(AudioSource))]
+[RequireComponent(typeof(StunReceiver))]
 public class EnemyMovementController : MonoBehaviour, IKillable
 {
     [Header("Stats")]
@@ -70,6 +71,14 @@ public class EnemyMovementController : MonoBehaviour, IKillable
     {
         if (isDead)
             return;
+
+        if (TryGetComponent<StunReceiver>(out var stun) && stun != null && stun.IsStunned)
+        {
+            if (rb != null)
+                rb.linearVelocity = Vector2.zero;
+
+            return;
+        }
 
         if (HasBombAt(targetTile))
             HandleBombAhead();
@@ -199,9 +208,9 @@ public class EnemyMovementController : MonoBehaviour, IKillable
     {
         AnimatedSpriteRenderer previousSprite = activeSprite;
 
-        spriteUp.enabled = false;
-        spriteDown.enabled = false;
-        spriteLeft.enabled = false;
+        if (spriteUp != null) spriteUp.enabled = false;
+        if (spriteDown != null) spriteDown.enabled = false;
+        if (spriteLeft != null) spriteLeft.enabled = false;
 
         if (spriteDeath != null && spriteDeath != activeSprite)
             spriteDeath.enabled = false;
@@ -213,30 +222,40 @@ public class EnemyMovementController : MonoBehaviour, IKillable
         else if (dir == Vector2.left || dir == Vector2.right)
             activeSprite = spriteLeft;
 
-        if (activeSprite != null)
+        if (activeSprite == null)
+            activeSprite = spriteDown != null ? spriteDown :
+                          spriteLeft != null ? spriteLeft :
+                          spriteUp != null ? spriteUp :
+                          activeSprite;
+
+        if (activeSprite == null)
         {
-            if (previousSprite != null && previousSprite != activeSprite)
+            Debug.LogError($"{name}: Any sprite renderer configured (Up/Down/Left).", this);
+            return;
+        }
+
+        if (previousSprite != null && previousSprite != activeSprite)
+        {
+            int frame = previousSprite.CurrentFrame;
+
+            if (activeSprite.animationSprite != null && activeSprite.animationSprite.Length > 0)
             {
-                int frame = previousSprite.CurrentFrame;
-
-                if (activeSprite.animationSprite != null && activeSprite.animationSprite.Length > 0)
-                {
-                    if (frame >= activeSprite.animationSprite.Length)
-                        frame = frame % activeSprite.animationSprite.Length;
-                }
-
-                activeSprite.CurrentFrame = frame;
-                activeSprite.idle = previousSprite.idle;
-                activeSprite.RefreshFrame();
+                if (frame >= activeSprite.animationSprite.Length)
+                    frame = frame % activeSprite.animationSprite.Length;
             }
 
-            activeSprite.enabled = true;
-            activeSprite.idle = false;
-
-            if (activeSprite.TryGetComponent<SpriteRenderer>(out var sr))
-                sr.flipX = (dir == Vector2.right);
+            activeSprite.CurrentFrame = frame;
+            activeSprite.idle = previousSprite.idle;
+            activeSprite.RefreshFrame();
         }
+
+        activeSprite.enabled = true;
+        activeSprite.idle = false;
+
+        if (activeSprite.TryGetComponent<SpriteRenderer>(out var sr))
+            sr.flipX = (dir == Vector2.right);
     }
+
 
     protected virtual void DecideNextTile()
     {

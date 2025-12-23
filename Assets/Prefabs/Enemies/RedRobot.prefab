@@ -14,6 +14,7 @@ GameObject:
   - component: {fileID: 1228606389669354654}
   - component: {fileID: 8638696913730581265}
   - component: {fileID: 1351269766690977818}
+  - component: {fileID: 4939096247585281341}
   m_Layer: 10
   m_Name: RedRobot
   m_TagString: Untagged
@@ -246,6 +247,19 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+--- !u!114 &4939096247585281341
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1228606389669354652}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9f528b4a7ce266344b53412d165dfefe, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyStunReceiver
+  isStunned: 0
 --- !u!1 &1228606389785476330
 GameObject:
   m_ObjectHideFlags: 0
@@ -355,6 +369,7 @@ MonoBehaviour:
   - {fileID: -582438228139702585, guid: 3aa9f1dfe054a594a910f54f5f17fde6, type: 3}
   - {fileID: 4436163510403040296, guid: 3aa9f1dfe054a594a910f54f5f17fde6, type: 3}
   - {fileID: -566025910420934192, guid: 3aa9f1dfe054a594a910f54f5f17fde6, type: 3}
+  allowFlipX: 0
   animationTime: 0.01
   useSequenceDuration: 0
   sequenceDuration: 0.5
@@ -472,6 +487,7 @@ MonoBehaviour:
   - {fileID: -7024969764210422596, guid: 3aa9f1dfe054a594a910f54f5f17fde6, type: 3}
   - {fileID: -1998366233017474397, guid: 3aa9f1dfe054a594a910f54f5f17fde6, type: 3}
   - {fileID: -8009156697828017459, guid: 3aa9f1dfe054a594a910f54f5f17fde6, type: 3}
+  allowFlipX: 0
   animationTime: 0.01
   useSequenceDuration: 0
   sequenceDuration: 0.5
@@ -589,6 +605,7 @@ MonoBehaviour:
   - {fileID: 440856806053404647, guid: 3aa9f1dfe054a594a910f54f5f17fde6, type: 3}
   - {fileID: 7284962585285078583, guid: 3aa9f1dfe054a594a910f54f5f17fde6, type: 3}
   - {fileID: 2733986572865395194, guid: 3aa9f1dfe054a594a910f54f5f17fde6, type: 3}
+  allowFlipX: 0
   animationTime: 0.01
   useSequenceDuration: 0
   sequenceDuration: 0.5
@@ -706,6 +723,7 @@ MonoBehaviour:
   - {fileID: -7024969764210422596, guid: 3aa9f1dfe054a594a910f54f5f17fde6, type: 3}
   - {fileID: -1998366233017474397, guid: 3aa9f1dfe054a594a910f54f5f17fde6, type: 3}
   - {fileID: -8009156697828017459, guid: 3aa9f1dfe054a594a910f54f5f17fde6, type: 3}
+  allowFlipX: 0
   animationTime: 0.01
   useSequenceDuration: 0
   sequenceDuration: 0.5
@@ -826,6 +844,7 @@ MonoBehaviour:
   - {fileID: -6647632493804449350, guid: eaeed7ce552d52a409a0dccee4f31c1e, type: 3}
   - {fileID: -5494614063893397770, guid: eaeed7ce552d52a409a0dccee4f31c1e, type: 3}
   - {fileID: -5427934351343933045, guid: eaeed7ce552d52a409a0dccee4f31c1e, type: 3}
+  allowFlipX: 0
   animationTime: 0.1
   useSequenceDuration: 0
   sequenceDuration: 0.5
