@@ -45,6 +45,7 @@ public class MechaBossSequence : MonoBehaviour
     MovementController[] mechas;
     GameManager gameManager;
     BombController playerBomb;
+    PlayerLouieCompanion playerCompanion;
 
     bool initialized;
     bool sequenceStarted;
@@ -79,6 +80,9 @@ public class MechaBossSequence : MonoBehaviour
             if (m == null) continue;
             m.Died += OnMechaDied;
         }
+
+        if (player != null)
+            playerCompanion = player.GetComponent<PlayerLouieCompanion>();
 
         if (player == null)
         {
@@ -128,6 +132,10 @@ public class MechaBossSequence : MonoBehaviour
 
     IEnumerator SpawnFirstMechaAfterStageStart()
     {
+        MechaIntroRunning = true;
+        if (playerCompanion != null)
+            playerCompanion.SetLouieAbilitiesLocked(true);
+
         if (StageIntroTransition.Instance != null)
         {
             PushPlayerSafety();
@@ -160,6 +168,8 @@ public class MechaBossSequence : MonoBehaviour
         if (mechas[index] == null) return;
 
         MechaIntroRunning = true;
+        if (playerCompanion != null)
+            playerCompanion.SetLouieAbilitiesLocked(true);
         LockPlayer(true);
 
         BombController.ExplodeAllControlBombsInStage();
@@ -290,7 +300,11 @@ public class MechaBossSequence : MonoBehaviour
         }
 
         SetItemSpawnEnabled(true);
+
         LockPlayer(false);
+
+        if (playerCompanion != null)
+            playerCompanion.SetLouieAbilitiesLocked(false);
 
         MechaIntroRunning = false;
     }

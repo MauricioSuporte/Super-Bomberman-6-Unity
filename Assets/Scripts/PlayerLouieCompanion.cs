@@ -42,6 +42,8 @@ public class PlayerLouieCompanion : MonoBehaviour
     AbilitySystem abilitySystem;
     BombPunchAbility punchAbility;
     bool punchOwned;
+    bool louieAbilitiesLocked;
+    bool louieAbilitiesLockApplied;
 
     MountedLouieType mountedType = MountedLouieType.None;
 
@@ -71,6 +73,13 @@ public class PlayerLouieCompanion : MonoBehaviour
 
     void Update()
     {
+        bool shouldLock =
+            MechaBossSequence.MechaIntroRunning ||
+            (StageIntroTransition.Instance != null && StageIntroTransition.Instance.IntroRunning);
+
+        if (shouldLock != louieAbilitiesLocked)
+            SetLouieAbilitiesLocked(shouldLock);
+
         UpdateDashInvulnerabilityTimers();
 
         if (currentLouie != null && mountedType != MountedLouieType.Blue)
@@ -735,5 +744,86 @@ public class PlayerLouieCompanion : MonoBehaviour
             return false;
 
         return visual.TryPlayEndStage(totalTime, frameCount);
+    }
+
+    public void SetLouieAbilitiesLocked(bool locked)
+    {
+        louieAbilitiesLocked = locked;
+        ApplyLouieAbilitiesLockState();
+    }
+
+    void ApplyLouieAbilitiesLockState()
+    {
+        if (abilitySystem == null)
+            return;
+
+        abilitySystem.RebuildCache();
+
+        if (louieAbilitiesLocked)
+        {
+            if (louieAbilitiesLockApplied)
+                return;
+
+            louieAbilitiesLockApplied = true;
+
+            abilitySystem.Disable(BombPunchAbility.AbilityId);
+            abilitySystem.Disable(BlackLouieDashPushAbility.AbilityId);
+            abilitySystem.Disable(PurpleLouieBombLineAbility.AbilityId);
+            abilitySystem.Disable(GreenLouieDashAbility.AbilityId);
+            abilitySystem.Disable(YellowLouieDestructibleKickAbility.AbilityId);
+            abilitySystem.Disable(PinkLouieJumpAbility.AbilityId);
+            abilitySystem.Disable(RedLouiePunchStunAbility.AbilityId);
+
+            if (punchAbility != null)
+                punchAbility.SetExternalAnimator(null);
+
+            var kick = abilitySystem.Get<YellowLouieDestructibleKickAbility>(YellowLouieDestructibleKickAbility.AbilityId);
+            if (kick != null)
+            {
+                kick.SetExternalAnimator(null);
+                kick.SetKickSfx(null, 1f);
+            }
+
+            var dash = abilitySystem.Get<GreenLouieDashAbility>(GreenLouieDashAbility.AbilityId);
+            if (dash != null)
+            {
+                dash.SetExternalAnimator(null);
+                dash.SetDashSfx(null, 1f);
+            }
+
+            var jump = abilitySystem.Get<PinkLouieJumpAbility>(PinkLouieJumpAbility.AbilityId);
+            if (jump != null)
+            {
+                jump.SetExternalAnimator(null);
+                jump.SetJumpSfx(null, 1f);
+            }
+
+            var stun = abilitySystem.Get<RedLouiePunchStunAbility>(RedLouiePunchStunAbility.AbilityId);
+            if (stun != null)
+            {
+                stun.SetExternalAnimator(null);
+                stun.SetPunchSfx(null, 1f);
+            }
+
+            var blackDash = abilitySystem.Get<BlackLouieDashPushAbility>(BlackLouieDashPushAbility.AbilityId);
+            if (blackDash != null)
+            {
+                blackDash.SetExternalAnimator(null);
+                blackDash.SetDashSfx(null, 1f);
+            }
+
+            var purple = abilitySystem.Get<PurpleLouieBombLineAbility>(PurpleLouieBombLineAbility.AbilityId);
+            if (purple != null)
+                purple.SetExternalAnimator(null);
+
+            return;
+        }
+
+        if (!louieAbilitiesLockApplied)
+            return;
+
+        louieAbilitiesLockApplied = false;
+
+        ApplyRulesForCurrentMount();
     }
 }
