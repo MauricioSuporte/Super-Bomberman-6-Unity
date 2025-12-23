@@ -20,10 +20,21 @@ public class LouieRiderVisual : MonoBehaviour
     public bool enablePinkRightFix = true;
     public float pinkRightFixedLocalX = -1f;
 
+    [Header("Blink Sync")]
+    public bool syncBlinkFromPlayerWhenMounted = true;
+
     private AnimatedSpriteRenderer active;
     private bool playingEndStage;
 
     private bool isPinkLouieMounted;
+
+    private CharacterHealth ownerHealth;
+    private PlayerLouieCompanion ownerCompanion;
+
+    private SpriteRenderer[] louieSpriteRenderers;
+    private Color[] louieOriginalColors;
+
+    private SpriteRenderer[] ownerSpriteRenderers;
 
     public void Bind(MovementController movement)
     {
@@ -31,6 +42,19 @@ public class LouieRiderVisual : MonoBehaviour
         playingEndStage = false;
 
         isPinkLouieMounted = DetectPinkMounted(owner);
+
+        if (owner != null)
+        {
+            owner.TryGetComponent(out ownerHealth);
+            owner.TryGetComponent(out ownerCompanion);
+
+            ownerSpriteRenderers = owner.GetComponentsInChildren<SpriteRenderer>(true);
+        }
+
+        louieSpriteRenderers = GetComponentsInChildren<SpriteRenderer>(true);
+        louieOriginalColors = new Color[louieSpriteRenderers.Length];
+        for (int i = 0; i < louieSpriteRenderers.Length; i++)
+            louieOriginalColors[i] = louieSpriteRenderers[i] != null ? louieSpriteRenderers[i].color : Color.white;
 
         SetExclusive(louieDown != null ? louieDown : louieUp);
         ApplyDirection(Vector2.down, true);
@@ -46,13 +70,100 @@ public class LouieRiderVisual : MonoBehaviour
 
         transform.localPosition = localOffset;
 
-        if (playingEndStage)
+        if (!playingEndStage)
+        {
+            bool isIdle = owner.Direction == Vector2.zero;
+            Vector2 faceDir = isIdle ? owner.FacingDirection : owner.Direction;
+
+            ApplyDirection(faceDir, isIdle);
+        }
+
+        ApplyBlinkSyncFromOwnerIfNeeded();
+    }
+
+    private void ApplyBlinkSyncFromOwnerIfNeeded()
+    {
+        if (!syncBlinkFromPlayerWhenMounted)
             return;
 
-        bool isIdle = owner.Direction == Vector2.zero;
-        Vector2 faceDir = isIdle ? owner.FacingDirection : owner.Direction;
+        if (owner == null || !owner.CompareTag("Player"))
+            return;
 
-        ApplyDirection(faceDir, isIdle);
+        if (ownerCompanion == null || !ownerCompanion.blinkPlayerTogetherWithLouie)
+            return;
+
+        if (ownerHealth == null)
+            return;
+
+        if (!ownerHealth.IsInvulnerable)
+        {
+            RestoreLouieOriginalColors();
+            return;
+        }
+
+        float alpha = ReadOwnerAlpha();
+        ApplyLouieAlpha(alpha);
+    }
+
+    private float ReadOwnerAlpha()
+    {
+        if (ownerSpriteRenderers == null || ownerSpriteRenderers.Length == 0)
+            return 1f;
+
+        for (int i = 0; i < ownerSpriteRenderers.Length; i++)
+        {
+            var sr = ownerSpriteRenderers[i];
+            if (sr == null || !sr.enabled)
+                continue;
+
+            return sr.color.a;
+        }
+
+        for (int i = 0; i < ownerSpriteRenderers.Length; i++)
+        {
+            var sr = ownerSpriteRenderers[i];
+            if (sr != null)
+                return sr.color.a;
+        }
+
+        return 1f;
+    }
+
+    private void ApplyLouieAlpha(float alpha)
+    {
+        if (louieSpriteRenderers == null)
+            return;
+
+        alpha = Mathf.Clamp01(alpha);
+
+        for (int i = 0; i < louieSpriteRenderers.Length; i++)
+        {
+            var sr = louieSpriteRenderers[i];
+            if (sr == null)
+                continue;
+
+            Color baseColor = (louieOriginalColors != null && i < louieOriginalColors.Length)
+                ? louieOriginalColors[i]
+                : sr.color;
+
+            sr.color = new Color(baseColor.r, baseColor.g, baseColor.b, alpha);
+        }
+    }
+
+    private void RestoreLouieOriginalColors()
+    {
+        if (louieSpriteRenderers == null || louieOriginalColors == null)
+            return;
+
+        for (int i = 0; i < louieSpriteRenderers.Length; i++)
+        {
+            var sr = louieSpriteRenderers[i];
+            if (sr == null)
+                continue;
+
+            if (i < louieOriginalColors.Length)
+                sr.color = louieOriginalColors[i];
+        }
     }
 
     private void ApplyDirection(Vector2 faceDir, bool isIdle)

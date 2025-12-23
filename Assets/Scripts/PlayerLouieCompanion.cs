@@ -657,6 +657,16 @@ public class PlayerLouieCompanion : MonoBehaviour
             : mountedType;
     }
 
+    public CharacterHealth GetMountedLouieHealth()
+    {
+        return mountedLouieHealth;
+    }
+
+    public bool HasMountedLouie()
+    {
+        return currentLouie != null;
+    }
+
     public void RestoreMountedBlueLouie()
     {
         if (currentLouie != null)
