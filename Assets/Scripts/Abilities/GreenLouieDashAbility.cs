@@ -28,6 +28,8 @@ public class GreenLouieDashAbility : MonoBehaviour, IPlayerAbility
 
     IGreenLouieDashExternalAnimator externalAnimator;
 
+    int bombLayer;
+
     public string Id => AbilityId;
     public bool IsEnabled => enabledAbility;
 
@@ -36,6 +38,8 @@ public class GreenLouieDashAbility : MonoBehaviour, IPlayerAbility
         movement = GetComponent<MovementController>();
         rb = movement != null ? movement.Rigidbody : null;
         audioSource = GetComponent<AudioSource>();
+
+        bombLayer = LayerMask.NameToLayer("Bomb");
     }
 
     void OnDisable() => CancelDash();
@@ -166,13 +170,26 @@ public class GreenLouieDashAbility : MonoBehaviour, IPlayerAbility
         return abilitySystem.IsEnabled(DestructiblePassAbility.AbilityId);
     }
 
+    bool HasBombPassEnabled()
+    {
+        if (PlayerPersistentStats.CanPassBombs)
+            return true;
+
+        if (!TryGetComponent<AbilitySystem>(out var abilitySystem) || abilitySystem == null)
+            return false;
+
+        abilitySystem.RebuildCache();
+        return abilitySystem.IsEnabled(BombPassAbility.AbilityId);
+    }
+
     bool IsBlocked(Vector2 targetPos, Vector2 dir)
     {
+        if (movement == null)
+            return true;
+
         Vector2 size = Mathf.Abs(dir.x) > 0.01f
             ? new Vector2(movement.tileSize * 0.6f, movement.tileSize * 0.2f)
             : new Vector2(movement.tileSize * 0.2f, movement.tileSize * 0.6f);
-
-        int stageMask = 1 << LayerMask.NameToLayer("Stage");
 
         Collider2D[] hits = Physics2D.OverlapBoxAll(targetPos, size, 0f);
 
@@ -180,6 +197,7 @@ public class GreenLouieDashAbility : MonoBehaviour, IPlayerAbility
             return false;
 
         bool canPassDestructibles = HasDestructiblePassEnabled();
+        bool canPassBombs = HasBombPassEnabled();
 
         for (int i = 0; i < hits.Length; i++)
         {
@@ -194,6 +212,9 @@ public class GreenLouieDashAbility : MonoBehaviour, IPlayerAbility
                 continue;
 
             if (canPassDestructibles && hit.CompareTag("Destructibles"))
+                continue;
+
+            if (canPassBombs && hit.gameObject.layer == bombLayer)
                 continue;
 
             return true;
