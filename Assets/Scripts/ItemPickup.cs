@@ -190,15 +190,7 @@ public class ItemPickup : MonoBehaviour
 
             case ItemType.PurpleLouieEgg:
                 if (player.TryGetComponent<PlayerLouieCompanion>(out var louiePurple))
-                {
                     louiePurple.MountPurpleLouie();
-
-                    if (PlayerPersistentStats.MountedLouieLife <= 0)
-                    {
-                        int currentLife = louiePurple.GetMountedLouieLife();
-                        PlayerPersistentStats.MountedLouieLife = Mathf.Clamp(currentLife, 1, 2);
-                    }
-                }
                 break;
 
             case ItemType.GreenLouieEgg:

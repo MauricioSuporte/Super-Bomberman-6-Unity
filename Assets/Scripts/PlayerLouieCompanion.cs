@@ -45,6 +45,9 @@ public class PlayerLouieCompanion : MonoBehaviour
 
     PlayerPersistentStats.MountedLouieType mountedType = PlayerPersistentStats.MountedLouieType.None;
 
+    float dashInvulRemainingPlayer;
+    float dashInvulRemainingLouie;
+
     void Awake()
     {
         movement = GetComponent<MovementController>();
@@ -68,8 +71,52 @@ public class PlayerLouieCompanion : MonoBehaviour
 
     void Update()
     {
+        UpdateDashInvulnerabilityTimers();
+
         if (currentLouie != null && mountedType != PlayerPersistentStats.MountedLouieType.Blue)
             EnforceNoPunchWhileMountedNonBlue();
+    }
+
+    void UpdateDashInvulnerabilityTimers()
+    {
+        float dt = Time.deltaTime;
+        if (dt <= 0f)
+            return;
+
+        if (dashInvulRemainingPlayer > 0f)
+            dashInvulRemainingPlayer = Mathf.Max(0f, dashInvulRemainingPlayer - dt);
+
+        if (dashInvulRemainingLouie > 0f)
+            dashInvulRemainingLouie = Mathf.Max(0f, dashInvulRemainingLouie - dt);
+    }
+
+    public void StartOrExtendDashInvulnerability(float seconds)
+    {
+        float s = Mathf.Max(0.01f, seconds);
+
+        if (playerHealth != null)
+        {
+            dashInvulRemainingPlayer = Mathf.Max(dashInvulRemainingPlayer, s);
+            playerHealth.StartTemporaryInvulnerability(dashInvulRemainingPlayer, withBlink: false);
+        }
+
+        if (mountedLouieHealth != null)
+        {
+            dashInvulRemainingLouie = Mathf.Max(dashInvulRemainingLouie, s);
+            mountedLouieHealth.StartTemporaryInvulnerability(dashInvulRemainingLouie, withBlink: false);
+        }
+    }
+
+    void ClearDashInvulnerabilityNow()
+    {
+        if (playerHealth != null && dashInvulRemainingPlayer > 0f)
+            playerHealth.StopInvulnerability();
+
+        if (mountedLouieHealth != null && dashInvulRemainingLouie > 0f)
+            mountedLouieHealth.StopInvulnerability();
+
+        dashInvulRemainingPlayer = 0f;
+        dashInvulRemainingLouie = 0f;
     }
 
     public void MountBlueLouie() => MountLouieInternal(blueLouiePrefab, PlayerPersistentStats.MountedLouieType.Blue);
@@ -102,9 +149,6 @@ public class PlayerLouieCompanion : MonoBehaviour
             mountedLouieHealth.life = v;
 
         mountedLouieHp = v;
-
-        if (mountedType == PlayerPersistentStats.MountedLouieType.Purple)
-            PlayerPersistentStats.MountedLouieLife = v;
     }
 
     void MountLouieInternal(GameObject prefab, PlayerPersistentStats.MountedLouieType type)
@@ -126,18 +170,6 @@ public class PlayerLouieCompanion : MonoBehaviour
         mountedLouieHp = 1;
         if (mountedLouieHealth != null)
             mountedLouieHp = Mathf.Max(1, mountedLouieHealth.life);
-
-        if (mountedType == PlayerPersistentStats.MountedLouieType.Purple)
-        {
-            if (PlayerPersistentStats.MountedLouieLife > 0)
-                SetMountedLouieLife(PlayerPersistentStats.MountedLouieLife);
-            else
-                PlayerPersistentStats.MountedLouieLife = Mathf.Max(1, mountedLouieHp);
-        }
-        else
-        {
-            PlayerPersistentStats.MountedLouieLife = 0;
-        }
 
         if (currentLouie.TryGetComponent<LouieMovementController>(out var lm))
         {
@@ -176,6 +208,7 @@ public class PlayerLouieCompanion : MonoBehaviour
 
     void ApplyRulesForCurrentMount()
     {
+        abilitySystem.Disable(BlackLouieDashPushAbility.AbilityId);
         abilitySystem.Disable(PurpleLouieBombLineAbility.AbilityId);
         abilitySystem.Disable(GreenLouieDashAbility.AbilityId);
         abilitySystem.Disable(YellowLouieDestructibleKickAbility.AbilityId);
@@ -330,6 +363,34 @@ public class PlayerLouieCompanion : MonoBehaviour
 
             return;
         }
+
+        if (mountedType == PlayerPersistentStats.MountedLouieType.Black)
+        {
+            abilitySystem.Enable(BlackLouieDashPushAbility.AbilityId);
+
+            var dash = abilitySystem.Get<BlackLouieDashPushAbility>(BlackLouieDashPushAbility.AbilityId);
+            if (dash != null)
+            {
+                dash.triggerKey = KeyCode.B;
+
+                var anim = currentLouie != null
+                    ? currentLouie.GetComponentInChildren<IBlackLouieDashExternalAnimator>(true)
+                    : null;
+
+                dash.SetExternalAnimator(anim);
+
+                var cfg = currentLouie != null
+                    ? currentLouie.GetComponentInChildren<LouieAbilitySfxConfig>(true)
+                    : null;
+
+                if (cfg != null)
+                    dash.SetDashSfx(cfg.abilitySfx, cfg.abilityVolume);
+                else
+                    dash.SetDashSfx(null, 1f);
+            }
+
+            return;
+        }
     }
 
     void EnforceNoPunchWhileMountedNonBlue()
@@ -377,9 +438,6 @@ public class PlayerLouieCompanion : MonoBehaviour
             mountedLouieHealth.TakeDamage(dmg);
             mountedLouieHp = Mathf.Max(0, mountedLouieHealth.life);
 
-            if (mountedType == PlayerPersistentStats.MountedLouieType.Purple)
-                PlayerPersistentStats.MountedLouieLife = Mathf.Max(0, mountedLouieHp);
-
             if (mountedLouieHealth.life > 0)
                 SyncPlayerBlinkWithLouie();
 
@@ -390,9 +448,6 @@ public class PlayerLouieCompanion : MonoBehaviour
         }
 
         mountedLouieHp -= dmg;
-
-        if (mountedType == PlayerPersistentStats.MountedLouieType.Purple)
-            PlayerPersistentStats.MountedLouieLife = Mathf.Max(0, mountedLouieHp);
 
         if (mountedLouieHp <= 0)
             LoseLouie();
@@ -441,13 +496,13 @@ public class PlayerLouieCompanion : MonoBehaviour
         if (currentLouie == null)
             return;
 
+        ClearDashInvulnerabilityNow();
+
         var louie = currentLouie;
         currentLouie = null;
 
         mountedLouieHp = 0;
         mountedLouieHealth = null;
-
-        PlayerPersistentStats.MountedLouieLife = 0;
 
         louie.transform.GetPositionAndRotation(out var worldPos, out var worldRot);
 
@@ -461,6 +516,7 @@ public class PlayerLouieCompanion : MonoBehaviour
         abilitySystem.Disable(YellowLouieDestructibleKickAbility.AbilityId);
         abilitySystem.Disable(PinkLouieJumpAbility.AbilityId);
         abilitySystem.Disable(RedLouiePunchStunAbility.AbilityId);
+        abilitySystem.Disable(BlackLouieDashPushAbility.AbilityId);
 
         var kick = abilitySystem.Get<YellowLouieDestructibleKickAbility>(YellowLouieDestructibleKickAbility.AbilityId);
         if (kick != null)
@@ -488,6 +544,13 @@ public class PlayerLouieCompanion : MonoBehaviour
         {
             stun.SetExternalAnimator(null);
             stun.SetPunchSfx(null, 1f);
+        }
+
+        var blackDash = abilitySystem.Get<BlackLouieDashPushAbility>(BlackLouieDashPushAbility.AbilityId);
+        if (blackDash != null)
+        {
+            blackDash.SetExternalAnimator(null);
+            blackDash.SetDashSfx(null, 1f);
         }
 
         RestorePunchAfterUnmount();
@@ -521,6 +584,8 @@ public class PlayerLouieCompanion : MonoBehaviour
 
     void UnmountLouie()
     {
+        ClearDashInvulnerabilityNow();
+
         if (currentLouie != null)
             Destroy(currentLouie);
 
@@ -529,7 +594,6 @@ public class PlayerLouieCompanion : MonoBehaviour
         mountedLouieHp = 0;
         mountedLouieHealth = null;
 
-        PlayerPersistentStats.MountedLouieLife = 0;
         movement.SetMountedSpritesLocalYOverride(false, 0f);
 
         movement.SetMountedOnLouie(false);
@@ -540,6 +604,7 @@ public class PlayerLouieCompanion : MonoBehaviour
         abilitySystem.Disable(YellowLouieDestructibleKickAbility.AbilityId);
         abilitySystem.Disable(PinkLouieJumpAbility.AbilityId);
         abilitySystem.Disable(RedLouiePunchStunAbility.AbilityId);
+        abilitySystem.Disable(BlackLouieDashPushAbility.AbilityId);
 
         var kick = abilitySystem.Get<YellowLouieDestructibleKickAbility>(YellowLouieDestructibleKickAbility.AbilityId);
         if (kick != null)
@@ -567,6 +632,13 @@ public class PlayerLouieCompanion : MonoBehaviour
         {
             stun.SetExternalAnimator(null);
             stun.SetPunchSfx(null, 1f);
+        }
+
+        var blackDash = abilitySystem.Get<BlackLouieDashPushAbility>(BlackLouieDashPushAbility.AbilityId);
+        if (blackDash != null)
+        {
+            blackDash.SetExternalAnimator(null);
+            blackDash.SetDashSfx(null, 1f);
         }
 
         RestorePunchAfterUnmount();

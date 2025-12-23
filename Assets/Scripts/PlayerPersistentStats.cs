@@ -5,16 +5,15 @@ public static class PlayerPersistentStats
     public const int MaxBombAmount = 9;
     public const int MaxExplosionRadius = 9;
     public const float MaxSpeed = 9f;
+    public static int Life = 1;
 
     public static int BombAmount = 9;
     public static int ExplosionRadius = 9;
     public static float Speed = 5f;
 
-    public static int Life = 1;
-
-    public static bool CanKickBombs = false;
+    public static bool CanKickBombs = true;
     public static bool CanPunchBombs = true;
-    public static bool CanPassBombs = true;
+    public static bool CanPassBombs = false;
     public static bool CanPassDestructibles = true;
     public static bool HasPierceBombs = true;
     public static bool HasControlBombs = false;
@@ -32,8 +31,7 @@ public static class PlayerPersistentStats
         Red = 7
     }
 
-    public static MountedLouieType MountedLouie = MountedLouieType.Red;
-    public static int MountedLouieLife = 1;
+    public static MountedLouieType MountedLouie = MountedLouieType.Black;
 
     public static void LoadInto(MovementController movement, BombController bomb)
     {
@@ -102,8 +100,6 @@ public static class PlayerPersistentStats
 
                     case MountedLouieType.Black:
                         louieCompanion.RestoreMountedBlackLouie();
-                        if (MountedLouieLife > 0)
-                            louieCompanion.SetMountedLouieLife(MountedLouieLife);
                         break;
 
                     case MountedLouieType.Purple:
@@ -169,16 +165,10 @@ public static class PlayerPersistentStats
                 HasControlBombs = false;
 
             MountedLouie = MountedLouieType.None;
-            MountedLouieLife = 0;
 
             if (movement.TryGetComponent<PlayerLouieCompanion>(out var louieCompanion))
             {
                 MountedLouie = louieCompanion.GetMountedLouieType();
-
-                if (MountedLouie == MountedLouieType.Black)
-                {
-                    MountedLouieLife = Mathf.Max(1, louieCompanion.GetMountedLouieLife());
-                }
             }
         }
 
@@ -206,6 +196,5 @@ public static class PlayerPersistentStats
         HasFullFire = false;
 
         MountedLouie = MountedLouieType.None;
-        MountedLouieLife = 0;
     }
 }

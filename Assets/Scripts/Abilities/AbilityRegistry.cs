@@ -18,15 +18,9 @@ public static class AbilityRegistry
         { YellowLouieDestructibleKickAbility.AbilityId, typeof(YellowLouieDestructibleKickAbility) },
         { PinkLouieJumpAbility.AbilityId, typeof(PinkLouieJumpAbility) },
         { RedLouiePunchStunAbility.AbilityId, typeof(RedLouiePunchStunAbility) },
+        { BlackLouieDashPushAbility.AbilityId, typeof(BlackLouieDashPushAbility) },
     };
 
-    public static bool TryGetType(string id, out Type type)
-    {
-        return map.TryGetValue(id, out type);
-    }
-
-    public static void Register(string id, Type type)
-    {
-        map[id] = type;
-    }
+    public static bool TryGetType(string id, out Type type) => map.TryGetValue(id, out type);
+    public static void Register(string id, Type type) => map[id] = type;
 }
