@@ -38,6 +38,8 @@ public class AnimatedSpriteRenderer : MonoBehaviour
     private bool canMoveVisualLocal;
     private bool frozen;
 
+    Vector3 runtimeBaseOffset;
+
     public int CurrentFrame
     {
         get => animationFrame;
@@ -233,12 +235,29 @@ public class AnimatedSpriteRenderer : MonoBehaviour
         if (spriteRenderer.flipX)
             offset.x = -offset.x;
 
-        visualTransform.localPosition = initialVisualLocalPosition + (Vector3)offset;
+        visualTransform.localPosition = initialVisualLocalPosition + runtimeBaseOffset + (Vector3)offset;
     }
 
     private void ResetOffset()
     {
         if (visualTransform != null)
-            visualTransform.localPosition = initialVisualLocalPosition;
+            visualTransform.localPosition = initialVisualLocalPosition + runtimeBaseOffset;
+    }
+
+    public void SetRuntimeBaseLocalY(float desiredLocalY)
+    {
+        EnsureSpriteRenderer();
+
+        if (visualTransform == null)
+            return;
+
+        runtimeBaseOffset = new Vector3(0f, desiredLocalY - initialVisualLocalPosition.y, 0f);
+        ApplyFrame();
+    }
+
+    public void ClearRuntimeBaseOffset()
+    {
+        runtimeBaseOffset = Vector3.zero;
+        ApplyFrame();
     }
 }

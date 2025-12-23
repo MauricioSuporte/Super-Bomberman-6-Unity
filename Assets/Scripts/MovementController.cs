@@ -38,6 +38,50 @@ public class MovementController : MonoBehaviour, IKillable
     public AnimatedSpriteRenderer mountedSpriteLeft;
     public AnimatedSpriteRenderer mountedSpriteRight;
 
+
+    #region testes offset mounted
+
+    [Header("Mounted On Louie - Pink Y Override")]
+    public float pinkMountedSpritesLocalY = 1.3f;
+
+    bool mountedSpritesYOverridden;
+
+    Vector3 mountedUpOriginalLocalPos;
+    Vector3 mountedDownOriginalLocalPos;
+    Vector3 mountedLeftOriginalLocalPos;
+    Vector3 mountedRightOriginalLocalPos;
+
+    public void SetMountedSpritesLocalYOverride(bool enable, float localY)
+    {
+        if (enable)
+        {
+            ApplyMountedSpritesLocalY(localY);
+            mountedSpritesYOverridden = true;
+            return;
+        }
+
+        ClearMountedSpritesLocalYOverride();
+        mountedSpritesYOverridden = false;
+    }
+
+    void ApplyMountedSpritesLocalY(float localY)
+    {
+        if (mountedSpriteUp != null) mountedSpriteUp.SetRuntimeBaseLocalY(localY);
+        if (mountedSpriteDown != null) mountedSpriteDown.SetRuntimeBaseLocalY(localY);
+        if (mountedSpriteLeft != null) mountedSpriteLeft.SetRuntimeBaseLocalY(localY);
+        if (mountedSpriteRight != null) mountedSpriteRight.SetRuntimeBaseLocalY(localY);
+    }
+
+    void ClearMountedSpritesLocalYOverride()
+    {
+        if (mountedSpriteUp != null) mountedSpriteUp.ClearRuntimeBaseOffset();
+        if (mountedSpriteDown != null) mountedSpriteDown.ClearRuntimeBaseOffset();
+        if (mountedSpriteLeft != null) mountedSpriteLeft.ClearRuntimeBaseOffset();
+        if (mountedSpriteRight != null) mountedSpriteRight.ClearRuntimeBaseOffset();
+    }
+
+    #endregion
+
     [Header("Contact Damage")]
     public float contactDamageCooldownSeconds = 0.15f;
 
@@ -899,6 +943,9 @@ public class MovementController : MonoBehaviour, IKillable
             ApplyDirectionFromVector(Vector2.zero);
             return;
         }
+
+        if (mountedSpritesYOverridden)
+            SetMountedSpritesLocalYOverride(false, 0f);
 
         DisableAllMountedSprites();
         ApplyDirectionFromVector(direction);

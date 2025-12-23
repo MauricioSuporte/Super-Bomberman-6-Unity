@@ -6,6 +6,7 @@ using UnityEngine.Tilemaps;
 [DisallowMultipleComponent]
 [RequireComponent(typeof(MovementController))]
 [RequireComponent(typeof(AudioSource))]
+[RequireComponent(typeof(CharacterHealth))]
 public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
 {
     public const string AbilityId = "PinkLouieJump";

@@ -154,6 +154,9 @@ public class PlayerLouieCompanion : MonoBehaviour
 
         movement.SetMountedOnLouie(true);
 
+        bool isPink = mountedType == PlayerPersistentStats.MountedLouieType.Pink;
+        movement.SetMountedSpritesLocalYOverride(isPink, movement.pinkMountedSpritesLocalY);
+
         if (currentLouie.TryGetComponent<LouieRiderVisual>(out var visual))
         {
             visual.localOffset = localOffset;
@@ -417,6 +420,8 @@ public class PlayerLouieCompanion : MonoBehaviour
 
         louie.transform.GetPositionAndRotation(out var worldPos, out var worldRot);
 
+        movement.SetMountedSpritesLocalYOverride(false, 0f);
+
         movement.SetMountedOnLouie(false);
         mountedType = PlayerPersistentStats.MountedLouieType.None;
 
@@ -486,6 +491,7 @@ public class PlayerLouieCompanion : MonoBehaviour
         mountedLouieHealth = null;
 
         PlayerPersistentStats.MountedLouieLife = 0;
+        movement.SetMountedSpritesLocalYOverride(false, 0f);
 
         movement.SetMountedOnLouie(false);
         mountedType = PlayerPersistentStats.MountedLouieType.None;

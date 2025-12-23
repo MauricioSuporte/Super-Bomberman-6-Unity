@@ -45,7 +45,7 @@ public class YellowLouieDestructibleKickAbility : MonoBehaviour, IPlayerAbility
 
     IYellowLouieDestructibleKickExternalAnimator externalAnimator;
 
-    static readonly HashSet<Vector3Int> _reservedCells = new HashSet<Vector3Int>();
+    static readonly HashSet<Vector3Int> _reservedCells = new();
 
     public string Id => AbilityId;
     public bool IsEnabled => enabledAbility;
