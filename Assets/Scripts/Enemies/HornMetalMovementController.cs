@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class MetalHornMovementController : PersecutingEnemyMovementController
+public class ChargerPersecutingMovementController : PersecutingEnemyMovementController
 {
     [Header("Metal Horn Settings")]
     public float chargePauseDuration = 0.5f;

@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class PaladinMovementController : MetalHornMovementController
+public class KnightMovementController : ChargerPersecutingMovementController
 {
     protected override void OnTriggerEnter2D(Collider2D other)
     {
