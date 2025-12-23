@@ -16,13 +16,21 @@ public class LouieRiderVisual : MonoBehaviour
     [Header("End Stage (Louie)")]
     public AnimatedSpriteRenderer louieEndStage;
 
+    [Header("Pink Louie - Right X Fix")]
+    public bool enablePinkRightFix = true;
+    public float pinkRightFixedLocalX = -1f;
+
     private AnimatedSpriteRenderer active;
     private bool playingEndStage;
+
+    private bool isPinkLouieMounted;
 
     public void Bind(MovementController movement)
     {
         owner = movement;
         playingEndStage = false;
+
+        isPinkLouieMounted = DetectPinkMounted(owner);
 
         SetExclusive(louieDown != null ? louieDown : louieUp);
         ApplyDirection(Vector2.down, true);
@@ -72,7 +80,40 @@ public class LouieRiderVisual : MonoBehaviour
             else if (faceDir == Vector2.left) sr.flipX = false;
         }
 
+        ApplyPinkRightXFix(faceDir);
+
         active.RefreshFrame();
+    }
+
+    private void ApplyPinkRightXFix(Vector2 faceDir)
+    {
+        if (active == null)
+            return;
+
+        if (!enablePinkRightFix || !isPinkLouieMounted)
+        {
+            active.ClearRuntimeBaseLocalX();
+            return;
+        }
+
+        if (faceDir == Vector2.right)
+            active.SetRuntimeBaseLocalX(pinkRightFixedLocalX);
+        else
+            active.ClearRuntimeBaseLocalX();
+    }
+
+    private bool DetectPinkMounted(MovementController movement)
+    {
+        if (movement == null)
+            return false;
+
+        if (!movement.CompareTag("Player"))
+            return false;
+
+        if (!movement.TryGetComponent<PlayerLouieCompanion>(out var comp) || comp == null)
+            return false;
+
+        return comp.GetMountedLouieType() == PlayerPersistentStats.MountedLouieType.Pink;
     }
 
     private void SetExclusive(AnimatedSpriteRenderer keep)
@@ -100,6 +141,13 @@ public class LouieRiderVisual : MonoBehaviour
             keepSr.enabled = true;
 
         active = keep;
+
+        if (owner != null && !playingEndStage)
+        {
+            bool isIdle = owner.Direction == Vector2.zero;
+            Vector2 faceDir = isIdle ? owner.FacingDirection : owner.Direction;
+            ApplyPinkRightXFix(faceDir);
+        }
     }
 
     public bool TryPlayEndStage(float totalTime, int frameCount)
@@ -114,6 +162,7 @@ public class LouieRiderVisual : MonoBehaviour
         louieEndStage.idle = false;
         louieEndStage.loop = true;
         louieEndStage.CurrentFrame = 0;
+        louieEndStage.ClearRuntimeBaseLocalX();
         louieEndStage.RefreshFrame();
 
         if (frameCount > 0)

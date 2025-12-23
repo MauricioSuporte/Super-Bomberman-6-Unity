@@ -2,12 +2,17 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+[RequireComponent(typeof(LouieRiderVisual))]
 public class PinkLouieJumpAnimator : MonoBehaviour, IPinkLouieJumpExternalAnimator
 {
     public AnimatedSpriteRenderer jumpUp;
     public AnimatedSpriteRenderer jumpDown;
     public AnimatedSpriteRenderer jumpLeft;
     public AnimatedSpriteRenderer jumpRight;
+
+    [Header("Fix Right Local X")]
+    public bool fixRightLocalX = true;
+    public float rightLocalX = -0.3f;
 
     AnimatedSpriteRenderer active;
     LouieRiderVisual riderVisual;
@@ -50,6 +55,14 @@ public class PinkLouieJumpAnimator : MonoBehaviour, IPinkLouieJumpExternalAnimat
             if (active.TryGetComponent<SpriteRenderer>(out var sr))
                 sr.flipX = (dir == Vector2.right);
 
+            if (fixRightLocalX)
+            {
+                if (dir == Vector2.right)
+                    active.SetRuntimeBaseLocalX(rightLocalX);
+                else
+                    active.ClearRuntimeBaseLocalX();
+            }
+
             active.enabled = true;
             active.idle = false;
             active.loop = true;
@@ -72,6 +85,9 @@ public class PinkLouieJumpAnimator : MonoBehaviour, IPinkLouieJumpExternalAnimat
         {
             if (active.TryGetComponent<SpriteRenderer>(out var sr))
                 sr.flipX = false;
+
+            if (fixRightLocalX)
+                active.ClearRuntimeBaseLocalX();
 
             active.enabled = false;
 

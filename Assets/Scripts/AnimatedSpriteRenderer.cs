@@ -40,6 +40,9 @@ public class AnimatedSpriteRenderer : MonoBehaviour
 
     Vector3 runtimeBaseOffset;
 
+    bool runtimeLockX;
+    float runtimeLockedLocalX;
+
     public int CurrentFrame
     {
         get => animationFrame;
@@ -94,7 +97,6 @@ public class AnimatedSpriteRenderer : MonoBehaviour
     private void OnDisable()
     {
         CancelInvoke(nameof(NextFrame));
-
         ResetOffset();
 
         EnsureSpriteRenderer();
@@ -226,22 +228,36 @@ public class AnimatedSpriteRenderer : MonoBehaviour
         if (!canMoveVisualLocal || visualTransform == null)
             return;
 
-        if (frameOffsets == null || frameOffsets.Length == 0)
-            return;
+        Vector3 pos = initialVisualLocalPosition + runtimeBaseOffset;
 
-        int idx = Mathf.Clamp(frame, 0, frameOffsets.Length - 1);
-        Vector2 offset = frameOffsets[idx];
+        if (frameOffsets != null && frameOffsets.Length > 0)
+        {
+            int idx = Mathf.Clamp(frame, 0, frameOffsets.Length - 1);
+            Vector2 offset = frameOffsets[idx];
 
-        if (spriteRenderer.flipX)
-            offset.x = -offset.x;
+            if (spriteRenderer != null && spriteRenderer.flipX)
+                offset.x = -offset.x;
 
-        visualTransform.localPosition = initialVisualLocalPosition + runtimeBaseOffset + (Vector3)offset;
+            pos += (Vector3)offset;
+        }
+
+        if (runtimeLockX)
+            pos.x = runtimeLockedLocalX;
+
+        visualTransform.localPosition = pos;
     }
 
     private void ResetOffset()
     {
-        if (visualTransform != null)
-            visualTransform.localPosition = initialVisualLocalPosition + runtimeBaseOffset;
+        if (visualTransform == null)
+            return;
+
+        Vector3 pos = initialVisualLocalPosition + runtimeBaseOffset;
+
+        if (runtimeLockX)
+            pos.x = runtimeLockedLocalX;
+
+        visualTransform.localPosition = pos;
     }
 
     public void SetRuntimeBaseLocalY(float desiredLocalY)
@@ -251,13 +267,32 @@ public class AnimatedSpriteRenderer : MonoBehaviour
         if (visualTransform == null)
             return;
 
-        runtimeBaseOffset = new Vector3(0f, desiredLocalY - initialVisualLocalPosition.y, 0f);
+        runtimeBaseOffset = new Vector3(runtimeBaseOffset.x, desiredLocalY - initialVisualLocalPosition.y, 0f);
+        ApplyFrame();
+    }
+
+    public void SetRuntimeBaseLocalX(float desiredLocalX)
+    {
+        EnsureSpriteRenderer();
+
+        if (visualTransform == null)
+            return;
+
+        runtimeLockX = true;
+        runtimeLockedLocalX = desiredLocalX;
+        ApplyFrame();
+    }
+
+    public void ClearRuntimeBaseLocalX()
+    {
+        runtimeLockX = false;
         ApplyFrame();
     }
 
     public void ClearRuntimeBaseOffset()
     {
         runtimeBaseOffset = Vector3.zero;
+        runtimeLockX = false;
         ApplyFrame();
     }
 }
