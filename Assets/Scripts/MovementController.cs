@@ -639,7 +639,7 @@ public class MovementController : MonoBehaviour, IKillable
             PlayerPersistentStats.HasFullFire = false;
             PlayerPersistentStats.CanPassBombs = false;
             PlayerPersistentStats.CanPassDestructibles = false;
-            PlayerPersistentStats.MountedLouie = PlayerPersistentStats.MountedLouieType.None;
+            PlayerPersistentStats.MountedLouie = MountedLouieType.None;
         }
 
         if (bombController != null)

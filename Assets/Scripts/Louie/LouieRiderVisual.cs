@@ -113,7 +113,7 @@ public class LouieRiderVisual : MonoBehaviour
         if (!movement.TryGetComponent<PlayerLouieCompanion>(out var comp) || comp == null)
             return false;
 
-        return comp.GetMountedLouieType() == PlayerPersistentStats.MountedLouieType.Pink;
+        return comp.GetMountedLouieType() == MountedLouieType.Pink;
     }
 
     private void SetExclusive(AnimatedSpriteRenderer keep)

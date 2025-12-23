@@ -69,7 +69,7 @@ public class ItemPickup : MonoBehaviour
             return true;
 
         if (player.TryGetComponent<PlayerLouieCompanion>(out var louieCompanion))
-            return louieCompanion.GetMountedLouieType() != PlayerPersistentStats.MountedLouieType.None;
+            return louieCompanion.GetMountedLouieType() != MountedLouieType.None;
 
         return false;
     }

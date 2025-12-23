@@ -43,7 +43,7 @@ public class PlayerLouieCompanion : MonoBehaviour
     BombPunchAbility punchAbility;
     bool punchOwned;
 
-    PlayerPersistentStats.MountedLouieType mountedType = PlayerPersistentStats.MountedLouieType.None;
+    MountedLouieType mountedType = MountedLouieType.None;
 
     float dashInvulRemainingPlayer;
     float dashInvulRemainingLouie;
@@ -73,7 +73,7 @@ public class PlayerLouieCompanion : MonoBehaviour
     {
         UpdateDashInvulnerabilityTimers();
 
-        if (currentLouie != null && mountedType != PlayerPersistentStats.MountedLouieType.Blue)
+        if (currentLouie != null && mountedType != MountedLouieType.Blue)
             EnforceNoPunchWhileMountedNonBlue();
     }
 
@@ -119,13 +119,13 @@ public class PlayerLouieCompanion : MonoBehaviour
         dashInvulRemainingLouie = 0f;
     }
 
-    public void MountBlueLouie() => MountLouieInternal(blueLouiePrefab, PlayerPersistentStats.MountedLouieType.Blue);
-    public void MountBlackLouie() => MountLouieInternal(blackLouiePrefab, PlayerPersistentStats.MountedLouieType.Black);
-    public void MountPurpleLouie() => MountLouieInternal(purpleLouiePrefab, PlayerPersistentStats.MountedLouieType.Purple);
-    public void MountGreenLouie() => MountLouieInternal(greenLouiePrefab, PlayerPersistentStats.MountedLouieType.Green);
-    public void MountYellowLouie() => MountLouieInternal(yellowLouiePrefab, PlayerPersistentStats.MountedLouieType.Yellow);
-    public void MountPinkLouie() => MountLouieInternal(pinkLouiePrefab, PlayerPersistentStats.MountedLouieType.Pink);
-    public void MountRedLouie() => MountLouieInternal(redLouiePrefab, PlayerPersistentStats.MountedLouieType.Red);
+    public void MountBlueLouie() => MountLouieInternal(blueLouiePrefab, MountedLouieType.Blue);
+    public void MountBlackLouie() => MountLouieInternal(blackLouiePrefab, MountedLouieType.Black);
+    public void MountPurpleLouie() => MountLouieInternal(purpleLouiePrefab, MountedLouieType.Purple);
+    public void MountGreenLouie() => MountLouieInternal(greenLouiePrefab, MountedLouieType.Green);
+    public void MountYellowLouie() => MountLouieInternal(yellowLouiePrefab, MountedLouieType.Yellow);
+    public void MountPinkLouie() => MountLouieInternal(pinkLouiePrefab, MountedLouieType.Pink);
+    public void MountRedLouie() => MountLouieInternal(redLouiePrefab, MountedLouieType.Red);
 
     public int GetMountedLouieLife()
     {
@@ -151,7 +151,7 @@ public class PlayerLouieCompanion : MonoBehaviour
         mountedLouieHp = v;
     }
 
-    void MountLouieInternal(GameObject prefab, PlayerPersistentStats.MountedLouieType type)
+    void MountLouieInternal(GameObject prefab, MountedLouieType type)
     {
         if (prefab == null || movement == null)
             return;
@@ -188,7 +188,7 @@ public class PlayerLouieCompanion : MonoBehaviour
 
         movement.SetMountedOnLouie(true);
 
-        bool isPink = mountedType == PlayerPersistentStats.MountedLouieType.Pink;
+        bool isPink = mountedType == MountedLouieType.Pink;
         movement.SetMountedSpritesLocalYOverride(isPink, movement.pinkMountedSpritesLocalY);
 
         if (currentLouie.TryGetComponent<LouieRiderVisual>(out var visual))
@@ -215,7 +215,7 @@ public class PlayerLouieCompanion : MonoBehaviour
         abilitySystem.Disable(PinkLouieJumpAbility.AbilityId);
         abilitySystem.Disable(RedLouiePunchStunAbility.AbilityId);
 
-        if (mountedType == PlayerPersistentStats.MountedLouieType.Blue)
+        if (mountedType == MountedLouieType.Blue)
         {
             var external = currentLouie != null
                 ? currentLouie.GetComponentInChildren<IBombPunchExternalAnimator>(true)
@@ -235,7 +235,7 @@ public class PlayerLouieCompanion : MonoBehaviour
 
         abilitySystem.Disable(BombPunchAbility.AbilityId);
 
-        if (mountedType == PlayerPersistentStats.MountedLouieType.Purple)
+        if (mountedType == MountedLouieType.Purple)
         {
             abilitySystem.Enable(PurpleLouieBombLineAbility.AbilityId);
 
@@ -254,7 +254,7 @@ public class PlayerLouieCompanion : MonoBehaviour
             return;
         }
 
-        if (mountedType == PlayerPersistentStats.MountedLouieType.Green)
+        if (mountedType == MountedLouieType.Green)
         {
             abilitySystem.Enable(GreenLouieDashAbility.AbilityId);
 
@@ -280,7 +280,7 @@ public class PlayerLouieCompanion : MonoBehaviour
             return;
         }
 
-        if (mountedType == PlayerPersistentStats.MountedLouieType.Yellow)
+        if (mountedType == MountedLouieType.Yellow)
         {
             abilitySystem.Enable(YellowLouieDestructibleKickAbility.AbilityId);
 
@@ -308,7 +308,7 @@ public class PlayerLouieCompanion : MonoBehaviour
             return;
         }
 
-        if (mountedType == PlayerPersistentStats.MountedLouieType.Pink)
+        if (mountedType == MountedLouieType.Pink)
         {
             abilitySystem.Enable(PinkLouieJumpAbility.AbilityId);
 
@@ -336,7 +336,7 @@ public class PlayerLouieCompanion : MonoBehaviour
             return;
         }
 
-        if (mountedType == PlayerPersistentStats.MountedLouieType.Red)
+        if (mountedType == MountedLouieType.Red)
         {
             abilitySystem.Enable(RedLouiePunchStunAbility.AbilityId);
 
@@ -364,7 +364,7 @@ public class PlayerLouieCompanion : MonoBehaviour
             return;
         }
 
-        if (mountedType == PlayerPersistentStats.MountedLouieType.Black)
+        if (mountedType == MountedLouieType.Black)
         {
             abilitySystem.Enable(BlackLouieDashPushAbility.AbilityId);
 
@@ -509,7 +509,7 @@ public class PlayerLouieCompanion : MonoBehaviour
         movement.SetMountedSpritesLocalYOverride(false, 0f);
 
         movement.SetMountedOnLouie(false);
-        mountedType = PlayerPersistentStats.MountedLouieType.None;
+        mountedType = MountedLouieType.None;
 
         abilitySystem.Disable(PurpleLouieBombLineAbility.AbilityId);
         abilitySystem.Disable(GreenLouieDashAbility.AbilityId);
@@ -597,7 +597,7 @@ public class PlayerLouieCompanion : MonoBehaviour
         movement.SetMountedSpritesLocalYOverride(false, 0f);
 
         movement.SetMountedOnLouie(false);
-        mountedType = PlayerPersistentStats.MountedLouieType.None;
+        mountedType = MountedLouieType.None;
 
         abilitySystem.Disable(PurpleLouieBombLineAbility.AbilityId);
         abilitySystem.Disable(GreenLouieDashAbility.AbilityId);
@@ -650,10 +650,10 @@ public class PlayerLouieCompanion : MonoBehaviour
             movement.Died -= OnPlayerDied;
     }
 
-    public PlayerPersistentStats.MountedLouieType GetMountedLouieType()
+    public MountedLouieType GetMountedLouieType()
     {
         return currentLouie == null
-            ? PlayerPersistentStats.MountedLouieType.None
+            ? MountedLouieType.None
             : mountedType;
     }
 

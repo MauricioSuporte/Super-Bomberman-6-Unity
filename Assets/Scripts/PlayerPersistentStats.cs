@@ -19,19 +19,7 @@ public static class PlayerPersistentStats
     public static bool HasControlBombs = false;
     public static bool HasFullFire = false;
 
-    public enum MountedLouieType
-    {
-        None = 0,
-        Blue = 1,
-        Black = 2,
-        Purple = 3,
-        Green = 4,
-        Yellow = 5,
-        Pink = 6,
-        Red = 7
-    }
-
-    public static MountedLouieType MountedLouie = MountedLouieType.Green;
+    public static MountedLouieType MountedLouie = MountedLouieType.Black;
 
     public static void LoadInto(MovementController movement, BombController bomb)
     {

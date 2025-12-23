@@ -15,7 +15,7 @@ public class BlackLouieDashPushAbility : MonoBehaviour, IPlayerAbility
     public KeyCode triggerKey = KeyCode.B;
 
     [Header("Dash")]
-    public int dashTiles = 2;
+    public int dashTiles = 3;
     public float dashMoveSeconds = 0.5f;
     public float dashCooldownSeconds = 0.6f;
 
