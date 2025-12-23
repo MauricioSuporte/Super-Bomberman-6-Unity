@@ -125,6 +125,8 @@ public class MovementController : MonoBehaviour, IKillable
         direction = Vector2.zero;
         hasInput = false;
         touchingHazards.Clear();
+
+        ForceExclusiveSpriteFromState();
     }
 
     protected virtual void OnDisable()
@@ -981,5 +983,43 @@ public class MovementController : MonoBehaviour, IKillable
         if (mountedSpriteDown != null) mountedSpriteDown.ClearRuntimeBaseOffset();
         if (mountedSpriteLeft != null) mountedSpriteLeft.ClearRuntimeBaseOffset();
         if (mountedSpriteRight != null) mountedSpriteRight.ClearRuntimeBaseOffset();
+    }
+
+    void ForceExclusiveSpriteFromState()
+    {
+        if (isDead)
+            return;
+
+        // Desliga tudo que pode ter sido habilitado quando o gameplayRoot ativou
+        DisableAllFootSprites();
+        DisableAllMountedSprites();
+
+        AnimatedSpriteRenderer target = null;
+
+        Vector2 face = facingDirection;
+        if (face == Vector2.zero)
+            face = Vector2.down;
+
+        if (isMountedOnLouie)
+        {
+            if (face == Vector2.up) target = mountedSpriteUp != null ? mountedSpriteUp : spriteRendererUp;
+            else if (face == Vector2.down) target = mountedSpriteDown != null ? mountedSpriteDown : spriteRendererDown;
+            else if (face == Vector2.left) target = mountedSpriteLeft != null ? mountedSpriteLeft : spriteRendererLeft;
+            else if (face == Vector2.right) target = mountedSpriteRight != null ? mountedSpriteRight : spriteRendererRight;
+            else target = mountedSpriteDown != null ? mountedSpriteDown : spriteRendererDown;
+        }
+        else
+        {
+            if (face == Vector2.up) target = spriteRendererUp;
+            else if (face == Vector2.down) target = spriteRendererDown;
+            else if (face == Vector2.left) target = spriteRendererLeft;
+            else if (face == Vector2.right) target = spriteRendererRight;
+            else target = spriteRendererDown;
+        }
+
+        // IMPORTANTE: força o SetDirection a religar o sprite mesmo se ele era o "active" antes
+        activeSpriteRenderer = null;
+
+        SetDirection(Vector2.zero, target);
     }
 }
