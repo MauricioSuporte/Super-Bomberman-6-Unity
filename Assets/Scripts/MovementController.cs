@@ -990,7 +990,6 @@ public class MovementController : MonoBehaviour, IKillable
         if (isDead)
             return;
 
-        // Desliga tudo que pode ter sido habilitado quando o gameplayRoot ativou
         DisableAllFootSprites();
         DisableAllMountedSprites();
 
@@ -1017,7 +1016,6 @@ public class MovementController : MonoBehaviour, IKillable
             else target = spriteRendererDown;
         }
 
-        // IMPORTANTE: força o SetDirection a religar o sprite mesmo se ele era o "active" antes
         activeSpriteRenderer = null;
 
         SetDirection(Vector2.zero, target);
