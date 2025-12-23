@@ -12,16 +12,53 @@ public class MetalHornMovementController : PersecutingEnemyMovementController
     private Vector2 chargeDirection;
     private float baseSpeed;
 
+    private StunReceiver stunReceiver;
+    private bool wasStunned;
+
     protected override void Start()
     {
         base.Start();
         baseSpeed = speed;
+        stunReceiver = GetComponent<StunReceiver>();
+        wasStunned = false;
     }
 
     protected override void FixedUpdate()
     {
         if (isDead)
             return;
+
+        bool stunnedNow = stunReceiver != null && stunReceiver.IsStunned;
+
+        if (stunnedNow)
+        {
+            wasStunned = true;
+
+            isPreparingCharge = false;
+            isCharging = false;
+            speed = baseSpeed;
+
+            if (rb != null)
+                rb.linearVelocity = Vector2.zero;
+
+            return;
+        }
+
+        if (wasStunned)
+        {
+            wasStunned = false;
+
+            speed = baseSpeed;
+
+            if (rb != null)
+            {
+                rb.linearVelocity = Vector2.zero;
+                SnapToGrid();
+            }
+
+            DecideNextTile();
+            return;
+        }
 
         if (isPreparingCharge)
         {
@@ -82,6 +119,9 @@ public class MetalHornMovementController : PersecutingEnemyMovementController
     protected override void DecideNextTile()
     {
         if (isPreparingCharge || isCharging)
+            return;
+
+        if (stunReceiver != null && stunReceiver.IsStunned)
             return;
 
         if (MetalHornTryGetPlayerDirection(out Vector2 playerDir))
