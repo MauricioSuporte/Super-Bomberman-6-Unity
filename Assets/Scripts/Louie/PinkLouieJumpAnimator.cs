@@ -15,6 +15,7 @@ public class PinkLouieJumpAnimator : MonoBehaviour, IPinkLouieJumpExternalAnimat
 
     AnimatedSpriteRenderer active;
     LouieRiderVisual riderVisual;
+    MovementController movement;
 
     readonly List<AnimatedSpriteRenderer> cachedAnimators = new();
     readonly List<bool> cachedAnimatorEnabled = new();
@@ -27,6 +28,7 @@ public class PinkLouieJumpAnimator : MonoBehaviour, IPinkLouieJumpExternalAnimat
     void Awake()
     {
         riderVisual = GetComponent<LouieRiderVisual>();
+        movement = GetComponent<MovementController>();
     }
 
     void OnDisable() => Stop();
@@ -101,6 +103,9 @@ public class PinkLouieJumpAnimator : MonoBehaviour, IPinkLouieJumpExternalAnimat
         if (riderVisual != null)
             riderVisual.enabled = true;
 
+        if (movement != null)
+            movement.ForceExclusiveSpriteNow();
+
         playing = false;
     }
 
@@ -108,9 +113,7 @@ public class PinkLouieJumpAnimator : MonoBehaviour, IPinkLouieJumpExternalAnimat
     {
         if (dir == Vector2.up) return jumpUp;
         if (dir == Vector2.down) return jumpDown;
-        if (dir == Vector2.left) return jumpLeft;
-        if (dir == Vector2.right) return jumpRight;
-        return jumpDown;
+        return jumpLeft;
     }
 
     void CacheEnabledStates()

@@ -1041,4 +1041,9 @@ public class MovementController : MonoBehaviour, IKillable
 
         SetDirection(Vector2.zero, target);
     }
+
+    public void ForceExclusiveSpriteNow()
+    {
+        ForceExclusiveSpriteFromState();
+    }
 }

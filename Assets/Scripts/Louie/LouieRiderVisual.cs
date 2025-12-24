@@ -12,13 +12,14 @@ public class LouieRiderVisual : MonoBehaviour
     public AnimatedSpriteRenderer louieUp;
     public AnimatedSpriteRenderer louieDown;
     public AnimatedSpriteRenderer louieLeft;
+    public AnimatedSpriteRenderer louieRight;
 
     [Header("End Stage (Louie)")]
     public AnimatedSpriteRenderer louieEndStage;
 
     [Header("Pink Louie - Right X Fix")]
     public bool enablePinkRightFix = true;
-    public float pinkRightFixedLocalX = -1f;
+    public float pinkRightFixedLocalX = 0f;
 
     [Header("Blink Sync")]
     public bool syncBlinkFromPlayerWhenMounted = true;
@@ -43,11 +44,13 @@ public class LouieRiderVisual : MonoBehaviour
 
         isPinkLouieMounted = DetectPinkMounted(owner);
 
+        if (isPinkLouieMounted && louieRight == louieLeft)
+            louieRight = null;
+
         if (owner != null)
         {
             owner.TryGetComponent(out ownerHealth);
             owner.TryGetComponent(out ownerCompanion);
-
             ownerSpriteRenderers = owner.GetComponentsInChildren<SpriteRenderer>(true);
         }
 
@@ -56,8 +59,12 @@ public class LouieRiderVisual : MonoBehaviour
         for (int i = 0; i < louieSpriteRenderers.Length; i++)
             louieOriginalColors[i] = louieSpriteRenderers[i] != null ? louieSpriteRenderers[i].color : Color.white;
 
-        SetExclusive(louieDown != null ? louieDown : louieUp);
-        ApplyDirection(Vector2.down, true);
+        var start = louieDown != null ? louieDown : (louieUp != null ? louieUp : (louieLeft != null ? louieLeft : louieRight));
+        if (start != null)
+        {
+            SetExclusive(start);
+            ApplyDirection(Vector2.down, true);
+        }
     }
 
     private void LateUpdate()
@@ -74,11 +81,27 @@ public class LouieRiderVisual : MonoBehaviour
         {
             bool isIdle = owner.Direction == Vector2.zero;
             Vector2 faceDir = isIdle ? owner.FacingDirection : owner.Direction;
-
             ApplyDirection(faceDir, isIdle);
+
+            if (isPinkLouieMounted)
+                ForceDisableRightRenderer();
         }
 
         ApplyBlinkSyncFromOwnerIfNeeded();
+    }
+
+    private void ForceDisableRightRenderer()
+    {
+        if (louieRight == null)
+            return;
+
+        if (active == louieRight)
+            return;
+
+        louieRight.enabled = false;
+
+        if (louieRight.TryGetComponent<SpriteRenderer>(out var sr))
+            sr.enabled = false;
     }
 
     private void ApplyBlinkSyncFromOwnerIfNeeded()
@@ -168,14 +191,26 @@ public class LouieRiderVisual : MonoBehaviour
 
     private void ApplyDirection(Vector2 faceDir, bool isIdle)
     {
-        AnimatedSpriteRenderer target;
+        if (faceDir == Vector2.zero)
+            faceDir = Vector2.down;
+
+        AnimatedSpriteRenderer target = null;
 
         if (faceDir == Vector2.up)
             target = louieUp;
         else if (faceDir == Vector2.down)
             target = louieDown;
+        else if (faceDir == Vector2.left)
+            target = louieLeft != null ? louieLeft : louieRight;
+        else if (faceDir == Vector2.right)
+        {
+            if (isPinkLouieMounted)
+                target = louieLeft != null ? louieLeft : louieRight;
+            else
+                target = louieRight != null ? louieRight : louieLeft;
+        }
         else
-            target = louieLeft;
+            target = louieDown != null ? louieDown : (louieUp != null ? louieUp : (louieLeft != null ? louieLeft : louieRight));
 
         if (target == null)
             return;
@@ -183,17 +218,32 @@ public class LouieRiderVisual : MonoBehaviour
         if (active != target)
             SetExclusive(target);
 
+        EnsureEnabled(active);
+
         active.idle = isIdle;
 
         if (active.TryGetComponent<SpriteRenderer>(out var sr))
         {
-            if (faceDir == Vector2.right) sr.flipX = true;
-            else if (faceDir == Vector2.left) sr.flipX = false;
+            if (active == louieLeft && (louieRight == null || isPinkLouieMounted))
+                sr.flipX = (faceDir == Vector2.right);
+            else
+                sr.flipX = false;
         }
 
         ApplyPinkRightXFix(faceDir);
-
         active.RefreshFrame();
+    }
+
+    private void EnsureEnabled(AnimatedSpriteRenderer renderer)
+    {
+        if (renderer == null)
+            return;
+
+        if (!renderer.enabled)
+            renderer.enabled = true;
+
+        if (renderer.TryGetComponent<SpriteRenderer>(out var sr) && !sr.enabled)
+            sr.enabled = true;
     }
 
     private void ApplyPinkRightXFix(Vector2 faceDir)
@@ -245,6 +295,7 @@ public class LouieRiderVisual : MonoBehaviour
         if (louieUp != null && louieUp != keep) louieUp.enabled = false;
         if (louieDown != null && louieDown != keep) louieDown.enabled = false;
         if (louieLeft != null && louieLeft != keep) louieLeft.enabled = false;
+        if (louieRight != null && louieRight != keep) louieRight.enabled = false;
         if (louieEndStage != null && louieEndStage != keep) louieEndStage.enabled = false;
 
         keep.enabled = true;
@@ -252,6 +303,9 @@ public class LouieRiderVisual : MonoBehaviour
             keepSr.enabled = true;
 
         active = keep;
+
+        if (isPinkLouieMounted)
+            ForceDisableRightRenderer();
 
         if (owner != null && !playingEndStage)
         {

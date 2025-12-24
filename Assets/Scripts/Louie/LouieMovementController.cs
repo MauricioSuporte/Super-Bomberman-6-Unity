@@ -13,6 +13,13 @@ public class LouieMovementController : MovementController
     {
         owner = ownerMovement;
         followOffset = offset;
+
+        if (owner != null)
+        {
+            Vector2 startFacing = owner.FacingDirection;
+            if (startFacing != Vector2.zero)
+                lastNonZeroDir = startFacing;
+        }
     }
 
     protected override void Awake()
@@ -45,8 +52,10 @@ public class LouieMovementController : MovementController
 
         if (dir != Vector2.zero)
             lastNonZeroDir = dir;
+        else if (owner.FacingDirection != Vector2.zero)
+            lastNonZeroDir = owner.FacingDirection;
 
-        ApplyDirectionFromVector(dir);
+        ApplyDirectionFromVector(lastNonZeroDir);
 
         if (activeSpriteRenderer != null)
             activeSpriteRenderer.idle = (dir == Vector2.zero);
