@@ -18,6 +18,10 @@ public class MovementController : MonoBehaviour, IKillable
     public float tileSize = 1f;
     public LayerMask obstacleMask;
 
+    [Header("Speed (SB5 Internal)")]
+    [SerializeField] private int speedInternal = PlayerPersistentStats.BaseSpeedNormal;
+    public int SpeedInternal => speedInternal;
+
     [Header("Input")]
     public KeyCode inputUp = KeyCode.W;
     public KeyCode inputDown = KeyCode.S;
@@ -118,6 +122,8 @@ public class MovementController : MonoBehaviour, IKillable
             audioSource.loop = false;
             audioSource.clip = null;
         }
+
+        ApplySpeedInternal(speedInternal);
     }
 
     protected virtual void OnEnable()
@@ -126,6 +132,7 @@ public class MovementController : MonoBehaviour, IKillable
         hasInput = false;
         touchingHazards.Clear();
 
+        ApplySpeedInternal(speedInternal);
         ForceExclusiveSpriteFromState();
     }
 
@@ -232,6 +239,19 @@ public class MovementController : MonoBehaviour, IKillable
         }
     }
 
+    public void ApplySpeedInternal(int newInternal)
+    {
+        speedInternal = PlayerPersistentStats.ClampSpeedInternal(newInternal);
+        speed = PlayerPersistentStats.InternalSpeedToTilesPerSecond(speedInternal);
+    }
+
+    public bool TryAddSpeedUp(int speedStep = PlayerPersistentStats.SpeedStep)
+    {
+        int before = speedInternal;
+        ApplySpeedInternal(speedInternal + speedStep);
+        return speedInternal != before;
+    }
+
     protected virtual void FixedUpdate()
     {
         if (inputLocked || GamePauseController.IsPaused || isDead)
@@ -249,7 +269,8 @@ public class MovementController : MonoBehaviour, IKillable
         }
 
         float dt = Time.fixedDeltaTime;
-        float moveSpeed = speed * dt;
+        float speedWorldPerSecond = speed * tileSize;
+        float moveSpeed = speedWorldPerSecond * dt;
 
         Vector2 position = Rigidbody.position;
 

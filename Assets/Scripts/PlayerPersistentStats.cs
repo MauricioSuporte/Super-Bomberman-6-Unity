@@ -4,12 +4,23 @@ public static class PlayerPersistentStats
 {
     public const int MaxBombAmount = 8;
     public const int MaxExplosionRadius = 8;
-    public const float MaxSpeed = 9f;
+
+    public const int SpeedStep = 32;
+    public const int BaseSpeedNormal = 224;
+
+    public const int MaxSpeedUps = 8;
+    public const int MaxSpeedInternal = BaseSpeedNormal + (MaxSpeedUps * SpeedStep);
+    public const int MinSpeedInternal = BaseSpeedNormal;
+
+    public const int SpeedDivisor = 64;
+
     public static int Life = 1;
 
     public static int BombAmount = 8;
     public static int ExplosionRadius = 8;
-    public static float Speed = 5f;
+
+    //public static int SpeedInternal = BaseSpeedNormal;
+    public static int SpeedInternal = BaseSpeedNormal + (5 * SpeedStep);
 
     public static bool CanKickBombs = true;
     public static bool CanPunchBombs = true;
@@ -21,15 +32,26 @@ public static class PlayerPersistentStats
 
     public static MountedLouieType MountedLouie = MountedLouieType.Black;
 
+    public static float InternalSpeedToTilesPerSecond(int internalSpeed)
+    {
+        return internalSpeed / (float)SpeedDivisor;
+    }
+
+    public static int ClampSpeedInternal(int internalSpeed)
+    {
+        return Mathf.Clamp(internalSpeed, MinSpeedInternal, MaxSpeedInternal);
+    }
+
     public static void LoadInto(MovementController movement, BombController bomb)
     {
         BombAmount = Mathf.Min(BombAmount, MaxBombAmount);
         ExplosionRadius = Mathf.Min(ExplosionRadius, MaxExplosionRadius);
-        Speed = Mathf.Min(Speed, MaxSpeed);
+
+        SpeedInternal = ClampSpeedInternal(SpeedInternal);
         Life = Mathf.Max(1, Life);
 
         if (movement != null)
-            movement.speed = Speed;
+            movement.ApplySpeedInternal(SpeedInternal);
 
         if (bomb != null)
         {
@@ -118,7 +140,7 @@ public static class PlayerPersistentStats
     {
         if (movement != null && movement.CompareTag("Player"))
         {
-            Speed = Mathf.Min(movement.speed, MaxSpeed);
+            SpeedInternal = ClampSpeedInternal(movement.SpeedInternal);
 
             if (movement.TryGetComponent<CharacterHealth>(out var health))
                 Life = Mathf.Max(1, health.life);
@@ -155,9 +177,7 @@ public static class PlayerPersistentStats
             MountedLouie = MountedLouieType.None;
 
             if (movement.TryGetComponent<PlayerLouieCompanion>(out var louieCompanion))
-            {
                 MountedLouie = louieCompanion.GetMountedLouieType();
-            }
         }
 
         if (bomb != null && bomb.CompareTag("Player"))
@@ -171,7 +191,7 @@ public static class PlayerPersistentStats
     {
         BombAmount = 1;
         ExplosionRadius = 1;
-        Speed = 3f;
+        SpeedInternal = BaseSpeedNormal;
 
         Life = 1;
 

@@ -109,9 +109,8 @@ public class ItemPickup : MonoBehaviour
 
             case ItemType.SpeedIncrese:
                 {
-                    var mv = player.GetComponent<MovementController>();
-                    if (mv != null && mv.speed < PlayerPersistentStats.MaxSpeed)
-                        mv.speed = Mathf.Min(mv.speed + 1f, PlayerPersistentStats.MaxSpeed);
+                    if (player.TryGetComponent<MovementController>(out var mv))
+                        mv.TryAddSpeedUp(PlayerPersistentStats.SpeedStep);
                     break;
                 }
 
