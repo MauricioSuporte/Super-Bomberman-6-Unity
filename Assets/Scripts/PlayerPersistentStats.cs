@@ -2,13 +2,13 @@ using UnityEngine;
 
 public static class PlayerPersistentStats
 {
-    public const int MaxBombAmount = 9;
-    public const int MaxExplosionRadius = 9;
+    public const int MaxBombAmount = 8;
+    public const int MaxExplosionRadius = 8;
     public const float MaxSpeed = 9f;
     public static int Life = 1;
 
-    public static int BombAmount = 9;
-    public static int ExplosionRadius = 9;
+    public static int BombAmount = 8;
+    public static int ExplosionRadius = 8;
     public static float Speed = 5f;
 
     public static bool CanKickBombs = true;

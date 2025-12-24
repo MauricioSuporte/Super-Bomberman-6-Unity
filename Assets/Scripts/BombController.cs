@@ -48,14 +48,9 @@ public class BombController : MonoBehaviour
     public AudioClip placeBombSfx;
     public AudioSource playerAudioSource;
 
-    public AudioClip explosionSfxSmall;
-    [Range(0f, 1f)] public float explosionSfxSmallVolume = 1f;
-
-    public AudioClip explosionSfxMedium;
-    [Range(0f, 1f)] public float explosionSfxMediumVolume = 1f;
-
-    public AudioClip explosionSfxMax;
-    [Range(0f, 1f)] public float explosionSfxMaxVolume = 1f;
+    [Header("Explosion SFX By Radius (1..9, >=10 = last)")]
+    public AudioClip[] explosionSfxByRadius = new AudioClip[10];
+    [Range(0f, 1f)] public float explosionSfxVolume = 1f;
 
     private static AudioSource currentExplosionAudio;
 
@@ -206,28 +201,7 @@ public class BombController : MonoBehaviour
                 currentExplosionAudio.Stop();
 
             currentExplosionAudio = explosionAudio;
-
-            AudioClip clip;
-            float vol;
-
-            if (effectiveRadius == 9)
-            {
-                clip = explosionSfxMax != null ? explosionSfxMax : currentExplosionAudio.clip;
-                vol = explosionSfxMaxVolume;
-            }
-            else if (effectiveRadius >= 5)
-            {
-                clip = explosionSfxMedium != null ? explosionSfxMedium : currentExplosionAudio.clip;
-                vol = explosionSfxMediumVolume;
-            }
-            else
-            {
-                clip = explosionSfxSmall != null ? explosionSfxSmall : currentExplosionAudio.clip;
-                vol = explosionSfxSmallVolume;
-            }
-
-            if (clip != null)
-                currentExplosionAudio.PlayOneShot(clip, vol);
+            PlayExplosionSfx(currentExplosionAudio, effectiveRadius);
         }
 
         Vector2 position = logicalPos;
@@ -246,31 +220,36 @@ public class BombController : MonoBehaviour
 
         float destroyDelay = 0.1f;
 
-        if (effectiveRadius == 9)
+        if (explosionSfxByRadius != null && explosionSfxByRadius.Length > 0)
         {
-            if (explosionSfxMax != null)
-                destroyDelay = explosionSfxMax.length;
+            int sfxIndex = Mathf.Clamp(effectiveRadius - 1, 0, explosionSfxByRadius.Length - 1);
+            AudioClip sfx = explosionSfxByRadius[sfxIndex];
+
+            if (sfx != null)
+                destroyDelay = sfx.length;
             else if (explosionAudio != null && explosionAudio.clip != null)
                 destroyDelay = explosionAudio.clip.length;
         }
-        else if (effectiveRadius >= 5)
+        else if (explosionAudio != null && explosionAudio.clip != null)
         {
-            if (explosionSfxMedium != null)
-                destroyDelay = explosionSfxMedium.length;
-            else if (explosionAudio != null && explosionAudio.clip != null)
-                destroyDelay = explosionAudio.clip.length;
-        }
-        else
-        {
-            if (explosionSfxSmall != null)
-                destroyDelay = explosionSfxSmall.length;
-            else if (explosionAudio != null && explosionAudio.clip != null)
-                destroyDelay = explosionAudio.clip.length;
+            destroyDelay = explosionAudio.clip.length;
         }
 
         Destroy(bomb, destroyDelay);
 
         bombsRemaining++;
+    }
+
+    private void PlayExplosionSfx(AudioSource source, int radius)
+    {
+        if (source == null || explosionSfxByRadius == null || explosionSfxByRadius.Length == 0)
+            return;
+
+        int index = Mathf.Clamp(radius - 1, 0, explosionSfxByRadius.Length - 1);
+        AudioClip clip = explosionSfxByRadius[index];
+
+        if (clip != null)
+            source.PlayOneShot(clip, explosionSfxVolume);
     }
 
     private void PlaceBomb()

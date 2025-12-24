@@ -16,6 +16,8 @@ GameObject:
   - component: {fileID: 4730492100800285400}
   - component: {fileID: 3101258277916350091}
   - component: {fileID: 495927919094519500}
+  - component: {fileID: 2922516725846522430}
+  - component: {fileID: 7151199009588158301}
   m_Layer: 10
   m_Name: BlackMechaBomber
   m_TagString: BossBomber
@@ -136,6 +138,14 @@ MonoBehaviour:
   spriteRendererDeath: {fileID: 4595467764902937718}
   spriteRendererEndStage: {fileID: 4652177394112457859}
   spriteRendererCheering: {fileID: 0}
+  mountedSpriteUp: {fileID: 0}
+  mountedSpriteDown: {fileID: 0}
+  mountedSpriteLeft: {fileID: 0}
+  mountedSpriteRight: {fileID: 0}
+  pinkMountedSpritesLocalY: 1.3
+  contactDamageCooldownSeconds: 0.15
+  deathDisableSeconds: 2
+  checkWinStateOnDeath: 1
   endStageTotalTime: 1
   endStageFrameCount: 9
   isDead: 0
@@ -154,15 +164,21 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   inputKey: 32
+  useAIInput: 1
   bombPrefab: {fileID: 147425199346742615, guid: b141cb2d60d85504dad495e1a188c108, type: 3}
+  pierceBombPrefab: {fileID: 0}
+  controlBombPrefab: {fileID: 0}
   bombFuseTime: 2
   bombAmout: 2
+  controlDetonateKey: 110
   explosionPrefab: {fileID: -38777085001033807, guid: 8280631722d6ef14fb951aaaf859563b, type: 3}
   explosionLayerMask:
     serializedVersion: 2
     m_Bits: 64
   explosionDuration: 0.5
   explosionRadius: 2
+  groundTiles: {fileID: 0}
+  stageBoundsTiles: {fileID: 0}
   destructibleTiles: {fileID: 0}
   destructiblePrefab: {fileID: 3440613785117735154, guid: 0db9b9963032895418bfd9382b2692f7, type: 3}
   itemLayerMask:
@@ -170,7 +186,18 @@ MonoBehaviour:
     m_Bits: 512
   placeBombSfx: {fileID: 8300000, guid: da95ad1eaf576a54599d96cc59b94c11, type: 3}
   playerAudioSource: {fileID: 3101258277916350091}
-  useAIInput: 1
+  explosionSfxByRadius:
+  - {fileID: 8300000, guid: 982bf6370a168ad46a4c3f893bc7510c, type: 3}
+  - {fileID: 8300000, guid: 888275a1a50795d4696007fe7b34632d, type: 3}
+  - {fileID: 8300000, guid: 9fd40e48d7f1ba6429b2957eb9cc7a4e, type: 3}
+  - {fileID: 8300000, guid: a4a2696a42dcf25478f7405cf6f0eff0, type: 3}
+  - {fileID: 8300000, guid: a694d1c720860e244a30e321a3c034ca, type: 3}
+  - {fileID: 8300000, guid: d52ad03bb8ada5144ac9577e9d972b17, type: 3}
+  - {fileID: 8300000, guid: b8cdb8ec346f0ca48a24a0741cc9f596, type: 3}
+  - {fileID: 8300000, guid: afdf2759f29ed294a97d92348294f718, type: 3}
+  - {fileID: 8300000, guid: fd2cc86b646e3b347bd634d5791f90c6, type: 3}
+  - {fileID: 8300000, guid: 987bcdcebc4a99144a3121e4d420ea4f, type: 3}
+  explosionSfxVolume: 1
 --- !u!114 &4730492100800285400
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -301,6 +328,36 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7058ad72d26750f468fe6b34b4fccf32, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AbilitySystem
+--- !u!114 &2922516725846522430
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 444576652216317808}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9f528b4a7ce266344b53412d165dfefe, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::StunReceiver
+  isStunned: 0
+  shakeWhileStunned: 1
+  shakeAmplitude: 0.03
+  shakeFrequency: 22
+  freezeAnimatedSprites: 1
+--- !u!114 &7151199009588158301
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 444576652216317808}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f63760a13a08f664e873ba399d2c2fca, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BombKickAbility
+  enabledAbility: 0
 --- !u!1 &2245651300953625166
 GameObject:
   m_ObjectHideFlags: 0
@@ -410,6 +467,7 @@ MonoBehaviour:
   - {fileID: 8014402558888806237, guid: 4dc6b98a350b5114ca44fb10022efed2, type: 3}
   - {fileID: 6674666667163067808, guid: 4dc6b98a350b5114ca44fb10022efed2, type: 3}
   - {fileID: -354992569208000999, guid: 4dc6b98a350b5114ca44fb10022efed2, type: 3}
+  allowFlipX: 0
   animationTime: 0.16666667
   useSequenceDuration: 0
   sequenceDuration: 0.5
@@ -417,6 +475,7 @@ MonoBehaviour:
   idle: 1
   frameOffsets: []
   pingPong: 0
+  disableOffsetsIfThisObjectHasRigidbody2D: 1
 --- !u!1 &3427337980659989041
 GameObject:
   m_ObjectHideFlags: 0
@@ -526,6 +585,7 @@ MonoBehaviour:
   - {fileID: 1297628351780482324, guid: 4dc6b98a350b5114ca44fb10022efed2, type: 3}
   - {fileID: 5911335850156195929, guid: 4dc6b98a350b5114ca44fb10022efed2, type: 3}
   - {fileID: 7539352308348791563, guid: 4dc6b98a350b5114ca44fb10022efed2, type: 3}
+  allowFlipX: 0
   animationTime: 0.16666667
   useSequenceDuration: 0
   sequenceDuration: 0.5
@@ -533,6 +593,7 @@ MonoBehaviour:
   idle: 1
   frameOffsets: []
   pingPong: 0
+  disableOffsetsIfThisObjectHasRigidbody2D: 1
 --- !u!1 &5360819268598013452
 GameObject:
   m_ObjectHideFlags: 0
@@ -646,6 +707,7 @@ MonoBehaviour:
   - {fileID: 662661292142045704, guid: 4dc6b98a350b5114ca44fb10022efed2, type: 3}
   - {fileID: 3910788143034557645, guid: 4dc6b98a350b5114ca44fb10022efed2, type: 3}
   - {fileID: 8217573853182341070, guid: 4dc6b98a350b5114ca44fb10022efed2, type: 3}
+  allowFlipX: 0
   animationTime: 0.16666667
   useSequenceDuration: 0
   sequenceDuration: 0.5
@@ -653,6 +715,7 @@ MonoBehaviour:
   idle: 0
   frameOffsets: []
   pingPong: 0
+  disableOffsetsIfThisObjectHasRigidbody2D: 1
 --- !u!1 &5962348387130672823
 GameObject:
   m_ObjectHideFlags: 0
@@ -762,6 +825,7 @@ MonoBehaviour:
   - {fileID: -2945977649531933481, guid: 4dc6b98a350b5114ca44fb10022efed2, type: 3}
   - {fileID: 106627695691825206, guid: 4dc6b98a350b5114ca44fb10022efed2, type: 3}
   - {fileID: -3959669465257220206, guid: 4dc6b98a350b5114ca44fb10022efed2, type: 3}
+  allowFlipX: 0
   animationTime: 0.16666667
   useSequenceDuration: 0
   sequenceDuration: 0.5
@@ -769,6 +833,7 @@ MonoBehaviour:
   idle: 1
   frameOffsets: []
   pingPong: 0
+  disableOffsetsIfThisObjectHasRigidbody2D: 1
 --- !u!1 &6140526923295798328
 GameObject:
   m_ObjectHideFlags: 0
@@ -883,6 +948,7 @@ MonoBehaviour:
   - {fileID: 7000587847891052219, guid: fade6ceffc1de7f43bfaea37f5587562, type: 3}
   - {fileID: 5938443313494947175, guid: fade6ceffc1de7f43bfaea37f5587562, type: 3}
   - {fileID: -5346151025070888229, guid: fade6ceffc1de7f43bfaea37f5587562, type: 3}
+  allowFlipX: 0
   animationTime: 0.11111111
   useSequenceDuration: 0
   sequenceDuration: 0.5
@@ -890,6 +956,7 @@ MonoBehaviour:
   idle: 0
   frameOffsets: []
   pingPong: 0
+  disableOffsetsIfThisObjectHasRigidbody2D: 1
 --- !u!1 &7536653507105177419
 GameObject:
   m_ObjectHideFlags: 0
@@ -999,6 +1066,7 @@ MonoBehaviour:
   - {fileID: 1376034401212645797, guid: 4dc6b98a350b5114ca44fb10022efed2, type: 3}
   - {fileID: 5799997974980645357, guid: 4dc6b98a350b5114ca44fb10022efed2, type: 3}
   - {fileID: 2218116869642603024, guid: 4dc6b98a350b5114ca44fb10022efed2, type: 3}
+  allowFlipX: 0
   animationTime: 0.16666667
   useSequenceDuration: 0
   sequenceDuration: 0.5
@@ -1006,3 +1074,4 @@ MonoBehaviour:
   idle: 1
   frameOffsets: []
   pingPong: 0
+  disableOffsetsIfThisObjectHasRigidbody2D: 1

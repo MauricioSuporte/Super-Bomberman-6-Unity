@@ -1090,6 +1090,7 @@ GameObject:
   - component: {fileID: 3128802035174165778}
   - component: {fileID: 50652477360605129}
   - component: {fileID: 2619861201639318036}
+  - component: {fileID: 3335614114974889682}
   m_Layer: 3
   m_Name: Player 1
   m_TagString: Player
@@ -1265,12 +1266,18 @@ MonoBehaviour:
     m_Bits: 512
   placeBombSfx: {fileID: 8300000, guid: da95ad1eaf576a54599d96cc59b94c11, type: 3}
   playerAudioSource: {fileID: 4627430260018096140}
-  explosionSfxSmall: {fileID: 8300000, guid: 382df354fe4ffa947a507667894bb52c, type: 3}
-  explosionSfxSmallVolume: 1
-  explosionSfxMedium: {fileID: 8300000, guid: f4d1c068ab5783349b5c617309c6fc37, type: 3}
-  explosionSfxMediumVolume: 1
-  explosionSfxMax: {fileID: 8300000, guid: 569cd9f94e40d1140b214f321bf208b4, type: 3}
-  explosionSfxMaxVolume: 1
+  explosionSfxByRadius:
+  - {fileID: 8300000, guid: 982bf6370a168ad46a4c3f893bc7510c, type: 3}
+  - {fileID: 8300000, guid: 888275a1a50795d4696007fe7b34632d, type: 3}
+  - {fileID: 8300000, guid: 9fd40e48d7f1ba6429b2957eb9cc7a4e, type: 3}
+  - {fileID: 8300000, guid: a4a2696a42dcf25478f7405cf6f0eff0, type: 3}
+  - {fileID: 8300000, guid: a694d1c720860e244a30e321a3c034ca, type: 3}
+  - {fileID: 8300000, guid: d52ad03bb8ada5144ac9577e9d972b17, type: 3}
+  - {fileID: 8300000, guid: b8cdb8ec346f0ca48a24a0741cc9f596, type: 3}
+  - {fileID: 8300000, guid: afdf2759f29ed294a97d92348294f718, type: 3}
+  - {fileID: 8300000, guid: fd2cc86b646e3b347bd634d5791f90c6, type: 3}
+  - {fileID: 8300000, guid: 987bcdcebc4a99144a3121e4d420ea4f, type: 3}
+  explosionSfxVolume: 1
 --- !u!82 &4627430260018096140
 AudioSource:
   m_ObjectHideFlags: 0
@@ -1440,6 +1447,23 @@ MonoBehaviour:
   louieDeathSeconds: 0.5
   playerInvulnerabilityAfterLoseLouieSeconds: 0.8
   blinkPlayerTogetherWithLouie: 1
+--- !u!114 &3335614114974889682
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4947014498081102474}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9f528b4a7ce266344b53412d165dfefe, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::StunReceiver
+  isStunned: 0
+  shakeWhileStunned: 1
+  shakeAmplitude: 0.03
+  shakeFrequency: 22
+  freezeAnimatedSprites: 1
 --- !u!1 &6183660032571719661
 GameObject:
   m_ObjectHideFlags: 0
