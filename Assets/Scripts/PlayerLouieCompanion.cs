@@ -221,6 +221,7 @@ public class PlayerLouieCompanion : MonoBehaviour
         abilitySystem.Disable(PurpleLouieBombLineAbility.AbilityId);
         abilitySystem.Disable(GreenLouieDashAbility.AbilityId);
         abilitySystem.Disable(YellowLouieDestructibleKickAbility.AbilityId);
+        abilitySystem.Disable(PinkLouieJumpAbility.AbilityId);
         abilitySystem.Disable(RedLouiePunchStunAbility.AbilityId);
 
         if (mountedType == MountedLouieType.Blue)
@@ -311,6 +312,34 @@ public class PlayerLouieCompanion : MonoBehaviour
                     kick.SetKickSfx(cfg.abilitySfx, cfg.abilityVolume);
                 else
                     kick.SetKickSfx(null, 1f);
+            }
+
+            return;
+        }
+
+        if (mountedType == MountedLouieType.Pink)
+        {
+            abilitySystem.Enable(PinkLouieJumpAbility.AbilityId);
+
+            var jump = abilitySystem.Get<PinkLouieJumpAbility>(PinkLouieJumpAbility.AbilityId);
+            if (jump != null)
+            {
+                jump.triggerKey = KeyCode.B;
+
+                var anim = currentLouie != null
+                    ? currentLouie.GetComponentInChildren<IPinkLouieJumpExternalAnimator>(true)
+                    : null;
+
+                jump.SetExternalAnimator(anim);
+
+                var cfg = currentLouie != null
+                    ? currentLouie.GetComponentInChildren<LouieAbilitySfxConfig>(true)
+                    : null;
+
+                if (cfg != null)
+                    jump.SetJumpSfx(cfg.abilitySfx, cfg.abilityVolume);
+                else
+                    jump.SetJumpSfx(null, 1f);
             }
 
             return;
@@ -494,6 +523,7 @@ public class PlayerLouieCompanion : MonoBehaviour
         abilitySystem.Disable(PurpleLouieBombLineAbility.AbilityId);
         abilitySystem.Disable(GreenLouieDashAbility.AbilityId);
         abilitySystem.Disable(YellowLouieDestructibleKickAbility.AbilityId);
+        abilitySystem.Disable(PinkLouieJumpAbility.AbilityId);
         abilitySystem.Disable(RedLouiePunchStunAbility.AbilityId);
         abilitySystem.Disable(BlackLouieDashPushAbility.AbilityId);
 
@@ -509,6 +539,13 @@ public class PlayerLouieCompanion : MonoBehaviour
         {
             dash.SetExternalAnimator(null);
             dash.SetDashSfx(null, 1f);
+        }
+
+        var jump = abilitySystem.Get<PinkLouieJumpAbility>(PinkLouieJumpAbility.AbilityId);
+        if (jump != null)
+        {
+            jump.SetExternalAnimator(null);
+            jump.SetJumpSfx(null, 1f);
         }
 
         var stun = abilitySystem.Get<RedLouiePunchStunAbility>(RedLouiePunchStunAbility.AbilityId);
@@ -574,6 +611,7 @@ public class PlayerLouieCompanion : MonoBehaviour
         abilitySystem.Disable(PurpleLouieBombLineAbility.AbilityId);
         abilitySystem.Disable(GreenLouieDashAbility.AbilityId);
         abilitySystem.Disable(YellowLouieDestructibleKickAbility.AbilityId);
+        abilitySystem.Disable(PinkLouieJumpAbility.AbilityId);
         abilitySystem.Disable(RedLouiePunchStunAbility.AbilityId);
         abilitySystem.Disable(BlackLouieDashPushAbility.AbilityId);
 
@@ -589,6 +627,13 @@ public class PlayerLouieCompanion : MonoBehaviour
         {
             dash.SetExternalAnimator(null);
             dash.SetDashSfx(null, 1f);
+        }
+
+        var jump = abilitySystem.Get<PinkLouieJumpAbility>(PinkLouieJumpAbility.AbilityId);
+        if (jump != null)
+        {
+            jump.SetExternalAnimator(null);
+            jump.SetJumpSfx(null, 1f);
         }
 
         var stun = abilitySystem.Get<RedLouiePunchStunAbility>(RedLouiePunchStunAbility.AbilityId);
@@ -726,6 +771,7 @@ public class PlayerLouieCompanion : MonoBehaviour
             abilitySystem.Disable(PurpleLouieBombLineAbility.AbilityId);
             abilitySystem.Disable(GreenLouieDashAbility.AbilityId);
             abilitySystem.Disable(YellowLouieDestructibleKickAbility.AbilityId);
+            abilitySystem.Disable(PinkLouieJumpAbility.AbilityId);
             abilitySystem.Disable(RedLouiePunchStunAbility.AbilityId);
 
             if (punchAbility != null)
@@ -743,6 +789,13 @@ public class PlayerLouieCompanion : MonoBehaviour
             {
                 dash.SetExternalAnimator(null);
                 dash.SetDashSfx(null, 1f);
+            }
+
+            var jump = abilitySystem.Get<PinkLouieJumpAbility>(PinkLouieJumpAbility.AbilityId);
+            if (jump != null)
+            {
+                jump.SetExternalAnimator(null);
+                jump.SetJumpSfx(null, 1f);
             }
 
             var stun = abilitySystem.Get<RedLouiePunchStunAbility>(RedLouiePunchStunAbility.AbilityId);
