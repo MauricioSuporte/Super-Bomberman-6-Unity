@@ -1198,6 +1198,7 @@ MonoBehaviour:
   walkIdleSmall: {fileID: 1472524419, guid: 242e9e1d39c8a0e488695bffb494ed5c, type: 3}
   walkMoveMedium: {fileID: 43156598, guid: 242e9e1d39c8a0e488695bffb494ed5c, type: 3}
   jumpLarge: {fileID: -301073963, guid: 242e9e1d39c8a0e488695bffb494ed5c, type: 3}
+  walkFrameSeconds: 0.1
 --- !u!114 &5692636436679240875
 MonoBehaviour:
   m_ObjectHideFlags: 0
