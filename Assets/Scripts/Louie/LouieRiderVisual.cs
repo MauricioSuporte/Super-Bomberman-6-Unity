@@ -279,30 +279,16 @@ public class LouieRiderVisual : MonoBehaviour
 
     private void SetExclusive(AnimatedSpriteRenderer keep)
     {
-        var anims = GetComponentsInChildren<AnimatedSpriteRenderer>(true);
-        for (int i = 0; i < anims.Length; i++)
-        {
-            var a = anims[i];
-            if (a == null) continue;
-
-            bool on = (a == keep);
-            a.enabled = on;
-
-            if (a.TryGetComponent<SpriteRenderer>(out var sr))
-                sr.enabled = on;
-        }
-
-        if (louieUp != null && louieUp != keep) louieUp.enabled = false;
-        if (louieDown != null && louieDown != keep) louieDown.enabled = false;
-        if (louieLeft != null && louieLeft != keep) louieLeft.enabled = false;
-        if (louieRight != null && louieRight != keep) louieRight.enabled = false;
-        if (louieEndStage != null && louieEndStage != keep) louieEndStage.enabled = false;
-
-        keep.enabled = true;
-        if (keep.TryGetComponent<SpriteRenderer>(out var keepSr))
-            keepSr.enabled = true;
+        SetRendererEnabled(louieUp, keep == louieUp);
+        SetRendererEnabled(louieDown, keep == louieDown);
+        SetRendererEnabled(louieLeft, keep == louieLeft);
+        SetRendererEnabled(louieRight, keep == louieRight);
+        SetRendererEnabled(louieEndStage, keep == louieEndStage);
 
         active = keep;
+
+        if (active != null)
+            EnsureEnabled(active);
 
         if (isPinkLouieMounted)
             ForceDisableRightRenderer();
@@ -313,6 +299,17 @@ public class LouieRiderVisual : MonoBehaviour
             Vector2 faceDir = isIdle ? owner.FacingDirection : owner.Direction;
             ApplyPinkRightXFix(faceDir);
         }
+    }
+
+    private void SetRendererEnabled(AnimatedSpriteRenderer r, bool on)
+    {
+        if (r == null)
+            return;
+
+        r.enabled = on;
+
+        if (r.TryGetComponent<SpriteRenderer>(out var sr))
+            sr.enabled = on;
     }
 
     public bool TryPlayEndStage(float totalTime, int frameCount)

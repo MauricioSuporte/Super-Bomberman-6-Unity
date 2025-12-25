@@ -1,5 +1,4 @@
 ﻿using Assets.Scripts.Interface;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class PinkLouieJumpAnimator : MonoBehaviour, IPinkLouieJumpExternalAnimator
@@ -16,17 +15,12 @@ public class PinkLouieJumpAnimator : MonoBehaviour, IPinkLouieJumpExternalAnimat
     AnimatedSpriteRenderer active;
     LouieRiderVisual riderVisual;
 
-    readonly List<AnimatedSpriteRenderer> cachedAnimators = new();
-    readonly List<bool> cachedAnimatorEnabled = new();
-
-    readonly List<SpriteRenderer> cachedSpriteRenderers = new();
-    readonly List<bool> cachedSpriteEnabled = new();
-
     bool playing;
 
     void Awake()
     {
         riderVisual = GetComponent<LouieRiderVisual>();
+        ForceOffJumpSprites();
     }
 
     void OnDisable() => Stop();
@@ -40,14 +34,17 @@ public class PinkLouieJumpAnimator : MonoBehaviour, IPinkLouieJumpExternalAnimat
         if (dir == Vector2.zero)
             dir = Vector2.down;
 
-        CacheEnabledStates();
+        ForceDisableRiderVisualRenderers();
 
         if (riderVisual != null)
             riderVisual.enabled = false;
 
-        DisableAllRenderers();
-
         active = GetSprite(dir);
+
+        SetRendererEnabled(jumpUp, active == jumpUp);
+        SetRendererEnabled(jumpDown, active == jumpDown);
+        SetRendererEnabled(jumpLeft, active == jumpLeft);
+        SetRendererEnabled(jumpRight, active == jumpRight);
 
         if (active != null)
         {
@@ -60,6 +57,10 @@ public class PinkLouieJumpAnimator : MonoBehaviour, IPinkLouieJumpExternalAnimat
                     active.SetRuntimeBaseLocalX(rightLocalX);
                 else
                     active.ClearRuntimeBaseLocalX();
+            }
+            else
+            {
+                active.ClearRuntimeBaseLocalX();
             }
 
             active.enabled = true;
@@ -88,18 +89,18 @@ public class PinkLouieJumpAnimator : MonoBehaviour, IPinkLouieJumpExternalAnimat
             if (fixRightLocalX)
                 active.ClearRuntimeBaseLocalX();
 
-            active.enabled = false;
-
-            if (active.TryGetComponent<SpriteRenderer>(out var asr))
-                asr.enabled = false;
+            SetRendererEnabled(active, false);
         }
 
         active = null;
 
-        RestoreEnabledStates();
+        ForceOffJumpSprites();
 
         if (riderVisual != null)
+        {
             riderVisual.enabled = true;
+            ForceDisableRiderVisualRenderers();
+        }
 
         playing = false;
     }
@@ -113,43 +114,34 @@ public class PinkLouieJumpAnimator : MonoBehaviour, IPinkLouieJumpExternalAnimat
         return jumpDown;
     }
 
-    void CacheEnabledStates()
+    void ForceOffJumpSprites()
     {
-        cachedAnimators.Clear();
-        cachedAnimatorEnabled.Clear();
-        cachedSpriteRenderers.Clear();
-        cachedSpriteEnabled.Clear();
-
-        var anims = GetComponentsInChildren<AnimatedSpriteRenderer>(true);
-        for (int i = 0; i < anims.Length; i++)
-        {
-            cachedAnimators.Add(anims[i]);
-            cachedAnimatorEnabled.Add(anims[i] != null && anims[i].enabled);
-        }
-
-        var srs = GetComponentsInChildren<SpriteRenderer>(true);
-        for (int i = 0; i < srs.Length; i++)
-        {
-            cachedSpriteRenderers.Add(srs[i]);
-            cachedSpriteEnabled.Add(srs[i] != null && srs[i].enabled);
-        }
+        SetRendererEnabled(jumpUp, false);
+        SetRendererEnabled(jumpDown, false);
+        SetRendererEnabled(jumpLeft, false);
+        SetRendererEnabled(jumpRight, false);
     }
 
-    void DisableAllRenderers()
+    void SetRendererEnabled(AnimatedSpriteRenderer r, bool on)
     {
-        for (int i = 0; i < cachedAnimators.Count; i++)
-            if (cachedAnimators[i] != null) cachedAnimators[i].enabled = false;
+        if (r == null)
+            return;
 
-        for (int i = 0; i < cachedSpriteRenderers.Count; i++)
-            if (cachedSpriteRenderers[i] != null) cachedSpriteRenderers[i].enabled = false;
+        r.enabled = on;
+
+        if (r.TryGetComponent<SpriteRenderer>(out var sr))
+            sr.enabled = on;
     }
 
-    void RestoreEnabledStates()
+    void ForceDisableRiderVisualRenderers()
     {
-        for (int i = 0; i < cachedAnimators.Count; i++)
-            if (cachedAnimators[i] != null) cachedAnimators[i].enabled = cachedAnimatorEnabled[i];
+        if (riderVisual == null)
+            return;
 
-        for (int i = 0; i < cachedSpriteRenderers.Count; i++)
-            if (cachedSpriteRenderers[i] != null) cachedSpriteRenderers[i].enabled = cachedSpriteEnabled[i];
+        SetRendererEnabled(riderVisual.louieUp, false);
+        SetRendererEnabled(riderVisual.louieDown, false);
+        SetRendererEnabled(riderVisual.louieLeft, false);
+        SetRendererEnabled(riderVisual.louieRight, false);
+        SetRendererEnabled(riderVisual.louieEndStage, false);
     }
 }

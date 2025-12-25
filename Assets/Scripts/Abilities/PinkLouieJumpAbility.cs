@@ -30,6 +30,9 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
     public AudioClip jumpSfx;
     [Range(0f, 1f)] public float jumpSfxVolume = 1f;
 
+    [Header("Shadow")]
+    public PinkLouieShadowController shadow;
+
     MovementController movement;
     Rigidbody2D rb;
     AudioSource audioSource;
@@ -57,6 +60,11 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
         playerHealth = GetComponent<CharacterHealth>();
         TryGetComponent(out companion);
         TryGetComponent(out abilitySystem);
+
+        if (shadow == null)
+            shadow = GetComponentInChildren<PinkLouieShadowController>(true);
+
+        BindShadowToPinkLouie();
     }
 
     void OnDisable() => CancelJump();
@@ -147,13 +155,10 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
             Vector3Int candidateFar = startCell + (step * maxCells);
 
             if (IsLandingAllowed(candidateFar, destructible, indestructible, ground))
-            {
                 targetCell = candidateFar;
-            }
             else
             {
                 Vector3Int candidateNear = startCell + step;
-
                 if (IsLandingAllowed(candidateNear, destructible, indestructible, ground))
                     targetCell = candidateNear;
             }
@@ -163,6 +168,13 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
         Vector3 endPos = CellCenter(targetCell, destructible, indestructible, ground);
 
         movement.SetInputLocked(true, false);
+
+        if (shadow == null)
+            shadow = GetComponentInChildren<PinkLouieShadowController>(true);
+
+        BindShadowToPinkLouie();
+
+        shadow?.BeginJump((Vector2)startPos);
 
         if (invulnerableDuringJump)
             StartJumpInvulnerabilityOnly(mountedLouieHealth);
@@ -184,9 +196,12 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
 
             float tt = Mathf.Clamp01(t);
 
-            Vector3 projectedGroundPos = Vector3.Lerp(startPos, endPos, tt);
+            Vector3 projectedGroundPos3 = Vector3.Lerp(startPos, endPos, tt);
+            Vector2 projectedGroundPos = projectedGroundPos3;
 
-            Vector3 pos = projectedGroundPos;
+            shadow?.SetJumpGroundPosition(projectedGroundPos);
+
+            Vector3 pos = projectedGroundPos3;
             float arc = Mathf.Sin(tt * Mathf.PI) * Mathf.Max(0f, jumpArcHeight);
             pos += new Vector3(0f, arc, 0f);
 
@@ -194,8 +209,10 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
 
             if (wasMountedAtStart && !movement.IsMountedOnLouie)
             {
-                HandleLoseLouieMidJump(projectedGroundPos, startCell, destructible, indestructible, ground);
+                HandleLoseLouieMidJump(projectedGroundPos3, startCell, destructible, indestructible, ground);
                 StopJumpVisuals();
+
+                shadow?.EndJump();
 
                 if (movement != null)
                     movement.SetInputLocked(false);
@@ -214,10 +231,24 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
 
         StopJumpVisuals();
 
+        shadow?.EndJump();
+
         if (movement != null)
             movement.SetInputLocked(false);
 
         routine = null;
+    }
+
+    void BindShadowToPinkLouie()
+    {
+        if (shadow == null)
+            return;
+
+        var louieVisual = shadow.GetComponentInParent<LouieRiderVisual>();
+        var target = louieVisual != null ? louieVisual.transform : shadow.transform.parent;
+
+        if (target != null)
+            shadow.BindToPinkLouieRoot(target);
     }
 
     void StartJumpInvulnerabilityOnly(CharacterHealth mountedLouieHealth)
@@ -423,6 +454,8 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
         }
 
         StopJumpVisuals();
+
+        shadow?.EndJump();
 
         if (movement != null)
             movement.SetInputLocked(false);
