@@ -375,6 +375,7 @@ GameObject:
   - component: {fileID: 2870228645174432188}
   - component: {fileID: -4538169248466786654}
   - component: {fileID: 3822240261114814580}
+  - component: {fileID: 1919497702538166291}
   m_Layer: 0
   m_Name: YellowLouie
   m_TagString: Untagged
@@ -602,12 +603,18 @@ MonoBehaviour:
     m_Bits: 0
   placeBombSfx: {fileID: 0}
   playerAudioSource: {fileID: 0}
-  explosionSfxSmall: {fileID: 0}
-  explosionSfxSmallVolume: 1
-  explosionSfxMedium: {fileID: 0}
-  explosionSfxMediumVolume: 1
-  explosionSfxMax: {fileID: 0}
-  explosionSfxMaxVolume: 1
+  explosionSfxByRadius:
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  explosionSfxVolume: 1
 --- !u!114 &5649779946888286329
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -638,6 +645,7 @@ MonoBehaviour:
   obstacleMask:
     serializedVersion: 2
     m_Bits: 0
+  speedInternal: 224
   inputUp: 119
   inputDown: 115
   inputLeft: 97
@@ -645,7 +653,7 @@ MonoBehaviour:
   spriteRendererUp: {fileID: 6685445590595473310}
   spriteRendererDown: {fileID: 4170285985975590271}
   spriteRendererLeft: {fileID: 5930063177854299457}
-  spriteRendererRight: {fileID: 5517004560909071985}
+  spriteRendererRight: {fileID: 0}
   spriteRendererDeath: {fileID: 5440623971944223000}
   spriteRendererEndStage: {fileID: 0}
   spriteRendererCheering: {fileID: 0}
@@ -653,6 +661,8 @@ MonoBehaviour:
   mountedSpriteDown: {fileID: 0}
   mountedSpriteLeft: {fileID: 0}
   mountedSpriteRight: {fileID: 0}
+  pinkMountedSpritesLocalY: 1.3
+  contactDamageCooldownSeconds: 0.15
   deathDisableSeconds: 1
   checkWinStateOnDeath: 0
   endStageTotalTime: 1
@@ -678,7 +688,11 @@ MonoBehaviour:
   louieUp: {fileID: 6685445590595473310}
   louieDown: {fileID: 4170285985975590271}
   louieLeft: {fileID: 5930063177854299457}
+  louieRight: {fileID: 0}
   louieEndStage: {fileID: 7247875284509425039}
+  enablePinkRightFix: 1
+  pinkRightFixedLocalX: 0
+  syncBlinkFromPlayerWhenMounted: 1
 --- !u!114 &-4538169248466786654
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -709,6 +723,23 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::LouieAbilitySfxConfig
   abilitySfx: {fileID: 8300000, guid: e034fabfe2601e34fa9c46707e3d6da3, type: 3}
   abilityVolume: 1
+--- !u!114 &1919497702538166291
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2273416014071709654}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9f528b4a7ce266344b53412d165dfefe, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::StunReceiver
+  isStunned: 0
+  shakeWhileStunned: 1
+  shakeAmplitude: 0.03
+  shakeFrequency: 22
+  freezeAnimatedSprites: 1
 --- !u!1 &2445788475736444126
 GameObject:
   m_ObjectHideFlags: 0

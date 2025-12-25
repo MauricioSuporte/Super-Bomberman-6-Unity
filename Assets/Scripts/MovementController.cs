@@ -668,10 +668,13 @@ public class MovementController : MonoBehaviour, IKillable
         if (bombController != null)
             bombController.enabled = false;
 
-        Rigidbody.linearVelocity = Vector2.zero;
-        Rigidbody.simulated = false;
+        if (Rigidbody != null)
+        {
+            Rigidbody.linearVelocity = Vector2.zero;
+            Rigidbody.simulated = false;
+        }
 
-        if (TryGetComponent<Collider2D>(out var col))
+        if (TryGetComponent<Collider2D>(out var col) && col != null)
             col.enabled = false;
 
         if (audioSource != null && deathSfx != null)
@@ -687,10 +690,8 @@ public class MovementController : MonoBehaviour, IKillable
             }
         }
 
-        spriteRendererUp.enabled = false;
-        spriteRendererDown.enabled = false;
-        spriteRendererLeft.enabled = false;
-        spriteRendererRight.enabled = false;
+        DisableAllFootSprites();
+        DisableAllMountedSprites();
 
         if (spriteRendererCheering != null)
             spriteRendererCheering.enabled = false;
@@ -704,6 +705,17 @@ public class MovementController : MonoBehaviour, IKillable
             spriteRendererDeath.idle = false;
             spriteRendererDeath.loop = false;
             activeSpriteRenderer = spriteRendererDeath;
+            spriteRendererDeath.RefreshFrame();
+        }
+        else
+        {
+            if (activeSpriteRenderer != null)
+            {
+                activeSpriteRenderer.enabled = true;
+                activeSpriteRenderer.idle = true;
+                activeSpriteRenderer.loop = false;
+                activeSpriteRenderer.RefreshFrame();
+            }
         }
 
         Invoke(nameof(OnDeathSequenceEnded), deathDisableSeconds);

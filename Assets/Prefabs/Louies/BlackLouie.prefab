@@ -597,12 +597,18 @@ MonoBehaviour:
     m_Bits: 0
   placeBombSfx: {fileID: 0}
   playerAudioSource: {fileID: 0}
-  explosionSfxSmall: {fileID: 0}
-  explosionSfxSmallVolume: 1
-  explosionSfxMedium: {fileID: 0}
-  explosionSfxMediumVolume: 1
-  explosionSfxMax: {fileID: 0}
-  explosionSfxMaxVolume: 1
+  explosionSfxByRadius:
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  explosionSfxVolume: 1
 --- !u!114 &5649779946888286329
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -633,6 +639,7 @@ MonoBehaviour:
   obstacleMask:
     serializedVersion: 2
     m_Bits: 0
+  speedInternal: 224
   inputUp: 119
   inputDown: 115
   inputLeft: 97
@@ -640,7 +647,7 @@ MonoBehaviour:
   spriteRendererUp: {fileID: 6685445590595473310}
   spriteRendererDown: {fileID: 4170285985975590271}
   spriteRendererLeft: {fileID: 5930063177854299457}
-  spriteRendererRight: {fileID: 5517004560909071985}
+  spriteRendererRight: {fileID: 0}
   spriteRendererDeath: {fileID: 5440623971944223000}
   spriteRendererEndStage: {fileID: 0}
   spriteRendererCheering: {fileID: 0}
@@ -675,9 +682,11 @@ MonoBehaviour:
   louieUp: {fileID: 6685445590595473310}
   louieDown: {fileID: 4170285985975590271}
   louieLeft: {fileID: 5930063177854299457}
+  louieRight: {fileID: 0}
   louieEndStage: {fileID: 9148293902192414157}
   enablePinkRightFix: 1
   pinkRightFixedLocalX: -1
+  syncBlinkFromPlayerWhenMounted: 1
 --- !u!114 &1919497702538166291
 MonoBehaviour:
   m_ObjectHideFlags: 0
