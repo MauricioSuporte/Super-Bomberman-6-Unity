@@ -30,7 +30,7 @@ public static class PlayerPersistentStats
     public static bool HasControlBombs = false;
     public static bool HasFullFire = false;
 
-    public static MountedLouieType MountedLouie = MountedLouieType.Purple;
+    public static MountedLouieType MountedLouie = MountedLouieType.Blue;
 
     public static float InternalSpeedToTilesPerSecond(int internalSpeed)
     {
