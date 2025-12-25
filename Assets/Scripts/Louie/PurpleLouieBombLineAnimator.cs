@@ -1,6 +1,8 @@
 ﻿using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
+[DisallowMultipleComponent]
 public class PurpleLouieBombLineAnimator : MonoBehaviour, IPurpleLouieBombLineExternalAnimator
 {
     [Header("Magic Sprites (PURPLE LOUIE)")]
@@ -9,27 +11,62 @@ public class PurpleLouieBombLineAnimator : MonoBehaviour, IPurpleLouieBombLineEx
     public AnimatedSpriteRenderer magicLeft;
     public AnimatedSpriteRenderer magicRight;
 
-    AnimatedSpriteRenderer active;
-    AnimatedSpriteRenderer cachedMovement;
+    AnimatedSpriteRenderer activeMagic;
+    LouieRiderVisual riderVisual;
+
+    readonly List<AnimatedSpriteRenderer> cachedAnimators = new();
+    readonly List<bool> cachedAnimatorEnabled = new();
+
+    readonly List<SpriteRenderer> cachedSpriteRenderers = new();
+    readonly List<bool> cachedSpriteEnabled = new();
+
+    bool playing;
+
+    void Awake()
+    {
+        riderVisual = GetComponent<LouieRiderVisual>();
+        if (riderVisual == null)
+            riderVisual = GetComponentInParent<LouieRiderVisual>();
+        if (riderVisual == null)
+            riderVisual = GetComponentInChildren<LouieRiderVisual>(true);
+    }
+
+    void OnDisable() => ForceStop();
+    void OnDestroy() => ForceStop();
 
     public IEnumerator Play(Vector2 dir, float lockSeconds)
     {
-        CacheAndDisableMovementSprite();
+        if (playing)
+            ForceStop();
 
-        active = GetMagic(dir);
-        DisableAllMagic();
+        if (dir == Vector2.zero)
+            dir = Vector2.down;
 
-        if (active != null)
+        CacheEnabledStates();
+
+        if (riderVisual != null)
+            riderVisual.enabled = false;
+
+        DisableAllRenderers();
+
+        activeMagic = GetMagic(dir);
+
+        if (activeMagic != null)
         {
-            if (active.TryGetComponent<SpriteRenderer>(out var sr))
+            if (activeMagic.TryGetComponent<SpriteRenderer>(out var sr))
+            {
+                sr.enabled = true;
                 sr.flipX = (dir == Vector2.right);
+            }
 
-            active.enabled = true;
-            active.idle = false;
-            active.loop = false;
-            active.CurrentFrame = 0;
-            active.RefreshFrame();
+            activeMagic.enabled = true;
+            activeMagic.idle = false;
+            activeMagic.loop = false;
+            activeMagic.CurrentFrame = 0;
+            activeMagic.RefreshFrame();
         }
+
+        playing = true;
 
         yield return new WaitForSeconds(lockSeconds);
 
@@ -38,17 +75,28 @@ public class PurpleLouieBombLineAnimator : MonoBehaviour, IPurpleLouieBombLineEx
 
     public void ForceStop()
     {
-        if (active != null)
-        {
-            if (active.TryGetComponent<SpriteRenderer>(out var sr))
-                sr.flipX = false;
+        if (!playing && activeMagic == null && cachedAnimators.Count == 0 && cachedSpriteRenderers.Count == 0)
+            return;
 
-            active.enabled = false;
+        if (activeMagic != null)
+        {
+            if (activeMagic.TryGetComponent<SpriteRenderer>(out var sr))
+            {
+                sr.flipX = false;
+                sr.enabled = false;
+            }
+
+            activeMagic.enabled = false;
         }
 
-        active = null;
-        DisableAllMagic();
-        RestoreMovementSprite();
+        activeMagic = null;
+
+        RestoreEnabledStates();
+
+        if (riderVisual != null)
+            riderVisual.enabled = true;
+
+        playing = false;
     }
 
     AnimatedSpriteRenderer GetMagic(Vector2 dir)
@@ -60,41 +108,60 @@ public class PurpleLouieBombLineAnimator : MonoBehaviour, IPurpleLouieBombLineEx
         return magicDown;
     }
 
-    void DisableAllMagic()
+    void CacheEnabledStates()
     {
-        if (magicUp != null) magicUp.enabled = false;
-        if (magicDown != null) magicDown.enabled = false;
-        if (magicLeft != null) magicLeft.enabled = false;
-        if (magicRight != null) magicRight.enabled = false;
-    }
+        cachedAnimators.Clear();
+        cachedAnimatorEnabled.Clear();
+        cachedSpriteRenderers.Clear();
+        cachedSpriteEnabled.Clear();
 
-    void CacheAndDisableMovementSprite()
-    {
-        cachedMovement = null;
-
-        var sprites = GetComponentsInChildren<AnimatedSpriteRenderer>(true);
-        for (int i = 0; i < sprites.Length; i++)
+        var anims = GetComponentsInChildren<AnimatedSpriteRenderer>(true);
+        for (int i = 0; i < anims.Length; i++)
         {
-            if (sprites[i] == magicUp || sprites[i] == magicDown || sprites[i] == magicLeft || sprites[i] == magicRight)
-                continue;
+            cachedAnimators.Add(anims[i]);
+            cachedAnimatorEnabled.Add(anims[i] != null && anims[i].enabled);
+        }
 
-            if (sprites[i].enabled)
-            {
-                cachedMovement = sprites[i];
-                cachedMovement.enabled = false;
-                break;
-            }
+        var srs = GetComponentsInChildren<SpriteRenderer>(true);
+        for (int i = 0; i < srs.Length; i++)
+        {
+            cachedSpriteRenderers.Add(srs[i]);
+            cachedSpriteEnabled.Add(srs[i] != null && srs[i].enabled);
         }
     }
 
-    void RestoreMovementSprite()
+    void DisableAllRenderers()
     {
-        if (cachedMovement != null)
+        for (int i = 0; i < cachedAnimators.Count; i++)
         {
-            cachedMovement.enabled = true;
-            cachedMovement.idle = true;
-            cachedMovement.RefreshFrame();
-            cachedMovement = null;
+            if (cachedAnimators[i] != null)
+                cachedAnimators[i].enabled = false;
         }
+
+        for (int i = 0; i < cachedSpriteRenderers.Count; i++)
+        {
+            if (cachedSpriteRenderers[i] != null)
+                cachedSpriteRenderers[i].enabled = false;
+        }
+    }
+
+    void RestoreEnabledStates()
+    {
+        for (int i = 0; i < cachedAnimators.Count; i++)
+        {
+            if (cachedAnimators[i] != null)
+                cachedAnimators[i].enabled = cachedAnimatorEnabled[i];
+        }
+
+        for (int i = 0; i < cachedSpriteRenderers.Count; i++)
+        {
+            if (cachedSpriteRenderers[i] != null)
+                cachedSpriteRenderers[i].enabled = cachedSpriteEnabled[i];
+        }
+
+        cachedAnimators.Clear();
+        cachedAnimatorEnabled.Clear();
+        cachedSpriteRenderers.Clear();
+        cachedSpriteEnabled.Clear();
     }
 }
