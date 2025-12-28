@@ -127,6 +127,7 @@ MonoBehaviour:
   obstacleMask:
     serializedVersion: 2
     m_Bits: 0
+  speedInternal: 224
   inputUp: 119
   inputDown: 115
   inputLeft: 97
@@ -707,8 +708,14 @@ MonoBehaviour:
   - {fileID: -8770913855884998421, guid: ab5cead99400bd842a3acc9e0b8a84db, type: 3}
   - {fileID: -108671046177886437, guid: ab5cead99400bd842a3acc9e0b8a84db, type: 3}
   - {fileID: -8425387056709914244, guid: ab5cead99400bd842a3acc9e0b8a84db, type: 3}
+  - {fileID: -108671046177886437, guid: ab5cead99400bd842a3acc9e0b8a84db, type: 3}
+  - {fileID: -8425387056709914244, guid: ab5cead99400bd842a3acc9e0b8a84db, type: 3}
+  - {fileID: -108671046177886437, guid: ab5cead99400bd842a3acc9e0b8a84db, type: 3}
+  - {fileID: -8425387056709914244, guid: ab5cead99400bd842a3acc9e0b8a84db, type: 3}
+  - {fileID: -8425387056709914244, guid: ab5cead99400bd842a3acc9e0b8a84db, type: 3}
+  - {fileID: -8425387056709914244, guid: ab5cead99400bd842a3acc9e0b8a84db, type: 3}
   allowFlipX: 0
-  animationTime: 0.16666667
+  animationTime: 0.071428575
   useSequenceDuration: 0
   sequenceDuration: 0.5
   loop: 0

@@ -925,7 +925,7 @@ public class MovementController : MonoBehaviour, IKillable
             spriteRendererCheering.enabled = true;
             spriteRendererCheering.idle = false;
             spriteRendererCheering.loop = true;
-            activeSpriteRenderer = spriteRendererCheering;
+            activeSpriteRenderer = spriteRendererEndStage;
         }
     }
 

@@ -51,10 +51,7 @@ public class BossEndStageSequence : MonoBehaviour
             Mathf.Round(player.transform.position.y)
         );
 
-        if (player.IsMountedOnLouie)
-            player.PlayEndStageSequence(center);
-        else
-            player.StartCheering();
+        player.PlayEndStageSequence(center);
 
         MakePlayerSafeForCelebration();
 

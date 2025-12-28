@@ -587,12 +587,8 @@ public class MechaBossSequence : MonoBehaviour
             Mathf.Round(player.transform.position.y)
         );
 
-        if (player.IsMountedOnLouie)
-            player.PlayEndStageSequence(center);
-        else
-            player.StartCheering();
+        player.PlayEndStageSequence(center);
 
-        // ✅ sem blink durante cheering (igual ClownMaskBoss)
         MakePlayerSafeForCelebration();
 
         if (GameMusicController.Instance != null && bossCheeringMusic != null)
@@ -639,7 +635,7 @@ public class MechaBossSequence : MonoBehaviour
         }
 
         if (player.TryGetComponent<CharacterHealth>(out var health) && health != null)
-            health.StopInvulnerability(); // garante que não existe blink rodando
+            health.StopInvulnerability();
     }
 
     void PopPlayerSafety()
