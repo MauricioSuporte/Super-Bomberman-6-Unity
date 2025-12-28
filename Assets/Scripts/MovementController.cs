@@ -655,6 +655,11 @@ public class MovementController : MonoBehaviour, IKillable
 
         if (CompareTag("Player"))
         {
+            PlayerPersistentStats.Life = 1;
+
+            if (TryGetComponent<CharacterHealth>(out var health) && health != null)
+                health.life = 1;
+
             PlayerPersistentStats.CanKickBombs = false;
             PlayerPersistentStats.CanPunchBombs = false;
             PlayerPersistentStats.HasPierceBombs = false;
