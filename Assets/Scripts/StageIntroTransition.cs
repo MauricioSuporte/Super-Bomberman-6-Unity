@@ -354,6 +354,8 @@ public class StageIntroTransition : MonoBehaviour
         if (gameplayRoot != null)
             gameplayRoot.SetActive(true);
 
+        ApplyPersistentPlayerSkin();
+
         if (fadeImage == null)
         {
             if (stageLabel != null)
@@ -841,5 +843,18 @@ public class StageIntroTransition : MonoBehaviour
         }
 
         spotlightMatInstance.SetColor("_Color", new Color(0f, 0f, 0f, endA));
+    }
+
+    void ApplyPersistentPlayerSkin()
+    {
+        var playerGo = GameObject.FindGameObjectWithTag("Player");
+        if (playerGo == null)
+            return;
+
+        if (!playerGo.TryGetComponent<PlayerBomberSkinController>(out var skin))
+            skin = playerGo.GetComponentInChildren<PlayerBomberSkinController>(true);
+
+        if (skin != null)
+            skin.ApplyCurrentSkin();
     }
 }
