@@ -31,7 +31,7 @@ public static class PlayerPersistentStats
     public static bool HasFullFire = false;
 
     public static MountedLouieType MountedLouie = MountedLouieType.None;
-    public static BomberSkin Skin = BomberSkin.Blue;
+    public static BomberSkin Skin = BomberSkin.Green;
 
     public static float InternalSpeedToTilesPerSecond(int internalSpeed)
     {
