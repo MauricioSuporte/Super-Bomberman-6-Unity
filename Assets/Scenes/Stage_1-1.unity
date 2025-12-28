@@ -5287,6 +5287,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Player 1
       objectReference: {fileID: 0}
+    - target: {fileID: 6013594429678645981, guid: a0c9407e33176584981a9df061a537bc, type: 3}
+      propertyPath: obstacleMask.m_Bits
+      value: 192
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
