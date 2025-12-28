@@ -6,13 +6,9 @@ public class PlayerBomberSkinController : MonoBehaviour
     [Header("Sprite Settings")]
     [SerializeField] private string spritesResourcesPath = "Sprites/Bombers/Bomberman";
 
-    [SerializeField] private string whiteSheetName = "WhiteBomber";
-    [SerializeField] private string blackSheetName = "BlackBomber";
-
     [SerializeField] private bool applyOnEnable = true;
 
-    Dictionary<string, Sprite> whiteMap;
-    Dictionary<string, Sprite> blackMap;
+    readonly Dictionary<BomberSkin, Dictionary<string, Sprite>> skinMaps = new();
 
     void OnEnable()
     {
@@ -34,10 +30,9 @@ public class PlayerBomberSkinController : MonoBehaviour
 
     public void Apply(BomberSkin skin)
     {
-        EnsureCache();
+        EnsureCache(skin);
 
-        var targetMap = (skin == BomberSkin.Black) ? blackMap : whiteMap;
-        if (targetMap == null || targetMap.Count == 0)
+        if (!skinMaps.TryGetValue(skin, out var targetMap) || targetMap.Count == 0)
             return;
 
         var animated = GetComponentsInChildren<AnimatedSpriteRenderer>(true);
@@ -70,11 +65,12 @@ public class PlayerBomberSkinController : MonoBehaviour
         }
     }
 
-    void EnsureCache()
+    void EnsureCache(BomberSkin skin)
     {
-        whiteMap ??= BuildSheetMap(whiteSheetName);
+        if (skinMaps.ContainsKey(skin))
+            return;
 
-        blackMap ??= BuildSheetMap(blackSheetName);
+        skinMaps[skin] = BuildSheetMap(GetSheetName(skin));
     }
 
     Dictionary<string, Sprite> BuildSheetMap(string sheetName)
@@ -85,14 +81,13 @@ public class PlayerBomberSkinController : MonoBehaviour
         var sprites = Resources.LoadAll<Sprite>(sheetPath);
 
         if (sprites == null || sprites.Length == 0)
-        {
             return map;
-        }
 
         for (int i = 0; i < sprites.Length; i++)
         {
             var s = sprites[i];
             if (s == null) continue;
+
             if (!map.ContainsKey(s.name))
                 map.Add(s.name, s);
         }
@@ -108,24 +103,13 @@ public class PlayerBomberSkinController : MonoBehaviour
         if (!TryExtractSuffix(current.name, out var suffix))
             return current;
 
-        string targetName = ResolveTargetNameFromSuffix(suffix, targetMap);
-        return targetName != null && targetMap.TryGetValue(targetName, out var s) ? s : current;
-    }
+        foreach (var kv in targetMap)
+        {
+            if (kv.Key.EndsWith(suffix))
+                return kv.Value;
+        }
 
-    string ResolveTargetNameFromSuffix(string suffix, Dictionary<string, Sprite> targetMap)
-    {
-        string whiteName = whiteSheetName + suffix;
-        if (targetMap.ContainsKey(whiteName))
-            return whiteName;
-
-        string blackName = blackSheetName + suffix;
-        if (targetMap.ContainsKey(blackName))
-            return blackName;
-
-        if (targetMap.ContainsKey(suffix))
-            return suffix;
-
-        return null;
+        return current;
     }
 
     bool TryExtractSuffix(string spriteName, out string suffix)
@@ -138,5 +122,10 @@ public class PlayerBomberSkinController : MonoBehaviour
 
         suffix = spriteName[idx..];
         return true;
+    }
+
+    string GetSheetName(BomberSkin skin)
+    {
+        return skin + "Bomber";
     }
 }

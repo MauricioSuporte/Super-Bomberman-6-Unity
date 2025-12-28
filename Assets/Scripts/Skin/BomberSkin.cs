@@ -1,5 +1,20 @@
 ﻿public enum BomberSkin
 {
+    Golden,
     White,
-    Black
+    Gray,
+    Black,
+    Red,
+    Orange,
+    Yellow,
+    Lime,
+    Green,
+    Cyan,
+    LightBlue,
+    Blue,
+    DarkBlue,
+    Purple,
+    Magenta,
+    Pink,
+    Brown
 }
