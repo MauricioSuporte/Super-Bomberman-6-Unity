@@ -182,11 +182,18 @@ MonoBehaviour:
   heartItemPrefab: {fileID: 0}
   blueLouieEggItemPrefab: {fileID: 0}
   blackLouieEggItemPrefab: {fileID: 0}
+  purpleLouieEggItemPrefab: {fileID: 0}
+  greenLouieEggItemPrefab: {fileID: 0}
+  yellowLouieEggItemPrefab: {fileID: 0}
+  pinkLouieEggItemPrefab: {fileID: 0}
+  redLouieEggItemPrefab: {fileID: 0}
   destructibleTilemap: {fileID: 285353618}
+  indestructibleTilemap: {fileID: 0}
   nextStageSceneName: 
   groundTilemap: {fileID: 672307155}
   groundTile: {fileID: 11400000, guid: ada74cfa1fdef9e4c86ccafaa1b2ae66, type: 2}
   groundShadowTile: {fileID: 11400000, guid: e0f633282caacc742af95bdd334dd0cf, type: 2}
+  autoResolveStageTilemaps: 1
 --- !u!114 &268450101
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3872,7 +3879,7 @@ Tilemap:
       m_AnimatedSprites:
       - {fileID: 175725864, guid: 77e6e42c2f9c34c489f692741ef2f39c, type: 3}
       - {fileID: -1587395625, guid: 271eb6691df942f45ace9088b503d63b, type: 3}
-      m_AnimationSpeed: 30.000002
+      m_AnimationSpeed: 30
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: -3, y: -7, z: 0}
@@ -4007,7 +4014,7 @@ Tilemap:
       m_AnimatedSprites:
       - {fileID: 21300000, guid: 99c336b1dfdc5774b99d7daeb017b718, type: 3}
       - {fileID: 1368141986660978707, guid: 77e6e42c2f9c34c489f692741ef2f39c, type: 3}
-      m_AnimationSpeed: 30
+      m_AnimationSpeed: 30.000002
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: -9, y: -4, z: 0}
@@ -4025,7 +4032,7 @@ Tilemap:
       m_AnimatedSprites:
       - {fileID: 1709807968, guid: 77e6e42c2f9c34c489f692741ef2f39c, type: 3}
       - {fileID: -1423662801, guid: 271eb6691df942f45ace9088b503d63b, type: 3}
-      m_AnimationSpeed: 30
+      m_AnimationSpeed: 30.000002
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: 6, y: -4, z: 0}
@@ -4160,7 +4167,7 @@ Tilemap:
       m_AnimatedSprites:
       - {fileID: 1368141986660978707, guid: 77e6e42c2f9c34c489f692741ef2f39c, type: 3}
       - {fileID: 1181556526, guid: 77e6e42c2f9c34c489f692741ef2f39c, type: 3}
-      m_AnimationSpeed: 30.000002
+      m_AnimationSpeed: 30
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: -8, y: 0, z: 0}
@@ -4376,7 +4383,7 @@ Tilemap:
       m_AnimatedSprites:
       - {fileID: -1871863515, guid: 77e6e42c2f9c34c489f692741ef2f39c, type: 3}
       - {fileID: -1325004801, guid: 271eb6691df942f45ace9088b503d63b, type: 3}
-      m_AnimationSpeed: 30
+      m_AnimationSpeed: 30.000002
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: 0, y: 5, z: 0}
@@ -5042,13 +5049,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   fadeImage: {fileID: 336813435}
-  introLogoImage: {fileID: 1102021992}
+  hudsonLogoIntro: {fileID: 0}
+  titleScreen: {fileID: 0}
   introMusic: {fileID: 8300000, guid: ff7109298c0b4734d8113eeb4b86601c, type: 3}
-  hudsonFx: {fileID: 8300000, guid: 57c59a710694ee949bbc2ae937b7db48, type: 3}
-  titleScreenRawImage: {fileID: 362350263}
-  titleVideoPlayer: {fileID: 362350260}
-  titleMusic: {fileID: 8300000, guid: c4def1af64d2e154f8c8cbd7a0472a10, type: 3}
-  startKey: 13
   stageLabel: {fileID: 556523582}
   world: 1
   stageNumber: 7
@@ -5058,11 +5061,6 @@ MonoBehaviour:
   restartKey: 13
   gameplayRoot: {fileID: 679601670}
   mechaBossSequence: {fileID: 0}
-  spotlightImage: {fileID: 1673140444}
-  spotlightYOffsetWorld: -1.9
-  spotlightEllipseX: 1.7
-  spotlightEllipseY: 0.85
-  spotlightFadeInDuration: 0.6
   stage17SceneName: Stage_1-7
 --- !u!114 &1389130173
 MonoBehaviour:
@@ -5461,6 +5459,10 @@ PrefabInstance:
       value: 4
       objectReference: {fileID: 0}
     - target: {fileID: 4345945350099860788, guid: dcd85deef67c12d47961870105bc2f37, type: 3}
+      propertyPath: stageIntroClownMaskBoss
+      value: 
+      objectReference: {fileID: 3773093811683518894}
+    - target: {fileID: 4345945350099860788, guid: dcd85deef67c12d47961870105bc2f37, type: 3}
       propertyPath: deathExplosionSfxInterval
       value: 0.3
       objectReference: {fileID: 0}
@@ -5527,8 +5529,33 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 6315403340219294976, guid: dcd85deef67c12d47961870105bc2f37, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 3773093811683518894}
   m_SourcePrefab: {fileID: 100100000, guid: dcd85deef67c12d47961870105bc2f37, type: 3}
+--- !u!1 &3773093811683518893 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 6315403340219294976, guid: dcd85deef67c12d47961870105bc2f37, type: 3}
+  m_PrefabInstance: {fileID: 3773093811683518892}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &3773093811683518894
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3773093811683518893}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b40f1ef906a46f7418d8462a3bb9d30d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::StageIntroClownMaskBoss
+  spotlightImage: {fileID: 1673140444}
+  spotlightYOffsetWorld: -1.85
+  spotlightEllipseX: 0.7
+  spotlightEllipseY: 0.4
+  spotlightFadeInDuration: 0.6
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

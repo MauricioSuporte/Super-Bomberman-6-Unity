@@ -15,6 +15,9 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
     public ClownMaskMovement clownMovement;
     public BossEndStageSequence bossEndSequence;
 
+    [Header("Stage Intro (Clown Mask)")]
+    public StageIntroClownMaskBoss stageIntroClownMaskBoss;
+
     [Header("Renderers")]
     SpriteRenderer[] bossSpriteRenderers;
     public AnimatedSpriteRenderer introRenderer;
@@ -112,6 +115,9 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
 
         if (!bossEndSequence)
             bossEndSequence = FindFirstObjectByType<BossEndStageSequence>();
+
+        if (!stageIntroClownMaskBoss)
+            stageIntroClownMaskBoss = FindFirstObjectByType<StageIntroClownMaskBoss>();
 
         audioSource = GetComponent<AudioSource>();
         if (audioSource != null)
@@ -228,23 +234,34 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
         if (waitAfterShowPlayer > 0f)
             yield return new WaitForSeconds(waitAfterShowPlayer);
 
-        if (StageIntroTransition.Instance != null)
-            yield return StageIntroTransition.Instance.FadeToFullDarknessAndWait(
+        float waitBeforeSpot = Mathf.Max(0f, introWaitBeforeSpotlight);
+        if (waitBeforeSpot > 0f)
+            yield return new WaitForSeconds(waitBeforeSpot);
+
+        if (stageIntroClownMaskBoss != null)
+            yield return stageIntroClownMaskBoss.FadeToFullDarknessAndWait(
                 introDarknessAlpha,
-                StageIntroTransition.Instance.spotlightFadeInDuration
+                stageIntroClownMaskBoss.spotlightFadeInDuration
             );
 
         yield return _waitForSeconds1;
 
         SpawnBossForIntroOnly();
 
-        if (StageIntroTransition.Instance != null)
-            StageIntroTransition.Instance.SetSpotlightWorld(
-                bossIntroPosition,
-                introSpotlightRadiusTiles,
-                introDarknessAlpha,
-                introSpotlightSoftnessTiles
-            );
+        float colliderRadius = 1f;
+
+        if (bossCollider is CircleCollider2D circle)
+        {
+            colliderRadius = circle.radius * Mathf.Max(transform.lossyScale.x, transform.lossyScale.y);
+        }
+        float spotlightRadius = colliderRadius * 0.3f;
+
+        stageIntroClownMaskBoss.SetSpotlightWorld(
+            bossIntroPosition,
+            spotlightRadius,
+            introDarknessAlpha,
+            introSpotlightSoftnessTiles
+        );
 
         EnableOnly(introRenderer);
 
@@ -262,11 +279,11 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
         if (duration > 0f)
             yield return new WaitForSeconds(duration);
 
-        if (StageIntroTransition.Instance != null)
-            yield return StageIntroTransition.Instance.FadeSpotlightAlphaAndWait(0f, 0.5f);
+        if (stageIntroClownMaskBoss != null)
+            yield return stageIntroClownMaskBoss.FadeSpotlightAlphaAndWait(0f, 0.5f);
 
-        if (StageIntroTransition.Instance != null)
-            StageIntroTransition.Instance.DisableSpotlight();
+        if (stageIntroClownMaskBoss != null)
+            stageIntroClownMaskBoss.DisableSpotlight();
 
         EnableOnly(idleRenderer);
         EnableBossCombat();
