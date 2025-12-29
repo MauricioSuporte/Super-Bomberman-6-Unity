@@ -41,6 +41,9 @@ public class PlayerBomberSkinController : MonoBehaviour
             var asr = animated[i];
             if (asr == null) continue;
 
+            if (IsInsideMountedLouie(asr))
+                continue;
+
             asr.idleSprite = SwapBySuffix(asr.idleSprite, targetMap);
 
             if (asr.animationSprite != null)
@@ -58,11 +61,19 @@ public class PlayerBomberSkinController : MonoBehaviour
             var sr = spriteRenderers[i];
             if (sr == null) continue;
 
+            if (IsInsideMountedLouie(sr))
+                continue;
+
             if (sr.GetComponentInParent<AnimatedSpriteRenderer>() != null)
                 continue;
 
             sr.sprite = SwapBySuffix(sr.sprite, targetMap);
         }
+    }
+
+    bool IsInsideMountedLouie(Component c)
+    {
+        return c != null && c.GetComponentInParent<LouieRiderVisual>(true) != null;
     }
 
     void EnsureCache(BomberSkin skin)
