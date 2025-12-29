@@ -33,6 +33,9 @@ public static class PlayerPersistentStats
     public static MountedLouieType MountedLouie = MountedLouieType.Yellow;
     public static BomberSkin Skin = BomberSkin.Yellow;
 
+    const string PrefGoldenUnlocked = "SKIN_GOLDEN_UNLOCKED";
+    const string PrefSelectedSkin = "SKIN_SELECTED";
+
     public static float InternalSpeedToTilesPerSecond(int internalSpeed)
     {
         return internalSpeed / (float)SpeedDivisor;
@@ -205,5 +208,31 @@ public static class PlayerPersistentStats
         HasFullFire = false;
 
         MountedLouie = MountedLouieType.None;
+    }
+
+    public static bool GoldenUnlocked
+    {
+        get => PlayerPrefs.GetInt(PrefGoldenUnlocked, 0) == 1;
+        set { PlayerPrefs.SetInt(PrefGoldenUnlocked, value ? 1 : 0); PlayerPrefs.Save(); }
+    }
+
+    public static bool IsSkinUnlocked(BomberSkin skin)
+    {
+        if (skin == BomberSkin.Golden)
+            return GoldenUnlocked;
+
+        return true;
+    }
+
+    public static void SaveSelectedSkin()
+    {
+        PlayerPrefs.SetInt(PrefSelectedSkin, (int)Skin);
+        PlayerPrefs.Save();
+    }
+
+    public static void LoadSelectedSkin()
+    {
+        if (PlayerPrefs.HasKey(PrefSelectedSkin))
+            Skin = (BomberSkin)PlayerPrefs.GetInt(PrefSelectedSkin);
     }
 }

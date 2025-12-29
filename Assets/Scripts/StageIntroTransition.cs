@@ -39,6 +39,9 @@ public class StageIntroTransition : MonoBehaviour
     [Header("Only Stage_1-7")]
     public string stage17SceneName = "Stage_1-7";
 
+    [Header("Skin Select")]
+    public BomberSkinSelectMenu skinSelectMenu;
+
     public bool IntroRunning { get; private set; }
     public bool EndingRunning { get; private set; }
 
@@ -79,6 +82,8 @@ public class StageIntroTransition : MonoBehaviour
 
     void Start()
     {
+        PlayerPersistentStats.LoadSelectedSkin();
+
         if (GameMusicController.Instance != null)
             GameMusicController.Instance.StopMusic();
 
@@ -167,6 +172,24 @@ public class StageIntroTransition : MonoBehaviour
         }
 
         yield return titleScreen.Play(fadeImage);
+
+        if (skinSelectMenu != null)
+        {
+            yield return skinSelectMenu.SelectSkinRoutine();
+
+            var chosen = skinSelectMenu.GetSelectedSkin();
+            PlayerPersistentStats.Skin = chosen;
+            PlayerPersistentStats.SaveSelectedSkin();
+
+            SkipTitleScreenOnNextLoad();
+
+            if (!string.IsNullOrEmpty(firstStageSceneName))
+            {
+                SceneManager.LoadScene(firstStageSceneName);
+                yield break;
+            }
+        }
+
         yield return FadeInToGame();
     }
 

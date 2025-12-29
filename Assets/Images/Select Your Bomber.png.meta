@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: 7274c6c7c2d38744d825f3a5ec97a90d
+guid: 06139589de34eed4a966c3011469d4c3
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -4910782293062871342
-    second: SBM6 Title Screen_0
+      213: 4697060192448965034
+    second: Select Your Bomber_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -100,13 +100,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: SBM6 Title Screen_0
+      name: Select Your Bomber_0
       rect:
         serializedVersion: 2
         x: 0
         y: 0
         width: 1024
-        height: 934
+        height: 1024
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -115,8 +115,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 2d695bcd58569dbb0800000000000000
-      internalID: -4910782293062871342
+      spriteID: aa96c83eb5f4f2140800000000000000
+      internalID: 4697060192448965034
       vertices: []
       indices: 
       edges: []
@@ -135,7 +135,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      SBM6 Title Screen_0: -4910782293062871342
+      Select Your Bomber_0: 4697060192448965034
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
