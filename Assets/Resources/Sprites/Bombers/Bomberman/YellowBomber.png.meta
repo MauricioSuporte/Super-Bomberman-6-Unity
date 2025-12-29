@@ -1,0 +1,4828 @@
+fileFormatVersion: 2
+guid: 69b19a1ab0ae3d546b5426e06773e0f0
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 4072542436652752433
+    second: YellowBomber_0
+  - first:
+      213: 3253160314189943038
+    second: YellowBomber_1
+  - first:
+      213: 878186792456621142
+    second: YellowBomber_2
+  - first:
+      213: 4615353985808866527
+    second: YellowBomber_3
+  - first:
+      213: 3013541639583543185
+    second: YellowBomber_4
+  - first:
+      213: 7727648150755761543
+    second: YellowBomber_5
+  - first:
+      213: -6278428394994883152
+    second: YellowBomber_6
+  - first:
+      213: -2184079651678388220
+    second: YellowBomber_7
+  - first:
+      213: -3307461363369056176
+    second: YellowBomber_8
+  - first:
+      213: 3535148820942194957
+    second: YellowBomber_9
+  - first:
+      213: -1590626240151187798
+    second: YellowBomber_10
+  - first:
+      213: -6883018769219903196
+    second: YellowBomber_11
+  - first:
+      213: 5796563566950586992
+    second: YellowBomber_12
+  - first:
+      213: 766665647750026706
+    second: YellowBomber_13
+  - first:
+      213: 8953197681903196175
+    second: YellowBomber_14
+  - first:
+      213: 7887831973363529104
+    second: YellowBomber_15
+  - first:
+      213: -6203224285082355069
+    second: YellowBomber_16
+  - first:
+      213: 7791254230390105554
+    second: YellowBomber_17
+  - first:
+      213: -1100300213731399968
+    second: YellowBomber_18
+  - first:
+      213: -7309903415762687132
+    second: YellowBomber_19
+  - first:
+      213: 7013279497305533733
+    second: YellowBomber_20
+  - first:
+      213: 492437227138477601
+    second: YellowBomber_21
+  - first:
+      213: 4055764613819691673
+    second: YellowBomber_22
+  - first:
+      213: 1773509137281777944
+    second: YellowBomber_23
+  - first:
+      213: 3238107186993839462
+    second: YellowBomber_24
+  - first:
+      213: 8140928674936910445
+    second: YellowBomber_25
+  - first:
+      213: -4209050648378896454
+    second: YellowBomber_26
+  - first:
+      213: -5467008201835515496
+    second: YellowBomber_27
+  - first:
+      213: -8245657510140998693
+    second: YellowBomber_28
+  - first:
+      213: 6953208074114196065
+    second: YellowBomber_29
+  - first:
+      213: -883404384875474489
+    second: YellowBomber_30
+  - first:
+      213: -7692616510379466933
+    second: YellowBomber_31
+  - first:
+      213: -7698625188124465935
+    second: YellowBomber_32
+  - first:
+      213: 6213496058674122979
+    second: YellowBomber_33
+  - first:
+      213: 5428051655352160670
+    second: YellowBomber_34
+  - first:
+      213: 2083383490925953831
+    second: YellowBomber_35
+  - first:
+      213: 8774362336887587387
+    second: YellowBomber_36
+  - first:
+      213: 6261941580061314832
+    second: YellowBomber_37
+  - first:
+      213: -4943966467701537409
+    second: YellowBomber_38
+  - first:
+      213: -1807614531516696947
+    second: YellowBomber_39
+  - first:
+      213: 4431283725086736866
+    second: YellowBomber_40
+  - first:
+      213: -7107318660772454121
+    second: YellowBomber_41
+  - first:
+      213: 8872413316651058914
+    second: YellowBomber_42
+  - first:
+      213: 5752261750094463085
+    second: YellowBomber_43
+  - first:
+      213: 2451742658236353609
+    second: YellowBomber_44
+  - first:
+      213: 1456838329188289114
+    second: YellowBomber_45
+  - first:
+      213: 6813821971786444342
+    second: YellowBomber_46
+  - first:
+      213: 1435195305251060735
+    second: YellowBomber_47
+  - first:
+      213: 5752859043849207757
+    second: YellowBomber_48
+  - first:
+      213: 6874823153952213414
+    second: YellowBomber_49
+  - first:
+      213: 3704322744009658352
+    second: YellowBomber_50
+  - first:
+      213: -2623941340488832680
+    second: YellowBomber_51
+  - first:
+      213: 1839622287481457762
+    second: YellowBomber_52
+  - first:
+      213: 2101905846352497896
+    second: YellowBomber_53
+  - first:
+      213: -3656154179119915838
+    second: YellowBomber_54
+  - first:
+      213: -8393434218501123429
+    second: YellowBomber_55
+  - first:
+      213: 5177392808382942525
+    second: YellowBomber_56
+  - first:
+      213: -8672279168001826086
+    second: YellowBomber_57
+  - first:
+      213: 2667716143764785088
+    second: YellowBomber_58
+  - first:
+      213: 4135358847407791997
+    second: YellowBomber_59
+  - first:
+      213: -5354703237830621249
+    second: YellowBomber_60
+  - first:
+      213: -5343219589770038510
+    second: YellowBomber_61
+  - first:
+      213: -2911286635191150774
+    second: YellowBomber_62
+  - first:
+      213: -6011861211268467793
+    second: YellowBomber_63
+  - first:
+      213: 4675354187950052634
+    second: YellowBomber_64
+  - first:
+      213: 1173983257595217027
+    second: YellowBomber_65
+  - first:
+      213: -7105220762498442660
+    second: YellowBomber_66
+  - first:
+      213: -6869471608649759390
+    second: YellowBomber_67
+  - first:
+      213: -5882432172207509007
+    second: YellowBomber_68
+  - first:
+      213: -8735595706278070857
+    second: YellowBomber_69
+  - first:
+      213: -6706477821987152169
+    second: YellowBomber_70
+  - first:
+      213: 2926696254588692377
+    second: YellowBomber_71
+  - first:
+      213: 7165564158752776891
+    second: YellowBomber_72
+  - first:
+      213: 6325736065627294527
+    second: YellowBomber_73
+  - first:
+      213: -924708513239408440
+    second: YellowBomber_74
+  - first:
+      213: 1789785688510220903
+    second: YellowBomber_75
+  - first:
+      213: -1425463724663253344
+    second: YellowBomber_76
+  - first:
+      213: -4550822955025412997
+    second: YellowBomber_77
+  - first:
+      213: 4770855334621682489
+    second: YellowBomber_78
+  - first:
+      213: -3827420081376822323
+    second: YellowBomber_79
+  - first:
+      213: 179294936525039847
+    second: YellowBomber_80
+  - first:
+      213: 8130182629160911075
+    second: YellowBomber_81
+  - first:
+      213: 1034460561485592482
+    second: YellowBomber_82
+  - first:
+      213: 2324848584988664343
+    second: YellowBomber_83
+  - first:
+      213: -1294750412433382254
+    second: YellowBomber_84
+  - first:
+      213: -8634025256095014653
+    second: YellowBomber_85
+  - first:
+      213: -7699552285298401700
+    second: YellowBomber_86
+  - first:
+      213: -1071487996236226354
+    second: YellowBomber_87
+  - first:
+      213: -7285855265910035912
+    second: YellowBomber_88
+  - first:
+      213: 8780515885684166891
+    second: YellowBomber_89
+  - first:
+      213: 6788865968496389711
+    second: YellowBomber_90
+  - first:
+      213: -7884334765238801779
+    second: YellowBomber_91
+  - first:
+      213: -3629132133173078433
+    second: YellowBomber_92
+  - first:
+      213: -7243740087868985535
+    second: YellowBomber_93
+  - first:
+      213: 4076820524965708684
+    second: YellowBomber_94
+  - first:
+      213: 3023455951013757061
+    second: YellowBomber_95
+  - first:
+      213: -3039308914130300500
+    second: YellowBomber_96
+  - first:
+      213: -7721508120377956745
+    second: YellowBomber_97
+  - first:
+      213: -854498775713716117
+    second: YellowBomber_98
+  - first:
+      213: 2837232848787287888
+    second: YellowBomber_99
+  - first:
+      213: 6845955744196673396
+    second: YellowBomber_100
+  - first:
+      213: 2552277528711996778
+    second: YellowBomber_101
+  - first:
+      213: -258120245033555060
+    second: YellowBomber_102
+  - first:
+      213: 629501868963058832
+    second: YellowBomber_103
+  - first:
+      213: 3792826498354484808
+    second: YellowBomber_104
+  - first:
+      213: 7723969283835438898
+    second: YellowBomber_105
+  - first:
+      213: 1717711643088042049
+    second: YellowBomber_106
+  - first:
+      213: -7116168877247885927
+    second: YellowBomber_107
+  - first:
+      213: 6255193746705369772
+    second: YellowBomber_108
+  - first:
+      213: -2142752607400542063
+    second: YellowBomber_109
+  - first:
+      213: -1715263855213234437
+    second: YellowBomber_110
+  - first:
+      213: -389614905991357025
+    second: YellowBomber_111
+  - first:
+      213: -5596177926422569322
+    second: YellowBomber_112
+  - first:
+      213: -1229658138101110909
+    second: YellowBomber_113
+  - first:
+      213: 9178253700382428849
+    second: YellowBomber_114
+  - first:
+      213: -5554359039055286683
+    second: YellowBomber_115
+  - first:
+      213: -1363542350259661498
+    second: YellowBomber_116
+  - first:
+      213: 9027920938396460170
+    second: YellowBomber_117
+  - first:
+      213: 7713818854468302917
+    second: YellowBomber_118
+  - first:
+      213: 8368995084769608266
+    second: YellowBomber_119
+  - first:
+      213: -6415901169067992612
+    second: YellowBomber_120
+  - first:
+      213: 7886568055985606043
+    second: YellowBomber_121
+  - first:
+      213: 1060035066488553454
+    second: YellowBomber_122
+  - first:
+      213: -2786026389577431143
+    second: YellowBomber_123
+  - first:
+      213: -7836026864491589753
+    second: YellowBomber_124
+  - first:
+      213: -5580976335970404836
+    second: YellowBomber_125
+  - first:
+      213: 1811196852818021016
+    second: YellowBomber_126
+  - first:
+      213: 1233102467091052201
+    second: YellowBomber_127
+  - first:
+      213: 1033581333963199010
+    second: YellowBomber_128
+  - first:
+      213: 7531599794920518454
+    second: YellowBomber_129
+  - first:
+      213: 6300772607325158385
+    second: YellowBomber_130
+  - first:
+      213: 2656397938321727568
+    second: YellowBomber_131
+  - first:
+      213: 4089316540390581001
+    second: YellowBomber_132
+  - first:
+      213: 4743302663692386685
+    second: YellowBomber_133
+  - first:
+      213: -969780089945669395
+    second: YellowBomber_134
+  - first:
+      213: -1167777297236586812
+    second: YellowBomber_135
+  - first:
+      213: -5028992674696563909
+    second: YellowBomber_136
+  - first:
+      213: 3852214690092682653
+    second: YellowBomber_137
+  - first:
+      213: -1645008301132482909
+    second: YellowBomber_138
+  - first:
+      213: -4368305608584269734
+    second: YellowBomber_139
+  - first:
+      213: 1825659250492721354
+    second: YellowBomber_140
+  - first:
+      213: -8900363678299935386
+    second: YellowBomber_141
+  - first:
+      213: -7235859949620157180
+    second: YellowBomber_142
+  - first:
+      213: 2133699572115244183
+    second: YellowBomber_143
+  - first:
+      213: 8196505503305238841
+    second: YellowBomber_144
+  - first:
+      213: -7159504846500477331
+    second: YellowBomber_145
+  - first:
+      213: 8886193332030478346
+    second: YellowBomber_146
+  - first:
+      213: -119129284543270878
+    second: YellowBomber_147
+  - first:
+      213: -5279556024115325588
+    second: YellowBomber_148
+  - first:
+      213: -2800790276712520864
+    second: YellowBomber_149
+  - first:
+      213: -5262101433566347658
+    second: YellowBomber_150
+  - first:
+      213: -728297736507668670
+    second: YellowBomber_151
+  - first:
+      213: 4710477706194885324
+    second: YellowBomber_152
+  - first:
+      213: 8224144272095026783
+    second: YellowBomber_153
+  - first:
+      213: 1663619197259022027
+    second: YellowBomber_154
+  - first:
+      213: -4325931959141711803
+    second: YellowBomber_155
+  - first:
+      213: -2497544832316978327
+    second: YellowBomber_156
+  - first:
+      213: 112749978205750290
+    second: YellowBomber_157
+  - first:
+      213: -4080516091577329316
+    second: YellowBomber_158
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 16
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: YellowBomber_0
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 1056
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 13e1465d4c3948830800000000000000
+      internalID: 4072542436652752433
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_1
+      rect:
+        serializedVersion: 2
+        x: 16
+        y: 1056
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ef090bcd11c852d20800000000000000
+      internalID: 3253160314189943038
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_2
+      rect:
+        serializedVersion: 2
+        x: 32
+        y: 1056
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 65c01d22c32ff2c00800000000000000
+      internalID: 878186792456621142
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_3
+      rect:
+        serializedVersion: 2
+        x: 48
+        y: 1056
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fdc12d43ff70d0040800000000000000
+      internalID: 4615353985808866527
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_4
+      rect:
+        serializedVersion: 2
+        x: 64
+        y: 1056
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 19fa93f972042d920800000000000000
+      internalID: 3013541639583543185
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_5
+      rect:
+        serializedVersion: 2
+        x: 96
+        y: 1056
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 78d500fdc0f1e3b60800000000000000
+      internalID: 7727648150755761543
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_6
+      rect:
+        serializedVersion: 2
+        x: 112
+        y: 1056
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0b5aa98a3aa8ed8a0800000000000000
+      internalID: -6278428394994883152
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_7
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 1024
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4000d88e02790b1e0800000000000000
+      internalID: -2184079651678388220
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_8
+      rect:
+        serializedVersion: 2
+        x: 16
+        y: 1024
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 058ee08e9698912d0800000000000000
+      internalID: -3307461363369056176
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_9
+      rect:
+        serializedVersion: 2
+        x: 32
+        y: 1024
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d0986646f1f5f0130800000000000000
+      internalID: 3535148820942194957
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_10
+      rect:
+        serializedVersion: 2
+        x: 48
+        y: 1024
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: aae8f51bcd5fce9e0800000000000000
+      internalID: -1590626240151187798
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_11
+      rect:
+        serializedVersion: 2
+        x: 64
+        y: 1024
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4212d4ea5ea9a70a0800000000000000
+      internalID: -6883018769219903196
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_12
+      rect:
+        serializedVersion: 2
+        x: 96
+        y: 1024
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 07a9f064ad7817050800000000000000
+      internalID: 5796563566950586992
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_13
+      rect:
+        serializedVersion: 2
+        x: 112
+        y: 1024
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2d592ab385eb3aa00800000000000000
+      internalID: 766665647750026706
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_14
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 992
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f08d0b90bd5204c70800000000000000
+      internalID: 8953197681903196175
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_15
+      rect:
+        serializedVersion: 2
+        x: 16
+        y: 992
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0953d446365377d60800000000000000
+      internalID: 7887831973363529104
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_16
+      rect:
+        serializedVersion: 2
+        x: 32
+        y: 992
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 38af699f068b9e9a0800000000000000
+      internalID: -6203224285082355069
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_17
+      rect:
+        serializedVersion: 2
+        x: 48
+        y: 992
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2d569255178102c60800000000000000
+      internalID: 7791254230390105554
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_18
+      rect:
+        serializedVersion: 2
+        x: 64
+        y: 992
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0e6e04609c2fab0f0800000000000000
+      internalID: -1100300213731399968
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_19
+      rect:
+        serializedVersion: 2
+        x: 96
+        y: 992
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 46bec09a2910e8a90800000000000000
+      internalID: -7309903415762687132
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_20
+      rect:
+        serializedVersion: 2
+        x: 112
+        y: 992
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 52d2d6b7b8c245160800000000000000
+      internalID: 7013279497305533733
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_21
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 960
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 12e64cd8c0d75d600800000000000000
+      internalID: 492437227138477601
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_22
+      rect:
+        serializedVersion: 2
+        x: 16
+        y: 960
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 992725b8d68f84830800000000000000
+      internalID: 4055764613819691673
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_23
+      rect:
+        serializedVersion: 2
+        x: 32
+        y: 960
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8110795f925cc9810800000000000000
+      internalID: 1773509137281777944
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_24
+      rect:
+        serializedVersion: 2
+        x: 48
+        y: 960
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 66d3861945110fc20800000000000000
+      internalID: 3238107186993839462
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_25
+      rect:
+        serializedVersion: 2
+        x: 64
+        y: 960
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d62f7635f736af070800000000000000
+      internalID: 8140928674936910445
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_26
+      rect:
+        serializedVersion: 2
+        x: 96
+        y: 960
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: abf8fbd5cb27695c0800000000000000
+      internalID: -4209050648378896454
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_27
+      rect:
+        serializedVersion: 2
+        x: 112
+        y: 960
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 891727181094124b0800000000000000
+      internalID: -5467008201835515496
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_28
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 928
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bdb83809e2a819d80800000000000000
+      internalID: -8245657510140998693
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_29
+      rect:
+        serializedVersion: 2
+        x: 16
+        y: 928
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 16264fa57e1ce7060800000000000000
+      internalID: 6953208074114196065
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_30
+      rect:
+        serializedVersion: 2
+        x: 32
+        y: 928
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7c1997674648db3f0800000000000000
+      internalID: -883404384875474489
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_31
+      rect:
+        serializedVersion: 2
+        x: 48
+        y: 928
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b4fd6818a065e3590800000000000000
+      internalID: -7692616510379466933
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_32
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 896
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1f467f23e2df82590800000000000000
+      internalID: -7698625188124465935
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_33
+      rect:
+        serializedVersion: 2
+        x: 16
+        y: 896
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3e09f8eaeb5ca3650800000000000000
+      internalID: 6213496058674122979
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_34
+      rect:
+        serializedVersion: 2
+        x: 32
+        y: 896
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e919cb3b830545b40800000000000000
+      internalID: 5428051655352160670
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_35
+      rect:
+        serializedVersion: 2
+        x: 48
+        y: 896
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7230e8b2f3aa9ec10800000000000000
+      internalID: 2083383490925953831
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_36
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 864
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b3240cc8e0cc4c970800000000000000
+      internalID: 8774362336887587387
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_37
+      rect:
+        serializedVersion: 2
+        x: 16
+        y: 864
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 01f8dcb90b2e6e650800000000000000
+      internalID: 6261941580061314832
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_38
+      rect:
+        serializedVersion: 2
+        x: 32
+        y: 864
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f75053f11b0836bb0800000000000000
+      internalID: -4943966467701537409
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_39
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 832
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d86fc1629201ae6e0800000000000000
+      internalID: -1807614531516696947
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_40
+      rect:
+        serializedVersion: 2
+        x: 16
+        y: 832
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2e1c3cce1151f7d30800000000000000
+      internalID: 4431283725086736866
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_41
+      rect:
+        serializedVersion: 2
+        x: 32
+        y: 832
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 711272f855bbd5d90800000000000000
+      internalID: -7107318660772454121
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_42
+      rect:
+        serializedVersion: 2
+        x: 48
+        y: 832
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2e68e6747e4212b70800000000000000
+      internalID: 8872413316651058914
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_43
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 800
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d60827db59324df40800000000000000
+      internalID: 5752261750094463085
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_44
+      rect:
+        serializedVersion: 2
+        x: 16
+        y: 800
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 94c89d035f6560220800000000000000
+      internalID: 2451742658236353609
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_45
+      rect:
+        serializedVersion: 2
+        x: 32
+        y: 800
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a5a0172edbab73410800000000000000
+      internalID: 1456838329188289114
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_46
+      rect:
+        serializedVersion: 2
+        x: 48
+        y: 800
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 63e251f6bfe8f8e50800000000000000
+      internalID: 6813821971786444342
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_47
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 768
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ffb3cc0b686dae310800000000000000
+      internalID: 1435195305251060735
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_48
+      rect:
+        serializedVersion: 2
+        x: 16
+        y: 768
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: dcf768702d246df40800000000000000
+      internalID: 5752859043849207757
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_49
+      rect:
+        serializedVersion: 2
+        x: 32
+        y: 768
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6a9c3f0fb37486f50800000000000000
+      internalID: 6874823153952213414
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_50
+      rect:
+        serializedVersion: 2
+        x: 48
+        y: 768
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0ff881ac8e5686330800000000000000
+      internalID: 3704322744009658352
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_51
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 736
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 85963b8c043e59bd0800000000000000
+      internalID: -2623941340488832680
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_52
+      rect:
+        serializedVersion: 2
+        x: 16
+        y: 736
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 26c493649b6a78910800000000000000
+      internalID: 1839622287481457762
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_53
+      rect:
+        serializedVersion: 2
+        x: 32
+        y: 736
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8ec482b1b387b2d10800000000000000
+      internalID: 2101905846352497896
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_54
+      rect:
+        serializedVersion: 2
+        x: 48
+        y: 736
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2cc5f7d252bb24dc0800000000000000
+      internalID: -3656154179119915838
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_55
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 704
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b92d1a07c08848b80800000000000000
+      internalID: -8393434218501123429
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_56
+      rect:
+        serializedVersion: 2
+        x: 16
+        y: 704
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d3dc356045bc9d740800000000000000
+      internalID: 5177392808382942525
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_57
+      rect:
+        serializedVersion: 2
+        x: 32
+        y: 704
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ad22b3e5b00e5a780800000000000000
+      internalID: -8672279168001826086
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_58
+      rect:
+        serializedVersion: 2
+        x: 48
+        y: 704
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0c7cca6d2b1a50520800000000000000
+      internalID: 2667716143764785088
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_59
+      rect:
+        serializedVersion: 2
+        x: 64
+        y: 704
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d7f928e26feb36930800000000000000
+      internalID: 4135358847407791997
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_60
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 672
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fb7c87f86c540b5b0800000000000000
+      internalID: -5354703237830621249
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_61
+      rect:
+        serializedVersion: 2
+        x: 16
+        y: 672
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 21339dab71219d5b0800000000000000
+      internalID: -5343219589770038510
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_62
+      rect:
+        serializedVersion: 2
+        x: 32
+        y: 672
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a47d61eda380997d0800000000000000
+      internalID: -2911286635191150774
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_63
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 640
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fa3b46f9414919ca0800000000000000
+      internalID: -6011861211268467793
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_64
+      rect:
+        serializedVersion: 2
+        x: 16
+        y: 640
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a15d5e3ecd132e040800000000000000
+      internalID: 4675354187950052634
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_65
+      rect:
+        serializedVersion: 2
+        x: 32
+        y: 640
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 38408318d83da4010800000000000000
+      internalID: 1173983257595217027
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_66
+      rect:
+        serializedVersion: 2
+        x: 48
+        y: 640
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c5adc809c5f256d90800000000000000
+      internalID: -7105220762498442660
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_67
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 608
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 265cccbc7fbbaa0a0800000000000000
+      internalID: -6869471608649759390
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_68
+      rect:
+        serializedVersion: 2
+        x: 16
+        y: 608
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1f1fd381b176d5ea0800000000000000
+      internalID: -5882432172207509007
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_69
+      rect:
+        serializedVersion: 2
+        x: 32
+        y: 608
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7b53ed10dfde4c680800000000000000
+      internalID: -8735595706278070857
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_70
+      rect:
+        serializedVersion: 2
+        x: 48
+        y: 608
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7de9b6e04fdcde2a0800000000000000
+      internalID: -6706477821987152169
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_71
+      rect:
+        serializedVersion: 2
+        x: 64
+        y: 608
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 997a93cbcb6bd9820800000000000000
+      internalID: 2926696254588692377
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_72
+      rect:
+        serializedVersion: 2
+        x: 80
+        y: 608
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bb2eab933a2317360800000000000000
+      internalID: 7165564158752776891
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_73
+      rect:
+        serializedVersion: 2
+        x: 96
+        y: 608
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f3b879ebf6789c750800000000000000
+      internalID: 6325736065627294527
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_74
+      rect:
+        serializedVersion: 2
+        x: 112
+        y: 608
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8c0e59ba186ca23f0800000000000000
+      internalID: -924708513239408440
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_75
+      rect:
+        serializedVersion: 2
+        x: 128
+        y: 608
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 76acabbd99896d810800000000000000
+      internalID: 1789785688510220903
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_76
+      rect:
+        serializedVersion: 2
+        x: 144
+        y: 608
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0a6dd3b7b4cb73ce0800000000000000
+      internalID: -1425463724663253344
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_77
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 576
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b7c440a32aa38d0c0800000000000000
+      internalID: -4550822955025412997
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_78
+      rect:
+        serializedVersion: 2
+        x: 16
+        y: 576
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 93b17e656ab753240800000000000000
+      internalID: 4770855334621682489
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_79
+      rect:
+        serializedVersion: 2
+        x: 32
+        y: 576
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: dcb765be6b542eac0800000000000000
+      internalID: -3827420081376822323
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_80
+      rect:
+        serializedVersion: 2
+        x: 48
+        y: 576
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7e8e9997bcbfc7200800000000000000
+      internalID: 179294936525039847
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_81
+      rect:
+        serializedVersion: 2
+        x: 64
+        y: 576
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3e00032960634d070800000000000000
+      internalID: 8130182629160911075
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_82
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 544
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2a7ff7d56642b5e00800000000000000
+      internalID: 1034460561485592482
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_83
+      rect:
+        serializedVersion: 2
+        x: 16
+        y: 544
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 712a1d07875834020800000000000000
+      internalID: 2324848584988664343
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_84
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 512
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2942e1a1c5f180ee0800000000000000
+      internalID: -1294750412433382254
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_85
+      rect:
+        serializedVersion: 2
+        x: 16
+        y: 512
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 301a4bc46c7cd2880800000000000000
+      internalID: -8634025256095014653
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_86
+      rect:
+        serializedVersion: 2
+        x: 32
+        y: 512
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c5edd319df1b52590800000000000000
+      internalID: -7699552285298401700
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_87
+      rect:
+        serializedVersion: 2
+        x: 48
+        y: 512
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ec0ae3b285f4121f0800000000000000
+      internalID: -1071487996236226354
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_88
+      rect:
+        serializedVersion: 2
+        x: 64
+        y: 512
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 83ae58edc3173ea90800000000000000
+      internalID: -7285855265910035912
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_89
+      rect:
+        serializedVersion: 2
+        x: 80
+        y: 512
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: be011e64da8aad970800000000000000
+      internalID: 8780515885684166891
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_90
+      rect:
+        serializedVersion: 2
+        x: 96
+        y: 512
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f4e27ff11a5e63e50800000000000000
+      internalID: 6788865968496389711
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_91
+      rect:
+        serializedVersion: 2
+        x: 112
+        y: 512
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d8aada3dd47359290800000000000000
+      internalID: -7884334765238801779
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_92
+      rect:
+        serializedVersion: 2
+        x: 128
+        y: 512
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f5653478d8bb2adc0800000000000000
+      internalID: -3629132133173078433
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_93
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 480
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 14fef41e4c0197b90800000000000000
+      internalID: -7243740087868985535
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_94
+      rect:
+        serializedVersion: 2
+        x: 16
+        y: 480
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c834a93eaa6c39830800000000000000
+      internalID: 4076820524965708684
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_95
+      rect:
+        serializedVersion: 2
+        x: 32
+        y: 480
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 58047322b2975f920800000000000000
+      internalID: 3023455951013757061
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_96
+      rect:
+        serializedVersion: 2
+        x: 48
+        y: 480
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ca1d59245a432d5d0800000000000000
+      internalID: -3039308914130300500
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_97
+      rect:
+        serializedVersion: 2
+        x: 64
+        y: 480
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 776e39a5641b7d490800000000000000
+      internalID: -7721508120377956745
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_98
+      rect:
+        serializedVersion: 2
+        x: 80
+        y: 480
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b68e39c04e53424f0800000000000000
+      internalID: -854498775713716117
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_99
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 448
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 05f29016e30ef5720800000000000000
+      internalID: 2837232848787287888
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_100
+      rect:
+        serializedVersion: 2
+        x: 16
+        y: 448
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 47f33e85a78b10f50800000000000000
+      internalID: 6845955744196673396
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_101
+      rect:
+        serializedVersion: 2
+        x: 32
+        y: 448
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a65271bc3e28b6320800000000000000
+      internalID: 2552277528711996778
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_102
+      rect:
+        serializedVersion: 2
+        x: 48
+        y: 448
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c8b20753109fa6cf0800000000000000
+      internalID: -258120245033555060
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_103
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 416
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 094dcf45d907cb800800000000000000
+      internalID: 629501868963058832
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_104
+      rect:
+        serializedVersion: 2
+        x: 16
+        y: 416
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8469b11ea93d2a430800000000000000
+      internalID: 3792826498354484808
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_105
+      rect:
+        serializedVersion: 2
+        x: 32
+        y: 416
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2372a0be32d013b60800000000000000
+      internalID: 7723969283835438898
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_106
+      rect:
+        serializedVersion: 2
+        x: 48
+        y: 416
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 148b0d873a986d710800000000000000
+      internalID: 1717711643088042049
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_107
+      rect:
+        serializedVersion: 2
+        x: 64
+        y: 416
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 99d03f5fb1a4e3d90800000000000000
+      internalID: -7116168877247885927
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_108
+      rect:
+        serializedVersion: 2
+        x: 80
+        y: 416
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: caa4e993299eec650800000000000000
+      internalID: 6255193746705369772
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_109
+      rect:
+        serializedVersion: 2
+        x: 96
+        y: 416
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 190495a3bd96342e0800000000000000
+      internalID: -2142752607400542063
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_110
+      rect:
+        serializedVersion: 2
+        x: 112
+        y: 416
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bf6b2fd8c982238e0800000000000000
+      internalID: -1715263855213234437
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_111
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 384
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f9d1039ae4fc79af0800000000000000
+      internalID: -389614905991357025
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_112
+      rect:
+        serializedVersion: 2
+        x: 16
+        y: 384
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 69e53b363d16652b0800000000000000
+      internalID: -5596177926422569322
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_113
+      rect:
+        serializedVersion: 2
+        x: 32
+        y: 384
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 387a05b30706feee0800000000000000
+      internalID: -1229658138101110909
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_114
+      rect:
+        serializedVersion: 2
+        x: 48
+        y: 384
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1be85bdac15bf5f70800000000000000
+      internalID: 9178253700382428849
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_115
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 352
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 56e212ad1e3fae2b0800000000000000
+      internalID: -5554359039055286683
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_116
+      rect:
+        serializedVersion: 2
+        x: 16
+        y: 352
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6455290f479b31de0800000000000000
+      internalID: -1363542350259661498
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_117
+      rect:
+        serializedVersion: 2
+        x: 32
+        y: 352
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a84ae61f24e994d70800000000000000
+      internalID: 9027920938396460170
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_118
+      rect:
+        serializedVersion: 2
+        x: 48
+        y: 352
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5483b4ae06dfc0b60800000000000000
+      internalID: 7713818854468302917
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_119
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 320
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a42cea250b4a42470800000000000000
+      internalID: 8368995084769608266
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_120
+      rect:
+        serializedVersion: 2
+        x: 16
+        y: 320
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: cd950bf21e326f6a0800000000000000
+      internalID: -6415901169067992612
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_121
+      rect:
+        serializedVersion: 2
+        x: 32
+        y: 320
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b9d07f1bcd7b27d60800000000000000
+      internalID: 7886568055985606043
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_122
+      rect:
+        serializedVersion: 2
+        x: 48
+        y: 320
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: eeff183d64006be00800000000000000
+      internalID: 1060035066488553454
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_123
+      rect:
+        serializedVersion: 2
+        x: 64
+        y: 320
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9978f5a72cb0659d0800000000000000
+      internalID: -2786026389577431143
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_124
+      rect:
+        serializedVersion: 2
+        x: 80
+        y: 320
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 78f8f837517d04390800000000000000
+      internalID: -7836026864491589753
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_125
+      rect:
+        serializedVersion: 2
+        x: 96
+        y: 320
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c167f9a77936c82b0800000000000000
+      internalID: -5580976335970404836
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_126
+      rect:
+        serializedVersion: 2
+        x: 112
+        y: 320
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 89a068601f9a22910800000000000000
+      internalID: 1811196852818021016
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_127
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 288
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9a6be9a192cdc1110800000000000000
+      internalID: 1233102467091052201
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_128
+      rect:
+        serializedVersion: 2
+        x: 16
+        y: 288
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 222d9514fb4085e00800000000000000
+      internalID: 1033581333963199010
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_129
+      rect:
+        serializedVersion: 2
+        x: 32
+        y: 288
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 63374aefb1e958860800000000000000
+      internalID: 7531599794920518454
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_130
+      rect:
+        serializedVersion: 2
+        x: 48
+        y: 288
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1fbb02ead47d07750800000000000000
+      internalID: 6300772607325158385
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_131
+      rect:
+        serializedVersion: 2
+        x: 64
+        y: 288
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0502fb7c9db6dd420800000000000000
+      internalID: 2656397938321727568
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_132
+      rect:
+        serializedVersion: 2
+        x: 80
+        y: 288
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9032c143abb20c830800000000000000
+      internalID: 4089316540390581001
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_133
+      rect:
+        serializedVersion: 2
+        x: 96
+        y: 288
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d718c8b34a893d140800000000000000
+      internalID: 4743302663692386685
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_134
+      rect:
+        serializedVersion: 2
+        x: 112
+        y: 288
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: de0ca847526aa82f0800000000000000
+      internalID: -969780089945669395
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_135
+      rect:
+        serializedVersion: 2
+        x: 128
+        y: 288
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4ce827d3cb83bcfe0800000000000000
+      internalID: -1167777297236586812
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_136
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 256
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b337bae9ecd653ab0800000000000000
+      internalID: -5028992674696563909
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_137
+      rect:
+        serializedVersion: 2
+        x: 16
+        y: 256
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d9d0489c9d0d57530800000000000000
+      internalID: 3852214690092682653
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_138
+      rect:
+        serializedVersion: 2
+        x: 32
+        y: 256
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3a6fd6e6aa1cb29e0800000000000000
+      internalID: -1645008301132482909
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_139
+      rect:
+        serializedVersion: 2
+        x: 48
+        y: 256
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a50fcf97139a063c0800000000000000
+      internalID: -4368305608584269734
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_140
+      rect:
+        serializedVersion: 2
+        x: 64
+        y: 256
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ac846826a6b065910800000000000000
+      internalID: 1825659250492721354
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_141
+      rect:
+        serializedVersion: 2
+        x: 80
+        y: 256
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 66da427046e8b7480800000000000000
+      internalID: -8900363678299935386
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_142
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 224
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4052a6a86bf059b90800000000000000
+      internalID: -7235859949620157180
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_143
+      rect:
+        serializedVersion: 2
+        x: 16
+        y: 224
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 794055db47c6c9d10800000000000000
+      internalID: 2133699572115244183
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_144
+      rect:
+        serializedVersion: 2
+        x: 32
+        y: 224
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9390b0c0456dfb170800000000000000
+      internalID: 8196505503305238841
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_145
+      rect:
+        serializedVersion: 2
+        x: 48
+        y: 224
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d66c6a8564454ac90800000000000000
+      internalID: -7159504846500477331
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_146
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 192
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a081f1121c9125b70800000000000000
+      internalID: 8886193332030478346
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_147
+      rect:
+        serializedVersion: 2
+        x: 16
+        y: 192
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 220b3700c84c85ef0800000000000000
+      internalID: -119129284543270878
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_148
+      rect:
+        serializedVersion: 2
+        x: 32
+        y: 192
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c6515d2b4cf3bb6b0800000000000000
+      internalID: -5279556024115325588
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_149
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 160
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 063ae2225189129d0800000000000000
+      internalID: -2800790276712520864
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_150
+      rect:
+        serializedVersion: 2
+        x: 16
+        y: 160
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 67e343040a249f6b0800000000000000
+      internalID: -5262101433566347658
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_151
+      rect:
+        serializedVersion: 2
+        x: 32
+        y: 160
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2474dbc311194e5f0800000000000000
+      internalID: -728297736507668670
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_152
+      rect:
+        serializedVersion: 2
+        x: 48
+        y: 160
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: cca9420448afe5140800000000000000
+      internalID: 4710477706194885324
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_153
+      rect:
+        serializedVersion: 2
+        x: 64
+        y: 160
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f5e99cf54a7022270800000000000000
+      internalID: 8224144272095026783
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_154
+      rect:
+        serializedVersion: 2
+        x: 80
+        y: 160
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bcef42e78dc561710800000000000000
+      internalID: 1663619197259022027
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_155
+      rect:
+        serializedVersion: 2
+        x: 96
+        y: 160
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 54049dc8dc337f3c0800000000000000
+      internalID: -4325931959141711803
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_156
+      rect:
+        serializedVersion: 2
+        x: 112
+        y: 160
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 96b42232530f65dd0800000000000000
+      internalID: -2497544832316978327
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_157
+      rect:
+        serializedVersion: 2
+        x: 128
+        y: 160
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 214036ff181909100800000000000000
+      internalID: 112749978205750290
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_158
+      rect:
+        serializedVersion: 2
+        x: 144
+        y: 160
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c599445fb381f57c0800000000000000
+      internalID: -4080516091577329316
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_159
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 128
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 54839afa3a856924e90f85525980c046
+      internalID: 335161537
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_160
+      rect:
+        serializedVersion: 2
+        x: 16
+        y: 128
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 3d9bd2cd62d435046b87a201126d8eb0
+      internalID: 1051593038
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_161
+      rect:
+        serializedVersion: 2
+        x: 32
+        y: 128
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 704020862358eee439bd3d3c92bb285c
+      internalID: -2007338713
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_162
+      rect:
+        serializedVersion: 2
+        x: 48
+        y: 128
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 3b1baaf757349da459dddb0f2009279d
+      internalID: -885231455
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_163
+      rect:
+        serializedVersion: 2
+        x: 64
+        y: 128
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: eeae4891c0ac3d94d8f1b67fc329176b
+      internalID: -362499601
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_164
+      rect:
+        serializedVersion: 2
+        x: 80
+        y: 128
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 67bb0ebdcbeb9224dae0008649a7caad
+      internalID: -391363425
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_165
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 96
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 14afc01685b663d48bb3eb6e5ae687c5
+      internalID: 389295024
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_166
+      rect:
+        serializedVersion: 2
+        x: 16
+        y: 96
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: b270e898c296bc64582165de9b64019f
+      internalID: 563499651
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_167
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 64
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: e0f17319ae29cb4468ac624473737ca5
+      internalID: 567063573
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_168
+      rect:
+        serializedVersion: 2
+        x: 16
+        y: 64
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 1369a9304dfe76f47b576cc09456bd5d
+      internalID: -1485854221
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_169
+      rect:
+        serializedVersion: 2
+        x: 32
+        y: 64
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 19e6d5c9af43a7e44a3defbf69caf798
+      internalID: 531232325
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_170
+      rect:
+        serializedVersion: 2
+        x: 48
+        y: 64
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: c0664c76eb7d14646bbe91f04463d060
+      internalID: 1541538008
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_171
+      rect:
+        serializedVersion: 2
+        x: 64
+        y: 64
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: a3579729150673842a9bc8cecdd2f9c3
+      internalID: -1826014595
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_172
+      rect:
+        serializedVersion: 2
+        x: 80
+        y: 64
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: c92617573a9b4ae44be9cd953b7e4b90
+      internalID: 143565048
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_173
+      rect:
+        serializedVersion: 2
+        x: 96
+        y: 64
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 43564efaf56a8b14292ff2b799c9c675
+      internalID: 930167504
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_174
+      rect:
+        serializedVersion: 2
+        x: 112
+        y: 64
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 0e67bab24e2ec8342b2fc3583e4d2104
+      internalID: -1925989715
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_175
+      rect:
+        serializedVersion: 2
+        x: 128
+        y: 64
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 6807252f3f2f656418b299c9c0cb5a05
+      internalID: -1886790348
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_176
+      rect:
+        serializedVersion: 2
+        x: 144
+        y: 64
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 34380e0d06f98904987beb0d391f6325
+      internalID: -222528711
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_177
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 32
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 8c3dd68f64f1b3545b73e06a531916e1
+      internalID: 83922034
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_178
+      rect:
+        serializedVersion: 2
+        x: 16
+        y: 32
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 9dc0cfa311c411d4a8b12cd51785c1b7
+      internalID: 862700487
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_179
+      rect:
+        serializedVersion: 2
+        x: 32
+        y: 32
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 42ce3e3aa105742459b6039bdb9ff418
+      internalID: -1805758278
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_180
+      rect:
+        serializedVersion: 2
+        x: 48
+        y: 32
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 4e6510e9d4d34ad459d872c1cdbd6174
+      internalID: -423688180
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_181
+      rect:
+        serializedVersion: 2
+        x: 64
+        y: 32
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: a3fe24344154cbe4499c874913ebb68d
+      internalID: 790980547
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_182
+      rect:
+        serializedVersion: 2
+        x: 80
+        y: 32
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: c47692f1911c5f24fbbd0efa073a8ba0
+      internalID: -846712234
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: YellowBomber_183
+      rect:
+        serializedVersion: 2
+        x: 96
+        y: 32
+        width: 16
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: f0b234864a4ae44458d5265a1c6c22db
+      internalID: -1136690841
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 46edba892079e1349ac09f020d9eccc5
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries:
+      - key: SpriteEditor.SliceSettings
+        value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":16.0,"y":32.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":1,"keepEmptyRects":false,"isAlternate":false}'
+    nameFileIdTable:
+      YellowBomber_0: 4072542436652752433
+      YellowBomber_1: 3253160314189943038
+      YellowBomber_10: -1590626240151187798
+      YellowBomber_100: 6845955744196673396
+      YellowBomber_101: 2552277528711996778
+      YellowBomber_102: -258120245033555060
+      YellowBomber_103: 629501868963058832
+      YellowBomber_104: 3792826498354484808
+      YellowBomber_105: 7723969283835438898
+      YellowBomber_106: 1717711643088042049
+      YellowBomber_107: -7116168877247885927
+      YellowBomber_108: 6255193746705369772
+      YellowBomber_109: -2142752607400542063
+      YellowBomber_11: -6883018769219903196
+      YellowBomber_110: -1715263855213234437
+      YellowBomber_111: -389614905991357025
+      YellowBomber_112: -5596177926422569322
+      YellowBomber_113: -1229658138101110909
+      YellowBomber_114: 9178253700382428849
+      YellowBomber_115: -5554359039055286683
+      YellowBomber_116: -1363542350259661498
+      YellowBomber_117: 9027920938396460170
+      YellowBomber_118: 7713818854468302917
+      YellowBomber_119: 8368995084769608266
+      YellowBomber_12: 5796563566950586992
+      YellowBomber_120: -6415901169067992612
+      YellowBomber_121: 7886568055985606043
+      YellowBomber_122: 1060035066488553454
+      YellowBomber_123: -2786026389577431143
+      YellowBomber_124: -7836026864491589753
+      YellowBomber_125: -5580976335970404836
+      YellowBomber_126: 1811196852818021016
+      YellowBomber_127: 1233102467091052201
+      YellowBomber_128: 1033581333963199010
+      YellowBomber_129: 7531599794920518454
+      YellowBomber_13: 766665647750026706
+      YellowBomber_130: 6300772607325158385
+      YellowBomber_131: 2656397938321727568
+      YellowBomber_132: 4089316540390581001
+      YellowBomber_133: 4743302663692386685
+      YellowBomber_134: -969780089945669395
+      YellowBomber_135: -1167777297236586812
+      YellowBomber_136: -5028992674696563909
+      YellowBomber_137: 3852214690092682653
+      YellowBomber_138: -1645008301132482909
+      YellowBomber_139: -4368305608584269734
+      YellowBomber_14: 8953197681903196175
+      YellowBomber_140: 1825659250492721354
+      YellowBomber_141: -8900363678299935386
+      YellowBomber_142: -7235859949620157180
+      YellowBomber_143: 2133699572115244183
+      YellowBomber_144: 8196505503305238841
+      YellowBomber_145: -7159504846500477331
+      YellowBomber_146: 8886193332030478346
+      YellowBomber_147: -119129284543270878
+      YellowBomber_148: -5279556024115325588
+      YellowBomber_149: -2800790276712520864
+      YellowBomber_15: 7887831973363529104
+      YellowBomber_150: -5262101433566347658
+      YellowBomber_151: -728297736507668670
+      YellowBomber_152: 4710477706194885324
+      YellowBomber_153: 8224144272095026783
+      YellowBomber_154: 1663619197259022027
+      YellowBomber_155: -4325931959141711803
+      YellowBomber_156: -2497544832316978327
+      YellowBomber_157: 112749978205750290
+      YellowBomber_158: -4080516091577329316
+      YellowBomber_159: 335161537
+      YellowBomber_16: -6203224285082355069
+      YellowBomber_160: 1051593038
+      YellowBomber_161: -2007338713
+      YellowBomber_162: -885231455
+      YellowBomber_163: -362499601
+      YellowBomber_164: -391363425
+      YellowBomber_165: 389295024
+      YellowBomber_166: 563499651
+      YellowBomber_167: 567063573
+      YellowBomber_168: -1485854221
+      YellowBomber_169: 531232325
+      YellowBomber_17: 7791254230390105554
+      YellowBomber_170: 1541538008
+      YellowBomber_171: -1826014595
+      YellowBomber_172: 143565048
+      YellowBomber_173: 930167504
+      YellowBomber_174: -1925989715
+      YellowBomber_175: -1886790348
+      YellowBomber_176: -222528711
+      YellowBomber_177: 83922034
+      YellowBomber_178: 862700487
+      YellowBomber_179: -1805758278
+      YellowBomber_18: -1100300213731399968
+      YellowBomber_180: -423688180
+      YellowBomber_181: 790980547
+      YellowBomber_182: -846712234
+      YellowBomber_183: -1136690841
+      YellowBomber_19: -7309903415762687132
+      YellowBomber_2: 878186792456621142
+      YellowBomber_20: 7013279497305533733
+      YellowBomber_21: 492437227138477601
+      YellowBomber_22: 4055764613819691673
+      YellowBomber_23: 1773509137281777944
+      YellowBomber_24: 3238107186993839462
+      YellowBomber_25: 8140928674936910445
+      YellowBomber_26: -4209050648378896454
+      YellowBomber_27: -5467008201835515496
+      YellowBomber_28: -8245657510140998693
+      YellowBomber_29: 6953208074114196065
+      YellowBomber_3: 4615353985808866527
+      YellowBomber_30: -883404384875474489
+      YellowBomber_31: -7692616510379466933
+      YellowBomber_32: -7698625188124465935
+      YellowBomber_33: 6213496058674122979
+      YellowBomber_34: 5428051655352160670
+      YellowBomber_35: 2083383490925953831
+      YellowBomber_36: 8774362336887587387
+      YellowBomber_37: 6261941580061314832
+      YellowBomber_38: -4943966467701537409
+      YellowBomber_39: -1807614531516696947
+      YellowBomber_4: 3013541639583543185
+      YellowBomber_40: 4431283725086736866
+      YellowBomber_41: -7107318660772454121
+      YellowBomber_42: 8872413316651058914
+      YellowBomber_43: 5752261750094463085
+      YellowBomber_44: 2451742658236353609
+      YellowBomber_45: 1456838329188289114
+      YellowBomber_46: 6813821971786444342
+      YellowBomber_47: 1435195305251060735
+      YellowBomber_48: 5752859043849207757
+      YellowBomber_49: 6874823153952213414
+      YellowBomber_5: 7727648150755761543
+      YellowBomber_50: 3704322744009658352
+      YellowBomber_51: -2623941340488832680
+      YellowBomber_52: 1839622287481457762
+      YellowBomber_53: 2101905846352497896
+      YellowBomber_54: -3656154179119915838
+      YellowBomber_55: -8393434218501123429
+      YellowBomber_56: 5177392808382942525
+      YellowBomber_57: -8672279168001826086
+      YellowBomber_58: 2667716143764785088
+      YellowBomber_59: 4135358847407791997
+      YellowBomber_6: -6278428394994883152
+      YellowBomber_60: -5354703237830621249
+      YellowBomber_61: -5343219589770038510
+      YellowBomber_62: -2911286635191150774
+      YellowBomber_63: -6011861211268467793
+      YellowBomber_64: 4675354187950052634
+      YellowBomber_65: 1173983257595217027
+      YellowBomber_66: -7105220762498442660
+      YellowBomber_67: -6869471608649759390
+      YellowBomber_68: -5882432172207509007
+      YellowBomber_69: -8735595706278070857
+      YellowBomber_7: -2184079651678388220
+      YellowBomber_70: -6706477821987152169
+      YellowBomber_71: 2926696254588692377
+      YellowBomber_72: 7165564158752776891
+      YellowBomber_73: 6325736065627294527
+      YellowBomber_74: -924708513239408440
+      YellowBomber_75: 1789785688510220903
+      YellowBomber_76: -1425463724663253344
+      YellowBomber_77: -4550822955025412997
+      YellowBomber_78: 4770855334621682489
+      YellowBomber_79: -3827420081376822323
+      YellowBomber_8: -3307461363369056176
+      YellowBomber_80: 179294936525039847
+      YellowBomber_81: 8130182629160911075
+      YellowBomber_82: 1034460561485592482
+      YellowBomber_83: 2324848584988664343
+      YellowBomber_84: -1294750412433382254
+      YellowBomber_85: -8634025256095014653
+      YellowBomber_86: -7699552285298401700
+      YellowBomber_87: -1071487996236226354
+      YellowBomber_88: -7285855265910035912
+      YellowBomber_89: 8780515885684166891
+      YellowBomber_9: 3535148820942194957
+      YellowBomber_90: 6788865968496389711
+      YellowBomber_91: -7884334765238801779
+      YellowBomber_92: -3629132133173078433
+      YellowBomber_93: -7243740087868985535
+      YellowBomber_94: 4076820524965708684
+      YellowBomber_95: 3023455951013757061
+      YellowBomber_96: -3039308914130300500
+      YellowBomber_97: -7721508120377956745
+      YellowBomber_98: -854498775713716117
+      YellowBomber_99: 2837232848787287888
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
