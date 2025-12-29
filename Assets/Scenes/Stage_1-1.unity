@@ -1355,13 +1355,14 @@ GameObject:
   - component: {fileID: 362350261}
   - component: {fileID: 362350263}
   - component: {fileID: 362350260}
+  - component: {fileID: 362350264}
   m_Layer: 5
-  m_Name: TitleScreenVideo
+  m_Name: TitleScreen
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!328 &362350260
 VideoPlayer:
   m_ObjectHideFlags: 0
@@ -1450,6 +1451,22 @@ MonoBehaviour:
     y: 0
     width: 1
     height: 1
+--- !u!114 &362350264
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 362350259}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4d2807c5c57c72e4a8a52390ba37be9a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TitleScreenController
+  titleScreenRawImage: {fileID: 362350263}
+  titleVideoPlayer: {fileID: 362350260}
+  titleMusic: {fileID: 8300000, guid: c4def1af64d2e154f8c8cbd7a0472a10, type: 3}
+  startKey: 13
 --- !u!1 &460986862
 GameObject:
   m_ObjectHideFlags: 0
@@ -4888,11 +4905,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   fadeImage: {fileID: 336813435}
   hudsonLogoIntro: {fileID: 761289504}
+  titleScreen: {fileID: 362350264}
   introMusic: {fileID: 8300000, guid: ff7109298c0b4734d8113eeb4b86601c, type: 3}
-  titleScreenRawImage: {fileID: 362350263}
-  titleVideoPlayer: {fileID: 362350260}
-  titleMusic: {fileID: 8300000, guid: c4def1af64d2e154f8c8cbd7a0472a10, type: 3}
-  startKey: 13
   stageLabel: {fileID: 556523582}
   world: 1
   stageNumber: 1

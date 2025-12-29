@@ -2,7 +2,6 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
-using UnityEngine.Video;
 
 public class StageIntroTransition : MonoBehaviour
 {
@@ -15,14 +14,11 @@ public class StageIntroTransition : MonoBehaviour
     [Header("Hudson Logo")]
     public HudsonLogoIntro hudsonLogoIntro;
 
+    [Header("Title Screen")]
+    public TitleScreenController titleScreen;
+
     [Header("Audio")]
     public AudioClip introMusic;
-
-    [Header("Title Screen (Video)")]
-    public RawImage titleScreenRawImage;
-    public VideoPlayer titleVideoPlayer;
-    public AudioClip titleMusic;
-    public KeyCode startKey = KeyCode.Return;
 
     [Header("Stage Intro")]
     public StageLabel stageLabel;
@@ -73,9 +69,6 @@ public class StageIntroTransition : MonoBehaviour
 
     bool defaultMusicStarted;
 
-    bool titleScreenRunning;
-    bool ignoreStartKeyUntilRelease;
-
     public static void SkipTitleScreenOnNextLoad()
     {
         skipTitleNextRound = true;
@@ -104,15 +97,22 @@ public class StageIntroTransition : MonoBehaviour
             spotlightImage.gameObject.SetActive(false);
         }
 
+        if (titleScreen != null)
+            titleScreen.startKey = (hudsonLogoIntro != null ? hudsonLogoIntro.skipKey : titleScreen.startKey);
+
+        if (hudsonLogoIntro != null && titleScreen != null)
+            hudsonLogoIntro.skipKey = titleScreen.startKey;
+
+        if (titleScreen != null)
+            titleScreen.ForceHide();
+
         if (hudsonLogoIntro != null)
-            hudsonLogoIntro.skipKey = startKey;
+            hudsonLogoIntro.ForceHide();
     }
 
     void Start()
     {
         defaultMusicStarted = false;
-        titleScreenRunning = false;
-        ignoreStartKeyUntilRelease = false;
 
         if (GameMusicController.Instance != null)
             GameMusicController.Instance.StopMusic();
@@ -146,11 +146,19 @@ public class StageIntroTransition : MonoBehaviour
         if (endingScreenImage != null)
             endingScreenImage.gameObject.SetActive(false);
 
+        if (titleScreen != null)
+            titleScreen.ForceHide();
+
         if (skipTitleNextRound)
         {
             skipTitleNextRound = false;
+
             if (hudsonLogoIntro != null)
                 hudsonLogoIntro.ForceHide();
+
+            if (titleScreen != null)
+                titleScreen.ForceHide();
+
             StartCoroutine(FadeInToGame());
             return;
         }
@@ -201,8 +209,8 @@ public class StageIntroTransition : MonoBehaviour
         if (hudsonLogoIntro != null)
             yield return hudsonLogoIntro.Play();
 
-        if (hudsonLogoIntro != null && hudsonLogoIntro.Skipped)
-            ignoreStartKeyUntilRelease = true;
+        if (titleScreen != null && hudsonLogoIntro != null && hudsonLogoIntro.Skipped)
+            titleScreen.SetIgnoreStartKeyUntilRelease();
 
         yield return ShowTitleScreen();
     }
@@ -214,60 +222,13 @@ public class StageIntroTransition : MonoBehaviour
 
     IEnumerator ShowTitleScreen()
     {
-        titleScreenRunning = true;
-
-        if (titleScreenRawImage == null || titleVideoPlayer == null)
+        if (titleScreen == null)
         {
-            titleScreenRunning = false;
+            yield return FadeInToGame();
             yield break;
         }
 
-        if (fadeImage != null)
-            fadeImage.gameObject.SetActive(false);
-
-        titleScreenRawImage.gameObject.SetActive(true);
-
-        if (titleMusic != null && GameMusicController.Instance != null)
-            GameMusicController.Instance.PlayMusic(titleMusic, 1f, true);
-
-        titleVideoPlayer.isLooping = true;
-        titleVideoPlayer.playOnAwake = false;
-        titleVideoPlayer.Stop();
-        titleVideoPlayer.Play();
-
-        if (ignoreStartKeyUntilRelease)
-        {
-            ignoreStartKeyUntilRelease = false;
-            while (Input.GetKey(startKey))
-                yield return null;
-            yield return null;
-        }
-
-        bool pressed = false;
-        while (!pressed)
-        {
-            if (Input.GetKeyDown(startKey))
-                pressed = true;
-
-            yield return null;
-        }
-
-        titleScreenRunning = false;
-
-        if (GameMusicController.Instance != null)
-            GameMusicController.Instance.StopMusic();
-
-        titleVideoPlayer.Stop();
-        titleScreenRawImage.gameObject.SetActive(false);
-
-        if (fadeImage != null)
-        {
-            fadeImage.gameObject.SetActive(true);
-            Color c = fadeImage.color;
-            c.a = 1f;
-            fadeImage.color = c;
-        }
-
+        yield return titleScreen.Play(fadeImage);
         yield return FadeInToGame();
     }
 
@@ -426,27 +387,6 @@ public class StageIntroTransition : MonoBehaviour
                     mechaBossSequence.SetStandsEmpty(empty);
                 }
 
-                if (i == cycles - 1)
-                {
-                    var playerGo = GameObject.FindGameObjectWithTag("Player");
-                    if (playerGo != null && playerGo.TryGetComponent<MovementController>(out var playerCtrl))
-                    {
-                        Vector2 targetPos = new(-3f, -6f);
-
-                        if (playerCtrl.Rigidbody != null)
-                        {
-                            playerCtrl.Rigidbody.position = targetPos;
-                            playerCtrl.Rigidbody.linearVelocity = Vector2.zero;
-                        }
-                        else
-                        {
-                            playerCtrl.transform.position = targetPos;
-                        }
-
-                        playerCtrl.ForceIdleUpConsideringMount();
-                    }
-                }
-
                 float hold = 0f;
                 while (hold < blackHold)
                 {
@@ -515,8 +455,8 @@ public class StageIntroTransition : MonoBehaviour
             fadeImage.color = fc;
         }
 
-        if (titleScreenRawImage != null)
-            titleScreenRawImage.gameObject.SetActive(false);
+        if (titleScreen != null)
+            titleScreen.ForceHide();
 
         if (hudsonLogoIntro != null)
             hudsonLogoIntro.ForceHide();
@@ -659,60 +599,6 @@ public class StageIntroTransition : MonoBehaviour
         Vector3 bv = cam.WorldToViewportPoint(b);
 
         return Mathf.Abs(bv.x - av.x);
-    }
-
-    public Coroutine FadeInSpotlightWorld(Vector3 worldCenter, float radiusWorld, float targetDarknessAlpha, float softnessWorld, float duration)
-    {
-        if (spotlightImage == null || spotlightMatInstance == null)
-            return null;
-
-        StopCoroutine(nameof(FadeInSpotlightWorldRoutine));
-        return StartCoroutine(FadeInSpotlightWorldRoutine(worldCenter, radiusWorld, targetDarknessAlpha, softnessWorld, duration));
-    }
-
-    IEnumerator FadeInSpotlightWorldRoutine(Vector3 worldCenter, float radiusWorld, float targetDarknessAlpha, float softnessWorld, float duration)
-    {
-        if (spotlightImage == null || spotlightMatInstance == null)
-            yield break;
-
-        var cam = Camera.main;
-        if (cam == null)
-            yield break;
-
-        worldCenter.y += spotlightYOffsetWorld;
-
-        Vector3 vp = cam.WorldToViewportPoint(worldCenter);
-
-        float radiusVp = WorldRadiusToViewportRadius(cam, worldCenter, Mathf.Max(0.01f, radiusWorld));
-        float softVp = WorldRadiusToViewportRadius(cam, worldCenter, Mathf.Max(0.001f, softnessWorld));
-        softVp = Mathf.Min(softVp, radiusVp * 0.25f);
-
-        spotlightMatInstance.SetFloat("_EllipseX", Mathf.Max(spotlightEllipseX, 1e-5f));
-        spotlightMatInstance.SetFloat("_EllipseY", Mathf.Max(spotlightEllipseY, 1e-5f));
-        spotlightMatInstance.SetVector("_Center", new Vector4(vp.x, vp.y, 0f, 0f));
-        spotlightMatInstance.SetFloat("_Radius", Mathf.Clamp(radiusVp, 0.001f, 2f));
-        spotlightMatInstance.SetFloat("_Softness", Mathf.Clamp(softVp, 0.001f, 2f));
-
-        spotlightImage.gameObject.SetActive(true);
-
-        float endA = Mathf.Clamp01(targetDarknessAlpha);
-        float t = 0f;
-        float d = Mathf.Max(0.001f, duration);
-
-        while (t < d)
-        {
-            t += Time.unscaledDeltaTime;
-            float a = Mathf.Lerp(0f, endA, Mathf.Clamp01(t / d));
-            spotlightMatInstance.SetColor("_Color", new Color(0f, 0f, 0f, a));
-            yield return null;
-        }
-
-        spotlightMatInstance.SetColor("_Color", new Color(0f, 0f, 0f, endA));
-    }
-
-    public IEnumerator FadeInSpotlightWorldAndWait(Vector3 worldCenter, float radiusWorld, float targetDarknessAlpha, float softnessWorld, float duration)
-    {
-        yield return FadeInSpotlightWorldRoutine(worldCenter, radiusWorld, targetDarknessAlpha, softnessWorld, duration);
     }
 
     public IEnumerator FadeToFullDarknessAndWait(float targetAlpha, float duration)
