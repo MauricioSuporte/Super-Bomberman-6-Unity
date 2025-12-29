@@ -9,13 +9,14 @@ public class StageIntroTransition : MonoBehaviour
     private static readonly WaitForSecondsRealtime _waitForSecondsRealtime2 = new(2f);
     public static StageIntroTransition Instance;
 
-    [Header("Fade / Logo")]
+    [Header("Fade")]
     public Image fadeImage;
-    public Image introLogoImage;
+
+    [Header("Hudson Logo")]
+    public HudsonLogoIntro hudsonLogoIntro;
 
     [Header("Audio")]
     public AudioClip introMusic;
-    public AudioClip hudsonFx;
 
     [Header("Title Screen (Video)")]
     public RawImage titleScreenRawImage;
@@ -73,7 +74,6 @@ public class StageIntroTransition : MonoBehaviour
     bool defaultMusicStarted;
 
     bool titleScreenRunning;
-    bool logoPhaseRunning;
     bool ignoreStartKeyUntilRelease;
 
     public static void SkipTitleScreenOnNextLoad()
@@ -103,13 +103,15 @@ public class StageIntroTransition : MonoBehaviour
             spotlightMatInstance.SetColor("_Color", new Color(0f, 0f, 0f, 0f));
             spotlightImage.gameObject.SetActive(false);
         }
+
+        if (hudsonLogoIntro != null)
+            hudsonLogoIntro.skipKey = startKey;
     }
 
     void Start()
     {
         defaultMusicStarted = false;
         titleScreenRunning = false;
-        logoPhaseRunning = false;
         ignoreStartKeyUntilRelease = false;
 
         if (GameMusicController.Instance != null)
@@ -147,22 +149,20 @@ public class StageIntroTransition : MonoBehaviour
         if (skipTitleNextRound)
         {
             skipTitleNextRound = false;
-            if (introLogoImage != null)
-                introLogoImage.enabled = false;
+            if (hudsonLogoIntro != null)
+                hudsonLogoIntro.ForceHide();
             StartCoroutine(FadeInToGame());
             return;
         }
 
-        if (!hasPlayedLogoIntro && introLogoImage != null)
+        if (!hasPlayedLogoIntro && hudsonLogoIntro != null)
         {
-            introLogoImage.enabled = true;
-            introLogoImage.color = new Color(1f, 1f, 1f, 0f);
             StartCoroutine(FullIntroSequence());
         }
         else
         {
-            if (introLogoImage != null)
-                introLogoImage.enabled = false;
+            if (hudsonLogoIntro != null)
+                hudsonLogoIntro.ForceHide();
 
             StartCoroutine(StageIntroOnlySequence());
         }
@@ -197,19 +197,12 @@ public class StageIntroTransition : MonoBehaviour
     IEnumerator FullIntroSequence()
     {
         hasPlayedLogoIntro = true;
-        logoPhaseRunning = true;
 
-        yield return FadeLogo(2f, 0f, 1f);
-        if (!logoPhaseRunning) yield break;
+        if (hudsonLogoIntro != null)
+            yield return hudsonLogoIntro.Play();
 
-        yield return LogoWithHudsonFx();
-        if (!logoPhaseRunning) yield break;
-
-        yield return FadeLogo(2f, 1f, 0f);
-        if (!logoPhaseRunning) yield break;
-
-        logoPhaseRunning = false;
-        ForceHideLogo();
+        if (hudsonLogoIntro != null && hudsonLogoIntro.Skipped)
+            ignoreStartKeyUntilRelease = true;
 
         yield return ShowTitleScreen();
     }
@@ -217,74 +210,6 @@ public class StageIntroTransition : MonoBehaviour
     IEnumerator StageIntroOnlySequence()
     {
         yield return ShowTitleScreen();
-    }
-
-    IEnumerator FadeLogo(float time, float startA, float endA)
-    {
-        if (!introLogoImage) yield break;
-
-        float t = 0f;
-        Color baseColor = introLogoImage.color;
-
-        while (t < time)
-        {
-            if (logoPhaseRunning && !titleScreenRunning && Input.GetKeyDown(startKey))
-            {
-                SkipLogoToTitle();
-                yield break;
-            }
-
-            t += Time.unscaledDeltaTime;
-            float a = Mathf.Lerp(startA, endA, t / time);
-            introLogoImage.color = new Color(baseColor.r, baseColor.g, baseColor.b, a);
-            yield return null;
-        }
-
-        introLogoImage.color = new Color(baseColor.r, baseColor.g, baseColor.b, endA);
-    }
-
-    IEnumerator LogoWithHudsonFx()
-    {
-        float timer = 0f;
-
-        if (hudsonFx != null && GameMusicController.Instance != null)
-            GameMusicController.Instance.PlaySfx(hudsonFx, 1f);
-
-        while (timer < 2f)
-        {
-            if (logoPhaseRunning && !titleScreenRunning && Input.GetKeyDown(startKey))
-            {
-                SkipLogoToTitle();
-                yield break;
-            }
-
-            timer += Time.unscaledDeltaTime;
-            yield return null;
-        }
-    }
-
-    void SkipLogoToTitle()
-    {
-        if (titleScreenRunning)
-            return;
-
-        logoPhaseRunning = false;
-        ignoreStartKeyUntilRelease = true;
-
-        StopAllCoroutines();
-
-        ForceHideLogo();
-
-        if (fadeImage != null)
-            fadeImage.gameObject.SetActive(false);
-
-        StartCoroutine(ShowTitleScreen());
-    }
-
-    void ForceHideLogo()
-    {
-        if (introLogoImage != null)
-            introLogoImage.enabled = false;
     }
 
     IEnumerator ShowTitleScreen()
@@ -593,8 +518,8 @@ public class StageIntroTransition : MonoBehaviour
         if (titleScreenRawImage != null)
             titleScreenRawImage.gameObject.SetActive(false);
 
-        if (introLogoImage != null)
-            introLogoImage.enabled = false;
+        if (hudsonLogoIntro != null)
+            hudsonLogoIntro.ForceHide();
 
         if (endingScreenImage != null)
         {
