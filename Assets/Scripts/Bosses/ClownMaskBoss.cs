@@ -227,8 +227,8 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
         LockPlayer(true);
         ShowPlayerIdleUpOnly();
 
-        if (StageIntroTransition.Instance != null)
-            StageIntroTransition.Instance.StartDefaultMusicOnce();
+        if (stageIntroClownMaskBoss != null)
+            stageIntroClownMaskBoss.StartDefaultMusicOnce();
 
         float waitAfterShowPlayer = Mathf.Max(0f, introWaitAfterPlayerShown);
         if (waitAfterShowPlayer > 0f)

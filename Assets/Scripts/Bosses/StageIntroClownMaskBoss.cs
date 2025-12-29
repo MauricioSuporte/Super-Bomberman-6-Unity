@@ -17,6 +17,11 @@ public class StageIntroClownMaskBoss : MonoBehaviour
     [Header("Spotlight Fade")]
     public float spotlightFadeInDuration = 0.6f;
 
+    [Header("Music (Boss Intro)")]
+    public bool startDefaultMusicOnIntro = true;
+
+    static bool defaultMusicStarted;
+
     Material spotlightMatInstance;
 
     void Awake()
@@ -33,21 +38,6 @@ public class StageIntroClownMaskBoss : MonoBehaviour
             if (spotlightImage != null)
                 spotlightImage.gameObject.SetActive(false);
         }
-    }
-
-    public void SetFullDarkness(float alpha)
-    {
-        if (spotlightImage == null || spotlightMatInstance == null) return;
-
-        spotlightMatInstance.SetFloat("_EllipseX", Mathf.Max(spotlightEllipseX, 1e-5f));
-        spotlightMatInstance.SetFloat("_EllipseY", Mathf.Max(spotlightEllipseY, 1e-5f));
-
-        spotlightMatInstance.SetColor("_Color", new Color(0f, 0f, 0f, Mathf.Clamp01(alpha)));
-        spotlightMatInstance.SetVector("_Center", new Vector4(-10f, -10f, 0f, 0f));
-        spotlightMatInstance.SetFloat("_Radius", 0.001f);
-        spotlightMatInstance.SetFloat("_Softness", 0.001f);
-
-        spotlightImage.gameObject.SetActive(true);
     }
 
     public void SetSpotlightWorld(Vector3 worldCenter, float radiusWorld, float darknessAlpha, float softnessWorld)
@@ -147,5 +137,31 @@ public class StageIntroClownMaskBoss : MonoBehaviour
         }
 
         spotlightMatInstance.SetColor("_Color", new Color(0f, 0f, 0f, endA));
+    }
+
+    public void StartDefaultMusicOnce()
+    {
+        if (!startDefaultMusicOnIntro)
+            return;
+
+        if (defaultMusicStarted)
+            return;
+
+        defaultMusicStarted = true;
+
+        if (GameMusicController.Instance != null &&
+            GameMusicController.Instance.defaultMusic != null)
+        {
+            GameMusicController.Instance.PlayMusic(
+                GameMusicController.Instance.defaultMusic,
+                GameMusicController.Instance.defaultMusicVolume,
+                true
+            );
+        }
+    }
+
+    void OnDestroy()
+    {
+        defaultMusicStarted = false;
     }
 }

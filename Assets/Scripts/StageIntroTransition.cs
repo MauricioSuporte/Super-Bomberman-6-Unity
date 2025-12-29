@@ -52,8 +52,6 @@ public class StageIntroTransition : MonoBehaviour
     MovementController[] movementControllers;
     BombController[] bombControllers;
 
-    bool defaultMusicStarted;
-
     public static void SkipTitleScreenOnNextLoad()
     {
         skipTitleNextRound = true;
@@ -88,8 +86,6 @@ public class StageIntroTransition : MonoBehaviour
 
     void Start()
     {
-        defaultMusicStarted = false;
-
         if (GameMusicController.Instance != null)
             GameMusicController.Instance.StopMusic();
 
@@ -149,26 +145,6 @@ public class StageIntroTransition : MonoBehaviour
     {
         var scene = SceneManager.GetActiveScene();
         return scene.IsValid() && scene.name == stage17SceneName;
-    }
-
-    public void StartDefaultMusicOnce()
-    {
-        if (!IsStage17())
-            return;
-
-        if (defaultMusicStarted)
-            return;
-
-        defaultMusicStarted = true;
-
-        if (GameMusicController.Instance != null && GameMusicController.Instance.defaultMusic != null)
-        {
-            GameMusicController.Instance.PlayMusic(
-                GameMusicController.Instance.defaultMusic,
-                GameMusicController.Instance.defaultMusicVolume,
-                true
-            );
-        }
     }
 
     IEnumerator FullIntroSequence()
