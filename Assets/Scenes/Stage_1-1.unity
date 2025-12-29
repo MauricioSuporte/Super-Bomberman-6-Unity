@@ -1279,6 +1279,7 @@ GameObject:
   - component: {fileID: 336813437}
   - component: {fileID: 336813436}
   - component: {fileID: 336813435}
+  - component: {fileID: 336813438}
   m_Layer: 5
   m_Name: StageIntroTransition
   m_TagString: Untagged
@@ -1343,6 +1344,24 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &336813438
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 336813434}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b90ea21fd85c8394ca3639c58f0b831d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HudsonLogoIntro
+  logoImage: {fileID: 1102021992}
+  skipKey: 13
+  fadeInSeconds: 2
+  holdSeconds: 2
+  fadeOutSeconds: 2
+  hudsonFx: {fileID: 8300000, guid: 57c59a710694ee949bbc2ae937b7db48, type: 3}
 --- !u!1 &362350259
 GameObject:
   m_ObjectHideFlags: 0
@@ -3241,56 +3260,6 @@ Transform:
   - {fileID: 285353615}
   m_Father: {fileID: 679601671}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &761289503
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 761289505}
-  - component: {fileID: 761289504}
-  m_Layer: 0
-  m_Name: HudsonLogoIntro
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &761289504
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 761289503}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b90ea21fd85c8394ca3639c58f0b831d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::HudsonLogoIntro
-  logoImage: {fileID: 1102021992}
-  skipKey: 13
-  fadeInSeconds: 2
-  holdSeconds: 2
-  fadeOutSeconds: 2
-  hudsonFx: {fileID: 8300000, guid: 57c59a710694ee949bbc2ae937b7db48, type: 3}
---- !u!4 &761289505
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 761289503}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -2.29959, y: -2.73532, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &818279431
 GameObject:
   m_ObjectHideFlags: 0
@@ -4904,7 +4873,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   fadeImage: {fileID: 336813435}
-  hudsonLogoIntro: {fileID: 761289504}
+  hudsonLogoIntro: {fileID: 336813438}
   titleScreen: {fileID: 362350264}
   introMusic: {fileID: 8300000, guid: ff7109298c0b4734d8113eeb4b86601c, type: 3}
   stageLabel: {fileID: 556523582}
@@ -5370,4 +5339,3 @@ SceneRoots:
   - {fileID: 1389130176}
   - {fileID: 290470827}
   - {fileID: 460986864}
-  - {fileID: 761289505}
