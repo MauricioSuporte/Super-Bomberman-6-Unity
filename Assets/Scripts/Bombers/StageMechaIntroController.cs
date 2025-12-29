@@ -35,11 +35,6 @@ public class StageMechaIntroController : MonoBehaviour
         IntroRunning = running;
     }
 
-    public IEnumerator Flash(float halfDuration, int cycles)
-    {
-        yield return FlashInternal(halfDuration, cycles, null);
-    }
-
     public IEnumerator FlashWithOnLastBlack(float halfDuration, int cycles, Action onLastBlack)
     {
         yield return FlashInternal(halfDuration, cycles, onLastBlack);
