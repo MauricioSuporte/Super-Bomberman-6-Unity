@@ -36,15 +36,11 @@ public class StageIntroTransition : MonoBehaviour
     [Header("Gameplay Root")]
     public GameObject gameplayRoot;
 
-    [Header("Boss / Mecha")]
-    public MechaBossSequence mechaBossSequence;
-
     [Header("Only Stage_1-7")]
     public string stage17SceneName = "Stage_1-7";
 
     public bool IntroRunning { get; private set; }
     public bool EndingRunning { get; private set; }
-    public bool FlashRunning { get; private set; }
 
     static bool hasPlayedLogoIntro;
     static bool skipTitleNextRound;
@@ -67,9 +63,6 @@ public class StageIntroTransition : MonoBehaviour
         }
 
         Instance = this;
-
-        if (mechaBossSequence == null)
-            mechaBossSequence = FindFirstObjectByType<MechaBossSequence>();
 
         if (titleScreen != null)
             titleScreen.startKey = (hudsonLogoIntro != null ? hudsonLogoIntro.skipKey : titleScreen.startKey);
@@ -260,119 +253,6 @@ public class StageIntroTransition : MonoBehaviour
         IntroRunning = false;
     }
 
-    public void StartFadeOut(float fadeDuration)
-    {
-        if (!fadeImage) return;
-
-        fadeImage.gameObject.SetActive(true);
-
-        Color c = fadeImage.color;
-        c.a = 0f;
-        fadeImage.color = c;
-
-        StopAllCoroutines();
-        StartCoroutine(FadeOutRoutine(fadeDuration));
-    }
-
-    IEnumerator FadeOutRoutine(float fadeDuration)
-    {
-        if (!fadeImage) yield break;
-
-        float t = 0f;
-        Color baseColor = fadeImage.color;
-
-        while (t < fadeDuration)
-        {
-            t += Time.unscaledDeltaTime;
-            float a = Mathf.Clamp01(t / fadeDuration);
-            fadeImage.color = new Color(baseColor.r, baseColor.g, baseColor.b, a);
-            yield return null;
-        }
-    }
-
-    public IEnumerator Flash(float halfDuration, int cycles)
-    {
-        if (fadeImage == null)
-            yield break;
-
-        FlashRunning = true;
-
-        try
-        {
-            fadeImage.gameObject.SetActive(true);
-
-            Color baseColor = fadeImage.color;
-            float blackHold = 0.5f;
-
-            for (int i = 0; i < cycles; i++)
-            {
-                float t = 0f;
-                while (t < halfDuration)
-                {
-                    if (GamePauseController.IsPaused)
-                    {
-                        yield return null;
-                        continue;
-                    }
-
-                    t += Time.deltaTime;
-                    float a = Mathf.Clamp01(t / halfDuration);
-                    fadeImage.color = new Color(baseColor.r, baseColor.g, baseColor.b, a);
-                    yield return null;
-                }
-
-                fadeImage.color = new Color(baseColor.r, baseColor.g, baseColor.b, 1f);
-
-                if (mechaBossSequence == null)
-                    mechaBossSequence = FindFirstObjectByType<MechaBossSequence>();
-
-                if (mechaBossSequence != null)
-                {
-                    bool empty = (i == cycles - 1) || (i % 2 == 0);
-                    mechaBossSequence.SetStandsEmpty(empty);
-                }
-
-                float hold = 0f;
-                while (hold < blackHold)
-                {
-                    if (GamePauseController.IsPaused)
-                    {
-                        yield return null;
-                        continue;
-                    }
-
-                    hold += Time.deltaTime;
-                    yield return null;
-                }
-
-                t = 0f;
-                while (t < halfDuration)
-                {
-                    if (GamePauseController.IsPaused)
-                    {
-                        yield return null;
-                        continue;
-                    }
-
-                    t += Time.deltaTime;
-                    float a = 1f - Mathf.Clamp01(t / halfDuration);
-                    fadeImage.color = new Color(baseColor.r, baseColor.g, baseColor.b, a);
-                    yield return null;
-                }
-
-                fadeImage.color = new Color(baseColor.r, baseColor.g, baseColor.b, 0f);
-                yield return null;
-            }
-
-            fadeImage.color = new Color(baseColor.r, baseColor.g, baseColor.b, 0f);
-            fadeImage.gameObject.SetActive(false);
-        }
-        finally
-        {
-            FlashRunning = false;
-        }
-    }
-
     public void StartEndingScreenSequence()
     {
         EndingRunning = true;
@@ -498,5 +378,43 @@ public class StageIntroTransition : MonoBehaviour
 
         if (skin != null)
             skin.ApplyCurrentSkin();
+    }
+
+    public void StartFadeOut(float fadeDuration)
+    {
+        if (StageMechaIntroController.Instance != null)
+        {
+            StageMechaIntroController.Instance.StartFadeOut(fadeDuration);
+            return;
+        }
+
+        if (!fadeImage)
+            return;
+
+        fadeImage.gameObject.SetActive(true);
+
+        Color c = fadeImage.color;
+        c.a = 0f;
+        fadeImage.color = c;
+
+        StopAllCoroutines();
+        StartCoroutine(FadeOutRoutine(fadeDuration));
+    }
+
+    IEnumerator FadeOutRoutine(float fadeDuration)
+    {
+        if (!fadeImage)
+            yield break;
+
+        float t = 0f;
+        Color baseColor = fadeImage.color;
+
+        while (t < fadeDuration)
+        {
+            t += Time.unscaledDeltaTime;
+            float a = Mathf.Clamp01(t / fadeDuration);
+            fadeImage.color = new Color(baseColor.r, baseColor.g, baseColor.b, a);
+            yield return null;
+        }
     }
 }

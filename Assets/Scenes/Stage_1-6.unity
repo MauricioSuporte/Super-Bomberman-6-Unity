@@ -182,11 +182,18 @@ MonoBehaviour:
   heartItemPrefab: {fileID: 0}
   blueLouieEggItemPrefab: {fileID: 0}
   blackLouieEggItemPrefab: {fileID: 0}
+  purpleLouieEggItemPrefab: {fileID: 0}
+  greenLouieEggItemPrefab: {fileID: 0}
+  yellowLouieEggItemPrefab: {fileID: 0}
+  pinkLouieEggItemPrefab: {fileID: 0}
+  redLouieEggItemPrefab: {fileID: 0}
   destructibleTilemap: {fileID: 285353618}
+  indestructibleTilemap: {fileID: 0}
   nextStageSceneName: Stage_1-7
   groundTilemap: {fileID: 672307155}
   groundTile: {fileID: 11400000, guid: ada74cfa1fdef9e4c86ccafaa1b2ae66, type: 2}
   groundShadowTile: {fileID: 11400000, guid: e0f633282caacc742af95bdd334dd0cf, type: 2}
+  autoResolveStageTilemaps: 1
 --- !u!114 &268450101
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2337,6 +2344,7 @@ GameObject:
   m_Component:
   - component: {fileID: 679601671}
   - component: {fileID: 679601672}
+  - component: {fileID: 679601673}
   m_Layer: 0
   m_Name: GameplayRoot
   m_TagString: Untagged
@@ -2418,6 +2426,20 @@ MonoBehaviour:
   minSpawnInterval: 20
   maxSpawnInterval: 30
   maxTriesPerSpawn: 50
+--- !u!114 &679601673
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 679601670}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 69d79d9cc675fe04a92be9bca190a6e6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::StageMechaIntroController
+  fadeImage: {fileID: 336813435}
+  mechaBossSequence: {fileID: 679601672}
 --- !u!1 &732032079
 GameObject:
   m_ObjectHideFlags: 0
@@ -3873,7 +3895,7 @@ Tilemap:
       m_AnimatedSprites:
       - {fileID: -4194490761759567601, guid: 914f6dd52fc1d3f428738756d19d329e, type: 3}
       - {fileID: 1710983818, guid: 914f6dd52fc1d3f428738756d19d329e, type: 3}
-      m_AnimationSpeed: 3.5
+      m_AnimationSpeed: 3.5000002
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: 7, y: -7, z: 0}
@@ -3900,7 +3922,7 @@ Tilemap:
       m_AnimatedSprites:
       - {fileID: 1909338682, guid: 1a57a821cb78e0f4d8f8f366d155df5b, type: 3}
       - {fileID: -1456098706, guid: 1a57a821cb78e0f4d8f8f366d155df5b, type: 3}
-      m_AnimationSpeed: 3.5000002
+      m_AnimationSpeed: 3.5
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: -9, y: -5, z: 0}
@@ -3918,7 +3940,7 @@ Tilemap:
       m_AnimatedSprites:
       - {fileID: -4876822446513763925, guid: 1a57a821cb78e0f4d8f8f366d155df5b, type: 3}
       - {fileID: 920322489, guid: 1a57a821cb78e0f4d8f8f366d155df5b, type: 3}
-      m_AnimationSpeed: 3.5000002
+      m_AnimationSpeed: 3.5
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: -9, y: -4, z: 0}
@@ -3945,7 +3967,7 @@ Tilemap:
       m_AnimatedSprites:
       - {fileID: -4194490761759567601, guid: 914f6dd52fc1d3f428738756d19d329e, type: 3}
       - {fileID: 1710983818, guid: 914f6dd52fc1d3f428738756d19d329e, type: 3}
-      m_AnimationSpeed: 3.5
+      m_AnimationSpeed: 3.5000002
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: 7, y: -3, z: 0}
@@ -4986,13 +5008,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   fadeImage: {fileID: 336813435}
-  introLogoImage: {fileID: 1102021992}
+  hudsonLogoIntro: {fileID: 0}
+  titleScreen: {fileID: 0}
   introMusic: {fileID: 8300000, guid: ff7109298c0b4734d8113eeb4b86601c, type: 3}
-  hudsonFx: {fileID: 8300000, guid: 57c59a710694ee949bbc2ae937b7db48, type: 3}
-  titleScreenRawImage: {fileID: 362350263}
-  titleVideoPlayer: {fileID: 362350260}
-  titleMusic: {fileID: 8300000, guid: c4def1af64d2e154f8c8cbd7a0472a10, type: 3}
-  startKey: 13
   stageLabel: {fileID: 556523582}
   world: 1
   stageNumber: 6
@@ -5001,12 +5019,6 @@ MonoBehaviour:
   endingScreenMusic: {fileID: 8300000, guid: e3b8c8f8710bcda4c9ca251a09b52d37, type: 3}
   restartKey: 13
   gameplayRoot: {fileID: 679601670}
-  mechaBossSequence: {fileID: 0}
-  spotlightImage: {fileID: 0}
-  spotlightYOffsetWorld: -0.8
-  spotlightEllipseX: 0.3
-  spotlightEllipseY: 0.3
-  spotlightFadeInDuration: 0.6
   stage17SceneName: Stage_1-7
 --- !u!114 &1389130173
 MonoBehaviour:

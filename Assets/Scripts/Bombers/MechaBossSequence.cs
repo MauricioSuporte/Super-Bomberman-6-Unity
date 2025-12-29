@@ -15,6 +15,10 @@ public class MechaBossSequence : MonoBehaviour
 
     public MovementController player;
 
+    [Header("Player Intro Position")]
+    public Vector2 playerIntroPosition = new(-3f, -6f);
+    public bool movePlayerToIntroPositionOnGoldenFlash = true;
+
     [Header("Music")]
     public AudioClip bossCheeringMusic;
 
@@ -133,6 +137,9 @@ public class MechaBossSequence : MonoBehaviour
     IEnumerator SpawnFirstMechaAfterStageStart()
     {
         MechaIntroRunning = true;
+        if (StageMechaIntroController.Instance != null)
+            StageMechaIntroController.Instance.SetIntroRunning(true);
+
         if (playerCompanion != null)
             playerCompanion.SetLouieAbilitiesLocked(true);
 
@@ -168,8 +175,12 @@ public class MechaBossSequence : MonoBehaviour
         if (mechas[index] == null) return;
 
         MechaIntroRunning = true;
+        if (StageMechaIntroController.Instance != null)
+            StageMechaIntroController.Instance.SetIntroRunning(true);
+
         if (playerCompanion != null)
             playerCompanion.SetLouieAbilitiesLocked(true);
+
         LockPlayer(true);
 
         BombController.ExplodeAllControlBombsInStage();
@@ -183,6 +194,8 @@ public class MechaBossSequence : MonoBehaviour
     IEnumerator MechaIntroRoutine(MovementController mecha)
     {
         MechaIntroRunning = true;
+        if (StageMechaIntroController.Instance != null)
+            StageMechaIntroController.Instance.SetIntroRunning(true);
 
         SetItemSpawnEnabled(false);
         LockPlayer(true);
@@ -199,8 +212,27 @@ public class MechaBossSequence : MonoBehaviour
         {
             yield return _waitForSeconds2;
 
-            if (StageIntroTransition.Instance != null)
-                yield return StageIntroTransition.Instance.Flash(0.5f, 5);
+            if (StageMechaIntroController.Instance != null)
+            {
+                yield return StageMechaIntroController.Instance.FlashWithOnLastBlack(0.5f, 5, () =>
+                {
+                    if (!movePlayerToIntroPositionOnGoldenFlash)
+                        return;
+
+                    EnsurePlayerRefs();
+                    MovePlayerToIntroPosition();
+                    ForcePlayerMountedUpIfNeeded();
+                });
+            }
+            else
+            {
+                if (movePlayerToIntroPositionOnGoldenFlash)
+                {
+                    EnsurePlayerRefs();
+                    MovePlayerToIntroPosition();
+                    ForcePlayerMountedUpIfNeeded();
+                }
+            }
         }
 
         mecha.SetExplosionInvulnerable(true);
@@ -307,6 +339,8 @@ public class MechaBossSequence : MonoBehaviour
             playerCompanion.SetLouieAbilitiesLocked(false);
 
         MechaIntroRunning = false;
+        if (StageMechaIntroController.Instance != null)
+            StageMechaIntroController.Instance.SetIntroRunning(false);
     }
 
     IEnumerator MoveMechaVertically(MovementController mecha, Vector2 from, Vector2 to, float speed)
@@ -543,6 +577,8 @@ public class MechaBossSequence : MonoBehaviour
 
     void LockPlayer(bool locked)
     {
+        EnsurePlayerRefs();
+
         if (player != null)
         {
             player.SetInputLocked(locked);
@@ -579,6 +615,7 @@ public class MechaBossSequence : MonoBehaviour
     {
         yield return _waitForSeconds1;
 
+        EnsurePlayerRefs();
         if (player == null || player.isDead)
             yield break;
 
@@ -601,8 +638,8 @@ public class MechaBossSequence : MonoBehaviour
         if (timeBeforeFade > 0f)
             yield return new WaitForSeconds(timeBeforeFade);
 
-        if (StageIntroTransition.Instance != null)
-            StageIntroTransition.Instance.StartFadeOut(fadeDurationLocal);
+        if (StageMechaIntroController.Instance != null)
+            StageMechaIntroController.Instance.StartFadeOut(fadeDurationLocal);
 
         if (fadeDurationLocal > 0f)
             yield return new WaitForSeconds(fadeDurationLocal);
@@ -613,6 +650,7 @@ public class MechaBossSequence : MonoBehaviour
 
     void PushPlayerSafety()
     {
+        EnsurePlayerRefs();
         if (player == null)
             return;
 
@@ -640,6 +678,7 @@ public class MechaBossSequence : MonoBehaviour
 
     void PopPlayerSafety()
     {
+        EnsurePlayerRefs();
         if (player == null)
             return;
 
@@ -662,6 +701,7 @@ public class MechaBossSequence : MonoBehaviour
 
     void MakePlayerSafeForCelebration()
     {
+        EnsurePlayerRefs();
         if (player == null)
             return;
 
@@ -684,6 +724,7 @@ public class MechaBossSequence : MonoBehaviour
 
     void ForcePlayerMountedUpIfNeeded()
     {
+        EnsurePlayerRefs();
         if (player == null)
             return;
 
@@ -691,5 +732,41 @@ public class MechaBossSequence : MonoBehaviour
             player.ForceMountedUpExclusive();
         else
             player.ForceIdleUp();
+    }
+
+    void MovePlayerToIntroPosition()
+    {
+        if (player == null)
+            return;
+
+        if (player.Rigidbody != null)
+        {
+            player.Rigidbody.simulated = true;
+            player.Rigidbody.linearVelocity = Vector2.zero;
+            player.Rigidbody.position = playerIntroPosition;
+        }
+        else
+        {
+            player.transform.position = new Vector3(playerIntroPosition.x, playerIntroPosition.y, player.transform.position.z);
+        }
+    }
+
+    void EnsurePlayerRefs()
+    {
+        if (player != null && playerBomb != null)
+            return;
+
+        var go = GameObject.FindGameObjectWithTag("Player");
+        if (go == null)
+            return;
+
+        if (player == null)
+            player = go.GetComponent<MovementController>();
+
+        if (player != null && playerBomb == null)
+            playerBomb = player.GetComponent<BombController>();
+
+        if (player != null && playerCompanion == null)
+            playerCompanion = player.GetComponent<PlayerLouieCompanion>();
     }
 }
