@@ -10,7 +10,7 @@
     Lime,
     Green,
     Cyan,
-    LightBlue,
+    Aqua,
     Blue,
     DarkBlue,
     Purple,
