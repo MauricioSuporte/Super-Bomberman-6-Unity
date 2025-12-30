@@ -748,6 +748,9 @@ public class MovementController : MonoBehaviour, IKillable
         isEndingStage = true;
         SetExplosionInvulnerable(true);
 
+        if (abilitySystem != null)
+            abilitySystem.DisableAll();
+
         inputLocked = true;
 
         if (bombController != null)

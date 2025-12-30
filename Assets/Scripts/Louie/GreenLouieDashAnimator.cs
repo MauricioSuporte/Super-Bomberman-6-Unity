@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
+using UnityEngine;
 
 public class GreenLouieDashAnimator : MonoBehaviour, IGreenLouieDashExternalAnimator
 {
@@ -8,14 +9,26 @@ public class GreenLouieDashAnimator : MonoBehaviour, IGreenLouieDashExternalAnim
     public AnimatedSpriteRenderer rollRight;
 
     AnimatedSpriteRenderer active;
-    AnimatedSpriteRenderer cachedMovement;
+
+    struct CachedState
+    {
+        public AnimatedSpriteRenderer asr;
+        public bool enabled;
+        public bool idle;
+        public bool loop;
+    }
+
+    readonly List<CachedState> cachedMovementStates = new();
+    bool dashing;
 
     public void Play(Vector2 dir)
     {
-        CacheAndDisableMovementSprite();
+        CacheAndDisableAllMovementSprites();
+
+        dashing = true;
 
         active = GetRoll(dir);
-        DisableAll();
+        DisableAllRolls();
 
         if (active != null)
         {
@@ -31,6 +44,8 @@ public class GreenLouieDashAnimator : MonoBehaviour, IGreenLouieDashExternalAnim
 
     public void Stop()
     {
+        dashing = false;
+
         if (active != null)
         {
             if (active.TryGetComponent<SpriteRenderer>(out var sr))
@@ -40,8 +55,24 @@ public class GreenLouieDashAnimator : MonoBehaviour, IGreenLouieDashExternalAnim
         }
 
         active = null;
-        DisableAll();
-        RestoreMovementSprite();
+        DisableAllRolls();
+        RestoreAllMovementSprites();
+    }
+
+    void LateUpdate()
+    {
+        if (!dashing)
+            return;
+
+        for (int i = 0; i < cachedMovementStates.Count; i++)
+        {
+            var s = cachedMovementStates[i].asr;
+            if (s == null)
+                continue;
+
+            if (s.enabled)
+                s.enabled = false;
+        }
     }
 
     AnimatedSpriteRenderer GetRoll(Vector2 dir)
@@ -53,7 +84,7 @@ public class GreenLouieDashAnimator : MonoBehaviour, IGreenLouieDashExternalAnim
         return rollDown;
     }
 
-    void DisableAll()
+    void DisableAllRolls()
     {
         if (rollUp) rollUp.enabled = false;
         if (rollDown) rollDown.enabled = false;
@@ -61,33 +92,47 @@ public class GreenLouieDashAnimator : MonoBehaviour, IGreenLouieDashExternalAnim
         if (rollRight) rollRight.enabled = false;
     }
 
-    void CacheAndDisableMovementSprite()
+    void CacheAndDisableAllMovementSprites()
     {
-        cachedMovement = null;
+        cachedMovementStates.Clear();
 
         var sprites = GetComponentsInChildren<AnimatedSpriteRenderer>(true);
         foreach (var s in sprites)
         {
+            if (s == null)
+                continue;
+
             if (s == rollUp || s == rollDown || s == rollLeft || s == rollRight)
                 continue;
 
-            if (s.enabled)
+            cachedMovementStates.Add(new CachedState
             {
-                cachedMovement = s;
-                cachedMovement.enabled = false;
-                break;
-            }
+                asr = s,
+                enabled = s.enabled,
+                idle = s.idle,
+                loop = s.loop
+            });
+
+            s.enabled = false;
         }
     }
 
-    void RestoreMovementSprite()
+    void RestoreAllMovementSprites()
     {
-        if (cachedMovement != null)
+        for (int i = 0; i < cachedMovementStates.Count; i++)
         {
-            cachedMovement.enabled = true;
-            cachedMovement.idle = true;
-            cachedMovement.RefreshFrame();
-            cachedMovement = null;
+            var st = cachedMovementStates[i];
+            if (st.asr == null)
+                continue;
+
+            st.asr.idle = st.idle;
+            st.asr.loop = st.loop;
+            st.asr.enabled = st.enabled;
+
+            if (st.asr.enabled)
+                st.asr.RefreshFrame();
         }
+
+        cachedMovementStates.Clear();
     }
 }
