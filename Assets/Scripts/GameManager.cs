@@ -389,9 +389,13 @@ public class GameManager : MonoBehaviour
             if (players[0].TryGetComponent<AbilitySystem>(out var abilitySystem))
                 abilitySystem.Disable(InvincibleSuitAbility.AbilityId);
 
-            var movement = players[0].GetComponent<MovementController>();
             var bomb = players[0].GetComponent<BombController>();
-            PlayerPersistentStats.SaveFrom(movement, bomb);
+
+            if (bomb != null && bomb.CompareTag("Player"))
+            {
+                PlayerPersistentStats.BombAmount = Mathf.Min(bomb.bombAmout, PlayerPersistentStats.MaxBombAmount);
+                PlayerPersistentStats.ExplosionRadius = Mathf.Min(bomb.explosionRadius, PlayerPersistentStats.MaxExplosionRadius);
+            }
         }
 
         if (string.IsNullOrEmpty(nextStageSceneName))

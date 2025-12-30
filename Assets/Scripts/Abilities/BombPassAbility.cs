@@ -27,9 +27,6 @@ public class BombPassAbility : MonoBehaviour, IPlayerAbility
 
         if (TryGetComponent<AbilitySystem>(out var abilitySystem))
             abilitySystem.Disable(BombKickAbility.AbilityId);
-
-        if (CompareTag("Player"))
-            PlayerPersistentStats.CanPassBombs = true;
     }
 
     public void Disable()
@@ -38,8 +35,5 @@ public class BombPassAbility : MonoBehaviour, IPlayerAbility
 
         if (movement != null)
             movement.obstacleMask |= LayerMask.GetMask("Bomb");
-
-        if (CompareTag("Player"))
-            PlayerPersistentStats.CanPassBombs = false;
     }
 }

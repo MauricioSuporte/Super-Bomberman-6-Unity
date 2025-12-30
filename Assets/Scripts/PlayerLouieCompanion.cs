@@ -69,10 +69,15 @@ public class PlayerLouieCompanion : MonoBehaviour
         punchAbility = abilitySystem.Get<BombPunchAbility>(BombPunchAbility.AbilityId);
 
         punchOwned = abilitySystem.IsEnabled(BombPunchAbility.AbilityId);
+
+        if (punchAbility != null)
+            punchAbility.SetLockedByLouie(false);
     }
 
     void Update()
     {
+        punchOwned = PlayerPersistentStats.CanPunchBombs;
+
         bool shouldLock =
             MechaBossSequence.MechaIntroRunning ||
             (StageIntroTransition.Instance != null && StageIntroTransition.Instance.IntroRunning);
@@ -208,6 +213,7 @@ public class PlayerLouieCompanion : MonoBehaviour
 
         abilitySystem.RebuildCache();
         punchAbility = abilitySystem.Get<BombPunchAbility>(BombPunchAbility.AbilityId);
+
         punchOwned |= abilitySystem.IsEnabled(BombPunchAbility.AbilityId);
 
         ApplyRulesForCurrentMount();
@@ -217,12 +223,28 @@ public class PlayerLouieCompanion : MonoBehaviour
 
     void ApplyRulesForCurrentMount()
     {
+        if (currentLouie == null || mountedType == MountedLouieType.None)
+        {
+            abilitySystem.RebuildCache();
+
+            var punch = abilitySystem.Get<BombPunchAbility>(BombPunchAbility.AbilityId);
+            if (punch != null)
+            {
+                punch.SetExternalAnimator(null);
+                punch.SetLockedByLouie(louieAbilitiesLocked);
+            }
+
+            return;
+        }
+
         abilitySystem.Disable(BlackLouieDashPushAbility.AbilityId);
         abilitySystem.Disable(PurpleLouieBombLineAbility.AbilityId);
         abilitySystem.Disable(GreenLouieDashAbility.AbilityId);
         abilitySystem.Disable(YellowLouieDestructibleKickAbility.AbilityId);
         abilitySystem.Disable(PinkLouieJumpAbility.AbilityId);
         abilitySystem.Disable(RedLouiePunchStunAbility.AbilityId);
+
+        punchAbility = abilitySystem.Get<BombPunchAbility>(BombPunchAbility.AbilityId);
 
         if (mountedType == MountedLouieType.Blue)
         {
@@ -234,15 +256,36 @@ public class PlayerLouieCompanion : MonoBehaviour
 
             punchAbility = abilitySystem.Get<BombPunchAbility>(BombPunchAbility.AbilityId);
             if (punchAbility != null)
+            {
                 punchAbility.SetExternalAnimator(external);
+                punchAbility.SetLockedByLouie(louieAbilitiesLocked);
+            }
 
             return;
         }
 
         if (punchAbility != null)
+        {
             punchAbility.SetExternalAnimator(null);
 
-        abilitySystem.Disable(BombPunchAbility.AbilityId);
+            if (punchOwned)
+            {
+                abilitySystem.Enable(BombPunchAbility.AbilityId);
+                punchAbility.SetLockedByLouie(true);
+            }
+            else
+            {
+                abilitySystem.Disable(BombPunchAbility.AbilityId);
+                punchAbility.SetLockedByLouie(false);
+            }
+        }
+        else
+        {
+            if (punchOwned)
+                abilitySystem.Enable(BombPunchAbility.AbilityId);
+            else
+                abilitySystem.Disable(BombPunchAbility.AbilityId);
+        }
 
         if (mountedType == MountedLouieType.Purple)
         {
@@ -406,15 +449,22 @@ public class PlayerLouieCompanion : MonoBehaviour
     {
         abilitySystem.RebuildCache();
 
-        if (abilitySystem.IsEnabled(BombPunchAbility.AbilityId))
+        if (punchOwned)
         {
-            punchOwned = true;
+            if (!abilitySystem.IsEnabled(BombPunchAbility.AbilityId))
+                abilitySystem.Enable(BombPunchAbility.AbilityId);
 
             punchAbility = abilitySystem.Get<BombPunchAbility>(BombPunchAbility.AbilityId);
             if (punchAbility != null)
+            {
                 punchAbility.SetExternalAnimator(null);
-
-            abilitySystem.Disable(BombPunchAbility.AbilityId);
+                punchAbility.SetLockedByLouie(true);
+            }
+        }
+        else
+        {
+            if (abilitySystem.IsEnabled(BombPunchAbility.AbilityId))
+                abilitySystem.Disable(BombPunchAbility.AbilityId);
         }
     }
 
@@ -424,7 +474,10 @@ public class PlayerLouieCompanion : MonoBehaviour
 
         punchAbility = abilitySystem.Get<BombPunchAbility>(BombPunchAbility.AbilityId);
         if (punchAbility != null)
+        {
             punchAbility.SetExternalAnimator(null);
+            punchAbility.SetLockedByLouie(false);
+        }
 
         if (punchOwned)
             abilitySystem.Enable(BombPunchAbility.AbilityId);
@@ -562,6 +615,10 @@ public class PlayerLouieCompanion : MonoBehaviour
             blackDash.SetDashSfx(null, 1f);
         }
 
+        var purple = abilitySystem.Get<PurpleLouieBombLineAbility>(PurpleLouieBombLineAbility.AbilityId);
+        if (purple != null)
+            purple.SetExternalAnimator(null);
+
         RestorePunchAfterUnmount();
 
         if (movement.TryGetComponent<CharacterHealth>(out var health))
@@ -649,6 +706,10 @@ public class PlayerLouieCompanion : MonoBehaviour
             blackDash.SetExternalAnimator(null);
             blackDash.SetDashSfx(null, 1f);
         }
+
+        var purple = abilitySystem.Get<PurpleLouieBombLineAbility>(PurpleLouieBombLineAbility.AbilityId);
+        if (purple != null)
+            purple.SetExternalAnimator(null);
 
         RestorePunchAfterUnmount();
     }
@@ -758,6 +819,7 @@ public class PlayerLouieCompanion : MonoBehaviour
             return;
 
         abilitySystem.RebuildCache();
+        punchAbility = abilitySystem.Get<BombPunchAbility>(BombPunchAbility.AbilityId);
 
         if (louieAbilitiesLocked)
         {
@@ -766,16 +828,18 @@ public class PlayerLouieCompanion : MonoBehaviour
 
             louieAbilitiesLockApplied = true;
 
-            abilitySystem.Disable(BombPunchAbility.AbilityId);
+            if (punchAbility != null)
+            {
+                punchAbility.SetExternalAnimator(null);
+                punchAbility.SetLockedByLouie(true);
+            }
+
             abilitySystem.Disable(BlackLouieDashPushAbility.AbilityId);
             abilitySystem.Disable(PurpleLouieBombLineAbility.AbilityId);
             abilitySystem.Disable(GreenLouieDashAbility.AbilityId);
             abilitySystem.Disable(YellowLouieDestructibleKickAbility.AbilityId);
             abilitySystem.Disable(PinkLouieJumpAbility.AbilityId);
             abilitySystem.Disable(RedLouiePunchStunAbility.AbilityId);
-
-            if (punchAbility != null)
-                punchAbility.SetExternalAnimator(null);
 
             var kick = abilitySystem.Get<YellowLouieDestructibleKickAbility>(YellowLouieDestructibleKickAbility.AbilityId);
             if (kick != null)
@@ -823,6 +887,9 @@ public class PlayerLouieCompanion : MonoBehaviour
             return;
 
         louieAbilitiesLockApplied = false;
+
+        if (punchAbility != null)
+            punchAbility.SetLockedByLouie(false);
 
         ApplyRulesForCurrentMount();
     }

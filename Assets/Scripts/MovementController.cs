@@ -132,6 +132,9 @@ public class MovementController : MonoBehaviour, IKillable
         hasInput = false;
         touchingHazards.Clear();
 
+        if (CompareTag("Player"))
+            PlayerPersistentStats.LoadInto(this, bombController);
+
         ApplySpeedInternal(speedInternal);
         ForceExclusiveSpriteFromState();
     }

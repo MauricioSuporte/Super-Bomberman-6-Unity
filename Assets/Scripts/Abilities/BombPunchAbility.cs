@@ -39,6 +39,8 @@ public class BombPunchAbility : MonoBehaviour, IPlayerAbility
 
     private IBombPunchExternalAnimator externalAnimator;
 
+    private bool lockedByLouie;
+
     public string Id => AbilityId;
     public bool IsEnabled => enabledAbility;
 
@@ -57,9 +59,25 @@ public class BombPunchAbility : MonoBehaviour, IPlayerAbility
         externalAnimator = animator;
     }
 
+    public void SetLockedByLouie(bool locked)
+    {
+        if (lockedByLouie == locked)
+            return;
+
+        lockedByLouie = locked;
+
+        if (lockedByLouie)
+        {
+            ForceResetPunchSprites();
+        }
+    }
+
     private void Update()
     {
         if (!enabledAbility)
+            return;
+
+        if (lockedByLouie)
             return;
 
         if (!CompareTag("Player"))
@@ -227,20 +245,13 @@ public class BombPunchAbility : MonoBehaviour, IPlayerAbility
     public void Enable()
     {
         enabledAbility = true;
-
-        if (CompareTag("Player"))
-            PlayerPersistentStats.CanPunchBombs = true;
     }
 
     public void Disable()
     {
         enabledAbility = false;
 
-        if (CompareTag("Player"))
-            PlayerPersistentStats.CanPunchBombs = false;
-
         SetPunchSprites(false);
-
         externalAnimator?.ForceStop();
 
         if (punchLockRoutine != null)

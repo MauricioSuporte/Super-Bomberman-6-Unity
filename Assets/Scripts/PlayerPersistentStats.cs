@@ -29,7 +29,7 @@ public static class PlayerPersistentStats
     public static bool HasControlBombs = false;
     public static bool HasFullFire = false;
 
-    public static MountedLouieType MountedLouie = MountedLouieType.Green;
+    public static MountedLouieType MountedLouie = MountedLouieType.Blue;
     public static BomberSkin Skin = BomberSkin.White;
 
     const string PrefSelectedSkin = "SKIN_SELECTED";
@@ -211,6 +211,7 @@ public static class PlayerPersistentStats
                 }
             }
         }
+
     }
 
     public static void SaveFrom(MovementController movement, BombController bomb)
@@ -222,7 +223,8 @@ public static class PlayerPersistentStats
             if (movement.TryGetComponent<CharacterHealth>(out var health))
                 Life = Mathf.Max(1, health.life);
 
-            if (movement.TryGetComponent(out AbilitySystem abilitySystem))
+            AbilitySystem abilitySystem = null;
+            if (movement.TryGetComponent(out abilitySystem) && abilitySystem != null)
                 abilitySystem.RebuildCache();
 
             var kick = abilitySystem != null ? abilitySystem.Get<BombKickAbility>(BombKickAbility.AbilityId) : null;

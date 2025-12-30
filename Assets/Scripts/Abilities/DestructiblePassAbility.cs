@@ -32,9 +32,6 @@ public class DestructiblePassAbility : MonoBehaviour, IPlayerAbility
     {
         enabledAbility = true;
 
-        if (CompareTag("Player"))
-            PlayerPersistentStats.CanPassDestructibles = true;
-
         ApplyIgnoreToCurrentDestructibles();
 
         if (refreshRoutine != null)
@@ -46,9 +43,6 @@ public class DestructiblePassAbility : MonoBehaviour, IPlayerAbility
     public void Disable()
     {
         enabledAbility = false;
-
-        if (CompareTag("Player"))
-            PlayerPersistentStats.CanPassDestructibles = false;
 
         if (refreshRoutine != null)
         {
