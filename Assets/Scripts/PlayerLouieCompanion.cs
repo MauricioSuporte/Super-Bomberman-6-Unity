@@ -830,8 +830,8 @@ public class PlayerLouieCompanion : MonoBehaviour
 
             if (punchAbility != null)
             {
-                punchAbility.SetExternalAnimator(null);
                 punchAbility.SetLockedByLouie(true);
+                punchAbility.SetExternalAnimator(null);
             }
 
             abilitySystem.Disable(BlackLouieDashPushAbility.AbilityId);

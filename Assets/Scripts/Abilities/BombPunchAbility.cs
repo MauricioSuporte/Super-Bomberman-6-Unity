@@ -56,6 +56,9 @@ public class BombPunchAbility : MonoBehaviour, IPlayerAbility
 
     public void SetExternalAnimator(IBombPunchExternalAnimator animator)
     {
+        if (externalAnimator != null && externalAnimator != animator)
+            externalAnimator.ForceStop();
+
         externalAnimator = animator;
     }
 
@@ -68,6 +71,7 @@ public class BombPunchAbility : MonoBehaviour, IPlayerAbility
 
         if (lockedByLouie)
         {
+            externalAnimator?.ForceStop();
             ForceResetPunchSprites();
         }
     }

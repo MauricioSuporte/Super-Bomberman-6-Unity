@@ -691,6 +691,7 @@ MonoBehaviour:
   enablePinkRightFix: 1
   pinkRightFixedLocalX: 0
   syncBlinkFromPlayerWhenMounted: 1
+  debugExclusive: 0
 --- !u!114 &6278954836837279341
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -707,6 +708,10 @@ MonoBehaviour:
   punchDown: {fileID: 5471246735332489006}
   punchLeft: {fileID: 4507174183192697291}
   punchRight: {fileID: 2897987350496308459}
+  riderVisual: {fileID: 0}
+  enforceExclusiveWhilePlaying: 1
+  debugPunch: 1
+  debugWithStackTrace: 1
 --- !u!114 &1919497702538166291
 MonoBehaviour:
   m_ObjectHideFlags: 0

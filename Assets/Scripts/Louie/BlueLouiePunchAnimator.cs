@@ -2,70 +2,52 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-[DisallowMultipleComponent]
 public class BlueLouiePunchAnimator : MonoBehaviour, IBombPunchExternalAnimator
 {
+    [Header("Punch Sprites (AnimatedSpriteRenderer)")]
     public AnimatedSpriteRenderer punchUp;
     public AnimatedSpriteRenderer punchDown;
     public AnimatedSpriteRenderer punchLeft;
     public AnimatedSpriteRenderer punchRight;
 
     AnimatedSpriteRenderer activePunch;
-    LouieRiderVisual riderVisual;
-
-    readonly List<AnimatedSpriteRenderer> cachedAnimators = new();
-    readonly List<bool> cachedAnimatorEnabled = new();
-
-    readonly List<SpriteRenderer> cachedSpriteRenderers = new();
-    readonly List<bool> cachedSpriteEnabled = new();
-
     bool playing;
+
+    readonly List<GameObject> movementGOs = new();
+    readonly Dictionary<GameObject, bool> movementPrevActive = new();
 
     void Awake()
     {
-        riderVisual = GetComponent<LouieRiderVisual>();
-        if (riderVisual == null)
-            riderVisual = GetComponentInParent<LouieRiderVisual>();
-        if (riderVisual == null)
-            riderVisual = GetComponentInChildren<LouieRiderVisual>(true);
+        CacheMovementObjects();
+        DisableAllPunch();
     }
-
-    void OnDisable() => ForceStop();
-    void OnDestroy() => ForceStop();
 
     public IEnumerator Play(Vector2 dir, float punchLockTime)
     {
-        if (playing)
-            ForceStop();
+        ForceStop();
 
-        if (dir == Vector2.zero)
-            dir = Vector2.down;
+        playing = true;
 
-        CacheEnabledStates();
+        HideMovementSprites();
 
-        if (riderVisual != null)
-            riderVisual.enabled = false;
-
-        DisableAllRenderers();
-
-        activePunch = GetPunchSprite(dir);
-
-        if (activePunch != null)
+        var target = GetPunchSprite(dir);
+        if (target != null)
         {
-            if (activePunch.TryGetComponent<SpriteRenderer>(out var sr))
-            {
-                sr.enabled = true;
-                sr.flipX = (dir == Vector2.right);
-            }
+            DisableAllPunch();
 
+            activePunch = target;
+
+            if (activePunch.TryGetComponent<SpriteRenderer>(out var sr))
+                sr.flipX = (dir == Vector2.right);
+
+            activePunch.gameObject.SetActive(true);
             activePunch.enabled = true;
+
             activePunch.idle = false;
             activePunch.loop = false;
             activePunch.CurrentFrame = 0;
             activePunch.RefreshFrame();
         }
-
-        playing = true;
 
         yield return new WaitForSeconds(punchLockTime);
 
@@ -74,28 +56,19 @@ public class BlueLouiePunchAnimator : MonoBehaviour, IBombPunchExternalAnimator
 
     public void ForceStop()
     {
-        if (!playing && activePunch == null && cachedAnimators.Count == 0 && cachedSpriteRenderers.Count == 0)
-            return;
-
-        if (activePunch != null)
+        if (!playing && activePunch == null)
         {
-            if (activePunch.TryGetComponent<SpriteRenderer>(out var sr))
-            {
-                sr.flipX = false;
-                sr.enabled = false;
-            }
-
-            activePunch.enabled = false;
+            RestoreMovementSprites();
+            DisableAllPunch();
+            return;
         }
 
+        playing = false;
+
+        DisableAllPunch();
         activePunch = null;
 
-        RestoreEnabledStates();
-
-        if (riderVisual != null)
-            riderVisual.enabled = true;
-
-        playing = false;
+        RestoreMovementSprites();
     }
 
     AnimatedSpriteRenderer GetPunchSprite(Vector2 dir)
@@ -107,60 +80,102 @@ public class BlueLouiePunchAnimator : MonoBehaviour, IBombPunchExternalAnimator
         return punchDown;
     }
 
-    void CacheEnabledStates()
+    void DisableAllPunch()
     {
-        cachedAnimators.Clear();
-        cachedAnimatorEnabled.Clear();
-        cachedSpriteRenderers.Clear();
-        cachedSpriteEnabled.Clear();
+        DisablePunch(punchUp);
+        DisablePunch(punchDown);
+        DisablePunch(punchLeft);
+        DisablePunch(punchRight);
+    }
 
-        var anims = GetComponentsInChildren<AnimatedSpriteRenderer>(true);
-        for (int i = 0; i < anims.Length; i++)
+    static void DisablePunch(AnimatedSpriteRenderer anim)
+    {
+        if (anim == null) return;
+        anim.enabled = false;
+        if (anim.gameObject.activeSelf)
+            anim.gameObject.SetActive(false);
+    }
+
+    void CacheMovementObjects()
+    {
+        movementGOs.Clear();
+        movementPrevActive.Clear();
+
+        var allAnim = GetComponentsInChildren<AnimatedSpriteRenderer>(true);
+
+        for (int i = 0; i < allAnim.Length; i++)
         {
-            cachedAnimators.Add(anims[i]);
-            cachedAnimatorEnabled.Add(anims[i] != null && anims[i].enabled);
+            var a = allAnim[i];
+            if (a == null) continue;
+
+            if (a == punchUp || a == punchDown || a == punchLeft || a == punchRight)
+                continue;
+
+            var go = a.gameObject;
+            if (!movementPrevActive.ContainsKey(go))
+            {
+                movementGOs.Add(go);
+                movementPrevActive.Add(go, go.activeSelf);
+            }
         }
 
-        var srs = GetComponentsInChildren<SpriteRenderer>(true);
-        for (int i = 0; i < srs.Length; i++)
+        var allSR = GetComponentsInChildren<SpriteRenderer>(true);
+
+        for (int i = 0; i < allSR.Length; i++)
         {
-            cachedSpriteRenderers.Add(srs[i]);
-            cachedSpriteEnabled.Add(srs[i] != null && srs[i].enabled);
+            var sr = allSR[i];
+            if (sr == null) continue;
+
+            if (IsPunchSpriteRenderer(sr))
+                continue;
+
+            var go = sr.gameObject;
+            if (!movementPrevActive.ContainsKey(go))
+            {
+                movementGOs.Add(go);
+                movementPrevActive.Add(go, go.activeSelf);
+            }
         }
     }
 
-    void DisableAllRenderers()
+    bool IsPunchSpriteRenderer(SpriteRenderer sr)
     {
-        for (int i = 0; i < cachedAnimators.Count; i++)
-        {
-            if (cachedAnimators[i] != null)
-                cachedAnimators[i].enabled = false;
-        }
+        if (sr == null) return false;
 
-        for (int i = 0; i < cachedSpriteRenderers.Count; i++)
+        if (punchUp != null && sr.gameObject == punchUp.gameObject) return true;
+        if (punchDown != null && sr.gameObject == punchDown.gameObject) return true;
+        if (punchLeft != null && sr.gameObject == punchLeft.gameObject) return true;
+        if (punchRight != null && sr.gameObject == punchRight.gameObject) return true;
+
+        return false;
+    }
+
+    void HideMovementSprites()
+    {
+        movementPrevActive.Clear();
+
+        for (int i = 0; i < movementGOs.Count; i++)
         {
-            if (cachedSpriteRenderers[i] != null)
-                cachedSpriteRenderers[i].enabled = false;
+            var go = movementGOs[i];
+            if (go == null) continue;
+
+            movementPrevActive[go] = go.activeSelf;
+
+            if (go.activeSelf)
+                go.SetActive(false);
         }
     }
 
-    void RestoreEnabledStates()
+    void RestoreMovementSprites()
     {
-        for (int i = 0; i < cachedAnimators.Count; i++)
+        foreach (var kv in movementPrevActive)
         {
-            if (cachedAnimators[i] != null)
-                cachedAnimators[i].enabled = cachedAnimatorEnabled[i];
-        }
+            var go = kv.Key;
+            if (go == null) continue;
 
-        for (int i = 0; i < cachedSpriteRenderers.Count; i++)
-        {
-            if (cachedSpriteRenderers[i] != null)
-                cachedSpriteRenderers[i].enabled = cachedSpriteEnabled[i];
+            var shouldBeActive = kv.Value;
+            if (go.activeSelf != shouldBeActive)
+                go.SetActive(shouldBeActive);
         }
-
-        cachedAnimators.Clear();
-        cachedAnimatorEnabled.Clear();
-        cachedSpriteRenderers.Clear();
-        cachedSpriteEnabled.Clear();
     }
 }

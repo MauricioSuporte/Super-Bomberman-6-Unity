@@ -24,7 +24,7 @@ MonoBehaviour:
   m_MinSize: {x: 300, y: 100}
   m_MaxSize: {x: 24288, y: 16192}
   vertical: 0
-  controlID: 30327
+  controlID: 41434
   draggingID: 0
 --- !u!114 &2
 MonoBehaviour:
@@ -153,7 +153,7 @@ MonoBehaviour:
   m_MinSize: {x: 200, y: 100}
   m_MaxSize: {x: 16192, y: 16192}
   vertical: 1
-  controlID: 30298
+  controlID: 41405
   draggingID: 0
 --- !u!114 &4
 MonoBehaviour:
@@ -179,7 +179,7 @@ MonoBehaviour:
   m_MinSize: {x: 200, y: 50}
   m_MaxSize: {x: 16192, y: 8096}
   vertical: 0
-  controlID: 30290
+  controlID: 41397
   draggingID: 0
 --- !u!114 &5
 MonoBehaviour:
@@ -248,7 +248,7 @@ MonoBehaviour:
       scrollPos: {x: 0, y: 0}
       m_SelectedIDs: 
       m_LastClickedID: 0
-      m_ExpandedIDs: 96d4f8ffc0f0f8ff8614f9ff9876f9ff7478f9ff2e7df9ffb891f9ffde94f9ff4ce6f9ff8ae8f9ff4416faff9e30faff5291fafff4b1faff6ab9faff74b9faff983efbff8253fbff8c53fbffb2adfbfffabdfbff1e2fffff04fbffff168700005a4d01006e4d0100da4d01007c5f0100fc5f01005c64010022810100a28101001ca501002aa5010086af0100f8af010050b10100a2b101002ab801007cb80100
+      m_ExpandedIDs: d2eff6ffec2ff7ff1a7af7ffb0bbf7ff32d5f7ff2e45f8ff6c47f8ff96d4f8ffc0f0f8ff8614f9ff9876f9ff7478f9ff2e7df9ffb891f9ffde94f9ff4ce6f9ff8ae8f9ff4416faff9e30faff5291fafff4b1faff6ab9faff74b9faff983efbff8253fbff8c53fbffb2adfbfffabdfbff1e2fffff04fbffff168700005a4d01006e4d0100da4d01007c5f0100fc5f01005c64010022810100a28101001ca501002aa5010086af0100f8af010050b10100a2b101002ab801007cb801007ad2010088d20100b0d20100
       m_RenameOverlay:
         m_UserAcceptedRename: 0
         m_Name: 
@@ -929,7 +929,7 @@ MonoBehaviour:
     m_SkipHidden: 0
     m_SearchArea: 1
     m_Folders:
-    - Assets/Sprites/Bombers/MechaBombers
+    - Assets/Prefabs/Louies
     m_Globs: []
     m_ProductIds: 
     m_AnyWithAssetOrigin: 0
@@ -939,15 +939,15 @@ MonoBehaviour:
   m_ViewMode: 1
   m_StartGridSize: 96
   m_LastFolders:
-  - Assets/Sprites/Bombers/MechaBombers
+  - Assets/Prefabs/Louies
   m_LastFoldersGridSize: 96
   m_LastProjectPath: C:\Users\mauri\source\repos\SuperBomberman6
   m_LockTracker:
     m_IsLocked: 0
   m_FolderTreeState:
-    scrollPos: {x: 0, y: 200}
-    m_SelectedIDs: 1c9f0000
-    m_LastClickedID: 40732
+    scrollPos: {x: 0, y: 31}
+    m_SelectedIDs: 0a9f0000
+    m_LastClickedID: 40714
     m_ExpandedIDs: 00000000969e0000989e00009a9e00009c9e00009e9e0000a09e0000a29e0000a49e0000a69e0000
     m_RenameOverlay:
       m_UserAcceptedRename: 0
@@ -1090,8 +1090,8 @@ MonoBehaviour:
     y: 0
     width: 558
     height: 933
-  m_MinSize: {x: 275, y: 50}
-  m_MaxSize: {x: 4000, y: 4000}
+  m_MinSize: {x: 276, y: 76}
+  m_MaxSize: {x: 4001, y: 4026}
   m_ActualView: {fileID: 13}
   m_Panes:
   - {fileID: 13}
