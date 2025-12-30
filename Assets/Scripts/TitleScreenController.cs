@@ -20,6 +20,7 @@ public class TitleScreenController : MonoBehaviour
     public bool Running { get; private set; }
 
     bool ignoreStartKeyUntilRelease;
+    bool bootedSession;
 
     void Awake()
     {
@@ -30,6 +31,15 @@ public class TitleScreenController : MonoBehaviour
             titleVideoPlayer = GetComponent<VideoPlayer>();
 
         ForceHide();
+    }
+
+    void EnsureBootSession()
+    {
+        if (bootedSession)
+            return;
+
+        PlayerPersistentStats.EnsureSessionBooted();
+        bootedSession = true;
     }
 
     public void SetIgnoreStartKeyUntilRelease()
@@ -50,6 +60,8 @@ public class TitleScreenController : MonoBehaviour
 
     public IEnumerator Play(Image fadeToHideOptional)
     {
+        EnsureBootSession();
+
         Running = true;
 
         if (titleScreenRawImage == null || titleVideoPlayer == null)

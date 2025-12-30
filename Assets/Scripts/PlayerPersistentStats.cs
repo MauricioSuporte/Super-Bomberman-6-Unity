@@ -19,7 +19,6 @@ public static class PlayerPersistentStats
     public static int BombAmount = 8;
     public static int ExplosionRadius = 8;
 
-    //public static int SpeedInternal = BaseSpeedNormal;
     public static int SpeedInternal = BaseSpeedNormal + (5 * SpeedStep);
 
     public static bool CanKickBombs = true;
@@ -33,8 +32,102 @@ public static class PlayerPersistentStats
     public static MountedLouieType MountedLouie = MountedLouieType.None;
     public static BomberSkin Skin = BomberSkin.White;
 
-    const string PrefGoldenUnlocked = "SKIN_GOLDEN_UNLOCKED";
     const string PrefSelectedSkin = "SKIN_SELECTED";
+
+    static bool goldenUnlockedSession;
+    static bool sessionBooted;
+
+    public static void EnsureSessionBooted()
+    {
+        if (sessionBooted)
+            return;
+
+        goldenUnlockedSession = false;
+        LoadSelectedSkinInternal();
+        ClampSelectedSkinIfLocked();
+
+        sessionBooted = true;
+    }
+
+    public static void BootSession()
+    {
+        sessionBooted = false;
+        EnsureSessionBooted();
+    }
+
+    public static bool GoldenUnlocked => goldenUnlockedSession;
+
+    public static void UnlockGolden()
+    {
+        goldenUnlockedSession = true;
+    }
+
+    public static bool IsSkinUnlocked(BomberSkin skin)
+    {
+        if (skin == BomberSkin.Golden)
+            return goldenUnlockedSession;
+
+        return true;
+    }
+
+    public static void SaveSelectedSkin()
+    {
+        if (Skin == BomberSkin.Golden)
+            return;
+
+        PlayerPrefs.SetInt(PrefSelectedSkin, (int)Skin);
+        PlayerPrefs.Save();
+    }
+
+    static void LoadSelectedSkinInternal()
+    {
+        if (PlayerPrefs.HasKey(PrefSelectedSkin))
+            Skin = (BomberSkin)PlayerPrefs.GetInt(PrefSelectedSkin);
+        else
+            Skin = BomberSkin.White;
+
+        if (Skin == BomberSkin.Golden)
+            Skin = BomberSkin.White;
+    }
+
+    public static void LoadSelectedSkin()
+    {
+        EnsureSessionBooted();
+    }
+
+    public static void ClampSelectedSkinIfLocked()
+    {
+        if (Skin == BomberSkin.Golden && !goldenUnlockedSession)
+        {
+            Skin = BomberSkin.White;
+            SaveSelectedSkin();
+        }
+    }
+
+    public static void ResetToDefaults()
+    {
+        BombAmount = 1;
+        ExplosionRadius = 1;
+        SpeedInternal = BaseSpeedNormal;
+
+        Life = 1;
+
+        CanKickBombs = false;
+        CanPunchBombs = false;
+        CanPassBombs = false;
+        CanPassDestructibles = false;
+        HasPierceBombs = false;
+        HasControlBombs = false;
+        HasFullFire = false;
+
+        MountedLouie = MountedLouieType.None;
+
+        Skin = BomberSkin.White;
+        SaveSelectedSkin();
+
+        goldenUnlockedSession = false;
+        sessionBooted = true;
+    }
 
     public static float InternalSpeedToTilesPerSecond(int internalSpeed)
     {
@@ -108,33 +201,13 @@ public static class PlayerPersistentStats
             {
                 switch (MountedLouie)
                 {
-                    case MountedLouieType.Blue:
-                        louieCompanion.RestoreMountedBlueLouie();
-                        break;
-
-                    case MountedLouieType.Black:
-                        louieCompanion.RestoreMountedBlackLouie();
-                        break;
-
-                    case MountedLouieType.Purple:
-                        louieCompanion.RestoreMountedPurpleLouie();
-                        break;
-
-                    case MountedLouieType.Green:
-                        louieCompanion.RestoreMountedGreenLouie();
-                        break;
-
-                    case MountedLouieType.Yellow:
-                        louieCompanion.RestoreMountedYellowLouie();
-                        break;
-
-                    case MountedLouieType.Pink:
-                        louieCompanion.RestoreMountedPinkLouie();
-                        break;
-
-                    case MountedLouieType.Red:
-                        louieCompanion.RestoreMountedRedLouie();
-                        break;
+                    case MountedLouieType.Blue: louieCompanion.RestoreMountedBlueLouie(); break;
+                    case MountedLouieType.Black: louieCompanion.RestoreMountedBlackLouie(); break;
+                    case MountedLouieType.Purple: louieCompanion.RestoreMountedPurpleLouie(); break;
+                    case MountedLouieType.Green: louieCompanion.RestoreMountedGreenLouie(); break;
+                    case MountedLouieType.Yellow: louieCompanion.RestoreMountedYellowLouie(); break;
+                    case MountedLouieType.Pink: louieCompanion.RestoreMountedPinkLouie(); break;
+                    case MountedLouieType.Red: louieCompanion.RestoreMountedRedLouie(); break;
                 }
             }
         }
@@ -173,10 +246,8 @@ public static class PlayerPersistentStats
             var passDestructibles = abilitySystem != null ? abilitySystem.Get<DestructiblePassAbility>(DestructiblePassAbility.AbilityId) : null;
             CanPassDestructibles = passDestructibles != null && passDestructibles.IsEnabled;
 
-            if (HasControlBombs)
-                HasPierceBombs = false;
-            else if (HasPierceBombs)
-                HasControlBombs = false;
+            if (HasControlBombs) HasPierceBombs = false;
+            else if (HasPierceBombs) HasControlBombs = false;
 
             MountedLouie = MountedLouieType.None;
 
@@ -189,50 +260,5 @@ public static class PlayerPersistentStats
             BombAmount = Mathf.Min(bomb.bombAmout, MaxBombAmount);
             ExplosionRadius = Mathf.Min(bomb.explosionRadius, MaxExplosionRadius);
         }
-    }
-
-    public static void ResetToDefaults()
-    {
-        BombAmount = 1;
-        ExplosionRadius = 1;
-        SpeedInternal = BaseSpeedNormal;
-
-        Life = 1;
-
-        CanKickBombs = false;
-        CanPunchBombs = false;
-        CanPassBombs = false;
-        CanPassDestructibles = false;
-        HasPierceBombs = false;
-        HasControlBombs = false;
-        HasFullFire = false;
-
-        MountedLouie = MountedLouieType.None;
-    }
-
-    public static bool GoldenUnlocked
-    {
-        get => PlayerPrefs.GetInt(PrefGoldenUnlocked, 0) == 1;
-        set { PlayerPrefs.SetInt(PrefGoldenUnlocked, value ? 1 : 0); PlayerPrefs.Save(); }
-    }
-
-    public static bool IsSkinUnlocked(BomberSkin skin)
-    {
-        if (skin == BomberSkin.Golden)
-            return GoldenUnlocked;
-
-        return true;
-    }
-
-    public static void SaveSelectedSkin()
-    {
-        PlayerPrefs.SetInt(PrefSelectedSkin, (int)Skin);
-        PlayerPrefs.Save();
-    }
-
-    public static void LoadSelectedSkin()
-    {
-        if (PlayerPrefs.HasKey(PrefSelectedSkin))
-            Skin = (BomberSkin)PlayerPrefs.GetInt(PrefSelectedSkin);
     }
 }

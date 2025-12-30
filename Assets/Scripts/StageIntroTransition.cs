@@ -82,7 +82,7 @@ public class StageIntroTransition : MonoBehaviour
 
     void Start()
     {
-        PlayerPersistentStats.LoadSelectedSkin();
+        PlayerPersistentStats.EnsureSessionBooted();
 
         if (GameMusicController.Instance != null)
             GameMusicController.Instance.StopMusic();
@@ -182,7 +182,8 @@ public class StageIntroTransition : MonoBehaviour
 
             var chosen = skinSelectMenu.GetSelectedSkin();
             PlayerPersistentStats.Skin = chosen;
-            PlayerPersistentStats.SaveSelectedSkin();
+            if (chosen != BomberSkin.Golden)
+                PlayerPersistentStats.SaveSelectedSkin();
 
             SkipTitleScreenOnNextLoad();
 
