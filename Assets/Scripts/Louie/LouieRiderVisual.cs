@@ -24,9 +24,11 @@ public class LouieRiderVisual : MonoBehaviour
     [Header("Blink Sync")]
     public bool syncBlinkFromPlayerWhenMounted = true;
 
+    [Header("Debug")]
+    [SerializeField] private bool debugExclusive;
+
     private AnimatedSpriteRenderer active;
     private bool playingEndStage;
-
     private bool isPinkLouieMounted;
 
     private CharacterHealth ownerHealth;
@@ -37,10 +39,15 @@ public class LouieRiderVisual : MonoBehaviour
 
     private SpriteRenderer[] ownerSpriteRenderers;
 
+    private SpriteRenderer[] allSpriteRenderers;
+    private AnimatedSpriteRenderer[] allAnimatedRenderers;
+
     public void Bind(MovementController movement)
     {
         owner = movement;
         playingEndStage = false;
+
+        CacheAllRenderers();
 
         isPinkLouieMounted = DetectPinkMounted(owner);
 
@@ -67,6 +74,12 @@ public class LouieRiderVisual : MonoBehaviour
         }
     }
 
+    private void CacheAllRenderers()
+    {
+        allSpriteRenderers = GetComponentsInChildren<SpriteRenderer>(true);
+        allAnimatedRenderers = GetComponentsInChildren<AnimatedSpriteRenderer>(true);
+    }
+
     private void LateUpdate()
     {
         if (owner == null || owner.isDead)
@@ -77,7 +90,9 @@ public class LouieRiderVisual : MonoBehaviour
 
         transform.localPosition = localOffset;
 
-        if (!playingEndStage)
+        if (playingEndStage)
+            EnsureEndStageExclusive();
+        else
         {
             bool isIdle = owner.Direction == Vector2.zero;
             Vector2 faceDir = isIdle ? owner.FacingDirection : owner.Direction;
@@ -90,6 +105,108 @@ public class LouieRiderVisual : MonoBehaviour
         ApplyBlinkSyncFromOwnerIfNeeded();
     }
 
+    private void ApplyBlinkSyncFromOwnerIfNeeded()
+    {
+        if (!syncBlinkFromPlayerWhenMounted)
+            return;
+
+        if (owner == null || !owner.IsMountedOnLouie)
+            return;
+
+        if (ownerSpriteRenderers == null || louieSpriteRenderers == null)
+            return;
+
+        for (int i = 0; i < louieSpriteRenderers.Length; i++)
+        {
+            var louieSr = louieSpriteRenderers[i];
+            if (louieSr == null)
+                continue;
+
+            Color c = louieOriginalColors[i];
+
+            for (int j = 0; j < ownerSpriteRenderers.Length; j++)
+            {
+                var ownerSr = ownerSpriteRenderers[j];
+                if (ownerSr == null || !ownerSr.enabled)
+                    continue;
+
+                c.a = ownerSr.color.a;
+                break;
+            }
+
+            louieSr.color = c;
+        }
+    }
+
+    private void EnsureEndStageExclusive()
+    {
+        if (louieEndStage == null)
+            return;
+
+        HardExclusive(louieEndStage);
+
+        louieEndStage.idle = false;
+        louieEndStage.loop = true;
+        louieEndStage.RefreshFrame();
+    }
+
+    private void HardExclusive(AnimatedSpriteRenderer keep)
+    {
+        if (allSpriteRenderers == null || allAnimatedRenderers == null)
+            CacheAllRenderers();
+
+        if (allAnimatedRenderers != null)
+        {
+            for (int i = 0; i < allAnimatedRenderers.Length; i++)
+            {
+                var a = allAnimatedRenderers[i];
+                if (a == null) continue;
+                a.enabled = (a == keep);
+            }
+        }
+
+        if (allSpriteRenderers != null)
+        {
+            for (int i = 0; i < allSpriteRenderers.Length; i++)
+            {
+                var sr = allSpriteRenderers[i];
+                if (sr == null) continue;
+                sr.enabled = false;
+            }
+        }
+
+        if (keep != null)
+        {
+            keep.enabled = true;
+
+            var keepSrs = keep.GetComponentsInChildren<SpriteRenderer>(true);
+            for (int i = 0; i < keepSrs.Length; i++)
+                if (keepSrs[i] != null)
+                    keepSrs[i].enabled = true;
+
+            var keepAnims = keep.GetComponentsInChildren<AnimatedSpriteRenderer>(true);
+            for (int i = 0; i < keepAnims.Length; i++)
+                if (keepAnims[i] != null)
+                    keepAnims[i].enabled = true;
+        }
+
+        active = keep;
+
+        if (debugExclusive)
+            DumpEnabledRenderers("HardExclusive");
+    }
+
+    private void DumpEnabledRenderers(string context)
+    {
+        var srs = GetComponentsInChildren<SpriteRenderer>(true);
+        for (int i = 0; i < srs.Length; i++)
+        {
+            var sr = srs[i];
+            if (sr != null && sr.enabled)
+                Debug.Log($"[LouieRiderVisual:{context}] SR ENABLED -> {sr.name} ({sr.transform.GetHierarchyPath()})", this);
+        }
+    }
+
     private void ForceDisableRightRenderer()
     {
         if (louieRight == null)
@@ -98,95 +215,7 @@ public class LouieRiderVisual : MonoBehaviour
         if (active == louieRight)
             return;
 
-        louieRight.enabled = false;
-
-        if (louieRight.TryGetComponent<SpriteRenderer>(out var sr))
-            sr.enabled = false;
-    }
-
-    private void ApplyBlinkSyncFromOwnerIfNeeded()
-    {
-        if (!syncBlinkFromPlayerWhenMounted)
-            return;
-
-        if (owner == null || !owner.CompareTag("Player"))
-            return;
-
-        if (ownerCompanion == null || !ownerCompanion.blinkPlayerTogetherWithLouie)
-            return;
-
-        if (ownerHealth == null)
-            return;
-
-        if (!ownerHealth.IsInvulnerable)
-        {
-            RestoreLouieOriginalColors();
-            return;
-        }
-
-        float alpha = ReadOwnerAlpha();
-        ApplyLouieAlpha(alpha);
-    }
-
-    private float ReadOwnerAlpha()
-    {
-        if (ownerSpriteRenderers == null || ownerSpriteRenderers.Length == 0)
-            return 1f;
-
-        for (int i = 0; i < ownerSpriteRenderers.Length; i++)
-        {
-            var sr = ownerSpriteRenderers[i];
-            if (sr == null || !sr.enabled)
-                continue;
-
-            return sr.color.a;
-        }
-
-        for (int i = 0; i < ownerSpriteRenderers.Length; i++)
-        {
-            var sr = ownerSpriteRenderers[i];
-            if (sr != null)
-                return sr.color.a;
-        }
-
-        return 1f;
-    }
-
-    private void ApplyLouieAlpha(float alpha)
-    {
-        if (louieSpriteRenderers == null)
-            return;
-
-        alpha = Mathf.Clamp01(alpha);
-
-        for (int i = 0; i < louieSpriteRenderers.Length; i++)
-        {
-            var sr = louieSpriteRenderers[i];
-            if (sr == null)
-                continue;
-
-            Color baseColor = (louieOriginalColors != null && i < louieOriginalColors.Length)
-                ? louieOriginalColors[i]
-                : sr.color;
-
-            sr.color = new Color(baseColor.r, baseColor.g, baseColor.b, alpha);
-        }
-    }
-
-    private void RestoreLouieOriginalColors()
-    {
-        if (louieSpriteRenderers == null || louieOriginalColors == null)
-            return;
-
-        for (int i = 0; i < louieSpriteRenderers.Length; i++)
-        {
-            var sr = louieSpriteRenderers[i];
-            if (sr == null)
-                continue;
-
-            if (i < louieOriginalColors.Length)
-                sr.color = louieOriginalColors[i];
-        }
+        SetRendererBranchEnabled(louieRight, false);
     }
 
     private void ApplyDirection(Vector2 faceDir, bool isIdle)
@@ -239,11 +268,7 @@ public class LouieRiderVisual : MonoBehaviour
         if (renderer == null)
             return;
 
-        if (!renderer.enabled)
-            renderer.enabled = true;
-
-        if (renderer.TryGetComponent<SpriteRenderer>(out var sr) && !sr.enabled)
-            sr.enabled = true;
+        SetRendererBranchEnabled(renderer, true);
     }
 
     private void ApplyPinkRightXFix(Vector2 faceDir)
@@ -279,16 +304,16 @@ public class LouieRiderVisual : MonoBehaviour
 
     private void SetExclusive(AnimatedSpriteRenderer keep)
     {
-        SetRendererEnabled(louieUp, keep == louieUp);
-        SetRendererEnabled(louieDown, keep == louieDown);
-        SetRendererEnabled(louieLeft, keep == louieLeft);
-        SetRendererEnabled(louieRight, keep == louieRight);
-        SetRendererEnabled(louieEndStage, keep == louieEndStage);
+        SetRendererBranchEnabled(louieUp, keep == louieUp);
+        SetRendererBranchEnabled(louieDown, keep == louieDown);
+        SetRendererBranchEnabled(louieLeft, keep == louieLeft);
+        SetRendererBranchEnabled(louieRight, keep == louieRight);
+        SetRendererBranchEnabled(louieEndStage, keep == louieEndStage);
 
         active = keep;
 
         if (active != null)
-            EnsureEnabled(active);
+            SetRendererBranchEnabled(active, true);
 
         if (isPinkLouieMounted)
             ForceDisableRightRenderer();
@@ -301,15 +326,22 @@ public class LouieRiderVisual : MonoBehaviour
         }
     }
 
-    private void SetRendererEnabled(AnimatedSpriteRenderer r, bool on)
+    private void SetRendererBranchEnabled(AnimatedSpriteRenderer r, bool on)
     {
         if (r == null)
             return;
 
         r.enabled = on;
 
-        if (r.TryGetComponent<SpriteRenderer>(out var sr))
-            sr.enabled = on;
+        var srs = r.GetComponentsInChildren<SpriteRenderer>(true);
+        for (int i = 0; i < srs.Length; i++)
+            if (srs[i] != null)
+                srs[i].enabled = on;
+
+        var anims = r.GetComponentsInChildren<AnimatedSpriteRenderer>(true);
+        for (int i = 0; i < anims.Length; i++)
+            if (anims[i] != null)
+                anims[i].enabled = on;
     }
 
     public bool TryPlayEndStage(float totalTime, int frameCount)
@@ -319,7 +351,7 @@ public class LouieRiderVisual : MonoBehaviour
 
         playingEndStage = true;
 
-        SetExclusive(louieEndStage);
+        HardExclusive(louieEndStage);
 
         louieEndStage.idle = false;
         louieEndStage.loop = true;
@@ -350,5 +382,20 @@ public class LouieRiderVisual : MonoBehaviour
     public void ForceOnlyUpEnabled()
     {
         ForceIdleUp();
+    }
+}
+
+public static class TransformExtensions
+{
+    public static string GetHierarchyPath(this Transform t)
+    {
+        if (t == null) return "<null>";
+        string path = t.name;
+        while (t.parent != null)
+        {
+            t = t.parent;
+            path = t.name + "/" + path;
+        }
+        return path;
     }
 }
