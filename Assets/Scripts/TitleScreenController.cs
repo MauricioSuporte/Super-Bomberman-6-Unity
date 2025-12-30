@@ -12,7 +12,7 @@ public class TitleScreenController : MonoBehaviour
     [Range(0f, 1f)]
     public float startSfxVolume = 1f;
 
-    private static readonly WaitForSecondsRealtime _waitForSecondsRealtime2 = new(2f);
+    private static readonly WaitForSecondsRealtime _waitForSecondsRealtime1 = new(1f);
 
     [Header("UI / Video")]
     public RawImage titleScreenRawImage;
@@ -110,9 +110,9 @@ public class TitleScreenController : MonoBehaviour
 
         var transition = StageIntroTransition.Instance;
         if (transition != null)
-            transition.StartFadeOut(2f, false);
+            transition.StartFadeOut(1f, false);
 
-        yield return _waitForSecondsRealtime2;
+        yield return _waitForSecondsRealtime1;
 
         if (GameMusicController.Instance != null)
             GameMusicController.Instance.StopMusic();
