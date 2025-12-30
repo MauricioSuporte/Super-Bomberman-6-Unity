@@ -24,6 +24,11 @@ public class BomberSkinSelectMenu : MonoBehaviour
     [SerializeField] Color selectedTint = Color.white;
     [SerializeField] Vector3 selectedScale = new(1.15f, 1.15f, 1f);
 
+    [Header("Cursor")]
+    [SerializeField] RectTransform skinCursor;
+    [SerializeField] Vector2 cursorPadding = new(18f, 18f);
+    [SerializeField] bool cursorMatchSelectedScale = true;
+
     [Header("Background Sprite")]
     [SerializeField] Sprite backgroundSprite;
 
@@ -76,6 +81,9 @@ public class BomberSkinSelectMenu : MonoBehaviour
     readonly Dictionary<BomberSkin, Sprite> spriteCache = new();
     readonly List<Image> slots = new();
 
+    [SerializeField] Vector2 cursorSizeMultiplier = new(0.9f, 0.9f);
+    [SerializeField] float cursorYOffset = 8f;
+
     int index;
     BomberSkin selected;
 
@@ -102,6 +110,9 @@ public class BomberSkinSelectMenu : MonoBehaviour
     KeyCode moveUp;
     KeyCode moveDown;
 
+    Image cursorImage;
+    bool cursorDirty;
+
     void Awake()
     {
         if (root == null)
@@ -110,10 +121,36 @@ public class BomberSkinSelectMenu : MonoBehaviour
         if (backgroundImage != null && backgroundSprite != null)
             backgroundImage.sprite = backgroundSprite;
 
+        if (skinCursor != null)
+        {
+            cursorImage = skinCursor.GetComponent<Image>();
+            if (cursorImage != null)
+            {
+                cursorImage.raycastTarget = false;
+                cursorImage.color = Color.white;
+            }
+
+            skinCursor.gameObject.SetActive(false);
+        }
+
         BuildGrid();
 
         if (root != null)
             root.SetActive(false);
+    }
+
+    void LateUpdate()
+    {
+        if (!cursorDirty)
+            return;
+
+        cursorDirty = false;
+
+        if (skinCursor == null)
+            return;
+
+        Canvas.ForceUpdateCanvases();
+        UpdateCursorToSelected();
     }
 
     void ResolveMovementKeys()
@@ -180,6 +217,7 @@ public class BomberSkinSelectMenu : MonoBehaviour
             var child = gridRoot.GetChild(i);
             if (child == null) continue;
             if (skinItemPrefab != null && child == skinItemPrefab.transform) continue;
+            if (skinCursor != null && child == skinCursor.transform) continue;
             Destroy(child.gameObject);
         }
 
@@ -194,10 +232,15 @@ public class BomberSkinSelectMenu : MonoBehaviour
             img.enabled = false;
             slots.Add(img);
         }
+
+        cursorDirty = true;
     }
 
     public void Hide()
     {
+        if (skinCursor != null)
+            skinCursor.gameObject.SetActive(false);
+
         if (root != null) root.SetActive(false);
         else gameObject.SetActive(false);
     }
@@ -244,6 +287,7 @@ public class BomberSkinSelectMenu : MonoBehaviour
         Refresh();
 
         Canvas.ForceUpdateCanvases();
+        cursorDirty = true;
         yield return null;
 
         yield return FadeInRoutine();
@@ -452,6 +496,47 @@ public class BomberSkinSelectMenu : MonoBehaviour
             if (isSelected)
                 img.color = isUnlocked ? selectedTint : lockedTint;
         }
+
+        cursorDirty = true;
+    }
+
+    void UpdateCursorToSelected()
+    {
+        if (skinCursor == null)
+            return;
+
+        if (index < 0 || index >= slots.Count || slots[index] == null)
+        {
+            skinCursor.gameObject.SetActive(false);
+            return;
+        }
+
+        var itemRt = slots[index].rectTransform;
+
+        skinCursor.gameObject.SetActive(true);
+
+        skinCursor.SetParent(itemRt, false);
+        skinCursor.SetAsLastSibling();
+
+        skinCursor.anchorMin = new Vector2(0.5f, 0.5f);
+        skinCursor.anchorMax = new Vector2(0.5f, 0.5f);
+        skinCursor.pivot = new Vector2(0.5f, 0.5f);
+
+        skinCursor.anchoredPosition = new Vector2(0f, cursorYOffset);
+
+        var baseSize = itemRt.rect.size;
+        var targetSize = new Vector2(
+            baseSize.x * cursorSizeMultiplier.x,
+            baseSize.y * cursorSizeMultiplier.y
+        ) + cursorPadding;
+
+        skinCursor.sizeDelta = targetSize;
+
+        skinCursor.localScale = cursorMatchSelectedScale ? itemRt.localScale : Vector3.one;
+        skinCursor.localRotation = Quaternion.identity;
+
+        if (cursorImage != null)
+            cursorImage.color = Color.white;
     }
 
     Sprite GetIdleSprite(BomberSkin skin)
