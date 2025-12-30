@@ -80,6 +80,8 @@ public class BomberSkinSelectMenu : MonoBehaviour
     bool previousLoop;
     bool capturedPreviousMusic;
 
+    bool confirmedSelection;
+
     static readonly KeyCode[] _konami = new[]
     {
         KeyCode.UpArrow, KeyCode.UpArrow,
@@ -169,6 +171,7 @@ public class BomberSkinSelectMenu : MonoBehaviour
             BuildGrid();
 
         konamiStep = 0;
+        confirmedSelection = false;
 
         StartSelectMusic();
 
@@ -242,6 +245,7 @@ public class BomberSkinSelectMenu : MonoBehaviour
                         PlayerPersistentStats.SaveSelectedSkin();
 
                     PlaySfx(confirmSfx, confirmSfxVolume);
+                    confirmedSelection = true;
                     done = true;
                 }
                 else
@@ -260,7 +264,7 @@ public class BomberSkinSelectMenu : MonoBehaviour
 
         yield return FadeOutRoutine();
 
-        StopSelectMusicAndRestorePrevious();
+        StopSelectMusicAndRestorePrevious(restorePrevious: !confirmedSelection);
         Hide();
 
         if (fadeImage != null)
@@ -349,11 +353,17 @@ public class BomberSkinSelectMenu : MonoBehaviour
         music.PlayMusic(selectMusic, selectMusicVolume, loopSelectMusic);
     }
 
-    void StopSelectMusicAndRestorePrevious()
+    void StopSelectMusicAndRestorePrevious(bool restorePrevious)
     {
         var music = GameMusicController.Instance;
         if (music == null)
             return;
+
+        if (!restorePrevious)
+        {
+            music.StopMusic();
+            return;
+        }
 
         if (!capturedPreviousMusic)
         {

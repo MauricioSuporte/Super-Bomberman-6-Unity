@@ -5112,7 +5112,7 @@ MonoBehaviour:
   root: {fileID: 861532794}
   backgroundImage: {fileID: 1806562755}
   fadeImage: {fileID: 336813435}
-  fadeDuration: 3
+  fadeDuration: 1
   gridRoot: {fileID: 607783271}
   skinItemPrefab: {fileID: 136072051}
   columns: 4
@@ -5134,7 +5134,7 @@ MonoBehaviour:
   confirmSfxVolume: 1
   lockedConfirmSfx: {fileID: 8300000, guid: 2f98cb783cdc9bb4d8ff3b868291f743, type: 3}
   lockedConfirmSfxVolume: 1
-  konamiUnlockSfx: {fileID: 0}
+  konamiUnlockSfx: {fileID: 8300000, guid: 1e71e29d5560374489499b51e60e4f93, type: 3}
   konamiUnlockSfxVolume: 1
   leftKey: 276
   rightKey: 275
