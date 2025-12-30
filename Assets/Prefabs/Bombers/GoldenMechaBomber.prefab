@@ -482,10 +482,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   idleSprite: {fileID: 1747748154677448771, guid: fc03f15b0ed620b499e06fe1e5bc7c6c, type: 3}
   animationSprite:
-  - {fileID: 1747748154677448771, guid: fc03f15b0ed620b499e06fe1e5bc7c6c, type: 3}
   - {fileID: 4458272346564058858, guid: fc03f15b0ed620b499e06fe1e5bc7c6c, type: 3}
   - {fileID: 1747748154677448771, guid: fc03f15b0ed620b499e06fe1e5bc7c6c, type: 3}
   - {fileID: -5425837314331679698, guid: fc03f15b0ed620b499e06fe1e5bc7c6c, type: 3}
+  - {fileID: 1747748154677448771, guid: fc03f15b0ed620b499e06fe1e5bc7c6c, type: 3}
   allowFlipX: 0
   animationTime: 0.16666667
   useSequenceDuration: 0
@@ -600,10 +600,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   idleSprite: {fileID: -8339179691743676504, guid: fc03f15b0ed620b499e06fe1e5bc7c6c, type: 3}
   animationSprite:
-  - {fileID: -8339179691743676504, guid: fc03f15b0ed620b499e06fe1e5bc7c6c, type: 3}
   - {fileID: -7777371207704829928, guid: fc03f15b0ed620b499e06fe1e5bc7c6c, type: 3}
   - {fileID: -8339179691743676504, guid: fc03f15b0ed620b499e06fe1e5bc7c6c, type: 3}
   - {fileID: -1378889983820701081, guid: fc03f15b0ed620b499e06fe1e5bc7c6c, type: 3}
+  - {fileID: -8339179691743676504, guid: fc03f15b0ed620b499e06fe1e5bc7c6c, type: 3}
   allowFlipX: 0
   animationTime: 0.16666667
   useSequenceDuration: 0
@@ -1087,10 +1087,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   idleSprite: {fileID: 9032141831631617861, guid: fc03f15b0ed620b499e06fe1e5bc7c6c, type: 3}
   animationSprite:
-  - {fileID: 9032141831631617861, guid: fc03f15b0ed620b499e06fe1e5bc7c6c, type: 3}
   - {fileID: -8018310140479158505, guid: fc03f15b0ed620b499e06fe1e5bc7c6c, type: 3}
   - {fileID: 9032141831631617861, guid: fc03f15b0ed620b499e06fe1e5bc7c6c, type: 3}
   - {fileID: 1772894999185328317, guid: fc03f15b0ed620b499e06fe1e5bc7c6c, type: 3}
+  - {fileID: 9032141831631617861, guid: fc03f15b0ed620b499e06fe1e5bc7c6c, type: 3}
   allowFlipX: 0
   animationTime: 0.16666667
   useSequenceDuration: 0

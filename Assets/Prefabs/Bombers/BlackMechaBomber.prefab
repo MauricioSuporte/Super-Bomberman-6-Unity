@@ -464,10 +464,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   idleSprite: {fileID: 6674666667163067808, guid: 4dc6b98a350b5114ca44fb10022efed2, type: 3}
   animationSprite:
-  - {fileID: 6674666667163067808, guid: 4dc6b98a350b5114ca44fb10022efed2, type: 3}
   - {fileID: 8014402558888806237, guid: 4dc6b98a350b5114ca44fb10022efed2, type: 3}
   - {fileID: 6674666667163067808, guid: 4dc6b98a350b5114ca44fb10022efed2, type: 3}
   - {fileID: -354992569208000999, guid: 4dc6b98a350b5114ca44fb10022efed2, type: 3}
+  - {fileID: 6674666667163067808, guid: 4dc6b98a350b5114ca44fb10022efed2, type: 3}
   allowFlipX: 0
   animationTime: 0.16666667
   useSequenceDuration: 0
@@ -582,10 +582,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   idleSprite: {fileID: 5911335850156195929, guid: 4dc6b98a350b5114ca44fb10022efed2, type: 3}
   animationSprite:
-  - {fileID: 5911335850156195929, guid: 4dc6b98a350b5114ca44fb10022efed2, type: 3}
   - {fileID: 1297628351780482324, guid: 4dc6b98a350b5114ca44fb10022efed2, type: 3}
   - {fileID: 5911335850156195929, guid: 4dc6b98a350b5114ca44fb10022efed2, type: 3}
   - {fileID: 7539352308348791563, guid: 4dc6b98a350b5114ca44fb10022efed2, type: 3}
+  - {fileID: 5911335850156195929, guid: 4dc6b98a350b5114ca44fb10022efed2, type: 3}
   allowFlipX: 0
   animationTime: 0.16666667
   useSequenceDuration: 0
@@ -828,10 +828,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   idleSprite: {fileID: 106627695691825206, guid: 4dc6b98a350b5114ca44fb10022efed2, type: 3}
   animationSprite:
-  - {fileID: 106627695691825206, guid: 4dc6b98a350b5114ca44fb10022efed2, type: 3}
   - {fileID: -2945977649531933481, guid: 4dc6b98a350b5114ca44fb10022efed2, type: 3}
   - {fileID: 106627695691825206, guid: 4dc6b98a350b5114ca44fb10022efed2, type: 3}
   - {fileID: -3959669465257220206, guid: 4dc6b98a350b5114ca44fb10022efed2, type: 3}
+  - {fileID: 106627695691825206, guid: 4dc6b98a350b5114ca44fb10022efed2, type: 3}
   allowFlipX: 0
   animationTime: 0.16666667
   useSequenceDuration: 0
@@ -1069,10 +1069,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   idleSprite: {fileID: 5799997974980645357, guid: 4dc6b98a350b5114ca44fb10022efed2, type: 3}
   animationSprite:
-  - {fileID: 5799997974980645357, guid: 4dc6b98a350b5114ca44fb10022efed2, type: 3}
   - {fileID: 1376034401212645797, guid: 4dc6b98a350b5114ca44fb10022efed2, type: 3}
   - {fileID: 5799997974980645357, guid: 4dc6b98a350b5114ca44fb10022efed2, type: 3}
   - {fileID: 2218116869642603024, guid: 4dc6b98a350b5114ca44fb10022efed2, type: 3}
+  - {fileID: 5799997974980645357, guid: 4dc6b98a350b5114ca44fb10022efed2, type: 3}
   allowFlipX: 0
   animationTime: 0.16666667
   useSequenceDuration: 0
