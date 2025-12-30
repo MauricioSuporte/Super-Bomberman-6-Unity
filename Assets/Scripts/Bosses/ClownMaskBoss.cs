@@ -255,9 +255,8 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
         float colliderRadius = 1f;
 
         if (bossCollider is CircleCollider2D circle)
-        {
             colliderRadius = circle.radius * Mathf.Max(transform.lossyScale.x, transform.lossyScale.y);
-        }
+
         float spotlightRadius = colliderRadius * 0.3f;
 
         stageIntroClownMaskBoss.SetSpotlightWorld(
@@ -291,8 +290,8 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
 
         EnableOnly(idleRenderer);
         EnableBossCombat();
-        RestoreLouieAfterBossIntro();
 
+        RestoreLouieAfterBossIntro();
         RestorePlayerAfterBossIntro();
 
         if (player != null)
@@ -1091,7 +1090,11 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
         if (riderRoot == null)
             return null;
 
-        var t = riderRoot.Find(childName);
+        Transform t = riderRoot.Find(childName);
+
+        if (t == null && childName == "Right")
+            t = riderRoot.Find("Rigth");
+
         if (t == null)
             return null;
 

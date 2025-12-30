@@ -24,9 +24,6 @@ public class LouieRiderVisual : MonoBehaviour
     [Header("Blink Sync")]
     public bool syncBlinkFromPlayerWhenMounted = true;
 
-    [Header("Debug")]
-    [SerializeField] private bool debugExclusive;
-
     private AnimatedSpriteRenderer active;
     private bool playingEndStage;
     private bool isPinkLouieMounted;
@@ -147,6 +144,7 @@ public class LouieRiderVisual : MonoBehaviour
 
         louieEndStage.idle = false;
         louieEndStage.loop = true;
+        louieEndStage.pingPong = false;
         louieEndStage.RefreshFrame();
     }
 
@@ -191,20 +189,6 @@ public class LouieRiderVisual : MonoBehaviour
         }
 
         active = keep;
-
-        if (debugExclusive)
-            DumpEnabledRenderers("HardExclusive");
-    }
-
-    private void DumpEnabledRenderers(string context)
-    {
-        var srs = GetComponentsInChildren<SpriteRenderer>(true);
-        for (int i = 0; i < srs.Length; i++)
-        {
-            var sr = srs[i];
-            if (sr != null && sr.enabled)
-                Debug.Log($"[LouieRiderVisual:{context}] SR ENABLED -> {sr.name} ({sr.transform.GetHierarchyPath()})", this);
-        }
     }
 
     private void ForceDisableRightRenderer()
@@ -249,7 +233,9 @@ public class LouieRiderVisual : MonoBehaviour
 
         EnsureEnabled(active);
 
+        active.pingPong = false;
         active.idle = isIdle;
+        active.loop = !isIdle;
 
         if (active.TryGetComponent<SpriteRenderer>(out var sr))
         {
@@ -355,6 +341,7 @@ public class LouieRiderVisual : MonoBehaviour
 
         louieEndStage.idle = false;
         louieEndStage.loop = true;
+        louieEndStage.pingPong = false;
         louieEndStage.CurrentFrame = 0;
         louieEndStage.ClearRuntimeBaseLocalX();
         louieEndStage.RefreshFrame();
@@ -376,6 +363,7 @@ public class LouieRiderVisual : MonoBehaviour
 
         louieUp.idle = true;
         louieUp.loop = false;
+        louieUp.pingPong = false;
         louieUp.RefreshFrame();
     }
 
