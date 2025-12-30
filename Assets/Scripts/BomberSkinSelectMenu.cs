@@ -12,6 +12,7 @@ public class BomberSkinSelectMenu : MonoBehaviour
     [Header("Fade")]
     [SerializeField] Image fadeImage;
     [SerializeField] float fadeDuration = 1f;
+    [SerializeField] float fadeOutOnConfirmDuration = 2f;
 
     [Header("Grid")]
     [SerializeField] Transform gridRoot;
@@ -36,6 +37,13 @@ public class BomberSkinSelectMenu : MonoBehaviour
     [SerializeField] string spritesResourcesPath = "Sprites/Bombers/Bomberman";
     [SerializeField] int idleFrameIndex = 16;
 
+    [Header("Preview Animations")]
+    [SerializeField] float downFrameTime = 0.22f;
+    [SerializeField] float endStageFrameTime = 0.14f;
+
+    [SerializeField] int[] downFrames = new[] { 14, 16, 18, 16 };
+    [SerializeField] int[] endStageFrames = new[] { 148, 148, 146, 148, 147, 148, 146, 148, 147, 147 };
+
     [Header("Music")]
     [SerializeField] AudioClip selectMusic;
     [SerializeField, Range(0f, 1f)] float selectMusicVolume = 1f;
@@ -51,7 +59,7 @@ public class BomberSkinSelectMenu : MonoBehaviour
     [SerializeField] AudioClip konamiUnlockSfx;
     [SerializeField, Range(0f, 1f)] float konamiUnlockSfxVolume = 1f;
 
-    [Header("Input (fallback - caso não use MovementController)")]
+    [Header("Input")]
     [SerializeField] KeyCode leftKey = KeyCode.A;
     [SerializeField] KeyCode rightKey = KeyCode.D;
     [SerializeField] KeyCode upKey = KeyCode.W;
@@ -78,13 +86,15 @@ public class BomberSkinSelectMenu : MonoBehaviour
         BomberSkin.Golden
     };
 
-    readonly Dictionary<BomberSkin, Sprite> spriteCache = new();
+    readonly Dictionary<BomberSkin, Sprite> idleCache = new();
+    readonly Dictionary<BomberSkin, Dictionary<int, Sprite>> sheetFrameCache = new();
     readonly List<Image> slots = new();
 
     [SerializeField] Vector2 cursorSizeMultiplier = new(0.9f, 0.9f);
     [SerializeField] float cursorYOffset = 8f;
 
     int index;
+    int selectedIndex = -1;
     BomberSkin selected;
 
     AudioClip previousClip;
@@ -112,6 +122,13 @@ public class BomberSkinSelectMenu : MonoBehaviour
 
     Image cursorImage;
     bool cursorDirty;
+    bool menuActive;
+
+    float downTimer;
+    int downFrameIdx;
+
+    float endTimer;
+    int endFrameIdx;
 
     void Awake()
     {
@@ -139,6 +156,21 @@ public class BomberSkinSelectMenu : MonoBehaviour
             root.SetActive(false);
     }
 
+    void Update()
+    {
+        if (!menuActive)
+            return;
+
+        if (!confirmedSelection)
+        {
+            TickDownHover();
+        }
+        else
+        {
+            TickEndStageSelected();
+        }
+    }
+
     void LateUpdate()
     {
         if (!cursorDirty)
@@ -151,6 +183,73 @@ public class BomberSkinSelectMenu : MonoBehaviour
 
         Canvas.ForceUpdateCanvases();
         UpdateCursorToSelected();
+    }
+
+    void TickDownHover()
+    {
+        if (index < 0 || index >= slots.Count)
+            return;
+
+        var skin = selectableSkins[index];
+        if (!PlayerPersistentStats.IsSkinUnlocked(skin))
+        {
+            ApplyIdleToAllSlots();
+            return;
+        }
+
+        ApplyIdleToAllSlots();
+
+        float ft = Mathf.Max(0.01f, downFrameTime);
+        downTimer += Time.unscaledDeltaTime;
+
+        if (downFrames == null || downFrames.Length == 0)
+            return;
+
+        while (downTimer >= ft)
+        {
+            downTimer -= ft;
+            downFrameIdx = (downFrameIdx + 1) % downFrames.Length;
+        }
+
+        var sp = GetSpriteByFrame(skin, downFrames[downFrameIdx]) ?? GetIdleSprite(skin);
+        var img = slots[index];
+        if (img != null && img.sprite != sp)
+            img.sprite = sp;
+    }
+
+    void TickEndStageSelected()
+    {
+        if (selectedIndex < 0 || selectedIndex >= slots.Count)
+        {
+            ApplyIdleToAllSlots();
+            return;
+        }
+
+        var skin = selectableSkins[selectedIndex];
+        if (!PlayerPersistentStats.IsSkinUnlocked(skin))
+        {
+            ApplyIdleToAllSlots();
+            return;
+        }
+
+        ApplyIdleToAllSlots();
+
+        float ft = Mathf.Max(0.01f, endStageFrameTime);
+        endTimer += Time.unscaledDeltaTime;
+
+        if (endStageFrames == null || endStageFrames.Length == 0)
+            return;
+
+        while (endTimer >= ft)
+        {
+            endTimer -= ft;
+            endFrameIdx = (endFrameIdx + 1) % endStageFrames.Length;
+        }
+
+        var sp = GetSpriteByFrame(skin, endStageFrames[endFrameIdx]) ?? GetIdleSprite(skin);
+        var img = slots[selectedIndex];
+        if (img != null && img.sprite != sp)
+            img.sprite = sp;
     }
 
     void ResolveMovementKeys()
@@ -238,6 +337,8 @@ public class BomberSkinSelectMenu : MonoBehaviour
 
     public void Hide()
     {
+        menuActive = false;
+
         if (skinCursor != null)
             skinCursor.gameObject.SetActive(false);
 
@@ -270,6 +371,12 @@ public class BomberSkinSelectMenu : MonoBehaviour
 
         konamiStep = 0;
         confirmedSelection = false;
+        selectedIndex = -1;
+
+        downTimer = 0f;
+        downFrameIdx = 0;
+        endTimer = 0f;
+        endFrameIdx = 0;
 
         StartSelectMusic();
 
@@ -283,12 +390,14 @@ public class BomberSkinSelectMenu : MonoBehaviour
 
         selected = PlayerPersistentStats.Skin;
 
-        PreloadAllIdleSprites();
-        Refresh();
+        PreloadIdleSprites();
+        RefreshVisuals();
 
         Canvas.ForceUpdateCanvases();
         cursorDirty = true;
         yield return null;
+
+        menuActive = true;
 
         yield return FadeInRoutine();
 
@@ -297,7 +406,7 @@ public class BomberSkinSelectMenu : MonoBehaviour
         {
             bool didUnlockNow = ProcessKonamiCode();
             if (didUnlockNow)
-                Refresh();
+                RefreshVisuals();
 
             bool moved = false;
             int nextIndex = index;
@@ -328,8 +437,10 @@ public class BomberSkinSelectMenu : MonoBehaviour
                 if (nextIndex != index)
                 {
                     index = nextIndex;
+                    downTimer = 0f;
+                    downFrameIdx = 0;
                     PlaySfx(moveCursorSfx, moveCursorSfxVolume);
-                    Refresh();
+                    RefreshVisuals();
                 }
             }
             else if (Input.GetKeyDown(confirmKey))
@@ -343,8 +454,17 @@ public class BomberSkinSelectMenu : MonoBehaviour
                     if (skin != BomberSkin.Golden)
                         PlayerPersistentStats.SaveSelectedSkin();
 
-                    PlaySfx(confirmSfx, confirmSfxVolume);
+                    selectedIndex = index;
                     confirmedSelection = true;
+
+                    endTimer = 0f;
+                    endFrameIdx = 0;
+
+                    fadeDuration = fadeOutOnConfirmDuration;
+
+                    PlaySfx(confirmSfx, confirmSfxVolume);
+                    RefreshVisuals();
+
                     done = true;
                 }
                 else
@@ -473,7 +593,7 @@ public class BomberSkinSelectMenu : MonoBehaviour
             music.StopMusic();
     }
 
-    void Refresh()
+    void RefreshVisuals()
     {
         if (selectableSkins == null || selectableSkins.Count == 0)
             return;
@@ -498,6 +618,20 @@ public class BomberSkinSelectMenu : MonoBehaviour
         }
 
         cursorDirty = true;
+    }
+
+    void ApplyIdleToAllSlots()
+    {
+        for (int i = 0; i < slots.Count; i++)
+        {
+            var img = slots[i];
+            if (img == null) continue;
+
+            var skin = selectableSkins[i];
+            var sp = GetIdleSprite(skin);
+            if (img.sprite != sp)
+                img.sprite = sp;
+        }
     }
 
     void UpdateCursorToSelected()
@@ -541,44 +675,60 @@ public class BomberSkinSelectMenu : MonoBehaviour
 
     Sprite GetIdleSprite(BomberSkin skin)
     {
-        if (spriteCache.TryGetValue(skin, out var cached))
+        if (idleCache.TryGetValue(skin, out var cached))
             return cached;
+
+        var s = GetSpriteByFrame(skin, idleFrameIndex);
+        idleCache[skin] = s;
+        return s;
+    }
+
+    Sprite GetSpriteByFrame(BomberSkin skin, int frameIndex)
+    {
+        var map = GetOrBuildFrameMap(skin);
+        if (map == null)
+            return null;
+
+        if (map.TryGetValue(frameIndex, out var s))
+            return s;
+
+        return null;
+    }
+
+    Dictionary<int, Sprite> GetOrBuildFrameMap(BomberSkin skin)
+    {
+        if (sheetFrameCache.TryGetValue(skin, out var map) && map != null)
+            return map;
 
         string sheetName = skin + "Bomber";
         string sheetPath = $"{spritesResourcesPath}/{sheetName}";
         var sprites = Resources.LoadAll<Sprite>(sheetPath);
 
-        string wantedName = $"{sheetName}_{idleFrameIndex}";
-
-        Sprite chosen = null;
+        map = new Dictionary<int, Sprite>();
 
         if (sprites != null && sprites.Length > 0)
         {
             for (int i = 0; i < sprites.Length; i++)
             {
-                var s = sprites[i];
-                if (s != null && s.name == wantedName)
-                {
-                    chosen = s;
-                    break;
-                }
-            }
+                var sp = sprites[i];
+                if (sp == null) continue;
 
-            if (chosen == null)
-            {
-                for (int i = 0; i < sprites.Length; i++)
+                string n = sp.name;
+
+                int u = n.LastIndexOf('_');
+                if (u < 0 || u >= n.Length - 1)
+                    continue;
+
+                if (int.TryParse(n.Substring(u + 1), out int idx))
                 {
-                    if (sprites[i] != null)
-                    {
-                        chosen = sprites[i];
-                        break;
-                    }
+                    if (!map.ContainsKey(idx))
+                        map.Add(idx, sp);
                 }
             }
         }
 
-        spriteCache[skin] = chosen;
-        return chosen;
+        sheetFrameCache[skin] = map;
+        return map;
     }
 
     int Wrap(int v, int count)
@@ -642,7 +792,7 @@ public class BomberSkinSelectMenu : MonoBehaviour
         fadeImage.color = c;
     }
 
-    void PreloadAllIdleSprites()
+    void PreloadIdleSprites()
     {
         for (int i = 0; i < selectableSkins.Count; i++)
             GetIdleSprite(selectableSkins[i]);
