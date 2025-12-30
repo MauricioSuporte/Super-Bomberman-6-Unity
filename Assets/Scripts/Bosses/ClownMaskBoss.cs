@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using UnityEngine;
 
 [RequireComponent(typeof(CharacterHealth))]
@@ -226,7 +226,7 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
         SpawnPlayerForBossIntro();
 
         EnsureMountedLouieExistsIfNeeded();
-        ForceLouieRiderVisualRenderers(true);
+        ForceLouieRiderVisualRenderers(true, upOnly: true);
 
         LockPlayer(true);
         ShowPlayerIdleUpOnly();
@@ -291,8 +291,13 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
 
         EnableOnly(idleRenderer);
         EnableBossCombat();
+        RestoreLouieAfterBossIntro();
 
         RestorePlayerAfterBossIntro();
+
+        if (player != null)
+            player.EnableExclusiveFromState();
+
         LockPlayer(false);
 
         introFinished = true;
@@ -1010,7 +1015,7 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
         }
     }
 
-    void ForceLouieRiderVisualRenderers(bool visible)
+    void ForceLouieRiderVisualRenderers(bool visible, bool upOnly = false)
     {
         if (player == null)
             return;
@@ -1019,17 +1024,111 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
         if (rider == null)
             return;
 
+        rider.gameObject.SetActive(visible);
+
+        var anims = rider.GetComponentsInChildren<AnimatedSpriteRenderer>(true);
         var srs = rider.GetComponentsInChildren<SpriteRenderer>(true);
+
+        if (!visible)
+        {
+            for (int i = 0; i < anims.Length; i++)
+                if (anims[i] != null)
+                    anims[i].enabled = false;
+
+            for (int i = 0; i < srs.Length; i++)
+                if (srs[i] != null)
+                    srs[i].enabled = false;
+
+            return;
+        }
+
+        AnimatedSpriteRenderer keep = null;
+
+        if (upOnly)
+            keep = FindLouieRendererByChildName(rider.transform, "Up");
+
+        if (keep == null)
+            keep = FindFirstEnabledLouieRenderer(anims);
+
+        if (keep == null)
+            keep = FindLouieRendererByChildName(rider.transform, "Up");
+
+        if (keep == null && anims.Length > 0)
+            keep = anims[0];
+
+        for (int i = 0; i < anims.Length; i++)
+        {
+            var a = anims[i];
+            if (a == null) continue;
+            a.enabled = (a == keep);
+        }
+
         for (int i = 0; i < srs.Length; i++)
-            if (srs[i] != null)
-                srs[i].enabled = visible;
+        {
+            var sr = srs[i];
+            if (sr == null) continue;
+            sr.enabled = false;
+        }
+
+        if (keep != null)
+        {
+            if (upOnly)
+            {
+                keep.idle = true;
+                keep.loop = false;
+                keep.RefreshFrame();
+            }
+
+            keep.RefreshFrame();
+
+            if (keep.TryGetComponent<SpriteRenderer>(out var keepSr))
+                keepSr.enabled = true;
+        }
+    }
+
+    AnimatedSpriteRenderer FindLouieRendererByChildName(Transform riderRoot, string childName)
+    {
+        if (riderRoot == null)
+            return null;
+
+        var t = riderRoot.Find(childName);
+        if (t == null)
+            return null;
+
+        return t.GetComponent<AnimatedSpriteRenderer>();
+    }
+
+    AnimatedSpriteRenderer FindFirstEnabledLouieRenderer(AnimatedSpriteRenderer[] anims)
+    {
+        if (anims == null)
+            return null;
+
+        for (int i = 0; i < anims.Length; i++)
+            if (anims[i] != null && anims[i].enabled)
+                return anims[i];
+
+        return null;
+    }
+
+    void RestoreLouieAfterBossIntro()
+    {
+        if (player == null || !player.IsMountedOnLouie)
+            return;
+
+        var rider = player.GetComponentInChildren<LouieRiderVisual>(true);
+        if (rider == null)
+            return;
+
+        rider.ForceIdleUp();
 
         var anims = rider.GetComponentsInChildren<AnimatedSpriteRenderer>(true);
         for (int i = 0; i < anims.Length; i++)
-            if (anims[i] != null)
-                anims[i].enabled = visible;
+        {
+            var a = anims[i];
+            if (a == null) continue;
 
-        if (rider.gameObject != null)
-            rider.gameObject.SetActive(visible);
+            a.idle = false;
+            a.loop = true;
+        }
     }
 }
