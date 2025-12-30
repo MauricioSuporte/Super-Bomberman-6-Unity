@@ -124,6 +124,8 @@ public class MovementController : MonoBehaviour, IKillable
         }
 
         ApplySpeedInternal(speedInternal);
+
+        EnableExclusiveFromState();
     }
 
     protected virtual void OnEnable()
@@ -136,12 +138,62 @@ public class MovementController : MonoBehaviour, IKillable
             PlayerPersistentStats.LoadInto(this, bombController);
 
         ApplySpeedInternal(speedInternal);
-        ForceExclusiveSpriteFromState();
+
+        EnableExclusiveFromState();
     }
 
     protected virtual void OnDisable()
     {
         touchingHazards.Clear();
+    }
+
+    void SetAnimEnabled(AnimatedSpriteRenderer r, bool on)
+    {
+        if (r == null)
+            return;
+
+        r.enabled = on;
+
+        if (r.TryGetComponent<SpriteRenderer>(out var sr))
+            sr.enabled = on;
+    }
+
+    public void SetAllSpritesVisible(bool visible)
+    {
+        SetAnimEnabled(spriteRendererUp, visible);
+        SetAnimEnabled(spriteRendererDown, visible);
+        SetAnimEnabled(spriteRendererLeft, visible);
+        SetAnimEnabled(spriteRendererRight, visible);
+        SetAnimEnabled(spriteRendererDeath, visible);
+        SetAnimEnabled(spriteRendererEndStage, visible);
+        SetAnimEnabled(spriteRendererCheering, visible);
+
+        SetAnimEnabled(mountedSpriteUp, visible);
+        SetAnimEnabled(mountedSpriteDown, visible);
+        SetAnimEnabled(mountedSpriteLeft, visible);
+        SetAnimEnabled(mountedSpriteRight, visible);
+
+        var rider = GetComponentInChildren<LouieRiderVisual>(true);
+        if (rider != null)
+        {
+            var srs = rider.GetComponentsInChildren<SpriteRenderer>(true);
+            for (int i = 0; i < srs.Length; i++)
+                if (srs[i] != null)
+                    srs[i].enabled = visible;
+
+            var anims = rider.GetComponentsInChildren<AnimatedSpriteRenderer>(true);
+            for (int i = 0; i < anims.Length; i++)
+                if (anims[i] != null)
+                    anims[i].enabled = visible;
+        }
+    }
+
+    // ✅ NOVO: liga apenas o sprite correto (e só ele)
+    public void EnableExclusiveFromState()
+    {
+        // IMPORTANTÍSSIMO: aqui é sempre OFF tudo primeiro
+        SetAllSpritesVisible(false);
+        ForceExclusiveSpriteFromState();
     }
 
     protected virtual void Update()
@@ -190,29 +242,20 @@ public class MovementController : MonoBehaviour, IKillable
 
         if (isMountedOnLouie)
         {
-            if (dir == Vector2.up)
-                SetDirection(Vector2.up, mountedSpriteUp != null ? mountedSpriteUp : spriteRendererUp);
-            else if (dir == Vector2.down)
-                SetDirection(Vector2.down, mountedSpriteDown != null ? mountedSpriteDown : spriteRendererDown);
-            else if (dir == Vector2.left)
-                SetDirection(Vector2.left, mountedSpriteLeft != null ? mountedSpriteLeft : spriteRendererLeft);
-            else if (dir == Vector2.right)
-                SetDirection(Vector2.right, mountedSpriteRight != null ? mountedSpriteRight : spriteRendererRight);
-            else
-            {
-                Vector2 face = facingDirection;
+            DisableAllFootSprites();
 
-                if (face == Vector2.up)
-                    SetDirection(Vector2.zero, mountedSpriteUp != null ? mountedSpriteUp : spriteRendererUp);
-                else if (face == Vector2.down)
-                    SetDirection(Vector2.zero, mountedSpriteDown != null ? mountedSpriteDown : spriteRendererDown);
-                else if (face == Vector2.left)
-                    SetDirection(Vector2.zero, mountedSpriteLeft != null ? mountedSpriteLeft : spriteRendererLeft);
-                else if (face == Vector2.right)
-                    SetDirection(Vector2.zero, mountedSpriteRight != null ? mountedSpriteRight : spriteRendererRight);
-                else
-                    SetDirection(Vector2.zero, mountedSpriteDown != null ? mountedSpriteDown : spriteRendererDown);
-            }
+            bool isIdle = (dir == Vector2.zero);
+            var target = GetMountedSprite(dir, isIdle);
+
+            if (target == null)
+                target = mountedSpriteDown;
+
+            DisableAllMountedSprites();
+
+            if (target != null)
+                SetDirection(dir, target);
+            else
+                SetDirection(Vector2.zero, null);
 
             return;
         }
@@ -240,6 +283,19 @@ public class MovementController : MonoBehaviour, IKillable
             else
                 SetDirection(Vector2.zero, activeSpriteRenderer);
         }
+    }
+
+    private AnimatedSpriteRenderer GetMountedSprite(Vector2 dir, bool idle)
+    {
+        Vector2 face = (dir == Vector2.zero) ? facingDirection : dir;
+        if (face == Vector2.zero) face = Vector2.down;
+
+        if (face == Vector2.up) return mountedSpriteUp;
+        if (face == Vector2.down) return mountedSpriteDown;
+        if (face == Vector2.left) return mountedSpriteLeft;
+        if (face == Vector2.right) return mountedSpriteRight;
+
+        return mountedSpriteDown;
     }
 
     public void ApplySpeedInternal(int newInternal)
@@ -515,15 +571,16 @@ public class MovementController : MonoBehaviour, IKillable
         if (activeSpriteRenderer != spriteRenderer)
         {
             if (activeSpriteRenderer != null)
-                activeSpriteRenderer.enabled = false;
+                SetAnimEnabled(activeSpriteRenderer, false);
 
             spriteRenderer.idle = isIdle;
-            spriteRenderer.enabled = true;
+            SetAnimEnabled(spriteRenderer, true);
             activeSpriteRenderer = spriteRenderer;
         }
         else
         {
             activeSpriteRenderer.idle = isIdle;
+            SetAnimEnabled(activeSpriteRenderer, true);
         }
 
         activeSpriteRenderer.RefreshFrame();
@@ -701,15 +758,12 @@ public class MovementController : MonoBehaviour, IKillable
         DisableAllFootSprites();
         DisableAllMountedSprites();
 
-        if (spriteRendererCheering != null)
-            spriteRendererCheering.enabled = false;
-
-        if (spriteRendererEndStage != null)
-            spriteRendererEndStage.enabled = false;
+        SetAnimEnabled(spriteRendererCheering, false);
+        SetAnimEnabled(spriteRendererEndStage, false);
 
         if (spriteRendererDeath != null)
         {
-            spriteRendererDeath.enabled = true;
+            SetAnimEnabled(spriteRendererDeath, true);
             spriteRendererDeath.idle = false;
             spriteRendererDeath.loop = false;
             activeSpriteRenderer = spriteRendererDeath;
@@ -719,7 +773,7 @@ public class MovementController : MonoBehaviour, IKillable
         {
             if (activeSpriteRenderer != null)
             {
-                activeSpriteRenderer.enabled = true;
+                SetAnimEnabled(activeSpriteRenderer, true);
                 activeSpriteRenderer.idle = true;
                 activeSpriteRenderer.loop = false;
                 activeSpriteRenderer.RefreshFrame();
@@ -763,19 +817,12 @@ public class MovementController : MonoBehaviour, IKillable
         Rigidbody.position = portalCenter;
         direction = Vector2.zero;
 
-        if (spriteRendererUp != null) spriteRendererUp.enabled = false;
-        if (spriteRendererDown != null) spriteRendererDown.enabled = false;
-        if (spriteRendererLeft != null) spriteRendererLeft.enabled = false;
-        if (spriteRendererRight != null) spriteRendererRight.enabled = false;
+        DisableAllFootSprites();
+        DisableAllMountedSprites();
 
-        if (spriteRendererDeath != null)
-            spriteRendererDeath.enabled = false;
-
-        if (spriteRendererCheering != null)
-            spriteRendererCheering.enabled = false;
-
-        if (spriteRendererEndStage != null)
-            spriteRendererEndStage.enabled = false;
+        SetAnimEnabled(spriteRendererDeath, false);
+        SetAnimEnabled(spriteRendererCheering, false);
+        SetAnimEnabled(spriteRendererEndStage, false);
 
         if (isMountedOnLouie)
         {
@@ -783,19 +830,14 @@ public class MovementController : MonoBehaviour, IKillable
             direction = Vector2.zero;
             hasInput = false;
 
-            if (mountedSpriteUp != null) mountedSpriteUp.enabled = false;
-            if (mountedSpriteLeft != null) mountedSpriteLeft.enabled = false;
-            if (mountedSpriteRight != null) mountedSpriteRight.enabled = false;
-
             var mountedDown = mountedSpriteDown != null ? mountedSpriteDown : spriteRendererDown;
 
             if (mountedDown != null)
             {
-                mountedDown.enabled = true;
+                SetAnimEnabled(mountedDown, true);
                 mountedDown.idle = true;
                 mountedDown.loop = false;
                 mountedDown.RefreshFrame();
-
                 activeSpriteRenderer = mountedDown;
             }
 
@@ -809,7 +851,7 @@ public class MovementController : MonoBehaviour, IKillable
 
         if (endSprite != null)
         {
-            endSprite.enabled = true;
+            SetAnimEnabled(endSprite, true);
             endSprite.idle = false;
             endSprite.loop = false;
 
@@ -889,11 +931,10 @@ public class MovementController : MonoBehaviour, IKillable
 
         if (up != null)
         {
-            up.enabled = true;
+            SetAnimEnabled(up, true);
             up.idle = true;
             up.loop = false;
             up.RefreshFrame();
-
             activeSpriteRenderer = up;
         }
 
@@ -924,19 +965,18 @@ public class MovementController : MonoBehaviour, IKillable
         if (Rigidbody != null)
             Rigidbody.linearVelocity = Vector2.zero;
 
-        if (spriteRendererUp != null) spriteRendererUp.enabled = false;
-        if (spriteRendererDown != null) spriteRendererDown.enabled = false;
-        if (spriteRendererLeft != null) spriteRendererLeft.enabled = false;
-        if (spriteRendererRight != null) spriteRendererRight.enabled = false;
-        if (spriteRendererDeath != null) spriteRendererDeath.enabled = false;
-        if (spriteRendererEndStage != null) spriteRendererEndStage.enabled = false;
+        DisableAllFootSprites();
+        DisableAllMountedSprites();
+
+        SetAnimEnabled(spriteRendererDeath, false);
+        SetAnimEnabled(spriteRendererEndStage, false);
 
         if (spriteRendererCheering != null)
         {
-            spriteRendererCheering.enabled = true;
+            SetAnimEnabled(spriteRendererCheering, true);
             spriteRendererCheering.idle = false;
             spriteRendererCheering.loop = true;
-            activeSpriteRenderer = spriteRendererEndStage;
+            activeSpriteRenderer = spriteRendererCheering;
         }
     }
 
@@ -974,6 +1014,8 @@ public class MovementController : MonoBehaviour, IKillable
             hasInput = false;
 
             ApplyDirectionFromVector(Vector2.zero);
+
+            DisableAllFootSprites();
             return;
         }
 
@@ -986,18 +1028,18 @@ public class MovementController : MonoBehaviour, IKillable
 
     private void DisableAllFootSprites()
     {
-        if (spriteRendererUp != null) spriteRendererUp.enabled = false;
-        if (spriteRendererDown != null) spriteRendererDown.enabled = false;
-        if (spriteRendererLeft != null) spriteRendererLeft.enabled = false;
-        if (spriteRendererRight != null) spriteRendererRight.enabled = false;
+        SetAnimEnabled(spriteRendererUp, false);
+        SetAnimEnabled(spriteRendererDown, false);
+        SetAnimEnabled(spriteRendererLeft, false);
+        SetAnimEnabled(spriteRendererRight, false);
     }
 
     private void DisableAllMountedSprites()
     {
-        if (mountedSpriteUp != null) mountedSpriteUp.enabled = false;
-        if (mountedSpriteDown != null) mountedSpriteDown.enabled = false;
-        if (mountedSpriteLeft != null) mountedSpriteLeft.enabled = false;
-        if (mountedSpriteRight != null) mountedSpriteRight.enabled = false;
+        SetAnimEnabled(mountedSpriteUp, false);
+        SetAnimEnabled(mountedSpriteDown, false);
+        SetAnimEnabled(mountedSpriteLeft, false);
+        SetAnimEnabled(mountedSpriteRight, false);
     }
 
     public void SetMountedSpritesLocalYOverride(bool enable, float localY)
@@ -1061,7 +1103,6 @@ public class MovementController : MonoBehaviour, IKillable
         }
 
         activeSpriteRenderer = null;
-
         SetDirection(Vector2.zero, target);
     }
 

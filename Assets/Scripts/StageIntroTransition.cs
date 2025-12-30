@@ -101,6 +101,10 @@ public class StageIntroTransition : MonoBehaviour
         foreach (var m in movementControllers) if (m) m.enabled = false;
         foreach (var b in bombControllers) if (b) b.enabled = false;
 
+        for (int i = 0; i < movementControllers.Length; i++)
+            if (movementControllers[i] != null)
+                movementControllers[i].SetAllSpritesVisible(false);
+
         GamePauseController.ClearPauseFlag();
         Time.timeScale = 0f;
 
@@ -132,13 +136,9 @@ public class StageIntroTransition : MonoBehaviour
         }
 
         if (!hasPlayedLogoIntro && hudsonLogoIntro != null)
-        {
             StartCoroutine(FullIntroSequence());
-        }
         else
-        {
             StartCoroutine(StageIntroOnlySequence());
-        }
     }
 
     bool IsStage17()
@@ -208,6 +208,15 @@ public class StageIntroTransition : MonoBehaviour
             gameplayRoot.SetActive(true);
 
         ApplyPersistentPlayerSkin();
+
+        // ✅ FIX: garante que cada player volta com SOMENTE 1 AnimatedSpriteRenderer ativo
+        for (int i = 0; i < movementControllers.Length; i++)
+        {
+            if (movementControllers[i] == null)
+                continue;
+
+            movementControllers[i].EnableExclusiveFromState();
+        }
 
         if (fadeImage == null)
         {
