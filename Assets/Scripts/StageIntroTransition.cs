@@ -209,12 +209,14 @@ public class StageIntroTransition : MonoBehaviour
 
         ApplyPersistentPlayerSkin();
 
-        // ✅ FIX: garante que cada player volta com SOMENTE 1 AnimatedSpriteRenderer ativo
+        yield return null;
+
         for (int i = 0; i < movementControllers.Length; i++)
         {
             if (movementControllers[i] == null)
                 continue;
 
+            movementControllers[i].SyncMountedFromPersistent();
             movementControllers[i].EnableExclusiveFromState();
         }
 

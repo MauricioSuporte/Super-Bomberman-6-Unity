@@ -108,6 +108,8 @@ public class MovementController : MonoBehaviour, IKillable
         if (CompareTag("Player"))
             PlayerPersistentStats.LoadInto(this, bombController);
 
+        SyncMountedFromPersistent();
+
         activeSpriteRenderer = spriteRendererDown;
         direction = Vector2.zero;
 
@@ -124,7 +126,6 @@ public class MovementController : MonoBehaviour, IKillable
         }
 
         ApplySpeedInternal(speedInternal);
-
         EnableExclusiveFromState();
     }
 
@@ -137,14 +138,24 @@ public class MovementController : MonoBehaviour, IKillable
         if (CompareTag("Player"))
             PlayerPersistentStats.LoadInto(this, bombController);
 
+        SyncMountedFromPersistent();
         ApplySpeedInternal(speedInternal);
-
         EnableExclusiveFromState();
     }
 
     protected virtual void OnDisable()
     {
         touchingHazards.Clear();
+    }
+
+    public void SyncMountedFromPersistent()
+    {
+        if (!CompareTag("Player"))
+            return;
+
+        isMountedOnLouie = PlayerPersistentStats.MountedLouie != MountedLouieType.None;
+        if (facingDirection == Vector2.zero)
+            facingDirection = Vector2.down;
     }
 
     void SetAnimEnabled(AnimatedSpriteRenderer r, bool on)
@@ -188,10 +199,8 @@ public class MovementController : MonoBehaviour, IKillable
         }
     }
 
-    // ✅ NOVO: liga apenas o sprite correto (e só ele)
     public void EnableExclusiveFromState()
     {
-        // IMPORTANTÍSSIMO: aqui é sempre OFF tudo primeiro
         SetAllSpritesVisible(false);
         ForceExclusiveSpriteFromState();
     }
@@ -1013,7 +1022,8 @@ public class MovementController : MonoBehaviour, IKillable
             direction = Vector2.zero;
             hasInput = false;
 
-            ApplyDirectionFromVector(Vector2.zero);
+            activeSpriteRenderer = null;
+            ForceExclusiveSpriteFromState();
 
             DisableAllFootSprites();
             return;
