@@ -1605,6 +1605,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4d2807c5c57c72e4a8a52390ba37be9a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TitleScreenController
+  startSfx: {fileID: 8300000, guid: f4ca5a046054f404aa2ac2df051e75c0, type: 3}
+  startSfxVolume: 1
   titleScreenRawImage: {fileID: 362350263}
   titleVideoPlayer: {fileID: 362350260}
   titleMusic: {fileID: 8300000, guid: c4def1af64d2e154f8c8cbd7a0472a10, type: 3}
@@ -5109,8 +5111,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BomberSkinSelectMenu
   root: {fileID: 861532794}
   backgroundImage: {fileID: 1806562755}
-  nameText: {fileID: 1569088797}
-  hintText: {fileID: 1562314718}
   gridRoot: {fileID: 607783271}
   skinItemPrefab: {fileID: 136072051}
   columns: 4
@@ -5132,6 +5132,8 @@ MonoBehaviour:
   confirmSfxVolume: 1
   lockedConfirmSfx: {fileID: 8300000, guid: 2f98cb783cdc9bb4d8ff3b868291f743, type: 3}
   lockedConfirmSfxVolume: 1
+  konamiUnlockSfx: {fileID: 0}
+  konamiUnlockSfxVolume: 1
   leftKey: 276
   rightKey: 275
   upKey: 273

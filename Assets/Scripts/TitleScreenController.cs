@@ -7,6 +7,13 @@ using UnityEngine.Video;
 [RequireComponent(typeof(VideoPlayer))]
 public class TitleScreenController : MonoBehaviour
 {
+    [Header("SFX")]
+    public AudioClip startSfx;
+    [Range(0f, 1f)]
+    public float startSfxVolume = 1f;
+
+    private static readonly WaitForSecondsRealtime _waitForSecondsRealtime2 = new(2f);
+
     [Header("UI / Video")]
     public RawImage titleScreenRawImage;
     public VideoPlayer titleVideoPlayer;
@@ -97,6 +104,15 @@ public class TitleScreenController : MonoBehaviour
 
         while (!Input.GetKeyDown(startKey))
             yield return null;
+
+        if (startSfx != null && GameMusicController.Instance != null)
+            GameMusicController.Instance.PlaySfx(startSfx, startSfxVolume);
+
+        var transition = StageIntroTransition.Instance;
+        if (transition != null)
+            transition.StartFadeOut(2f, false);
+
+        yield return _waitForSecondsRealtime2;
 
         if (GameMusicController.Instance != null)
             GameMusicController.Instance.StopMusic();

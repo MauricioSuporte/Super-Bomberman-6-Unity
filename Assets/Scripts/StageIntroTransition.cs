@@ -11,6 +11,8 @@ public class StageIntroTransition : MonoBehaviour
     [Header("Fade")]
     public Image fadeImage;
 
+    Coroutine fadeOutCoroutine;
+
     [Header("Hudson Logo")]
     public HudsonLogoIntro hudsonLogoIntro;
 
@@ -409,6 +411,11 @@ public class StageIntroTransition : MonoBehaviour
 
     public void StartFadeOut(float fadeDuration)
     {
+        StartFadeOut(fadeDuration, true);
+    }
+
+    public void StartFadeOut(float fadeDuration, bool stopOtherCoroutines)
+    {
         if (StageMechaIntroController.Instance != null)
         {
             StageMechaIntroController.Instance.StartFadeOut(fadeDuration);
@@ -419,13 +426,18 @@ public class StageIntroTransition : MonoBehaviour
             return;
 
         fadeImage.gameObject.SetActive(true);
+        fadeImage.transform.SetAsLastSibling();
 
         Color c = fadeImage.color;
         c.a = 0f;
         fadeImage.color = c;
 
-        StopAllCoroutines();
-        StartCoroutine(FadeOutRoutine(fadeDuration));
+        if (stopOtherCoroutines)
+            StopAllCoroutines();
+        else if (fadeOutCoroutine != null)
+            StopCoroutine(fadeOutCoroutine);
+
+        fadeOutCoroutine = StartCoroutine(FadeOutRoutine(fadeDuration));
     }
 
     IEnumerator FadeOutRoutine(float fadeDuration)
