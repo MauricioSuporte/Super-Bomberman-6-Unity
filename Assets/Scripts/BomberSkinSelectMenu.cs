@@ -9,6 +9,10 @@ public class BomberSkinSelectMenu : MonoBehaviour
     [SerializeField] GameObject root;
     [SerializeField] Image backgroundImage;
 
+    [Header("Fade")]
+    [SerializeField] Image fadeImage;
+    [SerializeField] float fadeDuration = 1f;
+
     [Header("Grid")]
     [SerializeField] Transform gridRoot;
     [SerializeField] Image skinItemPrefab;
@@ -108,8 +112,7 @@ public class BomberSkinSelectMenu : MonoBehaviour
         if (gridRoot == null || skinItemPrefab == null)
             return;
 
-        var grid = gridRoot.GetComponent<GridLayoutGroup>();
-        if (grid != null)
+        if (gridRoot.TryGetComponent<GridLayoutGroup>(out var grid))
         {
             grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
             grid.constraintCount = Mathf.Max(1, columns);
@@ -133,6 +136,7 @@ public class BomberSkinSelectMenu : MonoBehaviour
             var img = Instantiate(skinItemPrefab, gridRoot);
             img.gameObject.SetActive(true);
             img.preserveAspect = true;
+            img.enabled = false;
             slots.Add(img);
         }
     }
@@ -150,6 +154,13 @@ public class BomberSkinSelectMenu : MonoBehaviour
 
         root.transform.SetAsLastSibling();
         root.SetActive(true);
+
+        if (fadeImage != null)
+        {
+            fadeImage.gameObject.SetActive(true);
+            fadeImage.transform.SetAsLastSibling();
+            SetFadeAlpha(1f);
+        }
 
         if (backgroundImage != null && backgroundSprite != null)
             backgroundImage.sprite = backgroundSprite;
@@ -171,7 +182,13 @@ public class BomberSkinSelectMenu : MonoBehaviour
 
         selected = PlayerPersistentStats.Skin;
 
+        PreloadAllIdleSprites();
         Refresh();
+
+        Canvas.ForceUpdateCanvases();
+        yield return null;
+
+        yield return FadeInRoutine();
 
         bool done = false;
         while (!done)
@@ -241,8 +258,13 @@ public class BomberSkinSelectMenu : MonoBehaviour
             yield return null;
         }
 
+        yield return FadeOutRoutine();
+
         StopSelectMusicAndRestorePrevious();
         Hide();
+
+        if (fadeImage != null)
+            fadeImage.gameObject.SetActive(false);
     }
 
     public BomberSkin GetSelectedSkin() => selected;
@@ -418,5 +440,64 @@ public class BomberSkinSelectMenu : MonoBehaviour
         v %= count;
         if (v < 0) v += count;
         return v;
+    }
+
+    IEnumerator FadeInRoutine()
+    {
+        if (fadeImage == null)
+            yield break;
+
+        float duration = Mathf.Max(0.001f, fadeDuration);
+        float t = 0f;
+
+        while (t < duration)
+        {
+            t += Time.unscaledDeltaTime;
+            float a = 1f - Mathf.Clamp01(t / duration);
+            SetFadeAlpha(a);
+            yield return null;
+        }
+
+        SetFadeAlpha(0f);
+        fadeImage.gameObject.SetActive(false);
+    }
+
+    IEnumerator FadeOutRoutine()
+    {
+        if (fadeImage == null)
+            yield break;
+
+        fadeImage.gameObject.SetActive(true);
+        fadeImage.transform.SetAsLastSibling();
+        SetFadeAlpha(0f);
+
+        float duration = Mathf.Max(0.001f, fadeDuration);
+        float t = 0f;
+
+        while (t < duration)
+        {
+            t += Time.unscaledDeltaTime;
+            float a = Mathf.Clamp01(t / duration);
+            SetFadeAlpha(a);
+            yield return null;
+        }
+
+        SetFadeAlpha(1f);
+    }
+
+    void SetFadeAlpha(float a)
+    {
+        if (fadeImage == null)
+            return;
+
+        var c = fadeImage.color;
+        c.a = a;
+        fadeImage.color = c;
+    }
+
+    void PreloadAllIdleSprites()
+    {
+        for (int i = 0; i < selectableSkins.Count; i++)
+            GetIdleSprite(selectableSkins[i]);
     }
 }

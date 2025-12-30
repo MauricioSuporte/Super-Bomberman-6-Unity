@@ -5111,6 +5111,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BomberSkinSelectMenu
   root: {fileID: 861532794}
   backgroundImage: {fileID: 1806562755}
+  fadeImage: {fileID: 336813435}
+  fadeDuration: 3
   gridRoot: {fileID: 607783271}
   skinItemPrefab: {fileID: 136072051}
   columns: 4
