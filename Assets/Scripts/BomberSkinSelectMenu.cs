@@ -46,13 +46,17 @@ public class BomberSkinSelectMenu : MonoBehaviour
     [SerializeField] AudioClip konamiUnlockSfx;
     [SerializeField, Range(0f, 1f)] float konamiUnlockSfxVolume = 1f;
 
-    [Header("Input")]
+    [Header("Input (fallback - caso não use MovementController)")]
     [SerializeField] KeyCode leftKey = KeyCode.A;
     [SerializeField] KeyCode rightKey = KeyCode.D;
     [SerializeField] KeyCode upKey = KeyCode.W;
     [SerializeField] KeyCode downKey = KeyCode.S;
     [SerializeField] KeyCode confirmKey = KeyCode.Return;
     [SerializeField] KeyCode cancelKey = KeyCode.Escape;
+
+    [Header("Input Source")]
+    [SerializeField] bool useMovementControllerBindings = true;
+    [SerializeField] string playerTag = "Player";
 
     [Header("Skins (ordem do menu)")]
     [SerializeField]
@@ -93,6 +97,11 @@ public class BomberSkinSelectMenu : MonoBehaviour
 
     int konamiStep;
 
+    KeyCode moveLeft;
+    KeyCode moveRight;
+    KeyCode moveUp;
+    KeyCode moveDown;
+
     void Awake()
     {
         if (root == null)
@@ -106,6 +115,50 @@ public class BomberSkinSelectMenu : MonoBehaviour
         if (root != null)
             root.SetActive(false);
     }
+
+    void ResolveMovementKeys()
+    {
+        moveLeft = leftKey;
+        moveRight = rightKey;
+        moveUp = upKey;
+        moveDown = downKey;
+
+        if (!useMovementControllerBindings)
+        {
+            SanitizeMoveKeys();
+            return;
+        }
+
+        MovementController mc = null;
+
+        var player = GameObject.FindGameObjectWithTag(playerTag);
+        if (player != null)
+            mc = player.GetComponent<MovementController>();
+
+        if (mc == null)
+            mc = Object.FindFirstObjectByType<MovementController>();
+
+        if (mc != null)
+        {
+            moveUp = mc.inputUp;
+            moveDown = mc.inputDown;
+            moveLeft = mc.inputLeft;
+            moveRight = mc.inputRight;
+        }
+
+        SanitizeMoveKeys();
+    }
+
+    void SanitizeMoveKeys()
+    {
+        if (IsArrow(moveLeft)) moveLeft = KeyCode.A;
+        if (IsArrow(moveRight)) moveRight = KeyCode.D;
+        if (IsArrow(moveUp)) moveUp = KeyCode.W;
+        if (IsArrow(moveDown)) moveDown = KeyCode.S;
+    }
+
+    static bool IsArrow(KeyCode k) =>
+        k == KeyCode.UpArrow || k == KeyCode.DownArrow || k == KeyCode.LeftArrow || k == KeyCode.RightArrow;
 
     void BuildGrid()
     {
@@ -151,6 +204,8 @@ public class BomberSkinSelectMenu : MonoBehaviour
 
     public IEnumerator SelectSkinRoutine()
     {
+        ResolveMovementKeys();
+
         if (root == null)
             root = gameObject;
 
@@ -175,7 +230,7 @@ public class BomberSkinSelectMenu : MonoBehaviour
 
         StartSelectMusic();
 
-        while (Input.GetKey(confirmKey) || Input.GetKey(leftKey) || Input.GetKey(rightKey) || Input.GetKey(upKey) || Input.GetKey(downKey))
+        while (Input.GetKey(confirmKey) || Input.GetKey(moveLeft) || Input.GetKey(moveRight) || Input.GetKey(moveUp) || Input.GetKey(moveDown))
             yield return null;
 
         yield return null;
@@ -203,22 +258,22 @@ public class BomberSkinSelectMenu : MonoBehaviour
             bool moved = false;
             int nextIndex = index;
 
-            if (Input.GetKeyDown(leftKey))
+            if (Input.GetKeyDown(moveLeft))
             {
                 nextIndex = Wrap(index - 1, selectableSkins.Count);
                 moved = true;
             }
-            else if (Input.GetKeyDown(rightKey))
+            else if (Input.GetKeyDown(moveRight))
             {
                 nextIndex = Wrap(index + 1, selectableSkins.Count);
                 moved = true;
             }
-            else if (Input.GetKeyDown(upKey))
+            else if (Input.GetKeyDown(moveUp))
             {
                 nextIndex = MoveGrid(index, -columns);
                 moved = true;
             }
-            else if (Input.GetKeyDown(downKey))
+            else if (Input.GetKeyDown(moveDown))
             {
                 nextIndex = MoveGrid(index, +columns);
                 moved = true;
@@ -283,9 +338,6 @@ public class BomberSkinSelectMenu : MonoBehaviour
 
     bool ProcessKonamiCode()
     {
-        if (!Input.anyKeyDown)
-            return false;
-
         KeyCode pressed = KeyCode.None;
 
         if (Input.GetKeyDown(KeyCode.UpArrow)) pressed = KeyCode.UpArrow;
