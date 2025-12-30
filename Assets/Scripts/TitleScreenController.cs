@@ -92,14 +92,6 @@ public class TitleScreenController : MonoBehaviour
         titleVideoPlayer.Stop();
         titleScreenRawImage.gameObject.SetActive(false);
 
-        if (fadeToHideOptional != null)
-        {
-            fadeToHideOptional.gameObject.SetActive(true);
-            var c = fadeToHideOptional.color;
-            c.a = 1f;
-            fadeToHideOptional.color = c;
-        }
-
         Running = false;
     }
 }

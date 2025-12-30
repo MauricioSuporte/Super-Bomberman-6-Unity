@@ -7,9 +7,22 @@ public class BomberSkinSelectMenu : MonoBehaviour
 {
     [Header("UI")]
     [SerializeField] GameObject root;
-    [SerializeField] Image previewImage;
+    [SerializeField] Image backgroundImage;
+    [SerializeField] Image bomberImage;
     [SerializeField] Text nameText;
     [SerializeField] Text hintText;
+
+    [Header("Background Sprite")]
+    [SerializeField] Sprite backgroundSprite;
+
+    [Header("Resources")]
+    [SerializeField] string spritesResourcesPath = "Sprites/Bombers/Bomberman";
+    [SerializeField] int idleFrameIndex = 16;
+
+    [Header("Music")]
+    [SerializeField] AudioClip selectMusic;
+    [SerializeField, Range(0f, 1f)] float selectMusicVolume = 1f;
+    [SerializeField] bool loopSelectMusic = true;
 
     [Header("Input")]
     [SerializeField] KeyCode leftKey = KeyCode.LeftArrow;
@@ -32,39 +45,56 @@ public class BomberSkinSelectMenu : MonoBehaviour
         BomberSkin.Golden
     };
 
-    [Header("Preview Sprites (opcional)")]
-    [SerializeField] List<SkinPreview> previews = new();
+    readonly Dictionary<BomberSkin, Sprite> spriteCache = new();
 
-    [System.Serializable]
-    public class SkinPreview
-    {
-        public BomberSkin skin;
-        public Sprite sprite;
-    }
-
-    bool isOpen;
     int index;
     BomberSkin selected;
 
+    AudioClip previousClip;
+    float previousVolume;
+    bool previousLoop;
+    bool capturedPreviousMusic;
+
+    void Awake()
+    {
+        if (root == null)
+            root = gameObject;
+
+        if (backgroundImage != null && backgroundSprite != null)
+            backgroundImage.sprite = backgroundSprite;
+
+        if (root != null)
+            root.SetActive(false);
+    }
+
     public void Hide()
     {
-        isOpen = false;
         if (root != null) root.SetActive(false);
         else gameObject.SetActive(false);
     }
 
     public IEnumerator SelectSkinRoutine()
     {
-        if (selectableSkins == null || selectableSkins.Count == 0)
-            yield break;
+        if (root == null)
+            root = gameObject;
 
-        isOpen = true;
+        root.transform.SetAsLastSibling();
+        root.SetActive(true);
 
-        if (root != null) root.SetActive(true);
-        else gameObject.SetActive(true);
+        if (backgroundImage != null && backgroundSprite != null)
+            backgroundImage.sprite = backgroundSprite;
 
-        index = Mathf.Max(0, selectableSkins.IndexOf(PlayerPersistentStats.Skin));
+        StartSelectMusic();
+
+        while (Input.GetKey(confirmKey) || Input.GetKey(leftKey) || Input.GetKey(rightKey))
+            yield return null;
+
+        yield return null;
+
+        index = selectableSkins.IndexOf(PlayerPersistentStats.Skin);
         if (index < 0) index = 0;
+
+        selected = PlayerPersistentStats.Skin;
 
         Refresh();
 
@@ -103,38 +133,111 @@ public class BomberSkinSelectMenu : MonoBehaviour
             yield return null;
         }
 
+        StopSelectMusicAndRestorePrevious();
         Hide();
     }
 
     public BomberSkin GetSelectedSkin() => selected;
 
+    void StartSelectMusic()
+    {
+        var music = GameMusicController.Instance;
+        if (music == null || selectMusic == null)
+            return;
+
+        if (!capturedPreviousMusic)
+        {
+            var src = music.GetComponent<AudioSource>();
+            if (src != null)
+            {
+                previousClip = src.clip;
+                previousVolume = src.volume;
+                previousLoop = src.loop;
+                capturedPreviousMusic = true;
+            }
+        }
+
+        music.PlayMusic(selectMusic, selectMusicVolume, loopSelectMusic);
+    }
+
+    void StopSelectMusicAndRestorePrevious()
+    {
+        var music = GameMusicController.Instance;
+        if (music == null)
+            return;
+
+        if (!capturedPreviousMusic)
+        {
+            music.StopMusic();
+            return;
+        }
+
+        if (previousClip != null)
+            music.PlayMusic(previousClip, previousVolume, previousLoop);
+        else
+            music.StopMusic();
+    }
+
     void Refresh()
     {
         var skin = selectableSkins[index];
+        bool unlocked = PlayerPersistentStats.IsSkinUnlocked(skin);
 
         if (nameText != null)
             nameText.text = skin.ToString();
 
-        bool unlocked = PlayerPersistentStats.IsSkinUnlocked(skin);
-
         if (hintText != null)
             hintText.text = unlocked ? "← → escolher  |  Enter confirmar" : "Bloqueada (Golden)";
 
-        if (previewImage != null)
+        if (bomberImage != null)
         {
-            previewImage.sprite = GetPreviewSprite(skin);
-            previewImage.enabled = (previewImage.sprite != null);
-            previewImage.color = unlocked ? Color.white : new Color(1f, 1f, 1f, 0.35f);
+            bomberImage.sprite = GetIdleSprite(skin);
+            bomberImage.enabled = bomberImage.sprite != null;
+            bomberImage.preserveAspect = true;
+            bomberImage.color = unlocked ? Color.white : new Color(1f, 1f, 1f, 0.35f);
         }
     }
 
-    Sprite GetPreviewSprite(BomberSkin skin)
+    Sprite GetIdleSprite(BomberSkin skin)
     {
-        for (int i = 0; i < previews.Count; i++)
-            if (previews[i] != null && previews[i].skin == skin)
-                return previews[i].sprite;
+        if (spriteCache.TryGetValue(skin, out var cached))
+            return cached;
 
-        return null;
+        string sheetName = skin + "Bomber";
+        string sheetPath = $"{spritesResourcesPath}/{sheetName}";
+        var sprites = Resources.LoadAll<Sprite>(sheetPath);
+
+        string wantedName = $"{sheetName}_{idleFrameIndex}";
+
+        Sprite chosen = null;
+
+        if (sprites != null && sprites.Length > 0)
+        {
+            for (int i = 0; i < sprites.Length; i++)
+            {
+                var s = sprites[i];
+                if (s != null && s.name == wantedName)
+                {
+                    chosen = s;
+                    break;
+                }
+            }
+
+            if (chosen == null)
+            {
+                for (int i = 0; i < sprites.Length; i++)
+                {
+                    if (sprites[i] != null)
+                    {
+                        chosen = sprites[i];
+                        break;
+                    }
+                }
+            }
+        }
+
+        spriteCache[skin] = chosen;
+        return chosen;
     }
 
     int Wrap(int v, int count)

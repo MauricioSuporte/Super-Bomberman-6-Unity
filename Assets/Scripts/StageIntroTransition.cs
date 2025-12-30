@@ -173,6 +173,9 @@ public class StageIntroTransition : MonoBehaviour
 
         yield return titleScreen.Play(fadeImage);
 
+        if (fadeImage != null)
+            fadeImage.gameObject.SetActive(false);
+
         if (skinSelectMenu != null)
         {
             yield return skinSelectMenu.SelectSkinRoutine();

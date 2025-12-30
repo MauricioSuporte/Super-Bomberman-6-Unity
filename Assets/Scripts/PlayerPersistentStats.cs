@@ -30,8 +30,8 @@ public static class PlayerPersistentStats
     public static bool HasControlBombs = false;
     public static bool HasFullFire = false;
 
-    public static MountedLouieType MountedLouie = MountedLouieType.Yellow;
-    public static BomberSkin Skin = BomberSkin.Yellow;
+    public static MountedLouieType MountedLouie = MountedLouieType.None;
+    public static BomberSkin Skin = BomberSkin.White;
 
     const string PrefGoldenUnlocked = "SKIN_GOLDEN_UNLOCKED";
     const string PrefSelectedSkin = "SKIN_SELECTED";
