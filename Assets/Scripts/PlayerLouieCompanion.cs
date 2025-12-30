@@ -893,4 +893,20 @@ public class PlayerLouieCompanion : MonoBehaviour
 
         ApplyRulesForCurrentMount();
     }
+
+    public void SetMountedLouieVisible(bool visible)
+    {
+        if (currentLouie == null)
+            return;
+
+        currentLouie.SetActive(visible);
+    }
+
+    public void SetPlayerAndLouieVisible(bool visible)
+    {
+        if (movement != null)
+            movement.SetAllSpritesVisible(visible);
+
+        SetMountedLouieVisible(visible);
+    }
 }

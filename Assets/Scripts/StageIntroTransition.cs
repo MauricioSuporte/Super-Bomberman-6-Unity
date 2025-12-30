@@ -213,11 +213,23 @@ public class StageIntroTransition : MonoBehaviour
 
         for (int i = 0; i < movementControllers.Length; i++)
         {
-            if (movementControllers[i] == null)
+            var m = movementControllers[i];
+            if (m == null)
                 continue;
 
-            movementControllers[i].SyncMountedFromPersistent();
-            movementControllers[i].EnableExclusiveFromState();
+            m.SyncMountedFromPersistent();
+
+            if (IsStage17() && m.CompareTag("Player"))
+            {
+                m.SetAllSpritesVisible(false);
+
+                if (m.TryGetComponent<PlayerLouieCompanion>(out var comp) && comp != null)
+                    comp.SetMountedLouieVisible(false);
+
+                continue;
+            }
+
+            m.EnableExclusiveFromState();
         }
 
         if (fadeImage == null)

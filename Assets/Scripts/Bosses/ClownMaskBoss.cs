@@ -224,6 +224,10 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
 
         EnsurePlayerRefs();
         SpawnPlayerForBossIntro();
+
+        EnsureMountedLouieExistsIfNeeded();
+        ForceLouieRiderVisualRenderers(true);
+
         LockPlayer(true);
         ShowPlayerIdleUpOnly();
 
@@ -395,6 +399,9 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
             return;
 
         SetPlayerHidden(false);
+
+        EnsureMountedLouieExistsIfNeeded();
+        ForceLouieRiderVisualRenderers(true);
 
         if (player.TryGetComponent<BombPunchAbility>(out var punch))
             punch.ForceResetPunchSprites();
@@ -975,5 +982,54 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
 
         if (playerBomb == null)
             playerBomb = go.GetComponent<BombController>();
+    }
+
+    void EnsureMountedLouieExistsIfNeeded()
+    {
+        if (player == null)
+            return;
+
+        if (!player.IsMountedOnLouie)
+            return;
+
+        if (!player.TryGetComponent<PlayerLouieCompanion>(out var comp) || comp == null)
+            return;
+
+        if (comp.HasMountedLouie())
+            return;
+
+        switch (PlayerPersistentStats.MountedLouie)
+        {
+            case MountedLouieType.Blue: comp.RestoreMountedBlueLouie(); break;
+            case MountedLouieType.Black: comp.RestoreMountedBlackLouie(); break;
+            case MountedLouieType.Purple: comp.RestoreMountedPurpleLouie(); break;
+            case MountedLouieType.Green: comp.RestoreMountedGreenLouie(); break;
+            case MountedLouieType.Yellow: comp.RestoreMountedYellowLouie(); break;
+            case MountedLouieType.Pink: comp.RestoreMountedPinkLouie(); break;
+            case MountedLouieType.Red: comp.RestoreMountedRedLouie(); break;
+        }
+    }
+
+    void ForceLouieRiderVisualRenderers(bool visible)
+    {
+        if (player == null)
+            return;
+
+        var rider = player.GetComponentInChildren<LouieRiderVisual>(true);
+        if (rider == null)
+            return;
+
+        var srs = rider.GetComponentsInChildren<SpriteRenderer>(true);
+        for (int i = 0; i < srs.Length; i++)
+            if (srs[i] != null)
+                srs[i].enabled = visible;
+
+        var anims = rider.GetComponentsInChildren<AnimatedSpriteRenderer>(true);
+        for (int i = 0; i < anims.Length; i++)
+            if (anims[i] != null)
+                anims[i].enabled = visible;
+
+        if (rider.gameObject != null)
+            rider.gameObject.SetActive(visible);
     }
 }
