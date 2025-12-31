@@ -23,6 +23,7 @@ public class TitleScreenController : MonoBehaviour
 
     [Header("Input")]
     public KeyCode startKey = KeyCode.Return;
+    [SerializeField] KeyCode startKeyAlt = KeyCode.M;
 
     public bool Running { get; private set; }
 
@@ -90,10 +91,10 @@ public class TitleScreenController : MonoBehaviour
         titleVideoPlayer.Stop();
         titleVideoPlayer.Play();
 
-        if (ignoreStartKeyUntilRelease || Input.GetKey(startKey))
+        if (ignoreStartKeyUntilRelease || Input.GetKey(startKey) || Input.GetKey(startKeyAlt))
         {
             ignoreStartKeyUntilRelease = false;
-            while (Input.GetKey(startKey))
+            while (Input.GetKey(startKey) || Input.GetKey(startKeyAlt))
                 yield return null;
             yield return null;
         }
@@ -102,7 +103,7 @@ public class TitleScreenController : MonoBehaviour
             yield return null;
         }
 
-        while (!Input.GetKeyDown(startKey))
+        while (!Input.GetKeyDown(startKey) && !Input.GetKeyDown(startKeyAlt))
             yield return null;
 
         if (startSfx != null && GameMusicController.Instance != null)

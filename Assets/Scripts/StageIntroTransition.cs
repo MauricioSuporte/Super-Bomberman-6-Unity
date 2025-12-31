@@ -182,6 +182,15 @@ public class StageIntroTransition : MonoBehaviour
         {
             yield return skinSelectMenu.SelectSkinRoutine();
 
+            if (skinSelectMenu.ReturnToTitleRequested)
+            {
+                if (titleScreen != null)
+                    titleScreen.SetIgnoreStartKeyUntilRelease();
+
+                yield return ShowTitleScreen();
+                yield break;
+            }
+
             var chosen = skinSelectMenu.GetSelectedSkin();
             PlayerPersistentStats.Skin = chosen;
             if (chosen != BomberSkin.Golden)

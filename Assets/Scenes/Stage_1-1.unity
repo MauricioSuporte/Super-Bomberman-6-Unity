@@ -5248,6 +5248,12 @@ MonoBehaviour:
   skinCursor: {fileID: 258300565}
   cursorPadding: {x: 10, y: 6}
   cursorMatchSelectedScale: 1
+  cursorSizeMultiplier: {x: 0.75, y: 0.75}
+  cursorYOffset: 25
+  cursorBlinkWhileNotConfirmed: 1
+  cursorBlinkSpeed: 5.5
+  cursorBlinkMinAlpha: 0.25
+  cursorBlinkMaxAlpha: 1
   backgroundSprite: {fileID: 21300000, guid: 06139589de34eed4a966c3011469d4c3, type: 3}
   spritesResourcesPath: Sprites/Bombers/Bomberman
   idleFrameIndex: 16
@@ -5274,11 +5280,13 @@ MonoBehaviour:
   downKey: 274
   confirmKey: 13
   cancelKey: 27
+  confirmKeyAlt: 109
+  backToTitleKey: 110
+  backToTitleSfx: {fileID: 8300000, guid: 30ca55f720379e64ab9b908db035db4c, type: 3}
+  backToTitleSfxVolume: 1
   useMovementControllerBindings: 1
   playerTag: Player
   selectableSkins: 01000000030000000b0000000400000008000000060000000f0000000a00000000000000
-  cursorSizeMultiplier: {x: 0.75, y: 0.75}
-  cursorYOffset: 25
 --- !u!224 &1311323898
 RectTransform:
   m_ObjectHideFlags: 0

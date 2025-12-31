@@ -79,6 +79,16 @@ public class BomberSkinSelectMenu : MonoBehaviour
     [SerializeField] KeyCode confirmKey = KeyCode.Return;
     [SerializeField] KeyCode cancelKey = KeyCode.Escape;
 
+    [Header("Input Extra")]
+    [SerializeField] KeyCode confirmKeyAlt = KeyCode.M;
+    [SerializeField] KeyCode backToTitleKey = KeyCode.N;
+
+    [Header("SFX (Back to Title)")]
+    [SerializeField] AudioClip backToTitleSfx;
+    [SerializeField, Range(0f, 1f)] float backToTitleSfxVolume = 1f;
+
+    public bool ReturnToTitleRequested { get; private set; }
+
     [Header("Input Source")]
     [SerializeField] bool useMovementControllerBindings = true;
     [SerializeField] string playerTag = "Player";
@@ -480,6 +490,7 @@ public class BomberSkinSelectMenu : MonoBehaviour
             BuildGrid();
 
         konamiStep = 0;
+        ReturnToTitleRequested = false;
         confirmedSelection = false;
         selectedIndex = -1;
 
@@ -556,6 +567,8 @@ public class BomberSkinSelectMenu : MonoBehaviour
                 moved = true;
             }
 
+            bool confirmPressed = Input.GetKeyDown(confirmKey) || Input.GetKeyDown(confirmKeyAlt);
+
             if (moved)
             {
                 if (nextIndex != index)
@@ -567,7 +580,15 @@ public class BomberSkinSelectMenu : MonoBehaviour
                     RefreshVisuals();
                 }
             }
-            else if (Input.GetKeyDown(confirmKey))
+            else if (Input.GetKeyDown(backToTitleKey))
+            {
+                ReturnToTitleRequested = true;
+                PlaySfx(backToTitleSfx, backToTitleSfxVolume);
+
+                selected = PlayerPersistentStats.Skin;
+                done = true;
+            }
+            else if (confirmPressed)
             {
                 var skin = selectableSkins[index];
                 if (PlayerPersistentStats.IsSkinUnlocked(skin))
