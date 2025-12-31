@@ -31,9 +31,7 @@ public class StageIntroTransition : MonoBehaviour
     public string firstStageSceneName = "Stage_1-1";
 
     [Header("Ending Screen")]
-    public Image endingScreenImage;
-    public AudioClip endingScreenMusic;
-    public KeyCode restartKey = KeyCode.Return;
+    public EndingScreenController endingScreen;
 
     [Header("Gameplay Root")]
     public GameObject gameplayRoot;
@@ -80,6 +78,9 @@ public class StageIntroTransition : MonoBehaviour
 
         if (hudsonLogoIntro != null)
             hudsonLogoIntro.ForceHide();
+
+        if (endingScreen != null)
+            endingScreen.ForceHide();
     }
 
     void Start()
@@ -119,14 +120,14 @@ public class StageIntroTransition : MonoBehaviour
             fadeImage.gameObject.SetActive(true);
         }
 
-        if (endingScreenImage != null)
-            endingScreenImage.gameObject.SetActive(false);
-
         if (titleScreen != null)
             titleScreen.ForceHide();
 
         if (hudsonLogoIntro != null)
             hudsonLogoIntro.ForceHide();
+
+        if (endingScreen != null)
+            endingScreen.ForceHide();
 
         if (skipTitleNextRound)
         {
@@ -347,85 +348,29 @@ public class StageIntroTransition : MonoBehaviour
         if (hudsonLogoIntro != null)
             hudsonLogoIntro.ForceHide();
 
-        if (endingScreenImage != null)
-        {
-            endingScreenImage.enabled = true;
-            endingScreenImage.gameObject.SetActive(true);
-
-            Color c = endingScreenImage.color;
-            c.a = 0f;
-            endingScreenImage.color = c;
-
-            if (endingScreenMusic != null && GameMusicController.Instance != null)
-                GameMusicController.Instance.PlayMusic(endingScreenMusic, 1f, true);
-
-            float duration = 2f;
-            float t = 0f;
-
-            while (t < duration)
-            {
-                t += Time.unscaledDeltaTime;
-                float progress = Mathf.Clamp01(t / duration);
-
-                c.a = progress;
-                endingScreenImage.color = c;
-
-                if (fadeImage != null)
-                {
-                    var fc = fadeImage.color;
-                    fc.a = 1f - progress;
-                    fadeImage.color = fc;
-                }
-
-                yield return null;
-            }
-
-            if (fadeImage != null)
-                fadeImage.gameObject.SetActive(false);
-        }
-        else
-        {
-            if (endingScreenMusic != null && GameMusicController.Instance != null)
-                GameMusicController.Instance.PlayMusic(endingScreenMusic, 1f, true);
-        }
-
-        bool pressed = false;
-
-        while (!pressed)
-        {
-            if (Input.GetKeyDown(restartKey))
-                pressed = true;
-
-            yield return null;
-        }
+        if (endingScreen != null)
+            yield return endingScreen.Play(fadeImage);
 
         if (GameMusicController.Instance != null)
             GameMusicController.Instance.StopMusic();
-
-        if (endingScreenImage != null)
-            endingScreenImage.gameObject.SetActive(false);
 
         GamePauseController.ClearPauseFlag();
         Time.timeScale = 1f;
 
         PlayerPersistentStats.ResetToDefaults();
 
-        skipTitleNextRound = true;
-
-        if (stageLabel != null)
-            stageLabel.gameObject.SetActive(false);
+        hasPlayedLogoIntro = true;
+        skipTitleNextRound = false;
 
         EndingRunning = false;
 
+        if (titleScreen != null)
+            titleScreen.SetIgnoreStartKeyUntilRelease();
+
         if (!string.IsNullOrEmpty(firstStageSceneName))
-        {
             SceneManager.LoadScene(firstStageSceneName);
-        }
         else
-        {
-            Scene currentScene = SceneManager.GetActiveScene();
-            SceneManager.LoadScene(currentScene.buildIndex);
-        }
+            SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
 
     void ApplyPersistentPlayerSkin()
