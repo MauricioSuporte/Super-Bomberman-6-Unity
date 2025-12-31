@@ -141,16 +141,13 @@ public class GamePauseController : MonoBehaviour
             {
                 if (menuIndex == 0)
                 {
-                    // RESUME: mantém o som do pause (TogglePause já toca pauseSfx)
                     TogglePause();
                     return;
                 }
 
-                // RETURN TO TITLE -> entra na tela de confirmação (YES/NO)
                 confirmReturn = true;
                 confirmIndex = 0;
 
-                // aqui pode tocar o select
                 PlaySelectSfx();
                 RefreshPauseUI();
                 return;
@@ -159,7 +156,6 @@ public class GamePauseController : MonoBehaviour
             return;
         }
 
-        // CONFIRM (NO/YES)
         if (Input.GetKeyDown(upKey))
         {
             confirmIndex = Wrap(confirmIndex - 1, 2);
@@ -188,7 +184,6 @@ public class GamePauseController : MonoBehaviour
         {
             if (confirmIndex == 0)
             {
-                // NO
                 confirmReturn = false;
                 menuIndex = 1;
                 PlaySelectSfx();
@@ -196,7 +191,6 @@ public class GamePauseController : MonoBehaviour
                 return;
             }
 
-            // YES -> trava tudo, toca sfx, espera 1s realtime e volta
             BeginExitToTitle();
         }
     }
@@ -208,7 +202,6 @@ public class GamePauseController : MonoBehaviour
 
         exitingToTitle = true;
 
-        // garante que continua pausado durante o delay
         IsPaused = true;
         Time.timeScale = 0f;
 

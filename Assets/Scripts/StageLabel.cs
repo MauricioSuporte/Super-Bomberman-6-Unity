@@ -13,7 +13,7 @@ public class StageLabel : MonoBehaviour
         if (stageText == null)
             return;
 
-        stageText.enableWordWrapping = false;
+        stageText.textWrappingMode = TextWrappingModes.NoWrap;
         stageText.overflowMode = TextOverflowModes.Overflow;
     }
 
