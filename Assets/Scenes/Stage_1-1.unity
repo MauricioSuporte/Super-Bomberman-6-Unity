@@ -665,7 +665,7 @@ MonoBehaviour:
   moveOptionVolume: 1
   selectOptionSfx: {fileID: 8300000, guid: f4ca5a046054f404aa2ac2df051e75c0, type: 3}
   selectOptionVolume: 1
-  titleSceneName: TitleScreen
+  returnToTitleDelayRealtime: 1
 --- !u!114 &268450102
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5433,11 +5433,10 @@ MonoBehaviour:
   lockedTint: {r: 1, g: 1, b: 1, a: 0.35}
   normalTint: {r: 1, g: 1, b: 1, a: 1}
   selectedTint: {r: 1, g: 1, b: 1, a: 1}
-  selectedScale: {x: 1.15, y: 1.15, z: 1}
   skinCursor: {fileID: 258300565}
   cursorPadding: {x: 10, y: 6}
   cursorMatchSelectedScale: 1
-  cursorSizeMultiplier: {x: 0.75, y: 0.75}
+  cursorSizeMultiplier: {x: 1, y: 1}
   cursorYOffset: 25
   cursorBlinkWhileNotConfirmed: 1
   cursorBlinkSpeed: 5.5
@@ -5450,7 +5449,7 @@ MonoBehaviour:
   endStageFrameTime: 0.14
   downFrames: 0e000000100000001200000010000000
   endStageFrames: 94000000940000009200000094000000930000009400000092000000940000009300000093000000
-  endStageYOffset: 30
+  endStageYOffset: 25
   endStageLoopsToStop: 1
   selectMusic: {fileID: 8300000, guid: c6132799148651946aad210a09325333, type: 3}
   selectMusicVolume: 1

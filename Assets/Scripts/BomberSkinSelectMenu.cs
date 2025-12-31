@@ -23,7 +23,6 @@ public class BomberSkinSelectMenu : MonoBehaviour
     [SerializeField] Color lockedTint = new(1f, 1f, 1f, 0.35f);
     [SerializeField] Color normalTint = Color.white;
     [SerializeField] Color selectedTint = Color.white;
-    [SerializeField] Vector3 selectedScale = new(1.15f, 1.15f, 1f);
 
     [Header("Cursor")]
     [SerializeField] RectTransform skinCursor;
