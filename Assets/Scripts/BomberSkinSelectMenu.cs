@@ -44,6 +44,10 @@ public class BomberSkinSelectMenu : MonoBehaviour
     [SerializeField] int[] downFrames = new[] { 14, 16, 18, 16 };
     [SerializeField] int[] endStageFrames = new[] { 148, 148, 146, 148, 147, 148, 146, 148, 147, 147 };
 
+    [Header("EndStage Offset + Stop")]
+    [SerializeField] float endStageYOffset = 10f;
+    [SerializeField] int endStageLoopsToStop = 2;
+
     [Header("Music")]
     [SerializeField] AudioClip selectMusic;
     [SerializeField, Range(0f, 1f)] float selectMusicVolume = 1f;
@@ -88,7 +92,9 @@ public class BomberSkinSelectMenu : MonoBehaviour
 
     readonly Dictionary<BomberSkin, Sprite> idleCache = new();
     readonly Dictionary<BomberSkin, Dictionary<int, Sprite>> sheetFrameCache = new();
-    readonly List<Image> slots = new();
+
+    readonly List<RectTransform> slotRoots = new(); // container (Grid posiciona isso)
+    readonly List<Image> slotImages = new();         // filho (a gente anima só isso)
 
     [SerializeField] Vector2 cursorSizeMultiplier = new(0.9f, 0.9f);
     [SerializeField] float cursorYOffset = 8f;
@@ -130,6 +136,13 @@ public class BomberSkinSelectMenu : MonoBehaviour
     float endTimer;
     int endFrameIdx;
 
+    int endStageLoopsDone;
+    bool endStageStopped;
+
+    bool endStageBaseCaptured;
+    RectTransform endStageImgRt;
+    Vector2 endStageBaseAnchoredPos;
+
     void Awake()
     {
         if (root == null)
@@ -162,13 +175,9 @@ public class BomberSkinSelectMenu : MonoBehaviour
             return;
 
         if (!confirmedSelection)
-        {
             TickDownHover();
-        }
         else
-        {
             TickEndStageSelected();
-        }
     }
 
     void LateUpdate()
@@ -187,7 +196,7 @@ public class BomberSkinSelectMenu : MonoBehaviour
 
     void TickDownHover()
     {
-        if (index < 0 || index >= slots.Count)
+        if (index < 0 || index >= slotImages.Count)
             return;
 
         var skin = selectableSkins[index];
@@ -212,14 +221,14 @@ public class BomberSkinSelectMenu : MonoBehaviour
         }
 
         var sp = GetSpriteByFrame(skin, downFrames[downFrameIdx]) ?? GetIdleSprite(skin);
-        var img = slots[index];
+        var img = slotImages[index];
         if (img != null && img.sprite != sp)
             img.sprite = sp;
     }
 
     void TickEndStageSelected()
     {
-        if (selectedIndex < 0 || selectedIndex >= slots.Count)
+        if (selectedIndex < 0 || selectedIndex >= slotImages.Count)
         {
             ApplyIdleToAllSlots();
             return;
@@ -234,22 +243,64 @@ public class BomberSkinSelectMenu : MonoBehaviour
 
         ApplyIdleToAllSlots();
 
-        float ft = Mathf.Max(0.01f, endStageFrameTime);
-        endTimer += Time.unscaledDeltaTime;
+        var img = slotImages[selectedIndex];
+        if (img == null)
+            return;
+
+        var rt = img.rectTransform;
+
+        if (!endStageBaseCaptured || endStageImgRt != rt)
+        {
+            endStageImgRt = rt;
+            endStageBaseAnchoredPos = rt.anchoredPosition;
+            endStageBaseCaptured = true;
+        }
+
+        rt.anchoredPosition = endStageBaseAnchoredPos + new Vector2(0f, endStageYOffset);
 
         if (endStageFrames == null || endStageFrames.Length == 0)
             return;
 
+        if (endStageStopped)
+        {
+            int lastFrame = endStageFrames[endStageFrames.Length - 1];
+            var lastSp = GetSpriteByFrame(skin, lastFrame) ?? GetIdleSprite(skin);
+            if (img.sprite != lastSp)
+                img.sprite = lastSp;
+            return;
+        }
+
+        float ft = Mathf.Max(0.01f, endStageFrameTime);
+        endTimer += Time.unscaledDeltaTime;
+
         while (endTimer >= ft)
         {
             endTimer -= ft;
-            endFrameIdx = (endFrameIdx + 1) % endStageFrames.Length;
+
+            int next = endFrameIdx + 1;
+
+            if (next >= endStageFrames.Length)
+            {
+                endStageLoopsDone++;
+
+                if (endStageLoopsDone >= Mathf.Max(1, endStageLoopsToStop))
+                {
+                    endStageStopped = true;
+                    endFrameIdx = endStageFrames.Length - 1;
+                    break;
+                }
+
+                next = 0;
+            }
+
+            endFrameIdx = next;
         }
 
         var sp = GetSpriteByFrame(skin, endStageFrames[endFrameIdx]) ?? GetIdleSprite(skin);
-        var img = slots[selectedIndex];
-        if (img != null && img.sprite != sp)
+        if (img.sprite != sp)
             img.sprite = sp;
+
+        cursorDirty = true;
     }
 
     void ResolveMovementKeys()
@@ -298,7 +349,8 @@ public class BomberSkinSelectMenu : MonoBehaviour
 
     void BuildGrid()
     {
-        slots.Clear();
+        slotRoots.Clear();
+        slotImages.Clear();
 
         if (gridRoot == null || skinItemPrefab == null)
             return;
@@ -320,16 +372,36 @@ public class BomberSkinSelectMenu : MonoBehaviour
             Destroy(child.gameObject);
         }
 
-        if (skinItemPrefab != null)
-            skinItemPrefab.gameObject.SetActive(false);
+        skinItemPrefab.gameObject.SetActive(false);
 
         for (int i = 0; i < selectableSkins.Count; i++)
         {
-            var img = Instantiate(skinItemPrefab, gridRoot);
+            var slotGo = new GameObject($"SkinSlot_{i}", typeof(RectTransform));
+            var slotRt = slotGo.GetComponent<RectTransform>();
+            slotRt.SetParent(gridRoot, false);
+            slotRt.localScale = Vector3.one;
+
+            var img = Instantiate(skinItemPrefab, slotRt);
             img.gameObject.SetActive(true);
             img.preserveAspect = true;
             img.enabled = false;
-            slots.Add(img);
+
+            var imgRt = img.rectTransform;
+
+            // faz o sprite preencher o slot (que é o item do Grid)
+            imgRt.anchorMin = Vector2.zero;
+            imgRt.anchorMax = Vector2.one;
+            imgRt.pivot = new Vector2(0.5f, 0.5f);
+
+            // zera offsets para "stretch" total
+            imgRt.offsetMin = Vector2.zero;
+            imgRt.offsetMax = Vector2.zero;
+
+            imgRt.localScale = Vector3.one;
+            imgRt.localRotation = Quaternion.identity;
+
+            slotRoots.Add(slotRt);
+            slotImages.Add(img);
         }
 
         cursorDirty = true;
@@ -338,6 +410,12 @@ public class BomberSkinSelectMenu : MonoBehaviour
     public void Hide()
     {
         menuActive = false;
+
+        if (endStageBaseCaptured && endStageImgRt != null)
+            endStageImgRt.anchoredPosition = endStageBaseAnchoredPos;
+
+        endStageBaseCaptured = false;
+        endStageImgRt = null;
 
         if (skinCursor != null)
             skinCursor.gameObject.SetActive(false);
@@ -366,7 +444,7 @@ public class BomberSkinSelectMenu : MonoBehaviour
         if (backgroundImage != null && backgroundSprite != null)
             backgroundImage.sprite = backgroundSprite;
 
-        if (slots.Count != selectableSkins.Count)
+        if (slotImages.Count != selectableSkins.Count)
             BuildGrid();
 
         konamiStep = 0;
@@ -375,8 +453,14 @@ public class BomberSkinSelectMenu : MonoBehaviour
 
         downTimer = 0f;
         downFrameIdx = 0;
+
         endTimer = 0f;
         endFrameIdx = 0;
+        endStageLoopsDone = 0;
+        endStageStopped = false;
+
+        endStageBaseCaptured = false;
+        endStageImgRt = null;
 
         StartSelectMusic();
 
@@ -459,6 +543,11 @@ public class BomberSkinSelectMenu : MonoBehaviour
 
                     endTimer = 0f;
                     endFrameIdx = 0;
+                    endStageLoopsDone = 0;
+                    endStageStopped = false;
+
+                    endStageBaseCaptured = false;
+                    endStageImgRt = null;
 
                     fadeDuration = fadeOutOnConfirmDuration;
 
@@ -598,10 +687,13 @@ public class BomberSkinSelectMenu : MonoBehaviour
         if (selectableSkins == null || selectableSkins.Count == 0)
             return;
 
-        for (int i = 0; i < slots.Count; i++)
+        for (int i = 0; i < slotImages.Count; i++)
         {
-            var img = slots[i];
+            var img = slotImages[i];
             if (img == null) continue;
+
+            if (img.rectTransform != null)
+                img.rectTransform.anchoredPosition = Vector2.zero;
 
             var s = selectableSkins[i];
             bool isUnlocked = PlayerPersistentStats.IsSkinUnlocked(s);
@@ -611,7 +703,9 @@ public class BomberSkinSelectMenu : MonoBehaviour
             img.enabled = img.sprite != null;
 
             img.color = isUnlocked ? normalTint : lockedTint;
-            img.transform.localScale = isSelected ? selectedScale : Vector3.one;
+
+            if (i < slotRoots.Count && slotRoots[i] != null)
+                slotRoots[i].localScale = isSelected ? selectedScale : Vector3.one;
 
             if (isSelected)
                 img.color = isUnlocked ? selectedTint : lockedTint;
@@ -622,10 +716,13 @@ public class BomberSkinSelectMenu : MonoBehaviour
 
     void ApplyIdleToAllSlots()
     {
-        for (int i = 0; i < slots.Count; i++)
+        for (int i = 0; i < slotImages.Count; i++)
         {
-            var img = slots[i];
+            var img = slotImages[i];
             if (img == null) continue;
+
+            if (img.rectTransform != null)
+                img.rectTransform.anchoredPosition = Vector2.zero;
 
             var skin = selectableSkins[i];
             var sp = GetIdleSprite(skin);
@@ -639,17 +736,16 @@ public class BomberSkinSelectMenu : MonoBehaviour
         if (skinCursor == null)
             return;
 
-        if (index < 0 || index >= slots.Count || slots[index] == null)
+        if (index < 0 || index >= slotRoots.Count || slotRoots[index] == null)
         {
             skinCursor.gameObject.SetActive(false);
             return;
         }
 
-        var itemRt = slots[index].rectTransform;
+        var slotRt = slotRoots[index];
 
         skinCursor.gameObject.SetActive(true);
-
-        skinCursor.SetParent(itemRt, false);
+        skinCursor.SetParent(slotRt, false);
         skinCursor.SetAsLastSibling();
 
         skinCursor.anchorMin = new Vector2(0.5f, 0.5f);
@@ -658,7 +754,7 @@ public class BomberSkinSelectMenu : MonoBehaviour
 
         skinCursor.anchoredPosition = new Vector2(0f, cursorYOffset);
 
-        var baseSize = itemRt.rect.size;
+        var baseSize = slotRt.rect.size;
         var targetSize = new Vector2(
             baseSize.x * cursorSizeMultiplier.x,
             baseSize.y * cursorSizeMultiplier.y
@@ -666,7 +762,7 @@ public class BomberSkinSelectMenu : MonoBehaviour
 
         skinCursor.sizeDelta = targetSize;
 
-        skinCursor.localScale = cursorMatchSelectedScale ? itemRt.localScale : Vector3.one;
+        skinCursor.localScale = cursorMatchSelectedScale ? slotRt.localScale : Vector3.one;
         skinCursor.localRotation = Quaternion.identity;
 
         if (cursorImage != null)

@@ -5255,6 +5255,8 @@ MonoBehaviour:
   endStageFrameTime: 0.14
   downFrames: 0e000000100000001200000010000000
   endStageFrames: 94000000940000009200000094000000930000009400000092000000940000009300000093000000
+  endStageYOffset: 30
+  endStageLoopsToStop: 1
   selectMusic: {fileID: 8300000, guid: c6132799148651946aad210a09325333, type: 3}
   selectMusicVolume: 1
   loopSelectMusic: 1
