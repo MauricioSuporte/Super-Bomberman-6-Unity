@@ -630,6 +630,9 @@ public class BomberSkinSelectMenu : MonoBehaviour
             }
             else if (Input.GetKeyDown(cancelKey))
             {
+                ReturnToTitleRequested = true;
+                PlaySfx(backToTitleSfx, backToTitleSfxVolume);
+
                 selected = PlayerPersistentStats.Skin;
                 done = true;
             }
