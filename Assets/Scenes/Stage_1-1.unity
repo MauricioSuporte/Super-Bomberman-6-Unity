@@ -659,12 +659,15 @@ MonoBehaviour:
   downKey: 115
   selectKey: 13
   backKey: 27
+  backConfirmAltKey: 110
   pauseSfx: {fileID: 8300000, guid: 63944a43f80f52945aa04dad91925a65, type: 3}
   sfxSource: {fileID: 460986863}
   moveOptionSfx: {fileID: 8300000, guid: 9095599de31cf8543bb7e82ff2782f12, type: 3}
   moveOptionVolume: 1
   selectOptionSfx: {fileID: 8300000, guid: f4ca5a046054f404aa2ac2df051e75c0, type: 3}
   selectOptionVolume: 1
+  backConfirmSfx: {fileID: 8300000, guid: 30ca55f720379e64ab9b908db035db4c, type: 3}
+  backConfirmVolume: 1
   returnToTitleDelayRealtime: 1
 --- !u!114 &268450102
 MonoBehaviour:

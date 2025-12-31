@@ -12,6 +12,12 @@ public class GamePauseController : MonoBehaviour
     public KeyCode selectKey = KeyCode.Return;
     public KeyCode backKey = KeyCode.Escape;
 
+    [Header("Keys Extra")]
+    [SerializeField] KeyCode selectKeyAlt = KeyCode.M;
+
+    [Header("Key Extra (Confirm Screen)")]
+    [SerializeField] KeyCode backConfirmAltKey = KeyCode.N;
+
     [Header("SFX (Pause toggle)")]
     public AudioClip pauseSfx;
     public AudioSource sfxSource;
@@ -22,6 +28,10 @@ public class GamePauseController : MonoBehaviour
 
     public AudioClip selectOptionSfx;
     [Range(0f, 1f)] public float selectOptionVolume = 1f;
+
+    [Header("Pause Confirm Back SFX")]
+    [SerializeField] AudioClip backConfirmSfx;
+    [SerializeField, Range(0f, 1f)] float backConfirmVolume = 1f;
 
     [Header("Return To Title")]
     [SerializeField] float returnToTitleDelayRealtime = 1f;
@@ -40,7 +50,7 @@ public class GamePauseController : MonoBehaviour
 
         if (!IsPaused)
         {
-            if (Input.GetKeyDown(pauseKey))
+            if (Input.GetKeyDown(pauseKey) || Input.GetKeyDown(backKey))
             {
                 TogglePause();
                 return;
@@ -113,6 +123,8 @@ public class GamePauseController : MonoBehaviour
         if (exitingToTitle)
             return;
 
+        bool confirmPressed = Input.GetKeyDown(selectKey) || Input.GetKeyDown(selectKeyAlt);
+
         if (!confirmReturn)
         {
             if (Input.GetKeyDown(upKey))
@@ -137,7 +149,7 @@ public class GamePauseController : MonoBehaviour
                 return;
             }
 
-            if (Input.GetKeyDown(selectKey))
+            if (confirmPressed)
             {
                 if (menuIndex == 0)
                 {
@@ -172,21 +184,24 @@ public class GamePauseController : MonoBehaviour
             return;
         }
 
-        if (Input.GetKeyDown(backKey))
+        if (Input.GetKeyDown(backKey) || Input.GetKeyDown(backConfirmAltKey))
         {
             confirmReturn = false;
             menuIndex = 1;
+
+            PlayBackConfirmSfx();
             RefreshPauseUI();
             return;
         }
 
-        if (Input.GetKeyDown(selectKey))
+        if (confirmPressed)
         {
             if (confirmIndex == 0)
             {
                 confirmReturn = false;
                 menuIndex = 1;
-                PlaySelectSfx();
+
+                PlayBackConfirmSfx();
                 RefreshPauseUI();
                 return;
             }
@@ -226,7 +241,6 @@ public class GamePauseController : MonoBehaviour
             yield break;
         }
 
-        // fallback: só destrava (não deveria acontecer no seu fluxo)
         exitingToTitle = false;
         ForceUnpause();
     }
@@ -270,6 +284,14 @@ public class GamePauseController : MonoBehaviour
             return;
 
         sfxSource.PlayOneShot(selectOptionSfx, selectOptionVolume);
+    }
+
+    void PlayBackConfirmSfx()
+    {
+        if (backConfirmSfx == null || sfxSource == null)
+            return;
+
+        sfxSource.PlayOneShot(backConfirmSfx, backConfirmVolume);
     }
 
     int Wrap(int v, int count)
