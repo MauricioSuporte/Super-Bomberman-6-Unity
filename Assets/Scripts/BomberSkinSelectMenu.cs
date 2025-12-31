@@ -537,22 +537,22 @@ public class BomberSkinSelectMenu : MonoBehaviour
 
             if (Input.GetKeyDown(moveLeft))
             {
-                nextIndex = Wrap(index - 1, selectableSkins.Count);
+                nextIndex = MoveLeftWrap(index);
                 moved = true;
             }
             else if (Input.GetKeyDown(moveRight))
             {
-                nextIndex = Wrap(index + 1, selectableSkins.Count);
+                nextIndex = MoveRightWrap(index);
                 moved = true;
             }
             else if (Input.GetKeyDown(moveUp))
             {
-                nextIndex = MoveGrid(index, -columns);
+                nextIndex = MoveUpWrap(index);
                 moved = true;
             }
             else if (Input.GetKeyDown(moveDown))
             {
-                nextIndex = MoveGrid(index, +columns);
+                nextIndex = MoveDownWrap(index);
                 moved = true;
             }
 
@@ -945,5 +945,68 @@ public class BomberSkinSelectMenu : MonoBehaviour
     {
         for (int i = 0; i < selectableSkins.Count; i++)
             GetIdleSprite(selectableSkins[i]);
+    }
+
+    int MoveLeftWrap(int current)
+    {
+        int col = current % columns;
+        int rowStart = current - col;
+
+        if (col > 0)
+            return current - 1;
+
+        int lastInRow = Mathf.Min(rowStart + (columns - 1), selectableSkins.Count - 1);
+        return lastInRow;
+    }
+
+    int MoveRightWrap(int current)
+    {
+        int col = current % columns;
+        int rowStart = current - col;
+        int rowEnd = Mathf.Min(rowStart + (columns - 1), selectableSkins.Count - 1);
+
+        if (current < rowEnd)
+            return current + 1;
+
+        return rowStart;
+    }
+
+    int MoveUpWrap(int current)
+    {
+        int col = current % columns;
+        int count = selectableSkins.Count;
+
+        int prev = current - columns;
+        if (prev >= 0)
+            return prev;
+
+        // wrap para a última linha que tenha esse "col"
+        int lastRowStart = ((count - 1) / columns) * columns;
+        int candidate = lastRowStart + col;
+
+        // se a última linha não tem esse col (linha incompleta), sobe de linha até encontrar
+        while (candidate >= count)
+            candidate -= columns;
+
+        return Mathf.Clamp(candidate, 0, count - 1);
+    }
+
+    int MoveDownWrap(int current)
+    {
+        int col = current % columns;
+        int count = selectableSkins.Count;
+
+        int next = current + columns;
+        if (next < count)
+            return next;
+
+        // wrap para a primeira linha (row 0) mantendo coluna
+        int candidate = col;
+
+        // se nem na primeira linha existe (quase impossível), desce até achar
+        while (candidate >= count)
+            candidate -= columns;
+
+        return Mathf.Clamp(candidate, 0, count - 1);
     }
 }
