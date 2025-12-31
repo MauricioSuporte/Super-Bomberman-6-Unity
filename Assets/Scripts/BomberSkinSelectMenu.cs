@@ -29,6 +29,14 @@ public class BomberSkinSelectMenu : MonoBehaviour
     [SerializeField] RectTransform skinCursor;
     [SerializeField] Vector2 cursorPadding = new(18f, 18f);
     [SerializeField] bool cursorMatchSelectedScale = true;
+    [SerializeField] Vector2 cursorSizeMultiplier = new(0.9f, 0.9f);
+    [SerializeField] float cursorYOffset = 8f;
+
+    [Header("Cursor Blink (Idle)")]
+    [SerializeField] bool cursorBlinkWhileNotConfirmed = true;
+    [SerializeField] float cursorBlinkSpeed = 5.5f;
+    [SerializeField, Range(0f, 1f)] float cursorBlinkMinAlpha = 0.25f;
+    [SerializeField, Range(0f, 1f)] float cursorBlinkMaxAlpha = 1f;
 
     [Header("Background Sprite")]
     [SerializeField] Sprite backgroundSprite;
@@ -93,11 +101,8 @@ public class BomberSkinSelectMenu : MonoBehaviour
     readonly Dictionary<BomberSkin, Sprite> idleCache = new();
     readonly Dictionary<BomberSkin, Dictionary<int, Sprite>> sheetFrameCache = new();
 
-    readonly List<RectTransform> slotRoots = new(); // container (Grid posiciona isso)
-    readonly List<Image> slotImages = new();         // filho (a gente anima só isso)
-
-    [SerializeField] Vector2 cursorSizeMultiplier = new(0.9f, 0.9f);
-    [SerializeField] float cursorYOffset = 8f;
+    readonly List<RectTransform> slotRoots = new();
+    readonly List<Image> slotImages = new();
 
     int index;
     int selectedIndex = -1;
@@ -143,6 +148,8 @@ public class BomberSkinSelectMenu : MonoBehaviour
     RectTransform endStageImgRt;
     Vector2 endStageBaseAnchoredPos;
 
+    float cursorBlinkT;
+
     void Awake()
     {
         if (root == null)
@@ -174,6 +181,8 @@ public class BomberSkinSelectMenu : MonoBehaviour
         if (!menuActive)
             return;
 
+        TickCursorBlink();
+
         if (!confirmedSelection)
             TickDownHover();
         else
@@ -192,6 +201,34 @@ public class BomberSkinSelectMenu : MonoBehaviour
 
         Canvas.ForceUpdateCanvases();
         UpdateCursorToSelected();
+    }
+
+    void TickCursorBlink()
+    {
+        if (cursorImage == null || skinCursor == null || !skinCursor.gameObject.activeSelf)
+            return;
+
+        if (!cursorBlinkWhileNotConfirmed || confirmedSelection)
+        {
+            var c = cursorImage.color;
+            if (c.a != 1f)
+            {
+                c.a = 1f;
+                cursorImage.color = c;
+            }
+            return;
+        }
+
+        cursorBlinkT += Time.unscaledDeltaTime * Mathf.Max(0.01f, cursorBlinkSpeed);
+        float s = (Mathf.Sin(cursorBlinkT) + 1f) * 0.5f;
+        float a = Mathf.Lerp(cursorBlinkMinAlpha, cursorBlinkMaxAlpha, s);
+
+        var col = cursorImage.color;
+        if (!Mathf.Approximately(col.a, a))
+        {
+            col.a = a;
+            cursorImage.color = col;
+        }
     }
 
     void TickDownHover()
@@ -387,16 +424,11 @@ public class BomberSkinSelectMenu : MonoBehaviour
             img.enabled = false;
 
             var imgRt = img.rectTransform;
-
-            // faz o sprite preencher o slot (que é o item do Grid)
             imgRt.anchorMin = Vector2.zero;
             imgRt.anchorMax = Vector2.one;
             imgRt.pivot = new Vector2(0.5f, 0.5f);
-
-            // zera offsets para "stretch" total
             imgRt.offsetMin = Vector2.zero;
             imgRt.offsetMax = Vector2.zero;
-
             imgRt.localScale = Vector3.one;
             imgRt.localRotation = Quaternion.identity;
 
@@ -461,6 +493,14 @@ public class BomberSkinSelectMenu : MonoBehaviour
 
         endStageBaseCaptured = false;
         endStageImgRt = null;
+
+        cursorBlinkT = 0f;
+        if (cursorImage != null)
+        {
+            var c = cursorImage.color;
+            c.a = 1f;
+            cursorImage.color = c;
+        }
 
         StartSelectMusic();
 
@@ -540,6 +580,13 @@ public class BomberSkinSelectMenu : MonoBehaviour
 
                     selectedIndex = index;
                     confirmedSelection = true;
+
+                    if (cursorImage != null)
+                    {
+                        var c = cursorImage.color;
+                        c.a = 1f;
+                        cursorImage.color = c;
+                    }
 
                     endTimer = 0f;
                     endFrameIdx = 0;
@@ -766,7 +813,13 @@ public class BomberSkinSelectMenu : MonoBehaviour
         skinCursor.localRotation = Quaternion.identity;
 
         if (cursorImage != null)
-            cursorImage.color = Color.white;
+        {
+            var c = cursorImage.color;
+            c.r = 1f;
+            c.g = 1f;
+            c.b = 1f;
+            cursorImage.color = c;
+        }
     }
 
     Sprite GetIdleSprite(BomberSkin skin)
