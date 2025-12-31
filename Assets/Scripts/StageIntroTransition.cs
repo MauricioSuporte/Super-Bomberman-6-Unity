@@ -433,4 +433,22 @@ public class StageIntroTransition : MonoBehaviour
             yield return null;
         }
     }
+
+    public void ReturnToTitleFromPause()
+    {
+        StopAllCoroutines();
+
+        GamePauseController.ClearPauseFlag();
+        Time.timeScale = 1f;
+
+        if (GameMusicController.Instance != null)
+            GameMusicController.Instance.StopMusic();
+
+        PlayerPersistentStats.ResetToDefaults();
+
+        if (titleScreen != null)
+            titleScreen.SetIgnoreStartKeyUntilRelease();
+
+        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+    }
 }

@@ -655,8 +655,17 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   pauseKey: 13
+  upKey: 119
+  downKey: 115
+  selectKey: 13
+  backKey: 27
   pauseSfx: {fileID: 8300000, guid: 63944a43f80f52945aa04dad91925a65, type: 3}
   sfxSource: {fileID: 460986863}
+  moveOptionSfx: {fileID: 8300000, guid: 9095599de31cf8543bb7e82ff2782f12, type: 3}
+  moveOptionVolume: 1
+  selectOptionSfx: {fileID: 8300000, guid: f4ca5a046054f404aa2ac2df051e75c0, type: 3}
+  selectOptionVolume: 1
+  titleSceneName: TitleScreen
 --- !u!114 &268450102
 MonoBehaviour:
   m_ObjectHideFlags: 0
