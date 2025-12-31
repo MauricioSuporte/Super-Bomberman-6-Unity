@@ -649,14 +649,6 @@ public class BomberSkinSelectMenu : MonoBehaviour
 
     public BomberSkin GetSelectedSkin() => selected;
 
-    int MoveGrid(int current, int delta)
-    {
-        int next = current + delta;
-        if (next < 0) next = 0;
-        if (next >= selectableSkins.Count) next = selectableSkins.Count - 1;
-        return next;
-    }
-
     bool ProcessKonamiCode()
     {
         KeyCode pressed = KeyCode.None;
@@ -773,7 +765,7 @@ public class BomberSkinSelectMenu : MonoBehaviour
             img.color = isUnlocked ? normalTint : lockedTint;
 
             if (i < slotRoots.Count && slotRoots[i] != null)
-                slotRoots[i].localScale = isSelected ? selectedScale : Vector3.one;
+                slotRoots[i].localScale = Vector3.one;
 
             if (isSelected)
                 img.color = isUnlocked ? selectedTint : lockedTint;
@@ -830,7 +822,7 @@ public class BomberSkinSelectMenu : MonoBehaviour
 
         skinCursor.sizeDelta = targetSize;
 
-        skinCursor.localScale = cursorMatchSelectedScale ? slotRt.localScale : Vector3.one;
+        skinCursor.localScale = Vector3.one;
         skinCursor.localRotation = Quaternion.identity;
 
         if (cursorImage != null)
@@ -901,12 +893,20 @@ public class BomberSkinSelectMenu : MonoBehaviour
         return map;
     }
 
-    int Wrap(int v, int count)
+    void SetFadeAlpha(float a)
     {
-        if (count <= 0) return 0;
-        v %= count;
-        if (v < 0) v += count;
-        return v;
+        if (fadeImage == null)
+            return;
+
+        var c = fadeImage.color;
+        c.a = a;
+        fadeImage.color = c;
+    }
+
+    void PreloadIdleSprites()
+    {
+        for (int i = 0; i < selectableSkins.Count; i++)
+            GetIdleSprite(selectableSkins[i]);
     }
 
     IEnumerator FadeInRoutine()
@@ -950,22 +950,6 @@ public class BomberSkinSelectMenu : MonoBehaviour
         }
 
         SetFadeAlpha(1f);
-    }
-
-    void SetFadeAlpha(float a)
-    {
-        if (fadeImage == null)
-            return;
-
-        var c = fadeImage.color;
-        c.a = a;
-        fadeImage.color = c;
-    }
-
-    void PreloadIdleSprites()
-    {
-        for (int i = 0; i < selectableSkins.Count; i++)
-            GetIdleSprite(selectableSkins[i]);
     }
 
     int MoveLeftWrap(int current)
