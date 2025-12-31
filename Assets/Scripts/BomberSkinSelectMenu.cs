@@ -980,11 +980,9 @@ public class BomberSkinSelectMenu : MonoBehaviour
         if (prev >= 0)
             return prev;
 
-        // wrap para a última linha que tenha esse "col"
         int lastRowStart = ((count - 1) / columns) * columns;
         int candidate = lastRowStart + col;
 
-        // se a última linha não tem esse col (linha incompleta), sobe de linha até encontrar
         while (candidate >= count)
             candidate -= columns;
 
@@ -1000,10 +998,8 @@ public class BomberSkinSelectMenu : MonoBehaviour
         if (next < count)
             return next;
 
-        // wrap para a primeira linha (row 0) mantendo coluna
         int candidate = col;
 
-        // se nem na primeira linha existe (quase impossível), desce até achar
         while (candidate >= count)
             candidate -= columns;
 
