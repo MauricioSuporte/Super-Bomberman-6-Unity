@@ -1,9 +1,11 @@
-﻿using UnityEngine;
+﻿using System.Collections;
+using UnityEngine;
+using UnityEngine.UI;
 
-[RequireComponent(typeof(SpriteRenderer))]
 public class AnimatedSpriteRenderer : MonoBehaviour
 {
-    private SpriteRenderer spriteRenderer;
+    SpriteRenderer spriteRenderer;
+    Image uiImage;
 
     [Header("Sprites")]
     public Sprite idleSprite;
@@ -30,18 +32,19 @@ public class AnimatedSpriteRenderer : MonoBehaviour
     [Header("Safety")]
     public bool disableOffsetsIfThisObjectHasRigidbody2D = true;
 
-    private int animationFrame;
-    private int direction = 1;
+    int animationFrame;
+    int direction = 1;
 
-    private Transform visualTransform;
-    private Vector3 initialVisualLocalPosition;
-    private bool canMoveVisualLocal;
-    private bool frozen;
+    Transform visualTransform;
+    Vector3 initialVisualLocalPosition;
+    bool canMoveVisualLocal;
+    bool frozen;
 
     Vector3 runtimeBaseOffset;
-
     bool runtimeLockX;
     float runtimeLockedLocalX;
+
+    Coroutine playRoutine;
 
     public int CurrentFrame
     {
@@ -57,33 +60,48 @@ public class AnimatedSpriteRenderer : MonoBehaviour
         }
     }
 
-    void EnsureSpriteRenderer()
+    void EnsureTargets()
     {
         if (spriteRenderer == null)
-        {
             spriteRenderer = GetComponent<SpriteRenderer>();
-            if (spriteRenderer == null)
-                spriteRenderer = GetComponentInChildren<SpriteRenderer>(true);
+
+        if (uiImage == null)
+            uiImage = GetComponent<Image>();
+
+        if (spriteRenderer == null && uiImage == null)
+            uiImage = GetComponentInChildren<Image>(true);
+
+        if (spriteRenderer == null && uiImage == null)
+            spriteRenderer = GetComponentInChildren<SpriteRenderer>(true);
+
+        if (visualTransform == null)
+        {
+            if (spriteRenderer != null) visualTransform = spriteRenderer.transform;
+            else if (uiImage != null) visualTransform = uiImage.transform;
+            else visualTransform = transform;
         }
     }
 
-    private void Awake()
+    void Awake()
     {
-        EnsureSpriteRenderer();
+        EnsureTargets();
 
-        visualTransform = spriteRenderer != null ? spriteRenderer.transform : transform;
         initialVisualLocalPosition = visualTransform != null ? visualTransform.localPosition : Vector3.zero;
 
         bool hasRbHere = disableOffsetsIfThisObjectHasRigidbody2D && GetComponent<Rigidbody2D>() != null;
-        canMoveVisualLocal = visualTransform != null && !hasRbHere;
+
+        if (uiImage != null)
+            canMoveVisualLocal = false;
+        else
+            canMoveVisualLocal = visualTransform != null && !hasRbHere;
     }
 
-    private void OnEnable()
+    void OnEnable()
     {
-        EnsureSpriteRenderer();
+        EnsureTargets();
 
-        if (spriteRenderer != null)
-            spriteRenderer.enabled = true;
+        if (spriteRenderer != null) spriteRenderer.enabled = true;
+        if (uiImage != null) uiImage.enabled = true;
 
         direction = 1;
 
@@ -94,28 +112,25 @@ public class AnimatedSpriteRenderer : MonoBehaviour
         ApplyFrame();
     }
 
-    private void OnDisable()
+    void OnDisable()
     {
         CancelInvoke(nameof(NextFrame));
         ResetOffset();
 
-        EnsureSpriteRenderer();
-        if (spriteRenderer != null)
-            spriteRenderer.enabled = false;
+        EnsureTargets();
+
+        if (spriteRenderer != null) spriteRenderer.enabled = false;
+        if (uiImage != null) uiImage.enabled = false;
     }
 
-    private void SetupTiming()
+    void SetupTiming()
     {
-        if (animationSprite == null || animationSprite.Length == 0)
-            return;
-
-        if (!useSequenceDuration)
-            return;
+        if (animationSprite == null || animationSprite.Length == 0) return;
+        if (!useSequenceDuration) return;
 
         sequenceDuration = Mathf.Max(sequenceDuration, 0.0001f);
 
         int framesInCycle;
-
         if (pingPong && animationSprite.Length > 1)
             framesInCycle = animationSprite.Length * 2 - 2;
         else
@@ -141,10 +156,9 @@ public class AnimatedSpriteRenderer : MonoBehaviour
         }
     }
 
-    private void NextFrame()
+    void NextFrame()
     {
-        if (frozen)
-            return;
+        if (frozen) return;
 
         if (idle)
         {
@@ -152,17 +166,14 @@ public class AnimatedSpriteRenderer : MonoBehaviour
             return;
         }
 
-        if (animationSprite == null || animationSprite.Length == 0)
-            return;
+        if (animationSprite == null || animationSprite.Length == 0) return;
 
         if (!pingPong)
         {
             animationFrame++;
 
-            if (loop && animationFrame >= animationSprite.Length)
-                animationFrame = 0;
-            else if (!loop && animationFrame >= animationSprite.Length)
-                animationFrame = animationSprite.Length - 1;
+            if (loop && animationFrame >= animationSprite.Length) animationFrame = 0;
+            else if (!loop && animationFrame >= animationSprite.Length) animationFrame = animationSprite.Length - 1;
         }
         else
         {
@@ -170,10 +181,7 @@ public class AnimatedSpriteRenderer : MonoBehaviour
 
             if (animationFrame >= animationSprite.Length)
             {
-                if (animationSprite.Length == 1)
-                {
-                    animationFrame = 0;
-                }
+                if (animationSprite.Length == 1) animationFrame = 0;
                 else
                 {
                     animationFrame = animationSprite.Length - 2;
@@ -182,10 +190,7 @@ public class AnimatedSpriteRenderer : MonoBehaviour
             }
             else if (animationFrame < 0)
             {
-                if (animationSprite.Length == 1)
-                {
-                    animationFrame = 0;
-                }
+                if (animationSprite.Length == 1) animationFrame = 0;
                 else
                 {
                     animationFrame = 1;
@@ -197,36 +202,45 @@ public class AnimatedSpriteRenderer : MonoBehaviour
         ApplyFrame();
     }
 
-    private void ApplyFrame()
+    void SetSprite(Sprite s)
     {
-        EnsureSpriteRenderer();
-        if (spriteRenderer == null)
+        EnsureTargets();
+
+        if (spriteRenderer != null)
+        {
+            spriteRenderer.sprite = s;
             return;
+        }
+
+        if (uiImage != null)
+            uiImage.sprite = s;
+    }
+
+    void ApplyFrame()
+    {
+        EnsureTargets();
+        if (spriteRenderer == null && uiImage == null) return;
 
         int frameToUse = animationFrame;
 
         if (idle)
         {
-            spriteRenderer.sprite = idleSprite;
+            SetSprite(idleSprite);
         }
         else
         {
-            if (animationSprite == null || animationSprite.Length == 0)
-                return;
+            if (animationSprite == null || animationSprite.Length == 0) return;
+            if (animationFrame < 0 || animationFrame >= animationSprite.Length) return;
 
-            if (animationFrame < 0 || animationFrame >= animationSprite.Length)
-                return;
-
-            spriteRenderer.sprite = animationSprite[animationFrame];
+            SetSprite(animationSprite[animationFrame]);
         }
 
         ApplyOffset(frameToUse);
     }
 
-    private void ApplyOffset(int frame)
+    void ApplyOffset(int frame)
     {
-        if (!canMoveVisualLocal || visualTransform == null)
-            return;
+        if (!canMoveVisualLocal || visualTransform == null) return;
 
         Vector3 pos = initialVisualLocalPosition + runtimeBaseOffset;
 
@@ -247,10 +261,9 @@ public class AnimatedSpriteRenderer : MonoBehaviour
         visualTransform.localPosition = pos;
     }
 
-    private void ResetOffset()
+    void ResetOffset()
     {
-        if (visualTransform == null)
-            return;
+        if (visualTransform == null) return;
 
         Vector3 pos = initialVisualLocalPosition + runtimeBaseOffset;
 
@@ -262,10 +275,8 @@ public class AnimatedSpriteRenderer : MonoBehaviour
 
     public void SetRuntimeBaseLocalY(float desiredLocalY)
     {
-        EnsureSpriteRenderer();
-
-        if (visualTransform == null)
-            return;
+        EnsureTargets();
+        if (visualTransform == null) return;
 
         runtimeBaseOffset = new Vector3(runtimeBaseOffset.x, desiredLocalY - initialVisualLocalPosition.y, 0f);
         ApplyFrame();
@@ -273,10 +284,8 @@ public class AnimatedSpriteRenderer : MonoBehaviour
 
     public void SetRuntimeBaseLocalX(float desiredLocalX)
     {
-        EnsureSpriteRenderer();
-
-        if (visualTransform == null)
-            return;
+        EnsureTargets();
+        if (visualTransform == null) return;
 
         runtimeLockX = true;
         runtimeLockedLocalX = desiredLocalX;
@@ -294,5 +303,91 @@ public class AnimatedSpriteRenderer : MonoBehaviour
         runtimeBaseOffset = Vector3.zero;
         runtimeLockX = false;
         ApplyFrame();
+    }
+
+    public IEnumerator PlayCycles(int cycles)
+    {
+        EnsureTargets();
+
+        if (animationSprite == null || animationSprite.Length == 0 || cycles <= 0)
+            yield break;
+
+        if (!gameObject.activeInHierarchy)
+            yield break;
+
+        if (playRoutine != null)
+            StopCoroutine(playRoutine);
+
+        playRoutine = StartCoroutine(PlayCyclesRoutine(cycles));
+        yield return playRoutine;
+    }
+
+    IEnumerator PlayCyclesRoutine(int cycles)
+    {
+        CancelInvoke(nameof(NextFrame));
+
+        bool prevIdle = idle;
+        bool prevLoop = loop;
+
+        idle = false;
+        loop = false;
+
+        direction = 1;
+        CurrentFrame = 0;
+
+        SetupTiming();
+
+        int framesInCycle = (!pingPong || animationSprite.Length <= 1)
+            ? animationSprite.Length
+            : animationSprite.Length * 2 - 2;
+
+        for (int c = 0; c < cycles; c++)
+        {
+            if (!pingPong || animationSprite.Length <= 1)
+            {
+                for (int i = 0; i < animationSprite.Length; i++)
+                {
+                    CurrentFrame = i;
+                    RefreshFrame();
+                    yield return new WaitForSecondsRealtime(animationTime);
+                }
+            }
+            else
+            {
+                int frame = 0;
+                int dir = 1;
+
+                for (int i = 0; i < framesInCycle; i++)
+                {
+                    CurrentFrame = frame;
+                    RefreshFrame();
+                    yield return new WaitForSecondsRealtime(animationTime);
+
+                    frame += dir;
+
+                    if (frame >= animationSprite.Length)
+                    {
+                        frame = animationSprite.Length - 2;
+                        dir = -1;
+                    }
+                    else if (frame < 0)
+                    {
+                        frame = 1;
+                        dir = 1;
+                    }
+                }
+            }
+        }
+
+        idle = prevIdle;
+        loop = prevLoop;
+
+        CurrentFrame = 0;
+        RefreshFrame();
+
+        CancelInvoke(nameof(NextFrame));
+        InvokeRepeating(nameof(NextFrame), animationTime, animationTime);
+
+        playRoutine = null;
     }
 }

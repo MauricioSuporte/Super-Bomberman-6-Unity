@@ -61,6 +61,14 @@ public class TitleScreenController : MonoBehaviour
     [Header("Exit")]
     public float exitDelayRealtime = 1f;
 
+    [Header("Cursor (AnimatedSpriteRenderer)")]
+    public AnimatedSpriteRenderer cursorRenderer;
+
+    [SerializeField] Vector2 cursorOffset = new(-30f, 0f);
+    [SerializeField] bool cursorAsChildOfMenuText = true;
+
+    RectTransform cursorRect;
+
     public bool Running { get; private set; }
     public bool NormalGameRequested { get; private set; }
     public bool ExitRequested { get; private set; }
@@ -85,6 +93,14 @@ public class TitleScreenController : MonoBehaviour
 
         if (menuText != null)
             menuRect = menuText.rectTransform;
+
+        if (cursorRenderer != null)
+        {
+            cursorRect = cursorRenderer.GetComponent<RectTransform>();
+
+            if (cursorAsChildOfMenuText && menuText != null)
+                cursorRenderer.transform.SetParent(menuText.transform, false);
+        }
 
         ForceHide();
     }
@@ -205,6 +221,9 @@ public class TitleScreenController : MonoBehaviour
 
         if (menuText != null)
             menuText.gameObject.SetActive(false);
+
+        if (cursorRenderer != null)
+            cursorRenderer.gameObject.SetActive(false);
     }
 
     public IEnumerator Play(Image fadeToHideOptional)
@@ -228,6 +247,12 @@ public class TitleScreenController : MonoBehaviour
         {
             menuText.gameObject.SetActive(true);
             SetupMenuTextMaterial();
+        }
+
+        if (cursorRenderer != null)
+        {
+            cursorRenderer.gameObject.SetActive(true);
+            cursorRenderer.RefreshFrame();
         }
 
         if (titleMusic != null && GameMusicController.Instance != null)
@@ -270,6 +295,9 @@ public class TitleScreenController : MonoBehaviour
             {
                 locked = true;
                 PlaySelectSfx();
+
+                if (cursorRenderer != null)
+                    yield return cursorRenderer.PlayCycles(2);
 
                 if (menuIndex == 0)
                 {
@@ -347,6 +375,8 @@ public class TitleScreenController : MonoBehaviour
             $"<size={menuFontSize}>{normal}</size>\n" +
             $"<size={menuFontSize}>{exit}</size>" +
             "</align>";
+
+        UpdateCursorPosition();
     }
 
     void PlayMoveSfx()
@@ -371,5 +401,35 @@ public class TitleScreenController : MonoBehaviour
         v %= count;
         if (v < 0) v += count;
         return v;
+    }
+
+    void UpdateCursorPosition()
+    {
+        if (menuText == null || cursorRenderer == null)
+            return;
+
+        if (cursorRect == null)
+            cursorRect = cursorRenderer.GetComponent<RectTransform>();
+
+        if (cursorRect == null)
+            return;
+
+        menuText.ForceMeshUpdate();
+
+        var ti = menuText.textInfo;
+        if (ti == null || ti.lineCount <= 0)
+            return;
+
+        int line = Mathf.Clamp(menuIndex, 0, ti.lineCount - 1);
+        var li = ti.lineInfo[line];
+
+        float y = (li.ascender + li.descender) * 0.5f;
+        float x = li.lineExtents.min.x;
+
+        Vector3 localPos = new(x + cursorOffset.x, y + cursorOffset.y, 0f);
+
+        cursorRect.localPosition = localPos;
+
+        cursorRenderer.RefreshFrame();
     }
 }
