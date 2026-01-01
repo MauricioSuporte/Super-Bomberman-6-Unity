@@ -1886,7 +1886,7 @@ MonoBehaviour:
   titleScreenRawImage: {fileID: 362350263}
   titleVideoPlayer: {fileID: 362350260}
   menuText: {fileID: 1287610048}
-  menuAnchoredPos: {x: -50, y: 75}
+  menuAnchoredPos: {x: -50, y: 60}
   menuFontSize: 46
   forceBold: 1
   outlineColor: {r: 0, g: 0, b: 0, a: 1}
@@ -1909,6 +1909,12 @@ MonoBehaviour:
   cursorRenderer: {fileID: 544397349}
   cursorOffset: {x: -28, y: 5}
   cursorAsChildOfMenuText: 1
+  pushStartText: {fileID: 0}
+  pushStartLabel: PUSH START BUTTON
+  pushStartHex: '#FFA621'
+  pushStartFontSize: 46
+  pushStartBlinkInterval: 1
+  pushStartYOffset: 18
 --- !u!1 &460986862
 GameObject:
   m_ObjectHideFlags: 0
@@ -5575,7 +5581,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 75.14}
+  m_AnchoredPosition: {x: 0, y: 60}
   m_SizeDelta: {x: 200, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1287610048

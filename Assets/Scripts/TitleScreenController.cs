@@ -23,7 +23,6 @@ public class TitleScreenController : MonoBehaviour
     public TMP_Text menuText;
 
     [Header("Menu Layout")]
-    [Tooltip("Posição do RectTransform do menu (anchoredPosition).")]
     [SerializeField] Vector2 menuAnchoredPos = new(-70f, 75f);
 
     [Tooltip("Tamanho do menu (antes era 42).")]
@@ -67,6 +66,14 @@ public class TitleScreenController : MonoBehaviour
     [SerializeField] Vector2 cursorOffset = new(-30f, 0f);
     [SerializeField] bool cursorAsChildOfMenuText = true;
 
+    [Header("Push Start (TMP)")]
+    [SerializeField] TextMeshProUGUI pushStartText;
+    [SerializeField] string pushStartLabel = "PUSH START BUTTON";
+    [SerializeField] string pushStartHex = "#FFA621";
+    [SerializeField] int pushStartFontSize = 46;
+    [SerializeField] float pushStartBlinkInterval = 1f;
+    [SerializeField] float pushStartYOffset = 18f;
+
     RectTransform cursorRect;
 
     public bool Running { get; private set; }
@@ -80,6 +87,10 @@ public class TitleScreenController : MonoBehaviour
 
     Material runtimeMenuMat;
     RectTransform menuRect;
+
+    Coroutine pushStartRoutine;
+    bool pushStartVisible = true;
+    RectTransform pushStartRect;
 
     static readonly WaitForSecondsRealtime _wait1s = new(1f);
 
@@ -101,6 +112,8 @@ public class TitleScreenController : MonoBehaviour
             if (cursorAsChildOfMenuText && menuText != null)
                 cursorRenderer.transform.SetParent(menuText.transform, false);
         }
+
+        EnsurePushStartText();
 
         ForceHide();
     }
@@ -205,6 +218,40 @@ public class TitleScreenController : MonoBehaviour
             m.SetColor(prop, value);
     }
 
+    void EnsurePushStartText()
+    {
+        if (menuText == null)
+            return;
+
+        if (pushStartText == null)
+        {
+            var go = new GameObject("PushStartText", typeof(RectTransform));
+            go.transform.SetParent(menuText.transform, false);
+
+            pushStartText = go.AddComponent<TextMeshProUGUI>();
+            pushStartText.raycastTarget = false;
+        }
+
+        pushStartRect = pushStartText.rectTransform;
+
+        pushStartText.font = menuText.font;
+        pushStartText.fontSize = pushStartFontSize;
+        pushStartText.fontStyle = menuText.fontStyle;
+        pushStartText.textWrappingMode = TextWrappingModes.NoWrap;
+        pushStartText.overflowMode = TextOverflowModes.Overflow;
+        pushStartText.extraPadding = true;
+
+        pushStartText.fontMaterial = runtimeMenuMat != null ? runtimeMenuMat : menuText.fontMaterial;
+
+        pushStartText.alignment = TextAlignmentOptions.Center;
+
+        pushStartText.color = Color.white;
+
+        pushStartText.text = $"<color={pushStartHex}>{pushStartLabel}</color>";
+
+        pushStartText.gameObject.SetActive(false);
+    }
+
     public void ForceHide()
     {
         Running = false;
@@ -212,6 +259,8 @@ public class TitleScreenController : MonoBehaviour
 
         NormalGameRequested = false;
         ExitRequested = false;
+
+        StopPushStartBlink();
 
         if (titleVideoPlayer != null)
             titleVideoPlayer.Stop();
@@ -249,6 +298,8 @@ public class TitleScreenController : MonoBehaviour
             SetupMenuTextMaterial();
         }
 
+        EnsurePushStartText();
+
         if (cursorRenderer != null)
         {
             cursorRenderer.gameObject.SetActive(true);
@@ -274,6 +325,7 @@ public class TitleScreenController : MonoBehaviour
         }
 
         RefreshMenuText();
+        StartPushStartBlink();
 
         while (Running && !locked)
         {
@@ -294,6 +346,8 @@ public class TitleScreenController : MonoBehaviour
             if (Input.GetKeyDown(startKey) || Input.GetKeyDown(startKeyAlt))
             {
                 locked = true;
+                StopPushStartBlink();
+
                 PlaySelectSfx();
 
                 if (cursorRenderer != null)
@@ -337,6 +391,8 @@ public class TitleScreenController : MonoBehaviour
         if (menuText != null)
             menuText.gameObject.SetActive(false);
 
+        StopPushStartBlink();
+
         Running = false;
     }
 
@@ -352,6 +408,8 @@ public class TitleScreenController : MonoBehaviour
         Application.Quit();
 #endif
 
+        StopPushStartBlink();
+
         Running = false;
     }
 
@@ -360,7 +418,7 @@ public class TitleScreenController : MonoBehaviour
         if (menuText == null)
             return;
 
-        const string color = "#E8E8E8";
+        const string color = "#FFFFE7";
 
         string normal = $"<color={color}>NORMAL GAME</color>";
         string exit = $"<color={color}>EXIT</color>";
@@ -372,6 +430,79 @@ public class TitleScreenController : MonoBehaviour
             "</align>";
 
         UpdateCursorPosition();
+        UpdatePushStartPosition();
+    }
+
+    void StartPushStartBlink()
+    {
+        EnsurePushStartText();
+
+        if (pushStartText == null)
+            return;
+
+        StopPushStartBlink();
+
+        pushStartVisible = true;
+        pushStartText.gameObject.SetActive(true);
+        UpdatePushStartPosition();
+
+        pushStartRoutine = StartCoroutine(PushStartBlinkRoutine());
+    }
+
+    void StopPushStartBlink()
+    {
+        if (pushStartRoutine != null)
+        {
+            StopCoroutine(pushStartRoutine);
+            pushStartRoutine = null;
+        }
+
+        if (pushStartText != null)
+            pushStartText.gameObject.SetActive(false);
+    }
+
+    IEnumerator PushStartBlinkRoutine()
+    {
+        var wait = new WaitForSecondsRealtime(Mathf.Max(0.05f, pushStartBlinkInterval));
+
+        while (Running && !locked)
+        {
+            pushStartVisible = !pushStartVisible;
+
+            if (pushStartText != null)
+                pushStartText.gameObject.SetActive(pushStartVisible);
+
+            yield return wait;
+        }
+    }
+
+    void UpdatePushStartPosition()
+    {
+        if (menuText == null || pushStartRect == null)
+            return;
+
+        menuText.ForceMeshUpdate();
+        var ti = menuText.textInfo;
+
+        if (ti == null || ti.lineCount <= 0)
+            return;
+
+        float minX = float.PositiveInfinity;
+        float maxX = float.NegativeInfinity;
+
+        for (int i = 0; i < ti.lineCount; i++)
+        {
+            var li = ti.lineInfo[i];
+            minX = Mathf.Min(minX, li.lineExtents.min.x);
+            maxX = Mathf.Max(maxX, li.lineExtents.max.x);
+        }
+
+        float centerX = (minX + maxX) * 0.5f;
+
+        var first = ti.lineInfo[0];
+        float y = first.ascender + pushStartYOffset;
+
+        pushStartRect.localPosition = new Vector3(centerX, y, 0f);
     }
 
     void PlayMoveSfx()
@@ -401,12 +532,6 @@ public class TitleScreenController : MonoBehaviour
     void UpdateCursorPosition()
     {
         if (menuText == null || cursorRenderer == null)
-            return;
-
-        if (cursorRect == null)
-            cursorRect = cursorRenderer.GetComponent<RectTransform>();
-
-        if (cursorRect == null)
             return;
 
         menuText.ForceMeshUpdate();
