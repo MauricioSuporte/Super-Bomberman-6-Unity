@@ -428,8 +428,6 @@ public class TitleScreenController : MonoBehaviour
 
         Vector3 localPos = new(x + cursorOffset.x, y + cursorOffset.y, 0f);
 
-        cursorRect.localPosition = localPos;
-
-        cursorRenderer.RefreshFrame();
+        cursorRenderer.SetExternalBaseLocalPosition(localPos);
     }
 }
