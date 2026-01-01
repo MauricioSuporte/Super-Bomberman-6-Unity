@@ -45,7 +45,6 @@ public class AnimatedSpriteRenderer : MonoBehaviour
     bool runtimeLockX;
     float runtimeLockedLocalX;
 
-    // ✅ Base position vinda “de fora” (menu)
     bool hasExternalBase;
     Vector3 externalBaseLocalPos;
 
@@ -144,7 +143,17 @@ public class AnimatedSpriteRenderer : MonoBehaviour
 
     public void RefreshFrame() => ApplyFrame();
 
-    // ✅ Chame isso sempre que o menu reposicionar o cursor
+    public void SetFrozen(bool value)
+    {
+        frozen = value;
+
+        if (frozen)
+        {
+            ApplyFrame();
+            ResetOffset();
+        }
+    }
+
     public void SetExternalBaseLocalPosition(Vector3 baseLocalPos)
     {
         hasExternalBase = true;
@@ -240,7 +249,6 @@ public class AnimatedSpriteRenderer : MonoBehaviour
 
         Vector3 basePos;
 
-        // ✅ se o menu está controlando a posição, usa essa base
         if (hasExternalBase)
             basePos = externalBaseLocalPos;
         else
@@ -276,6 +284,38 @@ public class AnimatedSpriteRenderer : MonoBehaviour
             pos.x = runtimeLockedLocalX;
 
         visualTransform.localPosition = pos;
+    }
+
+    public void SetRuntimeBaseLocalY(float desiredLocalY)
+    {
+        EnsureTargets();
+        if (visualTransform == null) return;
+
+        runtimeBaseOffset = new Vector3(runtimeBaseOffset.x, desiredLocalY - initialVisualLocalPosition.y, 0f);
+        ApplyFrame();
+    }
+
+    public void SetRuntimeBaseLocalX(float desiredLocalX)
+    {
+        EnsureTargets();
+        if (visualTransform == null) return;
+
+        runtimeLockX = true;
+        runtimeLockedLocalX = desiredLocalX;
+        ApplyFrame();
+    }
+
+    public void ClearRuntimeBaseLocalX()
+    {
+        runtimeLockX = false;
+        ApplyFrame();
+    }
+
+    public void ClearRuntimeBaseOffset()
+    {
+        runtimeBaseOffset = Vector3.zero;
+        runtimeLockX = false;
+        ApplyFrame();
     }
 
     public IEnumerator PlayCycles(int cycles)
@@ -349,63 +389,5 @@ public class AnimatedSpriteRenderer : MonoBehaviour
 
         CancelInvoke(nameof(NextFrame));
         InvokeRepeating(nameof(NextFrame), animationTime, animationTime);
-    }
-
-    public void SetRuntimeBaseLocalY(float desiredLocalY)
-    {
-        EnsureTargets();
-        if (visualTransform == null) return;
-
-        float baseY = hasExternalBase ? externalBaseLocalPos.y : initialVisualLocalPosition.y;
-
-        runtimeBaseOffset = new Vector3(runtimeBaseOffset.x, desiredLocalY - baseY, 0f);
-        ApplyFrame();
-    }
-
-    public void SetRuntimeBaseLocalX(float desiredLocalX)
-    {
-        EnsureTargets();
-        if (visualTransform == null) return;
-
-        runtimeLockX = true;
-
-        float baseX = hasExternalBase ? externalBaseLocalPos.x : initialVisualLocalPosition.x;
-        runtimeLockedLocalX = desiredLocalX;
-
-        ApplyFrame();
-    }
-
-    public void ClearRuntimeBaseLocalX()
-    {
-        runtimeLockX = false;
-        ApplyFrame();
-    }
-
-    public void ClearRuntimeBaseOffset()
-    {
-        runtimeBaseOffset = Vector3.zero;
-        runtimeLockX = false;
-        ApplyFrame();
-    }
-
-    public void SetFrozen(bool value)
-    {
-        frozen = value;
-
-        if (frozen)
-        {
-            CancelInvoke(nameof(NextFrame));
-
-            ApplyFrame();
-            ResetOffset();
-        }
-        else
-        {
-            SetupTiming();
-            CancelInvoke(nameof(NextFrame));
-            InvokeRepeating(nameof(NextFrame), animationTime, animationTime);
-
-            ApplyFrame();
-        }
     }
 }
