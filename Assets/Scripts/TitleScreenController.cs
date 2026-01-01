@@ -360,15 +360,10 @@ public class TitleScreenController : MonoBehaviour
         if (menuText == null)
             return;
 
-        string normal =
-            menuIndex == 0
-                ? "<color=#FF6F31>NORMAL GAME</color>"
-                : "<color=#E8E8E8>NORMAL GAME</color>";
+        const string color = "#E8E8E8";
 
-        string exit =
-            menuIndex == 1
-                ? "<color=#FF6F31>EXIT</color>"
-                : "<color=#E8E8E8>EXIT</color>";
+        string normal = $"<color={color}>NORMAL GAME</color>";
+        string exit = $"<color={color}>EXIT</color>";
 
         menuText.text =
             "<align=left>" +
