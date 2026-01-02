@@ -1,5 +1,6 @@
 using System.Collections;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class GamePauseController : MonoBehaviour
 {
@@ -22,6 +23,9 @@ public class GamePauseController : MonoBehaviour
 
     [Header("Return To Title")]
     [SerializeField] float returnToTitleDelayRealtime = 1f;
+
+    [Header("Title Scene")]
+    [SerializeField] string titleSceneName = "Stage_1-1";
 
     int menuIndex;
     bool confirmReturn;
@@ -222,15 +226,12 @@ public class GamePauseController : MonoBehaviour
         if (wait > 0f)
             yield return new WaitForSecondsRealtime(wait);
 
-        var transition = StageIntroTransition.Instance;
-        if (transition != null)
-        {
-            transition.ReturnToTitleFromPause();
-            yield break;
-        }
+        ForceUnpause();
 
         exitingToTitle = false;
-        ForceUnpause();
+        confirmReturn = false;
+
+        SceneManager.LoadScene(titleSceneName, LoadSceneMode.Single);
     }
 
     void RefreshPauseUI()
