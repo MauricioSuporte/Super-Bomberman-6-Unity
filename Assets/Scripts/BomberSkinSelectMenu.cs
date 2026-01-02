@@ -27,7 +27,6 @@ public class BomberSkinSelectMenu : MonoBehaviour
     [Header("Cursor")]
     [SerializeField] RectTransform skinCursor;
     [SerializeField] Vector2 cursorPadding = new(18f, 18f);
-    [SerializeField] bool cursorMatchSelectedScale = true;
     [SerializeField] Vector2 cursorSizeMultiplier = new(0.9f, 0.9f);
     [SerializeField] float cursorYOffset = 8f;
 
@@ -76,7 +75,7 @@ public class BomberSkinSelectMenu : MonoBehaviour
 
     public bool ReturnToTitleRequested { get; private set; }
 
-    [Header("Skins (ordem do menu)")]
+    [Header("Skins (menu order)")]
     [SerializeField]
     List<BomberSkin> selectableSkins = new()
     {
@@ -461,6 +460,8 @@ public class BomberSkinSelectMenu : MonoBehaviour
         var input = PlayerInputManager.Instance;
 
         while (input.Get(PlayerAction.ActionA) ||
+               input.Get(PlayerAction.ActionB) ||
+               input.Get(PlayerAction.Start) ||
                input.Get(PlayerAction.MoveLeft) ||
                input.Get(PlayerAction.MoveRight) ||
                input.Get(PlayerAction.MoveUp) ||
@@ -489,38 +490,56 @@ public class BomberSkinSelectMenu : MonoBehaviour
 
         while (!done)
         {
-            bool blockConfirmBack;
-            bool didUnlockNow = ProcessKonamiCode(input, out blockConfirmBack);
+            bool upDown = input.GetDown(PlayerAction.MoveUp);
+            bool downDown = input.GetDown(PlayerAction.MoveDown);
+            bool leftDown = input.GetDown(PlayerAction.MoveLeft);
+            bool rightDown = input.GetDown(PlayerAction.MoveRight);
+            bool aDown = input.GetDown(PlayerAction.ActionA);
+            bool bDown = input.GetDown(PlayerAction.ActionB);
+            bool startDown = input.GetDown(PlayerAction.Start);
+
+            bool blockMenuThisFrame;
+            bool didUnlockNow = ProcessKonamiCode(upDown, downDown, leftDown, rightDown, bDown, aDown, out blockMenuThisFrame);
+
             if (didUnlockNow)
+            {
                 RefreshVisuals();
+                yield return null;
+                continue;
+            }
+
+            if (blockMenuThisFrame)
+            {
+                yield return null;
+                continue;
+            }
 
             bool moved = false;
             int nextIndex = index;
 
-            if (input.GetDown(PlayerAction.MoveLeft))
+            if (leftDown)
             {
                 nextIndex = MoveLeftWrap(index);
                 moved = true;
             }
-            else if (input.GetDown(PlayerAction.MoveRight))
+            else if (rightDown)
             {
                 nextIndex = MoveRightWrap(index);
                 moved = true;
             }
-            else if (input.GetDown(PlayerAction.MoveUp))
+            else if (upDown)
             {
                 nextIndex = MoveUpWrap(index);
                 moved = true;
             }
-            else if (input.GetDown(PlayerAction.MoveDown))
+            else if (downDown)
             {
                 nextIndex = MoveDownWrap(index);
                 moved = true;
             }
 
-            bool confirmPressed =
-                input.GetDown(PlayerAction.Start) ||
-                (!blockConfirmBack && input.GetDown(PlayerAction.ActionA));
+            bool confirmPressed = startDown || aDown;
+            bool backPressed = bDown;
 
             if (moved)
             {
@@ -533,7 +552,7 @@ public class BomberSkinSelectMenu : MonoBehaviour
                     RefreshVisuals();
                 }
             }
-            else if (!blockConfirmBack && input.GetDown(PlayerAction.ActionB))
+            else if (backPressed)
             {
                 ReturnToTitleRequested = true;
                 PlaySfx(backToTitleSfx, backToTitleSfxVolume);
@@ -582,14 +601,6 @@ public class BomberSkinSelectMenu : MonoBehaviour
                     PlaySfx(lockedConfirmSfx, lockedConfirmSfxVolume);
                 }
             }
-            else if (!blockConfirmBack && input.GetDown(PlayerAction.ActionB))
-            {
-                ReturnToTitleRequested = true;
-                PlaySfx(backToTitleSfx, backToTitleSfxVolume);
-
-                selected = PlayerPersistentStats.Skin;
-                done = true;
-            }
 
             yield return null;
         }
@@ -605,36 +616,56 @@ public class BomberSkinSelectMenu : MonoBehaviour
 
     public BomberSkin GetSelectedSkin() => selected;
 
-    bool ProcessKonamiCode(PlayerInputManager input, out bool blockConfirmBack)
+    bool ProcessKonamiCode(bool upDown, bool downDown, bool leftDown, bool rightDown, bool bDown, bool aDown, out bool blockMenuThisFrame)
     {
-        blockConfirmBack = false;
+        KonamiToken pressed = ReadKonamiTokenThisFrame(upDown, downDown, leftDown, rightDown, bDown, aDown);
 
-        KonamiToken pressed = KonamiToken.None;
+        bool unlocked = AdvanceKonami(pressed, out bool consumed);
 
-        if (input != null)
+        blockMenuThisFrame = consumed && (pressed == KonamiToken.A || pressed == KonamiToken.B);
+
+        if (!unlocked)
+            return false;
+
+        if (!PlayerPersistentStats.IsSkinUnlocked(BomberSkin.Golden))
         {
-            if (input.GetDown(PlayerAction.MoveUp)) pressed = KonamiToken.Up;
-            else if (input.GetDown(PlayerAction.MoveDown)) pressed = KonamiToken.Down;
-            else if (input.GetDown(PlayerAction.MoveLeft)) pressed = KonamiToken.Left;
-            else if (input.GetDown(PlayerAction.MoveRight)) pressed = KonamiToken.Right;
-            else if (input.GetDown(PlayerAction.ActionB)) pressed = KonamiToken.B;
-            else if (input.GetDown(PlayerAction.ActionA)) pressed = KonamiToken.A;
+            PlayerPersistentStats.UnlockGolden();
+            PlayerPersistentStats.ClampSelectedSkinIfLocked();
+            PlaySfx(konamiUnlockSfx, konamiUnlockSfxVolume);
+            return true;
         }
+
+        return false;
+    }
+
+    KonamiToken ReadKonamiTokenThisFrame(bool upDown, bool downDown, bool leftDown, bool rightDown, bool bDown, bool aDown)
+    {
+        if (upDown) return KonamiToken.Up;
+        if (downDown) return KonamiToken.Down;
+        if (leftDown) return KonamiToken.Left;
+        if (rightDown) return KonamiToken.Right;
+        if (bDown) return KonamiToken.B;
+        if (aDown) return KonamiToken.A;
+        return KonamiToken.None;
+    }
+
+    bool AdvanceKonami(KonamiToken pressed, out bool consumedThisFrame)
+    {
+        consumedThisFrame = false;
 
         if (pressed == KonamiToken.None)
-        {
-            if (Input.GetKeyDown(KeyCode.UpArrow)) pressed = KonamiToken.Up;
-            else if (Input.GetKeyDown(KeyCode.DownArrow)) pressed = KonamiToken.Down;
-            else if (Input.GetKeyDown(KeyCode.LeftArrow)) pressed = KonamiToken.Left;
-            else if (Input.GetKeyDown(KeyCode.RightArrow)) pressed = KonamiToken.Right;
-            else if (Input.GetKeyDown(KeyCode.B)) pressed = KonamiToken.B;
-            else if (Input.GetKeyDown(KeyCode.A)) pressed = KonamiToken.A;
-            else
-                return false;
-        }
+            return false;
 
-        if (pressed == KonamiToken.A || pressed == KonamiToken.B)
-            blockConfirmBack = true;
+        bool isKonamiToken =
+            pressed == KonamiToken.Up ||
+            pressed == KonamiToken.Down ||
+            pressed == KonamiToken.Left ||
+            pressed == KonamiToken.Right ||
+            pressed == KonamiToken.B ||
+            pressed == KonamiToken.A;
+
+        if (isKonamiToken && (konamiStep > 0 || pressed == _konamiTokens[0]))
+            consumedThisFrame = true;
 
         if (pressed == _konamiTokens[konamiStep])
         {
@@ -643,21 +674,18 @@ public class BomberSkinSelectMenu : MonoBehaviour
             if (konamiStep >= _konamiTokens.Length)
             {
                 konamiStep = 0;
-
-                if (!PlayerPersistentStats.IsSkinUnlocked(BomberSkin.Golden))
-                {
-                    PlayerPersistentStats.UnlockGolden();
-                    PlayerPersistentStats.ClampSelectedSkinIfLocked();
-
-                    PlaySfx(konamiUnlockSfx, konamiUnlockSfxVolume);
-                    return true;
-                }
+                consumedThisFrame = true;
+                return true;
             }
 
             return false;
         }
 
         konamiStep = (pressed == _konamiTokens[0]) ? 1 : 0;
+
+        if (pressed == _konamiTokens[0])
+            consumedThisFrame = true;
+
         return false;
     }
 
