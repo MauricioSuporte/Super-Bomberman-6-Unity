@@ -1,21 +1,23 @@
-﻿using UnityEngine;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.Controls;
 
 public class PlayerInputManager : MonoBehaviour
 {
     public static PlayerInputManager Instance { get; private set; }
 
-    private readonly Dictionary<int, PlayerInputProfile> players = new();
+    readonly Dictionary<int, PlayerInputProfile> players = new();
 
-    private readonly Dictionary<int, bool> prevUp = new();
-    private readonly Dictionary<int, bool> prevDown = new();
-    private readonly Dictionary<int, bool> prevLeft = new();
-    private readonly Dictionary<int, bool> prevRight = new();
+    readonly Dictionary<int, bool> prevUp = new();
+    readonly Dictionary<int, bool> prevDown = new();
+    readonly Dictionary<int, bool> prevLeft = new();
+    readonly Dictionary<int, bool> prevRight = new();
 
-    private readonly Dictionary<int, bool> curUp = new();
-    private readonly Dictionary<int, bool> curDown = new();
-    private readonly Dictionary<int, bool> curLeft = new();
-    private readonly Dictionary<int, bool> curRight = new();
+    readonly Dictionary<int, bool> curUp = new();
+    readonly Dictionary<int, bool> curDown = new();
+    readonly Dictionary<int, bool> curLeft = new();
+    readonly Dictionary<int, bool> curRight = new();
 
     void Awake()
     {
@@ -41,8 +43,7 @@ public class PlayerInputManager : MonoBehaviour
             int id = kv.Key;
             var p = kv.Value;
 
-            // lê DPad do joystick "ativo" do player
-            ReadDpadDigitalFromAxes(p, p.joyIndex, out bool up, out bool down, out bool left, out bool right);
+            ReadDpadDigital(p, out bool up, out bool down, out bool left, out bool right);
 
             curUp[id] = up;
             curDown[id] = down;
@@ -72,11 +73,10 @@ public class PlayerInputManager : MonoBehaviour
         var b = p.GetBinding(action);
 
         if (b.kind == BindKind.Key)
-            return Input.GetKey(b.key);
+            return ReadKeyHeld(b.key);
 
         if (b.kind == BindKind.DPad)
         {
-            // DPad usa o estado calculado no Update (do joystick ativo do player)
             return b.dpadDir switch
             {
                 0 => curUp[playerId],
@@ -89,8 +89,7 @@ public class PlayerInputManager : MonoBehaviour
 
         if (b.kind == BindKind.JoyButton)
         {
-            var kc = GetJoyButtonKeyCode(b.joyIndex, b.joyButton);
-            return kc.HasValue && Input.GetKey(kc.Value);
+            return ReadGamepadButtonHeld(p, b.joyButton);
         }
 
         return false;
@@ -102,7 +101,7 @@ public class PlayerInputManager : MonoBehaviour
         var b = p.GetBinding(action);
 
         if (b.kind == BindKind.Key)
-            return Input.GetKeyDown(b.key);
+            return ReadKeyDown(b.key);
 
         if (b.kind == BindKind.DPad)
         {
@@ -129,45 +128,112 @@ public class PlayerInputManager : MonoBehaviour
 
         if (b.kind == BindKind.JoyButton)
         {
-            var kc = GetJoyButtonKeyCode(b.joyIndex, b.joyButton);
-            return kc.HasValue && Input.GetKeyDown(kc.Value);
+            return ReadGamepadButtonDown(p, b.joyButton);
         }
 
         return false;
     }
 
-    static string DpadAxisName(int joyIndex, int axis) => $"joy{joyIndex}_{axis}";
-
-    static float ReadJoyAxisRaw(int joyIndex, int axis)
+    static void ReadDpadDigital(PlayerInputProfile p, out bool up, out bool down, out bool left, out bool right)
     {
-        return Input.GetAxisRaw(DpadAxisName(joyIndex, axis));
+        var pad = ResolvePlayerGamepad(p);
+
+        if (pad == null)
+        {
+            up = down = left = right = false;
+            return;
+        }
+
+        up = pad.dpad.up.isPressed;
+        down = pad.dpad.down.isPressed;
+        left = pad.dpad.left.isPressed;
+        right = pad.dpad.right.isPressed;
     }
 
-    public static void ReadDpadDigitalFromAxes(PlayerInputProfile p, int joyIndex, out bool up, out bool down, out bool left, out bool right)
+    static Gamepad ResolvePlayerGamepad(PlayerInputProfile p)
     {
-        float x = ReadJoyAxisRaw(joyIndex, 6);
-        float y = ReadJoyAxisRaw(joyIndex, 7);
-
-        if (p.invertDpadY)
-            y = -y;
-
-        float dz = Mathf.Clamp(p.axisDeadzone, 0.05f, 0.95f);
-
-        left = x <= -dz;
-        right = x >= dz;
-        up = y >= dz;
-        down = y <= -dz;
+        return Gamepad.current;
     }
 
-    static KeyCode? GetJoyButtonKeyCode(int joyIndex, int button)
+    static bool ReadKeyHeld(KeyCode k)
     {
-        if (joyIndex < 1 || joyIndex > 11) return null;
-        if (button < 0 || button > 39) return null;
+        var kb = Keyboard.current;
+        if (kb == null) return false;
 
-        string name = $"Joystick{joyIndex}Button{button}";
-        if (System.Enum.TryParse(name, out KeyCode kc))
-            return kc;
+        return TryGetKeyControl(k, kb, out var key) && key.isPressed;
+    }
 
-        return null;
+    static bool ReadKeyDown(KeyCode k)
+    {
+        var kb = Keyboard.current;
+        if (kb == null) return false;
+
+        return TryGetKeyControl(k, kb, out var key) && key.wasPressedThisFrame;
+    }
+
+    static bool TryGetKeyControl(KeyCode keyCode, Keyboard kb, out KeyControl key)
+    {
+        key = null;
+
+        switch (keyCode)
+        {
+            case KeyCode.W: key = kb.wKey; return true;
+            case KeyCode.A: key = kb.aKey; return true;
+            case KeyCode.S: key = kb.sKey; return true;
+            case KeyCode.D: key = kb.dKey; return true;
+
+            case KeyCode.UpArrow: key = kb.upArrowKey; return true;
+            case KeyCode.DownArrow: key = kb.downArrowKey; return true;
+            case KeyCode.LeftArrow: key = kb.leftArrowKey; return true;
+            case KeyCode.RightArrow: key = kb.rightArrowKey; return true;
+
+            case KeyCode.Return: key = kb.enterKey; return true;
+            case KeyCode.Escape: key = kb.escapeKey; return true;
+
+            case KeyCode.M: key = kb.mKey; return true;
+            case KeyCode.N: key = kb.nKey; return true;
+            case KeyCode.B: key = kb.bKey; return true;
+
+            case KeyCode.Space: key = kb.spaceKey; return true;
+
+            default:
+                return false;
+        }
+    }
+
+    static bool ReadGamepadButtonHeld(PlayerInputProfile p, int btn)
+    {
+        var pad = ResolvePlayerGamepad(p);
+        if (pad == null) return false;
+
+        var c = MapLegacyButtonIndex(pad, btn);
+        return c != null && c.isPressed;
+    }
+
+    static bool ReadGamepadButtonDown(PlayerInputProfile p, int btn)
+    {
+        var pad = ResolvePlayerGamepad(p);
+        if (pad == null) return false;
+
+        var c = MapLegacyButtonIndex(pad, btn);
+        return c != null && c.wasPressedThisFrame;
+    }
+
+    static ButtonControl MapLegacyButtonIndex(Gamepad pad, int btn)
+    {
+        return btn switch
+        {
+            0 => pad.buttonSouth,
+            1 => pad.buttonEast,
+            2 => pad.buttonWest,
+            3 => pad.buttonNorth,
+            4 => pad.leftShoulder,
+            5 => pad.rightShoulder,
+            6 => pad.leftTrigger,
+            7 => pad.rightTrigger,
+            8 => pad.startButton,
+            9 => pad.selectButton,
+            _ => null
+        };
     }
 }

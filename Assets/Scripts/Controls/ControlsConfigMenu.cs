@@ -3,6 +3,7 @@ using System.Collections;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.InputSystem;
 
 public class ControlsConfigMenu : MonoBehaviour
 {
@@ -98,14 +99,9 @@ public class ControlsConfigMenu : MonoBehaviour
     Material runtimeMenuMat;
     Coroutine cursorPulseRoutine;
 
-    bool dpadArmed;
-    float[] prevDpadX = new float[12];
-    float[] prevDpadY = new float[12];
-
     struct DpadHit
     {
-        public int joy;
-        public int dir; // 0..3
+        public int dir;
     }
 
     void Awake()
@@ -265,18 +261,6 @@ public class ControlsConfigMenu : MonoBehaviour
                     {
                         PlaySfx(confirmSfx, confirmVolume);
                         waitingForKey = true;
-
-                        var p1 = PlayerInputManager.Instance.GetPlayer(1);
-
-                        for (int j = 1; j <= 11; j++)
-                        {
-                            prevDpadX[j] = Input.GetAxisRaw($"joy{j}_6");
-                            prevDpadY[j] = Input.GetAxisRaw($"joy{j}_7");
-                            if (p1.invertDpadY) prevDpadY[j] = -prevDpadY[j];
-                        }
-
-                        dpadArmed = false;
-
                         RefreshText();
                         yield return PulseCursor();
                     }
@@ -299,14 +283,14 @@ public class ControlsConfigMenu : MonoBehaviour
             {
                 var p1 = PlayerInputManager.Instance.GetPlayer(1);
 
-                DpadHit? dpad = ReadAnyDpadDownEdgeAnyJoystick(p1, prevDpadX, prevDpadY, ref dpadArmed);
-                bool joyBtn = ReadAnyJoystickButtonDown(out int joyIndex, out int button);
-                KeyCode? key = ReadAnyKeyDownNoMouse();
+                DpadHit? dpad = ReadAnyDpadDownThisFrame();
+                bool joyBtn = ReadAnyGamepadButtonDownThisFrame(out int legacyBtn);
+                KeyCode? key = ReadAnyKeyboardKeyDownNoMouse();
 
                 if (remapDebugLogs)
                 {
-                    Debug.Log($"[REMAP] action={rows[index].action} dpad={(dpad.HasValue ? $"J{dpad.Value.joy} dir{dpad.Value.dir}" : "null")} " +
-                              $"joyBtn={(joyBtn ? $"Joystick{joyIndex}Button{button}" : "null")} key={(key.HasValue ? key.Value.ToString() : "null")}");
+                    Debug.Log($"[REMAP] action={rows[index].action} dpad={(dpad.HasValue ? $"dir{dpad.Value.dir}" : "null")} " +
+                              $"joyBtn={(joyBtn ? $"btn{legacyBtn}" : "null")} key={(key.HasValue ? key.Value.ToString() : "null")}");
                 }
 
                 if (dpad.HasValue || joyBtn || key.HasValue)
@@ -316,13 +300,11 @@ public class ControlsConfigMenu : MonoBehaviour
                     {
                         if (dpad.HasValue)
                         {
-                            p1.joyIndex = dpad.Value.joy;
-                            p1.SetBinding(row.action, Binding.FromDpad(dpad.Value.joy, dpad.Value.dir));
+                            p1.SetBinding(row.action, Binding.FromDpad(1, dpad.Value.dir));
                         }
                         else if (joyBtn)
                         {
-                            p1.joyIndex = joyIndex;
-                            p1.SetBinding(row.action, Binding.FromJoyButton(joyIndex, button));
+                            p1.SetBinding(row.action, Binding.FromJoyButton(1, legacyBtn));
                         }
                         else
                         {
@@ -369,81 +351,94 @@ public class ControlsConfigMenu : MonoBehaviour
             GameMusicController.Instance.PlayMusic(restoreMusic, Mathf.Clamp01(restoreMusicVolume), true);
     }
 
-    static DpadHit? ReadAnyDpadDownEdgeAnyJoystick(PlayerInputProfile p, float[] prevX, float[] prevY, ref bool armed)
+    static DpadHit? ReadAnyDpadDownThisFrame()
     {
-        float dz = Mathf.Clamp(p.axisDeadzone, 0.05f, 0.95f);
-
-        bool anyNeutralNow = false;
-
-        for (int j = 1; j <= 11; j++)
+        foreach (var pad in Gamepad.all)
         {
-            float x = Input.GetAxisRaw($"joy{j}_6");
-            float y = Input.GetAxisRaw($"joy{j}_7");
-            if (p.invertDpadY) y = -y;
+            if (pad == null) continue;
 
-            bool nowNeutral = Mathf.Abs(x) <= dz && Mathf.Abs(y) <= dz;
-            if (nowNeutral) anyNeutralNow = true;
-
-            bool prevNeutral = Mathf.Abs(prevX[j]) <= dz && Mathf.Abs(prevY[j]) <= dz;
-
-            if (armed && prevNeutral && !nowNeutral)
-            {
-                prevX[j] = x;
-                prevY[j] = y;
-
-                if (y >= dz) return new DpadHit { joy = j, dir = 0 };
-                if (y <= -dz) return new DpadHit { joy = j, dir = 1 };
-                if (x <= -dz) return new DpadHit { joy = j, dir = 2 };
-                if (x >= dz) return new DpadHit { joy = j, dir = 3 };
-            }
-
-            prevX[j] = x;
-            prevY[j] = y;
+            if (pad.dpad.up.wasPressedThisFrame) return new DpadHit { dir = 0 };
+            if (pad.dpad.down.wasPressedThisFrame) return new DpadHit { dir = 1 };
+            if (pad.dpad.left.wasPressedThisFrame) return new DpadHit { dir = 2 };
+            if (pad.dpad.right.wasPressedThisFrame) return new DpadHit { dir = 3 };
         }
-
-        if (!armed && anyNeutralNow)
-            armed = true;
 
         return null;
     }
 
-    static bool ReadAnyJoystickButtonDown(out int joyIndex, out int button)
+    static bool ReadAnyGamepadButtonDownThisFrame(out int legacyBtn)
     {
-        joyIndex = 0;
-        button = -1;
+        legacyBtn = -1;
 
-        for (int j = 1; j <= 11; j++)
+        foreach (var pad in Gamepad.all)
         {
-            for (int b = 0; b <= 19; b++)
-            {
-                string name = $"Joystick{j}Button{b}";
-                if (Enum.TryParse(name, out KeyCode kc) && Input.GetKeyDown(kc))
-                {
-                    joyIndex = j;
-                    button = b;
-                    return true;
-                }
-            }
+            if (pad == null) continue;
+
+            if (pad.buttonSouth.wasPressedThisFrame) { legacyBtn = 0; return true; }
+            if (pad.buttonEast.wasPressedThisFrame) { legacyBtn = 1; return true; }
+            if (pad.buttonWest.wasPressedThisFrame) { legacyBtn = 2; return true; }
+            if (pad.buttonNorth.wasPressedThisFrame) { legacyBtn = 3; return true; }
+
+            if (pad.leftShoulder.wasPressedThisFrame) { legacyBtn = 4; return true; }
+            if (pad.rightShoulder.wasPressedThisFrame) { legacyBtn = 5; return true; }
+
+            if (pad.leftTrigger.wasPressedThisFrame) { legacyBtn = 6; return true; }
+            if (pad.rightTrigger.wasPressedThisFrame) { legacyBtn = 7; return true; }
+
+            if (pad.startButton.wasPressedThisFrame) { legacyBtn = 8; return true; }
+            if (pad.selectButton.wasPressedThisFrame) { legacyBtn = 9; return true; }
         }
 
         return false;
     }
 
-    static KeyCode? ReadAnyKeyDownNoMouse()
+    static KeyCode? ReadAnyKeyboardKeyDownNoMouse()
     {
-        if (!Input.anyKeyDown)
+        var kb = Keyboard.current;
+        if (kb == null) return null;
+
+        if (!kb.anyKey.wasPressedThisFrame)
             return null;
 
-        foreach (KeyCode k in Enum.GetValues(typeof(KeyCode)))
+        foreach (var k in kb.allKeys)
         {
-            if (k >= KeyCode.Mouse0 && k <= KeyCode.Mouse6)
-                continue;
+            if (k == null) continue;
+            if (!k.wasPressedThisFrame) continue;
 
-            if (Input.GetKeyDown(k))
-                return k;
+            if (TryMapInputSystemKeyToUnityKeyCode(k.keyCode, out var kc))
+                return kc;
         }
 
         return null;
+    }
+
+    static bool TryMapInputSystemKeyToUnityKeyCode(Key key, out KeyCode kc)
+    {
+        kc = KeyCode.None;
+
+        switch (key)
+        {
+            case Key.W: kc = KeyCode.W; return true;
+            case Key.A: kc = KeyCode.A; return true;
+            case Key.S: kc = KeyCode.S; return true;
+            case Key.D: kc = KeyCode.D; return true;
+
+            case Key.UpArrow: kc = KeyCode.UpArrow; return true;
+            case Key.DownArrow: kc = KeyCode.DownArrow; return true;
+            case Key.LeftArrow: kc = KeyCode.LeftArrow; return true;
+            case Key.RightArrow: kc = KeyCode.RightArrow; return true;
+
+            case Key.Enter: kc = KeyCode.Return; return true;
+            case Key.Escape: kc = KeyCode.Escape; return true;
+            case Key.Space: kc = KeyCode.Space; return true;
+
+            case Key.M: kc = KeyCode.M; return true;
+            case Key.N: kc = KeyCode.N; return true;
+            case Key.B: kc = KeyCode.B; return true;
+
+            default:
+                return false;
+        }
     }
 
     IEnumerator PulseCursor()

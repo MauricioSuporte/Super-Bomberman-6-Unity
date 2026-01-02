@@ -9,14 +9,11 @@ public struct Binding
 
     public KeyCode key;
 
-    // 0=Up,1=Down,2=Left,3=Right
     public int dpadDir;
 
-    // Legacy: qual joystick (1..11)
     public int joyIndex;
 
-    // Legacy: Joystick#Button#
-    public int joyButton;  // 0..19+
+    public int joyButton;
 
     public static Binding FromKey(KeyCode k) => new()
     {
