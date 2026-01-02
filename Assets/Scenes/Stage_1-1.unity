@@ -440,7 +440,10 @@ GameObject:
   m_Component:
   - component: {fileID: 268450099}
   - component: {fileID: 268450100}
+  - component: {fileID: 268450101}
   - component: {fileID: 268450102}
+  - component: {fileID: 268450104}
+  - component: {fileID: 268450103}
   m_Layer: 0
   m_Name: Game Manager
   m_TagString: Untagged
@@ -504,6 +507,18 @@ MonoBehaviour:
   groundTile: {fileID: 11400000, guid: ada74cfa1fdef9e4c86ccafaa1b2ae66, type: 2}
   groundShadowTile: {fileID: 11400000, guid: e0f633282caacc742af95bdd334dd0cf, type: 2}
   autoResolveStageTilemaps: 1
+--- !u!114 &268450101
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 268450098}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ebf76970db4f6fe4e962a1c122f5dd70, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::JoystickNamesProbe
 --- !u!114 &268450102
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -511,11 +526,40 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 268450098}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f465471c04b83fa41bb3e9abef630080, type: 3}
+  m_Script: {fileID: 11500000, guid: f5f90ba8682289a4eaa60b766afe4d10, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: 
+  m_EditorClassIdentifier: Assembly-CSharp::DpadProbe
+--- !u!114 &268450103
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 268450098}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4241ef389600c9c4585105088a315e55, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PerJoystickButtonScanner
+  maxJoysticks: 11
+  maxButtons: 39
+--- !u!114 &268450104
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 268450098}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 53726dff906ce6447895b0d1ec871c4d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PerJoystickAxisScanner
+  maxJoysticks: 11
+  axisCount: 28
+  threshold: 0.5
 --- !u!1 &285353614
 GameObject:
   m_ObjectHideFlags: 0
@@ -6085,7 +6129,6 @@ MonoBehaviour:
   controlsMusic: {fileID: 8300000, guid: 995a31f86fa5dcd4e8e4ba88dc2854cf, type: 3}
   controlsMusicVolume: 1
   menuText: {fileID: 534844157}
-  fontSize: 32
   titleFontSize: 46
   titleOffsetLines: -1
   bodyFontSize: 32
@@ -6109,6 +6152,7 @@ MonoBehaviour:
   backVolume: 1
   resetSfx: {fileID: 8300000, guid: 19e972fda0569ce48901fd1e9d453520, type: 3}
   resetVolume: 1
+  remapDebugLogs: 1
 --- !u!224 &1789443841
 RectTransform:
   m_ObjectHideFlags: 0

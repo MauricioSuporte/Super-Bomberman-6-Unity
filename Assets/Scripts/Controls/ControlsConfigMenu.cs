@@ -21,7 +21,6 @@ public class ControlsConfigMenu : MonoBehaviour
 
     [Header("Text (TMP)")]
     [SerializeField] TMP_Text menuText;
-    [SerializeField] int fontSize = 46;
 
     [Header("Title")]
     [SerializeField] int titleFontSize = 46;
@@ -63,6 +62,9 @@ public class ControlsConfigMenu : MonoBehaviour
     [SerializeField] AudioClip resetSfx;
     [SerializeField, Range(0f, 1f)] float resetVolume = 1f;
 
+    [Header("Remap Debug")]
+    [SerializeField] bool remapDebugLogs = false;
+
     enum RowKind { Binding, Reset, Back }
 
     struct Row
@@ -95,6 +97,16 @@ public class ControlsConfigMenu : MonoBehaviour
     bool waitingForKey;
     Material runtimeMenuMat;
     Coroutine cursorPulseRoutine;
+
+    bool dpadArmed;
+    float[] prevDpadX = new float[12];
+    float[] prevDpadY = new float[12];
+
+    struct DpadHit
+    {
+        public int joy;
+        public int dir; // 0..3
+    }
 
     void Awake()
     {
@@ -129,13 +141,9 @@ public class ControlsConfigMenu : MonoBehaviour
             menuText.fontStyle |= FontStyles.Bold;
 
         Material baseMat = menuText.fontSharedMaterial;
-        if (baseMat == null)
-            baseMat = menuText.fontMaterial;
-        if (baseMat == null && menuText.font != null)
-            baseMat = menuText.font.material;
-
-        if (baseMat == null)
-            return;
+        if (baseMat == null) baseMat = menuText.fontMaterial;
+        if (baseMat == null && menuText.font != null) baseMat = menuText.font.material;
+        if (baseMat == null) return;
 
         if (runtimeMenuMat != null)
             Destroy(runtimeMenuMat);
@@ -257,6 +265,18 @@ public class ControlsConfigMenu : MonoBehaviour
                     {
                         PlaySfx(confirmSfx, confirmVolume);
                         waitingForKey = true;
+
+                        var p1 = PlayerInputManager.Instance.GetPlayer(1);
+
+                        for (int j = 1; j <= 11; j++)
+                        {
+                            prevDpadX[j] = Input.GetAxisRaw($"joy{j}_6");
+                            prevDpadY[j] = Input.GetAxisRaw($"joy{j}_7");
+                            if (p1.invertDpadY) prevDpadY[j] = -prevDpadY[j];
+                        }
+
+                        dpadArmed = false;
+
                         RefreshText();
                         yield return PulseCursor();
                     }
@@ -277,14 +297,37 @@ public class ControlsConfigMenu : MonoBehaviour
             }
             else
             {
-                var key = ReadAnyKeyDown();
-                if (key.HasValue)
+                var p1 = PlayerInputManager.Instance.GetPlayer(1);
+
+                DpadHit? dpad = ReadAnyDpadDownEdgeAnyJoystick(p1, prevDpadX, prevDpadY, ref dpadArmed);
+                bool joyBtn = ReadAnyJoystickButtonDown(out int joyIndex, out int button);
+                KeyCode? key = ReadAnyKeyDownNoMouse();
+
+                if (remapDebugLogs)
+                {
+                    Debug.Log($"[REMAP] action={rows[index].action} dpad={(dpad.HasValue ? $"J{dpad.Value.joy} dir{dpad.Value.dir}" : "null")} " +
+                              $"joyBtn={(joyBtn ? $"Joystick{joyIndex}Button{button}" : "null")} key={(key.HasValue ? key.Value.ToString() : "null")}");
+                }
+
+                if (dpad.HasValue || joyBtn || key.HasValue)
                 {
                     var row = rows[index];
                     if (row.kind == RowKind.Binding)
                     {
-                        var p1 = PlayerInputManager.Instance.GetPlayer(1);
-                        p1.SetKey(row.action, key.Value);
+                        if (dpad.HasValue)
+                        {
+                            p1.joyIndex = dpad.Value.joy;
+                            p1.SetBinding(row.action, Binding.FromDpad(dpad.Value.joy, dpad.Value.dir));
+                        }
+                        else if (joyBtn)
+                        {
+                            p1.joyIndex = joyIndex;
+                            p1.SetBinding(row.action, Binding.FromJoyButton(joyIndex, button));
+                        }
+                        else
+                        {
+                            p1.SetBinding(row.action, Binding.FromKey(key.Value));
+                        }
                     }
 
                     waitingForKey = false;
@@ -324,6 +367,83 @@ public class ControlsConfigMenu : MonoBehaviour
 
         if (restoreMusic != null && GameMusicController.Instance != null)
             GameMusicController.Instance.PlayMusic(restoreMusic, Mathf.Clamp01(restoreMusicVolume), true);
+    }
+
+    static DpadHit? ReadAnyDpadDownEdgeAnyJoystick(PlayerInputProfile p, float[] prevX, float[] prevY, ref bool armed)
+    {
+        float dz = Mathf.Clamp(p.axisDeadzone, 0.05f, 0.95f);
+
+        bool anyNeutralNow = false;
+
+        for (int j = 1; j <= 11; j++)
+        {
+            float x = Input.GetAxisRaw($"joy{j}_6");
+            float y = Input.GetAxisRaw($"joy{j}_7");
+            if (p.invertDpadY) y = -y;
+
+            bool nowNeutral = Mathf.Abs(x) <= dz && Mathf.Abs(y) <= dz;
+            if (nowNeutral) anyNeutralNow = true;
+
+            bool prevNeutral = Mathf.Abs(prevX[j]) <= dz && Mathf.Abs(prevY[j]) <= dz;
+
+            if (armed && prevNeutral && !nowNeutral)
+            {
+                prevX[j] = x;
+                prevY[j] = y;
+
+                if (y >= dz) return new DpadHit { joy = j, dir = 0 };
+                if (y <= -dz) return new DpadHit { joy = j, dir = 1 };
+                if (x <= -dz) return new DpadHit { joy = j, dir = 2 };
+                if (x >= dz) return new DpadHit { joy = j, dir = 3 };
+            }
+
+            prevX[j] = x;
+            prevY[j] = y;
+        }
+
+        if (!armed && anyNeutralNow)
+            armed = true;
+
+        return null;
+    }
+
+    static bool ReadAnyJoystickButtonDown(out int joyIndex, out int button)
+    {
+        joyIndex = 0;
+        button = -1;
+
+        for (int j = 1; j <= 11; j++)
+        {
+            for (int b = 0; b <= 19; b++)
+            {
+                string name = $"Joystick{j}Button{b}";
+                if (Enum.TryParse(name, out KeyCode kc) && Input.GetKeyDown(kc))
+                {
+                    joyIndex = j;
+                    button = b;
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    static KeyCode? ReadAnyKeyDownNoMouse()
+    {
+        if (!Input.anyKeyDown)
+            return null;
+
+        foreach (KeyCode k in Enum.GetValues(typeof(KeyCode)))
+        {
+            if (k >= KeyCode.Mouse0 && k <= KeyCode.Mouse6)
+                continue;
+
+            if (Input.GetKeyDown(k))
+                return k;
+        }
+
+        return null;
     }
 
     IEnumerator PulseCursor()
@@ -371,7 +491,7 @@ public class ControlsConfigMenu : MonoBehaviour
             if (r.kind == RowKind.Binding)
             {
                 string left = ActionToLabel(r.action);
-                string right = KeyToLabel(p1.GetKey(r.action));
+                string right = BindingToLabel(p1.GetBinding(r.action));
 
                 string line = $"{left,-12}  :  {right}";
                 if (sel && waitingForKey)
@@ -404,6 +524,31 @@ public class ControlsConfigMenu : MonoBehaviour
         menuText.text = header + body;
 
         UpdateCursorPosition();
+    }
+
+    static string BindingToLabel(Binding b)
+    {
+        if (b.kind == BindKind.Key)
+            return b.key.ToString().ToUpperInvariant();
+
+        if (b.kind == BindKind.DPad)
+        {
+            string dir = b.dpadDir switch
+            {
+                0 => "DPAD UP",
+                1 => "DPAD DOWN",
+                2 => "DPAD LEFT",
+                3 => "DPAD RIGHT",
+                _ => "DPAD"
+            };
+
+            return $"JOY{b.joyIndex} {dir}";
+        }
+
+        if (b.kind == BindKind.JoyButton)
+            return $"JOY{b.joyIndex} BTN{b.joyButton}";
+
+        return "UNKNOWN";
     }
 
     void UpdateCursorPosition()
@@ -518,10 +663,7 @@ public class ControlsConfigMenu : MonoBehaviour
     static string RepeatNewLine(int count)
     {
         if (count == 0) return string.Empty;
-
-        if (count > 0)
-            return new string('\n', count);
-
+        if (count > 0) return new string('\n', count);
         return string.Empty;
     }
 
@@ -539,24 +681,5 @@ public class ControlsConfigMenu : MonoBehaviour
             PlayerAction.ActionC => "C",
             _ => a.ToString().ToUpperInvariant(),
         };
-    }
-
-    static string KeyToLabel(KeyCode k)
-    {
-        return k.ToString().ToUpperInvariant();
-    }
-
-    static KeyCode? ReadAnyKeyDown()
-    {
-        if (!Input.anyKeyDown)
-            return null;
-
-        foreach (KeyCode k in Enum.GetValues(typeof(KeyCode)))
-        {
-            if (Input.GetKeyDown(k))
-                return k;
-        }
-
-        return null;
     }
 }
