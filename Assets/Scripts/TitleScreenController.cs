@@ -53,6 +53,9 @@ public class TitleScreenController : MonoBehaviour
     [Header("Exit")]
     public float exitDelayRealtime = 1f;
 
+    [Header("Start Game Timing")]
+    [SerializeField] float startGameFadeOutDuration = 0.25f;
+
     [Header("Cursor (AnimatedSpriteRenderer)")]
     public AnimatedSpriteRenderer cursorRenderer;
     [SerializeField] Vector2 cursorOffset = new(-30f, 0f);
@@ -398,13 +401,13 @@ public class TitleScreenController : MonoBehaviour
 
     IEnumerator StartNormalGame()
     {
-        yield return _wait1s;
+        float d = Mathf.Max(0.01f, startGameFadeOutDuration);
 
         var transition = StageIntroTransition.Instance;
         if (transition != null)
-            transition.StartFadeOut(1f, false);
+            transition.StartFadeOut(d, false);
 
-        yield return _wait1s;
+        yield return new WaitForSecondsRealtime(d);
 
         if (GameMusicController.Instance != null)
             GameMusicController.Instance.StopMusic();
@@ -421,6 +424,8 @@ public class TitleScreenController : MonoBehaviour
         StopPushStartBlink();
         Running = false;
     }
+
+
 
     IEnumerator ExitGame()
     {
