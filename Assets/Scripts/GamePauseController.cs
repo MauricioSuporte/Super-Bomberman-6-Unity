@@ -30,6 +30,20 @@ public class GamePauseController : MonoBehaviour
     bool exitingToTitle;
     Coroutine exitRoutine;
 
+    public static GamePauseController Instance { get; private set; }
+
+    void Awake()
+    {
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+
+        Instance = this;
+        DontDestroyOnLoad(gameObject);
+    }
+
     void Update()
     {
         if (exitingToTitle)

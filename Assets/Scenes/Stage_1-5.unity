@@ -129,7 +129,6 @@ GameObject:
   m_Component:
   - component: {fileID: 268450099}
   - component: {fileID: 268450100}
-  - component: {fileID: 268450101}
   - component: {fileID: 268450102}
   m_Layer: 0
   m_Name: Game Manager
@@ -174,26 +173,26 @@ MonoBehaviour:
   kickBombItemPrefab: {fileID: 6871244334814668705, guid: 8688e05eefe87c143a46fe4f721b8c80, type: 3}
   punchBombItemPrefab: {fileID: 6871244334814668705, guid: 5d9a731da7e790c45a7a1d311cea3d8c, type: 3}
   pierceBombItemPrefab: {fileID: 2727780941473249227, guid: 5ae02590c78b5f341801e38d8b723efd, type: 3}
+  controlBombItemPrefab: {fileID: 0}
+  fullFireItemPrefab: {fileID: 0}
+  bombPassItemPrefab: {fileID: 0}
+  destructiblePassItemPrefab: {fileID: 0}
+  invincibleSuitItemPrefab: {fileID: 0}
+  heartItemPrefab: {fileID: 0}
+  blueLouieEggItemPrefab: {fileID: 0}
+  blackLouieEggItemPrefab: {fileID: 0}
+  purpleLouieEggItemPrefab: {fileID: 0}
+  greenLouieEggItemPrefab: {fileID: 0}
+  yellowLouieEggItemPrefab: {fileID: 0}
+  pinkLouieEggItemPrefab: {fileID: 0}
+  redLouieEggItemPrefab: {fileID: 0}
   destructibleTilemap: {fileID: 285353618}
+  indestructibleTilemap: {fileID: 0}
   nextStageSceneName: Stage_1-6
   groundTilemap: {fileID: 672307155}
   groundTile: {fileID: 11400000, guid: ada74cfa1fdef9e4c86ccafaa1b2ae66, type: 2}
   groundShadowTile: {fileID: 11400000, guid: e0f633282caacc742af95bdd334dd0cf, type: 2}
---- !u!114 &268450101
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 268450098}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e921768e44b7b6c40a25e08b860ad527, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  pauseKey: 13
-  pauseSfx: {fileID: 8300000, guid: 63944a43f80f52945aa04dad91925a65, type: 3}
-  sfxSource: {fileID: 460986863}
+  autoResolveStageTilemaps: 1
 --- !u!114 &268450102
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -917,135 +916,6 @@ MonoBehaviour:
     y: 0
     width: 1
     height: 1
---- !u!1 &460986862
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 460986864}
-  - component: {fileID: 460986863}
-  m_Layer: 0
-  m_Name: PauseSfx
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!82 &460986863
-AudioSource:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 460986862}
-  m_Enabled: 1
-  serializedVersion: 4
-  OutputAudioMixerGroup: {fileID: 0}
-  m_audioClip: {fileID: 0}
-  m_Resource: {fileID: 0}
-  m_PlayOnAwake: 0
-  m_Volume: 1
-  m_Pitch: 1
-  Loop: 0
-  Mute: 0
-  Spatialize: 0
-  SpatializePostEffects: 0
-  Priority: 128
-  DopplerLevel: 1
-  MinDistance: 1
-  MaxDistance: 500
-  Pan2D: 0
-  rolloffMode: 0
-  BypassEffects: 0
-  BypassListenerEffects: 0
-  BypassReverbZones: 0
-  rolloffCustomCurve:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 1
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.33333334
-      outWeight: 0.33333334
-    - serializedVersion: 3
-      time: 1
-      value: 0
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.33333334
-      outWeight: 0.33333334
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
-  panLevelCustomCurve:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 0
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.33333334
-      outWeight: 0.33333334
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
-  spreadCustomCurve:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 0
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.33333334
-      outWeight: 0.33333334
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
-  reverbZoneMixCustomCurve:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 1
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.33333334
-      outWeight: 0.33333334
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
---- !u!4 &460986864
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 460986862}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.6920823, y: 0.11508037, z: -2.2525113}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &519420028
 GameObject:
   m_ObjectHideFlags: 0
@@ -4991,28 +4861,17 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   fadeImage: {fileID: 336813435}
-  introLogoImage: {fileID: 1102021992}
+  hudsonLogoIntro: {fileID: 0}
+  titleScreen: {fileID: 0}
   introMusic: {fileID: 8300000, guid: ff7109298c0b4734d8113eeb4b86601c, type: 3}
-  hudsonFx: {fileID: 8300000, guid: 57c59a710694ee949bbc2ae937b7db48, type: 3}
-  titleScreenRawImage: {fileID: 362350263}
-  titleVideoPlayer: {fileID: 362350260}
-  titleMusic: {fileID: 8300000, guid: c4def1af64d2e154f8c8cbd7a0472a10, type: 3}
-  startKey: 13
   stageLabel: {fileID: 556523582}
   world: 1
   stageNumber: 5
   firstStageSceneName: Stage_1-1
-  endingScreenImage: {fileID: 1205630035}
-  endingScreenMusic: {fileID: 8300000, guid: e3b8c8f8710bcda4c9ca251a09b52d37, type: 3}
-  restartKey: 13
+  endingScreen: {fileID: 0}
   gameplayRoot: {fileID: 679601670}
-  mechaBossSequence: {fileID: 0}
-  spotlightImage: {fileID: 0}
-  spotlightYOffsetWorld: -0.8
-  spotlightEllipseX: 0.3
-  spotlightEllipseY: 0.3
-  spotlightFadeInDuration: 0.6
   stage17SceneName: Stage_1-7
+  skinSelectMenu: {fileID: 0}
 --- !u!114 &1389130173
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5301,5 +5160,4 @@ SceneRoots:
   - {fileID: 1560934950}
   - {fileID: 1389130176}
   - {fileID: 290470827}
-  - {fileID: 460986864}
   - {fileID: 1746315304}
