@@ -15,9 +15,6 @@ public class EndingScreenController : MonoBehaviour
     public AudioClip endingMusic;
     [Range(0f, 1f)] public float musicVolume = 1f;
 
-    [Header("Input")]
-    public KeyCode confirmKey = KeyCode.Return;
-
     [Header("Text Outline")]
     [SerializeField] Color outlineColor = Color.black;
     [SerializeField, Range(0f, 1f)] float outlineWidth = 0.4f;
@@ -160,15 +157,24 @@ public class EndingScreenController : MonoBehaviour
         if (fadeImageOptional != null)
             fadeImageOptional.gameObject.SetActive(false);
 
-        if (Input.GetKey(confirmKey))
+        var input = PlayerInputManager.Instance;
+
+        if (input != null && input.Get(PlayerAction.Start))
         {
-            while (Input.GetKey(confirmKey))
+            while (input != null && input.Get(PlayerAction.Start))
                 yield return _waitFrame;
+
             yield return null;
         }
 
-        while (!Input.GetKeyDown(confirmKey))
+        while (true)
+        {
+            input = PlayerInputManager.Instance;
+            if (input != null && input.GetDown(PlayerAction.Start))
+                break;
+
             yield return null;
+        }
 
         if (GameMusicController.Instance != null)
             GameMusicController.Instance.StopMusic();

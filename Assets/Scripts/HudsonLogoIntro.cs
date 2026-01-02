@@ -7,9 +7,6 @@ public class HudsonLogoIntro : MonoBehaviour
     [Header("UI")]
     public Image logoImage;
 
-    [Header("Input")]
-    public KeyCode skipKey = KeyCode.Return;
-
     [Header("Timing")]
     public float fadeInSeconds = 2f;
     public float holdSeconds = 2f;
@@ -82,6 +79,15 @@ public class HudsonLogoIntro : MonoBehaviour
         Running = false;
     }
 
+    bool IsSkipPressed()
+    {
+        var input = PlayerInputManager.Instance;
+        if (input == null)
+            return false;
+
+        return input.GetDown(PlayerAction.Start) || input.GetDown(PlayerAction.ActionA);
+    }
+
     IEnumerator FadeAlpha(Color baseColor, float startA, float endA, float seconds)
     {
         float d = Mathf.Max(0.001f, seconds);
@@ -89,7 +95,7 @@ public class HudsonLogoIntro : MonoBehaviour
 
         while (t < d)
         {
-            if (Input.GetKeyDown(skipKey))
+            if (IsSkipPressed())
                 Skip();
 
             if (skipRequested)
@@ -111,7 +117,7 @@ public class HudsonLogoIntro : MonoBehaviour
 
         while (t < d)
         {
-            if (Input.GetKeyDown(skipKey))
+            if (IsSkipPressed())
                 Skip();
 
             if (skipRequested)

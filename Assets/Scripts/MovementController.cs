@@ -22,12 +22,6 @@ public class MovementController : MonoBehaviour, IKillable
     [SerializeField] private int speedInternal = PlayerPersistentStats.BaseSpeedNormal;
     public int SpeedInternal => speedInternal;
 
-    [Header("Input")]
-    public KeyCode inputUp = KeyCode.W;
-    public KeyCode inputDown = KeyCode.S;
-    public KeyCode inputLeft = KeyCode.A;
-    public KeyCode inputRight = KeyCode.D;
-
     [Header("Sprites")]
     public AnimatedSpriteRenderer spriteRendererUp;
     public AnimatedSpriteRenderer spriteRendererDown;
@@ -230,13 +224,15 @@ public class MovementController : MonoBehaviour, IKillable
 
     protected virtual void HandleInput()
     {
-        if (Input.GetKey(inputUp))
+        var input = PlayerInputManager.Instance;
+
+        if (input.Get(PlayerAction.MoveUp))
             ApplyDirectionFromVector(Vector2.up);
-        else if (Input.GetKey(inputDown))
+        else if (input.Get(PlayerAction.MoveDown))
             ApplyDirectionFromVector(Vector2.down);
-        else if (Input.GetKey(inputLeft))
+        else if (input.Get(PlayerAction.MoveLeft))
             ApplyDirectionFromVector(Vector2.left);
-        else if (Input.GetKey(inputRight))
+        else if (input.Get(PlayerAction.MoveRight))
             ApplyDirectionFromVector(Vector2.right);
         else
             ApplyDirectionFromVector(Vector2.zero);

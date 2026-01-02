@@ -294,8 +294,6 @@ public class PlayerLouieCompanion : MonoBehaviour
             var purpleAbility = abilitySystem.Get<PurpleLouieBombLineAbility>(PurpleLouieBombLineAbility.AbilityId);
             if (purpleAbility != null)
             {
-                purpleAbility.triggerKey = KeyCode.B;
-
                 var anim = currentLouie != null
                     ? currentLouie.GetComponentInChildren<IPurpleLouieBombLineExternalAnimator>(true)
                     : null;
@@ -339,8 +337,6 @@ public class PlayerLouieCompanion : MonoBehaviour
             var kick = abilitySystem.Get<YellowLouieDestructibleKickAbility>(YellowLouieDestructibleKickAbility.AbilityId);
             if (kick != null)
             {
-                kick.triggerKey = KeyCode.B;
-
                 var anim = currentLouie != null
                     ? currentLouie.GetComponentInChildren<IYellowLouieDestructibleKickExternalAnimator>(true)
                     : null;
@@ -367,8 +363,6 @@ public class PlayerLouieCompanion : MonoBehaviour
             var jump = abilitySystem.Get<PinkLouieJumpAbility>(PinkLouieJumpAbility.AbilityId);
             if (jump != null)
             {
-                jump.triggerKey = KeyCode.B;
-
                 var anim = currentLouie != null
                     ? currentLouie.GetComponentInChildren<IPinkLouieJumpExternalAnimator>(true)
                     : null;
@@ -395,8 +389,6 @@ public class PlayerLouieCompanion : MonoBehaviour
             var stun = abilitySystem.Get<RedLouiePunchStunAbility>(RedLouiePunchStunAbility.AbilityId);
             if (stun != null)
             {
-                stun.triggerKey = KeyCode.B;
-
                 var anim = currentLouie != null
                     ? currentLouie.GetComponentInChildren<IRedLouiePunchExternalAnimator>(true)
                     : null;
@@ -423,8 +415,6 @@ public class PlayerLouieCompanion : MonoBehaviour
             var dash = abilitySystem.Get<BlackLouieDashPushAbility>(BlackLouieDashPushAbility.AbilityId);
             if (dash != null)
             {
-                dash.triggerKey = KeyCode.B;
-
                 var anim = currentLouie != null
                     ? currentLouie.GetComponentInChildren<IBlackLouieDashExternalAnimator>(true)
                     : null;

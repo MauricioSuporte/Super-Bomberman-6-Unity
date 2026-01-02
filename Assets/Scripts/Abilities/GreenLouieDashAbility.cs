@@ -10,7 +10,6 @@ public class GreenLouieDashAbility : MonoBehaviour, IPlayerAbility
 
     [SerializeField] private bool enabledAbility = true;
 
-    public KeyCode triggerKey = KeyCode.B;
     public float dashSpeedMultiplier = 3.5f;
 
     public AudioClip dashSfx;
@@ -29,6 +28,8 @@ public class GreenLouieDashAbility : MonoBehaviour, IPlayerAbility
     IGreenLouieDashExternalAnimator externalAnimator;
 
     int bombLayer;
+
+    public bool DashActive => dashActive;
 
     public string Id => AbilityId;
     public bool IsEnabled => enabledAbility;
@@ -77,7 +78,11 @@ public class GreenLouieDashAbility : MonoBehaviour, IPlayerAbility
         if (movement.Direction != Vector2.zero)
             lastFacingDir = movement.Direction;
 
-        if (!Input.GetKeyDown(triggerKey))
+        var input = PlayerInputManager.Instance;
+        if (input == null)
+            return;
+
+        if (!input.GetDown(PlayerAction.ActionC))
             return;
 
         if (routine != null)

@@ -5,19 +5,6 @@ public class GamePauseController : MonoBehaviour
 {
     public static bool IsPaused { get; private set; }
 
-    [Header("Keys")]
-    public KeyCode pauseKey = KeyCode.Return;
-    public KeyCode upKey = KeyCode.W;
-    public KeyCode downKey = KeyCode.S;
-    public KeyCode selectKey = KeyCode.Return;
-    public KeyCode backKey = KeyCode.Escape;
-
-    [Header("Keys Extra")]
-    [SerializeField] KeyCode selectKeyAlt = KeyCode.M;
-
-    [Header("Key Extra (Confirm Screen)")]
-    [SerializeField] KeyCode backConfirmAltKey = KeyCode.N;
-
     [Header("SFX (Pause toggle)")]
     public AudioClip pauseSfx;
     public AudioSource sfxSource;
@@ -48,9 +35,11 @@ public class GamePauseController : MonoBehaviour
         if (exitingToTitle)
             return;
 
+        var input = PlayerInputManager.Instance;
+
         if (!IsPaused)
         {
-            if (Input.GetKeyDown(pauseKey) || Input.GetKeyDown(backKey))
+            if (input.GetDown(PlayerAction.Start))
             {
                 TogglePause();
                 return;
@@ -123,11 +112,12 @@ public class GamePauseController : MonoBehaviour
         if (exitingToTitle)
             return;
 
-        bool confirmPressed = Input.GetKeyDown(selectKey) || Input.GetKeyDown(selectKeyAlt);
+        var input = PlayerInputManager.Instance;
+        bool confirmPressed = input.GetDown(PlayerAction.Start);
 
         if (!confirmReturn)
         {
-            if (Input.GetKeyDown(upKey))
+            if (input.GetDown(PlayerAction.MoveUp))
             {
                 menuIndex = Wrap(menuIndex - 1, 2);
                 PlayMoveSfx();
@@ -135,17 +125,11 @@ public class GamePauseController : MonoBehaviour
                 return;
             }
 
-            if (Input.GetKeyDown(downKey))
+            if (input.GetDown(PlayerAction.MoveDown))
             {
                 menuIndex = Wrap(menuIndex + 1, 2);
                 PlayMoveSfx();
                 RefreshPauseUI();
-                return;
-            }
-
-            if (Input.GetKeyDown(backKey))
-            {
-                TogglePause();
                 return;
             }
 
@@ -168,7 +152,7 @@ public class GamePauseController : MonoBehaviour
             return;
         }
 
-        if (Input.GetKeyDown(upKey))
+        if (input.GetDown(PlayerAction.MoveUp))
         {
             confirmIndex = Wrap(confirmIndex - 1, 2);
             PlayMoveSfx();
@@ -176,20 +160,10 @@ public class GamePauseController : MonoBehaviour
             return;
         }
 
-        if (Input.GetKeyDown(downKey))
+        if (input.GetDown(PlayerAction.MoveDown))
         {
             confirmIndex = Wrap(confirmIndex + 1, 2);
             PlayMoveSfx();
-            RefreshPauseUI();
-            return;
-        }
-
-        if (Input.GetKeyDown(backKey) || Input.GetKeyDown(backConfirmAltKey))
-        {
-            confirmReturn = false;
-            menuIndex = 1;
-
-            PlayBackConfirmSfx();
             RefreshPauseUI();
             return;
         }

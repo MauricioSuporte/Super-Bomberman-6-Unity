@@ -13,9 +13,6 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
 
     [SerializeField] private bool enabledAbility = true;
 
-    [Header("Input")]
-    public KeyCode triggerKey = KeyCode.B;
-
     [Header("Jump")]
     public float jumpDurationSeconds = 1f;
     public int forwardCells = 2;
@@ -102,7 +99,8 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
              (StageIntroTransition.Instance.IntroRunning || StageIntroTransition.Instance.EndingRunning)))
             return;
 
-        if (!Input.GetKeyDown(triggerKey))
+        var input = PlayerInputManager.Instance;
+        if (input == null || !input.GetDown(PlayerAction.ActionC))
             return;
 
         nextAllowedTime = Time.time + jumpCooldownSeconds;

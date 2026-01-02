@@ -11,9 +11,6 @@ public class BlackLouieDashPushAbility : MonoBehaviour, IPlayerAbility
 
     [SerializeField] private bool enabledAbility = true;
 
-    [Header("Input")]
-    public KeyCode triggerKey = KeyCode.B;
-
     [Header("Dash")]
     public int dashTiles = 3;
     public float dashMoveSeconds = 0.5f;
@@ -72,10 +69,7 @@ public class BlackLouieDashPushAbility : MonoBehaviour, IPlayerAbility
     void OnDisable() => Cancel();
     void OnDestroy() => Cancel();
 
-    public void SetExternalAnimator(IBlackLouieDashExternalAnimator animator)
-    {
-        externalAnimator = animator;
-    }
+    public void SetExternalAnimator(IBlackLouieDashExternalAnimator animator) => externalAnimator = animator;
 
     public void SetDashSfx(AudioClip clip, float volume)
     {
@@ -83,19 +77,18 @@ public class BlackLouieDashPushAbility : MonoBehaviour, IPlayerAbility
         dashSfxVolume = Mathf.Clamp01(volume);
     }
 
+    bool IsTriggerPressed()
+    {
+        var input = PlayerInputManager.Instance;
+        return input != null && input.GetDown(PlayerAction.ActionC);
+    }
+
     void Update()
     {
-        if (!enabledAbility)
-            return;
-
-        if (!CompareTag("Player"))
-            return;
-
-        if (movement == null || movement.isDead)
-            return;
-
-        if (Time.time < nextAllowedTime)
-            return;
+        if (!enabledAbility) return;
+        if (!CompareTag("Player")) return;
+        if (movement == null || movement.isDead) return;
+        if (Time.time < nextAllowedTime) return;
 
         if (GamePauseController.IsPaused ||
             ClownMaskBoss.BossIntroRunning ||
@@ -104,7 +97,7 @@ public class BlackLouieDashPushAbility : MonoBehaviour, IPlayerAbility
              (StageIntroTransition.Instance.IntroRunning || StageIntroTransition.Instance.EndingRunning)))
             return;
 
-        if (!Input.GetKeyDown(triggerKey))
+        if (!IsTriggerPressed())
             return;
 
         if (routine != null)

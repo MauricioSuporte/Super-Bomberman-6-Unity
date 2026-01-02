@@ -11,9 +11,6 @@ public class RedLouiePunchStunAbility : MonoBehaviour, IPlayerAbility
 
     [SerializeField] private bool enabledAbility = true;
 
-    [Header("Input")]
-    public KeyCode triggerKey = KeyCode.B;
-
     [Header("Punch")]
     public float punchCooldownSeconds = 0.25f;
     public float punchRange = 0.75f;
@@ -83,7 +80,8 @@ public class RedLouiePunchStunAbility : MonoBehaviour, IPlayerAbility
              (StageIntroTransition.Instance.IntroRunning || StageIntroTransition.Instance.EndingRunning)))
             return;
 
-        if (!Input.GetKeyDown(triggerKey))
+        var input = PlayerInputManager.Instance;
+        if (input == null || !input.GetDown(PlayerAction.ActionC))
             return;
 
         if (routine != null)

@@ -9,7 +9,6 @@ public class PurpleLouieBombLineAbility : MonoBehaviour, IPlayerAbility
 
     [SerializeField] private bool enabledAbility;
 
-    public KeyCode triggerKey = KeyCode.B;
     public float lockSeconds = 0.25f;
 
     MovementController movement;
@@ -58,7 +57,8 @@ public class PurpleLouieBombLineAbility : MonoBehaviour, IPlayerAbility
         if (moveDir != Vector2.zero)
             lastFacingDir = moveDir;
 
-        if (!Input.GetKeyDown(triggerKey))
+        var input = PlayerInputManager.Instance;
+        if (input == null || !input.GetDown(PlayerAction.ActionC))
             return;
 
         if (bomb == null)

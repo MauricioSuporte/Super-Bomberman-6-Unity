@@ -14,9 +14,6 @@ public class BombPunchAbility : MonoBehaviour, IPlayerAbility
 
     [SerializeField] private bool enabledAbility;
 
-    [Header("Input")]
-    public KeyCode punchKey = KeyCode.B;
-
     [Header("Punch Settings")]
     public int punchDistanceTiles = 3;
     public float punchLockTime = 0.25f;
@@ -107,7 +104,7 @@ public class BombPunchAbility : MonoBehaviour, IPlayerAbility
         if (moveDir != Vector2.zero)
             lastFacingDir = moveDir;
 
-        if (!Input.GetKeyDown(punchKey))
+        if (!PlayerInputManager.Instance.GetDown(PlayerAction.ActionC))
             return;
 
         Vector2 dir = lastFacingDir;

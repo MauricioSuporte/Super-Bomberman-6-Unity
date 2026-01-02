@@ -13,9 +13,6 @@ public class YellowLouieDestructibleKickAbility : MonoBehaviour, IPlayerAbility
 
     [SerializeField] private bool enabledAbility = true;
 
-    [Header("Input")]
-    public KeyCode triggerKey = KeyCode.B;
-
     [Header("Move")]
     public float cellsPerSecond = 10f;
 
@@ -99,7 +96,8 @@ public class YellowLouieDestructibleKickAbility : MonoBehaviour, IPlayerAbility
              (StageIntroTransition.Instance.IntroRunning || StageIntroTransition.Instance.EndingRunning)))
             return;
 
-        if (!Input.GetKeyDown(triggerKey))
+        var input = PlayerInputManager.Instance;
+        if (input == null || !input.GetDown(PlayerAction.ActionC))
             return;
 
         nextAllowedKickTime = Time.time + kickCooldownSeconds;

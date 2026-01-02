@@ -7,7 +7,6 @@ using UnityEngine.Tilemaps;
 public class BombController : MonoBehaviour
 {
     [Header("Input")]
-    public KeyCode inputKey = KeyCode.Space;
     public bool useAIInput = false;
     private bool bombRequested;
 
@@ -24,7 +23,6 @@ public class BombController : MonoBehaviour
     public int BombsRemaining => bombsRemaining;
 
     [Header("Control Bomb")]
-    public KeyCode controlDetonateKey = KeyCode.N;
     private readonly List<GameObject> plantedBombs = new();
 
     [Header("Explosion Settings")]
@@ -73,21 +71,23 @@ public class BombController : MonoBehaviour
         if (movement != null && movement.InputLocked)
             return;
 
+        if (TryGetComponent<GreenLouieDashAbility>(out var dashAbility) && dashAbility != null && dashAbility.DashActive)
+            return;
+
         if (GamePauseController.IsPaused)
             return;
 
-        bool controlEnabled = IsControlEnabled();
-
         if (!useAIInput)
         {
-            if (controlEnabled && Input.GetKeyDown(controlDetonateKey))
-                TryExplodeOldestControlledBomb();
-
-            if (bombsRemaining <= 0)
+            var input = PlayerInputManager.Instance;
+            if (input == null)
                 return;
 
-            if (Input.GetKeyDown(inputKey))
+            if (bombsRemaining > 0 && input.GetDown(PlayerAction.ActionA))
                 PlaceBomb();
+
+            if (IsControlEnabled() && input.GetDown(PlayerAction.ActionB))
+                TryExplodeOldestControlledBomb();
         }
         else
         {
@@ -254,6 +254,13 @@ public class BombController : MonoBehaviour
 
     private void PlaceBomb()
     {
+        var movement = GetComponent<MovementController>();
+        if (movement != null && movement.InputLocked)
+            return;
+
+        if (TryGetComponent<GreenLouieDashAbility>(out var dashAbility) && dashAbility != null && dashAbility.DashActive)
+            return;
+
         Vector2 position = transform.position;
         position.x = Mathf.Round(position.x);
         position.y = Mathf.Round(position.y);
@@ -264,9 +271,6 @@ public class BombController : MonoBehaviour
         if (HasDestructibleAt(position))
             return;
 
-        if (playerAudioSource != null && placeBombSfx != null)
-            playerAudioSource.PlayOneShot(placeBombSfx);
-
         bool controlEnabled = IsControlEnabled();
         bool pierceEnabled = !controlEnabled && IsPierceEnabled();
 
@@ -274,6 +278,12 @@ public class BombController : MonoBehaviour
             controlEnabled && controlBombPrefab != null ? controlBombPrefab :
             (pierceEnabled && pierceBombPrefab != null) ? pierceBombPrefab :
             bombPrefab;
+
+        if (prefabToUse == null)
+            return;
+
+        if (playerAudioSource != null && placeBombSfx != null)
+            playerAudioSource.PlayOneShot(placeBombSfx);
 
         GameObject bomb = Instantiate(prefabToUse, position, Quaternion.identity);
         bombsRemaining--;
@@ -648,6 +658,9 @@ public class BombController : MonoBehaviour
 
         var movement = GetComponent<MovementController>();
         if (movement != null && movement.InputLocked)
+            return false;
+
+        if (TryGetComponent<GreenLouieDashAbility>(out var dashAbility) && dashAbility != null && dashAbility.DashActive)
             return false;
 
         if (GamePauseController.IsPaused)

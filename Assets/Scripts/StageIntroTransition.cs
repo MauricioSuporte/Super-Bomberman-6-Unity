@@ -68,12 +68,6 @@ public class StageIntroTransition : MonoBehaviour
         Instance = this;
 
         if (titleScreen != null)
-            titleScreen.startKey = (hudsonLogoIntro != null ? hudsonLogoIntro.skipKey : titleScreen.startKey);
-
-        if (hudsonLogoIntro != null && titleScreen != null)
-            hudsonLogoIntro.skipKey = titleScreen.startKey;
-
-        if (titleScreen != null)
             titleScreen.ForceHide();
 
         if (hudsonLogoIntro != null)

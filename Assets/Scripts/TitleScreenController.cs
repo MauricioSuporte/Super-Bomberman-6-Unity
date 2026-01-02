@@ -24,8 +24,6 @@ public class TitleScreenController : MonoBehaviour
 
     [Header("Menu Layout")]
     [SerializeField] Vector2 menuAnchoredPos = new(-70f, 75f);
-
-    [Tooltip("Tamanho do menu (antes era 42).")]
     [SerializeField] int menuFontSize = 46;
 
     [Header("Text Style (SB5-like)")]
@@ -51,18 +49,11 @@ public class TitleScreenController : MonoBehaviour
     [Header("Audio")]
     public AudioClip titleMusic;
 
-    [Header("Input")]
-    public KeyCode startKey = KeyCode.Return;
-    public KeyCode startKeyAlt = KeyCode.M;
-    public KeyCode upKey = KeyCode.W;
-    public KeyCode downKey = KeyCode.S;
-
     [Header("Exit")]
     public float exitDelayRealtime = 1f;
 
     [Header("Cursor (AnimatedSpriteRenderer)")]
     public AnimatedSpriteRenderer cursorRenderer;
-
     [SerializeField] Vector2 cursorOffset = new(-30f, 0f);
     [SerializeField] bool cursorAsChildOfMenuText = true;
 
@@ -114,7 +105,6 @@ public class TitleScreenController : MonoBehaviour
         }
 
         EnsurePushStartText();
-
         ForceHide();
     }
 
@@ -244,11 +234,8 @@ public class TitleScreenController : MonoBehaviour
         pushStartText.fontMaterial = runtimeMenuMat != null ? runtimeMenuMat : menuText.fontMaterial;
 
         pushStartText.alignment = TextAlignmentOptions.Center;
-
         pushStartText.color = Color.white;
-
         pushStartText.text = $"<color={pushStartHex}>{pushStartLabel}</color>";
-
         pushStartText.gameObject.SetActive(false);
     }
 
@@ -316,11 +303,17 @@ public class TitleScreenController : MonoBehaviour
             titleVideoPlayer.Play();
         }
 
-        if (ignoreStartKeyUntilRelease || Input.GetKey(startKey) || Input.GetKey(startKeyAlt))
+        var input = PlayerInputManager.Instance;
+
+        if (ignoreStartKeyUntilRelease ||
+            input.Get(PlayerAction.Start) ||
+            input.Get(PlayerAction.ActionA))
         {
             ignoreStartKeyUntilRelease = false;
-            while (Input.GetKey(startKey) || Input.GetKey(startKeyAlt))
+
+            while (input.Get(PlayerAction.Start) || input.Get(PlayerAction.ActionA))
                 yield return null;
+
             yield return null;
         }
 
@@ -329,21 +322,21 @@ public class TitleScreenController : MonoBehaviour
 
         while (Running && !locked)
         {
-            if (Input.GetKeyDown(upKey))
+            if (input.GetDown(PlayerAction.MoveUp))
             {
                 menuIndex = Wrap(menuIndex - 1, 2);
                 PlayMoveSfx();
                 RefreshMenuText();
             }
 
-            if (Input.GetKeyDown(downKey))
+            if (input.GetDown(PlayerAction.MoveDown))
             {
                 menuIndex = Wrap(menuIndex + 1, 2);
                 PlayMoveSfx();
                 RefreshMenuText();
             }
 
-            if (Input.GetKeyDown(startKey) || Input.GetKeyDown(startKeyAlt))
+            if (input.GetDown(PlayerAction.Start) || input.GetDown(PlayerAction.ActionA))
             {
                 locked = true;
                 StopPushStartBlink();
@@ -392,7 +385,6 @@ public class TitleScreenController : MonoBehaviour
             menuText.gameObject.SetActive(false);
 
         StopPushStartBlink();
-
         Running = false;
     }
 
@@ -409,7 +401,6 @@ public class TitleScreenController : MonoBehaviour
 #endif
 
         StopPushStartBlink();
-
         Running = false;
     }
 
@@ -483,7 +474,6 @@ public class TitleScreenController : MonoBehaviour
 
         menuText.ForceMeshUpdate();
         var ti = menuText.textInfo;
-
         if (ti == null || ti.lineCount <= 0)
             return;
 
@@ -547,7 +537,6 @@ public class TitleScreenController : MonoBehaviour
         float x = li.lineExtents.min.x;
 
         Vector3 localPos = new(x + cursorOffset.x, y + cursorOffset.y, 0f);
-
         cursorRenderer.SetExternalBaseLocalPosition(localPos);
     }
 }
