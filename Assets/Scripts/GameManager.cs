@@ -398,6 +398,12 @@ public class GameManager : MonoBehaviour
             }
         }
 
+        if (!string.IsNullOrEmpty(nextStageSceneName) && nextStageSceneName == "END_SCREEN")
+        {
+            StartCoroutine(ShowEndingAfterDelayRoutine());
+            return;
+        }
+
         if (string.IsNullOrEmpty(nextStageSceneName))
         {
             StartCoroutine(ShowEndingAfterDelayRoutine());
@@ -428,6 +434,8 @@ public class GameManager : MonoBehaviour
 
         if (StageIntroTransition.Instance != null)
             StageIntroTransition.Instance.StartEndingScreenSequence();
+        else if (EndingScreenController.Instance != null)
+            yield return EndingScreenController.Instance.Play(null);
     }
 
     void ApplyDestructibleShadows()

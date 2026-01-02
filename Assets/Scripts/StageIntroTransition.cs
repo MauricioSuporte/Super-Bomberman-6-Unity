@@ -30,9 +30,6 @@ public class StageIntroTransition : MonoBehaviour
     [Header("First Stage")]
     public string firstStageSceneName = "Stage_1-1";
 
-    [Header("Ending Screen")]
-    public EndingScreenController endingScreen;
-
     [Header("Gameplay Root")]
     public GameObject gameplayRoot;
 
@@ -72,9 +69,6 @@ public class StageIntroTransition : MonoBehaviour
 
         if (hudsonLogoIntro != null)
             hudsonLogoIntro.ForceHide();
-
-        if (endingScreen != null)
-            endingScreen.ForceHide();
     }
 
     void Start()
@@ -119,9 +113,6 @@ public class StageIntroTransition : MonoBehaviour
 
         if (hudsonLogoIntro != null)
             hudsonLogoIntro.ForceHide();
-
-        if (endingScreen != null)
-            endingScreen.ForceHide();
 
         if (skipTitleNextRound)
         {
@@ -342,8 +333,8 @@ public class StageIntroTransition : MonoBehaviour
         if (hudsonLogoIntro != null)
             hudsonLogoIntro.ForceHide();
 
-        if (endingScreen != null)
-            yield return endingScreen.Play(fadeImage);
+        if (EndingScreenController.Instance != null)
+            yield return EndingScreenController.Instance.Play(null);
 
         if (GameMusicController.Instance != null)
             GameMusicController.Instance.StopMusic();
@@ -361,10 +352,8 @@ public class StageIntroTransition : MonoBehaviour
         if (titleScreen != null)
             titleScreen.SetIgnoreStartKeyUntilRelease();
 
-        if (!string.IsNullOrEmpty(firstStageSceneName))
-            SceneManager.LoadScene(firstStageSceneName);
-        else
-            SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+        EndingRunning = false;
+        yield break;
     }
 
     void ApplyPersistentPlayerSkin()
@@ -443,6 +432,6 @@ public class StageIntroTransition : MonoBehaviour
         if (titleScreen != null)
             titleScreen.SetIgnoreStartKeyUntilRelease();
 
-        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+        SceneManager.LoadScene(firstStageSceneName, LoadSceneMode.Single);
     }
 }

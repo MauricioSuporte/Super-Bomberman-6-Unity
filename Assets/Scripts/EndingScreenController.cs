@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using TMPro;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 public class EndingScreenController : MonoBehaviour
@@ -18,6 +19,11 @@ public class EndingScreenController : MonoBehaviour
     [Header("Text Outline")]
     [SerializeField] Color outlineColor = Color.black;
     [SerializeField, Range(0f, 1f)] float outlineWidth = 0.4f;
+
+    public static EndingScreenController Instance { get; private set; }
+
+    [Header("Return To Title")]
+    [SerializeField] string titleSceneName = "Stage_1-1";
 
     [Header("Message")]
     [TextArea(6, 14)]
@@ -37,6 +43,22 @@ public class EndingScreenController : MonoBehaviour
 
     void Awake()
     {
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+
+        Instance = this;
+        DontDestroyOnLoad(gameObject);
+
+        var canvas = GetComponentInParent<Canvas>();
+        if (canvas != null)
+        {
+            canvas.overrideSorting = true;
+            canvas.sortingOrder = 1000;
+        }
+
         SetupMessageMaterial();
         ForceHide();
     }
@@ -179,7 +201,10 @@ public class EndingScreenController : MonoBehaviour
         if (GameMusicController.Instance != null)
             GameMusicController.Instance.StopMusic();
 
+        GamePauseController.ForceUnpause();
         ForceHide();
         Running = false;
+
+        SceneManager.LoadScene(titleSceneName, LoadSceneMode.Single);
     }
 }
