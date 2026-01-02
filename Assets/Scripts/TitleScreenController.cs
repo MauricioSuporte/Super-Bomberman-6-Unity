@@ -48,6 +48,7 @@ public class TitleScreenController : MonoBehaviour
 
     [Header("Audio")]
     public AudioClip titleMusic;
+    [Range(0f, 1f)] public float titleMusicVolume = 1f;
 
     [Header("Exit")]
     public float exitDelayRealtime = 1f;
@@ -64,6 +65,11 @@ public class TitleScreenController : MonoBehaviour
     [SerializeField] int pushStartFontSize = 46;
     [SerializeField] float pushStartBlinkInterval = 1f;
     [SerializeField] float pushStartYOffset = 18f;
+
+    [Header("Controls Menu")]
+    [SerializeField] ControlsConfigMenu controlsMenu;
+
+    public bool ControlsRequested { get; private set; }
 
     RectTransform cursorRect;
 
@@ -246,6 +252,7 @@ public class TitleScreenController : MonoBehaviour
 
         NormalGameRequested = false;
         ExitRequested = false;
+        ControlsRequested = false;
 
         StopPushStartBlink();
 
@@ -294,7 +301,7 @@ public class TitleScreenController : MonoBehaviour
         }
 
         if (titleMusic != null && GameMusicController.Instance != null)
-            GameMusicController.Instance.PlayMusic(titleMusic, 1f, true);
+            GameMusicController.Instance.PlayMusic(titleMusic, titleMusicVolume, true);
 
         if (titleVideoPlayer != null)
         {
@@ -324,14 +331,14 @@ public class TitleScreenController : MonoBehaviour
         {
             if (input.GetDown(PlayerAction.MoveUp))
             {
-                menuIndex = Wrap(menuIndex - 1, 2);
+                menuIndex = Wrap(menuIndex - 1, 3);
                 PlayMoveSfx();
                 RefreshMenuText();
             }
 
             if (input.GetDown(PlayerAction.MoveDown))
             {
-                menuIndex = Wrap(menuIndex + 1, 2);
+                menuIndex = Wrap(menuIndex + 1, 3);
                 PlayMoveSfx();
                 RefreshMenuText();
             }
@@ -351,6 +358,33 @@ public class TitleScreenController : MonoBehaviour
                     NormalGameRequested = true;
                     yield return StartNormalGame();
                     yield break;
+                }
+
+                if (menuIndex == 1)
+                {
+                    ControlsRequested = true;
+
+                    HideTitleScreenCompletely();
+
+                    if (controlsMenu != null)
+                        yield return controlsMenu.OpenRoutine(titleMusic, titleMusicVolume);
+
+                    RestoreTitleScreenAfterControls();
+
+                    ControlsRequested = false;
+
+                    locked = false;
+                    RefreshMenuText();
+                    StartPushStartBlink();
+
+                    while (input.Get(PlayerAction.Start) ||
+                           input.Get(PlayerAction.ActionA) ||
+                           input.Get(PlayerAction.ActionB) ||
+                           input.Get(PlayerAction.ActionC))
+                        yield return null;
+
+                    yield return null;
+                    continue;
                 }
 
                 ExitRequested = true;
@@ -412,11 +446,13 @@ public class TitleScreenController : MonoBehaviour
         const string color = "#FFFFE7";
 
         string normal = $"<color={color}>NORMAL GAME</color>";
+        string controls = $"<color={color}>CONTROLS</color>";
         string exit = $"<color={color}>EXIT</color>";
 
         menuText.text =
             "<align=left>" +
             $"<size={menuFontSize}>{normal}</size>\n" +
+            $"<size={menuFontSize}>{controls}</size>\n" +
             $"<size={menuFontSize}>{exit}</size>" +
             "</align>";
 
@@ -538,5 +574,44 @@ public class TitleScreenController : MonoBehaviour
 
         Vector3 localPos = new(x + cursorOffset.x, y + cursorOffset.y, 0f);
         cursorRenderer.SetExternalBaseLocalPosition(localPos);
+    }
+
+    void HideTitleScreenCompletely()
+    {
+        StopPushStartBlink();
+
+        if (titleVideoPlayer != null)
+            titleVideoPlayer.Stop();
+
+        if (titleScreenRawImage != null)
+            titleScreenRawImage.gameObject.SetActive(false);
+
+        if (menuText != null)
+            menuText.gameObject.SetActive(false);
+
+        if (cursorRenderer != null)
+            cursorRenderer.gameObject.SetActive(false);
+
+        if (pushStartText != null)
+            pushStartText.gameObject.SetActive(false);
+    }
+
+    void RestoreTitleScreenAfterControls()
+    {
+        if (titleScreenRawImage != null)
+            titleScreenRawImage.gameObject.SetActive(true);
+
+        if (menuText != null)
+            menuText.gameObject.SetActive(true);
+
+        if (cursorRenderer != null)
+            cursorRenderer.gameObject.SetActive(true);
+
+        if (titleVideoPlayer != null)
+        {
+            titleVideoPlayer.isLooping = true;
+            titleVideoPlayer.Stop();
+            titleVideoPlayer.Play();
+        }
     }
 }

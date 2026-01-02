@@ -8,23 +8,39 @@ public class PlayerInputProfile
 
     public Dictionary<PlayerAction, KeyCode> bindings = new();
 
+    readonly Dictionary<PlayerAction, KeyCode> defaultBindings = new();
+
     public PlayerInputProfile(int id)
     {
         playerId = id;
 
-        bindings[PlayerAction.MoveUp] = KeyCode.W;
-        bindings[PlayerAction.MoveDown] = KeyCode.S;
-        bindings[PlayerAction.MoveLeft] = KeyCode.A;
-        bindings[PlayerAction.MoveRight] = KeyCode.D;
+        defaultBindings[PlayerAction.MoveUp] = KeyCode.W;
+        defaultBindings[PlayerAction.MoveDown] = KeyCode.S;
+        defaultBindings[PlayerAction.MoveLeft] = KeyCode.A;
+        defaultBindings[PlayerAction.MoveRight] = KeyCode.D;
 
-        bindings[PlayerAction.Start] = KeyCode.Return;
-        bindings[PlayerAction.ActionA] = KeyCode.M;
-        bindings[PlayerAction.ActionB] = KeyCode.N;
-        bindings[PlayerAction.ActionC] = KeyCode.B;
+        defaultBindings[PlayerAction.Start] = KeyCode.Return;
+        defaultBindings[PlayerAction.ActionA] = KeyCode.M;
+        defaultBindings[PlayerAction.ActionB] = KeyCode.N;
+        defaultBindings[PlayerAction.ActionC] = KeyCode.B;
+
+        ResetToDefault();
     }
 
     public KeyCode GetKey(PlayerAction action)
     {
         return bindings[action];
+    }
+
+    public void SetKey(PlayerAction action, KeyCode key)
+    {
+        bindings[action] = key;
+    }
+
+    public void ResetToDefault()
+    {
+        bindings.Clear();
+        foreach (var kv in defaultBindings)
+            bindings[kv.Key] = kv.Value;
     }
 }

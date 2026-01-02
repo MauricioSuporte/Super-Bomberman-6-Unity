@@ -18,7 +18,6 @@ public class PlayerInputManager : MonoBehaviour
         Instance = this;
         DontDestroyOnLoad(gameObject);
 
-        // Inicializa Player 1
         players[1] = new PlayerInputProfile(1);
     }
 
