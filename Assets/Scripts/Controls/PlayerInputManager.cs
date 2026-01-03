@@ -7,12 +7,10 @@ public class PlayerInputManager : MonoBehaviour
 {
     public static PlayerInputManager Instance { get; private set; }
 
-    [Header("Emergency Reset")]
-    [Tooltip("Hold these keys during boot to restore default bindings.")]
-    [SerializeField] bool enableEmergencyReset = true;
-
-    [Tooltip("Hold ESC + R during boot to clear saved bindings.")]
-    [SerializeField] bool emergencyResetEscR = true;
+    [Header("Players")]
+    [Tooltip("How many player profiles to create (1-4).")]
+    [Range(1, 4)]
+    [SerializeField] int maxPlayers = 4;
 
     readonly Dictionary<int, PlayerInputProfile> players = new();
 
@@ -37,17 +35,15 @@ public class PlayerInputManager : MonoBehaviour
         Instance = this;
         DontDestroyOnLoad(gameObject);
 
-        if (enableEmergencyReset && emergencyResetEscR)
+        int count = Mathf.Clamp(maxPlayers, 1, 4);
+
+        for (int id = 1; id <= count; id++)
         {
-            var kb = Keyboard.current;
-            if (kb != null && kb.escapeKey.isPressed && kb.rKey.isPressed)
-                PlayerInputProfile.ClearPrefs(1);
+            players[id] = new PlayerInputProfile(id);
+
+            prevUp[id] = prevDown[id] = prevLeft[id] = prevRight[id] = false;
+            curUp[id] = curDown[id] = curLeft[id] = curRight[id] = false;
         }
-
-        players[1] = new PlayerInputProfile(1);
-
-        prevUp[1] = prevDown[1] = prevLeft[1] = prevRight[1] = false;
-        curUp[1] = curDown[1] = curLeft[1] = curRight[1] = false;
     }
 
     void Update()
@@ -79,11 +75,37 @@ public class PlayerInputManager : MonoBehaviour
         }
     }
 
-    public PlayerInputProfile GetPlayer(int playerId) => players[playerId];
+    public PlayerInputProfile GetPlayer(int playerId)
+    {
+        playerId = Mathf.Clamp(playerId, 1, 4);
+
+        if (!players.TryGetValue(playerId, out var p) || p == null)
+        {
+            p = new PlayerInputProfile(playerId);
+            players[playerId] = p;
+
+            prevUp[playerId] = prevDown[playerId] = prevLeft[playerId] = prevRight[playerId] = false;
+            curUp[playerId] = curDown[playerId] = curLeft[playerId] = curRight[playerId] = false;
+        }
+
+        return p;
+    }
+
+    public bool Get(int playerId, PlayerAction action)
+    {
+        return Get(action, playerId);
+    }
+
+    public bool GetDown(int playerId, PlayerAction action)
+    {
+        return GetDown(action, playerId);
+    }
 
     public bool Get(PlayerAction action, int playerId = 1)
     {
-        var p = players[playerId];
+        playerId = Mathf.Clamp(playerId, 1, 4);
+
+        var p = GetPlayer(playerId);
         var b = p.GetBinding(action);
 
         if (b.kind == BindKind.Key)
@@ -109,7 +131,9 @@ public class PlayerInputManager : MonoBehaviour
 
     public bool GetDown(PlayerAction action, int playerId = 1)
     {
-        var p = players[playerId];
+        playerId = Mathf.Clamp(playerId, 1, 4);
+
+        var p = GetPlayer(playerId);
         var b = p.GetBinding(action);
 
         if (b.kind == BindKind.Key)
@@ -162,7 +186,18 @@ public class PlayerInputManager : MonoBehaviour
 
     static Gamepad ResolvePlayerGamepad(PlayerInputProfile p)
     {
-        return Gamepad.current;
+        if (p == null)
+            return null;
+
+        var all = Gamepad.all;
+        if (all.Count == 0)
+            return null;
+
+        int idx = Mathf.Clamp(p.joyIndex, 1, 11) - 1;
+        if (idx < 0 || idx >= all.Count)
+            return null;
+
+        return all[idx];
     }
 
     static bool ReadKeyHeld(KeyCode k)

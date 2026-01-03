@@ -177,10 +177,17 @@ public class StageIntroTransition : MonoBehaviour
                 yield break;
             }
 
-            var chosen = skinSelectMenu.GetSelectedSkin();
-            PlayerPersistentStats.Skin = chosen;
-            if (chosen != BomberSkin.Golden)
-                PlayerPersistentStats.SaveSelectedSkin();
+            int count = 1;
+            if (GameSession.Instance != null)
+                count = GameSession.Instance.ActivePlayerCount;
+
+            for (int p = 1; p <= count; p++)
+            {
+                var chosen = skinSelectMenu.GetSelectedSkin(p);
+                PlayerPersistentStats.Get(p).Skin = chosen;
+                if (chosen != BomberSkin.Golden)
+                    PlayerPersistentStats.SaveSelectedSkin(p);
+            }
 
             SkipTitleScreenOnNextLoad();
 
@@ -358,15 +365,21 @@ public class StageIntroTransition : MonoBehaviour
 
     void ApplyPersistentPlayerSkin()
     {
-        var playerGo = GameObject.FindGameObjectWithTag("Player");
-        if (playerGo == null)
-            return;
+        var ids = Object.FindObjectsByType<PlayerIdentity>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
 
-        if (!playerGo.TryGetComponent<PlayerBomberSkinController>(out var skin))
-            skin = playerGo.GetComponentInChildren<PlayerBomberSkinController>(true);
+        for (int i = 0; i < ids.Length; i++)
+        {
+            var id = ids[i];
+            if (id == null) continue;
 
-        if (skin != null)
-            skin.ApplyCurrentSkin();
+            int playerId = Mathf.Clamp(id.playerId, 1, 4);
+            var state = PlayerPersistentStats.Get(playerId);
+
+            var skins = id.GetComponentsInChildren<PlayerBomberSkinController>(true);
+            for (int s = 0; s < skins.Length; s++)
+                if (skins[s] != null)
+                    skins[s].Apply(state.Skin);
+        }
     }
 
     public void StartFadeOut(float fadeDuration)

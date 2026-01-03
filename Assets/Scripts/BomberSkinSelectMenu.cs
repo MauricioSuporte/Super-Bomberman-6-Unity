@@ -1,6 +1,8 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 public class BomberSkinSelectMenu : MonoBehaviour
@@ -24,8 +26,14 @@ public class BomberSkinSelectMenu : MonoBehaviour
     [SerializeField] Color normalTint = Color.white;
     [SerializeField] Color selectedTint = Color.white;
 
-    [Header("Cursor")]
-    [SerializeField] RectTransform skinCursor;
+    [Header("Cursor Prefab (RectTransform)")]
+    [SerializeField] RectTransform skinCursorPrefab;
+
+    [Header("Cursor Per Player")]
+    [SerializeField] bool staggerCursorStartByPlayer = true;
+
+    [Tooltip("Optional: override cursor sprite per player (index 0 = P1, 1 = P2, 2 = P3, 3 = P4).")]
+    [SerializeField] Sprite[] cursorSpriteByPlayer = new Sprite[4];
     [SerializeField] Vector2 cursorPadding = new(18f, 18f);
     [SerializeField] Vector2 cursorSizeMultiplier = new(0.9f, 0.9f);
     [SerializeField] float cursorYOffset = 8f;
@@ -69,9 +77,11 @@ public class BomberSkinSelectMenu : MonoBehaviour
     [SerializeField] AudioClip konamiUnlockSfx;
     [SerializeField, Range(0f, 1f)] float konamiUnlockSfxVolume = 1f;
 
-    [Header("SFX (Back to Title)")]
-    [SerializeField] AudioClip backToTitleSfx;
-    [SerializeField, Range(0f, 1f)] float backToTitleSfxVolume = 1f;
+    [Header("SFX (Return)")]
+    [FormerlySerializedAs("backToTitleSfx")]
+    [SerializeField] AudioClip returnSfx;
+    [FormerlySerializedAs("backToTitleSfxVolume")]
+    [SerializeField, Range(0f, 1f)] float returnSfxVolume = 1f;
 
     public bool ReturnToTitleRequested { get; private set; }
 
@@ -96,16 +106,10 @@ public class BomberSkinSelectMenu : MonoBehaviour
     readonly List<RectTransform> slotRoots = new();
     readonly List<Image> slotImages = new();
 
-    int index;
-    int selectedIndex = -1;
-    BomberSkin selected;
-
     AudioClip previousClip;
     float previousVolume;
     bool previousLoop;
     bool capturedPreviousMusic;
-
-    bool confirmedSelection;
 
     enum KonamiToken
     {
@@ -128,25 +132,43 @@ public class BomberSkinSelectMenu : MonoBehaviour
     };
 
     int konamiStep;
-
-    Image cursorImage;
-    bool cursorDirty;
     bool menuActive;
 
     float downTimer;
     int downFrameIdx;
 
-    float endTimer;
-    int endFrameIdx;
+    sealed class EndStageState
+    {
+        public int slotIndex;
+        public BomberSkin skin;
+        public float timer;
+        public int frameIdx;
+        public int loopsDone;
+        public bool stopped;
+        public Vector2 baseAnchoredPos;
+        public bool baseCaptured;
+    }
 
-    int endStageLoopsDone;
-    bool endStageStopped;
-
-    bool endStageBaseCaptured;
-    RectTransform endStageImgRt;
-    Vector2 endStageBaseAnchoredPos;
+    readonly Dictionary<int, EndStageState> endStageBySlot = new(); // key = slotIndex
 
     float cursorBlinkT;
+    int overlapZTick;
+
+    // 0 = livre, senão = playerId que selecionou
+    int[] selectedBySlot;
+
+    sealed class PlayerCursorState
+    {
+        public int playerId;
+        public int index;              // cursor atual
+        public bool confirmed;         // já escolheu?
+        public BomberSkin selected;
+        public int selectedIndex = -1; // slot escolhido
+        public RectTransform cursorRt;
+        public Image cursorImg;
+    }
+
+    readonly List<PlayerCursorState> players = new();
 
     void Awake()
     {
@@ -155,18 +177,6 @@ public class BomberSkinSelectMenu : MonoBehaviour
 
         if (backgroundImage != null && backgroundSprite != null)
             backgroundImage.sprite = backgroundSprite;
-
-        if (skinCursor != null)
-        {
-            cursorImage = skinCursor.GetComponent<Image>();
-            if (cursorImage != null)
-            {
-                cursorImage.raycastTarget = false;
-                cursorImage.color = Color.white;
-            }
-
-            skinCursor.gameObject.SetActive(false);
-        }
 
         BuildGrid();
 
@@ -180,162 +190,612 @@ public class BomberSkinSelectMenu : MonoBehaviour
             return;
 
         TickCursorBlink();
-
-        if (!confirmedSelection)
-            TickDownHover();
-        else
-            TickEndStageSelected();
+        TickDownClock();
+        TickEndStageClocks();
+        UpdateSlotVisuals();
     }
 
     void LateUpdate()
     {
-        if (!cursorDirty)
-            return;
-
-        cursorDirty = false;
-
-        if (skinCursor == null)
+        if (!menuActive)
             return;
 
         Canvas.ForceUpdateCanvases();
-        UpdateCursorToSelected();
+        UpdateAllCursorsToSelected();
+        CycleOverlappedCursors();
+    }
+
+    public void Hide()
+    {
+        menuActive = false;
+
+        RestoreAllSlotPositions();
+        endStageBySlot.Clear();
+
+        for (int i = 0; i < players.Count; i++)
+        {
+            if (players[i].cursorRt != null)
+                Destroy(players[i].cursorRt.gameObject);
+        }
+        players.Clear();
+
+        if (root != null) root.SetActive(false);
+        else gameObject.SetActive(false);
+    }
+
+    public IEnumerator SelectSkinRoutine()
+    {
+        if (root == null)
+            root = gameObject;
+
+        root.transform.SetAsLastSibling();
+        root.SetActive(true);
+
+        if (fadeImage != null)
+        {
+            fadeImage.gameObject.SetActive(true);
+            fadeImage.transform.SetAsLastSibling();
+            SetFadeAlpha(1f);
+        }
+
+        if (backgroundImage != null && backgroundSprite != null)
+            backgroundImage.sprite = backgroundSprite;
+
+        if (slotImages.Count != selectableSkins.Count)
+            BuildGrid();
+
+        PlayerPersistentStats.EnsureSessionBooted();
+
+        konamiStep = 0;
+        ReturnToTitleRequested = false;
+
+        downTimer = 0f;
+        downFrameIdx = 0;
+
+        cursorBlinkT = 0f;
+        overlapZTick = 0;
+
+        RestoreAllSlotPositions();
+        endStageBySlot.Clear();
+
+        selectedBySlot = new int[selectableSkins.Count];
+        for (int i = 0; i < selectedBySlot.Length; i++)
+            selectedBySlot[i] = 0;
+
+        StartSelectMusic();
+
+        var input = PlayerInputManager.Instance;
+
+        int count = 1;
+        if (GameSession.Instance != null)
+            count = GameSession.Instance.ActivePlayerCount;
+
+        BuildPlayerCursors(count);
+
+        for (int p = 1; p <= count; p++)
+        {
+            while (input.Get(p, PlayerAction.ActionA) ||
+                   input.Get(p, PlayerAction.ActionB) ||
+                   input.Get(p, PlayerAction.Start) ||
+                   input.Get(p, PlayerAction.MoveLeft) ||
+                   input.Get(p, PlayerAction.MoveRight) ||
+                   input.Get(p, PlayerAction.MoveUp) ||
+                   input.Get(p, PlayerAction.MoveDown))
+                yield return null;
+        }
+
+        yield return null;
+
+        PreloadIdleSprites();
+
+        for (int i = 0; i < players.Count; i++)
+        {
+            int pid = players[i].playerId;
+            int idx;
+
+            if (staggerCursorStartByPlayer)
+                idx = (pid - 1) % selectableSkins.Count;
+            else
+            {
+                idx = selectableSkins.IndexOf(PlayerPersistentStats.Get(pid).Skin);
+                if (idx < 0) idx = 0;
+            }
+
+            players[i].index = idx;
+            players[i].selected = PlayerPersistentStats.Get(pid).Skin;
+            players[i].confirmed = false;
+            players[i].selectedIndex = -1;
+        }
+
+        UpdateSlotVisuals();
+
+        Canvas.ForceUpdateCanvases();
+        yield return null;
+
+        menuActive = true;
+
+        yield return FadeInRoutine();
+
+        bool done = false;
+
+        while (!done)
+        {
+            bool anyReturnToTitle = false;
+
+            bool globalUp = false, globalDown = false, globalLeft = false, globalRight = false, globalB = false, globalA = false;
+
+            for (int i = 0; i < players.Count; i++)
+            {
+                int pid = players[i].playerId;
+
+                bool upDown = input.GetDown(pid, PlayerAction.MoveUp);
+                bool downDown = input.GetDown(pid, PlayerAction.MoveDown);
+                bool leftDown = input.GetDown(pid, PlayerAction.MoveLeft);
+                bool rightDown = input.GetDown(pid, PlayerAction.MoveRight);
+                bool aDown = input.GetDown(pid, PlayerAction.ActionA);
+                bool bDown = input.GetDown(pid, PlayerAction.ActionB);
+
+                globalUp |= upDown;
+                globalDown |= downDown;
+                globalLeft |= leftDown;
+                globalRight |= rightDown;
+                globalB |= bDown;
+                globalA |= aDown;
+            }
+
+            bool blockMenuThisFrame;
+            bool didUnlockNow = ProcessKonamiCode(globalUp, globalDown, globalLeft, globalRight, globalB, globalA, out blockMenuThisFrame);
+
+            if (didUnlockNow)
+            {
+                UpdateSlotVisuals();
+                yield return null;
+                continue;
+            }
+
+            if (blockMenuThisFrame)
+            {
+                yield return null;
+                continue;
+            }
+
+            for (int i = 0; i < players.Count; i++)
+            {
+                var ps = players[i];
+                int pid = ps.playerId;
+
+                bool upDown = input.GetDown(pid, PlayerAction.MoveUp);
+                bool downDown = input.GetDown(pid, PlayerAction.MoveDown);
+                bool leftDown = input.GetDown(pid, PlayerAction.MoveLeft);
+                bool rightDown = input.GetDown(pid, PlayerAction.MoveRight);
+                bool aDown = input.GetDown(pid, PlayerAction.ActionA);
+                bool bDown = input.GetDown(pid, PlayerAction.ActionB);
+                bool startDown = input.GetDown(pid, PlayerAction.Start);
+
+                // (3) Se já confirmou, B = desselecionar (não volta pro title)
+                if (ps.confirmed && bDown)
+                {
+                    DeselectPlayer(pid);
+                    PlaySfx(returnSfx, returnSfxVolume);
+                    UpdateSlotVisuals();
+                    continue;
+                }
+
+                // Se não confirmou, processa navegação/confirmar/voltar title
+                if (!ps.confirmed)
+                {
+                    bool moved = false;
+                    int nextIndex = ps.index;
+
+                    if (leftDown) { nextIndex = MoveLeftWrap(ps.index); moved = true; }
+                    else if (rightDown) { nextIndex = MoveRightWrap(ps.index); moved = true; }
+                    else if (upDown) { nextIndex = MoveUpWrap(ps.index); moved = true; }
+                    else if (downDown) { nextIndex = MoveDownWrap(ps.index); moved = true; }
+
+                    bool confirmPressed = startDown || aDown;
+                    bool backPressed = bDown;
+
+                    if (moved)
+                    {
+                        if (nextIndex != ps.index)
+                        {
+                            ps.index = nextIndex;
+                            PlaySfx(moveCursorSfx, moveCursorSfxVolume);
+                            UpdateSlotVisuals();
+                        }
+                    }
+                    else if (backPressed)
+                    {
+                        anyReturnToTitle = true;
+                    }
+                    else if (confirmPressed)
+                    {
+                        TryConfirm(pid);
+                        UpdateSlotVisuals();
+
+                        if (AllPlayersConfirmed())
+                        {
+                            fadeDuration = fadeOutOnConfirmDuration;
+                            done = true;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if (anyReturnToTitle)
+            {
+                ReturnToTitleRequested = true;
+                PlaySfx(returnSfx, returnSfxVolume);
+                done = true;
+            }
+
+            yield return null;
+        }
+
+        yield return FadeOutRoutine();
+
+        StopSelectMusicAndRestorePrevious(restorePrevious: ReturnToTitleRequested);
+        Hide();
+
+        if (fadeImage != null)
+            fadeImage.gameObject.SetActive(false);
+    }
+
+    public BomberSkin GetSelectedSkin(int playerId)
+    {
+        playerId = Mathf.Clamp(playerId, 1, 4);
+
+        for (int i = 0; i < players.Count; i++)
+            if (players[i].playerId == playerId)
+                return players[i].selected;
+
+        return PlayerPersistentStats.Get(playerId).Skin;
+    }
+
+    void TryConfirm(int playerId)
+    {
+        var ps = GetPlayerState(playerId);
+        if (ps == null) return;
+
+        int slot = Mathf.Clamp(ps.index, 0, selectableSkins.Count - 1);
+        var skin = selectableSkins[slot];
+
+        if (!PlayerPersistentStats.IsSkinUnlocked(skin))
+        {
+            PlaySfx(lockedConfirmSfx, lockedConfirmSfxVolume);
+            return;
+        }
+
+        // (4) Se já está selecionada por outro, bloqueia
+        int owner = GetSelectedOwner(slot);
+        if (owner != 0 && owner != playerId)
+        {
+            PlaySfx(lockedConfirmSfx, lockedConfirmSfxVolume);
+            return;
+        }
+
+        // Marca seleção
+        selectedBySlot[slot] = playerId;
+
+        ps.selected = skin;
+        ps.selectedIndex = slot;
+        ps.confirmed = true;
+
+        // (2) Ao selecionar, dispara end stage para ESTE slot
+        StartEndStageForSlot(slot, skin);
+
+        if (ps.cursorImg != null)
+        {
+            var c = ps.cursorImg.color;
+            c.a = 1f;
+            ps.cursorImg.color = c;
+        }
+
+        PlaySfx(confirmSfx, confirmSfxVolume);
+    }
+
+    void DeselectPlayer(int playerId)
+    {
+        var ps = GetPlayerState(playerId);
+        if (ps == null) return;
+
+        if (!ps.confirmed || ps.selectedIndex < 0)
+            return;
+
+        int slot = ps.selectedIndex;
+
+        if (slot >= 0 && slot < selectedBySlot.Length && selectedBySlot[slot] == playerId)
+            selectedBySlot[slot] = 0;
+
+        StopEndStageForSlot(slot);
+
+        ps.confirmed = false;
+        ps.selectedIndex = -1;
+    }
+
+    PlayerCursorState GetPlayerState(int playerId)
+    {
+        for (int i = 0; i < players.Count; i++)
+            if (players[i].playerId == playerId)
+                return players[i];
+        return null;
+    }
+
+    int GetSelectedOwner(int slotIndex)
+    {
+        if (selectedBySlot == null || slotIndex < 0 || slotIndex >= selectedBySlot.Length)
+            return 0;
+        return selectedBySlot[slotIndex];
+    }
+
+    bool IsSlotSelected(int slotIndex) => GetSelectedOwner(slotIndex) != 0;
+
+    void StartEndStageForSlot(int slotIndex, BomberSkin skin)
+    {
+        if (!endStageBySlot.TryGetValue(slotIndex, out var st) || st == null)
+        {
+            st = new EndStageState();
+            endStageBySlot[slotIndex] = st;
+        }
+
+        st.slotIndex = slotIndex;
+        st.skin = skin;
+        st.timer = 0f;
+        st.frameIdx = 0;
+        st.loopsDone = 0;
+        st.stopped = false;
+        st.baseCaptured = false;
+    }
+
+    void StopEndStageForSlot(int slotIndex)
+    {
+        if (endStageBySlot.TryGetValue(slotIndex, out var st) && st != null)
+        {
+            // restaura posição
+            if (slotIndex >= 0 && slotIndex < slotImages.Count)
+            {
+                var img = slotImages[slotIndex];
+                if (img != null && img.rectTransform != null)
+                {
+                    img.rectTransform.anchoredPosition = st.baseCaptured ? st.baseAnchoredPos : Vector2.zero;
+                }
+            }
+        }
+
+        endStageBySlot.Remove(slotIndex);
+    }
+
+    bool AllPlayersConfirmed()
+    {
+        for (int i = 0; i < players.Count; i++)
+            if (!players[i].confirmed)
+                return false;
+        return players.Count > 0;
     }
 
     void TickCursorBlink()
     {
-        if (cursorImage == null || skinCursor == null || !skinCursor.gameObject.activeSelf)
+        if (!cursorBlinkWhileNotConfirmed)
             return;
-
-        if (!cursorBlinkWhileNotConfirmed || confirmedSelection)
-        {
-            var c = cursorImage.color;
-            if (c.a != 1f)
-            {
-                c.a = 1f;
-                cursorImage.color = c;
-            }
-            return;
-        }
 
         cursorBlinkT += Time.unscaledDeltaTime * Mathf.Max(0.01f, cursorBlinkSpeed);
         float s = (Mathf.Sin(cursorBlinkT) + 1f) * 0.5f;
         float a = Mathf.Lerp(cursorBlinkMinAlpha, cursorBlinkMaxAlpha, s);
 
-        var col = cursorImage.color;
-        if (!Mathf.Approximately(col.a, a))
+        for (int i = 0; i < players.Count; i++)
         {
-            col.a = a;
-            cursorImage.color = col;
+            var ps = players[i];
+            if (ps.cursorImg == null || ps.cursorRt == null || !ps.cursorRt.gameObject.activeSelf)
+                continue;
+
+            if (ps.confirmed)
+            {
+                var c0 = ps.cursorImg.color;
+                if (c0.a != 1f)
+                {
+                    c0.a = 1f;
+                    ps.cursorImg.color = c0;
+                }
+                continue;
+            }
+
+            var col = ps.cursorImg.color;
+            if (!Mathf.Approximately(col.a, a))
+            {
+                col.a = a;
+                ps.cursorImg.color = col;
+            }
         }
     }
 
-    void TickDownHover()
+    // (1) relógio do "down" avançando UMA vez por frame (não por cursor)
+    void TickDownClock()
     {
-        if (index < 0 || index >= slotImages.Count)
-            return;
-
-        var skin = selectableSkins[index];
-        if (!PlayerPersistentStats.IsSkinUnlocked(skin))
-        {
-            ApplyIdleToAllSlots();
-            return;
-        }
-
-        ApplyIdleToAllSlots();
-
-        float ft = Mathf.Max(0.01f, downFrameTime);
-        downTimer += Time.unscaledDeltaTime;
-
         if (downFrames == null || downFrames.Length == 0)
             return;
+
+        float ft = Mathf.Max(0.001f, downFrameTime);
+        downTimer += Time.unscaledDeltaTime;
 
         while (downTimer >= ft)
         {
             downTimer -= ft;
             downFrameIdx = (downFrameIdx + 1) % downFrames.Length;
         }
-
-        var sp = GetSpriteByFrame(skin, downFrames[downFrameIdx]) ?? GetIdleSprite(skin);
-        var img = slotImages[index];
-        if (img != null && img.sprite != sp)
-            img.sprite = sp;
     }
 
-    void TickEndStageSelected()
+    void TickEndStageClocks()
     {
-        if (selectedIndex < 0 || selectedIndex >= slotImages.Count)
-        {
-            ApplyIdleToAllSlots();
-            return;
-        }
-
-        var skin = selectableSkins[selectedIndex];
-        if (!PlayerPersistentStats.IsSkinUnlocked(skin))
-        {
-            ApplyIdleToAllSlots();
-            return;
-        }
-
-        ApplyIdleToAllSlots();
-
-        var img = slotImages[selectedIndex];
-        if (img == null)
-            return;
-
-        var rt = img.rectTransform;
-
-        if (!endStageBaseCaptured || endStageImgRt != rt)
-        {
-            endStageImgRt = rt;
-            endStageBaseAnchoredPos = rt.anchoredPosition;
-            endStageBaseCaptured = true;
-        }
-
-        rt.anchoredPosition = endStageBaseAnchoredPos + new Vector2(0f, endStageYOffset);
-
         if (endStageFrames == null || endStageFrames.Length == 0)
             return;
 
-        if (endStageStopped)
+        float ft = Mathf.Max(0.001f, endStageFrameTime);
+
+        foreach (var kv in endStageBySlot)
         {
-            int lastFrame = endStageFrames[endStageFrames.Length - 1];
-            var lastSp = GetSpriteByFrame(skin, lastFrame) ?? GetIdleSprite(skin);
-            if (img.sprite != lastSp)
-                img.sprite = lastSp;
-            return;
-        }
+            var st = kv.Value;
+            if (st == null) continue;
 
-        float ft = Mathf.Max(0.01f, endStageFrameTime);
-        endTimer += Time.unscaledDeltaTime;
+            if (st.stopped)
+                continue;
 
-        while (endTimer >= ft)
-        {
-            endTimer -= ft;
+            st.timer += Time.unscaledDeltaTime;
 
-            int next = endFrameIdx + 1;
-
-            if (next >= endStageFrames.Length)
+            while (st.timer >= ft)
             {
-                endStageLoopsDone++;
+                st.timer -= ft;
 
-                if (endStageLoopsDone >= Mathf.Max(1, endStageLoopsToStop))
+                int next = st.frameIdx + 1;
+
+                if (next >= endStageFrames.Length)
                 {
-                    endStageStopped = true;
-                    endFrameIdx = endStageFrames.Length - 1;
-                    break;
+                    st.loopsDone++;
+
+                    if (st.loopsDone >= Mathf.Max(1, endStageLoopsToStop))
+                    {
+                        st.stopped = true;
+                        st.frameIdx = endStageFrames.Length - 1;
+                        break;
+                    }
+
+                    next = 0;
                 }
 
-                next = 0;
+                st.frameIdx = next;
+            }
+        }
+    }
+
+    // Atualiza sprite/tint/offset respeitando:
+    // - end stage tem prioridade (não vira down por hover)
+    // - down só para slots com cursor em cima e NÃO selecionados
+    void UpdateSlotVisuals()
+    {
+        if (selectableSkins == null || selectableSkins.Count == 0)
+            return;
+
+        for (int i = 0; i < slotImages.Count; i++)
+        {
+            var img = slotImages[i];
+            if (img == null) continue;
+
+            var skin = selectableSkins[i];
+            bool unlocked = PlayerPersistentStats.IsSkinUnlocked(skin);
+
+            bool selected = IsSlotSelected(i);
+
+            bool anyCursorHere = false;
+            for (int p = 0; p < players.Count; p++)
+            {
+                if (!players[p].confirmed && players[p].index == i)
+                {
+                    anyCursorHere = true;
+                    break;
+                }
             }
 
-            endFrameIdx = next;
+            // cor
+            if (!unlocked)
+                img.color = lockedTint;
+            else if (selected || anyCursorHere)
+                img.color = selectedTint;
+            else
+                img.color = normalTint;
+
+            // sprite + offset
+            if (selected && endStageBySlot.TryGetValue(i, out var st) && st != null)
+            {
+                var rt = img.rectTransform;
+                if (rt != null)
+                {
+                    if (!st.baseCaptured)
+                    {
+                        st.baseAnchoredPos = rt.anchoredPosition;
+                        st.baseCaptured = true;
+                    }
+                    rt.anchoredPosition = st.baseAnchoredPos + new Vector2(0f, endStageYOffset);
+                }
+
+                int f = endStageFrames[Mathf.Clamp(st.frameIdx, 0, endStageFrames.Length - 1)];
+                img.sprite = GetSpriteByFrame(st.skin, f) ?? GetIdleSprite(st.skin);
+            }
+            else
+            {
+                // garante que não ficou “levantado” depois
+                if (img.rectTransform != null)
+                    img.rectTransform.anchoredPosition = Vector2.zero;
+
+                if (unlocked && anyCursorHere && !selected)
+                {
+                    int f = downFrames != null && downFrames.Length > 0
+                        ? downFrames[Mathf.Clamp(downFrameIdx, 0, downFrames.Length - 1)]
+                        : idleFrameIndex;
+
+                    img.sprite = GetSpriteByFrame(skin, f) ?? GetIdleSprite(skin);
+                }
+                else
+                {
+                    img.sprite = GetIdleSprite(skin);
+                }
+            }
+
+            img.enabled = img.sprite != null;
         }
+    }
 
-        var sp = GetSpriteByFrame(skin, endStageFrames[endFrameIdx]) ?? GetIdleSprite(skin);
-        if (img.sprite != sp)
-            img.sprite = sp;
+    void RestoreAllSlotPositions()
+    {
+        for (int i = 0; i < slotImages.Count; i++)
+        {
+            var img = slotImages[i];
+            if (img != null && img.rectTransform != null)
+                img.rectTransform.anchoredPosition = Vector2.zero;
+        }
+    }
 
-        cursorDirty = true;
+    void BuildPlayerCursors(int activeCount)
+    {
+        for (int i = 0; i < players.Count; i++)
+        {
+            if (players[i].cursorRt != null)
+                Destroy(players[i].cursorRt.gameObject);
+        }
+        players.Clear();
+
+        for (int p = 1; p <= Mathf.Clamp(activeCount, 1, 4); p++)
+        {
+            var st = new PlayerCursorState { playerId = p };
+
+            if (skinCursorPrefab != null)
+            {
+                var c = Instantiate(skinCursorPrefab, gridRoot);
+                c.gameObject.SetActive(true);
+                c.SetAsLastSibling();
+                st.cursorRt = c;
+
+                st.cursorImg = c.GetComponent<Image>();
+                if (st.cursorImg != null)
+                {
+                    st.cursorImg.raycastTarget = false;
+
+                    int spriteIdx = p - 1;
+                    if (cursorSpriteByPlayer != null &&
+                        spriteIdx >= 0 && spriteIdx < cursorSpriteByPlayer.Length &&
+                        cursorSpriteByPlayer[spriteIdx] != null)
+                    {
+                        st.cursorImg.sprite = cursorSpriteByPlayer[spriteIdx];
+                        st.cursorImg.preserveAspect = true;
+                    }
+
+                    var col = st.cursorImg.color;
+                    col.a = 1f;
+                    st.cursorImg.color = col;
+                }
+            }
+
+            players.Add(st);
+        }
     }
 
     void BuildGrid()
@@ -359,7 +819,7 @@ public class BomberSkinSelectMenu : MonoBehaviour
             var child = gridRoot.GetChild(i);
             if (child == null) continue;
             if (skinItemPrefab != null && child == skinItemPrefab.transform) continue;
-            if (skinCursor != null && child == skinCursor.transform) continue;
+            if (skinCursorPrefab != null && child == skinCursorPrefab.transform) continue;
             Destroy(child.gameObject);
         }
 
@@ -389,232 +849,89 @@ public class BomberSkinSelectMenu : MonoBehaviour
             slotRoots.Add(slotRt);
             slotImages.Add(img);
         }
-
-        cursorDirty = true;
     }
 
-    public void Hide()
+    void UpdateAllCursorsToSelected()
     {
-        menuActive = false;
-
-        if (endStageBaseCaptured && endStageImgRt != null)
-            endStageImgRt.anchoredPosition = endStageBaseAnchoredPos;
-
-        endStageBaseCaptured = false;
-        endStageImgRt = null;
-
-        if (skinCursor != null)
-            skinCursor.gameObject.SetActive(false);
-
-        if (root != null) root.SetActive(false);
-        else gameObject.SetActive(false);
-    }
-
-    public IEnumerator SelectSkinRoutine()
-    {
-        if (root == null)
-            root = gameObject;
-
-        root.transform.SetAsLastSibling();
-        root.SetActive(true);
-
-        if (fadeImage != null)
+        for (int i = 0; i < players.Count; i++)
         {
-            fadeImage.gameObject.SetActive(true);
-            fadeImage.transform.SetAsLastSibling();
-            SetFadeAlpha(1f);
-        }
+            var ps = players[i];
+            if (ps.cursorRt == null) continue;
 
-        if (backgroundImage != null && backgroundSprite != null)
-            backgroundImage.sprite = backgroundSprite;
+            int idx = ps.confirmed ? ps.selectedIndex : ps.index;
 
-        if (slotImages.Count != selectableSkins.Count)
-            BuildGrid();
-
-        konamiStep = 0;
-        ReturnToTitleRequested = false;
-        confirmedSelection = false;
-        selectedIndex = -1;
-
-        downTimer = 0f;
-        downFrameIdx = 0;
-
-        endTimer = 0f;
-        endFrameIdx = 0;
-        endStageLoopsDone = 0;
-        endStageStopped = false;
-
-        endStageBaseCaptured = false;
-        endStageImgRt = null;
-
-        cursorBlinkT = 0f;
-        if (cursorImage != null)
-        {
-            var c = cursorImage.color;
-            c.a = 1f;
-            cursorImage.color = c;
-        }
-
-        StartSelectMusic();
-
-        var input = PlayerInputManager.Instance;
-
-        while (input.Get(PlayerAction.ActionA) ||
-               input.Get(PlayerAction.ActionB) ||
-               input.Get(PlayerAction.Start) ||
-               input.Get(PlayerAction.MoveLeft) ||
-               input.Get(PlayerAction.MoveRight) ||
-               input.Get(PlayerAction.MoveUp) ||
-               input.Get(PlayerAction.MoveDown))
-            yield return null;
-
-        yield return null;
-
-        index = selectableSkins.IndexOf(PlayerPersistentStats.Skin);
-        if (index < 0) index = 0;
-
-        selected = PlayerPersistentStats.Skin;
-
-        PreloadIdleSprites();
-        RefreshVisuals();
-
-        Canvas.ForceUpdateCanvases();
-        cursorDirty = true;
-        yield return null;
-
-        menuActive = true;
-
-        yield return FadeInRoutine();
-
-        bool done = false;
-
-        while (!done)
-        {
-            bool upDown = input.GetDown(PlayerAction.MoveUp);
-            bool downDown = input.GetDown(PlayerAction.MoveDown);
-            bool leftDown = input.GetDown(PlayerAction.MoveLeft);
-            bool rightDown = input.GetDown(PlayerAction.MoveRight);
-            bool aDown = input.GetDown(PlayerAction.ActionA);
-            bool bDown = input.GetDown(PlayerAction.ActionB);
-            bool startDown = input.GetDown(PlayerAction.Start);
-
-            bool blockMenuThisFrame;
-            bool didUnlockNow = ProcessKonamiCode(upDown, downDown, leftDown, rightDown, bDown, aDown, out blockMenuThisFrame);
-
-            if (didUnlockNow)
+            if (idx < 0 || idx >= slotRoots.Count || slotRoots[idx] == null)
             {
-                RefreshVisuals();
-                yield return null;
+                ps.cursorRt.gameObject.SetActive(false);
                 continue;
             }
 
-            if (blockMenuThisFrame)
-            {
-                yield return null;
-                continue;
-            }
+            var slotRt = slotRoots[idx];
 
-            bool moved = false;
-            int nextIndex = index;
+            ps.cursorRt.gameObject.SetActive(true);
+            ps.cursorRt.SetParent(slotRt, false);
+            ps.cursorRt.SetAsLastSibling();
 
-            if (leftDown)
-            {
-                nextIndex = MoveLeftWrap(index);
-                moved = true;
-            }
-            else if (rightDown)
-            {
-                nextIndex = MoveRightWrap(index);
-                moved = true;
-            }
-            else if (upDown)
-            {
-                nextIndex = MoveUpWrap(index);
-                moved = true;
-            }
-            else if (downDown)
-            {
-                nextIndex = MoveDownWrap(index);
-                moved = true;
-            }
+            ps.cursorRt.anchorMin = new Vector2(0.5f, 0.5f);
+            ps.cursorRt.anchorMax = new Vector2(0.5f, 0.5f);
+            ps.cursorRt.pivot = new Vector2(0.5f, 0.5f);
 
-            bool confirmPressed = startDown || aDown;
-            bool backPressed = bDown;
+            ps.cursorRt.anchoredPosition = new Vector2(0f, cursorYOffset);
 
-            if (moved)
-            {
-                if (nextIndex != index)
-                {
-                    index = nextIndex;
-                    downTimer = 0f;
-                    downFrameIdx = 0;
-                    PlaySfx(moveCursorSfx, moveCursorSfxVolume);
-                    RefreshVisuals();
-                }
-            }
-            else if (backPressed)
-            {
-                ReturnToTitleRequested = true;
-                PlaySfx(backToTitleSfx, backToTitleSfxVolume);
+            var baseSize = slotRt.rect.size;
+            var targetSize = new Vector2(
+                baseSize.x * cursorSizeMultiplier.x,
+                baseSize.y * cursorSizeMultiplier.y
+            ) + cursorPadding;
 
-                selected = PlayerPersistentStats.Skin;
-                done = true;
-            }
-            else if (confirmPressed)
-            {
-                var skin = selectableSkins[index];
-                if (PlayerPersistentStats.IsSkinUnlocked(skin))
-                {
-                    selected = skin;
+            ps.cursorRt.sizeDelta = targetSize;
 
-                    PlayerPersistentStats.Skin = skin;
-                    if (skin != BomberSkin.Golden)
-                        PlayerPersistentStats.SaveSelectedSkin();
-
-                    selectedIndex = index;
-                    confirmedSelection = true;
-
-                    if (cursorImage != null)
-                    {
-                        var c = cursorImage.color;
-                        c.a = 1f;
-                        cursorImage.color = c;
-                    }
-
-                    endTimer = 0f;
-                    endFrameIdx = 0;
-                    endStageLoopsDone = 0;
-                    endStageStopped = false;
-
-                    endStageBaseCaptured = false;
-                    endStageImgRt = null;
-
-                    fadeDuration = fadeOutOnConfirmDuration;
-
-                    PlaySfx(confirmSfx, confirmSfxVolume);
-                    RefreshVisuals();
-
-                    done = true;
-                }
-                else
-                {
-                    PlaySfx(lockedConfirmSfx, lockedConfirmSfxVolume);
-                }
-            }
-
-            yield return null;
+            ps.cursorRt.localScale = Vector3.one;
+            ps.cursorRt.localRotation = Quaternion.identity;
         }
-
-        yield return FadeOutRoutine();
-
-        StopSelectMusicAndRestorePrevious(restorePrevious: !confirmedSelection);
-        Hide();
-
-        if (fadeImage != null)
-            fadeImage.gameObject.SetActive(false);
     }
 
-    public BomberSkin GetSelectedSkin() => selected;
+    // Intercala ordem quando N cursores estão no mesmo slot
+    void CycleOverlappedCursors()
+    {
+        overlapZTick++;
+
+        for (int slot = 0; slot < slotRoots.Count; slot++)
+        {
+            var slotRt = slotRoots[slot];
+            if (slotRt == null) continue;
+
+            List<PlayerCursorState> here = null;
+
+            for (int i = 0; i < players.Count; i++)
+            {
+                var ps = players[i];
+                if (ps.cursorRt == null) continue;
+                if (!ps.cursorRt.gameObject.activeSelf) continue;
+
+                int idx = ps.confirmed ? ps.selectedIndex : ps.index;
+                if (idx != slot) continue;
+
+                here ??= new List<PlayerCursorState>(4);
+                here.Add(ps);
+            }
+
+            if (here == null || here.Count <= 1)
+                continue;
+
+            // child 0 normalmente é a Image do slot; cursores vão de 1..N
+            int n = here.Count;
+            int shift = overlapZTick % n;
+
+            for (int k = 0; k < n; k++)
+            {
+                int pick = (k + shift) % n;
+                var ps = here[pick];
+                if (ps.cursorRt == null) continue;
+                ps.cursorRt.SetSiblingIndex(1 + k);
+            }
+        }
+    }
 
     bool ProcessKonamiCode(bool upDown, bool downDown, bool leftDown, bool rightDown, bool bDown, bool aDown, out bool blockMenuThisFrame)
     {
@@ -630,7 +947,10 @@ public class BomberSkinSelectMenu : MonoBehaviour
         if (!PlayerPersistentStats.IsSkinUnlocked(BomberSkin.Golden))
         {
             PlayerPersistentStats.UnlockGolden();
-            PlayerPersistentStats.ClampSelectedSkinIfLocked();
+
+            for (int p = 1; p <= 4; p++)
+                PlayerPersistentStats.ClampSelectedSkinIfLocked(p);
+
             PlaySfx(konamiUnlockSfx, konamiUnlockSfxVolume);
             return true;
         }
@@ -744,99 +1064,6 @@ public class BomberSkinSelectMenu : MonoBehaviour
             music.PlayMusic(previousClip, previousVolume, previousLoop);
         else
             music.StopMusic();
-    }
-
-    void RefreshVisuals()
-    {
-        if (selectableSkins == null || selectableSkins.Count == 0)
-            return;
-
-        for (int i = 0; i < slotImages.Count; i++)
-        {
-            var img = slotImages[i];
-            if (img == null) continue;
-
-            if (img.rectTransform != null)
-                img.rectTransform.anchoredPosition = Vector2.zero;
-
-            var s = selectableSkins[i];
-            bool isUnlocked = PlayerPersistentStats.IsSkinUnlocked(s);
-            bool isSelected = (i == index);
-
-            img.sprite = GetIdleSprite(s);
-            img.enabled = img.sprite != null;
-
-            img.color = isUnlocked ? normalTint : lockedTint;
-
-            if (i < slotRoots.Count && slotRoots[i] != null)
-                slotRoots[i].localScale = Vector3.one;
-
-            if (isSelected)
-                img.color = isUnlocked ? selectedTint : lockedTint;
-        }
-
-        cursorDirty = true;
-    }
-
-    void ApplyIdleToAllSlots()
-    {
-        for (int i = 0; i < slotImages.Count; i++)
-        {
-            var img = slotImages[i];
-            if (img == null) continue;
-
-            if (img.rectTransform != null)
-                img.rectTransform.anchoredPosition = Vector2.zero;
-
-            var skin = selectableSkins[i];
-            var sp = GetIdleSprite(skin);
-            if (img.sprite != sp)
-                img.sprite = sp;
-        }
-    }
-
-    void UpdateCursorToSelected()
-    {
-        if (skinCursor == null)
-            return;
-
-        if (index < 0 || index >= slotRoots.Count || slotRoots[index] == null)
-        {
-            skinCursor.gameObject.SetActive(false);
-            return;
-        }
-
-        var slotRt = slotRoots[index];
-
-        skinCursor.gameObject.SetActive(true);
-        skinCursor.SetParent(slotRt, false);
-        skinCursor.SetAsLastSibling();
-
-        skinCursor.anchorMin = new Vector2(0.5f, 0.5f);
-        skinCursor.anchorMax = new Vector2(0.5f, 0.5f);
-        skinCursor.pivot = new Vector2(0.5f, 0.5f);
-
-        skinCursor.anchoredPosition = new Vector2(0f, cursorYOffset);
-
-        var baseSize = slotRt.rect.size;
-        var targetSize = new Vector2(
-            baseSize.x * cursorSizeMultiplier.x,
-            baseSize.y * cursorSizeMultiplier.y
-        ) + cursorPadding;
-
-        skinCursor.sizeDelta = targetSize;
-
-        skinCursor.localScale = Vector3.one;
-        skinCursor.localRotation = Quaternion.identity;
-
-        if (cursorImage != null)
-        {
-            var c = cursorImage.color;
-            c.r = 1f;
-            c.g = 1f;
-            c.b = 1f;
-            cursorImage.color = c;
-        }
     }
 
     Sprite GetIdleSprite(BomberSkin skin)

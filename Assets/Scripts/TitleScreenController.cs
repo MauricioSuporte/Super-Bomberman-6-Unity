@@ -15,6 +15,10 @@ public class TitleScreenController : MonoBehaviour
     public AudioClip selectOptionSfx;
     [Range(0f, 1f)] public float selectOptionVolume = 1f;
 
+    [Header("Back SFX")]
+    [SerializeField] AudioClip backOptionSfx;
+    [SerializeField, Range(0f, 1f)] float backOptionVolume = 1f;
+
     [Header("UI / Video")]
     public RawImage titleScreenRawImage;
     public VideoPlayer titleVideoPlayer;
@@ -80,6 +84,14 @@ public class TitleScreenController : MonoBehaviour
     public bool NormalGameRequested { get; private set; }
     public bool ExitRequested { get; private set; }
 
+    enum MenuMode
+    {
+        Main = 0,
+        PlayerCount = 1
+    }
+
+    MenuMode menuMode = MenuMode.Main;
+
     int menuIndex;
     bool locked;
     bool ignoreStartKeyUntilRelease;
@@ -91,8 +103,6 @@ public class TitleScreenController : MonoBehaviour
     Coroutine pushStartRoutine;
     bool pushStartVisible = true;
     RectTransform pushStartRect;
-
-    static readonly WaitForSecondsRealtime _wait1s = new(1f);
 
     void Awake()
     {
@@ -257,6 +267,8 @@ public class TitleScreenController : MonoBehaviour
         ExitRequested = false;
         ControlsRequested = false;
 
+        menuMode = MenuMode.Main;
+
         StopPushStartBlink();
 
         if (titleVideoPlayer != null)
@@ -278,10 +290,13 @@ public class TitleScreenController : MonoBehaviour
 
         Running = true;
         locked = false;
+
+        menuMode = MenuMode.Main;
         menuIndex = 0;
 
         NormalGameRequested = false;
         ExitRequested = false;
+        ControlsRequested = false;
 
         if (fadeToHideOptional != null)
             fadeToHideOptional.gameObject.SetActive(false);
@@ -332,71 +347,132 @@ public class TitleScreenController : MonoBehaviour
 
         while (Running && !locked)
         {
+            int itemCount = GetMenuItemCount();
+
             if (input.GetDown(PlayerAction.MoveUp))
             {
-                menuIndex = Wrap(menuIndex - 1, 3);
+                menuIndex = Wrap(menuIndex - 1, itemCount);
                 PlayMoveSfx();
                 RefreshMenuText();
             }
 
             if (input.GetDown(PlayerAction.MoveDown))
             {
-                menuIndex = Wrap(menuIndex + 1, 3);
+                menuIndex = Wrap(menuIndex + 1, itemCount);
                 PlayMoveSfx();
                 RefreshMenuText();
             }
 
+            if (menuMode == MenuMode.PlayerCount && input.GetDown(PlayerAction.ActionB))
+            {
+                PlayBackSfx();
+                menuMode = MenuMode.Main;
+                menuIndex = 0;
+                RefreshMenuText();
+
+                while (input.Get(PlayerAction.ActionB))
+                    yield return null;
+
+                yield return null;
+                continue;
+            }
+
             if (input.GetDown(PlayerAction.Start) || input.GetDown(PlayerAction.ActionA))
             {
-                locked = true;
-                StopPushStartBlink();
-
-                PlaySelectSfx();
-
-                if (cursorRenderer != null)
-                    yield return cursorRenderer.PlayCycles(2);
-
-                if (menuIndex == 0)
+                if (menuMode == MenuMode.Main)
                 {
-                    NormalGameRequested = true;
-                    yield return StartNormalGame();
+                    if (menuIndex == 0)
+                    {
+                        locked = true;
+                        PlaySelectSfx();
+
+                        if (cursorRenderer != null)
+                            yield return cursorRenderer.PlayCycles(2);
+
+                        menuMode = MenuMode.PlayerCount;
+                        menuIndex = 0;
+                        locked = false;
+
+                        RefreshMenuText();
+
+                        while (input.Get(PlayerAction.Start) || input.Get(PlayerAction.ActionA))
+                            yield return null;
+
+                        yield return null;
+                        continue;
+                    }
+
+                    locked = true;
+                    PlaySelectSfx();
+
+                    if (cursorRenderer != null)
+                        yield return cursorRenderer.PlayCycles(2);
+
+                    if (menuIndex == 1)
+                    {
+                        ControlsRequested = true;
+
+                        HideTitleScreenCompletely();
+
+                        if (controlsMenu != null)
+                            yield return controlsMenu.OpenRoutine(titleMusic, titleMusicVolume);
+
+                        RestoreTitleScreenAfterControls();
+
+                        ControlsRequested = false;
+
+                        locked = false;
+                        menuMode = MenuMode.Main;
+                        menuIndex = 0;
+
+                        RefreshMenuText();
+                        StartPushStartBlink();
+
+                        while (input.Get(PlayerAction.Start) ||
+                               input.Get(PlayerAction.ActionA) ||
+                               input.Get(PlayerAction.ActionB) ||
+                               input.Get(PlayerAction.ActionC))
+                            yield return null;
+
+                        yield return null;
+                        continue;
+                    }
+
+                    ExitRequested = true;
+                    yield return ExitGame();
                     yield break;
                 }
 
-                if (menuIndex == 1)
+                if (menuMode == MenuMode.PlayerCount)
                 {
-                    ControlsRequested = true;
+                    int chosenCount = menuIndex + 1;
 
-                    HideTitleScreenCompletely();
+                    if (GameSession.Instance != null)
+                        GameSession.Instance.SetActivePlayerCount(chosenCount);
 
-                    if (controlsMenu != null)
-                        yield return controlsMenu.OpenRoutine(titleMusic, titleMusicVolume);
+                    locked = true;
+                    NormalGameRequested = true;
 
-                    RestoreTitleScreenAfterControls();
+                    PlaySelectSfx();
 
-                    ControlsRequested = false;
+                    if (cursorRenderer != null)
+                        yield return cursorRenderer.PlayCycles(2);
 
-                    locked = false;
-                    RefreshMenuText();
-                    StartPushStartBlink();
-
-                    while (input.Get(PlayerAction.Start) ||
-                           input.Get(PlayerAction.ActionA) ||
-                           input.Get(PlayerAction.ActionB) ||
-                           input.Get(PlayerAction.ActionC))
-                        yield return null;
-
-                    yield return null;
-                    continue;
+                    yield return StartNormalGame();
+                    yield break;
                 }
-
-                ExitRequested = true;
-                yield return ExitGame();
-                yield break;
             }
 
             yield return null;
         }
+    }
+
+    int GetMenuItemCount()
+    {
+        if (menuMode == MenuMode.PlayerCount)
+            return 4;
+
+        return 3;
     }
 
     IEnumerator StartNormalGame()
@@ -425,8 +501,6 @@ public class TitleScreenController : MonoBehaviour
         Running = false;
     }
 
-
-
     IEnumerator ExitGame()
     {
         float wait = Mathf.Max(0f, exitDelayRealtime);
@@ -450,15 +524,35 @@ public class TitleScreenController : MonoBehaviour
 
         const string color = "#FFFFE7";
 
-        string normal = $"<color={color}>NORMAL GAME</color>";
-        string controls = $"<color={color}>CONTROLS</color>";
-        string exit = $"<color={color}>EXIT</color>";
+        if (menuMode == MenuMode.Main)
+        {
+            string normal = $"<color={color}>NORMAL GAME</color>";
+            string controls = $"<color={color}>CONTROLS</color>";
+            string exit = $"<color={color}>EXIT</color>";
+
+            menuText.text =
+                "<align=left>" +
+                $"<size={menuFontSize}>{normal}</size>\n" +
+                $"<size={menuFontSize}>{controls}</size>\n" +
+                $"<size={menuFontSize}>{exit}</size>" +
+                "</align>";
+
+            UpdateCursorPosition();
+            UpdatePushStartPosition();
+            return;
+        }
+
+        string p1 = $"<color={color}>1 PLAYER</color>";
+        string p2 = $"<color={color}>2 PLAYERS</color>";
+        string p3 = $"<color={color}>3 PLAYERS</color>";
+        string p4 = $"<color={color}>4 PLAYERS</color>";
 
         menuText.text =
             "<align=left>" +
-            $"<size={menuFontSize}>{normal}</size>\n" +
-            $"<size={menuFontSize}>{controls}</size>\n" +
-            $"<size={menuFontSize}>{exit}</size>" +
+            $"<size={menuFontSize}>{p1}</size>\n" +
+            $"<size={menuFontSize}>{p2}</size>\n" +
+            $"<size={menuFontSize}>{p3}</size>\n" +
+            $"<size={menuFontSize}>{p4}</size>" +
             "</align>";
 
         UpdateCursorPosition();
@@ -497,7 +591,7 @@ public class TitleScreenController : MonoBehaviour
     {
         var wait = new WaitForSecondsRealtime(Mathf.Max(0.05f, pushStartBlinkInterval));
 
-        while (Running && !locked)
+        while (Running)
         {
             pushStartVisible = !pushStartVisible;
 
@@ -550,6 +644,14 @@ public class TitleScreenController : MonoBehaviour
             return;
 
         GameMusicController.Instance.PlaySfx(selectOptionSfx, selectOptionVolume);
+    }
+
+    void PlayBackSfx()
+    {
+        if (backOptionSfx == null || GameMusicController.Instance == null)
+            return;
+
+        GameMusicController.Instance.PlaySfx(backOptionSfx, backOptionVolume);
     }
 
     int Wrap(int v, int count)

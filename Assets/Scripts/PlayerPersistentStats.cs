@@ -14,28 +14,45 @@ public static class PlayerPersistentStats
 
     public const int SpeedDivisor = 64;
 
-    public static int Life = 1;
+    public sealed class PlayerState
+    {
+        public int Life = 1;
 
-    public static int BombAmount = 8;
-    public static int ExplosionRadius = 8;
+        public int BombAmount = 8;
+        public int ExplosionRadius = 8;
 
-    public static int SpeedInternal = BaseSpeedNormal + (5 * SpeedStep);
+        public int SpeedInternal = BaseSpeedNormal + (5 * SpeedStep);
 
-    public static bool CanKickBombs = true;
-    public static bool CanPunchBombs = true;
-    public static bool CanPassBombs = false;
-    public static bool CanPassDestructibles = true;
-    public static bool HasPierceBombs = true;
-    public static bool HasControlBombs = false;
-    public static bool HasFullFire = false;
+        public bool CanKickBombs = true;
+        public bool CanPunchBombs = true;
+        public bool CanPassBombs = false;
+        public bool CanPassDestructibles = true;
+        public bool HasPierceBombs = true;
+        public bool HasControlBombs = false;
+        public bool HasFullFire = false;
 
-    public static MountedLouieType MountedLouie = MountedLouieType.Green;
-    public static BomberSkin Skin = BomberSkin.White;
+        public MountedLouieType MountedLouie = MountedLouieType.Green;
+        public BomberSkin Skin = BomberSkin.White;
+    }
 
-    const string PrefSelectedSkin = "SKIN_SELECTED";
+    static readonly PlayerState[] _p = new PlayerState[4]
+    {
+        new(),
+        new(),
+        new(),
+        new()
+    };
 
     static bool goldenUnlockedSession;
     static bool sessionBooted;
+
+    public static bool GoldenUnlocked => goldenUnlockedSession;
+
+    public static PlayerState Get(int playerId)
+    {
+        playerId = Mathf.Clamp(playerId, 1, 4);
+        return _p[playerId - 1];
+    }
 
     public static void EnsureSessionBooted()
     {
@@ -43,8 +60,12 @@ public static class PlayerPersistentStats
             return;
 
         goldenUnlockedSession = false;
-        LoadSelectedSkinInternal();
-        ClampSelectedSkinIfLocked();
+
+        for (int i = 1; i <= 4; i++)
+        {
+            LoadSelectedSkinInternal(i);
+            ClampSelectedSkinIfLocked(i);
+        }
 
         sessionBooted = true;
     }
@@ -54,8 +75,6 @@ public static class PlayerPersistentStats
         sessionBooted = false;
         EnsureSessionBooted();
     }
-
-    public static bool GoldenUnlocked => goldenUnlockedSession;
 
     public static void UnlockGolden()
     {
@@ -70,63 +89,82 @@ public static class PlayerPersistentStats
         return true;
     }
 
-    public static void SaveSelectedSkin()
+    static string PrefSelectedSkin(int playerId) => $"P{playerId}_SKIN_SELECTED";
+
+    public static void SaveSelectedSkin(int playerId)
     {
-        if (Skin == BomberSkin.Golden)
+        var s = Get(playerId);
+
+        if (s.Skin == BomberSkin.Golden)
             return;
 
-        PlayerPrefs.SetInt(PrefSelectedSkin, (int)Skin);
+        PlayerPrefs.SetInt(PrefSelectedSkin(playerId), (int)s.Skin);
         PlayerPrefs.Save();
     }
 
-    static void LoadSelectedSkinInternal()
+    static void LoadSelectedSkinInternal(int playerId)
     {
-        if (PlayerPrefs.HasKey(PrefSelectedSkin))
-            Skin = (BomberSkin)PlayerPrefs.GetInt(PrefSelectedSkin);
-        else
-            Skin = BomberSkin.White;
+        var s = Get(playerId);
+        var key = PrefSelectedSkin(playerId);
 
-        if (Skin == BomberSkin.Golden)
-            Skin = BomberSkin.White;
+        if (PlayerPrefs.HasKey(key))
+            s.Skin = (BomberSkin)PlayerPrefs.GetInt(key);
+        else
+            s.Skin = BomberSkin.White;
+
+        if (s.Skin == BomberSkin.Golden)
+            s.Skin = BomberSkin.White;
     }
 
-    public static void LoadSelectedSkin()
+    public static void LoadSelectedSkin(int playerId)
     {
         EnsureSessionBooted();
+        LoadSelectedSkinInternal(playerId);
+        ClampSelectedSkinIfLocked(playerId);
     }
 
-    public static void ClampSelectedSkinIfLocked()
+    public static void ClampSelectedSkinIfLocked(int playerId)
     {
-        if (Skin == BomberSkin.Golden && !goldenUnlockedSession)
+        var s = Get(playerId);
+
+        if (s.Skin == BomberSkin.Golden && !goldenUnlockedSession)
         {
-            Skin = BomberSkin.White;
-            SaveSelectedSkin();
+            s.Skin = BomberSkin.White;
+            SaveSelectedSkin(playerId);
         }
     }
 
-    public static void ResetToDefaults()
+    public static void ResetToDefaultsAll()
     {
-        BombAmount = 1;
-        ExplosionRadius = 1;
-        SpeedInternal = BaseSpeedNormal;
-
-        Life = 1;
-
-        CanKickBombs = false;
-        CanPunchBombs = false;
-        CanPassBombs = false;
-        CanPassDestructibles = false;
-        HasPierceBombs = false;
-        HasControlBombs = false;
-        HasFullFire = false;
-
-        MountedLouie = MountedLouieType.None;
-
-        Skin = BomberSkin.White;
-        SaveSelectedSkin();
+        for (int i = 1; i <= 4; i++)
+            ResetToDefaults(i);
 
         goldenUnlockedSession = false;
         sessionBooted = true;
+    }
+
+    public static void ResetToDefaults(int playerId)
+    {
+        var s = Get(playerId);
+
+        s.BombAmount = 1;
+        s.ExplosionRadius = 1;
+        s.SpeedInternal = BaseSpeedNormal;
+
+        s.Life = 1;
+
+        s.CanKickBombs = false;
+        s.CanPunchBombs = false;
+        s.CanPassBombs = false;
+        s.CanPassDestructibles = false;
+        s.HasPierceBombs = false;
+        s.HasControlBombs = false;
+        s.HasFullFire = false;
+
+        s.MountedLouie = MountedLouieType.None;
+
+        s.Skin = BomberSkin.White;
+        SaveSelectedSkin(playerId);
     }
 
     public static float InternalSpeedToTilesPerSecond(int internalSpeed)
@@ -139,54 +177,79 @@ public static class PlayerPersistentStats
         return Mathf.Clamp(internalSpeed, MinSpeedInternal, MaxSpeedInternal);
     }
 
+    static int GetPlayerIdFrom(Component c)
+    {
+        if (c == null) return 1;
+
+        var id = c.GetComponent<PlayerIdentity>();
+        if (id != null) return Mathf.Clamp(id.playerId, 1, 4);
+
+        var parentId = c.GetComponentInParent<PlayerIdentity>(true);
+        if (parentId != null) return Mathf.Clamp(parentId.playerId, 1, 4);
+
+        return 1;
+    }
+
     public static void LoadInto(MovementController movement, BombController bomb)
     {
-        BombAmount = Mathf.Min(BombAmount, MaxBombAmount);
-        ExplosionRadius = Mathf.Min(ExplosionRadius, MaxExplosionRadius);
+        int playerId = 1;
 
-        SpeedInternal = ClampSpeedInternal(SpeedInternal);
-        Life = Mathf.Max(1, Life);
+        if (movement != null) playerId = GetPlayerIdFrom(movement);
+        else if (bomb != null) playerId = GetPlayerIdFrom(bomb);
+
+        LoadInto(playerId, movement, bomb);
+    }
+
+    public static void LoadInto(int playerId, MovementController movement, BombController bomb)
+    {
+        var s = Get(playerId);
+
+        s.BombAmount = Mathf.Min(s.BombAmount, MaxBombAmount);
+        s.ExplosionRadius = Mathf.Min(s.ExplosionRadius, MaxExplosionRadius);
+
+        s.SpeedInternal = ClampSpeedInternal(s.SpeedInternal);
+        s.Life = Mathf.Max(1, s.Life);
 
         if (movement != null)
-            movement.ApplySpeedInternal(SpeedInternal);
+            movement.ApplySpeedInternal(s.SpeedInternal);
 
         if (bomb != null)
         {
-            bomb.bombAmout = BombAmount;
-            bomb.explosionRadius = ExplosionRadius;
+            bomb.bombAmout = s.BombAmount;
+            bomb.explosionRadius = s.ExplosionRadius;
         }
 
         if (movement != null && movement.CompareTag("Player"))
         {
             if (movement.TryGetComponent<CharacterHealth>(out var health))
-                health.life = Mathf.Max(1, Life);
+                health.life = Mathf.Max(1, s.Life);
 
             if (!movement.TryGetComponent<AbilitySystem>(out var abilitySystem))
                 abilitySystem = movement.gameObject.AddComponent<AbilitySystem>();
 
             abilitySystem.RebuildCache();
 
-            if (CanKickBombs) abilitySystem.Enable(BombKickAbility.AbilityId);
+            if (s.CanKickBombs) abilitySystem.Enable(BombKickAbility.AbilityId);
             else abilitySystem.Disable(BombKickAbility.AbilityId);
 
-            if (CanPunchBombs) abilitySystem.Enable(BombPunchAbility.AbilityId);
+            if (s.CanPunchBombs) abilitySystem.Enable(BombPunchAbility.AbilityId);
             else abilitySystem.Disable(BombPunchAbility.AbilityId);
 
-            if (HasFullFire) abilitySystem.Enable(FullFireAbility.AbilityId);
+            if (s.HasFullFire) abilitySystem.Enable(FullFireAbility.AbilityId);
             else abilitySystem.Disable(FullFireAbility.AbilityId);
 
-            if (CanPassBombs) abilitySystem.Enable(BombPassAbility.AbilityId);
+            if (s.CanPassBombs) abilitySystem.Enable(BombPassAbility.AbilityId);
             else abilitySystem.Disable(BombPassAbility.AbilityId);
 
-            if (CanPassDestructibles) abilitySystem.Enable(DestructiblePassAbility.AbilityId);
+            if (s.CanPassDestructibles) abilitySystem.Enable(DestructiblePassAbility.AbilityId);
             else abilitySystem.Disable(DestructiblePassAbility.AbilityId);
 
-            if (HasControlBombs)
+            if (s.HasControlBombs)
             {
                 abilitySystem.Enable(ControlBombAbility.AbilityId);
                 abilitySystem.Disable(PierceBombAbility.AbilityId);
             }
-            else if (HasPierceBombs)
+            else if (s.HasPierceBombs)
             {
                 abilitySystem.Enable(PierceBombAbility.AbilityId);
                 abilitySystem.Disable(ControlBombAbility.AbilityId);
@@ -199,7 +262,7 @@ public static class PlayerPersistentStats
 
             if (movement.TryGetComponent<PlayerLouieCompanion>(out var louieCompanion))
             {
-                switch (MountedLouie)
+                switch (s.MountedLouie)
                 {
                     case MountedLouieType.Blue: louieCompanion.RestoreMountedBlueLouie(); break;
                     case MountedLouieType.Black: louieCompanion.RestoreMountedBlackLouie(); break;
@@ -211,56 +274,88 @@ public static class PlayerPersistentStats
                 }
             }
         }
-
     }
 
     public static void SaveFrom(MovementController movement, BombController bomb)
     {
+        int playerId = 1;
+
+        if (movement != null) playerId = GetPlayerIdFrom(movement);
+        else if (bomb != null) playerId = GetPlayerIdFrom(bomb);
+
+        SaveFrom(playerId, movement, bomb);
+    }
+
+    public static void SaveFrom(int playerId, MovementController movement, BombController bomb)
+    {
+        var s = Get(playerId);
+
         if (movement != null && movement.CompareTag("Player"))
         {
-            SpeedInternal = ClampSpeedInternal(movement.SpeedInternal);
+            s.SpeedInternal = ClampSpeedInternal(movement.SpeedInternal);
 
             if (movement.TryGetComponent<CharacterHealth>(out var health))
-                Life = Mathf.Max(1, health.life);
+                s.Life = Mathf.Max(1, health.life);
 
             AbilitySystem abilitySystem = null;
             if (movement.TryGetComponent(out abilitySystem) && abilitySystem != null)
                 abilitySystem.RebuildCache();
 
             var kick = abilitySystem != null ? abilitySystem.Get<BombKickAbility>(BombKickAbility.AbilityId) : null;
-            CanKickBombs = kick != null && kick.IsEnabled;
+            s.CanKickBombs = kick != null && kick.IsEnabled;
 
             var punch = abilitySystem != null ? abilitySystem.Get<BombPunchAbility>(BombPunchAbility.AbilityId) : null;
-            CanPunchBombs = punch != null && punch.IsEnabled;
+            s.CanPunchBombs = punch != null && punch.IsEnabled;
 
             var pierce = abilitySystem != null ? abilitySystem.Get<PierceBombAbility>(PierceBombAbility.AbilityId) : null;
-            HasPierceBombs = pierce != null && pierce.IsEnabled;
+            s.HasPierceBombs = pierce != null && pierce.IsEnabled;
 
             var control = abilitySystem != null ? abilitySystem.Get<ControlBombAbility>(ControlBombAbility.AbilityId) : null;
-            HasControlBombs = control != null && control.IsEnabled;
+            s.HasControlBombs = control != null && control.IsEnabled;
 
             var fullFire = abilitySystem != null ? abilitySystem.Get<FullFireAbility>(FullFireAbility.AbilityId) : null;
-            HasFullFire = fullFire != null && fullFire.IsEnabled;
+            s.HasFullFire = fullFire != null && fullFire.IsEnabled;
 
             var passBomb = abilitySystem != null ? abilitySystem.Get<BombPassAbility>(BombPassAbility.AbilityId) : null;
-            CanPassBombs = passBomb != null && passBomb.IsEnabled;
+            s.CanPassBombs = passBomb != null && passBomb.IsEnabled;
 
             var passDestructibles = abilitySystem != null ? abilitySystem.Get<DestructiblePassAbility>(DestructiblePassAbility.AbilityId) : null;
-            CanPassDestructibles = passDestructibles != null && passDestructibles.IsEnabled;
+            s.CanPassDestructibles = passDestructibles != null && passDestructibles.IsEnabled;
 
-            if (HasControlBombs) HasPierceBombs = false;
-            else if (HasPierceBombs) HasControlBombs = false;
+            if (s.HasControlBombs) s.HasPierceBombs = false;
+            else if (s.HasPierceBombs) s.HasControlBombs = false;
 
-            MountedLouie = MountedLouieType.None;
+            s.MountedLouie = MountedLouieType.None;
 
             if (movement.TryGetComponent<PlayerLouieCompanion>(out var louieCompanion))
-                MountedLouie = louieCompanion.GetMountedLouieType();
+                s.MountedLouie = louieCompanion.GetMountedLouieType();
         }
 
         if (bomb != null && bomb.CompareTag("Player"))
         {
-            BombAmount = Mathf.Min(bomb.bombAmout, MaxBombAmount);
-            ExplosionRadius = Mathf.Min(bomb.explosionRadius, MaxExplosionRadius);
+            s.BombAmount = Mathf.Min(bomb.bombAmout, MaxBombAmount);
+            s.ExplosionRadius = Mathf.Min(bomb.explosionRadius, MaxExplosionRadius);
         }
     }
+
+    public static int Life { get => Get(1).Life; set => Get(1).Life = value; }
+    public static int BombAmount { get => Get(1).BombAmount; set => Get(1).BombAmount = value; }
+    public static int ExplosionRadius { get => Get(1).ExplosionRadius; set => Get(1).ExplosionRadius = value; }
+    public static int SpeedInternal { get => Get(1).SpeedInternal; set => Get(1).SpeedInternal = value; }
+
+    public static bool CanKickBombs { get => Get(1).CanKickBombs; set => Get(1).CanKickBombs = value; }
+    public static bool CanPunchBombs { get => Get(1).CanPunchBombs; set => Get(1).CanPunchBombs = value; }
+    public static bool CanPassBombs { get => Get(1).CanPassBombs; set => Get(1).CanPassBombs = value; }
+    public static bool CanPassDestructibles { get => Get(1).CanPassDestructibles; set => Get(1).CanPassDestructibles = value; }
+    public static bool HasPierceBombs { get => Get(1).HasPierceBombs; set => Get(1).HasPierceBombs = value; }
+    public static bool HasControlBombs { get => Get(1).HasControlBombs; set => Get(1).HasControlBombs = value; }
+    public static bool HasFullFire { get => Get(1).HasFullFire; set => Get(1).HasFullFire = value; }
+
+    public static MountedLouieType MountedLouie { get => Get(1).MountedLouie; set => Get(1).MountedLouie = value; }
+    public static BomberSkin Skin { get => Get(1).Skin; set => Get(1).Skin = value; }
+
+    public static void SaveSelectedSkin() => SaveSelectedSkin(1);
+    public static void LoadSelectedSkin() => LoadSelectedSkin(1);
+    public static void ClampSelectedSkinIfLocked() => ClampSelectedSkinIfLocked(1);
+    public static void ResetToDefaults() => ResetToDefaults(1);
 }
