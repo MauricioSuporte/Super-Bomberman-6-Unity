@@ -6098,15 +6098,14 @@ MonoBehaviour:
   cursorOffset: {x: 0, y: 0}
   cursorGapLeft: 18
   cursorLineCenterAdjustY: 6
-  moveCursorSfx: {fileID: 8300000, guid: 9095599de31cf8543bb7e82ff2782f12, type: 3}
-  moveCursorVolume: 1
   confirmSfx: {fileID: 8300000, guid: f4ca5a046054f404aa2ac2df051e75c0, type: 3}
   confirmVolume: 1
+  moveOptionSfx: {fileID: 8300000, guid: 9095599de31cf8543bb7e82ff2782f12, type: 3}
+  moveOptionVolume: 1
   backSfx: {fileID: 8300000, guid: 30ca55f720379e64ab9b908db035db4c, type: 3}
   backVolume: 1
   resetSfx: {fileID: 8300000, guid: 19e972fda0569ce48901fd1e9d453520, type: 3}
   resetVolume: 1
-  remapDebugLogs: 1
 --- !u!224 &1789443841
 RectTransform:
   m_ObjectHideFlags: 0

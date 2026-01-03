@@ -24,7 +24,7 @@ MonoBehaviour:
   m_MinSize: {x: 300, y: 100}
   m_MaxSize: {x: 24288, y: 16192}
   vertical: 0
-  controlID: 4376
+  controlID: 7553
   draggingID: 0
 --- !u!114 &2
 MonoBehaviour:
@@ -153,7 +153,7 @@ MonoBehaviour:
   m_MinSize: {x: 200, y: 100}
   m_MaxSize: {x: 16192, y: 16192}
   vertical: 1
-  controlID: 4327
+  controlID: 7507
   draggingID: 0
 --- !u!114 &4
 MonoBehaviour:
@@ -179,7 +179,7 @@ MonoBehaviour:
   m_MinSize: {x: 200, y: 50}
   m_MaxSize: {x: 16192, y: 8096}
   vertical: 0
-  controlID: 4318
+  controlID: 7498
   draggingID: 0
 --- !u!114 &5
 MonoBehaviour:
@@ -248,7 +248,7 @@ MonoBehaviour:
       scrollPos: {x: 0, y: 0}
       m_SelectedIDs: 
       m_LastClickedID: 0
-      m_ExpandedIDs: ea7affff227dfffffe7effff4481ffffdc86ffffe6aeffffacb1ffff00fbffff608e0000768e0000968e0000
+      m_ExpandedIDs: 4e77ffffea7affff227dfffffe7effff4481ffffdc86ffffe6aeffffacb1ffff00fbffff608e0000768e0000968e00008ad50000
       m_RenameOverlay:
         m_UserAcceptedRename: 0
         m_Name: 
@@ -928,7 +928,7 @@ MonoBehaviour:
     m_SkipHidden: 0
     m_SearchArea: 1
     m_Folders:
-    - Packages/com.unity.inputsystem/InputSystem/Plugins/PlayerInput
+    - Assets/Scripts/Controls
     m_Globs: []
     m_ProductIds: 
     m_AnyWithAssetOrigin: 0
@@ -938,16 +938,16 @@ MonoBehaviour:
   m_ViewMode: 1
   m_StartGridSize: 96
   m_LastFolders:
-  - Packages/com.unity.inputsystem/InputSystem/Plugins/PlayerInput
+  - Assets/Scripts/Controls
   m_LastFoldersGridSize: 96
   m_LastProjectPath: C:\Users\mauri\source\repos\SuperBomberman6
   m_LockTracker:
     m_IsLocked: 0
   m_FolderTreeState:
-    scrollPos: {x: 0, y: 713}
-    m_SelectedIDs: e6aa0000
-    m_LastClickedID: 43750
-    m_ExpandedIDs: 00000000e2a50000e4a50000e6a50000e8a50000eaa50000eca50000eea50000f0a50000f2a50000e8aa0000eaaa0000ecaa0000ffffff7f
+    scrollPos: {x: 0, y: 381}
+    m_SelectedIDs: 08da0000
+    m_LastClickedID: 55816
+    m_ExpandedIDs: 00000000e2a50000e4a50000e6a50000e8a50000eaa50000eca50000eea50000f0a50000f2a5000072a60000e8aa0000eaaa0000ecaa0000
     m_RenameOverlay:
       m_UserAcceptedRename: 0
       m_Name: 
@@ -976,7 +976,7 @@ MonoBehaviour:
     scrollPos: {x: 0, y: 0}
     m_SelectedIDs: 
     m_LastClickedID: 0
-    m_ExpandedIDs: 00000000e2a50000e4a50000e6a50000e8a50000eaa50000eca50000eea50000f0a50000f2a50000e8aa0000eaaa0000ecaa0000
+    m_ExpandedIDs: 00000000e2a50000e4a50000e6a50000e8a50000eaa50000eca50000eea50000f0a50000f2a5000072a60000e8aa0000eaaa0000ecaa0000
     m_RenameOverlay:
       m_UserAcceptedRename: 0
       m_Name: 
@@ -1053,8 +1053,8 @@ MonoBehaviour:
     y: 0
     width: 565
     height: 933
-  m_MinSize: {x: 276, y: 76}
-  m_MaxSize: {x: 4001, y: 4026}
+  m_MinSize: {x: 275, y: 50}
+  m_MaxSize: {x: 4000, y: 4000}
   m_ActualView: {fileID: 12}
   m_Panes:
   - {fileID: 12}

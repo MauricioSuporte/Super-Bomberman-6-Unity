@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections;
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -51,11 +52,11 @@ public class ControlsConfigMenu : MonoBehaviour
     [SerializeField, Range(-40f, 40f)] float cursorLineCenterAdjustY = 6f;
 
     [Header("SFX")]
-    [SerializeField] AudioClip moveCursorSfx;
-    [SerializeField, Range(0f, 1f)] float moveCursorVolume = 1f;
-
     [SerializeField] AudioClip confirmSfx;
     [SerializeField, Range(0f, 1f)] float confirmVolume = 1f;
+
+    [SerializeField] AudioClip moveOptionSfx;
+    [SerializeField, Range(0f, 1f)] float moveOptionVolume = 1f;
 
     [SerializeField] AudioClip backSfx;
     [SerializeField, Range(0f, 1f)] float backVolume = 1f;
@@ -63,46 +64,33 @@ public class ControlsConfigMenu : MonoBehaviour
     [SerializeField] AudioClip resetSfx;
     [SerializeField, Range(0f, 1f)] float resetVolume = 1f;
 
-    [Header("Remap Debug")]
-    [SerializeField] bool remapDebugLogs = false;
+    enum MenuState { Home, ConfirmRemapAll, BulkRemap, ConfirmReset }
 
-    enum RowKind { Binding, Reset, Back }
+    enum HomeOption { RemapAll = 0, Reset = 1, Back = 2 }
 
-    struct Row
-    {
-        public RowKind kind;
-        public PlayerAction action;
+    MenuState state;
+    int bulkStep;
 
-        public Row(RowKind k, PlayerAction a = default)
-        {
-            kind = k;
-            action = a;
-        }
-    }
+    HomeOption homeOption = HomeOption.RemapAll;
 
-    readonly Row[] rows = new[]
-    {
-        new Row(RowKind.Binding, PlayerAction.MoveUp),
-        new Row(RowKind.Binding, PlayerAction.MoveDown),
-        new Row(RowKind.Binding, PlayerAction.MoveLeft),
-        new Row(RowKind.Binding, PlayerAction.MoveRight),
-        new Row(RowKind.Binding, PlayerAction.Start),
-        new Row(RowKind.Binding, PlayerAction.ActionA),
-        new Row(RowKind.Binding, PlayerAction.ActionB),
-        new Row(RowKind.Binding, PlayerAction.ActionC),
-        new Row(RowKind.Reset),
-        new Row(RowKind.Back),
-    };
-
-    int index;
-    bool waitingForKey;
     Material runtimeMenuMat;
     Coroutine cursorPulseRoutine;
 
-    struct DpadHit
+    Dictionary<PlayerAction, Binding> bulkSnapshot;
+
+    struct DpadHit { public int dir; }
+
+    static readonly PlayerAction[] BulkActions = new[]
     {
-        public int dir;
-    }
+        PlayerAction.MoveUp,
+        PlayerAction.MoveDown,
+        PlayerAction.MoveLeft,
+        PlayerAction.MoveRight,
+        PlayerAction.Start,
+        PlayerAction.ActionA,
+        PlayerAction.ActionB,
+        PlayerAction.ActionC
+    };
 
     void Awake()
     {
@@ -201,8 +189,10 @@ public class ControlsConfigMenu : MonoBehaviour
             fadeImage.gameObject.SetActive(false);
         }
 
-        index = 0;
-        waitingForKey = false;
+        state = MenuState.Home;
+        bulkStep = 0;
+        bulkSnapshot = null;
+        homeOption = HomeOption.RemapAll;
 
         if (cursorRenderer != null)
         {
@@ -215,6 +205,7 @@ public class ControlsConfigMenu : MonoBehaviour
         while (input.Get(PlayerAction.ActionA) ||
                input.Get(PlayerAction.ActionB) ||
                input.Get(PlayerAction.ActionC) ||
+               input.Get(PlayerAction.Start) ||
                input.Get(PlayerAction.MoveUp) ||
                input.Get(PlayerAction.MoveDown))
             yield return null;
@@ -226,28 +217,145 @@ public class ControlsConfigMenu : MonoBehaviour
         bool done = false;
         while (!done)
         {
-            if (!waitingForKey)
+            var p1 = PlayerInputManager.Instance.GetPlayer(1);
+
+            if (state == MenuState.BulkRemap)
             {
+                bool escCancel = Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame;
+
+                if (escCancel)
+                {
+                    if (bulkSnapshot != null)
+                        p1.ApplyBindings(bulkSnapshot);
+
+                    bulkSnapshot = null;
+                    bulkStep = 0;
+                    state = MenuState.Home;
+
+                    PlaySfx(backSfx, backVolume);
+                    RefreshText();
+                    yield return null;
+                    continue;
+                }
+
+                DpadHit? dpad = ReadAnyDpadDownThisFrame();
+                bool joyBtn = ReadAnyGamepadButtonDownThisFrame(out int legacyBtn);
+                KeyCode? key = ReadAnyKeyboardKeyDownNoMouse();
+
+                if (dpad.HasValue || joyBtn || key.HasValue)
+                {
+                    var action = BulkActions[Mathf.Clamp(bulkStep, 0, BulkActions.Length - 1)];
+
+                    if (dpad.HasValue) p1.SetBinding(action, Binding.FromDpad(1, dpad.Value.dir));
+                    else if (joyBtn) p1.SetBinding(action, Binding.FromJoyButton(1, legacyBtn));
+                    else p1.SetBinding(action, Binding.FromKey(key.Value));
+
+                    PlaySfx(confirmSfx, confirmVolume);
+                    yield return PulseCursor();
+
+                    bulkStep++;
+
+                    if (bulkStep >= BulkActions.Length)
+                    {
+                        p1.SaveToPrefs();
+
+                        bulkSnapshot = null;
+                        bulkStep = 0;
+                        state = MenuState.Home;
+
+                        RefreshText();
+                        yield return null;
+                        continue;
+                    }
+
+                    RefreshText();
+                }
+
+                yield return null;
+                continue;
+            }
+
+            if (state == MenuState.ConfirmRemapAll)
+            {
+                if (input.GetDown(PlayerAction.ActionB))
+                {
+                    PlaySfx(backSfx, backVolume);
+                    state = MenuState.Home;
+                    RefreshText();
+                }
+                else if (input.GetDown(PlayerAction.Start) || input.GetDown(PlayerAction.ActionA))
+                {
+                    bulkSnapshot = p1.CloneBindings();
+                    bulkStep = 0;
+                    state = MenuState.BulkRemap;
+
+                    PlaySfx(confirmSfx, confirmVolume);
+                    RefreshText();
+                    yield return PulseCursor();
+                }
+
+                yield return null;
+                continue;
+            }
+
+            if (state == MenuState.ConfirmReset)
+            {
+                if (input.GetDown(PlayerAction.ActionB))
+                {
+                    PlaySfx(backSfx, backVolume);
+                    state = MenuState.Home;
+                    RefreshText();
+                }
+                else if (input.GetDown(PlayerAction.Start) || input.GetDown(PlayerAction.ActionA))
+                {
+                    p1.ResetToDefault();
+                    p1.SaveToPrefs();
+
+                    PlaySfx(resetSfx, resetVolume);
+                    state = MenuState.Home;
+                    RefreshText();
+                    yield return PulseCursor();
+                }
+
+                yield return null;
+                continue;
+            }
+
+            if (state == MenuState.Home)
+            {
+                if (input.GetDown(PlayerAction.ActionC))
+                {
+                    homeOption = HomeOption.Reset;
+                    PlaySfx(confirmSfx, confirmVolume);
+                    state = MenuState.ConfirmReset;
+                    RefreshText();
+                    yield return PulseCursor();
+                    yield return null;
+                    continue;
+                }
+
                 if (input.GetDown(PlayerAction.MoveUp))
                 {
-                    index = Wrap(index - 1, rows.Length);
-                    PlaySfx(moveCursorSfx, moveCursorVolume);
+                    var prev = homeOption;
+                    homeOption = (HomeOption)Mathf.Clamp(((int)homeOption) - 1, 0, 2);
+
+                    if (homeOption != prev)
+                        PlaySfx(moveOptionSfx, moveOptionVolume);
+
                     RefreshText();
                 }
                 else if (input.GetDown(PlayerAction.MoveDown))
                 {
-                    index = Wrap(index + 1, rows.Length);
-                    PlaySfx(moveCursorSfx, moveCursorVolume);
+                    var prev = homeOption;
+                    homeOption = (HomeOption)Mathf.Clamp(((int)homeOption) + 1, 0, 2);
+
+                    if (homeOption != prev)
+                        PlaySfx(moveOptionSfx, moveOptionVolume);
+
                     RefreshText();
                 }
-                else if (input.GetDown(PlayerAction.ActionC))
-                {
-                    ResetDefaults();
-                    PlaySfx(resetSfx, resetVolume);
-                    RefreshText();
-                    yield return PulseCursor();
-                }
-                else if (input.GetDown(PlayerAction.ActionB))
+
+                if (input.GetDown(PlayerAction.ActionB))
                 {
                     PlaySfx(backSfx, backVolume);
                     yield return PulseCursor();
@@ -255,78 +363,30 @@ public class ControlsConfigMenu : MonoBehaviour
                 }
                 else if (input.GetDown(PlayerAction.Start) || input.GetDown(PlayerAction.ActionA))
                 {
-                    var row = rows[index];
+                    switch (homeOption)
+                    {
+                        case HomeOption.RemapAll:
+                            PlaySfx(confirmSfx, confirmVolume);
+                            state = MenuState.ConfirmRemapAll;
+                            RefreshText();
+                            yield return PulseCursor();
+                            break;
 
-                    if (row.kind == RowKind.Binding)
-                    {
-                        PlaySfx(confirmSfx, confirmVolume);
-                        waitingForKey = true;
-                        RefreshText();
-                        yield return PulseCursor();
-                    }
-                    else if (row.kind == RowKind.Reset)
-                    {
-                        ResetDefaults();
-                        PlaySfx(resetSfx, resetVolume);
-                        RefreshText();
-                        yield return PulseCursor();
-                    }
-                    else
-                    {
-                        PlaySfx(confirmSfx, confirmVolume);
-                        yield return PulseCursor();
-                        done = true;
+                        case HomeOption.Reset:
+                            PlaySfx(confirmSfx, confirmVolume);
+                            state = MenuState.ConfirmReset;
+                            RefreshText();
+                            yield return PulseCursor();
+                            break;
+
+                        case HomeOption.Back:
+                            PlaySfx(backSfx, backVolume);
+                            yield return PulseCursor();
+                            done = true;
+                            break;
                     }
                 }
             }
-            else
-            {
-                var p1 = PlayerInputManager.Instance.GetPlayer(1);
-
-                DpadHit? dpad = ReadAnyDpadDownThisFrame();
-                bool joyBtn = ReadAnyGamepadButtonDownThisFrame(out int legacyBtn);
-                KeyCode? key = ReadAnyKeyboardKeyDownNoMouse();
-
-                if (remapDebugLogs)
-                {
-                    Debug.Log($"[REMAP] action={rows[index].action} dpad={(dpad.HasValue ? $"dir{dpad.Value.dir}" : "null")} " +
-                              $"joyBtn={(joyBtn ? $"btn{legacyBtn}" : "null")} key={(key.HasValue ? key.Value.ToString() : "null")}");
-                }
-
-                if (dpad.HasValue || joyBtn || key.HasValue)
-                {
-                    var row = rows[index];
-                    if (row.kind == RowKind.Binding)
-                    {
-                        if (dpad.HasValue)
-                        {
-                            p1.SetBinding(row.action, Binding.FromDpad(1, dpad.Value.dir));
-                        }
-                        else if (joyBtn)
-                        {
-                            p1.SetBinding(row.action, Binding.FromJoyButton(1, legacyBtn));
-                        }
-                        else
-                        {
-                            p1.SetBinding(row.action, Binding.FromKey(key.Value));
-                        }
-                    }
-
-                    waitingForKey = false;
-                    PlaySfx(confirmSfx, confirmVolume);
-                    RefreshText();
-                    yield return PulseCursor();
-                }
-
-                if (input.GetDown(PlayerAction.ActionB))
-                {
-                    waitingForKey = false;
-                    PlaySfx(backSfx, backVolume);
-                    RefreshText();
-                    yield return PulseCursor();
-                }
-            }
-
             yield return null;
         }
 
@@ -435,6 +495,7 @@ public class ControlsConfigMenu : MonoBehaviour
             case Key.M: kc = KeyCode.M; return true;
             case Key.N: kc = KeyCode.N; return true;
             case Key.B: kc = KeyCode.B; return true;
+            case Key.C: kc = KeyCode.C; return true;
 
             default:
                 return false;
@@ -460,7 +521,6 @@ public class ControlsConfigMenu : MonoBehaviour
             return;
 
         const string colorNormal = "#FFFFE7";
-        const string colorSelected = "#39D1B4";
         const string colorHint = "#FFA621";
         const string colorWhite = "#FFFFFF";
 
@@ -474,45 +534,62 @@ public class ControlsConfigMenu : MonoBehaviour
 
         string body = "<align=left>";
 
-        for (int i = 0; i < rows.Length; i++)
+        for (int i = 0; i < BulkActions.Length; i++)
         {
-            bool sel = i == index;
-            string c = sel ? colorSelected : colorNormal;
+            var a = BulkActions[i];
+            string left = ActionToLabel(a);
+            string right = BindingToLabel(p1.GetBinding(a));
 
-            var r = rows[i];
-            string linkOpen = $"<link=\"row{i}\">";
-            string linkClose = "</link>";
+            string line = $"{left,-12}  :  {right}";
 
-            if (r.kind == RowKind.Binding)
-            {
-                string left = ActionToLabel(r.action);
-                string right = BindingToLabel(p1.GetBinding(r.action));
+            if (state == MenuState.BulkRemap && i == Mathf.Clamp(bulkStep, 0, BulkActions.Length - 1))
+                line = $"{left,-12}  :  <color={colorHint}>PRESS A KEY...</color>";
 
-                string line = $"{left,-12}  :  {right}";
-                if (sel && waitingForKey)
-                    line = $"{left,-12}  :  <color={colorHint}>PRESS A KEY...</color>";
-
-                body += $"{linkOpen}<size={bodyFontSize}><color={c}>{line}</color></size>{linkClose}\n";
-            }
-            else if (r.kind == RowKind.Reset)
-            {
-                body += $"{linkOpen}<size={bodyFontSize}><color={c}>RESET TO DEFAULT</color></size>{linkClose}\n";
-            }
-            else
-            {
-                body += $"{linkOpen}<size={bodyFontSize}><color={c}>BACK</color></size>{linkClose}\n";
-            }
+            body += $"<link=\"bind{i}\"><size={bodyFontSize}><color={colorNormal}>{line}</color></size></link>\n";
         }
 
         body += RepeatNewLine(footerGapLines);
 
-        body +=
-            $"<align=center><size={footerFontSize}>" +
-            $"<color={colorHint}>A:</color> <color={colorWhite}>CONFIRM / PLANT BOMB </color>\n" +
-            $"<color={colorHint}>B:</color> <color={colorWhite}>BACK / EXPLODE CONTROL BOMBS</color>\n" +
-            $"<color={colorHint}>C:</color> <color={colorWhite}>ABILITIES</color>\n" +
-            $"<color={colorHint}>START:</color> <color={colorWhite}>PAUSE / CONFIRM</color>" +
-            $"</size></align>";
+        if (state == MenuState.ConfirmRemapAll)
+        {
+            body +=
+                $"<align=center><size={footerFontSize}>" +
+                $"<color={colorHint}>REMAP ALL?</color>\n" +
+                $"<color={colorHint}>A / START:</color> <color={colorWhite}>YES</color>    " +
+                $"<color={colorHint}>B:</color> <color={colorWhite}>NO</color>" +
+                $"</size></align>";
+        }
+        else if (state == MenuState.ConfirmReset)
+        {
+            body +=
+                $"<align=center><size={footerFontSize}>" +
+                $"<color={colorHint}>RESET TO DEFAULT?</color>\n" +
+                $"<color={colorHint}>A / START:</color> <color={colorWhite}>YES</color>    " +
+                $"<color={colorHint}>B:</color> <color={colorWhite}>NO</color>" +
+                $"</size></align>";
+        }
+        else if (state == MenuState.BulkRemap)
+        {
+            var a = BulkActions[Mathf.Clamp(bulkStep, 0, BulkActions.Length - 1)];
+            body +=
+                $"<align=center><size={footerFontSize}>" +
+                $"<color={colorHint}>REMAP:</color> <color={colorWhite}>{ActionToLabel(a)}</color>\n" +
+                $"<color={colorHint}>ESC:</color> <color={colorWhite}>CANCEL REMAPPING</color>" +
+                $"</size></align>";
+        }
+        else
+        {
+            string remapLine = $"<link=\"home0\"><color={colorHint}>A / START:</color> <color={colorWhite}>REMAP ALL</color></link>";
+            string resetLine = $"<link=\"home1\"><color={colorHint}>C:</color> <color={colorWhite}>RESET TO DEFAULT</color></link>";
+            string backLine = $"<link=\"home2\"><color={colorHint}>B:</color> <color={colorWhite}>BACK</color></link>";
+
+            body +=
+                $"<align=center><size={footerFontSize}>" +
+                remapLine + "\n" +
+                resetLine + "\n" +
+                backLine +
+                $"</size></align>";
+        }
 
         body += "</align>";
 
@@ -551,14 +628,33 @@ public class ControlsConfigMenu : MonoBehaviour
         if (menuText == null || cursorRenderer == null)
             return;
 
+        bool show =
+            state == MenuState.BulkRemap ||
+            state == MenuState.Home;
+
+        cursorRenderer.gameObject.SetActive(show);
+
+        if (!show)
+            return;
+
         menuText.ForceMeshUpdate();
         var ti = menuText.textInfo;
         if (ti == null || ti.linkCount <= 0)
             return;
 
-        string targetId = $"row{index}";
-        TMP_LinkInfo? link = null;
+        string targetId;
 
+        if (state == MenuState.BulkRemap)
+        {
+            int target = Mathf.Clamp(bulkStep, 0, BulkActions.Length - 1);
+            targetId = $"bind{target}";
+        }
+        else
+        {
+            targetId = $"home{(int)homeOption}";
+        }
+
+        TMP_LinkInfo? link = null;
         for (int i = 0; i < ti.linkCount; i++)
         {
             var li = ti.linkInfo[i];
@@ -601,20 +697,6 @@ public class ControlsConfigMenu : MonoBehaviour
 
         Vector3 localPos = new(x + cursorOffset.x, y + cursorOffset.y, 0f);
         cursorRenderer.SetExternalBaseLocalPosition(localPos);
-    }
-
-    void ResetDefaults()
-    {
-        var p1 = PlayerInputManager.Instance.GetPlayer(1);
-        p1.ResetToDefault();
-    }
-
-    static int Wrap(int v, int count)
-    {
-        if (count <= 0) return 0;
-        v %= count;
-        if (v < 0) v += count;
-        return v;
     }
 
     void PlaySfx(AudioClip clip, float volume)

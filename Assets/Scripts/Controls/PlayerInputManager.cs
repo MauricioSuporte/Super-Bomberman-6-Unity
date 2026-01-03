@@ -7,6 +7,13 @@ public class PlayerInputManager : MonoBehaviour
 {
     public static PlayerInputManager Instance { get; private set; }
 
+    [Header("Emergency Reset")]
+    [Tooltip("Hold these keys during boot to restore default bindings.")]
+    [SerializeField] bool enableEmergencyReset = true;
+
+    [Tooltip("Hold ESC + R during boot to clear saved bindings.")]
+    [SerializeField] bool emergencyResetEscR = true;
+
     readonly Dictionary<int, PlayerInputProfile> players = new();
 
     readonly Dictionary<int, bool> prevUp = new();
@@ -29,6 +36,13 @@ public class PlayerInputManager : MonoBehaviour
 
         Instance = this;
         DontDestroyOnLoad(gameObject);
+
+        if (enableEmergencyReset && emergencyResetEscR)
+        {
+            var kb = Keyboard.current;
+            if (kb != null && kb.escapeKey.isPressed && kb.rKey.isPressed)
+                PlayerInputProfile.ClearPrefs(1);
+        }
 
         players[1] = new PlayerInputProfile(1);
 
@@ -88,9 +102,7 @@ public class PlayerInputManager : MonoBehaviour
         }
 
         if (b.kind == BindKind.JoyButton)
-        {
             return ReadGamepadButtonHeld(p, b.joyButton);
-        }
 
         return false;
     }
@@ -127,9 +139,7 @@ public class PlayerInputManager : MonoBehaviour
         }
 
         if (b.kind == BindKind.JoyButton)
-        {
             return ReadGamepadButtonDown(p, b.joyButton);
-        }
 
         return false;
     }
