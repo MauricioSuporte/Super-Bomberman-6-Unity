@@ -415,7 +415,7 @@ public class TitleScreenController : MonoBehaviour
                         HideTitleScreenCompletely();
 
                         if (controlsMenu != null)
-                            yield return controlsMenu.OpenRoutine(titleMusic, titleMusicVolume);
+                            yield return controlsMenu.OpenRoutine(1, titleMusic, titleMusicVolume);
 
                         RestoreTitleScreenAfterControls();
 

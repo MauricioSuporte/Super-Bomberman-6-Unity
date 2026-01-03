@@ -27,18 +27,67 @@ public class PlayerInputProfile
     {
         playerId = id;
 
-        defaultBindings[PlayerAction.MoveUp] = Binding.FromKey(KeyCode.W);
-        defaultBindings[PlayerAction.MoveDown] = Binding.FromKey(KeyCode.S);
-        defaultBindings[PlayerAction.MoveLeft] = Binding.FromKey(KeyCode.A);
-        defaultBindings[PlayerAction.MoveRight] = Binding.FromKey(KeyCode.D);
-
-        defaultBindings[PlayerAction.Start] = Binding.FromKey(KeyCode.Return);
-        defaultBindings[PlayerAction.ActionA] = Binding.FromKey(KeyCode.M);
-        defaultBindings[PlayerAction.ActionB] = Binding.FromKey(KeyCode.N);
-        defaultBindings[PlayerAction.ActionC] = Binding.FromKey(KeyCode.B);
+        BuildDefaultBindingsForPlayer(id);
 
         ResetToDefault();
         LoadFromPrefs();
+    }
+
+    void BuildDefaultBindingsForPlayer(int id)
+    {
+        defaultBindings.Clear();
+
+        if (id == 1)
+        {
+            defaultBindings[PlayerAction.MoveUp] = Binding.FromKey(KeyCode.W);
+            defaultBindings[PlayerAction.MoveDown] = Binding.FromKey(KeyCode.S);
+            defaultBindings[PlayerAction.MoveLeft] = Binding.FromKey(KeyCode.A);
+            defaultBindings[PlayerAction.MoveRight] = Binding.FromKey(KeyCode.D);
+
+            defaultBindings[PlayerAction.Start] = Binding.FromKey(KeyCode.Return);
+            defaultBindings[PlayerAction.ActionA] = Binding.FromKey(KeyCode.F);
+            defaultBindings[PlayerAction.ActionB] = Binding.FromKey(KeyCode.G);
+            defaultBindings[PlayerAction.ActionC] = Binding.FromKey(KeyCode.H);
+            return;
+        }
+
+        if (id == 2)
+        {
+            defaultBindings[PlayerAction.MoveUp] = Binding.FromKey(KeyCode.I);
+            defaultBindings[PlayerAction.MoveDown] = Binding.FromKey(KeyCode.K);
+            defaultBindings[PlayerAction.MoveLeft] = Binding.FromKey(KeyCode.J);
+            defaultBindings[PlayerAction.MoveRight] = Binding.FromKey(KeyCode.L);
+
+            defaultBindings[PlayerAction.Start] = Binding.FromKey(KeyCode.Y);
+            defaultBindings[PlayerAction.ActionA] = Binding.FromKey(KeyCode.U);
+            defaultBindings[PlayerAction.ActionB] = Binding.FromKey(KeyCode.O);
+            defaultBindings[PlayerAction.ActionC] = Binding.FromKey(KeyCode.P);
+            return;
+        }
+
+        if (id == 3)
+        {
+            defaultBindings[PlayerAction.MoveUp] = Binding.FromKey(KeyCode.UpArrow);
+            defaultBindings[PlayerAction.MoveDown] = Binding.FromKey(KeyCode.DownArrow);
+            defaultBindings[PlayerAction.MoveLeft] = Binding.FromKey(KeyCode.LeftArrow);
+            defaultBindings[PlayerAction.MoveRight] = Binding.FromKey(KeyCode.RightArrow);
+
+            defaultBindings[PlayerAction.Start] = Binding.FromKey(KeyCode.RightShift);
+            defaultBindings[PlayerAction.ActionA] = Binding.FromKey(KeyCode.Comma);
+            defaultBindings[PlayerAction.ActionB] = Binding.FromKey(KeyCode.Period);
+            defaultBindings[PlayerAction.ActionC] = Binding.FromKey(KeyCode.Slash);
+            return;
+        }
+
+        defaultBindings[PlayerAction.MoveUp] = Binding.FromKey(KeyCode.Keypad8);
+        defaultBindings[PlayerAction.MoveDown] = Binding.FromKey(KeyCode.Keypad2);
+        defaultBindings[PlayerAction.MoveLeft] = Binding.FromKey(KeyCode.Keypad4);
+        defaultBindings[PlayerAction.MoveRight] = Binding.FromKey(KeyCode.Keypad6);
+
+        defaultBindings[PlayerAction.Start] = Binding.FromKey(KeyCode.KeypadEnter);
+        defaultBindings[PlayerAction.ActionA] = Binding.FromKey(KeyCode.Keypad1);
+        defaultBindings[PlayerAction.ActionB] = Binding.FromKey(KeyCode.Keypad2);
+        defaultBindings[PlayerAction.ActionC] = Binding.FromKey(KeyCode.Keypad3);
     }
 
     public Binding GetBinding(PlayerAction action) => bindings[action];
@@ -50,6 +99,8 @@ public class PlayerInputProfile
         bindings.Clear();
         foreach (var kv in defaultBindings)
             bindings[kv.Key] = kv.Value;
+
+        EnsureAllActionsExist();
     }
 
     public Dictionary<PlayerAction, Binding> CloneBindings()
@@ -67,6 +118,8 @@ public class PlayerInputProfile
         bindings.Clear();
         foreach (var kv in source)
             bindings[kv.Key] = kv.Value;
+
+        EnsureAllActionsExist();
     }
 
     public void SaveToPrefs()

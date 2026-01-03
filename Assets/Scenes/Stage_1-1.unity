@@ -1744,7 +1744,7 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 1107666576}
+  m_Father: {fileID: 1876253041}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
@@ -5305,8 +5305,7 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 700387561}
-  - {fileID: 534844156}
-  - {fileID: 1434090862}
+  - {fileID: 1876253041}
   m_Father: {fileID: 1789443841}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -5532,8 +5531,8 @@ MonoBehaviour:
   lockedConfirmSfxVolume: 1
   konamiUnlockSfx: {fileID: 8300000, guid: 1e71e29d5560374489499b51e60e4f93, type: 3}
   konamiUnlockSfxVolume: 1
-  backToTitleSfx: {fileID: 8300000, guid: 30ca55f720379e64ab9b908db035db4c, type: 3}
-  backToTitleSfxVolume: 1
+  returnSfx: {fileID: 8300000, guid: 30ca55f720379e64ab9b908db035db4c, type: 3}
+  returnSfxVolume: 1
   selectableSkins: 01000000030000000b0000000400000008000000060000000f0000000a00000000000000
 --- !u!224 &1311323898
 RectTransform:
@@ -5826,13 +5825,13 @@ RectTransform:
   m_LocalScale: {x: 0.5, y: 0.5, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 1107666576}
+  m_Father: {fileID: 1876253041}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 1010, y: -480}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 100, y: 100}
-  m_Pivot: {x: 1, y: 0.5}
+  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!4 &1442642621 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 1228606389669354653, guid: a8ad655126f70524182569d5f875127c, type: 3}
@@ -6012,8 +6011,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 15b14ab88f8808a4183ec8ebd7dfc660, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ControlsConfigMenu
+  ownerPlayerId: 1
   root: {fileID: 1107666575}
   backgroundImage: {fileID: 700387562}
+  menuLayoutRoot: {fileID: 0}
+  menuGlobalYOffset: 140
   fadeImage: {fileID: 336813435}
   fadeInDuration: 0.25
   fadeOutDuration: 0.2
@@ -6021,18 +6023,27 @@ MonoBehaviour:
   controlsMusicVolume: 1
   menuText: {fileID: 534844157}
   titleFontSize: 46
-  titleOffsetLines: -1
-  bodyFontSize: 32
+  titleVOffset: 26
   headerTopPaddingLines: 1
-  headerBottomPaddingLines: 1
-  footerGapLines: 1
+  headerBottomPaddingLines: 0
+  bodyFontSize: 30
+  footerGapLines: 0
   footerFontSize: 28
+  footerExtraNewLines: 2
+  selectGridFontSize: 24
+  playerBlockGapLines: 1
+  colLabelLeftPos: -260
+  colValueLeftPos: -60
+  colLabelRightPos: 80
+  colValueRightPos: 280
+  playerBlocksXOffset: 600
+  rightColumnExtraSpacing: 80
   forceBold: 1
   outlineColor: {r: 0, g: 0, b: 0, a: 1}
   outlineWidth: 0.42
   outlineSoftness: 0
   cursorRenderer: {fileID: 1434090859}
-  cursorOffset: {x: 0, y: 0}
+  cursorOffset: {x: -10, y: 0}
   cursorGapLeft: 18
   cursorLineCenterAdjustY: 6
   confirmSfx: {fileID: 8300000, guid: f4ca5a046054f404aa2ac2df051e75c0, type: 3}
@@ -6043,6 +6054,7 @@ MonoBehaviour:
   backVolume: 1
   resetSfx: {fileID: 8300000, guid: 19e972fda0569ce48901fd1e9d453520, type: 3}
   resetVolume: 1
+  playersBlockIndentX: 360
 --- !u!224 &1789443841
 RectTransform:
   m_ObjectHideFlags: 0
@@ -6186,6 +6198,43 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!1 &1876253040
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1876253041}
+  m_Layer: 5
+  m_Name: MenuLayoutRoot
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &1876253041
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1876253040}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 534844156}
+  - {fileID: 1434090862}
+  m_Father: {fileID: 1107666576}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 0, y: 110}
+  m_SizeDelta: {x: 0, y: 0}
+  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1001 &1924767106
 PrefabInstance:
   m_ObjectHideFlags: 0

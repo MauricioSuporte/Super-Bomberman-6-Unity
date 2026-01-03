@@ -3,14 +3,21 @@ using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
 using UnityEngine.InputSystem;
+using UnityEngine.UI;
 
 public class ControlsConfigMenu : MonoBehaviour
 {
+    [Header("Menu Owner (who navigates UI)")]
+    [SerializeField, Range(1, 4)] int ownerPlayerId = 1;
+
     [Header("UI")]
     [SerializeField] GameObject root;
     [SerializeField] Image backgroundImage;
+
+    [Header("Layout Root (moves menu as a whole)")]
+    [SerializeField] RectTransform menuLayoutRoot;
+    [SerializeField] float menuGlobalYOffset = 140;
 
     [Header("Fade")]
     [SerializeField] Image fadeImage;
@@ -26,16 +33,21 @@ public class ControlsConfigMenu : MonoBehaviour
 
     [Header("Title")]
     [SerializeField] int titleFontSize = 46;
-    [SerializeField] int titleOffsetLines = -1;
+    [SerializeField] float titleVOffset = 26f;
+    [SerializeField] int headerTopPaddingLines = 0;
+    [SerializeField] int headerBottomPaddingLines = 0;
 
     [Header("Body")]
-    [SerializeField] int bodyFontSize = 32;
+    [SerializeField] int bodyFontSize = 30;
 
-    [Header("Layout")]
-    [SerializeField] int headerTopPaddingLines = 1;
-    [SerializeField] int headerBottomPaddingLines = 1;
-    [SerializeField] int footerGapLines = 1;
-    [SerializeField] int footerFontSize = 28;
+    [Header("Footer")]
+    [SerializeField] int footerGapLines = 0;
+    [SerializeField] int footerFontSize = 22;
+    [SerializeField, Range(0, 10)] int footerExtraNewLines = 0;
+
+    [Header("Select Player Blocks")]
+    [SerializeField] int selectGridFontSize = 24;
+    [SerializeField, Range(0, 6)] int playerBlockGapLines = 1;
 
     [Header("Text Style (SB5-like)")]
     [SerializeField] bool forceBold = true;
@@ -64,21 +76,51 @@ public class ControlsConfigMenu : MonoBehaviour
     [SerializeField] AudioClip resetSfx;
     [SerializeField, Range(0f, 1f)] float resetVolume = 1f;
 
-    enum MenuState { Home, ConfirmRemapAll, BulkRemap, ConfirmReset }
+    [Header("Players Block - Global Indent")]
+    [SerializeField] float playersBlockIndentX = 400f;
 
-    enum HomeOption { RemapAll = 0, Reset = 1, Back = 2 }
+    const string colorNormal = "#FFFFE7";
+    const string colorHint = "#FFA621";
+    const string colorWhite = "#FFFFFF";
+
+    const string colorBlueSoft = "#8FD3FF";
+    const string colorPlayerGreen = "#8CFFB3";
+    const string colorPlayerSelectedRed = "#FF5A5A";
+
+    const float COLUMN_LEFT_LABEL_BASE = -370f;
+    const float COLUMN_LEFT_VALUE_BASE = -210f;
+    const float COLUMN_RIGHT_LABEL_BASE = 100f;
+    const float COLUMN_RIGHT_VALUE_BASE = 260f;
+
+    const string LINK_WAIT_PREFIX = "wait_";
+    const string LINK_RESET_YES = "reset_yes";
+    const string LINK_RESET_NO = "reset_no";
+
+    enum MenuState
+    {
+        SelectPlayer,
+        ConfirmReset,
+        BulkRemap
+    }
 
     MenuState state;
+
+    int playerSelectIndex;
+    int targetPlayerId;
     int bulkStep;
 
-    HomeOption homeOption = HomeOption.RemapAll;
+    int confirmResetIndex;
+    int confirmResetPlayerId;
 
     Material runtimeMenuMat;
     Coroutine cursorPulseRoutine;
-
     Dictionary<PlayerAction, Binding> bulkSnapshot;
 
-    struct DpadHit { public int dir; }
+    Vector2 menuLayoutRootBasePos;
+    bool menuLayoutRootCached;
+
+    struct DpadHit { public int dir; public int joyIndex; }
+    struct JoyBtnHit { public int btn; public int joyIndex; }
 
     static readonly PlayerAction[] BulkActions = new[]
     {
@@ -98,6 +140,7 @@ public class ControlsConfigMenu : MonoBehaviour
             root = gameObject;
 
         SetupMenuTextMaterial();
+        CacheMenuLayoutRootBasePos();
 
         if (root != null)
             root.SetActive(false);
@@ -110,6 +153,18 @@ public class ControlsConfigMenu : MonoBehaviour
     {
         if (runtimeMenuMat != null)
             Destroy(runtimeMenuMat);
+    }
+
+    void CacheMenuLayoutRootBasePos()
+    {
+        if (menuLayoutRootCached)
+            return;
+
+        if (menuLayoutRoot != null)
+        {
+            menuLayoutRootBasePos = menuLayoutRoot.anchoredPosition;
+            menuLayoutRootCached = true;
+        }
     }
 
     void SetupMenuTextMaterial()
@@ -150,7 +205,6 @@ public class ControlsConfigMenu : MonoBehaviour
         runtimeMenuMat.DisableKeyword("UNDERLAY_INNER");
 
         menuText.fontMaterial = runtimeMenuMat;
-
         menuText.havePropertiesChanged = true;
         menuText.UpdateMeshPadding();
         menuText.SetAllDirty();
@@ -168,14 +222,83 @@ public class ControlsConfigMenu : MonoBehaviour
             m.SetColor(prop, value);
     }
 
-    public IEnumerator OpenRoutine(AudioClip restoreMusic, float restoreMusicVolume = 1f)
+    bool TryGetAnyPlayerDown(PlayerAction action, out int pid)
     {
+        pid = 1;
+
+        var input = PlayerInputManager.Instance;
+        if (input == null) return false;
+
+        for (int p = 1; p <= 4; p++)
+        {
+            if (input.GetDown(p, action))
+            {
+                pid = p;
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    bool TryGetAnyPlayerDownEither(PlayerAction a, PlayerAction b, out int pid)
+    {
+        if (TryGetAnyPlayerDown(a, out pid)) return true;
+        if (TryGetAnyPlayerDown(b, out pid)) return true;
+        pid = 1;
+        return false;
+    }
+
+    bool AnyPlayerHeld(PlayerAction action)
+    {
+        var input = PlayerInputManager.Instance;
+        if (input == null) return false;
+
+        for (int p = 1; p <= 4; p++)
+        {
+            if (input.Get(p, action))
+                return true;
+        }
+
+        return false;
+    }
+
+    bool AnyPlayerHeldAnyMenuKey()
+    {
+        return AnyPlayerHeld(PlayerAction.ActionA) ||
+               AnyPlayerHeld(PlayerAction.ActionB) ||
+               AnyPlayerHeld(PlayerAction.ActionC) ||
+               AnyPlayerHeld(PlayerAction.Start) ||
+               AnyPlayerHeld(PlayerAction.MoveUp) ||
+               AnyPlayerHeld(PlayerAction.MoveDown) ||
+               AnyPlayerHeld(PlayerAction.MoveLeft) ||
+               AnyPlayerHeld(PlayerAction.MoveRight);
+    }
+
+    PlayerAction CurrentBulkAction()
+    {
+        return BulkActions[Mathf.Clamp(bulkStep, 0, BulkActions.Length - 1)];
+    }
+
+    string CurrentWaitLinkId()
+    {
+        return LINK_WAIT_PREFIX + ActionToLabel(CurrentBulkAction());
+    }
+
+    public IEnumerator OpenRoutine(int openerPlayerId, AudioClip restoreMusic, float restoreMusicVolume = 1f)
+    {
+        ownerPlayerId = Mathf.Clamp(openerPlayerId, 1, 4);
+
         if (root == null) root = gameObject;
 
         root.transform.SetAsLastSibling();
         root.SetActive(true);
 
         SetupMenuTextMaterial();
+
+        CacheMenuLayoutRootBasePos();
+        if (menuLayoutRoot != null)
+            menuLayoutRoot.anchoredPosition = menuLayoutRootBasePos + new Vector2(0f, menuGlobalYOffset);
 
         if (controlsMusic != null && GameMusicController.Instance != null)
             GameMusicController.Instance.PlayMusic(controlsMusic, controlsMusicVolume, true);
@@ -189,10 +312,14 @@ public class ControlsConfigMenu : MonoBehaviour
             fadeImage.gameObject.SetActive(false);
         }
 
-        state = MenuState.Home;
+        state = MenuState.SelectPlayer;
+        playerSelectIndex = Mathf.Clamp(ownerPlayerId - 1, 0, 3);
+        targetPlayerId = playerSelectIndex + 1;
         bulkStep = 0;
         bulkSnapshot = null;
-        homeOption = HomeOption.RemapAll;
+
+        confirmResetIndex = 1;
+        confirmResetPlayerId = 1;
 
         if (cursorRenderer != null)
         {
@@ -200,14 +327,7 @@ public class ControlsConfigMenu : MonoBehaviour
             cursorRenderer.RefreshFrame();
         }
 
-        var input = PlayerInputManager.Instance;
-
-        while (input.Get(PlayerAction.ActionA) ||
-               input.Get(PlayerAction.ActionB) ||
-               input.Get(PlayerAction.ActionC) ||
-               input.Get(PlayerAction.Start) ||
-               input.Get(PlayerAction.MoveUp) ||
-               input.Get(PlayerAction.MoveDown))
+        while (AnyPlayerHeldAnyMenuKey())
             yield return null;
 
         yield return null;
@@ -217,20 +337,160 @@ public class ControlsConfigMenu : MonoBehaviour
         bool done = false;
         while (!done)
         {
-            var p1 = PlayerInputManager.Instance.GetPlayer(1);
+            if (state == MenuState.SelectPlayer)
+            {
+                int prev = playerSelectIndex;
+
+                if (TryGetAnyPlayerDown(PlayerAction.MoveUp, out int pidUp))
+                {
+                    ownerPlayerId = pidUp;
+                    playerSelectIndex = Mathf.Clamp(playerSelectIndex - 1, 0, 3);
+                }
+                else if (TryGetAnyPlayerDown(PlayerAction.MoveDown, out int pidDown))
+                {
+                    ownerPlayerId = pidDown;
+                    playerSelectIndex = Mathf.Clamp(playerSelectIndex + 1, 0, 3);
+                }
+
+                if (playerSelectIndex != prev)
+                {
+                    targetPlayerId = playerSelectIndex + 1;
+                    PlaySfx(moveOptionSfx, moveOptionVolume);
+                    RefreshText();
+                }
+
+                if (TryGetAnyPlayerDown(PlayerAction.ActionB, out int pidBack))
+                {
+                    ownerPlayerId = pidBack;
+                    PlaySfx(backSfx, backVolume);
+                    yield return PulseCursor();
+                    done = true;
+                    yield return null;
+                    continue;
+                }
+
+                if (TryGetAnyPlayerDown(PlayerAction.ActionC, out int pidAskReset))
+                {
+                    ownerPlayerId = pidAskReset;
+
+                    confirmResetPlayerId = playerSelectIndex + 1;
+                    confirmResetIndex = 1;
+                    state = MenuState.ConfirmReset;
+
+                    PlaySfx(confirmSfx, confirmVolume);
+                    RefreshText();
+                    yield return PulseCursor();
+                    yield return null;
+                    continue;
+                }
+
+                if (TryGetAnyPlayerDownEither(PlayerAction.Start, PlayerAction.ActionA, out int pidConfirm))
+                {
+                    ownerPlayerId = pidConfirm;
+
+                    targetPlayerId = playerSelectIndex + 1;
+                    var p = PlayerInputManager.Instance.GetPlayer(targetPlayerId);
+
+                    bulkSnapshot = p.CloneBindings();
+                    bulkStep = 0;
+                    state = MenuState.BulkRemap;
+
+                    PlaySfx(confirmSfx, confirmVolume);
+                    RefreshText();
+                    yield return PulseCursor();
+                    yield return null;
+                    continue;
+                }
+
+                yield return null;
+                continue;
+            }
+
+            if (state == MenuState.ConfirmReset)
+            {
+                int prev = confirmResetIndex;
+
+                if (TryGetAnyPlayerDown(PlayerAction.MoveUp, out int pidUp))
+                {
+                    ownerPlayerId = pidUp;
+                    confirmResetIndex = Mathf.Clamp(confirmResetIndex - 1, 0, 1);
+                }
+                else if (TryGetAnyPlayerDown(PlayerAction.MoveDown, out int pidDown))
+                {
+                    ownerPlayerId = pidDown;
+                    confirmResetIndex = Mathf.Clamp(confirmResetIndex + 1, 0, 1);
+                }
+                else if (TryGetAnyPlayerDown(PlayerAction.MoveLeft, out int pidLeft))
+                {
+                    ownerPlayerId = pidLeft;
+                    confirmResetIndex = 0;
+                }
+                else if (TryGetAnyPlayerDown(PlayerAction.MoveRight, out int pidRight))
+                {
+                    ownerPlayerId = pidRight;
+                    confirmResetIndex = 1;
+                }
+
+                if (confirmResetIndex != prev)
+                {
+                    PlaySfx(moveOptionSfx, moveOptionVolume);
+                    RefreshText();
+                }
+
+                if (TryGetAnyPlayerDown(PlayerAction.ActionB, out int pidCancel))
+                {
+                    ownerPlayerId = pidCancel;
+                    state = MenuState.SelectPlayer;
+                    PlaySfx(backSfx, backVolume);
+                    RefreshText();
+                    yield return PulseCursor();
+                    yield return null;
+                    continue;
+                }
+
+                if (TryGetAnyPlayerDownEither(PlayerAction.Start, PlayerAction.ActionA, out int pidYesNo))
+                {
+                    ownerPlayerId = pidYesNo;
+
+                    if (confirmResetIndex == 0)
+                    {
+                        var pReset = PlayerInputManager.Instance.GetPlayer(confirmResetPlayerId);
+                        pReset.ResetToDefault();
+                        pReset.SaveToPrefs();
+
+                        PlaySfx(resetSfx, resetVolume);
+                        state = MenuState.SelectPlayer;
+                        RefreshText();
+                        yield return PulseCursor();
+                        yield return null;
+                        continue;
+                    }
+
+                    state = MenuState.SelectPlayer;
+                    PlaySfx(backSfx, backVolume);
+                    RefreshText();
+                    yield return PulseCursor();
+                    yield return null;
+                    continue;
+                }
+
+                yield return null;
+                continue;
+            }
 
             if (state == MenuState.BulkRemap)
             {
                 bool escCancel = Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame;
+                var p = PlayerInputManager.Instance.GetPlayer(targetPlayerId);
 
                 if (escCancel)
                 {
                     if (bulkSnapshot != null)
-                        p1.ApplyBindings(bulkSnapshot);
+                        p.ApplyBindings(bulkSnapshot);
 
                     bulkSnapshot = null;
                     bulkStep = 0;
-                    state = MenuState.Home;
+                    state = MenuState.SelectPlayer;
 
                     PlaySfx(backSfx, backVolume);
                     RefreshText();
@@ -238,17 +498,37 @@ public class ControlsConfigMenu : MonoBehaviour
                     continue;
                 }
 
-                DpadHit? dpad = ReadAnyDpadDownThisFrame();
-                bool joyBtn = ReadAnyGamepadButtonDownThisFrame(out int legacyBtn);
+                var dpad = ReadAnyDpadDownThisFrame();
+                var joyBtn = ReadAnyGamepadButtonDownThisFrame();
                 KeyCode? key = ReadAnyKeyboardKeyDownNoMouse();
 
-                if (dpad.HasValue || joyBtn || key.HasValue)
+                if (key.HasValue)
                 {
-                    var action = BulkActions[Mathf.Clamp(bulkStep, 0, BulkActions.Length - 1)];
+                    var bBind = p.GetBinding(PlayerAction.ActionB);
+                    var cBind = p.GetBinding(PlayerAction.ActionC);
 
-                    if (dpad.HasValue) p1.SetBinding(action, Binding.FromDpad(1, dpad.Value.dir));
-                    else if (joyBtn) p1.SetBinding(action, Binding.FromJoyButton(1, legacyBtn));
-                    else p1.SetBinding(action, Binding.FromKey(key.Value));
+                    if (bBind.kind == BindKind.Key && bBind.key == key.Value) key = null;
+                    if (cBind.kind == BindKind.Key && cBind.key == key.Value) key = null;
+                }
+
+                if (dpad.HasValue || joyBtn.HasValue || key.HasValue)
+                {
+                    var action = CurrentBulkAction();
+
+                    if (dpad.HasValue)
+                    {
+                        p.joyIndex = dpad.Value.joyIndex;
+                        p.SetBinding(action, Binding.FromDpad(p.joyIndex, dpad.Value.dir));
+                    }
+                    else if (joyBtn.HasValue)
+                    {
+                        p.joyIndex = joyBtn.Value.joyIndex;
+                        p.SetBinding(action, Binding.FromJoyButton(p.joyIndex, joyBtn.Value.btn));
+                    }
+                    else
+                    {
+                        p.SetBinding(action, Binding.FromKey(key.Value));
+                    }
 
                     PlaySfx(confirmSfx, confirmVolume);
                     yield return PulseCursor();
@@ -257,12 +537,10 @@ public class ControlsConfigMenu : MonoBehaviour
 
                     if (bulkStep >= BulkActions.Length)
                     {
-                        p1.SaveToPrefs();
-
+                        p.SaveToPrefs();
                         bulkSnapshot = null;
                         bulkStep = 0;
-                        state = MenuState.Home;
-
+                        state = MenuState.SelectPlayer;
                         RefreshText();
                         yield return null;
                         continue;
@@ -275,118 +553,6 @@ public class ControlsConfigMenu : MonoBehaviour
                 continue;
             }
 
-            if (state == MenuState.ConfirmRemapAll)
-            {
-                if (input.GetDown(PlayerAction.ActionB))
-                {
-                    PlaySfx(backSfx, backVolume);
-                    state = MenuState.Home;
-                    RefreshText();
-                }
-                else if (input.GetDown(PlayerAction.Start) || input.GetDown(PlayerAction.ActionA))
-                {
-                    bulkSnapshot = p1.CloneBindings();
-                    bulkStep = 0;
-                    state = MenuState.BulkRemap;
-
-                    PlaySfx(confirmSfx, confirmVolume);
-                    RefreshText();
-                    yield return PulseCursor();
-                }
-
-                yield return null;
-                continue;
-            }
-
-            if (state == MenuState.ConfirmReset)
-            {
-                if (input.GetDown(PlayerAction.ActionB))
-                {
-                    PlaySfx(backSfx, backVolume);
-                    state = MenuState.Home;
-                    RefreshText();
-                }
-                else if (input.GetDown(PlayerAction.Start) || input.GetDown(PlayerAction.ActionA))
-                {
-                    p1.ResetToDefault();
-                    p1.SaveToPrefs();
-
-                    PlaySfx(resetSfx, resetVolume);
-                    state = MenuState.Home;
-                    RefreshText();
-                    yield return PulseCursor();
-                }
-
-                yield return null;
-                continue;
-            }
-
-            if (state == MenuState.Home)
-            {
-                if (input.GetDown(PlayerAction.ActionC))
-                {
-                    homeOption = HomeOption.Reset;
-                    PlaySfx(confirmSfx, confirmVolume);
-                    state = MenuState.ConfirmReset;
-                    RefreshText();
-                    yield return PulseCursor();
-                    yield return null;
-                    continue;
-                }
-
-                if (input.GetDown(PlayerAction.MoveUp))
-                {
-                    var prev = homeOption;
-                    homeOption = (HomeOption)Mathf.Clamp(((int)homeOption) - 1, 0, 2);
-
-                    if (homeOption != prev)
-                        PlaySfx(moveOptionSfx, moveOptionVolume);
-
-                    RefreshText();
-                }
-                else if (input.GetDown(PlayerAction.MoveDown))
-                {
-                    var prev = homeOption;
-                    homeOption = (HomeOption)Mathf.Clamp(((int)homeOption) + 1, 0, 2);
-
-                    if (homeOption != prev)
-                        PlaySfx(moveOptionSfx, moveOptionVolume);
-
-                    RefreshText();
-                }
-
-                if (input.GetDown(PlayerAction.ActionB))
-                {
-                    PlaySfx(backSfx, backVolume);
-                    yield return PulseCursor();
-                    done = true;
-                }
-                else if (input.GetDown(PlayerAction.Start) || input.GetDown(PlayerAction.ActionA))
-                {
-                    switch (homeOption)
-                    {
-                        case HomeOption.RemapAll:
-                            PlaySfx(confirmSfx, confirmVolume);
-                            state = MenuState.ConfirmRemapAll;
-                            RefreshText();
-                            yield return PulseCursor();
-                            break;
-
-                        case HomeOption.Reset:
-                            PlaySfx(confirmSfx, confirmVolume);
-                            state = MenuState.ConfirmReset;
-                            RefreshText();
-                            yield return PulseCursor();
-                            break;
-
-                        case HomeOption.Back:
-                            PlaySfx(backSfx, backVolume);
-                            yield return PulseCursor();
-                            done = true;
-                            break;
-                    }
-                }
-            }
             yield return null;
         }
 
@@ -401,6 +567,9 @@ public class ControlsConfigMenu : MonoBehaviour
         if (cursorRenderer != null)
             cursorRenderer.gameObject.SetActive(false);
 
+        if (menuLayoutRoot != null && menuLayoutRootCached)
+            menuLayoutRoot.anchoredPosition = menuLayoutRootBasePos;
+
         if (root != null)
             root.SetActive(false);
 
@@ -413,43 +582,49 @@ public class ControlsConfigMenu : MonoBehaviour
 
     static DpadHit? ReadAnyDpadDownThisFrame()
     {
-        foreach (var pad in Gamepad.all)
+        var all = Gamepad.all;
+        for (int i = 0; i < all.Count; i++)
         {
+            var pad = all[i];
             if (pad == null) continue;
 
-            if (pad.dpad.up.wasPressedThisFrame) return new DpadHit { dir = 0 };
-            if (pad.dpad.down.wasPressedThisFrame) return new DpadHit { dir = 1 };
-            if (pad.dpad.left.wasPressedThisFrame) return new DpadHit { dir = 2 };
-            if (pad.dpad.right.wasPressedThisFrame) return new DpadHit { dir = 3 };
+            int joyIndex = i + 1;
+
+            if (pad.dpad.up.wasPressedThisFrame) return new DpadHit { dir = 0, joyIndex = joyIndex };
+            if (pad.dpad.down.wasPressedThisFrame) return new DpadHit { dir = 1, joyIndex = joyIndex };
+            if (pad.dpad.left.wasPressedThisFrame) return new DpadHit { dir = 2, joyIndex = joyIndex };
+            if (pad.dpad.right.wasPressedThisFrame) return new DpadHit { dir = 3, joyIndex = joyIndex };
         }
 
         return null;
     }
 
-    static bool ReadAnyGamepadButtonDownThisFrame(out int legacyBtn)
+    static JoyBtnHit? ReadAnyGamepadButtonDownThisFrame()
     {
-        legacyBtn = -1;
-
-        foreach (var pad in Gamepad.all)
+        var all = Gamepad.all;
+        for (int i = 0; i < all.Count; i++)
         {
+            var pad = all[i];
             if (pad == null) continue;
 
-            if (pad.buttonSouth.wasPressedThisFrame) { legacyBtn = 0; return true; }
-            if (pad.buttonEast.wasPressedThisFrame) { legacyBtn = 1; return true; }
-            if (pad.buttonWest.wasPressedThisFrame) { legacyBtn = 2; return true; }
-            if (pad.buttonNorth.wasPressedThisFrame) { legacyBtn = 3; return true; }
+            int joyIndex = i + 1;
 
-            if (pad.leftShoulder.wasPressedThisFrame) { legacyBtn = 4; return true; }
-            if (pad.rightShoulder.wasPressedThisFrame) { legacyBtn = 5; return true; }
+            if (pad.buttonSouth.wasPressedThisFrame) return new JoyBtnHit { btn = 0, joyIndex = joyIndex };
+            if (pad.buttonEast.wasPressedThisFrame) return new JoyBtnHit { btn = 1, joyIndex = joyIndex };
+            if (pad.buttonWest.wasPressedThisFrame) return new JoyBtnHit { btn = 2, joyIndex = joyIndex };
+            if (pad.buttonNorth.wasPressedThisFrame) return new JoyBtnHit { btn = 3, joyIndex = joyIndex };
 
-            if (pad.leftTrigger.wasPressedThisFrame) { legacyBtn = 6; return true; }
-            if (pad.rightTrigger.wasPressedThisFrame) { legacyBtn = 7; return true; }
+            if (pad.leftShoulder.wasPressedThisFrame) return new JoyBtnHit { btn = 4, joyIndex = joyIndex };
+            if (pad.rightShoulder.wasPressedThisFrame) return new JoyBtnHit { btn = 5, joyIndex = joyIndex };
 
-            if (pad.startButton.wasPressedThisFrame) { legacyBtn = 8; return true; }
-            if (pad.selectButton.wasPressedThisFrame) { legacyBtn = 9; return true; }
+            if (pad.leftTrigger.wasPressedThisFrame) return new JoyBtnHit { btn = 6, joyIndex = joyIndex };
+            if (pad.rightTrigger.wasPressedThisFrame) return new JoyBtnHit { btn = 7, joyIndex = joyIndex };
+
+            if (pad.startButton.wasPressedThisFrame) return new JoyBtnHit { btn = 8, joyIndex = joyIndex };
+            if (pad.selectButton.wasPressedThisFrame) return new JoyBtnHit { btn = 9, joyIndex = joyIndex };
         }
 
-        return false;
+        return null;
     }
 
     static KeyCode? ReadAnyKeyboardKeyDownNoMouse()
@@ -475,31 +650,66 @@ public class ControlsConfigMenu : MonoBehaviour
     static bool TryMapInputSystemKeyToUnityKeyCode(Key key, out KeyCode kc)
     {
         kc = KeyCode.None;
+        string name = key.ToString();
 
         switch (key)
         {
-            case Key.W: kc = KeyCode.W; return true;
-            case Key.A: kc = KeyCode.A; return true;
-            case Key.S: kc = KeyCode.S; return true;
-            case Key.D: kc = KeyCode.D; return true;
-
-            case Key.UpArrow: kc = KeyCode.UpArrow; return true;
-            case Key.DownArrow: kc = KeyCode.DownArrow; return true;
-            case Key.LeftArrow: kc = KeyCode.LeftArrow; return true;
-            case Key.RightArrow: kc = KeyCode.RightArrow; return true;
-
             case Key.Enter: kc = KeyCode.Return; return true;
             case Key.Escape: kc = KeyCode.Escape; return true;
-            case Key.Space: kc = KeyCode.Space; return true;
-
-            case Key.M: kc = KeyCode.M; return true;
-            case Key.N: kc = KeyCode.N; return true;
-            case Key.B: kc = KeyCode.B; return true;
-            case Key.C: kc = KeyCode.C; return true;
-
-            default:
-                return false;
         }
+
+        if (name.StartsWith("Digit", StringComparison.OrdinalIgnoreCase) && name.Length == 6)
+        {
+            char d = name[5];
+            if (d >= '0' && d <= '9')
+            {
+                kc = (KeyCode)Enum.Parse(typeof(KeyCode), "Alpha" + d);
+                return true;
+            }
+        }
+
+        if (name.StartsWith("Numpad", StringComparison.OrdinalIgnoreCase))
+        {
+            if (name.Length == 7)
+            {
+                char d = name[6];
+                if (d >= '0' && d <= '9')
+                {
+                    kc = (KeyCode)Enum.Parse(typeof(KeyCode), "Keypad" + d);
+                    return true;
+                }
+            }
+
+            if (name.Equals("NumpadEnter", StringComparison.OrdinalIgnoreCase)) { kc = KeyCode.KeypadEnter; return true; }
+            if (name.Equals("NumpadPlus", StringComparison.OrdinalIgnoreCase)) { kc = KeyCode.KeypadPlus; return true; }
+            if (name.Equals("NumpadMinus", StringComparison.OrdinalIgnoreCase)) { kc = KeyCode.KeypadMinus; return true; }
+            if (name.Equals("NumpadMultiply", StringComparison.OrdinalIgnoreCase)) { kc = KeyCode.KeypadMultiply; return true; }
+            if (name.Equals("NumpadDivide", StringComparison.OrdinalIgnoreCase)) { kc = KeyCode.KeypadDivide; return true; }
+            if (name.Equals("NumpadPeriod", StringComparison.OrdinalIgnoreCase)) { kc = KeyCode.KeypadPeriod; return true; }
+        }
+
+        if (name.Equals("LeftCtrl", StringComparison.OrdinalIgnoreCase)) { kc = KeyCode.LeftControl; return true; }
+        if (name.Equals("RightCtrl", StringComparison.OrdinalIgnoreCase)) { kc = KeyCode.RightControl; return true; }
+
+        if (Enum.TryParse(name, true, out KeyCode parsed))
+        {
+            kc = parsed;
+            return kc != KeyCode.None;
+        }
+
+        if (name.Equals("Backquote", StringComparison.OrdinalIgnoreCase)) { kc = KeyCode.BackQuote; return true; }
+        if (name.Equals("Minus", StringComparison.OrdinalIgnoreCase)) { kc = KeyCode.Minus; return true; }
+        if (name.Equals("Equals", StringComparison.OrdinalIgnoreCase)) { kc = KeyCode.Equals; return true; }
+        if (name.Equals("LeftBracket", StringComparison.OrdinalIgnoreCase)) { kc = KeyCode.LeftBracket; return true; }
+        if (name.Equals("RightBracket", StringComparison.OrdinalIgnoreCase)) { kc = KeyCode.RightBracket; return true; }
+        if (name.Equals("Semicolon", StringComparison.OrdinalIgnoreCase)) { kc = KeyCode.Semicolon; return true; }
+        if (name.Equals("Quote", StringComparison.OrdinalIgnoreCase)) { kc = KeyCode.Quote; return true; }
+        if (name.Equals("Backslash", StringComparison.OrdinalIgnoreCase)) { kc = KeyCode.Backslash; return true; }
+        if (name.Equals("Slash", StringComparison.OrdinalIgnoreCase)) { kc = KeyCode.Slash; return true; }
+        if (name.Equals("Comma", StringComparison.OrdinalIgnoreCase)) { kc = KeyCode.Comma; return true; }
+        if (name.Equals("Period", StringComparison.OrdinalIgnoreCase)) { kc = KeyCode.Period; return true; }
+
+        return false;
     }
 
     IEnumerator PulseCursor()
@@ -520,74 +730,58 @@ public class ControlsConfigMenu : MonoBehaviour
         if (menuText == null)
             return;
 
-        const string colorNormal = "#FFFFE7";
-        const string colorHint = "#FFA621";
-        const string colorWhite = "#FFFFFF";
-
-        var p1 = PlayerInputManager.Instance.GetPlayer(1);
-
         string header =
-            RepeatNewLine(headerTopPaddingLines + titleOffsetLines) +
-            $"<align=center><size={titleFontSize}><color={colorHint}>CONTROLS</color></size></align>" +
-            RepeatNewLine(headerBottomPaddingLines) +
+            RepeatNewLine(Mathf.Max(0, headerTopPaddingLines)) +
+            $"<align=center><size={titleFontSize}><color={colorHint}><voffset={titleVOffset}>CONTROLS</voffset></color></size></align>" +
+            RepeatNewLine(Mathf.Max(0, headerBottomPaddingLines)) +
             "\n";
 
-        string body = "<align=left>";
+        string body = "<align=center>";
+        body += $"<size={bodyFontSize}><color={colorBlueSoft}>CHOOSE A PLAYER TO EDIT CONTROLS</color></size>\n\n";
+        body += "</align>";
 
-        for (int i = 0; i < BulkActions.Length; i++)
-        {
-            var a = BulkActions[i];
-            string left = ActionToLabel(a);
-            string right = BindingToLabel(p1.GetBinding(a));
+        body += "<align=left>";
+        AppendPlayerBlock(ref body, 0, colorNormal, colorHint, colorWhite);
+        body += RepeatNewLine(playerBlockGapLines);
+        AppendPlayerBlock(ref body, 1, colorNormal, colorHint, colorWhite);
+        body += RepeatNewLine(playerBlockGapLines);
+        AppendPlayerBlock(ref body, 2, colorNormal, colorHint, colorWhite);
+        body += RepeatNewLine(playerBlockGapLines);
+        AppendPlayerBlock(ref body, 3, colorNormal, colorHint, colorWhite);
 
-            string line = $"{left,-12}  :  {right}";
+        int footerLift = Mathf.Max(0, footerGapLines + footerExtraNewLines);
+        body += RepeatNewLine(footerLift);
 
-            if (state == MenuState.BulkRemap && i == Mathf.Clamp(bulkStep, 0, BulkActions.Length - 1))
-                line = $"{left,-12}  :  <color={colorHint}>PRESS A KEY...</color>";
-
-            body += $"<link=\"bind{i}\"><size={bodyFontSize}><color={colorNormal}>{line}</color></size></link>\n";
-        }
-
-        body += RepeatNewLine(footerGapLines);
-
-        if (state == MenuState.ConfirmRemapAll)
+        if (state == MenuState.SelectPlayer)
         {
             body +=
                 $"<align=center><size={footerFontSize}>" +
-                $"<color={colorHint}>REMAP ALL?</color>\n" +
-                $"<color={colorHint}>A / START:</color> <color={colorWhite}>YES</color>    " +
-                $"<color={colorHint}>B:</color> <color={colorWhite}>NO</color>" +
+                $"<color={colorHint}>A / START:</color> <color={colorWhite}>CONFIRM / PLACE BOMB</color>\n" +
+                $"<color={colorHint}>B:</color> <color={colorWhite}>RETURN / EXPLODE CONTROL BOMB</color>\n" +
+                $"<color={colorHint}>C:</color> <color={colorWhite}>RESTORE DEFAULT KEYS / ABILITIES</color>" +
                 $"</size></align>";
         }
         else if (state == MenuState.ConfirmReset)
         {
+            string yesText = confirmResetIndex == 0 ? $"<color={colorHint}>YES</color>" : $"<color={colorWhite}>YES</color>";
+            string noText = confirmResetIndex == 1 ? $"<color={colorHint}>NO</color>" : $"<color={colorWhite}>NO</color>";
+
             body +=
                 $"<align=center><size={footerFontSize}>" +
-                $"<color={colorHint}>RESET TO DEFAULT?</color>\n" +
-                $"<color={colorHint}>A / START:</color> <color={colorWhite}>YES</color>    " +
-                $"<color={colorHint}>B:</color> <color={colorWhite}>NO</color>" +
-                $"</size></align>";
-        }
-        else if (state == MenuState.BulkRemap)
-        {
-            var a = BulkActions[Mathf.Clamp(bulkStep, 0, BulkActions.Length - 1)];
-            body +=
-                $"<align=center><size={footerFontSize}>" +
-                $"<color={colorHint}>REMAP:</color> <color={colorWhite}>{ActionToLabel(a)}</color>\n" +
-                $"<color={colorHint}>ESC:</color> <color={colorWhite}>CANCEL REMAPPING</color>" +
+                $"<color={colorHint}>RESTORE DEFAULT KEYS?</color>\n" +
+                $"<color={colorWhite}>PLAYER {confirmResetPlayerId}</color>\n\n" +
+                $"<link=\"{LINK_RESET_YES}\">{yesText}</link>    <link=\"{LINK_RESET_NO}\">{noText}</link>\n\n" +
+                $"<color={colorHint}>A / START</color><color={colorWhite}>: CONFIRM</color>    <color={colorHint}>B</color><color={colorWhite}>: CANCEL</color>" +
                 $"</size></align>";
         }
         else
         {
-            string remapLine = $"<link=\"home0\"><color={colorHint}>A / START:</color> <color={colorWhite}>REMAP ALL</color></link>";
-            string resetLine = $"<link=\"home1\"><color={colorHint}>C:</color> <color={colorWhite}>RESET TO DEFAULT</color></link>";
-            string backLine = $"<link=\"home2\"><color={colorHint}>B:</color> <color={colorWhite}>BACK</color></link>";
-
+            var a = CurrentBulkAction();
             body +=
                 $"<align=center><size={footerFontSize}>" +
-                remapLine + "\n" +
-                resetLine + "\n" +
-                backLine +
+                $"<color={colorHint}>REMAPPING PLAYER {targetPlayerId}:</color> <color={colorWhite}>{ActionToLabel(a)}</color>\n" +
+                $"<color={colorHint}>PRESS A KEY...</color>\n" +
+                $"<color={colorHint}>ESC</color><color={colorWhite}>: CANCEL</color>" +
                 $"</size></align>";
         }
 
@@ -595,108 +789,189 @@ public class ControlsConfigMenu : MonoBehaviour
 
         menuText.text = header + body;
 
-        UpdateCursorPosition();
+        if (state == MenuState.SelectPlayer)
+        {
+            UpdateCursorPosition_ByLinkId($"sel{playerSelectIndex}");
+        }
+        else if (state == MenuState.ConfirmReset)
+        {
+            UpdateCursorPosition_ByLinkId(confirmResetIndex == 0 ? LINK_RESET_YES : LINK_RESET_NO);
+        }
+        else
+        {
+            UpdateCursorPosition_ByLinkId(CurrentWaitLinkId());
+        }
     }
 
-    static string BindingToLabel(Binding b)
+    void AppendPlayerBlock(ref string body, int index, string cn, string ch, string cw)
+    {
+        for (int line = 0; line < 5; line++)
+        {
+            string l = PlayerLine(index + 1, line, cn, ch, cw, index);
+            if (state == MenuState.SelectPlayer)
+                body += $"<link=\"sel{index}\">{l}</link>\n";
+            else
+                body += $"{l}\n";
+        }
+    }
+
+    string LabelMaybeWait(PlayerAction action, string label, string ch)
+    {
+        if (state == MenuState.BulkRemap && CurrentBulkAction() == action)
+            return $"<link=\"{CurrentWaitLinkId()}\"><color={ch}>{label}</color></link>";
+
+        return $"<color={ch}>{label}</color>";
+    }
+
+    string PlayerLine(int pid, int lineIndex, string cn, string ch, string cw, int selIndex)
+    {
+        var p = PlayerInputManager.Instance.GetPlayer(pid);
+
+        bool selected = (playerSelectIndex == selIndex);
+        string playerColor = selected ? colorPlayerSelectedRed : colorPlayerGreen;
+        string tag = $"<color={playerColor}>PLAYER {pid}</color>";
+
+        string u = BindingToShort(p.GetBinding(PlayerAction.MoveUp));
+        string d = BindingToShort(p.GetBinding(PlayerAction.MoveDown));
+        string l = BindingToShort(p.GetBinding(PlayerAction.MoveLeft));
+        string r = BindingToShort(p.GetBinding(PlayerAction.MoveRight));
+
+        string st = BindingToShort(p.GetBinding(PlayerAction.Start));
+        string a = BindingToShort(p.GetBinding(PlayerAction.ActionA));
+        string b = BindingToShort(p.GetBinding(PlayerAction.ActionB));
+        string c = BindingToShort(p.GetBinding(PlayerAction.ActionC));
+
+        float ll = COLUMN_LEFT_LABEL_BASE + playersBlockIndentX;
+        float lv = COLUMN_LEFT_VALUE_BASE + playersBlockIndentX;
+        float rl = COLUMN_RIGHT_LABEL_BASE + playersBlockIndentX;
+        float rv = COLUMN_RIGHT_VALUE_BASE + playersBlockIndentX;
+
+        bool isTarget = (state == MenuState.BulkRemap && pid == targetPlayerId);
+
+        string Lbl(PlayerAction act, string s)
+        {
+            if (isTarget) return LabelMaybeWait(act, s, ch);
+            return $"<color={ch}>{s}</color>";
+        }
+
+        string txt = lineIndex switch
+        {
+            0 => $"<align=center>{tag}</align>",
+
+            1 => $"<pos={ll}>{Lbl(PlayerAction.MoveUp, "UP:")}</pos><pos={lv}>{u}</pos><pos={rl}>{Lbl(PlayerAction.Start, "START:")}</pos><pos={rv}>{st}</pos>",
+            2 => $"<pos={ll}>{Lbl(PlayerAction.MoveDown, "DOWN:")}</pos><pos={lv}>{d}</pos><pos={rl}>{Lbl(PlayerAction.ActionA, "A:")}</pos><pos={rv}>{a}</pos>",
+            3 => $"<pos={ll}>{Lbl(PlayerAction.MoveLeft, "LEFT:")}</pos><pos={lv}>{l}</pos><pos={rl}>{Lbl(PlayerAction.ActionB, "B:")}</pos><pos={rv}>{b}</pos>",
+            4 => $"<pos={ll}>{Lbl(PlayerAction.MoveRight, "RIGHT:")}</pos><pos={lv}>{r}</pos><pos={rl}>{Lbl(PlayerAction.ActionC, "C:")}</pos><pos={rv}>{c}</pos>",
+
+            _ => string.Empty
+        };
+
+        return $"<size={selectGridFontSize}><color={cn}>{txt}</color></size>";
+    }
+
+    static string BindingToShort(Binding b)
     {
         if (b.kind == BindKind.Key)
-            return b.key.ToString().ToUpperInvariant();
+            return PrettyKeyName(b.key);
 
         if (b.kind == BindKind.DPad)
         {
-            string dir = b.dpadDir switch
+            return b.dpadDir switch
             {
-                0 => "DPAD UP",
-                1 => "DPAD DOWN",
-                2 => "DPAD LEFT",
-                3 => "DPAD RIGHT",
-                _ => "DPAD"
+                0 => $"JOY {b.joyIndex} UP",
+                1 => $"JOY {b.joyIndex} DOWN",
+                2 => $"JOY {b.joyIndex} LEFT",
+                3 => $"JOY {b.joyIndex} RIGHT",
+                _ => $"JOY {b.joyIndex} DPAD"
             };
-
-            return $"JOY{b.joyIndex} {dir}";
         }
 
         if (b.kind == BindKind.JoyButton)
-            return $"JOY{b.joyIndex} BTN{b.joyButton}";
+        {
+            string btn = b.joyButton switch
+            {
+                0 => "A",
+                1 => "B",
+                2 => "X",
+                3 => "Y",
+                4 => "L",
+                5 => "R",
+                6 => "LT",
+                7 => "RT",
+                8 => "START",
+                9 => "SELECT",
+                _ => $"B{b.joyButton}"
+            };
 
-        return "UNKNOWN";
+            return $"JOY {b.joyIndex} {btn}";
+        }
+
+        return "UNK";
     }
 
-    void UpdateCursorPosition()
+    void UpdateCursorPosition_ByLinkId(string linkId)
     {
         if (menuText == null || cursorRenderer == null)
             return;
 
-        bool show =
-            state == MenuState.BulkRemap ||
-            state == MenuState.Home;
-
-        cursorRenderer.gameObject.SetActive(show);
-
-        if (!show)
-            return;
+        cursorRenderer.gameObject.SetActive(true);
 
         menuText.ForceMeshUpdate();
         var ti = menuText.textInfo;
         if (ti == null || ti.linkCount <= 0)
             return;
 
-        string targetId;
+        bool foundAny = false;
+        float bestY = float.NegativeInfinity;
+        Vector3 bestLocalPos = default;
 
-        if (state == MenuState.BulkRemap)
-        {
-            int target = Mathf.Clamp(bulkStep, 0, BulkActions.Length - 1);
-            targetId = $"bind{target}";
-        }
-        else
-        {
-            targetId = $"home{(int)homeOption}";
-        }
-
-        TMP_LinkInfo? link = null;
         for (int i = 0; i < ti.linkCount; i++)
         {
             var li = ti.linkInfo[i];
-            if (li.GetLinkID() == targetId)
-            {
-                link = li;
-                break;
-            }
-        }
-
-        if (!link.HasValue)
-            return;
-
-        int first = link.Value.linkTextfirstCharacterIndex;
-        int last = first + link.Value.linkTextLength - 1;
-        if (first < 0 || last < 0 || first >= ti.characterCount)
-            return;
-
-        last = Mathf.Min(last, ti.characterCount - 1);
-
-        int anchorChar = first;
-        for (int i = first; i <= last; i++)
-        {
-            var ch = ti.characterInfo[i];
-            if (!ch.isVisible)
+            if (li.GetLinkID() != linkId)
                 continue;
 
-            char cc = ch.character;
-            if (cc != ' ' && cc != '\u00A0' && cc != '\n' && cc != '\r' && cc != '\t')
+            int first = li.linkTextfirstCharacterIndex;
+            int last = first + li.linkTextLength - 1;
+            if (first < 0 || first >= ti.characterCount)
+                continue;
+
+            last = Mathf.Min(last, ti.characterCount - 1);
+
+            int anchorChar = -1;
+            for (int c = first; c <= last; c++)
             {
-                anchorChar = i;
-                break;
+                var ch = ti.characterInfo[c];
+                if (!ch.isVisible) continue;
+
+                char cc = ch.character;
+                if (cc != ' ' && cc != '\u00A0' && cc != '\n' && cc != '\r' && cc != '\t')
+                {
+                    anchorChar = c;
+                    break;
+                }
+            }
+
+            if (anchorChar < 0) anchorChar = first;
+            if (anchorChar < 0 || anchorChar >= ti.characterCount) continue;
+
+            var ci = ti.characterInfo[anchorChar];
+
+            float x = ci.bottomLeft.x - cursorGapLeft;
+            float y = (ci.ascender + ci.descender) * 0.5f + cursorLineCenterAdjustY;
+
+            if (y > bestY)
+            {
+                bestY = y;
+                bestLocalPos = new Vector3(x + cursorOffset.x, y + cursorOffset.y, 0f);
+                foundAny = true;
             }
         }
 
-        var ci = ti.characterInfo[anchorChar];
+        if (!foundAny)
+            return;
 
-        float x = ci.bottomLeft.x - cursorGapLeft;
-        float y = (ci.ascender + ci.descender) * 0.5f + cursorLineCenterAdjustY;
-
-        Vector3 localPos = new(x + cursorOffset.x, y + cursorOffset.y, 0f);
-        cursorRenderer.SetExternalBaseLocalPosition(localPos);
+        cursorRenderer.SetExternalBaseLocalPosition(bestLocalPos);
     }
 
     void PlaySfx(AudioClip clip, float volume)
@@ -739,24 +1014,90 @@ public class ControlsConfigMenu : MonoBehaviour
 
     static string RepeatNewLine(int count)
     {
-        if (count == 0) return string.Empty;
-        if (count > 0) return new string('\n', count);
-        return string.Empty;
+        if (count <= 0) return string.Empty;
+        return new string('\n', count);
     }
 
     static string ActionToLabel(PlayerAction a)
     {
         return a switch
         {
-            PlayerAction.MoveUp => "MOVE UP",
-            PlayerAction.MoveDown => "MOVE DOWN",
-            PlayerAction.MoveLeft => "MOVE LEFT",
-            PlayerAction.MoveRight => "MOVE RIGHT",
+            PlayerAction.MoveUp => "UP",
+            PlayerAction.MoveDown => "DOWN",
+            PlayerAction.MoveLeft => "LEFT",
+            PlayerAction.MoveRight => "RIGHT",
             PlayerAction.Start => "START",
             PlayerAction.ActionA => "A",
             PlayerAction.ActionB => "B",
             PlayerAction.ActionC => "C",
             _ => a.ToString().ToUpperInvariant(),
         };
+    }
+
+    static string PrettyKeyName(KeyCode key)
+    {
+        return key switch
+        {
+            KeyCode.UpArrow => "UP ARROW",
+            KeyCode.DownArrow => "DOWN ARROW",
+            KeyCode.LeftArrow => "LEFT ARROW",
+            KeyCode.RightArrow => "RIGHT ARROW",
+
+            KeyCode.LeftShift => "LEFT SHIFT",
+            KeyCode.RightShift => "RIGHT SHIFT",
+
+            KeyCode.LeftControl => "LEFT CTRL",
+            KeyCode.RightControl => "RIGHT CTRL",
+
+            KeyCode.LeftAlt => "LEFT ALT",
+            KeyCode.RightAlt => "RIGHT ALT",
+
+            KeyCode.Return => "ENTER",
+            KeyCode.Escape => "ESC",
+
+            KeyCode.Backspace => "BACK SPACE",
+            KeyCode.Delete => "DELETE",
+
+            KeyCode.Space => "SPACE",
+
+            KeyCode.Keypad0 => "KEYPAD 0",
+            KeyCode.Keypad1 => "KEYPAD 1",
+            KeyCode.Keypad2 => "KEYPAD 2",
+            KeyCode.Keypad3 => "KEYPAD 3",
+            KeyCode.Keypad4 => "KEYPAD 4",
+            KeyCode.Keypad5 => "KEYPAD 5",
+            KeyCode.Keypad6 => "KEYPAD 6",
+            KeyCode.Keypad7 => "KEYPAD 7",
+            KeyCode.Keypad8 => "KEYPAD 8",
+            KeyCode.Keypad9 => "KEYPAD 9",
+
+            KeyCode.KeypadEnter => "KEYPAD ENTER",
+
+            KeyCode.Comma => ",",
+            KeyCode.Period => ".",
+            KeyCode.Slash => "/",
+
+            _ => SplitCamelCase(key.ToString()).ToUpperInvariant()
+        };
+    }
+
+    static string SplitCamelCase(string input)
+    {
+        if (string.IsNullOrEmpty(input))
+            return input;
+
+        var sb = new System.Text.StringBuilder(input.Length * 2);
+        sb.Append(input[0]);
+
+        for (int i = 1; i < input.Length; i++)
+        {
+            char c = input[i];
+            if (char.IsUpper(c) && !char.IsUpper(input[i - 1]))
+                sb.Append(' ');
+
+            sb.Append(c);
+        }
+
+        return sb.ToString();
     }
 }

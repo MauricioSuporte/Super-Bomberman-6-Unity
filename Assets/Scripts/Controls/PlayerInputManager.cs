@@ -91,15 +91,9 @@ public class PlayerInputManager : MonoBehaviour
         return p;
     }
 
-    public bool Get(int playerId, PlayerAction action)
-    {
-        return Get(action, playerId);
-    }
+    public bool Get(int playerId, PlayerAction action) => Get(action, playerId);
 
-    public bool GetDown(int playerId, PlayerAction action)
-    {
-        return GetDown(action, playerId);
-    }
+    public bool GetDown(int playerId, PlayerAction action) => GetDown(action, playerId);
 
     public bool Get(PlayerAction action, int playerId = 1)
     {
@@ -227,19 +221,42 @@ public class PlayerInputManager : MonoBehaviour
             case KeyCode.S: key = kb.sKey; return true;
             case KeyCode.D: key = kb.dKey; return true;
 
+            case KeyCode.R: key = kb.rKey; return true;
+            case KeyCode.F: key = kb.fKey; return true;
+            case KeyCode.G: key = kb.gKey; return true;
+            case KeyCode.H: key = kb.hKey; return true;
+
+            case KeyCode.I: key = kb.iKey; return true;
+            case KeyCode.J: key = kb.jKey; return true;
+            case KeyCode.K: key = kb.kKey; return true;
+            case KeyCode.L: key = kb.lKey; return true;
+
+            case KeyCode.Y: key = kb.yKey; return true;
+            case KeyCode.U: key = kb.uKey; return true;
+            case KeyCode.O: key = kb.oKey; return true;
+            case KeyCode.P: key = kb.pKey; return true;
+
             case KeyCode.UpArrow: key = kb.upArrowKey; return true;
             case KeyCode.DownArrow: key = kb.downArrowKey; return true;
             case KeyCode.LeftArrow: key = kb.leftArrowKey; return true;
             case KeyCode.RightArrow: key = kb.rightArrowKey; return true;
 
+            case KeyCode.RightShift: key = kb.rightShiftKey; return true;
+            case KeyCode.Comma: key = kb.commaKey; return true;
+            case KeyCode.Period: key = kb.periodKey; return true;
+            case KeyCode.Slash: key = kb.slashKey; return true;
+
+            case KeyCode.Keypad8: key = kb.numpad8Key; return true;
+            case KeyCode.Keypad4: key = kb.numpad4Key; return true;
+            case KeyCode.Keypad2: key = kb.numpad2Key; return true;
+            case KeyCode.Keypad6: key = kb.numpad6Key; return true;
+
+            case KeyCode.Keypad1: key = kb.numpad1Key; return true;
+            case KeyCode.Keypad3: key = kb.numpad3Key; return true;
+            case KeyCode.KeypadEnter: key = kb.numpadEnterKey; return true;
+
             case KeyCode.Return: key = kb.enterKey; return true;
             case KeyCode.Escape: key = kb.escapeKey; return true;
-
-            case KeyCode.M: key = kb.mKey; return true;
-            case KeyCode.N: key = kb.nKey; return true;
-            case KeyCode.B: key = kb.bKey; return true;
-
-            case KeyCode.Space: key = kb.spaceKey; return true;
 
             default:
                 return false;
