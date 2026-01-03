@@ -10,7 +10,7 @@ public class GameManager : MonoBehaviour
     private static readonly WaitForSecondsRealtime _waitForSecondsRealtime2 = new(2f);
     static readonly WaitForSecondsRealtime waitNextStageDelay = new(4f);
 
-    public GameObject[] players;
+    List<GameObject> runtimePlayers = new();
 
     public int EnemiesAlive { get; private set; }
 
@@ -85,6 +85,8 @@ public class GameManager : MonoBehaviour
 
     void Start()
     {
+        CachePlayers();
+
         EnemiesAlive = FindObjectsByType<EnemyMovementController>(
             FindObjectsInactive.Exclude,
             FindObjectsSortMode.None
@@ -92,6 +94,56 @@ public class GameManager : MonoBehaviour
 
         SetupHiddenObjects();
         ApplyDestructibleShadows();
+    }
+
+    void CachePlayers()
+    {
+        runtimePlayers.Clear();
+
+        var ids = FindObjectsByType<PlayerIdentity>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+
+        for (int i = 0; i < ids.Length; i++)
+        {
+            if (ids[i] == null)
+                continue;
+
+            var go = ids[i].gameObject;
+            if (go == null)
+                continue;
+
+            runtimePlayers.Add(go);
+        }
+    }
+
+    GameObject GetPrimaryPlayer()
+    {
+        PlayerIdentity best = null;
+
+        var ids = FindObjectsByType<PlayerIdentity>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+        for (int i = 0; i < ids.Length; i++)
+        {
+            if (ids[i] == null)
+                continue;
+
+            if (ids[i].playerId == 1)
+            {
+                best = ids[i];
+                break;
+            }
+        }
+
+        if (best != null && best.gameObject != null)
+            return best.gameObject;
+
+        CachePlayers();
+
+        for (int i = 0; i < runtimePlayers.Count; i++)
+        {
+            if (runtimePlayers[i] != null)
+                return runtimePlayers[i];
+        }
+
+        return null;
     }
 
     void ResolveStageTilemapsIfNeeded()
@@ -355,11 +407,14 @@ public class GameManager : MonoBehaviour
 
     public void CheckWinState()
     {
+        CachePlayers();
+
         int aliveCount = 0;
 
-        foreach (GameObject player in players)
+        for (int i = 0; i < runtimePlayers.Count; i++)
         {
-            if (player.activeSelf)
+            var p = runtimePlayers[i];
+            if (p != null && p.activeSelf)
                 aliveCount++;
         }
 
@@ -384,14 +439,16 @@ public class GameManager : MonoBehaviour
 
     public void EndStage()
     {
-        if (players != null && players.Length > 0 && players[0] != null)
+        var primaryPlayer = GetPrimaryPlayer();
+
+        if (primaryPlayer != null)
         {
-            if (players[0].TryGetComponent<AbilitySystem>(out var abilitySystem))
+            if (primaryPlayer.TryGetComponent<AbilitySystem>(out var abilitySystem))
                 abilitySystem.Disable(InvincibleSuitAbility.AbilityId);
 
-            var bomb = players[0].GetComponent<BombController>();
+            var bomb = primaryPlayer.GetComponent<BombController>();
 
-            if (bomb != null && bomb.CompareTag("Player"))
+            if (bomb != null && primaryPlayer.CompareTag("Player"))
             {
                 PlayerPersistentStats.BombAmount = Mathf.Min(bomb.bombAmout, PlayerPersistentStats.MaxBombAmount);
                 PlayerPersistentStats.ExplosionRadius = Mathf.Min(bomb.explosionRadius, PlayerPersistentStats.MaxExplosionRadius);

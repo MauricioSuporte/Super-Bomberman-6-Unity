@@ -1140,8 +1140,9 @@ GameObject:
   - component: {fileID: 2619861201639318036}
   - component: {fileID: 3335614114974889682}
   - component: {fileID: 6895379789113386949}
+  - component: {fileID: 2475403701411458639}
   m_Layer: 3
-  m_Name: Player 1
+  m_Name: Player
   m_TagString: Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1259,10 +1260,6 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 0
   speedInternal: 224
-  inputUp: 119
-  inputDown: 115
-  inputLeft: 97
-  inputRight: 100
   spriteRendererUp: {fileID: 1091894747361695229}
   spriteRendererDown: {fileID: 3988283045612322344}
   spriteRendererLeft: {fileID: 2494865831759049152}
@@ -1293,14 +1290,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 259dc96ea2e08cc4fa2829ffac0aef71, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  inputKey: 109
   useAIInput: 0
   bombPrefab: {fileID: 147425199346742615, guid: b141cb2d60d85504dad495e1a188c108, type: 3}
   pierceBombPrefab: {fileID: 147425199346742615, guid: d594648b2cf33354cb5de0fb314588c7, type: 3}
   controlBombPrefab: {fileID: 147425199346742615, guid: a1062e2cde4a9a944acd70ec09573664, type: 3}
   bombFuseTime: 2
   bombAmout: 1
-  controlDetonateKey: 110
   explosionPrefab: {fileID: -38777085001033807, guid: 8280631722d6ef14fb951aaaf859563b, type: 3}
   explosionLayerMask:
     serializedVersion: 2
@@ -1450,7 +1445,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BombPunchAbility
   enabledAbility: 0
-  punchKey: 98
   punchDistanceTiles: 3
   punchLockTime: 0.25
   punchUp: {fileID: 1334802762771057975}
@@ -1527,9 +1521,20 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerBomberSkinController
   spritesResourcesPath: Sprites/Bombers/Bomberman
-  whiteSheetName: WhiteBomber
-  blackSheetName: BlackBomber
   applyOnEnable: 1
+--- !u!114 &2475403701411458639
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4947014498081102474}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d94660178e52ac548a1683727d162b82, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerIdentity
+  playerId: 1
 --- !u!1 &6183660032571719661
 GameObject:
   m_ObjectHideFlags: 0
