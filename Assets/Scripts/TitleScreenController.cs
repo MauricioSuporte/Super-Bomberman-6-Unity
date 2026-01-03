@@ -284,6 +284,59 @@ public class TitleScreenController : MonoBehaviour
             cursorRenderer.gameObject.SetActive(false);
     }
 
+    bool TryGetAnyPlayerDown(PlayerAction action, out int pid)
+    {
+        pid = 1;
+
+        var input = PlayerInputManager.Instance;
+        if (input == null) return false;
+
+        for (int p = 1; p <= 4; p++)
+        {
+            if (input.GetDown(p, action))
+            {
+                pid = p;
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    bool TryGetAnyPlayerDownEither(PlayerAction a, PlayerAction b, out int pid)
+    {
+        if (TryGetAnyPlayerDown(a, out pid)) return true;
+        if (TryGetAnyPlayerDown(b, out pid)) return true;
+        pid = 1;
+        return false;
+    }
+
+    bool AnyPlayerHeld(PlayerAction action)
+    {
+        var input = PlayerInputManager.Instance;
+        if (input == null) return false;
+
+        for (int p = 1; p <= 4; p++)
+        {
+            if (input.Get(p, action))
+                return true;
+        }
+
+        return false;
+    }
+
+    bool AnyPlayerHeldAnyMenuKey()
+    {
+        return AnyPlayerHeld(PlayerAction.ActionA) ||
+               AnyPlayerHeld(PlayerAction.ActionB) ||
+               AnyPlayerHeld(PlayerAction.ActionC) ||
+               AnyPlayerHeld(PlayerAction.Start) ||
+               AnyPlayerHeld(PlayerAction.MoveUp) ||
+               AnyPlayerHeld(PlayerAction.MoveDown) ||
+               AnyPlayerHeld(PlayerAction.MoveLeft) ||
+               AnyPlayerHeld(PlayerAction.MoveRight);
+    }
+
     public IEnumerator Play(Image fadeToHideOptional)
     {
         EnsureBootSession();
@@ -328,15 +381,13 @@ public class TitleScreenController : MonoBehaviour
             titleVideoPlayer.Play();
         }
 
-        var input = PlayerInputManager.Instance;
-
         if (ignoreStartKeyUntilRelease ||
-            input.Get(PlayerAction.Start) ||
-            input.Get(PlayerAction.ActionA))
+            AnyPlayerHeld(PlayerAction.Start) ||
+            AnyPlayerHeld(PlayerAction.ActionA))
         {
             ignoreStartKeyUntilRelease = false;
 
-            while (input.Get(PlayerAction.Start) || input.Get(PlayerAction.ActionA))
+            while (AnyPlayerHeld(PlayerAction.Start) || AnyPlayerHeld(PlayerAction.ActionA))
                 yield return null;
 
             yield return null;
@@ -349,35 +400,35 @@ public class TitleScreenController : MonoBehaviour
         {
             int itemCount = GetMenuItemCount();
 
-            if (input.GetDown(PlayerAction.MoveUp))
+            if (TryGetAnyPlayerDown(PlayerAction.MoveUp, out _))
             {
                 menuIndex = Wrap(menuIndex - 1, itemCount);
                 PlayMoveSfx();
                 RefreshMenuText();
             }
 
-            if (input.GetDown(PlayerAction.MoveDown))
+            if (TryGetAnyPlayerDown(PlayerAction.MoveDown, out _))
             {
                 menuIndex = Wrap(menuIndex + 1, itemCount);
                 PlayMoveSfx();
                 RefreshMenuText();
             }
 
-            if (menuMode == MenuMode.PlayerCount && input.GetDown(PlayerAction.ActionB))
+            if (menuMode == MenuMode.PlayerCount && TryGetAnyPlayerDown(PlayerAction.ActionB, out _))
             {
                 PlayBackSfx();
                 menuMode = MenuMode.Main;
                 menuIndex = 0;
                 RefreshMenuText();
 
-                while (input.Get(PlayerAction.ActionB))
+                while (AnyPlayerHeld(PlayerAction.ActionB))
                     yield return null;
 
                 yield return null;
                 continue;
             }
 
-            if (input.GetDown(PlayerAction.Start) || input.GetDown(PlayerAction.ActionA))
+            if (TryGetAnyPlayerDownEither(PlayerAction.Start, PlayerAction.ActionA, out int pidConfirm))
             {
                 if (menuMode == MenuMode.Main)
                 {
@@ -395,7 +446,7 @@ public class TitleScreenController : MonoBehaviour
 
                         RefreshMenuText();
 
-                        while (input.Get(PlayerAction.Start) || input.Get(PlayerAction.ActionA))
+                        while (AnyPlayerHeld(PlayerAction.Start) || AnyPlayerHeld(PlayerAction.ActionA))
                             yield return null;
 
                         yield return null;
@@ -415,7 +466,7 @@ public class TitleScreenController : MonoBehaviour
                         HideTitleScreenCompletely();
 
                         if (controlsMenu != null)
-                            yield return controlsMenu.OpenRoutine(1, titleMusic, titleMusicVolume);
+                            yield return controlsMenu.OpenRoutine(pidConfirm, titleMusic, titleMusicVolume);
 
                         RestoreTitleScreenAfterControls();
 
@@ -428,10 +479,7 @@ public class TitleScreenController : MonoBehaviour
                         RefreshMenuText();
                         StartPushStartBlink();
 
-                        while (input.Get(PlayerAction.Start) ||
-                               input.Get(PlayerAction.ActionA) ||
-                               input.Get(PlayerAction.ActionB) ||
-                               input.Get(PlayerAction.ActionC))
+                        while (AnyPlayerHeldAnyMenuKey())
                             yield return null;
 
                         yield return null;
