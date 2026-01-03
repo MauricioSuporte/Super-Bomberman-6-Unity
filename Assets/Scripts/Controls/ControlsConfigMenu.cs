@@ -54,7 +54,7 @@ public class ControlsConfigMenu : MonoBehaviour
 
     [Header("Outline (TMP SDF)")]
     [SerializeField] Color outlineColor = Color.black;
-    [SerializeField, Range(0f, 1f)] float outlineWidth = 0.5f;
+    [SerializeField, Range(0f, 1f)] float outlineWidth = 0.42f;
     [SerializeField, Range(0f, 1f)] float outlineSoftness = 0.0f;
 
     [Header("Cursor (AnimatedSpriteRenderer)")]
