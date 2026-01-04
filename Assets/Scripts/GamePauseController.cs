@@ -54,10 +54,12 @@ public class GamePauseController : MonoBehaviour
             return;
 
         var input = PlayerInputManager.Instance;
+        if (input == null)
+            return;
 
         if (!IsPaused)
         {
-            if (input.GetDown(PlayerAction.Start))
+            if (input.AnyGetDown(PlayerAction.Start))
             {
                 TogglePause();
                 return;
@@ -131,11 +133,14 @@ public class GamePauseController : MonoBehaviour
             return;
 
         var input = PlayerInputManager.Instance;
-        bool confirmPressed = input.GetDown(PlayerAction.Start);
+        if (input == null)
+            return;
+
+        bool confirmPressed = TryGetAnyPlayerDown(PlayerAction.Start, out _);
 
         if (!confirmReturn)
         {
-            if (input.GetDown(PlayerAction.MoveUp))
+            if (TryGetAnyPlayerDown(PlayerAction.MoveUp, out _))
             {
                 menuIndex = Wrap(menuIndex - 1, 2);
                 PlayMoveSfx();
@@ -143,7 +148,7 @@ public class GamePauseController : MonoBehaviour
                 return;
             }
 
-            if (input.GetDown(PlayerAction.MoveDown))
+            if (TryGetAnyPlayerDown(PlayerAction.MoveDown, out _))
             {
                 menuIndex = Wrap(menuIndex + 1, 2);
                 PlayMoveSfx();
@@ -170,7 +175,7 @@ public class GamePauseController : MonoBehaviour
             return;
         }
 
-        if (input.GetDown(PlayerAction.MoveUp))
+        if (TryGetAnyPlayerDown(PlayerAction.MoveUp, out _))
         {
             confirmIndex = Wrap(confirmIndex - 1, 2);
             PlayMoveSfx();
@@ -178,7 +183,7 @@ public class GamePauseController : MonoBehaviour
             return;
         }
 
-        if (input.GetDown(PlayerAction.MoveDown))
+        if (TryGetAnyPlayerDown(PlayerAction.MoveDown, out _))
         {
             confirmIndex = Wrap(confirmIndex + 1, 2);
             PlayMoveSfx();
@@ -306,5 +311,24 @@ public class GamePauseController : MonoBehaviour
 
         if (StageIntroTransition.Instance != null && StageIntroTransition.Instance.stageLabel != null)
             StageIntroTransition.Instance.stageLabel.gameObject.SetActive(false);
+    }
+
+    bool TryGetAnyPlayerDown(PlayerAction action, out int pid)
+    {
+        pid = 1;
+
+        var input = PlayerInputManager.Instance;
+        if (input == null) return false;
+
+        for (int p = 1; p <= 4; p++)
+        {
+            if (input.GetDown(p, action))
+            {
+                pid = p;
+                return true;
+            }
+        }
+
+        return false;
     }
 }

@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.Controls;
 
+[DefaultExecutionOrder(-200)]
 public class PlayerInputManager : MonoBehaviour
 {
     public static PlayerInputManager Instance { get; private set; }
@@ -12,6 +13,10 @@ public class PlayerInputManager : MonoBehaviour
     [Tooltip("How many player profiles to create (1-4).")]
     [Range(1, 4)]
     [SerializeField] int maxPlayers = 4;
+
+    [Header("Analog As Dpad Fallback")]
+    [SerializeField, Range(0.1f, 0.95f)] float analogThreshold = 0.55f;
+    [SerializeField] bool includeRightStickAsDpad = false;
 
     readonly Dictionary<int, PlayerInputProfile> players = new();
 
@@ -25,6 +30,8 @@ public class PlayerInputManager : MonoBehaviour
     readonly Dictionary<int, bool> curLeft = new();
     readonly Dictionary<int, bool> curRight = new();
 
+    int PlayerCount => Mathf.Clamp(maxPlayers, 1, 4);
+
     void Awake()
     {
         if (Instance != null)
@@ -36,7 +43,7 @@ public class PlayerInputManager : MonoBehaviour
         Instance = this;
         DontDestroyOnLoad(gameObject);
 
-        int count = Mathf.Clamp(maxPlayers, 1, 4);
+        int count = PlayerCount;
 
         for (int id = 1; id <= count; id++)
         {
@@ -49,11 +56,11 @@ public class PlayerInputManager : MonoBehaviour
 
     void Update()
     {
-        foreach (var kv in players)
-        {
-            int id = kv.Key;
-            var p = kv.Value;
+        int count = PlayerCount;
 
+        for (int id = 1; id <= count; id++)
+        {
+            var p = GetPlayer(id);
             ReadDpadDigital(p, out bool up, out bool down, out bool left, out bool right);
 
             curUp[id] = up;
@@ -65,10 +72,10 @@ public class PlayerInputManager : MonoBehaviour
 
     void LateUpdate()
     {
-        foreach (var kv in players)
-        {
-            int id = kv.Key;
+        int count = PlayerCount;
 
+        for (int id = 1; id <= count; id++)
+        {
             prevUp[id] = curUp[id];
             prevDown[id] = curDown[id];
             prevLeft[id] = curLeft[id];
@@ -93,7 +100,6 @@ public class PlayerInputManager : MonoBehaviour
     }
 
     public bool Get(int playerId, PlayerAction action) => Get(action, playerId);
-
     public bool GetDown(int playerId, PlayerAction action) => GetDown(action, playerId);
 
     public bool Get(PlayerAction action, int playerId = 1)
@@ -163,7 +169,45 @@ public class PlayerInputManager : MonoBehaviour
         return false;
     }
 
-    static void ReadDpadDigital(PlayerInputProfile p, out bool up, out bool down, out bool left, out bool right)
+    public bool AnyGet(PlayerAction action) => AnyGet(action, out _);
+
+    public bool AnyGet(PlayerAction action, out int playerId)
+    {
+        int count = PlayerCount;
+
+        for (int id = 1; id <= count; id++)
+        {
+            if (Get(action, id))
+            {
+                playerId = id;
+                return true;
+            }
+        }
+
+        playerId = 0;
+        return false;
+    }
+
+    public bool AnyGetDown(PlayerAction action) => AnyGetDown(action, out _);
+
+    public bool AnyGetDown(PlayerAction action, out int playerId)
+    {
+        int count = PlayerCount;
+
+        for (int id = 1; id <= count; id++)
+        {
+            if (GetDown(action, id))
+            {
+                playerId = id;
+                return true;
+            }
+        }
+
+        playerId = 0;
+        return false;
+    }
+
+    void ReadDpadDigital(PlayerInputProfile p, out bool up, out bool down, out bool left, out bool right)
     {
         var pad = ResolvePlayerGamepad(p);
 
@@ -173,10 +217,35 @@ public class PlayerInputManager : MonoBehaviour
             return;
         }
 
-        up = pad.dpad.up.isPressed;
-        down = pad.dpad.down.isPressed;
-        left = pad.dpad.left.isPressed;
-        right = pad.dpad.right.isPressed;
+        bool dUp = pad.dpad.up.isPressed;
+        bool dDown = pad.dpad.down.isPressed;
+        bool dLeft = pad.dpad.left.isPressed;
+        bool dRight = pad.dpad.right.isPressed;
+
+        bool lsUp, lsDown, lsLeft, lsRight;
+        ReadStickAsDigital(pad.leftStick, analogThreshold, out lsUp, out lsDown, out lsLeft, out lsRight);
+
+        bool rsUp = false, rsDown = false, rsLeft = false, rsRight = false;
+        if (includeRightStickAsDpad)
+            ReadStickAsDigital(pad.rightStick, analogThreshold, out rsUp, out rsDown, out rsLeft, out rsRight);
+
+        up = dUp || lsUp || rsUp;
+        down = dDown || lsDown || rsDown;
+        left = dLeft || lsLeft || rsLeft;
+        right = dRight || lsRight || rsRight;
+    }
+
+    static void ReadStickAsDigital(StickControl stick, float threshold, out bool up, out bool down, out bool left, out bool right)
+    {
+        up = down = left = right = false;
+        if (stick == null) return;
+
+        Vector2 v = stick.ReadValue();
+
+        up = v.y >= threshold;
+        down = v.y <= -threshold;
+        right = v.x >= threshold;
+        left = v.x <= -threshold;
     }
 
     static Gamepad ResolvePlayerGamepad(PlayerInputProfile p)
