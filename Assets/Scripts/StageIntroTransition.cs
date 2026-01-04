@@ -234,9 +234,6 @@ public class StageIntroTransition : MonoBehaviour
 
     IEnumerator FadeInToGame()
     {
-        if (introMusic != null && GameMusicController.Instance != null)
-            GameMusicController.Instance.PlaySfx(introMusic, 1f);
-
         if (gameplayRoot != null)
             gameplayRoot.SetActive(true);
 
@@ -296,6 +293,9 @@ public class StageIntroTransition : MonoBehaviour
         float duration = 1f;
         float t = 0f;
         Color baseColor = fadeImage.color;
+
+        if (introMusic != null && GameMusicController.Instance != null)
+            GameMusicController.Instance.PlaySfx(introMusic, 1f);
 
         while (t < duration)
         {

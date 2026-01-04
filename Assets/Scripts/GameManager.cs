@@ -7,7 +7,6 @@ using UnityEngine.Tilemaps;
 
 public class GameManager : MonoBehaviour
 {
-    private static readonly WaitForSecondsRealtime _waitForSecondsRealtime2 = new(2f);
     static readonly WaitForSecondsRealtime waitNextStageDelay = new(4f);
 
     private readonly List<GameObject> runtimePlayers = new();
@@ -54,7 +53,7 @@ public class GameManager : MonoBehaviour
     [SerializeField] private bool autoResolveStageTilemaps = true;
 
     [Header("Round Restart")]
-    [SerializeField] private float restartAfterDeathSeconds = 5f;
+    private readonly float restartAfterDeathSeconds = 4f;
 
     int totalDestructibleBlocks;
     int destroyedDestructibleBlocks;
