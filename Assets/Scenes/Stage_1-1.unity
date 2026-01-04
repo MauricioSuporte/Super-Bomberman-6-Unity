@@ -6063,6 +6063,8 @@ MonoBehaviour:
   backVolume: 1
   resetSfx: {fileID: 8300000, guid: 19e972fda0569ce48901fd1e9d453520, type: 3}
   resetVolume: 1
+  lockedSfx: {fileID: 8300000, guid: 2f98cb783cdc9bb4d8ff3b868291f743, type: 3}
+  lockedVolume: 1
   playersBlockIndentX: 360
 --- !u!224 &1789443841
 RectTransform:

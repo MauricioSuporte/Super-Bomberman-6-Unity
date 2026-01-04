@@ -76,6 +76,9 @@ public class ControlsConfigMenu : MonoBehaviour
     [SerializeField] AudioClip resetSfx;
     [SerializeField, Range(0f, 1f)] float resetVolume = 1f;
 
+    [SerializeField] AudioClip lockedSfx;
+    [SerializeField, Range(0f, 1f)] float lockedVolume = 1f;
+
     [Header("Players Block - Global Indent")]
     [SerializeField] float playersBlockIndentX = 400f;
 
@@ -121,6 +124,9 @@ public class ControlsConfigMenu : MonoBehaviour
 
     struct DpadHit { public int dir; public int joyIndex; }
     struct JoyBtnHit { public int btn; public int joyIndex; }
+
+    float blockedMessageUntil;
+    string blockedMessageLine;
 
     static readonly PlayerAction[] BulkActions = new[]
     {
@@ -285,6 +291,54 @@ public class ControlsConfigMenu : MonoBehaviour
         return LINK_WAIT_PREFIX + ActionToLabel(CurrentBulkAction());
     }
 
+    void ShowBlockedMessageForKey(KeyCode key)
+    {
+        blockedMessageUntil = Time.unscaledTime + 1.25f;
+        blockedMessageLine =
+            $"<color={colorPlayerSelectedRed}>KEY {PrettyKeyName(key)} IS ALREADY IN USE!\nPLEASE PRESS ANOTHER KEY.</color>";
+    }
+
+    bool IsKeyUsedByOtherPlayers(int targetPid, KeyCode key)
+    {
+        var mgr = PlayerInputManager.Instance;
+        if (mgr == null) return false;
+
+        for (int p = 1; p <= 4; p++)
+        {
+            if (p == targetPid) continue;
+
+            var profile = mgr.GetPlayer(p);
+            if (profile == null) continue;
+
+            for (int i = 0; i < BulkActions.Length; i++)
+            {
+                var b = profile.GetBinding(BulkActions[i]);
+                if (b.kind == BindKind.Key && b.key == key)
+                    return true;
+            }
+        }
+
+        return false;
+    }
+
+    bool IsKeyAlreadyAssignedInThisBulkRemap(PlayerInputProfile targetProfile, PlayerAction currentAction, KeyCode key)
+    {
+        if (targetProfile == null) return false;
+
+        int max = Mathf.Clamp(bulkStep, 0, BulkActions.Length);
+        for (int i = 0; i < max; i++)
+        {
+            var a = BulkActions[i];
+            if (a == currentAction) continue;
+
+            var b = targetProfile.GetBinding(a);
+            if (b.kind == BindKind.Key && b.key == key)
+                return true;
+        }
+
+        return false;
+    }
+
     public IEnumerator OpenRoutine(int openerPlayerId, AudioClip restoreMusic, float restoreMusicVolume = 1f)
     {
         ownerPlayerId = Mathf.Clamp(openerPlayerId, 1, 4);
@@ -320,6 +374,9 @@ public class ControlsConfigMenu : MonoBehaviour
 
         confirmResetIndex = 1;
         confirmResetPlayerId = 1;
+
+        blockedMessageUntil = 0f;
+        blockedMessageLine = null;
 
         if (cursorRenderer != null)
         {
@@ -394,6 +451,9 @@ public class ControlsConfigMenu : MonoBehaviour
                     bulkSnapshot = p.CloneBindings();
                     bulkStep = 0;
                     state = MenuState.BulkRemap;
+
+                    blockedMessageUntil = 0f;
+                    blockedMessageLine = null;
 
                     PlaySfx(confirmSfx, confirmVolume);
                     RefreshText();
@@ -504,11 +564,20 @@ public class ControlsConfigMenu : MonoBehaviour
 
                 if (key.HasValue)
                 {
-                    var bBind = p.GetBinding(PlayerAction.ActionB);
-                    var cBind = p.GetBinding(PlayerAction.ActionC);
+                    var pressed = key.Value;
+                    var action = CurrentBulkAction();
 
-                    if (bBind.kind == BindKind.Key && bBind.key == key.Value) key = null;
-                    if (cBind.kind == BindKind.Key && cBind.key == key.Value) key = null;
+                    bool usedByOther = IsKeyUsedByOtherPlayers(targetPlayerId, pressed);
+                    bool usedEarlierInThisBulk = IsKeyAlreadyAssignedInThisBulkRemap(p, action, pressed);
+
+                    if (usedByOther || usedEarlierInThisBulk)
+                    {
+                        PlaySfx(lockedSfx, lockedVolume);
+                        ShowBlockedMessageForKey(pressed);
+                        RefreshText();
+                        yield return null;
+                        continue;
+                    }
                 }
 
                 if (dpad.HasValue || joyBtn.HasValue || key.HasValue)
@@ -517,16 +586,25 @@ public class ControlsConfigMenu : MonoBehaviour
 
                     if (dpad.HasValue)
                     {
+                        blockedMessageUntil = 0f;
+                        blockedMessageLine = null;
+
                         p.joyIndex = dpad.Value.joyIndex;
                         p.SetBinding(action, Binding.FromDpad(p.joyIndex, dpad.Value.dir));
                     }
                     else if (joyBtn.HasValue)
                     {
+                        blockedMessageUntil = 0f;
+                        blockedMessageLine = null;
+
                         p.joyIndex = joyBtn.Value.joyIndex;
                         p.SetBinding(action, Binding.FromJoyButton(p.joyIndex, joyBtn.Value.btn));
                     }
-                    else
+                    else if (key.HasValue)
                     {
+                        blockedMessageUntil = 0f;
+                        blockedMessageLine = null;
+
                         p.SetBinding(action, Binding.FromKey(key.Value));
                     }
 
@@ -777,11 +855,17 @@ public class ControlsConfigMenu : MonoBehaviour
         else
         {
             var a = CurrentBulkAction();
+
+            string blocked = (Time.unscaledTime < blockedMessageUntil && !string.IsNullOrEmpty(blockedMessageLine))
+                ? ("\n" + blockedMessageLine + "\n")
+                : "\n";
+
             body +=
                 $"<align=center><size={footerFontSize}>" +
                 $"<color={colorHint}>REMAPPING PLAYER {targetPlayerId}:</color> <color={colorWhite}>{ActionToLabel(a)}</color>\n" +
-                $"<color={colorHint}>PRESS A KEY...</color>\n" +
-                $"<color={colorHint}>ESC</color><color={colorWhite}>: CANCEL</color>" +
+                $"<color={colorHint}>PRESS A KEY...</color>" +
+                blocked +
+                $"<color={colorPlayerSelectedRed}>ESC TO CANCEL</color>" +
                 $"</size></align>";
         }
 
