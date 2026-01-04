@@ -44,7 +44,6 @@ public class BossBomberAI : MonoBehaviour
 
     void Start()
     {
-        // don't lock on P1; we'll dynamically pick the closest alive player
         PickClosestAlivePlayer();
         retargetTimer = retargetInterval;
     }
@@ -73,7 +72,6 @@ public class BossBomberAI : MonoBehaviour
 
     void PickClosestAlivePlayer()
     {
-        // Prefer PlayerIdentity if present (your multiplayer setup)
         var ids = FindObjectsByType<PlayerIdentity>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
 
         Vector2 myPos = RoundToTile(transform.position);
@@ -88,8 +86,7 @@ public class BossBomberAI : MonoBehaviour
                 var id = ids[i];
                 if (id == null) continue;
 
-                MovementController p = null;
-                if (!id.TryGetComponent<MovementController>(out p))
+                if (!id.TryGetComponent<MovementController>(out MovementController p))
                     p = id.GetComponentInChildren<MovementController>(true);
 
                 if (p == null) continue;
@@ -99,7 +96,6 @@ public class BossBomberAI : MonoBehaviour
 
                 Vector2 pPos = RoundToTile(p.transform.position);
 
-                // Manhattan works nicely for grid games
                 float dist = Mathf.Abs(pPos.x - myPos.x) + Mathf.Abs(pPos.y - myPos.y);
 
                 if (dist < bestDist)
@@ -111,7 +107,6 @@ public class BossBomberAI : MonoBehaviour
         }
         else
         {
-            // fallback: any MovementController tagged Player
             var players = FindObjectsByType<MovementController>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
 
             for (int i = 0; i < players.Length; i++)
@@ -133,7 +128,7 @@ public class BossBomberAI : MonoBehaviour
             }
         }
 
-        target = best; // can be null if everyone died
+        target = best;
     }
 
     void Think()
@@ -172,7 +167,6 @@ public class BossBomberAI : MonoBehaviour
             isEvading = false;
         }
 
-        // If target is null (everyone dead), just wander safely
         if (target == null)
         {
             lastDirection = GetBestDirectionAvoidingExplosion(myPos);
