@@ -136,6 +136,10 @@ public class StageIntroTransition : MonoBehaviour
             var m = movementControllers[i];
             if (m == null) continue;
 
+            bool isPlayer = m.CompareTag("Player") || m.GetComponent<PlayerIdentity>() != null;
+            if (!isPlayer)
+                continue;
+
             m.SetInputLocked(true, true);
             m.ApplyDirectionFromVector(Vector2.zero);
 
@@ -150,6 +154,10 @@ public class StageIntroTransition : MonoBehaviour
         {
             var b = bombControllers[i];
             if (b == null) continue;
+
+            bool isPlayer = b.CompareTag("Player") || b.GetComponent<PlayerIdentity>() != null;
+            if (!isPlayer)
+                continue;
 
             b.enabled = false;
         }
