@@ -234,6 +234,10 @@ public class StageIntroTransition : MonoBehaviour
         if (gameplayRoot != null)
             gameplayRoot.SetActive(true);
 
+        var spawner = FindAnyObjectByType<PlayersSpawner>();
+        if (spawner != null)
+            spawner.SpawnNow();
+
         yield return null;
 
         RefreshControllers(includeInactive: false);

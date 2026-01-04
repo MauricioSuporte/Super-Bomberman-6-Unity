@@ -14,6 +14,12 @@ public class PlayersSpawner : MonoBehaviour
     [Header("Stage Type")]
     [SerializeField] private bool isBossStage;
 
+    [Header("Spawn Control")]
+    [Tooltip("If true, clears existing players before spawning (useful on stage reload).")]
+    [SerializeField] private bool clearExistingPlayersBeforeSpawn = true;
+
+    bool spawned;
+
     static readonly Vector2[] NormalStagePositions =
     {
         new(-7f,  4f),
@@ -30,12 +36,50 @@ public class PlayersSpawner : MonoBehaviour
         new( 3f, -6f)
     };
 
-    void Start()
+    public void SpawnNow()
     {
-        SpawnPlayers();
+        if (spawned)
+            return;
+
+        if (playerPrefab == null)
+            return;
+
+        if (FindAnyPlayerInScene())
+        {
+            spawned = true;
+            return;
+        }
+
+        if (clearExistingPlayersBeforeSpawn)
+            DestroyExistingPlayers();
+
+        SpawnPlayersInternal();
+        spawned = true;
     }
 
-    void SpawnPlayers()
+    bool FindAnyPlayerInScene()
+    {
+        var ids = FindObjectsByType<PlayerIdentity>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+        return ids != null && ids.Length > 0;
+    }
+
+    void DestroyExistingPlayers()
+    {
+        var ids = FindObjectsByType<PlayerIdentity>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        if (ids == null) return;
+
+        for (int i = 0; i < ids.Length; i++)
+        {
+            if (ids[i] == null) continue;
+
+            var go = ids[i].gameObject;
+            if (go == null) continue;
+
+            Destroy(go);
+        }
+    }
+
+    void SpawnPlayersInternal()
     {
         int count = 1;
 
