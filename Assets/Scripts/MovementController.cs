@@ -755,6 +755,13 @@ public class MovementController : MonoBehaviour, IKillable
         isDead = true;
         inputLocked = true;
 
+        if (CompareTag("Player") && checkWinStateOnDeath)
+        {
+            var gm = FindFirstObjectByType<GameManager>();
+            if (gm != null)
+                gm.NotifyPlayerDeathStarted();
+        }
+
         touchingHazards.Clear();
 
         if (abilitySystem != null)
@@ -793,16 +800,6 @@ public class MovementController : MonoBehaviour, IKillable
 
         if (audioSource != null && deathSfx != null)
             audioSource.PlayOneShot(deathSfx);
-
-        if (CompareTag("Player"))
-        {
-            if (GameMusicController.Instance != null &&
-                GameMusicController.Instance.deathMusic != null)
-            {
-                GameMusicController.Instance.PlayMusic(
-                    GameMusicController.Instance.deathMusic, 1f, false);
-            }
-        }
 
         DisableAllFootSprites();
         DisableAllMountedSprites();
@@ -843,10 +840,6 @@ public class MovementController : MonoBehaviour, IKillable
 
         if (!checkWinStateOnDeath)
             return;
-
-        var gameManager = FindFirstObjectByType<GameManager>();
-        if (gameManager != null)
-            gameManager.CheckWinState();
     }
 
     public void PlayEndStageSequence(Vector2 portalCenter)

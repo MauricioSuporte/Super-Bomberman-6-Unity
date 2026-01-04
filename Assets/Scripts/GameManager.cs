@@ -10,7 +10,7 @@ public class GameManager : MonoBehaviour
     private static readonly WaitForSecondsRealtime _waitForSecondsRealtime2 = new(2f);
     static readonly WaitForSecondsRealtime waitNextStageDelay = new(4f);
 
-    List<GameObject> runtimePlayers = new();
+    private readonly List<GameObject> runtimePlayers = new();
 
     public int EnemiesAlive { get; private set; }
 
@@ -53,6 +53,9 @@ public class GameManager : MonoBehaviour
     [Header("Auto Resolve (Stage Tilemaps)")]
     [SerializeField] private bool autoResolveStageTilemaps = true;
 
+    [Header("Round Restart")]
+    [SerializeField] private float restartAfterDeathSeconds = 5f;
+
     int totalDestructibleBlocks;
     int destroyedDestructibleBlocks;
 
@@ -76,6 +79,8 @@ public class GameManager : MonoBehaviour
     int yellowLouieEggSpawnOrder = -1;
     int pinkLouieEggSpawnOrder = -1;
     int redLouieEggSpawnOrder = -1;
+
+    bool restartingRound;
 
     void Awake()
     {
@@ -423,6 +428,9 @@ public class GameManager : MonoBehaviour
 
     public void CheckWinState()
     {
+        if (restartingRound)
+            return;
+
         CachePlayers();
 
         int aliveCount = 0;
@@ -434,8 +442,17 @@ public class GameManager : MonoBehaviour
                 aliveCount++;
         }
 
-        if (aliveCount <= 1)
+        if (aliveCount <= 0)
         {
+            restartingRound = true;
+
+            if (GameMusicController.Instance != null &&
+                GameMusicController.Instance.deathMusic != null)
+            {
+                GameMusicController.Instance.PlayMusic(
+                    GameMusicController.Instance.deathMusic, 1f, false);
+            }
+
             if (StageIntroTransition.Instance != null)
                 StageIntroTransition.Instance.StartFadeOut(2f);
 
@@ -445,7 +462,7 @@ public class GameManager : MonoBehaviour
 
     IEnumerator RestartRoundRoutine()
     {
-        yield return _waitForSecondsRealtime2;
+        yield return new WaitForSecondsRealtime(restartAfterDeathSeconds);
 
         StageIntroTransition.SkipTitleScreenOnNextLoad();
 
@@ -550,5 +567,53 @@ public class GameManager : MonoBehaviour
 
         if (current == groundShadowTile)
             groundTilemap.SetTile(below, groundTile);
+    }
+
+    public void NotifyPlayerDeathStarted()
+    {
+        if (restartingRound)
+            return;
+
+        var players = FindObjectsByType<MovementController>(
+            FindObjectsInactive.Exclude,
+            FindObjectsSortMode.None
+        );
+
+        int aliveNotDead = 0;
+
+        for (int i = 0; i < players.Length; i++)
+        {
+            var m = players[i];
+            if (m == null)
+                continue;
+
+            if (!m.CompareTag("Player"))
+                continue;
+
+            if (!m.isActiveAndEnabled && !m.gameObject.activeInHierarchy)
+                continue;
+
+            if (m.isDead)
+                continue;
+
+            aliveNotDead++;
+        }
+
+        if (aliveNotDead <= 0)
+        {
+            restartingRound = true;
+
+            if (GameMusicController.Instance != null &&
+                GameMusicController.Instance.deathMusic != null)
+            {
+                GameMusicController.Instance.PlayMusic(
+                    GameMusicController.Instance.deathMusic, 1f, false);
+            }
+
+            if (StageIntroTransition.Instance != null)
+                StageIntroTransition.Instance.StartFadeOut(2f);
+
+            StartCoroutine(RestartRoundRoutine());
+        }
     }
 }
