@@ -57,26 +57,17 @@ public static class PlayerPersistentStats
     public static void EnsureSessionBooted()
     {
         if (sessionBooted)
-        {
-            Debug.Log($"[SKIN][BOOT] Already booted. P1={Get(1).Skin} P2={Get(2).Skin} P3={Get(3).Skin} P4={Get(4).Skin}");
             return;
-        }
-
-        Debug.Log("[SKIN][BOOT] Booting session...");
 
         goldenUnlockedSession = false;
 
         for (int i = 1; i <= 4; i++)
         {
-            Debug.Log($"[SKIN][BOOT] Before load P{i}={Get(i).Skin}");
             LoadSelectedSkinInternal(i);
-            Debug.Log($"[SKIN][BOOT] After load P{i}={Get(i).Skin} (hasKey={PlayerPrefs.HasKey(PrefSelectedSkin(i))})");
             ClampSelectedSkinIfLocked(i);
-            Debug.Log($"[SKIN][BOOT] After clamp P{i}={Get(i).Skin} (goldenUnlocked={goldenUnlockedSession})");
         }
 
         sessionBooted = true;
-        Debug.Log($"[SKIN][BOOT] Done. P1={Get(1).Skin} P2={Get(2).Skin} P3={Get(3).Skin} P4={Get(4).Skin}");
     }
 
     public static void BootSession()
@@ -116,21 +107,13 @@ public static class PlayerPersistentStats
         var key = PrefSelectedSkin(playerId);
 
         if (!PlayerPrefs.HasKey(key))
-        {
-            Debug.Log($"[SKIN][PREFS-LOAD] P{playerId} no key {key}. Keeping={s.Skin}");
             return;
-        }
 
         int raw = PlayerPrefs.GetInt(key);
-        Debug.Log($"[SKIN][PREFS-LOAD] P{playerId} key={key} raw={raw}");
-
         s.Skin = (BomberSkin)raw;
 
         if (s.Skin == BomberSkin.Golden)
-        {
-            Debug.Log($"[SKIN][PREFS-LOAD] P{playerId} loaded GOLDEN -> forcing WHITE (because golden not persisted)");
             s.Skin = BomberSkin.White;
-        }
     }
 
     public static void LoadSelectedSkin(int playerId)

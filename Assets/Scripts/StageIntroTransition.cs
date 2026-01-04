@@ -90,7 +90,6 @@ public class StageIntroTransition : MonoBehaviour
         if (gameplayRoot != null)
             gameplayRoot.SetActive(false);
 
-        // IMPORTANTE: buscar incluindo inativos (porque gameplayRoot pode estar desativado)
         RefreshControllers(includeInactive: true);
 
         DisableGameplayControllersAndHideSprites();
@@ -207,18 +206,10 @@ public class StageIntroTransition : MonoBehaviour
             for (int p = 1; p <= count; p++)
             {
                 var chosen = skinSelectMenu.GetSelectedSkin(p);
-
-                Debug.Log($"[SKIN][TITLE->SAVE] P{p} chosen={chosen} (before persistent={PlayerPersistentStats.Get(p).Skin})");
-
                 PlayerPersistentStats.Get(p).Skin = chosen;
 
-                Debug.Log($"[SKIN][TITLE->SAVE] P{p} persistent now={PlayerPersistentStats.Get(p).Skin}");
-
                 if (chosen != BomberSkin.Golden)
-                {
                     PlayerPersistentStats.SaveSelectedSkin(p);
-                    Debug.Log($"[SKIN][TITLE->PREFS] P{p} saved key=P{p}_SKIN_SELECTED val={(int)PlayerPersistentStats.Get(p).Skin}");
-                }
             }
 
             PlayerPrefs.Save();
@@ -243,9 +234,8 @@ public class StageIntroTransition : MonoBehaviour
         if (gameplayRoot != null)
             gameplayRoot.SetActive(true);
 
-        yield return null; // deixa spawners rodarem (Start) antes de resync/aplicar skin
+        yield return null;
 
-        // Re-scan agora que gameplayRoot pode ter sido ativado e players spawnados
         RefreshControllers(includeInactive: false);
 
         ResyncSpawnedPlayersFromIdentity();
@@ -340,7 +330,6 @@ public class StageIntroTransition : MonoBehaviour
 
     void EnableGameplay()
     {
-        // Segurança: se algum player entrou depois, tenta pegar mais uma vez.
         RefreshControllers(includeInactive: false);
 
         foreach (var m in movementControllers) if (m) m.enabled = true;
@@ -415,8 +404,6 @@ public class StageIntroTransition : MonoBehaviour
 
             int playerId = Mathf.Clamp(id.playerId, 1, 4);
             var state = PlayerPersistentStats.Get(playerId);
-
-            Debug.Log($"[SKIN][APPLY-PERSISTENT] Identity={id.name} pid={playerId} stateSkin={state.Skin}");
 
             var skins = id.GetComponentsInChildren<PlayerBomberSkinController>(true);
             for (int s = 0; s < skins.Length; s++)

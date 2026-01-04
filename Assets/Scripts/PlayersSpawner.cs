@@ -67,8 +67,6 @@ public class PlayersSpawner : MonoBehaviour
             if (bomb != null)
                 bomb.SetPlayerId(playerId);
 
-            Debug.Log($"Spawn P{playerId} persistent skin = {PlayerPersistentStats.Get(playerId).Skin}");
-
             var skins = go.GetComponentsInChildren<PlayerBomberSkinController>(true);
             for (int s = 0; s < skins.Length; s++)
                 if (skins[s] != null)

@@ -28,8 +28,6 @@ public class PlayerBomberSkinController : MonoBehaviour
 
     public void Apply(BomberSkin skin)
     {
-        Debug.Log($"[SKIN] Applying {skin} on {gameObject.name}");
-
         EnsureCache(skin);
 
         if (!skinMaps.TryGetValue(skin, out var targetMap) || targetMap.Count == 0)

@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Serialization;
@@ -149,21 +148,20 @@ public class BomberSkinSelectMenu : MonoBehaviour
         public bool baseCaptured;
     }
 
-    readonly Dictionary<int, EndStageState> endStageBySlot = new(); // key = slotIndex
+    readonly Dictionary<int, EndStageState> endStageBySlot = new();
 
     float cursorBlinkT;
     int overlapZTick;
 
-    // 0 = livre, senão = playerId que selecionou
     int[] selectedBySlot;
 
     sealed class PlayerCursorState
     {
         public int playerId;
-        public int index;              // cursor atual
-        public bool confirmed;         // já escolheu?
+        public int index;
+        public bool confirmed;
         public BomberSkin selected;
-        public int selectedIndex = -1; // slot escolhido
+        public int selectedIndex = -1;
         public RectTransform cursorRt;
         public Image cursorImg;
     }
@@ -372,7 +370,6 @@ public class BomberSkinSelectMenu : MonoBehaviour
                 bool bDown = input.GetDown(pid, PlayerAction.ActionB);
                 bool startDown = input.GetDown(pid, PlayerAction.Start);
 
-                // (3) Se já confirmou, B = desselecionar (não volta pro title)
                 if (ps.confirmed && bDown)
                 {
                     DeselectPlayer(pid);
@@ -381,7 +378,6 @@ public class BomberSkinSelectMenu : MonoBehaviour
                     continue;
                 }
 
-                // Se não confirmou, processa navegação/confirmar/voltar title
                 if (!ps.confirmed)
                 {
                     bool moved = false;
@@ -467,7 +463,6 @@ public class BomberSkinSelectMenu : MonoBehaviour
             return;
         }
 
-        // (4) Se já está selecionada por outro, bloqueia
         int owner = GetSelectedOwner(slot);
         if (owner != 0 && owner != playerId)
         {
@@ -475,7 +470,6 @@ public class BomberSkinSelectMenu : MonoBehaviour
             return;
         }
 
-        // Marca seleção
         selectedBySlot[slot] = playerId;
 
         ps.selected = skin;
@@ -484,9 +478,7 @@ public class BomberSkinSelectMenu : MonoBehaviour
 
         PlayerPersistentStats.Get(playerId).Skin = skin;
         PlayerPersistentStats.SaveSelectedSkin(playerId);
-        Debug.Log($"[SKIN][MENU->SAVE] P{playerId} skin={skin} val={(int)skin}");
 
-        // (2) Ao selecionar, dispara end stage para ESTE slot
         StartEndStageForSlot(slot, skin);
 
         if (ps.cursorImg != null)
@@ -556,7 +548,6 @@ public class BomberSkinSelectMenu : MonoBehaviour
     {
         if (endStageBySlot.TryGetValue(slotIndex, out var st) && st != null)
         {
-            // restaura posição
             if (slotIndex >= 0 && slotIndex < slotImages.Count)
             {
                 var img = slotImages[slotIndex];
@@ -613,7 +604,6 @@ public class BomberSkinSelectMenu : MonoBehaviour
         }
     }
 
-    // (1) relógio do "down" avançando UMA vez por frame (não por cursor)
     void TickDownClock()
     {
         if (downFrames == null || downFrames.Length == 0)
@@ -671,9 +661,6 @@ public class BomberSkinSelectMenu : MonoBehaviour
         }
     }
 
-    // Atualiza sprite/tint/offset respeitando:
-    // - end stage tem prioridade (não vira down por hover)
-    // - down só para slots com cursor em cima e NÃO selecionados
     void UpdateSlotVisuals()
     {
         if (selectableSkins == null || selectableSkins.Count == 0)
@@ -699,7 +686,6 @@ public class BomberSkinSelectMenu : MonoBehaviour
                 }
             }
 
-            // cor
             if (!unlocked)
                 img.color = lockedTint;
             else if (selected || anyCursorHere)
@@ -707,7 +693,6 @@ public class BomberSkinSelectMenu : MonoBehaviour
             else
                 img.color = normalTint;
 
-            // sprite + offset
             if (selected && endStageBySlot.TryGetValue(i, out var st) && st != null)
             {
                 var rt = img.rectTransform;
@@ -726,7 +711,6 @@ public class BomberSkinSelectMenu : MonoBehaviour
             }
             else
             {
-                // garante que não ficou “levantado” depois
                 if (img.rectTransform != null)
                     img.rectTransform.anchoredPosition = Vector2.zero;
 
@@ -895,7 +879,6 @@ public class BomberSkinSelectMenu : MonoBehaviour
         }
     }
 
-    // Intercala ordem quando N cursores estão no mesmo slot
     void CycleOverlappedCursors()
     {
         overlapZTick++;
@@ -923,7 +906,6 @@ public class BomberSkinSelectMenu : MonoBehaviour
             if (here == null || here.Count <= 1)
                 continue;
 
-            // child 0 normalmente é a Image do slot; cursores vão de 1..N
             int n = here.Count;
             int shift = overlapZTick % n;
 
