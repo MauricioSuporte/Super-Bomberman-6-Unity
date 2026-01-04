@@ -125,8 +125,8 @@ public class StageIntroTransition : MonoBehaviour
     {
         var inactive = includeInactive ? FindObjectsInactive.Include : FindObjectsInactive.Exclude;
 
-        movementControllers = Object.FindObjectsByType<MovementController>(inactive, FindObjectsSortMode.None);
-        bombControllers = Object.FindObjectsByType<BombController>(inactive, FindObjectsSortMode.None);
+        movementControllers = FindObjectsByType<MovementController>(inactive, FindObjectsSortMode.None);
+        bombControllers = FindObjectsByType<BombController>(inactive, FindObjectsSortMode.None);
     }
 
     void DisableGameplayControllersAndHideSprites()
@@ -399,7 +399,7 @@ public class StageIntroTransition : MonoBehaviour
 
     void ApplyPersistentPlayerSkin()
     {
-        var ids = Object.FindObjectsByType<PlayerIdentity>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+        var ids = FindObjectsByType<PlayerIdentity>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
 
         for (int i = 0; i < ids.Length; i++)
         {
@@ -418,7 +418,7 @@ public class StageIntroTransition : MonoBehaviour
 
     void ResyncSpawnedPlayersFromIdentity()
     {
-        var ids = Object.FindObjectsByType<PlayerIdentity>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+        var ids = FindObjectsByType<PlayerIdentity>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
 
         for (int i = 0; i < ids.Length; i++)
         {

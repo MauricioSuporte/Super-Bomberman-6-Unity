@@ -90,8 +90,8 @@ public class BomberSkinSelectMenu : MonoBehaviour
     {
         BomberSkin.White,
         BomberSkin.Black,
-        BomberSkin.Blue,
         BomberSkin.Red,
+        BomberSkin.Blue,
         BomberSkin.Green,
         BomberSkin.Yellow,
         BomberSkin.Pink,

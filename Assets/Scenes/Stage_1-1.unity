@@ -3589,6 +3589,7 @@ MonoBehaviour:
   - {fileID: 0}
   playersParent: {fileID: 0}
   isBossStage: 0
+  clearExistingPlayersBeforeSpawn: 1
 --- !u!1 &700387560
 GameObject:
   m_ObjectHideFlags: 0
@@ -5548,7 +5549,7 @@ MonoBehaviour:
   konamiUnlockSfxVolume: 1
   returnSfx: {fileID: 8300000, guid: 30ca55f720379e64ab9b908db035db4c, type: 3}
   returnSfxVolume: 1
-  selectableSkins: 01000000030000000b0000000400000008000000060000000f0000000a00000000000000
+  selectableSkins: 0100000003000000040000000b00000008000000060000000f0000000a00000000000000
 --- !u!224 &1311323898
 RectTransform:
   m_ObjectHideFlags: 0
