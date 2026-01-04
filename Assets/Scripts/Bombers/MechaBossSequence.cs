@@ -13,11 +13,16 @@ public class MechaBossSequence : MonoBehaviour
     public MovementController blackMecha;
     public MovementController goldenMecha;
 
-    public MovementController player;
-
-    [Header("Player Intro Position")]
-    public Vector2 playerIntroPosition = new(-3f, -6f);
+    [Header("Move players to boss intro positions on golden flash")]
     public bool movePlayerToIntroPositionOnGoldenFlash = true;
+
+    static readonly Vector2[] BossStagePositions =
+    {
+        new(-3f, -6f),
+        new( 1f, -6f),
+        new(-5f, -6f),
+        new( 3f, -6f)
+    };
 
     [Header("Music")]
     public AudioClip bossCheeringMusic;
@@ -48,8 +53,6 @@ public class MechaBossSequence : MonoBehaviour
 
     MovementController[] mechas;
     GameManager gameManager;
-    BombController playerBomb;
-    PlayerLouieCompanion playerCompanion;
 
     bool initialized;
     bool sequenceStarted;
@@ -69,10 +72,14 @@ public class MechaBossSequence : MonoBehaviour
     readonly Dictionary<Vector3Int, int> changedStandCells = new();
     readonly List<Vector3Int> spawnableCells = new();
 
-    Collider2D cachedPlayerCollider;
-    bool cachedColliderEnabled;
-    bool cachedColliderEnabledValid;
-    int playerSafetyLocks;
+    readonly List<MovementController> players = new();
+    readonly List<BombController> playerBombs = new();
+    readonly List<PlayerLouieCompanion> playerCompanions = new();
+
+    readonly Dictionary<MovementController, Collider2D> cachedPlayerColliders = new();
+    readonly Dictionary<MovementController, bool> cachedColliderEnabled = new();
+
+    int playersSafetyLocks;
 
     void Awake()
     {
@@ -84,18 +91,6 @@ public class MechaBossSequence : MonoBehaviour
             if (m == null) continue;
             m.Died += OnMechaDied;
         }
-
-        if (player != null)
-            playerCompanion = player.GetComponent<PlayerLouieCompanion>();
-
-        if (player == null)
-        {
-            var go = GameObject.FindGameObjectWithTag("Player");
-            if (go != null) player = go.GetComponent<MovementController>();
-        }
-
-        if (player != null)
-            playerBomb = player.GetComponent<BombController>();
 
         if (indestructibleTilemap != null)
         {
@@ -113,8 +108,10 @@ public class MechaBossSequence : MonoBehaviour
     {
         initialized = true;
 
-        LockPlayer(true);
-        ForcePlayerMountedUpIfNeeded();
+        EnsurePlayersRefs();
+
+        LockPlayers(true);
+        ForcePlayersMountedUpIfNeeded();
 
         for (int i = 0; i < mechas.Length; i++)
             if (mechas[i] != null)
@@ -129,7 +126,7 @@ public class MechaBossSequence : MonoBehaviour
         if (initialized && !sequenceStarted)
         {
             sequenceStarted = true;
-            ForcePlayerMountedUpIfNeeded();
+            ForcePlayersMountedUpIfNeeded();
             StartCoroutine(SpawnFirstMechaAfterStageStart());
         }
     }
@@ -140,31 +137,31 @@ public class MechaBossSequence : MonoBehaviour
         if (StageMechaIntroController.Instance != null)
             StageMechaIntroController.Instance.SetIntroRunning(true);
 
-        if (playerCompanion != null)
-            playerCompanion.SetLouieAbilitiesLocked(true);
+        EnsurePlayersRefs();
+        SetLouieAbilitiesLockedForAll(true);
 
         if (StageIntroTransition.Instance != null)
         {
-            PushPlayerSafety();
+            PushPlayersSafety();
 
             while (StageIntroTransition.Instance.IntroRunning)
             {
-                ForcePlayerMountedUpIfNeeded();
+                ForcePlayersMountedUpIfNeeded();
                 yield return null;
             }
 
-            PopPlayerSafety();
+            PopPlayersSafety();
         }
 
         while (GamePauseController.IsPaused)
             yield return null;
 
-        LockPlayer(true);
-        ForcePlayerMountedUpIfNeeded();
+        LockPlayers(true);
+        ForcePlayersMountedUpIfNeeded();
 
-        PushPlayerSafety();
+        PushPlayersSafety();
         yield return _waitForSeconds2;
-        PopPlayerSafety();
+        PopPlayersSafety();
 
         StartMechaIntro(0);
     }
@@ -178,15 +175,15 @@ public class MechaBossSequence : MonoBehaviour
         if (StageMechaIntroController.Instance != null)
             StageMechaIntroController.Instance.SetIntroRunning(true);
 
-        if (playerCompanion != null)
-            playerCompanion.SetLouieAbilitiesLocked(true);
+        EnsurePlayersRefs();
+        SetLouieAbilitiesLockedForAll(true);
 
-        LockPlayer(true);
+        LockPlayers(true);
 
         BombController.ExplodeAllControlBombsInStage();
 
-        ForcePlayerMountedUpIfNeeded();
-        PushPlayerSafety();
+        ForcePlayersMountedUpIfNeeded();
+        PushPlayersSafety();
 
         StartCoroutine(MechaIntroRoutine(mechas[index]));
     }
@@ -198,13 +195,14 @@ public class MechaBossSequence : MonoBehaviour
             StageMechaIntroController.Instance.SetIntroRunning(true);
 
         SetItemSpawnEnabled(false);
-        LockPlayer(true);
 
-        ForcePlayerMountedUpIfNeeded();
+        EnsurePlayersRefs();
+        LockPlayers(true);
+        ForcePlayersMountedUpIfNeeded();
 
         yield return StartCoroutine(OpenGateRoutine());
 
-        ForcePlayerMountedUpIfNeeded();
+        ForcePlayersMountedUpIfNeeded();
 
         bool isGolden = mecha == goldenMecha;
 
@@ -219,18 +217,18 @@ public class MechaBossSequence : MonoBehaviour
                     if (!movePlayerToIntroPositionOnGoldenFlash)
                         return;
 
-                    EnsurePlayerRefs();
-                    MovePlayerToIntroPosition();
-                    ForcePlayerMountedUpIfNeeded();
+                    EnsurePlayersRefs();
+                    MoveAllPlayersToBossIntroPositions();
+                    ForcePlayersMountedUpIfNeeded();
                 });
             }
             else
             {
                 if (movePlayerToIntroPositionOnGoldenFlash)
                 {
-                    EnsurePlayerRefs();
-                    MovePlayerToIntroPosition();
-                    ForcePlayerMountedUpIfNeeded();
+                    EnsurePlayersRefs();
+                    MoveAllPlayersToBossIntroPositions();
+                    ForcePlayersMountedUpIfNeeded();
                 }
             }
         }
@@ -323,7 +321,7 @@ public class MechaBossSequence : MonoBehaviour
 
         yield return StartCoroutine(CloseGateRoutine());
 
-        PopPlayerSafety();
+        PopPlayersSafety();
 
         if (!itemLoopStarted && groundTilemap != null && itemPrefabs != null && itemPrefabs.Length > 0)
         {
@@ -333,10 +331,8 @@ public class MechaBossSequence : MonoBehaviour
 
         SetItemSpawnEnabled(true);
 
-        LockPlayer(false);
-
-        if (playerCompanion != null)
-            playerCompanion.SetLouieAbilitiesLocked(false);
+        LockPlayers(false);
+        SetLouieAbilitiesLockedForAll(false);
 
         MechaIntroRunning = false;
         if (StageMechaIntroController.Instance != null)
@@ -575,20 +571,6 @@ public class MechaBossSequence : MonoBehaviour
         itemSpawnEnabled = enabled;
     }
 
-    void LockPlayer(bool locked)
-    {
-        EnsurePlayerRefs();
-
-        if (player != null)
-        {
-            player.SetInputLocked(locked);
-            player.SetExplosionInvulnerable(locked);
-        }
-
-        if (playerBomb != null)
-            playerBomb.enabled = !locked;
-    }
-
     void OnMechaDied(MovementController sender)
     {
         int currentIndex = Array.IndexOf(mechas, sender);
@@ -615,18 +597,29 @@ public class MechaBossSequence : MonoBehaviour
     {
         yield return _waitForSeconds1;
 
-        EnsurePlayerRefs();
-        if (player == null || player.isDead)
+        EnsurePlayersRefs();
+
+        bool anyCelebrated = false;
+
+        for (int i = 0; i < players.Count; i++)
+        {
+            var p = players[i];
+            if (p == null) continue;
+            if (p.isDead) continue;
+
+            Vector2 center = new(
+                Mathf.Round(p.transform.position.x),
+                Mathf.Round(p.transform.position.y)
+            );
+
+            p.PlayEndStageSequence(center);
+            anyCelebrated = true;
+        }
+
+        if (!anyCelebrated)
             yield break;
 
-        Vector2 center = new(
-            Mathf.Round(player.transform.position.x),
-            Mathf.Round(player.transform.position.y)
-        );
-
-        player.PlayEndStageSequence(center);
-
-        MakePlayerSafeForCelebration();
+        MakePlayersSafeForCelebration();
 
         if (GameMusicController.Instance != null && bossCheeringMusic != null)
             GameMusicController.Instance.PlayMusic(bossCheeringMusic, 1f, false);
@@ -648,125 +641,214 @@ public class MechaBossSequence : MonoBehaviour
             gameManager.EndStage();
     }
 
-    void PushPlayerSafety()
+    void EnsurePlayersRefs()
     {
-        EnsurePlayerRefs();
-        if (player == null)
-            return;
+        players.Clear();
+        playerBombs.Clear();
+        playerCompanions.Clear();
 
-        playerSafetyLocks++;
+        var ids = FindObjectsByType<PlayerIdentity>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
 
-        if (playerSafetyLocks > 1)
-            return;
-
-        player.SetExplosionInvulnerable(true);
-        player.SetInputLocked(true, false);
-
-        if (cachedPlayerCollider == null)
-            cachedPlayerCollider = player.GetComponent<Collider2D>();
-
-        if (cachedPlayerCollider != null)
+        if (ids != null && ids.Length > 0)
         {
-            cachedColliderEnabled = cachedPlayerCollider.enabled;
-            cachedColliderEnabledValid = true;
-            cachedPlayerCollider.enabled = false;
-        }
+            for (int i = 0; i < ids.Length; i++)
+            {
+                var id = ids[i];
+                if (id == null) continue;
 
-        if (player.TryGetComponent<CharacterHealth>(out var health) && health != null)
-            health.StopInvulnerability();
-    }
+                MovementController move = null;
+                if (!id.TryGetComponent<MovementController>(out move))
+                    move = id.GetComponentInChildren<MovementController>(true);
 
-    void PopPlayerSafety()
-    {
-        EnsurePlayerRefs();
-        if (player == null)
-            return;
+                if (move == null) continue;
 
-        if (playerSafetyLocks <= 0)
-            return;
-
-        playerSafetyLocks--;
-
-        if (playerSafetyLocks > 0)
-            return;
-
-        if (cachedPlayerCollider == null)
-            cachedPlayerCollider = player.GetComponent<Collider2D>();
-
-        if (cachedPlayerCollider != null && cachedColliderEnabledValid)
-            cachedPlayerCollider.enabled = cachedColliderEnabled;
-
-        cachedColliderEnabledValid = false;
-    }
-
-    void MakePlayerSafeForCelebration()
-    {
-        EnsurePlayerRefs();
-        if (player == null)
-            return;
-
-        player.SetExplosionInvulnerable(true);
-        player.SetInputLocked(true, false);
-
-        if (cachedPlayerCollider == null)
-            cachedPlayerCollider = player.GetComponent<Collider2D>();
-
-        if (cachedPlayerCollider != null)
-        {
-            cachedColliderEnabled = cachedPlayerCollider.enabled;
-            cachedColliderEnabledValid = true;
-            cachedPlayerCollider.enabled = false;
-        }
-
-        if (player.TryGetComponent<CharacterHealth>(out var health) && health != null)
-            health.StopInvulnerability();
-    }
-
-    void ForcePlayerMountedUpIfNeeded()
-    {
-        EnsurePlayerRefs();
-        if (player == null)
-            return;
-
-        if (player.IsMountedOnLouie)
-            player.ForceMountedUpExclusive();
-        else
-            player.ForceIdleUp();
-    }
-
-    void MovePlayerToIntroPosition()
-    {
-        if (player == null)
-            return;
-
-        if (player.Rigidbody != null)
-        {
-            player.Rigidbody.simulated = true;
-            player.Rigidbody.linearVelocity = Vector2.zero;
-            player.Rigidbody.position = playerIntroPosition;
+                if (!players.Contains(move))
+                    players.Add(move);
+            }
         }
         else
         {
-            player.transform.position = new Vector3(playerIntroPosition.x, playerIntroPosition.y, player.transform.position.z);
+            var moves = FindObjectsByType<MovementController>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+            for (int i = 0; i < moves.Length; i++)
+                if (moves[i] != null && moves[i].CompareTag("Player"))
+                    players.Add(moves[i]);
+        }
+
+        for (int i = 0; i < players.Count; i++)
+        {
+            var p = players[i];
+            if (p == null) continue;
+
+            var bomb = p.GetComponent<BombController>();
+            if (bomb != null) playerBombs.Add(bomb);
+
+            var comp = p.GetComponent<PlayerLouieCompanion>();
+            if (comp != null) playerCompanions.Add(comp);
         }
     }
 
-    void EnsurePlayerRefs()
+    MovementController GetPlayerById(int playerId)
     {
-        if (player != null && playerBomb != null)
+        for (int i = 0; i < players.Count; i++)
+        {
+            var p = players[i];
+            if (p == null) continue;
+            if (p.PlayerId == playerId) return p;
+        }
+        return null;
+    }
+
+    void MoveAllPlayersToBossIntroPositions()
+    {
+        for (int i = 0; i < players.Count; i++)
+        {
+            var p = players[i];
+            if (p == null) continue;
+
+            int pid = Mathf.Clamp(p.PlayerId, 1, 4);
+            Vector2 target = BossStagePositions[pid - 1];
+
+            if (p.Rigidbody != null)
+            {
+                p.Rigidbody.simulated = true;
+                p.Rigidbody.linearVelocity = Vector2.zero;
+                p.Rigidbody.position = target;
+            }
+            else
+            {
+                p.transform.position = new Vector3(target.x, target.y, p.transform.position.z);
+            }
+        }
+    }
+
+    void LockPlayers(bool locked)
+    {
+        EnsurePlayersRefs();
+
+        for (int i = 0; i < players.Count; i++)
+        {
+            var p = players[i];
+            if (p == null) continue;
+
+            p.SetInputLocked(locked);
+            p.SetExplosionInvulnerable(locked);
+        }
+
+        for (int i = 0; i < playerBombs.Count; i++)
+            if (playerBombs[i] != null)
+                playerBombs[i].enabled = !locked;
+    }
+
+    void SetLouieAbilitiesLockedForAll(bool locked)
+    {
+        EnsurePlayersRefs();
+
+        for (int i = 0; i < playerCompanions.Count; i++)
+            if (playerCompanions[i] != null)
+                playerCompanions[i].SetLouieAbilitiesLocked(locked);
+    }
+
+    void ForcePlayersMountedUpIfNeeded()
+    {
+        EnsurePlayersRefs();
+
+        for (int i = 0; i < players.Count; i++)
+        {
+            var p = players[i];
+            if (p == null) continue;
+
+            if (p.IsMountedOnLouie)
+                p.ForceMountedUpExclusive();
+            else
+                p.ForceIdleUp();
+        }
+    }
+
+    void PushPlayersSafety()
+    {
+        EnsurePlayersRefs();
+
+        playersSafetyLocks++;
+
+        if (playersSafetyLocks > 1)
             return;
 
-        var go = GameObject.FindGameObjectWithTag("Player");
-        if (go == null)
+        cachedPlayerColliders.Clear();
+        cachedColliderEnabled.Clear();
+
+        for (int i = 0; i < players.Count; i++)
+        {
+            var p = players[i];
+            if (p == null) continue;
+
+            p.SetExplosionInvulnerable(true);
+            p.SetInputLocked(true, false);
+
+            var col = p.GetComponent<Collider2D>();
+            if (col != null)
+            {
+                cachedPlayerColliders[p] = col;
+                cachedColliderEnabled[p] = col.enabled;
+                col.enabled = false;
+            }
+
+            if (p.TryGetComponent<CharacterHealth>(out var health) && health != null)
+                health.StopInvulnerability();
+        }
+    }
+
+    void PopPlayersSafety()
+    {
+        EnsurePlayersRefs();
+
+        if (playersSafetyLocks <= 0)
             return;
 
-        if (player == null)
-            player = go.GetComponent<MovementController>();
+        playersSafetyLocks--;
 
-        if (player != null && playerBomb == null)
-            playerBomb = player.GetComponent<BombController>();
+        if (playersSafetyLocks > 0)
+            return;
 
-        if (player != null && playerCompanion == null)
-            playerCompanion = player.GetComponent<PlayerLouieCompanion>();
+        foreach (var kv in cachedPlayerColliders)
+        {
+            var p = kv.Key;
+            var col = kv.Value;
+
+            if (p == null || col == null) continue;
+
+            if (cachedColliderEnabled.TryGetValue(p, out bool wasEnabled))
+                col.enabled = wasEnabled;
+        }
+
+        cachedPlayerColliders.Clear();
+        cachedColliderEnabled.Clear();
+    }
+
+    void MakePlayersSafeForCelebration()
+    {
+        EnsurePlayersRefs();
+
+        cachedPlayerColliders.Clear();
+        cachedColliderEnabled.Clear();
+
+        for (int i = 0; i < players.Count; i++)
+        {
+            var p = players[i];
+            if (p == null) continue;
+
+            p.SetExplosionInvulnerable(true);
+            p.SetInputLocked(true, false);
+
+            var col = p.GetComponent<Collider2D>();
+            if (col != null)
+            {
+                cachedPlayerColliders[p] = col;
+                cachedColliderEnabled[p] = col.enabled;
+                col.enabled = false;
+            }
+
+            if (p.TryGetComponent<CharacterHealth>(out var health) && health != null)
+                health.StopInvulnerability();
+        }
     }
 }
