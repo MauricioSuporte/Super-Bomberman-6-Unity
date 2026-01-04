@@ -85,7 +85,7 @@ public class HudsonLogoIntro : MonoBehaviour
         if (input == null)
             return false;
 
-        return input.GetDown(PlayerAction.Start) || input.GetDown(PlayerAction.ActionA);
+        return input.AnyGetDown(PlayerAction.Start) || input.AnyGetDown(PlayerAction.ActionA);
     }
 
     IEnumerator FadeAlpha(Color baseColor, float startA, float endA, float seconds)
