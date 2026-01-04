@@ -113,39 +113,58 @@ public class BombController : MonoBehaviour
 
     private void Awake()
     {
+        ResolveTilemaps();
+    }
+
+    private void ResolveTilemaps()
+    {
+        var gm = FindFirstObjectByType<GameManager>();
+        if (gm != null)
+        {
+            if (groundTiles == null) groundTiles = gm.groundTilemap;
+            if (destructibleTiles == null) destructibleTiles = gm.destructibleTilemap;
+
+            if (stageBoundsTiles == null)
+                stageBoundsTiles = gm.indestructibleTilemap != null ? gm.indestructibleTilemap : gm.groundTilemap;
+        }
+
         var tilemaps = FindObjectsByType<Tilemap>(FindObjectsSortMode.None);
 
         if (groundTiles == null)
-        {
-            for (int i = 0; i < tilemaps.Length; i++)
-            {
-                var tm = tilemaps[i];
-                if (tm != null && tm.name.ToLowerInvariant().Contains("ground"))
-                {
-                    groundTiles = tm;
-                    break;
-                }
-            }
-
-            if (groundTiles == null && tilemaps.Length > 0)
-                groundTiles = tilemaps[0];
-        }
+            groundTiles = FindTilemapByNameContains(tilemaps, "ground") ?? (tilemaps.Length > 0 ? tilemaps[0] : null);
 
         if (stageBoundsTiles == null)
+            stageBoundsTiles = FindTilemapByNameContains(tilemaps, "indestruct") ?? groundTiles;
+
+        if (destructibleTiles == null)
         {
             for (int i = 0; i < tilemaps.Length; i++)
             {
                 var tm = tilemaps[i];
-                if (tm != null && tm.name.ToLowerInvariant().Contains("indestruct"))
+                if (tm != null && tm.CompareTag("Destructibles"))
                 {
-                    stageBoundsTiles = tm;
+                    destructibleTiles = tm;
                     break;
                 }
             }
 
-            if (stageBoundsTiles == null)
-                stageBoundsTiles = groundTiles;
+            if (destructibleTiles == null)
+                destructibleTiles = FindTilemapByNameContains(tilemaps, "destruct");
         }
+    }
+
+    private Tilemap FindTilemapByNameContains(Tilemap[] tilemaps, string containsLower)
+    {
+        for (int i = 0; i < tilemaps.Length; i++)
+        {
+            var tm = tilemaps[i];
+            if (tm == null) continue;
+
+            string n = tm.name.ToLowerInvariant();
+            if (n.Contains(containsLower))
+                return tm;
+        }
+        return null;
     }
 
     public void AddBomb()
