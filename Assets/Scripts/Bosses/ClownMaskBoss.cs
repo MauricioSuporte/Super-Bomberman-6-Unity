@@ -1051,9 +1051,7 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
         AnimatedSpriteRenderer target = deathRenderer != null ? deathRenderer : idleRenderer;
         EnableOnly(target);
 
-        SpriteRenderer sr = null;
-        if (target != null)
-            sr = target.GetComponent<SpriteRenderer>();
+        float deathVisualDuration = GetRendererDuration(target, Mathf.Max(0.01f, deathDuration));
 
         float blinkInterval = characterHealth != null && characterHealth.hitBlinkInterval > 0f
             ? characterHealth.hitBlinkInterval
@@ -1061,12 +1059,16 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
 
         Coroutine explosions = null;
         if (explosionPrefab != null)
-            explosions = StartCoroutine(SpawnDeathExplosions());
+            explosions = StartCoroutine(SpawnDeathExplosions(deathVisualDuration));
 
         float elapsed = 0f;
         bool visible = true;
 
-        while (elapsed < deathDuration)
+        SpriteRenderer sr = null;
+        if (target != null)
+            sr = target.GetComponent<SpriteRenderer>();
+
+        while (elapsed < deathVisualDuration)
         {
             visible = !visible;
             if (sr != null)
@@ -1081,6 +1083,8 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
         if (explosions != null)
             StopCoroutine(explosions);
 
+        HideBossVisuals();
+
         yield return _waitForSeconds1;
 
         GrantPostBossDefeatImmunityToAlivePlayers();
@@ -1091,11 +1095,12 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
         Destroy(gameObject);
     }
 
-    IEnumerator SpawnDeathExplosions()
+    IEnumerator SpawnDeathExplosions(float duration)
     {
         float elapsed = 0f;
+        float d = Mathf.Max(0.01f, duration);
 
-        while (elapsed < deathDuration)
+        while (elapsed < d)
         {
             SpawnOneExplosion();
             yield return new WaitForSeconds(explosionSpawnInterval);
@@ -1305,5 +1310,34 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
             return Mathf.Clamp(parentId.playerId, 1, 4);
 
         return 1;
+    }
+
+    float GetRendererDuration(AnimatedSpriteRenderer r, float fallback)
+    {
+        if (r == null) return fallback;
+
+        if (r.useSequenceDuration && r.sequenceDuration > 0f)
+            return r.sequenceDuration;
+
+        if (r.animationSprite != null && r.animationSprite.Length > 0)
+            return Mathf.Max(0.01f, r.animationTime * r.animationSprite.Length);
+
+        return fallback;
+    }
+
+    void HideBossVisuals()
+    {
+        bossSpriteRenderers ??= GetComponentsInChildren<SpriteRenderer>(true);
+        for (int i = 0; i < bossSpriteRenderers.Length; i++)
+        {
+            var sr = bossSpriteRenderers[i];
+            if (sr != null) sr.enabled = false;
+        }
+
+        if (introRenderer != null) introRenderer.enabled = false;
+        if (idleRenderer != null) idleRenderer.enabled = false;
+        if (specialRenderer != null) specialRenderer.enabled = false;
+        if (hurtRenderer != null) hurtRenderer.enabled = false;
+        if (deathRenderer != null) deathRenderer.enabled = false;
     }
 }

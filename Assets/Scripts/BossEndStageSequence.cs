@@ -1,10 +1,13 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class BossEndStageSequence : MonoBehaviour
 {
-    public MovementController player;
+    [Header("Audio")]
     public AudioClip bossCheeringMusic;
+
+    [Header("Timing")]
     public float delayAfterBossDeath = 1f;
     public float cheeringDuration = 4f;
     public float fadeDuration = 1f;
@@ -12,18 +15,11 @@ public class BossEndStageSequence : MonoBehaviour
     GameManager gameManager;
     bool sequenceStarted;
 
-    Collider2D cachedPlayerCollider;
-    bool cachedColliderEnabled;
+    readonly List<Collider2D> cachedPlayerColliders = new();
+    readonly List<bool> cachedColliderEnabled = new();
 
     void Awake()
     {
-        if (player == null)
-        {
-            var go = GameObject.FindGameObjectWithTag("Player");
-            if (go != null)
-                player = go.GetComponent<MovementController>();
-        }
-
         gameManager = FindFirstObjectByType<GameManager>();
     }
 
@@ -34,8 +30,18 @@ public class BossEndStageSequence : MonoBehaviour
 
         sequenceStarted = true;
 
-        if (isActiveAndEnabled)
-            StartCoroutine(BossDefeatedRoutine());
+        var runnerGo = new GameObject("BossEndStageSequenceRunner");
+        var runner = runnerGo.AddComponent<BossEndStageSequence>();
+
+        runner.bossCheeringMusic = bossCheeringMusic;
+        runner.delayAfterBossDeath = delayAfterBossDeath;
+        runner.cheeringDuration = cheeringDuration;
+        runner.fadeDuration = fadeDuration;
+        runner.gameManager = gameManager;
+
+        runner.StartCoroutine(runner.BossDefeatedRoutine());
+
+        enabled = false;
     }
 
     IEnumerator BossDefeatedRoutine()
@@ -43,17 +49,29 @@ public class BossEndStageSequence : MonoBehaviour
         if (delayAfterBossDeath > 0f)
             yield return new WaitForSeconds(delayAfterBossDeath);
 
-        if (player == null || player.isDead)
+        var alivePlayers = FindAlivePlayers();
+
+        if (alivePlayers.Count == 0)
+        {
+            Destroy(gameObject);
             yield break;
+        }
 
-        Vector2 center = new(
-            Mathf.Round(player.transform.position.x),
-            Mathf.Round(player.transform.position.y)
-        );
+        for (int i = 0; i < alivePlayers.Count; i++)
+        {
+            var p = alivePlayers[i];
+            if (p == null || p.isDead)
+                continue;
 
-        player.PlayEndStageSequence(center);
+            Vector2 center = new(
+                Mathf.Round(p.transform.position.x),
+                Mathf.Round(p.transform.position.y)
+            );
 
-        MakePlayerSafeForCelebration();
+            p.PlayEndStageSequence(center, snapToPortalCenter: false);
+
+            MakePlayerSafeForCelebration(p);
+        }
 
         if (GameMusicController.Instance != null && bossCheeringMusic != null)
             GameMusicController.Instance.PlayMusic(bossCheeringMusic, 1f, false);
@@ -71,9 +89,52 @@ public class BossEndStageSequence : MonoBehaviour
 
         if (gameManager != null)
             gameManager.EndStage();
+
+        Destroy(gameObject);
     }
 
-    void MakePlayerSafeForCelebration()
+    List<MovementController> FindAlivePlayers()
+    {
+        var list = new List<MovementController>(4);
+
+        var ids = FindObjectsByType<PlayerIdentity>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+        if (ids != null && ids.Length > 0)
+        {
+            for (int i = 0; i < ids.Length; i++)
+            {
+                var id = ids[i];
+                if (id == null) continue;
+
+                if (!id.TryGetComponent(out MovementController m))
+                    m = id.GetComponentInChildren<MovementController>(true);
+
+                if (m == null) continue;
+                if (!m.gameObject.activeInHierarchy) continue;
+                if (!m.CompareTag("Player")) continue;
+                if (m.isDead) continue;
+
+                list.Add(m);
+            }
+
+            return list;
+        }
+
+        var players = FindObjectsByType<MovementController>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+        for (int i = 0; i < players.Length; i++)
+        {
+            var m = players[i];
+            if (m == null) continue;
+            if (!m.gameObject.activeInHierarchy) continue;
+            if (!m.CompareTag("Player")) continue;
+            if (m.isDead) continue;
+
+            list.Add(m);
+        }
+
+        return list;
+    }
+
+    void MakePlayerSafeForCelebration(MovementController player)
     {
         if (player == null)
             return;
@@ -81,13 +142,12 @@ public class BossEndStageSequence : MonoBehaviour
         player.SetExplosionInvulnerable(true);
         player.SetInputLocked(true, false);
 
-        if (cachedPlayerCollider == null)
-            cachedPlayerCollider = player.GetComponent<Collider2D>();
-
-        if (cachedPlayerCollider != null)
+        var col = player.GetComponent<Collider2D>();
+        if (col != null)
         {
-            cachedColliderEnabled = cachedPlayerCollider.enabled;
-            cachedPlayerCollider.enabled = false;
+            cachedPlayerColliders.Add(col);
+            cachedColliderEnabled.Add(col.enabled);
+            col.enabled = false;
         }
 
         if (player.TryGetComponent<CharacterHealth>(out var health) && health != null)
