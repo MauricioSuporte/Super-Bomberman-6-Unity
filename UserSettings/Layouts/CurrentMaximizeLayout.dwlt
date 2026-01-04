@@ -24,7 +24,7 @@ MonoBehaviour:
   m_MinSize: {x: 300, y: 100}
   m_MaxSize: {x: 24288, y: 16192}
   vertical: 0
-  controlID: 19265
+  controlID: 19924
   draggingID: 0
 --- !u!114 &2
 MonoBehaviour:
@@ -153,7 +153,7 @@ MonoBehaviour:
   m_MinSize: {x: 200, y: 100}
   m_MaxSize: {x: 16192, y: 16192}
   vertical: 1
-  controlID: 19221
+  controlID: 19880
   draggingID: 0
 --- !u!114 &4
 MonoBehaviour:
@@ -179,7 +179,7 @@ MonoBehaviour:
   m_MinSize: {x: 200, y: 50}
   m_MaxSize: {x: 16192, y: 8096}
   vertical: 0
-  controlID: 19212
+  controlID: 19871
   draggingID: 0
 --- !u!114 &5
 MonoBehaviour:
@@ -248,7 +248,7 @@ MonoBehaviour:
       scrollPos: {x: 0, y: 0}
       m_SelectedIDs: 
       m_LastClickedID: 0
-      m_ExpandedIDs: e84ffcff4453fcffe66ffcff8071fcff9076fcff368dfcff08b9fcffa4bafcfff8bcfcffe0befcff16c1fcffa6c3fcff44c8fcff00cafcffdecffcff98d1fcffb4d2fcff78d4fcff84d5fcff64d7fcff7cd8fcff70d9fcfff8dafcff26dcfcffc4e0fcff60e2fcff4ae7fcffbae8fcff4eeafcff74ecfcff44eefcff7ef0fcff16f6fcffda09fdff9e0cfdffc840fdff9243fdff4245fdff7a47fdff5056fdff405bfdffac5cfdfff45efdffb4f5ffff00fbffff028e00001c8e00002c8e00003c8e0000568e0000628e0000928a0100ea920100309301001898010042980100ce9e0100faa101009aa40100e0a6010024aa0100
+      m_ExpandedIDs: 3840fcffe84ffcff4453fcffe66ffcff8071fcff9076fcff368dfcff08b9fcffa4bafcfff8bcfcffe0befcff16c1fcffa6c3fcff44c8fcff00cafcffdecffcff98d1fcffb4d2fcff78d4fcff84d5fcff64d7fcff7cd8fcff70d9fcfff8dafcff26dcfcffc4e0fcff60e2fcff4ae7fcffbae8fcff4eeafcff74ecfcff44eefcff7ef0fcff16f6fcffda09fdff9e0cfdffc840fdff9243fdff4245fdff7a47fdff5056fdff405bfdffac5cfdfff45efdffb4f5ffff00fbffff028e00001c8e00002c8e00003c8e0000568e0000628e0000928a0100ea920100309301001898010042980100ce9e0100faa101009aa40100e0a6010024aa0100
       m_RenameOverlay:
         m_UserAcceptedRename: 0
         m_Name: 
@@ -1090,8 +1090,8 @@ MonoBehaviour:
     y: 0
     width: 565
     height: 933
-  m_MinSize: {x: 276, y: 76}
-  m_MaxSize: {x: 4001, y: 4026}
+  m_MinSize: {x: 275, y: 50}
+  m_MaxSize: {x: 4000, y: 4000}
   m_ActualView: {fileID: 13}
   m_Panes:
   - {fileID: 13}

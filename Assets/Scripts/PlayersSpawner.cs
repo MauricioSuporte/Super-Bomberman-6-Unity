@@ -111,6 +111,9 @@ public class PlayersSpawner : MonoBehaviour
             if (bomb != null)
                 bomb.SetPlayerId(playerId);
 
+            if (go.TryGetComponent<PlayerLouieCompanion>(out var louie))
+                louie.RestoreMountedFromPersistent();
+
             var skins = go.GetComponentsInChildren<PlayerBomberSkinController>(true);
             for (int s = 0; s < skins.Length; s++)
                 if (skins[s] != null)

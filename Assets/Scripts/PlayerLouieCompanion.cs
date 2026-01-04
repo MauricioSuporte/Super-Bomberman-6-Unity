@@ -911,4 +911,24 @@ public class PlayerLouieCompanion : MonoBehaviour
 
         return 1;
     }
+
+    public void RestoreMountedFromPersistent()
+    {
+        if (currentLouie != null)
+            return;
+
+        int playerId = GetPlayerId();
+        var state = PlayerPersistentStats.Get(playerId);
+
+        switch (state.MountedLouie)
+        {
+            case MountedLouieType.Blue: RestoreMountedBlueLouie(); break;
+            case MountedLouieType.Black: RestoreMountedBlackLouie(); break;
+            case MountedLouieType.Purple: RestoreMountedPurpleLouie(); break;
+            case MountedLouieType.Green: RestoreMountedGreenLouie(); break;
+            case MountedLouieType.Yellow: RestoreMountedYellowLouie(); break;
+            case MountedLouieType.Pink: RestoreMountedPinkLouie(); break;
+            case MountedLouieType.Red: RestoreMountedRedLouie(); break;
+        }
+    }
 }
