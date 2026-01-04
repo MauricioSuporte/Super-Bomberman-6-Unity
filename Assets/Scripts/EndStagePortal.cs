@@ -45,9 +45,7 @@ public class EndStagePortal : MonoBehaviour
     private void OnDestroy()
     {
         if (gameManager != null)
-        {
             gameManager.OnAllEnemiesDefeated -= HandleAllEnemiesDefeated;
-        }
     }
 
     private void HandleAllEnemiesDefeated()
@@ -66,27 +64,49 @@ public class EndStagePortal : MonoBehaviour
         if (!isUnlocked || isActivated)
             return;
 
-        if (!other.CompareTag("Player"))
+        if (!other || !other.CompareTag("Player"))
+            return;
+
+        var triggerMovement = other.GetComponent<MovementController>();
+        if (triggerMovement == null || triggerMovement.isDead || triggerMovement.IsEndingStage)
             return;
 
         isActivated = true;
 
-        var movement = other.GetComponent<MovementController>();
-        var bombController = other.GetComponent<BombController>();
+        Vector2 portalCenter = new(
+            Mathf.Round(transform.position.x),
+            Mathf.Round(transform.position.y)
+        );
 
-        if (movement != null)
-            PlayerPersistentStats.SaveFrom(movement, bombController);
+        var players = FindObjectsByType<MovementController>(
+            FindObjectsInactive.Exclude,
+            FindObjectsSortMode.None
+        );
 
-        if (bombController != null)
-            bombController.ClearPlantedBombsOnStageEnd(false);
-
-        if (movement != null)
+        for (int i = 0; i < players.Length; i++)
         {
-            Vector2 portalCenter = new(
-                Mathf.Round(transform.position.x),
-                Mathf.Round(transform.position.y)
-            );
-            movement.PlayEndStageSequence(portalCenter);
+            var m = players[i];
+            if (m == null)
+                continue;
+
+            if (!m.CompareTag("Player"))
+                continue;
+
+            if (!m.gameObject.activeInHierarchy)
+                continue;
+
+            if (m.isDead || m.IsEndingStage)
+                continue;
+
+            var bombController = m.GetComponent<BombController>();
+
+            PlayerPersistentStats.SaveFrom(m, bombController);
+
+            if (bombController != null)
+                bombController.ClearPlantedBombsOnStageEnd(false);
+
+            bool snapThisOne = (triggerMovement != null && m == triggerMovement);
+            m.PlayEndStageSequence(portalCenter, snapThisOne);
         }
 
         var audio = other.GetComponent<AudioSource>();

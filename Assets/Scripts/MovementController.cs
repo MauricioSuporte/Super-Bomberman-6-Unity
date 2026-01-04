@@ -844,6 +844,11 @@ public class MovementController : MonoBehaviour, IKillable
 
     public void PlayEndStageSequence(Vector2 portalCenter)
     {
+        PlayEndStageSequence(portalCenter, snapToPortalCenter: true);
+    }
+
+    public void PlayEndStageSequence(Vector2 portalCenter, bool snapToPortalCenter)
+    {
         isEndingStage = true;
         SetExplosionInvulnerable(true);
 
@@ -855,8 +860,14 @@ public class MovementController : MonoBehaviour, IKillable
         if (bombController != null)
             bombController.enabled = false;
 
-        Rigidbody.linearVelocity = Vector2.zero;
-        Rigidbody.position = portalCenter;
+        if (Rigidbody != null)
+        {
+            Rigidbody.linearVelocity = Vector2.zero;
+
+            if (snapToPortalCenter)
+                Rigidbody.position = portalCenter;
+        }
+
         direction = Vector2.zero;
 
         DisableAllFootSprites();
