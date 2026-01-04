@@ -80,7 +80,10 @@ public class BlackLouieDashPushAbility : MonoBehaviour, IPlayerAbility
     bool IsTriggerPressed()
     {
         var input = PlayerInputManager.Instance;
-        return input != null && input.GetDown(PlayerAction.ActionC);
+        if (input == null || movement == null)
+            return false;
+
+        return input.GetDown(movement.PlayerId, PlayerAction.ActionC);
     }
 
     void Update()
@@ -111,7 +114,7 @@ public class BlackLouieDashPushAbility : MonoBehaviour, IPlayerAbility
         if (!CompareTag("Player"))
             return false;
 
-        if (PlayerPersistentStats.CanPassDestructibles)
+        if (PlayerPersistentStats.Get(GetPlayerId()).CanPassDestructibles)
             return true;
 
         return abilitySystem != null &&
@@ -460,5 +463,17 @@ public class BlackLouieDashPushAbility : MonoBehaviour, IPlayerAbility
     {
         enabledAbility = false;
         Cancel();
+    }
+
+    int GetPlayerId()
+    {
+        if (TryGetComponent<PlayerIdentity>(out var id) && id != null)
+            return Mathf.Clamp(id.playerId, 1, 4);
+
+        var parentId = GetComponentInParent<PlayerIdentity>(true);
+        if (parentId != null)
+            return Mathf.Clamp(parentId.playerId, 1, 4);
+
+        return 1;
     }
 }

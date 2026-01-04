@@ -100,7 +100,8 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
             return;
 
         var input = PlayerInputManager.Instance;
-        if (input == null || !input.GetDown(PlayerAction.ActionC))
+        int pid = movement.PlayerId;
+        if (input == null || !input.GetDown(pid, PlayerAction.ActionC))
             return;
 
         nextAllowedTime = Time.time + jumpCooldownSeconds;
@@ -370,7 +371,7 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
         if (abilitySystem != null)
             return abilitySystem.IsEnabled(DestructiblePassAbility.AbilityId);
 
-        return PlayerPersistentStats.CanPassDestructibles;
+        return PlayerPersistentStats.Get(GetPlayerId()).CanPassDestructibles;
     }
 
     bool CanLandOnBombs()
@@ -378,7 +379,7 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
         if (abilitySystem != null)
             return abilitySystem.IsEnabled(BombPassAbility.AbilityId);
 
-        return PlayerPersistentStats.CanPassBombs;
+        return PlayerPersistentStats.Get(GetPlayerId()).CanPassBombs;
     }
 
     bool HasBombAt(Vector3 worldCenter)
@@ -465,5 +466,17 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
     {
         enabledAbility = false;
         CancelJump();
+    }
+
+    int GetPlayerId()
+    {
+        if (TryGetComponent<PlayerIdentity>(out var id) && id != null)
+            return Mathf.Clamp(id.playerId, 1, 4);
+
+        var parentId = GetComponentInParent<PlayerIdentity>(true);
+        if (parentId != null)
+            return Mathf.Clamp(parentId.playerId, 1, 4);
+
+        return 1;
     }
 }

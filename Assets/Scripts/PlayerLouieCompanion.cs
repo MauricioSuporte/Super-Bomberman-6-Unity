@@ -76,7 +76,7 @@ public class PlayerLouieCompanion : MonoBehaviour
 
     void Update()
     {
-        punchOwned = PlayerPersistentStats.CanPunchBombs;
+        punchOwned = PlayerPersistentStats.Get(GetPlayerId()).CanPunchBombs;
 
         bool shouldLock =
             MechaBossSequence.MechaIntroRunning ||
@@ -898,5 +898,17 @@ public class PlayerLouieCompanion : MonoBehaviour
             movement.SetAllSpritesVisible(visible);
 
         SetMountedLouieVisible(visible);
+    }
+
+    int GetPlayerId()
+    {
+        if (TryGetComponent<PlayerIdentity>(out var id) && id != null)
+            return Mathf.Clamp(id.playerId, 1, 4);
+
+        var parentId = GetComponentInParent<PlayerIdentity>(true);
+        if (parentId != null)
+            return Mathf.Clamp(parentId.playerId, 1, 4);
+
+        return 1;
     }
 }

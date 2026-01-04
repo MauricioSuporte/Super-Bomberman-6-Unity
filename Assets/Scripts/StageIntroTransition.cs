@@ -45,8 +45,8 @@ public class StageIntroTransition : MonoBehaviour
     static bool hasPlayedLogoIntro;
     static bool skipTitleNextRound;
 
-    MovementController[] movementControllers;
-    BombController[] bombControllers;
+    MovementController[] movementControllers = new MovementController[0];
+    BombController[] bombControllers = new BombController[0];
 
     public static void SkipTitleScreenOnNextLoad()
     {
@@ -84,21 +84,16 @@ public class StageIntroTransition : MonoBehaviour
         if (stageLabel != null)
             stageLabel.gameObject.SetActive(false);
 
-        movementControllers = Object.FindObjectsByType<MovementController>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
-        bombControllers = Object.FindObjectsByType<BombController>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
-
-        foreach (var m in movementControllers) if (m) m.enabled = false;
-        foreach (var b in bombControllers) if (b) b.enabled = false;
-
-        for (int i = 0; i < movementControllers.Length; i++)
-            if (movementControllers[i] != null)
-                movementControllers[i].SetAllSpritesVisible(false);
-
         GamePauseController.ClearPauseFlag();
         Time.timeScale = 0f;
 
         if (gameplayRoot != null)
             gameplayRoot.SetActive(false);
+
+        // IMPORTANTE: buscar incluindo inativos (porque gameplayRoot pode estar desativado)
+        RefreshControllers(includeInactive: true);
+
+        DisableGameplayControllersAndHideSprites();
 
         if (fadeImage != null)
         {
@@ -125,6 +120,34 @@ public class StageIntroTransition : MonoBehaviour
             StartCoroutine(FullIntroSequence());
         else
             StartCoroutine(StageIntroOnlySequence());
+    }
+
+    void RefreshControllers(bool includeInactive)
+    {
+        var inactive = includeInactive ? FindObjectsInactive.Include : FindObjectsInactive.Exclude;
+
+        movementControllers = Object.FindObjectsByType<MovementController>(inactive, FindObjectsSortMode.None);
+        bombControllers = Object.FindObjectsByType<BombController>(inactive, FindObjectsSortMode.None);
+    }
+
+    void DisableGameplayControllersAndHideSprites()
+    {
+        for (int i = 0; i < movementControllers.Length; i++)
+        {
+            var m = movementControllers[i];
+            if (m == null) continue;
+
+            m.enabled = false;
+            m.SetAllSpritesVisible(false);
+        }
+
+        for (int i = 0; i < bombControllers.Length; i++)
+        {
+            var b = bombControllers[i];
+            if (b == null) continue;
+
+            b.enabled = false;
+        }
     }
 
     bool IsStage17()
@@ -184,10 +207,21 @@ public class StageIntroTransition : MonoBehaviour
             for (int p = 1; p <= count; p++)
             {
                 var chosen = skinSelectMenu.GetSelectedSkin(p);
+
+                Debug.Log($"[SKIN][TITLE->SAVE] P{p} chosen={chosen} (before persistent={PlayerPersistentStats.Get(p).Skin})");
+
                 PlayerPersistentStats.Get(p).Skin = chosen;
+
+                Debug.Log($"[SKIN][TITLE->SAVE] P{p} persistent now={PlayerPersistentStats.Get(p).Skin}");
+
                 if (chosen != BomberSkin.Golden)
+                {
                     PlayerPersistentStats.SaveSelectedSkin(p);
+                    Debug.Log($"[SKIN][TITLE->PREFS] P{p} saved key=P{p}_SKIN_SELECTED val={(int)PlayerPersistentStats.Get(p).Skin}");
+                }
             }
+
+            PlayerPrefs.Save();
 
             SkipTitleScreenOnNextLoad();
 
@@ -209,9 +243,13 @@ public class StageIntroTransition : MonoBehaviour
         if (gameplayRoot != null)
             gameplayRoot.SetActive(true);
 
-        ApplyPersistentPlayerSkin();
+        yield return null; // deixa spawners rodarem (Start) antes de resync/aplicar skin
 
-        yield return null;
+        // Re-scan agora que gameplayRoot pode ter sido ativado e players spawnados
+        RefreshControllers(includeInactive: false);
+
+        ResyncSpawnedPlayersFromIdentity();
+        ApplyPersistentPlayerSkin();
 
         for (int i = 0; i < movementControllers.Length; i++)
         {
@@ -302,6 +340,9 @@ public class StageIntroTransition : MonoBehaviour
 
     void EnableGameplay()
     {
+        // Segurança: se algum player entrou depois, tenta pegar mais uma vez.
+        RefreshControllers(includeInactive: false);
+
         foreach (var m in movementControllers) if (m) m.enabled = true;
         foreach (var b in bombControllers) if (b) b.enabled = true;
         IntroRunning = false;
@@ -349,7 +390,7 @@ public class StageIntroTransition : MonoBehaviour
         GamePauseController.ClearPauseFlag();
         Time.timeScale = 1f;
 
-        PlayerPersistentStats.ResetToDefaults();
+        PlayerPersistentStats.ResetToDefaultsAll();
 
         hasPlayedLogoIntro = true;
         skipTitleNextRound = false;
@@ -375,10 +416,37 @@ public class StageIntroTransition : MonoBehaviour
             int playerId = Mathf.Clamp(id.playerId, 1, 4);
             var state = PlayerPersistentStats.Get(playerId);
 
+            Debug.Log($"[SKIN][APPLY-PERSISTENT] Identity={id.name} pid={playerId} stateSkin={state.Skin}");
+
             var skins = id.GetComponentsInChildren<PlayerBomberSkinController>(true);
             for (int s = 0; s < skins.Length; s++)
                 if (skins[s] != null)
                     skins[s].Apply(state.Skin);
+        }
+    }
+
+    void ResyncSpawnedPlayersFromIdentity()
+    {
+        var ids = Object.FindObjectsByType<PlayerIdentity>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+
+        for (int i = 0; i < ids.Length; i++)
+        {
+            var id = ids[i];
+            if (id == null) continue;
+
+            int playerId = Mathf.Clamp(id.playerId, 1, 4);
+
+            if (!id.TryGetComponent<MovementController>(out var move))
+                move = id.GetComponentInChildren<MovementController>(true);
+
+            if (!id.TryGetComponent<BombController>(out var bomb))
+                bomb = id.GetComponentInChildren<BombController>(true);
+
+            if (move != null)
+                move.SetPlayerId(playerId);
+
+            if (bomb != null)
+                bomb.SetPlayerId(playerId);
         }
     }
 
@@ -440,7 +508,7 @@ public class StageIntroTransition : MonoBehaviour
         if (GameMusicController.Instance != null)
             GameMusicController.Instance.StopMusic();
 
-        PlayerPersistentStats.ResetToDefaults();
+        PlayerPersistentStats.ResetToDefaultsAll();
 
         if (titleScreen != null)
             titleScreen.SetIgnoreStartKeyUntilRelease();

@@ -97,7 +97,8 @@ public class YellowLouieDestructibleKickAbility : MonoBehaviour, IPlayerAbility
             return;
 
         var input = PlayerInputManager.Instance;
-        if (input == null || !input.GetDown(PlayerAction.ActionC))
+        int pid = movement.PlayerId;
+        if (input == null || !input.GetDown(pid, PlayerAction.ActionC))
             return;
 
         nextAllowedKickTime = Time.time + kickCooldownSeconds;

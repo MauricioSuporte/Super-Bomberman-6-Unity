@@ -81,7 +81,8 @@ public class RedLouiePunchStunAbility : MonoBehaviour, IPlayerAbility
             return;
 
         var input = PlayerInputManager.Instance;
-        if (input == null || !input.GetDown(PlayerAction.ActionC))
+        int pid = movement.PlayerId;
+        if (input == null || !input.GetDown(pid, PlayerAction.ActionC))
             return;
 
         if (routine != null)

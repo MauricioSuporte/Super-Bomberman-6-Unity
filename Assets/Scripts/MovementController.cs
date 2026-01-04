@@ -22,6 +22,10 @@ public class MovementController : MonoBehaviour, IKillable
     [SerializeField] private int speedInternal = PlayerPersistentStats.BaseSpeedNormal;
     public int SpeedInternal => speedInternal;
 
+    [Header("Player Id (only used if tagged Player)")]
+    [SerializeField, Range(1, 4)] private int playerId = 1;
+    public int PlayerId => playerId;
+
     [Header("Sprites")]
     public AnimatedSpriteRenderer spriteRendererUp;
     public AnimatedSpriteRenderer spriteRendererDown;
@@ -89,18 +93,40 @@ public class MovementController : MonoBehaviour, IKillable
     private const float CenterEpsilon = 0.01f;
     private float SlideDeadZone => tileSize * 0.25f;
 
+    public void SetPlayerId(int id)
+    {
+        playerId = Mathf.Clamp(id, 1, 4);
+
+        if (!CompareTag("Player"))
+            return;
+
+        if (bombController != null)
+            bombController.SetPlayerId(playerId);
+
+        var skin = GetComponentInChildren<PlayerBomberSkinController>(true);
+        if (skin != null)
+            skin.Apply(PlayerPersistentStats.Get(playerId).Skin);
+
+        SyncMountedFromPersistent();
+        ApplySpeedInternal(speedInternal);
+        EnableExclusiveFromState();
+    }
+
     protected virtual void Awake()
     {
         Rigidbody = GetComponent<Rigidbody2D>();
         stunReceiver = GetComponent<StunReceiver>();
         bombController = GetComponent<BombController>();
 
+        if (bombController != null)
+            bombController.SetPlayerId(playerId);
+
         abilitySystem = GetComponent<AbilitySystem>();
         if (abilitySystem == null)
             abilitySystem = gameObject.AddComponent<AbilitySystem>();
 
         if (CompareTag("Player"))
-            PlayerPersistentStats.LoadInto(this, bombController);
+            PlayerPersistentStats.LoadInto(playerId, this, bombController);
 
         SyncMountedFromPersistent();
 
@@ -129,8 +155,11 @@ public class MovementController : MonoBehaviour, IKillable
         hasInput = false;
         touchingHazards.Clear();
 
+        if (bombController != null)
+            bombController.SetPlayerId(playerId);
+
         if (CompareTag("Player"))
-            PlayerPersistentStats.LoadInto(this, bombController);
+            PlayerPersistentStats.LoadInto(playerId, this, bombController);
 
         SyncMountedFromPersistent();
         ApplySpeedInternal(speedInternal);
@@ -147,7 +176,9 @@ public class MovementController : MonoBehaviour, IKillable
         if (!CompareTag("Player"))
             return;
 
-        isMountedOnLouie = PlayerPersistentStats.MountedLouie != MountedLouieType.None;
+        var st = PlayerPersistentStats.Get(playerId);
+        isMountedOnLouie = st.MountedLouie != MountedLouieType.None;
+
         if (facingDirection == Vector2.zero)
             facingDirection = Vector2.down;
     }
@@ -224,15 +255,26 @@ public class MovementController : MonoBehaviour, IKillable
 
     protected virtual void HandleInput()
     {
-        var input = PlayerInputManager.Instance;
+        if (!CompareTag("Player"))
+        {
+            ApplyDirectionFromVector(Vector2.zero);
+            return;
+        }
 
-        if (input.Get(PlayerAction.MoveUp))
+        var input = PlayerInputManager.Instance;
+        if (input == null)
+        {
+            ApplyDirectionFromVector(Vector2.zero);
+            return;
+        }
+
+        if (input.Get(playerId, PlayerAction.MoveUp))
             ApplyDirectionFromVector(Vector2.up);
-        else if (input.Get(PlayerAction.MoveDown))
+        else if (input.Get(playerId, PlayerAction.MoveDown))
             ApplyDirectionFromVector(Vector2.down);
-        else if (input.Get(PlayerAction.MoveLeft))
+        else if (input.Get(playerId, PlayerAction.MoveLeft))
             ApplyDirectionFromVector(Vector2.left);
-        else if (input.Get(PlayerAction.MoveRight))
+        else if (input.Get(playerId, PlayerAction.MoveRight))
             ApplyDirectionFromVector(Vector2.right);
         else
             ApplyDirectionFromVector(Vector2.zero);
@@ -720,19 +762,21 @@ public class MovementController : MonoBehaviour, IKillable
 
         if (CompareTag("Player"))
         {
-            PlayerPersistentStats.Life = 1;
+            var st = PlayerPersistentStats.Get(playerId);
+
+            st.Life = 1;
 
             if (TryGetComponent<CharacterHealth>(out var health) && health != null)
                 health.life = 1;
 
-            PlayerPersistentStats.CanKickBombs = false;
-            PlayerPersistentStats.CanPunchBombs = false;
-            PlayerPersistentStats.HasPierceBombs = false;
-            PlayerPersistentStats.HasControlBombs = false;
-            PlayerPersistentStats.HasFullFire = false;
-            PlayerPersistentStats.CanPassBombs = false;
-            PlayerPersistentStats.CanPassDestructibles = false;
-            PlayerPersistentStats.MountedLouie = MountedLouieType.None;
+            st.CanKickBombs = false;
+            st.CanPunchBombs = false;
+            st.HasPierceBombs = false;
+            st.HasControlBombs = false;
+            st.HasFullFire = false;
+            st.CanPassBombs = false;
+            st.CanPassDestructibles = false;
+            st.MountedLouie = MountedLouieType.None;
         }
 
         if (bombController != null)

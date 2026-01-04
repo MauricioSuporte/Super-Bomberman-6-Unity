@@ -5,27 +5,18 @@ public class PlayerBomberSkinController : MonoBehaviour
 {
     [Header("Sprite Settings")]
     [SerializeField] private string spritesResourcesPath = "Sprites/Bombers/Bomberman";
-    [SerializeField] private bool applyOnEnable = true;
 
     readonly Dictionary<BomberSkin, Dictionary<string, Sprite>> skinMaps = new();
 
-    void OnEnable()
+    public void ApplyFromIdentity()
     {
-        if (!applyOnEnable)
+        var id = GetComponentInParent<PlayerIdentity>(true);
+        if (id == null || id.playerId <= 0)
             return;
 
-        ApplyCurrentSkin();
-    }
-
-    public void ApplyCurrentSkin()
-    {
-        int playerId = 1;
-
-        var id = GetComponentInParent<PlayerIdentity>(true);
-        if (id != null)
-            playerId = Mathf.Clamp(id.playerId, 1, 4);
-
+        int playerId = Mathf.Clamp(id.playerId, 1, 4);
         var skin = PlayerPersistentStats.Get(playerId).Skin;
+
         Apply(skin);
     }
 
@@ -37,6 +28,8 @@ public class PlayerBomberSkinController : MonoBehaviour
 
     public void Apply(BomberSkin skin)
     {
+        Debug.Log($"[SKIN] Applying {skin} on {gameObject.name}");
+
         EnsureCache(skin);
 
         if (!skinMaps.TryGetValue(skin, out var targetMap) || targetMap.Count == 0)

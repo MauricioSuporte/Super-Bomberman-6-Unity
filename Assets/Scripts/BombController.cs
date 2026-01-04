@@ -6,6 +6,10 @@ using UnityEngine.Tilemaps;
 [RequireComponent(typeof(MovementController))]
 public class BombController : MonoBehaviour
 {
+    [Header("Player Id (only used if tagged Player)")]
+    [SerializeField, Range(1, 4)] private int playerId = 1;
+    public int PlayerId => playerId;
+
     [Header("Input")]
     public bool useAIInput = false;
     private bool bombRequested;
@@ -52,6 +56,11 @@ public class BombController : MonoBehaviour
 
     private static AudioSource currentExplosionAudio;
 
+    public void SetPlayerId(int id)
+    {
+        playerId = Mathf.Clamp(id, 1, 4);
+    }
+
     private void OnEnable()
     {
         bombAmout = Mathf.Min(bombAmout, PlayerPersistentStats.MaxBombAmount);
@@ -77,16 +86,16 @@ public class BombController : MonoBehaviour
         if (GamePauseController.IsPaused)
             return;
 
-        if (!useAIInput)
+        if (!useAIInput && CompareTag("Player"))
         {
             var input = PlayerInputManager.Instance;
             if (input == null)
                 return;
 
-            if (bombsRemaining > 0 && input.GetDown(PlayerAction.ActionA))
+            if (bombsRemaining > 0 && input.GetDown(playerId, PlayerAction.ActionA))
                 PlaceBomb();
 
-            if (IsControlEnabled() && input.GetDown(PlayerAction.ActionB))
+            if (IsControlEnabled() && input.GetDown(playerId, PlayerAction.ActionB))
                 TryExplodeOldestControlledBomb();
         }
         else

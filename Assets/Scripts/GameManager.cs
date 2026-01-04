@@ -85,6 +85,8 @@ public class GameManager : MonoBehaviour
 
     void Start()
     {
+        PlayerPersistentStats.EnsureSessionBooted();
+
         CachePlayers();
 
         EnemiesAlive = FindObjectsByType<EnemyMovementController>(
@@ -144,6 +146,20 @@ public class GameManager : MonoBehaviour
         }
 
         return null;
+    }
+
+    int GetPlayerIdFromGO(GameObject go)
+    {
+        if (go == null) return 1;
+
+        if (go.TryGetComponent<PlayerIdentity>(out var id) && id != null)
+            return Mathf.Clamp(id.playerId, 1, 4);
+
+        var parentId = go.GetComponentInParent<PlayerIdentity>(true);
+        if (parentId != null)
+            return Mathf.Clamp(parentId.playerId, 1, 4);
+
+        return 1;
     }
 
     void ResolveStageTilemapsIfNeeded()
@@ -446,12 +462,14 @@ public class GameManager : MonoBehaviour
             if (primaryPlayer.TryGetComponent<AbilitySystem>(out var abilitySystem))
                 abilitySystem.Disable(InvincibleSuitAbility.AbilityId);
 
-            var bomb = primaryPlayer.GetComponent<BombController>();
-
-            if (bomb != null && primaryPlayer.CompareTag("Player"))
+            
+            if (primaryPlayer.TryGetComponent<BombController>(out var bomb))
             {
-                PlayerPersistentStats.BombAmount = Mathf.Min(bomb.bombAmout, PlayerPersistentStats.MaxBombAmount);
-                PlayerPersistentStats.ExplosionRadius = Mathf.Min(bomb.explosionRadius, PlayerPersistentStats.MaxExplosionRadius);
+                int playerId = GetPlayerIdFromGO(primaryPlayer);
+
+                var state = PlayerPersistentStats.Get(playerId);
+                state.BombAmount = Mathf.Min(bomb.bombAmout, PlayerPersistentStats.MaxBombAmount);
+                state.ExplosionRadius = Mathf.Min(bomb.explosionRadius, PlayerPersistentStats.MaxExplosionRadius);
             }
         }
 

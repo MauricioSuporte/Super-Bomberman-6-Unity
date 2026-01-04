@@ -82,7 +82,8 @@ public class GreenLouieDashAbility : MonoBehaviour, IPlayerAbility
         if (input == null)
             return;
 
-        if (!input.GetDown(PlayerAction.ActionC))
+        int pid = movement.PlayerId;
+        if (!input.GetDown(pid, PlayerAction.ActionC))
             return;
 
         if (routine != null)
@@ -177,7 +178,7 @@ public class GreenLouieDashAbility : MonoBehaviour, IPlayerAbility
 
     bool HasBombPassEnabled()
     {
-        if (PlayerPersistentStats.CanPassBombs)
+        if (PlayerPersistentStats.Get(GetPlayerId()).CanPassBombs)
             return true;
 
         if (!TryGetComponent<AbilitySystem>(out var abilitySystem) || abilitySystem == null)
@@ -234,5 +235,17 @@ public class GreenLouieDashAbility : MonoBehaviour, IPlayerAbility
     {
         enabledAbility = false;
         CancelDash();
+    }
+
+    int GetPlayerId()
+    {
+        if (TryGetComponent<PlayerIdentity>(out var id) && id != null)
+            return Mathf.Clamp(id.playerId, 1, 4);
+
+        var parentId = GetComponentInParent<PlayerIdentity>(true);
+        if (parentId != null)
+            return Mathf.Clamp(parentId.playerId, 1, 4);
+
+        return 1;
     }
 }

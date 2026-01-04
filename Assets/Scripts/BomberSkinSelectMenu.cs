@@ -482,6 +482,10 @@ public class BomberSkinSelectMenu : MonoBehaviour
         ps.selectedIndex = slot;
         ps.confirmed = true;
 
+        PlayerPersistentStats.Get(playerId).Skin = skin;
+        PlayerPersistentStats.SaveSelectedSkin(playerId);
+        Debug.Log($"[SKIN][MENU->SAVE] P{playerId} skin={skin} val={(int)skin}");
+
         // (2) Ao selecionar, dispara end stage para ESTE slot
         StartEndStageForSlot(slot, skin);
 

@@ -58,7 +58,8 @@ public class PurpleLouieBombLineAbility : MonoBehaviour, IPlayerAbility
             lastFacingDir = moveDir;
 
         var input = PlayerInputManager.Instance;
-        if (input == null || !input.GetDown(PlayerAction.ActionC))
+        int pid = movement.PlayerId;
+        if (input == null || !input.GetDown(pid, PlayerAction.ActionC))
             return;
 
         if (bomb == null)

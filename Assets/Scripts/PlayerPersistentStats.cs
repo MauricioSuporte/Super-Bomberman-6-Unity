@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 public static class PlayerPersistentStats
 {
@@ -31,7 +31,7 @@ public static class PlayerPersistentStats
         public bool HasControlBombs = false;
         public bool HasFullFire = false;
 
-        public MountedLouieType MountedLouie = MountedLouieType.Green;
+        public MountedLouieType MountedLouie = MountedLouieType.None;
         public BomberSkin Skin = BomberSkin.White;
     }
 
@@ -57,17 +57,26 @@ public static class PlayerPersistentStats
     public static void EnsureSessionBooted()
     {
         if (sessionBooted)
+        {
+            Debug.Log($"[SKIN][BOOT] Already booted. P1={Get(1).Skin} P2={Get(2).Skin} P3={Get(3).Skin} P4={Get(4).Skin}");
             return;
+        }
+
+        Debug.Log("[SKIN][BOOT] Booting session...");
 
         goldenUnlockedSession = false;
 
         for (int i = 1; i <= 4; i++)
         {
+            Debug.Log($"[SKIN][BOOT] Before load P{i}={Get(i).Skin}");
             LoadSelectedSkinInternal(i);
+            Debug.Log($"[SKIN][BOOT] After load P{i}={Get(i).Skin} (hasKey={PlayerPrefs.HasKey(PrefSelectedSkin(i))})");
             ClampSelectedSkinIfLocked(i);
+            Debug.Log($"[SKIN][BOOT] After clamp P{i}={Get(i).Skin} (goldenUnlocked={goldenUnlockedSession})");
         }
 
         sessionBooted = true;
+        Debug.Log($"[SKIN][BOOT] Done. P1={Get(1).Skin} P2={Get(2).Skin} P3={Get(3).Skin} P4={Get(4).Skin}");
     }
 
     public static void BootSession()
@@ -99,7 +108,6 @@ public static class PlayerPersistentStats
             return;
 
         PlayerPrefs.SetInt(PrefSelectedSkin(playerId), (int)s.Skin);
-        PlayerPrefs.Save();
     }
 
     static void LoadSelectedSkinInternal(int playerId)
@@ -107,13 +115,22 @@ public static class PlayerPersistentStats
         var s = Get(playerId);
         var key = PrefSelectedSkin(playerId);
 
-        if (PlayerPrefs.HasKey(key))
-            s.Skin = (BomberSkin)PlayerPrefs.GetInt(key);
-        else
-            s.Skin = BomberSkin.White;
+        if (!PlayerPrefs.HasKey(key))
+        {
+            Debug.Log($"[SKIN][PREFS-LOAD] P{playerId} no key {key}. Keeping={s.Skin}");
+            return;
+        }
+
+        int raw = PlayerPrefs.GetInt(key);
+        Debug.Log($"[SKIN][PREFS-LOAD] P{playerId} key={key} raw={raw}");
+
+        s.Skin = (BomberSkin)raw;
 
         if (s.Skin == BomberSkin.Golden)
+        {
+            Debug.Log($"[SKIN][PREFS-LOAD] P{playerId} loaded GOLDEN -> forcing WHITE (because golden not persisted)");
             s.Skin = BomberSkin.White;
+        }
     }
 
     public static void LoadSelectedSkin(int playerId)
@@ -215,6 +232,7 @@ public static class PlayerPersistentStats
 
         if (bomb != null)
         {
+            bomb.SetPlayerId(playerId);
             bomb.bombAmout = s.BombAmount;
             bomb.explosionRadius = s.ExplosionRadius;
         }
@@ -297,8 +315,7 @@ public static class PlayerPersistentStats
             if (movement.TryGetComponent<CharacterHealth>(out var health))
                 s.Life = Mathf.Max(1, health.life);
 
-            AbilitySystem abilitySystem = null;
-            if (movement.TryGetComponent(out abilitySystem) && abilitySystem != null)
+            if (movement.TryGetComponent(out AbilitySystem abilitySystem) && abilitySystem != null)
                 abilitySystem.RebuildCache();
 
             var kick = abilitySystem != null ? abilitySystem.Get<BombKickAbility>(BombKickAbility.AbilityId) : null;
@@ -337,25 +354,4 @@ public static class PlayerPersistentStats
             s.ExplosionRadius = Mathf.Min(bomb.explosionRadius, MaxExplosionRadius);
         }
     }
-
-    public static int Life { get => Get(1).Life; set => Get(1).Life = value; }
-    public static int BombAmount { get => Get(1).BombAmount; set => Get(1).BombAmount = value; }
-    public static int ExplosionRadius { get => Get(1).ExplosionRadius; set => Get(1).ExplosionRadius = value; }
-    public static int SpeedInternal { get => Get(1).SpeedInternal; set => Get(1).SpeedInternal = value; }
-
-    public static bool CanKickBombs { get => Get(1).CanKickBombs; set => Get(1).CanKickBombs = value; }
-    public static bool CanPunchBombs { get => Get(1).CanPunchBombs; set => Get(1).CanPunchBombs = value; }
-    public static bool CanPassBombs { get => Get(1).CanPassBombs; set => Get(1).CanPassBombs = value; }
-    public static bool CanPassDestructibles { get => Get(1).CanPassDestructibles; set => Get(1).CanPassDestructibles = value; }
-    public static bool HasPierceBombs { get => Get(1).HasPierceBombs; set => Get(1).HasPierceBombs = value; }
-    public static bool HasControlBombs { get => Get(1).HasControlBombs; set => Get(1).HasControlBombs = value; }
-    public static bool HasFullFire { get => Get(1).HasFullFire; set => Get(1).HasFullFire = value; }
-
-    public static MountedLouieType MountedLouie { get => Get(1).MountedLouie; set => Get(1).MountedLouie = value; }
-    public static BomberSkin Skin { get => Get(1).Skin; set => Get(1).Skin = value; }
-
-    public static void SaveSelectedSkin() => SaveSelectedSkin(1);
-    public static void LoadSelectedSkin() => LoadSelectedSkin(1);
-    public static void ClampSelectedSkinIfLocked() => ClampSelectedSkinIfLocked(1);
-    public static void ResetToDefaults() => ResetToDefaults(1);
 }

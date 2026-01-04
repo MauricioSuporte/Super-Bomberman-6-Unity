@@ -1260,6 +1260,7 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 0
   speedInternal: 224
+  playerId: 1
   spriteRendererUp: {fileID: 1091894747361695229}
   spriteRendererDown: {fileID: 3988283045612322344}
   spriteRendererLeft: {fileID: 2494865831759049152}
@@ -1290,6 +1291,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 259dc96ea2e08cc4fa2829ffac0aef71, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  playerId: 1
   useAIInput: 0
   bombPrefab: {fileID: 147425199346742615, guid: b141cb2d60d85504dad495e1a188c108, type: 3}
   pierceBombPrefab: {fileID: 147425199346742615, guid: d594648b2cf33354cb5de0fb314588c7, type: 3}
@@ -1521,7 +1523,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerBomberSkinController
   spritesResourcesPath: Sprites/Bombers/Bomberman
-  applyOnEnable: 1
+  applyOnEnable: 0
 --- !u!114 &2475403701411458639
 MonoBehaviour:
   m_ObjectHideFlags: 0

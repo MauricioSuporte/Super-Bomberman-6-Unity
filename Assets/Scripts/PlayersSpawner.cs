@@ -1,5 +1,4 @@
 ﻿using UnityEngine;
-using UnityEngine.SceneManagement;
 
 public class PlayersSpawner : MonoBehaviour
 {
@@ -43,6 +42,8 @@ public class PlayersSpawner : MonoBehaviour
         if (GameSession.Instance != null)
             count = GameSession.Instance.ActivePlayerCount;
 
+        PlayerPersistentStats.EnsureSessionBooted();
+
         Vector2[] preset = isBossStage ? BossStagePositions : NormalStagePositions;
 
         for (int i = 0; i < count; i++)
@@ -54,7 +55,24 @@ public class PlayersSpawner : MonoBehaviour
             if (!go.TryGetComponent<PlayerIdentity>(out var id))
                 id = go.AddComponent<PlayerIdentity>();
 
-            id.playerId = i + 1;
+            int playerId = i + 1;
+            id.playerId = playerId;
+
+            var move = go.GetComponent<MovementController>();
+            var bomb = go.GetComponent<BombController>();
+
+            if (move != null)
+                move.SetPlayerId(playerId);
+
+            if (bomb != null)
+                bomb.SetPlayerId(playerId);
+
+            Debug.Log($"Spawn P{playerId} persistent skin = {PlayerPersistentStats.Get(playerId).Skin}");
+
+            var skins = go.GetComponentsInChildren<PlayerBomberSkinController>(true);
+            for (int s = 0; s < skins.Length; s++)
+                if (skins[s] != null)
+                    skins[s].ApplyFromIdentity();
         }
     }
 

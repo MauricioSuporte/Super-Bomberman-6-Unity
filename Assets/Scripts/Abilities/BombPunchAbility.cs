@@ -104,7 +104,13 @@ public class BombPunchAbility : MonoBehaviour, IPlayerAbility
         if (moveDir != Vector2.zero)
             lastFacingDir = moveDir;
 
-        if (!PlayerInputManager.Instance.GetDown(PlayerAction.ActionC))
+        var input = PlayerInputManager.Instance;
+        if (input == null)
+            return;
+
+        int pid = movement.PlayerId;
+
+        if (!input.GetDown(pid, PlayerAction.ActionC))
             return;
 
         Vector2 dir = lastFacingDir;

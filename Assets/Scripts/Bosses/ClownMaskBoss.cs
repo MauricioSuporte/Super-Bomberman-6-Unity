@@ -1002,7 +1002,10 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
         if (comp.HasMountedLouie())
             return;
 
-        switch (PlayerPersistentStats.MountedLouie)
+        int playerId = GetPlayerIdFromGO(player.gameObject);
+        var state = PlayerPersistentStats.Get(playerId);
+
+        switch (state.MountedLouie)
         {
             case MountedLouieType.Blue: comp.RestoreMountedBlueLouie(); break;
             case MountedLouieType.Black: comp.RestoreMountedBlackLouie(); break;
@@ -1133,5 +1136,19 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
             a.idle = false;
             a.loop = true;
         }
+    }
+
+    int GetPlayerIdFromGO(GameObject go)
+    {
+        if (go == null) return 1;
+
+        if (go.TryGetComponent<PlayerIdentity>(out var id) && id != null)
+            return Mathf.Clamp(id.playerId, 1, 4);
+
+        var parentId = go.GetComponentInParent<PlayerIdentity>(true);
+        if (parentId != null)
+            return Mathf.Clamp(parentId.playerId, 1, 4);
+
+        return 1;
     }
 }
