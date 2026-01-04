@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -231,7 +231,10 @@ public class GamePauseController : MonoBehaviour
         if (wait > 0f)
             yield return new WaitForSecondsRealtime(wait);
 
-        ForceUnpause();
+        if (GameMusicController.Instance != null)
+            GameMusicController.Instance.StopMusic();
+
+        ForceUnpause(resumeMusic: false);
 
         exitingToTitle = false;
         confirmReturn = false;
@@ -303,10 +306,15 @@ public class GamePauseController : MonoBehaviour
 
     public static void ForceUnpause()
     {
+        ForceUnpause(resumeMusic: true);
+    }
+
+    public static void ForceUnpause(bool resumeMusic)
+    {
         IsPaused = false;
         Time.timeScale = 1f;
 
-        if (GameMusicController.Instance != null)
+        if (resumeMusic && GameMusicController.Instance != null)
             GameMusicController.Instance.ResumeMusic();
 
         if (StageIntroTransition.Instance != null && StageIntroTransition.Instance.stageLabel != null)

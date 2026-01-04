@@ -59,6 +59,7 @@ public class GameMusicController : MonoBehaviour
             return;
 
         audioSource.Stop();
+        audioSource.clip = null;
     }
 
     public void PauseMusic()
