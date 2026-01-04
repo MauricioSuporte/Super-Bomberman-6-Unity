@@ -1307,7 +1307,7 @@ MonoBehaviour:
   groundTiles: {fileID: 0}
   stageBoundsTiles: {fileID: 0}
   destructibleTiles: {fileID: 0}
-  destructiblePrefab: {fileID: 3440613785117735154, guid: 227477c28434b21439475c6f07347eda, type: 3}
+  destructiblePrefab: {fileID: 0}
   itemLayerMask:
     serializedVersion: 2
     m_Bits: 512
@@ -1523,7 +1523,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerBomberSkinController
   spritesResourcesPath: Sprites/Bombers/Bomberman
-  applyOnEnable: 0
 --- !u!114 &2475403701411458639
 MonoBehaviour:
   m_ObjectHideFlags: 0

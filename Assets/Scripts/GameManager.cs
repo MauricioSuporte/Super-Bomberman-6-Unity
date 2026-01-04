@@ -44,6 +44,9 @@ public class GameManager : MonoBehaviour
     [Header("Stage Flow")]
     public string nextStageSceneName;
 
+    [Header("Stage Prefabs (Optional on Boss Stages)")]
+    public Destructible destructiblePrefab;
+
     [Header("Ground")]
     public Tilemap groundTilemap;
     public TileBase groundTile;
@@ -100,6 +103,21 @@ public class GameManager : MonoBehaviour
 
         SetupHiddenObjects();
         ApplyDestructibleShadows();
+    }
+
+    public bool HasDestructiblesInStage()
+    {
+        if (destructibleTilemap == null)
+            return false;
+
+        var bounds = destructibleTilemap.cellBounds;
+        foreach (var pos in bounds.allPositionsWithin)
+        {
+            if (destructibleTilemap.GetTile(pos) != null)
+                return true;
+        }
+
+        return false;
     }
 
     void CachePlayers()
@@ -235,32 +253,8 @@ public class GameManager : MonoBehaviour
 
     void SetupHiddenObjects()
     {
-        if (destructibleTilemap == null)
-            return;
-
-        var bounds = destructibleTilemap.cellBounds;
+        destroyedDestructibleBlocks = 0;
         totalDestructibleBlocks = 0;
-
-        foreach (var pos in bounds.allPositionsWithin)
-        {
-            if (destructibleTilemap.GetTile(pos) != null)
-                totalDestructibleBlocks++;
-        }
-
-        if (totalDestructibleBlocks <= 0)
-            return;
-
-        var indices = new List<int>();
-        for (int i = 1; i <= totalDestructibleBlocks; i++)
-            indices.Add(i);
-
-        for (int i = indices.Count - 1; i > 0; i--)
-        {
-            int j = UnityEngine.Random.Range(0, i + 1);
-            (indices[j], indices[i]) = (indices[i], indices[j]);
-        }
-
-        int cursor = 0;
 
         portalSpawnOrder = -1;
         extraBombSpawnOrder = -1;
@@ -282,6 +276,32 @@ public class GameManager : MonoBehaviour
         yellowLouieEggSpawnOrder = -1;
         pinkLouieEggSpawnOrder = -1;
         redLouieEggSpawnOrder = -1;
+
+        if (destructibleTilemap == null)
+            return;
+
+        var bounds = destructibleTilemap.cellBounds;
+
+        foreach (var pos in bounds.allPositionsWithin)
+        {
+            if (destructibleTilemap.GetTile(pos) != null)
+                totalDestructibleBlocks++;
+        }
+
+        if (totalDestructibleBlocks <= 0)
+            return;
+
+        var indices = new List<int>();
+        for (int i = 1; i <= totalDestructibleBlocks; i++)
+            indices.Add(i);
+
+        for (int i = indices.Count - 1; i > 0; i--)
+        {
+            int j = UnityEngine.Random.Range(0, i + 1);
+            (indices[j], indices[i]) = (indices[i], indices[j]);
+        }
+
+        int cursor = 0;
 
         if (endStagePortalPrefab != null && cursor < indices.Count)
             portalSpawnOrder = indices[cursor++];
@@ -478,7 +498,6 @@ public class GameManager : MonoBehaviour
             if (primaryPlayer.TryGetComponent<AbilitySystem>(out var abilitySystem))
                 abilitySystem.Disable(InvincibleSuitAbility.AbilityId);
 
-            
             if (primaryPlayer.TryGetComponent<BombController>(out var bomb))
             {
                 int playerId = GetPlayerIdFromGO(primaryPlayer);

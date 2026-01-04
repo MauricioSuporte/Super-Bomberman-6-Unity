@@ -39,7 +39,7 @@ public class BombController : MonoBehaviour
     public Tilemap groundTiles;
     public Tilemap stageBoundsTiles;
 
-    [Header("Destructible")]
+    [Header("Destructible (resolved from GameManager)")]
     public Tilemap destructibleTiles;
     public Destructible destructiblePrefab;
 
@@ -56,9 +56,21 @@ public class BombController : MonoBehaviour
 
     private static AudioSource currentExplosionAudio;
 
+    private GameManager _gm;
+
     public void SetPlayerId(int id)
     {
         playerId = Mathf.Clamp(id, 1, 4);
+    }
+
+    private void Awake()
+    {
+        ResolveTilemaps();
+    }
+
+    private void Start()
+    {
+        ResolveTilemaps();
     }
 
     private void OnEnable()
@@ -111,21 +123,20 @@ public class BombController : MonoBehaviour
         }
     }
 
-    private void Awake()
-    {
-        ResolveTilemaps();
-    }
-
     private void ResolveTilemaps()
     {
-        var gm = FindFirstObjectByType<GameManager>();
-        if (gm != null)
+        if (_gm == null)
+            _gm = FindFirstObjectByType<GameManager>();
+
+        if (_gm != null)
         {
-            if (groundTiles == null) groundTiles = gm.groundTilemap;
-            if (destructibleTiles == null) destructibleTiles = gm.destructibleTilemap;
+            if (groundTiles == null) groundTiles = _gm.groundTilemap;
+            if (destructibleTiles == null) destructibleTiles = _gm.destructibleTilemap;
 
             if (stageBoundsTiles == null)
-                stageBoundsTiles = gm.indestructibleTilemap != null ? gm.indestructibleTilemap : gm.groundTilemap;
+                stageBoundsTiles = _gm.indestructibleTilemap != null ? _gm.indestructibleTilemap : _gm.groundTilemap;
+
+            destructiblePrefab = _gm.destructiblePrefab;
         }
 
         var tilemaps = FindObjectsByType<Tilemap>(FindObjectsSortMode.None);
@@ -452,26 +463,34 @@ public class BombController : MonoBehaviour
 
     private void ClearDestructible(Vector2 position)
     {
+        if (destructibleTiles == null)
+            return;
+
         Vector3Int cell = destructibleTiles.WorldToCell(position);
         TileBase tile = destructibleTiles.GetTile(cell);
 
         if (tile == null)
             return;
 
-        var gameManager = FindFirstObjectByType<GameManager>();
-        if (gameManager != null)
-            gameManager.OnDestructibleDestroyed(cell);
+        if (_gm == null)
+            _gm = FindFirstObjectByType<GameManager>();
+
+        if (_gm != null)
+            _gm.OnDestructibleDestroyed(cell);
 
         Transform parent = destructibleTiles != null ? destructibleTiles.transform : null;
 
-        if (parent != null)
-            Instantiate(destructiblePrefab, position, Quaternion.identity, parent);
-        else
-            Instantiate(destructiblePrefab, position, Quaternion.identity);
-
-        if (gameManager != null)
+        if (destructiblePrefab != null)
         {
-            GameObject spawnPrefab = gameManager.GetSpawnForDestroyedBlock();
+            if (parent != null)
+                Instantiate(destructiblePrefab, position, Quaternion.identity, parent);
+            else
+                Instantiate(destructiblePrefab, position, Quaternion.identity);
+        }
+
+        if (_gm != null)
+        {
+            GameObject spawnPrefab = _gm.GetSpawnForDestroyedBlock();
             if (spawnPrefab != null)
             {
                 float delay = GetDestructibleDestroyTime();
