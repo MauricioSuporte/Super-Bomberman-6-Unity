@@ -11,6 +11,10 @@ public class BossBomberAI : MonoBehaviour
     public float safeDistanceAfterBomb = 3f;
     public float bombChainCooldown = 0.3f;
 
+    [Header("Targeting")]
+    [Tooltip("How often (seconds) the boss re-evaluates the closest alive player.")]
+    public float retargetInterval = 0.25f;
+
     [Header("Kick Behavior")]
     [Range(0f, 1f)] public float opportunisticKickChance = 0.25f;
     public float opportunisticKickMaxBombAge = 0.9f;
@@ -22,6 +26,7 @@ public class BossBomberAI : MonoBehaviour
     BombKickAbility kickAbility;
 
     float thinkTimer;
+    float retargetTimer;
     Vector2 lastDirection = Vector2.zero;
     bool isEvading;
     float lastBombTime;
@@ -39,18 +44,22 @@ public class BossBomberAI : MonoBehaviour
 
     void Start()
     {
-        if (target == null)
-        {
-            var player = GameObject.FindWithTag("Player");
-            if (player != null)
-                target = player.transform;
-        }
+        // don't lock on P1; we'll dynamically pick the closest alive player
+        PickClosestAlivePlayer();
+        retargetTimer = retargetInterval;
     }
 
     void Update()
     {
         if (GamePauseController.IsPaused)
             return;
+
+        retargetTimer -= Time.deltaTime;
+        if (retargetTimer <= 0f)
+        {
+            PickClosestAlivePlayer();
+            retargetTimer = retargetInterval;
+        }
 
         thinkTimer -= Time.deltaTime;
         if (thinkTimer <= 0f)
@@ -60,6 +69,71 @@ public class BossBomberAI : MonoBehaviour
         }
 
         movement.SetAIDirection(lastDirection);
+    }
+
+    void PickClosestAlivePlayer()
+    {
+        // Prefer PlayerIdentity if present (your multiplayer setup)
+        var ids = FindObjectsByType<PlayerIdentity>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+
+        Vector2 myPos = RoundToTile(transform.position);
+
+        Transform best = null;
+        float bestDist = float.PositiveInfinity;
+
+        if (ids != null && ids.Length > 0)
+        {
+            for (int i = 0; i < ids.Length; i++)
+            {
+                var id = ids[i];
+                if (id == null) continue;
+
+                MovementController p = null;
+                if (!id.TryGetComponent<MovementController>(out p))
+                    p = id.GetComponentInChildren<MovementController>(true);
+
+                if (p == null) continue;
+                if (!p.isActiveAndEnabled || !p.gameObject.activeInHierarchy) continue;
+                if (p.isDead) continue;
+                if (!p.CompareTag("Player")) continue;
+
+                Vector2 pPos = RoundToTile(p.transform.position);
+
+                // Manhattan works nicely for grid games
+                float dist = Mathf.Abs(pPos.x - myPos.x) + Mathf.Abs(pPos.y - myPos.y);
+
+                if (dist < bestDist)
+                {
+                    bestDist = dist;
+                    best = p.transform;
+                }
+            }
+        }
+        else
+        {
+            // fallback: any MovementController tagged Player
+            var players = FindObjectsByType<MovementController>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+
+            for (int i = 0; i < players.Length; i++)
+            {
+                var p = players[i];
+                if (p == null) continue;
+                if (!p.CompareTag("Player")) continue;
+                if (!p.isActiveAndEnabled || !p.gameObject.activeInHierarchy) continue;
+                if (p.isDead) continue;
+
+                Vector2 pPos = RoundToTile(p.transform.position);
+                float dist = Mathf.Abs(pPos.x - myPos.x) + Mathf.Abs(pPos.y - myPos.y);
+
+                if (dist < bestDist)
+                {
+                    bestDist = dist;
+                    best = p.transform;
+                }
+            }
+        }
+
+        target = best; // can be null if everyone died
     }
 
     void Think()
@@ -98,6 +172,7 @@ public class BossBomberAI : MonoBehaviour
             isEvading = false;
         }
 
+        // If target is null (everyone dead), just wander safely
         if (target == null)
         {
             lastDirection = GetBestDirectionAvoidingExplosion(myPos);
@@ -173,20 +248,11 @@ public class BossBomberAI : MonoBehaviour
         for (int i = 0; i < bombs.Length; i++)
         {
             var b = bombs[i];
-            if (b == null)
-                continue;
-
-            if (b.HasExploded)
-                continue;
-
-            if (!b.CanBeKicked)
-                continue;
-
-            if (b.Owner == null)
-                continue;
-
-            if (!b.Owner.CompareTag("Player"))
-                continue;
+            if (b == null) continue;
+            if (b.HasExploded) continue;
+            if (!b.CanBeKicked) continue;
+            if (b.Owner == null) continue;
+            if (!b.Owner.CompareTag("Player")) continue;
 
             Vector2 bombPos = RoundToTile(b.GetLogicalPosition());
             Vector2 delta = bombPos - myPos;
@@ -242,21 +308,15 @@ public class BossBomberAI : MonoBehaviour
         for (int i = 0; i < bombs.Length; i++)
         {
             var b = bombs[i];
-            if (b == null)
-                continue;
+            if (b == null) continue;
 
             Vector2 bombPos = RoundToTile(b.GetLogicalPosition());
             Vector2 delta = bombPos - myPos;
             float manhattan = Mathf.Abs(delta.x) + Mathf.Abs(delta.y);
 
-            if (manhattan != 1f)
-                continue;
-
-            if (b.HasExploded)
-                continue;
-
-            if (!b.CanBeKicked)
-                continue;
+            if (manhattan != 1f) continue;
+            if (b.HasExploded) continue;
+            if (!b.CanBeKicked) continue;
 
             if (b.PlacedTime > bestTime)
             {
@@ -277,17 +337,10 @@ public class BossBomberAI : MonoBehaviour
 
     void TryPlaceBombChain(Vector2 myPos)
     {
-        if (bomb == null)
-            return;
-
-        if (bomb.BombsRemaining <= 0)
-            return;
-
-        if (Time.time - lastBombTime < bombChainCooldown)
-            return;
-
-        if (IsTileWithBomb(myPos))
-            return;
+        if (bomb == null) return;
+        if (bomb.BombsRemaining <= 0) return;
+        if (Time.time - lastBombTime < bombChainCooldown) return;
+        if (IsTileWithBomb(myPos)) return;
 
         bomb.RequestBombFromAI();
         lastBombTime = Time.time;
