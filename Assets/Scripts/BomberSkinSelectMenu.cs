@@ -82,6 +82,7 @@ public class BomberSkinSelectMenu : MonoBehaviour
     [FormerlySerializedAs("backToTitleSfxVolume")]
     [SerializeField, Range(0f, 1f)] float returnSfxVolume = 1f;
 
+    Coroutine fadeInCoroutine;
     public bool ReturnToTitleRequested { get; private set; }
 
     [Header("Skins (menu order)")]
@@ -312,10 +313,12 @@ public class BomberSkinSelectMenu : MonoBehaviour
 
         menuActive = true;
 
-        yield return FadeInRoutine();
+        if (fadeInCoroutine != null)
+            StopCoroutine(fadeInCoroutine);
+
+        fadeInCoroutine = StartCoroutine(FadeInRoutine());
 
         bool done = false;
-
         while (!done)
         {
             bool anyReturnToTitle = false;
@@ -427,6 +430,12 @@ public class BomberSkinSelectMenu : MonoBehaviour
             }
 
             yield return null;
+        }
+
+        if (fadeInCoroutine != null)
+        {
+            StopCoroutine(fadeInCoroutine);
+            fadeInCoroutine = null;
         }
 
         yield return FadeOutRoutine();
