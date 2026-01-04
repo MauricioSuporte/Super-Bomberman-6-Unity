@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.Controls;
@@ -210,57 +211,93 @@ public class PlayerInputManager : MonoBehaviour
         return TryGetKeyControl(k, kb, out var key) && key.wasPressedThisFrame;
     }
 
-    static bool TryGetKeyControl(KeyCode keyCode, Keyboard kb, out KeyControl key)
+    static bool TryGetKeyControl(KeyCode desiredKeyCode, Keyboard kb, out KeyControl key)
     {
         key = null;
+        if (kb == null) return false;
 
-        switch (keyCode)
+        foreach (var k in kb.allKeys)
         {
-            case KeyCode.W: key = kb.wKey; return true;
-            case KeyCode.A: key = kb.aKey; return true;
-            case KeyCode.S: key = kb.sKey; return true;
-            case KeyCode.D: key = kb.dKey; return true;
+            if (k == null) continue;
 
-            case KeyCode.R: key = kb.rKey; return true;
-            case KeyCode.F: key = kb.fKey; return true;
-            case KeyCode.G: key = kb.gKey; return true;
-            case KeyCode.H: key = kb.hKey; return true;
-
-            case KeyCode.I: key = kb.iKey; return true;
-            case KeyCode.J: key = kb.jKey; return true;
-            case KeyCode.K: key = kb.kKey; return true;
-            case KeyCode.L: key = kb.lKey; return true;
-
-            case KeyCode.Y: key = kb.yKey; return true;
-            case KeyCode.U: key = kb.uKey; return true;
-            case KeyCode.O: key = kb.oKey; return true;
-            case KeyCode.P: key = kb.pKey; return true;
-
-            case KeyCode.UpArrow: key = kb.upArrowKey; return true;
-            case KeyCode.DownArrow: key = kb.downArrowKey; return true;
-            case KeyCode.LeftArrow: key = kb.leftArrowKey; return true;
-            case KeyCode.RightArrow: key = kb.rightArrowKey; return true;
-
-            case KeyCode.RightShift: key = kb.rightShiftKey; return true;
-            case KeyCode.Comma: key = kb.commaKey; return true;
-            case KeyCode.Period: key = kb.periodKey; return true;
-            case KeyCode.Slash: key = kb.slashKey; return true;
-
-            case KeyCode.Keypad8: key = kb.numpad8Key; return true;
-            case KeyCode.Keypad4: key = kb.numpad4Key; return true;
-            case KeyCode.Keypad2: key = kb.numpad2Key; return true;
-            case KeyCode.Keypad6: key = kb.numpad6Key; return true;
-
-            case KeyCode.Keypad1: key = kb.numpad1Key; return true;
-            case KeyCode.Keypad3: key = kb.numpad3Key; return true;
-            case KeyCode.KeypadEnter: key = kb.numpadEnterKey; return true;
-
-            case KeyCode.Return: key = kb.enterKey; return true;
-            case KeyCode.Escape: key = kb.escapeKey; return true;
-
-            default:
-                return false;
+            if (TryMapInputSystemKeyToUnityKeyCode(k.keyCode, out var kc) && kc == desiredKeyCode)
+            {
+                key = k;
+                return true;
+            }
         }
+
+        return false;
+    }
+
+    static bool TryMapInputSystemKeyToUnityKeyCode(Key key, out KeyCode kc)
+    {
+        kc = KeyCode.None;
+        string name = key.ToString();
+
+        switch (key)
+        {
+            case Key.Enter: kc = KeyCode.Return; return true;
+            case Key.Escape: kc = KeyCode.Escape; return true;
+            case Key.Backspace: kc = KeyCode.Backspace; return true;
+            case Key.Space: kc = KeyCode.Space; return true;
+            case Key.Tab: kc = KeyCode.Tab; return true;
+        }
+
+        if (name.StartsWith("Digit", StringComparison.OrdinalIgnoreCase) && name.Length == 6)
+        {
+            char d = name[5];
+            if (d >= '0' && d <= '9')
+            {
+                kc = (KeyCode)Enum.Parse(typeof(KeyCode), "Alpha" + d);
+                return true;
+            }
+        }
+
+        if (name.StartsWith("Numpad", StringComparison.OrdinalIgnoreCase))
+        {
+            if (name.Length == 7)
+            {
+                char d = name[6];
+                if (d >= '0' && d <= '9')
+                {
+                    kc = (KeyCode)Enum.Parse(typeof(KeyCode), "Keypad" + d);
+                    return true;
+                }
+            }
+
+            if (name.Equals("NumpadEnter", StringComparison.OrdinalIgnoreCase)) { kc = KeyCode.KeypadEnter; return true; }
+            if (name.Equals("NumpadPlus", StringComparison.OrdinalIgnoreCase)) { kc = KeyCode.KeypadPlus; return true; }
+            if (name.Equals("NumpadMinus", StringComparison.OrdinalIgnoreCase)) { kc = KeyCode.KeypadMinus; return true; }
+            if (name.Equals("NumpadMultiply", StringComparison.OrdinalIgnoreCase)) { kc = KeyCode.KeypadMultiply; return true; }
+            if (name.Equals("NumpadDivide", StringComparison.OrdinalIgnoreCase)) { kc = KeyCode.KeypadDivide; return true; }
+            if (name.Equals("NumpadPeriod", StringComparison.OrdinalIgnoreCase)) { kc = KeyCode.KeypadPeriod; return true; }
+        }
+
+        if (name.Equals("LeftCtrl", StringComparison.OrdinalIgnoreCase)) { kc = KeyCode.LeftControl; return true; }
+        if (name.Equals("RightCtrl", StringComparison.OrdinalIgnoreCase)) { kc = KeyCode.RightControl; return true; }
+        if (name.Equals("LeftAlt", StringComparison.OrdinalIgnoreCase)) { kc = KeyCode.LeftAlt; return true; }
+        if (name.Equals("RightAlt", StringComparison.OrdinalIgnoreCase)) { kc = KeyCode.RightAlt; return true; }
+        if (name.Equals("Backquote", StringComparison.OrdinalIgnoreCase)) { kc = KeyCode.BackQuote; return true; }
+
+        if (name.Equals("Minus", StringComparison.OrdinalIgnoreCase)) { kc = KeyCode.Minus; return true; }
+        if (name.Equals("Equals", StringComparison.OrdinalIgnoreCase)) { kc = KeyCode.Equals; return true; }
+        if (name.Equals("LeftBracket", StringComparison.OrdinalIgnoreCase)) { kc = KeyCode.LeftBracket; return true; }
+        if (name.Equals("RightBracket", StringComparison.OrdinalIgnoreCase)) { kc = KeyCode.RightBracket; return true; }
+        if (name.Equals("Semicolon", StringComparison.OrdinalIgnoreCase)) { kc = KeyCode.Semicolon; return true; }
+        if (name.Equals("Quote", StringComparison.OrdinalIgnoreCase)) { kc = KeyCode.Quote; return true; }
+        if (name.Equals("Backslash", StringComparison.OrdinalIgnoreCase)) { kc = KeyCode.Backslash; return true; }
+        if (name.Equals("Slash", StringComparison.OrdinalIgnoreCase)) { kc = KeyCode.Slash; return true; }
+        if (name.Equals("Comma", StringComparison.OrdinalIgnoreCase)) { kc = KeyCode.Comma; return true; }
+        if (name.Equals("Period", StringComparison.OrdinalIgnoreCase)) { kc = KeyCode.Period; return true; }
+
+        if (Enum.TryParse(name, true, out KeyCode parsed))
+        {
+            kc = parsed;
+            return kc != KeyCode.None;
+        }
+
+        return false;
     }
 
     static bool ReadGamepadButtonHeld(PlayerInputProfile p, int btn)
