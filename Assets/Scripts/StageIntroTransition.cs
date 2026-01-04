@@ -136,6 +136,12 @@ public class StageIntroTransition : MonoBehaviour
             var m = movementControllers[i];
             if (m == null) continue;
 
+            m.SetInputLocked(true, true);
+            m.ApplyDirectionFromVector(Vector2.zero);
+
+            if (m.Rigidbody != null)
+                m.Rigidbody.linearVelocity = Vector2.zero;
+
             m.enabled = false;
             m.SetAllSpritesVisible(false);
         }
@@ -238,6 +244,9 @@ public class StageIntroTransition : MonoBehaviour
         if (spawner != null)
             spawner.SpawnNow();
 
+        RefreshControllers(includeInactive: false);
+        DisableGameplayControllersAndHideSprites();
+
         yield return null;
 
         RefreshControllers(includeInactive: false);
@@ -336,8 +345,17 @@ public class StageIntroTransition : MonoBehaviour
     {
         RefreshControllers(includeInactive: false);
 
-        foreach (var m in movementControllers) if (m) m.enabled = true;
-        foreach (var b in bombControllers) if (b) b.enabled = true;
+        foreach (var m in movementControllers)
+        {
+            if (!m) continue;
+
+            m.SetInputLocked(false, true);
+            m.enabled = true;
+        }
+
+        foreach (var b in bombControllers)
+            if (b) b.enabled = true;
+
         IntroRunning = false;
     }
 
