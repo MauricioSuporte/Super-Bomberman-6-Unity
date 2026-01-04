@@ -181,9 +181,9 @@ public class EndingScreenController : MonoBehaviour
 
         var input = PlayerInputManager.Instance;
 
-        if (input != null && input.Get(PlayerAction.Start))
+        if (input != null && input.AnyGet(PlayerAction.Start))
         {
-            while (input != null && input.Get(PlayerAction.Start))
+            while (input != null && input.AnyGet(PlayerAction.Start))
                 yield return _waitFrame;
 
             yield return null;
@@ -192,7 +192,7 @@ public class EndingScreenController : MonoBehaviour
         while (true)
         {
             input = PlayerInputManager.Instance;
-            if (input != null && input.GetDown(PlayerAction.Start))
+            if (input != null && input.AnyGetDown(PlayerAction.Start))
                 break;
 
             yield return null;
