@@ -9,6 +9,10 @@ public class ClownMaskMovement : MonoBehaviour
     [Range(0f, 1f)]
     public float chaseWeight = 0.7f;
 
+    [Header("Targeting (Multiplayer)")]
+    [Tooltip("How often (seconds) the boss re-evaluates the closest alive player.")]
+    public float retargetInterval = 0.25f;
+
     [Header("Parar ao sofrer dano")]
     public float defaultHitStopDuration = 0.8f;
 
@@ -24,15 +28,16 @@ public class ClownMaskMovement : MonoBehaviour
     float nextDecisionTime;
     float hitStopTimer;
 
+    float retargetTimer;
+
     void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
         rb.gravityScale = 0f;
         rb.constraints = RigidbodyConstraints2D.FreezeRotation;
 
-        var go = GameObject.FindGameObjectWithTag("Player");
-        if (go != null)
-            player = go.transform;
+        PickClosestAlivePlayer();
+        retargetTimer = retargetInterval;
     }
 
     void OnEnable()
@@ -40,6 +45,9 @@ public class ClownMaskMovement : MonoBehaviour
         nextDecisionTime = Time.time;
         hitStopTimer = 0f;
         currentDirection = Vector2.zero;
+
+        PickClosestAlivePlayer();
+        retargetTimer = retargetInterval;
     }
 
     void FixedUpdate()
@@ -48,6 +56,16 @@ public class ClownMaskMovement : MonoBehaviour
         {
             rb.linearVelocity = Vector2.zero;
             return;
+        }
+
+        if (retargetInterval > 0f)
+        {
+            retargetTimer -= Time.fixedDeltaTime;
+            if (retargetTimer <= 0f)
+            {
+                PickClosestAlivePlayer();
+                retargetTimer = retargetInterval;
+            }
         }
 
         if (hitStopTimer > 0f)
@@ -72,6 +90,62 @@ public class ClownMaskMovement : MonoBehaviour
             pos.y = Mathf.Clamp(pos.y, minBounds.y, maxBounds.y);
             rb.position = pos;
         }
+    }
+
+    void PickClosestAlivePlayer()
+    {
+        Vector2 myPos = rb.position;
+
+        Transform best = null;
+        float bestDist = float.PositiveInfinity;
+
+        var ids = FindObjectsByType<PlayerIdentity>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+
+        if (ids != null && ids.Length > 0)
+        {
+            for (int i = 0; i < ids.Length; i++)
+            {
+                var id = ids[i];
+                if (id == null) continue;
+
+                MovementController m = null;
+                if (!id.TryGetComponent<MovementController>(out m))
+                    m = id.GetComponentInChildren<MovementController>(true);
+
+                if (m == null) continue;
+                if (!m.isActiveAndEnabled || !m.gameObject.activeInHierarchy) continue;
+                if (!m.CompareTag("Player")) continue;
+                if (m.isDead) continue;
+
+                float dist = ((Vector2)m.transform.position - myPos).sqrMagnitude;
+                if (dist < bestDist)
+                {
+                    bestDist = dist;
+                    best = m.transform;
+                }
+            }
+        }
+        else
+        {
+            var players = FindObjectsByType<MovementController>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+            for (int i = 0; i < players.Length; i++)
+            {
+                var m = players[i];
+                if (m == null) continue;
+                if (!m.CompareTag("Player")) continue;
+                if (!m.isActiveAndEnabled || !m.gameObject.activeInHierarchy) continue;
+                if (m.isDead) continue;
+
+                float dist = ((Vector2)m.transform.position - myPos).sqrMagnitude;
+                if (dist < bestDist)
+                {
+                    bestDist = dist;
+                    best = m.transform;
+                }
+            }
+        }
+
+        player = best;
     }
 
     void DecideNewDirection()

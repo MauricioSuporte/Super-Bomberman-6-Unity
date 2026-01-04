@@ -32,7 +32,19 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
     [Header("Boss Intro Setup")]
     public Vector2 bossIntroPosition = new(-1f, 2f);
     public float delayAfterStageIntroToShowPlayer = 1f;
+
+    [Tooltip("Fallback position if playerIntroPositions is empty.")]
     public Vector2 playerIntroPosition = new(-3f, -6f);
+
+    [Tooltip("Player intro positions (P1..P4). If empty, uses playerIntroPosition for all.")]
+    public Vector2[] playerIntroPositions = new Vector2[]
+    {
+        new(-3f, -6f),
+        new( 1f, -6f),
+        new(-5f, -6f),
+        new( 3f, -6f),
+    };
+
     public float introWaitAfterPlayerShown = 1f;
 
     [Header("Spotlight")]
@@ -99,8 +111,8 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
     AudioSource audioSource;
     float nextDeathSfxTime;
 
-    MovementController player;
-    BombController playerBomb;
+    MovementController[] players = new MovementController[0];
+    BombController[] playerBombs = new BombController[0];
 
     Collider2D bossCollider;
     Rigidbody2D bossRb;
@@ -128,12 +140,7 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
 
         bossSpriteRenderers = GetComponentsInChildren<SpriteRenderer>(true);
 
-        var playerGo = GameObject.FindGameObjectWithTag("Player");
-        if (playerGo != null)
-        {
-            player = playerGo.GetComponent<MovementController>();
-            playerBomb = playerGo.GetComponent<BombController>();
-        }
+        EnsurePlayersRefs();
 
         if (characterHealth != null)
         {
@@ -165,6 +172,66 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
     void OnDisable()
     {
         ResetBossState();
+    }
+
+    void EnsurePlayersRefs()
+    {
+        var ids = FindObjectsByType<PlayerIdentity>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+
+        if (ids != null && ids.Length > 0)
+        {
+            var tempPlayers = new System.Collections.Generic.List<MovementController>(ids.Length);
+            var tempBombs = new System.Collections.Generic.List<BombController>(ids.Length);
+
+            for (int i = 0; i < ids.Length; i++)
+            {
+                var id = ids[i];
+                if (id == null) continue;
+
+                MovementController m = null;
+                if (!id.TryGetComponent<MovementController>(out m))
+                    m = id.GetComponentInChildren<MovementController>(true);
+
+                if (m == null) continue;
+                if (!m.CompareTag("Player")) continue;
+
+                BombController b = null;
+                if (!id.TryGetComponent<BombController>(out b))
+                    b = id.GetComponentInChildren<BombController>(true);
+
+                tempPlayers.Add(m);
+                tempBombs.Add(b);
+            }
+
+            players = tempPlayers.ToArray();
+            playerBombs = tempBombs.ToArray();
+            return;
+        }
+
+        var go = GameObject.FindGameObjectsWithTag("Player");
+        if (go != null && go.Length > 0)
+        {
+            var tempPlayers = new System.Collections.Generic.List<MovementController>(go.Length);
+            var tempBombs = new System.Collections.Generic.List<BombController>(go.Length);
+
+            for (int i = 0; i < go.Length; i++)
+            {
+                if (go[i] == null) continue;
+
+                var m = go[i].GetComponent<MovementController>();
+                if (m == null) continue;
+
+                tempPlayers.Add(m);
+                tempBombs.Add(go[i].GetComponent<BombController>());
+            }
+
+            players = tempPlayers.ToArray();
+            playerBombs = tempBombs.ToArray();
+            return;
+        }
+
+        players = new MovementController[0];
+        playerBombs = new BombController[0];
     }
 
     void ResetBossState()
@@ -206,30 +273,30 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
         ResetBossState();
         MoveBossToIntroPosition();
 
-        EnsurePlayerRefs();
-        LockPlayer(true);
-        SetPlayerHidden(true);
+        EnsurePlayersRefs();
+        LockPlayers(true);
+        SetPlayersHidden(true);
 
         while (StageIntroTransition.Instance != null &&
                StageIntroTransition.Instance.IntroRunning)
             yield return null;
 
-        EnsurePlayerRefs();
-        LockPlayer(true);
-        SetPlayerHidden(true);
+        EnsurePlayersRefs();
+        LockPlayers(true);
+        SetPlayersHidden(true);
 
         float waitAfterStageIntro = Mathf.Max(0f, delayAfterStageIntroToShowPlayer);
         if (waitAfterStageIntro > 0f)
             yield return new WaitForSeconds(waitAfterStageIntro);
 
-        EnsurePlayerRefs();
-        SpawnPlayerForBossIntro();
+        EnsurePlayersRefs();
+        SpawnPlayersForBossIntro();
 
-        EnsureMountedLouieExistsIfNeeded();
-        ForceLouieRiderVisualRenderers(true, upOnly: true);
+        EnsureMountedLouiesExistsIfNeeded();
+        ForceLouieRiderVisualRenderersAll(true, upOnly: true);
 
-        LockPlayer(true);
-        ShowPlayerIdleUpOnly();
+        LockPlayers(true);
+        ShowPlayersIdleUpOnly();
 
         if (stageIntroClownMaskBoss != null)
             stageIntroClownMaskBoss.StartDefaultMusicOnce();
@@ -291,13 +358,10 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
         EnableOnly(idleRenderer);
         EnableBossCombat();
 
-        RestoreLouieAfterBossIntro();
-        RestorePlayerAfterBossIntro();
+        RestoreLouiesAfterBossIntro();
+        RestorePlayersAfterBossIntro();
 
-        if (player != null)
-            player.EnableExclusiveFromState();
-
-        LockPlayer(false);
+        LockPlayers(false);
 
         introFinished = true;
         BossIntroRunning = false;
@@ -363,78 +427,119 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
         }
     }
 
-    void SpawnPlayerForBossIntro()
+    Vector2 GetIntroPosForPlayerIndex(int index)
     {
-        if (player == null)
+        if (playerIntroPositions != null && playerIntroPositions.Length >= 4 && index >= 0 && index < playerIntroPositions.Length)
+            return playerIntroPositions[index];
+
+        return playerIntroPosition + new Vector2(index * 2f, 0f);
+    }
+
+    void SpawnPlayersForBossIntro()
+    {
+        EnsurePlayersRefs();
+        if (players == null || players.Length == 0)
+            return;
+
+        for (int i = 0; i < players.Length; i++)
         {
-            var go = GameObject.FindGameObjectWithTag("Player");
-            if (go != null)
+            var p = players[i];
+            if (p == null) continue;
+
+            Vector2 pos = GetIntroPosForPlayerIndex(GetPlayerIdFromGO(p.gameObject) - 1);
+
+            if (p.Rigidbody != null)
             {
-                player = go.GetComponent<MovementController>();
-                playerBomb = go.GetComponent<BombController>();
+                p.Rigidbody.simulated = true;
+                p.Rigidbody.position = pos;
+                p.Rigidbody.linearVelocity = Vector2.zero;
+            }
+            else
+            {
+                p.transform.position = new Vector3(pos.x, pos.y, p.transform.position.z);
+            }
+
+            p.ForceIdleUp();
+
+            var b = GetBombForPlayer(p);
+            if (b != null)
+                b.enabled = false;
+        }
+    }
+
+    BombController GetBombForPlayer(MovementController p)
+    {
+        if (p == null) return null;
+
+        for (int i = 0; i < players.Length; i++)
+        {
+            if (players[i] == p)
+            {
+                if (playerBombs != null && i < playerBombs.Length)
+                    return playerBombs[i];
             }
         }
 
-        if (player == null)
-            return;
+        var b = p.GetComponent<BombController>();
+        if (b != null) return b;
 
-        if (player.Rigidbody != null)
-        {
-            player.Rigidbody.simulated = true;
-            player.Rigidbody.position = playerIntroPosition;
-            player.Rigidbody.linearVelocity = Vector2.zero;
-        }
-        else
-        {
-            player.transform.position = new Vector3(playerIntroPosition.x, playerIntroPosition.y, player.transform.position.z);
-        }
+        var pid = p.GetComponentInParent<PlayerIdentity>(true);
+        if (pid != null)
+            return pid.GetComponentInChildren<BombController>(true);
 
-        player.ForceIdleUp();
-
-        if (playerBomb != null)
-            playerBomb.enabled = false;
+        return null;
     }
 
-    void RestorePlayerAfterBossIntro()
+    void RestorePlayersAfterBossIntro()
     {
-        EnsurePlayerRefs();
+        EnsurePlayersRefs();
+        if (players == null) return;
 
-        if (player == null)
-            return;
+        SetPlayersHidden(false);
 
-        SetPlayerHidden(false);
-
-        EnsureMountedLouieExistsIfNeeded();
-        ForceLouieRiderVisualRenderers(true);
-
-        if (player.TryGetComponent<BombPunchAbility>(out var punch))
-            punch.ForceResetPunchSprites();
-
-        var keep = player.IsMountedOnLouie
-            ? (player.mountedSpriteUp != null ? player.mountedSpriteUp : player.spriteRendererUp)
-            : player.spriteRendererUp;
-
-        DisableAllPlayerSpritesExcept(keep, keepLouieVisual: true);
-
-        if (keep != null)
+        for (int i = 0; i < players.Length; i++)
         {
-            keep.enabled = true;
-            keep.idle = true;
-            keep.loop = true;
-            keep.RefreshFrame();
+            var p = players[i];
+            if (p == null) continue;
 
-            if (keep.TryGetComponent<SpriteRenderer>(out var sr))
-                sr.enabled = true;
+            ForceLouieRiderVisualRenderersOne(p, true);
+
+            if (p.TryGetComponent<BombPunchAbility>(out var punch))
+                punch.ForceResetPunchSprites();
+
+            var keep = p.IsMountedOnLouie
+                ? (p.mountedSpriteUp != null ? p.mountedSpriteUp : p.spriteRendererUp)
+                : p.spriteRendererUp;
+
+            DisableAllPlayerSpritesExcept(p, keep, keepLouieVisual: true);
+
+            if (keep != null)
+            {
+                keep.enabled = true;
+                keep.idle = true;
+                keep.loop = true;
+                keep.RefreshFrame();
+
+                if (keep.TryGetComponent<SpriteRenderer>(out var sr))
+                    sr.enabled = true;
+            }
+
+            p.ForceIdleUpConsideringMount();
+            p.EnableExclusiveFromState();
+
+            var b = GetBombForPlayer(p);
+            if (b != null)
+                b.enabled = true;
+
+            p.SetExplosionInvulnerable(false);
         }
-
-        player.ForceIdleUpConsideringMount();
     }
 
-    void DisableAllPlayerSpritesExcept(AnimatedSpriteRenderer keep, bool keepLouieVisual)
+    void DisableAllPlayerSpritesExcept(MovementController p, AnimatedSpriteRenderer keep, bool keepLouieVisual)
     {
-        if (player == null) return;
+        if (p == null) return;
 
-        var anims = player.GetComponentsInChildren<AnimatedSpriteRenderer>(true);
+        var anims = p.GetComponentsInChildren<AnimatedSpriteRenderer>(true);
         for (int i = 0; i < anims.Length; i++)
         {
             var a = anims[i];
@@ -446,7 +551,7 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
             a.enabled = (a == keep);
         }
 
-        var srs = player.GetComponentsInChildren<SpriteRenderer>(true);
+        var srs = p.GetComponentsInChildren<SpriteRenderer>(true);
         for (int i = 0; i < srs.Length; i++)
         {
             var sr = srs[i];
@@ -465,46 +570,241 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
         }
     }
 
-    void SetPlayerHidden(bool hidden)
+    void SetPlayersHidden(bool hidden)
     {
-        if (player == null) return;
+        EnsurePlayersRefs();
+        if (players == null) return;
 
-        var anims = player.GetComponentsInChildren<AnimatedSpriteRenderer>(true);
-        for (int i = 0; i < anims.Length; i++)
-            if (anims[i] != null)
-                anims[i].enabled = !hidden;
+        for (int p = 0; p < players.Length; p++)
+        {
+            var pl = players[p];
+            if (pl == null) continue;
 
-        var srs = player.GetComponentsInChildren<SpriteRenderer>(true);
-        for (int i = 0; i < srs.Length; i++)
-            if (srs[i] != null)
-                srs[i].enabled = !hidden;
+            var anims = pl.GetComponentsInChildren<AnimatedSpriteRenderer>(true);
+            for (int i = 0; i < anims.Length; i++)
+                if (anims[i] != null)
+                    anims[i].enabled = !hidden;
+
+            var srs = pl.GetComponentsInChildren<SpriteRenderer>(true);
+            for (int i = 0; i < srs.Length; i++)
+                if (srs[i] != null)
+                    srs[i].enabled = !hidden;
+        }
     }
 
-    void ShowPlayerIdleUpOnly()
+    void ShowPlayersIdleUpOnly()
     {
-        if (player == null)
+        EnsurePlayersRefs();
+        if (players == null) return;
+
+        for (int i = 0; i < players.Length; i++)
+        {
+            var p = players[i];
+            if (p == null) continue;
+
+            p.ForceIdleUpConsideringMount();
+
+            DisableAllPlayerSpritesExcept(
+                p,
+                p.IsMountedOnLouie
+                    ? (p.mountedSpriteUp != null ? p.mountedSpriteUp : p.spriteRendererUp)
+                    : p.spriteRendererUp,
+                keepLouieVisual: true
+            );
+        }
+    }
+
+    void LockPlayers(bool locked)
+    {
+        EnsurePlayersRefs();
+
+        if (players != null)
+        {
+            for (int i = 0; i < players.Length; i++)
+            {
+                var p = players[i];
+                if (p == null) continue;
+
+                p.SetInputLocked(locked);
+                p.SetExplosionInvulnerable(locked);
+
+                var b = GetBombForPlayer(p);
+                if (b != null)
+                    b.enabled = !locked;
+            }
+        }
+    }
+
+    void EnsureMountedLouiesExistsIfNeeded()
+    {
+        EnsurePlayersRefs();
+        if (players == null) return;
+
+        for (int i = 0; i < players.Length; i++)
+            EnsureMountedLouieExistsIfNeededOne(players[i]);
+    }
+
+    void EnsureMountedLouieExistsIfNeededOne(MovementController p)
+    {
+        if (p == null) return;
+        if (!p.IsMountedOnLouie) return;
+
+        if (!p.TryGetComponent<PlayerLouieCompanion>(out var comp) || comp == null)
             return;
 
-        player.ForceIdleUpConsideringMount();
+        if (comp.HasMountedLouie())
+            return;
 
-        DisableAllPlayerSpritesExcept(
-            player.IsMountedOnLouie
-                ? (player.mountedSpriteUp != null ? player.mountedSpriteUp : player.spriteRendererUp)
-                : player.spriteRendererUp,
-            keepLouieVisual: true
-        );
+        int playerId = GetPlayerIdFromGO(p.gameObject);
+        var state = PlayerPersistentStats.Get(playerId);
+
+        switch (state.MountedLouie)
+        {
+            case MountedLouieType.Blue: comp.RestoreMountedBlueLouie(); break;
+            case MountedLouieType.Black: comp.RestoreMountedBlackLouie(); break;
+            case MountedLouieType.Purple: comp.RestoreMountedPurpleLouie(); break;
+            case MountedLouieType.Green: comp.RestoreMountedGreenLouie(); break;
+            case MountedLouieType.Yellow: comp.RestoreMountedYellowLouie(); break;
+            case MountedLouieType.Pink: comp.RestoreMountedPinkLouie(); break;
+            case MountedLouieType.Red: comp.RestoreMountedRedLouie(); break;
+        }
     }
 
-    void LockPlayer(bool locked)
+    void ForceLouieRiderVisualRenderersAll(bool visible, bool upOnly = false)
     {
-        if (player != null)
+        EnsurePlayersRefs();
+        if (players == null) return;
+
+        for (int i = 0; i < players.Length; i++)
+            ForceLouieRiderVisualRenderersOne(players[i], visible, upOnly);
+    }
+
+    void ForceLouieRiderVisualRenderersOne(MovementController p, bool visible, bool upOnly = false)
+    {
+        if (p == null)
+            return;
+
+        var rider = p.GetComponentInChildren<LouieRiderVisual>(true);
+        if (rider == null)
+            return;
+
+        rider.gameObject.SetActive(visible);
+
+        var anims = rider.GetComponentsInChildren<AnimatedSpriteRenderer>(true);
+        var srs = rider.GetComponentsInChildren<SpriteRenderer>(true);
+
+        if (!visible)
         {
-            player.SetInputLocked(locked);
-            player.SetExplosionInvulnerable(locked);
+            for (int i = 0; i < anims.Length; i++)
+                if (anims[i] != null)
+                    anims[i].enabled = false;
+
+            for (int i = 0; i < srs.Length; i++)
+                if (srs[i] != null)
+                    srs[i].enabled = false;
+
+            return;
         }
 
-        if (playerBomb != null)
-            playerBomb.enabled = !locked;
+        AnimatedSpriteRenderer keep = null;
+
+        if (upOnly)
+            keep = FindLouieRendererByChildName(rider.transform, "Up");
+
+        if (keep == null)
+            keep = FindFirstEnabledLouieRenderer(anims);
+
+        if (keep == null)
+            keep = FindLouieRendererByChildName(rider.transform, "Up");
+
+        if (keep == null && anims.Length > 0)
+            keep = anims[0];
+
+        for (int i = 0; i < anims.Length; i++)
+        {
+            var a = anims[i];
+            if (a == null) continue;
+            a.enabled = (a == keep);
+        }
+
+        for (int i = 0; i < srs.Length; i++)
+        {
+            var sr = srs[i];
+            if (sr == null) continue;
+            sr.enabled = false;
+        }
+
+        if (keep != null)
+        {
+            if (upOnly)
+            {
+                keep.idle = true;
+                keep.loop = false;
+                keep.RefreshFrame();
+            }
+
+            keep.RefreshFrame();
+
+            if (keep.TryGetComponent<SpriteRenderer>(out var keepSr))
+                keepSr.enabled = true;
+        }
+    }
+
+    AnimatedSpriteRenderer FindLouieRendererByChildName(Transform riderRoot, string childName)
+    {
+        if (riderRoot == null)
+            return null;
+
+        Transform t = riderRoot.Find(childName);
+
+        if (t == null && childName == "Right")
+            t = riderRoot.Find("Rigth");
+
+        if (t == null)
+            return null;
+
+        return t.GetComponent<AnimatedSpriteRenderer>();
+    }
+
+    AnimatedSpriteRenderer FindFirstEnabledLouieRenderer(AnimatedSpriteRenderer[] anims)
+    {
+        if (anims == null)
+            return null;
+
+        for (int i = 0; i < anims.Length; i++)
+            if (anims[i] != null && anims[i].enabled)
+                return anims[i];
+
+        return null;
+    }
+
+    void RestoreLouiesAfterBossIntro()
+    {
+        EnsurePlayersRefs();
+        if (players == null) return;
+
+        for (int i = 0; i < players.Length; i++)
+        {
+            var p = players[i];
+            if (p == null || !p.IsMountedOnLouie)
+                continue;
+
+            var rider = p.GetComponentInChildren<LouieRiderVisual>(true);
+            if (rider == null)
+                continue;
+
+            rider.ForceIdleUp();
+
+            var anims = rider.GetComponentsInChildren<AnimatedSpriteRenderer>(true);
+            for (int a = 0; a < anims.Length; a++)
+            {
+                var r = anims[a];
+                if (r == null) continue;
+
+                r.idle = false;
+                r.loop = true;
+            }
+        }
     }
 
     IEnumerator SpecialLoop()
@@ -729,6 +1029,23 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
         deathRoutine = StartCoroutine(DeathSequence());
     }
 
+    void GrantPostBossDefeatImmunityToAlivePlayers()
+    {
+        EnsurePlayersRefs();
+        if (players == null) return;
+
+        for (int i = 0; i < players.Length; i++)
+        {
+            var p = players[i];
+            if (p == null) continue;
+            if (p.isDead) continue;
+
+            p.SetExplosionInvulnerable(true);
+
+            p.SendMessage("SetInvulnerable", true, SendMessageOptions.DontRequireReceiver);
+        }
+    }
+
     IEnumerator DeathSequence()
     {
         AnimatedSpriteRenderer target = deathRenderer != null ? deathRenderer : idleRenderer;
@@ -763,6 +1080,10 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
 
         if (explosions != null)
             StopCoroutine(explosions);
+
+        yield return _waitForSeconds1;
+
+        GrantPostBossDefeatImmunityToAlivePlayers();
 
         if (bossEndSequence != null)
             bossEndSequence.StartBossDefeatedSequence();
@@ -969,172 +1290,6 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
             var sr = bossSpriteRenderers[i];
             if (sr != null)
                 sr.enabled = visible;
-        }
-    }
-
-    void EnsurePlayerRefs()
-    {
-        if (player != null && playerBomb != null)
-            return;
-
-        var go = GameObject.FindGameObjectWithTag("Player");
-        if (go == null)
-            return;
-
-        if (player == null)
-            player = go.GetComponent<MovementController>();
-
-        if (playerBomb == null)
-            playerBomb = go.GetComponent<BombController>();
-    }
-
-    void EnsureMountedLouieExistsIfNeeded()
-    {
-        if (player == null)
-            return;
-
-        if (!player.IsMountedOnLouie)
-            return;
-
-        if (!player.TryGetComponent<PlayerLouieCompanion>(out var comp) || comp == null)
-            return;
-
-        if (comp.HasMountedLouie())
-            return;
-
-        int playerId = GetPlayerIdFromGO(player.gameObject);
-        var state = PlayerPersistentStats.Get(playerId);
-
-        switch (state.MountedLouie)
-        {
-            case MountedLouieType.Blue: comp.RestoreMountedBlueLouie(); break;
-            case MountedLouieType.Black: comp.RestoreMountedBlackLouie(); break;
-            case MountedLouieType.Purple: comp.RestoreMountedPurpleLouie(); break;
-            case MountedLouieType.Green: comp.RestoreMountedGreenLouie(); break;
-            case MountedLouieType.Yellow: comp.RestoreMountedYellowLouie(); break;
-            case MountedLouieType.Pink: comp.RestoreMountedPinkLouie(); break;
-            case MountedLouieType.Red: comp.RestoreMountedRedLouie(); break;
-        }
-    }
-
-    void ForceLouieRiderVisualRenderers(bool visible, bool upOnly = false)
-    {
-        if (player == null)
-            return;
-
-        var rider = player.GetComponentInChildren<LouieRiderVisual>(true);
-        if (rider == null)
-            return;
-
-        rider.gameObject.SetActive(visible);
-
-        var anims = rider.GetComponentsInChildren<AnimatedSpriteRenderer>(true);
-        var srs = rider.GetComponentsInChildren<SpriteRenderer>(true);
-
-        if (!visible)
-        {
-            for (int i = 0; i < anims.Length; i++)
-                if (anims[i] != null)
-                    anims[i].enabled = false;
-
-            for (int i = 0; i < srs.Length; i++)
-                if (srs[i] != null)
-                    srs[i].enabled = false;
-
-            return;
-        }
-
-        AnimatedSpriteRenderer keep = null;
-
-        if (upOnly)
-            keep = FindLouieRendererByChildName(rider.transform, "Up");
-
-        if (keep == null)
-            keep = FindFirstEnabledLouieRenderer(anims);
-
-        if (keep == null)
-            keep = FindLouieRendererByChildName(rider.transform, "Up");
-
-        if (keep == null && anims.Length > 0)
-            keep = anims[0];
-
-        for (int i = 0; i < anims.Length; i++)
-        {
-            var a = anims[i];
-            if (a == null) continue;
-            a.enabled = (a == keep);
-        }
-
-        for (int i = 0; i < srs.Length; i++)
-        {
-            var sr = srs[i];
-            if (sr == null) continue;
-            sr.enabled = false;
-        }
-
-        if (keep != null)
-        {
-            if (upOnly)
-            {
-                keep.idle = true;
-                keep.loop = false;
-                keep.RefreshFrame();
-            }
-
-            keep.RefreshFrame();
-
-            if (keep.TryGetComponent<SpriteRenderer>(out var keepSr))
-                keepSr.enabled = true;
-        }
-    }
-
-    AnimatedSpriteRenderer FindLouieRendererByChildName(Transform riderRoot, string childName)
-    {
-        if (riderRoot == null)
-            return null;
-
-        Transform t = riderRoot.Find(childName);
-
-        if (t == null && childName == "Right")
-            t = riderRoot.Find("Rigth");
-
-        if (t == null)
-            return null;
-
-        return t.GetComponent<AnimatedSpriteRenderer>();
-    }
-
-    AnimatedSpriteRenderer FindFirstEnabledLouieRenderer(AnimatedSpriteRenderer[] anims)
-    {
-        if (anims == null)
-            return null;
-
-        for (int i = 0; i < anims.Length; i++)
-            if (anims[i] != null && anims[i].enabled)
-                return anims[i];
-
-        return null;
-    }
-
-    void RestoreLouieAfterBossIntro()
-    {
-        if (player == null || !player.IsMountedOnLouie)
-            return;
-
-        var rider = player.GetComponentInChildren<LouieRiderVisual>(true);
-        if (rider == null)
-            return;
-
-        rider.ForceIdleUp();
-
-        var anims = rider.GetComponentsInChildren<AnimatedSpriteRenderer>(true);
-        for (int i = 0; i < anims.Length; i++)
-        {
-            var a = anims[i];
-            if (a == null) continue;
-
-            a.idle = false;
-            a.loop = true;
         }
     }
 
