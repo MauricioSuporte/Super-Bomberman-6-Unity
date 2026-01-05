@@ -357,6 +357,15 @@ public class StageIntroTransition : MonoBehaviour
         {
             if (!m) continue;
 
+            bool isPlayer = m.CompareTag("Player") || m.GetComponent<PlayerIdentity>() != null;
+            if (isPlayer)
+            {
+                if (m.TryGetComponent<Collider2D>(out var col)) col.enabled = true;
+
+                if (m.Rigidbody != null)
+                    m.Rigidbody.simulated = true;
+            }
+
             m.SetInputLocked(false, true);
             m.enabled = true;
         }
