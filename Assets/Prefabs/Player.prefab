@@ -1301,7 +1301,7 @@ MonoBehaviour:
   explosionPrefab: {fileID: -38777085001033807, guid: 8280631722d6ef14fb951aaaf859563b, type: 3}
   explosionLayerMask:
     serializedVersion: 2
-    m_Bits: 64
+    m_Bits: 320
   explosionDuration: 0.5
   explosionRadius: 2
   groundTiles: {fileID: 0}

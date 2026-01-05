@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.Tilemaps;
 
 [RequireComponent(typeof(MovementController))]
+[RequireComponent(typeof(CharacterHealth))]
 public class BombController : MonoBehaviour
 {
     [Header("Player Id (only used if tagged Player)")]
@@ -304,8 +305,18 @@ public class BombController : MonoBehaviour
         position.x = Mathf.Round(position.x);
         position.y = Mathf.Round(position.y);
 
+        bool explosionAlreadyHere = HasActiveExplosionAt(position);
+
+        // Se ainda tiver uma bomba física no tile:
+        // - sem explosão ativa => bloqueia como sempre
+        // - com explosão ativa => explode/remova a anterior e deixa plantar
         if (TileHasBomb(position))
-            return;
+        {
+            if (!explosionAlreadyHere)
+                return;
+
+            ExplodeAnyBombAt(position);
+        }
 
         if (HasDestructibleAt(position))
             return;
@@ -341,6 +352,12 @@ public class BombController : MonoBehaviour
 
         if (controlEnabled)
             RegisterBomb(bomb);
+
+        if (explosionAlreadyHere)
+        {
+            ExplodeBomb(bomb);
+            return;
+        }
 
         if (!controlEnabled)
             StartCoroutine(BombFuse(bomb));
@@ -778,5 +795,47 @@ public class BombController : MonoBehaviour
             movement.SetInputLocked(previousLock, false);
 
         return result;
+    }
+
+    private bool HasActiveExplosionAt(Vector2 position)
+    {
+        int explosionLayer = LayerMask.NameToLayer("Explosion");
+        int mask = explosionLayerMask.value;
+
+        if (explosionLayer >= 0)
+            mask |= (1 << explosionLayer);
+
+        return Physics2D.OverlapBox(
+            position,
+            Vector2.one * 0.6f,
+            0f,
+            mask
+        ) != null;
+    }
+
+    private void ExplodeAnyBombAt(Vector2 position)
+    {
+        int bombLayer = LayerMask.NameToLayer("Bomb");
+        int bombMask = 1 << bombLayer;
+
+        Collider2D[] hits = Physics2D.OverlapBoxAll(position, Vector2.one * 0.6f, 0f, bombMask);
+        if (hits == null || hits.Length == 0)
+            return;
+
+        for (int i = 0; i < hits.Length; i++)
+        {
+            var hit = hits[i];
+            if (hit == null)
+                continue;
+
+            GameObject bombGo = hit.attachedRigidbody != null
+                ? hit.attachedRigidbody.gameObject
+                : hit.gameObject;
+
+            if (bombGo == null)
+                continue;
+
+            ExplodeBomb(bombGo);
+        }
     }
 }
