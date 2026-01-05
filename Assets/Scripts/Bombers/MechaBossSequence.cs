@@ -51,6 +51,10 @@ public class MechaBossSequence : MonoBehaviour
     public float maxSpawnInterval = 40f;
     public int maxTriesPerSpawn = 50;
 
+    [Header("Boss End Drop")]
+    public ItemPickup kickBombDropPrefabOverride;
+    public float endStageWaitNoItemsSeconds = 3f;
+
     MovementController[] mechas;
     GameManager gameManager;
 
@@ -605,7 +609,8 @@ public class MechaBossSequence : MonoBehaviour
         if (sender == goldenMecha && !finalSequenceStarted)
         {
             finalSequenceStarted = true;
-            StartCoroutine(FinalBossDefeatedRoutine());
+            SetItemSpawnEnabled(false);
+            StartCoroutine(FinalBossDropAndEndRoutine(sender));
             return;
         }
 
@@ -613,7 +618,71 @@ public class MechaBossSequence : MonoBehaviour
             gameManager.CheckWinState();
     }
 
-    IEnumerator FinalBossDefeatedRoutine()
+    IEnumerator FinalBossDropAndEndRoutine(MovementController deadBoss)
+    {
+        EnsurePlayersRefs();
+
+        Vector3Int cell = Vector3Int.zero;
+        bool hasCell = false;
+
+        if (groundTilemap != null && deadBoss != null)
+        {
+            cell = groundTilemap.WorldToCell(deadBoss.transform.position);
+            hasCell = true;
+        }
+
+        if (hasCell)
+            SpawnKickBombAtCell(cell);
+
+        float elapsed = 0f;
+        float maxWait = Mathf.Max(0f, endStageWaitNoItemsSeconds);
+
+        while (elapsed < maxWait)
+        {
+            if (!GamePauseController.IsPaused)
+                elapsed += Time.deltaTime;
+
+            if (!HasAnyItemPickupsInStage())
+                break;
+
+            yield return null;
+        }
+
+        yield return StartCoroutine(EndStageCelebrationRoutine());
+    }
+
+    bool HasAnyItemPickupsInStage()
+    {
+        var items = FindObjectsByType<ItemPickup>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+        return items != null && items.Length > 0;
+    }
+
+    void SpawnKickBombAtCell(Vector3Int cell)
+    {
+        if (groundTilemap == null)
+            return;
+
+        if (!groundTilemap.HasTile(cell))
+            return;
+
+        Vector3 worldPos = groundTilemap.GetCellCenterWorld(cell);
+
+        Collider2D hit = Physics2D.OverlapCircle(worldPos, 0.2f);
+        if (hit != null && hit.GetComponent<ItemPickup>() != null)
+            return;
+
+        ItemPickup prefab = kickBombDropPrefabOverride;
+
+        if (prefab == null && gameManager != null)
+            prefab = gameManager.kickBombItemPrefab;
+
+        if (prefab == null)
+            return;
+
+        Instantiate(prefab, worldPos, Quaternion.identity);
+    }
+
+    IEnumerator EndStageCelebrationRoutine()
     {
         yield return _waitForSeconds1;
 
