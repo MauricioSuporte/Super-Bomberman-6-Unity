@@ -143,14 +143,19 @@ public class MechaBossSequence : MonoBehaviour
         if (StageIntroTransition.Instance != null)
         {
             PushPlayersSafety();
-
-            while (StageIntroTransition.Instance.IntroRunning)
+            try
             {
-                ForcePlayersMountedUpIfNeeded();
-                yield return null;
+                while (StageIntroTransition.Instance.IntroRunning)
+                {
+                    ForcePlayersMountedUpIfNeeded();
+                    yield return null;
+                }
             }
-
-            PopPlayersSafety();
+            finally
+            {
+                while (playersSafetyLocks > 0)
+                    PopPlayersSafety();
+            }
         }
 
         while (GamePauseController.IsPaused)
@@ -200,143 +205,158 @@ public class MechaBossSequence : MonoBehaviour
         LockPlayers(true);
         ForcePlayersMountedUpIfNeeded();
 
-        yield return StartCoroutine(OpenGateRoutine());
-
-        ForcePlayersMountedUpIfNeeded();
-
-        bool isGolden = mecha == goldenMecha;
-
-        if (isGolden)
+        try
         {
-            yield return _waitForSeconds2;
+            yield return StartCoroutine(OpenGateRoutine());
 
-            if (StageMechaIntroController.Instance != null)
-            {
-                yield return StageMechaIntroController.Instance.FlashWithOnLastBlack(0.5f, 5, () =>
-                {
-                    if (!movePlayerToIntroPositionOnGoldenFlash)
-                        return;
+            ForcePlayersMountedUpIfNeeded();
 
-                    EnsurePlayersRefs();
-                    MoveAllPlayersToBossIntroPositions();
-                    ForcePlayersMountedUpIfNeeded();
-                });
-            }
-            else
+            bool isGolden = mecha == goldenMecha;
+
+            if (isGolden)
             {
-                if (movePlayerToIntroPositionOnGoldenFlash)
+                yield return _waitForSeconds2;
+
+                if (StageMechaIntroController.Instance != null)
                 {
-                    EnsurePlayersRefs();
-                    MoveAllPlayersToBossIntroPositions();
-                    ForcePlayersMountedUpIfNeeded();
+                    yield return StageMechaIntroController.Instance.FlashWithOnLastBlack(0.5f, 5, () =>
+                    {
+                        if (!movePlayerToIntroPositionOnGoldenFlash)
+                            return;
+
+                        EnsurePlayersRefs();
+                        MoveAllPlayersToBossIntroPositions();
+                        ForcePlayersMountedUpIfNeeded();
+                    });
+                }
+                else
+                {
+                    if (movePlayerToIntroPositionOnGoldenFlash)
+                    {
+                        EnsurePlayersRefs();
+                        MoveAllPlayersToBossIntroPositions();
+                        ForcePlayersMountedUpIfNeeded();
+                    }
                 }
             }
-        }
 
-        mecha.SetExplosionInvulnerable(true);
+            if (mecha == null) yield break;
 
-        var bossAI = mecha.GetComponent<BossBomberAI>();
-        var aiMove = mecha.GetComponent<AIMovementController>();
+            mecha.SetExplosionInvulnerable(true);
 
-        if (bossAI != null) bossAI.enabled = false;
-        if (aiMove != null) aiMove.enabled = true;
+            var bossAI = mecha.GetComponent<BossBomberAI>();
+            var aiMove = mecha.GetComponent<AIMovementController>();
 
-        Vector2 startPos = new(-1f, 5f);
-        Vector2 midPos = new(-1f, 4f);
-        Vector2 endPos = new(-1f, 0f);
+            if (bossAI != null) bossAI.enabled = false;
+            if (aiMove != null) aiMove.enabled = true;
 
-        if (mecha.Rigidbody != null)
-        {
-            mecha.Rigidbody.simulated = true;
-            mecha.Rigidbody.linearVelocity = Vector2.zero;
-            mecha.Rigidbody.position = startPos;
-        }
-        else
-        {
-            mecha.transform.position = startPos;
-        }
-
-        mecha.gameObject.SetActive(true);
-
-        if (!isGolden)
-        {
-            if (aiMove != null)
-                aiMove.SetAIDirection(Vector2.down);
-
-            while (true)
-            {
-                if (mecha == null) yield break;
-
-                Vector2 pos = mecha.Rigidbody != null
-                    ? mecha.Rigidbody.position
-                    : (Vector2)mecha.transform.position;
-
-                if (pos.y <= endPos.y + 0.05f)
-                    break;
-
-                if (aiMove != null)
-                    aiMove.SetAIDirection(Vector2.down);
-
-                yield return null;
-            }
+            Vector2 startPos = new(-1f, 5f);
+            Vector2 midPos = new(-1f, 4f);
+            Vector2 endPos = new(-1f, 0f);
 
             if (mecha.Rigidbody != null)
             {
-                mecha.Rigidbody.position = endPos;
+                mecha.Rigidbody.simulated = true;
                 mecha.Rigidbody.linearVelocity = Vector2.zero;
+                mecha.Rigidbody.position = startPos;
             }
             else
             {
-                mecha.transform.position = endPos;
+                mecha.transform.position = startPos;
             }
-        }
-        else
-        {
-            if (aiMove != null)
+
+            mecha.gameObject.SetActive(true);
+
+            if (!isGolden)
             {
-                aiMove.SetAIDirection(Vector2.zero);
-                aiMove.enabled = false;
+                if (aiMove != null)
+                    aiMove.SetAIDirection(Vector2.down);
+
+                while (true)
+                {
+                    if (mecha == null) yield break;
+
+                    Vector2 pos = mecha.Rigidbody != null
+                        ? mecha.Rigidbody.position
+                        : (Vector2)mecha.transform.position;
+
+                    if (pos.y <= endPos.y + 0.05f)
+                        break;
+
+                    if (aiMove != null)
+                        aiMove.SetAIDirection(Vector2.down);
+
+                    yield return null;
+                }
+
+                if (mecha.Rigidbody != null)
+                {
+                    mecha.Rigidbody.position = endPos;
+                    mecha.Rigidbody.linearVelocity = Vector2.zero;
+                }
+                else
+                {
+                    mecha.transform.position = endPos;
+                }
+            }
+            else
+            {
+                if (aiMove != null)
+                {
+                    aiMove.SetAIDirection(Vector2.zero);
+                    aiMove.enabled = false;
+                }
+
+                float moveSpeed = mecha.speed > 0f ? mecha.speed : 2f;
+
+                yield return MoveMechaVertically(mecha, startPos, midPos, moveSpeed);
+                yield return _waitForSeconds2;
+                yield return MoveMechaVertically(mecha, midPos, endPos, moveSpeed);
+
+                if (aiMove != null)
+                    aiMove.enabled = true;
             }
 
-            float moveSpeed = mecha.speed > 0f ? mecha.speed : 2f;
-
-            yield return MoveMechaVertically(mecha, startPos, midPos, moveSpeed);
+            if (aiMove != null)
+                aiMove.SetAIDirection(Vector2.zero);
 
             yield return _waitForSeconds2;
 
-            yield return MoveMechaVertically(mecha, midPos, endPos, moveSpeed);
+            if (bossAI != null) bossAI.enabled = true;
 
-            if (aiMove != null)
-                aiMove.enabled = true;
+            if (mecha != null)
+                mecha.SetExplosionInvulnerable(false);
+
+            yield return StartCoroutine(CloseGateRoutine());
+
+            if (!itemLoopStarted && groundTilemap != null && itemPrefabs != null && itemPrefabs.Length > 0)
+            {
+                itemLoopStarted = true;
+                StartCoroutine(ItemSpawnLoop());
+            }
+
+            SetItemSpawnEnabled(true);
+
+            LockPlayers(false);
+            SetLouieAbilitiesLockedForAll(false);
+
+            MechaIntroRunning = false;
+            if (StageMechaIntroController.Instance != null)
+                StageMechaIntroController.Instance.SetIntroRunning(false);
         }
-
-        if (aiMove != null)
-            aiMove.SetAIDirection(Vector2.zero);
-
-        yield return _waitForSeconds2;
-
-        if (bossAI != null) bossAI.enabled = true;
-
-        mecha.SetExplosionInvulnerable(false);
-
-        yield return StartCoroutine(CloseGateRoutine());
-
-        PopPlayersSafety();
-
-        if (!itemLoopStarted && groundTilemap != null && itemPrefabs != null && itemPrefabs.Length > 0)
+        finally
         {
-            itemLoopStarted = true;
-            StartCoroutine(ItemSpawnLoop());
+            while (playersSafetyLocks > 0)
+                PopPlayersSafety();
+
+            SetItemSpawnEnabled(true);
+            LockPlayers(false);
+            SetLouieAbilitiesLockedForAll(false);
+
+            MechaIntroRunning = false;
+            if (StageMechaIntroController.Instance != null)
+                StageMechaIntroController.Instance.SetIntroRunning(false);
         }
-
-        SetItemSpawnEnabled(true);
-
-        LockPlayers(false);
-        SetLouieAbilitiesLockedForAll(false);
-
-        MechaIntroRunning = false;
-        if (StageMechaIntroController.Instance != null)
-            StageMechaIntroController.Instance.SetIntroRunning(false);
     }
 
     IEnumerator MoveMechaVertically(MovementController mecha, Vector2 from, Vector2 to, float speed)
