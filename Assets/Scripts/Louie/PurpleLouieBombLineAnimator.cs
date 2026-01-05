@@ -20,6 +20,9 @@ public class PurpleLouieBombLineAnimator : MonoBehaviour, IPurpleLouieBombLineEx
     readonly List<SpriteRenderer> cachedSpriteRenderers = new();
     readonly List<bool> cachedSpriteEnabled = new();
 
+    readonly List<GameObject> cachedDirectionObjects = new();
+    readonly List<bool> cachedDirectionObjectsActive = new();
+
     bool playing;
 
     void Awake()
@@ -48,6 +51,7 @@ public class PurpleLouieBombLineAnimator : MonoBehaviour, IPurpleLouieBombLineEx
             riderVisual.enabled = false;
 
         DisableAllRenderers();
+        DisableDirectionalObjects();
 
         activeMagic = GetMagic(dir);
 
@@ -75,7 +79,7 @@ public class PurpleLouieBombLineAnimator : MonoBehaviour, IPurpleLouieBombLineEx
 
     public void ForceStop()
     {
-        if (!playing && activeMagic == null && cachedAnimators.Count == 0 && cachedSpriteRenderers.Count == 0)
+        if (!playing && activeMagic == null && cachedAnimators.Count == 0 && cachedSpriteRenderers.Count == 0 && cachedDirectionObjects.Count == 0)
             return;
 
         if (activeMagic != null)
@@ -92,6 +96,7 @@ public class PurpleLouieBombLineAnimator : MonoBehaviour, IPurpleLouieBombLineEx
         activeMagic = null;
 
         RestoreEnabledStates();
+        RestoreDirectionalObjects();
 
         if (riderVisual != null)
             riderVisual.enabled = true;
@@ -114,6 +119,8 @@ public class PurpleLouieBombLineAnimator : MonoBehaviour, IPurpleLouieBombLineEx
         cachedAnimatorEnabled.Clear();
         cachedSpriteRenderers.Clear();
         cachedSpriteEnabled.Clear();
+        cachedDirectionObjects.Clear();
+        cachedDirectionObjectsActive.Clear();
 
         var anims = GetComponentsInChildren<AnimatedSpriteRenderer>(true);
         for (int i = 0; i < anims.Length; i++)
@@ -128,6 +135,28 @@ public class PurpleLouieBombLineAnimator : MonoBehaviour, IPurpleLouieBombLineEx
             cachedSpriteRenderers.Add(srs[i]);
             cachedSpriteEnabled.Add(srs[i] != null && srs[i].enabled);
         }
+
+        CacheDirectionObjectByName("Up");
+        CacheDirectionObjectByName("Down");
+        CacheDirectionObjectByName("Left");
+        CacheDirectionObjectByName("Right");
+    }
+
+    void CacheDirectionObjectByName(string childName)
+    {
+        var t = transform.Find(childName);
+        if (t == null)
+        {
+            t = transform.parent != null ? transform.parent.Find(childName) : null;
+            if (t == null && transform.root != null)
+                t = transform.root.Find(childName);
+        }
+
+        if (t == null)
+            return;
+
+        cachedDirectionObjects.Add(t.gameObject);
+        cachedDirectionObjectsActive.Add(t.gameObject.activeSelf);
     }
 
     void DisableAllRenderers()
@@ -163,5 +192,28 @@ public class PurpleLouieBombLineAnimator : MonoBehaviour, IPurpleLouieBombLineEx
         cachedAnimatorEnabled.Clear();
         cachedSpriteRenderers.Clear();
         cachedSpriteEnabled.Clear();
+    }
+
+    void DisableDirectionalObjects()
+    {
+        for (int i = 0; i < cachedDirectionObjects.Count; i++)
+        {
+            var go = cachedDirectionObjects[i];
+            if (go != null)
+                go.SetActive(false);
+        }
+    }
+
+    void RestoreDirectionalObjects()
+    {
+        for (int i = 0; i < cachedDirectionObjects.Count; i++)
+        {
+            var go = cachedDirectionObjects[i];
+            if (go != null)
+                go.SetActive(cachedDirectionObjectsActive[i]);
+        }
+
+        cachedDirectionObjects.Clear();
+        cachedDirectionObjectsActive.Clear();
     }
 }

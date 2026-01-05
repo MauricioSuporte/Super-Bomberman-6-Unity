@@ -714,7 +714,9 @@ public class BombController : MonoBehaviour
         }
     }
 
-    public bool TryPlaceBombAt(Vector2 worldPos)
+    public bool TryPlaceBombAt(Vector2 worldPos) => TryPlaceBombAt(worldPos, playSfx: true);
+
+    public bool TryPlaceBombAt(Vector2 worldPos, bool playSfx)
     {
         if (ClownMaskBoss.BossIntroRunning)
             return false;
@@ -764,7 +766,8 @@ public class BombController : MonoBehaviour
         if (prefabToUse == null)
             return false;
 
-        PlayPlaceBombSfx();
+        if (playSfx)
+            PlayPlaceBombSfx();
 
         GameObject bomb = Instantiate(prefabToUse, position, Quaternion.identity);
         bombsRemaining--;
@@ -797,7 +800,9 @@ public class BombController : MonoBehaviour
         return true;
     }
 
-    public bool TryPlaceBombAtIgnoringInputLock(Vector2 worldPos)
+    public bool TryPlaceBombAtIgnoringInputLock(Vector2 worldPos) => TryPlaceBombAtIgnoringInputLock(worldPos, playSfx: true);
+
+    public bool TryPlaceBombAtIgnoringInputLock(Vector2 worldPos, bool playSfx)
     {
         var movement = GetComponent<MovementController>();
         if (movement != null && (movement.isDead || movement.IsEndingStage))
@@ -810,7 +815,7 @@ public class BombController : MonoBehaviour
             movement.SetInputLocked(false, false);
         }
 
-        bool result = TryPlaceBombAt(worldPos);
+        bool result = TryPlaceBombAt(worldPos, playSfx);
 
         if (movement != null)
             movement.SetInputLocked(previousLock, false);

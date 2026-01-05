@@ -78,8 +78,9 @@ public class PurpleLouieBombLineAbility : MonoBehaviour, IPlayerAbility
 
         Vector2 dir = lastFacingDir == Vector2.zero ? Vector2.down : lastFacingDir;
 
-        DropBombsInFrontLine(dir);
-        PlayPlaceBombSfxOnce();
+        bool placedAny = DropBombsInFrontLine(dir);
+        if (placedAny)
+            PlayPlaceBombSfxOnce();
 
         if (externalAnimator != null)
             yield return externalAnimator.Play(dir, lockSeconds);
@@ -106,14 +107,14 @@ public class PurpleLouieBombLineAbility : MonoBehaviour, IPlayerAbility
             bomb.playerAudioSource.PlayOneShot(bomb.placeBombSfx);
     }
 
-    void DropBombsInFrontLine(Vector2 dir)
+    bool DropBombsInFrontLine(Vector2 dir)
     {
         if (bomb == null || movement == null)
-            return;
+            return false;
 
         int count = bomb.BombsRemaining;
         if (count <= 0)
-            return;
+            return false;
 
         Vector2 origin = movement.Rigidbody != null
             ? movement.Rigidbody.position
@@ -122,7 +123,9 @@ public class PurpleLouieBombLineAbility : MonoBehaviour, IPlayerAbility
         origin.x = Mathf.Round(origin.x / movement.tileSize) * movement.tileSize;
         origin.y = Mathf.Round(origin.y / movement.tileSize) * movement.tileSize;
 
-        Vector2 pos = origin + dir * movement.tileSize;
+        Vector2 pos = origin;
+
+        bool placedAny = false;
 
         for (int i = 0; i < count; i++)
         {
@@ -132,15 +135,19 @@ public class PurpleLouieBombLineAbility : MonoBehaviour, IPlayerAbility
             if (HasEnemyAt(pos))
                 break;
 
-            bool placed = bomb.TryPlaceBombAtIgnoringInputLock(pos);
+            bool placed = bomb.TryPlaceBombAtIgnoringInputLock(pos, playSfx: false);
             if (!placed)
                 break;
+
+            placedAny = true;
 
             pos += dir * movement.tileSize;
 
             if (bomb.BombsRemaining <= 0)
                 break;
         }
+
+        return placedAny;
     }
 
     public void Enable() => enabledAbility = true;
