@@ -1284,11 +1284,6 @@ public class MovementController : MonoBehaviour, IKillable
         SetDirection(Vector2.zero, target);
     }
 
-    public void ForceExclusiveSpriteNow()
-    {
-        ForceExclusiveSpriteFromState();
-    }
-
     private bool IsForwardOpen(Vector2 pos, Vector2 moveDir)
     {
         if (moveDir == Vector2.zero)
