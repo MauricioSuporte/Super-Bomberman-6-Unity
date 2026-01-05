@@ -108,10 +108,12 @@ MonoBehaviour:
   - {fileID: -2018389329, guid: 6c2583beff5fe6444abe5f6a150dcc63, type: 3}
   - {fileID: -1724271120, guid: 6c2583beff5fe6444abe5f6a150dcc63, type: 3}
   - {fileID: -1146942863, guid: 6c2583beff5fe6444abe5f6a150dcc63, type: 3}
+  - {fileID: -1146942863, guid: 6c2583beff5fe6444abe5f6a150dcc63, type: 3}
+  - {fileID: -1146942863, guid: 6c2583beff5fe6444abe5f6a150dcc63, type: 3}
   - {fileID: -1724271120, guid: 6c2583beff5fe6444abe5f6a150dcc63, type: 3}
   - {fileID: -2018389329, guid: 6c2583beff5fe6444abe5f6a150dcc63, type: 3}
   allowFlipX: 0
-  animationTime: 0.05
+  animationTime: 0.035714287
   useSequenceDuration: 0
   sequenceDuration: 0.5
   loop: 0
@@ -345,10 +347,12 @@ MonoBehaviour:
   - {fileID: 999756273, guid: 6c2583beff5fe6444abe5f6a150dcc63, type: 3}
   - {fileID: -2021424871, guid: 6c2583beff5fe6444abe5f6a150dcc63, type: 3}
   - {fileID: -25328927, guid: 6c2583beff5fe6444abe5f6a150dcc63, type: 3}
+  - {fileID: -25328927, guid: 6c2583beff5fe6444abe5f6a150dcc63, type: 3}
+  - {fileID: -25328927, guid: 6c2583beff5fe6444abe5f6a150dcc63, type: 3}
   - {fileID: -2021424871, guid: 6c2583beff5fe6444abe5f6a150dcc63, type: 3}
   - {fileID: 999756273, guid: 6c2583beff5fe6444abe5f6a150dcc63, type: 3}
   allowFlipX: 0
-  animationTime: 0.05
+  animationTime: 0.035714287
   useSequenceDuration: 0
   sequenceDuration: 0.5
   loop: 0
@@ -374,6 +378,7 @@ GameObject:
   - component: {fileID: 2870228645174432188}
   - component: {fileID: 6278954836837279341}
   - component: {fileID: 1919497702538166291}
+  - component: {fileID: 6543421237453546391}
   m_Layer: 0
   m_Name: BlueLouie
   m_TagString: Untagged
@@ -578,14 +583,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 259dc96ea2e08cc4fa2829ffac0aef71, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BombController
-  inputKey: 32
+  playerId: 1
   useAIInput: 0
   bombPrefab: {fileID: 0}
   pierceBombPrefab: {fileID: 0}
   controlBombPrefab: {fileID: 0}
   bombFuseTime: 3
   bombAmout: 1
-  controlDetonateKey: 110
   explosionPrefab: {fileID: 0}
   explosionLayerMask:
     serializedVersion: 2
@@ -644,10 +648,7 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 0
   speedInternal: 224
-  inputUp: 119
-  inputDown: 115
-  inputLeft: 97
-  inputRight: 100
+  playerId: 1
   spriteRendererUp: {fileID: 6685445590595473310}
   spriteRendererDown: {fileID: 4170285985975590271}
   spriteRendererLeft: {fileID: 5930063177854299457}
@@ -666,6 +667,9 @@ MonoBehaviour:
   endStageTotalTime: 1
   endStageFrameCount: 9
   isDead: 0
+  perpendicularAlignMultiplier: 8
+  snapPerpendicularOnAxisStart: 1
+  alignEpsilon: 0.0015
   owner: {fileID: 0}
   followOffset: {x: -0.35, y: -0.15}
   followLerp: 25
@@ -691,7 +695,6 @@ MonoBehaviour:
   enablePinkRightFix: 1
   pinkRightFixedLocalX: 0
   syncBlinkFromPlayerWhenMounted: 1
-  debugExclusive: 0
 --- !u!114 &6278954836837279341
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -708,10 +711,6 @@ MonoBehaviour:
   punchDown: {fileID: 5471246735332489006}
   punchLeft: {fileID: 4507174183192697291}
   punchRight: {fileID: 2897987350496308459}
-  riderVisual: {fileID: 0}
-  enforceExclusiveWhilePlaying: 1
-  debugPunch: 1
-  debugWithStackTrace: 1
 --- !u!114 &1919497702538166291
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -729,6 +728,23 @@ MonoBehaviour:
   shakeAmplitude: 0.03
   shakeFrequency: 22
   freezeAnimatedSprites: 1
+--- !u!114 &6543421237453546391
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2273416014071709654}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 205f7fc6fe6408f419811c6c486b9cd6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CharacterHealth
+  life: 1
+  hitInvulnerableDuration: 3
+  hitBlinkInterval: 0.1
+  tempSlowdownStartNormalized: 0.7
+  tempEndBlinkMultiplier: 4
 --- !u!1 &2445788475736444126
 GameObject:
   m_ObjectHideFlags: 0
@@ -961,10 +977,12 @@ MonoBehaviour:
   - {fileID: 925624491, guid: 6c2583beff5fe6444abe5f6a150dcc63, type: 3}
   - {fileID: -1764534641, guid: 6c2583beff5fe6444abe5f6a150dcc63, type: 3}
   - {fileID: 1595019359, guid: 6c2583beff5fe6444abe5f6a150dcc63, type: 3}
+  - {fileID: 1595019359, guid: 6c2583beff5fe6444abe5f6a150dcc63, type: 3}
+  - {fileID: 1595019359, guid: 6c2583beff5fe6444abe5f6a150dcc63, type: 3}
   - {fileID: -1764534641, guid: 6c2583beff5fe6444abe5f6a150dcc63, type: 3}
   - {fileID: 925624491, guid: 6c2583beff5fe6444abe5f6a150dcc63, type: 3}
   allowFlipX: 0
-  animationTime: 0.05
+  animationTime: 0.035714287
   useSequenceDuration: 0
   sequenceDuration: 0.5
   loop: 0
@@ -1572,10 +1590,12 @@ MonoBehaviour:
   - {fileID: 925624491, guid: 6c2583beff5fe6444abe5f6a150dcc63, type: 3}
   - {fileID: -1764534641, guid: 6c2583beff5fe6444abe5f6a150dcc63, type: 3}
   - {fileID: 1595019359, guid: 6c2583beff5fe6444abe5f6a150dcc63, type: 3}
+  - {fileID: 1595019359, guid: 6c2583beff5fe6444abe5f6a150dcc63, type: 3}
+  - {fileID: 1595019359, guid: 6c2583beff5fe6444abe5f6a150dcc63, type: 3}
   - {fileID: -1764534641, guid: 6c2583beff5fe6444abe5f6a150dcc63, type: 3}
   - {fileID: 925624491, guid: 6c2583beff5fe6444abe5f6a150dcc63, type: 3}
   allowFlipX: 1
-  animationTime: 0.05
+  animationTime: 0.035714287
   useSequenceDuration: 0
   sequenceDuration: 0.5
   loop: 0

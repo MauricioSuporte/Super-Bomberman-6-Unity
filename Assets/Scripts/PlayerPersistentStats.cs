@@ -31,7 +31,7 @@ public static class PlayerPersistentStats
         public bool HasControlBombs = false;
         public bool HasFullFire = false;
 
-        public MountedLouieType MountedLouie = MountedLouieType.Red;
+        public MountedLouieType MountedLouie = MountedLouieType.Blue;
         public BomberSkin Skin = BomberSkin.White;
     }
 
