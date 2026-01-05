@@ -491,63 +491,80 @@ public class MovementController : MonoBehaviour, IKillable
         }
     }
 
-    // Alinha no eixo perpendicular ao movimento.
-    // axisIsHorizontal=true -> movimentando no X, alinha Y.
-    // axisIsHorizontal=false -> movimentando no Y, alinha X.
     private void AlignPerpendicular(ref Vector2 position, bool axisIsHorizontal, float moveSpeed, bool snapImmediate)
     {
         if (tileSize <= 0.0001f)
             return;
 
+        // Quanto o alinhamento "puxa" por FixedUpdate
         float alignStep = moveSpeed * Mathf.Max(0.5f, perpendicularAlignMultiplier);
+
+        // Direção real de movimento (4-dir)
+        Vector2 moveDir = direction;
 
         if (axisIsHorizontal)
         {
+            // Movendo no X -> alinhar Y
             float targetY = Mathf.Round(position.y / tileSize) * tileSize;
-            float delta = Mathf.Abs(position.y - targetY);
 
-            if (delta <= alignEpsilon)
+            // Se já está alinhado, snap final
+            if (Mathf.Abs(position.y - targetY) <= alignEpsilon)
             {
-                position.y = targetY;
+                var snapped = new Vector2(position.x, targetY);
+
+                // Só finaliza o snap se ainda for um "corredor válido"
+                if (CanAlignToPerpendicularTarget(snapped, moveDir))
+                    position.y = targetY;
+
                 return;
             }
 
-            // Tenta snap imediato (sem atravessar parede) quando começou a mover nesse eixo
-            if (snapImmediate)
+            // Candidato
+            Vector2 candidate = new Vector2(position.x, targetY);
+
+            // Snap imediato só se não vira beco/paredão
+            if (snapImmediate && CanAlignToPerpendicularTarget(candidate, moveDir))
             {
-                Vector2 snapped = new Vector2(position.x, targetY);
-                if (!IsBlockedAtPosition(snapped, Vector2.right)) // tamanho "horizontal"
-                {
-                    position = snapped;
-                    return;
-                }
-            }
-
-            position.y = Mathf.MoveTowards(position.y, targetY, alignStep);
-            return;
-        }
-
-        // Vertical: alinhar X
-        float targetX2 = Mathf.Round(position.x / tileSize) * tileSize;
-        float delta2 = Mathf.Abs(position.x - targetX2);
-
-        if (delta2 <= alignEpsilon)
-        {
-            position.x = targetX2;
-            return;
-        }
-
-        if (snapImmediate)
-        {
-            Vector2 snapped = new Vector2(targetX2, position.y);
-            if (!IsBlockedAtPosition(snapped, Vector2.up)) // tamanho "vertical"
-            {
-                position = snapped;
+                position = candidate;
                 return;
             }
+
+            // Alinhamento suave: só puxa em direção ao target se for seguro
+            // (checa também o "próximo" candidato, pra não puxar pra dentro de parede)
+            float newY = Mathf.MoveTowards(position.y, targetY, alignStep);
+            Vector2 nextCandidate = new Vector2(position.x, newY);
+
+            if (CanAlignToPerpendicularTarget(nextCandidate, moveDir))
+                position.y = newY;
+
+            return;
         }
 
-        position.x = Mathf.MoveTowards(position.x, targetX2, alignStep);
+        // Movendo no Y -> alinhar X
+        float targetX = Mathf.Round(position.x / tileSize) * tileSize;
+
+        if (Mathf.Abs(position.x - targetX) <= alignEpsilon)
+        {
+            var snapped = new Vector2(targetX, position.y);
+            if (CanAlignToPerpendicularTarget(snapped, moveDir))
+                position.x = targetX;
+
+            return;
+        }
+
+        Vector2 candidate2 = new Vector2(targetX, position.y);
+
+        if (snapImmediate && CanAlignToPerpendicularTarget(candidate2, moveDir))
+        {
+            position = candidate2;
+            return;
+        }
+
+        float newX = Mathf.MoveTowards(position.x, targetX, alignStep);
+        Vector2 nextCandidate2 = new Vector2(newX, position.y);
+
+        if (CanAlignToPerpendicularTarget(nextCandidate2, moveDir))
+            position.x = newX;
     }
 
     void TrySlideHorizontally(Vector2 position, float moveSpeed)
@@ -1294,5 +1311,28 @@ public class MovementController : MonoBehaviour, IKillable
     public void ForceExclusiveSpriteNow()
     {
         ForceExclusiveSpriteFromState();
+    }
+
+    private bool IsForwardOpen(Vector2 pos, Vector2 moveDir)
+    {
+        if (moveDir == Vector2.zero)
+            return true;
+
+        // Checa um "passo" na frente (meio tile) pra garantir que não vai alinhar pra um beco/paredão.
+        Vector2 ahead = pos + moveDir.normalized * (tileSize * 0.5f);
+        return !IsBlockedAtPosition(ahead, moveDir);
+    }
+
+    private bool CanAlignToPerpendicularTarget(Vector2 candidatePos, Vector2 moveDir)
+    {
+        // 1) Não pode alinhar pra dentro de colisão
+        if (IsBlockedAtPosition(candidatePos, moveDir))
+            return false;
+
+        // 2) Não alinhar se isso faz ficar "de cara com a parede"
+        if (!IsForwardOpen(candidatePos, moveDir))
+            return false;
+
+        return true;
     }
 }
