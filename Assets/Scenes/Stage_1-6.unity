@@ -2239,8 +2239,6 @@ MonoBehaviour:
   whiteMecha: {fileID: 1013805310}
   blackMecha: {fileID: 2036603996}
   goldenMecha: {fileID: 1721456759}
-  player: {fileID: 0}
-  playerIntroPosition: {x: -3, y: -6}
   movePlayerToIntroPositionOnGoldenFlash: 1
   bossCheeringMusic: {fileID: 8300000, guid: 4923b7e8bbf870e4ea64be1906159dbc, type: 3}
   indestructibleTilemap: {fileID: 818279435}
@@ -3801,7 +3799,7 @@ Tilemap:
       m_AnimatedSprites:
       - {fileID: -4194490761759567601, guid: 914f6dd52fc1d3f428738756d19d329e, type: 3}
       - {fileID: 1710983818, guid: 914f6dd52fc1d3f428738756d19d329e, type: 3}
-      m_AnimationSpeed: 3.5
+      m_AnimationSpeed: 3.5000002
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: 7, y: -5, z: 0}
@@ -3846,7 +3844,7 @@ Tilemap:
       m_AnimatedSprites:
       - {fileID: -4876822446513763925, guid: 1a57a821cb78e0f4d8f8f366d155df5b, type: 3}
       - {fileID: 920322489, guid: 1a57a821cb78e0f4d8f8f366d155df5b, type: 3}
-      m_AnimationSpeed: 3.5000002
+      m_AnimationSpeed: 3.5
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: -9, y: -2, z: 0}
@@ -3900,7 +3898,7 @@ Tilemap:
       m_AnimatedSprites:
       - {fileID: 1909338682, guid: 1a57a821cb78e0f4d8f8f366d155df5b, type: 3}
       - {fileID: -1456098706, guid: 1a57a821cb78e0f4d8f8f366d155df5b, type: 3}
-      m_AnimationSpeed: 3.5
+      m_AnimationSpeed: 3.5000002
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: -9, y: 1, z: 0}
@@ -4044,7 +4042,7 @@ Tilemap:
       m_AnimatedSprites:
       - {fileID: 413118391, guid: 914f6dd52fc1d3f428738756d19d329e, type: 3}
       - {fileID: -414010142, guid: 914f6dd52fc1d3f428738756d19d329e, type: 3}
-      m_AnimationSpeed: 3
+      m_AnimationSpeed: 3.0000002
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: 6, y: 4, z: 0}
@@ -4819,7 +4817,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1aa1ef842d43d4449a4b672797ff89e5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameSession
-  activePlayerCount: 4
+  activePlayerCount: 1
 --- !u!4 &1525807787
 Transform:
   m_ObjectHideFlags: 0
