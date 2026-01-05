@@ -93,6 +93,28 @@ public class MovementController : MonoBehaviour, IKillable
     private const float CenterEpsilon = 0.01f;
     private float SlideDeadZone => tileSize * 0.25f;
 
+    // =========================
+    //  Grid alignment (NEW)
+    // =========================
+    enum MoveAxis
+    {
+        None = 0,
+        Horizontal = 1,
+        Vertical = 2
+    }
+
+    [Header("Grid Alignment")]
+    [Tooltip("Quão rápido o player é alinhado ao grid no eixo perpendicular enquanto se move.")]
+    [SerializeField, Range(0.5f, 20f)] float perpendicularAlignMultiplier = 8f;
+
+    [Tooltip("Se true, tenta snap imediato no início da movimentação de um eixo (se não colidir).")]
+    [SerializeField] bool snapPerpendicularOnAxisStart = true;
+
+    [Tooltip("Epsilon para considerar que já está alinhado.")]
+    [SerializeField, Range(0.0001f, 0.05f)] float alignEpsilon = 0.0015f;
+
+    private MoveAxis currentAxis = MoveAxis.None;
+
     public void SetPlayerId(int id)
     {
         playerId = Mathf.Clamp(id, 1, 4);
@@ -147,6 +169,8 @@ public class MovementController : MonoBehaviour, IKillable
 
         ApplySpeedInternal(speedInternal);
         EnableExclusiveFromState();
+
+        currentAxis = MoveAxis.None;
     }
 
     protected virtual void OnEnable()
@@ -164,6 +188,8 @@ public class MovementController : MonoBehaviour, IKillable
         SyncMountedFromPersistent();
         ApplySpeedInternal(speedInternal);
         EnableExclusiveFromState();
+
+        currentAxis = MoveAxis.None;
     }
 
     protected virtual void OnDisable()
@@ -358,19 +384,26 @@ public class MovementController : MonoBehaviour, IKillable
         return speedInternal != before;
     }
 
+    // =========================
+    //  Movement (REFATORADO)
+    // =========================
     protected virtual void FixedUpdate()
     {
         if (inputLocked || GamePauseController.IsPaused || isDead)
             return;
 
         if (!hasInput || direction == Vector2.zero)
+        {
+            currentAxis = MoveAxis.None;
             return;
+        }
 
         if (stunReceiver != null && stunReceiver.IsStunned)
         {
             if (Rigidbody != null)
                 Rigidbody.linearVelocity = Vector2.zero;
 
+            currentAxis = MoveAxis.None;
             return;
         }
 
@@ -380,13 +413,44 @@ public class MovementController : MonoBehaviour, IKillable
 
         Vector2 position = Rigidbody.position;
 
+        bool movingVertical = Mathf.Abs(direction.y) > 0.01f;
+        bool movingHorizontal = Mathf.Abs(direction.x) > 0.01f;
+
+        // Decide eixo atual (apenas 4-direções, então um deles)
+        MoveAxis newAxis = MoveAxis.None;
+        if (movingHorizontal) newAxis = MoveAxis.Horizontal;
+        else if (movingVertical) newAxis = MoveAxis.Vertical;
+
+        bool axisJustStartedOrChanged = (newAxis != MoveAxis.None && newAxis != currentAxis);
+        currentAxis = newAxis;
+
+        // (1) REGRA NOVA:
+        // Ao mover no X -> alinhar Y ao inteiro mais próximo.
+        // Ao mover no Y -> alinhar X ao inteiro mais próximo.
+        if (currentAxis == MoveAxis.Horizontal)
+        {
+            AlignPerpendicular(
+                ref position,
+                axisIsHorizontal: true,
+                moveSpeed: moveSpeed,
+                snapImmediate: axisJustStartedOrChanged && snapPerpendicularOnAxisStart
+            );
+        }
+        else if (currentAxis == MoveAxis.Vertical)
+        {
+            AlignPerpendicular(
+                ref position,
+                axisIsHorizontal: false,
+                moveSpeed: moveSpeed,
+                snapImmediate: axisJustStartedOrChanged && snapPerpendicularOnAxisStart
+            );
+        }
+
+        // Mantém o "centrar em corredor" antigo (útil quando está espremido)
         bool blockLeft = IsSolidAt(position + Vector2.left * (tileSize * 0.5f));
         bool blockRight = IsSolidAt(position + Vector2.right * (tileSize * 0.5f));
         bool blockUp = IsSolidAt(position + Vector2.up * (tileSize * 0.5f));
         bool blockDown = IsSolidAt(position + Vector2.down * (tileSize * 0.5f));
-
-        bool movingVertical = Mathf.Abs(direction.y) > 0.01f;
-        bool movingHorizontal = Mathf.Abs(direction.x) > 0.01f;
 
         if (movingVertical && blockLeft && blockRight)
         {
@@ -408,6 +472,7 @@ public class MovementController : MonoBehaviour, IKillable
             return;
         }
 
+        // Mantém o "slide" antigo para contornar quinas quando bater
         if (movingVertical)
         {
             float currentCenterX = Mathf.Round(position.x / tileSize) * tileSize;
@@ -424,6 +489,65 @@ public class MovementController : MonoBehaviour, IKillable
             if (offsetY > SlideDeadZone)
                 TrySlideVertically(position, moveSpeed);
         }
+    }
+
+    // Alinha no eixo perpendicular ao movimento.
+    // axisIsHorizontal=true -> movimentando no X, alinha Y.
+    // axisIsHorizontal=false -> movimentando no Y, alinha X.
+    private void AlignPerpendicular(ref Vector2 position, bool axisIsHorizontal, float moveSpeed, bool snapImmediate)
+    {
+        if (tileSize <= 0.0001f)
+            return;
+
+        float alignStep = moveSpeed * Mathf.Max(0.5f, perpendicularAlignMultiplier);
+
+        if (axisIsHorizontal)
+        {
+            float targetY = Mathf.Round(position.y / tileSize) * tileSize;
+            float delta = Mathf.Abs(position.y - targetY);
+
+            if (delta <= alignEpsilon)
+            {
+                position.y = targetY;
+                return;
+            }
+
+            // Tenta snap imediato (sem atravessar parede) quando começou a mover nesse eixo
+            if (snapImmediate)
+            {
+                Vector2 snapped = new Vector2(position.x, targetY);
+                if (!IsBlockedAtPosition(snapped, Vector2.right)) // tamanho "horizontal"
+                {
+                    position = snapped;
+                    return;
+                }
+            }
+
+            position.y = Mathf.MoveTowards(position.y, targetY, alignStep);
+            return;
+        }
+
+        // Vertical: alinhar X
+        float targetX2 = Mathf.Round(position.x / tileSize) * tileSize;
+        float delta2 = Mathf.Abs(position.x - targetX2);
+
+        if (delta2 <= alignEpsilon)
+        {
+            position.x = targetX2;
+            return;
+        }
+
+        if (snapImmediate)
+        {
+            Vector2 snapped = new Vector2(targetX2, position.y);
+            if (!IsBlockedAtPosition(snapped, Vector2.up)) // tamanho "vertical"
+            {
+                position = snapped;
+                return;
+            }
+        }
+
+        position.x = Mathf.MoveTowards(position.x, targetX2, alignStep);
     }
 
     void TrySlideHorizontally(Vector2 position, float moveSpeed)
@@ -549,9 +673,15 @@ public class MovementController : MonoBehaviour, IKillable
 
     protected bool IsBlocked(Vector2 targetPosition)
     {
+        return IsBlockedAtPosition(targetPosition, direction);
+    }
+
+    // Mesmo filtro do IsBlocked, mas com direção "virtual" (pra escolher o tamanho da overlap)
+    private bool IsBlockedAtPosition(Vector2 targetPosition, Vector2 dirForSize)
+    {
         Vector2 size;
 
-        if (Mathf.Abs(direction.x) > 0f)
+        if (Mathf.Abs(dirForSize.x) > 0f)
             size = new Vector2(tileSize * 0.6f, tileSize * 0.2f);
         else
             size = new Vector2(tileSize * 0.2f, tileSize * 0.6f);
@@ -585,7 +715,8 @@ public class MovementController : MonoBehaviour, IKillable
             {
                 if (monos[i] is IMovementAbility ability && ability.IsEnabled)
                 {
-                    if (ability.TryHandleBlockedHit(hit, direction, tileSize, obstacleMask))
+                    // NOTE: para alinhamento, ainda respeitamos a regra do ability (p.ex. alguma habilidade bloqueia de propósito)
+                    if (ability.TryHandleBlockedHit(hit, dirForSize, tileSize, obstacleMask))
                         return true;
                 }
             }
