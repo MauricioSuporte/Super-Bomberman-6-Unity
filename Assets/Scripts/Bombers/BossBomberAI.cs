@@ -8,64 +8,56 @@ public class BossBomberAI : MonoBehaviour
 {
     [Header("Target")]
     public Transform target;
-
-    [Tooltip("Maximum Manhattan distance to keep chasing the target. If farther, the boss still moves toward but uses simpler logic.")]
     public float maxChaseDistance = 20f;
 
     [Header("Thinking")]
-    [Tooltip("How often (seconds) the boss thinks when it is safe.")]
     public float thinkIntervalSafe = 0.20f;
-
-    [Tooltip("How often (seconds) the boss thinks when it is in danger.")]
     public float thinkIntervalDanger = 0.05f;
-
-    [Tooltip("Time window (seconds) to consider a tile dangerous even if the explosion is imminent.")]
     public float imminentWindowSeconds = 0.60f;
-
-    [Tooltip("Additional reaction buffer (seconds) to avoid arriving exactly when an explosion starts.")]
     public float reactionBuffer = 0.05f;
-
-    [Tooltip("Minimum time margin (seconds) a tile must remain safe after arrival to be considered a safe destination.")]
     public float safeTileMinTime = 0.35f;
-
-    [Tooltip("BFS lookahead depth (in tiles) when searching for a safe escape route.")]
     public int escapeLookaheadDepth = 7;
 
-    [Header("Bomb Distance Bias")]
-    [Tooltip("Extra distance (in tiles) considered as unsafe beyond a bomb radius. Higher values make the boss flee earlier.")]
-    public float safeDistanceAfterBomb = 3f;
-
-    [Tooltip("Minimum time (seconds) between bomb placements for chaining.")]
+    [Header("Bomb Placement")]
     public float bombChainCooldown = 0.3f;
+    public float safeDistanceAfterBomb = 3f;
+    public int extraBombRangeTiles = 0;
+    public bool allowPlaceBombInRange = true;
+    public bool allowPlaceBombOnClearLine = true;
+
+    [Header("Always Plant Near Player")]
+    public bool alwaysPlantNearPlayer = true;
+    public int alwaysPlantDistanceTiles = 2;
+    public bool allowPlantEvenWithoutEscape = true;
+    public float nearPlantMinCooldown = 0.35f;
 
     [Header("Retargeting")]
-    [Tooltip("How often (seconds) the boss re-evaluates the closest alive player.")]
     public float retargetInterval = 0.25f;
 
     [Header("Kick Behavior")]
-    [Range(0f, 1f)]
-    [Tooltip("Chance to opportunistically kick a nearby player bomb.")]
-    public float opportunisticKickChance = 0.25f;
-
-    [Tooltip("Maximum age (seconds) of a player bomb to be considered for an opportunistic kick.")]
+    [Range(0f, 1f)] public float opportunisticKickChance = 0.25f;
     public float opportunisticKickMaxBombAge = 0.9f;
-
-    [Tooltip("Cooldown (seconds) between kick decisions.")]
     public float kickDecisionCooldown = 0.35f;
-
-    [Tooltip("Minimum safety score required after deciding to kick.")]
     public float minSafetyAfterKick = 1.5f;
 
-    AIMovementController movement;
-    BombController bomb;
-    BombKickAbility kickAbility;
+    private AIMovementController movement;
+    private BombController bomb;
+    private BombKickAbility kickAbility;
 
-    float thinkTimer;
-    float retargetTimer;
-    Vector2 lastDirection = Vector2.zero;
-    bool isEvading;
-    float lastBombTime;
-    float lastKickDecisionTime;
+    private float thinkTimer;
+    private float retargetTimer;
+    private Vector2 lastDirection = Vector2.zero;
+    private bool isEvading;
+    private float lastBombTime;
+    private float lastKickDecisionTime;
+
+    private int explosionLayer;
+    private int explosionMask;
+    private int bombLayer;
+    private int bombMask;
+    private int stageMask;
+
+    private static readonly Vector2[] Dirs = { Vector2.up, Vector2.down, Vector2.left, Vector2.right };
 
     void Awake()
     {
@@ -75,6 +67,14 @@ public class BossBomberAI : MonoBehaviour
 
         bomb.useAIInput = true;
         movement.isBoss = true;
+
+        explosionLayer = LayerMask.NameToLayer("Explosion");
+        explosionMask = (explosionLayer >= 0) ? (1 << explosionLayer) : 0;
+
+        bombLayer = LayerMask.NameToLayer("Bomb");
+        bombMask = (bombLayer >= 0) ? (1 << bombLayer) : 0;
+
+        stageMask = LayerMask.GetMask("Stage");
     }
 
     void Start()
@@ -82,6 +82,8 @@ public class BossBomberAI : MonoBehaviour
         PickClosestAlivePlayer();
         retargetTimer = retargetInterval;
         thinkTimer = 0f;
+        lastBombTime = -999f;
+        lastKickDecisionTime = -999f;
     }
 
     void Update()
@@ -96,16 +98,16 @@ public class BossBomberAI : MonoBehaviour
             retargetTimer = retargetInterval;
         }
 
-        Bomb[] bombs = FindObjectsByType<Bomb>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
-        Vector2 myPos = RoundToTile(transform.position);
+        Vector2 myTile = RoundToTile((Vector2)transform.position, movement.tileSize);
+        Bomb[] bombsNow = FindObjectsByType<Bomb>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
 
-        bool dangerNow = IsTileDangerousNowOrSoon(myPos, bombs, 0f);
+        bool dangerNow = IsTileDangerousNowOrSoon(myTile, bombsNow, 0f);
         float interval = dangerNow ? thinkIntervalDanger : thinkIntervalSafe;
 
         thinkTimer -= Time.deltaTime;
         if (thinkTimer <= 0f)
         {
-            Think(bombs);
+            Think(myTile, bombsNow, dangerNow);
             thinkTimer = interval;
         }
 
@@ -114,13 +116,12 @@ public class BossBomberAI : MonoBehaviour
 
     void PickClosestAlivePlayer()
     {
-        var ids = FindObjectsByType<PlayerIdentity>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
-
-        Vector2 myPos = RoundToTile(transform.position);
+        Vector2 myPos = RoundToTile((Vector2)transform.position, movement.tileSize);
 
         Transform best = null;
         float bestDist = float.PositiveInfinity;
 
+        var ids = FindObjectsByType<PlayerIdentity>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
         if (ids != null && ids.Length > 0)
         {
             for (int i = 0; i < ids.Length; i++)
@@ -136,9 +137,8 @@ public class BossBomberAI : MonoBehaviour
                 if (p.isDead) continue;
                 if (!p.CompareTag("Player")) continue;
 
-                Vector2 pPos = RoundToTile(p.transform.position);
-
-                float dist = Mathf.Abs(pPos.x - myPos.x) + Mathf.Abs(pPos.y - myPos.y);
+                Vector2 pPos = RoundToTile((Vector2)p.transform.position, movement.tileSize);
+                float dist = Manhattan(myPos, pPos);
 
                 if (dist < bestDist)
                 {
@@ -146,60 +146,78 @@ public class BossBomberAI : MonoBehaviour
                     best = p.transform;
                 }
             }
+
+            target = best;
+            return;
         }
-        else
+
+        var players = FindObjectsByType<MovementController>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+        for (int i = 0; i < players.Length; i++)
         {
-            var players = FindObjectsByType<MovementController>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+            var p = players[i];
+            if (p == null) continue;
+            if (!p.CompareTag("Player")) continue;
+            if (!p.isActiveAndEnabled || !p.gameObject.activeInHierarchy) continue;
+            if (p.isDead) continue;
 
-            for (int i = 0; i < players.Length; i++)
+            Vector2 pPos = RoundToTile((Vector2)p.transform.position, movement.tileSize);
+            float dist = Manhattan(myPos, pPos);
+
+            if (dist < bestDist)
             {
-                var p = players[i];
-                if (p == null) continue;
-                if (!p.CompareTag("Player")) continue;
-                if (!p.isActiveAndEnabled || !p.gameObject.activeInHierarchy) continue;
-                if (p.isDead) continue;
-
-                Vector2 pPos = RoundToTile(p.transform.position);
-                float dist = Mathf.Abs(pPos.x - myPos.x) + Mathf.Abs(pPos.y - myPos.y);
-
-                if (dist < bestDist)
-                {
-                    bestDist = dist;
-                    best = p.transform;
-                }
+                bestDist = dist;
+                best = p.transform;
             }
         }
 
         target = best;
     }
 
-    void Think(Bomb[] bombs)
+    void Think(Vector2 myTile, Bomb[] bombsNow, bool dangerNow)
     {
-        Vector2 myPos = RoundToTile(transform.position);
+        if (target != null && alwaysPlantNearPlayer)
+        {
+            Vector2 targetTile0 = RoundToTile((Vector2)target.position, movement.tileSize);
+            float dist0 = Manhattan(myTile, targetTile0);
 
-        bool inDanger = IsTileDangerousNowOrSoon(myPos, bombs, 0f);
+            if (!dangerNow && dist0 <= Mathf.Max(1, alwaysPlantDistanceTiles) + 0.01f)
+            {
+                if (TryPlaceBombAlwaysNearPlayer(myTile, targetTile0, bombsNow))
+                    return;
+            }
+        }
 
         if (HasKickAbility())
         {
-            if (TryTrappedKickIfNeeded(myPos, bombs))
+            if (TryTrappedKickIfNeeded(myTile, bombsNow))
                 return;
 
-            if (TryOpportunisticKickPlayerAdjacent(myPos, bombs, inDanger))
+            if (TryOpportunisticKickPlayerAdjacent(myTile, bombsNow, dangerNow))
                 return;
         }
 
-        if (inDanger)
+        if (dangerNow)
         {
             isEvading = true;
-            lastDirection = GetEscapeStep_BFS(myPos, bombs);
+            lastDirection = GetEscapeStep_BFS(myTile, bombsNow);
+            if (lastDirection == Vector2.zero && target != null)
+            {
+                Vector2 targetTile = RoundToTile((Vector2)target.position, movement.tileSize);
+                lastDirection = GetBestStepAwayFromTarget(myTile, targetTile, bombsNow);
+            }
             return;
         }
 
         if (isEvading)
         {
-            if (IsTileDangerousNowOrSoon(myPos, bombs, 0f))
+            if (IsTileDangerousNowOrSoon(myTile, bombsNow, 0f))
             {
-                lastDirection = GetEscapeStep_BFS(myPos, bombs);
+                lastDirection = GetEscapeStep_BFS(myTile, bombsNow);
+                if (lastDirection == Vector2.zero && target != null)
+                {
+                    Vector2 targetTile = RoundToTile((Vector2)target.position, movement.tileSize);
+                    lastDirection = GetBestStepAwayFromTarget(myTile, targetTile, bombsNow);
+                }
                 return;
             }
 
@@ -208,58 +226,242 @@ public class BossBomberAI : MonoBehaviour
 
         if (target == null)
         {
-            lastDirection = GetBestDirectionAvoidingExplosionSmart(myPos, bombs);
+            lastDirection = WanderSafely(myTile, bombsNow);
             return;
         }
 
-        Vector2 playerPos = RoundToTile(target.position);
-        Vector2 delta = playerPos - myPos;
+        Vector2 targetTile2 = RoundToTile((Vector2)target.position, movement.tileSize);
+        float distToTarget = Manhattan(myTile, targetTile2);
 
-        float manhattan = Mathf.Abs(delta.x) + Mathf.Abs(delta.y);
-        bool sameRow = Mathf.Abs(delta.y) < 0.1f;
-        bool sameCol = Mathf.Abs(delta.x) < 0.1f;
+        if (TryPlaceBombFromRangeIfGood(myTile, targetTile2, bombsNow, distToTarget))
+            return;
 
-        if (manhattan > maxChaseDistance)
+        if (distToTarget <= 1.01f)
         {
-            Vector2 dirFar = GetStepTowards(delta);
-            Vector2 targetTileFar = myPos + dirFar;
-            float eta = GetSingleStepTravelTimeSeconds();
+            if (TryPlaceBombWithEscape(myTile, bombsNow))
+                return;
 
-            lastDirection = IsTileDangerousNowOrSoon(targetTileFar, bombs, eta)
-                ? GetBestDirectionAvoidingExplosionSmart(myPos, bombs)
-                : dirFar;
+            lastDirection = GetEscapeStep_BFS(myTile, bombsNow);
+            if (lastDirection == Vector2.zero)
+                lastDirection = GetBestStepAwayFromTarget(myTile, targetTile2, bombsNow);
             return;
         }
 
-        if ((sameRow || sameCol) && manhattan <= bomb.explosionRadius + 1)
+        if (allowPlaceBombOnClearLine && IsClearLine(myTile, targetTile2, out Vector2 lineDir, out float lineDist))
         {
-            if (manhattan > 1.01f)
+            int myRadius = GetEffectiveMyBombRadius() + Mathf.Max(0, extraBombRangeTiles);
+
+            if (lineDist <= myRadius + 0.01f)
             {
-                Vector2 dirTo = GetStepTowards(delta);
-                Vector2 targetTileTo = myPos + dirTo;
-                float eta = GetSingleStepTravelTimeSeconds();
+                if (TryPlaceBombWithEscape(myTile, bombsNow))
+                    return;
 
-                lastDirection = IsTileDangerousNowOrSoon(targetTileTo, bombs, eta)
-                    ? GetBestDirectionAvoidingExplosionSmart(myPos, bombs)
-                    : dirTo;
+                lastDirection = GetEscapeStep_BFS(myTile, bombsNow);
+                if (lastDirection == Vector2.zero)
+                    lastDirection = GetBestStepAwayFromTarget(myTile, targetTile2, bombsNow);
                 return;
             }
 
-            TryPlaceBombChain(myPos);
+            if (lineDist <= myRadius + 1f)
+            {
+                Vector2 step = lineDir;
+                float eta = GetSingleStepTravelTimeSeconds();
+                Vector2 next = myTile + step;
 
-            Bomb[] bombsNow = FindObjectsByType<Bomb>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
-            isEvading = true;
-            lastDirection = GetEscapeStep_BFS(myPos, bombsNow);
+                if (!IsWalkableTile(next) || IsTileDangerousNowOrSoon(next, bombsNow, eta))
+                {
+                    lastDirection = GetEscapeStep_BFS(myTile, bombsNow);
+                    if (lastDirection == Vector2.zero)
+                        lastDirection = GetBestStepAwayFromTarget(myTile, targetTile2, bombsNow);
+                    return;
+                }
+
+                lastDirection = step;
+                return;
+            }
+        }
+
+        if (distToTarget > maxChaseDistance)
+        {
+            Vector2 step = GetStepTowards(targetTile2 - myTile);
+            Vector2 next = myTile + step;
+            float eta = GetSingleStepTravelTimeSeconds();
+
+            lastDirection = (step != Vector2.zero && IsWalkableTile(next) && !IsTileDangerousNowOrSoon(next, bombsNow, eta))
+                ? step
+                : WanderSafely(myTile, bombsNow);
+
             return;
         }
 
-        Vector2 dir = GetStepTowards(delta);
-        Vector2 targetTile = myPos + dir;
-        float eta2 = GetSingleStepTravelTimeSeconds();
+        Vector2 pathStep = GetChaseStep_AStar(myTile, targetTile2, bombsNow, 14);
+        if (pathStep == Vector2.zero)
+            pathStep = WanderSafely(myTile, bombsNow);
 
-        lastDirection = IsTileDangerousNowOrSoon(targetTile, bombs, eta2)
-            ? GetBestDirectionAvoidingExplosionSmart(myPos, bombs)
-            : dir;
+        lastDirection = pathStep;
+    }
+
+    bool TryPlaceBombAlwaysNearPlayer(Vector2 myTile, Vector2 targetTile, Bomb[] bombsNow)
+    {
+        if (bomb == null) return false;
+        if (bomb.BombsRemaining <= 0) return false;
+        if (IsTileWithBomb(myTile)) return false;
+
+        float cd = Mathf.Max(0.05f, nearPlantMinCooldown);
+        if (Time.time - lastBombTime < cd) return false;
+
+        Vector2 escape = GetEscapeStep_BFS(myTile, bombsNow);
+
+        if (escape == Vector2.zero)
+        {
+            if (!allowPlantEvenWithoutEscape)
+                return false;
+
+            bomb.TryPlaceBombAtIgnoringInputLock(myTile);
+            lastBombTime = Time.time;
+
+            Bomb[] bombsAfter0 = FindObjectsByType<Bomb>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+            isEvading = true;
+
+            Vector2 away = GetBestStepAwayFromTarget(myTile, targetTile, bombsAfter0);
+            if (away != Vector2.zero)
+                lastDirection = away;
+            else
+                lastDirection = WanderSafely(myTile, bombsAfter0);
+
+            return true;
+        }
+
+        float eta = GetSingleStepTravelTimeSeconds();
+        float escapeSafety = ScoreTile(myTile + escape, bombsNow, eta);
+
+        if (escapeSafety < minSafetyAfterKick)
+        {
+            if (!allowPlantEvenWithoutEscape)
+                return false;
+
+            bomb.TryPlaceBombAtIgnoringInputLock(myTile);
+            lastBombTime = Time.time;
+
+            Bomb[] bombsAfter1 = FindObjectsByType<Bomb>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+            isEvading = true;
+
+            Vector2 away = GetBestStepAwayFromTarget(myTile, targetTile, bombsAfter1);
+            if (away != Vector2.zero)
+                lastDirection = away;
+            else
+                lastDirection = WanderSafely(myTile, bombsAfter1);
+
+            return true;
+        }
+
+        bomb.TryPlaceBombAtIgnoringInputLock(myTile);
+        lastBombTime = Time.time;
+
+        Bomb[] bombsAfter = FindObjectsByType<Bomb>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+        isEvading = true;
+        lastDirection = GetEscapeStep_BFS(myTile, bombsAfter);
+
+        if (lastDirection == Vector2.zero)
+            lastDirection = GetBestStepAwayFromTarget(myTile, targetTile, bombsAfter);
+
+        return true;
+    }
+
+    Vector2 GetBestStepAwayFromTarget(Vector2 myTile, Vector2 targetTile, Bomb[] bombsNow)
+    {
+        float stepTime = GetSingleStepTravelTimeSeconds();
+        Vector2 best = Vector2.zero;
+        float bestScore = float.NegativeInfinity;
+
+        Vector2 awayPrimary = GetStepTowards(myTile - targetTile);
+
+        for (int pass = 0; pass < 2; pass++)
+        {
+            for (int i = 0; i < Dirs.Length; i++)
+            {
+                Vector2 dir = (pass == 0 && i == 0) ? awayPrimary : Dirs[i];
+                Vector2 n = myTile + dir;
+
+                if (dir == Vector2.zero) continue;
+                if (!IsWalkableTile(n)) continue;
+                if (IsTileDangerousNowOrSoon(n, bombsNow, stepTime)) continue;
+
+                float s = ScoreTile(n, bombsNow, stepTime);
+                if (s > bestScore)
+                {
+                    bestScore = s;
+                    best = dir;
+                }
+            }
+
+            if (best != Vector2.zero)
+                return best;
+        }
+
+        return Vector2.zero;
+    }
+
+    bool TryPlaceBombFromRangeIfGood(Vector2 myTile, Vector2 targetTile, Bomb[] bombsNow, float distToTarget)
+    {
+        if (!allowPlaceBombInRange)
+            return false;
+
+        int myRadius = GetEffectiveMyBombRadius() + Mathf.Max(0, extraBombRangeTiles);
+
+        if (distToTarget > myRadius + 0.01f)
+            return false;
+
+        if (!IsPlaceBombAllowedNow(myTile))
+            return false;
+
+        Vector2 escape = GetEscapeStep_BFS(myTile, bombsNow);
+        if (escape == Vector2.zero)
+            return false;
+
+        float escapeSafety = ScoreTile(myTile + escape, bombsNow, GetSingleStepTravelTimeSeconds());
+        if (escapeSafety < minSafetyAfterKick)
+            return false;
+
+        bomb.TryPlaceBombAtIgnoringInputLock(myTile);
+        lastBombTime = Time.time;
+
+        Bomb[] bombsAfter = FindObjectsByType<Bomb>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+        isEvading = true;
+        lastDirection = GetEscapeStep_BFS(myTile, bombsAfter);
+
+        return true;
+    }
+
+    bool TryPlaceBombWithEscape(Vector2 myTile, Bomb[] bombsNow)
+    {
+        if (!IsPlaceBombAllowedNow(myTile))
+            return false;
+
+        Vector2 escape = GetEscapeStep_BFS(myTile, bombsNow);
+        if (escape == Vector2.zero)
+            return false;
+
+        float escapeSafety = ScoreTile(myTile + escape, bombsNow, GetSingleStepTravelTimeSeconds());
+        if (escapeSafety < minSafetyAfterKick)
+            return false;
+
+        bomb.TryPlaceBombAtIgnoringInputLock(myTile);
+        lastBombTime = Time.time;
+
+        Bomb[] bombsAfter = FindObjectsByType<Bomb>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+        isEvading = true;
+        lastDirection = GetEscapeStep_BFS(myTile, bombsAfter);
+        return true;
+    }
+
+    bool IsPlaceBombAllowedNow(Vector2 myTile)
+    {
+        if (bomb == null) return false;
+        if (bomb.BombsRemaining <= 0) return false;
+        if (Time.time - lastBombTime < bombChainCooldown) return false;
+        if (IsTileWithBomb(myTile)) return false;
+        return true;
     }
 
     bool HasKickAbility()
@@ -267,12 +469,12 @@ public class BossBomberAI : MonoBehaviour
         return kickAbility != null && kickAbility.IsEnabled;
     }
 
-    bool TryOpportunisticKickPlayerAdjacent(Vector2 myPos, Bomb[] bombs, bool inDanger)
+    bool TryOpportunisticKickPlayerAdjacent(Vector2 myTile, Bomb[] bombsNow, bool dangerNow)
     {
         if (Time.time - lastKickDecisionTime < kickDecisionCooldown)
             return false;
 
-        if (inDanger)
+        if (dangerNow)
             return false;
 
         if (Random.value > opportunisticKickChance)
@@ -281,20 +483,17 @@ public class BossBomberAI : MonoBehaviour
         Bomb bestAdjPlayerBomb = null;
         float bestPlaced = float.NegativeInfinity;
 
-        for (int i = 0; i < bombs.Length; i++)
+        for (int i = 0; i < bombsNow.Length; i++)
         {
-            var b = bombs[i];
+            var b = bombsNow[i];
             if (b == null) continue;
             if (b.HasExploded) continue;
             if (!b.CanBeKicked) continue;
             if (b.Owner == null) continue;
             if (!b.Owner.CompareTag("Player")) continue;
 
-            Vector2 bombPos = RoundToTile(b.GetLogicalPosition());
-            Vector2 d = bombPos - myPos;
-
-            float manhattan = Mathf.Abs(d.x) + Mathf.Abs(d.y);
-            if (manhattan != 1f)
+            Vector2 bombTile = RoundToTile(b.GetLogicalPosition(), movement.tileSize);
+            if (Manhattan(myTile, bombTile) != 1f)
                 continue;
 
             float age = Time.time - b.PlacedTime;
@@ -311,11 +510,13 @@ public class BossBomberAI : MonoBehaviour
         if (bestAdjPlayerBomb == null)
             return false;
 
-        Vector2 bestBombPos2 = RoundToTile(bestAdjPlayerBomb.GetLogicalPosition());
-        Vector2 kickDir = bestBombPos2 - myPos;
+        Vector2 bestBombTile = RoundToTile(bestAdjPlayerBomb.GetLogicalPosition(), movement.tileSize);
+        Vector2 kickDir = bestBombTile - myTile;
 
-        Vector2 escapeDir = GetEscapeStep_BFS(myPos, bombs);
-        float escapeSafety = escapeDir == Vector2.zero ? ScoreTile(myPos, bombs, 0f) : ScoreTile(myPos + escapeDir, bombs, GetSingleStepTravelTimeSeconds());
+        Vector2 escapeDir = GetEscapeStep_BFS(myTile, bombsNow);
+        float escapeSafety = escapeDir == Vector2.zero
+            ? ScoreTile(myTile, bombsNow, 0f)
+            : ScoreTile(myTile + escapeDir, bombsNow, GetSingleStepTravelTimeSeconds());
 
         if (escapeSafety < minSafetyAfterKick)
             return false;
@@ -326,12 +527,12 @@ public class BossBomberAI : MonoBehaviour
         return true;
     }
 
-    bool TryTrappedKickIfNeeded(Vector2 myPos, Bomb[] bombs)
+    bool TryTrappedKickIfNeeded(Vector2 myTile, Bomb[] bombsNow)
     {
         if (Time.time - lastKickDecisionTime < kickDecisionCooldown)
             return false;
 
-        Vector2 bestSafe = GetEscapeStep_BFS(myPos, bombs);
+        Vector2 bestSafe = GetEscapeStep_BFS(myTile, bombsNow);
         if (bestSafe != Vector2.zero)
             return false;
 
@@ -339,16 +540,15 @@ public class BossBomberAI : MonoBehaviour
         float bestTime = float.NegativeInfinity;
         Vector2 bestDir = Vector2.zero;
 
-        for (int i = 0; i < bombs.Length; i++)
+        for (int i = 0; i < bombsNow.Length; i++)
         {
-            var b = bombs[i];
+            var b = bombsNow[i];
             if (b == null) continue;
 
-            Vector2 bombPos = RoundToTile(b.GetLogicalPosition());
-            Vector2 delta = bombPos - myPos;
-            float manhattan = Mathf.Abs(delta.x) + Mathf.Abs(delta.y);
+            Vector2 bombTile = RoundToTile(b.GetLogicalPosition(), movement.tileSize);
+            Vector2 delta = bombTile - myTile;
 
-            if (manhattan != 1f) continue;
+            if (Manhattan(myTile, bombTile) != 1f) continue;
             if (b.HasExploded) continue;
             if (!b.CanBeKicked) continue;
 
@@ -369,57 +569,56 @@ public class BossBomberAI : MonoBehaviour
         return true;
     }
 
-    void TryPlaceBombChain(Vector2 myPos)
+    Vector2 WanderSafely(Vector2 myTile, Bomb[] bombsNow)
     {
-        if (bomb == null) return;
-        if (bomb.BombsRemaining <= 0) return;
-        if (Time.time - lastBombTime < bombChainCooldown) return;
-        if (IsTileWithBomb(myPos)) return;
+        float stepTime = GetSingleStepTravelTimeSeconds();
+        Vector2 best = Vector2.zero;
+        float bestScore = ScoreTile(myTile, bombsNow, 0f);
 
-        bomb.RequestBombFromAI();
-        lastBombTime = Time.time;
+        for (int i = 0; i < Dirs.Length; i++)
+        {
+            Vector2 n = myTile + Dirs[i];
+            if (!IsWalkableTile(n))
+                continue;
+
+            if (IsTileDangerousNowOrSoon(n, bombsNow, stepTime))
+                continue;
+
+            float s = ScoreTile(n, bombsNow, stepTime);
+            if (s > bestScore)
+            {
+                bestScore = s;
+                best = Dirs[i];
+            }
+        }
+
+        return best;
     }
 
-    Vector2 GetBestDirectionAvoidingExplosionSmart(Vector2 myPos, Bomb[] bombs)
+    Vector2 GetEscapeStep_BFS(Vector2 myTile, Bomb[] bombsNow)
     {
-        Vector2 step = GetEscapeStep_BFS(myPos, bombs);
-        return step;
-    }
-
-    Vector2 GetEscapeStep_BFS(Vector2 myPos, Bomb[] bombs)
-    {
-        Vector2[] dirs = { Vector2.up, Vector2.down, Vector2.left, Vector2.right };
-
         float stepTime = GetSingleStepTravelTimeSeconds();
 
         var visited = new HashSet<Vector2>();
-        var q = new Queue<(Vector2 pos, int depth, Vector2 firstStep)>();
+        var q = new Queue<Node>();
 
-        visited.Add(myPos);
+        visited.Add(myTile);
 
         Vector2 bestFirst = Vector2.zero;
-        float bestScore = -999999f;
+        float bestScore = ScoreTile(myTile, bombsNow, 0f);
 
-        if (!IsTileDangerousNowOrSoon(myPos, bombs, 0f))
+        for (int i = 0; i < Dirs.Length; i++)
         {
-            float stayScore = ScoreTile(myPos, bombs, 0f);
-            bestFirst = Vector2.zero;
-            bestScore = stayScore;
-        }
-
-        for (int i = 0; i < dirs.Length; i++)
-        {
-            Vector2 n = myPos + dirs[i];
-
+            Vector2 n = myTile + Dirs[i];
             if (!IsWalkableTile(n))
                 continue;
 
             float eta = stepTime;
-            if (IsTileDangerousNowOrSoon(n, bombs, eta))
+            if (IsTileDangerousNowOrSoon(n, bombsNow, eta))
                 continue;
 
             visited.Add(n);
-            q.Enqueue((n, 1, dirs[i]));
+            q.Enqueue(new Node(n, 1, Dirs[i]));
         }
 
         while (q.Count > 0)
@@ -427,10 +626,10 @@ public class BossBomberAI : MonoBehaviour
             var cur = q.Dequeue();
 
             float eta = cur.depth * stepTime;
-            float timeToHit = GetMinTimeUntilBlastHitsTile(cur.pos, bombs);
+            float timeToHit = GetMinTimeUntilBlastHitsTile(cur.pos, bombsNow);
 
             bool safeEnough = timeToHit >= eta + safeTileMinTime;
-            float score = ScoreTile(cur.pos, bombs, eta);
+            float score = ScoreTile(cur.pos, bombsNow, eta);
 
             if (safeEnough && score > bestScore)
             {
@@ -444,9 +643,9 @@ public class BossBomberAI : MonoBehaviour
             if (cur.depth >= escapeLookaheadDepth)
                 continue;
 
-            for (int i = 0; i < dirs.Length; i++)
+            for (int i = 0; i < Dirs.Length; i++)
             {
-                Vector2 nx = cur.pos + dirs[i];
+                Vector2 nx = cur.pos + Dirs[i];
                 if (visited.Contains(nx))
                     continue;
 
@@ -454,62 +653,151 @@ public class BossBomberAI : MonoBehaviour
                     continue;
 
                 float nEta = (cur.depth + 1) * stepTime;
-                if (IsTileDangerousNowOrSoon(nx, bombs, nEta))
+                if (IsTileDangerousNowOrSoon(nx, bombsNow, nEta))
                     continue;
 
                 visited.Add(nx);
-                q.Enqueue((nx, cur.depth + 1, cur.firstStep));
+                q.Enqueue(new Node(nx, cur.depth + 1, cur.firstStep));
             }
         }
 
         return bestFirst;
     }
 
-    bool IsWalkableTile(Vector2 tile)
+    Vector2 GetChaseStep_AStar(Vector2 start, Vector2 goal, Bomb[] bombsNow, int maxNodes)
     {
-        if (IsTileWithExplosion(tile))
+        float stepTime = GetSingleStepTravelTimeSeconds();
+
+        var open = new List<AStarNode>(32);
+        var bestG = new Dictionary<Vector2, float>(64);
+
+        open.Add(new AStarNode(start, 0f, Heuristic(start, goal), Vector2.zero));
+        bestG[start] = 0f;
+
+        int expanded = 0;
+
+        while (open.Count > 0 && expanded < Mathf.Max(8, maxNodes))
+        {
+            int bestIndex = 0;
+            float bestF = open[0].f;
+
+            for (int i = 1; i < open.Count; i++)
+            {
+                if (open[i].f < bestF)
+                {
+                    bestF = open[i].f;
+                    bestIndex = i;
+                }
+            }
+
+            var cur = open[bestIndex];
+            open.RemoveAt(bestIndex);
+
+            expanded++;
+
+            if (cur.pos == goal)
+                return cur.firstStep;
+
+            for (int i = 0; i < Dirs.Length; i++)
+            {
+                Vector2 dir = Dirs[i];
+                Vector2 nx = cur.pos + dir;
+
+                if (!IsWalkableTile(nx))
+                    continue;
+
+                float eta = (cur.g + 1f) * stepTime;
+                if (IsTileDangerousNowOrSoon(nx, bombsNow, eta))
+                    continue;
+
+                float g2 = cur.g + 1f;
+                if (bestG.TryGetValue(nx, out float prev) && prev <= g2)
+                    continue;
+
+                bestG[nx] = g2;
+
+                Vector2 first = cur.firstStep == Vector2.zero ? dir : cur.firstStep;
+                float h = Heuristic(nx, goal);
+                float risk = Mathf.Clamp01(1f / Mathf.Max(0.25f, GetMinTimeUntilBlastHitsTile(nx, bombsNow)));
+                float f = g2 + h + (risk * 2.0f);
+
+                open.Add(new AStarNode(nx, g2, f, first));
+            }
+        }
+
+        Vector2 bestStep = Vector2.zero;
+        float bestScore = float.NegativeInfinity;
+
+        for (int i = 0; i < Dirs.Length; i++)
+        {
+            Vector2 n = start + Dirs[i];
+            if (!IsWalkableTile(n))
+                continue;
+
+            if (IsTileDangerousNowOrSoon(n, bombsNow, stepTime))
+                continue;
+
+            float s = 1000f - Heuristic(n, goal) + ScoreTile(n, bombsNow, stepTime) * 0.01f;
+            if (s > bestScore)
+            {
+                bestScore = s;
+                bestStep = Dirs[i];
+            }
+        }
+
+        return bestStep;
+    }
+
+    bool IsWalkableTile(Vector2 tileCenter)
+    {
+        if (IsTileWithExplosion(tileCenter))
             return false;
 
-        bool blocked = Physics2D.OverlapBox(
-            tile,
-            Vector2.one * (movement.tileSize * 0.6f),
-            0f,
-            movement.obstacleMask);
+        float t = Mathf.Max(0.0001f, movement.tileSize);
+        Vector2 size = Vector2.one * (t * 0.6f);
 
-        return !blocked;
-    }
-
-    bool IsTileDangerousNowOrSoon(Vector2 tilePos, Bomb[] bombs, float arrivalEta)
-    {
-        if (IsTileWithExplosion(tilePos))
+        Collider2D[] hits = Physics2D.OverlapBoxAll(tileCenter, size, 0f, movement.obstacleMask);
+        if (hits == null || hits.Length == 0)
             return true;
 
-        float timeToHit = GetMinTimeUntilBlastHitsTile(tilePos, bombs);
+        for (int i = 0; i < hits.Length; i++)
+        {
+            var h = hits[i];
+            if (h == null) continue;
+            if (h.gameObject == gameObject) continue;
+            if (h.isTrigger) continue;
+            return false;
+        }
 
-        return timeToHit <= arrivalEta + reactionBuffer + imminentWindowSeconds;
+        return true;
     }
 
-    float GetMinTimeUntilBlastHitsTile(Vector2 tilePos, Bomb[] bombs)
+    bool IsTileDangerousNowOrSoon(Vector2 tileCenter, Bomb[] bombsNow, float arrivalEta)
+    {
+        if (IsTileWithExplosion(tileCenter))
+            return true;
+
+        float t = GetMinTimeUntilBlastHitsTile(tileCenter, bombsNow);
+        return t <= arrivalEta + reactionBuffer + imminentWindowSeconds;
+    }
+
+    float GetMinTimeUntilBlastHitsTile(Vector2 tileCenter, Bomb[] bombsNow)
     {
         float best = 999f;
 
-        for (int i = 0; i < bombs.Length; i++)
+        for (int i = 0; i < bombsNow.Length; i++)
         {
-            var b = bombs[i];
+            var b = bombsNow[i];
             if (b == null || b.HasExploded)
                 continue;
 
             float remaining = GetBombRemainingFuseSecondsSafe(b);
+            Vector2 bombTile = RoundToTile(b.GetLogicalPosition(), movement.tileSize);
 
-            Vector2 bombTile = GetBombTilePosRoundedSafe(b);
-            if (IsTileWithExplosion(bombTile))
-                remaining = Mathf.Min(remaining, 0.08f);
-
-            if (!IsTileInBlastLine(tilePos, b, out float linearDist))
+            if (!IsTileInBlastLineWithBlocking(bombTile, tileCenter, GetBombExplosionRadiusSafe(b), out float dist))
                 continue;
 
-            int radius = GetBombExplosionRadiusSafe(b);
-            if (linearDist <= radius + safeDistanceAfterBomb)
+            if (dist <= GetBombExplosionRadiusSafe(b) + safeDistanceAfterBomb)
             {
                 if (remaining < best)
                     best = remaining;
@@ -519,74 +807,145 @@ public class BossBomberAI : MonoBehaviour
         return best;
     }
 
-    bool IsTileInBlastLine(Vector2 tilePos, Bomb b, out float linearDist)
+    bool IsTileInBlastLineWithBlocking(Vector2 bombTile, Vector2 tileCenter, int radius, out float linearDist)
     {
-        Vector2 bombPos = GetBombTilePosRoundedSafe(b);
-        Vector2 delta = tilePos - bombPos;
-
-        bool sameRow = Mathf.Abs(delta.y) < 0.1f;
-        bool sameCol = Mathf.Abs(delta.x) < 0.1f;
+        Vector2 delta = tileCenter - bombTile;
+        bool sameRow = Mathf.Abs(delta.y) < 0.001f;
+        bool sameCol = Mathf.Abs(delta.x) < 0.001f;
 
         linearDist = 999f;
         if (!sameRow && !sameCol)
             return false;
 
+        Vector2 dir = sameRow ? new Vector2(Mathf.Sign(delta.x), 0f) : new Vector2(0f, Mathf.Sign(delta.y));
         linearDist = sameRow ? Mathf.Abs(delta.x) : Mathf.Abs(delta.y);
 
-        int radius = GetBombExplosionRadiusSafe(b);
-        return linearDist <= radius;
-    }
+        if (linearDist > radius)
+            return false;
 
-    float ScoreTile(Vector2 tile, Bomb[] bombs, float arrivalEta)
-    {
-        float t = GetMinTimeUntilBlastHitsTile(tile, bombs);
+        int steps = Mathf.RoundToInt(linearDist);
+        Vector2 cur = bombTile;
 
-        if (t <= arrivalEta + reactionBuffer)
-            return -999999f;
-
-        float linePenalty = 0f;
-
-        for (int i = 0; i < bombs.Length; i++)
+        for (int i = 0; i < steps; i++)
         {
-            var b = bombs[i];
-            if (b == null || b.HasExploded) continue;
+            cur += dir * movement.tileSize;
+            if (cur == tileCenter)
+                return true;
 
-            if (IsTileInBlastLine(tile, b, out float dist))
-            {
-                linePenalty += (10f / Mathf.Max(1f, dist));
-            }
+            if (IsBlastBlockedAt(cur))
+                return false;
         }
 
-        float margin = t - arrivalEta;
-        return (margin * 100f) - (linePenalty * 5f);
+        return true;
+    }
+
+    bool IsBlastBlockedAt(Vector2 tileCenter)
+    {
+        float t = Mathf.Max(0.0001f, movement.tileSize);
+        Vector2 size = Vector2.one * (t * 0.55f);
+
+        Collider2D hit = Physics2D.OverlapBox(tileCenter, size, 0f, stageMask);
+        if (hit != null && !hit.isTrigger)
+            return true;
+
+        int bombLayerLocal = LayerMask.NameToLayer("Bomb");
+        int bombMaskLocal = (bombLayerLocal >= 0) ? (1 << bombLayerLocal) : 0;
+        Collider2D bh = Physics2D.OverlapBox(tileCenter, size, 0f, bombMaskLocal);
+        if (bh != null)
+            return true;
+
+        return false;
+    }
+
+    float ScoreTile(Vector2 tileCenter, Bomb[] bombsNow, float arrivalEta)
+    {
+        float tHit = GetMinTimeUntilBlastHitsTile(tileCenter, bombsNow);
+        if (tHit <= arrivalEta + reactionBuffer)
+            return -999999f;
+
+        float margin = tHit - arrivalEta;
+
+        float bombProxPenalty = 0f;
+        for (int i = 0; i < bombsNow.Length; i++)
+        {
+            var b = bombsNow[i];
+            if (b == null || b.HasExploded) continue;
+
+            Vector2 bt = RoundToTile(b.GetLogicalPosition(), movement.tileSize);
+            float d = Manhattan(tileCenter, bt);
+            bombProxPenalty += 1f / Mathf.Max(1f, d);
+        }
+
+        float openBonus = 0f;
+        for (int i = 0; i < Dirs.Length; i++)
+        {
+            Vector2 n = tileCenter + Dirs[i] * movement.tileSize;
+            if (IsWalkableTile(n))
+                openBonus += 0.25f;
+        }
+
+        return (margin * 100f) + (openBonus * 5f) - (bombProxPenalty * 40f);
+    }
+
+    bool IsTileWithExplosion(Vector2 tileCenter)
+    {
+        if (explosionMask == 0)
+            return false;
+
+        float t = Mathf.Max(0.0001f, movement.tileSize);
+        return Physics2D.OverlapBox(tileCenter, Vector2.one * (t * 0.55f), 0f, explosionMask) != null;
+    }
+
+    bool IsTileWithBomb(Vector2 tileCenter)
+    {
+        if (bombMask == 0)
+            return false;
+
+        float t = Mathf.Max(0.0001f, movement.tileSize);
+        return Physics2D.OverlapBox(tileCenter, Vector2.one * (t * 0.55f), 0f, bombMask) != null;
+    }
+
+    bool IsClearLine(Vector2 from, Vector2 to, out Vector2 dir, out float distTiles)
+    {
+        dir = Vector2.zero;
+        distTiles = 999f;
+
+        Vector2 delta = to - from;
+        bool sameRow = Mathf.Abs(delta.y) < 0.001f;
+        bool sameCol = Mathf.Abs(delta.x) < 0.001f;
+
+        if (!sameRow && !sameCol)
+            return false;
+
+        dir = sameRow ? new Vector2(Mathf.Sign(delta.x), 0f) : new Vector2(0f, Mathf.Sign(delta.y));
+        float distWorld = sameRow ? Mathf.Abs(delta.x) : Mathf.Abs(delta.y);
+        distTiles = distWorld / Mathf.Max(0.0001f, movement.tileSize);
+
+        int steps = Mathf.RoundToInt(distTiles);
+        Vector2 cur = from;
+
+        for (int i = 0; i < steps - 1; i++)
+        {
+            cur += dir * movement.tileSize;
+            if (IsBlastBlockedAt(cur))
+                return false;
+        }
+
+        return true;
+    }
+
+    int GetEffectiveMyBombRadius()
+    {
+        if (bomb == null)
+            return 2;
+
+        return bomb.explosionRadius;
     }
 
     float GetSingleStepTravelTimeSeconds()
     {
-        float spd = Mathf.Max(0.0001f, movement.speed);
-        float ts = Mathf.Max(0.0001f, movement.tileSize);
-        return ts / spd;
-    }
-
-    bool IsTileWithExplosion(Vector2 tilePos)
-    {
-        int explosionLayer = LayerMask.NameToLayer("Explosion");
-        int mask = 1 << explosionLayer;
-
-        return Physics2D.OverlapBox(tilePos, Vector2.one * 0.4f, 0f, mask) != null;
-    }
-
-    bool IsTileWithBomb(Vector2 tilePos)
-    {
-        int bombLayer = LayerMask.NameToLayer("Bomb");
-        int mask = 1 << bombLayer;
-
-        return Physics2D.OverlapBox(tilePos, Vector2.one * 0.4f, 0f, mask) != null;
-    }
-
-    Vector2 RoundToTile(Vector2 p)
-    {
-        return new Vector2(Mathf.Round(p.x), Mathf.Round(p.y));
+        float spdTilesPerSec = Mathf.Max(0.0001f, movement.speed);
+        return 1f / spdTilesPerSec;
     }
 
     Vector2 GetStepTowards(Vector2 delta)
@@ -601,16 +960,8 @@ public class BossBomberAI : MonoBehaviour
     {
         if (b == null) return 999f;
         if (b.HasExploded) return 0f;
-
-        if (b.IsControlBomb)
-            return 999f;
-
-        BombController owner = b.Owner;
-        if (owner == null) return 999f;
-
-        float fuse = owner.bombFuseTime;
-        float age = Time.time - b.PlacedTime;
-        return Mathf.Max(0f, fuse - age);
+        if (b.IsControlBomb) return 999f;
+        return b.RemainingFuseSeconds;
     }
 
     int GetBombExplosionRadiusSafe(Bomb b)
@@ -621,14 +972,49 @@ public class BossBomberAI : MonoBehaviour
         return owner.explosionRadius;
     }
 
-    Vector2 GetBombTilePosRoundedSafe(Bomb b)
+    static Vector2 RoundToTile(Vector2 p, float tileSize)
     {
-        if (b == null)
-            return Vector2.zero;
+        float t = Mathf.Max(0.0001f, tileSize);
+        return new Vector2(Mathf.Round(p.x / t) * t, Mathf.Round(p.y / t) * t);
+    }
 
-        Vector2 p = b.GetLogicalPosition();
-        p.x = Mathf.Round(p.x);
-        p.y = Mathf.Round(p.y);
-        return p;
+    static float Manhattan(Vector2 a, Vector2 b)
+    {
+        return Mathf.Abs(a.x - b.x) + Mathf.Abs(a.y - b.y);
+    }
+
+    static float Heuristic(Vector2 a, Vector2 b)
+    {
+        return Manhattan(a, b);
+    }
+
+    struct Node
+    {
+        public Vector2 pos;
+        public int depth;
+        public Vector2 firstStep;
+
+        public Node(Vector2 p, int d, Vector2 first)
+        {
+            pos = p;
+            depth = d;
+            firstStep = first;
+        }
+    }
+
+    struct AStarNode
+    {
+        public Vector2 pos;
+        public float g;
+        public float f;
+        public Vector2 firstStep;
+
+        public AStarNode(Vector2 p, float gCost, float fCost, Vector2 first)
+        {
+            pos = p;
+            g = gCost;
+            f = fCost;
+            firstStep = first;
+        }
     }
 }

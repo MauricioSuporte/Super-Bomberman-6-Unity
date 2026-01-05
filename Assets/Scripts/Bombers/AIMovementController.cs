@@ -7,42 +7,21 @@ public class AIMovementController : MovementController
     public bool isBoss = false;
 
     [Header("Anti-Stuck")]
-    [Tooltip("If the AI keeps trying to move in the same direction without actually moving for this long, it will try a detour.")]
     [SerializeField] private float stuckSeconds = 0.30f;
-
-    [Tooltip("Minimum squared movement (in world units) to consider that the character actually moved.")]
     [SerializeField] private float stuckMoveEpsilon = 0.0015f;
-
-    [Tooltip("If true, detours are also chosen when the forward tile is blocked.")]
     [SerializeField] private bool avoidWhenForwardBlocked = true;
 
     [Header("Decision Smoothing")]
-    [Tooltip("If true, the AI is only allowed to change direction when near the center of a tile (Bomberman-style).")]
     [SerializeField] private bool onlyTurnNearTileCenter = true;
-
-    [Tooltip("How close (world units) the character must be to the tile center to allow turning.")]
     [SerializeField] private float turnCenterEpsilon = 0.08f;
-
-    [Tooltip("Minimum time (seconds) to keep a chosen direction to avoid oscillation.")]
     [SerializeField] private float commitSeconds = 0.12f;
-
-    [Tooltip("Minimum interval (seconds) between direction changes.")]
     [SerializeField] private float minTurnInterval = 0.08f;
 
     [Header("Hazard Awareness")]
-    [Tooltip("If true, the AI will refuse to move into a tile that currently has an active explosion.")]
     [SerializeField] private bool avoidActiveExplosions = true;
-
-    [Tooltip("If true, the AI will refuse to move into a tile that currently contains a bomb trigger collider.")]
     [SerializeField] private bool avoidBombTiles = false;
-
-    [Tooltip("Explosion layer name used to detect active explosions.")]
     [SerializeField] private string explosionLayerName = "Explosion";
-
-    [Tooltip("Bomb layer name used to detect bombs.")]
     [SerializeField] private string bombLayerName = "Bomb";
-
-    [Tooltip("Overlap box size for hazard checks (world units).")]
     [SerializeField] private float hazardCheckBoxSize = 0.42f;
 
     private Vector2 lastPos;
