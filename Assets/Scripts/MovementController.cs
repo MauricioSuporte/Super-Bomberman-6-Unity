@@ -1293,7 +1293,7 @@ public class MovementController : MonoBehaviour, IKillable
         return !IsBlockedAtPosition(ahead, moveDir);
     }
 
-    private bool CanAlignToPerpendicularTarget(Vector2 candidatePos, Vector2 moveDir)
+    protected bool CanAlignToPerpendicularTarget(Vector2 candidatePos, Vector2 moveDir)
     {
         if (IsBlockedAtPosition(candidatePos, moveDir))
             return false;
@@ -1302,5 +1302,32 @@ public class MovementController : MonoBehaviour, IKillable
             return false;
 
         return true;
+    }
+
+    protected bool IsMoveBlocked(Vector2 dir)
+    {
+        dir = NormalizeCardinal(dir);
+        if (dir == Vector2.zero)
+            return false;
+
+        Vector2 pos = (Rigidbody != null) ? Rigidbody.position : (Vector2)transform.position;
+
+        float halfStep = tileSize * 0.5f;
+        Vector2 probe = pos + dir * halfStep;
+
+        return IsBlockedAtPosition(probe, dir);
+    }
+
+    protected bool IsMoveOpen(Vector2 dir) => !IsMoveBlocked(dir);
+
+    protected static Vector2 NormalizeCardinal(Vector2 dir)
+    {
+        if (dir.sqrMagnitude <= 0.01f)
+            return Vector2.zero;
+
+        if (Mathf.Abs(dir.x) > Mathf.Abs(dir.y))
+            return new Vector2(Mathf.Sign(dir.x), 0f);
+
+        return new Vector2(0f, Mathf.Sign(dir.y));
     }
 }

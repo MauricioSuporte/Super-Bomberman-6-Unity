@@ -46,6 +46,8 @@ public class Bomb : MonoBehaviour
     [Header("Chain Explosion")]
     public float chainStepDelay = 0.1f;
 
+    public float FuseSeconds = 2f;
+
     [Header("Stage Wrap")]
     [SerializeField] private Tilemap stageBoundsTilemap;
     private bool wrapBoundsReady;
@@ -69,7 +71,6 @@ public class Bomb : MonoBehaviour
     private Vector2 lastPos;
 
     private readonly HashSet<Collider2D> charactersInside = new();
-    private bool chainExplosionScheduled;
 
     private bool fusePaused;
     private float fusePauseStartedAt;
@@ -626,33 +627,6 @@ public class Bomb : MonoBehaviour
         lastPos = pos;
     }
 
-
-    private bool TryGetNextBounceTarget(Vector2 from, out Vector2 next, out bool wrapped)
-    {
-        Vector2 raw = from + kickDirection * kickTileSize;
-        wrapped = false;
-
-        if (stageBoundsTilemap == null)
-        {
-            next = raw;
-            return true;
-        }
-
-        var bounds = stageBoundsTilemap.cellBounds;
-        Vector3Int cell = stageBoundsTilemap.WorldToCell(raw);
-
-        int minX = bounds.xMin;
-        int maxX = bounds.xMax - 1;
-        int minY = bounds.yMin;
-        int maxY = bounds.yMax - 1;
-
-        if (cell.x < minX || cell.x > maxX || cell.y < minY || cell.y > maxY)
-            wrapped = true;
-
-        next = wrapped ? WrapToStage(raw) : raw;
-        return true;
-    }
-
     private IEnumerator PunchArcSegmentFixed(Vector2 start, Vector2 end, float duration, float arcHeight)
     {
         float t = 0f;
@@ -835,18 +809,8 @@ public class Bomb : MonoBehaviour
 
         if (layer == LayerMask.NameToLayer("Explosion"))
         {
-            if (isPunched)
-            {
-                if (owner != null)
-                    owner.ExplodeBomb(gameObject);
-                return;
-            }
-
-            if (!chainExplosionScheduled && owner != null)
-            {
-                chainExplosionScheduled = true;
-                StartCoroutine(DelayedChainExplosion(chainStepDelay));
-            }
+            if (owner != null)
+                owner.ExplodeBomb(gameObject);
             return;
         }
 
@@ -854,14 +818,6 @@ public class Bomb : MonoBehaviour
         {
             charactersInside.Add(other);
         }
-    }
-
-    private IEnumerator DelayedChainExplosion(float delay)
-    {
-        yield return new WaitForSeconds(delay);
-
-        if (!HasExploded && owner != null)
-            owner.ExplodeBomb(gameObject);
     }
 
     private void OnTriggerExit2D(Collider2D other)
@@ -877,5 +833,20 @@ public class Bomb : MonoBehaviour
 
         if (charactersInside.Count == 0)
             bombCollider.isTrigger = false;
+    }
+
+    public float RemainingFuseSeconds
+    {
+        get
+        {
+            if (HasExploded) return 0f;
+            float t = (Time.time - PlacedTime);
+            return Mathf.Max(0f, FuseSeconds - t);
+        }
+    }
+
+    public void SetFuseSeconds(float fuseSeconds)
+    {
+        FuseSeconds = Mathf.Max(0.01f, fuseSeconds);
     }
 }
