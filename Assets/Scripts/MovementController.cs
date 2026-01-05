@@ -93,9 +93,6 @@ public class MovementController : MonoBehaviour, IKillable
     private const float CenterEpsilon = 0.01f;
     private float SlideDeadZone => tileSize * 0.25f;
 
-    // =========================
-    //  Grid alignment (NEW)
-    // =========================
     enum MoveAxis
     {
         None = 0,
@@ -384,9 +381,6 @@ public class MovementController : MonoBehaviour, IKillable
         return speedInternal != before;
     }
 
-    // =========================
-    //  Movement (REFATORADO)
-    // =========================
     protected virtual void FixedUpdate()
     {
         if (inputLocked || GamePauseController.IsPaused || isDead)
@@ -416,7 +410,6 @@ public class MovementController : MonoBehaviour, IKillable
         bool movingVertical = Mathf.Abs(direction.y) > 0.01f;
         bool movingHorizontal = Mathf.Abs(direction.x) > 0.01f;
 
-        // Decide eixo atual (apenas 4-direções, então um deles)
         MoveAxis newAxis = MoveAxis.None;
         if (movingHorizontal) newAxis = MoveAxis.Horizontal;
         else if (movingVertical) newAxis = MoveAxis.Vertical;
@@ -424,9 +417,6 @@ public class MovementController : MonoBehaviour, IKillable
         bool axisJustStartedOrChanged = (newAxis != MoveAxis.None && newAxis != currentAxis);
         currentAxis = newAxis;
 
-        // (1) REGRA NOVA:
-        // Ao mover no X -> alinhar Y ao inteiro mais próximo.
-        // Ao mover no Y -> alinhar X ao inteiro mais próximo.
         if (currentAxis == MoveAxis.Horizontal)
         {
             AlignPerpendicular(
@@ -446,7 +436,6 @@ public class MovementController : MonoBehaviour, IKillable
             );
         }
 
-        // Mantém o "centrar em corredor" antigo (útil quando está espremido)
         bool blockLeft = IsSolidAt(position + Vector2.left * (tileSize * 0.5f));
         bool blockRight = IsSolidAt(position + Vector2.right * (tileSize * 0.5f));
         bool blockUp = IsSolidAt(position + Vector2.up * (tileSize * 0.5f));
@@ -472,7 +461,6 @@ public class MovementController : MonoBehaviour, IKillable
             return;
         }
 
-        // Mantém o "slide" antigo para contornar quinas quando bater
         if (movingVertical)
         {
             float currentCenterX = Mathf.Round(position.x / tileSize) * tileSize;
@@ -496,43 +484,34 @@ public class MovementController : MonoBehaviour, IKillable
         if (tileSize <= 0.0001f)
             return;
 
-        // Quanto o alinhamento "puxa" por FixedUpdate
         float alignStep = moveSpeed * Mathf.Max(0.5f, perpendicularAlignMultiplier);
 
-        // Direção real de movimento (4-dir)
         Vector2 moveDir = direction;
 
         if (axisIsHorizontal)
         {
-            // Movendo no X -> alinhar Y
             float targetY = Mathf.Round(position.y / tileSize) * tileSize;
 
-            // Se já está alinhado, snap final
             if (Mathf.Abs(position.y - targetY) <= alignEpsilon)
             {
                 var snapped = new Vector2(position.x, targetY);
 
-                // Só finaliza o snap se ainda for um "corredor válido"
                 if (CanAlignToPerpendicularTarget(snapped, moveDir))
                     position.y = targetY;
 
                 return;
             }
 
-            // Candidato
-            Vector2 candidate = new Vector2(position.x, targetY);
+            Vector2 candidate = new(position.x, targetY);
 
-            // Snap imediato só se não vira beco/paredão
             if (snapImmediate && CanAlignToPerpendicularTarget(candidate, moveDir))
             {
                 position = candidate;
                 return;
             }
 
-            // Alinhamento suave: só puxa em direção ao target se for seguro
-            // (checa também o "próximo" candidato, pra não puxar pra dentro de parede)
             float newY = Mathf.MoveTowards(position.y, targetY, alignStep);
-            Vector2 nextCandidate = new Vector2(position.x, newY);
+            Vector2 nextCandidate = new(position.x, newY);
 
             if (CanAlignToPerpendicularTarget(nextCandidate, moveDir))
                 position.y = newY;
@@ -540,7 +519,6 @@ public class MovementController : MonoBehaviour, IKillable
             return;
         }
 
-        // Movendo no Y -> alinhar X
         float targetX = Mathf.Round(position.x / tileSize) * tileSize;
 
         if (Mathf.Abs(position.x - targetX) <= alignEpsilon)
@@ -552,7 +530,7 @@ public class MovementController : MonoBehaviour, IKillable
             return;
         }
 
-        Vector2 candidate2 = new Vector2(targetX, position.y);
+        Vector2 candidate2 = new(targetX, position.y);
 
         if (snapImmediate && CanAlignToPerpendicularTarget(candidate2, moveDir))
         {
@@ -561,7 +539,7 @@ public class MovementController : MonoBehaviour, IKillable
         }
 
         float newX = Mathf.MoveTowards(position.x, targetX, alignStep);
-        Vector2 nextCandidate2 = new Vector2(newX, position.y);
+        Vector2 nextCandidate2 = new(newX, position.y);
 
         if (CanAlignToPerpendicularTarget(nextCandidate2, moveDir))
             position.x = newX;
@@ -693,7 +671,6 @@ public class MovementController : MonoBehaviour, IKillable
         return IsBlockedAtPosition(targetPosition, direction);
     }
 
-    // Mesmo filtro do IsBlocked, mas com direção "virtual" (pra escolher o tamanho da overlap)
     private bool IsBlockedAtPosition(Vector2 targetPosition, Vector2 dirForSize)
     {
         Vector2 size;
@@ -732,7 +709,6 @@ public class MovementController : MonoBehaviour, IKillable
             {
                 if (monos[i] is IMovementAbility ability && ability.IsEnabled)
                 {
-                    // NOTE: para alinhamento, ainda respeitamos a regra do ability (p.ex. alguma habilidade bloqueia de propósito)
                     if (ability.TryHandleBlockedHit(hit, dirForSize, tileSize, obstacleMask))
                         return true;
                 }
@@ -1318,18 +1294,15 @@ public class MovementController : MonoBehaviour, IKillable
         if (moveDir == Vector2.zero)
             return true;
 
-        // Checa um "passo" na frente (meio tile) pra garantir que não vai alinhar pra um beco/paredão.
         Vector2 ahead = pos + moveDir.normalized * (tileSize * 0.5f);
         return !IsBlockedAtPosition(ahead, moveDir);
     }
 
     private bool CanAlignToPerpendicularTarget(Vector2 candidatePos, Vector2 moveDir)
     {
-        // 1) Não pode alinhar pra dentro de colisão
         if (IsBlockedAtPosition(candidatePos, moveDir))
             return false;
 
-        // 2) Não alinhar se isso faz ficar "de cara com a parede"
         if (!IsForwardOpen(candidatePos, moveDir))
             return false;
 
