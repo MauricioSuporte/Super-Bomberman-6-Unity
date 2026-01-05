@@ -91,6 +91,13 @@ public class BossBomberAI : MonoBehaviour
         if (GamePauseController.IsPaused)
             return;
 
+        if (movement == null || movement.isDead)
+        {
+            if (movement != null)
+                movement.SetAIDirection(Vector2.zero);
+            return;
+        }
+
         retargetTimer -= Time.deltaTime;
         if (retargetTimer <= 0f)
         {
@@ -175,6 +182,12 @@ public class BossBomberAI : MonoBehaviour
 
     void Think(Vector2 myTile, Bomb[] bombsNow, bool dangerNow)
     {
+        if (movement == null || movement.isDead)
+        {
+            lastDirection = Vector2.zero;
+            return;
+        }
+
         if (target != null && alwaysPlantNearPlayer)
         {
             Vector2 targetTile0 = RoundToTile((Vector2)target.position, movement.tileSize);
@@ -199,7 +212,7 @@ public class BossBomberAI : MonoBehaviour
         if (dangerNow)
         {
             isEvading = true;
-            lastDirection = GetEscapeStep_BFS(myTile, bombsNow);
+            lastDirection = GetEscapeStep_BFS(myTile, bombsNow, 0f);
             if (lastDirection == Vector2.zero && target != null)
             {
                 Vector2 targetTile = RoundToTile((Vector2)target.position, movement.tileSize);
@@ -212,7 +225,7 @@ public class BossBomberAI : MonoBehaviour
         {
             if (IsTileDangerousNowOrSoon(myTile, bombsNow, 0f))
             {
-                lastDirection = GetEscapeStep_BFS(myTile, bombsNow);
+                lastDirection = GetEscapeStep_BFS(myTile, bombsNow, 0f);
                 if (lastDirection == Vector2.zero && target != null)
                 {
                     Vector2 targetTile = RoundToTile((Vector2)target.position, movement.tileSize);
@@ -241,7 +254,7 @@ public class BossBomberAI : MonoBehaviour
             if (TryPlaceBombWithEscape(myTile, bombsNow))
                 return;
 
-            lastDirection = GetEscapeStep_BFS(myTile, bombsNow);
+            lastDirection = GetEscapeStep_BFS(myTile, bombsNow, 0f);
             if (lastDirection == Vector2.zero)
                 lastDirection = GetBestStepAwayFromTarget(myTile, targetTile2, bombsNow);
             return;
@@ -256,7 +269,7 @@ public class BossBomberAI : MonoBehaviour
                 if (TryPlaceBombWithEscape(myTile, bombsNow))
                     return;
 
-                lastDirection = GetEscapeStep_BFS(myTile, bombsNow);
+                lastDirection = GetEscapeStep_BFS(myTile, bombsNow, 0f);
                 if (lastDirection == Vector2.zero)
                     lastDirection = GetBestStepAwayFromTarget(myTile, targetTile2, bombsNow);
                 return;
@@ -270,7 +283,7 @@ public class BossBomberAI : MonoBehaviour
 
                 if (!IsWalkableTile(next) || IsTileDangerousNowOrSoon(next, bombsNow, eta))
                 {
-                    lastDirection = GetEscapeStep_BFS(myTile, bombsNow);
+                    lastDirection = GetEscapeStep_BFS(myTile, bombsNow, 0f);
                     if (lastDirection == Vector2.zero)
                         lastDirection = GetBestStepAwayFromTarget(myTile, targetTile2, bombsNow);
                     return;
@@ -303,6 +316,7 @@ public class BossBomberAI : MonoBehaviour
 
     bool TryPlaceBombAlwaysNearPlayer(Vector2 myTile, Vector2 targetTile, Bomb[] bombsNow)
     {
+        if (movement == null || movement.isDead) return false;
         if (bomb == null) return false;
         if (bomb.BombsRemaining <= 0) return false;
         if (IsTileWithBomb(myTile)) return false;
@@ -310,14 +324,16 @@ public class BossBomberAI : MonoBehaviour
         float cd = Mathf.Max(0.05f, nearPlantMinCooldown);
         if (Time.time - lastBombTime < cd) return false;
 
-        Vector2 escape = GetEscapeStep_BFS(myTile, bombsNow);
+        Vector2 escape = GetEscapeStep_BFS(myTile, bombsNow, 0f);
 
         if (escape == Vector2.zero)
         {
             if (!allowPlantEvenWithoutEscape)
                 return false;
 
-            bomb.TryPlaceBombAtIgnoringInputLock(myTile);
+            if (!bomb.TryPlaceBombAtIgnoringInputLock(myTile))
+                return false;
+
             lastBombTime = Time.time;
 
             Bomb[] bombsAfter0 = FindObjectsByType<Bomb>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
@@ -340,7 +356,9 @@ public class BossBomberAI : MonoBehaviour
             if (!allowPlantEvenWithoutEscape)
                 return false;
 
-            bomb.TryPlaceBombAtIgnoringInputLock(myTile);
+            if (!bomb.TryPlaceBombAtIgnoringInputLock(myTile))
+                return false;
+
             lastBombTime = Time.time;
 
             Bomb[] bombsAfter1 = FindObjectsByType<Bomb>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
@@ -355,12 +373,14 @@ public class BossBomberAI : MonoBehaviour
             return true;
         }
 
-        bomb.TryPlaceBombAtIgnoringInputLock(myTile);
+        if (!bomb.TryPlaceBombAtIgnoringInputLock(myTile))
+            return false;
+
         lastBombTime = Time.time;
 
         Bomb[] bombsAfter = FindObjectsByType<Bomb>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
         isEvading = true;
-        lastDirection = GetEscapeStep_BFS(myTile, bombsAfter);
+        lastDirection = GetEscapeStep_BFS(myTile, bombsAfter, 0f);
 
         if (lastDirection == Vector2.zero)
             lastDirection = GetBestStepAwayFromTarget(myTile, targetTile, bombsAfter);
@@ -404,6 +424,7 @@ public class BossBomberAI : MonoBehaviour
 
     bool TryPlaceBombFromRangeIfGood(Vector2 myTile, Vector2 targetTile, Bomb[] bombsNow, float distToTarget)
     {
+        if (movement == null || movement.isDead) return false;
         if (!allowPlaceBombInRange)
             return false;
 
@@ -415,7 +436,7 @@ public class BossBomberAI : MonoBehaviour
         if (!IsPlaceBombAllowedNow(myTile))
             return false;
 
-        Vector2 escape = GetEscapeStep_BFS(myTile, bombsNow);
+        Vector2 escape = GetEscapeStep_BFS(myTile, bombsNow, 0f);
         if (escape == Vector2.zero)
             return false;
 
@@ -423,22 +444,26 @@ public class BossBomberAI : MonoBehaviour
         if (escapeSafety < minSafetyAfterKick)
             return false;
 
-        bomb.TryPlaceBombAtIgnoringInputLock(myTile);
+        if (!bomb.TryPlaceBombAtIgnoringInputLock(myTile))
+            return false;
+
         lastBombTime = Time.time;
 
         Bomb[] bombsAfter = FindObjectsByType<Bomb>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
         isEvading = true;
-        lastDirection = GetEscapeStep_BFS(myTile, bombsAfter);
+        lastDirection = GetEscapeStep_BFS(myTile, bombsAfter, 0f);
 
         return true;
     }
 
     bool TryPlaceBombWithEscape(Vector2 myTile, Bomb[] bombsNow)
     {
+        if (movement == null || movement.isDead) return false;
+
         if (!IsPlaceBombAllowedNow(myTile))
             return false;
 
-        Vector2 escape = GetEscapeStep_BFS(myTile, bombsNow);
+        Vector2 escape = GetEscapeStep_BFS(myTile, bombsNow, 0f);
         if (escape == Vector2.zero)
             return false;
 
@@ -446,17 +471,20 @@ public class BossBomberAI : MonoBehaviour
         if (escapeSafety < minSafetyAfterKick)
             return false;
 
-        bomb.TryPlaceBombAtIgnoringInputLock(myTile);
+        if (!bomb.TryPlaceBombAtIgnoringInputLock(myTile))
+            return false;
+
         lastBombTime = Time.time;
 
         Bomb[] bombsAfter = FindObjectsByType<Bomb>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
         isEvading = true;
-        lastDirection = GetEscapeStep_BFS(myTile, bombsAfter);
+        lastDirection = GetEscapeStep_BFS(myTile, bombsAfter, 0f);
         return true;
     }
 
     bool IsPlaceBombAllowedNow(Vector2 myTile)
     {
+        if (movement == null || movement.isDead) return false;
         if (bomb == null) return false;
         if (bomb.BombsRemaining <= 0) return false;
         if (Time.time - lastBombTime < bombChainCooldown) return false;
@@ -471,6 +499,8 @@ public class BossBomberAI : MonoBehaviour
 
     bool TryOpportunisticKickPlayerAdjacent(Vector2 myTile, Bomb[] bombsNow, bool dangerNow)
     {
+        if (movement == null || movement.isDead) return false;
+
         if (Time.time - lastKickDecisionTime < kickDecisionCooldown)
             return false;
 
@@ -513,7 +543,7 @@ public class BossBomberAI : MonoBehaviour
         Vector2 bestBombTile = RoundToTile(bestAdjPlayerBomb.GetLogicalPosition(), movement.tileSize);
         Vector2 kickDir = bestBombTile - myTile;
 
-        Vector2 escapeDir = GetEscapeStep_BFS(myTile, bombsNow);
+        Vector2 escapeDir = GetEscapeStep_BFS(myTile, bombsNow, 0f);
         float escapeSafety = escapeDir == Vector2.zero
             ? ScoreTile(myTile, bombsNow, 0f)
             : ScoreTile(myTile + escapeDir, bombsNow, GetSingleStepTravelTimeSeconds());
@@ -529,10 +559,12 @@ public class BossBomberAI : MonoBehaviour
 
     bool TryTrappedKickIfNeeded(Vector2 myTile, Bomb[] bombsNow)
     {
+        if (movement == null || movement.isDead) return false;
+
         if (Time.time - lastKickDecisionTime < kickDecisionCooldown)
             return false;
 
-        Vector2 bestSafe = GetEscapeStep_BFS(myTile, bombsNow);
+        Vector2 bestSafe = GetEscapeStep_BFS(myTile, bombsNow, 0f);
         if (bestSafe != Vector2.zero)
             return false;
 
@@ -595,7 +627,7 @@ public class BossBomberAI : MonoBehaviour
         return best;
     }
 
-    Vector2 GetEscapeStep_BFS(Vector2 myTile, Bomb[] bombsNow)
+    Vector2 GetEscapeStep_BFS(Vector2 myTile, Bomb[] bombsNow, float arrivalEtaBase)
     {
         float stepTime = GetSingleStepTravelTimeSeconds();
 
@@ -605,7 +637,7 @@ public class BossBomberAI : MonoBehaviour
         visited.Add(myTile);
 
         Vector2 bestFirst = Vector2.zero;
-        float bestScore = ScoreTile(myTile, bombsNow, 0f);
+        float bestScore = ScoreTile(myTile, bombsNow, arrivalEtaBase);
 
         for (int i = 0; i < Dirs.Length; i++)
         {
@@ -613,7 +645,7 @@ public class BossBomberAI : MonoBehaviour
             if (!IsWalkableTile(n))
                 continue;
 
-            float eta = stepTime;
+            float eta = arrivalEtaBase + stepTime;
             if (IsTileDangerousNowOrSoon(n, bombsNow, eta))
                 continue;
 
@@ -625,7 +657,7 @@ public class BossBomberAI : MonoBehaviour
         {
             var cur = q.Dequeue();
 
-            float eta = cur.depth * stepTime;
+            float eta = arrivalEtaBase + cur.depth * stepTime;
             float timeToHit = GetMinTimeUntilBlastHitsTile(cur.pos, bombsNow);
 
             bool safeEnough = timeToHit >= eta + safeTileMinTime;
@@ -652,7 +684,7 @@ public class BossBomberAI : MonoBehaviour
                 if (!IsWalkableTile(nx))
                     continue;
 
-                float nEta = (cur.depth + 1) * stepTime;
+                float nEta = arrivalEtaBase + (cur.depth + 1) * stepTime;
                 if (IsTileDangerousNowOrSoon(nx, bombsNow, nEta))
                     continue;
 

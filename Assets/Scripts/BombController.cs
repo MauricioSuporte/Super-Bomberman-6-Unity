@@ -57,6 +57,7 @@ public class BombController : MonoBehaviour
     private static AudioSource currentExplosionAudio;
 
     private GameManager _gm;
+    private AudioSource _localAudio;
 
     public void SetPlayerId(int id)
     {
@@ -65,6 +66,10 @@ public class BombController : MonoBehaviour
 
     private void Awake()
     {
+        _localAudio = GetComponent<AudioSource>();
+        if (playerAudioSource == null)
+            playerAudioSource = _localAudio;
+
         ResolveTilemaps();
     }
 
@@ -89,7 +94,7 @@ public class BombController : MonoBehaviour
             return;
 
         var movement = GetComponent<MovementController>();
-        if (movement != null && movement.InputLocked)
+        if (movement != null && (movement.InputLocked || movement.isDead || movement.IsEndingStage))
             return;
 
         if (TryGetComponent<GreenLouieDashAbility>(out var dashAbility) && dashAbility != null && dashAbility.DashActive)
@@ -291,10 +296,22 @@ public class BombController : MonoBehaviour
             source.PlayOneShot(clip, explosionSfxVolume);
     }
 
+    private void PlayPlaceBombSfx()
+    {
+        if (placeBombSfx == null)
+            return;
+
+        AudioSource src = playerAudioSource != null ? playerAudioSource : _localAudio;
+        if (src == null)
+            return;
+
+        src.PlayOneShot(placeBombSfx);
+    }
+
     private void PlaceBomb()
     {
         var movement = GetComponent<MovementController>();
-        if (movement != null && movement.InputLocked)
+        if (movement != null && (movement.InputLocked || movement.isDead || movement.IsEndingStage))
             return;
 
         if (TryGetComponent<GreenLouieDashAbility>(out var dashAbility) && dashAbility != null && dashAbility.DashActive)
@@ -328,8 +345,7 @@ public class BombController : MonoBehaviour
         if (prefabToUse == null)
             return;
 
-        if (playerAudioSource != null && placeBombSfx != null)
-            playerAudioSource.PlayOneShot(placeBombSfx);
+        PlayPlaceBombSfx();
 
         GameObject bomb = Instantiate(prefabToUse, position, Quaternion.identity);
         bombsRemaining--;
@@ -708,7 +724,7 @@ public class BombController : MonoBehaviour
             return false;
 
         var movement = GetComponent<MovementController>();
-        if (movement != null && movement.InputLocked)
+        if (movement != null && (movement.InputLocked || movement.isDead || movement.IsEndingStage))
             return false;
 
         if (TryGetComponent<GreenLouieDashAbility>(out var dashAbility) && dashAbility != null && dashAbility.DashActive)
@@ -748,6 +764,8 @@ public class BombController : MonoBehaviour
         if (prefabToUse == null)
             return false;
 
+        PlayPlaceBombSfx();
+
         GameObject bomb = Instantiate(prefabToUse, position, Quaternion.identity);
         bombsRemaining--;
 
@@ -782,6 +800,8 @@ public class BombController : MonoBehaviour
     public bool TryPlaceBombAtIgnoringInputLock(Vector2 worldPos)
     {
         var movement = GetComponent<MovementController>();
+        if (movement != null && (movement.isDead || movement.IsEndingStage))
+            return false;
 
         bool previousLock = false;
         if (movement != null)
