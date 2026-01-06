@@ -208,8 +208,10 @@ public class MovementController : MonoBehaviour, IKillable
 
     void SetAnimEnabled(AnimatedSpriteRenderer r, bool on)
     {
-        if (r == null)
-            return;
+        if (r == null) return;
+
+        if (on && r.name == "Right")
+            Debug.Log($"[SetAnimEnabled] Habilitando Right em {name}", this);
 
         r.enabled = on;
 
