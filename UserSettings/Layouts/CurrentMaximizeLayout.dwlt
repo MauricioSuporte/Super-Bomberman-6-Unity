@@ -24,7 +24,7 @@ MonoBehaviour:
   m_MinSize: {x: 300, y: 100}
   m_MaxSize: {x: 24288, y: 16192}
   vertical: 0
-  controlID: 22790
+  controlID: 31038
   draggingID: 0
 --- !u!114 &2
 MonoBehaviour:
@@ -153,7 +153,7 @@ MonoBehaviour:
   m_MinSize: {x: 200, y: 100}
   m_MaxSize: {x: 16192, y: 16192}
   vertical: 1
-  controlID: 22744
+  controlID: 30994
   draggingID: 0
 --- !u!114 &4
 MonoBehaviour:
@@ -179,7 +179,7 @@ MonoBehaviour:
   m_MinSize: {x: 200, y: 50}
   m_MaxSize: {x: 16192, y: 8096}
   vertical: 0
-  controlID: 22735
+  controlID: 30971
   draggingID: 0
 --- !u!114 &5
 MonoBehaviour:
@@ -248,7 +248,7 @@ MonoBehaviour:
       scrollPos: {x: 0, y: 0}
       m_SelectedIDs: 
       m_LastClickedID: 0
-      m_ExpandedIDs: c420fcff281d0100
+      m_ExpandedIDs: 7473fbffc4400100
       m_RenameOverlay:
         m_UserAcceptedRename: 0
         m_Name: 
@@ -767,9 +767,9 @@ MonoBehaviour:
   m_AudioPlay: 0
   m_DebugDrawModesUseInteractiveLightBakingData: 0
   m_Position:
-    m_Target: {x: 0, y: 1.090625, z: 0}
+    m_Target: {x: -0.26371533, y: 0.69917864, z: -0.0026586186}
     speed: 2
-    m_Value: {x: 0, y: 1.090625, z: 0}
+    m_Value: {x: -0.26371533, y: 0.69917864, z: -0.0026586186}
   m_RenderMode: 0
   m_CameraMode:
     drawMode: 0
@@ -819,9 +819,9 @@ MonoBehaviour:
     speed: 2
     m_Value: {x: 0, y: 0, z: 0, w: 1}
   m_Size:
-    m_Target: 1.9496123
+    m_Target: 1.3457899
     speed: 2
-    m_Value: 1.9496123
+    m_Value: 1.3457899
   m_Ortho:
     m_Target: 1
     speed: 2
@@ -918,7 +918,7 @@ MonoBehaviour:
     m_ContainerData: []
     m_OverlaysVisible: 1
   m_SearchFilter:
-    m_NameFilter: 
+    m_NameFilter: blackl
     m_ClassNames: []
     m_AssetLabels: []
     m_AssetBundleNames: []
@@ -926,28 +926,28 @@ MonoBehaviour:
     m_SceneHandles: 
     m_ShowAllHits: 0
     m_SkipHidden: 0
-    m_SearchArea: 1
+    m_SearchArea: 3
     m_Folders:
-    - Assets/Sprites/Louie/YellowLouie
+    - Assets/Scripts
     m_Globs: []
     m_ProductIds: 
     m_AnyWithAssetOrigin: 0
-    m_OriginalText: 
+    m_OriginalText: blackl
     m_ImportLogFlags: 0
     m_FilterByTypeIntersection: 0
   m_ViewMode: 1
   m_StartGridSize: 96
   m_LastFolders:
-  - Assets/Sprites/Louie/YellowLouie
+  - Assets/Scripts
   m_LastFoldersGridSize: 96
   m_LastProjectPath: C:\Users\mauri\source\repos\SuperBomberman6
   m_LockTracker:
     m_IsLocked: 0
   m_FolderTreeState:
-    scrollPos: {x: 0, y: 584}
-    m_SelectedIDs: 34bf0000
-    m_LastClickedID: 48948
-    m_ExpandedIDs: 000000001ea5000020a5000022a5000024a5000026a5000028a500002aa500002ca500002ea5000030a5000032a5000034a5000036a50000b8a500000ebf0000
+    scrollPos: {x: 0, y: 152}
+    m_SelectedIDs: 30a50000
+    m_LastClickedID: 42288
+    m_ExpandedIDs: 000000001ea5000020a5000022a5000024a5000026a5000028a500002aa500002ca500002ea5000030a5000032a5000034a5000036a50000
     m_RenameOverlay:
       m_UserAcceptedRename: 0
       m_Name: 
@@ -1030,7 +1030,7 @@ MonoBehaviour:
       m_Icon: {fileID: 0}
       m_ResourceFile: 
     m_NewAssetIndexInList: -1
-    m_ScrollPosition: {x: 0, y: 853.5}
+    m_ScrollPosition: {x: 0, y: 0}
     m_GridSize: 96
   m_SkipHiddenPackages: 0
   m_DirectoriesAreaWidth: 149
@@ -1053,8 +1053,8 @@ MonoBehaviour:
     y: 0
     width: 565
     height: 933
-  m_MinSize: {x: 275, y: 50}
-  m_MaxSize: {x: 4000, y: 4000}
+  m_MinSize: {x: 276, y: 76}
+  m_MaxSize: {x: 4001, y: 4026}
   m_ActualView: {fileID: 12}
   m_Panes:
   - {fileID: 12}
