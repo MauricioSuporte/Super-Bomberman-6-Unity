@@ -1,5 +1,6 @@
 ﻿using Assets.Scripts.Interface;
 using UnityEngine;
+using System.Collections.Generic;
 
 public class PinkLouieJumpAnimator : MonoBehaviour, IPinkLouieJumpExternalAnimator
 {
@@ -15,11 +16,25 @@ public class PinkLouieJumpAnimator : MonoBehaviour, IPinkLouieJumpExternalAnimat
     AnimatedSpriteRenderer active;
     LouieRiderVisual riderVisual;
 
+    readonly List<GameObject> cachedDirectionObjects = new();
+    readonly List<bool> cachedDirectionObjectsActive = new();
+
+    readonly List<Behaviour> cachedBehaviours = new();
+    readonly List<bool> cachedBehavioursEnabled = new();
+
+    readonly List<Renderer> cachedRenderers = new();
+    readonly List<bool> cachedRenderersEnabled = new();
+
     bool playing;
 
     void Awake()
     {
         riderVisual = GetComponent<LouieRiderVisual>();
+        if (riderVisual == null)
+            riderVisual = GetComponentInParent<LouieRiderVisual>();
+        if (riderVisual == null)
+            riderVisual = GetComponentInChildren<LouieRiderVisual>(true);
+
         ForceOffJumpSprites();
     }
 
@@ -33,6 +48,9 @@ public class PinkLouieJumpAnimator : MonoBehaviour, IPinkLouieJumpExternalAnimat
 
         if (dir == Vector2.zero)
             dir = Vector2.down;
+
+        CacheDirectionalObjects();
+        DisableDirectionalObjects();
 
         ForceDisableRiderVisualRenderers();
 
@@ -78,7 +96,7 @@ public class PinkLouieJumpAnimator : MonoBehaviour, IPinkLouieJumpExternalAnimat
 
     public void Stop()
     {
-        if (!playing)
+        if (!playing && active == null && cachedDirectionObjects.Count == 0 && cachedBehaviours.Count == 0 && cachedRenderers.Count == 0)
             return;
 
         if (active != null)
@@ -101,6 +119,8 @@ public class PinkLouieJumpAnimator : MonoBehaviour, IPinkLouieJumpExternalAnimat
             riderVisual.enabled = true;
             ForceDisableRiderVisualRenderers();
         }
+
+        RestoreDirectionalObjects();
 
         playing = false;
     }
@@ -143,5 +163,118 @@ public class PinkLouieJumpAnimator : MonoBehaviour, IPinkLouieJumpExternalAnimat
         SetRendererEnabled(riderVisual.louieLeft, false);
         SetRendererEnabled(riderVisual.louieRight, false);
         SetRendererEnabled(riderVisual.louieEndStage, false);
+    }
+
+    void CacheDirectionalObjects()
+    {
+        cachedDirectionObjects.Clear();
+        cachedDirectionObjectsActive.Clear();
+
+        cachedBehaviours.Clear();
+        cachedBehavioursEnabled.Clear();
+
+        cachedRenderers.Clear();
+        cachedRenderersEnabled.Clear();
+
+        CacheDirectionObjectByName("Up");
+        CacheDirectionObjectByName("Down");
+        CacheDirectionObjectByName("Left");
+        CacheDirectionObjectByName("Right");
+    }
+
+    void CacheDirectionObjectByName(string childName)
+    {
+        var t = transform.Find(childName);
+        if (t == null)
+        {
+            t = transform.parent != null ? transform.parent.Find(childName) : null;
+            if (t == null && transform.root != null)
+                t = transform.root.Find(childName);
+        }
+
+        if (t == null)
+            return;
+
+        var go = t.gameObject;
+
+        cachedDirectionObjects.Add(go);
+        cachedDirectionObjectsActive.Add(go.activeSelf);
+
+        var anims = go.GetComponentsInChildren<AnimatedSpriteRenderer>(true);
+        for (int i = 0; i < anims.Length; i++)
+        {
+            if (anims[i] == null)
+                continue;
+
+            cachedBehaviours.Add(anims[i]);
+            cachedBehavioursEnabled.Add(anims[i].enabled);
+        }
+
+        var renderers = go.GetComponentsInChildren<Renderer>(true);
+        for (int i = 0; i < renderers.Length; i++)
+        {
+            if (renderers[i] == null)
+                continue;
+
+            cachedRenderers.Add(renderers[i]);
+            cachedRenderersEnabled.Add(renderers[i].enabled);
+        }
+    }
+
+    void DisableDirectionalObjects()
+    {
+        for (int i = 0; i < cachedBehaviours.Count; i++)
+        {
+            var b = cachedBehaviours[i];
+            if (b != null)
+                b.enabled = false;
+        }
+
+        for (int i = 0; i < cachedRenderers.Count; i++)
+        {
+            var r = cachedRenderers[i];
+            if (r != null)
+                r.enabled = false;
+        }
+
+        for (int i = 0; i < cachedDirectionObjects.Count; i++)
+        {
+            var go = cachedDirectionObjects[i];
+            if (go != null)
+                go.SetActive(false);
+        }
+    }
+
+    void RestoreDirectionalObjects()
+    {
+        for (int i = 0; i < cachedDirectionObjects.Count; i++)
+        {
+            var go = cachedDirectionObjects[i];
+            if (go != null)
+                go.SetActive(cachedDirectionObjectsActive[i]);
+        }
+
+        for (int i = 0; i < cachedBehaviours.Count; i++)
+        {
+            var b = cachedBehaviours[i];
+            if (b != null)
+                b.enabled = cachedBehavioursEnabled[i];
+        }
+
+        for (int i = 0; i < cachedRenderers.Count; i++)
+        {
+            var r = cachedRenderers[i];
+            if (r != null)
+                r.enabled = cachedRenderersEnabled[i];
+        }
+
+        cachedDirectionObjects.Clear();
+        cachedDirectionObjectsActive.Clear();
+
+        cachedBehaviours.Clear();
+        cachedBehavioursEnabled.Clear();
+
+        cachedRenderers.Clear();
+        cachedRenderersEnabled.Clear();
     }
 }
