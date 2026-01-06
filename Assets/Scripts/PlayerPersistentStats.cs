@@ -18,20 +18,20 @@ public static class PlayerPersistentStats
     {
         public int Life = 1;
 
-        public int BombAmount = 8;
-        public int ExplosionRadius = 8;
+        public int BombAmount = 1;
+        public int ExplosionRadius = 1;
 
-        public int SpeedInternal = BaseSpeedNormal + (5 * SpeedStep);
+        public int SpeedInternal = BaseSpeedNormal;
 
-        public bool CanKickBombs = true;
-        public bool CanPunchBombs = true;
+        public bool CanKickBombs = false;
+        public bool CanPunchBombs = false;
         public bool CanPassBombs = false;
-        public bool CanPassDestructibles = true;
+        public bool CanPassDestructibles = false;
         public bool HasPierceBombs = false;
-        public bool HasControlBombs = true;
+        public bool HasControlBombs = false;
         public bool HasFullFire = false;
 
-        public MountedLouieType MountedLouie = MountedLouieType.Pink;
+        public MountedLouieType MountedLouie = MountedLouieType.None;
         public BomberSkin Skin = BomberSkin.White;
     }
 
@@ -167,15 +167,27 @@ public static class PlayerPersistentStats
         SaveSelectedSkin(playerId);
     }
 
-    public static float InternalSpeedToTilesPerSecond(int internalSpeed)
+    public static void ResetTemporaryPowerups(int playerId)
     {
-        return internalSpeed / (float)SpeedDivisor;
+        var s = Get(playerId);
+
+        s.CanKickBombs = false;
+        s.CanPunchBombs = false;
+        s.CanPassBombs = false;
+        s.CanPassDestructibles = false;
+
+        s.HasPierceBombs = false;
+        s.HasControlBombs = false;
+        s.HasFullFire = false;
+
+        s.MountedLouie = MountedLouieType.None;
     }
 
+    public static float InternalSpeedToTilesPerSecond(int internalSpeed)
+        => internalSpeed / (float)SpeedDivisor;
+
     public static int ClampSpeedInternal(int internalSpeed)
-    {
-        return Mathf.Clamp(internalSpeed, MinSpeedInternal, MaxSpeedInternal);
-    }
+        => Mathf.Clamp(internalSpeed, MinSpeedInternal, MaxSpeedInternal);
 
     static int GetPlayerIdFrom(Component c)
     {
@@ -298,8 +310,12 @@ public static class PlayerPersistentStats
             if (movement.TryGetComponent<CharacterHealth>(out var health))
                 s.Life = Mathf.Max(1, health.life);
 
-            if (movement.TryGetComponent(out AbilitySystem abilitySystem) && abilitySystem != null)
+            AbilitySystem abilitySystem = null;
+            if (movement.TryGetComponent(out AbilitySystem a) && a != null)
+            {
+                abilitySystem = a;
                 abilitySystem.RebuildCache();
+            }
 
             var kick = abilitySystem != null ? abilitySystem.Get<BombKickAbility>(BombKickAbility.AbilityId) : null;
             s.CanKickBombs = kick != null && kick.IsEnabled;
@@ -336,5 +352,22 @@ public static class PlayerPersistentStats
             s.BombAmount = Mathf.Min(bomb.bombAmout, MaxBombAmount);
             s.ExplosionRadius = Mathf.Min(bomb.explosionRadius, MaxExplosionRadius);
         }
+    }
+
+    public static void SavePermanentFrom(int playerId, MovementController movement, BombController bomb, CharacterHealth health)
+    {
+        var s = Get(playerId);
+
+        if (movement != null)
+            s.SpeedInternal = ClampSpeedInternal(movement.SpeedInternal);
+
+        if (bomb != null)
+        {
+            s.BombAmount = Mathf.Min(bomb.bombAmout, MaxBombAmount);
+            s.ExplosionRadius = Mathf.Min(bomb.explosionRadius, MaxExplosionRadius);
+        }
+
+        if (health != null)
+            s.Life = Mathf.Max(1, health.life);
     }
 }

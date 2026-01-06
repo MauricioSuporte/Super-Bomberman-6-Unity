@@ -101,13 +101,8 @@ public class MovementController : MonoBehaviour, IKillable
     }
 
     [Header("Grid Alignment")]
-    [Tooltip("Quão rápido o player é alinhado ao grid no eixo perpendicular enquanto se move.")]
     [SerializeField, Range(0.5f, 20f)] float perpendicularAlignMultiplier = 8f;
-
-    [Tooltip("Se true, tenta snap imediato no início da movimentação de um eixo (se não colidir).")]
     [SerializeField] bool snapPerpendicularOnAxisStart = true;
-
-    [Tooltip("Epsilon para considerar que já está alinhado.")]
     [SerializeField, Range(0.0001f, 0.05f)] float alignEpsilon = 0.0015f;
 
     private MoveAxis currentAxis = MoveAxis.None;
@@ -209,9 +204,6 @@ public class MovementController : MonoBehaviour, IKillable
     void SetAnimEnabled(AnimatedSpriteRenderer r, bool on)
     {
         if (r == null) return;
-
-        if (on && r.name == "Right")
-            Debug.Log($"[SetAnimEnabled] Habilitando Right em {name}", this);
 
         r.enabled = on;
 
@@ -881,6 +873,13 @@ public class MovementController : MonoBehaviour, IKillable
         isDead = true;
         inputLocked = true;
 
+        if (CompareTag("Player"))
+        {
+            TryGetComponent(out CharacterHealth health);
+
+            PlayerPersistentStats.SavePermanentFrom(playerId, this, bombController, health);
+        }
+
         if (CompareTag("Player") && checkWinStateOnDeath)
         {
             var gm = FindFirstObjectByType<GameManager>();
@@ -894,23 +893,7 @@ public class MovementController : MonoBehaviour, IKillable
             abilitySystem.DisableAll();
 
         if (CompareTag("Player"))
-        {
-            var st = PlayerPersistentStats.Get(playerId);
-
-            st.Life = 1;
-
-            if (TryGetComponent<CharacterHealth>(out var health) && health != null)
-                health.life = 1;
-
-            st.CanKickBombs = false;
-            st.CanPunchBombs = false;
-            st.HasPierceBombs = false;
-            st.HasControlBombs = false;
-            st.HasFullFire = false;
-            st.CanPassBombs = false;
-            st.CanPassDestructibles = false;
-            st.MountedLouie = MountedLouieType.None;
-        }
+            PlayerPersistentStats.ResetTemporaryPowerups(playerId);
 
         if (bombController != null)
             bombController.enabled = false;
