@@ -183,6 +183,26 @@ MonoBehaviour:
   yellowLouieEggItemPrefab: {fileID: 0}
   pinkLouieEggItemPrefab: {fileID: 0}
   redLouieEggItemPrefab: {fileID: 0}
+  portalAmount: 1
+  extraBombAmount: 8
+  blastRadiusAmount: 8
+  speedIncreaseAmount: 8
+  kickBombAmount: 8
+  punchBombAmount: 8
+  pierceBombAmount: 0
+  controlBombAmount: 0
+  fullFireAmount: 0
+  bombPassAmount: 0
+  destructiblePassAmount: 0
+  invincibleSuitAmount: 0
+  heartAmount: 0
+  blueLouieEggAmount: 0
+  blackLouieEggAmount: 0
+  purpleLouieEggAmount: 0
+  greenLouieEggAmount: 0
+  yellowLouieEggAmount: 0
+  pinkLouieEggAmount: 0
+  redLouieEggAmount: 0
   destructibleTilemap: {fileID: 285353618}
   indestructibleTilemap: {fileID: 0}
   nextStageSceneName: Stage_1-7
@@ -3783,7 +3803,7 @@ Tilemap:
       m_AnimatedSprites:
       - {fileID: 1766967165, guid: 914f6dd52fc1d3f428738756d19d329e, type: 3}
       - {fileID: -60461963, guid: 914f6dd52fc1d3f428738756d19d329e, type: 3}
-      m_AnimationSpeed: 3.5
+      m_AnimationSpeed: 3.5000002
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: 7, y: -6, z: 0}
@@ -3891,7 +3911,7 @@ Tilemap:
       m_AnimatedSprites:
       - {fileID: 1766967165, guid: 914f6dd52fc1d3f428738756d19d329e, type: 3}
       - {fileID: -60461963, guid: 914f6dd52fc1d3f428738756d19d329e, type: 3}
-      m_AnimationSpeed: 3.5
+      m_AnimationSpeed: 3.5000002
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: 7, y: 0, z: 0}
@@ -3981,7 +4001,7 @@ Tilemap:
       m_AnimatedSprites:
       - {fileID: 413118391, guid: 914f6dd52fc1d3f428738756d19d329e, type: 3}
       - {fileID: -414010142, guid: 914f6dd52fc1d3f428738756d19d329e, type: 3}
-      m_AnimationSpeed: 3
+      m_AnimationSpeed: 3.0000002
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: -6, y: 4, z: 0}
@@ -3999,7 +4019,7 @@ Tilemap:
       m_AnimatedSprites:
       - {fileID: 413118391, guid: 914f6dd52fc1d3f428738756d19d329e, type: 3}
       - {fileID: -414010142, guid: 914f6dd52fc1d3f428738756d19d329e, type: 3}
-      m_AnimationSpeed: 3.0000002
+      m_AnimationSpeed: 3
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: -4, y: 4, z: 0}
@@ -4062,7 +4082,7 @@ Tilemap:
       m_AnimatedSprites:
       - {fileID: 1909338682, guid: 1a57a821cb78e0f4d8f8f366d155df5b, type: 3}
       - {fileID: -1456098706, guid: 1a57a821cb78e0f4d8f8f366d155df5b, type: 3}
-      m_AnimationSpeed: 3.5000002
+      m_AnimationSpeed: 3.5
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: -9, y: 5, z: 0}
@@ -4143,7 +4163,7 @@ Tilemap:
       m_AnimatedSprites:
       - {fileID: 413118391, guid: 914f6dd52fc1d3f428738756d19d329e, type: 3}
       - {fileID: -414010142, guid: 914f6dd52fc1d3f428738756d19d329e, type: 3}
-      m_AnimationSpeed: 3
+      m_AnimationSpeed: 3.0000002
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: 5, y: 5, z: 0}
@@ -4161,7 +4181,7 @@ Tilemap:
       m_AnimatedSprites:
       - {fileID: 413118391, guid: 914f6dd52fc1d3f428738756d19d329e, type: 3}
       - {fileID: -414010142, guid: 914f6dd52fc1d3f428738756d19d329e, type: 3}
-      m_AnimationSpeed: 3.0000002
+      m_AnimationSpeed: 3
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: 7, y: 5, z: 0}

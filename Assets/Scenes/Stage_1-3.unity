@@ -245,6 +245,26 @@ MonoBehaviour:
   yellowLouieEggItemPrefab: {fileID: 0}
   pinkLouieEggItemPrefab: {fileID: 0}
   redLouieEggItemPrefab: {fileID: 0}
+  portalAmount: 1
+  extraBombAmount: 3
+  blastRadiusAmount: 3
+  speedIncreaseAmount: 3
+  kickBombAmount: 0
+  punchBombAmount: 3
+  pierceBombAmount: 0
+  controlBombAmount: 0
+  fullFireAmount: 0
+  bombPassAmount: 3
+  destructiblePassAmount: 0
+  invincibleSuitAmount: 0
+  heartAmount: 0
+  blueLouieEggAmount: 1
+  blackLouieEggAmount: 1
+  purpleLouieEggAmount: 0
+  greenLouieEggAmount: 1
+  yellowLouieEggAmount: 0
+  pinkLouieEggAmount: 0
+  redLouieEggAmount: 0
   destructibleTilemap: {fileID: 285353618}
   indestructibleTilemap: {fileID: 0}
   nextStageSceneName: Stage_1-4

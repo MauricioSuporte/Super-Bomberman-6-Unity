@@ -37,6 +37,28 @@ public class GameManager : MonoBehaviour
     public ItemPickup pinkLouieEggItemPrefab;
     public ItemPickup redLouieEggItemPrefab;
 
+    [Header("Hidden Objects Amounts")]
+    [Min(0)] public int portalAmount = 1;
+    [Min(0)] public int extraBombAmount = 1;
+    [Min(0)] public int blastRadiusAmount = 1;
+    [Min(0)] public int speedIncreaseAmount = 1;
+    [Min(0)] public int kickBombAmount = 1;
+    [Min(0)] public int punchBombAmount = 1;
+    [Min(0)] public int pierceBombAmount = 1;
+    [Min(0)] public int controlBombAmount = 1;
+    [Min(0)] public int fullFireAmount = 1;
+    [Min(0)] public int bombPassAmount = 1;
+    [Min(0)] public int destructiblePassAmount = 1;
+    [Min(0)] public int invincibleSuitAmount = 1;
+    [Min(0)] public int heartAmount = 1;
+    [Min(0)] public int blueLouieEggAmount = 1;
+    [Min(0)] public int blackLouieEggAmount = 1;
+    [Min(0)] public int purpleLouieEggAmount = 1;
+    [Min(0)] public int greenLouieEggAmount = 1;
+    [Min(0)] public int yellowLouieEggAmount = 1;
+    [Min(0)] public int pinkLouieEggAmount = 1;
+    [Min(0)] public int redLouieEggAmount = 1;
+
     [Header("Stage")]
     public Tilemap destructibleTilemap;
     public Tilemap indestructibleTilemap;
@@ -61,26 +83,7 @@ public class GameManager : MonoBehaviour
     int totalDestructibleBlocks;
     int destroyedDestructibleBlocks;
 
-    int portalSpawnOrder = -1;
-    int extraBombSpawnOrder = -1;
-    int blastRadiusSpawnOrder = -1;
-    int speedIncreaseSpawnOrder = -1;
-    int kickBombSpawnOrder = -1;
-    int punchBombSpawnOrder = -1;
-    int pierceBombSpawnOrder = -1;
-    int controlBombSpawnOrder = -1;
-    int fullFireSpawnOrder = -1;
-    int bombPassSpawnOrder = -1;
-    int destructiblePassSpawnOrder = -1;
-    int invincibleSuitSpawnOrder = -1;
-    int heartSpawnOrder = -1;
-    int blueLouieEggSpawnOrder = -1;
-    int blackLouieEggSpawnOrder = -1;
-    int purpleLouieEggSpawnOrder = -1;
-    int greenLouieEggSpawnOrder = -1;
-    int yellowLouieEggSpawnOrder = -1;
-    int pinkLouieEggSpawnOrder = -1;
-    int redLouieEggSpawnOrder = -1;
+    readonly Dictionary<int, GameObject> orderToSpawn = new();
 
     bool restartingRound;
 
@@ -256,26 +259,7 @@ public class GameManager : MonoBehaviour
         destroyedDestructibleBlocks = 0;
         totalDestructibleBlocks = 0;
 
-        portalSpawnOrder = -1;
-        extraBombSpawnOrder = -1;
-        blastRadiusSpawnOrder = -1;
-        speedIncreaseSpawnOrder = -1;
-        kickBombSpawnOrder = -1;
-        punchBombSpawnOrder = -1;
-        pierceBombSpawnOrder = -1;
-        controlBombSpawnOrder = -1;
-        fullFireSpawnOrder = -1;
-        bombPassSpawnOrder = -1;
-        destructiblePassSpawnOrder = -1;
-        invincibleSuitSpawnOrder = -1;
-        heartSpawnOrder = -1;
-        blueLouieEggSpawnOrder = -1;
-        blackLouieEggSpawnOrder = -1;
-        purpleLouieEggSpawnOrder = -1;
-        greenLouieEggSpawnOrder = -1;
-        yellowLouieEggSpawnOrder = -1;
-        pinkLouieEggSpawnOrder = -1;
-        redLouieEggSpawnOrder = -1;
+        orderToSpawn.Clear();
 
         if (destructibleTilemap == null)
             return;
@@ -291,7 +275,7 @@ public class GameManager : MonoBehaviour
         if (totalDestructibleBlocks <= 0)
             return;
 
-        var indices = new List<int>();
+        var indices = new List<int>(totalDestructibleBlocks);
         for (int i = 1; i <= totalDestructibleBlocks; i++)
             indices.Add(i);
 
@@ -303,65 +287,38 @@ public class GameManager : MonoBehaviour
 
         int cursor = 0;
 
-        if (endStagePortalPrefab != null && cursor < indices.Count)
-            portalSpawnOrder = indices[cursor++];
+        void TryAssign(GameObject prefabGo, int amount)
+        {
+            if (prefabGo == null || amount <= 0)
+                return;
 
-        if (extraBombItemPrefab != null && cursor < indices.Count)
-            extraBombSpawnOrder = indices[cursor++];
+            for (int k = 0; k < amount && cursor < indices.Count; k++)
+                orderToSpawn[indices[cursor++]] = prefabGo;
+        }
 
-        if (blastRadiusItemPrefab != null && cursor < indices.Count)
-            blastRadiusSpawnOrder = indices[cursor++];
+        TryAssign(endStagePortalPrefab != null ? endStagePortalPrefab.gameObject : null, portalAmount);
 
-        if (speedIncreaseItemPrefab != null && cursor < indices.Count)
-            speedIncreaseSpawnOrder = indices[cursor++];
+        TryAssign(extraBombItemPrefab != null ? extraBombItemPrefab.gameObject : null, extraBombAmount);
+        TryAssign(blastRadiusItemPrefab != null ? blastRadiusItemPrefab.gameObject : null, blastRadiusAmount);
+        TryAssign(speedIncreaseItemPrefab != null ? speedIncreaseItemPrefab.gameObject : null, speedIncreaseAmount);
+        TryAssign(kickBombItemPrefab != null ? kickBombItemPrefab.gameObject : null, kickBombAmount);
+        TryAssign(punchBombItemPrefab != null ? punchBombItemPrefab.gameObject : null, punchBombAmount);
+        TryAssign(pierceBombItemPrefab != null ? pierceBombItemPrefab.gameObject : null, pierceBombAmount);
+        TryAssign(pierceBombItemPrefab != null ? pierceBombItemPrefab.gameObject : null, pierceBombAmount);
+        TryAssign(controlBombItemPrefab != null ? controlBombItemPrefab.gameObject : null, controlBombAmount);
+        TryAssign(fullFireItemPrefab != null ? fullFireItemPrefab.gameObject : null, fullFireAmount);
+        TryAssign(bombPassItemPrefab != null ? bombPassItemPrefab.gameObject : null, bombPassAmount);
+        TryAssign(destructiblePassItemPrefab != null ? destructiblePassItemPrefab.gameObject : null, destructiblePassAmount);
+        TryAssign(invincibleSuitItemPrefab != null ? invincibleSuitItemPrefab.gameObject : null, invincibleSuitAmount);
+        TryAssign(heartItemPrefab != null ? heartItemPrefab.gameObject : null, heartAmount);
 
-        if (kickBombItemPrefab != null && cursor < indices.Count)
-            kickBombSpawnOrder = indices[cursor++];
-
-        if (punchBombItemPrefab != null && cursor < indices.Count)
-            punchBombSpawnOrder = indices[cursor++];
-
-        if (pierceBombItemPrefab != null && cursor < indices.Count)
-            pierceBombSpawnOrder = indices[cursor++];
-
-        if (controlBombItemPrefab != null && cursor < indices.Count)
-            controlBombSpawnOrder = indices[cursor++];
-
-        if (fullFireItemPrefab != null && cursor < indices.Count)
-            fullFireSpawnOrder = indices[cursor++];
-
-        if (bombPassItemPrefab != null && cursor < indices.Count)
-            bombPassSpawnOrder = indices[cursor++];
-
-        if (destructiblePassItemPrefab != null && cursor < indices.Count)
-            destructiblePassSpawnOrder = indices[cursor++];
-
-        if (invincibleSuitItemPrefab != null && cursor < indices.Count)
-            invincibleSuitSpawnOrder = indices[cursor++];
-
-        if (heartItemPrefab != null && cursor < indices.Count)
-            heartSpawnOrder = indices[cursor++];
-
-        if (blueLouieEggItemPrefab != null && cursor < indices.Count)
-            blueLouieEggSpawnOrder = indices[cursor++];
-
-        if (blackLouieEggItemPrefab != null && cursor < indices.Count)
-            blackLouieEggSpawnOrder = indices[cursor++];
-
-        if (purpleLouieEggItemPrefab != null && cursor < indices.Count)
-            purpleLouieEggSpawnOrder = indices[cursor++];
-
-        if (greenLouieEggItemPrefab != null && cursor < indices.Count)
-            greenLouieEggSpawnOrder = indices[cursor++];
-
-        if (yellowLouieEggItemPrefab != null && cursor < indices.Count)
-            yellowLouieEggSpawnOrder = indices[cursor++];
-
-        if (pinkLouieEggItemPrefab != null && cursor < indices.Count)
-            pinkLouieEggSpawnOrder = indices[cursor++];
-
-        if (redLouieEggItemPrefab != null && cursor < indices.Count)
-            redLouieEggSpawnOrder = indices[cursor++];
+        TryAssign(blueLouieEggItemPrefab != null ? blueLouieEggItemPrefab.gameObject : null, blueLouieEggAmount);
+        TryAssign(blackLouieEggItemPrefab != null ? blackLouieEggItemPrefab.gameObject : null, blackLouieEggAmount);
+        TryAssign(purpleLouieEggItemPrefab != null ? purpleLouieEggItemPrefab.gameObject : null, purpleLouieEggAmount);
+        TryAssign(greenLouieEggItemPrefab != null ? greenLouieEggItemPrefab.gameObject : null, greenLouieEggAmount);
+        TryAssign(yellowLouieEggItemPrefab != null ? yellowLouieEggItemPrefab.gameObject : null, yellowLouieEggAmount);
+        TryAssign(pinkLouieEggItemPrefab != null ? pinkLouieEggItemPrefab.gameObject : null, pinkLouieEggAmount);
+        TryAssign(redLouieEggItemPrefab != null ? redLouieEggItemPrefab.gameObject : null, redLouieEggAmount);
     }
 
     public GameObject GetSpawnForDestroyedBlock()
@@ -372,65 +329,8 @@ public class GameManager : MonoBehaviour
         destroyedDestructibleBlocks++;
         int order = destroyedDestructibleBlocks;
 
-        if (order == portalSpawnOrder && endStagePortalPrefab != null)
-            return endStagePortalPrefab.gameObject;
-
-        if (order == extraBombSpawnOrder && extraBombItemPrefab != null)
-            return extraBombItemPrefab.gameObject;
-
-        if (order == blastRadiusSpawnOrder && blastRadiusItemPrefab != null)
-            return blastRadiusItemPrefab.gameObject;
-
-        if (order == speedIncreaseSpawnOrder && speedIncreaseItemPrefab != null)
-            return speedIncreaseItemPrefab.gameObject;
-
-        if (order == kickBombSpawnOrder && kickBombItemPrefab != null)
-            return kickBombItemPrefab.gameObject;
-
-        if (order == punchBombSpawnOrder && punchBombItemPrefab != null)
-            return punchBombItemPrefab.gameObject;
-
-        if (order == pierceBombSpawnOrder && pierceBombItemPrefab != null)
-            return pierceBombItemPrefab.gameObject;
-
-        if (order == controlBombSpawnOrder && controlBombItemPrefab != null)
-            return controlBombItemPrefab.gameObject;
-
-        if (order == fullFireSpawnOrder && fullFireItemPrefab != null)
-            return fullFireItemPrefab.gameObject;
-
-        if (order == bombPassSpawnOrder && bombPassItemPrefab != null)
-            return bombPassItemPrefab.gameObject;
-
-        if (order == destructiblePassSpawnOrder && destructiblePassItemPrefab != null)
-            return destructiblePassItemPrefab.gameObject;
-
-        if (order == invincibleSuitSpawnOrder && invincibleSuitItemPrefab != null)
-            return invincibleSuitItemPrefab.gameObject;
-
-        if (order == heartSpawnOrder && heartItemPrefab != null)
-            return heartItemPrefab.gameObject;
-
-        if (order == blueLouieEggSpawnOrder && blueLouieEggItemPrefab != null)
-            return blueLouieEggItemPrefab.gameObject;
-
-        if (order == blackLouieEggSpawnOrder && blackLouieEggItemPrefab != null)
-            return blackLouieEggItemPrefab.gameObject;
-
-        if (order == purpleLouieEggSpawnOrder && purpleLouieEggItemPrefab != null)
-            return purpleLouieEggItemPrefab.gameObject;
-
-        if (order == greenLouieEggSpawnOrder && greenLouieEggItemPrefab != null)
-            return greenLouieEggItemPrefab.gameObject;
-
-        if (order == yellowLouieEggSpawnOrder && yellowLouieEggItemPrefab != null)
-            return yellowLouieEggItemPrefab.gameObject;
-
-        if (order == pinkLouieEggSpawnOrder && pinkLouieEggItemPrefab != null)
-            return pinkLouieEggItemPrefab.gameObject;
-
-        if (order == redLouieEggSpawnOrder && redLouieEggItemPrefab != null)
-            return redLouieEggItemPrefab.gameObject;
+        if (orderToSpawn.TryGetValue(order, out var prefabGo))
+            return prefabGo;
 
         return null;
     }
