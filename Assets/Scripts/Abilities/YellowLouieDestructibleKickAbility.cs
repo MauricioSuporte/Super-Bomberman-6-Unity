@@ -453,12 +453,23 @@ public class YellowLouieDestructibleKickAbility : MonoBehaviour, IPlayerAbility
 
     GameObject CreateGhost(Tilemap tilemap, Vector3Int cell, TileBase tile)
     {
-        GameObject ghost = new GameObject("YellowKickBlock_Ghost");
+        GameObject ghost = new("YellowKickBlock_Ghost");
         ghost.transform.position = tilemap.GetCellCenterWorld(cell);
+
+        int stageLayer = LayerMask.NameToLayer("Stage");
+        if (stageLayer >= 0)
+            ghost.layer = stageLayer;
 
         var sr = ghost.AddComponent<SpriteRenderer>();
         sr.sortingOrder = 10;
         sr.sprite = GetPreviewSprite(tile);
+
+        var col = ghost.AddComponent<BoxCollider2D>();
+        col.isTrigger = false;
+
+        float ts = movement != null ? Mathf.Max(0.1f, movement.tileSize) : 1f;
+        col.size = new Vector2(ts * 0.90f, ts * 0.90f);
+        col.offset = Vector2.zero;
 
         return ghost;
     }
@@ -514,6 +525,9 @@ public class YellowLouieDestructibleKickAbility : MonoBehaviour, IPlayerAbility
 
         Vector3 center = destructibleTilemap.GetCellCenterWorld(cell);
 
+        if (HasItemAt(center) || HasPlayerAt(center))
+            return BlockType.Solid;
+
         Vector2 size = Mathf.Abs(dir.x) > 0.01f
             ? new Vector2(movement.tileSize * 0.6f, movement.tileSize * 0.2f)
             : new Vector2(movement.tileSize * 0.2f, movement.tileSize * 0.6f);
@@ -530,13 +544,58 @@ public class YellowLouieDestructibleKickAbility : MonoBehaviour, IPlayerAbility
         for (int i = 0; i < hits.Length; i++)
         {
             var hit = hits[i];
-            if (hit == null || hit.isTrigger || hit.gameObject == gameObject)
+            if (hit == null || hit.gameObject == gameObject)
                 continue;
 
             return BlockType.Solid;
         }
 
         return BlockType.None;
+    }
+
+    bool HasItemAt(Vector3 center)
+    {
+        int itemLayer = LayerMask.NameToLayer("Item");
+        if (itemLayer < 0)
+            return false;
+
+        return HasAnyColliderAt(center, 1 << itemLayer);
+    }
+
+    bool HasPlayerAt(Vector3 center)
+    {
+        int playerLayer = LayerMask.NameToLayer("Player");
+        if (playerLayer < 0)
+            return false;
+
+        return HasAnyColliderAt(center, 1 << playerLayer);
+    }
+
+    bool HasAnyColliderAt(Vector3 center, int mask)
+    {
+        if (mask == 0)
+            return false;
+
+        float ts = movement != null ? Mathf.Max(0.1f, movement.tileSize) : 1f;
+        float s = ts * 0.55f;
+
+        var hits = Physics2D.OverlapBoxAll(center, new Vector2(s, s), 0f, mask);
+        if (hits == null || hits.Length == 0)
+            return false;
+
+        for (int i = 0; i < hits.Length; i++)
+        {
+            var hit = hits[i];
+            if (hit == null)
+                continue;
+
+            if (hit.gameObject == gameObject)
+                continue;
+
+            return true;
+        }
+
+        return false;
     }
 
     void CancelKick()

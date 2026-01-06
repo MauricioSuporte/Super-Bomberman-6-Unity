@@ -19,22 +19,22 @@ public class YellowLouieKickAnimator : MonoBehaviour, IYellowLouieDestructibleKi
     readonly List<SpriteRenderer> cachedSpriteRenderers = new();
     readonly List<bool> cachedSpriteEnabled = new();
 
+    readonly List<GameObject> cachedDirectionObjects = new();
+    readonly List<bool> cachedDirectionObjectsActive = new();
+
     bool playing;
 
     void Awake()
     {
         riderVisual = GetComponent<LouieRiderVisual>();
+        if (riderVisual == null)
+            riderVisual = GetComponentInParent<LouieRiderVisual>();
+        if (riderVisual == null)
+            riderVisual = GetComponentInChildren<LouieRiderVisual>(true);
     }
 
-    void OnDisable()
-    {
-        Stop();
-    }
-
-    void OnDestroy()
-    {
-        Stop();
-    }
+    void OnDisable() => Stop();
+    void OnDestroy() => Stop();
 
     public void Play(Vector2 dir)
     {
@@ -50,6 +50,7 @@ public class YellowLouieKickAnimator : MonoBehaviour, IYellowLouieDestructibleKi
             riderVisual.enabled = false;
 
         DisableAllRenderers();
+        DisableDirectionalObjects();
 
         activeKick = GetKickSprite(dir);
 
@@ -73,7 +74,7 @@ public class YellowLouieKickAnimator : MonoBehaviour, IYellowLouieDestructibleKi
 
     public void Stop()
     {
-        if (!playing)
+        if (!playing && activeKick == null && cachedAnimators.Count == 0 && cachedSpriteRenderers.Count == 0 && cachedDirectionObjects.Count == 0)
             return;
 
         if (activeKick != null)
@@ -90,6 +91,7 @@ public class YellowLouieKickAnimator : MonoBehaviour, IYellowLouieDestructibleKi
         activeKick = null;
 
         RestoreEnabledStates();
+        RestoreDirectionalObjects();
 
         if (riderVisual != null)
             riderVisual.enabled = true;
@@ -112,6 +114,8 @@ public class YellowLouieKickAnimator : MonoBehaviour, IYellowLouieDestructibleKi
         cachedAnimatorEnabled.Clear();
         cachedSpriteRenderers.Clear();
         cachedSpriteEnabled.Clear();
+        cachedDirectionObjects.Clear();
+        cachedDirectionObjectsActive.Clear();
 
         var anims = GetComponentsInChildren<AnimatedSpriteRenderer>(true);
         for (int i = 0; i < anims.Length; i++)
@@ -126,6 +130,28 @@ public class YellowLouieKickAnimator : MonoBehaviour, IYellowLouieDestructibleKi
             cachedSpriteRenderers.Add(srs[i]);
             cachedSpriteEnabled.Add(srs[i] != null && srs[i].enabled);
         }
+
+        CacheDirectionObjectByName("Up");
+        CacheDirectionObjectByName("Down");
+        CacheDirectionObjectByName("Left");
+        CacheDirectionObjectByName("Right");
+    }
+
+    void CacheDirectionObjectByName(string childName)
+    {
+        var t = transform.Find(childName);
+        if (t == null)
+        {
+            t = transform.parent != null ? transform.parent.Find(childName) : null;
+            if (t == null && transform.root != null)
+                t = transform.root.Find(childName);
+        }
+
+        if (t == null)
+            return;
+
+        cachedDirectionObjects.Add(t.gameObject);
+        cachedDirectionObjectsActive.Add(t.gameObject.activeSelf);
     }
 
     void DisableAllRenderers()
@@ -143,6 +169,16 @@ public class YellowLouieKickAnimator : MonoBehaviour, IYellowLouieDestructibleKi
         }
     }
 
+    void DisableDirectionalObjects()
+    {
+        for (int i = 0; i < cachedDirectionObjects.Count; i++)
+        {
+            var go = cachedDirectionObjects[i];
+            if (go != null)
+                go.SetActive(false);
+        }
+    }
+
     void RestoreEnabledStates()
     {
         for (int i = 0; i < cachedAnimators.Count; i++)
@@ -156,5 +192,23 @@ public class YellowLouieKickAnimator : MonoBehaviour, IYellowLouieDestructibleKi
             if (cachedSpriteRenderers[i] != null)
                 cachedSpriteRenderers[i].enabled = cachedSpriteEnabled[i];
         }
+
+        cachedAnimators.Clear();
+        cachedAnimatorEnabled.Clear();
+        cachedSpriteRenderers.Clear();
+        cachedSpriteEnabled.Clear();
+    }
+
+    void RestoreDirectionalObjects()
+    {
+        for (int i = 0; i < cachedDirectionObjects.Count; i++)
+        {
+            var go = cachedDirectionObjects[i];
+            if (go != null)
+                go.SetActive(cachedDirectionObjectsActive[i]);
+        }
+
+        cachedDirectionObjects.Clear();
+        cachedDirectionObjectsActive.Clear();
     }
 }

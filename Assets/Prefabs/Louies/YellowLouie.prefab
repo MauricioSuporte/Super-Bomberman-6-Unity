@@ -108,10 +108,12 @@ MonoBehaviour:
   - {fileID: -2047716836, guid: db1d712e644cc1f4d90176e10cc03307, type: 3}
   - {fileID: -1764831527, guid: db1d712e644cc1f4d90176e10cc03307, type: 3}
   - {fileID: -1923620330, guid: db1d712e644cc1f4d90176e10cc03307, type: 3}
+  - {fileID: -1923620330, guid: db1d712e644cc1f4d90176e10cc03307, type: 3}
+  - {fileID: -1923620330, guid: db1d712e644cc1f4d90176e10cc03307, type: 3}
   - {fileID: -1764831527, guid: db1d712e644cc1f4d90176e10cc03307, type: 3}
   - {fileID: -2047716836, guid: db1d712e644cc1f4d90176e10cc03307, type: 3}
   allowFlipX: 0
-  animationTime: 0.05
+  animationTime: 0.035714287
   useSequenceDuration: 0
   sequenceDuration: 0.5
   loop: 0
@@ -199,7 +201,7 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 5
-  m_Sprite: {fileID: -2019723519, guid: db1d712e644cc1f4d90176e10cc03307, type: 3}
+  m_Sprite: {fileID: -1242823147, guid: db1d712e644cc1f4d90176e10cc03307, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -222,13 +224,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a4b55e1b961d144197e1a7a4a391956, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  idleSprite: {fileID: -2019723519, guid: db1d712e644cc1f4d90176e10cc03307, type: 3}
+  idleSprite: {fileID: -1242823147, guid: db1d712e644cc1f4d90176e10cc03307, type: 3}
   animationSprite:
+  - {fileID: -1242823147, guid: db1d712e644cc1f4d90176e10cc03307, type: 3}
+  - {fileID: -632807235, guid: db1d712e644cc1f4d90176e10cc03307, type: 3}
   - {fileID: -2019723519, guid: db1d712e644cc1f4d90176e10cc03307, type: 3}
   - {fileID: -632807235, guid: db1d712e644cc1f4d90176e10cc03307, type: 3}
   - {fileID: -1242823147, guid: db1d712e644cc1f4d90176e10cc03307, type: 3}
   - {fileID: 2089124579, guid: db1d712e644cc1f4d90176e10cc03307, type: 3}
   - {fileID: 2108946630, guid: db1d712e644cc1f4d90176e10cc03307, type: 3}
+  - {fileID: 2089124579, guid: db1d712e644cc1f4d90176e10cc03307, type: 3}
   allowFlipX: 0
   animationTime: 0.1
   useSequenceDuration: 0
@@ -346,10 +351,12 @@ MonoBehaviour:
   - {fileID: -367825099, guid: db1d712e644cc1f4d90176e10cc03307, type: 3}
   - {fileID: 424709721, guid: db1d712e644cc1f4d90176e10cc03307, type: 3}
   - {fileID: 1795139364, guid: db1d712e644cc1f4d90176e10cc03307, type: 3}
+  - {fileID: 1795139364, guid: db1d712e644cc1f4d90176e10cc03307, type: 3}
+  - {fileID: 1795139364, guid: db1d712e644cc1f4d90176e10cc03307, type: 3}
   - {fileID: 424709721, guid: db1d712e644cc1f4d90176e10cc03307, type: 3}
   - {fileID: -367825099, guid: db1d712e644cc1f4d90176e10cc03307, type: 3}
   allowFlipX: 0
-  animationTime: 0.05
+  animationTime: 0.035714287
   useSequenceDuration: 0
   sequenceDuration: 0.5
   loop: 0
@@ -376,6 +383,7 @@ GameObject:
   - component: {fileID: -4538169248466786654}
   - component: {fileID: 3822240261114814580}
   - component: {fileID: 1919497702538166291}
+  - component: {fileID: 6543421237453546391}
   m_Layer: 0
   m_Name: YellowLouie
   m_TagString: Untagged
@@ -580,14 +588,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 259dc96ea2e08cc4fa2829ffac0aef71, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BombController
-  inputKey: 32
+  playerId: 1
   useAIInput: 0
   bombPrefab: {fileID: 0}
   pierceBombPrefab: {fileID: 0}
   controlBombPrefab: {fileID: 0}
   bombFuseTime: 3
   bombAmout: 1
-  controlDetonateKey: 110
   explosionPrefab: {fileID: 0}
   explosionLayerMask:
     serializedVersion: 2
@@ -646,10 +653,7 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 0
   speedInternal: 224
-  inputUp: 119
-  inputDown: 115
-  inputLeft: 97
-  inputRight: 100
+  playerId: 1
   spriteRendererUp: {fileID: 6685445590595473310}
   spriteRendererDown: {fileID: 4170285985975590271}
   spriteRendererLeft: {fileID: 5930063177854299457}
@@ -668,6 +672,9 @@ MonoBehaviour:
   endStageTotalTime: 1
   endStageFrameCount: 9
   isDead: 0
+  perpendicularAlignMultiplier: 8
+  snapPerpendicularOnAxisStart: 1
+  alignEpsilon: 0.0015
   owner: {fileID: 0}
   followOffset: {x: -0.35, y: -0.15}
   followLerp: 25
@@ -740,6 +747,23 @@ MonoBehaviour:
   shakeAmplitude: 0.03
   shakeFrequency: 22
   freezeAnimatedSprites: 1
+--- !u!114 &6543421237453546391
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2273416014071709654}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 205f7fc6fe6408f419811c6c486b9cd6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CharacterHealth
+  life: 1
+  hitInvulnerableDuration: 3
+  hitBlinkInterval: 0.1
+  tempSlowdownStartNormalized: 0.7
+  tempEndBlinkMultiplier: 4
 --- !u!1 &2445788475736444126
 GameObject:
   m_ObjectHideFlags: 0
@@ -972,10 +996,12 @@ MonoBehaviour:
   - {fileID: 1011705681, guid: db1d712e644cc1f4d90176e10cc03307, type: 3}
   - {fileID: -338969308, guid: db1d712e644cc1f4d90176e10cc03307, type: 3}
   - {fileID: 164064389, guid: db1d712e644cc1f4d90176e10cc03307, type: 3}
+  - {fileID: 164064389, guid: db1d712e644cc1f4d90176e10cc03307, type: 3}
+  - {fileID: 164064389, guid: db1d712e644cc1f4d90176e10cc03307, type: 3}
   - {fileID: -338969308, guid: db1d712e644cc1f4d90176e10cc03307, type: 3}
   - {fileID: 1011705681, guid: db1d712e644cc1f4d90176e10cc03307, type: 3}
   allowFlipX: 0
-  animationTime: 0.05
+  animationTime: 0.035714287
   useSequenceDuration: 0
   sequenceDuration: 0.5
   loop: 0
@@ -1583,10 +1609,12 @@ MonoBehaviour:
   - {fileID: 1011705681, guid: db1d712e644cc1f4d90176e10cc03307, type: 3}
   - {fileID: -338969308, guid: db1d712e644cc1f4d90176e10cc03307, type: 3}
   - {fileID: 164064389, guid: db1d712e644cc1f4d90176e10cc03307, type: 3}
+  - {fileID: 164064389, guid: db1d712e644cc1f4d90176e10cc03307, type: 3}
+  - {fileID: 164064389, guid: db1d712e644cc1f4d90176e10cc03307, type: 3}
   - {fileID: -338969308, guid: db1d712e644cc1f4d90176e10cc03307, type: 3}
   - {fileID: 1011705681, guid: db1d712e644cc1f4d90176e10cc03307, type: 3}
   allowFlipX: 1
-  animationTime: 0.05
+  animationTime: 0.035714287
   useSequenceDuration: 0
   sequenceDuration: 0.5
   loop: 0
