@@ -20,8 +20,12 @@ public class PinkLouieShadowController : MonoBehaviour
     void Awake()
     {
         TryAutoWire();
+
         if (animator != null)
+        {
             animator.SetJumping(false);
+            animator.SetMoving(false);
+        }
     }
 
     void LateUpdate()
@@ -40,7 +44,7 @@ public class PinkLouieShadowController : MonoBehaviour
             if (jumping)
                 animator.SetMoving(false);
             else
-                animator.SetMoving(IsTargetMoving());
+                animator.SetMoving(IsOwnerMoving());
         }
     }
 
@@ -56,15 +60,32 @@ public class PinkLouieShadowController : MonoBehaviour
         }
 
         if (cachedOwner == null)
-            cachedOwner = GetComponentInParent<MovementController>();
+        {
+            var louieVisual = GetComponentInParent<LouieRiderVisual>();
+            if (louieVisual != null && louieVisual.owner != null)
+                cachedOwner = louieVisual.owner;
+            else
+                cachedOwner = GetComponentInParent<MovementController>();
+        }
     }
 
-    bool IsTargetMoving()
+    bool IsOwnerMoving()
     {
         if (cachedOwner == null)
-            cachedOwner = GetComponentInParent<MovementController>();
+        {
+            var louieVisual = GetComponentInParent<LouieRiderVisual>();
+            cachedOwner = (louieVisual != null && louieVisual.owner != null)
+                ? louieVisual.owner
+                : GetComponentInParent<MovementController>();
+        }
 
         if (cachedOwner == null)
+            return false;
+
+        if (cachedOwner.isDead)
+            return false;
+
+        if (cachedOwner.InputLocked)
             return false;
 
         return cachedOwner.Direction != Vector2.zero;
@@ -74,16 +95,13 @@ public class PinkLouieShadowController : MonoBehaviour
     {
         followTarget = pinkLouieRoot;
 
-        if (cachedOwner == null)
-            cachedOwner = GetComponentInParent<MovementController>();
-
-        if (animator == null)
-            animator = GetComponentInChildren<PinkLouieShadowAnimator>(true);
+        cachedOwner = null;
+        TryAutoWire();
 
         if (animator != null && !jumping)
         {
             animator.SetJumping(false);
-            animator.SetMoving(IsTargetMoving());
+            animator.SetMoving(IsOwnerMoving());
         }
     }
 
@@ -117,7 +135,7 @@ public class PinkLouieShadowController : MonoBehaviour
         if (animator != null)
         {
             animator.SetJumping(false);
-            animator.SetMoving(IsTargetMoving());
+            animator.SetMoving(IsOwnerMoving());
         }
     }
 }
