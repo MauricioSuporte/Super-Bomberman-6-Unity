@@ -502,12 +502,13 @@ public class BombController : MonoBehaviour
                 if (itemHit.TryGetComponent<ItemPickup>(out var item))
                     item.DestroyWithAnimation();
 
-                positionsToSpawn.Add(position);
+                if (pierce)
+                {
+                    positionsToSpawn.Add(position);
+                    continue;
+                }
 
-                if (!pierce)
-                    break;
-
-                continue;
+                break;
             }
 
             bool hitDestructibleTile = HasDestructibleAt(position);
@@ -548,11 +549,11 @@ public class BombController : MonoBehaviour
             positionsToSpawn.Add(position);
         }
 
+        bool reachedMaxRange = positionsToSpawn.Count == length;
+
         for (int i = 0; i < positionsToSpawn.Count; i++)
         {
             Vector2 p = positionsToSpawn[i];
-
-            bool reachedMaxRange = positionsToSpawn.Count == length;
             bool isLastSpawned = i == positionsToSpawn.Count - 1;
 
             Explosion.ExplosionPart part =
