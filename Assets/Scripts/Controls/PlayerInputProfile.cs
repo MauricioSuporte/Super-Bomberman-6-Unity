@@ -1,14 +1,19 @@
 ﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 [Serializable]
 public class PlayerInputProfile
 {
     public int playerId;
 
-    [Header("Active Joystick (Legacy)")]
+    [Header("Active Joystick (Legacy Display)")]
     [Range(1, 11)] public int joyIndex = 1;
+
+    [Header("Active Gamepad (Stable Identity)")]
+    public int gamepadDeviceId = -1;
+    public string gamepadProduct = "";
 
     [Header("Legacy Input - DPad (Hat) Axes per Joystick")]
     [Range(0.05f, 0.95f)] public float axisDeadzone = 0.25f;
@@ -122,6 +127,26 @@ public class PlayerInputProfile
         EnsureAllActionsExist();
     }
 
+    public void BindToGamepad(Gamepad pad, int fallbackJoyIndexForDisplay = -1)
+    {
+        if (pad == null)
+            return;
+
+        gamepadDeviceId = pad.deviceId;
+        gamepadProduct = pad.description.product ?? "";
+
+        if (fallbackJoyIndexForDisplay > 0)
+            joyIndex = fallbackJoyIndexForDisplay;
+        else
+            joyIndex = Mathf.Clamp(joyIndex, 1, 11);
+    }
+
+    public void ClearGamepadBinding()
+    {
+        gamepadDeviceId = -1;
+        gamepadProduct = "";
+    }
+
     public void SaveToPrefs()
     {
         foreach (var kv in bindings)
@@ -131,6 +156,11 @@ public class PlayerInputProfile
         }
 
         PlayerPrefs.SetInt(PrefHasAny(), 1);
+
+        PlayerPrefs.SetInt(PrefJoyIndex(), joyIndex);
+        PlayerPrefs.SetInt(PrefGamepadDeviceId(), gamepadDeviceId);
+        PlayerPrefs.SetString(PrefGamepadProduct(), gamepadProduct ?? "");
+
         PlayerPrefs.Save();
     }
 
@@ -138,6 +168,15 @@ public class PlayerInputProfile
     {
         if (!PlayerPrefs.HasKey(PrefHasAny()))
             return;
+
+        if (PlayerPrefs.HasKey(PrefJoyIndex()))
+            joyIndex = Mathf.Clamp(PlayerPrefs.GetInt(PrefJoyIndex(), joyIndex), 1, 11);
+
+        if (PlayerPrefs.HasKey(PrefGamepadDeviceId()))
+            gamepadDeviceId = PlayerPrefs.GetInt(PrefGamepadDeviceId(), -1);
+
+        if (PlayerPrefs.HasKey(PrefGamepadProduct()))
+            gamepadProduct = PlayerPrefs.GetString(PrefGamepadProduct(), "");
 
         foreach (var action in Enum.GetValues(typeof(PlayerAction)))
         {
@@ -177,6 +216,10 @@ public class PlayerInputProfile
         foreach (var action in Enum.GetValues(typeof(PlayerAction)))
             PlayerPrefs.DeleteKey(PrefKey(playerId, (PlayerAction)action));
 
+        PlayerPrefs.DeleteKey(PrefJoyIndex(playerId));
+        PlayerPrefs.DeleteKey(PrefGamepadDeviceId(playerId));
+        PlayerPrefs.DeleteKey(PrefGamepadProduct(playerId));
+
         PlayerPrefs.Save();
     }
 
@@ -185,4 +228,13 @@ public class PlayerInputProfile
 
     string PrefKey(PlayerAction a) => PrefKey(playerId, a);
     static string PrefKey(int playerId, PlayerAction a) => $"P{playerId}_BIND_{a}";
+
+    string PrefJoyIndex() => PrefJoyIndex(playerId);
+    static string PrefJoyIndex(int playerId) => $"P{playerId}_JOY_INDEX";
+
+    string PrefGamepadDeviceId() => PrefGamepadDeviceId(playerId);
+    static string PrefGamepadDeviceId(int playerId) => $"P{playerId}_GAMEPAD_DEVICE_ID";
+
+    string PrefGamepadProduct() => PrefGamepadProduct(playerId);
+    static string PrefGamepadProduct(int playerId) => $"P{playerId}_GAMEPAD_PRODUCT";
 }

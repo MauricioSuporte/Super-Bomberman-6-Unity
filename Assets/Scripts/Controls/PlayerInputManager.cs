@@ -61,6 +61,9 @@ public class PlayerInputManager : MonoBehaviour
         for (int id = 1; id <= count; id++)
         {
             var p = GetPlayer(id);
+
+            // Attempt to re-resolve device if we have a stored deviceId but it's not connected anymore.
+            // (We don't force a reassignment here; we only read if a pad is resolvable.)
             ReadDpadDigital(p, out bool up, out bool down, out bool left, out bool right);
 
             curUp[id] = up;
@@ -257,11 +260,53 @@ public class PlayerInputManager : MonoBehaviour
         if (all.Count == 0)
             return null;
 
+        // 1) Stable resolve by deviceId (fixes reboot order changes)
+        if (p.gamepadDeviceId >= 0)
+        {
+            for (int i = 0; i < all.Count; i++)
+            {
+                var pad = all[i];
+                if (pad == null) continue;
+
+                if (pad.deviceId == p.gamepadDeviceId)
+                {
+                    // keep display joyIndex aligned (optional)
+                    p.joyIndex = Mathf.Clamp(i + 1, 1, 11);
+                    return pad;
+                }
+            }
+        }
+
+        // 2) Fallback: try by product name if available
+        if (!string.IsNullOrEmpty(p.gamepadProduct))
+        {
+            for (int i = 0; i < all.Count; i++)
+            {
+                var pad = all[i];
+                if (pad == null) continue;
+
+                var product = pad.description.product ?? "";
+                if (string.Equals(product, p.gamepadProduct, StringComparison.OrdinalIgnoreCase))
+                {
+                    p.BindToGamepad(pad, i + 1);
+                    return pad;
+                }
+            }
+        }
+
+        // 3) Last resort: legacy index fallback (keeps old saves working)
         int idx = Mathf.Clamp(p.joyIndex, 1, 11) - 1;
         if (idx < 0 || idx >= all.Count)
             return null;
 
-        return all[idx];
+        var resolved = all[idx];
+        if (resolved != null)
+        {
+            p.BindToGamepad(resolved, idx + 1);
+            return resolved;
+        }
+
+        return null;
     }
 
     static bool ReadKeyHeld(KeyCode k)

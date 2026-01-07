@@ -122,8 +122,8 @@ public class ControlsConfigMenu : MonoBehaviour
     Vector2 menuLayoutRootBasePos;
     bool menuLayoutRootCached;
 
-    struct DpadHit { public int dir; public int joyIndex; }
-    struct JoyBtnHit { public int btn; public int joyIndex; }
+    struct DpadHit { public int dir; public int joyIndex; public int deviceId; public string product; }
+    struct JoyBtnHit { public int btn; public int joyIndex; public int deviceId; public string product; }
 
     float blockedMessageUntil;
     string blockedMessageLine;
@@ -590,6 +590,9 @@ public class ControlsConfigMenu : MonoBehaviour
                         blockedMessageLine = null;
 
                         p.joyIndex = dpad.Value.joyIndex;
+                        p.gamepadDeviceId = dpad.Value.deviceId;
+                        p.gamepadProduct = dpad.Value.product ?? "";
+
                         p.SetBinding(action, Binding.FromDpad(p.joyIndex, dpad.Value.dir));
                     }
                     else if (joyBtn.HasValue)
@@ -598,6 +601,9 @@ public class ControlsConfigMenu : MonoBehaviour
                         blockedMessageLine = null;
 
                         p.joyIndex = joyBtn.Value.joyIndex;
+                        p.gamepadDeviceId = joyBtn.Value.deviceId;
+                        p.gamepadProduct = joyBtn.Value.product ?? "";
+
                         p.SetBinding(action, Binding.FromJoyButton(p.joyIndex, joyBtn.Value.btn));
                     }
                     else if (key.HasValue)
@@ -667,11 +673,13 @@ public class ControlsConfigMenu : MonoBehaviour
             if (pad == null) continue;
 
             int joyIndex = i + 1;
+            int deviceId = pad.deviceId;
+            string product = pad.description.product ?? "";
 
-            if (pad.dpad.up.wasPressedThisFrame) return new DpadHit { dir = 0, joyIndex = joyIndex };
-            if (pad.dpad.down.wasPressedThisFrame) return new DpadHit { dir = 1, joyIndex = joyIndex };
-            if (pad.dpad.left.wasPressedThisFrame) return new DpadHit { dir = 2, joyIndex = joyIndex };
-            if (pad.dpad.right.wasPressedThisFrame) return new DpadHit { dir = 3, joyIndex = joyIndex };
+            if (pad.dpad.up.wasPressedThisFrame) return new DpadHit { dir = 0, joyIndex = joyIndex, deviceId = deviceId, product = product };
+            if (pad.dpad.down.wasPressedThisFrame) return new DpadHit { dir = 1, joyIndex = joyIndex, deviceId = deviceId, product = product };
+            if (pad.dpad.left.wasPressedThisFrame) return new DpadHit { dir = 2, joyIndex = joyIndex, deviceId = deviceId, product = product };
+            if (pad.dpad.right.wasPressedThisFrame) return new DpadHit { dir = 3, joyIndex = joyIndex, deviceId = deviceId, product = product };
         }
 
         return null;
@@ -686,20 +694,22 @@ public class ControlsConfigMenu : MonoBehaviour
             if (pad == null) continue;
 
             int joyIndex = i + 1;
+            int deviceId = pad.deviceId;
+            string product = pad.description.product ?? "";
 
-            if (pad.buttonSouth.wasPressedThisFrame) return new JoyBtnHit { btn = 0, joyIndex = joyIndex };
-            if (pad.buttonEast.wasPressedThisFrame) return new JoyBtnHit { btn = 1, joyIndex = joyIndex };
-            if (pad.buttonWest.wasPressedThisFrame) return new JoyBtnHit { btn = 2, joyIndex = joyIndex };
-            if (pad.buttonNorth.wasPressedThisFrame) return new JoyBtnHit { btn = 3, joyIndex = joyIndex };
+            if (pad.buttonSouth.wasPressedThisFrame) return new JoyBtnHit { btn = 0, joyIndex = joyIndex, deviceId = deviceId, product = product };
+            if (pad.buttonEast.wasPressedThisFrame) return new JoyBtnHit { btn = 1, joyIndex = joyIndex, deviceId = deviceId, product = product };
+            if (pad.buttonWest.wasPressedThisFrame) return new JoyBtnHit { btn = 2, joyIndex = joyIndex, deviceId = deviceId, product = product };
+            if (pad.buttonNorth.wasPressedThisFrame) return new JoyBtnHit { btn = 3, joyIndex = joyIndex, deviceId = deviceId, product = product };
 
-            if (pad.leftShoulder.wasPressedThisFrame) return new JoyBtnHit { btn = 4, joyIndex = joyIndex };
-            if (pad.rightShoulder.wasPressedThisFrame) return new JoyBtnHit { btn = 5, joyIndex = joyIndex };
+            if (pad.leftShoulder.wasPressedThisFrame) return new JoyBtnHit { btn = 4, joyIndex = joyIndex, deviceId = deviceId, product = product };
+            if (pad.rightShoulder.wasPressedThisFrame) return new JoyBtnHit { btn = 5, joyIndex = joyIndex, deviceId = deviceId, product = product };
 
-            if (pad.leftTrigger.wasPressedThisFrame) return new JoyBtnHit { btn = 6, joyIndex = joyIndex };
-            if (pad.rightTrigger.wasPressedThisFrame) return new JoyBtnHit { btn = 7, joyIndex = joyIndex };
+            if (pad.leftTrigger.wasPressedThisFrame) return new JoyBtnHit { btn = 6, joyIndex = joyIndex, deviceId = deviceId, product = product };
+            if (pad.rightTrigger.wasPressedThisFrame) return new JoyBtnHit { btn = 7, joyIndex = joyIndex, deviceId = deviceId, product = product };
 
-            if (pad.startButton.wasPressedThisFrame) return new JoyBtnHit { btn = 8, joyIndex = joyIndex };
-            if (pad.selectButton.wasPressedThisFrame) return new JoyBtnHit { btn = 9, joyIndex = joyIndex };
+            if (pad.startButton.wasPressedThisFrame) return new JoyBtnHit { btn = 8, joyIndex = joyIndex, deviceId = deviceId, product = product };
+            if (pad.selectButton.wasPressedThisFrame) return new JoyBtnHit { btn = 9, joyIndex = joyIndex, deviceId = deviceId, product = product };
         }
 
         return null;
@@ -838,7 +848,7 @@ public class ControlsConfigMenu : MonoBehaviour
                 $"<color={colorHint}>B:</color> <color={colorWhite}>RETURN / EXPLODE CONTROL BOMB</color>\n" +
                 $"<color={colorHint}>C:</color> <color={colorWhite}>RESTORE DEFAULT KEYS / ABILITIES</color>" +
                 $"</size></align>";
-        }
+    }
         else if (state == MenuState.ConfirmReset)
         {
             string yesText = confirmResetIndex == 0 ? $"<color={colorHint}>YES</color>" : $"<color={colorWhite}>YES</color>";
