@@ -23,7 +23,7 @@ public static class PlayerPersistentStats
 
         public int SpeedInternal = BaseSpeedNormal;
 
-        public bool CanKickBombs = false;
+        public bool CanKickBombs = true;
         public bool CanPunchBombs = false;
         public bool CanPassBombs = false;
         public bool CanPassDestructibles = true;
@@ -31,7 +31,7 @@ public static class PlayerPersistentStats
         public bool HasControlBombs = false;
         public bool HasFullFire = false;
 
-        public MountedLouieType MountedLouie = MountedLouieType.Red;
+        public MountedLouieType MountedLouie = MountedLouieType.Blue;
         public BomberSkin Skin = BomberSkin.White;
     }
 
