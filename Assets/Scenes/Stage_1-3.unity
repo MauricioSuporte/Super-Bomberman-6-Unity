@@ -5478,7 +5478,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::StageMusicConfigurator
   stageDefaultMusic: {fileID: 8300000, guid: 8fe07e5c25441b14f876bd031e281fc2, type: 3}
-  musicVolume: 0.65
+  musicVolume: 0.4
 --- !u!4 &1746315304
 Transform:
   m_ObjectHideFlags: 0

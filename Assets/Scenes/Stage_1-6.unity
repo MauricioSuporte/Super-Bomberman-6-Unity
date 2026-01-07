@@ -163,26 +163,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a1fd4d59ac55eac49a2c862ee57d8ae9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  endStagePortalPrefab: {fileID: 6173519295973572242, guid: be5c87718a207a74f9463f10551c5cf6, type: 3}
-  extraBombItemPrefab: {fileID: 2727780941473249227, guid: 2c7394d5814f6284da1d799a66d95686, type: 3}
-  blastRadiusItemPrefab: {fileID: 6871244334814668705, guid: bdad95ff62d39d44fbcbb3b171a603bb, type: 3}
-  speedIncreaseItemPrefab: {fileID: 4209327807185772322, guid: 218d29a1a19c6864e8d870f01df7f91b, type: 3}
-  kickBombItemPrefab: {fileID: 6871244334814668705, guid: 8688e05eefe87c143a46fe4f721b8c80, type: 3}
-  punchBombItemPrefab: {fileID: 6871244334814668705, guid: 5d9a731da7e790c45a7a1d311cea3d8c, type: 3}
-  pierceBombItemPrefab: {fileID: 0}
-  controlBombItemPrefab: {fileID: 0}
-  fullFireItemPrefab: {fileID: 0}
-  bombPassItemPrefab: {fileID: 0}
-  destructiblePassItemPrefab: {fileID: 0}
-  invincibleSuitItemPrefab: {fileID: 0}
-  heartItemPrefab: {fileID: 0}
-  blueLouieEggItemPrefab: {fileID: 0}
-  blackLouieEggItemPrefab: {fileID: 0}
-  purpleLouieEggItemPrefab: {fileID: 0}
-  greenLouieEggItemPrefab: {fileID: 0}
-  yellowLouieEggItemPrefab: {fileID: 0}
-  pinkLouieEggItemPrefab: {fileID: 0}
-  redLouieEggItemPrefab: {fileID: 0}
+  portalResourcesPath: Portal/EndStagePortal
   portalAmount: 1
   extraBombAmount: 8
   blastRadiusAmount: 8
@@ -211,6 +192,7 @@ MonoBehaviour:
   groundTile: {fileID: 11400000, guid: ada74cfa1fdef9e4c86ccafaa1b2ae66, type: 2}
   groundShadowTile: {fileID: 11400000, guid: e0f633282caacc742af95bdd334dd0cf, type: 2}
   autoResolveStageTilemaps: 1
+  restartAfterDeathSeconds: 4
 --- !u!1 &285353614
 GameObject:
   m_ObjectHideFlags: 0
@@ -3803,7 +3785,7 @@ Tilemap:
       m_AnimatedSprites:
       - {fileID: 1766967165, guid: 914f6dd52fc1d3f428738756d19d329e, type: 3}
       - {fileID: -60461963, guid: 914f6dd52fc1d3f428738756d19d329e, type: 3}
-      m_AnimationSpeed: 3.5000002
+      m_AnimationSpeed: 3.5
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: 7, y: -6, z: 0}
@@ -3911,7 +3893,7 @@ Tilemap:
       m_AnimatedSprites:
       - {fileID: 1766967165, guid: 914f6dd52fc1d3f428738756d19d329e, type: 3}
       - {fileID: -60461963, guid: 914f6dd52fc1d3f428738756d19d329e, type: 3}
-      m_AnimationSpeed: 3.5000002
+      m_AnimationSpeed: 3.5
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: 7, y: 0, z: 0}
@@ -3920,7 +3902,7 @@ Tilemap:
       m_AnimatedSprites:
       - {fileID: 1909338682, guid: 1a57a821cb78e0f4d8f8f366d155df5b, type: 3}
       - {fileID: -1456098706, guid: 1a57a821cb78e0f4d8f8f366d155df5b, type: 3}
-      m_AnimationSpeed: 3.5
+      m_AnimationSpeed: 3.5000002
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: -9, y: 1, z: 0}
@@ -4001,7 +3983,7 @@ Tilemap:
       m_AnimatedSprites:
       - {fileID: 413118391, guid: 914f6dd52fc1d3f428738756d19d329e, type: 3}
       - {fileID: -414010142, guid: 914f6dd52fc1d3f428738756d19d329e, type: 3}
-      m_AnimationSpeed: 3.0000002
+      m_AnimationSpeed: 3
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: -6, y: 4, z: 0}
@@ -4163,7 +4145,7 @@ Tilemap:
       m_AnimatedSprites:
       - {fileID: 413118391, guid: 914f6dd52fc1d3f428738756d19d329e, type: 3}
       - {fileID: -414010142, guid: 914f6dd52fc1d3f428738756d19d329e, type: 3}
-      m_AnimationSpeed: 3.0000002
+      m_AnimationSpeed: 3
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: 5, y: 5, z: 0}
@@ -5221,7 +5203,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::StageMusicConfigurator
   stageDefaultMusic: {fileID: 8300000, guid: 62bd8bcbf4ee0154eb4e62d6b45fc41b, type: 3}
-  musicVolume: 0.65
+  musicVolume: 0.4
 --- !u!4 &1746315304
 Transform:
   m_ObjectHideFlags: 0
