@@ -53,6 +53,11 @@ public class ChameleonMovementController : EnemyMovementController
     private AnimatedSpriteRenderer activeDisguiseSprite;
     private DisguiseSpriteSet currentDisguiseSet;
 
+    // === FIX: cache do movimento "normal" para restaurar corretamente ===
+    private Vector2 cachedNormalDirection;
+    private Vector2 cachedNormalTargetTile;
+    private bool hasCachedNormalState;
+
     protected override void Awake()
     {
         base.Awake();
@@ -220,10 +225,48 @@ public class ChameleonMovementController : EnemyMovementController
         spriteRenderer.sprite = idleSprite;
     }
 
+    // === FIX helpers ===
+    private void CacheNormalMovementState()
+    {
+        cachedNormalDirection = (direction == Vector2.zero) ? Vector2.down : direction;
+        cachedNormalTargetTile = targetTile;
+        hasCachedNormalState = true;
+    }
+
+    private void ResyncNormalMovementAfterDisguise()
+    {
+        if (rb == null)
+            return;
+
+        SnapToGrid();
+
+        if (!hasCachedNormalState)
+        {
+            ChooseInitialDirection();
+            UpdateSpriteDirection(direction);
+            targetTile = rb.position;
+            DecideNextTile();
+            return;
+        }
+
+        direction = cachedNormalDirection;
+        UpdateSpriteDirection(direction);
+
+        // O pulo/atravessar parede acontecia porque o targetTile antigo ainda estava ativo.
+        // Resetando aqui, o próximo tile será decidido a partir da posição atual (já snapada).
+        targetTile = rb.position;
+        DecideNextTile();
+    }
+
     private IEnumerator DisguiseAsPlayer()
     {
         if (disguiseSets == null || disguiseSets.Length == 0)
             yield break;
+
+        // === FIX: garante estado consistente antes de entrar no disguise ===
+        CacheNormalMovementState();
+        SnapToGrid();
+        if (rb != null) rb.linearVelocity = Vector2.zero;
 
         currentDisguiseSet = disguiseSets[Random.Range(0, disguiseSets.Length)];
 
@@ -269,9 +312,14 @@ public class ChameleonMovementController : EnemyMovementController
             yield return null;
         }
 
+        // === Saindo do disguise ===
         isDisguised = false;
         isTransforming = true;
         speed = 0f;
+
+        // FIX: antes de mostrar o camaleão, trava posição no grid
+        SnapToGrid();
+        if (rb != null) rb.linearVelocity = Vector2.zero;
 
         DisableDisguiseSprites();
 
@@ -293,6 +341,9 @@ public class ChameleonMovementController : EnemyMovementController
             spriteRenderer.enabled = true;
             spriteRenderer.sprite = idleSprite;
         }
+
+        // === FIX: re-sincroniza direction/targetTile pro movimento normal não "puxar" pro alvo antigo ===
+        ResyncNormalMovementAfterDisguise();
     }
 
     private void DisableDisguiseSprites()
