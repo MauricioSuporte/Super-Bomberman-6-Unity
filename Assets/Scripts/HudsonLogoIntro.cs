@@ -2,6 +2,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 
+[RequireComponent(typeof(AudioSource))]
 public class HudsonLogoIntro : MonoBehaviour
 {
     [Header("UI")]
@@ -19,10 +20,45 @@ public class HudsonLogoIntro : MonoBehaviour
     public bool Skipped { get; private set; }
 
     bool skipRequested;
+    AudioSource sfxSource;
 
     void Awake()
     {
+        sfxSource = GetComponent<AudioSource>();
+        if (sfxSource != null)
+        {
+            sfxSource.playOnAwake = false;
+            sfxSource.loop = false;
+        }
+
         ForceHide();
+    }
+
+    void OnDisable()
+    {
+        StopHudsonFx();
+    }
+
+    void StopHudsonFx()
+    {
+        if (sfxSource == null)
+            return;
+
+        if (sfxSource.isPlaying)
+            sfxSource.Stop();
+
+        sfxSource.clip = null;
+    }
+
+    void PlayHudsonFx()
+    {
+        if (hudsonFx == null || sfxSource == null)
+            return;
+
+        sfxSource.Stop();
+        sfxSource.clip = hudsonFx;
+        sfxSource.loop = false;
+        sfxSource.Play();
     }
 
     public void ForceHide()
@@ -30,6 +66,8 @@ public class HudsonLogoIntro : MonoBehaviour
         Running = false;
         Skipped = false;
         skipRequested = false;
+
+        StopHudsonFx();
 
         if (logoImage != null)
         {
@@ -47,6 +85,8 @@ public class HudsonLogoIntro : MonoBehaviour
 
         skipRequested = true;
         Skipped = true;
+
+        StopHudsonFx();
     }
 
     public IEnumerator Play()
@@ -58,6 +98,8 @@ public class HudsonLogoIntro : MonoBehaviour
         Skipped = false;
         skipRequested = false;
 
+        StopHudsonFx();
+
         logoImage.enabled = true;
         var baseColor = logoImage.color;
         logoImage.color = new Color(baseColor.r, baseColor.g, baseColor.b, 0f);
@@ -66,14 +108,15 @@ public class HudsonLogoIntro : MonoBehaviour
         if (ConsumeSkip())
             yield break;
 
-        if (hudsonFx != null && GameMusicController.Instance != null)
-            GameMusicController.Instance.PlaySfx(hudsonFx, 1f);
+        PlayHudsonFx();
 
         yield return Hold(holdSeconds);
         if (ConsumeSkip())
             yield break;
 
         yield return FadeAlpha(baseColor, 1f, 0f, fadeOutSeconds);
+        if (ConsumeSkip())
+            yield break;
 
         ForceHide();
         Running = false;
