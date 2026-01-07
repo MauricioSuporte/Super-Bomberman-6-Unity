@@ -22,6 +22,8 @@ public class StunReceiver : MonoBehaviour
     Coroutine stunRoutine;
     float stunEndTime;
 
+    bool suppressRestore;
+
     public bool IsStunned => isStunned;
 
     struct SpriteTBase
@@ -38,6 +40,7 @@ public class StunReceiver : MonoBehaviour
         public bool loop;
         public float animationTime;
         public int frame;
+        public bool frozen;
     }
 
     readonly List<SpriteTBase> spriteBases = new();
@@ -53,6 +56,8 @@ public class StunReceiver : MonoBehaviour
         float dur = Mathf.Max(0.01f, seconds);
         float newEnd = Time.time + dur;
 
+        suppressRestore = false;
+
         if (!isStunned || newEnd > stunEndTime)
             stunEndTime = newEnd;
 
@@ -60,11 +65,64 @@ public class StunReceiver : MonoBehaviour
             stunRoutine = StartCoroutine(StunRoutine());
     }
 
+    public void CancelStun(bool restoreVisuals)
+    {
+        if (stunRoutine != null)
+        {
+            StopCoroutine(stunRoutine);
+            stunRoutine = null;
+        }
+
+        isStunned = false;
+        stunEndTime = 0f;
+
+        suppressRestore = !restoreVisuals;
+
+        if (rb != null)
+            rb.linearVelocity = Vector2.zero;
+
+        if (restoreVisuals)
+        {
+            RestoreSpriteBases();
+            if (freezeAnimatedSprites)
+                RestoreAnimations();
+        }
+        else
+        {
+            spriteBases.Clear();
+            animStates.Clear();
+        }
+    }
+
+    public void CancelStunForDeath()
+    {
+        if (stunRoutine != null)
+        {
+            StopCoroutine(stunRoutine);
+            stunRoutine = null;
+        }
+
+        isStunned = false;
+        stunEndTime = 0f;
+
+        suppressRestore = true;
+
+        if (rb != null)
+            rb.linearVelocity = Vector2.zero;
+
+        UnfreezeAnimationsKeepCurrentFrame();
+
+        spriteBases.Clear();
+        animStates.Clear();
+    }
+
     IEnumerator StunRoutine()
     {
         isStunned = true;
 
         CaptureSpriteBases();
+        ForceIdleAndApplyOffsets();
+
         if (freezeAnimatedSprites)
             FreezeAnimations();
 
@@ -94,14 +152,25 @@ public class StunReceiver : MonoBehaviour
                 }
             }
 
+            if (suppressRestore || !isActiveAndEnabled || !gameObject.activeInHierarchy)
+                break;
+
             yield return null;
         }
 
         isStunned = false;
 
-        RestoreSpriteBases();
-        if (freezeAnimatedSprites)
-            RestoreAnimations();
+        if (!suppressRestore && isActiveAndEnabled && gameObject.activeInHierarchy)
+        {
+            RestoreSpriteBases();
+            if (freezeAnimatedSprites)
+                RestoreAnimations();
+        }
+        else
+        {
+            spriteBases.Clear();
+            animStates.Clear();
+        }
 
         stunRoutine = null;
     }
@@ -147,6 +216,22 @@ public class StunReceiver : MonoBehaviour
         }
     }
 
+    void ForceIdleAndApplyOffsets()
+    {
+        var anims = GetComponentsInChildren<AnimatedSpriteRenderer>(true);
+        if (anims == null || anims.Length == 0)
+            return;
+
+        for (int i = 0; i < anims.Length; i++)
+        {
+            var a = anims[i];
+            if (a == null) continue;
+
+            a.idle = true;
+            a.RefreshFrame();
+        }
+    }
+
     void FreezeAnimations()
     {
         animStates.Clear();
@@ -168,8 +253,11 @@ public class StunReceiver : MonoBehaviour
                 idle = a.idle,
                 loop = a.loop,
                 animationTime = a.animationTime,
-                frame = a.CurrentFrame
+                frame = a.CurrentFrame,
+                frozen = false
             });
+
+            a.SetFrozen(true);
 
             a.idle = true;
             a.loop = false;
@@ -186,15 +274,45 @@ public class StunReceiver : MonoBehaviour
             if (st.anim == null)
                 continue;
 
+            st.anim.SetFrozen(false);
+
             st.anim.enabled = st.enabled;
             st.anim.idle = st.idle;
             st.anim.loop = st.loop;
             st.anim.animationTime = st.animationTime;
             st.anim.CurrentFrame = st.frame;
+
             st.anim.RefreshFrame();
+
+            if (freezeAnimatedSprites && st.anim.isActiveAndEnabled && st.anim.idle)
+            {
+                st.anim.idle = false;
+                st.anim.loop = true;
+
+                int len = (st.anim.animationSprite != null) ? st.anim.animationSprite.Length : 0;
+                if (len > 1)
+                    st.anim.CurrentFrame = (st.anim.CurrentFrame + 1) % len;
+
+                st.anim.RefreshFrame();
+            }
         }
 
         animStates.Clear();
+    }
+
+    void UnfreezeAnimationsKeepCurrentFrame()
+    {
+        var anims = GetComponentsInChildren<AnimatedSpriteRenderer>(true);
+        if (anims == null || anims.Length == 0)
+            return;
+
+        for (int i = 0; i < anims.Length; i++)
+        {
+            var a = anims[i];
+            if (a == null) continue;
+
+            a.SetFrozen(false);
+        }
     }
 
     void OnDisable()
@@ -216,5 +334,7 @@ public class StunReceiver : MonoBehaviour
             RestoreAnimations();
 
         spriteBases.Clear();
+        animStates.Clear();
+        suppressRestore = false;
     }
 }

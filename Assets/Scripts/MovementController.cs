@@ -873,6 +873,9 @@ public class MovementController : MonoBehaviour, IKillable
         isDead = true;
         inputLocked = true;
 
+        if (stunReceiver != null)
+            stunReceiver.CancelStunForDeath();
+
         if (CompareTag("Player"))
         {
             TryGetComponent(out CharacterHealth health);

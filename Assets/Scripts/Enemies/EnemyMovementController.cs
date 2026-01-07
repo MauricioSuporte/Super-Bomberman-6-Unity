@@ -132,6 +132,9 @@ public class EnemyMovementController : MonoBehaviour, IKillable
 
         isDead = true;
 
+        if (TryGetComponent<StunReceiver>(out var stun))
+            stun.CancelStunForDeath();
+
         if (audioSource != null && deathSfx != null)
             audioSource.PlayOneShot(deathSfx);
 
