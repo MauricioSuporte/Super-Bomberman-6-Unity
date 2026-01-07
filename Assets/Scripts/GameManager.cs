@@ -15,27 +15,11 @@ public class GameManager : MonoBehaviour
 
     public event Action OnAllEnemiesDefeated;
 
-    [Header("Hidden Objects Prefabs")]
-    public EndStagePortal endStagePortalPrefab;
-    public ItemPickup extraBombItemPrefab;
-    public ItemPickup blastRadiusItemPrefab;
-    public ItemPickup speedIncreaseItemPrefab;
-    public ItemPickup kickBombItemPrefab;
-    public ItemPickup punchBombItemPrefab;
-    public ItemPickup pierceBombItemPrefab;
-    public ItemPickup controlBombItemPrefab;
-    public ItemPickup fullFireItemPrefab;
-    public ItemPickup bombPassItemPrefab;
-    public ItemPickup destructiblePassItemPrefab;
-    public ItemPickup invincibleSuitItemPrefab;
-    public ItemPickup heartItemPrefab;
-    public ItemPickup blueLouieEggItemPrefab;
-    public ItemPickup blackLouieEggItemPrefab;
-    public ItemPickup purpleLouieEggItemPrefab;
-    public ItemPickup greenLouieEggItemPrefab;
-    public ItemPickup yellowLouieEggItemPrefab;
-    public ItemPickup pinkLouieEggItemPrefab;
-    public ItemPickup redLouieEggItemPrefab;
+    // ✅ Portal carregado automaticamente (Resources)
+    [Header("Auto Prefab Loading (Resources)")]
+    [SerializeField] private string portalResourcesPath = "Portal/EndStagePortal";
+
+    EndStagePortal portalPrefab;
 
     [Header("Hidden Objects Amounts")]
     [Min(0)] public int portalAmount = 1;
@@ -78,7 +62,7 @@ public class GameManager : MonoBehaviour
     [SerializeField] private bool autoResolveStageTilemaps = true;
 
     [Header("Round Restart")]
-    private readonly float restartAfterDeathSeconds = 4f;
+    [SerializeField] private float restartAfterDeathSeconds = 4f;
 
     int totalDestructibleBlocks;
     int destroyedDestructibleBlocks;
@@ -91,6 +75,13 @@ public class GameManager : MonoBehaviour
     {
         if (autoResolveStageTilemaps)
             ResolveStageTilemapsIfNeeded();
+
+        // ✅ Carrega portal automaticamente
+        portalPrefab = Resources.Load<EndStagePortal>(portalResourcesPath);
+
+        if (portalPrefab == null && portalAmount > 0)
+            Debug.LogError($"[GameManager] Portal prefab não encontrado em Resources/{portalResourcesPath}. " +
+                           "Crie a pasta Assets/Resources/Portal e coloque o prefab EndStagePortal lá.");
     }
 
     void Start()
@@ -247,7 +238,8 @@ public class GameManager : MonoBehaviour
         for (int i = 0; i < all.Length; i++)
         {
             var tm = all[i];
-            if (tm != null && tm.name != null && tm.name.IndexOf(exactName, StringComparison.OrdinalIgnoreCase) >= 0)
+            if (tm != null && tm.name != null &&
+                tm.name.IndexOf(exactName, StringComparison.OrdinalIgnoreCase) >= 0)
                 return tm;
         }
 
@@ -258,19 +250,19 @@ public class GameManager : MonoBehaviour
     {
         destroyedDestructibleBlocks = 0;
         totalDestructibleBlocks = 0;
-
         orderToSpawn.Clear();
 
         if (destructibleTilemap == null)
             return;
 
+        // ✅ Build cache dos itens automaticamente (Resources/Items)
+        AutoItemDatabase.BuildIfNeeded();
+
         var bounds = destructibleTilemap.cellBounds;
 
         foreach (var pos in bounds.allPositionsWithin)
-        {
             if (destructibleTilemap.GetTile(pos) != null)
                 totalDestructibleBlocks++;
-        }
 
         if (totalDestructibleBlocks <= 0)
             return;
@@ -279,6 +271,7 @@ public class GameManager : MonoBehaviour
         for (int i = 1; i <= totalDestructibleBlocks; i++)
             indices.Add(i);
 
+        // Shuffle
         for (int i = indices.Count - 1; i > 0; i--)
         {
             int j = UnityEngine.Random.Range(0, i + 1);
@@ -287,38 +280,56 @@ public class GameManager : MonoBehaviour
 
         int cursor = 0;
 
-        void TryAssign(GameObject prefabGo, int amount)
+        void TryAssignPortal(int amount)
         {
-            if (prefabGo == null || amount <= 0)
+            if (portalPrefab == null || amount <= 0)
                 return;
 
-            for (int k = 0; k < amount && cursor < indices.Count; k++)
-                orderToSpawn[indices[cursor++]] = prefabGo;
+            for (int i = 0; i < amount && cursor < indices.Count; i++)
+                orderToSpawn[indices[cursor++]] = portalPrefab.gameObject;
         }
 
-        TryAssign(endStagePortalPrefab != null ? endStagePortalPrefab.gameObject : null, portalAmount);
+        void TryAssignItem(ItemPickup.ItemType type, int amount)
+        {
+            if (amount <= 0)
+                return;
 
-        TryAssign(extraBombItemPrefab != null ? extraBombItemPrefab.gameObject : null, extraBombAmount);
-        TryAssign(blastRadiusItemPrefab != null ? blastRadiusItemPrefab.gameObject : null, blastRadiusAmount);
-        TryAssign(speedIncreaseItemPrefab != null ? speedIncreaseItemPrefab.gameObject : null, speedIncreaseAmount);
-        TryAssign(kickBombItemPrefab != null ? kickBombItemPrefab.gameObject : null, kickBombAmount);
-        TryAssign(punchBombItemPrefab != null ? punchBombItemPrefab.gameObject : null, punchBombAmount);
-        TryAssign(pierceBombItemPrefab != null ? pierceBombItemPrefab.gameObject : null, pierceBombAmount);
-        TryAssign(pierceBombItemPrefab != null ? pierceBombItemPrefab.gameObject : null, pierceBombAmount);
-        TryAssign(controlBombItemPrefab != null ? controlBombItemPrefab.gameObject : null, controlBombAmount);
-        TryAssign(fullFireItemPrefab != null ? fullFireItemPrefab.gameObject : null, fullFireAmount);
-        TryAssign(bombPassItemPrefab != null ? bombPassItemPrefab.gameObject : null, bombPassAmount);
-        TryAssign(destructiblePassItemPrefab != null ? destructiblePassItemPrefab.gameObject : null, destructiblePassAmount);
-        TryAssign(invincibleSuitItemPrefab != null ? invincibleSuitItemPrefab.gameObject : null, invincibleSuitAmount);
-        TryAssign(heartItemPrefab != null ? heartItemPrefab.gameObject : null, heartAmount);
+            var prefab = AutoItemDatabase.Get(type);
+            if (prefab == null)
+            {
+                Debug.LogWarning($"[GameManager] Prefab não encontrado para ItemType {type}. " +
+                                 "Confirme se existe um prefab com ItemPickup.type correto em Resources/Items.");
+                return;
+            }
 
-        TryAssign(blueLouieEggItemPrefab != null ? blueLouieEggItemPrefab.gameObject : null, blueLouieEggAmount);
-        TryAssign(blackLouieEggItemPrefab != null ? blackLouieEggItemPrefab.gameObject : null, blackLouieEggAmount);
-        TryAssign(purpleLouieEggItemPrefab != null ? purpleLouieEggItemPrefab.gameObject : null, purpleLouieEggAmount);
-        TryAssign(greenLouieEggItemPrefab != null ? greenLouieEggItemPrefab.gameObject : null, greenLouieEggAmount);
-        TryAssign(yellowLouieEggItemPrefab != null ? yellowLouieEggItemPrefab.gameObject : null, yellowLouieEggAmount);
-        TryAssign(pinkLouieEggItemPrefab != null ? pinkLouieEggItemPrefab.gameObject : null, pinkLouieEggAmount);
-        TryAssign(redLouieEggItemPrefab != null ? redLouieEggItemPrefab.gameObject : null, redLouieEggAmount);
+            for (int i = 0; i < amount && cursor < indices.Count; i++)
+                orderToSpawn[indices[cursor++]] = prefab.gameObject;
+        }
+
+        // ✅ Portal (não é ItemPickup)
+        TryAssignPortal(portalAmount);
+
+        // ✅ Itens (auto)
+        TryAssignItem(ItemPickup.ItemType.ExtraBomb, extraBombAmount);
+        TryAssignItem(ItemPickup.ItemType.BlastRadius, blastRadiusAmount);
+        TryAssignItem(ItemPickup.ItemType.SpeedIncrese, speedIncreaseAmount);
+        TryAssignItem(ItemPickup.ItemType.BombKick, kickBombAmount);
+        TryAssignItem(ItemPickup.ItemType.BombPunch, punchBombAmount);
+        TryAssignItem(ItemPickup.ItemType.PierceBomb, pierceBombAmount);
+        TryAssignItem(ItemPickup.ItemType.ControlBomb, controlBombAmount);
+        TryAssignItem(ItemPickup.ItemType.FullFire, fullFireAmount);
+        TryAssignItem(ItemPickup.ItemType.BombPass, bombPassAmount);
+        TryAssignItem(ItemPickup.ItemType.DestructiblePass, destructiblePassAmount);
+        TryAssignItem(ItemPickup.ItemType.InvincibleSuit, invincibleSuitAmount);
+        TryAssignItem(ItemPickup.ItemType.Heart, heartAmount);
+
+        TryAssignItem(ItemPickup.ItemType.BlueLouieEgg, blueLouieEggAmount);
+        TryAssignItem(ItemPickup.ItemType.BlackLouieEgg, blackLouieEggAmount);
+        TryAssignItem(ItemPickup.ItemType.PurpleLouieEgg, purpleLouieEggAmount);
+        TryAssignItem(ItemPickup.ItemType.GreenLouieEgg, greenLouieEggAmount);
+        TryAssignItem(ItemPickup.ItemType.YellowLouieEgg, yellowLouieEggAmount);
+        TryAssignItem(ItemPickup.ItemType.PinkLouieEgg, pinkLouieEggAmount);
+        TryAssignItem(ItemPickup.ItemType.RedLouieEgg, redLouieEggAmount);
     }
 
     public GameObject GetSpawnForDestroyedBlock()
@@ -533,5 +544,11 @@ public class GameManager : MonoBehaviour
 
             StartCoroutine(RestartRoundRoutine());
         }
+    }
+
+    public ItemPickup GetItemPrefab(ItemPickup.ItemType type)
+    {
+        AutoItemDatabase.BuildIfNeeded();
+        return AutoItemDatabase.Get(type);
     }
 }
