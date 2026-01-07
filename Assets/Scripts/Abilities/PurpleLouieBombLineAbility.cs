@@ -1,4 +1,5 @@
 ﻿using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 [DisallowMultipleComponent]
@@ -135,8 +136,7 @@ public class PurpleLouieBombLineAbility : MonoBehaviour, IPlayerAbility
             if (HasEnemyAt(pos))
                 break;
 
-            bool placed = bomb.TryPlaceBombAtIgnoringInputLock(pos, playSfx: false);
-            if (!placed)
+            if (!bomb.TryPlaceBombAtIgnoringInputLock(pos, playSfx: false))
                 break;
 
             placedAny = true;

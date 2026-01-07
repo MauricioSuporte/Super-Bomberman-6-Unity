@@ -810,7 +810,7 @@ public class Bomb : MonoBehaviour
         if (layer == LayerMask.NameToLayer("Explosion"))
         {
             if (owner != null)
-                owner.ExplodeBomb(gameObject);
+                owner.ExplodeBombChained(gameObject);
             return;
         }
 

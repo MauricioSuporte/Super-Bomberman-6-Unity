@@ -204,7 +204,8 @@ MonoBehaviour:
   kickSpeed: 7.5
   punchDuration: 0.22
   punchArcHeight: 0.9
-  chainStepDelay: 0.5
+  chainStepDelay: 0.1
+  FuseSeconds: 2
   stageBoundsTilemap: {fileID: 0}
 --- !u!82 &4491695425928016186
 AudioSource:

@@ -23,6 +23,9 @@ public class BombController : MonoBehaviour
     public int bombAmout = 1;
     private readonly HashSet<int> scheduledChainBombs = new();
 
+    [Header("Chain Explosion")]
+    [SerializeField] private float chainBombDelaySeconds = 0.1f;
+
     private int bombsRemaining = 0;
     public int BombsRemaining => bombsRemaining;
 
@@ -59,6 +62,11 @@ public class BombController : MonoBehaviour
     private GameManager _gm;
     private AudioSource _localAudio;
 
+    private static readonly Collider2D[] _bombOverlapBuffer = new Collider2D[16];
+
+    private GameObject lastPlacedBomb;
+    public GameObject GetLastPlacedBomb() => lastPlacedBomb;
+
     public void SetPlayerId(int id)
     {
         playerId = Mathf.Clamp(id, 1, 4);
@@ -82,6 +90,7 @@ public class BombController : MonoBehaviour
     {
         bombAmout = Mathf.Min(bombAmout, PlayerPersistentStats.MaxBombAmount);
         bombsRemaining = bombAmout;
+        lastPlacedBomb = null;
     }
 
     private void Update()
@@ -113,7 +122,7 @@ public class BombController : MonoBehaviour
                 PlaceBomb();
 
             if (IsControlEnabled() && input.GetDown(playerId, PlayerAction.ActionB))
-                TryExplodeOldestControlledBomb();
+                TryExplodeMostRecentControlledBomb();
         }
         else
         {
@@ -127,6 +136,8 @@ public class BombController : MonoBehaviour
             }
         }
     }
+
+    public bool IsControlAbilityActive() => IsControlEnabled();
 
     private void ResolveTilemaps()
     {
@@ -284,6 +295,42 @@ public class BombController : MonoBehaviour
         bombsRemaining++;
     }
 
+    public void ExplodeBombChained(GameObject bomb)
+    {
+        if (bomb == null)
+            return;
+
+        if (bomb.TryGetComponent<Bomb>(out var bombComp) && bombComp.HasExploded)
+            return;
+
+        int id = bomb.GetInstanceID();
+        if (!scheduledChainBombs.Add(id))
+            return;
+
+        float delayFromController = chainBombDelaySeconds;
+        float delayFromBomb = bombComp != null ? Mathf.Max(0f, bombComp.chainStepDelay) : -1f;
+
+        float delay = delayFromBomb >= 0f ? delayFromBomb : delayFromController;
+
+        StartCoroutine(ExplodeBombAfterDelay(bomb, id, delay));
+    }
+
+    private IEnumerator ExplodeBombAfterDelay(GameObject bomb, int id, float delay)
+    {
+        if (delay > 0f)
+            yield return new WaitForSeconds(delay);
+
+        scheduledChainBombs.Remove(id);
+
+        if (bomb == null)
+            yield break;
+
+        if (bomb.TryGetComponent<Bomb>(out var bombComp) && bombComp.HasExploded)
+            yield break;
+
+        ExplodeBomb(bomb);
+    }
+
     private void PlayExplosionSfx(AudioSource source, int radius)
     {
         if (source == null || explosionSfxByRadius == null || explosionSfxByRadius.Length == 0)
@@ -348,6 +395,7 @@ public class BombController : MonoBehaviour
         PlayPlaceBombSfx();
 
         GameObject bomb = Instantiate(prefabToUse, position, Quaternion.identity);
+        lastPlacedBomb = bomb;
         bombsRemaining--;
 
         if (!bomb.TryGetComponent<Bomb>(out var bombComponent))
@@ -359,9 +407,6 @@ public class BombController : MonoBehaviour
         bombComponent.SetStageBoundsTilemap(stageBoundsTiles);
         bombComponent.Initialize(this);
         bombComponent.SetFuseSeconds(bombFuseTime);
-
-        if (bomb.TryGetComponent<Collider2D>(out var bombCollider))
-            bombCollider.isTrigger = true;
 
         if (controlEnabled)
             RegisterBomb(bomb);
@@ -376,12 +421,39 @@ public class BombController : MonoBehaviour
             StartCoroutine(BombFuse(bomb));
     }
 
-    private bool TileHasBomb(Vector2 position)
+    private bool TryGetAnyBombColliderAt(Vector2 position, float size, out Collider2D bombCol)
     {
         int bombLayer = LayerMask.NameToLayer("Bomb");
-        int mask = 1 << bombLayer;
+        int bombMask = 1 << bombLayer;
 
-        return Physics2D.OverlapBox(position, Vector2.one * 0.4f, 0f, mask) != null;
+        var filter = new ContactFilter2D
+        {
+            useLayerMask = true
+        };
+        filter.SetLayerMask(bombMask);
+        filter.useTriggers = true;
+
+        int count = Physics2D.OverlapBox(position, Vector2.one * size, 0f, filter, _bombOverlapBuffer);
+
+        for (int i = 0; i < count; i++)
+        {
+            var c = _bombOverlapBuffer[i];
+            _bombOverlapBuffer[i] = null;
+
+            if (c == null)
+                continue;
+
+            bombCol = c;
+            return true;
+        }
+
+        bombCol = null;
+        return false;
+    }
+
+    private bool TileHasBomb(Vector2 position)
+    {
+        return TryGetAnyBombColliderAt(position, 0.6f, out _);
     }
 
     private IEnumerator BombFuse(GameObject bomb)
@@ -446,27 +518,29 @@ public class BombController : MonoBehaviour
                 if (hitDestructibleTile)
                     ClearDestructible(position);
 
-                if (pierce)
-                {
-                    positionsToSpawn.Add(position);
-                    continue;
-                }
+                positionsToSpawn.Add(position);
 
-                break;
+                if (!pierce)
+                    break;
+
+                continue;
             }
 
-            int bombLayer = LayerMask.NameToLayer("Bomb");
-            int bombMask = 1 << bombLayer;
-            var bombHit = Physics2D.OverlapBox(position, Vector2.one * 0.5f, 0f, bombMask);
-
-            if (bombHit != null)
+            if (TryGetAnyBombColliderAt(position, 0.6f, out var bombHit))
             {
                 GameObject otherBombGo = bombHit.attachedRigidbody != null
                     ? bombHit.attachedRigidbody.gameObject
                     : bombHit.gameObject;
 
-                if (otherBombGo != null && otherBombGo != gameObject)
-                    ExplodeBombImmediate(otherBombGo);
+                if (otherBombGo != null)
+                {
+                    positionsToSpawn.Add(position);
+
+                    if (otherBombGo.TryGetComponent<Bomb>(out var otherBomb) && otherBomb != null && otherBomb.Owner != null)
+                        otherBomb.Owner.ExplodeBombChained(otherBombGo);
+                    else
+                        ExplodeBombChained(otherBombGo);
+                }
 
                 break;
             }
@@ -489,23 +563,6 @@ public class BombController : MonoBehaviour
             Explosion explosion = Instantiate(explosionPrefab, p, Quaternion.identity);
             explosion.Play(part, direction, 0f, explosionDuration, origin);
         }
-    }
-
-    private void ExplodeBombImmediate(GameObject bomb)
-    {
-        if (bomb == null)
-            return;
-
-        int id = bomb.GetInstanceID();
-        if (!scheduledChainBombs.Add(id))
-            return;
-
-        scheduledChainBombs.Remove(id);
-
-        if (bomb.TryGetComponent<Bomb>(out var bombComp) && bombComp.HasExploded)
-            return;
-
-        ExplodeBomb(bomb);
     }
 
     private void ClearDestructible(Vector2 position)
@@ -561,11 +618,6 @@ public class BombController : MonoBehaviour
 
         if (bomb.TryGetComponent<Bomb>(out var bombScript))
             bombScript.enabled = false;
-    }
-
-    public void RequestBombFromAI()
-    {
-        bombRequested = true;
     }
 
     private bool HasDestroyingDestructibleAt(Vector2 worldPos)
@@ -640,21 +692,27 @@ public class BombController : MonoBehaviour
         }
     }
 
-    private bool TryExplodeOldestControlledBomb()
+    public bool TryExplodeMostRecentControlledBomb()
     {
         CleanupNullBombs();
 
-        for (int i = 0; i < plantedBombs.Count; i++)
+        for (int i = plantedBombs.Count - 1; i >= 0; i--)
         {
-            var bomb = plantedBombs[i];
-            if (bomb == null)
+            var b = plantedBombs[i];
+            if (b == null)
+            {
+                plantedBombs.RemoveAt(i);
                 continue;
+            }
 
-            if (!bomb.TryGetComponent<Bomb>(out var bombComp) || bombComp == null || !bombComp.IsControlBomb)
+            if (!b.TryGetComponent<Bomb>(out var bombComp) || bombComp == null || !bombComp.IsControlBomb)
+            {
+                plantedBombs.RemoveAt(i);
                 continue;
+            }
 
             plantedBombs.RemoveAt(i);
-            ExplodeBomb(bomb);
+            ExplodeBomb(b);
             return true;
         }
 
@@ -770,6 +828,7 @@ public class BombController : MonoBehaviour
             PlayPlaceBombSfx();
 
         GameObject bomb = Instantiate(prefabToUse, position, Quaternion.identity);
+        lastPlacedBomb = bomb;
         bombsRemaining--;
 
         if (!bomb.TryGetComponent<Bomb>(out var bombComponent))
@@ -844,13 +903,22 @@ public class BombController : MonoBehaviour
         int bombLayer = LayerMask.NameToLayer("Bomb");
         int bombMask = 1 << bombLayer;
 
-        Collider2D[] hits = Physics2D.OverlapBoxAll(position, Vector2.one * 0.6f, 0f, bombMask);
-        if (hits == null || hits.Length == 0)
+        var filter = new ContactFilter2D
+        {
+            useLayerMask = true
+        };
+        filter.SetLayerMask(bombMask);
+        filter.useTriggers = true;
+
+        int count = Physics2D.OverlapBox(position, Vector2.one * 0.6f, 0f, filter, _bombOverlapBuffer);
+        if (count <= 0)
             return;
 
-        for (int i = 0; i < hits.Length; i++)
+        for (int i = 0; i < count; i++)
         {
-            var hit = hits[i];
+            var hit = _bombOverlapBuffer[i];
+            _bombOverlapBuffer[i] = null;
+
             if (hit == null)
                 continue;
 
@@ -863,108 +931,5 @@ public class BombController : MonoBehaviour
 
             ExplodeBomb(bombGo);
         }
-    }
-
-    public bool WillCellBeHitSoon(Vector2 cellCenter, float withinSeconds)
-    {
-        cellCenter.x = Mathf.Round(cellCenter.x);
-        cellCenter.y = Mathf.Round(cellCenter.y);
-
-        var bombs = FindObjectsByType<Bomb>(FindObjectsSortMode.None);
-        if (bombs == null || bombs.Length == 0)
-            return false;
-
-        for (int i = 0; i < bombs.Length; i++)
-        {
-            var b = bombs[i];
-            if (b == null || b.HasExploded)
-                continue;
-
-            Vector2 pos = b.GetLogicalPosition();
-            pos.x = Mathf.Round(pos.x);
-            pos.y = Mathf.Round(pos.y);
-
-            if (b.RemainingFuseSeconds > withinSeconds)
-                continue;
-
-            int radius = GetEffectiveRadiusForOwner(b.Owner);
-            bool pierce = b.IsPierceBomb;
-
-            if (IsCellInBlast(pos, cellCenter, radius, pierce))
-                return true;
-        }
-
-        return false;
-    }
-
-    private int GetEffectiveRadiusForOwner(BombController owner)
-    {
-        if (owner == null)
-            return explosionRadius;
-
-        int baseRadius = owner.explosionRadius;
-        if (owner.IsFullFireEnabled())
-            return PlayerPersistentStats.MaxExplosionRadius;
-
-        return baseRadius;
-    }
-
-    private bool IsCellInBlast(Vector2 origin, Vector2 target, int radius, bool pierce)
-    {
-        if (target == origin)
-            return true;
-
-        Vector2 delta = target - origin;
-        if (delta.x != 0f && delta.y != 0f)
-            return false;
-
-        Vector2 dir;
-        int dist;
-
-        if (delta.x != 0f)
-        {
-            dir = new Vector2(Mathf.Sign(delta.x), 0f);
-            dist = Mathf.Abs((int)delta.x);
-        }
-        else
-        {
-            dir = new Vector2(0f, Mathf.Sign(delta.y));
-            dist = Mathf.Abs((int)delta.y);
-        }
-
-        if (dist > radius)
-            return false;
-
-        Vector2 p = origin;
-        for (int i = 0; i < dist; i++)
-        {
-            p += dir;
-
-            if (HasIndestructibleAt(p))
-                return false;
-
-            var itemHit = Physics2D.OverlapBox(p, Vector2.one * 0.5f, 0f, itemLayerMask);
-            if (itemHit != null)
-                return (p == target);
-
-            bool hitDestructibleTile = HasDestructibleAt(p);
-            bool hitDestroyingDestructible = HasDestroyingDestructibleAt(p);
-
-            if (hitDestructibleTile || hitDestroyingDestructible)
-            {
-                if (p == target)
-                    return true;
-
-                return pierce;
-            }
-
-            int bombLayer = LayerMask.NameToLayer("Bomb");
-            int bombMask = 1 << bombLayer;
-            var bombHit = Physics2D.OverlapBox(p, Vector2.one * 0.5f, 0f, bombMask);
-            if (bombHit != null)
-                return (p == target);
-        }
-
-        return true;
     }
 }
