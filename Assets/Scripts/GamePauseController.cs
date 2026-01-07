@@ -1,6 +1,9 @@
 ﻿using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+#if ENABLE_INPUT_SYSTEM
+using UnityEngine.InputSystem;
+#endif
 
 public class GamePauseController : MonoBehaviour
 {
@@ -59,7 +62,7 @@ public class GamePauseController : MonoBehaviour
 
         if (!IsPaused)
         {
-            if (input.AnyGetDown(PlayerAction.Start))
+            if (IsStartPressed())
             {
                 TogglePause();
                 return;
@@ -132,11 +135,7 @@ public class GamePauseController : MonoBehaviour
         if (exitingToTitle)
             return;
 
-        var input = PlayerInputManager.Instance;
-        if (input == null)
-            return;
-
-        bool confirmPressed = TryGetAnyPlayerDown(PlayerAction.Start, out _);
+        bool confirmPressed = IsStartPressed();
 
         if (!confirmReturn)
         {
@@ -336,6 +335,23 @@ public class GamePauseController : MonoBehaviour
                 return true;
             }
         }
+
+        return false;
+    }
+
+    bool IsStartPressed()
+    {
+        var input = PlayerInputManager.Instance;
+        bool startPressed = input != null && input.AnyGetDown(PlayerAction.Start);
+
+        if (startPressed)
+            return true;
+
+#if ENABLE_INPUT_SYSTEM
+        var kb = Keyboard.current;
+        if (kb != null && kb.escapeKey.wasPressedThisFrame)
+            return true;
+#endif
 
         return false;
     }
