@@ -193,6 +193,8 @@ MonoBehaviour:
   groundShadowTile: {fileID: 11400000, guid: e0f633282caacc742af95bdd334dd0cf, type: 2}
   autoResolveStageTilemaps: 1
   restartAfterDeathSeconds: 4
+  dynamiteTiles:
+  - {fileID: 11400000, guid: 4f950a947ba4e714c9f0de94de58f513, type: 2}
 --- !u!1 &285353614
 GameObject:
   m_ObjectHideFlags: 0

@@ -15,7 +15,6 @@ public class GameManager : MonoBehaviour
 
     public event Action OnAllEnemiesDefeated;
 
-    // ✅ Portal carregado automaticamente (Resources)
     [Header("Auto Prefab Loading (Resources)")]
     [SerializeField] private string portalResourcesPath = "Portal/EndStagePortal";
 
@@ -71,17 +70,19 @@ public class GameManager : MonoBehaviour
 
     bool restartingRound;
 
+    [Header("Destructible Tiles Kind")]
+    [SerializeField] private TileBase[] dynamiteTiles;
+
+    private HashSet<TileBase> _dynamiteSet;
+
     void Awake()
     {
+        _dynamiteSet ??= new HashSet<TileBase>(dynamiteTiles ?? new TileBase[0]);
+
         if (autoResolveStageTilemaps)
             ResolveStageTilemapsIfNeeded();
 
-        // ✅ Carrega portal automaticamente
         portalPrefab = Resources.Load<EndStagePortal>(portalResourcesPath);
-
-        if (portalPrefab == null && portalAmount > 0)
-            Debug.LogError($"[GameManager] Portal prefab não encontrado em Resources/{portalResourcesPath}. " +
-                           "Crie a pasta Assets/Resources/Portal e coloque o prefab EndStagePortal lá.");
     }
 
     void Start()
@@ -255,7 +256,6 @@ public class GameManager : MonoBehaviour
         if (destructibleTilemap == null)
             return;
 
-        // ✅ Build cache dos itens automaticamente (Resources/Items)
         AutoItemDatabase.BuildIfNeeded();
 
         var bounds = destructibleTilemap.cellBounds;
@@ -271,7 +271,6 @@ public class GameManager : MonoBehaviour
         for (int i = 1; i <= totalDestructibleBlocks; i++)
             indices.Add(i);
 
-        // Shuffle
         for (int i = indices.Count - 1; i > 0; i--)
         {
             int j = UnityEngine.Random.Range(0, i + 1);
@@ -295,21 +294,13 @@ public class GameManager : MonoBehaviour
                 return;
 
             var prefab = AutoItemDatabase.Get(type);
-            if (prefab == null)
-            {
-                Debug.LogWarning($"[GameManager] Prefab não encontrado para ItemType {type}. " +
-                                 "Confirme se existe um prefab com ItemPickup.type correto em Resources/Items.");
-                return;
-            }
 
             for (int i = 0; i < amount && cursor < indices.Count; i++)
                 orderToSpawn[indices[cursor++]] = prefab.gameObject;
         }
 
-        // ✅ Portal (não é ItemPickup)
         TryAssignPortal(portalAmount);
 
-        // ✅ Itens (auto)
         TryAssignItem(ItemPickup.ItemType.ExtraBomb, extraBombAmount);
         TryAssignItem(ItemPickup.ItemType.BlastRadius, blastRadiusAmount);
         TryAssignItem(ItemPickup.ItemType.SpeedIncrese, speedIncreaseAmount);
@@ -550,5 +541,15 @@ public class GameManager : MonoBehaviour
     {
         AutoItemDatabase.BuildIfNeeded();
         return AutoItemDatabase.Get(type);
+    }
+
+    public bool IsDynamiteTile(TileBase tile)
+    {
+        if (tile == null)
+            return false;
+
+        _dynamiteSet ??= new HashSet<TileBase>(dynamiteTiles ?? new TileBase[0]);
+
+        return _dynamiteSet.Contains(tile);
     }
 }
