@@ -68,7 +68,7 @@ public sealed class PlayersSpawner : MonoBehaviour
             if (positionXY == Vector2.zero)
                 return false;
 
-            pos = new Vector3(positionXY.x, positionXY.y, 0f);
+            pos = (Vector3)positionXY;
             return true;
         }
     }
