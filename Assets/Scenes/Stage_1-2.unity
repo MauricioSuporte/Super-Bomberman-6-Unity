@@ -2790,6 +2790,19 @@ MonoBehaviour:
   - {fileID: 0}
   - {fileID: 0}
   - {fileID: 0}
+  playerOverrides:
+  - useCustomSpawn: 0
+    spawnPoint: {fileID: 0}
+    positionXY: {x: 0, y: 0}
+  - useCustomSpawn: 0
+    spawnPoint: {fileID: 0}
+    positionXY: {x: 0, y: 0}
+  - useCustomSpawn: 0
+    spawnPoint: {fileID: 0}
+    positionXY: {x: 0, y: 0}
+  - useCustomSpawn: 0
+    spawnPoint: {fileID: 0}
+    positionXY: {x: 0, y: 0}
   playersParent: {fileID: 0}
   isBossStage: 0
   clearExistingPlayersBeforeSpawn: 1
@@ -2875,7 +2888,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1aa1ef842d43d4449a4b672797ff89e5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameSession
-  activePlayerCount: 1
+  activePlayerCount: 3
 --- !u!4 &806295706
 Transform:
   m_ObjectHideFlags: 0

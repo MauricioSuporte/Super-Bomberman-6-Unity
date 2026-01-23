@@ -2485,6 +2485,19 @@ MonoBehaviour:
   - {fileID: 0}
   - {fileID: 0}
   - {fileID: 0}
+  playerOverrides:
+  - useCustomSpawn: 0
+    spawnPoint: {fileID: 0}
+    positionXY: {x: 0, y: 0}
+  - useCustomSpawn: 0
+    spawnPoint: {fileID: 0}
+    positionXY: {x: 0, y: 0}
+  - useCustomSpawn: 0
+    spawnPoint: {fileID: 0}
+    positionXY: {x: 0, y: 0}
+  - useCustomSpawn: 0
+    spawnPoint: {fileID: 0}
+    positionXY: {x: 0, y: 0}
   playersParent: {fileID: 0}
   isBossStage: 1
   clearExistingPlayersBeforeSpawn: 1
@@ -3839,7 +3852,7 @@ Tilemap:
       m_AnimatedSprites:
       - {fileID: -2100383056, guid: 77e6e42c2f9c34c489f692741ef2f39c, type: 3}
       - {fileID: -1514600119, guid: 271eb6691df942f45ace9088b503d63b, type: 3}
-      m_AnimationSpeed: 30.000002
+      m_AnimationSpeed: 30
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: -2, y: -7, z: 0}
@@ -3902,7 +3915,7 @@ Tilemap:
       m_AnimatedSprites:
       - {fileID: 175725864, guid: 77e6e42c2f9c34c489f692741ef2f39c, type: 3}
       - {fileID: -1587395625, guid: 271eb6691df942f45ace9088b503d63b, type: 3}
-      m_AnimationSpeed: 30.000002
+      m_AnimationSpeed: 30
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: 5, y: -7, z: 0}
@@ -4226,7 +4239,7 @@ Tilemap:
       m_AnimatedSprites:
       - {fileID: 1181556526, guid: 77e6e42c2f9c34c489f692741ef2f39c, type: 3}
       - {fileID: -425628700, guid: 77e6e42c2f9c34c489f692741ef2f39c, type: 3}
-      m_AnimationSpeed: 30
+      m_AnimationSpeed: 30.000002
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: -8, y: 3, z: 0}
@@ -4289,7 +4302,7 @@ Tilemap:
       m_AnimatedSprites:
       - {fileID: 948470906, guid: 77e6e42c2f9c34c489f692741ef2f39c, type: 3}
       - {fileID: -1498975650, guid: 271eb6691df942f45ace9088b503d63b, type: 3}
-      m_AnimationSpeed: 30.000002
+      m_AnimationSpeed: 30
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: -5, y: 5, z: 0}
@@ -4307,7 +4320,7 @@ Tilemap:
       m_AnimatedSprites:
       - {fileID: 948470906, guid: 77e6e42c2f9c34c489f692741ef2f39c, type: 3}
       - {fileID: -1498975650, guid: 271eb6691df942f45ace9088b503d63b, type: 3}
-      m_AnimationSpeed: 30
+      m_AnimationSpeed: 30.000002
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: -3, y: 5, z: 0}

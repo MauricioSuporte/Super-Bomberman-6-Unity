@@ -1,12 +1,16 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 
-public class PlayersSpawner : MonoBehaviour
+public sealed class PlayersSpawner : MonoBehaviour
 {
     [Header("Player Prefab")]
     [SerializeField] private GameObject playerPrefab;
 
-    [Header("Optional Spawn Overrides (1..4)")]
+    [Header("Legacy Spawn Points (1..4)")]
     [SerializeField] private Transform[] spawnPoints = new Transform[4];
+
+    [Header("Per Player Spawn Override")]
+    [SerializeField] private SpawnOverride[] playerOverrides = new SpawnOverride[4];
 
     [Header("Optional Parent")]
     [SerializeField] private Transform playersParent;
@@ -35,6 +39,39 @@ public class PlayersSpawner : MonoBehaviour
         new(-5f, -6f),
         new( 3f, -6f)
     };
+
+    [Serializable]
+    private sealed class SpawnOverride
+    {
+        [Tooltip("If enabled, uses the custom spawn settings below.")]
+        public bool useCustomSpawn;
+
+        [Tooltip("If assigned, this Transform has priority over Position.")]
+        public Transform spawnPoint;
+
+        [Tooltip("Used if Spawn Point is not assigned.")]
+        public Vector2 positionXY;
+
+        public bool TryGetPosition(out Vector3 pos)
+        {
+            pos = default;
+
+            if (!useCustomSpawn)
+                return false;
+
+            if (spawnPoint != null)
+            {
+                pos = spawnPoint.position;
+                return true;
+            }
+
+            if (positionXY == Vector2.zero)
+                return false;
+
+            pos = new Vector3(positionXY.x, positionXY.y, 0f);
+            return true;
+        }
+    }
 
     public void SpawnNow()
     {
@@ -84,7 +121,7 @@ public class PlayersSpawner : MonoBehaviour
         int count = 1;
 
         if (GameSession.Instance != null)
-            count = GameSession.Instance.ActivePlayerCount;
+            count = Mathf.Clamp(GameSession.Instance.ActivePlayerCount, 1, 4);
 
         PlayerPersistentStats.EnsureSessionBooted();
 
@@ -123,16 +160,66 @@ public class PlayersSpawner : MonoBehaviour
 
     Vector3 ResolveSpawnPosition(int index, Vector2[] preset)
     {
-        if (spawnPoints != null &&
-            index < spawnPoints.Length &&
-            spawnPoints[index] != null)
-        {
+        if (TryGetOverridePosition(index, out var customPos))
+            return customPos;
+
+        if (spawnPoints != null && index < spawnPoints.Length && spawnPoints[index] != null)
             return spawnPoints[index].position;
-        }
 
         if (preset != null && index < preset.Length)
-            return preset[index];
+            return new Vector3(preset[index].x, preset[index].y, 0f);
 
         return Vector3.zero;
+    }
+
+    bool TryGetOverridePosition(int playerIndex, out Vector3 pos)
+    {
+        pos = default;
+
+        if (playerOverrides == null)
+            return false;
+
+        if (playerIndex < 0 || playerIndex >= playerOverrides.Length)
+            return false;
+
+        var ov = playerOverrides[playerIndex];
+        if (ov == null)
+            return false;
+
+        return ov.TryGetPosition(out pos);
+    }
+
+    public void SpawnNow(GameObject prefab, int playerIndex, Transform parent = null)
+    {
+        if (prefab == null)
+            return;
+
+        Vector2[] preset = isBossStage ? BossStagePositions : NormalStagePositions;
+        Vector3 spawnPos = ResolveSpawnPosition(playerIndex, preset);
+        Instantiate(prefab, spawnPos, Quaternion.identity, parent);
+    }
+
+    public void SpawnNow(GameObject prefab, int playerIndex)
+    {
+        SpawnNow(prefab, playerIndex, null);
+    }
+
+    public void SpawnNow(GameObject prefab)
+    {
+        if (prefab == null)
+            return;
+
+        int count = 1;
+
+        if (GameSession.Instance != null)
+            count = Mathf.Clamp(GameSession.Instance.ActivePlayerCount, 1, 4);
+
+        Vector2[] preset = isBossStage ? BossStagePositions : NormalStagePositions;
+
+        for (int i = 0; i < count; i++)
+        {
+            Vector3 spawnPos = ResolveSpawnPosition(i, preset);
+            Instantiate(prefab, spawnPos, Quaternion.identity, playersParent);
+        }
     }
 }
