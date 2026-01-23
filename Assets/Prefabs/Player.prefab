@@ -1301,6 +1301,7 @@ MonoBehaviour:
   controlBombPrefab: {fileID: 147425199346742615, guid: a1062e2cde4a9a944acd70ec09573664, type: 3}
   bombFuseTime: 2
   bombAmout: 1
+  chainBombDelaySeconds: 0.1
   explosionPrefab: {fileID: -38777085001033807, guid: 8280631722d6ef14fb951aaaf859563b, type: 3}
   explosionLayerMask:
     serializedVersion: 2
@@ -1327,7 +1328,7 @@ MonoBehaviour:
   - {fileID: 8300000, guid: afdf2759f29ed294a97d92348294f718, type: 3}
   - {fileID: 8300000, guid: fd2cc86b646e3b347bd634d5791f90c6, type: 3}
   - {fileID: 8300000, guid: 987bcdcebc4a99144a3121e4d420ea4f, type: 3}
-  explosionSfxVolume: 1
+  explosionSfxVolume: 0.8
 --- !u!82 &4627430260018096140
 AudioSource:
   m_ObjectHideFlags: 0

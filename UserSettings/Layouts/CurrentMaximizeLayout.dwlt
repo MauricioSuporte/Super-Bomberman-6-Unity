@@ -24,7 +24,7 @@ MonoBehaviour:
   m_MinSize: {x: 300, y: 100}
   m_MaxSize: {x: 24288, y: 16192}
   vertical: 0
-  controlID: 3562
+  controlID: 94
   draggingID: 0
 --- !u!114 &2
 MonoBehaviour:
@@ -153,7 +153,7 @@ MonoBehaviour:
   m_MinSize: {x: 200, y: 100}
   m_MaxSize: {x: 16192, y: 16192}
   vertical: 1
-  controlID: 3517
+  controlID: 48
   draggingID: 0
 --- !u!114 &4
 MonoBehaviour:
@@ -179,7 +179,7 @@ MonoBehaviour:
   m_MinSize: {x: 200, y: 50}
   m_MaxSize: {x: 16192, y: 8096}
   vertical: 0
-  controlID: 3508
+  controlID: 39
   draggingID: 0
 --- !u!114 &5
 MonoBehaviour:
@@ -248,7 +248,7 @@ MonoBehaviour:
       scrollPos: {x: 0, y: 0}
       m_SelectedIDs: 
       m_LastClickedID: 0
-      m_ExpandedIDs: a8d1ffff0ad7ffff66deffffc2e1ffffb2e6ffff00fbffff3a94000042940000629400002ebd000034bd0000
+      m_ExpandedIDs: 00fbffff
       m_RenameOverlay:
         m_UserAcceptedRename: 0
         m_Name: 
@@ -767,9 +767,9 @@ MonoBehaviour:
   m_AudioPlay: 0
   m_DebugDrawModesUseInteractiveLightBakingData: 0
   m_Position:
-    m_Target: {x: 15.494076, y: 0.0039353296, z: -0.014110927}
+    m_Target: {x: 5.244659, y: 1.9495702, z: -0.019121055}
     speed: 2
-    m_Value: {x: 15.494076, y: 0.0039353296, z: -0.014110927}
+    m_Value: {x: 5.244659, y: 1.9495702, z: -0.019121055}
   m_RenderMode: 0
   m_CameraMode:
     drawMode: 0
@@ -819,9 +819,9 @@ MonoBehaviour:
     speed: 2
     m_Value: {x: 0, y: 0, z: 0, w: 1}
   m_Size:
-    m_Target: 11.133529
+    m_Target: 11.634538
     speed: 2
-    m_Value: 11.133529
+    m_Value: 11.634538
   m_Ortho:
     m_Target: 1
     speed: 2
@@ -928,7 +928,7 @@ MonoBehaviour:
     m_SkipHidden: 0
     m_SearchArea: 1
     m_Folders:
-    - Assets/Tiles/World2
+    - Assets/Prefabs/Destructibles
     m_Globs: []
     m_ProductIds: 
     m_AnyWithAssetOrigin: 0
@@ -938,16 +938,16 @@ MonoBehaviour:
   m_ViewMode: 1
   m_StartGridSize: 96
   m_LastFolders:
-  - Assets/Tiles/World2
+  - Assets/Prefabs/Destructibles
   m_LastFoldersGridSize: 96
   m_LastProjectPath: C:\Users\mauri\source\repos\SuperBomberman6
   m_LockTracker:
     m_IsLocked: 0
   m_FolderTreeState:
-    scrollPos: {x: 0, y: 293}
-    m_SelectedIDs: 42d50000
-    m_LastClickedID: 54594
-    m_ExpandedIDs: 000000001caa00001eaa000020aa000022aa000024aa000026aa000028aa00002aaa00002caa00002eaa000030aa0000daaa0000
+    scrollPos: {x: 0, y: 120}
+    m_SelectedIDs: 60af0000
+    m_LastClickedID: 44896
+    m_ExpandedIDs: 00000000faa60000fca60000fea6000000a7000002a7000004a7000006a7000008a700000aa700000ca700000ea7000062a70000b4a70000
     m_RenameOverlay:
       m_UserAcceptedRename: 0
       m_Name: 
@@ -976,7 +976,7 @@ MonoBehaviour:
     scrollPos: {x: 0, y: 0}
     m_SelectedIDs: 
     m_LastClickedID: 0
-    m_ExpandedIDs: 000000001caa00001eaa000020aa000022aa000024aa000026aa000028aa00002aaa00002caa00002eaa000030aa0000
+    m_ExpandedIDs: 00000000faa60000fca60000fea6000000a7000002a7000004a7000006a7000008a700000aa700000ca700000ea70000
     m_RenameOverlay:
       m_UserAcceptedRename: 0
       m_Name: 
@@ -1004,8 +1004,8 @@ MonoBehaviour:
   m_ListAreaState:
     m_SelectedInstanceIDs: 
     m_LastClickedInstanceID: 0
-    m_HadKeyboardFocusLastEvent: 1
-    m_ExpandedInstanceIDs: c62300009e350000b87c0000f80801004e3001005e930000cc1a0100128800005cf300007ea7000090a40000e0180100748f000042f40000f46a0100ae890000c6870000e48700001ea500000a890000488a000030bd0000248b0000088c0000608a0000b8540100de8b00000e4101000c160200dcbf01008690000088900000de900000208c00002a8c00002e8c0000969800007e090200e4090200fc080200328b0000069f00000ce0000000e0000008e0000004e00000624e0200888c000064960000629600006a9600005e96000066960000689600004eb50000
+    m_HadKeyboardFocusLastEvent: 0
+    m_ExpandedInstanceIDs: c62300009e350000b87c0000f80801004e3001005e930000cc1a0100128800005cf300007ea7000090a40000e0180100748f000042f40000f46a0100ae890000c6870000e48700001ea500000a890000488a000030bd0000248b0000088c0000608a0000b8540100de8b00000e4101000c160200dcbf01008690000088900000de900000208c00002a8c00002e8c0000969800007e090200e4090200fc080200328b0000069f00000ce0000000e0000008e0000004e00000624e0200888c000064960000629600006a9600005e96000066960000689600004eb5000000060100b09400008c990000
     m_RenameOverlay:
       m_UserAcceptedRename: 0
       m_Name: 
@@ -1030,7 +1030,7 @@ MonoBehaviour:
       m_Icon: {fileID: 0}
       m_ResourceFile: 
     m_NewAssetIndexInList: -1
-    m_ScrollPosition: {x: 0, y: 1518}
+    m_ScrollPosition: {x: 0, y: 0}
     m_GridSize: 96
   m_SkipHiddenPackages: 0
   m_DirectoriesAreaWidth: 149
@@ -1053,8 +1053,8 @@ MonoBehaviour:
     y: 0
     width: 564
     height: 933
-  m_MinSize: {x: 276, y: 76}
-  m_MaxSize: {x: 4001, y: 4026}
+  m_MinSize: {x: 275, y: 50}
+  m_MaxSize: {x: 4000, y: 4000}
   m_ActualView: {fileID: 12}
   m_Panes:
   - {fileID: 12}

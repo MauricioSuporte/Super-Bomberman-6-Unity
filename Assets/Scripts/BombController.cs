@@ -886,17 +886,19 @@ public class BombController : MonoBehaviour
     private bool HasActiveExplosionAt(Vector2 position)
     {
         int explosionLayer = LayerMask.NameToLayer("Explosion");
-        int mask = explosionLayerMask.value;
+        if (explosionLayer < 0)
+            return false;
 
-        if (explosionLayer >= 0)
-            mask |= (1 << explosionLayer);
+        int mask = 1 << explosionLayer;
 
-        return Physics2D.OverlapBox(
+        var hit = Physics2D.OverlapBox(
             position,
             Vector2.one * 0.6f,
             0f,
             mask
-        ) != null;
+        );
+
+        return hit != null;
     }
 
     private void ExplodeAnyBombAt(Vector2 position)
