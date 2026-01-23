@@ -1245,8 +1245,8 @@ MonoBehaviour:
   followAllPlayers: 1
   boundsCollider: {fileID: 732032082}
   followOffset: {x: 0, y: 0}
-  smoothTime: 0.12
-  refreshPlayersEverySeconds: 0.5
+  smoothTime: 0.05
+  refreshPlayersEverySeconds: 0.01
 --- !u!1 &556523581
 GameObject:
   m_ObjectHideFlags: 0
