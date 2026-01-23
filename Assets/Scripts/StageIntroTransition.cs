@@ -252,6 +252,7 @@ public class StageIntroTransition : MonoBehaviour
         RefreshControllers(includeInactive: false);
         DisableGameplayControllersAndHideSprites();
 
+        // Aguarda 1 frame para garantir que Spawn/OnEnable/Awake/Start rodem
         yield return null;
 
         RefreshControllers(includeInactive: false);
@@ -278,6 +279,15 @@ public class StageIntroTransition : MonoBehaviour
             }
 
             m.EnableExclusiveFromState();
+        }
+
+        yield return null;
+
+        var mainCam = Camera.main;
+        if (mainCam != null)
+        {
+            if (mainCam.TryGetComponent<CameraFollowClamp2D>(out var camFollow))
+                camFollow.ForceSnapNow(refreshPlayersNow: true);
         }
 
         if (fadeImage == null)

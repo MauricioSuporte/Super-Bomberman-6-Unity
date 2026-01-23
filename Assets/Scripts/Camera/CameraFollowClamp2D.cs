@@ -145,4 +145,29 @@ public sealed class CameraFollowClamp2D : MonoBehaviour
     {
         boundsCollider = newBounds;
     }
+
+    public void ForceSnapNow(bool refreshPlayersNow = true)
+    {
+        if (cam == null || !cam.orthographic || boundsCollider == null)
+            return;
+
+        if (refreshPlayersNow)
+            RefreshPlayers();
+
+        if (!TryUpdateFollowTargetPosition(out var targetPos))
+            return;
+
+        var desired = new Vector3(
+            targetPos.x + followOffset.x,
+            targetPos.y + followOffset.y,
+            transform.position.z
+        );
+
+        var clamped = ClampToBounds(desired, boundsCollider.bounds);
+
+        transform.position = clamped;
+        velocity = Vector3.zero;
+
+        refreshTimer = Mathf.Max(0.05f, refreshPlayersEverySeconds);
+    }
 }
