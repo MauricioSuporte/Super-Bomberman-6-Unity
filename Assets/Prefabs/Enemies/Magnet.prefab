@@ -374,11 +374,11 @@ MonoBehaviour:
   - {fileID: 8236921800692627709, guid: b57b4d6531063304eb785f7bc7f174bb, type: 3}
   - {fileID: 4891576996777596727, guid: b57b4d6531063304eb785f7bc7f174bb, type: 3}
   allowFlipX: 0
-  animationTime: 0.01
+  animationTime: 0.125
   useSequenceDuration: 0
   sequenceDuration: 0.5
   loop: 1
-  idle: 1
+  idle: 0
   frameOffsets: []
   pingPong: 0
   disableOffsetsIfThisObjectHasRigidbody2D: 1
@@ -492,11 +492,11 @@ MonoBehaviour:
   - {fileID: -2988339257838675328, guid: b57b4d6531063304eb785f7bc7f174bb, type: 3}
   - {fileID: -8858336777130744673, guid: b57b4d6531063304eb785f7bc7f174bb, type: 3}
   allowFlipX: 0
-  animationTime: 0.01
+  animationTime: 0.125
   useSequenceDuration: 0
   sequenceDuration: 0.5
   loop: 1
-  idle: 1
+  idle: 0
   frameOffsets: []
   pingPong: 0
   disableOffsetsIfThisObjectHasRigidbody2D: 1
@@ -610,11 +610,11 @@ MonoBehaviour:
   - {fileID: -4088016472008987668, guid: b57b4d6531063304eb785f7bc7f174bb, type: 3}
   - {fileID: -5929607653193131407, guid: b57b4d6531063304eb785f7bc7f174bb, type: 3}
   allowFlipX: 0
-  animationTime: 0.01
+  animationTime: 0.125
   useSequenceDuration: 0
   sequenceDuration: 0.5
   loop: 1
-  idle: 1
+  idle: 0
   frameOffsets: []
   pingPong: 0
   disableOffsetsIfThisObjectHasRigidbody2D: 1
@@ -728,11 +728,11 @@ MonoBehaviour:
   - {fileID: -2988339257838675328, guid: b57b4d6531063304eb785f7bc7f174bb, type: 3}
   - {fileID: -8858336777130744673, guid: b57b4d6531063304eb785f7bc7f174bb, type: 3}
   allowFlipX: 0
-  animationTime: 0.01
+  animationTime: 0.125
   useSequenceDuration: 0
   sequenceDuration: 0.5
   loop: 1
-  idle: 1
+  idle: 0
   frameOffsets: []
   pingPong: 0
   disableOffsetsIfThisObjectHasRigidbody2D: 1
