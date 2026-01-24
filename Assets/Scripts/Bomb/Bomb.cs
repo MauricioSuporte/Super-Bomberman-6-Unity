@@ -77,6 +77,11 @@ public class Bomb : MonoBehaviour
 
     private static readonly WaitForFixedUpdate waitFixed = new();
 
+    public bool IsBeingMagnetPulled => magnetRoutine != null;
+
+    [SerializeField] private float magnetPullSpeed = 10f;
+    private Coroutine magnetRoutine;
+
     private void Awake()
     {
         bombCollider = GetComponent<Collider2D>();
@@ -848,5 +853,89 @@ public class Bomb : MonoBehaviour
     public void SetFuseSeconds(float fuseSeconds)
     {
         FuseSeconds = Mathf.Max(0.01f, fuseSeconds);
+    }
+
+    public bool StartMagnetPull(Vector2 directionToMagnet, float tileSize, int steps, LayerMask obstacleMask, Tilemap destructibleTilemap)
+    {
+        if (HasExploded || isKicked || isPunched || steps <= 0)
+            return false;
+
+        if (magnetRoutine != null)
+            StopCoroutine(magnetRoutine);
+
+        kickDirection = directionToMagnet.normalized;
+        kickTileSize = tileSize;
+
+        kickObstacleMask = obstacleMask | LayerMask.GetMask("Enemy");
+        kickDestructibleTilemap = destructibleTilemap;
+
+        Vector2 origin = rb.position;
+        origin.x = Mathf.Round(origin.x / tileSize) * tileSize;
+        origin.y = Mathf.Round(origin.y / tileSize) * tileSize;
+
+        currentTileCenter = origin;
+        lastPos = origin;
+
+        rb.position = origin;
+        transform.position = origin;
+
+        if (anim != null)
+            anim.SetFrozen(true);
+
+        magnetRoutine = StartCoroutine(MagnetPullRoutineFixed(steps));
+        return true;
+    }
+
+    private IEnumerator MagnetPullRoutineFixed(int steps)
+    {
+        for (int s = 0; s < steps; s++)
+        {
+            if (HasExploded)
+                break;
+
+            Vector2 next = currentTileCenter + kickDirection * kickTileSize;
+
+            if (IsKickBlocked(next))
+                break;
+
+            float speed = Mathf.Max(0.0001f, magnetPullSpeed);
+            float travelTime = kickTileSize / speed;
+            float elapsed = 0f;
+            Vector2 start = currentTileCenter;
+
+            while (elapsed < travelTime)
+            {
+                if (HasExploded)
+                    yield break;
+
+                elapsed += Time.fixedDeltaTime;
+
+                float a = Mathf.Clamp01(elapsed / travelTime);
+                Vector2 pos = Vector2.Lerp(start, next, a);
+
+                lastPos = pos;
+                rb.MovePosition(pos);
+
+                yield return waitFixed;
+            }
+
+            currentTileCenter = next;
+            lastPos = next;
+
+            rb.position = next;
+            transform.position = next;
+        }
+
+        rb.position = currentTileCenter;
+        transform.position = currentTileCenter;
+        lastPos = currentTileCenter;
+
+        if (anim != null)
+        {
+            anim.SetFrozen(false);
+            anim.RefreshFrame();
+        }
+
+        magnetRoutine = null;
     }
 }

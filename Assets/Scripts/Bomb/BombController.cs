@@ -73,6 +73,9 @@ public partial class BombController : MonoBehaviour
     [Header("Ground Tile Effects")]
     [SerializeField] private GroundTileResolver groundTileResolver;
 
+    [Header("Indestructible Tile Effects")]
+    [SerializeField] private IndestructibleTileResolver indestructibleTileResolver;
+
     public void SetPlayerId(int id)
     {
         playerId = Mathf.Clamp(id, 1, 4);
@@ -87,6 +90,7 @@ public partial class BombController : MonoBehaviour
         ResolveTilemaps();
         ResolveDestructibleTileResolver();
         ResolveGroundTileResolver();
+        ResolveIndestructibleTileResolver();
     }
 
     private void Start()
@@ -94,6 +98,7 @@ public partial class BombController : MonoBehaviour
         ResolveTilemaps();
         ResolveDestructibleTileResolver();
         ResolveGroundTileResolver();
+        ResolveIndestructibleTileResolver();
     }
 
     private void OnEnable()
@@ -544,7 +549,10 @@ public partial class BombController : MonoBehaviour
             position += direction;
 
             if (HasIndestructibleAt(position))
+            {
+                TryHandleIndestructibleTileHit(position);
                 break;
+            }
 
             var itemHit = Physics2D.OverlapBox(position, Vector2.one * 0.5f, 0f, itemLayerMask);
             if (itemHit != null)
@@ -1115,5 +1123,55 @@ public partial class BombController : MonoBehaviour
             return;
 
         handler.TryModifyExplosion(this, worldPos, groundTile, ref radius, ref pierce);
+    }
+
+    private void ResolveIndestructibleTileResolver()
+    {
+        if (indestructibleTileResolver != null)
+            return;
+
+        indestructibleTileResolver = FindFirstObjectByType<IndestructibleTileResolver>();
+
+        if (indestructibleTileResolver != null)
+            return;
+
+        if (stageBoundsTiles != null)
+            indestructibleTileResolver = stageBoundsTiles.GetComponentInParent<IndestructibleTileResolver>(true);
+
+        if (indestructibleTileResolver != null)
+            return;
+
+        var stage = GameObject.Find("Stage");
+        if (stage != null)
+            indestructibleTileResolver = stage.GetComponentInChildren<IndestructibleTileResolver>(true);
+    }
+
+    private bool TryGetIndestructibleTileAt(Vector2 worldPos, out Vector3Int cell, out TileBase tile)
+    {
+        cell = default;
+        tile = null;
+
+        if (stageBoundsTiles == null)
+            return false;
+
+        cell = stageBoundsTiles.WorldToCell(worldPos);
+        tile = stageBoundsTiles.GetTile(cell);
+        return tile != null;
+    }
+
+    private void TryHandleIndestructibleTileHit(Vector2 worldPos)
+    {
+        ResolveIndestructibleTileResolver();
+
+        if (indestructibleTileResolver == null)
+            return;
+
+        if (!TryGetIndestructibleTileAt(worldPos, out var cell, out var tile))
+            return;
+
+        if (!indestructibleTileResolver.TryGetHandler(tile, out var handler))
+            return;
+
+        handler.HandleExplosionHit(this, worldPos, cell, tile);
     }
 }
