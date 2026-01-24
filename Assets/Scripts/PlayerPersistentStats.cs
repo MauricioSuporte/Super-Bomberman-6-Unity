@@ -19,7 +19,7 @@ public static class PlayerPersistentStats
         public int Life = 1;
 
         public int BombAmount = 8;
-        public int ExplosionRadius = 10;
+        public int ExplosionRadius = 3;
 
         public int SpeedInternal = BaseSpeedNormal + BaseSpeedNormal;
 

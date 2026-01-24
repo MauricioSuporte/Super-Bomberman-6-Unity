@@ -3093,6 +3093,8 @@ GameObject:
   - component: {fileID: 732032082}
   - component: {fileID: 732032084}
   - component: {fileID: 732032083}
+  - component: {fileID: 732032086}
+  - component: {fileID: 732032085}
   m_Layer: 6
   m_Name: Stage
   m_TagString: Untagged
@@ -3207,6 +3209,36 @@ MonoBehaviour:
     tiles:
     - {fileID: 11400000, guid: 4f950a947ba4e714c9f0de94de58f513, type: 2}
     handler: {fileID: 732032083}
+--- !u!114 &732032085
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 732032079}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 62241670fbcb74c4aaa9e884b9cac159, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PowerGroundTileHandler
+  boostedRadius: 10
+--- !u!114 &732032086
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 732032079}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2f6d76f13ac00e74dbd4c75930cfa7e1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GroundTileResolver
+  groups:
+  - id: PowerGround
+    tiles:
+    - {fileID: 11400000, guid: aa353b3ac74079e48a8ac5187d9756c0, type: 2}
+    handler: {fileID: 732032085}
 --- !u!1 &818279431
 GameObject:
   m_ObjectHideFlags: 0
@@ -3225,7 +3257,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &818279432
 Transform:
   m_ObjectHideFlags: 0

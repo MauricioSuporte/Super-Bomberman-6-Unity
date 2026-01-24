@@ -70,6 +70,9 @@ public partial class BombController : MonoBehaviour
     private GameObject lastPlacedBomb;
     public GameObject GetLastPlacedBomb() => lastPlacedBomb;
 
+    [Header("Ground Tile Effects")]
+    [SerializeField] private GroundTileResolver groundTileResolver;
+
     public void SetPlayerId(int id)
     {
         playerId = Mathf.Clamp(id, 1, 4);
@@ -83,12 +86,14 @@ public partial class BombController : MonoBehaviour
 
         ResolveTilemaps();
         ResolveDestructibleTileResolver();
+        ResolveGroundTileResolver();
     }
 
     private void Start()
     {
         ResolveTilemaps();
         ResolveDestructibleTileResolver();
+        ResolveGroundTileResolver();
     }
 
     private void OnEnable()
@@ -274,6 +279,14 @@ public partial class BombController : MonoBehaviour
             ? PlayerPersistentStats.MaxExplosionRadius
             : explosionRadius;
 
+        Vector2 position = logicalPos;
+        position.x = Mathf.Round(position.x);
+        position.y = Mathf.Round(position.y);
+
+        bool pierce = bombComp != null && bombComp.IsPierceBomb;
+
+        TryApplyGroundExplosionModifiers(position, ref effectiveRadius, ref pierce);
+
         HideBombVisuals(bomb);
 
         if (bomb.TryGetComponent<AudioSource>(out var explosionAudio))
@@ -284,12 +297,6 @@ public partial class BombController : MonoBehaviour
             currentExplosionAudio = explosionAudio;
             PlayExplosionSfx(currentExplosionAudio, effectiveRadius);
         }
-
-        Vector2 position = logicalPos;
-        position.x = Mathf.Round(position.x);
-        position.y = Mathf.Round(position.y);
-
-        bool pierce = bombComp != null && bombComp.IsPierceBomb;
 
         Explosion centerExplosion = Instantiate(explosionPrefab, position, Quaternion.identity);
         centerExplosion.Play(Explosion.ExplosionPart.Start, Vector2.zero, 0f, explosionDuration, position);
@@ -1058,5 +1065,55 @@ public partial class BombController : MonoBehaviour
         Explode(p, Vector2.down, radius, pierce);
         Explode(p, Vector2.left, radius, pierce);
         Explode(p, Vector2.right, radius, pierce);
+    }
+
+    private void ResolveGroundTileResolver()
+    {
+        if (groundTileResolver != null)
+            return;
+
+        groundTileResolver = FindFirstObjectByType<GroundTileResolver>();
+
+        if (groundTileResolver != null)
+            return;
+
+        if (groundTiles != null)
+            groundTileResolver = groundTiles.GetComponentInParent<GroundTileResolver>(true);
+
+        if (groundTileResolver != null)
+            return;
+
+        var stage = GameObject.Find("Stage");
+        if (stage != null)
+            groundTileResolver = stage.GetComponentInChildren<GroundTileResolver>(true);
+    }
+
+    private bool TryGetGroundTileAt(Vector2 worldPos, out Vector3Int cell, out TileBase tile)
+    {
+        cell = default;
+        tile = null;
+
+        if (groundTiles == null)
+            return false;
+
+        cell = groundTiles.WorldToCell(worldPos);
+        tile = groundTiles.GetTile(cell);
+        return tile != null;
+    }
+
+    private void TryApplyGroundExplosionModifiers(Vector2 worldPos, ref int radius, ref bool pierce)
+    {
+        ResolveGroundTileResolver();
+
+        if (groundTileResolver == null)
+            return;
+
+        if (!TryGetGroundTileAt(worldPos, out _, out var groundTile))
+            return;
+
+        if (!groundTileResolver.TryGetHandler(groundTile, out var handler))
+            return;
+
+        handler.TryModifyExplosion(this, worldPos, groundTile, ref radius, ref pierce);
     }
 }
