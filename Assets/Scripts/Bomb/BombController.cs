@@ -46,6 +46,9 @@ public partial class BombController : MonoBehaviour
     public Tilemap destructibleTiles;
     public Destructible destructiblePrefab;
 
+    [Header("Destructible Tile Effects (Strategy B/2)")]
+    [SerializeField] private DestructibleTileResolver destructibleTileResolver;
+
     [Header("Items")]
     public LayerMask itemLayerMask;
 
@@ -78,14 +81,14 @@ public partial class BombController : MonoBehaviour
         if (playerAudioSource == null)
             playerAudioSource = _localAudio;
 
-        InitDynamite();
-
         ResolveTilemaps();
+        ResolveDestructibleTileResolver();
     }
 
     private void Start()
     {
         ResolveTilemaps();
+        ResolveDestructibleTileResolver();
     }
 
     private void OnEnable()
@@ -180,6 +183,27 @@ public partial class BombController : MonoBehaviour
             if (destructibleTiles == null)
                 destructibleTiles = FindTilemapByNameContains(tilemaps, "destruct");
         }
+    }
+
+    private void ResolveDestructibleTileResolver()
+    {
+        if (destructibleTileResolver != null)
+            return;
+
+        destructibleTileResolver = FindFirstObjectByType<DestructibleTileResolver>();
+
+        if (destructibleTileResolver != null)
+            return;
+
+        if (destructibleTiles != null)
+            destructibleTileResolver = destructibleTiles.GetComponentInParent<DestructibleTileResolver>(true);
+
+        if (destructibleTileResolver != null)
+            return;
+
+        var stage = GameObject.Find("Stage");
+        if (stage != null)
+            destructibleTileResolver = stage.GetComponentInChildren<DestructibleTileResolver>(true);
     }
 
     private Tilemap FindTilemapByNameContains(Tilemap[] tilemaps, string containsLower)
@@ -343,6 +367,23 @@ public partial class BombController : MonoBehaviour
 
         if (clip != null)
             source.PlayOneShot(clip, explosionSfxVolume);
+    }
+
+    public void PlayExplosionSfxExclusive(AudioSource source, int radius)
+    {
+        if (source == null || explosionSfxByRadius == null || explosionSfxByRadius.Length == 0)
+            return;
+
+        int index = Mathf.Clamp(radius - 1, 0, explosionSfxByRadius.Length - 1);
+        AudioClip clip = explosionSfxByRadius[index];
+        if (clip == null)
+            return;
+
+        if (currentExplosionAudio != null && currentExplosionAudio.isPlaying)
+            currentExplosionAudio.Stop();
+
+        currentExplosionAudio = source;
+        currentExplosionAudio.PlayOneShot(clip, explosionSfxVolume);
     }
 
     private void PlayPlaceBombSfx()
@@ -513,19 +554,22 @@ public partial class BombController : MonoBehaviour
                 break;
             }
 
-            bool hitDestructibleTile = HasDestructibleAt(position);
-            bool hitDestroyingDestructible = HasDestroyingDestructibleAt(position);
-
-            if (hitDestructibleTile || hitDestroyingDestructible)
+            if (TryGetDestructibleTileAt(position, out var cell, out var tile))
             {
-                if (hitDestructibleTile)
-                {
-                    if (IsDynamiteAt(position))
-                        DetonateDynamite(position);
-                    else
-                        ClearDestructible(position);
-                }
+                if (!TryHandleDestructibleTileEffect(position, cell, tile))
+                    ClearDestructibleForEffect(position);
 
+                positionsToSpawn.Add(position);
+
+                if (!pierce)
+                    break;
+
+                continue;
+            }
+
+            bool hitDestroyingDestructible = HasDestroyingDestructibleAt(position);
+            if (hitDestroyingDestructible)
+            {
                 positionsToSpawn.Add(position);
 
                 if (!pierce)
@@ -573,7 +617,20 @@ public partial class BombController : MonoBehaviour
         }
     }
 
-    private void ClearDestructible(
+    private bool TryHandleDestructibleTileEffect(Vector2 worldPos, Vector3Int cell, TileBase tile)
+    {
+        ResolveDestructibleTileResolver();
+
+        if (destructibleTileResolver == null)
+            return false;
+
+        if (!destructibleTileResolver.TryGetHandler(tile, out var handler))
+            return false;
+
+        return handler.HandleHit(this, worldPos, cell);
+    }
+
+    public void ClearDestructibleForEffect(
         Vector2 position,
         bool spawnDestructiblePrefab = true,
         bool spawnHiddenObject = true)
@@ -614,6 +671,14 @@ public partial class BombController : MonoBehaviour
         }
 
         destructibleTiles.SetTile(cell, null);
+    }
+
+    private void ClearDestructible(
+        Vector2 position,
+        bool spawnDestructiblePrefab = true,
+        bool spawnHiddenObject = true)
+    {
+        ClearDestructibleForEffect(position, spawnDestructiblePrefab, spawnHiddenObject);
     }
 
     private void HideBombVisuals(GameObject bomb)
@@ -862,6 +927,7 @@ public partial class BombController : MonoBehaviour
         {
             ExplodeBomb(bomb);
             return true;
+
         }
 
         if (!controlEnabled)
@@ -957,5 +1023,40 @@ public partial class BombController : MonoBehaviour
         cell = destructibleTiles.WorldToCell(worldPos);
         tile = destructibleTiles.GetTile(cell);
         return tile != null;
+    }
+
+    private bool HasGroundAt(Vector2 worldPos)
+    {
+        if (groundTiles == null)
+            return false;
+
+        Vector3Int cell = groundTiles.WorldToCell(worldPos);
+        return groundTiles.GetTile(cell) != null;
+    }
+
+    public bool CanSpawnTileEffectAt(Vector2 worldPos)
+    {
+        if (!HasGroundAt(worldPos))
+            return false;
+
+        if (HasIndestructibleAt(worldPos))
+            return false;
+
+        return true;
+    }
+
+    public void SpawnExplosionCrossForEffect(Vector2 origin, int radius, bool pierce)
+    {
+        Vector2 p = origin;
+        p.x = Mathf.Round(p.x);
+        p.y = Mathf.Round(p.y);
+
+        Explosion center = Instantiate(explosionPrefab, p, Quaternion.identity);
+        center.Play(Explosion.ExplosionPart.Start, Vector2.zero, 0f, explosionDuration, p);
+
+        Explode(p, Vector2.up, radius, pierce);
+        Explode(p, Vector2.down, radius, pierce);
+        Explode(p, Vector2.left, radius, pierce);
+        Explode(p, Vector2.right, radius, pierce);
     }
 }

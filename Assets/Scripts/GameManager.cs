@@ -70,15 +70,8 @@ public class GameManager : MonoBehaviour
 
     bool restartingRound;
 
-    [Header("Destructible Tiles Kind")]
-    [SerializeField] private TileBase[] dynamiteTiles;
-
-    private HashSet<TileBase> _dynamiteSet;
-
     void Awake()
     {
-        _dynamiteSet ??= new HashSet<TileBase>(dynamiteTiles ?? new TileBase[0]);
-
         if (autoResolveStageTilemaps)
             ResolveStageTilemapsIfNeeded();
 
@@ -541,15 +534,5 @@ public class GameManager : MonoBehaviour
     {
         AutoItemDatabase.BuildIfNeeded();
         return AutoItemDatabase.Get(type);
-    }
-
-    public bool IsDynamiteTile(TileBase tile)
-    {
-        if (tile == null)
-            return false;
-
-        _dynamiteSet ??= new HashSet<TileBase>(dynamiteTiles ?? new TileBase[0]);
-
-        return _dynamiteSet.Contains(tile);
     }
 }
