@@ -4,16 +4,9 @@ using UnityEngine.Tilemaps;
 
 [RequireComponent(typeof(BoxCollider2D))]
 [RequireComponent(typeof(AudioSource))]
-public sealed class EndStageGate : MonoBehaviour
+public sealed class EndStageGate : EndStage
 {
-    [Header("SFX")]
-    public AudioClip enterSfx;
-
-    [Tooltip("Som tocado quando o portão começa a abrir")]
     public AudioClip openGateSfx;
-
-    [Header("Music")]
-    public AudioClip endStageMusic;
 
     [Header("Gate Tilemap")]
     public Tilemap gateTilemap;
@@ -46,6 +39,10 @@ public sealed class EndStageGate : MonoBehaviour
     [Min(0f)]
     public float midStepDelay = 0.18f;
 
+    [Header("Open Delay")]
+    [Min(0f)]
+    public float openDelay = 0.5f;
+
     [Header("Entry (Open)")]
     public TileBase entryOpenTile;
 
@@ -54,16 +51,9 @@ public sealed class EndStageGate : MonoBehaviour
 
     public Vector2 triggerSize = new(0.1f, 0.1f);
 
-    [Header("Open Delay")]
-    public float openDelay = 1f;
-
-    bool isActivated;
-    bool isUnlocked;
-
-    GameManager gameManager;
     AudioSource audioSource;
 
-    private void Awake()
+    void Awake()
     {
         audioSource = GetComponent<AudioSource>();
 
@@ -77,41 +67,12 @@ public sealed class EndStageGate : MonoBehaviour
         }
     }
 
-    private void Start()
+    protected override void OnUnlocked()
     {
-        gameManager = FindFirstObjectByType<GameManager>();
-
-        if (gameManager != null)
-        {
-            gameManager.OnAllEnemiesDefeated += HandleAllEnemiesDefeated;
-            StartCoroutine(InitialEnemyCheckNextFrame());
-        }
-    }
-
-    IEnumerator InitialEnemyCheckNextFrame()
-    {
-        yield return null;
-
-        if (gameManager != null && gameManager.EnemiesAlive <= 0)
-            HandleAllEnemiesDefeated();
-    }
-
-    private void OnDestroy()
-    {
-        if (gameManager != null)
-            gameManager.OnAllEnemiesDefeated -= HandleAllEnemiesDefeated;
-    }
-
-    private void HandleAllEnemiesDefeated()
-    {
-        if (isUnlocked)
-            return;
-
-        isUnlocked = true;
         StartCoroutine(OpenGateRoutine());
     }
 
-    private IEnumerator OpenGateRoutine()
+    IEnumerator OpenGateRoutine()
     {
         if (openDelay > 0f)
             yield return new WaitForSeconds(openDelay);
@@ -122,14 +83,14 @@ public sealed class EndStageGate : MonoBehaviour
         if (HasMidTiles())
         {
             ReplaceTilesClosedToMid();
-            gateTilemap.RefreshAllTiles();
+            if (gateTilemap != null) gateTilemap.RefreshAllTiles();
 
             if (midStepDelay > 0f)
                 yield return new WaitForSeconds(midStepDelay);
         }
 
         ReplaceTilesToOpen();
-        gateTilemap.RefreshAllTiles();
+        if (gateTilemap != null) gateTilemap.RefreshAllTiles();
 
         PositionTriggerOnEntryTileFound();
 
@@ -137,14 +98,17 @@ public sealed class EndStageGate : MonoBehaviour
             gateTrigger.enabled = true;
     }
 
-    private bool HasMidTiles()
+    bool HasMidTiles()
     {
         return mid00 != null || mid10 != null || mid20 != null ||
                mid01 != null || mid11 != null || mid21 != null;
     }
 
-    private void ReplaceTilesClosedToMid()
+    void ReplaceTilesClosedToMid()
     {
+        if (gateTilemap == null)
+            return;
+
         var bounds = gateTilemap.cellBounds;
 
         for (int y = bounds.yMin; y < bounds.yMax; y++)
@@ -152,9 +116,7 @@ public sealed class EndStageGate : MonoBehaviour
             {
                 var cell = new Vector3Int(x, y, 0);
                 var current = gateTilemap.GetTile(cell);
-
-                if (current == null)
-                    continue;
+                if (current == null) continue;
 
                 var replacement = GetClosedToMid(current);
                 if (replacement != null)
@@ -162,7 +124,7 @@ public sealed class EndStageGate : MonoBehaviour
             }
     }
 
-    private TileBase GetClosedToMid(TileBase current)
+    TileBase GetClosedToMid(TileBase current)
     {
         if (current == null)
             return null;
@@ -178,8 +140,11 @@ public sealed class EndStageGate : MonoBehaviour
         return null;
     }
 
-    private void ReplaceTilesToOpen()
+    void ReplaceTilesToOpen()
     {
+        if (gateTilemap == null)
+            return;
+
         var bounds = gateTilemap.cellBounds;
 
         for (int y = bounds.yMin; y < bounds.yMax; y++)
@@ -187,9 +152,7 @@ public sealed class EndStageGate : MonoBehaviour
             {
                 var cell = new Vector3Int(x, y, 0);
                 var current = gateTilemap.GetTile(cell);
-
-                if (current == null)
-                    continue;
+                if (current == null) continue;
 
                 var replacement = GetToOpen(current);
                 if (replacement != null)
@@ -197,7 +160,7 @@ public sealed class EndStageGate : MonoBehaviour
             }
     }
 
-    private TileBase GetToOpen(TileBase current)
+    TileBase GetToOpen(TileBase current)
     {
         if (current == null)
             return null;
@@ -221,7 +184,7 @@ public sealed class EndStageGate : MonoBehaviour
         return null;
     }
 
-    private void PositionTriggerOnEntryTileFound()
+    void PositionTriggerOnEntryTileFound()
     {
         if (gateTilemap == null || gateTrigger == null || entryOpenTile == null)
             return;
@@ -249,64 +212,5 @@ public sealed class EndStageGate : MonoBehaviour
             }
 
         gateTrigger.enabled = false;
-    }
-
-    private void OnTriggerEnter2D(Collider2D other)
-    {
-        if (!isUnlocked || isActivated)
-            return;
-
-        if (!other || !other.CompareTag("Player"))
-            return;
-
-        var triggerMovement = other.GetComponent<MovementController>();
-        if (triggerMovement == null || triggerMovement.isDead || triggerMovement.IsEndingStage)
-            return;
-
-        isActivated = true;
-
-        Vector2 portalCenter = new(
-            Mathf.Round(transform.position.x),
-            Mathf.Round(transform.position.y)
-        );
-
-        var players = FindObjectsByType<MovementController>(
-            FindObjectsInactive.Exclude,
-            FindObjectsSortMode.None
-        );
-
-        for (int i = 0; i < players.Length; i++)
-        {
-            var m = players[i];
-            if (m == null) continue;
-            if (!m.CompareTag("Player")) continue;
-            if (!m.gameObject.activeInHierarchy) continue;
-            if (m.isDead || m.IsEndingStage) continue;
-
-            var bombController = m.GetComponent<BombController>();
-            PlayerPersistentStats.SaveFrom(m, bombController);
-
-            if (bombController != null)
-                bombController.ClearPlantedBombsOnStageEnd(false);
-
-            bool snapThisOne = m == triggerMovement;
-            m.PlayEndStageSequence(portalCenter, snapThisOne);
-        }
-
-        var audio = other.GetComponent<AudioSource>();
-        if (audio != null && enterSfx != null)
-            audio.PlayOneShot(enterSfx);
-
-        if (GameMusicController.Instance != null)
-            GameMusicController.Instance.StopMusic();
-
-        if (endStageMusic != null && GameMusicController.Instance != null)
-            GameMusicController.Instance.PlayMusic(endStageMusic, 1f, false);
-
-        if (StageIntroTransition.Instance != null)
-            StageIntroTransition.Instance.StartFadeOut(3f);
-
-        if (gameManager != null)
-            gameManager.EndStage();
     }
 }
