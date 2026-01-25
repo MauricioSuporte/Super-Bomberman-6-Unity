@@ -274,8 +274,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EndStageGate
   enterSfx: {fileID: 8300000, guid: 778da4e4d7313e54195e6cbca646d851, type: 3}
-  openGateSfx: {fileID: 8300000, guid: 9f1639c45a104994a87b186228d5b8e7, type: 3}
   endStageMusic: {fileID: 0}
+  openGateSfx: {fileID: 8300000, guid: 9f1639c45a104994a87b186228d5b8e7, type: 3}
   gateTilemap: {fileID: 818279435}
   closed00: {fileID: 11400000, guid: ee12a4bcd839de94ab5124e4467afc47, type: 2}
   closed10: {fileID: 11400000, guid: ed70a59b78bcf0f43ac068e8f3267058, type: 2}
@@ -296,10 +296,10 @@ MonoBehaviour:
   open11: {fileID: 11400000, guid: 8392f68313e8a754a8142ecb53c85edc, type: 2}
   open21: {fileID: 11400000, guid: 8a6054203b21b8b488e04bc8c0698a78, type: 2}
   midStepDelay: 0.18
+  openDelay: 1
   entryOpenTile: {fileID: 11400000, guid: 8392f68313e8a754a8142ecb53c85edc, type: 2}
   gateTrigger: {fileID: 161944108}
   triggerSize: {x: 0.1, y: 0.1}
-  openDelay: 1
 --- !u!82 &161944110
 AudioSource:
   m_ObjectHideFlags: 0
@@ -443,9 +443,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   portalResourcesPath: Portal/EndStagePortal
   portalAmount: 0
-  extraBombAmount: 0
-  blastRadiusAmount: 0
-  speedIncreaseAmount: 0
+  extraBombAmount: 1
+  blastRadiusAmount: 1
+  speedIncreaseAmount: 1
   kickBombAmount: 0
   punchBombAmount: 0
   pierceBombAmount: 0
@@ -453,9 +453,9 @@ MonoBehaviour:
   fullFireAmount: 0
   bombPassAmount: 0
   destructiblePassAmount: 0
-  invincibleSuitAmount: 0
+  invincibleSuitAmount: 1
   heartAmount: 0
-  blueLouieEggAmount: 0
+  blueLouieEggAmount: 1
   blackLouieEggAmount: 0
   purpleLouieEggAmount: 0
   greenLouieEggAmount: 0
