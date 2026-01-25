@@ -1075,6 +1075,33 @@ public partial class BombController : MonoBehaviour
         Explode(p, Vector2.right, radius, pierce);
     }
 
+    public void SpawnExplosionCrossForEffectWithTileEffects(
+    Vector2 origin,
+    int radius,
+    bool pierce,
+    AudioSource sfxSource = null)
+    {
+        Vector2 p = origin;
+        p.x = Mathf.Round(p.x);
+        p.y = Mathf.Round(p.y);
+
+        int effectiveRadius = Mathf.Max(0, radius);
+        bool effectivePierce = pierce;
+
+        TryApplyGroundExplosionModifiers(p, ref effectiveRadius, ref effectivePierce);
+
+        if (sfxSource != null)
+            PlayExplosionSfxExclusive(sfxSource, effectiveRadius);
+
+        Explosion center = Instantiate(explosionPrefab, p, Quaternion.identity);
+        center.Play(Explosion.ExplosionPart.Start, Vector2.zero, 0f, explosionDuration, p);
+
+        Explode(p, Vector2.up, effectiveRadius, effectivePierce);
+        Explode(p, Vector2.down, effectiveRadius, effectivePierce);
+        Explode(p, Vector2.left, effectiveRadius, effectivePierce);
+        Explode(p, Vector2.right, effectiveRadius, effectivePierce);
+    }
+
     private void ResolveGroundTileResolver()
     {
         if (groundTileResolver != null)

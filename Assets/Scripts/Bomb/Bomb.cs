@@ -7,7 +7,7 @@ using UnityEngine.Tilemaps;
 [RequireComponent(typeof(Rigidbody2D))]
 [RequireComponent(typeof(AudioSource))]
 [RequireComponent(typeof(AnimatedSpriteRenderer))]
-public class Bomb : MonoBehaviour
+public class Bomb : MonoBehaviour, IMagnetPullable
 {
     private BombController owner;
     public BombController Owner => owner;
@@ -22,6 +22,7 @@ public class Bomb : MonoBehaviour
     public bool IsSolid => bombCollider != null && !bombCollider.isTrigger;
     public bool CanBeKicked => !HasExploded && !isKicked && IsSolid && charactersInside.Count == 0;
     public bool CanBePunched => !HasExploded && !isKicked && !isPunched && IsSolid && charactersInside.Count == 0;
+    public bool CanBeMagnetPulled => !HasExploded && !IsBeingKicked && !IsBeingPunched && !IsBeingMagnetPulled;
     public bool IsPierceBomb { get; set; }
 
     [Header("References")]

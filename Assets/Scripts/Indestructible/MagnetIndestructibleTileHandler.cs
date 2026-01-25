@@ -21,6 +21,9 @@ public sealed class MagnetIndestructibleTileHandler : MonoBehaviour, IIndestruct
     [SerializeField] private float tileSize = 1f;
     [SerializeField] private LayerMask obstacleMask;
 
+    [Header("What can be pulled")]
+    [SerializeField] private LayerMask pullableMask;
+
     private readonly Dictionary<Vector3Int, int> _dirIndexByCell = new();
     private readonly List<Vector3Int> _magnetCells = new();
     private Coroutine _scanRoutine;
@@ -29,6 +32,9 @@ public sealed class MagnetIndestructibleTileHandler : MonoBehaviour, IIndestruct
     {
         if (indestructibleTilemap == null)
             indestructibleTilemap = GetComponentInParent<Tilemap>();
+
+        if (pullableMask.value == 0)
+            pullableMask = LayerMask.GetMask("Bomb", "Enemy");
 
         BuildMagnetListAndResetDirection();
     }
@@ -70,12 +76,12 @@ public sealed class MagnetIndestructibleTileHandler : MonoBehaviour, IIndestruct
         var wait = new WaitForSeconds(scanEverySeconds);
         while (true)
         {
-            PullBombs();
+            PullPullables();
             yield return wait;
         }
     }
 
-    private void PullBombs()
+    private void PullPullables()
     {
         for (int i = 0; i < _magnetCells.Count; i++)
         {
@@ -86,28 +92,27 @@ public sealed class MagnetIndestructibleTileHandler : MonoBehaviour, IIndestruct
                 continue;
 
             _dirIndexByCell.TryGetValue(magnetCell, out int idx);
-
             Vector3Int dir = DirFromIndex(idx);
 
             for (int dist = 2; dist <= maxPullDistance; dist++)
             {
-                Vector3Int bombCell = magnetCell + dir * dist;
+                Vector3Int targetCell = magnetCell + dir * dist;
 
-                if (HasAnyIndestructibleAt(bombCell) && bombCell != magnetCell)
+                if (HasAnyIndestructibleAt(targetCell) && targetCell != magnetCell)
                     break;
 
-                if (destructibleTilemap != null && destructibleTilemap.GetTile(bombCell) != null)
+                if (destructibleTilemap != null && destructibleTilemap.GetTile(targetCell) != null)
                     break;
 
-                if (TryGetBombAtCell(bombCell, out _, out var bombComp))
+                if (TryGetPullableAtCell(targetCell, out var pullable))
                 {
-                    if (bombComp == null || bombComp.HasExploded || bombComp.IsBeingKicked || bombComp.IsBeingPunched || bombComp.IsBeingMagnetPulled)
+                    if (pullable == null || !pullable.CanBeMagnetPulled || pullable.IsBeingMagnetPulled)
                         break;
 
                     int steps = dist - 1;
                     Vector2 pullDir = new(-dir.x, -dir.y);
 
-                    bombComp.StartMagnetPull(pullDir, tileSize, steps, obstacleMask, destructibleTilemap);
+                    pullable.StartMagnetPull(pullDir, tileSize, steps, obstacleMask, destructibleTilemap);
                     break;
                 }
             }
@@ -178,32 +183,30 @@ public sealed class MagnetIndestructibleTileHandler : MonoBehaviour, IIndestruct
         return indestructibleTilemap.GetTile(cell) != null;
     }
 
-    private bool TryGetBombAtCell(Vector3Int cell, out GameObject bombGo, out Bomb bombComp)
+    private bool TryGetPullableAtCell(Vector3Int cell, out IMagnetPullable pullable)
     {
-        bombGo = null;
-        bombComp = null;
+        pullable = null;
 
         if (indestructibleTilemap == null)
             return false;
 
         Vector3 world = indestructibleTilemap.GetCellCenterWorld(cell);
 
-        int bombLayer = LayerMask.NameToLayer("Bomb");
-        if (bombLayer < 0)
-            return false;
-
-        int bombMask = 1 << bombLayer;
-
-        Collider2D hit = Physics2D.OverlapBox((Vector2)world, Vector2.one * 0.6f, 0f, bombMask);
+        Collider2D hit = Physics2D.OverlapBox((Vector2)world, Vector2.one * 0.6f, 0f, pullableMask);
         if (hit == null)
             return false;
 
-        bombGo = hit.attachedRigidbody != null ? hit.attachedRigidbody.gameObject : hit.gameObject;
-        if (bombGo == null)
+        GameObject go = hit.attachedRigidbody != null ? hit.attachedRigidbody.gameObject : hit.gameObject;
+        if (go == null)
             return false;
 
-        bombGo.TryGetComponent(out bombComp);
-        return bombComp != null;
+        if (go.TryGetComponent<IMagnetPullable>(out var p) && p != null)
+        {
+            pullable = p;
+            return true;
+        }
+
+        return false;
     }
 
     private static Vector3Int DirFromIndex(int idx)
