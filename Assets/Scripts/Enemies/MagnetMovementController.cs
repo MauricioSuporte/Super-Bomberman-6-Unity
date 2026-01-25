@@ -106,19 +106,16 @@ public sealed class MagnetMovementController : EnemyMovementController
             if (IsBlockedForMagnet(tileCenter))
                 break;
 
-            int count = Physics2D.OverlapBoxNonAlloc(
+            Collider2D[] hits = Physics2D.OverlapBoxAll(
                 tileCenter,
                 Vector2.one * (tileSize * 0.75f),
                 0f,
-                _playerHits,
                 playerLayerMask
             );
 
-            for (int h = 0; h < count; h++)
+            for (int h = 0; h < hits.Length; h++)
             {
-                var col = _playerHits[h];
-                _playerHits[h] = null;
-
+                var col = hits[h];
                 if (col == null)
                     continue;
 
@@ -224,7 +221,9 @@ public sealed class MagnetMovementController : EnemyMovementController
         magnetTile.x = Mathf.Round(magnetTile.x / tileSize) * tileSize;
         magnetTile.y = Mathf.Round(magnetTile.y / tileSize) * tileSize;
 
-        Vector2 stopTile = magnetTile - dir * tileSize;
+        Vector2 stopTile = magnetTile;
+
+        float step = pullSpeed * Time.fixedDeltaTime;
 
         for (int i = 0; i < players.Count; i++)
         {
@@ -232,10 +231,13 @@ public sealed class MagnetMovementController : EnemyMovementController
             if (prb == null)
                 continue;
 
+            if ((prb.position - stopTile).sqrMagnitude <= 0.0004f)
+                continue;
+
             if (IsPathBlockedBetween(prb.position, stopTile))
                 continue;
 
-            Vector2 next = Vector2.MoveTowards(prb.position, stopTile, pullSpeed * Time.fixedDeltaTime);
+            Vector2 next = Vector2.MoveTowards(prb.position, stopTile, step);
             prb.MovePosition(next);
         }
     }
