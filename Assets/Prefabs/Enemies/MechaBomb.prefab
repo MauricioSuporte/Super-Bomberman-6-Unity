@@ -135,8 +135,8 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 1024
   deathSfx: {fileID: 8300000, guid: 95fa76ce6d1f33c498e5165cec574d98, type: 3}
-  abilityMinCooldown: 2
-  abilityMaxCooldown: 3
+  abilityMinCooldown: 8
+  abilityMaxCooldown: 10
   explosionRadius: 4
   pierceExplosion: 0
   spriteAbility: {fileID: 9103234017573325933}
