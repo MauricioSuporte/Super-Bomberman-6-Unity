@@ -17,6 +17,7 @@ public class EnemyMovementController : MonoBehaviour, IKillable
     public AnimatedSpriteRenderer spriteDown;
     public AnimatedSpriteRenderer spriteLeft;
     public AnimatedSpriteRenderer spriteDeath;
+    public AnimatedSpriteRenderer spriteDamaged;
 
     [Header("Layers")]
     public LayerMask obstacleMask;
@@ -35,6 +36,8 @@ public class EnemyMovementController : MonoBehaviour, IKillable
     CharacterHealth health;
     AudioSource audioSource;
 
+    bool isInDamagedLoop;
+
     protected virtual void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
@@ -51,11 +54,28 @@ public class EnemyMovementController : MonoBehaviour, IKillable
 
         health = GetComponent<CharacterHealth>();
 
+        if (health != null)
+        {
+            health.HitInvulnerabilityStarted += OnHitInvulnerabilityStarted;
+            health.HitInvulnerabilityEnded += OnHitInvulnerabilityEnded;
+            health.Died += OnHealthDied;
+        }
+
         audioSource = GetComponent<AudioSource>();
         if (audioSource != null)
         {
             audioSource.playOnAwake = false;
             audioSource.loop = false;
+        }
+    }
+
+    protected virtual void OnDestroy()
+    {
+        if (health != null)
+        {
+            health.HitInvulnerabilityStarted -= OnHitInvulnerabilityStarted;
+            health.HitInvulnerabilityEnded -= OnHitInvulnerabilityEnded;
+            health.Died -= OnHealthDied;
         }
     }
 
@@ -73,6 +93,14 @@ public class EnemyMovementController : MonoBehaviour, IKillable
             return;
 
         if (TryGetComponent<StunReceiver>(out var stun) && stun != null && stun.IsStunned)
+        {
+            if (rb != null)
+                rb.linearVelocity = Vector2.zero;
+
+            return;
+        }
+
+        if (isInDamagedLoop)
         {
             if (rb != null)
                 rb.linearVelocity = Vector2.zero;
@@ -125,6 +153,49 @@ public class EnemyMovementController : MonoBehaviour, IKillable
         Die();
     }
 
+    void OnHitInvulnerabilityStarted(float seconds)
+    {
+        if (health == null || !health.playDamagedLoopInsteadOfBlink)
+            return;
+
+        if (spriteDamaged == null)
+            return;
+
+        isInDamagedLoop = true;
+
+        if (rb != null)
+            rb.linearVelocity = Vector2.zero;
+
+        DisableAllDirectionalSprites();
+
+        activeSprite = spriteDamaged;
+        spriteDamaged.enabled = true;
+        spriteDamaged.idle = false;
+        spriteDamaged.loop = true;
+    }
+
+    void OnHitInvulnerabilityEnded()
+    {
+        if (!isInDamagedLoop)
+            return;
+
+        isInDamagedLoop = false;
+
+        if (spriteDamaged != null)
+            spriteDamaged.enabled = false;
+
+        UpdateSpriteDirection(direction);
+        DecideNextTile();
+    }
+
+    void OnHealthDied()
+    {
+        isInDamagedLoop = false;
+
+        if (spriteDamaged != null)
+            spriteDamaged.enabled = false;
+    }
+
     protected virtual void Die()
     {
         if (isDead)
@@ -144,14 +215,7 @@ public class EnemyMovementController : MonoBehaviour, IKillable
         if (TryGetComponent<Collider2D>(out var col))
             col.enabled = false;
 
-        if (spriteUp != null)
-            spriteUp.enabled = false;
-
-        if (spriteDown != null)
-            spriteDown.enabled = false;
-
-        if (spriteLeft != null)
-            spriteLeft.enabled = false;
+        DisableAllDirectionalSprites();
 
         if (spriteDeath != null)
         {
@@ -170,6 +234,18 @@ public class EnemyMovementController : MonoBehaviour, IKillable
             gameManager.NotifyEnemyDied();
 
         Invoke(nameof(OnDeathAnimationEnded), 0.7f);
+    }
+
+    void DisableAllDirectionalSprites()
+    {
+        if (spriteUp != null) spriteUp.enabled = false;
+        if (spriteDown != null) spriteDown.enabled = false;
+        if (spriteLeft != null) spriteLeft.enabled = false;
+
+        if (spriteDamaged != null) spriteDamaged.enabled = false;
+
+        if (spriteDeath != null && spriteDeath != activeSprite)
+            spriteDeath.enabled = false;
     }
 
     protected virtual void OnDeathAnimationEnded()
@@ -209,11 +285,17 @@ public class EnemyMovementController : MonoBehaviour, IKillable
 
     protected virtual void UpdateSpriteDirection(Vector2 dir)
     {
+        if (isInDamagedLoop)
+            return;
+
         AnimatedSpriteRenderer previousSprite = activeSprite;
 
         if (spriteUp != null) spriteUp.enabled = false;
         if (spriteDown != null) spriteDown.enabled = false;
         if (spriteLeft != null) spriteLeft.enabled = false;
+
+        if (spriteDamaged != null)
+            spriteDamaged.enabled = false;
 
         if (spriteDeath != null && spriteDeath != activeSprite)
             spriteDeath.enabled = false;
@@ -258,7 +340,6 @@ public class EnemyMovementController : MonoBehaviour, IKillable
         if (activeSprite.TryGetComponent<SpriteRenderer>(out var sr))
             sr.flipX = (dir == Vector2.right);
     }
-
 
     protected virtual void DecideNextTile()
     {

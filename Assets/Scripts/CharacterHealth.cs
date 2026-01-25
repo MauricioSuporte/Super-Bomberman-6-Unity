@@ -18,8 +18,14 @@ public class CharacterHealth : MonoBehaviour
     public float tempSlowdownStartNormalized = 0.7f;
     public float tempEndBlinkMultiplier = 4f;
 
+    [Header("Damaged Animation Instead Of Blink")]
+    public bool playDamagedLoopInsteadOfBlink;
+
     public event Action<int> Damaged;
     public event Action Died;
+
+    public event Action<float> HitInvulnerabilityStarted;
+    public event Action HitInvulnerabilityEnded;
 
     bool isInvulnerable;
     bool isDead;
@@ -170,43 +176,57 @@ public class CharacterHealth : MonoBehaviour
         if (hitRoutine != null)
             StopCoroutine(hitRoutine);
 
+        HitInvulnerabilityStarted?.Invoke(hitInvulnerableDuration);
         hitRoutine = StartCoroutine(HitInvulnerabilityRoutine());
     }
 
     IEnumerator HitInvulnerabilityRoutine()
     {
         isInvulnerable = true;
-        float elapsed = 0f;
-        bool faded = false;
 
-        while (elapsed < hitInvulnerableDuration)
+        if (!playDamagedLoopInsteadOfBlink)
         {
-            faded = !faded;
+            float elapsed = 0f;
+            bool faded = false;
 
-            for (int i = 0; i < spriteRenderers.Length; i++)
+            while (elapsed < hitInvulnerableDuration)
             {
-                if (spriteRenderers[i] == null)
-                    continue;
+                faded = !faded;
 
-                Color baseColor = originalColors[i];
+                for (int i = 0; i < spriteRenderers.Length; i++)
+                {
+                    if (spriteRenderers[i] == null)
+                        continue;
 
-                if (faded)
-                    spriteRenderers[i].color = new Color(baseColor.r, baseColor.g, baseColor.b, 0.2f);
-                else
-                    spriteRenderers[i].color = baseColor;
+                    Color baseColor = originalColors[i];
+
+                    if (faded)
+                        spriteRenderers[i].color = new Color(baseColor.r, baseColor.g, baseColor.b, 0.2f);
+                    else
+                        spriteRenderers[i].color = baseColor;
+                }
+
+                float wait = hitBlinkInterval > 0f ? hitBlinkInterval : 0.05f;
+                yield return new WaitForSeconds(wait);
+                elapsed += wait;
             }
 
-            float wait = hitBlinkInterval > 0f ? hitBlinkInterval : 0.05f;
-            yield return new WaitForSeconds(wait);
-            elapsed += wait;
+            for (int i = 0; i < spriteRenderers.Length; i++)
+                if (spriteRenderers[i] != null)
+                    spriteRenderers[i].color = originalColors[i];
         }
+        else
+        {
+            for (int i = 0; i < spriteRenderers.Length; i++)
+                if (spriteRenderers[i] != null)
+                    spriteRenderers[i].color = originalColors[i];
 
-        for (int i = 0; i < spriteRenderers.Length; i++)
-            if (spriteRenderers[i] != null)
-                spriteRenderers[i].color = originalColors[i];
+            yield return new WaitForSeconds(hitInvulnerableDuration);
+        }
 
         isInvulnerable = false;
         hitRoutine = null;
+        HitInvulnerabilityEnded?.Invoke();
     }
 
     void Die()

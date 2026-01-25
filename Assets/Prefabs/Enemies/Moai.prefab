@@ -123,7 +123,8 @@ MonoBehaviour:
   spriteUp: {fileID: 1228606390294117671}
   spriteDown: {fileID: 1228606389785476324}
   spriteLeft: {fileID: 1228606390696233727}
-  spriteDeath: {fileID: 0}
+  spriteDeath: {fileID: 1228606391467010645}
+  spriteDamaged: {fileID: 9103234017573325933}
   obstacleMask:
     serializedVersion: 2
     m_Bits: 1216
@@ -147,10 +148,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CharacterHealth
   life: 2
-  hitInvulnerableDuration: 3
+  hitInvulnerableDuration: 1
   hitBlinkInterval: 0.1
   tempSlowdownStartNormalized: 0.7
   tempEndBlinkMultiplier: 4
+  playDamagedLoopInsteadOfBlink: 1
 --- !u!82 &1351269766690977818
 AudioSource:
   m_ObjectHideFlags: 0
@@ -878,7 +880,7 @@ GameObject:
   - component: {fileID: 99662579475662179}
   - component: {fileID: 9103234017573325933}
   m_Layer: 10
-  m_Name: Damage
+  m_Name: Damaged
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -893,7 +895,7 @@ Transform:
   m_GameObject: {fileID: 7803439045935640801}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.57, z: 0}
+  m_LocalPosition: {x: 0, y: 0.93, z: 0}
   m_LocalScale: {x: 6, y: 6, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
