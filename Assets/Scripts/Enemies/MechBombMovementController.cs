@@ -3,7 +3,7 @@ using UnityEngine;
 using UnityEngine.Tilemaps;
 
 [RequireComponent(typeof(AudioSource))]
-public sealed class MechBombMovementController : EnemyMovementController, IMagnetPullable
+public class MechBombMovementController : JunctionTurningEnemyMovementController, IMagnetPullable
 {
     [Header("Ability - Cooldown")]
     public float abilityMinCooldown = 8f;

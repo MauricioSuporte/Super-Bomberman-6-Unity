@@ -135,6 +135,8 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 1024
   deathSfx: {fileID: 8300000, guid: 95fa76ce6d1f33c498e5165cec574d98, type: 3}
+  minAvailablePathsToTurn: 3
+  preferTurnAtJunction: 0
   abilityMinCooldown: 8
   abilityMaxCooldown: 10
   explosionRadius: 4
