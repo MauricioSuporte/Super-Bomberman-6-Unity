@@ -460,8 +460,8 @@ public partial class BombController : MonoBehaviour
         bombComponent.IsControlBomb = controlEnabled;
 
         bombComponent.SetStageBoundsTilemap(stageBoundsTiles);
-        bombComponent.Initialize(this);
         bombComponent.SetFuseSeconds(bombFuseTime);
+        bombComponent.Initialize(this);
 
         if (controlEnabled)
             RegisterBomb(bomb);
@@ -473,7 +473,7 @@ public partial class BombController : MonoBehaviour
         }
 
         if (!controlEnabled)
-            StartCoroutine(BombFuse(bomb));
+            bombComponent.BeginFuse();
     }
 
     private bool TryGetAnyBombColliderAt(Vector2 position, float size, out Collider2D bombCol)
@@ -509,12 +509,6 @@ public partial class BombController : MonoBehaviour
     private bool TileHasBomb(Vector2 position)
     {
         return TryGetAnyBombColliderAt(position, 0.6f, out _);
-    }
-
-    private IEnumerator BombFuse(GameObject bomb)
-    {
-        yield return new WaitForSeconds(bombFuseTime);
-        ExplodeBomb(bomb);
     }
 
     private bool HasIndestructibleAt(Vector2 worldPos)
@@ -931,8 +925,8 @@ public partial class BombController : MonoBehaviour
         bombComponent.IsControlBomb = controlEnabled;
 
         bombComponent.SetStageBoundsTilemap(stageBoundsTiles);
-        bombComponent.Initialize(this);
         bombComponent.SetFuseSeconds(bombFuseTime);
+        bombComponent.Initialize(this);
 
         if (bomb.TryGetComponent<Collider2D>(out var bombCollider))
             bombCollider.isTrigger = true;
@@ -944,11 +938,10 @@ public partial class BombController : MonoBehaviour
         {
             ExplodeBomb(bomb);
             return true;
-
         }
 
         if (!controlEnabled)
-            StartCoroutine(BombFuse(bomb));
+            bombComponent.BeginFuse();
 
         return true;
     }

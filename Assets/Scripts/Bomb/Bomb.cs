@@ -75,6 +75,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
 
     private bool fusePaused;
     private float fusePauseStartedAt;
+    private Coroutine fuseRoutine;
 
     private static readonly WaitForFixedUpdate waitFixed = new();
 
@@ -104,6 +105,49 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         }
 
         lastPos = rb.position;
+    }
+
+    public void BeginFuse()
+    {
+        if (HasExploded)
+            return;
+
+        if (IsControlBomb)
+            return;
+
+        if (fuseRoutine != null)
+            StopCoroutine(fuseRoutine);
+
+        fuseRoutine = StartCoroutine(FuseRoutine());
+    }
+
+    private IEnumerator FuseRoutine()
+    {
+        while (!HasExploded)
+        {
+            if (owner == null)
+            {
+                fuseRoutine = null;
+                yield break;
+            }
+
+            if (fusePaused)
+            {
+                yield return null;
+                continue;
+            }
+
+            if (RemainingFuseSeconds <= 0f)
+            {
+                owner.ExplodeBomb(gameObject);
+                fuseRoutine = null;
+                yield break;
+            }
+
+            yield return null;
+        }
+
+        fuseRoutine = null;
     }
 
     private void PauseFuse()
@@ -804,6 +848,12 @@ public class Bomb : MonoBehaviour, IMagnetPullable
     public void MarkAsExploded()
     {
         HasExploded = true;
+
+        if (fuseRoutine != null)
+        {
+            StopCoroutine(fuseRoutine);
+            fuseRoutine = null;
+        }
     }
 
     private void OnTriggerEnter2D(Collider2D other)
