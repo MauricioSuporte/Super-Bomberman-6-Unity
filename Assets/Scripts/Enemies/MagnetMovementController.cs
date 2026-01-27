@@ -31,6 +31,23 @@ public sealed class MagnetMovementController : EnemyMovementController
             playerLayerMask = LayerMask.GetMask("Player");
     }
 
+    protected override void Die()
+    {
+        if (_isMagnetActive)
+        {
+            _isMagnetActive = false;
+
+            if (spriteAbility != null)
+            {
+                spriteAbility.enabled = false;
+                spriteAbility.idle = true;
+                spriteAbility.loop = false;
+            }
+        }
+
+        base.Die();
+    }
+
     protected override void FixedUpdate()
     {
         if (isDead)
@@ -201,7 +218,11 @@ public sealed class MagnetMovementController : EnemyMovementController
         _isMagnetActive = false;
 
         if (spriteAbility != null)
+        {
             spriteAbility.enabled = false;
+            spriteAbility.idle = true;
+            spriteAbility.loop = false;
+        }
 
         UpdateSpriteDirection(direction);
     }
