@@ -865,8 +865,12 @@ public class Bomb : MonoBehaviour, IMagnetPullable
 
         if (layer == LayerMask.NameToLayer("Explosion"))
         {
+            if (IsControlBomb && isPunched)
+                return;
+
             if (owner != null)
                 owner.ExplodeBombChained(gameObject);
+
             return;
         }
 

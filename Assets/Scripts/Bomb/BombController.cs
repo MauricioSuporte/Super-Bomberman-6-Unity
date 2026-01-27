@@ -261,6 +261,9 @@ public partial class BombController : MonoBehaviour
             return;
         }
 
+        if (bombComp != null && bombComp.IsControlBomb && bombComp.IsBeingPunched)
+            return;
+
         UnregisterBomb(bomb);
 
         Vector2 logicalPos = bombComp != null
@@ -797,6 +800,9 @@ public partial class BombController : MonoBehaviour
                 i--;
                 continue;
             }
+
+            if (bombComp.IsBeingPunched)
+                continue;
 
             plantedBombs.RemoveAt(i);
             ExplodeBomb(b);

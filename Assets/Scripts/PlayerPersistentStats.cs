@@ -23,7 +23,7 @@ public static class PlayerPersistentStats
 
         public int SpeedInternal = BaseSpeedNormal + BaseSpeedNormal;
 
-        public bool CanKickBombs = false;
+        public bool CanKickBombs = true;
         public bool CanPunchBombs = true;
         public bool CanPassBombs = false;
         public bool CanPassDestructibles = false;
