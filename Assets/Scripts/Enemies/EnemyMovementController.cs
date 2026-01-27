@@ -27,6 +27,9 @@ public class EnemyMovementController : MonoBehaviour, IKillable
     [Header("SFX")]
     public AudioClip deathSfx;
 
+    [Header("Stuck Behavior")]
+    public float recheckStuckEverySeconds = 0.25f;
+
     protected AnimatedSpriteRenderer activeSprite;
     protected Rigidbody2D rb;
     protected Vector2 direction;
@@ -37,6 +40,11 @@ public class EnemyMovementController : MonoBehaviour, IKillable
     AudioSource audioSource;
 
     bool isInDamagedLoop;
+
+    bool isStuck;
+    float stuckTimer;
+
+    static readonly Vector2[] Dirs = { Vector2.up, Vector2.down, Vector2.left, Vector2.right };
 
     protected virtual void Awake()
     {
@@ -108,6 +116,12 @@ public class EnemyMovementController : MonoBehaviour, IKillable
             return;
         }
 
+        if (isStuck)
+        {
+            HandleStuck();
+            return;
+        }
+
         if (HasBombAt(targetTile))
             HandleBombAhead();
 
@@ -162,6 +176,7 @@ public class EnemyMovementController : MonoBehaviour, IKillable
             return;
 
         isInDamagedLoop = true;
+        isStuck = false;
 
         if (rb != null)
             rb.linearVelocity = Vector2.zero;
@@ -191,6 +206,7 @@ public class EnemyMovementController : MonoBehaviour, IKillable
     void OnHealthDied()
     {
         isInDamagedLoop = false;
+        isStuck = false;
 
         if (spriteDamaged != null)
             spriteDamaged.enabled = false;
@@ -202,6 +218,7 @@ public class EnemyMovementController : MonoBehaviour, IKillable
             return;
 
         isDead = true;
+        isStuck = false;
 
         if (TryGetComponent<StunReceiver>(out var stun))
             stun.CancelStunForDeath();
@@ -279,14 +296,31 @@ public class EnemyMovementController : MonoBehaviour, IKillable
 
     protected void ChooseInitialDirection()
     {
-        Vector2[] dirs = { Vector2.up, Vector2.down, Vector2.left, Vector2.right };
-        direction = dirs[Random.Range(0, dirs.Length)];
+        direction = Dirs[Random.Range(0, Dirs.Length)];
     }
 
     protected virtual void UpdateSpriteDirection(Vector2 dir)
     {
         if (isInDamagedLoop)
             return;
+
+        if (activeSprite != null)
+        {
+            bool sameDirSprite =
+                (dir == Vector2.up && activeSprite == spriteUp) ||
+                (dir == Vector2.down && activeSprite == spriteDown) ||
+                ((dir == Vector2.left || dir == Vector2.right) && activeSprite == spriteLeft);
+
+            if (sameDirSprite && activeSprite.enabled)
+            {
+                activeSprite.idle = false;
+
+                if (activeSprite.TryGetComponent<SpriteRenderer>(out var srSame))
+                    srSame.flipX = (dir == Vector2.right);
+
+                return;
+            }
+        }
 
         AnimatedSpriteRenderer previousSprite = activeSprite;
 
@@ -343,6 +377,8 @@ public class EnemyMovementController : MonoBehaviour, IKillable
 
     protected virtual void DecideNextTile()
     {
+        isStuck = false;
+
         Vector2 forwardTile = rb.position + direction * tileSize;
 
         if (!IsTileBlocked(forwardTile))
@@ -351,10 +387,9 @@ public class EnemyMovementController : MonoBehaviour, IKillable
             return;
         }
 
-        Vector2[] dirs = { Vector2.up, Vector2.down, Vector2.left, Vector2.right };
         var freeDirs = new List<Vector2>();
 
-        foreach (var dir in dirs)
+        foreach (var dir in Dirs)
         {
             if (dir == direction)
                 continue;
@@ -366,8 +401,24 @@ public class EnemyMovementController : MonoBehaviour, IKillable
 
         if (freeDirs.Count == 0)
         {
+            if (TryPickAnyFreeDirection(out var anyDir))
+            {
+                direction = anyDir;
+                UpdateSpriteDirection(direction);
+                targetTile = rb.position + direction * tileSize;
+                return;
+            }
+
             targetTile = rb.position;
-            UpdateSpriteDirection(direction);
+
+            if (activeSprite != null)
+            {
+                activeSprite.enabled = true;
+                activeSprite.idle = false;
+            }
+
+            isStuck = true;
+            stuckTimer = recheckStuckEverySeconds;
             return;
         }
 
@@ -414,16 +465,16 @@ public class EnemyMovementController : MonoBehaviour, IKillable
 
         if (!IsTileBlocked(backwardTile))
         {
+            isStuck = false;
             direction = backwardDir;
             UpdateSpriteDirection(direction);
             targetTile = backwardTile;
             return;
         }
 
-        Vector2[] dirs = { Vector2.up, Vector2.down, Vector2.left, Vector2.right };
         var freeDirs = new List<Vector2>();
 
-        foreach (var dir in dirs)
+        foreach (var dir in Dirs)
         {
             if (dir == direction || dir == -direction)
                 continue;
@@ -435,6 +486,7 @@ public class EnemyMovementController : MonoBehaviour, IKillable
 
         if (freeDirs.Count > 0)
         {
+            isStuck = false;
             direction = freeDirs[Random.Range(0, freeDirs.Count)];
             UpdateSpriteDirection(direction);
             targetTile = rb.position + direction * tileSize;
@@ -442,6 +494,15 @@ public class EnemyMovementController : MonoBehaviour, IKillable
         else
         {
             targetTile = rb.position;
+
+            if (activeSprite != null)
+            {
+                activeSprite.enabled = true;
+                activeSprite.idle = false;
+            }
+
+            isStuck = true;
+            stuckTimer = recheckStuckEverySeconds;
         }
     }
 
@@ -460,22 +521,13 @@ public class EnemyMovementController : MonoBehaviour, IKillable
 
         SnapToGrid();
 
-        Vector2[] dirs = { Vector2.up, Vector2.down, Vector2.left, Vector2.right };
-        var freeDirs = new List<Vector2>();
-
-        foreach (var dir in dirs)
+        if (TryPickAnyFreeDirection(out var dir))
         {
-            Vector2 checkTile = rb.position + dir * tileSize;
-            if (!IsTileBlocked(checkTile))
-                freeDirs.Add(dir);
+            isStuck = false;
+            direction = dir;
+            UpdateSpriteDirection(direction);
+            targetTile = rb.position + direction * tileSize;
         }
-
-        if (freeDirs.Count == 0)
-            return;
-
-        direction = freeDirs[Random.Range(0, freeDirs.Count)];
-        UpdateSpriteDirection(direction);
-        targetTile = rb.position + direction * tileSize;
     }
 
     protected virtual void OnDrawGizmosSelected()
@@ -488,5 +540,66 @@ public class EnemyMovementController : MonoBehaviour, IKillable
             rb.position + direction * tileSize,
             Vector2.one * (tileSize * 0.8f)
         );
+    }
+
+    void HandleStuck()
+    {
+        if (isDead || isInDamagedLoop)
+        {
+            isStuck = false;
+            return;
+        }
+
+        if (activeSprite != null)
+        {
+            activeSprite.enabled = true;
+            activeSprite.idle = false;
+        }
+
+        stuckTimer += Time.fixedDeltaTime;
+
+        if (stuckTimer < recheckStuckEverySeconds)
+            return;
+
+        stuckTimer = 0f;
+
+        if (TryPickAnyFreeDirection(out var newDir))
+        {
+            isStuck = false;
+            direction = newDir;
+            UpdateSpriteDirection(direction);
+            targetTile = rb.position + direction * tileSize;
+        }
+        else
+        {
+            targetTile = rb.position;
+
+            if (activeSprite != null)
+            {
+                activeSprite.enabled = true;
+                activeSprite.idle = false;
+            }
+        }
+    }
+
+    bool TryPickAnyFreeDirection(out Vector2 chosenDir)
+    {
+        var freeDirs = new List<Vector2>();
+
+        foreach (var dir in Dirs)
+        {
+            Vector2 checkTile = rb.position + dir * tileSize;
+            if (!IsTileBlocked(checkTile))
+                freeDirs.Add(dir);
+        }
+
+        if (freeDirs.Count == 0)
+        {
+            chosenDir = Vector2.zero;
+            return false;
+        }
+
+        chosenDir = freeDirs[Random.Range(0, freeDirs.Count)];
+        return true;
     }
 }

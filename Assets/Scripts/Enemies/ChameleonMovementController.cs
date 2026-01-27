@@ -37,26 +37,26 @@ public class ChameleonMovementController : EnemyMovementController
     public float transformDuration = 1f;
     public float transformBlinkInterval = 0.1f;
 
-    private Coroutine behaviourRoutine;
-    private bool isDisguised;
-    private bool isTransforming;
+    Coroutine behaviourRoutine;
+    bool isDisguised;
+    bool isTransforming;
+    bool isBlinking;
 
-    private Vector2 disguisedDirection = Vector2.zero;
-    private float directionChangeTimer;
-    private bool hasDisguisedInput;
+    Vector2 disguisedDirection = Vector2.zero;
+    float directionChangeTimer;
+    bool hasDisguisedInput;
 
-    private const float CenterEpsilon = 0.01f;
-    private float SlideDeadZone => tileSize * 0.25f;
+    const float CenterEpsilon = 0.01f;
+    float SlideDeadZone => tileSize * 0.25f;
 
-    private float originalSpeed;
+    float originalSpeed;
 
-    private AnimatedSpriteRenderer activeDisguiseSprite;
-    private DisguiseSpriteSet currentDisguiseSet;
+    AnimatedSpriteRenderer activeDisguiseSprite;
+    DisguiseSpriteSet currentDisguiseSet;
 
-    // === FIX: cache do movimento "normal" para restaurar corretamente ===
-    private Vector2 cachedNormalDirection;
-    private Vector2 cachedNormalTargetTile;
-    private bool hasCachedNormalState;
+    Vector2 cachedNormalDirection;
+    Vector2 cachedNormalTargetTile;
+    bool hasCachedNormalState;
 
     protected override void Awake()
     {
@@ -67,38 +67,44 @@ public class ChameleonMovementController : EnemyMovementController
         if (!spriteRenderer)
             spriteRenderer = GetComponent<SpriteRenderer>();
 
+        DisableAllAnimatedChildren();
         DisableDisguiseSprites();
+        ForceNormalVisualState();
     }
 
     protected override void Start()
     {
         base.Start();
 
-        if (spriteRenderer && idleSprite)
-            spriteRenderer.sprite = idleSprite;
-
-        StartBehaviourLoop();
-    }
-
-    private void OnEnable()
-    {
-        if (spriteRenderer && idleSprite && !isDisguised)
-        {
-            spriteRenderer.enabled = true;
-            spriteRenderer.sprite = idleSprite;
-        }
-
+        DisableAllAnimatedChildren();
         DisableDisguiseSprites();
-
+        ForceNormalVisualState();
         StartBehaviourLoop();
     }
 
-    private void OnDisable()
+    void OnEnable()
+    {
+        DisableAllAnimatedChildren();
+        DisableDisguiseSprites();
+        ForceNormalVisualState();
+        StartBehaviourLoop();
+    }
+
+    void OnDisable()
     {
         StopBehaviourLoop();
     }
 
-    private void Update()
+    void LateUpdate()
+    {
+        if (isDead)
+            return;
+
+        if (!isDisguised && !isTransforming && !isBlinking)
+            ForceNormalVisualState();
+    }
+
+    void Update()
     {
         if (isDead || isTransforming)
             return;
@@ -113,20 +119,55 @@ public class ChameleonMovementController : EnemyMovementController
             return;
 
         if (isDisguised)
-        {
             DoDisguisedMovement();
-        }
         else
-        {
             base.FixedUpdate();
-        }
     }
 
     protected override void UpdateSpriteDirection(Vector2 dir)
     {
     }
 
-    private void StartBehaviourLoop()
+    void ForceNormalVisualState()
+    {
+        DisableAllAnimatedChildren();
+        DisableDisguiseSprites();
+        DisableBaseDirectionalSprites();
+
+        if (spriteRenderer != null)
+        {
+            spriteRenderer.enabled = true;
+            if (idleSprite != null)
+                spriteRenderer.sprite = idleSprite;
+        }
+    }
+
+    void DisableBaseDirectionalSprites()
+    {
+        if (spriteUp != null) spriteUp.enabled = false;
+        if (spriteDown != null) spriteDown.enabled = false;
+        if (spriteLeft != null) spriteLeft.enabled = false;
+
+        if (spriteDamaged != null) spriteDamaged.enabled = false;
+
+        if (spriteDeath != null && !isDead)
+            spriteDeath.enabled = false;
+    }
+
+    void DisableAllAnimatedChildren()
+    {
+        var anims = GetComponentsInChildren<AnimatedSpriteRenderer>(true);
+        for (int i = 0; i < anims.Length; i++)
+        {
+            if (anims[i] == null) continue;
+            anims[i].enabled = false;
+
+            var sr = anims[i].GetComponent<SpriteRenderer>();
+            if (sr != null) sr.enabled = false;
+        }
+    }
+
+    void StartBehaviourLoop()
     {
         if (behaviourRoutine != null)
             StopCoroutine(behaviourRoutine);
@@ -135,7 +176,7 @@ public class ChameleonMovementController : EnemyMovementController
             behaviourRoutine = StartCoroutine(BehaviourLoop());
     }
 
-    private void StopBehaviourLoop()
+    void StopBehaviourLoop()
     {
         if (behaviourRoutine != null)
         {
@@ -144,7 +185,7 @@ public class ChameleonMovementController : EnemyMovementController
         }
     }
 
-    private IEnumerator BehaviourLoop()
+    IEnumerator BehaviourLoop()
     {
         while (!isDead)
         {
@@ -168,10 +209,18 @@ public class ChameleonMovementController : EnemyMovementController
         behaviourRoutine = null;
     }
 
-    private IEnumerator BlinkOnce()
+    IEnumerator BlinkOnce()
     {
         if (!spriteRenderer || blinkSprites == null || blinkSprites.Length == 0)
             yield break;
+
+        isBlinking = true;
+
+        DisableAllAnimatedChildren();
+        DisableDisguiseSprites();
+        DisableBaseDirectionalSprites();
+
+        spriteRenderer.enabled = true;
 
         float duration = Mathf.Max(blinkDuration, 0.01f);
         float frameTime = duration / blinkSprites.Length;
@@ -182,11 +231,13 @@ public class ChameleonMovementController : EnemyMovementController
             yield return new WaitForSeconds(frameTime);
         }
 
-        if (!isDisguised && idleSprite)
+        if (!isDisguised && idleSprite != null)
             spriteRenderer.sprite = idleSprite;
+
+        isBlinking = false;
     }
 
-    private Sprite GetCurrentPlayerIdleSprite()
+    Sprite GetCurrentPlayerIdleSprite()
     {
         if (currentDisguiseSet == null)
             return null;
@@ -204,10 +255,12 @@ public class ChameleonMovementController : EnemyMovementController
         return null;
     }
 
-    private IEnumerator TransformBlink(Sprite playerIdleSprite)
+    IEnumerator TransformBlink(Sprite playerIdleSprite)
     {
         if (spriteRenderer == null || idleSprite == null || playerIdleSprite == null)
             yield break;
+
+        isBlinking = true;
 
         float elapsed = 0f;
         bool useChameleon = true;
@@ -223,17 +276,17 @@ public class ChameleonMovementController : EnemyMovementController
         }
 
         spriteRenderer.sprite = idleSprite;
+        isBlinking = false;
     }
 
-    // === FIX helpers ===
-    private void CacheNormalMovementState()
+    void CacheNormalMovementState()
     {
         cachedNormalDirection = (direction == Vector2.zero) ? Vector2.down : direction;
         cachedNormalTargetTile = targetTile;
         hasCachedNormalState = true;
     }
 
-    private void ResyncNormalMovementAfterDisguise()
+    void ResyncNormalMovementAfterDisguise()
     {
         if (rb == null)
             return;
@@ -243,27 +296,21 @@ public class ChameleonMovementController : EnemyMovementController
         if (!hasCachedNormalState)
         {
             ChooseInitialDirection();
-            UpdateSpriteDirection(direction);
             targetTile = rb.position;
             DecideNextTile();
             return;
         }
 
         direction = cachedNormalDirection;
-        UpdateSpriteDirection(direction);
-
-        // O pulo/atravessar parede acontecia porque o targetTile antigo ainda estava ativo.
-        // Resetando aqui, o próximo tile será decidido a partir da posição atual (já snapada).
         targetTile = rb.position;
         DecideNextTile();
     }
 
-    private IEnumerator DisguiseAsPlayer()
+    IEnumerator DisguiseAsPlayer()
     {
         if (disguiseSets == null || disguiseSets.Length == 0)
             yield break;
 
-        // === FIX: garante estado consistente antes de entrar no disguise ===
         CacheNormalMovementState();
         SnapToGrid();
         if (rb != null) rb.linearVelocity = Vector2.zero;
@@ -274,7 +321,9 @@ public class ChameleonMovementController : EnemyMovementController
         isDisguised = false;
         speed = 0f;
 
+        DisableAllAnimatedChildren();
         DisableDisguiseSprites();
+        DisableBaseDirectionalSprites();
 
         if (spriteRenderer != null)
         {
@@ -297,6 +346,8 @@ public class ChameleonMovementController : EnemyMovementController
         if (spriteRenderer != null)
             spriteRenderer.enabled = false;
 
+        DisableBaseDirectionalSprites();
+
         SetDisguiseDirection(Vector2.down);
 
         disguisedDirection = Vector2.zero;
@@ -312,16 +363,16 @@ public class ChameleonMovementController : EnemyMovementController
             yield return null;
         }
 
-        // === Saindo do disguise ===
         isDisguised = false;
         isTransforming = true;
         speed = 0f;
 
-        // FIX: antes de mostrar o camaleão, trava posição no grid
         SnapToGrid();
         if (rb != null) rb.linearVelocity = Vector2.zero;
 
+        DisableAllAnimatedChildren();
         DisableDisguiseSprites();
+        DisableBaseDirectionalSprites();
 
         if (spriteRenderer != null)
         {
@@ -336,17 +387,11 @@ public class ChameleonMovementController : EnemyMovementController
         isTransforming = false;
         speed = originalSpeed;
 
-        if (!isDead && spriteRenderer && idleSprite)
-        {
-            spriteRenderer.enabled = true;
-            spriteRenderer.sprite = idleSprite;
-        }
-
-        // === FIX: re-sincroniza direction/targetTile pro movimento normal não "puxar" pro alvo antigo ===
+        ForceNormalVisualState();
         ResyncNormalMovementAfterDisguise();
     }
 
-    private void DisableDisguiseSprites()
+    void DisableDisguiseSprites()
     {
         if (disguiseSets == null)
         {
@@ -360,16 +405,25 @@ public class ChameleonMovementController : EnemyMovementController
             var set = disguiseSets[i];
             if (set == null) continue;
 
-            if (set.up != null) set.up.enabled = false;
-            if (set.down != null) set.down.enabled = false;
-            if (set.left != null) set.left.enabled = false;
-            if (set.right != null) set.right.enabled = false;
+            DisableDisguiseSprite(set.up);
+            DisableDisguiseSprite(set.down);
+            DisableDisguiseSprite(set.left);
+            DisableDisguiseSprite(set.right);
         }
 
         activeDisguiseSprite = null;
     }
 
-    private void SetDisguiseDirection(Vector2 dir)
+    void DisableDisguiseSprite(AnimatedSpriteRenderer r)
+    {
+        if (r == null) return;
+        r.enabled = false;
+
+        var sr = r.GetComponent<SpriteRenderer>();
+        if (sr != null) sr.enabled = false;
+    }
+
+    void SetDisguiseDirection(Vector2 dir)
     {
         if (!isDisguised || currentDisguiseSet == null)
             return;
@@ -388,7 +442,7 @@ public class ChameleonMovementController : EnemyMovementController
         if (newSprite != activeDisguiseSprite)
         {
             if (activeDisguiseSprite != null)
-                activeDisguiseSprite.enabled = false;
+                DisableDisguiseSprite(activeDisguiseSprite);
 
             activeDisguiseSprite = newSprite;
 
@@ -396,6 +450,9 @@ public class ChameleonMovementController : EnemyMovementController
             {
                 activeDisguiseSprite.enabled = true;
                 activeDisguiseSprite.idle = false;
+
+                var sr = activeDisguiseSprite.GetComponent<SpriteRenderer>();
+                if (sr != null) sr.enabled = true;
             }
         }
 
@@ -403,22 +460,22 @@ public class ChameleonMovementController : EnemyMovementController
             activeDisguiseSprite.idle = dir == Vector2.zero;
     }
 
-    private void ResetDirectionTimer()
+    void ResetDirectionTimer()
     {
         directionChangeTimer = Random.Range(minDirectionChangeTime, maxDirectionChangeTime);
     }
 
-    private void UpdateDisguisedDirection()
+    void UpdateDisguisedDirection()
     {
         directionChangeTimer -= Time.deltaTime;
 
         if (!hasDisguisedInput || directionChangeTimer <= 0f)
         {
-            Vector2[] dirs = { Vector2.up, Vector2.down, Vector2.left, Vector2.right };
             var validDirs = new List<Vector2>();
 
-            foreach (var dir in dirs)
+            for (int i = 0; i < 4; i++)
             {
+                Vector2 dir = i == 0 ? Vector2.up : i == 1 ? Vector2.down : i == 2 ? Vector2.left : Vector2.right;
                 Vector2 checkPos = rb.position + dir * tileSize;
                 if (!IsBlockedDisguised(checkPos))
                     validDirs.Add(dir);
@@ -441,7 +498,7 @@ public class ChameleonMovementController : EnemyMovementController
         SetDisguiseDirection(disguisedDirection);
     }
 
-    private void DoDisguisedMovement()
+    void DoDisguisedMovement()
     {
         if (!hasDisguisedInput || disguisedDirection == Vector2.zero)
         {
@@ -500,7 +557,7 @@ public class ChameleonMovementController : EnemyMovementController
         }
     }
 
-    private void TrySlideHorizontally(Vector2 position, float moveSpeed)
+    void TrySlideHorizontally(Vector2 position, float moveSpeed)
     {
         float leftCenter = Mathf.Floor(position.x / tileSize) * tileSize;
         float rightCenter = Mathf.Ceil(position.x / tileSize) * tileSize;
@@ -520,11 +577,7 @@ public class ChameleonMovementController : EnemyMovementController
         else if (rightFree && !leftFree)
             targetX = rightCenter;
         else
-        {
-            targetX = Mathf.Abs(position.x - leftCenter) <= Mathf.Abs(position.x - rightCenter)
-                ? leftCenter
-                : rightCenter;
-        }
+            targetX = Mathf.Abs(position.x - leftCenter) <= Mathf.Abs(position.x - rightCenter) ? leftCenter : rightCenter;
 
         if (Mathf.Abs(position.x - targetX) > CenterEpsilon)
         {
@@ -539,7 +592,7 @@ public class ChameleonMovementController : EnemyMovementController
         }
     }
 
-    private void TrySlideVertically(Vector2 position, float moveSpeed)
+    void TrySlideVertically(Vector2 position, float moveSpeed)
     {
         float bottomCenter = Mathf.Floor(position.y / tileSize) * tileSize;
         float topCenter = Mathf.Ceil(position.y / tileSize) * tileSize;
@@ -559,11 +612,7 @@ public class ChameleonMovementController : EnemyMovementController
         else if (topFree && !bottomFree)
             targetY = topCenter;
         else
-        {
-            targetY = Mathf.Abs(position.y - bottomCenter) <= Mathf.Abs(position.y - topCenter)
-                ? bottomCenter
-                : topCenter;
-        }
+            targetY = Mathf.Abs(position.y - bottomCenter) <= Mathf.Abs(position.y - topCenter) ? bottomCenter : topCenter;
 
         if (Mathf.Abs(position.y - targetY) > CenterEpsilon)
         {
@@ -578,7 +627,7 @@ public class ChameleonMovementController : EnemyMovementController
         }
     }
 
-    private bool IsSolidAtDisguised(Vector2 worldPosition)
+    bool IsSolidAtDisguised(Vector2 worldPosition)
     {
         Vector2 size = Vector2.one * (tileSize * 0.6f);
 
@@ -603,7 +652,7 @@ public class ChameleonMovementController : EnemyMovementController
         return false;
     }
 
-    private bool IsBlockedDisguised(Vector2 targetPosition)
+    bool IsBlockedDisguised(Vector2 targetPosition)
     {
         Vector2 size;
 
@@ -644,7 +693,9 @@ public class ChameleonMovementController : EnemyMovementController
         if (spriteRenderer != null)
             spriteRenderer.enabled = false;
 
+        DisableAllAnimatedChildren();
         DisableDisguiseSprites();
+        DisableBaseDirectionalSprites();
 
         base.Die();
     }
