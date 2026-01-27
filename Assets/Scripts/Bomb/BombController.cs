@@ -137,7 +137,7 @@ public partial class BombController : MonoBehaviour
                 PlaceBomb();
 
             if (IsControlEnabled() && input.GetDown(playerId, PlayerAction.ActionB))
-                TryExplodeMostRecentControlledBomb();
+                TryExplodeOldestControlledBomb();
         }
         else
         {
@@ -783,22 +783,24 @@ public partial class BombController : MonoBehaviour
         }
     }
 
-    public bool TryExplodeMostRecentControlledBomb()
+    public bool TryExplodeOldestControlledBomb()
     {
         CleanupNullBombs();
 
-        for (int i = plantedBombs.Count - 1; i >= 0; i--)
+        for (int i = 0; i < plantedBombs.Count; i++)
         {
             var b = plantedBombs[i];
             if (b == null)
             {
                 plantedBombs.RemoveAt(i);
+                i--;
                 continue;
             }
 
             if (!b.TryGetComponent<Bomb>(out var bombComp) || bombComp == null || !bombComp.IsControlBomb)
             {
                 plantedBombs.RemoveAt(i);
+                i--;
                 continue;
             }
 
