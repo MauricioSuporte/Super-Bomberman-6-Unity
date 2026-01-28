@@ -37,11 +37,6 @@ public sealed class LouieEggQueue : MonoBehaviour
     [SerializeField, Range(0f, 0.5f)] private float joinExtraDelayPerEgg = 0.05f;
     [SerializeField, Range(0.01f, 1f)] private float shiftSeconds = 0.35f;
 
-    [Header("Debug")]
-    [SerializeField] private bool debugLogs = true;
-    [SerializeField] private float debugEverySeconds = 0.25f;
-    float _nextDebug;
-
     struct EggEntry
     {
         public ItemPickup.ItemType type;
@@ -96,7 +91,7 @@ public sealed class LouieEggQueue : MonoBehaviour
         BindOwnerAuto();
         EnsureWorldRoot();
         EnsureHistoryBuffer();
-        SeedHistoryNow("Awake");
+        SeedHistoryNow();
     }
 
     void OnEnable()
@@ -104,7 +99,7 @@ public sealed class LouieEggQueue : MonoBehaviour
         BindOwnerAuto();
         EnsureWorldRoot();
         EnsureHistoryBuffer();
-        SeedHistoryNow("OnEnable");
+        SeedHistoryNow();
     }
 
     public void BindOwner(MovementController ownerMove)
@@ -122,7 +117,7 @@ public sealed class LouieEggQueue : MonoBehaviour
         EnsureHistoryBuffer();
 
         if (ownerChanged || _historyCount == 0)
-            SeedHistoryNow("BindOwner(EXPLICIT)");
+            SeedHistoryNow();
     }
 
     void BindOwnerAuto()
@@ -170,7 +165,7 @@ public sealed class LouieEggQueue : MonoBehaviour
         }
     }
 
-    void SeedHistoryNow(string reason)
+    void SeedHistoryNow()
     {
         EnsureHistoryBuffer();
 
@@ -185,9 +180,6 @@ public sealed class LouieEggQueue : MonoBehaviour
         RecordPosition(p);
         for (int i = 1; i < maxHistory; i++)
             RecordPosition(p);
-
-        if (debugLogs)
-            Debug.Log($"[EggQueue] SeedHistoryNow reason={reason} ownerPos={p} head={_historyHead} count={_historyCount}", this);
     }
 
     void LateUpdate()
@@ -203,13 +195,6 @@ public sealed class LouieEggQueue : MonoBehaviour
         EnsureHistoryBuffer();
 
         TrackOwnerPositionDistanceBased();
-
-        bool doDebug = debugLogs && Time.time >= _nextDebug;
-        if (doDebug)
-        {
-            _nextDebug = Time.time + Mathf.Max(0.05f, debugEverySeconds);
-            Debug.Log($"[EggQueue] eggs={_eggs.Count} historyCount={_historyCount} head={_historyHead}", this);
-        }
 
         for (int i = 0; i < _eggs.Count; i++)
         {
