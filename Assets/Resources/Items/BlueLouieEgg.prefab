@@ -170,7 +170,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a4b55e1b961d144197e1a7a4a391956, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  idleSprite: {fileID: 4646649027328027380, guid: 84fc19425a2586b49b58239f93eda2c5, type: 3}
+  idleSprite: {fileID: -1131300255, guid: 84fc19425a2586b49b58239f93eda2c5, type: 3}
   animationSprite:
   - {fileID: 4646649027328027380, guid: 84fc19425a2586b49b58239f93eda2c5, type: 3}
   - {fileID: -3665803642334570777, guid: 84fc19425a2586b49b58239f93eda2c5, type: 3}

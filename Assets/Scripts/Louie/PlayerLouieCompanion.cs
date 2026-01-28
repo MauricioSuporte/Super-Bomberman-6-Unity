@@ -218,6 +218,7 @@ public class PlayerLouieCompanion : MonoBehaviour
 
         ApplyRulesForCurrentMount();
 
+        movement.Died -= OnPlayerDied;
         movement.Died += OnPlayerDied;
     }
 
@@ -634,6 +635,8 @@ public class PlayerLouieCompanion : MonoBehaviour
         {
             Destroy(louie);
         }
+
+        TryMountFromQueuedEgg();
     }
 
     void OnPlayerDied(MovementController _) => UnmountLouie();
@@ -702,6 +705,8 @@ public class PlayerLouieCompanion : MonoBehaviour
             purple.SetExternalAnimator(null);
 
         RestorePunchAfterUnmount();
+
+        ClearEggQueue();
     }
 
     void OnDestroy()
@@ -930,5 +935,36 @@ public class PlayerLouieCompanion : MonoBehaviour
             case MountedLouieType.Pink: RestoreMountedPinkLouie(); break;
             case MountedLouieType.Red: RestoreMountedRedLouie(); break;
         }
+    }
+
+    bool TryMountFromQueuedEgg()
+    {
+        if (currentLouie != null)
+            return false;
+
+        if (!TryGetComponent<LouieEggQueue>(out var q) || q == null)
+            return false;
+
+        if (!q.TryDequeue(out var t))
+            return false;
+
+        switch (t)
+        {
+            case ItemPickup.ItemType.BlueLouieEgg: MountBlueLouie(); return true;
+            case ItemPickup.ItemType.BlackLouieEgg: MountBlackLouie(); return true;
+            case ItemPickup.ItemType.PurpleLouieEgg: MountPurpleLouie(); return true;
+            case ItemPickup.ItemType.GreenLouieEgg: MountGreenLouie(); return true;
+            case ItemPickup.ItemType.YellowLouieEgg: MountYellowLouie(); return true;
+            case ItemPickup.ItemType.PinkLouieEgg: MountPinkLouie(); return true;
+            case ItemPickup.ItemType.RedLouieEgg: MountRedLouie(); return true;
+        }
+
+        return false;
+    }
+
+    void ClearEggQueue()
+    {
+        if (TryGetComponent<LouieEggQueue>(out var q) && q != null)
+            q.ClearAll();
     }
 }

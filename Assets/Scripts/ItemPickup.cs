@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 
+[RequireComponent(typeof(SpriteRenderer))]
 public class ItemPickup : MonoBehaviour
 {
     [Header("SFX")]
@@ -83,10 +84,42 @@ public class ItemPickup : MonoBehaviour
         return abilitySystem;
     }
 
+    private Sprite GetEggIdleSpriteFallback()
+    {
+        if (idleRenderer != null && idleRenderer.idleSprite != null)
+            return idleRenderer.idleSprite;
+
+        var sr = GetComponent<SpriteRenderer>();
+        return sr != null ? sr.sprite : null;
+    }
+
+    private LouieEggQueue GetOrCreateEggQueue(GameObject player)
+    {
+        if (!player.TryGetComponent<LouieEggQueue>(out var q) || q == null)
+            q = player.AddComponent<LouieEggQueue>();
+
+        q.BindOwner(player.GetComponent<MovementController>());
+        return q;
+    }
+
     private void OnItemPickup(GameObject player)
     {
-        if (IsLouieEgg(type) && PlayerAlreadyMounted(player))
+        bool isEgg = IsLouieEgg(type);
+
+        if (isEgg && PlayerAlreadyMounted(player))
+        {
+            var q = GetOrCreateEggQueue(player);
+
+            if (!q.TryEnqueue(type, GetEggIdleSpriteFallback()))
+                return;
+
+            var audio2 = player.GetComponent<AudioSource>();
+            if (audio2 != null && collectSfx != null)
+                audio2.PlayOneShot(collectSfx, collectVolume);
+
+            Destroy(gameObject);
             return;
+        }
 
         var audio = player.GetComponent<AudioSource>();
         if (audio != null && collectSfx != null)
