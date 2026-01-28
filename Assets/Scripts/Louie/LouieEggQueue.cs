@@ -27,9 +27,10 @@ public sealed class LouieEggQueue : MonoBehaviour
     public int MaxEggs => Mathf.Max(0, maxEggsInQueue);
     public bool IsFull => MaxEggs > 0 && _eggs.Count >= MaxEggs;
 
-    [Header("Queue - Join Animation")]
+    [Header("Queue - Join/Shift Animation")]
     [SerializeField, Range(0.01f, 1f)] private float joinSeconds = 0.5f;
     [SerializeField, Range(0f, 0.5f)] private float joinExtraDelayPerEgg = 0.05f;
+    [SerializeField, Range(0.01f, 1f)] private float shiftSeconds = 0.35f;
 
     [Header("Debug")]
     [SerializeField] private bool debugLogs = true;
@@ -50,10 +51,10 @@ public sealed class LouieEggQueue : MonoBehaviour
         public SpriteRenderer sr;
         public int recentIndex;
 
-        public bool isJoining;
-        public float joinStartTime;
-        public float joinDuration;
-        public Vector3 joinFromWorld;
+        public bool isAnimating;
+        public float animStartTime;
+        public float animDuration;
+        public Vector3 animFromWorld;
     }
 
     readonly List<EggEntry> _eggs = new();
@@ -91,6 +92,7 @@ public sealed class LouieEggQueue : MonoBehaviour
 
         joinSeconds = Mathf.Clamp(joinSeconds, 0.01f, 1f);
         joinExtraDelayPerEgg = Mathf.Clamp(joinExtraDelayPerEgg, 0f, 0.5f);
+        shiftSeconds = Mathf.Clamp(shiftSeconds, 0.01f, 1f);
 
         minTargetSeparation = Mathf.Clamp(minTargetSeparation, 0.0001f, 0.5f);
         recordMinDelta = Mathf.Clamp(recordMinDelta, 0.00001f, 0.05f);
@@ -282,7 +284,7 @@ public sealed class LouieEggQueue : MonoBehaviour
             _eggs[i] = e;
         }
 
-        float t = Mathf.Clamp01(followLerp);
+        float followT = Mathf.Clamp01(followLerp);
 
         float minSep = Mathf.Max(0.0001f, minTargetSeparation);
         float minSepSqr = minSep * minSep;
@@ -309,13 +311,13 @@ public sealed class LouieEggQueue : MonoBehaviour
 
             Vector3 newWorld;
 
-            if (e.isJoining)
+            if (e.isAnimating)
             {
-                float elapsed = Time.time - e.joinStartTime;
-                float u = e.joinDuration <= 0.0001f ? 1f : Mathf.Clamp01(elapsed / e.joinDuration);
+                float elapsed = Time.time - e.animStartTime;
+                float u = e.animDuration <= 0.0001f ? 1f : Mathf.Clamp01(elapsed / e.animDuration);
                 float smoothU = u * u * (3f - 2f * u);
 
-                Vector3 from = e.joinFromWorld;
+                Vector3 from = e.animFromWorld;
                 from.z = 0f;
 
                 Vector3 to = targetWorld;
@@ -325,11 +327,14 @@ public sealed class LouieEggQueue : MonoBehaviour
                 newWorld.z = 0f;
 
                 if (u >= 1f)
-                    e.isJoining = false;
+                {
+                    e.isAnimating = false;
+                    e.animDuration = 0f;
+                }
             }
             else
             {
-                newWorld = Vector3.Lerp(before, targetWorld, t);
+                newWorld = Vector3.Lerp(before, targetWorld, followT);
                 newWorld.z = 0f;
             }
 
@@ -420,6 +425,44 @@ public sealed class LouieEggQueue : MonoBehaviour
         return transform.position;
     }
 
+    void StartAnimateToTargetNow(int eggIndex, float duration)
+    {
+        if (eggIndex < 0 || eggIndex >= _eggs.Count)
+            return;
+
+        var e = _eggs[eggIndex];
+        if (e.rootTr == null)
+            return;
+
+        e.isAnimating = true;
+        e.animStartTime = Time.time;
+        e.animDuration = Mathf.Max(0.01f, duration);
+
+        Vector3 p = e.rootTr.position;
+        p.z = 0f;
+        e.animFromWorld = p;
+
+        _eggs[eggIndex] = e;
+    }
+
+    void ReindexAll()
+    {
+        for (int i = 0; i < _eggs.Count; i++)
+        {
+            var e = _eggs[i];
+            e.recentIndex = (stepPerEgg * (i + 1)) - 1;
+            _eggs[i] = e;
+        }
+    }
+
+    void AnimateAllShift()
+    {
+        float dur = Mathf.Max(0.01f, shiftSeconds);
+
+        for (int i = 0; i < _eggs.Count; i++)
+            StartAnimateToTargetNow(i, dur);
+    }
+
     public bool TryEnqueue(ItemPickup.ItemType type, Sprite idleSprite)
     {
         BindOwnerAuto();
@@ -434,12 +477,7 @@ public sealed class LouieEggQueue : MonoBehaviour
             return false;
         }
 
-        for (int i = 0; i < _eggs.Count; i++)
-        {
-            var e = _eggs[i];
-            e.recentIndex = (stepPerEgg * (i + 1)) - 1;
-            _eggs[i] = e;
-        }
+        ReindexAll();
 
         int recentIndex = (stepPerEgg * (_eggs.Count + 1)) - 1;
 
@@ -495,10 +533,10 @@ public sealed class LouieEggQueue : MonoBehaviour
             sr = sr,
             recentIndex = recentIndex,
 
-            isJoining = true,
-            joinStartTime = Time.time,
-            joinDuration = dur,
-            joinFromWorld = spawnWorld
+            isAnimating = true,
+            animStartTime = Time.time,
+            animDuration = dur,
+            animFromWorld = spawnWorld
         });
 
         return true;
@@ -526,12 +564,8 @@ public sealed class LouieEggQueue : MonoBehaviour
 
         type = first.type;
 
-        for (int i = 0; i < _eggs.Count; i++)
-        {
-            var e = _eggs[i];
-            e.recentIndex = (stepPerEgg * (i + 1)) - 1;
-            _eggs[i] = e;
-        }
+        ReindexAll();
+        AnimateAllShift();
 
         return true;
     }
