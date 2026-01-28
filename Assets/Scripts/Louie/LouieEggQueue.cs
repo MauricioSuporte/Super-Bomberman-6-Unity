@@ -20,7 +20,7 @@ public sealed class LouieEggQueue : MonoBehaviour
 
     [Header("Rendering")]
     [SerializeField] private string sortingLayerName = "Player";
-    [SerializeField] private int baseOrderInLayer = 50;
+    [SerializeField] private int eggLayer = 3;
 
     [Header("Queue")]
     [SerializeField, Range(0, 10)] private int maxEggsInQueue = 3;
@@ -278,7 +278,7 @@ public sealed class LouieEggQueue : MonoBehaviour
             if (e.sr != null)
             {
                 e.sr.sortingLayerName = sortingLayerName;
-                e.sr.sortingOrder = baseOrderInLayer + i;
+                e.sr.sortingOrder = eggLayer;
             }
 
             _eggs[i] = e;
@@ -511,7 +511,7 @@ public sealed class LouieEggQueue : MonoBehaviour
         sr.sprite = idleSprite;
         sr.enabled = true;
         sr.sortingLayerName = sortingLayerName;
-        sr.sortingOrder = baseOrderInLayer + _eggs.Count;
+        sr.sortingOrder = eggLayer + _eggs.Count;
 
         var anim = visualGo.AddComponent<AnimatedSpriteRenderer>();
         anim.idleSprite = idleSprite;
