@@ -28,7 +28,7 @@ public sealed class LouieEggQueue : MonoBehaviour
     [SerializeField] private int eggGameObjectLayer = 3;
 
     [Header("Queue")]
-    [SerializeField, Range(0, 10)] private int maxEggsInQueue = 3;
+    private int maxEggsInQueue = 5;
     public int MaxEggs => Mathf.Max(0, maxEggsInQueue);
     public bool IsFull => MaxEggs > 0 && _eggs.Count >= MaxEggs;
 
@@ -48,9 +48,17 @@ public sealed class LouieEggQueue : MonoBehaviour
     [SerializeField] private bool idleDequeueSnap = false;
 
     [Header("Debug")]
-    private bool debugLogs = true;
+    [SerializeField] private bool debugLogs = true;
     [SerializeField, Range(0.05f, 5f)] private float debugLogEverySeconds = 0.5f;
     [SerializeField] private bool debugOnlyWhenIdleIssue = true;
+
+    [Header("Debug - Directional Visual Issue")]
+    [SerializeField] private bool debugDirectionalWhenIdleShift = true;
+    [SerializeField] private bool debugDirectionalOnlyOnChange = true;
+    [SerializeField] private bool debugDirectionalIncludeTargets = true;
+
+    [Header("Idle - Hysteresis")]
+    [SerializeField, Range(0, 30)] private int idleGraceFrames = 3;
 
     struct EggEntry
     {
@@ -74,6 +82,10 @@ public sealed class LouieEggQueue : MonoBehaviour
 
         public AudioClip mountSfx;
         public float mountVolume;
+
+        public bool hasLastDirDebug;
+        public bool lastIdleApplied;
+        public string lastActiveRendererName;
     }
 
     readonly List<EggEntry> _eggs = new();
@@ -93,7 +105,8 @@ public sealed class LouieEggQueue : MonoBehaviour
     float _nextDebugTime;
     Vector3 _lastOwnerPos;
     bool _hasLastOwnerPos;
-    int _idleNoHistoryAdvanceFrames;
+
+    int _idleFrames;
 
     bool _hasLastMoveDir;
     Vector3 _lastMoveDirWorld = Vector3.down;
@@ -102,6 +115,9 @@ public sealed class LouieEggQueue : MonoBehaviour
     Vector3 _lastRealOwnerPos;
 
     Vector3[] _idleSnapshot;
+
+    bool _lastUseIdleShift;
+    int _lastIdleShiftEggCount;
 
     public int Count => _eggs.Count;
 
@@ -121,6 +137,7 @@ public sealed class LouieEggQueue : MonoBehaviour
         eggSpacingWorld = Mathf.Clamp(eggSpacingWorld, 0.05f, 5f);
 
         debugLogEverySeconds = Mathf.Clamp(debugLogEverySeconds, 0.05f, 5f);
+        idleGraceFrames = Mathf.Clamp(idleGraceFrames, 0, 30);
     }
 
     void Awake()
@@ -145,7 +162,9 @@ public sealed class LouieEggQueue : MonoBehaviour
     {
         _nextDebugTime = 0f;
         _hasLastOwnerPos = false;
-        _idleNoHistoryAdvanceFrames = 0;
+        _idleFrames = 0;
+        _lastUseIdleShift = false;
+        _lastIdleShiftEggCount = 0;
     }
 
     public void BindOwner(MovementController ownerMove)
@@ -295,18 +314,21 @@ public sealed class LouieEggQueue : MonoBehaviour
         _lastOwnerPos = ownerPos;
         _hasLastOwnerPos = true;
 
+        if (ownerDidNotMove) _idleFrames++;
+        else _idleFrames = 0;
+
         int headBefore = _historyHead;
         int countBefore = _historyCount;
         float carryBefore = _distanceCarry;
 
         bool wroteHistory = TrackOwnerPositionDistanceBased();
 
-        bool historyAdvanced = (_historyHead != headBefore) || (_historyCount != countBefore);
+        float followSpeed = GetOwnerWorldSpeedPerSecond();
+        float maxStep = followSpeed * Time.deltaTime;
 
-        if (ownerDidNotMove && !historyAdvanced)
-            _idleNoHistoryAdvanceFrames++;
-        else
-            _idleNoHistoryAdvanceFrames = 0;
+        Vector3 behindDir = GetFallbackBehindDir();
+
+        bool useIdleShift = idleDequeueStyle && _idleFrames >= Mathf.Max(0, idleGraceFrames);
 
         if (debugLogs && Time.time >= _nextDebugTime)
         {
@@ -314,7 +336,7 @@ public sealed class LouieEggQueue : MonoBehaviour
 
             bool shouldLog =
                 !debugOnlyWhenIdleIssue ||
-                (ownerDidNotMove && _idleNoHistoryAdvanceFrames >= 10);
+                (ownerDidNotMove && _idleFrames >= 10);
 
             if (shouldLog)
             {
@@ -324,11 +346,27 @@ public sealed class LouieEggQueue : MonoBehaviour
 
                 Debug.Log(
                     $"[LouieEggQueue] Tick owner={ownerName} eggs={_eggs.Count} idle={ownerDidNotMove} " +
+                    $"useIdleShift={useIdleShift} idleFrames={_idleFrames} " +
                     $"history(wrote={wroteHistory}, head {headBefore}->{_historyHead}, count {countBefore}->{_historyCount}) " +
                     $"carry {carryBefore:0.0000}->{_distanceCarry:0.0000} spacing={spacing:0.0000} vAdv={virtualAdvance:0.0000} " +
-                    $"idleNoAdvanceFrames={_idleNoHistoryAdvanceFrames}",
+                    $"maxStep={maxStep:0.0000}",
                     this
                 );
+            }
+        }
+
+        if (debugLogs && debugDirectionalWhenIdleShift)
+        {
+            bool idleShiftJustChanged = (useIdleShift != _lastUseIdleShift) || (_lastIdleShiftEggCount != _eggs.Count);
+            if (idleShiftJustChanged)
+            {
+                Debug.Log(
+                    $"[LouieEggQueue] IdleShiftState changed -> useIdleShift={useIdleShift} eggs={_eggs.Count} idleFrames={_idleFrames}",
+                    this
+                );
+
+                _lastUseIdleShift = useIdleShift;
+                _lastIdleShiftEggCount = _eggs.Count;
             }
         }
 
@@ -368,14 +406,6 @@ public sealed class LouieEggQueue : MonoBehaviour
         Vector3 prevTarget = Vector3.positiveInfinity;
         bool hasPrevTarget = false;
 
-        float followSpeed = GetOwnerWorldSpeedPerSecond();
-        float maxStep = followSpeed * Time.deltaTime;
-
-        Vector3 behindDir = GetFallbackBehindDir();
-
-        const int idleGraceFrames = 1;
-        bool useIdleShift = idleDequeueStyle && _idleNoHistoryAdvanceFrames >= idleGraceFrames;
-
         if (useIdleShift)
         {
             EnsureIdleSnapshotBuffer(_eggs.Count);
@@ -400,13 +430,9 @@ public sealed class LouieEggQueue : MonoBehaviour
                 int closestIndex = _eggs.Count - 1;
 
                 if (i == closestIndex)
-                {
                     targetWorld = ownerPos + (Vector3)worldOffset;
-                }
                 else
-                {
                     targetWorld = _idleSnapshot[i + 1];
-                }
 
                 targetWorld.z = 0f;
             }
@@ -429,10 +455,13 @@ public sealed class LouieEggQueue : MonoBehaviour
                 e.lastPosWorld = before;
             }
 
+            bool usedAntiCollapseAdjust = false;
+
             if (!useIdleShift && hasPrevTarget && (targetWorld - prevTarget).sqrMagnitude <= minSepSqr)
             {
                 targetWorld = prevTarget + behindDir * minSep;
                 targetWorld.z = 0f;
+                usedAntiCollapseAdjust = true;
             }
 
             Vector3 newWorld;
@@ -471,7 +500,51 @@ public sealed class LouieEggQueue : MonoBehaviour
             delta.z = 0f;
 
             if (e.directional != null)
+            {
+                float dz = Mathf.Max(0.00000001f, e.directional.moveDeadZone);
+                bool wouldBeMoving = delta.sqrMagnitude > dz;
+
                 e.directional.ApplyMoveDelta(delta);
+
+                if (debugLogs && debugDirectionalWhenIdleShift && useIdleShift)
+                {
+                    bool shouldInspect = Time.time >= _nextDebugTime || !debugOnlyWhenIdleIssue || ownerDidNotMove;
+                    if (shouldInspect)
+                    {
+                        string activeName = GetActiveDirectionalRendererName(e.directional);
+                        bool changed = !e.hasLastDirDebug ||
+                                       e.lastIdleApplied != !wouldBeMoving ||
+                                       (activeName != e.lastActiveRendererName);
+
+                        if (!debugDirectionalOnlyOnChange || changed)
+                        {
+                            string ownerName = _ownerTr != null ? _ownerTr.name : (_ownerRb != null ? _ownerRb.name : "none");
+                            string tgtPart = "";
+
+                            if (debugDirectionalIncludeTargets)
+                            {
+                                Vector3 toTgt = targetWorld - before; toTgt.z = 0f;
+                                tgtPart =
+                                    $" target={targetWorld.x:0.00},{targetWorld.y:0.00} " +
+                                    $"toTarget={toTgt.x:0.00},{toTgt.y:0.00} " +
+                                    $"antiCollapseAdj={usedAntiCollapseAdjust}";
+                            }
+
+                            Debug.Log(
+                                $"[LouieEggQueue] IdleShiftAnim eggIndex={i} type={e.type} owner={ownerName} " +
+                                $"delta={delta.x:0.000},{delta.y:0.000} stepMax={maxStep:0.000} " +
+                                $"moving={wouldBeMoving} active={activeName} " +
+                                $"prevActive={(e.hasLastDirDebug ? e.lastActiveRendererName : "none")}{tgtPart}",
+                                this
+                            );
+                        }
+
+                        e.hasLastDirDebug = true;
+                        e.lastIdleApplied = !wouldBeMoving;
+                        e.lastActiveRendererName = activeName;
+                    }
+                }
+            }
 
             e.lastPosWorld = newWorld;
             _eggs[i] = e;
@@ -479,6 +552,21 @@ public sealed class LouieEggQueue : MonoBehaviour
             prevTarget = targetWorld;
             hasPrevTarget = true;
         }
+    }
+
+    static string GetActiveDirectionalRendererName(EggFollowerDirectionalVisual dv)
+    {
+        if (dv == null)
+            return "none";
+
+        string name = "none";
+
+        if (dv.up != null && dv.up.enabled) name = "Up";
+        if (dv.down != null && dv.down.enabled) name = (name == "none" ? "Down" : name + "+Down");
+        if (dv.left != null && dv.left.enabled) name = (name == "none" ? "Left" : name + "+Left");
+        if (dv.right != null && dv.right.enabled) name = (name == "none" ? "Right" : name + "+Right");
+
+        return name;
     }
 
     float GetOwnerWorldSpeedPerSecond()
@@ -789,7 +877,11 @@ public sealed class LouieEggQueue : MonoBehaviour
             animFromWorld = spawnWorld,
 
             hasLastPos = true,
-            lastPosWorld = spawnWorld
+            lastPosWorld = spawnWorld,
+
+            hasLastDirDebug = false,
+            lastIdleApplied = true,
+            lastActiveRendererName = "none",
         };
 
         _eggs.Insert(0, entry);
