@@ -1174,7 +1174,9 @@ public class MovementController : MonoBehaviour, IKillable
             DisableAllFootSprites();
             DisableAllMountedSprites();
 
-            facingDirection = Vector2.down;
+            if (facingDirection == Vector2.zero)
+                facingDirection = Vector2.down;
+
             direction = Vector2.zero;
             hasInput = false;
 
