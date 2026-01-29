@@ -199,7 +199,7 @@ SpriteRenderer:
   m_SortingOrder: 0
   m_Sprite: {fileID: 414104775, guid: c7af4be06e62a6841986633c2e52d5db, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_FlipX: 0
+  m_FlipX: 1
   m_FlipY: 0
   m_DrawMode: 0
   m_Size: {x: 1, y: 1.5625}
@@ -225,7 +225,7 @@ MonoBehaviour:
   - {fileID: 414104775, guid: c7af4be06e62a6841986633c2e52d5db, type: 3}
   - {fileID: 792342116, guid: c7af4be06e62a6841986633c2e52d5db, type: 3}
   - {fileID: -1848373286, guid: c7af4be06e62a6841986633c2e52d5db, type: 3}
-  allowFlipX: 0
+  allowFlipX: 1
   animationTime: 0.16666667
   useSequenceDuration: 0
   sequenceDuration: 0.5
@@ -513,7 +513,7 @@ MonoBehaviour:
   - {fileID: 414104775, guid: c7af4be06e62a6841986633c2e52d5db, type: 3}
   - {fileID: 792342116, guid: c7af4be06e62a6841986633c2e52d5db, type: 3}
   - {fileID: -1848373286, guid: c7af4be06e62a6841986633c2e52d5db, type: 3}
-  allowFlipX: 1
+  allowFlipX: 0
   animationTime: 0.16666667
   useSequenceDuration: 0
   sequenceDuration: 0.5
