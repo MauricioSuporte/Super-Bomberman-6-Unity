@@ -1567,7 +1567,7 @@ MonoBehaviour:
   sortingLayerName: Player
   eggSortingOrder: 3
   eggGameObjectLayer: 3
-  maxEggsInQueue: 3
+  maxEggsInQueue: 10
   joinSeconds: 0.5
   joinExtraDelayPerEgg: 0.05
   shiftSeconds: 0.35
