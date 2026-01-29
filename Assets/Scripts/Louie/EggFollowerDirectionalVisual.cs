@@ -19,6 +19,7 @@ public sealed class EggFollowerDirectionalVisual : MonoBehaviour
 
     void OnEnable()
     {
+        ForceOnlyOneRendererVisibleImmediate();
         ApplyState(facing, idle: true, force: true);
     }
 
@@ -43,7 +44,7 @@ public sealed class EggFollowerDirectionalVisual : MonoBehaviour
         if (face != Vector2.zero)
             facing = NormalizeCardinal(face);
 
-        ApplyState(facing, idle: true, force: false);
+        ApplyState(facing, idle: true, force: true);
     }
 
     void ApplyState(Vector2 face, bool idle, bool force)
@@ -62,13 +63,27 @@ public sealed class EggFollowerDirectionalVisual : MonoBehaviour
 
         if (target != active)
         {
-            if (active != null)
-                SetAnimEnabled(active, false);
+            DisableAllDirectionalRenderers();
 
             active = target;
 
             if (active != null)
                 SetAnimEnabled(active, true);
+        }
+        else
+        {
+            if (active == null)
+            {
+                DisableAllDirectionalRenderers();
+                active = target;
+                if (active != null)
+                    SetAnimEnabled(active, true);
+            }
+            else
+            {
+                DisableAllDirectionalRenderers();
+                SetAnimEnabled(active, true);
+            }
         }
 
         if (active != null)
@@ -76,6 +91,34 @@ public sealed class EggFollowerDirectionalVisual : MonoBehaviour
             active.idle = idle;
             active.RefreshFrame();
         }
+    }
+
+    void ForceOnlyOneRendererVisibleImmediate()
+    {
+        DisableAllDirectionalRenderers();
+
+        var target = Get(facing);
+        if (target == null)
+            target = down;
+
+        active = target;
+
+        if (active != null)
+        {
+            SetAnimEnabled(active, true);
+            active.idle = true;
+            active.RefreshFrame();
+        }
+
+        lastIdle = true;
+    }
+
+    void DisableAllDirectionalRenderers()
+    {
+        SetAnimEnabled(up, false);
+        SetAnimEnabled(down, false);
+        SetAnimEnabled(left, false);
+        SetAnimEnabled(right, false);
     }
 
     AnimatedSpriteRenderer Get(Vector2 face)
