@@ -60,6 +60,9 @@ public sealed class LouieEggQueue : MonoBehaviour
 
         public bool hasLastPos;
         public Vector3 lastPosWorld;
+
+        public AudioClip mountSfx;
+        public float mountVolume;
     }
 
     readonly List<EggEntry> _eggs = new();
@@ -479,6 +482,11 @@ public sealed class LouieEggQueue : MonoBehaviour
 
     public bool TryEnqueue(ItemPickup.ItemType type, Sprite idleSprite)
     {
+        return TryEnqueue(type, idleSprite, null, 1f);
+    }
+
+    public bool TryEnqueue(ItemPickup.ItemType type, Sprite idleSprite, AudioClip mountSfx, float mountVolume)
+    {
         BindOwnerAuto();
         EnsureWorldRoot();
         EnsureHistoryBuffer();
@@ -561,6 +569,9 @@ public sealed class LouieEggQueue : MonoBehaviour
             legacyAnim = legacyAnim,
             legacySr = legacySr,
 
+            mountSfx = mountSfx,
+            mountVolume = Mathf.Clamp01(mountVolume),
+
             isAnimating = true,
             animStartTime = Time.time,
             animDuration = dur,
@@ -575,7 +586,14 @@ public sealed class LouieEggQueue : MonoBehaviour
 
     public bool TryDequeue(out ItemPickup.ItemType type)
     {
+        return TryDequeue(out type, out _, out _);
+    }
+
+    public bool TryDequeue(out ItemPickup.ItemType type, out AudioClip mountSfx, out float mountVolume)
+    {
         type = default;
+        mountSfx = null;
+        mountVolume = 1f;
 
         if (_eggs.Count == 0)
             return false;
@@ -587,6 +605,8 @@ public sealed class LouieEggQueue : MonoBehaviour
             Destroy(first.rootTr.gameObject);
 
         type = first.type;
+        mountSfx = first.mountSfx;
+        mountVolume = first.mountVolume;
 
         AnimateAllShift();
         return true;

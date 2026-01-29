@@ -102,28 +102,51 @@ public class ItemPickup : MonoBehaviour
         return q;
     }
 
+    private void PlayCollectSfxOnPlayer(GameObject player)
+    {
+        if (collectSfx == null)
+            return;
+
+        var audio = player.GetComponent<AudioSource>();
+        if (audio != null)
+            audio.PlayOneShot(collectSfx, Mathf.Clamp01(collectVolume));
+    }
+
+    private bool TrySetMountSfxForImmediateMount(GameObject player)
+    {
+        if (collectSfx == null)
+            return false;
+
+        if (!player.TryGetComponent<PlayerLouieCompanion>(out var companion) || companion == null)
+            return false;
+
+        companion.SetNextMountSfx(collectSfx, collectVolume);
+        return true;
+    }
+
     private void OnItemPickup(GameObject player)
     {
         bool isEgg = IsLouieEgg(type);
 
-        if (isEgg && PlayerAlreadyMounted(player))
+        if (isEgg)
         {
-            var q = GetOrCreateEggQueue(player);
+            if (PlayerAlreadyMounted(player))
+            {
+                var q = GetOrCreateEggQueue(player);
 
-            if (!q.TryEnqueue(type, GetEggIdleSpriteFallback()))
+                if (!q.TryEnqueue(type, GetEggIdleSpriteFallback(), collectSfx, collectVolume))
+                    return;
+
+                Destroy(gameObject);
                 return;
+            }
 
-            var audio2 = player.GetComponent<AudioSource>();
-            if (audio2 != null && collectSfx != null)
-                audio2.PlayOneShot(collectSfx, collectVolume);
-
-            Destroy(gameObject);
-            return;
+            TrySetMountSfxForImmediateMount(player);
         }
-
-        var audio = player.GetComponent<AudioSource>();
-        if (audio != null && collectSfx != null)
-            audio.PlayOneShot(collectSfx, collectVolume);
+        else
+        {
+            PlayCollectSfxOnPlayer(player);
+        }
 
         switch (type)
         {

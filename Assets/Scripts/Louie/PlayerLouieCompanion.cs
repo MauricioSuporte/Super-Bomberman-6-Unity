@@ -27,6 +27,15 @@ public class PlayerLouieCompanion : MonoBehaviour
     [Header("Visual Sync")]
     public bool blinkPlayerTogetherWithLouie = true;
 
+    [Header("Louie Mount SFX")]
+    public AudioClip mountLouieSfx;
+
+    [Range(0f, 1f)]
+    public float mountLouieVolume = 1f;
+
+    AudioClip pendingMountSfx;
+    float pendingMountVolume = 1f;
+
     MovementController movement;
     GameObject currentLouie;
 
@@ -201,6 +210,7 @@ public class PlayerLouieCompanion : MonoBehaviour
             bc.enabled = false;
 
         movement.SetMountedOnLouie(true);
+        PlayMountSfxIfAny();
 
         bool isPink = mountedType == MountedLouieType.Pink;
         movement.SetMountedSpritesLocalYOverride(isPink, movement.pinkMountedSpritesLocalY);
@@ -945,8 +955,10 @@ public class PlayerLouieCompanion : MonoBehaviour
         if (!TryGetComponent<LouieEggQueue>(out var q) || q == null)
             return false;
 
-        if (!q.TryDequeue(out var t))
+        if (!q.TryDequeue(out var t, out var sfx, out var vol))
             return false;
+
+        SetNextMountSfx(sfx, vol);
 
         switch (t)
         {
@@ -966,5 +978,36 @@ public class PlayerLouieCompanion : MonoBehaviour
     {
         if (TryGetComponent<LouieEggQueue>(out var q) && q != null)
             q.ClearAll();
+    }
+
+    public void SetNextMountSfx(AudioClip clip, float volume)
+    {
+        pendingMountSfx = clip;
+        pendingMountVolume = Mathf.Clamp01(volume);
+    }
+
+    AudioSource FindAudioSource()
+    {
+        var a = GetComponent<AudioSource>();
+        if (a != null) return a;
+
+        a = GetComponentInChildren<AudioSource>(true);
+        if (a != null) return a;
+
+        a = GetComponentInParent<AudioSource>(true);
+        return a;
+    }
+
+    void PlayMountSfxIfAny()
+    {
+        var clip = pendingMountSfx != null ? pendingMountSfx : mountLouieSfx;
+        var vol = pendingMountSfx != null ? pendingMountVolume : mountLouieVolume;
+
+        pendingMountSfx = null;
+        pendingMountVolume = 1f;
+
+        var audio = FindAudioSource();
+        if (audio != null && clip != null)
+            audio.PlayOneShot(clip, Mathf.Clamp01(vol));
     }
 }
