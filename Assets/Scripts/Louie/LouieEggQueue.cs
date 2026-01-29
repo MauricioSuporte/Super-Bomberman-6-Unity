@@ -37,18 +37,29 @@ public sealed class LouieEggQueue : MonoBehaviour
     [SerializeField, Range(0f, 0.5f)] private float joinExtraDelayPerEgg = 0.05f;
     [SerializeField, Range(0.01f, 1f)] private float shiftSeconds = 0.35f;
 
+    [Header("Egg Visual (Prefab)")]
+    [Tooltip("Prefab do EggFollower (com filhos Up/Down/Left/Right + EggFollowerDirectionalVisual). Se definido, a animação fica sempre a mesma independente do tipo do ovo.")]
+    [SerializeField] private GameObject eggFollowerPrefab;
+
     struct EggEntry
     {
         public ItemPickup.ItemType type;
+
         public Transform rootTr;
-        public Transform visualTr;
-        public AnimatedSpriteRenderer anim;
-        public SpriteRenderer sr;
+
+        public EggFollowerDirectionalVisual directional;
+        public SpriteRenderer[] allSpriteRenderers;
+
+        public AnimatedSpriteRenderer legacyAnim;
+        public SpriteRenderer legacySr;
 
         public bool isAnimating;
         public float animStartTime;
         public float animDuration;
         public Vector3 animFromWorld;
+
+        public bool hasLastPos;
+        public Vector3 lastPosWorld;
     }
 
     readonly List<EggEntry> _eggs = new();
@@ -111,7 +122,7 @@ public sealed class LouieEggQueue : MonoBehaviour
 
         _ownerMove = ownerMove;
         _ownerTr = ownerMove.transform;
-        _ownerRb = ownerMove.Rigidbody != null ? ownerMove.Rigidbody : ownerMove.GetComponent<Rigidbody2D>();
+        _ownerRb = _ownerMove.Rigidbody != null ? _ownerMove.Rigidbody : ownerMove.GetComponent<Rigidbody2D>();
 
         EnsureWorldRoot();
         EnsureHistoryBuffer();
@@ -204,10 +215,23 @@ public sealed class LouieEggQueue : MonoBehaviour
 
             EnsureEggLayer(e.rootTr);
 
-            if (e.sr != null)
+            if (e.allSpriteRenderers != null && e.allSpriteRenderers.Length > 0)
             {
-                e.sr.sortingLayerName = sortingLayerName;
-                e.sr.sortingOrder = eggSortingOrder;
+                for (int r = 0; r < e.allSpriteRenderers.Length; r++)
+                {
+                    var srAny = e.allSpriteRenderers[r];
+                    if (srAny == null) continue;
+
+                    srAny.sortingLayerName = sortingLayerName;
+                    srAny.sortingOrder = eggSortingOrder;
+                }
+            }
+
+            if (e.legacySr != null)
+            {
+                e.legacySr.sortingLayerName = sortingLayerName;
+                e.legacySr.sortingOrder = eggSortingOrder;
+                e.legacySr.enabled = true;
             }
 
             _eggs[i] = e;
@@ -235,6 +259,12 @@ public sealed class LouieEggQueue : MonoBehaviour
 
             Vector3 before = e.rootTr.position;
             before.z = 0f;
+
+            if (!e.hasLastPos)
+            {
+                e.hasLastPos = true;
+                e.lastPosWorld = before;
+            }
 
             if (hasPrevTarget && (targetWorld - prevTarget).sqrMagnitude <= minSepSqr)
                 targetWorld = before;
@@ -266,6 +296,14 @@ public sealed class LouieEggQueue : MonoBehaviour
             }
 
             e.rootTr.position = newWorld;
+
+            Vector3 delta = newWorld - before;
+            delta.z = 0f;
+
+            if (e.directional != null)
+                e.directional.ApplyMoveDelta(delta);
+
+            e.lastPosWorld = newWorld;
             _eggs[i] = e;
 
             prevTarget = targetWorld;
@@ -453,35 +491,62 @@ public sealed class LouieEggQueue : MonoBehaviour
         spawnWorld += (Vector3)worldOffset;
         spawnWorld.z = 0f;
 
-        var rootGo = new GameObject($"EggFollower_{type}");
-        var rootTr = rootGo.transform;
-        rootTr.SetParent(_worldRoot, true);
-        rootTr.localScale = Vector3.one;
-        rootTr.position = spawnWorld;
+        Transform rootTr;
+        EggFollowerDirectionalVisual directional = null;
+        SpriteRenderer[] allRenderers = null;
 
-        var visualGo = new GameObject("Visual");
-        var visualTr = visualGo.transform;
-        visualTr.SetParent(rootTr, false);
-        visualTr.localPosition = Vector3.zero;
-        visualTr.localRotation = Quaternion.identity;
-        visualTr.localScale = Vector3.one;
+        AnimatedSpriteRenderer legacyAnim = null;
+        SpriteRenderer legacySr = null;
 
-        EnsureEggLayer(rootTr);
+        if (eggFollowerPrefab != null)
+        {
+            var rootGo = Instantiate(eggFollowerPrefab, spawnWorld, Quaternion.identity, _worldRoot);
+            rootGo.name = $"EggFollower_{type}";
+            rootTr = rootGo.transform;
 
-        var sr = visualGo.AddComponent<SpriteRenderer>();
-        sr.sprite = idleSprite;
-        sr.enabled = true;
-        sr.sortingLayerName = sortingLayerName;
-        sr.sortingOrder = eggSortingOrder;
+            EnsureEggLayer(rootTr);
 
-        var anim = visualGo.AddComponent<AnimatedSpriteRenderer>();
-        anim.idleSprite = idleSprite;
-        anim.idle = true;
-        anim.loop = false;
-        anim.pingPong = false;
-        anim.allowFlipX = false;
-        anim.enabled = true;
-        anim.RefreshFrame();
+            directional = rootGo.GetComponent<EggFollowerDirectionalVisual>();
+            if (directional == null)
+                directional = rootGo.GetComponentInChildren<EggFollowerDirectionalVisual>(true);
+
+            allRenderers = rootGo.GetComponentsInChildren<SpriteRenderer>(true);
+
+            if (directional != null)
+                directional.ForceIdleFacing(Vector2.down);
+        }
+        else
+        {
+            var rootGo = new GameObject($"EggFollower_{type}");
+            rootTr = rootGo.transform;
+            rootTr.SetParent(_worldRoot, true);
+            rootTr.localScale = Vector3.one;
+            rootTr.position = spawnWorld;
+
+            var visualGo = new GameObject("Visual");
+            var visualTr = visualGo.transform;
+            visualTr.SetParent(rootTr, false);
+            visualTr.localPosition = Vector3.zero;
+            visualTr.localRotation = Quaternion.identity;
+            visualTr.localScale = Vector3.one;
+
+            EnsureEggLayer(rootTr);
+
+            legacySr = visualGo.AddComponent<SpriteRenderer>();
+            legacySr.sprite = idleSprite;
+            legacySr.enabled = true;
+            legacySr.sortingLayerName = sortingLayerName;
+            legacySr.sortingOrder = eggSortingOrder;
+
+            legacyAnim = visualGo.AddComponent<AnimatedSpriteRenderer>();
+            legacyAnim.idleSprite = idleSprite;
+            legacyAnim.idle = true;
+            legacyAnim.loop = false;
+            legacyAnim.pingPong = false;
+            legacyAnim.allowFlipX = false;
+            legacyAnim.enabled = true;
+            legacyAnim.RefreshFrame();
+        }
 
         float dur = Mathf.Max(0.01f, joinSeconds) + Mathf.Max(0f, joinExtraDelayPerEgg) * _eggs.Count;
 
@@ -489,14 +554,20 @@ public sealed class LouieEggQueue : MonoBehaviour
         {
             type = type,
             rootTr = rootTr,
-            visualTr = visualTr,
-            anim = anim,
-            sr = sr,
+
+            directional = directional,
+            allSpriteRenderers = allRenderers,
+
+            legacyAnim = legacyAnim,
+            legacySr = legacySr,
 
             isAnimating = true,
             animStartTime = Time.time,
             animDuration = dur,
-            animFromWorld = spawnWorld
+            animFromWorld = spawnWorld,
+
+            hasLastPos = true,
+            lastPosWorld = spawnWorld
         });
 
         return true;

@@ -1141,6 +1141,7 @@ GameObject:
   - component: {fileID: 3335614114974889682}
   - component: {fileID: 6895379789113386949}
   - component: {fileID: 2475403701411458639}
+  - component: {fileID: 4227801384958850435}
   m_Layer: 3
   m_Name: Player
   m_TagString: Player
@@ -1312,6 +1313,7 @@ MonoBehaviour:
   stageBoundsTiles: {fileID: 0}
   destructibleTiles: {fileID: 0}
   destructiblePrefab: {fileID: 0}
+  destructibleTileResolver: {fileID: 0}
   itemLayerMask:
     serializedVersion: 2
     m_Bits: 512
@@ -1329,6 +1331,8 @@ MonoBehaviour:
   - {fileID: 8300000, guid: fd2cc86b646e3b347bd634d5791f90c6, type: 3}
   - {fileID: 8300000, guid: 987bcdcebc4a99144a3121e4d420ea4f, type: 3}
   explosionSfxVolume: 0.8
+  groundTileResolver: {fileID: 0}
+  indestructibleTileResolver: {fileID: 0}
 --- !u!82 &4627430260018096140
 AudioSource:
   m_ObjectHideFlags: 0
@@ -1474,6 +1478,7 @@ MonoBehaviour:
   hitBlinkInterval: 0.1
   tempSlowdownStartNormalized: 0.7
   tempEndBlinkMultiplier: 4
+  playDamagedLoopInsteadOfBlink: 0
 --- !u!114 &2619861201639318036
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1540,6 +1545,33 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerIdentity
   playerId: 1
+--- !u!114 &4227801384958850435
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4947014498081102474}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 778a78ae502f45a4dbfa2c39c37fa194, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::LouieEggQueue
+  maxHistory: 160
+  historyPointSpacingWorld: 0.06
+  jitterIgnoreDelta: 0.0005
+  eggSpacingWorld: 1
+  worldOffset: {x: 0, y: -0.15}
+  minTargetSeparation: 0.06
+  worldRootName: EggQueueWorldRoot
+  sortingLayerName: Player
+  eggSortingOrder: 3
+  eggGameObjectLayer: 3
+  maxEggsInQueue: 3
+  joinSeconds: 0.5
+  joinExtraDelayPerEgg: 0.05
+  shiftSeconds: 0.35
+  eggFollowerPrefab: {fileID: 4238104617994113025, guid: 4e2d079b3d9cc45409d4403b68e4f121, type: 3}
 --- !u!1 &6183660032571719661
 GameObject:
   m_ObjectHideFlags: 0
