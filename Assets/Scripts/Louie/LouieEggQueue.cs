@@ -154,6 +154,8 @@ public sealed class LouieEggQueue : MonoBehaviour
 
     float _lastMoveTime;
 
+    bool _wasMovingPrevFrame;
+
     public int Count => _eggs.Count;
 
     void OnValidate()
@@ -216,6 +218,7 @@ public sealed class LouieEggQueue : MonoBehaviour
         _lastIdleShiftEggCount = 0;
 
         _lastMoveTime = Time.time;
+        _wasMovingPrevFrame = false;
     }
 
     public void BindOwner(MovementController ownerMove)
@@ -240,6 +243,7 @@ public sealed class LouieEggQueue : MonoBehaviour
             _useIdleShiftState = false;
             _idleShiftStartTime = 0f;
             _lastMoveTime = Time.time;
+            _wasMovingPrevFrame = false;
 
             if (debugLogs)
                 Debug.Log($"[LouieEggQueue] BindOwner: ownerChanged={ownerChanged} -> SeedHistoryNow()", this);
@@ -369,6 +373,27 @@ public sealed class LouieEggQueue : MonoBehaviour
         _lastMoveTime = Time.time;
     }
 
+    void ResetHistoryToCurrentOwnerPos()
+    {
+        EnsureHistoryBuffer();
+
+        Vector3 p = GetOwnerWorldPos();
+        p.z = 0f;
+
+        for (int i = 0; i < _history.Length; i++)
+            _history[i] = p;
+
+        _historyHead = 0;
+        _historyCount = _history.Length;
+        _distanceCarry = 0f;
+
+        _lastRealOwnerPos = p;
+        _hasLastRealOwnerPos = true;
+
+        if (debugLogs)
+            Debug.Log($"[LouieEggQueue] ResetHistoryToCurrentOwnerPos() p={p.x:0.00},{p.y:0.00}", this);
+    }
+
     float GetIdleCollapseT()
     {
         if (!_useIdleShiftState)
@@ -401,6 +426,11 @@ public sealed class LouieEggQueue : MonoBehaviour
             movedByPosThisFrame = (ownerPos - _lastOwnerPos).sqrMagnitude > (jitterIgnoreDelta * jitterIgnoreDelta);
 
         bool isMoving = IsOwnerMoving(ownerPos, movedByPosThisFrame);
+
+        if (_wasMovingPrevFrame && !isMoving)
+            ResetHistoryToCurrentOwnerPos();
+
+        _wasMovingPrevFrame = isMoving;
 
         _lastOwnerPos = ownerPos;
         _hasLastOwnerPos = true;
@@ -1086,6 +1116,7 @@ public sealed class LouieEggQueue : MonoBehaviour
         _idleShiftStartTime = 0f;
 
         _lastMoveTime = Time.time;
+        _wasMovingPrevFrame = false;
 
         if (debugLogs)
             Debug.Log("[LouieEggQueue] ClearAll()", this);
