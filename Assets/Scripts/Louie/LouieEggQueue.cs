@@ -3,9 +3,12 @@ using UnityEngine;
 
 public sealed class LouieEggQueue : MonoBehaviour
 {
-    [Header("History (Distance Based)")]
+    [Header("History (Time Based - Speed Consistent)")]
     [SerializeField, Range(10, 500)] private int maxHistory = 160;
+
+    [Tooltip("Espaçamento em unidades de mundo que o rastro representa. Usado para calcular o intervalo de amostragem baseado na velocidade do player.")]
     [SerializeField, Range(0.005f, 0.5f)] private float historyPointSpacingWorld = 0.06f;
+
     [SerializeField, Range(0.00001f, 0.05f)] private float jitterIgnoreDelta = 0.0005f;
 
     [Header("Egg Spacing (World Units)")]
@@ -77,9 +80,12 @@ public sealed class LouieEggQueue : MonoBehaviour
     [Tooltip("Velocidade mínima (sqrMagnitude) para considerar que está andando quando usamos Rigidbody2D.velocity.")]
     [SerializeField, Range(0.000001f, 0.01f)] private float ownerVelocityEpsilon = 0.0001f;
 
-    [Header("History - When Owner Stops")]
-    [Tooltip("Se false, NÃO avança o histórico artificialmente quando o player fica parado (evita ovos colarem no player durante idle curto).")]
-    [SerializeField] private bool advanceHistoryWhenIdle = false;
+    [Header("History - Speed Based Sampling")]
+    [Tooltip("Se true, a gravação do histórico acontece por tempo (intervalo calculado pela velocidade), e NÃO por deslocamento. Isso mantém consistência em velocidades baixas.")]
+    [SerializeField] private bool historyUseSpeedBasedSampling = true;
+
+    [Tooltip("Mesmo parado (idle), mantém o histórico sendo amostrado na posição atual com base na velocidade (normalmente deixe false; use true se quiser 'empurrar' fila no idle).")]
+    [SerializeField] private bool historySampleWhenIdle = false;
 
     [Header("Debug")]
     [SerializeField] private bool debugLogs = true;
@@ -131,7 +137,7 @@ public sealed class LouieEggQueue : MonoBehaviour
 
     Transform _worldRoot;
 
-    float _distanceCarry;
+    float _historyTimeCarry;
 
     float _nextDebugTime;
     Vector3 _lastOwnerPos;
@@ -290,7 +296,7 @@ public sealed class LouieEggQueue : MonoBehaviour
             _history = new Vector3[maxHistory];
             _historyHead = 0;
             _historyCount = 0;
-            _distanceCarry = 0f;
+            _historyTimeCarry = 0f;
 
             _hasLastRealOwnerPos = false;
         }
@@ -342,7 +348,6 @@ public sealed class LouieEggQueue : MonoBehaviour
             dir = Vector3.down;
 
         dir.Normalize();
-
         return -dir;
     }
 
@@ -352,7 +357,7 @@ public sealed class LouieEggQueue : MonoBehaviour
 
         _historyHead = 0;
         _historyCount = 0;
-        _distanceCarry = 0f;
+        _historyTimeCarry = 0f;
 
         Vector3 p = GetOwnerWorldPos();
         p.z = 0f;
@@ -385,7 +390,7 @@ public sealed class LouieEggQueue : MonoBehaviour
 
         _historyHead = 0;
         _historyCount = _history.Length;
-        _distanceCarry = 0f;
+        _historyTimeCarry = 0f;
 
         _lastRealOwnerPos = p;
         _hasLastRealOwnerPos = true;
@@ -448,9 +453,9 @@ public sealed class LouieEggQueue : MonoBehaviour
 
         int headBefore = _historyHead;
         int countBefore = _historyCount;
-        float carryBefore = _distanceCarry;
+        float carryBefore = _historyTimeCarry;
 
-        bool wroteHistory = TrackOwnerPositionDistanceBased(isMoving);
+        bool wroteHistory = TrackOwnerPositionSpeedBased(isMoving);
 
         float followSpeed = GetOwnerWorldSpeedPerSecond();
         float maxStep = followSpeed * Time.deltaTime;
@@ -503,13 +508,15 @@ public sealed class LouieEggQueue : MonoBehaviour
             {
                 string ownerName = _ownerTr != null ? _ownerTr.name : (_ownerRb != null ? _ownerRb.name : "none");
                 float spacing = Mathf.Max(0.0001f, historyPointSpacingWorld);
-                float virtualAdvance = GetOwnerWorldSpeedPerSecond() * Time.deltaTime;
+
+                float speed = GetOwnerWorldSpeedPerSecond();
+                float secondsPerPoint = Mathf.Max(0.000001f, spacing / Mathf.Max(0.000001f, speed));
 
                 Debug.Log(
                     $"[LouieEggQueue] Tick owner={ownerName} eggs={_eggs.Count} idle={!isMoving} " +
                     $"useIdleShift={useIdleShift} idleFrames={_idleFrames} movingFrames={_movingFrames} " +
                     $"history(wrote={wroteHistory}, head {headBefore}->{_historyHead}, count {countBefore}->{_historyCount}) " +
-                    $"carry {carryBefore:0.0000}->{_distanceCarry:0.0000} spacing={spacing:0.0000} vAdv={virtualAdvance:0.0000} " +
+                    $"timeCarry {carryBefore:0.0000}->{_historyTimeCarry:0.0000} spacing={spacing:0.0000} s/pt={secondsPerPoint:0.0000} " +
                     $"maxStep={maxStep:0.0000} idleCollapseT={idleCollapseT:0.00} overlap={allowOverlapOnPlayer}",
                     this
                 );
@@ -736,7 +743,7 @@ public sealed class LouieEggQueue : MonoBehaviour
         return 5f;
     }
 
-    bool TrackOwnerPositionDistanceBased(bool isMoving)
+    bool TrackOwnerPositionSpeedBased(bool isMoving)
     {
         Vector3 p = GetOwnerWorldPos();
         p.z = 0f;
@@ -747,11 +754,9 @@ public sealed class LouieEggQueue : MonoBehaviour
             _hasLastRealOwnerPos = true;
 
             RecordHistory(p);
-            _distanceCarry = 0f;
+            _historyTimeCarry = 0f;
             return true;
         }
-
-        float jitterSqr = jitterIgnoreDelta * jitterIgnoreDelta;
 
         Vector3 fromReal = _lastRealOwnerPos;
         Vector3 toReal = p;
@@ -760,74 +765,45 @@ public sealed class LouieEggQueue : MonoBehaviour
         seg.z = 0f;
 
         float segLen = seg.magnitude;
-        float spacing = Mathf.Max(0.0001f, historyPointSpacingWorld);
 
-        if (segLen * segLen > jitterSqr && segLen > 0.000001f)
+        if (segLen > 0.000001f)
         {
-            _lastMoveDirWorld = seg / segLen;
-            _lastMoveDirWorld.z = 0f;
-            _hasLastMoveDir = _lastMoveDirWorld.sqrMagnitude > 0.000001f;
-            if (_hasLastMoveDir) _lastMoveDirWorld.Normalize();
-        }
+            Vector3 d = seg / segLen;
+            d.z = 0f;
 
-        if (segLen * segLen <= jitterSqr)
-        {
-            _lastRealOwnerPos = p;
-
-            if (!advanceHistoryWhenIdle || !isMoving)
-                return false;
-
-            float virtualAdvance = GetOwnerWorldSpeedPerSecond() * Time.deltaTime;
-            if (virtualAdvance <= 0.0000001f)
-                return false;
-
-            _distanceCarry += virtualAdvance;
-
-            Vector3 behindDir = GetFallbackBehindDir();
-
-            int wroteIdle = 0;
-            while (_distanceCarry >= spacing)
+            if (d.sqrMagnitude > 0.000001f)
             {
-                _distanceCarry -= spacing;
-                wroteIdle++;
-
-                Vector3 sample = p + behindDir * (spacing * wroteIdle);
-                sample.z = 0f;
-
-                RecordHistory(sample);
+                _lastMoveDirWorld = d;
+                _lastMoveDirWorld.z = 0f;
+                _lastMoveDirWorld.Normalize();
+                _hasLastMoveDir = true;
             }
-
-            return wroteIdle > 0;
         }
 
-        float dist = _distanceCarry + segLen;
+        _lastRealOwnerPos = p;
 
-        if (dist < spacing)
-        {
-            _distanceCarry = dist;
-            _lastRealOwnerPos = p;
+        if (!historyUseSpeedBasedSampling)
             return false;
-        }
 
-        Vector3 dirMove = seg / segLen;
-        float traveledFromLast = _distanceCarry;
+        bool shouldSample = isMoving || historySampleWhenIdle;
+        if (!shouldSample)
+            return false;
+
+        float spacing = Mathf.Max(0.0001f, historyPointSpacingWorld);
+        float speed = Mathf.Max(0.000001f, GetOwnerWorldSpeedPerSecond());
+
+        float secondsPerPoint = Mathf.Max(0.000001f, spacing / speed);
+
+        _historyTimeCarry += Time.deltaTime;
 
         int wrote = 0;
-
-        while (traveledFromLast + spacing <= segLen + 0.000001f)
+        while (_historyTimeCarry >= secondsPerPoint)
         {
-            traveledFromLast += spacing;
-            Vector3 sample = fromReal + dirMove * traveledFromLast;
-            sample.z = 0f;
-
-            RecordHistory(sample);
+            _historyTimeCarry -= secondsPerPoint;
+            RecordHistory(p);
             wrote++;
         }
 
-        float leftover = segLen - traveledFromLast;
-        _distanceCarry = Mathf.Max(0f, leftover);
-
-        _lastRealOwnerPos = p;
         return wrote > 0;
     }
 
@@ -1106,7 +1082,7 @@ public sealed class LouieEggQueue : MonoBehaviour
 
         _historyHead = 0;
         _historyCount = 0;
-        _distanceCarry = 0f;
+        _historyTimeCarry = 0f;
 
         _hasLastRealOwnerPos = false;
 
