@@ -32,7 +32,7 @@ public static class PlayerPersistentStats
         public bool HasControlBombs = false;
         public bool HasFullFire = false;
 
-        public MountedLouieType MountedLouie = MountedLouieType.None;
+        public MountedLouieType MountedLouie = MountedLouieType.Black;
         public BomberSkin Skin = BomberSkin.White;
 
         public readonly List<ItemPickup.ItemType> QueuedEggs = new(8);

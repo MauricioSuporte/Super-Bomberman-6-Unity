@@ -2007,8 +2007,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CharacterHealth
   life: 1
-  hitInvulnerableDuration: 3
-  hitBlinkInterval: 0.1
+  hitInvulnerableDuration: 0.6
+  hitBlinkInterval: 0.05
   tempSlowdownStartNormalized: 0.7
   tempEndBlinkMultiplier: 4
   playDamagedLoopInsteadOfBlink: 0
@@ -2032,8 +2032,7 @@ MonoBehaviour:
   pinkLouiePrefab: {fileID: 2273416014071709654, guid: 077a9ad657bf9be4fb1728d85f02354c, type: 3}
   redLouiePrefab: {fileID: 2273416014071709654, guid: 4a70e21506f50d14da6de1ab7462fbb9, type: 3}
   localOffset: {x: 0, y: -0.15}
-  louieDeathSeconds: 0.5
-  playerInvulnerabilityAfterLoseLouieSeconds: 1
+  playerInvulnerabilityAfterLoseLouieSeconds: 1.5
   blinkPlayerTogetherWithLouie: 1
   mountLouieSfx: {fileID: 0}
   mountLouieVolume: 1

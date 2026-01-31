@@ -11,7 +11,7 @@ public sealed class PlayerRidingController : MonoBehaviour
     public AnimatedSpriteRenderer ridingRight;
 
     [Header("Timing")]
-    public float ridingSeconds = 5f;
+    public float ridingSeconds = 1f;
 
     MovementController movement;
     BombController bomb;

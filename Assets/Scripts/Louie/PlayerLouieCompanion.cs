@@ -801,19 +801,7 @@ public class PlayerLouieCompanion : MonoBehaviour
         int playerId = GetPlayerId();
         var state = PlayerPersistentStats.Get(playerId);
 
-        RestoreMounted(state.MountedLouie);
-    }
-
-    void RestoreMounted(MountedLouieType type)
-    {
-        if (currentLouie != null)
-            return;
-
-        var prefab = GetPrefab(type);
-        if (prefab == null || type == MountedLouieType.None)
-            return;
-
-        TryMount(prefab, type);
+        RestoreMountedImmediate(state.MountedLouie);
     }
 
     public bool TryPlayMountedLouieEndStage(float totalTime, int frameCount)
