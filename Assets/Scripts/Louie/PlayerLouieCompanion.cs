@@ -18,9 +18,6 @@ public class PlayerLouieCompanion : MonoBehaviour
     [Header("Local Offset")]
     public Vector2 localOffset = new(0f, -0.15f);
 
-    [Header("Louie Death")]
-    public float louieDeathSeconds = 0.5f;
-
     [Header("Player Invulnerability After Losing Louie")]
     public float playerInvulnerabilityAfterLoseLouieSeconds = 0.8f;
 
@@ -76,7 +73,6 @@ public class PlayerLouieCompanion : MonoBehaviour
 
         abilitySystem.RebuildCache();
         punchAbility = abilitySystem.Get<BombPunchAbility>(BombPunchAbility.AbilityId);
-
         punchOwned = abilitySystem.IsEnabled(BombPunchAbility.AbilityId);
 
         if (punchAbility != null)
@@ -142,39 +138,51 @@ public class PlayerLouieCompanion : MonoBehaviour
         dashInvulRemainingLouie = 0f;
     }
 
-    public void MountBlueLouie() => MountLouieInternal(blueLouiePrefab, MountedLouieType.Blue);
-    public void MountBlackLouie() => MountLouieInternal(blackLouiePrefab, MountedLouieType.Black);
-    public void MountPurpleLouie() => MountLouieInternal(purpleLouiePrefab, MountedLouieType.Purple);
-    public void MountGreenLouie() => MountLouieInternal(greenLouiePrefab, MountedLouieType.Green);
-    public void MountYellowLouie() => MountLouieInternal(yellowLouiePrefab, MountedLouieType.Yellow);
-    public void MountPinkLouie() => MountLouieInternal(pinkLouiePrefab, MountedLouieType.Pink);
-    public void MountRedLouie() => MountLouieInternal(redLouiePrefab, MountedLouieType.Red);
+    public void MountBlueLouie() => TryMount(GetPrefab(MountedLouieType.Blue), MountedLouieType.Blue);
+    public void MountBlackLouie() => TryMount(GetPrefab(MountedLouieType.Black), MountedLouieType.Black);
+    public void MountPurpleLouie() => TryMount(GetPrefab(MountedLouieType.Purple), MountedLouieType.Purple);
+    public void MountGreenLouie() => TryMount(GetPrefab(MountedLouieType.Green), MountedLouieType.Green);
+    public void MountYellowLouie() => TryMount(GetPrefab(MountedLouieType.Yellow), MountedLouieType.Yellow);
+    public void MountPinkLouie() => TryMount(GetPrefab(MountedLouieType.Pink), MountedLouieType.Pink);
+    public void MountRedLouie() => TryMount(GetPrefab(MountedLouieType.Red), MountedLouieType.Red);
 
-    public int GetMountedLouieLife()
+    public void RestoreMountedBlueLouie() => RestoreMountedImmediate(MountedLouieType.Blue);
+    public void RestoreMountedBlackLouie() => RestoreMountedImmediate(MountedLouieType.Black);
+    public void RestoreMountedPurpleLouie() => RestoreMountedImmediate(MountedLouieType.Purple);
+    public void RestoreMountedGreenLouie() => RestoreMountedImmediate(MountedLouieType.Green);
+    public void RestoreMountedYellowLouie() => RestoreMountedImmediate(MountedLouieType.Yellow);
+    public void RestoreMountedPinkLouie() => RestoreMountedImmediate(MountedLouieType.Pink);
+    public void RestoreMountedRedLouie() => RestoreMountedImmediate(MountedLouieType.Red);
+
+    void RestoreMountedImmediate(MountedLouieType type)
     {
-        if (currentLouie == null)
-            return 0;
-
-        if (mountedLouieHealth != null)
-            return mountedLouieHealth.life;
-
-        return mountedLouieHp;
-    }
-
-    public void SetMountedLouieLife(int life)
-    {
-        if (currentLouie == null)
+        if (currentLouie != null || movement == null)
             return;
 
-        int v = Mathf.Max(1, life);
+        if (type == MountedLouieType.None)
+            return;
 
+        var prefab = GetPrefab(type);
+        if (prefab == null)
+            return;
+
+        mountedType = type;
+
+        currentLouie = Instantiate(prefab, transform);
+        currentLouie.transform.SetLocalPositionAndRotation(localOffset, Quaternion.identity);
+        currentLouie.transform.localScale = Vector3.one;
+
+        mountedLouieHealth = currentLouie.GetComponentInChildren<CharacterHealth>(true);
+        mountedLouieHp = 1;
         if (mountedLouieHealth != null)
-            mountedLouieHealth.life = v;
+            mountedLouieHp = Mathf.Max(1, mountedLouieHealth.life);
 
-        mountedLouieHp = v;
+        DisableLouieComponentsForMount(currentLouie);
+
+        FinalizeMount(type);
     }
 
-    void MountLouieInternal(GameObject prefab, MountedLouieType type)
+    void TryMount(GameObject prefab, MountedLouieType type)
     {
         if (prefab == null || movement == null)
             return;
@@ -185,14 +193,15 @@ public class PlayerLouieCompanion : MonoBehaviour
         var rider = GetComponent<PlayerRidingController>();
         if (rider != null && rider.TryPlayRiding(
             movement.FacingDirection,
-            onComplete: () => FinalizeMountAfterRiding(type),
-            onStart: () => SpawnLouieDuringRiding(prefab, type)))
+            onComplete: () => FinalizeMount(type),
+            onStart: () => SpawnLouieForMount(prefab, type, duringRiding: true)))
             return;
 
-        MountLouieInternal_AfterRiding(prefab, type);
+        SpawnLouieForMount(prefab, type, duringRiding: false);
+        FinalizeMount(type);
     }
 
-    void SpawnLouieDuringRiding(GameObject prefab, MountedLouieType type)
+    void SpawnLouieForMount(GameObject prefab, MountedLouieType type, bool duringRiding)
     {
         if (prefab == null || currentLouie != null)
             return;
@@ -204,34 +213,42 @@ public class PlayerLouieCompanion : MonoBehaviour
         currentLouie.transform.localScale = Vector3.one;
 
         mountedLouieHealth = currentLouie.GetComponentInChildren<CharacterHealth>(true);
-
         mountedLouieHp = 1;
         if (mountedLouieHealth != null)
             mountedLouieHp = Mathf.Max(1, mountedLouieHealth.life);
 
-        if (currentLouie.TryGetComponent<LouieMovementController>(out var lm))
+        DisableLouieComponentsForMount(currentLouie);
+
+        if (duringRiding)
+            SetMountedLouieVisible(true);
+
+        PlayMountSfxIfAny();
+    }
+
+    void DisableLouieComponentsForMount(GameObject louie)
+    {
+        if (louie == null)
+            return;
+
+        if (louie.TryGetComponent<LouieMovementController>(out var lm))
         {
             lm.BindOwner(movement, localOffset);
             lm.enabled = false;
         }
 
-        if (currentLouie.TryGetComponent<Rigidbody2D>(out var rb))
+        if (louie.TryGetComponent<Rigidbody2D>(out var rb))
             rb.simulated = false;
 
-        if (currentLouie.TryGetComponent<Collider2D>(out var col))
+        if (louie.TryGetComponent<Collider2D>(out var col))
             col.enabled = false;
 
-        if (currentLouie.TryGetComponent<BombController>(out var bc))
+        if (louie.TryGetComponent<BombController>(out var bc))
             bc.enabled = false;
 
-        ForceLouieFacingToPlayer();
-
-        SetMountedLouieVisible(true);
-
-        PlayMountSfxIfAny();
+        BindLouieVisualToOwnerIfAny(louie);
     }
 
-    void FinalizeMountAfterRiding(MountedLouieType type)
+    void FinalizeMount(MountedLouieType type)
     {
         if (currentLouie == null || movement == null)
             return;
@@ -243,11 +260,7 @@ public class PlayerLouieCompanion : MonoBehaviour
         bool isPink = mountedType == MountedLouieType.Pink;
         movement.SetMountedSpritesLocalYOverride(isPink, movement.pinkMountedSpritesLocalY);
 
-        if (currentLouie.TryGetComponent<LouieRiderVisual>(out var visual))
-        {
-            visual.localOffset = localOffset;
-            visual.Bind(movement);
-        }
+        BindLouieVisualToOwnerIfAny(currentLouie);
 
         SetMountedLouieVisible(true);
 
@@ -261,71 +274,34 @@ public class PlayerLouieCompanion : MonoBehaviour
         movement.Died += OnPlayerDied;
     }
 
-    void MountLouieInternal_AfterRiding(GameObject prefab, MountedLouieType type)
+    void BindLouieVisualToOwnerIfAny(GameObject louie)
     {
-        mountedType = type;
+        if (louie == null || movement == null)
+            return;
 
-        currentLouie = Instantiate(prefab, transform);
-        currentLouie.transform.SetLocalPositionAndRotation(localOffset, Quaternion.identity);
-        currentLouie.transform.localScale = Vector3.one;
+        if (!louie.TryGetComponent<LouieRiderVisual>(out var visual) || visual == null)
+            visual = louie.GetComponentInChildren<LouieRiderVisual>(true);
 
-        mountedLouieHealth = currentLouie.GetComponentInChildren<CharacterHealth>(true);
+        if (visual == null)
+            return;
 
-        mountedLouieHp = 1;
-        if (mountedLouieHealth != null)
-            mountedLouieHp = Mathf.Max(1, mountedLouieHealth.life);
-
-        if (currentLouie.TryGetComponent<LouieMovementController>(out var lm))
-        {
-            lm.BindOwner(movement, localOffset);
-            lm.enabled = false;
-        }
-
-        if (currentLouie.TryGetComponent<Rigidbody2D>(out var rb))
-            rb.simulated = false;
-
-        if (currentLouie.TryGetComponent<Collider2D>(out var col))
-            col.enabled = false;
-
-        if (currentLouie.TryGetComponent<BombController>(out var bc))
-            bc.enabled = false;
-
-        movement.SetMountedOnLouie(true);
-        PlayMountSfxIfAny();
-
-        bool isPink = mountedType == MountedLouieType.Pink;
-        movement.SetMountedSpritesLocalYOverride(isPink, movement.pinkMountedSpritesLocalY);
-
-        if (currentLouie.TryGetComponent<LouieRiderVisual>(out var visual))
-        {
-            visual.localOffset = localOffset;
-            visual.Bind(movement);
-        }
-
-        abilitySystem.RebuildCache();
-        punchAbility = abilitySystem.Get<BombPunchAbility>(BombPunchAbility.AbilityId);
-
-        punchOwned |= abilitySystem.IsEnabled(BombPunchAbility.AbilityId);
-
-        ApplyRulesForCurrentMount();
-
-        movement.Died -= OnPlayerDied;
-        movement.Died += OnPlayerDied;
+        visual.localOffset = localOffset;
+        visual.Bind(movement);
+        visual.enabled = true;
     }
 
     void ApplyRulesForCurrentMount()
     {
+        abilitySystem.RebuildCache();
+
         if (currentLouie == null || mountedType == MountedLouieType.None)
         {
-            abilitySystem.RebuildCache();
-
             var punch = abilitySystem.Get<BombPunchAbility>(BombPunchAbility.AbilityId);
             if (punch != null)
             {
                 punch.SetExternalAnimator(null);
                 punch.SetLockedByLouie(louieAbilitiesLocked);
             }
-
             return;
         }
 
@@ -352,7 +328,6 @@ public class PlayerLouieCompanion : MonoBehaviour
                 punchAbility.SetExternalAnimator(external);
                 punchAbility.SetLockedByLouie(louieAbilitiesLocked);
             }
-
             return;
         }
 
@@ -373,26 +348,25 @@ public class PlayerLouieCompanion : MonoBehaviour
         }
         else
         {
-            if (punchOwned)
-                abilitySystem.Enable(BombPunchAbility.AbilityId);
-            else
-                abilitySystem.Disable(BombPunchAbility.AbilityId);
+            if (punchOwned) abilitySystem.Enable(BombPunchAbility.AbilityId);
+            else abilitySystem.Disable(BombPunchAbility.AbilityId);
         }
+
+        if (currentLouie == null)
+            return;
+
+        var cfg = currentLouie.GetComponentInChildren<LouieAbilitySfxConfig>(true);
 
         if (mountedType == MountedLouieType.Purple)
         {
             abilitySystem.Enable(PurpleLouieBombLineAbility.AbilityId);
 
-            var purpleAbility = abilitySystem.Get<PurpleLouieBombLineAbility>(PurpleLouieBombLineAbility.AbilityId);
-            if (purpleAbility != null)
+            var purple = abilitySystem.Get<PurpleLouieBombLineAbility>(PurpleLouieBombLineAbility.AbilityId);
+            if (purple != null)
             {
-                var anim = currentLouie != null
-                    ? currentLouie.GetComponentInChildren<IPurpleLouieBombLineExternalAnimator>(true)
-                    : null;
-
-                purpleAbility.SetExternalAnimator(anim);
+                var anim = currentLouie.GetComponentInChildren<IPurpleLouieBombLineExternalAnimator>(true);
+                purple.SetExternalAnimator(anim);
             }
-
             return;
         }
 
@@ -403,22 +377,12 @@ public class PlayerLouieCompanion : MonoBehaviour
             var dash = abilitySystem.Get<GreenLouieDashAbility>(GreenLouieDashAbility.AbilityId);
             if (dash != null)
             {
-                var anim = currentLouie != null
-                    ? currentLouie.GetComponentInChildren<IGreenLouieDashExternalAnimator>(true)
-                    : null;
-
+                var anim = currentLouie.GetComponentInChildren<IGreenLouieDashExternalAnimator>(true);
                 dash.SetExternalAnimator(anim);
 
-                var cfg = currentLouie != null
-                    ? currentLouie.GetComponentInChildren<LouieAbilitySfxConfig>(true)
-                    : null;
-
-                if (cfg != null)
-                    dash.SetDashSfx(cfg.abilitySfx, cfg.abilityVolume);
-                else
-                    dash.SetDashSfx(null, 1f);
+                if (cfg != null) dash.SetDashSfx(cfg.abilitySfx, cfg.abilityVolume);
+                else dash.SetDashSfx(null, 1f);
             }
-
             return;
         }
 
@@ -429,22 +393,12 @@ public class PlayerLouieCompanion : MonoBehaviour
             var kick = abilitySystem.Get<YellowLouieDestructibleKickAbility>(YellowLouieDestructibleKickAbility.AbilityId);
             if (kick != null)
             {
-                var anim = currentLouie != null
-                    ? currentLouie.GetComponentInChildren<IYellowLouieDestructibleKickExternalAnimator>(true)
-                    : null;
-
+                var anim = currentLouie.GetComponentInChildren<IYellowLouieDestructibleKickExternalAnimator>(true);
                 kick.SetExternalAnimator(anim);
 
-                var cfg = currentLouie != null
-                    ? currentLouie.GetComponentInChildren<LouieAbilitySfxConfig>(true)
-                    : null;
-
-                if (cfg != null)
-                    kick.SetKickSfx(cfg.abilitySfx, cfg.abilityVolume);
-                else
-                    kick.SetKickSfx(null, 1f);
+                if (cfg != null) kick.SetKickSfx(cfg.abilitySfx, cfg.abilityVolume);
+                else kick.SetKickSfx(null, 1f);
             }
-
             return;
         }
 
@@ -455,22 +409,12 @@ public class PlayerLouieCompanion : MonoBehaviour
             var jump = abilitySystem.Get<PinkLouieJumpAbility>(PinkLouieJumpAbility.AbilityId);
             if (jump != null)
             {
-                var anim = currentLouie != null
-                    ? currentLouie.GetComponentInChildren<IPinkLouieJumpExternalAnimator>(true)
-                    : null;
-
+                var anim = currentLouie.GetComponentInChildren<IPinkLouieJumpExternalAnimator>(true);
                 jump.SetExternalAnimator(anim);
 
-                var cfg = currentLouie != null
-                    ? currentLouie.GetComponentInChildren<LouieAbilitySfxConfig>(true)
-                    : null;
-
-                if (cfg != null)
-                    jump.SetJumpSfx(cfg.abilitySfx, cfg.abilityVolume);
-                else
-                    jump.SetJumpSfx(null, 1f);
+                if (cfg != null) jump.SetJumpSfx(cfg.abilitySfx, cfg.abilityVolume);
+                else jump.SetJumpSfx(null, 1f);
             }
-
             return;
         }
 
@@ -481,22 +425,12 @@ public class PlayerLouieCompanion : MonoBehaviour
             var stun = abilitySystem.Get<RedLouiePunchStunAbility>(RedLouiePunchStunAbility.AbilityId);
             if (stun != null)
             {
-                var anim = currentLouie != null
-                    ? currentLouie.GetComponentInChildren<IRedLouiePunchExternalAnimator>(true)
-                    : null;
-
+                var anim = currentLouie.GetComponentInChildren<IRedLouiePunchExternalAnimator>(true);
                 stun.SetExternalAnimator(anim);
 
-                var cfg = currentLouie != null
-                    ? currentLouie.GetComponentInChildren<LouieAbilitySfxConfig>(true)
-                    : null;
-
-                if (cfg != null)
-                    stun.SetPunchSfx(cfg.abilitySfx, cfg.abilityVolume);
-                else
-                    stun.SetPunchSfx(null, 1f);
+                if (cfg != null) stun.SetPunchSfx(cfg.abilitySfx, cfg.abilityVolume);
+                else stun.SetPunchSfx(null, 1f);
             }
-
             return;
         }
 
@@ -504,25 +438,15 @@ public class PlayerLouieCompanion : MonoBehaviour
         {
             abilitySystem.Enable(BlackLouieDashPushAbility.AbilityId);
 
-            var dash = abilitySystem.Get<BlackLouieDashPushAbility>(BlackLouieDashPushAbility.AbilityId);
-            if (dash != null)
+            var blackDash = abilitySystem.Get<BlackLouieDashPushAbility>(BlackLouieDashPushAbility.AbilityId);
+            if (blackDash != null)
             {
-                var anim = currentLouie != null
-                    ? currentLouie.GetComponentInChildren<IBlackLouieDashExternalAnimator>(true)
-                    : null;
+                var anim = currentLouie.GetComponentInChildren<IBlackLouieDashExternalAnimator>(true);
+                blackDash.SetExternalAnimator(anim);
 
-                dash.SetExternalAnimator(anim);
-
-                var cfg = currentLouie != null
-                    ? currentLouie.GetComponentInChildren<LouieAbilitySfxConfig>(true)
-                    : null;
-
-                if (cfg != null)
-                    dash.SetDashSfx(cfg.abilitySfx, cfg.abilityVolume);
-                else
-                    dash.SetDashSfx(null, 1f);
+                if (cfg != null) blackDash.SetDashSfx(cfg.abilitySfx, cfg.abilityVolume);
+                else blackDash.SetDashSfx(null, 1f);
             }
-
             return;
         }
     }
@@ -561,10 +485,8 @@ public class PlayerLouieCompanion : MonoBehaviour
             punchAbility.SetLockedByLouie(false);
         }
 
-        if (punchOwned)
-            abilitySystem.Enable(BombPunchAbility.AbilityId);
-        else
-            abilitySystem.Disable(BombPunchAbility.AbilityId);
+        if (punchOwned) abilitySystem.Enable(BombPunchAbility.AbilityId);
+        else abilitySystem.Disable(BombPunchAbility.AbilityId);
     }
 
     public void OnMountedLouieHit(int damage)
@@ -640,21 +562,7 @@ public class PlayerLouieCompanion : MonoBehaviour
         if (currentLouie == null)
             return;
 
-        bool hasQueuedEgg = false;
-        ItemPickup.ItemType queuedType = default;
-        AudioClip queuedSfx = null;
-        float queuedVol = 1f;
-        GameObject queuedPrefab = null;
-        MountedLouieType queuedMountedType = MountedLouieType.None;
-
-        if (TryGetComponent<LouieEggQueue>(out var q) && q != null && q.Count > 0)
-        {
-            if (q.TryDequeue(out queuedType, out queuedSfx, out queuedVol))
-            {
-                if (TryMapEggToLouie(queuedType, out queuedPrefab, out queuedMountedType) && queuedPrefab != null)
-                    hasQueuedEgg = true;
-            }
-        }
+        bool hasQueuedEgg = TryPopQueuedEgg(out var queuedPrefab, out var queuedMountedType, out var queuedSfx, out var queuedVol);
 
         var rider = GetComponent<PlayerRidingController>();
 
@@ -666,19 +574,18 @@ public class PlayerLouieCompanion : MonoBehaviour
             {
                 if (rider.TryPlayRiding(
                     movement.FacingDirection,
-                    onComplete: () => FinalizeMountAfterRiding(queuedMountedType),
+                    onComplete: () => FinalizeMount(queuedMountedType),
                     onStart: () =>
                     {
                         DetachAndKillCurrentLouieOnly();
-
                         SetNextMountSfx(queuedSfx, queuedVol);
-                        SpawnLouieDuringRiding(queuedPrefab, queuedMountedType);
+                        SpawnLouieForMount(queuedPrefab, queuedMountedType, duringRiding: true);
                     }))
                     return;
 
                 DetachAndKillCurrentLouieOnly();
                 SetNextMountSfx(queuedSfx, queuedVol);
-                MountLouieInternal_AfterRiding(queuedPrefab, queuedMountedType);
+                TryMount(queuedPrefab, queuedMountedType);
                 return;
             }
 
@@ -689,97 +596,43 @@ public class PlayerLouieCompanion : MonoBehaviour
         LoseLouie_AfterRiding();
     }
 
+    bool TryPopQueuedEgg(out GameObject prefab, out MountedLouieType type, out AudioClip sfx, out float vol)
+    {
+        prefab = null;
+        type = MountedLouieType.None;
+        sfx = null;
+        vol = 1f;
+
+        if (!TryGetComponent<LouieEggQueue>(out var q) || q == null || q.Count <= 0)
+            return false;
+
+        if (!q.TryDequeue(out var queuedType, out sfx, out vol))
+            return false;
+
+        if (!TryMapEggToLouie(queuedType, out prefab, out type) || prefab == null)
+            return false;
+
+        return true;
+    }
+
     public void LoseLouie_AfterRiding()
     {
         if (currentLouie == null)
             return;
 
-        ClearDashInvulnerabilityNow();
-
         var louie = currentLouie;
         currentLouie = null;
 
-        mountedLouieHp = 0;
-        mountedLouieHealth = null;
-
         louie.transform.GetPositionAndRotation(out var worldPos, out var worldRot);
 
-        movement.SetMountedSpritesLocalYOverride(false, 0f);
-
-        movement.SetMountedOnLouie(false);
-        mountedType = MountedLouieType.None;
-
-        abilitySystem.Disable(PurpleLouieBombLineAbility.AbilityId);
-        abilitySystem.Disable(GreenLouieDashAbility.AbilityId);
-        abilitySystem.Disable(YellowLouieDestructibleKickAbility.AbilityId);
-        abilitySystem.Disable(PinkLouieJumpAbility.AbilityId);
-        abilitySystem.Disable(RedLouiePunchStunAbility.AbilityId);
-        abilitySystem.Disable(BlackLouieDashPushAbility.AbilityId);
-
-        var kick = abilitySystem.Get<YellowLouieDestructibleKickAbility>(YellowLouieDestructibleKickAbility.AbilityId);
-        if (kick != null)
-        {
-            kick.SetExternalAnimator(null);
-            kick.SetKickSfx(null, 1f);
-        }
-
-        var dash = abilitySystem.Get<GreenLouieDashAbility>(GreenLouieDashAbility.AbilityId);
-        if (dash != null)
-        {
-            dash.SetExternalAnimator(null);
-            dash.SetDashSfx(null, 1f);
-        }
-
-        var jump = abilitySystem.Get<PinkLouieJumpAbility>(PinkLouieJumpAbility.AbilityId);
-        if (jump != null)
-        {
-            jump.SetExternalAnimator(null);
-            jump.SetJumpSfx(null, 1f);
-        }
-
-        var stun = abilitySystem.Get<RedLouiePunchStunAbility>(RedLouiePunchStunAbility.AbilityId);
-        if (stun != null)
-        {
-            stun.SetExternalAnimator(null);
-            stun.SetPunchSfx(null, 1f);
-        }
-
-        var blackDash = abilitySystem.Get<BlackLouieDashPushAbility>(BlackLouieDashPushAbility.AbilityId);
-        if (blackDash != null)
-        {
-            blackDash.SetExternalAnimator(null);
-            blackDash.SetDashSfx(null, 1f);
-        }
-
-        var purple = abilitySystem.Get<PurpleLouieBombLineAbility>(PurpleLouieBombLineAbility.AbilityId);
-        if (purple != null)
-            purple.SetExternalAnimator(null);
-
-        RestorePunchAfterUnmount();
+        ClearDashInvulnerabilityNow();
+        ResetMountedStateAndAbilities();
 
         if (movement.TryGetComponent<CharacterHealth>(out var health))
             health.StartTemporaryInvulnerability(playerInvulnerabilityAfterLoseLouieSeconds);
 
-        louie.transform.SetParent(null, true);
-        louie.transform.SetPositionAndRotation(worldPos, worldRot);
-
-        if (louie.TryGetComponent<LouieRiderVisual>(out var riderVisual))
-            Destroy(riderVisual);
-
-        if (louie.TryGetComponent<LouieMovementController>(out var lm))
-        {
-            lm.enabled = true;
-            lm.Kill();
-        }
-        else if (louie.TryGetComponent<MovementController>(out var mc))
-        {
-            mc.enabled = true;
-            mc.Kill();
-        }
-        else
-        {
-            Destroy(louie);
-        }
+        DetachLouieToWorld(louie, worldPos, worldRot, disableVisual: false);
+        KillDetachedLouie(louie);
 
         if (currentLouie == null)
             TryMountFromQueuedEgg();
@@ -805,13 +658,26 @@ public class PlayerLouieCompanion : MonoBehaviour
 
         currentLouie = null;
 
+        ResetMountedStateAndAbilities();
+    }
+
+    void ResetMountedStateAndAbilities()
+    {
         mountedLouieHp = 0;
         mountedLouieHealth = null;
 
         movement.SetMountedSpritesLocalYOverride(false, 0f);
-
         movement.SetMountedOnLouie(false);
         mountedType = MountedLouieType.None;
+
+        ResetLouieAbilitiesExternalState();
+        RestorePunchAfterUnmount();
+    }
+
+    void ResetLouieAbilitiesExternalState()
+    {
+        if (abilitySystem == null)
+            return;
 
         abilitySystem.Disable(PurpleLouieBombLineAbility.AbilityId);
         abilitySystem.Disable(GreenLouieDashAbility.AbilityId);
@@ -821,45 +687,89 @@ public class PlayerLouieCompanion : MonoBehaviour
         abilitySystem.Disable(BlackLouieDashPushAbility.AbilityId);
 
         var kick = abilitySystem.Get<YellowLouieDestructibleKickAbility>(YellowLouieDestructibleKickAbility.AbilityId);
-        if (kick != null)
-        {
-            kick.SetExternalAnimator(null);
-            kick.SetKickSfx(null, 1f);
-        }
+        if (kick != null) { kick.SetExternalAnimator(null); kick.SetKickSfx(null, 1f); }
 
         var dash = abilitySystem.Get<GreenLouieDashAbility>(GreenLouieDashAbility.AbilityId);
-        if (dash != null)
-        {
-            dash.SetExternalAnimator(null);
-            dash.SetDashSfx(null, 1f);
-        }
+        if (dash != null) { dash.SetExternalAnimator(null); dash.SetDashSfx(null, 1f); }
 
         var jump = abilitySystem.Get<PinkLouieJumpAbility>(PinkLouieJumpAbility.AbilityId);
-        if (jump != null)
-        {
-            jump.SetExternalAnimator(null);
-            jump.SetJumpSfx(null, 1f);
-        }
+        if (jump != null) { jump.SetExternalAnimator(null); jump.SetJumpSfx(null, 1f); }
 
         var stun = abilitySystem.Get<RedLouiePunchStunAbility>(RedLouiePunchStunAbility.AbilityId);
-        if (stun != null)
-        {
-            stun.SetExternalAnimator(null);
-            stun.SetPunchSfx(null, 1f);
-        }
+        if (stun != null) { stun.SetExternalAnimator(null); stun.SetPunchSfx(null, 1f); }
 
         var blackDash = abilitySystem.Get<BlackLouieDashPushAbility>(BlackLouieDashPushAbility.AbilityId);
-        if (blackDash != null)
-        {
-            blackDash.SetExternalAnimator(null);
-            blackDash.SetDashSfx(null, 1f);
-        }
+        if (blackDash != null) { blackDash.SetExternalAnimator(null); blackDash.SetDashSfx(null, 1f); }
 
         var purple = abilitySystem.Get<PurpleLouieBombLineAbility>(PurpleLouieBombLineAbility.AbilityId);
-        if (purple != null)
-            purple.SetExternalAnimator(null);
+        if (purple != null) purple.SetExternalAnimator(null);
+    }
 
-        RestorePunchAfterUnmount();
+    void DetachLouieToWorld(GameObject louie, Vector3 worldPos, Quaternion worldRot, bool disableVisual)
+    {
+        if (louie == null)
+            return;
+
+        louie.transform.SetParent(null, true);
+        louie.transform.SetPositionAndRotation(worldPos, worldRot);
+
+        if (disableVisual)
+        {
+            if (louie.TryGetComponent<LouieRiderVisual>(out var rv) && rv != null)
+                rv.enabled = false;
+            else
+            {
+                var inChild = louie.GetComponentInChildren<LouieRiderVisual>(true);
+                if (inChild != null) inChild.enabled = false;
+            }
+        }
+        else
+        {
+            if (louie.TryGetComponent<LouieRiderVisual>(out var riderVisual))
+                Destroy(riderVisual);
+        }
+    }
+
+    void KillDetachedLouie(GameObject louie)
+    {
+        if (louie == null)
+            return;
+
+        if (louie.TryGetComponent<LouieMovementController>(out var lm))
+        {
+            lm.enabled = true;
+            lm.Kill();
+            return;
+        }
+
+        if (louie.TryGetComponent<MovementController>(out var mc))
+        {
+            mc.enabled = true;
+            mc.Kill();
+            return;
+        }
+
+        Destroy(louie);
+    }
+
+    void DetachAndKillCurrentLouieOnly()
+    {
+        if (currentLouie == null)
+            return;
+
+        var louie = currentLouie;
+        currentLouie = null;
+
+        louie.transform.GetPositionAndRotation(out var worldPos, out var worldRot);
+
+        ClearDashInvulnerabilityNow();
+        ResetMountedStateAndAbilities();
+
+        if (movement.TryGetComponent<CharacterHealth>(out var health))
+            health.StartTemporaryInvulnerability(playerInvulnerabilityAfterLoseLouieSeconds);
+
+        DetachLouieToWorld(louie, worldPos, worldRot, disableVisual: false);
+        KillDetachedLouie(louie);
     }
 
     void OnDestroy()
@@ -870,9 +780,7 @@ public class PlayerLouieCompanion : MonoBehaviour
 
     public MountedLouieType GetMountedLouieType()
     {
-        return currentLouie == null
-            ? MountedLouieType.None
-            : mountedType;
+        return currentLouie == null ? MountedLouieType.None : mountedType;
     }
 
     public CharacterHealth GetMountedLouieHealth()
@@ -885,60 +793,27 @@ public class PlayerLouieCompanion : MonoBehaviour
         return currentLouie != null;
     }
 
-    public void RestoreMountedBlueLouie()
+    public void RestoreMountedFromPersistent()
     {
         if (currentLouie != null)
             return;
 
-        MountBlueLouie();
+        int playerId = GetPlayerId();
+        var state = PlayerPersistentStats.Get(playerId);
+
+        RestoreMounted(state.MountedLouie);
     }
 
-    public void RestoreMountedBlackLouie()
+    void RestoreMounted(MountedLouieType type)
     {
         if (currentLouie != null)
             return;
 
-        MountBlackLouie();
-    }
-
-    public void RestoreMountedPurpleLouie()
-    {
-        if (currentLouie != null)
+        var prefab = GetPrefab(type);
+        if (prefab == null || type == MountedLouieType.None)
             return;
 
-        MountPurpleLouie();
-    }
-
-    public void RestoreMountedGreenLouie()
-    {
-        if (currentLouie != null)
-            return;
-
-        MountGreenLouie();
-    }
-
-    public void RestoreMountedYellowLouie()
-    {
-        if (currentLouie != null)
-            return;
-
-        MountYellowLouie();
-    }
-
-    public void RestoreMountedPinkLouie()
-    {
-        if (currentLouie != null)
-            return;
-
-        MountPinkLouie();
-    }
-
-    public void RestoreMountedRedLouie()
-    {
-        if (currentLouie != null)
-            return;
-
-        MountRedLouie();
+        TryMount(prefab, type);
     }
 
     public bool TryPlayMountedLouieEndStage(float totalTime, int frameCount)
@@ -982,52 +857,7 @@ public class PlayerLouieCompanion : MonoBehaviour
                 punchAbility.SetExternalAnimator(null);
             }
 
-            abilitySystem.Disable(BlackLouieDashPushAbility.AbilityId);
-            abilitySystem.Disable(PurpleLouieBombLineAbility.AbilityId);
-            abilitySystem.Disable(GreenLouieDashAbility.AbilityId);
-            abilitySystem.Disable(YellowLouieDestructibleKickAbility.AbilityId);
-            abilitySystem.Disable(PinkLouieJumpAbility.AbilityId);
-            abilitySystem.Disable(RedLouiePunchStunAbility.AbilityId);
-
-            var kick = abilitySystem.Get<YellowLouieDestructibleKickAbility>(YellowLouieDestructibleKickAbility.AbilityId);
-            if (kick != null)
-            {
-                kick.SetExternalAnimator(null);
-                kick.SetKickSfx(null, 1f);
-            }
-
-            var dash = abilitySystem.Get<GreenLouieDashAbility>(GreenLouieDashAbility.AbilityId);
-            if (dash != null)
-            {
-                dash.SetExternalAnimator(null);
-                dash.SetDashSfx(null, 1f);
-            }
-
-            var jump = abilitySystem.Get<PinkLouieJumpAbility>(PinkLouieJumpAbility.AbilityId);
-            if (jump != null)
-            {
-                jump.SetExternalAnimator(null);
-                jump.SetJumpSfx(null, 1f);
-            }
-
-            var stun = abilitySystem.Get<RedLouiePunchStunAbility>(RedLouiePunchStunAbility.AbilityId);
-            if (stun != null)
-            {
-                stun.SetExternalAnimator(null);
-                stun.SetPunchSfx(null, 1f);
-            }
-
-            var blackDash = abilitySystem.Get<BlackLouieDashPushAbility>(BlackLouieDashPushAbility.AbilityId);
-            if (blackDash != null)
-            {
-                blackDash.SetExternalAnimator(null);
-                blackDash.SetDashSfx(null, 1f);
-            }
-
-            var purple = abilitySystem.Get<PurpleLouieBombLineAbility>(PurpleLouieBombLineAbility.AbilityId);
-            if (purple != null)
-                purple.SetExternalAnimator(null);
-
+            ResetLouieAbilitiesExternalState();
             return;
         }
 
@@ -1070,26 +900,6 @@ public class PlayerLouieCompanion : MonoBehaviour
         return 1;
     }
 
-    public void RestoreMountedFromPersistent()
-    {
-        if (currentLouie != null)
-            return;
-
-        int playerId = GetPlayerId();
-        var state = PlayerPersistentStats.Get(playerId);
-
-        switch (state.MountedLouie)
-        {
-            case MountedLouieType.Blue: RestoreMountedBlueLouie(); break;
-            case MountedLouieType.Black: RestoreMountedBlackLouie(); break;
-            case MountedLouieType.Purple: RestoreMountedPurpleLouie(); break;
-            case MountedLouieType.Green: RestoreMountedGreenLouie(); break;
-            case MountedLouieType.Yellow: RestoreMountedYellowLouie(); break;
-            case MountedLouieType.Pink: RestoreMountedPinkLouie(); break;
-            case MountedLouieType.Red: RestoreMountedRedLouie(); break;
-        }
-    }
-
     bool TryMountFromQueuedEgg()
     {
         if (currentLouie != null)
@@ -1103,18 +913,16 @@ public class PlayerLouieCompanion : MonoBehaviour
 
         SetNextMountSfx(sfx, vol);
 
-        switch (t)
-        {
-            case ItemPickup.ItemType.BlueLouieEgg: MountBlueLouie(); return true;
-            case ItemPickup.ItemType.BlackLouieEgg: MountBlackLouie(); return true;
-            case ItemPickup.ItemType.PurpleLouieEgg: MountPurpleLouie(); return true;
-            case ItemPickup.ItemType.GreenLouieEgg: MountGreenLouie(); return true;
-            case ItemPickup.ItemType.YellowLouieEgg: MountYellowLouie(); return true;
-            case ItemPickup.ItemType.PinkLouieEgg: MountPinkLouie(); return true;
-            case ItemPickup.ItemType.RedLouieEgg: MountRedLouie(); return true;
-        }
+        var type = EggToMountedType(t);
+        if (type == MountedLouieType.None)
+            return false;
 
-        return false;
+        var prefab = GetPrefab(type);
+        if (prefab == null)
+            return false;
+
+        TryMount(prefab, type);
+        return true;
     }
 
     public void SetNextMountSfx(AudioClip clip, float volume)
@@ -1148,118 +956,41 @@ public class PlayerLouieCompanion : MonoBehaviour
             audio.PlayOneShot(clip, Mathf.Clamp01(vol));
     }
 
-    void ForceLouieFacingToPlayer()
-    {
-        if (currentLouie == null || movement == null)
-            return;
-
-        Vector2 facing = movement.FacingDirection;
-        if (facing == Vector2.zero)
-            facing = Vector2.down;
-
-        if (!currentLouie.TryGetComponent<LouieRiderVisual>(out var visual) || visual == null)
-            visual = currentLouie.GetComponentInChildren<LouieRiderVisual>(true);
-
-        if (visual == null)
-            return;
-
-        visual.localOffset = localOffset;
-
-        visual.Bind(movement);
-
-        if (visual.TryGetComponent(out MonoBehaviour mb))
-            mb.enabled = true;
-    }
-
     bool TryMapEggToLouie(ItemPickup.ItemType eggType, out GameObject prefab, out MountedLouieType type)
     {
-        prefab = null;
-        type = MountedLouieType.None;
-
-        switch (eggType)
-        {
-            case ItemPickup.ItemType.BlueLouieEgg: prefab = blueLouiePrefab; type = MountedLouieType.Blue; return true;
-            case ItemPickup.ItemType.BlackLouieEgg: prefab = blackLouiePrefab; type = MountedLouieType.Black; return true;
-            case ItemPickup.ItemType.PurpleLouieEgg: prefab = purpleLouiePrefab; type = MountedLouieType.Purple; return true;
-            case ItemPickup.ItemType.GreenLouieEgg: prefab = greenLouiePrefab; type = MountedLouieType.Green; return true;
-            case ItemPickup.ItemType.YellowLouieEgg: prefab = yellowLouiePrefab; type = MountedLouieType.Yellow; return true;
-            case ItemPickup.ItemType.PinkLouieEgg: prefab = pinkLouiePrefab; type = MountedLouieType.Pink; return true;
-            case ItemPickup.ItemType.RedLouieEgg: prefab = redLouiePrefab; type = MountedLouieType.Red; return true;
-        }
-
-        return false;
+        type = EggToMountedType(eggType);
+        prefab = GetPrefab(type);
+        return type != MountedLouieType.None && prefab != null;
     }
 
-    void DetachAndKillCurrentLouieOnly()
+    MountedLouieType EggToMountedType(ItemPickup.ItemType eggType)
     {
-        if (currentLouie == null)
-            return;
-
-        ClearDashInvulnerabilityNow();
-
-        var louie = currentLouie;
-        currentLouie = null;
-
-        mountedLouieHp = 0;
-        mountedLouieHealth = null;
-
-        louie.transform.GetPositionAndRotation(out var worldPos, out var worldRot);
-
-        movement.SetMountedSpritesLocalYOverride(false, 0f);
-        movement.SetMountedOnLouie(false);
-
-        mountedType = MountedLouieType.None;
-
-        abilitySystem.Disable(PurpleLouieBombLineAbility.AbilityId);
-        abilitySystem.Disable(GreenLouieDashAbility.AbilityId);
-        abilitySystem.Disable(YellowLouieDestructibleKickAbility.AbilityId);
-        abilitySystem.Disable(PinkLouieJumpAbility.AbilityId);
-        abilitySystem.Disable(RedLouiePunchStunAbility.AbilityId);
-        abilitySystem.Disable(BlackLouieDashPushAbility.AbilityId);
-
-        var kick = abilitySystem.Get<YellowLouieDestructibleKickAbility>(YellowLouieDestructibleKickAbility.AbilityId);
-        if (kick != null) { kick.SetExternalAnimator(null); kick.SetKickSfx(null, 1f); }
-
-        var dash = abilitySystem.Get<GreenLouieDashAbility>(GreenLouieDashAbility.AbilityId);
-        if (dash != null) { dash.SetExternalAnimator(null); dash.SetDashSfx(null, 1f); }
-
-        var jump = abilitySystem.Get<PinkLouieJumpAbility>(PinkLouieJumpAbility.AbilityId);
-        if (jump != null) { jump.SetExternalAnimator(null); jump.SetJumpSfx(null, 1f); }
-
-        var stun = abilitySystem.Get<RedLouiePunchStunAbility>(RedLouiePunchStunAbility.AbilityId);
-        if (stun != null) { stun.SetExternalAnimator(null); stun.SetPunchSfx(null, 1f); }
-
-        var blackDash = abilitySystem.Get<BlackLouieDashPushAbility>(BlackLouieDashPushAbility.AbilityId);
-        if (blackDash != null) { blackDash.SetExternalAnimator(null); blackDash.SetDashSfx(null, 1f); }
-
-        var purple = abilitySystem.Get<PurpleLouieBombLineAbility>(PurpleLouieBombLineAbility.AbilityId);
-        if (purple != null) purple.SetExternalAnimator(null);
-
-        RestorePunchAfterUnmount();
-
-        if (movement.TryGetComponent<CharacterHealth>(out var health))
-            health.StartTemporaryInvulnerability(playerInvulnerabilityAfterLoseLouieSeconds);
-
-        louie.transform.SetParent(null, true);
-        louie.transform.SetPositionAndRotation(worldPos, worldRot);
-
-        if (louie.TryGetComponent<LouieRiderVisual>(out var riderVisual))
-            Destroy(riderVisual);
-
-        if (louie.TryGetComponent<LouieMovementController>(out var lm))
+        return eggType switch
         {
-            lm.enabled = true;
-            lm.Kill();
-        }
-        else if (louie.TryGetComponent<MovementController>(out var mc))
+            ItemPickup.ItemType.BlueLouieEgg => MountedLouieType.Blue,
+            ItemPickup.ItemType.BlackLouieEgg => MountedLouieType.Black,
+            ItemPickup.ItemType.PurpleLouieEgg => MountedLouieType.Purple,
+            ItemPickup.ItemType.GreenLouieEgg => MountedLouieType.Green,
+            ItemPickup.ItemType.YellowLouieEgg => MountedLouieType.Yellow,
+            ItemPickup.ItemType.PinkLouieEgg => MountedLouieType.Pink,
+            ItemPickup.ItemType.RedLouieEgg => MountedLouieType.Red,
+            _ => MountedLouieType.None
+        };
+    }
+
+    GameObject GetPrefab(MountedLouieType type)
+    {
+        return type switch
         {
-            mc.enabled = true;
-            mc.Kill();
-        }
-        else
-        {
-            Destroy(louie);
-        }
+            MountedLouieType.Blue => blueLouiePrefab,
+            MountedLouieType.Black => blackLouiePrefab,
+            MountedLouieType.Purple => purpleLouiePrefab,
+            MountedLouieType.Green => greenLouiePrefab,
+            MountedLouieType.Yellow => yellowLouiePrefab,
+            MountedLouieType.Pink => pinkLouiePrefab,
+            MountedLouieType.Red => redLouiePrefab,
+            _ => null
+        };
     }
 
     void DetachCurrentLouieBeforeRiding()
@@ -1268,11 +999,6 @@ public class PlayerLouieCompanion : MonoBehaviour
             return;
 
         currentLouie.transform.GetPositionAndRotation(out var worldPos, out var worldRot);
-
-        if (currentLouie.TryGetComponent<LouieRiderVisual>(out var rv) && rv != null)
-            rv.enabled = false;
-
-        currentLouie.transform.SetParent(null, true);
-        currentLouie.transform.SetPositionAndRotation(worldPos, worldRot);
+        DetachLouieToWorld(currentLouie, worldPos, worldRot, disableVisual: true);
     }
 }
