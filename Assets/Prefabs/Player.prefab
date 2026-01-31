@@ -405,6 +405,22 @@ MonoBehaviour:
   - {fileID: -1156605930590490695, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
   - {fileID: -1156605930590490695, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
   - {fileID: -1156605930590490695, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
+  - {fileID: -1156605930590490695, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
+  - {fileID: -1156605930590490695, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
+  - {fileID: -1156605930590490695, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
+  - {fileID: -1156605930590490695, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
+  - {fileID: -1156605930590490695, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
+  - {fileID: -1156605930590490695, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
+  - {fileID: -1156605930590490695, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
+  - {fileID: -1156605930590490695, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
+  - {fileID: 8552966399892014597, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
+  - {fileID: 8552966399892014597, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
+  - {fileID: 8552966399892014597, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
+  - {fileID: 8552966399892014597, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
+  - {fileID: 8552966399892014597, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
+  - {fileID: 8552966399892014597, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
+  - {fileID: 8552966399892014597, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
+  - {fileID: 8552966399892014597, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
   - {fileID: 8552966399892014597, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
   - {fileID: 8552966399892014597, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
   - {fileID: 8552966399892014597, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
@@ -413,26 +429,42 @@ MonoBehaviour:
   - {fileID: 8552966399892014597, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
   - {fileID: 8552966399892014597, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
   allowFlipX: 0
-  animationTime: 0.06666667
+  animationTime: 0.032258064
   useSequenceDuration: 0
   sequenceDuration: 0.5
   loop: 0
   idle: 0
   frameOffsets:
   - {x: 0, y: 0.5}
-  - {x: 0, y: 0.75}
-  - {x: 0, y: 1}
-  - {x: 0, y: 1.25}
-  - {x: 0, y: 1.5}
-  - {x: 0, y: 2}
-  - {x: 0, y: 2.25}
+  - {x: 0, y: 0.633333}
+  - {x: 0, y: 0.766667}
+  - {x: 0, y: 0.9}
+  - {x: 0, y: 1.033333}
+  - {x: 0, y: 1.166667}
+  - {x: 0, y: 1.3}
+  - {x: 0, y: 1.433333}
+  - {x: 0, y: 1.566667}
+  - {x: 0, y: 1.7}
+  - {x: 0, y: 1.833333}
+  - {x: 0, y: 1.966667}
+  - {x: 0, y: 2.1}
+  - {x: 0, y: 2.233333}
+  - {x: 0, y: 2.366667}
   - {x: 0, y: 2.5}
-  - {x: 0, y: 2.25}
-  - {x: 0, y: 2}
-  - {x: 0, y: 1.5}
-  - {x: 0, y: 1.25}
-  - {x: 0, y: 1}
-  - {x: 0, y: 0.75}
+  - {x: 0, y: 2.366667}
+  - {x: 0, y: 2.233333}
+  - {x: 0, y: 2.1}
+  - {x: 0, y: 1.966667}
+  - {x: 0, y: 1.833333}
+  - {x: 0, y: 1.7}
+  - {x: 0, y: 1.566667}
+  - {x: 0, y: 1.433333}
+  - {x: 0, y: 1.3}
+  - {x: 0, y: 1.166667}
+  - {x: 0, y: 1.033333}
+  - {x: 0, y: 0.5}
+  - {x: 0, y: 0.766667}
+  - {x: 0, y: 0.633333}
   - {x: 0, y: 0.5}
   pingPong: 0
   disableOffsetsIfThisObjectHasRigidbody2D: 1
@@ -1019,6 +1051,22 @@ MonoBehaviour:
   - {fileID: 439622058109301826, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
   - {fileID: 439622058109301826, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
   - {fileID: 439622058109301826, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
+  - {fileID: 439622058109301826, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
+  - {fileID: 439622058109301826, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
+  - {fileID: 439622058109301826, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
+  - {fileID: 439622058109301826, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
+  - {fileID: 439622058109301826, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
+  - {fileID: 439622058109301826, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
+  - {fileID: 439622058109301826, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
+  - {fileID: 439622058109301826, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
+  - {fileID: -4540406695759904406, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
+  - {fileID: -4540406695759904406, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
+  - {fileID: -4540406695759904406, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
+  - {fileID: -4540406695759904406, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
+  - {fileID: -4540406695759904406, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
+  - {fileID: -4540406695759904406, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
+  - {fileID: -4540406695759904406, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
+  - {fileID: -4540406695759904406, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
   - {fileID: -4540406695759904406, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
   - {fileID: -4540406695759904406, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
   - {fileID: -4540406695759904406, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
@@ -1027,26 +1075,42 @@ MonoBehaviour:
   - {fileID: -4540406695759904406, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
   - {fileID: -4540406695759904406, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
   allowFlipX: 0
-  animationTime: 0.06666667
+  animationTime: 0.032258064
   useSequenceDuration: 0
   sequenceDuration: 0.5
   loop: 0
   idle: 0
   frameOffsets:
   - {x: 0.15, y: 0.5}
-  - {x: 0.15, y: 0.75}
-  - {x: 0.15, y: 1}
-  - {x: 0.15, y: 1.25}
-  - {x: 0.15, y: 1.5}
-  - {x: 0.15, y: 2}
-  - {x: 0.15, y: 2.25}
+  - {x: 0.15, y: 0.633333}
+  - {x: 0.15, y: 0.766667}
+  - {x: 0.15, y: 0.9}
+  - {x: 0.15, y: 1.033333}
+  - {x: 0.15, y: 1.166667}
+  - {x: 0.15, y: 1.3}
+  - {x: 0.15, y: 1.433333}
+  - {x: 0.15, y: 1.566667}
+  - {x: 0.15, y: 1.7}
+  - {x: 0.15, y: 1.833333}
+  - {x: 0.15, y: 1.966667}
+  - {x: 0.15, y: 2.1}
+  - {x: 0.15, y: 2.233333}
+  - {x: 0.15, y: 2.366667}
   - {x: 0.15, y: 2.5}
-  - {x: 0.15, y: 2.25}
-  - {x: 0.15, y: 2}
-  - {x: 0.15, y: 1.5}
-  - {x: 0.15, y: 1.25}
-  - {x: 0.15, y: 1}
-  - {x: 0.15, y: 0.75}
+  - {x: 0.15, y: 2.366667}
+  - {x: 0.15, y: 2.233333}
+  - {x: 0.15, y: 2.1}
+  - {x: 0.15, y: 1.966667}
+  - {x: 0.15, y: 1.833333}
+  - {x: 0.15, y: 1.7}
+  - {x: 0.15, y: 1.566667}
+  - {x: 0.15, y: 1.433333}
+  - {x: 0.15, y: 1.3}
+  - {x: 0.15, y: 1.166667}
+  - {x: 0.15, y: 1.033333}
+  - {x: 0.15, y: 0.5}
+  - {x: 0.15, y: 0.766667}
+  - {x: 0.15, y: 0.633333}
   - {x: 0.15, y: 0.5}
   pingPong: 0
   disableOffsetsIfThisObjectHasRigidbody2D: 1
@@ -1521,6 +1585,22 @@ MonoBehaviour:
   - {fileID: 4621900904674556200, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
   - {fileID: 4621900904674556200, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
   - {fileID: 4621900904674556200, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
+  - {fileID: 4621900904674556200, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
+  - {fileID: 4621900904674556200, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
+  - {fileID: 4621900904674556200, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
+  - {fileID: 4621900904674556200, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
+  - {fileID: 4621900904674556200, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
+  - {fileID: 4621900904674556200, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
+  - {fileID: 4621900904674556200, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
+  - {fileID: 4621900904674556200, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
+  - {fileID: -4509764011273305862, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
+  - {fileID: -4509764011273305862, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
+  - {fileID: -4509764011273305862, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
+  - {fileID: -4509764011273305862, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
+  - {fileID: -4509764011273305862, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
+  - {fileID: -4509764011273305862, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
+  - {fileID: -4509764011273305862, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
+  - {fileID: -4509764011273305862, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
   - {fileID: -4509764011273305862, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
   - {fileID: -4509764011273305862, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
   - {fileID: -4509764011273305862, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
@@ -1529,26 +1609,42 @@ MonoBehaviour:
   - {fileID: -4509764011273305862, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
   - {fileID: -4509764011273305862, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
   allowFlipX: 0
-  animationTime: 0.06666667
+  animationTime: 0.032258064
   useSequenceDuration: 0
   sequenceDuration: 0.5
   loop: 0
   idle: 0
   frameOffsets:
   - {x: 0, y: 0.5}
-  - {x: 0, y: 0.75}
-  - {x: 0, y: 1}
-  - {x: 0, y: 1.25}
-  - {x: 0, y: 1.5}
-  - {x: 0, y: 2}
-  - {x: 0, y: 2.25}
+  - {x: 0, y: 0.633333}
+  - {x: 0, y: 0.766667}
+  - {x: 0, y: 0.9}
+  - {x: 0, y: 1.033333}
+  - {x: 0, y: 1.166667}
+  - {x: 0, y: 1.3}
+  - {x: 0, y: 1.433333}
+  - {x: 0, y: 1.566667}
+  - {x: 0, y: 1.7}
+  - {x: 0, y: 1.833333}
+  - {x: 0, y: 1.966667}
+  - {x: 0, y: 2.1}
+  - {x: 0, y: 2.233333}
+  - {x: 0, y: 2.366667}
   - {x: 0, y: 2.5}
-  - {x: 0, y: 2.25}
-  - {x: 0, y: 2}
-  - {x: 0, y: 1.5}
-  - {x: 0, y: 1.25}
-  - {x: 0, y: 1}
-  - {x: 0, y: 0.75}
+  - {x: 0, y: 2.366667}
+  - {x: 0, y: 2.233333}
+  - {x: 0, y: 2.1}
+  - {x: 0, y: 1.966667}
+  - {x: 0, y: 1.833333}
+  - {x: 0, y: 1.7}
+  - {x: 0, y: 1.566667}
+  - {x: 0, y: 1.433333}
+  - {x: 0, y: 1.3}
+  - {x: 0, y: 1.166667}
+  - {x: 0, y: 1.033333}
+  - {x: 0, y: 0.5}
+  - {x: 0, y: 0.766667}
+  - {x: 0, y: 0.633333}
   - {x: 0, y: 0.5}
   pingPong: 0
   disableOffsetsIfThisObjectHasRigidbody2D: 1
@@ -2150,6 +2246,22 @@ MonoBehaviour:
   - {fileID: -6353658998627689660, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
   - {fileID: -6353658998627689660, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
   - {fileID: -6353658998627689660, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
+  - {fileID: -6353658998627689660, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
+  - {fileID: -6353658998627689660, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
+  - {fileID: -6353658998627689660, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
+  - {fileID: -6353658998627689660, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
+  - {fileID: -6353658998627689660, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
+  - {fileID: -6353658998627689660, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
+  - {fileID: -6353658998627689660, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
+  - {fileID: -6353658998627689660, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
+  - {fileID: -1439883196527328149, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
+  - {fileID: -1439883196527328149, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
+  - {fileID: -1439883196527328149, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
+  - {fileID: -1439883196527328149, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
+  - {fileID: -1439883196527328149, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
+  - {fileID: -1439883196527328149, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
+  - {fileID: -1439883196527328149, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
+  - {fileID: -1439883196527328149, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
   - {fileID: -1439883196527328149, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
   - {fileID: -1439883196527328149, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
   - {fileID: -1439883196527328149, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
@@ -2158,26 +2270,42 @@ MonoBehaviour:
   - {fileID: -1439883196527328149, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
   - {fileID: -1439883196527328149, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
   allowFlipX: 0
-  animationTime: 0.06666667
+  animationTime: 0.032258064
   useSequenceDuration: 0
   sequenceDuration: 0.5
   loop: 0
   idle: 0
   frameOffsets:
   - {x: 0.15, y: 0.5}
-  - {x: 0.15, y: 0.75}
-  - {x: 0.15, y: 1}
-  - {x: 0.15, y: 1.25}
-  - {x: 0.15, y: 1.5}
-  - {x: 0.15, y: 2}
-  - {x: 0.15, y: 2.25}
+  - {x: 0.15, y: 0.633333}
+  - {x: 0.15, y: 0.766667}
+  - {x: 0.15, y: 0.9}
+  - {x: 0.15, y: 1.033333}
+  - {x: 0.15, y: 1.166667}
+  - {x: 0.15, y: 1.3}
+  - {x: 0.15, y: 1.433333}
+  - {x: 0.15, y: 1.566667}
+  - {x: 0.15, y: 1.7}
+  - {x: 0.15, y: 1.833333}
+  - {x: 0.15, y: 1.966667}
+  - {x: 0.15, y: 2.1}
+  - {x: 0.15, y: 2.233333}
+  - {x: 0.15, y: 2.366667}
   - {x: 0.15, y: 2.5}
-  - {x: 0.15, y: 2.25}
-  - {x: 0.15, y: 2}
-  - {x: 0.15, y: 1.5}
-  - {x: 0.15, y: 1.25}
-  - {x: 0.15, y: 1}
-  - {x: 0.15, y: 0.75}
+  - {x: 0.15, y: 2.366667}
+  - {x: 0.15, y: 2.233333}
+  - {x: 0.15, y: 2.1}
+  - {x: 0.15, y: 1.966667}
+  - {x: 0.15, y: 1.833333}
+  - {x: 0.15, y: 1.7}
+  - {x: 0.15, y: 1.566667}
+  - {x: 0.15, y: 1.433333}
+  - {x: 0.15, y: 1.3}
+  - {x: 0.15, y: 1.166667}
+  - {x: 0.15, y: 1.033333}
+  - {x: 0.15, y: 0.5}
+  - {x: 0.15, y: 0.766667}
+  - {x: 0.15, y: 0.633333}
   - {x: 0.15, y: 0.5}
   pingPong: 0
   disableOffsetsIfThisObjectHasRigidbody2D: 1
