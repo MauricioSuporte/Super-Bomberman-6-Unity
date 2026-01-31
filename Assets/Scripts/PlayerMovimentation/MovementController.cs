@@ -1310,7 +1310,7 @@ public class MovementController : MonoBehaviour, IKillable
 
     bool IsRidingPlaying()
     {
-        if (TryGetComponent<PlayerRidingController>(out PlayerRidingController r) && r != null)
+        if (TryGetComponent(out PlayerRidingController r) && r != null)
             return r.IsPlaying;
 
         return false;
