@@ -243,6 +243,13 @@ public class MovementController : MonoBehaviour, IKillable
 
     public void EnableExclusiveFromState()
     {
+        if (IsRidingPlaying())
+        {
+            DisableAllFootSprites();
+            DisableAllMountedSprites();
+            return;
+        }
+
         SetAllSpritesVisible(false);
         ForceExclusiveSpriteFromState();
     }
@@ -299,6 +306,9 @@ public class MovementController : MonoBehaviour, IKillable
 
     public void ApplyDirectionFromVector(Vector2 dir)
     {
+        if (IsRidingPlaying())
+            return;
+
         hasInput = dir != Vector2.zero;
 
         if (dir != Vector2.zero)
@@ -716,6 +726,9 @@ public class MovementController : MonoBehaviour, IKillable
 
     protected void SetDirection(Vector2 newDirection, AnimatedSpriteRenderer spriteRenderer)
     {
+        if (IsRidingPlaying())
+            return;
+
         direction = newDirection;
 
         if (newDirection != Vector2.zero)
@@ -1169,6 +1182,13 @@ public class MovementController : MonoBehaviour, IKillable
     {
         isMountedOnLouie = mounted;
 
+        if (IsRidingPlaying())
+        {
+            DisableAllFootSprites();
+            DisableAllMountedSprites();
+            return;
+        }
+
         if (mounted)
         {
             DisableAllFootSprites();
@@ -1243,6 +1263,13 @@ public class MovementController : MonoBehaviour, IKillable
     {
         if (isDead)
             return;
+
+        if (IsRidingPlaying())
+        {
+            DisableAllFootSprites();
+            DisableAllMountedSprites();
+            return;
+        }
 
         DisableAllFootSprites();
         DisableAllMountedSprites();
@@ -1319,5 +1346,13 @@ public class MovementController : MonoBehaviour, IKillable
             return new Vector2(Mathf.Sign(dir.x), 0f);
 
         return new Vector2(0f, Mathf.Sign(dir.y));
+    }
+
+    bool IsRidingPlaying()
+    {
+        if (TryGetComponent<PlayerRidingController>(out var r) && r != null)
+            return r.IsPlaying;
+
+        return false;
     }
 }
