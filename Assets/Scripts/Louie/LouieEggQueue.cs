@@ -686,6 +686,92 @@ public sealed class LouieEggQueue : MonoBehaviour
         _useIdleShiftState = false;
         _idleShiftStartTime = 0f;
 
+        EnqueueInternal(type, idleSprite, mountSfx, mountVolume, animate: true);
+        return true;
+    }
+
+    public bool TryDequeue(out ItemPickup.ItemType type, out AudioClip mountSfx, out float mountVolume)
+    {
+        type = default;
+        mountSfx = null;
+        mountVolume = 0f;
+
+        if (_eggs.Count == 0)
+            return false;
+
+        int lastIndex = _eggs.Count - 1;
+        var oldestClosest = _eggs[lastIndex];
+        _eggs.RemoveAt(lastIndex);
+
+        if (oldestClosest.rootTr != null)
+            Destroy(oldestClosest.rootTr.gameObject);
+
+        type = oldestClosest.type;
+        mountSfx = oldestClosest.mountSfx;
+        mountVolume = oldestClosest.mountVolume;
+
+        AnimateAllShift();
+        return true;
+    }
+
+    public void GetQueuedEggTypesOldestToNewest(List<ItemPickup.ItemType> buffer)
+    {
+        if (buffer == null)
+            return;
+
+        buffer.Clear();
+
+        if (_eggs.Count == 0)
+            return;
+
+        for (int i = _eggs.Count - 1; i >= 0; i--)
+            buffer.Add(_eggs[i].type);
+    }
+
+    public void RestoreQueuedEggTypesOldestToNewest(IReadOnlyList<ItemPickup.ItemType> types, Sprite idleSpriteFallback = null)
+    {
+        ClearAllEggs();
+
+        if (types == null || types.Count == 0)
+            return;
+
+        BindOwnerAuto();
+        EnsureWorldRoot();
+        EnsureHistoryBuffer();
+        SeedHistoryNow();
+        ResetRuntimeState();
+
+        for (int i = 0; i < types.Count; i++)
+            EnqueueInternal(types[i], idleSpriteFallback, null, 0f, animate: false);
+
+        SnapAllToTargetsNow();
+    }
+
+    void ClearAllEggs()
+    {
+        for (int i = 0; i < _eggs.Count; i++)
+        {
+            if (_eggs[i].rootTr != null)
+                Destroy(_eggs[i].rootTr.gameObject);
+        }
+
+        _eggs.Clear();
+    }
+
+    void EnqueueInternal(ItemPickup.ItemType type, Sprite idleSprite, AudioClip mountSfx, float mountVolume, bool animate)
+    {
+        BindOwnerAuto();
+        EnsureWorldRoot();
+        EnsureHistoryBuffer();
+
+        if (MaxEggs > 0 && _eggs.Count >= MaxEggs)
+            return;
+
+        _idleFrames = 0;
+        _movingFrames = 0;
+        _useIdleShiftState = false;
+        _idleShiftStartTime = 0f;
+
         Vector3 spawnWorld = GetOwnerWorldPos();
         spawnWorld.z = 0f;
         spawnWorld += (Vector3)worldOffset;
@@ -724,7 +810,9 @@ public sealed class LouieEggQueue : MonoBehaviour
             sr.enabled = true;
         }
 
-        float durJoin = Mathf.Max(0.01f, joinSeconds) + Mathf.Max(0f, joinExtraDelayPerEgg) * _eggs.Count;
+        float durJoin = animate
+            ? Mathf.Max(0.01f, joinSeconds) + Mathf.Max(0f, joinExtraDelayPerEgg) * _eggs.Count
+            : 0f;
 
         var entry = new EggEntry
         {
@@ -733,40 +821,72 @@ public sealed class LouieEggQueue : MonoBehaviour
             directional = directional,
             mountSfx = mountSfx,
             mountVolume = Mathf.Clamp01(mountVolume),
-            isAnimating = true,
+            isAnimating = animate,
             animStartTime = Time.time,
             animDuration = durJoin,
             animFromWorld = spawnWorld
         };
 
         _eggs.Insert(0, entry);
-        AnimateShiftExceptNewest();
 
-        return true;
+        if (animate)
+            AnimateShiftExceptNewest();
+        else
+            StopAllAnimationsNow();
     }
 
-    public bool TryDequeue(out ItemPickup.ItemType type, out AudioClip mountSfx, out float mountVolume)
+    void StopAllAnimationsNow()
     {
-        type = default;
-        mountSfx = null;
-        mountVolume = 0f;
+        for (int i = 0; i < _eggs.Count; i++)
+        {
+            var e = _eggs[i];
+            e.isAnimating = false;
+            e.animDuration = 0f;
+            _eggs[i] = e;
+        }
+    }
 
-        if (_eggs.Count == 0)
-            return false;
+    void SnapAllToTargetsNow()
+    {
+        EnsureHistoryBuffer();
 
-        int lastIndex = _eggs.Count - 1;
-        var oldestClosest = _eggs[lastIndex];
-        _eggs.RemoveAt(lastIndex);
+        Vector3 behindDir = GetFallbackBehindDir();
 
-        if (oldestClosest.rootTr != null)
-            Destroy(oldestClosest.rootTr.gameObject);
+        float minSep = Mathf.Max(0.0001f, minTargetSeparation);
+        float minSepSqr = minSep * minSep;
 
-        type = oldestClosest.type;
-        mountSfx = oldestClosest.mountSfx;
-        mountVolume = oldestClosest.mountVolume;
+        Vector3 prevTarget = Vector3.positiveInfinity;
+        bool hasPrevTarget = false;
 
-        AnimateAllShift();
-        return true;
+        for (int i = _eggs.Count - 1; i >= 0; i--)
+        {
+            var e = _eggs[i];
+            if (e.rootTr == null)
+                continue;
+
+            int ageRank = (_eggs.Count - i);
+            float backDist = eggSpacingWorld * ageRank;
+
+            Vector3 targetWorld = SampleBackDistance(backDist);
+            targetWorld += (Vector3)worldOffset;
+            targetWorld.z = 0f;
+
+            if (hasPrevTarget && (targetWorld - prevTarget).sqrMagnitude <= minSepSqr)
+            {
+                targetWorld = prevTarget + behindDir * minSep;
+                targetWorld.z = 0f;
+            }
+
+            e.rootTr.position = targetWorld;
+
+            if (e.directional != null)
+                e.directional.ApplyMoveDelta(Vector3.zero);
+
+            _eggs[i] = e;
+
+            prevTarget = targetWorld;
+            hasPrevTarget = true;
+        }
     }
 
     void EnsureEggLayer(Transform root)

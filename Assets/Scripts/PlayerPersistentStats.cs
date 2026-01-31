@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
+using UnityEngine;
 
 public static class PlayerPersistentStats
 {
@@ -33,6 +34,8 @@ public static class PlayerPersistentStats
 
         public MountedLouieType MountedLouie = MountedLouieType.None;
         public BomberSkin Skin = BomberSkin.White;
+
+        public readonly List<ItemPickup.ItemType> QueuedEggs = new(8);
     }
 
     static readonly PlayerState[] _p = new PlayerState[4]
@@ -162,6 +165,7 @@ public static class PlayerPersistentStats
         s.HasFullFire = false;
 
         s.MountedLouie = MountedLouieType.None;
+        s.QueuedEggs.Clear();
 
         s.Skin = BomberSkin.White;
         SaveSelectedSkin(playerId);
@@ -193,13 +197,26 @@ public static class PlayerPersistentStats
     {
         if (c == null) return 1;
 
-        var id = c.GetComponent<PlayerIdentity>();
-        if (id != null) return Mathf.Clamp(id.playerId, 1, 4);
+        if (c.TryGetComponent<PlayerIdentity>(out var id)) return Mathf.Clamp(id.playerId, 1, 4);
 
         var parentId = c.GetComponentInParent<PlayerIdentity>(true);
         if (parentId != null) return Mathf.Clamp(parentId.playerId, 1, 4);
 
         return 1;
+    }
+
+    static LouieEggQueue GetOrCreateEggQueue(GameObject playerGo, MovementController movement)
+    {
+        if (playerGo == null)
+            return null;
+
+        if (!playerGo.TryGetComponent<LouieEggQueue>(out var q) || q == null)
+            q = playerGo.AddComponent<LouieEggQueue>();
+
+        if (movement != null)
+            q.BindOwner(movement);
+
+        return q;
     }
 
     public static void LoadInto(MovementController movement, BombController bomb)
@@ -286,6 +303,18 @@ public static class PlayerPersistentStats
                     case MountedLouieType.Red: louieCompanion.RestoreMountedRedLouie(); break;
                 }
             }
+
+            if (s.QueuedEggs != null && s.QueuedEggs.Count > 0)
+            {
+                var q = GetOrCreateEggQueue(movement.gameObject, movement);
+                if (q != null)
+                    q.RestoreQueuedEggTypesOldestToNewest(s.QueuedEggs, idleSpriteFallback: null);
+            }
+            else
+            {
+                if (movement.TryGetComponent<LouieEggQueue>(out var q) && q != null)
+                    q.RestoreQueuedEggTypesOldestToNewest(null, null);
+            }
         }
     }
 
@@ -345,6 +374,11 @@ public static class PlayerPersistentStats
 
             if (movement.TryGetComponent<PlayerLouieCompanion>(out var louieCompanion))
                 s.MountedLouie = louieCompanion.GetMountedLouieType();
+
+            if (movement.TryGetComponent<LouieEggQueue>(out var q) && q != null)
+                q.GetQueuedEggTypesOldestToNewest(s.QueuedEggs);
+            else
+                s.QueuedEggs.Clear();
         }
 
         if (bomb != null && bomb.CompareTag("Player"))
@@ -369,5 +403,8 @@ public static class PlayerPersistentStats
 
         if (health != null)
             s.Life = Mathf.Max(1, health.life);
+
+        if (movement != null && movement.TryGetComponent<LouieEggQueue>(out var q) && q != null)
+            q.GetQueuedEggTypesOldestToNewest(s.QueuedEggs);
     }
 }
