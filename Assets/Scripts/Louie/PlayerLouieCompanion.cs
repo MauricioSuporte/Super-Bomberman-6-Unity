@@ -182,6 +182,87 @@ public class PlayerLouieCompanion : MonoBehaviour
         if (currentLouie != null)
             return;
 
+        var rider = GetComponent<PlayerRidingController>();
+        if (rider != null && rider.TryPlayRiding(
+            movement.FacingDirection,
+            onComplete: () => FinalizeMountAfterRiding(type),
+            onStart: () => SpawnLouieDuringRiding(prefab, type)))
+            return;
+
+        MountLouieInternal_AfterRiding(prefab, type);
+    }
+
+    void SpawnLouieDuringRiding(GameObject prefab, MountedLouieType type)
+    {
+        if (prefab == null || currentLouie != null)
+            return;
+
+        mountedType = type;
+
+        currentLouie = Instantiate(prefab, transform);
+        currentLouie.transform.SetLocalPositionAndRotation(localOffset, Quaternion.identity);
+        currentLouie.transform.localScale = Vector3.one;
+
+        mountedLouieHealth = currentLouie.GetComponentInChildren<CharacterHealth>(true);
+
+        mountedLouieHp = 1;
+        if (mountedLouieHealth != null)
+            mountedLouieHp = Mathf.Max(1, mountedLouieHealth.life);
+
+        if (currentLouie.TryGetComponent<LouieMovementController>(out var lm))
+        {
+            lm.BindOwner(movement, localOffset);
+            lm.enabled = false;
+        }
+
+        if (currentLouie.TryGetComponent<Rigidbody2D>(out var rb))
+            rb.simulated = false;
+
+        if (currentLouie.TryGetComponent<Collider2D>(out var col))
+            col.enabled = false;
+
+        if (currentLouie.TryGetComponent<BombController>(out var bc))
+            bc.enabled = false;
+
+        ForceLouieFacingToPlayer();
+
+        SetMountedLouieVisible(true);
+
+        PlayMountSfxIfAny();
+    }
+
+    void FinalizeMountAfterRiding(MountedLouieType type)
+    {
+        if (currentLouie == null || movement == null)
+            return;
+
+        mountedType = type;
+
+        movement.SetMountedOnLouie(true);
+
+        bool isPink = mountedType == MountedLouieType.Pink;
+        movement.SetMountedSpritesLocalYOverride(isPink, movement.pinkMountedSpritesLocalY);
+
+        if (currentLouie.TryGetComponent<LouieRiderVisual>(out var visual))
+        {
+            visual.localOffset = localOffset;
+            visual.Bind(movement);
+        }
+
+        SetMountedLouieVisible(true);
+
+        abilitySystem.RebuildCache();
+        punchAbility = abilitySystem.Get<BombPunchAbility>(BombPunchAbility.AbilityId);
+        punchOwned |= abilitySystem.IsEnabled(BombPunchAbility.AbilityId);
+
+        ApplyRulesForCurrentMount();
+
+        movement.Died -= OnPlayerDied;
+        movement.Died += OnPlayerDied;
+    }
+
+    void MountLouieInternal_AfterRiding(GameObject prefab, MountedLouieType type)
+    {
         mountedType = type;
 
         currentLouie = Instantiate(prefab, transform);
@@ -559,6 +640,18 @@ public class PlayerLouieCompanion : MonoBehaviour
         if (currentLouie == null)
             return;
 
+        var rider = GetComponent<PlayerRidingController>();
+        if (rider != null && movement != null && rider.TryPlayRiding(movement.FacingDirection, LoseLouie_AfterRiding))
+            return;
+
+        LoseLouie_AfterRiding();
+    }
+
+    public void LoseLouie_AfterRiding()
+    {
+        if (currentLouie == null)
+            return;
+
         ClearDashInvulnerabilityNow();
 
         var louie = currentLouie;
@@ -652,6 +745,15 @@ public class PlayerLouieCompanion : MonoBehaviour
     void OnPlayerDied(MovementController _) => UnmountLouie();
 
     void UnmountLouie()
+    {
+        var rider = GetComponent<PlayerRidingController>();
+        if (rider != null && movement != null && rider.TryPlayRiding(movement.FacingDirection, UnmountLouie_AfterRiding))
+            return;
+
+        UnmountLouie_AfterRiding();
+    }
+
+    void UnmountLouie_AfterRiding()
     {
         ClearDashInvulnerabilityNow();
 
@@ -1001,5 +1103,28 @@ public class PlayerLouieCompanion : MonoBehaviour
         var audio = FindAudioSource();
         if (audio != null && clip != null)
             audio.PlayOneShot(clip, Mathf.Clamp01(vol));
+    }
+
+    void ForceLouieFacingToPlayer()
+    {
+        if (currentLouie == null || movement == null)
+            return;
+
+        Vector2 facing = movement.FacingDirection;
+        if (facing == Vector2.zero)
+            facing = Vector2.down;
+
+        if (!currentLouie.TryGetComponent<LouieRiderVisual>(out var visual) || visual == null)
+            visual = currentLouie.GetComponentInChildren<LouieRiderVisual>(true);
+
+        if (visual == null)
+            return;
+
+        visual.localOffset = localOffset;
+
+        visual.Bind(movement);
+
+        if (visual.TryGetComponent(out MonoBehaviour mb))
+            mb.enabled = true;
     }
 }
