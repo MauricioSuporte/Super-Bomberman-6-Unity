@@ -53,8 +53,7 @@ public sealed class PlayerRidingController : MonoBehaviour
         if (r != null)
         {
             SetAnimEnabled(r, true);
-            r.idle = false;
-            r.loop = false;
+            r.CurrentFrame = 0;
             r.RefreshFrame();
         }
 
