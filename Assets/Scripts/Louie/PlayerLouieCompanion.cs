@@ -715,8 +715,6 @@ public class PlayerLouieCompanion : MonoBehaviour
             purple.SetExternalAnimator(null);
 
         RestorePunchAfterUnmount();
-
-        ClearEggQueue();
     }
 
     void OnDestroy()
@@ -972,12 +970,6 @@ public class PlayerLouieCompanion : MonoBehaviour
         }
 
         return false;
-    }
-
-    void ClearEggQueue()
-    {
-        if (TryGetComponent<LouieEggQueue>(out var q) && q != null)
-            q.ClearAll();
     }
 
     public void SetNextMountSfx(AudioClip clip, float volume)

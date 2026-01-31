@@ -918,11 +918,6 @@ public sealed class LouieEggQueue : MonoBehaviour
             StartAnimateToTargetNow(i, dur);
     }
 
-    public bool TryEnqueue(ItemPickup.ItemType type, Sprite idleSprite)
-    {
-        return TryEnqueue(type, idleSprite, null, 1f);
-    }
-
     public bool TryEnqueue(ItemPickup.ItemType type, Sprite idleSprite, AudioClip mountSfx, float mountVolume)
     {
         BindOwnerAuto();
@@ -1037,11 +1032,6 @@ public sealed class LouieEggQueue : MonoBehaviour
         return true;
     }
 
-    public bool TryDequeue(out ItemPickup.ItemType type)
-    {
-        return TryDequeue(out type, out _, out _);
-    }
-
     public bool TryDequeue(out ItemPickup.ItemType type, out AudioClip mountSfx, out float mountVolume)
     {
         type = default;
@@ -1068,34 +1058,6 @@ public sealed class LouieEggQueue : MonoBehaviour
             Debug.Log($"[LouieEggQueue] Dequeue type={type} eggsNow={_eggs.Count}", this);
 
         return true;
-    }
-
-    public void ClearAll()
-    {
-        for (int i = 0; i < _eggs.Count; i++)
-        {
-            if (_eggs[i].rootTr != null)
-                Destroy(_eggs[i].rootTr.gameObject);
-        }
-
-        _eggs.Clear();
-
-        _historyHead = 0;
-        _historyCount = 0;
-        _historyTimeCarry = 0f;
-
-        _hasLastRealOwnerPos = false;
-
-        _idleFrames = 0;
-        _movingFrames = 0;
-        _useIdleShiftState = false;
-        _idleShiftStartTime = 0f;
-
-        _lastMoveTime = Time.time;
-        _wasMovingPrevFrame = false;
-
-        if (debugLogs)
-            Debug.Log("[LouieEggQueue] ClearAll()", this);
     }
 
     void EnsureEggLayer(Transform root)

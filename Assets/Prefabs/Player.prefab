@@ -1502,6 +1502,8 @@ MonoBehaviour:
   louieDeathSeconds: 0.5
   playerInvulnerabilityAfterLoseLouieSeconds: 0.8
   blinkPlayerTogetherWithLouie: 1
+  mountLouieSfx: {fileID: 0}
+  mountLouieVolume: 1
 --- !u!114 &3335614114974889682
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1567,11 +1569,30 @@ MonoBehaviour:
   sortingLayerName: Player
   eggSortingOrder: 3
   eggGameObjectLayer: 3
-  maxEggsInQueue: 10
+  maxEggsInQueue: 2
   joinSeconds: 0.5
   joinExtraDelayPerEgg: 0.05
   shiftSeconds: 0.35
   eggFollowerPrefab: {fileID: 4238104617994113025, guid: 4e2d079b3d9cc45409d4403b68e4f121, type: 3}
+  idleDequeueStyle: 1
+  idleDequeueSnap: 0
+  idleEnterSeconds: 0.18
+  movingHoldSeconds: 0.06
+  idleGraceFrames: 3
+  idleExitGraceFrames: 2
+  idleCollapseSeconds: 0.35
+  idleDisableAntiCollapseAt: 0.95
+  idleShiftDirectionalDeadZoneMul: 6
+  preferRigidbodyVelocityForIdle: 1
+  ownerVelocityEpsilon: 0.0001
+  historyUseSpeedBasedSampling: 1
+  historySampleWhenIdle: 0
+  debugLogs: 1
+  debugLogEverySeconds: 0.5
+  debugOnlyWhenIdleIssue: 1
+  debugDirectionalWhenIdleShift: 1
+  debugDirectionalOnlyOnChange: 1
+  debugDirectionalIncludeTargets: 1
 --- !u!1 &6183660032571719661
 GameObject:
   m_ObjectHideFlags: 0
