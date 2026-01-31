@@ -660,6 +660,8 @@ public class PlayerLouieCompanion : MonoBehaviour
 
         if (rider != null && movement != null)
         {
+            DetachCurrentLouieBeforeRiding();
+
             if (hasQueuedEgg)
             {
                 if (rider.TryPlayRiding(
@@ -1258,5 +1260,19 @@ public class PlayerLouieCompanion : MonoBehaviour
         {
             Destroy(louie);
         }
+    }
+
+    void DetachCurrentLouieBeforeRiding()
+    {
+        if (currentLouie == null)
+            return;
+
+        currentLouie.transform.GetPositionAndRotation(out var worldPos, out var worldRot);
+
+        if (currentLouie.TryGetComponent<LouieRiderVisual>(out var rv) && rv != null)
+            rv.enabled = false;
+
+        currentLouie.transform.SetParent(null, true);
+        currentLouie.transform.SetPositionAndRotation(worldPos, worldRot);
     }
 }
