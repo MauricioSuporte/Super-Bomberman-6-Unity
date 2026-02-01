@@ -92,7 +92,7 @@ public class StageIntroTransition : MonoBehaviour
 
         RefreshControllers(includeInactive: true);
 
-        DisableGameplayControllersAndHideSprites();
+        DisableGameplayControllersAndHideSprites(hideLouieAndEggs: IsStage17());
 
         if (fadeImage != null)
         {
@@ -129,7 +129,7 @@ public class StageIntroTransition : MonoBehaviour
         bombControllers = FindObjectsByType<BombController>(inactive, FindObjectsSortMode.None);
     }
 
-    void DisableGameplayControllersAndHideSprites()
+    void DisableGameplayControllersAndHideSprites(bool hideLouieAndEggs)
     {
         for (int i = 0; i < movementControllers.Length; i++)
         {
@@ -149,16 +149,7 @@ public class StageIntroTransition : MonoBehaviour
             m.enabled = false;
             m.SetAllSpritesVisible(false);
 
-            var q = m.GetComponentInChildren<LouieEggQueue>(true);
-            if (q != null)
-                q.ForceVisible(false);
-
-            if (m.TryGetComponent<PlayerLouieCompanion>(out var comp) && comp != null)
-                comp.SetMountedLouieVisible(false);
-
-            var rider = m.GetComponentInChildren<LouieRiderVisual>(true);
-            if (rider != null)
-                rider.gameObject.SetActive(false);
+            ApplyLouieAndEggsIntroVisibility(m, visible: !hideLouieAndEggs);
         }
 
         for (int i = 0; i < bombControllers.Length; i++)
@@ -172,6 +163,30 @@ public class StageIntroTransition : MonoBehaviour
 
             b.enabled = false;
         }
+    }
+
+    void ApplyLouieAndEggsIntroVisibility(MovementController m, bool visible)
+    {
+        if (m == null) return;
+
+        var q = m.GetComponentInChildren<LouieEggQueue>(true);
+        if (q != null)
+        {
+            if (!q.gameObject.activeSelf)
+                q.gameObject.SetActive(true);
+
+            q.ForceVisible(visible);
+
+            if (visible)
+                q.RebindAndReseedNow(resetHistoryToOwnerNow: true);
+        }
+
+        if (m.TryGetComponent<PlayerLouieCompanion>(out var comp) && comp != null)
+            comp.SetMountedLouieVisible(visible);
+
+        var rider = m.GetComponentInChildren<LouieRiderVisual>(true);
+        if (rider != null)
+            rider.gameObject.SetActive(visible);
     }
 
     bool IsStage17()
@@ -261,12 +276,12 @@ public class StageIntroTransition : MonoBehaviour
             spawner.SpawnNow();
 
         RefreshControllers(includeInactive: false);
-        DisableGameplayControllersAndHideSprites();
+        DisableGameplayControllersAndHideSprites(hideLouieAndEggs: IsStage17());
 
         yield return null;
 
         RefreshControllers(includeInactive: false);
-        DisableGameplayControllersAndHideSprites();
+        DisableGameplayControllersAndHideSprites(hideLouieAndEggs: IsStage17());
 
         ResyncSpawnedPlayersFromIdentity();
         ApplyPersistentPlayerSkin();
@@ -302,6 +317,7 @@ public class StageIntroTransition : MonoBehaviour
                 continue;
             }
 
+            ApplyLouieAndEggsIntroVisibility(m, visible: true);
             m.EnableExclusiveFromState();
         }
 

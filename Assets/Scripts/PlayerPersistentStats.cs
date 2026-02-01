@@ -40,8 +40,8 @@ public static class PlayerPersistentStats
         public PlayerState()
         {
             QueuedEggs.Clear();
-            QueuedEggs.Add(ItemPickup.ItemType.PinkLouieEgg);
-            QueuedEggs.Add(ItemPickup.ItemType.RedLouieEgg);
+            QueuedEggs.Add(ItemPickup.ItemType.BlackLouieEgg);
+            QueuedEggs.Add(ItemPickup.ItemType.GreenLouieEgg);
         }
     }
 

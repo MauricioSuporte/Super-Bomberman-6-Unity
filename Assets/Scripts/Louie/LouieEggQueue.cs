@@ -937,6 +937,21 @@ public sealed class LouieEggQueue : MonoBehaviour
         ApplyForcedVisibility();
     }
 
+    public void RebindAndReseedNow(bool resetHistoryToOwnerNow)
+    {
+        BindOwnerAuto();
+        EnsureWorldRoot();
+        EnsureHistoryBuffer();
+
+        if (resetHistoryToOwnerNow)
+            ResetHistoryToCurrentOwnerPos();
+        else
+            SeedHistoryNow();
+
+        ResetRuntimeState();
+        ApplyForcedVisibility();
+    }
+
     void ApplyForcedVisibility()
     {
         bool active = !_forcedHidden;
