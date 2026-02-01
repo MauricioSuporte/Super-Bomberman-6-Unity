@@ -59,6 +59,16 @@ public sealed class LouieEggQueue : MonoBehaviour
     [SerializeField] private bool preferRigidbodyVelocityForIdle = true;
     [SerializeField, Range(0.000001f, 0.01f)] private float ownerVelocityEpsilon = 0.0001f;
 
+    [Header("Mount SFX (Resources/Sounds)")]
+    [SerializeField] private string blueLouieMountSfxName = "MountBlueLouie";
+    [SerializeField] private string blackLouieMountSfxName = "MountBlackLouie";
+    [SerializeField] private string purpleLouieMountSfxName = "MountPurpleLouie";
+    [SerializeField] private string greenLouieMountSfxName = "MountGreenLouie";
+    [SerializeField] private string yellowLouieMountSfxName = "MountYellowLouie";
+    [SerializeField] private string pinkLouieMountSfxName = "MountPinkLouie";
+    [SerializeField] private string redLouieMountSfxName = "MountRedLouie";
+    [SerializeField, Range(0f, 1f)] private float defaultMountVolume = 1f;
+
     struct EggEntry
     {
         public ItemPickup.ItemType type;
@@ -69,9 +79,6 @@ public sealed class LouieEggQueue : MonoBehaviour
         public float animStartTime;
         public float animDuration;
         public Vector3 animFromWorld;
-
-        public AudioClip mountSfx;
-        public float mountVolume;
     }
 
     readonly List<EggEntry> _eggs = new();
@@ -105,6 +112,8 @@ public sealed class LouieEggQueue : MonoBehaviour
     float _lastMoveTime;
     bool _wasMovingPrevFrame;
 
+    readonly Dictionary<ItemPickup.ItemType, AudioClip> _mountSfxCache = new();
+
     void OnValidate()
     {
         maxHistory = Mathf.Clamp(maxHistory, 10, 500);
@@ -130,6 +139,8 @@ public sealed class LouieEggQueue : MonoBehaviour
 
         idleShiftDirectionalDeadZoneMul = Mathf.Clamp(idleShiftDirectionalDeadZoneMul, 1f, 20f);
         ownerVelocityEpsilon = Mathf.Clamp(ownerVelocityEpsilon, 0.000001f, 0.01f);
+
+        defaultMountVolume = Mathf.Clamp01(defaultMountVolume);
     }
 
     void Awake()
@@ -672,6 +683,34 @@ public sealed class LouieEggQueue : MonoBehaviour
             StartAnimateToTargetNow(i, dur);
     }
 
+    AudioClip LoadMountSfx(ItemPickup.ItemType eggType)
+    {
+        if (_mountSfxCache.TryGetValue(eggType, out var cached) && cached != null)
+            return cached;
+
+        string name = eggType switch
+        {
+            ItemPickup.ItemType.BlueLouieEgg => blueLouieMountSfxName,
+            ItemPickup.ItemType.BlackLouieEgg => blackLouieMountSfxName,
+            ItemPickup.ItemType.PurpleLouieEgg => purpleLouieMountSfxName,
+            ItemPickup.ItemType.GreenLouieEgg => greenLouieMountSfxName,
+            ItemPickup.ItemType.YellowLouieEgg => yellowLouieMountSfxName,
+            ItemPickup.ItemType.PinkLouieEgg => pinkLouieMountSfxName,
+            ItemPickup.ItemType.RedLouieEgg => redLouieMountSfxName,
+            _ => null
+        };
+
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            _mountSfxCache[eggType] = null;
+            return null;
+        }
+
+        var clip = Resources.Load<AudioClip>($"Sounds/{name}");
+        _mountSfxCache[eggType] = clip;
+        return clip;
+    }
+
     public bool TryEnqueue(ItemPickup.ItemType type, Sprite idleSprite, AudioClip mountSfx, float mountVolume)
     {
         BindOwnerAuto();
@@ -686,7 +725,7 @@ public sealed class LouieEggQueue : MonoBehaviour
         _useIdleShiftState = false;
         _idleShiftStartTime = 0f;
 
-        EnqueueInternal(type, idleSprite, mountSfx, mountVolume, animate: true);
+        EnqueueInternal(type, idleSprite, animate: true);
         return true;
     }
 
@@ -707,8 +746,9 @@ public sealed class LouieEggQueue : MonoBehaviour
             Destroy(oldestClosest.rootTr.gameObject);
 
         type = oldestClosest.type;
-        mountSfx = oldestClosest.mountSfx;
-        mountVolume = oldestClosest.mountVolume;
+
+        mountSfx = LoadMountSfx(type);
+        mountVolume = Mathf.Clamp01(defaultMountVolume);
 
         AnimateAllShift();
         return true;
@@ -743,7 +783,7 @@ public sealed class LouieEggQueue : MonoBehaviour
         ResetRuntimeState();
 
         for (int i = 0; i < types.Count; i++)
-            EnqueueInternal(types[i], idleSpriteFallback, null, 0f, animate: false);
+            EnqueueInternal(types[i], idleSpriteFallback, animate: false);
 
         StopAllAnimationsNow();
         SnapAllToOwnerNow();
@@ -760,7 +800,7 @@ public sealed class LouieEggQueue : MonoBehaviour
         _eggs.Clear();
     }
 
-    void EnqueueInternal(ItemPickup.ItemType type, Sprite idleSprite, AudioClip mountSfx, float mountVolume, bool animate)
+    void EnqueueInternal(ItemPickup.ItemType type, Sprite idleSprite, bool animate)
     {
         BindOwnerAuto();
         EnsureWorldRoot();
@@ -821,8 +861,6 @@ public sealed class LouieEggQueue : MonoBehaviour
             type = type,
             rootTr = rootTr,
             directional = directional,
-            mountSfx = mountSfx,
-            mountVolume = Mathf.Clamp01(mountVolume),
             isAnimating = animate,
             animStartTime = Time.time,
             animDuration = durJoin,
