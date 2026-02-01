@@ -88,6 +88,29 @@ public sealed class PlayerRidingController : MonoBehaviour
         return true;
     }
 
+    public bool CancelRiding()
+    {
+        if (!isPlaying)
+            return false;
+
+        if (routine != null)
+        {
+            StopCoroutine(routine);
+            routine = null;
+        }
+
+        DisableAllRiding();
+
+        if (movement != null)
+        {
+            movement.EnableExclusiveFromState();
+            movement.SetInputLocked(false, forceIdle: true);
+        }
+
+        isPlaying = false;
+        return true;
+    }
+
     IEnumerator FinishRoutine(System.Action onComplete)
     {
         yield return null;

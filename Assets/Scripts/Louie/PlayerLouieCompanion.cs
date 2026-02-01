@@ -56,6 +56,22 @@ public class PlayerLouieCompanion : MonoBehaviour
     float dashInvulRemainingPlayer;
     float dashInvulRemainingLouie;
 
+    float ridingUninterruptibleUntil;
+
+    bool IsRidingUninterruptible()
+    {
+        return Time.time < ridingUninterruptibleUntil;
+    }
+
+    void MarkRidingUninterruptible(float seconds, bool blink)
+    {
+        float s = Mathf.Max(0.01f, seconds);
+        ridingUninterruptibleUntil = Mathf.Max(ridingUninterruptibleUntil, Time.time + s);
+
+        if (playerHealth != null)
+            playerHealth.StartTemporaryInvulnerability(s, withBlink: blink);
+    }
+
     void Awake()
     {
         movement = GetComponent<MovementController>();
@@ -577,6 +593,8 @@ public class PlayerLouieCompanion : MonoBehaviour
                     onComplete: () => FinalizeMount(queuedMountedType),
                     onStart: () =>
                     {
+                        MarkRidingUninterruptible(rider.ridingSeconds, blink: true);
+
                         DetachAndKillCurrentLouieOnly();
                         SetNextMountSfx(queuedSfx, queuedVol);
                         SpawnLouieForMount(queuedPrefab, queuedMountedType, duringRiding: true);
@@ -589,7 +607,10 @@ public class PlayerLouieCompanion : MonoBehaviour
                 return;
             }
 
-            if (rider.TryPlayRiding(movement.FacingDirection, LoseLouie_AfterRiding))
+            if (rider.TryPlayRiding(
+                movement.FacingDirection,
+                onComplete: LoseLouie_AfterRiding,
+                onStart: () => MarkRidingUninterruptible(rider.ridingSeconds, blink: true)))
                 return;
         }
 
@@ -643,7 +664,10 @@ public class PlayerLouieCompanion : MonoBehaviour
     void UnmountLouie()
     {
         var rider = GetComponent<PlayerRidingController>();
-        if (rider != null && movement != null && rider.TryPlayRiding(movement.FacingDirection, UnmountLouie_AfterRiding))
+        if (rider != null && movement != null && rider.TryPlayRiding(
+            movement.FacingDirection,
+            onComplete: UnmountLouie_AfterRiding,
+            onStart: () => MarkRidingUninterruptible(rider.ridingSeconds, blink: true)))
             return;
 
         UnmountLouie_AfterRiding();
@@ -988,5 +1012,28 @@ public class PlayerLouieCompanion : MonoBehaviour
 
         currentLouie.transform.GetPositionAndRotation(out var worldPos, out var worldRot);
         DetachLouieToWorld(currentLouie, worldPos, worldRot, disableVisual: true);
+    }
+
+    public bool HandleDamageWhileMounting(int damage)
+    {
+        var rider = GetComponent<PlayerRidingController>();
+        if (rider == null || !rider.IsPlaying)
+            return false;
+
+        if (movement != null && movement.isDead)
+            return true;
+
+        if (IsRidingUninterruptible())
+            return true;
+
+        rider.CancelRiding();
+
+        if (currentLouie != null)
+            DetachAndKillCurrentLouieOnly();
+
+        if (movement != null && movement.TryGetComponent<CharacterHealth>(out var health) && health != null)
+            health.StartTemporaryInvulnerability(playerInvulnerabilityAfterLoseLouieSeconds);
+
+        return true;
     }
 }

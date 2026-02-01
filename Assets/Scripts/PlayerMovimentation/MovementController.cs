@@ -801,14 +801,23 @@ public class MovementController : MonoBehaviour, IKillable
 
         float cd = Mathf.Max(0.01f, contactDamageCooldownSeconds);
 
+        if (CompareTag("Player") && IsRidingPlaying())
+        {
+            if (TryGetComponent<PlayerLouieCompanion>(out var companion) && companion != null)
+            {
+                companion.HandleDamageWhileMounting(1);
+                nextContactDamageTime = Time.time + cd;
+                return;
+            }
+        }
+
         if (CompareTag("Player") && isMountedOnLouie)
         {
             var mountedHealth = GetMountedLouieHealth();
             if (mountedHealth != null && mountedHealth.IsInvulnerable)
                 return;
 
-            PlayerLouieCompanion companion;
-            if (TryGetComponent<PlayerLouieCompanion>(out companion) && companion != null)
+            if (TryGetComponent(out PlayerLouieCompanion companion) && companion != null)
             {
                 companion.OnMountedLouieHit(1);
                 nextContactDamageTime = Time.time + cd;

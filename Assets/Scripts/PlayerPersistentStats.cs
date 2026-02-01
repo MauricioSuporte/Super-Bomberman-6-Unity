@@ -17,7 +17,7 @@ public static class PlayerPersistentStats
 
     public sealed class PlayerState
     {
-        public int Life = 9;
+        public int Life = 1;
 
         public int BombAmount = 8;
         public int ExplosionRadius = 10;
