@@ -177,8 +177,8 @@ MonoBehaviour:
   destructiblePassAmount: 0
   invincibleSuitAmount: 1
   heartAmount: 1
-  blueLouieEggAmount: 99
-  blackLouieEggAmount: 0
+  blueLouieEggAmount: 0
+  blackLouieEggAmount: 1
   purpleLouieEggAmount: 1
   greenLouieEggAmount: 0
   yellowLouieEggAmount: 1

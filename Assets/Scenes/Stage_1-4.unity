@@ -239,11 +239,11 @@ MonoBehaviour:
   destructiblePassAmount: 0
   invincibleSuitAmount: 0
   heartAmount: 0
-  blueLouieEggAmount: 0
+  blueLouieEggAmount: 1
   blackLouieEggAmount: 1
-  purpleLouieEggAmount: 0
-  greenLouieEggAmount: 0
-  yellowLouieEggAmount: 0
+  purpleLouieEggAmount: 1
+  greenLouieEggAmount: 1
+  yellowLouieEggAmount: 1
   pinkLouieEggAmount: 1
   redLouieEggAmount: 1
   destructibleTilemap: {fileID: 285353618}
@@ -1037,7 +1037,7 @@ Tilemap:
       - {fileID: 1015330559, guid: f1e5692e3d10a804d897441da1a7fe2c, type: 3}
       - {fileID: 566355664, guid: f1e5692e3d10a804d897441da1a7fe2c, type: 3}
       - {fileID: 1530234348, guid: f1e5692e3d10a804d897441da1a7fe2c, type: 3}
-      m_AnimationSpeed: 10
+      m_AnimationSpeed: 10.000001
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: 0, y: 2, z: 0}
@@ -1103,7 +1103,7 @@ Tilemap:
       - {fileID: 597665950, guid: f1e5692e3d10a804d897441da1a7fe2c, type: 3}
       - {fileID: -567632026, guid: f1e5692e3d10a804d897441da1a7fe2c, type: 3}
       - {fileID: 918707804, guid: f1e5692e3d10a804d897441da1a7fe2c, type: 3}
-      m_AnimationSpeed: 10
+      m_AnimationSpeed: 10.000001
       m_AnimationTimeOffset: 0
       m_Flags: 0
   m_TileAssetArray:
@@ -3152,6 +3152,19 @@ MonoBehaviour:
   - {fileID: 0}
   - {fileID: 0}
   - {fileID: 0}
+  playerOverrides:
+  - useCustomSpawn: 0
+    spawnPoint: {fileID: 0}
+    positionXY: {x: 0, y: 0}
+  - useCustomSpawn: 0
+    spawnPoint: {fileID: 0}
+    positionXY: {x: 0, y: 0}
+  - useCustomSpawn: 0
+    spawnPoint: {fileID: 0}
+    positionXY: {x: 0, y: 0}
+  - useCustomSpawn: 0
+    spawnPoint: {fileID: 0}
+    positionXY: {x: 0, y: 0}
   playersParent: {fileID: 0}
   isBossStage: 0
   clearExistingPlayersBeforeSpawn: 1
