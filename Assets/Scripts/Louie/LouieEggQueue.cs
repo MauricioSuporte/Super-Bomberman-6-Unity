@@ -23,6 +23,10 @@ public sealed class LouieEggQueue : MonoBehaviour
     [Header("Layer")]
     [SerializeField] private int eggGameObjectLayer = 3;
 
+    [Header("Sorting (SpriteRenderer)")]
+    [SerializeField] private string eggSortingLayerName = "Default";
+    [SerializeField] private int eggBaseSortingOrder = 2;
+
     [Header("Queue")]
     [SerializeField, Range(0, 10)] private int maxEggsInQueue = 5;
     public int MaxEggs => Mathf.Max(0, maxEggsInQueue);
@@ -152,6 +156,8 @@ public sealed class LouieEggQueue : MonoBehaviour
         EnsureHistoryBuffer();
         SeedHistoryNow();
         ResetRuntimeState();
+        ApplyEggLayerNow();
+        ApplyEggSortingNow();
     }
 
     void OnEnable()
@@ -161,6 +167,8 @@ public sealed class LouieEggQueue : MonoBehaviour
         EnsureHistoryBuffer();
         SeedHistoryNow();
         ResetRuntimeState();
+        ApplyEggLayerNow();
+        ApplyEggSortingNow();
     }
 
     void ResetRuntimeState()
@@ -199,6 +207,9 @@ public sealed class LouieEggQueue : MonoBehaviour
             SeedHistoryNow();
             ResetRuntimeState();
         }
+
+        ApplyEggLayerNow();
+        ApplyEggSortingNow();
     }
 
     void BindOwnerAuto()
@@ -488,6 +499,9 @@ public sealed class LouieEggQueue : MonoBehaviour
 
     void LateUpdate()
     {
+        ApplyEggLayerNow();
+        ApplyEggSortingNow();
+
         if (_ownerTr == null && _ownerRb == null)
         {
             BindOwnerAuto();
@@ -728,6 +742,8 @@ public sealed class LouieEggQueue : MonoBehaviour
         _idleShiftStartTime = 0f;
 
         EnqueueInternal(type, idleSprite, animate: true);
+        ApplyEggLayerNow();
+        ApplyEggSortingNow();
         return true;
     }
 
@@ -753,6 +769,8 @@ public sealed class LouieEggQueue : MonoBehaviour
         mountVolume = Mathf.Clamp01(defaultMountVolume);
 
         AnimateAllShift();
+        ApplyEggLayerNow();
+        ApplyEggSortingNow();
         return true;
     }
 
@@ -789,6 +807,8 @@ public sealed class LouieEggQueue : MonoBehaviour
 
         StopAllAnimationsNow();
         SnapAllToOwnerNow();
+        ApplyEggLayerNow();
+        ApplyEggSortingNow();
     }
 
     void ClearAllEggs()
@@ -875,6 +895,9 @@ public sealed class LouieEggQueue : MonoBehaviour
             AnimateShiftExceptNewest();
         else
             StopAllAnimationsNow();
+
+        ApplyEggLayerNow();
+        ApplyEggSortingNow();
     }
 
     void StopAllAnimationsNow()
@@ -931,6 +954,74 @@ public sealed class LouieEggQueue : MonoBehaviour
             SetLayerRecursively(t.GetChild(i), layer);
     }
 
+    void EnsureEggSorting(Transform root, int sortingOrder)
+    {
+        if (root == null)
+            return;
+
+        var renderers = root.GetComponentsInChildren<SpriteRenderer>(true);
+        for (int i = 0; i < renderers.Length; i++)
+        {
+            var sr = renderers[i];
+            if (!string.IsNullOrEmpty(eggSortingLayerName))
+                sr.sortingLayerName = eggSortingLayerName;
+
+            sr.sortingOrder = sortingOrder;
+        }
+    }
+
+    void ApplyEggLayerNow()
+    {
+        for (int i = 0; i < _eggs.Count; i++)
+        {
+            var e = _eggs[i];
+            if (e.rootTr != null)
+                EnsureEggLayer(e.rootTr);
+        }
+    }
+
+    bool ShouldInvertSortingForUp()
+    {
+        if (_eggs.Count != 2)
+            return false;
+
+        for (int i = 0; i < _eggs.Count; i++)
+        {
+            var e = _eggs[i];
+            if (e.directional != null && e.directional.IsPlayingUpAnimation)
+                return true;
+        }
+
+        return false;
+    }
+
+    void ApplyEggSortingNow()
+    {
+        int baseOrder = eggBaseSortingOrder;
+
+        bool invertForUp = ShouldInvertSortingForUp();
+
+        for (int i = 0; i < _eggs.Count; i++)
+        {
+            var e = _eggs[i];
+            if (e.rootTr == null)
+                continue;
+
+            int sortingOrder;
+
+            if (invertForUp && _eggs.Count == 2)
+            {
+                sortingOrder = (i == 0) ? baseOrder + 1 : baseOrder;
+            }
+            else
+            {
+                sortingOrder = baseOrder + i;
+            }
+
+            EnsureEggSorting(e.rootTr, sortingOrder);
+        }
+    }
+
     public void ForceVisible(bool visible)
     {
         _forcedHidden = !visible;
@@ -950,6 +1041,8 @@ public sealed class LouieEggQueue : MonoBehaviour
 
         ResetRuntimeState();
         ApplyForcedVisibility();
+        ApplyEggLayerNow();
+        ApplyEggSortingNow();
     }
 
     void ApplyForcedVisibility()

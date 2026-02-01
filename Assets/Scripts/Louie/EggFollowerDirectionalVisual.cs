@@ -17,6 +17,10 @@ public sealed class EggFollowerDirectionalVisual : MonoBehaviour
     AnimatedSpriteRenderer active;
     bool lastIdle = true;
 
+    public bool IsIdle => lastIdle;
+    public bool IsActiveUp => active == up;
+    public bool IsPlayingUpAnimation => active == up && !lastIdle;
+
     void OnEnable()
     {
         ForceOnlyOneRendererVisibleImmediate();
