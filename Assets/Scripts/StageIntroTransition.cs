@@ -534,21 +534,8 @@ public class StageIntroTransition : MonoBehaviour
         }
     }
 
-    public void ReturnToTitleFromPause()
+    public static void SkipHudsonLogoOnNextLoad()
     {
-        StopAllCoroutines();
-
-        GamePauseController.ClearPauseFlag();
-        Time.timeScale = 1f;
-
-        if (GameMusicController.Instance != null)
-            GameMusicController.Instance.StopMusic();
-
-        PlayerPersistentStats.ResetToDefaultsAll();
-
-        if (titleScreen != null)
-            titleScreen.SetIgnoreStartKeyUntilRelease();
-
-        SceneManager.LoadScene(firstStageSceneName, LoadSceneMode.Single);
+        hasPlayedLogoIntro = true;
     }
 }

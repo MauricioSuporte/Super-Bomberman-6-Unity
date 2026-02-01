@@ -205,6 +205,7 @@ public class EndingScreenController : MonoBehaviour
         ForceHide();
         Running = false;
 
+        PlayerPersistentStats.ResetSessionForReturnToTitle();
         SceneManager.LoadScene(titleSceneName, LoadSceneMode.Single);
     }
 }

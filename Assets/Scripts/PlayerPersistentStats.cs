@@ -407,4 +407,11 @@ public static class PlayerPersistentStats
         if (movement != null && movement.TryGetComponent<LouieEggQueue>(out var q) && q != null)
             q.GetQueuedEggTypesOldestToNewest(s.QueuedEggs);
     }
+
+    public static void ResetSessionForReturnToTitle()
+    {
+        ResetToDefaultsAll();
+        BootSession();
+        PlayerPrefs.Save();
+    }
 }

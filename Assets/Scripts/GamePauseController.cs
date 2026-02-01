@@ -238,6 +238,10 @@ public class GamePauseController : MonoBehaviour
         exitingToTitle = false;
         confirmReturn = false;
 
+        PlayerPersistentStats.ResetSessionForReturnToTitle();
+
+        StageIntroTransition.SkipHudsonLogoOnNextLoad();
+
         SceneManager.LoadScene(titleSceneName, LoadSceneMode.Single);
     }
 
