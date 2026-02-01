@@ -112,6 +112,8 @@ public sealed class LouieEggQueue : MonoBehaviour
     float _lastMoveTime;
     bool _wasMovingPrevFrame;
 
+    bool _forcedHidden;
+
     readonly Dictionary<ItemPickup.ItemType, AudioClip> _mountSfxCache = new();
 
     void OnValidate()
@@ -928,8 +930,6 @@ public sealed class LouieEggQueue : MonoBehaviour
         for (int i = 0; i < t.childCount; i++)
             SetLayerRecursively(t.GetChild(i), layer);
     }
-
-    bool _forcedHidden;
 
     public void ForceVisible(bool visible)
     {

@@ -539,6 +539,15 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
                 b.enabled = true;
 
             p.SetExplosionInvulnerable(false);
+
+            p.SetInputLocked(false, true);
+            p.enabled = true;
+
+            if (p.TryGetComponent<Collider2D>(out var col) && col != null)
+                col.enabled = true;
+
+            if (p.Rigidbody != null)
+                p.Rigidbody.simulated = true;
         }
     }
 
@@ -625,20 +634,38 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
     {
         EnsurePlayersRefs();
 
-        if (players != null)
+        if (players == null)
+            return;
+
+        for (int i = 0; i < players.Length; i++)
         {
-            for (int i = 0; i < players.Length; i++)
+            var p = players[i];
+            if (p == null) continue;
+
+            if (!locked)
             {
-                var p = players[i];
-                if (p == null) continue;
+                if (!p.enabled)
+                    p.enabled = true;
 
-                p.SetInputLocked(locked);
-                p.SetExplosionInvulnerable(locked);
+                if (p.TryGetComponent<Collider2D>(out var col) && col != null)
+                    col.enabled = true;
 
-                var b = GetBombForPlayer(p);
-                if (b != null)
-                    b.enabled = !locked;
+                if (p.Rigidbody != null)
+                    p.Rigidbody.simulated = true;
             }
+
+            p.SetInputLocked(locked, true);
+            p.SetExplosionInvulnerable(locked);
+
+            if (locked)
+                p.ApplyDirectionFromVector(Vector2.zero);
+
+            if (p.Rigidbody != null && locked)
+                p.Rigidbody.linearVelocity = Vector2.zero;
+
+            var b = GetBombForPlayer(p);
+            if (b != null)
+                b.enabled = !locked;
         }
     }
 

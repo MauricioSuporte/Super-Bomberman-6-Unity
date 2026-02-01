@@ -155,6 +155,10 @@ public class StageIntroTransition : MonoBehaviour
 
             if (m.TryGetComponent<PlayerLouieCompanion>(out var comp) && comp != null)
                 comp.SetMountedLouieVisible(false);
+
+            var rider = m.GetComponentInChildren<LouieRiderVisual>(true);
+            if (rider != null)
+                rider.gameObject.SetActive(false);
         }
 
         for (int i = 0; i < bombControllers.Length; i++)
@@ -262,6 +266,7 @@ public class StageIntroTransition : MonoBehaviour
         yield return null;
 
         RefreshControllers(includeInactive: false);
+        DisableGameplayControllersAndHideSprites();
 
         ResyncSpawnedPlayersFromIdentity();
         ApplyPersistentPlayerSkin();
@@ -284,6 +289,15 @@ public class StageIntroTransition : MonoBehaviour
                 var q = m.GetComponentInChildren<LouieEggQueue>(true);
                 if (q != null)
                     q.ForceVisible(false);
+
+                var rider = m.GetComponentInChildren<LouieRiderVisual>(true);
+                if (rider != null)
+                    rider.gameObject.SetActive(false);
+
+                m.enabled = false;
+
+                var b = m.GetComponent<BombController>();
+                if (b != null) b.enabled = false;
 
                 continue;
             }
@@ -372,6 +386,46 @@ public class StageIntroTransition : MonoBehaviour
     void EnableGameplay()
     {
         RefreshControllers(includeInactive: false);
+
+        if (IsStage17())
+        {
+            for (int i = 0; i < movementControllers.Length; i++)
+            {
+                var m = movementControllers[i];
+                if (!m) continue;
+
+                bool isPlayer = m.CompareTag("Player") || m.GetComponent<PlayerIdentity>() != null;
+                if (!isPlayer)
+                    continue;
+
+                m.SetInputLocked(true, true);
+                m.enabled = false;
+                m.SetAllSpritesVisible(false);
+
+                if (m.Rigidbody != null)
+                {
+                    m.Rigidbody.simulated = false;
+                    m.Rigidbody.linearVelocity = Vector2.zero;
+                }
+
+                var q = m.GetComponentInChildren<LouieEggQueue>(true);
+                if (q != null)
+                    q.ForceVisible(false);
+
+                if (m.TryGetComponent<PlayerLouieCompanion>(out var comp) && comp != null)
+                    comp.SetMountedLouieVisible(false);
+
+                var rider = m.GetComponentInChildren<LouieRiderVisual>(true);
+                if (rider != null)
+                    rider.gameObject.SetActive(false);
+
+                var b = m.GetComponent<BombController>();
+                if (b != null) b.enabled = false;
+            }
+
+            IntroRunning = false;
+            return;
+        }
 
         foreach (var m in movementControllers)
         {
