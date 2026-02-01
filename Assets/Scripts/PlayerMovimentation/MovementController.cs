@@ -942,20 +942,15 @@ public class MovementController : MonoBehaviour, IKillable
 
     protected virtual void OnDeathSequenceEnded()
     {
-        gameObject.SetActive(false);
-
         Died?.Invoke(this);
+
+        gameObject.SetActive(false);
 
         if (CompareTag("BossBomber"))
             return;
 
         if (!checkWinStateOnDeath)
             return;
-    }
-
-    public void PlayEndStageSequence(Vector2 portalCenter)
-    {
-        PlayEndStageSequence(portalCenter, snapToPortalCenter: true);
     }
 
     public void PlayEndStageSequence(Vector2 portalCenter, bool snapToPortalCenter)
