@@ -243,7 +243,7 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
         if (shadow == null)
             return;
 
-        var louieVisual = shadow.GetComponentInParent<LouieRiderVisual>();
+        var louieVisual = shadow.GetComponentInParent<LouieRidingVisual>();
         var target = louieVisual != null ? louieVisual.transform : shadow.transform.parent;
 
         if (target != null)

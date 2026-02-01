@@ -14,7 +14,7 @@ public class PinkLouieJumpAnimator : MonoBehaviour, IPinkLouieJumpExternalAnimat
     public float rightLocalX = -0.3f;
 
     AnimatedSpriteRenderer active;
-    LouieRiderVisual riderVisual;
+    LouieRidingVisual riderVisual;
 
     readonly List<GameObject> cachedDirectionObjects = new();
     readonly List<bool> cachedDirectionObjectsActive = new();
@@ -29,11 +29,11 @@ public class PinkLouieJumpAnimator : MonoBehaviour, IPinkLouieJumpExternalAnimat
 
     void Awake()
     {
-        riderVisual = GetComponent<LouieRiderVisual>();
+        riderVisual = GetComponent<LouieRidingVisual>();
         if (riderVisual == null)
-            riderVisual = GetComponentInParent<LouieRiderVisual>();
+            riderVisual = GetComponentInParent<LouieRidingVisual>();
         if (riderVisual == null)
-            riderVisual = GetComponentInChildren<LouieRiderVisual>(true);
+            riderVisual = GetComponentInChildren<LouieRidingVisual>(true);
 
         ForceOffJumpSprites();
     }

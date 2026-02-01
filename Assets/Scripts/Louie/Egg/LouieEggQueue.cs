@@ -585,6 +585,7 @@ public sealed class LouieEggQueue : MonoBehaviour
         for (int i = _eggs.Count - 1; i >= 0; i--)
         {
             var e = _eggs[i];
+
             if (e.rootTr == null)
                 continue;
 
@@ -850,6 +851,12 @@ public sealed class LouieEggQueue : MonoBehaviour
             rootGo.name = $"EggFollower_{type}";
             rootTr = rootGo.transform;
 
+            if (!rootGo.TryGetComponent<EggQueueFollowerHitbox>(out var hitbox))
+                hitbox = rootGo.GetComponentInChildren<EggQueueFollowerHitbox>(true);
+
+            if (hitbox != null)
+                hitbox.Bind(this);
+
             EnsureEggLayer(rootTr);
 
             directional = rootGo.GetComponent<EggFollowerDirectionalVisual>();
@@ -1057,5 +1064,61 @@ public sealed class LouieEggQueue : MonoBehaviour
             if (e.rootTr.gameObject.activeSelf != active)
                 e.rootTr.gameObject.SetActive(active);
         }
+    }
+
+    public void RequestDestroyEgg(Transform anyTransformOnEgg)
+    {
+        if (anyTransformOnEgg == null) return;
+        if (_eggs.Count == 0) return;
+
+        int idx = -1;
+        for (int i = 0; i < _eggs.Count; i++)
+        {
+            var rt = _eggs[i].rootTr;
+            if (rt == null) continue;
+
+            if (rt == anyTransformOnEgg || anyTransformOnEgg.IsChildOf(rt))
+            {
+                idx = i;
+                break;
+            }
+        }
+
+        if (idx < 0) return;
+
+        var e = _eggs[idx];
+        var tr = e.rootTr;
+
+        _eggs.RemoveAt(idx);
+
+        AnimateAllShift();
+        ApplyEggLayerNow();
+        ApplyEggSortingNow();
+
+        if (tr == null) return;
+
+        StartCoroutine(DestroyEggRoutine(tr, 0.5f));
+    }
+
+    System.Collections.IEnumerator DestroyEggRoutine(Transform tr, float seconds)
+    {
+        if (tr == null) yield break;
+
+        if (!tr.TryGetComponent<EggFollowerDestroyVisual>(out var v))
+            v = tr.GetComponentInChildren<EggFollowerDestroyVisual>(true);
+
+        if (v != null)
+            v.PlayDestroy();
+
+        if (!tr.TryGetComponent<Collider2D>(out var col))
+            col = tr.GetComponentInChildren<Collider2D>(true);
+
+        if (col != null)
+            col.enabled = false;
+
+        yield return new WaitForSeconds(seconds);
+
+        if (tr != null)
+            Destroy(tr.gameObject);
     }
 }

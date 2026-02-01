@@ -250,7 +250,7 @@ public class MovementController : MonoBehaviour, IKillable
         SetAnimEnabled(mountedSpriteLeft, visible);
         SetAnimEnabled(mountedSpriteRight, visible);
 
-        var rider = GetComponentInChildren<LouieRiderVisual>(true);
+        var rider = GetComponentInChildren<LouieRidingVisual>(true);
         if (rider != null)
         {
             var srs = rider.GetComponentsInChildren<SpriteRenderer>(true);
@@ -1057,7 +1057,7 @@ public class MovementController : MonoBehaviour, IKillable
             var up = mountedSpriteUp != null ? mountedSpriteUp : spriteRendererUp;
             SetDirection(Vector2.zero, up);
 
-            var rider = GetComponentInChildren<LouieRiderVisual>(true);
+            var rider = GetComponentInChildren<LouieRidingVisual>(true);
             if (rider != null)
                 rider.ForceIdleUp();
         }
@@ -1097,7 +1097,7 @@ public class MovementController : MonoBehaviour, IKillable
             activeSpriteRenderer = up;
         }
 
-        var rider = GetComponentInChildren<LouieRiderVisual>(true);
+        var rider = GetComponentInChildren<LouieRidingVisual>(true);
         if (rider != null)
             rider.ForceOnlyUpEnabled();
     }

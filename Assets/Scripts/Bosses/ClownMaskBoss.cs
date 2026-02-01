@@ -561,7 +561,7 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
             var a = anims[i];
             if (a == null) continue;
 
-            if (keepLouieVisual && a.GetComponentInParent<LouieRiderVisual>(true) != null)
+            if (keepLouieVisual && a.GetComponentInParent<LouieRidingVisual>(true) != null)
                 continue;
 
             a.enabled = (a == keep);
@@ -573,7 +573,7 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
             var sr = srs[i];
             if (sr == null) continue;
 
-            if (keepLouieVisual && sr.GetComponentInParent<LouieRiderVisual>(true) != null)
+            if (keepLouieVisual && sr.GetComponentInParent<LouieRidingVisual>(true) != null)
                 continue;
 
             sr.enabled = false;
@@ -718,7 +718,7 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
         if (p == null)
             return;
 
-        var rider = p.GetComponentInChildren<LouieRiderVisual>(true);
+        var rider = p.GetComponentInChildren<LouieRidingVisual>(true);
         if (rider == null)
             return;
 
@@ -823,7 +823,7 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
             if (p == null || !p.IsMountedOnLouie)
                 continue;
 
-            var rider = p.GetComponentInChildren<LouieRiderVisual>(true);
+            var rider = p.GetComponentInChildren<LouieRidingVisual>(true);
             if (rider == null)
                 continue;
 

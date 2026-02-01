@@ -295,8 +295,8 @@ public class PlayerLouieCompanion : MonoBehaviour
         if (louie == null || movement == null)
             return;
 
-        if (!louie.TryGetComponent<LouieRiderVisual>(out var visual) || visual == null)
-            visual = louie.GetComponentInChildren<LouieRiderVisual>(true);
+        if (!louie.TryGetComponent<LouieRidingVisual>(out var visual) || visual == null)
+            visual = louie.GetComponentInChildren<LouieRidingVisual>(true);
 
         if (visual == null)
             return;
@@ -739,17 +739,17 @@ public class PlayerLouieCompanion : MonoBehaviour
 
         if (disableVisual)
         {
-            if (louie.TryGetComponent<LouieRiderVisual>(out var rv) && rv != null)
+            if (louie.TryGetComponent<LouieRidingVisual>(out var rv) && rv != null)
                 rv.enabled = false;
             else
             {
-                var inChild = louie.GetComponentInChildren<LouieRiderVisual>(true);
+                var inChild = louie.GetComponentInChildren<LouieRidingVisual>(true);
                 if (inChild != null) inChild.enabled = false;
             }
         }
         else
         {
-            if (louie.TryGetComponent<LouieRiderVisual>(out var riderVisual))
+            if (louie.TryGetComponent<LouieRidingVisual>(out var riderVisual))
                 Destroy(riderVisual);
         }
     }
@@ -833,8 +833,8 @@ public class PlayerLouieCompanion : MonoBehaviour
         if (currentLouie == null)
             return false;
 
-        if (!currentLouie.TryGetComponent<LouieRiderVisual>(out var visual) || visual == null)
-            visual = currentLouie.GetComponentInChildren<LouieRiderVisual>(true);
+        if (!currentLouie.TryGetComponent<LouieRidingVisual>(out var visual) || visual == null)
+            visual = currentLouie.GetComponentInChildren<LouieRidingVisual>(true);
 
         if (visual == null)
             return false;
@@ -1045,7 +1045,7 @@ public class PlayerLouieCompanion : MonoBehaviour
         if (!louie.TryGetComponent<MovementController>(out var mc) || mc == null)
             return;
 
-        var riderVisual = louie.GetComponentInChildren<LouieRiderVisual>(true);
+        var riderVisual = louie.GetComponentInChildren<LouieRidingVisual>(true);
         if (riderVisual != null)
             Destroy(riderVisual);
 
