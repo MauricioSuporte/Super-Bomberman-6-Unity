@@ -148,6 +148,13 @@ public class StageIntroTransition : MonoBehaviour
 
             m.enabled = false;
             m.SetAllSpritesVisible(false);
+
+            var q = m.GetComponentInChildren<LouieEggQueue>(true);
+            if (q != null)
+                q.ForceVisible(false);
+
+            if (m.TryGetComponent<PlayerLouieCompanion>(out var comp) && comp != null)
+                comp.SetMountedLouieVisible(false);
         }
 
         for (int i = 0; i < bombControllers.Length; i++)
@@ -252,7 +259,6 @@ public class StageIntroTransition : MonoBehaviour
         RefreshControllers(includeInactive: false);
         DisableGameplayControllersAndHideSprites();
 
-        // Aguarda 1 frame para garantir que Spawn/OnEnable/Awake/Start rodem
         yield return null;
 
         RefreshControllers(includeInactive: false);
@@ -274,6 +280,10 @@ public class StageIntroTransition : MonoBehaviour
 
                 if (m.TryGetComponent<PlayerLouieCompanion>(out var comp) && comp != null)
                     comp.SetMountedLouieVisible(false);
+
+                var q = m.GetComponentInChildren<LouieEggQueue>(true);
+                if (q != null)
+                    q.ForceVisible(false);
 
                 continue;
             }

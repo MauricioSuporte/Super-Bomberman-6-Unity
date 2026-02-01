@@ -276,6 +276,8 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
         EnsurePlayersRefs();
         LockPlayers(true);
         SetPlayersHidden(true);
+        ForceEggQueuesVisibleAll(false);
+        ForceLouieRiderVisualRenderersAll(false);
 
         while (StageIntroTransition.Instance != null &&
                StageIntroTransition.Instance.IntroRunning)
@@ -284,6 +286,8 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
         EnsurePlayersRefs();
         LockPlayers(true);
         SetPlayersHidden(true);
+        ForceEggQueuesVisibleAll(false);
+        ForceLouieRiderVisualRenderersAll(false);
 
         float waitAfterStageIntro = Mathf.Max(0f, delayAfterStageIntroToShowPlayer);
         if (waitAfterStageIntro > 0f)
@@ -293,6 +297,9 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
         SpawnPlayersForBossIntro();
 
         EnsureMountedLouiesExistsIfNeeded();
+
+        SetPlayersHidden(false);
+        ForceEggQueuesVisibleAll(true);
         ForceLouieRiderVisualRenderersAll(true, upOnly: true);
 
         LockPlayers(true);
@@ -1339,5 +1346,21 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
         if (specialRenderer != null) specialRenderer.enabled = false;
         if (hurtRenderer != null) hurtRenderer.enabled = false;
         if (deathRenderer != null) deathRenderer.enabled = false;
+    }
+
+    void ForceEggQueuesVisibleAll(bool visible)
+    {
+        EnsurePlayersRefs();
+        if (players == null) return;
+
+        for (int i = 0; i < players.Length; i++)
+        {
+            var p = players[i];
+            if (p == null) continue;
+
+            var q = p.GetComponentInChildren<LouieEggQueue>(true);
+            if (q != null)
+                q.ForceVisible(visible);
+        }
     }
 }

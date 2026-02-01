@@ -928,4 +928,26 @@ public sealed class LouieEggQueue : MonoBehaviour
         for (int i = 0; i < t.childCount; i++)
             SetLayerRecursively(t.GetChild(i), layer);
     }
+
+    bool _forcedHidden;
+
+    public void ForceVisible(bool visible)
+    {
+        _forcedHidden = !visible;
+        ApplyForcedVisibility();
+    }
+
+    void ApplyForcedVisibility()
+    {
+        bool active = !_forcedHidden;
+
+        for (int i = 0; i < _eggs.Count; i++)
+        {
+            var e = _eggs[i];
+            if (e.rootTr == null) continue;
+
+            if (e.rootTr.gameObject.activeSelf != active)
+                e.rootTr.gameObject.SetActive(active);
+        }
+    }
 }
