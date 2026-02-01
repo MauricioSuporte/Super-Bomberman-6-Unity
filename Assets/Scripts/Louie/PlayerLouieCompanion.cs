@@ -653,7 +653,7 @@ public class PlayerLouieCompanion : MonoBehaviour
             health.StartTemporaryInvulnerability(playerInvulnerabilityAfterLoseLouieSeconds);
 
         DetachLouieToWorld(louie, worldPos, worldRot, disableVisual: false);
-        KillDetachedLouie(louie);
+        KillDetachedLouieGuaranteed(louie);
 
         if (currentLouie == null)
             TryMountFromQueuedEgg();
@@ -793,7 +793,7 @@ public class PlayerLouieCompanion : MonoBehaviour
             health.StartTemporaryInvulnerability(playerInvulnerabilityAfterLoseLouieSeconds);
 
         DetachLouieToWorld(louie, worldPos, worldRot, disableVisual: false);
-        KillDetachedLouie(louie);
+        KillDetachedLouieGuaranteed(louie);
     }
 
     void OnDestroy()
@@ -1035,5 +1035,100 @@ public class PlayerLouieCompanion : MonoBehaviour
             health.StartTemporaryInvulnerability(playerInvulnerabilityAfterLoseLouieSeconds);
 
         return true;
+    }
+
+    void PrepareDetachedLouieForGuaranteedDeath(GameObject louie)
+    {
+        if (louie == null)
+            return;
+
+        if (!louie.TryGetComponent<MovementController>(out var mc) || mc == null)
+            return;
+
+        var riderVisual = louie.GetComponentInChildren<LouieRiderVisual>(true);
+        if (riderVisual != null)
+            Destroy(riderVisual);
+
+        var allAnimated = louie.GetComponentsInChildren<AnimatedSpriteRenderer>(true);
+        for (int i = 0; i < allAnimated.Length; i++)
+        {
+            var a = allAnimated[i];
+            if (a == null)
+                continue;
+
+            bool keep = (mc.spriteRendererDeath != null && a == mc.spriteRendererDeath);
+            a.enabled = keep;
+
+            if (a.TryGetComponent<SpriteRenderer>(out var sr) && sr != null)
+                sr.enabled = keep;
+
+            var childSrs = a.GetComponentsInChildren<SpriteRenderer>(true);
+            for (int s = 0; s < childSrs.Length; s++)
+                if (childSrs[s] != null)
+                    childSrs[s].enabled = keep;
+        }
+
+        if (mc.spriteRendererDeath != null)
+        {
+            mc.spriteRendererDeath.enabled = true;
+
+            if (mc.spriteRendererDeath.TryGetComponent<SpriteRenderer>(out var deathSr) && deathSr != null)
+                deathSr.enabled = true;
+
+            var deathChildSrs = mc.spriteRendererDeath.GetComponentsInChildren<SpriteRenderer>(true);
+            for (int i = 0; i < deathChildSrs.Length; i++)
+                if (deathChildSrs[i] != null)
+                    deathChildSrs[i].enabled = true;
+
+            mc.spriteRendererDeath.idle = false;
+            mc.spriteRendererDeath.loop = false;
+            mc.spriteRendererDeath.pingPong = false;
+            mc.spriteRendererDeath.CurrentFrame = 0;
+            mc.spriteRendererDeath.RefreshFrame();
+        }
+    }
+
+    void KillDetachedLouieGuaranteed(GameObject louie)
+    {
+        if (louie == null)
+            return;
+
+        PrepareDetachedLouieForGuaranteedDeath(louie);
+
+        if (louie.TryGetComponent<LouieMovementController>(out var lm) && lm != null)
+        {
+            lm.enabled = true;
+            lm.Kill();
+
+            if (lm.spriteRendererDeath != null)
+            {
+                lm.spriteRendererDeath.enabled = true;
+                lm.spriteRendererDeath.idle = false;
+                lm.spriteRendererDeath.loop = false;
+                lm.spriteRendererDeath.CurrentFrame = 0;
+                lm.spriteRendererDeath.RefreshFrame();
+            }
+
+            return;
+        }
+
+        if (louie.TryGetComponent<MovementController>(out var mc) && mc != null)
+        {
+            mc.enabled = true;
+            mc.Kill();
+
+            if (mc.spriteRendererDeath != null)
+            {
+                mc.spriteRendererDeath.enabled = true;
+                mc.spriteRendererDeath.idle = false;
+                mc.spriteRendererDeath.loop = false;
+                mc.spriteRendererDeath.CurrentFrame = 0;
+                mc.spriteRendererDeath.RefreshFrame();
+            }
+
+            return;
+        }
+
+        Destroy(louie);
     }
 }
