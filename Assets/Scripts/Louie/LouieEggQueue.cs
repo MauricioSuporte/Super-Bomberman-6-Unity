@@ -738,13 +738,15 @@ public sealed class LouieEggQueue : MonoBehaviour
         BindOwnerAuto();
         EnsureWorldRoot();
         EnsureHistoryBuffer();
-        SeedHistoryNow();
+
+        ResetHistoryToCurrentOwnerPos();
         ResetRuntimeState();
 
         for (int i = 0; i < types.Count; i++)
             EnqueueInternal(types[i], idleSpriteFallback, null, 0f, animate: false);
 
-        SnapAllToTargetsNow();
+        StopAllAnimationsNow();
+        SnapAllToOwnerNow();
     }
 
     void ClearAllEggs()
@@ -846,46 +848,25 @@ public sealed class LouieEggQueue : MonoBehaviour
         }
     }
 
-    void SnapAllToTargetsNow()
+    void SnapAllToOwnerNow()
     {
-        EnsureHistoryBuffer();
+        Vector3 p = GetOwnerWorldPos();
+        p.z = 0f;
+        p += (Vector3)worldOffset;
+        p.z = 0f;
 
-        Vector3 behindDir = GetFallbackBehindDir();
-
-        float minSep = Mathf.Max(0.0001f, minTargetSeparation);
-        float minSepSqr = minSep * minSep;
-
-        Vector3 prevTarget = Vector3.positiveInfinity;
-        bool hasPrevTarget = false;
-
-        for (int i = _eggs.Count - 1; i >= 0; i--)
+        for (int i = 0; i < _eggs.Count; i++)
         {
             var e = _eggs[i];
             if (e.rootTr == null)
                 continue;
 
-            int ageRank = (_eggs.Count - i);
-            float backDist = eggSpacingWorld * ageRank;
-
-            Vector3 targetWorld = SampleBackDistance(backDist);
-            targetWorld += (Vector3)worldOffset;
-            targetWorld.z = 0f;
-
-            if (hasPrevTarget && (targetWorld - prevTarget).sqrMagnitude <= minSepSqr)
-            {
-                targetWorld = prevTarget + behindDir * minSep;
-                targetWorld.z = 0f;
-            }
-
-            e.rootTr.position = targetWorld;
+            e.rootTr.position = p;
 
             if (e.directional != null)
                 e.directional.ApplyMoveDelta(Vector3.zero);
 
             _eggs[i] = e;
-
-            prevTarget = targetWorld;
-            hasPrevTarget = true;
         }
     }
 
