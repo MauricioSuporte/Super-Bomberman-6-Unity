@@ -55,6 +55,11 @@ public class MechaBossSequence : MonoBehaviour
     public ItemPickup kickBombDropPrefabOverride;
     public float endStageWaitNoItemsSeconds = 3f;
 
+    [Header("End Stage")]
+    [Min(0f)] public float endStageDelayBeforeStart = 1f;
+    [Min(0f)] public float endStageFadeDuration = 3f;
+    public AudioClip endStageEnterSfx;
+
     MovementController[] mechas;
     GameManager gameManager;
 
@@ -63,6 +68,8 @@ public class MechaBossSequence : MonoBehaviour
     bool finalSequenceStarted;
     bool itemLoopStarted;
     bool itemSpawnEnabled = true;
+
+    bool endStageLikeStarted;
 
     TileBase gateCenterTile;
     TileBase gateLeftTile;
@@ -648,7 +655,89 @@ public class MechaBossSequence : MonoBehaviour
             yield return null;
         }
 
-        yield return StartCoroutine(EndStageCelebrationRoutine());
+        yield return _waitForSeconds1;
+
+        StartEndStageLike();
+    }
+
+    void StartEndStageLike()
+    {
+        if (endStageLikeStarted)
+            return;
+
+        endStageLikeStarted = true;
+
+        StartCoroutine(EndStageLikeRoutine());
+    }
+
+    IEnumerator EndStageLikeRoutine()
+    {
+        if (endStageDelayBeforeStart > 0f)
+            yield return new WaitForSeconds(endStageDelayBeforeStart);
+
+        EnsurePlayersRefs();
+
+        bool playedEnter = false;
+
+        for (int i = 0; i < players.Count; i++)
+        {
+            var p = players[i];
+            if (p == null) continue;
+            if (!p.gameObject.activeInHierarchy) continue;
+            if (!p.CompareTag("Player")) continue;
+            if (p.isDead) continue;
+            if (p.IsEndingStage) continue;
+
+            var bomb = p.GetComponent<BombController>();
+
+            PlayerPersistentStats.SaveFrom(p, bomb);
+
+            if (bomb != null)
+                bomb.ClearPlantedBombsOnStageEnd(false);
+
+            Vector2 center = new(
+                Mathf.Round(p.transform.position.x),
+                Mathf.Round(p.transform.position.y)
+            );
+
+            p.PlayEndStageSequence(center, snapToPortalCenter: false);
+
+            p.SetExplosionInvulnerable(true);
+            p.SetInputLocked(true, false);
+
+            var col = p.GetComponent<Collider2D>();
+            if (col != null)
+            {
+                cachedPlayerColliders[p] = col;
+                cachedColliderEnabled[p] = col.enabled;
+                col.enabled = false;
+            }
+
+            if (p.TryGetComponent<CharacterHealth>(out var health) && health != null)
+                health.StopInvulnerability();
+
+            if (!playedEnter && endStageEnterSfx != null)
+            {
+                var audio = p.GetComponent<AudioSource>();
+                if (audio != null)
+                {
+                    audio.PlayOneShot(endStageEnterSfx);
+                    playedEnter = true;
+                }
+            }
+        }
+
+        if (GameMusicController.Instance != null)
+            GameMusicController.Instance.StopMusic();
+
+        if (bossCheeringMusic != null && GameMusicController.Instance != null)
+            GameMusicController.Instance.PlayMusic(bossCheeringMusic, 1f, false);
+
+        if (StageIntroTransition.Instance != null)
+            StageIntroTransition.Instance.StartFadeOut(endStageFadeDuration);
+
+        if (gameManager != null)
+            gameManager.EndStage();
     }
 
     bool HasAnyItemPickupsInStage()
@@ -682,54 +771,6 @@ public class MechaBossSequence : MonoBehaviour
         Instantiate(prefab, worldPos, Quaternion.identity);
     }
 
-    IEnumerator EndStageCelebrationRoutine()
-    {
-        yield return _waitForSeconds1;
-
-        EnsurePlayersRefs();
-
-        bool anyCelebrated = false;
-
-        for (int i = 0; i < players.Count; i++)
-        {
-            var p = players[i];
-            if (p == null) continue;
-            if (p.isDead) continue;
-
-            Vector2 center = new(
-                Mathf.Round(p.transform.position.x),
-                Mathf.Round(p.transform.position.y)
-            );
-
-            p.PlayEndStageSequence(center);
-            anyCelebrated = true;
-        }
-
-        if (!anyCelebrated)
-            yield break;
-
-        MakePlayersSafeForCelebration();
-
-        if (GameMusicController.Instance != null && bossCheeringMusic != null)
-            GameMusicController.Instance.PlayMusic(bossCheeringMusic, 1f, false);
-
-        float cheeringDurationLocal = 4f;
-        float fadeDurationLocal = 1f;
-        float timeBeforeFade = Mathf.Max(0f, cheeringDurationLocal - fadeDurationLocal);
-
-        if (timeBeforeFade > 0f)
-            yield return new WaitForSeconds(timeBeforeFade);
-
-        if (StageMechaIntroController.Instance != null)
-            StageMechaIntroController.Instance.StartFadeOut(fadeDurationLocal);
-
-        if (fadeDurationLocal > 0f)
-            yield return new WaitForSeconds(fadeDurationLocal);
-
-        if (gameManager != null)
-            gameManager.EndStage();
-    }
-
     void EnsurePlayersRefs()
     {
         players.Clear();
@@ -746,10 +787,13 @@ public class MechaBossSequence : MonoBehaviour
                 if (id == null) continue;
 
                 MovementController move = null;
-                if (!id.TryGetComponent<MovementController>(out move))
+                if (!id.TryGetComponent(out move))
                     move = id.GetComponentInChildren<MovementController>(true);
 
                 if (move == null) continue;
+                if (!move.gameObject.activeInHierarchy) continue;
+                if (!move.CompareTag("Player")) continue;
+                if (move.isDead) continue;
 
                 if (!players.Contains(move))
                     players.Add(move);
@@ -759,7 +803,7 @@ public class MechaBossSequence : MonoBehaviour
         {
             var moves = FindObjectsByType<MovementController>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
             for (int i = 0; i < moves.Length; i++)
-                if (moves[i] != null && moves[i].CompareTag("Player"))
+                if (moves[i] != null && moves[i].CompareTag("Player") && moves[i].gameObject.activeInHierarchy && !moves[i].isDead)
                     players.Add(moves[i]);
         }
 
@@ -776,19 +820,10 @@ public class MechaBossSequence : MonoBehaviour
         }
     }
 
-    MovementController GetPlayerById(int playerId)
-    {
-        for (int i = 0; i < players.Count; i++)
-        {
-            var p = players[i];
-            if (p == null) continue;
-            if (p.PlayerId == playerId) return p;
-        }
-        return null;
-    }
-
     void MoveAllPlayersToBossIntroPositions()
     {
+        EnsurePlayersRefs();
+
         for (int i = 0; i < players.Count; i++)
         {
             var p = players[i];
@@ -911,33 +946,5 @@ public class MechaBossSequence : MonoBehaviour
 
         cachedPlayerColliders.Clear();
         cachedColliderEnabled.Clear();
-    }
-
-    void MakePlayersSafeForCelebration()
-    {
-        EnsurePlayersRefs();
-
-        cachedPlayerColliders.Clear();
-        cachedColliderEnabled.Clear();
-
-        for (int i = 0; i < players.Count; i++)
-        {
-            var p = players[i];
-            if (p == null) continue;
-
-            p.SetExplosionInvulnerable(true);
-            p.SetInputLocked(true, false);
-
-            var col = p.GetComponent<Collider2D>();
-            if (col != null)
-            {
-                cachedPlayerColliders[p] = col;
-                cachedColliderEnabled[p] = col.enabled;
-                col.enabled = false;
-            }
-
-            if (p.TryGetComponent<CharacterHealth>(out var health) && health != null)
-                health.StopInvulnerability();
-        }
     }
 }

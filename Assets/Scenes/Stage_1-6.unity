@@ -2242,7 +2242,7 @@ MonoBehaviour:
   blackMecha: {fileID: 2036603996}
   goldenMecha: {fileID: 1721456759}
   movePlayerToIntroPositionOnGoldenFlash: 1
-  bossCheeringMusic: {fileID: 8300000, guid: 4923b7e8bbf870e4ea64be1906159dbc, type: 3}
+  bossCheeringMusic: {fileID: 8300000, guid: d3943f4848bd8744c938c91b24684287, type: 3}
   indestructibleTilemap: {fileID: 818279435}
   gateCell: {x: -1, y: 3, z: 0}
   gateStepDelay: 0.15
@@ -2282,6 +2282,10 @@ MonoBehaviour:
   maxTriesPerSpawn: 50
   kickBombDropPrefabOverride: {fileID: 0}
   endStageWaitNoItemsSeconds: 3
+  bossEndSequence: {fileID: 0}
+  endStageDelayBeforeStart: 1
+  endStageFadeDuration: 3
+  endStageEnterSfx: {fileID: 0}
 --- !u!114 &679601673
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3816,7 +3820,7 @@ Tilemap:
       m_AnimatedSprites:
       - {fileID: -4194490761759567601, guid: 914f6dd52fc1d3f428738756d19d329e, type: 3}
       - {fileID: 1710983818, guid: 914f6dd52fc1d3f428738756d19d329e, type: 3}
-      m_AnimationSpeed: 3.5000002
+      m_AnimationSpeed: 3.5
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: 7, y: -5, z: 0}
@@ -3825,7 +3829,7 @@ Tilemap:
       m_AnimatedSprites:
       - {fileID: -4876822446513763925, guid: 1a57a821cb78e0f4d8f8f366d155df5b, type: 3}
       - {fileID: 920322489, guid: 1a57a821cb78e0f4d8f8f366d155df5b, type: 3}
-      m_AnimationSpeed: 3.5000002
+      m_AnimationSpeed: 3.5
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: -9, y: -4, z: 0}
@@ -3852,7 +3856,7 @@ Tilemap:
       m_AnimatedSprites:
       - {fileID: -4194490761759567601, guid: 914f6dd52fc1d3f428738756d19d329e, type: 3}
       - {fileID: 1710983818, guid: 914f6dd52fc1d3f428738756d19d329e, type: 3}
-      m_AnimationSpeed: 3.5
+      m_AnimationSpeed: 3.5000002
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: 7, y: -3, z: 0}
@@ -4014,7 +4018,7 @@ Tilemap:
       m_AnimatedSprites:
       - {fileID: 413118391, guid: 914f6dd52fc1d3f428738756d19d329e, type: 3}
       - {fileID: -414010142, guid: 914f6dd52fc1d3f428738756d19d329e, type: 3}
-      m_AnimationSpeed: 3
+      m_AnimationSpeed: 3.0000002
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: -4, y: 4, z: 0}

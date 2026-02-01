@@ -5,12 +5,12 @@ using UnityEngine;
 public class BossEndStageSequence : MonoBehaviour
 {
     [Header("Audio")]
-    public AudioClip bossCheeringMusic;
+    public AudioClip endStageMusic;
 
     [Header("Timing")]
-    public float delayAfterBossDeath = 1f;
-    public float cheeringDuration = 4f;
-    public float fadeDuration = 1f;
+    [Min(0f)] public float delayBeforeStart = 1f;
+    [Min(0f)] public float celebrationSeconds = 5f;
+    [Min(0f)] public float fadeDuration = 3f;
 
     GameManager gameManager;
     bool sequenceStarted;
@@ -33,24 +33,23 @@ public class BossEndStageSequence : MonoBehaviour
         var runnerGo = new GameObject("BossEndStageSequenceRunner");
         var runner = runnerGo.AddComponent<BossEndStageSequence>();
 
-        runner.bossCheeringMusic = bossCheeringMusic;
-        runner.delayAfterBossDeath = delayAfterBossDeath;
-        runner.cheeringDuration = cheeringDuration;
+        runner.endStageMusic = endStageMusic;
+        runner.delayBeforeStart = delayBeforeStart;
+        runner.celebrationSeconds = celebrationSeconds;
         runner.fadeDuration = fadeDuration;
         runner.gameManager = gameManager;
 
-        runner.StartCoroutine(runner.BossDefeatedRoutine());
+        runner.StartCoroutine(runner.RunEndStageRoutine());
 
         enabled = false;
     }
 
-    IEnumerator BossDefeatedRoutine()
+    IEnumerator RunEndStageRoutine()
     {
-        if (delayAfterBossDeath > 0f)
-            yield return new WaitForSeconds(delayAfterBossDeath);
+        if (delayBeforeStart > 0f)
+            yield return new WaitForSeconds(delayBeforeStart);
 
         var alivePlayers = FindAlivePlayers();
-
         if (alivePlayers.Count == 0)
         {
             Destroy(gameObject);
@@ -59,33 +58,47 @@ public class BossEndStageSequence : MonoBehaviour
 
         for (int i = 0; i < alivePlayers.Count; i++)
         {
-            var p = alivePlayers[i];
-            if (p == null || p.isDead)
+            var m = alivePlayers[i];
+            if (m == null || m.isDead || m.IsEndingStage)
                 continue;
 
+            var bombController = m.GetComponent<BombController>();
+
+            PlayerPersistentStats.SaveFrom(m, bombController);
+
+            if (bombController != null)
+                bombController.ClearPlantedBombsOnStageEnd(false);
+
             Vector2 center = new(
-                Mathf.Round(p.transform.position.x),
-                Mathf.Round(p.transform.position.y)
+                Mathf.Round(m.transform.position.x),
+                Mathf.Round(m.transform.position.y)
             );
 
-            p.PlayEndStageSequence(center, snapToPortalCenter: false);
+            m.PlayEndStageSequence(center, snapToPortalCenter: false);
 
-            MakePlayerSafeForCelebration(p);
+            MakePlayerSafeForEnding(m);
         }
 
-        if (GameMusicController.Instance != null && bossCheeringMusic != null)
-            GameMusicController.Instance.PlayMusic(bossCheeringMusic, 1f, false);
+        if (GameMusicController.Instance != null)
+            GameMusicController.Instance.StopMusic();
 
-        float timeBeforeFade = Mathf.Max(0f, cheeringDuration - fadeDuration);
+        if (endStageMusic != null && GameMusicController.Instance != null)
+            GameMusicController.Instance.PlayMusic(endStageMusic, 1f, false);
 
-        if (timeBeforeFade > 0f)
-            yield return new WaitForSeconds(timeBeforeFade);
+        if (celebrationSeconds > 0f)
+        {
+            float elapsed = 0f;
+            while (elapsed < celebrationSeconds)
+            {
+                if (!GamePauseController.IsPaused)
+                    elapsed += Time.deltaTime;
 
-        if (StageIntroTransition.Instance != null && fadeDuration > 0f)
+                yield return null;
+            }
+        }
+
+        if (StageIntroTransition.Instance != null)
             StageIntroTransition.Instance.StartFadeOut(fadeDuration);
-
-        if (fadeDuration > 0f)
-            yield return new WaitForSeconds(fadeDuration);
 
         if (gameManager != null)
             gameManager.EndStage();
@@ -134,7 +147,7 @@ public class BossEndStageSequence : MonoBehaviour
         return list;
     }
 
-    void MakePlayerSafeForCelebration(MovementController player)
+    void MakePlayerSafeForEnding(MovementController player)
     {
         if (player == null)
             return;
@@ -142,8 +155,7 @@ public class BossEndStageSequence : MonoBehaviour
         player.SetExplosionInvulnerable(true);
         player.SetInputLocked(true, false);
 
-        var col = player.GetComponent<Collider2D>();
-        if (col != null)
+        if (player.TryGetComponent<Collider2D>(out var col))
         {
             cachedPlayerColliders.Add(col);
             cachedColliderEnabled.Add(col.enabled);
