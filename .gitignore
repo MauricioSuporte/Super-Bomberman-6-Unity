@@ -9,10 +9,9 @@
 [Ll]ogs/
 [Mm]emoryCaptures/
 
-# =========================
 # Unity Editor user settings (LOCAL ONLY)
-# =========================
-Assets/UserSettings/
+UserSettings/
+UserSettings/**
 *.dwlt
 
 # =========================
