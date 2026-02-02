@@ -54,7 +54,6 @@ public class PlayerInputProfile
             defaultBindings[PlayerAction.ActionB] = Binding.FromKey(KeyCode.G);
             defaultBindings[PlayerAction.ActionC] = Binding.FromKey(KeyCode.H);
 
-            // NEW: L / R (rare actions)
             defaultBindings[PlayerAction.ActionL] = Binding.FromKey(KeyCode.R);
             defaultBindings[PlayerAction.ActionR] = Binding.FromKey(KeyCode.T);
 
@@ -73,7 +72,6 @@ public class PlayerInputProfile
             defaultBindings[PlayerAction.ActionB] = Binding.FromKey(KeyCode.O);
             defaultBindings[PlayerAction.ActionC] = Binding.FromKey(KeyCode.P);
 
-            // NEW: L / R
             defaultBindings[PlayerAction.ActionL] = Binding.FromKey(KeyCode.LeftBracket);
             defaultBindings[PlayerAction.ActionR] = Binding.FromKey(KeyCode.RightBracket);
 
@@ -92,14 +90,12 @@ public class PlayerInputProfile
             defaultBindings[PlayerAction.ActionB] = Binding.FromKey(KeyCode.Period);
             defaultBindings[PlayerAction.ActionC] = Binding.FromKey(KeyCode.Slash);
 
-            // NEW: L / R
             defaultBindings[PlayerAction.ActionL] = Binding.FromKey(KeyCode.RightControl);
             defaultBindings[PlayerAction.ActionR] = Binding.FromKey(KeyCode.RightAlt);
 
             return;
         }
 
-        // id == 4
         defaultBindings[PlayerAction.MoveUp] = Binding.FromKey(KeyCode.Keypad8);
         defaultBindings[PlayerAction.MoveDown] = Binding.FromKey(KeyCode.Keypad2);
         defaultBindings[PlayerAction.MoveLeft] = Binding.FromKey(KeyCode.Keypad4);
@@ -110,7 +106,6 @@ public class PlayerInputProfile
         defaultBindings[PlayerAction.ActionB] = Binding.FromKey(KeyCode.Keypad2);
         defaultBindings[PlayerAction.ActionC] = Binding.FromKey(KeyCode.Keypad3);
 
-        // NEW: L / R
         defaultBindings[PlayerAction.ActionL] = Binding.FromKey(KeyCode.Keypad0);
         defaultBindings[PlayerAction.ActionR] = Binding.FromKey(KeyCode.KeypadPeriod);
     }

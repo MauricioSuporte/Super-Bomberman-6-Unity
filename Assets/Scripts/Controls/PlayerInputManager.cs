@@ -62,8 +62,6 @@ public class PlayerInputManager : MonoBehaviour
         {
             var p = GetPlayer(id);
 
-            // Attempt to re-resolve device if we have a stored deviceId but it's not connected anymore.
-            // (We don't force a reassignment here; we only read if a pad is resolvable.)
             ReadDpadDigital(p, out bool up, out bool down, out bool left, out bool right);
 
             curUp[id] = up;
@@ -225,8 +223,7 @@ public class PlayerInputManager : MonoBehaviour
         bool dLeft = pad.dpad.left.isPressed;
         bool dRight = pad.dpad.right.isPressed;
 
-        bool lsUp, lsDown, lsLeft, lsRight;
-        ReadStickAsDigital(pad.leftStick, analogThreshold, out lsUp, out lsDown, out lsLeft, out lsRight);
+        ReadStickAsDigital(pad.leftStick, analogThreshold, out bool lsUp, out bool lsDown, out bool lsLeft, out bool lsRight);
 
         bool rsUp = false, rsDown = false, rsLeft = false, rsRight = false;
         if (includeRightStickAsDpad)
@@ -260,7 +257,6 @@ public class PlayerInputManager : MonoBehaviour
         if (all.Count == 0)
             return null;
 
-        // 1) Stable resolve by deviceId (fixes reboot order changes)
         if (p.gamepadDeviceId >= 0)
         {
             for (int i = 0; i < all.Count; i++)
@@ -270,14 +266,12 @@ public class PlayerInputManager : MonoBehaviour
 
                 if (pad.deviceId == p.gamepadDeviceId)
                 {
-                    // keep display joyIndex aligned (optional)
                     p.joyIndex = Mathf.Clamp(i + 1, 1, 11);
                     return pad;
                 }
             }
         }
 
-        // 2) Fallback: try by product name if available
         if (!string.IsNullOrEmpty(p.gamepadProduct))
         {
             for (int i = 0; i < all.Count; i++)
@@ -294,7 +288,6 @@ public class PlayerInputManager : MonoBehaviour
             }
         }
 
-        // 3) Last resort: legacy index fallback (keeps old saves working)
         int idx = Mathf.Clamp(p.joyIndex, 1, 11) - 1;
         if (idx < 0 || idx >= all.Count)
             return null;
