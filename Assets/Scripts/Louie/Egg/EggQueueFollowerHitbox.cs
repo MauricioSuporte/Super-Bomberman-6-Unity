@@ -2,29 +2,47 @@
 
 public sealed class EggQueueFollowerHitbox : MonoBehaviour
 {
+    [Header("Explosion Destroy")]
     [SerializeField] private bool useTag = true;
     [SerializeField] private string explosionTag = "Explosion";
     [SerializeField] private string explosionLayerName = "Explosion";
 
+    [Header("Consume Egg On Player Collision")]
+    [SerializeField] private bool enableConsumeByPlayer = true;
+    [SerializeField] private string playerTag = "Player";
+
     LouieEggQueue ownerQueue;
-    bool requested;
+    bool requestedExplosion;
+    bool requestedConsume;
 
     public void Bind(LouieEggQueue q) => ownerQueue = q;
 
     void OnTriggerEnter2D(Collider2D other)
     {
-        if (requested) return;
-        if (ownerQueue == null) return;
-        if (other == null) return;
+        if (ownerQueue == null || other == null)
+            return;
 
-        bool isExplosion =
-            useTag
-                ? other.CompareTag(explosionTag)
-                : other.gameObject.layer == LayerMask.NameToLayer(explosionLayerName);
+        if (!requestedExplosion && IsExplosion(other))
+        {
+            requestedExplosion = true;
+            ownerQueue.RequestDestroyEgg(transform);
+            return;
+        }
 
-        if (!isExplosion) return;
+        if (!enableConsumeByPlayer || requestedConsume)
+            return;
 
-        requested = true;
-        ownerQueue.RequestDestroyEgg(transform);
+        if (!other.CompareTag(playerTag))
+            return;
+
+        bool consumed = ownerQueue.RequestConsumeEggForMountCollision(transform, other.gameObject);
+        requestedConsume = consumed;
+    }
+
+    bool IsExplosion(Collider2D other)
+    {
+        return useTag
+            ? other.CompareTag(explosionTag)
+            : other.gameObject.layer == LayerMask.NameToLayer(explosionLayerName);
     }
 }

@@ -210,6 +210,7 @@ public sealed class LouieEggQueue : MonoBehaviour
 
         ApplyEggLayerNow();
         ApplyEggSortingNow();
+        CacheOwnerIdentity();
     }
 
     void BindOwnerAuto()
@@ -224,6 +225,7 @@ public sealed class LouieEggQueue : MonoBehaviour
 
         _ownerRb = GetComponentInParent<Rigidbody2D>();
         _ownerTr = _ownerRb != null ? _ownerRb.transform : transform.root;
+        CacheOwnerIdentity();
     }
 
     void EnsureWorldRoot()
@@ -1117,6 +1119,133 @@ public sealed class LouieEggQueue : MonoBehaviour
             col.enabled = false;
 
         yield return new WaitForSeconds(seconds);
+
+        if (tr != null)
+            Destroy(tr.gameObject);
+    }
+
+    public bool RequestConsumeEggForMountCollision(Transform anyTransformOnEgg, GameObject consumerPlayer)
+    {
+        if (anyTransformOnEgg == null) return false;
+        if (consumerPlayer == null) return false;
+        if (_eggs.Count == 0) return false;
+
+        if (_ownerPlayerId == -1)
+            CacheOwnerIdentity();
+
+        int consumerId = ResolvePlayerIdFrom(consumerPlayer);
+        if (_ownerPlayerId != -1 && consumerId != -1 && _ownerPlayerId == consumerId)
+            return false;
+
+        var rider = consumerPlayer.GetComponent<PlayerRidingController>();
+        bool ridingPlaying = rider != null && rider.IsPlaying;
+
+        bool mountedByMovement = consumerPlayer.TryGetComponent<MovementController>(out var mv) && mv != null && mv.IsMountedOnLouie;
+        bool mountedByCompanion = consumerPlayer.TryGetComponent<PlayerLouieCompanion>(out var compCheck) && compCheck != null && compCheck.HasMountedLouie();
+        bool isMounted = mountedByMovement || mountedByCompanion;
+
+        if (ridingPlaying) return false;
+        if (isMounted) return false;
+
+        if (!consumerPlayer.TryGetComponent<PlayerLouieCompanion>(out var comp) || comp == null)
+            return false;
+
+        int idx = FindEggIndexByTransform(anyTransformOnEgg);
+        if (idx < 0)
+            return false;
+
+        var egg = _eggs[idx];
+        var eggType = egg.type;
+
+        RemoveEggSilently(idx);
+
+        var sfx = LoadMountSfx(eggType);
+        if (sfx != null)
+            comp.SetNextMountSfx(sfx, Mathf.Clamp01(defaultMountVolume));
+
+        MountFromEggType(comp, eggType);
+
+        return true;
+    }
+
+    int FindEggIndexByTransform(Transform anyTransformOnEgg)
+    {
+        for (int i = 0; i < _eggs.Count; i++)
+        {
+            var rt = _eggs[i].rootTr;
+            if (rt == null) continue;
+
+            if (rt == anyTransformOnEgg || anyTransformOnEgg.IsChildOf(rt))
+                return i;
+        }
+        return -1;
+    }
+
+    static void MountFromEggType(PlayerLouieCompanion comp, ItemPickup.ItemType eggType)
+    {
+        if (comp == null) return;
+
+        switch (eggType)
+        {
+            case ItemPickup.ItemType.BlueLouieEgg: comp.MountBlueLouie(); break;
+            case ItemPickup.ItemType.BlackLouieEgg: comp.MountBlackLouie(); break;
+            case ItemPickup.ItemType.PurpleLouieEgg: comp.MountPurpleLouie(); break;
+            case ItemPickup.ItemType.GreenLouieEgg: comp.MountGreenLouie(); break;
+            case ItemPickup.ItemType.YellowLouieEgg: comp.MountYellowLouie(); break;
+            case ItemPickup.ItemType.PinkLouieEgg: comp.MountPinkLouie(); break;
+            case ItemPickup.ItemType.RedLouieEgg: comp.MountRedLouie(); break;
+        }
+    }
+
+    int _ownerPlayerId = -1;
+
+    int ResolvePlayerIdFrom(GameObject go)
+    {
+        if (go == null) return -1;
+
+        if (go.TryGetComponent<PlayerIdentity>(out var id) && id != null)
+            return id.playerId;
+
+        var parentId = go.GetComponentInParent<PlayerIdentity>();
+        if (parentId != null)
+            return parentId.playerId;
+
+        if (go.TryGetComponent<MovementController>(out var mv) && mv != null)
+            return mv.PlayerId;
+
+        var mvParent = go.GetComponentInParent<MovementController>();
+        if (mvParent != null)
+            return mvParent.PlayerId;
+
+        return -1;
+    }
+
+    void CacheOwnerIdentity()
+    {
+        if (_ownerMove != null)
+            _ownerPlayerId = ResolvePlayerIdFrom(_ownerMove.gameObject);
+        else if (_ownerTr != null)
+            _ownerPlayerId = ResolvePlayerIdFrom(_ownerTr.gameObject);
+        else
+            _ownerPlayerId = ResolvePlayerIdFrom(gameObject);
+
+        if (_ownerPlayerId < 1 || _ownerPlayerId > 4)
+            _ownerPlayerId = -1;
+    }
+
+    void RemoveEggSilently(int idx)
+    {
+        if (idx < 0 || idx >= _eggs.Count)
+            return;
+
+        var e = _eggs[idx];
+        var tr = e.rootTr;
+
+        _eggs.RemoveAt(idx);
+
+        AnimateAllShift();
+        ApplyEggLayerNow();
+        ApplyEggSortingNow();
 
         if (tr != null)
             Destroy(tr.gameObject);

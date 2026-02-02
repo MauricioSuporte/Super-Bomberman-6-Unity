@@ -83,9 +83,5 @@ public class LouieMovementController : MovementController
         Rigidbody.MovePosition(next);
     }
 
-    protected new bool IsBlocked(Vector2 targetPosition) => false;
-
-    protected new bool IsSolidAt(Vector2 worldPosition) => false;
-
     protected override void OnTriggerEnter2D(Collider2D other) { }
 }
