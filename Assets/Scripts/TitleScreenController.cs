@@ -202,6 +202,9 @@ public class TitleScreenController : MonoBehaviour
         menuText.fontMaterial = runtimeMenuMat;
         menuText.UpdateMeshPadding();
         menuText.SetVerticesDirty();
+
+        if (pushStartText != null)
+            pushStartText.fontMaterial = runtimeMenuMat;
     }
 
     void ApplyMenuAnchoredPosition()
@@ -282,6 +285,29 @@ public class TitleScreenController : MonoBehaviour
 
         if (cursorRenderer != null)
             cursorRenderer.gameObject.SetActive(false);
+
+        if (pushStartText != null)
+            pushStartText.gameObject.SetActive(false);
+    }
+
+    void ShowTitleScreenNow()
+    {
+        if (titleScreenRawImage != null)
+            titleScreenRawImage.gameObject.SetActive(true);
+
+        if (menuText != null)
+        {
+            menuText.gameObject.SetActive(true);
+            SetupMenuTextMaterial();
+        }
+
+        EnsurePushStartText();
+
+        if (cursorRenderer != null)
+        {
+            cursorRenderer.gameObject.SetActive(true);
+            cursorRenderer.RefreshFrame();
+        }
     }
 
     bool TryGetAnyPlayerDown(PlayerAction action, out int pid)
@@ -354,22 +380,7 @@ public class TitleScreenController : MonoBehaviour
         if (fadeToHideOptional != null)
             fadeToHideOptional.gameObject.SetActive(false);
 
-        if (titleScreenRawImage != null)
-            titleScreenRawImage.gameObject.SetActive(true);
-
-        if (menuText != null)
-        {
-            menuText.gameObject.SetActive(true);
-            SetupMenuTextMaterial();
-        }
-
-        EnsurePushStartText();
-
-        if (cursorRenderer != null)
-        {
-            cursorRenderer.gameObject.SetActive(true);
-            cursorRenderer.RefreshFrame();
-        }
+        ShowTitleScreenNow();
 
         if (titleMusic != null && GameMusicController.Instance != null)
             GameMusicController.Instance.PlayMusic(titleMusic, titleMusicVolume, true);
@@ -544,6 +555,12 @@ public class TitleScreenController : MonoBehaviour
 
         if (menuText != null)
             menuText.gameObject.SetActive(false);
+
+        if (cursorRenderer != null)
+            cursorRenderer.gameObject.SetActive(false);
+
+        if (pushStartText != null)
+            pushStartText.gameObject.SetActive(false);
 
         StopPushStartBlink();
         Running = false;
@@ -753,14 +770,7 @@ public class TitleScreenController : MonoBehaviour
 
     void RestoreTitleScreenAfterControls()
     {
-        if (titleScreenRawImage != null)
-            titleScreenRawImage.gameObject.SetActive(true);
-
-        if (menuText != null)
-            menuText.gameObject.SetActive(true);
-
-        if (cursorRenderer != null)
-            cursorRenderer.gameObject.SetActive(true);
+        ShowTitleScreenNow();
 
         if (titleVideoPlayer != null)
         {
