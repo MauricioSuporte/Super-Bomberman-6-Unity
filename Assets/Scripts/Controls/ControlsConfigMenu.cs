@@ -90,8 +90,8 @@ public class ControlsConfigMenu : MonoBehaviour
     const string colorPlayerGreen = "#8CFFB3";
     const string colorPlayerSelectedRed = "#FF5A5A";
 
-    const float COLUMN_LEFT_LABEL_BASE = -370f;
-    const float COLUMN_LEFT_VALUE_BASE = -210f;
+    const float COLUMN_LEFT_LABEL_BASE = -400f;
+    const float COLUMN_LEFT_VALUE_BASE = -240f;
     const float COLUMN_RIGHT_LABEL_BASE = 100f;
     const float COLUMN_RIGHT_VALUE_BASE = 260f;
 
@@ -121,6 +121,7 @@ public class ControlsConfigMenu : MonoBehaviour
 
     Vector2 menuLayoutRootBasePos;
     bool menuLayoutRootCached;
+    bool warnedAboutAutoLayoutRoot;
 
     struct DpadHit { public int dir; public int joyIndex; public int deviceId; public string product; }
     struct JoyBtnHit { public int btn; public int joyIndex; public int deviceId; public string product; }
@@ -137,7 +138,9 @@ public class ControlsConfigMenu : MonoBehaviour
         PlayerAction.Start,
         PlayerAction.ActionA,
         PlayerAction.ActionB,
-        PlayerAction.ActionC
+        PlayerAction.ActionC,
+        PlayerAction.ActionL,
+        PlayerAction.ActionR
     };
 
     void Awake()
@@ -146,6 +149,8 @@ public class ControlsConfigMenu : MonoBehaviour
             root = gameObject;
 
         SetupMenuTextMaterial();
+
+        ResolveMenuLayoutRoot();
         CacheMenuLayoutRootBasePos();
 
         if (root != null)
@@ -161,6 +166,50 @@ public class ControlsConfigMenu : MonoBehaviour
             Destroy(runtimeMenuMat);
     }
 
+    void ResolveMenuLayoutRoot()
+    {
+        if (menuLayoutRoot != null)
+            return;
+
+        if (root != null)
+        {
+            if (root.TryGetComponent<RectTransform>(out var rt))
+            {
+                menuLayoutRoot = rt;
+                WarnAutoLayoutRoot("root RectTransform");
+                return;
+            }
+        }
+
+        if (menuText != null)
+        {
+            var parentRt = menuText.transform.parent as RectTransform;
+            if (parentRt != null)
+            {
+                menuLayoutRoot = parentRt;
+                WarnAutoLayoutRoot("menuText parent RectTransform");
+                return;
+            }
+
+            var textRt = menuText.rectTransform;
+            if (textRt != null)
+            {
+                menuLayoutRoot = textRt;
+                WarnAutoLayoutRoot("menuText RectTransform");
+                return;
+            }
+        }
+    }
+
+    void WarnAutoLayoutRoot(string source)
+    {
+        if (warnedAboutAutoLayoutRoot)
+            return;
+
+        warnedAboutAutoLayoutRoot = true;
+        Debug.LogWarning($"ControlsConfigMenu: 'Menu Layout Root' was not set. Auto-using {source}. Assign it in the Inspector to control what moves as a whole.", this);
+    }
+
     void CacheMenuLayoutRootBasePos()
     {
         if (menuLayoutRootCached)
@@ -171,6 +220,15 @@ public class ControlsConfigMenu : MonoBehaviour
             menuLayoutRootBasePos = menuLayoutRoot.anchoredPosition;
             menuLayoutRootCached = true;
         }
+    }
+
+    void ApplyMenuGlobalOffset()
+    {
+        ResolveMenuLayoutRoot();
+        CacheMenuLayoutRootBasePos();
+
+        if (menuLayoutRoot != null && menuLayoutRootCached)
+            menuLayoutRoot.anchoredPosition = menuLayoutRootBasePos + new Vector2(0f, menuGlobalYOffset);
     }
 
     void SetupMenuTextMaterial()
@@ -274,6 +332,8 @@ public class ControlsConfigMenu : MonoBehaviour
         return AnyPlayerHeld(PlayerAction.ActionA) ||
                AnyPlayerHeld(PlayerAction.ActionB) ||
                AnyPlayerHeld(PlayerAction.ActionC) ||
+               AnyPlayerHeld(PlayerAction.ActionL) ||
+               AnyPlayerHeld(PlayerAction.ActionR) ||
                AnyPlayerHeld(PlayerAction.Start) ||
                AnyPlayerHeld(PlayerAction.MoveUp) ||
                AnyPlayerHeld(PlayerAction.MoveDown) ||
@@ -350,9 +410,7 @@ public class ControlsConfigMenu : MonoBehaviour
 
         SetupMenuTextMaterial();
 
-        CacheMenuLayoutRootBasePos();
-        if (menuLayoutRoot != null)
-            menuLayoutRoot.anchoredPosition = menuLayoutRootBasePos + new Vector2(0f, menuGlobalYOffset);
+        ApplyMenuGlobalOffset();
 
         if (controlsMusic != null && GameMusicController.Instance != null)
             GameMusicController.Instance.PlayMusic(controlsMusic, controlsMusicVolume, true);
@@ -829,13 +887,13 @@ public class ControlsConfigMenu : MonoBehaviour
         body += "</align>";
 
         body += "<align=left>";
-        AppendPlayerBlock(ref body, 0, colorNormal, colorHint, colorWhite);
+        AppendPlayerBlock(ref body, 0, colorNormal, colorHint);
         body += RepeatNewLine(playerBlockGapLines);
-        AppendPlayerBlock(ref body, 1, colorNormal, colorHint, colorWhite);
+        AppendPlayerBlock(ref body, 1, colorNormal, colorHint);
         body += RepeatNewLine(playerBlockGapLines);
-        AppendPlayerBlock(ref body, 2, colorNormal, colorHint, colorWhite);
+        AppendPlayerBlock(ref body, 2, colorNormal, colorHint);
         body += RepeatNewLine(playerBlockGapLines);
-        AppendPlayerBlock(ref body, 3, colorNormal, colorHint, colorWhite);
+        AppendPlayerBlock(ref body, 3, colorNormal, colorHint);
 
         int footerLift = Mathf.Max(0, footerGapLines + footerExtraNewLines);
         body += RepeatNewLine(footerLift);
@@ -846,9 +904,11 @@ public class ControlsConfigMenu : MonoBehaviour
                 $"<align=center><size={footerFontSize}>" +
                 $"<color={colorHint}>A / START:</color> <color={colorWhite}>CONFIRM / PLACE BOMB</color>\n" +
                 $"<color={colorHint}>B:</color> <color={colorWhite}>RETURN / EXPLODE CONTROL BOMB</color>\n" +
-                $"<color={colorHint}>C:</color> <color={colorWhite}>RESTORE DEFAULT KEYS / ABILITIES</color>" +
+                $"<color={colorHint}>C:</color> <color={colorWhite}>RESTORE DEFAULT KEYS / ABILITIES</color>\n" +
+                $"<color={colorHint}>L / R:</color> <color={colorWhite}>CHANGE WORLD</color>\n" +
+                $"<color={colorHint}>R (RIDING):</color> <color={colorWhite}>DISMOUNT</color>" +
                 $"</size></align>";
-    }
+        }
         else if (state == MenuState.ConfirmReset)
         {
             string yesText = confirmResetIndex == 0 ? $"<color={colorHint}>YES</color>" : $"<color={colorWhite}>YES</color>";
@@ -897,11 +957,11 @@ public class ControlsConfigMenu : MonoBehaviour
         }
     }
 
-    void AppendPlayerBlock(ref string body, int index, string cn, string ch, string cw)
+    void AppendPlayerBlock(ref string body, int index, string cn, string ch)
     {
-        for (int line = 0; line < 5; line++)
+        for (int line = 0; line < 6; line++)
         {
-            string l = PlayerLine(index + 1, line, cn, ch, cw, index);
+            string l = PlayerLine(index + 1, line, cn, ch, index);
             if (state == MenuState.SelectPlayer)
                 body += $"<link=\"sel{index}\">{l}</link>\n";
             else
@@ -917,7 +977,7 @@ public class ControlsConfigMenu : MonoBehaviour
         return $"<color={ch}>{label}</color>";
     }
 
-    string PlayerLine(int pid, int lineIndex, string cn, string ch, string cw, int selIndex)
+    string PlayerLine(int pid, int lineIndex, string cn, string ch, int selIndex)
     {
         var p = PlayerInputManager.Instance.GetPlayer(pid);
 
@@ -934,6 +994,9 @@ public class ControlsConfigMenu : MonoBehaviour
         string a = BindingToShort(p.GetBinding(PlayerAction.ActionA));
         string b = BindingToShort(p.GetBinding(PlayerAction.ActionB));
         string c = BindingToShort(p.GetBinding(PlayerAction.ActionC));
+
+        string lBtn = BindingToShort(p.GetBinding(PlayerAction.ActionL));
+        string rBtn = BindingToShort(p.GetBinding(PlayerAction.ActionR));
 
         float ll = COLUMN_LEFT_LABEL_BASE + playersBlockIndentX;
         float lv = COLUMN_LEFT_VALUE_BASE + playersBlockIndentX;
@@ -952,11 +1015,22 @@ public class ControlsConfigMenu : MonoBehaviour
         {
             0 => $"<align=center>{tag}</align>",
 
-            1 => $"<pos={ll}>{Lbl(PlayerAction.MoveUp, "UP:")}</pos><pos={lv}>{u}</pos><pos={rl}>{Lbl(PlayerAction.Start, "START:")}</pos><pos={rv}>{st}</pos>",
-            2 => $"<pos={ll}>{Lbl(PlayerAction.MoveDown, "DOWN:")}</pos><pos={lv}>{d}</pos><pos={rl}>{Lbl(PlayerAction.ActionA, "A:")}</pos><pos={rv}>{a}</pos>",
-            3 => $"<pos={ll}>{Lbl(PlayerAction.MoveLeft, "LEFT:")}</pos><pos={lv}>{l}</pos><pos={rl}>{Lbl(PlayerAction.ActionB, "B:")}</pos><pos={rv}>{b}</pos>",
-            4 => $"<pos={ll}>{Lbl(PlayerAction.MoveRight, "RIGHT:")}</pos><pos={lv}>{r}</pos><pos={rl}>{Lbl(PlayerAction.ActionC, "C:")}</pos><pos={rv}>{c}</pos>",
+            1 => $"<pos={ll}>{Lbl(PlayerAction.MoveUp, "UP:")}</pos><pos={lv}>{u}</pos>" +
+                 $"<pos={rl}>{Lbl(PlayerAction.ActionA, "A:")}</pos><pos={rv}>{a}</pos>",
 
+            2 => $"<pos={ll}>{Lbl(PlayerAction.MoveDown, "DOWN:")}</pos><pos={lv}>{d}</pos>" +
+                 $"<pos={rl}>{Lbl(PlayerAction.ActionB, "B:")}</pos><pos={rv}>{b}</pos>",
+
+            3 => $"<pos={ll}>{Lbl(PlayerAction.MoveLeft, "LEFT:")}</pos><pos={lv}>{l}</pos>" +
+                 $"<pos={rl}>{Lbl(PlayerAction.ActionC, "C:")}</pos><pos={rv}>{c}</pos>",
+
+            4 => $"<pos={ll}>{Lbl(PlayerAction.MoveRight, "RIGHT:")}</pos><pos={lv}>{r}</pos>" +
+                 $"<pos={rl}>{Lbl(PlayerAction.ActionL, "L:")}</pos><pos={rv}>{lBtn}</pos>",
+
+            5 => $"<pos={ll}>{Lbl(PlayerAction.Start, "START:")}</pos><pos={lv}>{st}</pos>" +
+                 $"<pos={rl}>{Lbl(PlayerAction.ActionR, "R:")}</pos><pos={rv}>{rBtn}</pos>",
+
+            6 => string.Empty,
             _ => string.Empty
         };
 
@@ -1124,6 +1198,8 @@ public class ControlsConfigMenu : MonoBehaviour
             PlayerAction.ActionA => "A",
             PlayerAction.ActionB => "B",
             PlayerAction.ActionC => "C",
+            PlayerAction.ActionL => "L",
+            PlayerAction.ActionR => "R",
             _ => a.ToString().ToUpperInvariant(),
         };
     }

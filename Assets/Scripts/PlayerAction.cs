@@ -5,9 +5,12 @@
     MoveLeft,
     MoveRight,
 
+    Start,
+
     ActionA,
     ActionB,
     ActionC,
 
-    Start
+    ActionL,
+    ActionR
 }

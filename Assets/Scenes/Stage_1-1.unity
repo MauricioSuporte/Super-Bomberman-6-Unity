@@ -3734,6 +3734,19 @@ MonoBehaviour:
   - {fileID: 0}
   - {fileID: 0}
   - {fileID: 0}
+  playerOverrides:
+  - useCustomSpawn: 0
+    spawnPoint: {fileID: 0}
+    positionXY: {x: 0, y: 0}
+  - useCustomSpawn: 0
+    spawnPoint: {fileID: 0}
+    positionXY: {x: 0, y: 0}
+  - useCustomSpawn: 0
+    spawnPoint: {fileID: 0}
+    positionXY: {x: 0, y: 0}
+  - useCustomSpawn: 0
+    spawnPoint: {fileID: 0}
+    positionXY: {x: 0, y: 0}
   playersParent: {fileID: 0}
   isBossStage: 0
   clearExistingPlayersBeforeSpawn: 1
@@ -6177,8 +6190,8 @@ MonoBehaviour:
   ownerPlayerId: 1
   root: {fileID: 1107666575}
   backgroundImage: {fileID: 700387562}
-  menuLayoutRoot: {fileID: 0}
-  menuGlobalYOffset: 140
+  menuLayoutRoot: {fileID: 1876253041}
+  menuGlobalYOffset: 50
   fadeImage: {fileID: 336813435}
   fadeInDuration: 0.25
   fadeOutDuration: 0.2
