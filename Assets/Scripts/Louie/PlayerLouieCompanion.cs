@@ -6,6 +6,7 @@ using UnityEngine;
 
 [RequireComponent(typeof(MovementController))]
 [RequireComponent(typeof(CharacterHealth))]
+[RequireComponent(typeof(PlayerRidingController))]
 public class PlayerLouieCompanion : MonoBehaviour
 {
     [Header("Louie Prefabs")]
@@ -29,6 +30,15 @@ public class PlayerLouieCompanion : MonoBehaviour
     [Header("Louie Mount SFX")]
     public AudioClip mountLouieSfx;
     [Range(0f, 1f)] public float mountLouieVolume = 1f;
+    [SerializeField] string blueLouieMountSfxName = "MountBlueLouie";
+    [SerializeField] string blackLouieMountSfxName = "MountBlackLouie";
+    [SerializeField] string purpleLouieMountSfxName = "MountPurpleLouie";
+    [SerializeField] string greenLouieMountSfxName = "MountGreenLouie";
+    [SerializeField] string yellowLouieMountSfxName = "MountYellowLouie";
+    [SerializeField] string pinkLouieMountSfxName = "MountPinkLouie";
+    [SerializeField] string redLouieMountSfxName = "MountRedLouie";
+
+    readonly Dictionary<MountedLouieType, AudioClip> _worldMountSfxCache = new();
 
     AudioClip pendingMountSfx;
     float pendingMountVolume = 1f;
@@ -480,6 +490,8 @@ public class PlayerLouieCompanion : MonoBehaviour
         if (louieWorldInstance == null || movement == null || currentLouie != null)
             return false;
 
+        PrepareWorldRemountSfxIfNone(louieType);
+
         var rider = GetComponent<PlayerRidingController>();
 
         void AdoptWorldQueueIfAny()
@@ -509,6 +521,7 @@ public class PlayerLouieCompanion : MonoBehaviour
         AdoptWorldQueueIfAny();
         return true;
     }
+
 
     void AttachExistingLouieForMount(GameObject louieWorldInstance, MountedLouieType type, bool duringRiding)
     {
@@ -1026,6 +1039,49 @@ public class PlayerLouieCompanion : MonoBehaviour
     #endregion
 
     #region SFX
+
+    AudioClip LoadWorldMountSfx(MountedLouieType type)
+    {
+        if (type == MountedLouieType.None)
+            return null;
+
+        if (_worldMountSfxCache.TryGetValue(type, out var cached))
+            return cached;
+
+        string name = type switch
+        {
+            MountedLouieType.Blue => blueLouieMountSfxName,
+            MountedLouieType.Black => blackLouieMountSfxName,
+            MountedLouieType.Purple => purpleLouieMountSfxName,
+            MountedLouieType.Green => greenLouieMountSfxName,
+            MountedLouieType.Yellow => yellowLouieMountSfxName,
+            MountedLouieType.Pink => pinkLouieMountSfxName,
+            MountedLouieType.Red => redLouieMountSfxName,
+            _ => null
+        };
+
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            _worldMountSfxCache[type] = null;
+            return null;
+        }
+
+        var clip = Resources.Load<AudioClip>($"Sounds/{name}");
+        _worldMountSfxCache[type] = clip;
+        return clip;
+    }
+
+    void PrepareWorldRemountSfxIfNone(MountedLouieType type)
+    {
+        if (pendingMountSfx != null)
+            return;
+
+        var clip = LoadWorldMountSfx(type);
+        if (clip == null)
+            return;
+
+        SetNextMountSfx(clip, mountLouieVolume);
+    }
 
     public void SetNextMountSfx(AudioClip clip, float volume)
     {
