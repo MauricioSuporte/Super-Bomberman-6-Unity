@@ -1229,8 +1229,7 @@ public sealed class LouieEggQueue : MonoBehaviour
         if (detachedLouie == null || _eggs.Count == 0)
             return;
 
-        var target = detachedLouie.GetComponent<LouieEggQueue>();
-        if (target == null)
+        if (!detachedLouie.TryGetComponent<LouieEggQueue>(out var target))
             target = detachedLouie.AddComponent<LouieEggQueue>();
 
         CopySettingsTo(target);
@@ -1241,6 +1240,13 @@ public sealed class LouieEggQueue : MonoBehaviour
         target._eggs.Clear();
         for (int i = 0; i < _eggs.Count; i++)
             target._eggs.Add(_eggs[i]);
+
+        for (int i = 0; i < target._eggs.Count; i++)
+        {
+            var e = target._eggs[i];
+            if (e.rootTr != null)
+                BindEggHitbox(e.rootTr.gameObject, target);
+        }
 
         _eggs.Clear();
 
