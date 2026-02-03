@@ -1191,6 +1191,93 @@ public sealed class LouieEggQueue : MonoBehaviour
         }
     }
 
+    public void TransferToDetachedLouieAndFreeze(GameObject detachedLouie, Vector3 freezeWorldPos)
+    {
+        if (detachedLouie == null)
+            return;
+
+        if (_eggs.Count == 0)
+            return;
+
+        var target = detachedLouie.GetComponent<LouieEggQueue>();
+        if (target == null)
+            target = detachedLouie.AddComponent<LouieEggQueue>();
+
+        CopySettingsTo(target);
+
+        target.EnsureWorldRoot();
+        target.EnsureHistoryBuffer();
+
+        target._eggs.Clear();
+        for (int i = 0; i < _eggs.Count; i++)
+            target._eggs.Add(_eggs[i]);
+
+        _eggs.Clear();
+
+        target._ownerPlayerId = -1;
+        target.FreezeOwnerAtWorldPosition(freezeWorldPos);
+        target.BeginHardFreeze();
+        target.ApplyForcedVisibility();
+        target.ApplyEggLayerNow();
+        target.ApplyEggSortingNow();
+
+        BindOwnerAuto();
+        EnsureWorldRoot();
+        EnsureHistoryBuffer();
+        SeedHistoryNow();
+        ResetRuntimeState();
+        ApplyForcedVisibility();
+    }
+
+    void CopySettingsTo(LouieEggQueue q)
+    {
+        q.maxHistory = maxHistory;
+        q.historyPointSpacingWorld = historyPointSpacingWorld;
+        q.jitterIgnoreDelta = jitterIgnoreDelta;
+
+        q.eggSpacingWorld = eggSpacingWorld;
+        q.worldOffset = worldOffset;
+        q.minTargetSeparation = minTargetSeparation;
+
+        q.worldRootName = worldRootName;
+
+        q.eggGameObjectLayer = eggGameObjectLayer;
+        q.eggSortingLayerName = eggSortingLayerName;
+        q.eggBaseSortingOrder = eggBaseSortingOrder;
+
+        q.maxEggsInQueue = maxEggsInQueue;
+
+        q.joinSeconds = joinSeconds;
+        q.joinExtraDelayPerEgg = joinExtraDelayPerEgg;
+        q.shiftSeconds = shiftSeconds;
+
+        q.eggFollowerPrefab = eggFollowerPrefab;
+
+        q.idleDequeueStyle = idleDequeueStyle;
+        q.idleDequeueSnap = idleDequeueSnap;
+
+        q.idleEnterSeconds = idleEnterSeconds;
+        q.movingHoldSeconds = movingHoldSeconds;
+        q.idleGraceFrames = idleGraceFrames;
+        q.idleExitGraceFrames = idleExitGraceFrames;
+
+        q.idleCollapseSeconds = idleCollapseSeconds;
+        q.idleDisableAntiCollapseAt = idleDisableAntiCollapseAt;
+        q.idleShiftDirectionalDeadZoneMul = idleShiftDirectionalDeadZoneMul;
+
+        q.preferRigidbodyVelocityForIdle = preferRigidbodyVelocityForIdle;
+        q.ownerVelocityEpsilon = ownerVelocityEpsilon;
+
+        q.blueLouieMountSfxName = blueLouieMountSfxName;
+        q.blackLouieMountSfxName = blackLouieMountSfxName;
+        q.purpleLouieMountSfxName = purpleLouieMountSfxName;
+        q.greenLouieMountSfxName = greenLouieMountSfxName;
+        q.yellowLouieMountSfxName = yellowLouieMountSfxName;
+        q.pinkLouieMountSfxName = pinkLouieMountSfxName;
+        q.redLouieMountSfxName = redLouieMountSfxName;
+        q.defaultMountVolume = defaultMountVolume;
+    }
+
     public void RequestDestroyEgg(Transform anyTransformOnEgg)
     {
         if (anyTransformOnEgg == null) return;

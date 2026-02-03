@@ -72,16 +72,8 @@ public sealed class PlayerLouieManualDismount : MonoBehaviour
 
         freezeWorldPos.z = 0f;
 
-        if (freezeEggQueueOnDismount && eggQueue != null)
-            eggQueue.BeginHardFreeze();
-
         if (!companion.TryDetachMountedLouieToWorldStationary(out var detachedLouie))
-        {
-            if (freezeEggQueueOnDismount && eggQueue != null)
-                eggQueue.EndHardFreezeAndRebind(movement);
-
             return;
-        }
 
         if (detachedLouie != null)
         {
@@ -92,23 +84,19 @@ public sealed class PlayerLouieManualDismount : MonoBehaviour
             detachedLouie.SendMessage("ApplyMoveDelta", Vector3.zero, SendMessageOptions.DontRequireReceiver);
 
             ForceAllAnimatedRenderersIdle(detachedLouie);
+
+            if (freezeEggQueueOnDismount && eggQueue != null && eggQueue.Count > 0)
+                eggQueue.TransferToDetachedLouieAndFreeze(detachedLouie, freezeWorldPos);
         }
 
         bool started = rider.TryPlayRiding(
             facingAtPress,
-            onComplete: () =>
-            {
-                if (freezeEggQueueOnDismount && eggQueue != null)
-                    eggQueue.EndHardFreezeAndKeepWorld(freezeWorldPos);
-            },
+            onComplete: null,
             onStart: null
         );
 
         if (!started)
-        {
-            if (freezeEggQueueOnDismount && eggQueue != null)
-                eggQueue.EndHardFreezeAndKeepWorld(freezeWorldPos);
-        }
+            return;
     }
 
     static void ForceAllAnimatedRenderersIdle(GameObject root)
