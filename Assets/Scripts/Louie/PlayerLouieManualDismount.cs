@@ -66,54 +66,42 @@ public sealed class PlayerLouieManualDismount : MonoBehaviour
         if (facingAtPress == Vector2.zero)
             facingAtPress = Vector2.down;
 
-        Vector3 freezeWorldPos = movement.Rigidbody != null
-            ? (Vector3)movement.Rigidbody.position
-            : movement.transform.position;
-
-        freezeWorldPos.z = 0f;
-
-        if (!companion.TryDetachMountedLouieToWorldStationary(out var detachedLouie))
+        if (!companion.TryDetachMountedLouieToWorldStationary(out var detachedLouie, out var detachedType))
             return;
 
         if (detachedLouie != null)
         {
-            detachedLouie.transform.position = freezeWorldPos;
-            detachedLouie.transform.rotation = Quaternion.identity;
+            var pickup = detachedLouie.GetComponent<LouieWorldPickup>();
+            if (pickup == null)
+                pickup = detachedLouie.AddComponent<LouieWorldPickup>();
 
-            detachedLouie.SendMessage("ForceIdleFacing", facingAtPress, SendMessageOptions.DontRequireReceiver);
-            detachedLouie.SendMessage("ApplyMoveDelta", Vector3.zero, SendMessageOptions.DontRequireReceiver);
-
-            ForceAllAnimatedRenderersIdle(detachedLouie);
-
-            if (freezeEggQueueOnDismount && eggQueue != null && eggQueue.Count > 0)
-                eggQueue.TransferToDetachedLouieAndFreeze(detachedLouie, freezeWorldPos);
+            pickup.Init(detachedType);
         }
 
         bool started = rider.TryPlayRiding(
             facingAtPress,
             onComplete: null,
-            onStart: null
+            onStart: () =>
+            {
+                // IMPORTANT: no início do desmontar, os ovos param de seguir o player
+                // e ficam "presos" no Louie destacado (para serem adotados por quem montar depois).
+                if (!freezeEggQueueOnDismount)
+                    return;
+
+                if (detachedLouie == null)
+                    return;
+
+                if (eggQueue == null || eggQueue.Count <= 0)
+                    return;
+
+                Vector3 freezePos = detachedLouie.transform.position;
+                freezePos.z = 0f;
+
+                eggQueue.TransferToDetachedLouieAndFreeze(detachedLouie, freezePos);
+            }
         );
 
         if (!started)
             return;
-    }
-
-    static void ForceAllAnimatedRenderersIdle(GameObject root)
-    {
-        if (root == null)
-            return;
-
-        var anims = root.GetComponentsInChildren<AnimatedSpriteRenderer>(true);
-        for (int i = 0; i < anims.Length; i++)
-        {
-            var a = anims[i];
-            if (a == null)
-                continue;
-
-            a.idle = true;
-            a.CurrentFrame = 0;
-            a.RefreshFrame();
-        }
     }
 }

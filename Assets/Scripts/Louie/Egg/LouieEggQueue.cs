@@ -1373,8 +1373,79 @@ public sealed class LouieEggQueue : MonoBehaviour
         var egg = _eggs[idx];
         var eggType = egg.type;
 
+        // “A partir daquele ovo”: transfere ovos mais novos (0..idx-1) para o player
+        bool isWorldQueue = _hardFrozen || (_freezeAnchor != null && _ownerTr == _freezeAnchor);
+
+        List<EggEntry> transferNewer = null;
+        if (isWorldQueue && idx > 0)
+        {
+            transferNewer = new List<EggEntry>(idx);
+            for (int i = 0; i < idx; i++)
+                transferNewer.Add(_eggs[i]);
+        }
+
+        // Remove o ovo colidido (esse vira Louie)
         RemoveEggSilently(idx);
 
+        // Transfere os mais novos pro consumidor (se for fila do mundo)
+        if (isWorldQueue && transferNewer != null && transferNewer.Count > 0)
+        {
+            for (int i = 0; i < transferNewer.Count; i++)
+            {
+                var entry = transferNewer[i];
+
+                // Remove do mundo (índice 0 sempre, porque estamos removendo a “cabeça” repetidamente)
+                if (_eggs.Count > 0)
+                {
+                    // como transferNewer representa 0..idx-1 da lista ORIGINAL,
+                    // e a gente já removeu o idx, os “newer” continuam no começo.
+                    _eggs.RemoveAt(0);
+                }
+
+                // Rebind hitbox para a fila do player depois
+            }
+
+            if (!consumerPlayer.TryGetComponent<LouieEggQueue>(out var consumerQueue) || consumerQueue == null)
+                consumerQueue = consumerPlayer.AddComponent<LouieEggQueue>();
+
+            consumerQueue.CopySettingsTo(consumerQueue); // no-op, só pra manter padrão se você mexer depois
+            consumerQueue.BindOwner(consumerPlayer.GetComponent<MovementController>());
+
+            // Insere mantendo ordem (0 = mais novo)
+            for (int i = transferNewer.Count - 1; i >= 0; i--)
+            {
+                var e = transferNewer[i];
+
+                // respeita limite
+                if (consumerQueue.MaxEggs > 0 && consumerQueue._eggs.Count >= consumerQueue.MaxEggs)
+                    break;
+
+                consumerQueue._eggs.Insert(0, e);
+
+                if (e.rootTr != null)
+                {
+                    if (!e.rootTr.TryGetComponent<EggQueueFollowerHitbox>(out var hb))
+                        hb = e.rootTr.GetComponentInChildren<EggQueueFollowerHitbox>(true);
+
+                    if (hb != null)
+                        hb.Bind(consumerQueue);
+                }
+            }
+
+            consumerQueue.EnsureWorldRoot();
+            consumerQueue.EnsureHistoryBuffer();
+            consumerQueue.SeedHistoryNow();
+            consumerQueue.ResetRuntimeState();
+            consumerQueue.ApplyForcedVisibility();
+            consumerQueue.ApplyEggLayerNow();
+            consumerQueue.ApplyEggSortingNow();
+
+            // Atualiza visual do queue do mundo também
+            ApplyEggLayerNow();
+            ApplyEggSortingNow();
+        }
+
+        // Agora monta o Louie do tipo do ovo, igual ItemPickup
         var sfx = LoadMountSfx(eggType);
         if (sfx != null)
             comp.SetNextMountSfx(sfx, Mathf.Clamp01(defaultMountVolume));
@@ -1494,5 +1565,47 @@ public sealed class LouieEggQueue : MonoBehaviour
 
         ResetHistoryToCurrentOwnerPos();
         ResetRuntimeState();
+    }
+
+    public void AbsorbAllEggsFromWorldQueue(LouieEggQueue worldQueue, MovementController newOwner)
+    {
+        if (worldQueue == null || newOwner == null)
+            return;
+
+        // Se a fila do mundo estiver congelada, liberamos e vamos usar a lista de eggs dela
+        worldQueue._hardFrozen = false;
+
+        // Copia settings para consistência
+        worldQueue.CopySettingsTo(this);
+
+        BindOwner(newOwner);
+
+        // Move os eggs do mundo para esse queue (sem destruir os GOs)
+        // Mantém ordem: _eggs[0] = mais novo
+        for (int i = 0; i < worldQueue._eggs.Count; i++)
+        {
+            var e = worldQueue._eggs[i];
+            _eggs.Insert(Mathf.Min(i, _eggs.Count), e);
+
+            // rebind hitbox para ESTE queue
+            if (e.rootTr != null)
+            {
+                if (!e.rootTr.TryGetComponent<EggQueueFollowerHitbox>(out var hb))
+                    hb = e.rootTr.GetComponentInChildren<EggQueueFollowerHitbox>(true);
+
+                if (hb != null)
+                    hb.Bind(this);
+            }
+        }
+
+        worldQueue._eggs.Clear();
+
+        EnsureWorldRoot();
+        EnsureHistoryBuffer();
+        SeedHistoryNow();
+        ResetRuntimeState();
+        ApplyForcedVisibility();
+        ApplyEggLayerNow();
+        ApplyEggSortingNow();
     }
 }

@@ -1132,14 +1132,17 @@ public class PlayerLouieCompanion : MonoBehaviour
         Destroy(louie);
     }
 
-    public bool TryDetachMountedLouieToWorldStationary(out GameObject detachedLouie)
+    public bool TryDetachMountedLouieToWorldStationary(out GameObject detachedLouie, out MountedLouieType detachedType)
     {
         detachedLouie = null;
+        detachedType = MountedLouieType.None;
 
         if (currentLouie == null || movement == null)
             return false;
 
         var louie = currentLouie;
+        var typeBeforeReset = mountedType;
+
         currentLouie = null;
 
         louie.transform.GetPositionAndRotation(out var worldPos, out var worldRot);
@@ -1150,6 +1153,7 @@ public class PlayerLouieCompanion : MonoBehaviour
         louie.transform.SetParent(null, true);
         louie.transform.SetPositionAndRotation(worldPos, worldRot);
 
+        // Remove visual de riding (como você já faz)
         if (louie.TryGetComponent<LouieRidingVisual>(out var rv))
             Destroy(rv);
         else
@@ -1158,19 +1162,95 @@ public class PlayerLouieCompanion : MonoBehaviour
             if (childRv != null) Destroy(childRv);
         }
 
+        // Mantém parado, mas colisão ligada para pickup
         if (louie.TryGetComponent<LouieMovementController>(out var lm))
             lm.enabled = false;
 
         if (louie.TryGetComponent<Rigidbody2D>(out var rb))
-            rb.simulated = false;
+            rb.simulated = true; // precisa estar ativo para trigger/collision
 
         if (louie.TryGetComponent<Collider2D>(out var col))
-            col.enabled = false;
+            col.enabled = true;
 
         if (louie.TryGetComponent<BombController>(out var bc))
             bc.enabled = false;
 
         detachedLouie = louie;
+        detachedType = typeBeforeReset;
         return true;
+    }
+
+    public bool TryMountExistingLouieFromWorld(GameObject louieWorldInstance, MountedLouieType louieType, LouieEggQueue worldQueueToAdopt)
+    {
+        if (louieWorldInstance == null || movement == null)
+            return false;
+
+        if (currentLouie != null)
+            return false;
+
+        var rider = GetComponent<PlayerRidingController>();
+
+        // Se existir fila no Louie do mundo, absorve pro player (após montar)
+        void AdoptWorldQueueIfAny()
+        {
+            if (worldQueueToAdopt == null)
+                return;
+
+            if (!TryGetComponent<LouieEggQueue>(out var playerQueue) || playerQueue == null)
+                playerQueue = gameObject.AddComponent<LouieEggQueue>();
+
+            playerQueue.AbsorbAllEggsFromWorldQueue(worldQueueToAdopt, movement);
+
+            // A fila do mundo não precisa mais existir no Louie
+            Destroy(worldQueueToAdopt);
+        }
+
+        if (rider != null && rider.TryPlayRiding(
+            movement.FacingDirection,
+            onComplete: () =>
+            {
+                FinalizeMount(louieType);
+                AdoptWorldQueueIfAny();
+            },
+            onStart: () =>
+            {
+                AttachExistingLouieForMount(louieWorldInstance, louieType, duringRiding: true);
+            }))
+            return true;
+
+        AttachExistingLouieForMount(louieWorldInstance, louieType, duringRiding: false);
+        FinalizeMount(louieType);
+        AdoptWorldQueueIfAny();
+        return true;
+    }
+
+    void AttachExistingLouieForMount(GameObject louieWorldInstance, MountedLouieType type, bool duringRiding)
+    {
+        if (louieWorldInstance == null || currentLouie != null)
+            return;
+
+        mountedType = type;
+
+        currentLouie = louieWorldInstance;
+
+        // remove pickup do mundo (para não tentar pegar de novo)
+        var pickup = currentLouie.GetComponent<LouieWorldPickup>();
+        if (pickup != null) Destroy(pickup);
+
+        currentLouie.transform.SetParent(transform, true);
+        currentLouie.transform.SetLocalPositionAndRotation(localOffset, Quaternion.identity);
+        currentLouie.transform.localScale = Vector3.one;
+
+        mountedLouieHealth = currentLouie.GetComponentInChildren<CharacterHealth>(true);
+        mountedLouieHp = 1;
+        if (mountedLouieHealth != null)
+            mountedLouieHp = Mathf.Max(1, mountedLouieHealth.life);
+
+        DisableLouieComponentsForMount(currentLouie);
+
+        if (duringRiding)
+            SetMountedLouieVisible(true);
+
+        PlayMountSfxIfAny();
     }
 }
