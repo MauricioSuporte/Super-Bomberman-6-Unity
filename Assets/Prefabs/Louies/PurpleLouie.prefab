@@ -390,6 +390,7 @@ GameObject:
   - component: {fileID: 2870228645174432188}
   - component: {fileID: 8029523518312429621}
   - component: {fileID: 1919497702538166291}
+  - component: {fileID: 6543421237453546391}
   m_Layer: 0
   m_Name: PurpleLouie
   m_TagString: Untagged
@@ -484,7 +485,7 @@ CircleCollider2D:
   m_CompositeOperation: 0
   m_CompositeOrder: 0
   m_Offset: {x: 0, y: 0}
-  m_Radius: 0.5
+  m_Radius: 0.32
 --- !u!82 &-1290901313582732214
 AudioSource:
   m_ObjectHideFlags: 0
@@ -594,14 +595,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 259dc96ea2e08cc4fa2829ffac0aef71, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BombController
-  inputKey: 32
+  playerId: 1
   useAIInput: 0
   bombPrefab: {fileID: 0}
   pierceBombPrefab: {fileID: 0}
   controlBombPrefab: {fileID: 0}
   bombFuseTime: 3
   bombAmout: 1
-  controlDetonateKey: 110
+  chainBombDelaySeconds: 0.1
   explosionPrefab: {fileID: 0}
   explosionLayerMask:
     serializedVersion: 2
@@ -612,6 +613,7 @@ MonoBehaviour:
   stageBoundsTiles: {fileID: 0}
   destructibleTiles: {fileID: 0}
   destructiblePrefab: {fileID: 0}
+  destructibleTileResolver: {fileID: 0}
   itemLayerMask:
     serializedVersion: 2
     m_Bits: 0
@@ -629,6 +631,8 @@ MonoBehaviour:
   - {fileID: 0}
   - {fileID: 0}
   explosionSfxVolume: 1
+  groundTileResolver: {fileID: 0}
+  indestructibleTileResolver: {fileID: 0}
 --- !u!114 &5649779946888286329
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -660,10 +664,7 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 0
   speedInternal: 224
-  inputUp: 119
-  inputDown: 115
-  inputLeft: 97
-  inputRight: 100
+  playerId: 1
   spriteRendererUp: {fileID: 6685445590595473310}
   spriteRendererDown: {fileID: 4170285985975590271}
   spriteRendererLeft: {fileID: 5930063177854299457}
@@ -682,6 +683,9 @@ MonoBehaviour:
   endStageTotalTime: 1
   endStageFrameCount: 9
   isDead: 0
+  perpendicularAlignMultiplier: 8
+  snapPerpendicularOnAxisStart: 1
+  alignEpsilon: 0.0015
   owner: {fileID: 0}
   followOffset: {x: -0.35, y: -0.15}
   followLerp: 25
@@ -740,6 +744,24 @@ MonoBehaviour:
   shakeAmplitude: 0.03
   shakeFrequency: 22
   freezeAnimatedSprites: 1
+--- !u!114 &6543421237453546391
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2273416014071709654}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 205f7fc6fe6408f419811c6c486b9cd6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CharacterHealth
+  life: 1
+  hitInvulnerableDuration: 3
+  hitBlinkInterval: 0.1
+  tempSlowdownStartNormalized: 0.7
+  tempEndBlinkMultiplier: 4
+  playDamagedLoopInsteadOfBlink: 0
 --- !u!1 &2445788475736444126
 GameObject:
   m_ObjectHideFlags: 0

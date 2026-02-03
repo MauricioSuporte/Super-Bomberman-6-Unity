@@ -1392,9 +1392,16 @@ public sealed class LouieEggQueue : MonoBehaviour
         bool isWorldQueue = _hardFrozen || (_freezeAnchor != null && _ownerTr == _freezeAnchor);
 
         if (isWorldQueue && idx > 0)
+        {
             TransferNewerEggsToConsumer(consumerPlayer, idx);
 
+            idx = FindEggIndexByTransform(anyTransformOnEgg);
+            if (idx < 0)
+                return false;
+        }
+
         RemoveEggAndDestroyVisual(idx);
+
         PostQueueChanged(animateShift: true);
 
         var sfx = egg.mountSfx != null ? egg.mountSfx : LoadMountSfx(eggType);

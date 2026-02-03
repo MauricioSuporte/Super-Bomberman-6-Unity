@@ -473,7 +473,7 @@ CircleCollider2D:
   m_CompositeOperation: 0
   m_CompositeOrder: 0
   m_Offset: {x: 0, y: 0}
-  m_Radius: 0.5
+  m_Radius: 0.32
 --- !u!82 &-1290901313582732214
 AudioSource:
   m_ObjectHideFlags: 0
@@ -590,6 +590,7 @@ MonoBehaviour:
   controlBombPrefab: {fileID: 0}
   bombFuseTime: 3
   bombAmout: 1
+  chainBombDelaySeconds: 0.1
   explosionPrefab: {fileID: 0}
   explosionLayerMask:
     serializedVersion: 2
@@ -600,6 +601,7 @@ MonoBehaviour:
   stageBoundsTiles: {fileID: 0}
   destructibleTiles: {fileID: 0}
   destructiblePrefab: {fileID: 0}
+  destructibleTileResolver: {fileID: 0}
   itemLayerMask:
     serializedVersion: 2
     m_Bits: 0
@@ -617,6 +619,8 @@ MonoBehaviour:
   - {fileID: 0}
   - {fileID: 0}
   explosionSfxVolume: 1
+  groundTileResolver: {fileID: 0}
+  indestructibleTileResolver: {fileID: 0}
 --- !u!114 &5649779946888286329
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -745,6 +749,7 @@ MonoBehaviour:
   hitBlinkInterval: 0.1
   tempSlowdownStartNormalized: 0.7
   tempEndBlinkMultiplier: 4
+  playDamagedLoopInsteadOfBlink: 0
 --- !u!1 &2445788475736444126
 GameObject:
   m_ObjectHideFlags: 0
