@@ -4,23 +4,21 @@
 public sealed class LouieWorldPickup : MonoBehaviour
 {
     [Header("Pickup")]
-    [SerializeField] private string playerTag = "Player";
+    [SerializeField] string playerTag = "Player";
 
     [Header("Type")]
-    [SerializeField] private MountedLouieType type = MountedLouieType.None;
+    [SerializeField] MountedLouieType type = MountedLouieType.None;
 
     bool consumed;
+    Collider2D _col;
 
-    public void Init(MountedLouieType t)
-    {
-        type = t;
-    }
+    public void Init(MountedLouieType t) => type = t;
 
     void Awake()
     {
-        var col = GetComponent<Collider2D>();
-        if (col != null)
-            col.enabled = true;
+        _col = GetComponent<Collider2D>();
+        if (_col != null)
+            _col.enabled = true;
     }
 
     void OnTriggerEnter2D(Collider2D other)
@@ -42,7 +40,7 @@ public sealed class LouieWorldPickup : MonoBehaviour
         if (player.TryGetComponent<PlayerRidingController>(out var rider) && rider != null && rider.IsPlaying)
             return;
 
-        if (player.TryGetComponent<PlayerLouieCompanion>(out var comp) == false || comp == null)
+        if (!player.TryGetComponent<PlayerLouieCompanion>(out var comp) || comp == null)
             return;
 
         bool alreadyMounted =
@@ -57,6 +55,11 @@ public sealed class LouieWorldPickup : MonoBehaviour
 
         if (type == MountedLouieType.None)
             return;
+
+        if (_col != null)
+            mv.SnapToColliderCenter(_col, roundToGrid: false);
+        else
+            mv.SnapToWorldPoint(transform.position, roundToGrid: false);
 
         consumed = true;
 

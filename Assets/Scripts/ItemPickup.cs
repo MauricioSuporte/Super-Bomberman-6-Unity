@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 
 [RequireComponent(typeof(SpriteRenderer))]
+[RequireComponent(typeof(Collider2D))]
 public class ItemPickup : MonoBehaviour
 {
     [Header("SFX")]
@@ -40,20 +41,19 @@ public class ItemPickup : MonoBehaviour
 
     public ItemType type;
 
-    private bool isBeingDestroyed = false;
-    private float spawnTime;
+    bool isBeingDestroyed;
+    float spawnTime;
+    Collider2D _col;
 
-    private void Awake()
+    void Awake()
     {
         spawnTime = Time.time;
+        _col = GetComponent<Collider2D>();
     }
 
-    private bool IsSpawnImmune()
-    {
-        return Time.time - spawnTime < spawnImmunitySeconds;
-    }
+    bool IsSpawnImmune() => Time.time - spawnTime < spawnImmunitySeconds;
 
-    private bool IsLouieEgg(ItemType t)
+    bool IsLouieEgg(ItemType t)
     {
         return t == ItemType.BlueLouieEgg
             || t == ItemType.BlackLouieEgg
@@ -64,18 +64,18 @@ public class ItemPickup : MonoBehaviour
             || t == ItemType.RedLouieEgg;
     }
 
-    private bool PlayerAlreadyMounted(GameObject player)
+    bool PlayerAlreadyMounted(GameObject player)
     {
         if (player.TryGetComponent<MovementController>(out var movement) && movement.IsMountedOnLouie)
             return true;
 
-        if (player.TryGetComponent<PlayerLouieCompanion>(out var louieCompanion))
+        if (player.TryGetComponent<PlayerLouieCompanion>(out var louieCompanion) && louieCompanion != null)
             return louieCompanion.GetMountedLouieType() != MountedLouieType.None;
 
         return false;
     }
 
-    private AbilitySystem GetOrCreateAbilitySystem(GameObject player)
+    AbilitySystem GetOrCreateAbilitySystem(GameObject player)
     {
         if (!player.TryGetComponent<AbilitySystem>(out var abilitySystem))
             abilitySystem = player.AddComponent<AbilitySystem>();
@@ -84,7 +84,7 @@ public class ItemPickup : MonoBehaviour
         return abilitySystem;
     }
 
-    private Sprite GetEggIdleSpriteFallback()
+    Sprite GetEggIdleSpriteFallback()
     {
         if (idleRenderer != null && idleRenderer.idleSprite != null)
             return idleRenderer.idleSprite;
@@ -93,7 +93,7 @@ public class ItemPickup : MonoBehaviour
         return sr != null ? sr.sprite : null;
     }
 
-    private LouieEggQueue GetOrCreateEggQueue(GameObject player)
+    LouieEggQueue GetOrCreateEggQueue(GameObject player)
     {
         if (!player.TryGetComponent<LouieEggQueue>(out var q) || q == null)
             q = player.AddComponent<LouieEggQueue>();
@@ -102,7 +102,7 @@ public class ItemPickup : MonoBehaviour
         return q;
     }
 
-    private void PlayCollectSfxOnPlayer(GameObject player)
+    void PlayCollectSfxOnPlayer(GameObject player)
     {
         if (collectSfx == null)
             return;
@@ -112,7 +112,7 @@ public class ItemPickup : MonoBehaviour
             audio.PlayOneShot(collectSfx, Mathf.Clamp01(collectVolume));
     }
 
-    private bool TrySetMountSfxForImmediateMount(GameObject player)
+    bool TrySetMountSfxForImmediateMount(GameObject player)
     {
         if (collectSfx == null)
             return false;
@@ -124,7 +124,7 @@ public class ItemPickup : MonoBehaviour
         return true;
     }
 
-    private void OnItemPickup(GameObject player)
+    void OnItemPickup(GameObject player)
     {
         bool isEgg = IsLouieEgg(type);
 
@@ -171,62 +171,44 @@ public class ItemPickup : MonoBehaviour
                 }
 
             case ItemType.BombKick:
-                {
-                    var abilitySystem = GetOrCreateAbilitySystem(player);
-                    abilitySystem.Enable(BombKickAbility.AbilityId);
-                    break;
-                }
+                GetOrCreateAbilitySystem(player).Enable(BombKickAbility.AbilityId);
+                break;
 
             case ItemType.BombPunch:
-                {
-                    var abilitySystem = GetOrCreateAbilitySystem(player);
-                    abilitySystem.Enable(BombPunchAbility.AbilityId);
-                    break;
-                }
+                GetOrCreateAbilitySystem(player).Enable(BombPunchAbility.AbilityId);
+                break;
 
             case ItemType.PierceBomb:
                 {
-                    var abilitySystem = GetOrCreateAbilitySystem(player);
-                    abilitySystem.Enable(PierceBombAbility.AbilityId);
-                    abilitySystem.Disable(ControlBombAbility.AbilityId);
+                    var ab = GetOrCreateAbilitySystem(player);
+                    ab.Enable(PierceBombAbility.AbilityId);
+                    ab.Disable(ControlBombAbility.AbilityId);
                     break;
                 }
 
             case ItemType.ControlBomb:
                 {
-                    var abilitySystem = GetOrCreateAbilitySystem(player);
-                    abilitySystem.Enable(ControlBombAbility.AbilityId);
-                    abilitySystem.Disable(PierceBombAbility.AbilityId);
+                    var ab = GetOrCreateAbilitySystem(player);
+                    ab.Enable(ControlBombAbility.AbilityId);
+                    ab.Disable(PierceBombAbility.AbilityId);
                     break;
                 }
 
             case ItemType.FullFire:
-                {
-                    var abilitySystem = GetOrCreateAbilitySystem(player);
-                    abilitySystem.Enable(FullFireAbility.AbilityId);
-                    break;
-                }
+                GetOrCreateAbilitySystem(player).Enable(FullFireAbility.AbilityId);
+                break;
 
             case ItemType.BombPass:
-                {
-                    var abilitySystem = GetOrCreateAbilitySystem(player);
-                    abilitySystem.Enable(BombPassAbility.AbilityId);
-                    break;
-                }
+                GetOrCreateAbilitySystem(player).Enable(BombPassAbility.AbilityId);
+                break;
 
             case ItemType.DestructiblePass:
-                {
-                    var abilitySystem = GetOrCreateAbilitySystem(player);
-                    abilitySystem.Enable(DestructiblePassAbility.AbilityId);
-                    break;
-                }
+                GetOrCreateAbilitySystem(player).Enable(DestructiblePassAbility.AbilityId);
+                break;
 
             case ItemType.InvincibleSuit:
-                {
-                    var abilitySystem = GetOrCreateAbilitySystem(player);
-                    abilitySystem.Enable(InvincibleSuitAbility.AbilityId);
-                    break;
-                }
+                GetOrCreateAbilitySystem(player).Enable(InvincibleSuitAbility.AbilityId);
+                break;
 
             case ItemType.Heart:
                 if (player.TryGetComponent<CharacterHealth>(out var health))
@@ -272,10 +254,16 @@ public class ItemPickup : MonoBehaviour
         Destroy(gameObject);
     }
 
-    private void OnTriggerEnter2D(Collider2D other)
+    void OnTriggerEnter2D(Collider2D other)
     {
+        if (other == null)
+            return;
+
         if (other.CompareTag("Player"))
         {
+            if (other.TryGetComponent<MovementController>(out var mv) && mv != null && _col != null)
+                mv.SnapToColliderCenter(_col, roundToGrid: false);
+
             OnItemPickup(other.gameObject);
             return;
         }

@@ -1400,6 +1400,21 @@ public sealed class LouieEggQueue : MonoBehaviour
                 return false;
         }
 
+        if (consumerPlayer.TryGetComponent<MovementController>(out var consumerMv) && consumerMv != null)
+        {
+            var eggRoot = _eggs[idx].rootTr;
+            if (eggRoot != null)
+            {
+                if (!eggRoot.TryGetComponent<Collider2D>(out var eggCol))
+                    eggCol = eggRoot.GetComponentInChildren<Collider2D>(true);
+
+                if (eggCol != null)
+                    consumerMv.SnapToColliderCenter(eggCol, roundToGrid: false);
+                else
+                    consumerMv.SnapToWorldPoint((Vector2)eggRoot.position, roundToGrid: false);
+            }
+        }
+
         RemoveEggAndDestroyVisual(idx);
 
         PostQueueChanged(animateShift: true);

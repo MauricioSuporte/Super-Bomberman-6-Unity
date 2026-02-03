@@ -1319,4 +1319,34 @@ public class MovementController : MonoBehaviour, IKillable
 
         return false;
     }
+
+    public void SnapToWorldPoint(Vector2 worldPos, bool roundToGrid = false)
+    {
+        if (roundToGrid && tileSize > 0.0001f)
+        {
+            worldPos = new Vector2(
+                Mathf.Round(worldPos.x / tileSize) * tileSize,
+                Mathf.Round(worldPos.y / tileSize) * tileSize
+            );
+        }
+
+        if (Rigidbody != null)
+        {
+            Rigidbody.linearVelocity = Vector2.zero;
+            Rigidbody.position = worldPos;
+        }
+        else
+        {
+            transform.position = worldPos;
+        }
+    }
+
+    public void SnapToColliderCenter(Collider2D col, bool roundToGrid = false)
+    {
+        if (col == null)
+            return;
+
+        Vector2 center = col.bounds.center;
+        SnapToWorldPoint(center, roundToGrid);
+    }
 }
