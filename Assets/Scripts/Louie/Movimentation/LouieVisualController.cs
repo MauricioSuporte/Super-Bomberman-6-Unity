@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-public class LouieRidingVisual : MonoBehaviour
+public class LouieVisualController : MonoBehaviour
 {
     [Header("Owner")]
     public MovementController owner;

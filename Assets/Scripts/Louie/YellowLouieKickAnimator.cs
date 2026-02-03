@@ -11,7 +11,7 @@ public class YellowLouieKickAnimator : MonoBehaviour, IYellowLouieDestructibleKi
     public AnimatedSpriteRenderer kickRight;
 
     AnimatedSpriteRenderer activeKick;
-    LouieRidingVisual riderVisual;
+    LouieVisualController riderVisual;
 
     readonly List<AnimatedSpriteRenderer> cachedAnimators = new();
     readonly List<bool> cachedAnimatorEnabled = new();
@@ -26,11 +26,11 @@ public class YellowLouieKickAnimator : MonoBehaviour, IYellowLouieDestructibleKi
 
     void Awake()
     {
-        riderVisual = GetComponent<LouieRidingVisual>();
+        riderVisual = GetComponent<LouieVisualController>();
         if (riderVisual == null)
-            riderVisual = GetComponentInParent<LouieRidingVisual>();
+            riderVisual = GetComponentInParent<LouieVisualController>();
         if (riderVisual == null)
-            riderVisual = GetComponentInChildren<LouieRidingVisual>(true);
+            riderVisual = GetComponentInChildren<LouieVisualController>(true);
     }
 
     void OnDisable() => Stop();

@@ -1081,15 +1081,15 @@ public class PlayerLouieCompanion : MonoBehaviour
 
     #region Visual Binding (LouieRidingVisual)
 
-    static LouieRidingVisual GetLouieRidingVisual(GameObject louie)
+    static LouieVisualController GetLouieRidingVisual(GameObject louie)
     {
         if (louie == null)
             return null;
 
-        if (louie.TryGetComponent<LouieRidingVisual>(out var visual) && visual != null)
+        if (louie.TryGetComponent<LouieVisualController>(out var visual) && visual != null)
             return visual;
 
-        return louie.GetComponentInChildren<LouieRidingVisual>(true);
+        return louie.GetComponentInChildren<LouieVisualController>(true);
     }
 
     void DisableLouieRidingVisualForWorld(GameObject louie)
@@ -1125,7 +1125,7 @@ public class PlayerLouieCompanion : MonoBehaviour
         if (!louie.TryGetComponent<MovementController>(out var mc) || mc == null)
             return;
 
-        var riderVisual = louie.GetComponentInChildren<LouieRidingVisual>(true);
+        var riderVisual = louie.GetComponentInChildren<LouieVisualController>(true);
         if (riderVisual != null)
             Destroy(riderVisual);
 
@@ -1290,7 +1290,7 @@ public class PlayerLouieCompanion : MonoBehaviour
         static bool IsUnderRidingVisual(AnimatedSpriteRenderer a)
         {
             if (a == null) return false;
-            return a.GetComponentInParent<LouieRidingVisual>(true) != null;
+            return a.GetComponentInParent<LouieVisualController>(true) != null;
         }
 
         static void SetSpriteRenderersEnabled(Component root, bool enabled)

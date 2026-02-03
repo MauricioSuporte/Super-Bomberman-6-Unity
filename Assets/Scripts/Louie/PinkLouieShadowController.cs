@@ -55,13 +55,13 @@ public class PinkLouieShadowController : MonoBehaviour
 
         if (followTarget == null)
         {
-            var louieVisual = GetComponentInParent<LouieRidingVisual>();
+            var louieVisual = GetComponentInParent<LouieVisualController>();
             followTarget = louieVisual != null ? louieVisual.transform : transform.parent;
         }
 
         if (cachedOwner == null)
         {
-            var louieVisual = GetComponentInParent<LouieRidingVisual>();
+            var louieVisual = GetComponentInParent<LouieVisualController>();
             if (louieVisual != null && louieVisual.owner != null)
                 cachedOwner = louieVisual.owner;
             else
@@ -73,7 +73,7 @@ public class PinkLouieShadowController : MonoBehaviour
     {
         if (cachedOwner == null)
         {
-            var louieVisual = GetComponentInParent<LouieRidingVisual>();
+            var louieVisual = GetComponentInParent<LouieVisualController>();
             cachedOwner = (louieVisual != null && louieVisual.owner != null)
                 ? louieVisual.owner
                 : GetComponentInParent<MovementController>();

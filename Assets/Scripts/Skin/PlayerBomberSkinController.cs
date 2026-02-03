@@ -71,7 +71,7 @@ public class PlayerBomberSkinController : MonoBehaviour
 
     bool IsInsideMountedLouie(Component c)
     {
-        return c != null && c.GetComponentInParent<LouieRidingVisual>(true) != null;
+        return c != null && c.GetComponentInParent<LouieVisualController>(true) != null;
     }
 
     void EnsureCache(BomberSkin skin)

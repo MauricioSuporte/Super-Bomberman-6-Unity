@@ -12,7 +12,7 @@ public class PurpleLouieBombLineAnimator : MonoBehaviour, IPurpleLouieBombLineEx
     public AnimatedSpriteRenderer magicRight;
 
     AnimatedSpriteRenderer activeMagic;
-    LouieRidingVisual riderVisual;
+    LouieVisualController riderVisual;
 
     readonly List<AnimatedSpriteRenderer> cachedAnimators = new();
     readonly List<bool> cachedAnimatorEnabled = new();
@@ -27,11 +27,11 @@ public class PurpleLouieBombLineAnimator : MonoBehaviour, IPurpleLouieBombLineEx
 
     void Awake()
     {
-        riderVisual = GetComponent<LouieRidingVisual>();
+        riderVisual = GetComponent<LouieVisualController>();
         if (riderVisual == null)
-            riderVisual = GetComponentInParent<LouieRidingVisual>();
+            riderVisual = GetComponentInParent<LouieVisualController>();
         if (riderVisual == null)
-            riderVisual = GetComponentInChildren<LouieRidingVisual>(true);
+            riderVisual = GetComponentInChildren<LouieVisualController>(true);
     }
 
     void OnDisable() => ForceStop();

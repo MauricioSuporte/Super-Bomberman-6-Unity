@@ -184,7 +184,7 @@ public class StageIntroTransition : MonoBehaviour
         if (m.TryGetComponent<PlayerLouieCompanion>(out var comp) && comp != null)
             comp.SetMountedLouieVisible(visible);
 
-        var rider = m.GetComponentInChildren<LouieRidingVisual>(true);
+        var rider = m.GetComponentInChildren<LouieVisualController>(true);
         if (rider != null)
             rider.gameObject.SetActive(visible);
     }
@@ -305,7 +305,7 @@ public class StageIntroTransition : MonoBehaviour
                 if (q != null)
                     q.ForceVisible(false);
 
-                var rider = m.GetComponentInChildren<LouieRidingVisual>(true);
+                var rider = m.GetComponentInChildren<LouieVisualController>(true);
                 if (rider != null)
                     rider.gameObject.SetActive(false);
 
@@ -431,7 +431,7 @@ public class StageIntroTransition : MonoBehaviour
                 if (m.TryGetComponent<PlayerLouieCompanion>(out var comp) && comp != null)
                     comp.SetMountedLouieVisible(false);
 
-                var rider = m.GetComponentInChildren<LouieRidingVisual>(true);
+                var rider = m.GetComponentInChildren<LouieVisualController>(true);
                 if (rider != null)
                     rider.gameObject.SetActive(false);
 
