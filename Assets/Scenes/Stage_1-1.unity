@@ -5547,11 +5547,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 'NORMAL GAME
-
-    EXIT
-
-'
+  m_text: 
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 0cd596907be67a34f9e1cd590b869e4e, type: 2}
   m_sharedMaterial: {fileID: 4596487593959663645, guid: 0cd596907be67a34f9e1cd590b869e4e, type: 2}

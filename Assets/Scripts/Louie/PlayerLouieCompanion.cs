@@ -1131,4 +1131,46 @@ public class PlayerLouieCompanion : MonoBehaviour
 
         Destroy(louie);
     }
+
+    public bool TryDetachMountedLouieToWorldStationary(out GameObject detachedLouie)
+    {
+        detachedLouie = null;
+
+        if (currentLouie == null || movement == null)
+            return false;
+
+        var louie = currentLouie;
+        currentLouie = null;
+
+        louie.transform.GetPositionAndRotation(out var worldPos, out var worldRot);
+
+        ClearDashInvulnerabilityNow();
+        ResetMountedStateAndAbilities();
+
+        louie.transform.SetParent(null, true);
+        louie.transform.SetPositionAndRotation(worldPos, worldRot);
+
+        if (louie.TryGetComponent<LouieRidingVisual>(out var rv))
+            Destroy(rv);
+        else
+        {
+            var childRv = louie.GetComponentInChildren<LouieRidingVisual>(true);
+            if (childRv != null) Destroy(childRv);
+        }
+
+        if (louie.TryGetComponent<LouieMovementController>(out var lm))
+            lm.enabled = false;
+
+        if (louie.TryGetComponent<Rigidbody2D>(out var rb))
+            rb.simulated = false;
+
+        if (louie.TryGetComponent<Collider2D>(out var col))
+            col.enabled = false;
+
+        if (louie.TryGetComponent<BombController>(out var bc))
+            bc.enabled = false;
+
+        detachedLouie = louie;
+        return true;
+    }
 }

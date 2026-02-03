@@ -1671,6 +1671,7 @@ GameObject:
   - component: {fileID: 2475403701411458639}
   - component: {fileID: 4227801384958850435}
   - component: {fileID: 8631268761558722197}
+  - component: {fileID: 429751358522082578}
   m_Layer: 3
   m_Name: Player
   m_TagString: Player
@@ -2099,6 +2100,8 @@ MonoBehaviour:
   minTargetSeparation: 0.06
   worldRootName: EggQueueWorldRoot
   eggGameObjectLayer: 3
+  eggSortingLayerName: Default
+  eggBaseSortingOrder: 2
   maxEggsInQueue: 2
   joinSeconds: 0.5
   joinExtraDelayPerEgg: 0.05
@@ -2115,6 +2118,14 @@ MonoBehaviour:
   idleShiftDirectionalDeadZoneMul: 6
   preferRigidbodyVelocityForIdle: 1
   ownerVelocityEpsilon: 0.0001
+  blueLouieMountSfxName: MountBlueLouie
+  blackLouieMountSfxName: MountBlackLouie
+  purpleLouieMountSfxName: MountPurpleLouie
+  greenLouieMountSfxName: MountGreenLouie
+  yellowLouieMountSfxName: MountYellowLouie
+  pinkLouieMountSfxName: MountPinkLouie
+  redLouieMountSfxName: MountRedLouie
+  defaultMountVolume: 1
 --- !u!114 &8631268761558722197
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2132,6 +2143,20 @@ MonoBehaviour:
   ridingLeft: {fileID: 1732504714837229594}
   ridingRight: {fileID: 1114266120169183442}
   ridingSeconds: 1
+--- !u!114 &429751358522082578
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4947014498081102474}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 68b020415a2b4524a9b95a6531190b6d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerLouieManualDismount
+  dismountAction: 9
+  freezeEggQueueOnDismount: 1
 --- !u!1 &5548736737291621340
 GameObject:
   m_ObjectHideFlags: 0
