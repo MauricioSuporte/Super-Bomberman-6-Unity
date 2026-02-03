@@ -66,7 +66,7 @@ public class LouieRidingVisual : MonoBehaviour
         var start = louieDown != null ? louieDown : (louieUp != null ? louieUp : (louieLeft != null ? louieLeft : louieRight));
         if (start != null)
         {
-            SetExclusive(start);
+            HardExclusive(start);
             ApplyDirection(Vector2.down, true);
         }
     }

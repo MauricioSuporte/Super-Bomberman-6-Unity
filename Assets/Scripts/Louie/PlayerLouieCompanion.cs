@@ -1153,14 +1153,7 @@ public class PlayerLouieCompanion : MonoBehaviour
         louie.transform.SetParent(null, true);
         louie.transform.SetPositionAndRotation(worldPos, worldRot);
 
-        // Remove visual de riding (como você já faz)
-        if (louie.TryGetComponent<LouieRidingVisual>(out var rv))
-            Destroy(rv);
-        else
-        {
-            var childRv = louie.GetComponentInChildren<LouieRidingVisual>(true);
-            if (childRv != null) Destroy(childRv);
-        }
+        DisableLouieRidingVisualForWorld(louie);
 
         // ✅ NOVO: força o Louie destacado a ficar em IDLE na direção atual do player
         ForceDetachedLouieIdleFacing(louie, movement.FacingDirection);
@@ -1230,7 +1223,6 @@ public class PlayerLouieCompanion : MonoBehaviour
             return;
 
         mountedType = type;
-
         currentLouie = louieWorldInstance;
 
         var pickup = currentLouie.GetComponent<LouieWorldPickup>();
@@ -1239,6 +1231,9 @@ public class PlayerLouieCompanion : MonoBehaviour
         currentLouie.transform.SetParent(transform, true);
         currentLouie.transform.SetLocalPositionAndRotation(localOffset, Quaternion.identity);
         currentLouie.transform.localScale = Vector3.one;
+
+        RestoreLouieVisualAfterWorldDetach(currentLouie);
+        EnableAndBindLouieRidingVisual(currentLouie);
 
         mountedLouieHealth = currentLouie.GetComponentInChildren<CharacterHealth>(true);
         mountedLouieHp = 1;
@@ -1397,5 +1392,58 @@ public class PlayerLouieCompanion : MonoBehaviour
         ApplyFlipIfNeeded(chosen, facing, forceFlipX);
 
         chosen.RefreshFrame();
+    }
+
+    static void RestoreLouieVisualAfterWorldDetach(GameObject louie)
+    {
+        if (louie == null)
+            return;
+
+        var anims = louie.GetComponentsInChildren<AnimatedSpriteRenderer>(true);
+        if (anims == null || anims.Length == 0)
+            return;
+
+        for (int i = 0; i < anims.Length; i++)
+        {
+            var a = anims[i];
+            if (a == null) continue;
+
+            if (!a.gameObject.activeSelf)
+                a.gameObject.SetActive(true);
+
+            a.SetFrozen(false);
+            a.ClearRuntimeBaseOffset();
+            a.ClearRuntimeBaseLocalX();
+        }
+    }
+
+    void DisableLouieRidingVisualForWorld(GameObject louie)
+    {
+        if (louie == null) return;
+
+        if (louie.TryGetComponent<LouieRidingVisual>(out var rv) && rv != null)
+        {
+            rv.enabled = false;
+            return;
+        }
+
+        var childRv = louie.GetComponentInChildren<LouieRidingVisual>(true);
+        if (childRv != null)
+            childRv.enabled = false;
+    }
+
+    void EnableAndBindLouieRidingVisual(GameObject louie)
+    {
+        if (louie == null || movement == null) return;
+
+        if (!louie.TryGetComponent(out LouieRidingVisual visual) || visual == null)
+            visual = louie.GetComponentInChildren<LouieRidingVisual>(true);
+
+        if (visual == null)
+            return; // se isso acontecer, é porque o prefab realmente não tem LouieRidingVisual
+
+        visual.localOffset = localOffset;
+        visual.Bind(movement);
+        visual.enabled = true;
     }
 }

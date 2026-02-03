@@ -71,8 +71,7 @@ public sealed class PlayerLouieManualDismount : MonoBehaviour
 
         if (detachedLouie != null)
         {
-            var pickup = detachedLouie.GetComponent<LouieWorldPickup>();
-            if (pickup == null)
+            if (!detachedLouie.TryGetComponent<LouieWorldPickup>(out var pickup))
                 pickup = detachedLouie.AddComponent<LouieWorldPickup>();
 
             pickup.Init(detachedType);
