@@ -1,77 +1,78 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 public sealed class LouieEggQueue : MonoBehaviour
 {
     [Header("History (Time Based)")]
-    [SerializeField, Range(10, 500)] private int maxHistory = 160;
-    [SerializeField, Range(0.005f, 0.5f)] private float historyPointSpacingWorld = 0.06f;
-    [SerializeField, Range(0.00001f, 0.05f)] private float jitterIgnoreDelta = 0.0005f;
+    [SerializeField, Range(10, 500)] int maxHistory = 160;
+    [SerializeField, Range(0.005f, 0.5f)] float historyPointSpacingWorld = 0.06f;
+    [SerializeField, Range(0.00001f, 0.05f)] float jitterIgnoreDelta = 0.0005f;
 
     [Header("Egg Spacing (World Units)")]
-    [SerializeField, Range(0.05f, 5f)] private float eggSpacingWorld = 1f;
+    [SerializeField, Range(0.05f, 5f)] float eggSpacingWorld = 1f;
 
     [Header("Follow (WORLD)")]
-    [SerializeField] private Vector2 worldOffset = new(0f, -0.15f);
+    [SerializeField] Vector2 worldOffset = new(0f, -0.15f);
 
     [Header("Follow - Anti Collapse")]
-    [SerializeField, Range(0.0001f, 0.5f)] private float minTargetSeparation = 0.06f;
+    [SerializeField, Range(0.0001f, 0.5f)] float minTargetSeparation = 0.06f;
 
     [Header("World Root")]
-    [SerializeField] private string worldRootName = "EggQueueWorldRoot";
+    [SerializeField] string worldRootName = "EggQueueWorldRoot";
 
     [Header("Layer")]
-    [SerializeField] private int eggGameObjectLayer = 3;
+    [SerializeField] int eggGameObjectLayer = 3;
 
     [Header("Sorting (SpriteRenderer)")]
-    [SerializeField] private string eggSortingLayerName = "Default";
-    [SerializeField] private int eggBaseSortingOrder = 2;
+    [SerializeField] string eggSortingLayerName = "Default";
+    [SerializeField] int eggBaseSortingOrder = 2;
 
     [Header("Queue")]
-    [SerializeField, Range(0, 10)] private int maxEggsInQueue = 5;
+    [SerializeField, Range(0, 10)] int maxEggsInQueue = 5;
     public int MaxEggs => Mathf.Max(0, maxEggsInQueue);
     public bool IsFull => MaxEggs > 0 && _eggs.Count >= MaxEggs;
     public int Count => _eggs.Count;
 
     [Header("Queue - Join/Shift Animation")]
-    [SerializeField, Range(0.01f, 1f)] private float joinSeconds = 0.5f;
-    [SerializeField, Range(0f, 0.5f)] private float joinExtraDelayPerEgg = 0.05f;
-    [SerializeField, Range(0.01f, 1f)] private float shiftSeconds = 0.35f;
+    [SerializeField, Range(0.01f, 1f)] float joinSeconds = 0.5f;
+    [SerializeField, Range(0f, 0.5f)] float joinExtraDelayPerEgg = 0.05f;
+    [SerializeField, Range(0.01f, 1f)] float shiftSeconds = 0.35f;
 
     [Header("Egg Visual (Prefab)")]
-    [SerializeField] private GameObject eggFollowerPrefab;
+    [SerializeField] GameObject eggFollowerPrefab;
 
     [Header("Idle - Dequeue Style Follow")]
-    [SerializeField] private bool idleDequeueStyle = true;
-    [SerializeField] private bool idleDequeueSnap = false;
+    [SerializeField] bool idleDequeueStyle = true;
+    [SerializeField] bool idleDequeueSnap = false;
 
     [Header("Idle - Enter Delay")]
-    [SerializeField, Range(0f, 0.5f)] private float idleEnterSeconds = 0.18f;
+    [SerializeField, Range(0f, 0.5f)] float idleEnterSeconds = 0.18f;
 
-    [SerializeField, Range(0f, 0.25f)] private float movingHoldSeconds = 0.06f;
-    [SerializeField, Range(0, 30)] private int idleGraceFrames = 3;
-    [SerializeField, Range(0, 30)] private int idleExitGraceFrames = 2;
+    [SerializeField, Range(0f, 0.25f)] float movingHoldSeconds = 0.06f;
+    [SerializeField, Range(0, 30)] int idleGraceFrames = 3;
+    [SerializeField, Range(0, 30)] int idleExitGraceFrames = 2;
 
     [Header("Idle - Collapse To Player")]
-    [SerializeField, Range(0f, 2f)] private float idleCollapseSeconds = 0.35f;
-    [SerializeField, Range(0.5f, 1f)] private float idleDisableAntiCollapseAt = 0.95f;
+    [SerializeField, Range(0f, 2f)] float idleCollapseSeconds = 0.35f;
+    [SerializeField, Range(0.5f, 1f)] float idleDisableAntiCollapseAt = 0.95f;
 
     [Header("Idle - Direction Stabilization")]
-    [SerializeField, Range(1f, 20f)] private float idleShiftDirectionalDeadZoneMul = 6f;
+    [SerializeField, Range(1f, 20f)] float idleShiftDirectionalDeadZoneMul = 6f;
 
     [Header("Owner Move Detection")]
-    [SerializeField] private bool preferRigidbodyVelocityForIdle = true;
-    [SerializeField, Range(0.000001f, 0.01f)] private float ownerVelocityEpsilon = 0.0001f;
+    [SerializeField] bool preferRigidbodyVelocityForIdle = true;
+    [SerializeField, Range(0.000001f, 0.01f)] float ownerVelocityEpsilon = 0.0001f;
 
     [Header("Mount SFX (Resources/Sounds)")]
-    [SerializeField] private string blueLouieMountSfxName = "MountBlueLouie";
-    [SerializeField] private string blackLouieMountSfxName = "MountBlackLouie";
-    [SerializeField] private string purpleLouieMountSfxName = "MountPurpleLouie";
-    [SerializeField] private string greenLouieMountSfxName = "MountGreenLouie";
-    [SerializeField] private string yellowLouieMountSfxName = "MountYellowLouie";
-    [SerializeField] private string pinkLouieMountSfxName = "MountPinkLouie";
-    [SerializeField] private string redLouieMountSfxName = "MountRedLouie";
-    [SerializeField, Range(0f, 1f)] private float defaultMountVolume = 1f;
+    [SerializeField] string blueLouieMountSfxName = "MountBlueLouie";
+    [SerializeField] string blackLouieMountSfxName = "MountBlackLouie";
+    [SerializeField] string purpleLouieMountSfxName = "MountPurpleLouie";
+    [SerializeField] string greenLouieMountSfxName = "MountGreenLouie";
+    [SerializeField] string yellowLouieMountSfxName = "MountYellowLouie";
+    [SerializeField] string pinkLouieMountSfxName = "MountPinkLouie";
+    [SerializeField] string redLouieMountSfxName = "MountRedLouie";
+    [SerializeField, Range(0f, 1f)] float defaultMountVolume = 1f;
 
     Transform _freezeAnchor;
 
@@ -84,6 +85,9 @@ public sealed class LouieEggQueue : MonoBehaviour
         public ItemPickup.ItemType type;
         public Transform rootTr;
         public EggFollowerDirectionalVisual directional;
+
+        public AudioClip mountSfx;
+        public float mountVolume;
 
         public bool isAnimating;
         public float animStartTime;
@@ -125,10 +129,125 @@ public sealed class LouieEggQueue : MonoBehaviour
     bool _forcedHidden;
 
     readonly Dictionary<ItemPickup.ItemType, AudioClip> _mountSfxCache = new();
-
     int _ownerPlayerId = -1;
 
-    void OnValidate()
+    #region Unity
+
+    void OnValidate() => ClampInspector();
+
+    void Awake() => InitializeRuntime();
+
+    void OnEnable() => InitializeRuntime();
+
+    void LateUpdate()
+    {
+        ApplyEggLayerNow();
+        ApplyEggSortingNow();
+
+        if (_hardFrozen)
+        {
+            ApplyHardFreezeFrame();
+            return;
+        }
+
+        EnsureBound();
+
+        if (_ownerTr == null && _ownerRb == null)
+            return;
+
+        Vector3 ownerPos = GetOwnerWorldPos();
+        ownerPos.z = 0f;
+
+        bool movedByPosThisFrame = false;
+        if (_hasLastOwnerPos)
+        {
+            float j = Mathf.Max(0f, jitterIgnoreDelta);
+            movedByPosThisFrame = (ownerPos - _lastOwnerPos).sqrMagnitude > (j * j);
+        }
+
+        bool isMoving = IsOwnerMoving(ownerPos, movedByPosThisFrame);
+
+        if (_wasMovingPrevFrame && !isMoving)
+            ResetHistoryToCurrentOwnerPos();
+
+        _wasMovingPrevFrame = isMoving;
+        _lastOwnerPos = ownerPos;
+        _hasLastOwnerPos = true;
+
+        if (!isMoving) { _idleFrames++; _movingFrames = 0; }
+        else { _movingFrames++; _idleFrames = 0; }
+
+        TrackOwnerPositionSpeedBased(isMoving);
+
+        float followSpeed = GetOwnerWorldSpeedPerSecond();
+        float maxStep = followSpeed * Time.deltaTime;
+
+        Vector3 behindDir = GetBehindDir();
+
+        bool eligibleIdleByTime = (Time.time - _lastMoveTime) >= Mathf.Max(0f, idleEnterSeconds);
+        bool wantIdleShift = idleDequeueStyle && _eggs.Count > 0 && !isMoving && eligibleIdleByTime;
+
+        bool prevUseIdleShift = _useIdleShiftState;
+        UpdateIdleShiftState(wantIdleShift);
+
+        bool useIdleShift = _useIdleShiftState;
+
+        if (!prevUseIdleShift && useIdleShift)
+            _idleShiftStartTime = Time.time;
+        else if (prevUseIdleShift && !useIdleShift)
+            _idleShiftStartTime = 0f;
+
+        float idleCollapseT = useIdleShift ? GetIdleCollapseT() : 0f;
+        bool allowOverlapOnPlayer = useIdleShift && idleCollapseT >= idleDisableAntiCollapseAt;
+
+        float minSep = Mathf.Max(0.0001f, minTargetSeparation);
+        float minSepSqr = minSep * minSep;
+
+        Vector3 prevTarget = Vector3.positiveInfinity;
+        bool hasPrevTarget = false;
+
+        for (int i = _eggs.Count - 1; i >= 0; i--)
+        {
+            var e = _eggs[i];
+            if (e.rootTr == null)
+                continue;
+
+            int ageRank = (_eggs.Count - i);
+            float backDist = eggSpacingWorld * ageRank;
+            float effectiveBackDist = useIdleShift ? Mathf.Lerp(backDist, 0f, idleCollapseT) : backDist;
+
+            Vector3 targetWorld = SampleBackDistance(effectiveBackDist) + (Vector3)worldOffset;
+            targetWorld.z = 0f;
+
+            if (!allowOverlapOnPlayer && hasPrevTarget)
+            {
+                if ((targetWorld - prevTarget).sqrMagnitude <= minSepSqr)
+                {
+                    targetWorld = prevTarget + behindDir * minSep;
+                    targetWorld.z = 0f;
+                }
+            }
+
+            Vector3 before = e.rootTr.position;
+            before.z = 0f;
+
+            Vector3 newWorld = ComputeNewWorldPosition(ref e, before, targetWorld, maxStep, useIdleShift);
+            e.rootTr.position = newWorld;
+
+            UpdateDirectional(ref e, before, newWorld, targetWorld, useIdleShift);
+
+            _eggs[i] = e;
+
+            prevTarget = targetWorld;
+            hasPrevTarget = true;
+        }
+    }
+
+    #endregion
+
+    #region Init / Binding
+
+    void ClampInspector()
     {
         maxHistory = Mathf.Clamp(maxHistory, 10, 500);
         maxEggsInQueue = Mathf.Clamp(maxEggsInQueue, 0, 10);
@@ -155,45 +274,27 @@ public sealed class LouieEggQueue : MonoBehaviour
         ownerVelocityEpsilon = Mathf.Clamp(ownerVelocityEpsilon, 0.000001f, 0.01f);
 
         defaultMountVolume = Mathf.Clamp01(defaultMountVolume);
+        eggGameObjectLayer = Mathf.Clamp(eggGameObjectLayer, 0, 31);
     }
 
-    void Awake()
+    void InitializeRuntime()
     {
-        BindOwnerAuto();
-        EnsureWorldRoot();
-        EnsureHistoryBuffer();
+        if (_hardFrozen)
+        {
+            EnsureWorldRoot();
+            EnsureHistoryBuffer();
+            ApplyEggLayerNow();
+            ApplyEggSortingNow();
+            ApplyForcedVisibility();
+            return;
+        }
+
+        EnsureBound();
         SeedHistoryNow();
         ResetRuntimeState();
         ApplyEggLayerNow();
         ApplyEggSortingNow();
-    }
-
-    void OnEnable()
-    {
-        BindOwnerAuto();
-        EnsureWorldRoot();
-        EnsureHistoryBuffer();
-        SeedHistoryNow();
-        ResetRuntimeState();
-        ApplyEggLayerNow();
-        ApplyEggSortingNow();
-    }
-
-    void ResetRuntimeState()
-    {
-        _historyTimeCarry = 0f;
-
-        _hasLastOwnerPos = false;
-        _hasLastRealOwnerPos = false;
-
-        _idleFrames = 0;
-        _movingFrames = 0;
-
-        _useIdleShiftState = false;
-        _idleShiftStartTime = 0f;
-
-        _lastMoveTime = Time.time;
-        _wasMovingPrevFrame = false;
+        ApplyForcedVisibility();
     }
 
     public void BindOwner(MovementController ownerMove)
@@ -205,7 +306,7 @@ public sealed class LouieEggQueue : MonoBehaviour
 
         _ownerMove = ownerMove;
         _ownerTr = ownerMove.transform;
-        _ownerRb = _ownerMove.Rigidbody != null ? _ownerMove.Rigidbody : ownerMove.GetComponent<Rigidbody2D>();
+        _ownerRb = (_ownerMove.Rigidbody != null) ? _ownerMove.Rigidbody : ownerMove.GetComponent<Rigidbody2D>();
 
         EnsureWorldRoot();
         EnsureHistoryBuffer();
@@ -216,9 +317,27 @@ public sealed class LouieEggQueue : MonoBehaviour
             ResetRuntimeState();
         }
 
+        CacheOwnerIdentity();
         ApplyEggLayerNow();
         ApplyEggSortingNow();
-        CacheOwnerIdentity();
+        ApplyForcedVisibility();
+    }
+
+    void EnsureBound()
+    {
+        if (_hardFrozen)
+            return;
+
+        if (_ownerTr != null || _ownerRb != null)
+        {
+            EnsureWorldRoot();
+            EnsureHistoryBuffer();
+            return;
+        }
+
+        BindOwnerAuto();
+        EnsureWorldRoot();
+        EnsureHistoryBuffer();
     }
 
     void BindOwnerAuto()
@@ -230,7 +349,7 @@ public sealed class LouieEggQueue : MonoBehaviour
         if (_ownerMove != null)
         {
             _ownerTr = _ownerMove.transform;
-            _ownerRb = _ownerMove.Rigidbody != null ? _ownerMove.Rigidbody : _ownerMove.GetComponent<Rigidbody2D>();
+            _ownerRb = (_ownerMove.Rigidbody != null) ? _ownerMove.Rigidbody : _ownerMove.GetComponent<Rigidbody2D>();
             CacheOwnerIdentity();
             return;
         }
@@ -251,8 +370,7 @@ public sealed class LouieEggQueue : MonoBehaviour
         if (_worldRoot.parent != null)
             _worldRoot.SetParent(null, true);
 
-        _worldRoot.position = Vector3.zero;
-        _worldRoot.rotation = Quaternion.identity;
+        _worldRoot.SetPositionAndRotation(Vector3.zero, Quaternion.identity);
         _worldRoot.localScale = Vector3.one;
     }
 
@@ -266,19 +384,35 @@ public sealed class LouieEggQueue : MonoBehaviour
             _historyHead = 0;
             _historyCount = 0;
             _historyTimeCarry = 0f;
-
             _hasLastRealOwnerPos = false;
         }
     }
 
+    void ResetRuntimeState()
+    {
+        _historyTimeCarry = 0f;
+
+        _hasLastOwnerPos = false;
+        _hasLastRealOwnerPos = false;
+
+        _idleFrames = 0;
+        _movingFrames = 0;
+
+        _useIdleShiftState = false;
+        _idleShiftStartTime = 0f;
+
+        _lastMoveTime = Time.time;
+        _wasMovingPrevFrame = false;
+    }
+
+    #endregion
+
+    #region Owner / History
+
     Vector3 GetOwnerWorldPos()
     {
-        if (_ownerTr != null)
-            return _ownerTr.position;
-
-        if (_ownerRb != null)
-            return _ownerRb.position;
-
+        if (_ownerTr != null) return _ownerTr.position;
+        if (_ownerRb != null) return _ownerRb.position;
         return transform.position;
     }
 
@@ -317,7 +451,7 @@ public sealed class LouieEggQueue : MonoBehaviour
         return movingNow;
     }
 
-    Vector3 GetFallbackBehindDir()
+    Vector3 GetBehindDir()
     {
         Vector3 dir = Vector3.down;
 
@@ -351,18 +485,13 @@ public sealed class LouieEggQueue : MonoBehaviour
         p.z = 0f;
 
         float spacing = Mathf.Max(0.0001f, historyPointSpacingWorld);
-        Vector3 behind = GetFallbackBehindDir();
+        Vector3 behind = GetBehindDir();
 
         for (int i = 0; i < maxHistory; i++)
-        {
-            Vector3 sample = p + behind * (spacing * i);
-            sample.z = 0f;
-            RecordHistory(sample);
-        }
+            RecordHistory(p + behind * (spacing * i));
 
         _lastRealOwnerPos = p;
         _hasLastRealOwnerPos = true;
-
         _lastMoveTime = Time.time;
     }
 
@@ -398,8 +527,7 @@ public sealed class LouieEggQueue : MonoBehaviour
         if (_historyCount <= 0)
             return GetOwnerWorldPos();
 
-        if (recentIndex < 0) recentIndex = 0;
-        if (recentIndex >= _historyCount) recentIndex = _historyCount - 1;
+        recentIndex = Mathf.Clamp(recentIndex, 0, _historyCount - 1);
 
         int idx = _historyHead - 1 - recentIndex;
         while (idx < 0) idx += _history.Length;
@@ -425,10 +553,7 @@ public sealed class LouieEggQueue : MonoBehaviour
             return;
         }
 
-        Vector3 fromReal = _lastRealOwnerPos;
-        Vector3 toReal = p;
-
-        Vector3 seg = toReal - fromReal;
+        Vector3 seg = p - _lastRealOwnerPos;
         seg.z = 0f;
 
         float segLen = seg.magnitude;
@@ -468,7 +593,6 @@ public sealed class LouieEggQueue : MonoBehaviour
             return head;
 
         float remaining = Mathf.Max(0f, backDistanceWorld);
-
         Vector3 prev = head;
 
         for (int k = 0; k < _historyCount; k++)
@@ -486,17 +610,38 @@ public sealed class LouieEggQueue : MonoBehaviour
             if (segLen >= remaining)
             {
                 float t = remaining / segLen;
-                Vector3 res = Vector3.Lerp(prev, pt, t);
-                res.z = 0f;
-                return res;
+                return Vector3.Lerp(prev, pt, t);
             }
 
             remaining -= segLen;
             prev = pt;
         }
 
-        prev.z = 0f;
         return prev;
+    }
+
+    #endregion
+
+    #region Idle Shift
+
+    void UpdateIdleShiftState(bool wantIdleShift)
+    {
+        if (!wantIdleShift)
+        {
+            _useIdleShiftState = false;
+            return;
+        }
+
+        if (!_useIdleShiftState)
+        {
+            if (_idleFrames >= Mathf.Max(0, idleGraceFrames))
+                _useIdleShiftState = true;
+
+            return;
+        }
+
+        if (_movingFrames > Mathf.Max(0, idleExitGraceFrames))
+            _useIdleShiftState = false;
     }
 
     float GetIdleCollapseT()
@@ -510,6 +655,55 @@ public sealed class LouieEggQueue : MonoBehaviour
 
         return Mathf.Clamp01((Time.time - _idleShiftStartTime) / secs);
     }
+
+    Vector3 ComputeNewWorldPosition(ref EggEntry e, Vector3 before, Vector3 targetWorld, float maxStep, bool useIdleShift)
+    {
+        if (e.isAnimating)
+        {
+            float elapsed = Time.time - e.animStartTime;
+            float u = e.animDuration <= 0.0001f ? 1f : Mathf.Clamp01(elapsed / e.animDuration);
+            float smoothU = u * u * (3f - 2f * u);
+
+            Vector3 from = e.animFromWorld; from.z = 0f;
+            Vector3 to = targetWorld; to.z = 0f;
+
+            Vector3 newWorld = Vector3.Lerp(from, to, smoothU);
+            newWorld.z = 0f;
+
+            if (u >= 1f)
+            {
+                e.isAnimating = false;
+                e.animDuration = 0f;
+            }
+
+            return newWorld;
+        }
+
+        if (useIdleShift && idleDequeueSnap)
+            return targetWorld;
+
+        return Vector3.MoveTowards(before, targetWorld, maxStep);
+    }
+
+    void UpdateDirectional(ref EggEntry e, Vector3 before, Vector3 newWorld, Vector3 targetWorld, bool useIdleShift)
+    {
+        if (e.directional == null)
+            return;
+
+        float dz = Mathf.Max(0.00000001f, e.directional.moveDeadZone);
+        float dzMul = useIdleShift ? idleShiftDirectionalDeadZoneMul : 1f;
+        float effectiveDzSqr = (dz * dzMul) * (dz * dzMul);
+
+        Vector3 dirSample = useIdleShift ? (targetWorld - before) : (newWorld - before);
+        dirSample.z = 0f;
+
+        bool wouldBeMoving = dirSample.sqrMagnitude > effectiveDzSqr;
+        e.directional.ApplyMoveDelta(wouldBeMoving ? dirSample : Vector3.zero);
+    }
+
+    #endregion
+
+    #region Freeze
 
     public void BeginHardFreeze()
     {
@@ -547,6 +741,7 @@ public sealed class LouieEggQueue : MonoBehaviour
 
         ApplyEggLayerNow();
         ApplyEggSortingNow();
+        ApplyForcedVisibility();
     }
 
     public void EndHardFreezeAndRebind(MovementController owner)
@@ -556,10 +751,8 @@ public sealed class LouieEggQueue : MonoBehaviour
         _hardFrozenEggWorld.Clear();
         _hardFrozenFacing.Clear();
 
-        if (owner != null)
-            BindOwner(owner);
-        else
-            BindOwnerAuto();
+        if (owner != null) BindOwner(owner);
+        else BindOwnerAuto();
 
         EnsureHistoryBuffer();
         SeedHistoryNow();
@@ -567,6 +760,7 @@ public sealed class LouieEggQueue : MonoBehaviour
 
         ApplyEggLayerNow();
         ApplyEggSortingNow();
+        ApplyForcedVisibility();
     }
 
     public void EndHardFreezeAndKeepWorld(Vector3 worldPos)
@@ -578,6 +772,7 @@ public sealed class LouieEggQueue : MonoBehaviour
 
         ApplyEggLayerNow();
         ApplyEggSortingNow();
+        ApplyForcedVisibility();
     }
 
     void ApplyHardFreezeFrame()
@@ -617,178 +812,9 @@ public sealed class LouieEggQueue : MonoBehaviour
         }
     }
 
-    void LateUpdate()
-    {
-        ApplyEggLayerNow();
-        ApplyEggSortingNow();
+    #endregion
 
-        if (_hardFrozen)
-        {
-            ApplyHardFreezeFrame();
-            return;
-        }
-
-        if (_ownerTr == null && _ownerRb == null)
-        {
-            BindOwnerAuto();
-            if (_ownerTr == null && _ownerRb == null)
-                return;
-        }
-
-        EnsureWorldRoot();
-        EnsureHistoryBuffer();
-
-        Vector3 ownerPos = GetOwnerWorldPos();
-        ownerPos.z = 0f;
-
-        bool movedByPosThisFrame = false;
-        if (_hasLastOwnerPos)
-        {
-            float j = jitterIgnoreDelta;
-            movedByPosThisFrame = (ownerPos - _lastOwnerPos).sqrMagnitude > (j * j);
-        }
-
-        bool isMoving = IsOwnerMoving(ownerPos, movedByPosThisFrame);
-
-        if (_wasMovingPrevFrame && !isMoving)
-            ResetHistoryToCurrentOwnerPos();
-
-        _wasMovingPrevFrame = isMoving;
-
-        _lastOwnerPos = ownerPos;
-        _hasLastOwnerPos = true;
-
-        if (!isMoving) { _idleFrames++; _movingFrames = 0; }
-        else { _movingFrames++; _idleFrames = 0; }
-
-        TrackOwnerPositionSpeedBased(isMoving);
-
-        float followSpeed = GetOwnerWorldSpeedPerSecond();
-        float maxStep = followSpeed * Time.deltaTime;
-
-        Vector3 behindDir = GetFallbackBehindDir();
-
-        bool eligibleIdleByTime = (Time.time - _lastMoveTime) >= Mathf.Max(0f, idleEnterSeconds);
-        bool wantIdleShift = idleDequeueStyle && _eggs.Count > 0 && !isMoving && eligibleIdleByTime;
-
-        bool prevUseIdleShift = _useIdleShiftState;
-
-        if (!wantIdleShift)
-        {
-            _useIdleShiftState = false;
-        }
-        else
-        {
-            if (!_useIdleShiftState)
-            {
-                if (_idleFrames >= Mathf.Max(0, idleGraceFrames))
-                    _useIdleShiftState = true;
-            }
-            else
-            {
-                if (_movingFrames > Mathf.Max(0, idleExitGraceFrames))
-                    _useIdleShiftState = false;
-            }
-        }
-
-        bool useIdleShift = _useIdleShiftState;
-
-        if (!prevUseIdleShift && useIdleShift)
-            _idleShiftStartTime = Time.time;
-
-        if (prevUseIdleShift && !useIdleShift)
-            _idleShiftStartTime = 0f;
-
-        float idleCollapseT = useIdleShift ? GetIdleCollapseT() : 0f;
-        bool allowOverlapOnPlayer = useIdleShift && idleCollapseT >= idleDisableAntiCollapseAt;
-
-        float minSep = Mathf.Max(0.0001f, minTargetSeparation);
-        float minSepSqr = minSep * minSep;
-
-        Vector3 prevTarget = Vector3.positiveInfinity;
-        bool hasPrevTarget = false;
-
-        for (int i = _eggs.Count - 1; i >= 0; i--)
-        {
-            var e = _eggs[i];
-
-            if (e.rootTr == null)
-                continue;
-
-            int ageRank = (_eggs.Count - i);
-            float backDist = eggSpacingWorld * ageRank;
-
-            float effectiveBackDist = useIdleShift ? Mathf.Lerp(backDist, 0f, idleCollapseT) : backDist;
-
-            Vector3 targetWorld = SampleBackDistance(effectiveBackDist);
-            targetWorld += (Vector3)worldOffset;
-            targetWorld.z = 0f;
-
-            if (!allowOverlapOnPlayer && hasPrevTarget)
-            {
-                if ((targetWorld - prevTarget).sqrMagnitude <= minSepSqr)
-                {
-                    targetWorld = prevTarget + behindDir * minSep;
-                    targetWorld.z = 0f;
-                }
-            }
-
-            Vector3 before = e.rootTr.position;
-            before.z = 0f;
-
-            Vector3 newWorld;
-
-            if (e.isAnimating)
-            {
-                float elapsed = Time.time - e.animStartTime;
-                float u = e.animDuration <= 0.0001f ? 1f : Mathf.Clamp01(elapsed / e.animDuration);
-                float smoothU = u * u * (3f - 2f * u);
-
-                Vector3 from = e.animFromWorld; from.z = 0f;
-                Vector3 to = targetWorld; to.z = 0f;
-
-                newWorld = Vector3.Lerp(from, to, smoothU);
-                newWorld.z = 0f;
-
-                if (u >= 1f)
-                {
-                    e.isAnimating = false;
-                    e.animDuration = 0f;
-                }
-            }
-            else
-            {
-                if (useIdleShift && idleDequeueSnap)
-                    newWorld = targetWorld;
-                else
-                    newWorld = Vector3.MoveTowards(before, targetWorld, maxStep);
-
-                newWorld.z = 0f;
-            }
-
-            e.rootTr.position = newWorld;
-
-            if (e.directional != null)
-            {
-                float dz = Mathf.Max(0.00000001f, e.directional.moveDeadZone);
-                float dzMul = useIdleShift ? idleShiftDirectionalDeadZoneMul : 1f;
-                float effectiveDz = dz * dzMul;
-                float effectiveDzSqr = effectiveDz * effectiveDz;
-
-                Vector3 dirSample = useIdleShift ? (targetWorld - before) : (newWorld - before);
-                dirSample.z = 0f;
-
-                bool wouldBeMoving = dirSample.sqrMagnitude > effectiveDzSqr;
-
-                e.directional.ApplyMoveDelta(wouldBeMoving ? dirSample : Vector3.zero);
-            }
-
-            _eggs[i] = e;
-
-            prevTarget = targetWorld;
-            hasPrevTarget = true;
-        }
-    }
+    #region Animations
 
     void StartAnimateToTargetNow(int eggIndex, float duration)
     {
@@ -813,7 +839,6 @@ public sealed class LouieEggQueue : MonoBehaviour
     void AnimateAllShift()
     {
         float dur = Mathf.Max(0.01f, shiftSeconds);
-
         for (int i = 0; i < _eggs.Count; i++)
             StartAnimateToTargetNow(i, dur);
     }
@@ -821,216 +846,8 @@ public sealed class LouieEggQueue : MonoBehaviour
     void AnimateShiftExceptNewest()
     {
         float dur = Mathf.Max(0.01f, shiftSeconds);
-
         for (int i = 1; i < _eggs.Count; i++)
             StartAnimateToTargetNow(i, dur);
-    }
-
-    AudioClip LoadMountSfx(ItemPickup.ItemType eggType)
-    {
-        if (_mountSfxCache.TryGetValue(eggType, out var cached) && cached != null)
-            return cached;
-
-        string name = eggType switch
-        {
-            ItemPickup.ItemType.BlueLouieEgg => blueLouieMountSfxName,
-            ItemPickup.ItemType.BlackLouieEgg => blackLouieMountSfxName,
-            ItemPickup.ItemType.PurpleLouieEgg => purpleLouieMountSfxName,
-            ItemPickup.ItemType.GreenLouieEgg => greenLouieMountSfxName,
-            ItemPickup.ItemType.YellowLouieEgg => yellowLouieMountSfxName,
-            ItemPickup.ItemType.PinkLouieEgg => pinkLouieMountSfxName,
-            ItemPickup.ItemType.RedLouieEgg => redLouieMountSfxName,
-            _ => null
-        };
-
-        if (string.IsNullOrWhiteSpace(name))
-        {
-            _mountSfxCache[eggType] = null;
-            return null;
-        }
-
-        var clip = Resources.Load<AudioClip>($"Sounds/{name}");
-        _mountSfxCache[eggType] = clip;
-        return clip;
-    }
-
-    public bool TryEnqueue(ItemPickup.ItemType type, Sprite idleSprite, AudioClip mountSfx, float mountVolume)
-    {
-        BindOwnerAuto();
-        EnsureWorldRoot();
-        EnsureHistoryBuffer();
-
-        if (MaxEggs > 0 && _eggs.Count >= MaxEggs)
-            return false;
-
-        _idleFrames = 0;
-        _movingFrames = 0;
-        _useIdleShiftState = false;
-        _idleShiftStartTime = 0f;
-
-        EnqueueInternal(type, idleSprite, animate: true);
-        ApplyEggLayerNow();
-        ApplyEggSortingNow();
-        return true;
-    }
-
-    public bool TryDequeue(out ItemPickup.ItemType type, out AudioClip mountSfx, out float mountVolume)
-    {
-        type = default;
-        mountSfx = null;
-        mountVolume = 0f;
-
-        if (_eggs.Count == 0)
-            return false;
-
-        int lastIndex = _eggs.Count - 1;
-        var oldestClosest = _eggs[lastIndex];
-        _eggs.RemoveAt(lastIndex);
-
-        if (oldestClosest.rootTr != null)
-            Destroy(oldestClosest.rootTr.gameObject);
-
-        type = oldestClosest.type;
-
-        mountSfx = LoadMountSfx(type);
-        mountVolume = Mathf.Clamp01(defaultMountVolume);
-
-        AnimateAllShift();
-        ApplyEggLayerNow();
-        ApplyEggSortingNow();
-        return true;
-    }
-
-    public void GetQueuedEggTypesOldestToNewest(List<ItemPickup.ItemType> buffer)
-    {
-        if (buffer == null)
-            return;
-
-        buffer.Clear();
-
-        if (_eggs.Count == 0)
-            return;
-
-        for (int i = _eggs.Count - 1; i >= 0; i--)
-            buffer.Add(_eggs[i].type);
-    }
-
-    public void RestoreQueuedEggTypesOldestToNewest(IReadOnlyList<ItemPickup.ItemType> types, Sprite idleSpriteFallback = null)
-    {
-        ClearAllEggs();
-
-        if (types == null || types.Count == 0)
-            return;
-
-        BindOwnerAuto();
-        EnsureWorldRoot();
-        EnsureHistoryBuffer();
-
-        ResetHistoryToCurrentOwnerPos();
-        ResetRuntimeState();
-
-        for (int i = 0; i < types.Count; i++)
-            EnqueueInternal(types[i], idleSpriteFallback, animate: false);
-
-        StopAllAnimationsNow();
-        SnapAllToOwnerNow();
-        ApplyEggLayerNow();
-        ApplyEggSortingNow();
-    }
-
-    void ClearAllEggs()
-    {
-        for (int i = 0; i < _eggs.Count; i++)
-        {
-            if (_eggs[i].rootTr != null)
-                Destroy(_eggs[i].rootTr.gameObject);
-        }
-
-        _eggs.Clear();
-    }
-
-    void EnqueueInternal(ItemPickup.ItemType type, Sprite idleSprite, bool animate)
-    {
-        BindOwnerAuto();
-        EnsureWorldRoot();
-        EnsureHistoryBuffer();
-
-        if (MaxEggs > 0 && _eggs.Count >= MaxEggs)
-            return;
-
-        _idleFrames = 0;
-        _movingFrames = 0;
-        _useIdleShiftState = false;
-        _idleShiftStartTime = 0f;
-
-        Vector3 spawnWorld = GetOwnerWorldPos();
-        spawnWorld.z = 0f;
-        spawnWorld += (Vector3)worldOffset;
-        spawnWorld.z = 0f;
-
-        Transform rootTr;
-        EggFollowerDirectionalVisual directional = null;
-
-        if (eggFollowerPrefab != null)
-        {
-            var rootGo = Instantiate(eggFollowerPrefab, spawnWorld, Quaternion.identity, _worldRoot);
-            rootGo.name = $"EggFollower_{type}";
-            rootTr = rootGo.transform;
-
-            if (!rootGo.TryGetComponent<EggQueueFollowerHitbox>(out var hitbox))
-                hitbox = rootGo.GetComponentInChildren<EggQueueFollowerHitbox>(true);
-
-            if (hitbox != null)
-                hitbox.Bind(this);
-
-            EnsureEggLayer(rootTr);
-
-            directional = rootGo.GetComponent<EggFollowerDirectionalVisual>();
-            if (directional == null)
-                directional = rootGo.GetComponentInChildren<EggFollowerDirectionalVisual>(true);
-
-            if (directional != null)
-                directional.ForceIdleFacing(Vector2.down);
-        }
-        else
-        {
-            var rootGo = new GameObject($"EggFollower_{type}");
-            rootTr = rootGo.transform;
-            rootTr.SetParent(_worldRoot, true);
-            rootTr.localScale = Vector3.one;
-            rootTr.position = spawnWorld;
-
-            EnsureEggLayer(rootTr);
-
-            var sr = rootGo.AddComponent<SpriteRenderer>();
-            sr.sprite = idleSprite;
-            sr.enabled = true;
-        }
-
-        float durJoin = animate
-            ? Mathf.Max(0.01f, joinSeconds) + Mathf.Max(0f, joinExtraDelayPerEgg) * _eggs.Count
-            : 0f;
-
-        var entry = new EggEntry
-        {
-            type = type,
-            rootTr = rootTr,
-            directional = directional,
-            isAnimating = animate,
-            animStartTime = Time.time,
-            animDuration = durJoin,
-            animFromWorld = spawnWorld
-        };
-
-        _eggs.Insert(0, entry);
-
-        if (animate)
-            AnimateShiftExceptNewest();
-        else
-            StopAllAnimationsNow();
-
-        ApplyEggLayerNow();
-        ApplyEggSortingNow();
     }
 
     void StopAllAnimationsNow()
@@ -1046,9 +863,7 @@ public sealed class LouieEggQueue : MonoBehaviour
 
     void SnapAllToOwnerNow()
     {
-        Vector3 p = GetOwnerWorldPos();
-        p.z = 0f;
-        p += (Vector3)worldOffset;
+        Vector3 p = GetOwnerWorldPos() + (Vector3)worldOffset;
         p.z = 0f;
 
         for (int i = 0; i < _eggs.Count; i++)
@@ -1065,6 +880,10 @@ public sealed class LouieEggQueue : MonoBehaviour
             _eggs[i] = e;
         }
     }
+
+    #endregion
+
+    #region Sorting / Layer / Visibility
 
     void EnsureEggLayer(Transform root)
     {
@@ -1106,11 +925,8 @@ public sealed class LouieEggQueue : MonoBehaviour
     void ApplyEggLayerNow()
     {
         for (int i = 0; i < _eggs.Count; i++)
-        {
-            var e = _eggs[i];
-            if (e.rootTr != null)
-                EnsureEggLayer(e.rootTr);
-        }
+            if (_eggs[i].rootTr != null)
+                EnsureEggLayer(_eggs[i].rootTr);
     }
 
     bool ShouldInvertSortingForUp()
@@ -1119,11 +935,8 @@ public sealed class LouieEggQueue : MonoBehaviour
             return false;
 
         for (int i = 0; i < _eggs.Count; i++)
-        {
-            var e = _eggs[i];
-            if (e.directional != null && e.directional.IsPlayingUpAnimation)
+            if (_eggs[i].directional != null && _eggs[i].directional.IsPlayingUpAnimation)
                 return true;
-        }
 
         return false;
     }
@@ -1131,7 +944,6 @@ public sealed class LouieEggQueue : MonoBehaviour
     void ApplyEggSortingNow()
     {
         int baseOrder = eggBaseSortingOrder;
-
         bool invertForUp = ShouldInvertSortingForUp();
 
         for (int i = 0; i < _eggs.Count; i++)
@@ -1140,14 +952,11 @@ public sealed class LouieEggQueue : MonoBehaviour
             if (e.rootTr == null)
                 continue;
 
-            int sortingOrder;
+            int order = (invertForUp && _eggs.Count == 2)
+                ? (i == 0 ? baseOrder + 1 : baseOrder)
+                : baseOrder + i;
 
-            if (invertForUp && _eggs.Count == 2)
-                sortingOrder = (i == 0) ? baseOrder + 1 : baseOrder;
-            else
-                sortingOrder = baseOrder + i;
-
-            EnsureEggSorting(e.rootTr, sortingOrder);
+            EnsureEggSorting(e.rootTr, order);
         }
     }
 
@@ -1155,6 +964,136 @@ public sealed class LouieEggQueue : MonoBehaviour
     {
         _forcedHidden = !visible;
         ApplyForcedVisibility();
+    }
+
+    void ApplyForcedVisibility()
+    {
+        bool active = !_forcedHidden;
+
+        for (int i = 0; i < _eggs.Count; i++)
+        {
+            var e = _eggs[i];
+            if (e.rootTr == null) continue;
+
+            if (e.rootTr.gameObject.activeSelf != active)
+                e.rootTr.gameObject.SetActive(active);
+        }
+    }
+
+    void PostQueueChanged(bool animateShift)
+    {
+        if (animateShift)
+            AnimateAllShift();
+
+        ApplyEggLayerNow();
+        ApplyEggSortingNow();
+        ApplyForcedVisibility();
+    }
+
+    #endregion
+
+    #region SFX
+
+    AudioClip LoadMountSfx(ItemPickup.ItemType eggType)
+    {
+        if (_mountSfxCache.TryGetValue(eggType, out var cached) && cached != null)
+            return cached;
+
+        string name = eggType switch
+        {
+            ItemPickup.ItemType.BlueLouieEgg => blueLouieMountSfxName,
+            ItemPickup.ItemType.BlackLouieEgg => blackLouieMountSfxName,
+            ItemPickup.ItemType.PurpleLouieEgg => purpleLouieMountSfxName,
+            ItemPickup.ItemType.GreenLouieEgg => greenLouieMountSfxName,
+            ItemPickup.ItemType.YellowLouieEgg => yellowLouieMountSfxName,
+            ItemPickup.ItemType.PinkLouieEgg => pinkLouieMountSfxName,
+            ItemPickup.ItemType.RedLouieEgg => redLouieMountSfxName,
+            _ => null
+        };
+
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            _mountSfxCache[eggType] = null;
+            return null;
+        }
+
+        var clip = Resources.Load<AudioClip>($"Sounds/{name}");
+        _mountSfxCache[eggType] = clip;
+        return clip;
+    }
+
+    #endregion
+
+    #region Public Queue API
+
+    public bool TryEnqueue(ItemPickup.ItemType type, Sprite idleSprite, AudioClip mountSfx, float mountVolume)
+    {
+        EnsureBound();
+
+        if (IsFull)
+            return false;
+
+        ExitIdleShiftNow();
+
+        EnqueueInternal(type, idleSprite, mountSfx, mountVolume, animate: true);
+        PostQueueChanged(animateShift: false);
+        return true;
+    }
+
+    public bool TryDequeue(out ItemPickup.ItemType type, out AudioClip mountSfx, out float mountVolume)
+    {
+        type = default;
+        mountSfx = null;
+        mountVolume = 0f;
+
+        if (_eggs.Count == 0)
+            return false;
+
+        int lastIndex = _eggs.Count - 1;
+        var oldestClosest = _eggs[lastIndex];
+        _eggs.RemoveAt(lastIndex);
+
+        if (oldestClosest.rootTr != null)
+            Destroy(oldestClosest.rootTr.gameObject);
+
+        type = oldestClosest.type;
+
+        mountSfx = oldestClosest.mountSfx != null ? oldestClosest.mountSfx : LoadMountSfx(type);
+        mountVolume = Mathf.Clamp01(oldestClosest.mountSfx != null ? oldestClosest.mountVolume : defaultMountVolume);
+
+        PostQueueChanged(animateShift: true);
+        return true;
+    }
+
+    public void GetQueuedEggTypesOldestToNewest(List<ItemPickup.ItemType> buffer)
+    {
+        if (buffer == null)
+            return;
+
+        buffer.Clear();
+
+        for (int i = _eggs.Count - 1; i >= 0; i--)
+            buffer.Add(_eggs[i].type);
+    }
+
+    public void RestoreQueuedEggTypesOldestToNewest(IReadOnlyList<ItemPickup.ItemType> types, Sprite idleSpriteFallback = null)
+    {
+        ClearAllEggs();
+
+        if (types == null || types.Count == 0)
+            return;
+
+        EnsureBound();
+
+        ResetHistoryToCurrentOwnerPos();
+        ResetRuntimeState();
+
+        for (int i = 0; i < types.Count; i++)
+            EnqueueInternal(types[i], idleSpriteFallback, mountSfx: null, mountVolume: defaultMountVolume, animate: false);
+
+        StopAllAnimationsNow();
+        SnapAllToOwnerNow();
+        PostQueueChanged(animateShift: false);
     }
 
     public void RebindAndReseedNow(bool resetHistoryToOwnerNow)
@@ -1172,31 +1111,122 @@ public sealed class LouieEggQueue : MonoBehaviour
             SeedHistoryNow();
 
         ResetRuntimeState();
-        ApplyForcedVisibility();
-        ApplyEggLayerNow();
-        ApplyEggSortingNow();
+        PostQueueChanged(animateShift: false);
     }
 
-    void ApplyForcedVisibility()
+    #endregion
+
+    #region Enqueue / Clear / Internal Spawn
+
+    void ExitIdleShiftNow()
     {
-        bool active = !_forcedHidden;
-
-        for (int i = 0; i < _eggs.Count; i++)
-        {
-            var e = _eggs[i];
-            if (e.rootTr == null) continue;
-
-            if (e.rootTr.gameObject.activeSelf != active)
-                e.rootTr.gameObject.SetActive(active);
-        }
+        _idleFrames = 0;
+        _movingFrames = 0;
+        _useIdleShiftState = false;
+        _idleShiftStartTime = 0f;
     }
+
+    void ClearAllEggs()
+    {
+        for (int i = 0; i < _eggs.Count; i++)
+            if (_eggs[i].rootTr != null)
+                Destroy(_eggs[i].rootTr.gameObject);
+
+        _eggs.Clear();
+    }
+
+    void EnqueueInternal(ItemPickup.ItemType type, Sprite idleSprite, AudioClip mountSfx, float mountVolume, bool animate)
+    {
+        EnsureBound();
+
+        if (IsFull)
+            return;
+
+        ExitIdleShiftNow();
+
+        Vector3 spawnWorld = GetOwnerWorldPos() + (Vector3)worldOffset;
+        spawnWorld.z = 0f;
+
+        Transform rootTr;
+        EggFollowerDirectionalVisual directional = null;
+
+        if (eggFollowerPrefab != null)
+        {
+            var rootGo = Instantiate(eggFollowerPrefab, spawnWorld, Quaternion.identity, _worldRoot);
+            rootGo.name = $"EggFollower_{type}";
+            rootTr = rootGo.transform;
+
+            BindEggHitbox(rootGo, this);
+            EnsureEggLayer(rootTr);
+
+            directional = rootGo.GetComponent<EggFollowerDirectionalVisual>();
+            if (directional == null)
+                directional = rootGo.GetComponentInChildren<EggFollowerDirectionalVisual>(true);
+
+            if (directional != null)
+                directional.ForceIdleFacing(Vector2.down);
+        }
+        else
+        {
+            var rootGo = new GameObject($"EggFollower_{type}");
+            rootTr = rootGo.transform;
+            rootTr.SetParent(_worldRoot, true);
+            rootTr.localScale = Vector3.one;
+            rootTr.position = spawnWorld;
+
+            EnsureEggLayer(rootTr);
+
+            var sr = rootGo.AddComponent<SpriteRenderer>();
+            sr.sprite = idleSprite;
+            sr.enabled = true;
+        }
+
+        float durJoin = animate
+            ? Mathf.Max(0.01f, joinSeconds) + Mathf.Max(0f, joinExtraDelayPerEgg) * _eggs.Count
+            : 0f;
+
+        var entry = new EggEntry
+        {
+            type = type,
+            rootTr = rootTr,
+            directional = directional,
+
+            mountSfx = mountSfx,
+            mountVolume = Mathf.Clamp01(mountVolume),
+
+            isAnimating = animate,
+            animStartTime = Time.time,
+            animDuration = durJoin,
+            animFromWorld = spawnWorld
+        };
+
+        _eggs.Insert(0, entry);
+
+        if (animate)
+            AnimateShiftExceptNewest();
+        else
+            StopAllAnimationsNow();
+    }
+
+    static void BindEggHitbox(GameObject eggRootGo, LouieEggQueue queue)
+    {
+        if (eggRootGo == null || queue == null)
+            return;
+
+        if (!eggRootGo.TryGetComponent<EggQueueFollowerHitbox>(out var hitbox))
+            hitbox = eggRootGo.GetComponentInChildren<EggQueueFollowerHitbox>(true);
+
+        if (hitbox != null)
+            hitbox.Bind(queue);
+    }
+
+    #endregion
+
+    #region Transfer / World Queue Helpers
 
     public void TransferToDetachedLouieAndFreeze(GameObject detachedLouie, Vector3 freezeWorldPos)
     {
-        if (detachedLouie == null)
-            return;
-
-        if (_eggs.Count == 0)
+        if (detachedLouie == null || _eggs.Count == 0)
             return;
 
         var target = detachedLouie.GetComponent<LouieEggQueue>();
@@ -1217,16 +1247,12 @@ public sealed class LouieEggQueue : MonoBehaviour
         target._ownerPlayerId = -1;
         target.FreezeOwnerAtWorldPosition(freezeWorldPos);
         target.BeginHardFreeze();
-        target.ApplyForcedVisibility();
-        target.ApplyEggLayerNow();
-        target.ApplyEggSortingNow();
+        target.PostQueueChanged(animateShift: false);
 
-        BindOwnerAuto();
-        EnsureWorldRoot();
-        EnsureHistoryBuffer();
+        EnsureBound();
         SeedHistoryNow();
         ResetRuntimeState();
-        ApplyForcedVisibility();
+        PostQueueChanged(animateShift: false);
     }
 
     void CopySettingsTo(LouieEggQueue q)
@@ -1278,49 +1304,35 @@ public sealed class LouieEggQueue : MonoBehaviour
         q.defaultMountVolume = defaultMountVolume;
     }
 
+    #endregion
+
+    #region Destroy / Consume Requests
+
     public void RequestDestroyEgg(Transform anyTransformOnEgg)
     {
-        if (anyTransformOnEgg == null) return;
-        if (_eggs.Count == 0) return;
+        if (anyTransformOnEgg == null || _eggs.Count == 0)
+            return;
 
-        int idx = -1;
-        for (int i = 0; i < _eggs.Count; i++)
-        {
-            var rt = _eggs[i].rootTr;
-            if (rt == null) continue;
-
-            if (rt == anyTransformOnEgg || anyTransformOnEgg.IsChildOf(rt))
-            {
-                idx = i;
-                break;
-            }
-        }
-
-        if (idx < 0) return;
+        int idx = FindEggIndexByTransform(anyTransformOnEgg);
+        if (idx < 0)
+            return;
 
         var e = _eggs[idx];
         var tr = e.rootTr;
 
-        _eggs.RemoveAt(idx);
+        RemoveEggAtIndexNoDestroy(idx);
+        PostQueueChanged(animateShift: true);
 
-        if (_hardFrozen)
-        {
-            if (idx < _hardFrozenEggWorld.Count) _hardFrozenEggWorld.RemoveAt(idx);
-            if (idx < _hardFrozenFacing.Count) _hardFrozenFacing.RemoveAt(idx);
-        }
-
-        AnimateAllShift();
-        ApplyEggLayerNow();
-        ApplyEggSortingNow();
-
-        if (tr == null) return;
+        if (tr == null)
+            return;
 
         StartCoroutine(DestroyEggRoutine(tr, 0.5f));
     }
 
-    System.Collections.IEnumerator DestroyEggRoutine(Transform tr, float seconds)
+    IEnumerator DestroyEggRoutine(Transform tr, float seconds)
     {
-        if (tr == null) yield break;
+        if (tr == null)
+            yield break;
 
         if (!tr.TryGetComponent<EggFollowerDestroyVisual>(out var v))
             v = tr.GetComponentInChildren<EggFollowerDestroyVisual>(true);
@@ -1342,9 +1354,8 @@ public sealed class LouieEggQueue : MonoBehaviour
 
     public bool RequestConsumeEggForMountCollision(Transform anyTransformOnEgg, GameObject consumerPlayer)
     {
-        if (anyTransformOnEgg == null) return false;
-        if (consumerPlayer == null) return false;
-        if (_eggs.Count == 0) return false;
+        if (anyTransformOnEgg == null || consumerPlayer == null || _eggs.Count == 0)
+            return false;
 
         if (_ownerPlayerId == -1)
             CacheOwnerIdentity();
@@ -1354,14 +1365,13 @@ public sealed class LouieEggQueue : MonoBehaviour
             return false;
 
         var rider = consumerPlayer.GetComponent<PlayerRidingController>();
-        bool ridingPlaying = rider != null && rider.IsPlaying;
+        if (rider != null && rider.IsPlaying)
+            return false;
 
         bool mountedByMovement = consumerPlayer.TryGetComponent<MovementController>(out var mv) && mv != null && mv.IsMountedOnLouie;
         bool mountedByCompanion = consumerPlayer.TryGetComponent<PlayerLouieCompanion>(out var compCheck) && compCheck != null && compCheck.HasMountedLouie();
-        bool isMounted = mountedByMovement || mountedByCompanion;
-
-        if (ridingPlaying) return false;
-        if (isMounted) return false;
+        if (mountedByMovement || mountedByCompanion)
+            return false;
 
         if (!consumerPlayer.TryGetComponent<PlayerLouieCompanion>(out var comp) || comp == null)
             return false;
@@ -1373,86 +1383,64 @@ public sealed class LouieEggQueue : MonoBehaviour
         var egg = _eggs[idx];
         var eggType = egg.type;
 
-        // “A partir daquele ovo”: transfere ovos mais novos (0..idx-1) para o player
         bool isWorldQueue = _hardFrozen || (_freezeAnchor != null && _ownerTr == _freezeAnchor);
 
-        List<EggEntry> transferNewer = null;
         if (isWorldQueue && idx > 0)
-        {
-            transferNewer = new List<EggEntry>(idx);
-            for (int i = 0; i < idx; i++)
-                transferNewer.Add(_eggs[i]);
-        }
+            TransferNewerEggsToConsumer(consumerPlayer, idx);
 
-        // Remove o ovo colidido (esse vira Louie)
-        RemoveEggSilently(idx);
+        RemoveEggAndDestroyVisual(idx);
+        PostQueueChanged(animateShift: true);
 
-        // Transfere os mais novos pro consumidor (se for fila do mundo)
-        if (isWorldQueue && transferNewer != null && transferNewer.Count > 0)
-        {
-            for (int i = 0; i < transferNewer.Count; i++)
-            {
-                var entry = transferNewer[i];
+        var sfx = egg.mountSfx != null ? egg.mountSfx : LoadMountSfx(eggType);
+        var vol = Mathf.Clamp01(egg.mountSfx != null ? egg.mountVolume : defaultMountVolume);
 
-                // Remove do mundo (índice 0 sempre, porque estamos removendo a “cabeça” repetidamente)
-                if (_eggs.Count > 0)
-                {
-                    // como transferNewer representa 0..idx-1 da lista ORIGINAL,
-                    // e a gente já removeu o idx, os “newer” continuam no começo.
-                    _eggs.RemoveAt(0);
-                }
-
-                // Rebind hitbox para a fila do player depois
-            }
-
-            if (!consumerPlayer.TryGetComponent<LouieEggQueue>(out var consumerQueue) || consumerQueue == null)
-                consumerQueue = consumerPlayer.AddComponent<LouieEggQueue>();
-
-            consumerQueue.CopySettingsTo(consumerQueue); // no-op, só pra manter padrão se você mexer depois
-            consumerQueue.BindOwner(consumerPlayer.GetComponent<MovementController>());
-
-            // Insere mantendo ordem (0 = mais novo)
-            for (int i = transferNewer.Count - 1; i >= 0; i--)
-            {
-                var e = transferNewer[i];
-
-                // respeita limite
-                if (consumerQueue.MaxEggs > 0 && consumerQueue._eggs.Count >= consumerQueue.MaxEggs)
-                    break;
-
-                consumerQueue._eggs.Insert(0, e);
-
-                if (e.rootTr != null)
-                {
-                    if (!e.rootTr.TryGetComponent<EggQueueFollowerHitbox>(out var hb))
-                        hb = e.rootTr.GetComponentInChildren<EggQueueFollowerHitbox>(true);
-
-                    if (hb != null)
-                        hb.Bind(consumerQueue);
-                }
-            }
-
-            consumerQueue.EnsureWorldRoot();
-            consumerQueue.EnsureHistoryBuffer();
-            consumerQueue.SeedHistoryNow();
-            consumerQueue.ResetRuntimeState();
-            consumerQueue.ApplyForcedVisibility();
-            consumerQueue.ApplyEggLayerNow();
-            consumerQueue.ApplyEggSortingNow();
-
-            // Atualiza visual do queue do mundo também
-            ApplyEggLayerNow();
-            ApplyEggSortingNow();
-        }
-
-        // Agora monta o Louie do tipo do ovo, igual ItemPickup
-        var sfx = LoadMountSfx(eggType);
         if (sfx != null)
-            comp.SetNextMountSfx(sfx, Mathf.Clamp01(defaultMountVolume));
+            comp.SetNextMountSfx(sfx, vol);
 
         MountFromEggType(comp, eggType);
-
         return true;
+    }
+
+    void TransferNewerEggsToConsumer(GameObject consumerPlayer, int idxExclusive)
+    {
+        if (consumerPlayer == null || idxExclusive <= 0 || _eggs.Count == 0)
+            return;
+
+        if (!consumerPlayer.TryGetComponent<LouieEggQueue>(out var consumerQueue) || consumerQueue == null)
+            consumerQueue = consumerPlayer.AddComponent<LouieEggQueue>();
+
+        CopySettingsTo(consumerQueue);
+
+        if (consumerPlayer.TryGetComponent<MovementController>(out var newOwnerMove))
+            consumerQueue.BindOwner(newOwnerMove);
+        else
+            consumerQueue.BindOwnerAuto();
+
+        var transfer = new List<EggEntry>(idxExclusive);
+        for (int i = 0; i < idxExclusive; i++)
+            transfer.Add(_eggs[i]);
+
+        for (int i = 0; i < idxExclusive && _eggs.Count > 0; i++)
+            _eggs.RemoveAt(0);
+
+        for (int i = transfer.Count - 1; i >= 0; i--)
+        {
+            if (consumerQueue.IsFull)
+                break;
+
+            var e = transfer[i];
+
+            consumerQueue._eggs.Insert(0, e);
+
+            if (e.rootTr != null)
+                BindEggHitbox(e.rootTr.gameObject, consumerQueue);
+        }
+
+        consumerQueue.EnsureWorldRoot();
+        consumerQueue.EnsureHistoryBuffer();
+        consumerQueue.SeedHistoryNow();
+        consumerQueue.ResetRuntimeState();
+        consumerQueue.PostQueueChanged(animateShift: false);
     }
 
     int FindEggIndexByTransform(Transform anyTransformOnEgg)
@@ -1466,6 +1454,32 @@ public sealed class LouieEggQueue : MonoBehaviour
                 return i;
         }
         return -1;
+    }
+
+    void RemoveEggAtIndexNoDestroy(int idx)
+    {
+        if (idx < 0 || idx >= _eggs.Count)
+            return;
+
+        _eggs.RemoveAt(idx);
+
+        if (_hardFrozen)
+        {
+            if (idx < _hardFrozenEggWorld.Count) _hardFrozenEggWorld.RemoveAt(idx);
+            if (idx < _hardFrozenFacing.Count) _hardFrozenFacing.RemoveAt(idx);
+        }
+    }
+
+    void RemoveEggAndDestroyVisual(int idx)
+    {
+        if (idx < 0 || idx >= _eggs.Count)
+            return;
+
+        var tr = _eggs[idx].rootTr;
+        RemoveEggAtIndexNoDestroy(idx);
+
+        if (tr != null)
+            Destroy(tr.gameObject);
     }
 
     static void MountFromEggType(PlayerLouieCompanion comp, ItemPickup.ItemType eggType)
@@ -1483,6 +1497,67 @@ public sealed class LouieEggQueue : MonoBehaviour
             case ItemPickup.ItemType.RedLouieEgg: comp.MountRedLouie(); break;
         }
     }
+
+    #endregion
+
+    #region Freeze Owner / Absorb
+
+    public void FreezeOwnerAtWorldPosition(Vector3 worldPos)
+    {
+        EnsureWorldRoot();
+        EnsureHistoryBuffer();
+
+        worldPos.z = 0f;
+
+        if (_freezeAnchor == null)
+            _freezeAnchor = new GameObject("EggQueue_FreezeAnchor").transform;
+
+        _freezeAnchor.SetParent(null, true);
+        _freezeAnchor.SetPositionAndRotation(worldPos, Quaternion.identity);
+        _freezeAnchor.localScale = Vector3.one;
+
+        _ownerMove = null;
+        _ownerRb = null;
+        _ownerTr = _freezeAnchor;
+
+        ResetHistoryToCurrentOwnerPos();
+        ResetRuntimeState();
+    }
+
+    public void AbsorbAllEggsFromWorldQueue(LouieEggQueue worldQueue, MovementController newOwner)
+    {
+        if (worldQueue == null || newOwner == null)
+            return;
+
+        worldQueue._hardFrozen = false;
+
+        worldQueue.CopySettingsTo(this);
+        BindOwner(newOwner);
+
+        for (int i = 0; i < worldQueue._eggs.Count; i++)
+        {
+            if (IsFull)
+                break;
+
+            var e = worldQueue._eggs[i];
+            _eggs.Insert(Mathf.Min(i, _eggs.Count), e);
+
+            if (e.rootTr != null)
+                BindEggHitbox(e.rootTr.gameObject, this);
+        }
+
+        worldQueue._eggs.Clear();
+
+        EnsureWorldRoot();
+        EnsureHistoryBuffer();
+        SeedHistoryNow();
+        ResetRuntimeState();
+        PostQueueChanged(animateShift: false);
+    }
+
+    #endregion
+
+    #region Player Id / Identity
 
     int ResolvePlayerIdFrom(GameObject go)
     {
@@ -1507,105 +1582,13 @@ public sealed class LouieEggQueue : MonoBehaviour
 
     void CacheOwnerIdentity()
     {
-        if (_ownerMove != null)
-            _ownerPlayerId = ResolvePlayerIdFrom(_ownerMove.gameObject);
-        else if (_ownerTr != null)
-            _ownerPlayerId = ResolvePlayerIdFrom(_ownerTr.gameObject);
-        else
-            _ownerPlayerId = ResolvePlayerIdFrom(gameObject);
+        if (_ownerMove != null) _ownerPlayerId = ResolvePlayerIdFrom(_ownerMove.gameObject);
+        else if (_ownerTr != null) _ownerPlayerId = ResolvePlayerIdFrom(_ownerTr.gameObject);
+        else _ownerPlayerId = ResolvePlayerIdFrom(gameObject);
 
         if (_ownerPlayerId < 1 || _ownerPlayerId > 4)
             _ownerPlayerId = -1;
     }
 
-    void RemoveEggSilently(int idx)
-    {
-        if (idx < 0 || idx >= _eggs.Count)
-            return;
-
-        var e = _eggs[idx];
-        var tr = e.rootTr;
-
-        _eggs.RemoveAt(idx);
-
-        if (_hardFrozen)
-        {
-            if (idx < _hardFrozenEggWorld.Count) _hardFrozenEggWorld.RemoveAt(idx);
-            if (idx < _hardFrozenFacing.Count) _hardFrozenFacing.RemoveAt(idx);
-        }
-
-        AnimateAllShift();
-        ApplyEggLayerNow();
-        ApplyEggSortingNow();
-
-        if (tr != null)
-            Destroy(tr.gameObject);
-    }
-
-    public void FreezeOwnerAtWorldPosition(Vector3 worldPos)
-    {
-        EnsureWorldRoot();
-        EnsureHistoryBuffer();
-
-        worldPos.z = 0f;
-
-        if (_freezeAnchor == null)
-        {
-            var go = new GameObject("EggQueue_FreezeAnchor");
-            _freezeAnchor = go.transform;
-        }
-
-        _freezeAnchor.SetParent(null, true);
-        _freezeAnchor.SetPositionAndRotation(worldPos, Quaternion.identity);
-        _freezeAnchor.localScale = Vector3.one;
-
-        _ownerMove = null;
-        _ownerRb = null;
-        _ownerTr = _freezeAnchor;
-
-        ResetHistoryToCurrentOwnerPos();
-        ResetRuntimeState();
-    }
-
-    public void AbsorbAllEggsFromWorldQueue(LouieEggQueue worldQueue, MovementController newOwner)
-    {
-        if (worldQueue == null || newOwner == null)
-            return;
-
-        // Se a fila do mundo estiver congelada, liberamos e vamos usar a lista de eggs dela
-        worldQueue._hardFrozen = false;
-
-        // Copia settings para consistência
-        worldQueue.CopySettingsTo(this);
-
-        BindOwner(newOwner);
-
-        // Move os eggs do mundo para esse queue (sem destruir os GOs)
-        // Mantém ordem: _eggs[0] = mais novo
-        for (int i = 0; i < worldQueue._eggs.Count; i++)
-        {
-            var e = worldQueue._eggs[i];
-            _eggs.Insert(Mathf.Min(i, _eggs.Count), e);
-
-            // rebind hitbox para ESTE queue
-            if (e.rootTr != null)
-            {
-                if (!e.rootTr.TryGetComponent<EggQueueFollowerHitbox>(out var hb))
-                    hb = e.rootTr.GetComponentInChildren<EggQueueFollowerHitbox>(true);
-
-                if (hb != null)
-                    hb.Bind(this);
-            }
-        }
-
-        worldQueue._eggs.Clear();
-
-        EnsureWorldRoot();
-        EnsureHistoryBuffer();
-        SeedHistoryNow();
-        ResetRuntimeState();
-        ApplyForcedVisibility();
-        ApplyEggLayerNow();
-        ApplyEggSortingNow();
-    }
+    #endregion
 }
