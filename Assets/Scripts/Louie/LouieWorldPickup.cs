@@ -60,7 +60,6 @@ public sealed class LouieWorldPickup : MonoBehaviour
 
         consumed = true;
 
-        // Se esse Louie tiver uma fila congelada no mundo, vamos absorver pro player.
         var worldQueue = GetComponent<LouieEggQueue>();
 
         comp.TryMountExistingLouieFromWorld(

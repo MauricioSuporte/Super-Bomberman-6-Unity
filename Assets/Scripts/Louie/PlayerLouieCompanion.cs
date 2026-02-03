@@ -1162,6 +1162,9 @@ public class PlayerLouieCompanion : MonoBehaviour
             if (childRv != null) Destroy(childRv);
         }
 
+        // ✅ NOVO: força o Louie destacado a ficar em IDLE na direção atual do player
+        ForceDetachedLouieIdleFacing(louie, movement.FacingDirection);
+
         // Mantém parado, mas colisão ligada para pickup
         if (louie.TryGetComponent<LouieMovementController>(out var lm))
             lm.enabled = false;
@@ -1190,7 +1193,6 @@ public class PlayerLouieCompanion : MonoBehaviour
 
         var rider = GetComponent<PlayerRidingController>();
 
-        // Se existir fila no Louie do mundo, absorve pro player (após montar)
         void AdoptWorldQueueIfAny()
         {
             if (worldQueueToAdopt == null)
@@ -1200,8 +1202,6 @@ public class PlayerLouieCompanion : MonoBehaviour
                 playerQueue = gameObject.AddComponent<LouieEggQueue>();
 
             playerQueue.AbsorbAllEggsFromWorldQueue(worldQueueToAdopt, movement);
-
-            // A fila do mundo não precisa mais existir no Louie
             Destroy(worldQueueToAdopt);
         }
 
@@ -1233,7 +1233,6 @@ public class PlayerLouieCompanion : MonoBehaviour
 
         currentLouie = louieWorldInstance;
 
-        // remove pickup do mundo (para não tentar pegar de novo)
         var pickup = currentLouie.GetComponent<LouieWorldPickup>();
         if (pickup != null) Destroy(pickup);
 
@@ -1252,5 +1251,151 @@ public class PlayerLouieCompanion : MonoBehaviour
             SetMountedLouieVisible(true);
 
         PlayMountSfxIfAny();
+    }
+
+    static Vector2 CardinalizeFacing(Vector2 f)
+    {
+        if (f == Vector2.zero)
+            return Vector2.down;
+
+        if (Mathf.Abs(f.x) >= Mathf.Abs(f.y))
+            return f.x >= 0f ? Vector2.right : Vector2.left;
+
+        return f.y >= 0f ? Vector2.up : Vector2.down;
+    }
+
+    static void SetSpriteRenderersEnabled(Component root, bool enabled)
+    {
+        if (root == null) return;
+
+        if (root.TryGetComponent<SpriteRenderer>(out var sr) && sr != null)
+            sr.enabled = enabled;
+
+        var childSrs = root.GetComponentsInChildren<SpriteRenderer>(true);
+        for (int i = 0; i < childSrs.Length; i++)
+            if (childSrs[i] != null)
+                childSrs[i].enabled = enabled;
+    }
+
+    static void ApplyFlipIfNeeded(AnimatedSpriteRenderer anim, Vector2 facing, bool forceFlipX)
+    {
+        if (anim == null) return;
+
+        if (!anim.TryGetComponent<SpriteRenderer>(out var sr) || sr == null)
+            return;
+
+        var face = CardinalizeFacing(facing);
+
+        if (forceFlipX)
+        {
+            if (face == Vector2.right) sr.flipX = true;
+            else if (face == Vector2.left) sr.flipX = false;
+            else sr.flipX = false;
+
+            return;
+        }
+
+        if (!anim.allowFlipX)
+        {
+            sr.flipX = false;
+            return;
+        }
+
+        if (face == Vector2.right) sr.flipX = true;
+        else if (face == Vector2.left) sr.flipX = false;
+        else sr.flipX = false;
+    }
+
+    static AnimatedSpriteRenderer PickDirectionalFromController(MovementController mc, Vector2 facing, out bool forceFlipX)
+    {
+        forceFlipX = false;
+
+        if (mc == null) return null;
+
+        var face = CardinalizeFacing(facing);
+
+        if (face == Vector2.up) return mc.spriteRendererUp;
+        if (face == Vector2.down) return mc.spriteRendererDown;
+
+        if (face == Vector2.left)
+        {
+            if (mc.spriteRendererLeft != null) return mc.spriteRendererLeft;
+
+            if (mc.spriteRendererRight != null)
+            {
+                forceFlipX = true;
+                return mc.spriteRendererRight;
+            }
+
+            return null;
+        }
+
+        if (mc.spriteRendererRight != null) return mc.spriteRendererRight;
+
+        if (mc.spriteRendererLeft != null)
+        {
+            forceFlipX = true;
+            return mc.spriteRendererLeft;
+        }
+
+        return null;
+    }
+
+    static void ForceDetachedLouieIdleFacing(GameObject louie, Vector2 facing)
+    {
+        if (louie == null)
+            return;
+
+        facing = CardinalizeFacing(facing);
+
+        var anims = louie.GetComponentsInChildren<AnimatedSpriteRenderer>(true);
+        if (anims == null || anims.Length == 0)
+            return;
+
+        for (int i = 0; i < anims.Length; i++)
+        {
+            var a = anims[i];
+            if (a == null) continue;
+
+            a.enabled = false;
+            SetSpriteRenderersEnabled(a, false);
+        }
+
+        MovementController mc = louie.GetComponentInChildren<LouieMovementController>(true);
+        if (mc == null)
+            mc = louie.GetComponentInChildren<MovementController>(true);
+
+        AnimatedSpriteRenderer chosen = PickDirectionalFromController(mc, facing, out bool forceFlipX);
+
+        if (chosen == null)
+        {
+            for (int i = 0; i < anims.Length; i++)
+            {
+                if (anims[i] != null)
+                {
+                    chosen = anims[i];
+                    forceFlipX = false;
+                    break;
+                }
+            }
+        }
+
+        if (chosen == null)
+            return;
+
+        if (!chosen.gameObject.activeSelf)
+            chosen.gameObject.SetActive(true);
+
+        chosen.enabled = true;
+        SetSpriteRenderersEnabled(chosen, true);
+
+        chosen.idle = true;
+        chosen.loop = false;
+        chosen.pingPong = false;
+        chosen.CurrentFrame = 0;
+
+        ApplyFlipIfNeeded(chosen, facing, forceFlipX);
+
+        chosen.RefreshFrame();
     }
 }

@@ -83,8 +83,6 @@ public sealed class PlayerLouieManualDismount : MonoBehaviour
             onComplete: null,
             onStart: () =>
             {
-                // IMPORTANT: no início do desmontar, os ovos param de seguir o player
-                // e ficam "presos" no Louie destacado (para serem adotados por quem montar depois).
                 if (!freezeEggQueueOnDismount)
                     return;
 
