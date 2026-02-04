@@ -261,10 +261,15 @@ public class ItemPickup : MonoBehaviour
 
         if (other.CompareTag("Player"))
         {
-            if (other.TryGetComponent<MovementController>(out var mv) && mv != null && _col != null)
-                mv.SnapToColliderCenter(_col, roundToGrid: false);
+            var player = other.gameObject;
 
-            OnItemPickup(other.gameObject);
+            if (IsLouieEgg(type) && !PlayerAlreadyMounted(player))
+            {
+                if (other.TryGetComponent<MovementController>(out var mv) && mv != null && _col != null)
+                    mv.SnapToColliderCenter(_col, roundToGrid: false);
+            }
+
+            OnItemPickup(player);
             return;
         }
 
