@@ -24,6 +24,9 @@ public sealed class EggQueueFollowerHitbox : MonoBehaviour
 
         if (!requestedExplosion && IsExplosion(other))
         {
+            if (ownerQueue.OwnerIsInvulnerable)
+                return;
+
             requestedExplosion = true;
             ownerQueue.RequestDestroyEgg(transform);
             return;

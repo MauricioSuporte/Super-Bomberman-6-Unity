@@ -105,6 +105,8 @@ public sealed class LouieEggQueue : MonoBehaviour
     Transform _ownerTr;
     Rigidbody2D _ownerRb;
     MovementController _ownerMove;
+    CharacterHealth _ownerHealth;
+    public bool OwnerIsInvulnerable => _ownerHealth != null && _ownerHealth.IsInvulnerable;
 
     Transform _worldRoot;
 
@@ -307,6 +309,8 @@ public sealed class LouieEggQueue : MonoBehaviour
         _ownerMove = ownerMove;
         _ownerTr = ownerMove.transform;
         _ownerRb = (_ownerMove.Rigidbody != null) ? _ownerMove.Rigidbody : ownerMove.GetComponent<Rigidbody2D>();
+        _ownerHealth = null;
+        _ownerMove.TryGetComponent(out _ownerHealth);
 
         EnsureWorldRoot();
         EnsureHistoryBuffer();
@@ -350,12 +354,17 @@ public sealed class LouieEggQueue : MonoBehaviour
         {
             _ownerTr = _ownerMove.transform;
             _ownerRb = (_ownerMove.Rigidbody != null) ? _ownerMove.Rigidbody : _ownerMove.GetComponent<Rigidbody2D>();
+
+            _ownerHealth = null;
+            _ownerMove.TryGetComponent(out _ownerHealth);
+
             CacheOwnerIdentity();
             return;
         }
 
         _ownerRb = GetComponentInParent<Rigidbody2D>();
         _ownerTr = _ownerRb != null ? _ownerRb.transform : transform.root;
+        _ownerHealth = null;
         CacheOwnerIdentity();
     }
 
@@ -1547,6 +1556,7 @@ public sealed class LouieEggQueue : MonoBehaviour
         _ownerMove = null;
         _ownerRb = null;
         _ownerTr = _freezeAnchor;
+        _ownerHealth = null;
 
         ResetHistoryToCurrentOwnerPos();
         ResetRuntimeState();
