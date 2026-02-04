@@ -74,6 +74,9 @@ public sealed class LouieEggQueue : MonoBehaviour
     [SerializeField] string redLouieMountSfxName = "MountRedLouie";
     [SerializeField, Range(0f, 1f)] float defaultMountVolume = 1f;
 
+    [Header("Dequeue - Destroy Visual")]
+    [SerializeField, Range(0.05f, 2f)] float dequeueDestroySeconds = 0.5f;
+
     Transform _freezeAnchor;
 
     bool _hardFrozen;
@@ -281,6 +284,8 @@ public sealed class LouieEggQueue : MonoBehaviour
 
         defaultMountVolume = Mathf.Clamp01(defaultMountVolume);
         eggGameObjectLayer = Mathf.Clamp(eggGameObjectLayer, 0, 31);
+
+        dequeueDestroySeconds = Mathf.Clamp(dequeueDestroySeconds, 0.05f, 2f);
     }
 
     void InitializeRuntime()
@@ -1066,13 +1071,33 @@ public sealed class LouieEggQueue : MonoBehaviour
         var oldestClosest = _eggs[lastIndex];
         _eggs.RemoveAt(lastIndex);
 
-        if (oldestClosest.rootTr != null)
-            Destroy(oldestClosest.rootTr.gameObject);
-
         type = oldestClosest.type;
-
         mountSfx = oldestClosest.mountSfx != null ? oldestClosest.mountSfx : LoadMountSfx(type);
         mountVolume = Mathf.Clamp01(oldestClosest.mountSfx != null ? oldestClosest.mountVolume : defaultMountVolume);
+
+        var tr = oldestClosest.rootTr;
+        if (tr != null)
+        {
+            if (_hardFrozen)
+            {
+                if (lastIndex < _hardFrozenEggWorld.Count) _hardFrozenEggWorld.RemoveAt(lastIndex);
+                if (lastIndex < _hardFrozenFacing.Count) _hardFrozenFacing.RemoveAt(lastIndex);
+            }
+
+            Vector3 destroyAt = GetOwnerWorldPos() + (Vector3)worldOffset;
+            destroyAt.z = 0f;
+            tr.position = destroyAt;
+
+            StartCoroutine(DestroyEggRoutine(tr, Mathf.Max(0.05f, dequeueDestroySeconds)));
+        }
+        else
+        {
+            if (_hardFrozen)
+            {
+                if (lastIndex < _hardFrozenEggWorld.Count) _hardFrozenEggWorld.RemoveAt(lastIndex);
+                if (lastIndex < _hardFrozenFacing.Count) _hardFrozenFacing.RemoveAt(lastIndex);
+            }
+        }
 
         PostQueueChanged(animateShift: true);
         return true;
@@ -1236,7 +1261,7 @@ public sealed class LouieEggQueue : MonoBehaviour
     #endregion
 
     #region Transfer / World Queue Helpers
-
+    // (mantido igual ao seu)
     public void TransferToDetachedLouieAndFreeze(GameObject detachedLouie, Vector3 freezeWorldPos)
     {
         if (detachedLouie == null || _eggs.Count == 0)
@@ -1321,6 +1346,8 @@ public sealed class LouieEggQueue : MonoBehaviour
         q.pinkLouieMountSfxName = pinkLouieMountSfxName;
         q.redLouieMountSfxName = redLouieMountSfxName;
         q.defaultMountVolume = defaultMountVolume;
+
+        q.dequeueDestroySeconds = dequeueDestroySeconds;
     }
 
     #endregion
@@ -1428,9 +1455,25 @@ public sealed class LouieEggQueue : MonoBehaviour
             }
         }
 
-        RemoveEggAndDestroyVisual(idx);
-
+        Transform consumedTr = _eggs[idx].rootTr;
+        RemoveEggAtIndexNoDestroy(idx);
         PostQueueChanged(animateShift: true);
+
+        if (consumedTr != null)
+        {
+            Vector3 destroyAt = consumerPlayer.transform.position;
+            destroyAt.z = 0f;
+
+            if (consumerPlayer.TryGetComponent<MovementController>(out var cmv) && cmv != null)
+            {
+                destroyAt = (Vector3)cmv.transform.position;
+                destroyAt.z = 0f;
+            }
+
+            consumedTr.position = destroyAt;
+
+            StartCoroutine(DestroyEggRoutine(consumedTr, Mathf.Max(0.05f, dequeueDestroySeconds)));
+        }
 
         var sfx = egg.mountSfx != null ? egg.mountSfx : LoadMountSfx(eggType);
         var vol = Mathf.Clamp01(egg.mountSfx != null ? egg.mountVolume : defaultMountVolume);
@@ -1547,7 +1590,7 @@ public sealed class LouieEggQueue : MonoBehaviour
     #endregion
 
     #region Freeze Owner / Absorb
-
+    // (mantido igual ao seu)
     public void FreezeOwnerAtWorldPosition(Vector3 worldPos)
     {
         EnsureWorldRoot();

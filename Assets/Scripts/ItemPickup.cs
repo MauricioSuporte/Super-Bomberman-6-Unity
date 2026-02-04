@@ -13,6 +13,10 @@ public class ItemPickup : MonoBehaviour
     public AnimatedSpriteRenderer idleRenderer;
     public AnimatedSpriteRenderer destroyRenderer;
 
+    [Header("Destroy Animation")]
+    [SerializeField, Range(0.05f, 3f)]
+    private float destroyDelaySeconds = 0.5f;
+
     [Header("Spawn Immunity")]
     public float spawnImmunitySeconds = 0.5f;
 
@@ -124,23 +128,31 @@ public class ItemPickup : MonoBehaviour
         return true;
     }
 
+    void ConsumeNow(bool playDestroyAnim)
+    {
+        if (playDestroyAnim)
+            DestroyWithAnimation();
+        else
+            Destroy(gameObject);
+    }
+
     void OnItemPickup(GameObject player)
     {
         bool isEgg = IsLouieEgg(type);
 
+        if (isEgg && PlayerAlreadyMounted(player))
+        {
+            var q = GetOrCreateEggQueue(player);
+
+            if (!q.TryEnqueue(type, GetEggIdleSpriteFallback(), collectSfx, collectVolume))
+                return;
+
+            ConsumeNow(playDestroyAnim: false);
+            return;
+        }
+
         if (isEgg)
         {
-            if (PlayerAlreadyMounted(player))
-            {
-                var q = GetOrCreateEggQueue(player);
-
-                if (!q.TryEnqueue(type, GetEggIdleSpriteFallback(), collectSfx, collectVolume))
-                    return;
-
-                Destroy(gameObject);
-                return;
-            }
-
             TrySetMountSfxForImmediateMount(player);
         }
         else
@@ -251,12 +263,12 @@ public class ItemPickup : MonoBehaviour
                 break;
         }
 
-        Destroy(gameObject);
+        ConsumeNow(playDestroyAnim: isEgg);
     }
 
     void OnTriggerEnter2D(Collider2D other)
     {
-        if (other == null)
+        if (isBeingDestroyed || other == null)
             return;
 
         if (other.CompareTag("Player"))
@@ -289,15 +301,40 @@ public class ItemPickup : MonoBehaviour
 
         isBeingDestroyed = true;
 
+        if (_col != null)
+            _col.enabled = false;
+
         if (idleRenderer != null)
+        {
             idleRenderer.enabled = false;
+            EnableSpriteBranch(idleRenderer, false);
+        }
 
         if (destroyRenderer != null)
         {
             destroyRenderer.enabled = true;
+            EnableSpriteBranch(destroyRenderer, true);
+
             destroyRenderer.idle = false;
+            destroyRenderer.loop = false;
+            destroyRenderer.pingPong = false;
+            destroyRenderer.CurrentFrame = 0;
+            destroyRenderer.RefreshFrame();
         }
 
-        Destroy(gameObject, 0.5f);
+        Destroy(gameObject, Mathf.Max(0.05f, destroyDelaySeconds));
+    }
+
+    static void EnableSpriteBranch(Component root, bool enabled)
+    {
+        if (root == null) return;
+
+        if (root.TryGetComponent<SpriteRenderer>(out var sr) && sr != null)
+            sr.enabled = enabled;
+
+        var childSrs = root.GetComponentsInChildren<SpriteRenderer>(true);
+        for (int i = 0; i < childSrs.Length; i++)
+            if (childSrs[i] != null)
+                childSrs[i].enabled = enabled;
     }
 }
