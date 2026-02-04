@@ -45,14 +45,8 @@ public class MovementController : MonoBehaviour, IKillable
     [Header("Mounted On Louie - Pink Y Override")]
     public float pinkMountedSpritesLocalY = 1.3f;
 
-    bool mountedSpritesYOverridden;
-
     [Header("Contact Damage")]
     public float contactDamageCooldownSeconds = 0.15f;
-
-    float nextContactDamageTime;
-
-    readonly HashSet<Collider2D> touchingHazards = new();
 
     [Header("Death Timing")]
     public float deathDisableSeconds = 2f;
@@ -60,63 +54,77 @@ public class MovementController : MonoBehaviour, IKillable
     [Header("Death Behavior")]
     public bool checkWinStateOnDeath = true;
 
+    [Header("End Stage Animation")]
+    public float endStageTotalTime = 1f;
+    public int endStageFrameCount = 9;
+
+    [Header("Grid Alignment")]
+    [SerializeField, Range(0.5f, 20f)] private float perpendicularAlignMultiplier = 8f;
+    [SerializeField] private bool snapPerpendicularOnAxisStart = true;
+    [SerializeField, Range(0.0001f, 0.05f)] private float alignEpsilon = 0.0015f;
+
+    public Rigidbody2D Rigidbody { get; private set; }
+    public Vector2 Direction => direction;
+
     protected Vector2 facingDirection = Vector2.down;
     public Vector2 FacingDirection => facingDirection;
 
     private bool isMountedOnLouie;
     public bool IsMountedOnLouie => isMountedOnLouie;
 
-    StunReceiver stunReceiver;
+    public bool isDead;
+    protected bool inputLocked;
+    public bool InputLocked => inputLocked;
 
-    [Header("End Stage Animation")]
-    public float endStageTotalTime = 1f;
-    public int endStageFrameCount = 9;
-
-    public Rigidbody2D Rigidbody { get; private set; }
-    public Vector2 Direction => direction;
-
-    protected AudioSource audioSource;
-    protected BombController bombController;
-    protected AbilitySystem abilitySystem;
-
-    protected AnimatedSpriteRenderer activeSpriteRenderer;
+    private bool isEndingStage;
+    public bool IsEndingStage => isEndingStage;
 
     protected Vector2 direction = Vector2.zero;
     protected bool hasInput;
-    protected bool inputLocked;
     protected bool explosionInvulnerable;
 
-    public bool isDead;
-    public bool InputLocked => inputLocked;
-    private bool isEndingStage;
-    public bool IsEndingStage => isEndingStage;
+    private bool mountedSpritesYOverridden;
+    private float nextContactDamageTime;
+
+    private readonly HashSet<Collider2D> touchingHazards = new();
 
     private const float CenterEpsilon = 0.01f;
     private float SlideDeadZone => tileSize * 0.25f;
 
-    enum MoveAxis
+    private enum MoveAxis
     {
         None = 0,
         Horizontal = 1,
         Vertical = 2
     }
 
-    [Header("Grid Alignment")]
-    [SerializeField, Range(0.5f, 20f)] float perpendicularAlignMultiplier = 8f;
-    [SerializeField] bool snapPerpendicularOnAxisStart = true;
-    [SerializeField, Range(0.0001f, 0.05f)] float alignEpsilon = 0.0015f;
-
     private MoveAxis currentAxis = MoveAxis.None;
+
+    protected AudioSource audioSource;
+    protected BombController bombController;
+    protected AbilitySystem abilitySystem;
+    private StunReceiver stunReceiver;
+
+    private CharacterHealth cachedHealth;
+    private PlayerLouieCompanion cachedCompanion;
+    private PlayerRidingController cachedRiding;
+
+    protected AnimatedSpriteRenderer activeSpriteRenderer;
 
     private IMovementAbility[] movementAbilities = Array.Empty<IMovementAbility>();
     private int explosionLayer;
     private int enemyLayer;
 
+    private static readonly Vector2[] CardinalDirs =
+    {
+        Vector2.up, Vector2.down, Vector2.left, Vector2.right
+    };
+
     public void SetPlayerId(int id)
     {
         playerId = Mathf.Clamp(id, 1, 4);
 
-        if (!CompareTag("Player"))
+        if (!IsPlayer())
             return;
 
         if (bombController != null)
@@ -136,10 +144,7 @@ public class MovementController : MonoBehaviour, IKillable
         Rigidbody = GetComponent<Rigidbody2D>();
         stunReceiver = GetComponent<StunReceiver>();
         bombController = GetComponent<BombController>();
-
         abilitySystem = GetComponent<AbilitySystem>();
-        if (abilitySystem == null)
-            abilitySystem = gameObject.AddComponent<AbilitySystem>();
 
         audioSource = GetComponent<AudioSource>();
         if (audioSource != null)
@@ -148,6 +153,10 @@ public class MovementController : MonoBehaviour, IKillable
             audioSource.loop = false;
             audioSource.clip = null;
         }
+
+        cachedHealth = GetComponent<CharacterHealth>();
+        TryGetComponent(out cachedCompanion);
+        TryGetComponent(out cachedRiding);
 
         if (obstacleMask.value == 0)
             obstacleMask = LayerMask.GetMask("Stage", "Bomb");
@@ -175,11 +184,12 @@ public class MovementController : MonoBehaviour, IKillable
         direction = Vector2.zero;
         hasInput = false;
         touchingHazards.Clear();
+        currentAxis = MoveAxis.None;
 
         if (bombController != null)
             bombController.SetPlayerId(playerId);
 
-        if (loadPersistent && CompareTag("Player"))
+        if (loadPersistent && IsPlayer())
             PlayerPersistentStats.LoadInto(playerId, this, bombController);
 
         SyncMountedFromPersistent();
@@ -189,8 +199,6 @@ public class MovementController : MonoBehaviour, IKillable
 
         ApplySpeedInternal(speedInternal);
         EnableExclusiveFromState();
-
-        currentAxis = MoveAxis.None;
     }
 
     private void CacheMovementAbilities()
@@ -214,7 +222,7 @@ public class MovementController : MonoBehaviour, IKillable
 
     public void SyncMountedFromPersistent()
     {
-        if (!CompareTag("Player"))
+        if (!IsPlayer())
             return;
 
         var st = PlayerPersistentStats.Get(playerId);
@@ -224,31 +232,48 @@ public class MovementController : MonoBehaviour, IKillable
             facingDirection = Vector2.down;
     }
 
-    static void SetAnimEnabled(AnimatedSpriteRenderer r, bool on)
+    private bool IsPlayer() => CompareTag("Player");
+
+    private bool IsRidingPlaying()
+    {
+        if (cachedRiding == null)
+            TryGetComponent(out cachedRiding);
+
+        return cachedRiding != null && cachedRiding.IsPlaying;
+    }
+
+    private static void SetAnimEnabled(AnimatedSpriteRenderer r, bool on)
     {
         if (r == null) return;
 
         r.enabled = on;
 
-        SpriteRenderer sr;
-        if (r.TryGetComponent<SpriteRenderer>(out sr) && sr != null)
+        if (r.TryGetComponent(out SpriteRenderer sr) && sr != null)
             sr.enabled = on;
+    }
+
+    private void SetMany(bool enabled, params AnimatedSpriteRenderer[] arr)
+    {
+        for (int i = 0; i < arr.Length; i++)
+            SetAnimEnabled(arr[i], enabled);
+    }
+
+    private void DisableAllFootSprites()
+    {
+        SetMany(false, spriteRendererUp, spriteRendererDown, spriteRendererLeft, spriteRendererRight);
+    }
+
+    private void DisableAllMountedSprites()
+    {
+        SetMany(false, mountedSpriteUp, mountedSpriteDown, mountedSpriteLeft, mountedSpriteRight);
     }
 
     public void SetAllSpritesVisible(bool visible)
     {
-        SetAnimEnabled(spriteRendererUp, visible);
-        SetAnimEnabled(spriteRendererDown, visible);
-        SetAnimEnabled(spriteRendererLeft, visible);
-        SetAnimEnabled(spriteRendererRight, visible);
-        SetAnimEnabled(spriteRendererDeath, visible);
-        SetAnimEnabled(spriteRendererEndStage, visible);
-        SetAnimEnabled(spriteRendererCheering, visible);
-
-        SetAnimEnabled(mountedSpriteUp, visible);
-        SetAnimEnabled(mountedSpriteDown, visible);
-        SetAnimEnabled(mountedSpriteLeft, visible);
-        SetAnimEnabled(mountedSpriteRight, visible);
+        SetMany(visible,
+            spriteRendererUp, spriteRendererDown, spriteRendererLeft, spriteRendererRight,
+            spriteRendererDeath, spriteRendererEndStage, spriteRendererCheering,
+            mountedSpriteUp, mountedSpriteDown, mountedSpriteLeft, mountedSpriteRight);
 
         var rider = GetComponentInChildren<LouieVisualController>(true);
         if (rider != null)
@@ -303,7 +328,7 @@ public class MovementController : MonoBehaviour, IKillable
 
     protected virtual void HandleInput()
     {
-        if (!CompareTag("Player"))
+        if (!IsPlayer())
         {
             ApplyDirectionFromVector(Vector2.zero);
             return;
@@ -316,16 +341,11 @@ public class MovementController : MonoBehaviour, IKillable
             return;
         }
 
-        if (input.Get(playerId, PlayerAction.MoveUp))
-            ApplyDirectionFromVector(Vector2.up);
-        else if (input.Get(playerId, PlayerAction.MoveDown))
-            ApplyDirectionFromVector(Vector2.down);
-        else if (input.Get(playerId, PlayerAction.MoveLeft))
-            ApplyDirectionFromVector(Vector2.left);
-        else if (input.Get(playerId, PlayerAction.MoveRight))
-            ApplyDirectionFromVector(Vector2.right);
-        else
-            ApplyDirectionFromVector(Vector2.zero);
+        if (input.Get(playerId, PlayerAction.MoveUp)) ApplyDirectionFromVector(Vector2.up);
+        else if (input.Get(playerId, PlayerAction.MoveDown)) ApplyDirectionFromVector(Vector2.down);
+        else if (input.Get(playerId, PlayerAction.MoveLeft)) ApplyDirectionFromVector(Vector2.left);
+        else if (input.Get(playerId, PlayerAction.MoveRight)) ApplyDirectionFromVector(Vector2.right);
+        else ApplyDirectionFromVector(Vector2.zero);
     }
 
     public void ApplyDirectionFromVector(Vector2 dir)
@@ -355,10 +375,16 @@ public class MovementController : MonoBehaviour, IKillable
         SetDirection(dir == Vector2.zero ? Vector2.zero : dir, foot);
     }
 
-    private AnimatedSpriteRenderer PickFootRenderer(Vector2 dir)
+    private Vector2 GetFacing(Vector2 dir)
     {
         Vector2 face = dir != Vector2.zero ? dir : facingDirection;
         if (face == Vector2.zero) face = Vector2.down;
+        return face;
+    }
+
+    private AnimatedSpriteRenderer PickFootRenderer(Vector2 dir)
+    {
+        Vector2 face = GetFacing(dir);
 
         if (face == Vector2.up) return spriteRendererUp;
         if (face == Vector2.down) return spriteRendererDown;
@@ -370,8 +396,7 @@ public class MovementController : MonoBehaviour, IKillable
 
     private AnimatedSpriteRenderer PickMountedRenderer(Vector2 dir)
     {
-        Vector2 face = dir != Vector2.zero ? dir : facingDirection;
-        if (face == Vector2.zero) face = Vector2.down;
+        Vector2 face = GetFacing(dir);
 
         if (face == Vector2.up) return mountedSpriteUp != null ? mountedSpriteUp : spriteRendererUp;
         if (face == Vector2.down) return mountedSpriteDown != null ? mountedSpriteDown : spriteRendererDown;
@@ -424,7 +449,6 @@ public class MovementController : MonoBehaviour, IKillable
         bool movingHorizontal = Mathf.Abs(direction.x) > 0.01f;
 
         MoveAxis newAxis = movingHorizontal ? MoveAxis.Horizontal : (movingVertical ? MoveAxis.Vertical : MoveAxis.None);
-
         bool axisJustStartedOrChanged = (newAxis != MoveAxis.None && newAxis != currentAxis);
         currentAxis = newAxis;
 
@@ -546,7 +570,7 @@ public class MovementController : MonoBehaviour, IKillable
             position.x = newX;
     }
 
-    void TrySlideHorizontally(Vector2 position, float moveSpeed)
+    private void TrySlideHorizontally(Vector2 position, float moveSpeed)
     {
         float leftCenter = Mathf.Floor(position.x / tileSize) * tileSize;
         float rightCenter = Mathf.Ceil(position.x / tileSize) * tileSize;
@@ -561,12 +585,9 @@ public class MovementController : MonoBehaviour, IKillable
 
         float targetX;
 
-        if (leftFree && !rightFree)
-            targetX = leftCenter;
-        else if (rightFree && !leftFree)
-            targetX = rightCenter;
-        else
-            targetX = Mathf.Abs(position.x - leftCenter) <= Mathf.Abs(position.x - rightCenter) ? leftCenter : rightCenter;
+        if (leftFree && !rightFree) targetX = leftCenter;
+        else if (rightFree && !leftFree) targetX = rightCenter;
+        else targetX = Mathf.Abs(position.x - leftCenter) <= Mathf.Abs(position.x - rightCenter) ? leftCenter : rightCenter;
 
         if (Mathf.Abs(position.x - targetX) > CenterEpsilon)
         {
@@ -581,7 +602,7 @@ public class MovementController : MonoBehaviour, IKillable
         }
     }
 
-    void TrySlideVertically(Vector2 position, float moveSpeed)
+    private void TrySlideVertically(Vector2 position, float moveSpeed)
     {
         float bottomCenter = Mathf.Floor(position.y / tileSize) * tileSize;
         float topCenter = Mathf.Ceil(position.y / tileSize) * tileSize;
@@ -596,12 +617,9 @@ public class MovementController : MonoBehaviour, IKillable
 
         float targetY;
 
-        if (bottomFree && !topFree)
-            targetY = bottomCenter;
-        else if (topFree && !bottomFree)
-            targetY = topCenter;
-        else
-            targetY = Mathf.Abs(position.y - bottomCenter) <= Mathf.Abs(position.y - topCenter) ? bottomCenter : topCenter;
+        if (bottomFree && !topFree) targetY = bottomCenter;
+        else if (topFree && !bottomFree) targetY = topCenter;
+        else targetY = Mathf.Abs(position.y - bottomCenter) <= Mathf.Abs(position.y - topCenter) ? bottomCenter : topCenter;
 
         if (Mathf.Abs(position.y - targetY) > CenterEpsilon)
         {
@@ -624,9 +642,8 @@ public class MovementController : MonoBehaviour, IKillable
         if (hits == null || hits.Length == 0)
             return false;
 
-        bool canPassDestructibles =
-            abilitySystem != null &&
-            abilitySystem.IsEnabled(DestructiblePassAbility.AbilityId);
+        bool canPassDestructibles = abilitySystem != null &&
+                                   abilitySystem.IsEnabled(DestructiblePassAbility.AbilityId);
 
         for (int i = 0; i < hits.Length; i++)
         {
@@ -660,20 +677,17 @@ public class MovementController : MonoBehaviour, IKillable
 
     private bool IsBlockedAtPosition(Vector2 targetPosition, Vector2 dirForSize)
     {
-        Vector2 size;
-
-        if (Mathf.Abs(dirForSize.x) > 0f)
-            size = new Vector2(tileSize * 0.6f, tileSize * 0.2f);
-        else
-            size = new Vector2(tileSize * 0.2f, tileSize * 0.6f);
+        Vector2 size =
+            Mathf.Abs(dirForSize.x) > 0f
+                ? new Vector2(tileSize * 0.6f, tileSize * 0.2f)
+                : new Vector2(tileSize * 0.2f, tileSize * 0.6f);
 
         Collider2D[] hits = Physics2D.OverlapBoxAll(targetPosition, size, 0f, obstacleMask);
         if (hits == null || hits.Length == 0)
             return false;
 
-        bool canPassDestructibles =
-            abilitySystem != null &&
-            abilitySystem.IsEnabled(DestructiblePassAbility.AbilityId);
+        bool canPassDestructibles = abilitySystem != null &&
+                                   abilitySystem.IsEnabled(DestructiblePassAbility.AbilityId);
 
         for (int h = 0; h < hits.Length; h++)
         {
@@ -760,7 +774,7 @@ public class MovementController : MonoBehaviour, IKillable
         touchingHazards.Remove(other);
     }
 
-    void RegisterHazard(Collider2D other)
+    private void RegisterHazard(Collider2D other)
     {
         if (other == null)
             return;
@@ -772,7 +786,7 @@ public class MovementController : MonoBehaviour, IKillable
         touchingHazards.Add(other);
     }
 
-    void TryApplyHazardDamage(Collider2D other)
+    private void TryApplyHazardDamage(Collider2D other)
     {
         if (isDead || isEndingStage)
             return;
@@ -790,43 +804,46 @@ public class MovementController : MonoBehaviour, IKillable
         if (layer == explosionLayer && explosionInvulnerable)
             return;
 
-        CharacterHealth playerHealth = null;
+        if (cachedHealth == null)
+            cachedHealth = GetComponent<CharacterHealth>();
 
-        if (TryGetComponent(out CharacterHealth ph) && ph != null)
-        {
-            playerHealth = ph;
-            if (playerHealth.IsInvulnerable)
-                return;
-        }
+        if (cachedHealth != null && cachedHealth.IsInvulnerable)
+            return;
 
         float cd = Mathf.Max(0.01f, contactDamageCooldownSeconds);
 
-        if (CompareTag("Player") && IsRidingPlaying())
+        if (IsPlayer() && IsRidingPlaying())
         {
-            if (TryGetComponent<PlayerLouieCompanion>(out var companion) && companion != null)
+            if (cachedCompanion == null)
+                TryGetComponent(out cachedCompanion);
+
+            if (cachedCompanion != null)
             {
-                companion.HandleDamageWhileMounting(1);
+                cachedCompanion.HandleDamageWhileMounting(1);
                 nextContactDamageTime = Time.time + cd;
                 return;
             }
         }
 
-        if (CompareTag("Player") && isMountedOnLouie)
+        if (IsPlayer() && isMountedOnLouie)
         {
             var mountedHealth = GetMountedLouieHealth();
             if (mountedHealth != null && mountedHealth.IsInvulnerable)
                 return;
 
-            if (TryGetComponent(out PlayerLouieCompanion companion) && companion != null)
+            if (cachedCompanion == null)
+                TryGetComponent(out cachedCompanion);
+
+            if (cachedCompanion != null)
             {
-                companion.OnMountedLouieHit(1);
+                cachedCompanion.OnMountedLouieHit(1);
                 nextContactDamageTime = Time.time + cd;
                 return;
             }
 
-            if (playerHealth != null)
+            if (cachedHealth != null)
             {
-                playerHealth.TakeDamage(1);
+                cachedHealth.TakeDamage(1);
                 nextContactDamageTime = Time.time + cd;
                 return;
             }
@@ -836,9 +853,9 @@ public class MovementController : MonoBehaviour, IKillable
             return;
         }
 
-        if (playerHealth != null)
+        if (cachedHealth != null)
         {
-            playerHealth.TakeDamage(1);
+            cachedHealth.TakeDamage(1);
             nextContactDamageTime = Time.time + cd;
             return;
         }
@@ -847,7 +864,7 @@ public class MovementController : MonoBehaviour, IKillable
         nextContactDamageTime = Time.time + cd;
     }
 
-    CharacterHealth GetMountedLouieHealth()
+    private CharacterHealth GetMountedLouieHealth()
     {
         var louieMove = GetComponentInChildren<LouieMovementController>(true);
         if (louieMove == null)
@@ -876,13 +893,13 @@ public class MovementController : MonoBehaviour, IKillable
         if (stunReceiver != null)
             stunReceiver.CancelStunForDeath();
 
-        if (CompareTag("Player"))
+        if (IsPlayer())
         {
             TryGetComponent(out CharacterHealth health);
             PlayerPersistentStats.SavePermanentFrom(playerId, this, bombController, health);
         }
 
-        if (CompareTag("Player") && checkWinStateOnDeath)
+        if (IsPlayer() && checkWinStateOnDeath)
         {
             var gm = FindFirstObjectByType<GameManager>();
             if (gm != null)
@@ -894,7 +911,7 @@ public class MovementController : MonoBehaviour, IKillable
         if (abilitySystem != null)
             abilitySystem.DisableAll();
 
-        if (CompareTag("Player"))
+        if (IsPlayer())
             PlayerPersistentStats.ResetTemporaryPowerups(playerId);
 
         if (bombController != null)
@@ -926,15 +943,12 @@ public class MovementController : MonoBehaviour, IKillable
             activeSpriteRenderer = spriteRendererDeath;
             spriteRendererDeath.RefreshFrame();
         }
-        else
+        else if (activeSpriteRenderer != null)
         {
-            if (activeSpriteRenderer != null)
-            {
-                SetAnimEnabled(activeSpriteRenderer, true);
-                activeSpriteRenderer.idle = true;
-                activeSpriteRenderer.loop = false;
-                activeSpriteRenderer.RefreshFrame();
-            }
+            SetAnimEnabled(activeSpriteRenderer, true);
+            activeSpriteRenderer.idle = true;
+            activeSpriteRenderer.loop = false;
+            activeSpriteRenderer.RefreshFrame();
         }
 
         Invoke(nameof(OnDeathSequenceEnded), deathDisableSeconds);
@@ -975,6 +989,7 @@ public class MovementController : MonoBehaviour, IKillable
         }
 
         direction = Vector2.zero;
+        hasInput = false;
 
         DisableAllFootSprites();
         DisableAllMountedSprites();
@@ -986,8 +1001,6 @@ public class MovementController : MonoBehaviour, IKillable
         if (isMountedOnLouie)
         {
             facingDirection = Vector2.down;
-            direction = Vector2.zero;
-            hasInput = false;
 
             var mountedDown = mountedSpriteDown != null ? mountedSpriteDown : spriteRendererDown;
 
@@ -1000,8 +1013,11 @@ public class MovementController : MonoBehaviour, IKillable
                 activeSpriteRenderer = mountedDown;
             }
 
-            if (TryGetComponent(out PlayerLouieCompanion companion) && companion != null)
-                companion.TryPlayMountedLouieEndStage(endStageTotalTime, endStageFrameCount);
+            if (cachedCompanion == null)
+                TryGetComponent(out cachedCompanion);
+
+            if (cachedCompanion != null)
+                cachedCompanion.TryPlayMountedLouieEndStage(endStageTotalTime, endStageFrameCount);
 
             return;
         }
@@ -1153,10 +1169,8 @@ public class MovementController : MonoBehaviour, IKillable
             return;
         }
 
-        if (dir == Vector2.right)
-            sr.flipX = true;
-        else if (dir == Vector2.left)
-            sr.flipX = false;
+        if (dir == Vector2.right) sr.flipX = true;
+        else if (dir == Vector2.left) sr.flipX = false;
     }
 
     public void SetMountedOnLouie(bool mounted)
@@ -1195,22 +1209,6 @@ public class MovementController : MonoBehaviour, IKillable
         ApplyDirectionFromVector(direction);
     }
 
-    private void DisableAllFootSprites()
-    {
-        SetAnimEnabled(spriteRendererUp, false);
-        SetAnimEnabled(spriteRendererDown, false);
-        SetAnimEnabled(spriteRendererLeft, false);
-        SetAnimEnabled(spriteRendererRight, false);
-    }
-
-    private void DisableAllMountedSprites()
-    {
-        SetAnimEnabled(mountedSpriteUp, false);
-        SetAnimEnabled(mountedSpriteDown, false);
-        SetAnimEnabled(mountedSpriteLeft, false);
-        SetAnimEnabled(mountedSpriteRight, false);
-    }
-
     public void SetMountedSpritesLocalYOverride(bool enable, float localY)
     {
         if (enable)
@@ -1224,7 +1222,7 @@ public class MovementController : MonoBehaviour, IKillable
         mountedSpritesYOverridden = false;
     }
 
-    void ApplyMountedSpritesLocalY(float localY)
+    private void ApplyMountedSpritesLocalY(float localY)
     {
         if (mountedSpriteUp != null) mountedSpriteUp.SetRuntimeBaseLocalY(localY);
         if (mountedSpriteDown != null) mountedSpriteDown.SetRuntimeBaseLocalY(localY);
@@ -1232,7 +1230,7 @@ public class MovementController : MonoBehaviour, IKillable
         if (mountedSpriteRight != null) mountedSpriteRight.SetRuntimeBaseLocalY(localY);
     }
 
-    void ClearMountedSpritesLocalYOverride()
+    private void ClearMountedSpritesLocalYOverride()
     {
         if (mountedSpriteUp != null) mountedSpriteUp.ClearRuntimeBaseOffset();
         if (mountedSpriteDown != null) mountedSpriteDown.ClearRuntimeBaseOffset();
@@ -1240,7 +1238,7 @@ public class MovementController : MonoBehaviour, IKillable
         if (mountedSpriteRight != null) mountedSpriteRight.ClearRuntimeBaseOffset();
     }
 
-    void ForceExclusiveSpriteFromState()
+    private void ForceExclusiveSpriteFromState()
     {
         if (isDead)
             return;
@@ -1310,14 +1308,6 @@ public class MovementController : MonoBehaviour, IKillable
             return new Vector2(Mathf.Sign(dir.x), 0f);
 
         return new Vector2(0f, Mathf.Sign(dir.y));
-    }
-
-    bool IsRidingPlaying()
-    {
-        if (TryGetComponent(out PlayerRidingController r) && r != null)
-            return r.IsPlaying;
-
-        return false;
     }
 
     public void SnapToWorldPoint(Vector2 worldPos, bool roundToGrid = false)
