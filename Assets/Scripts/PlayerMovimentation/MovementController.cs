@@ -58,6 +58,10 @@ public class MovementController : MonoBehaviour, IKillable
     public float endStageTotalTime = 1f;
     public int endStageFrameCount = 9;
 
+    [Header("Visual Override (external)")]
+    [SerializeField] private bool visualOverrideActive;
+    public bool VisualOverrideActive => visualOverrideActive;
+
     [Header("Grid Alignment")]
     [SerializeField, Range(0.5f, 20f)] private float perpendicularAlignMultiplier = 8f;
     [SerializeField] private bool snapPerpendicularOnAxisStart = true;
@@ -114,11 +118,6 @@ public class MovementController : MonoBehaviour, IKillable
     private IMovementAbility[] movementAbilities = Array.Empty<IMovementAbility>();
     private int explosionLayer;
     private int enemyLayer;
-
-    private static readonly Vector2[] CardinalDirs =
-    {
-        Vector2.up, Vector2.down, Vector2.left, Vector2.right
-    };
 
     public void SetPlayerId(int id)
     {
@@ -292,6 +291,9 @@ public class MovementController : MonoBehaviour, IKillable
 
     public void EnableExclusiveFromState()
     {
+        if (visualOverrideActive)
+            return;
+
         if (IsRidingPlaying())
         {
             DisableAllFootSprites();
@@ -320,6 +322,9 @@ public class MovementController : MonoBehaviour, IKillable
         }
 
         if (inputLocked || GamePauseController.IsPaused || isDead)
+            return;
+
+        if (visualOverrideActive)
             return;
 
         hasInput = false;
@@ -715,6 +720,9 @@ public class MovementController : MonoBehaviour, IKillable
 
     protected void SetDirection(Vector2 newDirection, AnimatedSpriteRenderer spriteRenderer)
     {
+        if (visualOverrideActive)
+            return;
+
         if (IsRidingPlaying())
             return;
 
@@ -1172,6 +1180,22 @@ public class MovementController : MonoBehaviour, IKillable
 
         if (dir == Vector2.right) sr.flipX = true;
         else if (dir == Vector2.left) sr.flipX = false;
+    }
+
+    public void SetVisualOverrideActive(bool active)
+    {
+        visualOverrideActive = active;
+
+        if (visualOverrideActive)
+        {
+            SetAllSpritesVisible(false);
+            return;
+        }
+
+        if (isDead || isEndingStage || IsRidingPlaying())
+            return;
+
+        EnableExclusiveFromState();
     }
 
     public void SetMountedOnLouie(bool mounted)

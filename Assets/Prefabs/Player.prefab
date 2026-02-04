@@ -586,6 +586,124 @@ MonoBehaviour:
   frameOffsets: []
   pingPong: 0
   disableOffsetsIfThisObjectHasRigidbody2D: 1
+--- !u!1 &1534028239872533418
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 3080202695484727751}
+  - component: {fileID: 8554059029330946642}
+  - component: {fileID: 8373095307517099465}
+  m_Layer: 3
+  m_Name: Afk
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &3080202695484727751
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1534028239872533418}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0.53, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 3797169763190965992}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!212 &8554059029330946642
+SpriteRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1534028239872533418}
+  m_Enabled: 0
+  m_CastShadows: 0
+  m_ReceiveShadows: 0
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 0
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 10754, guid: 0000000000000000f000000000000000, type: 0}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 0
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 5
+  m_Sprite: {fileID: 2894449952862357072, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_FlipX: 0
+  m_FlipY: 0
+  m_DrawMode: 0
+  m_Size: {x: 1, y: 1.5}
+  m_AdaptiveModeThreshold: 0.5
+  m_SpriteTileMode: 0
+  m_WasSpriteAssigned: 1
+  m_MaskInteraction: 0
+  m_SpriteSortPoint: 0
+--- !u!114 &8373095307517099465
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1534028239872533418}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3a4b55e1b961d144197e1a7a4a391956, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  idleSprite: {fileID: 2894449952862357072, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
+  animationSprite:
+  - {fileID: 2894449952862357072, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
+  - {fileID: 8268391293709550242, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
+  - {fileID: 2894449952862357072, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
+  - {fileID: 8268391293709550242, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
+  allowFlipX: 0
+  animationTime: 0.125
+  useSequenceDuration: 0
+  sequenceDuration: 0.5
+  loop: 0
+  idle: 0
+  frameOffsets: []
+  pingPong: 0
+  disableOffsetsIfThisObjectHasRigidbody2D: 1
 --- !u!1 &1867382026052711107
 GameObject:
   m_ObjectHideFlags: 0
@@ -1672,6 +1790,7 @@ GameObject:
   - component: {fileID: 4227801384958850435}
   - component: {fileID: 8631268761558722197}
   - component: {fileID: 429751358522082578}
+  - component: {fileID: 4481698298045029297}
   m_Layer: 3
   m_Name: Player
   m_TagString: Player
@@ -1711,6 +1830,7 @@ Transform:
   - {fileID: 4424687848007575676}
   - {fileID: 3396635034526613013}
   - {fileID: 6166608495005568657}
+  - {fileID: 3080202695484727751}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!50 &8689873400551580866
@@ -1813,10 +1933,11 @@ MonoBehaviour:
   checkWinStateOnDeath: 1
   endStageTotalTime: 1
   endStageFrameCount: 9
-  isDead: 0
+  visualOverrideActive: 0
   perpendicularAlignMultiplier: 8
   snapPerpendicularOnAxisStart: 1
   alignEpsilon: 0.0015
+  isDead: 0
 --- !u!114 &2372813969180496726
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2037,6 +2158,13 @@ MonoBehaviour:
   blinkPlayerTogetherWithLouie: 1
   mountLouieSfx: {fileID: 0}
   mountLouieVolume: 1
+  blueLouieMountSfxName: MountBlueLouie
+  blackLouieMountSfxName: MountBlackLouie
+  purpleLouieMountSfxName: MountPurpleLouie
+  greenLouieMountSfxName: MountGreenLouie
+  yellowLouieMountSfxName: MountYellowLouie
+  pinkLouieMountSfxName: MountPinkLouie
+  redLouieMountSfxName: MountRedLouie
 --- !u!114 &3335614114974889682
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2126,6 +2254,7 @@ MonoBehaviour:
   pinkLouieMountSfxName: MountPinkLouie
   redLouieMountSfxName: MountRedLouie
   defaultMountVolume: 1
+  dequeueDestroySeconds: 0.5
 --- !u!114 &8631268761558722197
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2157,6 +2286,21 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerLouieManualDismount
   dismountAction: 9
   freezeEggQueueOnDismount: 1
+--- !u!114 &4481698298045029297
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4947014498081102474}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 030967207a30a0a46a315f39d879799f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerInactivityEmote
+  secondsToTrigger: 5
+  emoteLoopRenderer: {fileID: 8373095307517099465}
+  refreshFrameOnEnter: 1
 --- !u!1 &5548736737291621340
 GameObject:
   m_ObjectHideFlags: 0

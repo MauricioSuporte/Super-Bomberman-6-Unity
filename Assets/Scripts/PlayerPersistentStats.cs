@@ -17,7 +17,7 @@ public static class PlayerPersistentStats
 
     public sealed class PlayerState
     {
-        public int Life = 1;
+        public int Life = 2;
 
         public int BombAmount = 8;
         public int ExplosionRadius = 10;
@@ -28,11 +28,11 @@ public static class PlayerPersistentStats
         public bool CanPunchBombs = true;
         public bool CanPassBombs = false;
         public bool CanPassDestructibles = true;
-        public bool HasPierceBombs = true;
-        public bool HasControlBombs = false;
+        public bool HasPierceBombs = false;
+        public bool HasControlBombs = true;
         public bool HasFullFire = false;
 
-        public MountedLouieType MountedLouie = MountedLouieType.Black;
+        public MountedLouieType MountedLouie = MountedLouieType.None;
         public BomberSkin Skin = BomberSkin.White;
 
         public readonly List<ItemPickup.ItemType> QueuedEggs = new(8);
@@ -40,8 +40,8 @@ public static class PlayerPersistentStats
         public PlayerState()
         {
             QueuedEggs.Clear();
-            QueuedEggs.Add(ItemPickup.ItemType.BlueLouieEgg);
-            QueuedEggs.Add(ItemPickup.ItemType.PurpleLouieEgg);
+            //QueuedEggs.Add(ItemPickup.ItemType.BlueLouieEgg);
+            //QueuedEggs.Add(ItemPickup.ItemType.PurpleLouieEgg);
         }
     }
 
