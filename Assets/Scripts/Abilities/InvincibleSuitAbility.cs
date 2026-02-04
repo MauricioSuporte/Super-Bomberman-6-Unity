@@ -12,11 +12,13 @@ public class InvincibleSuitAbility : MonoBehaviour, IPlayerAbility
     [Header("Settings")]
     public float durationSeconds = 10f;
 
-    private CharacterHealth health;
-    private PlayerLouieCompanion companion;
-    private Coroutine routine;
+    CharacterHealth health;
+    PlayerLouieCompanion companion;
+    Coroutine routine;
 
-    private void Awake()
+    CharacterHealth appliedLouieHealth;
+
+    void Awake()
     {
         health = GetComponent<CharacterHealth>();
         TryGetComponent(out companion);
@@ -51,26 +53,27 @@ public class InvincibleSuitAbility : MonoBehaviour, IPlayerAbility
         if (health != null)
             health.StopInvulnerability();
 
-        if (companion != null)
+        if (appliedLouieHealth != null)
         {
-            var louieHealth = companion.GetMountedLouieHealth();
-            if (louieHealth != null)
-                louieHealth.StopInvulnerability();
+            appliedLouieHealth.StopInvulnerability();
+            appliedLouieHealth = null;
         }
     }
 
-    private IEnumerator Run()
+    IEnumerator Run()
     {
         float seconds = Mathf.Max(0.01f, durationSeconds);
 
         if (health != null)
             health.StartTemporaryInvulnerability(seconds);
 
+        appliedLouieHealth = null;
+
         if (companion != null)
         {
-            var louieHealth = companion.GetMountedLouieHealth();
-            if (louieHealth != null)
-                louieHealth.StartTemporaryInvulnerability(seconds);
+            appliedLouieHealth = companion.GetMountedLouieHealth();
+            if (appliedLouieHealth != null)
+                appliedLouieHealth.StartTemporaryInvulnerability(seconds);
         }
 
         yield return new WaitForSeconds(seconds);

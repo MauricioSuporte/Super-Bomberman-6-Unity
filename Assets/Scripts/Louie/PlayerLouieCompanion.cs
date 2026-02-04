@@ -480,6 +480,9 @@ public class PlayerLouieCompanion : MonoBehaviour
         if (louie.TryGetComponent<BombController>(out var bc))
             bc.enabled = false;
 
+        if (louie.TryGetComponent<MovementController>(out var mc) && mc != null)
+            mc.SetExplosionInvulnerable(false);
+
         detachedLouie = louie;
         detachedType = typeBeforeReset;
         return true;

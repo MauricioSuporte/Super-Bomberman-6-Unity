@@ -75,6 +75,8 @@ public sealed class PlayerLouieManualDismount : MonoBehaviour
                 pickup = detachedLouie.AddComponent<LouieWorldPickup>();
 
             pickup.Init(detachedType);
+
+            ClearDetachedLouieInvulnerability(detachedLouie);
         }
 
         bool started = rider.TryPlayRiding(
@@ -82,23 +84,54 @@ public sealed class PlayerLouieManualDismount : MonoBehaviour
             onComplete: null,
             onStart: () =>
             {
+                if (eggQueue != null)
+                    eggQueue.SetIgnoreOwnerInvulnerability(true);
+
                 if (!freezeEggQueueOnDismount)
+                {
+                    if (eggQueue != null)
+                        eggQueue.SetIgnoreOwnerInvulnerability(false);
                     return;
+                }
 
                 if (detachedLouie == null)
+                {
+                    if (eggQueue != null)
+                        eggQueue.SetIgnoreOwnerInvulnerability(false);
                     return;
+                }
 
                 if (eggQueue == null || eggQueue.Count <= 0)
+                {
+                    if (eggQueue != null)
+                        eggQueue.SetIgnoreOwnerInvulnerability(false);
                     return;
+                }
 
                 Vector3 freezePos = detachedLouie.transform.position;
                 freezePos.z = 0f;
 
                 eggQueue.TransferToDetachedLouieAndFreeze(detachedLouie, freezePos);
+
+                if (eggQueue != null)
+                    eggQueue.SetIgnoreOwnerInvulnerability(false);
             }
         );
 
         if (!started)
             return;
+    }
+
+    static void ClearDetachedLouieInvulnerability(GameObject detachedLouie)
+    {
+        if (detachedLouie == null)
+            return;
+
+        if (detachedLouie.TryGetComponent<CharacterHealth>(out var louieHealth))
+            louieHealth.StopInvulnerability();
+
+        var move = detachedLouie.GetComponent<MovementController>();
+        if (move != null)
+            move.SetExplosionInvulnerable(false);
     }
 }

@@ -106,7 +106,10 @@ public sealed class LouieEggQueue : MonoBehaviour
     Rigidbody2D _ownerRb;
     MovementController _ownerMove;
     CharacterHealth _ownerHealth;
-    public bool OwnerIsInvulnerable => _ownerHealth != null && _ownerHealth.IsInvulnerable;
+    public bool OwnerIsInvulnerable =>
+        !_ignoreOwnerInvulnerability &&
+        _ownerHealth != null &&
+        _ownerHealth.IsInvulnerable;
 
     Transform _worldRoot;
 
@@ -132,6 +135,7 @@ public sealed class LouieEggQueue : MonoBehaviour
 
     readonly Dictionary<ItemPickup.ItemType, AudioClip> _mountSfxCache = new();
     int _ownerPlayerId = -1;
+    bool _ignoreOwnerInvulnerability;
 
     #region Unity
 
@@ -1533,6 +1537,11 @@ public sealed class LouieEggQueue : MonoBehaviour
             case ItemPickup.ItemType.PinkLouieEgg: comp.MountPinkLouie(); break;
             case ItemPickup.ItemType.RedLouieEgg: comp.MountRedLouie(); break;
         }
+    }
+
+    public void SetIgnoreOwnerInvulnerability(bool ignore)
+    {
+        _ignoreOwnerInvulnerability = ignore;
     }
 
     #endregion
