@@ -75,6 +75,9 @@ public class PlayerLouieCompanion : MonoBehaviour
     readonly Dictionary<MountedLouieType, Action> applyMountedAbility = new();
     LouieAbilitySfxConfig currentAbilityCfg;
 
+    Coroutine autoRemountRoutine;
+    bool autoRemountRequested;
+
     void Awake()
     {
         movement = GetComponent<MovementController>();
@@ -299,12 +302,37 @@ public class PlayerLouieCompanion : MonoBehaviour
 
     #region Damage / Lose / Unmount
 
-    public void OnMountedLouieHit(int damage)
+    bool skipQueueRemountOnce;
+
+    public void OnMountedLouieHit(int damage, bool fromExplosion)
     {
         if (currentLouie == null)
             return;
 
         int dmg = Mathf.Max(1, damage);
+
+        if (fromExplosion)
+        {
+            bool willDie = false;
+
+            if (mountedLouieHealth != null)
+                willDie = (mountedLouieHealth.life - dmg) <= 0;
+            else
+                willDie = (mountedLouieHp - dmg) <= 0;
+
+            if (willDie)
+            {
+                if (TryGetComponent<LouieEggQueue>(out var q) && q != null)
+                    q.AllowEggExplosionDamageForFrames(2);
+            }
+        }
+
+        if (fromExplosion && mountedLouieHealth != null)
+        {
+            int lifeAfter = mountedLouieHealth.life - dmg;
+            if (lifeAfter <= 0)
+                skipQueueRemountOnce = true;
+        }
 
         if (mountedLouieHealth != null)
         {
@@ -325,7 +353,12 @@ public class PlayerLouieCompanion : MonoBehaviour
 
         mountedLouieHp -= dmg;
         if (mountedLouieHp <= 0)
+        {
+            if (fromExplosion)
+                skipQueueRemountOnce = true;
+
             LoseLouie();
+        }
     }
 
     public void LoseLouie()
@@ -333,7 +366,18 @@ public class PlayerLouieCompanion : MonoBehaviour
         if (currentLouie == null)
             return;
 
-        bool hasQueuedEgg = TryPopQueuedEgg(out var queuedPrefab, out var queuedMountedType, out var queuedSfx, out var queuedVol);
+        bool allowQueue = !skipQueueRemountOnce;
+        skipQueueRemountOnce = false;
+
+        bool hasQueuedEgg = false;
+        GameObject queuedPrefab = null;
+        MountedLouieType queuedMountedType = MountedLouieType.None;
+        AudioClip queuedSfx = null;
+        float queuedVol = 1f;
+
+        if (allowQueue)
+            hasQueuedEgg = TryPopQueuedEgg(out queuedPrefab, out queuedMountedType, out queuedSfx, out queuedVol);
+
         var rider = GetComponent<PlayerRidingController>();
 
         if (rider != null && movement != null)
@@ -391,7 +435,7 @@ public class PlayerLouieCompanion : MonoBehaviour
         KillDetachedLouieGuaranteed(louie);
 
         if (currentLouie == null)
-            TryMountFromQueuedEgg();
+            RequestAutoRemountFromQueue();
     }
 
     void OnPlayerDied(MovementController _) => UnmountLouie();
@@ -1037,6 +1081,55 @@ public class PlayerLouieCompanion : MonoBehaviour
 
         TryMount(prefab, type);
         return true;
+    }
+
+    void RequestAutoRemountFromQueue()
+    {
+        autoRemountRequested = true;
+
+        if (autoRemountRoutine != null)
+            return;
+
+        autoRemountRoutine = StartCoroutine(AutoRemountFromQueueRoutine());
+    }
+
+    IEnumerator AutoRemountFromQueueRoutine()
+    {
+        yield return null;
+
+        int safetyFrames = 240;
+        while (safetyFrames-- > 0)
+        {
+            autoRemountRequested = false;
+
+            if (!gameObject.activeInHierarchy)
+                break;
+
+            if (currentLouie != null)
+                break;
+
+            var rider = GetComponent<PlayerRidingController>();
+            if (rider != null && rider.IsPlaying)
+            {
+                yield return null;
+                continue;
+            }
+
+            if (!TryGetComponent<LouieEggQueue>(out var q) || q == null || q.Count <= 0)
+                break;
+
+            bool mounted = TryMountFromQueuedEgg();
+            if (mounted)
+                break;
+
+            yield return null;
+
+            if (autoRemountRequested)
+                continue;
+        }
+
+        autoRemountRoutine = null;
+        autoRemountRequested = false;
     }
 
     #endregion

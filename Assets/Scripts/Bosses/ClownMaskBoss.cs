@@ -1292,7 +1292,7 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
         {
             if (movement.TryGetComponent<PlayerLouieCompanion>(out var companion) && companion != null)
             {
-                companion.OnMountedLouieHit(touchDamage);
+                companion.OnMountedLouieHit(touchDamage, false);
                 nextTouchDamageTime = Time.time + touchDamageCooldown;
                 return;
             }

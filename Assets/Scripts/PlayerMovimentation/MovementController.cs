@@ -836,7 +836,8 @@ public class MovementController : MonoBehaviour, IKillable
 
             if (cachedCompanion != null)
             {
-                cachedCompanion.OnMountedLouieHit(1);
+                bool fromExplosion = (layer == explosionLayer);
+                cachedCompanion.OnMountedLouieHit(1, fromExplosion);
                 nextContactDamageTime = Time.time + cd;
                 return;
             }

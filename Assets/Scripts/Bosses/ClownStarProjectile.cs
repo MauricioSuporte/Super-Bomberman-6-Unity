@@ -84,7 +84,7 @@ public class ClownStarProjectile : MonoBehaviour
         {
             if (movement.TryGetComponent<PlayerLouieCompanion>(out var companion) && companion != null)
             {
-                companion.OnMountedLouieHit(damage);
+                companion.OnMountedLouieHit(damage, false);
                 return true;
             }
 

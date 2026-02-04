@@ -104,15 +104,26 @@ public sealed class LouieEggQueue : MonoBehaviour
     int _historyHead;
     int _historyCount;
     float _historyTimeCarry;
+    int _ignoreOwnerInvulnerabilityUntilFrame = -1;
 
     Transform _ownerTr;
     Rigidbody2D _ownerRb;
     MovementController _ownerMove;
     CharacterHealth _ownerHealth;
-    public bool OwnerIsInvulnerable =>
-        !_ignoreOwnerInvulnerability &&
-        _ownerHealth != null &&
-        _ownerHealth.IsInvulnerable;
+    public bool OwnerIsInvulnerable
+    {
+        get
+        {
+            bool ignoreNow =
+                _ignoreOwnerInvulnerability ||
+                (_ignoreOwnerInvulnerabilityUntilFrame >= 0 && Time.frameCount <= _ignoreOwnerInvulnerabilityUntilFrame);
+
+            return
+                !ignoreNow &&
+                _ownerHealth != null &&
+                _ownerHealth.IsInvulnerable;
+        }
+    }
 
     Transform _worldRoot;
 
@@ -152,6 +163,9 @@ public sealed class LouieEggQueue : MonoBehaviour
     {
         ApplyEggLayerNow();
         ApplyEggSortingNow();
+
+        if (PruneNullEggs())
+            PostQueueChanged(animateShift: true);
 
         if (_hardFrozen)
         {
@@ -1554,18 +1568,6 @@ public sealed class LouieEggQueue : MonoBehaviour
         }
     }
 
-    void RemoveEggAndDestroyVisual(int idx)
-    {
-        if (idx < 0 || idx >= _eggs.Count)
-            return;
-
-        var tr = _eggs[idx].rootTr;
-        RemoveEggAtIndexNoDestroy(idx);
-
-        if (tr != null)
-            Destroy(tr.gameObject);
-    }
-
     static void MountFromEggType(PlayerLouieCompanion comp, ItemPickup.ItemType eggType)
     {
         if (comp == null) return;
@@ -1587,10 +1589,71 @@ public sealed class LouieEggQueue : MonoBehaviour
         _ignoreOwnerInvulnerability = ignore;
     }
 
+    bool PruneNullEggs()
+    {
+        if (_eggs.Count == 0)
+            return false;
+
+        bool removed = false;
+
+        for (int i = _eggs.Count - 1; i >= 0; i--)
+        {
+            if (_eggs[i].rootTr != null)
+                continue;
+
+            _eggs.RemoveAt(i);
+            removed = true;
+
+            if (_hardFrozen)
+            {
+                if (i < _hardFrozenEggWorld.Count) _hardFrozenEggWorld.RemoveAt(i);
+                if (i < _hardFrozenFacing.Count) _hardFrozenFacing.RemoveAt(i);
+            }
+        }
+
+        return removed;
+    }
+
+    public void InvalidateAllEggsByExplosion()
+    {
+        if (_eggs.Count == 0)
+            return;
+
+        for (int i = 0; i < _eggs.Count; i++)
+        {
+            var tr = _eggs[i].rootTr;
+            if (tr == null)
+                continue;
+
+            if (!tr.TryGetComponent<Collider2D>(out var col))
+                col = tr.GetComponentInChildren<Collider2D>(true);
+
+            if (col != null)
+                col.enabled = false;
+
+            StartCoroutine(DestroyEggRoutine(tr, Mathf.Max(0.05f, dequeueDestroySeconds)));
+        }
+
+        _eggs.Clear();
+
+        if (_hardFrozen)
+        {
+            _hardFrozenEggWorld.Clear();
+            _hardFrozenFacing.Clear();
+        }
+
+        PostQueueChanged(animateShift: false);
+    }
+
+    public void AllowEggExplosionDamageForFrames(int frames = 2)
+    {
+        frames = Mathf.Clamp(frames, 1, 10);
+        _ignoreOwnerInvulnerabilityUntilFrame = Time.frameCount + frames;
+    }
+
     #endregion
 
     #region Freeze Owner / Absorb
-    // (mantido igual ao seu)
     public void FreezeOwnerAtWorldPosition(Vector3 worldPos)
     {
         EnsureWorldRoot();
