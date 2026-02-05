@@ -35,6 +35,7 @@ public class LouieVisualController : MonoBehaviour
 
     private CharacterHealth ownerHealth;
     private PlayerLouieCompanion ownerCompanion;
+    private MovementController louieMovement;
 
     private SpriteRenderer[] louieSpriteRenderers;
     private Color[] louieOriginalColors;
@@ -53,6 +54,9 @@ public class LouieVisualController : MonoBehaviour
         playingInactivity = false;
 
         CacheAllRenderers();
+
+        if (louieMovement == null)
+            TryGetComponent(out louieMovement);
 
         isPinkLouieMounted = DetectPinkMounted(owner);
 
@@ -87,6 +91,13 @@ public class LouieVisualController : MonoBehaviour
         if (louieInactivityEmoteLoop == null)
             return;
 
+        if (louieMovement != null && louieMovement.isDead)
+        {
+            playingInactivity = false;
+            SetRendererBranchEnabled(louieInactivityEmoteLoop, false);
+            return;
+        }
+
         playingInactivity = on;
 
         if (on)
@@ -114,8 +125,7 @@ public class LouieVisualController : MonoBehaviour
 
             ApplyDirection(faceDir, isIdle);
 
-            if (louieInactivityEmoteLoop != null)
-                SetRendererBranchEnabled(louieInactivityEmoteLoop, false);
+            SetRendererBranchEnabled(louieInactivityEmoteLoop, false);
         }
     }
 
@@ -127,6 +137,14 @@ public class LouieVisualController : MonoBehaviour
 
     private void LateUpdate()
     {
+        if (louieMovement != null && louieMovement.isDead)
+        {
+            playingInactivity = false;
+            playingEndStage = false;
+            transform.localPosition = localOffset;
+            return;
+        }
+
         if (owner == null || owner.isDead)
         {
             Destroy(gameObject);
@@ -154,6 +172,12 @@ public class LouieVisualController : MonoBehaviour
 
     private void EnsureInactivityExclusive()
     {
+        if (louieMovement != null && louieMovement.isDead)
+        {
+            playingInactivity = false;
+            return;
+        }
+
         if (louieInactivityEmoteLoop == null)
         {
             playingInactivity = false;

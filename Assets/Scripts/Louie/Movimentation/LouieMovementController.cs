@@ -84,4 +84,15 @@ public class LouieMovementController : MovementController
     }
 
     protected override void OnTriggerEnter2D(Collider2D other) { }
+
+    protected override void DeathSequence()
+    {
+        if (TryGetComponent<LouieVisualController>(out var visual))
+        {
+            visual.SetInactivityEmote(false);
+            visual.enabled = false;
+        }
+
+        base.DeathSequence();
+    }
 }
