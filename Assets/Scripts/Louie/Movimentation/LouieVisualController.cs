@@ -31,6 +31,7 @@ public class LouieVisualController : MonoBehaviour
     private AnimatedSpriteRenderer active;
     private bool playingEndStage;
     private bool isPinkLouieMounted;
+    private bool playingInactivity;
 
     private CharacterHealth ownerHealth;
     private PlayerLouieCompanion ownerCompanion;
@@ -49,6 +50,7 @@ public class LouieVisualController : MonoBehaviour
     {
         owner = movement;
         playingEndStage = false;
+        playingInactivity = false;
 
         CacheAllRenderers();
 
@@ -69,7 +71,8 @@ public class LouieVisualController : MonoBehaviour
         for (int i = 0; i < louieSpriteRenderers.Length; i++)
             louieOriginalColors[i] = louieSpriteRenderers[i] != null ? louieSpriteRenderers[i].color : Color.white;
 
-        SetInactivityEmote(false);
+        if (louieInactivityEmoteLoop != null)
+            SetRendererBranchEnabled(louieInactivityEmoteLoop, false);
 
         var start = louieDown != null ? louieDown : (louieUp != null ? louieUp : (louieLeft != null ? louieLeft : louieRight));
         if (start != null)
@@ -84,12 +87,36 @@ public class LouieVisualController : MonoBehaviour
         if (louieInactivityEmoteLoop == null)
             return;
 
-        louieInactivityEmoteLoop.loop = true;
-        louieInactivityEmoteLoop.idle = false;
-        SetRendererBranchEnabled(louieInactivityEmoteLoop, on);
+        playingInactivity = on;
 
-        if (on && refreshInactivityFrameOnEnter)
-            louieInactivityEmoteLoop.RefreshFrame();
+        if (on)
+        {
+            louieInactivityEmoteLoop.loop = true;
+            louieInactivityEmoteLoop.idle = false;
+
+            HardExclusive(louieInactivityEmoteLoop);
+
+            if (refreshInactivityFrameOnEnter)
+                louieInactivityEmoteLoop.RefreshFrame();
+        }
+        else
+        {
+            if (owner == null)
+            {
+                SetRendererBranchEnabled(louieInactivityEmoteLoop, false);
+                return;
+            }
+
+            bool isIdle = owner.Direction == Vector2.zero;
+            Vector2 faceDir = isIdle ? owner.FacingDirection : owner.Direction;
+
+            playingEndStage = false;
+
+            ApplyDirection(faceDir, isIdle);
+
+            if (louieInactivityEmoteLoop != null)
+                SetRendererBranchEnabled(louieInactivityEmoteLoop, false);
+        }
     }
 
     private void CacheAllRenderers()
@@ -108,7 +135,9 @@ public class LouieVisualController : MonoBehaviour
 
         transform.localPosition = localOffset;
 
-        if (playingEndStage)
+        if (playingInactivity)
+            EnsureInactivityExclusive();
+        else if (playingEndStage)
             EnsureEndStageExclusive();
         else
         {
@@ -121,6 +150,22 @@ public class LouieVisualController : MonoBehaviour
         }
 
         ApplyBlinkSyncFromOwnerIfNeeded();
+    }
+
+    private void EnsureInactivityExclusive()
+    {
+        if (louieInactivityEmoteLoop == null)
+        {
+            playingInactivity = false;
+            return;
+        }
+
+        HardExclusive(louieInactivityEmoteLoop);
+
+        louieInactivityEmoteLoop.idle = false;
+        louieInactivityEmoteLoop.loop = true;
+        louieInactivityEmoteLoop.pingPong = false;
+        louieInactivityEmoteLoop.RefreshFrame();
     }
 
     private void ApplyBlinkSyncFromOwnerIfNeeded()
@@ -211,8 +256,8 @@ public class LouieVisualController : MonoBehaviour
 
         active = keep;
 
-        if (louieInactivityEmoteLoop != null)
-            SetRendererBranchEnabled(louieInactivityEmoteLoop, louieInactivityEmoteLoop.enabled);
+        if (isPinkLouieMounted && !playingInactivity)
+            ForceDisableRightRenderer();
     }
 
     private void ForceDisableRightRenderer()
@@ -320,6 +365,9 @@ public class LouieVisualController : MonoBehaviour
         SetRendererBranchEnabled(louieRight, keep == louieRight);
         SetRendererBranchEnabled(louieEndStage, keep == louieEndStage);
 
+        if (louieInactivityEmoteLoop != null)
+            SetRendererBranchEnabled(louieInactivityEmoteLoop, false);
+
         active = keep;
 
         if (active != null)
@@ -359,6 +407,7 @@ public class LouieVisualController : MonoBehaviour
         if (louieEndStage == null)
             return false;
 
+        playingInactivity = false;
         playingEndStage = true;
 
         HardExclusive(louieEndStage);
@@ -378,6 +427,7 @@ public class LouieVisualController : MonoBehaviour
 
     public void ForceIdleUp()
     {
+        playingInactivity = false;
         playingEndStage = false;
 
         if (louieUp == null)
