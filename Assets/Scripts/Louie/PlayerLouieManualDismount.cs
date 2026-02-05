@@ -81,7 +81,10 @@ public sealed class PlayerLouieManualDismount : MonoBehaviour
 
         bool started = rider.TryPlayRiding(
             facingAtPress,
-            onComplete: null,
+            onComplete: () =>
+            {
+                StartDetachedLouieInactivityLoop(detachedLouie);
+            },
             onStart: () =>
             {
                 if (eggQueue != null)
@@ -120,6 +123,30 @@ public sealed class PlayerLouieManualDismount : MonoBehaviour
 
         if (!started)
             return;
+    }
+
+    static void StartDetachedLouieInactivityLoop(GameObject detachedLouie)
+    {
+        if (detachedLouie == null)
+            return;
+
+        if (detachedLouie.TryGetComponent<MovementController>(out var mc) && mc != null && mc.isDead)
+            return;
+
+        var visual = detachedLouie.GetComponentInChildren<LouieVisualController>(true);
+        if (visual == null)
+            return;
+
+        visual.localOffset = (Vector2)visual.transform.localPosition;
+
+        var selfMovement = detachedLouie.GetComponentInChildren<MovementController>(true);
+        if (selfMovement == null || selfMovement.isDead)
+            return;
+
+        visual.Bind(selfMovement);
+        visual.enabled = true;
+
+        visual.SetInactivityEmote(true);
     }
 
     static void ClearDetachedLouieInvulnerability(GameObject detachedLouie)
