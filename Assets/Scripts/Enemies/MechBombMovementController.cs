@@ -235,17 +235,24 @@ public class MechBombMovementController : JunctionTurningEnemyMovementController
         if (cachedBombController != null)
             return;
 
-        cachedBombController = FindFirstObjectByType<BombController>();
+        if (TryGetComponent(out cachedBombController) && cachedBombController != null)
+            return;
+
+        var all = FindObjectsByType<BombController>(FindObjectsSortMode.None);
+        for (int i = 0; i < all.Length; i++)
+        {
+            var bc = all[i];
+            if (bc == null) continue;
+            if (!bc.CompareTag("Player")) continue;
+            cachedBombController = bc;
+            return;
+        }
+
+        cachedBombController = null;
     }
 
     void ExplodeLikeBombController()
     {
-        if (cachedBombController == null)
-        {
-            Debug.LogError($"{name}: No BombController found in scene. Cannot spawn bomb-like explosion.", this);
-            return;
-        }
-
         Vector2 origin = rb != null ? rb.position : (Vector2)transform.position;
         origin.x = Mathf.Round(origin.x);
         origin.y = Mathf.Round(origin.y);

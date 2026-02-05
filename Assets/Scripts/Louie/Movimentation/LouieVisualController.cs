@@ -19,7 +19,6 @@ public class LouieVisualController : MonoBehaviour
 
     [Header("Inactivity Emote (Louie)")]
     [SerializeField] private AnimatedSpriteRenderer louieInactivityEmoteLoop;
-    [SerializeField] private bool refreshInactivityFrameOnEnter = true;
 
     [Header("Pink Louie - Right X Fix")]
     public bool enablePinkRightFix = true;

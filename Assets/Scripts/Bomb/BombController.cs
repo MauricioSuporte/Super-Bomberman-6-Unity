@@ -685,14 +685,6 @@ public partial class BombController : MonoBehaviour
         destructibleTiles.SetTile(cell, null);
     }
 
-    private void ClearDestructible(
-        Vector2 position,
-        bool spawnDestructiblePrefab = true,
-        bool spawnHiddenObject = true)
-    {
-        ClearDestructibleForEffect(position, spawnDestructiblePrefab, spawnHiddenObject);
-    }
-
     private void HideBombVisuals(GameObject bomb)
     {
         if (bomb.TryGetComponent<SpriteRenderer>(out var sprite))
@@ -1093,6 +1085,12 @@ public partial class BombController : MonoBehaviour
 
         if (sfxSource != null)
             PlayExplosionSfxExclusive(sfxSource, effectiveRadius);
+
+        if (explosionPrefab == null)
+        {
+            Debug.LogError($"[BombController] explosionPrefab NULL on '{name}' (scene='{gameObject.scene.name}')");
+            return;
+        }
 
         Explosion center = Instantiate(explosionPrefab, p, Quaternion.identity);
         center.Play(Explosion.ExplosionPart.Start, Vector2.zero, 0f, explosionDuration, p);
