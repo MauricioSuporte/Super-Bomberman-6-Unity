@@ -1102,7 +1102,7 @@ public sealed class LouieEggQueue : MonoBehaviour
             destroyAt.z = 0f;
             tr.position = destroyAt;
 
-            StartCoroutine(DestroyEggRoutine(tr, Mathf.Max(0.05f, dequeueDestroySeconds)));
+            StartCoroutineSafe(DestroyEggRoutine(tr, Mathf.Max(0.05f, dequeueDestroySeconds)));
         }
         else
         {
@@ -1164,6 +1164,17 @@ public sealed class LouieEggQueue : MonoBehaviour
 
         ResetRuntimeState();
         PostQueueChanged(animateShift: false);
+    }
+
+    Coroutine StartCoroutineSafe(IEnumerator routine)
+    {
+        if (routine == null)
+            return null;
+
+        if (isActiveAndEnabled)
+            return StartCoroutine(routine);
+
+        return GlobalCoroutineRunner.Run(routine);
     }
 
     #endregion
@@ -1386,7 +1397,7 @@ public sealed class LouieEggQueue : MonoBehaviour
         if (tr == null)
             return;
 
-        StartCoroutine(DestroyEggRoutine(tr, 0.5f));
+        StartCoroutineSafe(DestroyEggRoutine(tr, 0.5f));
     }
 
     IEnumerator DestroyEggRoutine(Transform tr, float seconds)
@@ -1486,7 +1497,7 @@ public sealed class LouieEggQueue : MonoBehaviour
 
             consumedTr.position = destroyAt;
 
-            StartCoroutine(DestroyEggRoutine(consumedTr, Mathf.Max(0.05f, dequeueDestroySeconds)));
+            StartCoroutineSafe(DestroyEggRoutine(consumedTr, Mathf.Max(0.05f, dequeueDestroySeconds)));
         }
 
         var sfx = egg.mountSfx != null ? egg.mountSfx : LoadMountSfx(eggType);
@@ -1631,7 +1642,7 @@ public sealed class LouieEggQueue : MonoBehaviour
             if (col != null)
                 col.enabled = false;
 
-            StartCoroutine(DestroyEggRoutine(tr, Mathf.Max(0.05f, dequeueDestroySeconds)));
+            StartCoroutineSafe(DestroyEggRoutine(tr, Mathf.Max(0.05f, dequeueDestroySeconds)));
         }
 
         _eggs.Clear();
