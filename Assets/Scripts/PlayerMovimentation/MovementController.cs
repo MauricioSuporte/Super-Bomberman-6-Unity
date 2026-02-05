@@ -119,6 +119,8 @@ public class MovementController : MonoBehaviour, IKillable
     private int explosionLayer;
     private int enemyLayer;
 
+    private bool inactivityMountedDownOverride;
+
     public void SetPlayerId(int id)
     {
         playerId = Mathf.Clamp(id, 1, 4);
@@ -291,7 +293,7 @@ public class MovementController : MonoBehaviour, IKillable
 
     public void EnableExclusiveFromState()
     {
-        if (visualOverrideActive)
+        if (visualOverrideActive || inactivityMountedDownOverride)
             return;
 
         if (IsRidingPlaying())
@@ -324,7 +326,7 @@ public class MovementController : MonoBehaviour, IKillable
         if (inputLocked || GamePauseController.IsPaused || isDead)
             return;
 
-        if (visualOverrideActive)
+        if (visualOverrideActive || inactivityMountedDownOverride)
             return;
 
         hasInput = false;
@@ -356,6 +358,9 @@ public class MovementController : MonoBehaviour, IKillable
     public void ApplyDirectionFromVector(Vector2 dir)
     {
         if (IsRidingPlaying())
+            return;
+
+        if (visualOverrideActive || inactivityMountedDownOverride)
             return;
 
         hasInput = dir != Vector2.zero;
@@ -427,6 +432,9 @@ public class MovementController : MonoBehaviour, IKillable
     protected virtual void FixedUpdate()
     {
         if (inputLocked || GamePauseController.IsPaused || isDead)
+            return;
+
+        if (visualOverrideActive || inactivityMountedDownOverride)
             return;
 
         if (!hasInput || direction == Vector2.zero)
@@ -720,7 +728,7 @@ public class MovementController : MonoBehaviour, IKillable
 
     protected void SetDirection(Vector2 newDirection, AnimatedSpriteRenderer spriteRenderer)
     {
-        if (visualOverrideActive)
+        if (visualOverrideActive || inactivityMountedDownOverride)
             return;
 
         if (IsRidingPlaying())
@@ -898,6 +906,7 @@ public class MovementController : MonoBehaviour, IKillable
 
         isDead = true;
         inputLocked = true;
+        inactivityMountedDownOverride = false;
 
         if (stunReceiver != null)
             stunReceiver.CancelStunForDeath();
@@ -985,6 +994,7 @@ public class MovementController : MonoBehaviour, IKillable
             abilitySystem.DisableAll();
 
         inputLocked = true;
+        inactivityMountedDownOverride = false;
 
         if (bombController != null)
             bombController.enabled = false;
@@ -1139,6 +1149,7 @@ public class MovementController : MonoBehaviour, IKillable
 
         SetExplosionInvulnerable(true);
         inputLocked = true;
+        inactivityMountedDownOverride = false;
 
         if (bombController != null)
             bombController.enabled = false;
@@ -1184,6 +1195,9 @@ public class MovementController : MonoBehaviour, IKillable
 
     public void SetVisualOverrideActive(bool active)
     {
+        if (inactivityMountedDownOverride && !active)
+            return;
+
         visualOverrideActive = active;
 
         if (visualOverrideActive)
@@ -1191,6 +1205,49 @@ public class MovementController : MonoBehaviour, IKillable
             SetAllSpritesVisible(false);
             return;
         }
+
+        if (isDead || isEndingStage || IsRidingPlaying())
+            return;
+
+        EnableExclusiveFromState();
+    }
+
+    public void SetInactivityMountedDownOverride(bool on)
+    {
+        if (inactivityMountedDownOverride == on)
+            return;
+
+        inactivityMountedDownOverride = on;
+
+        if (on)
+        {
+            if (!isMountedOnLouie)
+            {
+                inactivityMountedDownOverride = false;
+                return;
+            }
+
+            visualOverrideActive = true;
+
+            SetAllSpritesVisible(false);
+            DisableAllFootSprites();
+            DisableAllMountedSprites();
+
+            var r = mountedSpriteDown != null ? mountedSpriteDown : spriteRendererDown;
+            if (r != null)
+            {
+                SetAnimEnabled(r, true);
+                r.idle = true;
+                r.loop = false;
+                r.pingPong = false;
+                activeSpriteRenderer = r;
+                r.RefreshFrame();
+            }
+
+            return;
+        }
+
+        visualOverrideActive = false;
 
         if (isDead || isEndingStage || IsRidingPlaying())
             return;

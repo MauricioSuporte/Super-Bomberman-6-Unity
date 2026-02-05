@@ -3,7 +3,7 @@
 [DefaultExecutionOrder(-50)]
 [DisallowMultipleComponent]
 [RequireComponent(typeof(MovementController))]
-public sealed class PlayerInactivityEmote : MonoBehaviour
+public sealed class InactivityAnimation : MonoBehaviour
 {
     [Header("Inactivity")]
     [SerializeField, Min(0.1f)] private float secondsToTrigger = 5f;
@@ -111,7 +111,7 @@ public sealed class PlayerInactivityEmote : MonoBehaviour
 
         nextLouieResolveTime = Time.time + 0.25f;
 
-        var all = FindObjectsOfType<LouieVisualController>(true);
+        var all = FindObjectsByType<LouieVisualController>(FindObjectsInactive.Include, FindObjectsSortMode.None);
         for (int i = 0; i < all.Length; i++)
         {
             var v = all[i];
@@ -160,7 +160,7 @@ public sealed class PlayerInactivityEmote : MonoBehaviour
 
         if (target == EmoteTarget.Louie)
         {
-            movement.SetVisualOverrideActive(false);
+            movement.SetInactivityMountedDownOverride(true);
 
             var lv = ResolveLouieVisual();
             if (lv != null)
@@ -170,6 +170,7 @@ public sealed class PlayerInactivityEmote : MonoBehaviour
             return;
         }
 
+        movement.SetInactivityMountedDownOverride(false);
         movement.SetVisualOverrideActive(true);
 
         if (emoteLoopRenderer != null)
@@ -189,6 +190,7 @@ public sealed class PlayerInactivityEmote : MonoBehaviour
         if (!isPlaying && currentTarget == EmoteTarget.None)
         {
             SetPlayerEmoteEnabled(false);
+            movement?.SetInactivityMountedDownOverride(false);
             movement?.SetVisualOverrideActive(false);
             return;
         }
@@ -199,17 +201,19 @@ public sealed class PlayerInactivityEmote : MonoBehaviour
             if (lv != null)
                 lv.SetInactivityEmote(false);
 
-            movement?.SetVisualOverrideActive(false);
+            movement?.SetInactivityMountedDownOverride(false);
             SetPlayerEmoteEnabled(false);
         }
         else if (currentTarget == EmoteTarget.Player)
         {
             SetPlayerEmoteEnabled(false);
             movement?.SetVisualOverrideActive(false);
+            movement?.SetInactivityMountedDownOverride(false);
         }
         else
         {
             SetPlayerEmoteEnabled(false);
+            movement?.SetInactivityMountedDownOverride(false);
             movement?.SetVisualOverrideActive(false);
         }
 
