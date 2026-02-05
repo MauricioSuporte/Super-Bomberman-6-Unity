@@ -662,10 +662,11 @@ MonoBehaviour:
   checkWinStateOnDeath: 0
   endStageTotalTime: 1
   endStageFrameCount: 9
-  isDead: 0
+  visualOverrideActive: 0
   perpendicularAlignMultiplier: 8
   snapPerpendicularOnAxisStart: 1
   alignEpsilon: 0.0015
+  isDead: 0
   owner: {fileID: 0}
   followOffset: {x: -0.35, y: -0.15}
   followLerp: 25
@@ -688,6 +689,8 @@ MonoBehaviour:
   louieLeft: {fileID: 5930063177854299457}
   louieRight: {fileID: 0}
   louieEndStage: {fileID: 9148293902192414157}
+  louieInactivityEmoteLoop: {fileID: 9148293902192414157}
+  refreshInactivityFrameOnEnter: 1
   enablePinkRightFix: 1
   pinkRightFixedLocalX: -1
   syncBlinkFromPlayerWhenMounted: 1

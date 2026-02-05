@@ -14,43 +14,43 @@ public sealed class PlayerInactivityEmote : MonoBehaviour
 
     private MovementController movement;
     private float lastInputTime;
+
     private bool isPlaying;
+    private EmoteTarget currentTarget;
+
+    private LouieVisualController cachedLouieVisual;
+    private float nextLouieResolveTime;
+
+    private enum EmoteTarget
+    {
+        None = 0,
+        Player = 1,
+        Louie = 2
+    }
 
     private void Awake()
     {
         movement = GetComponent<MovementController>();
         lastInputTime = Time.time;
-        SetEmoteEnabled(false);
+        currentTarget = EmoteTarget.None;
+        SetPlayerEmoteEnabled(false);
     }
 
     private void OnEnable()
     {
         lastInputTime = Time.time;
-        SetEmoteEnabled(false);
-
-        if (movement != null)
-            movement.SetVisualOverrideActive(false);
+        StopEmote();
     }
 
     private void OnDisable()
     {
-        SetEmoteEnabled(false);
-
-        if (movement != null)
-            movement.SetVisualOverrideActive(false);
+        StopEmote();
     }
 
     private void Update()
     {
         if (movement == null)
             return;
-
-        if (movement.IsMountedOnLouie)
-        {
-            if (isPlaying) StopEmote();
-            lastInputTime = Time.time;
-            return;
-        }
 
         if (movement.InputLocked || movement.isDead || GamePauseController.IsPaused)
         {
@@ -69,8 +69,61 @@ public sealed class PlayerInactivityEmote : MonoBehaviour
             return;
         }
 
+        var desiredTarget = ResolveDesiredTarget();
+
+        if (isPlaying && desiredTarget != currentTarget)
+        {
+            StopEmote();
+            lastInputTime = Time.time;
+            return;
+        }
+
         if (!isPlaying && (Time.time - lastInputTime) >= secondsToTrigger)
-            StartEmote();
+            StartEmote(desiredTarget);
+    }
+
+    private EmoteTarget ResolveDesiredTarget()
+    {
+        if (!movement.IsMountedOnLouie)
+            return EmoteTarget.Player;
+
+        var lv = ResolveLouieVisual();
+        if (lv != null && lv.HasInactivityEmoteRenderer)
+            return EmoteTarget.Louie;
+
+        return EmoteTarget.Player;
+    }
+
+    private LouieVisualController ResolveLouieVisual()
+    {
+        if (!movement.IsMountedOnLouie)
+        {
+            cachedLouieVisual = null;
+            nextLouieResolveTime = 0f;
+            return null;
+        }
+
+        if (cachedLouieVisual != null && cachedLouieVisual.owner == movement)
+            return cachedLouieVisual;
+
+        if (Time.time < nextLouieResolveTime)
+            return cachedLouieVisual;
+
+        nextLouieResolveTime = Time.time + 0.25f;
+
+        var all = FindObjectsOfType<LouieVisualController>(true);
+        for (int i = 0; i < all.Length; i++)
+        {
+            var v = all[i];
+            if (v != null && v.owner == movement)
+            {
+                cachedLouieVisual = v;
+                return cachedLouieVisual;
+            }
+        }
+
+        cachedLouieVisual = null;
+        return null;
     }
 
     private bool HasAnyPlayerInput()
@@ -97,12 +150,25 @@ public sealed class PlayerInactivityEmote : MonoBehaviour
             input.Get(id, PlayerAction.ActionR);
     }
 
-    private void StartEmote()
+    private void StartEmote(EmoteTarget target)
     {
         if (isPlaying)
             return;
 
         isPlaying = true;
+        currentTarget = target;
+
+        if (target == EmoteTarget.Louie)
+        {
+            movement.SetVisualOverrideActive(false);
+
+            var lv = ResolveLouieVisual();
+            if (lv != null)
+                lv.SetInactivityEmote(true);
+
+            SetPlayerEmoteEnabled(false);
+            return;
+        }
 
         movement.SetVisualOverrideActive(true);
 
@@ -112,7 +178,7 @@ public sealed class PlayerInactivityEmote : MonoBehaviour
             emoteLoopRenderer.idle = false;
         }
 
-        SetEmoteEnabled(true);
+        SetPlayerEmoteEnabled(true);
 
         if (refreshFrameOnEnter && emoteLoopRenderer != null)
             emoteLoopRenderer.RefreshFrame();
@@ -120,17 +186,38 @@ public sealed class PlayerInactivityEmote : MonoBehaviour
 
     private void StopEmote()
     {
-        if (!isPlaying)
+        if (!isPlaying && currentTarget == EmoteTarget.None)
+        {
+            SetPlayerEmoteEnabled(false);
+            movement?.SetVisualOverrideActive(false);
             return;
+        }
+
+        if (currentTarget == EmoteTarget.Louie)
+        {
+            var lv = ResolveLouieVisual();
+            if (lv != null)
+                lv.SetInactivityEmote(false);
+
+            movement?.SetVisualOverrideActive(false);
+            SetPlayerEmoteEnabled(false);
+        }
+        else if (currentTarget == EmoteTarget.Player)
+        {
+            SetPlayerEmoteEnabled(false);
+            movement?.SetVisualOverrideActive(false);
+        }
+        else
+        {
+            SetPlayerEmoteEnabled(false);
+            movement?.SetVisualOverrideActive(false);
+        }
 
         isPlaying = false;
-
-        SetEmoteEnabled(false);
-
-        movement.SetVisualOverrideActive(false);
+        currentTarget = EmoteTarget.None;
     }
 
-    private void SetEmoteEnabled(bool on)
+    private void SetPlayerEmoteEnabled(bool on)
     {
         if (emoteLoopRenderer == null)
             return;

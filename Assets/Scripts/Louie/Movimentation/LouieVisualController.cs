@@ -17,6 +17,10 @@ public class LouieVisualController : MonoBehaviour
     [Header("End Stage (Louie)")]
     public AnimatedSpriteRenderer louieEndStage;
 
+    [Header("Inactivity Emote (Louie)")]
+    [SerializeField] private AnimatedSpriteRenderer louieInactivityEmoteLoop;
+    [SerializeField] private bool refreshInactivityFrameOnEnter = true;
+
     [Header("Pink Louie - Right X Fix")]
     public bool enablePinkRightFix = true;
     public float pinkRightFixedLocalX = 0f;
@@ -38,6 +42,8 @@ public class LouieVisualController : MonoBehaviour
 
     private SpriteRenderer[] allSpriteRenderers;
     private AnimatedSpriteRenderer[] allAnimatedRenderers;
+
+    public bool HasInactivityEmoteRenderer => louieInactivityEmoteLoop != null;
 
     public void Bind(MovementController movement)
     {
@@ -63,12 +69,27 @@ public class LouieVisualController : MonoBehaviour
         for (int i = 0; i < louieSpriteRenderers.Length; i++)
             louieOriginalColors[i] = louieSpriteRenderers[i] != null ? louieSpriteRenderers[i].color : Color.white;
 
+        SetInactivityEmote(false);
+
         var start = louieDown != null ? louieDown : (louieUp != null ? louieUp : (louieLeft != null ? louieLeft : louieRight));
         if (start != null)
         {
             HardExclusive(start);
             ApplyDirection(Vector2.down, true);
         }
+    }
+
+    public void SetInactivityEmote(bool on)
+    {
+        if (louieInactivityEmoteLoop == null)
+            return;
+
+        louieInactivityEmoteLoop.loop = true;
+        louieInactivityEmoteLoop.idle = false;
+        SetRendererBranchEnabled(louieInactivityEmoteLoop, on);
+
+        if (on && refreshInactivityFrameOnEnter)
+            louieInactivityEmoteLoop.RefreshFrame();
     }
 
     private void CacheAllRenderers()
@@ -189,6 +210,9 @@ public class LouieVisualController : MonoBehaviour
         }
 
         active = keep;
+
+        if (louieInactivityEmoteLoop != null)
+            SetRendererBranchEnabled(louieInactivityEmoteLoop, louieInactivityEmoteLoop.enabled);
     }
 
     private void ForceDisableRightRenderer()
