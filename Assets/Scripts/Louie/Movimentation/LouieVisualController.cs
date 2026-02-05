@@ -105,10 +105,13 @@ public class LouieVisualController : MonoBehaviour
             louieInactivityEmoteLoop.loop = true;
             louieInactivityEmoteLoop.idle = false;
 
+            louieInactivityEmoteLoop.CurrentFrame = 0;
+
             HardExclusive(louieInactivityEmoteLoop);
 
-            if (refreshInactivityFrameOnEnter)
-                louieInactivityEmoteLoop.RefreshFrame();
+            louieInactivityEmoteLoop.RefreshFrame();
+
+            return;
         }
         else
         {
