@@ -455,13 +455,13 @@ MonoBehaviour:
   destructiblePassAmount: 0
   invincibleSuitAmount: 1
   heartAmount: 0
-  blueLouieEggAmount: 2
-  blackLouieEggAmount: 2
-  purpleLouieEggAmount: 2
-  greenLouieEggAmount: 2
-  yellowLouieEggAmount: 2
-  pinkLouieEggAmount: 2
-  redLouieEggAmount: 2
+  blueLouieEggAmount: 3
+  blackLouieEggAmount: 3
+  purpleLouieEggAmount: 3
+  greenLouieEggAmount: 3
+  yellowLouieEggAmount: 3
+  pinkLouieEggAmount: 3
+  redLouieEggAmount: 3
   destructibleTilemap: {fileID: 285353618}
   indestructibleTilemap: {fileID: 0}
   nextStageSceneName: Stage_2-2
@@ -7815,7 +7815,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1aa1ef842d43d4449a4b672797ff89e5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameSession
-  activePlayerCount: 2
+  activePlayerCount: 1
 --- !u!4 &1522516126
 Transform:
   m_ObjectHideFlags: 0
@@ -8083,7 +8083,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9a284d4030dc9c84caeaae28969ab361, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::StageMusicConfigurator
-  stageDefaultMusic: {fileID: 8300000, guid: f8159f6ea95a97d40ad62d514f7f0dcd, type: 3}
+  stageDefaultMusic: {fileID: 8300000, guid: 6c2d4b3a9fc4bbd4ca36b2fafc1e28d4, type: 3}
   musicVolume: 0.6
 --- !u!4 &1746315304
 Transform:
