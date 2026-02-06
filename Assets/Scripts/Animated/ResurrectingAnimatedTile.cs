@@ -13,16 +13,12 @@ public class ResurrectingAnimatedTile : AnimatedTile
     [Min(0.05f)] public float overlapBoxSize = 0.6f;
 
     [Header("Pre-Respawn Warning (Tile)")]
-    [Tooltip("Tile que aparece ANTES do ressurgimento (deve ser atravessável, sem collider).")]
     public AnimatedTile preRespawnWarningTile;
 
-    [Tooltip("Quanto tempo o tile de aviso fica na célula antes do respawn.")]
     [Min(0.01f)] public float preRespawnWarningSeconds = 3f;
 
     [Header("Respawn Animation (Tile)")]
-    [Tooltip("AnimatedTile tocado imediatamente antes do destructible reaparecer (opcional).")]
     public AnimatedTile respawnAnimationTile;
 
-    [Tooltip("Duração da animação de respawn (opcional).")]
     [Min(0.01f)] public float respawnAnimationDuration = 0.4f;
 }

@@ -42,7 +42,6 @@ public sealed class DestructibleTileResolver : MonoBehaviour
             if (g == null || g.tiles == null || g.tiles.Length == 0)
                 continue;
 
-            // registra TODOS os tiles do grupo como "destructible conhecido"
             for (int t = 0; t < g.tiles.Length; t++)
             {
                 var tile = g.tiles[t];
@@ -52,7 +51,6 @@ public sealed class DestructibleTileResolver : MonoBehaviour
                 _registeredTiles.Add(tile);
             }
 
-            // handler é opcional: só mapeia se tiver e implementar a interface
             if (g.handler is not IDestructibleTileHandler h)
                 continue;
 
@@ -78,7 +76,6 @@ public sealed class DestructibleTileResolver : MonoBehaviour
         return _map.TryGetValue(tile, out handler) && handler != null;
     }
 
-    // ✅ NOVO: “esse tile é um destructible de verdade?”
     public bool IsRegisteredDestructibleTile(TileBase tile)
     {
         if (tile == null)

@@ -47,20 +47,17 @@ public sealed class ResurrectingAnimatedTileHandler : MonoBehaviour, IDestructib
             if (tm == null)
                 yield break;
 
-            // se alguém já colocou um tile aqui (por qualquer motivo), não mexe
             if (tm.GetTile(cell) != null)
                 yield break;
 
             Vector2 center = tm.GetCellCenterWorld(cell);
 
-            // precisa estar livre para INICIAR o aviso
             if (IsOccupied(center, tile.overlapBoxSize))
             {
                 yield return new WaitForSeconds(retry);
                 continue;
             }
 
-            // 1) Mostra o "warning tile" (atravessável) por 3s
             float warnSeconds = Mathf.Max(0.01f, tile.preRespawnWarningSeconds);
 
             if (tile.preRespawnWarningTile != null && warnSeconds > 0f)
@@ -73,29 +70,20 @@ public sealed class ResurrectingAnimatedTileHandler : MonoBehaviour, IDestructib
                 if (tm == null)
                     yield break;
 
-                // Se alguém trocou o tile no meio tempo, não mexe.
                 if (tm.GetTile(cell) != tile.preRespawnWarningTile)
                     yield break;
 
-                // remove o aviso antes de revalidar (fica vazio)
                 tm.SetTile(cell, null);
                 tm.RefreshTile(cell);
             }
-            else
-            {
-                // mesmo sem warning tile, respeita os 3s se você quiser (aqui não espera)
-            }
 
-            // 2) Revalida ocupação APÓS os 3s
             center = tm.GetCellCenterWorld(cell);
             if (IsOccupied(center, tile.overlapBoxSize))
             {
-                // se ficou ocupado, volta pro loop e tenta mais tarde
                 yield return new WaitForSeconds(retry);
                 continue;
             }
 
-            // 3) (Opcional) animação curtinha imediatamente antes de nascer
             if (tile.respawnAnimationTile != null)
             {
                 tm.SetTile(cell, tile.respawnAnimationTile);
@@ -107,16 +95,13 @@ public sealed class ResurrectingAnimatedTileHandler : MonoBehaviour, IDestructib
                 if (tm == null)
                     yield break;
 
-                // se alguém trocou o tile durante a animação, não mexe.
                 if (tm.GetTile(cell) != tile.respawnAnimationTile)
                     yield break;
 
-                // limpa antes de colocar o final
                 tm.SetTile(cell, null);
                 tm.RefreshTile(cell);
             }
 
-            // 4) Valida mais uma vez (só pra garantir)
             center = tm.GetCellCenterWorld(cell);
             if (IsOccupied(center, tile.overlapBoxSize))
             {
@@ -124,7 +109,6 @@ public sealed class ResurrectingAnimatedTileHandler : MonoBehaviour, IDestructib
                 continue;
             }
 
-            // 5) Respawn final (tile real com collider)
             tm.SetTile(cell, tile);
             tm.RefreshTile(cell);
             yield break;
