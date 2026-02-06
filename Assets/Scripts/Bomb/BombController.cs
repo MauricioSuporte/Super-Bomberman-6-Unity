@@ -465,6 +465,7 @@ public partial class BombController : MonoBehaviour
         bombComponent.SetStageBoundsTilemap(stageBoundsTiles);
         bombComponent.SetFuseSeconds(bombFuseTime);
         bombComponent.Initialize(this);
+        TryHandleGroundBombPlaced(position, bomb);
 
         if (controlEnabled)
             RegisterBomb(bomb);
@@ -866,8 +867,6 @@ public partial class BombController : MonoBehaviour
         }
     }
 
-    public bool TryPlaceBombAt(Vector2 worldPos) => TryPlaceBombAt(worldPos, playSfx: true);
-
     public bool TryPlaceBombAt(Vector2 worldPos, bool playSfx)
     {
         if (ClownMaskBoss.BossIntroRunning)
@@ -934,6 +933,7 @@ public partial class BombController : MonoBehaviour
         bombComponent.SetStageBoundsTilemap(stageBoundsTiles);
         bombComponent.SetFuseSeconds(bombFuseTime);
         bombComponent.Initialize(this);
+        TryHandleGroundBombPlaced(position, bomb);
 
         if (bomb.TryGetComponent<Collider2D>(out var bombCollider))
             bombCollider.isTrigger = true;
@@ -1219,5 +1219,22 @@ public partial class BombController : MonoBehaviour
             return;
 
         handler.HandleExplosionHit(this, worldPos, cell, tile);
+    }
+
+    private void TryHandleGroundBombPlaced(Vector2 worldPos, GameObject bomb)
+    {
+        ResolveGroundTileResolver();
+
+        if (groundTileResolver == null || bomb == null)
+            return;
+
+        if (!TryGetGroundTileAt(worldPos, out var cell, out var groundTile))
+            return;
+
+        if (!groundTileResolver.TryGetHandler(groundTile, out var handler) || handler == null)
+            return;
+
+        if (handler is IGroundTileBombPlacedHandler bombPlacedHandler)
+            bombPlacedHandler.OnBombPlaced(this, worldPos, cell, groundTile, bomb);
     }
 }

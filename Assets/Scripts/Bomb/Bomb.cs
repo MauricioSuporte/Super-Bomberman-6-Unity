@@ -751,6 +751,19 @@ public class Bomb : MonoBehaviour, IMagnetPullable
 
     public Vector2 GetLogicalPosition() => lastPos;
 
+    public void ForceSetLogicalPosition(Vector2 worldPos)
+    {
+        worldPos.x = Mathf.Round(worldPos.x);
+        worldPos.y = Mathf.Round(worldPos.y);
+
+        lastPos = worldPos;
+
+        if (rb != null)
+            rb.position = worldPos;
+
+        transform.position = worldPos;
+    }
+
     public bool StartKick(Vector2 direction, float tileSize, LayerMask obstacleMask, Tilemap destructibleTilemap)
     {
         if (!CanBeKicked || direction == Vector2.zero)
