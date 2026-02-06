@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 647854dae32d7cd4d816594a34fcb443, type: 3}
+  m_Name: AnimatedTile_lava_corner_rigthup
+  m_EditorClassIdentifier: 
+  m_AnimatedSprites:
+  - {fileID: -7718872627917309140, guid: 3a6391608ce99464a83ac682412c5c0b, type: 3}
+  - {fileID: 1973846042, guid: 3a6391608ce99464a83ac682412c5c0b, type: 3}
+  - {fileID: 774902994, guid: 3a6391608ce99464a83ac682412c5c0b, type: 3}
+  - {fileID: 1973846042, guid: 3a6391608ce99464a83ac682412c5c0b, type: 3}
+  m_MinSpeed: 3
+  m_MaxSpeed: 3
+  m_AnimationStartTime: 0
+  m_TileColliderType: 1
