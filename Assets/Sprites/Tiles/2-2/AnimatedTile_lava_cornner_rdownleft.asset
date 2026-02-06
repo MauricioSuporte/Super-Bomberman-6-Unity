@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 647854dae32d7cd4d816594a34fcb443, type: 3}
+  m_Name: AnimatedTile_lava_cornner_rdownleft
+  m_EditorClassIdentifier: 
+  m_AnimatedSprites:
+  - {fileID: 8987768692630206008, guid: 1cdd520419d53794a8fe31bbd4311a1a, type: 3}
+  - {fileID: 253059296, guid: 1cdd520419d53794a8fe31bbd4311a1a, type: 3}
+  - {fileID: 113113433, guid: 1cdd520419d53794a8fe31bbd4311a1a, type: 3}
+  - {fileID: 253059296, guid: 1cdd520419d53794a8fe31bbd4311a1a, type: 3}
+  m_MinSpeed: 3
+  m_MaxSpeed: 3
+  m_AnimationStartTime: 0
+  m_TileColliderType: 1
