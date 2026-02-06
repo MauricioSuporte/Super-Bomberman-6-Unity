@@ -529,7 +529,16 @@ public partial class BombController : MonoBehaviour
             return false;
 
         Vector3Int cell = destructibleTiles.WorldToCell(worldPos);
-        return destructibleTiles.GetTile(cell) != null;
+        TileBase tile = destructibleTiles.GetTile(cell);
+        if (tile == null)
+            return false;
+
+        ResolveDestructibleTileResolver();
+        if (destructibleTileResolver != null &&
+            !destructibleTileResolver.IsRegisteredDestructibleTile(tile))
+            return false;
+
+        return true;
     }
 
     private void Explode(Vector2 origin, Vector2 direction, int length, bool pierce)
@@ -1030,7 +1039,18 @@ public partial class BombController : MonoBehaviour
 
         cell = destructibleTiles.WorldToCell(worldPos);
         tile = destructibleTiles.GetTile(cell);
-        return tile != null;
+        if (tile == null)
+            return false;
+
+        ResolveDestructibleTileResolver();
+        if (destructibleTileResolver != null &&
+            !destructibleTileResolver.IsRegisteredDestructibleTile(tile))
+        {
+            tile = null;
+            return false;
+        }
+
+        return true;
     }
 
     private bool HasGroundAt(Vector2 worldPos)
