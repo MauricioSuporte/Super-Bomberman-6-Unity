@@ -10,13 +10,13 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 647854dae32d7cd4d816594a34fcb443, type: 3}
-  m_Name: AnimatedTile_lava_cornner_rdownleft
+  m_Name: AnimatedTile_lava_cornner_leftup
   m_EditorClassIdentifier: 
   m_AnimatedSprites:
-  - {fileID: 8987768692630206008, guid: 1cdd520419d53794a8fe31bbd4311a1a, type: 3}
-  - {fileID: 253059296, guid: 1cdd520419d53794a8fe31bbd4311a1a, type: 3}
-  - {fileID: 113113433, guid: 1cdd520419d53794a8fe31bbd4311a1a, type: 3}
-  - {fileID: 253059296, guid: 1cdd520419d53794a8fe31bbd4311a1a, type: 3}
+  - {fileID: 7156313083137638618, guid: 8c1bed2bac500d84ba6886cbc719f3f1, type: 3}
+  - {fileID: -1870411909, guid: 8c1bed2bac500d84ba6886cbc719f3f1, type: 3}
+  - {fileID: 17198361, guid: 8c1bed2bac500d84ba6886cbc719f3f1, type: 3}
+  - {fileID: -1870411909, guid: 8c1bed2bac500d84ba6886cbc719f3f1, type: 3}
   m_MinSpeed: 3
   m_MaxSpeed: 3
   m_AnimationStartTime: 0
