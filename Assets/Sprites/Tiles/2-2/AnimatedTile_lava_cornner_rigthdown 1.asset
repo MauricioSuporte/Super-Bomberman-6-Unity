@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 647854dae32d7cd4d816594a34fcb443, type: 3}
+  m_Name: AnimatedTile_lava_cornner_rigthdown 1
+  m_EditorClassIdentifier: 
+  m_AnimatedSprites:
+  - {fileID: 2431239985857941135, guid: 91284f2f6bb08a34a81c45ea428f4d73, type: 3}
+  - {fileID: 425618897, guid: 91284f2f6bb08a34a81c45ea428f4d73, type: 3}
+  - {fileID: -788506090, guid: 91284f2f6bb08a34a81c45ea428f4d73, type: 3}
+  - {fileID: 425618897, guid: 91284f2f6bb08a34a81c45ea428f4d73, type: 3}
+  m_MinSpeed: 3
+  m_MaxSpeed: 3
+  m_AnimationStartTime: 0
+  m_TileColliderType: 1
