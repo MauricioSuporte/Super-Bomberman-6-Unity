@@ -32,8 +32,6 @@ public class LouieVisualController : MonoBehaviour
     private bool isPinkLouieMounted;
     private bool playingInactivity;
 
-    private CharacterHealth ownerHealth;
-    private PlayerLouieCompanion ownerCompanion;
     private MovementController louieMovement;
 
     private SpriteRenderer[] louieSpriteRenderers;
@@ -64,8 +62,6 @@ public class LouieVisualController : MonoBehaviour
 
         if (owner != null)
         {
-            owner.TryGetComponent(out ownerHealth);
-            owner.TryGetComponent(out ownerCompanion);
             ownerSpriteRenderers = owner.GetComponentsInChildren<SpriteRenderer>(true);
         }
 
