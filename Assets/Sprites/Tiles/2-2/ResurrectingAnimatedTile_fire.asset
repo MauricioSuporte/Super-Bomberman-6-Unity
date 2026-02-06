@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1974e43f861d8f943a03c2984961c3b8, type: 3}
+  m_Name: ResurrectingAnimatedTile_fire
+  m_EditorClassIdentifier: Assembly-CSharp::ResurrectingAnimatedTile
+  m_AnimatedSprites:
+  - {fileID: 8388194896362394706, guid: 69f9b0a33a7b10f459d882a68627240b, type: 3}
+  - {fileID: -1772517012, guid: 69f9b0a33a7b10f459d882a68627240b, type: 3}
+  - {fileID: 1179061220, guid: 69f9b0a33a7b10f459d882a68627240b, type: 3}
+  m_MinSpeed: 12
+  m_MaxSpeed: 12
+  m_AnimationStartTime: 0
+  m_TileColliderType: 1
+  respawnSeconds: 10
+  retryCheckSeconds: 0.25
+  overlapBoxSize: 0.6
+  preRespawnWarningTile: {fileID: 11400000, guid: 56246eeacbcc0e64c844a2f33fca2f33, type: 2}
+  preRespawnWarningSeconds: 3
+  respawnAnimationTile: {fileID: 11400000, guid: 8a2535cfa512aa7409df1a467004a2ad, type: 2}
+  respawnAnimationDuration: 0.4
