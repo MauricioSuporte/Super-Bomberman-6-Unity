@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 6008752803860707348}
   - component: {fileID: 9076959455548540240}
   - component: {fileID: 4374612366954077727}
-  m_Layer: 3
+  m_Layer: 13
   m_Name: DashDown
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -128,7 +128,7 @@ GameObject:
   - component: {fileID: 3541909242652053341}
   - component: {fileID: 7008142568920136663}
   - component: {fileID: 3024139644898069688}
-  m_Layer: 3
+  m_Layer: 13
   m_Name: DashRigth
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -245,7 +245,7 @@ GameObject:
   - component: {fileID: 4019347069755344019}
   - component: {fileID: 418556681739557969}
   - component: {fileID: 1588011849113726162}
-  m_Layer: 3
+  m_Layer: 13
   m_Name: DashUp
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -371,7 +371,7 @@ GameObject:
   - component: {fileID: 1602559577221677003}
   - component: {fileID: 4962582305298341405}
   - component: {fileID: 6543421237453546391}
-  m_Layer: 0
+  m_Layer: 13
   m_Name: BlackLouie
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -691,7 +691,6 @@ MonoBehaviour:
   louieRight: {fileID: 0}
   louieEndStage: {fileID: 9148293902192414157}
   louieInactivityEmoteLoop: {fileID: 8900229302262561777}
-  refreshInactivityFrameOnEnter: 1
   enablePinkRightFix: 1
   pinkRightFixedLocalX: -1
   syncBlinkFromPlayerWhenMounted: 1
@@ -771,7 +770,7 @@ GameObject:
   - component: {fileID: 57579042699043240}
   - component: {fileID: 4193300079987578512}
   - component: {fileID: 5517004560909071985}
-  m_Layer: 3
+  m_Layer: 13
   m_Name: Rigth
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -895,7 +894,7 @@ GameObject:
   - component: {fileID: 472548663252246733}
   - component: {fileID: 4682180528833170331}
   - component: {fileID: 5440623971944223000}
-  m_Layer: 3
+  m_Layer: 13
   m_Name: Death
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1015,7 +1014,7 @@ GameObject:
   - component: {fileID: 7840755247326828258}
   - component: {fileID: 7433645285038209540}
   - component: {fileID: 8900229302262561777}
-  m_Layer: 3
+  m_Layer: 13
   m_Name: Inactivity
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1169,7 +1168,7 @@ GameObject:
   - component: {fileID: 8981153933468618131}
   - component: {fileID: 100063847843263520}
   - component: {fileID: 9148293902192414157}
-  m_Layer: 3
+  m_Layer: 13
   m_Name: EndStage
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1285,7 +1284,7 @@ GameObject:
   - component: {fileID: 4899981597654540596}
   - component: {fileID: 130411067413783413}
   - component: {fileID: 497069503549479997}
-  m_Layer: 3
+  m_Layer: 13
   m_Name: DashLeft
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1402,7 +1401,7 @@ GameObject:
   - component: {fileID: 193354633721661751}
   - component: {fileID: 578016096536030585}
   - component: {fileID: 4170285985975590271}
-  m_Layer: 3
+  m_Layer: 13
   m_Name: Down
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1526,7 +1525,7 @@ GameObject:
   - component: {fileID: 2145118279089090007}
   - component: {fileID: 1185928738049138913}
   - component: {fileID: 5930063177854299457}
-  m_Layer: 3
+  m_Layer: 13
   m_Name: Left
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1650,7 +1649,7 @@ GameObject:
   - component: {fileID: 2256879706850589562}
   - component: {fileID: 1202631410246704134}
   - component: {fileID: 6685445590595473310}
-  m_Layer: 3
+  m_Layer: 13
   m_Name: Up
   m_TagString: Untagged
   m_Icon: {fileID: 0}

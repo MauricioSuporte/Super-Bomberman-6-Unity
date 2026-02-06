@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 9131655977267603673}
   - component: {fileID: 4725985995669604674}
   - component: {fileID: 7677378060523124291}
-  m_Layer: 3
+  m_Layer: 13
   m_Name: PunchUp
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -128,7 +128,7 @@ GameObject:
   - component: {fileID: 8348643429636657567}
   - component: {fileID: 9013122632948595599}
   - component: {fileID: 7247875284509425039}
-  m_Layer: 3
+  m_Layer: 13
   m_Name: EndStage
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -246,7 +246,7 @@ GameObject:
   - component: {fileID: 4153890904718329116}
   - component: {fileID: 4511529953207216220}
   - component: {fileID: 5471246735332489006}
-  m_Layer: 3
+  m_Layer: 13
   m_Name: PunchDown
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -372,7 +372,7 @@ GameObject:
   - component: {fileID: 1187755275880992955}
   - component: {fileID: 1919497702538166291}
   - component: {fileID: 6543421237453546391}
-  m_Layer: 0
+  m_Layer: 13
   m_Name: RedLouie
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -692,7 +692,6 @@ MonoBehaviour:
   louieRight: {fileID: 0}
   louieEndStage: {fileID: 7247875284509425039}
   louieInactivityEmoteLoop: {fileID: 5449351130648027043}
-  refreshInactivityFrameOnEnter: 1
   enablePinkRightFix: 1
   pinkRightFixedLocalX: -1
   syncBlinkFromPlayerWhenMounted: 1
@@ -772,7 +771,7 @@ GameObject:
   - component: {fileID: 57579042699043240}
   - component: {fileID: 4193300079987578512}
   - component: {fileID: 5517004560909071985}
-  m_Layer: 3
+  m_Layer: 13
   m_Name: Rigth
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -896,7 +895,7 @@ GameObject:
   - component: {fileID: 5023389770901249726}
   - component: {fileID: 2427265833389128986}
   - component: {fileID: 4507174183192697291}
-  m_Layer: 3
+  m_Layer: 13
   m_Name: PunchLeft
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1013,7 +1012,7 @@ GameObject:
   - component: {fileID: 472548663252246733}
   - component: {fileID: 4682180528833170331}
   - component: {fileID: 5440623971944223000}
-  m_Layer: 3
+  m_Layer: 13
   m_Name: Death
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1133,7 +1132,7 @@ GameObject:
   - component: {fileID: 7907171061899518234}
   - component: {fileID: 1320663417195302014}
   - component: {fileID: 5449351130648027043}
-  m_Layer: 3
+  m_Layer: 13
   m_Name: Inactivity
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1276,7 +1275,7 @@ GameObject:
   - component: {fileID: 193354633721661751}
   - component: {fileID: 578016096536030585}
   - component: {fileID: 4170285985975590271}
-  m_Layer: 3
+  m_Layer: 13
   m_Name: Down
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1400,7 +1399,7 @@ GameObject:
   - component: {fileID: 2145118279089090007}
   - component: {fileID: 1185928738049138913}
   - component: {fileID: 5930063177854299457}
-  m_Layer: 3
+  m_Layer: 13
   m_Name: Left
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1524,7 +1523,7 @@ GameObject:
   - component: {fileID: 2256879706850589562}
   - component: {fileID: 1202631410246704134}
   - component: {fileID: 6685445590595473310}
-  m_Layer: 3
+  m_Layer: 13
   m_Name: Up
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1648,7 +1647,7 @@ GameObject:
   - component: {fileID: 2468591829565942770}
   - component: {fileID: 908191367289619404}
   - component: {fileID: 2897987350496308459}
-  m_Layer: 3
+  m_Layer: 13
   m_Name: PunchRigth
   m_TagString: Untagged
   m_Icon: {fileID: 0}
