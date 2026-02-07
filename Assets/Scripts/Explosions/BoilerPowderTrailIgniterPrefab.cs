@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Tilemaps;
+using UnityEngine.UI;
 
 namespace Assets.Scripts.Explosions
 {
@@ -56,6 +57,14 @@ namespace Assets.Scripts.Explosions
         [SerializeField] private bool enableSecondSteam = true;
         [SerializeField] private Vector3 secondSteamWorldOffset = Vector3.zero;
 
+        [Header("Screen Red Flash (UI Image)")]
+        [SerializeField] private bool enableScreenRedFlash = true;
+        [SerializeField] private Image screenRedOverlay;
+        [SerializeField, Min(0.01f)] private float screenRedFadeInSeconds = 1f;
+        [SerializeField, Min(0.01f)] private float screenRedHoldSeconds = 2f;
+        [SerializeField, Min(0.01f)] private float screenRedFadeOutSeconds = 1f;
+        [SerializeField, Range(0f, 1f)] private float screenRedMaxAlpha = 0.4f;
+
         private AnimatedSpriteRenderer steamRendererA;
         private AnimatedSpriteRenderer steamRendererB;
 
@@ -70,6 +79,7 @@ namespace Assets.Scripts.Explosions
 
         private Coroutine routine;
         private Coroutine steamRoutine;
+        private Coroutine redFlashRoutine;
 
         private bool hasExpectedSteamPos;
         private Vector3 expectedSteamWorldPos;
@@ -79,7 +89,9 @@ namespace Assets.Scripts.Explosions
             ResolveGroundTilemapIfNeeded();
             ResolveSfxSourceIfNeeded();
             ResolveSteamRendererIfNeeded();
+            ResolveScreenOverlayIfNeeded();
             SetSteamEnabled(false);
+            SetOverlayAlpha(0f);
         }
 
         private void LateUpdate()
@@ -106,6 +118,7 @@ namespace Assets.Scripts.Explosions
             ResolveGroundTilemapIfNeeded();
             ResolveSfxSourceIfNeeded();
             ResolveSteamRendererIfNeeded();
+            ResolveScreenOverlayIfNeeded();
 
             if (!ValidateSetup())
                 return;
@@ -143,9 +156,93 @@ namespace Assets.Scripts.Explosions
             }
 
             StartSteamForBoiler();
+            StartScreenRedFlash();
 
             if (lead > 0f)
                 yield return new WaitForSeconds(lead);
+        }
+
+        private void StartScreenRedFlash()
+        {
+            if (!enableScreenRedFlash)
+                return;
+
+            ResolveScreenOverlayIfNeeded();
+            if (screenRedOverlay == null)
+                return;
+
+            if (redFlashRoutine != null)
+            {
+                StopCoroutine(redFlashRoutine);
+                redFlashRoutine = null;
+            }
+
+            redFlashRoutine = StartCoroutine(ScreenRedFlashRoutine());
+        }
+
+        private IEnumerator ScreenRedFlashRoutine()
+        {
+            SetOverlayAlpha(0f);
+
+            float fadeIn = Mathf.Max(0.01f, screenRedFadeInSeconds);
+            float hold = Mathf.Max(0f, screenRedHoldSeconds);
+            float fadeOut = Mathf.Max(0.01f, screenRedFadeOutSeconds);
+            float maxA = Mathf.Clamp01(screenRedMaxAlpha);
+
+            float t = 0f;
+            while (t < fadeIn)
+            {
+                t += Time.unscaledDeltaTime;
+                float a = Mathf.Clamp01(t / fadeIn);
+                SetOverlayAlpha(maxA * a);
+                yield return null;
+            }
+
+            SetOverlayAlpha(maxA);
+
+            if (hold > 0f)
+                yield return new WaitForSecondsRealtime(hold);
+
+            t = 0f;
+            while (t < fadeOut)
+            {
+                t += Time.unscaledDeltaTime;
+                float a = Mathf.Clamp01(t / fadeOut);
+                SetOverlayAlpha(maxA * (1f - a));
+                yield return null;
+            }
+
+            SetOverlayAlpha(0f);
+            redFlashRoutine = null;
+        }
+
+        private void SetOverlayAlpha(float a)
+        {
+            if (screenRedOverlay == null)
+                return;
+
+            var c = screenRedOverlay.color;
+            c.a = Mathf.Clamp01(a);
+            screenRedOverlay.color = c;
+
+            if (screenRedOverlay.gameObject.activeSelf != (c.a > 0f))
+                screenRedOverlay.gameObject.SetActive(c.a > 0f);
+        }
+
+        private void ResolveScreenOverlayIfNeeded()
+        {
+            if (screenRedOverlay != null)
+                return;
+
+            var found = FindFirstObjectByType<Canvas>();
+            if (found == null)
+                return;
+
+            var img = found.GetComponentInChildren<Image>(includeInactive: true);
+            if (img == null)
+                return;
+
+            screenRedOverlay = img;
         }
 
         private void StartSteamForBoiler()
@@ -435,7 +532,14 @@ namespace Assets.Scripts.Explosions
                 steamRoutine = null;
             }
 
+            if (redFlashRoutine != null)
+            {
+                StopCoroutine(redFlashRoutine);
+                redFlashRoutine = null;
+            }
+
             SetSteamEnabled(false);
+            SetOverlayAlpha(0f);
             hasExpectedSteamPos = false;
         }
 
