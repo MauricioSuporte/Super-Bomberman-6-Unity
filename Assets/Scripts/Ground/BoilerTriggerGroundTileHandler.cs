@@ -5,6 +5,7 @@ using UnityEngine;
 using UnityEngine.Tilemaps;
 using Assets.Scripts.Explosions;
 
+[RequireComponent(typeof(BoilerPowderTrailIgniterPrefab))]
 public sealed class BoilerTriggerGroundTileHandler : MonoBehaviour, IGroundTileHandler, IGroundTileBombPlacedHandler
 {
     [SerializeField] private float pullDelaySeconds = 0.5f;
