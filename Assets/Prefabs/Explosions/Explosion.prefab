@@ -113,6 +113,7 @@ MonoBehaviour:
   - {fileID: 6008817306966069758, guid: 868733e9f407cab46a41f3326155fb03, type: 3}
   - {fileID: 3891889430353354993, guid: 868733e9f407cab46a41f3326155fb03, type: 3}
   - {fileID: 6285860838762689335, guid: 868733e9f407cab46a41f3326155fb03, type: 3}
+  allowFlipX: 0
   animationTime: 0.0625
   useSequenceDuration: 0
   sequenceDuration: 0.5
@@ -131,8 +132,8 @@ GameObject:
   m_Component:
   - component: {fileID: 6380748379181955697}
   - component: {fileID: 3262222071986927519}
-  - component: {fileID: -38777085001033807}
   - component: {fileID: 1743110654645821925}
+  - component: {fileID: -38777085001033807}
   m_Layer: 8
   m_Name: Explosion
   m_TagString: Explosion
@@ -204,21 +205,6 @@ BoxCollider2D:
   m_AutoTiling: 0
   m_Size: {x: 0.25, y: 0.25}
   m_EdgeRadius: 0
---- !u!114 &-38777085001033807
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6808800731990316043}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9a9fd413d8a7ea54e87f7c53e59f0b36, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  start: {fileID: 7202751292448453280}
-  middle: {fileID: 7205957583967581245}
-  end: {fileID: 4814171930701571145}
 --- !u!50 &1743110654645821925
 Rigidbody2D:
   serializedVersion: 5
@@ -246,6 +232,21 @@ Rigidbody2D:
   m_SleepingMode: 1
   m_CollisionDetection: 0
   m_Constraints: 4
+--- !u!114 &-38777085001033807
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6808800731990316043}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9a9fd413d8a7ea54e87f7c53e59f0b36, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  start: {fileID: 7202751292448453280}
+  middle: {fileID: 7205957583967581245}
+  end: {fileID: 4814171930701571145}
 --- !u!1 &7509791017686141940
 GameObject:
   m_ObjectHideFlags: 0
@@ -359,6 +360,7 @@ MonoBehaviour:
   - {fileID: 9118549529482997128, guid: dea460387940f46408b46d8dc59a6108, type: 3}
   - {fileID: -4830720148593167457, guid: dea460387940f46408b46d8dc59a6108, type: 3}
   - {fileID: 2363799373831751792, guid: dea460387940f46408b46d8dc59a6108, type: 3}
+  allowFlipX: 0
   animationTime: 0.0625
   useSequenceDuration: 0
   sequenceDuration: 0.5
@@ -480,6 +482,7 @@ MonoBehaviour:
   - {fileID: 1960144569077839259, guid: 002f6d2fc73e37d4bb8fd3d29517b658, type: 3}
   - {fileID: -3175918128893223224, guid: 002f6d2fc73e37d4bb8fd3d29517b658, type: 3}
   - {fileID: -6771676236449578781, guid: 002f6d2fc73e37d4bb8fd3d29517b658, type: 3}
+  allowFlipX: 0
   animationTime: 0.0625
   useSequenceDuration: 0
   sequenceDuration: 0.5

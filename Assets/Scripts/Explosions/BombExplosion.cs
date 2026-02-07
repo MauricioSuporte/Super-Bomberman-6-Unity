@@ -1,7 +1,7 @@
 using System.Collections;
 using UnityEngine;
 
-public class Explosion : MonoBehaviour
+public class BombExplosion : MonoBehaviour
 {
     public AnimatedSpriteRenderer start;
     public AnimatedSpriteRenderer middle;

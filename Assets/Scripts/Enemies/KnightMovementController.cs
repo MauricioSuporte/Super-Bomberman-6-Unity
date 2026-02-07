@@ -11,7 +11,7 @@ public class KnightMovementController : ChargerPersecutingMovementController
         {
             Vector2 origin = other.transform.position;
 
-            if (other.TryGetComponent<Explosion>(out var explosion))
+            if (other.TryGetComponent<BombExplosion>(out var explosion))
                 origin = explosion.Origin;
 
             if (IsExplosionOriginInFront(origin))

@@ -33,7 +33,7 @@ public partial class BombController : MonoBehaviour
     private readonly List<GameObject> plantedBombs = new();
 
     [Header("Explosion Settings")]
-    public Explosion explosionPrefab;
+    public BombExplosion explosionPrefab;
     public LayerMask explosionLayerMask;
     public float explosionDuration = 1f;
     public int explosionRadius = 2;
@@ -306,8 +306,8 @@ public partial class BombController : MonoBehaviour
             PlayExplosionSfx(currentExplosionAudio, effectiveRadius);
         }
 
-        Explosion centerExplosion = Instantiate(explosionPrefab, position, Quaternion.identity);
-        centerExplosion.Play(Explosion.ExplosionPart.Start, Vector2.zero, 0f, explosionDuration, position);
+        BombExplosion centerExplosion = Instantiate(explosionPrefab, position, Quaternion.identity);
+        centerExplosion.Play(BombExplosion.ExplosionPart.Start, Vector2.zero, 0f, explosionDuration, position);
 
         Explode(position, Vector2.up, effectiveRadius, pierce);
         Explode(position, Vector2.down, effectiveRadius, pierce);
@@ -629,12 +629,12 @@ public partial class BombController : MonoBehaviour
             Vector2 p = positionsToSpawn[i];
             bool isLastSpawned = i == positionsToSpawn.Count - 1;
 
-            Explosion.ExplosionPart part =
+            BombExplosion.ExplosionPart part =
                 (isLastSpawned && reachedMaxRange)
-                    ? Explosion.ExplosionPart.End
-                    : Explosion.ExplosionPart.Middle;
+                    ? BombExplosion.ExplosionPart.End
+                    : BombExplosion.ExplosionPart.Middle;
 
-            Explosion explosion = Instantiate(explosionPrefab, p, Quaternion.identity);
+            BombExplosion explosion = Instantiate(explosionPrefab, p, Quaternion.identity);
             explosion.Play(part, direction, 0f, explosionDuration, origin);
         }
     }
@@ -1079,8 +1079,8 @@ public partial class BombController : MonoBehaviour
         p.x = Mathf.Round(p.x);
         p.y = Mathf.Round(p.y);
 
-        Explosion center = Instantiate(explosionPrefab, p, Quaternion.identity);
-        center.Play(Explosion.ExplosionPart.Start, Vector2.zero, 0f, explosionDuration, p);
+        BombExplosion center = Instantiate(explosionPrefab, p, Quaternion.identity);
+        center.Play(BombExplosion.ExplosionPart.Start, Vector2.zero, 0f, explosionDuration, p);
 
         Explode(p, Vector2.up, radius, pierce);
         Explode(p, Vector2.down, radius, pierce);
@@ -1112,8 +1112,8 @@ public partial class BombController : MonoBehaviour
             return;
         }
 
-        Explosion center = Instantiate(explosionPrefab, p, Quaternion.identity);
-        center.Play(Explosion.ExplosionPart.Start, Vector2.zero, 0f, explosionDuration, p);
+        BombExplosion center = Instantiate(explosionPrefab, p, Quaternion.identity);
+        center.Play(BombExplosion.ExplosionPart.Start, Vector2.zero, 0f, explosionDuration, p);
 
         Explode(p, Vector2.up, effectiveRadius, effectivePierce);
         Explode(p, Vector2.down, effectiveRadius, effectivePierce);

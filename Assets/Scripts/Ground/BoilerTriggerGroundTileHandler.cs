@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
 using UnityEngine.Tilemaps;
+using Assets.Scripts.Explosions;
 
 public sealed class BoilerTriggerGroundTileHandler : MonoBehaviour, IGroundTileHandler, IGroundTileBombPlacedHandler
 {
@@ -17,6 +18,8 @@ public sealed class BoilerTriggerGroundTileHandler : MonoBehaviour, IGroundTileH
     [SerializeField] private float openDoorAnimationSeconds = 0.5f;
     [SerializeField] private TileBase openedDoorTile;
 
+    [SerializeField] private BoilerPowderTrailIgniterPrefab powderIgniter;
+
     private bool triggeredOnce;
     private Coroutine routine;
     private Coroutine doorAllRoutine;
@@ -28,6 +31,12 @@ public sealed class BoilerTriggerGroundTileHandler : MonoBehaviour, IGroundTileH
     {
         if (bombLastPosField == null)
             bombLastPosField = typeof(Bomb).GetField("lastPos", BindingFlags.Instance | BindingFlags.NonPublic);
+
+        if (powderIgniter == null)
+            powderIgniter = GetComponent<BoilerPowderTrailIgniterPrefab>();
+
+        if (powderIgniter == null)
+            powderIgniter = FindFirstObjectByType<BoilerPowderTrailIgniterPrefab>();
     }
 
     private void OnDisable()
@@ -123,7 +132,7 @@ public sealed class BoilerTriggerGroundTileHandler : MonoBehaviour, IGroundTileH
         tm.CompressBounds();
         var bounds = tm.cellBounds;
 
-        List<Vector3Int> targets = new List<Vector3Int>(64);
+        List<Vector3Int> targets = new(64);
 
         for (int y = bounds.yMin; y < bounds.yMax; y++)
         {
@@ -241,6 +250,9 @@ public sealed class BoilerTriggerGroundTileHandler : MonoBehaviour, IGroundTileH
         }
 
         source.ExplodeBomb(bombGo);
+
+        if (powderIgniter != null)
+            powderIgniter.IgniteSequence();
 
         routine = null;
     }
