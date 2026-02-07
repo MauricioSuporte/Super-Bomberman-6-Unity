@@ -43,12 +43,50 @@ namespace Assets.Scripts.Explosions
         [SerializeField, Min(0f)] private float preIgniteLeadSeconds = 1f;
         [SerializeField, Range(0f, 1f)] private float preIgniteVolume = 1f;
 
+        [Header("Boiler Steam (child / prefab)")]
+        [SerializeField] private bool enableSteam = true;
+        [SerializeField] private int steamTileX;
+        [SerializeField] private int steamTileY;
+        [SerializeField, Min(0.01f)] private float steamDurationSeconds = 2.5f;
+        [SerializeField] private bool steamUseGroundTilemapZ = false;
+        [SerializeField] private bool steamUsePrefabLocalOffset = true;
+        [SerializeField] private bool steamEnforcePositionWhileEnabled = true;
+
+        private AnimatedSpriteRenderer steamRenderer;
+        private GameObject steamInstance;
+        private Transform steamRoot;
+        private Vector3 steamPrefabLocalOffset;
+        private bool hasSteamPrefabLocalOffset;
+
         private Coroutine routine;
+        private Coroutine steamRoutine;
+
+        private bool hasExpectedSteamPos;
+        private Vector3 expectedSteamWorldPos;
 
         private void Awake()
         {
             ResolveGroundTilemapIfNeeded();
             ResolveSfxSourceIfNeeded();
+            ResolveSteamRendererIfNeeded();
+            SetSteamEnabled(false);
+        }
+
+        private void LateUpdate()
+        {
+            if (!steamEnforcePositionWhileEnabled)
+                return;
+
+            if (!hasExpectedSteamPos)
+                return;
+
+            if (steamRoot == null || steamRenderer == null)
+                return;
+
+            if (!steamRenderer.enabled)
+                return;
+
+            ApplySteamWorldPos(expectedSteamWorldPos);
         }
 
         private void OnDisable()
@@ -60,6 +98,7 @@ namespace Assets.Scripts.Explosions
         {
             ResolveGroundTilemapIfNeeded();
             ResolveSfxSourceIfNeeded();
+            ResolveSteamRendererIfNeeded();
 
             if (!ValidateSetup())
                 return;
@@ -96,8 +135,73 @@ namespace Assets.Scripts.Explosions
                     sfxSource.PlayOneShot(preIgniteClip, Mathf.Clamp01(preIgniteVolume));
             }
 
+            StartSteamForBoiler();
+
             if (lead > 0f)
                 yield return new WaitForSeconds(lead);
+        }
+
+        private void StartSteamForBoiler()
+        {
+            hasExpectedSteamPos = false;
+
+            if (!enableSteam)
+                return;
+
+            if (groundTilemap == null)
+                return;
+
+            ResolveSteamRendererIfNeeded();
+            if (steamRenderer == null || steamRoot == null)
+                return;
+
+            expectedSteamWorldPos = GetExpectedSteamWorldPos();
+            hasExpectedSteamPos = true;
+
+            ApplySteamWorldPos(expectedSteamWorldPos);
+
+            if (steamRoutine != null)
+            {
+                StopCoroutine(steamRoutine);
+                steamRoutine = null;
+            }
+
+            steamRoutine = StartCoroutine(SteamRoutine(expectedSteamWorldPos));
+        }
+
+        private IEnumerator SteamRoutine(Vector3 expected)
+        {
+            SetSteamEnabled(true);
+            ApplySteamWorldPos(expected);
+
+            yield return null;
+
+            ApplySteamWorldPos(expected);
+
+            float d = Mathf.Max(0.01f, steamDurationSeconds);
+            yield return new WaitForSeconds(d);
+
+            SetSteamEnabled(false);
+            steamRoutine = null;
+        }
+
+        private void SetSteamEnabled(bool enabled)
+        {
+            if (steamRenderer == null)
+                return;
+
+            steamRenderer.enabled = enabled;
+
+            if (enabled)
+                steamRenderer.RefreshFrame();
+        }
+
+        private void ApplySteamWorldPos(Vector3 worldPos)
+        {
+            if (steamRoot == null)
+                return;
+
+            steamRoot.position = worldPos;
         }
 
         private IEnumerator IgniteOnceRoutine(int startIndex = 0)
@@ -195,6 +299,49 @@ namespace Assets.Scripts.Explosions
             }
         }
 
+        private void ResolveSteamRendererIfNeeded()
+        {
+            if (steamRenderer != null && steamRoot != null)
+                return;
+
+            var t = transform.Find("Steam");
+            if (t != null)
+            {
+                steamRenderer = t.GetComponent<AnimatedSpriteRenderer>();
+                steamRoot = t;
+                steamPrefabLocalOffset = t.localPosition;
+                hasSteamPrefabLocalOffset = true;
+                return;
+            }
+
+            if (powderIgniterPrefab == null)
+                return;
+
+            Transform prefabSteam = powderIgniterPrefab.transform.Find("Steam");
+            if (prefabSteam == null)
+                return;
+
+            var prefabSteamRenderer = prefabSteam.GetComponent<AnimatedSpriteRenderer>();
+            if (prefabSteamRenderer == null)
+                return;
+
+            steamPrefabLocalOffset = prefabSteam.localPosition;
+            hasSteamPrefabLocalOffset = true;
+
+            if (steamInstance == null)
+            {
+                steamInstance = Instantiate(prefabSteam.gameObject);
+                steamInstance.name = "Steam(Runtime)";
+                steamInstance.transform.SetParent(transform, worldPositionStays: true);
+            }
+
+            steamRenderer = steamInstance.GetComponent<AnimatedSpriteRenderer>();
+            steamRoot = steamRenderer != null ? steamRenderer.transform : steamInstance.transform;
+
+            if (steamRenderer != null)
+                steamRenderer.enabled = false;
+        }
+
         private bool ValidateSetup()
         {
             if (groundTilemap == null)
@@ -216,6 +363,34 @@ namespace Assets.Scripts.Explosions
                 StopCoroutine(routine);
                 routine = null;
             }
+
+            if (steamRoutine != null)
+            {
+                StopCoroutine(steamRoutine);
+                steamRoutine = null;
+            }
+
+            SetSteamEnabled(false);
+            hasExpectedSteamPos = false;
+        }
+
+        private Vector3 GetExpectedSteamWorldPos()
+        {
+            if (groundTilemap == null)
+                return Vector3.zero;
+
+            Vector3Int cell = new(steamTileX, steamTileY, 0);
+            Vector3 cellCenter = groundTilemap.GetCellCenterWorld(cell);
+
+            float z = steamUseGroundTilemapZ ? cellCenter.z : 0f;
+            cellCenter.z = z;
+
+            Vector3 expected = cellCenter;
+
+            if (steamUsePrefabLocalOffset && hasSteamPrefabLocalOffset)
+                expected += steamPrefabLocalOffset;
+
+            return expected;
         }
     }
 }
