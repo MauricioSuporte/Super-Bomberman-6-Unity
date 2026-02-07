@@ -6,27 +6,22 @@ using UnityEngine.Tilemaps;
 
 public sealed class BoilerTriggerGroundTileHandler : MonoBehaviour, IGroundTileHandler, IGroundTileBombPlacedHandler
 {
-    [Header("Boiler Trigger")]
-    [SerializeField, Min(0f)] private float pullDelaySeconds = 0.5f;
+    [SerializeField] private float pullDelaySeconds = 0.5f;
     [SerializeField] private int pullTilesUp = 1;
-    [SerializeField, Min(0.01f)] private float pullMoveSeconds = 0.08f;
+    [SerializeField] private float pullMoveSeconds = 0.08f;
 
-    [Header("Door (Tilemap)")]
     [SerializeField] private Tilemap doorTilemapOverride;
 
-    [Header("Door Tiles")]
     [SerializeField] private TileBase closedDoorTile;
     [SerializeField] private AnimatedTile openDoorAnimationTile;
-    [SerializeField, Min(0.01f)] private float openDoorAnimationSeconds = 0.5f;
+    [SerializeField] private float openDoorAnimationSeconds = 0.5f;
     [SerializeField] private TileBase openedDoorTile;
 
     private bool triggeredOnce;
     private Coroutine routine;
-
-    private readonly Dictionary<Vector3Int, Coroutine> _doorPending = new();
+    private Coroutine doorAllRoutine;
 
     private static readonly WaitForFixedUpdate waitFixed = new();
-
     private static FieldInfo bombLastPosField;
 
     private void Awake()
@@ -43,11 +38,11 @@ public sealed class BoilerTriggerGroundTileHandler : MonoBehaviour, IGroundTileH
             routine = null;
         }
 
-        foreach (var kv in _doorPending)
-            if (kv.Value != null)
-                StopCoroutine(kv.Value);
-
-        _doorPending.Clear();
+        if (doorAllRoutine != null)
+        {
+            StopCoroutine(doorAllRoutine);
+            doorAllRoutine = null;
+        }
     }
 
     public bool TryModifyExplosion(BombController source, Vector2 worldPos, TileBase groundTile, ref int radius, ref bool pierce)
@@ -82,7 +77,7 @@ public sealed class BoilerTriggerGroundTileHandler : MonoBehaviour, IGroundTileH
         to.x = Mathf.Round(to.x);
         to.y = Mathf.Round(to.y);
 
-        StartDoorOpenSequence(source, to);
+        StartDoorOpenSequenceAll(source);
 
         if (routine != null)
             StopCoroutine(routine);
@@ -90,64 +85,94 @@ public sealed class BoilerTriggerGroundTileHandler : MonoBehaviour, IGroundTileH
         routine = StartCoroutine(PullAndExplodeRoutine(source, bombGo, bomb, from, to));
     }
 
-    private void StartDoorOpenSequence(BombController source, Vector2 doorWorldPos)
+    private Tilemap ResolveDoorTilemap(BombController source)
     {
-        Tilemap tm = doorTilemapOverride != null ? doorTilemapOverride : source.groundTiles;
-        if (tm == null)
-            return;
+        if (doorTilemapOverride != null)
+            return doorTilemapOverride;
 
-        if (openDoorAnimationTile == null || openedDoorTile == null)
-            return;
+        if (source != null && source.stageBoundsTiles != null)
+            return source.stageBoundsTiles;
 
-        Vector3Int doorCell = tm.WorldToCell(doorWorldPos);
+        if (source != null && source.groundTiles != null)
+            return source.groundTiles;
 
-        if (_doorPending.TryGetValue(doorCell, out var c) && c != null)
-            StopCoroutine(c);
-
-        _doorPending[doorCell] = StartCoroutine(DoorOpenRoutine(tm, doorCell));
+        return null;
     }
 
-    private IEnumerator DoorOpenRoutine(Tilemap tm, Vector3Int cell)
+    private void StartDoorOpenSequenceAll(BombController source)
+    {
+        Tilemap tm = ResolveDoorTilemap(source);
+
+        if (tm == null)
+            return;
+
+        if (closedDoorTile == null || openDoorAnimationTile == null || openedDoorTile == null)
+            return;
+
+        if (doorAllRoutine != null)
+            StopCoroutine(doorAllRoutine);
+
+        doorAllRoutine = StartCoroutine(DoorOpenRoutineAll(tm));
+    }
+
+    private IEnumerator DoorOpenRoutineAll(Tilemap tm)
     {
         if (tm == null)
             yield break;
 
-        TileBase original = tm.GetTile(cell);
+        tm.CompressBounds();
+        var bounds = tm.cellBounds;
 
-        if (openedDoorTile != null && original == openedDoorTile)
+        List<Vector3Int> targets = new List<Vector3Int>(64);
+
+        for (int y = bounds.yMin; y < bounds.yMax; y++)
         {
-            _doorPending.Remove(cell);
+            for (int x = bounds.xMin; x < bounds.xMax; x++)
+            {
+                var c = new Vector3Int(x, y, 0);
+                var t = tm.GetTile(c);
+                if (t == closedDoorTile)
+                    targets.Add(c);
+            }
+        }
+
+        if (targets.Count == 0)
+        {
+            doorAllRoutine = null;
             yield break;
         }
 
-        if (closedDoorTile != null && original != null && original != closedDoorTile)
-        {
-            _doorPending.Remove(cell);
-            yield break;
-        }
+        for (int i = 0; i < targets.Count; i++)
+            tm.SetTile(targets[i], openDoorAnimationTile);
 
-        tm.SetTile(cell, openDoorAnimationTile);
-        tm.RefreshTile(cell);
+        tm.RefreshAllTiles();
 
         float dur = Mathf.Max(0.01f, openDoorAnimationSeconds);
         yield return new WaitForSeconds(dur);
 
         if (tm == null)
         {
-            _doorPending.Remove(cell);
+            doorAllRoutine = null;
             yield break;
         }
 
-        if (tm.GetTile(cell) == openDoorAnimationTile)
+        for (int i = 0; i < targets.Count; i++)
         {
-            tm.SetTile(cell, openedDoorTile);
-            tm.RefreshTile(cell);
+            var c = targets[i];
+            if (tm.GetTile(c) == openDoorAnimationTile)
+                tm.SetTile(c, openedDoorTile);
         }
 
-        _doorPending.Remove(cell);
+        tm.RefreshAllTiles();
+        doorAllRoutine = null;
     }
 
-    private IEnumerator PullAndExplodeRoutine(BombController source, GameObject bombGo, Bomb bomb, Vector2 from, Vector2 to)
+    private IEnumerator PullAndExplodeRoutine(
+        BombController source,
+        GameObject bombGo,
+        Bomb bomb,
+        Vector2 from,
+        Vector2 to)
     {
         if (pullDelaySeconds > 0f)
             yield return new WaitForSeconds(pullDelaySeconds);
