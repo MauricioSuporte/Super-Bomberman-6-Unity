@@ -52,9 +52,19 @@ namespace Assets.Scripts.Explosions
         [SerializeField] private bool steamUsePrefabLocalOffset = true;
         [SerializeField] private bool steamEnforcePositionWhileEnabled = true;
 
-        private AnimatedSpriteRenderer steamRenderer;
-        private GameObject steamInstance;
-        private Transform steamRoot;
+        [Header("Boiler Steam (second instance)")]
+        [SerializeField] private bool enableSecondSteam = true;
+        [SerializeField] private Vector3 secondSteamWorldOffset = Vector3.zero;
+
+        private AnimatedSpriteRenderer steamRendererA;
+        private AnimatedSpriteRenderer steamRendererB;
+
+        private GameObject steamInstanceA;
+        private GameObject steamInstanceB;
+
+        private Transform steamRootA;
+        private Transform steamRootB;
+
         private Vector3 steamPrefabLocalOffset;
         private bool hasSteamPrefabLocalOffset;
 
@@ -80,10 +90,7 @@ namespace Assets.Scripts.Explosions
             if (!hasExpectedSteamPos)
                 return;
 
-            if (steamRoot == null || steamRenderer == null)
-                return;
-
-            if (!steamRenderer.enabled)
+            if (!IsAnySteamEnabled())
                 return;
 
             ApplySteamWorldPos(expectedSteamWorldPos);
@@ -152,7 +159,7 @@ namespace Assets.Scripts.Explosions
                 return;
 
             ResolveSteamRendererIfNeeded();
-            if (steamRenderer == null || steamRoot == null)
+            if (steamRendererA == null || steamRootA == null)
                 return;
 
             expectedSteamWorldPos = GetExpectedSteamWorldPos();
@@ -187,21 +194,37 @@ namespace Assets.Scripts.Explosions
 
         private void SetSteamEnabled(bool enabled)
         {
-            if (steamRenderer == null)
-                return;
+            if (steamRendererA != null)
+            {
+                steamRendererA.enabled = enabled;
+                if (enabled) steamRendererA.RefreshFrame();
+            }
 
-            steamRenderer.enabled = enabled;
+            if (enableSecondSteam && steamRendererB != null)
+            {
+                steamRendererB.enabled = enabled;
+                if (enabled) steamRendererB.RefreshFrame();
+            }
+        }
 
-            if (enabled)
-                steamRenderer.RefreshFrame();
+        private bool IsAnySteamEnabled()
+        {
+            if (steamRendererA != null && steamRendererA.enabled)
+                return true;
+
+            if (enableSecondSteam && steamRendererB != null && steamRendererB.enabled)
+                return true;
+
+            return false;
         }
 
         private void ApplySteamWorldPos(Vector3 worldPos)
         {
-            if (steamRoot == null)
-                return;
+            if (steamRootA != null)
+                steamRootA.position = worldPos;
 
-            steamRoot.position = worldPos;
+            if (enableSecondSteam && steamRootB != null)
+                steamRootB.position = worldPos + secondSteamWorldOffset;
         }
 
         private IEnumerator IgniteOnceRoutine(int startIndex = 0)
@@ -301,16 +324,39 @@ namespace Assets.Scripts.Explosions
 
         private void ResolveSteamRendererIfNeeded()
         {
-            if (steamRenderer != null && steamRoot != null)
+            bool hasA = steamRendererA != null && steamRootA != null;
+            bool hasB = !enableSecondSteam || (steamRendererB != null && steamRootB != null);
+
+            if (hasA && hasB)
                 return;
 
             var t = transform.Find("Steam");
             if (t != null)
             {
-                steamRenderer = t.GetComponent<AnimatedSpriteRenderer>();
-                steamRoot = t;
+                steamRendererA = t.GetComponent<AnimatedSpriteRenderer>();
+                steamRootA = t;
                 steamPrefabLocalOffset = t.localPosition;
                 hasSteamPrefabLocalOffset = true;
+
+                if (enableSecondSteam)
+                {
+                    var t2 = transform.Find("Steam2");
+                    if (t2 == null && t.gameObject != null)
+                    {
+                        var clone = Instantiate(t.gameObject, t.parent, worldPositionStays: false);
+                        clone.name = "Steam2";
+                        t2 = clone.transform;
+                    }
+
+                    if (t2 != null)
+                    {
+                        steamRendererB = t2.GetComponent<AnimatedSpriteRenderer>();
+                        steamRootB = t2;
+                        if (steamRendererB != null) steamRendererB.enabled = false;
+                    }
+                }
+
+                if (steamRendererA != null) steamRendererA.enabled = false;
                 return;
             }
 
@@ -328,18 +374,37 @@ namespace Assets.Scripts.Explosions
             steamPrefabLocalOffset = prefabSteam.localPosition;
             hasSteamPrefabLocalOffset = true;
 
-            if (steamInstance == null)
+            if (steamInstanceA == null)
             {
-                steamInstance = Instantiate(prefabSteam.gameObject);
-                steamInstance.name = "Steam(Runtime)";
-                steamInstance.transform.SetParent(transform, worldPositionStays: true);
+                steamInstanceA = Instantiate(prefabSteam.gameObject);
+                steamInstanceA.name = "Steam(Runtime)";
+                steamInstanceA.transform.SetParent(transform, worldPositionStays: true);
             }
 
-            steamRenderer = steamInstance.GetComponent<AnimatedSpriteRenderer>();
-            steamRoot = steamRenderer != null ? steamRenderer.transform : steamInstance.transform;
+            steamRendererA = steamInstanceA.GetComponent<AnimatedSpriteRenderer>();
+            steamRootA = steamRendererA != null ? steamRendererA.transform : steamInstanceA.transform;
 
-            if (steamRenderer != null)
-                steamRenderer.enabled = false;
+            if (steamRendererA != null)
+                steamRendererA.enabled = false;
+
+            if (enableSecondSteam)
+            {
+                if (steamInstanceB == null && steamInstanceA != null)
+                {
+                    steamInstanceB = Instantiate(steamInstanceA);
+                    steamInstanceB.name = "Steam2(Runtime)";
+                    steamInstanceB.transform.SetParent(transform, worldPositionStays: true);
+                }
+
+                if (steamInstanceB != null)
+                {
+                    steamRendererB = steamInstanceB.GetComponent<AnimatedSpriteRenderer>();
+                    steamRootB = steamRendererB != null ? steamRendererB.transform : steamInstanceB.transform;
+
+                    if (steamRendererB != null)
+                        steamRendererB.enabled = false;
+                }
+            }
         }
 
         private bool ValidateSetup()
