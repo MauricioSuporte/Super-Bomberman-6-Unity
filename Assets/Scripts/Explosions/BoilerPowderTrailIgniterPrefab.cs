@@ -29,7 +29,7 @@ namespace Assets.Scripts.Explosions
 
         [SerializeField] private Tilemap groundTilemap;
         [SerializeField] private PowderIgniterFlame powderIgniterPrefab;
-        [SerializeField] private List<PowderTileEntry> orderedTiles = new List<PowderTileEntry>();
+        [SerializeField] private List<PowderTileEntry> orderedTiles = new();
 
         [SerializeField, Min(0.01f)] private float flameDurationSeconds = 0.5f;
         [SerializeField, Min(0f)] private float stepDelaySeconds = 0.06f;
@@ -37,11 +37,18 @@ namespace Assets.Scripts.Explosions
         [SerializeField, Min(0.1f)] private float restartEverySeconds = 5f;
         [SerializeField] private bool validateTileExistsOnGround = true;
 
+        [Header("Pre Ignite SFX")]
+        [SerializeField] private AudioSource sfxSource;
+        [SerializeField] private AudioClip preIgniteClip;
+        [SerializeField, Min(0f)] private float preIgniteLeadSeconds = 1f;
+        [SerializeField, Range(0f, 1f)] private float preIgniteVolume = 1f;
+
         private Coroutine routine;
 
         private void Awake()
         {
             ResolveGroundTilemapIfNeeded();
+            ResolveSfxSourceIfNeeded();
         }
 
         private void OnDisable()
@@ -52,6 +59,7 @@ namespace Assets.Scripts.Explosions
         public void IgniteSequence()
         {
             ResolveGroundTilemapIfNeeded();
+            ResolveSfxSourceIfNeeded();
 
             if (!ValidateSetup())
                 return;
@@ -71,9 +79,25 @@ namespace Assets.Scripts.Explosions
 
             while (true)
             {
+                yield return PreIgniteRoutine();
                 yield return IgniteOnceRoutine();
                 yield return new WaitForSeconds(waitBetween);
             }
+        }
+
+        private IEnumerator PreIgniteRoutine()
+        {
+            float lead = Mathf.Max(0f, preIgniteLeadSeconds);
+
+            if (preIgniteClip != null)
+            {
+                ResolveSfxSourceIfNeeded();
+                if (sfxSource != null)
+                    sfxSource.PlayOneShot(preIgniteClip, Mathf.Clamp01(preIgniteVolume));
+            }
+
+            if (lead > 0f)
+                yield return new WaitForSeconds(lead);
         }
 
         private IEnumerator IgniteOnceRoutine(int startIndex = 0)
@@ -156,6 +180,19 @@ namespace Assets.Scripts.Explosions
             }
 
             groundTilemap = tilemaps[0];
+        }
+
+        private void ResolveSfxSourceIfNeeded()
+        {
+            if (sfxSource != null)
+                return;
+
+            sfxSource = GetComponent<AudioSource>();
+            if (sfxSource == null)
+            {
+                sfxSource = gameObject.AddComponent<AudioSource>();
+                sfxSource.playOnAwake = false;
+            }
         }
 
         private bool ValidateSetup()
