@@ -97,8 +97,15 @@ public sealed class BoilerTriggerGroundTileHandler : MonoBehaviour, IGroundTileH
 
         triggeredOnce = true;
 
-        float explodeAt = Time.time + Mathf.Max(0.01f, explodeAfterCapturedSeconds);
-        bomb.EnsureMinRemainingFuse(Mathf.Max(0.01f, explodeAfterCapturedSeconds) + 0.05f);
+        float explodeDelay = Mathf.Max(0.01f, explodeAfterCapturedSeconds);
+
+        float minFuse =
+            Mathf.Max(0.0f, pullDelaySeconds) +
+            Mathf.Max(0.01f, pullMoveSeconds) +
+            explodeDelay +
+            0.05f;
+
+        bomb.EnsureMinRemainingFuse(minFuse);
 
         Vector2 from = bomb.GetLogicalPosition();
         from.x = Mathf.Round(from.x);
@@ -113,7 +120,7 @@ public sealed class BoilerTriggerGroundTileHandler : MonoBehaviour, IGroundTileH
         if (routine != null)
             StopCoroutine(routine);
 
-        routine = StartCoroutine(PullAndExplodeRoutine(source, bombGo, bomb, from, to, explodeAt));
+        routine = StartCoroutine(PullAndExplodeRoutine(source, bombGo, bomb, from, to, explodeDelay));
     }
 
     private Tilemap ResolveDoorTilemap(BombController source)
@@ -215,7 +222,7 @@ public sealed class BoilerTriggerGroundTileHandler : MonoBehaviour, IGroundTileH
         Bomb bomb,
         Vector2 from,
         Vector2 to,
-        float explodeAt)
+        float explodeDelay)
     {
         if (pullDelaySeconds > 0f)
             yield return new WaitForSeconds(pullDelaySeconds);
@@ -286,9 +293,14 @@ public sealed class BoilerTriggerGroundTileHandler : MonoBehaviour, IGroundTileH
             anim2.RefreshFrame();
         }
 
-        float wait = explodeAt - Time.time;
-        if (wait > 0f)
-            yield return new WaitForSeconds(wait);
+        if (bombGo == null || bomb == null || source == null)
+            yield break;
+
+        if (bomb.HasExploded)
+            yield break;
+
+        if (explodeDelay > 0f)
+            yield return new WaitForSeconds(explodeDelay);
 
         if (bombGo == null || bomb == null || source == null)
             yield break;
