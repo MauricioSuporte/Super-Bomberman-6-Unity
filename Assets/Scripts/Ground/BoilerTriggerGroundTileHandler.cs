@@ -6,7 +6,7 @@ using UnityEngine.Tilemaps;
 using Assets.Scripts.Explosions;
 
 [RequireComponent(typeof(BoilerPowderTrailIgniterPrefab))]
-public sealed class BoilerTriggerGroundTileHandler : MonoBehaviour, IGroundTileHandler, IGroundTileBombPlacedHandler
+public sealed class BoilerTriggerGroundTileHandler : MonoBehaviour, IGroundTileHandler, IGroundTileBombAtHandler
 {
     [SerializeField] private float pullDelaySeconds = 0.5f;
     [SerializeField] private int pullTilesUp = 1;
@@ -58,7 +58,7 @@ public sealed class BoilerTriggerGroundTileHandler : MonoBehaviour, IGroundTileH
     public bool TryModifyExplosion(BombController source, Vector2 worldPos, TileBase groundTile, ref int radius, ref bool pierce)
         => false;
 
-    public void OnBombPlaced(
+    public void OnBombAt(
         BombController source,
         Vector2 worldPos,
         Vector3Int cell,

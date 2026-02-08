@@ -465,7 +465,12 @@ public partial class BombController : MonoBehaviour
         bombComponent.SetStageBoundsTilemap(stageBoundsTiles);
         bombComponent.SetFuseSeconds(bombFuseTime);
         bombComponent.Initialize(this);
-        TryHandleGroundBombPlaced(position, bomb);
+        if (!bomb.TryGetComponent<BombAtGroundTileNotifier>(out var notifier))
+            notifier = bomb.AddComponent<BombAtGroundTileNotifier>();
+
+        notifier.Initialize(this);
+
+        TryHandleGroundBombAt(position, bomb);
 
         if (controlEnabled)
             RegisterBomb(bomb);
@@ -933,7 +938,12 @@ public partial class BombController : MonoBehaviour
         bombComponent.SetStageBoundsTilemap(stageBoundsTiles);
         bombComponent.SetFuseSeconds(bombFuseTime);
         bombComponent.Initialize(this);
-        TryHandleGroundBombPlaced(position, bomb);
+        if (!bomb.TryGetComponent<BombAtGroundTileNotifier>(out var notifier))
+            notifier = bomb.AddComponent<BombAtGroundTileNotifier>();
+
+        notifier.Initialize(this);
+
+        TryHandleGroundBombAt(position, bomb);
 
         if (bomb.TryGetComponent<Collider2D>(out var bombCollider))
             bombCollider.isTrigger = true;
@@ -1221,7 +1231,7 @@ public partial class BombController : MonoBehaviour
         handler.HandleExplosionHit(this, worldPos, cell, tile);
     }
 
-    private void TryHandleGroundBombPlaced(Vector2 worldPos, GameObject bomb)
+    private void TryHandleGroundBombAt(Vector2 worldPos, GameObject bomb)
     {
         ResolveGroundTileResolver();
 
@@ -1234,7 +1244,12 @@ public partial class BombController : MonoBehaviour
         if (!groundTileResolver.TryGetHandler(groundTile, out var handler) || handler == null)
             return;
 
-        if (handler is IGroundTileBombPlacedHandler bombPlacedHandler)
-            bombPlacedHandler.OnBombPlaced(this, worldPos, cell, groundTile, bomb);
+        if (handler is IGroundTileBombAtHandler bombAtHandler)
+            bombAtHandler.OnBombAt(this, worldPos, cell, groundTile, bomb);
+    }
+
+    public void NotifyBombAt(Vector2 worldPos, GameObject bombGo)
+    {
+        TryHandleGroundBombAt(worldPos, bombGo);
     }
 }

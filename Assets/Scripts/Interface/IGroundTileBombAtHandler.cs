@@ -1,9 +1,9 @@
 ﻿using UnityEngine;
 using UnityEngine.Tilemaps;
 
-public interface IGroundTileBombPlacedHandler
+public interface IGroundTileBombAtHandler
 {
-    void OnBombPlaced(
+    void OnBombAt(
         BombController source,
         Vector2 worldPos,
         Vector3Int cell,
