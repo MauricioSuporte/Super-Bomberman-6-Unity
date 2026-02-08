@@ -43,6 +43,7 @@ namespace Assets.Scripts.Explosions
         [SerializeField] private AudioClip preIgniteClip;
         [SerializeField, Min(0f)] private float preIgniteLeadSeconds = 1f;
         [SerializeField, Range(0f, 1f)] private float preIgniteVolume = 1f;
+        [SerializeField, Min(0f)] private float igniteAfterSfxDelaySeconds = 1.3f;
 
         [Header("Boiler Steam (child / prefab)")]
         [SerializeField] private bool enableSteam = true;
@@ -148,6 +149,9 @@ namespace Assets.Scripts.Explosions
         {
             float lead = Mathf.Max(0f, preIgniteLeadSeconds);
 
+            if (lead > 0f)
+                yield return new WaitForSeconds(lead);
+
             if (preIgniteClip != null)
             {
                 ResolveSfxSourceIfNeeded();
@@ -158,8 +162,9 @@ namespace Assets.Scripts.Explosions
             StartSteamForBoiler();
             StartScreenRedFlash();
 
-            if (lead > 0f)
-                yield return new WaitForSeconds(lead);
+            float igniteDelay = Mathf.Max(0f, igniteAfterSfxDelaySeconds);
+            if (igniteDelay > 0f)
+                yield return new WaitForSeconds(igniteDelay);
         }
 
         private void StartScreenRedFlash()
