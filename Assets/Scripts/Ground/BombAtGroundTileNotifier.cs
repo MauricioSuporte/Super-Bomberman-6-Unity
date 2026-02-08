@@ -1,58 +1,86 @@
 ﻿using UnityEngine;
+using UnityEngine.Tilemaps;
 
 [DisallowMultipleComponent]
+[RequireComponent(typeof(Bomb))]
+[RequireComponent(typeof(Rigidbody2D))]
 public sealed class BombAtGroundTileNotifier : MonoBehaviour
 {
-    [SerializeField, Min(0.01f)] private float tickSeconds = 0.02f;
-
-    private float nextTickTime;
-
-    private BombController fallbackSource;
+    private BombController owner;
     private Bomb bomb;
+    private Rigidbody2D rb;
 
-    private bool hasLast;
-    private Vector3Int lastCell;
+    private MovementController ownerMovement;
+    private float tileSize = 1f;
 
-    public void Initialize(BombController source)
+    private Tilemap groundTiles;
+
+    private Vector3Int lastCell = new(int.MinValue, int.MinValue, int.MinValue);
+    private bool hasLastCell;
+
+    public void Initialize(BombController ownerController)
     {
-        fallbackSource = source;
+        owner = ownerController;
+
         bomb = GetComponent<Bomb>();
-        hasLast = false;
-        nextTickTime = 0f;
-    }
+        rb = GetComponent<Rigidbody2D>();
 
-    private void OnEnable()
-    {
-        nextTickTime = 0f;
+        if (owner != null)
+        {
+            ownerMovement = owner.GetComponent<MovementController>();
+            if (ownerMovement != null)
+                tileSize = Mathf.Max(0.0001f, ownerMovement.tileSize);
+
+            groundTiles = owner.groundTiles;
+        }
+
+        hasLastCell = false;
+        lastCell = new Vector3Int(int.MinValue, int.MinValue, int.MinValue);
     }
 
     private void FixedUpdate()
     {
-        if (Time.time < nextTickTime)
+        if (owner == null)
             return;
 
-        nextTickTime = Time.time + tickSeconds;
+        if (bomb == null)
+            bomb = GetComponent<Bomb>();
 
-        var source = bomb != null && bomb.Owner != null ? bomb.Owner : fallbackSource;
-        if (source == null)
+        if (bomb == null || bomb.HasExploded)
             return;
 
-        Vector2 logicalPos = bomb != null ? bomb.GetLogicalPosition() : (Vector2)transform.position;
-
-        logicalPos.x = Mathf.Round(logicalPos.x);
-        logicalPos.y = Mathf.Round(logicalPos.y);
-
-        if (source.groundTiles == null)
+        if (bomb.IsBeingPunched || bomb.IsBeingKicked || bomb.IsBeingMagnetPulled)
             return;
 
-        Vector3Int cell = source.groundTiles.WorldToCell(logicalPos);
+        Vector2 basePos = bomb.GetLogicalPosition();
 
-        if (hasLast && cell == lastCell)
+        Vector3Int cell;
+        Vector2 tileCenter;
+
+        if (groundTiles != null)
+        {
+            cell = groundTiles.WorldToCell(basePos);
+            Vector3 c = groundTiles.GetCellCenterWorld(cell);
+            tileCenter = (Vector2)c;
+        }
+        else
+        {
+            float x = Mathf.Round(basePos.x / tileSize) * tileSize;
+            float y = Mathf.Round(basePos.y / tileSize) * tileSize;
+            tileCenter = new Vector2(x, y);
+            cell = new Vector3Int(
+                Mathf.RoundToInt(x / tileSize),
+                Mathf.RoundToInt(y / tileSize),
+                0
+            );
+        }
+
+        if (hasLastCell && cell == lastCell)
             return;
 
         lastCell = cell;
-        hasLast = true;
+        hasLastCell = true;
 
-        source.NotifyBombAt(logicalPos, gameObject);
+        owner.NotifyBombAt(tileCenter, gameObject);
     }
 }

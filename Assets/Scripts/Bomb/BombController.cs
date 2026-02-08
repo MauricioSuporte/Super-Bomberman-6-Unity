@@ -1230,6 +1230,15 @@ public partial class BombController : MonoBehaviour
 
         handler.HandleExplosionHit(this, worldPos, cell, tile);
     }
+    public void NotifyBombAt(Vector2 worldPos, GameObject bombGo)
+    {
+        if (bombGo == null)
+            return;
+
+        Vector2 actual = GetBombEffectiveWorldPos(bombGo, worldPos);
+
+        TryHandleGroundBombAt(actual, bombGo);
+    }
 
     private void TryHandleGroundBombAt(Vector2 worldPos, GameObject bomb)
     {
@@ -1248,8 +1257,27 @@ public partial class BombController : MonoBehaviour
             bombAtHandler.OnBombAt(this, worldPos, cell, groundTile, bomb);
     }
 
-    public void NotifyBombAt(Vector2 worldPos, GameObject bombGo)
+    private Vector2 GetBombEffectiveWorldPos(GameObject bombGo, Vector2? incomingWorldPos = null)
     {
-        TryHandleGroundBombAt(worldPos, bombGo);
+        if (bombGo == null)
+            return Vector2.zero;
+
+        Vector2 basePos;
+
+        if (bombGo.TryGetComponent<Bomb>(out var bomb) && bomb != null)
+            basePos = bomb.GetLogicalPosition();
+        else
+            basePos = (Vector2)bombGo.transform.position;
+
+        if (groundTiles != null)
+        {
+            Vector3Int cell = groundTiles.WorldToCell(basePos);
+            Vector3 center = groundTiles.GetCellCenterWorld(cell);
+            return (Vector2)center;
+        }
+
+        basePos.x = Mathf.Round(basePos.x);
+        basePos.y = Mathf.Round(basePos.y);
+        return basePos;
     }
 }
