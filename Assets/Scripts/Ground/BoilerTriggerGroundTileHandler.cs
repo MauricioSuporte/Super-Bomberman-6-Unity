@@ -12,6 +12,9 @@ public sealed class BoilerTriggerGroundTileHandler : MonoBehaviour, IGroundTileH
     [SerializeField] private int pullTilesUp = 1;
     [SerializeField] private float pullMoveSeconds = 0.08f;
 
+    [Header("Explode Timing")]
+    [SerializeField, Min(0.01f)] private float explodeAfterCapturedSeconds = 1f;
+
     [Header("SFX - Bomb Move")]
     [SerializeField] private AudioSource bombMoveSfxSource;
     [SerializeField] private AudioClip bombMoveClip;
@@ -94,6 +97,9 @@ public sealed class BoilerTriggerGroundTileHandler : MonoBehaviour, IGroundTileH
 
         triggeredOnce = true;
 
+        float explodeAt = Time.time + Mathf.Max(0.01f, explodeAfterCapturedSeconds);
+        bomb.EnsureMinRemainingFuse(Mathf.Max(0.01f, explodeAfterCapturedSeconds) + 0.05f);
+
         Vector2 from = bomb.GetLogicalPosition();
         from.x = Mathf.Round(from.x);
         from.y = Mathf.Round(from.y);
@@ -107,7 +113,7 @@ public sealed class BoilerTriggerGroundTileHandler : MonoBehaviour, IGroundTileH
         if (routine != null)
             StopCoroutine(routine);
 
-        routine = StartCoroutine(PullAndExplodeRoutine(source, bombGo, bomb, from, to));
+        routine = StartCoroutine(PullAndExplodeRoutine(source, bombGo, bomb, from, to, explodeAt));
     }
 
     private Tilemap ResolveDoorTilemap(BombController source)
@@ -208,7 +214,8 @@ public sealed class BoilerTriggerGroundTileHandler : MonoBehaviour, IGroundTileH
         GameObject bombGo,
         Bomb bomb,
         Vector2 from,
-        Vector2 to)
+        Vector2 to,
+        float explodeAt)
     {
         if (pullDelaySeconds > 0f)
             yield return new WaitForSeconds(pullDelaySeconds);
@@ -219,9 +226,10 @@ public sealed class BoilerTriggerGroundTileHandler : MonoBehaviour, IGroundTileH
         if (bomb.HasExploded || bomb.IsBeingKicked || bomb.IsBeingPunched || bomb.IsBeingMagnetPulled)
             yield break;
 
-        PlayBombMoveSfx();
-
         float dur = Mathf.Max(0.01f, pullMoveSeconds);
+
+        if (bombGo.TryGetComponent<AnimatedSpriteRenderer>(out var anim) && anim != null)
+            anim.SetFrozen(true);
 
         if (bombGo.TryGetComponent<Rigidbody2D>(out var rb) && rb != null)
         {
@@ -277,6 +285,16 @@ public sealed class BoilerTriggerGroundTileHandler : MonoBehaviour, IGroundTileH
             anim2.SetFrozen(false);
             anim2.RefreshFrame();
         }
+
+        float wait = explodeAt - Time.time;
+        if (wait > 0f)
+            yield return new WaitForSeconds(wait);
+
+        if (bombGo == null || bomb == null || source == null)
+            yield break;
+
+        if (bomb.HasExploded)
+            yield break;
 
         source.ExplodeBomb(bombGo);
 

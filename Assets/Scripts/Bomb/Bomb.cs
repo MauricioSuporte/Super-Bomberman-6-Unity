@@ -1006,4 +1006,18 @@ public class Bomb : MonoBehaviour, IMagnetPullable
 
         magnetRoutine = null;
     }
+
+    public void EnsureMinRemainingFuse(float minSeconds)
+    {
+        if (HasExploded)
+            return;
+
+        float min = Mathf.Max(0f, minSeconds);
+
+        float remaining = RemainingFuseSeconds;
+        if (remaining >= min)
+            return;
+
+        FuseSeconds += (min - remaining);
+    }
 }
