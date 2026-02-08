@@ -12,6 +12,11 @@ public sealed class BoilerTriggerGroundTileHandler : MonoBehaviour, IGroundTileH
     [SerializeField] private int pullTilesUp = 1;
     [SerializeField] private float pullMoveSeconds = 0.08f;
 
+    [Header("SFX - Bomb Move")]
+    [SerializeField] private AudioSource bombMoveSfxSource;
+    [SerializeField] private AudioClip bombMoveClip;
+    [SerializeField, Range(0f, 1f)] private float bombMoveVolume = 1f;
+
     [SerializeField] private Tilemap doorTilemapOverride;
 
     [SerializeField] private TileBase closedDoorTile;
@@ -38,6 +43,16 @@ public sealed class BoilerTriggerGroundTileHandler : MonoBehaviour, IGroundTileH
 
         if (powderIgniter == null)
             powderIgniter = FindFirstObjectByType<BoilerPowderTrailIgniterPrefab>();
+
+        if (bombMoveSfxSource == null)
+        {
+            bombMoveSfxSource = GetComponent<AudioSource>();
+            if (bombMoveSfxSource == null)
+            {
+                bombMoveSfxSource = gameObject.AddComponent<AudioSource>();
+                bombMoveSfxSource.playOnAwake = false;
+            }
+        }
     }
 
     private void OnDisable()
@@ -177,6 +192,17 @@ public sealed class BoilerTriggerGroundTileHandler : MonoBehaviour, IGroundTileH
         doorAllRoutine = null;
     }
 
+    private void PlayBombMoveSfx()
+    {
+        if (bombMoveClip == null)
+            return;
+
+        if (bombMoveSfxSource == null)
+            return;
+
+        bombMoveSfxSource.PlayOneShot(bombMoveClip, Mathf.Clamp01(bombMoveVolume));
+    }
+
     private IEnumerator PullAndExplodeRoutine(
         BombController source,
         GameObject bombGo,
@@ -193,15 +219,16 @@ public sealed class BoilerTriggerGroundTileHandler : MonoBehaviour, IGroundTileH
         if (bomb.HasExploded || bomb.IsBeingKicked || bomb.IsBeingPunched || bomb.IsBeingMagnetPulled)
             yield break;
 
-        float dur = Mathf.Max(0.01f, pullMoveSeconds);
+        PlayBombMoveSfx();
 
-        if (bombGo.TryGetComponent<AnimatedSpriteRenderer>(out var anim) && anim != null)
-            anim.SetFrozen(true);
+        float dur = Mathf.Max(0.01f, pullMoveSeconds);
 
         if (bombGo.TryGetComponent<Rigidbody2D>(out var rb) && rb != null)
         {
             rb.position = from;
             bombGo.transform.position = from;
+
+            PlayBombMoveSfx();
 
             float t = 0f;
 
@@ -233,6 +260,7 @@ public sealed class BoilerTriggerGroundTileHandler : MonoBehaviour, IGroundTileH
         }
         else
         {
+            PlayBombMoveSfx();
             bomb.ForceSetLogicalPosition(to);
         }
 
