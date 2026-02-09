@@ -28,7 +28,7 @@ public class EndingScreenController : MonoBehaviour
     [Header("Message")]
     [TextArea(6, 14)]
     public string message =
-        "<size=52><color=#1ABC00>WORLD 1</color>  <color=#E8E8E8>DEMO COMPLETE!</color></size>\n\n\n\n" +
+        "<size=52><color=#1ABC00>WORLD 2</color>  <color=#E8E8E8>DEMO COMPLETE!</color></size>\n\n\n\n" +
         "<size=34><color=#E8E8E8>Thank you for playing!</color></size>\n" +
         "<size=34><color=#E8E8E8>More stages are coming soon!</color></size>\n\n\n\n" +
         "<size=32><color=#3392FF>OPEN SOURCE PROJECT</color></size>\n" +
