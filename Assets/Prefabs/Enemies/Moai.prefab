@@ -134,7 +134,8 @@ MonoBehaviour:
   enemyLayerMask:
     serializedVersion: 2
     m_Bits: 1024
-  deathSfx: {fileID: 0}
+  deathSfx: {fileID: 8300000, guid: 95fa76ce6d1f33c498e5165cec574d98, type: 3}
+  recheckStuckEverySeconds: 0.25
 --- !u!114 &8638696913730581265
 MonoBehaviour:
   m_ObjectHideFlags: 0

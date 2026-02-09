@@ -39,12 +39,12 @@ public class EnemyMovementController : MonoBehaviour, IKillable
     CharacterHealth health;
     AudioSource audioSource;
 
-    bool isInDamagedLoop;
+    protected bool isInDamagedLoop;
 
     bool isStuck;
     float stuckTimer;
 
-    static readonly Vector2[] Dirs = { Vector2.up, Vector2.down, Vector2.left, Vector2.right };
+    protected Vector2[] Dirs = { Vector2.up, Vector2.down, Vector2.left, Vector2.right };
 
     protected virtual void Awake()
     {
@@ -582,7 +582,7 @@ public class EnemyMovementController : MonoBehaviour, IKillable
         }
     }
 
-    bool TryPickAnyFreeDirection(out Vector2 chosenDir)
+    protected bool TryPickAnyFreeDirection(out Vector2 chosenDir)
     {
         var freeDirs = new List<Vector2>();
 

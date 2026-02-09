@@ -30,6 +30,8 @@ public sealed class BoilerTriggerGroundTileHandler : MonoBehaviour, IGroundTileH
     [SerializeField] private BoilerPowderTrailIgniterPrefab powderIgniter;
 
     private bool triggeredOnce;
+    private bool finalizedOnce;
+
     private Coroutine routine;
     private Coroutine doorAllRoutine;
 
@@ -96,6 +98,7 @@ public sealed class BoilerTriggerGroundTileHandler : MonoBehaviour, IGroundTileH
             return;
 
         triggeredOnce = true;
+        finalizedOnce = false;
 
         float explodeDelay = Mathf.Max(0.01f, explodeAfterCapturedSeconds);
 
@@ -140,7 +143,6 @@ public sealed class BoilerTriggerGroundTileHandler : MonoBehaviour, IGroundTileH
     private void StartDoorOpenSequenceAll(BombController source)
     {
         Tilemap tm = ResolveDoorTilemap(source);
-
         if (tm == null)
             return;
 
@@ -216,6 +218,19 @@ public sealed class BoilerTriggerGroundTileHandler : MonoBehaviour, IGroundTileH
         bombMoveSfxSource.PlayOneShot(bombMoveClip, Mathf.Clamp01(bombMoveVolume));
     }
 
+    private void FinalizeBoilerOnce()
+    {
+        if (finalizedOnce)
+            return;
+
+        finalizedOnce = true;
+
+        if (powderIgniter != null)
+            powderIgniter.IgniteSequence();
+
+        routine = null;
+    }
+
     private IEnumerator PullAndExplodeRoutine(
         BombController source,
         GameObject bombGo,
@@ -224,21 +239,45 @@ public sealed class BoilerTriggerGroundTileHandler : MonoBehaviour, IGroundTileH
         Vector2 to,
         float explodeDelay)
     {
-        bomb.ForceStopExternalMovementAndSnap(from);
+        AnimatedSpriteRenderer frozenAnim = null;
+
+        void RestoreAnimIfNeeded()
+        {
+            if (frozenAnim != null)
+            {
+                frozenAnim.SetFrozen(false);
+                frozenAnim.RefreshFrame();
+                frozenAnim = null;
+            }
+        }
+
+        if (bomb != null)
+            bomb.ForceStopExternalMovementAndSnap(from);
 
         if (pullDelaySeconds > 0f)
             yield return new WaitForSeconds(pullDelaySeconds);
 
-        if (bombGo == null || bomb == null || source == null)
+        if (source == null)
+        {
+            RestoreAnimIfNeeded();
+            FinalizeBoilerOnce();
             yield break;
+        }
 
-        if (bomb.HasExploded)
+        if (bomb == null || bombGo == null || bomb.HasExploded)
+        {
+            RestoreAnimIfNeeded();
+            FinalizeBoilerOnce();
             yield break;
+        }
 
         float dur = Mathf.Max(0.01f, pullMoveSeconds);
 
         if (bombGo.TryGetComponent<AnimatedSpriteRenderer>(out var anim) && anim != null)
-            anim.SetFrozen(true);
+        {
+            frozenAnim = anim;
+            frozenAnim.SetFrozen(true);
+        }
 
         if (bombGo.TryGetComponent<Rigidbody2D>(out var rb) && rb != null)
         {
@@ -251,11 +290,19 @@ public sealed class BoilerTriggerGroundTileHandler : MonoBehaviour, IGroundTileH
 
             while (t < dur)
             {
-                if (bombGo == null || bomb == null || source == null)
+                if (source == null)
+                {
+                    RestoreAnimIfNeeded();
+                    FinalizeBoilerOnce();
                     yield break;
+                }
 
-                if (bomb.HasExploded)
+                if (bomb == null || bombGo == null || bomb.HasExploded)
+                {
+                    RestoreAnimIfNeeded();
+                    FinalizeBoilerOnce();
                     yield break;
+                }
 
                 t += Time.fixedDeltaTime;
                 float a = Mathf.Clamp01(t / dur);
@@ -278,43 +325,52 @@ public sealed class BoilerTriggerGroundTileHandler : MonoBehaviour, IGroundTileH
         else
         {
             PlayBombMoveSfx();
+
+            if (bomb == null || bombGo == null || bomb.HasExploded)
+            {
+                RestoreAnimIfNeeded();
+                FinalizeBoilerOnce();
+                yield break;
+            }
+
             bomb.ForceSetLogicalPosition(to);
         }
 
-        if (bombGo == null || bomb == null || source == null)
+        if (source == null)
+        {
+            RestoreAnimIfNeeded();
+            FinalizeBoilerOnce();
             yield break;
+        }
 
-        if (bomb.HasExploded)
+        if (bomb == null || bombGo == null || bomb.HasExploded)
+        {
+            RestoreAnimIfNeeded();
+            FinalizeBoilerOnce();
             yield break;
+        }
 
         bomb.ForceSetLogicalPosition(to);
 
-        if (bombGo.TryGetComponent<AnimatedSpriteRenderer>(out var anim2) && anim2 != null)
-        {
-            anim2.SetFrozen(false);
-            anim2.RefreshFrame();
-        }
-
-        if (bombGo == null || bomb == null || source == null)
-            yield break;
-
-        if (bomb.HasExploded)
-            yield break;
+        RestoreAnimIfNeeded();
 
         if (explodeDelay > 0f)
             yield return new WaitForSeconds(explodeDelay);
 
-        if (bombGo == null || bomb == null || source == null)
+        if (source == null)
+        {
+            FinalizeBoilerOnce();
             yield break;
+        }
 
-        if (bomb.HasExploded)
+        if (bomb == null || bombGo == null || bomb.HasExploded)
+        {
+            FinalizeBoilerOnce();
             yield break;
+        }
 
         source.ExplodeBomb(bombGo);
 
-        if (powderIgniter != null)
-            powderIgniter.IgniteSequence();
-
-        routine = null;
+        FinalizeBoilerOnce();
     }
 }
