@@ -6,6 +6,9 @@ public class AbilitySystem : MonoBehaviour
 {
     private readonly Dictionary<string, IPlayerAbility> cache = new();
 
+    private int version;
+    public int Version => version;
+
     private void Awake()
     {
         RebuildCache();
@@ -21,6 +24,8 @@ public class AbilitySystem : MonoBehaviour
             if (monos[i] is IPlayerAbility ability && !string.IsNullOrEmpty(ability.Id))
                 cache[ability.Id] = ability;
         }
+
+        version++;
     }
 
     public IPlayerAbility Get(string id)
@@ -46,7 +51,14 @@ public class AbilitySystem : MonoBehaviour
             return;
 
         var ability = EnsureAbilityComponent(id, type);
-        ability?.Enable();
+        if (ability == null)
+            return;
+
+        bool wasEnabled = ability.IsEnabled;
+        ability.Enable();
+
+        if (!wasEnabled || version == 0)
+            version++;
     }
 
     public void Disable(string id)
@@ -64,19 +76,34 @@ public class AbilitySystem : MonoBehaviour
             }
         }
 
-        ability?.Disable();
+        if (ability == null)
+            return;
+
+        bool wasEnabled = ability.IsEnabled;
+        ability.Disable();
+
+        if (wasEnabled)
+            version++;
     }
 
     public void DisableAll()
     {
         RebuildCache();
 
+        bool changed = false;
+
         foreach (var kv in cache)
         {
             var a = kv.Value;
             if (a != null && a.IsEnabled)
+            {
                 a.Disable();
+                changed = true;
+            }
         }
+
+        if (changed)
+            version++;
     }
 
     private IPlayerAbility EnsureAbilityComponent(string id, Type type)
@@ -91,6 +118,7 @@ public class AbilitySystem : MonoBehaviour
         if (existing is IPlayerAbility ability)
         {
             cache[id] = ability;
+            version++;
             return ability;
         }
 

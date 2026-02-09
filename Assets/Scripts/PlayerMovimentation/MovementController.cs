@@ -18,6 +18,7 @@ public class MovementController : MonoBehaviour, IKillable
     public float speed = 5f;
     public float tileSize = 1f;
     public LayerMask obstacleMask;
+    private int abilitySystemVersion;
 
     [Header("Speed (SB5 Internal)")]
     [SerializeField] private int speedInternal = PlayerPersistentStats.BaseSpeedNormal;
@@ -146,6 +147,7 @@ public class MovementController : MonoBehaviour, IKillable
         stunReceiver = GetComponent<StunReceiver>();
         bombController = GetComponent<BombController>();
         abilitySystem = GetComponent<AbilitySystem>();
+        abilitySystemVersion = abilitySystem != null ? abilitySystem.Version : 0;
 
         audioSource = GetComponent<AudioSource>();
         if (audioSource != null)
@@ -192,6 +194,8 @@ public class MovementController : MonoBehaviour, IKillable
 
         if (loadPersistent && IsPlayer())
             PlayerPersistentStats.LoadInto(playerId, this, bombController);
+
+        CacheMovementAbilities();
 
         SyncMountedFromPersistent();
 
@@ -309,6 +313,8 @@ public class MovementController : MonoBehaviour, IKillable
 
     protected virtual void Update()
     {
+        SyncMovementAbilitiesFromAbilitySystemIfChanged();
+
         if (stunReceiver != null && stunReceiver.IsStunned)
         {
             hasInput = false;
@@ -431,6 +437,8 @@ public class MovementController : MonoBehaviour, IKillable
 
     protected virtual void FixedUpdate()
     {
+        SyncMovementAbilitiesFromAbilitySystemIfChanged();
+
         if (inputLocked || GamePauseController.IsPaused || isDead)
             return;
 
@@ -1420,5 +1428,18 @@ public class MovementController : MonoBehaviour, IKillable
 
         Vector2 center = col.bounds.center;
         SnapToWorldPoint(center, roundToGrid);
+    }
+
+    private void SyncMovementAbilitiesFromAbilitySystemIfChanged()
+    {
+        if (abilitySystem == null)
+            return;
+
+        int v = abilitySystem.Version;
+        if (v == abilitySystemVersion)
+            return;
+
+        abilitySystemVersion = v;
+        CacheMovementAbilities();
     }
 }
