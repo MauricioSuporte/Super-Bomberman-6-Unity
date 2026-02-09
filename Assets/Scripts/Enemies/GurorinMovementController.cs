@@ -1,4 +1,5 @@
 ﻿using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 [RequireComponent(typeof(Rigidbody2D))]
@@ -16,9 +17,17 @@ public sealed class GurorinMovementController : EnemyMovementController
     [SerializeField, Min(0.01f)] private float jokeSeconds = 0.5f;
     [SerializeField, Min(0f)] private float waitAfterJokeSeconds = 0.5f;
 
+    [Header("Junction Stop")]
+    [SerializeField, Min(2)] private int minAvailablePathsToStop = 3;
+
+    [Header("Timing Mode")]
+    [SerializeField] private bool useUnscaledTime = true;
+
     Coroutine mainRoutine;
     bool isInJokeOrWait;
-    bool isInCorridorMove;
+    bool isMovingToDecisionPoint;
+
+    static readonly Vector2[] FourDirs = { Vector2.up, Vector2.down, Vector2.left, Vector2.right };
 
     protected override void Awake()
     {
@@ -43,6 +52,8 @@ public sealed class GurorinMovementController : EnemyMovementController
         if (rb != null)
             rb.linearVelocity = Vector2.zero;
 
+        EnsureInitialDirection();
+
         mainRoutine = StartCoroutine(MainLoop());
     }
 
@@ -57,7 +68,13 @@ public sealed class GurorinMovementController : EnemyMovementController
             return;
         }
 
-        if (!isInCorridorMove)
+        if (isInJokeOrWait)
+        {
+            rb.linearVelocity = Vector2.zero;
+            return;
+        }
+
+        if (!isMovingToDecisionPoint)
         {
             rb.linearVelocity = Vector2.zero;
             return;
@@ -72,16 +89,54 @@ public sealed class GurorinMovementController : EnemyMovementController
         {
             SnapToGrid();
 
-            Vector2 next = rb.position + direction * tileSize;
-            if (IsTileBlocked(next))
+            bool stopHere = ShouldStopHere(rb.position, out var _);
+            if (stopHere)
             {
-                isInCorridorMove = false;
+                isMovingToDecisionPoint = false;
+                rb.linearVelocity = Vector2.zero;
+                return;
+            }
+
+            Vector2 next = rb.position + direction * tileSize;
+
+            bool blockedNext = IsTileBlocked(next);
+            if (blockedNext)
+            {
+                isMovingToDecisionPoint = false;
                 rb.linearVelocity = Vector2.zero;
                 return;
             }
 
             targetTile = next;
         }
+    }
+
+    void OnEnable()
+    {
+        if (isDead) return;
+
+        if (rb == null) rb = GetComponent<Rigidbody2D>();
+
+        isInJokeOrWait = false;
+        isMovingToDecisionPoint = false;
+
+        if (mainRoutine == null)
+            mainRoutine = StartCoroutine(MainLoop());
+    }
+
+    void OnDisable()
+    {
+        if (mainRoutine != null)
+        {
+            StopCoroutine(mainRoutine);
+            mainRoutine = null;
+        }
+
+        isInJokeOrWait = false;
+        isMovingToDecisionPoint = false;
+
+        if (rb != null)
+            rb.linearVelocity = Vector2.zero;
     }
 
     IEnumerator MainLoop()
@@ -91,13 +146,15 @@ public sealed class GurorinMovementController : EnemyMovementController
             yield return Joke();
             yield return Wait();
             yield return Joke();
-            yield return MoveUntilBlocked();
+            yield return MoveToDecisionPoint();
         }
     }
 
     IEnumerator Joke()
     {
-        isInCorridorMove = false;
+        EnsureInitialDirection();
+
+        isMovingToDecisionPoint = false;
         isInJokeOrWait = true;
 
         rb.linearVelocity = Vector2.zero;
@@ -105,9 +162,14 @@ public sealed class GurorinMovementController : EnemyMovementController
         StopMoveSprite();
         StartJokeSprite(direction);
 
-        yield return WaitWhileAlive(jokeSeconds);
-
-        isInJokeOrWait = false;
+        try
+        {
+            yield return WaitWhileAlive(jokeSeconds);
+        }
+        finally
+        {
+            isInJokeOrWait = false;
+        }
     }
 
     IEnumerator Wait()
@@ -117,19 +179,26 @@ public sealed class GurorinMovementController : EnemyMovementController
         if (jokeSprite != null)
             jokeSprite.SetFrozen(true);
 
-        yield return WaitWhileAlive(waitAfterJokeSeconds);
+        try
+        {
+            yield return WaitWhileAlive(waitAfterJokeSeconds);
+        }
+        finally
+        {
+            if (jokeSprite != null)
+                jokeSprite.SetFrozen(false);
 
-        if (jokeSprite != null)
-            jokeSprite.SetFrozen(false);
-
-        isInJokeOrWait = false;
+            isInJokeOrWait = false;
+        }
     }
 
-    IEnumerator MoveUntilBlocked()
+    IEnumerator MoveToDecisionPoint()
     {
         SnapToGrid();
 
-        if (!TryPickAnyFreeDirection(out var dir))
+        EnsureInitialDirection();
+
+        if (!TryPickInitialDir(out var dir))
             yield break;
 
         direction = dir;
@@ -138,36 +207,106 @@ public sealed class GurorinMovementController : EnemyMovementController
         StopJokeSprite();
         StartMoveSprite(direction);
 
-        isInCorridorMove = true;
+        isMovingToDecisionPoint = true;
 
-        yield return new WaitUntil(() => isDead || !isInCorridorMove);
+        if (IsTileBlocked(targetTile))
+            isMovingToDecisionPoint = false;
+
+        yield return new WaitUntil(() => isDead || !isMovingToDecisionPoint);
 
         StopMoveSprite();
     }
 
+    void EnsureInitialDirection()
+    {
+        if (direction != Vector2.zero)
+            return;
+
+        var free = GetFreeDirs(rb.position);
+        if (free.Count > 0)
+        {
+            direction = free[Random.Range(0, free.Count)];
+            return;
+        }
+
+        direction = Vector2.down;
+    }
+
+    bool TryPickInitialDir(out Vector2 chosenDir)
+    {
+        var freeDirs = GetFreeDirs(rb.position);
+
+        if (freeDirs.Count == 0)
+        {
+            chosenDir = Vector2.zero;
+            return false;
+        }
+
+        chosenDir = freeDirs[Random.Range(0, freeDirs.Count)];
+        return true;
+    }
+
+    bool ShouldStopHere(Vector2 pos, out List<Vector2> freeDirs)
+    {
+        freeDirs = GetFreeDirs(pos);
+
+        if (freeDirs.Count >= minAvailablePathsToStop)
+            return true;
+
+        if (freeDirs.Count <= 1)
+            return true;
+
+        Vector2 forward = direction;
+        bool canGoForward = false;
+
+        for (int i = 0; i < freeDirs.Count; i++)
+        {
+            if (freeDirs[i] == forward)
+            {
+                canGoForward = true;
+                break;
+            }
+        }
+
+        if (!canGoForward)
+            return true;
+
+        return false;
+    }
+
+    List<Vector2> GetFreeDirs(Vector2 pos)
+    {
+        var freeDirs = new List<Vector2>(4);
+
+        for (int i = 0; i < FourDirs.Length; i++)
+        {
+            Vector2 d = FourDirs[i];
+            Vector2 checkTile = pos + d * tileSize;
+
+            if (!IsTileBlocked(checkTile))
+                freeDirs.Add(d);
+        }
+
+        return freeDirs;
+    }
+
     IEnumerator WaitWhileAlive(float seconds)
     {
-        float t = 0f;
-        while (t < seconds)
+        float start = useUnscaledTime ? Time.unscaledTime : Time.time;
+        float end = start + seconds;
+
+        while ((useUnscaledTime ? Time.unscaledTime : Time.time) < end)
         {
             if (isDead)
                 yield break;
 
-            if (TryGetComponent<StunReceiver>(out var stun) && stun != null && stun.IsStunned)
-            {
-                rb.linearVelocity = Vector2.zero;
-                yield return null;
-                continue;
-            }
+            bool stunned = false;
+            if (TryGetComponent<StunReceiver>(out var stun) && stun != null)
+                stunned = stun.IsStunned;
 
-            if (isInDamagedLoop)
-            {
+            if (stunned || isInDamagedLoop)
                 rb.linearVelocity = Vector2.zero;
-                yield return null;
-                continue;
-            }
 
-            t += Time.deltaTime;
             yield return null;
         }
     }
@@ -231,17 +370,19 @@ public sealed class GurorinMovementController : EnemyMovementController
         if (isInDamagedLoop)
             return;
 
-        if (activeSprite != null &&
-            activeSprite.TryGetComponent<SpriteRenderer>(out var sr))
+        if (activeSprite != null && activeSprite.TryGetComponent<SpriteRenderer>(out var sr))
             sr.flipX = (dir == Vector2.right);
     }
 
     protected override void Die()
     {
         if (mainRoutine != null)
+        {
             StopCoroutine(mainRoutine);
+            mainRoutine = null;
+        }
 
-        isInCorridorMove = false;
+        isMovingToDecisionPoint = false;
         isInJokeOrWait = false;
 
         if (moveSprite != null) moveSprite.enabled = false;
