@@ -171,37 +171,39 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         fusePauseStartedAt = 0f;
     }
 
-    private Vector2 WrapToStage(Vector2 worldPos)
+    public void ForceStopExternalMovementAndSnap(Vector2 snapWorldPos)
     {
-        EnsureStageBounds();
+        if (kickRoutine != null)
+        {
+            StopCoroutine(kickRoutine);
+            kickRoutine = null;
+        }
 
-        if (!stageBoundsReady)
-            return worldPos;
+        if (punchRoutine != null)
+        {
+            StopCoroutine(punchRoutine);
+            punchRoutine = null;
+        }
 
-        Vector3Int cell = stageBoundsTilemap != null
-            ? stageBoundsTilemap.WorldToCell(worldPos)
-            : new Vector3Int(Mathf.RoundToInt(worldPos.x / kickTileSize), Mathf.RoundToInt(worldPos.y / kickTileSize), 0);
+        if (magnetRoutine != null)
+        {
+            StopCoroutine(magnetRoutine);
+            magnetRoutine = null;
+        }
 
-        int minX = wrapBoundsReady ? wrapMinX : stageCellBounds.xMin;
-        int maxX = wrapBoundsReady ? wrapMaxX : (stageCellBounds.xMax - 1);
-        int minY = wrapBoundsReady ? wrapMinY : stageCellBounds.yMin;
-        int maxY = wrapBoundsReady ? wrapMaxY : (stageCellBounds.yMax - 1);
+        isKicked = false;
+        isPunched = false;
 
-        if (cell.x < minX) cell.x = maxX;
-        else if (cell.x > maxX) cell.x = minX;
+        snapWorldPos.x = Mathf.Round(snapWorldPos.x);
+        snapWorldPos.y = Mathf.Round(snapWorldPos.y);
 
-        if (cell.y < minY) cell.y = maxY;
-        else if (cell.y > maxY) cell.y = minY;
+        currentTileCenter = snapWorldPos;
+        lastPos = snapWorldPos;
 
-        Vector3 center;
+        if (rb != null)
+            rb.position = snapWorldPos;
 
-        if (stageBoundsTilemap != null)
-            center = stageBoundsTilemap.GetCellCenterWorld(cell);
-        else
-            center = new Vector3(cell.x * kickTileSize, cell.y * kickTileSize, transform.position.z);
-
-        center.z = transform.position.z;
-        return (Vector2)center;
+        transform.position = snapWorldPos;
     }
 
     private void RecalculateCharactersInsideAt(Vector2 worldPos)
@@ -808,6 +810,9 @@ public class Bomb : MonoBehaviour, IMagnetPullable
             if (HasExploded)
                 break;
 
+            if (!isKicked)
+                break;
+
             Vector2 next = currentTileCenter + kickDirection * kickTileSize;
 
             if (IsKickBlocked(next))
@@ -820,6 +825,9 @@ public class Bomb : MonoBehaviour, IMagnetPullable
             while (elapsed < travelTime)
             {
                 if (HasExploded)
+                    break;
+
+                if (!isKicked)
                     break;
 
                 elapsed += Time.fixedDeltaTime;
@@ -836,11 +844,25 @@ public class Bomb : MonoBehaviour, IMagnetPullable
             if (HasExploded)
                 break;
 
+            if (!isKicked)
+                break;
+
             currentTileCenter = next;
             lastPos = next;
 
             rb.position = next;
             transform.position = next;
+
+            if (owner != null)
+            {
+                owner.NotifyBombAt(next, gameObject);
+
+                if (HasExploded)
+                    break;
+
+                if (!isKicked)
+                    break;
+            }
         }
 
         rb.position = currentTileCenter;
@@ -992,6 +1014,9 @@ public class Bomb : MonoBehaviour, IMagnetPullable
 
             rb.position = next;
             transform.position = next;
+
+            if (owner != null)
+                owner.NotifyBombAt(next, gameObject);
         }
 
         rb.position = currentTileCenter;

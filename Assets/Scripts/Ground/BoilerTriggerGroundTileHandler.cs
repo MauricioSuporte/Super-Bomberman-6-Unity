@@ -107,7 +107,7 @@ public sealed class BoilerTriggerGroundTileHandler : MonoBehaviour, IGroundTileH
 
         bomb.EnsureMinRemainingFuse(minFuse);
 
-        Vector2 from = bomb.GetLogicalPosition();
+        Vector2 from = worldPos;
         from.x = Mathf.Round(from.x);
         from.y = Mathf.Round(from.y);
 
@@ -224,13 +224,15 @@ public sealed class BoilerTriggerGroundTileHandler : MonoBehaviour, IGroundTileH
         Vector2 to,
         float explodeDelay)
     {
+        bomb.ForceStopExternalMovementAndSnap(from);
+
         if (pullDelaySeconds > 0f)
             yield return new WaitForSeconds(pullDelaySeconds);
 
         if (bombGo == null || bomb == null || source == null)
             yield break;
 
-        if (bomb.HasExploded || bomb.IsBeingKicked || bomb.IsBeingPunched || bomb.IsBeingMagnetPulled)
+        if (bomb.HasExploded)
             yield break;
 
         float dur = Mathf.Max(0.01f, pullMoveSeconds);
