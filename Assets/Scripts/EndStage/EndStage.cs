@@ -59,14 +59,28 @@ public abstract class EndStage : MonoBehaviour
         if (!isUnlocked || isActivated)
             return false;
 
-        if (!other || !other.CompareTag("Player"))
+        if (!other)
+            return false;
+
+        if (!other.CompareTag("Player"))
             return false;
 
         var triggerMovement = other.GetComponent<MovementController>();
-        if (triggerMovement == null || triggerMovement.isDead || triggerMovement.IsEndingStage)
+        if (triggerMovement == null)
+            return false;
+
+        if (triggerMovement.isDead || triggerMovement.IsEndingStage)
             return false;
 
         return true;
+    }
+
+    protected virtual Vector2 GetPortalCenterWorld(Collider2D triggeredBy)
+    {
+        return new Vector2(
+            Mathf.Round(transform.position.x),
+            Mathf.Round(transform.position.y)
+        );
     }
 
     protected virtual void OnTriggerEnter2D(Collider2D other)
@@ -78,10 +92,7 @@ public abstract class EndStage : MonoBehaviour
 
         var triggerMovement = other.GetComponent<MovementController>();
 
-        Vector2 portalCenter = new(
-            Mathf.Round(transform.position.x),
-            Mathf.Round(transform.position.y)
-        );
+        Vector2 portalCenter = GetPortalCenterWorld(other);
 
         var players = FindObjectsByType<MovementController>(
             FindObjectsInactive.Exclude,
