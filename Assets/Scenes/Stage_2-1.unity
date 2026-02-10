@@ -453,15 +453,15 @@ MonoBehaviour:
   fullFireAmount: 0
   bombPassAmount: 0
   destructiblePassAmount: 0
-  invincibleSuitAmount: 1
+  invincibleSuitAmount: 0
   heartAmount: 0
-  blueLouieEggAmount: 3
-  blackLouieEggAmount: 3
-  purpleLouieEggAmount: 3
-  greenLouieEggAmount: 3
-  yellowLouieEggAmount: 3
-  pinkLouieEggAmount: 3
-  redLouieEggAmount: 3
+  blueLouieEggAmount: 1
+  blackLouieEggAmount: 0
+  purpleLouieEggAmount: 0
+  greenLouieEggAmount: 0
+  yellowLouieEggAmount: 0
+  pinkLouieEggAmount: 0
+  redLouieEggAmount: 0
   destructibleTilemap: {fileID: 285353618}
   indestructibleTilemap: {fileID: 0}
   nextStageSceneName: Stage_2-2
