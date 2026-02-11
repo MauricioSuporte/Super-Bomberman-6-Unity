@@ -3500,6 +3500,14 @@ MonoBehaviour:
     tiles:
     - {fileID: 11400000, guid: 4f950a947ba4e714c9f0de94de58f513, type: 2}
     handler: {fileID: 732032083}
+  - id: Destructible
+    tiles:
+    - {fileID: 11400000, guid: 173e355ee62b26641afcd89721ca7ecf, type: 2}
+    handler: {fileID: 0}
+  debugLogs: 1
+  logRebuildSummary: 1
+  logEachTileRegistration: 1
+  logLookups: 1
 --- !u!114 &732032085
 MonoBehaviour:
   m_ObjectHideFlags: 0
