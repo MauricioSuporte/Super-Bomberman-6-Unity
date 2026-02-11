@@ -1,0 +1,307 @@
+fileFormatVersion: 2
+guid: 8138c77f51864f44c8dadc3dc168fba7
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 8117027084133663031
+    second: firework2_0
+  - first:
+      213: 4197935694227447549
+    second: firework2_1
+  - first:
+      213: -786091079793987348
+    second: firework2_2
+  - first:
+      213: 9045450634330279060
+    second: firework2_3
+  - first:
+      213: 4096216025391672455
+    second: firework2_4
+  - first:
+      213: -1905424483265912308
+    second: firework2_5
+  - first:
+      213: -6136443851061062206
+    second: firework2_6
+  - first:
+      213: -7926586077129318581
+    second: firework2_7
+  - first:
+      213: 1348133893513899259
+    second: firework2_8
+  - first:
+      213: -7907436415755555207
+    second: firework2_9
+  - first:
+      213: -139397026215112581
+    second: firework2_10
+  - first:
+      213: -1124809062816560122
+    second: firework2_11
+  - first:
+      213: -2895945614365421973
+    second: firework2_12
+  - first:
+      213: -7109389499836490362
+    second: firework2_13
+  - first:
+      213: -7025734887668607579
+    second: firework2_14
+  - first:
+      213: 5275294008785342899
+    second: firework2_15
+  - first:
+      213: -3436899550987644409
+    second: firework2_16
+  - first:
+      213: 3569688113001205888
+    second: firework2_17
+  - first:
+      213: -6686608624697911275
+    second: firework2_18
+  - first:
+      213: 8970213786657224093
+    second: firework2_19
+  - first:
+      213: -7971292864840959752
+    second: firework2_20
+  - first:
+      213: -6175590433933302058
+    second: firework2_21
+  - first:
+      213: 628298146179640454
+    second: firework2_22
+  - first:
+      213: 3010867909025419302
+    second: firework2_23
+  - first:
+      213: 562750264688619404
+    second: firework2_24
+  - first:
+      213: 7063125303323583799
+    second: firework2_25
+  - first:
+      213: -1058728738702252528
+    second: firework2_26
+  - first:
+      213: 7962808816894765141
+    second: firework2_27
+  - first:
+      213: -358884733673793774
+    second: firework2_28
+  - first:
+      213: 3798418453974492226
+    second: firework2_29
+  - first:
+      213: 7555168781599180224
+    second: firework2_30
+  - first:
+      213: 8085001174873791730
+    second: firework2_31
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 16
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: firework2_0
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 731030e802975a070800000000000000
+      internalID: 8117027084133663031
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: firework2_1
+      rect:
+        serializedVersion: 2
+        x: 32
+        y: 0
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: dfe1c54b540124a30800000000000000
+      internalID: 4197935694227447549
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: firework2_2
+      rect:
+        serializedVersion: 2
+        x: 64
+        y: 0
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ce0b6cbe35e3715f0800000000000000
+      internalID: -786091079793987348
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: firework2_3
+      rect:
+        serializedVersion: 2
+        x: 96
+        y: 0
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 49c86945d65e78d70800000000000000
+      internalID: 9045450634330279060
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: da3bc4ad0b652fc4db4cc0d504844706
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries:
+      - key: SpriteEditor.SliceSettings
+        value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":32.0,"y":32.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":1,"keepEmptyRects":false,"isAlternate":false}'
+    nameFileIdTable:
+      firework2_0: 8117027084133663031
+      firework2_1: 4197935694227447549
+      firework2_2: -786091079793987348
+      firework2_3: 9045450634330279060
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
