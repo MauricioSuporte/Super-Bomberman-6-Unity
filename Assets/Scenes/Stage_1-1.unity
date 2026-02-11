@@ -405,13 +405,13 @@ MonoBehaviour:
   kickBombAmount: 0
   punchBombAmount: 0
   pierceBombAmount: 0
-  controlBombAmount: 0
+  controlBombAmount: 5
   fullFireAmount: 0
   bombPassAmount: 0
   destructiblePassAmount: 0
   invincibleSuitAmount: 1
   heartAmount: 0
-  blueLouieEggAmount: 0
+  blueLouieEggAmount: 5
   blackLouieEggAmount: 0
   purpleLouieEggAmount: 0
   greenLouieEggAmount: 0

@@ -1198,6 +1198,25 @@ public sealed class LouieEggQueue : MonoBehaviour
         _eggs.Clear();
     }
 
+    public void ClearQueueNow(bool resetHistoryToOwner = true, bool animateShift = false)
+    {
+        ClearAllEggs();
+
+        if (_hardFrozen)
+        {
+            _hardFrozenEggWorld.Clear();
+            _hardFrozenFacing.Clear();
+        }
+
+        ExitIdleShiftNow();
+
+        if (resetHistoryToOwner)
+            ResetHistoryToCurrentOwnerPos();
+
+        ResetRuntimeState();
+        PostQueueChanged(animateShift);
+    }
+
     void EnqueueInternal(ItemPickup.ItemType type, Sprite idleSprite, AudioClip mountSfx, float mountVolume, bool animate)
     {
         EnsureBound();

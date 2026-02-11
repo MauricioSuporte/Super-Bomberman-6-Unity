@@ -109,7 +109,7 @@ public abstract class EndStage : MonoBehaviour
 
             var bombController = m.GetComponent<BombController>();
 
-            PlayerPersistentStats.SaveFrom(m, bombController);
+            PlayerPersistentStats.StageCaptureFromRuntime(m, bombController);
 
             if (bombController != null)
                 bombController.ClearPlantedBombsOnStageEnd(false);
@@ -117,6 +117,8 @@ public abstract class EndStage : MonoBehaviour
             bool snapThisOne = (triggerMovement != null && m == triggerMovement);
             m.PlayEndStageSequence(portalCenter, snapThisOne);
         }
+
+        PlayerPersistentStats.CommitStage();
 
         var audio = other.GetComponent<AudioSource>();
         if (audio != null && enterSfx != null)

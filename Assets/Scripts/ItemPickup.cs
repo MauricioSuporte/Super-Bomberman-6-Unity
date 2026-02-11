@@ -160,6 +160,12 @@ public class ItemPickup : MonoBehaviour
             PlayCollectSfxOnPlayer(player);
         }
 
+        int pid = 1;
+        if (player.TryGetComponent<PlayerIdentity>(out var id) && id != null)
+            pid = Mathf.Clamp(id.playerId, 1, 4);
+
+        PlayerPersistentStats.StageApplyPickup(pid, type);
+
         switch (type)
         {
             case ItemType.ExtraBomb:

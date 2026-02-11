@@ -17,19 +17,19 @@ public static class PlayerPersistentStats
 
     public sealed class PlayerState
     {
-        public int Life = 9;
+        public int Life = 1;
 
-        public int BombAmount = 8;
-        public int ExplosionRadius = 9;
+        public int BombAmount = 1;
+        public int ExplosionRadius = 1;
 
-        public int SpeedInternal = MaxSpeedInternal;
+        public int SpeedInternal = BaseSpeedNormal;
 
-        public bool CanKickBombs = true;
+        public bool CanKickBombs = false;
         public bool CanPunchBombs = true;
         public bool CanPassBombs = false;
-        public bool CanPassDestructibles = true;
+        public bool CanPassDestructibles = false;
         public bool HasPierceBombs = false;
-        public bool HasControlBombs = true;
+        public bool HasControlBombs = false;
         public bool HasFullFire = false;
 
         public MountedLouieType MountedLouie = MountedLouieType.None;
@@ -178,9 +178,9 @@ public static class PlayerPersistentStats
         SaveSelectedSkin(playerId);
     }
 
-    public static void ResetTemporaryPowerups(int playerId)
+    static void ResetTemporaryPowerups(PlayerState s)
     {
-        var s = Get(playerId);
+        if (s == null) return;
 
         s.CanKickBombs = false;
         s.CanPunchBombs = false;
@@ -192,6 +192,23 @@ public static class PlayerPersistentStats
         s.HasFullFire = false;
 
         s.MountedLouie = MountedLouieType.None;
+
+        s.QueuedEggs?.Clear();
+    }
+
+    public static void ResetTemporaryPowerups(int playerId)
+    {
+        var s = Get(playerId);
+        ResetTemporaryPowerups(s);
+    }
+
+    public static void StageResetTemporaryPowerupsOnDeath(int playerId)
+    {
+        playerId = Mathf.Clamp(playerId, 1, 4);
+        BeginStage();
+
+        var s = _stage[playerId - 1];
+        ResetTemporaryPowerups(s);
     }
 
     public static float InternalSpeedToTilesPerSecond(int internalSpeed)
@@ -413,6 +430,246 @@ public static class PlayerPersistentStats
 
         if (movement != null && movement.TryGetComponent<LouieEggQueue>(out var q) && q != null)
             q.GetQueuedEggTypesOldestToNewest(s.QueuedEggs);
+    }
+
+    static readonly PlayerState[] _stage = new PlayerState[4]
+    {
+        new(),
+        new(),
+        new(),
+        new()
+    };
+
+    static bool stageActive;
+
+    static void CopyState(PlayerState from, PlayerState to)
+    {
+        if (from == null || to == null) return;
+
+        to.Life = from.Life;
+
+        to.BombAmount = from.BombAmount;
+        to.ExplosionRadius = from.ExplosionRadius;
+
+        to.SpeedInternal = from.SpeedInternal;
+
+        to.CanKickBombs = from.CanKickBombs;
+        to.CanPunchBombs = from.CanPunchBombs;
+        to.CanPassBombs = from.CanPassBombs;
+        to.CanPassDestructibles = from.CanPassDestructibles;
+        to.HasPierceBombs = from.HasPierceBombs;
+        to.HasControlBombs = from.HasControlBombs;
+        to.HasFullFire = from.HasFullFire;
+
+        to.MountedLouie = from.MountedLouie;
+        to.Skin = from.Skin;
+
+        to.QueuedEggs.Clear();
+        if (from.QueuedEggs != null && from.QueuedEggs.Count > 0)
+            to.QueuedEggs.AddRange(from.QueuedEggs);
+    }
+
+    public static void BeginStage()
+    {
+        if (stageActive)
+            return;
+
+        for (int i = 1; i <= 4; i++)
+        {
+            var baseState = Get(i);
+            var st = _stage[i - 1];
+            CopyState(baseState, st);
+        }
+
+        stageActive = true;
+    }
+
+    public static void DiscardStage()
+    {
+        stageActive = false;
+    }
+
+    public static void CommitStage()
+    {
+        if (!stageActive)
+            return;
+
+        for (int i = 1; i <= 4; i++)
+        {
+            var baseState = Get(i);
+            var st = _stage[i - 1];
+            CopyState(st, baseState);
+        }
+
+        stageActive = false;
+    }
+
+    static MountedLouieType EggToLouie(ItemPickup.ItemType t)
+    {
+        return t switch
+        {
+            ItemPickup.ItemType.BlueLouieEgg => MountedLouieType.Blue,
+            ItemPickup.ItemType.BlackLouieEgg => MountedLouieType.Black,
+            ItemPickup.ItemType.PurpleLouieEgg => MountedLouieType.Purple,
+            ItemPickup.ItemType.GreenLouieEgg => MountedLouieType.Green,
+            ItemPickup.ItemType.YellowLouieEgg => MountedLouieType.Yellow,
+            ItemPickup.ItemType.PinkLouieEgg => MountedLouieType.Pink,
+            ItemPickup.ItemType.RedLouieEgg => MountedLouieType.Red,
+            _ => MountedLouieType.None
+        };
+    }
+
+    static bool IsEgg(ItemPickup.ItemType t)
+    {
+        return t == ItemPickup.ItemType.BlueLouieEgg
+            || t == ItemPickup.ItemType.BlackLouieEgg
+            || t == ItemPickup.ItemType.PurpleLouieEgg
+            || t == ItemPickup.ItemType.GreenLouieEgg
+            || t == ItemPickup.ItemType.YellowLouieEgg
+            || t == ItemPickup.ItemType.PinkLouieEgg
+            || t == ItemPickup.ItemType.RedLouieEgg;
+    }
+
+    public static void StageApplyPickup(int playerId, ItemPickup.ItemType type)
+    {
+        playerId = Mathf.Clamp(playerId, 1, 4);
+        BeginStage();
+
+        var s = _stage[playerId - 1];
+
+        switch (type)
+        {
+            case ItemPickup.ItemType.ExtraBomb:
+                s.BombAmount = Mathf.Min(s.BombAmount + 1, MaxBombAmount);
+                break;
+
+            case ItemPickup.ItemType.BlastRadius:
+                s.ExplosionRadius = Mathf.Min(s.ExplosionRadius + 1, MaxExplosionRadius);
+                break;
+
+            case ItemPickup.ItemType.SpeedIncrese:
+                s.SpeedInternal = ClampSpeedInternal(s.SpeedInternal + SpeedStep);
+                break;
+
+            case ItemPickup.ItemType.BombKick:
+                s.CanKickBombs = true;
+                break;
+
+            case ItemPickup.ItemType.BombPunch:
+                s.CanPunchBombs = true;
+                break;
+
+            case ItemPickup.ItemType.FullFire:
+                s.HasFullFire = true;
+                break;
+
+            case ItemPickup.ItemType.BombPass:
+                s.CanPassBombs = true;
+                break;
+
+            case ItemPickup.ItemType.DestructiblePass:
+                s.CanPassDestructibles = true;
+                break;
+
+            case ItemPickup.ItemType.PierceBomb:
+                s.HasPierceBombs = true;
+                s.HasControlBombs = false;
+                break;
+
+            case ItemPickup.ItemType.ControlBomb:
+                s.HasControlBombs = true;
+                s.HasPierceBombs = false;
+                break;
+
+            case ItemPickup.ItemType.Heart:
+                s.Life = Mathf.Max(1, s.Life + 1);
+                break;
+
+            default:
+                if (IsEgg(type))
+                {
+                    var louie = EggToLouie(type);
+
+                    if (s.MountedLouie != MountedLouieType.None)
+                    {
+                        if (s.QueuedEggs.Count < 8)
+                            s.QueuedEggs.Add(type);
+                    }
+                    else
+                    {
+                        s.MountedLouie = louie;
+                    }
+                }
+                break;
+        }
+    }
+
+    public static void StageCaptureFromRuntime(MovementController movement, BombController bomb)
+    {
+        if (movement == null && bomb == null)
+            return;
+
+        int playerId = 1;
+        if (movement != null) playerId = GetPlayerIdFrom(movement);
+        else if (bomb != null) playerId = GetPlayerIdFrom(bomb);
+
+        BeginStage();
+
+        var s = _stage[playerId - 1];
+
+        if (movement != null && movement.CompareTag("Player"))
+        {
+            s.SpeedInternal = ClampSpeedInternal(movement.SpeedInternal);
+
+            if (movement.TryGetComponent<CharacterHealth>(out var health))
+                s.Life = Mathf.Max(1, health.life);
+
+            AbilitySystem abilitySystem = null;
+            if (movement.TryGetComponent(out AbilitySystem a) && a != null)
+            {
+                abilitySystem = a;
+                abilitySystem.RebuildCache();
+            }
+
+            var kick = abilitySystem != null ? abilitySystem.Get<BombKickAbility>(BombKickAbility.AbilityId) : null;
+            s.CanKickBombs = kick != null && kick.IsEnabled;
+
+            var punch = abilitySystem != null ? abilitySystem.Get<BombPunchAbility>(BombPunchAbility.AbilityId) : null;
+            s.CanPunchBombs = punch != null && punch.IsEnabled;
+
+            var pierce = abilitySystem != null ? abilitySystem.Get<PierceBombAbility>(PierceBombAbility.AbilityId) : null;
+            s.HasPierceBombs = pierce != null && pierce.IsEnabled;
+
+            var control = abilitySystem != null ? abilitySystem.Get<ControlBombAbility>(ControlBombAbility.AbilityId) : null;
+            s.HasControlBombs = control != null && control.IsEnabled;
+
+            var fullFire = abilitySystem != null ? abilitySystem.Get<FullFireAbility>(FullFireAbility.AbilityId) : null;
+            s.HasFullFire = fullFire != null && fullFire.IsEnabled;
+
+            var passBomb = abilitySystem != null ? abilitySystem.Get<BombPassAbility>(BombPassAbility.AbilityId) : null;
+            s.CanPassBombs = passBomb != null && passBomb.IsEnabled;
+
+            var passDestructibles = abilitySystem != null ? abilitySystem.Get<DestructiblePassAbility>(DestructiblePassAbility.AbilityId) : null;
+            s.CanPassDestructibles = passDestructibles != null && passDestructibles.IsEnabled;
+
+            if (s.HasControlBombs) s.HasPierceBombs = false;
+            else if (s.HasPierceBombs) s.HasControlBombs = false;
+
+            s.MountedLouie = MountedLouieType.None;
+            if (movement.TryGetComponent<PlayerLouieCompanion>(out var louieCompanion))
+                s.MountedLouie = louieCompanion.GetMountedLouieType();
+
+            if (movement.TryGetComponent<LouieEggQueue>(out var q) && q != null)
+                q.GetQueuedEggTypesOldestToNewest(s.QueuedEggs);
+            else
+                s.QueuedEggs.Clear();
+        }
+
+        if (bomb != null && bomb.CompareTag("Player"))
+        {
+            s.BombAmount = Mathf.Min(bomb.bombAmout, MaxBombAmount);
+            s.ExplosionRadius = Mathf.Min(bomb.explosionRadius, MaxExplosionRadius);
+        }
     }
 
     public static void ResetSessionForReturnToTitle()

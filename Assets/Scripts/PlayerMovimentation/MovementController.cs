@@ -919,12 +919,6 @@ public class MovementController : MonoBehaviour, IKillable
         if (stunReceiver != null)
             stunReceiver.CancelStunForDeath();
 
-        if (IsPlayer())
-        {
-            TryGetComponent(out CharacterHealth health);
-            PlayerPersistentStats.SavePermanentFrom(playerId, this, bombController, health);
-        }
-
         if (IsPlayer() && checkWinStateOnDeath)
         {
             var gm = FindFirstObjectByType<GameManager>();
@@ -934,11 +928,17 @@ public class MovementController : MonoBehaviour, IKillable
 
         touchingHazards.Clear();
 
+        if (IsPlayer())
+        {
+            PlayerPersistentStats.StageResetTemporaryPowerupsOnDeath(playerId);
+            PlayerPersistentStats.ResetTemporaryPowerups(playerId);
+
+            if (TryGetComponent<LouieEggQueue>(out var q) && q != null)
+                q.ClearQueueNow(resetHistoryToOwner: true, animateShift: false);
+        }
+
         if (abilitySystem != null)
             abilitySystem.DisableAll();
-
-        if (IsPlayer())
-            PlayerPersistentStats.ResetTemporaryPowerups(playerId);
 
         if (bombController != null)
             bombController.enabled = false;
