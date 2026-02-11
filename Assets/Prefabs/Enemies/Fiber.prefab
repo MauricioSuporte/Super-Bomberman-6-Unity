@@ -27,7 +27,7 @@ Transform:
   m_GameObject: {fileID: 3096155768532509377}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.27, z: 0}
+  m_LocalPosition: {x: 0, y: 0.48, z: 0}
   m_LocalScale: {x: 6, y: 6, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -148,7 +148,7 @@ Transform:
   m_GameObject: {fileID: 4468896865082420794}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.2, z: 0}
+  m_LocalPosition: {x: 0, y: 0.4, z: 0}
   m_LocalScale: {x: 6, y: 6, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -253,7 +253,7 @@ GameObject:
   - component: {fileID: 8388449595591689174}
   - component: {fileID: 5604493247895075029}
   - component: {fileID: 8690953919204973052}
-  - component: {fileID: 3896081388140495434}
+  - component: {fileID: 745809108137984003}
   - component: {fileID: 4002592649201115258}
   - component: {fileID: 7248176284778430663}
   - component: {fileID: 7276827565942926280}
@@ -345,7 +345,7 @@ CircleCollider2D:
   m_CompositeOrder: 0
   m_Offset: {x: 0, y: 0}
   m_Radius: 0.3
---- !u!114 &3896081388140495434
+--- !u!114 &745809108137984003
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -354,9 +354,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 6652107077462134106}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d3e3a4a3442a32540bc54cc62ff3ea8a, type: 3}
+  m_Script: {fileID: 11500000, guid: 842c9fdf6595c824491951074e482038, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::EnemyMovementController
+  m_EditorClassIdentifier: Assembly-CSharp::FiberMovementController
   speed: 1.5
   tileSize: 1
   spriteUp: {fileID: 5670927535302856814}
@@ -375,6 +375,18 @@ MonoBehaviour:
     m_Bits: 1024
   deathSfx: {fileID: 8300000, guid: 95fa76ce6d1f33c498e5165cec574d98, type: 3}
   recheckStuckEverySeconds: 0.25
+  minAvailablePathsToTurn: 3
+  preferTurnAtJunction: 0
+  abilityMinCooldown: 1
+  abilityMaxCooldown: 2
+  abilityAnimationDurationSeconds: 1.2
+  fireSpawnDelaySeconds: 0.35
+  fireLifetimeSeconds: 0.5
+  firePrefab: {fileID: 4663725436683452354, guid: e76f060a0d2419a49971b918122196dc, type: 3}
+  useCurrentDirectionForFire: 0
+  spawnFireOnAdjacentTile: 1
+  spriteAbility: {fileID: 7300962255653753835}
+  debugAbility: 1
 --- !u!114 &4002592649201115258
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -519,7 +531,7 @@ GameObject:
   - component: {fileID: 7989464560649647016}
   - component: {fileID: 7300962255653753835}
   m_Layer: 10
-  m_Name: Joke
+  m_Name: Ability
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -534,7 +546,7 @@ Transform:
   m_GameObject: {fileID: 8261806751568389280}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: 0.4, z: 0}
   m_LocalScale: {x: 6, y: 6, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -587,7 +599,7 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 5
-  m_Sprite: {fileID: -8190934745560522981, guid: 086f4e652027f0a489a50e5b424ccfb8, type: 3}
+  m_Sprite: {fileID: -2753548895741212639, guid: 53f1774a69b43a34da85bcd801b725a9, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -610,10 +622,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a4b55e1b961d144197e1a7a4a391956, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  idleSprite: {fileID: -8190934745560522981, guid: 086f4e652027f0a489a50e5b424ccfb8, type: 3}
-  animationSprite: []
+  idleSprite: {fileID: -2753548895741212639, guid: 53f1774a69b43a34da85bcd801b725a9, type: 3}
+  animationSprite:
+  - {fileID: -2753548895741212639, guid: 53f1774a69b43a34da85bcd801b725a9, type: 3}
   allowFlipX: 0
-  animationTime: 0.125
+  animationTime: 0.3
   useSequenceDuration: 0
   sequenceDuration: 0.5
   loop: 0
