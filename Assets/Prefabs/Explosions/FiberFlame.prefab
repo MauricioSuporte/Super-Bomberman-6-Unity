@@ -488,7 +488,7 @@ MonoBehaviour:
   left: {fileID: 305550849254919312}
   right: {fileID: 8189007387608342037}
   collisionTiles: 3
-  tileSize: 1
+  tileSize: 0.5
   durationSeconds: 0.5
 --- !u!1 &8992946389446785346
 GameObject:

@@ -11,12 +11,14 @@ public sealed class FiberFlame : MonoBehaviour
 
     [Header("Collision")]
     [SerializeField, Min(1)] private int collisionTiles = 3;
-    [SerializeField, Min(0.01f)] private float tileSize = 1f;
+    [SerializeField, Min(0.01f)] private float tileSize = 0.5f;
 
     [Header("Lifetime")]
     [SerializeField, Min(0.01f)] private float durationSeconds = 0.5f;
 
     private BoxCollider2D box;
+    private AnimatedSpriteRenderer active;
+    private Coroutine lifeRoutine;
 
     private void Awake()
     {
@@ -29,23 +31,32 @@ public sealed class FiberFlame : MonoBehaviour
         if (durationOverride > 0f)
             durationSeconds = durationOverride;
 
-        DisableAll();
-
         direction = NormalizeToCardinal(direction);
 
-        var r = Resolve(direction);
-        if (r != null)
+        DisableAll();
+
+        active = Resolve(direction);
+        if (active != null)
         {
-            r.enabled = true;
-            r.idle = false;
-            r.loop = true;
-            r.RefreshFrame();
+            active.enabled = true;
+
+            active.idle = false;
+
+            active.loop = false;
+
+            active.useSequenceDuration = true;
+            active.sequenceDuration = Mathf.Max(0.01f, durationSeconds);
+
+            active.CurrentFrame = 0;
+            active.RefreshFrame();
         }
 
         ConfigureCollider(direction);
 
-        StopAllCoroutines();
-        StartCoroutine(LifeRoutine());
+        if (lifeRoutine != null)
+            StopCoroutine(lifeRoutine);
+
+        lifeRoutine = StartCoroutine(LifeRoutine());
     }
 
     private void ConfigureCollider(Vector2 dir)
@@ -84,7 +95,22 @@ public sealed class FiberFlame : MonoBehaviour
     private IEnumerator LifeRoutine()
     {
         float d = Mathf.Max(0.01f, durationSeconds);
-        yield return new WaitForSeconds(d);
+
+        if (active != null)
+        {
+            float freezeAt = Mathf.Max(0f, d - 0.01f);
+            float t = 0f;
+
+            while (t < freezeAt)
+            {
+                t += Time.deltaTime;
+                yield return null;
+            }
+
+            active.SetFrozen(true);
+        }
+
+        yield return new WaitForSeconds(Mathf.Max(0.01f, 0.01f));
         Destroy(gameObject);
     }
 
@@ -103,6 +129,13 @@ public sealed class FiberFlame : MonoBehaviour
         if (down != null) down.enabled = false;
         if (left != null) left.enabled = false;
         if (right != null) right.enabled = false;
+
+        if (up != null) up.SetFrozen(false);
+        if (down != null) down.SetFrozen(false);
+        if (left != null) left.SetFrozen(false);
+        if (right != null) right.SetFrozen(false);
+
+        active = null;
     }
 
     private Vector2 NormalizeToCardinal(Vector2 dir)

@@ -377,11 +377,11 @@ MonoBehaviour:
   recheckStuckEverySeconds: 0.25
   minAvailablePathsToTurn: 3
   preferTurnAtJunction: 0
-  abilityMinCooldown: 1
-  abilityMaxCooldown: 2
-  abilityAnimationDurationSeconds: 1.2
-  fireSpawnDelaySeconds: 0.35
-  fireLifetimeSeconds: 0.5
+  abilityMinCooldown: 10
+  abilityMaxCooldown: 10
+  prepareSeconds: 0.5
+  flameSeconds: 0.5
+  recoverSeconds: 0.5
   firePrefab: {fileID: 4663725436683452354, guid: e76f060a0d2419a49971b918122196dc, type: 3}
   useCurrentDirectionForFire: 0
   spawnFireOnAdjacentTile: 1
@@ -624,13 +624,42 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   idleSprite: {fileID: -2753548895741212639, guid: 53f1774a69b43a34da85bcd801b725a9, type: 3}
   animationSprite:
+  - {fileID: 1695622670434142603, guid: 53f1774a69b43a34da85bcd801b725a9, type: 3}
   - {fileID: -2753548895741212639, guid: 53f1774a69b43a34da85bcd801b725a9, type: 3}
+  - {fileID: -7635104551740724378, guid: 53f1774a69b43a34da85bcd801b725a9, type: 3}
+  - {fileID: -7635104551740724378, guid: 53f1774a69b43a34da85bcd801b725a9, type: 3}
+  - {fileID: -2753548895741212639, guid: 53f1774a69b43a34da85bcd801b725a9, type: 3}
+  - {fileID: -2753548895741212639, guid: 53f1774a69b43a34da85bcd801b725a9, type: 3}
+  - {fileID: -2753548895741212639, guid: 53f1774a69b43a34da85bcd801b725a9, type: 3}
+  - {fileID: -2753548895741212639, guid: 53f1774a69b43a34da85bcd801b725a9, type: 3}
+  - {fileID: -2753548895741212639, guid: 53f1774a69b43a34da85bcd801b725a9, type: 3}
+  - {fileID: -2753548895741212639, guid: 53f1774a69b43a34da85bcd801b725a9, type: 3}
+  - {fileID: -2753548895741212639, guid: 53f1774a69b43a34da85bcd801b725a9, type: 3}
+  - {fileID: -2753548895741212639, guid: 53f1774a69b43a34da85bcd801b725a9, type: 3}
+  - {fileID: -2753548895741212639, guid: 53f1774a69b43a34da85bcd801b725a9, type: 3}
+  - {fileID: -1742039700928002196, guid: 53f1774a69b43a34da85bcd801b725a9, type: 3}
+  - {fileID: 1695622670434142603, guid: 53f1774a69b43a34da85bcd801b725a9, type: 3}
   allowFlipX: 0
-  animationTime: 0.3
+  animationTime: 0.1
   useSequenceDuration: 0
   sequenceDuration: 0.5
   loop: 0
   idle: 0
-  frameOffsets: []
+  frameOffsets:
+  - {x: 0, y: 0}
+  - {x: 0, y: 0}
+  - {x: 0, y: 0}
+  - {x: 0, y: 0}
+  - {x: 0, y: 0}
+  - {x: 0.05, y: 0}
+  - {x: 0, y: 0}
+  - {x: 0.05, y: 0}
+  - {x: 0, y: 0}
+  - {x: 0.05, y: 0}
+  - {x: 0, y: 0}
+  - {x: 0, y: 0}
+  - {x: 0, y: 0}
+  - {x: 0, y: 0}
+  - {x: 0, y: 0}
   pingPong: 0
   disableOffsetsIfThisObjectHasRigidbody2D: 1

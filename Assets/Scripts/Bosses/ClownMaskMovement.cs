@@ -108,8 +108,7 @@ public class ClownMaskMovement : MonoBehaviour
                 var id = ids[i];
                 if (id == null) continue;
 
-                MovementController m = null;
-                if (!id.TryGetComponent<MovementController>(out m))
+                if (!id.TryGetComponent(out MovementController m))
                     m = id.GetComponentInChildren<MovementController>(true);
 
                 if (m == null) continue;

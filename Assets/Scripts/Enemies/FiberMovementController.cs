@@ -12,39 +12,38 @@ public sealed class FiberMovementController : JunctionTurningEnemyMovementContro
     [SerializeField] private float abilityMinCooldown = 6f;
     [SerializeField] private float abilityMaxCooldown = 8f;
 
-    [Header("Ability - Timing")]
-    [SerializeField, Min(0.01f)] private float abilityAnimationDurationSeconds = 1.2f;
-    [SerializeField, Min(0f)] private float fireSpawnDelaySeconds = 0.35f;
-    [SerializeField, Min(0.01f)] private float fireLifetimeSeconds = 0.5f;
+    [Header("Ability - Phases (fixed)")]
+    [SerializeField, Min(0.01f)] private float prepareSeconds = 0.5f;
+    [SerializeField, Min(0.01f)] private float flameSeconds = 0.5f;
+    [SerializeField, Min(0.01f)] private float recoverSeconds = 0.5f;
 
     [Header("Ability - Fire")]
     [SerializeField] private FiberFlame firePrefab;
     [SerializeField] private bool useCurrentDirectionForFire = false;
     [SerializeField] private bool spawnFireOnAdjacentTile = true;
 
+    [Header("Ability - Targeting")]
+    [SerializeField, Min(0.1f)] private float targetSearchRadiusTiles = 12f;
+
+    [Header("Ability - Layers (optional override)")]
+    [SerializeField] private LayerMask playerLayerMask;
+
     [Header("Ability - Sprite")]
     [SerializeField] private AnimatedSpriteRenderer spriteAbility;
-
-    [Header("Debug")]
-    [SerializeField] private bool debugAbility = true;
 
     private Coroutine abilityLoopRoutine;
     private bool isAbilityActive;
     private bool started;
 
+    private Vector2 lastAbilityDir = Vector2.down;
+
     private void OnEnable()
     {
-        if (debugAbility)
-            Debug.Log($"[Fiber] {name} OnEnable timeScale={Time.timeScale:0.###} t={Time.time:0.00} rt={Time.realtimeSinceStartup:0.00}", this);
-
         TryStartAbilityLoop();
     }
 
     private void OnDisable()
     {
-        if (debugAbility)
-            Debug.Log($"[Fiber] {name} OnDisable timeScale={Time.timeScale:0.###} t={Time.time:0.00} rt={Time.realtimeSinceStartup:0.00}", this);
-
         StopAbilityLoop();
     }
 
@@ -52,10 +51,13 @@ public sealed class FiberMovementController : JunctionTurningEnemyMovementContro
     {
         base.Start();
 
-        started = true;
+        if (playerLayerMask.value == 0)
+            playerLayerMask = LayerMask.GetMask("Player");
 
-        if (debugAbility)
-            Debug.Log($"[Fiber] {name} Start() firePrefab={(firePrefab != null)} spriteAbility={(spriteAbility != null)} timeScale={Time.timeScale:0.###}", this);
+        if (bombLayerMask.value == 0)
+            bombLayerMask = LayerMask.GetMask("Bomb");
+
+        started = true;
 
         TryStartAbilityLoop();
     }
@@ -78,9 +80,6 @@ public sealed class FiberMovementController : JunctionTurningEnemyMovementContro
 
     protected override void Die()
     {
-        if (debugAbility)
-            Debug.Log($"[Fiber] {name} Die() timeScale={Time.timeScale:0.###} t={Time.time:0.00} rt={Time.realtimeSinceStartup:0.00}", this);
-
         StopAbilityLoop();
         isAbilityActive = false;
 
@@ -90,37 +89,18 @@ public sealed class FiberMovementController : JunctionTurningEnemyMovementContro
     private void TryStartAbilityLoop()
     {
         if (!started)
-        {
-            if (debugAbility)
-                Debug.Log($"[Fiber] {name} TryStartAbilityLoop skipped (not started yet)", this);
             return;
-        }
 
         if (!isActiveAndEnabled)
-        {
-            if (debugAbility)
-                Debug.Log($"[Fiber] {name} TryStartAbilityLoop skipped (not active/enabled)", this);
             return;
-        }
 
         if (isDead)
-        {
-            if (debugAbility)
-                Debug.Log($"[Fiber] {name} TryStartAbilityLoop skipped (dead)", this);
             return;
-        }
 
         if (abilityLoopRoutine != null)
-        {
-            if (debugAbility)
-                Debug.Log($"[Fiber] {name} AbilityLoop already running", this);
             return;
-        }
 
         abilityLoopRoutine = StartCoroutine(AbilityLoop());
-
-        if (debugAbility)
-            Debug.Log($"[Fiber] {name} AbilityLoop coroutine started", this);
     }
 
     private void StopAbilityLoop()
@@ -129,81 +109,40 @@ public sealed class FiberMovementController : JunctionTurningEnemyMovementContro
         {
             StopCoroutine(abilityLoopRoutine);
             abilityLoopRoutine = null;
-
-            if (debugAbility)
-                Debug.Log($"[Fiber] {name} AbilityLoop coroutine stopped", this);
         }
     }
 
     private IEnumerator AbilityLoop()
     {
-        if (debugAbility)
-            Debug.Log($"[Fiber] {name} AbilityLoop STARTED", this);
-
         while (!isDead && isActiveAndEnabled)
         {
             float waitTime = Random.Range(abilityMinCooldown, abilityMaxCooldown);
-
-            if (debugAbility)
-                Debug.Log($"[Fiber] {name} cooldown {waitTime:0.00}s", this);
-
             yield return new WaitForSecondsRealtime(waitTime);
 
             if (!isActiveAndEnabled || isDead)
-            {
-                if (debugAbility)
-                    Debug.Log($"[Fiber] {name} AbilityLoop END (disabled or dead after wait)", this);
                 yield break;
-            }
 
             if (TryGetComponent(out StunReceiver stun) && stun != null && stun.IsStunned)
-            {
-                if (debugAbility)
-                    Debug.Log($"[Fiber] {name} skipped ability (stunned)", this);
                 continue;
-            }
 
             if (isInDamagedLoop)
-            {
-                if (debugAbility)
-                    Debug.Log($"[Fiber] {name} skipped ability (damaged loop)", this);
                 continue;
-            }
 
             if (isAbilityActive)
-            {
-                if (debugAbility)
-                    Debug.Log($"[Fiber] {name} skipped ability (already active)", this);
                 continue;
-            }
 
             if (spriteAbility == null)
-            {
-                Debug.LogWarning($"[Fiber] {name} spriteAbility == NULL", this);
                 continue;
-            }
 
             if (firePrefab == null)
-            {
-                Debug.LogWarning($"[Fiber] {name} firePrefab == NULL", this);
                 continue;
-            }
-
-            if (debugAbility)
-                Debug.Log($"[Fiber] {name} EXECUTING ability", this);
 
             yield return ExecuteAbility();
         }
-
-        if (debugAbility)
-            Debug.Log($"[Fiber] {name} AbilityLoop EXIT (dead or disabled)", this);
     }
 
     private IEnumerator ExecuteAbility()
     {
-        if (debugAbility)
-            Debug.Log($"[Fiber] {name} ExecuteAbility START", this);
-
         isAbilityActive = true;
 
         if (rb != null)
@@ -211,60 +150,197 @@ public sealed class FiberMovementController : JunctionTurningEnemyMovementContro
 
         SnapToGrid();
 
-        float duration = Mathf.Max(0.01f, abilityAnimationDurationSeconds);
-        float spawnDelay = Mathf.Clamp(fireSpawnDelaySeconds, 0f, duration);
+        float p = Mathf.Max(0.01f, prepareSeconds);
+        float f = Mathf.Max(0.01f, flameSeconds);
+        float r = Mathf.Max(0.01f, recoverSeconds);
+
+        float total = p + f + r;
 
         var h = GetComponent<CharacterHealth>();
         if (h != null)
-        {
-            h.StartTemporaryInvulnerability(duration, withBlink: false);
-            if (debugAbility)
-                Debug.Log($"[Fiber] {name} invulnerable for {duration:0.00}s", this);
-        }
+            h.StartTemporaryInvulnerability(total, withBlink: false);
 
         DisableAllForAbility();
         EnableAbilitySprite();
 
-        float elapsed = 0f;
-        bool fired = false;
+        yield return WaitSecondsGameplay(p);
 
-        while (elapsed < duration)
-        {
-            if (!isActiveAndEnabled || isDead)
-            {
-                if (debugAbility)
-                    Debug.Log($"[Fiber] {name} ExecuteAbility interrupted (disabled or dead)", this);
-                break;
-            }
+        if (!isActiveAndEnabled || isDead)
+            goto END;
 
-            if (!fired && elapsed >= spawnDelay)
-            {
-                fired = true;
-                if (debugAbility)
-                    Debug.Log($"[Fiber] {name} SpawnFire at t={elapsed:0.00}s", this);
+        lastAbilityDir = PickAbilityDirection();
+        SpawnFireWithExactLifetime(f, lastAbilityDir);
 
-                SpawnFire();
-            }
+        yield return WaitSecondsGameplay(f);
 
-            elapsed += Time.deltaTime;
-            yield return null;
-        }
+        if (!isActiveAndEnabled || isDead)
+            goto END;
 
+        yield return WaitSecondsGameplay(r);
+
+    END:
         DisableAbilitySprite();
         isAbilityActive = false;
 
         UpdateSpriteDirection(direction);
         DecideNextTile();
-
-        if (debugAbility)
-            Debug.Log($"[Fiber] {name} ExecuteAbility END", this);
     }
 
-    private void SpawnFire()
+    private IEnumerator WaitSecondsGameplay(float seconds)
     {
-        Vector2 dir = useCurrentDirectionForFire ? direction : Dirs[Random.Range(0, Dirs.Length)];
-        if (dir == Vector2.zero)
-            dir = Vector2.down;
+        if (seconds <= 0f)
+            yield break;
+
+        float t = 0f;
+        while (t < seconds)
+        {
+            if (!isActiveAndEnabled || isDead)
+                yield break;
+
+            t += Time.deltaTime;
+            yield return null;
+        }
+    }
+
+    private Vector2 PickAbilityDirection()
+    {
+        Vector2 origin = rb != null ? rb.position : (Vector2)transform.position;
+        origin.x = Mathf.Round(origin.x / tileSize) * tileSize;
+        origin.y = Mathf.Round(origin.y / tileSize) * tileSize;
+
+        float radius = Mathf.Max(tileSize, targetSearchRadiusTiles * tileSize);
+
+        if (TryGetClosestAlivePlayer(origin, out Vector2 playerPos, radius))
+        {
+            Vector2 toPlayer = playerPos - origin;
+            return BestCardinalFromVector(toPlayer);
+        }
+
+        if (TryGetClosestBomb(origin, out Vector2 bombPos, radius))
+        {
+            Vector2 toBomb = bombPos - origin;
+            return BestCardinalFromVector(toBomb);
+        }
+
+        Vector2 fallback = direction != Vector2.zero ? direction : Vector2.down;
+        return PickBiasedRandomCardinal(fallback, fallback);
+    }
+
+    private bool TryGetClosestAlivePlayer(Vector2 origin, out Vector2 bestPos, float radius)
+    {
+        bestPos = Vector2.zero;
+        float bestSqr = float.PositiveInfinity;
+
+        var players = FindObjectsByType<MovementController>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+        if (players == null || players.Length == 0)
+            return false;
+
+        float rSqr = radius * radius;
+
+        for (int i = 0; i < players.Length; i++)
+        {
+            var m = players[i];
+            if (m == null) continue;
+            if (!m.isActiveAndEnabled || !m.gameObject.activeInHierarchy) continue;
+            if (!m.CompareTag("Player")) continue;
+            if (m.isDead) continue;
+
+            int layer = m.gameObject.layer;
+            if (playerLayerMask.value != 0 && ((1 << layer) & playerLayerMask.value) == 0)
+                continue;
+
+            Vector2 p = m.transform.position;
+            float d = (p - origin).sqrMagnitude;
+            if (d > rSqr) continue;
+
+            if (d < bestSqr)
+            {
+                bestSqr = d;
+                bestPos = p;
+            }
+        }
+
+        return bestSqr < float.PositiveInfinity;
+    }
+
+    private bool TryGetClosestBomb(Vector2 origin, out Vector2 bestPos, float radius)
+    {
+        bestPos = Vector2.zero;
+        float bestSqr = float.PositiveInfinity;
+
+        if (bombLayerMask.value == 0)
+            return false;
+
+        var hits = Physics2D.OverlapCircleAll(origin, radius, bombLayerMask);
+        if (hits == null || hits.Length == 0)
+            return false;
+
+        for (int i = 0; i < hits.Length; i++)
+        {
+            var c = hits[i];
+            if (c == null) continue;
+
+            Vector2 p = c.transform.position;
+            float d = (p - origin).sqrMagnitude;
+
+            if (d < bestSqr)
+            {
+                bestSqr = d;
+                bestPos = p;
+            }
+        }
+
+        return bestSqr < float.PositiveInfinity;
+    }
+
+    private Vector2 BestCardinalFromVector(Vector2 v)
+    {
+        if (v.sqrMagnitude < 0.0001f)
+            return Vector2.down;
+
+        if (Mathf.Abs(v.x) >= Mathf.Abs(v.y))
+            return v.x >= 0f ? Vector2.right : Vector2.left;
+
+        return v.y >= 0f ? Vector2.up : Vector2.down;
+    }
+
+    private Vector2 PickBiasedRandomCardinal(Vector2 preferred1, Vector2 preferred2)
+    {
+        preferred1 = BestCardinalFromVector(preferred1);
+        preferred2 = BestCardinalFromVector(preferred2);
+
+        float wUp = 1f;
+        float wDown = 1f;
+        float wLeft = 1f;
+        float wRight = 1f;
+
+        if (preferred1 == Vector2.up) wUp += 2.5f;
+        else if (preferred1 == Vector2.down) wDown += 2.5f;
+        else if (preferred1 == Vector2.left) wLeft += 2.5f;
+        else if (preferred1 == Vector2.right) wRight += 2.5f;
+
+        if (preferred2 == Vector2.up) wUp += 2.5f;
+        else if (preferred2 == Vector2.down) wDown += 2.5f;
+        else if (preferred2 == Vector2.left) wLeft += 2.5f;
+        else if (preferred2 == Vector2.right) wRight += 2.5f;
+
+        float sum = wUp + wDown + wLeft + wRight;
+        float r = Random.Range(0f, sum);
+
+        if ((r -= wUp) < 0f) return Vector2.up;
+        if ((r -= wDown) < 0f) return Vector2.down;
+        if ((r -= wLeft) < 0f) return Vector2.left;
+        return Vector2.right;
+    }
+
+    private void SpawnFireWithExactLifetime(float exactLifetimeSeconds, Vector2 chosenDir)
+    {
+        Vector2 dir = chosenDir;
+
+        if (useCurrentDirectionForFire)
+            dir = direction != Vector2.zero ? direction : Vector2.down;
+
+        dir = BestCardinalFromVector(dir);
 
         Vector2 origin = rb != null ? rb.position : (Vector2)transform.position;
         origin.x = Mathf.Round(origin.x / tileSize) * tileSize;
@@ -272,17 +348,11 @@ public sealed class FiberMovementController : JunctionTurningEnemyMovementContro
 
         Vector2 pos = spawnFireOnAdjacentTile ? origin + dir * tileSize : origin;
 
-        if (debugAbility)
-            Debug.Log($"[Fiber] {name} SpawnFire dir={dir} pos={pos} lifetime={fireLifetimeSeconds:0.00}s", this);
-
         var flame = Instantiate(firePrefab, pos, Quaternion.identity);
         if (flame == null)
-        {
-            Debug.LogWarning($"[Fiber] {name} Instantiate(firePrefab) returned NULL", this);
             return;
-        }
 
-        flame.Play(dir, fireLifetimeSeconds);
+        flame.Play(dir, exactLifetimeSeconds);
     }
 
     private void EnableAbilitySprite()
