@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 647854dae32d7cd4d816594a34fcb443, type: 3}
+  m_Name: AnimatedTile_Water
+  m_EditorClassIdentifier: 
+  m_AnimatedSprites:
+  - {fileID: 1169518771, guid: 6941c19c1cba83a4cbc94f1207289cd9, type: 3}
+  - {fileID: -1784714319, guid: 6941c19c1cba83a4cbc94f1207289cd9, type: 3}
+  - {fileID: -1647649517, guid: 6941c19c1cba83a4cbc94f1207289cd9, type: 3}
+  - {fileID: 796374663, guid: 6941c19c1cba83a4cbc94f1207289cd9, type: 3}
+  - {fileID: 377836313, guid: 6941c19c1cba83a4cbc94f1207289cd9, type: 3}
+  - {fileID: -1999495904, guid: 6941c19c1cba83a4cbc94f1207289cd9, type: 3}
+  - {fileID: -1601884613, guid: 6941c19c1cba83a4cbc94f1207289cd9, type: 3}
+  - {fileID: 1244794495, guid: 6941c19c1cba83a4cbc94f1207289cd9, type: 3}
+  m_MinSpeed: 5
+  m_MaxSpeed: 5
+  m_AnimationStartTime: 0
+  m_TileColliderType: 1
