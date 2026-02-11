@@ -227,24 +227,24 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   portalResourcesPath: Portal/EndStagePortal
   portalAmount: 1
-  extraBombAmount: 3
-  blastRadiusAmount: 3
-  speedIncreaseAmount: 3
+  extraBombAmount: 1
+  blastRadiusAmount: 1
+  speedIncreaseAmount: 1
   kickBombAmount: 0
-  punchBombAmount: 3
+  punchBombAmount: 1
   pierceBombAmount: 0
   controlBombAmount: 0
   fullFireAmount: 0
-  bombPassAmount: 3
+  bombPassAmount: 0
   destructiblePassAmount: 0
   invincibleSuitAmount: 0
   heartAmount: 0
-  blueLouieEggAmount: 1
+  blueLouieEggAmount: 0
   blackLouieEggAmount: 0
   purpleLouieEggAmount: 0
-  greenLouieEggAmount: 1
-  yellowLouieEggAmount: 1
-  pinkLouieEggAmount: 0
+  greenLouieEggAmount: 0
+  yellowLouieEggAmount: 0
+  pinkLouieEggAmount: 1
   redLouieEggAmount: 0
   destructibleTilemap: {fileID: 285353618}
   indestructibleTilemap: {fileID: 0}
@@ -3290,6 +3290,19 @@ MonoBehaviour:
   - {fileID: 0}
   - {fileID: 0}
   - {fileID: 0}
+  playerOverrides:
+  - useCustomSpawn: 0
+    spawnPoint: {fileID: 0}
+    positionXY: {x: 0, y: 0}
+  - useCustomSpawn: 0
+    spawnPoint: {fileID: 0}
+    positionXY: {x: 0, y: 0}
+  - useCustomSpawn: 0
+    spawnPoint: {fileID: 0}
+    positionXY: {x: 0, y: 0}
+  - useCustomSpawn: 0
+    spawnPoint: {fileID: 0}
+    positionXY: {x: 0, y: 0}
   playersParent: {fileID: 0}
   isBossStage: 0
   clearExistingPlayersBeforeSpawn: 1

@@ -165,24 +165,24 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   portalResourcesPath: Portal/EndStagePortal
   portalAmount: 1
-  extraBombAmount: 3
-  blastRadiusAmount: 3
-  speedIncreaseAmount: 3
-  kickBombAmount: 3
+  extraBombAmount: 1
+  blastRadiusAmount: 1
+  speedIncreaseAmount: 1
+  kickBombAmount: 1
   punchBombAmount: 0
   pierceBombAmount: 0
   controlBombAmount: 0
-  fullFireAmount: 1
+  fullFireAmount: 0
   bombPassAmount: 0
   destructiblePassAmount: 0
-  invincibleSuitAmount: 1
-  heartAmount: 1
+  invincibleSuitAmount: 0
+  heartAmount: 0
   blueLouieEggAmount: 0
-  blackLouieEggAmount: 1
-  purpleLouieEggAmount: 1
+  blackLouieEggAmount: 0
+  purpleLouieEggAmount: 0
   greenLouieEggAmount: 0
   yellowLouieEggAmount: 1
-  pinkLouieEggAmount: 1
+  pinkLouieEggAmount: 0
   redLouieEggAmount: 0
   destructibleTilemap: {fileID: 285353618}
   indestructibleTilemap: {fileID: 818279435}
