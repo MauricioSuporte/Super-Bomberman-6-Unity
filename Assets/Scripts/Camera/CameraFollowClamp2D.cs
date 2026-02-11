@@ -122,7 +122,7 @@ public sealed class CameraFollowClamp2D : MonoBehaviour
     Vector3 ClampToBounds(Vector3 desired, Bounds bounds)
     {
         float vertExtent = cam.orthographicSize;
-        float horzExtent = vertExtent * cam.aspect;
+        float horzExtent = vertExtent * (4f / 3f);
 
         float minX = bounds.min.x + horzExtent;
         float maxX = bounds.max.x - horzExtent;
