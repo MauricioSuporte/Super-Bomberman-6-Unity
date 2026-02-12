@@ -3,6 +3,8 @@ using UnityEngine;
 
 [RequireComponent(typeof(Collider2D))]
 [RequireComponent(typeof(AudioSource))]
+[RequireComponent(typeof(BoxCollider2D))]
+[RequireComponent(typeof(AnimatedSpriteRenderer))]
 public sealed class CannonLauncher : MonoBehaviour
 {
     [Header("Refs")]
@@ -46,8 +48,7 @@ public sealed class CannonLauncher : MonoBehaviour
 
     private void Reset()
     {
-        var col = GetComponent<Collider2D>();
-        if (col != null) col.isTrigger = true;
+        if (TryGetComponent<Collider2D>(out var col)) col.isTrigger = true;
     }
 
     private void Awake()
