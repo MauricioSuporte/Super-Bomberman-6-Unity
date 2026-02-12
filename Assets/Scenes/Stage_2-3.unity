@@ -787,7 +787,7 @@ Tilemap:
       - {fileID: 1925664496, guid: 6941c19c1cba83a4cbc94f1207289cd9, type: 3}
       - {fileID: -42286666, guid: 6941c19c1cba83a4cbc94f1207289cd9, type: 3}
       - {fileID: 1943493983, guid: 6941c19c1cba83a4cbc94f1207289cd9, type: 3}
-      m_AnimationSpeed: 5.0000005
+      m_AnimationSpeed: 5
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: 18, y: -6, z: 0}
@@ -8247,7 +8247,7 @@ Tilemap:
       - {fileID: -1999495904, guid: 6941c19c1cba83a4cbc94f1207289cd9, type: 3}
       - {fileID: -1601884613, guid: 6941c19c1cba83a4cbc94f1207289cd9, type: 3}
       - {fileID: 1244794495, guid: 6941c19c1cba83a4cbc94f1207289cd9, type: 3}
-      m_AnimationSpeed: 5.0000005
+      m_AnimationSpeed: 5
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: 7, y: -4, z: 0}
@@ -10552,7 +10552,7 @@ MonoBehaviour:
   finishTrigger: {fileID: 2051672181}
   finishTriggerSize: {x: 0.3, y: 0.3}
   finishTriggerTilemap: {fileID: 672307155}
-  finishTriggerCell: {x: 0, y: 17, z: 0}
+  finishTriggerCell: {x: 19, y: 5, z: 0}
   finishTriggerOffset: {x: 0, y: 0}
   snapOpenToClosedOnUnlock: 1
 --- !u!82 &2051672180
