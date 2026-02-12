@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-public sealed class GuardiMovementController : EnemyMovementController
+public sealed class GuardiMovementController : JunctionTurningEnemyMovementController
 {
     [Header("Firework Death Rule")]
     [SerializeField] private bool dieWhenFireworksCleared = true;
