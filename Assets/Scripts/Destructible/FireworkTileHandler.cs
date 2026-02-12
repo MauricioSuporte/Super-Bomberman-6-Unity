@@ -1,9 +1,24 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
+using UnityEngine.Tilemaps;
+using Random = UnityEngine.Random;
 
 public sealed class FireworkTileHandler : MonoBehaviour, IDestructibleTileHandler
 {
+    public static event Action AllFireworksDestroyedAtPhase2Start;
+
+    [Header("Stage Fireworks Counter")]
+    [SerializeField, Min(0)] private int totalFireworksInStage = 0;
+    [SerializeField] private TileBase fireworkTile;
+
+    static int _total;
+    static int _destroyed;
+    static int _sceneBuildIndex = -1;
+    static bool _pendingInvokeAtPhase2Start;
+
     [Header("Prefabs (3 phases)")]
     [SerializeField] private AnimatedSpriteRenderer phase1RisePrefab;
     [SerializeField] private AnimatedSpriteRenderer phase2ExplosionPrefab;
@@ -39,12 +54,12 @@ public sealed class FireworkTileHandler : MonoBehaviour, IDestructibleTileHandle
     [SerializeField, Min(1)] private int phase2MinSpawnPerBurst = 1;
     [SerializeField, Min(1)] private int phase2MaxSpawnPerBurst = 3;
 
-    [Header("Phase 3 Spawning (Less sparks, longer lifetime)")]
+    [Header("Phase 3 Spawning")]
     [SerializeField, Min(0.01f)] private float phase3SpawnLifetimeSeconds = 0.25f;
-    [SerializeField, Min(0f)] private float phase3MinIntervalSeconds = 0.06f;
-    [SerializeField, Min(0f)] private float phase3MaxIntervalSeconds = 0.16f;
+    [SerializeField, Min(0f)] private float phase3MinIntervalSeconds = 0.10f;
+    [SerializeField, Min(0f)] private float phase3MaxIntervalSeconds = 0.22f;
     [SerializeField, Min(1)] private int phase3MinSpawnPerBurst = 1;
-    [SerializeField, Min(1)] private int phase3MaxSpawnPerBurst = 2;
+    [SerializeField, Min(1)] private int phase3MaxSpawnPerBurst = 1;
 
     [Header("Phase 3 Drift Down")]
     [SerializeField, Min(0f)] private float phase3DriftSpeedUnitsPerSecond = 0.75f;
@@ -59,12 +74,59 @@ public sealed class FireworkTileHandler : MonoBehaviour, IDestructibleTileHandle
 
     void Awake()
     {
+        int currentScene = SceneManager.GetActiveScene().buildIndex;
+        if (_sceneBuildIndex != currentScene)
+        {
+            _sceneBuildIndex = currentScene;
+            _total = 0;
+            _destroyed = 0;
+            _pendingInvokeAtPhase2Start = false;
+        }
+
         _audio = GetComponent<AudioSource>();
         if (_audio == null)
             _audio = gameObject.AddComponent<AudioSource>();
 
         _audio.playOnAwake = false;
         _audio.loop = false;
+    }
+
+    void Start()
+    {
+        if (_total > 0)
+            return;
+
+        if (totalFireworksInStage > 0)
+        {
+            _total = totalFireworksInStage;
+            return;
+        }
+
+        int counted = TryAutoCountFireworks();
+        if (counted > 0)
+            _total = counted;
+    }
+
+    int TryAutoCountFireworks()
+    {
+        var gm = FindFirstObjectByType<GameManager>();
+        if (gm == null || gm.destructibleTilemap == null)
+            return 0;
+
+        if (fireworkTile == null)
+            return 0;
+
+        int c = 0;
+        var bounds = gm.destructibleTilemap.cellBounds;
+
+        foreach (var pos in bounds.allPositionsWithin)
+        {
+            var t = gm.destructibleTilemap.GetTile(pos);
+            if (t == fireworkTile)
+                c++;
+        }
+
+        return c;
     }
 
     public bool HandleHit(BombController source, Vector2 worldPos, Vector3Int cell)
@@ -75,19 +137,38 @@ public sealed class FireworkTileHandler : MonoBehaviour, IDestructibleTileHandle
         if (!_triggered.Add(cell))
             return true;
 
-        source.ClearDestructibleForEffect(worldPos, spawnDestructiblePrefab: false, spawnHiddenObject: false);
+        bool isLast = RegisterFireworkDestroyedAndCheckIfLast();
+
+        source.ClearDestructibleForEffect(worldPos, false, false);
 
         Vector2 p = worldPos;
         p.x = Mathf.Round(p.x);
         p.y = Mathf.Round(p.y);
 
         Vector3 origin = (Vector3)p + worldOffset;
+        StartCoroutine(FireworkSequence(origin, isLast));
 
-        StartCoroutine(FireworkSequence(origin));
         return true;
     }
 
-    IEnumerator FireworkSequence(Vector3 origin)
+    bool RegisterFireworkDestroyedAndCheckIfLast()
+    {
+        if (_total <= 0)
+            return false;
+
+        _destroyed++;
+
+        if (_destroyed >= _total)
+        {
+            _destroyed = _total;
+            _pendingInvokeAtPhase2Start = true;
+            return true;
+        }
+
+        return false;
+    }
+
+    IEnumerator FireworkSequence(Vector3 origin, bool isLastFirework)
     {
         if (phase1RisePrefab != null)
             SpawnOneShot(phase1RisePrefab, Snap(origin, true, true), phase1DurationSeconds, false);
@@ -98,6 +179,12 @@ public sealed class FireworkTileHandler : MonoBehaviour, IDestructibleTileHandle
         areaBottomCenter = Snap(areaBottomCenter, true, true);
 
         PlayPhase2StartSfx();
+
+        if (isLastFirework && _pendingInvokeAtPhase2Start)
+        {
+            _pendingInvokeAtPhase2Start = false;
+            AllFireworksDestroyedAtPhase2Start?.Invoke();
+        }
 
         if (phase2ExplosionPrefab != null)
         {
@@ -167,7 +254,6 @@ public sealed class FireworkTileHandler : MonoBehaviour, IDestructibleTileHandle
         bool snapY)
     {
         float endTime = Time.time + Mathf.Max(0.01f, phaseSeconds);
-
         int halfW = widthTiles / 2;
 
         while (Time.time < endTime)
@@ -186,7 +272,6 @@ public sealed class FireworkTileHandler : MonoBehaviour, IDestructibleTileHandle
                 );
 
                 pos = Snap(pos, true, snapY);
-
                 SpawnOneShot(prefab, pos, spawnLifetime, driftDown);
             }
 
@@ -202,7 +287,7 @@ public sealed class FireworkTileHandler : MonoBehaviour, IDestructibleTileHandle
         fx.idle = false;
         fx.loop = false;
         fx.useSequenceDuration = true;
-        fx.sequenceDuration = durationSeconds;
+        fx.sequenceDuration = Mathf.Max(0.01f, durationSeconds);
         fx.CurrentFrame = 0;
 
         fx.enabled = false;
@@ -215,7 +300,7 @@ public sealed class FireworkTileHandler : MonoBehaviour, IDestructibleTileHandle
             drift.maxDownDistance = phase3DriftMaxDownDistance;
         }
 
-        Destroy(fx.gameObject, durationSeconds + 0.02f);
+        Destroy(fx.gameObject, durationSeconds + 0.05f);
     }
 
     Vector3 Snap(Vector3 p, bool snapX, bool snapY)
@@ -240,6 +325,7 @@ public sealed class FireworkTileHandler : MonoBehaviour, IDestructibleTileHandle
         void OnEnable()
         {
             startPos = transform.position;
+            accumulatedDown = 0f;
         }
 
         void Update()
