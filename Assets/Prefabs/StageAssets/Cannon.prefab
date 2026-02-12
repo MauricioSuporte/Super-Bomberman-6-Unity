@@ -117,13 +117,38 @@ MonoBehaviour:
   - {fileID: -8342537765474309362, guid: 6f3517d7a6de2234c96643aa8550e398, type: 3}
   - {fileID: -7207036134069483804, guid: 6f3517d7a6de2234c96643aa8550e398, type: 3}
   - {fileID: -7050456553549192230, guid: 6f3517d7a6de2234c96643aa8550e398, type: 3}
+  - {fileID: -7050456553549192230, guid: 6f3517d7a6de2234c96643aa8550e398, type: 3}
+  - {fileID: -7050456553549192230, guid: 6f3517d7a6de2234c96643aa8550e398, type: 3}
+  - {fileID: -7050456553549192230, guid: 6f3517d7a6de2234c96643aa8550e398, type: 3}
+  - {fileID: -7050456553549192230, guid: 6f3517d7a6de2234c96643aa8550e398, type: 3}
+  - {fileID: -7050456553549192230, guid: 6f3517d7a6de2234c96643aa8550e398, type: 3}
+  - {fileID: -7050456553549192230, guid: 6f3517d7a6de2234c96643aa8550e398, type: 3}
+  - {fileID: -7050456553549192230, guid: 6f3517d7a6de2234c96643aa8550e398, type: 3}
+  - {fileID: -7050456553549192230, guid: 6f3517d7a6de2234c96643aa8550e398, type: 3}
   allowFlipX: 0
   animationTime: 0.055555556
   useSequenceDuration: 0
   sequenceDuration: 0.5
   loop: 0
   idle: 0
-  frameOffsets: []
+  frameOffsets:
+  - {x: 0, y: 0}
+  - {x: 0, y: 0}
+  - {x: 0, y: 0}
+  - {x: 0, y: 0}
+  - {x: 0, y: 0}
+  - {x: 0, y: 0}
+  - {x: 0, y: 0}
+  - {x: 0, y: 0}
+  - {x: 0, y: 0}
+  - {x: 0, y: 0}
+  - {x: 0, y: 0}
+  - {x: 0, y: 0}
+  - {x: -0.1, y: 0}
+  - {x: 0, y: 0}
+  - {x: -0.1, y: 0}
+  - {x: 0, y: 0}
+  - {x: -0.1, y: 0}
   pingPong: 0
   disableOffsetsIfThisObjectHasRigidbody2D: 1
 --- !u!61 &5873656209211389269
@@ -186,6 +211,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CannonLauncher
   cannonAnim: {fileID: 6005031007019803755}
   fireSfx: {fileID: 8300000, guid: b352c5d4acd39a04e85e80621446e61c, type: 3}
+  fireSfxDelay: 0
   warmupSeconds: 0.5
   smokeSeconds: 0.25
   steamPrefab: {fileID: 3841201844243122236, guid: 4bb825ea1aeec264198e22902e78988d, type: 3}

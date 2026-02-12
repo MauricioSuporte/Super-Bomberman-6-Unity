@@ -12,6 +12,9 @@ public sealed class CannonLauncher : MonoBehaviour
     [SerializeField] private AudioClip fireSfx;
     [SerializeField, Min(0f)] private float fireSfxDelay = 0f;
 
+    [Header("Direction Override")]
+    [SerializeField] private bool fireToLeft = false;
+
     [Header("Fire - Timing")]
     [SerializeField, Min(0f)] private float warmupSeconds = 0.5f;
     [SerializeField, Min(0f)] private float smokeSeconds = 0.25f;
@@ -178,9 +181,14 @@ public sealed class CannonLauncher : MonoBehaviour
         Vector2 tileCenter = GetCannonTileCenter();
         float tileSize = GetTileSizeFallback();
 
-        Vector2 spawn = tileCenter + new Vector2(steamTileOffset.x * tileSize, steamTileOffset.y * tileSize);
+        Vector2Int off = GetSteamOffsetFinal();
+        Vector2 spawn = tileCenter + new Vector2(off.x * tileSize, off.y * tileSize);
 
         var steam = Instantiate(steamPrefab, spawn, Quaternion.identity);
+
+        if (steam.TryGetComponent<SpriteRenderer>(out var sr))
+            sr.flipX = fireToLeft;
+
         steam.idle = false;
         steam.loop = false;
         steam.useSequenceDuration = true;
@@ -189,6 +197,14 @@ public sealed class CannonLauncher : MonoBehaviour
         steam.RefreshFrame();
 
         Destroy(steam.gameObject, smokeSeconds + 0.05f);
+    }
+
+    private Vector2Int GetSteamOffsetFinal()
+    {
+        if (!fireToLeft)
+            return steamTileOffset;
+
+        return new Vector2Int(-steamTileOffset.x, steamTileOffset.y);
     }
 
     private float GetTileSizeFallback()
@@ -225,10 +241,16 @@ public sealed class CannonLauncher : MonoBehaviour
 
     private Vector2 GetLaunchDirection()
     {
-        if (useTransformRightAsDirection)
-            return (Vector2)transform.right;
+        Vector2 dir = useTransformRightAsDirection ? (Vector2)transform.right : fallbackDirection;
+        if (dir.sqrMagnitude < 0.0001f)
+            dir = Vector2.right;
 
-        return fallbackDirection;
+        dir.Normalize();
+
+        if (fireToLeft)
+            dir = -dir;
+
+        return dir;
     }
 
     private IEnumerator LaunchPlayerArc(MovementController mover, Vector2 dir)
