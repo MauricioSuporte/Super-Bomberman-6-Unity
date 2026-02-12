@@ -10,9 +10,15 @@ public sealed class CannonLauncher : MonoBehaviour
 
     [Header("SFX")]
     [SerializeField] private AudioClip fireSfx;
+    [SerializeField, Min(0f)] private float fireSfxDelay = 0f;
 
     [Header("Fire - Timing")]
     [SerializeField, Min(0f)] private float warmupSeconds = 0.5f;
+    [SerializeField, Min(0f)] private float smokeSeconds = 0.25f;
+
+    [Header("Steam")]
+    [SerializeField] private AnimatedSpriteRenderer steamPrefab;
+    [SerializeField] private Vector2Int steamTileOffset = new Vector2Int(1, 1);
 
     [Header("Launch - Distance")]
     [SerializeField, Min(1)] private int launchTiles = 9;
@@ -59,12 +65,7 @@ public sealed class CannonLauncher : MonoBehaviour
         if (cannonAnim == null)
             cannonAnim = GetComponent<AnimatedSpriteRenderer>();
 
-        if (cannonAnim != null)
-        {
-            cannonAnim.idle = true;
-            cannonAnim.loop = true;
-            cannonAnim.RefreshFrame();
-        }
+        SetCannonIdle(true);
     }
 
     private void OnTriggerEnter2D(Collider2D other)
@@ -99,10 +100,13 @@ public sealed class CannonLauncher : MonoBehaviour
 
         CenterPlayerOnCannon(mover);
 
-        yield return PlayCannonWarmup();
+        float warm = Mathf.Max(0f, warmupSeconds);
+        float smoke = Mathf.Max(0f, smokeSeconds);
+        float totalFire = warm + smoke;
 
-        if (audioSource != null && fireSfx != null)
-            audioSource.PlayOneShot(fireSfx);
+        StartCoroutine(PlayFireSfxWithDelay());
+
+        yield return PlayCannonFire(totalFire, warm);
 
         yield return LaunchPlayerArc(mover, dir);
 
@@ -114,18 +118,108 @@ public sealed class CannonLauncher : MonoBehaviour
         busy = false;
     }
 
+    private IEnumerator PlayFireSfxWithDelay()
+    {
+        if (fireSfx == null || audioSource == null)
+            yield break;
+
+        if (fireSfxDelay > 0f)
+            yield return new WaitForSeconds(fireSfxDelay);
+
+        audioSource.PlayOneShot(fireSfx);
+    }
+
+    private IEnumerator PlayCannonFire(float totalSeconds, float smokeAtSeconds)
+    {
+        if (totalSeconds <= 0f)
+            yield break;
+
+        SetCannonIdle(false);
+
+        float t = 0f;
+        bool steamSpawned = false;
+
+        while (t < totalSeconds)
+        {
+            if (!steamSpawned && t >= smokeAtSeconds)
+            {
+                SpawnSteam();
+                steamSpawned = true;
+            }
+
+            t += Time.deltaTime;
+            yield return null;
+        }
+
+        SetCannonIdle(true);
+    }
+
+    private void SetCannonIdle(bool idle)
+    {
+        if (cannonAnim == null)
+            return;
+
+        cannonAnim.idle = idle;
+
+        if (!idle)
+        {
+            cannonAnim.loop = true;
+            cannonAnim.CurrentFrame = 0;
+        }
+
+        cannonAnim.RefreshFrame();
+    }
+
+    private void SpawnSteam()
+    {
+        if (steamPrefab == null)
+            return;
+
+        Vector2 tileCenter = GetCannonTileCenter();
+        float tileSize = GetTileSizeFallback();
+
+        Vector2 spawn = tileCenter + new Vector2(steamTileOffset.x * tileSize, steamTileOffset.y * tileSize);
+
+        var steam = Instantiate(steamPrefab, spawn, Quaternion.identity);
+        steam.idle = false;
+        steam.loop = false;
+        steam.useSequenceDuration = true;
+        steam.sequenceDuration = Mathf.Max(0.01f, smokeSeconds);
+        steam.CurrentFrame = 0;
+        steam.RefreshFrame();
+
+        Destroy(steam.gameObject, smokeSeconds + 0.05f);
+    }
+
+    private float GetTileSizeFallback()
+    {
+        if (boxCollider != null)
+        {
+            float s = Mathf.Min(Mathf.Abs(boxCollider.size.x), Mathf.Abs(boxCollider.size.y));
+            if (s > 0.0001f)
+                return s;
+        }
+
+        return 1f;
+    }
+
+    private Vector2 GetCannonTileCenter()
+    {
+        Vector2 center = boxCollider != null ? (Vector2)boxCollider.bounds.center : (Vector2)transform.position;
+        float tileSize = GetTileSizeFallback();
+
+        return new Vector2(
+            Mathf.Round(center.x / tileSize) * tileSize,
+            Mathf.Round(center.y / tileSize) * tileSize
+        );
+    }
+
     private void CenterPlayerOnCannon(MovementController mover)
     {
         if (mover == null || mover.Rigidbody == null)
             return;
 
-        Vector2 center;
-
-        if (boxCollider != null)
-            center = boxCollider.bounds.center;
-        else
-            center = transform.position;
-
+        Vector2 center = GetCannonTileCenter();
         mover.SnapToWorldPoint(center, roundToGrid: false);
     }
 
@@ -135,29 +229,6 @@ public sealed class CannonLauncher : MonoBehaviour
             return (Vector2)transform.right;
 
         return fallbackDirection;
-    }
-
-    private IEnumerator PlayCannonWarmup()
-    {
-        if (warmupSeconds <= 0f)
-            yield break;
-
-        if (cannonAnim == null || !cannonAnim.isActiveAndEnabled)
-        {
-            yield return new WaitForSeconds(warmupSeconds);
-            yield break;
-        }
-
-        bool prevUseSeq = cannonAnim.useSequenceDuration;
-        float prevSeq = cannonAnim.sequenceDuration;
-
-        cannonAnim.useSequenceDuration = true;
-        cannonAnim.sequenceDuration = warmupSeconds;
-
-        yield return cannonAnim.PlayCycles(1);
-
-        cannonAnim.useSequenceDuration = prevUseSeq;
-        cannonAnim.sequenceDuration = prevSeq;
     }
 
     private IEnumerator LaunchPlayerArc(MovementController mover, Vector2 dir)
@@ -192,10 +263,10 @@ public sealed class CannonLauncher : MonoBehaviour
 
         while (elapsed < duration)
         {
-            float t = elapsed / duration;
+            float tt = elapsed / duration;
 
-            Vector2 flat = Vector2.Lerp(start, end, t);
-            float parabola = 4f * t * (1f - t);
+            Vector2 flat = Vector2.Lerp(start, end, tt);
+            float parabola = 4f * tt * (1f - tt);
             Vector2 pos = flat + Vector2.up * (arcWorld * parabola);
 
             rb.position = pos;

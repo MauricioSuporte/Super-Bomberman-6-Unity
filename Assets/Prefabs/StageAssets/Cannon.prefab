@@ -184,9 +184,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a6d9640d1d24c4142aebd2ca2bc67207, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CannonLauncher
-  cannonAnim: {fileID: 0}
-  fireSfx: {fileID: 0}
+  cannonAnim: {fileID: 6005031007019803755}
+  fireSfx: {fileID: 8300000, guid: b352c5d4acd39a04e85e80621446e61c, type: 3}
   warmupSeconds: 0.5
+  smokeSeconds: 0.25
+  steamPrefab: {fileID: 3841201844243122236, guid: 4bb825ea1aeec264198e22902e78988d, type: 3}
+  steamTileOffset: {x: 2, y: 3}
   launchTiles: 9
   arcHeightTiles: 5
   flightSeconds: 0.55
