@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 [RequireComponent(typeof(BoxCollider2D))]
 public sealed class RedBoatRideZone : MonoBehaviour
@@ -29,6 +30,13 @@ public sealed class RedBoatRideZone : MonoBehaviour
     [SerializeField] private string headOnlyLeftName = "HeadOnlyLeft";
     [SerializeField] private string headOnlyRightName = "HeadOnlyRight";
 
+    [Header("HeadOnly Offsets (local)")]
+    [SerializeField] private bool applyHeadOnlyOffsets = true;
+    [SerializeField] private Vector2 headOnlyUpOffset = Vector2.zero;
+    [SerializeField] private Vector2 headOnlyDownOffset = Vector2.zero;
+    [SerializeField] private Vector2 headOnlyLeftOffset = Vector2.zero;
+    [SerializeField] private Vector2 headOnlyRightOffset = Vector2.zero;
+
     private MovementController rider;
     private Rigidbody2D riderRb;
     private float boatZ;
@@ -54,6 +62,9 @@ public sealed class RedBoatRideZone : MonoBehaviour
 
     private readonly List<AnimatedSpriteRenderer> riderAllAnimRenderers = new();
 
+    // Base local position do "visual" usado pelo AnimatedSpriteRenderer (SpriteRenderer/Image)
+    private readonly Dictionary<AnimatedSpriteRenderer, Vector3> headVisualBaseLocal = new();
+
     private void Awake()
     {
         var col = GetComponent<BoxCollider2D>();
@@ -76,6 +87,9 @@ public sealed class RedBoatRideZone : MonoBehaviour
 
         UpdateBoatVisualFromRider();
         UpdateHeadOnlyFromRider();
+
+        // aplica offsets continuamente (pra refletir ajuste no inspector)
+        ApplyHeadOnlyOffsetsIfEnabled();
     }
 
     private void OnDisable()
@@ -140,7 +154,6 @@ public sealed class RedBoatRideZone : MonoBehaviour
             rider.SetExternalVisualSuppressed(true);
             rider.SetAllSpritesVisible(false);
 
-            CacheHeadOnlyFromRider();
             currentHead = PickHeadRenderer(rider.FacingDirection);
             if (currentHead == null) currentHead = headDown;
 
@@ -189,6 +202,7 @@ public sealed class RedBoatRideZone : MonoBehaviour
             rider.SetPassTaggedObstacles(false, waterTag);
         }
 
+        ResetHeadOnlyExternalBases();
         DisableAllPlayerAnimSprites();
         currentHead = null;
 
@@ -204,6 +218,8 @@ public sealed class RedBoatRideZone : MonoBehaviour
         rider.SetSuppressInactivityAnimation(false);
         rider = null;
         riderRb = null;
+
+        headVisualBaseLocal.Clear();
 
         currentVisual = down;
         currentIdle = true;
@@ -251,6 +267,81 @@ public sealed class RedBoatRideZone : MonoBehaviour
         headDown = FindChildAnimByName(rider.transform, headOnlyDownName);
         headLeft = FindChildAnimByName(rider.transform, headOnlyLeftName);
         headRight = FindChildAnimByName(rider.transform, headOnlyRightName);
+
+        CacheHeadVisualBase(headUp);
+        CacheHeadVisualBase(headDown);
+        CacheHeadVisualBase(headLeft);
+        CacheHeadVisualBase(headRight);
+
+        ApplyHeadOnlyOffsetsIfEnabled();
+    }
+
+    private void CacheHeadVisualBase(AnimatedSpriteRenderer r)
+    {
+        if (r == null) return;
+        if (headVisualBaseLocal.ContainsKey(r)) return;
+
+        var vt = FindVisualTransform(r);
+        if (vt == null) return;
+
+        headVisualBaseLocal[r] = vt.localPosition;
+    }
+
+    private void ApplyHeadOnlyOffsetsIfEnabled()
+    {
+        if (!applyHeadOnlyOffsets) return;
+        if (rider == null) return;
+
+        ApplyHeadExternalBase(headUp, headOnlyUpOffset);
+        ApplyHeadExternalBase(headDown, headOnlyDownOffset);
+        ApplyHeadExternalBase(headLeft, headOnlyLeftOffset);
+        ApplyHeadExternalBase(headRight, headOnlyRightOffset);
+    }
+
+    private void ApplyHeadExternalBase(AnimatedSpriteRenderer r, Vector2 offset)
+    {
+        if (r == null) return;
+        if (!headVisualBaseLocal.TryGetValue(r, out var baseLocal)) return;
+
+        r.SetExternalBaseLocalPosition(baseLocal + (Vector3)offset);
+    }
+
+    private void ResetHeadOnlyExternalBases()
+    {
+        ResetHeadExternalBase(headUp);
+        ResetHeadExternalBase(headDown);
+        ResetHeadExternalBase(headLeft);
+        ResetHeadExternalBase(headRight);
+    }
+
+    private void ResetHeadExternalBase(AnimatedSpriteRenderer r)
+    {
+        if (r == null) return;
+        if (!headVisualBaseLocal.TryGetValue(r, out var baseLocal)) return;
+
+        r.SetExternalBaseLocalPosition(baseLocal);
+    }
+
+    private static Transform FindVisualTransform(AnimatedSpriteRenderer r)
+    {
+        if (r == null) return null;
+
+        // Mesmo GO
+        var srHere = r.GetComponent<SpriteRenderer>();
+        if (srHere != null) return srHere.transform;
+
+        var imgHere = r.GetComponent<Image>();
+        if (imgHere != null) return imgHere.transform;
+
+        // Filhos
+        var imgChild = r.GetComponentInChildren<Image>(true);
+        if (imgChild != null) return imgChild.transform;
+
+        var srChild = r.GetComponentInChildren<SpriteRenderer>(true);
+        if (srChild != null) return srChild.transform;
+
+        // fallback
+        return r.transform;
     }
 
     private static AnimatedSpriteRenderer FindChildAnimByName(Transform root, string childName)
