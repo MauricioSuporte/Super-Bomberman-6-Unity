@@ -25,7 +25,7 @@ public static class PlayerPersistentStats
         public int SpeedInternal = MaxSpeedInternal;
 
         public bool CanKickBombs = false;
-        public bool CanPunchBombs = false;
+        public bool CanPunchBombs = true;
         public bool CanPassBombs = false;
         public bool CanPassDestructibles = true;
         public bool HasPierceBombs = true;

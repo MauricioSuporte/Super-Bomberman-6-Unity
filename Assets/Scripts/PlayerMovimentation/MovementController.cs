@@ -68,6 +68,18 @@ public class MovementController : MonoBehaviour, IKillable
     [SerializeField] private bool snapPerpendicularOnAxisStart = true;
     [SerializeField, Range(0.0001f, 0.05f)] private float alignEpsilon = 0.0015f;
 
+    [Header("Special Pass (by Tag)")]
+    [SerializeField] private bool canPassTaggedObstacles;
+    [SerializeField] private string passObstacleTag = "Water";
+
+    public void SetPassTaggedObstacles(bool canPass, string tag)
+    {
+        canPassTaggedObstacles = canPass;
+        passObstacleTag = string.IsNullOrWhiteSpace(tag) ? "Water" : tag;
+
+        DebugLogThrottled($"SetPassTaggedObstacles canPass={canPassTaggedObstacles} tag='{passObstacleTag}' obstacleMask={obstacleMask.value}");
+    }
+
     public Rigidbody2D Rigidbody { get; private set; }
     public Vector2 Direction => direction;
 
@@ -313,6 +325,18 @@ public class MovementController : MonoBehaviour, IKillable
 
     protected virtual void Update()
     {
+        if (inputLocked || GamePauseController.IsPaused || isDead)
+        {
+            GateLog($"Update blocked: inputLocked={inputLocked} paused={GamePauseController.IsPaused} isDead={isDead}");
+            return;
+        }
+
+        if (visualOverrideActive || inactivityMountedDownOverride)
+        {
+            GateLog($"Update blocked: visualOverrideActive={visualOverrideActive} inactivityMountedDownOverride={inactivityMountedDownOverride}");
+            return;
+        }
+
         SyncMovementAbilitiesFromAbilitySystemIfChanged();
 
         if (stunReceiver != null && stunReceiver.IsStunned)
@@ -437,6 +461,19 @@ public class MovementController : MonoBehaviour, IKillable
 
     protected virtual void FixedUpdate()
     {
+        if (inputLocked || GamePauseController.IsPaused || isDead)
+        {
+            GateLog($"FixedUpdate blocked: inputLocked={inputLocked} paused={GamePauseController.IsPaused} isDead={isDead}");
+            return;
+        }
+
+        if (visualOverrideActive || inactivityMountedDownOverride)
+        {
+            GateLog($"FixedUpdate blocked: visualOverrideActive={visualOverrideActive} inactivityMountedDownOverride={inactivityMountedDownOverride}");
+            return;
+        }
+
+
         SyncMovementAbilitiesFromAbilitySystemIfChanged();
 
         if (inputLocked || GamePauseController.IsPaused || isDead)
@@ -508,6 +545,9 @@ public class MovementController : MonoBehaviour, IKillable
         if (!IsBlocked(targetPosition))
         {
             Rigidbody.MovePosition(targetPosition);
+            if (debugWaterPass)
+                Debug.Log($"[MoveDbg] RB moved to {targetPosition}", this);
+
             return;
         }
 
@@ -672,6 +712,10 @@ public class MovementController : MonoBehaviour, IKillable
             if (hit == null) continue;
             if (hit.gameObject == gameObject) continue;
             if (hit.isTrigger) continue;
+
+            if (canPassTaggedObstacles && hit.CompareTag(passObstacleTag))
+                continue;
+
             if (canPassDestructibles && hit.CompareTag("Destructibles")) continue;
 
             if (hit.gameObject.layer == LayerMask.NameToLayer("Bomb"))
@@ -710,13 +754,38 @@ public class MovementController : MonoBehaviour, IKillable
         bool canPassDestructibles = abilitySystem != null &&
                                    abilitySystem.IsEnabled(DestructiblePassAbility.AbilityId);
 
+        // Só loga quando tiver hit e estiver tentando andar (pra não poluir)
+        if (debugWaterPass)
+        {
+            DebugLogThrottled(
+                $"IsBlockedAtPosition pos={targetPosition} dir={dirForSize} size={size} hits={hits.Length} " +
+                $"passOn={canPassTaggedObstacles} passTag='{passObstacleTag}' canPassDestructibles={canPassDestructibles}"
+            );
+
+            for (int k = 0; k < hits.Length; k++)
+                DebugLogThrottled($"  hit[{k}] {ColInfo(hits[k])}");
+        }
+
         for (int h = 0; h < hits.Length; h++)
         {
             var hit = hits[h];
             if (hit == null) continue;
             if (hit.gameObject == gameObject) continue;
             if (hit.isTrigger) continue;
-            if (canPassDestructibles && hit.CompareTag("Destructibles")) continue;
+
+            if (canPassTaggedObstacles && hit.CompareTag(passObstacleTag))
+            {
+                if (debugWaterPass)
+                    DebugLogThrottled($"  skip(byTag-passObstacleTag) {ColInfo(hit)}");
+                continue;
+            }
+
+            if (canPassDestructibles && hit.CompareTag("Destructibles"))
+            {
+                if (debugWaterPass)
+                    DebugLogThrottled($"  skip(destructiblePass) {ColInfo(hit)}");
+                continue;
+            }
 
             for (int i = 0; i < movementAbilities.Length; i++)
             {
@@ -724,13 +793,18 @@ public class MovementController : MonoBehaviour, IKillable
                 if (ability != null && ability.IsEnabled)
                 {
                     if (ability.TryHandleBlockedHit(hit, dirForSize, tileSize, obstacleMask))
+                    {
+                        DebugLogThrottled($"  BLOCKED(byAbility {ability.GetType().Name}) {ColInfo(hit)}");
                         return true;
+                    }
                 }
             }
 
+            DebugLogThrottled($"  BLOCKED(default) {ColInfo(hit)}");
             return true;
         }
 
+        DebugLogThrottled("  not blocked (all hits skipped)");
         return false;
     }
 
@@ -1442,4 +1516,43 @@ public class MovementController : MonoBehaviour, IKillable
         abilitySystemVersion = v;
         CacheMovementAbilities();
     }
+
+    [Header("Debug - Water Pass")]
+    [SerializeField] private bool debugWaterPass;
+    [SerializeField, Min(0.05f)] private float debugCooldown = 0.25f;
+
+    private float nextDebugTime;
+
+    private void DebugLogThrottled(string msg)
+    {
+        if (!debugWaterPass) return;
+        if (Time.time < nextDebugTime) return;
+        nextDebugTime = Time.time + Mathf.Max(0.05f, debugCooldown);
+        Debug.Log($"[MoveDbg] obj={name} pid={playerId} t={Time.time:0.00} {msg}", this);
+    }
+
+    private static string LayerName(int layer)
+    {
+        string n = LayerMask.LayerToName(layer);
+        return string.IsNullOrEmpty(n) ? layer.ToString() : n;
+    }
+
+    private string ColInfo(Collider2D c)
+    {
+        if (c == null) return "null";
+        return $"'{c.name}' tag='{c.tag}' layer={LayerName(c.gameObject.layer)} trig={c.isTrigger}";
+    }
+
+    private bool debugGate;
+    [SerializeField, Min(0.05f)] private float debugGateCooldown = 0.5f;
+    private float nextGateDebugTime;
+
+    private void GateLog(string msg)
+    {
+        if (!debugGate) return;
+        if (Time.time < nextGateDebugTime) return;
+        nextGateDebugTime = Time.time + Mathf.Max(0.05f, debugGateCooldown);
+        Debug.Log($"[MoveGate] obj={name} pid={playerId} t={Time.time:0.00} {msg}", this);
+    }
+
 }
