@@ -124,6 +124,7 @@ public sealed class RedBoatRideZone : MonoBehaviour
             return false;
 
         rider = mc;
+        rider.SetSuppressInactivityAnimation(true);
         riderRb = mc.Rigidbody;
 
         boatZ = transform.position.z;
@@ -200,6 +201,7 @@ public sealed class RedBoatRideZone : MonoBehaviour
         riderColliders.Clear();
         waterColliders.Clear();
 
+        rider.SetSuppressInactivityAnimation(false);
         rider = null;
         riderRb = null;
 

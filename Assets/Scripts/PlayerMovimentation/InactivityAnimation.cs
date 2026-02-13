@@ -52,6 +52,15 @@ public sealed class InactivityAnimation : MonoBehaviour
         if (movement == null)
             return;
 
+        if (movement.SuppressInactivityAnimation)
+        {
+            if (isPlaying)
+                StopEmote();
+
+            lastInputTime = Time.time;
+            return;
+        }
+
         if (movement.InputLocked || movement.isDead || GamePauseController.IsPaused)
         {
             if (isPlaying) StopEmote();

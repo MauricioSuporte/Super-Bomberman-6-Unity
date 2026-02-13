@@ -77,6 +77,10 @@ public class MovementController : MonoBehaviour, IKillable
     [SerializeField] private bool canPassTaggedObstacles;
     [SerializeField] private string passObstacleTag = "Water";
 
+    [Header("Inactivity (external)")]
+    [SerializeField] private bool suppressInactivityAnimation;
+    public bool SuppressInactivityAnimation => suppressInactivityAnimation;
+
     public void SetPassTaggedObstacles(bool canPass, string tag)
     {
         canPassTaggedObstacles = canPass;
@@ -1120,6 +1124,17 @@ public class MovementController : MonoBehaviour, IKillable
                 endSprite.animationTime = endStageTotalTime / endStageFrameCount;
 
             activeSpriteRenderer = endSprite;
+        }
+    }
+
+    public void SetSuppressInactivityAnimation(bool suppress)
+    {
+        suppressInactivityAnimation = suppress;
+
+        if (suppressInactivityAnimation)
+        {
+            SetInactivityMountedDownOverride(false);
+            SetVisualOverrideActive(false);
         }
     }
 

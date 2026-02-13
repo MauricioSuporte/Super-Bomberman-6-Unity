@@ -2174,6 +2174,7 @@ MonoBehaviour:
   alignEpsilon: 0.0015
   canPassTaggedObstacles: 0
   passObstacleTag: Water
+  suppressInactivityAnimation: 0
   isDead: 0
   debugWaterPass: 0
   debugCooldown: 0.25
