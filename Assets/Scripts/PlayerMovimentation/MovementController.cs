@@ -63,6 +63,10 @@ public class MovementController : MonoBehaviour, IKillable
     [SerializeField] private bool visualOverrideActive;
     public bool VisualOverrideActive => visualOverrideActive;
 
+    [Header("HeadOnly Override (external)")]
+    [SerializeField] private bool externalHeadOnlyOverrideActive;
+    public bool ExternalHeadOnlyOverrideActive => externalHeadOnlyOverrideActive;
+
     [Header("Grid Alignment")]
     [SerializeField, Range(0.5f, 20f)] private float perpendicularAlignMultiplier = 8f;
     [SerializeField] private bool snapPerpendicularOnAxisStart = true;
@@ -180,7 +184,6 @@ public class MovementController : MonoBehaviour, IKillable
         enemyLayer = LayerMask.NameToLayer("Enemy");
 
         CacheMovementAbilities();
-
         InitRuntimeState(loadPersistent: true);
     }
 
@@ -208,14 +211,15 @@ public class MovementController : MonoBehaviour, IKillable
             PlayerPersistentStats.LoadInto(playerId, this, bombController);
 
         CacheMovementAbilities();
-
         SyncMountedFromPersistent();
 
         if (activeSpriteRenderer == null)
             activeSpriteRenderer = spriteRendererDown;
 
         ApplySpeedInternal(speedInternal);
-        EnableExclusiveFromState();
+
+        if (!externalHeadOnlyOverrideActive)
+            EnableExclusiveFromState();
     }
 
     private void CacheMovementAbilities()
@@ -309,7 +313,7 @@ public class MovementController : MonoBehaviour, IKillable
 
     public void EnableExclusiveFromState()
     {
-        if (visualOverrideActive || inactivityMountedDownOverride)
+        if (visualOverrideActive || inactivityMountedDownOverride || externalHeadOnlyOverrideActive)
             return;
 
         if (IsRidingPlaying())
@@ -343,21 +347,8 @@ public class MovementController : MonoBehaviour, IKillable
         {
             hasInput = false;
             direction = Vector2.zero;
-
-            if (activeSpriteRenderer != null)
-            {
-                activeSpriteRenderer.idle = true;
-                activeSpriteRenderer.RefreshFrame();
-            }
-
             return;
         }
-
-        if (inputLocked || GamePauseController.IsPaused || isDead)
-            return;
-
-        if (visualOverrideActive || inactivityMountedDownOverride)
-            return;
 
         hasInput = false;
         HandleInput();
@@ -397,6 +388,12 @@ public class MovementController : MonoBehaviour, IKillable
 
         if (dir != Vector2.zero)
             facingDirection = dir;
+
+        if (externalHeadOnlyOverrideActive)
+        {
+            direction = dir;
+            return;
+        }
 
         if (isMountedOnLouie)
         {
@@ -473,14 +470,7 @@ public class MovementController : MonoBehaviour, IKillable
             return;
         }
 
-
         SyncMovementAbilitiesFromAbilitySystemIfChanged();
-
-        if (inputLocked || GamePauseController.IsPaused || isDead)
-            return;
-
-        if (visualOverrideActive || inactivityMountedDownOverride)
-            return;
 
         if (!hasInput || direction == Vector2.zero)
         {
@@ -754,7 +744,6 @@ public class MovementController : MonoBehaviour, IKillable
         bool canPassDestructibles = abilitySystem != null &&
                                    abilitySystem.IsEnabled(DestructiblePassAbility.AbilityId);
 
-        // Só loga quando tiver hit e estiver tentando andar (pra não poluir)
         if (debugWaterPass)
         {
             DebugLogThrottled(
@@ -817,9 +806,11 @@ public class MovementController : MonoBehaviour, IKillable
             return;
 
         direction = newDirection;
-
         if (newDirection != Vector2.zero)
             facingDirection = newDirection;
+
+        if (externalHeadOnlyOverrideActive)
+            return;
 
         if (spriteRenderer == null)
         {
@@ -989,6 +980,7 @@ public class MovementController : MonoBehaviour, IKillable
         isDead = true;
         inputLocked = true;
         inactivityMountedDownOverride = false;
+        externalHeadOnlyOverrideActive = false;
 
         if (stunReceiver != null)
             stunReceiver.CancelStunForDeath();
@@ -1057,7 +1049,6 @@ public class MovementController : MonoBehaviour, IKillable
     protected virtual void OnDeathSequenceEnded()
     {
         Died?.Invoke(this);
-
         gameObject.SetActive(false);
 
         if (CompareTag("BossBomber"))
@@ -1077,6 +1068,7 @@ public class MovementController : MonoBehaviour, IKillable
 
         inputLocked = true;
         inactivityMountedDownOverride = false;
+        externalHeadOnlyOverrideActive = false;
 
         if (bombController != null)
             bombController.enabled = false;
@@ -1224,39 +1216,6 @@ public class MovementController : MonoBehaviour, IKillable
         explosionInvulnerable = value;
     }
 
-    public void StartCheering()
-    {
-        if (isDead)
-            return;
-
-        SetExplosionInvulnerable(true);
-        inputLocked = true;
-        inactivityMountedDownOverride = false;
-
-        if (bombController != null)
-            bombController.enabled = false;
-
-        direction = Vector2.zero;
-        hasInput = false;
-
-        if (Rigidbody != null)
-            Rigidbody.linearVelocity = Vector2.zero;
-
-        DisableAllFootSprites();
-        DisableAllMountedSprites();
-
-        SetAnimEnabled(spriteRendererDeath, false);
-        SetAnimEnabled(spriteRendererEndStage, false);
-
-        if (spriteRendererCheering != null)
-        {
-            SetAnimEnabled(spriteRendererCheering, true);
-            spriteRendererCheering.idle = false;
-            spriteRendererCheering.loop = true;
-            activeSpriteRenderer = spriteRendererCheering;
-        }
-    }
-
     protected void ApplyFlipForHorizontal(Vector2 dir)
     {
         if (activeSpriteRenderer == null)
@@ -1287,6 +1246,22 @@ public class MovementController : MonoBehaviour, IKillable
             SetAllSpritesVisible(false);
             return;
         }
+
+        if (isDead || isEndingStage || IsRidingPlaying())
+            return;
+
+        EnableExclusiveFromState();
+    }
+
+    public void BeginExternalHeadOnlyOverride()
+    {
+        externalHeadOnlyOverrideActive = true;
+        SetAllSpritesVisible(false);
+    }
+
+    public void EndExternalHeadOnlyOverride()
+    {
+        externalHeadOnlyOverrideActive = false;
 
         if (isDead || isEndingStage || IsRidingPlaying())
             return;
@@ -1413,6 +1388,9 @@ public class MovementController : MonoBehaviour, IKillable
             DisableAllMountedSprites();
             return;
         }
+
+        if (externalHeadOnlyOverrideActive)
+            return;
 
         DisableAllFootSprites();
         DisableAllMountedSprites();
@@ -1554,5 +1532,4 @@ public class MovementController : MonoBehaviour, IKillable
         nextGateDebugTime = Time.time + Mathf.Max(0.05f, debugGateCooldown);
         Debug.Log($"[MoveGate] obj={name} pid={playerId} t={Time.time:0.00} {msg}", this);
     }
-
 }

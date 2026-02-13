@@ -23,6 +23,12 @@ public sealed class RedBoatRideZone : MonoBehaviour
     [Header("Mount/Unmount Safety")]
     [SerializeField, Min(0f)] private float remountBlockSeconds = 0.15f;
 
+    [Header("HeadOnly (child names)")]
+    [SerializeField] private string headOnlyUpName = "HeadOnlyUp";
+    [SerializeField] private string headOnlyDownName = "HeadOnlyDown";
+    [SerializeField] private string headOnlyLeftName = "HeadOnlyLeft";
+    [SerializeField] private string headOnlyRightName = "HeadOnlyRight";
+
     private MovementController rider;
     private Rigidbody2D riderRb;
     private float boatZ;
@@ -39,6 +45,14 @@ public sealed class RedBoatRideZone : MonoBehaviour
 
     private MovementController remountBlockedRider;
     private bool blockRemountUntilExit;
+
+    private AnimatedSpriteRenderer headUp;
+    private AnimatedSpriteRenderer headDown;
+    private AnimatedSpriteRenderer headLeft;
+    private AnimatedSpriteRenderer headRight;
+    private AnimatedSpriteRenderer currentHead;
+
+    private readonly List<AnimatedSpriteRenderer> riderAllAnimRenderers = new();
 
     private void Awake()
     {
@@ -61,6 +75,7 @@ public sealed class RedBoatRideZone : MonoBehaviour
         transform.position = new Vector3(p.x, p.y, boatZ);
 
         UpdateBoatVisualFromRider();
+        UpdateHeadOnlyFromRider();
     }
 
     private void OnDisable()
@@ -116,8 +131,19 @@ public sealed class RedBoatRideZone : MonoBehaviour
         Vector2 p = riderRb != null ? riderRb.position : (Vector2)rider.transform.position;
         transform.position = new Vector3(p.x + followOffset.x, p.y + followOffset.y, boatZ);
 
+        CacheHeadOnlyFromRider();
+        DisableAllPlayerAnimSprites();
+
         if (hidePlayerWhileRiding)
-            rider.SetAllSpritesVisible(false);
+        {
+            rider.BeginExternalHeadOnlyOverride();
+
+            currentHead = PickHeadRenderer(rider.FacingDirection);
+            if (currentHead == null) currentHead = headDown;
+
+            ForceOnlyHead(currentHead);
+            SetIdle(currentHead, true);
+        }
 
         if (allowPassOnWaterWhileRiding)
         {
@@ -160,11 +186,17 @@ public sealed class RedBoatRideZone : MonoBehaviour
             rider.SetPassTaggedObstacles(false, waterTag);
         }
 
+        DisableAllPlayerAnimSprites();
+        currentHead = null;
+
         if (hidePlayerWhileRiding)
         {
-            rider.SetAllSpritesVisible(true);
-            rider.EnableExclusiveFromState();
+            rider.EndExternalHeadOnlyOverride();
         }
+
+        riderAllAnimRenderers.Clear();
+        riderColliders.Clear();
+        waterColliders.Clear();
 
         rider = null;
         riderRb = null;
@@ -204,6 +236,102 @@ public sealed class RedBoatRideZone : MonoBehaviour
         {
             SetIdle(currentVisual, currentIdle);
         }
+    }
+
+    private void CacheHeadOnlyFromRider()
+    {
+        riderAllAnimRenderers.Clear();
+        rider.GetComponentsInChildren(true, riderAllAnimRenderers);
+
+        headUp = FindChildAnimByName(rider.transform, headOnlyUpName);
+        headDown = FindChildAnimByName(rider.transform, headOnlyDownName);
+        headLeft = FindChildAnimByName(rider.transform, headOnlyLeftName);
+        headRight = FindChildAnimByName(rider.transform, headOnlyRightName);
+    }
+
+    private static AnimatedSpriteRenderer FindChildAnimByName(Transform root, string childName)
+    {
+        if (root == null || string.IsNullOrWhiteSpace(childName))
+            return null;
+
+        var trs = root.GetComponentsInChildren<Transform>(true);
+        for (int i = 0; i < trs.Length; i++)
+        {
+            if (trs[i] != null && trs[i].name == childName)
+                return trs[i].GetComponent<AnimatedSpriteRenderer>();
+        }
+
+        return null;
+    }
+
+    private void UpdateHeadOnlyFromRider()
+    {
+        if (!hidePlayerWhileRiding) return;
+        if (rider == null) return;
+
+        if (headDown == null && headUp == null && headLeft == null && headRight == null)
+            return;
+
+        Vector2 moveDir = rider.Direction;
+        Vector2 faceDir = rider.FacingDirection;
+
+        bool isMoving = moveDir != Vector2.zero;
+        Vector2 dirToUse = isMoving ? moveDir : faceDir;
+
+        var target = PickHeadRenderer(dirToUse);
+        if (target == null) target = headDown;
+
+        bool wantIdle = !isMoving;
+
+        if (target != currentHead)
+        {
+            ForceOnlyHead(target);
+        }
+
+        SetIdle(currentHead, wantIdle);
+    }
+
+    private AnimatedSpriteRenderer PickHeadRenderer(Vector2 dir)
+    {
+        if (dir == Vector2.up) return headUp != null ? headUp : headDown;
+        if (dir == Vector2.down) return headDown;
+        if (dir == Vector2.left) return headLeft != null ? headLeft : headDown;
+        if (dir == Vector2.right) return headRight != null ? headRight : headDown;
+        return headDown;
+    }
+
+    private void DisableAllPlayerAnimSprites()
+    {
+        for (int i = 0; i < riderAllAnimRenderers.Count; i++)
+        {
+            var r = riderAllAnimRenderers[i];
+            if (r == null) continue;
+
+            r.enabled = false;
+
+            if (r.TryGetComponent(out SpriteRenderer sr) && sr != null)
+                sr.enabled = false;
+        }
+    }
+
+    private void ForceOnlyHead(AnimatedSpriteRenderer target)
+    {
+        if (target == null)
+            return;
+
+        for (int i = 0; i < riderAllAnimRenderers.Count; i++)
+        {
+            var r = riderAllAnimRenderers[i];
+            if (r == null) continue;
+
+            bool enable = (r == target);
+            r.enabled = enable;
+
+            if (r.TryGetComponent(out SpriteRenderer sr) && sr != null)
+                sr.enabled = enable;
+        }
+
+        currentHead = target;
     }
 
     private AnimatedSpriteRenderer PickBoatRenderer(Vector2 dir)
