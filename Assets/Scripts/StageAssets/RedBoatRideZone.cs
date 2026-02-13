@@ -136,8 +136,10 @@ public sealed class RedBoatRideZone : MonoBehaviour
 
         if (hidePlayerWhileRiding)
         {
-            rider.BeginExternalHeadOnlyOverride();
+            rider.SetExternalVisualSuppressed(true);
+            rider.SetAllSpritesVisible(false);
 
+            CacheHeadOnlyFromRider();
             currentHead = PickHeadRenderer(rider.FacingDirection);
             if (currentHead == null) currentHead = headDown;
 
@@ -191,7 +193,7 @@ public sealed class RedBoatRideZone : MonoBehaviour
 
         if (hidePlayerWhileRiding)
         {
-            rider.EndExternalHeadOnlyOverride();
+            rider.SetExternalVisualSuppressed(false);
         }
 
         riderAllAnimRenderers.Clear();

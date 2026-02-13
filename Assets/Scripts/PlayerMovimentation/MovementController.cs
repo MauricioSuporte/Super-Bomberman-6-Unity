@@ -63,9 +63,10 @@ public class MovementController : MonoBehaviour, IKillable
     [SerializeField] private bool visualOverrideActive;
     public bool VisualOverrideActive => visualOverrideActive;
 
-    [Header("HeadOnly Override (external)")]
-    [SerializeField] private bool externalHeadOnlyOverrideActive;
-    public bool ExternalHeadOnlyOverrideActive => externalHeadOnlyOverrideActive;
+    [Header("Visual Suppress (external)")]
+    [SerializeField] private bool externalVisualSuppressed;
+    private SpriteUpdateLock spriteLock;
+    private bool IsSpriteLocked => spriteLock != null && spriteLock.IsLocked;
 
     [Header("Grid Alignment")]
     [SerializeField, Range(0.5f, 20f)] private float perpendicularAlignMultiplier = 8f;
@@ -176,6 +177,7 @@ public class MovementController : MonoBehaviour, IKillable
         cachedHealth = GetComponent<CharacterHealth>();
         TryGetComponent(out cachedCompanion);
         TryGetComponent(out cachedRiding);
+        TryGetComponent(out spriteLock);
 
         if (obstacleMask.value == 0)
             obstacleMask = LayerMask.GetMask("Stage", "Bomb");
@@ -218,7 +220,7 @@ public class MovementController : MonoBehaviour, IKillable
 
         ApplySpeedInternal(speedInternal);
 
-        if (!externalHeadOnlyOverrideActive)
+        if (!IsSpriteLocked)
             EnableExclusiveFromState();
     }
 
@@ -313,7 +315,7 @@ public class MovementController : MonoBehaviour, IKillable
 
     public void EnableExclusiveFromState()
     {
-        if (visualOverrideActive || inactivityMountedDownOverride || externalHeadOnlyOverrideActive)
+        if (visualOverrideActive || inactivityMountedDownOverride || IsSpriteLocked)
             return;
 
         if (IsRidingPlaying())
@@ -332,12 +334,6 @@ public class MovementController : MonoBehaviour, IKillable
         if (inputLocked || GamePauseController.IsPaused || isDead)
         {
             GateLog($"Update blocked: inputLocked={inputLocked} paused={GamePauseController.IsPaused} isDead={isDead}");
-            return;
-        }
-
-        if (visualOverrideActive || inactivityMountedDownOverride)
-        {
-            GateLog($"Update blocked: visualOverrideActive={visualOverrideActive} inactivityMountedDownOverride={inactivityMountedDownOverride}");
             return;
         }
 
@@ -381,19 +377,20 @@ public class MovementController : MonoBehaviour, IKillable
         if (IsRidingPlaying())
             return;
 
-        if (visualOverrideActive || inactivityMountedDownOverride)
+        if (inactivityMountedDownOverride)
             return;
 
         hasInput = dir != Vector2.zero;
 
+        direction = dir;
         if (dir != Vector2.zero)
             facingDirection = dir;
 
-        if (externalHeadOnlyOverrideActive)
-        {
-            direction = dir;
+        if (externalVisualSuppressed || visualOverrideActive)
             return;
-        }
+
+        if (IsSpriteLocked)
+            return;
 
         if (isMountedOnLouie)
         {
@@ -461,12 +458,6 @@ public class MovementController : MonoBehaviour, IKillable
         if (inputLocked || GamePauseController.IsPaused || isDead)
         {
             GateLog($"FixedUpdate blocked: inputLocked={inputLocked} paused={GamePauseController.IsPaused} isDead={isDead}");
-            return;
-        }
-
-        if (visualOverrideActive || inactivityMountedDownOverride)
-        {
-            GateLog($"FixedUpdate blocked: visualOverrideActive={visualOverrideActive} inactivityMountedDownOverride={inactivityMountedDownOverride}");
             return;
         }
 
@@ -809,7 +800,7 @@ public class MovementController : MonoBehaviour, IKillable
         if (newDirection != Vector2.zero)
             facingDirection = newDirection;
 
-        if (externalHeadOnlyOverrideActive)
+        if (IsSpriteLocked)
             return;
 
         if (spriteRenderer == null)
@@ -980,7 +971,8 @@ public class MovementController : MonoBehaviour, IKillable
         isDead = true;
         inputLocked = true;
         inactivityMountedDownOverride = false;
-        externalHeadOnlyOverrideActive = false;
+        if (spriteLock != null && spriteLock.IsLocked)
+            spriteLock.EndLock();
 
         if (stunReceiver != null)
             stunReceiver.CancelStunForDeath();
@@ -1068,7 +1060,8 @@ public class MovementController : MonoBehaviour, IKillable
 
         inputLocked = true;
         inactivityMountedDownOverride = false;
-        externalHeadOnlyOverrideActive = false;
+        if (spriteLock != null && spriteLock.IsLocked)
+            spriteLock.EndLock();
 
         if (bombController != null)
             bombController.enabled = false;
@@ -1253,22 +1246,6 @@ public class MovementController : MonoBehaviour, IKillable
         EnableExclusiveFromState();
     }
 
-    public void BeginExternalHeadOnlyOverride()
-    {
-        externalHeadOnlyOverrideActive = true;
-        SetAllSpritesVisible(false);
-    }
-
-    public void EndExternalHeadOnlyOverride()
-    {
-        externalHeadOnlyOverrideActive = false;
-
-        if (isDead || isEndingStage || IsRidingPlaying())
-            return;
-
-        EnableExclusiveFromState();
-    }
-
     public void SetInactivityMountedDownOverride(bool on)
     {
         if (inactivityMountedDownOverride == on)
@@ -1389,7 +1366,7 @@ public class MovementController : MonoBehaviour, IKillable
             return;
         }
 
-        if (externalHeadOnlyOverrideActive)
+        if (IsSpriteLocked)
             return;
 
         DisableAllFootSprites();
@@ -1493,6 +1470,23 @@ public class MovementController : MonoBehaviour, IKillable
 
         abilitySystemVersion = v;
         CacheMovementAbilities();
+    }
+
+    public void SetExternalVisualSuppressed(bool suppressed)
+    {
+        externalVisualSuppressed = suppressed;
+
+        if (externalVisualSuppressed)
+        {
+            SetAllSpritesVisible(false);
+        }
+        else
+        {
+            if (isDead || isEndingStage || IsRidingPlaying())
+                return;
+
+            EnableExclusiveFromState();
+        }
     }
 
     [Header("Debug - Water Pass")]

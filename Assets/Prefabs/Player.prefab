@@ -2538,7 +2538,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 030967207a30a0a46a315f39d879799f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerInactivityEmote
-  secondsToTrigger: 99
+  secondsToTrigger: 5
   emoteLoopRenderer: {fileID: 8373095307517099465}
   refreshFrameOnEnter: 1
 --- !u!1 &5548736737291621340
