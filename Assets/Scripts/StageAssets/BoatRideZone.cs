@@ -320,7 +320,6 @@ public sealed class BoatRideZone : MonoBehaviour
         ApplyIdleToAll(true);
     }
 
-    // ======= AQUI ESTÁ O FIX =======
     private void RebuildAnchorZonesCache()
     {
         cachedAnchorZones.Clear();
@@ -333,7 +332,6 @@ public sealed class BoatRideZone : MonoBehaviour
             var z = zones[i];
             if (z == null) continue;
 
-            // antes era: if (z.Boat == this)
             if (z.ReferencesBoat(this))
                 cachedAnchorZones.Add(z);
         }

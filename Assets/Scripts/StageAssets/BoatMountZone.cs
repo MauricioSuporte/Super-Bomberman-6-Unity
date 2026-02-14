@@ -14,15 +14,10 @@ public sealed class BoatMountZone : MonoBehaviour
     [SerializeField] private bool snapPlayerOnMount = true;
     [SerializeField] private bool roundToGrid = true;
 
-    [Header("Debug")]
-    [SerializeField] private bool debugMountZone = true;
-
     private BoxCollider2D zoneCollider;
 
-    // Legacy-only (mantido)
     public BoatRideZone Boat => boat;
 
-    // Usado pelo RideZone para cachear anchors mesmo sem legacy
     public bool ReferencesBoat(BoatRideZone target)
     {
         if (target == null) return false;
@@ -39,35 +34,13 @@ public sealed class BoatMountZone : MonoBehaviour
         return parentBoat == target;
     }
 
-    private void MLog(string msg)
-    {
-        if (!debugMountZone) return;
-        Debug.Log($"[BoatMountDbg] zone='{name}' t={Time.time:0.00} f={Time.frameCount} {msg}", this);
-    }
-
-    private static string BName(Object o) => o == null ? "NULL" : o.name;
-
     private void Awake()
     {
         zoneCollider = GetComponent<BoxCollider2D>();
         zoneCollider.isTrigger = true;
 
         if (boat == null)
-        {
             boat = GetComponentInParent<BoatRideZone>();
-            MLog($"Awake: legacy boat was NULL, parentBoat={BName(boat)}");
-        }
-        else
-        {
-            MLog($"Awake: legacy boat set: {BName(boat)}");
-        }
-
-        MLog($"Awake: boats list count={(boats == null ? -1 : boats.Count)}");
-        if (boats != null)
-        {
-            for (int i = 0; i < boats.Count; i++)
-                MLog($"Awake: boats[{i}]={BName(boats[i])}");
-        }
     }
 
     private void Reset()
@@ -82,46 +55,28 @@ public sealed class BoatMountZone : MonoBehaviour
 
         var mc = other.GetComponentInParent<MovementController>();
         if (mc == null)
-        {
-            MLog($"Enter: other='{other.name}' -> MovementController NULL (GetComponentInParent).");
             return;
-        }
 
         Vector2 zoneCenter = GetZoneCenterWorld();
-        MLog($"Enter: other='{other.name}' mc='{mc.name}' zoneCenter={zoneCenter} legacyBoat={BName(boat)}");
 
-        var targetBoat = ResolveBoatForMount(mc, zoneCenter, out var resolveTrace);
-        MLog($"ResolveBoatForMount => target={BName(targetBoat)} trace={resolveTrace}");
-
+        var targetBoat = ResolveBoatForMount(mc, zoneCenter, out _);
         if (targetBoat == null)
-        {
-            MLog("ABORT: targetBoat NULL");
             return;
-        }
 
-        if (!targetBoat.IsAnchoredAt(zoneCenter, out var anchorReason))
-        {
-            float dist = Vector2.Distance(zoneCenter, targetBoat.transform.position);
-            MLog($"ABORT: IsAnchoredAt=false reason='{anchorReason}' dist(zoneCenter, boat.pos)={dist:0.000} boat.pos={(Vector2)targetBoat.transform.position}");
+        if (!targetBoat.IsAnchoredAt(zoneCenter, out _))
             return;
-        }
 
-        if (!targetBoat.CanMount(mc, out var canReason))
-        {
-            MLog($"ABORT: CanMount=false reason='{canReason}'");
+        if (!targetBoat.CanMount(mc, out _))
             return;
-        }
 
         if (snapPlayerOnMount)
         {
             float tile = mc.tileSize > 0.0001f ? mc.tileSize : 1f;
             Vector2 target = zoneCenter + Vector2.down * tile;
-            MLog($"SnapPlayerOnMount: tile={tile:0.###} target={target} roundToGrid={roundToGrid}");
             mc.SnapToWorldPoint(target, roundToGrid);
         }
 
-        bool mounted = targetBoat.TryMount(mc, out var mountReason);
-        MLog($"TryMount => {mounted} reason='{mountReason}' targetBoat={BName(targetBoat)}");
+        targetBoat.TryMount(mc, out _);
     }
 
     private void OnTriggerExit2D(Collider2D other)
@@ -131,31 +86,24 @@ public sealed class BoatMountZone : MonoBehaviour
         var mc = other.GetComponentInParent<MovementController>();
         if (mc == null) return;
 
-        // IMPORTANT: não dá pra “resolver 1 barco” com segurança (você pode ter montado no (1))
-        // então limpamos o remount block em TODOS os candidatos.
-        int clearedCount = ClearRemountBlocksForAllCandidates(mc);
-        MLog($"Exit: mc='{mc.name}' ClearRemountBlocks candidatesCleared={clearedCount}");
+        ClearRemountBlocksForAllCandidates(mc);
     }
 
     private int ClearRemountBlocksForAllCandidates(MovementController mc)
     {
         var unique = new HashSet<BoatRideZone>();
 
-        // 1) legacy
         if (boat != null) unique.Add(boat);
 
-        // 2) parent
         var parentBoat = GetComponentInParent<BoatRideZone>();
         if (parentBoat != null) unique.Add(parentBoat);
 
-        // 3) lista
         if (boats != null && boats.Count > 0)
         {
             for (int i = 0; i < boats.Count; i++)
                 if (boats[i] != null) unique.Add(boats[i]);
         }
 
-        // 4) fallback: scene
         if (unique.Count == 0)
         {
             var all = FindObjectsByType<BoatRideZone>(FindObjectsSortMode.None);
@@ -168,15 +116,11 @@ public sealed class BoatMountZone : MonoBehaviour
         {
             if (b == null) continue;
 
-            // log antes/depois (pra você enxergar exatamente quem estava bloqueando)
             bool wasBlocked = b.IsRemountBlockedFor(mc);
             b.ClearRemountBlock(mc);
             bool stillBlocked = b.IsRemountBlockedFor(mc);
 
             if (wasBlocked && !stillBlocked) cleared++;
-
-            if (wasBlocked || debugMountZone)
-                MLog($"Exit: ClearRemountBlock boat='{b.name}' wasBlocked={wasBlocked} nowBlocked={stillBlocked}");
         }
 
         return cleared;
@@ -184,7 +128,6 @@ public sealed class BoatMountZone : MonoBehaviour
 
     private BoatRideZone ResolveBoatForMount(MovementController mc, Vector2 zoneCenter, out string trace)
     {
-        // Monta candidatos
         var candidates = new List<BoatRideZone>(8);
 
         if (boat != null) candidates.Add(boat);
@@ -219,7 +162,6 @@ public sealed class BoatMountZone : MonoBehaviour
             return null;
         }
 
-        // 1) Preferir: ancorado no zoneCenter + pode montar
         BoatRideZone best = null;
         float bestDist = float.MaxValue;
 
@@ -248,7 +190,6 @@ public sealed class BoatMountZone : MonoBehaviour
             return best;
         }
 
-        // 2) Fallback antigo: mais perto (para não “matar” seu fluxo em casos edge)
         best = null;
         bestDist = float.MaxValue;
 

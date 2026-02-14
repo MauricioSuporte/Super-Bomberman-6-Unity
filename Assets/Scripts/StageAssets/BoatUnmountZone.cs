@@ -17,7 +17,6 @@ public sealed class BoatUnmountZone : MonoBehaviour
         zoneCollider = GetComponent<BoxCollider2D>();
         zoneCollider.isTrigger = true;
 
-        // Auto-resolve se não setou nada no Inspector
         if (boat == null)
             boat = GetComponentInParent<BoatRideZone>();
     }
@@ -54,20 +53,16 @@ public sealed class BoatUnmountZone : MonoBehaviour
 
     private BoatRideZone ResolveBoatForUnmount(MovementController mc)
     {
-        // 1) se veio setado (legacy)
         if (boat != null)
             return boat;
 
-        // 2) se o player está montado, pega pelo mapa rider->boat (multi-boat perfeito)
         if (BoatRideZone.TryGetBoatForRider(mc, out var ridingBoat) && ridingBoat != null)
             return ridingBoat;
 
-        // 3) tenta parent
         var parentBoat = GetComponentInParent<BoatRideZone>();
         if (parentBoat != null)
             return parentBoat;
 
-        // 4) se tem lista, tenta achar qual contém esse rider
         if (boats != null && boats.Count > 0)
         {
             for (int i = 0; i < boats.Count; i++)
@@ -78,12 +73,10 @@ public sealed class BoatUnmountZone : MonoBehaviour
                     return b;
             }
 
-            // fallback: primeiro não nulo
             for (int i = 0; i < boats.Count; i++)
                 if (boats[i] != null) return boats[i];
         }
 
-        // 5) último fallback: procurar no scene quem está com esse rider
         var all = FindObjectsByType<BoatRideZone>(FindObjectsSortMode.None);
         for (int i = 0; i < all.Length; i++)
         {
