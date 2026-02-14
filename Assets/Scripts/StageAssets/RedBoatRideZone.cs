@@ -194,6 +194,10 @@ public sealed class RedBoatRideZone : MonoBehaviour
         }
 
         rider = mc;
+
+        if (rider != null && rider.TryGetComponent<CharacterHealth>(out var health) && health != null)
+            health.SetExternalInvulnerability(true);
+
         ridersOnBoats.Add(rider);
         rider.SetSuppressInactivityAnimation(true);
         riderRb = mc.Rigidbody;
@@ -256,10 +260,12 @@ public sealed class RedBoatRideZone : MonoBehaviour
     {
         if (rider == null) return;
 
+        var prevRider = rider;
+
         if (allowPassOnWaterWhileRiding)
         {
             ApplyIgnoreWater(false);
-            rider.SetPassTaggedObstacles(false, waterTag);
+            prevRider.SetPassTaggedObstacles(false, waterTag);
         }
 
         ResetHeadOnlyExternalBases();
@@ -268,20 +274,22 @@ public sealed class RedBoatRideZone : MonoBehaviour
 
         if (hidePlayerWhileRiding)
         {
-            rider.SetExternalVisualSuppressed(false);
+            prevRider.SetExternalVisualSuppressed(false);
         }
+
+        prevRider.SetSuppressInactivityAnimation(false);
+        ridersOnBoats.Remove(prevRider);
+
+        if (prevRider != null && prevRider.TryGetComponent<CharacterHealth>(out var health) && health != null)
+            health.SetExternalInvulnerability(false);
 
         riderAllAnimRenderers.Clear();
         riderColliders.Clear();
         waterColliders.Clear();
-
-        rider.SetSuppressInactivityAnimation(false);
-        ridersOnBoats.Remove(rider);
+        headVisualBaseLocal.Clear();
 
         rider = null;
         riderRb = null;
-
-        headVisualBaseLocal.Clear();
 
         currentVisual = down;
         currentIdle = true;
@@ -292,8 +300,9 @@ public sealed class RedBoatRideZone : MonoBehaviour
     private void RebuildAnchorZonesCache()
     {
         cachedAnchorZones.Clear();
-        var zones = FindObjectsOfType<RedBoatMountZone>(true);
-        if (zones == null) return;
+
+        var zones = FindObjectsByType<RedBoatMountZone>(FindObjectsSortMode.None);
+        if (zones == null || zones.Length == 0) return;
 
         for (int i = 0; i < zones.Length; i++)
         {

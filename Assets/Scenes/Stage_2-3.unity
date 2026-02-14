@@ -1531,7 +1531,7 @@ Tilemap:
       - {fileID: 1925664496, guid: 6941c19c1cba83a4cbc94f1207289cd9, type: 3}
       - {fileID: -42286666, guid: 6941c19c1cba83a4cbc94f1207289cd9, type: 3}
       - {fileID: 1943493983, guid: 6941c19c1cba83a4cbc94f1207289cd9, type: 3}
-      m_AnimationSpeed: 5.0000005
+      m_AnimationSpeed: 5
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: 15, y: 4, z: 0}
@@ -2019,8 +2019,6 @@ MonoBehaviour:
   boat: {fileID: 814744109}
   snapPlayerOnMount: 1
   roundToGrid: 1
-  debugMount: 1
-  debugCooldown: 0.25
 --- !u!61 &487829677
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -10575,7 +10573,7 @@ Tilemap:
       - {fileID: -1999495904, guid: 6941c19c1cba83a4cbc94f1207289cd9, type: 3}
       - {fileID: -1601884613, guid: 6941c19c1cba83a4cbc94f1207289cd9, type: 3}
       - {fileID: 1244794495, guid: 6941c19c1cba83a4cbc94f1207289cd9, type: 3}
-      m_AnimationSpeed: 5.0000005
+      m_AnimationSpeed: 5
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: 7, y: -4, z: 0}
@@ -10860,7 +10858,7 @@ Tilemap:
       - {fileID: -1999495904, guid: 6941c19c1cba83a4cbc94f1207289cd9, type: 3}
       - {fileID: -1601884613, guid: 6941c19c1cba83a4cbc94f1207289cd9, type: 3}
       - {fileID: 1244794495, guid: 6941c19c1cba83a4cbc94f1207289cd9, type: 3}
-      m_AnimationSpeed: 5
+      m_AnimationSpeed: 5.0000005
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: 12, y: 2, z: 0}
@@ -12344,8 +12342,6 @@ MonoBehaviour:
   boat: {fileID: 814744109}
   snapPlayerOnMount: 1
   roundToGrid: 1
-  debugMount: 1
-  debugCooldown: 0.25
 --- !u!1001 &1629966498
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -12529,8 +12525,6 @@ MonoBehaviour:
   boat: {fileID: 814744109}
   snapPlayerOnMount: 1
   roundToGrid: 1
-  debugMount: 1
-  debugCooldown: 0.25
 --- !u!61 &1758564797
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -12687,8 +12681,6 @@ MonoBehaviour:
   boat: {fileID: 814744109}
   snapPlayerOnMount: 1
   roundToGrid: 1
-  debugMount: 1
-  debugCooldown: 0.25
 --- !u!61 &2010671749
 BoxCollider2D:
   m_ObjectHideFlags: 0

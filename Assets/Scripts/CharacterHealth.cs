@@ -37,6 +37,7 @@ public class CharacterHealth : MonoBehaviour
     IKillable killable;
 
     public bool IsInvulnerable => isInvulnerable;
+    private bool externalInvulnerability;
 
     void Awake()
     {
@@ -51,10 +52,7 @@ public class CharacterHealth : MonoBehaviour
 
     public void TakeDamage(int amount)
     {
-        if (isDead)
-            return;
-
-        if (isInvulnerable)
+        if (isDead || isInvulnerable || externalInvulnerability)
             return;
 
         life -= amount;
@@ -255,4 +253,33 @@ public class CharacterHealth : MonoBehaviour
         else
             Destroy(gameObject);
     }
+
+    public void SetExternalInvulnerability(bool value)
+    {
+        externalInvulnerability = value;
+
+        if (externalInvulnerability)
+        {
+            if (hitRoutine != null)
+            {
+                StopCoroutine(hitRoutine);
+                hitRoutine = null;
+            }
+
+            isInvulnerable = true;
+
+            for (int i = 0; i < spriteRenderers.Length; i++)
+                if (spriteRenderers[i] != null)
+                    spriteRenderers[i].color = originalColors[i];
+        }
+        else
+        {
+            isInvulnerable = false;
+
+            for (int i = 0; i < spriteRenderers.Length; i++)
+                if (spriteRenderers[i] != null)
+                    spriteRenderers[i].color = originalColors[i];
+        }
+    }
+
 }
