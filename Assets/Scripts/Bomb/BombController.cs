@@ -21,10 +21,10 @@ public partial class BombController : MonoBehaviour
     public GameObject controlBombPrefab;
     public float bombFuseTime = 2f;
     public int bombAmout = 1;
-    private readonly HashSet<int> scheduledChainBombs = new();
 
     [Header("Chain Explosion")]
     [SerializeField] private float chainBombDelaySeconds = 0.1f;
+    private readonly HashSet<int> scheduledChainBombs = new();
 
     private int bombsRemaining = 0;
     public int BombsRemaining => bombsRemaining;
@@ -88,30 +88,6 @@ public partial class BombController : MonoBehaviour
     [SerializeField] private IndestructibleTileResolver indestructibleTileResolver;
 
     private readonly HashSet<int> _removedBombIds = new(128);
-
-    [Header("Debug - Surgical")]
-    [SerializeField] private bool debugWaterBomb = true;
-    [SerializeField] private bool debugExplodeTeleport = true;
-    [SerializeField, Range(0f, 2f)] private float debugCooldown = 0.15f;
-
-    private float _dbgNextAt;
-
-    private void DLog(string msg, Object ctx = null)
-    {
-        if (!debugWaterBomb && !debugExplodeTeleport) return;
-        if (Time.time < _dbgNextAt) return;
-        _dbgNextAt = Time.time + Mathf.Max(0f, debugCooldown);
-        Debug.Log($"[BombDbg][Controller:{name}] t={Time.time:0.000} f={Time.frameCount} {msg}", ctx != null ? ctx : this);
-    }
-
-    private static string BombTag(GameObject bombGo)
-    {
-        if (bombGo == null) return "bomb=NULL";
-        int id = bombGo.GetInstanceID();
-        var t = bombGo.transform;
-        Vector3 p = t != null ? t.position : Vector3.zero;
-        return $"bomb='{bombGo.name}' id={id} pos=({p.x:0.###},{p.y:0.###})";
-    }
 
     public void SetPlayerId(int id)
     {
@@ -251,6 +227,20 @@ public partial class BombController : MonoBehaviour
         }
     }
 
+    private Tilemap FindTilemapByNameContains(Tilemap[] tilemaps, string containsLower)
+    {
+        for (int i = 0; i < tilemaps.Length; i++)
+        {
+            var tm = tilemaps[i];
+            if (tm == null) continue;
+
+            string n = tm.name.ToLowerInvariant();
+            if (n.Contains(containsLower))
+                return tm;
+        }
+        return null;
+    }
+
     private void ResolveDestructibleTileResolver()
     {
         if (destructibleTileResolver != null)
@@ -271,18 +261,44 @@ public partial class BombController : MonoBehaviour
             destructibleTileResolver = stage.GetComponentInChildren<DestructibleTileResolver>(true);
     }
 
-    private Tilemap FindTilemapByNameContains(Tilemap[] tilemaps, string containsLower)
+    private void ResolveGroundTileResolver()
     {
-        for (int i = 0; i < tilemaps.Length; i++)
-        {
-            var tm = tilemaps[i];
-            if (tm == null) continue;
+        if (groundTileResolver != null)
+            return;
 
-            string n = tm.name.ToLowerInvariant();
-            if (n.Contains(containsLower))
-                return tm;
-        }
-        return null;
+        groundTileResolver = FindFirstObjectByType<GroundTileResolver>();
+        if (groundTileResolver != null)
+            return;
+
+        if (groundTiles != null)
+            groundTileResolver = groundTiles.GetComponentInParent<GroundTileResolver>(true);
+
+        if (groundTileResolver != null)
+            return;
+
+        var stage = GameObject.Find("Stage");
+        if (stage != null)
+            groundTileResolver = stage.GetComponentInChildren<GroundTileResolver>(true);
+    }
+
+    private void ResolveIndestructibleTileResolver()
+    {
+        if (indestructibleTileResolver != null)
+            return;
+
+        indestructibleTileResolver = FindFirstObjectByType<IndestructibleTileResolver>();
+        if (indestructibleTileResolver != null)
+            return;
+
+        if (stageBoundsTiles != null)
+            indestructibleTileResolver = stageBoundsTiles.GetComponentInParent<IndestructibleTileResolver>(true);
+
+        if (indestructibleTileResolver != null)
+            return;
+
+        var stage = GameObject.Find("Stage");
+        if (stage != null)
+            indestructibleTileResolver = stage.GetComponentInChildren<IndestructibleTileResolver>(true);
     }
 
     public void AddBomb()
@@ -298,6 +314,22 @@ public partial class BombController : MonoBehaviour
     {
         if (TryGetComponent<AbilitySystem>(out var abilitySystem))
             return abilitySystem.IsEnabled(PierceBombAbility.AbilityId);
+
+        return false;
+    }
+
+    private bool IsControlEnabled()
+    {
+        if (TryGetComponent<AbilitySystem>(out var abilitySystem))
+            return abilitySystem.IsEnabled(ControlBombAbility.AbilityId);
+
+        return false;
+    }
+
+    private bool IsFullFireEnabled()
+    {
+        if (TryGetComponent<AbilitySystem>(out var abilitySystem))
+            return abilitySystem.IsEnabled(FullFireAbility.AbilityId);
 
         return false;
     }
@@ -327,6 +359,279 @@ public partial class BombController : MonoBehaviour
         return SnapToTileCenter(tm, worldPos, out _, out _);
     }
 
+    private bool TryGetAnyBombColliderAt(Vector2 position, float size, out Collider2D bombCol)
+    {
+        int bombLayer = LayerMask.NameToLayer("Bomb");
+        int bombMask = 1 << bombLayer;
+
+        var filter = new ContactFilter2D { useLayerMask = true };
+        filter.SetLayerMask(bombMask);
+        filter.useTriggers = true;
+
+        int count = Physics2D.OverlapBox(position, Vector2.one * size, 0f, filter, _bombOverlapBuffer);
+
+        for (int i = 0; i < count; i++)
+        {
+            var c = _bombOverlapBuffer[i];
+            _bombOverlapBuffer[i] = null;
+
+            if (c == null)
+                continue;
+
+            bombCol = c;
+            return true;
+        }
+
+        bombCol = null;
+        return false;
+    }
+
+    private bool TileHasBomb(Vector2 position)
+    {
+        return TryGetAnyBombColliderAt(position, 0.6f, out _);
+    }
+
+    private bool HasActiveExplosionAt(Vector2 position)
+    {
+        int explosionLayer = LayerMask.NameToLayer("Explosion");
+        if (explosionLayer < 0)
+            return false;
+
+        int mask = 1 << explosionLayer;
+
+        var hit = Physics2D.OverlapBox(
+            position,
+            Vector2.one * 0.6f,
+            0f,
+            mask
+        );
+
+        return hit != null;
+    }
+
+    private void ExplodeAnyBombAt(Vector2 position)
+    {
+        int bombLayer = LayerMask.NameToLayer("Bomb");
+        int bombMask = 1 << bombLayer;
+
+        var filter = new ContactFilter2D { useLayerMask = true };
+        filter.SetLayerMask(bombMask);
+        filter.useTriggers = true;
+
+        int count = Physics2D.OverlapBox(position, Vector2.one * 0.6f, 0f, filter, _bombOverlapBuffer);
+        if (count <= 0)
+            return;
+
+        for (int i = 0; i < count; i++)
+        {
+            var hit = _bombOverlapBuffer[i];
+            _bombOverlapBuffer[i] = null;
+
+            if (hit == null)
+                continue;
+
+            GameObject bombGo = hit.attachedRigidbody != null
+                ? hit.attachedRigidbody.gameObject
+                : hit.gameObject;
+
+            if (bombGo == null)
+                continue;
+
+            ExplodeBomb(bombGo);
+        }
+    }
+
+    private bool HasIndestructibleAt(Vector2 worldPos)
+    {
+        if (stageBoundsTiles == null)
+            return false;
+
+        Vector3Int cell = stageBoundsTiles.WorldToCell(worldPos);
+        return stageBoundsTiles.GetTile(cell) != null;
+    }
+
+    private bool HasWaterAt(Vector2 worldPos)
+    {
+        if (waterTiles == null)
+        {
+            ResolveTilemaps();
+            if (waterTiles == null)
+                return false;
+        }
+
+        Vector3Int cell = waterTiles.WorldToCell(worldPos);
+        return waterTiles.GetTile(cell) != null;
+    }
+
+    private bool HasDestructibleAt(Vector2 worldPos)
+    {
+        if (destructibleTiles == null)
+            return false;
+
+        Vector3Int cell = destructibleTiles.WorldToCell(worldPos);
+        TileBase tile = destructibleTiles.GetTile(cell);
+        if (tile == null)
+            return false;
+
+        ResolveDestructibleTileResolver();
+        if (destructibleTileResolver != null &&
+            !destructibleTileResolver.IsRegisteredDestructibleTile(tile))
+            return false;
+
+        return true;
+    }
+
+    private bool TryGetDestructibleTileAt(Vector2 worldPos, out Vector3Int cell, out TileBase tile)
+    {
+        cell = default;
+        tile = null;
+
+        if (destructibleTiles == null)
+            return false;
+
+        cell = destructibleTiles.WorldToCell(worldPos);
+        tile = destructibleTiles.GetTile(cell);
+        if (tile == null)
+            return false;
+
+        ResolveDestructibleTileResolver();
+        if (destructibleTileResolver != null &&
+            !destructibleTileResolver.IsRegisteredDestructibleTile(tile))
+        {
+            tile = null;
+            return false;
+        }
+
+        return true;
+    }
+
+    private bool HasGroundAt(Vector2 worldPos)
+    {
+        if (groundTiles == null)
+            return false;
+
+        Vector3Int cell = groundTiles.WorldToCell(worldPos);
+        return groundTiles.GetTile(cell) != null;
+    }
+
+    private bool HasDestroyingDestructibleAt(Vector2 worldPos)
+    {
+        int mask = LayerMask.GetMask("Stage");
+
+        Collider2D hit = Physics2D.OverlapBox(
+            worldPos,
+            Vector2.one * 0.6f,
+            0f,
+            mask
+        );
+
+        if (hit == null)
+            return false;
+
+        return hit.GetComponent<Destructible>() != null;
+    }
+
+    public bool CanSpawnTileEffectAt(Vector2 worldPos)
+    {
+        if (!HasGroundAt(worldPos))
+            return false;
+
+        if (HasIndestructibleAt(worldPos))
+            return false;
+
+        return true;
+    }
+
+    private void PlaceBomb()
+    {
+        if (ClownMaskBoss.BossIntroRunning)
+            return;
+
+        if (StageIntroTransition.Instance != null &&
+            (StageIntroTransition.Instance.IntroRunning || StageIntroTransition.Instance.EndingRunning))
+            return;
+
+        var movement = GetComponent<MovementController>();
+        if (movement != null && (movement.InputLocked || movement.isDead || movement.IsEndingStage))
+            return;
+
+        if (TryGetComponent<GreenLouieDashAbility>(out var dashAbility) && dashAbility != null && dashAbility.DashActive)
+            return;
+
+        if (GamePauseController.IsPaused)
+            return;
+
+        ResolveTilemaps();
+
+        Tilemap snapTm = GetSnapTilemapForGround();
+        Vector2 position = SnapToTileCenter(snapTm, (Vector2)transform.position, out _, out _);
+
+        bool explosionAlreadyHere = HasActiveExplosionAt(position);
+
+        if (TileHasBomb(position))
+        {
+            if (!explosionAlreadyHere)
+                return;
+
+            ExplodeAnyBombAt(position);
+        }
+
+        if (HasDestructibleAt(position))
+            return;
+
+        bool controlEnabled = IsControlEnabled();
+        bool pierceEnabled = !controlEnabled && IsPierceEnabled();
+
+        GameObject prefabToUse =
+            controlEnabled && controlBombPrefab != null ? controlBombPrefab :
+            (pierceEnabled && pierceBombPrefab != null) ? pierceBombPrefab :
+            bombPrefab;
+
+        if (prefabToUse == null)
+            return;
+
+        PlayPlaceBombSfx();
+
+        GameObject bomb = Instantiate(prefabToUse, position, Quaternion.identity);
+        lastPlacedBomb = bomb;
+        bombsRemaining--;
+
+        if (!bomb.TryGetComponent<Bomb>(out var bombComponent))
+            bombComponent = bomb.AddComponent<Bomb>();
+
+        bombComponent.IsPierceBomb = pierceEnabled;
+        bombComponent.IsControlBomb = controlEnabled;
+
+        bombComponent.SetStageBoundsTilemap(stageBoundsTiles);
+        bombComponent.SetFuseSeconds(bombFuseTime);
+        bombComponent.Initialize(this);
+
+        if (!bomb.TryGetComponent<BombAtGroundTileNotifier>(out var notifier))
+            notifier = bomb.AddComponent<BombAtGroundTileNotifier>();
+
+        notifier.Initialize(this);
+
+        TryHandleGroundBombAt(position, bomb);
+
+        if (TryDestroyBombIfOnWater(bomb, position, refund: true))
+            return;
+
+        if (bomb.TryGetComponent<Collider2D>(out var bombCollider))
+            bombCollider.isTrigger = true;
+
+        if (controlEnabled)
+            RegisterBomb(bomb);
+
+        if (explosionAlreadyHere)
+        {
+            ExplodeBomb(bomb);
+            return;
+        }
+
+        if (!controlEnabled)
+            bombComponent.BeginFuse();
+    }
+
     private bool TryDestroyBombIfOnWater(GameObject bombGo, Vector2 worldPos, bool refund)
     {
         if (bombGo == null)
@@ -343,13 +648,9 @@ public partial class BombController : MonoBehaviour
                 return false;
         }
 
-        // worldPos já chega "snapped" no chão pelo seu fluxo (NotifyBombAt / PlaceBomb)
-        // Checa água DIRETO na célula do waterTiles (sem SnapToTileCenter no waterTiles).
         Vector3Int waterCell = waterTiles.WorldToCell(worldPos);
         TileBase waterTile = waterTiles.GetTile(waterCell);
-        bool hasWater = waterTile != null;
-
-        if (!hasWater)
+        if (waterTile == null)
             return false;
 
         _removedBombIds.Add(id);
@@ -372,18 +673,6 @@ public partial class BombController : MonoBehaviour
 
         StartCoroutine(WaterSinkAndDestroyRoutine(bombGo, sinkPos));
         return true;
-    }
-
-    private void DisableBombDrivers(GameObject bombGo)
-    {
-        if (bombGo == null)
-            return;
-
-        if (bombGo.TryGetComponent<BombAtGroundTileNotifier>(out var notifier) && notifier != null)
-            notifier.enabled = false;
-
-        if (bombGo.TryGetComponent<AnimatedSpriteRenderer>(out var anim) && anim != null)
-            anim.enabled = false;
     }
 
     private IEnumerator WaterSinkAndDestroyRoutine(GameObject bombGo, Vector2 sinkWorldPos)
@@ -455,48 +744,38 @@ public partial class BombController : MonoBehaviour
             Destroy(bombGo);
     }
 
+    private void DisableBombDrivers(GameObject bombGo)
+    {
+        if (bombGo == null)
+            return;
+
+        if (bombGo.TryGetComponent<BombAtGroundTileNotifier>(out var notifier) && notifier != null)
+            notifier.enabled = false;
+
+        if (bombGo.TryGetComponent<AnimatedSpriteRenderer>(out var anim) && anim != null)
+            anim.enabled = false;
+    }
+
     public void ExplodeBomb(GameObject bomb)
     {
         if (bomb == null)
             return;
 
         int id = bomb.GetInstanceID();
-
-        if (debugExplodeTeleport)
-        {
-            bomb.TryGetComponent<Rigidbody2D>(out var rb0);
-            bomb.TryGetComponent<Bomb>(out var bombComp0);
-            Vector2 logical0 = bombComp0 != null ? bombComp0.GetLogicalPosition() : (Vector2)bomb.transform.position;
-            Vector2 rbPos0 = rb0 != null ? rb0.position : Vector2.negativeInfinity;
-
-            DLog(
-                $"ExplodeBomb ENTER: {BombTag(bomb)} removedHas={_removedBombIds.Contains(id)} " +
-                $"HasExploded={(bombComp0 != null && bombComp0.HasExploded)} logical=({logical0.x:0.###},{logical0.y:0.###}) rb=({rbPos0.x:0.###},{rbPos0.y:0.###})",
-                bomb
-            );
-        }
-
         if (_removedBombIds.Contains(id))
-        {
-            if (debugExplodeTeleport) DLog($"ExplodeBomb ABORT (already removed): {BombTag(bomb)}", bomb);
             return;
-        }
 
         bomb.TryGetComponent<Bomb>(out var bombComp);
 
         BombController realOwner = bombComp != null ? bombComp.Owner : null;
         if (realOwner != null && realOwner != this)
         {
-            if (debugExplodeTeleport) DLog($"ExplodeBomb FORWARD to realOwner='{realOwner.name}' -> {BombTag(bomb)}", bomb);
             realOwner.ExplodeBomb(bomb);
             return;
         }
 
         if (bombComp != null && bombComp.IsControlBomb && bombComp.IsBeingPunched)
-        {
-            if (debugExplodeTeleport) DLog($"ExplodeBomb ABORT (control+punch): {BombTag(bomb)}", bomb);
             return;
-        }
 
         UnregisterBomb(bomb);
 
@@ -505,45 +784,29 @@ public partial class BombController : MonoBehaviour
             : (Vector2)bomb.transform.position;
 
         Tilemap snapTm = GetSnapTilemapForGround();
-        Vector2 snappedLogical = SnapToTileCenter(snapTm, logicalPos, out var snapCell, out var snapCenter);
+        Vector2 snapped = SnapToTileCenter(snapTm, logicalPos, out _, out _);
 
-        if (debugExplodeTeleport)
-        {
-            bomb.TryGetComponent<Rigidbody2D>(out var rb1);
-            Vector2 rbPos1 = rb1 != null ? rb1.position : Vector2.negativeInfinity;
-
-            DLog(
-                $"ExplodeBomb SNAP: {BombTag(bomb)} logical=({logicalPos.x:0.###},{logicalPos.y:0.###}) " +
-                $"snapCell=({snapCell.x},{snapCell.y}) snapped=({snappedLogical.x:0.###},{snappedLogical.y:0.###}) rbBefore=({rbPos1.x:0.###},{rbPos1.y:0.###})",
-                bomb
-            );
-        }
-
-        bomb.transform.position = snappedLogical;
+        bomb.transform.position = snapped;
 
         if (bomb.TryGetComponent<Rigidbody2D>(out var rb))
-            rb.position = snappedLogical;
+            rb.position = snapped;
 
         if (bombComp != null)
         {
             if (bombComp.HasExploded)
-            {
-                if (debugExplodeTeleport) DLog($"ExplodeBomb ABORT (bombComp already HasExploded after snap): {BombTag(bomb)}", bomb);
                 return;
-            }
 
             bombComp.MarkAsExploded();
-            bombComp.ForceSetLogicalPosition(snappedLogical);
+            bombComp.ForceSetLogicalPosition(snapped);
         }
 
         int effectiveRadius = IsFullFireEnabled()
             ? PlayerPersistentStats.MaxExplosionRadius
             : explosionRadius;
 
-        Vector2 position = snappedLogical;
         bool pierce = bombComp != null && bombComp.IsPierceBomb;
 
-        TryApplyGroundExplosionModifiers(position, ref effectiveRadius, ref pierce);
+        TryApplyGroundExplosionModifiers(snapped, ref effectiveRadius, ref pierce);
 
         HideBombVisuals(bomb);
 
@@ -562,13 +825,13 @@ public partial class BombController : MonoBehaviour
             return;
         }
 
-        BombExplosion centerExplosion = Instantiate(explosionPrefab, position, Quaternion.identity);
-        centerExplosion.Play(BombExplosion.ExplosionPart.Start, Vector2.zero, 0f, explosionDuration, position);
+        BombExplosion centerExplosion = Instantiate(explosionPrefab, snapped, Quaternion.identity);
+        centerExplosion.Play(BombExplosion.ExplosionPart.Start, Vector2.zero, 0f, explosionDuration, snapped);
 
-        Explode(position, Vector2.up, effectiveRadius, pierce);
-        Explode(position, Vector2.down, effectiveRadius, pierce);
-        Explode(position, Vector2.left, effectiveRadius, pierce);
-        Explode(position, Vector2.right, effectiveRadius, pierce);
+        Explode(snapped, Vector2.up, effectiveRadius, pierce);
+        Explode(snapped, Vector2.down, effectiveRadius, pierce);
+        Explode(snapped, Vector2.left, effectiveRadius, pierce);
+        Explode(snapped, Vector2.right, effectiveRadius, pierce);
 
         float destroyDelay = 0.1f;
 
@@ -589,8 +852,6 @@ public partial class BombController : MonoBehaviour
 
         Destroy(bomb, destroyDelay);
         bombsRemaining = Mathf.Min(bombsRemaining + 1, bombAmout);
-
-        if (debugExplodeTeleport) DLog($"ExplodeBomb EXIT: scheduled Destroy in {destroyDelay:0.###}s -> {BombTag(bomb)} bombsRemaining={bombsRemaining}", bomb);
     }
 
     public void ExplodeBombChained(GameObject bomb)
@@ -600,10 +861,7 @@ public partial class BombController : MonoBehaviour
 
         int id = bomb.GetInstanceID();
         if (_removedBombIds.Contains(id))
-        {
-            if (debugExplodeTeleport) DLog($"ExplodeBombChained ABORT (removed): {BombTag(bomb)}", bomb);
             return;
-        }
 
         if (bomb.TryGetComponent<Bomb>(out var bombComp) && bombComp.HasExploded)
             return;
@@ -611,11 +869,9 @@ public partial class BombController : MonoBehaviour
         if (!scheduledChainBombs.Add(id))
             return;
 
-        float delayFromController = chainBombDelaySeconds;
-        float delayFromBomb = bombComp != null ? Mathf.Max(0f, bombComp.chainStepDelay) : -1f;
-        float delay = delayFromBomb >= 0f ? delayFromBomb : delayFromController;
-
-        if (debugExplodeTeleport) DLog($"ExplodeBombChained SCHEDULE: delay={delay:0.###} -> {BombTag(bomb)}", bomb);
+        float delay = chainBombDelaySeconds;
+        if (bombComp != null)
+            delay = Mathf.Max(0f, bombComp.chainStepDelay);
 
         StartCoroutine(ExplodeBombAfterDelay(bomb, id, delay));
     }
@@ -631,215 +887,12 @@ public partial class BombController : MonoBehaviour
             yield break;
 
         if (_removedBombIds.Contains(id))
-        {
-            if (debugExplodeTeleport) DLog($"ExplodeBombAfterDelay ABORT (removed): {BombTag(bomb)}", bomb);
             yield break;
-        }
 
         if (bomb.TryGetComponent<Bomb>(out var bombComp) && bombComp.HasExploded)
             yield break;
 
-        if (debugExplodeTeleport) DLog($"ExplodeBombAfterDelay FIRE -> {BombTag(bomb)}", bomb);
         ExplodeBomb(bomb);
-    }
-
-    private void PlayExplosionSfx(AudioSource source, int radius)
-    {
-        if (source == null || explosionSfxByRadius == null || explosionSfxByRadius.Length == 0)
-            return;
-
-        int index = Mathf.Clamp(radius - 1, 0, explosionSfxByRadius.Length - 1);
-        AudioClip clip = explosionSfxByRadius[index];
-
-        if (clip != null)
-            source.PlayOneShot(clip, explosionSfxVolume);
-    }
-
-    public void PlayExplosionSfxExclusive(AudioSource source, int radius)
-    {
-        if (source == null || explosionSfxByRadius == null || explosionSfxByRadius.Length == 0)
-            return;
-
-        int index = Mathf.Clamp(radius - 1, 0, explosionSfxByRadius.Length - 1);
-        AudioClip clip = explosionSfxByRadius[index];
-        if (clip == null)
-            return;
-
-        if (currentExplosionAudio != null && currentExplosionAudio.isPlaying)
-            currentExplosionAudio.Stop();
-
-        currentExplosionAudio = source;
-        currentExplosionAudio.PlayOneShot(clip, explosionSfxVolume);
-    }
-
-    private void PlayPlaceBombSfx()
-    {
-        if (placeBombSfx == null)
-            return;
-
-        AudioSource src = playerAudioSource != null ? playerAudioSource : _localAudio;
-        if (src == null)
-            return;
-
-        src.PlayOneShot(placeBombSfx);
-    }
-
-    private void PlaceBomb()
-    {
-        var movement = GetComponent<MovementController>();
-        if (movement != null && (movement.InputLocked || movement.isDead || movement.IsEndingStage))
-            return;
-
-        if (TryGetComponent<GreenLouieDashAbility>(out var dashAbility) && dashAbility != null && dashAbility.DashActive)
-            return;
-
-        Tilemap snapTm = GetSnapTilemapForGround();
-
-        Vector2 rawPos = transform.position;
-        Vector2 position = SnapToTileCenter(snapTm, rawPos, out _, out _);
-
-        bool explosionAlreadyHere = HasActiveExplosionAt(position);
-
-        if (TileHasBomb(position))
-        {
-            if (!explosionAlreadyHere)
-                return;
-
-            ExplodeAnyBombAt(position);
-        }
-
-        if (HasDestructibleAt(position))
-            return;
-
-        bool controlEnabled = IsControlEnabled();
-        bool pierceEnabled = !controlEnabled && IsPierceEnabled();
-
-        GameObject prefabToUse =
-            controlEnabled && controlBombPrefab != null ? controlBombPrefab :
-            (pierceEnabled && pierceBombPrefab != null) ? pierceBombPrefab :
-            bombPrefab;
-
-        if (prefabToUse == null)
-            return;
-
-        PlayPlaceBombSfx();
-
-        GameObject bomb = Instantiate(prefabToUse, position, Quaternion.identity);
-        lastPlacedBomb = bomb;
-        bombsRemaining--;
-
-        if (debugWaterBomb) DLog($"PlaceBomb: spawned -> {BombTag(bomb)} snappedPos=({position.x:0.###},{position.y:0.###}) bombsRemaining={bombsRemaining}", bomb);
-
-        if (!bomb.TryGetComponent<Bomb>(out var bombComponent))
-            bombComponent = bomb.AddComponent<Bomb>();
-
-        bombComponent.IsPierceBomb = pierceEnabled;
-        bombComponent.IsControlBomb = controlEnabled;
-
-        bombComponent.SetStageBoundsTilemap(stageBoundsTiles);
-        bombComponent.SetFuseSeconds(bombFuseTime);
-        bombComponent.Initialize(this);
-
-        if (!bomb.TryGetComponent<BombAtGroundTileNotifier>(out var notifier))
-            notifier = bomb.AddComponent<BombAtGroundTileNotifier>();
-
-        notifier.Initialize(this);
-
-        TryHandleGroundBombAt(position, bomb);
-
-        if (TryDestroyBombIfOnWater(bomb, position, refund: true))
-        {
-            if (debugWaterBomb) DLog($"PlaceBomb: destroyed by water immediately -> {BombTag(bomb)}", bomb);
-            return;
-        }
-
-        if (bomb.TryGetComponent<Collider2D>(out var bombCollider))
-            bombCollider.isTrigger = true;
-
-        if (controlEnabled)
-            RegisterBomb(bomb);
-
-        if (explosionAlreadyHere)
-        {
-            if (debugExplodeTeleport) DLog($"PlaceBomb: explosionAlreadyHere -> ExplodeBomb now -> {BombTag(bomb)}", bomb);
-            ExplodeBomb(bomb);
-            return;
-        }
-
-        if (!controlEnabled)
-            bombComponent.BeginFuse();
-    }
-
-    private bool TryGetAnyBombColliderAt(Vector2 position, float size, out Collider2D bombCol)
-    {
-        int bombLayer = LayerMask.NameToLayer("Bomb");
-        int bombMask = 1 << bombLayer;
-
-        var filter = new ContactFilter2D { useLayerMask = true };
-        filter.SetLayerMask(bombMask);
-        filter.useTriggers = true;
-
-        int count = Physics2D.OverlapBox(position, Vector2.one * size, 0f, filter, _bombOverlapBuffer);
-
-        for (int i = 0; i < count; i++)
-        {
-            var c = _bombOverlapBuffer[i];
-            _bombOverlapBuffer[i] = null;
-
-            if (c == null)
-                continue;
-
-            bombCol = c;
-            return true;
-        }
-
-        bombCol = null;
-        return false;
-    }
-
-    private bool TileHasBomb(Vector2 position)
-    {
-        return TryGetAnyBombColliderAt(position, 0.6f, out _);
-    }
-
-    private bool HasIndestructibleAt(Vector2 worldPos)
-    {
-        if (stageBoundsTiles == null)
-            return false;
-
-        Vector3Int cell = stageBoundsTiles.WorldToCell(worldPos);
-        return stageBoundsTiles.GetTile(cell) != null;
-    }
-
-    private bool HasWaterAt(Vector2 worldPos)
-    {
-        if (waterTiles == null)
-        {
-            ResolveTilemaps();
-            if (waterTiles == null)
-                return false;
-        }
-
-        Vector3Int cell = waterTiles.WorldToCell(worldPos);
-        return waterTiles.GetTile(cell) != null;
-    }
-
-    private bool HasDestructibleAt(Vector2 worldPos)
-    {
-        if (destructibleTiles == null)
-            return false;
-
-        Vector3Int cell = destructibleTiles.WorldToCell(worldPos);
-        TileBase tile = destructibleTiles.GetTile(cell);
-        if (tile == null)
-            return false;
-
-        ResolveDestructibleTileResolver();
-        if (destructibleTileResolver != null &&
-            !destructibleTileResolver.IsRegisteredDestructibleTile(tile))
-            return false;
-
-        return true;
     }
 
     private void Explode(Vector2 origin, Vector2 direction, int length, bool pierce)
@@ -894,8 +947,7 @@ public partial class BombController : MonoBehaviour
                 continue;
             }
 
-            bool hitDestroyingDestructible = HasDestroyingDestructibleAt(position);
-            if (hitDestroyingDestructible)
+            if (HasDestroyingDestructibleAt(position))
             {
                 positionsToSpawn.Add(position);
 
@@ -1003,6 +1055,28 @@ public partial class BombController : MonoBehaviour
         destructibleTiles.SetTile(cell, null);
     }
 
+    private IEnumerator SpawnHiddenObjectAfterDelay(GameObject prefab, Vector2 position, Transform parent, float delay)
+    {
+        if (prefab == null)
+            yield break;
+
+        if (delay > 0f)
+            yield return new WaitForSeconds(delay);
+
+        if (parent != null)
+            Instantiate(prefab, position, Quaternion.identity, parent);
+        else
+            Instantiate(prefab, position, Quaternion.identity);
+    }
+
+    private float GetDestructibleDestroyTime()
+    {
+        if (destructiblePrefab != null)
+            return Mathf.Max(0f, destructiblePrefab.destructionTime);
+
+        return 0.5f;
+    }
+
     private void HideBombVisuals(GameObject bomb)
     {
         if (bomb == null)
@@ -1029,51 +1103,132 @@ public partial class BombController : MonoBehaviour
         }
     }
 
-    private bool HasDestroyingDestructibleAt(Vector2 worldPos)
+    private void PlayExplosionSfx(AudioSource source, int radius)
     {
-        int mask = LayerMask.GetMask("Stage");
+        if (source == null || explosionSfxByRadius == null || explosionSfxByRadius.Length == 0)
+            return;
 
-        Collider2D hit = Physics2D.OverlapBox(
-            worldPos,
-            Vector2.one * 0.6f,
-            0f,
-            mask
-        );
+        int index = Mathf.Clamp(radius - 1, 0, explosionSfxByRadius.Length - 1);
+        AudioClip clip = explosionSfxByRadius[index];
 
-        if (hit == null)
+        if (clip != null)
+            source.PlayOneShot(clip, explosionSfxVolume);
+    }
+
+    public void PlayExplosionSfxExclusive(AudioSource source, int radius)
+    {
+        if (source == null || explosionSfxByRadius == null || explosionSfxByRadius.Length == 0)
+            return;
+
+        int index = Mathf.Clamp(radius - 1, 0, explosionSfxByRadius.Length - 1);
+        AudioClip clip = explosionSfxByRadius[index];
+        if (clip == null)
+            return;
+
+        if (currentExplosionAudio != null && currentExplosionAudio.isPlaying)
+            currentExplosionAudio.Stop();
+
+        currentExplosionAudio = source;
+        currentExplosionAudio.PlayOneShot(clip, explosionSfxVolume);
+    }
+
+    private void PlayPlaceBombSfx()
+    {
+        if (placeBombSfx == null)
+            return;
+
+        AudioSource src = playerAudioSource != null ? playerAudioSource : _localAudio;
+        if (src == null)
+            return;
+
+        src.PlayOneShot(placeBombSfx);
+    }
+
+    private void PlayWaterDestroySfx()
+    {
+        if (waterDestroySfx == null)
+            return;
+
+        AudioSource src = playerAudioSource != null ? playerAudioSource : _localAudio;
+        if (src == null)
+            return;
+
+        src.PlayOneShot(waterDestroySfx, waterDestroyVolume);
+    }
+
+    private void TryApplyGroundExplosionModifiers(Vector2 worldPos, ref int radius, ref bool pierce)
+    {
+        ResolveGroundTileResolver();
+
+        if (groundTileResolver == null)
+            return;
+
+        if (!TryGetGroundTileAt(worldPos, out _, out var groundTile))
+            return;
+
+        if (!groundTileResolver.TryGetHandler(groundTile, out var handler))
+            return;
+
+        handler.TryModifyExplosion(this, worldPos, groundTile, ref radius, ref pierce);
+    }
+
+    private bool TryGetGroundTileAt(Vector2 worldPos, out Vector3Int cell, out TileBase tile)
+    {
+        cell = default;
+        tile = null;
+
+        if (groundTiles == null)
             return false;
 
-        return hit.GetComponent<Destructible>() != null;
+        cell = groundTiles.WorldToCell(worldPos);
+        tile = groundTiles.GetTile(cell);
+        return tile != null;
     }
 
-    private IEnumerator SpawnHiddenObjectAfterDelay(GameObject prefab, Vector2 position, Transform parent, float delay)
+    private bool TryGetIndestructibleTileAt(Vector2 worldPos, out Vector3Int cell, out TileBase tile)
     {
-        if (prefab == null)
-            yield break;
+        cell = default;
+        tile = null;
 
-        if (delay > 0f)
-            yield return new WaitForSeconds(delay);
+        if (stageBoundsTiles == null)
+            return false;
 
-        if (parent != null)
-            Instantiate(prefab, position, Quaternion.identity, parent);
-        else
-            Instantiate(prefab, position, Quaternion.identity);
+        cell = stageBoundsTiles.WorldToCell(worldPos);
+        tile = stageBoundsTiles.GetTile(cell);
+        return tile != null;
     }
 
-    private float GetDestructibleDestroyTime()
+    private void TryHandleIndestructibleTileHit(Vector2 worldPos)
     {
-        if (destructiblePrefab != null)
-            return Mathf.Max(0f, destructiblePrefab.destructionTime);
+        ResolveIndestructibleTileResolver();
 
-        return 0.5f;
+        if (indestructibleTileResolver == null)
+            return;
+
+        if (!TryGetIndestructibleTileAt(worldPos, out var cell, out var tile))
+            return;
+
+        if (!indestructibleTileResolver.TryGetHandler(tile, out var handler))
+            return;
+
+        handler.HandleExplosionHit(this, worldPos, cell, tile);
     }
 
-    private bool IsControlEnabled()
+    private void TryHandleGroundBombAt(Vector2 worldPos, GameObject bomb)
     {
-        if (TryGetComponent<AbilitySystem>(out var abilitySystem))
-            return abilitySystem.IsEnabled(ControlBombAbility.AbilityId);
+        ResolveGroundTileResolver();
 
-        return false;
+        if (groundTileResolver == null || bomb == null)
+            return;
+
+        if (!TryGetGroundTileAt(worldPos, out var cell, out var groundTile))
+            return;
+
+        if (!groundTileResolver.TryGetHandler(groundTile, out var handler) || handler == null)
+            return;
+
+        if (handler is IGroundTileBombAtHandler bombAtHandler)
+            bombAtHandler.OnBombAt(this, worldPos, cell, groundTile, bomb);
     }
 
     private void RegisterBomb(GameObject bomb)
@@ -1152,14 +1307,6 @@ public partial class BombController : MonoBehaviour
         plantedBombs.Clear();
     }
 
-    private bool IsFullFireEnabled()
-    {
-        if (TryGetComponent<AbilitySystem>(out var abilitySystem))
-            return abilitySystem.IsEnabled(FullFireAbility.AbilityId);
-
-        return false;
-    }
-
     public static void ExplodeAllControlBombsInStage()
     {
         var bombs = FindObjectsByType<Bomb>(FindObjectsSortMode.None);
@@ -1193,127 +1340,13 @@ public partial class BombController : MonoBehaviour
 
         int id = bombGo.GetInstanceID();
         if (_removedBombIds.Contains(id))
-        {
-            if (debugWaterBomb) DLog($"NotifyBombAt SKIP (removed): {BombTag(bombGo)} worldPos=({worldPos.x:0.###},{worldPos.y:0.###})", bombGo);
             return;
-        }
 
         Tilemap snapTm = GetSnapTilemapForGround();
         Vector2 snapped = SnapToTileCenter(snapTm, worldPos, out _, out _);
 
-        if (debugWaterBomb)
-        {
-            bombGo.TryGetComponent<Rigidbody2D>(out var rb);
-            bombGo.TryGetComponent<Bomb>(out var bombComp);
-            Vector2 logical = bombComp != null ? bombComp.GetLogicalPosition() : (Vector2)bombGo.transform.position;
-            Vector2 rbPos = rb != null ? rb.position : Vector2.negativeInfinity;
-
-            DLog(
-                $"NotifyBombAt: {BombTag(bombGo)} worldPos=({worldPos.x:0.###},{worldPos.y:0.###}) snapped=({snapped.x:0.###},{snapped.y:0.###}) " +
-                $"logical=({logical.x:0.###},{logical.y:0.###}) rb=({rbPos.x:0.###},{rbPos.y:0.###})",
-                bombGo
-            );
-        }
-
         TryHandleGroundBombAt(snapped, bombGo);
-
         TryDestroyBombIfOnWater(bombGo, snapped, refund: true);
-    }
-
-
-
-    private bool HasActiveExplosionAt(Vector2 position)
-    {
-        int explosionLayer = LayerMask.NameToLayer("Explosion");
-        if (explosionLayer < 0)
-            return false;
-
-        int mask = 1 << explosionLayer;
-
-        var hit = Physics2D.OverlapBox(
-            position,
-            Vector2.one * 0.6f,
-            0f,
-            mask
-        );
-
-        return hit != null;
-    }
-
-    private void ExplodeAnyBombAt(Vector2 position)
-    {
-        int bombLayer = LayerMask.NameToLayer("Bomb");
-        int bombMask = 1 << bombLayer;
-
-        var filter = new ContactFilter2D { useLayerMask = true };
-        filter.SetLayerMask(bombMask);
-        filter.useTriggers = true;
-
-        int count = Physics2D.OverlapBox(position, Vector2.one * 0.6f, 0f, filter, _bombOverlapBuffer);
-        if (count <= 0)
-            return;
-
-        for (int i = 0; i < count; i++)
-        {
-            var hit = _bombOverlapBuffer[i];
-            _bombOverlapBuffer[i] = null;
-
-            if (hit == null)
-                continue;
-
-            GameObject bombGo = hit.attachedRigidbody != null
-                ? hit.attachedRigidbody.gameObject
-                : hit.gameObject;
-
-            if (bombGo == null)
-                continue;
-
-            ExplodeBomb(bombGo);
-        }
-    }
-
-    private bool TryGetDestructibleTileAt(Vector2 worldPos, out Vector3Int cell, out TileBase tile)
-    {
-        cell = default;
-        tile = null;
-
-        if (destructibleTiles == null)
-            return false;
-
-        cell = destructibleTiles.WorldToCell(worldPos);
-        tile = destructibleTiles.GetTile(cell);
-        if (tile == null)
-            return false;
-
-        ResolveDestructibleTileResolver();
-        if (destructibleTileResolver != null &&
-            !destructibleTileResolver.IsRegisteredDestructibleTile(tile))
-        {
-            tile = null;
-            return false;
-        }
-
-        return true;
-    }
-
-    private bool HasGroundAt(Vector2 worldPos)
-    {
-        if (groundTiles == null)
-            return false;
-
-        Vector3Int cell = groundTiles.WorldToCell(worldPos);
-        return groundTiles.GetTile(cell) != null;
-    }
-
-    public bool CanSpawnTileEffectAt(Vector2 worldPos)
-    {
-        if (!HasGroundAt(worldPos))
-            return false;
-
-        if (HasIndestructibleAt(worldPos))
-            return false;
-
-        return true;
     }
 
     public void SpawnExplosionCrossForEffect(Vector2 origin, int radius, bool pierce)
@@ -1360,133 +1393,6 @@ public partial class BombController : MonoBehaviour
         Explode(p, Vector2.down, effectiveRadius, effectivePierce);
         Explode(p, Vector2.left, effectiveRadius, effectivePierce);
         Explode(p, Vector2.right, effectiveRadius, effectivePierce);
-    }
-
-    private void ResolveGroundTileResolver()
-    {
-        if (groundTileResolver != null)
-            return;
-
-        groundTileResolver = FindFirstObjectByType<GroundTileResolver>();
-        if (groundTileResolver != null)
-            return;
-
-        if (groundTiles != null)
-            groundTileResolver = groundTiles.GetComponentInParent<GroundTileResolver>(true);
-
-        if (groundTileResolver != null)
-            return;
-
-        var stage = GameObject.Find("Stage");
-        if (stage != null)
-            groundTileResolver = stage.GetComponentInChildren<GroundTileResolver>(true);
-    }
-
-    private bool TryGetGroundTileAt(Vector2 worldPos, out Vector3Int cell, out TileBase tile)
-    {
-        cell = default;
-        tile = null;
-
-        if (groundTiles == null)
-            return false;
-
-        cell = groundTiles.WorldToCell(worldPos);
-        tile = groundTiles.GetTile(cell);
-        return tile != null;
-    }
-
-    private void TryApplyGroundExplosionModifiers(Vector2 worldPos, ref int radius, ref bool pierce)
-    {
-        ResolveGroundTileResolver();
-
-        if (groundTileResolver == null)
-            return;
-
-        if (!TryGetGroundTileAt(worldPos, out _, out var groundTile))
-            return;
-
-        if (!groundTileResolver.TryGetHandler(groundTile, out var handler))
-            return;
-
-        handler.TryModifyExplosion(this, worldPos, groundTile, ref radius, ref pierce);
-    }
-
-    private void ResolveIndestructibleTileResolver()
-    {
-        if (indestructibleTileResolver != null)
-            return;
-
-        indestructibleTileResolver = FindFirstObjectByType<IndestructibleTileResolver>();
-        if (indestructibleTileResolver != null)
-            return;
-
-        if (stageBoundsTiles != null)
-            indestructibleTileResolver = stageBoundsTiles.GetComponentInParent<IndestructibleTileResolver>(true);
-
-        if (indestructibleTileResolver != null)
-            return;
-
-        var stage = GameObject.Find("Stage");
-        if (stage != null)
-            indestructibleTileResolver = stage.GetComponentInChildren<IndestructibleTileResolver>(true);
-    }
-
-    private bool TryGetIndestructibleTileAt(Vector2 worldPos, out Vector3Int cell, out TileBase tile)
-    {
-        cell = default;
-        tile = null;
-
-        if (stageBoundsTiles == null)
-            return false;
-
-        cell = stageBoundsTiles.WorldToCell(worldPos);
-        tile = stageBoundsTiles.GetTile(cell);
-        return tile != null;
-    }
-
-    private void TryHandleIndestructibleTileHit(Vector2 worldPos)
-    {
-        ResolveIndestructibleTileResolver();
-
-        if (indestructibleTileResolver == null)
-            return;
-
-        if (!TryGetIndestructibleTileAt(worldPos, out var cell, out var tile))
-            return;
-
-        if (!indestructibleTileResolver.TryGetHandler(tile, out var handler))
-            return;
-
-        handler.HandleExplosionHit(this, worldPos, cell, tile);
-    }
-
-    private void TryHandleGroundBombAt(Vector2 worldPos, GameObject bomb)
-    {
-        ResolveGroundTileResolver();
-
-        if (groundTileResolver == null || bomb == null)
-            return;
-
-        if (!TryGetGroundTileAt(worldPos, out var cell, out var groundTile))
-            return;
-
-        if (!groundTileResolver.TryGetHandler(groundTile, out var handler) || handler == null)
-            return;
-
-        if (handler is IGroundTileBombAtHandler bombAtHandler)
-            bombAtHandler.OnBombAt(this, worldPos, cell, groundTile, bomb);
-    }
-
-    private void PlayWaterDestroySfx()
-    {
-        if (waterDestroySfx == null)
-            return;
-
-        AudioSource src = playerAudioSource != null ? playerAudioSource : _localAudio;
-        if (src == null)
-            return;
-
-        src.PlayOneShot(waterDestroySfx, waterDestroyVolume);
     }
 
     public bool TryPlaceBombAtIgnoringInputLock(Vector2 worldPos, out GameObject placedBomb, bool consumeBomb = true)
@@ -1551,9 +1457,6 @@ public partial class BombController : MonoBehaviour
         if (consumeBomb)
             bombsRemaining--;
 
-        if (debugWaterBomb)
-            DLog($"TryPlaceBombAtIgnoringInputLock: spawned -> {BombTag(bomb)} snappedPos=({position.x:0.###},{position.y:0.###}) consume={consumeBomb} bombsRemaining={bombsRemaining}", bomb);
-
         if (!bomb.TryGetComponent<Bomb>(out var bombComponent))
             bombComponent = bomb.AddComponent<Bomb>();
 
@@ -1573,9 +1476,6 @@ public partial class BombController : MonoBehaviour
 
         if (TryDestroyBombIfOnWater(bomb, position, refund: consumeBomb))
         {
-            if (debugWaterBomb)
-                DLog($"TryPlaceBombAtIgnoringInputLock: destroyed by water immediately -> {BombTag(bomb)}", bomb);
-
             placedBomb = null;
             return false;
         }
@@ -1588,9 +1488,6 @@ public partial class BombController : MonoBehaviour
 
         if (explosionAlreadyHere)
         {
-            if (debugExplodeTeleport)
-                DLog($"TryPlaceBombAtIgnoringInputLock: explosionAlreadyHere -> ExplodeBomb now -> {BombTag(bomb)}", bomb);
-
             ExplodeBomb(bomb);
             return true;
         }
@@ -1605,5 +1502,4 @@ public partial class BombController : MonoBehaviour
     {
         return TryPlaceBombAtIgnoringInputLock(worldPos, out _, consumeBomb: true);
     }
-
 }

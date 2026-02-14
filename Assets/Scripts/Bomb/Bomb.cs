@@ -9,28 +9,6 @@ using UnityEngine.Tilemaps;
 [RequireComponent(typeof(AnimatedSpriteRenderer))]
 public class Bomb : MonoBehaviour, IMagnetPullable
 {
-    private BombController owner;
-    public BombController Owner => owner;
-
-    public bool HasExploded { get; private set; }
-    public float PlacedTime { get; private set; }
-    public bool IsControlBomb { get; set; }
-
-    public bool IsBeingKicked => isKicked;
-    public bool IsBeingPunched => isPunched;
-
-    public bool IsSolid => bombCollider != null && !bombCollider.isTrigger;
-    public bool CanBeKicked => !HasExploded && !isKicked && IsSolid && charactersInside.Count == 0;
-    public bool CanBePunched => !HasExploded && !isKicked && !isPunched && IsSolid && charactersInside.Count == 0;
-    public bool CanBeMagnetPulled => !HasExploded && !IsBeingKicked && !IsBeingPunched && !IsBeingMagnetPulled;
-    public bool IsPierceBomb { get; set; }
-
-    [Header("References")]
-    private Collider2D bombCollider;
-    private Rigidbody2D rb;
-    private AnimatedSpriteRenderer anim;
-    private AudioSource audioSource;
-
     [Header("SFX")]
     public AudioClip punchSfx;
     [Range(0f, 1f)] public float punchSfxVolume = 1f;
@@ -51,6 +29,32 @@ public class Bomb : MonoBehaviour, IMagnetPullable
 
     [Header("Stage Wrap")]
     [SerializeField] private Tilemap stageBoundsTilemap;
+
+    [SerializeField] private float magnetPullSpeed = 10f;
+
+    private BombController owner;
+    public BombController Owner => owner;
+
+    public bool HasExploded { get; private set; }
+    public float PlacedTime { get; private set; }
+    public bool IsControlBomb { get; set; }
+
+    public bool IsBeingKicked => isKicked;
+    public bool IsBeingPunched => isPunched;
+
+    public bool IsSolid => bombCollider != null && !bombCollider.isTrigger;
+    public bool CanBeKicked => !HasExploded && !isKicked && IsSolid && charactersInside.Count == 0;
+    public bool CanBePunched => !HasExploded && !isKicked && !isPunched && IsSolid && charactersInside.Count == 0;
+    public bool CanBeMagnetPulled => !HasExploded && !IsBeingKicked && !IsBeingPunched && !IsBeingMagnetPulled;
+    public bool IsPierceBomb { get; set; }
+
+    public bool IsBeingMagnetPulled => magnetRoutine != null;
+
+    private Collider2D bombCollider;
+    private Rigidbody2D rb;
+    private AnimatedSpriteRenderer anim;
+    private AudioSource audioSource;
+
     private bool wrapBoundsReady;
     private int wrapMinX, wrapMaxX, wrapMinY, wrapMaxY;
 
@@ -77,25 +81,12 @@ public class Bomb : MonoBehaviour, IMagnetPullable
     private float fusePauseStartedAt;
     private Coroutine fuseRoutine;
 
-    private static readonly WaitForFixedUpdate waitFixed = new();
-
-    public bool IsBeingMagnetPulled => magnetRoutine != null;
     private bool lockWorldPosActive;
     private Vector2 lockWorldPos;
 
-    [SerializeField] private float magnetPullSpeed = 10f;
     private Coroutine magnetRoutine;
 
-    [Header("Debug - Surgical")]
-    [SerializeField] private bool debugBombPos = true;
-
-    private void DLog(string msg)
-    {
-        if (!debugBombPos) return;
-        Vector2 rbPos = rb != null ? rb.position : Vector2.negativeInfinity;
-        Vector3 tp = transform != null ? transform.position : Vector3.zero;
-        Debug.Log($"[BombDbg][Bomb:{name}] t={Time.time:0.000} f={Time.frameCount} id={GetInstanceID()} {msg} lastPos=({lastPos.x:0.###},{lastPos.y:0.###}) rb=({rbPos.x:0.###},{rbPos.y:0.###}) tr=({tp.x:0.###},{tp.y:0.###})");
-    }
+    private static readonly WaitForFixedUpdate waitFixed = new();
 
     private void Awake()
     {
@@ -118,23 +109,6 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         }
 
         lastPos = rb.position;
-
-        DLog("Awake");
-    }
-
-    private void OnEnable()
-    {
-        DLog("OnEnable");
-    }
-
-    private void OnDisable()
-    {
-        DLog("OnDisable");
-    }
-
-    private void OnDestroy()
-    {
-        DLog("OnDestroy");
     }
 
     private void FixedUpdate()
@@ -163,7 +137,6 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         if (fuseRoutine != null)
             StopCoroutine(fuseRoutine);
 
-        DLog($"BeginFuse FuseSeconds={FuseSeconds:0.###} PlacedTime={PlacedTime:0.###}");
         fuseRoutine = StartCoroutine(FuseRoutine());
     }
 
@@ -173,7 +146,6 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         {
             if (owner == null)
             {
-                DLog("FuseRoutine: owner NULL -> stop");
                 fuseRoutine = null;
                 yield break;
             }
@@ -186,7 +158,6 @@ public class Bomb : MonoBehaviour, IMagnetPullable
 
             if (RemainingFuseSeconds <= 0f)
             {
-                DLog("FuseRoutine: fuse ended -> owner.ExplodeBomb");
                 owner.ExplodeBomb(gameObject);
                 fuseRoutine = null;
                 yield break;
@@ -205,7 +176,6 @@ public class Bomb : MonoBehaviour, IMagnetPullable
 
         fusePaused = true;
         fusePauseStartedAt = Time.time;
-        DLog("PauseFuse");
     }
 
     private void ResumeFuse()
@@ -218,14 +188,29 @@ public class Bomb : MonoBehaviour, IMagnetPullable
 
         fusePaused = false;
         fusePauseStartedAt = 0f;
-
-        DLog($"ResumeFuse (+{paused:0.###}s)");
     }
 
     public void ForceStopExternalMovementAndSnap(Vector2 snapWorldPos)
     {
-        DLog($"ForceStopExternalMovementAndSnap snap=({snapWorldPos.x:0.###},{snapWorldPos.y:0.###})");
+        StopKickPunchMagnetRoutines();
 
+        isKicked = false;
+        isPunched = false;
+
+        snapWorldPos.x = Mathf.Round(snapWorldPos.x);
+        snapWorldPos.y = Mathf.Round(snapWorldPos.y);
+
+        currentTileCenter = snapWorldPos;
+        lastPos = snapWorldPos;
+
+        if (rb != null)
+            rb.position = snapWorldPos;
+
+        transform.position = snapWorldPos;
+    }
+
+    private void StopKickPunchMagnetRoutines()
+    {
         if (kickRoutine != null)
         {
             StopCoroutine(kickRoutine);
@@ -243,22 +228,6 @@ public class Bomb : MonoBehaviour, IMagnetPullable
             StopCoroutine(magnetRoutine);
             magnetRoutine = null;
         }
-
-        isKicked = false;
-        isPunched = false;
-
-        snapWorldPos.x = Mathf.Round(snapWorldPos.x);
-        snapWorldPos.y = Mathf.Round(snapWorldPos.y);
-
-        currentTileCenter = snapWorldPos;
-        lastPos = snapWorldPos;
-
-        if (rb != null)
-            rb.position = snapWorldPos;
-
-        transform.position = snapWorldPos;
-
-        DLog("ForceStopExternalMovementAndSnap DONE");
     }
 
     private void RecalculateCharactersInsideAt(Vector2 worldPos)
@@ -271,6 +240,9 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         if (cols == null)
             return;
 
+        int playerLayer = LayerMask.NameToLayer("Player");
+        int enemyLayer = LayerMask.NameToLayer("Enemy");
+
         for (int i = 0; i < cols.Length; i++)
         {
             var c = cols[i];
@@ -278,7 +250,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
                 continue;
 
             int layer = c.gameObject.layer;
-            if (layer == LayerMask.NameToLayer("Player") || layer == LayerMask.NameToLayer("Enemy"))
+            if (layer == playerLayer || layer == enemyLayer)
                 charactersInside.Add(c);
         }
     }
@@ -389,9 +361,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         kickObstacleMask = obstacleMask | LayerMask.GetMask("Enemy", "Player");
         kickDestructibleTilemap = destructibleTilemap;
 
-        Vector2 origin = rb.position;
-        origin.x = Mathf.Round(origin.x / tileSize) * tileSize;
-        origin.y = Mathf.Round(origin.y / tileSize) * tileSize;
+        Vector2 origin = SnapToGrid(rb.position, tileSize);
 
         currentTileCenter = origin;
         lastPos = origin;
@@ -416,8 +386,6 @@ public class Bomb : MonoBehaviour, IMagnetPullable
 
         if (anim != null)
             anim.SetFrozen(true);
-
-        DLog($"StartPunch dir=({kickDirection.x:0.###},{kickDirection.y:0.###}) steps={distanceTiles} tile={tileSize:0.###}");
 
         punchRoutine = StartCoroutine(PunchRoutineFixed_Hybrid(origin, distanceTiles, 80, punchDuration, punchArcHeight));
         return true;
@@ -539,8 +507,6 @@ public class Bomb : MonoBehaviour, IMagnetPullable
             anim.SetFrozen(false);
             anim.RefreshFrame();
         }
-
-        DLog("PunchRoutine FINISH");
     }
 
     private void EnsureStageBounds()
@@ -736,8 +702,6 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         rb.position = pos;
         transform.position = pos;
         lastPos = pos;
-
-        DLog($"TeleportTo ({pos.x:0.###},{pos.y:0.###})");
     }
 
     private IEnumerator PunchArcSegmentFixed(Vector2 start, Vector2 end, float duration, float arcHeight)
@@ -766,8 +730,6 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         rb.position = end;
         transform.position = end;
         lastPos = end;
-
-        DLog($"PunchArcSegmentFixed END ({end.x:0.###},{end.y:0.###})");
     }
 
     public void SetStageBoundsTilemap(Tilemap tilemap)
@@ -812,8 +774,6 @@ public class Bomb : MonoBehaviour, IMagnetPullable
 
         RecalculateCharactersInsideAt(rb.position);
         bombCollider.isTrigger = charactersInside.Count > 0;
-
-        DLog($"Initialize owner='{(owner != null ? owner.name : "NULL")}' PlacedTime={PlacedTime:0.###}");
     }
 
     public Vector2 GetLogicalPosition() => lastPos;
@@ -829,8 +789,6 @@ public class Bomb : MonoBehaviour, IMagnetPullable
             rb.position = worldPos;
 
         transform.position = worldPos;
-
-        DLog($"ForceSetLogicalPosition ({worldPos.x:0.###},{worldPos.y:0.###})");
     }
 
     public bool StartKick(Vector2 direction, float tileSize, LayerMask obstacleMask, Tilemap destructibleTilemap)
@@ -844,9 +802,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         kickObstacleMask = obstacleMask | LayerMask.GetMask("Enemy");
         kickDestructibleTilemap = destructibleTilemap;
 
-        Vector2 origin = rb.position;
-        origin.x = Mathf.Round(origin.x / tileSize) * tileSize;
-        origin.y = Mathf.Round(origin.y / tileSize) * tileSize;
+        Vector2 origin = SnapToGrid(rb.position, tileSize);
 
         if (IsKickBlocked(origin + kickDirection * kickTileSize))
             return false;
@@ -865,10 +821,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         if (anim != null)
             anim.SetFrozen(true);
 
-        DLog($"StartKick dir=({kickDirection.x:0.###},{kickDirection.y:0.###}) tile={tileSize:0.###}");
-
         kickRoutine = StartCoroutine(KickRoutineFixed());
-
         return true;
     }
 
@@ -876,10 +829,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
     {
         while (true)
         {
-            if (HasExploded)
-                break;
-
-            if (!isKicked)
+            if (HasExploded || !isKicked)
                 break;
 
             Vector2 next = currentTileCenter + kickDirection * kickTileSize;
@@ -893,10 +843,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
 
             while (elapsed < travelTime)
             {
-                if (HasExploded)
-                    break;
-
-                if (!isKicked)
+                if (HasExploded || !isKicked)
                     break;
 
                 elapsed += Time.fixedDeltaTime;
@@ -910,10 +857,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
                 yield return waitFixed;
             }
 
-            if (HasExploded)
-                break;
-
-            if (!isKicked)
+            if (HasExploded || !isKicked)
                 break;
 
             currentTileCenter = next;
@@ -926,17 +870,13 @@ public class Bomb : MonoBehaviour, IMagnetPullable
             {
                 owner.NotifyBombAt(next, gameObject);
 
-                if (HasExploded)
-                    break;
-
-                if (!isKicked)
+                if (HasExploded || !isKicked)
                     break;
             }
         }
 
         rb.position = currentTileCenter;
         transform.position = currentTileCenter;
-
         lastPos = currentTileCenter;
 
         isKicked = false;
@@ -947,31 +887,13 @@ public class Bomb : MonoBehaviour, IMagnetPullable
             anim.SetFrozen(false);
             anim.RefreshFrame();
         }
-
-        DLog("KickRoutine FINISH");
     }
 
     public void MarkAsExploded()
     {
         HasExploded = true;
 
-        if (kickRoutine != null)
-        {
-            StopCoroutine(kickRoutine);
-            kickRoutine = null;
-        }
-
-        if (punchRoutine != null)
-        {
-            StopCoroutine(punchRoutine);
-            punchRoutine = null;
-        }
-
-        if (magnetRoutine != null)
-        {
-            StopCoroutine(magnetRoutine);
-            magnetRoutine = null;
-        }
+        StopKickPunchMagnetRoutines();
 
         isKicked = false;
         isPunched = false;
@@ -996,18 +918,16 @@ public class Bomb : MonoBehaviour, IMagnetPullable
                 return;
 
             if (owner != null)
-            {
-                DLog("OnTriggerEnter Explosion -> owner.ExplodeBombChained");
                 owner.ExplodeBombChained(gameObject);
-            }
 
             return;
         }
 
-        if (layer == LayerMask.NameToLayer("Player") || layer == LayerMask.NameToLayer("Enemy"))
-        {
+        int playerLayer = LayerMask.NameToLayer("Player");
+        int enemyLayer = LayerMask.NameToLayer("Enemy");
+
+        if (layer == playerLayer || layer == enemyLayer)
             charactersInside.Add(other);
-        }
     }
 
     private void OnTriggerExit2D(Collider2D other)
@@ -1016,7 +936,10 @@ public class Bomb : MonoBehaviour, IMagnetPullable
             return;
 
         int layer = other.gameObject.layer;
-        if (layer != LayerMask.NameToLayer("Player") && layer != LayerMask.NameToLayer("Enemy"))
+        int playerLayer = LayerMask.NameToLayer("Player");
+        int enemyLayer = LayerMask.NameToLayer("Enemy");
+
+        if (layer != playerLayer && layer != enemyLayer)
             return;
 
         charactersInside.Remove(other);
@@ -1054,9 +977,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         kickObstacleMask = obstacleMask | LayerMask.GetMask("Enemy");
         kickDestructibleTilemap = destructibleTilemap;
 
-        Vector2 origin = rb.position;
-        origin.x = Mathf.Round(origin.x / tileSize) * tileSize;
-        origin.y = Mathf.Round(origin.y / tileSize) * tileSize;
+        Vector2 origin = SnapToGrid(rb.position, tileSize);
 
         currentTileCenter = origin;
         lastPos = origin;
@@ -1066,8 +987,6 @@ public class Bomb : MonoBehaviour, IMagnetPullable
 
         if (anim != null)
             anim.SetFrozen(true);
-
-        DLog($"StartMagnetPull dir=({kickDirection.x:0.###},{kickDirection.y:0.###}) steps={steps} tile={tileSize:0.###}");
 
         magnetRoutine = StartCoroutine(MagnetPullRoutineFixed(steps));
         return true;
@@ -1127,8 +1046,6 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         }
 
         magnetRoutine = null;
-
-        DLog("MagnetPull FINISH");
     }
 
     public void EnsureMinRemainingFuse(float minSeconds)
@@ -1143,7 +1060,6 @@ public class Bomb : MonoBehaviour, IMagnetPullable
             return;
 
         FuseSeconds += (min - remaining);
-        DLog($"EnsureMinRemainingFuse min={min:0.###} remainingWas={remaining:0.###} FuseSecondsNow={FuseSeconds:0.###}");
     }
 
     public void LockWorldPosition(Vector2 worldPos)
@@ -1165,5 +1081,12 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         }
 
         transform.position = worldPos;
+    }
+
+    private static Vector2 SnapToGrid(Vector2 worldPos, float tileSize)
+    {
+        worldPos.x = Mathf.Round(worldPos.x / tileSize) * tileSize;
+        worldPos.y = Mathf.Round(worldPos.y / tileSize) * tileSize;
+        return worldPos;
     }
 }
