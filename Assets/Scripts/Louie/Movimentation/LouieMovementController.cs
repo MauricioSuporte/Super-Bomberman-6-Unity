@@ -48,6 +48,9 @@ public class LouieMovementController : MovementController
             return;
         }
 
+        if (RedBoatRideZone.IsRidingBoat(owner))
+            return;
+
         Vector2 dir = owner.Direction;
 
         if (dir != Vector2.zero)

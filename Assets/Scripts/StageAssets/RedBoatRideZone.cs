@@ -62,7 +62,7 @@ public sealed class RedBoatRideZone : MonoBehaviour
 
     private readonly List<AnimatedSpriteRenderer> riderAllAnimRenderers = new();
 
-    // Base local position do "visual" usado pelo AnimatedSpriteRenderer (SpriteRenderer/Image)
+    private static readonly HashSet<MovementController> ridersOnBoats = new();
     private readonly Dictionary<AnimatedSpriteRenderer, Vector3> headVisualBaseLocal = new();
 
     private void Awake()
@@ -87,15 +87,16 @@ public sealed class RedBoatRideZone : MonoBehaviour
 
         UpdateBoatVisualFromRider();
         UpdateHeadOnlyFromRider();
-
-        // aplica offsets continuamente (pra refletir ajuste no inspector)
         ApplyHeadOnlyOffsetsIfEnabled();
     }
 
     private void OnDisable()
     {
         if (rider != null)
+        {
+            ridersOnBoats.Remove(rider);
             ForceUnmount();
+        }
     }
 
     public bool HasRider => rider != null;
@@ -138,6 +139,7 @@ public sealed class RedBoatRideZone : MonoBehaviour
             return false;
 
         rider = mc;
+        ridersOnBoats.Add(rider);
         rider.SetSuppressInactivityAnimation(true);
         riderRb = mc.Rigidbody;
 
@@ -216,6 +218,8 @@ public sealed class RedBoatRideZone : MonoBehaviour
         waterColliders.Clear();
 
         rider.SetSuppressInactivityAnimation(false);
+        if (rider != null)
+            ridersOnBoats.Remove(rider);
         rider = null;
         riderRb = null;
 
@@ -538,4 +542,11 @@ public sealed class RedBoatRideZone : MonoBehaviour
         r.idle = idle;
         r.RefreshFrame();
     }
+
+    public static bool IsRidingBoat(MovementController mc)
+    {
+        if (mc == null) return false;
+        return ridersOnBoats.Contains(mc);
+    }
+
 }

@@ -42,6 +42,8 @@ public class LouieVisualController : MonoBehaviour
     private SpriteRenderer[] allSpriteRenderers;
     private AnimatedSpriteRenderer[] allAnimatedRenderers;
 
+    private bool suppressedByRedBoat;
+
     public bool HasInactivityEmoteRenderer => louieInactivityEmoteLoop != null;
 
     public void Bind(MovementController movement)
@@ -49,6 +51,7 @@ public class LouieVisualController : MonoBehaviour
         owner = movement;
         playingEndStage = false;
         playingInactivity = false;
+        suppressedByRedBoat = false;
 
         CacheAllRenderers();
 
@@ -151,6 +154,27 @@ public class LouieVisualController : MonoBehaviour
 
         transform.localPosition = localOffset;
 
+        bool ownerOnRedBoat = RedBoatRideZone.IsRidingBoat(owner);
+
+        if (ownerOnRedBoat)
+        {
+            if (!suppressedByRedBoat)
+            {
+                Debug.Log($"[LouieVisual] SUPPRESS start dir={owner.Direction} face={owner.FacingDirection}", this);
+                SuppressAllLouieVisuals();
+            }
+
+            return;
+        }
+        else
+        {
+            if (suppressedByRedBoat)
+            {
+                Debug.Log($"[LouieVisual] RESTORE dir={owner.Direction} face={owner.FacingDirection}", this);
+                RestoreAfterBoatSuppression();
+            }
+        }
+
         if (playingInactivity)
             EnsureInactivityExclusive();
         else if (playingEndStage)
@@ -166,6 +190,62 @@ public class LouieVisualController : MonoBehaviour
         }
 
         ApplyBlinkSyncFromOwnerIfNeeded();
+    }
+
+    private void SuppressAllLouieVisuals()
+    {
+        suppressedByRedBoat = true;
+
+        if (allSpriteRenderers == null || allAnimatedRenderers == null)
+            CacheAllRenderers();
+
+        if (allAnimatedRenderers != null)
+        {
+            for (int i = 0; i < allAnimatedRenderers.Length; i++)
+            {
+                var a = allAnimatedRenderers[i];
+                if (a == null) continue;
+                a.enabled = false;
+            }
+        }
+
+        if (allSpriteRenderers != null)
+        {
+            for (int i = 0; i < allSpriteRenderers.Length; i++)
+            {
+                var sr = allSpriteRenderers[i];
+                if (sr == null) continue;
+                sr.enabled = false;
+            }
+        }
+    }
+
+    private void RestoreAfterBoatSuppression()
+    {
+        suppressedByRedBoat = false;
+
+        if (owner == null)
+            return;
+
+        if (playingInactivity)
+        {
+            EnsureInactivityExclusive();
+            return;
+        }
+
+        if (playingEndStage)
+        {
+            EnsureEndStageExclusive();
+            return;
+        }
+
+        bool isIdle = owner.Direction == Vector2.zero;
+        Vector2 faceDir = isIdle ? owner.FacingDirection : owner.Direction;
+
+        ApplyDirection(faceDir, isIdle);
+
+        if (isPinkLouieMounted)
+            ForceDisableRightRenderer();
     }
 
     private void EnsureInactivityExclusive()
@@ -466,20 +546,5 @@ public class LouieVisualController : MonoBehaviour
     public void ForceOnlyUpEnabled()
     {
         ForceIdleUp();
-    }
-}
-
-public static class TransformExtensions
-{
-    public static string GetHierarchyPath(this Transform t)
-    {
-        if (t == null) return "<null>";
-        string path = t.name;
-        while (t.parent != null)
-        {
-            t = t.parent;
-            path = t.name + "/" + path;
-        }
-        return path;
     }
 }
