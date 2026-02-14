@@ -9,14 +9,21 @@ public class PlayerInputManager : MonoBehaviour
 {
     public static PlayerInputManager Instance { get; private set; }
 
-    [Header("Players")]
-    [Tooltip("How many player profiles to create (1-4).")]
+    [Header("Players (fallback if GameSession is missing)")]
+    [Tooltip("How many player profiles to create (1-4). Used only if GameSession.Instance is null.")]
     [Range(1, 4)]
     [SerializeField] int maxPlayers = 4;
 
     [Header("Analog As Dpad Fallback")]
     [SerializeField, Range(0.1f, 0.95f)] float analogThreshold = 0.55f;
     [SerializeField] bool includeRightStickAsDpad = false;
+
+    [Header("Boat Input Gate")]
+    [Tooltip("If true: while the player is riding a Boat, only MoveUp/Down/Left/Right are accepted. Everything else returns false.")]
+    [SerializeField] private bool blockNonDirectionalInputsWhileRidingBoat = true;
+
+    [Tooltip("How often to refresh playerId -> MovementController mapping (seconds).")]
+    [SerializeField, Min(0.05f)] private float refreshPlayersMapEverySeconds = 0.5f;
 
     readonly Dictionary<int, PlayerInputProfile> players = new();
 
@@ -30,7 +37,20 @@ public class PlayerInputManager : MonoBehaviour
     readonly Dictionary<int, bool> curLeft = new();
     readonly Dictionary<int, bool> curRight = new();
 
-    int PlayerCount => Mathf.Clamp(maxPlayers, 1, 4);
+    private readonly Dictionary<int, MovementController> playerControllers = new();
+    private float nextPlayersMapRefreshTime;
+
+    int PlayerCount
+    {
+        get
+        {
+            var gs = GameSession.Instance;
+            if (gs != null)
+                return Mathf.Clamp(gs.ActivePlayerCount, 1, 4);
+
+            return Mathf.Clamp(maxPlayers, 1, 4);
+        }
+    }
 
     void Awake()
     {
@@ -43,25 +63,20 @@ public class PlayerInputManager : MonoBehaviour
         Instance = this;
         DontDestroyOnLoad(gameObject);
 
-        int count = PlayerCount;
-
-        for (int id = 1; id <= count; id++)
-        {
-            players[id] = new PlayerInputProfile(id);
-
-            prevUp[id] = prevDown[id] = prevLeft[id] = prevRight[id] = false;
-            curUp[id] = curDown[id] = curLeft[id] = curRight[id] = false;
-        }
+        EnsureProfilesForPlayerCount();
+        RefreshPlayersMap(force: true);
     }
 
     void Update()
     {
-        int count = PlayerCount;
+        EnsureProfilesForPlayerCount();
 
+        RefreshPlayersMap(force: false);
+
+        int count = PlayerCount;
         for (int id = 1; id <= count; id++)
         {
             var p = GetPlayer(id);
-
             ReadDpadDigital(p, out bool up, out bool down, out bool left, out bool right);
 
             curUp[id] = up;
@@ -74,7 +89,6 @@ public class PlayerInputManager : MonoBehaviour
     void LateUpdate()
     {
         int count = PlayerCount;
-
         for (int id = 1; id <= count; id++)
         {
             prevUp[id] = curUp[id];
@@ -82,6 +96,81 @@ public class PlayerInputManager : MonoBehaviour
             prevLeft[id] = curLeft[id];
             prevRight[id] = curRight[id];
         }
+    }
+
+    private void EnsureProfilesForPlayerCount()
+    {
+        int count = PlayerCount;
+
+        for (int id = 1; id <= count; id++)
+        {
+            if (!players.TryGetValue(id, out var p) || p == null)
+                players[id] = new PlayerInputProfile(id);
+
+            if (!prevUp.ContainsKey(id))
+                prevUp[id] = prevDown[id] = prevLeft[id] = prevRight[id] = false;
+
+            if (!curUp.ContainsKey(id))
+                curUp[id] = curDown[id] = curLeft[id] = curRight[id] = false;
+        }
+
+    }
+
+    private void RefreshPlayersMap(bool force)
+    {
+        if (!force && Time.time < nextPlayersMapRefreshTime)
+            return;
+
+        nextPlayersMapRefreshTime = Time.time + Mathf.Max(0.05f, refreshPlayersMapEverySeconds);
+
+        playerControllers.Clear();
+
+#if UNITY_2023_1_OR_NEWER
+        var all = FindObjectsByType<MovementController>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+#else
+        var all = FindObjectsOfType<MovementController>();
+#endif
+        if (all == null) return;
+
+        for (int i = 0; i < all.Length; i++)
+        {
+            var mc = all[i];
+            if (mc == null) continue;
+
+            if (!mc.CompareTag("Player"))
+                continue;
+
+            int pid = Mathf.Clamp(mc.PlayerId, 1, 4);
+
+            playerControllers[pid] = mc;
+        }
+    }
+
+    private bool IsDirectionalAction(PlayerAction action)
+    {
+        return action == PlayerAction.MoveUp ||
+               action == PlayerAction.MoveDown ||
+               action == PlayerAction.MoveLeft ||
+               action == PlayerAction.MoveRight;
+    }
+
+    private bool ShouldBlockActionBecauseRidingBoat(int playerId, PlayerAction action)
+    {
+        if (!blockNonDirectionalInputsWhileRidingBoat)
+            return false;
+
+        if (IsDirectionalAction(action))
+            return false;
+
+        if (!playerControllers.TryGetValue(playerId, out var mc) || mc == null)
+        {
+            RefreshPlayersMap(force: true);
+
+            if (!playerControllers.TryGetValue(playerId, out mc) || mc == null)
+                return false;
+        }
+
+        return RedBoatRideZone.IsRidingBoat(mc);
     }
 
     public PlayerInputProfile GetPlayer(int playerId)
@@ -106,6 +195,9 @@ public class PlayerInputManager : MonoBehaviour
     public bool Get(PlayerAction action, int playerId = 1)
     {
         playerId = Mathf.Clamp(playerId, 1, 4);
+
+        if (ShouldBlockActionBecauseRidingBoat(playerId, action))
+            return false;
 
         var p = GetPlayer(playerId);
         var b = p.GetBinding(action);
@@ -134,6 +226,9 @@ public class PlayerInputManager : MonoBehaviour
     public bool GetDown(PlayerAction action, int playerId = 1)
     {
         playerId = Mathf.Clamp(playerId, 1, 4);
+
+        if (ShouldBlockActionBecauseRidingBoat(playerId, action))
+            return false;
 
         var p = GetPlayer(playerId);
         var b = p.GetBinding(action);
