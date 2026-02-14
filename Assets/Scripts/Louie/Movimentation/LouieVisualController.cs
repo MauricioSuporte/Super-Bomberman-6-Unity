@@ -29,9 +29,9 @@ public class LouieVisualController : MonoBehaviour
 
     private AnimatedSpriteRenderer active;
     private bool playingEndStage;
-    private bool isPinkLouieMounted;
     private bool playingInactivity;
 
+    private bool isPinkLouieMounted;
     private MovementController louieMovement;
 
     private SpriteRenderer[] louieSpriteRenderers;
@@ -60,13 +60,12 @@ public class LouieVisualController : MonoBehaviour
 
         isPinkLouieMounted = DetectPinkMounted(owner);
 
+        // Se Pink usa o mesmo renderer pra left/right, anula right
         if (isPinkLouieMounted && louieRight == louieLeft)
             louieRight = null;
 
         if (owner != null)
-        {
             ownerSpriteRenderers = owner.GetComponentsInChildren<SpriteRenderer>(true);
-        }
 
         louieSpriteRenderers = GetComponentsInChildren<SpriteRenderer>(true);
         louieOriginalColors = new Color[louieSpriteRenderers.Length];
@@ -76,7 +75,11 @@ public class LouieVisualController : MonoBehaviour
         if (louieInactivityEmoteLoop != null)
             SetRendererBranchEnabled(louieInactivityEmoteLoop, false);
 
-        var start = louieDown != null ? louieDown : (louieUp != null ? louieUp : (louieLeft != null ? louieLeft : louieRight));
+        var start =
+            louieDown != null ? louieDown :
+            louieUp != null ? louieUp :
+            louieLeft != null ? louieLeft : louieRight;
+
         if (start != null)
         {
             HardExclusive(start);
@@ -100,34 +103,76 @@ public class LouieVisualController : MonoBehaviour
 
         if (on)
         {
+            playingEndStage = false;
+
             louieInactivityEmoteLoop.loop = true;
             louieInactivityEmoteLoop.idle = false;
-
+            louieInactivityEmoteLoop.pingPong = false;
             louieInactivityEmoteLoop.CurrentFrame = 0;
 
             HardExclusive(louieInactivityEmoteLoop);
-
             louieInactivityEmoteLoop.RefreshFrame();
-
             return;
         }
-        else
+
+        // desligando emote
+        if (owner == null)
         {
-            if (owner == null)
-            {
-                SetRendererBranchEnabled(louieInactivityEmoteLoop, false);
-                return;
-            }
-
-            bool isIdle = owner.Direction == Vector2.zero;
-            Vector2 faceDir = isIdle ? owner.FacingDirection : owner.Direction;
-
-            playingEndStage = false;
-
-            ApplyDirection(faceDir, isIdle);
-
             SetRendererBranchEnabled(louieInactivityEmoteLoop, false);
+            return;
         }
+
+        bool isIdle = owner.Direction == Vector2.zero;
+        Vector2 faceDir = isIdle ? owner.FacingDirection : owner.Direction;
+
+        playingEndStage = false;
+
+        ApplyDirection(faceDir, isIdle);
+        SetRendererBranchEnabled(louieInactivityEmoteLoop, false);
+    }
+
+    public bool TryPlayEndStage(float totalTime, int frameCount)
+    {
+        if (louieEndStage == null)
+            return false;
+
+        playingInactivity = false;
+        playingEndStage = true;
+
+        HardExclusive(louieEndStage);
+
+        louieEndStage.idle = false;
+        louieEndStage.loop = true;
+        louieEndStage.pingPong = false;
+        louieEndStage.CurrentFrame = 0;
+        louieEndStage.ClearRuntimeBaseLocalX();
+        louieEndStage.RefreshFrame();
+
+        if (frameCount > 0)
+            louieEndStage.animationTime = totalTime / frameCount;
+
+        return true;
+    }
+
+    public void ForceIdleUp()
+    {
+        playingInactivity = false;
+        playingEndStage = false;
+
+        if (louieUp == null)
+            return;
+
+        SetExclusive(louieUp);
+
+        louieUp.idle = true;
+        louieUp.loop = false;
+        louieUp.pingPong = false;
+        louieUp.RefreshFrame();
+    }
+
+    public void ForceOnlyUpEnabled()
+    {
+        ForceIdleUp();
     }
 
     private void CacheAllRenderers()
@@ -154,31 +199,28 @@ public class LouieVisualController : MonoBehaviour
 
         transform.localPosition = localOffset;
 
+        // SUPPRESS total quando o dono está no RedBoat
         bool ownerOnRedBoat = RedBoatRideZone.IsRidingBoat(owner);
 
         if (ownerOnRedBoat)
         {
             if (!suppressedByRedBoat)
-            {
-                Debug.Log($"[LouieVisual] SUPPRESS start dir={owner.Direction} face={owner.FacingDirection}", this);
                 SuppressAllLouieVisuals();
-            }
 
-            return;
+            return; // não atualiza animações enquanto estiver suprimido
         }
-        else
-        {
-            if (suppressedByRedBoat)
-            {
-                Debug.Log($"[LouieVisual] RESTORE dir={owner.Direction} face={owner.FacingDirection}", this);
-                RestoreAfterBoatSuppression();
-            }
-        }
+
+        if (suppressedByRedBoat)
+            RestoreAfterBoatSuppression();
 
         if (playingInactivity)
+        {
             EnsureInactivityExclusive();
+        }
         else if (playingEndStage)
+        {
             EnsureEndStageExclusive();
+        }
         else
         {
             bool isIdle = owner.Direction == Vector2.zero;
@@ -270,39 +312,6 @@ public class LouieVisualController : MonoBehaviour
         louieInactivityEmoteLoop.RefreshFrame();
     }
 
-    private void ApplyBlinkSyncFromOwnerIfNeeded()
-    {
-        if (!syncBlinkFromPlayerWhenMounted)
-            return;
-
-        if (owner == null || !owner.IsMountedOnLouie)
-            return;
-
-        if (ownerSpriteRenderers == null || louieSpriteRenderers == null)
-            return;
-
-        for (int i = 0; i < louieSpriteRenderers.Length; i++)
-        {
-            var louieSr = louieSpriteRenderers[i];
-            if (louieSr == null)
-                continue;
-
-            Color c = louieOriginalColors[i];
-
-            for (int j = 0; j < ownerSpriteRenderers.Length; j++)
-            {
-                var ownerSr = ownerSpriteRenderers[j];
-                if (ownerSr == null || !ownerSr.enabled)
-                    continue;
-
-                c.a = ownerSr.color.a;
-                break;
-            }
-
-            louieSr.color = c;
-        }
-    }
-
     private void EnsureEndStageExclusive()
     {
         if (louieEndStage == null)
@@ -362,6 +371,39 @@ public class LouieVisualController : MonoBehaviour
             ForceDisableRightRenderer();
     }
 
+    private void ApplyBlinkSyncFromOwnerIfNeeded()
+    {
+        if (!syncBlinkFromPlayerWhenMounted)
+            return;
+
+        if (owner == null || !owner.IsMountedOnLouie)
+            return;
+
+        if (ownerSpriteRenderers == null || louieSpriteRenderers == null)
+            return;
+
+        for (int i = 0; i < louieSpriteRenderers.Length; i++)
+        {
+            var louieSr = louieSpriteRenderers[i];
+            if (louieSr == null)
+                continue;
+
+            Color c = louieOriginalColors[i];
+
+            for (int j = 0; j < ownerSpriteRenderers.Length; j++)
+            {
+                var ownerSr = ownerSpriteRenderers[j];
+                if (ownerSr == null || !ownerSr.enabled)
+                    continue;
+
+                c.a = ownerSr.color.a;
+                break;
+            }
+
+            louieSr.color = c;
+        }
+    }
+
     private void ForceDisableRightRenderer()
     {
         if (louieRight == null)
@@ -380,12 +422,9 @@ public class LouieVisualController : MonoBehaviour
 
         AnimatedSpriteRenderer target = null;
 
-        if (faceDir == Vector2.up)
-            target = louieUp;
-        else if (faceDir == Vector2.down)
-            target = louieDown;
-        else if (faceDir == Vector2.left)
-            target = louieLeft != null ? louieLeft : louieRight;
+        if (faceDir == Vector2.up) target = louieUp;
+        else if (faceDir == Vector2.down) target = louieDown;
+        else if (faceDir == Vector2.left) target = louieLeft != null ? louieLeft : louieRight;
         else if (faceDir == Vector2.right)
         {
             if (isPinkLouieMounted)
@@ -394,7 +433,9 @@ public class LouieVisualController : MonoBehaviour
                 target = louieRight != null ? louieRight : louieLeft;
         }
         else
-            target = louieDown != null ? louieDown : (louieUp != null ? louieUp : (louieLeft != null ? louieLeft : louieRight));
+            target = louieDown != null ? louieDown :
+                     (louieUp != null ? louieUp :
+                     (louieLeft != null ? louieLeft : louieRight));
 
         if (target == null)
             return;
@@ -402,13 +443,13 @@ public class LouieVisualController : MonoBehaviour
         if (active != target)
             SetExclusive(target);
 
-        EnsureEnabled(active);
+        SetRendererBranchEnabled(active, true);
 
         active.pingPong = false;
         active.idle = isIdle;
         active.loop = !isIdle;
 
-        if (active.TryGetComponent<SpriteRenderer>(out var sr))
+        if (active != null && active.TryGetComponent<SpriteRenderer>(out var sr) && sr != null)
         {
             if (active == louieLeft && (louieRight == null || isPinkLouieMounted))
                 sr.flipX = (faceDir == Vector2.right);
@@ -418,14 +459,6 @@ public class LouieVisualController : MonoBehaviour
 
         ApplyPinkRightXFix(faceDir);
         active.RefreshFrame();
-    }
-
-    private void EnsureEnabled(AnimatedSpriteRenderer renderer)
-    {
-        if (renderer == null)
-            return;
-
-        SetRendererBranchEnabled(renderer, true);
     }
 
     private void ApplyPinkRightXFix(Vector2 faceDir)
@@ -502,49 +535,5 @@ public class LouieVisualController : MonoBehaviour
         for (int i = 0; i < anims.Length; i++)
             if (anims[i] != null)
                 anims[i].enabled = on;
-    }
-
-    public bool TryPlayEndStage(float totalTime, int frameCount)
-    {
-        if (louieEndStage == null)
-            return false;
-
-        playingInactivity = false;
-        playingEndStage = true;
-
-        HardExclusive(louieEndStage);
-
-        louieEndStage.idle = false;
-        louieEndStage.loop = true;
-        louieEndStage.pingPong = false;
-        louieEndStage.CurrentFrame = 0;
-        louieEndStage.ClearRuntimeBaseLocalX();
-        louieEndStage.RefreshFrame();
-
-        if (frameCount > 0)
-            louieEndStage.animationTime = totalTime / frameCount;
-
-        return true;
-    }
-
-    public void ForceIdleUp()
-    {
-        playingInactivity = false;
-        playingEndStage = false;
-
-        if (louieUp == null)
-            return;
-
-        SetExclusive(louieUp);
-
-        louieUp.idle = true;
-        louieUp.loop = false;
-        louieUp.pingPong = false;
-        louieUp.RefreshFrame();
-    }
-
-    public void ForceOnlyUpEnabled()
-    {
-        ForceIdleUp();
     }
 }
