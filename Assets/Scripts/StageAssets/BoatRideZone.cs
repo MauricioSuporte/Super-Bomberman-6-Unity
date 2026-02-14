@@ -3,7 +3,7 @@ using UnityEngine;
 using UnityEngine.UI;
 
 [RequireComponent(typeof(BoxCollider2D))]
-public sealed class RedBoatRideZone : MonoBehaviour
+public sealed class BoatRideZone : MonoBehaviour
 {
     [Header("Boat Visuals (children)")]
     [SerializeField] private AnimatedSpriteRenderer down;
@@ -33,7 +33,7 @@ public sealed class RedBoatRideZone : MonoBehaviour
     [SerializeField, Min(0.01f)] private float autoAnchorRefreshSeconds = 0.35f;
     [SerializeField, Min(0.01f)] private float autoAnchorSnapDistance = 1.25f;
     private float nextAutoAnchorTime;
-    private readonly List<RedBoatMountZone> cachedAnchorZones = new();
+    private readonly List<BoatMountZone> cachedAnchorZones = new();
 
     [Header("HeadOnly (child names)")]
     [SerializeField] private string headOnlyUpName = "HeadOnlyUp";
@@ -78,9 +78,9 @@ public sealed class RedBoatRideZone : MonoBehaviour
     private readonly Dictionary<AnimatedSpriteRenderer, Vector3> headVisualBaseLocal = new();
 
     private static readonly HashSet<MovementController> ridersOnBoats = new();
-    private static readonly Dictionary<MovementController, RedBoatRideZone> riderToBoat = new();
+    private static readonly Dictionary<MovementController, BoatRideZone> riderToBoat = new();
 
-    public static bool TryGetBoatForRider(MovementController mc, out RedBoatRideZone boat)
+    public static bool TryGetBoatForRider(MovementController mc, out BoatRideZone boat)
     {
         boat = null;
         if (mc == null) return false;
@@ -325,7 +325,7 @@ public sealed class RedBoatRideZone : MonoBehaviour
     {
         cachedAnchorZones.Clear();
 
-        var zones = FindObjectsByType<RedBoatMountZone>(FindObjectsSortMode.None);
+        var zones = FindObjectsByType<BoatMountZone>(FindObjectsSortMode.None);
         if (zones == null || zones.Length == 0) return;
 
         for (int i = 0; i < zones.Length; i++)
@@ -351,7 +351,7 @@ public sealed class RedBoatRideZone : MonoBehaviour
 
         Vector2 boatCenter = GetBoatCenter();
 
-        RedBoatMountZone best = null;
+        BoatMountZone best = null;
         float bestDist = float.MaxValue;
         Vector2 bestCenter = Vector2.zero;
 

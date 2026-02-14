@@ -2,13 +2,13 @@
 using UnityEngine;
 
 [RequireComponent(typeof(BoxCollider2D))]
-public sealed class RedBoatUnmountZone : MonoBehaviour
+public sealed class BoatUnmountZone : MonoBehaviour
 {
     [Header("Boat Ref (legacy)")]
-    [SerializeField] private RedBoatRideZone boat;
+    [SerializeField] private BoatRideZone boat;
 
     [Header("Boats (optional - for multi boat)")]
-    [SerializeField] private List<RedBoatRideZone> boats = new();
+    [SerializeField] private List<BoatRideZone> boats = new();
 
     private BoxCollider2D zoneCollider;
 
@@ -19,7 +19,7 @@ public sealed class RedBoatUnmountZone : MonoBehaviour
 
         // Auto-resolve se não setou nada no Inspector
         if (boat == null)
-            boat = GetComponentInParent<RedBoatRideZone>();
+            boat = GetComponentInParent<BoatRideZone>();
     }
 
     private void Reset()
@@ -52,18 +52,18 @@ public sealed class RedBoatUnmountZone : MonoBehaviour
         mc.SnapToWorldPoint(center, roundToGrid: true);
     }
 
-    private RedBoatRideZone ResolveBoatForUnmount(MovementController mc)
+    private BoatRideZone ResolveBoatForUnmount(MovementController mc)
     {
         // 1) se veio setado (legacy)
         if (boat != null)
             return boat;
 
         // 2) se o player está montado, pega pelo mapa rider->boat (multi-boat perfeito)
-        if (RedBoatRideZone.TryGetBoatForRider(mc, out var ridingBoat) && ridingBoat != null)
+        if (BoatRideZone.TryGetBoatForRider(mc, out var ridingBoat) && ridingBoat != null)
             return ridingBoat;
 
         // 3) tenta parent
-        var parentBoat = GetComponentInParent<RedBoatRideZone>();
+        var parentBoat = GetComponentInParent<BoatRideZone>();
         if (parentBoat != null)
             return parentBoat;
 
@@ -84,7 +84,7 @@ public sealed class RedBoatUnmountZone : MonoBehaviour
         }
 
         // 5) último fallback: procurar no scene quem está com esse rider
-        var all = FindObjectsByType<RedBoatRideZone>(FindObjectsSortMode.None);
+        var all = FindObjectsByType<BoatRideZone>(FindObjectsSortMode.None);
         for (int i = 0; i < all.Length; i++)
         {
             var b = all[i];

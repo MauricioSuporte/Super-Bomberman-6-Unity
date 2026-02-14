@@ -2,13 +2,13 @@
 using UnityEngine;
 
 [RequireComponent(typeof(BoxCollider2D))]
-public sealed class RedBoatMountZone : MonoBehaviour
+public sealed class BoatMountZone : MonoBehaviour
 {
     [Header("Boat Ref (legacy)")]
-    [SerializeField] private RedBoatRideZone boat;
+    [SerializeField] private BoatRideZone boat;
 
     [Header("Boats (optional - for multi boat)")]
-    [SerializeField] private List<RedBoatRideZone> boats = new();
+    [SerializeField] private List<BoatRideZone> boats = new();
 
     [Header("Snap On Mount")]
     [SerializeField] private bool snapPlayerOnMount = true;
@@ -20,10 +20,10 @@ public sealed class RedBoatMountZone : MonoBehaviour
     private BoxCollider2D zoneCollider;
 
     // Legacy-only (mantido)
-    public RedBoatRideZone Boat => boat;
+    public BoatRideZone Boat => boat;
 
     // Usado pelo RideZone para cachear anchors mesmo sem legacy
-    public bool ReferencesBoat(RedBoatRideZone target)
+    public bool ReferencesBoat(BoatRideZone target)
     {
         if (target == null) return false;
 
@@ -35,7 +35,7 @@ public sealed class RedBoatMountZone : MonoBehaviour
                 if (boats[i] == target) return true;
         }
 
-        var parentBoat = GetComponentInParent<RedBoatRideZone>();
+        var parentBoat = GetComponentInParent<BoatRideZone>();
         return parentBoat == target;
     }
 
@@ -54,7 +54,7 @@ public sealed class RedBoatMountZone : MonoBehaviour
 
         if (boat == null)
         {
-            boat = GetComponentInParent<RedBoatRideZone>();
+            boat = GetComponentInParent<BoatRideZone>();
             MLog($"Awake: legacy boat was NULL, parentBoat={BName(boat)}");
         }
         else
@@ -139,13 +139,13 @@ public sealed class RedBoatMountZone : MonoBehaviour
 
     private int ClearRemountBlocksForAllCandidates(MovementController mc)
     {
-        var unique = new HashSet<RedBoatRideZone>();
+        var unique = new HashSet<BoatRideZone>();
 
         // 1) legacy
         if (boat != null) unique.Add(boat);
 
         // 2) parent
-        var parentBoat = GetComponentInParent<RedBoatRideZone>();
+        var parentBoat = GetComponentInParent<BoatRideZone>();
         if (parentBoat != null) unique.Add(parentBoat);
 
         // 3) lista
@@ -158,7 +158,7 @@ public sealed class RedBoatMountZone : MonoBehaviour
         // 4) fallback: scene
         if (unique.Count == 0)
         {
-            var all = FindObjectsByType<RedBoatRideZone>(FindObjectsSortMode.None);
+            var all = FindObjectsByType<BoatRideZone>(FindObjectsSortMode.None);
             for (int i = 0; i < all.Length; i++)
                 if (all[i] != null) unique.Add(all[i]);
         }
@@ -182,14 +182,14 @@ public sealed class RedBoatMountZone : MonoBehaviour
         return cleared;
     }
 
-    private RedBoatRideZone ResolveBoatForMount(MovementController mc, Vector2 zoneCenter, out string trace)
+    private BoatRideZone ResolveBoatForMount(MovementController mc, Vector2 zoneCenter, out string trace)
     {
         // Monta candidatos
-        var candidates = new List<RedBoatRideZone>(8);
+        var candidates = new List<BoatRideZone>(8);
 
         if (boat != null) candidates.Add(boat);
 
-        var parentBoat = GetComponentInParent<RedBoatRideZone>();
+        var parentBoat = GetComponentInParent<BoatRideZone>();
         if (parentBoat != null && !candidates.Contains(parentBoat))
             candidates.Add(parentBoat);
 
@@ -205,7 +205,7 @@ public sealed class RedBoatMountZone : MonoBehaviour
 
         if (candidates.Count == 0)
         {
-            var all = FindObjectsByType<RedBoatRideZone>(FindObjectsSortMode.None);
+            var all = FindObjectsByType<BoatRideZone>(FindObjectsSortMode.None);
             for (int i = 0; i < all.Length; i++)
             {
                 var b = all[i];
@@ -220,7 +220,7 @@ public sealed class RedBoatMountZone : MonoBehaviour
         }
 
         // 1) Preferir: ancorado no zoneCenter + pode montar
-        RedBoatRideZone best = null;
+        BoatRideZone best = null;
         float bestDist = float.MaxValue;
 
         for (int i = 0; i < candidates.Count; i++)

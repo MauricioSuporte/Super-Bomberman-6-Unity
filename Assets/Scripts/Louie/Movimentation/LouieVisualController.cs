@@ -200,7 +200,7 @@ public class LouieVisualController : MonoBehaviour
         transform.localPosition = localOffset;
 
         // SUPPRESS total quando o dono está no RedBoat
-        bool ownerOnRedBoat = RedBoatRideZone.IsRidingBoat(owner);
+        bool ownerOnRedBoat = BoatRideZone.IsRidingBoat(owner);
 
         if (ownerOnRedBoat)
         {

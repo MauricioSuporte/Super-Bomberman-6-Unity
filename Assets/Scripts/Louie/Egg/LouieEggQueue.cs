@@ -176,7 +176,7 @@ public sealed class LouieEggQueue : MonoBehaviour
 
         EnsureBound();
 
-        bool ownerOnRedBoat = (_ownerMove != null && RedBoatRideZone.IsRidingBoat(_ownerMove));
+        bool ownerOnRedBoat = (_ownerMove != null && BoatRideZone.IsRidingBoat(_ownerMove));
 
         if (ownerOnRedBoat)
         {

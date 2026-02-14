@@ -173,7 +173,7 @@ public class PlayerInputManager : MonoBehaviour
                 return false;
         }
 
-        return RedBoatRideZone.IsRidingBoat(mc);
+        return BoatRideZone.IsRidingBoat(mc);
     }
 
     public PlayerInputProfile GetPlayer(int playerId)
