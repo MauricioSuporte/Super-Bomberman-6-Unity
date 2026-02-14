@@ -982,7 +982,7 @@ Tilemap:
       - {fileID: 1925664496, guid: 6941c19c1cba83a4cbc94f1207289cd9, type: 3}
       - {fileID: -42286666, guid: 6941c19c1cba83a4cbc94f1207289cd9, type: 3}
       - {fileID: 1943493983, guid: 6941c19c1cba83a4cbc94f1207289cd9, type: 3}
-      m_AnimationSpeed: 5
+      m_AnimationSpeed: 5.0000005
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: 1, y: -6, z: 0}
@@ -1342,7 +1342,7 @@ Tilemap:
       - {fileID: 1925664496, guid: 6941c19c1cba83a4cbc94f1207289cd9, type: 3}
       - {fileID: -42286666, guid: 6941c19c1cba83a4cbc94f1207289cd9, type: 3}
       - {fileID: 1943493983, guid: 6941c19c1cba83a4cbc94f1207289cd9, type: 3}
-      m_AnimationSpeed: 5
+      m_AnimationSpeed: 5.0000005
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: 21, y: 1, z: 0}
@@ -2028,7 +2028,6 @@ MonoBehaviour:
   - {fileID: 1001493220}
   snapPlayerOnMount: 1
   roundToGrid: 1
-  debugMountZone: 1
 --- !u!61 &487829677
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -12002,7 +12001,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1aa1ef842d43d4449a4b672797ff89e5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameSession
-  activePlayerCount: 2
+  activePlayerCount: 1
 --- !u!4 &1522516126
 Transform:
   m_ObjectHideFlags: 0
@@ -12439,7 +12438,6 @@ MonoBehaviour:
   - {fileID: 1001493220}
   snapPlayerOnMount: 1
   roundToGrid: 1
-  debugMountZone: 1
 --- !u!1001 &1629966498
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -12626,7 +12624,6 @@ MonoBehaviour:
   - {fileID: 1001493220}
   snapPlayerOnMount: 1
   roundToGrid: 1
-  debugMountZone: 1
 --- !u!61 &1758564797
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -12786,7 +12783,6 @@ MonoBehaviour:
   - {fileID: 1001493220}
   snapPlayerOnMount: 1
   roundToGrid: 1
-  debugMountZone: 1
 --- !u!61 &2010671749
 BoxCollider2D:
   m_ObjectHideFlags: 0

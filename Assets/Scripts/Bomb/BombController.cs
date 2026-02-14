@@ -60,6 +60,10 @@ public partial class BombController : MonoBehaviour
     public AudioClip placeBombSfx;
     public AudioSource playerAudioSource;
 
+    [Header("Water Destroy SFX")]
+    [SerializeField] private AudioClip waterDestroySfx;
+    [Range(0f, 1f)][SerializeField] private float waterDestroyVolume = 1f;
+
     [Header("Explosion SFX By Radius (1..9, >=10 = last)")]
     public AudioClip[] explosionSfxByRadius = new AudioClip[10];
     [Range(0f, 1f)] public float explosionSfxVolume = 1f;
@@ -265,6 +269,41 @@ public partial class BombController : MonoBehaviour
             return abilitySystem.IsEnabled(PierceBombAbility.AbilityId);
 
         return false;
+    }
+
+    private bool TryDestroyBombIfOnWater(GameObject bombGo, Vector2 worldPos, bool refund)
+    {
+        if (bombGo == null)
+            return false;
+
+        var bomb = bombGo.GetComponent<Bomb>();
+        if (bomb != null && bomb.HasExploded)
+            return false;
+
+        if (!HasWaterAt(worldPos))
+            return false;
+
+        PlayWaterDestroySfx();
+
+        UnregisterBomb(bombGo);
+
+        if (bomb != null)
+            bomb.MarkAsExploded();
+
+        if (bombGo.TryGetComponent<Collider2D>(out var col))
+            col.enabled = false;
+
+        if (bombGo.TryGetComponent<SpriteRenderer>(out var sr))
+            sr.enabled = false;
+
+        if (bombGo.TryGetComponent<AnimatedSpriteRenderer>(out var ar))
+            ar.enabled = false;
+
+        if (refund)
+            bombsRemaining++;
+
+        Destroy(bombGo);
+        return true;
     }
 
     public void ExplodeBomb(GameObject bomb)
@@ -491,6 +530,9 @@ public partial class BombController : MonoBehaviour
         notifier.Initialize(this);
 
         TryHandleGroundBombAt(position, bomb);
+
+        if (TryDestroyBombIfOnWater(bomb, position, refund: true))
+            return;
 
         if (controlEnabled)
             RegisterBomb(bomb);
@@ -981,6 +1023,9 @@ public partial class BombController : MonoBehaviour
 
         TryHandleGroundBombAt(position, bomb);
 
+        if (TryDestroyBombIfOnWater(bomb, position, refund: true))
+            return true;
+
         if (bomb.TryGetComponent<Collider2D>(out var bombCollider))
             bombCollider.isTrigger = true;
 
@@ -1135,10 +1180,10 @@ public partial class BombController : MonoBehaviour
     }
 
     public void SpawnExplosionCrossForEffectWithTileEffects(
-    Vector2 origin,
-    int radius,
-    bool pierce,
-    AudioSource sfxSource = null)
+        Vector2 origin,
+        int radius,
+        bool pierce,
+        AudioSource sfxSource = null)
     {
         Vector2 p = origin;
         p.x = Mathf.Round(p.x);
@@ -1275,6 +1320,9 @@ public partial class BombController : MonoBehaviour
         Vector2 actual = GetBombEffectiveWorldPos(bombGo, worldPos);
 
         TryHandleGroundBombAt(actual, bombGo);
+
+        if (TryDestroyBombIfOnWater(bombGo, actual, refund: true))
+            return;
     }
 
     private void TryHandleGroundBombAt(Vector2 worldPos, GameObject bomb)
@@ -1316,5 +1364,17 @@ public partial class BombController : MonoBehaviour
         basePos.x = Mathf.Round(basePos.x);
         basePos.y = Mathf.Round(basePos.y);
         return basePos;
+    }
+
+    private void PlayWaterDestroySfx()
+    {
+        if (waterDestroySfx == null)
+            return;
+
+        AudioSource src = playerAudioSource != null ? playerAudioSource : _localAudio;
+        if (src == null)
+            return;
+
+        src.PlayOneShot(waterDestroySfx, waterDestroyVolume);
     }
 }

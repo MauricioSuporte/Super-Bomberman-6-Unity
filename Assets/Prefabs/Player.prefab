@@ -2207,6 +2207,8 @@ MonoBehaviour:
   explosionRadius: 2
   groundTiles: {fileID: 0}
   stageBoundsTiles: {fileID: 0}
+  waterTiles: {fileID: 0}
+  waterTag: Water
   destructibleTiles: {fileID: 0}
   destructiblePrefab: {fileID: 0}
   destructibleTileResolver: {fileID: 0}
@@ -2215,6 +2217,8 @@ MonoBehaviour:
     m_Bits: 512
   placeBombSfx: {fileID: 8300000, guid: da95ad1eaf576a54599d96cc59b94c11, type: 3}
   playerAudioSource: {fileID: 4627430260018096140}
+  waterDestroySfx: {fileID: 8300000, guid: 83a93c1236f473d409252138ebbc4160, type: 3}
+  waterDestroyVolume: 0.396
   explosionSfxByRadius:
   - {fileID: 8300000, guid: 982bf6370a168ad46a4c3f893bc7510c, type: 3}
   - {fileID: 8300000, guid: 888275a1a50795d4696007fe7b34632d, type: 3}
