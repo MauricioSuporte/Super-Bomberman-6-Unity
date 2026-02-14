@@ -24,6 +24,17 @@ public sealed class RedBoatRideZone : MonoBehaviour
     [Header("Mount/Unmount Safety")]
     [SerializeField, Min(0f)] private float remountBlockSeconds = 0.15f;
 
+    [Header("Anchor (Mount Zone Restriction)")]
+    [SerializeField, Min(0.001f)] private float anchorCheckDistance = 0.25f;
+    private BoxCollider2D boatCollider;
+
+    [Header("Auto Anchor Snap (when idle)")]
+    [SerializeField] private bool autoAnchorSnapWhenIdle = true;
+    [SerializeField, Min(0.01f)] private float autoAnchorRefreshSeconds = 0.35f;
+    [SerializeField, Min(0.01f)] private float autoAnchorSnapDistance = 1.25f;
+    private float nextAutoAnchorTime;
+    private readonly List<RedBoatMountZone> cachedAnchorZones = new();
+
     [Header("HeadOnly (child names)")]
     [SerializeField] private string headOnlyUpName = "HeadOnlyUp";
     [SerializeField] private string headOnlyDownName = "HeadOnlyDown";
@@ -67,20 +78,33 @@ public sealed class RedBoatRideZone : MonoBehaviour
 
     private void Awake()
     {
-        var col = GetComponent<BoxCollider2D>();
-        col.isTrigger = true;
+        boatCollider = GetComponent<BoxCollider2D>();
+        boatCollider.isTrigger = true;
 
         boatZ = transform.position.z;
 
         currentVisual = down;
         ForceOnly(currentVisual);
         ApplyIdleToAll(true);
+
+        RebuildAnchorZonesCache();
+
+        if (autoAnchorSnapWhenIdle)
+            TryAutoSnapToNearestAnchorZone();
     }
 
     private void LateUpdate()
     {
         if (rider == null || riderRb == null)
+        {
+            if (autoAnchorSnapWhenIdle && Time.time >= nextAutoAnchorTime)
+            {
+                nextAutoAnchorTime = Time.time + Mathf.Max(0.05f, autoAnchorRefreshSeconds);
+                TryAutoSnapToNearestAnchorZone();
+            }
+
             return;
+        }
 
         Vector2 p = riderRb.position + followOffset;
         transform.position = new Vector3(p.x, p.y, boatZ);
@@ -102,6 +126,31 @@ public sealed class RedBoatRideZone : MonoBehaviour
     public bool HasRider => rider != null;
     public bool IsRider(MovementController mc) => rider != null && rider == mc;
 
+    private Vector2 GetBoatCenter()
+    {
+        if (boatCollider != null)
+            return (Vector2)boatCollider.bounds.center;
+
+        return (Vector2)transform.position;
+    }
+
+    public bool IsAnchoredAt(Vector2 worldPoint, out string reason)
+    {
+        if (HasRider)
+        {
+            reason = "HasRider=true";
+            return false;
+        }
+
+        Vector2 boatCenter = GetBoatCenter();
+
+        float dist = Vector2.Distance(boatCenter, worldPoint);
+        bool ok = dist <= anchorCheckDistance;
+
+        reason = ok ? "ok" : "too far";
+        return ok;
+    }
+
     public bool IsRemountBlockedFor(MovementController mc)
     {
         if (mc == null) return false;
@@ -118,25 +167,31 @@ public sealed class RedBoatRideZone : MonoBehaviour
         remountBlockedRider = null;
     }
 
-    public bool CanMount(MovementController mc)
+    public bool CanMount(MovementController mc, out string reason)
     {
-        if (mc == null) return false;
-        if (HasRider) return false;
-        if (mc.isDead) return false;
-        if (!mc.CompareTag("Player")) return false;
+        if (mc == null) { reason = "mc NULL"; return false; }
+        if (HasRider) { reason = "boat already has rider"; return false; }
+        if (mc.isDead) { reason = "mc.isDead=true"; return false; }
+        if (!mc.CompareTag("Player")) { reason = "mc tag != Player"; return false; }
 
-        if (IsRemountBlockedFor(mc)) return false;
+        if (IsRemountBlockedFor(mc)) { reason = "remount blocked until exit"; return false; }
 
-        if (Time.frameCount == lastUnmountFrame) return false;
-        if (Time.time < nextAllowedMountTime) return false;
+        if (Time.frameCount == lastUnmountFrame) { reason = "blocked same frame as unmount"; return false; }
+        if (Time.time < nextAllowedMountTime) { reason = "blocked by cooldown"; return false; }
 
+        reason = "ok";
         return true;
     }
 
-    public bool TryMount(MovementController mc)
+    public bool CanMount(MovementController mc) => CanMount(mc, out _);
+
+    public bool TryMount(MovementController mc, out string reason)
     {
-        if (!CanMount(mc))
+        if (!CanMount(mc, out var canReason))
+        {
+            reason = $"CanMount=false ({canReason})";
             return false;
+        }
 
         rider = mc;
         ridersOnBoats.Add(rider);
@@ -174,8 +229,11 @@ public sealed class RedBoatRideZone : MonoBehaviour
         ForceOnly(currentVisual);
         ApplyIdleToAll(true);
 
+        reason = "ok";
         return true;
     }
+
+    public bool TryMount(MovementController mc) => TryMount(mc, out _);
 
     public bool TryUnmount(MovementController mc)
     {
@@ -218,8 +276,8 @@ public sealed class RedBoatRideZone : MonoBehaviour
         waterColliders.Clear();
 
         rider.SetSuppressInactivityAnimation(false);
-        if (rider != null)
-            ridersOnBoats.Remove(rider);
+        ridersOnBoats.Remove(rider);
+
         rider = null;
         riderRb = null;
 
@@ -229,6 +287,65 @@ public sealed class RedBoatRideZone : MonoBehaviour
         currentIdle = true;
         ForceOnly(currentVisual);
         ApplyIdleToAll(true);
+    }
+
+    private void RebuildAnchorZonesCache()
+    {
+        cachedAnchorZones.Clear();
+        var zones = FindObjectsOfType<RedBoatMountZone>(true);
+        if (zones == null) return;
+
+        for (int i = 0; i < zones.Length; i++)
+        {
+            var z = zones[i];
+            if (z == null) continue;
+            if (z.Boat == this)
+                cachedAnchorZones.Add(z);
+        }
+    }
+
+    private bool TryAutoSnapToNearestAnchorZone()
+    {
+        if (HasRider) return false;
+
+        if (cachedAnchorZones.Count == 0)
+            RebuildAnchorZonesCache();
+
+        if (cachedAnchorZones.Count == 0)
+            return false;
+
+        Vector2 boatCenter = GetBoatCenter();
+
+        RedBoatMountZone best = null;
+        float bestDist = float.MaxValue;
+        Vector2 bestCenter = Vector2.zero;
+
+        for (int i = 0; i < cachedAnchorZones.Count; i++)
+        {
+            var z = cachedAnchorZones[i];
+            if (z == null) continue;
+
+            Vector2 c = z.GetZoneCenterWorld();
+            float d = Vector2.Distance(boatCenter, c);
+            if (d < bestDist)
+            {
+                bestDist = d;
+                best = z;
+                bestCenter = c;
+            }
+        }
+
+        if (best == null)
+            return false;
+
+        bool shouldSnap = bestDist <= autoAnchorSnapDistance;
+        bool alreadyOk = bestDist <= anchorCheckDistance;
+
+        if (!shouldSnap || alreadyOk)
+            return alreadyOk;
+
+        transform.position = new Vector3(bestCenter.x, bestCenter.y, boatZ);
+        return true;
     }
 
     private void UpdateBoatVisualFromRider()
@@ -330,21 +447,18 @@ public sealed class RedBoatRideZone : MonoBehaviour
     {
         if (r == null) return null;
 
-        // Mesmo GO
         var srHere = r.GetComponent<SpriteRenderer>();
         if (srHere != null) return srHere.transform;
 
         var imgHere = r.GetComponent<Image>();
         if (imgHere != null) return imgHere.transform;
 
-        // Filhos
         var imgChild = r.GetComponentInChildren<Image>(true);
         if (imgChild != null) return imgChild.transform;
 
         var srChild = r.GetComponentInChildren<SpriteRenderer>(true);
         if (srChild != null) return srChild.transform;
 
-        // fallback
         return r.transform;
     }
 
@@ -383,9 +497,7 @@ public sealed class RedBoatRideZone : MonoBehaviour
         bool wantIdle = !isMoving;
 
         if (target != currentHead)
-        {
             ForceOnlyHead(target);
-        }
 
         SetIdle(currentHead, wantIdle);
     }
@@ -548,5 +660,4 @@ public sealed class RedBoatRideZone : MonoBehaviour
         if (mc == null) return false;
         return ridersOnBoats.Contains(mc);
     }
-
 }

@@ -11,6 +11,8 @@ public sealed class RedBoatMountZone : MonoBehaviour
 
     private BoxCollider2D zoneCollider;
 
+    public RedBoatRideZone Boat => boat;
+
     private void Awake()
     {
         zoneCollider = GetComponent<BoxCollider2D>();
@@ -25,33 +27,43 @@ public sealed class RedBoatMountZone : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D other)
     {
-        if (boat == null) return;
+        if (boat == null || other == null)
+            return;
 
         var mc = other.GetComponentInParent<MovementController>();
-        if (mc == null) return;
+        if (mc == null)
+            return;
 
-        if (!boat.CanMount(mc))
+        Vector2 zoneCenter = GetZoneCenterWorld();
+
+        if (!boat.IsAnchoredAt(zoneCenter, out _))
+            return;
+
+        if (!boat.CanMount(mc, out _))
             return;
 
         if (snapPlayerOnMount)
         {
             float tile = mc.tileSize > 0.0001f ? mc.tileSize : 1f;
-            Vector2 center = zoneCollider != null ? (Vector2)zoneCollider.bounds.center : (Vector2)transform.position;
-            Vector2 target = center + Vector2.down * tile;
-
+            Vector2 target = zoneCenter + Vector2.down * tile;
             mc.SnapToWorldPoint(target, roundToGrid);
         }
 
-        boat.TryMount(mc);
+        boat.TryMount(mc, out _);
     }
 
     private void OnTriggerExit2D(Collider2D other)
     {
-        if (boat == null) return;
+        if (boat == null || other == null) return;
 
         var mc = other.GetComponentInParent<MovementController>();
         if (mc == null) return;
 
         boat.ClearRemountBlock(mc);
+    }
+
+    public Vector2 GetZoneCenterWorld()
+    {
+        return zoneCollider != null ? (Vector2)zoneCollider.bounds.center : (Vector2)transform.position;
     }
 }
