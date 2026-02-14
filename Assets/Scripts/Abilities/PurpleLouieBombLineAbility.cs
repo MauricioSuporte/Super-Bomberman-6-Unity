@@ -136,7 +136,7 @@ public class PurpleLouieBombLineAbility : MonoBehaviour, IPlayerAbility
             if (HasEnemyAt(pos))
                 break;
 
-            if (!bomb.TryPlaceBombAtIgnoringInputLock(pos, playSfx: false))
+            if (!bomb.TryPlaceBombAtIgnoringInputLock(pos/*, playSfx: false*/))
                 break;
 
             placedAny = true;

@@ -80,9 +80,22 @@ public class Bomb : MonoBehaviour, IMagnetPullable
     private static readonly WaitForFixedUpdate waitFixed = new();
 
     public bool IsBeingMagnetPulled => magnetRoutine != null;
+    private bool lockWorldPosActive;
+    private Vector2 lockWorldPos;
 
     [SerializeField] private float magnetPullSpeed = 10f;
     private Coroutine magnetRoutine;
+
+    [Header("Debug - Surgical")]
+    [SerializeField] private bool debugBombPos = true;
+
+    private void DLog(string msg)
+    {
+        if (!debugBombPos) return;
+        Vector2 rbPos = rb != null ? rb.position : Vector2.negativeInfinity;
+        Vector3 tp = transform != null ? transform.position : Vector3.zero;
+        Debug.Log($"[BombDbg][Bomb:{name}] t={Time.time:0.000} f={Time.frameCount} id={GetInstanceID()} {msg} lastPos=({lastPos.x:0.###},{lastPos.y:0.###}) rb=({rbPos.x:0.###},{rbPos.y:0.###}) tr=({tp.x:0.###},{tp.y:0.###})");
+    }
 
     private void Awake()
     {
@@ -105,6 +118,38 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         }
 
         lastPos = rb.position;
+
+        DLog("Awake");
+    }
+
+    private void OnEnable()
+    {
+        DLog("OnEnable");
+    }
+
+    private void OnDisable()
+    {
+        DLog("OnDisable");
+    }
+
+    private void OnDestroy()
+    {
+        DLog("OnDestroy");
+    }
+
+    private void FixedUpdate()
+    {
+        if (!lockWorldPosActive)
+            return;
+
+        if (rb != null)
+        {
+            rb.position = lockWorldPos;
+            rb.linearVelocity = Vector2.zero;
+            rb.angularVelocity = 0f;
+        }
+
+        transform.position = lockWorldPos;
     }
 
     public void BeginFuse()
@@ -118,6 +163,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         if (fuseRoutine != null)
             StopCoroutine(fuseRoutine);
 
+        DLog($"BeginFuse FuseSeconds={FuseSeconds:0.###} PlacedTime={PlacedTime:0.###}");
         fuseRoutine = StartCoroutine(FuseRoutine());
     }
 
@@ -127,6 +173,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         {
             if (owner == null)
             {
+                DLog("FuseRoutine: owner NULL -> stop");
                 fuseRoutine = null;
                 yield break;
             }
@@ -139,6 +186,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
 
             if (RemainingFuseSeconds <= 0f)
             {
+                DLog("FuseRoutine: fuse ended -> owner.ExplodeBomb");
                 owner.ExplodeBomb(gameObject);
                 fuseRoutine = null;
                 yield break;
@@ -157,6 +205,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
 
         fusePaused = true;
         fusePauseStartedAt = Time.time;
+        DLog("PauseFuse");
     }
 
     private void ResumeFuse()
@@ -169,10 +218,14 @@ public class Bomb : MonoBehaviour, IMagnetPullable
 
         fusePaused = false;
         fusePauseStartedAt = 0f;
+
+        DLog($"ResumeFuse (+{paused:0.###}s)");
     }
 
     public void ForceStopExternalMovementAndSnap(Vector2 snapWorldPos)
     {
+        DLog($"ForceStopExternalMovementAndSnap snap=({snapWorldPos.x:0.###},{snapWorldPos.y:0.###})");
+
         if (kickRoutine != null)
         {
             StopCoroutine(kickRoutine);
@@ -204,6 +257,8 @@ public class Bomb : MonoBehaviour, IMagnetPullable
             rb.position = snapWorldPos;
 
         transform.position = snapWorldPos;
+
+        DLog("ForceStopExternalMovementAndSnap DONE");
     }
 
     private void RecalculateCharactersInsideAt(Vector2 worldPos)
@@ -362,6 +417,8 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         if (anim != null)
             anim.SetFrozen(true);
 
+        DLog($"StartPunch dir=({kickDirection.x:0.###},{kickDirection.y:0.###}) steps={distanceTiles} tile={tileSize:0.###}");
+
         punchRoutine = StartCoroutine(PunchRoutineFixed_Hybrid(origin, distanceTiles, 80, punchDuration, punchArcHeight));
         return true;
     }
@@ -482,6 +539,8 @@ public class Bomb : MonoBehaviour, IMagnetPullable
             anim.SetFrozen(false);
             anim.RefreshFrame();
         }
+
+        DLog("PunchRoutine FINISH");
     }
 
     private void EnsureStageBounds()
@@ -677,6 +736,8 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         rb.position = pos;
         transform.position = pos;
         lastPos = pos;
+
+        DLog($"TeleportTo ({pos.x:0.###},{pos.y:0.###})");
     }
 
     private IEnumerator PunchArcSegmentFixed(Vector2 start, Vector2 end, float duration, float arcHeight)
@@ -705,6 +766,8 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         rb.position = end;
         transform.position = end;
         lastPos = end;
+
+        DLog($"PunchArcSegmentFixed END ({end.x:0.###},{end.y:0.###})");
     }
 
     public void SetStageBoundsTilemap(Tilemap tilemap)
@@ -749,6 +812,8 @@ public class Bomb : MonoBehaviour, IMagnetPullable
 
         RecalculateCharactersInsideAt(rb.position);
         bombCollider.isTrigger = charactersInside.Count > 0;
+
+        DLog($"Initialize owner='{(owner != null ? owner.name : "NULL")}' PlacedTime={PlacedTime:0.###}");
     }
 
     public Vector2 GetLogicalPosition() => lastPos;
@@ -764,6 +829,8 @@ public class Bomb : MonoBehaviour, IMagnetPullable
             rb.position = worldPos;
 
         transform.position = worldPos;
+
+        DLog($"ForceSetLogicalPosition ({worldPos.x:0.###},{worldPos.y:0.###})");
     }
 
     public bool StartKick(Vector2 direction, float tileSize, LayerMask obstacleMask, Tilemap destructibleTilemap)
@@ -797,6 +864,8 @@ public class Bomb : MonoBehaviour, IMagnetPullable
 
         if (anim != null)
             anim.SetFrozen(true);
+
+        DLog($"StartKick dir=({kickDirection.x:0.###},{kickDirection.y:0.###}) tile={tileSize:0.###}");
 
         kickRoutine = StartCoroutine(KickRoutineFixed());
 
@@ -878,11 +947,34 @@ public class Bomb : MonoBehaviour, IMagnetPullable
             anim.SetFrozen(false);
             anim.RefreshFrame();
         }
+
+        DLog("KickRoutine FINISH");
     }
 
     public void MarkAsExploded()
     {
         HasExploded = true;
+
+        if (kickRoutine != null)
+        {
+            StopCoroutine(kickRoutine);
+            kickRoutine = null;
+        }
+
+        if (punchRoutine != null)
+        {
+            StopCoroutine(punchRoutine);
+            punchRoutine = null;
+        }
+
+        if (magnetRoutine != null)
+        {
+            StopCoroutine(magnetRoutine);
+            magnetRoutine = null;
+        }
+
+        isKicked = false;
+        isPunched = false;
 
         if (fuseRoutine != null)
         {
@@ -904,7 +996,10 @@ public class Bomb : MonoBehaviour, IMagnetPullable
                 return;
 
             if (owner != null)
+            {
+                DLog("OnTriggerEnter Explosion -> owner.ExplodeBombChained");
                 owner.ExplodeBombChained(gameObject);
+            }
 
             return;
         }
@@ -972,6 +1067,8 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         if (anim != null)
             anim.SetFrozen(true);
 
+        DLog($"StartMagnetPull dir=({kickDirection.x:0.###},{kickDirection.y:0.###}) steps={steps} tile={tileSize:0.###}");
+
         magnetRoutine = StartCoroutine(MagnetPullRoutineFixed(steps));
         return true;
     }
@@ -1030,6 +1127,8 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         }
 
         magnetRoutine = null;
+
+        DLog("MagnetPull FINISH");
     }
 
     public void EnsureMinRemainingFuse(float minSeconds)
@@ -1044,5 +1143,27 @@ public class Bomb : MonoBehaviour, IMagnetPullable
             return;
 
         FuseSeconds += (min - remaining);
+        DLog($"EnsureMinRemainingFuse min={min:0.###} remainingWas={remaining:0.###} FuseSecondsNow={FuseSeconds:0.###}");
+    }
+
+    public void LockWorldPosition(Vector2 worldPos)
+    {
+        worldPos.x = Mathf.Round(worldPos.x);
+        worldPos.y = Mathf.Round(worldPos.y);
+
+        lockWorldPosActive = true;
+        lockWorldPos = worldPos;
+
+        currentTileCenter = worldPos;
+        lastPos = worldPos;
+
+        if (rb != null)
+        {
+            rb.position = worldPos;
+            rb.linearVelocity = Vector2.zero;
+            rb.angularVelocity = 0f;
+        }
+
+        transform.position = worldPos;
     }
 }
