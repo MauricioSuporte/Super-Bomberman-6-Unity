@@ -41,6 +41,9 @@ public sealed class RedBoatRideZone : MonoBehaviour
     [SerializeField] private string headOnlyLeftName = "HeadOnlyLeft";
     [SerializeField] private string headOnlyRightName = "HeadOnlyRight";
 
+    [Header("HeadOnly Visibility")]
+    [SerializeField] private bool hideHead = false;
+
     [Header("HeadOnly Offsets (local)")]
     [SerializeField] private bool applyHeadOnlyOffsets = true;
     [SerializeField] private Vector2 headOnlyUpOffset = Vector2.zero;
@@ -229,11 +232,19 @@ public sealed class RedBoatRideZone : MonoBehaviour
             rider.SetExternalVisualSuppressed(true);
             rider.SetAllSpritesVisible(false);
 
-            currentHead = PickHeadRenderer(rider.FacingDirection);
-            if (currentHead == null) currentHead = headDown;
+            if (!hideHead)
+            {
+                currentHead = PickHeadRenderer(rider.FacingDirection);
+                if (currentHead == null) currentHead = headDown;
 
-            ForceOnlyHead(currentHead);
-            SetIdle(currentHead, true);
+                ForceOnlyHead(currentHead);
+                SetIdle(currentHead, true);
+            }
+            else
+            {
+                ForceOnlyHead(null);
+                currentHead = null;
+            }
         }
 
         if (allowPassOnWaterWhileRiding)
@@ -503,6 +514,7 @@ public sealed class RedBoatRideZone : MonoBehaviour
 
     private void UpdateHeadOnlyFromRider()
     {
+        if (hideHead) return;
         if (!hidePlayerWhileRiding) return;
         if (rider == null) return;
 
@@ -551,15 +563,12 @@ public sealed class RedBoatRideZone : MonoBehaviour
 
     private void ForceOnlyHead(AnimatedSpriteRenderer target)
     {
-        if (target == null)
-            return;
-
         for (int i = 0; i < riderAllAnimRenderers.Count; i++)
         {
             var r = riderAllAnimRenderers[i];
             if (r == null) continue;
 
-            bool enable = (r == target);
+            bool enable = (target != null && r == target);
             r.enabled = enable;
 
             if (r.TryGetComponent(out SpriteRenderer sr) && sr != null)

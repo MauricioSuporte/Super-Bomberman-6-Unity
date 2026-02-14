@@ -967,7 +967,7 @@ Tilemap:
       - {fileID: 1925664496, guid: 6941c19c1cba83a4cbc94f1207289cd9, type: 3}
       - {fileID: -42286666, guid: 6941c19c1cba83a4cbc94f1207289cd9, type: 3}
       - {fileID: 1943493983, guid: 6941c19c1cba83a4cbc94f1207289cd9, type: 3}
-      m_AnimationSpeed: 5.0000005
+      m_AnimationSpeed: 5
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: -3, y: -6, z: 0}
@@ -1087,7 +1087,7 @@ Tilemap:
       - {fileID: 1925664496, guid: 6941c19c1cba83a4cbc94f1207289cd9, type: 3}
       - {fileID: -42286666, guid: 6941c19c1cba83a4cbc94f1207289cd9, type: 3}
       - {fileID: 1943493983, guid: 6941c19c1cba83a4cbc94f1207289cd9, type: 3}
-      m_AnimationSpeed: 5
+      m_AnimationSpeed: 5.0000005
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: -7, y: -4, z: 0}
@@ -1132,7 +1132,7 @@ Tilemap:
       - {fileID: 1925664496, guid: 6941c19c1cba83a4cbc94f1207289cd9, type: 3}
       - {fileID: -42286666, guid: 6941c19c1cba83a4cbc94f1207289cd9, type: 3}
       - {fileID: 1943493983, guid: 6941c19c1cba83a4cbc94f1207289cd9, type: 3}
-      m_AnimationSpeed: 5.0000005
+      m_AnimationSpeed: 5
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: -1, y: -4, z: 0}
@@ -1192,7 +1192,7 @@ Tilemap:
       - {fileID: 1925664496, guid: 6941c19c1cba83a4cbc94f1207289cd9, type: 3}
       - {fileID: -42286666, guid: 6941c19c1cba83a4cbc94f1207289cd9, type: 3}
       - {fileID: 1943493983, guid: 6941c19c1cba83a4cbc94f1207289cd9, type: 3}
-      m_AnimationSpeed: 5.0000005
+      m_AnimationSpeed: 5
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: 7, y: -2, z: 0}
@@ -2236,6 +2236,14 @@ PrefabInstance:
     - target: {fileID: 6765667424912982891, guid: 11a7a2a90cc1cf747b6c7aa8309b75c6, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7225057538406863044, guid: 11a7a2a90cc1cf747b6c7aa8309b75c6, type: 3}
+      propertyPath: hideHead
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7225057538406863044, guid: 11a7a2a90cc1cf747b6c7aa8309b75c6, type: 3}
+      propertyPath: hidePlayerWhileRiding
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -10937,7 +10945,7 @@ Tilemap:
       - {fileID: -1999495904, guid: 6941c19c1cba83a4cbc94f1207289cd9, type: 3}
       - {fileID: -1601884613, guid: 6941c19c1cba83a4cbc94f1207289cd9, type: 3}
       - {fileID: 1244794495, guid: 6941c19c1cba83a4cbc94f1207289cd9, type: 3}
-      m_AnimationSpeed: 5.0000005
+      m_AnimationSpeed: 5
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: 12, y: 2, z: 0}
@@ -12429,7 +12437,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7cfdff2964be7d844a964e86bafbd18c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RedBoatMountZone
-  boat: {fileID: 814744109}
+  boat: {fileID: 0}
   boats:
   - {fileID: 814744109}
   - {fileID: 1555660163}
