@@ -72,9 +72,23 @@ public sealed class RedBoatRideZone : MonoBehaviour
     private AnimatedSpriteRenderer currentHead;
 
     private readonly List<AnimatedSpriteRenderer> riderAllAnimRenderers = new();
+    private readonly Dictionary<AnimatedSpriteRenderer, Vector3> headVisualBaseLocal = new();
 
     private static readonly HashSet<MovementController> ridersOnBoats = new();
-    private readonly Dictionary<AnimatedSpriteRenderer, Vector3> headVisualBaseLocal = new();
+    private static readonly Dictionary<MovementController, RedBoatRideZone> riderToBoat = new();
+
+    public static bool TryGetBoatForRider(MovementController mc, out RedBoatRideZone boat)
+    {
+        boat = null;
+        if (mc == null) return false;
+        return riderToBoat.TryGetValue(mc, out boat) && boat != null;
+    }
+
+    public static bool IsRidingBoat(MovementController mc)
+    {
+        if (mc == null) return false;
+        return ridersOnBoats.Contains(mc);
+    }
 
     private void Awake()
     {
@@ -119,6 +133,7 @@ public sealed class RedBoatRideZone : MonoBehaviour
         if (rider != null)
         {
             ridersOnBoats.Remove(rider);
+            riderToBoat.Remove(rider);
             ForceUnmount();
         }
     }
@@ -143,7 +158,6 @@ public sealed class RedBoatRideZone : MonoBehaviour
         }
 
         Vector2 boatCenter = GetBoatCenter();
-
         float dist = Vector2.Distance(boatCenter, worldPoint);
         bool ok = dist <= anchorCheckDistance;
 
@@ -174,16 +188,14 @@ public sealed class RedBoatRideZone : MonoBehaviour
         if (mc.isDead) { reason = "mc.isDead=true"; return false; }
         if (!mc.CompareTag("Player")) { reason = "mc tag != Player"; return false; }
 
+        if (IsRidingBoat(mc)) { reason = "mc already riding another boat"; return false; }
         if (IsRemountBlockedFor(mc)) { reason = "remount blocked until exit"; return false; }
-
         if (Time.frameCount == lastUnmountFrame) { reason = "blocked same frame as unmount"; return false; }
         if (Time.time < nextAllowedMountTime) { reason = "blocked by cooldown"; return false; }
 
         reason = "ok";
         return true;
     }
-
-    public bool CanMount(MovementController mc) => CanMount(mc, out _);
 
     public bool TryMount(MovementController mc, out string reason)
     {
@@ -199,6 +211,8 @@ public sealed class RedBoatRideZone : MonoBehaviour
             health.SetExternalInvulnerability(true);
 
         ridersOnBoats.Add(rider);
+        riderToBoat[rider] = this;
+
         rider.SetSuppressInactivityAnimation(true);
         riderRb = mc.Rigidbody;
 
@@ -237,8 +251,6 @@ public sealed class RedBoatRideZone : MonoBehaviour
         return true;
     }
 
-    public bool TryMount(MovementController mc) => TryMount(mc, out _);
-
     public bool TryUnmount(MovementController mc)
     {
         if (mc == null) return false;
@@ -273,12 +285,12 @@ public sealed class RedBoatRideZone : MonoBehaviour
         currentHead = null;
 
         if (hidePlayerWhileRiding)
-        {
             prevRider.SetExternalVisualSuppressed(false);
-        }
 
         prevRider.SetSuppressInactivityAnimation(false);
+
         ridersOnBoats.Remove(prevRider);
+        riderToBoat.Remove(prevRider);
 
         if (prevRider != null && prevRider.TryGetComponent<CharacterHealth>(out var health) && health != null)
             health.SetExternalInvulnerability(false);
@@ -297,6 +309,7 @@ public sealed class RedBoatRideZone : MonoBehaviour
         ApplyIdleToAll(true);
     }
 
+    // ======= AQUI ESTÁ O FIX =======
     private void RebuildAnchorZonesCache()
     {
         cachedAnchorZones.Clear();
@@ -308,7 +321,9 @@ public sealed class RedBoatRideZone : MonoBehaviour
         {
             var z = zones[i];
             if (z == null) continue;
-            if (z.Boat == this)
+
+            // antes era: if (z.Boat == this)
+            if (z.ReferencesBoat(this))
                 cachedAnchorZones.Add(z);
         }
     }
@@ -662,11 +677,5 @@ public sealed class RedBoatRideZone : MonoBehaviour
         if (r == null) return;
         r.idle = idle;
         r.RefreshFrame();
-    }
-
-    public static bool IsRidingBoat(MovementController mc)
-    {
-        if (mc == null) return false;
-        return ridersOnBoats.Contains(mc);
     }
 }

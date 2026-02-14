@@ -1,9 +1,14 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
+using UnityEngine;
 
 [RequireComponent(typeof(BoxCollider2D))]
 public sealed class RedBoatUnmountZone : MonoBehaviour
 {
+    [Header("Boat Ref (legacy)")]
     [SerializeField] private RedBoatRideZone boat;
+
+    [Header("Boats (optional - for multi boat)")]
+    [SerializeField] private List<RedBoatRideZone> boats = new();
 
     private BoxCollider2D zoneCollider;
 
@@ -11,6 +16,10 @@ public sealed class RedBoatUnmountZone : MonoBehaviour
     {
         zoneCollider = GetComponent<BoxCollider2D>();
         zoneCollider.isTrigger = true;
+
+        // Auto-resolve se não setou nada no Inspector
+        if (boat == null)
+            boat = GetComponentInParent<RedBoatRideZone>();
     }
 
     private void Reset()
@@ -21,21 +30,69 @@ public sealed class RedBoatUnmountZone : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D other)
     {
-        if (boat == null || !boat.HasRider)
+        if (other == null)
             return;
 
         var mc = other.GetComponentInParent<MovementController>();
         if (mc == null)
             return;
 
-        if (!boat.IsRider(mc))
+        var targetBoat = ResolveBoatForUnmount(mc);
+        if (targetBoat == null || !targetBoat.HasRider)
+            return;
+
+        if (!targetBoat.IsRider(mc))
             return;
 
         Vector2 center = zoneCollider != null ? (Vector2)zoneCollider.bounds.center : (Vector2)transform.position;
 
-        if (!boat.TryUnmount(mc))
+        if (!targetBoat.TryUnmount(mc))
             return;
 
         mc.SnapToWorldPoint(center, roundToGrid: true);
+    }
+
+    private RedBoatRideZone ResolveBoatForUnmount(MovementController mc)
+    {
+        // 1) se veio setado (legacy)
+        if (boat != null)
+            return boat;
+
+        // 2) se o player está montado, pega pelo mapa rider->boat (multi-boat perfeito)
+        if (RedBoatRideZone.TryGetBoatForRider(mc, out var ridingBoat) && ridingBoat != null)
+            return ridingBoat;
+
+        // 3) tenta parent
+        var parentBoat = GetComponentInParent<RedBoatRideZone>();
+        if (parentBoat != null)
+            return parentBoat;
+
+        // 4) se tem lista, tenta achar qual contém esse rider
+        if (boats != null && boats.Count > 0)
+        {
+            for (int i = 0; i < boats.Count; i++)
+            {
+                var b = boats[i];
+                if (b == null) continue;
+                if (b.HasRider && b.IsRider(mc))
+                    return b;
+            }
+
+            // fallback: primeiro não nulo
+            for (int i = 0; i < boats.Count; i++)
+                if (boats[i] != null) return boats[i];
+        }
+
+        // 5) último fallback: procurar no scene quem está com esse rider
+        var all = FindObjectsByType<RedBoatRideZone>(FindObjectsSortMode.None);
+        for (int i = 0; i < all.Length; i++)
+        {
+            var b = all[i];
+            if (b == null) continue;
+            if (b.HasRider && b.IsRider(mc))
+                return b;
+        }
+
+        return null;
     }
 }
