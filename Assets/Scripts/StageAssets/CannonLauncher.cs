@@ -100,7 +100,13 @@ public sealed class CannonLauncher : MonoBehaviour
         dir.Normalize();
 
         bool prevInputLocked = mover.InputLocked;
-        mover.SetInputLocked(true);
+
+        mover.SetInputLocked(true, forceIdle: false);
+
+        Vector2 forcedVisualDir = fireToLeft ? Vector2.left : Vector2.right;
+
+        mover.ApplyDirectionFromVector(forcedVisualDir);
+        mover.ApplyDirectionFromVector(Vector2.zero);
 
         CenterPlayerOnCannon(mover);
 
@@ -114,7 +120,7 @@ public sealed class CannonLauncher : MonoBehaviour
 
         yield return LaunchPlayerArc(mover, dir);
 
-        mover.SetInputLocked(prevInputLocked);
+        mover.SetInputLocked(prevInputLocked, forceIdle: false);
 
         if (rearmSeconds > 0f)
             yield return new WaitForSeconds(rearmSeconds);
