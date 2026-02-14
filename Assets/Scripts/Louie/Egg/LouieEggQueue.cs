@@ -105,6 +105,7 @@ public sealed class LouieEggQueue : MonoBehaviour
     int _historyCount;
     float _historyTimeCarry;
     int _ignoreOwnerInvulnerabilityUntilFrame = -1;
+    bool _suppressedByRedBoat;
 
     Transform _ownerTr;
     Rigidbody2D _ownerRb;
@@ -175,8 +176,29 @@ public sealed class LouieEggQueue : MonoBehaviour
 
         EnsureBound();
 
-        if (_ownerTr == null && _ownerRb == null)
+        bool ownerOnRedBoat = (_ownerMove != null && RedBoatRideZone.IsRidingBoat(_ownerMove));
+
+        if (ownerOnRedBoat)
+        {
+            if (!_suppressedByRedBoat)
+                SetEggVisualRenderersEnabled(false);
+
             return;
+        }
+        else
+        {
+            if (_suppressedByRedBoat)
+            {
+                SetEggVisualRenderersEnabled(true);
+
+                ResetHistoryToCurrentOwnerPos();
+                ResetRuntimeState();
+                ExitIdleShiftNow();
+
+                StopAllAnimationsNow();
+                SnapAllToOwnerNow();
+            }
+        }
 
         Vector3 ownerPos = GetOwnerWorldPos();
         ownerPos.z = 0f;
@@ -263,6 +285,75 @@ public sealed class LouieEggQueue : MonoBehaviour
 
             prevTarget = targetWorld;
             hasPrevTarget = true;
+        }
+    }
+    static Transform FindDeepChildByName(Transform root, string childName)
+    {
+        if (root == null || string.IsNullOrWhiteSpace(childName))
+            return null;
+
+        var all = root.GetComponentsInChildren<Transform>(true);
+        for (int i = 0; i < all.Length; i++)
+            if (all[i] != null && all[i].name == childName)
+                return all[i];
+
+        return null;
+    }
+
+    static void SetDestroyAnimationEnabled(Transform eggRoot, bool enabled)
+    {
+        if (eggRoot == null) return;
+
+        var t = FindDeepChildByName(eggRoot, "DestroyAnimation");
+        if (t == null) return;
+
+        if (t.TryGetComponent<AnimatedSpriteRenderer>(out var ar)) ar.enabled = enabled;
+
+        if (t.TryGetComponent<SpriteRenderer>(out var sr)) sr.enabled = enabled;
+    }
+
+    void ForceEggVisualToNormalIdle(Transform eggRoot, EggFollowerDirectionalVisual directional)
+    {
+        SetDestroyAnimationEnabled(eggRoot, false);
+
+        if (directional != null)
+            directional.ForceIdleFacing(directional.facing);
+    }
+
+    void SetEggVisualRenderersEnabled(bool enabled)
+    {
+        _suppressedByRedBoat = !enabled;
+
+        for (int i = 0; i < _eggs.Count; i++)
+        {
+            var e = _eggs[i];
+            if (e.rootTr == null)
+                continue;
+
+            var anims = e.rootTr.GetComponentsInChildren<AnimatedSpriteRenderer>(true);
+            for (int a = 0; a < anims.Length; a++)
+            {
+                var ar = anims[a];
+                if (ar == null) continue;
+
+                ar.enabled = enabled;
+
+                if (ar.TryGetComponent<SpriteRenderer>(out var sr) && sr != null)
+                    sr.enabled = enabled;
+            }
+
+            var srs = e.rootTr.GetComponentsInChildren<SpriteRenderer>(true);
+            for (int s = 0; s < srs.Length; s++)
+            {
+                var sr = srs[s];
+                if (sr == null) continue;
+                sr.enabled = enabled;
+            }
+
+            if (enabled)
+            {
+                ForceEggVisualToNormalIdle(e.rootTr, e.directional);
+            }
         }
     }
 
@@ -1305,7 +1396,6 @@ public sealed class LouieEggQueue : MonoBehaviour
     #endregion
 
     #region Transfer / World Queue Helpers
-    // (mantido igual ao seu)
     public void TransferToDetachedLouieAndFreeze(GameObject detachedLouie, Vector3 freezeWorldPos)
     {
         if (detachedLouie == null || _eggs.Count == 0)
