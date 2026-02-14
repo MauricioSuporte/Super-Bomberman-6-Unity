@@ -42,6 +42,10 @@ public partial class BombController : MonoBehaviour
     public Tilemap groundTiles;
     public Tilemap stageBoundsTiles;
 
+    [Header("Water (blocks explosion)")]
+    [SerializeField] private Tilemap waterTiles;
+    [SerializeField] private string waterTag = "Water";
+
     [Header("Destructible (resolved from GameManager)")]
     public Tilemap destructibleTiles;
     public Destructible destructiblePrefab;
@@ -192,6 +196,22 @@ public partial class BombController : MonoBehaviour
 
             if (destructibleTiles == null)
                 destructibleTiles = FindTilemapByNameContains(tilemaps, "destruct");
+        }
+
+        if (waterTiles == null)
+        {
+            for (int i = 0; i < tilemaps.Length; i++)
+            {
+                var tm = tilemaps[i];
+                if (tm != null && tm.CompareTag(waterTag))
+                {
+                    waterTiles = tm;
+                    break;
+                }
+            }
+
+            if (waterTiles == null)
+                waterTiles = FindTilemapByNameContains(tilemaps, "water");
         }
     }
 
@@ -529,6 +549,19 @@ public partial class BombController : MonoBehaviour
         return stageBoundsTiles.GetTile(cell) != null;
     }
 
+    private bool HasWaterAt(Vector2 worldPos)
+    {
+        if (waterTiles == null)
+        {
+            ResolveTilemaps();
+            if (waterTiles == null)
+                return false;
+        }
+
+        Vector3Int cell = waterTiles.WorldToCell(worldPos);
+        return waterTiles.GetTile(cell) != null;
+    }
+
     private bool HasDestructibleAt(Vector2 worldPos)
     {
         if (destructibleTiles == null)
@@ -559,6 +592,9 @@ public partial class BombController : MonoBehaviour
         for (int i = 0; i < length; i++)
         {
             position += direction;
+
+            if (HasWaterAt(position))
+                break;
 
             if (HasIndestructibleAt(position))
             {
@@ -1230,6 +1266,7 @@ public partial class BombController : MonoBehaviour
 
         handler.HandleExplosionHit(this, worldPos, cell, tile);
     }
+
     public void NotifyBombAt(Vector2 worldPos, GameObject bombGo)
     {
         if (bombGo == null)
