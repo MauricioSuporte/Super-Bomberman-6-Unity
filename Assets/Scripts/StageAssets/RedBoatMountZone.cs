@@ -184,68 +184,89 @@ public sealed class RedBoatMountZone : MonoBehaviour
 
     private RedBoatRideZone ResolveBoatForMount(MovementController mc, Vector2 zoneCenter, out string trace)
     {
-        if (boat != null)
-        {
-            trace = "legacy";
-            return boat;
-        }
+        // Monta candidatos
+        var candidates = new List<RedBoatRideZone>(8);
+
+        if (boat != null) candidates.Add(boat);
 
         var parentBoat = GetComponentInParent<RedBoatRideZone>();
-        if (parentBoat != null)
-        {
-            trace = "parent";
-            return parentBoat;
-        }
+        if (parentBoat != null && !candidates.Contains(parentBoat))
+            candidates.Add(parentBoat);
 
         if (boats != null && boats.Count > 0)
         {
-            RedBoatRideZone best = null;
-            float bestDist = float.MaxValue;
-
             for (int i = 0; i < boats.Count; i++)
             {
                 var b = boats[i];
-                if (b == null) continue;
-
-                float d = Vector2.Distance(zoneCenter, b.transform.position);
-                if (d < bestDist)
-                {
-                    bestDist = d;
-                    best = b;
-                }
+                if (b != null && !candidates.Contains(b))
+                    candidates.Add(b);
             }
-
-            trace = best != null ? $"list(bestDist={bestDist:0.000})" : "list(all null)";
-            return best;
         }
 
-        var allBoats = FindObjectsByType<RedBoatRideZone>(FindObjectsSortMode.None);
-        if (allBoats == null || allBoats.Length == 0)
+        if (candidates.Count == 0)
         {
-            trace = "scene(no boats found)";
+            var all = FindObjectsByType<RedBoatRideZone>(FindObjectsSortMode.None);
+            for (int i = 0; i < all.Length; i++)
+            {
+                var b = all[i];
+                if (b != null) candidates.Add(b);
+            }
+        }
+
+        if (candidates.Count == 0)
+        {
+            trace = "none";
             return null;
         }
 
+        // 1) Preferir: ancorado no zoneCenter + pode montar
+        RedBoatRideZone best = null;
+        float bestDist = float.MaxValue;
+
+        for (int i = 0; i < candidates.Count; i++)
         {
-            RedBoatRideZone best = null;
-            float bestDist = float.MaxValue;
+            var b = candidates[i];
+            if (b == null) continue;
 
-            for (int i = 0; i < allBoats.Length; i++)
+            if (!b.IsAnchoredAt(zoneCenter, out _))
+                continue;
+
+            if (!b.CanMount(mc, out _))
+                continue;
+
+            float d = Vector2.Distance(zoneCenter, (Vector2)b.transform.position);
+            if (d < bestDist)
             {
-                var b = allBoats[i];
-                if (b == null) continue;
-
-                float d = Vector2.Distance(zoneCenter, b.transform.position);
-                if (d < bestDist)
-                {
-                    bestDist = d;
-                    best = b;
-                }
+                bestDist = d;
+                best = b;
             }
+        }
 
-            trace = best != null ? $"scene(bestDist={bestDist:0.000})" : "scene(all null)";
+        if (best != null)
+        {
+            trace = $"anchored+can(bestDist={bestDist:0.000})";
             return best;
         }
+
+        // 2) Fallback antigo: mais perto (para não “matar” seu fluxo em casos edge)
+        best = null;
+        bestDist = float.MaxValue;
+
+        for (int i = 0; i < candidates.Count; i++)
+        {
+            var b = candidates[i];
+            if (b == null) continue;
+
+            float d = Vector2.Distance(zoneCenter, (Vector2)b.transform.position);
+            if (d < bestDist)
+            {
+                bestDist = d;
+                best = b;
+            }
+        }
+
+        trace = best != null ? $"fallback(bestDist={bestDist:0.000})" : "fallback(null)";
+        return best;
     }
 
     public Vector2 GetZoneCenterWorld()
