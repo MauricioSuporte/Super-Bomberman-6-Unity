@@ -6194,13 +6194,13 @@ MonoBehaviour:
   controlsMusic: {fileID: 8300000, guid: 995a31f86fa5dcd4e8e4ba88dc2854cf, type: 3}
   controlsMusicVolume: 1
   menuText: {fileID: 534844157}
-  titleFontSize: 46
+  titleFontSize: 36
   titleVOffset: 26
   headerTopPaddingLines: 1
   headerBottomPaddingLines: 0
-  bodyFontSize: 30
+  bodyFontSize: 28
   footerGapLines: 0
-  footerFontSize: 28
+  footerFontSize: 20
   footerExtraNewLines: 2
   selectGridFontSize: 24
   playerBlockGapLines: 1

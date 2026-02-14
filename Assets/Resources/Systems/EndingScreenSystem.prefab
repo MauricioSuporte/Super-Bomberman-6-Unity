@@ -56,7 +56,7 @@ MonoBehaviour:
   outlineColor: {r: 0, g: 0, b: 0, a: 1}
   outlineWidth: 0.4
   titleSceneName: Stage_1-1
-  message: '<size=52><color=#1ABC00>WORLD 1</color>  <color=#E8E8E8>DEMO COMPLETE!</color></size>
+  message: '<size=52><color=#1ABC00>WORLD 2</color>  <color=#E8E8E8>DEMO COMPLETE!</color></size>
 
 
     <size=34><color=#E8E8E8>Thank
