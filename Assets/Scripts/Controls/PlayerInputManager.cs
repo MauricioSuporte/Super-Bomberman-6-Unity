@@ -125,11 +125,7 @@ public class PlayerInputManager : MonoBehaviour
 
         playerControllers.Clear();
 
-#if UNITY_2023_1_OR_NEWER
         var all = FindObjectsByType<MovementController>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
-#else
-        var all = FindObjectsOfType<MovementController>();
-#endif
         if (all == null) return;
 
         for (int i = 0; i < all.Length; i++)
@@ -140,18 +136,25 @@ public class PlayerInputManager : MonoBehaviour
             if (!mc.CompareTag("Player"))
                 continue;
 
-            int pid = Mathf.Clamp(mc.PlayerId, 1, 4);
+            if (!mc.TryGetComponent<PlayerIdentity>(out var identity))
+                identity = mc.GetComponentInParent<PlayerIdentity>(true);
+
+            if (identity == null)
+                continue;
+
+            int pid = Mathf.Clamp(identity.playerId, 1, 4);
 
             playerControllers[pid] = mc;
         }
     }
 
-    private bool IsDirectionalAction(PlayerAction action)
+    private bool IsActionBlockedWhileRidingBoat(PlayerAction action)
     {
-        return action == PlayerAction.MoveUp ||
-               action == PlayerAction.MoveDown ||
-               action == PlayerAction.MoveLeft ||
-               action == PlayerAction.MoveRight;
+        return action != PlayerAction.MoveUp &&
+               action != PlayerAction.MoveDown &&
+               action != PlayerAction.MoveLeft &&
+               action != PlayerAction.MoveRight &&
+               action != PlayerAction.Start;
     }
 
     private bool ShouldBlockActionBecauseRidingBoat(int playerId, PlayerAction action)
@@ -159,7 +162,7 @@ public class PlayerInputManager : MonoBehaviour
         if (!blockNonDirectionalInputsWhileRidingBoat)
             return false;
 
-        if (IsDirectionalAction(action))
+        if (!IsActionBlockedWhileRidingBoat(action))
             return false;
 
         if (!playerControllers.TryGetValue(playerId, out var mc) || mc == null)
