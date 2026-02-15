@@ -100,7 +100,14 @@ public sealed class SpringLauncher : MonoBehaviour
 
             Vector2 heldDir = Vector2.zero;
 
+            float compressTimer = 0f;
+            float compressStepTimer = 0f;
+            float compressInterval = 0.1f;
+            float compressStep = 0.05f;
+            float totalCompressed = 0f;
+
             float tEnd = Time.time + Mathf.Max(0f, channelSeconds);
+
             while (Time.time < tEnd)
             {
                 heldDir = ReadHeldCardinal(mover);
@@ -110,8 +117,25 @@ public sealed class SpringLauncher : MonoBehaviour
                 else
                     ApplyIdleFacing(mover, Vector2.zero);
 
+                compressTimer += Time.deltaTime;
+                compressStepTimer += Time.deltaTime;
+
+                if (compressStepTimer >= compressInterval)
+                {
+                    compressStepTimer -= compressInterval;
+
+                    Vector2 p = rb.position;
+                    p.y -= compressStep;
+                    rb.position = p;
+
+                    totalCompressed += compressStep;
+                }
+
                 yield return null;
             }
+
+            // volta para o centro antes do salto
+            rb.position = center;
 
             heldDir = ReadHeldCardinal(mover);
 
@@ -159,12 +183,6 @@ public sealed class SpringLauncher : MonoBehaviour
             mover.SetExplosionInvulnerable(false);
 
             Vector2 afterHeld = ReadHeldCardinal(mover);
-            if (afterHeld != Vector2.zero)
-                ApplyIdleFacing(mover, afterHeld);
-            else if (heldDir != Vector2.zero)
-                ApplyIdleFacing(mover, heldDir);
-            else
-                ApplyIdleFacing(mover, Vector2.zero);
 
             bool stillOnCenter = Vector2.Distance(rb.position, center) <= (tileSize * 0.15f);
             bool keepBouncing = isIdleBounce && afterHeld == Vector2.zero && stillOnCenter;
@@ -244,14 +262,6 @@ public sealed class SpringLauncher : MonoBehaviour
         }
 
         rb.position = end;
-
-        if (mover != null)
-        {
-            if (fixedFaceDir != Vector2.zero)
-                mover.ApplyDirectionFromVector(fixedFaceDir);
-
-            mover.ApplyDirectionFromVector(Vector2.zero);
-        }
     }
 
     private Vector2 GetTileCenterWorld(float tileSize)
