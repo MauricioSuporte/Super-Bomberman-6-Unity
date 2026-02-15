@@ -1164,7 +1164,7 @@ Tilemap:
       - {fileID: 1925664496, guid: 6941c19c1cba83a4cbc94f1207289cd9, type: 3}
       - {fileID: -42286666, guid: 6941c19c1cba83a4cbc94f1207289cd9, type: 3}
       - {fileID: 1943493983, guid: 6941c19c1cba83a4cbc94f1207289cd9, type: 3}
-      m_AnimationSpeed: 5.0000005
+      m_AnimationSpeed: 5
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: -4, y: -4, z: 0}
@@ -2246,6 +2246,68 @@ MonoBehaviour:
   followOffset: {x: 0, y: 0}
   smoothTime: 0.05
   refreshPlayersEverySeconds: 0.01
+--- !u!1001 &521020442
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 732032081}
+    m_Modifications:
+    - target: {fileID: 1228606389669354652, guid: 03d75bf177face8458cfc48171d18612, type: 3}
+      propertyPath: m_Name
+      value: Futa
+      objectReference: {fileID: 0}
+    - target: {fileID: 1228606389669354653, guid: 03d75bf177face8458cfc48171d18612, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 21.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 1228606389669354653, guid: 03d75bf177face8458cfc48171d18612, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -3.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 1228606389669354653, guid: 03d75bf177face8458cfc48171d18612, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1228606389669354653, guid: 03d75bf177face8458cfc48171d18612, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1228606389669354653, guid: 03d75bf177face8458cfc48171d18612, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1228606389669354653, guid: 03d75bf177face8458cfc48171d18612, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1228606389669354653, guid: 03d75bf177face8458cfc48171d18612, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1228606389669354653, guid: 03d75bf177face8458cfc48171d18612, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1228606389669354653, guid: 03d75bf177face8458cfc48171d18612, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1228606389669354653, guid: 03d75bf177face8458cfc48171d18612, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 03d75bf177face8458cfc48171d18612, type: 3}
+--- !u!4 &521020443 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 1228606389669354653, guid: 03d75bf177face8458cfc48171d18612, type: 3}
+  m_PrefabInstance: {fileID: 521020442}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &556523581
 GameObject:
   m_ObjectHideFlags: 0
@@ -4583,6 +4645,7 @@ Transform:
   - {fileID: 129135726}
   - {fileID: 1516083832}
   - {fileID: 655255377}
+  - {fileID: 521020443}
   m_Father: {fileID: 679601671}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &732032084
@@ -10974,7 +11037,7 @@ Tilemap:
       - {fileID: -1999495904, guid: 6941c19c1cba83a4cbc94f1207289cd9, type: 3}
       - {fileID: -1601884613, guid: 6941c19c1cba83a4cbc94f1207289cd9, type: 3}
       - {fileID: 1244794495, guid: 6941c19c1cba83a4cbc94f1207289cd9, type: 3}
-      m_AnimationSpeed: 5.0000005
+      m_AnimationSpeed: 5
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: 1, y: 1, z: 0}
@@ -11049,7 +11112,7 @@ Tilemap:
       - {fileID: -1999495904, guid: 6941c19c1cba83a4cbc94f1207289cd9, type: 3}
       - {fileID: -1601884613, guid: 6941c19c1cba83a4cbc94f1207289cd9, type: 3}
       - {fileID: 1244794495, guid: 6941c19c1cba83a4cbc94f1207289cd9, type: 3}
-      m_AnimationSpeed: 5.0000005
+      m_AnimationSpeed: 5
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: 7, y: 2, z: 0}
