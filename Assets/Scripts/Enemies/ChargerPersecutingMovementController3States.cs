@@ -171,16 +171,7 @@ public sealed class ChargerPersecutingMovementController3States : ChargerPersecu
         {
             speed = baseSpd * chargeSpeedMultiplier;
 
-            if (HasBombAt(targetTile))
-            {
-                HandleBombAhead();
-                StartChargeStopPause();
-                return;
-            }
-
-            Vector2 nextTile = rb.position + direction * tileSize;
-
-            if (IsTileBlocked(nextTile))
+            if (IsTileBlocked(targetTile))
             {
                 SnapToGrid();
                 StartChargeStopPause();
@@ -192,16 +183,7 @@ public sealed class ChargerPersecutingMovementController3States : ChargerPersecu
             if (ReachedTile())
             {
                 SnapToGrid();
-
-                Vector2 forward = rb.position + direction * tileSize;
-
-                if (IsTileBlocked(forward))
-                {
-                    StartChargeStopPause();
-                    return;
-                }
-
-                targetTile = forward;
+                targetTile = rb.position + direction * tileSize;
             }
 
             return;
