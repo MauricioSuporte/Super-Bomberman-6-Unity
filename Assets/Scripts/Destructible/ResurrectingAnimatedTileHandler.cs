@@ -132,7 +132,7 @@ public sealed class ResurrectingAnimatedTileHandler : MonoBehaviour, IDestructib
 
         for (int i = 0; i < count; i++)
         {
-            var c = _overlapBuffer[i];
+            var c = _overlapBuffer[i]; 
             _overlapBuffer[i] = null;
 
             if (c != null)
