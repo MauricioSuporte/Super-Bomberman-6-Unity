@@ -41,8 +41,8 @@ public class EnemyMovementController : MonoBehaviour, IKillable
 
     protected bool isInDamagedLoop;
 
-    bool isStuck;
-    float stuckTimer;
+    protected bool isStuck;
+    protected float stuckTimer;
 
     protected Vector2[] Dirs = { Vector2.up, Vector2.down, Vector2.left, Vector2.right };
 
