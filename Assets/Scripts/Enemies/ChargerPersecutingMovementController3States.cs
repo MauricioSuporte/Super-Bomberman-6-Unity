@@ -28,11 +28,18 @@ public sealed class ChargerPersecutingMovementController3States : ChargerPersecu
     [SerializeField] private AnimatedSpriteRenderer chargeLeft;
     [SerializeField] private AnimatedSpriteRenderer chargeRight;
 
+    [Header("Charge Stop (after collision)")]
+    [SerializeField, Min(0f)] private float chargeStopPauseSeconds = 0.5f;
+
     private VisualState visualState = VisualState.Walking;
 
     private bool preparing;
     private bool charging;
+    private bool chargeStopping;
+
     private float timer;
+    private float chargeStopTimer;
+
     private Vector2 chargeDir;
     private float baseSpd;
 
@@ -81,6 +88,8 @@ public sealed class ChargerPersecutingMovementController3States : ChargerPersecu
 
             preparing = false;
             charging = false;
+            chargeStopping = false;
+
             speed = baseSpd;
 
             if (rb != null)
@@ -124,6 +133,7 @@ public sealed class ChargerPersecutingMovementController3States : ChargerPersecu
             {
                 preparing = false;
                 charging = true;
+                chargeStopping = false;
 
                 direction = chargeDir;
                 SetVisualState(VisualState.Charging);
@@ -136,29 +146,62 @@ public sealed class ChargerPersecutingMovementController3States : ChargerPersecu
             return;
         }
 
+        if (chargeStopping)
+        {
+            if (rb != null)
+                rb.linearVelocity = Vector2.zero;
+
+            chargeStopTimer -= Time.fixedDeltaTime;
+
+            if (chargeStopTimer <= 0f)
+            {
+                chargeStopping = false;
+                charging = false;
+                speed = baseSpd;
+
+                SetVisualState(VisualState.Walking);
+                UpdateSpriteDirection(direction);
+                DecideNextTile();
+            }
+
+            return;
+        }
+
         if (charging)
         {
             speed = baseSpd * chargeSpeedMultiplier;
 
-            if (!HasPlayerInDirection(chargeDir))
+            if (HasBombAt(targetTile))
             {
-                charging = false;
-                speed = baseSpd;
-                SetVisualState(VisualState.Walking);
-                UpdateSpriteDirection(direction);
-                DecideNextTile();
+                HandleBombAhead();
+                StartChargeStopPause();
                 return;
             }
 
-            if (HasBombAt(targetTile))
-                HandleBombAhead();
+            Vector2 nextTile = rb.position + direction * tileSize;
+
+            if (IsTileBlocked(nextTile))
+            {
+                SnapToGrid();
+                StartChargeStopPause();
+                return;
+            }
 
             rb.MovePosition(Vector2.MoveTowards(rb.position, targetTile, speed * Time.fixedDeltaTime));
 
             if (ReachedTile())
             {
                 SnapToGrid();
-                targetTile = rb.position + direction * tileSize;
+
+                Vector2 forward = rb.position + direction * tileSize;
+
+                if (IsTileBlocked(forward))
+                {
+                    StartChargeStopPause();
+                    return;
+                }
+
+                targetTile = forward;
             }
 
             return;
@@ -186,7 +229,7 @@ public sealed class ChargerPersecutingMovementController3States : ChargerPersecu
 
     protected override void DecideNextTile()
     {
-        if (preparing || charging)
+        if (preparing || charging || chargeStopping)
             return;
 
         if (stun != null && stun.IsStunned)
@@ -207,6 +250,8 @@ public sealed class ChargerPersecutingMovementController3States : ChargerPersecu
                 {
                     preparing = true;
                     charging = false;
+                    chargeStopping = false;
+
                     timer = chargePauseDuration;
                     chargeDir = hornDir;
 
@@ -232,6 +277,8 @@ public sealed class ChargerPersecutingMovementController3States : ChargerPersecu
         {
             preparing = true;
             charging = false;
+            chargeStopping = false;
+
             timer = chargePauseDuration;
             chargeDir = hornOnlyDir;
 
@@ -333,10 +380,28 @@ public sealed class ChargerPersecutingMovementController3States : ChargerPersecu
     {
         preparing = false;
         charging = false;
+        chargeStopping = false;
+
         speed = baseSpd;
 
         DisableAllStateSprites();
         base.Die();
+    }
+
+    private void StartChargeStopPause()
+    {
+        charging = false;
+        chargeStopping = true;
+
+        speed = baseSpd;
+
+        if (rb != null)
+            rb.linearVelocity = Vector2.zero;
+
+        chargeStopTimer = chargeStopPauseSeconds;
+
+        SetVisualState(VisualState.Charging);
+        UpdateSpriteDirection(direction);
     }
 
     private void SetVisualState(VisualState state)
@@ -432,22 +497,6 @@ public sealed class ChargerPersecutingMovementController3States : ChargerPersecu
         }
 
         return false;
-    }
-
-    private bool HasPlayerInDirection(Vector2 dir)
-    {
-        if (dir == Vector2.zero)
-            return false;
-
-        int mask = obstacleMask | playerLayerMask;
-        Vector2 origin = rb.position + dir.normalized * (tileSize * 0.5f);
-
-        RaycastHit2D hit = Physics2D.Raycast(origin, dir.normalized, visionDistance, mask);
-
-        if (hit.collider == null)
-            return false;
-
-        return ((1 << hit.collider.gameObject.layer) & playerLayerMask) != 0;
     }
 
     private bool TryGetPlayerDirectionChase(out Vector2 dirToPlayer)
