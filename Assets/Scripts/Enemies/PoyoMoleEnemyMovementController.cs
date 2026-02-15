@@ -9,8 +9,11 @@ using UnityEngine.Tilemaps;
 [RequireComponent(typeof(StunReceiver))]
 public sealed class PoyoMoleEnemyMovementController : JunctionTurningEnemyMovementController
 {
-    [Header("Walk Sprite")]
-    [SerializeField] private AnimatedSpriteRenderer walkSprite;
+    [Header("Walk Sprites (4 directions)")]
+    [SerializeField] private AnimatedSpriteRenderer walkUpSprite;
+    [SerializeField] private AnimatedSpriteRenderer walkDownSprite;
+    [SerializeField] private AnimatedSpriteRenderer walkLeftSprite;
+    [SerializeField] private AnimatedSpriteRenderer walkRightSprite;
     [SerializeField] private bool forceFlipXFalse = true;
 
     [Header("Ability Sprites")]
@@ -68,8 +71,12 @@ public sealed class PoyoMoleEnemyMovementController : JunctionTurningEnemyMoveme
 
         TryAutoResolveGroundTilemap();
 
-        spriteDown = walkSprite;
-        activeSprite = walkSprite;
+        spriteUp = walkUpSprite;
+        spriteDown = walkDownSprite;
+        spriteLeft = walkLeftSprite;
+
+        if (activeSprite == null)
+            activeSprite = walkDownSprite != null ? walkDownSprite : walkLeftSprite != null ? walkLeftSprite : walkUpSprite;
 
         if (occupiedLayers.value == 0)
             occupiedLayers = LayerMask.GetMask("Louie", "Player", "Bomb", "Explosion", "Item", "Enemy", "Stage");
@@ -147,13 +154,49 @@ public sealed class PoyoMoleEnemyMovementController : JunctionTurningEnemyMoveme
         if (_isUsingAbility || _isHidden || isInDamagedLoop || isDead)
             return;
 
-        if (walkSprite == null)
-            return;
-
         if (_visualState != VisualState.Walk)
             ApplyVisualState(VisualState.Walk);
 
-        ForceNoFlipOn(walkSprite);
+        AnimatedSpriteRenderer chosen = ResolveWalkSprite(dir);
+
+        if (chosen == null)
+            return;
+
+        DisableAllWalkSprites();
+        DisableAbilitySprites();
+
+        chosen.enabled = true;
+        chosen.idle = false;
+        chosen.loop = true;
+
+        activeSprite = chosen;
+
+        ForceNoFlipOn(chosen);
+    }
+
+    private AnimatedSpriteRenderer ResolveWalkSprite(Vector2 dir)
+    {
+        if (dir == Vector2.up)
+            return walkUpSprite;
+
+        if (dir == Vector2.down)
+            return walkDownSprite;
+
+        if (dir == Vector2.left)
+            return walkLeftSprite;
+
+        if (dir == Vector2.right)
+            return walkRightSprite;
+
+        return walkDownSprite != null ? walkDownSprite : walkLeftSprite != null ? walkLeftSprite : walkUpSprite;
+    }
+
+    private void DisableAllWalkSprites()
+    {
+        if (walkUpSprite != null) walkUpSprite.enabled = false;
+        if (walkDownSprite != null) walkDownSprite.enabled = false;
+        if (walkLeftSprite != null) walkLeftSprite.enabled = false;
+        if (walkRightSprite != null) walkRightSprite.enabled = false;
     }
 
     private void StartAbility()
@@ -248,24 +291,19 @@ public sealed class PoyoMoleEnemyMovementController : JunctionTurningEnemyMoveme
     {
         _visualState = state;
 
-        if (walkSprite != null)
-            walkSprite.enabled = false;
-
-        if (abilityStartSprite != null)
-            abilityStartSprite.enabled = false;
-
-        if (abilityEndSprite != null)
-            abilityEndSprite.enabled = false;
+        DisableAllWalkSprites();
+        DisableAbilitySprites();
 
         if (state == VisualState.Walk)
         {
-            if (walkSprite != null)
+            AnimatedSpriteRenderer chosen = ResolveWalkSprite(direction);
+            if (chosen != null)
             {
-                walkSprite.enabled = true;
-                walkSprite.idle = false;
-                walkSprite.loop = true;
-                activeSprite = walkSprite;
-                ForceNoFlipOn(walkSprite);
+                chosen.enabled = true;
+                chosen.idle = false;
+                chosen.loop = true;
+                activeSprite = chosen;
+                ForceNoFlipOn(chosen);
             }
 
             return;
@@ -288,7 +326,10 @@ public sealed class PoyoMoleEnemyMovementController : JunctionTurningEnemyMoveme
         if (state == VisualState.Hidden)
         {
             activeSprite = null;
-            ForceSpriteRendererOff(walkSprite);
+            ForceSpriteRendererOff(walkUpSprite);
+            ForceSpriteRendererOff(walkDownSprite);
+            ForceSpriteRendererOff(walkLeftSprite);
+            ForceSpriteRendererOff(walkRightSprite);
             ForceSpriteRendererOff(abilityStartSprite);
             ForceSpriteRendererOff(abilityEndSprite);
             return;
@@ -307,6 +348,12 @@ public sealed class PoyoMoleEnemyMovementController : JunctionTurningEnemyMoveme
 
             return;
         }
+    }
+
+    private void DisableAbilitySprites()
+    {
+        if (abilityStartSprite != null) abilityStartSprite.enabled = false;
+        if (abilityEndSprite != null) abilityEndSprite.enabled = false;
     }
 
     private void ConfigureAsOneShot(AnimatedSpriteRenderer r)
@@ -461,9 +508,14 @@ public sealed class PoyoMoleEnemyMovementController : JunctionTurningEnemyMoveme
         if (walkSecondsBeforeAbility <= 0f)
             return;
 
+        bool anyWalkEnabled =
+            (walkUpSprite != null && walkUpSprite.enabled) ||
+            (walkDownSprite != null && walkDownSprite.enabled) ||
+            (walkLeftSprite != null && walkLeftSprite.enabled) ||
+            (walkRightSprite != null && walkRightSprite.enabled);
+
         bool canCount =
-            walkSprite != null &&
-            walkSprite.enabled &&
+            anyWalkEnabled &&
             !_isUsingAbility &&
             !_isHidden &&
             !isDead &&

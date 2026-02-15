@@ -11,6 +11,33 @@ TextureImporter:
   - first:
       213: -4865886486667916583
     second: PoyoMole_2
+  - first:
+      213: 2393040213722118399
+    second: PoyoMole_3
+  - first:
+      213: 6681842522714624180
+    second: PoyoMole_4
+  - first:
+      213: 7877911880114996779
+    second: PoyoMole_5
+  - first:
+      213: -272882913519951153
+    second: PoyoMole_6
+  - first:
+      213: 6220598237331682528
+    second: PoyoMole_7
+  - first:
+      213: 684110841400680527
+    second: PoyoMole_8
+  - first:
+      213: -7643573949665418907
+    second: PoyoMole_9
+  - first:
+      213: 4905951595488958796
+    second: PoyoMole_10
+  - first:
+      213: 4371325078803417096
+    second: PoyoMole_11
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -110,7 +137,7 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 0
-        y: 0
+        y: 32
         width: 32
         height: 32
       alignment: 0
@@ -132,7 +159,7 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 32
-        y: 0
+        y: 32
         width: 32
         height: 32
       alignment: 0
@@ -154,7 +181,7 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 64
-        y: 0
+        y: 32
         width: 32
         height: 32
       alignment: 0
@@ -171,11 +198,209 @@ TextureImporter:
       indices: 
       edges: []
       weights: []
+    - serializedVersion: 2
+      name: PoyoMole_3
+      rect:
+        serializedVersion: 2
+        x: 96
+        y: 32
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ff8b1204569c53120800000000000000
+      internalID: 2393040213722118399
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PoyoMole_4
+      rect:
+        serializedVersion: 2
+        x: 128
+        y: 32
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4b0518b5f5caabc50800000000000000
+      internalID: 6681842522714624180
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PoyoMole_5
+      rect:
+        serializedVersion: 2
+        x: 160
+        y: 32
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b268512bd17f35d60800000000000000
+      internalID: 7877911880114996779
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PoyoMole_6
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fc2ae5a9f66863cf0800000000000000
+      internalID: -272882913519951153
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PoyoMole_7
+      rect:
+        serializedVersion: 2
+        x: 32
+        y: 0
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0e473928321045650800000000000000
+      internalID: 6220598237331682528
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PoyoMole_8
+      rect:
+        serializedVersion: 2
+        x: 64
+        y: 0
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f406ea88f237e7900800000000000000
+      internalID: 684110841400680527
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PoyoMole_9
+      rect:
+        serializedVersion: 2
+        x: 96
+        y: 0
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 56163cb7df19ce590800000000000000
+      internalID: -7643573949665418907
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PoyoMole_10
+      rect:
+        serializedVersion: 2
+        x: 128
+        y: 0
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c495166bbf0751440800000000000000
+      internalID: 4905951595488958796
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PoyoMole_11
+      rect:
+        serializedVersion: 2
+        x: 160
+        y: 0
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 80885d7bff01aac30800000000000000
+      internalID: 4371325078803417096
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
     outline: []
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 33715cafc88dee44ab67c1056fc6225f
+    spriteID: d80a8b27a68501349b90b2661608944b
     internalID: 0
     vertices: []
     indices: 
@@ -189,7 +414,16 @@ TextureImporter:
     nameFileIdTable:
       PoyoMole_0: -262859550284426006
       PoyoMole_1: 2068934446833436346
+      PoyoMole_10: 4905951595488958796
+      PoyoMole_11: 4371325078803417096
       PoyoMole_2: -4865886486667916583
+      PoyoMole_3: 2393040213722118399
+      PoyoMole_4: 6681842522714624180
+      PoyoMole_5: 7877911880114996779
+      PoyoMole_6: -272882913519951153
+      PoyoMole_7: 6220598237331682528
+      PoyoMole_8: 684110841400680527
+      PoyoMole_9: -7643573949665418907
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
