@@ -16,24 +16,40 @@ public sealed class PoyoMoleEnemyMovementController : JunctionTurningEnemyMoveme
     [SerializeField] private AnimatedSpriteRenderer walkRightSprite;
     [SerializeField] private bool forceFlipXFalse = true;
 
-    [Header("Ability Sprites")]
-    [SerializeField] private AnimatedSpriteRenderer abilityStartSprite;
-    [SerializeField] private AnimatedSpriteRenderer abilityEndSprite;
+    [Header("Ability START (3 phases)")]
+    [SerializeField] private AnimatedSpriteRenderer abilityStartPhase1Sprite;
+    [SerializeField] private AnimatedSpriteRenderer abilityStartPhase2Sprite;
+    [SerializeField] private AnimatedSpriteRenderer abilityStartPhase3Sprite;
 
-    [Header("Ability Timing")]
-    [SerializeField] private float walkSecondsBeforeAbility = 10f;
-    [SerializeField] private float abilityStartDurationSeconds = 2f;
-    [SerializeField] private float hiddenSeconds = 5f;
-    [SerializeField] private float abilityEndDurationSeconds = 2f;
+    [Header("Ability START timings")]
+    [SerializeField, Min(0.01f)] private float abilityStartPhase1Seconds = 0.7f;
+    [SerializeField, Min(0.01f)] private float abilityStartPhase2Seconds = 0.7f;
+    [SerializeField, Min(0.01f)] private float abilityStartPhase3Seconds = 0.6f;
+
+    [Header("Hidden (no visuals)")]
+    [SerializeField, Min(0.01f)] private float hiddenSeconds = 5f;
+
+    [Header("Ability END (3 phases)")]
+    [SerializeField] private AnimatedSpriteRenderer abilityEndPhase1Sprite;
+    [SerializeField] private AnimatedSpriteRenderer abilityEndPhase2Sprite;
+    [SerializeField] private AnimatedSpriteRenderer abilityEndPhase3Sprite;
+
+    [Header("Ability END timings")]
+    [SerializeField, Min(0.01f)] private float abilityEndPhase1Seconds = 0.6f;
+    [SerializeField, Min(0.01f)] private float abilityEndPhase2Seconds = 0.7f;
+    [SerializeField, Min(0.01f)] private float abilityEndPhase3Seconds = 0.7f;
+
+    [Header("Ability Trigger")]
+    [SerializeField, Min(0f)] private float walkSecondsBeforeAbility = 10f;
 
     [Header("Respawn")]
     [SerializeField] private Tilemap groundTilemapOverride;
-    [SerializeField] private int maxRespawnAttempts = 200;
-    [SerializeField] private float overlapBoxSize = 0.8f;
+    [SerializeField, Min(1)] private int maxRespawnAttempts = 200;
+    [SerializeField, Min(0.05f)] private float overlapBoxSize = 0.8f;
     [SerializeField] private LayerMask occupiedLayers;
 
     [Header("Respawn Exclusion (tiles)")]
-    [SerializeField] private int excludeRadiusTiles = 3;
+    [SerializeField, Min(0)] private int excludeRadiusTiles = 3;
 
     private CharacterHealth _health;
     private Rigidbody2D _rb;
@@ -52,15 +68,7 @@ public sealed class PoyoMoleEnemyMovementController : JunctionTurningEnemyMoveme
     private Vector2 _abilityStartPos;
     private bool _hasAbilityStartPos;
 
-    private enum VisualState
-    {
-        Walk,
-        AbilityStart,
-        Hidden,
-        AbilityEnd
-    }
-
-    private VisualState _visualState = VisualState.Walk;
+    private bool _damageAllowed;
 
     protected override void Awake()
     {
@@ -85,8 +93,12 @@ public sealed class PoyoMoleEnemyMovementController : JunctionTurningEnemyMoveme
         if (_health != null)
             _health.Died += OnAnyDied;
 
-        ApplyVisualState(VisualState.Walk);
+        DisableAllAbilitySprites();
+        DisableAllWalkSprites();
+        ApplyWalkVisualForDirection(Vector2.down);
+
         ResetWalkTimer();
+        RefreshDamageAllowed();
 
         DLog($"Awake rb={_rb != null} groundTm={groundTilemapOverride != null} excludeRadiusTiles={excludeRadiusTiles}");
     }
@@ -132,8 +144,11 @@ public sealed class PoyoMoleEnemyMovementController : JunctionTurningEnemyMoveme
 
         if (_isUsingAbility || _isHidden)
         {
-            _rb.linearVelocity = Vector2.zero;
+            if (_rb != null)
+                _rb.linearVelocity = Vector2.zero;
+
             targetTile = _rb.position;
+            RefreshDamageAllowed();
             return;
         }
 
@@ -143,10 +158,12 @@ public sealed class PoyoMoleEnemyMovementController : JunctionTurningEnemyMoveme
 
         if (_walkTimerPrimed && _walkTimer >= walkSecondsBeforeAbility)
         {
-            DLog($"TriggerAbility walkTimer={_walkTimer}");
+            DLog($"TriggerAbility walkTimer={_walkTimer:F3}/{walkSecondsBeforeAbility:F3}");
             ResetWalkTimer();
             StartAbility();
         }
+
+        RefreshDamageAllowed();
     }
 
     protected override void UpdateSpriteDirection(Vector2 dir)
@@ -154,23 +171,52 @@ public sealed class PoyoMoleEnemyMovementController : JunctionTurningEnemyMoveme
         if (_isUsingAbility || _isHidden || isInDamagedLoop || isDead)
             return;
 
-        if (_visualState != VisualState.Walk)
-            ApplyVisualState(VisualState.Walk);
+        ApplyWalkVisualForDirection(dir);
+        RefreshDamageAllowed();
+    }
 
+    protected override void OnTriggerEnter2D(Collider2D other)
+    {
+        if (isDead)
+            return;
+
+        int layer = other.gameObject.layer;
+
+        if (layer == LayerMask.NameToLayer("Explosion"))
+        {
+            if (_health != null && _damageAllowed)
+                _health.TakeDamage(1);
+            return;
+        }
+
+        if (layer == LayerMask.NameToLayer("Bomb"))
+        {
+            HandleBombCollisionOnContact();
+            return;
+        }
+
+        if (layer == LayerMask.NameToLayer("Enemy"))
+        {
+            var otherEnemy = other.GetComponent<EnemyMovementController>();
+            HandleEnemyCollision(otherEnemy);
+            return;
+        }
+    }
+
+    private void ApplyWalkVisualForDirection(Vector2 dir)
+    {
         AnimatedSpriteRenderer chosen = ResolveWalkSprite(dir);
-
         if (chosen == null)
             return;
 
+        DisableAllAbilitySprites();
         DisableAllWalkSprites();
-        DisableAbilitySprites();
 
         chosen.enabled = true;
         chosen.idle = false;
         chosen.loop = true;
 
         activeSprite = chosen;
-
         ForceNoFlipOn(chosen);
     }
 
@@ -216,6 +262,7 @@ public sealed class PoyoMoleEnemyMovementController : JunctionTurningEnemyMoveme
     {
         _isUsingAbility = true;
         ResetWalkTimer();
+        RefreshDamageAllowed();
 
         if (_rb != null)
             _rb.linearVelocity = Vector2.zero;
@@ -224,17 +271,15 @@ public sealed class PoyoMoleEnemyMovementController : JunctionTurningEnemyMoveme
 
         DLog($"AbilityRoutine BEGIN rbPos={_rb.position} startCell={(_hasAbilityStartCell ? _abilityStartCell.ToString() : "none")} startPos={(_hasAbilityStartPos ? _abilityStartPos.ToString() : "none")}");
 
-        ApplyVisualState(VisualState.AbilityStart);
+        DisableAllWalkSprites();
 
-        if (abilityStartSprite != null)
-            ConfigureAsOneShot(abilityStartSprite);
-
-        yield return new WaitForSecondsRealtime(Mathf.Max(0.01f, abilityStartDurationSeconds));
+        yield return PlayAbilityStartPhases();
 
         if (isDead)
             yield break;
 
         _isHidden = true;
+        RefreshDamageAllowed();
 
         if (_collider != null)
             _collider.enabled = false;
@@ -245,9 +290,10 @@ public sealed class PoyoMoleEnemyMovementController : JunctionTurningEnemyMoveme
             _rb.simulated = false;
         }
 
-        ApplyVisualState(VisualState.Hidden);
+        DisableAllAbilitySprites();
+        ForceAllAbilitySpriteRenderersOff();
 
-        DLog($"HIDE ON rbPos={_rb.position} hiddenSeconds={hiddenSeconds}");
+        DLog($"HIDE ON rbPos={_rb.position} hiddenSeconds={hiddenSeconds:F3}");
 
         yield return new WaitForSecondsRealtime(Mathf.Max(0.01f, hiddenSeconds));
 
@@ -270,103 +316,94 @@ public sealed class PoyoMoleEnemyMovementController : JunctionTurningEnemyMoveme
             _collider.enabled = true;
 
         _isHidden = false;
+        RefreshDamageAllowed();
 
-        ApplyVisualState(VisualState.AbilityEnd);
-
-        if (abilityEndSprite != null)
-            ConfigureAsOneShot(abilityEndSprite);
-
-        yield return new WaitForSecondsRealtime(Mathf.Max(0.01f, abilityEndDurationSeconds));
+        yield return PlayAbilityEndPhasesReverseOrderNoPhase1();
 
         _isUsingAbility = false;
         _abilityRoutine = null;
+        RefreshDamageAllowed();
 
-        ApplyVisualState(VisualState.Walk);
+        DisableAllAbilitySprites();
+        ApplyWalkVisualForDirection(direction == Vector2.zero ? Vector2.down : direction);
         DecideNextTile();
 
         DLog($"AbilityRoutine END rbPos={_rb.position} nextTarget={targetTile}");
     }
 
-    private void ApplyVisualState(VisualState state)
+    private IEnumerator PlayAbilityStartPhases()
     {
-        _visualState = state;
+        yield return PlayOnePhase(abilityStartPhase1Sprite, abilityStartPhase1Seconds, "StartPhase1", loopPhase: true);
+        if (isDead) yield break;
 
+        yield return PlayOnePhase(abilityStartPhase2Sprite, abilityStartPhase2Seconds, "StartPhase2", loopPhase: false);
+        if (isDead) yield break;
+
+        yield return PlayOnePhase(abilityStartPhase3Sprite, abilityStartPhase3Seconds, "StartPhase3", loopPhase: false);
+    }
+
+    private IEnumerator PlayAbilityEndPhasesReverseOrderNoPhase1()
+    {
+        yield return PlayOnePhase(abilityEndPhase3Sprite, abilityEndPhase3Seconds, "EndPhase3", loopPhase: false);
+        if (isDead) yield break;
+
+        yield return PlayOnePhase(abilityEndPhase2Sprite, abilityEndPhase2Seconds, "EndPhase2", loopPhase: false);
+    }
+
+    private IEnumerator PlayOnePhase(AnimatedSpriteRenderer phaseSprite, float seconds, string label, bool loopPhase)
+    {
         DisableAllWalkSprites();
-        DisableAbilitySprites();
+        DisableAllAbilitySprites();
+        ForceAllAbilitySpriteRenderersOff();
 
-        if (state == VisualState.Walk)
+        float dur = Mathf.Max(0.01f, seconds);
+
+        if (phaseSprite != null)
         {
-            AnimatedSpriteRenderer chosen = ResolveWalkSprite(direction);
-            if (chosen != null)
-            {
-                chosen.enabled = true;
-                chosen.idle = false;
-                chosen.loop = true;
-                activeSprite = chosen;
-                ForceNoFlipOn(chosen);
-            }
+            phaseSprite.enabled = true;
+            ForceSpriteRendererEnabled(phaseSprite, true);
 
-            return;
+            phaseSprite.idle = false;
+            phaseSprite.loop = loopPhase;
+            phaseSprite.CurrentFrame = 0;
+            phaseSprite.RefreshFrame();
+
+            activeSprite = phaseSprite;
+            ForceNoFlipOn(phaseSprite);
+
+            DLog($"{label} ON loop={loopPhase} dur={dur:F3}");
+            yield return new WaitForSecondsRealtime(dur);
+
+            phaseSprite.enabled = false;
+            ForceSpriteRendererEnabled(phaseSprite, false);
         }
-
-        if (state == VisualState.AbilityStart)
+        else
         {
-            if (abilityStartSprite != null)
-            {
-                abilityStartSprite.enabled = true;
-                abilityStartSprite.idle = false;
-                abilityStartSprite.loop = false;
-                activeSprite = abilityStartSprite;
-                ForceNoFlipOn(abilityStartSprite);
-            }
-
-            return;
-        }
-
-        if (state == VisualState.Hidden)
-        {
-            activeSprite = null;
-            ForceSpriteRendererOff(walkUpSprite);
-            ForceSpriteRendererOff(walkDownSprite);
-            ForceSpriteRendererOff(walkLeftSprite);
-            ForceSpriteRendererOff(walkRightSprite);
-            ForceSpriteRendererOff(abilityStartSprite);
-            ForceSpriteRendererOff(abilityEndSprite);
-            return;
-        }
-
-        if (state == VisualState.AbilityEnd)
-        {
-            if (abilityEndSprite != null)
-            {
-                abilityEndSprite.enabled = true;
-                abilityEndSprite.idle = false;
-                abilityEndSprite.loop = false;
-                activeSprite = abilityEndSprite;
-                ForceNoFlipOn(abilityEndSprite);
-            }
-
-            return;
+            DLog($"{label} NULL (waiting) dur={dur:F3}");
+            yield return new WaitForSecondsRealtime(dur);
         }
     }
 
-    private void DisableAbilitySprites()
+    private void DisableAllAbilitySprites()
     {
-        if (abilityStartSprite != null) abilityStartSprite.enabled = false;
-        if (abilityEndSprite != null) abilityEndSprite.enabled = false;
+        if (abilityStartPhase1Sprite != null) abilityStartPhase1Sprite.enabled = false;
+        if (abilityStartPhase2Sprite != null) abilityStartPhase2Sprite.enabled = false;
+        if (abilityStartPhase3Sprite != null) abilityStartPhase3Sprite.enabled = false;
+
+        if (abilityEndPhase1Sprite != null) abilityEndPhase1Sprite.enabled = false;
+        if (abilityEndPhase2Sprite != null) abilityEndPhase2Sprite.enabled = false;
+        if (abilityEndPhase3Sprite != null) abilityEndPhase3Sprite.enabled = false;
     }
 
-    private void ConfigureAsOneShot(AnimatedSpriteRenderer r)
+    private void ForceAllAbilitySpriteRenderersOff()
     {
-        if (r == null)
-            return;
+        ForceSpriteRendererOff(abilityStartPhase1Sprite);
+        ForceSpriteRendererOff(abilityStartPhase2Sprite);
+        ForceSpriteRendererOff(abilityStartPhase3Sprite);
 
-        r.idle = false;
-        r.loop = false;
-        r.CurrentFrame = 0;
-        r.RefreshFrame();
-
-        ForceNoFlipOn(r);
+        ForceSpriteRendererOff(abilityEndPhase1Sprite);
+        ForceSpriteRendererOff(abilityEndPhase2Sprite);
+        ForceSpriteRendererOff(abilityEndPhase3Sprite);
     }
 
     private void ForceNoFlipOn(AnimatedSpriteRenderer r)
@@ -392,6 +429,22 @@ public sealed class PoyoMoleEnemyMovementController : JunctionTurningEnemyMoveme
         var childSr = r.GetComponentInChildren<SpriteRenderer>(true);
         if (childSr != null)
             childSr.enabled = false;
+    }
+
+    private void ForceSpriteRendererEnabled(AnimatedSpriteRenderer r, bool enabled)
+    {
+        if (r == null)
+            return;
+
+        if (r.TryGetComponent<SpriteRenderer>(out var sr) && sr != null)
+        {
+            sr.enabled = enabled;
+            return;
+        }
+
+        var childSr = r.GetComponentInChildren<SpriteRenderer>(true);
+        if (childSr != null)
+            childSr.enabled = enabled;
     }
 
     private void CaptureAbilityStartPosition()
@@ -537,6 +590,22 @@ public sealed class PoyoMoleEnemyMovementController : JunctionTurningEnemyMoveme
     {
         _walkTimer = 0f;
         _walkTimerPrimed = false;
+    }
+
+    private void RefreshDamageAllowed()
+    {
+        bool anyWalkEnabled =
+            (walkUpSprite != null && walkUpSprite.enabled) ||
+            (walkDownSprite != null && walkDownSprite.enabled) ||
+            (walkLeftSprite != null && walkLeftSprite.enabled) ||
+            (walkRightSprite != null && walkRightSprite.enabled);
+
+        _damageAllowed =
+            anyWalkEnabled &&
+            !_isUsingAbility &&
+            !_isHidden &&
+            !isDead &&
+            !isInDamagedLoop;
     }
 
     private void OnAnyDied()
