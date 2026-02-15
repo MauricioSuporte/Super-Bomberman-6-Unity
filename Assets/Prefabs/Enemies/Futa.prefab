@@ -117,7 +117,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d4b6dd4177daa8c4c90a6a8e13251ca5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::JunctionTurningGhostEnemyMovementController
-  speed: 1.75
+  speed: 1.5
   tileSize: 1
   spriteUp: {fileID: 1228606390294117671}
   spriteDown: {fileID: 1228606389785476324}
@@ -136,7 +136,7 @@ MonoBehaviour:
   deathSfx: {fileID: 8300000, guid: 95fa76ce6d1f33c498e5165cec574d98, type: 3}
   recheckStuckEverySeconds: 0.25
   minAvailablePathsToTurn: 3
-  preferTurnAtJunction: 1
+  preferTurnAtJunction: 0
   destructiblesTag: Destructibles
   ghostAlpha: 0.55
   deathAlpha: 1
@@ -353,7 +353,7 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 5
-  m_Sprite: {fileID: -718161690, guid: 968ab056fd9a43447bf5d721e78f6c28, type: 3}
+  m_Sprite: {fileID: 1929118680, guid: 968ab056fd9a43447bf5d721e78f6c28, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -376,20 +376,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a4b55e1b961d144197e1a7a4a391956, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  idleSprite: {fileID: -718161690, guid: 968ab056fd9a43447bf5d721e78f6c28, type: 3}
+  idleSprite: {fileID: 1929118680, guid: 968ab056fd9a43447bf5d721e78f6c28, type: 3}
   animationSprite:
-  - {fileID: -718161690, guid: 968ab056fd9a43447bf5d721e78f6c28, type: 3}
+  - {fileID: 1929118680, guid: 968ab056fd9a43447bf5d721e78f6c28, type: 3}
   - {fileID: 6519461365004617146, guid: 968ab056fd9a43447bf5d721e78f6c28, type: 3}
-  - {fileID: 927842319, guid: 968ab056fd9a43447bf5d721e78f6c28, type: 3}
-  - {fileID: 338586802, guid: 968ab056fd9a43447bf5d721e78f6c28, type: 3}
+  - {fileID: 222220432, guid: 968ab056fd9a43447bf5d721e78f6c28, type: 3}
+  - {fileID: -1768301494, guid: 968ab056fd9a43447bf5d721e78f6c28, type: 3}
   allowFlipX: 0
-  animationTime: 0.1
+  animationTime: 0.25
   useSequenceDuration: 0
-  sequenceDuration: 0.5
+  sequenceDuration: 0.75
   loop: 1
   idle: 0
   frameOffsets: []
-  pingPong: 1
+  pingPong: 0
   disableOffsetsIfThisObjectHasRigidbody2D: 1
 --- !u!1 &1228606390223914641
 GameObject:
@@ -471,7 +471,7 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 5
-  m_Sprite: {fileID: 171830755, guid: 968ab056fd9a43447bf5d721e78f6c28, type: 3}
+  m_Sprite: {fileID: -528816664, guid: 968ab056fd9a43447bf5d721e78f6c28, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -494,20 +494,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a4b55e1b961d144197e1a7a4a391956, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  idleSprite: {fileID: 171830755, guid: 968ab056fd9a43447bf5d721e78f6c28, type: 3}
+  idleSprite: {fileID: -528816664, guid: 968ab056fd9a43447bf5d721e78f6c28, type: 3}
   animationSprite:
-  - {fileID: 171830755, guid: 968ab056fd9a43447bf5d721e78f6c28, type: 3}
-  - {fileID: 791067485, guid: 968ab056fd9a43447bf5d721e78f6c28, type: 3}
-  - {fileID: 1754396874, guid: 968ab056fd9a43447bf5d721e78f6c28, type: 3}
-  - {fileID: -502867410, guid: 968ab056fd9a43447bf5d721e78f6c28, type: 3}
+  - {fileID: -528816664, guid: 968ab056fd9a43447bf5d721e78f6c28, type: 3}
+  - {fileID: 1221043230, guid: 968ab056fd9a43447bf5d721e78f6c28, type: 3}
+  - {fileID: 1843899410, guid: 968ab056fd9a43447bf5d721e78f6c28, type: 3}
+  - {fileID: 1927025249, guid: 968ab056fd9a43447bf5d721e78f6c28, type: 3}
   allowFlipX: 0
-  animationTime: 0.1
+  animationTime: 0.25
   useSequenceDuration: 0
-  sequenceDuration: 0.5
+  sequenceDuration: 0.75
   loop: 1
   idle: 0
   frameOffsets: []
-  pingPong: 1
+  pingPong: 0
   disableOffsetsIfThisObjectHasRigidbody2D: 1
 --- !u!1 &1228606390294117669
 GameObject:
@@ -589,7 +589,7 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 5
-  m_Sprite: {fileID: 528283380, guid: 968ab056fd9a43447bf5d721e78f6c28, type: 3}
+  m_Sprite: {fileID: 72991891, guid: 968ab056fd9a43447bf5d721e78f6c28, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -612,20 +612,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a4b55e1b961d144197e1a7a4a391956, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  idleSprite: {fileID: 528283380, guid: 968ab056fd9a43447bf5d721e78f6c28, type: 3}
+  idleSprite: {fileID: 72991891, guid: 968ab056fd9a43447bf5d721e78f6c28, type: 3}
   animationSprite:
-  - {fileID: 528283380, guid: 968ab056fd9a43447bf5d721e78f6c28, type: 3}
-  - {fileID: 802231440, guid: 968ab056fd9a43447bf5d721e78f6c28, type: 3}
-  - {fileID: -2110596668, guid: 968ab056fd9a43447bf5d721e78f6c28, type: 3}
-  - {fileID: 802231440, guid: 968ab056fd9a43447bf5d721e78f6c28, type: 3}
+  - {fileID: 72991891, guid: 968ab056fd9a43447bf5d721e78f6c28, type: 3}
+  - {fileID: -1893925052, guid: 968ab056fd9a43447bf5d721e78f6c28, type: 3}
+  - {fileID: 173219662, guid: 968ab056fd9a43447bf5d721e78f6c28, type: 3}
+  - {fileID: -1893925052, guid: 968ab056fd9a43447bf5d721e78f6c28, type: 3}
   allowFlipX: 0
-  animationTime: 0.1
+  animationTime: 0.25
   useSequenceDuration: 0
-  sequenceDuration: 0.5
+  sequenceDuration: 0.75
   loop: 1
   idle: 0
   frameOffsets: []
-  pingPong: 1
+  pingPong: 0
   disableOffsetsIfThisObjectHasRigidbody2D: 1
 --- !u!1 &1228606390696233725
 GameObject:
@@ -707,7 +707,7 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 5
-  m_Sprite: {fileID: 1996378250, guid: 968ab056fd9a43447bf5d721e78f6c28, type: 3}
+  m_Sprite: {fileID: -1492541048, guid: 968ab056fd9a43447bf5d721e78f6c28, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -730,20 +730,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a4b55e1b961d144197e1a7a4a391956, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  idleSprite: {fileID: 1996378250, guid: 968ab056fd9a43447bf5d721e78f6c28, type: 3}
+  idleSprite: {fileID: -1492541048, guid: 968ab056fd9a43447bf5d721e78f6c28, type: 3}
   animationSprite:
-  - {fileID: 1996378250, guid: 968ab056fd9a43447bf5d721e78f6c28, type: 3}
-  - {fileID: -211338634, guid: 968ab056fd9a43447bf5d721e78f6c28, type: 3}
-  - {fileID: 445841120, guid: 968ab056fd9a43447bf5d721e78f6c28, type: 3}
-  - {fileID: 944158016, guid: 968ab056fd9a43447bf5d721e78f6c28, type: 3}
+  - {fileID: -1492541048, guid: 968ab056fd9a43447bf5d721e78f6c28, type: 3}
+  - {fileID: -891562363, guid: 968ab056fd9a43447bf5d721e78f6c28, type: 3}
+  - {fileID: -1588143893, guid: 968ab056fd9a43447bf5d721e78f6c28, type: 3}
+  - {fileID: 1742252101, guid: 968ab056fd9a43447bf5d721e78f6c28, type: 3}
   allowFlipX: 0
-  animationTime: 0.1
+  animationTime: 0.25
   useSequenceDuration: 0
-  sequenceDuration: 0.5
+  sequenceDuration: 0.75
   loop: 1
   idle: 0
   frameOffsets: []
-  pingPong: 1
+  pingPong: 0
   disableOffsetsIfThisObjectHasRigidbody2D: 1
 --- !u!1 &1228606391467010651
 GameObject:
