@@ -141,7 +141,6 @@ GameObject:
   - component: {fileID: 1919497702538166291}
   - component: {fileID: 6543421237453546391}
   - component: {fileID: 6829774629725126631}
-  - component: {fileID: 1992388427650369074}
   m_Layer: 13
   m_Name: Mole
   m_TagString: Untagged
@@ -495,7 +494,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: aeb569e071432dc49b0dbbadfb27af27, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LouieAbilitySfxConfig
-  abilitySfx: {fileID: 8300000, guid: bce0a0ce6d519a945aebabc5896d5189, type: 3}
+  abilitySfx: {fileID: 8300000, guid: 56f48e9d8d841434fb4b17086f54fc5f, type: 3}
   abilityVolume: 1
 --- !u!114 &1919497702538166291
 MonoBehaviour:
@@ -552,20 +551,6 @@ MonoBehaviour:
   phase2Duration: 0.5
   phase3Duration: 0.5
   phase2ReverseDuration: 0.5
---- !u!114 &1992388427650369074
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2273416014071709654}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: aeb569e071432dc49b0dbbadfb27af27, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::MountAbilitySfxConfig
-  abilitySfx: {fileID: 8300000, guid: 56f48e9d8d841434fb4b17086f54fc5f, type: 3}
-  abilityVolume: 1
 --- !u!1 &2295009489718295767
 GameObject:
   m_ObjectHideFlags: 0

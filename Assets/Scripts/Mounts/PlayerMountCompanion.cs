@@ -39,6 +39,7 @@ public class PlayerMountCompanion : MonoBehaviour
     [SerializeField] string yellowLouieMountSfxName = "MountYellowLouie";
     [SerializeField] string pinkLouieMountSfxName = "MountPinkLouie";
     [SerializeField] string redLouieMountSfxName = "MountRedLouie";
+    [SerializeField] string moleMountSfxName = "MountMole";
 
     readonly Dictionary<MountedType, AudioClip> _worldMountSfxCache = new();
 
@@ -877,6 +878,11 @@ public class PlayerMountCompanion : MonoBehaviour
                 var tm = ResolveGroundTilemapNear(transform.position);
                 if (tm != null)
                     drill.SetGroundTilemap(tm);
+
+                if (currentAbilityCfg != null)
+                    drill.SetDrillSfx(currentAbilityCfg.abilitySfx, currentAbilityCfg.abilityVolume);
+                else
+                    drill.SetDrillSfx(null, 1f);
             }
         }
 
@@ -1199,6 +1205,7 @@ public class PlayerMountCompanion : MonoBehaviour
             MountedType.Yellow => yellowLouieMountSfxName,
             MountedType.Pink => pinkLouieMountSfxName,
             MountedType.Red => redLouieMountSfxName,
+            MountedType.Mole => moleMountSfxName,
             _ => null
         };
 

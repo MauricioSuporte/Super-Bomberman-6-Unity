@@ -38,6 +38,10 @@ public class MoleMountDrillAbility : MonoBehaviour, IPlayerAbility
 
     IMoleMountDrillExternalAnimator externalAnimator;
 
+    AudioClip drillSfx;
+    float drillVolume = 1f;
+    AudioSource audioSource;
+
     bool running;
 
     public string Id => AbilityId;
@@ -48,6 +52,8 @@ public class MoleMountDrillAbility : MonoBehaviour, IPlayerAbility
         movement = GetComponent<MovementController>();
         rb = movement != null ? movement.Rigidbody : null;
 
+        audioSource = GetComponentInParent<AudioSource>();
+
         if (enemyLayerMask.value == 0)
             enemyLayerMask = LayerMask.GetMask("Enemy");
 
@@ -57,6 +63,12 @@ public class MoleMountDrillAbility : MonoBehaviour, IPlayerAbility
 
     void OnDisable() => Cancel();
     void OnDestroy() => Cancel();
+
+    public void SetDrillSfx(AudioClip clip, float volume)
+    {
+        drillSfx = clip;
+        drillVolume = Mathf.Clamp01(volume);
+    }
 
     public void SetExternalAnimator(IMoleMountDrillExternalAnimator animator)
     {
@@ -108,6 +120,9 @@ public class MoleMountDrillAbility : MonoBehaviour, IPlayerAbility
 
     IEnumerator DrillRoutine()
     {
+        if (drillSfx != null && audioSource != null)
+            audioSource.PlayOneShot(drillSfx, drillVolume);
+
         if (movement == null || rb == null)
         {
             routine = null;
