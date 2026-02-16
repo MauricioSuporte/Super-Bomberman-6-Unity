@@ -1258,7 +1258,7 @@ Tilemap:
       - {fileID: 1925664496, guid: 6941c19c1cba83a4cbc94f1207289cd9, type: 3}
       - {fileID: -42286666, guid: 6941c19c1cba83a4cbc94f1207289cd9, type: 3}
       - {fileID: 1943493983, guid: 6941c19c1cba83a4cbc94f1207289cd9, type: 3}
-      m_AnimationSpeed: 5
+      m_AnimationSpeed: 5.0000005
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: 7, y: -2, z: 0}
@@ -1498,7 +1498,7 @@ Tilemap:
       - {fileID: 1925664496, guid: 6941c19c1cba83a4cbc94f1207289cd9, type: 3}
       - {fileID: -42286666, guid: 6941c19c1cba83a4cbc94f1207289cd9, type: 3}
       - {fileID: 1943493983, guid: 6941c19c1cba83a4cbc94f1207289cd9, type: 3}
-      m_AnimationSpeed: 5
+      m_AnimationSpeed: 5.0000005
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: 19, y: 2, z: 0}
@@ -4669,7 +4669,6 @@ Transform:
   - {fileID: 521020443}
   - {fileID: 362800774}
   - {fileID: 1247606180}
-  - {fileID: 1169073181}
   m_Father: {fileID: 679601671}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &732032084
@@ -9923,7 +9922,7 @@ PrefabInstance:
   serializedVersion: 2
   m_Modification:
     serializedVersion: 3
-    m_TransformParent: {fileID: 732032081}
+    m_TransformParent: {fileID: 0}
     m_Modifications:
     - target: {fileID: 6652107077462134106, guid: 780b4b3f570b10843b45da0805356115, type: 3}
       propertyPath: m_Name
@@ -9931,11 +9930,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8388449595591689174, guid: 780b4b3f570b10843b45da0805356115, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -4.5
+      value: -5
       objectReference: {fileID: 0}
     - target: {fileID: 8388449595591689174, guid: 780b4b3f570b10843b45da0805356115, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -3.5
+      value: -4
       objectReference: {fileID: 0}
     - target: {fileID: 8388449595591689174, guid: 780b4b3f570b10843b45da0805356115, type: 3}
       propertyPath: m_LocalPosition.z
@@ -9974,11 +9973,6 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 780b4b3f570b10843b45da0805356115, type: 3}
---- !u!4 &1169073181 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 8388449595591689174, guid: 780b4b3f570b10843b45da0805356115, type: 3}
-  m_PrefabInstance: {fileID: 1169073180}
-  m_PrefabAsset: {fileID: 0}
 --- !u!4 &1247606180 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 8388449595591689174, guid: 8f15b5d884a8d5d4fad591fc2ed9672d, type: 3}
@@ -11174,7 +11168,7 @@ Tilemap:
       - {fileID: -1999495904, guid: 6941c19c1cba83a4cbc94f1207289cd9, type: 3}
       - {fileID: -1601884613, guid: 6941c19c1cba83a4cbc94f1207289cd9, type: 3}
       - {fileID: 1244794495, guid: 6941c19c1cba83a4cbc94f1207289cd9, type: 3}
-      m_AnimationSpeed: 5.0000005
+      m_AnimationSpeed: 5
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: 13, y: 0, z: 0}
@@ -13646,3 +13640,4 @@ SceneRoots:
   - {fileID: 290470827}
   - {fileID: 1746315304}
   - {fileID: 1522516126}
+  - {fileID: 1169073180}

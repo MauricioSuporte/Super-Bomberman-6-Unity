@@ -7,6 +7,11 @@ public sealed class TankShot : MonoBehaviour
     [SerializeField, Min(0.1f)] private float speed = 8f;
     [SerializeField] private LayerMask hitMask;
 
+    [Header("Impact -> Explosion (BombController logic)")]
+    [SerializeField, Min(0)] private int explosionRadius = 1;
+    [SerializeField] private bool pierceExplosion = false;
+    [SerializeField] private bool chainBombOnHit = true;
+
     private Rigidbody2D _rb;
     private Collider2D _col;
     private Vector2 _dir;
@@ -15,6 +20,11 @@ public sealed class TankShot : MonoBehaviour
     private AnimatedSpriteRenderer _anim;
     private ContactFilter2D _filter;
     private readonly RaycastHit2D[] _castHits = new RaycastHit2D[8];
+
+    private BombController _cachedBombController;
+    private AudioSource _cachedSfxSource;
+
+    private bool _impactHandled;
 
     public void Init(Vector2 dir, float projectileSpeed, LayerMask mask, GameObject owner)
     {
@@ -25,6 +35,8 @@ public sealed class TankShot : MonoBehaviour
 
         _filter = new ContactFilter2D { useLayerMask = true, useTriggers = true };
         _filter.SetLayerMask(hitMask);
+
+        CacheBombControllerAndSfxSource();
 
         if (_anim != null)
         {
@@ -60,6 +72,9 @@ public sealed class TankShot : MonoBehaviour
 
     private void FixedUpdate()
     {
+        if (_impactHandled)
+            return;
+
         if (_rb == null || _col == null)
             return;
 
@@ -76,20 +91,101 @@ public sealed class TankShot : MonoBehaviour
             if (_owner != null && hit.collider.gameObject == _owner)
                 continue;
 
-            _rb.MovePosition(hit.centroid);
-
-            int layer = hit.collider.gameObject.layer;
-
-            if (layer == LayerMask.NameToLayer("Player"))
-            {
-                if (hit.collider.TryGetComponent<CharacterHealth>(out var h))
-                    h.TakeDamage(1);
-            }
-
-            Destroy(gameObject);
+            HandleImpact(hit.collider, hit.centroid);
             return;
         }
 
         _rb.MovePosition(_rb.position + _dir * moveDist);
+    }
+
+    private void HandleImpact(Collider2D other, Vector2 impactPos)
+    {
+        if (_impactHandled)
+            return;
+
+        _impactHandled = true;
+
+        if (_rb != null)
+            _rb.MovePosition(impactPos);
+
+        if (chainBombOnHit && other != null && other.gameObject.layer == LayerMask.NameToLayer("Bomb"))
+            TryChainBomb(other);
+
+        TrySpawnExplosion(impactPos);
+
+        Destroy(gameObject);
+    }
+
+    private void TryChainBomb(Collider2D other)
+    {
+        var bombGo = other.attachedRigidbody != null ? other.attachedRigidbody.gameObject : other.gameObject;
+        if (bombGo == null)
+            return;
+
+        if (bombGo.TryGetComponent<Bomb>(out var bomb) && bomb != null && bomb.Owner != null)
+        {
+            bomb.Owner.ExplodeBombChained(bombGo);
+            return;
+        }
+
+        CacheBombControllerAndSfxSource();
+        if (_cachedBombController != null)
+            _cachedBombController.ExplodeBombChained(bombGo);
+    }
+
+    private void TrySpawnExplosion(Vector2 worldPos)
+    {
+        CacheBombControllerAndSfxSource();
+        if (_cachedBombController == null)
+            return;
+
+        worldPos.x = Mathf.Round(worldPos.x);
+        worldPos.y = Mathf.Round(worldPos.y);
+
+        _cachedBombController.SpawnExplosionCrossForEffectWithTileEffects(
+            origin: worldPos,
+            radius: Mathf.Max(0, explosionRadius),
+            pierce: pierceExplosion,
+            sfxSource: _cachedSfxSource
+        );
+    }
+
+    private void CacheBombControllerAndSfxSource()
+    {
+        if (_cachedBombController == null)
+        {
+            if (_owner != null && _owner.TryGetComponent(out _cachedBombController) && _cachedBombController != null)
+            {
+            }
+            else
+            {
+                var all = FindObjectsByType<BombController>(FindObjectsSortMode.None);
+                for (int i = 0; i < all.Length; i++)
+                {
+                    var bc = all[i];
+                    if (bc == null)
+                        continue;
+
+                    if (!bc.CompareTag("Player"))
+                        continue;
+
+                    _cachedBombController = bc;
+                    break;
+                }
+            }
+        }
+
+        if (_cachedSfxSource == null)
+        {
+            if (_owner != null && _owner.TryGetComponent(out _cachedSfxSource) && _cachedSfxSource != null)
+            {
+                _cachedSfxSource.playOnAwake = false;
+                _cachedSfxSource.spatialBlend = 0f;
+            }
+            else if (_cachedBombController != null && _cachedBombController.playerAudioSource != null)
+            {
+                _cachedSfxSource = _cachedBombController.playerAudioSource;
+            }
+        }
     }
 }

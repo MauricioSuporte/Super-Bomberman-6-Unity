@@ -123,7 +123,9 @@ MonoBehaviour:
   speed: 8
   hitMask:
     serializedVersion: 2
-    m_Bits: 1992
+    m_Bits: 10184
+  debugTankShot: 1
+  logEveryFixed: 6
 --- !u!1 &8992946389446785346
 GameObject:
   m_ObjectHideFlags: 0

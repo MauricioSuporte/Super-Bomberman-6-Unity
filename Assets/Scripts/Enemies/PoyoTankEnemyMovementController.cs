@@ -197,6 +197,19 @@ public sealed class PoyoTankEnemyMovementController : JunctionTurningEnemyMoveme
         Vector2 d = dir == Vector2.zero ? Vector2.down : dir.normalized;
         Vector2 spawn = rb.position + d * tileSize + projectileLocalOffset;
 
+        int expected = LayerMask.GetMask("Player", "Stage", "Bomb", "Enemy", "Water", "Explosion", "Item");
+        int current = projectileHitMask.value;
+
+        bool looksWrong = current == 0 || current == LayerMask.GetMask("Explosion");
+
+        if (looksWrong)
+            projectileHitMask = expected;
+
+        Debug.Log(
+            $"[PoyoTank.Shoot] shooter={name} dir={d} spawn={spawn} maskBefore={current}({MaskToString(current)}) " +
+            $"maskAfter={projectileHitMask.value}({MaskToString(projectileHitMask.value)}) looksWrong={looksWrong}"
+        );
+
         var go = Instantiate(projectilePrefab, spawn, Quaternion.identity);
         if (go == null)
             return;
@@ -206,6 +219,26 @@ public sealed class PoyoTankEnemyMovementController : JunctionTurningEnemyMoveme
             proj = go.AddComponent<TankShot>();
 
         proj.Init(d, projectileSpeed, projectileHitMask, owner: gameObject);
+    }
+
+    private static string MaskToString(int maskValue)
+    {
+        if (maskValue == 0) return "Nothing";
+
+        string s = "";
+        for (int i = 0; i < 32; i++)
+        {
+            if ((maskValue & (1 << i)) == 0)
+                continue;
+
+            string n = LayerMask.LayerToName(i);
+            if (string.IsNullOrEmpty(n))
+                n = $"Layer{i}";
+
+            if (s.Length > 0) s += ",";
+            s += n;
+        }
+        return s;
     }
 
     private bool TryGetPlayerDirection(out Vector2 dirToPlayer)
