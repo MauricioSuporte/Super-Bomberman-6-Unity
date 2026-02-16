@@ -29,7 +29,7 @@ public class MoleMountDrillAbility : MonoBehaviour, IPlayerAbility
     [SerializeField] private bool lockInputWhileDrilling = true;
 
     [Header("Burrowed (after Phase 3, before teleport)")]
-    [SerializeField, Min(0f)] private float burrowedSeconds = 1f;
+    [SerializeField, Min(0f)] private float burrowedSeconds = 0.5f;
 
     MovementController movement;
     Rigidbody2D rb;
@@ -47,8 +47,15 @@ public class MoleMountDrillAbility : MonoBehaviour, IPlayerAbility
     public string Id => AbilityId;
     public bool IsEnabled => enabledAbility;
 
+    MountEggQueue eggQueue;
+    bool eggQueuePrevVisible;
+    bool eggQueueCached;
+
     void Awake()
     {
+        eggQueue = GetComponentInChildren<MountEggQueue>(true);
+        eggQueueCached = true;
+
         movement = GetComponent<MovementController>();
         rb = movement != null ? movement.Rigidbody : null;
 
@@ -120,6 +127,18 @@ public class MoleMountDrillAbility : MonoBehaviour, IPlayerAbility
 
     IEnumerator DrillRoutine()
     {
+        if (!eggQueueCached)
+        {
+            eggQueue = GetComponentInChildren<MountEggQueue>(true);
+            eggQueueCached = true;
+        }
+
+        if (eggQueue != null)
+        {
+            eggQueuePrevVisible = !eggQueue.IsForcedHidden;
+            eggQueue.ForceVisible(false);
+        }
+
         if (drillSfx != null && audioSource != null)
             audioSource.PlayOneShot(drillSfx, drillVolume);
 
@@ -179,6 +198,12 @@ public class MoleMountDrillAbility : MonoBehaviour, IPlayerAbility
 
             if (movement != null && lockInputWhileDrilling)
                 movement.SetInputLocked(false);
+
+            if (eggQueue != null)
+            {
+                eggQueue.SnapQueueToOwnerNow(resetHistoryToOwnerNow: true);
+                eggQueue.ForceVisible(eggQueuePrevVisible);
+            }
 
             running = false;
             routine = null;

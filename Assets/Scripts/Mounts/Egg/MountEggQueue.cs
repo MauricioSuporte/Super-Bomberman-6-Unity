@@ -152,6 +152,8 @@ public sealed class MountEggQueue : MonoBehaviour
     int _ownerPlayerId = -1;
     bool _ignoreOwnerInvulnerability;
 
+    public bool IsForcedHidden => _forcedHidden;
+
     #region Unity
 
     void OnValidate() => ClampInspector();
@@ -1266,6 +1268,27 @@ public sealed class MountEggQueue : MonoBehaviour
             return StartCoroutine(routine);
 
         return GlobalCoroutineRunner.Run(routine);
+    }
+
+    public void SnapQueueToOwnerNow(bool resetHistoryToOwnerNow = true)
+    {
+        if (_hardFrozen)
+            return;
+
+        EnsureBound();
+
+        if (resetHistoryToOwnerNow)
+            ResetHistoryToCurrentOwnerPos();
+        else
+            SeedHistoryNow();
+
+        ResetRuntimeState();
+        ExitIdleShiftNow();
+
+        StopAllAnimationsNow();
+        SnapAllToOwnerNow();
+
+        PostQueueChanged(animateShift: false);
     }
 
     #endregion
