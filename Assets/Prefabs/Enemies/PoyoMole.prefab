@@ -991,7 +991,6 @@ MonoBehaviour:
   abilityEndPhase1Sprite: {fileID: 2929260832268906477}
   abilityEndPhase2Sprite: {fileID: 3297093546399395364}
   abilityEndPhase3Sprite: {fileID: 4000756953925145055}
-  abilityEndPhase1Seconds: 1
   abilityEndPhase2Seconds: 0.5
   abilityEndPhase3Seconds: 0.5
   walkSecondsBeforeAbility: 10
@@ -1001,6 +1000,8 @@ MonoBehaviour:
   poyoArcHeightTiles: 3
   poyoMaxLandingDistanceTiles: 3
   notifyGameManagerOnDefeat: 0
+  moleMountPrefab: {fileID: 2273416014071709654, guid: 158f2ef3a3826a54d995ca3a09ba97a2, type: 3}
+  dropMoleMountOnDefeat: 1
   groundTilemapOverride: {fileID: 0}
   maxRespawnAttempts: 220
   overlapBoxSize: 0.8

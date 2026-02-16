@@ -49,6 +49,10 @@ public sealed class PoyoMoleEnemyMovementController : JunctionTurningEnemyMoveme
     [SerializeField, Min(0)] private int poyoMaxLandingDistanceTiles = 3;
     [SerializeField] private bool notifyGameManagerOnDefeat = true;
 
+    [Header("Defeat -> Drop World Mount (Mole)")]
+    [SerializeField] private GameObject moleMountPrefab;
+    [SerializeField] private bool dropMoleMountOnDefeat = true;
+
     [Header("Respawn / Ground")]
     [SerializeField] private Tilemap groundTilemapOverride;
     [SerializeField, Min(1)] private int maxRespawnAttempts = 200;
@@ -272,6 +276,9 @@ public sealed class PoyoMoleEnemyMovementController : JunctionTurningEnemyMoveme
                 gameManager.NotifyEnemyDied();
         }
 
+        if (dropMoleMountOnDefeat)
+            SpawnWorldMoleMount(origin);
+
         if (poyoPrefab != null)
         {
             Vector2 landing = PickLandingNear(origin, poyoMaxLandingDistanceTiles);
@@ -284,6 +291,48 @@ public sealed class PoyoMoleEnemyMovementController : JunctionTurningEnemyMoveme
         }
 
         Destroy(gameObject);
+    }
+
+    private void SpawnWorldMoleMount(Vector2 origin)
+    {
+        if (moleMountPrefab == null)
+            return;
+
+        Vector3 pos = (Vector3)origin;
+        GameObject moleGo = Instantiate(moleMountPrefab, pos, Quaternion.identity);
+        if (moleGo == null)
+            return;
+
+        if (!moleGo.TryGetComponent<MountWorldPickup>(out var pickup) || pickup == null)
+            pickup = moleGo.AddComponent<MountWorldPickup>();
+
+        pickup.Init(MountedType.Mole);
+
+        var visual = moleGo.GetComponentInChildren<MountVisualController>(true);
+        if (visual != null)
+            visual.enabled = false;
+
+        if (moleGo.TryGetComponent<MountMovementController>(out var mmc) && mmc != null)
+            mmc.enabled = false;
+
+        if (moleGo.TryGetComponent<MovementController>(out var mc) && mc != null)
+            mc.enabled = false;
+
+        if (moleGo.TryGetComponent<Rigidbody2D>(out var rb) && rb != null)
+        {
+            rb.simulated = true;
+            rb.linearVelocity = Vector2.zero;
+            rb.angularVelocity = 0f;
+        }
+
+        if (moleGo.TryGetComponent<Collider2D>(out var col))
+            col.enabled = true;
+
+        if (moleGo.TryGetComponent<BombController>(out var bc) && bc != null)
+            bc.enabled = false;
+
+        if (moleGo.TryGetComponent<CharacterHealth>(out var h) && h != null)
+            h.StopInvulnerability();
     }
 
     private Vector2 PickLandingNear(Vector2 origin, int radiusTiles)
@@ -718,10 +767,5 @@ public sealed class PoyoMoleEnemyMovementController : JunctionTurningEnemyMoveme
         }
 
         StopAllCoroutines();
-    }
-
-    private void DLog(string msg)
-    {
-        Debug.Log($"[PoyoDbg] name='{name}' t={Time.time:F3} f={Time.frameCount} {msg}", this);
     }
 }
