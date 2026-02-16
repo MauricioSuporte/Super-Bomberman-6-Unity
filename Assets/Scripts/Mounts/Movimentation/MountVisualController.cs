@@ -8,6 +8,12 @@ public class MountVisualController : MonoBehaviour
     [Header("Player Visual While Mounted")]
     public bool useHeadOnlyPlayerVisual = false;
 
+    [Header("HeadOnly Player Visual Offsets (local, per direction)")]
+    [SerializeField] private Vector2 headOnlyUpLocalOffset = Vector2.zero;
+    [SerializeField] private Vector2 headOnlyDownLocalOffset = Vector2.zero;
+    [SerializeField] private Vector2 headOnlyLeftLocalOffset = Vector2.zero;
+    [SerializeField] private Vector2 headOnlyRightLocalOffset = Vector2.zero;
+
     [Header("Visual Offset (local)")]
     public Vector2 localOffset = new(0f, -0.15f);
 
@@ -47,6 +53,8 @@ public class MountVisualController : MonoBehaviour
 
     private bool suppressedByRedBoat;
 
+    private bool headOnlyOffsetsApplied;
+
     public bool HasInactivityEmoteRenderer => louieInactivityEmoteLoop != null;
 
     public void Bind(MovementController movement)
@@ -55,6 +63,8 @@ public class MountVisualController : MonoBehaviour
         playingEndStage = false;
         playingInactivity = false;
         suppressedByRedBoat = false;
+
+        headOnlyOffsetsApplied = false;
 
         CacheAllRenderers();
 
@@ -67,7 +77,15 @@ public class MountVisualController : MonoBehaviour
             louieRight = null;
 
         if (owner != null)
+        {
             ownerSpriteRenderers = owner.GetComponentsInChildren<SpriteRenderer>(true);
+
+            if (useHeadOnlyPlayerVisual)
+            {
+                owner.SetUseHeadOnlyWhenMounted(true);
+                ApplyHeadOnlyOffsetsIfNeeded(force: true);
+            }
+        }
 
         louieSpriteRenderers = GetComponentsInChildren<SpriteRenderer>(true);
         louieOriginalColors = new Color[louieSpriteRenderers.Length];
@@ -87,6 +105,11 @@ public class MountVisualController : MonoBehaviour
             HardExclusive(start);
             ApplyDirection(Vector2.down, true);
         }
+    }
+
+    private void OnDestroy()
+    {
+        ClearHeadOnlyOffsetsIfNeeded();
     }
 
     public void SetInactivityEmote(bool on)
@@ -200,6 +223,11 @@ public class MountVisualController : MonoBehaviour
 
         transform.localPosition = localOffset;
 
+        if (useHeadOnlyPlayerVisual)
+            ApplyHeadOnlyOffsetsIfNeeded(force: false);
+        else
+            ClearHeadOnlyOffsetsIfNeeded();
+
         bool ownerOnRedBoat = BoatRideZone.IsRidingBoat(owner);
 
         if (ownerOnRedBoat)
@@ -232,6 +260,38 @@ public class MountVisualController : MonoBehaviour
         }
 
         ApplyBlinkSyncFromOwnerIfNeeded();
+    }
+
+    private void ApplyHeadOnlyOffsetsIfNeeded(bool force)
+    {
+        if (owner == null)
+            return;
+
+        if (!useHeadOnlyPlayerVisual)
+            return;
+
+        if (!force && headOnlyOffsetsApplied)
+            return;
+
+        owner.SetHeadOnlyMountedOffsets(
+            headOnlyUpLocalOffset,
+            headOnlyDownLocalOffset,
+            headOnlyLeftLocalOffset,
+            headOnlyRightLocalOffset
+        );
+
+        headOnlyOffsetsApplied = true;
+    }
+
+    private void ClearHeadOnlyOffsetsIfNeeded()
+    {
+        if (!headOnlyOffsetsApplied)
+            return;
+
+        if (owner != null)
+            owner.ClearHeadOnlyMountedOffsets();
+
+        headOnlyOffsetsApplied = false;
     }
 
     private void SuppressAllLouieVisuals()

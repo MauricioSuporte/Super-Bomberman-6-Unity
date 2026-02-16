@@ -2181,6 +2181,7 @@ MonoBehaviour:
   passObstacleTag: Water
   suppressInactivityAnimation: 0
   isDead: 0
+  debugHeadOnlyMounted: 1
 --- !u!114 &2372813969180496726
 MonoBehaviour:
   m_ObjectHideFlags: 0

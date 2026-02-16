@@ -1548,6 +1548,47 @@ public class MovementController : MonoBehaviour, IKillable
         EnableExclusiveFromState();
     }
 
+    public void SetHeadOnlyMountedOffsets(Vector2 up, Vector2 down, Vector2 left, Vector2 right)
+    {
+        ApplyHeadOnlyOffset(headOnlyUp, up);
+        ApplyHeadOnlyOffset(headOnlyDown, down);
+        ApplyHeadOnlyOffset(headOnlyLeft, left);
+        ApplyHeadOnlyOffset(headOnlyRight, right);
+
+        if (isDead || isEndingStage) return;
+        if (IsRidingPlaying()) return;
+        if (externalVisualSuppressed || visualOverrideActive || IsSpriteLocked) return;
+
+        EnableExclusiveFromState();
+    }
+
+    public void ClearHeadOnlyMountedOffsets()
+    {
+        ClearHeadOnlyOffset(headOnlyUp);
+        ClearHeadOnlyOffset(headOnlyDown);
+        ClearHeadOnlyOffset(headOnlyLeft);
+        ClearHeadOnlyOffset(headOnlyRight);
+
+        if (isDead || isEndingStage) return;
+        if (IsRidingPlaying()) return;
+        if (externalVisualSuppressed || visualOverrideActive || IsSpriteLocked) return;
+
+        EnableExclusiveFromState();
+    }
+
+    private static void ApplyHeadOnlyOffset(AnimatedSpriteRenderer r, Vector2 localOffset)
+    {
+        if (r == null) return;
+        r.SetRuntimeBaseLocalX(localOffset.x);
+        r.SetRuntimeBaseLocalY(localOffset.y);
+    }
+
+    private static void ClearHeadOnlyOffset(AnimatedSpriteRenderer r)
+    {
+        if (r == null) return;
+        r.ClearRuntimeBaseOffset();
+    }
+
     [Header("Debug - HeadOnly Mounted")]
     [SerializeField] private bool debugHeadOnlyMounted = true;
 

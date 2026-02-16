@@ -440,6 +440,7 @@ MonoBehaviour:
   passObstacleTag: Water
   suppressInactivityAnimation: 0
   isDead: 0
+  debugHeadOnlyMounted: 1
   owner: {fileID: 0}
   followOffset: {x: -0.35, y: -0.15}
   followLerp: 25
@@ -457,6 +458,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::LouieRiderVisual
   owner: {fileID: 6013594429678645981, guid: a0c9407e33176584981a9df061a537bc, type: 3}
   useHeadOnlyPlayerVisual: 1
+  headOnlyUpLocalOffset: {x: 0, y: 1.3}
+  headOnlyDownLocalOffset: {x: 0, y: 1.3}
+  headOnlyLeftLocalOffset: {x: 0, y: 1.3}
+  headOnlyRightLocalOffset: {x: 0, y: 1.3}
   localOffset: {x: 0, y: -0.15}
   louieUp: {fileID: 6685445590595473310}
   louieDown: {fileID: 6685445590595473310}
