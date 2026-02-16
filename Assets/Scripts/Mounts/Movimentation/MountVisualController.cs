@@ -226,15 +226,12 @@ public class MountVisualController : MonoBehaviour
 
         transform.localPosition = localOffset;
 
-        if (useHeadOnlyPlayerVisual)
-            ApplyHeadOnlyOffsetsIfNeeded(force: false);
-        else
-            ClearHeadOnlyOffsetsIfNeeded();
-
         bool ownerOnRedBoat = BoatRideZone.IsRidingBoat(owner);
 
         if (ownerOnRedBoat)
         {
+            ClearHeadOnlyOffsetsIfNeeded();
+
             if (!suppressedByRedBoat)
                 SuppressAllLouieVisuals();
 
@@ -243,6 +240,11 @@ public class MountVisualController : MonoBehaviour
 
         if (suppressedByRedBoat)
             RestoreAfterBoatSuppression();
+
+        if (useHeadOnlyPlayerVisual)
+            ApplyHeadOnlyOffsetsIfNeeded(force: false);
+        else
+            ClearHeadOnlyOffsetsIfNeeded();
 
         if (playingInactivity)
         {

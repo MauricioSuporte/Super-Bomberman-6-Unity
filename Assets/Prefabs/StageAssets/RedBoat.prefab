@@ -578,8 +578,8 @@ MonoBehaviour:
   headOnlyRightName: HeadOnlyRight
   hideHead: 0
   applyHeadOnlyOffsets: 1
-  headOnlyUpOffset: {x: 0, y: -0.5}
-  headOnlyDownOffset: {x: 0, y: -0.2}
-  headOnlyLeftOffset: {x: 0.3, y: -0.3}
-  headOnlyRightOffset: {x: -0.3, y: -0.3}
+  headOnlyUpOffset: {x: 0, y: 0.7}
+  headOnlyDownOffset: {x: 0, y: 1}
+  headOnlyLeftOffset: {x: 0.3, y: 0.9}
+  headOnlyRightOffset: {x: -0.3, y: 0.9}
   debugHeadOnlyOffsets: 1
