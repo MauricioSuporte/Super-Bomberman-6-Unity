@@ -26,6 +26,18 @@ TextureImporter:
   - first:
       213: -873026078354243102
     second: Poyo_7
+  - first:
+      213: -6919709048319407968
+    second: Poyo_8
+  - first:
+      213: -542038289384033356
+    second: Poyo_9
+  - first:
+      213: 1495008168424011799
+    second: Poyo_10
+  - first:
+      213: 3368412813617493755
+    second: Poyo_11
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -168,8 +180,8 @@ TextureImporter:
       name: Poyo_2
       rect:
         serializedVersion: 2
-        x: 0
-        y: 48
+        x: 48
+        y: 72
         width: 24
         height: 24
       alignment: 0
@@ -190,7 +202,7 @@ TextureImporter:
       name: Poyo_3
       rect:
         serializedVersion: 2
-        x: 24
+        x: 0
         y: 48
         width: 24
         height: 24
@@ -212,8 +224,8 @@ TextureImporter:
       name: Poyo_4
       rect:
         serializedVersion: 2
-        x: 0
-        y: 24
+        x: 24
+        y: 48
         width: 24
         height: 24
       alignment: 0
@@ -234,8 +246,8 @@ TextureImporter:
       name: Poyo_5
       rect:
         serializedVersion: 2
-        x: 24
-        y: 24
+        x: 48
+        y: 48
         width: 24
         height: 24
       alignment: 0
@@ -257,7 +269,7 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 0
-        y: 0
+        y: 24
         width: 24
         height: 24
       alignment: 0
@@ -279,7 +291,7 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 24
-        y: 0
+        y: 24
         width: 24
         height: 24
       alignment: 0
@@ -296,11 +308,99 @@ TextureImporter:
       indices: 
       edges: []
       weights: []
+    - serializedVersion: 2
+      name: Poyo_8
+      rect:
+        serializedVersion: 2
+        x: 48
+        y: 24
+        width: 24
+        height: 24
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0a88dd1684148ff90800000000000000
+      internalID: -6919709048319407968
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Poyo_9
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 24
+        height: 24
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4b3ba923c0b4a78f0800000000000000
+      internalID: -542038289384033356
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Poyo_10
+      rect:
+        serializedVersion: 2
+        x: 24
+        y: 0
+        width: 24
+        height: 24
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 718783f12065fb410800000000000000
+      internalID: 1495008168424011799
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Poyo_11
+      rect:
+        serializedVersion: 2
+        x: 48
+        y: 0
+        width: 24
+        height: 24
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bf67b8c7b910fbe20800000000000000
+      internalID: 3368412813617493755
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
     outline: []
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 1c2498d9b9ecf084dab1d8d9aa388bd2
+    spriteID: 8d596e697997227499d1b0d1c2ca0e85
     internalID: 0
     vertices: []
     indices: 
@@ -314,12 +414,16 @@ TextureImporter:
     nameFileIdTable:
       Poyo_0: -6038573053162576232
       Poyo_1: -2702777466881198695
+      Poyo_10: 1495008168424011799
+      Poyo_11: 3368412813617493755
       Poyo_2: -151149950946044470
       Poyo_3: -769908227809659486
       Poyo_4: 1610956191612630606
       Poyo_5: 5163057879799271108
       Poyo_6: 1559068571429780131
       Poyo_7: -873026078354243102
+      Poyo_8: -6919709048319407968
+      Poyo_9: -542038289384033356
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

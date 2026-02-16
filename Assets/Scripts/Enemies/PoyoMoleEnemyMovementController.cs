@@ -42,7 +42,15 @@ public sealed class PoyoMoleEnemyMovementController : JunctionTurningEnemyMoveme
     [Header("Ability Trigger")]
     [SerializeField, Min(0f)] private float walkSecondsBeforeAbility = 10f;
 
-    [Header("Respawn")]
+    [Header("Defeat -> Spawn Poyo")]
+    [SerializeField] private GameObject poyoPrefab;
+    [SerializeField, Min(0.01f)] private float damagedSecondsBeforeSpawn = 0.5f;
+    [SerializeField, Min(0.01f)] private float poyoLaunchSeconds = 0.5f;
+    [SerializeField, Min(0f)] private float poyoArcHeightTiles = 3f;
+    [SerializeField, Min(0)] private int poyoMaxLandingDistanceTiles = 3;
+    [SerializeField] private bool notifyGameManagerOnDefeat = true;
+
+    [Header("Respawn / Ground")]
     [SerializeField] private Tilemap groundTilemapOverride;
     [SerializeField, Min(1)] private int maxRespawnAttempts = 200;
     [SerializeField, Min(0.05f)] private float overlapBoxSize = 0.8f;
@@ -55,11 +63,15 @@ public sealed class PoyoMoleEnemyMovementController : JunctionTurningEnemyMoveme
     private Rigidbody2D _rb;
     private Collider2D _collider;
     private Coroutine _abilityRoutine;
+    private Coroutine _defeatRoutine;
 
     private bool _isUsingAbility;
     private bool _isHidden;
     private float _walkTimer;
     private bool _walkTimerPrimed;
+
+    private bool _damageAllowed;
+    private bool _isDefeated;
 
     private static readonly Collider2D[] _overlapBuffer = new Collider2D[32];
 
@@ -67,8 +79,6 @@ public sealed class PoyoMoleEnemyMovementController : JunctionTurningEnemyMoveme
     private bool _hasAbilityStartCell;
     private Vector2 _abilityStartPos;
     private bool _hasAbilityStartPos;
-
-    private bool _damageAllowed;
 
     protected override void Awake()
     {
@@ -99,8 +109,6 @@ public sealed class PoyoMoleEnemyMovementController : JunctionTurningEnemyMoveme
 
         ResetWalkTimer();
         RefreshDamageAllowed();
-
-        DLog($"Awake rb={_rb != null} groundTm={groundTilemapOverride != null} excludeRadiusTiles={excludeRadiusTiles}");
     }
 
     protected override void OnDestroy()
@@ -129,17 +137,14 @@ public sealed class PoyoMoleEnemyMovementController : JunctionTurningEnemyMoveme
             if (tm.GetTile(cell) != null)
             {
                 groundTilemapOverride = tm;
-                DLog($"AutoResolved GroundTilemap -> {tm.name}");
                 return;
             }
         }
-
-        DLog("AutoResolveGroundTilemap FAILED");
     }
 
     protected override void FixedUpdate()
     {
-        if (isDead)
+        if (isDead || _isDefeated)
             return;
 
         if (_isUsingAbility || _isHidden)
@@ -158,7 +163,6 @@ public sealed class PoyoMoleEnemyMovementController : JunctionTurningEnemyMoveme
 
         if (_walkTimerPrimed && _walkTimer >= walkSecondsBeforeAbility)
         {
-            DLog($"TriggerAbility walkTimer={_walkTimer:F3}/{walkSecondsBeforeAbility:F3}");
             ResetWalkTimer();
             StartAbility();
         }
@@ -168,7 +172,7 @@ public sealed class PoyoMoleEnemyMovementController : JunctionTurningEnemyMoveme
 
     protected override void UpdateSpriteDirection(Vector2 dir)
     {
-        if (_isUsingAbility || _isHidden || isInDamagedLoop || isDead)
+        if (_isUsingAbility || _isHidden || isInDamagedLoop || isDead || _isDefeated)
             return;
 
         ApplyWalkVisualForDirection(dir);
@@ -177,15 +181,16 @@ public sealed class PoyoMoleEnemyMovementController : JunctionTurningEnemyMoveme
 
     protected override void OnTriggerEnter2D(Collider2D other)
     {
-        if (isDead)
+        if (isDead || _isDefeated)
             return;
 
         int layer = other.gameObject.layer;
 
         if (layer == LayerMask.NameToLayer("Explosion"))
         {
-            if (_health != null && _damageAllowed)
-                _health.TakeDamage(1);
+            if (_damageAllowed)
+                TriggerDefeatAndSpawnPoyo();
+
             return;
         }
 
@@ -201,6 +206,117 @@ public sealed class PoyoMoleEnemyMovementController : JunctionTurningEnemyMoveme
             HandleEnemyCollision(otherEnemy);
             return;
         }
+    }
+
+    private void TriggerDefeatAndSpawnPoyo()
+    {
+        if (_isDefeated)
+            return;
+
+        _isDefeated = true;
+
+        if (_defeatRoutine != null)
+            StopCoroutine(_defeatRoutine);
+
+        _defeatRoutine = StartCoroutine(DefeatRoutine());
+    }
+
+    private IEnumerator DefeatRoutine()
+    {
+        if (_abilityRoutine != null)
+        {
+            StopCoroutine(_abilityRoutine);
+            _abilityRoutine = null;
+        }
+
+        _isUsingAbility = false;
+        _isHidden = false;
+
+        ResetWalkTimer();
+        RefreshDamageAllowed();
+
+        if (_rb != null)
+        {
+            _rb.linearVelocity = Vector2.zero;
+            _rb.simulated = false;
+        }
+
+        if (_collider != null)
+            _collider.enabled = false;
+
+        DisableAllWalkSprites();
+        DisableAllAbilitySprites();
+        ForceAllAbilitySpriteRenderersOff();
+
+        if (spriteDamaged != null)
+        {
+            spriteDamaged.enabled = true;
+            spriteDamaged.idle = false;
+            spriteDamaged.loop = true;
+            spriteDamaged.CurrentFrame = 0;
+            spriteDamaged.RefreshFrame();
+
+            if (forceFlipXFalse && spriteDamaged.TryGetComponent<SpriteRenderer>(out var srD) && srD != null)
+                srD.flipX = false;
+
+            activeSprite = spriteDamaged;
+        }
+
+        yield return new WaitForSecondsRealtime(Mathf.Max(0.01f, damagedSecondsBeforeSpawn));
+
+        Vector2 origin = _rb != null ? _rb.position : (Vector2)transform.position;
+
+        if (notifyGameManagerOnDefeat)
+        {
+            var gameManager = FindFirstObjectByType<GameManager>();
+            if (gameManager != null)
+                gameManager.NotifyEnemyDied();
+        }
+
+        if (poyoPrefab != null)
+        {
+            Vector2 landing = PickLandingNear(origin, poyoMaxLandingDistanceTiles);
+            GameObject poyoGo = Instantiate(poyoPrefab, origin, Quaternion.identity);
+
+            if (poyoGo != null && poyoGo.TryGetComponent<PoyoEnemyMovementController>(out var poyo) && poyo != null)
+                poyo.LaunchTo(landing, poyoLaunchSeconds, poyoArcHeightTiles);
+            else if (poyoGo != null)
+                poyoGo.transform.position = landing;
+        }
+
+        Destroy(gameObject);
+    }
+
+    private Vector2 PickLandingNear(Vector2 origin, int radiusTiles)
+    {
+        if (groundTilemapOverride == null)
+            return origin;
+
+        int r = Mathf.Max(0, radiusTiles);
+        Vector3Int originCell = groundTilemapOverride.WorldToCell(origin);
+
+        for (int i = 0; i < maxRespawnAttempts; i++)
+        {
+            int dx = Random.Range(-r, r + 1);
+            int dy = Random.Range(-r, r + 1);
+
+            Vector3Int cell = new Vector3Int(originCell.x + dx, originCell.y + dy, 0);
+
+            if (groundTilemapOverride.GetTile(cell) == null)
+                continue;
+
+            Vector2 center = groundTilemapOverride.GetCellCenterWorld(cell);
+
+            if (IsOccupied(center))
+                continue;
+
+            if (IsTileBlocked(center))
+                continue;
+
+            return center;
+        }
+
+        return origin;
     }
 
     private void ApplyWalkVisualForDirection(Vector2 dir)
@@ -222,17 +338,10 @@ public sealed class PoyoMoleEnemyMovementController : JunctionTurningEnemyMoveme
 
     private AnimatedSpriteRenderer ResolveWalkSprite(Vector2 dir)
     {
-        if (dir == Vector2.up)
-            return walkUpSprite;
-
-        if (dir == Vector2.down)
-            return walkDownSprite;
-
-        if (dir == Vector2.left)
-            return walkLeftSprite;
-
-        if (dir == Vector2.right)
-            return walkRightSprite;
+        if (dir == Vector2.up) return walkUpSprite;
+        if (dir == Vector2.down) return walkDownSprite;
+        if (dir == Vector2.left) return walkLeftSprite;
+        if (dir == Vector2.right) return walkRightSprite;
 
         return walkDownSprite != null ? walkDownSprite : walkLeftSprite != null ? walkLeftSprite : walkUpSprite;
     }
@@ -247,10 +356,8 @@ public sealed class PoyoMoleEnemyMovementController : JunctionTurningEnemyMoveme
 
     private void StartAbility()
     {
-        if (_isUsingAbility || isDead)
+        if (_isUsingAbility || isDead || _isDefeated)
             return;
-
-        DLog("StartAbility()");
 
         if (_abilityRoutine != null)
             StopCoroutine(_abilityRoutine);
@@ -269,13 +376,11 @@ public sealed class PoyoMoleEnemyMovementController : JunctionTurningEnemyMoveme
 
         CaptureAbilityStartPosition();
 
-        DLog($"AbilityRoutine BEGIN rbPos={_rb.position} startCell={(_hasAbilityStartCell ? _abilityStartCell.ToString() : "none")} startPos={(_hasAbilityStartPos ? _abilityStartPos.ToString() : "none")}");
-
         DisableAllWalkSprites();
 
         yield return PlayAbilityStartPhases();
 
-        if (isDead)
+        if (isDead || _isDefeated)
             yield break;
 
         _isHidden = true;
@@ -293,15 +398,12 @@ public sealed class PoyoMoleEnemyMovementController : JunctionTurningEnemyMoveme
         DisableAllAbilitySprites();
         ForceAllAbilitySpriteRenderersOff();
 
-        DLog($"HIDE ON rbPos={_rb.position} hiddenSeconds={hiddenSeconds:F3}");
-
         yield return new WaitForSecondsRealtime(Mathf.Max(0.01f, hiddenSeconds));
 
-        if (isDead)
+        if (isDead || _isDefeated)
             yield break;
 
         Vector2 respawn = PickRespawnWorldPositionAvoidingOrigin();
-        DLog($"RESPAWN PICKED {respawn}");
 
         if (_rb != null)
         {
@@ -327,30 +429,28 @@ public sealed class PoyoMoleEnemyMovementController : JunctionTurningEnemyMoveme
         DisableAllAbilitySprites();
         ApplyWalkVisualForDirection(direction == Vector2.zero ? Vector2.down : direction);
         DecideNextTile();
-
-        DLog($"AbilityRoutine END rbPos={_rb.position} nextTarget={targetTile}");
     }
 
     private IEnumerator PlayAbilityStartPhases()
     {
-        yield return PlayOnePhase(abilityStartPhase1Sprite, abilityStartPhase1Seconds, "StartPhase1", loopPhase: true);
-        if (isDead) yield break;
+        yield return PlayOnePhase(abilityStartPhase1Sprite, abilityStartPhase1Seconds, loopPhase: true);
+        if (isDead || _isDefeated) yield break;
 
-        yield return PlayOnePhase(abilityStartPhase2Sprite, abilityStartPhase2Seconds, "StartPhase2", loopPhase: false);
-        if (isDead) yield break;
+        yield return PlayOnePhase(abilityStartPhase2Sprite, abilityStartPhase2Seconds, loopPhase: false);
+        if (isDead || _isDefeated) yield break;
 
-        yield return PlayOnePhase(abilityStartPhase3Sprite, abilityStartPhase3Seconds, "StartPhase3", loopPhase: false);
+        yield return PlayOnePhase(abilityStartPhase3Sprite, abilityStartPhase3Seconds, loopPhase: false);
     }
 
     private IEnumerator PlayAbilityEndPhasesReverseOrderNoPhase1()
     {
-        yield return PlayOnePhase(abilityEndPhase3Sprite, abilityEndPhase3Seconds, "EndPhase3", loopPhase: false);
-        if (isDead) yield break;
+        yield return PlayOnePhase(abilityEndPhase3Sprite, abilityEndPhase3Seconds, loopPhase: false);
+        if (isDead || _isDefeated) yield break;
 
-        yield return PlayOnePhase(abilityEndPhase2Sprite, abilityEndPhase2Seconds, "EndPhase2", loopPhase: false);
+        yield return PlayOnePhase(abilityEndPhase2Sprite, abilityEndPhase2Seconds, loopPhase: false);
     }
 
-    private IEnumerator PlayOnePhase(AnimatedSpriteRenderer phaseSprite, float seconds, string label, bool loopPhase)
+    private IEnumerator PlayOnePhase(AnimatedSpriteRenderer phaseSprite, float seconds, bool loopPhase)
     {
         DisableAllWalkSprites();
         DisableAllAbilitySprites();
@@ -371,7 +471,6 @@ public sealed class PoyoMoleEnemyMovementController : JunctionTurningEnemyMoveme
             activeSprite = phaseSprite;
             ForceNoFlipOn(phaseSprite);
 
-            DLog($"{label} ON loop={loopPhase} dur={dur:F3}");
             yield return new WaitForSecondsRealtime(dur);
 
             phaseSprite.enabled = false;
@@ -379,7 +478,6 @@ public sealed class PoyoMoleEnemyMovementController : JunctionTurningEnemyMoveme
         }
         else
         {
-            DLog($"{label} NULL (waiting) dur={dur:F3}");
             yield return new WaitForSecondsRealtime(dur);
         }
     }
@@ -466,10 +564,7 @@ public sealed class PoyoMoleEnemyMovementController : JunctionTurningEnemyMoveme
     private Vector2 PickRespawnWorldPositionAvoidingOrigin()
     {
         if (groundTilemapOverride == null)
-        {
-            DLog("PickRespawn tm=NULL -> returning current position");
             return _rb.position;
-        }
 
         BoundsInt bounds = groundTilemapOverride.cellBounds;
         int r = Mathf.Max(0, excludeRadiusTiles);
@@ -498,7 +593,6 @@ public sealed class PoyoMoleEnemyMovementController : JunctionTurningEnemyMoveme
             return center;
         }
 
-        DLog("Respawn fallback -> returning original position");
         return _rb.position;
     }
 
@@ -571,6 +665,7 @@ public sealed class PoyoMoleEnemyMovementController : JunctionTurningEnemyMoveme
             anyWalkEnabled &&
             !_isUsingAbility &&
             !_isHidden &&
+            !_isDefeated &&
             !isDead &&
             !isInDamagedLoop &&
             !isStuck;
@@ -604,12 +699,19 @@ public sealed class PoyoMoleEnemyMovementController : JunctionTurningEnemyMoveme
             anyWalkEnabled &&
             !_isUsingAbility &&
             !_isHidden &&
+            !_isDefeated &&
             !isDead &&
             !isInDamagedLoop;
     }
 
     private void OnAnyDied()
     {
+        if (_defeatRoutine != null)
+        {
+            StopCoroutine(_defeatRoutine);
+            _defeatRoutine = null;
+        }
+
         if (_abilityRoutine != null)
         {
             StopCoroutine(_abilityRoutine);

@@ -321,15 +321,15 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 5
-  m_Sprite: {fileID: 0}
+  m_Sprite: {fileID: -262859550284426006, guid: bfddbca72211bb547bcfbd35875b58ac, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
-  m_Size: {x: 0.64, y: 0.16}
+  m_Size: {x: 0.32, y: 0.32}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
-  m_WasSpriteAssigned: 0
+  m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
 --- !u!114 &503298939128056327
@@ -344,9 +344,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a4b55e1b961d144197e1a7a4a391956, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  idleSprite: {fileID: 0}
+  idleSprite: {fileID: -262859550284426006, guid: bfddbca72211bb547bcfbd35875b58ac, type: 3}
   animationSprite:
-  - {fileID: 0}
+  - {fileID: -262859550284426006, guid: bfddbca72211bb547bcfbd35875b58ac, type: 3}
   allowFlipX: 0
   animationTime: 0.25
   useSequenceDuration: 0
@@ -714,128 +714,6 @@ MonoBehaviour:
   frameOffsets: []
   pingPong: 0
   disableOffsetsIfThisObjectHasRigidbody2D: 1
---- !u!1 &5465378641366746003
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 5812207533510021612}
-  - component: {fileID: 2271451162185361460}
-  - component: {fileID: 493758393799321122}
-  m_Layer: 10
-  m_Name: EndPause
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &5812207533510021612
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5465378641366746003}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.65, z: 0}
-  m_LocalScale: {x: 6, y: 6, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 8388449595591689174}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!212 &2271451162185361460
-SpriteRenderer:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5465378641366746003}
-  m_Enabled: 0
-  m_CastShadows: 0
-  m_ReceiveShadows: 0
-  m_DynamicOccludee: 1
-  m_StaticShadowCaster: 0
-  m_MotionVectors: 1
-  m_LightProbeUsage: 1
-  m_ReflectionProbeUsage: 1
-  m_RayTracingMode: 0
-  m_RayTraceProcedural: 0
-  m_RayTracingAccelStructBuildFlagsOverride: 0
-  m_RayTracingAccelStructBuildFlags: 1
-  m_SmallMeshCulling: 1
-  m_ForceMeshLod: -1
-  m_MeshLodSelectionBias: 0
-  m_RenderingLayerMask: 1
-  m_RendererPriority: 0
-  m_Materials:
-  - {fileID: 10754, guid: 0000000000000000f000000000000000, type: 0}
-  m_StaticBatchInfo:
-    firstSubMesh: 0
-    subMeshCount: 0
-  m_StaticBatchRoot: {fileID: 0}
-  m_ProbeAnchor: {fileID: 0}
-  m_LightProbeVolumeOverride: {fileID: 0}
-  m_ScaleInLightmap: 1
-  m_ReceiveGI: 1
-  m_PreserveUVs: 0
-  m_IgnoreNormalsForChartDetection: 0
-  m_ImportantGI: 0
-  m_StitchLightmapSeams: 1
-  m_SelectedEditorRenderState: 0
-  m_MinimumChartSize: 4
-  m_AutoUVMaxDistance: 0.5
-  m_AutoUVMaxAngle: 89
-  m_LightmapParameters: {fileID: 0}
-  m_GlobalIlluminationMeshLod: 0
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
-  m_SortingOrder: 5
-  m_Sprite: {fileID: 277945894, guid: b5d794a00d076fa46891c59ac866601a, type: 3}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_FlipX: 0
-  m_FlipY: 0
-  m_DrawMode: 0
-  m_Size: {x: 0.64, y: 0.16}
-  m_AdaptiveModeThreshold: 0.5
-  m_SpriteTileMode: 0
-  m_WasSpriteAssigned: 1
-  m_MaskInteraction: 0
-  m_SpriteSortPoint: 0
---- !u!114 &493758393799321122
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5465378641366746003}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3a4b55e1b961d144197e1a7a4a391956, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  idleSprite: {fileID: 277945894, guid: b5d794a00d076fa46891c59ac866601a, type: 3}
-  animationSprite:
-  - {fileID: 277945894, guid: b5d794a00d076fa46891c59ac866601a, type: 3}
-  - {fileID: 277945894, guid: b5d794a00d076fa46891c59ac866601a, type: 3}
-  - {fileID: -1193110847, guid: b5d794a00d076fa46891c59ac866601a, type: 3}
-  - {fileID: 1361922969, guid: b5d794a00d076fa46891c59ac866601a, type: 3}
-  - {fileID: 1738401038, guid: b5d794a00d076fa46891c59ac866601a, type: 3}
-  - {fileID: 1738401038, guid: b5d794a00d076fa46891c59ac866601a, type: 3}
-  - {fileID: 1738401038, guid: b5d794a00d076fa46891c59ac866601a, type: 3}
-  - {fileID: 1738401038, guid: b5d794a00d076fa46891c59ac866601a, type: 3}
-  allowFlipX: 0
-  animationTime: 0.125
-  useSequenceDuration: 0
-  sequenceDuration: 0.5
-  loop: 0
-  idle: 0
-  frameOffsets: []
-  pingPong: 0
-  disableOffsetsIfThisObjectHasRigidbody2D: 1
 --- !u!1 &6525841548190720293
 GameObject:
   m_ObjectHideFlags: 0
@@ -999,7 +877,6 @@ Transform:
   - {fileID: 7201404554037792687}
   - {fileID: 8688688428657537264}
   - {fileID: 6925874358656846047}
-  - {fileID: 5812207533510021612}
   - {fileID: 5721204518225450737}
   - {fileID: 314547717197311376}
   m_Father: {fileID: 0}
@@ -1085,16 +962,16 @@ MonoBehaviour:
   spriteDown: {fileID: 0}
   spriteLeft: {fileID: 0}
   spriteDeath: {fileID: 0}
-  spriteDamaged: {fileID: 0}
+  spriteDamaged: {fileID: 503298939128056327}
   obstacleMask:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 1216
   bombLayerMask:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 128
   enemyLayerMask:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 1024
   deathSfx: {fileID: 0}
   recheckStuckEverySeconds: 0.25
   minAvailablePathsToTurn: 3
@@ -1117,7 +994,13 @@ MonoBehaviour:
   abilityEndPhase1Seconds: 1
   abilityEndPhase2Seconds: 0.5
   abilityEndPhase3Seconds: 0.5
-  walkSecondsBeforeAbility: 1
+  walkSecondsBeforeAbility: 10
+  poyoPrefab: {fileID: 1228606389669354652, guid: ced803cd828df3741b0190e3a589b80a, type: 3}
+  damagedSecondsBeforeSpawn: 0.5
+  poyoLaunchSeconds: 0.5
+  poyoArcHeightTiles: 3
+  poyoMaxLandingDistanceTiles: 3
+  notifyGameManagerOnDefeat: 0
   groundTilemapOverride: {fileID: 0}
   maxRespawnAttempts: 220
   overlapBoxSize: 0.8
