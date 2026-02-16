@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 [RequireComponent(typeof(AudioSource))]
 [RequireComponent(typeof(BombController))]
@@ -1582,17 +1583,31 @@ public class MovementController : MonoBehaviour, IKillable
         EnableExclusiveFromState();
     }
 
-    private static void ApplyHeadOnlyOffset(AnimatedSpriteRenderer r, Vector2 localOffset)
+    private void ApplyHeadOnlyOffset(AnimatedSpriteRenderer r, Vector2 localOffset)
     {
         if (r == null) return;
+
+        var before = GetVisualLocalPos(r);
+
         r.SetRuntimeBaseLocalX(localOffset.x);
         r.SetRuntimeBaseLocalY(localOffset.y);
+
+        var after = GetVisualLocalPos(r);
+
+        HLog($"ApplyHeadOnlyOffset r={RName(r)} offset={V2(localOffset)} vtLocal before={V3(before)} after={V3(after)}");
     }
 
-    private static void ClearHeadOnlyOffset(AnimatedSpriteRenderer r)
+    private void ClearHeadOnlyOffset(AnimatedSpriteRenderer r)
     {
         if (r == null) return;
+
+        var before = GetVisualLocalPos(r);
+
         r.ClearRuntimeBaseOffset();
+
+        var after = GetVisualLocalPos(r);
+
+        HLog($"ClearHeadOnlyOffset r={RName(r)} vtLocal before={V3(before)} after={V3(after)}");
     }
 
     [Header("Debug - HeadOnly Mounted")]
@@ -1603,14 +1618,28 @@ public class MovementController : MonoBehaviour, IKillable
         if (!debugHeadOnlyMounted) return;
 
         string who = IsPlayer() ? $"P{playerId}" : gameObject.name;
-        Debug.Log(
-            $"[HeadOnlyDbg] {who} t={Time.time:0.000} f={Time.frameCount} " +
-            $"mounted={isMounted} headRt={useHeadOnlyWhenMountedRuntime} headDef={useHeadOnlyWhenMountedDefault} " +
-            $"dead={isDead} ending={isEndingStage} riding={IsRidingPlaying()} lock={IsSpriteLocked} visOvr={visualOverrideActive} extSup={externalVisualSuppressed} " +
-            $"- {msg}",
-            this
-        );
+        //Debug.Log(
+        //    $"[HeadOnlyDbg] {who} t={Time.time:0.000} f={Time.frameCount} " +
+        //    $"mounted={isMounted} headRt={useHeadOnlyWhenMountedRuntime} headDef={useHeadOnlyWhenMountedDefault} " +
+        //    $"dead={isDead} ending={isEndingStage} riding={IsRidingPlaying()} lock={IsSpriteLocked} visOvr={visualOverrideActive} extSup={externalVisualSuppressed} " +
+        //    $"- {msg}",
+        //    this
+        //);
     }
 
     private string RName(AnimatedSpriteRenderer r) => r == null ? "null" : r.name;
+
+    private Vector3 GetVisualLocalPos(AnimatedSpriteRenderer r)
+    {
+        if (r == null) return Vector3.zero;
+
+        var sr = r.GetComponentInChildren<SpriteRenderer>(true);
+        if (sr != null) return sr.transform.localPosition;
+
+        return r.transform.localPosition;
+    }
+
+    private static string V3(Vector3 v) => $"({v.x:0.###},{v.y:0.###},{v.z:0.###})";
+    private static string V2(Vector2 v) => $"({v.x:0.###},{v.y:0.###})";
+
 }

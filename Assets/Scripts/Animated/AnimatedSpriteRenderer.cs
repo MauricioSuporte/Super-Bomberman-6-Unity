@@ -48,6 +48,10 @@ public class AnimatedSpriteRenderer : MonoBehaviour
     bool hasExternalBase;
     Vector3 externalBaseLocalPos;
 
+    bool savedRuntimeLockX;
+    float savedRuntimeLockedLocalX;
+    bool hasSavedRuntimeLockXState;
+
     public int CurrentFrame
     {
         get => animationFrame;
@@ -308,6 +312,7 @@ public class AnimatedSpriteRenderer : MonoBehaviour
     public void ClearRuntimeBaseLocalX()
     {
         runtimeLockX = false;
+        hasSavedRuntimeLockXState = false;
         ApplyFrame();
     }
 
@@ -315,6 +320,7 @@ public class AnimatedSpriteRenderer : MonoBehaviour
     {
         runtimeBaseOffset = Vector3.zero;
         runtimeLockX = false;
+        hasSavedRuntimeLockXState = false;
         ApplyFrame();
     }
 
@@ -389,5 +395,42 @@ public class AnimatedSpriteRenderer : MonoBehaviour
 
         CancelInvoke(nameof(NextFrame));
         InvokeRepeating(nameof(NextFrame), animationTime, animationTime);
+    }
+
+    public void SetExternalBaseOffsetFromInitial(Vector3 offsetFromInitial)
+    {
+        EnsureTargets();
+
+        hasExternalBase = true;
+        externalBaseLocalPos = initialVisualLocalPosition + offsetFromInitial;
+
+        if (runtimeLockX)
+        {
+            if (!hasSavedRuntimeLockXState)
+            {
+                savedRuntimeLockX = runtimeLockX;
+                savedRuntimeLockedLocalX = runtimeLockedLocalX;
+                hasSavedRuntimeLockXState = true;
+            }
+
+            runtimeLockX = false;
+        }
+
+        ApplyFrame();
+    }
+
+    public void ClearExternalBase()
+    {
+        hasExternalBase = false;
+        externalBaseLocalPos = Vector3.zero;
+
+        if (hasSavedRuntimeLockXState)
+        {
+            runtimeLockX = savedRuntimeLockX;
+            runtimeLockedLocalX = savedRuntimeLockedLocalX;
+            hasSavedRuntimeLockXState = false;
+        }
+
+        ApplyFrame();
     }
 }

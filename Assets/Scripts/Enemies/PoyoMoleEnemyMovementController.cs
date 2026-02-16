@@ -35,7 +35,6 @@ public sealed class PoyoMoleEnemyMovementController : JunctionTurningEnemyMoveme
     [SerializeField] private AnimatedSpriteRenderer abilityEndPhase3Sprite;
 
     [Header("Ability END timings")]
-    [SerializeField, Min(0.01f)] private float abilityEndPhase1Seconds = 0.6f;
     [SerializeField, Min(0.01f)] private float abilityEndPhase2Seconds = 0.7f;
     [SerializeField, Min(0.01f)] private float abilityEndPhase3Seconds = 0.7f;
 

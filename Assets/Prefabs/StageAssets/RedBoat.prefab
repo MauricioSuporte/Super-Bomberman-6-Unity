@@ -569,12 +569,17 @@ MonoBehaviour:
   followOffset: {x: 0, y: 0}
   remountBlockSeconds: 0.15
   anchorCheckDistance: 0.6
+  autoAnchorSnapWhenIdle: 1
+  autoAnchorRefreshSeconds: 0.35
+  autoAnchorSnapDistance: 1.25
   headOnlyUpName: HeadOnlyUp
   headOnlyDownName: HeadOnlyDown
   headOnlyLeftName: HeadOnlyLeft
   headOnlyRightName: HeadOnlyRight
+  hideHead: 0
   applyHeadOnlyOffsets: 1
-  headOnlyUpOffset: {x: 0, y: 0.8}
-  headOnlyDownOffset: {x: 0, y: 1.1}
-  headOnlyLeftOffset: {x: 0.2, y: 1}
-  headOnlyRightOffset: {x: -0.2, y: 1}
+  headOnlyUpOffset: {x: 0, y: -0.5}
+  headOnlyDownOffset: {x: 0, y: -0.2}
+  headOnlyLeftOffset: {x: 0.3, y: -0.3}
+  headOnlyRightOffset: {x: -0.3, y: -0.3}
+  debugHeadOnlyOffsets: 1
