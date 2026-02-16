@@ -3,6 +3,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Tilemaps;
 
 [RequireComponent(typeof(MovementController))]
 [RequireComponent(typeof(CharacterHealth))]
@@ -864,7 +865,42 @@ public class PlayerMountCompanion : MonoBehaviour
         if (applyMountedAbility.TryGetValue(mountedType, out var applier) && applier != null)
             applier();
 
+        if (mountedType == MountedType.Mole)
+        {
+            abilitySystem.Enable(MoleMountDrillAbility.AbilityId);
+            var drill = abilitySystem.Get<MoleMountDrillAbility>(MoleMountDrillAbility.AbilityId);
+            if (drill != null)
+            {
+                var anim = currentLouie.GetComponentInChildren<IMoleMountDrillExternalAnimator>(true);
+                drill.SetExternalAnimator(anim);
+
+                var tm = ResolveGroundTilemapNear(transform.position);
+                if (tm != null)
+                    drill.SetGroundTilemap(tm);
+            }
+        }
+
         currentAbilityCfg = null;
+    }
+
+    static Tilemap ResolveGroundTilemapNear(Vector3 worldPos)
+    {
+        var tilemaps = FindObjectsByType<Tilemap>(FindObjectsSortMode.None);
+        if (tilemaps == null || tilemaps.Length == 0)
+            return null;
+
+        for (int i = 0; i < tilemaps.Length; i++)
+        {
+            var tm = tilemaps[i];
+            if (tm == null)
+                continue;
+
+            var cell = tm.WorldToCell(worldPos);
+            if (tm.GetTile(cell) != null)
+                return tm;
+        }
+
+        return null;
     }
 
     void ResetLouieAbilitiesExternalState()
@@ -878,6 +914,7 @@ public class PlayerMountCompanion : MonoBehaviour
         abilitySystem.Disable(PinkLouieJumpAbility.AbilityId);
         abilitySystem.Disable(RedLouiePunchStunAbility.AbilityId);
         abilitySystem.Disable(BlackLouieDashPushAbility.AbilityId);
+        abilitySystem.Disable(MoleMountDrillAbility.AbilityId);
 
         var kick = abilitySystem.Get<YellowLouieDestructibleKickAbility>(YellowLouieDestructibleKickAbility.AbilityId);
         if (kick != null) { kick.SetExternalAnimator(null); kick.SetKickSfx(null, 1f); }

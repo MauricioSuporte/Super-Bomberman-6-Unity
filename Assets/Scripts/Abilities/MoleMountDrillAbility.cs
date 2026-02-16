@@ -1,0 +1,370 @@
+﻿using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.Tilemaps;
+
+[DisallowMultipleComponent]
+[RequireComponent(typeof(MovementController))]
+public class MoleMountDrillAbility : MonoBehaviour, IPlayerAbility
+{
+    public const string AbilityId = "MoleMountDrill";
+
+    [SerializeField] private bool enabledAbility = true;
+
+    [Header("Teleport Search")]
+    [SerializeField] private Tilemap groundTilemap;
+    [SerializeField] private LayerMask blockingMask;
+    [SerializeField, Min(1)] private int searchRadiusTiles = 15;
+    [SerializeField] private bool preferFartherTiles = true;
+
+    [Header("Enemy Avoidance")]
+    [SerializeField] private LayerMask enemyLayerMask;
+    [SerializeField, Min(0)] private int enemyAvoidanceRadiusTiles = 5;
+
+    [Header("Avoid Destructibles")]
+    [SerializeField] private string destructiblesTag = "Destructibles";
+    [SerializeField] private LayerMask destructiblesLayerMask;
+
+    [Header("Input Lock")]
+    [SerializeField] private bool lockInputWhileDrilling = true;
+
+    [Header("Burrowed (after Phase 3, before teleport)")]
+    [SerializeField, Min(0f)] private float burrowedSeconds = 1f;
+
+    MovementController movement;
+    Rigidbody2D rb;
+    Coroutine routine;
+    Vector2 lastFacingDir = Vector2.down;
+
+    IMoleMountDrillExternalAnimator externalAnimator;
+
+    bool running;
+
+    public string Id => AbilityId;
+    public bool IsEnabled => enabledAbility;
+
+    void Awake()
+    {
+        movement = GetComponent<MovementController>();
+        rb = movement != null ? movement.Rigidbody : null;
+
+        if (enemyLayerMask.value == 0)
+            enemyLayerMask = LayerMask.GetMask("Enemy");
+
+        if (destructiblesLayerMask.value == 0)
+            destructiblesLayerMask = LayerMask.GetMask("Stage");
+    }
+
+    void OnDisable() => Cancel();
+    void OnDestroy() => Cancel();
+
+    public void SetExternalAnimator(IMoleMountDrillExternalAnimator animator)
+    {
+        externalAnimator = animator;
+    }
+
+    public void SetGroundTilemap(Tilemap t)
+    {
+        groundTilemap = t;
+    }
+
+    void Update()
+    {
+        if (!enabledAbility)
+            return;
+
+        if (!CompareTag("Player"))
+            return;
+
+        if (movement == null || movement.isDead || movement.InputLocked)
+            return;
+
+        if (GamePauseController.IsPaused ||
+            ClownMaskBoss.BossIntroRunning ||
+            MechaBossSequence.MechaIntroRunning ||
+            (StageIntroTransition.Instance != null &&
+             (StageIntroTransition.Instance.IntroRunning || StageIntroTransition.Instance.EndingRunning)))
+            return;
+
+        if (movement.Direction != Vector2.zero)
+            lastFacingDir = movement.Direction;
+
+        var input = PlayerInputManager.Instance;
+        if (input == null)
+            return;
+
+        int pid = movement.PlayerId;
+        if (!input.GetDown(pid, PlayerAction.ActionC))
+            return;
+
+        if (!IsMountedOnMole())
+            return;
+
+        if (routine != null)
+            StopCoroutine(routine);
+
+        routine = StartCoroutine(DrillRoutine());
+    }
+
+    IEnumerator DrillRoutine()
+    {
+        if (movement == null || rb == null)
+        {
+            routine = null;
+            yield break;
+        }
+
+        if (running)
+        {
+            routine = null;
+            yield break;
+        }
+
+        running = true;
+
+        Vector2 dir = lastFacingDir == Vector2.zero ? Vector2.down : lastFacingDir;
+
+        if (lockInputWhileDrilling)
+            movement.SetInputLocked(true, false);
+
+        try
+        {
+            float p1 = 1f;
+            float p2 = 0.5f;
+            float p3 = 0.5f;
+            float p2rev = 0.5f;
+
+            if (externalAnimator is MoleMountDrillAnimator anim)
+            {
+                p1 = anim.Phase1Duration;
+                p2 = anim.Phase2Duration;
+                p3 = anim.Phase3Duration;
+                p2rev = anim.Phase2ReverseDuration;
+            }
+
+            externalAnimator?.PlayPhase(1, dir);
+            yield return new WaitForSeconds(p1);
+
+            externalAnimator?.PlayPhase(2, dir);
+            yield return new WaitForSeconds(p2);
+
+            externalAnimator?.PlayPhase(3, dir);
+            yield return new WaitForSeconds(p3);
+
+            yield return new WaitForSeconds(burrowedSeconds);
+
+            TryTeleportToOtherGroundTile();
+
+            externalAnimator?.PlayPhase(4, dir);
+            yield return new WaitForSeconds(p2rev);
+        }
+        finally
+        {
+            externalAnimator?.Stop();
+
+            if (movement != null && lockInputWhileDrilling)
+                movement.SetInputLocked(false);
+
+            running = false;
+            routine = null;
+        }
+    }
+
+    bool IsMountedOnMole()
+    {
+        if (!TryGetComponent<PlayerMountCompanion>(out var mount) || mount == null)
+            return false;
+
+        return mount.GetMountedLouieType() == MountedType.Mole;
+    }
+
+    void TryTeleportToOtherGroundTile()
+    {
+        if (groundTilemap == null)
+            return;
+
+        Vector3 world = rb.position;
+        Vector3Int originCell = groundTilemap.WorldToCell(world);
+
+        if (!TryFindTargetCell(originCell, out var targetCell))
+            return;
+
+        Vector3 targetWorld = groundTilemap.GetCellCenterWorld(targetCell);
+        rb.position = targetWorld;
+        transform.position = targetWorld;
+    }
+
+    bool TryFindTargetCell(Vector3Int origin, out Vector3Int target)
+    {
+        target = origin;
+
+        var safe = new List<Vector3Int>(256);
+        var fallback = new List<Vector3Int>(256);
+
+        int r = Mathf.Max(1, searchRadiusTiles);
+
+        for (int dy = -r; dy <= r; dy++)
+        {
+            for (int dx = -r; dx <= r; dx++)
+            {
+                if (dx == 0 && dy == 0)
+                    continue;
+
+                var c = new Vector3Int(origin.x + dx, origin.y + dy, origin.z);
+
+                if (!groundTilemap.HasTile(c))
+                    continue;
+
+                Vector3 w = groundTilemap.GetCellCenterWorld(c);
+
+                if (IsBlockedAtWorld(w))
+                    continue;
+
+                if (IsDestructibleAtWorld(w))
+                    continue;
+
+                fallback.Add(c);
+
+                if (enemyAvoidanceRadiusTiles > 0 && IsEnemyNearWorld(w))
+                    continue;
+
+                safe.Add(c);
+            }
+        }
+
+        var pool = safe.Count > 0 ? safe : fallback;
+        if (pool.Count == 0)
+            return false;
+
+        if (!preferFartherTiles)
+        {
+            target = pool[Random.Range(0, pool.Count)];
+            return true;
+        }
+
+        pool.Sort((a, b) =>
+        {
+            int da = Mathf.Abs(a.x - origin.x) + Mathf.Abs(a.y - origin.y);
+            int db = Mathf.Abs(b.x - origin.x) + Mathf.Abs(b.y - origin.y);
+            return db.CompareTo(da);
+        });
+
+        int pickPool = Mathf.Min(12, pool.Count);
+        target = pool[Random.Range(0, pickPool)];
+        return true;
+    }
+
+    bool IsDestructibleAtWorld(Vector3 worldPos)
+    {
+        if (destructiblesLayerMask.value == 0 || string.IsNullOrEmpty(destructiblesTag))
+            return false;
+
+        float tileSize = movement != null ? Mathf.Max(0.1f, movement.tileSize) : 1f;
+        Vector2 size = new Vector2(tileSize * 0.6f, tileSize * 0.6f);
+
+        var hits = Physics2D.OverlapBoxAll(worldPos, size, 0f, destructiblesLayerMask);
+        if (hits == null || hits.Length == 0)
+            return false;
+
+        for (int i = 0; i < hits.Length; i++)
+        {
+            var h = hits[i];
+            if (h == null)
+                continue;
+
+            if (h.gameObject == gameObject)
+                continue;
+
+            if (h.isTrigger)
+                continue;
+
+            if (h.CompareTag(destructiblesTag))
+                return true;
+        }
+
+        return false;
+    }
+
+    bool IsEnemyNearWorld(Vector3 worldPos)
+    {
+        if (enemyLayerMask.value == 0 || enemyAvoidanceRadiusTiles <= 0)
+            return false;
+
+        float tile = movement != null ? Mathf.Max(0.1f, movement.tileSize) : 1f;
+        float radius = enemyAvoidanceRadiusTiles * tile;
+
+        var hits = Physics2D.OverlapCircleAll(worldPos, radius, enemyLayerMask);
+        if (hits == null || hits.Length == 0)
+            return false;
+
+        for (int i = 0; i < hits.Length; i++)
+        {
+            var h = hits[i];
+            if (h == null)
+                continue;
+
+            if (h.gameObject == gameObject)
+                continue;
+
+            if (h.isTrigger)
+                continue;
+
+            return true;
+        }
+
+        return false;
+    }
+
+    bool IsBlockedAtWorld(Vector3 worldPos)
+    {
+        float tileSize = movement != null ? Mathf.Max(0.1f, movement.tileSize) : 1f;
+        Vector2 size = new Vector2(tileSize * 0.6f, tileSize * 0.6f);
+
+        var hits = Physics2D.OverlapBoxAll(worldPos, size, 0f, blockingMask);
+        if (hits == null || hits.Length == 0)
+            return false;
+
+        for (int i = 0; i < hits.Length; i++)
+        {
+            var h = hits[i];
+            if (h == null)
+                continue;
+
+            if (h.gameObject == gameObject)
+                continue;
+
+            if (h.isTrigger)
+                continue;
+
+            return true;
+        }
+
+        return false;
+    }
+
+    void Cancel()
+    {
+        if (routine != null)
+        {
+            StopCoroutine(routine);
+            routine = null;
+        }
+
+        if (running)
+        {
+            running = false;
+            externalAnimator?.Stop();
+
+            if (movement != null && lockInputWhileDrilling)
+                movement.SetInputLocked(false);
+        }
+    }
+
+    public void Enable() => enabledAbility = true;
+
+    public void Disable()
+    {
+        enabledAbility = false;
+        Cancel();
+    }
+}
