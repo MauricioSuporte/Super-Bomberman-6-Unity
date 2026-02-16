@@ -249,7 +249,16 @@ public class PlayerMountCompanion : MonoBehaviour
 
         mountedType = type;
 
+        Debug.Log($"[HeadOnlyDbg] FinalizeMount type={type} t={Time.time:0.000} f={Time.frameCount}", this);
+
         movement.SetMountedOnLouie(true);
+
+        var ridingVisual = GetLouieRidingVisual(currentLouie);
+        bool useHeadOnly = ridingVisual != null && ridingVisual.useHeadOnlyPlayerVisual;
+
+        Debug.Log($"[HeadOnlyDbg] FinalizeMount visual={(ridingVisual != null ? ridingVisual.name : "null")} useHeadOnly={useHeadOnly}", this);
+
+        movement.SetUseHeadOnlyWhenMounted(useHeadOnly);
 
         bool isPink = mountedType == MountedType.Pink;
         movement.SetMountedSpritesLocalYOverride(isPink, movement.pinkMountedSpritesLocalY);
@@ -1031,6 +1040,7 @@ public class PlayerMountCompanion : MonoBehaviour
 
         movement.SetMountedSpritesLocalYOverride(false, 0f);
         movement.SetMountedOnLouie(false);
+        movement.SetUseHeadOnlyWhenMounted(false);
 
         mountedType = MountedType.None;
 
@@ -1601,6 +1611,12 @@ public class PlayerMountCompanion : MonoBehaviour
                 a.ClearRuntimeBaseLocalX();
             }
         }
+    }
+
+    public bool GetUseHeadOnlyPlayerVisual()
+    {
+        var v = GetLouieRidingVisual(currentLouie);
+        return v != null && v.useHeadOnlyPlayerVisual;
     }
 
     #endregion

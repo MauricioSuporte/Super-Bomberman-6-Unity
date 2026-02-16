@@ -2161,6 +2161,11 @@ MonoBehaviour:
   mountedSpriteDown: {fileID: 500731651036015959}
   mountedSpriteLeft: {fileID: 530947641134278556}
   mountedSpriteRight: {fileID: 1472820644573264970}
+  headOnlyUp: {fileID: 3484826407279584927}
+  headOnlyDown: {fileID: 8759847425235556398}
+  headOnlyLeft: {fileID: 8046713775504059901}
+  headOnlyRight: {fileID: 8791886242839769813}
+  useHeadOnlyWhenMountedDefault: 0
   pinkMountedSpritesLocalY: 1.3
   contactDamageCooldownSeconds: 0.15
   deathDisableSeconds: 2

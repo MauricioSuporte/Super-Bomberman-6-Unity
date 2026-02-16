@@ -43,6 +43,17 @@ public class MovementController : MonoBehaviour, IKillable
     public AnimatedSpriteRenderer mountedSpriteLeft;
     public AnimatedSpriteRenderer mountedSpriteRight;
 
+    [Header("Mounted On Louie - Head Only (optional)")]
+    [SerializeField] private AnimatedSpriteRenderer headOnlyUp;
+    [SerializeField] private AnimatedSpriteRenderer headOnlyDown;
+    [SerializeField] private AnimatedSpriteRenderer headOnlyLeft;
+    [SerializeField] private AnimatedSpriteRenderer headOnlyRight;
+
+    [Header("Mounted On Louie - Use HeadOnly When Mounted (default)")]
+    [SerializeField] private bool useHeadOnlyWhenMountedDefault = false;
+
+    private bool useHeadOnlyWhenMountedRuntime;
+
     [Header("Mounted On Louie - Pink Y Override")]
     public float pinkMountedSpritesLocalY = 1.3f;
 
@@ -162,6 +173,7 @@ public class MovementController : MonoBehaviour, IKillable
 
     protected virtual void Awake()
     {
+        HLog("Awake() ENTER");
         Rigidbody = GetComponent<Rigidbody2D>();
         stunReceiver = GetComponent<StunReceiver>();
         bombController = GetComponent<BombController>();
@@ -189,11 +201,14 @@ public class MovementController : MonoBehaviour, IKillable
 
         CacheMovementAbilities();
         InitRuntimeState(loadPersistent: true);
+        HLog("Awake() EXIT");
     }
 
     protected virtual void OnEnable()
     {
+        HLog("OnEnable() ENTER");
         InitRuntimeState(loadPersistent: true);
+        HLog("OnEnable() EXIT");
     }
 
     protected virtual void OnDisable()
@@ -203,6 +218,11 @@ public class MovementController : MonoBehaviour, IKillable
 
     private void InitRuntimeState(bool loadPersistent)
     {
+        bool wasMounted = isMountedOnLouie;
+        bool headBefore = useHeadOnlyWhenMountedRuntime;
+
+        HLog($"InitRuntimeState(loadPersistent={loadPersistent}) ENTER headBefore={headBefore}");
+
         direction = Vector2.zero;
         hasInput = false;
         touchingHazards.Clear();
@@ -217,6 +237,19 @@ public class MovementController : MonoBehaviour, IKillable
         CacheMovementAbilities();
         SyncMountedFromPersistent();
 
+        useHeadOnlyWhenMountedRuntime = useHeadOnlyWhenMountedDefault;
+
+        if (IsPlayer() && isMountedOnLouie)
+        {
+            if (cachedCompanion == null)
+                TryGetComponent(out cachedCompanion);
+
+            if (cachedCompanion != null)
+                useHeadOnlyWhenMountedRuntime = cachedCompanion.GetUseHeadOnlyPlayerVisual();
+        }
+
+        HLog($"InitRuntimeState() after SyncMountedFromPersistent mounted={isMountedOnLouie} (wasMounted={wasMounted}) headRt={useHeadOnlyWhenMountedRuntime}");
+
         if (activeSpriteRenderer == null)
             activeSpriteRenderer = spriteRendererDown;
 
@@ -224,6 +257,8 @@ public class MovementController : MonoBehaviour, IKillable
 
         if (!IsSpriteLocked)
             EnableExclusiveFromState();
+
+        HLog($"InitRuntimeState() EXIT active={RName(activeSpriteRenderer)}");
     }
 
     private void CacheMovementAbilities()
@@ -251,7 +286,10 @@ public class MovementController : MonoBehaviour, IKillable
             return;
 
         var st = PlayerPersistentStats.Get(playerId);
+        bool before = isMountedOnLouie;
         isMountedOnLouie = st.MountedLouie != MountedType.None;
+
+        HLog($"SyncMountedFromPersistent() before={before} after={isMountedOnLouie} st.MountedLouie={st.MountedLouie}");
 
         if (facingDirection == Vector2.zero)
             facingDirection = Vector2.down;
@@ -290,7 +328,9 @@ public class MovementController : MonoBehaviour, IKillable
 
     private void DisableAllMountedSprites()
     {
-        SetMany(false, mountedSpriteUp, mountedSpriteDown, mountedSpriteLeft, mountedSpriteRight);
+        SetMany(false,
+            mountedSpriteUp, mountedSpriteDown, mountedSpriteLeft, mountedSpriteRight,
+            headOnlyUp, headOnlyDown, headOnlyLeft, headOnlyRight);
     }
 
     public void SetAllSpritesVisible(bool visible)
@@ -298,7 +338,8 @@ public class MovementController : MonoBehaviour, IKillable
         SetMany(visible,
             spriteRendererUp, spriteRendererDown, spriteRendererLeft, spriteRendererRight,
             spriteRendererDeath, spriteRendererEndStage, spriteRendererCheering,
-            mountedSpriteUp, mountedSpriteDown, mountedSpriteLeft, mountedSpriteRight);
+            mountedSpriteUp, mountedSpriteDown, mountedSpriteLeft, mountedSpriteRight,
+            headOnlyUp, headOnlyDown, headOnlyLeft, headOnlyRight);
 
         var rider = GetComponentInChildren<MountVisualController>(true);
         if (rider != null)
@@ -400,6 +441,8 @@ public class MovementController : MonoBehaviour, IKillable
             if (target == null)
                 target = mountedSpriteDown;
 
+            HLog($"ApplyDirectionFromVector(dir={dir}) MOUNTED PickMountedRenderer -> {RName(target)}");
+
             SetDirection(dir, target);
             return;
         }
@@ -430,6 +473,24 @@ public class MovementController : MonoBehaviour, IKillable
     private AnimatedSpriteRenderer PickMountedRenderer(Vector2 dir)
     {
         Vector2 face = GetFacing(dir);
+
+        bool useHead =
+            useHeadOnlyWhenMountedRuntime &&
+            (headOnlyUp != null || headOnlyDown != null || headOnlyLeft != null || headOnlyRight != null);
+
+        HLog($"PickMountedRenderer(dir={dir}, face={face}) useHead={useHead} headRt={useHeadOnlyWhenMountedRuntime} " +
+             $"HU={RName(headOnlyUp)} HD={RName(headOnlyDown)} HL={RName(headOnlyLeft)} HR={RName(headOnlyRight)} " +
+             $"MU={RName(mountedSpriteUp)} MD={RName(mountedSpriteDown)} ML={RName(mountedSpriteLeft)} MR={RName(mountedSpriteRight)}");
+
+        if (useHead)
+        {
+            if (face == Vector2.up) return headOnlyUp != null ? headOnlyUp : (mountedSpriteUp != null ? mountedSpriteUp : spriteRendererUp);
+            if (face == Vector2.down) return headOnlyDown != null ? headOnlyDown : (mountedSpriteDown != null ? mountedSpriteDown : spriteRendererDown);
+            if (face == Vector2.left) return headOnlyLeft != null ? headOnlyLeft : (mountedSpriteLeft != null ? mountedSpriteLeft : spriteRendererLeft);
+            if (face == Vector2.right) return headOnlyRight != null ? headOnlyRight : (mountedSpriteRight != null ? mountedSpriteRight : spriteRendererRight);
+
+            return headOnlyDown != null ? headOnlyDown : (mountedSpriteDown != null ? mountedSpriteDown : spriteRendererDown);
+        }
 
         if (face == Vector2.up) return mountedSpriteUp != null ? mountedSpriteUp : spriteRendererUp;
         if (face == Vector2.down) return mountedSpriteDown != null ? mountedSpriteDown : spriteRendererDown;
@@ -1271,6 +1332,8 @@ public class MovementController : MonoBehaviour, IKillable
 
     public void SetMountedOnLouie(bool mounted)
     {
+        HLog($"SetMountedOnLouie({mounted}) ENTER");
+
         isMountedOnLouie = mounted;
 
         if (IsRidingPlaying())
@@ -1303,6 +1366,8 @@ public class MovementController : MonoBehaviour, IKillable
 
         DisableAllMountedSprites();
         ApplyDirectionFromVector(direction);
+
+        HLog($"SetMountedOnLouie({mounted}) EXIT active={RName(activeSpriteRenderer)}");
     }
 
     public void SetMountedSpritesLocalYOverride(bool enable, float localY)
@@ -1468,4 +1533,37 @@ public class MovementController : MonoBehaviour, IKillable
             EnableExclusiveFromState();
         }
     }
+
+    public void SetUseHeadOnlyWhenMounted(bool useHeadOnly)
+    {
+        bool before = useHeadOnlyWhenMountedRuntime;
+        useHeadOnlyWhenMountedRuntime = useHeadOnly;
+
+        HLog($"SetUseHeadOnlyWhenMounted({useHeadOnly}) before={before} after={useHeadOnlyWhenMountedRuntime}");
+
+        if (isDead || isEndingStage) return;
+        if (IsRidingPlaying()) return;
+        if (externalVisualSuppressed || visualOverrideActive || IsSpriteLocked) return;
+
+        EnableExclusiveFromState();
+    }
+
+    [Header("Debug - HeadOnly Mounted")]
+    [SerializeField] private bool debugHeadOnlyMounted = true;
+
+    private void HLog(string msg)
+    {
+        if (!debugHeadOnlyMounted) return;
+
+        string who = IsPlayer() ? $"P{playerId}" : gameObject.name;
+        Debug.Log(
+            $"[HeadOnlyDbg] {who} t={Time.time:0.000} f={Time.frameCount} " +
+            $"mounted={isMountedOnLouie} headRt={useHeadOnlyWhenMountedRuntime} headDef={useHeadOnlyWhenMountedDefault} " +
+            $"dead={isDead} ending={isEndingStage} riding={IsRidingPlaying()} lock={IsSpriteLocked} visOvr={visualOverrideActive} extSup={externalVisualSuppressed} " +
+            $"- {msg}",
+            this
+        );
+    }
+
+    private string RName(AnimatedSpriteRenderer r) => r == null ? "null" : r.name;
 }

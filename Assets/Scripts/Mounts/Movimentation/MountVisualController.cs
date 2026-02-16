@@ -5,6 +5,9 @@ public class MountVisualController : MonoBehaviour
     [Header("Owner")]
     public MovementController owner;
 
+    [Header("Player Visual While Mounted")]
+    public bool useHeadOnlyPlayerVisual = false;
+
     [Header("Visual Offset (local)")]
     public Vector2 localOffset = new(0f, -0.15f);
 
