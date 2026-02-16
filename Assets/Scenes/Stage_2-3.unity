@@ -136,6 +136,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Sprint
       objectReference: {fileID: 0}
+    - target: {fileID: 3623787100506952678, guid: d83d0b2aae5e6ae4a92a21da109df9d9, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 8029862403792585174, guid: d83d0b2aae5e6ae4a92a21da109df9d9, type: 3}
       propertyPath: m_LocalPosition.x
       value: 11.5
@@ -1164,7 +1168,7 @@ Tilemap:
       - {fileID: 1925664496, guid: 6941c19c1cba83a4cbc94f1207289cd9, type: 3}
       - {fileID: -42286666, guid: 6941c19c1cba83a4cbc94f1207289cd9, type: 3}
       - {fileID: 1943493983, guid: 6941c19c1cba83a4cbc94f1207289cd9, type: 3}
-      m_AnimationSpeed: 5.0000005
+      m_AnimationSpeed: 5
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: -4, y: -4, z: 0}
@@ -1479,7 +1483,7 @@ Tilemap:
       - {fileID: 1925664496, guid: 6941c19c1cba83a4cbc94f1207289cd9, type: 3}
       - {fileID: -42286666, guid: 6941c19c1cba83a4cbc94f1207289cd9, type: 3}
       - {fileID: 1943493983, guid: 6941c19c1cba83a4cbc94f1207289cd9, type: 3}
-      m_AnimationSpeed: 5
+      m_AnimationSpeed: 5.0000005
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: 18, y: 2, z: 0}
@@ -2263,6 +2267,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Futa
       objectReference: {fileID: 0}
+    - target: {fileID: 1228606389669354652, guid: 03d75bf177face8458cfc48171d18612, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 1228606389669354653, guid: 03d75bf177face8458cfc48171d18612, type: 3}
       propertyPath: m_LocalPosition.x
       value: 21.5
@@ -2479,6 +2487,10 @@ PrefabInstance:
     - target: {fileID: 1228606389669354652, guid: 95d5bd4e51f7fd645a8dbda8294d1c84, type: 3}
       propertyPath: m_Name
       value: Petan
+      objectReference: {fileID: 0}
+    - target: {fileID: 1228606389669354652, guid: 95d5bd4e51f7fd645a8dbda8294d1c84, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1228606389669354653, guid: 95d5bd4e51f7fd645a8dbda8294d1c84, type: 3}
       propertyPath: m_LocalPosition.x
@@ -9780,6 +9792,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: PoyoMole
       objectReference: {fileID: 0}
+    - target: {fileID: 6652107077462134106, guid: 8f15b5d884a8d5d4fad591fc2ed9672d, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 8388449595591689174, guid: 8f15b5d884a8d5d4fad591fc2ed9672d, type: 3}
       propertyPath: m_LocalPosition.x
       value: -2.5
@@ -11065,7 +11081,7 @@ Tilemap:
       - {fileID: -1999495904, guid: 6941c19c1cba83a4cbc94f1207289cd9, type: 3}
       - {fileID: -1601884613, guid: 6941c19c1cba83a4cbc94f1207289cd9, type: 3}
       - {fileID: 1244794495, guid: 6941c19c1cba83a4cbc94f1207289cd9, type: 3}
-      m_AnimationSpeed: 5.0000005
+      m_AnimationSpeed: 5
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: 13, y: -1, z: 0}
@@ -12248,6 +12264,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Sprint
       objectReference: {fileID: 0}
+    - target: {fileID: 3623787100506952678, guid: d83d0b2aae5e6ae4a92a21da109df9d9, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 8029862403792585174, guid: d83d0b2aae5e6ae4a92a21da109df9d9, type: 3}
       propertyPath: m_LocalPosition.x
       value: 3.5
@@ -12309,6 +12329,10 @@ PrefabInstance:
     - target: {fileID: 1228606389669354652, guid: 95d5bd4e51f7fd645a8dbda8294d1c84, type: 3}
       propertyPath: m_Name
       value: Petan
+      objectReference: {fileID: 0}
+    - target: {fileID: 1228606389669354652, guid: 95d5bd4e51f7fd645a8dbda8294d1c84, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1228606389669354653, guid: 95d5bd4e51f7fd645a8dbda8294d1c84, type: 3}
       propertyPath: m_LocalPosition.x
@@ -12926,6 +12950,10 @@ PrefabInstance:
     - target: {fileID: 6652107077462134106, guid: 1195af38c2e954542a1a6f7a82fd1404, type: 3}
       propertyPath: m_Name
       value: NemuNemu
+      objectReference: {fileID: 0}
+    - target: {fileID: 6652107077462134106, guid: 1195af38c2e954542a1a6f7a82fd1404, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8388449595591689174, guid: 1195af38c2e954542a1a6f7a82fd1404, type: 3}
       propertyPath: m_LocalPosition.x

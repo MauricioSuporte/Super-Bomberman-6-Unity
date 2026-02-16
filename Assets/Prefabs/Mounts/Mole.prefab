@@ -533,7 +533,7 @@ GameObject:
   - component: {fileID: 1202631410246704134}
   - component: {fileID: 6685445590595473310}
   m_Layer: 13
-  m_Name: Up
+  m_Name: Movimentation
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -635,7 +635,7 @@ MonoBehaviour:
   useSequenceDuration: 0
   sequenceDuration: 0.5
   loop: 1
-  idle: 1
+  idle: 0
   frameOffsets: []
   pingPong: 0
   disableOffsetsIfThisObjectHasRigidbody2D: 1
