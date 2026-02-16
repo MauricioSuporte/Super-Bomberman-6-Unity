@@ -25,7 +25,7 @@ public sealed class InactivityAnimation : MonoBehaviour
     {
         None = 0,
         Player = 1,
-        Louie = 2
+        Mount = 2
     }
 
     private void Awake()
@@ -98,7 +98,7 @@ public sealed class InactivityAnimation : MonoBehaviour
 
         var lv = ResolveLouieVisual();
         if (lv != null && lv.HasInactivityEmoteRenderer)
-            return EmoteTarget.Louie;
+            return EmoteTarget.Mount;
 
         return EmoteTarget.Player;
     }
@@ -167,7 +167,7 @@ public sealed class InactivityAnimation : MonoBehaviour
         isPlaying = true;
         currentTarget = target;
 
-        if (target == EmoteTarget.Louie)
+        if (target == EmoteTarget.Mount)
         {
             movement.SetInactivityMountedDownOverride(true);
 
@@ -204,7 +204,7 @@ public sealed class InactivityAnimation : MonoBehaviour
             return;
         }
 
-        if (currentTarget == EmoteTarget.Louie)
+        if (currentTarget == EmoteTarget.Mount)
         {
             var lv = ResolveLouieVisual();
             if (lv != null)
