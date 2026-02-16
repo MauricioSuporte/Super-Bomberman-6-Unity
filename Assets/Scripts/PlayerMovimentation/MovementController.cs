@@ -174,7 +174,6 @@ public class MovementController : MonoBehaviour, IKillable
 
     protected virtual void Awake()
     {
-        HLog("Awake() ENTER");
         Rigidbody = GetComponent<Rigidbody2D>();
         stunReceiver = GetComponent<StunReceiver>();
         bombController = GetComponent<BombController>();
@@ -202,14 +201,11 @@ public class MovementController : MonoBehaviour, IKillable
 
         CacheMovementAbilities();
         InitRuntimeState(loadPersistent: true);
-        HLog("Awake() EXIT");
     }
 
     protected virtual void OnEnable()
     {
-        HLog("OnEnable() ENTER");
         InitRuntimeState(loadPersistent: true);
-        HLog("OnEnable() EXIT");
     }
 
     protected virtual void OnDisable()
@@ -220,9 +216,6 @@ public class MovementController : MonoBehaviour, IKillable
     private void InitRuntimeState(bool loadPersistent)
     {
         bool wasMounted = isMounted;
-        bool headBefore = useHeadOnlyWhenMountedRuntime;
-
-        HLog($"InitRuntimeState(loadPersistent={loadPersistent}) ENTER headBefore={headBefore}");
 
         direction = Vector2.zero;
         hasInput = false;
@@ -249,8 +242,6 @@ public class MovementController : MonoBehaviour, IKillable
                 useHeadOnlyWhenMountedRuntime = cachedCompanion.GetUseHeadOnlyPlayerVisual();
         }
 
-        HLog($"InitRuntimeState() after SyncMountedFromPersistent mounted={isMounted} (wasMounted={wasMounted}) headRt={useHeadOnlyWhenMountedRuntime}");
-
         if (activeSpriteRenderer == null)
             activeSpriteRenderer = spriteRendererDown;
 
@@ -258,8 +249,6 @@ public class MovementController : MonoBehaviour, IKillable
 
         if (!IsSpriteLocked)
             EnableExclusiveFromState();
-
-        HLog($"InitRuntimeState() EXIT active={RName(activeSpriteRenderer)}");
     }
 
     private void CacheMovementAbilities()
@@ -289,8 +278,6 @@ public class MovementController : MonoBehaviour, IKillable
         var st = PlayerPersistentStats.Get(playerId);
         bool before = isMounted;
         isMounted = st.MountedLouie != MountedType.None;
-
-        HLog($"SyncMountedFromPersistent() before={before} after={isMounted} st.MountedLouie={st.MountedLouie}");
 
         if (facingDirection == Vector2.zero)
             facingDirection = Vector2.down;
@@ -442,8 +429,6 @@ public class MovementController : MonoBehaviour, IKillable
             if (target == null)
                 target = mountedSpriteDown;
 
-            HLog($"ApplyDirectionFromVector(dir={dir}) MOUNTED PickMountedRenderer -> {RName(target)}");
-
             SetDirection(dir, target);
             return;
         }
@@ -478,10 +463,6 @@ public class MovementController : MonoBehaviour, IKillable
         bool useHead =
             useHeadOnlyWhenMountedRuntime &&
             (headOnlyUp != null || headOnlyDown != null || headOnlyLeft != null || headOnlyRight != null);
-
-        HLog($"PickMountedRenderer(dir={dir}, face={face}) useHead={useHead} headRt={useHeadOnlyWhenMountedRuntime} " +
-             $"HU={RName(headOnlyUp)} HD={RName(headOnlyDown)} HL={RName(headOnlyLeft)} HR={RName(headOnlyRight)} " +
-             $"MU={RName(mountedSpriteUp)} MD={RName(mountedSpriteDown)} ML={RName(mountedSpriteLeft)} MR={RName(mountedSpriteRight)}");
 
         if (useHead)
         {
@@ -1339,8 +1320,6 @@ public class MovementController : MonoBehaviour, IKillable
 
     public void SetMountedOnLouie(bool mounted)
     {
-        HLog($"SetMountedOnLouie({mounted}) ENTER");
-
         isMounted = mounted;
 
         if (IsRidingPlaying())
@@ -1373,8 +1352,6 @@ public class MovementController : MonoBehaviour, IKillable
 
         DisableAllMountedSprites();
         ApplyDirectionFromVector(direction);
-
-        HLog($"SetMountedOnLouie({mounted}) EXIT active={RName(activeSpriteRenderer)}");
     }
 
     public void SetMountedSpritesLocalYOverride(bool enable, float localY)
@@ -1543,10 +1520,7 @@ public class MovementController : MonoBehaviour, IKillable
 
     public void SetUseHeadOnlyWhenMounted(bool useHeadOnly)
     {
-        bool before = useHeadOnlyWhenMountedRuntime;
         useHeadOnlyWhenMountedRuntime = useHeadOnly;
-
-        HLog($"SetUseHeadOnlyWhenMounted({useHeadOnly}) before={before} after={useHeadOnlyWhenMountedRuntime}");
 
         if (isDead || isEndingStage) return;
         if (IsRidingPlaying()) return;
@@ -1587,59 +1561,14 @@ public class MovementController : MonoBehaviour, IKillable
     {
         if (r == null) return;
 
-        var before = GetVisualLocalPos(r);
-
         r.SetRuntimeBaseLocalX(localOffset.x);
         r.SetRuntimeBaseLocalY(localOffset.y);
-
-        var after = GetVisualLocalPos(r);
-
-        HLog($"ApplyHeadOnlyOffset r={RName(r)} offset={V2(localOffset)} vtLocal before={V3(before)} after={V3(after)}");
     }
 
     private void ClearHeadOnlyOffset(AnimatedSpriteRenderer r)
     {
         if (r == null) return;
 
-        var before = GetVisualLocalPos(r);
-
         r.ClearRuntimeBaseOffset();
-
-        var after = GetVisualLocalPos(r);
-
-        HLog($"ClearHeadOnlyOffset r={RName(r)} vtLocal before={V3(before)} after={V3(after)}");
     }
-
-    [Header("Debug - HeadOnly Mounted")]
-    [SerializeField] private bool debugHeadOnlyMounted = true;
-
-    private void HLog(string msg)
-    {
-        if (!debugHeadOnlyMounted) return;
-
-        string who = IsPlayer() ? $"P{playerId}" : gameObject.name;
-        //Debug.Log(
-        //    $"[HeadOnlyDbg] {who} t={Time.time:0.000} f={Time.frameCount} " +
-        //    $"mounted={isMounted} headRt={useHeadOnlyWhenMountedRuntime} headDef={useHeadOnlyWhenMountedDefault} " +
-        //    $"dead={isDead} ending={isEndingStage} riding={IsRidingPlaying()} lock={IsSpriteLocked} visOvr={visualOverrideActive} extSup={externalVisualSuppressed} " +
-        //    $"- {msg}",
-        //    this
-        //);
-    }
-
-    private string RName(AnimatedSpriteRenderer r) => r == null ? "null" : r.name;
-
-    private Vector3 GetVisualLocalPos(AnimatedSpriteRenderer r)
-    {
-        if (r == null) return Vector3.zero;
-
-        var sr = r.GetComponentInChildren<SpriteRenderer>(true);
-        if (sr != null) return sr.transform.localPosition;
-
-        return r.transform.localPosition;
-    }
-
-    private static string V3(Vector3 v) => $"({v.x:0.###},{v.y:0.###},{v.z:0.###})";
-    private static string V2(Vector2 v) => $"({v.x:0.###},{v.y:0.###})";
-
 }

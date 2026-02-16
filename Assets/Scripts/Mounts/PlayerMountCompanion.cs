@@ -249,14 +249,10 @@ public class PlayerMountCompanion : MonoBehaviour
 
         mountedType = type;
 
-        Debug.Log($"[HeadOnlyDbg] FinalizeMount type={type} t={Time.time:0.000} f={Time.frameCount}", this);
-
         movement.SetMountedOnLouie(true);
 
         var ridingVisual = GetLouieRidingVisual(currentLouie);
         bool useHeadOnly = ridingVisual != null && ridingVisual.useHeadOnlyPlayerVisual;
-
-        Debug.Log($"[HeadOnlyDbg] FinalizeMount visual={(ridingVisual != null ? ridingVisual.name : "null")} useHeadOnly={useHeadOnly}", this);
 
         movement.SetUseHeadOnlyWhenMounted(useHeadOnly);
 
