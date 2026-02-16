@@ -291,11 +291,7 @@ public sealed class BoatRideZone : MonoBehaviour
             prevRider.SetPassTaggedObstacles(false, waterTag);
         }
 
-        BLog($"UNMOUNT ResetHeadOnlyExternalBases ENTER");
-
         ResetHeadOnlyExternalBases();
-
-        BLog($"UNMOUNT ResetHeadOnlyExternalBases EXIT");
 
         DisableAllPlayerAnimSprites();
         currentHead = null;
@@ -444,15 +440,7 @@ public sealed class BoatRideZone : MonoBehaviour
     private void ApplyHeadExternalBase(AnimatedSpriteRenderer r, Vector2 offset)
     {
         if (r == null) return;
-
-        var before = GetVisualLocalPos(r);
-
         r.SetExternalBaseOffsetFromInitial((Vector3)offset);
-
-        var after = GetVisualLocalPos(r);
-
-        if ((after - before).sqrMagnitude > 0.000001f)
-            BLog($"APPLY r={r.name} offset={V2(offset)} before={V3(before)} after={V3(after)} delta={V3(after - before)}");
     }
 
     private void ResetHeadOnlyExternalBases()
@@ -466,34 +454,7 @@ public sealed class BoatRideZone : MonoBehaviour
     private void ClearHeadExternalBase(AnimatedSpriteRenderer r)
     {
         if (r == null) return;
-
-        var before = GetVisualLocalPos(r);
-
         r.ClearExternalBase();
-
-        var after = GetVisualLocalPos(r);
-
-        if ((after - before).sqrMagnitude > 0.000001f)
-            BLog($"RESET r={r.name} before={V3(before)} after={V3(after)} delta={V3(after - before)}");
-    }
-
-    private static Transform FindVisualTransform(AnimatedSpriteRenderer r)
-    {
-        if (r == null) return null;
-
-        var srHere = r.GetComponent<SpriteRenderer>();
-        if (srHere != null) return srHere.transform;
-
-        var imgHere = r.GetComponent<Image>();
-        if (imgHere != null) return imgHere.transform;
-
-        var imgChild = r.GetComponentInChildren<Image>(true);
-        if (imgChild != null) return imgChild.transform;
-
-        var srChild = r.GetComponentInChildren<SpriteRenderer>(true);
-        if (srChild != null) return srChild.transform;
-
-        return r.transform;
     }
 
     private static AnimatedSpriteRenderer FindChildAnimByName(Transform root, string childName)
@@ -685,25 +646,5 @@ public sealed class BoatRideZone : MonoBehaviour
         if (r == null) return;
         r.idle = idle;
         r.RefreshFrame();
-    }
-
-    [Header("Debug - HeadOnly Offsets")]
-    [SerializeField] private bool debugHeadOnlyOffsets = true;
-
-    private void BLog(string msg)
-    {
-        if (!debugHeadOnlyOffsets) return;
-
-        string who = rider != null ? (rider.CompareTag("Player") ? $"P{rider.PlayerId}" : rider.name) : "no-rider";
-        Debug.Log($"[BoatHeadDbg] boat={name} who={who} t={Time.time:0.000} f={Time.frameCount} - {msg}", this);
-    }
-
-    private static string V3(Vector3 v) => $"({v.x:0.###},{v.y:0.###},{v.z:0.###})";
-    private static string V2(Vector2 v) => $"({v.x:0.###},{v.y:0.###})";
-
-    private Vector3 GetVisualLocalPos(AnimatedSpriteRenderer r)
-    {
-        var vt = FindVisualTransform(r);
-        return vt != null ? vt.localPosition : Vector3.zero;
     }
 }
