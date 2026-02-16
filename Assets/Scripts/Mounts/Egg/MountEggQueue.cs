@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public sealed class LouieEggQueue : MonoBehaviour
+public sealed class MountEggQueue : MonoBehaviour
 {
     [Header("History (Time Based)")]
     [SerializeField, Range(10, 500)] int maxHistory = 160;
@@ -1381,7 +1381,7 @@ public sealed class LouieEggQueue : MonoBehaviour
             StopAllAnimationsNow();
     }
 
-    static void BindEggHitbox(GameObject eggRootGo, LouieEggQueue queue)
+    static void BindEggHitbox(GameObject eggRootGo, MountEggQueue queue)
     {
         if (eggRootGo == null || queue == null)
             return;
@@ -1401,8 +1401,8 @@ public sealed class LouieEggQueue : MonoBehaviour
         if (detachedLouie == null || _eggs.Count == 0)
             return;
 
-        if (!detachedLouie.TryGetComponent<LouieEggQueue>(out var target))
-            target = detachedLouie.AddComponent<LouieEggQueue>();
+        if (!detachedLouie.TryGetComponent<MountEggQueue>(out var target))
+            target = detachedLouie.AddComponent<MountEggQueue>();
 
         CopySettingsTo(target);
 
@@ -1433,7 +1433,7 @@ public sealed class LouieEggQueue : MonoBehaviour
         PostQueueChanged(animateShift: false);
     }
 
-    void CopySettingsTo(LouieEggQueue q)
+    void CopySettingsTo(MountEggQueue q)
     {
         q.maxHistory = maxHistory;
         q.historyPointSpacingWorld = historyPointSpacingWorld;
@@ -1549,11 +1549,11 @@ public sealed class LouieEggQueue : MonoBehaviour
             return false;
 
         bool mountedByMovement = consumerPlayer.TryGetComponent<MovementController>(out var mv) && mv != null && mv.IsMountedOnLouie;
-        bool mountedByCompanion = consumerPlayer.TryGetComponent<PlayerLouieCompanion>(out var compCheck) && compCheck != null && compCheck.HasMountedLouie();
+        bool mountedByCompanion = consumerPlayer.TryGetComponent<PlayerMountCompanion>(out var compCheck) && compCheck != null && compCheck.HasMountedLouie();
         if (mountedByMovement || mountedByCompanion)
             return false;
 
-        if (!consumerPlayer.TryGetComponent<PlayerLouieCompanion>(out var comp) || comp == null)
+        if (!consumerPlayer.TryGetComponent<PlayerMountCompanion>(out var comp) || comp == null)
             return false;
 
         int idx = FindEggIndexByTransform(anyTransformOnEgg);
@@ -1624,8 +1624,8 @@ public sealed class LouieEggQueue : MonoBehaviour
         if (consumerPlayer == null || idxExclusive <= 0 || _eggs.Count == 0)
             return;
 
-        if (!consumerPlayer.TryGetComponent<LouieEggQueue>(out var consumerQueue) || consumerQueue == null)
-            consumerQueue = consumerPlayer.AddComponent<LouieEggQueue>();
+        if (!consumerPlayer.TryGetComponent<MountEggQueue>(out var consumerQueue) || consumerQueue == null)
+            consumerQueue = consumerPlayer.AddComponent<MountEggQueue>();
 
         CopySettingsTo(consumerQueue);
 
@@ -1688,7 +1688,7 @@ public sealed class LouieEggQueue : MonoBehaviour
         }
     }
 
-    static void MountFromEggType(PlayerLouieCompanion comp, ItemPickup.ItemType eggType)
+    static void MountFromEggType(PlayerMountCompanion comp, ItemPickup.ItemType eggType)
     {
         if (comp == null) return;
 
@@ -1797,7 +1797,7 @@ public sealed class LouieEggQueue : MonoBehaviour
         ResetRuntimeState();
     }
 
-    public void AbsorbAllEggsFromWorldQueue(LouieEggQueue worldQueue, MovementController newOwner)
+    public void AbsorbAllEggsFromWorldQueue(MountEggQueue worldQueue, MovementController newOwner)
     {
         if (worldQueue == null || newOwner == null)
             return;

@@ -85,7 +85,7 @@ public class MechaBossSequence : MonoBehaviour
 
     readonly List<MovementController> players = new();
     readonly List<BombController> playerBombs = new();
-    readonly List<PlayerLouieCompanion> playerCompanions = new();
+    readonly List<PlayerMountCompanion> playerCompanions = new();
 
     readonly Dictionary<MovementController, Collider2D> cachedPlayerColliders = new();
     readonly Dictionary<MovementController, bool> cachedColliderEnabled = new();
@@ -815,7 +815,7 @@ public class MechaBossSequence : MonoBehaviour
             var bomb = p.GetComponent<BombController>();
             if (bomb != null) playerBombs.Add(bomb);
 
-            var comp = p.GetComponent<PlayerLouieCompanion>();
+            var comp = p.GetComponent<PlayerMountCompanion>();
             if (comp != null) playerCompanions.Add(comp);
         }
     }

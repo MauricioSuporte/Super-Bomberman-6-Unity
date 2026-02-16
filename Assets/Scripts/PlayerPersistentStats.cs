@@ -32,7 +32,7 @@ public static class PlayerPersistentStats
         public bool HasControlBombs = true;
         public bool HasFullFire = false;
 
-        public MountedLouieType MountedLouie = MountedLouieType.Blue;
+        public MountedType MountedLouie = MountedType.Mole;
         public BomberSkin Skin = BomberSkin.White;
 
         public readonly List<ItemPickup.ItemType> QueuedEggs = new(8);
@@ -40,8 +40,8 @@ public static class PlayerPersistentStats
         public PlayerState()
         {
             QueuedEggs.Clear();
-            QueuedEggs.Add(ItemPickup.ItemType.BlackLouieEgg);
-            QueuedEggs.Add(ItemPickup.ItemType.PurpleLouieEgg);
+            //QueuedEggs.Add(ItemPickup.ItemType.BlackLouieEgg);
+            //QueuedEggs.Add(ItemPickup.ItemType.PurpleLouieEgg);
         }
     }
 
@@ -171,7 +171,7 @@ public static class PlayerPersistentStats
         s.HasControlBombs = false;
         s.HasFullFire = false;
 
-        s.MountedLouie = MountedLouieType.None;
+        s.MountedLouie = MountedType.None;
         s.QueuedEggs.Clear();
 
         s.Skin = BomberSkin.White;
@@ -191,7 +191,7 @@ public static class PlayerPersistentStats
         s.HasControlBombs = false;
         s.HasFullFire = false;
 
-        s.MountedLouie = MountedLouieType.None;
+        s.MountedLouie = MountedType.None;
 
         s.QueuedEggs?.Clear();
     }
@@ -229,13 +229,13 @@ public static class PlayerPersistentStats
         return 1;
     }
 
-    static LouieEggQueue GetOrCreateEggQueue(GameObject playerGo, MovementController movement)
+    static MountEggQueue GetOrCreateEggQueue(GameObject playerGo, MovementController movement)
     {
         if (playerGo == null)
             return null;
 
-        if (!playerGo.TryGetComponent<LouieEggQueue>(out var q) || q == null)
-            q = playerGo.AddComponent<LouieEggQueue>();
+        if (!playerGo.TryGetComponent<MountEggQueue>(out var q) || q == null)
+            q = playerGo.AddComponent<MountEggQueue>();
 
         if (movement != null)
             q.BindOwner(movement);
@@ -314,17 +314,17 @@ public static class PlayerPersistentStats
                 abilitySystem.Disable(ControlBombAbility.AbilityId);
             }
 
-            if (movement.TryGetComponent<PlayerLouieCompanion>(out var louieCompanion))
+            if (movement.TryGetComponent<PlayerMountCompanion>(out var louieCompanion))
             {
                 switch (s.MountedLouie)
                 {
-                    case MountedLouieType.Blue: louieCompanion.RestoreMountedBlueLouie(); break;
-                    case MountedLouieType.Black: louieCompanion.RestoreMountedBlackLouie(); break;
-                    case MountedLouieType.Purple: louieCompanion.RestoreMountedPurpleLouie(); break;
-                    case MountedLouieType.Green: louieCompanion.RestoreMountedGreenLouie(); break;
-                    case MountedLouieType.Yellow: louieCompanion.RestoreMountedYellowLouie(); break;
-                    case MountedLouieType.Pink: louieCompanion.RestoreMountedPinkLouie(); break;
-                    case MountedLouieType.Red: louieCompanion.RestoreMountedRedLouie(); break;
+                    case MountedType.Blue: louieCompanion.RestoreMountedBlueLouie(); break;
+                    case MountedType.Black: louieCompanion.RestoreMountedBlackLouie(); break;
+                    case MountedType.Purple: louieCompanion.RestoreMountedPurpleLouie(); break;
+                    case MountedType.Green: louieCompanion.RestoreMountedGreenLouie(); break;
+                    case MountedType.Yellow: louieCompanion.RestoreMountedYellowLouie(); break;
+                    case MountedType.Pink: louieCompanion.RestoreMountedPinkLouie(); break;
+                    case MountedType.Red: louieCompanion.RestoreMountedRedLouie(); break;
                 }
             }
 
@@ -336,7 +336,7 @@ public static class PlayerPersistentStats
             }
             else
             {
-                if (movement.TryGetComponent<LouieEggQueue>(out var q) && q != null)
+                if (movement.TryGetComponent<MountEggQueue>(out var q) && q != null)
                     q.RestoreQueuedEggTypesOldestToNewest(null, null);
             }
         }
@@ -394,12 +394,12 @@ public static class PlayerPersistentStats
             if (s.HasControlBombs) s.HasPierceBombs = false;
             else if (s.HasPierceBombs) s.HasControlBombs = false;
 
-            s.MountedLouie = MountedLouieType.None;
+            s.MountedLouie = MountedType.None;
 
-            if (movement.TryGetComponent<PlayerLouieCompanion>(out var louieCompanion))
+            if (movement.TryGetComponent<PlayerMountCompanion>(out var louieCompanion))
                 s.MountedLouie = louieCompanion.GetMountedLouieType();
 
-            if (movement.TryGetComponent<LouieEggQueue>(out var q) && q != null)
+            if (movement.TryGetComponent<MountEggQueue>(out var q) && q != null)
                 q.GetQueuedEggTypesOldestToNewest(s.QueuedEggs);
             else
                 s.QueuedEggs.Clear();
@@ -428,7 +428,7 @@ public static class PlayerPersistentStats
         if (health != null)
             s.Life = Mathf.Max(1, health.life);
 
-        if (movement != null && movement.TryGetComponent<LouieEggQueue>(out var q) && q != null)
+        if (movement != null && movement.TryGetComponent<MountEggQueue>(out var q) && q != null)
             q.GetQueuedEggTypesOldestToNewest(s.QueuedEggs);
     }
 
@@ -504,18 +504,18 @@ public static class PlayerPersistentStats
         stageActive = false;
     }
 
-    static MountedLouieType EggToLouie(ItemPickup.ItemType t)
+    static MountedType EggToLouie(ItemPickup.ItemType t)
     {
         return t switch
         {
-            ItemPickup.ItemType.BlueLouieEgg => MountedLouieType.Blue,
-            ItemPickup.ItemType.BlackLouieEgg => MountedLouieType.Black,
-            ItemPickup.ItemType.PurpleLouieEgg => MountedLouieType.Purple,
-            ItemPickup.ItemType.GreenLouieEgg => MountedLouieType.Green,
-            ItemPickup.ItemType.YellowLouieEgg => MountedLouieType.Yellow,
-            ItemPickup.ItemType.PinkLouieEgg => MountedLouieType.Pink,
-            ItemPickup.ItemType.RedLouieEgg => MountedLouieType.Red,
-            _ => MountedLouieType.None
+            ItemPickup.ItemType.BlueLouieEgg => MountedType.Blue,
+            ItemPickup.ItemType.BlackLouieEgg => MountedType.Black,
+            ItemPickup.ItemType.PurpleLouieEgg => MountedType.Purple,
+            ItemPickup.ItemType.GreenLouieEgg => MountedType.Green,
+            ItemPickup.ItemType.YellowLouieEgg => MountedType.Yellow,
+            ItemPickup.ItemType.PinkLouieEgg => MountedType.Pink,
+            ItemPickup.ItemType.RedLouieEgg => MountedType.Red,
+            _ => MountedType.None
         };
     }
 
@@ -590,7 +590,7 @@ public static class PlayerPersistentStats
                 {
                     var louie = EggToLouie(type);
 
-                    if (s.MountedLouie != MountedLouieType.None)
+                    if (s.MountedLouie != MountedType.None)
                     {
                         if (s.QueuedEggs.Count < 8)
                             s.QueuedEggs.Add(type);
@@ -655,11 +655,11 @@ public static class PlayerPersistentStats
             if (s.HasControlBombs) s.HasPierceBombs = false;
             else if (s.HasPierceBombs) s.HasControlBombs = false;
 
-            s.MountedLouie = MountedLouieType.None;
-            if (movement.TryGetComponent<PlayerLouieCompanion>(out var louieCompanion))
+            s.MountedLouie = MountedType.None;
+            if (movement.TryGetComponent<PlayerMountCompanion>(out var louieCompanion))
                 s.MountedLouie = louieCompanion.GetMountedLouieType();
 
-            if (movement.TryGetComponent<LouieEggQueue>(out var q) && q != null)
+            if (movement.TryGetComponent<MountEggQueue>(out var q) && q != null)
                 q.GetQueuedEggTypesOldestToNewest(s.QueuedEggs);
             else
                 s.QueuedEggs.Clear();

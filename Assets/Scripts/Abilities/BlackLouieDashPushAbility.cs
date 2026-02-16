@@ -36,7 +36,7 @@ public class BlackLouieDashPushAbility : MonoBehaviour, IPlayerAbility
     Collider2D myCollider;
     AudioSource audioSource;
     BombController bombController;
-    PlayerLouieCompanion louieCompanion;
+    PlayerMountCompanion louieCompanion;
     AbilitySystem abilitySystem;
 
     float nextAllowedTime;
@@ -58,7 +58,7 @@ public class BlackLouieDashPushAbility : MonoBehaviour, IPlayerAbility
         myCollider = GetComponent<Collider2D>();
         audioSource = GetComponent<AudioSource>();
         bombController = GetComponent<BombController>();
-        louieCompanion = GetComponent<PlayerLouieCompanion>();
+        louieCompanion = GetComponent<PlayerMountCompanion>();
         abilitySystem = GetComponent<AbilitySystem>();
 
         enemyLayer = LayerMask.NameToLayer("Enemy");

@@ -35,7 +35,7 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
     AudioSource audioSource;
 
     CharacterHealth playerHealth;
-    PlayerLouieCompanion companion;
+    PlayerMountCompanion companion;
     AbilitySystem abilitySystem;
 
     Coroutine routine;
@@ -243,7 +243,7 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
         if (shadow == null)
             return;
 
-        var louieVisual = shadow.GetComponentInParent<LouieVisualController>();
+        var louieVisual = shadow.GetComponentInParent<MountVisualController>();
         var target = louieVisual != null ? louieVisual.transform : shadow.transform.parent;
 
         if (target != null)
@@ -288,7 +288,7 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
         if (companion == null)
             return null;
 
-        var louieMove = companion.GetComponentInChildren<LouieMovementController>(true);
+        var louieMove = companion.GetComponentInChildren<MountMovementController>(true);
         if (louieMove == null)
             return null;
 

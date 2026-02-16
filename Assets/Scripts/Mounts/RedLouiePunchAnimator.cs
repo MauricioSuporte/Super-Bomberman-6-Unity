@@ -10,7 +10,7 @@ public class RedLouiePunchAnimator : MonoBehaviour, IRedLouiePunchExternalAnimat
     public AnimatedSpriteRenderer punchRight;
 
     AnimatedSpriteRenderer activePunch;
-    LouieVisualController riderVisual;
+    MountVisualController riderVisual;
 
     readonly List<AnimatedSpriteRenderer> cachedAnimators = new();
     readonly List<bool> cachedAnimatorEnabled = new();
@@ -25,11 +25,11 @@ public class RedLouiePunchAnimator : MonoBehaviour, IRedLouiePunchExternalAnimat
 
     void Awake()
     {
-        riderVisual = GetComponent<LouieVisualController>();
+        riderVisual = GetComponent<MountVisualController>();
         if (riderVisual == null)
-            riderVisual = GetComponentInParent<LouieVisualController>();
+            riderVisual = GetComponentInParent<MountVisualController>();
         if (riderVisual == null)
-            riderVisual = GetComponentInChildren<LouieVisualController>(true);
+            riderVisual = GetComponentInChildren<MountVisualController>(true);
     }
 
     void OnDisable() => Stop();

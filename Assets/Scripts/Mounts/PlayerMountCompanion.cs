@@ -7,7 +7,7 @@ using UnityEngine;
 [RequireComponent(typeof(MovementController))]
 [RequireComponent(typeof(CharacterHealth))]
 [RequireComponent(typeof(PlayerRidingController))]
-public class PlayerLouieCompanion : MonoBehaviour
+public class PlayerMountCompanion : MonoBehaviour
 {
     [Header("Louie Prefabs")]
     public GameObject blueLouiePrefab;
@@ -38,7 +38,7 @@ public class PlayerLouieCompanion : MonoBehaviour
     [SerializeField] string pinkLouieMountSfxName = "MountPinkLouie";
     [SerializeField] string redLouieMountSfxName = "MountRedLouie";
 
-    readonly Dictionary<MountedLouieType, AudioClip> _worldMountSfxCache = new();
+    readonly Dictionary<MountedType, AudioClip> _worldMountSfxCache = new();
 
     AudioClip pendingMountSfx;
     float pendingMountVolume = 1f;
@@ -47,7 +47,7 @@ public class PlayerLouieCompanion : MonoBehaviour
     CharacterHealth playerHealth;
 
     GameObject currentLouie;
-    MountedLouieType mountedType = MountedLouieType.None;
+    MountedType mountedType = MountedType.None;
 
     CharacterHealth mountedLouieHealth;
     int mountedLouieHp;
@@ -69,11 +69,11 @@ public class PlayerLouieCompanion : MonoBehaviour
     float playerOriginalTempEndBlinkMultiplier;
     Coroutine restorePlayerBlinkRoutine;
 
-    readonly Dictionary<MountedLouieType, GameObject> prefabByType = new();
-    readonly Dictionary<ItemPickup.ItemType, MountedLouieType> mountedByEggType = new();
+    readonly Dictionary<MountedType, GameObject> prefabByType = new();
+    readonly Dictionary<ItemPickup.ItemType, MountedType> mountedByEggType = new();
 
-    readonly Dictionary<MountedLouieType, Action> applyMountedAbility = new();
-    LouieAbilitySfxConfig currentAbilityCfg;
+    readonly Dictionary<MountedType, Action> applyMountedAbility = new();
+    MountAbilitySfxConfig currentAbilityCfg;
 
     Coroutine autoRemountRoutine;
     bool autoRemountRequested;
@@ -117,7 +117,7 @@ public class PlayerLouieCompanion : MonoBehaviour
 
         TickDashInvulnerability();
 
-        if (currentLouie != null && mountedType != MountedLouieType.Blue)
+        if (currentLouie != null && mountedType != MountedType.Blue)
             EnforceNoPunchWhileMountedNonBlue();
     }
 
@@ -129,23 +129,23 @@ public class PlayerLouieCompanion : MonoBehaviour
 
     #region Mount API (Public)
 
-    public void MountBlueLouie() => Mount(MountedLouieType.Blue);
-    public void MountBlackLouie() => Mount(MountedLouieType.Black);
-    public void MountPurpleLouie() => Mount(MountedLouieType.Purple);
-    public void MountGreenLouie() => Mount(MountedLouieType.Green);
-    public void MountYellowLouie() => Mount(MountedLouieType.Yellow);
-    public void MountPinkLouie() => Mount(MountedLouieType.Pink);
-    public void MountRedLouie() => Mount(MountedLouieType.Red);
+    public void MountBlueLouie() => Mount(MountedType.Blue);
+    public void MountBlackLouie() => Mount(MountedType.Black);
+    public void MountPurpleLouie() => Mount(MountedType.Purple);
+    public void MountGreenLouie() => Mount(MountedType.Green);
+    public void MountYellowLouie() => Mount(MountedType.Yellow);
+    public void MountPinkLouie() => Mount(MountedType.Pink);
+    public void MountRedLouie() => Mount(MountedType.Red);
 
-    public void RestoreMountedBlueLouie() => RestoreMounted(MountedLouieType.Blue);
-    public void RestoreMountedBlackLouie() => RestoreMounted(MountedLouieType.Black);
-    public void RestoreMountedPurpleLouie() => RestoreMounted(MountedLouieType.Purple);
-    public void RestoreMountedGreenLouie() => RestoreMounted(MountedLouieType.Green);
-    public void RestoreMountedYellowLouie() => RestoreMounted(MountedLouieType.Yellow);
-    public void RestoreMountedPinkLouie() => RestoreMounted(MountedLouieType.Pink);
-    public void RestoreMountedRedLouie() => RestoreMounted(MountedLouieType.Red);
+    public void RestoreMountedBlueLouie() => RestoreMounted(MountedType.Blue);
+    public void RestoreMountedBlackLouie() => RestoreMounted(MountedType.Black);
+    public void RestoreMountedPurpleLouie() => RestoreMounted(MountedType.Purple);
+    public void RestoreMountedGreenLouie() => RestoreMounted(MountedType.Green);
+    public void RestoreMountedYellowLouie() => RestoreMounted(MountedType.Yellow);
+    public void RestoreMountedPinkLouie() => RestoreMounted(MountedType.Pink);
+    public void RestoreMountedRedLouie() => RestoreMounted(MountedType.Red);
 
-    public MountedLouieType GetMountedLouieType() => currentLouie == null ? MountedLouieType.None : mountedType;
+    public MountedType GetMountedLouieType() => currentLouie == null ? MountedType.None : mountedType;
     public CharacterHealth GetMountedLouieHealth() => mountedLouieHealth;
     public bool HasMountedLouie() => currentLouie != null;
 
@@ -167,15 +167,15 @@ public class PlayerLouieCompanion : MonoBehaviour
         return visual.TryPlayEndStage(totalTime, frameCount);
     }
 
-    public void Mount(MountedLouieType type)
+    public void Mount(MountedType type)
     {
-        if (type == MountedLouieType.None)
+        if (type == MountedType.None)
             return;
 
         TryMount(GetPrefab(type), type);
     }
 
-    public void RestoreMounted(MountedLouieType type)
+    public void RestoreMounted(MountedType type)
     {
         RestoreMountedImmediate(type);
     }
@@ -184,9 +184,9 @@ public class PlayerLouieCompanion : MonoBehaviour
 
     #region Core Mount Flow
 
-    void RestoreMountedImmediate(MountedLouieType type)
+    void RestoreMountedImmediate(MountedType type)
     {
-        if (currentLouie != null || movement == null || type == MountedLouieType.None)
+        if (currentLouie != null || movement == null || type == MountedType.None)
             return;
 
         var prefab = GetPrefab(type);
@@ -204,7 +204,7 @@ public class PlayerLouieCompanion : MonoBehaviour
         FinalizeMount(type);
     }
 
-    void TryMount(GameObject prefab, MountedLouieType type)
+    void TryMount(GameObject prefab, MountedType type)
     {
         if (prefab == null || movement == null || currentLouie != null)
             return;
@@ -220,7 +220,7 @@ public class PlayerLouieCompanion : MonoBehaviour
         FinalizeMount(type);
     }
 
-    void SpawnLouieForMount(GameObject prefab, MountedLouieType type, bool duringRiding)
+    void SpawnLouieForMount(GameObject prefab, MountedType type, bool duringRiding)
     {
         if (prefab == null || currentLouie != null)
             return;
@@ -239,7 +239,7 @@ public class PlayerLouieCompanion : MonoBehaviour
         PlayMountSfxIfAny();
     }
 
-    void FinalizeMount(MountedLouieType type)
+    void FinalizeMount(MountedType type)
     {
         if (currentLouie == null || movement == null)
             return;
@@ -248,7 +248,7 @@ public class PlayerLouieCompanion : MonoBehaviour
 
         movement.SetMountedOnLouie(true);
 
-        bool isPink = mountedType == MountedLouieType.Pink;
+        bool isPink = mountedType == MountedType.Pink;
         movement.SetMountedSpritesLocalYOverride(isPink, movement.pinkMountedSpritesLocalY);
 
         EnableAndBindLouieRidingVisual(currentLouie);
@@ -280,7 +280,7 @@ public class PlayerLouieCompanion : MonoBehaviour
         if (louie == null)
             return;
 
-        if (louie.TryGetComponent<LouieMovementController>(out var lm))
+        if (louie.TryGetComponent<MountMovementController>(out var lm))
         {
             lm.BindOwner(movement, localOffset);
             lm.enabled = false;
@@ -322,7 +322,7 @@ public class PlayerLouieCompanion : MonoBehaviour
 
             if (willDie)
             {
-                if (TryGetComponent<LouieEggQueue>(out var q) && q != null)
+                if (TryGetComponent<MountEggQueue>(out var q) && q != null)
                     q.AllowEggExplosionDamageForFrames(2);
             }
         }
@@ -371,7 +371,7 @@ public class PlayerLouieCompanion : MonoBehaviour
 
         bool hasQueuedEgg = false;
         GameObject queuedPrefab = null;
-        MountedLouieType queuedMountedType = MountedLouieType.None;
+        MountedType queuedMountedType = MountedType.None;
         AudioClip queuedSfx = null;
         float queuedVol = 1f;
 
@@ -487,10 +487,10 @@ public class PlayerLouieCompanion : MonoBehaviour
 
     #region World Detach / Mount Existing
 
-    public bool TryDetachMountedLouieToWorldStationary(out GameObject detachedLouie, out MountedLouieType detachedType)
+    public bool TryDetachMountedLouieToWorldStationary(out GameObject detachedLouie, out MountedType detachedType)
     {
         detachedLouie = null;
-        detachedType = MountedLouieType.None;
+        detachedType = MountedType.None;
 
         if (currentLouie == null || movement == null)
             return false;
@@ -512,7 +512,7 @@ public class PlayerLouieCompanion : MonoBehaviour
 
         LouieVisualUtils.ForceDetachedLouieIdleFacing(louie, movement.FacingDirection);
 
-        if (louie.TryGetComponent<LouieMovementController>(out var lm))
+        if (louie.TryGetComponent<MountMovementController>(out var lm))
             lm.enabled = false;
 
         if (louie.TryGetComponent<Rigidbody2D>(out var rb))
@@ -532,7 +532,7 @@ public class PlayerLouieCompanion : MonoBehaviour
         return true;
     }
 
-    public bool TryMountExistingLouieFromWorld(GameObject louieWorldInstance, MountedLouieType louieType, LouieEggQueue worldQueueToAdopt)
+    public bool TryMountExistingLouieFromWorld(GameObject louieWorldInstance, MountedType louieType, MountEggQueue worldQueueToAdopt)
     {
         if (louieWorldInstance == null || movement == null || currentLouie != null)
             return false;
@@ -546,8 +546,8 @@ public class PlayerLouieCompanion : MonoBehaviour
             if (worldQueueToAdopt == null)
                 return;
 
-            if (!TryGetComponent<LouieEggQueue>(out var playerQueue) || playerQueue == null)
-                playerQueue = gameObject.AddComponent<LouieEggQueue>();
+            if (!TryGetComponent<MountEggQueue>(out var playerQueue) || playerQueue == null)
+                playerQueue = gameObject.AddComponent<MountEggQueue>();
 
             playerQueue.AbsorbAllEggsFromWorldQueue(worldQueueToAdopt, movement);
             Destroy(worldQueueToAdopt);
@@ -570,7 +570,7 @@ public class PlayerLouieCompanion : MonoBehaviour
     }
 
 
-    void AttachExistingLouieForMount(GameObject louieWorldInstance, MountedLouieType type, bool duringRiding)
+    void AttachExistingLouieForMount(GameObject louieWorldInstance, MountedType type, bool duringRiding)
     {
         if (louieWorldInstance == null || currentLouie != null)
             return;
@@ -578,7 +578,7 @@ public class PlayerLouieCompanion : MonoBehaviour
         mountedType = type;
         currentLouie = louieWorldInstance;
 
-        var pickup = currentLouie.GetComponent<LouieWorldPickup>();
+        var pickup = currentLouie.GetComponent<MountWorldPickup>();
         if (pickup != null) Destroy(pickup);
 
         currentLouie.transform.SetParent(transform, true);
@@ -800,7 +800,7 @@ public class PlayerLouieCompanion : MonoBehaviour
         abilitySystem.RebuildCache();
         EnsurePunchAbilityCached();
 
-        if (currentLouie == null || mountedType == MountedLouieType.None)
+        if (currentLouie == null || mountedType == MountedType.None)
         {
             if (punchAbility != null)
             {
@@ -814,9 +814,9 @@ public class PlayerLouieCompanion : MonoBehaviour
 
         ResetLouieAbilitiesExternalState();
 
-        currentAbilityCfg = currentLouie.GetComponentInChildren<LouieAbilitySfxConfig>(true);
+        currentAbilityCfg = currentLouie.GetComponentInChildren<MountAbilitySfxConfig>(true);
 
-        if (mountedType == MountedLouieType.Blue)
+        if (mountedType == MountedType.Blue)
         {
             abilitySystem.Enable(BombPunchAbility.AbilityId);
 
@@ -1029,7 +1029,7 @@ public class PlayerLouieCompanion : MonoBehaviour
         movement.SetMountedSpritesLocalYOverride(false, 0f);
         movement.SetMountedOnLouie(false);
 
-        mountedType = MountedLouieType.None;
+        mountedType = MountedType.None;
 
         ResetLouieAbilitiesExternalState();
         RestorePunchAfterUnmount();
@@ -1039,14 +1039,14 @@ public class PlayerLouieCompanion : MonoBehaviour
 
     #region Queue Mount
 
-    bool TryPopQueuedEgg(out GameObject prefab, out MountedLouieType type, out AudioClip sfx, out float vol)
+    bool TryPopQueuedEgg(out GameObject prefab, out MountedType type, out AudioClip sfx, out float vol)
     {
         prefab = null;
-        type = MountedLouieType.None;
+        type = MountedType.None;
         sfx = null;
         vol = 1f;
 
-        if (!TryGetComponent<LouieEggQueue>(out var q) || q == null || q.Count <= 0)
+        if (!TryGetComponent<MountEggQueue>(out var q) || q == null || q.Count <= 0)
             return false;
 
         if (!q.TryDequeue(out var queuedEggType, out sfx, out vol))
@@ -1055,7 +1055,7 @@ public class PlayerLouieCompanion : MonoBehaviour
         type = EggToMountedType(queuedEggType);
         prefab = GetPrefab(type);
 
-        return type != MountedLouieType.None && prefab != null;
+        return type != MountedType.None && prefab != null;
     }
 
     bool TryMountFromQueuedEgg()
@@ -1063,7 +1063,7 @@ public class PlayerLouieCompanion : MonoBehaviour
         if (currentLouie != null)
             return false;
 
-        if (!TryGetComponent<LouieEggQueue>(out var q) || q == null)
+        if (!TryGetComponent<MountEggQueue>(out var q) || q == null)
             return false;
 
         if (!q.TryDequeue(out var eggType, out var sfx, out var vol))
@@ -1072,7 +1072,7 @@ public class PlayerLouieCompanion : MonoBehaviour
         SetNextMountSfx(sfx, vol);
 
         var type = EggToMountedType(eggType);
-        if (type == MountedLouieType.None)
+        if (type == MountedType.None)
             return false;
 
         var prefab = GetPrefab(type);
@@ -1115,7 +1115,7 @@ public class PlayerLouieCompanion : MonoBehaviour
                 continue;
             }
 
-            if (!TryGetComponent<LouieEggQueue>(out var q) || q == null || q.Count <= 0)
+            if (!TryGetComponent<MountEggQueue>(out var q) || q == null || q.Count <= 0)
                 break;
 
             bool mounted = TryMountFromQueuedEgg();
@@ -1136,9 +1136,9 @@ public class PlayerLouieCompanion : MonoBehaviour
 
     #region SFX
 
-    AudioClip LoadWorldMountSfx(MountedLouieType type)
+    AudioClip LoadWorldMountSfx(MountedType type)
     {
-        if (type == MountedLouieType.None)
+        if (type == MountedType.None)
             return null;
 
         if (_worldMountSfxCache.TryGetValue(type, out var cached))
@@ -1146,13 +1146,13 @@ public class PlayerLouieCompanion : MonoBehaviour
 
         string name = type switch
         {
-            MountedLouieType.Blue => blueLouieMountSfxName,
-            MountedLouieType.Black => blackLouieMountSfxName,
-            MountedLouieType.Purple => purpleLouieMountSfxName,
-            MountedLouieType.Green => greenLouieMountSfxName,
-            MountedLouieType.Yellow => yellowLouieMountSfxName,
-            MountedLouieType.Pink => pinkLouieMountSfxName,
-            MountedLouieType.Red => redLouieMountSfxName,
+            MountedType.Blue => blueLouieMountSfxName,
+            MountedType.Black => blackLouieMountSfxName,
+            MountedType.Purple => purpleLouieMountSfxName,
+            MountedType.Green => greenLouieMountSfxName,
+            MountedType.Yellow => yellowLouieMountSfxName,
+            MountedType.Pink => pinkLouieMountSfxName,
+            MountedType.Red => redLouieMountSfxName,
             _ => null
         };
 
@@ -1167,7 +1167,7 @@ public class PlayerLouieCompanion : MonoBehaviour
         return clip;
     }
 
-    void PrepareWorldRemountSfxIfNone(MountedLouieType type)
+    void PrepareWorldRemountSfxIfNone(MountedType type)
     {
         if (pendingMountSfx != null)
             return;
@@ -1233,15 +1233,15 @@ public class PlayerLouieCompanion : MonoBehaviour
 
     #region Visual Binding (LouieRidingVisual)
 
-    static LouieVisualController GetLouieRidingVisual(GameObject louie)
+    static MountVisualController GetLouieRidingVisual(GameObject louie)
     {
         if (louie == null)
             return null;
 
-        if (louie.TryGetComponent<LouieVisualController>(out var visual) && visual != null)
+        if (louie.TryGetComponent<MountVisualController>(out var visual) && visual != null)
             return visual;
 
-        return louie.GetComponentInChildren<LouieVisualController>(true);
+        return louie.GetComponentInChildren<MountVisualController>(true);
     }
 
     void DisableLouieRidingVisualForWorld(GameObject louie)
@@ -1277,7 +1277,7 @@ public class PlayerLouieCompanion : MonoBehaviour
         if (!louie.TryGetComponent<MovementController>(out var mc) || mc == null)
             return;
 
-        var riderVisual = louie.GetComponentInChildren<LouieVisualController>(true);
+        var riderVisual = louie.GetComponentInChildren<MountVisualController>(true);
         if (riderVisual != null)
             Destroy(riderVisual);
 
@@ -1327,7 +1327,7 @@ public class PlayerLouieCompanion : MonoBehaviour
 
         PrepareDetachedLouieForGuaranteedDeath(louie);
 
-        if (louie.TryGetComponent<LouieMovementController>(out var lm) && lm != null)
+        if (louie.TryGetComponent<MountMovementController>(out var lm) && lm != null)
         {
             lm.enabled = true;
             lm.Kill();
@@ -1371,33 +1371,33 @@ public class PlayerLouieCompanion : MonoBehaviour
     void BuildTypeMaps()
     {
         prefabByType.Clear();
-        prefabByType[MountedLouieType.Blue] = blueLouiePrefab;
-        prefabByType[MountedLouieType.Black] = blackLouiePrefab;
-        prefabByType[MountedLouieType.Purple] = purpleLouiePrefab;
-        prefabByType[MountedLouieType.Green] = greenLouiePrefab;
-        prefabByType[MountedLouieType.Yellow] = yellowLouiePrefab;
-        prefabByType[MountedLouieType.Pink] = pinkLouiePrefab;
-        prefabByType[MountedLouieType.Red] = redLouiePrefab;
+        prefabByType[MountedType.Blue] = blueLouiePrefab;
+        prefabByType[MountedType.Black] = blackLouiePrefab;
+        prefabByType[MountedType.Purple] = purpleLouiePrefab;
+        prefabByType[MountedType.Green] = greenLouiePrefab;
+        prefabByType[MountedType.Yellow] = yellowLouiePrefab;
+        prefabByType[MountedType.Pink] = pinkLouiePrefab;
+        prefabByType[MountedType.Red] = redLouiePrefab;
 
         mountedByEggType.Clear();
-        mountedByEggType[ItemPickup.ItemType.BlueLouieEgg] = MountedLouieType.Blue;
-        mountedByEggType[ItemPickup.ItemType.BlackLouieEgg] = MountedLouieType.Black;
-        mountedByEggType[ItemPickup.ItemType.PurpleLouieEgg] = MountedLouieType.Purple;
-        mountedByEggType[ItemPickup.ItemType.GreenLouieEgg] = MountedLouieType.Green;
-        mountedByEggType[ItemPickup.ItemType.YellowLouieEgg] = MountedLouieType.Yellow;
-        mountedByEggType[ItemPickup.ItemType.PinkLouieEgg] = MountedLouieType.Pink;
-        mountedByEggType[ItemPickup.ItemType.RedLouieEgg] = MountedLouieType.Red;
+        mountedByEggType[ItemPickup.ItemType.BlueLouieEgg] = MountedType.Blue;
+        mountedByEggType[ItemPickup.ItemType.BlackLouieEgg] = MountedType.Black;
+        mountedByEggType[ItemPickup.ItemType.PurpleLouieEgg] = MountedType.Purple;
+        mountedByEggType[ItemPickup.ItemType.GreenLouieEgg] = MountedType.Green;
+        mountedByEggType[ItemPickup.ItemType.YellowLouieEgg] = MountedType.Yellow;
+        mountedByEggType[ItemPickup.ItemType.PinkLouieEgg] = MountedType.Pink;
+        mountedByEggType[ItemPickup.ItemType.RedLouieEgg] = MountedType.Red;
     }
 
     void BuildAbilityStrategy()
     {
         applyMountedAbility.Clear();
-        applyMountedAbility[MountedLouieType.Purple] = ApplyPurple;
-        applyMountedAbility[MountedLouieType.Green] = ApplyGreen;
-        applyMountedAbility[MountedLouieType.Yellow] = ApplyYellow;
-        applyMountedAbility[MountedLouieType.Pink] = ApplyPink;
-        applyMountedAbility[MountedLouieType.Red] = ApplyRed;
-        applyMountedAbility[MountedLouieType.Black] = ApplyBlack;
+        applyMountedAbility[MountedType.Purple] = ApplyPurple;
+        applyMountedAbility[MountedType.Green] = ApplyGreen;
+        applyMountedAbility[MountedType.Yellow] = ApplyYellow;
+        applyMountedAbility[MountedType.Pink] = ApplyPink;
+        applyMountedAbility[MountedType.Red] = ApplyRed;
+        applyMountedAbility[MountedType.Black] = ApplyBlack;
     }
 
     int GetPlayerId()
@@ -1412,12 +1412,12 @@ public class PlayerLouieCompanion : MonoBehaviour
         return 1;
     }
 
-    MountedLouieType EggToMountedType(ItemPickup.ItemType eggType)
+    MountedType EggToMountedType(ItemPickup.ItemType eggType)
     {
-        return mountedByEggType.TryGetValue(eggType, out var t) ? t : MountedLouieType.None;
+        return mountedByEggType.TryGetValue(eggType, out var t) ? t : MountedType.None;
     }
 
-    GameObject GetPrefab(MountedLouieType type)
+    GameObject GetPrefab(MountedType type)
     {
         return prefabByType.TryGetValue(type, out var p) ? p : null;
     }
@@ -1442,7 +1442,7 @@ public class PlayerLouieCompanion : MonoBehaviour
         static bool IsUnderRidingVisual(AnimatedSpriteRenderer a)
         {
             if (a == null) return false;
-            return a.GetComponentInParent<LouieVisualController>(true) != null;
+            return a.GetComponentInParent<MountVisualController>(true) != null;
         }
 
         static void SetSpriteRenderersEnabled(Component root, bool enabled)
@@ -1537,7 +1537,7 @@ public class PlayerLouieCompanion : MonoBehaviour
                 SetSpriteRenderersEnabled(a, false);
             }
 
-            MovementController mc = louie.GetComponentInChildren<LouieMovementController>(true);
+            MovementController mc = louie.GetComponentInChildren<MountMovementController>(true);
             if (mc == null)
                 mc = louie.GetComponentInChildren<MovementController>(true);
 

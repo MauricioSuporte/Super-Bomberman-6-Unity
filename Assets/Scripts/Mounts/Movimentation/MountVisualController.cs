@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-public class LouieVisualController : MonoBehaviour
+public class MountVisualController : MonoBehaviour
 {
     [Header("Owner")]
     public MovementController owner;
@@ -486,10 +486,10 @@ public class LouieVisualController : MonoBehaviour
         if (!movement.CompareTag("Player"))
             return false;
 
-        if (!movement.TryGetComponent<PlayerLouieCompanion>(out var comp) || comp == null)
+        if (!movement.TryGetComponent<PlayerMountCompanion>(out var comp) || comp == null)
             return false;
 
-        return comp.GetMountedLouieType() == MountedLouieType.Pink;
+        return comp.GetMountedLouieType() == MountedType.Pink;
     }
 
     private void SetExclusive(AnimatedSpriteRenderer keep)

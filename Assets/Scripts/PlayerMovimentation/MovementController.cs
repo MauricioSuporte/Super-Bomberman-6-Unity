@@ -132,7 +132,7 @@ public class MovementController : MonoBehaviour, IKillable
     private StunReceiver stunReceiver;
 
     private CharacterHealth cachedHealth;
-    private PlayerLouieCompanion cachedCompanion;
+    private PlayerMountCompanion cachedCompanion;
     private PlayerRidingController cachedRiding;
 
     protected AnimatedSpriteRenderer activeSpriteRenderer;
@@ -253,7 +253,7 @@ public class MovementController : MonoBehaviour, IKillable
             return;
 
         var st = PlayerPersistentStats.Get(playerId);
-        isMountedOnLouie = st.MountedLouie != MountedLouieType.None;
+        isMountedOnLouie = st.MountedLouie != MountedType.None;
 
         if (facingDirection == Vector2.zero)
             facingDirection = Vector2.down;
@@ -302,7 +302,7 @@ public class MovementController : MonoBehaviour, IKillable
             spriteRendererDeath, spriteRendererEndStage, spriteRendererCheering,
             mountedSpriteUp, mountedSpriteDown, mountedSpriteLeft, mountedSpriteRight);
 
-        var rider = GetComponentInChildren<LouieVisualController>(true);
+        var rider = GetComponentInChildren<MountVisualController>(true);
         if (rider != null)
         {
             var srs = rider.GetComponentsInChildren<SpriteRenderer>(true);
@@ -951,7 +951,7 @@ public class MovementController : MonoBehaviour, IKillable
 
     private CharacterHealth GetMountedLouieHealth()
     {
-        var louieMove = GetComponentInChildren<LouieMovementController>(true);
+        var louieMove = GetComponentInChildren<MountMovementController>(true);
         if (louieMove == null)
             return null;
 
@@ -995,7 +995,7 @@ public class MovementController : MonoBehaviour, IKillable
             PlayerPersistentStats.StageResetTemporaryPowerupsOnDeath(playerId);
             PlayerPersistentStats.ResetTemporaryPowerups(playerId);
 
-            if (TryGetComponent<LouieEggQueue>(out var q) && q != null)
+            if (TryGetComponent<MountEggQueue>(out var q) && q != null)
                 q.ClearQueueNow(resetHistoryToOwner: true, animateShift: false);
         }
 
@@ -1174,7 +1174,7 @@ public class MovementController : MonoBehaviour, IKillable
             var up = mountedSpriteUp != null ? mountedSpriteUp : spriteRendererUp;
             SetDirection(Vector2.zero, up);
 
-            var rider = GetComponentInChildren<LouieVisualController>(true);
+            var rider = GetComponentInChildren<MountVisualController>(true);
             if (rider != null)
                 rider.ForceIdleUp();
         }
@@ -1214,7 +1214,7 @@ public class MovementController : MonoBehaviour, IKillable
             activeSpriteRenderer = up;
         }
 
-        var rider = GetComponentInChildren<LouieVisualController>(true);
+        var rider = GetComponentInChildren<MountVisualController>(true);
         if (rider != null)
             rider.ForceOnlyUpEnabled();
     }

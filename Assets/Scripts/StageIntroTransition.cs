@@ -169,7 +169,7 @@ public class StageIntroTransition : MonoBehaviour
     {
         if (m == null) return;
 
-        var q = m.GetComponentInChildren<LouieEggQueue>(true);
+        var q = m.GetComponentInChildren<MountEggQueue>(true);
         if (q != null)
         {
             if (!q.gameObject.activeSelf)
@@ -181,10 +181,10 @@ public class StageIntroTransition : MonoBehaviour
                 q.RebindAndReseedNow(resetHistoryToOwnerNow: true);
         }
 
-        if (m.TryGetComponent<PlayerLouieCompanion>(out var comp) && comp != null)
+        if (m.TryGetComponent<PlayerMountCompanion>(out var comp) && comp != null)
             comp.SetMountedLouieVisible(visible);
 
-        var rider = m.GetComponentInChildren<LouieVisualController>(true);
+        var rider = m.GetComponentInChildren<MountVisualController>(true);
         if (rider != null)
             rider.gameObject.SetActive(visible);
     }
@@ -298,14 +298,14 @@ public class StageIntroTransition : MonoBehaviour
             {
                 m.SetAllSpritesVisible(false);
 
-                if (m.TryGetComponent<PlayerLouieCompanion>(out var comp) && comp != null)
+                if (m.TryGetComponent<PlayerMountCompanion>(out var comp) && comp != null)
                     comp.SetMountedLouieVisible(false);
 
-                var q = m.GetComponentInChildren<LouieEggQueue>(true);
+                var q = m.GetComponentInChildren<MountEggQueue>(true);
                 if (q != null)
                     q.ForceVisible(false);
 
-                var rider = m.GetComponentInChildren<LouieVisualController>(true);
+                var rider = m.GetComponentInChildren<MountVisualController>(true);
                 if (rider != null)
                     rider.gameObject.SetActive(false);
 
@@ -424,14 +424,14 @@ public class StageIntroTransition : MonoBehaviour
                     m.Rigidbody.linearVelocity = Vector2.zero;
                 }
 
-                var q = m.GetComponentInChildren<LouieEggQueue>(true);
+                var q = m.GetComponentInChildren<MountEggQueue>(true);
                 if (q != null)
                     q.ForceVisible(false);
 
-                if (m.TryGetComponent<PlayerLouieCompanion>(out var comp) && comp != null)
+                if (m.TryGetComponent<PlayerMountCompanion>(out var comp) && comp != null)
                     comp.SetMountedLouieVisible(false);
 
-                var rider = m.GetComponentInChildren<LouieVisualController>(true);
+                var rider = m.GetComponentInChildren<MountVisualController>(true);
                 if (rider != null)
                     rider.gameObject.SetActive(false);
 

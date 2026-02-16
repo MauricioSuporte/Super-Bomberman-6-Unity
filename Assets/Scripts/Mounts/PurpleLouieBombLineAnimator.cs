@@ -1,17 +1,18 @@
-﻿using Assets.Scripts.Interface;
+﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 [DisallowMultipleComponent]
-public class YellowLouieKickAnimator : MonoBehaviour, IYellowLouieDestructibleKickExternalAnimator
+public class PurpleLouieBombLineAnimator : MonoBehaviour, IPurpleLouieBombLineExternalAnimator
 {
-    public AnimatedSpriteRenderer kickUp;
-    public AnimatedSpriteRenderer kickDown;
-    public AnimatedSpriteRenderer kickLeft;
-    public AnimatedSpriteRenderer kickRight;
+    [Header("Magic Sprites (PURPLE LOUIE)")]
+    public AnimatedSpriteRenderer magicUp;
+    public AnimatedSpriteRenderer magicDown;
+    public AnimatedSpriteRenderer magicLeft;
+    public AnimatedSpriteRenderer magicRight;
 
-    AnimatedSpriteRenderer activeKick;
-    LouieVisualController riderVisual;
+    AnimatedSpriteRenderer activeMagic;
+    MountVisualController riderVisual;
 
     readonly List<AnimatedSpriteRenderer> cachedAnimators = new();
     readonly List<bool> cachedAnimatorEnabled = new();
@@ -26,20 +27,20 @@ public class YellowLouieKickAnimator : MonoBehaviour, IYellowLouieDestructibleKi
 
     void Awake()
     {
-        riderVisual = GetComponent<LouieVisualController>();
+        riderVisual = GetComponent<MountVisualController>();
         if (riderVisual == null)
-            riderVisual = GetComponentInParent<LouieVisualController>();
+            riderVisual = GetComponentInParent<MountVisualController>();
         if (riderVisual == null)
-            riderVisual = GetComponentInChildren<LouieVisualController>(true);
+            riderVisual = GetComponentInChildren<MountVisualController>(true);
     }
 
-    void OnDisable() => Stop();
-    void OnDestroy() => Stop();
+    void OnDisable() => ForceStop();
+    void OnDestroy() => ForceStop();
 
-    public void Play(Vector2 dir)
+    public IEnumerator Play(Vector2 dir, float lockSeconds)
     {
         if (playing)
-            Stop();
+            ForceStop();
 
         if (dir == Vector2.zero)
             dir = Vector2.down;
@@ -52,43 +53,47 @@ public class YellowLouieKickAnimator : MonoBehaviour, IYellowLouieDestructibleKi
         DisableAllRenderers();
         DisableDirectionalObjects();
 
-        activeKick = GetKickSprite(dir);
+        activeMagic = GetMagic(dir);
 
-        if (activeKick != null)
+        if (activeMagic != null)
         {
-            if (activeKick.TryGetComponent<SpriteRenderer>(out var sr))
+            if (activeMagic.TryGetComponent<SpriteRenderer>(out var sr))
+            {
+                sr.enabled = true;
                 sr.flipX = (dir == Vector2.right);
+            }
 
-            activeKick.enabled = true;
-            activeKick.idle = false;
-            activeKick.loop = false;
-            activeKick.CurrentFrame = 0;
-            activeKick.RefreshFrame();
-
-            if (activeKick.TryGetComponent<SpriteRenderer>(out var ksr))
-                ksr.enabled = true;
+            activeMagic.enabled = true;
+            activeMagic.idle = false;
+            activeMagic.loop = false;
+            activeMagic.CurrentFrame = 0;
+            activeMagic.RefreshFrame();
         }
 
         playing = true;
+
+        yield return new WaitForSeconds(lockSeconds);
+
+        ForceStop();
     }
 
-    public void Stop()
+    public void ForceStop()
     {
-        if (!playing && activeKick == null && cachedAnimators.Count == 0 && cachedSpriteRenderers.Count == 0 && cachedDirectionObjects.Count == 0)
+        if (!playing && activeMagic == null && cachedAnimators.Count == 0 && cachedSpriteRenderers.Count == 0 && cachedDirectionObjects.Count == 0)
             return;
 
-        if (activeKick != null)
+        if (activeMagic != null)
         {
-            if (activeKick.TryGetComponent<SpriteRenderer>(out var sr))
+            if (activeMagic.TryGetComponent<SpriteRenderer>(out var sr))
+            {
                 sr.flipX = false;
+                sr.enabled = false;
+            }
 
-            activeKick.enabled = false;
-
-            if (activeKick.TryGetComponent<SpriteRenderer>(out var ksr))
-                ksr.enabled = false;
+            activeMagic.enabled = false;
         }
 
-        activeKick = null;
+        activeMagic = null;
 
         RestoreEnabledStates();
         RestoreDirectionalObjects();
@@ -99,13 +104,13 @@ public class YellowLouieKickAnimator : MonoBehaviour, IYellowLouieDestructibleKi
         playing = false;
     }
 
-    AnimatedSpriteRenderer GetKickSprite(Vector2 dir)
+    AnimatedSpriteRenderer GetMagic(Vector2 dir)
     {
-        if (dir == Vector2.up) return kickUp;
-        if (dir == Vector2.down) return kickDown;
-        if (dir == Vector2.left) return kickLeft;
-        if (dir == Vector2.right) return kickRight;
-        return kickDown;
+        if (dir == Vector2.up) return magicUp;
+        if (dir == Vector2.down) return magicDown;
+        if (dir == Vector2.left) return magicLeft;
+        if (dir == Vector2.right) return magicRight;
+        return magicDown;
     }
 
     void CacheEnabledStates()
@@ -169,16 +174,6 @@ public class YellowLouieKickAnimator : MonoBehaviour, IYellowLouieDestructibleKi
         }
     }
 
-    void DisableDirectionalObjects()
-    {
-        for (int i = 0; i < cachedDirectionObjects.Count; i++)
-        {
-            var go = cachedDirectionObjects[i];
-            if (go != null)
-                go.SetActive(false);
-        }
-    }
-
     void RestoreEnabledStates()
     {
         for (int i = 0; i < cachedAnimators.Count; i++)
@@ -197,6 +192,16 @@ public class YellowLouieKickAnimator : MonoBehaviour, IYellowLouieDestructibleKi
         cachedAnimatorEnabled.Clear();
         cachedSpriteRenderers.Clear();
         cachedSpriteEnabled.Clear();
+    }
+
+    void DisableDirectionalObjects()
+    {
+        for (int i = 0; i < cachedDirectionObjects.Count; i++)
+        {
+            var go = cachedDirectionObjects[i];
+            if (go != null)
+                go.SetActive(false);
+        }
     }
 
     void RestoreDirectionalObjects()

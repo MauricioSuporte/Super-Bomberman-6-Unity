@@ -1,18 +1,18 @@
 ﻿using UnityEngine;
 
 [RequireComponent(typeof(Collider2D))]
-public sealed class LouieWorldPickup : MonoBehaviour
+public sealed class MountWorldPickup : MonoBehaviour
 {
     [Header("Pickup")]
     [SerializeField] string playerTag = "Player";
 
     [Header("Type")]
-    [SerializeField] MountedLouieType type = MountedLouieType.None;
+    [SerializeField] MountedType type = MountedType.None;
 
     bool consumed;
     Collider2D _col;
 
-    public void Init(MountedLouieType t) => type = t;
+    public void Init(MountedType t) => type = t;
 
     void Awake()
     {
@@ -40,20 +40,20 @@ public sealed class LouieWorldPickup : MonoBehaviour
         if (player.TryGetComponent<PlayerRidingController>(out var rider) && rider != null && rider.IsPlaying)
             return;
 
-        if (!player.TryGetComponent<PlayerLouieCompanion>(out var comp) || comp == null)
+        if (!player.TryGetComponent<PlayerMountCompanion>(out var comp) || comp == null)
             return;
 
         bool alreadyMounted =
             (player.TryGetComponent<MovementController>(out var m2) && m2 != null && m2.IsMountedOnLouie) ||
-            (player.TryGetComponent<PlayerLouieCompanion>(out var c2) && c2 != null && c2.HasMountedLouie());
+            (player.TryGetComponent<PlayerMountCompanion>(out var c2) && c2 != null && c2.HasMountedLouie());
 
         if (alreadyMounted)
             return;
 
-        if (type == MountedLouieType.None)
+        if (type == MountedType.None)
             type = ResolveTypeFromNameFallback(gameObject.name);
 
-        if (type == MountedLouieType.None)
+        if (type == MountedType.None)
             return;
 
         if (_col != null)
@@ -63,7 +63,7 @@ public sealed class LouieWorldPickup : MonoBehaviour
 
         consumed = true;
 
-        var worldQueue = GetComponent<LouieEggQueue>();
+        var worldQueue = GetComponent<MountEggQueue>();
 
         comp.TryMountExistingLouieFromWorld(
             louieWorldInstance: gameObject,
@@ -72,20 +72,20 @@ public sealed class LouieWorldPickup : MonoBehaviour
         );
     }
 
-    static MountedLouieType ResolveTypeFromNameFallback(string n)
+    static MountedType ResolveTypeFromNameFallback(string n)
     {
-        if (string.IsNullOrEmpty(n)) return MountedLouieType.None;
+        if (string.IsNullOrEmpty(n)) return MountedType.None;
 
         n = n.ToLowerInvariant();
 
-        if (n.Contains("bluelouie")) return MountedLouieType.Blue;
-        if (n.Contains("blacklouie")) return MountedLouieType.Black;
-        if (n.Contains("purplelouie")) return MountedLouieType.Purple;
-        if (n.Contains("greenlouie")) return MountedLouieType.Green;
-        if (n.Contains("yellowlouie")) return MountedLouieType.Yellow;
-        if (n.Contains("pinklouie")) return MountedLouieType.Pink;
-        if (n.Contains("redlouie")) return MountedLouieType.Red;
+        if (n.Contains("bluelouie")) return MountedType.Blue;
+        if (n.Contains("blacklouie")) return MountedType.Black;
+        if (n.Contains("purplelouie")) return MountedType.Purple;
+        if (n.Contains("greenlouie")) return MountedType.Green;
+        if (n.Contains("yellowlouie")) return MountedType.Yellow;
+        if (n.Contains("pinklouie")) return MountedType.Pink;
+        if (n.Contains("redlouie")) return MountedType.Red;
 
-        return MountedLouieType.None;
+        return MountedType.None;
     }
 }

@@ -561,7 +561,7 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
             var a = anims[i];
             if (a == null) continue;
 
-            if (keepLouieVisual && a.GetComponentInParent<LouieVisualController>(true) != null)
+            if (keepLouieVisual && a.GetComponentInParent<MountVisualController>(true) != null)
                 continue;
 
             a.enabled = (a == keep);
@@ -573,7 +573,7 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
             var sr = srs[i];
             if (sr == null) continue;
 
-            if (keepLouieVisual && sr.GetComponentInParent<LouieVisualController>(true) != null)
+            if (keepLouieVisual && sr.GetComponentInParent<MountVisualController>(true) != null)
                 continue;
 
             sr.enabled = false;
@@ -683,7 +683,7 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
         if (p == null) return;
         if (!p.IsMountedOnLouie) return;
 
-        if (!p.TryGetComponent<PlayerLouieCompanion>(out var comp) || comp == null)
+        if (!p.TryGetComponent<PlayerMountCompanion>(out var comp) || comp == null)
             return;
 
         if (comp.HasMountedLouie())
@@ -694,13 +694,13 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
 
         switch (state.MountedLouie)
         {
-            case MountedLouieType.Blue: comp.RestoreMountedBlueLouie(); break;
-            case MountedLouieType.Black: comp.RestoreMountedBlackLouie(); break;
-            case MountedLouieType.Purple: comp.RestoreMountedPurpleLouie(); break;
-            case MountedLouieType.Green: comp.RestoreMountedGreenLouie(); break;
-            case MountedLouieType.Yellow: comp.RestoreMountedYellowLouie(); break;
-            case MountedLouieType.Pink: comp.RestoreMountedPinkLouie(); break;
-            case MountedLouieType.Red: comp.RestoreMountedRedLouie(); break;
+            case MountedType.Blue: comp.RestoreMountedBlueLouie(); break;
+            case MountedType.Black: comp.RestoreMountedBlackLouie(); break;
+            case MountedType.Purple: comp.RestoreMountedPurpleLouie(); break;
+            case MountedType.Green: comp.RestoreMountedGreenLouie(); break;
+            case MountedType.Yellow: comp.RestoreMountedYellowLouie(); break;
+            case MountedType.Pink: comp.RestoreMountedPinkLouie(); break;
+            case MountedType.Red: comp.RestoreMountedRedLouie(); break;
         }
     }
 
@@ -718,7 +718,7 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
         if (p == null)
             return;
 
-        var rider = p.GetComponentInChildren<LouieVisualController>(true);
+        var rider = p.GetComponentInChildren<MountVisualController>(true);
         if (rider == null)
             return;
 
@@ -823,7 +823,7 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
             if (p == null || !p.IsMountedOnLouie)
                 continue;
 
-            var rider = p.GetComponentInChildren<LouieVisualController>(true);
+            var rider = p.GetComponentInChildren<MountVisualController>(true);
             if (rider == null)
                 continue;
 
@@ -1290,7 +1290,7 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
 
         if (movement.IsMountedOnLouie)
         {
-            if (movement.TryGetComponent<PlayerLouieCompanion>(out var companion) && companion != null)
+            if (movement.TryGetComponent<PlayerMountCompanion>(out var companion) && companion != null)
             {
                 companion.OnMountedLouieHit(touchDamage, false);
                 nextTouchDamageTime = Time.time + touchDamageCooldown;
@@ -1385,7 +1385,7 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
             var p = players[i];
             if (p == null) continue;
 
-            var q = p.GetComponentInChildren<LouieEggQueue>(true);
+            var q = p.GetComponentInChildren<MountEggQueue>(true);
             if (q != null)
                 q.ForceVisible(visible);
         }

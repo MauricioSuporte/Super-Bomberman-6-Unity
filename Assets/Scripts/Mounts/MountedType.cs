@@ -1,4 +1,4 @@
-﻿public enum MountedLouieType
+﻿public enum MountedType
 {
     None = 0,
     Blue = 1,
@@ -7,5 +7,6 @@
     Green = 4,
     Yellow = 5,
     Pink = 6,
-    Red = 7
+    Red = 7,
+    Mole = 9
 }

@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-public class LouieMovementController : MovementController
+public class MountMovementController : MovementController
 {
     [Header("Louie Follow")]
     [SerializeField] private MovementController owner;
@@ -90,7 +90,7 @@ public class LouieMovementController : MovementController
 
     protected override void DeathSequence()
     {
-        if (TryGetComponent<LouieVisualController>(out var visual))
+        if (TryGetComponent<MountVisualController>(out var visual))
         {
             visual.SetInactivityEmote(false);
             visual.enabled = false;

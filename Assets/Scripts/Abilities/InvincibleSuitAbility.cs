@@ -13,7 +13,7 @@ public class InvincibleSuitAbility : MonoBehaviour, IPlayerAbility
     public float durationSeconds = 10f;
 
     CharacterHealth health;
-    PlayerLouieCompanion companion;
+    PlayerMountCompanion companion;
     Coroutine routine;
 
     CharacterHealth appliedLouieHealth;

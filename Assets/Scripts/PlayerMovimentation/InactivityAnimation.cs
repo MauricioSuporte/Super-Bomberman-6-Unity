@@ -18,7 +18,7 @@ public sealed class InactivityAnimation : MonoBehaviour
     private bool isPlaying;
     private EmoteTarget currentTarget;
 
-    private LouieVisualController cachedLouieVisual;
+    private MountVisualController cachedLouieVisual;
     private float nextLouieResolveTime;
 
     private enum EmoteTarget
@@ -103,7 +103,7 @@ public sealed class InactivityAnimation : MonoBehaviour
         return EmoteTarget.Player;
     }
 
-    private LouieVisualController ResolveLouieVisual()
+    private MountVisualController ResolveLouieVisual()
     {
         if (!movement.IsMountedOnLouie)
         {
@@ -120,7 +120,7 @@ public sealed class InactivityAnimation : MonoBehaviour
 
         nextLouieResolveTime = Time.time + 0.25f;
 
-        var all = FindObjectsByType<LouieVisualController>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        var all = FindObjectsByType<MountVisualController>(FindObjectsInactive.Include, FindObjectsSortMode.None);
         for (int i = 0; i < all.Length; i++)
         {
             var v = all[i];

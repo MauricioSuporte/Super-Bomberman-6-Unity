@@ -1,15 +1,17 @@
-﻿using System.Collections.Generic;
+﻿using Assets.Scripts.Interface;
+using System.Collections.Generic;
 using UnityEngine;
 
-public class BlackLouieDashAnimator : MonoBehaviour, IBlackLouieDashExternalAnimator
+[DisallowMultipleComponent]
+public class YellowLouieKickAnimator : MonoBehaviour, IYellowLouieDestructibleKickExternalAnimator
 {
-    public AnimatedSpriteRenderer dashUp;
-    public AnimatedSpriteRenderer dashDown;
-    public AnimatedSpriteRenderer dashLeft;
-    public AnimatedSpriteRenderer dashRight;
+    public AnimatedSpriteRenderer kickUp;
+    public AnimatedSpriteRenderer kickDown;
+    public AnimatedSpriteRenderer kickLeft;
+    public AnimatedSpriteRenderer kickRight;
 
-    AnimatedSpriteRenderer activeDash;
-    LouieVisualController riderVisual;
+    AnimatedSpriteRenderer activeKick;
+    MountVisualController riderVisual;
 
     readonly List<AnimatedSpriteRenderer> cachedAnimators = new();
     readonly List<bool> cachedAnimatorEnabled = new();
@@ -24,11 +26,11 @@ public class BlackLouieDashAnimator : MonoBehaviour, IBlackLouieDashExternalAnim
 
     void Awake()
     {
-        riderVisual = GetComponent<LouieVisualController>();
+        riderVisual = GetComponent<MountVisualController>();
         if (riderVisual == null)
-            riderVisual = GetComponentInParent<LouieVisualController>();
+            riderVisual = GetComponentInParent<MountVisualController>();
         if (riderVisual == null)
-            riderVisual = GetComponentInChildren<LouieVisualController>(true);
+            riderVisual = GetComponentInChildren<MountVisualController>(true);
     }
 
     void OnDisable() => Stop();
@@ -50,21 +52,21 @@ public class BlackLouieDashAnimator : MonoBehaviour, IBlackLouieDashExternalAnim
         DisableAllRenderers();
         DisableDirectionalObjects();
 
-        activeDash = GetDashSprite(dir);
+        activeKick = GetKickSprite(dir);
 
-        if (activeDash != null)
+        if (activeKick != null)
         {
-            if (activeDash.TryGetComponent<SpriteRenderer>(out var sr))
+            if (activeKick.TryGetComponent<SpriteRenderer>(out var sr))
                 sr.flipX = (dir == Vector2.right);
 
-            activeDash.enabled = true;
-            activeDash.idle = false;
-            activeDash.loop = false;
-            activeDash.CurrentFrame = 0;
-            activeDash.RefreshFrame();
+            activeKick.enabled = true;
+            activeKick.idle = false;
+            activeKick.loop = false;
+            activeKick.CurrentFrame = 0;
+            activeKick.RefreshFrame();
 
-            if (activeDash.TryGetComponent<SpriteRenderer>(out var psr))
-                psr.enabled = true;
+            if (activeKick.TryGetComponent<SpriteRenderer>(out var ksr))
+                ksr.enabled = true;
         }
 
         playing = true;
@@ -72,21 +74,21 @@ public class BlackLouieDashAnimator : MonoBehaviour, IBlackLouieDashExternalAnim
 
     public void Stop()
     {
-        if (!playing && activeDash == null && cachedAnimators.Count == 0 && cachedSpriteRenderers.Count == 0 && cachedDirectionObjects.Count == 0)
+        if (!playing && activeKick == null && cachedAnimators.Count == 0 && cachedSpriteRenderers.Count == 0 && cachedDirectionObjects.Count == 0)
             return;
 
-        if (activeDash != null)
+        if (activeKick != null)
         {
-            if (activeDash.TryGetComponent<SpriteRenderer>(out var sr))
+            if (activeKick.TryGetComponent<SpriteRenderer>(out var sr))
                 sr.flipX = false;
 
-            activeDash.enabled = false;
+            activeKick.enabled = false;
 
-            if (activeDash.TryGetComponent<SpriteRenderer>(out var psr))
-                psr.enabled = false;
+            if (activeKick.TryGetComponent<SpriteRenderer>(out var ksr))
+                ksr.enabled = false;
         }
 
-        activeDash = null;
+        activeKick = null;
 
         RestoreEnabledStates();
         RestoreDirectionalObjects();
@@ -97,13 +99,13 @@ public class BlackLouieDashAnimator : MonoBehaviour, IBlackLouieDashExternalAnim
         playing = false;
     }
 
-    AnimatedSpriteRenderer GetDashSprite(Vector2 dir)
+    AnimatedSpriteRenderer GetKickSprite(Vector2 dir)
     {
-        if (dir == Vector2.up) return dashUp;
-        if (dir == Vector2.down) return dashDown;
-        if (dir == Vector2.left) return dashLeft;
-        if (dir == Vector2.right) return dashRight;
-        return dashDown;
+        if (dir == Vector2.up) return kickUp;
+        if (dir == Vector2.down) return kickDown;
+        if (dir == Vector2.left) return kickLeft;
+        if (dir == Vector2.right) return kickRight;
+        return kickDown;
     }
 
     void CacheEnabledStates()

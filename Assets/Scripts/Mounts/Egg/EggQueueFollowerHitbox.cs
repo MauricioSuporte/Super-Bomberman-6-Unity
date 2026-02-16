@@ -11,11 +11,11 @@ public sealed class EggQueueFollowerHitbox : MonoBehaviour
     [SerializeField] private bool enableConsumeByPlayer = true;
     [SerializeField] private string playerTag = "Player";
 
-    LouieEggQueue ownerQueue;
+    MountEggQueue ownerQueue;
     bool requestedExplosion;
     bool requestedConsume;
 
-    public void Bind(LouieEggQueue q) => ownerQueue = q;
+    public void Bind(MountEggQueue q) => ownerQueue = q;
 
     void OnTriggerEnter2D(Collider2D other)
     {

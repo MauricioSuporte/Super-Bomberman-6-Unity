@@ -1,18 +1,15 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 
-[DisallowMultipleComponent]
-public class PurpleLouieBombLineAnimator : MonoBehaviour, IPurpleLouieBombLineExternalAnimator
+public class BlackLouieDashAnimator : MonoBehaviour, IBlackLouieDashExternalAnimator
 {
-    [Header("Magic Sprites (PURPLE LOUIE)")]
-    public AnimatedSpriteRenderer magicUp;
-    public AnimatedSpriteRenderer magicDown;
-    public AnimatedSpriteRenderer magicLeft;
-    public AnimatedSpriteRenderer magicRight;
+    public AnimatedSpriteRenderer dashUp;
+    public AnimatedSpriteRenderer dashDown;
+    public AnimatedSpriteRenderer dashLeft;
+    public AnimatedSpriteRenderer dashRight;
 
-    AnimatedSpriteRenderer activeMagic;
-    LouieVisualController riderVisual;
+    AnimatedSpriteRenderer activeDash;
+    MountVisualController riderVisual;
 
     readonly List<AnimatedSpriteRenderer> cachedAnimators = new();
     readonly List<bool> cachedAnimatorEnabled = new();
@@ -27,20 +24,20 @@ public class PurpleLouieBombLineAnimator : MonoBehaviour, IPurpleLouieBombLineEx
 
     void Awake()
     {
-        riderVisual = GetComponent<LouieVisualController>();
+        riderVisual = GetComponent<MountVisualController>();
         if (riderVisual == null)
-            riderVisual = GetComponentInParent<LouieVisualController>();
+            riderVisual = GetComponentInParent<MountVisualController>();
         if (riderVisual == null)
-            riderVisual = GetComponentInChildren<LouieVisualController>(true);
+            riderVisual = GetComponentInChildren<MountVisualController>(true);
     }
 
-    void OnDisable() => ForceStop();
-    void OnDestroy() => ForceStop();
+    void OnDisable() => Stop();
+    void OnDestroy() => Stop();
 
-    public IEnumerator Play(Vector2 dir, float lockSeconds)
+    public void Play(Vector2 dir)
     {
         if (playing)
-            ForceStop();
+            Stop();
 
         if (dir == Vector2.zero)
             dir = Vector2.down;
@@ -53,47 +50,43 @@ public class PurpleLouieBombLineAnimator : MonoBehaviour, IPurpleLouieBombLineEx
         DisableAllRenderers();
         DisableDirectionalObjects();
 
-        activeMagic = GetMagic(dir);
+        activeDash = GetDashSprite(dir);
 
-        if (activeMagic != null)
+        if (activeDash != null)
         {
-            if (activeMagic.TryGetComponent<SpriteRenderer>(out var sr))
-            {
-                sr.enabled = true;
+            if (activeDash.TryGetComponent<SpriteRenderer>(out var sr))
                 sr.flipX = (dir == Vector2.right);
-            }
 
-            activeMagic.enabled = true;
-            activeMagic.idle = false;
-            activeMagic.loop = false;
-            activeMagic.CurrentFrame = 0;
-            activeMagic.RefreshFrame();
+            activeDash.enabled = true;
+            activeDash.idle = false;
+            activeDash.loop = false;
+            activeDash.CurrentFrame = 0;
+            activeDash.RefreshFrame();
+
+            if (activeDash.TryGetComponent<SpriteRenderer>(out var psr))
+                psr.enabled = true;
         }
 
         playing = true;
-
-        yield return new WaitForSeconds(lockSeconds);
-
-        ForceStop();
     }
 
-    public void ForceStop()
+    public void Stop()
     {
-        if (!playing && activeMagic == null && cachedAnimators.Count == 0 && cachedSpriteRenderers.Count == 0 && cachedDirectionObjects.Count == 0)
+        if (!playing && activeDash == null && cachedAnimators.Count == 0 && cachedSpriteRenderers.Count == 0 && cachedDirectionObjects.Count == 0)
             return;
 
-        if (activeMagic != null)
+        if (activeDash != null)
         {
-            if (activeMagic.TryGetComponent<SpriteRenderer>(out var sr))
-            {
+            if (activeDash.TryGetComponent<SpriteRenderer>(out var sr))
                 sr.flipX = false;
-                sr.enabled = false;
-            }
 
-            activeMagic.enabled = false;
+            activeDash.enabled = false;
+
+            if (activeDash.TryGetComponent<SpriteRenderer>(out var psr))
+                psr.enabled = false;
         }
 
-        activeMagic = null;
+        activeDash = null;
 
         RestoreEnabledStates();
         RestoreDirectionalObjects();
@@ -104,13 +97,13 @@ public class PurpleLouieBombLineAnimator : MonoBehaviour, IPurpleLouieBombLineEx
         playing = false;
     }
 
-    AnimatedSpriteRenderer GetMagic(Vector2 dir)
+    AnimatedSpriteRenderer GetDashSprite(Vector2 dir)
     {
-        if (dir == Vector2.up) return magicUp;
-        if (dir == Vector2.down) return magicDown;
-        if (dir == Vector2.left) return magicLeft;
-        if (dir == Vector2.right) return magicRight;
-        return magicDown;
+        if (dir == Vector2.up) return dashUp;
+        if (dir == Vector2.down) return dashDown;
+        if (dir == Vector2.left) return dashLeft;
+        if (dir == Vector2.right) return dashRight;
+        return dashDown;
     }
 
     void CacheEnabledStates()
@@ -174,6 +167,16 @@ public class PurpleLouieBombLineAnimator : MonoBehaviour, IPurpleLouieBombLineEx
         }
     }
 
+    void DisableDirectionalObjects()
+    {
+        for (int i = 0; i < cachedDirectionObjects.Count; i++)
+        {
+            var go = cachedDirectionObjects[i];
+            if (go != null)
+                go.SetActive(false);
+        }
+    }
+
     void RestoreEnabledStates()
     {
         for (int i = 0; i < cachedAnimators.Count; i++)
@@ -192,16 +195,6 @@ public class PurpleLouieBombLineAnimator : MonoBehaviour, IPurpleLouieBombLineEx
         cachedAnimatorEnabled.Clear();
         cachedSpriteRenderers.Clear();
         cachedSpriteEnabled.Clear();
-    }
-
-    void DisableDirectionalObjects()
-    {
-        for (int i = 0; i < cachedDirectionObjects.Count; i++)
-        {
-            var go = cachedDirectionObjects[i];
-            if (go != null)
-                go.SetActive(false);
-        }
     }
 
     void RestoreDirectionalObjects()

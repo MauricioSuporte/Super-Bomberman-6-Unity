@@ -1,8 +1,8 @@
 ﻿using UnityEngine;
 
 [RequireComponent(typeof(MovementController))]
-[RequireComponent(typeof(PlayerLouieCompanion))]
-public sealed class PlayerLouieManualDismount : MonoBehaviour
+[RequireComponent(typeof(PlayerMountCompanion))]
+public sealed class PlayerManualDismount : MonoBehaviour
 {
     [Header("Input")]
     [SerializeField] private PlayerAction dismountAction = PlayerAction.ActionR;
@@ -11,18 +11,18 @@ public sealed class PlayerLouieManualDismount : MonoBehaviour
     [SerializeField] private bool freezeEggQueueOnDismount = true;
 
     MovementController movement;
-    PlayerLouieCompanion companion;
+    PlayerMountCompanion companion;
     PlayerRidingController rider;
-    LouieEggQueue eggQueue;
+    MountEggQueue eggQueue;
 
     bool wasHeld;
 
     void Awake()
     {
         movement = GetComponent<MovementController>();
-        companion = GetComponent<PlayerLouieCompanion>();
+        companion = GetComponent<PlayerMountCompanion>();
         rider = GetComponent<PlayerRidingController>();
-        eggQueue = GetComponent<LouieEggQueue>();
+        eggQueue = GetComponent<MountEggQueue>();
     }
 
     void Update()
@@ -71,8 +71,8 @@ public sealed class PlayerLouieManualDismount : MonoBehaviour
 
         if (detachedLouie != null)
         {
-            if (!detachedLouie.TryGetComponent<LouieWorldPickup>(out var pickup))
-                pickup = detachedLouie.AddComponent<LouieWorldPickup>();
+            if (!detachedLouie.TryGetComponent<MountWorldPickup>(out var pickup))
+                pickup = detachedLouie.AddComponent<MountWorldPickup>();
 
             pickup.Init(detachedType);
 
@@ -133,7 +133,7 @@ public sealed class PlayerLouieManualDismount : MonoBehaviour
         if (detachedLouie.TryGetComponent<MovementController>(out var mc) && mc != null && mc.isDead)
             return;
 
-        var visual = detachedLouie.GetComponentInChildren<LouieVisualController>(true);
+        var visual = detachedLouie.GetComponentInChildren<MountVisualController>(true);
         if (visual == null)
             return;
 
