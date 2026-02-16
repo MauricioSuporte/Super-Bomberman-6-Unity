@@ -9,7 +9,7 @@ using UnityEngine;
 [RequireComponent(typeof(PlayerRidingController))]
 public class PlayerMountCompanion : MonoBehaviour
 {
-    [Header("Louie Prefabs")]
+    [Header("Mounts Prefabs")]
     public GameObject blueLouiePrefab;
     public GameObject blackLouiePrefab;
     public GameObject purpleLouiePrefab;
@@ -17,6 +17,7 @@ public class PlayerMountCompanion : MonoBehaviour
     public GameObject yellowLouiePrefab;
     public GameObject pinkLouiePrefab;
     public GameObject redLouiePrefab;
+    public GameObject molePrefab;
 
     [Header("Local Offset")]
     public Vector2 localOffset = new(0f, -0.15f);
@@ -136,6 +137,7 @@ public class PlayerMountCompanion : MonoBehaviour
     public void MountYellowLouie() => Mount(MountedType.Yellow);
     public void MountPinkLouie() => Mount(MountedType.Pink);
     public void MountRedLouie() => Mount(MountedType.Red);
+    public void MountMole() => Mount(MountedType.Mole);
 
     public void RestoreMountedBlueLouie() => RestoreMounted(MountedType.Blue);
     public void RestoreMountedBlackLouie() => RestoreMounted(MountedType.Black);
@@ -144,6 +146,7 @@ public class PlayerMountCompanion : MonoBehaviour
     public void RestoreMountedYellowLouie() => RestoreMounted(MountedType.Yellow);
     public void RestoreMountedPinkLouie() => RestoreMounted(MountedType.Pink);
     public void RestoreMountedRedLouie() => RestoreMounted(MountedType.Red);
+    public void RestoreMountedMole() => RestoreMounted(MountedType.Mole);
 
     public MountedType GetMountedLouieType() => currentLouie == null ? MountedType.None : mountedType;
     public CharacterHealth GetMountedLouieHealth() => mountedLouieHealth;
@@ -1260,10 +1263,10 @@ public class PlayerMountCompanion : MonoBehaviour
         if (visual == null)
             return;
 
-        visual.localOffset = localOffset;
-        visual.Bind(movement);
-        visual.enabled = true;
-    }
+            visual.localOffset = localOffset;
+            visual.Bind(movement);
+            visual.enabled = true;
+        }
 
     #endregion
 
@@ -1378,6 +1381,7 @@ public class PlayerMountCompanion : MonoBehaviour
         prefabByType[MountedType.Yellow] = yellowLouiePrefab;
         prefabByType[MountedType.Pink] = pinkLouiePrefab;
         prefabByType[MountedType.Red] = redLouiePrefab;
+        prefabByType[MountedType.Mole] = molePrefab;
 
         mountedByEggType.Clear();
         mountedByEggType[ItemPickup.ItemType.BlueLouieEgg] = MountedType.Blue;

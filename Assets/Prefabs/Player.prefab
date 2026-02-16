@@ -2234,9 +2234,6 @@ MonoBehaviour:
   explosionSfxVolume: 0.8
   groundTileResolver: {fileID: 0}
   indestructibleTileResolver: {fileID: 0}
-  debugWaterBomb: 1
-  debugExplodeTeleport: 1
-  debugCooldown: 0.15
 --- !u!82 &4627430260018096140
 AudioSource:
   m_ObjectHideFlags: 0
@@ -2402,6 +2399,7 @@ MonoBehaviour:
   yellowLouiePrefab: {fileID: 2273416014071709654, guid: 18a28a73f2f20a349aba53112f2f4a07, type: 3}
   pinkLouiePrefab: {fileID: 2273416014071709654, guid: 077a9ad657bf9be4fb1728d85f02354c, type: 3}
   redLouiePrefab: {fileID: 2273416014071709654, guid: 4a70e21506f50d14da6de1ab7462fbb9, type: 3}
+  molePrefab: {fileID: 2273416014071709654, guid: e0c8f23facce063418ecb0588ce6eb0d, type: 3}
   localOffset: {x: 0, y: -0.15}
   playerInvulnerabilityAfterLoseLouieSeconds: 1.5
   blinkPlayerTogetherWithLouie: 1

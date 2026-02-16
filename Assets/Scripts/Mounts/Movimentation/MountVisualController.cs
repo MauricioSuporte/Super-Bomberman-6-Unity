@@ -60,7 +60,6 @@ public class MountVisualController : MonoBehaviour
 
         isPinkLouieMounted = DetectPinkMounted(owner);
 
-        // Se Pink usa o mesmo renderer pra left/right, anula right
         if (isPinkLouieMounted && louieRight == louieLeft)
             louieRight = null;
 
@@ -115,7 +114,6 @@ public class MountVisualController : MonoBehaviour
             return;
         }
 
-        // desligando emote
         if (owner == null)
         {
             SetRendererBranchEnabled(louieInactivityEmoteLoop, false);
@@ -199,7 +197,6 @@ public class MountVisualController : MonoBehaviour
 
         transform.localPosition = localOffset;
 
-        // SUPPRESS total quando o dono está no RedBoat
         bool ownerOnRedBoat = BoatRideZone.IsRidingBoat(owner);
 
         if (ownerOnRedBoat)
@@ -207,7 +204,7 @@ public class MountVisualController : MonoBehaviour
             if (!suppressedByRedBoat)
                 SuppressAllLouieVisuals();
 
-            return; // não atualiza animações enquanto estiver suprimido
+            return;
         }
 
         if (suppressedByRedBoat)
