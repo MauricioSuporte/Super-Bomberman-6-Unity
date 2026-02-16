@@ -31,6 +31,9 @@ public class MoleMountDrillAbility : MonoBehaviour, IPlayerAbility
     [Header("Burrowed (after Phase 3, before teleport)")]
     [SerializeField, Min(0f)] private float burrowedSeconds = 0.5f;
 
+    [Header("Phase 1 HeadOnlyDown Offset Delta")]
+    private static readonly Vector2 Phase1HeadOnlyDownDelta = new(0f, -0.3f);
+
     MovementController movement;
     Rigidbody2D rb;
     Coroutine routine;
@@ -50,6 +53,8 @@ public class MoleMountDrillAbility : MonoBehaviour, IPlayerAbility
     MountEggQueue eggQueue;
     bool eggQueuePrevVisible;
     bool eggQueueCached;
+
+    MountVisualController cachedMountVisual;
 
     void Awake()
     {
@@ -176,11 +181,15 @@ public class MoleMountDrillAbility : MonoBehaviour, IPlayerAbility
                 p2rev = anim.Phase2ReverseDuration;
             }
 
+            ApplyPhase1HeadOnlyDownDelta(true);
+
             movement.SetExternalVisualSuppressed(false);
             movement.SetInactivityMountedDownOverride(true);
 
             externalAnimator?.PlayPhase(1, dir);
             yield return new WaitForSeconds(p1);
+
+            ApplyPhase1HeadOnlyDownDelta(false);
 
             movement.SetInactivityMountedDownOverride(false);
 
@@ -206,6 +215,8 @@ public class MoleMountDrillAbility : MonoBehaviour, IPlayerAbility
         }
         finally
         {
+            ApplyPhase1HeadOnlyDownDelta(false);
+
             externalAnimator?.Stop();
 
             if (movement != null)
@@ -226,6 +237,23 @@ public class MoleMountDrillAbility : MonoBehaviour, IPlayerAbility
             running = false;
             routine = null;
         }
+    }
+
+    private void ApplyPhase1HeadOnlyDownDelta(bool on)
+    {
+        if (Phase1HeadOnlyDownDelta == Vector2.zero)
+            return;
+
+        if (movement == null)
+            return;
+
+        if (cachedMountVisual == null)
+            cachedMountVisual = GetComponentInChildren<MountVisualController>(true);
+
+        if (cachedMountVisual == null)
+            return;
+
+        cachedMountVisual.SetTemporaryHeadOnlyDownDelta(Phase1HeadOnlyDownDelta, on);
     }
 
     bool IsMountedOnMole()
@@ -407,6 +435,8 @@ public class MoleMountDrillAbility : MonoBehaviour, IPlayerAbility
             StopCoroutine(routine);
             routine = null;
         }
+
+        ApplyPhase1HeadOnlyDownDelta(false);
 
         if (running)
         {

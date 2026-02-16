@@ -58,7 +58,19 @@ public class MountVisualController : MonoBehaviour
 
     private bool headOnlyOffsetsApplied;
 
+    private Vector2 temporaryHeadOnlyDownDelta;
+    private bool temporaryHeadOnlyDownDeltaActive;
+
     public bool HasInactivityEmoteRenderer => louieInactivityEmoteLoop != null;
+
+    public void SetTemporaryHeadOnlyDownDelta(Vector2 delta, bool active)
+    {
+        temporaryHeadOnlyDownDelta = delta;
+        temporaryHeadOnlyDownDeltaActive = active;
+
+        headOnlyOffsetsApplied = false;
+        ApplyHeadOnlyOffsetsIfNeeded(force: true);
+    }
 
     public void Bind(MovementController movement)
     {
@@ -278,9 +290,13 @@ public class MountVisualController : MonoBehaviour
         if (!force && headOnlyOffsetsApplied)
             return;
 
+        Vector2 down = headOnlyDownLocalOffset;
+        if (temporaryHeadOnlyDownDeltaActive)
+            down += temporaryHeadOnlyDownDelta;
+
         owner.SetHeadOnlyMountedOffsets(
             headOnlyUpLocalOffset,
-            headOnlyDownLocalOffset,
+            down,
             headOnlyLeftLocalOffset,
             headOnlyRightLocalOffset
         );
