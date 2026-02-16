@@ -7,6 +7,9 @@ public class MountMovementController : MovementController
     [SerializeField] private Vector2 followOffset = new(-0.35f, -0.15f);
     [SerializeField] private float followLerp = 25f;
 
+    [Header("Visual")]
+    [SerializeField] private bool keepMoveAnimationWhenIdle = false;
+
     private Vector2 lastNonZeroDir = Vector2.down;
 
     public void BindOwner(MovementController ownerMovement, Vector2 offset)
@@ -61,7 +64,18 @@ public class MountMovementController : MovementController
         ApplyDirectionFromVector(lastNonZeroDir);
 
         if (activeSpriteRenderer != null)
-            activeSpriteRenderer.idle = (dir == Vector2.zero);
+        {
+            if (keepMoveAnimationWhenIdle)
+            {
+                activeSpriteRenderer.idle = false;
+                activeSpriteRenderer.loop = true;
+            }
+            else
+            {
+                activeSpriteRenderer.idle = (dir == Vector2.zero);
+                activeSpriteRenderer.loop = (dir != Vector2.zero);
+            }
+        }
     }
 
     protected override void FixedUpdate()

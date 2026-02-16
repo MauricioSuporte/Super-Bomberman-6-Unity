@@ -8,6 +8,9 @@ public class MountVisualController : MonoBehaviour
     [Header("Player Visual While Mounted")]
     public bool useHeadOnlyPlayerVisual = false;
 
+    [Header("Keep Move Animation When Idle")]
+    [SerializeField] private bool keepMoveAnimationWhenIdle = false;
+
     [Header("HeadOnly Player Visual Offsets (local, per direction)")]
     [SerializeField] private Vector2 headOnlyUpLocalOffset = Vector2.zero;
     [SerializeField] private Vector2 headOnlyDownLocalOffset = Vector2.zero;
@@ -505,9 +508,11 @@ public class MountVisualController : MonoBehaviour
 
         SetRendererBranchEnabled(active, true);
 
+        bool shouldIdle = isIdle && !keepMoveAnimationWhenIdle;
+
         active.pingPong = false;
-        active.idle = isIdle;
-        active.loop = !isIdle;
+        active.idle = shouldIdle;
+        active.loop = !shouldIdle;
 
         if (active != null && active.TryGetComponent<SpriteRenderer>(out var sr) && sr != null)
         {
