@@ -14,7 +14,7 @@ public class MoleMountDrillAbility : MonoBehaviour, IPlayerAbility
     [Header("Teleport Search")]
     [SerializeField] private Tilemap groundTilemap;
     [SerializeField] private LayerMask blockingMask;
-    [SerializeField, Min(1)] private int searchRadiusTiles = 15;
+    [SerializeField, Min(1)] private int searchRadiusTiles = 10;
     [SerializeField] private bool preferFartherTiles = true;
 
     [Header("Enemy Avoidance")]
@@ -176,8 +176,15 @@ public class MoleMountDrillAbility : MonoBehaviour, IPlayerAbility
                 p2rev = anim.Phase2ReverseDuration;
             }
 
+            movement.SetExternalVisualSuppressed(false);
+            movement.SetInactivityMountedDownOverride(true);
+
             externalAnimator?.PlayPhase(1, dir);
             yield return new WaitForSeconds(p1);
+
+            movement.SetInactivityMountedDownOverride(false);
+
+            movement.SetExternalVisualSuppressed(true);
 
             externalAnimator?.PlayPhase(2, dir);
             yield return new WaitForSeconds(p2);
@@ -191,13 +198,24 @@ public class MoleMountDrillAbility : MonoBehaviour, IPlayerAbility
 
             externalAnimator?.PlayPhase(4, dir);
             yield return new WaitForSeconds(p2rev);
+
+            movement.ForceFacingDirection(Vector2.down);
+            movement.SetInactivityMountedDownOverride(true);
+            movement.SetExternalVisualSuppressed(false);
+            yield return null;
         }
         finally
         {
             externalAnimator?.Stop();
 
-            if (movement != null && lockInputWhileDrilling)
-                movement.SetInputLocked(false);
+            if (movement != null)
+            {
+                movement.SetInactivityMountedDownOverride(false);
+                movement.SetExternalVisualSuppressed(false);
+
+                if (lockInputWhileDrilling)
+                    movement.SetInputLocked(false);
+            }
 
             if (eggQueue != null)
             {
@@ -395,8 +413,14 @@ public class MoleMountDrillAbility : MonoBehaviour, IPlayerAbility
             running = false;
             externalAnimator?.Stop();
 
-            if (movement != null && lockInputWhileDrilling)
-                movement.SetInputLocked(false);
+            if (movement != null)
+            {
+                movement.SetInactivityMountedDownOverride(false);
+                movement.SetExternalVisualSuppressed(false);
+
+                if (lockInputWhileDrilling)
+                    movement.SetInputLocked(false);
+            }
         }
     }
 

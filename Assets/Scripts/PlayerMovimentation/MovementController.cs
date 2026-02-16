@@ -1411,6 +1411,21 @@ public class MovementController : MonoBehaviour, IKillable
         SetDirection(Vector2.zero, target);
     }
 
+    public void ForceFacingDirection(Vector2 faceDir)
+    {
+        faceDir = NormalizeCardinal(faceDir);
+        if (faceDir == Vector2.zero)
+            faceDir = Vector2.down;
+
+        facingDirection = faceDir;
+
+        if (isDead || isEndingStage) return;
+        if (IsRidingPlaying()) return;
+        if (externalVisualSuppressed || visualOverrideActive || IsSpriteLocked) return;
+
+        EnableExclusiveFromState();
+    }
+
     private bool IsForwardOpen(Vector2 pos, Vector2 moveDir)
     {
         if (moveDir == Vector2.zero)
