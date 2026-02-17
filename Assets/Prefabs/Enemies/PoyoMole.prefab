@@ -998,9 +998,10 @@ MonoBehaviour:
   abilityStartPhase1SfxVolume: 0.804
   poyoPrefab: {fileID: 1228606389669354652, guid: ced803cd828df3741b0190e3a589b80a, type: 3}
   damagedSecondsBeforeSpawn: 0.5
-  poyoLaunchSeconds: 0.5
-  poyoArcHeightTiles: 3
-  poyoMaxLandingDistanceTiles: 3
+  poyoLaunchSeconds: 1
+  poyoArcHeightTiles: 5
+  poyoMinLandingDistanceTiles: 10
+  poyoMaxLandingDistanceTiles: 15
   notifyGameManagerOnDefeat: 0
   moleMountPrefab: {fileID: 2273416014071709654, guid: 158f2ef3a3826a54d995ca3a09ba97a2, type: 3}
   dropMoleMountOnDefeat: 1

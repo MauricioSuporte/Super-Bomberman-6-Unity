@@ -50,7 +50,8 @@ public sealed class PoyoMoleEnemyMovementController : JunctionTurningEnemyMoveme
     [SerializeField, Min(0.01f)] private float damagedSecondsBeforeSpawn = 0.5f;
     [SerializeField, Min(0.01f)] private float poyoLaunchSeconds = 0.5f;
     [SerializeField, Min(0f)] private float poyoArcHeightTiles = 3f;
-    [SerializeField, Min(0)] private int poyoMaxLandingDistanceTiles = 3;
+    [SerializeField, Min(0)] private int poyoMinLandingDistanceTiles = 10;
+    [SerializeField, Min(0)] private int poyoMaxLandingDistanceTiles = 15;
     [SerializeField] private bool notifyGameManagerOnDefeat = true;
 
     [Header("Defeat -> Drop World Mount (Mole)")]
@@ -287,7 +288,7 @@ public sealed class PoyoMoleEnemyMovementController : JunctionTurningEnemyMoveme
 
         if (poyoPrefab != null)
         {
-            Vector2 landing = PickLandingNear(origin, poyoMaxLandingDistanceTiles);
+            Vector2 landing = PickLandingInRange(origin, poyoMinLandingDistanceTiles, poyoMaxLandingDistanceTiles);
             GameObject poyoGo = Instantiate(poyoPrefab, origin, Quaternion.identity);
 
             if (poyoGo != null && poyoGo.TryGetComponent<PoyoEnemyMovementController>(out var poyo) && poyo != null)
@@ -360,18 +361,27 @@ public sealed class PoyoMoleEnemyMovementController : JunctionTurningEnemyMoveme
         visual.SetInactivityEmote(true);
     }
 
-    private Vector2 PickLandingNear(Vector2 origin, int radiusTiles)
+    private Vector2 PickLandingInRange(Vector2 origin, int minRadiusTiles, int maxRadiusTiles)
     {
         if (groundTilemapOverride == null)
             return origin;
 
-        int r = Mathf.Max(0, radiusTiles);
+        int minR = Mathf.Max(0, minRadiusTiles);
+        int maxR = Mathf.Max(minR, maxRadiusTiles);
+
+        int min2 = minR * minR;
+        int max2 = maxR * maxR;
+
         Vector3Int originCell = groundTilemapOverride.WorldToCell(origin);
 
         for (int i = 0; i < maxRespawnAttempts; i++)
         {
-            int dx = Random.Range(-r, r + 1);
-            int dy = Random.Range(-r, r + 1);
+            int dx = Random.Range(-maxR, maxR + 1);
+            int dy = Random.Range(-maxR, maxR + 1);
+
+            int d2 = dx * dx + dy * dy;
+            if (d2 < min2 || d2 > max2)
+                continue;
 
             Vector3Int cell = new Vector3Int(originCell.x + dx, originCell.y + dy, 0);
 
