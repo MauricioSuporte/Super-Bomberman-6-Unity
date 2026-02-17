@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 3262222071986927519}
   - component: {fileID: 1743110654645821925}
   - component: {fileID: 288013320720116993}
-  m_Layer: 8
+  m_Layer: 0
   m_Name: Shot
   m_TagString: Explosion
   m_Icon: {fileID: 0}
@@ -124,8 +124,9 @@ MonoBehaviour:
   hitMask:
     serializedVersion: 2
     m_Bits: 10184
-  debugTankShot: 1
-  logEveryFixed: 6
+  explosionRadius: 1
+  pierceExplosion: 0
+  chainBombOnHit: 1
 --- !u!1 &8992946389446785346
 GameObject:
   m_ObjectHideFlags: 0
@@ -137,7 +138,7 @@ GameObject:
   - component: {fileID: 3689550547183318938}
   - component: {fileID: 2847991479580734962}
   - component: {fileID: 7202751292448453280}
-  m_Layer: 8
+  m_Layer: 0
   m_Name: Animation
   m_TagString: Untagged
   m_Icon: {fileID: 0}

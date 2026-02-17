@@ -14,9 +14,12 @@ public sealed class PoyoTankEnemyMovementController : JunctionTurningEnemyMoveme
 
     [Header("Shooting")]
     [SerializeField] private bool stopAndShoot = true;
-    [SerializeField, Min(0.01f)] private float shotCooldownSeconds = 1.25f;
+    [SerializeField, Min(0.01f)] private float shotCooldownSeconds = 5f;
     [SerializeField, Min(0.01f)] private float shotWindupSeconds = 0.12f;
     [SerializeField, Min(0.01f)] private float shotAnimSeconds = 0.25f;
+
+    [Header("Shot SFX")]
+    [SerializeField] private AudioClip shotSfx;
 
     [Header("Projectile")]
     [SerializeField] private GameObject projectilePrefab;
@@ -34,10 +37,15 @@ public sealed class PoyoTankEnemyMovementController : JunctionTurningEnemyMoveme
     private Coroutine _shootRoutine;
     private float _cooldownTimer;
     private bool _isShooting;
+    private Vector2 _shootDir;
+    private AnimatedSpriteRenderer _activeShotSprite;
+    private AudioSource _audioSource;
 
     protected override void Awake()
     {
         base.Awake();
+
+        _audioSource = GetComponent<AudioSource>();
 
         if (playerLayerMask.value == 0)
             playerLayerMask = LayerMask.GetMask("Player");
@@ -55,17 +63,13 @@ public sealed class PoyoTankEnemyMovementController : JunctionTurningEnemyMoveme
 
         if (TryGetComponent<StunReceiver>(out var stun) && stun != null && stun.IsStunned)
         {
-            if (rb != null)
-                rb.linearVelocity = Vector2.zero;
-
+            StopMotionNow();
             return;
         }
 
         if (isInDamagedLoop)
         {
-            if (rb != null)
-                rb.linearVelocity = Vector2.zero;
-
+            StopMotionNow();
             return;
         }
 
@@ -74,9 +78,7 @@ public sealed class PoyoTankEnemyMovementController : JunctionTurningEnemyMoveme
 
         if (_isShooting)
         {
-            if (rb != null)
-                rb.linearVelocity = Vector2.zero;
-
+            StopMotionNow();
             targetTile = rb.position;
             return;
         }
@@ -86,11 +88,8 @@ public sealed class PoyoTankEnemyMovementController : JunctionTurningEnemyMoveme
             direction = dirToPlayer;
             UpdateSpriteDirection(direction);
 
-            if (stopAndShoot && rb != null)
-            {
-                rb.linearVelocity = Vector2.zero;
-                targetTile = rb.position;
-            }
+            if (stopAndShoot)
+                StopMotionNow();
 
             StartShoot(dirToPlayer);
             return;
@@ -112,54 +111,90 @@ public sealed class PoyoTankEnemyMovementController : JunctionTurningEnemyMoveme
         if (_isShooting || isDead || isInDamagedLoop)
             return;
 
+        if (_cooldownTimer > 0f)
+            return;
+
+        _shootDir = dir == Vector2.zero ? Vector2.down : dir.normalized;
+
         if (_shootRoutine != null)
             StopCoroutine(_shootRoutine);
 
-        _shootRoutine = StartCoroutine(ShootRoutine(dir));
+        _shootRoutine = StartCoroutine(ShootRoutine(_shootDir));
     }
 
     private IEnumerator ShootRoutine(Vector2 dir)
     {
         _isShooting = true;
+        StopMotionNow();
 
-        if (rb != null)
-            rb.linearVelocity = Vector2.zero;
+        _activeShotSprite = ResolveShotSprite(dir);
 
-        PlayShotSprite(dir);
-
-        yield return new WaitForSecondsRealtime(Mathf.Max(0.01f, shotWindupSeconds));
-
-        if (!isDead && !isInDamagedLoop)
-            SpawnProjectile(dir);
-
-        yield return new WaitForSecondsRealtime(Mathf.Max(0.01f, shotAnimSeconds));
-
+        DisableAllMovementSprites();
         DisableAllShotSprites();
 
-        _cooldownTimer = Mathf.Max(0.01f, shotCooldownSeconds);
+        EnableShotSprite(_activeShotSprite);
+
+        float total = shotAnimSeconds;
+        float windup = Mathf.Clamp(shotWindupSeconds, 0.01f, total);
+
+        yield return new WaitForSecondsRealtime(windup);
+
+        if (!isDead && !isInDamagedLoop)
+        {
+            SpawnProjectile(dir);
+
+            if (shotSfx != null && _audioSource != null)
+                _audioSource.PlayOneShot(shotSfx);
+        }
+
+        float remain = total - windup;
+        if (remain > 0f)
+            yield return new WaitForSecondsRealtime(remain);
+
+        DisableAllShotSprites();
+        _activeShotSprite = null;
+
+        _cooldownTimer = shotCooldownSeconds;
         _isShooting = false;
         _shootRoutine = null;
 
-        UpdateSpriteDirection(direction == Vector2.zero ? Vector2.down : direction);
+        base.UpdateSpriteDirection(direction == Vector2.zero ? Vector2.down : direction);
         DecideNextTile();
     }
 
-    private void PlayShotSprite(Vector2 dir)
+    private void StopMotionNow()
     {
-        DisableAllShotSprites();
+        rb.linearVelocity = Vector2.zero;
+        targetTile = rb.position;
+    }
 
-        var chosen = ResolveShotSprite(dir);
+    private void EnableShotSprite(AnimatedSpriteRenderer chosen)
+    {
         if (chosen == null)
             return;
 
-        chosen.enabled = true;
+        chosen.loop = true;
         chosen.idle = false;
-        chosen.loop = false;
         chosen.CurrentFrame = 0;
+        chosen.enabled = true;
         chosen.RefreshFrame();
 
         activeSprite = chosen;
-        ForceNoFlipOn(chosen);
+
+        if (forceFlipXFalse)
+            ForceNoFlipOn(chosen);
+    }
+
+    private void DisableAllMovementSprites()
+    {
+        if (spriteUp != null) spriteUp.enabled = false;
+        if (spriteDown != null) spriteDown.enabled = false;
+        if (spriteLeft != null) spriteLeft.enabled = false;
+
+        if (spriteDamaged != null) spriteDamaged.enabled = false;
+
+        if (spriteDeath != null && spriteDeath != activeSprite)
+            spriteDeath.enabled = false;
     }
 
     private AnimatedSpriteRenderer ResolveShotSprite(Vector2 dir)
@@ -169,7 +204,9 @@ public sealed class PoyoTankEnemyMovementController : JunctionTurningEnemyMoveme
         if (dir == Vector2.left) return shotLeftSprite;
         if (dir == Vector2.right) return shotRightSprite;
 
-        return shotDownSprite != null ? shotDownSprite : shotLeftSprite != null ? shotLeftSprite : shotUpSprite;
+        return shotDownSprite != null ? shotDownSprite :
+               shotLeftSprite != null ? shotLeftSprite :
+               shotUpSprite;
     }
 
     private void DisableAllShotSprites()
@@ -182,63 +219,26 @@ public sealed class PoyoTankEnemyMovementController : JunctionTurningEnemyMoveme
 
     private void ForceNoFlipOn(AnimatedSpriteRenderer r)
     {
-        if (!forceFlipXFalse || r == null)
+        if (r == null)
             return;
 
-        if (r.TryGetComponent<SpriteRenderer>(out var sr) && sr != null)
+        if (r.TryGetComponent<SpriteRenderer>(out var sr))
             sr.flipX = false;
     }
 
     private void SpawnProjectile(Vector2 dir)
     {
-        if (projectilePrefab == null || rb == null)
+        if (projectilePrefab == null)
             return;
 
-        Vector2 d = dir == Vector2.zero ? Vector2.down : dir.normalized;
-        Vector2 spawn = rb.position + d * tileSize + projectileLocalOffset;
-
-        int expected = LayerMask.GetMask("Player", "Stage", "Bomb", "Enemy", "Water", "Explosion", "Item");
-        int current = projectileHitMask.value;
-
-        bool looksWrong = current == 0 || current == LayerMask.GetMask("Explosion");
-
-        if (looksWrong)
-            projectileHitMask = expected;
-
-        Debug.Log(
-            $"[PoyoTank.Shoot] shooter={name} dir={d} spawn={spawn} maskBefore={current}({MaskToString(current)}) " +
-            $"maskAfter={projectileHitMask.value}({MaskToString(projectileHitMask.value)}) looksWrong={looksWrong}"
-        );
+        Vector2 spawn = rb.position + dir * tileSize + projectileLocalOffset;
 
         var go = Instantiate(projectilePrefab, spawn, Quaternion.identity);
-        if (go == null)
-            return;
-
         var proj = go.GetComponent<TankShot>();
         if (proj == null)
             proj = go.AddComponent<TankShot>();
 
-        proj.Init(d, projectileSpeed, projectileHitMask, owner: gameObject);
-    }
-
-    private static string MaskToString(int maskValue)
-    {
-        if (maskValue == 0) return "Nothing";
-
-        string s = "";
-        for (int i = 0; i < 32; i++)
-        {
-            if ((maskValue & (1 << i)) == 0)
-                continue;
-
-            string n = LayerMask.LayerToName(i);
-            if (string.IsNullOrEmpty(n))
-                n = $"Layer{i}";
-
-            if (s.Length > 0) s += ",";
-            s += n;
-        }
-        return s;
+        proj.Init(dir, projectileSpeed, projectileHitMask, gameObject);
     }
 
     private bool TryGetPlayerDirection(out Vector2 dirToPlayer)

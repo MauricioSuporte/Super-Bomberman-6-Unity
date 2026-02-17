@@ -1079,20 +1079,21 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 8
   stopAndShoot: 1
-  shotCooldownSeconds: 1.25
+  shotCooldownSeconds: 5
   shotWindupSeconds: 0.12
   shotAnimSeconds: 0.25
+  shotSfx: {fileID: 8300000, guid: 91d0210a38e7773428530d691f29b543, type: 3}
   projectilePrefab: {fileID: 6808800731990316043, guid: 4f3d05f7722c5d642802f4e77bb2e130, type: 3}
   projectileSpeed: 8
   projectileLocalOffset: {x: 0, y: 0.05}
   projectileHitMask:
     serializedVersion: 2
-    m_Bits: 256
+    m_Bits: 10184
   shotUpSprite: {fileID: 3056293447429893633}
   shotDownSprite: {fileID: 3405900184648216138}
   shotLeftSprite: {fileID: 4133685054606994392}
   shotRightSprite: {fileID: 1209352177853399713}
-  forceFlipXFalse: 1
+  forceFlipXFalse: 0
 --- !u!114 &4002592649201115258
 MonoBehaviour:
   m_ObjectHideFlags: 0
