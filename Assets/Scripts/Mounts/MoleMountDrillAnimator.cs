@@ -36,13 +36,20 @@ public class MoleMountDrillAnimator : MonoBehaviour, IMoleMountDrillExternalAnim
         public int frame;
     }
 
-    readonly List<CachedState> cached = new();
+    readonly List<CachedState> cached = new(16);
     AnimatedSpriteRenderer active;
     bool playing;
+    bool cachedInitialized;
 
     public void PlayPhase(int phase, Vector2 dir)
     {
-        CacheAndDisableAllNonAbilitySprites();
+        if (!playing)
+        {
+            cached.Clear();
+            cachedInitialized = false;
+        }
+
+        CacheAndDisableAllNonAbilitySprites(rebuildCache: !cachedInitialized);
 
         playing = true;
 
@@ -53,12 +60,7 @@ public class MoleMountDrillAnimator : MonoBehaviour, IMoleMountDrillExternalAnim
         {
             active.enabled = true;
             active.idle = false;
-
-            if (phase == 1 || phase == 2)
-                active.loop = true;
-            else
-                active.loop = false;
-
+            active.loop = (phase == 1 || phase == 2);
             active.pingPong = false;
             active.CurrentFrame = 0;
             active.RefreshFrame();
@@ -73,8 +75,11 @@ public class MoleMountDrillAnimator : MonoBehaviour, IMoleMountDrillExternalAnim
             active.enabled = false;
 
         active = null;
+
         DisableAllAbilitySprites();
         RestoreAllNonAbilitySprites();
+
+        cachedInitialized = false;
     }
 
     void LateUpdate()
@@ -118,7 +123,8 @@ public class MoleMountDrillAnimator : MonoBehaviour, IMoleMountDrillExternalAnim
 
     static void Disable(AnimatedSpriteRenderer a)
     {
-        if (a != null) a.enabled = false;
+        if (a != null)
+            a.enabled = false;
     }
 
     bool IsAbilitySprite(AnimatedSpriteRenderer s)
@@ -126,11 +132,42 @@ public class MoleMountDrillAnimator : MonoBehaviour, IMoleMountDrillExternalAnim
         return s == phase1 || s == phase2 || s == phase3 || s == phase2Reverse;
     }
 
-    void CacheAndDisableAllNonAbilitySprites()
-    {
-        cached.Clear();
+    public bool IsAbilitySpritePublic(AnimatedSpriteRenderer s) => IsAbilitySprite(s);
 
+    void CacheAndDisableAllNonAbilitySprites(bool rebuildCache)
+    {
         var sprites = GetComponentsInChildren<AnimatedSpriteRenderer>(true);
+
+        if (rebuildCache)
+        {
+            cached.Clear();
+
+            for (int i = 0; i < sprites.Length; i++)
+            {
+                var s = sprites[i];
+                if (s == null)
+                    continue;
+
+                if (IsAbilitySprite(s))
+                    continue;
+
+                cached.Add(new CachedState
+                {
+                    asr = s,
+                    enabled = s.enabled,
+                    idle = s.idle,
+                    loop = s.loop,
+                    pingPong = s.pingPong,
+                    frame = s.CurrentFrame
+                });
+
+                s.enabled = false;
+            }
+
+            cachedInitialized = true;
+            return;
+        }
+
         for (int i = 0; i < sprites.Length; i++)
         {
             var s = sprites[i];
@@ -140,17 +177,8 @@ public class MoleMountDrillAnimator : MonoBehaviour, IMoleMountDrillExternalAnim
             if (IsAbilitySprite(s))
                 continue;
 
-            cached.Add(new CachedState
-            {
-                asr = s,
-                enabled = s.enabled,
-                idle = s.idle,
-                loop = s.loop,
-                pingPong = s.pingPong,
-                frame = s.CurrentFrame
-            });
-
-            s.enabled = false;
+            if (s.enabled)
+                s.enabled = false;
         }
     }
 

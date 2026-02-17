@@ -32,7 +32,7 @@ public static class PlayerPersistentStats
         public bool HasControlBombs = true;
         public bool HasFullFire = false;
 
-        public MountedType MountedLouie = MountedType.Blue;
+        public MountedType MountedLouie = MountedType.Mole;
         public BomberSkin Skin = BomberSkin.White;
 
         public readonly List<ItemPickup.ItemType> QueuedEggs = new(8);
@@ -40,8 +40,8 @@ public static class PlayerPersistentStats
         public PlayerState()
         {
             QueuedEggs.Clear();
-            //QueuedEggs.Add(ItemPickup.ItemType.PinkLouieEgg);
-            //QueuedEggs.Add(ItemPickup.ItemType.PurpleLouieEgg);
+            QueuedEggs.Add(ItemPickup.ItemType.PinkLouieEgg);
+            QueuedEggs.Add(ItemPickup.ItemType.PurpleLouieEgg);
         }
     }
 

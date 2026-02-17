@@ -53,10 +53,25 @@ public class MoleMountDrillAbility : MonoBehaviour, IPlayerAbility
     MountEggQueue eggQueue;
     bool eggQueuePrevVisible;
     bool eggQueueCached;
-
     bool eggQueueHiddenByThisAbility;
 
     MountVisualController cachedMountVisual;
+
+    bool cachedMountVisualPrevEnabled;
+    bool cachedMountVisualDisabledByThisAbility;
+
+    struct CachedAsrState
+    {
+        public AnimatedSpriteRenderer asr;
+        public bool enabled;
+        public bool idle;
+        public bool loop;
+        public bool pingPong;
+        public int frame;
+    }
+
+    readonly List<CachedAsrState> _globalCachedAsr = new(64);
+    bool _globalSuppressionActive;
 
     void Awake()
     {
@@ -77,6 +92,14 @@ public class MoleMountDrillAbility : MonoBehaviour, IPlayerAbility
 
     void OnDisable() => Cancel();
     void OnDestroy() => Cancel();
+
+    void LateUpdate()
+    {
+        if (!running || !_globalSuppressionActive)
+            return;
+
+        EnforceGlobalSuppression();
+    }
 
     public void SetDrillSfx(AudioClip clip, float volume)
     {
@@ -195,13 +218,14 @@ public class MoleMountDrillAbility : MonoBehaviour, IPlayerAbility
             movement.SetExternalVisualSuppressed(false);
             movement.SetInactivityMountedDownOverride(true);
 
+            BeginGlobalSuppression();
+
             externalAnimator?.PlayPhase(1, dir);
             yield return new WaitForSeconds(p1);
 
             ApplyPhase1HeadOnlyDownDelta(false);
 
             movement.SetInactivityMountedDownOverride(false);
-
             movement.SetExternalVisualSuppressed(true);
 
             externalAnimator?.PlayPhase(2, dir);
@@ -220,6 +244,7 @@ public class MoleMountDrillAbility : MonoBehaviour, IPlayerAbility
             movement.ForceFacingDirection(Vector2.down);
             movement.SetInactivityMountedDownOverride(true);
             movement.SetExternalVisualSuppressed(false);
+
             yield return null;
         }
         finally
@@ -227,6 +252,8 @@ public class MoleMountDrillAbility : MonoBehaviour, IPlayerAbility
             ApplyPhase1HeadOnlyDownDelta(false);
 
             externalAnimator?.Stop();
+
+            EndGlobalSuppression();
 
             if (movement != null)
             {
@@ -241,6 +268,102 @@ public class MoleMountDrillAbility : MonoBehaviour, IPlayerAbility
 
             running = false;
             routine = null;
+        }
+    }
+
+    void BeginGlobalSuppression()
+    {
+        _globalCachedAsr.Clear();
+
+        var root = GetSuppressionRoot();
+        if (root == null)
+        {
+            _globalSuppressionActive = false;
+            return;
+        }
+
+        _globalSuppressionActive = true;
+
+        if (cachedMountVisual == null)
+            cachedMountVisual = GetComponentInChildren<MountVisualController>(true);
+
+        if (cachedMountVisual != null && !cachedMountVisualDisabledByThisAbility)
+        {
+            cachedMountVisualPrevEnabled = cachedMountVisual.enabled;
+            if (cachedMountVisualPrevEnabled)
+            {
+                cachedMountVisual.enabled = false;
+                cachedMountVisualDisabledByThisAbility = true;
+            }
+        }
+
+        var drillAnim = externalAnimator as MoleMountDrillAnimator;
+
+        var all = root.GetComponentsInChildren<AnimatedSpriteRenderer>(true);
+        for (int i = 0; i < all.Length; i++)
+        {
+            var a = all[i];
+            if (a == null)
+                continue;
+
+            if (drillAnim != null && drillAnim.IsAbilitySpritePublic(a))
+                continue;
+
+            _globalCachedAsr.Add(new CachedAsrState
+            {
+                asr = a,
+                enabled = a.enabled,
+                idle = a.idle,
+                loop = a.loop,
+                pingPong = a.pingPong,
+                frame = a.CurrentFrame
+            });
+
+            a.enabled = false;
+        }
+    }
+
+    void EnforceGlobalSuppression()
+    {
+        for (int i = 0; i < _globalCachedAsr.Count; i++)
+        {
+            var a = _globalCachedAsr[i].asr;
+            if (a == null)
+                continue;
+
+            if (a.enabled)
+                a.enabled = false;
+        }
+    }
+
+    void EndGlobalSuppression()
+    {
+        if (!_globalSuppressionActive)
+            return;
+
+        for (int i = 0; i < _globalCachedAsr.Count; i++)
+        {
+            var st = _globalCachedAsr[i];
+            if (st.asr == null)
+                continue;
+
+            st.asr.idle = st.idle;
+            st.asr.loop = st.loop;
+            st.asr.pingPong = st.pingPong;
+            st.asr.CurrentFrame = st.frame;
+            st.asr.enabled = st.enabled;
+
+            if (st.asr.enabled)
+                st.asr.RefreshFrame();
+        }
+
+        _globalCachedAsr.Clear();
+        _globalSuppressionActive = false;
+
+        if (cachedMountVisualDisabledByThisAbility && cachedMountVisual != null)
+        {
+            cachedMountVisual.enabled = cachedMountVisualPrevEnabled;
+            cachedMountVisualDisabledByThisAbility = false;
         }
     }
 
@@ -264,7 +387,7 @@ public class MoleMountDrillAbility : MonoBehaviour, IPlayerAbility
         eggQueueHiddenByThisAbility = false;
     }
 
-    private void ApplyPhase1HeadOnlyDownDelta(bool on)
+    void ApplyPhase1HeadOnlyDownDelta(bool on)
     {
         if (Phase1HeadOnlyDownDelta == Vector2.zero)
             return;
@@ -465,6 +588,8 @@ public class MoleMountDrillAbility : MonoBehaviour, IPlayerAbility
 
         externalAnimator?.Stop();
 
+        EndGlobalSuppression();
+
         if (movement != null)
         {
             movement.SetInactivityMountedDownOverride(false);
@@ -485,5 +610,16 @@ public class MoleMountDrillAbility : MonoBehaviour, IPlayerAbility
     {
         enabledAbility = false;
         Cancel();
+    }
+
+    Component GetSuppressionRoot()
+    {
+        if (externalAnimator is Component c && c != null)
+            return c;
+
+        if (cachedMountVisual != null)
+            return cachedMountVisual;
+
+        return null;
     }
 }
