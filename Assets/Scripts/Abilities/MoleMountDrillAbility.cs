@@ -21,6 +21,12 @@ public class MoleMountDrillAbility : MonoBehaviour, IPlayerAbility
     [SerializeField] private LayerMask enemyLayerMask;
     [SerializeField, Min(0)] private int enemyAvoidanceRadiusTiles = 5;
 
+    [Header("Enemy Avoidance - Behavior")]
+    [SerializeField] private bool enemyAvoidanceIgnoreTriggers = false;
+
+    [Header("Enemy Avoidance - Extra Safety")]
+    [SerializeField] private bool rejectTilesWithEnemyOverlap = true;
+
     [Header("Avoid Destructibles")]
     [SerializeField] private string destructiblesTag = "Destructibles";
     [SerializeField] private LayerMask destructiblesLayerMask;
@@ -417,6 +423,9 @@ public class MoleMountDrillAbility : MonoBehaviour, IPlayerAbility
         if (groundTilemap == null)
             return;
 
+        if (movement == null || rb == null)
+            return;
+
         Vector3 world = rb.position;
         Vector3Int originCell = groundTilemap.WorldToCell(world);
 
@@ -424,6 +433,7 @@ public class MoleMountDrillAbility : MonoBehaviour, IPlayerAbility
             return;
 
         Vector3 targetWorld = groundTilemap.GetCellCenterWorld(targetCell);
+
         rb.position = targetWorld;
         transform.position = targetWorld;
     }
@@ -457,10 +467,16 @@ public class MoleMountDrillAbility : MonoBehaviour, IPlayerAbility
                 if (IsDestructibleAtWorld(w))
                     continue;
 
+                if (rejectTilesWithEnemyOverlap && IsEnemyOverlappingExactSpot(w))
+                    continue;
+
                 fallback.Add(c);
 
-                if (enemyAvoidanceRadiusTiles > 0 && IsEnemyNearWorld(w))
-                    continue;
+                if (enemyAvoidanceRadiusTiles > 0)
+                {
+                    if (IsEnemyNearWorld(w))
+                        continue;
+                }
 
                 safe.Add(c);
             }
@@ -484,7 +500,9 @@ public class MoleMountDrillAbility : MonoBehaviour, IPlayerAbility
         });
 
         int pickPool = Mathf.Min(12, pool.Count);
-        target = pool[Random.Range(0, pickPool)];
+        int pickIndex = Random.Range(0, pickPool);
+        target = pool[pickIndex];
+
         return true;
     }
 
@@ -540,7 +558,37 @@ public class MoleMountDrillAbility : MonoBehaviour, IPlayerAbility
             if (h.gameObject == gameObject)
                 continue;
 
-            if (h.isTrigger)
+            if (enemyAvoidanceIgnoreTriggers && h.isTrigger)
+                continue;
+
+            return true;
+        }
+
+        return false;
+    }
+
+    bool IsEnemyOverlappingExactSpot(Vector3 worldPos)
+    {
+        if (enemyLayerMask.value == 0)
+            return false;
+
+        float tileSize = movement != null ? Mathf.Max(0.1f, movement.tileSize) : 1f;
+        Vector2 size = new Vector2(tileSize * 0.7f, tileSize * 0.7f);
+
+        var hits = Physics2D.OverlapBoxAll(worldPos, size, 0f, enemyLayerMask);
+        if (hits == null || hits.Length == 0)
+            return false;
+
+        for (int i = 0; i < hits.Length; i++)
+        {
+            var h = hits[i];
+            if (h == null)
+                continue;
+
+            if (h.gameObject == gameObject)
+                continue;
+
+            if (enemyAvoidanceIgnoreTriggers && h.isTrigger)
                 continue;
 
             return true;

@@ -1093,7 +1093,7 @@ Tilemap:
       - {fileID: 1925664496, guid: 6941c19c1cba83a4cbc94f1207289cd9, type: 3}
       - {fileID: -42286666, guid: 6941c19c1cba83a4cbc94f1207289cd9, type: 3}
       - {fileID: 1943493983, guid: 6941c19c1cba83a4cbc94f1207289cd9, type: 3}
-      m_AnimationSpeed: 5.0000005
+      m_AnimationSpeed: 5
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: 16, y: -6, z: 0}
@@ -2490,11 +2490,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8388449595591689174, guid: 780b4b3f570b10843b45da0805356115, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -5
+      value: 19
       objectReference: {fileID: 0}
     - target: {fileID: 8388449595591689174, guid: 780b4b3f570b10843b45da0805356115, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -4
+      value: 4
       objectReference: {fileID: 0}
     - target: {fileID: 8388449595591689174, guid: 780b4b3f570b10843b45da0805356115, type: 3}
       propertyPath: m_LocalPosition.z
@@ -9932,7 +9932,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 1.405, y: -1.498}
+  m_AnchoredPosition: {x: 2.75, y: -1.09}
   m_SizeDelta: {x: 1024, y: 1024}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1102021992
@@ -11048,7 +11048,7 @@ Tilemap:
       - {fileID: -1999495904, guid: 6941c19c1cba83a4cbc94f1207289cd9, type: 3}
       - {fileID: -1601884613, guid: 6941c19c1cba83a4cbc94f1207289cd9, type: 3}
       - {fileID: 1244794495, guid: 6941c19c1cba83a4cbc94f1207289cd9, type: 3}
-      m_AnimationSpeed: 5.0000005
+      m_AnimationSpeed: 5
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: 13, y: -4, z: 0}
@@ -11063,7 +11063,7 @@ Tilemap:
       - {fileID: -1999495904, guid: 6941c19c1cba83a4cbc94f1207289cd9, type: 3}
       - {fileID: -1601884613, guid: 6941c19c1cba83a4cbc94f1207289cd9, type: 3}
       - {fileID: 1244794495, guid: 6941c19c1cba83a4cbc94f1207289cd9, type: 3}
-      m_AnimationSpeed: 5
+      m_AnimationSpeed: 5.0000005
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: 1, y: -3, z: 0}
