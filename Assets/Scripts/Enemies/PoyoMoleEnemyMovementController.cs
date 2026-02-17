@@ -335,6 +335,8 @@ public sealed class PoyoMoleEnemyMovementController : JunctionTurningEnemyMoveme
         if (moleGo.TryGetComponent<CharacterHealth>(out var h) && h != null)
             h.StopInvulnerability();
 
+        ClearSpawnedMoleInvulnerability(moleGo);
+
         StartSpawnedMoleInactivityLoop(moleGo, visual);
     }
 
@@ -796,5 +798,22 @@ public sealed class PoyoMoleEnemyMovementController : JunctionTurningEnemyMoveme
         }
 
         StopAllCoroutines();
+    }
+
+    private void ClearSpawnedMoleInvulnerability(GameObject moleGo)
+    {
+        if (moleGo == null)
+            return;
+
+        var health = moleGo.GetComponentInChildren<CharacterHealth>(true);
+        if (health != null)
+            health.StopInvulnerability();
+
+        if (moleGo.TryGetComponent<MovementController>(out var mcRoot))
+            mcRoot.SetExplosionInvulnerable(false);
+
+        var mcChild = moleGo.GetComponentInChildren<MovementController>(true);
+        if (mcChild != null)
+            mcChild.SetExplosionInvulnerable(false);
     }
 }
