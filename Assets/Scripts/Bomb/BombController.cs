@@ -71,6 +71,7 @@ public partial class BombController : MonoBehaviour
     [SerializeField] private bool waterSinkApplyBlueTint = true;
     [SerializeField] private bool waterSinkTintAffectsChildren = true;
     [SerializeField] private Color waterSinkTint = new(0.45f, 0.75f, 1f, 1f);
+    [SerializeField, Range(0f, 1f)] private float waterSinkTargetAlpha = 0.25f;
 
     [Header("Explosion SFX By Radius (1..9, >=10 = last)")]
     public AudioClip[] explosionSfxByRadius = new AudioClip[10];
@@ -756,15 +757,15 @@ public partial class BombController : MonoBehaviour
 
             if (waterSinkApplyBlueTint && srs != null && originalColors != null)
             {
-                float alpha = Mathf.Lerp(1f, waterSinkTint.a, a);
+                float alpha = Mathf.Lerp(1f, waterSinkTargetAlpha, a);
+
+                Color target = waterSinkTint;
+                target.a = alpha;
 
                 for (int r = 0; r < srs.Length; r++)
                 {
                     var sr = srs[r];
                     if (sr == null) continue;
-
-                    Color target = waterSinkTint;
-                    target.a = alpha;
 
                     sr.color = Color.Lerp(originalColors[r], target, a);
                 }
@@ -784,15 +785,15 @@ public partial class BombController : MonoBehaviour
                 if (sr == null) continue;
 
                 Color final = waterSinkTint;
-                final.a = waterSinkTint.a;
+                final.a = waterSinkTargetAlpha;
                 sr.color = final;
             }
         }
 
         DisableBombDrivers(bombGo);
 
-        if (bombGo.TryGetComponent<Bomb>(out var bomb) && bomb != null)
-            bomb.enabled = false;
+        if (bombGo.TryGetComponent<Bomb>(out var bombScript) && bombScript != null)
+            bombScript.enabled = false;
 
         if (bombGo != null)
             Destroy(bombGo);
