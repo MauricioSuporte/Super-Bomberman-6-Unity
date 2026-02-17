@@ -195,7 +195,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 5
+  m_SortingOrder: 4
   m_Sprite: {fileID: -265122744945021051, guid: 16647b803e09f1844b75991bd41be488, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
@@ -602,6 +602,10 @@ MonoBehaviour:
   waterDestroySfx: {fileID: 0}
   waterDestroyVolume: 1
   waterSinkSeconds: 0.1
+  waterSinkApplyBlueTint: 1
+  waterSinkTintAffectsChildren: 1
+  waterSinkTint: {r: 0.45, g: 0.75, b: 1, a: 1}
+  waterSinkTargetAlpha: 0.25
   explosionSfxByRadius:
   - {fileID: 0}
   - {fileID: 0}
@@ -712,6 +716,7 @@ MonoBehaviour:
   enablePinkRightFix: 1
   pinkRightFixedLocalX: -1
   syncBlinkFromPlayerWhenMounted: 1
+  allowExternalTint: 1
 --- !u!114 &3822240261114814580
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1457,7 +1462,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 5
+  m_SortingOrder: 4
   m_Sprite: {fileID: -265122744945021051, guid: 16647b803e09f1844b75991bd41be488, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
