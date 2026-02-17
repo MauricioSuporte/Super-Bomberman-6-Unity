@@ -27,6 +27,10 @@ public sealed class PoyoTankEnemyMovementController : JunctionTurningEnemyMoveme
     [SerializeField, Min(0.01f)] private float shotWindupSeconds = 0.12f;
     [SerializeField, Min(0.01f)] private float shotAnimSeconds = 0.25f;
 
+    [Header("Cooldown Tint (PoyoTank Sprites)")]
+    [SerializeField] private bool tintOnCooldown = true;
+    [SerializeField] private Color cooldownTintColor = new(8f, 0.2f, 0.2f, 1f);
+
     [Header("Shot SFX")]
     [SerializeField] private AudioClip shotSfx;
 
@@ -80,6 +84,9 @@ public sealed class PoyoTankEnemyMovementController : JunctionTurningEnemyMoveme
 
     private static readonly Collider2D[] _overlapBuffer = new Collider2D[32];
 
+    private SpriteRenderer[] _tintSpriteRenderers;
+    private Color[] _tintOriginalColors;
+
     protected override void Awake()
     {
         base.Awake();
@@ -106,16 +113,93 @@ public sealed class PoyoTankEnemyMovementController : JunctionTurningEnemyMoveme
         if (_health != null)
             _health.Died += OnAnyDied;
 
+        CacheTintRenderers();
+
         DisableAllShotSprites();
         RefreshDamageAllowed();
+        ClearCooldownTint();
     }
 
     protected override void OnDestroy()
     {
+        ClearCooldownTint();
+
         if (_health != null)
             _health.Died -= OnAnyDied;
 
         base.OnDestroy();
+    }
+
+    private void CacheTintRenderers()
+    {
+        _tintSpriteRenderers = GetComponentsInChildren<SpriteRenderer>(true);
+
+        if (_tintSpriteRenderers == null)
+        {
+            _tintOriginalColors = null;
+            return;
+        }
+
+        _tintOriginalColors = new Color[_tintSpriteRenderers.Length];
+        for (int i = 0; i < _tintSpriteRenderers.Length; i++)
+        {
+            var sr = _tintSpriteRenderers[i];
+            _tintOriginalColors[i] = sr != null ? sr.color : Color.white;
+        }
+    }
+
+    private void ApplyCooldownTint()
+    {
+        if (!tintOnCooldown)
+            return;
+
+        if (_tintSpriteRenderers == null || _tintOriginalColors == null || _tintSpriteRenderers.Length == 0)
+            CacheTintRenderers();
+
+        if (_tintSpriteRenderers == null || _tintOriginalColors == null)
+            return;
+
+        if (isDead || _isDefeated)
+        {
+            ClearCooldownTint();
+            return;
+        }
+
+        if (_cooldownTimer <= 0f || shotCooldownSeconds <= 0f)
+        {
+            ClearCooldownTint();
+            return;
+        }
+
+        float normalized = 1f - Mathf.Clamp01(_cooldownTimer / shotCooldownSeconds);
+
+        for (int i = 0; i < _tintSpriteRenderers.Length; i++)
+        {
+            var sr = _tintSpriteRenderers[i];
+            if (sr == null)
+                continue;
+
+            Color baseColor = _tintOriginalColors[i];
+            Color tint = cooldownTintColor;
+            tint.a = baseColor.a;
+
+            sr.color = Color.Lerp(tint, baseColor, normalized);
+        }
+    }
+
+    private void ClearCooldownTint()
+    {
+        if (_tintSpriteRenderers == null || _tintOriginalColors == null)
+            return;
+
+        for (int i = 0; i < _tintSpriteRenderers.Length; i++)
+        {
+            var sr = _tintSpriteRenderers[i];
+            if (sr == null)
+                continue;
+
+            sr.color = _tintOriginalColors[i];
+        }
     }
 
     private void TryAutoResolveGroundTilemap()
@@ -144,12 +228,16 @@ public sealed class PoyoTankEnemyMovementController : JunctionTurningEnemyMoveme
     protected override void FixedUpdate()
     {
         if (isDead || _isDefeated)
+        {
+            ApplyCooldownTint();
             return;
+        }
 
         if (TryGetComponent<StunReceiver>(out var stun) && stun != null && stun.IsStunned)
         {
             StopMotionNow();
             RefreshDamageAllowed();
+            ApplyCooldownTint();
             return;
         }
 
@@ -157,6 +245,7 @@ public sealed class PoyoTankEnemyMovementController : JunctionTurningEnemyMoveme
         {
             StopMotionNow();
             RefreshDamageAllowed();
+            ApplyCooldownTint();
             return;
         }
 
@@ -168,6 +257,7 @@ public sealed class PoyoTankEnemyMovementController : JunctionTurningEnemyMoveme
             StopMotionNow();
             targetTile = rb.position;
             RefreshDamageAllowed();
+            ApplyCooldownTint();
             return;
         }
 
@@ -181,11 +271,13 @@ public sealed class PoyoTankEnemyMovementController : JunctionTurningEnemyMoveme
 
             StartShoot(dirToPlayer);
             RefreshDamageAllowed();
+            ApplyCooldownTint();
             return;
         }
 
         base.FixedUpdate();
         RefreshDamageAllowed();
+        ApplyCooldownTint();
     }
 
     protected override void UpdateSpriteDirection(Vector2 dir)
@@ -232,6 +324,8 @@ public sealed class PoyoTankEnemyMovementController : JunctionTurningEnemyMoveme
             return;
 
         _isDefeated = true;
+
+        ClearCooldownTint();
 
         if (_defeatRoutine != null)
             StopCoroutine(_defeatRoutine);
@@ -505,11 +599,14 @@ public sealed class PoyoTankEnemyMovementController : JunctionTurningEnemyMoveme
         _activeShotSprite = null;
 
         _cooldownTimer = shotCooldownSeconds;
+
         _isShooting = false;
         _shootRoutine = null;
 
         base.UpdateSpriteDirection(direction == Vector2.zero ? Vector2.down : direction);
         DecideNextTile();
+
+        ApplyCooldownTint();
     }
 
     private void StopMotionNow()
@@ -690,6 +787,8 @@ public sealed class PoyoTankEnemyMovementController : JunctionTurningEnemyMoveme
 
     private void OnAnyDied()
     {
+        ClearCooldownTint();
+
         if (_defeatRoutine != null)
         {
             StopCoroutine(_defeatRoutine);
