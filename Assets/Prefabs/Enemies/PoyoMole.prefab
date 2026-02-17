@@ -1002,7 +1002,7 @@ MonoBehaviour:
   poyoArcHeightTiles: 5
   poyoMinLandingDistanceTiles: 10
   poyoMaxLandingDistanceTiles: 15
-  notifyGameManagerOnDefeat: 0
+  notifyGameManagerOnDefeat: 1
   moleMountPrefab: {fileID: 2273416014071709654, guid: 158f2ef3a3826a54d995ca3a09ba97a2, type: 3}
   dropMoleMountOnDefeat: 1
   groundTilemapOverride: {fileID: 0}

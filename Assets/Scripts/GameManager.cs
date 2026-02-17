@@ -18,7 +18,7 @@ public class GameManager : MonoBehaviour
     [Header("Auto Prefab Loading (Resources)")]
     [SerializeField] private string portalResourcesPath = "Portal/EndStagePortal";
 
-    EndStagePortal portalPrefab;
+    private EndStagePortal portalPrefab;
 
     [Header("Hidden Objects Amounts")]
     [Min(0)] public int portalAmount = 1;
@@ -63,12 +63,15 @@ public class GameManager : MonoBehaviour
     [Header("Round Restart")]
     [SerializeField] private float restartAfterDeathSeconds = 4f;
 
-    int totalDestructibleBlocks;
-    int destroyedDestructibleBlocks;
+    private int totalDestructibleBlocks;
+    private int destroyedDestructibleBlocks;
 
-    readonly Dictionary<int, GameObject> orderToSpawn = new();
+    private readonly Dictionary<int, GameObject> orderToSpawn = new();
 
-    bool restartingRound;
+    private bool restartingRound;
+
+    private bool pendingEnemyCheck;
+    private Coroutine enemyCheckRoutine;
 
     void Awake()
     {
@@ -91,6 +94,54 @@ public class GameManager : MonoBehaviour
 
         SetupHiddenObjects();
         ApplyDestructibleShadows();
+
+        ScheduleEnemyCheckNextFrame();
+    }
+
+    public void NotifyEnemySpawned(int amount = 1)
+    {
+        int add = Mathf.Max(1, amount);
+        EnemiesAlive += add;
+
+        ScheduleEnemyCheckNextFrame();
+    }
+
+    public void NotifyEnemyDied()
+    {
+        EnemiesAlive = Mathf.Max(EnemiesAlive - 1, 0);
+        ScheduleEnemyCheckNextFrame();
+    }
+
+    public void ForceEnemyCheckNextFrame()
+    {
+        ScheduleEnemyCheckNextFrame();
+    }
+
+    private void ScheduleEnemyCheckNextFrame()
+    {
+        if (pendingEnemyCheck)
+            return;
+
+        pendingEnemyCheck = true;
+
+        if (enemyCheckRoutine != null)
+            StopCoroutine(enemyCheckRoutine);
+
+        enemyCheckRoutine = StartCoroutine(EnemyCheckNextFrameRoutine());
+    }
+
+    private IEnumerator EnemyCheckNextFrameRoutine()
+    {
+        yield return null;
+
+        pendingEnemyCheck = false;
+        enemyCheckRoutine = null;
+
+        if (EnemiesAlive <= 0)
+        {
+            EnemiesAlive = 0;
+            OnAllEnemiesDefeated?.Invoke();
+        }
     }
 
     public bool HasDestructiblesInStage()
@@ -328,16 +379,6 @@ public class GameManager : MonoBehaviour
             return prefabGo;
 
         return null;
-    }
-
-    public void NotifyEnemyDied()
-    {
-        EnemiesAlive--;
-        if (EnemiesAlive <= 0)
-        {
-            EnemiesAlive = 0;
-            OnAllEnemiesDefeated?.Invoke();
-        }
     }
 
     public void CheckWinState()

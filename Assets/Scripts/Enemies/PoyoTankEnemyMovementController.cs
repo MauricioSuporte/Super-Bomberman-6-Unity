@@ -282,9 +282,10 @@ public sealed class PoyoTankEnemyMovementController : JunctionTurningEnemyMoveme
 
         Vector2 origin = _rb != null ? _rb.position : (Vector2)transform.position;
 
+        var gameManager = FindFirstObjectByType<GameManager>();
+
         if (notifyGameManagerOnDefeat)
         {
-            var gameManager = FindFirstObjectByType<GameManager>();
             if (gameManager != null)
                 gameManager.NotifyEnemyDied();
         }
@@ -296,6 +297,9 @@ public sealed class PoyoTankEnemyMovementController : JunctionTurningEnemyMoveme
         {
             Vector2 landing = PickLandingInRange(origin, poyoMinLandingDistanceTiles, poyoMaxLandingDistanceTiles);
             GameObject poyoGo = Instantiate(poyoPrefab, origin, Quaternion.identity);
+
+            if (poyoGo != null && gameManager != null)
+                gameManager.NotifyEnemySpawned();
 
             if (poyoGo != null && poyoGo.TryGetComponent<PoyoEnemyMovementController>(out var poyo) && poyo != null)
                 poyo.LaunchTo(landing, poyoLaunchSeconds, poyoArcHeightTiles);
