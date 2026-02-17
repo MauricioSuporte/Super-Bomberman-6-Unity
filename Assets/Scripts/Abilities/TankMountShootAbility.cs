@@ -172,15 +172,15 @@ public sealed class TankMountShootAbility : MonoBehaviour, IPlayerAbility
                     src.PlayOneShot(shotSfx, shotVolume);
             }
 
+            float t = Mathf.Max(0f, shootLockSeconds);
+            if (t > 0f)
+                yield return new WaitForSecondsRealtime(t);
+
             cooldownUntil = Time.time + Mathf.Max(0f, cooldownSeconds);
 
             var v = ResolveTankVisual();
             if (v != null && tintTankOnCooldown)
                 v.SetExternalTint(true, cooldownTintColor, 0f);
-
-            float t = Mathf.Max(0f, shootLockSeconds);
-            if (t > 0f)
-                yield return new WaitForSecondsRealtime(t);
         }
         finally
         {
