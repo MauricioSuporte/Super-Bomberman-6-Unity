@@ -67,6 +67,11 @@ public partial class BombController : MonoBehaviour
     [Header("Water Sink Animation")]
     [SerializeField, Min(0f)] private float waterSinkSeconds = 0.1f;
 
+    [Header("Water Sink Tint")]
+    [SerializeField] private bool waterSinkApplyBlueTint = true;
+    [SerializeField] private bool waterSinkTintAffectsChildren = true;
+    [SerializeField] private Color waterSinkTint = new(0.45f, 0.75f, 1f, 1f);
+
     [Header("Explosion SFX By Radius (1..9, >=10 = last)")]
     public AudioClip[] explosionSfxByRadius = new AudioClip[10];
     [Range(0f, 1f)] public float explosionSfxVolume = 1f;
@@ -714,6 +719,26 @@ public partial class BombController : MonoBehaviour
             ar.enabled = true;
         }
 
+        SpriteRenderer[] srs = null;
+        Color[] originalColors = null;
+
+        if (waterSinkApplyBlueTint)
+        {
+            srs = waterSinkTintAffectsChildren
+                ? bombGo.GetComponentsInChildren<SpriteRenderer>(true)
+                : bombGo.GetComponents<SpriteRenderer>();
+
+            if (srs != null && srs.Length > 0)
+            {
+                originalColors = new Color[srs.Length];
+                for (int i = 0; i < srs.Length; i++)
+                {
+                    var sr = srs[i];
+                    originalColors[i] = sr != null ? sr.color : Color.white;
+                }
+            }
+        }
+
         Vector3 startScale = t != null ? t.localScale : Vector3.one;
 
         float stepSeconds = 0.1f;
@@ -729,11 +754,40 @@ public partial class BombController : MonoBehaviour
             if (t != null)
                 t.localScale = Vector3.Lerp(startScale, Vector3.zero, a);
 
+            if (waterSinkApplyBlueTint && srs != null && originalColors != null)
+            {
+                float alpha = Mathf.Lerp(1f, waterSinkTint.a, a);
+
+                for (int r = 0; r < srs.Length; r++)
+                {
+                    var sr = srs[r];
+                    if (sr == null) continue;
+
+                    Color target = waterSinkTint;
+                    target.a = alpha;
+
+                    sr.color = Color.Lerp(originalColors[r], target, a);
+                }
+            }
+
             yield return new WaitForSeconds(stepSeconds);
         }
 
         if (t != null)
             t.localScale = Vector3.zero;
+
+        if (waterSinkApplyBlueTint && srs != null && originalColors != null)
+        {
+            for (int r = 0; r < srs.Length; r++)
+            {
+                var sr = srs[r];
+                if (sr == null) continue;
+
+                Color final = waterSinkTint;
+                final.a = waterSinkTint.a;
+                sr.color = final;
+            }
+        }
 
         DisableBombDrivers(bombGo);
 
