@@ -886,6 +886,23 @@ public class PlayerMountCompanion : MonoBehaviour
             }
         }
 
+        if (mountedType == MountedType.Tank)
+        {
+            abilitySystem.Enable(TankMountShootAbility.AbilityId);
+
+            var shoot = abilitySystem.Get<TankMountShootAbility>(TankMountShootAbility.AbilityId);
+            if (shoot != null)
+            {
+                var anim = currentLouie.GetComponentInChildren<ITankMountShootExternalAnimator>(true);
+                shoot.SetExternalAnimator(anim);
+
+                if (currentAbilityCfg != null)
+                    shoot.SetShotSfx(currentAbilityCfg.abilitySfx, currentAbilityCfg.abilityVolume);
+                else
+                    shoot.SetShotSfx(null, 1f);
+            }
+        }
+
         currentAbilityCfg = null;
     }
 
@@ -921,6 +938,7 @@ public class PlayerMountCompanion : MonoBehaviour
         abilitySystem.Disable(RedLouiePunchStunAbility.AbilityId);
         abilitySystem.Disable(BlackLouieDashPushAbility.AbilityId);
         abilitySystem.Disable(MoleMountDrillAbility.AbilityId);
+        abilitySystem.Disable(TankMountShootAbility.AbilityId);
 
         var kick = abilitySystem.Get<YellowLouieDestructibleKickAbility>(YellowLouieDestructibleKickAbility.AbilityId);
         if (kick != null) { kick.SetExternalAnimator(null); kick.SetKickSfx(null, 1f); }

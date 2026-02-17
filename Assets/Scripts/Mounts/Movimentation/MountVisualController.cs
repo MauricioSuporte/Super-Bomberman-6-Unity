@@ -501,8 +501,7 @@ public class MountVisualController : MonoBehaviour
         if (faceDir == Vector2.zero)
             faceDir = Vector2.down;
 
-        AnimatedSpriteRenderer target = null;
-
+        AnimatedSpriteRenderer target;
         if (faceDir == Vector2.up) target = louieUp;
         else if (faceDir == Vector2.down) target = louieDown;
         else if (faceDir == Vector2.left) target = louieLeft != null ? louieLeft : louieRight;

@@ -367,6 +367,7 @@ GameObject:
   - component: {fileID: 3822240261114814580}
   - component: {fileID: 1919497702538166291}
   - component: {fileID: 6543421237453546391}
+  - component: {fileID: 1984779192924005223}
   m_Layer: 13
   m_Name: Tank
   m_TagString: Untagged
@@ -760,6 +761,23 @@ MonoBehaviour:
   tempSlowdownStartNormalized: 0.7
   tempEndBlinkMultiplier: 4
   playDamagedLoopInsteadOfBlink: 0
+--- !u!114 &1984779192924005223
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2273416014071709654}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 070c9eeea664b8b429a6b89b31beb9a1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TankMountShootAnimator
+  shotUp: {fileID: 7677378060523124291}
+  shotDown: {fileID: 5471246735332489006}
+  shotLeft: {fileID: 4507174183192697291}
+  shotRight: {fileID: 2897987350496308459}
+  forceFlipXFalse: 1
 --- !u!1 &2445788475736444126
 GameObject:
   m_ObjectHideFlags: 0
