@@ -15,7 +15,11 @@ public sealed class TankMountShootAbility : MonoBehaviour, IPlayerAbility
 
     [Header("Timing")]
     [SerializeField, Min(0f)] private float shootLockSeconds = 0.25f;
-    private readonly float cooldownSeconds = 1f;
+    private readonly float cooldownSeconds = 10f;
+
+    [Header("Cooldown Tint (Tank Sprites)")]
+    [SerializeField] private bool tintTankOnCooldown = true;
+    [SerializeField] private Color cooldownTintColor = new(8f, 0.2f, 0.2f, 1f);
 
     [Header("Projectile")]
     [SerializeField] private GameObject projectilePrefab;
@@ -41,6 +45,8 @@ public sealed class TankMountShootAbility : MonoBehaviour, IPlayerAbility
 
     private ITankMountShootExternalAnimator externalAnimator;
     private AudioSource audioSource;
+
+    private MountVisualController cachedTankVisual;
 
     public string Id => AbilityId;
     public bool IsEnabled => enabledAbility;
@@ -72,6 +78,11 @@ public sealed class TankMountShootAbility : MonoBehaviour, IPlayerAbility
     public void SetExternalAnimator(ITankMountShootExternalAnimator animator)
     {
         externalAnimator = animator;
+        cachedTankVisual = null;
+
+        var v = ResolveTankVisual();
+        if (v != null && tintTankOnCooldown)
+            v.SetExternalTint(false, cooldownTintColor, 1f);
     }
 
     public void SetShotSfx(AudioClip clip, float volume)
@@ -97,6 +108,8 @@ public sealed class TankMountShootAbility : MonoBehaviour, IPlayerAbility
             (StageIntroTransition.Instance != null &&
              (StageIntroTransition.Instance.IntroRunning || StageIntroTransition.Instance.EndingRunning)))
             return;
+
+        TickCooldownTint();
 
         if (movement.Direction != Vector2.zero)
             lastFacingDir = movement.Direction;
@@ -159,6 +172,12 @@ public sealed class TankMountShootAbility : MonoBehaviour, IPlayerAbility
                     src.PlayOneShot(shotSfx, shotVolume);
             }
 
+            cooldownUntil = Time.time + Mathf.Max(0f, cooldownSeconds);
+
+            var v = ResolveTankVisual();
+            if (v != null && tintTankOnCooldown)
+                v.SetExternalTint(true, cooldownTintColor, 0f);
+
             float t = Mathf.Max(0f, shootLockSeconds);
             if (t > 0f)
                 yield return new WaitForSecondsRealtime(t);
@@ -170,11 +189,61 @@ public sealed class TankMountShootAbility : MonoBehaviour, IPlayerAbility
             if (movement != null && lockInputWhileShooting)
                 movement.SetInputLocked(false);
 
-            cooldownUntil = Time.time + Mathf.Max(0f, cooldownSeconds);
-
             running = false;
             routine = null;
         }
+    }
+
+    private void TickCooldownTint()
+    {
+        if (!tintTankOnCooldown)
+            return;
+
+        var v = ResolveTankVisual();
+        if (v == null)
+            return;
+
+        if (!IsMountedOnTank())
+        {
+            v.SetExternalTint(false, cooldownTintColor, 1f);
+            return;
+        }
+
+        float remaining = cooldownUntil - Time.time;
+
+        if (remaining <= 0f || cooldownSeconds <= 0f)
+        {
+            v.SetExternalTint(false, cooldownTintColor, 1f);
+            return;
+        }
+
+        float normalized = 1f - Mathf.Clamp01(remaining / cooldownSeconds);
+        v.SetExternalTint(true, cooldownTintColor, normalized);
+    }
+
+    private MountVisualController ResolveTankVisual()
+    {
+        if (cachedTankVisual != null)
+            return cachedTankVisual;
+
+        if (!TryGetComponent<PlayerMountCompanion>(out var mount) || mount == null)
+            return null;
+
+        if (mount.GetMountedLouieType() != MountedType.Tank)
+            return null;
+
+        var visuals = GetComponentsInChildren<MountVisualController>(true);
+        for (int i = 0; i < visuals.Length; i++)
+        {
+            var v = visuals[i];
+            if (v == null)
+                continue;
+
+            cachedTankVisual = v;
+            break;
+        }
+
+        return cachedTankVisual;
     }
 
     private void StopMotionNow()
@@ -269,6 +338,10 @@ public sealed class TankMountShootAbility : MonoBehaviour, IPlayerAbility
 
         if (movement != null && lockInputWhileShooting)
             movement.SetInputLocked(false);
+
+        var v = ResolveTankVisual();
+        if (v != null && tintTankOnCooldown)
+            v.SetExternalTint(false, cooldownTintColor, 1f);
 
         running = false;
     }

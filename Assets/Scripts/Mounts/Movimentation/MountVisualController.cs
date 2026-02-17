@@ -39,6 +39,9 @@ public class MountVisualController : MonoBehaviour
     [Header("Blink Sync")]
     public bool syncBlinkFromPlayerWhenMounted = true;
 
+    [Header("External Tint (Ability Cooldown)")]
+    [SerializeField] private bool allowExternalTint = true;
+
     private AnimatedSpriteRenderer active;
     private bool playingEndStage;
     private bool playingInactivity;
@@ -61,6 +64,10 @@ public class MountVisualController : MonoBehaviour
     private Vector2 temporaryHeadOnlyDownDelta;
     private bool temporaryHeadOnlyDownDeltaActive;
 
+    private bool externalTintActive;
+    private Color externalTintColor = Color.white;
+    private float externalTintNormalized;
+
     public bool HasInactivityEmoteRenderer => louieInactivityEmoteLoop != null;
 
     public void SetTemporaryHeadOnlyDownDelta(Vector2 delta, bool active)
@@ -72,6 +79,16 @@ public class MountVisualController : MonoBehaviour
         ApplyHeadOnlyOffsetsIfNeeded(force: true);
     }
 
+    public void SetExternalTint(bool active, Color tintColor, float normalized01)
+    {
+        if (!allowExternalTint)
+            return;
+
+        externalTintActive = active;
+        externalTintColor = tintColor;
+        externalTintNormalized = Mathf.Clamp01(normalized01);
+    }
+
     public void Bind(MovementController movement)
     {
         owner = movement;
@@ -80,6 +97,10 @@ public class MountVisualController : MonoBehaviour
         suppressedByRedBoat = false;
 
         headOnlyOffsetsApplied = false;
+
+        externalTintActive = false;
+        externalTintColor = Color.white;
+        externalTintNormalized = 1f;
 
         CacheAllRenderers();
 
@@ -277,6 +298,29 @@ public class MountVisualController : MonoBehaviour
         }
 
         ApplyBlinkSyncFromOwnerIfNeeded();
+        ApplyExternalTintIfNeeded();
+    }
+
+    private void ApplyExternalTintIfNeeded()
+    {
+        if (!allowExternalTint || !externalTintActive)
+            return;
+
+        if (louieSpriteRenderers == null || louieSpriteRenderers.Length == 0)
+            return;
+
+        for (int i = 0; i < louieSpriteRenderers.Length; i++)
+        {
+            var sr = louieSpriteRenderers[i];
+            if (sr == null)
+                continue;
+
+            var baseColor = sr.color;
+            var tint = externalTintColor;
+            tint.a = baseColor.a;
+
+            sr.color = Color.Lerp(tint, baseColor, externalTintNormalized);
+        }
     }
 
     private void ApplyHeadOnlyOffsetsIfNeeded(bool force)
@@ -332,7 +376,7 @@ public class MountVisualController : MonoBehaviour
             }
         }
 
-        if (allSpriteRenderers != null)
+        if (allSprite_renderers_notnull())
         {
             for (int i = 0; i < allSpriteRenderers.Length; i++)
             {
@@ -341,6 +385,11 @@ public class MountVisualController : MonoBehaviour
                 sr.enabled = false;
             }
         }
+    }
+
+    private bool allSprite_renderers_notnull()
+    {
+        return allSpriteRenderers != null;
     }
 
     private void RestoreAfterBoatSuppression()
