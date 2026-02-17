@@ -54,6 +54,8 @@ public class MoleMountDrillAbility : MonoBehaviour, IPlayerAbility
     bool eggQueuePrevVisible;
     bool eggQueueCached;
 
+    bool eggQueueHiddenByThisAbility;
+
     MountVisualController cachedMountVisual;
 
     void Awake()
@@ -141,7 +143,12 @@ public class MoleMountDrillAbility : MonoBehaviour, IPlayerAbility
         if (eggQueue != null)
         {
             eggQueuePrevVisible = !eggQueue.IsForcedHidden;
+            eggQueueHiddenByThisAbility = true;
             eggQueue.ForceVisible(false);
+        }
+        else
+        {
+            eggQueueHiddenByThisAbility = false;
         }
 
         if (drillSfx != null && audioSource != null)
@@ -150,12 +157,14 @@ public class MoleMountDrillAbility : MonoBehaviour, IPlayerAbility
         if (movement == null || rb == null)
         {
             routine = null;
+            RestoreEggQueueIfNeeded();
             yield break;
         }
 
         if (running)
         {
             routine = null;
+            RestoreEggQueueIfNeeded();
             yield break;
         }
 
@@ -228,15 +237,31 @@ public class MoleMountDrillAbility : MonoBehaviour, IPlayerAbility
                     movement.SetInputLocked(false);
             }
 
-            if (eggQueue != null)
-            {
-                eggQueue.SnapQueueToOwnerNow(resetHistoryToOwnerNow: true);
-                eggQueue.ForceVisible(eggQueuePrevVisible);
-            }
+            RestoreEggQueueIfNeeded();
 
             running = false;
             routine = null;
         }
+    }
+
+    void RestoreEggQueueIfNeeded()
+    {
+        if (!eggQueueHiddenByThisAbility)
+            return;
+
+        if (!eggQueueCached)
+        {
+            eggQueue = GetComponentInChildren<MountEggQueue>(true);
+            eggQueueCached = true;
+        }
+
+        if (eggQueue != null)
+        {
+            eggQueue.SnapQueueToOwnerNow(resetHistoryToOwnerNow: true);
+            eggQueue.ForceVisible(eggQueuePrevVisible);
+        }
+
+        eggQueueHiddenByThisAbility = false;
     }
 
     private void ApplyPhase1HeadOnlyDownDelta(bool on)
@@ -438,20 +463,20 @@ public class MoleMountDrillAbility : MonoBehaviour, IPlayerAbility
 
         ApplyPhase1HeadOnlyDownDelta(false);
 
-        if (running)
+        externalAnimator?.Stop();
+
+        if (movement != null)
         {
-            running = false;
-            externalAnimator?.Stop();
+            movement.SetInactivityMountedDownOverride(false);
+            movement.SetExternalVisualSuppressed(false);
 
-            if (movement != null)
-            {
-                movement.SetInactivityMountedDownOverride(false);
-                movement.SetExternalVisualSuppressed(false);
-
-                if (lockInputWhileDrilling)
-                    movement.SetInputLocked(false);
-            }
+            if (lockInputWhileDrilling)
+                movement.SetInputLocked(false);
         }
+
+        RestoreEggQueueIfNeeded();
+
+        running = false;
     }
 
     public void Enable() => enabledAbility = true;

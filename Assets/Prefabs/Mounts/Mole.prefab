@@ -494,7 +494,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: aeb569e071432dc49b0dbbadfb27af27, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LouieAbilitySfxConfig
-  abilitySfx: {fileID: 8300000, guid: 56f48e9d8d841434fb4b17086f54fc5f, type: 3}
+  abilitySfx: {fileID: 8300000, guid: c114686b82917164e9a6267440a75ba9, type: 3}
   abilityVolume: 1
 --- !u!114 &1919497702538166291
 MonoBehaviour:
