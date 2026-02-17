@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using UnityEngine;
+using UnityEngine.Tilemaps;
 
 [RequireComponent(typeof(Rigidbody2D))]
 [RequireComponent(typeof(Collider2D))]
@@ -42,18 +43,52 @@ public sealed class PoyoTankEnemyMovementController : JunctionTurningEnemyMoveme
     [SerializeField] private AnimatedSpriteRenderer shotRightSprite;
     [SerializeField] private bool forceFlipXFalse = true;
 
+    [Header("Defeat -> Spawn Poyo")]
+    [SerializeField] private GameObject poyoPrefab;
+    [SerializeField, Min(0.01f)] private float damagedSecondsBeforeSpawn = 0.5f;
+    [SerializeField, Min(0.01f)] private float poyoLaunchSeconds = 0.5f;
+    [SerializeField, Min(0f)] private float poyoArcHeightTiles = 3f;
+    [SerializeField, Min(0)] private int poyoMinLandingDistanceTiles = 10;
+    [SerializeField, Min(0)] private int poyoMaxLandingDistanceTiles = 15;
+    [SerializeField] private bool notifyGameManagerOnDefeat = true;
+
+    [Header("Defeat -> Drop World Mount (Tank)")]
+    [SerializeField] private GameObject tankMountPrefab;
+    [SerializeField] private bool dropTankMountOnDefeat = true;
+
+    [Header("Respawn / Ground")]
+    [SerializeField] private Tilemap groundTilemapOverride;
+    [SerializeField, Min(1)] private int maxRespawnAttempts = 200;
+    [SerializeField, Min(0.05f)] private float overlapBoxSize = 0.8f;
+    [SerializeField] private LayerMask occupiedLayers;
+
     private Coroutine _shootRoutine;
+    private Coroutine _defeatRoutine;
+
     private float _cooldownTimer;
     private bool _isShooting;
     private Vector2 _shootDir;
     private AnimatedSpriteRenderer _activeShotSprite;
+
     private AudioSource _audioSource;
+    private Rigidbody2D _rb;
+    private Collider2D _collider;
+    private CharacterHealth _health;
+
+    private bool _isDefeated;
+    private bool _damageAllowed;
+
+    private static readonly Collider2D[] _overlapBuffer = new Collider2D[32];
 
     protected override void Awake()
     {
         base.Awake();
 
         _audioSource = GetComponent<AudioSource>();
+        _rb = GetComponent<Rigidbody2D>();
+        _collider = GetComponent<Collider2D>();
+
+        TryAutoResolveGroundTilemap();
 
         if (playerLayerMask.value == 0)
             playerLayerMask = LayerMask.GetMask("Player");
@@ -64,23 +99,64 @@ public sealed class PoyoTankEnemyMovementController : JunctionTurningEnemyMoveme
         if (projectileHitMask.value == 0)
             projectileHitMask = LayerMask.GetMask("Bomb", "Stage", "Enemy", "Player", "Water", "Explosion");
 
+        if (occupiedLayers.value == 0)
+            occupiedLayers = LayerMask.GetMask("Louie", "Player", "Bomb", "Explosion", "Item", "Enemy", "Stage");
+
+        _health = GetComponent<CharacterHealth>();
+        if (_health != null)
+            _health.Died += OnAnyDied;
+
         DisableAllShotSprites();
+        RefreshDamageAllowed();
+    }
+
+    protected override void OnDestroy()
+    {
+        if (_health != null)
+            _health.Died -= OnAnyDied;
+
+        base.OnDestroy();
+    }
+
+    private void TryAutoResolveGroundTilemap()
+    {
+        if (groundTilemapOverride != null)
+            return;
+
+        var tilemaps = FindObjectsByType<Tilemap>(FindObjectsSortMode.None);
+        if (tilemaps == null)
+            return;
+
+        foreach (var tm in tilemaps)
+        {
+            if (tm == null)
+                continue;
+
+            var cell = tm.WorldToCell(transform.position);
+            if (tm.GetTile(cell) != null)
+            {
+                groundTilemapOverride = tm;
+                return;
+            }
+        }
     }
 
     protected override void FixedUpdate()
     {
-        if (isDead)
+        if (isDead || _isDefeated)
             return;
 
         if (TryGetComponent<StunReceiver>(out var stun) && stun != null && stun.IsStunned)
         {
             StopMotionNow();
+            RefreshDamageAllowed();
             return;
         }
 
         if (isInDamagedLoop)
         {
             StopMotionNow();
+            RefreshDamageAllowed();
             return;
         }
 
@@ -91,6 +167,7 @@ public sealed class PoyoTankEnemyMovementController : JunctionTurningEnemyMoveme
         {
             StopMotionNow();
             targetTile = rb.position;
+            RefreshDamageAllowed();
             return;
         }
 
@@ -103,23 +180,281 @@ public sealed class PoyoTankEnemyMovementController : JunctionTurningEnemyMoveme
                 StopMotionNow();
 
             StartShoot(dirToPlayer);
+            RefreshDamageAllowed();
             return;
         }
 
         base.FixedUpdate();
+        RefreshDamageAllowed();
     }
 
     protected override void UpdateSpriteDirection(Vector2 dir)
     {
-        if (_isShooting || isDead || isInDamagedLoop)
+        if (_isShooting || isDead || isInDamagedLoop || _isDefeated)
             return;
 
         base.UpdateSpriteDirection(dir);
+        RefreshDamageAllowed();
+    }
+
+    protected override void OnTriggerEnter2D(Collider2D other)
+    {
+        if (isDead || _isDefeated)
+            return;
+
+        int layer = other.gameObject.layer;
+
+        if (layer == LayerMask.NameToLayer("Explosion"))
+        {
+            if (_damageAllowed)
+                TriggerDefeatAndSpawnPoyo();
+
+            return;
+        }
+
+        if (layer == LayerMask.NameToLayer("Bomb"))
+        {
+            HandleBombCollisionOnContact();
+            return;
+        }
+
+        if (layer == LayerMask.NameToLayer("Enemy"))
+        {
+            var otherEnemy = other.GetComponent<EnemyMovementController>();
+            HandleEnemyCollision(otherEnemy);
+            return;
+        }
+    }
+
+    private void TriggerDefeatAndSpawnPoyo()
+    {
+        if (_isDefeated)
+            return;
+
+        _isDefeated = true;
+
+        if (_defeatRoutine != null)
+            StopCoroutine(_defeatRoutine);
+
+        _defeatRoutine = StartCoroutine(DefeatRoutine());
+    }
+
+    private IEnumerator DefeatRoutine()
+    {
+        if (_shootRoutine != null)
+        {
+            StopCoroutine(_shootRoutine);
+            _shootRoutine = null;
+        }
+
+        _isShooting = false;
+        _activeShotSprite = null;
+
+        RefreshDamageAllowed();
+
+        if (_rb != null)
+        {
+            _rb.linearVelocity = Vector2.zero;
+            _rb.simulated = false;
+        }
+
+        if (_collider != null)
+            _collider.enabled = false;
+
+        DisableAllShotSprites();
+        DisableAllMovementSprites();
+
+        if (spriteDamaged != null)
+        {
+            spriteDamaged.enabled = true;
+            spriteDamaged.idle = false;
+            spriteDamaged.loop = true;
+            spriteDamaged.CurrentFrame = 0;
+            spriteDamaged.RefreshFrame();
+
+            if (forceFlipXFalse && spriteDamaged.TryGetComponent<SpriteRenderer>(out var srD) && srD != null)
+                srD.flipX = false;
+
+            activeSprite = spriteDamaged;
+        }
+
+        yield return new WaitForSecondsRealtime(Mathf.Max(0.01f, damagedSecondsBeforeSpawn));
+
+        Vector2 origin = _rb != null ? _rb.position : (Vector2)transform.position;
+
+        if (notifyGameManagerOnDefeat)
+        {
+            var gameManager = FindFirstObjectByType<GameManager>();
+            if (gameManager != null)
+                gameManager.NotifyEnemyDied();
+        }
+
+        if (dropTankMountOnDefeat)
+            SpawnWorldTankMount(origin);
+
+        if (poyoPrefab != null)
+        {
+            Vector2 landing = PickLandingInRange(origin, poyoMinLandingDistanceTiles, poyoMaxLandingDistanceTiles);
+            GameObject poyoGo = Instantiate(poyoPrefab, origin, Quaternion.identity);
+
+            if (poyoGo != null && poyoGo.TryGetComponent<PoyoEnemyMovementController>(out var poyo) && poyo != null)
+                poyo.LaunchTo(landing, poyoLaunchSeconds, poyoArcHeightTiles);
+            else if (poyoGo != null)
+                poyoGo.transform.position = landing;
+        }
+
+        Destroy(gameObject);
+    }
+
+    private void SpawnWorldTankMount(Vector2 origin)
+    {
+        if (tankMountPrefab == null)
+            return;
+
+        Vector3 pos = (Vector3)origin;
+        GameObject tankGo = Instantiate(tankMountPrefab, pos, Quaternion.identity);
+        if (tankGo == null)
+            return;
+
+        if (!tankGo.TryGetComponent<MountWorldPickup>(out var pickup) || pickup == null)
+            pickup = tankGo.AddComponent<MountWorldPickup>();
+
+        pickup.Init(MountedType.Tank);
+
+        var visual = tankGo.GetComponentInChildren<MountVisualController>(true);
+
+        if (tankGo.TryGetComponent<MountMovementController>(out var mmc) && mmc != null)
+            mmc.enabled = false;
+
+        if (tankGo.TryGetComponent<Rigidbody2D>(out var rb2) && rb2 != null)
+        {
+            rb2.simulated = true;
+            rb2.linearVelocity = Vector2.zero;
+            rb2.angularVelocity = 0f;
+        }
+
+        if (tankGo.TryGetComponent<Collider2D>(out var col))
+            col.enabled = true;
+
+        if (tankGo.TryGetComponent<BombController>(out var bc) && bc != null)
+            bc.enabled = false;
+
+        if (tankGo.TryGetComponent<CharacterHealth>(out var h) && h != null)
+            h.StopInvulnerability();
+
+        ClearSpawnedTankInvulnerability(tankGo);
+        StartSpawnedTankInactivityLoop(tankGo, visual);
+    }
+
+    private void StartSpawnedTankInactivityLoop(GameObject tankGo, MountVisualController visual)
+    {
+        if (tankGo == null || visual == null)
+            return;
+
+        if (tankGo.TryGetComponent<MovementController>(out var rootMc) && rootMc != null && rootMc.isDead)
+            return;
+
+        var selfMovement = tankGo.GetComponentInChildren<MovementController>(true);
+        if (selfMovement == null || selfMovement.isDead)
+            return;
+
+        visual.localOffset = (Vector2)visual.transform.localPosition;
+
+        visual.Bind(selfMovement);
+        visual.enabled = true;
+
+        visual.SetInactivityEmote(true);
+    }
+
+    private void ClearSpawnedTankInvulnerability(GameObject tankGo)
+    {
+        if (tankGo == null)
+            return;
+
+        var health = tankGo.GetComponentInChildren<CharacterHealth>(true);
+        if (health != null)
+            health.StopInvulnerability();
+
+        if (tankGo.TryGetComponent<MovementController>(out var mcRoot))
+            mcRoot.SetExplosionInvulnerable(false);
+
+        var mcChild = tankGo.GetComponentInChildren<MovementController>(true);
+        if (mcChild != null)
+            mcChild.SetExplosionInvulnerable(false);
+    }
+
+    private Vector2 PickLandingInRange(Vector2 origin, int minRadiusTiles, int maxRadiusTiles)
+    {
+        if (groundTilemapOverride == null)
+            return origin;
+
+        int minR = Mathf.Max(0, minRadiusTiles);
+        int maxR = Mathf.Max(minR, maxRadiusTiles);
+
+        int min2 = minR * minR;
+        int max2 = maxR * maxR;
+
+        Vector3Int originCell = groundTilemapOverride.WorldToCell(origin);
+
+        for (int i = 0; i < maxRespawnAttempts; i++)
+        {
+            int dx = Random.Range(-maxR, maxR + 1);
+            int dy = Random.Range(-maxR, maxR + 1);
+
+            int d2 = dx * dx + dy * dy;
+            if (d2 < min2 || d2 > max2)
+                continue;
+
+            Vector3Int cell = new(originCell.x + dx, originCell.y + dy, 0);
+
+            if (groundTilemapOverride.GetTile(cell) == null)
+                continue;
+
+            Vector2 center = groundTilemapOverride.GetCellCenterWorld(cell);
+
+            if (IsOccupied(center))
+                continue;
+
+            if (IsTileBlocked(center))
+                continue;
+
+            return center;
+        }
+
+        return origin;
+    }
+
+    private bool IsOccupied(Vector2 worldCenter)
+    {
+        var filter = new ContactFilter2D { useLayerMask = true, useTriggers = true };
+        filter.SetLayerMask(occupiedLayers);
+
+        int count = Physics2D.OverlapBox(worldCenter, Vector2.one * overlapBoxSize, 0f, filter, _overlapBuffer);
+
+        for (int i = 0; i < count; i++)
+        {
+            var c = _overlapBuffer[i];
+            _overlapBuffer[i] = null;
+
+            if (c != null && c.gameObject != gameObject)
+                return true;
+        }
+
+        return false;
+    }
+
+    private void RefreshDamageAllowed()
+    {
+        _damageAllowed =
+            !_isShooting &&
+            !_isDefeated &&
+            !isDead &&
+            !isInDamagedLoop;
     }
 
     private void StartShoot(Vector2 dir)
     {
-        if (_isShooting || isDead || isInDamagedLoop)
+        if (_isShooting || isDead || isInDamagedLoop || _isDefeated)
             return;
 
         if (_cooldownTimer > 0f)
@@ -150,7 +485,7 @@ public sealed class PoyoTankEnemyMovementController : JunctionTurningEnemyMoveme
 
         yield return new WaitForSecondsRealtime(windup);
 
-        if (!isDead && !isInDamagedLoop)
+        if (!isDead && !isInDamagedLoop && !_isDefeated)
         {
             SpawnProjectile(dir);
 
@@ -347,5 +682,22 @@ public sealed class PoyoTankEnemyMovementController : JunctionTurningEnemyMoveme
         float x = Mathf.Round(worldPos.x / tileSize) * tileSize;
         float y = Mathf.Round(worldPos.y / tileSize) * tileSize;
         return new Vector2(x, y);
+    }
+
+    private void OnAnyDied()
+    {
+        if (_defeatRoutine != null)
+        {
+            StopCoroutine(_defeatRoutine);
+            _defeatRoutine = null;
+        }
+
+        if (_shootRoutine != null)
+        {
+            StopCoroutine(_shootRoutine);
+            _shootRoutine = null;
+        }
+
+        StopAllCoroutines();
     }
 }

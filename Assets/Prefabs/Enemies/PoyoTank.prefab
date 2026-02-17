@@ -1078,6 +1078,10 @@ MonoBehaviour:
   playerLayerMask:
     serializedVersion: 2
     m_Bits: 8
+  stageLayerMask:
+    serializedVersion: 2
+    m_Bits: 0
+  destructiblesTag: Destructibles
   alignedToleranceTiles: 0.15
   scanBoxSizePercent: 0.6
   stopAndShoot: 1
@@ -1096,8 +1100,21 @@ MonoBehaviour:
   shotLeftSprite: {fileID: 4133685054606994392}
   shotRightSprite: {fileID: 1209352177853399713}
   forceFlipXFalse: 0
-  dbgPoyoTank: 1
-  dbgLogEveryFixed: 0
+  poyoPrefab: {fileID: 1228606389669354652, guid: ced803cd828df3741b0190e3a589b80a, type: 3}
+  damagedSecondsBeforeSpawn: 0.5
+  poyoLaunchSeconds: 1
+  poyoArcHeightTiles: 3
+  poyoMinLandingDistanceTiles: 10
+  poyoMaxLandingDistanceTiles: 15
+  notifyGameManagerOnDefeat: 1
+  tankMountPrefab: {fileID: 2273416014071709654, guid: 0b88553d721c2dd419fba889dcda636f, type: 3}
+  dropTankMountOnDefeat: 1
+  groundTilemapOverride: {fileID: 0}
+  maxRespawnAttempts: 200
+  overlapBoxSize: 0.8
+  occupiedLayers:
+    serializedVersion: 2
+    m_Bits: 10176
 --- !u!114 &4002592649201115258
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -8,5 +8,6 @@
     Yellow = 5,
     Pink = 6,
     Red = 7,
-    Mole = 9
+    Mole = 8,
+    Tank = 9
 }

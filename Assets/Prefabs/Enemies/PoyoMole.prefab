@@ -1010,7 +1010,7 @@ MonoBehaviour:
   overlapBoxSize: 0.8
   occupiedLayers:
     serializedVersion: 2
-    m_Bits: 10192
+    m_Bits: 10128
   excludeRadiusTiles: 3
 --- !u!114 &4002592649201115258
 MonoBehaviour:

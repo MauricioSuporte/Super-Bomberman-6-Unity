@@ -2181,7 +2181,6 @@ MonoBehaviour:
   passObstacleTag: Water
   suppressInactivityAnimation: 0
   isDead: 0
-  debugHeadOnlyMounted: 1
 --- !u!114 &2372813969180496726
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2403,6 +2402,7 @@ MonoBehaviour:
   pinkLouiePrefab: {fileID: 2273416014071709654, guid: 077a9ad657bf9be4fb1728d85f02354c, type: 3}
   redLouiePrefab: {fileID: 2273416014071709654, guid: 4a70e21506f50d14da6de1ab7462fbb9, type: 3}
   molePrefab: {fileID: 2273416014071709654, guid: 158f2ef3a3826a54d995ca3a09ba97a2, type: 3}
+  tankPrefab: {fileID: 2273416014071709654, guid: 0b88553d721c2dd419fba889dcda636f, type: 3}
   localOffset: {x: 0, y: -0.15}
   playerInvulnerabilityAfterLoseLouieSeconds: 1.5
   blinkPlayerTogetherWithLouie: 1

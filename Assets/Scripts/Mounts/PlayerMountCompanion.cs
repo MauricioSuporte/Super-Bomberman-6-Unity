@@ -19,6 +19,7 @@ public class PlayerMountCompanion : MonoBehaviour
     public GameObject pinkLouiePrefab;
     public GameObject redLouiePrefab;
     public GameObject molePrefab;
+    public GameObject tankPrefab;
 
     [Header("Local Offset")]
     public Vector2 localOffset = new(0f, -0.15f);
@@ -138,7 +139,6 @@ public class PlayerMountCompanion : MonoBehaviour
     public void MountYellowLouie() => Mount(MountedType.Yellow);
     public void MountPinkLouie() => Mount(MountedType.Pink);
     public void MountRedLouie() => Mount(MountedType.Red);
-    public void MountMole() => Mount(MountedType.Mole);
 
     public void RestoreMountedBlueLouie() => RestoreMounted(MountedType.Blue);
     public void RestoreMountedBlackLouie() => RestoreMounted(MountedType.Black);
@@ -148,6 +148,7 @@ public class PlayerMountCompanion : MonoBehaviour
     public void RestoreMountedPinkLouie() => RestoreMounted(MountedType.Pink);
     public void RestoreMountedRedLouie() => RestoreMounted(MountedType.Red);
     public void RestoreMountedMole() => RestoreMounted(MountedType.Mole);
+    public void RestoreMountedTank() => RestoreMounted(MountedType.Tank);
 
     public MountedType GetMountedLouieType() => currentLouie == null ? MountedType.None : mountedType;
     public CharacterHealth GetMountedLouieHealth() => mountedLouieHealth;
@@ -1430,6 +1431,7 @@ public class PlayerMountCompanion : MonoBehaviour
         prefabByType[MountedType.Pink] = pinkLouiePrefab;
         prefabByType[MountedType.Red] = redLouiePrefab;
         prefabByType[MountedType.Mole] = molePrefab;
+        prefabByType[MountedType.Tank] = tankPrefab;
 
         mountedByEggType.Clear();
         mountedByEggType[ItemPickup.ItemType.BlueLouieEgg] = MountedType.Blue;
