@@ -39,7 +39,6 @@ public class PlayerMountCompanion : MonoBehaviour
     [SerializeField] string yellowLouieMountSfxName = "MountYellowLouie";
     [SerializeField] string pinkLouieMountSfxName = "MountPinkLouie";
     [SerializeField] string redLouieMountSfxName = "MountRedLouie";
-    [SerializeField] string moleMountSfxName = "MountMole";
 
     readonly Dictionary<MountedType, AudioClip> _worldMountSfxCache = new();
 
@@ -1205,7 +1204,6 @@ public class PlayerMountCompanion : MonoBehaviour
             MountedType.Yellow => yellowLouieMountSfxName,
             MountedType.Pink => pinkLouieMountSfxName,
             MountedType.Red => redLouieMountSfxName,
-            MountedType.Mole => moleMountSfxName,
             _ => null
         };
 
