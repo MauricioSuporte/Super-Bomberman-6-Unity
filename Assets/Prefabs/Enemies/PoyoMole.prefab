@@ -994,6 +994,8 @@ MonoBehaviour:
   abilityEndPhase2Seconds: 0.5
   abilityEndPhase3Seconds: 0.5
   walkSecondsBeforeAbility: 10
+  abilityStartPhase1Sfx: {fileID: 8300000, guid: c114686b82917164e9a6267440a75ba9, type: 3}
+  abilityStartPhase1SfxVolume: 0.804
   poyoPrefab: {fileID: 1228606389669354652, guid: ced803cd828df3741b0190e3a589b80a, type: 3}
   damagedSecondsBeforeSpawn: 0.5
   poyoLaunchSeconds: 0.5

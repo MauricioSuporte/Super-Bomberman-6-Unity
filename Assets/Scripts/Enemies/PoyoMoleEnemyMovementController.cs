@@ -41,6 +41,10 @@ public sealed class PoyoMoleEnemyMovementController : JunctionTurningEnemyMoveme
     [Header("Ability Trigger")]
     [SerializeField, Min(0f)] private float walkSecondsBeforeAbility = 10f;
 
+    [Header("SFX")]
+    [SerializeField] private AudioClip abilityStartPhase1Sfx;
+    [SerializeField, Range(0f, 1f)] private float abilityStartPhase1SfxVolume = 1f;
+
     [Header("Defeat -> Spawn Poyo")]
     [SerializeField] private GameObject poyoPrefab;
     [SerializeField, Min(0.01f)] private float damagedSecondsBeforeSpawn = 0.5f;
@@ -65,6 +69,7 @@ public sealed class PoyoMoleEnemyMovementController : JunctionTurningEnemyMoveme
     private CharacterHealth _health;
     private Rigidbody2D _rb;
     private Collider2D _collider;
+    private AudioSource _audio;
     private Coroutine _abilityRoutine;
     private Coroutine _defeatRoutine;
 
@@ -89,6 +94,7 @@ public sealed class PoyoMoleEnemyMovementController : JunctionTurningEnemyMoveme
 
         _rb = GetComponent<Rigidbody2D>();
         _collider = GetComponent<Collider2D>();
+        _audio = GetComponent<AudioSource>();
 
         TryAutoResolveGroundTilemap();
 
@@ -481,24 +487,24 @@ public sealed class PoyoMoleEnemyMovementController : JunctionTurningEnemyMoveme
 
     private IEnumerator PlayAbilityStartPhases()
     {
-        yield return PlayOnePhase(abilityStartPhase1Sprite, abilityStartPhase1Seconds, loopPhase: true);
+        yield return PlayOnePhase(abilityStartPhase1Sprite, abilityStartPhase1Seconds, loopPhase: true, playSfx: true);
         if (isDead || _isDefeated) yield break;
 
-        yield return PlayOnePhase(abilityStartPhase2Sprite, abilityStartPhase2Seconds, loopPhase: false);
+        yield return PlayOnePhase(abilityStartPhase2Sprite, abilityStartPhase2Seconds, loopPhase: false, playSfx: false);
         if (isDead || _isDefeated) yield break;
 
-        yield return PlayOnePhase(abilityStartPhase3Sprite, abilityStartPhase3Seconds, loopPhase: false);
+        yield return PlayOnePhase(abilityStartPhase3Sprite, abilityStartPhase3Seconds, loopPhase: false, playSfx: false);
     }
 
     private IEnumerator PlayAbilityEndPhasesReverseOrderNoPhase1()
     {
-        yield return PlayOnePhase(abilityEndPhase3Sprite, abilityEndPhase3Seconds, loopPhase: false);
+        yield return PlayOnePhase(abilityEndPhase3Sprite, abilityEndPhase3Seconds, loopPhase: false, playSfx: false);
         if (isDead || _isDefeated) yield break;
 
-        yield return PlayOnePhase(abilityEndPhase2Sprite, abilityEndPhase2Seconds, loopPhase: false);
+        yield return PlayOnePhase(abilityEndPhase2Sprite, abilityEndPhase2Seconds, loopPhase: false, playSfx: false);
     }
 
-    private IEnumerator PlayOnePhase(AnimatedSpriteRenderer phaseSprite, float seconds, bool loopPhase)
+    private IEnumerator PlayOnePhase(AnimatedSpriteRenderer phaseSprite, float seconds, bool loopPhase, bool playSfx)
     {
         DisableAllWalkSprites();
         DisableAllAbilitySprites();
@@ -519,6 +525,9 @@ public sealed class PoyoMoleEnemyMovementController : JunctionTurningEnemyMoveme
             activeSprite = phaseSprite;
             ForceNoFlipOn(phaseSprite);
 
+            if (playSfx && abilityStartPhase1Sfx != null && _audio != null)
+                _audio.PlayOneShot(abilityStartPhase1Sfx, Mathf.Clamp01(abilityStartPhase1SfxVolume));
+
             yield return new WaitForSecondsRealtime(dur);
 
             phaseSprite.enabled = false;
@@ -526,6 +535,9 @@ public sealed class PoyoMoleEnemyMovementController : JunctionTurningEnemyMoveme
         }
         else
         {
+            if (playSfx && abilityStartPhase1Sfx != null && _audio != null)
+                _audio.PlayOneShot(abilityStartPhase1Sfx, Mathf.Clamp01(abilityStartPhase1SfxVolume));
+
             yield return new WaitForSecondsRealtime(dur);
         }
     }
