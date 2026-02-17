@@ -1078,6 +1078,8 @@ MonoBehaviour:
   playerLayerMask:
     serializedVersion: 2
     m_Bits: 8
+  alignedToleranceTiles: 0.15
+  scanBoxSizePercent: 0.6
   stopAndShoot: 1
   shotCooldownSeconds: 5
   shotWindupSeconds: 0.12
@@ -1094,6 +1096,8 @@ MonoBehaviour:
   shotLeftSprite: {fileID: 4133685054606994392}
   shotRightSprite: {fileID: 1209352177853399713}
   forceFlipXFalse: 0
+  dbgPoyoTank: 1
+  dbgLogEveryFixed: 0
 --- !u!114 &4002592649201115258
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1440,7 +1444,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8801135993263362806}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 3a4b55e1b961d144197e1a7a4a391956, type: 3}
   m_Name: 
