@@ -12,6 +12,10 @@ public sealed class PoyoTankEnemyMovementController : JunctionTurningEnemyMoveme
     [SerializeField, Min(0.1f)] private float visionDistance = 10f;
     [SerializeField] private LayerMask playerLayerMask;
 
+    [Header("Vision Block (Under Player)")]
+    [SerializeField] private LayerMask stageLayerMask;
+    [SerializeField] private string destructiblesTag = "Destructibles";
+
     [Header("Vision Alignment")]
     [SerializeField, Min(0.001f)] private float alignedToleranceTiles = 0.15f;
     [SerializeField, Range(0.1f, 1f)] private float scanBoxSizePercent = 0.6f;
@@ -53,6 +57,9 @@ public sealed class PoyoTankEnemyMovementController : JunctionTurningEnemyMoveme
 
         if (playerLayerMask.value == 0)
             playerLayerMask = LayerMask.GetMask("Player");
+
+        if (stageLayerMask.value == 0)
+            stageLayerMask = LayerMask.GetMask("Stage");
 
         if (projectileHitMask.value == 0)
             projectileHitMask = LayerMask.GetMask("Bomb", "Stage", "Enemy", "Player", "Water", "Explosion");
@@ -269,7 +276,6 @@ public sealed class PoyoTankEnemyMovementController : JunctionTurningEnemyMoveme
         for (int i = 0; i < dirs.Length; i++)
         {
             var dir = dirs[i];
-
             bool verticalScan = dir == Vector2.up || dir == Vector2.down;
 
             for (int step = 1; step <= maxSteps; step++)
@@ -292,11 +298,14 @@ public sealed class PoyoTankEnemyMovementController : JunctionTurningEnemyMoveme
                             ? Mathf.Abs(p.x - selfPos.x) <= alignedToleranceWorld
                             : Mathf.Abs(p.y - selfPos.y) <= alignedToleranceWorld;
 
-                        if (aligned)
-                        {
-                            dirToPlayer = dir;
-                            return true;
-                        }
+                        if (!aligned)
+                            continue;
+
+                        if (IsPlayerStandingOnDestructibles(p))
+                            continue;
+
+                        dirToPlayer = dir;
+                        return true;
                     }
                 }
 
@@ -306,5 +315,37 @@ public sealed class PoyoTankEnemyMovementController : JunctionTurningEnemyMoveme
         }
 
         return false;
+    }
+
+    private bool IsPlayerStandingOnDestructibles(Vector2 playerWorldPos)
+    {
+        if (stageLayerMask.value == 0)
+            return false;
+
+        Vector2 tileCenter = GetTileCenter(playerWorldPos);
+        Vector2 size = Vector2.one * (tileSize * 0.8f);
+
+        var hits = Physics2D.OverlapBoxAll(tileCenter, size, 0f, stageLayerMask);
+        if (hits == null || hits.Length == 0)
+            return false;
+
+        for (int i = 0; i < hits.Length; i++)
+        {
+            var h = hits[i];
+            if (h == null)
+                continue;
+
+            if (!string.IsNullOrEmpty(destructiblesTag) && h.CompareTag(destructiblesTag))
+                return true;
+        }
+
+        return false;
+    }
+
+    private Vector2 GetTileCenter(Vector2 worldPos)
+    {
+        float x = Mathf.Round(worldPos.x / tileSize) * tileSize;
+        float y = Mathf.Round(worldPos.y / tileSize) * tileSize;
+        return new Vector2(x, y);
     }
 }
