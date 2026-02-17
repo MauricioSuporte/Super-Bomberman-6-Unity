@@ -1,11 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using Assets.Scripts.Interface;
+using System.Collections.Generic;
 using UnityEngine;
-
-public interface ITankMountShootExternalAnimator
-{
-    void Play(Vector2 dir);
-    void Stop();
-}
 
 public sealed class TankMountShootAnimator : MonoBehaviour, ITankMountShootExternalAnimator
 {

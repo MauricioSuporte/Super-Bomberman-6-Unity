@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using Assets.Scripts.Interface;
+using System.Collections;
 using UnityEngine;
 
 [DisallowMultipleComponent]
@@ -14,7 +15,7 @@ public sealed class TankMountShootAbility : MonoBehaviour, IPlayerAbility
 
     [Header("Timing")]
     [SerializeField, Min(0f)] private float shootLockSeconds = 0.25f;
-    [SerializeField, Min(0f)] private float cooldownSeconds = 0.2f;
+    private readonly float cooldownSeconds = 1f;
 
     [Header("Projectile")]
     [SerializeField] private GameObject projectilePrefab;
