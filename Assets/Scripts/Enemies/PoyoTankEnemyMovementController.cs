@@ -12,6 +12,10 @@ public sealed class PoyoTankEnemyMovementController : JunctionTurningEnemyMoveme
     [SerializeField, Min(0.1f)] private float visionDistance = 10f;
     [SerializeField] private LayerMask playerLayerMask;
 
+    [Header("Vision Alignment")]
+    [SerializeField, Min(0.001f)] private float alignedToleranceTiles = 0.15f;
+    [SerializeField, Range(0.1f, 1f)] private float scanBoxSizePercent = 0.6f;
+
     [Header("Shooting")]
     [SerializeField] private bool stopAndShoot = true;
     [SerializeField, Min(0.01f)] private float shotCooldownSeconds = 5f;
@@ -253,23 +257,47 @@ public sealed class PoyoTankEnemyMovementController : JunctionTurningEnemyMoveme
             Vector2.right
         };
 
-        int maxSteps = Mathf.Max(1, Mathf.RoundToInt(visionDistance / tileSize));
-        Vector2 boxSize = Vector2.one * (tileSize * 0.8f);
+        int maxSteps = Mathf.Max(1, Mathf.FloorToInt(visionDistance / tileSize));
+
+        float boxPercent = Mathf.Clamp(scanBoxSizePercent, 0.1f, 1f);
+        Vector2 boxSize = Vector2.one * (tileSize * boxPercent);
+
+        float alignedToleranceWorld = Mathf.Max(0.001f, alignedToleranceTiles * tileSize);
+
+        Vector2 selfPos = rb.position;
 
         for (int i = 0; i < dirs.Length; i++)
         {
             var dir = dirs[i];
 
+            bool verticalScan = dir == Vector2.up || dir == Vector2.down;
+
             for (int step = 1; step <= maxSteps; step++)
             {
-                Vector2 tileCenter = rb.position + step * tileSize * dir;
+                Vector2 tileCenter = selfPos + step * tileSize * dir;
 
-                Collider2D playerHit = Physics2D.OverlapBox(tileCenter, boxSize, 0f, playerLayerMask);
+                var hits = Physics2D.OverlapBoxAll(tileCenter, boxSize, 0f, playerLayerMask);
 
-                if (playerHit != null)
+                if (hits != null && hits.Length > 0)
                 {
-                    dirToPlayer = dir;
-                    return true;
+                    for (int h = 0; h < hits.Length; h++)
+                    {
+                        var col = hits[h];
+                        if (col == null)
+                            continue;
+
+                        Vector2 p = col.attachedRigidbody != null ? col.attachedRigidbody.position : (Vector2)col.transform.position;
+
+                        bool aligned = verticalScan
+                            ? Mathf.Abs(p.x - selfPos.x) <= alignedToleranceWorld
+                            : Mathf.Abs(p.y - selfPos.y) <= alignedToleranceWorld;
+
+                        if (aligned)
+                        {
+                            dirToPlayer = dir;
+                            return true;
+                        }
+                    }
                 }
 
                 if (IsTileBlocked(tileCenter))
