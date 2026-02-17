@@ -315,14 +315,9 @@ public sealed class PoyoMoleEnemyMovementController : JunctionTurningEnemyMoveme
         pickup.Init(MountedType.Mole);
 
         var visual = moleGo.GetComponentInChildren<MountVisualController>(true);
-        if (visual != null)
-            visual.enabled = false;
 
         if (moleGo.TryGetComponent<MountMovementController>(out var mmc) && mmc != null)
             mmc.enabled = false;
-
-        if (moleGo.TryGetComponent<MovementController>(out var mc) && mc != null)
-            mc.enabled = false;
 
         if (moleGo.TryGetComponent<Rigidbody2D>(out var rb) && rb != null)
         {
@@ -339,6 +334,28 @@ public sealed class PoyoMoleEnemyMovementController : JunctionTurningEnemyMoveme
 
         if (moleGo.TryGetComponent<CharacterHealth>(out var h) && h != null)
             h.StopInvulnerability();
+
+        StartSpawnedMoleInactivityLoop(moleGo, visual);
+    }
+
+    private void StartSpawnedMoleInactivityLoop(GameObject moleGo, MountVisualController visual)
+    {
+        if (moleGo == null || visual == null)
+            return;
+
+        if (moleGo.TryGetComponent<MovementController>(out var rootMc) && rootMc != null && rootMc.isDead)
+            return;
+
+        var selfMovement = moleGo.GetComponentInChildren<MovementController>(true);
+        if (selfMovement == null || selfMovement.isDead)
+            return;
+
+        visual.localOffset = (Vector2)visual.transform.localPosition;
+
+        visual.Bind(selfMovement);
+        visual.enabled = true;
+
+        visual.SetInactivityEmote(true);
     }
 
     private Vector2 PickLandingNear(Vector2 origin, int radiusTiles)
