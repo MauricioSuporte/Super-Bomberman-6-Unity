@@ -1,0 +1,851 @@
+fileFormatVersion: 2
+guid: fd4f244a83c196c4fae6db6572aaa4a6
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 6994454538397917846
+    second: 2-4TilesCropped_0
+  - first:
+      213: 8292268225951430592
+    second: 2-4TilesCropped_1
+  - first:
+      213: -8699096712929138100
+    second: 2-4TilesCropped_2
+  - first:
+      213: -8084378401418802050
+    second: 2-4TilesCropped_3
+  - first:
+      213: 4136393331822343282
+    second: 2-4TilesCropped_4
+  - first:
+      213: 7275047051805809064
+    second: 2-4TilesCropped_5
+  - first:
+      213: -4440362154415146
+    second: 2-4TilesCropped_6
+  - first:
+      213: 1856625902548519718
+    second: 2-4TilesCropped_7
+  - first:
+      213: 7560583060591278071
+    second: 2-4TilesCropped_8
+  - first:
+      213: 4911982611596017931
+    second: 2-4TilesCropped_9
+  - first:
+      213: -2598167702531056925
+    second: 2-4TilesCropped_10
+  - first:
+      213: 4909105762637231329
+    second: 2-4TilesCropped_11
+  - first:
+      213: 5085157249303889864
+    second: 2-4TilesCropped_12
+  - first:
+      213: -7695206858166325107
+    second: 2-4TilesCropped_13
+  - first:
+      213: -5450993017244357687
+    second: 2-4TilesCropped_14
+  - first:
+      213: 3947821359909134837
+    second: 2-4TilesCropped_15
+  - first:
+      213: -1199636108819650147
+    second: 2-4TilesCropped_16
+  - first:
+      213: -3773795471854268531
+    second: 2-4TilesCropped_17
+  - first:
+      213: 7516491733246841412
+    second: 2-4TilesCropped_18
+  - first:
+      213: 8280862123440649187
+    second: 2-4TilesCropped_19
+  - first:
+      213: -4743446699613013209
+    second: 2-4TilesCropped_20
+  - first:
+      213: 5290630985492981689
+    second: 2-4TilesCropped_21
+  - first:
+      213: -751624770227459374
+    second: 2-4TilesCropped_22
+  - first:
+      213: -1502847943487502280
+    second: 2-4TilesCropped_23
+  - first:
+      213: 6643464359428574599
+    second: 2-4TilesCropped_24
+  - first:
+      213: -3788050019189960821
+    second: 2-4TilesCropped_25
+  - first:
+      213: -9214200134136061697
+    second: 2-4TilesCropped_26
+  - first:
+      213: -1629629581496617939
+    second: 2-4TilesCropped_27
+  - first:
+      213: -4262902684744471833
+    second: 2-4TilesCropped_28
+  - first:
+      213: 6439965892620072910
+    second: 2-4TilesCropped_29
+  - first:
+      213: -4035880734216787542
+    second: 2-4TilesCropped_30
+  - first:
+      213: -2366884402570465144
+    second: 2-4TilesCropped_31
+  - first:
+      213: -885221552391051746
+    second: 2-4TilesCropped_32
+  - first:
+      213: 127210220785463614
+    second: 2-4TilesCropped_33
+  - first:
+      213: -7756173375071482177
+    second: 2-4TilesCropped_34
+  - first:
+      213: -8598312587802325865
+    second: 2-4TilesCropped_35
+  - first:
+      213: 6315212503512254591
+    second: 2-4TilesCropped_36
+  - first:
+      213: -444830940874992804
+    second: 2-4TilesCropped_37
+  - first:
+      213: 1350581490570665125
+    second: 2-4TilesCropped_38
+  - first:
+      213: 8618490682156908032
+    second: 2-4TilesCropped_39
+  - first:
+      213: -7904424450006065650
+    second: 2-4TilesCropped_40
+  - first:
+      213: -5978340997047520435
+    second: 2-4TilesCropped_41
+  - first:
+      213: -9132426915072604551
+    second: 2-4TilesCropped_42
+  - first:
+      213: -760675095495294572
+    second: 2-4TilesCropped_43
+  - first:
+      213: -7888717010851664173
+    second: 2-4TilesCropped_44
+  - first:
+      213: -1392845875657255962
+    second: 2-4TilesCropped_45
+  - first:
+      213: -3308379495043628600
+    second: 2-4TilesCropped_46
+  - first:
+      213: -4589623754267456049
+    second: 2-4TilesCropped_47
+  - first:
+      213: -4692248962462290022
+    second: 2-4TilesCropped_48
+  - first:
+      213: -8318197204906113093
+    second: 2-4TilesCropped_49
+  - first:
+      213: -8607346931048058968
+    second: 2-4TilesCropped_50
+  - first:
+      213: -3202884658095027630
+    second: 2-4TilesCropped_51
+  - first:
+      213: 2924962622257149240
+    second: 2-4TilesCropped_52
+  - first:
+      213: -8242583532309920181
+    second: 2-4TilesCropped_53
+  - first:
+      213: 6411998659328492420
+    second: 2-4TilesCropped_54
+  - first:
+      213: -2561894928707036821
+    second: 2-4TilesCropped_55
+  - first:
+      213: -5635326078456099855
+    second: 2-4TilesCropped_56
+  - first:
+      213: -5467431485236194158
+    second: 2-4TilesCropped_57
+  - first:
+      213: 3843479450605855654
+    second: 2-4TilesCropped_58
+  - first:
+      213: -1305454514108337456
+    second: 2-4TilesCropped_59
+  - first:
+      213: 8320876821922539011
+    second: 2-4TilesCropped_60
+  - first:
+      213: 8309497180017522186
+    second: 2-4TilesCropped_61
+  - first:
+      213: 8697681527958032953
+    second: 2-4TilesCropped_62
+  - first:
+      213: 3169741035181741150
+    second: 2-4TilesCropped_63
+  - first:
+      213: 6660339895547337859
+    second: 2-4TilesCropped_64
+  - first:
+      213: 605799875510820086
+    second: 2-4TilesCropped_65
+  - first:
+      213: 3325470363455373578
+    second: 2-4TilesCropped_66
+  - first:
+      213: -3420728318813104269
+    second: 2-4TilesCropped_67
+  - first:
+      213: -1015782305769624644
+    second: 2-4TilesCropped_68
+  - first:
+      213: 330484222571864720
+    second: 2-4TilesCropped_69
+  - first:
+      213: -6136451010016572730
+    second: 2-4TilesCropped_70
+  - first:
+      213: -1884674265556230766
+    second: 2-4TilesCropped_71
+  - first:
+      213: -3689881236591404829
+    second: 2-4TilesCropped_72
+  - first:
+      213: -5965464724717203708
+    second: 2-4TilesCropped_73
+  - first:
+      213: -4339563918124610057
+    second: 2-4TilesCropped_74
+  - first:
+      213: 6036383451788201505
+    second: 2-4TilesCropped_75
+  - first:
+      213: -7544478696853348350
+    second: 2-4TilesCropped_76
+  - first:
+      213: -2393308289448706096
+    second: 2-4TilesCropped_77
+  - first:
+      213: -7742531462737433616
+    second: 2-4TilesCropped_78
+  - first:
+      213: -8073598098308045581
+    second: 2-4TilesCropped_79
+  - first:
+      213: -6701320689423742919
+    second: 2-4TilesCropped_80
+  - first:
+      213: -255587604071173507
+    second: 2-4TilesCropped_81
+  - first:
+      213: 6146366754764473796
+    second: 2-4TilesCropped_82
+  - first:
+      213: -7352225974688433427
+    second: 2-4TilesCropped_83
+  - first:
+      213: -1024801658714922021
+    second: 2-4TilesCropped_84
+  - first:
+      213: 3941024424100794021
+    second: 2-4TilesCropped_85
+  - first:
+      213: -1722690051901075586
+    second: 2-4TilesCropped_86
+  - first:
+      213: 1901063592917810001
+    second: 2-4TilesCropped_87
+  - first:
+      213: -4025099737146440401
+    second: 2-4TilesCropped_88
+  - first:
+      213: 6381113228051437190
+    second: 2-4TilesCropped_89
+  - first:
+      213: -8575128562321442022
+    second: 2-4TilesCropped_90
+  - first:
+      213: 5256632260557290431
+    second: 2-4TilesCropped_91
+  - first:
+      213: -3989610032537040467
+    second: 2-4TilesCropped_92
+  - first:
+      213: 4672276302957875195
+    second: 2-4TilesCropped_93
+  - first:
+      213: 1878609711818460132
+    second: 2-4TilesCropped_94
+  - first:
+      213: 9052095668460309182
+    second: 2-4TilesCropped_95
+  - first:
+      213: -5019386325582022292
+    second: 2-4TilesCropped_96
+  - first:
+      213: -6342318427902031798
+    second: 2-4TilesCropped_97
+  - first:
+      213: -6749031932385557336
+    second: 2-4TilesCropped_98
+  - first:
+      213: -6222150646548934865
+    second: 2-4TilesCropped_99
+  - first:
+      213: 8744269455259412994
+    second: 2-4TilesCropped_100
+  - first:
+      213: -4805864535294486992
+    second: 2-4TilesCropped_101
+  - first:
+      213: -138050206060360981
+    second: 2-4TilesCropped_102
+  - first:
+      213: 36288202189328844
+    second: 2-4TilesCropped_103
+  - first:
+      213: -8312201967600270056
+    second: 2-4TilesCropped_104
+  - first:
+      213: -8193563472011240414
+    second: 2-4TilesCropped_105
+  - first:
+      213: -4312116520245998251
+    second: 2-4TilesCropped_106
+  - first:
+      213: -4927048974950579065
+    second: 2-4TilesCropped_107
+  - first:
+      213: -3143919214949104941
+    second: 2-4TilesCropped_108
+  - first:
+      213: 1418201131540031202
+    second: 2-4TilesCropped_109
+  - first:
+      213: -2828601225063889793
+    second: 2-4TilesCropped_110
+  - first:
+      213: 5240125867200522276
+    second: 2-4TilesCropped_111
+  - first:
+      213: -6963498259518410504
+    second: 2-4TilesCropped_112
+  - first:
+      213: 2468234324297521450
+    second: 2-4TilesCropped_113
+  - first:
+      213: 1245010243334102651
+    second: 2-4TilesCropped_114
+  - first:
+      213: 4086158380339602287
+    second: 2-4TilesCropped_115
+  - first:
+      213: -5037208564741147177
+    second: 2-4TilesCropped_116
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 16
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: 2-4TilesCropped_73
+      rect:
+        serializedVersion: 2
+        x: 86
+        y: 86
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 40f8b137079663da0800000000000000
+      internalID: -5965464724717203708
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: 2-4TilesCropped_74
+      rect:
+        serializedVersion: 2
+        x: 103
+        y: 86
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7fd8414cb95c6c3c0800000000000000
+      internalID: -4339563918124610057
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: 2-4TilesCropped_75
+      rect:
+        serializedVersion: 2
+        x: 137
+        y: 86
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 12ec1eb64ca85c350800000000000000
+      internalID: 6036383451788201505
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: 2-4TilesCropped_79
+      rect:
+        serializedVersion: 2
+        x: 86
+        y: 69
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3f4641b2e41d4ff80800000000000000
+      internalID: -8073598098308045581
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: 2-4TilesCropped_80
+      rect:
+        serializedVersion: 2
+        x: 137
+        y: 69
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9380cec86502003a0800000000000000
+      internalID: -6701320689423742919
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: 2-4TilesCropped_84
+      rect:
+        serializedVersion: 2
+        x: 86
+        y: 52
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bd3e01f225c27c1f0800000000000000
+      internalID: -1024801658714922021
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: 2-4TilesCropped_85
+      rect:
+        serializedVersion: 2
+        x: 103
+        y: 52
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5ae8aa155d451b630800000000000000
+      internalID: 3941024424100794021
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: 2-4TilesCropped_86
+      rect:
+        serializedVersion: 2
+        x: 120
+        y: 52
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e7f46566686c718e0800000000000000
+      internalID: -1722690051901075586
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: 2-4TilesCropped_93
+      rect:
+        serializedVersion: 2
+        x: 103
+        y: 35
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bff8742fa8247d040800000000000000
+      internalID: 4672276302957875195
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: 2-4TilesCropped_94
+      rect:
+        serializedVersion: 2
+        x: 120
+        y: 35
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4ebc9806499221a10800000000000000
+      internalID: 1878609711818460132
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: 2-4TilesCropped_97
+      rect:
+        serializedVersion: 2
+        x: 171
+        y: 35
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a484c7c2efe8bf7a0800000000000000
+      internalID: -6342318427902031798
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: 2-4TilesCropped_107
+      rect:
+        serializedVersion: 2
+        x: 154
+        y: 18
+        width: 16
+        height: 16
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7844e19df0b9f9bb0800000000000000
+      internalID: -4927048974950579065
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 288bc265639ecde4eb6e14ac872d4ced
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries:
+      - key: SpriteEditor.SliceSettings
+        value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":16.0,"y":16.0},"gridSpriteOffset":{"x":1.0,"y":2.0},"gridSpritePadding":{"x":1.0,"y":1.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":1,"keepEmptyRects":false,"isAlternate":false}'
+    nameFileIdTable:
+      2-4TilesCropped_0: 6994454538397917846
+      2-4TilesCropped_1: 8292268225951430592
+      2-4TilesCropped_10: -2598167702531056925
+      2-4TilesCropped_100: 8744269455259412994
+      2-4TilesCropped_101: -4805864535294486992
+      2-4TilesCropped_102: -138050206060360981
+      2-4TilesCropped_103: 36288202189328844
+      2-4TilesCropped_104: -8312201967600270056
+      2-4TilesCropped_105: -8193563472011240414
+      2-4TilesCropped_106: -4312116520245998251
+      2-4TilesCropped_107: -4927048974950579065
+      2-4TilesCropped_108: -3143919214949104941
+      2-4TilesCropped_109: 1418201131540031202
+      2-4TilesCropped_11: 4909105762637231329
+      2-4TilesCropped_110: -2828601225063889793
+      2-4TilesCropped_111: 5240125867200522276
+      2-4TilesCropped_112: -6963498259518410504
+      2-4TilesCropped_113: 2468234324297521450
+      2-4TilesCropped_114: 1245010243334102651
+      2-4TilesCropped_115: 4086158380339602287
+      2-4TilesCropped_116: -5037208564741147177
+      2-4TilesCropped_12: 5085157249303889864
+      2-4TilesCropped_13: -7695206858166325107
+      2-4TilesCropped_14: -5450993017244357687
+      2-4TilesCropped_15: 3947821359909134837
+      2-4TilesCropped_16: -1199636108819650147
+      2-4TilesCropped_17: -3773795471854268531
+      2-4TilesCropped_18: 7516491733246841412
+      2-4TilesCropped_19: 8280862123440649187
+      2-4TilesCropped_2: -8699096712929138100
+      2-4TilesCropped_20: -4743446699613013209
+      2-4TilesCropped_21: 5290630985492981689
+      2-4TilesCropped_22: -751624770227459374
+      2-4TilesCropped_23: -1502847943487502280
+      2-4TilesCropped_24: 6643464359428574599
+      2-4TilesCropped_25: -3788050019189960821
+      2-4TilesCropped_26: -9214200134136061697
+      2-4TilesCropped_27: -1629629581496617939
+      2-4TilesCropped_28: -4262902684744471833
+      2-4TilesCropped_29: 6439965892620072910
+      2-4TilesCropped_3: -8084378401418802050
+      2-4TilesCropped_30: -4035880734216787542
+      2-4TilesCropped_31: -2366884402570465144
+      2-4TilesCropped_32: -885221552391051746
+      2-4TilesCropped_33: 127210220785463614
+      2-4TilesCropped_34: -7756173375071482177
+      2-4TilesCropped_35: -8598312587802325865
+      2-4TilesCropped_36: 6315212503512254591
+      2-4TilesCropped_37: -444830940874992804
+      2-4TilesCropped_38: 1350581490570665125
+      2-4TilesCropped_39: 8618490682156908032
+      2-4TilesCropped_4: 4136393331822343282
+      2-4TilesCropped_40: -7904424450006065650
+      2-4TilesCropped_41: -5978340997047520435
+      2-4TilesCropped_42: -9132426915072604551
+      2-4TilesCropped_43: -760675095495294572
+      2-4TilesCropped_44: -7888717010851664173
+      2-4TilesCropped_45: -1392845875657255962
+      2-4TilesCropped_46: -3308379495043628600
+      2-4TilesCropped_47: -4589623754267456049
+      2-4TilesCropped_48: -4692248962462290022
+      2-4TilesCropped_49: -8318197204906113093
+      2-4TilesCropped_5: 7275047051805809064
+      2-4TilesCropped_50: -8607346931048058968
+      2-4TilesCropped_51: -3202884658095027630
+      2-4TilesCropped_52: 2924962622257149240
+      2-4TilesCropped_53: -8242583532309920181
+      2-4TilesCropped_54: 6411998659328492420
+      2-4TilesCropped_55: -2561894928707036821
+      2-4TilesCropped_56: -5635326078456099855
+      2-4TilesCropped_57: -5467431485236194158
+      2-4TilesCropped_58: 3843479450605855654
+      2-4TilesCropped_59: -1305454514108337456
+      2-4TilesCropped_6: -4440362154415146
+      2-4TilesCropped_60: 8320876821922539011
+      2-4TilesCropped_61: 8309497180017522186
+      2-4TilesCropped_62: 8697681527958032953
+      2-4TilesCropped_63: 3169741035181741150
+      2-4TilesCropped_64: 6660339895547337859
+      2-4TilesCropped_65: 605799875510820086
+      2-4TilesCropped_66: 3325470363455373578
+      2-4TilesCropped_67: -3420728318813104269
+      2-4TilesCropped_68: -1015782305769624644
+      2-4TilesCropped_69: 330484222571864720
+      2-4TilesCropped_7: 1856625902548519718
+      2-4TilesCropped_70: -6136451010016572730
+      2-4TilesCropped_71: -1884674265556230766
+      2-4TilesCropped_72: -3689881236591404829
+      2-4TilesCropped_73: -5965464724717203708
+      2-4TilesCropped_74: -4339563918124610057
+      2-4TilesCropped_75: 6036383451788201505
+      2-4TilesCropped_76: -7544478696853348350
+      2-4TilesCropped_77: -2393308289448706096
+      2-4TilesCropped_78: -7742531462737433616
+      2-4TilesCropped_79: -8073598098308045581
+      2-4TilesCropped_8: 7560583060591278071
+      2-4TilesCropped_80: -6701320689423742919
+      2-4TilesCropped_81: -255587604071173507
+      2-4TilesCropped_82: 6146366754764473796
+      2-4TilesCropped_83: -7352225974688433427
+      2-4TilesCropped_84: -1024801658714922021
+      2-4TilesCropped_85: 3941024424100794021
+      2-4TilesCropped_86: -1722690051901075586
+      2-4TilesCropped_87: 1901063592917810001
+      2-4TilesCropped_88: -4025099737146440401
+      2-4TilesCropped_89: 6381113228051437190
+      2-4TilesCropped_9: 4911982611596017931
+      2-4TilesCropped_90: -8575128562321442022
+      2-4TilesCropped_91: 5256632260557290431
+      2-4TilesCropped_92: -3989610032537040467
+      2-4TilesCropped_93: 4672276302957875195
+      2-4TilesCropped_94: 1878609711818460132
+      2-4TilesCropped_95: 9052095668460309182
+      2-4TilesCropped_96: -5019386325582022292
+      2-4TilesCropped_97: -6342318427902031798
+      2-4TilesCropped_98: -6749031932385557336
+      2-4TilesCropped_99: -6222150646548934865
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
