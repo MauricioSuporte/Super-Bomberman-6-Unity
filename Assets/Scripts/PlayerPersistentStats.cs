@@ -17,7 +17,7 @@ public static class PlayerPersistentStats
 
     public sealed class PlayerState
     {
-        public int Life = 9;
+        public int Life = 2;
 
         public int BombAmount = 9;
         public int ExplosionRadius = 9;
@@ -207,8 +207,13 @@ public static class PlayerPersistentStats
         playerId = Mathf.Clamp(playerId, 1, 4);
         BeginStage();
 
-        var s = _stage[playerId - 1];
-        ResetTemporaryPowerups(s);
+        var sStage = _stage[playerId - 1];
+        ResetTemporaryPowerups(sStage);
+
+        sStage.Life = 1;
+
+        var sBase = Get(playerId);
+        sBase.Life = 1;
     }
 
     public static float InternalSpeedToTilesPerSecond(int internalSpeed)
