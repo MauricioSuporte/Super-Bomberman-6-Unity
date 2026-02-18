@@ -644,7 +644,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 94bf9db0a4fbb7643bd631c16d64a3ab, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LouieMovementController
-  deathSfx: {fileID: 8300000, guid: 25cf03f4439bbb342a2c2a67090bb6e5, type: 3}
+  deathSfx: {fileID: 8300000, guid: f168f16b604151f439124bfd47d617b2, type: 3}
   speed: 5
   tileSize: 1
   obstacleMask:
@@ -1128,6 +1128,7 @@ MonoBehaviour:
   - {fileID: -6647632493804449350, guid: eaeed7ce552d52a409a0dccee4f31c1e, type: 3}
   - {fileID: -5494614063893397770, guid: eaeed7ce552d52a409a0dccee4f31c1e, type: 3}
   - {fileID: -5427934351343933045, guid: eaeed7ce552d52a409a0dccee4f31c1e, type: 3}
+  - {fileID: 0}
   allowFlipX: 0
   animationTime: 0.1
   useSequenceDuration: 0

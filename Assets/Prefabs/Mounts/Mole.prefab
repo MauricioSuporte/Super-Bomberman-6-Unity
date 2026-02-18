@@ -372,6 +372,10 @@ MonoBehaviour:
   waterDestroySfx: {fileID: 0}
   waterDestroyVolume: 1
   waterSinkSeconds: 0.1
+  waterSinkApplyBlueTint: 1
+  waterSinkTintAffectsChildren: 1
+  waterSinkTint: {r: 0.45, g: 0.75, b: 1, a: 1}
+  waterSinkTargetAlpha: 0.25
   explosionSfxByRadius:
   - {fileID: 0}
   - {fileID: 0}
@@ -482,6 +486,7 @@ MonoBehaviour:
   enablePinkRightFix: 1
   pinkRightFixedLocalX: -1
   syncBlinkFromPlayerWhenMounted: 1
+  allowExternalTint: 1
 --- !u!114 &3822240261114814580
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1382,6 +1387,7 @@ MonoBehaviour:
   - {fileID: -6647632493804449350, guid: eaeed7ce552d52a409a0dccee4f31c1e, type: 3}
   - {fileID: -5494614063893397770, guid: eaeed7ce552d52a409a0dccee4f31c1e, type: 3}
   - {fileID: -5427934351343933045, guid: eaeed7ce552d52a409a0dccee4f31c1e, type: 3}
+  - {fileID: 0}
   allowFlipX: 0
   animationTime: 0.1
   useSequenceDuration: 0
