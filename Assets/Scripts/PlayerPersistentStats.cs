@@ -17,10 +17,10 @@ public static class PlayerPersistentStats
 
     public sealed class PlayerState
     {
-        public int Life = 2;
+        public int Life = 9;
 
         public int BombAmount = 9;
-        public int ExplosionRadius = 9;
+        public int ExplosionRadius = 10;
 
         public int SpeedInternal = MaxSpeedInternal;
 

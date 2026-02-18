@@ -60,6 +60,10 @@ public sealed class PoyoTankEnemyMovementController : JunctionTurningEnemyMoveme
     [SerializeField] private GameObject tankMountPrefab;
     [SerializeField] private bool dropTankMountOnDefeat = true;
 
+    [Header("Poyo Landing Safety (avoid dropped mount)")]
+    [SerializeField] private bool avoidLandingNearDroppedMount = true;
+    [SerializeField, Min(0)] private int avoidDroppedMountRadiusTiles = 3;
+
     [Header("Respawn / Ground")]
     [SerializeField] private Tilemap groundTilemapOverride;
     [SerializeField, Min(1)] private int maxRespawnAttempts = 200;
@@ -86,6 +90,9 @@ public sealed class PoyoTankEnemyMovementController : JunctionTurningEnemyMoveme
 
     private SpriteRenderer[] _tintSpriteRenderers;
     private Color[] _tintOriginalColors;
+
+    private bool _hasDroppedMountCell;
+    private Vector3Int _droppedMountCell;
 
     protected override void Awake()
     {
@@ -384,12 +391,18 @@ public sealed class PoyoTankEnemyMovementController : JunctionTurningEnemyMoveme
                 gameManager.NotifyEnemyDied();
         }
 
+        _hasDroppedMountCell = false;
+
         if (dropTankMountOnDefeat)
             SpawnWorldTankMount(origin);
 
         if (poyoPrefab != null)
         {
-            Vector2 landing = PickLandingInRange(origin, poyoMinLandingDistanceTiles, poyoMaxLandingDistanceTiles);
+            int avoidR = (avoidLandingNearDroppedMount && _hasDroppedMountCell) ? Mathf.Max(0, avoidDroppedMountRadiusTiles) : 0;
+            Vector3Int avoidCell = _hasDroppedMountCell ? _droppedMountCell : default;
+
+            Vector2 landing = PickLandingInRangeAvoidingCell(origin, poyoMinLandingDistanceTiles, poyoMaxLandingDistanceTiles, avoidCell, avoidR);
+
             GameObject poyoGo = Instantiate(poyoPrefab, origin, Quaternion.identity);
 
             if (poyoGo != null && gameManager != null)
@@ -409,10 +422,22 @@ public sealed class PoyoTankEnemyMovementController : JunctionTurningEnemyMoveme
         if (tankMountPrefab == null)
             return;
 
-        Vector3 pos = (Vector3)origin;
+        Vector2 spawnWorld = SnapWorldToGrid(origin);
+
+        Vector3 pos = (Vector3)spawnWorld;
         GameObject tankGo = Instantiate(tankMountPrefab, pos, Quaternion.identity);
         if (tankGo == null)
             return;
+
+        if (groundTilemapOverride != null)
+        {
+            _droppedMountCell = groundTilemapOverride.WorldToCell(spawnWorld);
+            _hasDroppedMountCell = true;
+        }
+        else
+        {
+            _hasDroppedMountCell = false;
+        }
 
         if (!tankGo.TryGetComponent<MountWorldPickup>(out var pickup) || pickup == null)
             pickup = tankGo.AddComponent<MountWorldPickup>();
@@ -442,6 +467,14 @@ public sealed class PoyoTankEnemyMovementController : JunctionTurningEnemyMoveme
 
         ClearSpawnedTankInvulnerability(tankGo);
         StartSpawnedTankInactivityLoop(tankGo, visual);
+    }
+
+    private Vector2 SnapWorldToGrid(Vector2 world)
+    {
+        float ts = Mathf.Max(0.0001f, tileSize);
+        world.x = Mathf.Round(world.x / ts) * ts;
+        world.y = Mathf.Round(world.y / ts) * ts;
+        return world;
     }
 
     private void StartSpawnedTankInactivityLoop(GameObject tankGo, MountVisualController visual)
@@ -481,7 +514,7 @@ public sealed class PoyoTankEnemyMovementController : JunctionTurningEnemyMoveme
             mcChild.SetExplosionInvulnerable(false);
     }
 
-    private Vector2 PickLandingInRange(Vector2 origin, int minRadiusTiles, int maxRadiusTiles)
+    private Vector2 PickLandingInRangeAvoidingCell(Vector2 origin, int minRadiusTiles, int maxRadiusTiles, Vector3Int avoidCell, int avoidRadiusTiles)
     {
         if (groundTilemapOverride == null)
             return origin;
@@ -489,10 +522,15 @@ public sealed class PoyoTankEnemyMovementController : JunctionTurningEnemyMoveme
         int minR = Mathf.Max(0, minRadiusTiles);
         int maxR = Mathf.Max(minR, maxRadiusTiles);
 
+        Vector3Int originCell = groundTilemapOverride.WorldToCell(origin);
+
+        int avoidR = Mathf.Max(0, avoidRadiusTiles);
+        int avoidR2 = avoidR * avoidR;
+
         int min2 = minR * minR;
         int max2 = maxR * maxR;
 
-        Vector3Int originCell = groundTilemapOverride.WorldToCell(origin);
+        bool useAvoid = avoidR > 0;
 
         for (int i = 0; i < maxRespawnAttempts; i++)
         {
@@ -503,10 +541,18 @@ public sealed class PoyoTankEnemyMovementController : JunctionTurningEnemyMoveme
             if (d2 < min2 || d2 > max2)
                 continue;
 
-            Vector3Int cell = new(originCell.x + dx, originCell.y + dy, 0);
+            Vector3Int cell = new Vector3Int(originCell.x + dx, originCell.y + dy, 0);
 
             if (groundTilemapOverride.GetTile(cell) == null)
                 continue;
+
+            if (useAvoid)
+            {
+                int ax = cell.x - avoidCell.x;
+                int ay = cell.y - avoidCell.y;
+                if ((ax * ax + ay * ay) <= avoidR2)
+                    continue;
+            }
 
             Vector2 center = groundTilemapOverride.GetCellCenterWorld(cell);
 
@@ -517,6 +563,100 @@ public sealed class PoyoTankEnemyMovementController : JunctionTurningEnemyMoveme
                 continue;
 
             return center;
+        }
+
+        int expandedMaxR = maxR + 10;
+        int expandedMax2 = expandedMaxR * expandedMaxR;
+        int expandedMin2 = min2;
+
+        int extraAttempts = Mathf.Max(maxRespawnAttempts, 400);
+        for (int i = 0; i < extraAttempts; i++)
+        {
+            int dx = Random.Range(-expandedMaxR, expandedMaxR + 1);
+            int dy = Random.Range(-expandedMaxR, expandedMaxR + 1);
+
+            int d2 = dx * dx + dy * dy;
+            if (d2 < expandedMin2 || d2 > expandedMax2)
+                continue;
+
+            Vector3Int cell = new Vector3Int(originCell.x + dx, originCell.y + dy, 0);
+
+            if (groundTilemapOverride.GetTile(cell) == null)
+                continue;
+
+            if (useAvoid)
+            {
+                int ax = cell.x - avoidCell.x;
+                int ay = cell.y - avoidCell.y;
+                if ((ax * ax + ay * ay) <= avoidR2)
+                    continue;
+            }
+
+            Vector2 center = groundTilemapOverride.GetCellCenterWorld(cell);
+
+            if (IsOccupied(center))
+                continue;
+
+            if (IsTileBlocked(center))
+                continue;
+
+            return center;
+        }
+
+        Vector2 best = origin;
+        float bestScore = -1f;
+
+        BoundsInt bounds = groundTilemapOverride.cellBounds;
+
+        int samples = 1200;
+        for (int i = 0; i < samples; i++)
+        {
+            int x = Random.Range(bounds.xMin, bounds.xMax);
+            int y = Random.Range(bounds.yMin, bounds.yMax);
+            Vector3Int cell = new Vector3Int(x, y, 0);
+
+            if (groundTilemapOverride.GetTile(cell) == null)
+                continue;
+
+            int odx = cell.x - originCell.x;
+            int ody = cell.y - originCell.y;
+            int od2 = odx * odx + ody * ody;
+            if (od2 < min2)
+                continue;
+
+            if (useAvoid)
+            {
+                int ax = cell.x - avoidCell.x;
+                int ay = cell.y - avoidCell.y;
+                if ((ax * ax + ay * ay) <= avoidR2)
+                    continue;
+            }
+
+            Vector2 center = groundTilemapOverride.GetCellCenterWorld(cell);
+
+            if (IsOccupied(center))
+                continue;
+
+            if (IsTileBlocked(center))
+                continue;
+
+            float score = useAvoid ? (cell - avoidCell).sqrMagnitude : (cell - originCell).sqrMagnitude;
+            if (score > bestScore)
+            {
+                bestScore = score;
+                best = center;
+            }
+        }
+
+        if (bestScore >= 0f)
+            return best;
+
+        Vector3Int fallbackCell = new Vector3Int(originCell.x + maxR, originCell.y, 0);
+        if (groundTilemapOverride.GetTile(fallbackCell) != null)
+        {
+            Vector2 center = groundTilemapOverride.GetCellCenterWorld(fallbackCell);
+            if (!IsOccupied(center) && !IsTileBlocked(center))
+                return center;
         }
 
         return origin;
