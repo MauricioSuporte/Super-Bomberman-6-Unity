@@ -8,6 +8,7 @@ TagManager:
   - Destructibles
   - BossBomber
   - Water
+  - Hole
   layers:
   - Default
   - TransparentFX
