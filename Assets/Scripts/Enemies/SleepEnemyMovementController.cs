@@ -32,6 +32,9 @@ public class SleepEnemyMovementController : JunctionTurningEnemyMovementControll
     [Header("Walk -> Pause Cycle (by main sprite active time)")]
     [SerializeField, Min(0.1f)] private float walkSecondsBeforePause = 5f;
 
+    [Header("Sleep Centering")]
+    [SerializeField, Range(0.001f, 0.25f)] private float sleepCenterEpsilonTiles = 0.05f;
+
     private CharacterHealth _health;
     private Coroutine _abilityRoutine;
 
@@ -40,6 +43,9 @@ public class SleepEnemyMovementController : JunctionTurningEnemyMovementControll
 
     private float _walkTimer;
     private bool _walkTimerPrimed;
+
+    private bool _pendingStopAtCenter;
+    private Vector2 _pendingCenterTarget;
 
     protected override void Awake()
     {
@@ -96,6 +102,22 @@ public class SleepEnemyMovementController : JunctionTurningEnemyMovementControll
             return;
         }
 
+        if (_pendingStopAtCenter)
+        {
+            targetTile = _pendingCenterTarget;
+
+            base.FixedUpdate();
+
+            if (rb != null && IsAtWorldCenter(rb.position, _pendingCenterTarget))
+            {
+                _pendingStopAtCenter = false;
+                StartAbilityStop();
+            }
+
+            ResetWalkTimer();
+            return;
+        }
+
         base.FixedUpdate();
 
         UpdateWalkTimerByMainSpriteActive();
@@ -108,8 +130,8 @@ public class SleepEnemyMovementController : JunctionTurningEnemyMovementControll
         if (shouldAutoPause)
         {
             ResetWalkTimer();
-            StartAbilityStop();
-            targetTile = rb.position;
+            RequestAbilityStopAtCenter();
+            return;
         }
     }
 
@@ -143,7 +165,7 @@ public class SleepEnemyMovementController : JunctionTurningEnemyMovementControll
 
     protected override void DecideNextTile()
     {
-        if (_isUsingAbility || isDead || isInDamagedLoop)
+        if (_isUsingAbility || _pendingStopAtCenter || isDead || isInDamagedLoop)
         {
             targetTile = rb.position;
             return;
@@ -172,8 +194,7 @@ public class SleepEnemyMovementController : JunctionTurningEnemyMovementControll
 
         if (isJunction && CanTriggerAbilityHere())
         {
-            StartAbilityStop();
-            targetTile = rb.position;
+            RequestAbilityStopAtCenter();
             return;
         }
 
@@ -236,6 +257,7 @@ public class SleepEnemyMovementController : JunctionTurningEnemyMovementControll
         bool canCount =
             mainActive &&
             !_isUsingAbility &&
+            !_pendingStopAtCenter &&
             !isDead &&
             !isInDamagedLoop &&
             !IsStunned() &&
@@ -266,6 +288,32 @@ public class SleepEnemyMovementController : JunctionTurningEnemyMovementControll
         return Random.value <= chanceToTriggerAtJunction;
     }
 
+    private void RequestAbilityStopAtCenter()
+    {
+        if (_isUsingAbility || _pendingStopAtCenter || _cooldownRemaining > 0f)
+            return;
+
+        if (rb == null || tileSize <= 0.0001f)
+        {
+            StartAbilityStop();
+            return;
+        }
+
+        Vector2 center = GetNearestTileCenter(rb.position);
+
+        if (IsAtWorldCenter(rb.position, center))
+        {
+            StartAbilityStop();
+            return;
+        }
+
+        _pendingStopAtCenter = true;
+        _pendingCenterTarget = center;
+        targetTile = center;
+
+        ResetWalkTimer();
+    }
+
     private void StartAbilityStop()
     {
         if (_isUsingAbility || _cooldownRemaining > 0f)
@@ -280,6 +328,7 @@ public class SleepEnemyMovementController : JunctionTurningEnemyMovementControll
     private void CancelAbilityStop()
     {
         _isUsingAbility = false;
+        _pendingStopAtCenter = false;
 
         if (_abilityRoutine != null)
         {
@@ -298,10 +347,20 @@ public class SleepEnemyMovementController : JunctionTurningEnemyMovementControll
     private IEnumerator AbilityStopRoutine()
     {
         _isUsingAbility = true;
+        _pendingStopAtCenter = false;
         ResetWalkTimer();
 
         if (rb != null)
+        {
             rb.linearVelocity = Vector2.zero;
+
+            if (tileSize > 0.0001f)
+            {
+                Vector2 center = GetNearestTileCenter(rb.position);
+                rb.position = center;
+                targetTile = center;
+            }
+        }
 
         EnsureMainSpriteOn();
 
@@ -436,5 +495,21 @@ public class SleepEnemyMovementController : JunctionTurningEnemyMovementControll
             return false;
 
         return stun.IsStunned;
+    }
+
+    private Vector2 GetNearestTileCenter(Vector2 worldPos)
+    {
+        if (tileSize <= 0.0001f)
+            return worldPos;
+
+        float x = Mathf.Round(worldPos.x / tileSize) * tileSize;
+        float y = Mathf.Round(worldPos.y / tileSize) * tileSize;
+        return new Vector2(x, y);
+    }
+
+    private bool IsAtWorldCenter(Vector2 pos, Vector2 center)
+    {
+        float eps = Mathf.Max(0.0001f, tileSize * Mathf.Clamp(sleepCenterEpsilonTiles, 0.001f, 0.25f));
+        return Vector2.SqrMagnitude(pos - center) <= (eps * eps);
     }
 }

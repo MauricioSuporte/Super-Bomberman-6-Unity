@@ -28,8 +28,8 @@ public static class PlayerPersistentStats
         public bool CanPunchBombs = true;
         public bool CanPassBombs = false;
         public bool CanPassDestructibles = true;
-        public bool HasPierceBombs = true;
-        public bool HasControlBombs = false;
+        public bool HasPierceBombs = false;
+        public bool HasControlBombs = true;
         public bool HasFullFire = false;
 
         public MountedType MountedLouie = MountedType.None;
