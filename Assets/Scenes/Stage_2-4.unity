@@ -3091,7 +3091,7 @@ Tilemap:
       m_TileColorIndex: 0
       m_TileObjectToInstantiateIndex: 65535
       dummyAlignment: 0
-      m_AllTileFlags: 1073741825
+      m_AllTileFlags: 1
   m_AnimatedTiles: {}
   m_TileAssetArray:
   - m_RefCount: 0
@@ -7655,6 +7655,63 @@ Tilemap:
     e31: 0
     e32: 0
     e33: 1
+--- !u!1001 &822885728
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 1228606389669354652, guid: a8ad655126f70524182569d5f875127c, type: 3}
+      propertyPath: m_Name
+      value: RedRobot
+      objectReference: {fileID: 0}
+    - target: {fileID: 1228606389669354653, guid: a8ad655126f70524182569d5f875127c, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -8
+      objectReference: {fileID: 0}
+    - target: {fileID: 1228606389669354653, guid: a8ad655126f70524182569d5f875127c, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 14.2
+      objectReference: {fileID: 0}
+    - target: {fileID: 1228606389669354653, guid: a8ad655126f70524182569d5f875127c, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1228606389669354653, guid: a8ad655126f70524182569d5f875127c, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1228606389669354653, guid: a8ad655126f70524182569d5f875127c, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1228606389669354653, guid: a8ad655126f70524182569d5f875127c, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1228606389669354653, guid: a8ad655126f70524182569d5f875127c, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1228606389669354653, guid: a8ad655126f70524182569d5f875127c, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1228606389669354653, guid: a8ad655126f70524182569d5f875127c, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1228606389669354653, guid: a8ad655126f70524182569d5f875127c, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: a8ad655126f70524182569d5f875127c, type: 3}
 --- !u!1 &1102021990
 GameObject:
   m_ObjectHideFlags: 0
@@ -7850,40 +7907,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a4b55e1b961d144197e1a7a4a391956, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AnimatedSpriteRenderer
-  idleSprite: {fileID: 7246436049500273037, guid: f68441e0eac06a344b97dfbf8d35254e, type: 3}
+  idleSprite: {fileID: -5830910725697397378, guid: 18e6805e1663653408b2f2fd75dc5df2, type: 3}
   animationSprite:
-  - {fileID: 7246436049500273037, guid: f68441e0eac06a344b97dfbf8d35254e, type: 3}
-  - {fileID: 1889244521001289109, guid: f68441e0eac06a344b97dfbf8d35254e, type: 3}
-  - {fileID: 7246436049500273037, guid: f68441e0eac06a344b97dfbf8d35254e, type: 3}
-  - {fileID: 1889244521001289109, guid: f68441e0eac06a344b97dfbf8d35254e, type: 3}
-  - {fileID: 7246436049500273037, guid: f68441e0eac06a344b97dfbf8d35254e, type: 3}
-  - {fileID: 1889244521001289109, guid: f68441e0eac06a344b97dfbf8d35254e, type: 3}
-  - {fileID: 7246436049500273037, guid: f68441e0eac06a344b97dfbf8d35254e, type: 3}
-  - {fileID: 1889244521001289109, guid: f68441e0eac06a344b97dfbf8d35254e, type: 3}
-  - {fileID: 7246436049500273037, guid: f68441e0eac06a344b97dfbf8d35254e, type: 3}
-  - {fileID: 1889244521001289109, guid: f68441e0eac06a344b97dfbf8d35254e, type: 3}
-  - {fileID: -6720762641539382885, guid: f68441e0eac06a344b97dfbf8d35254e, type: 3}
-  - {fileID: 1889244521001289109, guid: f68441e0eac06a344b97dfbf8d35254e, type: 3}
-  - {fileID: -6720762641539382885, guid: f68441e0eac06a344b97dfbf8d35254e, type: 3}
-  - {fileID: 1889244521001289109, guid: f68441e0eac06a344b97dfbf8d35254e, type: 3}
-  - {fileID: -6720762641539382885, guid: f68441e0eac06a344b97dfbf8d35254e, type: 3}
-  - {fileID: 1889244521001289109, guid: f68441e0eac06a344b97dfbf8d35254e, type: 3}
-  - {fileID: -6720762641539382885, guid: f68441e0eac06a344b97dfbf8d35254e, type: 3}
-  - {fileID: 1889244521001289109, guid: f68441e0eac06a344b97dfbf8d35254e, type: 3}
-  - {fileID: -6720762641539382885, guid: f68441e0eac06a344b97dfbf8d35254e, type: 3}
-  - {fileID: 1889244521001289109, guid: f68441e0eac06a344b97dfbf8d35254e, type: 3}
-  - {fileID: -6720762641539382885, guid: f68441e0eac06a344b97dfbf8d35254e, type: 3}
-  - {fileID: 0}
-  - {fileID: -6720762641539382885, guid: f68441e0eac06a344b97dfbf8d35254e, type: 3}
-  - {fileID: 0}
-  - {fileID: -6720762641539382885, guid: f68441e0eac06a344b97dfbf8d35254e, type: 3}
-  - {fileID: 0}
-  - {fileID: -6720762641539382885, guid: f68441e0eac06a344b97dfbf8d35254e, type: 3}
-  - {fileID: 0}
-  - {fileID: -6720762641539382885, guid: f68441e0eac06a344b97dfbf8d35254e, type: 3}
-  - {fileID: 0}
+  - {fileID: -5830910725697397378, guid: 18e6805e1663653408b2f2fd75dc5df2, type: 3}
+  - {fileID: 4809984455209906020, guid: 18e6805e1663653408b2f2fd75dc5df2, type: 3}
+  - {fileID: -2648227626333144506, guid: 18e6805e1663653408b2f2fd75dc5df2, type: 3}
+  - {fileID: 2698015592926892019, guid: 18e6805e1663653408b2f2fd75dc5df2, type: 3}
+  - {fileID: -632116998439235981, guid: 18e6805e1663653408b2f2fd75dc5df2, type: 3}
+  - {fileID: 6062111172099477505, guid: 18e6805e1663653408b2f2fd75dc5df2, type: 3}
+  - {fileID: 2150325698216607582, guid: 18e6805e1663653408b2f2fd75dc5df2, type: 3}
+  - {fileID: 4188210772722521475, guid: 18e6805e1663653408b2f2fd75dc5df2, type: 3}
   allowFlipX: 0
-  animationTime: 0.016666668
+  animationTime: 0.125
   useSequenceDuration: 0
   sequenceDuration: 0.5
   loop: 0
@@ -7938,7 +7973,7 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
-  m_Sprite: {fileID: 7246436049500273037, guid: f68441e0eac06a344b97dfbf8d35254e, type: 3}
+  m_Sprite: {fileID: -5830910725697397378, guid: 18e6805e1663653408b2f2fd75dc5df2, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -8106,7 +8141,7 @@ Transform:
   m_GameObject: {fileID: 1398873974}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: -0.22, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -8159,7 +8194,7 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
-  m_Sprite: {fileID: 7246436049500273037, guid: f68441e0eac06a344b97dfbf8d35254e, type: 3}
+  m_Sprite: {fileID: -5830910725697397378, guid: 18e6805e1663653408b2f2fd75dc5df2, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -8208,7 +8243,7 @@ BoxCollider2D:
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0.5, y: 0.5}
-    oldSize: {x: 3, y: 2}
+    oldSize: {x: 1, y: 1}
     newSize: {x: 2, y: 2}
     adaptiveTilingThreshold: 0.5
     drawMode: 0
@@ -9683,7 +9718,7 @@ Transform:
   m_GameObject: {fileID: 2051672177}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -7.5, y: 18, z: 0}
+  m_LocalPosition: {x: -7.5, y: 18.03, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -9706,9 +9741,9 @@ MonoBehaviour:
   enterSfx: {fileID: 8300000, guid: 778da4e4d7313e54195e6cbca646d851, type: 3}
   endStageMusic: {fileID: 0}
   unlockGateSfx: {fileID: 8300000, guid: 9f1639c45a104994a87b186228d5b8e7, type: 3}
-  openGateSfx: {fileID: 0}
+  openGateSfx: {fileID: 8300000, guid: 66686e87bc1a8994880d4f9972de6d54, type: 3}
   unlockSfxDelay: 1
-  openSfxDelayAfterUnlock: 0
+  openSfxDelayAfterUnlock: 1
   closedRoot: {fileID: 1398873974}
   openRoot: {fileID: 1345246685}
   openAnimatedSprite: {fileID: 1345246687}
@@ -9717,7 +9752,7 @@ MonoBehaviour:
   finishTrigger: {fileID: 2051672181}
   finishTriggerSize: {x: 0.3, y: 0.3}
   finishTriggerTilemap: {fileID: 672307155}
-  finishTriggerCell: {x: 19, y: 5, z: 0}
+  finishTriggerCell: {x: -8, y: 17, z: 0}
   finishTriggerOffset: {x: 0, y: 0}
   snapOpenToClosedOnUnlock: 1
 --- !u!82 &2051672180
@@ -9875,3 +9910,4 @@ SceneRoots:
   - {fileID: 290470827}
   - {fileID: 1746315304}
   - {fileID: 1522516126}
+  - {fileID: 822885728}
