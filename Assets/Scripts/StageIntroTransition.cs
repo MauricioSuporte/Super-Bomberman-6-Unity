@@ -48,6 +48,9 @@ public class StageIntroTransition : MonoBehaviour
     MovementController[] movementControllers = new MovementController[0];
     BombController[] bombControllers = new BombController[0];
 
+    // (B) Also disable PlayerManualDismount during intro
+    PlayerManualDismount[] manualDismounts = new PlayerManualDismount[0];
+
     public static void SkipTitleScreenOnNextLoad()
     {
         skipTitleNextRound = true;
@@ -127,6 +130,9 @@ public class StageIntroTransition : MonoBehaviour
 
         movementControllers = FindObjectsByType<MovementController>(inactive, FindObjectsSortMode.None);
         bombControllers = FindObjectsByType<BombController>(inactive, FindObjectsSortMode.None);
+
+        // (B) find manual dismount scripts too
+        manualDismounts = FindObjectsByType<PlayerManualDismount>(inactive, FindObjectsSortMode.None);
     }
 
     void DisableGameplayControllersAndHideSprites(bool hideLouieAndEggs)
@@ -162,6 +168,19 @@ public class StageIntroTransition : MonoBehaviour
                 continue;
 
             b.enabled = false;
+        }
+
+        // (B) disable PlayerManualDismount too
+        for (int i = 0; i < manualDismounts.Length; i++)
+        {
+            var d = manualDismounts[i];
+            if (d == null) continue;
+
+            bool isPlayer = d.CompareTag("Player") || d.GetComponent<PlayerIdentity>() != null;
+            if (!isPlayer)
+                continue;
+
+            d.enabled = false;
         }
     }
 
@@ -314,6 +333,10 @@ public class StageIntroTransition : MonoBehaviour
                 var b = m.GetComponent<BombController>();
                 if (b != null) b.enabled = false;
 
+                // keep manual dismount off
+                var d = m.GetComponent<PlayerManualDismount>();
+                if (d != null) d.enabled = false;
+
                 continue;
             }
 
@@ -437,7 +460,15 @@ public class StageIntroTransition : MonoBehaviour
 
                 var b = m.GetComponent<BombController>();
                 if (b != null) b.enabled = false;
+
+                var d = m.GetComponent<PlayerManualDismount>();
+                if (d != null) d.enabled = false;
             }
+
+            // keep global dismount scripts off too
+            for (int i = 0; i < manualDismounts.Length; i++)
+                if (manualDismounts[i] != null)
+                    manualDismounts[i].enabled = false;
 
             IntroRunning = false;
             return;
@@ -462,6 +493,19 @@ public class StageIntroTransition : MonoBehaviour
 
         foreach (var b in bombControllers)
             if (b) b.enabled = true;
+
+        // (B) re-enable manual dismount after intro (normal stages)
+        for (int i = 0; i < manualDismounts.Length; i++)
+        {
+            var d = manualDismounts[i];
+            if (d == null) continue;
+
+            bool isPlayer = d.CompareTag("Player") || d.GetComponent<PlayerIdentity>() != null;
+            if (!isPlayer)
+                continue;
+
+            d.enabled = true;
+        }
 
         IntroRunning = false;
     }
