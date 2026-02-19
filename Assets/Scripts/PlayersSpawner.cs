@@ -19,7 +19,6 @@ public sealed class PlayersSpawner : MonoBehaviour
     [SerializeField] private bool isBossStage;
 
     [Header("Spawn Control")]
-    [Tooltip("If true, clears existing players before spawning (useful on stage reload).")]
     [SerializeField] private bool clearExistingPlayersBeforeSpawn = true;
 
     bool spawned;
@@ -41,18 +40,13 @@ public sealed class PlayersSpawner : MonoBehaviour
     };
 
     [Serializable]
-    private sealed class SpawnOverride
+    private struct SpawnOverride
     {
-        [Tooltip("If enabled, uses the custom spawn settings below.")]
-        public bool useCustomSpawn;
+        [SerializeField] private bool useCustomSpawn;
+        [SerializeField] private Transform spawnPoint;
+        [SerializeField] private Vector2 positionXY;
 
-        [Tooltip("If assigned, this Transform has priority over Position.")]
-        public Transform spawnPoint;
-
-        [Tooltip("Used if Spawn Point is not assigned.")]
-        public Vector2 positionXY;
-
-        public bool TryGetPosition(out Vector3 pos)
+        public readonly bool TryGetPosition(out Vector3 pos)
         {
             pos = default;
 
@@ -182,44 +176,6 @@ public sealed class PlayersSpawner : MonoBehaviour
         if (playerIndex < 0 || playerIndex >= playerOverrides.Length)
             return false;
 
-        var ov = playerOverrides[playerIndex];
-        if (ov == null)
-            return false;
-
-        return ov.TryGetPosition(out pos);
-    }
-
-    public void SpawnNow(GameObject prefab, int playerIndex, Transform parent = null)
-    {
-        if (prefab == null)
-            return;
-
-        Vector2[] preset = isBossStage ? BossStagePositions : NormalStagePositions;
-        Vector3 spawnPos = ResolveSpawnPosition(playerIndex, preset);
-        Instantiate(prefab, spawnPos, Quaternion.identity, parent);
-    }
-
-    public void SpawnNow(GameObject prefab, int playerIndex)
-    {
-        SpawnNow(prefab, playerIndex, null);
-    }
-
-    public void SpawnNow(GameObject prefab)
-    {
-        if (prefab == null)
-            return;
-
-        int count = 1;
-
-        if (GameSession.Instance != null)
-            count = Mathf.Clamp(GameSession.Instance.ActivePlayerCount, 1, 4);
-
-        Vector2[] preset = isBossStage ? BossStagePositions : NormalStagePositions;
-
-        for (int i = 0; i < count; i++)
-        {
-            Vector3 spawnPos = ResolveSpawnPosition(i, preset);
-            Instantiate(prefab, spawnPos, Quaternion.identity, playersParent);
-        }
+        return playerOverrides[playerIndex].TryGetPosition(out pos);
     }
 }
