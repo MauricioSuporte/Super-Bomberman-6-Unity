@@ -7,8 +7,8 @@ using UnityEngine;
 public sealed class FloatingPlatform : MonoBehaviour
 {
     [Header("Path (World Positions)")]
-    [SerializeField] private Vector2 pointA = new Vector2(-7.5f, 3.5f);
-    [SerializeField] private Vector2 pointB = new Vector2(-7.5f, 0.5f);
+    [SerializeField] private Vector2 pointA = new(-7.5f, 3.5f);
+    [SerializeField] private Vector2 pointB = new(-7.5f, 0.5f);
 
     [Header("Motion")]
     [SerializeField, Min(0.01f)] private float moveSpeed = 2f;

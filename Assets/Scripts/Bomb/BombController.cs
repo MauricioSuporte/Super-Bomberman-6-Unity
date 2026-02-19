@@ -874,11 +874,7 @@ public partial class BombController : MonoBehaviour
             PlayExplosionSfx(currentExplosionAudio, effectiveRadius);
         }
 
-        if (explosionPrefab == null)
-        {
-            Debug.LogError($"[BombController] explosionPrefab NULL on '{name}' (scene='{gameObject.scene.name}')");
-            return;
-        }
+        TryHandleGroundExplosionHit(snapped);
 
         BombExplosion centerExplosion = Instantiate(explosionPrefab, snapped, Quaternion.identity);
         centerExplosion.Play(BombExplosion.ExplosionPart.Start, Vector2.zero, 0f, explosionDuration, snapped);
@@ -1048,6 +1044,8 @@ public partial class BombController : MonoBehaviour
                 (isLastSpawned && reachedMaxRange)
                     ? BombExplosion.ExplosionPart.End
                     : BombExplosion.ExplosionPart.Middle;
+
+            TryHandleGroundExplosionHit(p);
 
             BombExplosion explosion = Instantiate(explosionPrefab, p, Quaternion.identity);
             explosion.Play(part, direction, 0f, explosionDuration, origin);
@@ -1286,6 +1284,23 @@ public partial class BombController : MonoBehaviour
             bombAtHandler.OnBombAt(this, worldPos, cell, groundTile, bomb);
     }
 
+    private void TryHandleGroundExplosionHit(Vector2 worldPos)
+    {
+        ResolveGroundTileResolver();
+
+        if (groundTileResolver == null)
+            return;
+
+        if (!TryGetGroundTileAt(worldPos, out var cell, out var groundTile))
+            return;
+
+        if (!groundTileResolver.TryGetHandler(groundTile, out var handler) || handler == null)
+            return;
+
+        if (handler is IGroundTileExplosionHitHandler hitHandler)
+            hitHandler.OnExplosionHit(this, worldPos, cell, groundTile);
+    }
+
     private void RegisterBomb(GameObject bomb)
     {
         if (bomb == null)
@@ -1434,12 +1449,6 @@ public partial class BombController : MonoBehaviour
 
         if (sfxSource != null)
             PlayExplosionSfxExclusive(sfxSource, effectiveRadius);
-
-        if (explosionPrefab == null)
-        {
-            Debug.LogError($"[BombController] explosionPrefab NULL on '{name}' (scene='{gameObject.scene.name}')");
-            return;
-        }
 
         BombExplosion centerExp = Instantiate(explosionPrefab, p, Quaternion.identity);
         centerExp.Play(BombExplosion.ExplosionPart.Start, Vector2.zero, 0f, explosionDuration, p);
