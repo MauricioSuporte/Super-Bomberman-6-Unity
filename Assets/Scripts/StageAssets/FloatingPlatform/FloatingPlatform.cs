@@ -6,10 +6,6 @@ using UnityEngine;
 [RequireComponent(typeof(BoxCollider2D))]
 public sealed class FloatingPlatform : MonoBehaviour
 {
-    [Header("Debug")]
-    [SerializeField] private bool dbg = true;
-    [SerializeField, Min(0.05f)] private float dbgMoveLogEverySeconds = 0.35f;
-
     [Header("Path (World Positions)")]
     [SerializeField] private Vector2 pointA = new Vector2(-7.5f, 3.5f);
     [SerializeField] private Vector2 pointB = new Vector2(-7.5f, 0.5f);
@@ -27,12 +23,16 @@ public sealed class FloatingPlatform : MonoBehaviour
     [Header("Follow While Moving")]
     [SerializeField] private Vector2 followOffset = Vector2.zero;
 
+    [Header("Rider Position On Platform")]
+    [SerializeField] private Vector2 riderLocalOffset = Vector2.zero;
+
     [Header("Remount Safety")]
     [SerializeField, Min(0f)] private float remountBlockSeconds = 0.15f;
 
     [Header("Unmount Offset")]
-    [SerializeField] private bool applyUnmountYOffset = true;
-    [SerializeField, Min(0f)] private float unmountYOffsetTiles = 1f;
+    [SerializeField] private bool applyUnmountOffset = true;
+    [SerializeField] private Vector2 unmountOffsetUpperTiles = new(0f, 1f);
+    [SerializeField] private Vector2 unmountOffsetLowerTiles = new(0f, -1f);
 
     private BoxCollider2D _col;
     private Rigidbody2D _rb;
@@ -51,14 +51,6 @@ public sealed class FloatingPlatform : MonoBehaviour
 
     private static readonly HashSet<MovementController> ridersOnPlatforms = new();
     private static readonly Dictionary<MovementController, FloatingPlatform> riderToPlatform = new();
-
-    private string DbgPrefix => $"[FloatingPlatform#{GetInstanceID()} '{name}']";
-
-    private void Dbg(string msg)
-    {
-        if (!dbg) return;
-        Debug.Log($"{DbgPrefix} {msg}", this);
-    }
 
     public static bool TryGetPlatformForRider(MovementController mc, out FloatingPlatform platform)
     {
@@ -96,22 +88,17 @@ public sealed class FloatingPlatform : MonoBehaviour
         if ((Vector2)transform.position == Vector2.zero)
             transform.position = pointA;
 
-        Dbg($"Awake. pos={transform.position} A={pointA} B={pointB} rb={(_rb != null ? _rb.bodyType.ToString() : "NONE")}");
-
         _loop = StartCoroutine(MoveLoop());
     }
 
     private void OnEnable()
     {
-        Dbg("OnEnable.");
         if (_loop == null && gameObject.activeInHierarchy)
             _loop = StartCoroutine(MoveLoop());
     }
 
     private void OnDisable()
     {
-        Dbg("OnDisable.");
-
         if (_loop != null)
         {
             StopCoroutine(_loop);
@@ -128,10 +115,9 @@ public sealed class FloatingPlatform : MonoBehaviour
 
     private void LateUpdate()
     {
-        if (_rider == null || _riderRb == null)
-            return;
+        if (_rider == null) return;
 
-        if (_isMoving)
+        if (snapRiderToCenterOnMount)
             SnapRiderToPlatformCenter();
     }
 
@@ -148,14 +134,8 @@ public sealed class FloatingPlatform : MonoBehaviour
 
     private IEnumerator MoveLoop()
     {
-        Dbg($"MoveLoop START. timeScale={Time.timeScale:0.###} active={isActiveAndEnabled}");
-
         Vector2 startPos = GetWorldPos2D();
         _atA = Vector2.Distance(startPos, pointA) <= Vector2.Distance(startPos, pointB);
-
-        Dbg($"Initial: startPos={startPos} atA={_atA}");
-
-        float nextMoveDbg = 0f;
 
         while (true)
         {
@@ -165,8 +145,6 @@ public sealed class FloatingPlatform : MonoBehaviour
             UnlockRiderIfAny();
 
             float stop = Mathf.Max(0f, stopSeconds);
-            Dbg($"STOP begin. stopSeconds={stop:0.###} pos={GetWorldPos2D()} rider={(_rider != null ? _rider.name : "none")}");
-
             if (stop > 0f) yield return new WaitForSeconds(stop);
             else yield return null;
 
@@ -178,21 +156,12 @@ public sealed class FloatingPlatform : MonoBehaviour
                 BeginCarryRider();
 
             _isMoving = true;
-            Dbg($"MOVE begin -> target={target} moveSpeed={moveSpeed:0.###}");
 
             while (Vector2.Distance(GetWorldPos2D(), target) > 0.001f)
             {
                 Vector2 p = GetWorldPos2D();
                 Vector2 np = Vector2.MoveTowards(p, target, moveSpeed * Time.deltaTime);
-
                 SetWorldPos2D(np);
-
-                if (dbg && Time.time >= nextMoveDbg)
-                {
-                    nextMoveDbg = Time.time + Mathf.Max(0.05f, dbgMoveLogEverySeconds);
-                    Dbg($"MOVE tick pos={np} dist={Vector2.Distance(np, target):0.###} dt={Time.deltaTime:0.###}");
-                }
-
                 yield return null;
             }
 
@@ -204,7 +173,6 @@ public sealed class FloatingPlatform : MonoBehaviour
             UnlockRiderIfAny();
 
             _atA = !_atA;
-            Dbg($"MOVE end. snappedTo={target} nowAtA={_atA}");
         }
     }
 
@@ -213,12 +181,9 @@ public sealed class FloatingPlatform : MonoBehaviour
     private void SetWorldPos2D(Vector2 p)
     {
         if (_rb != null)
-        {
             _rb.MovePosition(p);
-            return;
-        }
-
-        transform.position = new Vector3(p.x, p.y, transform.position.z);
+        else
+            transform.position = new Vector3(p.x, p.y, transform.position.z);
     }
 
     private Vector2 GetPlatformCenter()
@@ -233,7 +198,7 @@ public sealed class FloatingPlatform : MonoBehaviour
     {
         if (_rider == null) return;
 
-        Vector2 center = GetPlatformCenter() + followOffset;
+        Vector2 center = GetPlatformCenter() + followOffset + riderLocalOffset;
 
         if (_riderRb != null)
         {
@@ -255,8 +220,6 @@ public sealed class FloatingPlatform : MonoBehaviour
 
         if (lockInputWhileMoving)
             _rider.SetInputLocked(true, forceIdleOnLock);
-
-        Dbg($"BeginCarryRider rider={_rider.name} lockInput={lockInputWhileMoving} snap={snapRiderToCenterOnMount}");
     }
 
     private void UnlockRiderIfAny()
@@ -265,35 +228,26 @@ public sealed class FloatingPlatform : MonoBehaviour
 
         if (lockInputWhileMoving)
             _rider.SetInputLocked(false);
-
-        Dbg($"UnlockRiderIfAny rider={_rider.name}");
     }
 
-    public bool CanMount(MovementController mc, out string reason)
+    public bool CanMount(MovementController mc)
     {
-        if (mc == null) { reason = "mc NULL"; return false; }
-        if (HasRider) { reason = "platform already has rider"; return false; }
-        if (mc.isDead) { reason = "mc.isDead=true"; return false; }
-        if (!mc.CompareTag("Player")) { reason = "mc tag != Player"; return false; }
+        if (mc == null) return false;
+        if (HasRider) return false;
+        if (mc.isDead) return false;
+        if (!mc.CompareTag("Player")) return false;
+        if (IsRidingPlatform(mc)) return false;
+        if (Time.frameCount == _lastUnmountFrame) return false;
+        if (Time.time < _nextAllowedMountTime) return false;
+        if (!IsIdleAtStop) return false;
 
-        if (IsRidingPlatform(mc)) { reason = "mc already riding another platform"; return false; }
-        if (Time.frameCount == _lastUnmountFrame) { reason = "blocked same frame as unmount"; return false; }
-        if (Time.time < _nextAllowedMountTime) { reason = "blocked by cooldown"; return false; }
-
-        if (!IsIdleAtStop) { reason = $"platform not stopped (stopping={_isStopping} moving={_isMoving})"; return false; }
-
-        reason = "ok";
         return true;
     }
 
-    public bool TryMount(MovementController mc, out string reason)
+    public bool TryMount(MovementController mc)
     {
-        if (!CanMount(mc, out var canReason))
-        {
-            reason = $"CanMount=false ({canReason})";
-            Dbg($"TryMount FAIL rider={mc?.name} reason={reason}");
+        if (!CanMount(mc))
             return false;
-        }
 
         _rider = mc;
         _riderRb = mc.Rigidbody;
@@ -303,7 +257,7 @@ public sealed class FloatingPlatform : MonoBehaviour
 
         if (snapRiderToCenterOnMount)
         {
-            Vector2 center = GetPlatformCenter() + followOffset;
+            Vector2 center = GetPlatformCenter() + followOffset + riderLocalOffset;
             mc.SnapToWorldPoint(center, roundRiderToGridOnSnap);
         }
 
@@ -312,8 +266,6 @@ public sealed class FloatingPlatform : MonoBehaviour
         else
             mc.SetInputLocked(false);
 
-        reason = "ok";
-        Dbg($"TryMount OK rider={mc.name} pos={mc.transform.position} stopping={_isStopping} moving={_isMoving}");
         return true;
     }
 
@@ -324,13 +276,12 @@ public sealed class FloatingPlatform : MonoBehaviour
         if (!IsIdleAtStop) return false;
 
         float tileSize = mover.tileSize > 0f ? mover.tileSize : 1f;
-        float yTiles = Mathf.Max(0f, unmountYOffsetTiles);
 
         bool upper = IsAtUpperStop;
-        float ySign = upper ? 1f : -1f;
-        Vector2 offset = applyUnmountYOffset ? new Vector2(0f, ySign * yTiles * tileSize) : Vector2.zero;
+        Vector2 offsetTiles = upper ? unmountOffsetUpperTiles : unmountOffsetLowerTiles;
+        Vector2 offset = applyUnmountOffset ? offsetTiles * tileSize : Vector2.zero;
 
-        Vector2 basePos = GetPlatformCenter() + followOffset;
+        Vector2 basePos = GetPlatformCenter() + followOffset + riderLocalOffset;
         Vector2 targetPos = basePos + offset;
 
         ForceUnmountInternal();
@@ -339,8 +290,6 @@ public sealed class FloatingPlatform : MonoBehaviour
         _nextAllowedMountTime = Time.time + Mathf.Max(0f, remountBlockSeconds);
 
         mover.SnapToWorldPoint(targetPos, roundRiderToGridOnSnap);
-
-        Dbg($"TryUnmount OK rider={mover.name} upper={upper} targetPos={targetPos} nextAllowed={_nextAllowedMountTime:0.###}");
         return true;
     }
 
@@ -358,8 +307,6 @@ public sealed class FloatingPlatform : MonoBehaviour
 
         _rider = null;
         _riderRb = null;
-
-        Dbg($"ForceUnmount rider={prev.name}");
     }
 
     private bool TryHandlePlatformInput(MovementController mc)
@@ -379,7 +326,7 @@ public sealed class FloatingPlatform : MonoBehaviour
         if (IsAtLowerStop)
         {
             if (!isRider && up)
-                return TryMount(mc, out _);
+                return TryMount(mc);
 
             if (isRider && down)
                 return TryUnmount(mc);
@@ -388,7 +335,7 @@ public sealed class FloatingPlatform : MonoBehaviour
         if (IsAtUpperStop)
         {
             if (!isRider && down)
-                return TryMount(mc, out _);
+                return TryMount(mc);
 
             if (isRider && up)
                 return TryUnmount(mc);
