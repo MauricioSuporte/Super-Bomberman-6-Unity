@@ -6661,7 +6661,7 @@ Tilemap:
       m_AnimatedSprites:
       - {fileID: -512380286, guid: 9ca3acaac181aaa4da91fd60f6063a21, type: 3}
       - {fileID: 146987460, guid: 9ca3acaac181aaa4da91fd60f6063a21, type: 3}
-      m_AnimationSpeed: 5.0000005
+      m_AnimationSpeed: 5
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: -10, y: 18, z: 0}
@@ -6701,7 +6701,7 @@ Tilemap:
       - {fileID: -541303470, guid: 9ca3acaac181aaa4da91fd60f6063a21, type: 3}
       - {fileID: 44329480, guid: 9ca3acaac181aaa4da91fd60f6063a21, type: 3}
       - {fileID: -541303470, guid: 9ca3acaac181aaa4da91fd60f6063a21, type: 3}
-      m_AnimationSpeed: 10
+      m_AnimationSpeed: 10.000001
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: -6, y: 18, z: 0}
@@ -12189,6 +12189,14 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 732032081}
     m_Modifications:
+    - target: {fileID: -7997238546731430080, guid: 7ddf5e2a8c7bf03408af9cdc1283b093, type: 3}
+      propertyPath: m_Size.x
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: -7997238546731430080, guid: 7ddf5e2a8c7bf03408af9cdc1283b093, type: 3}
+      propertyPath: m_Size.y
+      value: 0.5
+      objectReference: {fileID: 0}
     - target: {fileID: 1847427885351036637, guid: 7ddf5e2a8c7bf03408af9cdc1283b093, type: 3}
       propertyPath: m_LocalPosition.x
       value: -4.5

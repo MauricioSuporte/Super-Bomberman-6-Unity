@@ -17,7 +17,11 @@ public sealed class PusherPatrolAndPush : MonoBehaviour
     [Header("Push")]
     [SerializeField] private LayerMask playerLayerMask;
     [SerializeField, Min(0f)] private float castSkin = 0.02f;
-    [SerializeField] private bool pushOnlyMovementAxis = true;
+
+    [Header("Vertical Push Filter")]
+    [SerializeField, Range(0f, 1f)] private float minVerticalNormal = 0.75f;
+    [SerializeField, Range(0f, 1f)] private float maxSideNormal = 0.25f;
+    [SerializeField, Range(0f, 1f)] private float minXOverlapPercent = 0.6f;
 
     [Header("Animation")]
     [SerializeField] private AnimatedSpriteRenderer animatedSprite;
@@ -72,15 +76,18 @@ public sealed class PusherPatrolAndPush : MonoBehaviour
 
         Vector2 delta = dir * step;
 
-        PushPlayersInFront(delta);
+        PushPlayersIfValidVerticalContact(delta);
 
         _rb.MovePosition(pos + delta);
     }
 
-    private void PushPlayersInFront(Vector2 delta)
+    private void PushPlayersIfValidVerticalContact(Vector2 delta)
     {
         float moveDist = delta.magnitude;
         if (moveDist <= 0.00001f)
+            return;
+
+        if (Mathf.Abs(delta.y) <= Mathf.Abs(delta.x))
             return;
 
         Vector2 dir = delta / moveDist;
@@ -94,20 +101,45 @@ public sealed class PusherPatrolAndPush : MonoBehaviour
         if (count <= 0)
             return;
 
-        Vector2 pushDelta = delta;
+        float pushY = delta.y;
+        if (Mathf.Abs(pushY) <= 0.00001f)
+            return;
 
-        if (pushOnlyMovementAxis)
-        {
-            if (Mathf.Abs(delta.x) >= Mathf.Abs(delta.y))
-                pushDelta = new Vector2(delta.x, 0f);
-            else
-                pushDelta = new Vector2(0f, delta.y);
-        }
+        Bounds pusherBounds = _col.bounds;
 
         for (int i = 0; i < count; i++)
         {
             var hit = _hits[i];
             if (hit.collider == null)
+                continue;
+
+            Vector2 n = hit.normal;
+            if (Mathf.Abs(n.x) > maxSideNormal)
+                continue;
+
+            if (pushY > 0f)
+            {
+                if (n.y > -minVerticalNormal)
+                    continue;
+            }
+            else
+            {
+                if (n.y < minVerticalNormal)
+                    continue;
+            }
+
+            Bounds playerBounds = hit.collider.bounds;
+
+            float overlapX = Mathf.Min(pusherBounds.max.x, playerBounds.max.x) - Mathf.Max(pusherBounds.min.x, playerBounds.min.x);
+            if (overlapX <= 0f)
+                continue;
+
+            float denom = Mathf.Min(pusherBounds.size.x, playerBounds.size.x);
+            if (denom <= 0.00001f)
+                continue;
+
+            float overlapPercent = overlapX / denom;
+            if (overlapPercent < minXOverlapPercent)
                 continue;
 
             Rigidbody2D playerRb = hit.rigidbody;
@@ -117,7 +149,7 @@ public sealed class PusherPatrolAndPush : MonoBehaviour
             if (playerRb == null)
                 continue;
 
-            playerRb.MovePosition(playerRb.position + pushDelta);
+            playerRb.MovePosition(playerRb.position + new Vector2(0f, pushY));
         }
     }
 

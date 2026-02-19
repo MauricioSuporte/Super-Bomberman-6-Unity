@@ -10,11 +10,11 @@ GameObject:
   m_Component:
   - component: {fileID: 1847427885351036637}
   - component: {fileID: 2069176661737943011}
-  - component: {fileID: -7997238546731430080}
+  - component: {fileID: 1132245848853390198}
   - component: {fileID: 8679632675940270058}
   - component: {fileID: 3175094388223151205}
   - component: {fileID: 6476092081960386603}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Pusher
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -63,8 +63,8 @@ Rigidbody2D:
   m_SleepingMode: 1
   m_CollisionDetection: 0
   m_Constraints: 0
---- !u!61 &-7997238546731430080
-BoxCollider2D:
+--- !u!58 &1132245848853390198
+CircleCollider2D:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -98,17 +98,7 @@ BoxCollider2D:
   m_CompositeOperation: 0
   m_CompositeOrder: 0
   m_Offset: {x: 0, y: 0}
-  m_SpriteTilingProperty:
-    border: {x: 0, y: 0, z: 0, w: 0}
-    pivot: {x: 0.5, y: 0.5}
-    oldSize: {x: 1, y: 1.5}
-    newSize: {x: 1, y: 1}
-    adaptiveTilingThreshold: 0.5
-    drawMode: 0
-    adaptiveTiling: 0
-  m_AutoTiling: 0
-  m_Size: {x: 1, y: 1}
-  m_EdgeRadius: 0
+  m_Radius: 0.4
 --- !u!212 &8679632675940270058
 SpriteRenderer:
   serializedVersion: 2
@@ -217,3 +207,5 @@ MonoBehaviour:
     m_Bits: 0
   castSkin: 0.02
   pushOnlyMovementAxis: 1
+  animatedSprite: {fileID: 0}
+  forceAnimatedLoopAlways: 1
