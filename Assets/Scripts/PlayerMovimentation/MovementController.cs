@@ -67,6 +67,10 @@ public class MovementController : MonoBehaviour, IKillable
     [Header("Death Behavior")]
     public bool checkWinStateOnDeath = true;
 
+    [Header("Hole Death State")]
+    [SerializeField] private bool holeDeathInProgress;
+    public bool IsHoleDeathInProgress => holeDeathInProgress;
+
     [Header("Hole Death SFX")]
     [SerializeField] private AudioClip holeDeathSfx;
     [SerializeField, Range(0f, 1f)] private float holeDeathSfxVolume = 1f;
@@ -1046,6 +1050,8 @@ public class MovementController : MonoBehaviour, IKillable
         if (isDead || isEndingStage)
             return;
 
+        holeDeathInProgress = false;
+
         BeginDeathCommon();
 
         if (audioSource != null && deathSfx != null)
@@ -1092,6 +1098,8 @@ public class MovementController : MonoBehaviour, IKillable
     {
         if (isDead || isEndingStage)
             return;
+
+        holeDeathInProgress = true;
 
         BeginDeathCommon();
 
@@ -1164,14 +1172,16 @@ public class MovementController : MonoBehaviour, IKillable
         r.pingPong = false;
         r.RefreshFrame();
 
-        if (!r.TryGetComponent<SpriteRenderer>(out var sr) || sr == null)
+        var srs = GetComponentsInChildren<SpriteRenderer>(true);
+        if (srs == null || srs.Length == 0)
             yield break;
 
-        Transform tr = sr.transform;
+        var startColors = new Color[srs.Length];
+        for (int i = 0; i < srs.Length; i++)
+            startColors[i] = srs[i] != null ? srs[i].color : Color.white;
 
-        Vector3 startScale = tr.localScale;
-        Color startColor = sr.color;
-        Color endColor = new(0f, 0f, 0f, startColor.a);
+        Transform root = transform;
+        Vector3 startScale = root.localScale;
 
         float dur = Mathf.Max(0.05f, holeDeathSinkSeconds);
         float t = 0f;
@@ -1182,14 +1192,32 @@ public class MovementController : MonoBehaviour, IKillable
             float a = Mathf.Clamp01(t / dur);
             float eased = holeDeathSinkCurve != null ? holeDeathSinkCurve.Evaluate(a) : a;
 
-            tr.localScale = Vector3.LerpUnclamped(startScale, Vector3.zero, eased);
-            sr.color = Color.LerpUnclamped(startColor, endColor, eased);
+            root.localScale = Vector3.LerpUnclamped(startScale, Vector3.zero, eased);
+
+            for (int i = 0; i < srs.Length; i++)
+            {
+                var sr = srs[i];
+                if (sr == null) continue;
+
+                Color sc = startColors[i];
+                Color endColor = new Color(0f, 0f, 0f, sc.a);
+
+                sr.color = Color.LerpUnclamped(sc, endColor, eased);
+            }
 
             yield return null;
         }
 
-        tr.localScale = Vector3.zero;
-        sr.color = endColor;
+        root.localScale = Vector3.zero;
+
+        for (int i = 0; i < srs.Length; i++)
+        {
+            var sr = srs[i];
+            if (sr == null) continue;
+
+            Color sc = startColors[i];
+            sr.color = new Color(0f, 0f, 0f, sc.a);
+        }
     }
 
     public void PlayEndStageSequence(Vector2 portalCenter, bool snapToPortalCenter)

@@ -45,8 +45,17 @@ public class MountMovementController : MovementController
         if (isDead)
             return;
 
-        if (owner == null || owner.isDead)
+        if (owner == null)
         {
+            Destroy(gameObject);
+            return;
+        }
+
+        if (owner.isDead)
+        {
+            if (owner.IsHoleDeathInProgress)
+                return;
+
             Destroy(gameObject);
             return;
         }

@@ -251,8 +251,20 @@ public class MountVisualController : MonoBehaviour
             return;
         }
 
-        if (owner == null || owner.isDead)
+        if (owner == null)
         {
+            Destroy(gameObject);
+            return;
+        }
+
+        if (owner.isDead)
+        {
+            if (owner.IsHoleDeathInProgress)
+            {
+                transform.localPosition = localOffset;
+                return;
+            }
+
             Destroy(gameObject);
             return;
         }
