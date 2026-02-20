@@ -306,6 +306,9 @@ public class Bomb : MonoBehaviour, IMagnetPullable
                 return true;
         }
 
+        if (HasIndestructibleAt(target))
+            return true;
+
         return false;
     }
 
@@ -346,6 +349,9 @@ public class Bomb : MonoBehaviour, IMagnetPullable
             if (kickDestructibleTilemap.GetTile(cell) != null)
                 return true;
         }
+
+        if (HasIndestructibleAt(target))
+            return true;
 
         return false;
     }
@@ -1088,5 +1094,14 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         worldPos.x = Mathf.Round(worldPos.x / tileSize) * tileSize;
         worldPos.y = Mathf.Round(worldPos.y / tileSize) * tileSize;
         return worldPos;
+    }
+
+    private bool HasIndestructibleAt(Vector2 worldPos)
+    {
+        if (stageBoundsTilemap == null)
+            return false;
+
+        Vector3Int cell = stageBoundsTilemap.WorldToCell(worldPos);
+        return stageBoundsTilemap.GetTile(cell) != null;
     }
 }
