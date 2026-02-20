@@ -3,6 +3,7 @@
 [DisallowMultipleComponent]
 [RequireComponent(typeof(Rigidbody2D))]
 [RequireComponent(typeof(Collider2D))]
+[RequireComponent(typeof(AnimatedSpriteRenderer))]
 public sealed class PusherPatrolAndPush : MonoBehaviour
 {
     [Header("Path (A <-> B)")]
@@ -92,10 +93,12 @@ public sealed class PusherPatrolAndPush : MonoBehaviour
 
         Vector2 dir = delta / moveDist;
 
-        var filter = new ContactFilter2D();
-        filter.useLayerMask = true;
-        filter.layerMask = playerLayerMask;
-        filter.useTriggers = true;
+        var filter = new ContactFilter2D
+        {
+            useLayerMask = true,
+            layerMask = playerLayerMask,
+            useTriggers = true
+        };
 
         int count = _col.Cast(dir, filter, _hits, moveDist + castSkin);
         if (count <= 0)
@@ -149,7 +152,15 @@ public sealed class PusherPatrolAndPush : MonoBehaviour
             if (playerRb == null)
                 continue;
 
-            playerRb.MovePosition(playerRb.position + new Vector2(0f, pushY));
+            Vector2 pushDelta = new(0f, pushY);
+            playerRb.MovePosition(playerRb.position + pushDelta);
+
+            var resolver = hit.collider.GetComponentInParent<PlayerPushedOutOfInvalidTile>();
+            if (resolver != null)
+            {
+                Vector2 pushDir = pushY > 0f ? Vector2.up : Vector2.down;
+                resolver.NotifyExternalPushed(pushDir);
+            }
         }
     }
 
