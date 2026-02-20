@@ -548,6 +548,20 @@ public partial class BombController : MonoBehaviour
         return true;
     }
 
+    private bool CanPlaceBombAt(Vector2 worldPos)
+    {
+        if (!HasGroundAt(worldPos))
+            return false;
+
+        if (HasIndestructibleAt(worldPos))
+            return false;
+
+        if (HasWaterAt(worldPos))
+            return false;
+
+        return true;
+    }
+
     private void PlaceBomb()
     {
         if (ClownMaskBoss.BossIntroRunning)
@@ -571,6 +585,9 @@ public partial class BombController : MonoBehaviour
 
         Tilemap snapTm = GetSnapTilemapForGround();
         Vector2 position = SnapToTileCenter(snapTm, (Vector2)transform.position, out _, out _);
+
+        if (!CanPlaceBombAt(position))
+            return;
 
         bool explosionAlreadyHere = HasActiveExplosionAt(position);
 
@@ -1487,6 +1504,9 @@ public partial class BombController : MonoBehaviour
 
         Tilemap snapTm = GetSnapTilemapForGround();
         Vector2 position = SnapToTileCenter(snapTm, worldPos, out _, out _);
+
+        if (!CanPlaceBombAt(position))
+            return false;
 
         bool explosionAlreadyHere = HasActiveExplosionAt(position);
 
