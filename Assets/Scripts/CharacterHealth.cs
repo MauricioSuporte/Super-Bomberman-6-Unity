@@ -39,6 +39,10 @@ public class CharacterHealth : MonoBehaviour
     public bool IsInvulnerable => isInvulnerable;
     private bool externalInvulnerability;
 
+    // --- Spawn blink override control ---
+    private int _blinkOverrideToken;
+    private Coroutine _restoreBlinkIntervalRoutine;
+
     void Awake()
     {
         killable = GetComponent<IKillable>();
@@ -92,6 +96,39 @@ public class CharacterHealth : MonoBehaviour
             hitRoutine = StartCoroutine(TemporaryInvulnerabilityRoutine(seconds));
         else
             hitRoutine = StartCoroutine(TemporaryInvulnerabilityNoBlinkRoutine(seconds));
+    }
+
+    // NOVO: invencibilidade “real” de spawn + blink com intervalo customizado (restaura depois)
+    public void StartSpawnInvulnerability(float seconds, float blinkInterval)
+    {
+        if (seconds <= 0f)
+            return;
+
+        float previousInterval = hitBlinkInterval;
+
+        _blinkOverrideToken++;
+        int token = _blinkOverrideToken;
+
+        if (blinkInterval > 0f)
+            hitBlinkInterval = blinkInterval;
+
+        StartTemporaryInvulnerability(seconds, withBlink: true);
+
+        if (_restoreBlinkIntervalRoutine != null)
+            StopCoroutine(_restoreBlinkIntervalRoutine);
+
+        _restoreBlinkIntervalRoutine = StartCoroutine(RestoreBlinkIntervalAfter(seconds, token, previousInterval));
+    }
+
+    IEnumerator RestoreBlinkIntervalAfter(float seconds, int token, float previousInterval)
+    {
+        yield return new WaitForSeconds(seconds);
+
+        if (token != _blinkOverrideToken)
+            yield break;
+
+        hitBlinkInterval = previousInterval;
+        _restoreBlinkIntervalRoutine = null;
     }
 
     public void StopInvulnerability()
@@ -281,5 +318,4 @@ public class CharacterHealth : MonoBehaviour
                     spriteRenderers[i].color = originalColors[i];
         }
     }
-
 }

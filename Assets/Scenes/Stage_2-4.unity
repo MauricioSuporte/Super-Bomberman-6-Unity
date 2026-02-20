@@ -193,6 +193,7 @@ MonoBehaviour:
   groundShadowTile: {fileID: 11400000, guid: e0f633282caacc742af95bdd334dd0cf, type: 2}
   autoResolveStageTilemaps: 1
   restartAfterDeathSeconds: 4
+  destructibleTileResolver: {fileID: 0}
 --- !u!1 &285353614
 GameObject:
   m_ObjectHideFlags: 0
@@ -393,7 +394,7 @@ Tilemap:
   - first: {x: -3, y: -5, z: 0}
     second:
       serializedVersion: 2
-      m_TileIndex: 8
+      m_TileIndex: 7
       m_TileSpriteIndex: 8
       m_TileMatrixIndex: 0
       m_TileColorIndex: 0
@@ -543,7 +544,7 @@ Tilemap:
   - first: {x: -8, y: 12, z: 0}
     second:
       serializedVersion: 2
-      m_TileIndex: 8
+      m_TileIndex: 7
       m_TileSpriteIndex: 8
       m_TileMatrixIndex: 0
       m_TileColorIndex: 0
@@ -994,9 +995,9 @@ Tilemap:
     m_Data: {fileID: 0}
   - m_RefCount: 0
     m_Data: {fileID: 0}
-  - m_RefCount: 0
-    m_Data: {fileID: 0}
-  - m_RefCount: 27
+  - m_RefCount: 2
+    m_Data: {fileID: 11400000, guid: eb2d7ce3fa9f83d47b36b7391f5fb2c7, type: 2}
+  - m_RefCount: 25
     m_Data: {fileID: 11400000, guid: b1eada4f7e771a745a314fc47eb739c8, type: 2}
   m_TileSpriteArray:
   - m_RefCount: 0
@@ -3614,6 +3615,7 @@ GameObject:
   - component: {fileID: 732032086}
   - component: {fileID: 732032089}
   - component: {fileID: 732032088}
+  - component: {fileID: 732032090}
   m_Layer: 6
   m_Name: Stage
   m_TagString: Untagged
@@ -3679,6 +3681,10 @@ MonoBehaviour:
     tiles:
     - {fileID: 11400000, guid: b1eada4f7e771a745a314fc47eb739c8, type: 2}
     handler: {fileID: 0}
+  - id: EnemyBlock
+    tiles:
+    - {fileID: 11400000, guid: eb2d7ce3fa9f83d47b36b7391f5fb2c7, type: 2}
+    handler: {fileID: 732032090}
 --- !u!114 &732032086
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3730,6 +3736,22 @@ MonoBehaviour:
   floatingPlatformToEnable: {fileID: 713000867}
   puzzleCompleteSfx: {fileID: 8300000, guid: 20f0c618ca0bf0440b68123eebe7b752, type: 3}
   puzzleCompleteVolume: 1
+--- !u!114 &732032090
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 732032079}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b70721a5b3b062d46a983d33a7404325, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemySpawnDestructibleTileHandler
+  enemyPrefab: {fileID: 1228606389669354652, guid: 2bdcfeb9f702cfa4b9f824f41a42cc2f, type: 3}
+  spawnDelaySeconds: 0.5
+  invincibleSeconds: 1
+  blinkIntervalSeconds: 0.12
 --- !u!1 &818279431
 GameObject:
   m_ObjectHideFlags: 0
@@ -7444,63 +7466,6 @@ Tilemap:
     e31: 0
     e32: 0
     e33: 1
---- !u!1001 &822885728
-PrefabInstance:
-  m_ObjectHideFlags: 0
-  serializedVersion: 2
-  m_Modification:
-    serializedVersion: 3
-    m_TransformParent: {fileID: 0}
-    m_Modifications:
-    - target: {fileID: 1228606389669354652, guid: a8ad655126f70524182569d5f875127c, type: 3}
-      propertyPath: m_Name
-      value: RedRobot
-      objectReference: {fileID: 0}
-    - target: {fileID: 1228606389669354653, guid: a8ad655126f70524182569d5f875127c, type: 3}
-      propertyPath: m_LocalPosition.x
-      value: -8
-      objectReference: {fileID: 0}
-    - target: {fileID: 1228606389669354653, guid: a8ad655126f70524182569d5f875127c, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: 14.2
-      objectReference: {fileID: 0}
-    - target: {fileID: 1228606389669354653, guid: a8ad655126f70524182569d5f875127c, type: 3}
-      propertyPath: m_LocalPosition.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1228606389669354653, guid: a8ad655126f70524182569d5f875127c, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 1228606389669354653, guid: a8ad655126f70524182569d5f875127c, type: 3}
-      propertyPath: m_LocalRotation.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1228606389669354653, guid: a8ad655126f70524182569d5f875127c, type: 3}
-      propertyPath: m_LocalRotation.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1228606389669354653, guid: a8ad655126f70524182569d5f875127c, type: 3}
-      propertyPath: m_LocalRotation.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1228606389669354653, guid: a8ad655126f70524182569d5f875127c, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1228606389669354653, guid: a8ad655126f70524182569d5f875127c, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1228606389669354653, guid: a8ad655126f70524182569d5f875127c, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
-      objectReference: {fileID: 0}
-    m_RemovedComponents: []
-    m_RemovedGameObjects: []
-    m_AddedGameObjects: []
-    m_AddedComponents: []
-  m_SourcePrefab: {fileID: 100100000, guid: a8ad655126f70524182569d5f875127c, type: 3}
 --- !u!1001 &984219024
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -12578,4 +12543,3 @@ SceneRoots:
   - {fileID: 290470827}
   - {fileID: 1746315304}
   - {fileID: 1522516126}
-  - {fileID: 822885728}

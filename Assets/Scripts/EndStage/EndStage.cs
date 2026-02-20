@@ -37,7 +37,7 @@ public abstract class EndStage : MonoBehaviour
     {
         yield return null;
 
-        if (gameManager != null && gameManager.EnemiesAlive <= 0)
+        if (gameManager != null && gameManager.AreAllEnemiesCleared())
             HandleAllEnemiesDefeated();
     }
 

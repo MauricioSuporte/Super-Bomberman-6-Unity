@@ -13,6 +13,8 @@ public class GameManager : MonoBehaviour
 
     public int EnemiesAlive { get; private set; }
 
+    public int PendingHiddenEnemies { get; private set; }
+
     public event Action OnAllEnemiesDefeated;
 
     [Header("Auto Prefab Loading (Resources)")]
@@ -73,12 +75,17 @@ public class GameManager : MonoBehaviour
     private bool pendingEnemyCheck;
     private Coroutine enemyCheckRoutine;
 
+    [Header("Destructible Tile Resolver (optional, auto-find)")]
+    [SerializeField] private DestructibleTileResolver destructibleTileResolver;
+
     void Awake()
     {
         if (autoResolveStageTilemaps)
             ResolveStageTilemapsIfNeeded();
 
         portalPrefab = Resources.Load<EndStagePortal>(portalResourcesPath);
+
+        ResolveDestructibleTileResolver();
     }
 
     void Start()
@@ -95,7 +102,14 @@ public class GameManager : MonoBehaviour
         SetupHiddenObjects();
         ApplyDestructibleShadows();
 
+        CountPendingHiddenEnemiesFromTiles();
+
         ScheduleEnemyCheckNextFrame();
+    }
+
+    public bool AreAllEnemiesCleared()
+    {
+        return EnemiesAlive <= 0 && PendingHiddenEnemies <= 0;
     }
 
     public void NotifyEnemySpawned(int amount = 1)
@@ -109,6 +123,25 @@ public class GameManager : MonoBehaviour
     public void NotifyEnemyDied()
     {
         EnemiesAlive = Mathf.Max(EnemiesAlive - 1, 0);
+        ScheduleEnemyCheckNextFrame();
+    }
+
+    public void NotifyHiddenEnemySpawnedFromBlock(int amount = 1)
+    {
+        int a = Mathf.Max(1, amount);
+
+        PendingHiddenEnemies = Mathf.Max(PendingHiddenEnemies - a, 0);
+        EnemiesAlive += a;
+
+        ScheduleEnemyCheckNextFrame();
+    }
+
+    public void NotifyHiddenEnemyCancelledFromBlock(int amount = 1)
+    {
+        int a = Mathf.Max(1, amount);
+
+        PendingHiddenEnemies = Mathf.Max(PendingHiddenEnemies - a, 0);
+
         ScheduleEnemyCheckNextFrame();
     }
 
@@ -137,10 +170,58 @@ public class GameManager : MonoBehaviour
         pendingEnemyCheck = false;
         enemyCheckRoutine = null;
 
-        if (EnemiesAlive <= 0)
+        if (AreAllEnemiesCleared())
         {
             EnemiesAlive = 0;
+            PendingHiddenEnemies = 0;
             OnAllEnemiesDefeated?.Invoke();
+        }
+    }
+
+    private void ResolveDestructibleTileResolver()
+    {
+        if (destructibleTileResolver != null)
+            return;
+
+        destructibleTileResolver = FindFirstObjectByType<DestructibleTileResolver>();
+        if (destructibleTileResolver != null)
+            return;
+
+        if (destructibleTilemap != null)
+            destructibleTileResolver = destructibleTilemap.GetComponentInParent<DestructibleTileResolver>(true);
+
+        if (destructibleTileResolver != null)
+            return;
+
+        var stage = GameObject.Find("Stage");
+        if (stage != null)
+            destructibleTileResolver = stage.GetComponentInChildren<DestructibleTileResolver>(true);
+    }
+
+    private void CountPendingHiddenEnemiesFromTiles()
+    {
+        PendingHiddenEnemies = 0;
+
+        if (destructibleTilemap == null)
+            return;
+
+        ResolveDestructibleTileResolver();
+        if (destructibleTileResolver == null)
+            return;
+
+        var bounds = destructibleTilemap.cellBounds;
+
+        foreach (var pos in bounds.allPositionsWithin)
+        {
+            var tile = destructibleTilemap.GetTile(pos);
+            if (tile == null)
+                continue;
+
+            if (!destructibleTileResolver.TryGetHandler(tile, out var handler) || handler == null)
+                continue;
+
+            if (handler is EnemySpawnDestructibleTileHandler)
+                PendingHiddenEnemies++;
         }
     }
 
