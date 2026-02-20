@@ -73,7 +73,7 @@ public sealed class PlayerPushedOutOfInvalidTile : MonoBehaviour
 
         if (IsOnHole(pos))
         {
-            _move.Kill();
+            _move.KillByHole();
             yield break;
         }
 
@@ -100,7 +100,7 @@ public sealed class PlayerPushedOutOfInvalidTile : MonoBehaviour
             if (IsOnHole(cur))
             {
                 _col.enabled = prevColliderEnabled;
-                _move.Kill();
+                _move.KillByHole();
                 yield break;
             }
 
@@ -115,7 +115,7 @@ public sealed class PlayerPushedOutOfInvalidTile : MonoBehaviour
             {
                 yield return MoveOneTile(cur, next, travelTime);
                 _col.enabled = prevColliderEnabled;
-                _move.Kill();
+                _move.KillByHole();
                 yield break;
             }
 

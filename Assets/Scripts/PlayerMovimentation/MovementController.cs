@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -65,6 +66,17 @@ public class MovementController : MonoBehaviour, IKillable
 
     [Header("Death Behavior")]
     public bool checkWinStateOnDeath = true;
+
+    [Header("Hole Death SFX")]
+    [SerializeField] private AudioClip holeDeathSfx;
+    [SerializeField, Range(0f, 1f)] private float holeDeathSfxVolume = 1f;
+
+    [Header("Hole Death Visual (Sink + Black)")]
+    [SerializeField] private bool useHoleDeathSinkVisual = true;
+    [SerializeField, Min(0.05f)] private float holeDeathSinkSeconds = 0.55f;
+    [SerializeField] private AnimationCurve holeDeathSinkCurve = AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
+
+    private Coroutine _holeDeathVisualRoutine;
 
     [Header("End Stage Animation")]
     public float endStageTotalTime = 1f;
@@ -974,14 +986,21 @@ public class MovementController : MonoBehaviour, IKillable
             DeathSequence();
     }
 
-    protected virtual void DeathSequence()
+    public void KillByHole()
     {
-        if (isDead || isEndingStage)
+        if (isEndingStage)
             return;
 
+        if (!isDead)
+            HoleDeathSequence();
+    }
+
+    private void BeginDeathCommon()
+    {
         isDead = true;
         inputLocked = true;
         inactivityMountedDownOverride = false;
+
         if (spriteLock != null && spriteLock.IsLocked)
             spriteLock.EndLock();
 
@@ -1020,6 +1039,14 @@ public class MovementController : MonoBehaviour, IKillable
 
         if (TryGetComponent(out Collider2D col) && col != null)
             col.enabled = false;
+    }
+
+    protected virtual void DeathSequence()
+    {
+        if (isDead || isEndingStage)
+            return;
+
+        BeginDeathCommon();
 
         if (audioSource != null && deathSfx != null)
             audioSource.PlayOneShot(deathSfx);
@@ -1059,6 +1086,110 @@ public class MovementController : MonoBehaviour, IKillable
 
         if (!checkWinStateOnDeath)
             return;
+    }
+
+    private void HoleDeathSequence()
+    {
+        if (isDead || isEndingStage)
+            return;
+
+        BeginDeathCommon();
+
+        PlayHoleDeathSfx();
+
+        DisableAllFootSprites();
+        DisableAllMountedSprites();
+
+        SetAnimEnabled(spriteRendererCheering, false);
+        SetAnimEnabled(spriteRendererEndStage, false);
+        SetAnimEnabled(spriteRendererDeath, false);
+
+        var r = PickRendererForHoleDeathVisual();
+        activeSpriteRenderer = r;
+
+        if (useHoleDeathSinkVisual && r != null)
+        {
+            if (_holeDeathVisualRoutine != null)
+                StopCoroutine(_holeDeathVisualRoutine);
+
+            _holeDeathVisualRoutine = StartCoroutine(HoleDeathSinkVisualRoutine(r));
+        }
+        else if (r != null)
+        {
+            SetAnimEnabled(r, true);
+            r.idle = true;
+            r.loop = false;
+            r.RefreshFrame();
+        }
+
+        Invoke(nameof(OnDeathSequenceEnded), deathDisableSeconds);
+    }
+
+    private void PlayHoleDeathSfx()
+    {
+        if (audioSource == null || holeDeathSfx == null)
+            return;
+
+        if (audioSource.isPlaying)
+            audioSource.Stop();
+
+        audioSource.clip = holeDeathSfx;
+        audioSource.volume = holeDeathSfxVolume;
+        audioSource.loop = false;
+        audioSource.Play();
+    }
+
+    private AnimatedSpriteRenderer PickRendererForHoleDeathVisual()
+    {
+        if (activeSpriteRenderer != null)
+            return activeSpriteRenderer;
+
+        if (isMounted)
+        {
+            var r = PickMountedRenderer(facingDirection);
+            if (r != null) return r;
+        }
+
+        return spriteRendererDown != null ? spriteRendererDown : null;
+    }
+
+    private IEnumerator HoleDeathSinkVisualRoutine(AnimatedSpriteRenderer r)
+    {
+        if (r == null)
+            yield break;
+
+        SetAnimEnabled(r, true);
+        r.idle = true;
+        r.loop = false;
+        r.pingPong = false;
+        r.RefreshFrame();
+
+        if (!r.TryGetComponent<SpriteRenderer>(out var sr) || sr == null)
+            yield break;
+
+        Transform tr = sr.transform;
+
+        Vector3 startScale = tr.localScale;
+        Color startColor = sr.color;
+        Color endColor = new(0f, 0f, 0f, startColor.a);
+
+        float dur = Mathf.Max(0.05f, holeDeathSinkSeconds);
+        float t = 0f;
+
+        while (t < dur)
+        {
+            t += Time.deltaTime;
+            float a = Mathf.Clamp01(t / dur);
+            float eased = holeDeathSinkCurve != null ? holeDeathSinkCurve.Evaluate(a) : a;
+
+            tr.localScale = Vector3.LerpUnclamped(startScale, Vector3.zero, eased);
+            sr.color = Color.LerpUnclamped(startColor, endColor, eased);
+
+            yield return null;
+        }
+
+        tr.localScale = Vector3.zero;
+        sr.color = endColor;
     }
 
     public void PlayEndStageSequence(Vector2 portalCenter, bool snapToPortalCenter)
