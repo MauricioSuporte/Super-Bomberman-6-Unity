@@ -334,7 +334,7 @@ Tilemap:
   - first: {x: -3, y: -6, z: 0}
     second:
       serializedVersion: 2
-      m_TileIndex: 8
+      m_TileIndex: 6
       m_TileSpriteIndex: 8
       m_TileMatrixIndex: 0
       m_TileColorIndex: 0
@@ -594,7 +594,7 @@ Tilemap:
   - first: {x: 1, y: 13, z: 0}
     second:
       serializedVersion: 2
-      m_TileIndex: 8
+      m_TileIndex: 6
       m_TileSpriteIndex: 8
       m_TileMatrixIndex: 0
       m_TileColorIndex: 0
@@ -993,11 +993,11 @@ Tilemap:
     m_Data: {fileID: 0}
   - m_RefCount: 0
     m_Data: {fileID: 0}
-  - m_RefCount: 0
-    m_Data: {fileID: 0}
+  - m_RefCount: 2
+    m_Data: {fileID: 11400000, guid: 8e02cee30a1ab5449b56c46893437677, type: 2}
   - m_RefCount: 2
     m_Data: {fileID: 11400000, guid: eb2d7ce3fa9f83d47b36b7391f5fb2c7, type: 2}
-  - m_RefCount: 25
+  - m_RefCount: 23
     m_Data: {fileID: 11400000, guid: b1eada4f7e771a745a314fc47eb739c8, type: 2}
   m_TileSpriteArray:
   - m_RefCount: 0
@@ -3456,6 +3456,7 @@ GameObject:
   - component: {fileID: 732032089}
   - component: {fileID: 732032088}
   - component: {fileID: 732032090}
+  - component: {fileID: 732032091}
   m_Layer: 6
   m_Name: Stage
   m_TagString: Untagged
@@ -3521,10 +3522,14 @@ MonoBehaviour:
     tiles:
     - {fileID: 11400000, guid: b1eada4f7e771a745a314fc47eb739c8, type: 2}
     handler: {fileID: 0}
-  - id: EnemyBlock
+  - id: RedMechEnemyBlock
     tiles:
     - {fileID: 11400000, guid: eb2d7ce3fa9f83d47b36b7391f5fb2c7, type: 2}
     handler: {fileID: 732032090}
+  - id: RoboDashEnemyBlock
+    tiles:
+    - {fileID: 11400000, guid: 8e02cee30a1ab5449b56c46893437677, type: 2}
+    handler: {fileID: 732032091}
 --- !u!114 &732032086
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3589,6 +3594,22 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemySpawnDestructibleTileHandler
   enemyPrefab: {fileID: 1228606389669354652, guid: 2bdcfeb9f702cfa4b9f824f41a42cc2f, type: 3}
+  spawnDelaySeconds: 0.5
+  invincibleSeconds: 1
+  blinkIntervalSeconds: 0.12
+--- !u!114 &732032091
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 732032079}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b70721a5b3b062d46a983d33a7404325, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemySpawnDestructibleTileHandler
+  enemyPrefab: {fileID: 1228606389669354652, guid: c3e8b30d068507244a7c5ea3cda77caa, type: 3}
   spawnDelaySeconds: 0.5
   invincibleSeconds: 1
   blinkIntervalSeconds: 0.12
@@ -7624,7 +7645,7 @@ Tilemap:
       m_AnimatedSprites:
       - {fileID: -512380286, guid: 9ca3acaac181aaa4da91fd60f6063a21, type: 3}
       - {fileID: 146987460, guid: 9ca3acaac181aaa4da91fd60f6063a21, type: 3}
-      m_AnimationSpeed: 5.0000005
+      m_AnimationSpeed: 5
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: 1, y: 18, z: 0}
@@ -8274,6 +8295,67 @@ Tilemap:
     e31: 0
     e32: 0
     e33: 1
+--- !u!1001 &854846515
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 1228606389669354652, guid: c3e8b30d068507244a7c5ea3cda77caa, type: 3}
+      propertyPath: m_Name
+      value: RoboDash
+      objectReference: {fileID: 0}
+    - target: {fileID: 1228606389669354652, guid: c3e8b30d068507244a7c5ea3cda77caa, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1228606389669354653, guid: c3e8b30d068507244a7c5ea3cda77caa, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -3.0553148
+      objectReference: {fileID: 0}
+    - target: {fileID: 1228606389669354653, guid: c3e8b30d068507244a7c5ea3cda77caa, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -3.0137527
+      objectReference: {fileID: 0}
+    - target: {fileID: 1228606389669354653, guid: c3e8b30d068507244a7c5ea3cda77caa, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1228606389669354653, guid: c3e8b30d068507244a7c5ea3cda77caa, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1228606389669354653, guid: c3e8b30d068507244a7c5ea3cda77caa, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1228606389669354653, guid: c3e8b30d068507244a7c5ea3cda77caa, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1228606389669354653, guid: c3e8b30d068507244a7c5ea3cda77caa, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1228606389669354653, guid: c3e8b30d068507244a7c5ea3cda77caa, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1228606389669354653, guid: c3e8b30d068507244a7c5ea3cda77caa, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1228606389669354653, guid: c3e8b30d068507244a7c5ea3cda77caa, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: c3e8b30d068507244a7c5ea3cda77caa, type: 3}
 --- !u!1001 &984219024
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -13351,3 +13433,4 @@ SceneRoots:
   - {fileID: 290470827}
   - {fileID: 1746315304}
   - {fileID: 1522516126}
+  - {fileID: 854846515}
