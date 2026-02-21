@@ -187,7 +187,7 @@ MonoBehaviour:
   destructibleTilemap: {fileID: 285353618}
   indestructibleTilemap: {fileID: 0}
   nextStageSceneName: 
-  destructiblePrefab: {fileID: 3440613785117735154, guid: ae195ebe108124a43b35c0a301b446eb, type: 3}
+  destructiblePrefab: {fileID: 3440613785117735154, guid: 75354832aaed18641b111a634067f982, type: 3}
   groundTilemap: {fileID: 672307155}
   groundTile: {fileID: 11400000, guid: ada74cfa1fdef9e4c86ccafaa1b2ae66, type: 2}
   groundShadowTile: {fileID: 11400000, guid: e0f633282caacc742af95bdd334dd0cf, type: 2}
@@ -3806,7 +3806,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1a20d7c632bb9f841917e2548dd9e7dc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DestructibleTileResolver
-  groups: []
+  groups:
+  - id: Destructible
+    tiles:
+    - {fileID: 11400000, guid: e144b6e6b4589ee45ad888143ea82bfd, type: 2}
+    handler: {fileID: 3026958387598246550, guid: 75354832aaed18641b111a634067f982, type: 3}
 --- !u!114 &732032086
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6534,7 +6538,7 @@ Tilemap:
     second:
       serializedVersion: 2
       m_TileIndex: 191
-      m_TileSpriteIndex: 38
+      m_TileSpriteIndex: 41
       m_TileMatrixIndex: 1
       m_TileColorIndex: 0
       m_TileObjectToInstantiateIndex: 65535
@@ -6654,7 +6658,7 @@ Tilemap:
     second:
       serializedVersion: 2
       m_TileIndex: 187
-      m_TileSpriteIndex: 37
+      m_TileSpriteIndex: 38
       m_TileMatrixIndex: 2
       m_TileColorIndex: 0
       m_TileObjectToInstantiateIndex: 65535
@@ -8565,16 +8569,16 @@ Tilemap:
     m_Data: {fileID: 7500012598614842352, guid: 17991a6676ded78438138725c62fac7c, type: 3}
   - m_RefCount: 3
     m_Data: {fileID: -6088800945719919605, guid: 17991a6676ded78438138725c62fac7c, type: 3}
+  - m_RefCount: 0
+    m_Data: {fileID: 0}
   - m_RefCount: 1
     m_Data: {fileID: -8640203682804661590, guid: 17991a6676ded78438138725c62fac7c, type: 3}
-  - m_RefCount: 1
-    m_Data: {fileID: -5302911774443870069, guid: 17991a6676ded78438138725c62fac7c, type: 3}
   - m_RefCount: 16
     m_Data: {fileID: 2666516837060376466, guid: 17991a6676ded78438138725c62fac7c, type: 3}
   - m_RefCount: 18
     m_Data: {fileID: 9127875864468747206, guid: 17991a6676ded78438138725c62fac7c, type: 3}
-  - m_RefCount: 0
-    m_Data: {fileID: 0}
+  - m_RefCount: 1
+    m_Data: {fileID: -5302911774443870069, guid: 17991a6676ded78438138725c62fac7c, type: 3}
   - m_RefCount: 8
     m_Data: {fileID: -7813374207947574260, guid: 17991a6676ded78438138725c62fac7c, type: 3}
   - m_RefCount: 2
