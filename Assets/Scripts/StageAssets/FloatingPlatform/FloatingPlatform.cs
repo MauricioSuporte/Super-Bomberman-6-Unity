@@ -14,6 +14,9 @@ public sealed class FloatingPlatform : MonoBehaviour
     [SerializeField, Min(0.01f)] private float moveSpeed = 2f;
     [SerializeField, Min(0f)] private float stopSeconds = 2f;
 
+    [Header("Time")]
+    [SerializeField] private bool ignoreTimeScale = true;
+
     [Header("Mount")]
     [SerializeField] private bool snapRiderToCenterOnMount = true;
     [SerializeField] private bool roundRiderToGridOnSnap = true;
@@ -46,7 +49,6 @@ public sealed class FloatingPlatform : MonoBehaviour
 
     private Coroutine _loop;
 
-    // MULTI-RIDERS
     private readonly List<MovementController> _riders = new();
     private readonly Dictionary<MovementController, Rigidbody2D> _riderRb = new();
 
@@ -138,8 +140,15 @@ public sealed class FloatingPlatform : MonoBehaviour
             UnlockAllRidersIfAny();
 
             float stop = Mathf.Max(0f, stopSeconds);
-            if (stop > 0f) yield return new WaitForSeconds(stop);
-            else yield return null;
+            if (stop > 0f)
+            {
+                if (ignoreTimeScale) yield return new WaitForSecondsRealtime(stop);
+                else yield return new WaitForSeconds(stop);
+            }
+            else
+            {
+                yield return null;
+            }
 
             _isStopping = false;
 
@@ -152,9 +161,12 @@ public sealed class FloatingPlatform : MonoBehaviour
 
             while (Vector2.Distance(GetWorldPos2D(), target) > 0.001f)
             {
+                float dt = ignoreTimeScale ? Time.unscaledDeltaTime : Time.deltaTime;
+
                 Vector2 p = GetWorldPos2D();
-                Vector2 np = Vector2.MoveTowards(p, target, moveSpeed * Time.deltaTime);
+                Vector2 np = Vector2.MoveTowards(p, target, moveSpeed * dt);
                 SetWorldPos2D(np);
+
                 yield return null;
             }
 
