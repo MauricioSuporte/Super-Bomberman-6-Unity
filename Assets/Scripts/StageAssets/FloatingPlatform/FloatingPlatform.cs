@@ -37,9 +37,6 @@ public sealed class FloatingPlatform : MonoBehaviour
     private BoxCollider2D _col;
     private Rigidbody2D _rb;
 
-    private MovementController _rider;
-    private Rigidbody2D _riderRb;
-
     private bool _isMoving;
     private bool _isStopping;
     private bool _atA = true;
@@ -48,6 +45,10 @@ public sealed class FloatingPlatform : MonoBehaviour
     private int _lastUnmountFrame = -999;
 
     private Coroutine _loop;
+
+    // MULTI-RIDERS
+    private readonly List<MovementController> _riders = new();
+    private readonly Dictionary<MovementController, Rigidbody2D> _riderRb = new();
 
     private static readonly HashSet<MovementController> ridersOnPlatforms = new();
     private static readonly Dictionary<MovementController, FloatingPlatform> riderToPlatform = new();
@@ -64,9 +65,6 @@ public sealed class FloatingPlatform : MonoBehaviour
         if (mc == null) return false;
         return ridersOnPlatforms.Contains(mc);
     }
-
-    public bool HasRider => _rider != null;
-    public bool IsRider(MovementController mc) => _rider != null && _rider == mc;
 
     public bool IsMoving => _isMoving;
     public bool IsIdleAtStop => _isStopping && !_isMoving;
@@ -105,20 +103,15 @@ public sealed class FloatingPlatform : MonoBehaviour
             _loop = null;
         }
 
-        if (_rider != null)
-        {
-            ridersOnPlatforms.Remove(_rider);
-            riderToPlatform.Remove(_rider);
-            ForceUnmountInternal();
-        }
+        ForceUnmountAllInternal();
     }
 
     private void LateUpdate()
     {
-        if (_rider == null) return;
+        if (_riders.Count == 0) return;
 
         if (snapRiderToCenterOnMount)
-            SnapRiderToPlatformCenter();
+            SnapAllRidersToPlatformCenter();
     }
 
     private void OnTriggerStay2D(Collider2D other)
@@ -142,7 +135,7 @@ public sealed class FloatingPlatform : MonoBehaviour
             _isMoving = false;
             _isStopping = true;
 
-            UnlockRiderIfAny();
+            UnlockAllRidersIfAny();
 
             float stop = Mathf.Max(0f, stopSeconds);
             if (stop > 0f) yield return new WaitForSeconds(stop);
@@ -152,8 +145,8 @@ public sealed class FloatingPlatform : MonoBehaviour
 
             Vector2 target = _atA ? pointB : pointA;
 
-            if (_rider != null)
-                BeginCarryRider();
+            if (_riders.Count > 0)
+                BeginCarryAllRiders();
 
             _isMoving = true;
 
@@ -170,7 +163,7 @@ public sealed class FloatingPlatform : MonoBehaviour
             _isMoving = false;
             _isStopping = true;
 
-            UnlockRiderIfAny();
+            UnlockAllRidersIfAny();
 
             _atA = !_atA;
         }
@@ -194,46 +187,74 @@ public sealed class FloatingPlatform : MonoBehaviour
         return GetWorldPos2D();
     }
 
-    private void SnapRiderToPlatformCenter()
+    private int GetPlayerId(MovementController mc)
     {
-        if (_rider == null) return;
+        if (mc == null) return 1;
 
-        Vector2 center = GetPlatformCenter() + followOffset + riderLocalOffset;
+        var pid = mc.GetComponentInParent<PlayerIdentity>();
+        if (pid != null)
+            return Mathf.Clamp(pid.playerId, 1, 4);
 
-        if (_riderRb != null)
+        return Mathf.Clamp(mc.PlayerId, 1, 4);
+    }
+
+    private Vector2 GetSharedRiderTargetWorldPos()
+        => GetPlatformCenter() + followOffset + riderLocalOffset;
+
+    private void SnapAllRidersToPlatformCenter()
+    {
+        Vector2 target = GetSharedRiderTargetWorldPos();
+
+        for (int i = 0; i < _riders.Count; i++)
         {
-            _riderRb.linearVelocity = Vector2.zero;
-            _riderRb.position = center;
-        }
-        else
-        {
-            _rider.transform.position = center;
+            var mc = _riders[i];
+            if (mc == null) continue;
+
+            if (_riderRb.TryGetValue(mc, out var rb) && rb != null)
+            {
+                rb.linearVelocity = Vector2.zero;
+                rb.position = target;
+            }
+            else
+            {
+                mc.transform.position = target;
+            }
         }
     }
 
-    private void BeginCarryRider()
+    private void BeginCarryAllRiders()
     {
-        if (_rider == null) return;
+        if (_riders.Count == 0) return;
 
         if (snapRiderToCenterOnMount)
-            SnapRiderToPlatformCenter();
+            SnapAllRidersToPlatformCenter();
 
-        if (lockInputWhileMoving)
-            _rider.SetInputLocked(true, forceIdleOnLock);
+        if (!lockInputWhileMoving) return;
+
+        for (int i = 0; i < _riders.Count; i++)
+        {
+            var mc = _riders[i];
+            if (mc == null) continue;
+            mc.SetInputLocked(true, forceIdleOnLock);
+        }
     }
 
-    private void UnlockRiderIfAny()
+    private void UnlockAllRidersIfAny()
     {
-        if (_rider == null) return;
+        if (_riders.Count == 0) return;
+        if (!lockInputWhileMoving) return;
 
-        if (lockInputWhileMoving)
-            _rider.SetInputLocked(false);
+        for (int i = 0; i < _riders.Count; i++)
+        {
+            var mc = _riders[i];
+            if (mc == null) continue;
+            mc.SetInputLocked(false);
+        }
     }
 
     public bool CanMount(MovementController mc)
     {
         if (mc == null) return false;
-        if (HasRider) return false;
         if (mc.isDead) return false;
         if (!mc.CompareTag("Player")) return false;
         if (IsRidingPlatform(mc)) return false;
@@ -249,16 +270,19 @@ public sealed class FloatingPlatform : MonoBehaviour
         if (!CanMount(mc))
             return false;
 
-        _rider = mc;
-        _riderRb = mc.Rigidbody;
+        if (_riders.Contains(mc))
+            return false;
 
-        ridersOnPlatforms.Add(_rider);
-        riderToPlatform[_rider] = this;
+        _riders.Add(mc);
+        _riderRb[mc] = mc.Rigidbody;
+
+        ridersOnPlatforms.Add(mc);
+        riderToPlatform[mc] = this;
 
         if (snapRiderToCenterOnMount)
         {
-            Vector2 center = GetPlatformCenter() + followOffset + riderLocalOffset;
-            mc.SnapToWorldPoint(center, roundRiderToGridOnSnap);
+            Vector2 target = GetSharedRiderTargetWorldPos();
+            mc.SnapToWorldPoint(target, roundRiderToGridOnSnap);
         }
 
         if (_isMoving && lockInputWhileMoving)
@@ -272,7 +296,7 @@ public sealed class FloatingPlatform : MonoBehaviour
     public bool TryUnmount(MovementController mover)
     {
         if (mover == null) return false;
-        if (!HasRider || mover != _rider) return false;
+        if (!_riders.Contains(mover)) return false;
         if (!IsIdleAtStop) return false;
 
         float tileSize = mover.tileSize > 0f ? mover.tileSize : 1f;
@@ -281,10 +305,10 @@ public sealed class FloatingPlatform : MonoBehaviour
         Vector2 offsetTiles = upper ? unmountOffsetUpperTiles : unmountOffsetLowerTiles;
         Vector2 offset = applyUnmountOffset ? offsetTiles * tileSize : Vector2.zero;
 
-        Vector2 basePos = GetPlatformCenter() + followOffset + riderLocalOffset;
+        Vector2 basePos = GetSharedRiderTargetWorldPos();
         Vector2 targetPos = basePos + offset;
 
-        ForceUnmountInternal();
+        ForceUnmountInternal(mover);
 
         _lastUnmountFrame = Time.frameCount;
         _nextAllowedMountTime = Time.time + Mathf.Max(0f, remountBlockSeconds);
@@ -293,20 +317,28 @@ public sealed class FloatingPlatform : MonoBehaviour
         return true;
     }
 
-    private void ForceUnmountInternal()
+    private void ForceUnmountInternal(MovementController mc)
     {
-        if (_rider == null) return;
-
-        var prev = _rider;
+        if (mc == null) return;
 
         if (lockInputWhileMoving)
-            prev.SetInputLocked(false);
+            mc.SetInputLocked(false);
 
-        ridersOnPlatforms.Remove(prev);
-        riderToPlatform.Remove(prev);
+        ridersOnPlatforms.Remove(mc);
+        riderToPlatform.Remove(mc);
 
-        _rider = null;
-        _riderRb = null;
+        _riderRb.Remove(mc);
+        _riders.Remove(mc);
+    }
+
+    private void ForceUnmountAllInternal()
+    {
+        var copy = new List<MovementController>(_riders);
+        for (int i = 0; i < copy.Count; i++)
+            ForceUnmountInternal(copy[i]);
+
+        _riders.Clear();
+        _riderRb.Clear();
     }
 
     private bool TryHandlePlatformInput(MovementController mc)
@@ -318,10 +350,12 @@ public sealed class FloatingPlatform : MonoBehaviour
         var input = PlayerInputManager.Instance;
         if (input == null) return false;
 
-        bool up = input.Get(mc.PlayerId, PlayerAction.MoveUp);
-        bool down = input.Get(mc.PlayerId, PlayerAction.MoveDown);
+        int pid = GetPlayerId(mc);
 
-        bool isRider = HasRider && IsRider(mc);
+        bool up = input.Get(pid, PlayerAction.MoveUp);
+        bool down = input.Get(pid, PlayerAction.MoveDown);
+
+        bool isRider = _riders.Contains(mc);
 
         if (IsAtLowerStop)
         {
