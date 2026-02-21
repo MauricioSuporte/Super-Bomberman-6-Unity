@@ -73,10 +73,10 @@ public partial class BombController : MonoBehaviour
     [Range(0f, 1f)][SerializeField] private float holeDestroyVolume = 1f;
 
     [Header("Water Sink Animation")]
-    [SerializeField, Min(0f)] private float waterSinkSeconds = 0.1f;
+    private readonly float waterSinkSeconds = 0.55f;
 
     [Header("Hole Sink Animation")]
-    [SerializeField, Min(0f)] private float holeSinkSeconds = 0.1f;
+    private readonly float holeSinkSeconds = 0.55f;
 
     [Header("Water Sink Tint")]
     [SerializeField] private bool waterSinkApplyBlueTint = true;
@@ -730,7 +730,7 @@ public partial class BombController : MonoBehaviour
         _removedBombIds.Add(id);
 
         Vector3 wc = waterTiles.GetCellCenterWorld(waterCell);
-        Vector2 sinkPos = new Vector2(Mathf.Round(wc.x), Mathf.Round(wc.y));
+        Vector2 sinkPos = new(Mathf.Round(wc.x), Mathf.Round(wc.y));
 
         if (bombGo.TryGetComponent<Bomb>(out var bomb) && bomb != null)
         {
@@ -777,9 +777,8 @@ public partial class BombController : MonoBehaviour
 
         if (bombGo.TryGetComponent<Bomb>(out var bomb) && bomb != null)
         {
+            bomb.StopAllCoroutines();
             bomb.LockWorldPosition(sinkPos);
-            bomb.ForceStopExternalMovementAndSnap(sinkPos);
-            bomb.StopKickPunchMagnetRoutines();
             bomb.ForceStopExternalMovementAndSnap(sinkPos);
         }
 
@@ -854,15 +853,15 @@ public partial class BombController : MonoBehaviour
 
         Vector3 startScale = t != null ? t.localScale : Vector3.one;
 
-        float stepSeconds = 0.1f;
-        int steps = Mathf.Max(1, Mathf.CeilToInt(waterSinkSeconds / stepSeconds));
+        float elapsed = 0f;
 
-        for (int i = 1; i <= steps; i++)
+        while (elapsed < waterSinkSeconds)
         {
             if (bombGo == null)
                 yield break;
 
-            float a = i / (float)steps;
+            elapsed += Time.deltaTime;
+            float a = Mathf.Clamp01(elapsed / waterSinkSeconds);
 
             if (t != null)
                 t.localScale = Vector3.Lerp(startScale, Vector3.zero, a);
@@ -883,7 +882,7 @@ public partial class BombController : MonoBehaviour
                 }
             }
 
-            yield return new WaitForSeconds(stepSeconds);
+            yield return null;
         }
 
         if (t != null)
@@ -972,32 +971,31 @@ public partial class BombController : MonoBehaviour
 
         Vector3 startScale = t != null ? t.localScale : Vector3.one;
 
-        float stepSeconds = 0.1f;
-        int steps = Mathf.Max(1, Mathf.CeilToInt(holeSinkSeconds / stepSeconds));
+        float elapsed = 0f;
 
-        for (int i = 1; i <= steps; i++)
+        while (elapsed < holeSinkSeconds)
         {
             if (bombGo == null)
                 yield break;
 
-            float a = i / (float)steps;
+            elapsed += Time.deltaTime;
+            float a = Mathf.Clamp01(elapsed / holeSinkSeconds);
 
             if (t != null)
                 t.localScale = Vector3.Lerp(startScale, Vector3.zero, a);
 
             if (holeSinkApplyBlackTint && srs != null && originalColors != null)
             {
-                Color target = holeSinkTint; // preto sólido
                 for (int r = 0; r < srs.Length; r++)
                 {
                     var sr = srs[r];
                     if (sr == null) continue;
 
-                    sr.color = Color.Lerp(originalColors[r], target, a);
+                    sr.color = Color.Lerp(originalColors[r], holeSinkTint, a);
                 }
             }
 
-            yield return new WaitForSeconds(stepSeconds);
+            yield return null;
         }
 
         if (t != null)
