@@ -3569,7 +3569,7 @@ MonoBehaviour:
     positionXY: {x: -8, y: -9}
   - useCustomSpawn: 1
     spawnPoint: {fileID: 0}
-    positionXY: {x: -8, y: -9}
+    positionXY: {x: -4, y: -9}
   playersParent: {fileID: 0}
   isBossStage: 0
   clearExistingPlayersBeforeSpawn: 1
