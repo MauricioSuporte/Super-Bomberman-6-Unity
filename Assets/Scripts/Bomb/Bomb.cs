@@ -209,7 +209,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         transform.position = snapWorldPos;
     }
 
-    private void StopKickPunchMagnetRoutines()
+    public void StopKickPunchMagnetRoutines()
     {
         if (kickRoutine != null)
         {
@@ -284,6 +284,9 @@ public class Bomb : MonoBehaviour, IMagnetPullable
             if (hit == null || hit.gameObject == gameObject)
                 continue;
 
+            if (IsHoleCollider(hit))
+                continue;
+
             if (hit.gameObject.layer == enemyLayer)
                 return true;
 
@@ -323,6 +326,9 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         foreach (var hit in hits)
         {
             if (hit == null || hit.gameObject == gameObject)
+                continue;
+
+            if (IsHoleCollider(hit))
                 continue;
 
             if (hit.gameObject.layer == enemyLayer)
@@ -397,7 +403,12 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         return true;
     }
 
-    private IEnumerator PunchRoutineFixed_Hybrid(Vector2 start, int forwardSteps, int maxExtraBounces, float duration, float arcHeight)
+    private IEnumerator PunchRoutineFixed_Hybrid(
+        Vector2 start,
+        int forwardSteps,
+        int maxExtraBounces,
+        float duration,
+        float arcHeight)
     {
         Vector2 cur = start;
         int steps = Mathf.Max(1, forwardSteps);
@@ -423,6 +434,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         if (!wrapsDuringForward)
         {
             Vector2 target = cur;
+
             for (int i = 0; i < steps; i++)
             {
                 if (!TryStepWithWrap(target, out var n, out var didWrap))
@@ -432,6 +444,13 @@ public class Bomb : MonoBehaviour, IMagnetPullable
                 {
                     TeleportTo(n);
                     target = n;
+
+                    if (NotifyOwnerAt(target))
+                    {
+                        cur = target;
+                        goto FINISH;
+                    }
+
                     continue;
                 }
 
@@ -443,6 +462,9 @@ public class Bomb : MonoBehaviour, IMagnetPullable
 
             yield return PunchArcSegmentFixed(cur, target, duration, arcHeight);
             cur = target;
+
+            if (NotifyOwnerAt(cur))
+                goto FINISH;
         }
         else
         {
@@ -460,11 +482,18 @@ public class Bomb : MonoBehaviour, IMagnetPullable
                 {
                     TeleportTo(next);
                     cur = next;
+
+                    if (NotifyOwnerAt(cur))
+                        goto FINISH;
+
                     continue;
                 }
 
                 yield return PunchArcSegmentFixed(cur, next, segDuration, arcHeight);
                 cur = next;
+
+                if (NotifyOwnerAt(cur))
+                    goto FINISH;
             }
         }
 
@@ -483,6 +512,10 @@ public class Bomb : MonoBehaviour, IMagnetPullable
             {
                 TeleportTo(next);
                 cur = next;
+
+                if (NotifyOwnerAt(cur))
+                    goto FINISH;
+
                 b--;
                 continue;
             }
@@ -492,6 +525,9 @@ public class Bomb : MonoBehaviour, IMagnetPullable
 
             yield return PunchArcSegmentFixed(cur, next, duration, arcHeight);
             cur = next;
+
+            if (NotifyOwnerAt(cur))
+                goto FINISH;
         }
 
     FINISH:
@@ -1103,5 +1139,20 @@ public class Bomb : MonoBehaviour, IMagnetPullable
 
         Vector3Int cell = stageBoundsTilemap.WorldToCell(worldPos);
         return stageBoundsTilemap.GetTile(cell) != null;
+    }
+
+    private bool IsHoleCollider(Collider2D c)
+    {
+        return c != null && c.CompareTag("Hole");
+    }
+
+    private bool NotifyOwnerAt(Vector2 pos)
+    {
+        if (owner == null)
+            return false;
+
+        owner.NotifyBombAt(pos, gameObject);
+
+        return HasExploded || this == null || gameObject == null;
     }
 }

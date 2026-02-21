@@ -2186,6 +2186,7 @@ MonoBehaviour:
   contactDamageCooldownSeconds: 0.15
   deathDisableSeconds: 2
   checkWinStateOnDeath: 1
+  holeDeathInProgress: 0
   holeDeathSfx: {fileID: 8300000, guid: f33e3c1b335de674f900986923780c43, type: 3}
   holeDeathSfxVolume: 1
   useHoleDeathSinkVisual: 1
@@ -2255,6 +2256,8 @@ MonoBehaviour:
   stageBoundsTiles: {fileID: 0}
   waterTiles: {fileID: 0}
   waterTag: Water
+  holeTiles: {fileID: 0}
+  holeTag: Hole
   destructibleTiles: {fileID: 0}
   destructiblePrefab: {fileID: 0}
   destructibleTileResolver: {fileID: 0}
@@ -2265,11 +2268,17 @@ MonoBehaviour:
   playerAudioSource: {fileID: 4627430260018096140}
   waterDestroySfx: {fileID: 8300000, guid: 83a93c1236f473d409252138ebbc4160, type: 3}
   waterDestroyVolume: 0.396
+  holeDestroySfx: {fileID: 8300000, guid: f33e3c1b335de674f900986923780c43, type: 3}
+  holeDestroyVolume: 1
   waterSinkSeconds: 0.5
+  holeSinkSeconds: 0.1
   waterSinkApplyBlueTint: 1
   waterSinkTintAffectsChildren: 1
   waterSinkTint: {r: 0.45, g: 0.75, b: 1, a: 1}
   waterSinkTargetAlpha: 0.25
+  holeSinkApplyBlackTint: 1
+  holeSinkTintAffectsChildren: 1
+  holeSinkTint: {r: 0, g: 0, b: 0, a: 1}
   explosionSfxByRadius:
   - {fileID: 8300000, guid: 982bf6370a168ad46a4c3f893bc7510c, type: 3}
   - {fileID: 8300000, guid: 888275a1a50795d4696007fe7b34632d, type: 3}

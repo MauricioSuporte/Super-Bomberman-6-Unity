@@ -46,6 +46,10 @@ public partial class BombController : MonoBehaviour
     [SerializeField] private Tilemap waterTiles;
     [SerializeField] private string waterTag = "Water";
 
+    [Header("Hole (kills bomb)")]
+    [SerializeField] private Tilemap holeTiles;
+    [SerializeField] private string holeTag = "Hole";
+
     [Header("Destructible (resolved from GameManager)")]
     public Tilemap destructibleTiles;
     public Destructible destructiblePrefab;
@@ -64,14 +68,26 @@ public partial class BombController : MonoBehaviour
     [SerializeField] private AudioClip waterDestroySfx;
     [Range(0f, 1f)][SerializeField] private float waterDestroyVolume = 1f;
 
+    [Header("Hole Destroy SFX")]
+    [SerializeField] private AudioClip holeDestroySfx;
+    [Range(0f, 1f)][SerializeField] private float holeDestroyVolume = 1f;
+
     [Header("Water Sink Animation")]
     [SerializeField, Min(0f)] private float waterSinkSeconds = 0.1f;
+
+    [Header("Hole Sink Animation")]
+    [SerializeField, Min(0f)] private float holeSinkSeconds = 0.1f;
 
     [Header("Water Sink Tint")]
     [SerializeField] private bool waterSinkApplyBlueTint = true;
     [SerializeField] private bool waterSinkTintAffectsChildren = true;
     [SerializeField] private Color waterSinkTint = new(0.45f, 0.75f, 1f, 1f);
     [SerializeField, Range(0f, 1f)] private float waterSinkTargetAlpha = 0.25f;
+
+    [Header("Hole Sink Tint (darken to solid black)")]
+    [SerializeField] private bool holeSinkApplyBlackTint = true;
+    [SerializeField] private bool holeSinkTintAffectsChildren = true;
+    [SerializeField] private Color holeSinkTint = new(0f, 0f, 0f, 1f);
 
     [Header("Explosion SFX By Radius (1..9, >=10 = last)")]
     public AudioClip[] explosionSfxByRadius = new AudioClip[10];
@@ -230,6 +246,22 @@ public partial class BombController : MonoBehaviour
 
             if (waterTiles == null)
                 waterTiles = FindTilemapByNameContains(tilemaps, "water");
+        }
+
+        if (holeTiles == null)
+        {
+            for (int i = 0; i < tilemaps.Length; i++)
+            {
+                var tm = tilemaps[i];
+                if (tm != null && tm.CompareTag(holeTag))
+                {
+                    holeTiles = tm;
+                    break;
+                }
+            }
+
+            if (holeTiles == null)
+                holeTiles = FindTilemapByNameContains(tilemaps, "hole");
         }
     }
 
@@ -469,6 +501,19 @@ public partial class BombController : MonoBehaviour
         return waterTiles.GetTile(cell) != null;
     }
 
+    private bool HasHoleAt(Vector2 worldPos)
+    {
+        if (holeTiles == null)
+        {
+            ResolveTilemaps();
+            if (holeTiles == null)
+                return false;
+        }
+
+        Vector3Int cell = holeTiles.WorldToCell(worldPos);
+        return holeTiles.GetTile(cell) != null;
+    }
+
     private bool HasDestructibleAt(Vector2 worldPos)
     {
         if (destructibleTiles == null)
@@ -559,6 +604,9 @@ public partial class BombController : MonoBehaviour
         if (HasWaterAt(worldPos))
             return false;
 
+        if (HasHoleAt(worldPos))
+            return false;
+
         return true;
     }
 
@@ -639,6 +687,9 @@ public partial class BombController : MonoBehaviour
         if (TryDestroyBombIfOnWater(bomb, position, refund: true))
             return;
 
+        if (TryDestroyBombIfOnHole(bomb, position, refund: true))
+            return;
+
         if (bomb.TryGetComponent<Collider2D>(out var bombCollider))
             bombCollider.isTrigger = true;
 
@@ -695,6 +746,50 @@ public partial class BombController : MonoBehaviour
             bombsRemaining = Mathf.Min(bombsRemaining + 1, bombAmout);
 
         StartCoroutine(WaterSinkAndDestroyRoutine(bombGo, sinkPos));
+        return true;
+    }
+
+    private bool TryDestroyBombIfOnHole(GameObject bombGo, Vector2 worldPos, bool refund)
+    {
+        if (bombGo == null)
+            return false;
+
+        int id = bombGo.GetInstanceID();
+        if (_removedBombIds.Contains(id))
+            return true;
+
+        if (holeTiles == null)
+        {
+            ResolveTilemaps();
+            if (holeTiles == null)
+                return false;
+        }
+
+        Vector3Int holeCell = holeTiles.WorldToCell(worldPos);
+        TileBase holeTile = holeTiles.GetTile(holeCell);
+        if (holeTile == null)
+            return false;
+
+        _removedBombIds.Add(id);
+
+        Vector3 hc = holeTiles.GetCellCenterWorld(holeCell);
+        Vector2 sinkPos = new(Mathf.Round(hc.x), Mathf.Round(hc.y));
+
+        if (bombGo.TryGetComponent<Bomb>(out var bomb) && bomb != null)
+        {
+            bomb.LockWorldPosition(sinkPos);
+            bomb.ForceStopExternalMovementAndSnap(sinkPos);
+            bomb.StopKickPunchMagnetRoutines();
+            bomb.ForceStopExternalMovementAndSnap(sinkPos);
+        }
+
+        PlayHoleDestroySfx();
+        UnregisterBomb(bombGo);
+
+        if (refund)
+            bombsRemaining = Mathf.Min(bombsRemaining + 1, bombAmout);
+
+        StartCoroutine(HoleSinkAndDestroyRoutine(bombGo, sinkPos));
         return true;
     }
 
@@ -804,6 +899,118 @@ public partial class BombController : MonoBehaviour
                 Color final = waterSinkTint;
                 final.a = waterSinkTargetAlpha;
                 sr.color = final;
+            }
+        }
+
+        DisableBombDrivers(bombGo);
+
+        if (bombGo.TryGetComponent<Bomb>(out var bombScript) && bombScript != null)
+            bombScript.enabled = false;
+
+        if (bombGo != null)
+            Destroy(bombGo);
+    }
+
+    private IEnumerator HoleSinkAndDestroyRoutine(GameObject bombGo, Vector2 sinkWorldPos)
+    {
+        if (bombGo == null)
+            yield break;
+
+        var t = bombGo.transform;
+
+        if (bombGo.TryGetComponent<Bomb>(out var bombComp) && bombComp != null)
+        {
+            bombComp.LockWorldPosition(sinkWorldPos);
+            bombComp.ForceStopExternalMovementAndSnap(sinkWorldPos);
+        }
+
+        if (t != null)
+            t.position = new Vector3(sinkWorldPos.x, sinkWorldPos.y, t.position.z);
+
+        if (bombGo.TryGetComponent<Rigidbody2D>(out var rb) && rb != null)
+        {
+            rb.position = sinkWorldPos;
+            rb.linearVelocity = Vector2.zero;
+            rb.angularVelocity = 0f;
+            rb.simulated = false;
+            rb.interpolation = RigidbodyInterpolation2D.None;
+        }
+
+        Physics2D.SyncTransforms();
+
+        if (bombGo.TryGetComponent<BombAtGroundTileNotifier>(out var notifier) && notifier != null)
+            notifier.enabled = false;
+
+        if (bombGo.TryGetComponent<Collider2D>(out var col) && col != null)
+            col.enabled = false;
+
+        if (bombGo.TryGetComponent<AnimatedSpriteRenderer>(out var ar) && ar != null)
+        {
+            ar.SetFrozen(true);
+            ar.enabled = true;
+        }
+
+        SpriteRenderer[] srs = null;
+        Color[] originalColors = null;
+
+        if (holeSinkApplyBlackTint)
+        {
+            srs = holeSinkTintAffectsChildren
+                ? bombGo.GetComponentsInChildren<SpriteRenderer>(true)
+                : bombGo.GetComponents<SpriteRenderer>();
+
+            if (srs != null && srs.Length > 0)
+            {
+                originalColors = new Color[srs.Length];
+                for (int i = 0; i < srs.Length; i++)
+                {
+                    var sr = srs[i];
+                    originalColors[i] = sr != null ? sr.color : Color.white;
+                }
+            }
+        }
+
+        Vector3 startScale = t != null ? t.localScale : Vector3.one;
+
+        float stepSeconds = 0.1f;
+        int steps = Mathf.Max(1, Mathf.CeilToInt(holeSinkSeconds / stepSeconds));
+
+        for (int i = 1; i <= steps; i++)
+        {
+            if (bombGo == null)
+                yield break;
+
+            float a = i / (float)steps;
+
+            if (t != null)
+                t.localScale = Vector3.Lerp(startScale, Vector3.zero, a);
+
+            if (holeSinkApplyBlackTint && srs != null && originalColors != null)
+            {
+                Color target = holeSinkTint; // preto sólido
+                for (int r = 0; r < srs.Length; r++)
+                {
+                    var sr = srs[r];
+                    if (sr == null) continue;
+
+                    sr.color = Color.Lerp(originalColors[r], target, a);
+                }
+            }
+
+            yield return new WaitForSeconds(stepSeconds);
+        }
+
+        if (t != null)
+            t.localScale = Vector3.zero;
+
+        if (holeSinkApplyBlackTint && srs != null && originalColors != null)
+        {
+            for (int r = 0; r < srs.Length; r++)
+            {
+                var sr = srs[r];
+                if (sr == null) continue;
+
+                sr.color = holeSinkTint;
             }
         }
 
@@ -1226,6 +1433,18 @@ public partial class BombController : MonoBehaviour
         src.PlayOneShot(waterDestroySfx, waterDestroyVolume);
     }
 
+    private void PlayHoleDestroySfx()
+    {
+        if (holeDestroySfx == null)
+            return;
+
+        AudioSource src = playerAudioSource != null ? playerAudioSource : _localAudio;
+        if (src == null)
+            return;
+
+        src.PlayOneShot(holeDestroySfx, holeDestroyVolume);
+    }
+
     private void TryApplyGroundExplosionModifiers(Vector2 worldPos, ref int radius, ref bool pierce)
     {
         ResolveGroundTileResolver();
@@ -1433,7 +1652,11 @@ public partial class BombController : MonoBehaviour
         Vector2 snapped = SnapToTileCenter(snapTm, worldPos, out _, out _);
 
         TryHandleGroundBombAt(snapped, bombGo);
-        TryDestroyBombIfOnWater(bombGo, snapped, refund: true);
+
+        if (TryDestroyBombIfOnWater(bombGo, snapped, refund: true))
+            return;
+
+        TryDestroyBombIfOnHole(bombGo, snapped, refund: true);
     }
 
     public void SpawnExplosionCrossForEffect(Vector2 origin, int radius, bool pierce)
@@ -1559,6 +1782,12 @@ public partial class BombController : MonoBehaviour
         TryHandleGroundBombAt(position, bomb);
 
         if (TryDestroyBombIfOnWater(bomb, position, refund: consumeBomb))
+        {
+            placedBomb = null;
+            return false;
+        }
+
+        if (TryDestroyBombIfOnHole(bomb, position, refund: consumeBomb))
         {
             placedBomb = null;
             return false;
