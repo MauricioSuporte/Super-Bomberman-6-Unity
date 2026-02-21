@@ -186,7 +186,7 @@ MonoBehaviour:
   redLouieEggAmount: 1
   destructibleTilemap: {fileID: 285353618}
   indestructibleTilemap: {fileID: 0}
-  nextStageSceneName: 
+  nextStageSceneName: Stage_2-5
   destructiblePrefab: {fileID: 3440613785117735154, guid: ae195ebe108124a43b35c0a301b446eb, type: 3}
   groundTilemap: {fileID: 672307155}
   groundTile: {fileID: 11400000, guid: ada74cfa1fdef9e4c86ccafaa1b2ae66, type: 2}
@@ -7602,7 +7602,7 @@ Tilemap:
       m_AnimatedSprites:
       - {fileID: -512380286, guid: 9ca3acaac181aaa4da91fd60f6063a21, type: 3}
       - {fileID: 146987460, guid: 9ca3acaac181aaa4da91fd60f6063a21, type: 3}
-      m_AnimationSpeed: 5.0000005
+      m_AnimationSpeed: 5
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: -18, y: 18, z: 0}
