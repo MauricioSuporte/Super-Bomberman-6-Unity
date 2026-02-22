@@ -114,9 +114,7 @@ MonoBehaviour:
   sequenceDuration: 0.5
   loop: 1
   idle: 0
-  frameOffsets:
-  - {x: 0.05, y: 0}
-  - {x: -0.05, y: 0}
+  frameOffsets: []
   pingPong: 0
   disableOffsetsIfThisObjectHasRigidbody2D: 1
   disableOffsetsIfStandaloneRoot: 1
