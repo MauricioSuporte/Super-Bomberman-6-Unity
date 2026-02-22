@@ -83,6 +83,7 @@ public sealed class PushIndestructibleTileHandler : MonoBehaviour, IIndestructib
         Color prevFromColor = indestructibleTilemap.GetColor(fromCell);
         Color prevToColor = indestructibleTilemap.GetColor(toCell);
 
+        // Hide original tile (alpha 0)
         indestructibleTilemap.SetColor(fromCell, new Color(prevFromColor.r, prevFromColor.g, prevFromColor.b, 0f));
         indestructibleTilemap.RefreshTile(fromCell);
 
@@ -90,12 +91,22 @@ public sealed class PushIndestructibleTileHandler : MonoBehaviour, IIndestructib
         if (moveVisualPrefab != null)
             visual = Instantiate(moveVisualPrefab, fromPos, Quaternion.identity);
 
+        // Remove from origin immediately (creates the "hole")
         indestructibleTilemap.SetTile(fromCell, null);
         indestructibleTilemap.RefreshTile(fromCell);
+
+        bool cancelAndReturnToOrigin = false;
 
         float elapsed = 0f;
         while (elapsed < moveSeconds)
         {
+            // If anyone appears on target during motion, cancel and revert.
+            if (IsBlockedByMaskAtCell(toCell, blockMoveMask))
+            {
+                cancelAndReturnToOrigin = true;
+                break;
+            }
+
             elapsed += Time.deltaTime;
             float t = Mathf.Clamp01(elapsed / moveSeconds);
 
@@ -105,6 +116,26 @@ public sealed class PushIndestructibleTileHandler : MonoBehaviour, IIndestructib
             yield return null;
         }
 
+        // If cancelled mid-way, snap visual back (optional) and restore origin tile.
+        if (cancelAndReturnToOrigin)
+        {
+            if (visual != null)
+                visual.transform.position = fromPos;
+
+            indestructibleTilemap.SetTile(fromCell, tile);
+            indestructibleTilemap.SetColor(fromCell, prevFromColor);
+            indestructibleTilemap.RefreshTile(fromCell);
+
+            // We never placed anything in destination, so nothing to clear there.
+            if (visual != null)
+                Destroy(visual);
+
+            RemoveOriginBlocker(fromCell);
+            _movingCells.Remove(fromCell);
+            yield break;
+        }
+
+        // Otherwise, finished motion: do final validation (covers ground/destructible/indestructible + mask overlap).
         bool canPlace = CanMoveToCell(toCell);
 
         if (canPlace)
@@ -112,6 +143,9 @@ public sealed class PushIndestructibleTileHandler : MonoBehaviour, IIndestructib
             indestructibleTilemap.SetTile(toCell, tile);
             indestructibleTilemap.SetColor(toCell, prevToColor);
             indestructibleTilemap.RefreshTile(toCell);
+
+            // restore origin color (tile is null there)
+            indestructibleTilemap.SetColor(fromCell, prevFromColor);
         }
         else
         {
@@ -120,14 +154,22 @@ public sealed class PushIndestructibleTileHandler : MonoBehaviour, IIndestructib
             indestructibleTilemap.RefreshTile(fromCell);
         }
 
-        indestructibleTilemap.SetColor(fromCell, prevFromColor);
-
         if (visual != null)
             Destroy(visual);
 
         RemoveOriginBlocker(fromCell);
-
         _movingCells.Remove(fromCell);
+    }
+
+    private bool IsBlockedByMaskAtCell(Vector3Int cell, LayerMask mask)
+    {
+        if (indestructibleTilemap == null)
+            return false;
+
+        Vector3 w3 = indestructibleTilemap.GetCellCenterWorld(cell);
+        Vector2 w = new(w3.x, w3.y);
+
+        return Physics2D.OverlapBox(w, Vector2.one * overlapBoxSize, 0f, mask) != null;
     }
 
     private void EnsureOriginBlocker(Vector3Int cell)
@@ -144,7 +186,6 @@ public sealed class PushIndestructibleTileHandler : MonoBehaviour, IIndestructib
         go.transform.SetParent(indestructibleTilemap.transform, worldPositionStays: true);
         go.transform.position = new Vector3(c.x, c.y, c.z);
 
-        // Use Stage layer so MovementController (obstacleMask Stage/Bomb) will block it
         int stageLayer = LayerMask.NameToLayer("Stage");
         if (stageLayer >= 0)
             go.layer = stageLayer;
