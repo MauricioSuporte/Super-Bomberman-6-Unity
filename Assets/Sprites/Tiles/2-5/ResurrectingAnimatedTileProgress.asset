@@ -1,0 +1,32 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6e09a8d68fc28744bb9737b0c25194e2, type: 3}
+  m_Name: ResurrectingAnimatedTileProgress
+  m_EditorClassIdentifier: Assembly-CSharp::ResurrectingAnimatedTileProgress
+  m_AnimatedSprites: []
+  m_MinSpeed: 1
+  m_MaxSpeed: 1
+  m_AnimationStartTime: 0
+  m_TileColliderType: 1
+  idleVisualTile: {fileID: 11400000, guid: e144b6e6b4589ee45ad888143ea82bfd, type: 2}
+  destructionAnimationSeconds: 0.5
+  respawnSeconds: 20
+  retryCheckSeconds: 0.25
+  overlapBoxSize: 0.5
+  preRespawnWarningTile: {fileID: 0}
+  preRespawnWarningSeconds: 0
+  resurrectionAnimatedTile: {fileID: 11400000, guid: 2c24f7187dc9a774f8fe50520742a8ae, type: 2}
+  resurrectionFrames:
+  - {fileID: 11400000, guid: 9ef0456e9844ccd4f98e3ce252d2d40e, type: 2}
+  - {fileID: 11400000, guid: 46e7bb703210171448aeadd1074b60ef, type: 2}
+  - {fileID: 11400000, guid: e4dc0f573ad6eb24a87cf044c60abdaa, type: 2}
+  - {fileID: 11400000, guid: f15ddedfd1b97764ca0317e8c0e9dab4, type: 2}
