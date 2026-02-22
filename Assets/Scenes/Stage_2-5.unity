@@ -4760,11 +4760,13 @@ GameObject:
   m_Component:
   - component: {fileID: 732032081}
   - component: {fileID: 732032080}
+  - component: {fileID: 732032091}
   - component: {fileID: 732032084}
   - component: {fileID: 732032089}
   - component: {fileID: 732032088}
   - component: {fileID: 732032090}
   - component: {fileID: 732032086}
+  - component: {fileID: 732032092}
   m_Layer: 6
   m_Name: Stage
   m_TagString: Untagged
@@ -4836,7 +4838,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2f6d76f13ac00e74dbd4c75930cfa7e1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GroundTileResolver
-  groups: []
+  groups:
+  - id: Ligths
+    tiles:
+    - {fileID: 11400000, guid: cc2d5346686ed544c93c4e79ff7f600f, type: 2}
+    - {fileID: 11400000, guid: 2a61ac72231356949b91175a02f49811, type: 2}
+    handler: {fileID: 732032092}
 --- !u!114 &732032088
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4899,6 +4906,41 @@ MonoBehaviour:
   wiggleAmount: 0.05
   originBlockerSize: 0.9
   originBlockerUseTrigger: 0
+--- !u!114 &732032091
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 732032079}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 49428698e13823048aa4eaa022118a54, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::StageBlackout
+  blackoutImage: {fileID: 1385156977}
+  onlyForWorldStage: 1
+  targetWorld: 2
+  targetStage: 5
+  blackoutAlpha: 0.85
+  fadeInSeconds: 0
+--- !u!114 &732032092
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 732032079}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: db9a00f7feb0db946a58bd5958618baf, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SwapGroundTileBlackoutHandler
+  tileA: {fileID: 11400000, guid: cc2d5346686ed544c93c4e79ff7f600f, type: 2}
+  tileB: {fileID: 11400000, guid: 2a61ac72231356949b91175a02f49811, type: 2}
+  onlyIfMatchesAorB: 1
+  groundTilemapOverride: {fileID: 0}
+  syncBlackoutOnStart: 1
 --- !u!1001 &763234532
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -10874,6 +10916,81 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 6871244334814668732, guid: 374eddb0a155d444389c0ac9e3b6419a, type: 3}
   m_PrefabInstance: {fileID: 1364211065}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1385156975
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1385156976}
+  - component: {fileID: 1385156978}
+  - component: {fileID: 1385156977}
+  m_Layer: 5
+  m_Name: BlackoutOverlay
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &1385156976
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1385156975}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1389130176}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &1385156977
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1385156975}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
+  m_Material: {fileID: 2100000, guid: 6855d4d19190ac84895df2ad4f2f309d, type: 2}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_RaycastTarget: 0
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_Sprite: {fileID: 0}
+  m_Type: 0
+  m_PreserveAspect: 0
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
+  m_UseSpriteMesh: 0
+  m_PixelsPerUnitMultiplier: 1
+--- !u!222 &1385156978
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1385156975}
+  m_CullTransparentMesh: 1
 --- !u!1 &1389130171
 GameObject:
   m_ObjectHideFlags: 0
@@ -10997,6 +11114,7 @@ RectTransform:
   - {fileID: 676188640}
   - {fileID: 556523585}
   - {fileID: 1277028519}
+  - {fileID: 1385156976}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
