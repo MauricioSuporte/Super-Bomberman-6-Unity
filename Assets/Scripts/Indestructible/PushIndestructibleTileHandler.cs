@@ -33,6 +33,11 @@ public sealed class PushIndestructibleTileHandler : MonoBehaviour, IIndestructib
     [SerializeField] private GameObject moveVisualPrefab;
     [SerializeField] private float visualZOverride = 0f;
 
+    [Header("Move Visual - Animation Offset (wiggle)")]
+    [SerializeField] private bool enableMoveWiggle = true;
+    [SerializeField, Min(0.001f)] private float wiggleIntervalSeconds = 0.01f;
+    [SerializeField, Min(0f)] private float wiggleAmount = 0.05f;
+
     [Header("Origin Blocker (while moving)")]
     [SerializeField, Range(0.2f, 1.2f)] private float originBlockerSize = 0.9f;
     [SerializeField] private bool originBlockerUseTrigger = false;
@@ -89,6 +94,9 @@ public sealed class PushIndestructibleTileHandler : MonoBehaviour, IIndestructib
             toPos.z = visualZOverride;
         }
 
+        // Determine movement axis for wiggle
+        bool moveIsHorizontal = Mathf.Abs(toPos.x - fromPos.x) >= Mathf.Abs(toPos.y - fromPos.y);
+
         Color prevFromColor = indestructibleTilemap.GetColor(fromCell);
 
         indestructibleTilemap.SetColor(fromCell, new Color(prevFromColor.r, prevFromColor.g, prevFromColor.b, 0f));
@@ -103,6 +111,9 @@ public sealed class PushIndestructibleTileHandler : MonoBehaviour, IIndestructib
 
         bool cancelAndReturnToOrigin = false;
 
+        float wiggleTimer = 0f;
+        float wiggleSign = 1f;
+
         float elapsed = 0f;
         while (elapsed < moveSeconds)
         {
@@ -116,7 +127,29 @@ public sealed class PushIndestructibleTileHandler : MonoBehaviour, IIndestructib
             float t = Mathf.Clamp01(elapsed / moveSeconds);
 
             if (visual != null)
-                visual.transform.position = Vector3.Lerp(fromPos, toPos, t);
+            {
+                Vector3 basePos = Vector3.Lerp(fromPos, toPos, t);
+
+                if (enableMoveWiggle && wiggleAmount > 0f && wiggleIntervalSeconds > 0f)
+                {
+                    wiggleTimer += Time.deltaTime;
+                    while (wiggleTimer >= wiggleIntervalSeconds)
+                    {
+                        wiggleTimer -= wiggleIntervalSeconds;
+                        wiggleSign = -wiggleSign; // alterna: + / -
+                    }
+
+                    Vector3 off = moveIsHorizontal
+                        ? new Vector3(wiggleSign * wiggleAmount, 0f, 0f)
+                        : new Vector3(0f, wiggleSign * wiggleAmount, 0f);
+
+                    visual.transform.position = basePos + off;
+                }
+                else
+                {
+                    visual.transform.position = basePos;
+                }
+            }
 
             yield return null;
         }
