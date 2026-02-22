@@ -9,7 +9,12 @@ public sealed class PushIndestructibleTileHandler : MonoBehaviour, IIndestructib
     [SerializeField] private Tilemap indestructibleTilemap;
     [SerializeField] private Tilemap groundTilemap;
     [SerializeField] private Tilemap destructiblesTilemap;
-    [SerializeField] private Tilemap otherIndestructibleTilemap;
+
+    [Header("Allowed Target Tile (same tilemap)")]
+    [SerializeField] private TileBase allowedTargetIndestructibleTile;
+
+    [Header("Merge Result (walkable ground tile)")]
+    [SerializeField] private TileBase mergedGroundTile;
 
     [Header("Move")]
     [SerializeField, Min(0.01f)] private float moveSeconds = 0.5f;
@@ -36,9 +41,6 @@ public sealed class PushIndestructibleTileHandler : MonoBehaviour, IIndestructib
         if (indestructibleTilemap == null)
             indestructibleTilemap = GetComponentInParent<Tilemap>();
 
-        if (otherIndestructibleTilemap == null)
-            otherIndestructibleTilemap = indestructibleTilemap;
-
         if (blockMoveMask.value == 0)
             blockMoveMask = LayerMask.GetMask("Item", "Bomb", "Enemy", "Player", "Louie");
     }
@@ -56,13 +58,15 @@ public sealed class PushIndestructibleTileHandler : MonoBehaviour, IIndestructib
         if (moveDir == Vector3Int.zero) return false;
 
         Vector3Int targetCell = cell + moveDir;
-        if (!CanMoveToCell(targetCell)) return true;
 
-        StartCoroutine(MoveTileRoutine(cell, targetCell, tile));
+        if (!CanMoveToCell(targetCell, out bool isMergeTarget))
+            return true;
+
+        StartCoroutine(MoveTileRoutine(cell, targetCell, tile, isMergeTarget));
         return true;
     }
 
-    private IEnumerator MoveTileRoutine(Vector3Int fromCell, Vector3Int toCell, TileBase tile)
+    private IEnumerator MoveTileRoutine(Vector3Int fromCell, Vector3Int toCell, TileBase tile, bool mergeAtDestination)
     {
         _movingCells.Add(fromCell);
 
@@ -81,9 +85,7 @@ public sealed class PushIndestructibleTileHandler : MonoBehaviour, IIndestructib
         }
 
         Color prevFromColor = indestructibleTilemap.GetColor(fromCell);
-        Color prevToColor = indestructibleTilemap.GetColor(toCell);
 
-        // Hide original tile (alpha 0)
         indestructibleTilemap.SetColor(fromCell, new Color(prevFromColor.r, prevFromColor.g, prevFromColor.b, 0f));
         indestructibleTilemap.RefreshTile(fromCell);
 
@@ -91,7 +93,6 @@ public sealed class PushIndestructibleTileHandler : MonoBehaviour, IIndestructib
         if (moveVisualPrefab != null)
             visual = Instantiate(moveVisualPrefab, fromPos, Quaternion.identity);
 
-        // Remove from origin immediately (creates the "hole")
         indestructibleTilemap.SetTile(fromCell, null);
         indestructibleTilemap.RefreshTile(fromCell);
 
@@ -100,7 +101,6 @@ public sealed class PushIndestructibleTileHandler : MonoBehaviour, IIndestructib
         float elapsed = 0f;
         while (elapsed < moveSeconds)
         {
-            // If anyone appears on target during motion, cancel and revert.
             if (IsBlockedByMaskAtCell(toCell, blockMoveMask))
             {
                 cancelAndReturnToOrigin = true;
@@ -116,7 +116,6 @@ public sealed class PushIndestructibleTileHandler : MonoBehaviour, IIndestructib
             yield return null;
         }
 
-        // If cancelled mid-way, snap visual back (optional) and restore origin tile.
         if (cancelAndReturnToOrigin)
         {
             if (visual != null)
@@ -126,7 +125,6 @@ public sealed class PushIndestructibleTileHandler : MonoBehaviour, IIndestructib
             indestructibleTilemap.SetColor(fromCell, prevFromColor);
             indestructibleTilemap.RefreshTile(fromCell);
 
-            // We never placed anything in destination, so nothing to clear there.
             if (visual != null)
                 Destroy(visual);
 
@@ -135,23 +133,42 @@ public sealed class PushIndestructibleTileHandler : MonoBehaviour, IIndestructib
             yield break;
         }
 
-        // Otherwise, finished motion: do final validation (covers ground/destructible/indestructible + mask overlap).
-        bool canPlace = CanMoveToCell(toCell);
-
-        if (canPlace)
-        {
-            indestructibleTilemap.SetTile(toCell, tile);
-            indestructibleTilemap.SetColor(toCell, prevToColor);
-            indestructibleTilemap.RefreshTile(toCell);
-
-            // restore origin color (tile is null there)
-            indestructibleTilemap.SetColor(fromCell, prevFromColor);
-        }
-        else
+        if (!CanMoveToCell(toCell, out bool mergeNow))
         {
             indestructibleTilemap.SetTile(fromCell, tile);
             indestructibleTilemap.SetColor(fromCell, prevFromColor);
             indestructibleTilemap.RefreshTile(fromCell);
+
+            if (visual != null)
+                Destroy(visual);
+
+            RemoveOriginBlocker(fromCell);
+            _movingCells.Remove(fromCell);
+            yield break;
+        }
+
+        if (mergeAtDestination || mergeNow)
+        {
+            indestructibleTilemap.SetTile(toCell, null);
+            indestructibleTilemap.RefreshTile(toCell);
+
+            indestructibleTilemap.SetColor(fromCell, prevFromColor);
+
+            if (groundTilemap != null && mergedGroundTile != null)
+            {
+                groundTilemap.SetTile(toCell, mergedGroundTile);
+                groundTilemap.RefreshTile(toCell);
+            }
+        }
+        else
+        {
+            Color prevToColor = indestructibleTilemap.GetColor(toCell);
+
+            indestructibleTilemap.SetTile(toCell, tile);
+            indestructibleTilemap.SetColor(toCell, prevToColor);
+            indestructibleTilemap.RefreshTile(toCell);
+
+            indestructibleTilemap.SetColor(fromCell, prevFromColor);
         }
 
         if (visual != null)
@@ -209,8 +226,10 @@ public sealed class PushIndestructibleTileHandler : MonoBehaviour, IIndestructib
         Destroy(go);
     }
 
-    private bool CanMoveToCell(Vector3Int targetCell)
+    private bool CanMoveToCell(Vector3Int targetCell, out bool isMergeTarget)
     {
+        isMergeTarget = false;
+
         if (groundTilemap == null) return false;
 
         var groundTile = groundTilemap.GetTile(targetCell);
@@ -219,10 +238,22 @@ public sealed class PushIndestructibleTileHandler : MonoBehaviour, IIndestructib
         if (destructiblesTilemap != null && destructiblesTilemap.GetTile(targetCell) != null)
             return false;
 
-        if (otherIndestructibleTilemap != null && otherIndestructibleTilemap.GetTile(targetCell) != null)
-            return false;
+        TileBase existing = indestructibleTilemap != null ? indestructibleTilemap.GetTile(targetCell) : null;
+        if (existing != null)
+        {
+            if (allowedTargetIndestructibleTile == null)
+                return false;
 
-        Vector3 world3 = indestructibleTilemap.GetCellCenterWorld(targetCell);
+            if (existing != allowedTargetIndestructibleTile)
+                return false;
+
+            isMergeTarget = true;
+        }
+
+        Vector3 world3 = indestructibleTilemap != null
+            ? indestructibleTilemap.GetCellCenterWorld(targetCell)
+            : groundTilemap.GetCellCenterWorld(targetCell);
+
         Vector2 world = new(world3.x, world3.y);
 
         Collider2D hit = Physics2D.OverlapBox(world, Vector2.one * overlapBoxSize, 0f, blockMoveMask);

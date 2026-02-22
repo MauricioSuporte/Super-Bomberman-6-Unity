@@ -4683,7 +4683,8 @@ MonoBehaviour:
   indestructibleTilemap: {fileID: 818279435}
   groundTilemap: {fileID: 672307155}
   destructiblesTilemap: {fileID: 285353618}
-  otherIndestructibleTilemap: {fileID: 0}
+  allowedTargetIndestructibleTile: {fileID: 11400000, guid: b6b9bb81fb56e784bb2c3394788d7f12, type: 2}
+  mergedGroundTile: {fileID: 11400000, guid: f0e92d504bea46c4bbfd7f2e06232ce3, type: 2}
   moveSeconds: 0.5
   blockMoveMask:
     serializedVersion: 2
@@ -4691,6 +4692,8 @@ MonoBehaviour:
   overlapBoxSize: 0.5
   moveVisualPrefab: {fileID: 7418547542724600161, guid: 61e3a621ca0726649ab68eac44f0bea8, type: 3}
   visualZOverride: 0
+  originBlockerSize: 0.9
+  originBlockerUseTrigger: 0
 --- !u!1001 &763234532
 PrefabInstance:
   m_ObjectHideFlags: 0
