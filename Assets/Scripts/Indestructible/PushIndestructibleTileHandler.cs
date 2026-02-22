@@ -153,12 +153,6 @@ public sealed class PushIndestructibleTileHandler : MonoBehaviour, IIndestructib
             indestructibleTilemap.RefreshTile(toCell);
 
             indestructibleTilemap.SetColor(fromCell, prevFromColor);
-
-            if (groundTilemap != null && mergedGroundTile != null)
-            {
-                groundTilemap.SetTile(toCell, mergedGroundTile);
-                groundTilemap.RefreshTile(toCell);
-            }
         }
         else
         {
