@@ -300,7 +300,7 @@ public class MovementController : MonoBehaviour, IKillable
 
     private bool IsPlayer() => CompareTag("Player");
 
-    private bool IsRidingPlaying()
+    public bool IsRidingPlaying()
     {
         if (cachedRiding == null)
             TryGetComponent(out cachedRiding);

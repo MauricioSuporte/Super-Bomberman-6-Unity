@@ -20,6 +20,9 @@ public class ItemPickup : MonoBehaviour
     [Header("Spawn Immunity")]
     public float spawnImmunitySeconds = 0.5f;
 
+    [Header("Damage Pickup")]
+    [SerializeField] private bool damageIgnoresInvulnerability = false;
+
     public enum ItemType
     {
         ExtraBomb,
@@ -40,7 +43,8 @@ public class ItemPickup : MonoBehaviour
         GreenLouieEgg,
         YellowLouieEgg,
         PinkLouieEgg,
-        RedLouieEgg
+        RedLouieEgg,
+        LandMine
     }
 
     public ItemType type;
@@ -136,6 +140,57 @@ public class ItemPickup : MonoBehaviour
             Destroy(gameObject);
     }
 
+    bool TryApplyPickupDamageLikeEnemyContact(GameObject player, int damage)
+    {
+        if (player == null || damage <= 0)
+            return false;
+
+        player.TryGetComponent<MovementController>(out var mv);
+        player.TryGetComponent<CharacterHealth>(out var health);
+
+        // Respeita invulnerabilidade igual ao contato com Enemy/Explosion (a menos que você force ignorar)
+        if (!damageIgnoresInvulnerability && health != null && health.IsInvulnerable)
+            return false;
+
+        // Mesma prioridade do MovementController: Riding -> Mounted -> Health
+        if (mv != null && mv.CompareTag("Player"))
+        {
+            if (mv.IsRidingPlaying())
+            {
+                if (player.TryGetComponent<PlayerMountCompanion>(out var companion) && companion != null)
+                {
+                    companion.HandleDamageWhileMounting(damage);
+                    return true;
+                }
+            }
+
+            if (mv.IsMountedOnLouie)
+            {
+                if (player.TryGetComponent<PlayerMountCompanion>(out var companion) && companion != null)
+                {
+                    // "fromExplosion" = false (é pickup)
+                    companion.OnMountedLouieHit(damage, fromExplosion: false);
+                    return true;
+                }
+            }
+        }
+
+        if (health != null)
+        {
+            health.TakeDamage(damage);
+            return true;
+        }
+
+        // Fallback: se por algum motivo não tiver CharacterHealth, tenta matar via MovementController
+        if (mv != null)
+        {
+            mv.Kill();
+            return true;
+        }
+
+        return false;
+    }
+
     void OnItemPickup(GameObject player)
     {
         bool isEgg = IsLouieEgg(type);
@@ -164,10 +219,15 @@ public class ItemPickup : MonoBehaviour
         if (player.TryGetComponent<PlayerIdentity>(out var id) && id != null)
             pid = Mathf.Clamp(id.playerId, 1, 4);
 
-        PlayerPersistentStats.StageApplyPickup(pid, type);
+        if (type != ItemType.LandMine)
+            PlayerPersistentStats.StageApplyPickup(pid, type);
 
         switch (type)
         {
+            case ItemType.LandMine:
+                TryApplyPickupDamageLikeEnemyContact(player, 1);
+                break;
+
             case ItemType.ExtraBomb:
                 if (player.TryGetComponent<BombController>(out var bombController))
                     bombController.AddBomb();
@@ -269,7 +329,11 @@ public class ItemPickup : MonoBehaviour
                 break;
         }
 
-        ConsumeNow(playDestroyAnim: isEgg);
+        bool playDestroyAnim =
+            isEgg ||
+            type == ItemType.LandMine;
+
+        ConsumeNow(playDestroyAnim);
     }
 
     void OnTriggerEnter2D(Collider2D other)
