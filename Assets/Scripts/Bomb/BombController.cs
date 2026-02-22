@@ -1186,6 +1186,9 @@ public partial class BombController : MonoBehaviour
             if (HasWaterAt(position))
                 break;
 
+            if (HasHoleAt(position))
+                break;
+
             if (HasIndestructibleAt(position))
             {
                 TryHandleIndestructibleTileHit(position);
