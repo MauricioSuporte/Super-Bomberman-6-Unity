@@ -2187,7 +2187,7 @@ MonoBehaviour:
   deathDisableSeconds: 2
   checkWinStateOnDeath: 1
   holeDeathInProgress: 0
-  holeDeathSfx: {fileID: 8300000, guid: f33e3c1b335de674f900986923780c43, type: 3}
+  holeDeathSfx: {fileID: 8300000, guid: 9b01f1328346569418d33afffd8094da, type: 3}
   holeDeathSfxVolume: 1
   useHoleDeathSinkVisual: 1
   holeDeathSinkSeconds: 0.55
@@ -2270,8 +2270,6 @@ MonoBehaviour:
   waterDestroyVolume: 0.396
   holeDestroySfx: {fileID: 8300000, guid: f33e3c1b335de674f900986923780c43, type: 3}
   holeDestroyVolume: 1
-  waterSinkSeconds: 0.5
-  holeSinkSeconds: 0.1
   waterSinkApplyBlueTint: 1
   waterSinkTintAffectsChildren: 1
   waterSinkTint: {r: 0.45, g: 0.75, b: 1, a: 1}
