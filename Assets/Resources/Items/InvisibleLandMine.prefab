@@ -136,9 +136,9 @@ GameObject:
   - component: {fileID: 6871244334814668734}
   - component: {fileID: 6871244334814668705}
   - component: {fileID: 7535927048605856034}
-  - component: {fileID: 2236912824413260424}
+  - component: {fileID: 970816173104616044}
   m_Layer: 9
-  m_Name: LandMine
+  m_Name: InvisibleLandMine
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -209,7 +209,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 2
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 2416819147312204517, guid: 17991a6676ded78438138725c62fac7c, type: 3}
+  m_Sprite: {fileID: 8873717022101069850, guid: 17991a6676ded78438138725c62fac7c, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -298,13 +298,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a4b55e1b961d144197e1a7a4a391956, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  idleSprite: {fileID: -7272324874456527237, guid: 17991a6676ded78438138725c62fac7c, type: 3}
+  idleSprite: {fileID: 0}
   animationSprite:
-  - {fileID: -7272324874456527237, guid: 17991a6676ded78438138725c62fac7c, type: 3}
-  - {fileID: 3724583033083188702, guid: 17991a6676ded78438138725c62fac7c, type: 3}
-  - {fileID: -7272324874456527237, guid: 17991a6676ded78438138725c62fac7c, type: 3}
+  - {fileID: 8873717022101069850, guid: 17991a6676ded78438138725c62fac7c, type: 3}
+  - {fileID: 2260787461044256379, guid: 17991a6676ded78438138725c62fac7c, type: 3}
+  - {fileID: 0}
   allowFlipX: 0
-  animationTime: 0.1
+  animationTime: 0.01
   useSequenceDuration: 0
   sequenceDuration: 0.5
   loop: 1
@@ -312,7 +312,7 @@ MonoBehaviour:
   frameOffsets: []
   pingPong: 0
   disableOffsetsIfThisObjectHasRigidbody2D: 1
---- !u!114 &2236912824413260424
+--- !u!114 &970816173104616044
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -321,8 +321,13 @@ MonoBehaviour:
   m_GameObject: {fileID: 6871244334814668704}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 86e30a67f84f9a7409c2e7874a77fe48, type: 3}
+  m_Script: {fileID: 11500000, guid: bbf967cbe60577d4790255e474ed41a8, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::LandMineBehavior
+  m_EditorClassIdentifier: Assembly-CSharp::InvisibleLandMineBehavior
+  tileSize: 1
+  triggerDistanceInTiles: 3
+  scanEverySeconds: 0.1
+  targetRenderer: {fileID: 0}
+  loopWhenNear: 1
   damage: 1
-  playDestroyAnimation: 1
+  playDestroyAnimationOnPickup: 1

@@ -23,6 +23,9 @@ public class ItemPickup : MonoBehaviour
     [Header("Damage Pickup")]
     [SerializeField] private bool damageIgnoresInvulnerability = false;
 
+    [Header("Optional Behavior (overrides default switch for non-eggs)")]
+    [SerializeField] private MonoBehaviour behavior;
+
     public enum ItemType
     {
         ExtraBomb,
@@ -53,10 +56,13 @@ public class ItemPickup : MonoBehaviour
     float spawnTime;
     Collider2D _col;
 
+    IItemPickupBehavior _behavior;
+
     void Awake()
     {
         spawnTime = Time.time;
         _col = GetComponent<Collider2D>();
+        _behavior = behavior as IItemPickupBehavior;
     }
 
     bool IsSpawnImmune() => Time.time - spawnTime < spawnImmunitySeconds;
@@ -140,6 +146,9 @@ public class ItemPickup : MonoBehaviour
             Destroy(gameObject);
     }
 
+    public void Consume(bool playDestroyAnim) => ConsumeNow(playDestroyAnim);
+    public bool TryApplyDamageLikeEnemyContact(GameObject player, int damage) => TryApplyPickupDamageLikeEnemyContact(player, damage);
+
     bool TryApplyPickupDamageLikeEnemyContact(GameObject player, int damage)
     {
         if (player == null || damage <= 0)
@@ -148,11 +157,9 @@ public class ItemPickup : MonoBehaviour
         player.TryGetComponent<MovementController>(out var mv);
         player.TryGetComponent<CharacterHealth>(out var health);
 
-        // Respeita invulnerabilidade igual ao contato com Enemy/Explosion (a menos que você force ignorar)
         if (!damageIgnoresInvulnerability && health != null && health.IsInvulnerable)
             return false;
 
-        // Mesma prioridade do MovementController: Riding -> Mounted -> Health
         if (mv != null && mv.CompareTag("Player"))
         {
             if (mv.IsRidingPlaying())
@@ -168,7 +175,6 @@ public class ItemPickup : MonoBehaviour
             {
                 if (player.TryGetComponent<PlayerMountCompanion>(out var companion) && companion != null)
                 {
-                    // "fromExplosion" = false (é pickup)
                     companion.OnMountedLouieHit(damage, fromExplosion: false);
                     return true;
                 }
@@ -181,7 +187,6 @@ public class ItemPickup : MonoBehaviour
             return true;
         }
 
-        // Fallback: se por algum motivo não tiver CharacterHealth, tenta matar via MovementController
         if (mv != null)
         {
             mv.Kill();
@@ -213,6 +218,12 @@ public class ItemPickup : MonoBehaviour
         else
         {
             PlayCollectSfxOnPlayer(player);
+
+            if (_behavior != null)
+            {
+                if (_behavior.OnPickedUp(this, player))
+                    return;
+            }
         }
 
         int pid = 1;
