@@ -4685,6 +4685,8 @@ MonoBehaviour:
   destructiblesTilemap: {fileID: 285353618}
   allowedTargetIndestructibleTile: {fileID: 11400000, guid: b6b9bb81fb56e784bb2c3394788d7f12, type: 2}
   mergedGroundTile: {fileID: 11400000, guid: f0e92d504bea46c4bbfd7f2e06232ce3, type: 2}
+  mergeFxAnimatedTile: {fileID: 11400000, guid: 942611879f4b580489414acca05f6503, type: 2}
+  mergeFxSeconds: 0.25
   moveSeconds: 0.5
   blockMoveMask:
     serializedVersion: 2

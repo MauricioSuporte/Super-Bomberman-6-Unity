@@ -5,9 +5,16 @@ using UnityEngine.Tilemaps;
 public class AnimatedTile : TileBase
 {
     public Sprite[] m_AnimatedSprites;
+
     public float m_MinSpeed = 1f;
     public float m_MaxSpeed = 1f;
+
     public float m_AnimationStartTime;
+
+    public bool UseSpecifiedTime = false;
+    [Min(0.01f)]
+    public float SpecifiedTime = 0.25f;
+
     public Tile.ColliderType m_TileColliderType = Tile.ColliderType.Sprite;
 
     public override void GetTileData(Vector3Int position, ITilemap tilemap, ref TileData tileData)
@@ -25,8 +32,19 @@ public class AnimatedTile : TileBase
             return false;
 
         tileAnimationData.animatedSprites = m_AnimatedSprites;
-        tileAnimationData.animationSpeed = Random.Range(m_MinSpeed, m_MaxSpeed);
+
+        if (UseSpecifiedTime && SpecifiedTime > 0f)
+        {
+            float speed = m_AnimatedSprites.Length / SpecifiedTime;
+            tileAnimationData.animationSpeed = speed;
+        }
+        else
+        {
+            tileAnimationData.animationSpeed = Random.Range(m_MinSpeed, m_MaxSpeed);
+        }
+
         tileAnimationData.animationStartTime = m_AnimationStartTime;
+
         return true;
     }
 }

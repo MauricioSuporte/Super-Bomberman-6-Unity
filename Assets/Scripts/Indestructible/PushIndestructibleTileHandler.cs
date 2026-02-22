@@ -16,6 +16,10 @@ public sealed class PushIndestructibleTileHandler : MonoBehaviour, IIndestructib
     [Header("Merge Result (walkable ground tile)")]
     [SerializeField] private TileBase mergedGroundTile;
 
+    [Header("Merge FX (animated tile)")]
+    [SerializeField] private TileBase mergeFxAnimatedTile;
+    [SerializeField, Min(0.01f)] private float mergeFxSeconds = 0.25f;
+
     [Header("Move")]
     [SerializeField, Min(0.01f)] private float moveSeconds = 0.5f;
 
@@ -35,6 +39,7 @@ public sealed class PushIndestructibleTileHandler : MonoBehaviour, IIndestructib
 
     private readonly HashSet<Vector3Int> _movingCells = new();
     private readonly Dictionary<Vector3Int, GameObject> _originBlockers = new();
+    private readonly HashSet<Vector3Int> _mergeFxCells = new();
 
     void Awake()
     {
@@ -153,6 +158,17 @@ public sealed class PushIndestructibleTileHandler : MonoBehaviour, IIndestructib
             indestructibleTilemap.RefreshTile(toCell);
 
             indestructibleTilemap.SetColor(fromCell, prevFromColor);
+
+            if (groundTilemap != null && mergedGroundTile != null)
+            {
+                groundTilemap.SetTile(toCell, mergedGroundTile);
+                groundTilemap.RefreshTile(toCell);
+            }
+
+            if (groundTilemap != null && mergeFxAnimatedTile != null && mergeFxSeconds > 0f)
+            {
+                StartMergeFx(toCell);
+            }
         }
         else
         {
@@ -170,6 +186,44 @@ public sealed class PushIndestructibleTileHandler : MonoBehaviour, IIndestructib
 
         RemoveOriginBlocker(fromCell);
         _movingCells.Remove(fromCell);
+    }
+
+    private void StartMergeFx(Vector3Int cell)
+    {
+        if (_mergeFxCells.Contains(cell))
+            return;
+
+        _mergeFxCells.Add(cell);
+        StartCoroutine(MergeFxRoutine(cell));
+    }
+
+    private IEnumerator MergeFxRoutine(Vector3Int cell)
+    {
+        if (groundTilemap == null)
+        {
+            _mergeFxCells.Remove(cell);
+            yield break;
+        }
+
+        TileBase prevGround = groundTilemap.GetTile(cell);
+
+        groundTilemap.SetTile(cell, mergeFxAnimatedTile);
+        groundTilemap.RefreshTile(cell);
+
+        yield return new WaitForSeconds(mergeFxSeconds);
+
+        if (groundTilemap == null)
+        {
+            _mergeFxCells.Remove(cell);
+            yield break;
+        }
+
+        TileBase desiredFinal = mergedGroundTile != null ? mergedGroundTile : prevGround;
+
+        groundTilemap.SetTile(cell, desiredFinal);
+        groundTilemap.RefreshTile(cell);
+
+        _mergeFxCells.Remove(cell);
     }
 
     private bool IsBlockedByMaskAtCell(Vector3Int cell, LayerMask mask)
