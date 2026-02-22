@@ -33,6 +33,10 @@ public class AnimatedSpriteRenderer : MonoBehaviour
     [Header("Safety")]
     public bool disableOffsetsIfThisObjectHasRigidbody2D = true;
 
+    [Header("Safety (Standalone Objects)")]
+    [Tooltip("Se o objeto não tem parent e o visualTransform é o próprio transform, não mexe em localPosition (evita brigar com scripts que movem position).")]
+    [SerializeField] private bool disableOffsetsIfStandaloneRoot = true;
+
     int animationFrame;
     int direction = 1;
 
@@ -98,7 +102,13 @@ public class AnimatedSpriteRenderer : MonoBehaviour
         initialVisualLocalPosition = visualTransform != null ? visualTransform.localPosition : Vector3.zero;
 
         bool hasRbHere = disableOffsetsIfThisObjectHasRigidbody2D && GetComponent<Rigidbody2D>() != null;
-        canMoveVisualLocal = visualTransform != null && !hasRbHere;
+
+        bool isStandaloneRoot =
+            disableOffsetsIfStandaloneRoot &&
+            transform.parent == null &&
+            visualTransform == transform;
+
+        canMoveVisualLocal = visualTransform != null && !hasRbHere && !isStandaloneRoot;
     }
 
     void OnEnable()
@@ -251,13 +261,7 @@ public class AnimatedSpriteRenderer : MonoBehaviour
     {
         if (!canMoveVisualLocal || visualTransform == null) return;
 
-        Vector3 basePos;
-
-        if (hasExternalBase)
-            basePos = externalBaseLocalPos;
-        else
-            basePos = initialVisualLocalPosition;
-
+        Vector3 basePos = hasExternalBase ? externalBaseLocalPos : initialVisualLocalPosition;
         Vector3 pos = basePos + runtimeBaseOffset;
 
         if (frameOffsets != null && frameOffsets.Length > 0)
@@ -280,6 +284,7 @@ public class AnimatedSpriteRenderer : MonoBehaviour
     void ResetOffset()
     {
         if (visualTransform == null) return;
+        if (!canMoveVisualLocal) return;
 
         Vector3 basePos = hasExternalBase ? externalBaseLocalPos : initialVisualLocalPosition;
         Vector3 pos = basePos + runtimeBaseOffset;
