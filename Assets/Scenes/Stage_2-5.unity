@@ -4562,10 +4562,10 @@ GameObject:
   m_Component:
   - component: {fileID: 732032081}
   - component: {fileID: 732032080}
-  - component: {fileID: 732032088}
-  - component: {fileID: 732032090}
   - component: {fileID: 732032084}
   - component: {fileID: 732032089}
+  - component: {fileID: 732032088}
+  - component: {fileID: 732032090}
   - component: {fileID: 732032086}
   m_Layer: 6
   m_Name: Stage
@@ -4668,6 +4668,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ResurrectingAnimatedTileProgressHandler
   destructibleTilemapOverride: {fileID: 0}
+  groundTilemapOverride: {fileID: 672307155}
 --- !u!114 &732032090
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4694,6 +4695,9 @@ MonoBehaviour:
   overlapBoxSize: 0.5
   moveVisualPrefab: {fileID: 7418547542724600161, guid: 61e3a621ca0726649ab68eac44f0bea8, type: 3}
   visualZOverride: 0
+  enableMoveWiggle: 1
+  wiggleIntervalSeconds: 0.01
+  wiggleAmount: 0.05
   originBlockerSize: 0.9
   originBlockerUseTrigger: 0
 --- !u!1001 &763234532

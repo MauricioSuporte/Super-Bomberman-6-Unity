@@ -14,11 +14,12 @@ public class ResurrectingAnimatedTile : AnimatedTile
 
     [Header("Pre-Respawn Warning (Tile)")]
     public AnimatedTile preRespawnWarningTile;
-
     [Min(0.01f)] public float preRespawnWarningSeconds = 3f;
 
     [Header("Respawn Animation (Tile)")]
     public AnimatedTile respawnAnimationTile;
-
     [Min(0.01f)] public float respawnAnimationDuration = 0.4f;
+
+    [Header("Rendering")]
+    public bool renderRespawnOnGround = true;
 }

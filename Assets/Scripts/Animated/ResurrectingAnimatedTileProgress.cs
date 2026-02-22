@@ -25,6 +25,10 @@ public class ResurrectingAnimatedTileProgress : AnimatedTile
     public AnimatedTile resurrectionAnimatedTile;
     public TileBase[] resurrectionFrames;
 
+    [Header("Rendering")]
+    [Tooltip("Se true, o handler desenha warning/ressurreição no Tilemap Ground e só coloca o destrutível no Tilemap Destructibles ao final.")]
+    public bool renderResurrectionOnGround = true;
+
     public override void GetTileData(Vector3Int position, ITilemap tilemap, ref TileData tileData)
     {
         Sprite idleSprite = null;

@@ -5,52 +5,70 @@ using UnityEngine.Tilemaps;
 
 public sealed class ResurrectingAnimatedTileHandler : MonoBehaviour, IDestructibleTileHandler
 {
+    [Header("Overrides (optional)")]
     [SerializeField] private Tilemap destructibleTilemapOverride;
+    [SerializeField] private Tilemap groundTilemapOverride;
 
     private readonly Dictionary<Vector3Int, Coroutine> _pending = new();
     private static readonly Collider2D[] _overlapBuffer = new Collider2D[32];
 
     public bool HandleHit(BombController source, Vector2 worldPos, Vector3Int cell)
     {
-        Tilemap tm = destructibleTilemapOverride != null
+        if (source == null)
+            return false;
+
+        Tilemap destructTm = destructibleTilemapOverride != null
             ? destructibleTilemapOverride
             : source.destructibleTiles;
 
-        if (tm == null)
+        if (destructTm == null)
             return false;
 
-        TileBase tileBase = tm.GetTile(cell);
+        TileBase tileBase = destructTm.GetTile(cell);
         if (tileBase is not ResurrectingAnimatedTile tile)
             return false;
 
         source.ClearDestructibleForEffect(worldPos);
-        ScheduleRespawn(tm, cell, tile);
+
+        Tilemap groundTm = groundTilemapOverride != null
+            ? groundTilemapOverride
+            : source.groundTiles;
+
+        ScheduleRespawn(destructTm, groundTm, cell, tile);
         return true;
     }
 
-    private void ScheduleRespawn(Tilemap tm, Vector3Int cell, ResurrectingAnimatedTile tile)
+    private void ScheduleRespawn(Tilemap destructTm, Tilemap groundTm, Vector3Int cell, ResurrectingAnimatedTile tile)
     {
         if (_pending.TryGetValue(cell, out var c) && c != null)
             StopCoroutine(c);
 
-        _pending[cell] = StartCoroutine(RespawnRoutine(tm, cell, tile));
+        _pending[cell] = StartCoroutine(RespawnRoutine(destructTm, groundTm, cell, tile));
     }
 
-    private IEnumerator RespawnRoutine(Tilemap tm, Vector3Int cell, ResurrectingAnimatedTile tile)
+    private IEnumerator RespawnRoutine(Tilemap destructTm, Tilemap groundTm, Vector3Int cell, ResurrectingAnimatedTile tile)
     {
-        yield return new WaitForSeconds(Mathf.Max(0.01f, tile.respawnSeconds));
+        float waitRespawn = Mathf.Max(0.01f, tile.respawnSeconds);
+
+        bool useGround = tile.renderRespawnOnGround && groundTm != null;
+        TileBase groundOriginal = null;
+
+        if (useGround)
+            groundOriginal = groundTm.GetTile(cell);
+
+        yield return new WaitForSeconds(waitRespawn);
 
         float retry = Mathf.Max(0.02f, tile.retryCheckSeconds);
 
         while (true)
         {
-            if (tm == null)
+            if (destructTm == null)
                 yield break;
 
-            if (tm.GetTile(cell) != null)
+            if (destructTm.GetTile(cell) != null)
                 yield break;
 
-            Vector2 center = tm.GetCellCenterWorld(cell);
+            Vector2 center = destructTm.GetCellCenterWorld(cell);
 
             if (IsOccupied(center, tile.overlapBoxSize))
             {
@@ -62,57 +80,150 @@ public sealed class ResurrectingAnimatedTileHandler : MonoBehaviour, IDestructib
 
             if (tile.preRespawnWarningTile != null && warnSeconds > 0f)
             {
-                tm.SetTile(cell, tile.preRespawnWarningTile);
-                tm.RefreshTile(cell);
+                if (useGround)
+                {
+                    if (groundTm == null)
+                        yield break;
+
+                    groundTm.SetTile(cell, tile.preRespawnWarningTile);
+                    groundTm.RefreshTile(cell);
+                }
+                else
+                {
+                    destructTm.SetTile(cell, tile.preRespawnWarningTile);
+                    destructTm.RefreshTile(cell);
+                }
 
                 yield return new WaitForSeconds(warnSeconds);
 
-                if (tm == null)
+                if (destructTm == null)
                     yield break;
 
-                if (tm.GetTile(cell) != tile.preRespawnWarningTile)
+                if (destructTm.GetTile(cell) != null)
+                {
+                    if (useGround)
+                        RestoreGround(groundTm, cell, groundOriginal, tile);
                     yield break;
+                }
 
-                tm.SetTile(cell, null);
-                tm.RefreshTile(cell);
+                if (useGround)
+                {
+                    if (groundTm == null)
+                        yield break;
+
+                    if (groundTm.GetTile(cell) != tile.preRespawnWarningTile)
+                        yield break;
+
+                    groundTm.SetTile(cell, groundOriginal);
+                    groundTm.RefreshTile(cell);
+                }
+                else
+                {
+                    if (destructTm.GetTile(cell) != tile.preRespawnWarningTile)
+                        yield break;
+
+                    destructTm.SetTile(cell, null);
+                    destructTm.RefreshTile(cell);
+                }
             }
 
-            center = tm.GetCellCenterWorld(cell);
+            center = destructTm.GetCellCenterWorld(cell);
             if (IsOccupied(center, tile.overlapBoxSize))
             {
                 yield return new WaitForSeconds(retry);
                 continue;
+            }
+
+            if (destructTm.GetTile(cell) != null)
+            {
+                if (useGround)
+                    RestoreGround(groundTm, cell, groundOriginal, tile);
+                yield break;
             }
 
             if (tile.respawnAnimationTile != null)
             {
-                tm.SetTile(cell, tile.respawnAnimationTile);
-                tm.RefreshTile(cell);
+                if (useGround)
+                {
+                    if (groundTm == null)
+                        yield break;
+
+                    groundTm.SetTile(cell, tile.respawnAnimationTile);
+                    groundTm.RefreshTile(cell);
+                }
+                else
+                {
+                    destructTm.SetTile(cell, tile.respawnAnimationTile);
+                    destructTm.RefreshTile(cell);
+                }
 
                 float animDur = Mathf.Max(0.01f, tile.respawnAnimationDuration);
                 yield return new WaitForSeconds(animDur);
 
-                if (tm == null)
+                if (destructTm == null)
                     yield break;
 
-                if (tm.GetTile(cell) != tile.respawnAnimationTile)
+                if (destructTm.GetTile(cell) != null)
+                {
+                    if (useGround)
+                        RestoreGround(groundTm, cell, groundOriginal, tile);
                     yield break;
+                }
 
-                tm.SetTile(cell, null);
-                tm.RefreshTile(cell);
+                if (useGround)
+                {
+                    if (groundTm == null)
+                        yield break;
+
+                    if (groundTm.GetTile(cell) != tile.respawnAnimationTile)
+                        yield break;
+
+                    groundTm.SetTile(cell, groundOriginal);
+                    groundTm.RefreshTile(cell);
+                }
+                else
+                {
+                    if (destructTm.GetTile(cell) != tile.respawnAnimationTile)
+                        yield break;
+
+                    destructTm.SetTile(cell, null);
+                    destructTm.RefreshTile(cell);
+                }
             }
 
-            center = tm.GetCellCenterWorld(cell);
+            center = destructTm.GetCellCenterWorld(cell);
             if (IsOccupied(center, tile.overlapBoxSize))
             {
                 yield return new WaitForSeconds(retry);
                 continue;
             }
 
-            tm.SetTile(cell, tile);
-            tm.RefreshTile(cell);
+            if (destructTm.GetTile(cell) != null)
+            {
+                if (useGround)
+                    RestoreGround(groundTm, cell, groundOriginal, tile);
+                yield break;
+            }
+
+            if (useGround)
+                RestoreGround(groundTm, cell, groundOriginal, tile);
+
+            destructTm.SetTile(cell, tile);
+            destructTm.RefreshTile(cell);
             yield break;
         }
+    }
+
+    private static void RestoreGround(Tilemap groundTm, Vector3Int cell, TileBase original, ResurrectingAnimatedTile tile)
+    {
+        if (groundTm == null)
+            return;
+
+        if (!tile.renderRespawnOnGround)
+            return;
+
+        groundTm.SetTile(cell, original);
+        groundTm.RefreshTile(cell);
     }
 
     private bool IsOccupied(Vector2 worldCenter, float size)
@@ -132,7 +243,7 @@ public sealed class ResurrectingAnimatedTileHandler : MonoBehaviour, IDestructib
 
         for (int i = 0; i < count; i++)
         {
-            var c = _overlapBuffer[i]; 
+            var c = _overlapBuffer[i];
             _overlapBuffer[i] = null;
 
             if (c != null)
