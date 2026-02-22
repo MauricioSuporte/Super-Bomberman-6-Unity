@@ -42,21 +42,16 @@ public sealed class PushIndestructibleTileHandler : MonoBehaviour, IIndestructib
     {
         if (tile == null) return false;
         if (indestructibleTilemap == null) return false;
-
-        if (_movingCells.Contains(cell))
-            return true;
+        if (_movingCells.Contains(cell)) return true;
 
         Vector3 fromCenter3 = indestructibleTilemap.GetCellCenterWorld(cell);
         Vector2 fromCenter = new(fromCenter3.x, fromCenter3.y);
 
         Vector3Int moveDir = ComputeMoveDirAwayFromHit(fromCenter, hitWorldPos);
-        if (moveDir == Vector3Int.zero)
-            return false;
+        if (moveDir == Vector3Int.zero) return false;
 
         Vector3Int targetCell = cell + moveDir;
-
-        if (!CanMoveToCell(targetCell, out _))
-            return true;
+        if (!CanMoveToCell(targetCell)) return true;
 
         StartCoroutine(MoveTileRoutine(cell, targetCell, tile));
         return true;
@@ -103,7 +98,7 @@ public sealed class PushIndestructibleTileHandler : MonoBehaviour, IIndestructib
             yield return null;
         }
 
-        bool canPlace = CanMoveToCell(toCell, out _);
+        bool canPlace = CanMoveToCell(toCell);
 
         if (canPlace)
         {
@@ -126,46 +121,25 @@ public sealed class PushIndestructibleTileHandler : MonoBehaviour, IIndestructib
         _movingCells.Remove(fromCell);
     }
 
-    private bool CanMoveToCell(Vector3Int targetCell, out string reason)
+    private bool CanMoveToCell(Vector3Int targetCell)
     {
-        reason = "";
-
-        if (groundTilemap == null)
-        {
-            reason = "groundTilemap=NULL";
-            return false;
-        }
+        if (groundTilemap == null) return false;
 
         var groundTile = groundTilemap.GetTile(targetCell);
-        if (groundTile == null)
-        {
-            reason = "no_ground";
-            return false;
-        }
+        if (groundTile == null) return false;
 
         if (destructiblesTilemap != null && destructiblesTilemap.GetTile(targetCell) != null)
-        {
-            reason = "blocked_by_destructible_tile";
             return false;
-        }
 
         if (otherIndestructibleTilemap != null && otherIndestructibleTilemap.GetTile(targetCell) != null)
-        {
-            reason = "blocked_by_indestructible_tile";
             return false;
-        }
 
         Vector3 world3 = indestructibleTilemap.GetCellCenterWorld(targetCell);
         Vector2 world = new(world3.x, world3.y);
 
         Collider2D hit = Physics2D.OverlapBox(world, Vector2.one * overlapBoxSize, 0f, blockMoveMask);
-        if (hit != null)
-        {
-            reason = $"blocked_by_collider:{hit.name}";
-            return false;
-        }
+        if (hit != null) return false;
 
-        reason = "ok";
         return true;
     }
 

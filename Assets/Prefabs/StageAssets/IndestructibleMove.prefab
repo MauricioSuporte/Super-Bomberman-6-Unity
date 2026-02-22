@@ -104,9 +104,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a4b55e1b961d144197e1a7a4a391956, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AnimatedSpriteRenderer
-  dbg: 1
-  dbgLogEverySeconds: 0.25
-  idleSprite: {fileID: -7789843783487722775, guid: 17991a6676ded78438138725c62fac7c, type: 3}
+  idleSprite: {fileID: 0}
   animationSprite:
   - {fileID: -7789843783487722775, guid: 17991a6676ded78438138725c62fac7c, type: 3}
   - {fileID: -7789843783487722775, guid: 17991a6676ded78438138725c62fac7c, type: 3}
