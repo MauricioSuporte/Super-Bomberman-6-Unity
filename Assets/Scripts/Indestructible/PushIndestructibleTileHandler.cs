@@ -24,7 +24,12 @@ public sealed class PushIndestructibleTileHandler : MonoBehaviour, IIndestructib
     [SerializeField] private GameObject moveVisualPrefab;
     [SerializeField] private float visualZOverride = 0f;
 
+    [Header("Origin Blocker (while moving)")]
+    [SerializeField, Range(0.2f, 1.2f)] private float originBlockerSize = 0.9f;
+    [SerializeField] private bool originBlockerUseTrigger = false;
+
     private readonly HashSet<Vector3Int> _movingCells = new();
+    private readonly Dictionary<Vector3Int, GameObject> _originBlockers = new();
 
     void Awake()
     {
@@ -60,6 +65,8 @@ public sealed class PushIndestructibleTileHandler : MonoBehaviour, IIndestructib
     private IEnumerator MoveTileRoutine(Vector3Int fromCell, Vector3Int toCell, TileBase tile)
     {
         _movingCells.Add(fromCell);
+
+        EnsureOriginBlocker(fromCell);
 
         Vector3 fromCenter3 = indestructibleTilemap.GetCellCenterWorld(fromCell);
         Vector3 toCenter3 = indestructibleTilemap.GetCellCenterWorld(toCell);
@@ -118,7 +125,47 @@ public sealed class PushIndestructibleTileHandler : MonoBehaviour, IIndestructib
         if (visual != null)
             Destroy(visual);
 
+        RemoveOriginBlocker(fromCell);
+
         _movingCells.Remove(fromCell);
+    }
+
+    private void EnsureOriginBlocker(Vector3Int cell)
+    {
+        if (_originBlockers.ContainsKey(cell))
+            return;
+
+        if (indestructibleTilemap == null)
+            return;
+
+        Vector3 c = indestructibleTilemap.GetCellCenterWorld(cell);
+
+        var go = new GameObject($"IndestructibleOriginBlocker_{cell.x}_{cell.y}_{cell.z}");
+        go.transform.SetParent(indestructibleTilemap.transform, worldPositionStays: true);
+        go.transform.position = new Vector3(c.x, c.y, c.z);
+
+        // Use Stage layer so MovementController (obstacleMask Stage/Bomb) will block it
+        int stageLayer = LayerMask.NameToLayer("Stage");
+        if (stageLayer >= 0)
+            go.layer = stageLayer;
+
+        var col = go.AddComponent<BoxCollider2D>();
+        col.isTrigger = originBlockerUseTrigger;
+        col.size = Vector2.one * Mathf.Max(0.01f, originBlockerSize);
+
+        _originBlockers[cell] = go;
+    }
+
+    private void RemoveOriginBlocker(Vector3Int cell)
+    {
+        if (!_originBlockers.TryGetValue(cell, out var go) || go == null)
+        {
+            _originBlockers.Remove(cell);
+            return;
+        }
+
+        _originBlockers.Remove(cell);
+        Destroy(go);
     }
 
     private bool CanMoveToCell(Vector3Int targetCell)
