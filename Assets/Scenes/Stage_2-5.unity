@@ -4562,10 +4562,11 @@ GameObject:
   m_Component:
   - component: {fileID: 732032081}
   - component: {fileID: 732032080}
+  - component: {fileID: 732032088}
+  - component: {fileID: 732032090}
   - component: {fileID: 732032084}
   - component: {fileID: 732032089}
   - component: {fileID: 732032086}
-  - component: {fileID: 732032088}
   m_Layer: 6
   m_Name: Stage
   m_TagString: Untagged
@@ -4649,7 +4650,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a5a44567fd912e5428b674e083999057, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::IndestructibleTileResolver
-  groups: []
+  groups:
+  - id: IndestructibleMove
+    tiles:
+    - {fileID: 11400000, guid: 600266ccef7d7c1459765491815db92e, type: 2}
+    handler: {fileID: 732032090}
 --- !u!114 &732032089
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4663,6 +4668,29 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ResurrectingAnimatedTileProgressHandler
   destructibleTilemapOverride: {fileID: 0}
+--- !u!114 &732032090
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 732032079}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b15fabdb20b213f4fa3f5ec3fb185d48, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PushIndestructibleTileHandler
+  indestructibleTilemap: {fileID: 818279435}
+  groundTilemap: {fileID: 672307155}
+  destructiblesTilemap: {fileID: 285353618}
+  otherIndestructibleTilemap: {fileID: 0}
+  moveSeconds: 0.5
+  blockMoveMask:
+    serializedVersion: 2
+    m_Bits: 9864
+  overlapBoxSize: 0.5
+  moveVisualPrefab: {fileID: 7418547542724600161, guid: 61e3a621ca0726649ab68eac44f0bea8, type: 3}
+  visualZOverride: 0
 --- !u!1001 &763234532
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -5357,16 +5385,6 @@ Tilemap:
       serializedVersion: 2
       m_TileIndex: 185
       m_TileSpriteIndex: 18
-      m_TileMatrixIndex: 2
-      m_TileColorIndex: 0
-      m_TileObjectToInstantiateIndex: 65535
-      dummyAlignment: 0
-      m_AllTileFlags: 1073741825
-  - first: {x: -4, y: -6, z: 0}
-    second:
-      serializedVersion: 2
-      m_TileIndex: 186
-      m_TileSpriteIndex: 19
       m_TileMatrixIndex: 2
       m_TileColorIndex: 0
       m_TileObjectToInstantiateIndex: 65535
@@ -8921,7 +8939,7 @@ Tilemap:
       - {fileID: -4301117888644429131, guid: 17991a6676ded78438138725c62fac7c, type: 3}
       - {fileID: 6982989271821945363, guid: 17991a6676ded78438138725c62fac7c, type: 3}
       - {fileID: 3171655041305257236, guid: 17991a6676ded78438138725c62fac7c, type: 3}
-      m_AnimationSpeed: 10.000001
+      m_AnimationSpeed: 10
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: -4, y: 15, z: 0}
@@ -9400,7 +9418,7 @@ Tilemap:
     m_Data: {fileID: 11400000, guid: 3bbbf86fdbc6a884caca205f18c009ab, type: 2}
   - m_RefCount: 14
     m_Data: {fileID: 11400000, guid: 600266ccef7d7c1459765491815db92e, type: 2}
-  - m_RefCount: 34
+  - m_RefCount: 33
     m_Data: {fileID: 11400000, guid: b6b9bb81fb56e784bb2c3394788d7f12, type: 2}
   - m_RefCount: 1
     m_Data: {fileID: 11400000, guid: 2047d5c408d003c46826017d7c18a37c, type: 2}
@@ -9491,7 +9509,7 @@ Tilemap:
     m_Data: {fileID: 810274799657761072, guid: 17991a6676ded78438138725c62fac7c, type: 3}
   - m_RefCount: 14
     m_Data: {fileID: -7789843783487722775, guid: 17991a6676ded78438138725c62fac7c, type: 3}
-  - m_RefCount: 34
+  - m_RefCount: 33
     m_Data: {fileID: 7836244652610323432, guid: 17991a6676ded78438138725c62fac7c, type: 3}
   - m_RefCount: 3
     m_Data: {fileID: 3945133241877227524, guid: 17991a6676ded78438138725c62fac7c, type: 3}
@@ -9580,7 +9598,7 @@ Tilemap:
       e31: 0
       e32: 0
       e33: 1
-  - m_RefCount: 210
+  - m_RefCount: 209
     m_Data:
       e00: 1
       e01: 0
@@ -9599,7 +9617,7 @@ Tilemap:
       e32: 0
       e33: 1
   m_TileColorArray:
-  - m_RefCount: 279
+  - m_RefCount: 278
     m_Data: {r: 1, g: 1, b: 1, a: 1}
   m_TileObjectToInstantiateArray: []
   m_AnimationFrameRate: 1

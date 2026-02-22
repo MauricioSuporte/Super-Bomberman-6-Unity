@@ -1191,7 +1191,7 @@ public partial class BombController : MonoBehaviour
 
             if (HasIndestructibleAt(position))
             {
-                TryHandleIndestructibleTileHit(position);
+                TryHandleIndestructibleTileHit(position, origin);
                 break;
             }
 
@@ -1488,20 +1488,20 @@ public partial class BombController : MonoBehaviour
         return tile != null;
     }
 
-    private void TryHandleIndestructibleTileHit(Vector2 worldPos)
+    private void TryHandleIndestructibleTileHit(Vector2 indestructibleWorldPos, Vector2 hitFromWorldPos)
     {
         ResolveIndestructibleTileResolver();
 
         if (indestructibleTileResolver == null)
             return;
 
-        if (!TryGetIndestructibleTileAt(worldPos, out var cell, out var tile))
+        if (!TryGetIndestructibleTileAt(indestructibleWorldPos, out var cell, out var tile))
             return;
 
         if (!indestructibleTileResolver.TryGetHandler(tile, out var handler))
             return;
 
-        handler.HandleExplosionHit(this, worldPos, cell, tile);
+        handler.HandleExplosionHit(this, hitFromWorldPos, cell, tile);
     }
 
     private void TryHandleGroundBombAt(Vector2 worldPos, GameObject bomb)

@@ -34,7 +34,6 @@ public class AnimatedSpriteRenderer : MonoBehaviour
     public bool disableOffsetsIfThisObjectHasRigidbody2D = true;
 
     [Header("Safety (Standalone Objects)")]
-    [Tooltip("Se o objeto não tem parent e o visualTransform é o próprio transform, não mexe em localPosition (evita brigar com scripts que movem position).")]
     [SerializeField] private bool disableOffsetsIfStandaloneRoot = true;
 
     int animationFrame;
