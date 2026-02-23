@@ -162,8 +162,11 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
         Collider2D hit = Physics2D.OverlapBox(origin, Vector2.one * (movement.tileSize * 0.6f), 0f, bombMask);
         if (hit == null) return;
 
-        var bomb = hit.GetComponent<Bomb>();
-        if (bomb == null) return;
+        if (hit.GetComponent<BoilerCapturedBomb>() != null) return;
+
+        if (!hit.TryGetComponent<Bomb>(out var bomb)) return;
+
+        if (bomb.GetComponent<BoilerCapturedBomb>() != null) return;
 
         if (pickupRoutine != null) StopCoroutine(pickupRoutine);
         pickupRoutine = StartCoroutine(PickupRoutine(bomb, lastFacingDir));

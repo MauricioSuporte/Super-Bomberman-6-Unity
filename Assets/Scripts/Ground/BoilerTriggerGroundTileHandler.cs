@@ -97,6 +97,9 @@ public sealed class BoilerTriggerGroundTileHandler : MonoBehaviour, IGroundTileH
         if (bomb.HasExploded)
             return;
 
+        if (!bombGo.TryGetComponent<BoilerCapturedBomb>(out _))
+            bombGo.AddComponent<BoilerCapturedBomb>();
+
         triggeredOnce = true;
         finalizedOnce = false;
 
@@ -373,4 +376,8 @@ public sealed class BoilerTriggerGroundTileHandler : MonoBehaviour, IGroundTileH
 
         FinalizeBoilerOnce();
     }
+}
+
+public sealed class BoilerCapturedBomb : MonoBehaviour
+{
 }
