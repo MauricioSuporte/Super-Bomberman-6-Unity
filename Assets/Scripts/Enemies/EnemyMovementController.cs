@@ -542,7 +542,7 @@ public class EnemyMovementController : MonoBehaviour, IKillable
         );
     }
 
-    void HandleStuck()
+    protected void HandleStuck()
     {
         if (isDead || isInDamagedLoop)
         {
