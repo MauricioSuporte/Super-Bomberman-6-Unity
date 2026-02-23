@@ -762,8 +762,13 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
             return;
         }
 
-        bool baseline = movementLockCaptured ? prevMovementLocked : movement.InputLocked;
-        movement.SetInputLocked(globalLock || baseline, false);
+        if (!movementLockCaptured)
+            return;
+
+        bool baseline = prevMovementLocked;
+
+        movement.SetInputLocked(baseline, false);
+
         movementLockCaptured = false;
     }
 
@@ -866,7 +871,11 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
             RestoreBombControllerInputModeIfNeeded();
             isHoldingBomb = false;
 
-            RestoreMovementLockToBaseline(IsGlobalLockActive());
+            RestoreBombControllerInputModeIfNeeded();
+            isHoldingBomb = false;
+
+            RestoreMovementLockToBaseline(false);
+
             return;
         }
 

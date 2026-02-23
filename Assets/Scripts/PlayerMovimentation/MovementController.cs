@@ -230,8 +230,6 @@ public class MovementController : MonoBehaviour, IKillable
 
     private void InitRuntimeState(bool loadPersistent)
     {
-        bool wasMounted = isMounted;
-
         direction = Vector2.zero;
         hasInput = false;
         touchingHazards.Clear();
