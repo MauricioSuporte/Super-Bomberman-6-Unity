@@ -117,10 +117,21 @@ public sealed class LightSensitiveEnemyMovementController : JunctionTurningEnemy
         SnapToGrid();
         ChooseInitialDirection();
 
-        RefreshBoostFromBlackout();
+        ForceSyncFromBlackout();
         UpdateEnemySpriteDirection(direction);
 
         DecideNextTile();
+    }
+
+    private void ForceSyncFromBlackout()
+    {
+        bool blackoutActive = StageBlackout.Instance != null && IsStageBlackoutActive(StageBlackout.Instance);
+        _cachedBlackoutActive = blackoutActive;
+
+        bool energizedNow = energizedWhenLightOn ? !blackoutActive : blackoutActive;
+        _cachedEnergized = energizedNow;
+
+        speed = energizedNow ? (_baseSpeed * Mathf.Max(1f, blackoutSpeedMultiplier)) : _baseSpeed;
     }
 
     protected override void FixedUpdate()
@@ -407,8 +418,14 @@ public sealed class LightSensitiveEnemyMovementController : JunctionTurningEnemy
             return;
 
         activeSprite = asr;
-        asr.enabled = true;
+
+        if (!asr.enabled)
+            asr.enabled = true;
+
         asr.idle = false;
+
+        if (asr.TryGetComponent<SpriteRenderer>(out var sr))
+            sr.enabled = true;
     }
 
     private void DisableAllVisualsHard()
