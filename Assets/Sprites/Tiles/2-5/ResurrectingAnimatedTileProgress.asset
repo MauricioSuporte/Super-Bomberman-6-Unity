@@ -16,10 +16,12 @@ MonoBehaviour:
   m_MinSpeed: 1
   m_MaxSpeed: 1
   m_AnimationStartTime: 0
+  UseSpecifiedTime: 0
+  SpecifiedTime: 0.25
   m_TileColliderType: 1
   idleVisualTile: {fileID: 11400000, guid: e144b6e6b4589ee45ad888143ea82bfd, type: 2}
   destructionAnimationSeconds: 0.5
-  respawnSeconds: 20
+  respawnSeconds: 30
   retryCheckSeconds: 0.25
   overlapBoxSize: 0.5
   preRespawnWarningTile: {fileID: 0}
@@ -30,3 +32,4 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 46e7bb703210171448aeadd1074b60ef, type: 2}
   - {fileID: 11400000, guid: e4dc0f573ad6eb24a87cf044c60abdaa, type: 2}
   - {fileID: 11400000, guid: f15ddedfd1b97764ca0317e8c0e9dab4, type: 2}
+  renderResurrectionOnGround: 1
