@@ -997,6 +997,83 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
         return frame;
     }
 
+    public void TryDestroyHeldBombByHoleUsingBombController()
+    {
+        if (bombController == null)
+            return;
+
+        if (movement == null)
+            return;
+
+        if (heldBomb == null)
+            return;
+
+        var bombGo = heldBomb.gameObject;
+        if (bombGo == null)
+            return;
+
+        if (heldBomb.HasExploded)
+        {
+            EmergencyUnlockAndReset();
+            return;
+        }
+
+        if (pickupRoutine != null) StopCoroutine(pickupRoutine);
+        if (releaseRoutine != null) StopCoroutine(releaseRoutine);
+        if (landWatchRoutine != null) StopCoroutine(landWatchRoutine);
+
+        pickupRoutine = null;
+        releaseRoutine = null;
+        landWatchRoutine = null;
+
+        holding = false;
+        isHoldingBomb = false;
+        animLocking = false;
+        activeCarryRenderer = null;
+
+        SetAllPickupSprites(false);
+        SetAllCarrySprites(false);
+
+        movement.SetExternalVisualSuppressed(false);
+
+        Vector2 ground = movement.Rigidbody != null ? movement.Rigidbody.position : (Vector2)transform.position;
+        ground.x = Mathf.Round(ground.x / movement.tileSize) * movement.tileSize;
+        ground.y = Mathf.Round(ground.y / movement.tileSize) * movement.tileSize;
+
+        Vector2 visual = ground + Vector2.up * movement.tileSize;
+
+        if (heldBombRb != null)
+        {
+            heldBombRb.linearVelocity = Vector2.zero;
+            heldBombRb.angularVelocity = 0f;
+        }
+
+        if (heldBombNotifier != null)
+            heldBombNotifier.enabled = false;
+
+        if (heldBombCollider != null)
+            heldBombCollider.enabled = false;
+
+        if (heldBombSpriteRenderer != null)
+            heldBombSpriteRenderer.sortingOrder = CarryOrderInLayer;
+
+        DetachBombFromPlayerKeepWorld();
+
+        bombGo.transform.position = new Vector3(visual.x, visual.y, bombGo.transform.position.z);
+
+        heldBomb = null;
+        heldBombCollider = null;
+        heldBombAnim = null;
+        heldBombRb = null;
+        heldBombNotifier = null;
+        heldBombSpriteRenderer = null;
+
+        RestoreBombControllerInputModeIfNeeded();
+        RestoreMovementLockToBaseline(IsGlobalLockActive());
+
+        bombController.NotifyBombAtHoleWithVisualOffset(ground, bombGo, 1f, refund: true);
+    }
+
     public void Enable()
     {
         enabledAbility = true;

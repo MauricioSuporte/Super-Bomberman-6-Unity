@@ -999,7 +999,7 @@ public class MovementController : MonoBehaviour, IKillable
         {
             var glove = GetComponent<PowerGloveAbility>();
             if (glove != null && glove.IsEnabled)
-                glove.DestroyHeldBombIfHolding();
+                glove.TryDestroyHeldBombByHoleUsingBombController();
 
             HoleDeathSequence();
         }

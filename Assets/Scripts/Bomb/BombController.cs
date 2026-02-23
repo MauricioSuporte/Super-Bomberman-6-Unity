@@ -1816,4 +1816,61 @@ public partial class BombController : MonoBehaviour
     {
         return TryPlaceBombAtIgnoringInputLock(worldPos, out _, consumeBomb: true);
     }
+
+    public void NotifyBombAtHoleWithVisualOffset(Vector2 holeCheckWorldPos, GameObject bombGo, float visualYOffsetTiles, bool refund = true)
+    {
+        if (bombGo == null)
+            return;
+
+        int id = bombGo.GetInstanceID();
+        if (_removedBombIds.Contains(id))
+            return;
+
+        Tilemap snapTm = GetSnapTilemapForGround();
+        Vector2 snappedCheck = SnapToTileCenter(snapTm, holeCheckWorldPos, out _, out _);
+
+        if (!HasHoleAt(snappedCheck))
+        {
+            TryHandleGroundBombAt(snappedCheck, bombGo);
+            if (TryDestroyBombIfOnWater(bombGo, snappedCheck, refund))
+                return;
+
+            TryDestroyBombIfOnHole(bombGo, snappedCheck, refund);
+            return;
+        }
+
+        ResolveTilemaps();
+        if (holeTiles == null)
+            return;
+
+        Vector3Int holeCell = holeTiles.WorldToCell(snappedCheck);
+        TileBase holeTile = holeTiles.GetTile(holeCell);
+        if (holeTile == null)
+            return;
+
+        _removedBombIds.Add(id);
+
+        Vector3 hc = holeTiles.GetCellCenterWorld(holeCell);
+        float tile = 1f;
+
+        Vector2 sinkPos = new(
+            Mathf.Round(hc.x),
+            Mathf.Round(hc.y) + (Mathf.RoundToInt(visualYOffsetTiles) * tile)
+        );
+
+        if (bombGo.TryGetComponent<Bomb>(out var bomb) && bomb != null)
+        {
+            bomb.StopAllCoroutines();
+            bomb.LockWorldPosition(sinkPos);
+            bomb.ForceStopExternalMovementAndSnap(sinkPos);
+        }
+
+        PlayHoleDestroySfx();
+        UnregisterBomb(bombGo);
+
+        if (refund)
+            bombsRemaining = Mathf.Min(bombsRemaining + 1, bombAmout);
+
+        StartCoroutine(HoleSinkAndDestroyRoutine(bombGo, sinkPos));
+    }
 }
