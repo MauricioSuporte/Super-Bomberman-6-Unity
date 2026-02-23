@@ -24,7 +24,6 @@ public sealed class RoboDashMovementController : JunctionTurningEnemyMovementCon
     CharacterHealth zippoHealth;
 
     float baseSpeed;
-    bool enraged;
     bool pausedByDamage;
     bool frozenByDeath;
     Coroutine damageRoutine;
@@ -175,7 +174,6 @@ public sealed class RoboDashMovementController : JunctionTurningEnemyMovementCon
             yield break;
         }
 
-        enraged = true;
         speed = baseSpeed * enragedSpeedMultiplier;
 
         if (damagedSprite != null)
@@ -226,7 +224,6 @@ public sealed class RoboDashMovementController : JunctionTurningEnemyMovementCon
         }
         else
         {
-            // fallback: keep whatever EnemyMovementController had as activeSprite
             if (activeSprite != null)
             {
                 activeSprite.enabled = true;
@@ -237,14 +234,12 @@ public sealed class RoboDashMovementController : JunctionTurningEnemyMovementCon
 
     AnimatedSpriteRenderer ChooseDirectionalSprite(Vector2 dir)
     {
-        // Prefer exact cardinal matches.
         if (dir == Vector2.up) return moveUp != null ? moveUp : moveDown;
         if (dir == Vector2.down) return moveDown != null ? moveDown : moveUp;
         if (dir == Vector2.left) return moveLeft != null ? moveLeft : moveRight;
         if (dir == Vector2.right) return moveRight != null ? moveRight : moveLeft;
 
-        // If some diagonal/zero slips in, pick something stable.
-        return moveDown ?? moveLeft ?? moveRight ?? moveUp;
+        return moveDown != null ? moveDown : moveLeft != null ? moveLeft : moveRight != null ? moveRight : moveUp;
     }
 
     void DisableAllZippoVisuals()

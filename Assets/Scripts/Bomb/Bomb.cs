@@ -55,9 +55,6 @@ public class Bomb : MonoBehaviour, IMagnetPullable
     private AnimatedSpriteRenderer anim;
     private AudioSource audioSource;
 
-    private bool wrapBoundsReady;
-    private int wrapMinX, wrapMaxX, wrapMinY, wrapMaxY;
-
     private bool stageBoundsReady;
     private BoundsInt stageCellBounds;
 
@@ -602,7 +599,6 @@ public class Bomb : MonoBehaviour, IMagnetPullable
             stageBoundsTilemap.CompressBounds();
             stageCellBounds = stageBoundsTilemap.cellBounds;
             stageBoundsReady = true;
-            ComputeWrapBoundsFromIndestructible();
             return;
         }
 
@@ -637,7 +633,6 @@ public class Bomb : MonoBehaviour, IMagnetPullable
             stageBoundsReady = true;
 
             stageBoundsTilemap = ind;
-            ComputeWrapBoundsFromIndestructible();
             return;
         }
 
@@ -649,87 +644,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
 
             if (stageBoundsTilemap == null && ind != null)
                 stageBoundsTilemap = ind;
-
-            ComputeWrapBoundsFromIndestructible();
         }
-    }
-
-    private void ComputeWrapBoundsFromIndestructible()
-    {
-        wrapBoundsReady = false;
-
-        if (stageBoundsTilemap == null)
-            return;
-
-        var outer = stageCellBounds;
-
-        int outerMinX = outer.xMin;
-        int outerMaxX = outer.xMax - 1;
-        int outerMinY = outer.yMin;
-        int outerMaxY = outer.yMax - 1;
-
-        bool RowFull(int y)
-        {
-            for (int x = outerMinX; x <= outerMaxX; x++)
-            {
-                if (stageBoundsTilemap.GetTile(new Vector3Int(x, y, 0)) == null)
-                    return false;
-            }
-            return true;
-        }
-
-        bool ColFull(int x)
-        {
-            for (int y = outerMinY; y <= outerMaxY; y++)
-            {
-                if (stageBoundsTilemap.GetTile(new Vector3Int(x, y, 0)) == null)
-                    return false;
-            }
-            return true;
-        }
-
-        int top = 0;
-        for (int y = outerMaxY; y >= outerMinY; y--)
-        {
-            if (!RowFull(y)) break;
-            top++;
-        }
-
-        int bottom = 0;
-        for (int y = outerMinY; y <= outerMaxY; y++)
-        {
-            if (!RowFull(y)) break;
-            bottom++;
-        }
-
-        int left = 0;
-        for (int x = outerMinX; x <= outerMaxX; x++)
-        {
-            if (!ColFull(x)) break;
-            left++;
-        }
-
-        int right = 0;
-        for (int x = outerMaxX; x >= outerMinX; x--)
-        {
-            if (!ColFull(x)) break;
-            right++;
-        }
-
-        int minX = outerMinX + left;
-        int maxX = outerMaxX - right;
-        int minY = outerMinY + bottom;
-        int maxY = outerMaxY - top;
-
-        if (minX > maxX || minY > maxY)
-            return;
-
-        wrapMinX = minX;
-        wrapMaxX = maxX;
-        wrapMinY = minY;
-        wrapMaxY = maxY;
-
-        wrapBoundsReady = true;
     }
 
     private bool TryStepWithWrap(Vector2 from, out Vector2 next, out bool didWrap)
