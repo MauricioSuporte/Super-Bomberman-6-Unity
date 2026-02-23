@@ -57,8 +57,10 @@ public class ItemPickup : MonoBehaviour
 
     void ApplyDefaultsEditor()
     {
+        TrySetTypeFromGameObjectName();
+
         if (collectSfx == null)
-            collectSfx = Resources.Load<AudioClip>("Sounds/ItemCollect");
+            collectSfx = LoadDefaultCollectSfx(type);
 
         if (idleRenderer == null)
             idleRenderer = GetComponent<AnimatedSpriteRenderer>();
@@ -69,14 +71,14 @@ public class ItemPickup : MonoBehaviour
             if (t != null)
                 destroyRenderer = t.GetComponent<AnimatedSpriteRenderer>();
         }
-
-        TrySetTypeFromGameObjectName();
     }
 
     void ApplyDefaultsRuntime()
     {
+        TrySetTypeFromGameObjectName();
+
         if (collectSfx == null)
-            collectSfx = Resources.Load<AudioClip>("Sounds/ItemCollect");
+            collectSfx = LoadDefaultCollectSfx(type);
 
         if (idleRenderer == null)
             idleRenderer = GetComponent<AnimatedSpriteRenderer>();
@@ -87,8 +89,48 @@ public class ItemPickup : MonoBehaviour
             if (t != null)
                 destroyRenderer = t.GetComponent<AnimatedSpriteRenderer>();
         }
+    }
 
-        TrySetTypeFromGameObjectName();
+    static AudioClip LoadDefaultCollectSfx(ItemType t)
+    {
+        if (IsLouieEggStatic(t))
+        {
+            string eggPath = GetEggSfxResourcesPath(t);
+            if (!string.IsNullOrEmpty(eggPath))
+            {
+                var eggClip = Resources.Load<AudioClip>(eggPath);
+                if (eggClip != null)
+                    return eggClip;
+            }
+        }
+
+        return Resources.Load<AudioClip>("Sounds/ItemCollect");
+    }
+
+    static bool IsLouieEggStatic(ItemType t)
+    {
+        return t == ItemType.BlueLouieEgg
+            || t == ItemType.BlackLouieEgg
+            || t == ItemType.PurpleLouieEgg
+            || t == ItemType.GreenLouieEgg
+            || t == ItemType.YellowLouieEgg
+            || t == ItemType.PinkLouieEgg
+            || t == ItemType.RedLouieEgg;
+    }
+
+    static string GetEggSfxResourcesPath(ItemType t)
+    {
+        switch (t)
+        {
+            case ItemType.BlueLouieEgg: return "Sounds/MountBlueLouie";
+            case ItemType.BlackLouieEgg: return "Sounds/MountBlackLouie";
+            case ItemType.PurpleLouieEgg: return "Sounds/MountPurpleLouie";
+            case ItemType.GreenLouieEgg: return "Sounds/MountGreenLouie";
+            case ItemType.YellowLouieEgg: return "Sounds/MountYellowLouie";
+            case ItemType.PinkLouieEgg: return "Sounds/MountPinkLouie";
+            case ItemType.RedLouieEgg: return "Sounds/MountRedLouie";
+            default: return null;
+        }
     }
 
     void TrySetTypeFromGameObjectName()
@@ -116,16 +158,7 @@ public class ItemPickup : MonoBehaviour
 
     bool IsSpawnImmune() => Time.time - spawnTime < spawnImmunitySeconds;
 
-    bool IsLouieEgg(ItemType t)
-    {
-        return t == ItemType.BlueLouieEgg
-            || t == ItemType.BlackLouieEgg
-            || t == ItemType.PurpleLouieEgg
-            || t == ItemType.GreenLouieEgg
-            || t == ItemType.YellowLouieEgg
-            || t == ItemType.PinkLouieEgg
-            || t == ItemType.RedLouieEgg;
-    }
+    bool IsLouieEgg(ItemType t) => IsLouieEggStatic(t);
 
     bool PlayerAlreadyMounted(GameObject player)
     {

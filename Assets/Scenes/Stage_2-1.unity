@@ -510,7 +510,6 @@ MonoBehaviour:
   speedIncreaseAmount: 1
   kickBombAmount: 0
   punchBombAmount: 0
-  powerGloveAmount: 99
   pierceBombAmount: 0
   controlBombAmount: 0
   fullFireAmount: 0
@@ -518,6 +517,7 @@ MonoBehaviour:
   destructiblePassAmount: 0
   invincibleSuitAmount: 0
   heartAmount: 0
+  powerGloveAmount: 1
   blueLouieEggAmount: 1
   blackLouieEggAmount: 0
   purpleLouieEggAmount: 0

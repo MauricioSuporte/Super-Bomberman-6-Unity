@@ -219,7 +219,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5dba0d8cd3c6df4db28085d767123c6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ItemPickup
-  collectSfx: {fileID: 8300000, guid: 9fbf9eaeca42e304495130d4b2f83633, type: 3}
+  collectSfx: {fileID: 8300000, guid: 8a3c0b4c44b209840ab56f51004bc900, type: 3}
   collectVolume: 1
   idleRenderer: {fileID: 3750686511081856235}
   destroyRenderer: {fileID: 9181071277600479867}
