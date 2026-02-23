@@ -6,6 +6,8 @@ using UnityEngine.UI;
 public class StageIntroTransition : MonoBehaviour
 {
     private static readonly WaitForSecondsRealtime _waitForSecondsRealtime2 = new(2f);
+    private static readonly WaitForSecondsRealtime _waitForSecondsRealtimeStartDelay = new(0.5f);
+
     public static StageIntroTransition Instance;
 
     [Header("Fade")]
@@ -21,6 +23,10 @@ public class StageIntroTransition : MonoBehaviour
 
     [Header("Audio")]
     public AudioClip introMusic;
+
+    [Header("Stage Start SFX (Resources/Sounds)")]
+    [SerializeField] private bool playStartSfxOnIntroEnd = true;
+    [SerializeField, Range(0f, 1f)] private float startSfxVolume = 1f;
 
     [Header("Stage Intro")]
     public StageLabel stageLabel;
@@ -48,8 +54,9 @@ public class StageIntroTransition : MonoBehaviour
     MovementController[] movementControllers = new MovementController[0];
     BombController[] bombControllers = new BombController[0];
 
-    // (B) Also disable PlayerManualDismount during intro
     PlayerManualDismount[] manualDismounts = new PlayerManualDismount[0];
+
+    static AudioClip s_startSfxClip;
 
     public static void SkipTitleScreenOnNextLoad()
     {
@@ -131,7 +138,6 @@ public class StageIntroTransition : MonoBehaviour
         movementControllers = FindObjectsByType<MovementController>(inactive, FindObjectsSortMode.None);
         bombControllers = FindObjectsByType<BombController>(inactive, FindObjectsSortMode.None);
 
-        // (B) find manual dismount scripts too
         manualDismounts = FindObjectsByType<PlayerManualDismount>(inactive, FindObjectsSortMode.None);
     }
 
@@ -170,7 +176,6 @@ public class StageIntroTransition : MonoBehaviour
             b.enabled = false;
         }
 
-        // (B) disable PlayerManualDismount too
         for (int i = 0; i < manualDismounts.Length; i++)
         {
             var d = manualDismounts[i];
@@ -333,7 +338,6 @@ public class StageIntroTransition : MonoBehaviour
                 var b = m.GetComponent<BombController>();
                 if (b != null) b.enabled = false;
 
-                // keep manual dismount off
                 var d = m.GetComponent<PlayerManualDismount>();
                 if (d != null) d.enabled = false;
 
@@ -366,7 +370,7 @@ public class StageIntroTransition : MonoBehaviour
             EnableGameplay();
 
             if (!IsStage17())
-                TryStartDefaultMusicNormalFlow();
+                yield return PlayStartSfxThenMusic();
 
             yield break;
         }
@@ -405,20 +409,47 @@ public class StageIntroTransition : MonoBehaviour
         EnableGameplay();
 
         if (!IsStage17())
-            TryStartDefaultMusicNormalFlow();
+            yield return PlayStartSfxThenMusic();
+    }
+
+    private static void EnsureStartClipLoaded()
+    {
+        if (s_startSfxClip != null)
+            return;
+
+        s_startSfxClip = Resources.Load<AudioClip>("Sounds/start");
+    }
+
+    private IEnumerator PlayStartSfxThenMusic()
+    {
+        if (GameMusicController.Instance == null)
+            yield break;
+
+        if (playStartSfxOnIntroEnd)
+        {
+            EnsureStartClipLoaded();
+            if (s_startSfxClip != null)
+                GameMusicController.Instance.PlaySfx(s_startSfxClip, startSfxVolume);
+        }
+
+        var music = GameMusicController.Instance.defaultMusic;
+        if (music != null)
+            music.LoadAudioData();
+
+        yield return _waitForSecondsRealtimeStartDelay;
+
+        TryStartDefaultMusicNormalFlow();
     }
 
     void TryStartDefaultMusicNormalFlow()
     {
         if (GameMusicController.Instance != null && GameMusicController.Instance.defaultMusic != null)
         {
-            float volume = GameMusicController.Instance.defaultMusicVolume;
+            var clip = GameMusicController.Instance.defaultMusic;
+            clip.LoadAudioData();
 
-            GameMusicController.Instance.PlayMusic(
-                GameMusicController.Instance.defaultMusic,
-                volume,
-                true
-            );
+            float volume = GameMusicController.Instance.defaultMusicVolume;
+            GameMusicController.Instance.PlayMusic(clip, volume, true);
         }
     }
 
@@ -465,7 +496,6 @@ public class StageIntroTransition : MonoBehaviour
                 if (d != null) d.enabled = false;
             }
 
-            // keep global dismount scripts off too
             for (int i = 0; i < manualDismounts.Length; i++)
                 if (manualDismounts[i] != null)
                     manualDismounts[i].enabled = false;
@@ -494,7 +524,6 @@ public class StageIntroTransition : MonoBehaviour
         foreach (var b in bombControllers)
             if (b) b.enabled = true;
 
-        // (B) re-enable manual dismount after intro (normal stages)
         for (int i = 0; i < manualDismounts.Length; i++)
         {
             var d = manualDismounts[i];
