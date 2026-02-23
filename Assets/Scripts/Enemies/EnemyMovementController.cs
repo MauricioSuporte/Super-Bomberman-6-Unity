@@ -167,7 +167,7 @@ public class EnemyMovementController : MonoBehaviour, IKillable
         Die();
     }
 
-    void OnHitInvulnerabilityStarted(float seconds)
+    protected virtual void OnHitInvulnerabilityStarted(float seconds)
     {
         if (health == null || !health.playDamagedLoopInsteadOfBlink)
             return;
@@ -189,7 +189,7 @@ public class EnemyMovementController : MonoBehaviour, IKillable
         spriteDamaged.loop = true;
     }
 
-    void OnHitInvulnerabilityEnded()
+    protected virtual void OnHitInvulnerabilityEnded()
     {
         if (!isInDamagedLoop)
             return;
