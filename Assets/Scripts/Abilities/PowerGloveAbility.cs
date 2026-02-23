@@ -626,14 +626,14 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
         logicalOrigin.x = Mathf.Round(logicalOrigin.x / movement.tileSize) * movement.tileSize;
         logicalOrigin.y = Mathf.Round(logicalOrigin.y / movement.tileSize) * movement.tileSize;
 
-        heldBomb.StartPunchFrom(
-            logicalOrigin,
-            movement.tileSize,
+        heldBomb.StartPunch(
             dir,
             movement.tileSize,
             throwDistanceTiles,
             obstacles,
-            bombController != null ? bombController.destructibleTiles : null
+            bombController != null ? bombController.destructibleTiles : null,
+            visualStartYOffset: movement.tileSize,
+            logicalOriginOverride: logicalOrigin
         );
     }
 

@@ -373,7 +373,14 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         return false;
     }
 
-    public bool StartPunch(Vector2 direction, float tileSize, int distanceTiles, LayerMask obstacleMask, Tilemap destructibleTilemap)
+    public bool StartPunch(
+        Vector2 direction,
+        float tileSize,
+        int distanceTiles,
+        LayerMask obstacleMask,
+        Tilemap destructibleTilemap,
+        float visualStartYOffset = 0f,
+        Vector2? logicalOriginOverride = null)
     {
         if (!CanBePunched || direction == Vector2.zero)
             return false;
@@ -384,60 +391,14 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         kickObstacleMask = obstacleMask | LayerMask.GetMask("Enemy", "Player");
         kickDestructibleTilemap = destructibleTilemap;
 
-        Vector2 origin = SnapToGrid((Vector2)transform.position, tileSize);
-
-        currentTileCenter = origin;
-        lastPos = origin;
-
-        rb.position = origin;
-        transform.position = origin;
-
-        if (kickRoutine != null)
-            StopCoroutine(kickRoutine);
-
-        if (punchRoutine != null)
-            StopCoroutine(punchRoutine);
-
-        isPunched = true;
-        charactersInside.Clear();
-        bombCollider.isTrigger = true;
-
-        PauseFuse();
-
-        if (audioSource != null && punchSfx != null)
-            audioSource.PlayOneShot(punchSfx, punchSfxVolume);
-
-        if (anim != null)
-            anim.SetFrozen(true);
-
-        punchRoutine = StartCoroutine(PunchRoutineFixed_Hybrid(origin, distanceTiles, 80, punchDuration, punchArcHeight));
-        return true;
-    }
-
-    public bool StartPunchFrom(
-    Vector2 logicalOrigin,
-    float visualStartYOffset,
-    Vector2 direction,
-    float tileSize,
-    int distanceTiles,
-    LayerMask obstacleMask,
-    Tilemap destructibleTilemap)
-    {
-        if (!CanBePunched || direction == Vector2.zero)
-            return false;
-
-        kickDirection = direction.normalized;
-        kickTileSize = tileSize;
-
-        kickObstacleMask = obstacleMask | LayerMask.GetMask("Enemy", "Player");
-        kickDestructibleTilemap = destructibleTilemap;
-
+        Vector2 logicalOrigin = logicalOriginOverride ?? (Vector2)transform.position;
         logicalOrigin = SnapToGrid(logicalOrigin, tileSize);
 
         currentTileCenter = logicalOrigin;
         lastPos = logicalOrigin;
 
-        Vector2 visualStart = logicalOrigin + Vector2.up * visualStartYOffset;
+        float yOff = Mathf.Max(0f, visualStartYOffset);
+        Vector2 visualStart = yOff > 0f ? (logicalOrigin + Vector2.up * yOff) : logicalOrigin;
 
         rb.position = visualStart;
         transform.position = visualStart;
@@ -460,9 +421,9 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         if (anim != null)
             anim.SetFrozen(true);
 
-        punchRoutine = StartCoroutine(PunchRoutineFixed_Hybrid_FromOrigin(
+        punchRoutine = StartCoroutine(PunchRoutineFixed_Hybrid(
             logicalOrigin,
-            visualStartYOffset,
+            yOff,
             distanceTiles,
             80,
             punchDuration,
@@ -472,160 +433,12 @@ public class Bomb : MonoBehaviour, IMagnetPullable
     }
 
     private IEnumerator PunchRoutineFixed_Hybrid(
-        Vector2 start,
+        Vector2 logicalOrigin,
+        float visualStartYOffset,
         int forwardSteps,
         int maxExtraBounces,
         float duration,
         float arcHeight)
-    {
-        Vector2 cur = start;
-        int steps = Mathf.Max(1, forwardSteps);
-
-        bool wrapsDuringForward = false;
-        {
-            Vector2 sim = cur;
-            for (int i = 0; i < steps; i++)
-            {
-                if (!TryStepWithWrap(sim, out var n, out var didWrap))
-                    break;
-
-                if (didWrap)
-                {
-                    wrapsDuringForward = true;
-                    break;
-                }
-
-                sim = n;
-            }
-        }
-
-        if (!wrapsDuringForward)
-        {
-            Vector2 target = cur;
-
-            for (int i = 0; i < steps; i++)
-            {
-                if (!TryStepWithWrap(target, out var n, out var didWrap))
-                    goto FINISH;
-
-                if (didWrap)
-                {
-                    TeleportTo(n);
-                    target = n;
-
-                    if (NotifyOwnerAt(target))
-                    {
-                        cur = target;
-                        goto FINISH;
-                    }
-
-                    continue;
-                }
-
-                target = n;
-            }
-
-            if (HasExploded)
-                goto FINISH;
-
-            yield return PunchArcSegmentFixed(cur, target, duration, arcHeight);
-            cur = target;
-
-            if (NotifyOwnerAt(cur))
-                goto FINISH;
-        }
-        else
-        {
-            float segDuration = duration / Mathf.Max(1, steps);
-
-            for (int i = 0; i < steps; i++)
-            {
-                if (HasExploded)
-                    goto FINISH;
-
-                if (!TryStepWithWrap(cur, out var next, out var didWrap))
-                    goto FINISH;
-
-                if (didWrap)
-                {
-                    TeleportTo(next);
-                    cur = next;
-
-                    if (NotifyOwnerAt(cur))
-                        goto FINISH;
-
-                    continue;
-                }
-
-                yield return PunchArcSegmentFixed(cur, next, segDuration, arcHeight);
-                cur = next;
-
-                if (NotifyOwnerAt(cur))
-                    goto FINISH;
-            }
-        }
-
-        for (int b = 0; b < Mathf.Max(0, maxExtraBounces); b++)
-        {
-            if (HasExploded)
-                goto FINISH;
-
-            if (!IsPunchLandingBlocked(cur))
-                break;
-
-            if (!TryStepWithWrap(cur, out var next, out var didWrap))
-                break;
-
-            if (didWrap)
-            {
-                TeleportTo(next);
-                cur = next;
-
-                if (NotifyOwnerAt(cur))
-                    goto FINISH;
-
-                b--;
-                continue;
-            }
-
-            if (audioSource != null && bounceSfx != null)
-                audioSource.PlayOneShot(bounceSfx, bounceSfxVolume);
-
-            yield return PunchArcSegmentFixed(cur, next, duration, arcHeight);
-            cur = next;
-
-            if (NotifyOwnerAt(cur))
-                goto FINISH;
-        }
-
-    FINISH:
-        TeleportTo(cur);
-
-        isPunched = false;
-        punchRoutine = null;
-
-        ResumeFuse();
-
-        if (!HasExploded)
-        {
-            RecalculateCharactersInsideAt(cur);
-            bombCollider.isTrigger = charactersInside.Count > 0;
-        }
-
-        if (anim != null)
-        {
-            anim.SetFrozen(false);
-            anim.RefreshFrame();
-        }
-    }
-
-    private IEnumerator PunchRoutineFixed_Hybrid_FromOrigin(
-    Vector2 logicalOrigin,
-    float visualStartYOffset,
-    int forwardSteps,
-    int maxExtraBounces,
-    float duration,
-    float arcHeight)
     {
         Vector2 cur = logicalOrigin;
         int steps = Mathf.Max(1, forwardSteps);
@@ -648,7 +461,16 @@ public class Bomb : MonoBehaviour, IMagnetPullable
             }
         }
 
-        bool firstSegment = true;
+        bool applyYOffsetOnThisSegment = visualStartYOffset > 0f;
+
+        Vector2 SegmentStart(Vector2 baseStart)
+        {
+            if (!applyYOffsetOnThisSegment)
+                return baseStart;
+
+            applyYOffsetOnThisSegment = false;
+            return baseStart + Vector2.up * visualStartYOffset;
+        }
 
         if (!wrapsDuringForward)
         {
@@ -679,10 +501,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
             if (HasExploded)
                 goto FINISH;
 
-            Vector2 segStart = firstSegment ? (cur + Vector2.up * visualStartYOffset) : cur;
-            firstSegment = false;
-
-            yield return PunchArcSegmentFixed(segStart, target, duration, arcHeight);
+            yield return PunchArcSegmentFixed(SegmentStart(cur), target, duration, arcHeight);
             cur = target;
 
             if (NotifyOwnerAt(cur))
@@ -711,10 +530,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
                     continue;
                 }
 
-                Vector2 segStart = firstSegment ? (cur + Vector2.up * visualStartYOffset) : cur;
-                firstSegment = false;
-
-                yield return PunchArcSegmentFixed(segStart, next, segDuration, arcHeight);
+                yield return PunchArcSegmentFixed(SegmentStart(cur), next, segDuration, arcHeight);
                 cur = next;
 
                 if (NotifyOwnerAt(cur))
