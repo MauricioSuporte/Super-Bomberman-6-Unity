@@ -763,7 +763,7 @@ public class MechaBossSequence : MonoBehaviour
         ItemPickup prefab = kickBombDropPrefabOverride;
 
         if (prefab == null && gameManager != null)
-            prefab = gameManager.GetItemPrefab(ItemPickup.ItemType.BombKick);
+            prefab = gameManager.GetItemPrefab(ItemType.BombKick);
 
         if (prefab == null)
             return;

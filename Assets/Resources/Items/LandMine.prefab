@@ -123,6 +123,7 @@ MonoBehaviour:
   frameOffsets: []
   pingPong: 0
   disableOffsetsIfThisObjectHasRigidbody2D: 1
+  disableOffsetsIfStandaloneRoot: 1
 --- !u!1 &6871244334814668704
 GameObject:
   m_ObjectHideFlags: 0
@@ -134,9 +135,9 @@ GameObject:
   - component: {fileID: 6871244334814668732}
   - component: {fileID: 6871244334814668735}
   - component: {fileID: 6871244334814668734}
-  - component: {fileID: 6871244334814668705}
   - component: {fileID: 7535927048605856034}
   - component: {fileID: 2236912824413260424}
+  - component: {fileID: 3110590526168976961}
   m_Layer: 9
   m_Name: LandMine
   m_TagString: Untagged
@@ -265,27 +266,6 @@ BoxCollider2D:
   m_AutoTiling: 0
   m_Size: {x: 0.5, y: 0.5}
   m_EdgeRadius: 0
---- !u!114 &6871244334814668705
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6871244334814668704}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 376665fd527b5c04e9b39d41cc80c035, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  collectSfx: {fileID: 8300000, guid: e20ff4560223b6145b03f9dc1214e8be, type: 3}
-  collectVolume: 1
-  idleRenderer: {fileID: 7535927048605856034}
-  destroyRenderer: {fileID: 1735519002939741838}
-  destroyDelaySeconds: 0.5
-  spawnImmunitySeconds: 0.5
-  damageIgnoresInvulnerability: 0
-  behavior: {fileID: 0}
-  type: 19
 --- !u!114 &7535927048605856034
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -312,6 +292,7 @@ MonoBehaviour:
   frameOffsets: []
   pingPong: 0
   disableOffsetsIfThisObjectHasRigidbody2D: 1
+  disableOffsetsIfStandaloneRoot: 1
 --- !u!114 &2236912824413260424
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -326,3 +307,24 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::LandMineBehavior
   damage: 1
   playDestroyAnimation: 1
+--- !u!114 &3110590526168976961
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6871244334814668704}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5dba0d8cd3c6df4db28085d767123c6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ItemPickup
+  collectSfx: {fileID: 8300000, guid: 9fbf9eaeca42e304495130d4b2f83633, type: 3}
+  collectVolume: 1
+  idleRenderer: {fileID: 7535927048605856034}
+  destroyRenderer: {fileID: 1735519002939741838}
+  destroyDelaySeconds: 0.5
+  spawnImmunitySeconds: 0.5
+  damageIgnoresInvulnerability: 0
+  behavior: {fileID: 0}
+  type: 20

@@ -17,7 +17,7 @@ public static class PlayerPersistentStats
 
     public sealed class PlayerState
     {
-        public int Life = 9;
+        public int Life = 1;
 
         public int BombAmount = 9;
         public int ExplosionRadius = 10;
@@ -26,7 +26,7 @@ public static class PlayerPersistentStats
 
         public bool CanKickBombs = false;
         public bool CanPunchBombs = true;
-        public bool HasPowerGlove = true;
+        public bool HasPowerGlove = false;
         public bool CanPassBombs = false;
         public bool CanPassDestructibles = true;
         public bool HasPierceBombs = false;
@@ -36,7 +36,7 @@ public static class PlayerPersistentStats
         public MountedType MountedLouie = MountedType.None;
         public BomberSkin Skin = BomberSkin.White;
 
-        public readonly List<ItemPickup.ItemType> QueuedEggs = new(8);
+        public readonly List<ItemType> QueuedEggs = new(8);
 
         public PlayerState()
         {
@@ -352,6 +352,7 @@ public static class PlayerPersistentStats
             }
         }
     }
+
     public static void SaveFrom(MovementController movement, BombController bomb)
     {
         int playerId = 1;
@@ -498,33 +499,33 @@ public static class PlayerPersistentStats
         stageActive = false;
     }
 
-    static MountedType EggToLouie(ItemPickup.ItemType t)
+    static MountedType EggToLouie(ItemType t)
     {
         return t switch
         {
-            ItemPickup.ItemType.BlueLouieEgg => MountedType.Blue,
-            ItemPickup.ItemType.BlackLouieEgg => MountedType.Black,
-            ItemPickup.ItemType.PurpleLouieEgg => MountedType.Purple,
-            ItemPickup.ItemType.GreenLouieEgg => MountedType.Green,
-            ItemPickup.ItemType.YellowLouieEgg => MountedType.Yellow,
-            ItemPickup.ItemType.PinkLouieEgg => MountedType.Pink,
-            ItemPickup.ItemType.RedLouieEgg => MountedType.Red,
+            ItemType.BlueLouieEgg => MountedType.Blue,
+            ItemType.BlackLouieEgg => MountedType.Black,
+            ItemType.PurpleLouieEgg => MountedType.Purple,
+            ItemType.GreenLouieEgg => MountedType.Green,
+            ItemType.YellowLouieEgg => MountedType.Yellow,
+            ItemType.PinkLouieEgg => MountedType.Pink,
+            ItemType.RedLouieEgg => MountedType.Red,
             _ => MountedType.None
         };
     }
 
-    static bool IsEgg(ItemPickup.ItemType t)
+    static bool IsEgg(ItemType t)
     {
-        return t == ItemPickup.ItemType.BlueLouieEgg
-            || t == ItemPickup.ItemType.BlackLouieEgg
-            || t == ItemPickup.ItemType.PurpleLouieEgg
-            || t == ItemPickup.ItemType.GreenLouieEgg
-            || t == ItemPickup.ItemType.YellowLouieEgg
-            || t == ItemPickup.ItemType.PinkLouieEgg
-            || t == ItemPickup.ItemType.RedLouieEgg;
+        return t == ItemType.BlueLouieEgg
+            || t == ItemType.BlackLouieEgg
+            || t == ItemType.PurpleLouieEgg
+            || t == ItemType.GreenLouieEgg
+            || t == ItemType.YellowLouieEgg
+            || t == ItemType.PinkLouieEgg
+            || t == ItemType.RedLouieEgg;
     }
 
-    public static void StageApplyPickup(int playerId, ItemPickup.ItemType type)
+    public static void StageApplyPickup(int playerId, ItemType type)
     {
         playerId = Mathf.Clamp(playerId, 1, 4);
         BeginStage();
@@ -533,49 +534,53 @@ public static class PlayerPersistentStats
 
         switch (type)
         {
-            case ItemPickup.ItemType.ExtraBomb:
+            case ItemType.ExtraBomb:
                 s.BombAmount = Mathf.Min(s.BombAmount + 1, MaxBombAmount);
                 break;
 
-            case ItemPickup.ItemType.BlastRadius:
+            case ItemType.BlastRadius:
                 s.ExplosionRadius = Mathf.Min(s.ExplosionRadius + 1, MaxExplosionRadius);
                 break;
 
-            case ItemPickup.ItemType.SpeedIncrese:
+            case ItemType.SpeedIncrese:
                 s.SpeedInternal = ClampSpeedInternal(s.SpeedInternal + SpeedStep);
                 break;
 
-            case ItemPickup.ItemType.BombKick:
+            case ItemType.BombKick:
                 s.CanKickBombs = true;
                 break;
 
-            case ItemPickup.ItemType.BombPunch:
+            case ItemType.BombPunch:
                 s.CanPunchBombs = true;
                 break;
 
-            case ItemPickup.ItemType.FullFire:
+            case ItemType.PowerGlove:
+                s.HasPowerGlove = true;
+                break;
+
+            case ItemType.FullFire:
                 s.HasFullFire = true;
                 break;
 
-            case ItemPickup.ItemType.BombPass:
+            case ItemType.BombPass:
                 s.CanPassBombs = true;
                 break;
 
-            case ItemPickup.ItemType.DestructiblePass:
+            case ItemType.DestructiblePass:
                 s.CanPassDestructibles = true;
                 break;
 
-            case ItemPickup.ItemType.PierceBomb:
+            case ItemType.PierceBomb:
                 s.HasPierceBombs = true;
                 s.HasControlBombs = false;
                 break;
 
-            case ItemPickup.ItemType.ControlBomb:
+            case ItemType.ControlBomb:
                 s.HasControlBombs = true;
                 s.HasPierceBombs = false;
                 break;
 
-            case ItemPickup.ItemType.Heart:
+            case ItemType.Heart:
                 s.Life = Mathf.Max(1, s.Life + 1);
                 break;
 

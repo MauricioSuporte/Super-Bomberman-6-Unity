@@ -1,7 +1,9 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 
 [RequireComponent(typeof(SpriteRenderer))]
 [RequireComponent(typeof(Collider2D))]
+[RequireComponent(typeof(AnimatedSpriteRenderer))]
 public class ItemPickup : MonoBehaviour
 {
     [Header("SFX")]
@@ -26,30 +28,6 @@ public class ItemPickup : MonoBehaviour
     [Header("Optional Behavior (overrides default switch for non-eggs)")]
     [SerializeField] private MonoBehaviour behavior;
 
-    public enum ItemType
-    {
-        ExtraBomb,
-        BlastRadius,
-        SpeedIncrese,
-        BombKick,
-        BombPunch,
-        PierceBomb,
-        ControlBomb,
-        FullFire,
-        BombPass,
-        DestructiblePass,
-        InvincibleSuit,
-        Heart,
-        BlueLouieEgg,
-        BlackLouieEgg,
-        PurpleLouieEgg,
-        GreenLouieEgg,
-        YellowLouieEgg,
-        PinkLouieEgg,
-        RedLouieEgg,
-        LandMine
-    }
-
     public ItemType type;
 
     bool isBeingDestroyed;
@@ -58,11 +36,82 @@ public class ItemPickup : MonoBehaviour
 
     IItemPickupBehavior _behavior;
 
+    void Reset()
+    {
+        ApplyDefaultsEditor();
+    }
+
+    void OnValidate()
+    {
+        ApplyDefaultsEditor();
+    }
+
     void Awake()
     {
+        ApplyDefaultsRuntime();
+
         spawnTime = Time.time;
         _col = GetComponent<Collider2D>();
         _behavior = behavior as IItemPickupBehavior;
+    }
+
+    void ApplyDefaultsEditor()
+    {
+        if (collectSfx == null)
+            collectSfx = Resources.Load<AudioClip>("Sounds/ItemCollect");
+
+        if (idleRenderer == null)
+            idleRenderer = GetComponent<AnimatedSpriteRenderer>();
+
+        if (destroyRenderer == null)
+        {
+            var t = transform.Find("DestroyAnimation");
+            if (t != null)
+                destroyRenderer = t.GetComponent<AnimatedSpriteRenderer>();
+        }
+
+        TrySetTypeFromGameObjectName();
+    }
+
+    void ApplyDefaultsRuntime()
+    {
+        if (collectSfx == null)
+            collectSfx = Resources.Load<AudioClip>("Sounds/ItemCollect");
+
+        if (idleRenderer == null)
+            idleRenderer = GetComponent<AnimatedSpriteRenderer>();
+
+        if (destroyRenderer == null)
+        {
+            var t = transform.Find("DestroyAnimation");
+            if (t != null)
+                destroyRenderer = t.GetComponent<AnimatedSpriteRenderer>();
+        }
+
+        TrySetTypeFromGameObjectName();
+    }
+
+    void TrySetTypeFromGameObjectName()
+    {
+        string n = gameObject != null ? gameObject.name : null;
+        if (string.IsNullOrWhiteSpace(n))
+            return;
+
+        n = CleanItemName(n);
+
+        if (Enum.TryParse(n, ignoreCase: true, out ItemType parsed))
+            type = parsed;
+    }
+
+    static string CleanItemName(string n)
+    {
+        n = n.Trim();
+
+        const string cloneSuffix = "(Clone)";
+        if (n.EndsWith(cloneSuffix, StringComparison.OrdinalIgnoreCase))
+            n = n.Substring(0, n.Length - cloneSuffix.Length).Trim();
+
+        return n;
     }
 
     bool IsSpawnImmune() => Time.time - spawnTime < spawnImmunitySeconds;
@@ -224,7 +273,7 @@ public class ItemPickup : MonoBehaviour
             if (!q.TryEnqueue(type, GetEggIdleSpriteFallback(), collectSfx, collectVolume))
                 return;
 
-            ConsumeNow(playDestroyAnim: false);
+            ConsumeNow(false);
             return;
         }
 
@@ -282,6 +331,10 @@ public class ItemPickup : MonoBehaviour
 
             case ItemType.BombPunch:
                 GetOrCreateAbilitySystem(player).Enable(BombPunchAbility.AbilityId);
+                break;
+
+            case ItemType.PowerGlove:
+                GetOrCreateAbilitySystem(player).Enable(PowerGloveAbility.AbilityId);
                 break;
 
             case ItemType.PierceBomb:
@@ -357,10 +410,7 @@ public class ItemPickup : MonoBehaviour
                 break;
         }
 
-        bool playDestroyAnim =
-            isEgg ||
-            type == ItemType.LandMine;
-
+        bool playDestroyAnim = isEgg || type == ItemType.LandMine;
         ConsumeNow(playDestroyAnim);
     }
 
@@ -381,7 +431,7 @@ public class ItemPickup : MonoBehaviour
                 if (!PlayerAlreadyMounted(player))
                 {
                     if (other.TryGetComponent<MovementController>(out var mv) && mv != null && _col != null)
-                        mv.SnapToColliderCenter(_col, roundToGrid: false);
+                        mv.SnapToColliderCenter(_col, false);
                 }
             }
 

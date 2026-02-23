@@ -85,7 +85,7 @@ public sealed class MountEggQueue : MonoBehaviour
 
     struct EggEntry
     {
-        public ItemPickup.ItemType type;
+        public ItemType type;
         public Transform rootTr;
         public EggFollowerDirectionalVisual directional;
 
@@ -148,7 +148,7 @@ public sealed class MountEggQueue : MonoBehaviour
 
     bool _forcedHidden;
 
-    readonly Dictionary<ItemPickup.ItemType, AudioClip> _mountSfxCache = new();
+    readonly Dictionary<ItemType, AudioClip> _mountSfxCache = new();
     int _ownerPlayerId = -1;
     bool _ignoreOwnerInvulnerability;
 
@@ -289,6 +289,7 @@ public sealed class MountEggQueue : MonoBehaviour
             hasPrevTarget = true;
         }
     }
+
     static Transform FindDeepChildByName(Transform root, string childName)
     {
         if (root == null || string.IsNullOrWhiteSpace(childName))
@@ -353,9 +354,7 @@ public sealed class MountEggQueue : MonoBehaviour
             }
 
             if (enabled)
-            {
                 ForceEggVisualToNormalIdle(e.rootTr, e.directional);
-            }
         }
     }
 
@@ -1119,20 +1118,20 @@ public sealed class MountEggQueue : MonoBehaviour
 
     #region SFX
 
-    AudioClip LoadMountSfx(ItemPickup.ItemType eggType)
+    AudioClip LoadMountSfx(ItemType eggType)
     {
         if (_mountSfxCache.TryGetValue(eggType, out var cached) && cached != null)
             return cached;
 
         string name = eggType switch
         {
-            ItemPickup.ItemType.BlueLouieEgg => blueLouieMountSfxName,
-            ItemPickup.ItemType.BlackLouieEgg => blackLouieMountSfxName,
-            ItemPickup.ItemType.PurpleLouieEgg => purpleLouieMountSfxName,
-            ItemPickup.ItemType.GreenLouieEgg => greenLouieMountSfxName,
-            ItemPickup.ItemType.YellowLouieEgg => yellowLouieMountSfxName,
-            ItemPickup.ItemType.PinkLouieEgg => pinkLouieMountSfxName,
-            ItemPickup.ItemType.RedLouieEgg => redLouieMountSfxName,
+            ItemType.BlueLouieEgg => blueLouieMountSfxName,
+            ItemType.BlackLouieEgg => blackLouieMountSfxName,
+            ItemType.PurpleLouieEgg => purpleLouieMountSfxName,
+            ItemType.GreenLouieEgg => greenLouieMountSfxName,
+            ItemType.YellowLouieEgg => yellowLouieMountSfxName,
+            ItemType.PinkLouieEgg => pinkLouieMountSfxName,
+            ItemType.RedLouieEgg => redLouieMountSfxName,
             _ => null
         };
 
@@ -1151,7 +1150,7 @@ public sealed class MountEggQueue : MonoBehaviour
 
     #region Public Queue API
 
-    public bool TryEnqueue(ItemPickup.ItemType type, Sprite idleSprite, AudioClip mountSfx, float mountVolume)
+    public bool TryEnqueue(ItemType type, Sprite idleSprite, AudioClip mountSfx, float mountVolume)
     {
         EnsureBound();
 
@@ -1165,7 +1164,7 @@ public sealed class MountEggQueue : MonoBehaviour
         return true;
     }
 
-    public bool TryDequeue(out ItemPickup.ItemType type, out AudioClip mountSfx, out float mountVolume)
+    public bool TryDequeue(out ItemType type, out AudioClip mountSfx, out float mountVolume)
     {
         type = default;
         mountSfx = null;
@@ -1210,7 +1209,7 @@ public sealed class MountEggQueue : MonoBehaviour
         return true;
     }
 
-    public void GetQueuedEggTypesOldestToNewest(List<ItemPickup.ItemType> buffer)
+    public void GetQueuedEggTypesOldestToNewest(List<ItemType> buffer)
     {
         if (buffer == null)
             return;
@@ -1221,7 +1220,7 @@ public sealed class MountEggQueue : MonoBehaviour
             buffer.Add(_eggs[i].type);
     }
 
-    public void RestoreQueuedEggTypesOldestToNewest(IReadOnlyList<ItemPickup.ItemType> types, Sprite idleSpriteFallback = null)
+    public void RestoreQueuedEggTypesOldestToNewest(IReadOnlyList<ItemType> types, Sprite idleSpriteFallback = null)
     {
         ClearAllEggs();
 
@@ -1331,7 +1330,7 @@ public sealed class MountEggQueue : MonoBehaviour
         PostQueueChanged(animateShift);
     }
 
-    void EnqueueInternal(ItemPickup.ItemType type, Sprite idleSprite, AudioClip mountSfx, float mountVolume, bool animate)
+    void EnqueueInternal(ItemType type, Sprite idleSprite, AudioClip mountSfx, float mountVolume, bool animate)
     {
         EnsureBound();
 
@@ -1419,6 +1418,7 @@ public sealed class MountEggQueue : MonoBehaviour
     #endregion
 
     #region Transfer / World Queue Helpers
+
     public void TransferToDetachedLouieAndFreeze(GameObject detachedLouie, Vector3 freezeWorldPos)
     {
         if (detachedLouie == null || _eggs.Count == 0)
@@ -1711,19 +1711,19 @@ public sealed class MountEggQueue : MonoBehaviour
         }
     }
 
-    static void MountFromEggType(PlayerMountCompanion comp, ItemPickup.ItemType eggType)
+    static void MountFromEggType(PlayerMountCompanion comp, ItemType eggType)
     {
         if (comp == null) return;
 
         switch (eggType)
         {
-            case ItemPickup.ItemType.BlueLouieEgg: comp.MountBlueLouie(); break;
-            case ItemPickup.ItemType.BlackLouieEgg: comp.MountBlackLouie(); break;
-            case ItemPickup.ItemType.PurpleLouieEgg: comp.MountPurpleLouie(); break;
-            case ItemPickup.ItemType.GreenLouieEgg: comp.MountGreenLouie(); break;
-            case ItemPickup.ItemType.YellowLouieEgg: comp.MountYellowLouie(); break;
-            case ItemPickup.ItemType.PinkLouieEgg: comp.MountPinkLouie(); break;
-            case ItemPickup.ItemType.RedLouieEgg: comp.MountRedLouie(); break;
+            case ItemType.BlueLouieEgg: comp.MountBlueLouie(); break;
+            case ItemType.BlackLouieEgg: comp.MountBlackLouie(); break;
+            case ItemType.PurpleLouieEgg: comp.MountPurpleLouie(); break;
+            case ItemType.GreenLouieEgg: comp.MountGreenLouie(); break;
+            case ItemType.YellowLouieEgg: comp.MountYellowLouie(); break;
+            case ItemType.PinkLouieEgg: comp.MountPinkLouie(); break;
+            case ItemType.RedLouieEgg: comp.MountRedLouie(); break;
         }
     }
 
@@ -1797,6 +1797,7 @@ public sealed class MountEggQueue : MonoBehaviour
     #endregion
 
     #region Freeze Owner / Absorb
+
     public void FreezeOwnerAtWorldPosition(Vector3 worldPos)
     {
         EnsureWorldRoot();

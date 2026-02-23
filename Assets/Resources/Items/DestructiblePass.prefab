@@ -35,6 +35,7 @@ Transform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!212 &498606762078572542
 SpriteRenderer:
+  serializedVersion: 2
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -80,6 +81,7 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 5
+  m_MaskInteraction: 0
   m_Sprite: {fileID: -4710102961357003840, guid: 73aa2ab8aa1737f4797de733c4035821, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
@@ -89,7 +91,6 @@ SpriteRenderer:
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
-  m_MaskInteraction: 0
   m_SpriteSortPoint: 0
 --- !u!114 &1735519002939741838
 MonoBehaviour:
@@ -113,6 +114,7 @@ MonoBehaviour:
   - {fileID: -5127058307936795808, guid: 73aa2ab8aa1737f4797de733c4035821, type: 3}
   - {fileID: 301452517978567945, guid: 73aa2ab8aa1737f4797de733c4035821, type: 3}
   - {fileID: -677491539265025114, guid: 73aa2ab8aa1737f4797de733c4035821, type: 3}
+  allowFlipX: 0
   animationTime: 0.0625
   useSequenceDuration: 0
   sequenceDuration: 0.5
@@ -121,6 +123,7 @@ MonoBehaviour:
   frameOffsets: []
   pingPong: 0
   disableOffsetsIfThisObjectHasRigidbody2D: 1
+  disableOffsetsIfStandaloneRoot: 1
 --- !u!1 &6871244334814668704
 GameObject:
   m_ObjectHideFlags: 0
@@ -132,8 +135,8 @@ GameObject:
   - component: {fileID: 6871244334814668732}
   - component: {fileID: 6871244334814668735}
   - component: {fileID: 6871244334814668734}
-  - component: {fileID: 6871244334814668705}
   - component: {fileID: 7535927048605856034}
+  - component: {fileID: 7019599285505322465}
   m_Layer: 9
   m_Name: DestructiblePass
   m_TagString: Untagged
@@ -159,6 +162,7 @@ Transform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!212 &6871244334814668735
 SpriteRenderer:
+  serializedVersion: 2
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -204,6 +208,7 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 2
+  m_MaskInteraction: 0
   m_Sprite: {fileID: -8982428921563239791, guid: 4ff4afedda9fa1949af624da82c728b9, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
@@ -213,7 +218,6 @@ SpriteRenderer:
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
-  m_MaskInteraction: 0
   m_SpriteSortPoint: 0
 --- !u!61 &6871244334814668734
 BoxCollider2D:
@@ -261,23 +265,6 @@ BoxCollider2D:
   m_AutoTiling: 0
   m_Size: {x: 0.5, y: 0.5}
   m_EdgeRadius: 0
---- !u!114 &6871244334814668705
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6871244334814668704}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 376665fd527b5c04e9b39d41cc80c035, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  collectSfx: {fileID: 8300000, guid: 9fbf9eaeca42e304495130d4b2f83633, type: 3}
-  idleRenderer: {fileID: 7535927048605856034}
-  destroyRenderer: {fileID: 1735519002939741838}
-  spawnImmunitySeconds: 0.5
-  type: 9
 --- !u!114 &7535927048605856034
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -294,6 +281,7 @@ MonoBehaviour:
   animationSprite:
   - {fileID: -8982428921563239791, guid: 4ff4afedda9fa1949af624da82c728b9, type: 3}
   - {fileID: 7326888061925976464, guid: 4ff4afedda9fa1949af624da82c728b9, type: 3}
+  allowFlipX: 0
   animationTime: 0.01
   useSequenceDuration: 0
   sequenceDuration: 0.5
@@ -302,3 +290,25 @@ MonoBehaviour:
   frameOffsets: []
   pingPong: 0
   disableOffsetsIfThisObjectHasRigidbody2D: 1
+  disableOffsetsIfStandaloneRoot: 1
+--- !u!114 &7019599285505322465
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6871244334814668704}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5dba0d8cd3c6df4db28085d767123c6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ItemPickup
+  collectSfx: {fileID: 8300000, guid: 9fbf9eaeca42e304495130d4b2f83633, type: 3}
+  collectVolume: 1
+  idleRenderer: {fileID: 7535927048605856034}
+  destroyRenderer: {fileID: 1735519002939741838}
+  destroyDelaySeconds: 0.5
+  spawnImmunitySeconds: 0.5
+  damageIgnoresInvulnerability: 0
+  behavior: {fileID: 0}
+  type: 10

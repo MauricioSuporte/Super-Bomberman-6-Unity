@@ -136,10 +136,9 @@ GameObject:
   - component: {fileID: 6871244334814668735}
   - component: {fileID: 6871244334814668734}
   - component: {fileID: 7535927048605856034}
-  - component: {fileID: 970816173104616044}
-  - component: {fileID: 1750568647715777264}
+  - component: {fileID: 1445703711155537245}
   m_Layer: 9
-  m_Name: InvisibleLandMine
+  m_Name: PowerGlove
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -210,7 +209,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 2
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 8873717022101069850, guid: 17991a6676ded78438138725c62fac7c, type: 3}
+  m_Sprite: {fileID: 6964919571947642685, guid: 4ff4afedda9fa1949af624da82c728b9, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -278,11 +277,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a4b55e1b961d144197e1a7a4a391956, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  idleSprite: {fileID: 0}
+  idleSprite: {fileID: 6964919571947642685, guid: 4ff4afedda9fa1949af624da82c728b9, type: 3}
   animationSprite:
-  - {fileID: 8873717022101069850, guid: 17991a6676ded78438138725c62fac7c, type: 3}
-  - {fileID: 2260787461044256379, guid: 17991a6676ded78438138725c62fac7c, type: 3}
-  - {fileID: 0}
+  - {fileID: -885702533326746873, guid: 4ff4afedda9fa1949af624da82c728b9, type: 3}
+  - {fileID: 6964919571947642685, guid: 4ff4afedda9fa1949af624da82c728b9, type: 3}
   allowFlipX: 0
   animationTime: 0.01
   useSequenceDuration: 0
@@ -293,26 +291,7 @@ MonoBehaviour:
   pingPong: 0
   disableOffsetsIfThisObjectHasRigidbody2D: 1
   disableOffsetsIfStandaloneRoot: 1
---- !u!114 &970816173104616044
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6871244334814668704}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: bbf967cbe60577d4790255e474ed41a8, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::InvisibleLandMineBehavior
-  tileSize: 1
-  triggerDistanceInTiles: 3
-  scanEverySeconds: 0.1
-  targetRenderer: {fileID: 0}
-  loopWhenNear: 1
-  damage: 1
-  playDestroyAnimationOnPickup: 1
---- !u!114 &1750568647715777264
+--- !u!114 &1445703711155537245
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -332,4 +311,4 @@ MonoBehaviour:
   spawnImmunitySeconds: 0.5
   damageIgnoresInvulnerability: 0
   behavior: {fileID: 0}
-  type: 20
+  type: 5

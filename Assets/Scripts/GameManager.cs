@@ -23,26 +23,27 @@ public class GameManager : MonoBehaviour
     private EndStagePortal portalPrefab;
 
     [Header("Hidden Objects Amounts")]
-    [Min(0)] public int portalAmount = 1;
-    [Min(0)] public int extraBombAmount = 1;
-    [Min(0)] public int blastRadiusAmount = 1;
-    [Min(0)] public int speedIncreaseAmount = 1;
-    [Min(0)] public int kickBombAmount = 1;
-    [Min(0)] public int punchBombAmount = 1;
-    [Min(0)] public int pierceBombAmount = 1;
-    [Min(0)] public int controlBombAmount = 1;
-    [Min(0)] public int fullFireAmount = 1;
-    [Min(0)] public int bombPassAmount = 1;
-    [Min(0)] public int destructiblePassAmount = 1;
-    [Min(0)] public int invincibleSuitAmount = 1;
-    [Min(0)] public int heartAmount = 1;
-    [Min(0)] public int blueLouieEggAmount = 1;
-    [Min(0)] public int blackLouieEggAmount = 1;
-    [Min(0)] public int purpleLouieEggAmount = 1;
-    [Min(0)] public int greenLouieEggAmount = 1;
-    [Min(0)] public int yellowLouieEggAmount = 1;
-    [Min(0)] public int pinkLouieEggAmount = 1;
-    [Min(0)] public int redLouieEggAmount = 1;
+    [Min(0)] public int portalAmount = 0;
+    [Min(0)] public int extraBombAmount = 0;
+    [Min(0)] public int blastRadiusAmount = 0;
+    [Min(0)] public int speedIncreaseAmount = 0;
+    [Min(0)] public int kickBombAmount = 0;
+    [Min(0)] public int punchBombAmount = 0;
+    [Min(0)] public int pierceBombAmount = 0;
+    [Min(0)] public int controlBombAmount = 0;
+    [Min(0)] public int fullFireAmount = 0;
+    [Min(0)] public int bombPassAmount = 0;
+    [Min(0)] public int destructiblePassAmount = 0;
+    [Min(0)] public int invincibleSuitAmount = 0;
+    [Min(0)] public int heartAmount = 0;
+    [Min(0)] public int powerGloveAmount = 0;
+    [Min(0)] public int blueLouieEggAmount = 0;
+    [Min(0)] public int blackLouieEggAmount = 0;
+    [Min(0)] public int purpleLouieEggAmount = 0;
+    [Min(0)] public int greenLouieEggAmount = 0;
+    [Min(0)] public int yellowLouieEggAmount = 0;
+    [Min(0)] public int pinkLouieEggAmount = 0;
+    [Min(0)] public int redLouieEggAmount = 0;
 
     [Header("Stage")]
     public Tilemap destructibleTilemap;
@@ -413,7 +414,7 @@ public class GameManager : MonoBehaviour
                 orderToSpawn[indices[cursor++]] = portalPrefab.gameObject;
         }
 
-        void TryAssignItem(ItemPickup.ItemType type, int amount)
+        void TryAssignItem(ItemType type, int amount)
         {
             if (amount <= 0)
                 return;
@@ -426,26 +427,27 @@ public class GameManager : MonoBehaviour
 
         TryAssignPortal(portalAmount);
 
-        TryAssignItem(ItemPickup.ItemType.ExtraBomb, extraBombAmount);
-        TryAssignItem(ItemPickup.ItemType.BlastRadius, blastRadiusAmount);
-        TryAssignItem(ItemPickup.ItemType.SpeedIncrese, speedIncreaseAmount);
-        TryAssignItem(ItemPickup.ItemType.BombKick, kickBombAmount);
-        TryAssignItem(ItemPickup.ItemType.BombPunch, punchBombAmount);
-        TryAssignItem(ItemPickup.ItemType.PierceBomb, pierceBombAmount);
-        TryAssignItem(ItemPickup.ItemType.ControlBomb, controlBombAmount);
-        TryAssignItem(ItemPickup.ItemType.FullFire, fullFireAmount);
-        TryAssignItem(ItemPickup.ItemType.BombPass, bombPassAmount);
-        TryAssignItem(ItemPickup.ItemType.DestructiblePass, destructiblePassAmount);
-        TryAssignItem(ItemPickup.ItemType.InvincibleSuit, invincibleSuitAmount);
-        TryAssignItem(ItemPickup.ItemType.Heart, heartAmount);
+        TryAssignItem(ItemType.ExtraBomb, extraBombAmount);
+        TryAssignItem(ItemType.BlastRadius, blastRadiusAmount);
+        TryAssignItem(ItemType.SpeedIncrese, speedIncreaseAmount);
+        TryAssignItem(ItemType.BombKick, kickBombAmount);
+        TryAssignItem(ItemType.BombPunch, punchBombAmount);
+        TryAssignItem(ItemType.PierceBomb, pierceBombAmount);
+        TryAssignItem(ItemType.ControlBomb, controlBombAmount);
+        TryAssignItem(ItemType.FullFire, fullFireAmount);
+        TryAssignItem(ItemType.BombPass, bombPassAmount);
+        TryAssignItem(ItemType.DestructiblePass, destructiblePassAmount);
+        TryAssignItem(ItemType.InvincibleSuit, invincibleSuitAmount);
+        TryAssignItem(ItemType.Heart, heartAmount);
+        TryAssignItem(ItemType.PowerGlove, powerGloveAmount);
 
-        TryAssignItem(ItemPickup.ItemType.BlueLouieEgg, blueLouieEggAmount);
-        TryAssignItem(ItemPickup.ItemType.BlackLouieEgg, blackLouieEggAmount);
-        TryAssignItem(ItemPickup.ItemType.PurpleLouieEgg, purpleLouieEggAmount);
-        TryAssignItem(ItemPickup.ItemType.GreenLouieEgg, greenLouieEggAmount);
-        TryAssignItem(ItemPickup.ItemType.YellowLouieEgg, yellowLouieEggAmount);
-        TryAssignItem(ItemPickup.ItemType.PinkLouieEgg, pinkLouieEggAmount);
-        TryAssignItem(ItemPickup.ItemType.RedLouieEgg, redLouieEggAmount);
+        TryAssignItem(ItemType.BlueLouieEgg, blueLouieEggAmount);
+        TryAssignItem(ItemType.BlackLouieEgg, blackLouieEggAmount);
+        TryAssignItem(ItemType.PurpleLouieEgg, purpleLouieEggAmount);
+        TryAssignItem(ItemType.GreenLouieEgg, greenLouieEggAmount);
+        TryAssignItem(ItemType.YellowLouieEgg, yellowLouieEggAmount);
+        TryAssignItem(ItemType.PinkLouieEgg, pinkLouieEggAmount);
+        TryAssignItem(ItemType.RedLouieEgg, redLouieEggAmount);
     }
 
     public GameObject GetSpawnForDestroyedBlock()
@@ -652,7 +654,7 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    public ItemPickup GetItemPrefab(ItemPickup.ItemType type)
+    public ItemPickup GetItemPrefab(ItemType type)
     {
         AutoItemDatabase.BuildIfNeeded();
         return AutoItemDatabase.Get(type);

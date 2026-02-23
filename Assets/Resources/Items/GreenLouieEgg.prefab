@@ -11,8 +11,8 @@ GameObject:
   - component: {fileID: 2727780941473249230}
   - component: {fileID: 2727780941473249229}
   - component: {fileID: 2727780941473249228}
-  - component: {fileID: 2727780941473249227}
   - component: {fileID: 3750686511081856235}
+  - component: {fileID: 5803387367300320477}
   m_Layer: 9
   m_Name: GreenLouieEgg
   m_TagString: Untagged
@@ -38,6 +38,7 @@ Transform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!212 &2727780941473249229
 SpriteRenderer:
+  serializedVersion: 2
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -83,6 +84,7 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 2
+  m_MaskInteraction: 0
   m_Sprite: {fileID: 4646649027328027380, guid: 84fc19425a2586b49b58239f93eda2c5, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
@@ -92,7 +94,6 @@ SpriteRenderer:
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
-  m_MaskInteraction: 0
   m_SpriteSortPoint: 0
 --- !u!61 &2727780941473249228
 BoxCollider2D:
@@ -140,24 +141,6 @@ BoxCollider2D:
   m_AutoTiling: 0
   m_Size: {x: 0.5, y: 0.5}
   m_EdgeRadius: 0
---- !u!114 &2727780941473249227
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2727780941473249226}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 376665fd527b5c04e9b39d41cc80c035, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  collectSfx: {fileID: 8300000, guid: b1c81e7d04c50c74aa74fa8ec03ea9c3, type: 3}
-  collectVolume: 0.5
-  idleRenderer: {fileID: 3750686511081856235}
-  destroyRenderer: {fileID: 6778312637566534134}
-  spawnImmunitySeconds: 0.5
-  type: 15
 --- !u!114 &3750686511081856235
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -223,6 +206,28 @@ MonoBehaviour:
   - {x: 0, y: 0.3}
   pingPong: 0
   disableOffsetsIfThisObjectHasRigidbody2D: 1
+  disableOffsetsIfStandaloneRoot: 1
+--- !u!114 &5803387367300320477
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2727780941473249226}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5dba0d8cd3c6df4db28085d767123c6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ItemPickup
+  collectSfx: {fileID: 8300000, guid: 9fbf9eaeca42e304495130d4b2f83633, type: 3}
+  collectVolume: 1
+  idleRenderer: {fileID: 3750686511081856235}
+  destroyRenderer: {fileID: 6778312637566534134}
+  destroyDelaySeconds: 0.5
+  spawnImmunitySeconds: 0.5
+  damageIgnoresInvulnerability: 0
+  behavior: {fileID: 0}
+  type: 16
 --- !u!1 &6028343297040555193
 GameObject:
   m_ObjectHideFlags: 0
@@ -258,6 +263,7 @@ Transform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!212 &8129222952113166275
 SpriteRenderer:
+  serializedVersion: 2
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -303,6 +309,7 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 5
+  m_MaskInteraction: 0
   m_Sprite: {fileID: 3883525430853174984, guid: c1c4dabaa986dda439b7e9bf8f110ba3, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
@@ -312,7 +319,6 @@ SpriteRenderer:
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
-  m_MaskInteraction: 0
   m_SpriteSortPoint: 0
 --- !u!114 &6778312637566534134
 MonoBehaviour:
@@ -341,3 +347,4 @@ MonoBehaviour:
   frameOffsets: []
   pingPong: 0
   disableOffsetsIfThisObjectHasRigidbody2D: 1
+  disableOffsetsIfStandaloneRoot: 1

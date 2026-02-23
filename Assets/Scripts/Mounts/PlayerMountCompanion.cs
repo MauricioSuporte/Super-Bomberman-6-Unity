@@ -73,7 +73,7 @@ public class PlayerMountCompanion : MonoBehaviour
     Coroutine restorePlayerBlinkRoutine;
 
     readonly Dictionary<MountedType, GameObject> prefabByType = new();
-    readonly Dictionary<ItemPickup.ItemType, MountedType> mountedByEggType = new();
+    readonly Dictionary<ItemType, MountedType> mountedByEggType = new();
 
     readonly Dictionary<MountedType, Action> applyMountedAbility = new();
     MountAbilitySfxConfig currentAbilityCfg;
@@ -1452,13 +1452,13 @@ public class PlayerMountCompanion : MonoBehaviour
         prefabByType[MountedType.Tank] = tankPrefab;
 
         mountedByEggType.Clear();
-        mountedByEggType[ItemPickup.ItemType.BlueLouieEgg] = MountedType.Blue;
-        mountedByEggType[ItemPickup.ItemType.BlackLouieEgg] = MountedType.Black;
-        mountedByEggType[ItemPickup.ItemType.PurpleLouieEgg] = MountedType.Purple;
-        mountedByEggType[ItemPickup.ItemType.GreenLouieEgg] = MountedType.Green;
-        mountedByEggType[ItemPickup.ItemType.YellowLouieEgg] = MountedType.Yellow;
-        mountedByEggType[ItemPickup.ItemType.PinkLouieEgg] = MountedType.Pink;
-        mountedByEggType[ItemPickup.ItemType.RedLouieEgg] = MountedType.Red;
+        mountedByEggType[ItemType.BlueLouieEgg] = MountedType.Blue;
+        mountedByEggType[ItemType.BlackLouieEgg] = MountedType.Black;
+        mountedByEggType[ItemType.PurpleLouieEgg] = MountedType.Purple;
+        mountedByEggType[ItemType.GreenLouieEgg] = MountedType.Green;
+        mountedByEggType[ItemType.YellowLouieEgg] = MountedType.Yellow;
+        mountedByEggType[ItemType.PinkLouieEgg] = MountedType.Pink;
+        mountedByEggType[ItemType.RedLouieEgg] = MountedType.Red;
     }
 
     void BuildAbilityStrategy()
@@ -1484,7 +1484,7 @@ public class PlayerMountCompanion : MonoBehaviour
         return 1;
     }
 
-    MountedType EggToMountedType(ItemPickup.ItemType eggType)
+    MountedType EggToMountedType(ItemType eggType)
     {
         return mountedByEggType.TryGetValue(eggType, out var t) ? t : MountedType.None;
     }
