@@ -7,10 +7,17 @@ public class BossEndStageSequence : MonoBehaviour
     [Header("Audio")]
     public AudioClip endStageMusic;
 
+    [Header("End Stage - Random Good SFX (Resources/Sounds)")]
+    [SerializeField] private bool playRandomGoodSfx = true;
+    [SerializeField, Range(0f, 1f)] private float goodSfxVolume = 1f;
+
     [Header("Timing")]
     [Min(0f)] public float delayBeforeStart = 1f;
     [Min(0f)] public float celebrationSeconds = 5f;
     [Min(0f)] public float fadeDuration = 3f;
+
+    private static bool s_goodSfxPlayedThisStage;
+    private static AudioClip[] s_goodClips;
 
     GameManager gameManager;
     bool sequenceStarted;
@@ -21,6 +28,7 @@ public class BossEndStageSequence : MonoBehaviour
     void Awake()
     {
         gameManager = FindFirstObjectByType<GameManager>();
+        s_goodSfxPlayedThisStage = false;
     }
 
     public void StartBossDefeatedSequence()
@@ -39,6 +47,9 @@ public class BossEndStageSequence : MonoBehaviour
         runner.fadeDuration = fadeDuration;
         runner.gameManager = gameManager;
 
+        runner.playRandomGoodSfx = playRandomGoodSfx;
+        runner.goodSfxVolume = goodSfxVolume;
+
         runner.StartCoroutine(runner.RunEndStageRoutine());
 
         enabled = false;
@@ -55,6 +66,16 @@ public class BossEndStageSequence : MonoBehaviour
             Destroy(gameObject);
             yield break;
         }
+
+        var audio = GetComponent<AudioSource>();
+        if (audio == null)
+        {
+            var sourceGo = alivePlayers[0] != null ? alivePlayers[0].gameObject : null;
+            if (sourceGo != null)
+                audio = sourceGo.GetComponent<AudioSource>();
+        }
+
+        PlayRandomGoodOnce(audio);
 
         for (int i = 0; i < alivePlayers.Count; i++)
         {
@@ -104,6 +125,49 @@ public class BossEndStageSequence : MonoBehaviour
             gameManager.EndStage();
 
         Destroy(gameObject);
+    }
+
+    private static void EnsureGoodClipsLoaded()
+    {
+        if (s_goodClips != null)
+            return;
+
+        s_goodClips = new AudioClip[3];
+        s_goodClips[0] = Resources.Load<AudioClip>("Sounds/good1");
+        s_goodClips[1] = Resources.Load<AudioClip>("Sounds/good2");
+        s_goodClips[2] = Resources.Load<AudioClip>("Sounds/good3");
+    }
+
+    private void PlayRandomGoodOnce(AudioSource audio)
+    {
+        if (!playRandomGoodSfx)
+            return;
+
+        if (s_goodSfxPlayedThisStage)
+            return;
+
+        if (audio == null)
+            return;
+
+        EnsureGoodClipsLoaded();
+
+        int count = 0;
+        for (int i = 0; i < s_goodClips.Length; i++)
+            if (s_goodClips[i] != null) count++;
+
+        if (count <= 0)
+            return;
+
+        int pick = Random.Range(0, s_goodClips.Length);
+        for (int tries = 0; tries < s_goodClips.Length && s_goodClips[pick] == null; tries++)
+            pick = (pick + 1) % s_goodClips.Length;
+
+        var clip = s_goodClips[pick];
+        if (clip == null)
+            return;
+
+        s_goodSfxPlayedThisStage = true;
+        audio.PlayOneShot(clip, goodSfxVolume);
     }
 
     List<MovementController> FindAlivePlayers()
