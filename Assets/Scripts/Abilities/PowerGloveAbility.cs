@@ -34,6 +34,18 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
     [SerializeField] private AnimatedSpriteRenderer carryLeft;
     [SerializeField] private AnimatedSpriteRenderer carryRight;
 
+    [Header("Throw SFX (Resources/Sounds)")]
+    [SerializeField, Range(0f, 1f)] private float throwSfxVolume = 1f;
+
+    private static readonly string[] ThrowSfxPaths =
+    {
+        "Sounds/throw",
+        "Sounds/throw2",
+        "Sounds/throw3"
+    };
+
+    private AudioClip[] throwSfxClips;
+
     private AnimatedSpriteRenderer activeCarryRenderer;
     private Vector2 activeCarryFace = Vector2.down;
 
@@ -79,6 +91,7 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
         audioSource = GetComponent<AudioSource>();
         bombController = GetComponent<BombController>();
         movement = GetComponent<MovementController>();
+        LoadThrowSfxClipsIfNeeded();
     }
 
     private void OnDisable()
@@ -158,6 +171,39 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
         }
 
         UpdateCarryVisual();
+    }
+
+    private void LoadThrowSfxClipsIfNeeded()
+    {
+        if (throwSfxClips != null && throwSfxClips.Length == ThrowSfxPaths.Length)
+            return;
+
+        throwSfxClips = new AudioClip[ThrowSfxPaths.Length];
+        for (int i = 0; i < ThrowSfxPaths.Length; i++)
+            throwSfxClips[i] = Resources.Load<AudioClip>(ThrowSfxPaths[i]);
+    }
+
+    private void PlayRandomThrowSfx()
+    {
+        if (audioSource == null)
+            return;
+
+        LoadThrowSfxClipsIfNeeded();
+
+        if (throwSfxClips == null || throwSfxClips.Length == 0)
+            return;
+
+        int tries = throwSfxClips.Length;
+        while (tries-- > 0)
+        {
+            int idx = Random.Range(0, throwSfxClips.Length);
+            var clip = throwSfxClips[idx];
+            if (clip != null)
+            {
+                audioSource.PlayOneShot(clip, Mathf.Clamp01(throwSfxVolume));
+                return;
+            }
+        }
     }
 
     private void TryPickupInput()
@@ -386,6 +432,7 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
             yield break;
         }
 
+        PlayRandomThrowSfx();
         ThrowHeldBomb(dir);
 
         float t = 0f;
