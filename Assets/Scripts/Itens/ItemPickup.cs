@@ -12,6 +12,14 @@ public class ItemPickup : MonoBehaviour
     [Range(0f, 1f)]
     public float collectVolume = 1f;
 
+    [Header("Player Extra SFX (optional)")]
+    [SerializeField] private AudioClip playerExtraSfx;
+
+    [Range(0f, 1f)]
+    [SerializeField] private float playerExtraVolume = 1f;
+
+    [SerializeField] private ItemType[] playPlayerExtraSfxForTypes;
+
     public AnimatedSpriteRenderer idleRenderer;
     public AnimatedSpriteRenderer destroyRenderer;
 
@@ -222,6 +230,31 @@ public class ItemPickup : MonoBehaviour
             audio.PlayOneShot(collectSfx, Mathf.Clamp01(collectVolume));
     }
 
+    bool ShouldPlayPlayerExtraSfx()
+    {
+        if (playerExtraSfx == null)
+            return false;
+
+        if (playPlayerExtraSfxForTypes == null || playPlayerExtraSfxForTypes.Length == 0)
+            return false;
+
+        for (int i = 0; i < playPlayerExtraSfxForTypes.Length; i++)
+            if (playPlayerExtraSfxForTypes[i] == type)
+                return true;
+
+        return false;
+    }
+
+    void PlayPlayerExtraSfx(GameObject player)
+    {
+        if (!ShouldPlayPlayerExtraSfx())
+            return;
+
+        var audio = player.GetComponent<AudioSource>();
+        if (audio != null)
+            audio.PlayOneShot(playerExtraSfx, Mathf.Clamp01(playerExtraVolume));
+    }
+
     bool TrySetMountSfxForImmediateMount(GameObject player)
     {
         if (collectSfx == null)
@@ -317,6 +350,7 @@ public class ItemPickup : MonoBehaviour
         else
         {
             PlayCollectSfxOnPlayer(player);
+            PlayPlayerExtraSfx(player);
 
             if (_behavior != null)
             {

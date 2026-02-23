@@ -305,6 +305,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ItemPickup
   collectSfx: {fileID: 8300000, guid: 9fbf9eaeca42e304495130d4b2f83633, type: 3}
   collectVolume: 1
+  playerExtraSfx: {fileID: 8300000, guid: c4ed858182e4a38448d0e59f96539991, type: 3}
+  playerExtraVolume: 1
+  playPlayerExtraSfxForTypes: 05000000
   idleRenderer: {fileID: 7535927048605856034}
   destroyRenderer: {fileID: 1735519002939741838}
   destroyDelaySeconds: 0.5
