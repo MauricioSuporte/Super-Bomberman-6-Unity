@@ -60,6 +60,13 @@ public class MechaBossSequence : MonoBehaviour
     [Min(0f)] public float endStageFadeDuration = 3f;
     public AudioClip endStageEnterSfx;
 
+    [Header("End Stage - Random Good SFX (Resources/Sounds)")]
+    [SerializeField] private bool playRandomGoodSfx = true;
+    [SerializeField, Range(0f, 1f)] private float goodSfxVolume = 1f;
+
+    private static bool s_goodSfxPlayedThisStage;
+    private static AudioClip[] s_goodClips;
+
     MovementController[] mechas;
     GameManager gameManager;
 
@@ -96,6 +103,8 @@ public class MechaBossSequence : MonoBehaviour
     {
         mechas = new[] { whiteMecha, blackMecha, goldenMecha };
         gameManager = FindFirstObjectByType<GameManager>();
+
+        s_goodSfxPlayedThisStage = false;
 
         foreach (var m in mechas)
         {
@@ -679,6 +688,22 @@ public class MechaBossSequence : MonoBehaviour
 
         bool playedEnter = false;
 
+        AudioSource goodAudio = null;
+        for (int i = 0; i < players.Count; i++)
+        {
+            var p = players[i];
+            if (p == null) continue;
+            if (!p.gameObject.activeInHierarchy) continue;
+            if (!p.CompareTag("Player")) continue;
+            if (p.isDead) continue;
+            if (p.IsEndingStage) continue;
+
+            if (goodAudio == null)
+                goodAudio = p.GetComponent<AudioSource>();
+        }
+
+        PlayRandomGoodOnce(goodAudio);
+
         for (int i = 0; i < players.Count; i++)
         {
             var p = players[i];
@@ -738,6 +763,49 @@ public class MechaBossSequence : MonoBehaviour
 
         if (gameManager != null)
             gameManager.EndStage();
+    }
+
+    private static void EnsureGoodClipsLoaded()
+    {
+        if (s_goodClips != null)
+            return;
+
+        s_goodClips = new AudioClip[3];
+        s_goodClips[0] = Resources.Load<AudioClip>("Sounds/good1");
+        s_goodClips[1] = Resources.Load<AudioClip>("Sounds/good2");
+        s_goodClips[2] = Resources.Load<AudioClip>("Sounds/good3");
+    }
+
+    private void PlayRandomGoodOnce(AudioSource audio)
+    {
+        if (!playRandomGoodSfx)
+            return;
+
+        if (s_goodSfxPlayedThisStage)
+            return;
+
+        if (audio == null)
+            return;
+
+        EnsureGoodClipsLoaded();
+
+        int count = 0;
+        for (int i = 0; i < s_goodClips.Length; i++)
+            if (s_goodClips[i] != null) count++;
+
+        if (count <= 0)
+            return;
+
+        int pick = UnityEngine.Random.Range(0, s_goodClips.Length);
+        for (int tries = 0; tries < s_goodClips.Length && s_goodClips[pick] == null; tries++)
+            pick = (pick + 1) % s_goodClips.Length;
+
+        var clip = s_goodClips[pick];
+        if (clip == null)
+            return;
+
+        s_goodSfxPlayedThisStage = true;
+        audio.PlayOneShot(clip, goodSfxVolume);
     }
 
     bool HasAnyItemPickupsInStage()
