@@ -622,7 +622,13 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
 
         LayerMask obstacles = movement.obstacleMask | LayerMask.GetMask("Enemy", "Bomb", "Player");
 
-        heldBomb.StartPunch(
+        Vector2 logicalOrigin = movement.Rigidbody != null ? movement.Rigidbody.position : (Vector2)transform.position;
+        logicalOrigin.x = Mathf.Round(logicalOrigin.x / movement.tileSize) * movement.tileSize;
+        logicalOrigin.y = Mathf.Round(logicalOrigin.y / movement.tileSize) * movement.tileSize;
+
+        heldBomb.StartPunchFrom(
+            logicalOrigin,
+            movement.tileSize,
             dir,
             movement.tileSize,
             throwDistanceTiles,
@@ -879,7 +885,6 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
 
         if (heldBomb != null && !heldBomb.HasExploded)
         {
-            SnapHeldBombToPlayerGround();
             DetachBombFromPlayerKeepWorld();
 
             SetBombSorting(GroundOrderInLayer);
