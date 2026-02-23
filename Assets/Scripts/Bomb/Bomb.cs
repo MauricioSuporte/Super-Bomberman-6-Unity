@@ -384,7 +384,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         kickObstacleMask = obstacleMask | LayerMask.GetMask("Enemy", "Player");
         kickDestructibleTilemap = destructibleTilemap;
 
-        Vector2 origin = SnapToGrid(rb.position, tileSize);
+        Vector2 origin = SnapToGrid((Vector2)transform.position, tileSize);
 
         currentTileCenter = origin;
         lastPos = origin;
