@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Reflection;
+﻿using System.Reflection;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -9,24 +8,27 @@ using UnityEngine.UI;
 [RequireComponent(typeof(CharacterHealth))]
 [RequireComponent(typeof(AudioSource))]
 [RequireComponent(typeof(StunReceiver))]
-public sealed class PikarinMovementController : JunctionTurningEnemyMovementController
+public sealed class LightSensitiveEnemyMovementController : JunctionTurningEnemyMovementController
 {
-    [Header("Pikarin Sprites (Normal)")]
+    [Header("Energized Mode")]
+    [SerializeField] private bool energizedWhenLightOn = true;
+
+    [Header("Sprites (Normal)")]
     [SerializeField] private AnimatedSpriteRenderer spriteUpNormal;
     [SerializeField] private AnimatedSpriteRenderer spriteDownNormal;
     [SerializeField] private AnimatedSpriteRenderer spriteLeftNormal;
     [SerializeField] private AnimatedSpriteRenderer spriteRightNormal;
 
-    [Header("Pikarin Sprites (Normal Damaged)")]
+    [Header("Sprites (Normal Damaged)")]
     [SerializeField] private AnimatedSpriteRenderer spriteDamagedNormal;
 
-    [Header("Pikarin Sprites (Energized)")]
+    [Header("Sprites (Energized)")]
     [SerializeField] private AnimatedSpriteRenderer spriteUpEnergized;
     [SerializeField] private AnimatedSpriteRenderer spriteDownEnergized;
     [SerializeField] private AnimatedSpriteRenderer spriteLeftEnergized;
     [SerializeField] private AnimatedSpriteRenderer spriteRightEnergized;
 
-    [Header("Pikarin Sprites (Energized Damaged)")]
+    [Header("Sprites (Energized Damaged)")]
     [SerializeField] private AnimatedSpriteRenderer spriteDamagedEnergized;
 
     [Header("Persecuting (Vision)")]
@@ -37,7 +39,7 @@ public sealed class PikarinMovementController : JunctionTurningEnemyMovementCont
     [SerializeField] private LayerMask stageLayerMask;
     [SerializeField] private string destructiblesTag = "Destructibles";
 
-    [Header("Vision Alignment)")]
+    [Header("Vision Alignment")]
     [SerializeField, Min(0.001f)] private float alignedToleranceTiles = 0.15f;
     [SerializeField, Range(0.1f, 1f)] private float scanBoxSizePercent = 0.6f;
 
@@ -116,7 +118,7 @@ public sealed class PikarinMovementController : JunctionTurningEnemyMovementCont
         ChooseInitialDirection();
 
         RefreshBoostFromBlackout();
-        UpdatePikarinSpriteDirection(direction);
+        UpdateEnemySpriteDirection(direction);
 
         DecideNextTile();
     }
@@ -197,7 +199,7 @@ public sealed class PikarinMovementController : JunctionTurningEnemyMovementCont
             if (!IsTileBlocked(forwardTile))
             {
                 direction = playerDir;
-                UpdatePikarinSpriteDirection(direction);
+                UpdateEnemySpriteDirection(direction);
                 targetTile = forwardTile;
                 return;
             }
@@ -305,8 +307,11 @@ public sealed class PikarinMovementController : JunctionTurningEnemyMovementCont
         if (blackoutActive != _cachedBlackoutActive)
         {
             _cachedBlackoutActive = blackoutActive;
-            speed = _cachedBlackoutActive ? (_baseSpeed * Mathf.Max(1f, blackoutSpeedMultiplier)) : _baseSpeed;
-            SetEnergized(_cachedBlackoutActive);
+
+            bool energizedNow = energizedWhenLightOn ? !_cachedBlackoutActive : _cachedBlackoutActive;
+
+            speed = energizedNow ? (_baseSpeed * Mathf.Max(1f, blackoutSpeedMultiplier)) : _baseSpeed;
+            SetEnergized(energizedNow);
         }
     }
 
@@ -353,10 +358,10 @@ public sealed class PikarinMovementController : JunctionTurningEnemyMovementCont
             return;
         }
 
-        UpdatePikarinSpriteDirection(direction);
+        UpdateEnemySpriteDirection(direction);
     }
 
-    private void UpdatePikarinSpriteDirection(Vector2 dir)
+    private void UpdateEnemySpriteDirection(Vector2 dir)
     {
         if (isInDamagedLoop || isDead)
             return;
@@ -469,7 +474,7 @@ public sealed class PikarinMovementController : JunctionTurningEnemyMovementCont
 
         isInDamagedLoop = false;
 
-        UpdatePikarinSpriteDirection(direction);
+        UpdateEnemySpriteDirection(direction);
         DecideNextTile();
     }
 
@@ -524,6 +529,6 @@ public sealed class PikarinMovementController : JunctionTurningEnemyMovementCont
 
     protected override void UpdateSpriteDirection(Vector2 dir)
     {
-        UpdatePikarinSpriteDirection(dir);
+        UpdateEnemySpriteDirection(dir);
     }
 }
