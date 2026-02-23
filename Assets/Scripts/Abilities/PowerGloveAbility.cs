@@ -207,7 +207,38 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
             pick.RefreshFrame();
         }
 
-        yield return new WaitForSeconds(pickupLockTime);
+        AttachBombToPlayerAtGround();
+
+        if (dir == Vector2.down)
+            SetBombSorting(CarryOrderInLayer);
+        else
+            SetBombSorting(GroundOrderInLayer);
+
+        float dur = Mathf.Max(0.01f, pickupLockTime);
+        float t = 0f;
+
+        Vector3 p = transform.position;
+        p.x = Mathf.Round(p.x / movement.tileSize) * movement.tileSize;
+        p.y = Mathf.Round(p.y / movement.tileSize) * movement.tileSize;
+
+        float z = heldBomb != null ? heldBomb.transform.position.z : 0f;
+
+        while (t < dur)
+        {
+            t += Time.deltaTime;
+            float a = Mathf.Clamp01(t / dur);
+
+            if (heldBomb != null)
+            {
+                float y = Mathf.Lerp(0f, movement.tileSize, a);
+                heldBomb.transform.position = new Vector3(p.x, p.y + y, z);
+            }
+
+            yield return null;
+        }
+
+        if (heldBomb != null)
+            heldBomb.transform.position = new Vector3(p.x, p.y + movement.tileSize, z);
 
         if (pick != null)
             pick.enabled = false;
@@ -215,7 +246,7 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
         holding = true;
         isHoldingBomb = true;
 
-        AttachBombToPlayer();
+        SetBombSorting(CarryOrderInLayer);
 
         if (bombController != null)
         {
@@ -486,7 +517,7 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
         heldBombSpriteRenderer = bomb != null ? bomb.GetComponent<SpriteRenderer>() : null;
     }
 
-    private void AttachBombToPlayer()
+    private void AttachBombToPlayerAtGround()
     {
         if (heldBomb == null)
             return;
@@ -502,7 +533,9 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
         p.x = Mathf.Round(p.x / movement.tileSize) * movement.tileSize;
         p.y = Mathf.Round(p.y / movement.tileSize) * movement.tileSize;
 
-        heldBomb.transform.position = p + new Vector3(0f, movement.tileSize, 0f);
+        float z = heldBomb.transform.position.z;
+
+        heldBomb.transform.position = new Vector3(p.x, p.y, z);
         heldBomb.transform.localRotation = Quaternion.identity;
 
         SetBombSorting(CarryOrderInLayer);
