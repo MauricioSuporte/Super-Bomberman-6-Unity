@@ -9,6 +9,13 @@ public abstract class EndStage : MonoBehaviour
     [Header("Music")]
     public AudioClip endStageMusic;
 
+    [Header("End Stage - Random Good SFX (Resources/Sounds)")]
+    [SerializeField] private bool playRandomGoodSfx = true;
+    [SerializeField, Range(0f, 1f)] private float goodSfxVolume = 1f;
+
+    private static bool s_goodSfxPlayedThisStage;
+    private static AudioClip[] s_goodClips;
+
     protected bool isActivated;
     protected bool isUnlocked;
 
@@ -16,6 +23,8 @@ public abstract class EndStage : MonoBehaviour
 
     protected virtual void Start()
     {
+        s_goodSfxPlayedThisStage = false;
+
         gameManager = FindFirstObjectByType<GameManager>();
 
         if (gameManager != null)
@@ -83,6 +92,49 @@ public abstract class EndStage : MonoBehaviour
         );
     }
 
+    private static void EnsureGoodClipsLoaded()
+    {
+        if (s_goodClips != null)
+            return;
+
+        s_goodClips = new AudioClip[3];
+        s_goodClips[0] = Resources.Load<AudioClip>("Sounds/good1");
+        s_goodClips[1] = Resources.Load<AudioClip>("Sounds/good2");
+        s_goodClips[2] = Resources.Load<AudioClip>("Sounds/good3");
+    }
+
+    private void PlayRandomGoodOnce(AudioSource audio)
+    {
+        if (!playRandomGoodSfx)
+            return;
+
+        if (s_goodSfxPlayedThisStage)
+            return;
+
+        if (audio == null)
+            return;
+
+        EnsureGoodClipsLoaded();
+
+        int count = 0;
+        for (int i = 0; i < s_goodClips.Length; i++)
+            if (s_goodClips[i] != null) count++;
+
+        if (count <= 0)
+            return;
+
+        int pick = Random.Range(0, s_goodClips.Length);
+        for (int tries = 0; tries < s_goodClips.Length && s_goodClips[pick] == null; tries++)
+            pick = (pick + 1) % s_goodClips.Length;
+
+        var clip = s_goodClips[pick];
+        if (clip == null)
+            return;
+
+        s_goodSfxPlayedThisStage = true;
+        audio.PlayOneShot(clip, goodSfxVolume);
+    }
+
     protected virtual void OnTriggerEnter2D(Collider2D other)
     {
         if (!CanTrigger(other))
@@ -124,6 +176,9 @@ public abstract class EndStage : MonoBehaviour
         PlayerPersistentStats.CommitStage();
 
         var audio = other.GetComponent<AudioSource>();
+
+        PlayRandomGoodOnce(audio);
+
         if (audio != null && enterSfx != null)
             audio.PlayOneShot(enterSfx);
 
