@@ -32,10 +32,10 @@ public class AIMovementController : MovementController
     private float commitUntilTime;
     private float lastTurnTime;
 
-    private int explosionLayer;
-    private int bombLayer;
-    private int explosionMask;
-    private int bombMask;
+    private int iaExplosionLayer;
+    private int iaBombLayer;
+    private int iaExplosionMask;
+    private int iaBombMask;
 
     protected override void Awake()
     {
@@ -49,11 +49,11 @@ public class AIMovementController : MovementController
         commitUntilTime = 0f;
         lastTurnTime = -999f;
 
-        explosionLayer = LayerMask.NameToLayer(explosionLayerName);
-        bombLayer = LayerMask.NameToLayer(bombLayerName);
+        iaExplosionLayer = LayerMask.NameToLayer(explosionLayerName);
+        iaBombLayer = LayerMask.NameToLayer(bombLayerName);
 
-        explosionMask = (explosionLayer >= 0) ? (1 << explosionLayer) : 0;
-        bombMask = (bombLayer >= 0) ? (1 << bombLayer) : 0;
+        iaExplosionMask = (iaExplosionLayer >= 0) ? (1 << iaExplosionLayer) : 0;
+        iaBombMask = (iaBombLayer >= 0) ? (1 << iaBombLayer) : 0;
 
         if (isBoss)
         {
@@ -192,20 +192,20 @@ public class AIMovementController : MovementController
 
     private bool IsTileWithExplosion(Vector2 tileCenter)
     {
-        if (explosionMask == 0)
+        if (iaExplosionMask == 0)
             return false;
 
         float s = Mathf.Max(0.1f, hazardCheckBoxSize);
-        return Physics2D.OverlapBox(tileCenter, Vector2.one * s, 0f, explosionMask) != null;
+        return Physics2D.OverlapBox(tileCenter, Vector2.one * s, 0f, iaExplosionMask) != null;
     }
 
     private bool IsTileWithBomb(Vector2 tileCenter)
     {
-        if (bombMask == 0)
+        if (iaBombMask == 0)
             return false;
 
         float s = Mathf.Max(0.1f, hazardCheckBoxSize);
-        return Physics2D.OverlapBox(tileCenter, Vector2.one * s, 0f, bombMask) != null;
+        return Physics2D.OverlapBox(tileCenter, Vector2.one * s, 0f, iaBombMask) != null;
     }
 
     private void Commit(Vector2 dir)
