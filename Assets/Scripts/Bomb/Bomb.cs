@@ -169,6 +169,17 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         fuseRoutine = null;
     }
 
+    public void SetFusePaused(bool pause)
+    {
+        if (HasExploded)
+            return;
+
+        if (pause)
+            PauseFuse();
+        else
+            ResumeFuse();
+    }
+
     private void PauseFuse()
     {
         if (fusePaused)

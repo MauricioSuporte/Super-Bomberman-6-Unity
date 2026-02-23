@@ -39,6 +39,7 @@ Transform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!212 &147425199346742611
 SpriteRenderer:
+  serializedVersion: 2
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -84,7 +85,8 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 3
-  m_Sprite: {fileID: -174751868630856966, guid: aaeb7740db057114f9b159291607444b, type: 3}
+  m_MaskInteraction: 0
+  m_Sprite: {fileID: -7602850566474025976, guid: aaeb7740db057114f9b159291607444b, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -93,7 +95,6 @@ SpriteRenderer:
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
-  m_MaskInteraction: 0
   m_SpriteSortPoint: 0
 --- !u!50 &147425199346742610
 Rigidbody2D:
@@ -170,7 +171,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a4b55e1b961d144197e1a7a4a391956, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  idleSprite: {fileID: -174751868630856966, guid: aaeb7740db057114f9b159291607444b, type: 3}
+  idleSprite: {fileID: -7602850566474025976, guid: aaeb7740db057114f9b159291607444b, type: 3}
   animationSprite:
   - {fileID: -174751868630856966, guid: aaeb7740db057114f9b159291607444b, type: 3}
   - {fileID: -7602850566474025976, guid: aaeb7740db057114f9b159291607444b, type: 3}
@@ -185,6 +186,7 @@ MonoBehaviour:
   frameOffsets: []
   pingPong: 0
   disableOffsetsIfThisObjectHasRigidbody2D: 1
+  disableOffsetsIfStandaloneRoot: 1
 --- !u!114 &2484313177524847551
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -207,6 +209,7 @@ MonoBehaviour:
   chainStepDelay: 0.1
   FuseSeconds: 2
   stageBoundsTilemap: {fileID: 0}
+  magnetPullSpeed: 10
 --- !u!82 &4491695425928016186
 AudioSource:
   m_ObjectHideFlags: 0

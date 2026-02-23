@@ -26,10 +26,11 @@ public static class PlayerPersistentStats
 
         public bool CanKickBombs = false;
         public bool CanPunchBombs = true;
+        public bool HasPowerGlove = true;
         public bool CanPassBombs = false;
         public bool CanPassDestructibles = true;
         public bool HasPierceBombs = false;
-        public bool HasControlBombs = true;
+        public bool HasControlBombs = false;
         public bool HasFullFire = false;
 
         public MountedType MountedLouie = MountedType.None;
@@ -40,8 +41,6 @@ public static class PlayerPersistentStats
         public PlayerState()
         {
             QueuedEggs.Clear();
-            //QueuedEggs.Add(ItemPickup.ItemType.PinkLouieEgg);
-            //QueuedEggs.Add(ItemPickup.ItemType.PurpleLouieEgg);
         }
     }
 
@@ -165,6 +164,7 @@ public static class PlayerPersistentStats
 
         s.CanKickBombs = false;
         s.CanPunchBombs = false;
+        s.HasPowerGlove = false;
         s.CanPassBombs = false;
         s.CanPassDestructibles = false;
         s.HasPierceBombs = false;
@@ -184,6 +184,7 @@ public static class PlayerPersistentStats
 
         s.CanKickBombs = false;
         s.CanPunchBombs = false;
+        s.HasPowerGlove = false;
         s.CanPassBombs = false;
         s.CanPassDestructibles = false;
 
@@ -294,6 +295,9 @@ public static class PlayerPersistentStats
             if (s.CanPunchBombs) abilitySystem.Enable(BombPunchAbility.AbilityId);
             else abilitySystem.Disable(BombPunchAbility.AbilityId);
 
+            if (s.HasPowerGlove) abilitySystem.Enable(PowerGloveAbility.AbilityId);
+            else abilitySystem.Disable(PowerGloveAbility.AbilityId);
+
             if (s.HasFullFire) abilitySystem.Enable(FullFireAbility.AbilityId);
             else abilitySystem.Disable(FullFireAbility.AbilityId);
 
@@ -348,7 +352,6 @@ public static class PlayerPersistentStats
             }
         }
     }
-
     public static void SaveFrom(MovementController movement, BombController bomb)
     {
         int playerId = 1;
@@ -382,6 +385,9 @@ public static class PlayerPersistentStats
 
             var punch = abilitySystem != null ? abilitySystem.Get<BombPunchAbility>(BombPunchAbility.AbilityId) : null;
             s.CanPunchBombs = punch != null && punch.IsEnabled;
+
+            var glove = abilitySystem != null ? abilitySystem.Get<PowerGloveAbility>(PowerGloveAbility.AbilityId) : null;
+            s.HasPowerGlove = glove != null && glove.IsEnabled;
 
             var pierce = abilitySystem != null ? abilitySystem.Get<PierceBombAbility>(PierceBombAbility.AbilityId) : null;
             s.HasPierceBombs = pierce != null && pierce.IsEnabled;
@@ -419,26 +425,6 @@ public static class PlayerPersistentStats
         }
     }
 
-    public static void SavePermanentFrom(int playerId, MovementController movement, BombController bomb, CharacterHealth health)
-    {
-        var s = Get(playerId);
-
-        if (movement != null)
-            s.SpeedInternal = ClampSpeedInternal(movement.SpeedInternal);
-
-        if (bomb != null)
-        {
-            s.BombAmount = Mathf.Min(bomb.bombAmout, MaxBombAmount);
-            s.ExplosionRadius = Mathf.Min(bomb.explosionRadius, MaxExplosionRadius);
-        }
-
-        if (health != null)
-            s.Life = Mathf.Max(1, health.life);
-
-        if (movement != null && movement.TryGetComponent<MountEggQueue>(out var q) && q != null)
-            q.GetQueuedEggTypesOldestToNewest(s.QueuedEggs);
-    }
-
     static readonly PlayerState[] _stage = new PlayerState[4]
     {
         new(),
@@ -462,6 +448,7 @@ public static class PlayerPersistentStats
 
         to.CanKickBombs = from.CanKickBombs;
         to.CanPunchBombs = from.CanPunchBombs;
+        to.HasPowerGlove = from.HasPowerGlove;
         to.CanPassBombs = from.CanPassBombs;
         to.CanPassDestructibles = from.CanPassDestructibles;
         to.HasPierceBombs = from.HasPierceBombs;
@@ -643,6 +630,9 @@ public static class PlayerPersistentStats
 
             var punch = abilitySystem != null ? abilitySystem.Get<BombPunchAbility>(BombPunchAbility.AbilityId) : null;
             s.CanPunchBombs = punch != null && punch.IsEnabled;
+
+            var glove = abilitySystem != null ? abilitySystem.Get<PowerGloveAbility>(PowerGloveAbility.AbilityId) : null;
+            s.HasPowerGlove = glove != null && glove.IsEnabled;
 
             var pierce = abilitySystem != null ? abilitySystem.Get<PierceBombAbility>(PierceBombAbility.AbilityId) : null;
             s.HasPierceBombs = pierce != null && pierce.IsEnabled;

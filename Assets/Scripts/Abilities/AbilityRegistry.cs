@@ -7,6 +7,7 @@ public static class AbilityRegistry
     {
         { BombKickAbility.AbilityId, typeof(BombKickAbility) },
         { BombPunchAbility.AbilityId, typeof(BombPunchAbility) },
+        { PowerGloveAbility.AbilityId, typeof(PowerGloveAbility) },
         { PierceBombAbility.AbilityId, typeof(PierceBombAbility) },
         { ControlBombAbility.AbilityId, typeof(ControlBombAbility) },
         { FullFireAbility.AbilityId, typeof(FullFireAbility) },
