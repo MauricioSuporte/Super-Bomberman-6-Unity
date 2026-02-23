@@ -36,6 +36,7 @@ Transform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!212 &3026958387598246549
 SpriteRenderer:
+  serializedVersion: 2
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -81,6 +82,7 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 3
+  m_MaskInteraction: 0
   m_Sprite: {fileID: 6403415226449605359, guid: aa6f718ae3978bc4792a2451599643fa, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
@@ -90,7 +92,6 @@ SpriteRenderer:
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
-  m_MaskInteraction: 0
   m_SpriteSortPoint: 0
 --- !u!114 &3026958387598246550
 MonoBehaviour:
@@ -109,15 +110,15 @@ MonoBehaviour:
   - {fileID: 1924985933083946007, guid: aa6f718ae3978bc4792a2451599643fa, type: 3}
   - {fileID: 1924985933083946007, guid: aa6f718ae3978bc4792a2451599643fa, type: 3}
   - {fileID: 1924985933083946007, guid: aa6f718ae3978bc4792a2451599643fa, type: 3}
+  - {fileID: 7015359517438579375, guid: aa6f718ae3978bc4792a2451599643fa, type: 3}
+  - {fileID: 7015359517438579375, guid: aa6f718ae3978bc4792a2451599643fa, type: 3}
   - {fileID: 1594478462972071182, guid: aa6f718ae3978bc4792a2451599643fa, type: 3}
   - {fileID: 1594478462972071182, guid: aa6f718ae3978bc4792a2451599643fa, type: 3}
-  - {fileID: 7015359517438579375, guid: aa6f718ae3978bc4792a2451599643fa, type: 3}
-  - {fileID: 7015359517438579375, guid: aa6f718ae3978bc4792a2451599643fa, type: 3}
-  - {fileID: 7015359517438579375, guid: aa6f718ae3978bc4792a2451599643fa, type: 3}
-  - {fileID: 7015359517438579375, guid: aa6f718ae3978bc4792a2451599643fa, type: 3}
-  - {fileID: 7015359517438579375, guid: aa6f718ae3978bc4792a2451599643fa, type: 3}
-  - {fileID: 7015359517438579375, guid: aa6f718ae3978bc4792a2451599643fa, type: 3}
-  - {fileID: 7015359517438579375, guid: aa6f718ae3978bc4792a2451599643fa, type: 3}
+  - {fileID: 1594478462972071182, guid: aa6f718ae3978bc4792a2451599643fa, type: 3}
+  - {fileID: 1594478462972071182, guid: aa6f718ae3978bc4792a2451599643fa, type: 3}
+  - {fileID: 1594478462972071182, guid: aa6f718ae3978bc4792a2451599643fa, type: 3}
+  - {fileID: 1594478462972071182, guid: aa6f718ae3978bc4792a2451599643fa, type: 3}
+  - {fileID: 1594478462972071182, guid: aa6f718ae3978bc4792a2451599643fa, type: 3}
   allowFlipX: 0
   animationTime: 0.041666668
   useSequenceDuration: 0
@@ -128,17 +129,18 @@ MonoBehaviour:
   - {x: 0, y: 0}
   - {x: 0, y: 0}
   - {x: 0, y: 0}
-  - {x: 0, y: 0.3}
-  - {x: 0, y: 0.6}
-  - {x: 0, y: 0.9}
-  - {x: 0, y: 1.2}
-  - {x: 0, y: 1.5}
-  - {x: 0, y: 1.8}
-  - {x: 0, y: 2.1}
-  - {x: 0, y: 2.4}
-  - {x: 0, y: 2.6}
+  - {x: -0.01, y: 0.3}
+  - {x: 0.01, y: 0.6}
+  - {x: -0.01, y: 0.9}
+  - {x: 0.01, y: 1.2}
+  - {x: -0.01, y: 1.5}
+  - {x: 0.01, y: 1.8}
+  - {x: -0.01, y: 2.1}
+  - {x: 0.01, y: 2.4}
+  - {x: -0.01, y: 2.6}
   pingPong: 0
-  disableOffsetsIfThisObjectHasRigidbody2D: 1
+  disableOffsetsIfThisObjectHasRigidbody2D: 0
+  disableOffsetsIfStandaloneRoot: 0
 --- !u!114 &3440613785117735154
 MonoBehaviour:
   m_ObjectHideFlags: 0
