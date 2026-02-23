@@ -4035,10 +4035,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   idleSprite: {fileID: 6880199824899251412, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
   animationSprite:
+  - {fileID: 3176295465641672477, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
   - {fileID: 6880199824899251412, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
-  - {fileID: -8992181573293629939, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
+  - {fileID: 4692863092206075843, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
   - {fileID: 6880199824899251412, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
-  - {fileID: -8992181573293629939, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
   allowFlipX: 0
   animationTime: 0.125
   useSequenceDuration: 0

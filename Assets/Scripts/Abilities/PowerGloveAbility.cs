@@ -30,6 +30,9 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
     [SerializeField] private AnimatedSpriteRenderer carryLeft;
     [SerializeField] private AnimatedSpriteRenderer carryRight;
 
+    private AnimatedSpriteRenderer activeCarryRenderer;
+    private Vector2 activeCarryFace = Vector2.down;
+
     private AudioSource audioSource;
     private BombController bombController;
     private MovementController movement;
@@ -76,6 +79,7 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
         ForceDropIfHolding();
         SetAllPickupSprites(false);
         SetAllCarrySprites(false);
+        activeCarryRenderer = null;
     }
 
     private void Update()
@@ -308,6 +312,7 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
             pick.enabled = false;
 
         holding = false;
+        activeCarryRenderer = null;
 
         movement.SetExternalVisualSuppressed(false);
         movement.EnableExclusiveFromState();
@@ -340,17 +345,40 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
         Vector2 face = movement.Direction != Vector2.zero ? movement.Direction : movement.FacingDirection;
         face = NormalizeCardinalOrDown(face);
 
-        SetAllPickupSprites(false);
-        SetAllCarrySprites(false);
+        bool isIdle = (movement.Direction == Vector2.zero);
 
-        var carry = GetCarrySprite(face);
-        if (carry != null)
+        SetAllPickupSprites(false);
+
+        var desired = GetCarrySprite(face);
+        if (desired == null)
+            return;
+
+        if (activeCarryRenderer != desired)
         {
-            carry.enabled = true;
-            carry.idle = (movement.Direction == Vector2.zero);
-            carry.loop = true;
-            carry.pingPong = false;
-            carry.RefreshFrame();
+            if (activeCarryRenderer != null)
+                activeCarryRenderer.enabled = false;
+
+            SetAllCarrySprites(false);
+
+            desired.enabled = true;
+            desired.loop = true;
+            desired.pingPong = false;
+
+            activeCarryRenderer = desired;
+            activeCarryFace = face;
+
+            if (!desired.idle)
+                desired.CurrentFrame = 0;
+
+            desired.idle = isIdle;
+            desired.RefreshFrame();
+        }
+        else
+        {
+            activeCarryRenderer.idle = isIdle;
+            activeCarryRenderer.loop = true;
+            activeCarryRenderer.pingPong = false;
+            activeCarryRenderer.RefreshFrame();
         }
 
         if (heldBomb != null)
@@ -363,7 +391,6 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
             ForceBombIdle(true);
         }
     }
-
     private IEnumerator WatchBombLandingThenResume(Bomb bomb)
     {
         float timeout = 6f;
@@ -555,6 +582,7 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
         }
 
         holding = false;
+        activeCarryRenderer = null;
         animLocking = false;
 
         if (pickupRoutine != null) StopCoroutine(pickupRoutine);
@@ -673,6 +701,7 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
     public void Disable()
     {
         enabledAbility = false;
+        activeCarryRenderer = null;
         ForceDropIfHolding();
         SetAllPickupSprites(false);
         SetAllCarrySprites(false);
