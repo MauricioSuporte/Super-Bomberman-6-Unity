@@ -59,14 +59,14 @@ public sealed class BoatMountZone : MonoBehaviour
 
         Vector2 zoneCenter = GetZoneCenterWorld();
 
-        var targetBoat = ResolveBoatForMount(mc, zoneCenter, out _);
+        var targetBoat = ResolveBoatForMount(mc, zoneCenter);
         if (targetBoat == null)
             return;
 
-        if (!targetBoat.IsAnchoredAt(zoneCenter, out _))
+        if (!targetBoat.IsAnchoredAt(zoneCenter))
             return;
 
-        if (!targetBoat.CanMount(mc, out _))
+        if (!targetBoat.CanMount(mc))
             return;
 
         if (snapPlayerOnMount)
@@ -76,7 +76,7 @@ public sealed class BoatMountZone : MonoBehaviour
             mc.SnapToWorldPoint(target, roundToGrid);
         }
 
-        targetBoat.TryMount(mc, out _);
+        targetBoat.TryMount(mc);
     }
 
     private void OnTriggerExit2D(Collider2D other)
@@ -89,7 +89,7 @@ public sealed class BoatMountZone : MonoBehaviour
         ClearRemountBlocksForAllCandidates(mc);
     }
 
-    private int ClearRemountBlocksForAllCandidates(MovementController mc)
+    private void ClearRemountBlocksForAllCandidates(MovementController mc)
     {
         var unique = new HashSet<BoatRideZone>();
 
@@ -111,22 +111,14 @@ public sealed class BoatMountZone : MonoBehaviour
                 if (all[i] != null) unique.Add(all[i]);
         }
 
-        int cleared = 0;
         foreach (var b in unique)
         {
             if (b == null) continue;
-
-            bool wasBlocked = b.IsRemountBlockedFor(mc);
             b.ClearRemountBlock(mc);
-            bool stillBlocked = b.IsRemountBlockedFor(mc);
-
-            if (wasBlocked && !stillBlocked) cleared++;
         }
-
-        return cleared;
     }
 
-    private BoatRideZone ResolveBoatForMount(MovementController mc, Vector2 zoneCenter, out string trace)
+    private BoatRideZone ResolveBoatForMount(MovementController mc, Vector2 zoneCenter)
     {
         var candidates = new List<BoatRideZone>(8);
 
@@ -157,10 +149,7 @@ public sealed class BoatMountZone : MonoBehaviour
         }
 
         if (candidates.Count == 0)
-        {
-            trace = "none";
             return null;
-        }
 
         BoatRideZone best = null;
         float bestDist = float.MaxValue;
@@ -170,10 +159,10 @@ public sealed class BoatMountZone : MonoBehaviour
             var b = candidates[i];
             if (b == null) continue;
 
-            if (!b.IsAnchoredAt(zoneCenter, out _))
+            if (!b.IsAnchoredAt(zoneCenter))
                 continue;
 
-            if (!b.CanMount(mc, out _))
+            if (!b.CanMount(mc))
                 continue;
 
             float d = Vector2.Distance(zoneCenter, (Vector2)b.transform.position);
@@ -185,10 +174,7 @@ public sealed class BoatMountZone : MonoBehaviour
         }
 
         if (best != null)
-        {
-            trace = $"anchored+can(bestDist={bestDist:0.000})";
             return best;
-        }
 
         best = null;
         bestDist = float.MaxValue;
@@ -206,7 +192,6 @@ public sealed class BoatMountZone : MonoBehaviour
             }
         }
 
-        trace = best != null ? $"fallback(bestDist={bestDist:0.000})" : "fallback(null)";
         return best;
     }
 

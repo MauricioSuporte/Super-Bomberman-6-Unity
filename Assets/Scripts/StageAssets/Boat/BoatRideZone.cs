@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UI;
 
 [RequireComponent(typeof(BoxCollider2D))]
 public sealed class BoatRideZone : MonoBehaviour
@@ -152,20 +151,14 @@ public sealed class BoatRideZone : MonoBehaviour
         return (Vector2)transform.position;
     }
 
-    public bool IsAnchoredAt(Vector2 worldPoint, out string reason)
+    public bool IsAnchoredAt(Vector2 worldPoint)
     {
         if (HasRider)
-        {
-            reason = "HasRider=true";
             return false;
-        }
 
         Vector2 boatCenter = GetBoatCenter();
         float dist = Vector2.Distance(boatCenter, worldPoint);
-        bool ok = dist <= anchorCheckDistance;
-
-        reason = ok ? "ok" : "too far";
-        return ok;
+        return dist <= anchorCheckDistance;
     }
 
     public bool IsRemountBlockedFor(MovementController mc)
@@ -184,29 +177,27 @@ public sealed class BoatRideZone : MonoBehaviour
         remountBlockedRider = null;
     }
 
-    public bool CanMount(MovementController mc, out string reason)
+    public bool CanMount(MovementController mc)
     {
-        if (mc == null) { reason = "mc NULL"; return false; }
-        if (HasRider) { reason = "boat already has rider"; return false; }
-        if (mc.isDead) { reason = "mc.isDead=true"; return false; }
-        if (!mc.CompareTag("Player")) { reason = "mc tag != Player"; return false; }
+        if (mc == null) return false;
+        if (HasRider) return false;
+        if (mc.isDead) return false;
+        if (!mc.CompareTag("Player")) return false;
 
-        if (IsRidingBoat(mc)) { reason = "mc already riding another boat"; return false; }
-        if (IsRemountBlockedFor(mc)) { reason = "remount blocked until exit"; return false; }
-        if (Time.frameCount == lastUnmountFrame) { reason = "blocked same frame as unmount"; return false; }
-        if (Time.time < nextAllowedMountTime) { reason = "blocked by cooldown"; return false; }
+        if (IsHoldingPowerGloveBomb(mc)) return false;
 
-        reason = "ok";
+        if (IsRidingBoat(mc)) return false;
+        if (IsRemountBlockedFor(mc)) return false;
+        if (Time.frameCount == lastUnmountFrame) return false;
+        if (Time.time < nextAllowedMountTime) return false;
+
         return true;
     }
 
-    public bool TryMount(MovementController mc, out string reason)
+    public bool TryMount(MovementController mc)
     {
-        if (!CanMount(mc, out var canReason))
-        {
-            reason = $"CanMount=false ({canReason})";
+        if (!CanMount(mc))
             return false;
-        }
 
         rider = mc;
 
@@ -258,7 +249,6 @@ public sealed class BoatRideZone : MonoBehaviour
         ForceOnly(currentVisual);
         ApplyIdleToAll(true);
 
-        reason = "ok";
         return true;
     }
 
@@ -646,5 +636,15 @@ public sealed class BoatRideZone : MonoBehaviour
         if (r == null) return;
         r.idle = idle;
         r.RefreshFrame();
+    }
+
+    private static bool IsHoldingPowerGloveBomb(MovementController mc)
+    {
+        if (mc == null) return false;
+
+        if (mc.TryGetComponent<PowerGloveAbility>(out var pg) && pg != null)
+            return pg.IsEnabled && pg.IsHoldingBomb;
+
+        return false;
     }
 }
