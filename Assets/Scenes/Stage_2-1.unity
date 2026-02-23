@@ -517,7 +517,7 @@ MonoBehaviour:
   destructiblePassAmount: 0
   invincibleSuitAmount: 0
   heartAmount: 0
-  blueLouieEggAmount: 1
+  blueLouieEggAmount: 99
   blackLouieEggAmount: 0
   purpleLouieEggAmount: 0
   greenLouieEggAmount: 0
@@ -3041,7 +3041,7 @@ Tilemap:
     second:
       serializedVersion: 2
       m_TileIndex: 3
-      m_TileSpriteIndex: 9
+      m_TileSpriteIndex: 10
       m_TileMatrixIndex: 0
       m_TileColorIndex: 0
       m_TileObjectToInstantiateIndex: 65535
@@ -3051,7 +3051,7 @@ Tilemap:
     second:
       serializedVersion: 2
       m_TileIndex: 0
-      m_TileSpriteIndex: 3
+      m_TileSpriteIndex: 9
       m_TileMatrixIndex: 0
       m_TileColorIndex: 0
       m_TileObjectToInstantiateIndex: 65535
@@ -3146,8 +3146,8 @@ Tilemap:
     m_Data: {fileID: 0}
   - m_RefCount: 0
     m_Data: {fileID: 0}
-  - m_RefCount: 1
-    m_Data: {fileID: 2087264155, guid: 70ff375895135b6419da49532997015e, type: 3}
+  - m_RefCount: 0
+    m_Data: {fileID: 0}
   - m_RefCount: 48
     m_Data: {fileID: 823239423, guid: 70ff375895135b6419da49532997015e, type: 3}
   - m_RefCount: 8
@@ -3159,9 +3159,9 @@ Tilemap:
   - m_RefCount: 40
     m_Data: {fileID: 1048876458, guid: 70ff375895135b6419da49532997015e, type: 3}
   - m_RefCount: 1
+    m_Data: {fileID: 2087264155, guid: 70ff375895135b6419da49532997015e, type: 3}
+  - m_RefCount: 1
     m_Data: {fileID: 1891997861, guid: 70ff375895135b6419da49532997015e, type: 3}
-  - m_RefCount: 0
-    m_Data: {fileID: 0}
   - m_RefCount: 26
     m_Data: {fileID: 1652146390, guid: 70ff375895135b6419da49532997015e, type: 3}
   - m_RefCount: 2

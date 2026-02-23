@@ -11,6 +11,10 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
 
     [SerializeField] private bool enabledAbility;
 
+    [Header("State (read-only)")]
+    [SerializeField] private bool isHoldingBomb;
+    public bool IsHoldingBomb => isHoldingBomb;
+
     [Header("Timings")]
     [SerializeField, Min(0.01f)] private float pickupLockTime = 0.25f;
     [SerializeField, Min(0.01f)] private float releaseLockTime = 0.25f;
@@ -80,6 +84,7 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
         SetAllPickupSprites(false);
         SetAllCarrySprites(false);
         activeCarryRenderer = null;
+        isHoldingBomb = false;
     }
 
     private void Update()
@@ -208,6 +213,8 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
             pick.enabled = false;
 
         holding = true;
+        isHoldingBomb = true;
+
         AttachBombToPlayer();
 
         if (bombController != null)
@@ -312,6 +319,7 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
             pick.enabled = false;
 
         holding = false;
+        isHoldingBomb = false;
         activeCarryRenderer = null;
 
         movement.SetExternalVisualSuppressed(false);
@@ -391,6 +399,7 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
             ForceBombIdle(true);
         }
     }
+
     private IEnumerator WatchBombLandingThenResume(Bomb bomb)
     {
         float timeout = 6f;
@@ -573,15 +582,70 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
         bombControllerUseAIInputOverridden = false;
     }
 
+    public void DestroyHeldBombIfHolding()
+    {
+        if (!holding && !isHoldingBomb)
+            return;
+
+        holding = false;
+        isHoldingBomb = false;
+        activeCarryRenderer = null;
+        animLocking = false;
+
+        if (pickupRoutine != null) StopCoroutine(pickupRoutine);
+        if (releaseRoutine != null) StopCoroutine(releaseRoutine);
+        if (landWatchRoutine != null) StopCoroutine(landWatchRoutine);
+
+        pickupRoutine = null;
+        releaseRoutine = null;
+        landWatchRoutine = null;
+
+        if (heldBomb != null)
+        {
+            var go = heldBomb.gameObject;
+
+            heldBomb = null;
+            heldBombCollider = null;
+            heldBombAnim = null;
+            heldBombRb = null;
+            heldBombNotifier = null;
+            heldBombSpriteRenderer = null;
+
+            if (go != null)
+                Destroy(go);
+        }
+        else
+        {
+            heldBomb = null;
+            heldBombCollider = null;
+            heldBombAnim = null;
+            heldBombRb = null;
+            heldBombNotifier = null;
+            heldBombSpriteRenderer = null;
+        }
+
+        if (movement != null)
+        {
+            movement.SetExternalVisualSuppressed(false);
+
+            if (!movement.isDead && !movement.IsEndingStage && !movement.IsRidingPlaying())
+                movement.EnableExclusiveFromState();
+        }
+
+        RestoreBombControllerInputModeIfNeeded();
+    }
+
     private void ForceDropIfHolding()
     {
         if (!holding)
         {
             RestoreBombControllerInputModeIfNeeded();
+            isHoldingBomb = false;
             return;
         }
 
         holding = false;
+        isHoldingBomb = false;
         activeCarryRenderer = null;
         animLocking = false;
 
@@ -705,5 +769,6 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
         ForceDropIfHolding();
         SetAllPickupSprites(false);
         SetAllCarrySprites(false);
+        isHoldingBomb = false;
     }
 }

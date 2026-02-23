@@ -107,6 +107,9 @@ public abstract class EndStage : MonoBehaviour
             if (!m.gameObject.activeInHierarchy) continue;
             if (m.isDead || m.IsEndingStage) continue;
 
+            if (m.TryGetComponent<PowerGloveAbility>(out var glove) && glove != null)
+                glove.DestroyHeldBombIfHolding();
+
             var bombController = m.GetComponent<BombController>();
 
             PlayerPersistentStats.StageCaptureFromRuntime(m, bombController);

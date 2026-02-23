@@ -3385,6 +3385,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PowerGloveAbility
   enabledAbility: 1
+  isHoldingBomb: 0
   pickupLockTime: 0.25
   releaseLockTime: 0.25
   throwDistanceTiles: 3

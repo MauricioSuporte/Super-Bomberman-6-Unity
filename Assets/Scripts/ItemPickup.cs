@@ -89,6 +89,20 @@ public class ItemPickup : MonoBehaviour
         return false;
     }
 
+    bool PlayerHoldingBombWithPowerGlove(GameObject player)
+    {
+        if (player == null)
+            return false;
+
+        if (!player.TryGetComponent<AbilitySystem>(out var ab) || ab == null)
+            return false;
+
+        ab.RebuildCache();
+
+        var glove = ab.Get<PowerGloveAbility>(PowerGloveAbility.AbilityId);
+        return glove != null && glove.IsEnabled && glove.IsHoldingBomb;
+    }
+
     AbilitySystem GetOrCreateAbilitySystem(GameObject player)
     {
         if (!player.TryGetComponent<AbilitySystem>(out var abilitySystem))
@@ -199,6 +213,9 @@ public class ItemPickup : MonoBehaviour
     void OnItemPickup(GameObject player)
     {
         bool isEgg = IsLouieEgg(type);
+
+        if (isEgg && PlayerHoldingBombWithPowerGlove(player))
+            return;
 
         if (isEgg && PlayerAlreadyMounted(player))
         {
@@ -356,10 +373,16 @@ public class ItemPickup : MonoBehaviour
         {
             var player = other.gameObject;
 
-            if (IsLouieEgg(type) && !PlayerAlreadyMounted(player))
+            if (IsLouieEgg(type))
             {
-                if (other.TryGetComponent<MovementController>(out var mv) && mv != null && _col != null)
-                    mv.SnapToColliderCenter(_col, roundToGrid: false);
+                if (PlayerHoldingBombWithPowerGlove(player))
+                    return;
+
+                if (!PlayerAlreadyMounted(player))
+                {
+                    if (other.TryGetComponent<MovementController>(out var mv) && mv != null && _col != null)
+                        mv.SnapToColliderCenter(_col, roundToGrid: false);
+                }
             }
 
             OnItemPickup(player);

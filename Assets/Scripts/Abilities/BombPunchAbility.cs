@@ -73,6 +73,20 @@ public class BombPunchAbility : MonoBehaviour, IPlayerAbility
         }
     }
 
+    private bool IsHoldingBomb()
+    {
+        if (!TryGetComponent<AbilitySystem>(out var ab) || ab == null)
+            return false;
+
+        ab.RebuildCache();
+
+        var glove = ab.Get<PowerGloveAbility>(PowerGloveAbility.AbilityId);
+        if (glove != null && glove.IsEnabled && glove.IsHoldingBomb)
+            return true;
+
+        return false;
+    }
+
     private void Update()
     {
         if (!enabledAbility)
@@ -98,6 +112,9 @@ public class BombPunchAbility : MonoBehaviour, IPlayerAbility
             return;
 
         if (movement.InputLocked)
+            return;
+
+        if (IsHoldingBomb())
             return;
 
         Vector2 moveDir = movement.Direction;

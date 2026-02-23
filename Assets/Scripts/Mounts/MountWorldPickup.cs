@@ -21,6 +21,20 @@ public sealed class MountWorldPickup : MonoBehaviour
             _col.enabled = true;
     }
 
+    static bool PlayerHoldingBombWithPowerGlove(GameObject player)
+    {
+        if (player == null)
+            return false;
+
+        if (!player.TryGetComponent<AbilitySystem>(out var ab) || ab == null)
+            return false;
+
+        ab.RebuildCache();
+
+        var glove = ab.Get<PowerGloveAbility>(PowerGloveAbility.AbilityId);
+        return glove != null && glove.IsEnabled && glove.IsHoldingBomb;
+    }
+
     void OnTriggerEnter2D(Collider2D other)
     {
         if (consumed || other == null)
@@ -38,6 +52,9 @@ public sealed class MountWorldPickup : MonoBehaviour
             return;
 
         if (player.TryGetComponent<PlayerRidingController>(out var rider) && rider != null && rider.IsPlaying)
+            return;
+
+        if (PlayerHoldingBombWithPowerGlove(player))
             return;
 
         if (!player.TryGetComponent<PlayerMountCompanion>(out var comp) || comp == null)
