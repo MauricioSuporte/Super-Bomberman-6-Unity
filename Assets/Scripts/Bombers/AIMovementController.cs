@@ -24,6 +24,10 @@ public class AIMovementController : MovementController
     [SerializeField] private string bombLayerName = "Bomb";
     [SerializeField] private float hazardCheckBoxSize = 0.42f;
 
+    [Header("Damaged Visual (optional)")]
+    [SerializeField] private AnimatedSpriteRenderer spriteRendererDamaged;
+    [SerializeField] private bool useDamagedRendererWhenHealthUsesDamagedLoop = true;
+
     private Vector2 lastPos;
     private float stuckTimer;
 
@@ -36,6 +40,9 @@ public class AIMovementController : MovementController
     private int iaBombLayer;
     private int iaExplosionMask;
     private int iaBombMask;
+
+    private CharacterHealth healthForDamaged;
+    private bool damagedVisualActive;
 
     protected override void Awake()
     {
@@ -60,6 +67,9 @@ public class AIMovementController : MovementController
             if (obstacleMask.value == 0)
                 obstacleMask = LayerMask.GetMask("Bomb", "Stage", "Enemy");
         }
+
+        CacheHealthEvents();
+        EndDamagedVisual();
     }
 
     protected override void OnEnable()
@@ -73,10 +83,23 @@ public class AIMovementController : MovementController
         lastDetour = Vector2.zero;
         commitUntilTime = 0f;
         lastTurnTime = -999f;
+
+        CacheHealthEvents();
+        EndDamagedVisual();
+    }
+
+    protected override void OnDisable()
+    {
+        UnhookHealthEvents();
+        EndDamagedVisual();
+        base.OnDisable();
     }
 
     void LateUpdate()
     {
+        if (damagedVisualActive)
+            return;
+
         Vector2 pos = (Rigidbody != null) ? Rigidbody.position : (Vector2)transform.position;
 
         float moved = (pos - lastPos).sqrMagnitude;
@@ -95,6 +118,21 @@ public class AIMovementController : MovementController
 
     protected override void HandleInput()
     {
+        if (damagedVisualActive)
+        {
+            committedDir = Vector2.zero;
+            lastDetour = Vector2.zero;
+
+            aiDirection = Vector2.zero;
+
+            ApplyDirectionFromVector(Vector2.zero);
+
+            if (Rigidbody != null)
+                Rigidbody.linearVelocity = Vector2.zero;
+
+            return;
+        }
+
         Vector2 desired = NormalizeCardinal(aiDirection);
 
         if (desired == Vector2.zero)
@@ -294,5 +332,113 @@ public class AIMovementController : MovementController
     public void SetAIDirection(Vector2 dir)
     {
         aiDirection = dir;
+    }
+
+    private void CacheHealthEvents()
+    {
+        if (healthForDamaged != null)
+            return;
+
+        healthForDamaged = GetComponent<CharacterHealth>();
+        if (healthForDamaged == null)
+            return;
+
+        healthForDamaged.HitInvulnerabilityStarted += OnHitInvulnerabilityStarted;
+        healthForDamaged.HitInvulnerabilityEnded += OnHitInvulnerabilityEnded;
+        healthForDamaged.Died += OnHealthDied;
+    }
+
+    private void UnhookHealthEvents()
+    {
+        if (healthForDamaged == null)
+            return;
+
+        healthForDamaged.HitInvulnerabilityStarted -= OnHitInvulnerabilityStarted;
+        healthForDamaged.HitInvulnerabilityEnded -= OnHitInvulnerabilityEnded;
+        healthForDamaged.Died -= OnHealthDied;
+
+        healthForDamaged = null;
+    }
+
+    private void OnHitInvulnerabilityStarted(float seconds)
+    {
+        if (!useDamagedRendererWhenHealthUsesDamagedLoop)
+            return;
+
+        if (isDead || IsEndingStage)
+            return;
+
+        if (healthForDamaged == null || !healthForDamaged.playDamagedLoopInsteadOfBlink)
+            return;
+
+        if (spriteRendererDamaged == null)
+            return;
+
+        BeginDamagedVisual();
+    }
+
+    private void OnHitInvulnerabilityEnded()
+    {
+        EndDamagedVisual();
+    }
+
+    private void OnHealthDied()
+    {
+        EndDamagedVisual();
+    }
+
+    private void BeginDamagedVisual()
+    {
+        if (damagedVisualActive)
+            return;
+
+        damagedVisualActive = true;
+
+        committedDir = Vector2.zero;
+        lastDetour = Vector2.zero;
+        commitUntilTime = 0f;
+        stuckTimer = 0f;
+        aiDirection = Vector2.zero;
+
+        ApplyDirectionFromVector(Vector2.zero);
+
+        if (Rigidbody != null)
+            Rigidbody.linearVelocity = Vector2.zero;
+
+        SetVisualOverrideActive(true);
+        SetAllSpritesVisible(false);
+
+        SetAnimEnabledLocal(spriteRendererDamaged, true);
+        spriteRendererDamaged.idle = false;
+        spriteRendererDamaged.loop = true;
+        spriteRendererDamaged.pingPong = false;
+        spriteRendererDamaged.RefreshFrame();
+
+        activeSpriteRenderer = spriteRendererDamaged;
+
+        ApplyFlipForHorizontal(FacingDirection);
+    }
+
+    private void EndDamagedVisual()
+    {
+        if (!damagedVisualActive)
+            return;
+
+        damagedVisualActive = false;
+
+        if (spriteRendererDamaged != null)
+            SetAnimEnabledLocal(spriteRendererDamaged, false);
+
+        SetVisualOverrideActive(false);
+    }
+
+    private static void SetAnimEnabledLocal(AnimatedSpriteRenderer r, bool on)
+    {
+        if (r == null) return;
+
+        r.enabled = on;
+
+        if (r.TryGetComponent(out SpriteRenderer sr) && sr != null)
+            sr.enabled = on;
     }
 }

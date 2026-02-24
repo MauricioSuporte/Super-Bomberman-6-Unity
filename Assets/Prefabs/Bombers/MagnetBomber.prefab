@@ -206,6 +206,8 @@ MonoBehaviour:
   explosionLayerName: Explosion
   bombLayerName: Bomb
   hazardCheckBoxSize: 0.42
+  spriteRendererDamaged: {fileID: 7661374584512628626}
+  useDamagedRendererWhenHealthUsesDamagedLoop: 1
 --- !u!114 &8243230538853254392
 MonoBehaviour:
   m_ObjectHideFlags: 0
