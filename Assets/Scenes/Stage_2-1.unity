@@ -337,6 +337,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EndStageGate
   enterSfx: {fileID: 8300000, guid: 778da4e4d7313e54195e6cbca646d851, type: 3}
   endStageMusic: {fileID: 0}
+  playRandomGoodSfx: 1
+  goodSfxVolume: 1
   openGateSfx: {fileID: 8300000, guid: 9f1639c45a104994a87b186228d5b8e7, type: 3}
   gateTilemap: {fileID: 818279435}
   closed00: {fileID: 11400000, guid: ee12a4bcd839de94ab5124e4467afc47, type: 2}
@@ -6806,6 +6808,7 @@ MonoBehaviour:
   hudsonLogoIntro: {fileID: 0}
   titleScreen: {fileID: 0}
   introMusic: {fileID: 8300000, guid: ff7109298c0b4734d8113eeb4b86601c, type: 3}
+  playStartSfxOnIntroEnd: 1
   stageLabel: {fileID: 556523582}
   world: 2
   stageNumber: 1

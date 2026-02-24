@@ -85,7 +85,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 2
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 5702364104341334034, guid: 4ff4afedda9fa1949af624da82c728b9, type: 3}
+  m_Sprite: {fileID: 2078114618, guid: 397c74d25f4b66540bd9a09d023b1591, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -153,12 +153,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a4b55e1b961d144197e1a7a4a391956, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  idleSprite: {fileID: 5702364104341334034, guid: 4ff4afedda9fa1949af624da82c728b9, type: 3}
+  idleSprite: {fileID: 2078114618, guid: 397c74d25f4b66540bd9a09d023b1591, type: 3}
   animationSprite:
-  - {fileID: 5702364104341334034, guid: 4ff4afedda9fa1949af624da82c728b9, type: 3}
-  - {fileID: -5204222585785840746, guid: 4ff4afedda9fa1949af624da82c728b9, type: 3}
+  - {fileID: 2078114618, guid: 397c74d25f4b66540bd9a09d023b1591, type: 3}
+  - {fileID: 208726055, guid: 397c74d25f4b66540bd9a09d023b1591, type: 3}
+  - {fileID: -152622951, guid: 397c74d25f4b66540bd9a09d023b1591, type: 3}
+  - {fileID: -365777494, guid: 397c74d25f4b66540bd9a09d023b1591, type: 3}
+  - {fileID: -2126261096, guid: 397c74d25f4b66540bd9a09d023b1591, type: 3}
+  - {fileID: -619515105, guid: 397c74d25f4b66540bd9a09d023b1591, type: 3}
   allowFlipX: 0
-  animationTime: 0.01
+  animationTime: 0.025
   useSequenceDuration: 0
   sequenceDuration: 0.5
   loop: 1
@@ -181,13 +185,16 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ItemPickup
   collectSfx: {fileID: 8300000, guid: 9fbf9eaeca42e304495130d4b2f83633, type: 3}
   collectVolume: 1
+  playerExtraSfx: {fileID: 0}
+  playerExtraVolume: 1
+  playPlayerExtraSfxForTypes: 
   idleRenderer: {fileID: -470072179518323026}
   destroyRenderer: {fileID: 4200252698884628086}
   destroyDelaySeconds: 0.5
   spawnImmunitySeconds: 0.5
   damageIgnoresInvulnerability: 0
   behavior: {fileID: 0}
-  type: 0
+  type: 2
 --- !u!1 &7196401913749878199
 GameObject:
   m_ObjectHideFlags: 0
