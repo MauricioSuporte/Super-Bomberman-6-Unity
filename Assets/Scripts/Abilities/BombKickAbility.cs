@@ -1,8 +1,10 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
+using UnityEngine;
 
 [DisallowMultipleComponent]
 [RequireComponent(typeof(AudioSource))]
 [RequireComponent(typeof(BombController))]
+[RequireComponent(typeof(MovementController))]
 public class BombKickAbility : MonoBehaviour, IMovementAbility
 {
     public const string AbilityId = "BombKick";
@@ -14,6 +16,9 @@ public class BombKickAbility : MonoBehaviour, IMovementAbility
 
     private AudioSource audioSource;
     private BombController bombController;
+    private MovementController movement;
+
+    private readonly HashSet<Bomb> kickedByMe = new();
 
     public string Id => AbilityId;
     public bool IsEnabled => enabledAbility;
@@ -22,9 +27,31 @@ public class BombKickAbility : MonoBehaviour, IMovementAbility
     {
         audioSource = GetComponent<AudioSource>();
         bombController = GetComponent<BombController>();
+        movement = GetComponent<MovementController>();
 
         if (cachedKickClip == null)
             cachedKickClip = Resources.Load<AudioClip>(KickClipResourcesPath);
+    }
+
+    private void Update()
+    {
+        if (!enabledAbility)
+            return;
+
+        if (movement == null || !movement.CompareTag("Player"))
+            return;
+
+        if (movement.InputLocked || GamePauseController.IsPaused || movement.isDead)
+            return;
+
+        PruneKickedSet();
+
+        var input = PlayerInputManager.Instance;
+        if (input == null)
+            return;
+
+        if (input.GetDown(movement.PlayerId, PlayerAction.ActionR))
+            StopKickedBombsNow();
     }
 
     public void Enable()
@@ -38,6 +65,7 @@ public class BombKickAbility : MonoBehaviour, IMovementAbility
     public void Disable()
     {
         enabledAbility = false;
+        kickedByMe.Clear();
     }
 
     public bool TryHandleBlockedHit(Collider2D hit, Vector2 direction, float tileSize, LayerMask obstacleMask)
@@ -70,9 +98,84 @@ public class BombKickAbility : MonoBehaviour, IMovementAbility
         if (!kicked)
             return false;
 
+        kickedByMe.Add(bomb);
+
         if (audioSource != null && cachedKickClip != null)
             audioSource.PlayOneShot(cachedKickClip);
 
         return true;
+    }
+
+    private void StopKickedBombsNow()
+    {
+        if (kickedByMe.Count == 0)
+            return;
+
+        var toRemove = ListPool<Bomb>.Get();
+
+        foreach (var b in kickedByMe)
+        {
+            if (b == null)
+            {
+                toRemove.Add(b);
+                continue;
+            }
+
+            if (!b.IsBeingKicked)
+            {
+                toRemove.Add(b);
+                continue;
+            }
+
+            b.StopKickAndSnapToGrid(movement != null ? movement.tileSize : 1f);
+            toRemove.Add(b);
+        }
+
+        for (int i = 0; i < toRemove.Count; i++)
+            kickedByMe.Remove(toRemove[i]);
+
+        ListPool<Bomb>.Release(toRemove);
+    }
+
+    private void PruneKickedSet()
+    {
+        if (kickedByMe.Count == 0)
+            return;
+
+        var toRemove = ListPool<Bomb>.Get();
+
+        foreach (var b in kickedByMe)
+        {
+            if (b == null || !b.IsBeingKicked)
+                toRemove.Add(b);
+        }
+
+        for (int i = 0; i < toRemove.Count; i++)
+            kickedByMe.Remove(toRemove[i]);
+
+        ListPool<Bomb>.Release(toRemove);
+    }
+
+    private static class ListPool<T>
+    {
+        private static readonly Stack<List<T>> pool = new();
+
+        public static List<T> Get()
+        {
+            if (pool.Count > 0)
+            {
+                var l = pool.Pop();
+                l.Clear();
+                return l;
+            }
+            return new List<T>(8);
+        }
+
+        public static void Release(List<T> list)
+        {
+            if (list == null) return;
+            list.Clear();
+            pool.Push(list);
+        }
     }
 }

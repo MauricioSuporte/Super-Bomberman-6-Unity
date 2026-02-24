@@ -887,6 +887,50 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         }
     }
 
+    public void StopKickAndSnapToGrid(float tileSize)
+    {
+        if (HasExploded)
+            return;
+
+        if (!isKicked)
+            return;
+
+        tileSize = Mathf.Max(0.0001f, tileSize);
+
+        if (kickRoutine != null)
+        {
+            StopCoroutine(kickRoutine);
+            kickRoutine = null;
+        }
+
+        isKicked = false;
+
+        Vector2 cur = rb != null ? rb.position : (Vector2)transform.position;
+        Vector2 snapped = SnapToGrid(cur, tileSize);
+
+        currentTileCenter = snapped;
+        lastPos = snapped;
+
+        if (rb != null)
+        {
+            rb.linearVelocity = Vector2.zero;
+            rb.angularVelocity = 0f;
+            rb.position = snapped;
+        }
+
+        transform.position = snapped;
+
+        if (anim != null)
+        {
+            anim.SetFrozen(false);
+            anim.RefreshFrame();
+        }
+
+        RecalculateCharactersInsideAt(snapped);
+        if (bombCollider != null)
+            bombCollider.isTrigger = charactersInside.Count > 0;
+    }
+
     public void MarkAsExploded()
     {
         HasExploded = true;
