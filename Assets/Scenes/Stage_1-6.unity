@@ -177,6 +177,7 @@ MonoBehaviour:
   destructiblePassAmount: 0
   invincibleSuitAmount: 0
   heartAmount: 0
+  powerGloveAmount: 0
   blueLouieEggAmount: 0
   blackLouieEggAmount: 0
   purpleLouieEggAmount: 0
@@ -193,6 +194,7 @@ MonoBehaviour:
   groundShadowTile: {fileID: 11400000, guid: e0f633282caacc742af95bdd334dd0cf, type: 2}
   autoResolveStageTilemaps: 1
   restartAfterDeathSeconds: 4
+  destructibleTileResolver: {fileID: 0}
 --- !u!1 &285353614
 GameObject:
   m_ObjectHideFlags: 0
@@ -2270,11 +2272,11 @@ MonoBehaviour:
   groundTilemap: {fileID: 672307155}
   destructibleTilemap: {fileID: 285353618}
   itemPrefabs:
-  - {fileID: 6871244334814668705, guid: bdad95ff62d39d44fbcbb3b171a603bb, type: 3}
-  - {fileID: 2727780941473249227, guid: 2c7394d5814f6284da1d799a66d95686, type: 3}
-  - {fileID: 4209327807185772322, guid: 218d29a1a19c6864e8d870f01df7f91b, type: 3}
-  - {fileID: 6871244334814668705, guid: 8688e05eefe87c143a46fe4f721b8c80, type: 3}
-  - {fileID: 6871244334814668705, guid: 5d9a731da7e790c45a7a1d311cea3d8c, type: 3}
+  - {fileID: 3486627233271282426, guid: bdad95ff62d39d44fbcbb3b171a603bb, type: 3}
+  - {fileID: 6753344994599800136, guid: 2c7394d5814f6284da1d799a66d95686, type: 3}
+  - {fileID: 1407923596997385852, guid: 218d29a1a19c6864e8d870f01df7f91b, type: 3}
+  - {fileID: 573600615820131519, guid: 5d9a731da7e790c45a7a1d311cea3d8c, type: 3}
+  - {fileID: 3459621916490203606, guid: 60d73a0d38dd5ab44b2ed223467d82df, type: 3}
   spawnMinX: -7
   spawnMaxX: 5
   spawnMinY: -6
@@ -2287,6 +2289,8 @@ MonoBehaviour:
   endStageDelayBeforeStart: 1
   endStageFadeDuration: 3
   endStageEnterSfx: {fileID: 0}
+  playRandomGoodSfx: 1
+  goodSfxVolume: 1
 --- !u!114 &679601673
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3804,7 +3808,7 @@ Tilemap:
       m_AnimatedSprites:
       - {fileID: 1766967165, guid: 914f6dd52fc1d3f428738756d19d329e, type: 3}
       - {fileID: -60461963, guid: 914f6dd52fc1d3f428738756d19d329e, type: 3}
-      m_AnimationSpeed: 3.5000002
+      m_AnimationSpeed: 3.5
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: 7, y: -6, z: 0}
@@ -3903,7 +3907,7 @@ Tilemap:
       m_AnimatedSprites:
       - {fileID: -4876822446513763925, guid: 1a57a821cb78e0f4d8f8f366d155df5b, type: 3}
       - {fileID: 920322489, guid: 1a57a821cb78e0f4d8f8f366d155df5b, type: 3}
-      m_AnimationSpeed: 3.5000002
+      m_AnimationSpeed: 3.5
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: -9, y: 0, z: 0}
@@ -4137,7 +4141,7 @@ Tilemap:
       m_AnimatedSprites:
       - {fileID: 413118391, guid: 914f6dd52fc1d3f428738756d19d329e, type: 3}
       - {fileID: -414010142, guid: 914f6dd52fc1d3f428738756d19d329e, type: 3}
-      m_AnimationSpeed: 3.0000002
+      m_AnimationSpeed: 3
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: 2, y: 5, z: 0}
@@ -4146,7 +4150,7 @@ Tilemap:
       m_AnimatedSprites:
       - {fileID: 413118391, guid: 914f6dd52fc1d3f428738756d19d329e, type: 3}
       - {fileID: -414010142, guid: 914f6dd52fc1d3f428738756d19d329e, type: 3}
-      m_AnimationSpeed: 3
+      m_AnimationSpeed: 3.0000002
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: 3, y: 5, z: 0}
@@ -4191,7 +4195,7 @@ Tilemap:
       m_AnimatedSprites:
       - {fileID: -4876822446513763925, guid: 1a57a821cb78e0f4d8f8f366d155df5b, type: 3}
       - {fileID: 920322489, guid: 1a57a821cb78e0f4d8f8f366d155df5b, type: 3}
-      m_AnimationSpeed: 3.5
+      m_AnimationSpeed: 3.5000002
       m_AnimationTimeOffset: 0
       m_Flags: 0
   m_TileAssetArray:
@@ -4718,6 +4722,7 @@ MonoBehaviour:
   hudsonLogoIntro: {fileID: 0}
   titleScreen: {fileID: 0}
   introMusic: {fileID: 8300000, guid: ff7109298c0b4734d8113eeb4b86601c, type: 3}
+  playStartSfxOnIntroEnd: 1
   stageLabel: {fileID: 556523582}
   world: 1
   stageNumber: 6
