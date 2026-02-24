@@ -98,8 +98,7 @@ public sealed class MagnetBomberBattleFlowController : MonoBehaviour
                 var id = ids[i];
                 if (id == null) continue;
 
-                MovementController move = null;
-                if (!id.TryGetComponent(out move))
+                if (!id.TryGetComponent(out MovementController move))
                     move = id.GetComponentInChildren<MovementController>(true);
 
                 if (move == null) continue;
@@ -130,14 +129,11 @@ public sealed class MagnetBomberBattleFlowController : MonoBehaviour
             var p = players[i];
             if (p == null) continue;
 
-            var b = p.GetComponent<BombController>();
-            if (b != null) playerBombs.Add(b);
+            if (p.TryGetComponent<BombController>(out var b)) playerBombs.Add(b);
 
-            var d = p.GetComponent<PlayerManualDismount>();
-            if (d != null) manualDismounts.Add(d);
+            if (p.TryGetComponent<PlayerManualDismount>(out var d)) manualDismounts.Add(d);
 
-            var comp = p.GetComponent<PlayerMountCompanion>();
-            if (comp != null) playerCompanions.Add(comp);
+            if (p.TryGetComponent<PlayerMountCompanion>(out var comp)) playerCompanions.Add(comp);
         }
     }
 
