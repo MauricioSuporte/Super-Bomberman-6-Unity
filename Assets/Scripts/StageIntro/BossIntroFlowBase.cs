@@ -251,8 +251,7 @@ public abstract class BossIntroFlowBase : MonoBehaviour
             var col = kv.Value;
             if (!p || !col) continue;
 
-            if (cachedColliderEnabled.TryGetValue(p, out bool wasEnabled))
-                col.enabled = wasEnabled;
+            col.enabled = true;
         }
 
         cachedPlayerColliders.Clear();
