@@ -297,11 +297,12 @@ public class MechBombMovementController : JunctionTurningEnemyMovementController
     }
 
     public bool StartMagnetPull(
-    Vector2 directionToMagnet,
-    float tileSize,
-    int steps,
-    LayerMask obstacleMask,
-    Tilemap destructibleTilemap)
+        Vector2 directionToMagnet,
+        float tileSize,
+        int steps,
+        LayerMask obstacleMask,
+        Tilemap destructibleTilemap,
+        float speedMultiplier)
     {
         if (!CanBeMagnetPulled || steps <= 0 || directionToMagnet == Vector2.zero)
             return false;
@@ -316,7 +317,7 @@ public class MechBombMovementController : JunctionTurningEnemyMovementController
 
         SnapToGrid();
 
-        magnetRoutine = StartCoroutine(MagnetPullRoutine(dir, tileSize, steps, obstacleMask, destructibleTilemap));
+        magnetRoutine = StartCoroutine(MagnetPullRoutine(dir, tileSize, steps, obstacleMask, destructibleTilemap, speedMultiplier));
         return true;
     }
 
@@ -325,9 +326,13 @@ public class MechBombMovementController : JunctionTurningEnemyMovementController
         float tileSize,
         int steps,
         LayerMask obstacleMask,
-        Tilemap destructibleTilemap)
+        Tilemap destructibleTilemap,
+        float speedMultiplier)
     {
         var wait = new WaitForFixedUpdate();
+
+        float mult = Mathf.Max(0.01f, speedMultiplier);
+        float speed = Mathf.Max(0.0001f, magnetPullSpeed) * mult;
 
         Vector2 current = rb != null ? rb.position : (Vector2)transform.position;
         current.x = Mathf.Round(current.x / tileSize) * tileSize;
@@ -348,7 +353,6 @@ public class MechBombMovementController : JunctionTurningEnemyMovementController
             if (IsMagnetMoveBlocked(next, tileSize, obstacleMask, destructibleTilemap))
                 break;
 
-            float speed = Mathf.Max(0.0001f, magnetPullSpeed);
             float travelTime = tileSize / speed;
 
             float elapsed = 0f;

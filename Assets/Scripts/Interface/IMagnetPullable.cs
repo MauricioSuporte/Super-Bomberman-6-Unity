@@ -11,6 +11,7 @@ public interface IMagnetPullable
         float tileSize,
         int steps,
         LayerMask obstacleMask,
-        Tilemap destructibleTilemap
+        Tilemap destructibleTilemap,
+        float speedMultiplier
     );
 }

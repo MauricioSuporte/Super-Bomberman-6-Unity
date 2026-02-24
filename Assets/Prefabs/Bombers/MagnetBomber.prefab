@@ -222,7 +222,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   playerId: 1
   useAIInput: 1
-  bombPrefab: {fileID: 147425199346742615, guid: b141cb2d60d85504dad495e1a188c108, type: 3}
+  bombPrefab: {fileID: 147425199346742615, guid: 851ce7b3e6e8c724dbbf6dae1abc11dc, type: 3}
   pierceBombPrefab: {fileID: 0}
   controlBombPrefab: {fileID: 0}
   bombFuseTime: 2

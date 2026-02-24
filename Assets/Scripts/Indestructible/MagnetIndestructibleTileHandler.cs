@@ -21,6 +21,9 @@ public sealed class MagnetIndestructibleTileHandler : MonoBehaviour, IIndestruct
     [SerializeField] private float tileSize = 1f;
     [SerializeField] private LayerMask obstacleMask;
 
+    [Header("Speed")]
+    [SerializeField, Min(0.01f)] private float magnetPullSpeedMultiplier = 1f;
+
     [Header("What can be pulled")]
     [SerializeField] private LayerMask pullableMask;
 
@@ -112,7 +115,7 @@ public sealed class MagnetIndestructibleTileHandler : MonoBehaviour, IIndestruct
                     int steps = dist - 1;
                     Vector2 pullDir = new(-dir.x, -dir.y);
 
-                    pullable.StartMagnetPull(pullDir, tileSize, steps, obstacleMask, destructibleTilemap);
+                    pullable.StartMagnetPull(pullDir, tileSize, steps, obstacleMask, destructibleTilemap, magnetPullSpeedMultiplier);
                     break;
                 }
             }

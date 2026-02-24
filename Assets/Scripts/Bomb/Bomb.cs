@@ -82,6 +82,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
     private Vector2 lockWorldPos;
 
     private Coroutine magnetRoutine;
+    private float magnetSpeedMultiplier = 1f;
 
     private static readonly WaitForFixedUpdate waitFixed = new();
 
@@ -1005,13 +1006,21 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         FuseSeconds = Mathf.Max(0.01f, fuseSeconds);
     }
 
-    public bool StartMagnetPull(Vector2 directionToMagnet, float tileSize, int steps, LayerMask obstacleMask, Tilemap destructibleTilemap)
+    public bool StartMagnetPull(
+        Vector2 directionToMagnet,
+        float tileSize,
+        int steps,
+        LayerMask obstacleMask,
+        Tilemap destructibleTilemap,
+        float speedMultiplier)
     {
         if (HasExploded || isKicked || isPunched || steps <= 0)
             return false;
 
         if (magnetRoutine != null)
             StopCoroutine(magnetRoutine);
+
+        magnetSpeedMultiplier = Mathf.Max(0.05f, speedMultiplier);
 
         kickDirection = directionToMagnet.normalized;
         kickTileSize = tileSize;
@@ -1030,12 +1039,14 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         if (anim != null)
             anim.SetFrozen(true);
 
-        magnetRoutine = StartCoroutine(MagnetPullRoutineFixed(steps));
+        magnetRoutine = StartCoroutine(MagnetPullRoutineFixed(steps, magnetSpeedMultiplier));
         return true;
     }
 
-    private IEnumerator MagnetPullRoutineFixed(int steps)
+    private IEnumerator MagnetPullRoutineFixed(int steps, float speedMultiplier)
     {
+        float mult = Mathf.Max(0.05f, speedMultiplier);
+
         for (int s = 0; s < steps; s++)
         {
             if (HasExploded)
@@ -1046,7 +1057,9 @@ public class Bomb : MonoBehaviour, IMagnetPullable
             if (IsKickBlocked(next))
                 break;
 
-            float speed = Mathf.Max(0.0001f, magnetPullSpeed);
+            float baseSpeed = Mathf.Max(0.0001f, magnetPullSpeed);
+            float speed = Mathf.Max(0.0001f, baseSpeed * mult);
+
             float travelTime = kickTileSize / speed;
             float elapsed = 0f;
             Vector2 start = currentTileCenter;
