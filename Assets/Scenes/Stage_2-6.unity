@@ -827,9 +827,10 @@ MonoBehaviour:
   endStageMusic: {fileID: 0}
   playRandomGoodSfx: 1
   goodSfxVolume: 1
+  manualUnlockOnly: 1
   unlockGateSfx: {fileID: 8300000, guid: 9f1639c45a104994a87b186228d5b8e7, type: 3}
   openGateSfx: {fileID: 8300000, guid: 66686e87bc1a8994880d4f9972de6d54, type: 3}
-  unlockSfxDelay: 1
+  unlockSfxDelay: 0
   openSfxDelayAfterUnlock: 1
   closedRoot: {fileID: 1326041599}
   openRoot: {fileID: 1472254269}
@@ -839,7 +840,7 @@ MonoBehaviour:
   finishTrigger: {fileID: 472218075}
   finishTriggerSize: {x: 0.3, y: 0.3}
   finishTriggerTilemap: {fileID: 672307155}
-  finishTriggerCell: {x: -1, y: 15, z: 0}
+  finishTriggerCell: {x: -3, y: 2, z: 0}
   finishTriggerOffset: {x: 0, y: 0}
   snapOpenToClosedOnUnlock: 1
 --- !u!82 &472218077
@@ -5585,6 +5586,10 @@ PrefabInstance:
     - target: {fileID: 8741466755873979984, guid: a009117f38ad56d4fb5e2e5fa7445a16, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8953337400205497012, guid: a009117f38ad56d4fb5e2e5fa7445a16, type: 3}
+      propertyPath: waitBeforeEscapeSeconds
+      value: 3
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

@@ -13,6 +13,9 @@ public abstract class EndStage : MonoBehaviour
     [SerializeField] private bool playRandomGoodSfx = true;
     [SerializeField, Range(0f, 1f)] private float goodSfxVolume = 1f;
 
+    [Header("Unlock Mode")]
+    [SerializeField] private bool manualUnlockOnly = false;
+
     private static bool s_goodSfxPlayedThisStage;
     private static AudioClip[] s_goodClips;
 
@@ -27,7 +30,7 @@ public abstract class EndStage : MonoBehaviour
 
         gameManager = FindFirstObjectByType<GameManager>();
 
-        if (gameManager != null)
+        if (!manualUnlockOnly && gameManager != null)
         {
             gameManager.OnAllEnemiesDefeated += HandleAllEnemiesDefeated;
             StartCoroutine(InitialEnemyCheckNextFrame());
@@ -51,6 +54,15 @@ public abstract class EndStage : MonoBehaviour
     }
 
     void HandleAllEnemiesDefeated()
+    {
+        if (isUnlocked)
+            return;
+
+        isUnlocked = true;
+        OnUnlocked();
+    }
+
+    public void ForceUnlock()
     {
         if (isUnlocked)
             return;

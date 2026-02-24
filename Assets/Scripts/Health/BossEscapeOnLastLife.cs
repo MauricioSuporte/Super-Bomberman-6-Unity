@@ -15,6 +15,7 @@ public class BossEscapeOnLastLife : MonoBehaviour
     [Header("Escape")]
     [SerializeField] private Vector2 escapeTarget = new(-3f, 2f);
     [SerializeField] private float reachEpsilon = 0.06f;
+    [SerializeField, Min(0f)] private float waitBeforeEscapeSeconds = 2f;
 
     [Header("Pathfinding")]
     [SerializeField] private int maxNodes = 4096;
@@ -86,6 +87,25 @@ public class BossEscapeOnLastLife : MonoBehaviour
 
         LockBossForEscape();
 
+        var gate = FindFirstObjectByType<EndStageGateAnimated>();
+        if (gate != null)
+            gate.ForceUnlock();
+
+        if (waitBeforeEscapeSeconds > 0f)
+        {
+            float elapsed = 0f;
+            while (elapsed < waitBeforeEscapeSeconds)
+            {
+                if (aiMove) aiMove.SetAIDirection(Vector2.zero);
+                if (boss && boss.Rigidbody != null) boss.Rigidbody.linearVelocity = Vector2.zero;
+
+                if (!GamePauseController.IsPaused)
+                    elapsed += Time.deltaTime;
+
+                yield return null;
+            }
+        }
+
         BombController.ExplodeAllControlBombsInStage();
 
         yield return null;
@@ -133,6 +153,9 @@ public class BossEscapeOnLastLife : MonoBehaviour
             health.StopInvulnerability();
             health.SetExternalInvulnerability(true);
         }
+
+        if (aiMove)
+            aiMove.SetAIDirection(Vector2.zero);
     }
 
     private IEnumerator MoveToTile(Vector2 tileCenter, float tile)

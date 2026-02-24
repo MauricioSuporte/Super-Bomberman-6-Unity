@@ -345,6 +345,7 @@ MonoBehaviour:
   bossAIToDisable: {fileID: 4730492100800285400}
   escapeTarget: {x: -3, y: 2}
   reachEpsilon: 0.06
+  waitBeforeEscapeSeconds: 4
   maxNodes: 4096
   maxExpandSteps: 20000
   disablePlayerBombControllerWhileLocked: 1
