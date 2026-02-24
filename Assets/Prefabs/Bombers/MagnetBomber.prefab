@@ -239,7 +239,7 @@ MonoBehaviour:
   holeTiles: {fileID: 0}
   holeTag: Hole
   destructibleTiles: {fileID: 0}
-  destructiblePrefab: {fileID: 3440613785117735154, guid: 0db9b9963032895418bfd9382b2692f7, type: 3}
+  destructiblePrefab: {fileID: 3440613785117735154, guid: 75354832aaed18641b111a634067f982, type: 3}
   destructibleTileResolver: {fileID: 0}
   itemLayerMask:
     serializedVersion: 2
@@ -317,7 +317,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 205f7fc6fe6408f419811c6c486b9cd6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CharacterHealth
-  life: 4
+  life: 5
   hitInvulnerableDuration: 1
   hitBlinkInterval: 0.1
   tempSlowdownStartNormalized: 0.7

@@ -5535,6 +5535,14 @@ PrefabInstance:
       propertyPath: m_Name
       value: MagnetBomber
       objectReference: {fileID: 0}
+    - target: {fileID: 8243230538853254392, guid: a009117f38ad56d4fb5e2e5fa7445a16, type: 3}
+      propertyPath: groundTiles
+      value: 
+      objectReference: {fileID: 672307155}
+    - target: {fileID: 8243230538853254392, guid: a009117f38ad56d4fb5e2e5fa7445a16, type: 3}
+      propertyPath: stageBoundsTiles
+      value: 
+      objectReference: {fileID: 818279435}
     - target: {fileID: 8741466755873979984, guid: a009117f38ad56d4fb5e2e5fa7445a16, type: 3}
       propertyPath: m_LocalPosition.x
       value: -2.5
