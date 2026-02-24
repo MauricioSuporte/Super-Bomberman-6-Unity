@@ -5857,12 +5857,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Stage26BossFlowController
   enableFlow: 1
   extraHoldAfterIntroSeconds: 3
+  disablePlayerBombControllerWhileLocked: 1
   boss: {fileID: 1171221400}
   bossAI: {fileID: 1439060919}
   aiMove: {fileID: 1171221400}
   forceBossFacing: {x: 0, y: 0}
-  disablePlayerBombControllerWhileLocked: 1
-  disablePlayerManualDismountWhileLocked: 1
 --- !u!1 &1389130171
 GameObject:
   m_ObjectHideFlags: 0
