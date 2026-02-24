@@ -208,6 +208,8 @@ MonoBehaviour:
   hazardCheckBoxSize: 0.42
   spriteRendererDamaged: {fileID: 7661374584512628626}
   useDamagedRendererWhenHealthUsesDamagedLoop: 1
+  spriteRendererIntroIdle: {fileID: 4652177394112457859}
+  introIdleLoop: 1
 --- !u!114 &8243230538853254392
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1197,13 +1199,13 @@ MonoBehaviour:
   - {fileID: 9109548303016174499, guid: 11cf8da23de195e46bccbc2e440bfc1c, type: 3}
   - {fileID: 2759946652197135952, guid: 11cf8da23de195e46bccbc2e440bfc1c, type: 3}
   allowFlipX: 0
-  animationTime: 0.1
+  animationTime: 0.071428575
   useSequenceDuration: 0
   sequenceDuration: 0.5
   loop: 0
   idle: 0
   frameOffsets: []
-  pingPong: 0
+  pingPong: 1
   disableOffsetsIfThisObjectHasRigidbody2D: 1
   disableOffsetsIfStandaloneRoot: 1
 --- !u!1 &7536653507105177419

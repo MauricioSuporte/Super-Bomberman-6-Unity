@@ -2711,7 +2711,6 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 1027568746}
   - {fileID: 1577369972}
   - {fileID: 818279432}
   - {fileID: 672307153}
@@ -5529,7 +5528,7 @@ PrefabInstance:
   serializedVersion: 2
   m_Modification:
     serializedVersion: 3
-    m_TransformParent: {fileID: 732032081}
+    m_TransformParent: {fileID: 0}
     m_Modifications:
     - target: {fileID: 444576652216317808, guid: a009117f38ad56d4fb5e2e5fa7445a16, type: 3}
       propertyPath: m_Name
@@ -5545,11 +5544,11 @@ PrefabInstance:
       objectReference: {fileID: 818279435}
     - target: {fileID: 8741466755873979984, guid: a009117f38ad56d4fb5e2e5fa7445a16, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -2.5
+      value: -3
       objectReference: {fileID: 0}
     - target: {fileID: 8741466755873979984, guid: a009117f38ad56d4fb5e2e5fa7445a16, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -0.5
+      value: -1
       objectReference: {fileID: 0}
     - target: {fileID: 8741466755873979984, guid: a009117f38ad56d4fb5e2e5fa7445a16, type: 3}
       propertyPath: m_LocalPosition.z
@@ -5588,11 +5587,6 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: a009117f38ad56d4fb5e2e5fa7445a16, type: 3}
---- !u!4 &1027568746 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 8741466755873979984, guid: a009117f38ad56d4fb5e2e5fa7445a16, type: 3}
-  m_PrefabInstance: {fileID: 1027568745}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1102021990
 GameObject:
   m_ObjectHideFlags: 0
@@ -5668,6 +5662,17 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1102021990}
   m_CullTransparentMesh: 1
+--- !u!114 &1171221400 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 1907593265075809238, guid: a009117f38ad56d4fb5e2e5fa7445a16, type: 3}
+  m_PrefabInstance: {fileID: 1027568745}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5704045885c5fbb40ad9f0c6dc80db9f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AIMovementController
 --- !u!1 &1326041599
 GameObject:
   m_ObjectHideFlags: 0
@@ -5806,6 +5811,58 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
+--- !u!1 &1372892348
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1372892349}
+  - component: {fileID: 1372892350}
+  m_Layer: 6
+  m_Name: BossBattleController
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1372892349
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1372892348}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -0.5, y: -0.5, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1372892350
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1372892348}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4d6701802c3bbb946b5e1fc67063bd78, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Stage26BossFlowController
+  enableFlow: 1
+  extraHoldAfterIntroSeconds: 3
+  boss: {fileID: 1171221400}
+  bossAI: {fileID: 1439060919}
+  aiMove: {fileID: 1171221400}
+  forceBossFacing: {x: 0, y: 0}
+  disablePlayerBombControllerWhileLocked: 1
+  disablePlayerManualDismountWhileLocked: 1
 --- !u!1 &1389130171
 GameObject:
   m_ObjectHideFlags: 0
@@ -5936,6 +5993,17 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 0}
+--- !u!114 &1439060919 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 4730492100800285400, guid: a009117f38ad56d4fb5e2e5fa7445a16, type: 3}
+  m_PrefabInstance: {fileID: 1027568745}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a87682b71682a5d44ab92ecaa57ef207, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BossBomberAI
 --- !u!1 &1472254269
 GameObject:
   m_ObjectHideFlags: 0
@@ -6131,7 +6199,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1aa1ef842d43d4449a4b672797ff89e5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameSession
-  activePlayerCount: 1
+  activePlayerCount: 4
 --- !u!4 &1522516126
 Transform:
   m_ObjectHideFlags: 0
@@ -6283,3 +6351,5 @@ SceneRoots:
   - {fileID: 565019135}
   - {fileID: 1746315304}
   - {fileID: 1522516126}
+  - {fileID: 1372892349}
+  - {fileID: 1027568745}

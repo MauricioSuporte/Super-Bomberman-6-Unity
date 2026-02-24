@@ -28,6 +28,10 @@ public class AIMovementController : MovementController
     [SerializeField] private AnimatedSpriteRenderer spriteRendererDamaged;
     [SerializeField] private bool useDamagedRendererWhenHealthUsesDamagedLoop = true;
 
+    [Header("Boss Intro Idle Visual (optional)")]
+    [SerializeField] private AnimatedSpriteRenderer spriteRendererIntroIdle;
+    [SerializeField] private bool introIdleLoop = true;
+
     private Vector2 lastPos;
     private float stuckTimer;
 
@@ -43,6 +47,8 @@ public class AIMovementController : MovementController
 
     private CharacterHealth healthForDamaged;
     private bool damagedVisualActive;
+
+    private bool introIdleVisualActive;
 
     protected override void Awake()
     {
@@ -69,7 +75,9 @@ public class AIMovementController : MovementController
         }
 
         CacheHealthEvents();
+
         EndDamagedVisual();
+        EndIntroIdleVisual();
     }
 
     protected override void OnEnable()
@@ -85,6 +93,7 @@ public class AIMovementController : MovementController
         lastTurnTime = -999f;
 
         CacheHealthEvents();
+
         EndDamagedVisual();
     }
 
@@ -92,12 +101,13 @@ public class AIMovementController : MovementController
     {
         UnhookHealthEvents();
         EndDamagedVisual();
+        EndIntroIdleVisual();
         base.OnDisable();
     }
 
     void LateUpdate()
     {
-        if (damagedVisualActive)
+        if (damagedVisualActive || introIdleVisualActive)
             return;
 
         Vector2 pos = (Rigidbody != null) ? Rigidbody.position : (Vector2)transform.position;
@@ -119,6 +129,21 @@ public class AIMovementController : MovementController
     protected override void HandleInput()
     {
         if (damagedVisualActive)
+        {
+            committedDir = Vector2.zero;
+            lastDetour = Vector2.zero;
+
+            aiDirection = Vector2.zero;
+
+            ApplyDirectionFromVector(Vector2.zero);
+
+            if (Rigidbody != null)
+                Rigidbody.linearVelocity = Vector2.zero;
+
+            return;
+        }
+
+        if (introIdleVisualActive)
         {
             committedDir = Vector2.zero;
             lastDetour = Vector2.zero;
@@ -334,6 +359,60 @@ public class AIMovementController : MovementController
         aiDirection = dir;
     }
 
+    public void SetIntroIdle(bool on)
+    {
+        if (on) BeginIntroIdleVisual();
+        else EndIntroIdleVisual();
+    }
+
+    private void BeginIntroIdleVisual()
+    {
+        if (introIdleVisualActive)
+            return;
+
+        introIdleVisualActive = true;
+
+        committedDir = Vector2.zero;
+        lastDetour = Vector2.zero;
+        commitUntilTime = 0f;
+        stuckTimer = 0f;
+        aiDirection = Vector2.zero;
+
+        ApplyDirectionFromVector(Vector2.zero);
+
+        if (Rigidbody != null)
+            Rigidbody.linearVelocity = Vector2.zero;
+
+        if (spriteRendererIntroIdle == null)
+            return;
+
+        SetVisualOverrideActive(true);
+        SetAllSpritesVisible(false);
+
+        SetAnimEnabledLocal(spriteRendererIntroIdle, true);
+        spriteRendererIntroIdle.idle = false;
+        spriteRendererIntroIdle.loop = introIdleLoop;
+        spriteRendererIntroIdle.pingPong = false;
+        spriteRendererIntroIdle.RefreshFrame();
+
+        activeSpriteRenderer = spriteRendererIntroIdle;
+
+        ApplyFlipForHorizontal(FacingDirection);
+    }
+
+    private void EndIntroIdleVisual()
+    {
+        if (!introIdleVisualActive)
+            return;
+
+        introIdleVisualActive = false;
+
+        if (spriteRendererIntroIdle != null)
+            SetAnimEnabledLocal(spriteRendererIntroIdle, false);
+
+        SetVisualOverrideActive(false);
+    }
+
     private void CacheHealthEvents()
     {
         if (healthForDamaged != null)
@@ -393,6 +472,9 @@ public class AIMovementController : MovementController
             return;
 
         damagedVisualActive = true;
+
+        if (introIdleVisualActive)
+            EndIntroIdleVisual();
 
         committedDir = Vector2.zero;
         lastDetour = Vector2.zero;
