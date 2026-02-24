@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections;
+using System.Linq;
 using UnityEngine;
 
 [RequireComponent(typeof(Collider2D))]
@@ -26,6 +27,7 @@ public class CharacterHealth : MonoBehaviour
 
     public event Action<float> HitInvulnerabilityStarted;
     public event Action HitInvulnerabilityEnded;
+    public Func<bool> CancelDeathRequest;
 
     bool isInvulnerable;
     bool isDead;
@@ -39,7 +41,6 @@ public class CharacterHealth : MonoBehaviour
     public bool IsInvulnerable => isInvulnerable;
     private bool externalInvulnerability;
 
-    // --- Spawn blink override control ---
     private int _blinkOverrideToken;
     private Coroutine _restoreBlinkIntervalRoutine;
 
@@ -65,6 +66,25 @@ public class CharacterHealth : MonoBehaviour
 
         if (life <= 0)
         {
+            if (CancelDeathRequest != null)
+            {
+                bool cancel = false;
+                foreach (Func<bool> h in CancelDeathRequest.GetInvocationList().Cast<Func<bool>>())
+                {
+                    try
+                    {
+                        if (h()) { cancel = true; break; }
+                    }
+                    catch { /* ignore */ }
+                }
+
+                if (cancel)
+                {
+                    life = 1;
+                    return;
+                }
+            }
+
             life = 0;
             Die();
             return;
@@ -98,7 +118,6 @@ public class CharacterHealth : MonoBehaviour
             hitRoutine = StartCoroutine(TemporaryInvulnerabilityNoBlinkRoutine(seconds));
     }
 
-    // NOVO: invencibilidade “real” de spawn + blink com intervalo customizado (restaura depois)
     public void StartSpawnInvulnerability(float seconds, float blinkInterval)
     {
         if (seconds <= 0f)

@@ -15,6 +15,7 @@ GameObject:
   - component: {fileID: 8243230538853254392}
   - component: {fileID: 4730492100800285400}
   - component: {fileID: 2258062271764064381}
+  - component: {fileID: 8953337400205497012}
   - component: {fileID: 3101258277916350091}
   - component: {fileID: 3989780119984243601}
   - component: {fileID: 2922516725846522430}
@@ -321,12 +322,33 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 205f7fc6fe6408f419811c6c486b9cd6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CharacterHealth
-  life: 5
+  life: 2
   hitInvulnerableDuration: 1
   hitBlinkInterval: 0.1
   tempSlowdownStartNormalized: 0.7
   tempEndBlinkMultiplier: 4
   playDamagedLoopInsteadOfBlink: 1
+--- !u!114 &8953337400205497012
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 444576652216317808}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7034f6eeeab99fd45bf2cf2feeac7281, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BossEscapeOnLastLife
+  boss: {fileID: 1907593265075809238}
+  aiMove: {fileID: 1907593265075809238}
+  bossAIToDisable: {fileID: 4730492100800285400}
+  escapeTarget: {x: -3, y: 2}
+  reachEpsilon: 0.06
+  maxNodes: 4096
+  maxExpandSteps: 20000
+  disablePlayerBombControllerWhileLocked: 1
+  disablePlayerCollidersWhileLocked: 1
 --- !u!82 &3101258277916350091
 AudioSource:
   m_ObjectHideFlags: 0
