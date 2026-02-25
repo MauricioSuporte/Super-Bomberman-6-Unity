@@ -65,6 +65,8 @@ public class StunReceiver : MonoBehaviour
 
     private bool stunVisualSuppressedByDamaged;
     private bool hadFrozenBeforeDamaged;
+    private bool stunVisualInitialized;
+    private bool stunWantsCustomAnim;
 
     private MovementController cachedMovement;
     private BombController cachedBombController;
@@ -203,17 +205,21 @@ public class StunReceiver : MonoBehaviour
         stunVisualSuppressedByDamaged = false;
         hadFrozenBeforeDamaged = false;
 
-        if (wantsCustomAnim)
+        stunVisualInitialized = false;
+        stunWantsCustomAnim = wantsCustomAnim;
+
+        bool damagedAtStart = IsDamagedVisualActiveNow();
+
+        if (!damagedAtStart)
         {
-            EnterCustomStunOverride();
+            InitializeStunVisualIfNeeded(wantsCustomAnim);
         }
         else
         {
-            CaptureSpriteBases();
-            ForceIdleAndApplyOffsets();
+            stunVisualSuppressedByDamaged = true;
 
             if (freezeAnimatedSprites)
-                FreezeAnimations();
+                UnfreezeAnimationsKeepCurrentFrame();
         }
 
         float seed = Random.value * 1000f;
@@ -253,6 +259,13 @@ public class StunReceiver : MonoBehaviour
 
                 yield return null;
                 continue;
+            }
+
+            if (!stunVisualInitialized)
+            {
+                InitializeStunVisualIfNeeded(wantsCustomAnim);
+                stunVisualSuppressedByDamaged = false;
+                hadFrozenBeforeDamaged = false;
             }
 
             if (stunVisualSuppressedByDamaged)
@@ -747,5 +760,28 @@ public class StunReceiver : MonoBehaviour
 
         stunVisualSuppressedByDamaged = false;
         hadFrozenBeforeDamaged = false;
+    }
+
+    private void InitializeStunVisualIfNeeded(bool wantsCustomAnim)
+    {
+        if (stunVisualInitialized)
+            return;
+
+        stunWantsCustomAnim = wantsCustomAnim;
+
+        if (wantsCustomAnim)
+        {
+            EnterCustomStunOverride();
+        }
+        else
+        {
+            CaptureSpriteBases();
+            ForceIdleAndApplyOffsets();
+
+            if (freezeAnimatedSprites)
+                FreezeAnimations();
+        }
+
+        stunVisualInitialized = true;
     }
 }
