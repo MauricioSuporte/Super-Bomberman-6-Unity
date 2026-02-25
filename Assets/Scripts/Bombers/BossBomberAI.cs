@@ -43,6 +43,7 @@ public class BossBomberAI : MonoBehaviour
     private AIMovementController movement;
     private BombController bomb;
     private BombKickAbility kickAbility;
+    private StunReceiver stun;
 
     private float thinkTimer;
     private float retargetTimer;
@@ -64,6 +65,7 @@ public class BossBomberAI : MonoBehaviour
         movement = GetComponent<AIMovementController>();
         bomb = GetComponent<BombController>();
         kickAbility = GetComponent<BombKickAbility>();
+        stun = GetComponent<StunReceiver>();
 
         bomb.useAIInput = true;
         movement.isBoss = true;
@@ -188,7 +190,7 @@ public class BossBomberAI : MonoBehaviour
             return;
         }
 
-        if (IsDamagedPlaying())
+        if (IsDamagedPlaying() || IsStunnedPlaying())
         {
             lastDirection = Vector2.zero;
             return;
@@ -324,6 +326,7 @@ public class BossBomberAI : MonoBehaviour
     {
         if (movement == null || movement.isDead) return false;
         if (movement.IsDamagedVisualActive) return false;
+        if (IsStunnedPlaying()) return false;
         if (bomb == null) return false;
         if (bomb.BombsRemaining <= 0) return false;
         if (IsTileWithBomb(myTile)) return false;
@@ -395,45 +398,11 @@ public class BossBomberAI : MonoBehaviour
         return true;
     }
 
-    Vector2 GetBestStepAwayFromTarget(Vector2 myTile, Vector2 targetTile, Bomb[] bombsNow)
-    {
-        float stepTime = GetSingleStepTravelTimeSeconds();
-        Vector2 best = Vector2.zero;
-        float bestScore = float.NegativeInfinity;
-
-        Vector2 awayPrimary = GetStepTowards(myTile - targetTile);
-
-        for (int pass = 0; pass < 2; pass++)
-        {
-            for (int i = 0; i < Dirs.Length; i++)
-            {
-                Vector2 dir = (pass == 0 && i == 0) ? awayPrimary : Dirs[i];
-                Vector2 n = myTile + dir;
-
-                if (dir == Vector2.zero) continue;
-                if (!IsWalkableTile(n)) continue;
-                if (IsTileDangerousNowOrSoon(n, bombsNow, stepTime)) continue;
-
-                float s = ScoreTile(n, bombsNow, stepTime);
-                if (s > bestScore)
-                {
-                    bestScore = s;
-                    best = dir;
-                }
-            }
-
-            if (best != Vector2.zero)
-                return best;
-        }
-
-        return Vector2.zero;
-    }
-
     bool TryPlaceBombFromRangeIfGood(Vector2 myTile, Vector2 targetTile, Bomb[] bombsNow, float distToTarget)
     {
         if (movement == null || movement.isDead) return false;
-        if (!allowPlaceBombInRange)
-            return false;
+        if (!allowPlaceBombInRange) return false;
+        if (IsStunnedPlaying()) return false;
 
         int myRadius = GetEffectiveMyBombRadius() + Mathf.Max(0, extraBombRangeTiles);
 
@@ -466,6 +435,7 @@ public class BossBomberAI : MonoBehaviour
     bool TryPlaceBombWithEscape(Vector2 myTile, Bomb[] bombsNow)
     {
         if (movement == null || movement.isDead) return false;
+        if (IsStunnedPlaying()) return false;
 
         if (!IsPlaceBombAllowedNow(myTile))
             return false;
@@ -493,6 +463,7 @@ public class BossBomberAI : MonoBehaviour
     {
         if (movement == null || movement.isDead) return false;
         if (movement.IsDamagedVisualActive) return false;
+        if (IsStunnedPlaying()) return false;
         if (bomb == null) return false;
         if (bomb.BombsRemaining <= 0) return false;
         if (Time.time - lastBombTime < bombChainCooldown) return false;
@@ -607,6 +578,40 @@ public class BossBomberAI : MonoBehaviour
         isEvading = true;
         lastDirection = bestDir;
         return true;
+    }
+
+    Vector2 GetBestStepAwayFromTarget(Vector2 myTile, Vector2 targetTile, Bomb[] bombsNow)
+    {
+        float stepTime = GetSingleStepTravelTimeSeconds();
+        Vector2 best = Vector2.zero;
+        float bestScore = float.NegativeInfinity;
+
+        Vector2 awayPrimary = GetStepTowards(myTile - targetTile);
+
+        for (int pass = 0; pass < 2; pass++)
+        {
+            for (int i = 0; i < Dirs.Length; i++)
+            {
+                Vector2 dir = (pass == 0 && i == 0) ? awayPrimary : Dirs[i];
+                Vector2 n = myTile + dir;
+
+                if (dir == Vector2.zero) continue;
+                if (!IsWalkableTile(n)) continue;
+                if (IsTileDangerousNowOrSoon(n, bombsNow, stepTime)) continue;
+
+                float s = ScoreTile(n, bombsNow, stepTime);
+                if (s > bestScore)
+                {
+                    bestScore = s;
+                    best = dir;
+                }
+            }
+
+            if (best != Vector2.zero)
+                return best;
+        }
+
+        return Vector2.zero;
     }
 
     Vector2 WanderSafely(Vector2 myTile, Bomb[] bombsNow)
@@ -1068,6 +1073,11 @@ public class BossBomberAI : MonoBehaviour
     bool IsDamagedPlaying()
     {
         return movement != null && movement.IsDamagedVisualActive;
+    }
+
+    bool IsStunnedPlaying()
+    {
+        return stun != null && stun.IsStunned;
     }
 
     struct Node
