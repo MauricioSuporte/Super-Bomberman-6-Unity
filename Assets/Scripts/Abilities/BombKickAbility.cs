@@ -11,8 +11,12 @@ public class BombKickAbility : MonoBehaviour, IMovementAbility
 
     private const string KickClipResourcesPath = "Sounds/KickBomb";
     private static AudioClip cachedKickClip;
+
     private const string KickStopClipResourcesPath = "Sounds/kickstop";
     private static AudioClip cachedKickStopClip;
+
+    private static float kickSfxBlockedUntil = 0f;
+    private static readonly object kickSfxGate = new();
 
     [SerializeField] private bool enabledAbility;
 
@@ -105,8 +109,7 @@ public class BombKickAbility : MonoBehaviour, IMovementAbility
 
         kickedByMe.Add(bomb);
 
-        if (audioSource != null && cachedKickClip != null)
-            audioSource.PlayOneShot(cachedKickClip);
+        TryPlayKickSfx_NoOverlap(cachedKickClip, 1f);
 
         return true;
     }
@@ -144,8 +147,8 @@ public class BombKickAbility : MonoBehaviour, IMovementAbility
 
         ListPool<Bomb>.Release(toRemove);
 
-        if (stoppedAny && audioSource != null && cachedKickStopClip != null)
-            audioSource.PlayOneShot(cachedKickStopClip);
+        if (stoppedAny)
+            TryPlayKickSfx_NoOverlap(cachedKickStopClip, 1f);
     }
 
     private void PruneKickedSet()
@@ -165,6 +168,30 @@ public class BombKickAbility : MonoBehaviour, IMovementAbility
             kickedByMe.Remove(toRemove[i]);
 
         ListPool<Bomb>.Release(toRemove);
+    }
+
+    private void TryPlayKickSfx_NoOverlap(AudioClip clip, float volume)
+    {
+        if (audioSource == null || clip == null)
+            return;
+
+        float clipLen = clip.length > 0.001f ? clip.length : 0.10f;
+
+        bool canPlay;
+
+        lock (kickSfxGate)
+        {
+            float now = Time.time;
+            canPlay = now >= kickSfxBlockedUntil;
+
+            if (canPlay)
+                kickSfxBlockedUntil = now + clipLen;
+        }
+
+        if (!canPlay)
+            return;
+
+        audioSource.PlayOneShot(clip, volume);
     }
 
     private static class ListPool<T>

@@ -20,7 +20,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
     private static readonly object bombSfxGate = new();
 
     [Header("Kick")]
-    public float kickSpeed = 9f;
+    public float kickSpeed = 10f;
 
     [Header("Punch")]
     public float punchDuration = 0.22f;
