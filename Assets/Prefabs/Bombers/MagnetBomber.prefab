@@ -46,6 +46,7 @@ Transform:
   - {fileID: 858095697731552257}
   - {fileID: 6918279977256922494}
   - {fileID: 3194057631086398555}
+  - {fileID: 237960179505124317}
   - {fileID: 7875768528615782267}
   - {fileID: 7333132863478847643}
   m_Father: {fileID: 0}
@@ -346,10 +347,15 @@ MonoBehaviour:
   escapeTarget: {x: -3, y: 2}
   reachEpsilon: 0.06
   waitBeforeEscapeSeconds: 4
+  destroyBossGameObject: 0
+  snapToGoalOnFinish: 1
   maxNodes: 4096
   maxExpandSteps: 20000
   disablePlayerBombControllerWhileLocked: 1
   disablePlayerCollidersWhileLocked: 1
+  nearGoalWindowSeconds: 1.2
+  nearGoalDistance: 0.14
+  forceSnapIfOscillatingDistance: 0.25
 --- !u!82 &3101258277916350091
 AudioSource:
   m_ObjectHideFlags: 0
@@ -472,6 +478,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::StunReceiver
   isStunned: 0
+  useAnimatedStunRenderer: 1
+  stunAnimatedRenderer: {fileID: 2122818773508748709}
+  disableShakeWhenUsingAnimatedStun: 1
+  visualOverrideWhileStunned: 1
+  disablePlayerControllersWhileStunned: 1
+  onlyDisableIfTaggedPlayer: 1
   shakeWhileStunned: 1
   shakeAmplitude: 0.03
   shakeFrequency: 22
@@ -843,6 +855,124 @@ MonoBehaviour:
   sequenceDuration: 0.5
   loop: 1
   idle: 1
+  frameOffsets: []
+  pingPong: 0
+  disableOffsetsIfThisObjectHasRigidbody2D: 1
+  disableOffsetsIfStandaloneRoot: 1
+--- !u!1 &4446294064630530182
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 237960179505124317}
+  - component: {fileID: 6663902702452143114}
+  - component: {fileID: 2122818773508748709}
+  m_Layer: 10
+  m_Name: Stun
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &237960179505124317
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4446294064630530182}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0.4, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 8741466755873979984}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!212 &6663902702452143114
+SpriteRenderer:
+  serializedVersion: 2
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4446294064630530182}
+  m_Enabled: 0
+  m_CastShadows: 0
+  m_ReceiveShadows: 0
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 0
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 10754, guid: 0000000000000000f000000000000000, type: 0}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 0
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 5
+  m_MaskInteraction: 0
+  m_Sprite: {fileID: -1628214379812336855, guid: 11cf8da23de195e46bccbc2e440bfc1c, type: 3}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_FlipX: 0
+  m_FlipY: 0
+  m_DrawMode: 0
+  m_Size: {x: 1, y: 1.5}
+  m_AdaptiveModeThreshold: 0.5
+  m_SpriteTileMode: 0
+  m_WasSpriteAssigned: 1
+  m_SpriteSortPoint: 0
+--- !u!114 &2122818773508748709
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4446294064630530182}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3a4b55e1b961d144197e1a7a4a391956, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  idleSprite: {fileID: -1628214379812336855, guid: 11cf8da23de195e46bccbc2e440bfc1c, type: 3}
+  animationSprite:
+  - {fileID: -1628214379812336855, guid: 11cf8da23de195e46bccbc2e440bfc1c, type: 3}
+  - {fileID: 6964854660695469448, guid: 11cf8da23de195e46bccbc2e440bfc1c, type: 3}
+  allowFlipX: 0
+  animationTime: 0.1
+  useSequenceDuration: 0
+  sequenceDuration: 0.5
+  loop: 0
+  idle: 0
   frameOffsets: []
   pingPong: 0
   disableOffsetsIfThisObjectHasRigidbody2D: 1

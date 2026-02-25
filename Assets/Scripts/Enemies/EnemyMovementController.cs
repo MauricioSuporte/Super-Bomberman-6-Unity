@@ -602,4 +602,6 @@ public class EnemyMovementController : MonoBehaviour, IKillable
         chosenDir = freeDirs[Random.Range(0, freeDirs.Count)];
         return true;
     }
+
+    public bool IsDamagedVisualActive => isInDamagedLoop;
 }
