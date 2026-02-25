@@ -457,6 +457,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         charactersInside.Clear();
         bombCollider.isTrigger = true;
 
+        SetAirborneColliderSuppressed(true);
         PauseFuse();
 
         TryPlayBombSfx_NoOverlap(punchSfx, punchSfxVolume);
@@ -625,6 +626,8 @@ public class Bomb : MonoBehaviour, IMagnetPullable
 
         if (!HasExploded)
         {
+            SetAirborneColliderSuppressed(false);
+
             RecalculateCharactersInsideAt(cur);
             bombCollider.isTrigger = charactersInside.Count > 0;
         }
@@ -983,7 +986,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
     public void MarkAsExploded()
     {
         HasExploded = true;
-
+        SetAirborneColliderSuppressed(false);
         StopKickPunchMagnetRoutines();
 
         isKicked = false;
@@ -1249,5 +1252,31 @@ public class Bomb : MonoBehaviour, IMagnetPullable
             return;
 
         audioSource.PlayOneShot(clip, volume);
+    }
+
+    private bool airborneColliderSuppressed;
+    private bool airbornePrevColliderEnabled;
+
+    private void SetAirborneColliderSuppressed(bool suppressed)
+    {
+        if (bombCollider == null)
+            return;
+
+        if (suppressed)
+        {
+            if (airborneColliderSuppressed)
+                return;
+
+            airbornePrevColliderEnabled = bombCollider.enabled;
+            bombCollider.enabled = false;          // <- chave: não recebe Explosion trigger
+            airborneColliderSuppressed = true;
+            return;
+        }
+
+        if (!airborneColliderSuppressed)
+            return;
+
+        bombCollider.enabled = airbornePrevColliderEnabled;
+        airborneColliderSuppressed = false;
     }
 }
