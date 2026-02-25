@@ -52,6 +52,8 @@ public class BossEscapeOnLastLife : MonoBehaviour
     private float dbgNearGoalFirstTime;
     private int dbgNearGoalCrosses;
 
+    private readonly GridAStarPathfinder2D pathfinder = new();
+
     private void Awake()
     {
         if (!boss) boss = GetComponent<MovementController>();
@@ -143,7 +145,16 @@ public class BossEscapeOnLastLife : MonoBehaviour
             yield break;
         }
 
-        List<Vector2> path = FindPathAStar(dbgStart, dbgGoal, tile);
+        List<Vector2> path = pathfinder.FindPath(
+            dbgStart,
+            dbgGoal,
+            tile,
+            boss.obstacleMask,
+            gameObject,
+            maxNodes,
+            maxExpandSteps,
+            overlapBoxScale: 0.6f);
+
         if (path == null || path.Count == 0)
         {
             yield return StartCoroutine(FallbackWalkTowards(dbgGoal, tile));
@@ -249,8 +260,7 @@ public class BossEscapeOnLastLife : MonoBehaviour
 
             float distToGoal = Vector2.Distance(pos, dbgGoal);
 
-            if (absRemaining <= stepEps ||
-                Mathf.Sign(remaining) != Mathf.Sign(dirSign))
+            if (absRemaining <= stepEps || Mathf.Sign(remaining) != Mathf.Sign(dirSign))
             {
                 SnapBossTo(tileCenter);
                 break;
@@ -454,160 +464,6 @@ public class BossEscapeOnLastLife : MonoBehaviour
             foreach (var bomb in playerBombs)
                 if (bomb) bomb.enabled = true;
         }
-    }
-
-    #endregion
-
-    #region A* (igual ao anterior)
-
-    private struct Node
-    {
-        public Vector2 Pos;
-        public int Parent;
-        public int G;
-        public int F;
-    }
-
-    private List<Vector2> FindPathAStar(Vector2 start, Vector2 goal, float tile)
-    {
-        if (start == goal)
-            return new List<Vector2> { start };
-
-        var open = new List<int>();
-        var nodes = new List<Node>();
-        var openMap = new Dictionary<Vector2, int>();
-        var closed = new HashSet<Vector2>();
-
-        int Heur(Vector2 a, Vector2 b)
-            => Mathf.Abs(Mathf.RoundToInt((a.x - b.x) / tile)) +
-               Mathf.Abs(Mathf.RoundToInt((a.y - b.y) / tile));
-
-        if (IsSolidAtWorld(goal))
-            return null;
-
-        nodes.Add(new Node { Pos = start, Parent = -1, G = 0, F = Heur(start, goal) });
-        open.Add(0);
-        openMap[start] = 0;
-
-        int expanded = 0;
-
-        while (open.Count > 0)
-        {
-            int bestOpenIndex = 0;
-            int bestNodeIndex = open[0];
-            int bestF = nodes[bestNodeIndex].F;
-
-            for (int i = 1; i < open.Count; i++)
-            {
-                int ni = open[i];
-                if (nodes[ni].F < bestF)
-                {
-                    bestF = nodes[ni].F;
-                    bestNodeIndex = ni;
-                    bestOpenIndex = i;
-                }
-            }
-
-            open.RemoveAt(bestOpenIndex);
-            openMap.Remove(nodes[bestNodeIndex].Pos);
-
-            Vector2 cur = nodes[bestNodeIndex].Pos;
-            if (cur == goal)
-                return Reconstruct(nodes, bestNodeIndex);
-
-            closed.Add(cur);
-
-            expanded++;
-            if (expanded > maxExpandSteps || nodes.Count > maxNodes)
-                return null;
-
-            Vector2[] neighbors =
-            {
-                cur + Vector2.up * tile,
-                cur + Vector2.down * tile,
-                cur + Vector2.left * tile,
-                cur + Vector2.right * tile
-            };
-
-            foreach (var np in neighbors)
-                ProcessNeighbor(np, bestNodeIndex, goal, tile, nodes, open, openMap, closed);
-        }
-
-        return null;
-    }
-
-    private static List<Vector2> Reconstruct(List<Node> nodes, int endIndex)
-    {
-        var path = new List<Vector2>();
-        int cur = endIndex;
-        while (cur >= 0)
-        {
-            path.Add(nodes[cur].Pos);
-            cur = nodes[cur].Parent;
-        }
-        path.Reverse();
-        return path;
-    }
-
-    private bool IsSolidAtWorld(Vector2 worldPos)
-    {
-        float tile = Mathf.Max(0.0001f, boss.tileSize);
-        Vector2 size = Vector2.one * (tile * 0.6f);
-
-        var hits = Physics2D.OverlapBoxAll(worldPos, size, 0f, boss.obstacleMask);
-        foreach (var hit in hits)
-        {
-            if (!hit) continue;
-            if (hit.isTrigger) continue;
-            if (hit.gameObject == gameObject) continue;
-            return true;
-        }
-        return false;
-    }
-
-    private void ProcessNeighbor(
-        Vector2 np,
-        int parent,
-        Vector2 goal,
-        float tile,
-        List<Node> nodes,
-        List<int> open,
-        Dictionary<Vector2, int> openMap,
-        HashSet<Vector2> closed)
-    {
-        if (closed.Contains(np)) return;
-        if (IsSolidAtWorld(np)) return;
-
-        int Heur(Vector2 a, Vector2 b)
-            => Mathf.Abs(Mathf.RoundToInt((a.x - b.x) / tile)) +
-               Mathf.Abs(Mathf.RoundToInt((a.y - b.y) / tile));
-
-        int newG = nodes[parent].G + 1;
-
-        if (openMap.TryGetValue(np, out int existing))
-        {
-            if (newG < nodes[existing].G)
-            {
-                var up = nodes[existing];
-                up.G = newG;
-                up.F = newG + Heur(np, goal);
-                up.Parent = parent;
-                nodes[existing] = up;
-            }
-            return;
-        }
-
-        int idx = nodes.Count;
-        nodes.Add(new Node
-        {
-            Pos = np,
-            Parent = parent,
-            G = newG,
-            F = newG + Heur(np, goal)
-        });
-
-        open.Add(idx);
-        openMap[np] = idx;
     }
 
     #endregion
