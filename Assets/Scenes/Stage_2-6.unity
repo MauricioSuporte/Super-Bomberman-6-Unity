@@ -5541,7 +5541,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2258062271764064381, guid: a009117f38ad56d4fb5e2e5fa7445a16, type: 3}
       propertyPath: life
-      value: 2
+      value: 6
       objectReference: {fileID: 0}
     - target: {fileID: 8243230538853254392, guid: a009117f38ad56d4fb5e2e5fa7445a16, type: 3}
       propertyPath: groundTiles
@@ -5590,6 +5590,14 @@ PrefabInstance:
     - target: {fileID: 8741466755873979984, guid: a009117f38ad56d4fb5e2e5fa7445a16, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8953337400205497012, guid: a009117f38ad56d4fb5e2e5fa7445a16, type: 3}
+      propertyPath: escapeTarget.y
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 8953337400205497012, guid: a009117f38ad56d4fb5e2e5fa7445a16, type: 3}
+      propertyPath: immediateFinishDistance
+      value: 0.4
       objectReference: {fileID: 0}
     - target: {fileID: 8953337400205497012, guid: a009117f38ad56d4fb5e2e5fa7445a16, type: 3}
       propertyPath: waitBeforeEscapeSeconds

@@ -190,6 +190,9 @@ MonoBehaviour:
   perpendicularAlignMultiplier: 8
   snapPerpendicularOnAxisStart: 1
   alignEpsilon: 0.0015
+  enableCorridorAxisLock: 1
+  corridorCenterEpsilon: 0.06
+  corridorSolidProbeSizeMul: 0.9
   canPassTaggedObstacles: 0
   passObstacleTag: Water
   suppressInactivityAnimation: 0
@@ -342,10 +345,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7034f6eeeab99fd45bf2cf2feeac7281, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BossEscapeOnLastLife
+  debugLogs: 1
+  debugLogsVerbose: 1
+  debugNearGoalLogEvery: 0.15
   boss: {fileID: 1907593265075809238}
   aiMove: {fileID: 1907593265075809238}
   bossAIToDisable: {fileID: 4730492100800285400}
-  escapeTarget: {x: -3, y: 2}
+  escapeTarget: {x: -3, y: 1.49}
   reachEpsilon: 0.06
   waitBeforeEscapeSeconds: 4
   destroyBossGameObject: 0
