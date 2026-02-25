@@ -12,7 +12,7 @@ public class CharacterHealth : MonoBehaviour
 
     [Header("Hit / Invulnerability")]
     public float hitInvulnerableDuration = 3f;
-    public float hitBlinkInterval = 0.1f;
+    public float hitBlinkInterval = 0.01f;
 
     [Header("Temporary Invulnerability Visual")]
     [Range(0f, 1f)]
@@ -21,6 +21,9 @@ public class CharacterHealth : MonoBehaviour
 
     [Header("Damaged Animation Instead Of Blink")]
     public bool playDamagedLoopInsteadOfBlink;
+
+    [Tooltip("If true, keeps blinking even when using the damaged loop. Default: false.")]
+    public bool playDamagedLoopAndBlink = false;
 
     public event Action<int> Damaged;
     public event Action Died;
@@ -238,7 +241,13 @@ public class CharacterHealth : MonoBehaviour
     {
         isInvulnerable = true;
 
-        if (!playDamagedLoopInsteadOfBlink)
+        // NEW:
+        // - If damaged loop is OFF => blink
+        // - If damaged loop is ON and "and blink" is ON => blink
+        // - If damaged loop is ON and "and blink" is OFF => no blink (just wait)
+        bool shouldBlink = !playDamagedLoopInsteadOfBlink || playDamagedLoopAndBlink;
+
+        if (shouldBlink)
         {
             float elapsed = 0f;
             bool faded = false;

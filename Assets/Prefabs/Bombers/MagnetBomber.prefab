@@ -325,10 +325,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CharacterHealth
   life: 6
   hitInvulnerableDuration: 1
-  hitBlinkInterval: 0.1
+  hitBlinkInterval: 0.01
   tempSlowdownStartNormalized: 0.7
   tempEndBlinkMultiplier: 4
   playDamagedLoopInsteadOfBlink: 1
+  playDamagedLoopAndBlink: 1
 --- !u!114 &8953337400205497012
 MonoBehaviour:
   m_ObjectHideFlags: 0
