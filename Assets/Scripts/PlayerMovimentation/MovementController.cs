@@ -100,6 +100,13 @@ public class MovementController : MonoBehaviour, IKillable
     [SerializeField] private bool snapPerpendicularOnAxisStart = true;
     [SerializeField, Range(0.0001f, 0.05f)] private float alignEpsilon = 0.0015f;
 
+    [Header("Axis Lock")]
+    [SerializeField] private bool enableCorridorAxisLock = true;
+
+    [SerializeField, Range(0.0001f, 0.25f)] private float corridorCenterEpsilon = 0.06f;
+
+    [SerializeField, Range(0.2f, 1.2f)] private float corridorSolidProbeSizeMul = 0.9f;
+
     [Header("Special Pass (by Tag)")]
     [SerializeField] private bool canPassTaggedObstacles;
     [SerializeField] private string passObstacleTag = "Water";
@@ -508,17 +515,92 @@ public class MovementController : MonoBehaviour, IKillable
         return speedInternal != before;
     }
 
+    private bool IsSolidAtCustom(Vector2 worldPosition, float sizeMul)
+    {
+        Vector2 size = Vector2.one * (tileSize * sizeMul);
+
+        Collider2D[] hits = Physics2D.OverlapBoxAll(worldPosition, size, 0f, obstacleMask);
+        if (hits == null || hits.Length == 0)
+            return false;
+
+        bool canPassDestructibles = abilitySystem != null &&
+                                   abilitySystem.IsEnabled(DestructiblePassAbility.AbilityId);
+
+        for (int i = 0; i < hits.Length; i++)
+        {
+            var hit = hits[i];
+            if (hit == null) continue;
+            if (hit.gameObject == gameObject) continue;
+            if (hit.isTrigger) continue;
+
+            if (canPassTaggedObstacles && hit.CompareTag(passObstacleTag))
+                continue;
+
+            if (canPassDestructibles && hit.CompareTag("Destructibles"))
+                continue;
+
+            if (hit.gameObject.layer == LayerMask.NameToLayer("Bomb"))
+            {
+                var bomb = hit.GetComponent<Bomb>();
+                if (bomb != null && bomb.Owner == bombController)
+                {
+                    var bombCollider = bomb.GetComponent<Collider2D>();
+                    if (bombCollider != null && bombCollider.isTrigger)
+                        continue;
+                }
+            }
+
+            return true;
+        }
+
+        return false;
+    }
+
     protected virtual void FixedUpdate()
     {
-        if (inputLocked || GamePauseController.IsPaused || isDead)
+        if (ShouldSkipFixedUpdate())
             return;
+
+        float moveSpeed = GetMoveSpeedPerFixedFrame();
+
+        Vector2 position = Rigidbody.position;
+
+        bool movingVertical = Mathf.Abs(direction.y) > 0.01f;
+        bool movingHorizontal = Mathf.Abs(direction.x) > 0.01f;
+
+        UpdateCurrentAxis(movingHorizontal, movingVertical);
+        AlignPerpendicularForCurrentAxis(ref position, moveSpeed);
+
+        if (enableCorridorAxisLock && tileSize > 0.0001f)
+        {
+            if (TryApplyCorridorAxisLock(position, movingHorizontal, movingVertical, moveSpeed))
+                return;
+        }
+
+        ApplyCenteringWhenSqueezed(ref position, moveSpeed, movingHorizontal, movingVertical);
+
+        Vector2 targetPosition = position + direction * moveSpeed;
+
+        if (!IsBlocked(targetPosition))
+        {
+            Rigidbody.MovePosition(targetPosition);
+            return;
+        }
+
+        TrySlideIfBlocked(position, moveSpeed, movingHorizontal, movingVertical);
+    }
+
+    private bool ShouldSkipFixedUpdate()
+    {
+        if (inputLocked || GamePauseController.IsPaused || isDead)
+            return true;
 
         SyncMovementAbilitiesFromAbilitySystemIfChanged();
 
         if (!hasInput || direction == Vector2.zero)
         {
             currentAxis = MoveAxis.None;
-            return;
+            return true;
         }
 
         if (stunReceiver != null && stunReceiver.IsStunned)
@@ -527,33 +609,109 @@ public class MovementController : MonoBehaviour, IKillable
                 Rigidbody.linearVelocity = Vector2.zero;
 
             currentAxis = MoveAxis.None;
-            return;
+            return true;
         }
 
+        return false;
+    }
+
+    private float GetMoveSpeedPerFixedFrame()
+    {
         float dt = Time.fixedDeltaTime;
         float speedWorldPerSecond = speed * tileSize;
-        float moveSpeed = speedWorldPerSecond * dt;
+        return speedWorldPerSecond * dt;
+    }
 
-        Vector2 position = Rigidbody.position;
+    private void UpdateCurrentAxis(bool movingHorizontal, bool movingVertical)
+    {
+        MoveAxis newAxis = movingHorizontal
+            ? MoveAxis.Horizontal
+            : (movingVertical ? MoveAxis.Vertical : MoveAxis.None);
 
-        bool movingVertical = Mathf.Abs(direction.y) > 0.01f;
-        bool movingHorizontal = Mathf.Abs(direction.x) > 0.01f;
-
-        MoveAxis newAxis = movingHorizontal ? MoveAxis.Horizontal : (movingVertical ? MoveAxis.Vertical : MoveAxis.None);
-        bool axisJustStartedOrChanged = (newAxis != MoveAxis.None && newAxis != currentAxis);
         currentAxis = newAxis;
+    }
 
+    private void AlignPerpendicularForCurrentAxis(ref Vector2 position, float moveSpeed)
+    {
         if (currentAxis == MoveAxis.Horizontal)
         {
             AlignPerpendicular(ref position, axisIsHorizontal: true, moveSpeed: moveSpeed,
-                snapImmediate: axisJustStartedOrChanged && snapPerpendicularOnAxisStart);
+                snapImmediate: snapPerpendicularOnAxisStart);
         }
         else if (currentAxis == MoveAxis.Vertical)
         {
             AlignPerpendicular(ref position, axisIsHorizontal: false, moveSpeed: moveSpeed,
-                snapImmediate: axisJustStartedOrChanged && snapPerpendicularOnAxisStart);
+                snapImmediate: snapPerpendicularOnAxisStart);
+        }
+    }
+
+    private bool TryApplyCorridorAxisLock(Vector2 position, bool movingHorizontal, bool movingVertical, float moveSpeed)
+    {
+        float x0 = TileFloor(position.x, tileSize);
+        float x1 = TileCeil(position.x, tileSize);
+        float y0 = TileFloor(position.y, tileSize);
+        float y1 = TileCeil(position.y, tileSize);
+
+        float cx = Mathf.Round(position.x / tileSize) * tileSize;
+        float cy = Mathf.Round(position.y / tileSize) * tileSize;
+
+        if (movingHorizontal)
+        {
+            bool lrRow0 = SolidLRAt(cx, y0);
+            bool lrRow1 = SolidLRAt(cx, y1);
+
+            bool corridorVertical = (lrRow0 || lrRow1);
+            if (!corridorVertical)
+                return false;
+
+            SnapAndStop(axisX: true, position, new Vector2(cx, position.y), moveSpeed);
+            return true;
         }
 
+        if (movingVertical)
+        {
+            bool udCol0 = SolidUDAt(x0, cy);
+            bool udCol1 = SolidUDAt(x1, cy);
+
+            bool corridorHorizontal = (udCol0 || udCol1);
+            if (!corridorHorizontal)
+                return false;
+
+            SnapAndStop(axisX: false, position, new Vector2(position.x, cy), moveSpeed);
+            return true;
+        }
+
+        return false;
+    }
+
+    private void SnapAndStop(bool axisX, Vector2 currentPos, Vector2 snapTarget, float moveSpeed)
+    {
+        if (Rigidbody != null)
+            Rigidbody.linearVelocity = Vector2.zero;
+
+        direction = Vector2.zero;
+        hasInput = false;
+        currentAxis = MoveAxis.None;
+
+        float snapStep = moveSpeed * Mathf.Max(1f, perpendicularAlignMultiplier);
+
+        Vector2 snappedPos;
+        if (axisX)
+        {
+            float newX = Mathf.MoveTowards(currentPos.x, snapTarget.x, snapStep);
+            snappedPos = new Vector2(newX, currentPos.y);
+        }
+        else
+        {
+            float newY = Mathf.MoveTowards(currentPos.y, snapTarget.y, snapStep);
+            snappedPos = new Vector2(currentPos.x, newY);
+        }
+
+        Rigidbody.MovePosition(snappedPos);
+    }
+
+    private void ApplyCenteringWhenSqueezed(ref Vector2 position, float moveSpeed, bool movingHorizontal, bool movingVertical)
+    {
         float half = tileSize * 0.5f;
 
         bool blockLeft = IsSolidAt(position + Vector2.left * half);
@@ -572,15 +730,10 @@ public class MovementController : MonoBehaviour, IKillable
             float targetY = Mathf.Round(position.y / tileSize) * tileSize;
             position.y = Mathf.MoveTowards(position.y, targetY, moveSpeed);
         }
+    }
 
-        Vector2 targetPosition = position + direction * moveSpeed;
-
-        if (!IsBlocked(targetPosition))
-        {
-            Rigidbody.MovePosition(targetPosition);
-            return;
-        }
-
+    private void TrySlideIfBlocked(Vector2 position, float moveSpeed, bool movingHorizontal, bool movingVertical)
+    {
         if (movingVertical)
         {
             float centerX = Mathf.Round(position.x / tileSize) * tileSize;
@@ -588,8 +741,11 @@ public class MovementController : MonoBehaviour, IKillable
 
             if (offsetX > SlideDeadZone)
                 TrySlideHorizontally(position, moveSpeed);
+
+            return;
         }
-        else if (movingHorizontal)
+
+        if (movingHorizontal)
         {
             float centerY = Mathf.Round(position.y / tileSize) * tileSize;
             float offsetY = Mathf.Abs(position.y - centerY);
@@ -1749,5 +1905,24 @@ public class MovementController : MonoBehaviour, IKillable
         if (r == null) return;
 
         r.ClearRuntimeBaseOffset();
+    }
+
+    private static float TileFloor(float v, float t) => Mathf.Floor(v / t) * t;
+    private static float TileCeil(float v, float t) => Mathf.Ceil(v / t) * t;
+
+    private bool SolidUDAt(float xCenter, float yCenter)
+    {
+        Vector2 c = new(xCenter, yCenter);
+        bool u = IsSolidAtCustom(c + Vector2.up * tileSize, corridorSolidProbeSizeMul);
+        bool d = IsSolidAtCustom(c + Vector2.down * tileSize, corridorSolidProbeSizeMul);
+        return u && d;
+    }
+
+    private bool SolidLRAt(float xCenter, float yCenter)
+    {
+        Vector2 c = new Vector2(xCenter, yCenter);
+        bool l = IsSolidAtCustom(c + Vector2.left * tileSize, corridorSolidProbeSizeMul);
+        bool r = IsSolidAtCustom(c + Vector2.right * tileSize, corridorSolidProbeSizeMul);
+        return l && r;
     }
 }
