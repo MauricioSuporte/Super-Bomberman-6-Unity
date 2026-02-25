@@ -47,7 +47,6 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
     private AudioClip[] throwSfxClips;
 
     private AnimatedSpriteRenderer activeCarryRenderer;
-    private Vector2 activeCarryFace = Vector2.down;
 
     private AudioSource audioSource;
     private BombController bombController;
@@ -269,8 +268,6 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
         if (heldBombCollider != null)
             heldBombCollider.enabled = false;
 
-        ForceBombIdle(true);
-
         movement.SetExternalVisualSuppressed(true);
         SetMoveSprites(false);
         SetAllCarrySprites(false);
@@ -423,8 +420,6 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
         if (heldBombCollider != null)
             heldBombCollider.enabled = true;
 
-        ForceBombIdle(true);
-
         if (!IsHeldBombValid())
         {
             if (pick != null) pick.enabled = false;
@@ -521,7 +516,6 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
             desired.pingPong = false;
 
             activeCarryRenderer = desired;
-            activeCarryFace = face;
 
             if (!desired.idle)
                 desired.CurrentFrame = 0;
@@ -543,8 +537,6 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
             p.x = 0f;
             p.y = movement.tileSize;
             heldBomb.transform.localPosition = p;
-
-            ForceBombIdle(true);
         }
     }
 
@@ -711,17 +703,6 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
         heldBombAnim.loop = true;
         heldBombAnim.pingPong = false;
         heldBombAnim.SetFrozen(false);
-        heldBombAnim.RefreshFrame();
-    }
-
-    private void ForceBombIdle(bool keepIdle)
-    {
-        if (heldBombAnim == null)
-            return;
-
-        heldBombAnim.idle = true;
-        heldBombAnim.loop = true;
-        heldBombAnim.pingPong = false;
         heldBombAnim.RefreshFrame();
     }
 

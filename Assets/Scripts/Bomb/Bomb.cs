@@ -429,9 +429,6 @@ public class Bomb : MonoBehaviour, IMagnetPullable
 
         TryPlayBombSfx_NoOverlap(punchSfx, punchSfxVolume);
 
-        if (anim != null)
-            anim.SetFrozen(true);
-
         punchRoutine = StartCoroutine(PunchRoutineFixed_Hybrid(
             logicalOrigin,
             yOff,
@@ -829,9 +826,6 @@ public class Bomb : MonoBehaviour, IMagnetPullable
 
         isKicked = true;
 
-        if (anim != null)
-            anim.SetFrozen(true);
-
         kickRoutine = StartCoroutine(KickRoutineFixed());
         return true;
     }
@@ -1050,9 +1044,6 @@ public class Bomb : MonoBehaviour, IMagnetPullable
 
         rb.position = origin;
         transform.position = origin;
-
-        if (anim != null)
-            anim.SetFrozen(true);
 
         TryPlayBombSfx_NoOverlap(magnetPullSfx, magnetPullSfxVolume);
 
