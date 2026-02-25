@@ -294,6 +294,38 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         return TileHasCharacter(pos, charMask);
     }
 
+    private void StunMovementControllersAtTile(Vector2 tileCenter, float seconds)
+    {
+        int charMask = LayerMask.GetMask("Player", "Enemy");
+
+        Collider2D[] hits = Physics2D.OverlapBoxAll(tileCenter, Vector2.one * (kickTileSize * 0.6f), 0f, charMask);
+        if (hits == null || hits.Length == 0)
+            return;
+
+        HashSet<StunReceiver> stunned = null;
+
+        for (int i = 0; i < hits.Length; i++)
+        {
+            var h = hits[i];
+            if (h == null)
+                continue;
+
+            var mc = h.GetComponentInParent<MovementController>();
+            if (mc == null)
+                continue;
+
+            var sr = h.GetComponentInParent<StunReceiver>();
+            if (sr == null)
+                continue;
+
+            stunned ??= new HashSet<StunReceiver>();
+            if (!stunned.Add(sr))
+                continue;
+
+            sr.Stun(seconds);
+        }
+    }
+
     private bool IsKickBlocked(Vector2 target)
     {
         Vector2 size = Vector2.one * (kickTileSize * 0.6f);
@@ -568,6 +600,8 @@ public class Bomb : MonoBehaviour, IMagnetPullable
                 b--;
                 continue;
             }
+
+            StunMovementControllersAtTile(cur, 0.5f);
 
             TryPlayBombSfx_NoOverlap(bounceSfx, bounceSfxVolume);
 
