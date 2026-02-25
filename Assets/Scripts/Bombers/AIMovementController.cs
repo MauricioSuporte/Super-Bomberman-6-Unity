@@ -55,7 +55,7 @@ public class AIMovementController : MovementController
     {
         base.Awake();
 
-        lastPos = (Rigidbody != null) ? Rigidbody.position : (Vector2)transform.position;
+        lastPos = GetWorldPos();
         stuckTimer = 0f;
 
         committedDir = Vector2.zero;
@@ -85,7 +85,7 @@ public class AIMovementController : MovementController
     {
         base.OnEnable();
 
-        lastPos = (Rigidbody != null) ? Rigidbody.position : (Vector2)transform.position;
+        lastPos = GetWorldPos();
         stuckTimer = 0f;
 
         committedDir = Vector2.zero;
@@ -111,7 +111,7 @@ public class AIMovementController : MovementController
         if (damagedVisualActive || introIdleVisualActive)
             return;
 
-        Vector2 pos = (Rigidbody != null) ? Rigidbody.position : (Vector2)transform.position;
+        Vector2 pos = GetWorldPos();
 
         float moved = (pos - lastPos).sqrMagnitude;
         if (moved > (stuckMoveEpsilon * stuckMoveEpsilon))
@@ -121,7 +121,9 @@ public class AIMovementController : MovementController
             return;
         }
 
-        if (aiDirection.sqrMagnitude > 0.01f && !inputLocked && !GamePauseController.IsPaused && !isDead)
+        bool wantsMove = aiDirection.sqrMagnitude > 0.01f;
+        bool actuallyTryingToMove = Direction.sqrMagnitude > 0.01f;
+        if (wantsMove && actuallyTryingToMove && !inputLocked && !GamePauseController.IsPaused && !isDead)
             stuckTimer += Time.deltaTime;
         else
             stuckTimer = 0f;
@@ -129,33 +131,9 @@ public class AIMovementController : MovementController
 
     protected override void HandleInput()
     {
-        if (damagedVisualActive)
+        if (damagedVisualActive || introIdleVisualActive)
         {
-            committedDir = Vector2.zero;
-            lastDetour = Vector2.zero;
-
-            aiDirection = Vector2.zero;
-
-            ApplyDirectionFromVector(Vector2.zero);
-
-            if (Rigidbody != null)
-                Rigidbody.linearVelocity = Vector2.zero;
-
-            return;
-        }
-
-        if (introIdleVisualActive)
-        {
-            committedDir = Vector2.zero;
-            lastDetour = Vector2.zero;
-
-            aiDirection = Vector2.zero;
-
-            ApplyDirectionFromVector(Vector2.zero);
-
-            if (Rigidbody != null)
-                Rigidbody.linearVelocity = Vector2.zero;
-
+            ClearAIAndStop();
             return;
         }
 
@@ -169,31 +147,57 @@ public class AIMovementController : MovementController
             return;
         }
 
-        bool isStuck = stuckTimer >= stuckSeconds;
-        bool forwardBlocked = avoidWhenForwardBlocked && IsMoveBlocked(desired);
+        bool nearCenter = !onlyTurnNearTileCenter || IsNearTileCenter();
+        bool canTurnNow = (Time.time - lastTurnTime) >= minTurnInterval;
 
         if (Time.time < commitUntilTime && committedDir != Vector2.zero)
         {
-            Vector2 safeCommitted = FilterUnsafeMove(committedDir);
-            committedDir = safeCommitted;
-            ApplyDirectionFromVector(safeCommitted);
+            Vector2 keep = FilterUnsafeMove(committedDir);
+
+            if (keep != Vector2.zero && !(avoidWhenForwardBlocked && IsMoveBlocked(keep)))
+            {
+                committedDir = keep;
+                ApplyDirectionFromVector(keep);
+                return;
+            }
+
+            Vector2 detour = PickDetourStable(desired);
+            if (detour != Vector2.zero)
+            {
+                detour = FilterUnsafeMove(detour);
+                Commit(detour);
+                ApplyDirectionFromVector(detour);
+                return;
+            }
+
+            committedDir = Vector2.zero;
+            ApplyDirectionFromVector(Vector2.zero);
             return;
         }
-
-        bool nearCenter = !onlyTurnNearTileCenter || IsNearTileCenter();
 
         if (!nearCenter)
         {
             if (committedDir == Vector2.zero)
                 committedDir = desired;
 
-            Vector2 safeHold = FilterUnsafeMove(committedDir);
-            committedDir = safeHold;
-            ApplyDirectionFromVector(safeHold);
+            Vector2 hold = FilterUnsafeMove(committedDir);
+            committedDir = hold;
+
+            if (hold != Vector2.zero && avoidWhenForwardBlocked && IsMoveBlocked(hold))
+            {
+                Vector2 detour = PickDetourStable(desired);
+                detour = FilterUnsafeMove(detour);
+                committedDir = detour;
+                ApplyDirectionFromVector(detour);
+                return;
+            }
+
+            ApplyDirectionFromVector(hold);
             return;
         }
 
-        bool canTurnNow = (Time.time - lastTurnTime) >= minTurnInterval;
+        bool forwardBlocked = avoidWhenForwardBlocked && IsMoveBlocked(desired);
+        bool isStuck = stuckTimer >= stuckSeconds;
 
         if (canTurnNow && (forwardBlocked || isStuck))
         {
@@ -228,8 +232,27 @@ public class AIMovementController : MovementController
             committedDir = desired;
 
         Vector2 safeContinue = FilterUnsafeMove(committedDir);
+
+        if (safeContinue != Vector2.zero && avoidWhenForwardBlocked && IsMoveBlocked(safeContinue))
+        {
+            Vector2 detour = PickDetourStable(desired);
+            safeContinue = FilterUnsafeMove(detour);
+        }
+
         committedDir = safeContinue;
         ApplyDirectionFromVector(safeContinue);
+    }
+
+    private void ClearAIAndStop()
+    {
+        committedDir = Vector2.zero;
+        lastDetour = Vector2.zero;
+        aiDirection = Vector2.zero;
+
+        ApplyDirectionFromVector(Vector2.zero);
+
+        if (Rigidbody != null)
+            Rigidbody.linearVelocity = Vector2.zero;
     }
 
     private Vector2 FilterUnsafeMove(Vector2 dir)
@@ -237,13 +260,15 @@ public class AIMovementController : MovementController
         if (dir == Vector2.zero)
             return Vector2.zero;
 
-        Vector2 pos = (Rigidbody != null) ? Rigidbody.position : (Vector2)transform.position;
-
         float t = Mathf.Max(0.0001f, tileSize);
-        Vector2 nextTile = new Vector2(
-            Mathf.Round((pos.x + dir.x * t) / t) * t,
-            Mathf.Round((pos.y + dir.y * t) / t) * t
+        Vector2 pos = GetWorldPos();
+
+        Vector2 myTile = new(
+            Mathf.Round(pos.x / t) * t,
+            Mathf.Round(pos.y / t) * t
         );
+
+        Vector2 nextTile = myTile + dir * t;
 
         if (avoidActiveExplosions && IsTileWithExplosion(nextTile))
             return Vector2.zero;
@@ -282,7 +307,7 @@ public class AIMovementController : MovementController
 
     private bool IsNearTileCenter()
     {
-        Vector2 pos = (Rigidbody != null) ? Rigidbody.position : (Vector2)transform.position;
+        Vector2 pos = GetWorldPos();
 
         float t = Mathf.Max(0.0001f, tileSize);
         float cx = Mathf.Round(pos.x / t) * t;
@@ -326,7 +351,7 @@ public class AIMovementController : MovementController
 
         if (aOpen && bOpen)
         {
-            Vector2 pos = (Rigidbody != null) ? Rigidbody.position : (Vector2)transform.position;
+            Vector2 pos = GetWorldPos();
             int tx = Mathf.RoundToInt(pos.x / Mathf.Max(0.0001f, tileSize));
             int ty = Mathf.RoundToInt(pos.y / Mathf.Max(0.0001f, tileSize));
             Vector2 pick = (((tx + ty) & 1) == 0) ? perpA : perpB;
@@ -353,6 +378,14 @@ public class AIMovementController : MovementController
 
         Vector2 safe = FilterUnsafeMove(dir);
         return safe != Vector2.zero;
+    }
+
+    private Vector2 GetWorldPos()
+    {
+        if (Rigidbody != null)
+            return Rigidbody.position;
+
+        return (Vector2)transform.position;
     }
 
     public void SetAIDirection(Vector2 dir)

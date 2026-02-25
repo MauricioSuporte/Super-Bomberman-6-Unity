@@ -107,7 +107,9 @@ public class BossBomberAI : MonoBehaviour
             retargetTimer = retargetInterval;
         }
 
-        Vector2 myTile = RoundToTile((Vector2)transform.position, movement.tileSize);
+        Vector2 myWorld = (movement.Rigidbody != null) ? movement.Rigidbody.position : (Vector2)transform.position;
+        Vector2 myTile = RoundToTile(myWorld, movement.tileSize);
+
         Bomb[] bombsNow = FindObjectsByType<Bomb>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
 
         bool dangerNow = IsTileDangerousNowOrSoon(myTile, bombsNow, 0f);
@@ -125,7 +127,8 @@ public class BossBomberAI : MonoBehaviour
 
     void PickClosestAlivePlayer()
     {
-        Vector2 myPos = RoundToTile((Vector2)transform.position, movement.tileSize);
+        Vector2 myWorld = (movement != null && movement.Rigidbody != null) ? movement.Rigidbody.position : (Vector2)transform.position;
+        Vector2 myPos = RoundToTile(myWorld, movement.tileSize);
 
         Transform best = null;
         float bestDist = float.PositiveInfinity;
@@ -287,7 +290,7 @@ public class BossBomberAI : MonoBehaviour
             {
                 Vector2 step = lineDir;
                 float eta = GetSingleStepTravelTimeSeconds();
-                Vector2 next = myTile + step;
+                Vector2 next = myTile + step * movement.tileSize;
 
                 if (!IsWalkableTile(next) || IsTileDangerousNowOrSoon(next, bombsNow, eta))
                 {
@@ -305,7 +308,7 @@ public class BossBomberAI : MonoBehaviour
         if (distToTarget > maxChaseDistance)
         {
             Vector2 step = GetStepTowards(targetTile2 - myTile);
-            Vector2 next = myTile + step;
+            Vector2 next = myTile + step * movement.tileSize;
             float eta = GetSingleStepTravelTimeSeconds();
 
             lastDirection = (step != Vector2.zero && IsWalkableTile(next) && !IsTileDangerousNowOrSoon(next, bombsNow, eta))
@@ -359,7 +362,7 @@ public class BossBomberAI : MonoBehaviour
         }
 
         float eta = GetSingleStepTravelTimeSeconds();
-        float escapeSafety = ScoreTile(myTile + escape, bombsNow, eta);
+        float escapeSafety = ScoreTile(myTile + escape * movement.tileSize, bombsNow, eta);
 
         if (escapeSafety < minSafetyAfterKick)
         {
@@ -416,7 +419,7 @@ public class BossBomberAI : MonoBehaviour
         if (escape == Vector2.zero)
             return false;
 
-        float escapeSafety = ScoreTile(myTile + escape, bombsNow, GetSingleStepTravelTimeSeconds());
+        float escapeSafety = ScoreTile(myTile + escape * movement.tileSize, bombsNow, GetSingleStepTravelTimeSeconds());
         if (escapeSafety < minSafetyAfterKick)
             return false;
 
@@ -444,7 +447,7 @@ public class BossBomberAI : MonoBehaviour
         if (escape == Vector2.zero)
             return false;
 
-        float escapeSafety = ScoreTile(myTile + escape, bombsNow, GetSingleStepTravelTimeSeconds());
+        float escapeSafety = ScoreTile(myTile + escape * movement.tileSize, bombsNow, GetSingleStepTravelTimeSeconds());
         if (escapeSafety < minSafetyAfterKick)
             return false;
 
@@ -520,12 +523,13 @@ public class BossBomberAI : MonoBehaviour
             return false;
 
         Vector2 bestBombTile = RoundToTile(bestAdjPlayerBomb.GetLogicalPosition(), movement.tileSize);
-        Vector2 kickDir = bestBombTile - myTile;
+        Vector2 kickDir = (bestBombTile - myTile);
+        kickDir = new Vector2(Mathf.Sign(kickDir.x), Mathf.Sign(kickDir.y));
 
         Vector2 escapeDir = GetEscapeStep_BFS(myTile, bombsNow, 0f);
         float escapeSafety = escapeDir == Vector2.zero
             ? ScoreTile(myTile, bombsNow, 0f)
-            : ScoreTile(myTile + escapeDir, bombsNow, GetSingleStepTravelTimeSeconds());
+            : ScoreTile(myTile + escapeDir * movement.tileSize, bombsNow, GetSingleStepTravelTimeSeconds());
 
         if (escapeSafety < minSafetyAfterKick)
             return false;
@@ -574,6 +578,8 @@ public class BossBomberAI : MonoBehaviour
         if (bestBomb == null)
             return false;
 
+        bestDir = new Vector2(Mathf.Sign(bestDir.x), Mathf.Sign(bestDir.y));
+
         lastKickDecisionTime = Time.time;
         isEvading = true;
         lastDirection = bestDir;
@@ -593,7 +599,7 @@ public class BossBomberAI : MonoBehaviour
             for (int i = 0; i < Dirs.Length; i++)
             {
                 Vector2 dir = (pass == 0 && i == 0) ? awayPrimary : Dirs[i];
-                Vector2 n = myTile + dir;
+                Vector2 n = myTile + dir * movement.tileSize;
 
                 if (dir == Vector2.zero) continue;
                 if (!IsWalkableTile(n)) continue;
@@ -622,7 +628,7 @@ public class BossBomberAI : MonoBehaviour
 
         for (int i = 0; i < Dirs.Length; i++)
         {
-            Vector2 n = myTile + Dirs[i];
+            Vector2 n = myTile + Dirs[i] * movement.tileSize;
             if (!IsWalkableTile(n))
                 continue;
 
@@ -654,7 +660,7 @@ public class BossBomberAI : MonoBehaviour
 
         for (int i = 0; i < Dirs.Length; i++)
         {
-            Vector2 n = myTile + Dirs[i];
+            Vector2 n = myTile + Dirs[i] * movement.tileSize;
             if (!IsWalkableTile(n))
                 continue;
 
@@ -690,7 +696,7 @@ public class BossBomberAI : MonoBehaviour
 
             for (int i = 0; i < Dirs.Length; i++)
             {
-                Vector2 nx = cur.pos + Dirs[i];
+                Vector2 nx = cur.pos + Dirs[i] * movement.tileSize;
                 if (visited.Contains(nx))
                     continue;
 
@@ -746,7 +752,7 @@ public class BossBomberAI : MonoBehaviour
             for (int i = 0; i < Dirs.Length; i++)
             {
                 Vector2 dir = Dirs[i];
-                Vector2 nx = cur.pos + dir;
+                Vector2 nx = cur.pos + dir * movement.tileSize;
 
                 if (!IsWalkableTile(nx))
                     continue;
@@ -775,7 +781,7 @@ public class BossBomberAI : MonoBehaviour
 
         for (int i = 0; i < Dirs.Length; i++)
         {
-            Vector2 n = start + Dirs[i];
+            Vector2 n = start + Dirs[i] * movement.tileSize;
             if (!IsWalkableTile(n))
                 continue;
 
@@ -865,10 +871,10 @@ public class BossBomberAI : MonoBehaviour
         Vector2 dir = sameRow ? new Vector2(Mathf.Sign(delta.x), 0f) : new Vector2(0f, Mathf.Sign(delta.y));
         linearDist = sameRow ? Mathf.Abs(delta.x) : Mathf.Abs(delta.y);
 
-        if (linearDist > radius)
+        if (linearDist > radius * movement.tileSize)
             return false;
 
-        int steps = Mathf.RoundToInt(linearDist);
+        int steps = Mathf.RoundToInt(linearDist / Mathf.Max(0.0001f, movement.tileSize));
         Vector2 cur = bombTile;
 
         for (int i = 0; i < steps; i++)
@@ -956,9 +962,7 @@ public class BossBomberAI : MonoBehaviour
                 for (int h = 0; h < hits.Length; h++)
                 {
                     if (hits[h] != null && hits[h].CompareTag("Destructibles"))
-                    {
                         destructibleBonus += 2.0f;
-                    }
                 }
             }
         }
@@ -1030,12 +1034,12 @@ public class BossBomberAI : MonoBehaviour
         return 1f / spdTilesPerSec;
     }
 
-    Vector2 GetStepTowards(Vector2 delta)
+    Vector2 GetStepTowards(Vector2 deltaWorld)
     {
-        if (Mathf.Abs(delta.x) > Mathf.Abs(delta.y))
-            return new Vector2(Mathf.Sign(delta.x), 0f);
+        if (Mathf.Abs(deltaWorld.x) > Mathf.Abs(deltaWorld.y))
+            return new Vector2(Mathf.Sign(deltaWorld.x), 0f);
 
-        return new Vector2(0f, Mathf.Sign(delta.y));
+        return new Vector2(0f, Mathf.Sign(deltaWorld.y));
     }
 
     float GetBombRemainingFuseSecondsSafe(Bomb b)

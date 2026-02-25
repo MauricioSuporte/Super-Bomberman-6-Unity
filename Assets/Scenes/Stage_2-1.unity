@@ -339,6 +339,7 @@ MonoBehaviour:
   endStageMusic: {fileID: 0}
   playRandomGoodSfx: 1
   goodSfxVolume: 1
+  manualUnlockOnly: 0
   openGateSfx: {fileID: 8300000, guid: 9f1639c45a104994a87b186228d5b8e7, type: 3}
   gateTilemap: {fileID: 818279435}
   closed00: {fileID: 11400000, guid: ee12a4bcd839de94ab5124e4467afc47, type: 2}
@@ -3545,6 +3546,7 @@ MonoBehaviour:
   obstacleMask:
     serializedVersion: 2
     m_Bits: 1224
+  magnetPullSpeedMultiplier: 1
   pullableMask:
     serializedVersion: 2
     m_Bits: 0
