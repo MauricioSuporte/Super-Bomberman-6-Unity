@@ -30,6 +30,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
     public float chainStepDelay = 0.1f;
 
     public float FuseSeconds = 2f;
+    public bool IsFusePaused => fusePaused;
 
     [Header("Stage Wrap")]
     [SerializeField] private Tilemap stageBoundsTilemap;
@@ -135,11 +136,8 @@ public class Bomb : MonoBehaviour, IMagnetPullable
 
     public void BeginFuse()
     {
-        if (HasExploded)
-            return;
-
-        if (IsControlBomb)
-            return;
+        if (HasExploded) return;
+        if (IsControlBomb) return;
 
         if (fuseRoutine != null)
             StopCoroutine(fuseRoutine);
@@ -157,13 +155,15 @@ public class Bomb : MonoBehaviour, IMagnetPullable
                 yield break;
             }
 
+            float rem = RemainingFuseSeconds;
+
             if (fusePaused)
             {
                 yield return null;
                 continue;
             }
 
-            if (RemainingFuseSeconds <= 0f)
+            if (rem <= 0f)
             {
                 owner.ExplodeBomb(gameObject);
                 fuseRoutine = null;
@@ -461,12 +461,14 @@ public class Bomb : MonoBehaviour, IMagnetPullable
 
         TryPlayBombSfx_NoOverlap(punchSfx, punchSfxVolume);
 
+        float dur = Mathf.Max(punchDuration, Time.fixedDeltaTime);
+
         punchRoutine = StartCoroutine(PunchRoutineFixed_Hybrid(
             logicalOrigin,
             yOff,
             distanceTiles,
             80,
-            punchDuration,
+            dur,
             punchArcHeight));
 
         return true;
@@ -618,7 +620,8 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         isPunched = false;
         punchRoutine = null;
 
-        ResumeFuse();
+        if (fusePaused)
+            ResumeFuse();
 
         if (!HasExploded)
         {
@@ -748,6 +751,8 @@ public class Bomb : MonoBehaviour, IMagnetPullable
 
     private IEnumerator PunchArcSegmentFixed(Vector2 start, Vector2 end, float duration, float arcHeight)
     {
+        duration = Mathf.Max(duration, Time.fixedDeltaTime);
+
         float t = 0f;
         float inv = 1f / Mathf.Max(0.0001f, duration);
 
@@ -1039,8 +1044,10 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         get
         {
             if (HasExploded) return 0f;
-            float t = (Time.time - PlacedTime);
-            return Mathf.Max(0f, FuseSeconds - t);
+
+            float now = fusePaused ? fusePauseStartedAt : Time.time;
+            float elapsed = now - PlacedTime;
+            return Mathf.Max(0f, FuseSeconds - elapsed);
         }
     }
 

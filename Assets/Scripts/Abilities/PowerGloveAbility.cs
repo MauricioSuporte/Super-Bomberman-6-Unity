@@ -552,7 +552,9 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
         float timeout = 6f;
         float t = 0f;
 
-        Rigidbody2D rb = bomb != null ? bomb.GetComponent<Rigidbody2D>() : null;
+        Rigidbody2D rb = bomb.GetComponent<Rigidbody2D>();
+        Collider2D col = bomb.GetComponent<Collider2D>();
+        BombAtGroundTileNotifier notifier = bomb.GetComponent<BombAtGroundTileNotifier>();
 
         while (t < timeout)
         {
@@ -568,19 +570,25 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
             bool aligned =
                 Mathf.Abs(pos.x - Mathf.Round(pos.x / movement.tileSize) * movement.tileSize) <= 0.02f &&
                 Mathf.Abs(pos.y - Mathf.Round(pos.y / movement.tileSize) * movement.tileSize) <= 0.02f;
+            if (bomb.IsBeingPunched || bomb.IsBeingKicked)
+            {
+                yield return null;
+                continue;
+            }
 
             if (slow && aligned)
             {
-                var col = bomb.GetComponent<Collider2D>();
                 if (col != null)
                     col.enabled = true;
 
-                var notifier = bomb.GetComponent<BombAtGroundTileNotifier>();
                 if (notifier != null)
                     notifier.enabled = true;
 
                 RestoreBombAnimation();
-                PauseBombFuse(bomb, false);
+
+                if (bomb.IsFusePaused)
+                    PauseBombFuse(bomb, false);
+
                 landWatchRoutine = null;
                 RestoreBombControllerInputModeIfNeeded();
                 yield break;
@@ -591,16 +599,16 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
 
         if (bomb != null && !bomb.HasExploded)
         {
-            var col = bomb.GetComponent<Collider2D>();
             if (col != null)
                 col.enabled = true;
 
-            var notifier = bomb.GetComponent<BombAtGroundTileNotifier>();
             if (notifier != null)
                 notifier.enabled = true;
 
             RestoreBombAnimation();
-            PauseBombFuse(bomb, false);
+
+            if (bomb.IsFusePaused)
+                PauseBombFuse(bomb, false);
         }
 
         landWatchRoutine = null;
