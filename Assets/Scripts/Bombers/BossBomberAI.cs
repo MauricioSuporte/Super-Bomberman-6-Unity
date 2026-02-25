@@ -884,15 +884,26 @@ public class BossBomberAI : MonoBehaviour
         float t = Mathf.Max(0.0001f, movement.tileSize);
         Vector2 size = Vector2.one * (t * 0.55f);
 
-        Collider2D hit = Physics2D.OverlapBox(tileCenter, size, 0f, stageMask);
-        if (hit != null && !hit.isTrigger)
-            return true;
+        Collider2D[] hits = Physics2D.OverlapBoxAll(tileCenter, size, 0f, stageMask);
+        if (hits != null)
+        {
+            for (int i = 0; i < hits.Length; i++)
+            {
+                var h = hits[i];
+                if (h == null) continue;
+                if (h.isTrigger) continue;
 
-        int bombLayerLocal = LayerMask.NameToLayer("Bomb");
-        int bombMaskLocal = (bombLayerLocal >= 0) ? (1 << bombLayerLocal) : 0;
-        Collider2D bh = Physics2D.OverlapBox(tileCenter, size, 0f, bombMaskLocal);
-        if (bh != null)
-            return true;
+                if (h.CompareTag("Destructibles") || h.CompareTag("Indestructibles"))
+                    return true;
+            }
+        }
+
+        if (bombMask != 0)
+        {
+            Collider2D bh = Physics2D.OverlapBox(tileCenter, size, 0f, bombMask);
+            if (bh != null)
+                return true;
+        }
 
         return false;
     }
@@ -924,7 +935,33 @@ public class BossBomberAI : MonoBehaviour
                 openBonus += 0.25f;
         }
 
-        return (margin * 100f) + (openBonus * 5f) - (bombProxPenalty * 40f);
+        float destructibleBonus = 0f;
+
+        for (int i = 0; i < Dirs.Length; i++)
+        {
+            Vector2 adj = tileCenter + Dirs[i] * movement.tileSize;
+
+            float t = Mathf.Max(0.0001f, movement.tileSize);
+            Vector2 size = Vector2.one * (t * 0.6f);
+
+            Collider2D[] hits = Physics2D.OverlapBoxAll(adj, size, 0f, stageMask);
+
+            if (hits != null)
+            {
+                for (int h = 0; h < hits.Length; h++)
+                {
+                    if (hits[h] != null && hits[h].CompareTag("Destructibles"))
+                    {
+                        destructibleBonus += 2.0f;
+                    }
+                }
+            }
+        }
+
+        return (margin * 100f)
+             + (openBonus * 5f)
+             - (bombProxPenalty * 40f)
+             + destructibleBonus;
     }
 
     bool IsTileWithExplosion(Vector2 tileCenter)
