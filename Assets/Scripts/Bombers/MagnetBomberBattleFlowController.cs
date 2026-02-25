@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-public class MechaBossIntroFlow : BossIntroFlowBase
+public class MagnetBomberBattleFlowController : BossIntroFlowBase
 {
     [SerializeField] private MovementController boss;
     [SerializeField] private BossBomberAI bossAI;

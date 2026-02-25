@@ -3181,6 +3181,7 @@ MonoBehaviour:
   tempSlowdownStartNormalized: 0.7
   tempEndBlinkMultiplier: 4
   playDamagedLoopInsteadOfBlink: 0
+  playDamagedLoopAndBlink: 0
 --- !u!114 &2619861201639318036
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3227,7 +3228,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::StunReceiver
   isStunned: 0
-  useAnimatedStunRenderer: 1
+  useAnimatedStunRenderer: 0
   stunAnimatedRenderer: {fileID: 3931440256274558322}
   disableShakeWhenUsingAnimatedStun: 1
   visualOverrideWhileStunned: 1
