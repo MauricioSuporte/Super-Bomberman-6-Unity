@@ -95,15 +95,10 @@ public sealed class MagnetBomb : MonoBehaviour
         if (!TryFindPlayerInLine(origin, tileSize, out Vector2 dir, out int stepsToTarget))
             return;
 
-        int steps = Mathf.Clamp(stepsToTarget, 1, Mathf.Max(1, maxPullSteps));
+        if (stepsToTarget <= 1)
+            return;
 
-        if (bomb.StartMagnetPull(
-            dir,
-            tileSize,
-            steps,
-            obstacleMask,
-            destructibleTilemap,
-            magnetPullSpeedMultiplier))
+        if (bomb.StartMagnetPull(dir, tileSize, 0, obstacleMask, destructibleTilemap, magnetPullSpeedMultiplier))
         {
             waitingMovementToEnd = true;
         }

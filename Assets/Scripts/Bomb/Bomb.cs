@@ -273,11 +273,16 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         return hit != null && hit.gameObject != gameObject;
     }
 
+    private bool TileHasCharacter(Vector2 pos, int charMask)
+    {
+        Collider2D hit = Physics2D.OverlapBox(pos, Vector2.one * (kickTileSize * 0.6f), 0f, charMask);
+        return hit != null;
+    }
+
     private bool TileHasCharacter(Vector2 pos)
     {
         int charMask = LayerMask.GetMask("Player", "Enemy");
-        Collider2D hit = Physics2D.OverlapBox(pos, Vector2.one * (kickTileSize * 0.6f), 0f, charMask);
-        return hit != null;
+        return TileHasCharacter(pos, charMask);
     }
 
     private bool IsKickBlocked(Vector2 target)
@@ -833,6 +838,9 @@ public class Bomb : MonoBehaviour, IMagnetPullable
 
             Vector2 next = currentTileCenter + kickDirection * kickTileSize;
 
+            if (TileHasCharacter(next, LayerMask.GetMask("Player", "Enemy")))
+                break;
+
             if (IsKickBlocked(next))
                 break;
 
@@ -1014,7 +1022,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         Tilemap destructibleTilemap,
         float speedMultiplier)
     {
-        if (HasExploded || isKicked || isPunched || steps <= 0)
+        if (HasExploded || isKicked || isPunched)
             return false;
 
         if (magnetRoutine != null)
@@ -1047,12 +1055,21 @@ public class Bomb : MonoBehaviour, IMagnetPullable
     {
         float mult = Mathf.Max(0.05f, speedMultiplier);
 
-        for (int s = 0; s < steps; s++)
+        int remainingSteps = steps;
+
+
+        while (true)
         {
             if (HasExploded)
                 break;
 
+            if (remainingSteps > 0 && remainingSteps-- == 0)
+                break;
+
             Vector2 next = currentTileCenter + kickDirection * kickTileSize;
+
+            if (TileHasCharacter(next, LayerMask.GetMask("Player")))
+                break;
 
             if (IsKickBlocked(next))
                 break;
