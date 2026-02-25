@@ -47,6 +47,7 @@ public class AIMovementController : MovementController
 
     private CharacterHealth healthForDamaged;
     private bool damagedVisualActive;
+    public bool IsDamagedVisualActive => damagedVisualActive;
 
     private bool introIdleVisualActive;
 

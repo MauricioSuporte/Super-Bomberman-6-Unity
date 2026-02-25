@@ -188,6 +188,12 @@ public class BossBomberAI : MonoBehaviour
             return;
         }
 
+        if (IsDamagedPlaying())
+        {
+            lastDirection = Vector2.zero;
+            return;
+        }
+
         if (target != null && alwaysPlantNearPlayer)
         {
             Vector2 targetTile0 = RoundToTile((Vector2)target.position, movement.tileSize);
@@ -317,6 +323,7 @@ public class BossBomberAI : MonoBehaviour
     bool TryPlaceBombAlwaysNearPlayer(Vector2 myTile, Vector2 targetTile, Bomb[] bombsNow)
     {
         if (movement == null || movement.isDead) return false;
+        if (movement.IsDamagedVisualActive) return false;
         if (bomb == null) return false;
         if (bomb.BombsRemaining <= 0) return false;
         if (IsTileWithBomb(myTile)) return false;
@@ -485,6 +492,7 @@ public class BossBomberAI : MonoBehaviour
     bool IsPlaceBombAllowedNow(Vector2 myTile)
     {
         if (movement == null || movement.isDead) return false;
+        if (movement.IsDamagedVisualActive) return false;
         if (bomb == null) return false;
         if (bomb.BombsRemaining <= 0) return false;
         if (Time.time - lastBombTime < bombChainCooldown) return false;
@@ -1018,6 +1026,11 @@ public class BossBomberAI : MonoBehaviour
     static float Heuristic(Vector2 a, Vector2 b)
     {
         return Manhattan(a, b);
+    }
+
+    bool IsDamagedPlaying()
+    {
+        return movement != null && movement.IsDamagedVisualActive;
     }
 
     struct Node
