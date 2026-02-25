@@ -905,8 +905,8 @@ public class ControlsConfigMenu : MonoBehaviour
                 $"<color={colorHint}>A / START:</color> <color={colorWhite}>CONFIRM / PLACE BOMB</color>\n" +
                 $"<color={colorHint}>B:</color> <color={colorWhite}>RETURN / EXPLODE CONTROL BOMB</color>\n" +
                 $"<color={colorHint}>C:</color> <color={colorWhite}>RESTORE DEFAULT KEYS / ABILITIES</color>\n" +
-                $"<color={colorHint}>L / R:</color> <color={colorWhite}>CHANGE WORLD</color>\n" +
-                $"<color={colorHint}>R (RIDING):</color> <color={colorWhite}>DISMOUNT</color>" +
+                $"<color={colorHint}>L (RIDING):</color> <color={colorWhite}>DISMOUNT</color>\n" +
+                $"<color={colorHint}>R:</color> <color={colorWhite}>STOP KICKED BOMBS</color>" +
                 $"</size></align>";
         }
         else if (state == MenuState.ConfirmReset)

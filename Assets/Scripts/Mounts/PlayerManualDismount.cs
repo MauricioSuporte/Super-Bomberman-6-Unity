@@ -5,7 +5,7 @@
 public sealed class PlayerManualDismount : MonoBehaviour
 {
     [Header("Input")]
-    [SerializeField] private PlayerAction dismountAction = PlayerAction.ActionR;
+    private readonly PlayerAction dismountAction = PlayerAction.ActionL;
 
     [Header("Freeze")]
     [SerializeField] private bool freezeEggQueueOnDismount = true;
