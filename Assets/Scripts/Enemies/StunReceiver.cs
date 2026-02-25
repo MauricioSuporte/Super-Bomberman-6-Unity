@@ -76,6 +76,12 @@ public class StunReceiver : MonoBehaviour
     private AIMovementController cachedAIMove;
     private EnemyMovementController cachedEnemyMove;
 
+    Coroutine deferredVisualRestoreRoutine;
+    int stunSessionToken;
+    bool deferredRestoreWantsCustomAnim;
+
+    bool customStunControllersRestored;
+
     void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
@@ -98,6 +104,12 @@ public class StunReceiver : MonoBehaviour
 
         suppressRestore = false;
 
+        if (deferredVisualRestoreRoutine != null)
+        {
+            StopCoroutine(deferredVisualRestoreRoutine);
+            deferredVisualRestoreRoutine = null;
+        }
+
         if (!isStunned || newEnd > stunEndTime)
             stunEndTime = newEnd;
 
@@ -107,6 +119,14 @@ public class StunReceiver : MonoBehaviour
 
     public void CancelStun(bool restoreVisuals)
     {
+        if (deferredVisualRestoreRoutine != null)
+        {
+            StopCoroutine(deferredVisualRestoreRoutine);
+            deferredVisualRestoreRoutine = null;
+        }
+
+        stunSessionToken++;
+
         if (stunRoutine != null)
         {
             StopCoroutine(stunRoutine);
@@ -142,6 +162,14 @@ public class StunReceiver : MonoBehaviour
 
     public void CancelStunForDeath()
     {
+        if (deferredVisualRestoreRoutine != null)
+        {
+            StopCoroutine(deferredVisualRestoreRoutine);
+            deferredVisualRestoreRoutine = null;
+        }
+
+        stunSessionToken++;
+
         if (stunRoutine != null)
         {
             StopCoroutine(stunRoutine);
@@ -275,17 +303,35 @@ public class StunReceiver : MonoBehaviour
 
         isStunned = false;
 
+        int myToken = ++stunSessionToken;
+        bool damagedStillActive = IsDamagedVisualActiveNow();
+
         if (!suppressRestore && isActiveAndEnabled && gameObject.activeInHierarchy)
         {
-            if (wantsCustomAnim)
+            if (damagedStillActive)
             {
-                ExitCustomStunOverride();
+                if (wantsCustomAnim)
+                    RestoreCustomStunControllersIfNeeded();
+
+                deferredRestoreWantsCustomAnim = wantsCustomAnim;
+
+                if (deferredVisualRestoreRoutine != null)
+                    StopCoroutine(deferredVisualRestoreRoutine);
+
+                deferredVisualRestoreRoutine = StartCoroutine(DeferredRestoreAfterDamaged(myToken));
             }
             else
             {
-                RestoreSpriteBases();
-                if (freezeAnimatedSprites)
-                    RestoreAnimations();
+                if (wantsCustomAnim)
+                {
+                    ExitCustomStunOverride();
+                }
+                else
+                {
+                    RestoreSpriteBases();
+                    if (freezeAnimatedSprites)
+                        RestoreAnimations();
+                }
             }
         }
         else
@@ -299,6 +345,60 @@ public class StunReceiver : MonoBehaviour
         hadFrozenBeforeDamaged = false;
 
         stunRoutine = null;
+    }
+
+    private IEnumerator DeferredRestoreAfterDamaged(int token)
+    {
+        while (IsDamagedVisualActiveNow())
+        {
+            if (token != stunSessionToken)
+            {
+                deferredVisualRestoreRoutine = null;
+                yield break;
+            }
+
+            if (!isActiveAndEnabled || !gameObject.activeInHierarchy)
+            {
+                deferredVisualRestoreRoutine = null;
+                yield break;
+            }
+
+            yield return null;
+        }
+
+        if (token != stunSessionToken)
+        {
+            deferredVisualRestoreRoutine = null;
+            yield break;
+        }
+
+        if (isStunned)
+        {
+            deferredVisualRestoreRoutine = null;
+            yield break;
+        }
+
+        if (suppressRestore || !isActiveAndEnabled || !gameObject.activeInHierarchy)
+        {
+            spriteBases.Clear();
+            animStates.Clear();
+            customStunActive = false;
+            deferredVisualRestoreRoutine = null;
+            yield break;
+        }
+
+        if (deferredRestoreWantsCustomAnim)
+        {
+            ExitCustomStunOverrideVisualOnly();
+        }
+        else
+        {
+            RestoreSpriteBases();
+            if (freezeAnimatedSprites)
+                RestoreAnimations();
+        }
+
+        deferredVisualRestoreRoutine = null;
     }
 
     private bool IsDamagedVisualActiveNow()
@@ -473,6 +573,26 @@ public class StunReceiver : MonoBehaviour
             sr.enabled = on;
     }
 
+    private void RestoreCustomStunControllersIfNeeded()
+    {
+        if (!customStunActive)
+            return;
+
+        if (customStunControllersRestored)
+            return;
+
+        if (ShouldAffectControllers())
+        {
+            if (cachedBombController != null)
+                cachedBombController.enabled = savedBombControllerEnabled;
+
+            if (cachedManualDismount != null)
+                cachedManualDismount.enabled = savedManualDismountEnabled;
+        }
+
+        customStunControllersRestored = true;
+    }
+
     private void EnterCustomStunOverride()
     {
         if (customStunActive)
@@ -525,6 +645,7 @@ public class StunReceiver : MonoBehaviour
         spriteBases.Clear();
         animStates.Clear();
 
+        customStunControllersRestored = false;
         customStunActive = true;
     }
 
@@ -548,19 +669,33 @@ public class StunReceiver : MonoBehaviour
         stunAnimatedRenderer.RefreshFrame();
     }
 
+    private void ExitCustomStunOverrideVisualOnly()
+    {
+        if (!customStunActive)
+            return;
+
+        if (stunAnimatedRenderer != null)
+        {
+            stunAnimatedRenderer.idle = savedStunRendererIdle;
+            stunAnimatedRenderer.loop = savedStunRendererLoop;
+            SetAnimEnabled(stunAnimatedRenderer, savedStunRendererEnabled);
+            stunAnimatedRenderer.RefreshFrame();
+        }
+
+        if (visualOverrideWhileStunned && cachedMovement != null)
+        {
+            cachedMovement.SetVisualOverrideActive(savedVisualOverrideActive);
+        }
+
+        customStunActive = false;
+    }
+
     private void ExitCustomStunOverride()
     {
         if (!customStunActive)
             return;
 
-        if (ShouldAffectControllers())
-        {
-            if (cachedBombController != null)
-                cachedBombController.enabled = savedBombControllerEnabled;
-
-            if (cachedManualDismount != null)
-                cachedManualDismount.enabled = savedManualDismountEnabled;
-        }
+        RestoreCustomStunControllersIfNeeded();
 
         if (stunAnimatedRenderer != null)
         {
@@ -580,6 +715,14 @@ public class StunReceiver : MonoBehaviour
 
     void OnDisable()
     {
+        if (deferredVisualRestoreRoutine != null)
+        {
+            StopCoroutine(deferredVisualRestoreRoutine);
+            deferredVisualRestoreRoutine = null;
+        }
+
+        stunSessionToken++;
+
         if (stunRoutine != null)
         {
             StopCoroutine(stunRoutine);
