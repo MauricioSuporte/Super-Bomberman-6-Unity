@@ -3,8 +3,8 @@
 public class MagnetBomberBattleFlowController : BossIntroFlowBase
 {
     [SerializeField] private MovementController boss;
-    [SerializeField] private BossBomberAI bossAI;
-    [SerializeField] private AIMovementController aiMove;
+    [SerializeField] private BrainIA bossAI;
+    [SerializeField] private MovementControllerAI aiMove;
     [SerializeField] private Vector2 forceBossFacing;
 
     protected override void LockBoss(bool locked)

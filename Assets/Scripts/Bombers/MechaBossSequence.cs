@@ -264,8 +264,8 @@ public class MechaBossSequence : MonoBehaviour
 
             mecha.SetExplosionInvulnerable(true);
 
-            var bossAI = mecha.GetComponent<BossBomberAI>();
-            var aiMove = mecha.GetComponent<AIMovementController>();
+            var bossAI = mecha.GetComponent<BrainIA>();
+            var aiMove = mecha.GetComponent<MovementControllerAI>();
 
             if (bossAI != null) bossAI.enabled = false;
             if (aiMove != null) aiMove.enabled = true;

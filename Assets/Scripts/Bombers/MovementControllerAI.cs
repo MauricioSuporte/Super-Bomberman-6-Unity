@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-public class AIMovementController : MovementController
+public class MovementControllerAI : MovementController
 {
     [Header("AI Control")]
     public Vector2 aiDirection = Vector2.zero;

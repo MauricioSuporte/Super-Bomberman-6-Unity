@@ -1,10 +1,10 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 
-[RequireComponent(typeof(AIMovementController))]
+[RequireComponent(typeof(MovementControllerAI))]
 [RequireComponent(typeof(BombController))]
 [RequireComponent(typeof(BombKickAbility))]
-public class BossBomberAI : MonoBehaviour
+public class BrainIA : MonoBehaviour
 {
     [Header("Target")]
     public Transform target;
@@ -40,7 +40,7 @@ public class BossBomberAI : MonoBehaviour
     public float kickDecisionCooldown = 0.35f;
     public float minSafetyAfterKick = 1.5f;
 
-    private AIMovementController movement;
+    private MovementControllerAI movement;
     private BombController bomb;
     private BombKickAbility kickAbility;
     private StunReceiver stun;
@@ -62,7 +62,7 @@ public class BossBomberAI : MonoBehaviour
 
     void Awake()
     {
-        movement = GetComponent<AIMovementController>();
+        movement = GetComponent<MovementControllerAI>();
         bomb = GetComponent<BombController>();
         kickAbility = GetComponent<BombKickAbility>();
         stun = GetComponent<StunReceiver>();

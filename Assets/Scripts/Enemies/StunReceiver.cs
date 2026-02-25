@@ -75,7 +75,7 @@ public class StunReceiver : MonoBehaviour
     private bool savedBombControllerEnabled;
     private bool savedManualDismountEnabled;
 
-    private AIMovementController cachedAIMove;
+    private MovementControllerAI cachedAIMove;
     private EnemyMovementController cachedEnemyMove;
 
     Coroutine deferredVisualRestoreRoutine;
@@ -92,7 +92,7 @@ public class StunReceiver : MonoBehaviour
         cachedBombController = GetComponent<BombController>();
         cachedManualDismount = GetComponent<PlayerManualDismount>();
 
-        cachedAIMove = GetComponent<AIMovementController>();
+        cachedAIMove = GetComponent<MovementControllerAI>();
         cachedEnemyMove = GetComponent<EnemyMovementController>();
 
         if (stunAnimatedRenderer == null)

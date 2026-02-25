@@ -3,13 +3,13 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [RequireComponent(typeof(CharacterHealth))]
-[RequireComponent(typeof(AIMovementController))]
+[RequireComponent(typeof(MovementControllerAI))]
 [RequireComponent(typeof(MovementController))]
 public class BossEscapeOnLastLife : MonoBehaviour
 {
     [Header("Boss Refs")]
     [SerializeField] private MovementController boss;
-    [SerializeField] private AIMovementController aiMove;
+    [SerializeField] private MovementControllerAI aiMove;
     [SerializeField] private MonoBehaviour bossAIToDisable;
 
     [Header("Escape")]
@@ -55,7 +55,7 @@ public class BossEscapeOnLastLife : MonoBehaviour
     private void Awake()
     {
         if (!boss) boss = GetComponent<MovementController>();
-        if (!aiMove) aiMove = GetComponent<AIMovementController>();
+        if (!aiMove) aiMove = GetComponent<MovementControllerAI>();
         health = GetComponent<CharacterHealth>();
     }
 
