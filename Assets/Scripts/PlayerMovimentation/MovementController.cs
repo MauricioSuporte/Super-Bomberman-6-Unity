@@ -1376,7 +1376,9 @@ public class MovementController : MonoBehaviour, IKillable
         DisableAllFootSprites();
         DisableAllMountedSprites();
 
-        var up = mountedSpriteUp != null ? mountedSpriteUp : spriteRendererUp;
+        var up = PickMountedRenderer(Vector2.up);
+        if (up == null)
+            up = mountedSpriteUp != null ? mountedSpriteUp : spriteRendererUp;
 
         if (up != null)
         {
