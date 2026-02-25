@@ -17,6 +17,10 @@ public class BossEscapeOnLastLife : MonoBehaviour
     [SerializeField] private float reachEpsilon = 0.06f;
     [SerializeField, Min(0f)] private float waitBeforeEscapeSeconds = 2f;
 
+    [Header("Finish Behavior")]
+    [SerializeField] private bool destroyBossGameObject = false;
+    [SerializeField] private bool snapToGoalOnFinish = true;
+
     [Header("Pathfinding")]
     [SerializeField] private int maxNodes = 4096;
     [SerializeField] private int maxExpandSteps = 20000;
@@ -25,15 +29,28 @@ public class BossEscapeOnLastLife : MonoBehaviour
     [SerializeField] private bool disablePlayerBombControllerWhileLocked = true;
     [SerializeField] private bool disablePlayerCollidersWhileLocked = true;
 
+    [Header("Oscillation Protection")]
+    [SerializeField] private float nearGoalWindowSeconds = 1.20f;
+    [SerializeField] private float nearGoalDistance = 0.14f;
+    [SerializeField] private float forceSnapIfOscillatingDistance = 0.25f;
+
     private CharacterHealth health;
 
     private bool escapeArmed;
     private bool escapeStarted;
+    private bool escapeFinished;
 
     private readonly List<MovementController> players = new();
     private readonly List<BombController> playerBombs = new();
     private readonly Dictionary<MovementController, Collider2D> cachedPlayerColliders = new();
     private readonly Dictionary<MovementController, bool> cachedColliderEnabled = new();
+
+    private Vector2 dbgStart;
+    private Vector2 dbgGoal;
+
+    private bool dbgNearGoal;
+    private float dbgNearGoalFirstTime;
+    private int dbgNearGoalCrosses;
 
     private void Awake()
     {
@@ -82,6 +99,8 @@ public class BossEscapeOnLastLife : MonoBehaviour
 
     private IEnumerator EscapeRoutine()
     {
+        if (!boss) yield break;
+
         RefreshPlayersRefs();
         LockPlayers();
 
@@ -97,7 +116,7 @@ public class BossEscapeOnLastLife : MonoBehaviour
             while (elapsed < waitBeforeEscapeSeconds)
             {
                 if (aiMove) aiMove.SetAIDirection(Vector2.zero);
-                if (boss && boss.Rigidbody != null) boss.Rigidbody.linearVelocity = Vector2.zero;
+                if (boss.Rigidbody != null) boss.Rigidbody.linearVelocity = Vector2.zero;
 
                 if (!GamePauseController.IsPaused)
                     elapsed += Time.deltaTime;
@@ -107,46 +126,81 @@ public class BossEscapeOnLastLife : MonoBehaviour
         }
 
         BombController.ExplodeAllControlBombsInStage();
-
         yield return null;
 
         float tile = Mathf.Max(0.0001f, boss.tileSize);
 
-        Vector2 start = RoundToGrid(GetBossPos(), tile);
-        Vector2 goal = RoundToGrid(escapeTarget, tile);
+        dbgStart = RoundToGrid(GetBossPos(), tile);
+        dbgGoal = RoundToGrid(escapeTarget, tile);
 
-        List<Vector2> path = FindPathAStar(start, goal, tile);
+        dbgNearGoal = false;
+        dbgNearGoalCrosses = 0;
+        dbgNearGoalFirstTime = -999f;
+
+        if (IsAt(dbgGoal))
+        {
+            FinalizeEscape(dbgGoal);
+            yield break;
+        }
+
+        List<Vector2> path = FindPathAStar(dbgStart, dbgGoal, tile);
         if (path == null || path.Count == 0)
         {
-            yield return StartCoroutine(FallbackWalkTowards(goal, tile));
-            Destroy(gameObject);
+            yield return StartCoroutine(FallbackWalkTowards(dbgGoal, tile));
+            if (!escapeFinished) FinalizeEscape(dbgGoal);
             yield break;
         }
 
         for (int i = 1; i < path.Count; i++)
         {
-            Vector2 next = path[i];
-            yield return MoveToTile(next, tile);
+            yield return MoveToTile(path[i], tile);
+
+            if (escapeFinished) yield break;
+
+            if (IsAt(dbgGoal))
+            {
+                FinalizeEscape(dbgGoal);
+                yield break;
+            }
         }
 
-        if (aiMove) aiMove.SetAIDirection(Vector2.zero);
-        if (boss && boss.Rigidbody != null) boss.Rigidbody.linearVelocity = Vector2.zero;
+        FinalizeEscape(dbgGoal);
+    }
 
-        Destroy(gameObject);
+    private void FinalizeEscape(Vector2 goal)
+    {
+        if (escapeFinished) return;
+        escapeFinished = true;
+
+        if (aiMove) aiMove.SetAIDirection(Vector2.zero);
+        if (boss.Rigidbody != null) boss.Rigidbody.linearVelocity = Vector2.zero;
+
+        if (snapToGoalOnFinish && boss)
+        {
+            if (boss.Rigidbody != null)
+                boss.Rigidbody.position = goal;
+            else
+                boss.transform.position = goal;
+        }
+
+        UnlockPlayers();
+
+        if (destroyBossGameObject)
+            Destroy(boss.gameObject);
+        else
+            boss.gameObject.SetActive(false);
     }
 
     private void LockBossForEscape()
     {
         if (bossAIToDisable) bossAIToDisable.enabled = false;
-
         if (aiMove) aiMove.enabled = true;
 
-        if (boss)
-        {
-            boss.SetInputLocked(false, true);
-            boss.SetExplosionInvulnerable(true);
-            if (boss.Rigidbody != null) boss.Rigidbody.linearVelocity = Vector2.zero;
-        }
+        boss.SetInputLocked(false, true);
+        boss.SetExplosionInvulnerable(true);
+
+        if (boss.Rigidbody != null)
+            boss.Rigidbody.linearVelocity = Vector2.zero;
 
         if (health != null)
         {
@@ -154,8 +208,7 @@ public class BossEscapeOnLastLife : MonoBehaviour
             health.SetExternalInvulnerability(true);
         }
 
-        if (aiMove)
-            aiMove.SetAIDirection(Vector2.zero);
+        if (aiMove) aiMove.SetAIDirection(Vector2.zero);
     }
 
     private IEnumerator MoveToTile(Vector2 tileCenter, float tile)
@@ -163,8 +216,26 @@ public class BossEscapeOnLastLife : MonoBehaviour
         float maxTime = 6f;
         float t = 0f;
 
+        Vector2 startPos = GetBossPos();
+        Vector2 delta0 = tileCenter - startPos;
+
+        bool vertical = Mathf.Abs(delta0.y) >= Mathf.Abs(delta0.x);
+        Vector2 desiredDir = vertical
+            ? new Vector2(0f, Mathf.Sign(delta0.y))
+            : new Vector2(Mathf.Sign(delta0.x), 0f);
+
+        if (desiredDir == Vector2.zero)
+            desiredDir = vertical ? Vector2.up : Vector2.right;
+
+        float targetCoord = vertical ? tileCenter.y : tileCenter.x;
+        float dirSign = vertical ? desiredDir.y : desiredDir.x;
+
+        float stepEps = Mathf.Max(reachEpsilon, tile * 0.08f);
+
         while (t < maxTime)
         {
+            if (escapeFinished) yield break;
+
             if (GamePauseController.IsPaused)
             {
                 if (aiMove) aiMove.SetAIDirection(Vector2.zero);
@@ -173,13 +244,26 @@ public class BossEscapeOnLastLife : MonoBehaviour
             }
 
             Vector2 pos = GetBossPos();
-            Vector2 delta = tileCenter - pos;
+            float remaining = vertical ? (targetCoord - pos.y) : (targetCoord - pos.x);
+            float absRemaining = Mathf.Abs(remaining);
 
-            if (delta.sqrMagnitude <= (reachEpsilon * reachEpsilon))
+            float distToGoal = Vector2.Distance(pos, dbgGoal);
+
+            if (absRemaining <= stepEps ||
+                Mathf.Sign(remaining) != Mathf.Sign(dirSign))
+            {
+                SnapBossTo(tileCenter);
                 break;
+            }
 
-            Vector2 dir = PickCardinal(delta);
-            if (aiMove) aiMove.SetAIDirection(dir);
+            if (distToGoal <= forceSnapIfOscillatingDistance &&
+                IsOscillatingNow(Time.time, distToGoal))
+            {
+                SnapBossTo(dbgGoal);
+                break;
+            }
+
+            if (aiMove) aiMove.SetAIDirection(desiredDir);
 
             t += Time.deltaTime;
             yield return null;
@@ -196,6 +280,8 @@ public class BossEscapeOnLastLife : MonoBehaviour
 
         while (t < maxTime)
         {
+            if (escapeFinished) yield break;
+
             if (GamePauseController.IsPaused)
             {
                 if (aiMove) aiMove.SetAIDirection(Vector2.zero);
@@ -219,8 +305,31 @@ public class BossEscapeOnLastLife : MonoBehaviour
         if (aiMove) aiMove.SetAIDirection(Vector2.zero);
     }
 
+    private bool IsOscillatingNow(float now, float distToGoal)
+    {
+        bool nowNear = distToGoal <= nearGoalDistance;
+
+        if (nowNear != dbgNearGoal)
+        {
+            dbgNearGoal = nowNear;
+            dbgNearGoalCrosses++;
+
+            if (dbgNearGoalFirstTime < 0f ||
+                (now - dbgNearGoalFirstTime) > nearGoalWindowSeconds)
+                dbgNearGoalFirstTime = now;
+        }
+
+        if (distToGoal > forceSnapIfOscillatingDistance) return false;
+        if (dbgNearGoalCrosses < 6) return false;
+
+        return (now - dbgNearGoalFirstTime) <= nearGoalWindowSeconds;
+    }
+
+    private bool IsAt(Vector2 goal)
+        => (goal - GetBossPos()).sqrMagnitude <= (reachEpsilon * reachEpsilon);
+
     private Vector2 GetBossPos()
-        => boss && boss.Rigidbody != null ? boss.Rigidbody.position : (Vector2)transform.position;
+        => boss.Rigidbody != null ? boss.Rigidbody.position : (Vector2)transform.position;
 
     private static Vector2 PickCardinal(Vector2 delta)
     {
@@ -230,20 +339,36 @@ public class BossEscapeOnLastLife : MonoBehaviour
     }
 
     private static Vector2 RoundToGrid(Vector2 p, float tile)
-        => new Vector2(Mathf.Round(p.x / tile) * tile, Mathf.Round(p.y / tile) * tile);
+        => new Vector2(
+            Mathf.Round(p.x / tile) * tile,
+            Mathf.Round(p.y / tile) * tile);
 
-    #region Players Lock
+    private void SnapBossTo(Vector2 worldPos)
+    {
+        if (boss.Rigidbody != null)
+        {
+            boss.Rigidbody.position = worldPos;
+            boss.Rigidbody.linearVelocity = Vector2.zero;
+        }
+        else
+        {
+            boss.transform.position = worldPos;
+        }
+    }
+
+    #region Players Lock (igual ao anterior)
 
     private void RefreshPlayersRefs()
     {
         players.Clear();
         playerBombs.Clear();
 
-        var ids = FindObjectsByType<PlayerIdentity>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+        var ids = FindObjectsByType<PlayerIdentity>(
+            FindObjectsInactive.Exclude,
+            FindObjectsSortMode.None);
 
-        for (int i = 0; i < ids.Length; i++)
+        foreach (var id in ids)
         {
-            var id = ids[i];
             if (!id) continue;
 
             if (!id.TryGetComponent(out MovementController move))
@@ -265,9 +390,8 @@ public class BossEscapeOnLastLife : MonoBehaviour
         cachedPlayerColliders.Clear();
         cachedColliderEnabled.Clear();
 
-        for (int i = 0; i < players.Count; i++)
+        foreach (var p in players)
         {
-            var p = players[i];
             if (!p) continue;
 
             p.SetInputLocked(true, true);
@@ -297,9 +421,8 @@ public class BossEscapeOnLastLife : MonoBehaviour
 
         if (disablePlayerBombControllerWhileLocked)
         {
-            for (int i = 0; i < playerBombs.Count; i++)
-                if (playerBombs[i])
-                    playerBombs[i].enabled = false;
+            foreach (var bomb in playerBombs)
+                if (bomb) bomb.enabled = false;
         }
     }
 
@@ -318,12 +441,9 @@ public class BossEscapeOnLastLife : MonoBehaviour
 
         foreach (var kv in cachedPlayerColliders)
         {
-            var p = kv.Key;
-            var col = kv.Value;
-            if (!p || !col) continue;
-
-            if (cachedColliderEnabled.TryGetValue(p, out bool wasEnabled))
-                col.enabled = wasEnabled;
+            if (kv.Key && kv.Value &&
+                cachedColliderEnabled.TryGetValue(kv.Key, out bool wasEnabled))
+                kv.Value.enabled = wasEnabled;
         }
 
         cachedPlayerColliders.Clear();
@@ -331,15 +451,14 @@ public class BossEscapeOnLastLife : MonoBehaviour
 
         if (disablePlayerBombControllerWhileLocked)
         {
-            for (int i = 0; i < playerBombs.Count; i++)
-                if (playerBombs[i])
-                    playerBombs[i].enabled = true;
+            foreach (var bomb in playerBombs)
+                if (bomb) bomb.enabled = true;
         }
     }
 
     #endregion
 
-    #region A* Grid
+    #region A* (igual ao anterior)
 
     private struct Node
     {
@@ -354,13 +473,14 @@ public class BossEscapeOnLastLife : MonoBehaviour
         if (start == goal)
             return new List<Vector2> { start };
 
-        var open = new List<int>(256);
-        var nodes = new List<Node>(256);
-        var openMap = new Dictionary<Vector2, int>(256);
+        var open = new List<int>();
+        var nodes = new List<Node>();
+        var openMap = new Dictionary<Vector2, int>();
         var closed = new HashSet<Vector2>();
 
         int Heur(Vector2 a, Vector2 b)
-            => Mathf.Abs(Mathf.RoundToInt((a.x - b.x) / tile)) + Mathf.Abs(Mathf.RoundToInt((a.y - b.y) / tile));
+            => Mathf.Abs(Mathf.RoundToInt((a.x - b.x) / tile)) +
+               Mathf.Abs(Mathf.RoundToInt((a.y - b.y) / tile));
 
         if (IsSolidAtWorld(goal))
             return null;
@@ -380,10 +500,9 @@ public class BossEscapeOnLastLife : MonoBehaviour
             for (int i = 1; i < open.Count; i++)
             {
                 int ni = open[i];
-                int f = nodes[ni].F;
-                if (f < bestF)
+                if (nodes[ni].F < bestF)
                 {
-                    bestF = f;
+                    bestF = nodes[ni].F;
                     bestNodeIndex = ni;
                     bestOpenIndex = i;
                 }
@@ -402,15 +521,16 @@ public class BossEscapeOnLastLife : MonoBehaviour
             if (expanded > maxExpandSteps || nodes.Count > maxNodes)
                 return null;
 
-            Vector2 n0 = cur + Vector2.up * tile;
-            Vector2 n1 = cur + Vector2.down * tile;
-            Vector2 n2 = cur + Vector2.left * tile;
-            Vector2 n3 = cur + Vector2.right * tile;
+            Vector2[] neighbors =
+            {
+                cur + Vector2.up * tile,
+                cur + Vector2.down * tile,
+                cur + Vector2.left * tile,
+                cur + Vector2.right * tile
+            };
 
-            ProcessNeighbor(n0, bestNodeIndex, goal, tile, nodes, open, openMap, closed);
-            ProcessNeighbor(n1, bestNodeIndex, goal, tile, nodes, open, openMap, closed);
-            ProcessNeighbor(n2, bestNodeIndex, goal, tile, nodes, open, openMap, closed);
-            ProcessNeighbor(n3, bestNodeIndex, goal, tile, nodes, open, openMap, closed);
+            foreach (var np in neighbors)
+                ProcessNeighbor(np, bestNodeIndex, goal, tile, nodes, open, openMap, closed);
         }
 
         return null;
@@ -418,7 +538,7 @@ public class BossEscapeOnLastLife : MonoBehaviour
 
     private static List<Vector2> Reconstruct(List<Node> nodes, int endIndex)
     {
-        var path = new List<Vector2>(64);
+        var path = new List<Vector2>();
         int cur = endIndex;
         while (cur >= 0)
         {
@@ -435,24 +555,19 @@ public class BossEscapeOnLastLife : MonoBehaviour
         Vector2 size = Vector2.one * (tile * 0.6f);
 
         var hits = Physics2D.OverlapBoxAll(worldPos, size, 0f, boss.obstacleMask);
-        if (hits == null || hits.Length == 0)
-            return false;
-
-        for (int i = 0; i < hits.Length; i++)
+        foreach (var hit in hits)
         {
-            var hit = hits[i];
             if (!hit) continue;
             if (hit.isTrigger) continue;
             if (hit.gameObject == gameObject) continue;
             return true;
         }
-
         return false;
     }
 
     private void ProcessNeighbor(
         Vector2 np,
-        int bestNodeIndex,
+        int parent,
         Vector2 goal,
         float tile,
         List<Node> nodes,
@@ -460,26 +575,24 @@ public class BossEscapeOnLastLife : MonoBehaviour
         Dictionary<Vector2, int> openMap,
         HashSet<Vector2> closed)
     {
-        if (closed.Contains(np))
-            return;
-
-        if (IsSolidAtWorld(np))
-            return;
+        if (closed.Contains(np)) return;
+        if (IsSolidAtWorld(np)) return;
 
         int Heur(Vector2 a, Vector2 b)
-            => Mathf.Abs(Mathf.RoundToInt((a.x - b.x) / tile)) + Mathf.Abs(Mathf.RoundToInt((a.y - b.y) / tile));
+            => Mathf.Abs(Mathf.RoundToInt((a.x - b.x) / tile)) +
+               Mathf.Abs(Mathf.RoundToInt((a.y - b.y) / tile));
 
-        int newG = nodes[bestNodeIndex].G + 1;
+        int newG = nodes[parent].G + 1;
 
-        if (openMap.TryGetValue(np, out int existingIndex))
+        if (openMap.TryGetValue(np, out int existing))
         {
-            if (newG < nodes[existingIndex].G)
+            if (newG < nodes[existing].G)
             {
-                var up = nodes[existingIndex];
+                var up = nodes[existing];
                 up.G = newG;
                 up.F = newG + Heur(np, goal);
-                up.Parent = bestNodeIndex;
-                nodes[existingIndex] = up;
+                up.Parent = parent;
+                nodes[existing] = up;
             }
             return;
         }
@@ -488,7 +601,7 @@ public class BossEscapeOnLastLife : MonoBehaviour
         nodes.Add(new Node
         {
             Pos = np,
-            Parent = bestNodeIndex,
+            Parent = parent,
             G = newG,
             F = newG + Heur(np, goal)
         });
