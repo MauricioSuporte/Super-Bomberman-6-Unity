@@ -11,6 +11,8 @@ public class BombKickAbility : MonoBehaviour, IMovementAbility
 
     private const string KickClipResourcesPath = "Sounds/KickBomb";
     private static AudioClip cachedKickClip;
+    private const string KickStopClipResourcesPath = "Sounds/kickstop";
+    private static AudioClip cachedKickStopClip;
 
     [SerializeField] private bool enabledAbility;
 
@@ -31,6 +33,9 @@ public class BombKickAbility : MonoBehaviour, IMovementAbility
 
         if (cachedKickClip == null)
             cachedKickClip = Resources.Load<AudioClip>(KickClipResourcesPath);
+
+        if (cachedKickStopClip == null)
+            cachedKickStopClip = Resources.Load<AudioClip>(KickStopClipResourcesPath);
     }
 
     private void Update()
@@ -111,6 +116,8 @@ public class BombKickAbility : MonoBehaviour, IMovementAbility
         if (kickedByMe.Count == 0)
             return;
 
+        bool stoppedAny = false;
+
         var toRemove = ListPool<Bomb>.Get();
 
         foreach (var b in kickedByMe)
@@ -128,6 +135,7 @@ public class BombKickAbility : MonoBehaviour, IMovementAbility
             }
 
             b.StopKickAndSnapToGrid(movement != null ? movement.tileSize : 1f);
+            stoppedAny = true;
             toRemove.Add(b);
         }
 
@@ -135,6 +143,9 @@ public class BombKickAbility : MonoBehaviour, IMovementAbility
             kickedByMe.Remove(toRemove[i]);
 
         ListPool<Bomb>.Release(toRemove);
+
+        if (stoppedAny && audioSource != null && cachedKickStopClip != null)
+            audioSource.PlayOneShot(cachedKickStopClip);
     }
 
     private void PruneKickedSet()
