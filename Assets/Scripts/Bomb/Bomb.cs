@@ -14,6 +14,10 @@ public class Bomb : MonoBehaviour, IMagnetPullable
     [Range(0f, 1f)] public float punchSfxVolume = 1f;
     public AudioClip bounceSfx;
     [Range(0f, 1f)] public float bounceSfxVolume = 1f;
+    private static AudioClip magnetPullSfx;
+    [Range(0f, 1f)] public float magnetPullSfxVolume = 1f;
+    private static float bombSfxBlockedUntil = 0f;
+    private static readonly object bombSfxGate = new();
 
     [Header("Kick")]
     public float kickSpeed = 9f;
@@ -104,6 +108,11 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         {
             audioSource.playOnAwake = false;
             audioSource.loop = false;
+        }
+
+        if (magnetPullSfx == null)
+        {
+            magnetPullSfx = Resources.Load<AudioClip>("Sounds/magnetbomb");
         }
 
         lastPos = rb.position;
@@ -418,8 +427,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
 
         PauseFuse();
 
-        if (audioSource != null && punchSfx != null)
-            audioSource.PlayOneShot(punchSfx, punchSfxVolume);
+        TryPlayBombSfx_NoOverlap(punchSfx, punchSfxVolume);
 
         if (anim != null)
             anim.SetFrozen(true);
@@ -564,8 +572,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
                 continue;
             }
 
-            if (audioSource != null && bounceSfx != null)
-                audioSource.PlayOneShot(bounceSfx, bounceSfxVolume);
+            TryPlayBombSfx_NoOverlap(bounceSfx, bounceSfxVolume);
 
             yield return PunchArcSegmentFixed(cur, next, duration, arcHeight);
             cur = next;
@@ -1047,6 +1054,8 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         if (anim != null)
             anim.SetFrozen(true);
 
+        TryPlayBombSfx_NoOverlap(magnetPullSfx, magnetPullSfxVolume);
+
         magnetRoutine = StartCoroutine(MagnetPullRoutineFixed(steps, magnetSpeedMultiplier));
         return true;
     }
@@ -1184,5 +1193,29 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         owner.NotifyBombAt(pos, gameObject);
 
         return HasExploded || this == null || gameObject == null;
+    }
+
+    private void TryPlayBombSfx_NoOverlap(AudioClip clip, float volume)
+    {
+        if (audioSource == null || clip == null)
+            return;
+
+        float clipLen = clip.length > 0.001f ? clip.length : 0.10f;
+
+        bool canPlay;
+
+        lock (bombSfxGate)
+        {
+            float now = Time.time;
+            canPlay = now >= bombSfxBlockedUntil;
+
+            if (canPlay)
+                bombSfxBlockedUntil = now + clipLen;
+        }
+
+        if (!canPlay)
+            return;
+
+        audioSource.PlayOneShot(clip, volume);
     }
 }
