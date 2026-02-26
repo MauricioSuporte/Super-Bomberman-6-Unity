@@ -116,6 +116,9 @@ public class MountMovementController : MovementController
         if (owner != null && owner.TryGetComponent<RedLouiePunchStunAbility>(out var ownerPunch) && ownerPunch != null)
             ownerPunch.Disable();
 
+        if (owner != null && owner.TryGetComponent<GreenLouieDashAbility>(out var ownerDash) && ownerDash != null)
+            ownerDash.Disable();
+
         if (TryGetComponent<GreenLouieDashAbility>(out var dash))
             dash.CancelDashForDeath();
 
