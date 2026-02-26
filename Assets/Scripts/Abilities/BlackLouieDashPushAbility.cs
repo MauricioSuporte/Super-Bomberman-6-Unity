@@ -50,6 +50,7 @@ public class BlackLouieDashPushAbility : MonoBehaviour, IPlayerAbility
 
     public string Id => AbilityId;
     public bool IsEnabled => enabledAbility;
+    bool deathCancelInProgress;
 
     void Awake()
     {
@@ -244,12 +245,16 @@ public class BlackLouieDashPushAbility : MonoBehaviour, IPlayerAbility
 
     void EndDash()
     {
-        externalAnimator?.Stop();
+        if (!deathCancelInProgress)
+        {
+            externalAnimator?.Stop();
 
-        if (movement != null)
-            movement.SetInputLocked(false);
+            if (movement != null)
+                movement.SetInputLocked(false);
+        }
 
         routine = null;
+        deathCancelInProgress = false;
     }
 
     bool TryKickBomb(Collider2D hit, Vector2 dir)
@@ -475,5 +480,25 @@ public class BlackLouieDashPushAbility : MonoBehaviour, IPlayerAbility
             return Mathf.Clamp(parentId.playerId, 1, 4);
 
         return 1;
+    }
+
+    public void CancelDashForDeath()
+    {
+        deathCancelInProgress = true;
+
+        enabledAbility = false;
+
+        if (routine != null)
+        {
+            StopCoroutine(routine);
+            routine = null;
+        }
+
+        externalAnimator?.Stop();
+
+        if (movement != null)
+            movement.SetInputLocked(false);
+
+        externalAnimator = null;
     }
 }

@@ -209,4 +209,30 @@ public class BlackLouieDashAnimator : MonoBehaviour, IBlackLouieDashExternalAnim
         cachedDirectionObjects.Clear();
         cachedDirectionObjectsActive.Clear();
     }
+
+    public void CancelForDeath()
+    {
+        if (activeDash != null)
+        {
+            if (activeDash.TryGetComponent<SpriteRenderer>(out var sr))
+                sr.flipX = false;
+
+            activeDash.enabled = false;
+
+            if (activeDash.TryGetComponent<SpriteRenderer>(out var psr))
+                psr.enabled = false;
+        }
+
+        activeDash = null;
+        playing = false;
+
+        cachedAnimators.Clear();
+        cachedAnimatorEnabled.Clear();
+        cachedSpriteRenderers.Clear();
+        cachedSpriteEnabled.Clear();
+        cachedDirectionObjects.Clear();
+        cachedDirectionObjectsActive.Clear();
+
+        enabled = false;
+    }
 }
