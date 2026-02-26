@@ -211,4 +211,30 @@ public class YellowLouieKickAnimator : MonoBehaviour, IYellowLouieDestructibleKi
         cachedDirectionObjects.Clear();
         cachedDirectionObjectsActive.Clear();
     }
+
+    public void CancelForDeath()
+    {
+        if (activeKick != null)
+        {
+            if (activeKick.TryGetComponent<SpriteRenderer>(out var sr))
+                sr.flipX = false;
+
+            activeKick.enabled = false;
+
+            if (activeKick.TryGetComponent<SpriteRenderer>(out var ksr))
+                ksr.enabled = false;
+        }
+
+        activeKick = null;
+        playing = false;
+
+        cachedAnimators.Clear();
+        cachedAnimatorEnabled.Clear();
+        cachedSpriteRenderers.Clear();
+        cachedSpriteEnabled.Clear();
+        cachedDirectionObjects.Clear();
+        cachedDirectionObjectsActive.Clear();
+
+        enabled = false;
+    }
 }

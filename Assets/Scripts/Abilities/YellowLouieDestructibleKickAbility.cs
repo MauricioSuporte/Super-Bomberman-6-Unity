@@ -47,6 +47,8 @@ public class YellowLouieDestructibleKickAbility : MonoBehaviour, IPlayerAbility
     public string Id => AbilityId;
     public bool IsEnabled => enabledAbility;
 
+    bool deathCancelInProgress;
+
     enum BlockType
     {
         None = 0,
@@ -359,10 +361,14 @@ public class YellowLouieDestructibleKickAbility : MonoBehaviour, IPlayerAbility
 
             ApplyShadowForCell(currentCell);
 
-            if (movement != null)
-                movement.SetInputLocked(false);
+            if (!deathCancelInProgress)
+            {
+                if (movement != null)
+                    movement.SetInputLocked(false);
+            }
 
             routine = null;
+            deathCancelInProgress = false;
         }
     }
 
@@ -618,5 +624,32 @@ public class YellowLouieDestructibleKickAbility : MonoBehaviour, IPlayerAbility
     {
         enabledAbility = false;
         CancelKick();
+    }
+
+    public void CancelKickForDeath()
+    {
+        deathCancelInProgress = true;
+
+        enabledAbility = false;
+
+        if (routine != null)
+        {
+            StopCoroutine(routine);
+            routine = null;
+        }
+
+        if (kickVisualRoutine != null)
+        {
+            StopCoroutine(kickVisualRoutine);
+            kickVisualRoutine = null;
+        }
+
+        kickActive = false;
+        externalAnimator?.Stop();
+
+        if (movement != null)
+            movement.SetInputLocked(false);
+
+        externalAnimator = null;
     }
 }
