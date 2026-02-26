@@ -25,17 +25,17 @@ public static class PlayerPersistentStats
         public int SpeedInternal = MaxSpeedInternal;
 
         public bool CanKickBombs = true;
-        public bool CanPunchBombs = true;
+        public bool CanPunchBombs = false;
         public bool HasPowerGlove = true;
         public bool CanPassBombs = false;
         public bool CanPassDestructibles = false;
         public bool HasPierceBombs = false;
         public bool HasControlBombs = false;
-        public bool HasPowerBomb = false;
+        public bool HasPowerBomb = true;
         public bool HasRubberBombs = false;
         public bool HasFullFire = false;
 
-        public MountedType MountedLouie = MountedType.None;
+        public MountedType MountedLouie = MountedType.Red;
         public BomberSkin Skin = BomberSkin.White;
 
         public readonly List<ItemType> QueuedEggs = new(8);

@@ -113,12 +113,22 @@ public class MountMovementController : MovementController
 
     protected override void DeathSequence()
     {
+        if (owner != null && owner.TryGetComponent<RedLouiePunchStunAbility>(out var ownerPunch) && ownerPunch != null)
+            ownerPunch.Disable();
+
         if (TryGetComponent<GreenLouieDashAbility>(out var dash))
             dash.CancelDashForDeath();
 
         var dashAnim = GetComponentInChildren<GreenLouieDashAnimator>(true);
         if (dashAnim != null)
             dashAnim.CancelForDeath();
+
+        if (TryGetComponent<RedLouiePunchStunAbility>(out var punch))
+            punch.CancelPunchForDeath();
+
+        var punchAnim = GetComponentInChildren<RedLouiePunchAnimator>(true);
+        if (punchAnim != null)
+            punchAnim.CancelForDeath();
 
         if (TryGetComponent<MountVisualController>(out var visual))
         {

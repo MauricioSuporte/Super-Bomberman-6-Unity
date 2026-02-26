@@ -11,18 +11,14 @@ public class RedLouiePunchStunAbility : MonoBehaviour, IPlayerAbility
 
     [SerializeField] private bool enabledAbility = true;
 
-    [Header("Punch")]
     public float punchCooldownSeconds = 0.25f;
     public float punchRange = 0.75f;
     public Vector2 punchBoxSize = new(0.65f, 0.45f);
 
-    [Header("Stun")]
     public float stunSeconds = 2f;
 
-    [Header("Extra Cooldown (only if stunned someone)")]
     public float successCooldownSeconds = 2.25f;
 
-    [Header("SFX")]
     public AudioClip punchSfx;
     [Range(0f, 1f)] public float punchSfxVolume = 1f;
 
@@ -34,6 +30,8 @@ public class RedLouiePunchStunAbility : MonoBehaviour, IPlayerAbility
     Coroutine routine;
 
     IRedLouiePunchExternalAnimator externalAnimator;
+
+    bool deathCancelInProgress;
 
     public string Id => AbilityId;
     public bool IsEnabled => enabledAbility;
@@ -132,12 +130,38 @@ public class RedLouiePunchStunAbility : MonoBehaviour, IPlayerAbility
             yield return null;
         }
 
-        externalAnimator?.Stop();
+        if (!deathCancelInProgress)
+        {
+            externalAnimator?.Stop();
 
-        if (movement != null)
-            movement.SetInputLocked(false);
+            if (movement != null)
+                movement.SetInputLocked(false);
+        }
 
         routine = null;
+        deathCancelInProgress = false;
+    }
+
+    public void CancelPunchForDeath()
+    {
+        deathCancelInProgress = true;
+
+        if (routine != null)
+        {
+            StopCoroutine(routine);
+            routine = null;
+        }
+
+        if (externalAnimator is RedLouiePunchAnimator anim && anim != null)
+        {
+            anim.CancelForDeath();
+        }
+        else if (externalAnimator is MonoBehaviour mb && mb != null)
+        {
+            mb.enabled = false;
+        }
+
+        externalAnimator = null;
     }
 
     bool TryHitEnemy(Vector2 dir)
@@ -215,33 +239,4 @@ public class RedLouiePunchStunAbility : MonoBehaviour, IPlayerAbility
         enabledAbility = false;
         Cancel();
     }
-
-#if UNITY_EDITOR
-    void OnDrawGizmosSelected()
-    {
-        if (movement == null)
-            movement = GetComponent<MovementController>();
-
-        Vector2 dir = movement != null
-            ? (movement.Direction != Vector2.zero ? movement.Direction : movement.FacingDirection)
-            : Vector2.down;
-
-        if (dir == Vector2.zero)
-            dir = Vector2.down;
-
-        var rbLocal = rb != null ? rb : GetComponent<Rigidbody2D>();
-        Vector2 origin = rbLocal != null ? rbLocal.position : (Vector2)transform.position;
-        Vector2 center = origin + dir.normalized * Mathf.Max(0.01f, punchRange);
-
-        float w = Mathf.Max(0.05f, punchBoxSize.x);
-        float h = Mathf.Max(0.05f, punchBoxSize.y);
-
-        if (Mathf.Abs(dir.x) > 0.01f)
-            (w, h) = (Mathf.Max(w, h), Mathf.Min(w, h));
-        else
-            (w, h) = (Mathf.Min(w, h), Mathf.Max(w, h));
-
-        Gizmos.DrawWireCube(center, new Vector3(w, h, 0f));
-    }
-#endif
 }

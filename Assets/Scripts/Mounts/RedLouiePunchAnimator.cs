@@ -98,6 +98,32 @@ public class RedLouiePunchAnimator : MonoBehaviour, IRedLouiePunchExternalAnimat
         playing = false;
     }
 
+    public void CancelForDeath()
+    {
+        if (activePunch != null)
+        {
+            if (activePunch.TryGetComponent<SpriteRenderer>(out var sr))
+                sr.flipX = false;
+
+            activePunch.enabled = false;
+
+            if (activePunch.TryGetComponent<SpriteRenderer>(out var psr))
+                psr.enabled = false;
+        }
+
+        activePunch = null;
+        playing = false;
+
+        cachedAnimators.Clear();
+        cachedAnimatorEnabled.Clear();
+        cachedSpriteRenderers.Clear();
+        cachedSpriteEnabled.Clear();
+        cachedDirectionObjects.Clear();
+        cachedDirectionObjectsActive.Clear();
+
+        enabled = false;
+    }
+
     AnimatedSpriteRenderer GetPunchSprite(Vector2 dir)
     {
         if (dir == Vector2.up) return punchUp;
