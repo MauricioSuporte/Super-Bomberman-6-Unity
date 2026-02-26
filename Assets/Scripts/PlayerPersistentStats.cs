@@ -17,7 +17,7 @@ public static class PlayerPersistentStats
 
     public sealed class PlayerState
     {
-        public int Life = 99;
+        public int Life = 1;
 
         public int BombAmount = 9;
         public int ExplosionRadius = 10;
@@ -193,6 +193,7 @@ public static class PlayerPersistentStats
         s.HasPierceBombs = false;
         s.HasControlBombs = false;
         s.HasPowerBomb = false;
+        s.HasRubberBombs = false;
         s.HasFullFire = false;
 
         s.MountedLouie = MountedType.None;
@@ -486,6 +487,7 @@ public static class PlayerPersistentStats
         to.HasPierceBombs = from.HasPierceBombs;
         to.HasControlBombs = from.HasControlBombs;
         to.HasPowerBomb = from.HasPowerBomb;
+        to.HasRubberBombs = from.HasRubberBombs;
         to.HasFullFire = from.HasFullFire;
 
         to.MountedLouie = from.MountedLouie;
@@ -697,6 +699,9 @@ public static class PlayerPersistentStats
 
             var power = abilitySystem != null ? abilitySystem.Get<PowerBombAbility>(PowerBombAbility.AbilityId) : null;
             s.HasPowerBomb = power != null && power.IsEnabled;
+
+            var rubber = abilitySystem != null ? abilitySystem.Get<RubberBombAbility>(RubberBombAbility.AbilityId) : null;
+            s.HasRubberBombs = rubber != null && rubber.IsEnabled;
 
             var fullFire = abilitySystem != null ? abilitySystem.Get<FullFireAbility>(FullFireAbility.AbilityId) : null;
             s.HasFullFire = fullFire != null && fullFire.IsEnabled;
