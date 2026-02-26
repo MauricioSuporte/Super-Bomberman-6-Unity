@@ -48,6 +48,8 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
     public string Id => AbilityId;
     public bool IsEnabled => enabledAbility;
 
+    bool deathCancelInProgress;
+
     void Awake()
     {
         movement = GetComponent<MovementController>();
@@ -209,14 +211,18 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
             if (wasMountedAtStart && !movement.IsMountedOnLouie)
             {
                 HandleLoseLouieMidJump(projectedGroundPos3, startCell, destructible, indestructible, ground);
-                StopJumpVisuals();
 
-                shadow?.EndJump();
+                if (!deathCancelInProgress)
+                {
+                    StopJumpVisuals();
+                    shadow?.EndJump();
 
-                if (movement != null)
-                    movement.SetInputLocked(false);
+                    if (movement != null)
+                        movement.SetInputLocked(false);
+                }
 
                 routine = null;
+                deathCancelInProgress = false;
                 yield break;
             }
 
@@ -228,14 +234,17 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
         if (invulnerableDuringJump)
             ApplyPostLandingInvulnerability(mountedLouieHealth);
 
-        StopJumpVisuals();
+        if (!deathCancelInProgress)
+        {
+            StopJumpVisuals();
+            shadow?.EndJump();
 
-        shadow?.EndJump();
-
-        if (movement != null)
-            movement.SetInputLocked(false);
+            if (movement != null)
+                movement.SetInputLocked(false);
+        }
 
         routine = null;
+        deathCancelInProgress = false;
     }
 
     void BindShadowToPinkLouie()
@@ -478,5 +487,45 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
             return Mathf.Clamp(parentId.playerId, 1, 4);
 
         return 1;
+    }
+
+    public void CancelJumpForDeath()
+    {
+        deathCancelInProgress = true;
+
+        if (routine != null)
+        {
+            StopCoroutine(routine);
+            routine = null;
+        }
+
+        if (visualRoutine != null)
+        {
+            StopCoroutine(visualRoutine);
+            visualRoutine = null;
+        }
+
+        externalAnimator?.Stop();
+        shadow?.EndJump();
+
+        if (movement != null)
+            movement.SetInputLocked(false);
+
+        if (invulnerableDuringJump)
+        {
+            if (playerHealth != null)
+                playerHealth.StopInvulnerability();
+
+            var louieHealth = GetMountedLouieHealth();
+            if (louieHealth != null)
+                louieHealth.StopInvulnerability();
+        }
+
+        if (externalAnimator is PinkLouieJumpAnimator anim && anim != null)
+            anim.CancelForDeath();
+        else if (externalAnimator is MonoBehaviour mb && mb != null)
+            mb.enabled = false;
+
+        externalAnimator = null;
     }
 }

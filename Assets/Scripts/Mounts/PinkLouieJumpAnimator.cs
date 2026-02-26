@@ -277,4 +277,34 @@ public class PinkLouieJumpAnimator : MonoBehaviour, IPinkLouieJumpExternalAnimat
         cachedRenderers.Clear();
         cachedRenderersEnabled.Clear();
     }
+
+    public void CancelForDeath()
+    {
+        if (active != null)
+        {
+            if (active.TryGetComponent<SpriteRenderer>(out var sr))
+                sr.flipX = false;
+
+            if (fixRightLocalX)
+                active.ClearRuntimeBaseLocalX();
+
+            SetRendererEnabled(active, false);
+        }
+
+        active = null;
+        playing = false;
+
+        ForceOffJumpSprites();
+
+        cachedDirectionObjects.Clear();
+        cachedDirectionObjectsActive.Clear();
+
+        cachedBehaviours.Clear();
+        cachedBehavioursEnabled.Clear();
+
+        cachedRenderers.Clear();
+        cachedRenderersEnabled.Clear();
+
+        enabled = false;
+    }
 }
