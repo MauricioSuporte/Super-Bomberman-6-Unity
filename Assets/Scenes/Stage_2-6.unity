@@ -5546,6 +5546,10 @@ PrefabInstance:
       propertyPath: life
       value: 6
       objectReference: {fileID: 0}
+    - target: {fileID: 2258062271764064381, guid: a009117f38ad56d4fb5e2e5fa7445a16, type: 3}
+      propertyPath: hitInvulnerableDuration
+      value: 0.5
+      objectReference: {fileID: 0}
     - target: {fileID: 8243230538853254392, guid: a009117f38ad56d4fb5e2e5fa7445a16, type: 3}
       propertyPath: groundTiles
       value: 
