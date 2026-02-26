@@ -234,6 +234,7 @@ MonoBehaviour:
   punchBombAmount: 0
   pierceBombAmount: 0
   controlBombAmount: 0
+  powerBombAmount: 0
   fullFireAmount: 0
   bombPassAmount: 0
   destructiblePassAmount: 0
@@ -1019,7 +1020,7 @@ Tilemap:
       - {fileID: 597665950, guid: f1e5692e3d10a804d897441da1a7fe2c, type: 3}
       - {fileID: -567632026, guid: f1e5692e3d10a804d897441da1a7fe2c, type: 3}
       - {fileID: 918707804, guid: f1e5692e3d10a804d897441da1a7fe2c, type: 3}
-      m_AnimationSpeed: 10.000001
+      m_AnimationSpeed: 10
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: -4, y: 2, z: 0}

@@ -592,38 +592,85 @@ public class Bomb : MonoBehaviour, IMagnetPullable
             }
         }
 
-        for (int b = 0; b < Mathf.Max(0, maxExtraBounces); b++)
+        int extraLimit = Mathf.Max(0, maxExtraBounces);
+
+        if (IsRubberBomb)
         {
-            if (HasExploded)
-                goto FINISH;
+            int minBounces = Random.Range(3, 6);
+            int bouncesDone = 0;
 
-            if (!IsPunchLandingBlocked(cur))
-                break;
-
-            if (!TryStepWithWrap(cur, out var next, out var didWrap))
-                break;
-
-            if (didWrap)
+            for (int b = 0; b < extraLimit; b++)
             {
-                TeleportTo(next);
+                if (HasExploded)
+                    goto FINISH;
+
+                bool safeNow = !IsPunchLandingBlocked(cur);
+
+                if (bouncesDone >= minBounces && safeNow)
+                    break;
+
+                Vector2 dir = RandomCardinalDir();
+
+                if (!TryStepWithWrapDir(cur, dir, out var next, out var didWrap))
+                    break;
+
+                if (didWrap)
+                {
+                    TeleportTo(next);
+                    cur = next;
+
+                    if (NotifyOwnerAt(cur))
+                        goto FINISH;
+
+                    b--;
+                    continue;
+                }
+
+                StunMovementControllersAtTile(cur, 0.5f);
+                TryPlayKickSfx_StopOthers(GetKickBounceClip(), bounceSfxVolume);
+
+                yield return PunchArcSegmentFixed(cur, next, duration, arcHeight);
+                cur = next;
+                bouncesDone++;
+
+                if (NotifyOwnerAt(cur))
+                    goto FINISH;
+            }
+        }
+        else
+        {
+            for (int b = 0; b < extraLimit; b++)
+            {
+                if (HasExploded)
+                    goto FINISH;
+
+                if (!IsPunchLandingBlocked(cur))
+                    break;
+
+                if (!TryStepWithWrap(cur, out var next, out var didWrap))
+                    break;
+
+                if (didWrap)
+                {
+                    TeleportTo(next);
+                    cur = next;
+
+                    if (NotifyOwnerAt(cur))
+                        goto FINISH;
+
+                    b--;
+                    continue;
+                }
+
+                StunMovementControllersAtTile(cur, 0.5f);
+                TryPlayKickSfx_StopOthers(GetKickBounceClip(), bounceSfxVolume);
+
+                yield return PunchArcSegmentFixed(cur, next, duration, arcHeight);
                 cur = next;
 
                 if (NotifyOwnerAt(cur))
                     goto FINISH;
-
-                b--;
-                continue;
             }
-
-            StunMovementControllersAtTile(cur, 0.5f);
-
-            TryPlayKickSfx_StopOthers(GetKickBounceClip(), bounceSfxVolume);
-
-            yield return PunchArcSegmentFixed(cur, next, duration, arcHeight);
-            cur = next;
-
-            if (NotifyOwnerAt(cur))
-                goto FINISH;
         }
 
     FINISH:
@@ -754,6 +801,29 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         }
 
         return true;
+    }
+
+    private bool TryStepWithWrapDir(Vector2 from, Vector2 dir, out Vector2 next, out bool didWrap)
+    {
+        Vector2 prev = kickDirection;
+        kickDirection = dir;
+
+        bool ok = TryStepWithWrap(from, out next, out didWrap);
+
+        kickDirection = prev;
+        return ok;
+    }
+
+    private static Vector2 RandomCardinalDir()
+    {
+        int r = Random.Range(0, 4);
+        return r switch
+        {
+            0 => Vector2.up,
+            1 => Vector2.down,
+            2 => Vector2.left,
+            _ => Vector2.right,
+        };
     }
 
     private void TeleportTo(Vector2 pos)
