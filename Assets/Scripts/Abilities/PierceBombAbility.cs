@@ -15,7 +15,10 @@ public class PierceBombAbility : MonoBehaviour, IPlayerAbility
         enabledAbility = true;
 
         if (TryGetComponent<AbilitySystem>(out var abilitySystem))
+        {
             abilitySystem.Disable(ControlBombAbility.AbilityId);
+            abilitySystem.Disable(PowerBombAbility.AbilityId);
+        }
     }
 
     public void Disable()

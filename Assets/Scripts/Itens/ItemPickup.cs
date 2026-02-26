@@ -413,6 +413,7 @@ public class ItemPickup : MonoBehaviour
                     var ab = GetOrCreateAbilitySystem(player);
                     ab.Enable(PierceBombAbility.AbilityId);
                     ab.Disable(ControlBombAbility.AbilityId);
+                    ab.Disable(PowerBombAbility.AbilityId);
                     break;
                 }
 
@@ -421,6 +422,16 @@ public class ItemPickup : MonoBehaviour
                     var ab = GetOrCreateAbilitySystem(player);
                     ab.Enable(ControlBombAbility.AbilityId);
                     ab.Disable(PierceBombAbility.AbilityId);
+                    ab.Disable(PowerBombAbility.AbilityId);
+                    break;
+                }
+
+            case ItemType.PowerBomb:
+                {
+                    var ab = GetOrCreateAbilitySystem(player);
+                    ab.Enable(PowerBombAbility.AbilityId);
+                    ab.Disable(PierceBombAbility.AbilityId);
+                    ab.Disable(ControlBombAbility.AbilityId);
                     break;
                 }
 

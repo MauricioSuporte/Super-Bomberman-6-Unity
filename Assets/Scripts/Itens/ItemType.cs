@@ -21,5 +21,6 @@
     PinkLouieEgg = 18,
     RedLouieEgg = 19,
     LandMine = 20,
-    Clock = 21
+    Clock = 21,
+    PowerBomb = 22
 }

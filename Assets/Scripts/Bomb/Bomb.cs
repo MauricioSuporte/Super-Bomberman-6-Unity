@@ -52,6 +52,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
     public bool CanBePunched => !HasExploded && !isKicked && !isPunched && IsSolid && charactersInside.Count == 0;
     public bool CanBeMagnetPulled => !HasExploded && !IsBeingKicked && !IsBeingPunched && !IsBeingMagnetPulled;
     public bool IsPierceBomb { get; set; }
+    public bool IsPowerBomb { get; set; }
 
     public bool IsBeingMagnetPulled => magnetRoutine != null;
 
@@ -1268,7 +1269,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
                 return;
 
             airbornePrevColliderEnabled = bombCollider.enabled;
-            bombCollider.enabled = false;          // <- chave: não recebe Explosion trigger
+            bombCollider.enabled = false;
             airborneColliderSuppressed = true;
             return;
         }

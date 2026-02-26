@@ -1,9 +1,9 @@
 ﻿using UnityEngine;
 
 [DisallowMultipleComponent]
-public class ControlBombAbility : MonoBehaviour, IPlayerAbility
+public class PowerBombAbility : MonoBehaviour, IPlayerAbility
 {
-    public const string AbilityId = "ControlBomb";
+    public const string AbilityId = "PowerBomb";
 
     [SerializeField] private bool enabledAbility;
 
@@ -14,10 +14,10 @@ public class ControlBombAbility : MonoBehaviour, IPlayerAbility
     {
         enabledAbility = true;
 
-        if (TryGetComponent<AbilitySystem>(out var abilitySystem))
+        if (TryGetComponent<AbilitySystem>(out var ab) && ab != null)
         {
-            abilitySystem.Disable(PierceBombAbility.AbilityId);
-            abilitySystem.Disable(PowerBombAbility.AbilityId);
+            ab.Disable(PierceBombAbility.AbilityId);
+            ab.Disable(ControlBombAbility.AbilityId);
         }
     }
 

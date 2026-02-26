@@ -15,9 +15,8 @@ GameObject:
   - component: {fileID: 147425199346742613}
   - component: {fileID: 2484313177524847551}
   - component: {fileID: 4491695425928016186}
-  - component: {fileID: 1584574550123671064}
   m_Layer: 7
-  m_Name: MagnetBomb
+  m_Name: PowerBomb
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -87,7 +86,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 3
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 3671727416473069314, guid: 6e85537cefcdfa848bca3fb60e64908a, type: 3}
+  m_Sprite: {fileID: -204850963964771505, guid: c3900668087ae8d4c9077c20318815b2, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -109,12 +108,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a4b55e1b961d144197e1a7a4a391956, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  idleSprite: {fileID: 3671727416473069314, guid: 6e85537cefcdfa848bca3fb60e64908a, type: 3}
+  idleSprite: {fileID: -204850963964771505, guid: c3900668087ae8d4c9077c20318815b2, type: 3}
   animationSprite:
-  - {fileID: 8622632769309838820, guid: 6e85537cefcdfa848bca3fb60e64908a, type: 3}
-  - {fileID: 3671727416473069314, guid: 6e85537cefcdfa848bca3fb60e64908a, type: 3}
-  - {fileID: -7580392354972000331, guid: 6e85537cefcdfa848bca3fb60e64908a, type: 3}
-  - {fileID: 3671727416473069314, guid: 6e85537cefcdfa848bca3fb60e64908a, type: 3}
+  - {fileID: 3560976147015099402, guid: c3900668087ae8d4c9077c20318815b2, type: 3}
+  - {fileID: -204850963964771505, guid: c3900668087ae8d4c9077c20318815b2, type: 3}
+  - {fileID: -4309301051881964775, guid: c3900668087ae8d4c9077c20318815b2, type: 3}
+  - {fileID: -204850963964771505, guid: c3900668087ae8d4c9077c20318815b2, type: 3}
   allowFlipX: 1
   animationTime: 0.25
   useSequenceDuration: 0
@@ -309,24 +308,3 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
---- !u!114 &1584574550123671064
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 147425199346742615}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 80cf9b3f17a431d46acf4e7ad59f1ebb, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::MagnetBomb
-  scanInterval: 0.08
-  scanMaxDistanceTiles: 12
-  maxPullSteps: 12
-  reattractDelaySeconds: 1
-  playerLayerName: Player
-  stageLayerName: Stage
-  bombLayerName: Bomb
-  magnetPullSpeedMultiplier: 0.5
-  tileCheckBoxSize: 0.6

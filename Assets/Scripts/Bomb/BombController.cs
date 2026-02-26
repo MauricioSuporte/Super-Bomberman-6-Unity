@@ -19,6 +19,7 @@ public partial class BombController : MonoBehaviour
     public GameObject bombPrefab;
     public GameObject pierceBombPrefab;
     public GameObject controlBombPrefab;
+    public GameObject powerBombPrefab;
     public float bombFuseTime = 2f;
     public int bombAmout = 1;
 
@@ -31,6 +32,11 @@ public partial class BombController : MonoBehaviour
 
     [Header("Control Bomb")]
     private readonly List<GameObject> plantedBombs = new();
+
+    [Header("Power Bomb")]
+    [SerializeField, Min(1)] private int powerBombRadius = 15;
+    private GameObject activePowerBomb;
+    private int activePowerBombId;
 
     [Header("Explosion Settings")]
     public BombExplosion explosionPrefab;
@@ -189,8 +195,6 @@ public partial class BombController : MonoBehaviour
             }
         }
     }
-
-    public bool IsControlAbilityActive() => IsControlEnabled();
 
     private void ResolveTilemaps()
     {
@@ -650,11 +654,14 @@ public partial class BombController : MonoBehaviour
         if (HasDestructibleAt(position))
             return;
 
-        bool controlEnabled = IsControlEnabled();
-        bool pierceEnabled = !controlEnabled && IsPierceEnabled();
+        bool canUsePowerNow = CanUsePowerBombNow();
+
+        bool controlEnabled = !canUsePowerNow && IsControlEnabled();
+        bool pierceEnabled = !canUsePowerNow && !controlEnabled && IsPierceEnabled();
 
         GameObject prefabToUse =
-            controlEnabled && controlBombPrefab != null ? controlBombPrefab :
+            (canUsePowerNow && powerBombPrefab != null) ? powerBombPrefab :
+            (controlEnabled && controlBombPrefab != null) ? controlBombPrefab :
             (pierceEnabled && pierceBombPrefab != null) ? pierceBombPrefab :
             bombPrefab;
 
@@ -670,8 +677,12 @@ public partial class BombController : MonoBehaviour
         if (!bomb.TryGetComponent<Bomb>(out var bombComponent))
             bombComponent = bomb.AddComponent<Bomb>();
 
-        bombComponent.IsPierceBomb = pierceEnabled;
+        bombComponent.IsPowerBomb = canUsePowerNow;
         bombComponent.IsControlBomb = controlEnabled;
+        bombComponent.IsPierceBomb = pierceEnabled;
+
+        if (canUsePowerNow)
+            TrackNewActivePowerBomb(bomb);
 
         bombComponent.SetStageBoundsTilemap(stageBoundsTiles);
         bombComponent.SetFuseSeconds(bombFuseTime);
@@ -739,6 +750,9 @@ public partial class BombController : MonoBehaviour
             bomb.MarkAsExploded();
         }
 
+        if (bombGo.TryGetComponent<Bomb>(out var b) && b != null && b.IsPowerBomb)
+            ClearActivePowerBombIfMatches(bombGo);
+
         PlayWaterDestroySfx();
         UnregisterBomb(bombGo);
 
@@ -781,6 +795,9 @@ public partial class BombController : MonoBehaviour
             bomb.LockWorldPosition(sinkPos);
             bomb.ForceStopExternalMovementAndSnap(sinkPos);
         }
+
+        if (bombGo.TryGetComponent<Bomb>(out var b) && b != null && b.IsPowerBomb)
+            ClearActivePowerBombIfMatches(bombGo);
 
         PlayHoleDestroySfx();
         UnregisterBomb(bombGo);
@@ -1044,6 +1061,9 @@ public partial class BombController : MonoBehaviour
 
         bomb.TryGetComponent<Bomb>(out var bombComp);
 
+        if (bombComp != null && bombComp.IsPowerBomb)
+            ClearActivePowerBombIfMatches(bomb);
+
         BombController realOwner = bombComp != null ? bombComp.Owner : null;
         if (realOwner != null && realOwner != this)
         {
@@ -1077,9 +1097,18 @@ public partial class BombController : MonoBehaviour
             bombComp.ForceSetLogicalPosition(snapped);
         }
 
-        int effectiveRadius = IsFullFireEnabled()
-            ? PlayerPersistentStats.MaxExplosionRadius
-            : explosionRadius;
+        int effectiveRadius;
+
+        if (bombComp != null && bombComp.IsPowerBomb)
+        {
+            effectiveRadius = Mathf.Max(1, powerBombRadius);
+        }
+        else
+        {
+            effectiveRadius = IsFullFireEnabled()
+                ? PlayerPersistentStats.MaxExplosionRadius
+                : explosionRadius;
+        }
 
         bool pierce = bombComp != null && bombComp.IsPierceBomb;
 
@@ -1745,11 +1774,14 @@ public partial class BombController : MonoBehaviour
         if (HasDestructibleAt(position))
             return false;
 
-        bool controlEnabled = IsControlEnabled();
-        bool pierceEnabled = !controlEnabled && IsPierceEnabled();
+        bool canUsePowerNow = CanUsePowerBombNow();
+
+        bool controlEnabled = !canUsePowerNow && IsControlEnabled();
+        bool pierceEnabled = !canUsePowerNow && !controlEnabled && IsPierceEnabled();
 
         GameObject prefabToUse =
-            controlEnabled && controlBombPrefab != null ? controlBombPrefab :
+            (canUsePowerNow && powerBombPrefab != null) ? powerBombPrefab :
+            (controlEnabled && controlBombPrefab != null) ? controlBombPrefab :
             (pierceEnabled && pierceBombPrefab != null) ? pierceBombPrefab :
             bombPrefab;
 
@@ -1768,8 +1800,12 @@ public partial class BombController : MonoBehaviour
         if (!bomb.TryGetComponent<Bomb>(out var bombComponent))
             bombComponent = bomb.AddComponent<Bomb>();
 
-        bombComponent.IsPierceBomb = pierceEnabled;
+        bombComponent.IsPowerBomb = canUsePowerNow;
         bombComponent.IsControlBomb = controlEnabled;
+        bombComponent.IsPierceBomb = pierceEnabled;
+
+        if (canUsePowerNow)
+            TrackNewActivePowerBomb(bomb);
 
         bombComponent.SetStageBoundsTilemap(stageBoundsTiles);
         bombComponent.SetFuseSeconds(bombFuseTime);
@@ -1872,5 +1908,94 @@ public partial class BombController : MonoBehaviour
             bombsRemaining = Mathf.Min(bombsRemaining + 1, bombAmout);
 
         StartCoroutine(HoleSinkAndDestroyRoutine(bombGo, sinkPos));
+    }
+
+    private bool IsPowerBombEnabled()
+    {
+        if (TryGetComponent<AbilitySystem>(out var ab) && ab != null)
+            return ab.IsEnabled(PowerBombAbility.AbilityId);
+
+        return false;
+    }
+
+    private bool HasActivePowerBombAlive()
+    {
+        if (activePowerBomb == null)
+            return false;
+
+        if (activePowerBombId != 0 && activePowerBomb.GetInstanceID() != activePowerBombId)
+        {
+            activePowerBomb = null;
+            activePowerBombId = 0;
+            return false;
+        }
+
+        if (!activePowerBomb.TryGetComponent<Bomb>(out var b) || b == null)
+        {
+            activePowerBomb = null;
+            activePowerBombId = 0;
+            return false;
+        }
+
+        if (b.HasExploded)
+        {
+            activePowerBomb = null;
+            activePowerBombId = 0;
+            return false;
+        }
+
+        return true;
+    }
+
+    private void TrackNewActivePowerBomb(GameObject bombGo)
+    {
+        activePowerBomb = bombGo;
+        activePowerBombId = bombGo != null ? bombGo.GetInstanceID() : 0;
+    }
+
+    private void ClearActivePowerBombIfMatches(GameObject bombGo)
+    {
+        if (bombGo == null)
+            return;
+
+        int id = bombGo.GetInstanceID();
+        if (id == activePowerBombId)
+        {
+            activePowerBomb = null;
+            activePowerBombId = 0;
+        }
+    }
+
+    private bool HasAnyAliveBombOwnedByMe()
+    {
+        var bombs = FindObjectsByType<Bomb>(FindObjectsSortMode.None);
+        if (bombs == null || bombs.Length == 0)
+            return false;
+
+        for (int i = 0; i < bombs.Length; i++)
+        {
+            var b = bombs[i];
+            if (b == null) continue;
+            if (b.HasExploded) continue;
+            if (b.Owner != this) continue;
+
+            return true;
+        }
+
+        return false;
+    }
+
+    private bool CanUsePowerBombNow()
+    {
+        if (!IsPowerBombEnabled())
+            return false;
+
+        if (HasAnyAliveBombOwnedByMe())
+            return false;
+
+        if (HasActivePowerBombAlive())
+            return false;
+
+        return true;
     }
 }

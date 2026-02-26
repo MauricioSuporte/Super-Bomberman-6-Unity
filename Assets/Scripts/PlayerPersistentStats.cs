@@ -31,6 +31,7 @@ public static class PlayerPersistentStats
         public bool CanPassDestructibles = false;
         public bool HasPierceBombs = true;
         public bool HasControlBombs = false;
+        public bool HasPowerBomb = false;
         public bool HasFullFire = false;
 
         public MountedType MountedLouie = MountedType.None;
@@ -190,6 +191,7 @@ public static class PlayerPersistentStats
 
         s.HasPierceBombs = false;
         s.HasControlBombs = false;
+        s.HasPowerBomb = false;
         s.HasFullFire = false;
 
         s.MountedLouie = MountedType.None;
@@ -311,16 +313,25 @@ public static class PlayerPersistentStats
             {
                 abilitySystem.Enable(ControlBombAbility.AbilityId);
                 abilitySystem.Disable(PierceBombAbility.AbilityId);
+                abilitySystem.Disable(PowerBombAbility.AbilityId);
             }
             else if (s.HasPierceBombs)
             {
                 abilitySystem.Enable(PierceBombAbility.AbilityId);
                 abilitySystem.Disable(ControlBombAbility.AbilityId);
+                abilitySystem.Disable(PowerBombAbility.AbilityId);
+            }
+            else if (s.HasPowerBomb)
+            {
+                abilitySystem.Enable(PowerBombAbility.AbilityId);
+                abilitySystem.Disable(ControlBombAbility.AbilityId);
+                abilitySystem.Disable(PierceBombAbility.AbilityId);
             }
             else
             {
                 abilitySystem.Disable(PierceBombAbility.AbilityId);
                 abilitySystem.Disable(ControlBombAbility.AbilityId);
+                abilitySystem.Disable(PowerBombAbility.AbilityId);
             }
 
             if (movement.TryGetComponent<PlayerMountCompanion>(out var louieCompanion))
@@ -396,6 +407,9 @@ public static class PlayerPersistentStats
             var control = abilitySystem != null ? abilitySystem.Get<ControlBombAbility>(ControlBombAbility.AbilityId) : null;
             s.HasControlBombs = control != null && control.IsEnabled;
 
+            var power = abilitySystem != null ? abilitySystem.Get<PowerBombAbility>(PowerBombAbility.AbilityId) : null;
+            s.HasPowerBomb = power != null && power.IsEnabled;
+
             var fullFire = abilitySystem != null ? abilitySystem.Get<FullFireAbility>(FullFireAbility.AbilityId) : null;
             s.HasFullFire = fullFire != null && fullFire.IsEnabled;
 
@@ -454,6 +468,7 @@ public static class PlayerPersistentStats
         to.CanPassDestructibles = from.CanPassDestructibles;
         to.HasPierceBombs = from.HasPierceBombs;
         to.HasControlBombs = from.HasControlBombs;
+        to.HasPowerBomb = from.HasPowerBomb;
         to.HasFullFire = from.HasFullFire;
 
         to.MountedLouie = from.MountedLouie;
@@ -573,11 +588,19 @@ public static class PlayerPersistentStats
             case ItemType.PierceBomb:
                 s.HasPierceBombs = true;
                 s.HasControlBombs = false;
+                s.HasPowerBomb = false;
                 break;
 
             case ItemType.ControlBomb:
                 s.HasControlBombs = true;
                 s.HasPierceBombs = false;
+                s.HasPowerBomb = false;
+                break;
+
+            case ItemType.PowerBomb:
+                s.HasPowerBomb = true;
+                s.HasPierceBombs = false;
+                s.HasControlBombs = false;
                 break;
 
             case ItemType.Heart:
@@ -644,6 +667,9 @@ public static class PlayerPersistentStats
 
             var control = abilitySystem != null ? abilitySystem.Get<ControlBombAbility>(ControlBombAbility.AbilityId) : null;
             s.HasControlBombs = control != null && control.IsEnabled;
+
+            var power = abilitySystem != null ? abilitySystem.Get<PowerBombAbility>(PowerBombAbility.AbilityId) : null;
+            s.HasPowerBomb = power != null && power.IsEnabled;
 
             var fullFire = abilitySystem != null ? abilitySystem.Get<FullFireAbility>(FullFireAbility.AbilityId) : null;
             s.HasFullFire = fullFire != null && fullFire.IsEnabled;
