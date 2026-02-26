@@ -216,4 +216,30 @@ public class PurpleLouieBombLineAnimator : MonoBehaviour, IPurpleLouieBombLineEx
         cachedDirectionObjects.Clear();
         cachedDirectionObjectsActive.Clear();
     }
+
+    public void CancelForDeath()
+    {
+        if (activeMagic != null)
+        {
+            if (activeMagic.TryGetComponent<SpriteRenderer>(out var sr))
+            {
+                sr.flipX = false;
+                sr.enabled = false;
+            }
+
+            activeMagic.enabled = false;
+        }
+
+        activeMagic = null;
+        playing = false;
+
+        cachedAnimators.Clear();
+        cachedAnimatorEnabled.Clear();
+        cachedSpriteRenderers.Clear();
+        cachedSpriteEnabled.Clear();
+        cachedDirectionObjects.Clear();
+        cachedDirectionObjectsActive.Clear();
+
+        enabled = false;
+    }
 }

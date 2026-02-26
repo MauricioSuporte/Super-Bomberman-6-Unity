@@ -18,6 +18,8 @@ public class PurpleLouieBombLineAbility : MonoBehaviour, IPlayerAbility
 
     IPurpleLouieBombLineExternalAnimator externalAnimator;
 
+    bool deathCancelInProgress;
+
     public string Id => AbilityId;
     public bool IsEnabled => enabledAbility;
 
@@ -95,8 +97,13 @@ public class PurpleLouieBombLineAbility : MonoBehaviour, IPlayerAbility
             (StageIntroTransition.Instance != null &&
              (StageIntroTransition.Instance.IntroRunning || StageIntroTransition.Instance.EndingRunning));
 
-        movement.SetInputLocked(globalLock || wasLocked, false);
+        if (!deathCancelInProgress)
+        {
+            movement.SetInputLocked(globalLock || wasLocked, false);
+        }
+
         routine = null;
+        deathCancelInProgress = false;
     }
 
     private Vector2 ToCardinal(Vector2 v)
@@ -171,6 +178,9 @@ public class PurpleLouieBombLineAbility : MonoBehaviour, IPlayerAbility
             StopCoroutine(routine);
             routine = null;
         }
+
+        if (movement != null)
+            movement.SetInputLocked(false);
     }
 
     private bool HasIndestructibleAt(Vector2 worldPos)
@@ -183,5 +193,23 @@ public class PurpleLouieBombLineAbility : MonoBehaviour, IPlayerAbility
     {
         int mask = 1 << LayerMask.NameToLayer("Enemy");
         return Physics2D.OverlapBox(worldPos, Vector2.one * 0.4f, 0f, mask) != null;
+    }
+
+    public void CancelCastForDeath()
+    {
+        deathCancelInProgress = true;
+
+        enabledAbility = false;
+
+        externalAnimator?.ForceStop();
+
+        if (routine != null)
+        {
+            StopCoroutine(routine);
+            routine = null;
+        }
+
+        if (movement != null)
+            movement.SetInputLocked(false);
     }
 }

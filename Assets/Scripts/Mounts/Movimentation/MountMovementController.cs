@@ -125,6 +125,9 @@ public class MountMovementController : MovementController
         if (owner != null && owner.TryGetComponent<PinkLouieJumpAbility>(out var ownerPinkJump) && ownerPinkJump != null)
             ownerPinkJump.Disable();
 
+        if (owner != null && owner.TryGetComponent<PurpleLouieBombLineAbility>(out var ownerPurpleLine) && ownerPurpleLine != null)
+            ownerPurpleLine.Disable();
+
         if (TryGetComponent<GreenLouieDashAbility>(out var dash))
             dash.CancelDashForDeath();
 
@@ -149,6 +152,13 @@ public class MountMovementController : MovementController
         var pinkAnim = GetComponentInChildren<PinkLouieJumpAnimator>(true);
         if (pinkAnim != null)
             pinkAnim.CancelForDeath();
+
+        if (TryGetComponent<PurpleLouieBombLineAbility>(out var purpleLine) && purpleLine != null)
+            purpleLine.CancelCastForDeath();
+
+        var purpleAnim = GetComponentInChildren<PurpleLouieBombLineAnimator>(true);
+        if (purpleAnim != null)
+            purpleAnim.CancelForDeath();
 
         if (TryGetComponent<MountVisualController>(out var visual))
         {
