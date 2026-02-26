@@ -17,7 +17,7 @@ public static class PlayerPersistentStats
 
     public sealed class PlayerState
     {
-        public int Life = 1;
+        public int Life = 99;
 
         public int BombAmount = 9;
         public int ExplosionRadius = 10;
@@ -32,7 +32,7 @@ public static class PlayerPersistentStats
         public bool HasPierceBombs = false;
         public bool HasControlBombs = false;
         public bool HasPowerBomb = false;
-        public bool HasRubberBombs = true;
+        public bool HasRubberBombs = false;
         public bool HasFullFire = false;
 
         public MountedType MountedLouie = MountedType.None;

@@ -148,7 +148,7 @@ public class BombKickAbility : MonoBehaviour, IMovementAbility
         ListPool<Bomb>.Release(toRemove);
 
         if (stoppedAny)
-            TryPlayKickSfx_NoOverlap(cachedKickStopClip, 1f);
+            PlayKickStop_Always(cachedKickStopClip, 1f);
     }
 
     private void PruneKickedSet()
@@ -191,6 +191,18 @@ public class BombKickAbility : MonoBehaviour, IMovementAbility
         if (!canPlay)
             return;
 
+        audioSource.PlayOneShot(clip, volume);
+    }
+
+    private void PlayKickStop_Always(AudioClip clip, float volume)
+    {
+        if (audioSource == null || clip == null)
+            return;
+
+        lock (kickSfxGate)
+            kickSfxBlockedUntil = 0f;
+
+        audioSource.Stop();
         audioSource.PlayOneShot(clip, volume);
     }
 
