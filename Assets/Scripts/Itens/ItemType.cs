@@ -20,5 +20,6 @@
     YellowLouieEgg = 17,
     PinkLouieEgg = 18,
     RedLouieEgg = 19,
-    LandMine = 20
+    LandMine = 20,
+    Clock = 21
 }

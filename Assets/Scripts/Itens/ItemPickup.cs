@@ -363,11 +363,15 @@ public class ItemPickup : MonoBehaviour
         if (player.TryGetComponent<PlayerIdentity>(out var id) && id != null)
             pid = Mathf.Clamp(id.playerId, 1, 4);
 
-        if (type != ItemType.LandMine)
+        if (type != ItemType.LandMine && type != ItemType.Clock)
             PlayerPersistentStats.StageApplyPickup(pid, type);
 
         switch (type)
         {
+            case ItemType.Clock:
+                ClockStageStunEffect.Trigger(5f);
+                break;
+
             case ItemType.LandMine:
                 TryApplyPickupDamageLikeEnemyContact(player, 1);
                 break;

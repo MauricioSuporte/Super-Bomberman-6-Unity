@@ -44,6 +44,7 @@ public class GameManager : MonoBehaviour
     [Min(0)] public int yellowLouieEggAmount = 0;
     [Min(0)] public int pinkLouieEggAmount = 0;
     [Min(0)] public int redLouieEggAmount = 0;
+    [Min(0)] public int clockAmount = 0;
 
     [Header("Stage")]
     public Tilemap destructibleTilemap;
@@ -448,6 +449,8 @@ public class GameManager : MonoBehaviour
         TryAssignItem(ItemType.YellowLouieEgg, yellowLouieEggAmount);
         TryAssignItem(ItemType.PinkLouieEgg, pinkLouieEggAmount);
         TryAssignItem(ItemType.RedLouieEgg, redLouieEggAmount);
+
+        TryAssignItem(ItemType.Clock, clockAmount);
     }
 
     public GameObject GetSpawnForDestroyedBlock()
