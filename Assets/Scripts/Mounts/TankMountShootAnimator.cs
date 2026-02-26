@@ -159,4 +159,25 @@ public sealed class TankMountShootAnimator : MonoBehaviour, ITankMountShootExter
 
         cached.Clear();
     }
+
+    public void CancelForDeath()
+    {
+        playing = false;
+
+        if (active != null)
+        {
+            active.enabled = false;
+
+            if (forceFlipXFalse && active.TryGetComponent<SpriteRenderer>(out var sr) && sr != null)
+                sr.flipX = false;
+        }
+
+        active = null;
+
+        DisableAllAbilitySprites();
+
+        cached.Clear();
+
+        enabled = false;
+    }
 }

@@ -48,6 +48,8 @@ public sealed class TankMountShootAbility : MonoBehaviour, IPlayerAbility
 
     private MountVisualController cachedTankVisual;
 
+    private bool deathCancelInProgress;
+
     public string Id => AbilityId;
     public bool IsEnabled => enabledAbility;
 
@@ -184,13 +186,17 @@ public sealed class TankMountShootAbility : MonoBehaviour, IPlayerAbility
         }
         finally
         {
-            externalAnimator?.Stop();
+            if (!deathCancelInProgress)
+            {
+                externalAnimator?.Stop();
 
-            if (movement != null && lockInputWhileShooting)
-                movement.SetInputLocked(false);
+                if (movement != null && lockInputWhileShooting)
+                    movement.SetInputLocked(false);
+            }
 
             running = false;
             routine = null;
+            deathCancelInProgress = false;
         }
     }
 
@@ -352,5 +358,30 @@ public sealed class TankMountShootAbility : MonoBehaviour, IPlayerAbility
     {
         enabledAbility = false;
         Cancel();
+    }
+
+    public void CancelShootForDeath()
+    {
+        deathCancelInProgress = true;
+
+        enabledAbility = false;
+
+        if (routine != null)
+        {
+            StopCoroutine(routine);
+            routine = null;
+        }
+
+        externalAnimator?.Stop();
+        externalAnimator = null;
+
+        if (movement != null && lockInputWhileShooting)
+            movement.SetInputLocked(false);
+
+        var v = ResolveTankVisual();
+        if (v != null && tintTankOnCooldown)
+            v.SetExternalTint(false, cooldownTintColor, 1f);
+
+        running = false;
     }
 }

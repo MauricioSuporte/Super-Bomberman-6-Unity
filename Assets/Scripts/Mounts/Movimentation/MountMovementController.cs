@@ -131,6 +131,9 @@ public class MountMovementController : MovementController
         if (owner != null && owner.TryGetComponent<YellowLouieDestructibleKickAbility>(out var ownerYellowKick) && ownerYellowKick != null)
             ownerYellowKick.Disable();
 
+        if (owner != null && owner.TryGetComponent<TankMountShootAbility>(out var ownerTankShoot) && ownerTankShoot != null)
+            ownerTankShoot.Disable();
+
         if (TryGetComponent<GreenLouieDashAbility>(out var dash))
             dash.CancelDashForDeath();
 
@@ -179,6 +182,13 @@ public class MountMovementController : MovementController
         var yellowAnim = GetComponentInChildren<YellowLouieKickAnimator>(true);
         if (yellowAnim != null)
             yellowAnim.CancelForDeath();
+
+        if (TryGetComponent<TankMountShootAbility>(out var tankShoot) && tankShoot != null)
+            tankShoot.CancelShootForDeath();
+
+        var tankAnim = GetComponentInChildren<TankMountShootAnimator>(true);
+        if (tankAnim != null)
+            tankAnim.CancelForDeath();
 
         if (TryGetComponent<MountVisualController>(out var visual))
         {
