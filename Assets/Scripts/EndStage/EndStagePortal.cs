@@ -1,32 +1,55 @@
 using UnityEngine;
 
+[DisallowMultipleComponent]
+[RequireComponent(typeof(Collider2D))]
 [RequireComponent(typeof(AnimatedSpriteRenderer))]
 public sealed class EndStagePortal : EndStage
 {
     [Header("Visual")]
-    public AnimatedSpriteRenderer idleRenderer;
+    [SerializeField] private AnimatedSpriteRenderer portalRenderer;
 
-    void Awake()
+    [Header("Unlock Visual Mode")]
+    [SerializeField] private bool enableLoopWhenUnlocked = true;
+
+    private Collider2D col;
+
+    private void Awake()
     {
-        if (idleRenderer == null)
-            idleRenderer = GetComponent<AnimatedSpriteRenderer>();
+        col = GetComponent<Collider2D>();
+        if (col != null)
+            col.isTrigger = true;
+
+        if (portalRenderer == null)
+            portalRenderer = GetComponent<AnimatedSpriteRenderer>();
     }
 
     protected override void OnStartSetup()
     {
-        if (idleRenderer != null)
+        if (portalRenderer != null)
         {
-            idleRenderer.idle = true;
-            idleRenderer.loop = false;
+            portalRenderer.enabled = true;
+
+            portalRenderer.idle = true;
+            portalRenderer.loop = false;
+            portalRenderer.SetFrozen(false);
+
+            portalRenderer.CurrentFrame = 0;
+            portalRenderer.RefreshFrame();
         }
     }
 
     protected override void OnUnlocked()
     {
-        if (idleRenderer != null)
+        if (portalRenderer != null)
         {
-            idleRenderer.idle = false;
-            idleRenderer.loop = true;
+            portalRenderer.enabled = true;
+
+            portalRenderer.idle = false;
+            portalRenderer.loop = enableLoopWhenUnlocked;
+            portalRenderer.SetFrozen(false);
+
+            portalRenderer.CurrentFrame = 0;
+            portalRenderer.RefreshFrame();
         }
     }
 }

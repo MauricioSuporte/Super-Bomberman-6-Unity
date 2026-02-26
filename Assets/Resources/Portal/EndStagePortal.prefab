@@ -37,6 +37,7 @@ Transform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!212 &1494173302840486209
 SpriteRenderer:
+  serializedVersion: 2
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -82,7 +83,8 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 2
-  m_Sprite: {fileID: 6875428831685346176, guid: 4ff4afedda9fa1949af624da82c728b9, type: 3}
+  m_MaskInteraction: 0
+  m_Sprite: {fileID: 1197168801, guid: 0ccdeec91ba95d045a63b3eb0c9d57c6, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -91,7 +93,6 @@ SpriteRenderer:
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
-  m_MaskInteraction: 0
   m_SpriteSortPoint: 0
 --- !u!61 &1494173302840486208
 BoxCollider2D:
@@ -153,7 +154,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   enterSfx: {fileID: 8300000, guid: 778da4e4d7313e54195e6cbca646d851, type: 3}
   endStageMusic: {fileID: 0}
-  idleRenderer: {fileID: 0}
+  playRandomGoodSfx: 1
+  goodSfxVolume: 1
+  manualUnlockOnly: 0
+  idleRenderer: {fileID: 9020523032431095497}
 --- !u!114 &9020523032431095497
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -166,10 +170,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a4b55e1b961d144197e1a7a4a391956, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  idleSprite: {fileID: 6875428831685346176, guid: 4ff4afedda9fa1949af624da82c728b9, type: 3}
+  idleSprite: {fileID: 1197168801, guid: 0ccdeec91ba95d045a63b3eb0c9d57c6, type: 3}
   animationSprite:
-  - {fileID: 6875428831685346176, guid: 4ff4afedda9fa1949af624da82c728b9, type: 3}
-  - {fileID: 2727568694874073583, guid: 4ff4afedda9fa1949af624da82c728b9, type: 3}
+  - {fileID: 1197168801, guid: 0ccdeec91ba95d045a63b3eb0c9d57c6, type: 3}
+  - {fileID: 2189510010676529607, guid: 0ccdeec91ba95d045a63b3eb0c9d57c6, type: 3}
   allowFlipX: 0
   animationTime: 0.01
   useSequenceDuration: 0
@@ -179,3 +183,4 @@ MonoBehaviour:
   frameOffsets: []
   pingPong: 0
   disableOffsetsIfThisObjectHasRigidbody2D: 1
+  disableOffsetsIfStandaloneRoot: 1
