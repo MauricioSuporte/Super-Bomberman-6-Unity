@@ -471,6 +471,8 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
 
         RestoreMovementLockToBaseline(IsGlobalLockActive());
 
+        RestoreBombControllerInputModeIfNeeded();
+
         animLocking = false;
         releaseRoutine = null;
 
@@ -545,7 +547,6 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
         if (bomb == null || bomb.HasExploded)
         {
             landWatchRoutine = null;
-            RestoreBombControllerInputModeIfNeeded();
             yield break;
         }
 
