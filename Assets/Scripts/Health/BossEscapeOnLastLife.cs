@@ -33,11 +33,19 @@ public class BossEscapeOnLastLife : MonoBehaviour
     [SerializeField] private bool disablePlayerBombControllerWhileLocked = true;
     [SerializeField] private bool disablePlayerCollidersWhileLocked = true;
 
+    [Header("Drop Item On Escape Start")]
+    [SerializeField] private GameObject escapeDropItemPrefab;
+    [SerializeField] private bool dropAlignToGrid = true;
+    [SerializeField] private Vector2 dropOffset = Vector2.zero;
+    [SerializeField] private bool dropOnlyOnce = true;
+
     private CharacterHealth health;
 
     private bool escapeArmed;
     private bool escapeStarted;
     private bool escapeFinished;
+
+    private bool droppedItem;
 
     private readonly List<MovementController> players = new();
     private readonly List<BombController> playerBombs = new();
@@ -102,6 +110,9 @@ public class BossEscapeOnLastLife : MonoBehaviour
 
         LockBossForEscape();
 
+        // Drop do item exatamente quando a fuga começa
+        TryDropItemOnEscapeStart();
+
         var gate = FindFirstObjectByType<EndStageGateAnimated>();
         if (gate != null) gate.ForceUnlock();
 
@@ -159,6 +170,26 @@ public class BossEscapeOnLastLife : MonoBehaviour
 
         if (!escapeFinished)
             FinalizeEscape(goal);
+    }
+
+    private void TryDropItemOnEscapeStart()
+    {
+        if (escapeDropItemPrefab == null)
+            return;
+
+        if (dropOnlyOnce && droppedItem)
+            return;
+
+        float tile = boss != null ? Mathf.Max(0.0001f, boss.tileSize) : 1f;
+
+        Vector2 pos = GetBossPos();
+        if (dropAlignToGrid)
+            pos = RoundToGrid(pos, tile);
+
+        pos += dropOffset;
+
+        Instantiate(escapeDropItemPrefab, pos, Quaternion.identity);
+        droppedItem = true;
     }
 
     private void FinalizeEscape(Vector2 finalGoal)

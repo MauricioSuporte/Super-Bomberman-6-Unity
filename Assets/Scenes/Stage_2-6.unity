@@ -5599,6 +5599,10 @@ PrefabInstance:
       value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 8953337400205497012, guid: a009117f38ad56d4fb5e2e5fa7445a16, type: 3}
+      propertyPath: escapeDropItemPrefab
+      value: 
+      objectReference: {fileID: 2727780941473249226, guid: 60d73a0d38dd5ab44b2ed223467d82df, type: 3}
+    - target: {fileID: 8953337400205497012, guid: a009117f38ad56d4fb5e2e5fa7445a16, type: 3}
       propertyPath: immediateFinishDistance
       value: 0.4
       objectReference: {fileID: 0}
