@@ -178,4 +178,23 @@ public class BlueLouiePunchAnimator : MonoBehaviour, IBombPunchExternalAnimator
                 go.SetActive(shouldBeActive);
         }
     }
+
+    public void CancelForDeath()
+    {
+        playing = false;
+
+        if (activePunch != null)
+        {
+            if (activePunch.TryGetComponent<SpriteRenderer>(out var sr))
+                sr.flipX = false;
+        }
+
+        DisableAllPunch();
+        activePunch = null;
+
+        movementGOs.Clear();
+        movementPrevActive.Clear();
+
+        enabled = false;
+    }
 }
