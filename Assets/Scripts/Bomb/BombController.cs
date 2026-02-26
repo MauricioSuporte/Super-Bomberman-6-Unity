@@ -1741,7 +1741,7 @@ public partial class BombController : MonoBehaviour
         Explode(p, Vector2.right, effectiveRadius, effectivePierce);
     }
 
-    public bool TryPlaceBombAtIgnoringInputLock(Vector2 worldPos, out GameObject placedBomb, bool consumeBomb = true)
+    public bool TryPlaceBombAtIgnoringInputLock(Vector2 worldPos, out GameObject placedBomb, bool consumeBomb = true, bool playSfx = true)
     {
         placedBomb = null;
 
@@ -1802,7 +1802,8 @@ public partial class BombController : MonoBehaviour
         if (prefabToUse == null)
             return false;
 
-        PlayPlaceBombSfx();
+        if (playSfx)
+            PlayPlaceBombSfx();
 
         GameObject bomb = Instantiate(prefabToUse, position, Quaternion.identity);
         placedBomb = bomb;

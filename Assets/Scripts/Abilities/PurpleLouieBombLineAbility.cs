@@ -77,6 +77,7 @@ public class PurpleLouieBombLineAbility : MonoBehaviour, IPlayerAbility
         movement.SetInputLocked(true, false);
 
         Vector2 dir = lastFacingDir == Vector2.zero ? Vector2.down : lastFacingDir;
+        dir = ToCardinal(dir);
 
         bool placedAny = DropBombsInFrontLine(dir);
         if (placedAny)
@@ -96,6 +97,14 @@ public class PurpleLouieBombLineAbility : MonoBehaviour, IPlayerAbility
 
         movement.SetInputLocked(globalLock || wasLocked, false);
         routine = null;
+    }
+
+    private Vector2 ToCardinal(Vector2 v)
+    {
+        if (Mathf.Abs(v.x) >= Mathf.Abs(v.y))
+            return v.x >= 0f ? Vector2.right : Vector2.left;
+
+        return v.y >= 0f ? Vector2.up : Vector2.down;
     }
 
     private void PlayPlaceBombSfxOnce()
@@ -123,7 +132,8 @@ public class PurpleLouieBombLineAbility : MonoBehaviour, IPlayerAbility
         origin.x = Mathf.Round(origin.x / movement.tileSize) * movement.tileSize;
         origin.y = Mathf.Round(origin.y / movement.tileSize) * movement.tileSize;
 
-        Vector2 pos = origin;
+        // Começa 1 tile à frente, nunca no tile do player
+        Vector2 pos = origin + dir * movement.tileSize;
 
         bool placedAny = false;
 
@@ -135,7 +145,7 @@ public class PurpleLouieBombLineAbility : MonoBehaviour, IPlayerAbility
             if (HasEnemyAt(pos))
                 break;
 
-            if (!bomb.TryPlaceBombAtIgnoringInputLock(pos/*, playSfx: false*/))
+            if (!bomb.TryPlaceBombAtIgnoringInputLock(pos, out _, consumeBomb: true, playSfx: false))
                 break;
 
             placedAny = true;
