@@ -32,7 +32,7 @@ public static class PlayerPersistentStats
         public bool HasPierceBombs = false;
         public bool HasControlBombs = false;
         public bool HasPowerBomb = false;
-        public bool HasRubberBombs = true;
+        public bool HasRubberBombs = false;
         public bool HasFullFire = false;
 
         public MountedType MountedLouie = MountedType.None;
