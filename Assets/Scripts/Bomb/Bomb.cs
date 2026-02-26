@@ -18,6 +18,10 @@ public class Bomb : MonoBehaviour, IMagnetPullable
     [Range(0f, 1f)] public float magnetPullSfxVolume = 1f;
     private static float bombSfxBlockedUntil = 0f;
     private static readonly object bombSfxGate = new();
+    private static readonly object kickSfxGate = new();
+    private static AudioSource kickSfxCurrentSource;
+    private const string RubberBounceClipResourcesPath = "Sounds/RubberBombBounce";
+    private static AudioClip cachedRubberBounceClip;
 
     [Header("Kick")]
     public float kickSpeed = 10f;
@@ -116,6 +120,11 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         if (magnetPullSfx == null)
         {
             magnetPullSfx = Resources.Load<AudioClip>("Sounds/magnetbomb");
+        }
+
+        if (cachedRubberBounceClip == null)
+        {
+            cachedRubberBounceClip = Resources.Load<AudioClip>(RubberBounceClipResourcesPath);
         }
 
         lastPos = rb.position;
@@ -608,7 +617,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
 
             StunMovementControllersAtTile(cur, 0.5f);
 
-            TryPlayBombSfx_NoOverlap(bounceSfx, bounceSfxVolume);
+            TryPlayKickSfx_StopOthers(GetKickBounceClip(), bounceSfxVolume);
 
             yield return PunchArcSegmentFixed(cur, next, duration, arcHeight);
             cur = next;
@@ -897,8 +906,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
                     if (IsKickBlocked(back))
                         break;
 
-                    TryPlayBombSfx_NoOverlap(bounceSfx, bounceSfxVolume);
-                    continue;
+                    TryPlayKickSfx_StopOthers(GetKickBounceClip(), bounceSfxVolume); continue;
                 }
 
                 break;
@@ -918,8 +926,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
                     if (TileHasCharacter(back, LayerMask.GetMask("Player", "Enemy")))
                         break;
 
-                    TryPlayBombSfx_NoOverlap(bounceSfx, bounceSfxVolume);
-                    continue;
+                    TryPlayKickSfx_StopOthers(GetKickBounceClip(), bounceSfxVolume); continue;
                 }
 
                 break;
@@ -1290,6 +1297,33 @@ public class Bomb : MonoBehaviour, IMagnetPullable
             return;
 
         audioSource.PlayOneShot(clip, volume);
+    }
+
+    private void TryPlayKickSfx_StopOthers(AudioClip clip, float volume)
+    {
+        if (audioSource == null || clip == null)
+            return;
+
+        lock (kickSfxGate)
+        {
+            if (kickSfxCurrentSource != null && kickSfxCurrentSource != audioSource)
+            {
+                kickSfxCurrentSource.Stop();
+            }
+
+            kickSfxCurrentSource = audioSource;
+        }
+
+        audioSource.Stop();
+        audioSource.PlayOneShot(clip, volume);
+    }
+
+    private AudioClip GetKickBounceClip()
+    {
+        if (IsRubberBomb && cachedRubberBounceClip != null)
+            return cachedRubberBounceClip;
+
+        return bounceSfx;
     }
 
     private bool airborneColliderSuppressed;
