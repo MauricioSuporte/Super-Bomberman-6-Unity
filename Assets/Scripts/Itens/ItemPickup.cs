@@ -414,6 +414,7 @@ public class ItemPickup : MonoBehaviour
                     ab.Enable(PierceBombAbility.AbilityId);
                     ab.Disable(ControlBombAbility.AbilityId);
                     ab.Disable(PowerBombAbility.AbilityId);
+                    ab.Disable(RubberBombAbility.AbilityId);
                     break;
                 }
 
@@ -423,6 +424,7 @@ public class ItemPickup : MonoBehaviour
                     ab.Enable(ControlBombAbility.AbilityId);
                     ab.Disable(PierceBombAbility.AbilityId);
                     ab.Disable(PowerBombAbility.AbilityId);
+                    ab.Disable(RubberBombAbility.AbilityId);
                     break;
                 }
 
@@ -432,6 +434,17 @@ public class ItemPickup : MonoBehaviour
                     ab.Enable(PowerBombAbility.AbilityId);
                     ab.Disable(PierceBombAbility.AbilityId);
                     ab.Disable(ControlBombAbility.AbilityId);
+                    ab.Disable(RubberBombAbility.AbilityId);
+                    break;
+                }
+
+            case ItemType.RubberBomb:
+                {
+                    var ab = GetOrCreateAbilitySystem(player);
+                    ab.Enable(RubberBombAbility.AbilityId);
+                    ab.Disable(PierceBombAbility.AbilityId);
+                    ab.Disable(ControlBombAbility.AbilityId);
+                    ab.Disable(PowerBombAbility.AbilityId);
                     break;
                 }
 

@@ -29,9 +29,10 @@ public static class PlayerPersistentStats
         public bool HasPowerGlove = true;
         public bool CanPassBombs = false;
         public bool CanPassDestructibles = false;
-        public bool HasPierceBombs = true;
+        public bool HasPierceBombs = false;
         public bool HasControlBombs = false;
         public bool HasPowerBomb = false;
+        public bool HasRubberBombs = true;
         public bool HasFullFire = false;
 
         public MountedType MountedLouie = MountedType.None;
@@ -314,24 +315,35 @@ public static class PlayerPersistentStats
                 abilitySystem.Enable(ControlBombAbility.AbilityId);
                 abilitySystem.Disable(PierceBombAbility.AbilityId);
                 abilitySystem.Disable(PowerBombAbility.AbilityId);
+                abilitySystem.Disable(RubberBombAbility.AbilityId);
             }
             else if (s.HasPierceBombs)
             {
                 abilitySystem.Enable(PierceBombAbility.AbilityId);
                 abilitySystem.Disable(ControlBombAbility.AbilityId);
                 abilitySystem.Disable(PowerBombAbility.AbilityId);
+                abilitySystem.Disable(RubberBombAbility.AbilityId);
             }
             else if (s.HasPowerBomb)
             {
                 abilitySystem.Enable(PowerBombAbility.AbilityId);
                 abilitySystem.Disable(ControlBombAbility.AbilityId);
                 abilitySystem.Disable(PierceBombAbility.AbilityId);
+                abilitySystem.Disable(RubberBombAbility.AbilityId);
+            }
+            else if (s.HasRubberBombs)
+            {
+                abilitySystem.Enable(RubberBombAbility.AbilityId);
+                abilitySystem.Disable(ControlBombAbility.AbilityId);
+                abilitySystem.Disable(PierceBombAbility.AbilityId);
+                abilitySystem.Disable(PowerBombAbility.AbilityId);
             }
             else
             {
                 abilitySystem.Disable(PierceBombAbility.AbilityId);
                 abilitySystem.Disable(ControlBombAbility.AbilityId);
                 abilitySystem.Disable(PowerBombAbility.AbilityId);
+                abilitySystem.Disable(RubberBombAbility.AbilityId);
             }
 
             if (movement.TryGetComponent<PlayerMountCompanion>(out var louieCompanion))
@@ -410,6 +422,9 @@ public static class PlayerPersistentStats
             var power = abilitySystem != null ? abilitySystem.Get<PowerBombAbility>(PowerBombAbility.AbilityId) : null;
             s.HasPowerBomb = power != null && power.IsEnabled;
 
+            var rubber = abilitySystem != null ? abilitySystem.Get<RubberBombAbility>(RubberBombAbility.AbilityId) : null;
+            s.HasRubberBombs = rubber != null && rubber.IsEnabled;
+
             var fullFire = abilitySystem != null ? abilitySystem.Get<FullFireAbility>(FullFireAbility.AbilityId) : null;
             s.HasFullFire = fullFire != null && fullFire.IsEnabled;
 
@@ -419,8 +434,10 @@ public static class PlayerPersistentStats
             var passDestructibles = abilitySystem != null ? abilitySystem.Get<DestructiblePassAbility>(DestructiblePassAbility.AbilityId) : null;
             s.CanPassDestructibles = passDestructibles != null && passDestructibles.IsEnabled;
 
-            if (s.HasControlBombs) s.HasPierceBombs = false;
-            else if (s.HasPierceBombs) s.HasControlBombs = false;
+            if (s.HasControlBombs) { s.HasPierceBombs = false; s.HasRubberBombs = false; s.HasPowerBomb = false; }
+            else if (s.HasPierceBombs) { s.HasControlBombs = false; s.HasRubberBombs = false; s.HasPowerBomb = false; }
+            else if (s.HasPowerBomb) { s.HasControlBombs = false; s.HasPierceBombs = false; s.HasRubberBombs = false; }
+            else if (s.HasRubberBombs) { s.HasControlBombs = false; s.HasPierceBombs = false; s.HasPowerBomb = false; }
 
             s.MountedLouie = MountedType.None;
 
@@ -589,18 +606,28 @@ public static class PlayerPersistentStats
                 s.HasPierceBombs = true;
                 s.HasControlBombs = false;
                 s.HasPowerBomb = false;
+                s.HasRubberBombs = false;
                 break;
 
             case ItemType.ControlBomb:
                 s.HasControlBombs = true;
                 s.HasPierceBombs = false;
                 s.HasPowerBomb = false;
+                s.HasRubberBombs = false;
                 break;
 
             case ItemType.PowerBomb:
                 s.HasPowerBomb = true;
                 s.HasPierceBombs = false;
                 s.HasControlBombs = false;
+                s.HasRubberBombs = false;
+                break;
+
+            case ItemType.RubberBomb:
+                s.HasRubberBombs = true;
+                s.HasPierceBombs = false;
+                s.HasControlBombs = false;
+                s.HasPowerBomb = false;
                 break;
 
             case ItemType.Heart:

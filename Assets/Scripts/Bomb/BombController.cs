@@ -20,6 +20,7 @@ public partial class BombController : MonoBehaviour
     public GameObject pierceBombPrefab;
     public GameObject controlBombPrefab;
     public GameObject powerBombPrefab;
+    public GameObject rubberBombPrefab;
     public float bombFuseTime = 2f;
     public int bombAmout = 1;
 
@@ -368,6 +369,14 @@ public partial class BombController : MonoBehaviour
         return false;
     }
 
+    private bool IsRubberEnabled()
+    {
+        if (TryGetComponent<AbilitySystem>(out var abilitySystem))
+            return abilitySystem.IsEnabled(RubberBombAbility.AbilityId);
+
+        return false;
+    }
+
     private bool IsFullFireEnabled()
     {
         if (TryGetComponent<AbilitySystem>(out var abilitySystem))
@@ -658,11 +667,13 @@ public partial class BombController : MonoBehaviour
 
         bool controlEnabled = !canUsePowerNow && IsControlEnabled();
         bool pierceEnabled = !canUsePowerNow && !controlEnabled && IsPierceEnabled();
+        bool rubberEnabled = !canUsePowerNow && !controlEnabled && !pierceEnabled && IsRubberEnabled();
 
         GameObject prefabToUse =
             (canUsePowerNow && powerBombPrefab != null) ? powerBombPrefab :
             (controlEnabled && controlBombPrefab != null) ? controlBombPrefab :
             (pierceEnabled && pierceBombPrefab != null) ? pierceBombPrefab :
+            (rubberEnabled && rubberBombPrefab != null) ? rubberBombPrefab :
             bombPrefab;
 
         if (prefabToUse == null)
@@ -680,6 +691,7 @@ public partial class BombController : MonoBehaviour
         bombComponent.IsPowerBomb = canUsePowerNow;
         bombComponent.IsControlBomb = controlEnabled;
         bombComponent.IsPierceBomb = pierceEnabled;
+        bombComponent.IsRubberBomb = rubberEnabled;
 
         if (canUsePowerNow)
             TrackNewActivePowerBomb(bomb);
@@ -1778,11 +1790,13 @@ public partial class BombController : MonoBehaviour
 
         bool controlEnabled = !canUsePowerNow && IsControlEnabled();
         bool pierceEnabled = !canUsePowerNow && !controlEnabled && IsPierceEnabled();
+        bool rubberEnabled = !canUsePowerNow && !controlEnabled && !pierceEnabled && IsRubberEnabled();
 
         GameObject prefabToUse =
             (canUsePowerNow && powerBombPrefab != null) ? powerBombPrefab :
             (controlEnabled && controlBombPrefab != null) ? controlBombPrefab :
             (pierceEnabled && pierceBombPrefab != null) ? pierceBombPrefab :
+            (rubberEnabled && rubberBombPrefab != null) ? rubberBombPrefab :
             bombPrefab;
 
         if (prefabToUse == null)
@@ -1803,6 +1817,7 @@ public partial class BombController : MonoBehaviour
         bombComponent.IsPowerBomb = canUsePowerNow;
         bombComponent.IsControlBomb = controlEnabled;
         bombComponent.IsPierceBomb = pierceEnabled;
+        bombComponent.IsRubberBomb = rubberEnabled;
 
         if (canUsePowerNow)
             TrackNewActivePowerBomb(bomb);

@@ -23,6 +23,7 @@ public static class AbilityRegistry
         { MoleMountDrillAbility.AbilityId, typeof(MoleMountDrillAbility) },
         { TankMountShootAbility.AbilityId, typeof(TankMountShootAbility) },
         { PowerBombAbility.AbilityId, typeof(PowerBombAbility) },
+        { RubberBombAbility.AbilityId, typeof(RubberBombAbility) },
     };
 
     public static bool TryGetType(string id, out Type type) => map.TryGetValue(id, out type);

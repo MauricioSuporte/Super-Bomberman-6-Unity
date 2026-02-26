@@ -18,6 +18,7 @@ public class ControlBombAbility : MonoBehaviour, IPlayerAbility
         {
             abilitySystem.Disable(PierceBombAbility.AbilityId);
             abilitySystem.Disable(PowerBombAbility.AbilityId);
+            abilitySystem.Disable(RubberBombAbility.AbilityId);
         }
     }
 

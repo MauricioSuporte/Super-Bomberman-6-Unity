@@ -53,6 +53,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
     public bool CanBeMagnetPulled => !HasExploded && !IsBeingKicked && !IsBeingPunched && !IsBeingMagnetPulled;
     public bool IsPierceBomb { get; set; }
     public bool IsPowerBomb { get; set; }
+    public bool IsRubberBomb { get; set; }
 
     public bool IsBeingMagnetPulled => magnetRoutine != null;
 
@@ -883,10 +884,46 @@ public class Bomb : MonoBehaviour, IMagnetPullable
             Vector2 next = currentTileCenter + kickDirection * kickTileSize;
 
             if (TileHasCharacter(next, LayerMask.GetMask("Player", "Enemy")))
+            {
+                if (IsRubberBomb)
+                {
+                    kickDirection = -kickDirection;
+
+                    Vector2 back = currentTileCenter + kickDirection * kickTileSize;
+
+                    if (TileHasCharacter(back, LayerMask.GetMask("Player", "Enemy")))
+                        break;
+
+                    if (IsKickBlocked(back))
+                        break;
+
+                    TryPlayBombSfx_NoOverlap(bounceSfx, bounceSfxVolume);
+                    continue;
+                }
+
                 break;
+            }
 
             if (IsKickBlocked(next))
+            {
+                if (IsRubberBomb)
+                {
+                    kickDirection = -kickDirection;
+
+                    Vector2 back = currentTileCenter + kickDirection * kickTileSize;
+
+                    if (IsKickBlocked(back))
+                        break;
+
+                    if (TileHasCharacter(back, LayerMask.GetMask("Player", "Enemy")))
+                        break;
+
+                    TryPlayBombSfx_NoOverlap(bounceSfx, bounceSfxVolume);
+                    continue;
+                }
+
                 break;
+            }
 
             float travelTime = kickTileSize / Mathf.Max(0.0001f, kickSpeed);
             float elapsed = 0f;

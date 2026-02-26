@@ -2991,6 +2991,7 @@ MonoBehaviour:
   pierceBombPrefab: {fileID: 147425199346742615, guid: d594648b2cf33354cb5de0fb314588c7, type: 3}
   controlBombPrefab: {fileID: 147425199346742615, guid: a1062e2cde4a9a944acd70ec09573664, type: 3}
   powerBombPrefab: {fileID: 147425199346742615, guid: 9928ad697fc8ff64587c25df57a4209b, type: 3}
+  rubberBombPrefab: {fileID: 147425199346742615, guid: 26d7fe4d167283544b2eef6186339436, type: 3}
   bombFuseTime: 2
   bombAmout: 1
   chainBombDelaySeconds: 0.1
