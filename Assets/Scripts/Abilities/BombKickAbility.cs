@@ -15,8 +15,8 @@ public class BombKickAbility : MonoBehaviour, IMovementAbility
     private const string KickStopClipResourcesPath = "Sounds/kickstop";
     private static AudioClip cachedKickStopClip;
 
-    private static float kickSfxBlockedUntil = 0f;
     private static readonly object kickSfxGate = new();
+    private static AudioSource kickSfxOwner;
 
     [SerializeField] private bool enabledAbility;
 
@@ -109,7 +109,7 @@ public class BombKickAbility : MonoBehaviour, IMovementAbility
 
         kickedByMe.Add(bomb);
 
-        TryPlayKickSfx_NoOverlap(cachedKickClip, 1f);
+        PlayKick_InterruptPrevious(cachedKickClip, 1f);
 
         return true;
     }
@@ -148,7 +148,7 @@ public class BombKickAbility : MonoBehaviour, IMovementAbility
         ListPool<Bomb>.Release(toRemove);
 
         if (stoppedAny)
-            PlayKickStop_Always(cachedKickStopClip, 1f);
+            PlayKickStop_InterruptPrevious(cachedKickStopClip, 1f);
     }
 
     private void PruneKickedSet()
@@ -170,40 +170,36 @@ public class BombKickAbility : MonoBehaviour, IMovementAbility
         ListPool<Bomb>.Release(toRemove);
     }
 
-    private void TryPlayKickSfx_NoOverlap(AudioClip clip, float volume)
+    private void PlayKick_InterruptPrevious(AudioClip clip, float volume)
     {
         if (audioSource == null || clip == null)
             return;
-
-        float clipLen = clip.length > 0.001f ? clip.length : 0.10f;
-
-        bool canPlay;
 
         lock (kickSfxGate)
         {
-            float now = Time.time;
-            canPlay = now >= kickSfxBlockedUntil;
+            if (kickSfxOwner != null && kickSfxOwner != audioSource)
+                kickSfxOwner.Stop();
 
-            if (canPlay)
-                kickSfxBlockedUntil = now + clipLen;
+            kickSfxOwner = audioSource;
+            audioSource.Stop();
+            audioSource.PlayOneShot(clip, volume);
         }
-
-        if (!canPlay)
-            return;
-
-        audioSource.PlayOneShot(clip, volume);
     }
 
-    private void PlayKickStop_Always(AudioClip clip, float volume)
+    private void PlayKickStop_InterruptPrevious(AudioClip clip, float volume)
     {
         if (audioSource == null || clip == null)
             return;
 
         lock (kickSfxGate)
-            kickSfxBlockedUntil = 0f;
+        {
+            if (kickSfxOwner != null && kickSfxOwner != audioSource)
+                kickSfxOwner.Stop();
 
-        audioSource.Stop();
-        audioSource.PlayOneShot(clip, volume);
+            kickSfxOwner = audioSource;
+            audioSource.Stop();
+            audioSource.PlayOneShot(clip, volume);
+        }
     }
 
     private static class ListPool<T>
