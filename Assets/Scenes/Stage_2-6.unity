@@ -172,6 +172,8 @@ MonoBehaviour:
   punchBombAmount: 0
   pierceBombAmount: 0
   controlBombAmount: 0
+  powerBombAmount: 0
+  rubberBombAmount: 0
   fullFireAmount: 0
   bombPassAmount: 0
   destructiblePassAmount: 0
@@ -185,6 +187,7 @@ MonoBehaviour:
   yellowLouieEggAmount: 0
   pinkLouieEggAmount: 0
   redLouieEggAmount: 0
+  clockAmount: 0
   destructibleTilemap: {fileID: 285353618}
   indestructibleTilemap: {fileID: 0}
   nextStageSceneName: 
@@ -823,7 +826,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 300b58941cd40574fb547c0de98e4ed9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EndStageGateAnimated
-  enterSfx: {fileID: 8300000, guid: 778da4e4d7313e54195e6cbca646d851, type: 3}
+  enterSfx: {fileID: 8300000, guid: 4923b7e8bbf870e4ea64be1906159dbc, type: 3}
   endStageMusic: {fileID: 0}
   playRandomGoodSfx: 1
   goodSfxVolume: 1
