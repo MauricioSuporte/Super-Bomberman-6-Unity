@@ -131,74 +131,65 @@ public class MountMovementController : MovementController
         if (owner != null && owner.TryGetComponent<YellowLouieDestructibleKickAbility>(out var ownerYellowKick) && ownerYellowKick != null)
             ownerYellowKick.Disable();
 
+        if (owner != null && owner.TryGetComponent<BlackLouieDashPushAbility>(out var ownerBlackDash) && ownerBlackDash != null)
+            ownerBlackDash.Disable();
+
         if (owner != null && owner.TryGetComponent<TankMountShootAbility>(out var ownerTankShoot) && ownerTankShoot != null)
             ownerTankShoot.Disable();
 
         if (owner != null && owner.TryGetComponent<MoleMountDrillAbility>(out var ownerMoleDrill) && ownerMoleDrill != null)
             ownerMoleDrill.Disable();
 
-        if (TryGetComponent<GreenLouieDashAbility>(out var dash))
+        if (TryGetComponent<GreenLouieDashAbility>(out var dash) && dash != null)
             dash.CancelDashForDeath();
 
-        if (owner != null && owner.TryGetComponent<BlackLouieDashPushAbility>(out var ownerBlackDash) && ownerBlackDash != null)
-            ownerBlackDash.Disable();
-
-        var dashAnim = GetComponentInChildren<GreenLouieDashAnimator>(true);
-        if (dashAnim != null)
-            dashAnim.CancelForDeath();
-
-        if (TryGetComponent<RedLouiePunchStunAbility>(out var punch))
+        if (TryGetComponent<RedLouiePunchStunAbility>(out var punch) && punch != null)
             punch.CancelPunchForDeath();
 
-        var punchAnim = GetComponentInChildren<RedLouiePunchAnimator>(true);
-        if (punchAnim != null)
-            punchAnim.CancelForDeath();
-
-        var blueAnim = GetComponentInChildren<BlueLouiePunchAnimator>(true);
-        if (blueAnim != null)
-            blueAnim.CancelForDeath();
-
-        if (TryGetComponent<PinkLouieJumpAbility>(out var pinkJump))
+        if (TryGetComponent<PinkLouieJumpAbility>(out var pinkJump) && pinkJump != null)
             pinkJump.CancelJumpForDeath();
-
-        var pinkAnim = GetComponentInChildren<PinkLouieJumpAnimator>(true);
-        if (pinkAnim != null)
-            pinkAnim.CancelForDeath();
 
         if (TryGetComponent<PurpleLouieBombLineAbility>(out var purpleLine) && purpleLine != null)
             purpleLine.CancelCastForDeath();
 
-        var purpleAnim = GetComponentInChildren<PurpleLouieBombLineAnimator>(true);
-        if (purpleAnim != null)
-            purpleAnim.CancelForDeath();
-
         if (TryGetComponent<BlackLouieDashPushAbility>(out var blackDash) && blackDash != null)
             blackDash.CancelDashForDeath();
-
-        var blackAnim = GetComponentInChildren<BlackLouieDashAnimator>(true);
-        if (blackAnim != null)
-            blackAnim.CancelForDeath();
 
         if (TryGetComponent<YellowLouieDestructibleKickAbility>(out var yellowKick) && yellowKick != null)
             yellowKick.CancelKickForDeath();
 
-        var yellowAnim = GetComponentInChildren<YellowLouieKickAnimator>(true);
-        if (yellowAnim != null)
-            yellowAnim.CancelForDeath();
-
         if (TryGetComponent<TankMountShootAbility>(out var tankShoot) && tankShoot != null)
             tankShoot.CancelShootForDeath();
-
-        var tankAnim = GetComponentInChildren<TankMountShootAnimator>(true);
-        if (tankAnim != null)
-            tankAnim.CancelForDeath();
 
         if (TryGetComponent<MoleMountDrillAbility>(out var moleDrill) && moleDrill != null)
             moleDrill.CancelDrillForDeath();
 
+        var dashAnim = GetComponentInChildren<GreenLouieDashAnimator>(true);
+        if (dashAnim != null) dashAnim.CancelForDeath();
+
+        var punchAnim = GetComponentInChildren<RedLouiePunchAnimator>(true);
+        if (punchAnim != null) punchAnim.CancelForDeath();
+
+        var blueAnim = GetComponentInChildren<BlueLouiePunchAnimator>(true);
+        if (blueAnim != null) blueAnim.CancelForDeath();
+
+        var pinkAnim = GetComponentInChildren<PinkLouieJumpAnimator>(true);
+        if (pinkAnim != null) pinkAnim.CancelForDeath();
+
+        var purpleAnim = GetComponentInChildren<PurpleLouieBombLineAnimator>(true);
+        if (purpleAnim != null) purpleAnim.CancelForDeath();
+
+        var blackAnim = GetComponentInChildren<BlackLouieDashAnimator>(true);
+        if (blackAnim != null) blackAnim.CancelForDeath();
+
+        var yellowAnim = GetComponentInChildren<YellowLouieKickAnimator>(true);
+        if (yellowAnim != null) yellowAnim.CancelForDeath();
+
+        var tankAnim = GetComponentInChildren<TankMountShootAnimator>(true);
+        if (tankAnim != null) tankAnim.CancelForDeath();
+
         var moleAnim = GetComponentInChildren<MoleMountDrillAnimator>(true);
-        if (moleAnim != null)
-            moleAnim.CancelForDeath();
+        if (moleAnim != null) moleAnim.CancelForDeath();
 
         if (TryGetComponent<MountVisualController>(out var visual))
         {
