@@ -66,6 +66,8 @@ public class MoleMountDrillAbility : MonoBehaviour, IPlayerAbility
     bool cachedMountVisualPrevEnabled;
     bool cachedMountVisualDisabledByThisAbility;
 
+    bool deathCancelInProgress;
+
     struct CachedAsrState
     {
         public AnimatedSpriteRenderer asr;
@@ -257,7 +259,8 @@ public class MoleMountDrillAbility : MonoBehaviour, IPlayerAbility
         {
             ApplyPhase1HeadOnlyDownDelta(false);
 
-            externalAnimator?.Stop();
+            if (!deathCancelInProgress)
+                externalAnimator?.Stop();
 
             EndGlobalSuppression();
 
@@ -266,7 +269,9 @@ public class MoleMountDrillAbility : MonoBehaviour, IPlayerAbility
                 movement.SetInactivityMountedDownOverride(false);
                 movement.SetExternalVisualSuppressed(false);
 
-                if (lockInputWhileDrilling)
+                if (lockInputWhileDrilling && !deathCancelInProgress)
+                    movement.SetInputLocked(false);
+                else if (lockInputWhileDrilling)
                     movement.SetInputLocked(false);
             }
 
@@ -274,6 +279,7 @@ public class MoleMountDrillAbility : MonoBehaviour, IPlayerAbility
 
             running = false;
             routine = null;
+            deathCancelInProgress = false;
         }
     }
 
@@ -669,5 +675,40 @@ public class MoleMountDrillAbility : MonoBehaviour, IPlayerAbility
             return cachedMountVisual;
 
         return null;
+    }
+
+    public void CancelDrillForDeath()
+    {
+        deathCancelInProgress = true;
+
+        enabledAbility = false;
+
+        if (routine != null)
+        {
+            StopCoroutine(routine);
+            routine = null;
+        }
+
+        ApplyPhase1HeadOnlyDownDelta(false);
+
+        externalAnimator?.Stop();
+        externalAnimator = null;
+
+        EndGlobalSuppression();
+
+        if (movement != null)
+        {
+            movement.SetInactivityMountedDownOverride(false);
+            movement.SetExternalVisualSuppressed(false);
+
+            if (lockInputWhileDrilling)
+                movement.SetInputLocked(false);
+        }
+
+        RestoreEggQueueIfNeeded();
+
+        running = false;
+
+        _globalSuppressionActive = false;
     }
 }

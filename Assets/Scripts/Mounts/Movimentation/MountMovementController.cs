@@ -134,6 +134,9 @@ public class MountMovementController : MovementController
         if (owner != null && owner.TryGetComponent<TankMountShootAbility>(out var ownerTankShoot) && ownerTankShoot != null)
             ownerTankShoot.Disable();
 
+        if (owner != null && owner.TryGetComponent<MoleMountDrillAbility>(out var ownerMoleDrill) && ownerMoleDrill != null)
+            ownerMoleDrill.Disable();
+
         if (TryGetComponent<GreenLouieDashAbility>(out var dash))
             dash.CancelDashForDeath();
 
@@ -189,6 +192,13 @@ public class MountMovementController : MovementController
         var tankAnim = GetComponentInChildren<TankMountShootAnimator>(true);
         if (tankAnim != null)
             tankAnim.CancelForDeath();
+
+        if (TryGetComponent<MoleMountDrillAbility>(out var moleDrill) && moleDrill != null)
+            moleDrill.CancelDrillForDeath();
+
+        var moleAnim = GetComponentInChildren<MoleMountDrillAnimator>(true);
+        if (moleAnim != null)
+            moleAnim.CancelForDeath();
 
         if (TryGetComponent<MountVisualController>(out var visual))
         {

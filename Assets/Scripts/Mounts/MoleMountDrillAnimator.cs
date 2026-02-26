@@ -202,4 +202,21 @@ public class MoleMountDrillAnimator : MonoBehaviour, IMoleMountDrillExternalAnim
 
         cached.Clear();
     }
+
+    public void CancelForDeath()
+    {
+        playing = false;
+
+        if (active != null)
+            active.enabled = false;
+
+        active = null;
+
+        DisableAllAbilitySprites();
+        cached.Clear();
+
+        cachedInitialized = false;
+
+        enabled = false;
+    }
 }
