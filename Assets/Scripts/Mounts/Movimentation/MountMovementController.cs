@@ -113,6 +113,13 @@ public class MountMovementController : MovementController
 
     protected override void DeathSequence()
     {
+        if (TryGetComponent<GreenLouieDashAbility>(out var dash))
+            dash.CancelDashForDeath();
+
+        var dashAnim = GetComponentInChildren<GreenLouieDashAnimator>(true);
+        if (dashAnim != null)
+            dashAnim.CancelForDeath();
+
         if (TryGetComponent<MountVisualController>(out var visual))
         {
             visual.SetInactivityEmote(false);

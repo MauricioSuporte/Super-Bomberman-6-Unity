@@ -29,6 +29,8 @@ public class GreenLouieDashAbility : MonoBehaviour, IPlayerAbility
 
     int bombLayer;
 
+    bool deathCancelInProgress;
+
     public bool DashActive => dashActive;
 
     public string Id => AbilityId;
@@ -133,15 +135,19 @@ public class GreenLouieDashAbility : MonoBehaviour, IPlayerAbility
         {
             dashActive = false;
 
-            externalAnimator?.Stop();
-
-            if (movement != null)
+            if (!deathCancelInProgress)
             {
-                movement.speed = originalSpeed;
-                movement.SetInputLocked(false);
+                externalAnimator?.Stop();
+
+                if (movement != null)
+                {
+                    movement.speed = originalSpeed;
+                    movement.SetInputLocked(false);
+                }
             }
 
             routine = null;
+            deathCancelInProgress = false;
         }
     }
 
@@ -165,6 +171,30 @@ public class GreenLouieDashAbility : MonoBehaviour, IPlayerAbility
                 movement.SetInputLocked(false);
             }
         }
+    }
+
+    public void CancelDashForDeath()
+    {
+        deathCancelInProgress = true;
+
+        if (routine != null)
+        {
+            StopCoroutine(routine);
+            routine = null;
+        }
+
+        dashActive = false;
+
+        if (externalAnimator is GreenLouieDashAnimator dashAnim && dashAnim != null)
+        {
+            dashAnim.CancelForDeath();
+        }
+        else if (externalAnimator is MonoBehaviour mb && mb != null)
+        {
+            mb.enabled = false;
+        }
+
+        externalAnimator = null;
     }
 
     bool HasDestructiblePassEnabled()

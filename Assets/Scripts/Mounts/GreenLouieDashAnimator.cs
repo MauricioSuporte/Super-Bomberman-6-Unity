@@ -59,6 +59,27 @@ public class GreenLouieDashAnimator : MonoBehaviour, IGreenLouieDashExternalAnim
         RestoreAllMovementSprites();
     }
 
+    public void CancelForDeath()
+    {
+        dashing = false;
+
+        if (active != null)
+        {
+            if (active.TryGetComponent<SpriteRenderer>(out var sr))
+                sr.flipX = false;
+
+            active.enabled = false;
+        }
+
+        active = null;
+
+        DisableAllRolls();
+
+        cachedMovementStates.Clear();
+
+        enabled = false;
+    }
+
     void LateUpdate()
     {
         if (!dashing)
