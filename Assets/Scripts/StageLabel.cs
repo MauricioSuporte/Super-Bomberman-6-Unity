@@ -6,15 +6,36 @@ public class StageLabel : MonoBehaviour
     public TMP_Text stageText;
 
     static readonly string NBSP = "\u00A0";
-    const int OptionsIndentPx = -18;
+
+    const int SizeStageLabel = 44;
+    const int SizeStageNumber = 40;
+    const int SizePauseTitle = 38;
+    const int SizeMenuItem = 34;
+    const int SizeConfirmTitle = 30;
+    const int SizeConfirmSubtitle = 26;
+
+    const int OptionsIndentPxBase = -18;
+
+    float UiScale
+    {
+        get
+        {
+            if (stageText == null) return 1f;
+            var c = stageText.canvas;
+            if (c == null) return 1f;
+            return Mathf.Max(0.01f, c.scaleFactor);
+        }
+    }
+
+    int S(int baseSize) => Mathf.Clamp(Mathf.RoundToInt(baseSize * UiScale), 10, 200);
+    int Px(int basePx) => Mathf.RoundToInt(basePx * UiScale);
 
     void EnsureNoWrap()
     {
-        if (stageText == null)
-            return;
-
+        if (stageText == null) return;
         stageText.textWrappingMode = TextWrappingModes.NoWrap;
         stageText.overflowMode = TextOverflowModes.Overflow;
+        stageText.richText = true;
     }
 
     public void SetStage(int world, int stage)
@@ -25,8 +46,8 @@ public class StageLabel : MonoBehaviour
 
         stageText.text =
             "<align=center>" +
-            $"<size=44><color=#1ABC00>STAGE</color></size>  " +
-            $"<size=40><color=#E8E8E8>{stageNumber}</color></size>" +
+            $"<size={S(SizeStageLabel)}><color=#1ABC00>STAGE</color></size>  " +
+            $"<size={S(SizeStageNumber)}><color=#E8E8E8>{stageNumber}</color></size>" +
             "</align>";
     }
 
@@ -48,11 +69,11 @@ public class StageLabel : MonoBehaviour
 
         stageText.text =
             "<align=center>" +
-            $"<size=44><color=#1ABC00>STAGE</color></size>  " +
-            $"<size=40><color=#E8E8E8>{stageNumber}</color></size>\n" +
-            $"<size=38><color=#3392FF>PAUSE!</color></size>\n\n" +
-            $"<size=34>{resume}</size>\n" +
-            $"<size=34>{ret}</size>" +
+            $"<size={S(SizeStageLabel)}><color=#1ABC00>STAGE</color></size>  " +
+            $"<size={S(SizeStageNumber)}><color=#E8E8E8>{stageNumber}</color></size>\n" +
+            $"<size={S(SizePauseTitle)}><color=#3392FF>PAUSE!</color></size>\n\n" +
+            $"<size={S(SizeMenuItem)}>{resume}</size>\n" +
+            $"<size={S(SizeMenuItem)}>{ret}</size>" +
             "</align>";
     }
 
@@ -73,15 +94,17 @@ public class StageLabel : MonoBehaviour
             ? ArrowVisible("<color=#FF6F31>YES</color>")
             : ArrowHidden("<color=#E8E8E8>YES</color>");
 
+        int indent = Px(OptionsIndentPxBase);
+
         stageText.text =
             "<align=center>" +
-            $"<size=44><color=#1ABC00>STAGE</color></size>  " +
-            $"<size=40><color=#E8E8E8>{stageNumber}</color></size>\n" +
-            $"<size=38><color=#3392FF>PAUSE!</color></size>\n\n" +
-            $"<size=30><color=#E8E8E8>Return to Title Screen?</color></size>\n" +
-            $"<size=26><color=#E8E8E8>All progress will be lost.</color></size>\n\n" +
-            $"<size=34><indent={OptionsIndentPx}>{noOpt}</indent></size>\n" +
-            $"<size=34><indent={OptionsIndentPx}>{yesOpt}</indent></size>" +
+            $"<size={S(SizeStageLabel)}><color=#1ABC00>STAGE</color></size>  " +
+            $"<size={S(SizeStageNumber)}><color=#E8E8E8>{stageNumber}</color></size>\n" +
+            $"<size={S(SizePauseTitle)}><color=#3392FF>PAUSE!</color></size>\n\n" +
+            $"<size={S(SizeConfirmTitle)}><color=#E8E8E8>Return to Title Screen?</color></size>\n" +
+            $"<size={S(SizeConfirmSubtitle)}><color=#E8E8E8>All progress will be lost.</color></size>\n\n" +
+            $"<size={S(SizeMenuItem)}><indent={indent}>{noOpt}</indent></size>\n" +
+            $"<size={S(SizeMenuItem)}><indent={indent}>{yesOpt}</indent></size>" +
             "</align>";
     }
 }
