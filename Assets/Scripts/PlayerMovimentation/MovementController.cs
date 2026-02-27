@@ -111,6 +111,17 @@ public class MovementController : MonoBehaviour, IKillable
     [SerializeField] private bool canPassTaggedObstacles;
     [SerializeField] private string passObstacleTag = "Water";
 
+    [Header("Pixel Perfect Step (Option C)")]
+    [SerializeField, Min(1)] private int pixelsPerUnit = 16;
+    [SerializeField] private bool useIntegerPixelSteps = true;
+
+    private float accPixelsX;
+    private float accPixelsY;
+
+    private Vector2 lastMoveDirCardinal = Vector2.zero;
+
+    private float PixelWorldStep => (pixelsPerUnit > 0) ? (1f / pixelsPerUnit) : 0.0625f;
+
     [Header("Inactivity (external)")]
     [SerializeField] private bool suppressInactivityAnimation;
     public bool SuppressInactivityAnimation => suppressInactivityAnimation;
@@ -561,33 +572,44 @@ public class MovementController : MonoBehaviour, IKillable
         if (ShouldSkipFixedUpdate())
             return;
 
-        float moveSpeed = GetMoveSpeedPerFixedFrame();
+        float rawMoveWorld = GetRawMoveWorldPerFixedFrame();
+
+        float moveWorld = GetQuantizedMoveWorldPerFixedFrame(direction, rawMoveWorld);
 
         Vector2 position = Rigidbody.position;
+        position = QuantizeToPixelGrid(position);
 
         bool movingVertical = Mathf.Abs(direction.y) > 0.01f;
         bool movingHorizontal = Mathf.Abs(direction.x) > 0.01f;
 
         UpdateCurrentAxis(movingHorizontal, movingVertical);
-        AlignPerpendicularForCurrentAxis(ref position, moveSpeed);
+
+        AlignPerpendicularForCurrentAxis(ref position, rawMoveWorld);
 
         if (enableCorridorAxisLock && tileSize > 0.0001f)
         {
-            if (TryApplyCorridorAxisLock(position, movingHorizontal, movingVertical, moveSpeed))
+            if (TryApplyCorridorAxisLock(position, movingHorizontal, movingVertical, rawMoveWorld))
                 return;
         }
 
-        ApplyCenteringWhenSqueezed(ref position, moveSpeed, movingHorizontal, movingVertical);
+        ApplyCenteringWhenSqueezed(ref position, rawMoveWorld, movingHorizontal, movingVertical);
 
-        Vector2 targetPosition = position + direction * moveSpeed;
-
-        if (!IsBlocked(targetPosition))
+        if (moveWorld <= 0f)
         {
-            Rigidbody.MovePosition(targetPosition);
+            MovePositionPixelPerfect(position);
             return;
         }
 
-        TrySlideIfBlocked(position, moveSpeed, movingHorizontal, movingVertical);
+        Vector2 targetPosition = position + direction * moveWorld;
+        targetPosition = QuantizeToPixelGrid(targetPosition);
+
+        if (!IsBlocked(targetPosition))
+        {
+            MovePositionPixelPerfect(targetPosition);
+            return;
+        }
+
+        TrySlideIfBlocked(position, moveWorld, movingHorizontal, movingVertical);
     }
 
     private bool ShouldSkipFixedUpdate()
@@ -707,7 +729,7 @@ public class MovementController : MonoBehaviour, IKillable
             snappedPos = new Vector2(currentPos.x, newY);
         }
 
-        Rigidbody.MovePosition(snappedPos);
+        MovePositionPixelPerfect(snappedPos);
     }
 
     private void ApplyCenteringWhenSqueezed(ref Vector2 position, float moveSpeed, bool movingHorizontal, bool movingVertical)
@@ -839,13 +861,13 @@ public class MovementController : MonoBehaviour, IKillable
         if (Mathf.Abs(position.x - targetX) > CenterEpsilon)
         {
             float newX = Mathf.MoveTowards(position.x, targetX, moveSpeed);
-            Rigidbody.MovePosition(new Vector2(newX, position.y));
+            MovePositionPixelPerfect(new Vector2(newX, position.y));
         }
         else
         {
             Vector2 newPos = new Vector2(targetX, position.y) + verticalStep;
             if (!IsBlocked(newPos))
-                Rigidbody.MovePosition(newPos);
+                MovePositionPixelPerfect(newPos);
         }
     }
 
@@ -871,13 +893,13 @@ public class MovementController : MonoBehaviour, IKillable
         if (Mathf.Abs(position.y - targetY) > CenterEpsilon)
         {
             float newY = Mathf.MoveTowards(position.y, targetY, moveSpeed);
-            Rigidbody.MovePosition(new Vector2(position.x, newY));
+            MovePositionPixelPerfect(new Vector2(position.x, newY));
         }
         else
         {
             Vector2 newPos = new Vector2(position.x, targetY) + horizontalStep;
             if (!IsBlocked(newPos))
-                Rigidbody.MovePosition(newPos);
+                MovePositionPixelPerfect(newPos);
         }
     }
 
@@ -1803,6 +1825,8 @@ public class MovementController : MonoBehaviour, IKillable
             );
         }
 
+        worldPos = QuantizeToPixelGrid(worldPos);
+
         if (Rigidbody != null)
         {
             Rigidbody.linearVelocity = Vector2.zero;
@@ -1920,9 +1944,79 @@ public class MovementController : MonoBehaviour, IKillable
 
     private bool SolidLRAt(float xCenter, float yCenter)
     {
-        Vector2 c = new Vector2(xCenter, yCenter);
+        Vector2 c = new(xCenter, yCenter);
         bool l = IsSolidAtCustom(c + Vector2.left * tileSize, corridorSolidProbeSizeMul);
         bool r = IsSolidAtCustom(c + Vector2.right * tileSize, corridorSolidProbeSizeMul);
         return l && r;
+    }
+
+    private Vector2 QuantizeToPixelGrid(Vector2 world)
+    {
+        if (!useIntegerPixelSteps || pixelsPerUnit <= 0)
+            return world;
+
+        float ppu = pixelsPerUnit;
+        return new Vector2(
+            Mathf.Round(world.x * ppu) / ppu,
+            Mathf.Round(world.y * ppu) / ppu
+        );
+    }
+
+    private void ResetPixelAccumulators()
+    {
+        accPixelsX = 0f;
+        accPixelsY = 0f;
+    }
+
+    private float GetRawMoveWorldPerFixedFrame()
+    {
+        float dt = Time.fixedDeltaTime;
+        float speedWorldPerSecond = speed * tileSize;
+        return speedWorldPerSecond * dt;
+    }
+
+    private float GetQuantizedMoveWorldPerFixedFrame(Vector2 moveDir, float rawWorldStep)
+    {
+        if (!useIntegerPixelSteps || pixelsPerUnit <= 0)
+            return rawWorldStep;
+
+        moveDir = NormalizeCardinal(moveDir);
+        if (moveDir == Vector2.zero)
+            return 0f;
+
+        if (moveDir != lastMoveDirCardinal)
+        {
+            lastMoveDirCardinal = moveDir;
+            ResetPixelAccumulators();
+        }
+
+        float rawPixels = rawWorldStep * pixelsPerUnit;
+
+        if (Mathf.Abs(moveDir.x) > 0.01f)
+        {
+            accPixelsX += rawPixels * Mathf.Sign(moveDir.x);
+
+            int whole = (int)accPixelsX;
+            accPixelsX -= whole;
+
+            return Mathf.Abs(whole) * PixelWorldStep;
+        }
+        else
+        {
+            accPixelsY += rawPixels * Mathf.Sign(moveDir.y);
+
+            int whole = (int)accPixelsY;
+            accPixelsY -= whole;
+
+            return Mathf.Abs(whole) * PixelWorldStep;
+        }
+    }
+
+    private void MovePositionPixelPerfect(Vector2 worldPos)
+    {
+        if (Rigidbody == null)
+            return;
+
+        Rigidbody.MovePosition(QuantizeToPixelGrid(worldPos));
     }
 }
