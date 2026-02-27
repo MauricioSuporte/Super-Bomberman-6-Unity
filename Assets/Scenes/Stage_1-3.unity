@@ -366,7 +366,7 @@ MonoBehaviour:
   clockAmount: 0
   destructibleTilemap: {fileID: 285353618}
   indestructibleTilemap: {fileID: 0}
-  nextStageSceneName: Stage_1-4
+  nextStageSceneName: 
   destructiblePrefab: {fileID: 3440613785117735154, guid: 2d079a58b58d2964db3a2e9963e1ef41, type: 3}
   groundTilemap: {fileID: 672307155}
   groundTile: {fileID: 11400000, guid: ada74cfa1fdef9e4c86ccafaa1b2ae66, type: 2}
