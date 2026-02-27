@@ -50,6 +50,11 @@ public class ClownMaskMovement : MonoBehaviour
         retargetTimer = retargetInterval;
     }
 
+    [SerializeField] private int pixelsPerUnit = 16;
+
+    float pixelAccumulatorX;
+    float pixelAccumulatorY;
+
     void FixedUpdate()
     {
         if (GamePauseController.IsPaused)
@@ -58,9 +63,11 @@ public class ClownMaskMovement : MonoBehaviour
             return;
         }
 
+        float dt = Time.fixedDeltaTime;
+
         if (retargetInterval > 0f)
         {
-            retargetTimer -= Time.fixedDeltaTime;
+            retargetTimer -= dt;
             if (retargetTimer <= 0f)
             {
                 PickClosestAlivePlayer();
@@ -70,10 +77,7 @@ public class ClownMaskMovement : MonoBehaviour
 
         if (hitStopTimer > 0f)
         {
-            hitStopTimer -= Time.fixedDeltaTime;
-            if (hitStopTimer < 0f)
-                hitStopTimer = 0f;
-
+            hitStopTimer -= dt;
             rb.linearVelocity = Vector2.zero;
             return;
         }
@@ -81,15 +85,32 @@ public class ClownMaskMovement : MonoBehaviour
         if (Time.time >= nextDecisionTime)
             DecideNewDirection();
 
-        rb.linearVelocity = currentDirection * speed;
+        float worldStep = speed * dt;
+        float pixelStep = worldStep * pixelsPerUnit;
+
+        pixelAccumulatorX += currentDirection.x * pixelStep;
+        pixelAccumulatorY += currentDirection.y * pixelStep;
+
+        int movePixelsX = (int)pixelAccumulatorX;
+        int movePixelsY = (int)pixelAccumulatorY;
+
+        pixelAccumulatorX -= movePixelsX;
+        pixelAccumulatorY -= movePixelsY;
+
+        Vector2 moveWorld = new(
+            movePixelsX / (float)pixelsPerUnit,
+            movePixelsY / (float)pixelsPerUnit
+        );
+
+        Vector2 newPos = rb.position + moveWorld;
 
         if (useBounds)
         {
-            Vector2 pos = rb.position;
-            pos.x = Mathf.Clamp(pos.x, minBounds.x, maxBounds.x);
-            pos.y = Mathf.Clamp(pos.y, minBounds.y, maxBounds.y);
-            rb.position = pos;
+            newPos.x = Mathf.Clamp(newPos.x, minBounds.x, maxBounds.x);
+            newPos.y = Mathf.Clamp(newPos.y, minBounds.y, maxBounds.y);
         }
+
+        rb.MovePosition(newPos);
     }
 
     void PickClosestAlivePlayer()
