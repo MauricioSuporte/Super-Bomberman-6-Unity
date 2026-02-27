@@ -1,10 +1,49 @@
 fileFormatVersion: 2
-guid: c1c4dabaa986dda439b7e9bf8f110ba3
+guid: 9d0029269009e134ab03d358fe79f9f0
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 3883525430853174984
-    second: Egg Destruction_0
+      213: 6797611592296160210
+    second: Egg Destruction 1_0
+  - first:
+      213: 1994002947523506397
+    second: Egg Destruction 1_1
+  - first:
+      213: 7821248823398095707
+    second: Egg Destruction 1_2
+  - first:
+      213: -160263632419133399
+    second: Egg Destruction 1_3
+  - first:
+      213: -2312881024781151045
+    second: Egg Destruction 1_4
+  - first:
+      213: 1331480376340067499
+    second: Egg Destruction 1_5
+  - first:
+      213: 6376332952512827086
+    second: Egg Destruction 1_6
+  - first:
+      213: -8632574064049070217
+    second: Egg Destruction 1_7
+  - first:
+      213: 1939202069222000397
+    second: Egg Destruction 1_8
+  - first:
+      213: 6487050091927226918
+    second: Egg Destruction 1_9
+  - first:
+      213: 1870905931279003596
+    second: Egg Destruction 1_10
+  - first:
+      213: 8013053025350927418
+    second: Egg Destruction 1_11
+  - first:
+      213: 1840595158575203785
+    second: Egg Destruction 1_12
+  - first:
+      213: -3472652461385827753
+    second: Egg Destruction 1_13
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -100,11 +139,11 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Egg Destruction_0
+      name: Egg Destruction 1_0
       rect:
         serializedVersion: 2
         x: 1
-        y: 1
+        y: 0
         width: 32
         height: 23
       alignment: 0
@@ -115,18 +154,18 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 8c60336bdcd05e530800000000000000
-      internalID: 3883525430853174984
+      spriteID: 2dbd3e75ab7f55e50800000000000000
+      internalID: 6797611592296160210
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Egg Destruction_1
+      name: Egg Destruction 1_1
       rect:
         serializedVersion: 2
         x: 34
-        y: 1
+        y: 0
         width: 32
         height: 23
       alignment: 0
@@ -135,16 +174,16 @@ TextureImporter:
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: 0
+      tessellationDetail: -1
       bones: []
-      spriteID: 32b39950a96f4984f8cd51ddc1338d54
-      internalID: -1521650782
+      spriteID: dd07838bd1f1cab10800000000000000
+      internalID: 1994002947523506397
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Egg Destruction_2
+      name: Egg Destruction 1_2
       rect:
         serializedVersion: 2
         x: 67
@@ -157,20 +196,20 @@ TextureImporter:
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: 0
+      tessellationDetail: -1
       bones: []
-      spriteID: 6a09c71d9288d574c898fd15976b5e54
-      internalID: -1777489326
+      spriteID: b5bd59abd58aa8c60800000000000000
+      internalID: 7821248823398095707
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Egg Destruction_3
+      name: Egg Destruction 1_3
       rect:
         serializedVersion: 2
         x: 100
-        y: 1
+        y: 2
         width: 32
         height: 23
       alignment: 0
@@ -179,10 +218,10 @@ TextureImporter:
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: 0
+      tessellationDetail: -1
       bones: []
-      spriteID: 4272ef29818a5324e8f6b1e1f50599b6
-      internalID: 1593336565
+      spriteID: 9286e3f4311a6cdf0800000000000000
+      internalID: -160263632419133399
       vertices: []
       indices: 
       edges: []
@@ -191,7 +230,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: eaade981abbf18641ad87364ead118f7
+    spriteID: 97e101d2b2431f343bcc63e463d8120a
     internalID: 0
     vertices: []
     indices: 
@@ -201,12 +240,12 @@ TextureImporter:
     spriteCustomMetadata:
       entries:
       - key: SpriteEditor.SliceSettings
-        value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":32.0,"y":23.0},"gridSpriteOffset":{"x":1.0,"y":1.0},"gridSpritePadding":{"x":1.0,"y":1.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":1,"keepEmptyRects":false,"isAlternate":false}'
+        value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":32.0,"y":23.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":1,"keepEmptyRects":false,"isAlternate":false}'
     nameFileIdTable:
-      Egg Destruction_0: 3883525430853174984
-      Egg Destruction_1: -1521650782
-      Egg Destruction_2: -1777489326
-      Egg Destruction_3: 1593336565
+      Egg Destruction 1_0: 6797611592296160210
+      Egg Destruction 1_1: 1994002947523506397
+      Egg Destruction 1_2: 7821248823398095707
+      Egg Destruction 1_3: -160263632419133399
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

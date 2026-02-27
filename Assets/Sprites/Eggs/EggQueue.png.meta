@@ -5,6 +5,24 @@ TextureImporter:
   - first:
       213: 4261309024983001340
     second: EggQueue_0
+  - first:
+      213: 7372344868566309808
+    second: EggQueue_1
+  - first:
+      213: 3004856018439525455
+    second: EggQueue_2
+  - first:
+      213: -1440071991841220287
+    second: EggQueue_3
+  - first:
+      213: 1061232392524068943
+    second: EggQueue_4
+  - first:
+      213: -8557706799840318879
+    second: EggQueue_5
+  - first:
+      213: 3720050419863610821
+    second: EggQueue_6
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -103,10 +121,10 @@ TextureImporter:
       name: EggQueue_0
       rect:
         serializedVersion: 2
-        x: 1
-        y: 53
+        x: 0
+        y: 48
         width: 16
-        height: 25
+        height: 24
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -125,20 +143,20 @@ TextureImporter:
       name: EggQueue_1
       rect:
         serializedVersion: 2
-        x: 18
-        y: 53
+        x: 16
+        y: 48
         width: 16
-        height: 25
+        height: 24
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: 0
+      tessellationDetail: -1
       bones: []
-      spriteID: fa5510c2ae21a1347872bd8086c77b7e
-      internalID: 1907531810
+      spriteID: 0bb919cf894df4660800000000000000
+      internalID: 7372344868566309808
       vertices: []
       indices: 
       edges: []
@@ -147,20 +165,20 @@ TextureImporter:
       name: EggQueue_2
       rect:
         serializedVersion: 2
-        x: 35
-        y: 53
+        x: 32
+        y: 48
         width: 16
-        height: 25
+        height: 24
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: 0
+      tessellationDetail: -1
       bones: []
-      spriteID: 2c00a8cfb07480340ae7b7d9838bd027
-      internalID: -1217645023
+      spriteID: f44584cd0a463b920800000000000000
+      internalID: 3004856018439525455
       vertices: []
       indices: 
       edges: []
@@ -169,20 +187,20 @@ TextureImporter:
       name: EggQueue_3
       rect:
         serializedVersion: 2
-        x: 1
-        y: 27
+        x: 0
+        y: 24
         width: 16
-        height: 25
+        height: 24
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: 0
+      tessellationDetail: -1
       bones: []
-      spriteID: b5b794af46b9bd84f802f878ee017148
-      internalID: 1218654110
+      spriteID: 149905b3726d30ce0800000000000000
+      internalID: -1440071991841220287
       vertices: []
       indices: 
       edges: []
@@ -191,20 +209,20 @@ TextureImporter:
       name: EggQueue_4
       rect:
         serializedVersion: 2
-        x: 18
-        y: 27
+        x: 16
+        y: 24
         width: 16
-        height: 25
+        height: 24
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: 0
+      tessellationDetail: -1
       bones: []
-      spriteID: 706907da634ccad4b850ba12dfd0a41c
-      internalID: 551949543
+      spriteID: f48f8840d314abe00800000000000000
+      internalID: 1061232392524068943
       vertices: []
       indices: 
       edges: []
@@ -213,20 +231,20 @@ TextureImporter:
       name: EggQueue_5
       rect:
         serializedVersion: 2
-        x: 35
-        y: 27
+        x: 32
+        y: 24
         width: 16
-        height: 25
+        height: 24
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: 0
+      tessellationDetail: -1
       bones: []
-      spriteID: a10738b483cbb6742815e2b8baacfc68
-      internalID: -1207600437
+      spriteID: 16aa297910bec3980800000000000000
+      internalID: -8557706799840318879
       vertices: []
       indices: 
       edges: []
@@ -235,20 +253,20 @@ TextureImporter:
       name: EggQueue_6
       rect:
         serializedVersion: 2
-        x: 1
-        y: 1
+        x: 0
+        y: 0
         width: 16
-        height: 25
+        height: 24
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: 0
+      tessellationDetail: -1
       bones: []
-      spriteID: 1e77356cd3c371a48accbb5ff13a4ca9
-      internalID: 414104775
+      spriteID: 5c5638ea52640a330800000000000000
+      internalID: 3720050419863610821
       vertices: []
       indices: 
       edges: []
@@ -257,10 +275,10 @@ TextureImporter:
       name: EggQueue_7
       rect:
         serializedVersion: 2
-        x: 18
-        y: 1
+        x: 16
+        y: 0
         width: 16
-        height: 25
+        height: 24
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -269,8 +287,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 98d36169f34232549a214646b887ae36
-      internalID: 792342116
+      spriteID: 8ecfa3d7431356646b4eae67e3b9048b
+      internalID: 478390796
       vertices: []
       indices: 
       edges: []
@@ -279,10 +297,10 @@ TextureImporter:
       name: EggQueue_8
       rect:
         serializedVersion: 2
-        x: 35
-        y: 1
+        x: 32
+        y: 0
         width: 16
-        height: 25
+        height: 24
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -291,8 +309,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: a9c03665b29975044b0f9d2170ad086a
-      internalID: -1848373286
+      spriteID: bb884e24a4c17b34986d77d068f56db9
+      internalID: -2093345186
       vertices: []
       indices: 
       edges: []
@@ -301,7 +319,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 0cce1a8d721f1294ab9404352eb76648
+    spriteID: 6455aefba27233f4d980c579f09d5256
     internalID: 0
     vertices: []
     indices: 
@@ -311,17 +329,17 @@ TextureImporter:
     spriteCustomMetadata:
       entries:
       - key: SpriteEditor.SliceSettings
-        value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":16.0,"y":25.0},"gridSpriteOffset":{"x":1.0,"y":1.0},"gridSpritePadding":{"x":1.0,"y":1.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":1,"keepEmptyRects":false,"isAlternate":false}'
+        value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":16.0,"y":24.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":1,"keepEmptyRects":false,"isAlternate":false}'
     nameFileIdTable:
       EggQueue_0: 4261309024983001340
-      EggQueue_1: 1907531810
-      EggQueue_2: -1217645023
-      EggQueue_3: 1218654110
-      EggQueue_4: 551949543
-      EggQueue_5: -1207600437
-      EggQueue_6: 414104775
-      EggQueue_7: 792342116
-      EggQueue_8: -1848373286
+      EggQueue_1: 7372344868566309808
+      EggQueue_2: 3004856018439525455
+      EggQueue_3: -1440071991841220287
+      EggQueue_4: 1061232392524068943
+      EggQueue_5: -8557706799840318879
+      EggQueue_6: 3720050419863610821
+      EggQueue_7: 478390796
+      EggQueue_8: -2093345186
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
