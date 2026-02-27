@@ -1,6 +1,10 @@
 ﻿using UnityEngine;
+#if UNITY_2022_2_OR_NEWER
+using UnityEngine.U2D;
+#endif
 
 [RequireComponent(typeof(Camera))]
+[RequireComponent(typeof(PixelPerfectCamera))]
 public sealed class CameraFollowClamp2D : MonoBehaviour
 {
     [Header("Targets")]
@@ -13,21 +17,47 @@ public sealed class CameraFollowClamp2D : MonoBehaviour
     [SerializeField] private Vector2 followOffset;
     [SerializeField] private float smoothTime = 0.12f;
 
+    [Header("Pixel Perfect Snap")]
+    [SerializeField] private bool pixelSnap = true;
+    [SerializeField, Min(1)] private int pixelsPerUnit = 16;
+
     [Header("Player Search")]
     [SerializeField] private float refreshPlayersEverySeconds = 0.5f;
 
-    Camera cam;
-    Vector3 velocity;
+    private Camera cam;
+    private Vector3 velocity;
 
-    Transform followTarget;
-    PlayerIdentity[] cachedPlayers = new PlayerIdentity[0];
-    float refreshTimer;
+    private Transform followTarget;
+    private PlayerIdentity[] cachedPlayers = new PlayerIdentity[0];
+    private float refreshTimer;
+
+    private Vector3 rawPos;
+
+    private float accPixelsX;
+    private float accPixelsY;
+
+#if UNITY_2022_2_OR_NEWER
+    private PixelPerfectCamera ppc;
+#endif
+
+    private float PixelWorldStep => (pixelsPerUnit > 0) ? (1f / pixelsPerUnit) : 0.0625f;
 
     void Awake()
     {
         cam = GetComponent<Camera>();
+
         followTarget = new GameObject("CameraTarget").transform;
         followTarget.hideFlags = HideFlags.HideInHierarchy;
+
+        rawPos = transform.position;
+
+#if UNITY_2022_2_OR_NEWER
+        ppc = GetComponent<PixelPerfectCamera>();
+        if (ppc != null)
+        {
+            pixelSnap = false;
+        }
+#endif
     }
 
     void OnDestroy()
@@ -57,8 +87,20 @@ public sealed class CameraFollowClamp2D : MonoBehaviour
             transform.position.z
         );
 
-        var clamped = ClampToBounds(desired, boundsCollider.bounds);
-        transform.position = Vector3.SmoothDamp(transform.position, clamped, ref velocity, smoothTime);
+        var clampedTarget = ClampToBounds(desired, boundsCollider.bounds);
+
+        rawPos = Vector3.SmoothDamp(rawPos, clampedTarget, ref velocity, smoothTime);
+
+        rawPos = ClampToBounds(rawPos, boundsCollider.bounds);
+
+        var finalPos = rawPos;
+
+        if (pixelSnap)
+            finalPos = SnapWithPixelAccumulator(finalPos, pixelsPerUnit);
+
+        finalPos = ClampToBounds(finalPos, boundsCollider.bounds);
+
+        transform.position = finalPos;
     }
 
     void RefreshPlayers()
@@ -122,7 +164,7 @@ public sealed class CameraFollowClamp2D : MonoBehaviour
     Vector3 ClampToBounds(Vector3 desired, Bounds bounds)
     {
         float vertExtent = cam.orthographicSize;
-        float horzExtent = vertExtent * (4f / 3f);
+        float horzExtent = vertExtent * cam.aspect;
 
         float minX = bounds.min.x + horzExtent;
         float maxX = bounds.max.x - horzExtent;
@@ -139,6 +181,31 @@ public sealed class CameraFollowClamp2D : MonoBehaviour
         else y = Mathf.Clamp(y, minY, maxY);
 
         return new Vector3(x, y, desired.z);
+    }
+
+    Vector3 SnapWithPixelAccumulator(Vector3 targetWorldPos, int ppu)
+    {
+        if (ppu <= 0)
+            return targetWorldPos;
+
+        Vector3 current = transform.position;
+
+        float dxPixels = (targetWorldPos.x - current.x) * ppu;
+        float dyPixels = (targetWorldPos.y - current.y) * ppu;
+
+        accPixelsX += dxPixels;
+        accPixelsY += dyPixels;
+
+        int stepX = (int)accPixelsX;
+        int stepY = (int)accPixelsY;
+
+        accPixelsX -= stepX;
+        accPixelsY -= stepY;
+
+        float newX = current.x + (stepX * PixelWorldStep);
+        float newY = current.y + (stepY * PixelWorldStep);
+
+        return new Vector3(newX, newY, targetWorldPos.z);
     }
 
     public void SetBounds(Collider2D newBounds)
@@ -165,9 +232,28 @@ public sealed class CameraFollowClamp2D : MonoBehaviour
 
         var clamped = ClampToBounds(desired, boundsCollider.bounds);
 
-        transform.position = clamped;
+        rawPos = clamped;
         velocity = Vector3.zero;
 
+        accPixelsX = 0f;
+        accPixelsY = 0f;
+
+        if (pixelSnap)
+            clamped = SnapToPixelGrid(clamped, pixelsPerUnit);
+
+        clamped = ClampToBounds(clamped, boundsCollider.bounds);
+
+        transform.position = clamped;
+
         refreshTimer = Mathf.Max(0.05f, refreshPlayersEverySeconds);
+    }
+
+    static Vector3 SnapToPixelGrid(Vector3 worldPos, int ppu)
+    {
+        if (ppu <= 0) return worldPos;
+
+        float x = Mathf.Round(worldPos.x * ppu) / ppu;
+        float y = Mathf.Round(worldPos.y * ppu) / ppu;
+        return new Vector3(x, y, worldPos.z);
     }
 }
