@@ -523,8 +523,8 @@ MonoBehaviour:
   invincibleSuitAmount: 0
   heartAmount: 0
   powerGloveAmount: 1
-  blueLouieEggAmount: 1
-  blackLouieEggAmount: 0
+  blueLouieEggAmount: 5
+  blackLouieEggAmount: 5
   purpleLouieEggAmount: 0
   greenLouieEggAmount: 0
   yellowLouieEggAmount: 0
