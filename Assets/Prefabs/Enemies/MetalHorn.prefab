@@ -14,6 +14,7 @@ GameObject:
   - component: {fileID: -3084971832037153437}
   - component: {fileID: 8638696913730581265}
   - component: {fileID: 1351269766690977818}
+  - component: {fileID: 3148160967286809831}
   m_Layer: 10
   m_Name: MetalHorn
   m_TagString: Untagged
@@ -122,6 +123,7 @@ MonoBehaviour:
   spriteDown: {fileID: 1228606389785476324}
   spriteLeft: {fileID: 1228606390696233727}
   spriteDeath: {fileID: 1228606391467010645}
+  spriteDamaged: {fileID: 0}
   obstacleMask:
     serializedVersion: 2
     m_Bits: 1216
@@ -132,10 +134,17 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 1024
   deathSfx: {fileID: 8300000, guid: 95fa76ce6d1f33c498e5165cec574d98, type: 3}
+  recheckStuckEverySeconds: 0.25
   visionDistance: 10
   playerLayerMask:
     serializedVersion: 2
     m_Bits: 8
+  stageLayerMask:
+    serializedVersion: 2
+    m_Bits: 0
+  destructiblesTag: Destructibles
+  alignedToleranceTiles: 0.15
+  scanBoxSizePercent: 0.6
   chargePauseDuration: 0.5
   chargeSpeedMultiplier: 2
 --- !u!114 &8638696913730581265
@@ -153,6 +162,10 @@ MonoBehaviour:
   life: 1
   hitInvulnerableDuration: 3
   hitBlinkInterval: 0.1
+  tempSlowdownStartNormalized: 0.7
+  tempEndBlinkMultiplier: 4
+  playDamagedLoopInsteadOfBlink: 0
+  playDamagedLoopAndBlink: 0
 --- !u!82 &1351269766690977818
 AudioSource:
   m_ObjectHideFlags: 0
@@ -250,6 +263,29 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+--- !u!114 &3148160967286809831
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1228606389669354652}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9f528b4a7ce266344b53412d165dfefe, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::StunReceiver
+  isStunned: 0
+  useAnimatedStunRenderer: 0
+  stunAnimatedRenderer: {fileID: 0}
+  disableShakeWhenUsingAnimatedStun: 1
+  visualOverrideWhileStunned: 1
+  disablePlayerControllersWhileStunned: 1
+  onlyDisableIfTaggedPlayer: 1
+  shakeWhileStunned: 1
+  shakeAmplitude: 0.03
+  shakeFrequency: 22
+  freezeAnimatedSprites: 1
 --- !u!1 &1228606389785476330
 GameObject:
   m_ObjectHideFlags: 0
@@ -285,6 +321,7 @@ Transform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!212 &1228606389785476325
 SpriteRenderer:
+  serializedVersion: 2
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -330,6 +367,7 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 5
+  m_MaskInteraction: 0
   m_Sprite: {fileID: 4325408724812423499, guid: 159a1b2b1e1e9964ba86df6d5d275321, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
@@ -339,7 +377,6 @@ SpriteRenderer:
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
-  m_MaskInteraction: 0
   m_SpriteSortPoint: 0
 --- !u!114 &1228606389785476324
 MonoBehaviour:
@@ -361,6 +398,7 @@ MonoBehaviour:
   - {fileID: -5600296156200766470, guid: 159a1b2b1e1e9964ba86df6d5d275321, type: 3}
   - {fileID: 2073057527981432824, guid: 159a1b2b1e1e9964ba86df6d5d275321, type: 3}
   - {fileID: 1869524795, guid: 159a1b2b1e1e9964ba86df6d5d275321, type: 3}
+  allowFlipX: 0
   animationTime: 0.16666667
   useSequenceDuration: 1
   sequenceDuration: 1
@@ -369,6 +407,7 @@ MonoBehaviour:
   frameOffsets: []
   pingPong: 1
   disableOffsetsIfThisObjectHasRigidbody2D: 1
+  disableOffsetsIfStandaloneRoot: 1
 --- !u!1 &1228606390223914641
 GameObject:
   m_ObjectHideFlags: 0
@@ -404,6 +443,7 @@ Transform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!212 &1228606390223914636
 SpriteRenderer:
+  serializedVersion: 2
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -449,6 +489,7 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 5
+  m_MaskInteraction: 0
   m_Sprite: {fileID: -8535522410668091890, guid: 159a1b2b1e1e9964ba86df6d5d275321, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
@@ -458,7 +499,6 @@ SpriteRenderer:
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
-  m_MaskInteraction: 0
   m_SpriteSortPoint: 0
 --- !u!114 &1228606390223914643
 MonoBehaviour:
@@ -480,6 +520,7 @@ MonoBehaviour:
   - {fileID: -3470672694249022145, guid: 159a1b2b1e1e9964ba86df6d5d275321, type: 3}
   - {fileID: 1878778570605234488, guid: 159a1b2b1e1e9964ba86df6d5d275321, type: 3}
   - {fileID: 7429185038129036366, guid: 159a1b2b1e1e9964ba86df6d5d275321, type: 3}
+  allowFlipX: 0
   animationTime: 0.16666667
   useSequenceDuration: 1
   sequenceDuration: 1
@@ -488,6 +529,7 @@ MonoBehaviour:
   frameOffsets: []
   pingPong: 1
   disableOffsetsIfThisObjectHasRigidbody2D: 1
+  disableOffsetsIfStandaloneRoot: 1
 --- !u!1 &1228606390294117669
 GameObject:
   m_ObjectHideFlags: 0
@@ -523,6 +565,7 @@ Transform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!212 &1228606390294117664
 SpriteRenderer:
+  serializedVersion: 2
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -568,6 +611,7 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 5
+  m_MaskInteraction: 0
   m_Sprite: {fileID: -6359491945841751481, guid: 159a1b2b1e1e9964ba86df6d5d275321, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
@@ -577,7 +621,6 @@ SpriteRenderer:
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
-  m_MaskInteraction: 0
   m_SpriteSortPoint: 0
 --- !u!114 &1228606390294117671
 MonoBehaviour:
@@ -596,6 +639,7 @@ MonoBehaviour:
   - {fileID: -6359491945841751481, guid: 159a1b2b1e1e9964ba86df6d5d275321, type: 3}
   - {fileID: 331739692417282745, guid: 159a1b2b1e1e9964ba86df6d5d275321, type: 3}
   - {fileID: -4927060027014618062, guid: 159a1b2b1e1e9964ba86df6d5d275321, type: 3}
+  allowFlipX: 0
   animationTime: 0.033333335
   useSequenceDuration: 0
   sequenceDuration: 0.5
@@ -604,6 +648,7 @@ MonoBehaviour:
   frameOffsets: []
   pingPong: 0
   disableOffsetsIfThisObjectHasRigidbody2D: 1
+  disableOffsetsIfStandaloneRoot: 1
 --- !u!1 &1228606390696233725
 GameObject:
   m_ObjectHideFlags: 0
@@ -639,6 +684,7 @@ Transform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!212 &1228606390696233720
 SpriteRenderer:
+  serializedVersion: 2
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -684,6 +730,7 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 5
+  m_MaskInteraction: 0
   m_Sprite: {fileID: -8535522410668091890, guid: 159a1b2b1e1e9964ba86df6d5d275321, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
@@ -693,7 +740,6 @@ SpriteRenderer:
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
-  m_MaskInteraction: 0
   m_SpriteSortPoint: 0
 --- !u!114 &1228606390696233727
 MonoBehaviour:
@@ -715,6 +761,7 @@ MonoBehaviour:
   - {fileID: -3470672694249022145, guid: 159a1b2b1e1e9964ba86df6d5d275321, type: 3}
   - {fileID: 1878778570605234488, guid: 159a1b2b1e1e9964ba86df6d5d275321, type: 3}
   - {fileID: 7429185038129036366, guid: 159a1b2b1e1e9964ba86df6d5d275321, type: 3}
+  allowFlipX: 0
   animationTime: 0.16666667
   useSequenceDuration: 1
   sequenceDuration: 1
@@ -723,6 +770,7 @@ MonoBehaviour:
   frameOffsets: []
   pingPong: 1
   disableOffsetsIfThisObjectHasRigidbody2D: 1
+  disableOffsetsIfStandaloneRoot: 1
 --- !u!1 &1228606391467010651
 GameObject:
   m_ObjectHideFlags: 0
@@ -751,13 +799,14 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0.27, z: 0}
-  m_LocalScale: {x: 6, y: 6, z: 1}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1228606389669354653}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!212 &1228606391467010646
 SpriteRenderer:
+  serializedVersion: 2
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -803,6 +852,7 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 5
+  m_MaskInteraction: 0
   m_Sprite: {fileID: 7003975502510558183, guid: eaeed7ce552d52a409a0dccee4f31c1e, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
@@ -812,7 +862,6 @@ SpriteRenderer:
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
-  m_MaskInteraction: 0
   m_SpriteSortPoint: 0
 --- !u!114 &1228606391467010645
 MonoBehaviour:
@@ -835,6 +884,7 @@ MonoBehaviour:
   - {fileID: -6647632493804449350, guid: eaeed7ce552d52a409a0dccee4f31c1e, type: 3}
   - {fileID: -5494614063893397770, guid: eaeed7ce552d52a409a0dccee4f31c1e, type: 3}
   - {fileID: -5427934351343933045, guid: eaeed7ce552d52a409a0dccee4f31c1e, type: 3}
+  allowFlipX: 0
   animationTime: 0.1
   useSequenceDuration: 0
   sequenceDuration: 0.5
@@ -843,3 +893,4 @@ MonoBehaviour:
   frameOffsets: []
   pingPong: 0
   disableOffsetsIfThisObjectHasRigidbody2D: 1
+  disableOffsetsIfStandaloneRoot: 1

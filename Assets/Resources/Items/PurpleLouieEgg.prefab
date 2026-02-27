@@ -221,6 +221,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ItemPickup
   collectSfx: {fileID: 8300000, guid: 8a3c0b4c44b209840ab56f51004bc900, type: 3}
   collectVolume: 1
+  playerExtraSfx: {fileID: 0}
+  playerExtraVolume: 1
+  playPlayerExtraSfxForTypes: 
   idleRenderer: {fileID: 3750686511081856235}
   destroyRenderer: {fileID: 9181071277600479867}
   destroyDelaySeconds: 0.5
@@ -256,7 +259,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0.029, y: -0.10700011, z: 0}
-  m_LocalScale: {x: 5, y: 5, z: 1}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 2727780941473249230}
