@@ -16,6 +16,9 @@ public class BlackLouieDashPushAbility : MonoBehaviour, IPlayerAbility
     public float dashMoveSeconds = 0.5f;
     public float dashCooldownSeconds = 0.6f;
 
+    [Header("Impact Hold (when push succeeds)")]
+    [SerializeField, Min(0f)] private float impactHoldSeconds = 0.25f;
+
     [Header("Enemy Push")]
     public int enemyPushTiles = 2;
     public float enemyPushTilesPerSecond = 14f;
@@ -187,7 +190,11 @@ public class BlackLouieDashPushAbility : MonoBehaviour, IPlayerAbility
                     if (TryPushEnemy(hit, dir, tile, out var pushedEnemy))
                     {
                         if (pushedEnemy)
+                        {
                             ExtendInvulnerabilityAfterPush();
+                            yield return HoldImpactThenEnd();
+                            yield break;
+                        }
 
                         EndDash();
                         yield break;
@@ -223,10 +230,31 @@ public class BlackLouieDashPushAbility : MonoBehaviour, IPlayerAbility
                     TryKickBomb(hitFinal, dir);
 
                     if (TryPushEnemy(hitFinal, dir, tile, out var pushedEnemy) && pushedEnemy)
+                    {
                         ExtendInvulnerabilityAfterPush();
+                        yield return HoldImpactThenEnd();
+                        yield break;
+                    }
                 }
             }
         }
+
+        EndDash();
+    }
+
+    IEnumerator HoldImpactThenEnd()
+    {
+        float hold = Mathf.Max(0f, impactHoldSeconds);
+
+        // Mantém o último frame visível no local do impacto.
+        if (hold > 0f)
+        {
+            if (externalAnimator is BlackLouieDashAnimator anim)
+                anim.HoldImpact(hold);
+        }
+
+        if (hold > 0f)
+            yield return new WaitForSeconds(hold);
 
         EndDash();
     }

@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class BlackLouieDashAnimator : MonoBehaviour, IBlackLouieDashExternalAnimator
@@ -21,6 +22,8 @@ public class BlackLouieDashAnimator : MonoBehaviour, IBlackLouieDashExternalAnim
     readonly List<bool> cachedDirectionObjectsActive = new();
 
     bool playing;
+
+    Coroutine holdRoutine;
 
     void Awake()
     {
@@ -70,8 +73,70 @@ public class BlackLouieDashAnimator : MonoBehaviour, IBlackLouieDashExternalAnim
         playing = true;
     }
 
+    /// <summary>
+    /// Congela imediatamente no último frame (clampando via int.MaxValue) por alguns segundos,
+    /// e só então executa Stop() (restaurando estados anteriores).
+    /// </summary>
+    public void HoldImpact(float seconds)
+    {
+        if (!playing || activeDash == null)
+            return;
+
+        seconds = Mathf.Max(0f, seconds);
+
+        if (holdRoutine != null)
+        {
+            StopCoroutine(holdRoutine);
+            holdRoutine = null;
+        }
+
+        ForceLastFrameAndFreeze(activeDash);
+
+        if (seconds <= 0f)
+        {
+            Stop();
+            return;
+        }
+
+        holdRoutine = StartCoroutine(HoldThenStopRoutine(seconds));
+    }
+
+    IEnumerator HoldThenStopRoutine(float seconds)
+    {
+        yield return new WaitForSeconds(seconds);
+        holdRoutine = null;
+        Stop();
+    }
+
+    void ForceLastFrameAndFreeze(AnimatedSpriteRenderer anim)
+    {
+        if (anim == null)
+            return;
+
+        anim.loop = false;
+
+        // Força o último frame (muito comum renderers clamparem internamente).
+        anim.CurrentFrame = int.MaxValue;
+        anim.RefreshFrame();
+
+        // Garante que ele não continue avançando frames.
+        anim.idle = true;
+
+        // Garante visibilidade.
+        anim.enabled = true;
+
+        if (anim.TryGetComponent<SpriteRenderer>(out var sr))
+            sr.enabled = true;
+    }
+
     public void Stop()
     {
+        if (holdRoutine != null)
+        {
+            StopCoroutine(holdRoutine);
+            holdRoutine = null;
+        }
+
         if (!playing && activeDash == null && cachedAnimators.Count == 0 && cachedSpriteRenderers.Count == 0 && cachedDirectionObjects.Count == 0)
             return;
 
@@ -212,6 +277,12 @@ public class BlackLouieDashAnimator : MonoBehaviour, IBlackLouieDashExternalAnim
 
     public void CancelForDeath()
     {
+        if (holdRoutine != null)
+        {
+            StopCoroutine(holdRoutine);
+            holdRoutine = null;
+        }
+
         if (activeDash != null)
         {
             if (activeDash.TryGetComponent<SpriteRenderer>(out var sr))
