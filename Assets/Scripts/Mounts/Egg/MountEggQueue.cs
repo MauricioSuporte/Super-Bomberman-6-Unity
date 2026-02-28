@@ -156,6 +156,14 @@ public sealed class MountEggQueue : MonoBehaviour
 
     #region Unity
 
+    bool UseUnscaledIntroTime()
+    {
+        return Time.timeScale == 0f && !GamePauseController.IsPaused;
+    }
+
+    float QTime() => UseUnscaledIntroTime() ? Time.unscaledTime : Time.time;
+    float QDelta() => UseUnscaledIntroTime() ? Time.unscaledDeltaTime : Time.deltaTime;
+
     void OnValidate() => ClampInspector();
 
     void Awake() => InitializeRuntime();
@@ -227,11 +235,11 @@ public sealed class MountEggQueue : MonoBehaviour
         TrackOwnerPositionSpeedBased(isMoving);
 
         float followSpeed = GetOwnerWorldSpeedPerSecond();
-        float maxStep = followSpeed * Time.deltaTime;
+        float maxStep = followSpeed * QDelta();
 
         Vector3 behindDir = GetBehindDir();
 
-        bool eligibleIdleByTime = (Time.time - _lastMoveTime) >= Mathf.Max(0f, idleEnterSeconds);
+        bool eligibleIdleByTime = (QTime() - _lastMoveTime) >= Mathf.Max(0f, idleEnterSeconds);
         bool wantIdleShift = idleDequeueStyle && _eggs.Count > 0 && !isMoving && eligibleIdleByTime;
 
         bool prevUseIdleShift = _useIdleShiftState;
@@ -240,7 +248,7 @@ public sealed class MountEggQueue : MonoBehaviour
         bool useIdleShift = _useIdleShiftState;
 
         if (!prevUseIdleShift && useIdleShift)
-            _idleShiftStartTime = Time.time;
+            _idleShiftStartTime = QTime();
         else if (prevUseIdleShift && !useIdleShift)
             _idleShiftStartTime = 0f;
 
@@ -525,7 +533,7 @@ public sealed class MountEggQueue : MonoBehaviour
         _useIdleShiftState = false;
         _idleShiftStartTime = 0f;
 
-        _lastMoveTime = Time.time;
+        _lastMoveTime = QTime();
         _wasMovingPrevFrame = false;
     }
 
@@ -566,10 +574,10 @@ public sealed class MountEggQueue : MonoBehaviour
             movingNow = movedByPositionThisFrame;
 
         if (movingNow)
-            _lastMoveTime = Time.time;
+            _lastMoveTime = QTime();
 
         float hold = Mathf.Max(0f, movingHoldSeconds);
-        if (hold > 0f && (Time.time - _lastMoveTime) <= hold)
+        if (hold > 0f && (QTime() - _lastMoveTime) <= hold)
             return true;
 
         return movingNow;
@@ -616,7 +624,7 @@ public sealed class MountEggQueue : MonoBehaviour
 
         _lastRealOwnerPos = p;
         _hasLastRealOwnerPos = true;
-        _lastMoveTime = Time.time;
+        _lastMoveTime = QTime();
     }
 
     void ResetHistoryToCurrentOwnerPos()
@@ -699,7 +707,7 @@ public sealed class MountEggQueue : MonoBehaviour
         float speed = Mathf.Max(0.000001f, GetOwnerWorldSpeedPerSecond());
         float secondsPerPoint = Mathf.Max(0.000001f, spacing / speed);
 
-        _historyTimeCarry += Time.deltaTime;
+        _historyTimeCarry += QDelta();
 
         while (_historyTimeCarry >= secondsPerPoint)
         {
@@ -777,15 +785,14 @@ public sealed class MountEggQueue : MonoBehaviour
         if (secs <= 0.000001f)
             return 1f;
 
-        return Mathf.Clamp01((Time.time - _idleShiftStartTime) / secs);
+        return Mathf.Clamp01((QTime() - _idleShiftStartTime) / secs);
     }
 
     Vector3 ComputeNewWorldPosition(ref EggEntry e, Vector3 before, Vector3 targetWorld, float maxStep, bool useIdleShift)
     {
         if (e.isAnimating)
         {
-            float elapsed = Time.time - e.animStartTime;
-            float u = e.animDuration <= 0.0001f ? 1f : Mathf.Clamp01(elapsed / e.animDuration);
+            float elapsed = QTime() - e.animStartTime; float u = e.animDuration <= 0.0001f ? 1f : Mathf.Clamp01(elapsed / e.animDuration);
             float smoothU = u * u * (3f - 2f * u);
 
             Vector3 from = e.animFromWorld; from.z = 0f;
@@ -950,7 +957,7 @@ public sealed class MountEggQueue : MonoBehaviour
             return;
 
         e.isAnimating = true;
-        e.animStartTime = Time.time;
+        e.animStartTime = QTime();
         e.animDuration = Mathf.Max(0.01f, duration);
 
         Vector3 p = e.rootTr.position;
@@ -1390,7 +1397,7 @@ public sealed class MountEggQueue : MonoBehaviour
             mountVolume = Mathf.Clamp01(mountVolume),
 
             isAnimating = animate,
-            animStartTime = Time.time,
+            animStartTime = QTime(),
             animDuration = durJoin,
             animFromWorld = spawnWorld
         };
