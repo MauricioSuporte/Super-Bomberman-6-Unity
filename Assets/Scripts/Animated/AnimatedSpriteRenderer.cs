@@ -20,6 +20,10 @@ public class AnimatedSpriteRenderer : MonoBehaviour
     public bool useSequenceDuration = false;
     public float sequenceDuration = 0.5f;
 
+    [SerializeField] private bool useUnscaledTime = true;
+
+    [SerializeField] private bool respectGamePause = true;
+
     [Header("Loop / Idle")]
     public bool loop = true;
     public bool idle = true;
@@ -54,6 +58,8 @@ public class AnimatedSpriteRenderer : MonoBehaviour
     bool savedRuntimeLockX;
     float savedRuntimeLockedLocalX;
     bool hasSavedRuntimeLockXState;
+
+    float frameTimer;
 
     public int CurrentFrame
     {
@@ -118,23 +124,56 @@ public class AnimatedSpriteRenderer : MonoBehaviour
         if (uiImage != null) uiImage.enabled = true;
 
         direction = 1;
+        frameTimer = 0f;
 
         SetupTiming();
-        CancelInvoke(nameof(NextFrame));
-        InvokeRepeating(nameof(NextFrame), animationTime, animationTime);
-
         ApplyFrame();
     }
 
     void OnDisable()
     {
-        CancelInvoke(nameof(NextFrame));
         ResetOffset();
 
         EnsureTargets();
 
         if (spriteRenderer != null) spriteRenderer.enabled = false;
         if (uiImage != null) uiImage.enabled = false;
+    }
+
+    void Update()
+    {
+        if (!isActiveAndEnabled)
+            return;
+
+        if (frozen)
+            return;
+
+        if (respectGamePause && GamePauseController.IsPaused)
+            return;
+
+        if (idle)
+        {
+            ApplyFrame();
+            return;
+        }
+
+        if (animationSprite == null || animationSprite.Length == 0)
+            return;
+
+        SetupTiming();
+
+        float dt = useUnscaledTime ? Time.unscaledDeltaTime : Time.deltaTime;
+        if (dt <= 0f)
+            return;
+
+        frameTimer += dt;
+
+        float step = Mathf.Max(0.0001f, animationTime);
+        while (frameTimer >= step)
+        {
+            frameTimer -= step;
+            NextFrameInternal();
+        }
     }
 
     void SetupTiming()
@@ -174,10 +213,8 @@ public class AnimatedSpriteRenderer : MonoBehaviour
         ApplyFrame();
     }
 
-    void NextFrame()
+    void NextFrameInternal()
     {
-        if (frozen) return;
-
         if (idle)
         {
             ApplyFrame();
@@ -338,8 +375,6 @@ public class AnimatedSpriteRenderer : MonoBehaviour
         if (!gameObject.activeInHierarchy)
             yield break;
 
-        CancelInvoke(nameof(NextFrame));
-
         bool prevIdle = idle;
         bool prevLoop = loop;
 
@@ -397,8 +432,7 @@ public class AnimatedSpriteRenderer : MonoBehaviour
         CurrentFrame = 0;
         RefreshFrame();
 
-        CancelInvoke(nameof(NextFrame));
-        InvokeRepeating(nameof(NextFrame), animationTime, animationTime);
+        frameTimer = 0f;
     }
 
     public void SetExternalBaseOffsetFromInitial(Vector3 offsetFromInitial)
