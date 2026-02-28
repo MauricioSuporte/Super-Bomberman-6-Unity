@@ -39,6 +39,23 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
     [Header("Debug / Watch External Move")]
     [SerializeField, Min(0f)] private float watchAfterSnapSeconds = 0.35f;
 
+    private const string WalkLoopClipResourcesPath = "Sounds/walk";
+    private static AudioClip s_walkLoopClip;
+
+    private const float WalkStepSfxIntervalSeconds = 0.3f;
+
+    [SerializeField, Range(0f, 1f)] private float walkLoopVolume = 0.8f;
+
+    private Coroutine walkSfxRoutine;
+    private bool walkSfxActive;
+    private float nextWalkStepSfxAtUnscaled;
+
+    [Header("Queue Walk (fila)")]
+    [SerializeField] private bool queueWalk = true;
+
+    [Tooltip("Distância em tiles entre um player e o próximo (ex: 1 = 1 tile).")]
+    [SerializeField, Min(0)] private int queueSpacingTiles = 1;
+
     private readonly GridAStarPathfinder2D pathfinder = new();
     private AudioSource walkLoopSource;
 
@@ -262,6 +279,8 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
             yield break;
         }
 
+        players.Sort((a, b) => b.playerId.CompareTo(a.playerId));
+
         if (delayBeforeWalkSeconds > 0f)
         {
             Log($"WAIT_BEFORE seconds={delayBeforeWalkSeconds:0.###}");
@@ -294,60 +313,33 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
 
         try
         {
+            int doneCount = 0;
+            bool[] done = new bool[players.Count];
+
             for (int i = 0; i < players.Count; i++)
             {
-                var pw = players[i];
-                if (pw.mover == null || pw.root == null) continue;
+                int idx = i;
+                var pw = players[idx];
 
-                int pid = Mathf.Clamp(pw.playerId, 1, 4);
+                if (pw.mover == null || pw.root == null)
+                {
+                    done[idx] = true;
+                    doneCount++;
+                    continue;
+                }
 
-                Vector2 goal = spawner.GetResolvedSpawnPosition(pid);
                 float tile = Mathf.Max(0.0001f, pw.tileSize);
 
-                Vector2 start = RoundToGrid(GetRootWorldPos(pw.root, pw.mover), tile);
-                Vector2 goalRounded = RoundToGrid(goal, tile);
+                float secondsPerTile = tile / Mathf.Max(0.0001f, walkSpeedUnitsPerSecond);
+                float startDelay = (queueWalk && queueSpacingTiles > 0)
+                    ? (idx * queueSpacingTiles * secondsPerTile)
+                    : 0f;
 
-                var usedMask = obstacleMask.value != 0 ? obstacleMask : pw.mover.obstacleMask;
-
-                LogHierarchyState("HIER_BEFORE_WALK", pid, pw.identity, pw.mover, pw.root);
-                Log($"P{pid} WALK_BEGIN start={Fmt(start)} goalRaw={Fmt(goal)} goalRounded={Fmt(goalRounded)} tile={tile:0.###} obstacleMask={(obstacleMask.value != 0 ? obstacleMask.value : pw.mover.obstacleMask.value)}");
-
-                if (start == goalRounded)
-                {
-                    Log($"P{pid} WALK_SKIP reason=start_equals_goal");
-                    continue;
-                }
-
-                var path = pathfinder.FindPath(
-                    start,
-                    goalRounded,
-                    tile,
-                    usedMask,
-                    pw.mover.gameObject,
-                    maxNodes,
-                    maxExpandSteps,
-                    overlapBoxScale);
-
-                if (path == null || path.Count == 0)
-                {
-                    Log($"P{pid} PATH_FAIL path={(path == null ? "NULL" : "EMPTY")} -> FALLBACK");
-                    yield return FallbackWalkTowards(pw, goalRounded, tile);
-                    SnapRootToWorld(pw.root, goalRounded);
-                    Log($"P{pid} FALLBACK_DONE finalPos={Fmt(GetRootWorldPos(pw.root, pw.mover))}");
-                    continue;
-                }
-
-                Log($"P{pid} PATH_OK nodes={path.Count} first={Fmt(path[0])} last={Fmt(path[path.Count - 1])}");
-
-                for (int p = 1; p < path.Count; p++)
-                {
-                    Log($"P{pid} STEP idx={p}/{path.Count - 1} target={Fmt(path[p])}");
-                    yield return MoveToTile(pw, path[p], tile);
-                }
-
-                SnapRootToWorld(pw.root, goalRounded);
-                Log($"P{pid} WALK_DONE finalPos={Fmt(GetRootWorldPos(pw.root, pw.mover))}");
+                StartCoroutine(WalkSinglePlayer(idx, pw, spawner, startDelay, done, () => doneCount++));
             }
+
+            while (doneCount < players.Count)
+                yield return null;
         }
         finally
         {
@@ -448,6 +440,83 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
         SnapRootToWorld(pw.root, tileCenter);
         pw.mover.ApplyDirectionFromVector(Vector2.zero);
         yield return null;
+    }
+
+    private IEnumerator WalkSinglePlayer(
+    int idx,
+    PlayerWalkData pw,
+    PlayersSpawner spawner,
+    float startDelay,
+    bool[] doneFlags,
+    System.Action onDone)
+    {
+        if (startDelay > 0f)
+            yield return WaitRealtime(startDelay);
+
+        if (pw.mover == null || pw.root == null || spawner == null)
+        {
+            if (doneFlags != null && idx >= 0 && idx < doneFlags.Length) doneFlags[idx] = true;
+            onDone?.Invoke();
+            yield break;
+        }
+
+        int pid = Mathf.Clamp(pw.playerId, 1, 4);
+
+        Vector2 goal = spawner.GetResolvedSpawnPosition(pid);
+        float tile = Mathf.Max(0.0001f, pw.tileSize);
+
+        Vector2 start = RoundToGrid(GetRootWorldPos(pw.root, pw.mover), tile);
+        Vector2 goalRounded = RoundToGrid(goal, tile);
+
+        var usedMask = obstacleMask.value != 0 ? obstacleMask : pw.mover.obstacleMask;
+
+        LogHierarchyState("HIER_BEFORE_WALK", pid, pw.identity, pw.mover, pw.root);
+        Log($"P{pid} WALK_BEGIN(QUEUE) start={Fmt(start)} goalRaw={Fmt(goal)} goalRounded={Fmt(goalRounded)} tile={tile:0.###} " +
+            $"startDelay={startDelay:0.###} obstacleMask={(obstacleMask.value != 0 ? obstacleMask.value : pw.mover.obstacleMask.value)}");
+
+        if (start == goalRounded)
+        {
+            Log($"P{pid} WALK_SKIP reason=start_equals_goal");
+            if (doneFlags != null && idx >= 0 && idx < doneFlags.Length) doneFlags[idx] = true;
+            onDone?.Invoke();
+            yield break;
+        }
+
+        var path = pathfinder.FindPath(
+            start,
+            goalRounded,
+            tile,
+            usedMask,
+            pw.mover.gameObject,
+            maxNodes,
+            maxExpandSteps,
+            overlapBoxScale);
+
+        if (path == null || path.Count == 0)
+        {
+            Log($"P{pid} PATH_FAIL path={(path == null ? "NULL" : "EMPTY")} -> FALLBACK");
+            yield return FallbackWalkTowards(pw, goalRounded, tile);
+            SnapRootToWorld(pw.root, goalRounded);
+            Log($"P{pid} FALLBACK_DONE finalPos={Fmt(GetRootWorldPos(pw.root, pw.mover))}");
+
+            if (doneFlags != null && idx >= 0 && idx < doneFlags.Length) doneFlags[idx] = true;
+            onDone?.Invoke();
+            yield break;
+        }
+
+        Log($"P{pid} PATH_OK nodes={path.Count} first={Fmt(path[0])} last={Fmt(path[path.Count - 1])}");
+
+        for (int p = 1; p < path.Count; p++)
+        {
+            Log($"P{pid} STEP idx={p}/{path.Count - 1} target={Fmt(path[p])}");
+            yield return MoveToTile(pw, path[p], tile);
+        }
+
+        SnapRootToWorld(pw.root, goalRounded);
+        Log($"P{pid} WALK_DONE finalPos={Fmt(GetRootWorldPos(pw.root, pw.mover))}");
+
+        if (doneFlags != null && idx >= 0 && idx < doneFlags.Length) doneFlags[idx] = true;
+        onDone?.Invoke();
     }
 
     private IEnumerator FallbackWalkTowards(PlayerWalkData pw, Vector2 goal, float tile)
@@ -651,17 +720,6 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
     }
 
     private static string Fmt(Vector2 v) => $"({v.x:0.###},{v.y:0.###})";
-
-    private const string WalkLoopClipResourcesPath = "Sounds/walk";
-    private static AudioClip s_walkLoopClip;
-
-    private const float WalkStepSfxIntervalSeconds = 0.3f;
-
-    [SerializeField, Range(0f, 1f)] private float walkLoopVolume = 0.8f;
-
-    private Coroutine walkSfxRoutine;
-    private bool walkSfxActive;
-    private float nextWalkStepSfxAtUnscaled;
 
     private static void EnsureWalkLoopClipLoaded()
     {

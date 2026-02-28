@@ -43,6 +43,7 @@ public static class PlayerPersistentStats
         public PlayerState()
         {
             QueuedEggs.Clear();
+            //QueuedEggs.Add(ItemType.GreenLouieEgg);
         }
     }
 
