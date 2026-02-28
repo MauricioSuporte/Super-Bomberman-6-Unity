@@ -178,4 +178,18 @@ public sealed class PlayersSpawner : MonoBehaviour
 
         return playerOverrides[playerIndex].TryGetPosition(out pos);
     }
+
+    public Vector2 GetResolvedSpawnPosition(int playerId)
+    {
+        int count = 1;
+        if (GameSession.Instance != null)
+            count = Mathf.Clamp(GameSession.Instance.ActivePlayerCount, 1, 4);
+
+        int idx = Mathf.Clamp(playerId - 1, 0, 3);
+
+        Vector2[] preset = isBossStage ? BossStagePositions : NormalStagePositions;
+
+        Vector3 pos = ResolveSpawnPosition(idx, preset);
+        return (Vector2)pos;
+    }
 }

@@ -58,6 +58,9 @@ public class StageIntroTransition : MonoBehaviour
 
     static AudioClip s_startSfxClip;
 
+    [Header("Pre-Intro Walk (optional)")]
+    public StagePreIntroPlayersWalk preIntroWalk;
+
     public static void SkipTitleScreenOnNextLoad()
     {
         skipTitleNextRound = true;
@@ -299,6 +302,9 @@ public class StageIntroTransition : MonoBehaviour
         if (spawner != null)
             spawner.SpawnNow();
 
+        if (preIntroWalk != null && preIntroWalk.IsEnabled)
+            preIntroWalk.PreSnapPlayersToOrigin();
+
         RefreshControllers(includeInactive: false);
         DisableGameplayControllersAndHideSprites(hideLouieAndEggs: IsStage17());
 
@@ -359,11 +365,27 @@ public class StageIntroTransition : MonoBehaviour
 
         if (fadeImage == null)
         {
+            if (preIntroWalk != null && preIntroWalk.IsEnabled)
+            {
+                Debug.Log($"[StageIntro] PREINTRO_CALL begin preIntroWalk={preIntroWalk.name} timeScale={Time.timeScale:0.###} paused={GamePauseController.IsPaused} t_unscaled={Time.unscaledTime:0.###}");
+                yield return preIntroWalk.Play(spawner);
+                Debug.Log($"[StageIntro] PREINTRO_CALL end timeScale={Time.timeScale:0.###} paused={GamePauseController.IsPaused} t_unscaled={Time.unscaledTime:0.###}");
+            }
+            else
+            {
+                Debug.Log($"[StageIntro] PREINTRO_SKIP isStage17={IsStage17()} preIntroWalk={(preIntroWalk ? preIntroWalk.name : "NULL")} enabled={(preIntroWalk ? preIntroWalk.IsEnabled.ToString() : "NA")}");
+            }
+
             if (stageLabel != null)
             {
                 stageLabel.gameObject.SetActive(true);
                 stageLabel.SetStage(world, stageNumber);
             }
+
+            yield return _waitForSecondsRealtime2;
+
+            if (stageLabel != null)
+                stageLabel.gameObject.SetActive(false);
 
             GamePauseController.ClearPauseFlag();
             Time.timeScale = 1f;
@@ -387,17 +409,19 @@ public class StageIntroTransition : MonoBehaviour
             t += Time.unscaledDeltaTime;
             float a = 1f - Mathf.Clamp01(t / duration);
             fadeImage.color = new Color(baseColor.r, baseColor.g, baseColor.b, a);
-
-            if (stageLabel != null && !stageLabel.gameObject.activeSelf && t >= 0.5f)
-            {
-                stageLabel.gameObject.SetActive(true);
-                stageLabel.SetStage(world, stageNumber);
-            }
-
             yield return null;
         }
 
         fadeImage.gameObject.SetActive(false);
+
+        if (!IsStage17() && preIntroWalk != null && preIntroWalk.IsEnabled)
+            yield return preIntroWalk.Play(spawner);
+
+        if (stageLabel != null)
+        {
+            stageLabel.gameObject.SetActive(true);
+            stageLabel.SetStage(world, stageNumber);
+        }
 
         yield return _waitForSecondsRealtime2;
 

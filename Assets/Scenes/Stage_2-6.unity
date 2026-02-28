@@ -2744,6 +2744,69 @@ MonoBehaviour:
   onlyIfMatchesAorB: 1
   groundTilemapOverride: {fileID: 0}
   syncBlackoutOnStart: 1
+--- !u!1 &786849904
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 786849906}
+  - component: {fileID: 786849905}
+  m_Layer: 0
+  m_Name: PreIntroWalk
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &786849905
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 786849904}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6d30c2de090977b438401e2e569ac171, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::StagePreIntroPlayersWalk
+  debugLogs: 1
+  enabledPreIntro: 1
+  commonOrigin: {fileID: 786849906}
+  perPlayerOriginOffset:
+  - {x: 0, y: 0}
+  - {x: 0, y: 0}
+  - {x: 0, y: 0}
+  - {x: 0, y: 0}
+  obstacleMask:
+    serializedVersion: 2
+    m_Bits: 64
+  maxNodes: 4096
+  maxExpandSteps: 20000
+  overlapBoxScale: 0.6
+  walkSpeedUnitsPerSecond: 3.5
+  reachEpsilon: 0.06
+  delayBeforeWalkSeconds: 0.15
+  delayAfterWalkSeconds: 0.05
+  watchAfterSnapSeconds: 0.35
+--- !u!4 &786849906
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 786849904}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -2, y: -7, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &818279431
 GameObject:
   m_ObjectHideFlags: 0
@@ -5434,7 +5497,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2258062271764064381, guid: a009117f38ad56d4fb5e2e5fa7445a16, type: 3}
       propertyPath: life
-      value: 6
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 2258062271764064381, guid: a009117f38ad56d4fb5e2e5fa7445a16, type: 3}
       propertyPath: hitInvulnerableDuration
@@ -5961,6 +6024,7 @@ MonoBehaviour:
   gameplayRoot: {fileID: 679601670}
   stage17SceneName: Stage_1-7
   skinSelectMenu: {fileID: 0}
+  preIntroWalk: {fileID: 786849905}
 --- !u!114 &1389130173
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6407,3 +6471,4 @@ SceneRoots:
   - {fileID: 1522516126}
   - {fileID: 1372892349}
   - {fileID: 1027568745}
+  - {fileID: 786849906}
