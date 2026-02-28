@@ -523,8 +523,8 @@ MonoBehaviour:
   invincibleSuitAmount: 0
   heartAmount: 0
   powerGloveAmount: 1
-  blueLouieEggAmount: 5
-  blackLouieEggAmount: 5
+  blueLouieEggAmount: 1
+  blackLouieEggAmount: 0
   purpleLouieEggAmount: 0
   greenLouieEggAmount: 0
   yellowLouieEggAmount: 0
@@ -6970,7 +6970,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1aa1ef842d43d4449a4b672797ff89e5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameSession
-  activePlayerCount: 4
+  activePlayerCount: 1
 --- !u!4 &1522516126
 Transform:
   m_ObjectHideFlags: 0

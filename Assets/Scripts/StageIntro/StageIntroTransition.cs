@@ -296,11 +296,17 @@ public class StageIntroTransition : MonoBehaviour
     IEnumerator PreloadIntroAudio()
     {
         EnsureStartClipLoaded();
-        if (s_startSfxClip != null) s_startSfxClip.LoadAudioData();
+        if (s_startSfxClip != null)
+            s_startSfxClip.LoadAudioData();
+
+        yield return null;
 
         var gmc = GameMusicController.Instance;
-        if (gmc != null && gmc.defaultMusic != null)
-            gmc.defaultMusic.LoadAudioData();
+        if (gmc != null)
+        {
+            if (gmc.defaultMusic != null)
+                gmc.defaultMusic.LoadAudioData();
+        }
 
         if (introMusic != null)
             introMusic.LoadAudioData();
@@ -312,6 +318,8 @@ public class StageIntroTransition : MonoBehaviour
     {
         if (gameplayRoot != null)
             gameplayRoot.SetActive(true);
+
+        yield return PreloadIntroAudio();
 
         var spawner = FindAnyObjectByType<PlayersSpawner>();
         if (spawner != null)
