@@ -2,18 +2,6 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-/// <summary>
-/// Pré-intro do stage: teleporta os players para um ponto de origem e os move (A*) até o spawn final
-/// resolvido pelo PlayersSpawner. Roda com Time.timeScale = 0 (usa unscaledDeltaTime).
-///
-/// Ajustes (2026-02-27):
-/// - Move SEMPRE o "root" do player (PlayerIdentity.transform) para evitar caso onde o MovementController é filho
-///   e o visual/root fica parado no spawn.
-/// - Força Transform.position junto do Rigidbody2D.position quando existir (timeScale=0 não garante sync imediato).
-/// - Adicionado PreSnapPlayersToOrigin(spawner) para "pré-teleport" enquanto a tela ainda está preta (fade alpha=1),
-///   evitando mostrar o player no spawn antes de ir ao commonOrigin.
-/// - Watch de teleporte externo não pode pegar a caminhada normal: agora só observa até ANTES do walk começar.
-/// </summary>
 [DisallowMultipleComponent]
 public sealed class StagePreIntroPlayersWalk : MonoBehaviour
 {
@@ -47,7 +35,6 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
     [SerializeField, Min(0f)] private float delayBeforeWalkSeconds = 0.15f;
     [SerializeField, Min(0f)] private float delayAfterWalkSeconds = 0.05f;
 
-    // watch: detectar "pisada" de outro sistema logo após o snap (somente antes do walk)
     [Header("Debug / Watch External Move")]
     [SerializeField, Min(0f)] private float watchAfterSnapSeconds = 0.35f;
 
@@ -64,15 +51,6 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
         public float tileSize;
     }
 
-    // -------------------------
-    // Public API
-    // -------------------------
-
-    /// <summary>
-    /// Importante: chame isso enquanto a tela ainda está preta (fade alpha=1),
-    /// para não aparecer o player no spawn antes de ir pro commonOrigin.
-    /// Só faz o snap para o origin (não caminha).
-    /// </summary>
     public void PreSnapPlayersToOrigin()
     {
         if (!enabledPreIntro)
@@ -109,10 +87,8 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
             Vector2 originRaw = commonOriginWorld + offset;
             Vector2 originRounded = RoundToGrid(originRaw, tile);
 
-            // snap no root
             SnapRootToWorld(root, originRounded);
 
-            // zera RB do mover e do root
             if (move.Rigidbody != null)
             {
                 move.Rigidbody.simulated = true;
@@ -127,7 +103,6 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
                 rbRoot.linearVelocity = Vector2.zero;
                 rbRoot.position = originRounded;
 
-                // garante transform sync
                 root.position = originRounded;
             }
         }
@@ -156,7 +131,6 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
             yield break;
         }
 
-        // pega players vivos
         var ids = FindObjectsByType<PlayerIdentity>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
         Log($"FOUND_PlayerIdentity count={(ids != null ? ids.Length : 0)}");
 
@@ -169,7 +143,6 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
         Vector2 commonOriginWorld = commonOrigin.position;
         Log($"ORIGIN commonOriginWorld={Fmt(commonOriginWorld)} commonOriginTransformPos={Fmt((Vector2)commonOrigin.position)} thisGO={name} thisPos={Fmt((Vector2)transform.position)}");
 
-        // prepara lista
         var players = new List<PlayerWalkData>(4);
 
         for (int i = 0; i < ids.Length; i++)
@@ -201,29 +174,23 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
                 continue;
             }
 
-            // Root que realmente representa o player (o mesmo que o spawner costuma posicionar)
             Transform root = id.transform != null ? id.transform : move.transform;
 
             LogHierarchyState("HIER_BEFORE_SETUP", playerId, id, move, root);
             LogPlayerState("BEFORE_SETUP", playerId, move);
 
-            // lock de input, mas deixa visível para a caminhada
             move.SetInputLocked(true, true);
 
-            // manter enabled para poder aplicar direção/visual durante a caminhada
             move.enabled = true;
 
-            // Em vez de ligar TUDO, volta pro modo exclusivo (1 sprite/animação por vez)
             move.EnableExclusiveFromState();
 
-            // garante rigidbody utilizável (do MovementController)
             if (move.Rigidbody != null)
             {
                 move.Rigidbody.simulated = true;
                 move.Rigidbody.linearVelocity = Vector2.zero;
             }
 
-            // move para origem
             Vector2 offset = GetOriginOffset(playerId);
             Vector2 originRaw = commonOriginWorld + offset;
 
@@ -232,10 +199,8 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
 
             Log($"P{playerId} ORIGIN_CALC common={Fmt(commonOriginWorld)} offset={Fmt(offset)} raw={Fmt(originRaw)} tile={tile:0.###} rounded={Fmt(originRounded)}");
 
-            // SNAP NO ROOT
             SnapRootToWorld(root, originRounded);
 
-            // zera RB do root se existir
             var rbRoot = root != null ? root.GetComponent<Rigidbody2D>() : null;
             if (rbRoot != null)
             {
@@ -243,7 +208,6 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
                 rbRoot.linearVelocity = Vector2.zero;
                 rbRoot.position = originRounded;
 
-                // IMPORTANTÍSSIMO: força o Transform a refletir a posição mesmo com timeScale=0
                 root.position = originRounded;
             }
 
@@ -252,18 +216,15 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
             Vector2 afterSnap = GetRootWorldPos(root, move);
             Log($"P{playerId} AFTER_SNAP rootPosNow={Fmt(afterSnap)} deltaToOrigin={Fmt(originRounded - afterSnap)} rootRB={(rbRoot ? "YES" : "NO")} rootRbSim={(rbRoot ? rbRoot.simulated.ToString() : "NA")}");
 
-            // Watch: só faz sentido observar ANTES do walk começar (senão ele pega o movimento normal).
             float watchSeconds = 0f;
             if (debugLogs && watchAfterSnapSeconds > 0f)
             {
-                // tenta observar apenas até o fim do "delayBeforeWalkSeconds" (menos uma folga)
                 watchSeconds = Mathf.Min(watchAfterSnapSeconds, Mathf.Max(0f, delayBeforeWalkSeconds - 0.01f));
             }
 
             if (debugLogs && watchSeconds > 0f && root != null)
                 StartCoroutine(WatchForExternalTeleport("WATCH_AFTER_SNAP", playerId, root, originRounded, watchSeconds));
 
-            // checa depois de 1 frame (às vezes outro sistema pisa na posição)
             yield return null;
 
             Vector2 after1 = GetRootWorldPos(root, move);
@@ -296,7 +257,6 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
             yield return WaitRealtime(delayBeforeWalkSeconds);
         }
 
-        // Caminhar um por um (usando root como fonte de posição/movimento)
         for (int i = 0; i < players.Count; i++)
         {
             var pw = players[i];
@@ -353,7 +313,6 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
             Log($"P{pid} WALK_DONE finalPos={Fmt(GetRootWorldPos(pw.root, pw.mover))}");
         }
 
-        // Para a direção (idle)
         for (int i = 0; i < players.Count; i++)
         {
             var pw = players[i];
@@ -379,10 +338,6 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
 
         Log($"PLAY_END t_unscaled={Time.unscaledTime:0.###}");
     }
-
-    // -------------------------
-    // Movement using ROOT
-    // -------------------------
 
     private IEnumerator MoveToTile(PlayerWalkData pw, Vector2 tileCenter, float tile)
     {
@@ -493,10 +448,6 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
         }
     }
 
-    // -------------------------
-    // Origin offsets
-    // -------------------------
-
     private Vector2 GetOriginOffset(int playerId)
     {
         int idx = Mathf.Clamp(playerId - 1, 0, 3);
@@ -504,10 +455,6 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
             return Vector2.zero;
         return perPlayerOriginOffset[idx];
     }
-
-    // -------------------------
-    // Root positioning helpers
-    // -------------------------
 
     private static Vector2 GetRootWorldPos(Transform root, MovementController move)
     {
@@ -537,7 +484,6 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
             rb.position = pos;
             rb.linearVelocity = Vector2.zero;
 
-            // força o Transform a refletir mesmo com timeScale=0
             root.position = pos;
             return;
         }
@@ -549,10 +495,6 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
     {
         SetRootWorldPos(root, pos);
     }
-
-    // -------------------------
-    // Small utils
-    // -------------------------
 
     private static Vector2 PickCardinal(Vector2 delta)
     {
@@ -574,10 +516,6 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
             yield return null;
         }
     }
-
-    // -------------------------
-    // Debug helpers
-    // -------------------------
 
     private void Log(string msg)
     {
@@ -616,8 +554,7 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
         var rb = t.GetComponent<Rigidbody2D>();
         float end = Time.unscaledTime + Mathf.Max(0f, seconds);
 
-        // Threshold: qualquer coisa muito pequena pode ser flutuação.
-        const float sqrThreshold = 0.01f * 0.01f; // 0.01 unidades
+        const float sqrThreshold = 0.01f * 0.01f;
 
         while (Time.unscaledTime < end)
         {
