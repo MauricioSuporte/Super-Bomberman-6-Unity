@@ -155,22 +155,15 @@ public abstract class BossIntroFlowBase : MonoBehaviour
             var p = players[i];
             if (!p) continue;
 
-            // Se está sob movimento externo (preintro/cutscene andando),
-            // NÃO force idle e NÃO zere direção/animação.
             if (p.ExternalMovementOverride)
             {
-                p.SetInputLocked(locked, false);     // trava input, mas não força idle
+                p.SetInputLocked(locked, false);
                 p.SetExplosionInvulnerable(locked);
-
-                if (p.Rigidbody != null)
-                    p.Rigidbody.linearVelocity = Vector2.zero;
-
+                if (p.Rigidbody != null) p.Rigidbody.linearVelocity = Vector2.zero;
                 continue;
             }
 
-            // comportamento normal
-            p.SetInputLocked(locked, true);
-            p.ApplyDirectionFromVector(Vector2.zero);
+            p.SetInputLocked(locked, false);
             p.SetExplosionInvulnerable(locked);
 
             if (p.Rigidbody != null)
@@ -185,8 +178,12 @@ public abstract class BossIntroFlowBase : MonoBehaviour
         }
 
         for (int i = 0; i < playerCompanions.Count; i++)
-            if (playerCompanions[i])
-                playerCompanions[i].SetLouieAbilitiesLocked(locked);
+        {
+            var c = playerCompanions[i];
+            if (!c) continue;
+
+            c.SetLouieAbilitiesLocked(locked, affectVisuals: false);
+        }
     }
 
     protected void ForcePlayersIdleUp()

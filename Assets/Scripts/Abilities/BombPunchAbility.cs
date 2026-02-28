@@ -59,7 +59,7 @@ public class BombPunchAbility : MonoBehaviour, IPlayerAbility
         externalAnimator = animator;
     }
 
-    public void SetLockedByLouie(bool locked)
+    public void SetLockedByLouie(bool locked, bool resetVisuals)
     {
         if (lockedByLouie == locked)
             return;
@@ -69,8 +69,15 @@ public class BombPunchAbility : MonoBehaviour, IPlayerAbility
         if (lockedByLouie)
         {
             externalAnimator?.ForceStop();
-            ForceResetPunchSprites();
+
+            if (resetVisuals)
+                ForceResetPunchSprites();
         }
+    }
+
+    public void SetLockedByLouie(bool locked)
+    {
+        SetLockedByLouie(locked, resetVisuals: true);
     }
 
     private bool IsHoldingBomb()

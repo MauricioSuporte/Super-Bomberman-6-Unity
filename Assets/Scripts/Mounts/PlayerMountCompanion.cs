@@ -116,7 +116,7 @@ public class PlayerMountCompanion : MonoBehaviour
             (StageIntroTransition.Instance != null && StageIntroTransition.Instance.IntroRunning);
 
         if (shouldLock != louieAbilitiesLocked)
-            SetLouieAbilitiesLocked(shouldLock);
+            SetLouieAbilitiesLocked(shouldLock, affectVisuals: false);
 
         TickDashInvulnerability();
 
@@ -762,8 +762,52 @@ public class PlayerMountCompanion : MonoBehaviour
 
     public void SetLouieAbilitiesLocked(bool locked)
     {
+        SetLouieAbilitiesLocked(locked, affectVisuals: true);
+    }
+
+    public void SetLouieAbilitiesLocked(bool locked, bool affectVisuals)
+    {
         louieAbilitiesLocked = locked;
+
+        if (!affectVisuals)
+        {
+            ApplyLouieAbilitiesLockState_NoVisuals();
+            return;
+        }
+
         ApplyLouieAbilitiesLockState();
+    }
+
+    void ApplyLouieAbilitiesLockState_NoVisuals()
+    {
+        if (abilitySystem == null)
+            return;
+
+        abilitySystem.RebuildCache();
+        EnsurePunchAbilityCached();
+
+        if (louieAbilitiesLocked)
+        {
+            if (louieAbilitiesLockApplied)
+                return;
+
+            louieAbilitiesLockApplied = true;
+
+            if (punchAbility != null)
+            {
+                punchAbility.SetLockedByLouie(true, resetVisuals: false);
+            }
+
+            return;
+        }
+
+        if (!louieAbilitiesLockApplied)
+            return;
+
+        louieAbilitiesLockApplied = false;
+
+        if (punchAbility != null)
+            punchAbility.SetLockedByLouie(false, resetVisuals: false);
     }
 
     void ApplyLouieAbilitiesLockState()
