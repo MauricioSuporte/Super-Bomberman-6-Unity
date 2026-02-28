@@ -21,7 +21,6 @@ public class AnimatedSpriteRenderer : MonoBehaviour
     public float sequenceDuration = 0.5f;
 
     [SerializeField] private bool useUnscaledTime = true;
-
     [SerializeField] private bool respectGamePause = true;
 
     [Header("Loop / Idle")]
@@ -39,6 +38,23 @@ public class AnimatedSpriteRenderer : MonoBehaviour
 
     [Header("Safety (Standalone Objects)")]
     [SerializeField] private bool disableOffsetsIfStandaloneRoot = true;
+
+    // ---------------------------
+    // DEBUG (SURGICAL)
+    // ---------------------------
+    [Header("Debug (Surgical)")]
+    [SerializeField] private bool debug = false;
+
+    [SerializeField, Min(0.01f)] private float debugLogEverySeconds = 0.25f;
+    [SerializeField] private bool debugLogFrameAdvance = true;
+    [SerializeField] private bool debugLogEarlyReturns = true;
+
+    private float nextDebugLogAtUnscaled;
+    private int lastLoggedFrame = -999;
+
+    // Expose for external logs without reflection
+    public bool UseUnscaledTime => useUnscaledTime;
+    public bool RespectGamePause => respectGamePause;
 
     int animationFrame;
     int direction = 1;
@@ -100,6 +116,19 @@ public class AnimatedSpriteRenderer : MonoBehaviour
         }
     }
 
+    private void Dbg(string msg)
+    {
+        if (!debug) return;
+        Debug.Log($"[AnimSR:{name}] {msg}");
+    }
+
+    private string TargetsDesc()
+    {
+        string sr = spriteRenderer != null ? $"SR=Y flipX={spriteRenderer.flipX} enabled={spriteRenderer.enabled} sprite={(spriteRenderer.sprite ? spriteRenderer.sprite.name : "NULL")}" : "SR=N";
+        string ui = uiImage != null ? $"UI=Y enabled={uiImage.enabled} sprite={(uiImage.sprite ? uiImage.sprite.name : "NULL")}" : "UI=N";
+        return $"{sr} {ui}";
+    }
+
     void Awake()
     {
         EnsureTargets();
@@ -114,6 +143,12 @@ public class AnimatedSpriteRenderer : MonoBehaviour
             visualTransform == transform;
 
         canMoveVisualLocal = visualTransform != null && !hasRbHere && !isStandaloneRoot;
+
+        if (debug)
+        {
+            Dbg($"AWAKE canMoveVisualLocal={canMoveVisualLocal} hasRbHere={hasRbHere} isStandaloneRoot={isStandaloneRoot} " +
+                $"parent={(transform.parent ? transform.parent.name : "NULL")} visualTransform={(visualTransform ? visualTransform.name : "NULL")} {TargetsDesc()}");
+        }
     }
 
     void OnEnable()
@@ -128,6 +163,15 @@ public class AnimatedSpriteRenderer : MonoBehaviour
 
         SetupTiming();
         ApplyFrame();
+
+        if (debug)
+        {
+            nextDebugLogAtUnscaled = Time.unscaledTime; // log imediato
+            Dbg($"ON_ENABLE idle={idle} loop={loop} pingPong={pingPong} useUnscaled={useUnscaledTime} respectPause={respectGamePause} " +
+                $"animLen={(animationSprite != null ? animationSprite.Length : 0)} idleSprite={(idleSprite ? idleSprite.name : "NULL")} " +
+                $"curFrame={animationFrame} animTime={animationTime:0.###} seqDur={sequenceDuration:0.###} useSeq={useSequenceDuration} " +
+                $"{TargetsDesc()} activeInHierarchy={gameObject.activeInHierarchy} activeEnabled={isActiveAndEnabled}");
+        }
     }
 
     void OnDisable()
@@ -138,6 +182,9 @@ public class AnimatedSpriteRenderer : MonoBehaviour
 
         if (spriteRenderer != null) spriteRenderer.enabled = false;
         if (uiImage != null) uiImage.enabled = false;
+
+        if (debug)
+            Dbg($"ON_DISABLE curFrame={animationFrame} frameTimer={frameTimer:0.###} idle={idle} loop={loop} {TargetsDesc()}");
     }
 
     void Update()
@@ -145,35 +192,67 @@ public class AnimatedSpriteRenderer : MonoBehaviour
         if (!isActiveAndEnabled)
             return;
 
+        if (debug && Time.unscaledTime >= nextDebugLogAtUnscaled)
+        {
+            float dtNow = useUnscaledTime ? Time.unscaledDeltaTime : Time.deltaTime;
+            Dbg($"TICK idle={idle} frozen={frozen} paused={GamePauseController.IsPaused} frame={animationFrame} frameTimer={frameTimer:0.###} " +
+                $"animTime={animationTime:0.###} loop={loop} pingPong={pingPong} dt={dtNow:0.####} {TargetsDesc()}");
+            nextDebugLogAtUnscaled = Time.unscaledTime + debugLogEverySeconds;
+        }
+
         if (frozen)
+        {
+            if (debug && debugLogEarlyReturns) Dbg("EARLY_RETURN reason=frozen");
             return;
+        }
 
         if (respectGamePause && GamePauseController.IsPaused)
+        {
+            if (debug && debugLogEarlyReturns) Dbg("EARLY_RETURN reason=paused");
             return;
+        }
 
         if (idle)
         {
             ApplyFrame();
+            if (debug && debugLogEarlyReturns) Dbg("EARLY_RETURN reason=idle_true (ApplyFrame)");
             return;
         }
 
         if (animationSprite == null || animationSprite.Length == 0)
+        {
+            if (debug && debugLogEarlyReturns) Dbg("EARLY_RETURN reason=no_animationSprite");
             return;
+        }
 
         SetupTiming();
 
         float dt = useUnscaledTime ? Time.unscaledDeltaTime : Time.deltaTime;
         if (dt <= 0f)
+        {
+            if (debug && debugLogEarlyReturns) Dbg("EARLY_RETURN reason=dt<=0");
             return;
+        }
 
         frameTimer += dt;
 
         float step = Mathf.Max(0.0001f, animationTime);
+        bool advanced = false;
+
         while (frameTimer >= step)
         {
             frameTimer -= step;
+            int before = animationFrame;
+
             NextFrameInternal();
+            advanced = true;
+
+            if (debug && debugLogFrameAdvance && before != animationFrame)
+                Dbg($"FRAME_ADV before={before} after={animationFrame} step={step:0.###} frameTimerNow={frameTimer:0.###}");
         }
+
+        if (debug && advanced && debugLogFrameAdvance && lastLoggedFrame != animationFrame)
+            lastLoggedFrame = animationFrame;
     }
 
     void SetupTiming()
@@ -199,6 +278,9 @@ public class AnimatedSpriteRenderer : MonoBehaviour
     {
         frozen = value;
 
+        if (debug)
+            Dbg($"SET_FROZEN value={value} idle={idle} frame={animationFrame}");
+
         if (frozen)
         {
             ApplyFrame();
@@ -210,6 +292,10 @@ public class AnimatedSpriteRenderer : MonoBehaviour
     {
         hasExternalBase = true;
         externalBaseLocalPos = baseLocalPos;
+
+        if (debug)
+            Dbg($"SET_EXTERNAL_BASE_LOCAL_POS base={baseLocalPos} runtimeLockX={runtimeLockX} runtimeLockedLocalX={runtimeLockedLocalX:0.###}");
+
         ApplyFrame();
     }
 
@@ -337,6 +423,10 @@ public class AnimatedSpriteRenderer : MonoBehaviour
         if (visualTransform == null) return;
 
         runtimeBaseOffset = new Vector3(runtimeBaseOffset.x, desiredLocalY - initialVisualLocalPosition.y, 0f);
+
+        if (debug)
+            Dbg($"SET_RUNTIME_BASE_Y desiredLocalY={desiredLocalY:0.###} runtimeBaseOffset={runtimeBaseOffset} initLocalY={initialVisualLocalPosition.y:0.###}");
+
         ApplyFrame();
     }
 
@@ -347,6 +437,10 @@ public class AnimatedSpriteRenderer : MonoBehaviour
 
         runtimeLockX = true;
         runtimeLockedLocalX = desiredLocalX;
+
+        if (debug)
+            Dbg($"SET_RUNTIME_BASE_X desiredLocalX={desiredLocalX:0.###} runtimeLockX={runtimeLockX}");
+
         ApplyFrame();
     }
 
@@ -354,6 +448,10 @@ public class AnimatedSpriteRenderer : MonoBehaviour
     {
         runtimeLockX = false;
         hasSavedRuntimeLockXState = false;
+
+        if (debug)
+            Dbg("CLEAR_RUNTIME_BASE_X");
+
         ApplyFrame();
     }
 
@@ -362,6 +460,10 @@ public class AnimatedSpriteRenderer : MonoBehaviour
         runtimeBaseOffset = Vector3.zero;
         runtimeLockX = false;
         hasSavedRuntimeLockXState = false;
+
+        if (debug)
+            Dbg("CLEAR_RUNTIME_BASE_OFFSET");
+
         ApplyFrame();
     }
 
@@ -385,6 +487,9 @@ public class AnimatedSpriteRenderer : MonoBehaviour
         CurrentFrame = 0;
 
         SetupTiming();
+
+        if (debug)
+            Dbg($"PLAY_CYCLES begin cycles={cycles} prevIdle={prevIdle} prevLoop={prevLoop} animLen={animationSprite.Length} animTime={animationTime:0.###}");
 
         for (int c = 0; c < cycles; c++)
         {
@@ -433,6 +538,9 @@ public class AnimatedSpriteRenderer : MonoBehaviour
         RefreshFrame();
 
         frameTimer = 0f;
+
+        if (debug)
+            Dbg($"PLAY_CYCLES end restored idle={idle} loop={loop} curFrame={animationFrame}");
     }
 
     public void SetExternalBaseOffsetFromInitial(Vector3 offsetFromInitial)
@@ -454,6 +562,9 @@ public class AnimatedSpriteRenderer : MonoBehaviour
             runtimeLockX = false;
         }
 
+        if (debug)
+            Dbg($"SET_EXTERNAL_BASE_OFFSET offset={offsetFromInitial} extBase={externalBaseLocalPos} savedLockX={hasSavedRuntimeLockXState}");
+
         ApplyFrame();
     }
 
@@ -468,6 +579,9 @@ public class AnimatedSpriteRenderer : MonoBehaviour
             runtimeLockedLocalX = savedRuntimeLockedLocalX;
             hasSavedRuntimeLockXState = false;
         }
+
+        if (debug)
+            Dbg("CLEAR_EXTERNAL_BASE");
 
         ApplyFrame();
     }

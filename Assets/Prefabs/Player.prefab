@@ -99,7 +99,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 123108581728754592}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 3a4b55e1b961d144197e1a7a4a391956, type: 3}
   m_Name: 
@@ -122,6 +122,10 @@ MonoBehaviour:
   pingPong: 0
   disableOffsetsIfThisObjectHasRigidbody2D: 1
   disableOffsetsIfStandaloneRoot: 1
+  debug: 0
+  debugLogEverySeconds: 0.25
+  debugLogFrameAdvance: 1
+  debugLogEarlyReturns: 1
 --- !u!1 &191604599465835601
 GameObject:
   m_ObjectHideFlags: 0
@@ -300,6 +304,10 @@ MonoBehaviour:
   pingPong: 0
   disableOffsetsIfThisObjectHasRigidbody2D: 1
   disableOffsetsIfStandaloneRoot: 1
+  debug: 0
+  debugLogEverySeconds: 0.25
+  debugLogFrameAdvance: 1
+  debugLogEarlyReturns: 1
 --- !u!1 &548987656250073282
 GameObject:
   m_ObjectHideFlags: 0
@@ -422,6 +430,10 @@ MonoBehaviour:
   pingPong: 0
   disableOffsetsIfThisObjectHasRigidbody2D: 1
   disableOffsetsIfStandaloneRoot: 1
+  debug: 0
+  debugLogEverySeconds: 0.25
+  debugLogFrameAdvance: 1
+  debugLogEarlyReturns: 1
 --- !u!1 &549150929986574176
 GameObject:
   m_ObjectHideFlags: 0
@@ -543,6 +555,10 @@ MonoBehaviour:
   pingPong: 0
   disableOffsetsIfThisObjectHasRigidbody2D: 1
   disableOffsetsIfStandaloneRoot: 1
+  debug: 0
+  debugLogEverySeconds: 0.25
+  debugLogFrameAdvance: 1
+  debugLogEarlyReturns: 1
 --- !u!1 &564954905650562407
 GameObject:
   m_ObjectHideFlags: 0
@@ -723,6 +739,10 @@ MonoBehaviour:
   pingPong: 0
   disableOffsetsIfThisObjectHasRigidbody2D: 1
   disableOffsetsIfStandaloneRoot: 1
+  debug: 0
+  debugLogEverySeconds: 0.25
+  debugLogFrameAdvance: 1
+  debugLogEarlyReturns: 1
 --- !u!1 &766710722019102173
 GameObject:
   m_ObjectHideFlags: 0
@@ -845,6 +865,10 @@ MonoBehaviour:
   pingPong: 0
   disableOffsetsIfThisObjectHasRigidbody2D: 1
   disableOffsetsIfStandaloneRoot: 1
+  debug: 0
+  debugLogEverySeconds: 0.25
+  debugLogFrameAdvance: 1
+  debugLogEarlyReturns: 1
 --- !u!1 &1534028239872533418
 GameObject:
   m_ObjectHideFlags: 0
@@ -967,6 +991,10 @@ MonoBehaviour:
   pingPong: 0
   disableOffsetsIfThisObjectHasRigidbody2D: 1
   disableOffsetsIfStandaloneRoot: 1
+  debug: 0
+  debugLogEverySeconds: 0.25
+  debugLogFrameAdvance: 1
+  debugLogEarlyReturns: 1
 --- !u!1 &1794679654625741451
 GameObject:
   m_ObjectHideFlags: 0
@@ -1089,6 +1117,10 @@ MonoBehaviour:
   pingPong: 0
   disableOffsetsIfThisObjectHasRigidbody2D: 1
   disableOffsetsIfStandaloneRoot: 1
+  debug: 0
+  debugLogEverySeconds: 0.25
+  debugLogFrameAdvance: 1
+  debugLogEarlyReturns: 1
 --- !u!1 &1867382026052711107
 GameObject:
   m_ObjectHideFlags: 0
@@ -1209,6 +1241,10 @@ MonoBehaviour:
   pingPong: 0
   disableOffsetsIfThisObjectHasRigidbody2D: 1
   disableOffsetsIfStandaloneRoot: 1
+  debug: 0
+  debugLogEverySeconds: 0.25
+  debugLogFrameAdvance: 1
+  debugLogEarlyReturns: 1
 --- !u!1 &2555127276573635417
 GameObject:
   m_ObjectHideFlags: 0
@@ -1331,6 +1367,10 @@ MonoBehaviour:
   pingPong: 0
   disableOffsetsIfThisObjectHasRigidbody2D: 1
   disableOffsetsIfStandaloneRoot: 1
+  debug: 0
+  debugLogEverySeconds: 0.25
+  debugLogFrameAdvance: 1
+  debugLogEarlyReturns: 1
 --- !u!1 &2885120066792565534
 GameObject:
   m_ObjectHideFlags: 0
@@ -1453,6 +1493,10 @@ MonoBehaviour:
   pingPong: 0
   disableOffsetsIfThisObjectHasRigidbody2D: 1
   disableOffsetsIfStandaloneRoot: 1
+  debug: 0
+  debugLogEverySeconds: 0.25
+  debugLogFrameAdvance: 1
+  debugLogEarlyReturns: 1
 --- !u!1 &2962464941700320510
 GameObject:
   m_ObjectHideFlags: 0
@@ -1552,7 +1596,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2962464941700320510}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 3a4b55e1b961d144197e1a7a4a391956, type: 3}
   m_Name: 
@@ -1575,6 +1619,10 @@ MonoBehaviour:
   pingPong: 0
   disableOffsetsIfThisObjectHasRigidbody2D: 1
   disableOffsetsIfStandaloneRoot: 1
+  debug: 1
+  debugLogEverySeconds: 0.25
+  debugLogFrameAdvance: 1
+  debugLogEarlyReturns: 1
 --- !u!1 &3704550181007554897
 GameObject:
   m_ObjectHideFlags: 0
@@ -1755,6 +1803,10 @@ MonoBehaviour:
   pingPong: 0
   disableOffsetsIfThisObjectHasRigidbody2D: 1
   disableOffsetsIfStandaloneRoot: 1
+  debug: 0
+  debugLogEverySeconds: 0.25
+  debugLogFrameAdvance: 1
+  debugLogEarlyReturns: 1
 --- !u!1 &3806937013374402781
 GameObject:
   m_ObjectHideFlags: 0
@@ -1877,6 +1929,10 @@ MonoBehaviour:
   pingPong: 0
   disableOffsetsIfThisObjectHasRigidbody2D: 1
   disableOffsetsIfStandaloneRoot: 1
+  debug: 0
+  debugLogEverySeconds: 0.25
+  debugLogFrameAdvance: 1
+  debugLogEarlyReturns: 1
 --- !u!1 &3925363287571007564
 GameObject:
   m_ObjectHideFlags: 0
@@ -2005,6 +2061,10 @@ MonoBehaviour:
   pingPong: 1
   disableOffsetsIfThisObjectHasRigidbody2D: 1
   disableOffsetsIfStandaloneRoot: 1
+  debug: 0
+  debugLogEverySeconds: 0.25
+  debugLogFrameAdvance: 1
+  debugLogEarlyReturns: 1
 --- !u!1 &3968899432084868011
 GameObject:
   m_ObjectHideFlags: 0
@@ -2124,6 +2184,10 @@ MonoBehaviour:
   pingPong: 0
   disableOffsetsIfThisObjectHasRigidbody2D: 1
   disableOffsetsIfStandaloneRoot: 1
+  debug: 0
+  debugLogEverySeconds: 0.25
+  debugLogFrameAdvance: 1
+  debugLogEarlyReturns: 1
 --- !u!1 &3991794389949452577
 GameObject:
   m_ObjectHideFlags: 0
@@ -2243,6 +2307,10 @@ MonoBehaviour:
   pingPong: 0
   disableOffsetsIfThisObjectHasRigidbody2D: 1
   disableOffsetsIfStandaloneRoot: 1
+  debug: 0
+  debugLogEverySeconds: 0.25
+  debugLogFrameAdvance: 1
+  debugLogEarlyReturns: 1
 --- !u!1 &4428092436107916663
 GameObject:
   m_ObjectHideFlags: 0
@@ -2365,6 +2433,10 @@ MonoBehaviour:
   pingPong: 0
   disableOffsetsIfThisObjectHasRigidbody2D: 1
   disableOffsetsIfStandaloneRoot: 1
+  debug: 0
+  debugLogEverySeconds: 0.25
+  debugLogFrameAdvance: 1
+  debugLogEarlyReturns: 1
 --- !u!1 &4590589861454301310
 GameObject:
   m_ObjectHideFlags: 0
@@ -2487,6 +2559,10 @@ MonoBehaviour:
   pingPong: 0
   disableOffsetsIfThisObjectHasRigidbody2D: 1
   disableOffsetsIfStandaloneRoot: 1
+  debug: 0
+  debugLogEverySeconds: 0.25
+  debugLogFrameAdvance: 1
+  debugLogEarlyReturns: 1
 --- !u!1 &4774286793582261755
 GameObject:
   m_ObjectHideFlags: 0
@@ -2607,6 +2683,10 @@ MonoBehaviour:
   pingPong: 0
   disableOffsetsIfThisObjectHasRigidbody2D: 1
   disableOffsetsIfStandaloneRoot: 1
+  debug: 0
+  debugLogEverySeconds: 0.25
+  debugLogFrameAdvance: 1
+  debugLogEarlyReturns: 1
 --- !u!1 &4934425448686927508
 GameObject:
   m_ObjectHideFlags: 0
@@ -2787,6 +2867,10 @@ MonoBehaviour:
   pingPong: 0
   disableOffsetsIfThisObjectHasRigidbody2D: 1
   disableOffsetsIfStandaloneRoot: 1
+  debug: 0
+  debugLogEverySeconds: 0.25
+  debugLogFrameAdvance: 1
+  debugLogEarlyReturns: 1
 --- !u!1 &4947014498081102474
 GameObject:
   m_ObjectHideFlags: 0
@@ -3635,6 +3719,10 @@ MonoBehaviour:
   pingPong: 0
   disableOffsetsIfThisObjectHasRigidbody2D: 1
   disableOffsetsIfStandaloneRoot: 1
+  debug: 0
+  debugLogEverySeconds: 0.25
+  debugLogFrameAdvance: 1
+  debugLogEarlyReturns: 1
 --- !u!1 &6152426229867311502
 GameObject:
   m_ObjectHideFlags: 0
@@ -3754,6 +3842,10 @@ MonoBehaviour:
   pingPong: 0
   disableOffsetsIfThisObjectHasRigidbody2D: 1
   disableOffsetsIfStandaloneRoot: 1
+  debug: 0
+  debugLogEverySeconds: 0.25
+  debugLogFrameAdvance: 1
+  debugLogEarlyReturns: 1
 --- !u!1 &6183660032571719661
 GameObject:
   m_ObjectHideFlags: 0
@@ -3874,6 +3966,10 @@ MonoBehaviour:
   pingPong: 0
   disableOffsetsIfThisObjectHasRigidbody2D: 1
   disableOffsetsIfStandaloneRoot: 1
+  debug: 0
+  debugLogEverySeconds: 0.25
+  debugLogFrameAdvance: 1
+  debugLogEarlyReturns: 1
 --- !u!1 &6530556802187073845
 GameObject:
   m_ObjectHideFlags: 0
@@ -3996,6 +4092,10 @@ MonoBehaviour:
   pingPong: 0
   disableOffsetsIfThisObjectHasRigidbody2D: 1
   disableOffsetsIfStandaloneRoot: 1
+  debug: 0
+  debugLogEverySeconds: 0.25
+  debugLogFrameAdvance: 1
+  debugLogEarlyReturns: 1
 --- !u!1 &7053433055746874994
 GameObject:
   m_ObjectHideFlags: 0
@@ -4118,6 +4218,10 @@ MonoBehaviour:
   pingPong: 0
   disableOffsetsIfThisObjectHasRigidbody2D: 1
   disableOffsetsIfStandaloneRoot: 1
+  debug: 0
+  debugLogEverySeconds: 0.25
+  debugLogFrameAdvance: 1
+  debugLogEarlyReturns: 1
 --- !u!1 &7187687357521038210
 GameObject:
   m_ObjectHideFlags: 0
@@ -4246,6 +4350,10 @@ MonoBehaviour:
   pingPong: 0
   disableOffsetsIfThisObjectHasRigidbody2D: 1
   disableOffsetsIfStandaloneRoot: 1
+  debug: 0
+  debugLogEverySeconds: 0.25
+  debugLogFrameAdvance: 1
+  debugLogEarlyReturns: 1
 --- !u!1 &8024946940868953893
 GameObject:
   m_ObjectHideFlags: 0
@@ -4368,6 +4476,10 @@ MonoBehaviour:
   pingPong: 0
   disableOffsetsIfThisObjectHasRigidbody2D: 1
   disableOffsetsIfStandaloneRoot: 1
+  debug: 0
+  debugLogEverySeconds: 0.25
+  debugLogFrameAdvance: 1
+  debugLogEarlyReturns: 1
 --- !u!1 &8178138482401590097
 GameObject:
   m_ObjectHideFlags: 0
@@ -4490,6 +4602,10 @@ MonoBehaviour:
   pingPong: 0
   disableOffsetsIfThisObjectHasRigidbody2D: 1
   disableOffsetsIfStandaloneRoot: 1
+  debug: 0
+  debugLogEverySeconds: 0.25
+  debugLogFrameAdvance: 1
+  debugLogEarlyReturns: 1
 --- !u!1 &8560675118705275457
 GameObject:
   m_ObjectHideFlags: 0
@@ -4612,6 +4728,10 @@ MonoBehaviour:
   pingPong: 0
   disableOffsetsIfThisObjectHasRigidbody2D: 1
   disableOffsetsIfStandaloneRoot: 1
+  debug: 0
+  debugLogEverySeconds: 0.25
+  debugLogFrameAdvance: 1
+  debugLogEarlyReturns: 1
 --- !u!1 &8900479660486598124
 GameObject:
   m_ObjectHideFlags: 0
@@ -4734,6 +4854,10 @@ MonoBehaviour:
   pingPong: 0
   disableOffsetsIfThisObjectHasRigidbody2D: 1
   disableOffsetsIfStandaloneRoot: 1
+  debug: 0
+  debugLogEverySeconds: 0.25
+  debugLogFrameAdvance: 1
+  debugLogEarlyReturns: 1
 --- !u!1 &9014292581269105957
 GameObject:
   m_ObjectHideFlags: 0
@@ -4854,6 +4978,10 @@ MonoBehaviour:
   pingPong: 0
   disableOffsetsIfThisObjectHasRigidbody2D: 1
   disableOffsetsIfStandaloneRoot: 1
+  debug: 0
+  debugLogEverySeconds: 0.25
+  debugLogFrameAdvance: 1
+  debugLogEarlyReturns: 1
 --- !u!1 &9153496192774368971
 GameObject:
   m_ObjectHideFlags: 0
@@ -4973,3 +5101,7 @@ MonoBehaviour:
   pingPong: 0
   disableOffsetsIfThisObjectHasRigidbody2D: 1
   disableOffsetsIfStandaloneRoot: 1
+  debug: 0
+  debugLogEverySeconds: 0.25
+  debugLogFrameAdvance: 1
+  debugLogEarlyReturns: 1

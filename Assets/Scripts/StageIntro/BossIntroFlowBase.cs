@@ -155,6 +155,20 @@ public abstract class BossIntroFlowBase : MonoBehaviour
             var p = players[i];
             if (!p) continue;
 
+            // Se está sob movimento externo (preintro/cutscene andando),
+            // NÃO force idle e NÃO zere direção/animação.
+            if (p.ExternalMovementOverride)
+            {
+                p.SetInputLocked(locked, false);     // trava input, mas não força idle
+                p.SetExplosionInvulnerable(locked);
+
+                if (p.Rigidbody != null)
+                    p.Rigidbody.linearVelocity = Vector2.zero;
+
+                continue;
+            }
+
+            // comportamento normal
             p.SetInputLocked(locked, true);
             p.ApplyDirectionFromVector(Vector2.zero);
             p.SetExplosionInvulnerable(locked);
@@ -181,6 +195,9 @@ public abstract class BossIntroFlowBase : MonoBehaviour
         {
             var p = players[i];
             if (!p) continue;
+
+            if (p.ExternalMovementOverride)
+                continue;
 
             if (p.IsMountedOnLouie)
                 p.ForceMountedUpExclusive();
