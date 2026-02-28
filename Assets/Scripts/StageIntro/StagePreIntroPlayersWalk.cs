@@ -119,6 +119,13 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
 
             SnapRootToWorld(root, originRounded);
 
+            var queue = move.GetComponentInChildren<MountEggQueue>(true);
+            if (queue != null)
+            {
+                queue.RebindAndReseedNow(resetHistoryToOwnerNow: true);
+                queue.SnapQueueToOwnerNow(resetHistoryToOwnerNow: true);
+            }
+
             if (move.Rigidbody != null)
             {
                 move.Rigidbody.simulated = true;
@@ -264,6 +271,13 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
             Log($"P{playerId} ORIGIN_CALC common={Fmt(commonOriginWorld)} offset={Fmt(offset)} raw={Fmt(originRaw)} tile={tile:0.###} rounded={Fmt(originRounded)}");
 
             SnapRootToWorld(root, originRounded);
+
+            var queue = move.GetComponentInChildren<MountEggQueue>(true);
+            if (queue != null)
+            {
+                queue.RebindAndReseedNow(resetHistoryToOwnerNow: true);
+                queue.SnapQueueToOwnerNow(resetHistoryToOwnerNow: true);
+            }
 
             var rbRoot = root != null ? root.GetComponent<Rigidbody2D>() : null;
             if (rbRoot != null)
