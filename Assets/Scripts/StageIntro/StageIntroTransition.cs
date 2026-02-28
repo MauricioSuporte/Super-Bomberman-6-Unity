@@ -293,6 +293,21 @@ public class StageIntroTransition : MonoBehaviour
         yield return FadeInToGame();
     }
 
+    IEnumerator PreloadIntroAudio()
+    {
+        EnsureStartClipLoaded();
+        if (s_startSfxClip != null) s_startSfxClip.LoadAudioData();
+
+        var gmc = GameMusicController.Instance;
+        if (gmc != null && gmc.defaultMusic != null)
+            gmc.defaultMusic.LoadAudioData();
+
+        if (introMusic != null)
+            introMusic.LoadAudioData();
+
+        yield return null;
+    }
+
     IEnumerator FadeInToGame()
     {
         if (gameplayRoot != null)
@@ -379,6 +394,8 @@ public class StageIntroTransition : MonoBehaviour
                 stageLabel.SetStage(world, stageNumber);
             }
 
+            yield return PreloadIntroAudio();
+
             yield return _waitForSecondsRealtime2;
 
             if (stageLabel != null)
@@ -456,10 +473,6 @@ public class StageIntroTransition : MonoBehaviour
                 GameMusicController.Instance.PlaySfx(s_startSfxClip, startSfxVolume);
         }
 
-        var music = GameMusicController.Instance.defaultMusic;
-        if (music != null)
-            music.LoadAudioData();
-
         yield return _waitForSecondsRealtimeStartDelay;
 
         TryStartDefaultMusicNormalFlow();
@@ -470,7 +483,6 @@ public class StageIntroTransition : MonoBehaviour
         if (GameMusicController.Instance != null && GameMusicController.Instance.defaultMusic != null)
         {
             var clip = GameMusicController.Instance.defaultMusic;
-            clip.LoadAudioData();
 
             float volume = GameMusicController.Instance.defaultMusicVolume;
             GameMusicController.Instance.PlayMusic(clip, volume, true);
