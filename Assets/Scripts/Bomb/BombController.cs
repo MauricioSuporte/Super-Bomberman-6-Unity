@@ -5,6 +5,7 @@ using UnityEngine.Tilemaps;
 
 [RequireComponent(typeof(MovementController))]
 [RequireComponent(typeof(CharacterHealth))]
+[RequireComponent(typeof(AudioSource))]
 public partial class BombController : MonoBehaviour
 {
     [Header("Player Id (only used if tagged Player)")]
@@ -40,6 +41,8 @@ public partial class BombController : MonoBehaviour
     private int activePowerBombId;
 
     [Header("Explosion Settings")]
+    private const string ExplosionPrefabResourcesPath = "Explosions/BombExplosion";
+    private static BombExplosion cachedExplosionPrefab;
     public BombExplosion explosionPrefab;
     public LayerMask explosionLayerMask;
     public float explosionDuration = 1f;
@@ -129,6 +132,8 @@ public partial class BombController : MonoBehaviour
         if (playerAudioSource == null)
             playerAudioSource = _localAudio;
 
+        ResolveExplosionPrefab();
+
         ResolveTilemaps();
         ResolveDestructibleTileResolver();
         ResolveGroundTileResolver();
@@ -145,6 +150,7 @@ public partial class BombController : MonoBehaviour
 
     private void OnEnable()
     {
+        ResolveExplosionPrefab();
         bombAmout = Mathf.Min(bombAmout, PlayerPersistentStats.MaxBombAmount);
         bombsRemaining = bombAmout;
         lastPlacedBomb = null;
@@ -342,6 +348,17 @@ public partial class BombController : MonoBehaviour
         var stage = GameObject.Find("Stage");
         if (stage != null)
             indestructibleTileResolver = stage.GetComponentInChildren<IndestructibleTileResolver>(true);
+    }
+
+    private void ResolveExplosionPrefab()
+    {
+        if (explosionPrefab != null)
+            return;
+
+        if (cachedExplosionPrefab == null)
+            cachedExplosionPrefab = Resources.Load<BombExplosion>(ExplosionPrefabResourcesPath);
+
+        explosionPrefab = cachedExplosionPrefab;
     }
 
     public void AddBomb()
@@ -1139,6 +1156,14 @@ public partial class BombController : MonoBehaviour
 
         TryHandleGroundExplosionHit(snapped);
 
+        ResolveExplosionPrefab();
+        if (explosionPrefab == null)
+        {
+            Destroy(bomb);
+            bombsRemaining = Mathf.Min(bombsRemaining + 1, bombAmout);
+            return;
+        }
+
         BombExplosion centerExplosion = Instantiate(explosionPrefab, snapped, Quaternion.identity);
         centerExplosion.Play(BombExplosion.ExplosionPart.Start, Vector2.zero, 0f, explosionDuration, snapped);
 
@@ -1703,6 +1728,10 @@ public partial class BombController : MonoBehaviour
 
     public void SpawnExplosionCrossForEffect(Vector2 origin, int radius, bool pierce)
     {
+        ResolveExplosionPrefab();
+        if (explosionPrefab == null)
+            return;
+
         Tilemap snapTm = GetSnapTilemapForGround();
         Vector2 p = SnapToTileCenter(snapTm, origin, out _, out _);
 
@@ -1721,6 +1750,10 @@ public partial class BombController : MonoBehaviour
         bool pierce,
         AudioSource sfxSource = null)
     {
+        ResolveExplosionPrefab();
+        if (explosionPrefab == null)
+            return;
+
         Tilemap snapTm = GetSnapTilemapForGround();
         Vector2 p = SnapToTileCenter(snapTm, origin, out _, out _);
 
