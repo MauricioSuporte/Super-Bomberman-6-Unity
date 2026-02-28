@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [DisallowMultipleComponent]
+[RequireComponent(typeof(AudioSource))]
 public sealed class StagePreIntroPlayersWalk : MonoBehaviour
 {
     private const string LOG = "[PreIntroWalk]";
@@ -39,6 +40,7 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
     [SerializeField, Min(0f)] private float watchAfterSnapSeconds = 0.35f;
 
     private readonly GridAStarPathfinder2D pathfinder = new();
+    private AudioSource walkLoopSource;
 
     public bool IsEnabled => enabledPreIntro;
 
@@ -49,6 +51,17 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
         public MovementController mover;
         public Transform root;
         public float tileSize;
+    }
+
+    void Awake()
+    {
+        walkLoopSource = GetComponent<AudioSource>();
+        if (walkLoopSource == null)
+            walkLoopSource = gameObject.AddComponent<AudioSource>();
+
+        walkLoopSource.playOnAwake = false;
+        walkLoopSource.loop = false;
+        walkLoopSource.spatialBlend = 0f;
     }
 
     public void PreSnapPlayersToOrigin()
@@ -112,6 +125,8 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
     {
         Log($"PLAY_BEGIN enabledPreIntro={enabledPreIntro} spawner={(spawner ? spawner.name : "NULL")} commonOrigin={(commonOrigin ? commonOrigin.name : "NULL")} " +
             $"timeScale={Time.timeScale:0.###} paused={GamePauseController.IsPaused} t_unscaled={Time.unscaledTime:0.###}");
+
+        StopWalkLoopSfx();
 
         if (!enabledPreIntro)
         {
@@ -180,9 +195,7 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
             LogPlayerState("BEFORE_SETUP", playerId, move);
 
             move.SetInputLocked(true, true);
-
             move.enabled = true;
-
             move.EnableExclusiveFromState();
 
             if (move.Rigidbody != null)
@@ -218,9 +231,7 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
 
             float watchSeconds = 0f;
             if (debugLogs && watchAfterSnapSeconds > 0f)
-            {
                 watchSeconds = Mathf.Min(watchAfterSnapSeconds, Mathf.Max(0f, delayBeforeWalkSeconds - 0.01f));
-            }
 
             if (debugLogs && watchSeconds > 0f && root != null)
                 StartCoroutine(WatchForExternalTeleport("WATCH_AFTER_SNAP", playerId, root, originRounded, watchSeconds));
@@ -257,6 +268,7 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
             yield return WaitRealtime(delayBeforeWalkSeconds);
         }
 
+        bool anyWillWalk = false;
         for (int i = 0; i < players.Count; i++)
         {
             var pw = players[i];
@@ -270,47 +282,76 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
             Vector2 start = RoundToGrid(GetRootWorldPos(pw.root, pw.mover), tile);
             Vector2 goalRounded = RoundToGrid(goal, tile);
 
-            var usedMask = obstacleMask.value != 0 ? obstacleMask : pw.mover.obstacleMask;
-
-            LogHierarchyState("HIER_BEFORE_WALK", pid, pw.identity, pw.mover, pw.root);
-
-            Log($"P{pid} WALK_BEGIN start={Fmt(start)} goalRaw={Fmt(goal)} goalRounded={Fmt(goalRounded)} tile={tile:0.###} obstacleMask={(obstacleMask.value != 0 ? obstacleMask.value : pw.mover.obstacleMask.value)}");
-
-            if (start == goalRounded)
+            if (start != goalRounded)
             {
-                Log($"P{pid} WALK_SKIP reason=start_equals_goal");
-                continue;
+                anyWillWalk = true;
+                break;
             }
+        }
 
-            var path = pathfinder.FindPath(
-                start,
-                goalRounded,
-                tile,
-                usedMask,
-                pw.mover.gameObject,
-                maxNodes,
-                maxExpandSteps,
-                overlapBoxScale);
+        if (anyWillWalk)
+            StartWalkLoopSfx();
 
-            if (path == null || path.Count == 0)
+        try
+        {
+            for (int i = 0; i < players.Count; i++)
             {
-                Log($"P{pid} PATH_FAIL path={(path == null ? "NULL" : "EMPTY")} -> FALLBACK");
-                yield return FallbackWalkTowards(pw, goalRounded, tile);
+                var pw = players[i];
+                if (pw.mover == null || pw.root == null) continue;
+
+                int pid = Mathf.Clamp(pw.playerId, 1, 4);
+
+                Vector2 goal = spawner.GetResolvedSpawnPosition(pid);
+                float tile = Mathf.Max(0.0001f, pw.tileSize);
+
+                Vector2 start = RoundToGrid(GetRootWorldPos(pw.root, pw.mover), tile);
+                Vector2 goalRounded = RoundToGrid(goal, tile);
+
+                var usedMask = obstacleMask.value != 0 ? obstacleMask : pw.mover.obstacleMask;
+
+                LogHierarchyState("HIER_BEFORE_WALK", pid, pw.identity, pw.mover, pw.root);
+                Log($"P{pid} WALK_BEGIN start={Fmt(start)} goalRaw={Fmt(goal)} goalRounded={Fmt(goalRounded)} tile={tile:0.###} obstacleMask={(obstacleMask.value != 0 ? obstacleMask.value : pw.mover.obstacleMask.value)}");
+
+                if (start == goalRounded)
+                {
+                    Log($"P{pid} WALK_SKIP reason=start_equals_goal");
+                    continue;
+                }
+
+                var path = pathfinder.FindPath(
+                    start,
+                    goalRounded,
+                    tile,
+                    usedMask,
+                    pw.mover.gameObject,
+                    maxNodes,
+                    maxExpandSteps,
+                    overlapBoxScale);
+
+                if (path == null || path.Count == 0)
+                {
+                    Log($"P{pid} PATH_FAIL path={(path == null ? "NULL" : "EMPTY")} -> FALLBACK");
+                    yield return FallbackWalkTowards(pw, goalRounded, tile);
+                    SnapRootToWorld(pw.root, goalRounded);
+                    Log($"P{pid} FALLBACK_DONE finalPos={Fmt(GetRootWorldPos(pw.root, pw.mover))}");
+                    continue;
+                }
+
+                Log($"P{pid} PATH_OK nodes={path.Count} first={Fmt(path[0])} last={Fmt(path[path.Count - 1])}");
+
+                for (int p = 1; p < path.Count; p++)
+                {
+                    Log($"P{pid} STEP idx={p}/{path.Count - 1} target={Fmt(path[p])}");
+                    yield return MoveToTile(pw, path[p], tile);
+                }
+
                 SnapRootToWorld(pw.root, goalRounded);
-                Log($"P{pid} FALLBACK_DONE finalPos={Fmt(GetRootWorldPos(pw.root, pw.mover))}");
-                continue;
+                Log($"P{pid} WALK_DONE finalPos={Fmt(GetRootWorldPos(pw.root, pw.mover))}");
             }
-
-            Log($"P{pid} PATH_OK nodes={path.Count} first={Fmt(path[0])} last={Fmt(path[path.Count - 1])}");
-
-            for (int p = 1; p < path.Count; p++)
-            {
-                Log($"P{pid} STEP idx={p}/{path.Count - 1} target={Fmt(path[p])}");
-                yield return MoveToTile(pw, path[p], tile);
-            }
-
-            SnapRootToWorld(pw.root, goalRounded);
-            Log($"P{pid} WALK_DONE finalPos={Fmt(GetRootWorldPos(pw.root, pw.mover))}");
+        }
+        finally
+        {
+            StopWalkLoopSfx();
         }
 
         for (int i = 0; i < players.Count; i++)
@@ -610,4 +651,87 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
     }
 
     private static string Fmt(Vector2 v) => $"({v.x:0.###},{v.y:0.###})";
+
+    private const string WalkLoopClipResourcesPath = "Sounds/walk";
+    private static AudioClip s_walkLoopClip;
+
+    private const float WalkStepSfxIntervalSeconds = 0.3f;
+
+    [SerializeField, Range(0f, 1f)] private float walkLoopVolume = 0.8f;
+
+    private Coroutine walkSfxRoutine;
+    private bool walkSfxActive;
+    private float nextWalkStepSfxAtUnscaled;
+
+    private static void EnsureWalkLoopClipLoaded()
+    {
+        if (s_walkLoopClip != null)
+            return;
+
+        s_walkLoopClip = Resources.Load<AudioClip>(WalkLoopClipResourcesPath);
+    }
+
+    private void StartWalkLoopSfx()
+    {
+        EnsureWalkLoopClipLoaded();
+
+        if (walkLoopSource == null)
+            return;
+
+        if (s_walkLoopClip == null)
+            return;
+
+        walkLoopSource.loop = false;
+        walkLoopSource.volume = walkLoopVolume;
+
+        if (walkSfxRoutine != null)
+            return;
+
+        walkSfxActive = true;
+        nextWalkStepSfxAtUnscaled = Time.unscaledTime;
+        walkSfxRoutine = StartCoroutine(WalkStepSfxLoop());
+    }
+
+    private void StopWalkLoopSfx()
+    {
+        walkSfxActive = false;
+
+        if (walkSfxRoutine != null)
+        {
+            StopCoroutine(walkSfxRoutine);
+            walkSfxRoutine = null;
+        }
+
+        if (walkLoopSource == null)
+            return;
+
+        if (walkLoopSource.isPlaying)
+            walkLoopSource.Stop();
+    }
+
+    private IEnumerator WalkStepSfxLoop()
+    {
+        while (walkSfxActive)
+        {
+            if (GamePauseController.IsPaused)
+            {
+                yield return null;
+                continue;
+            }
+
+            float now = Time.unscaledTime;
+            if (now >= nextWalkStepSfxAtUnscaled)
+            {
+                if (walkLoopSource != null && s_walkLoopClip != null)
+                {
+                    walkLoopSource.Stop();
+                    walkLoopSource.PlayOneShot(s_walkLoopClip, walkLoopVolume);
+                }
+
+                nextWalkStepSfxAtUnscaled = now + WalkStepSfxIntervalSeconds;
+            }
+
+            yield return null;
+        }
+    }
 }

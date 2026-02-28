@@ -302,7 +302,9 @@ public class StageIntroTransition : MonoBehaviour
         if (spawner != null)
             spawner.SpawnNow();
 
-        if (preIntroWalk != null && preIntroWalk.IsEnabled)
+        bool hasPreIntro = (preIntroWalk != null && preIntroWalk.IsEnabled);
+
+        if (hasPreIntro)
             preIntroWalk.PreSnapPlayersToOrigin();
 
         RefreshControllers(includeInactive: false);
@@ -363,18 +365,18 @@ public class StageIntroTransition : MonoBehaviour
                 camFollow.ForceSnapNow(refreshPlayersNow: true);
         }
 
+        // -----------------------------
+        // FLOW A) SEM FADE IMAGE
+        // -----------------------------
         if (fadeImage == null)
         {
-            if (preIntroWalk != null && preIntroWalk.IsEnabled)
-            {
-                Debug.Log($"[StageIntro] PREINTRO_CALL begin preIntroWalk={preIntroWalk.name} timeScale={Time.timeScale:0.###} paused={GamePauseController.IsPaused} t_unscaled={Time.unscaledTime:0.###}");
+            if (hasPreIntro)
                 yield return preIntroWalk.Play(spawner);
-                Debug.Log($"[StageIntro] PREINTRO_CALL end timeScale={Time.timeScale:0.###} paused={GamePauseController.IsPaused} t_unscaled={Time.unscaledTime:0.###}");
-            }
-            else
-            {
-                Debug.Log($"[StageIntro] PREINTRO_SKIP isStage17={IsStage17()} preIntroWalk={(preIntroWalk ? preIntroWalk.name : "NULL")} enabled={(preIntroWalk ? preIntroWalk.IsEnabled.ToString() : "NA")}");
-            }
+
+            // >>> AJUSTE: introMusic só depois do preintro (quando existir)
+            if (hasPreIntro)
+                TryPlayIntroMusic();
+            // <<<
 
             if (stageLabel != null)
             {
@@ -397,12 +399,17 @@ public class StageIntroTransition : MonoBehaviour
             yield break;
         }
 
+        // -----------------------------
+        // FLOW B) COM FADE IMAGE
+        // -----------------------------
         float duration = 1f;
         float t = 0f;
         Color baseColor = fadeImage.color;
 
-        if (introMusic != null && GameMusicController.Instance != null)
-            GameMusicController.Instance.PlaySfx(introMusic, 1f);
+        // >>> AJUSTE: se NÃO tem preintro, mantém como antes (toca já no começo do fade)
+        if (!hasPreIntro)
+            TryPlayIntroMusic();
+        // <<<
 
         while (t < duration)
         {
@@ -414,8 +421,13 @@ public class StageIntroTransition : MonoBehaviour
 
         fadeImage.gameObject.SetActive(false);
 
-        if (!IsStage17() && preIntroWalk != null && preIntroWalk.IsEnabled)
+        if (!IsStage17() && hasPreIntro)
             yield return preIntroWalk.Play(spawner);
+
+        // >>> AJUSTE: se tem preintro, só toca a introMusic depois que todos chegaram
+        if (hasPreIntro)
+            TryPlayIntroMusic();
+        // <<<
 
         if (stageLabel != null)
         {
@@ -714,5 +726,16 @@ public class StageIntroTransition : MonoBehaviour
     public static void SkipHudsonLogoOnNextLoad()
     {
         hasPlayedLogoIntro = true;
+    }
+
+    private void TryPlayIntroMusic()
+    {
+        if (introMusic == null)
+            return;
+
+        if (GameMusicController.Instance == null)
+            return;
+
+        GameMusicController.Instance.PlaySfx(introMusic, 1f);
     }
 }
