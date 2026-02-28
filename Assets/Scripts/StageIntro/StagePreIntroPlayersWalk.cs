@@ -388,13 +388,14 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
             StopWalkLoopSfx();
         }
 
-        // --------- NOVO: restaura estados ao final ----------
         for (int i = 0; i < players.Count; i++)
         {
             var pw = players[i];
             if (pw.mover == null) continue;
 
             pw.mover.EnableExclusiveFromState();
+
+            pw.mover.ApplyDirectionFromVector(Vector2.up);
             pw.mover.ApplyDirectionFromVector(Vector2.zero);
 
             if (pw.mover.Rigidbody != null) pw.mover.Rigidbody.linearVelocity = Vector2.zero;
@@ -526,7 +527,6 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
         SnapRootToWorld(pw.root, tileCenter);
         pw.mover.ApplyDirectionFromVector(Vector2.zero);
 
-        // NEW: snapshot após snap final
         if (debugLogs)
             LogActiveAnimSnapshot("ANIM_TILESTEP_END_SNAPPED", pw.playerId, pw.mover, Vector2.zero, tileCenter);
 
@@ -611,6 +611,12 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
         }
 
         SnapRootToWorld(pw.root, goalRounded);
+
+        // >>> FORÇA FACING UP AO TERMINAR
+        pw.mover.ApplyDirectionFromVector(Vector2.up);
+        pw.mover.ApplyDirectionFromVector(Vector2.zero);
+        // <<<
+
         Log($"P{pid} WALK_DONE finalPos={Fmt(GetRootWorldPos(pw.root, pw.mover))}");
 
         if (debugLogs)
