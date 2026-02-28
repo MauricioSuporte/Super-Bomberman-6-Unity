@@ -365,18 +365,13 @@ public class StageIntroTransition : MonoBehaviour
                 camFollow.ForceSnapNow(refreshPlayersNow: true);
         }
 
-        // -----------------------------
-        // FLOW A) SEM FADE IMAGE
-        // -----------------------------
         if (fadeImage == null)
         {
             if (hasPreIntro)
                 yield return preIntroWalk.Play(spawner);
 
-            // >>> AJUSTE: introMusic só depois do preintro (quando existir)
             if (hasPreIntro)
                 TryPlayIntroMusic();
-            // <<<
 
             if (stageLabel != null)
             {
@@ -399,17 +394,12 @@ public class StageIntroTransition : MonoBehaviour
             yield break;
         }
 
-        // -----------------------------
-        // FLOW B) COM FADE IMAGE
-        // -----------------------------
         float duration = 1f;
         float t = 0f;
         Color baseColor = fadeImage.color;
 
-        // >>> AJUSTE: se NÃO tem preintro, mantém como antes (toca já no começo do fade)
         if (!hasPreIntro)
             TryPlayIntroMusic();
-        // <<<
 
         while (t < duration)
         {
@@ -424,10 +414,8 @@ public class StageIntroTransition : MonoBehaviour
         if (!IsStage17() && hasPreIntro)
             yield return preIntroWalk.Play(spawner);
 
-        // >>> AJUSTE: se tem preintro, só toca a introMusic depois que todos chegaram
         if (hasPreIntro)
             TryPlayIntroMusic();
-        // <<<
 
         if (stageLabel != null)
         {
