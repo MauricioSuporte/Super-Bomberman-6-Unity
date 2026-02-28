@@ -175,7 +175,6 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
         Vector2 commonOriginWorld = commonOrigin.position;
         Log($"ORIGIN commonOriginWorld={Fmt(commonOriginWorld)} commonOriginTransformPos={Fmt((Vector2)commonOrigin.position)} thisGO={name} thisPos={Fmt((Vector2)transform.position)}");
 
-        // Guardas de segurança (collider / bomb enable)
         var cachedColliders = new Dictionary<MovementController, Collider2D>();
         var cachedColliderEnabled = new Dictionary<MovementController, bool>();
         var cachedBombEnabled = new Dictionary<MovementController, bool>();
@@ -215,15 +214,12 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
 
             LogHierarchyState("HIER_BEFORE_SETUP", playerId, id, move, root);
             LogPlayerState("BEFORE_SETUP", playerId, move);
+            Vector2 savedFacing = GetCurrentFacingFromMove(move);
 
-            // --------- NOVO: trava de preintro (para não “bolear”) ----------
-            // 1) impede o FixedUpdate do MovementController de brigar com o movimento manual
             move.SetExternalMovementOverride(true);
 
-            // 2) trava input (você vai animar via ApplyDirectionFromVector)
             move.SetInputLocked(true, true);
 
-            // 3) desliga collider para não colidir / slide / empurrões
             if (!cachedColliders.ContainsKey(move))
             {
                 var col = move.GetComponent<Collider2D>();
@@ -240,7 +236,6 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
                 if (col != null) col.enabled = false;
             }
 
-            // 4) (opcional, mas recomendado) desliga BombController durante preintro
             if (move.TryGetComponent<BombController>(out var bc) && bc != null)
             {
                 if (!cachedBombEnabled.ContainsKey(move))
@@ -249,16 +244,16 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
                 bc.enabled = false;
             }
 
-            // Mantém o controller habilitado para atualizar animação ao chamar ApplyDirectionFromVector
             move.enabled = true;
             move.EnableExclusiveFromState();
+
+            ApplyFacingIdle(move, savedFacing);
 
             if (move.Rigidbody != null)
             {
                 move.Rigidbody.simulated = true;
                 move.Rigidbody.linearVelocity = Vector2.zero;
             }
-            // ---------------------------------------------------------------
 
             Vector2 offset = GetOriginOffset(playerId);
             Vector2 originRaw = commonOriginWorld + offset;
@@ -403,7 +398,6 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
             var rbRoot = pw.root != null ? pw.root.GetComponent<Rigidbody2D>() : null;
             if (rbRoot != null) rbRoot.linearVelocity = Vector2.zero;
 
-            // Reabilita collider como estava
             if (cachedColliders.TryGetValue(pw.mover, out var col) && col != null)
             {
                 bool wasEnabled = true;
@@ -413,7 +407,6 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
                 col.enabled = wasEnabled;
             }
 
-            // Reabilita bomb controller como estava
             if (pw.mover.TryGetComponent<BombController>(out var bc) && bc != null)
             {
                 bool prev = true;
@@ -423,10 +416,8 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
                 bc.enabled = prev;
             }
 
-            // Sai do override (volta controle normal)
             pw.mover.SetExternalMovementOverride(false);
 
-            // Libera input só depois do resto do fluxo (ou deixe travado se a intro ainda vai segurar)
             pw.mover.SetInputLocked(false, false);
 
             LogPlayerState("AFTER_WALK_IDLE", pw.playerId, pw.mover);
@@ -435,7 +426,6 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
             if (debugLogs)
                 LogActiveAnimSnapshot("ANIM_AFTER_WALK_IDLE", pw.playerId, pw.mover, Vector2.zero, GetRootWorldPos(pw.root, pw.mover));
         }
-        // ---------------------------------------------------
 
         if (delayAfterWalkSeconds > 0f)
         {
@@ -470,7 +460,6 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
 
         float stepEps = Mathf.Max(reachEpsilon, tile * 0.08f);
 
-        // NEW: snapshot no começo do tile-step
         if (debugLogs)
             LogActiveAnimSnapshot("ANIM_TILESTEP_BEGIN", pw.playerId, pw.mover, desiredDir, startPos);
 
@@ -490,7 +479,6 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
 
             if (absRemaining <= stepEps || Mathf.Sign(remaining) != Mathf.Sign(dirSign))
             {
-                // NEW: snapshot no momento que considera alcançado
                 if (debugLogs)
                     LogActiveAnimSnapshot("ANIM_TILESTEP_REACHED_BREAK", pw.playerId, pw.mover, Vector2.zero, pos);
                 break;
@@ -498,7 +486,6 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
 
             pw.mover.ApplyDirectionFromVector(desiredDir);
 
-            // NEW: snapshot a cada frame de movimento (cuidado: pode logar bastante; use debugLogs só quando precisar)
             if (debugLogs)
                 LogActiveAnimSnapshot("ANIM_TILESTEP_APPLYDIR", pw.playerId, pw.mover, desiredDir, pos);
 
@@ -565,7 +552,6 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
         Log($"P{pid} WALK_BEGIN(QUEUE) start={Fmt(start)} goalRaw={Fmt(goal)} goalRounded={Fmt(goalRounded)} tile={tile:0.###} " +
             $"startDelay={startDelay:0.###} obstacleMask={(obstacleMask.value != 0 ? obstacleMask.value : pw.mover.obstacleMask.value)}");
 
-        // NEW: snapshot no começo
         if (debugLogs)
             LogActiveAnimSnapshot("ANIM_WALK_BEGIN", pid, pw.mover, (goalRounded - start), start);
 
@@ -612,10 +598,8 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
 
         SnapRootToWorld(pw.root, goalRounded);
 
-        // >>> FORÇA FACING UP AO TERMINAR
         pw.mover.ApplyDirectionFromVector(Vector2.up);
         pw.mover.ApplyDirectionFromVector(Vector2.zero);
-        // <<<
 
         Log($"P{pid} WALK_DONE finalPos={Fmt(GetRootWorldPos(pw.root, pw.mover))}");
 
@@ -652,7 +636,6 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
             Vector2 dir = PickCardinal(delta);
             pw.mover.ApplyDirectionFromVector(dir);
 
-            // NEW: snapshot durante fallback
             if (debugLogs)
                 LogActiveAnimSnapshot("ANIM_FALLBACK_STEP", pw.playerId, pw.mover, dir, pos);
 
@@ -830,9 +813,6 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
         );
     }
 
-    // -------------------------------------------------------
-    // NEW: LOG CIRÚRGICO DO ANIM RENDERER ATIVO
-    // -------------------------------------------------------
     private void LogActiveAnimSnapshot(string tag, int playerId, MovementController move, Vector2 desiredDir, Vector2 pos)
     {
         if (!debugLogs) return;
@@ -848,7 +828,6 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
                 var a = anims[i];
                 if (a == null || !a.enabled) continue;
 
-                // “ativo de verdade” = componente ligado e SpriteRenderer ligado (se existir)
                 if (a.TryGetComponent<SpriteRenderer>(out var sr) && sr != null && !sr.enabled)
                     continue;
 
@@ -948,5 +927,43 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
 
             yield return null;
         }
+    }
+
+    private static Vector2 GetCurrentFacingFromMove(MovementController move)
+    {
+        if (!move) return Vector2.down;
+
+        var anims = move.GetComponentsInChildren<AnimatedSpriteRenderer>(true);
+        if (anims != null)
+        {
+            for (int i = 0; i < anims.Length; i++)
+            {
+                var a = anims[i];
+                if (a == null || !a.enabled) continue;
+
+                if (a.TryGetComponent<SpriteRenderer>(out var sr) && sr != null && !sr.enabled)
+                    continue;
+
+                string n = a.name.ToLowerInvariant();
+                if (n.Contains("up")) return Vector2.up;
+                if (n.Contains("down")) return Vector2.down;
+                if (n.Contains("left")) return Vector2.left;
+                if (n.Contains("right")) return Vector2.right;
+
+                break;
+            }
+        }
+
+        return Vector2.down;
+    }
+
+    private static void ApplyFacingIdle(MovementController move, Vector2 facing)
+    {
+        if (!move) return;
+
+        if (facing == Vector2.zero) facing = Vector2.down;
+
+        move.ApplyDirectionFromVector(facing);
+        move.ApplyDirectionFromVector(Vector2.zero);
     }
 }
