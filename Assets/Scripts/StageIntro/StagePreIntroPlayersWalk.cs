@@ -961,22 +961,14 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
         if (rider != null)
         {
             rider.enabled = true;
-
             rider.Bind(move);
         }
 
         move.SetAllSpritesVisible(false);
-
         move.ApplyDirectionFromVector(Vector2.zero);
-
         move.EnableExclusiveFromState();
 
-        var queue = move.GetComponentInChildren<MountEggQueue>(true);
-        if (queue != null)
-        {
-            queue.RebindAndReseedNow(resetHistoryToOwnerNow: true);
-            queue.SnapQueueToOwnerNow(resetHistoryToOwnerNow: true);
-        }
+        SetEggQueueActive(move, true);
 
         if (move.Rigidbody != null)
             move.Rigidbody.linearVelocity = Vector2.zero;
@@ -987,11 +979,37 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
         if (move == null) return;
 
         move.ApplyDirectionFromVector(Vector2.zero);
-
         move.SetAllSpritesVisible(false);
 
         var rider = move.GetComponentInChildren<MountVisualController>(true);
         if (rider != null)
             rider.enabled = false;
+
+        SetEggQueueActive(move, false);
+    }
+
+    private static void SetEggQueueActive(MovementController move, bool active)
+    {
+        if (move == null) return;
+
+        var queue = move.GetComponentInChildren<MountEggQueue>(true);
+        if (queue == null) return;
+
+        if (!active)
+        {
+            queue.BeginHardFreeze();
+            queue.ForceVisible(false);
+
+            queue.enabled = false;
+            return;
+        }
+
+        queue.enabled = true;
+
+        queue.EndHardFreezeAndRebind(move);
+
+        queue.ForceVisible(true);
+        queue.RebindAndReseedNow(resetHistoryToOwnerNow: true);
+        queue.SnapQueueToOwnerNow(resetHistoryToOwnerNow: true);
     }
 }
