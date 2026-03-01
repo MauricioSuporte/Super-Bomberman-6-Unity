@@ -186,23 +186,9 @@ public class MovementController : MonoBehaviour, IKillable
     [SerializeField] private bool externalMovementOverride;
     public bool ExternalMovementOverride => externalMovementOverride;
 
-    [Header("Debug (Surgical)")]
-    [SerializeField] private bool debugDirectionSurgical = false;
-
-    private const string DLOG = "[MoveDir]";
-
-    private string DWho()
-    {
-        return $"{name}(P{playerId})";
-    }
-
     private void SetFacingDirection(Vector2 newFace, string reason)
     {
-        var prev = facingDirection;
         facingDirection = newFace;
-
-        if (debugDirectionSurgical && prev != facingDirection)
-            Debug.Log($"{DLOG} {DWho()} f={Time.frameCount} t={Time.time:F3} facing {prev} -> {facingDirection} REASON={reason}", this);
     }
 
     public void SetPlayerId(int id)
@@ -1511,6 +1497,14 @@ public class MovementController : MonoBehaviour, IKillable
         }
     }
 
+    public void SetInputLocked(bool locked, bool forceIdle, Vector2 idleFacing)
+    {
+        inputLocked = locked;
+
+        if (locked && forceIdle)
+            ForceIdleFacing(idleFacing, "SetInputLockedFacing");
+    }
+
     public void SetInputLocked(bool locked, bool forceIdle)
     {
         inputLocked = locked;
@@ -1522,6 +1516,31 @@ public class MovementController : MonoBehaviour, IKillable
     public void SetInputLocked(bool locked)
     {
         SetInputLocked(locked, true);
+    }
+
+    public void ForceIdleFacing(Vector2 faceDir, string reason = "ForceIdleFacing")
+    {
+        direction = Vector2.zero;
+        hasInput = false;
+
+        faceDir = NormalizeCardinal(faceDir);
+        if (faceDir == Vector2.zero)
+            faceDir = Vector2.down;
+
+        SetFacingDirection(faceDir, reason);
+
+        DisableAllFootSprites();
+        DisableAllMountedSprites();
+
+        AnimatedSpriteRenderer target = isMounted ? PickMountedRenderer(faceDir) : PickFootRenderer(faceDir);
+        if (target == null)
+            target = isMounted ? mountedSpriteDown : spriteRendererDown;
+
+        SetDirection(Vector2.zero, target);
+
+        // opcional: se quiser também forçar o visual do Louie/rider:
+        // var rider = GetComponentInChildren<MountVisualController>(true);
+        // if (rider != null && faceDir == Vector2.up) rider.ForceIdleUp();
     }
 
     public void ForceIdleUp()

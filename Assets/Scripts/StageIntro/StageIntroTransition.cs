@@ -157,7 +157,8 @@ public class StageIntroTransition : MonoBehaviour
             if (!isPlayer)
                 continue;
 
-            m.SetInputLocked(true, true);
+            Vector2 idleFace = ShouldFaceUpOnIntro() ? Vector2.up : Vector2.down;
+            m.SetInputLocked(true, true, idleFace);
             m.ApplyDirectionFromVector(Vector2.zero);
 
             if (m.Rigidbody != null)
@@ -761,5 +762,17 @@ public class StageIntroTransition : MonoBehaviour
     public static void SkipPreIntroWalkOnNextLoad()
     {
         skipPreIntroWalkNextRound = true;
+    }
+
+    bool ShouldFaceUpOnIntro()
+    {
+        if (StageMechaIntroController.Instance != null)
+            return true;
+
+        var spawner = FindAnyObjectByType<PlayersSpawner>();
+        if (spawner != null)
+            return spawner.IsBossStage;
+
+        return false;
     }
 }

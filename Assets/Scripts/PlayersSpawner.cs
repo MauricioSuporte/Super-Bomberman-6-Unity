@@ -21,6 +21,8 @@ public sealed class PlayersSpawner : MonoBehaviour
     [Header("Spawn Control")]
     [SerializeField] private bool clearExistingPlayersBeforeSpawn = true;
 
+    public bool IsBossStage => isBossStage;
+
     bool spawned;
 
     static readonly Vector2[] NormalStagePositions =
