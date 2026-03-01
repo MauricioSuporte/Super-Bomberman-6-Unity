@@ -9,6 +9,8 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
 {
     public const string AbilityId = "PowerGlove";
 
+    private const string LOG = "[PowerGlove]";
+
     [SerializeField] private bool enabledAbility;
 
     [Header("State (read-only)")]
@@ -85,6 +87,11 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
     private const int CarryOrderInLayer = 6;
     private const int GroundOrderInLayer = 3;
 
+    private void Log(string msg)
+    {
+        Debug.Log($"{LOG} {msg}", this);
+    }
+
     private void Awake()
     {
         audioSource = GetComponent<AudioSource>();
@@ -99,12 +106,16 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
         SetAllCarrySprites(false);
         activeCarryRenderer = null;
         isHoldingBomb = false;
+
+        holding = false;
+        animLocking = false;
+
+        movementLockCaptured = false;
+        bombControllerUseAIInputOverridden = false;
     }
 
     private bool IsHeldBombValid()
-    {
-        return heldBomb != null && !heldBomb.HasExploded;
-    }
+        => heldBomb != null && !heldBomb.HasExploded;
 
     private void LateUpdate()
     {
@@ -112,8 +123,18 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
         if (!CompareTag("Player")) return;
         if (movement == null) return;
 
+        // FIX: se o baseline ficou capturado durante um lock externo, libera quando o lock externo acabou.
+        if (movementLockCaptured && !IsGlobalLockActive() && !animLocking && !holding && !isHoldingBomb)
+        {
+            Log($"Clear stale movement baseline (lockCaptured=true, globalLock=false, holding=false). prevMovementLocked={prevMovementLocked} movement.InputLocked={movement.InputLocked}");
+            movementLockCaptured = false;
+        }
+
         if ((animLocking || holding || isHoldingBomb) && !IsHeldBombValid())
-            EmergencyUnlockAndReset();
+        {
+            Log($"LateUpdate emergency reset: state says holding/locking but bomb invalid. holding={holding} isHoldingBomb={isHoldingBomb} animLocking={animLocking} heldBomb={(heldBomb ? heldBomb.name : "NULL")}");
+            EmergencyUnlockAndReset("LateUpdate_InvalidBomb");
+        }
     }
 
     private void Update()
@@ -129,7 +150,7 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
 
         if (IsExternalBlockingDismount())
         {
-            ApplyExternalBlockAndCancel();
+            ApplyExternalBlockAndCancel("Update_ExternalBlock");
             return;
         }
 
@@ -146,7 +167,8 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
 
         if (!IsHeldBombValid())
         {
-            EmergencyUnlockAndReset();
+            Log($"Update emergency reset: holding but bomb invalid. heldBomb={(heldBomb ? heldBomb.name : "NULL")}");
+            EmergencyUnlockAndReset("Update_InvalidBomb");
             return;
         }
 
@@ -161,6 +183,7 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
             {
                 prevBombControllerUseAIInput = bombController.useAIInput;
                 bombControllerUseAIInputOverridden = true;
+                Log($"Captured bombController.useAIInput baseline={prevBombControllerUseAIInput}");
             }
 
             bombController.useAIInput = true;
@@ -177,14 +200,9 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
 
     static bool IsExternalBlockingDismount()
     {
-        if (MechaBossSequence.MechaIntroRunning)
-            return true;
-
-        if (BossIntroFlowBase.BossIntroRunning)
-            return true;
-
-        if (BossEscapeOnLastLife.AnyBossEscapeRunning)
-            return true;
+        if (MechaBossSequence.MechaIntroRunning) return true;
+        if (BossIntroFlowBase.BossIntroRunning) return true;
+        if (BossEscapeOnLastLife.AnyBossEscapeRunning) return true;
 
         var mechaIntro = StageMechaIntroController.Instance;
         if (mechaIntro != null && (mechaIntro.IntroRunning || mechaIntro.FlashRunning))
@@ -193,22 +211,42 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
         return false;
     }
 
-    private void ApplyExternalBlockAndCancel()
+    private void ApplyExternalBlockAndCancel(string reason)
     {
         if (movement == null)
             return;
 
-        CaptureMovementLockBaselineIfNeeded();
+        // FIX: NÃO capturar baseline aqui. Esse método roda em loop durante escape.
+        // Se capturar baseline aqui, você “grava” InputLocked=true do escape e isso vaza pro próximo uso.
         movement.SetInputLocked(true, false);
 
-        if (animLocking || holding || isHoldingBomb || heldBomb != null)
-            CancelPowerGloveAndDestroyHeldBomb();
+        Log($"ApplyExternalBlockAndCancel reason={reason}. holding={holding} isHoldingBomb={isHoldingBomb} animLocking={animLocking} heldBomb={(heldBomb ? heldBomb.name : "NULL")} inputLocked={movement.InputLocked} extSupp={movement.ExternalVisualSuppressed}");
 
-        RestoreBombControllerInputModeIfNeeded();
+        if (animLocking || holding || isHoldingBomb || heldBomb != null)
+            CancelPowerGloveAndDestroyHeldBomb("ExternalBlockCancel");
+
+        // Garantia extra: não deixar sprite suprimido quando estamos só em lock externo
+        if (!holding && !animLocking && movement.ExternalVisualSuppressed)
+        {
+            Log("ApplyExternalBlockAndCancel forcing externalVisualSuppressed=false (no holding/locking).");
+            movement.SetExternalVisualSuppressed(false);
+        }
+
+        RestoreBombControllerInputModeIfNeeded("ExternalBlockCancel");
     }
 
-    private void CancelPowerGloveAndDestroyHeldBomb()
+    public void DestroyHeldBombIfHolding()
     {
+        if (!holding && !isHoldingBomb)
+            return;
+
+        Log($"DestroyHeldBombIfHolding called. heldBomb={(heldBomb ? heldBomb.name : "NULL")}");
+
+        holding = false;
+        isHoldingBomb = false;
+        animLocking = false;
+        activeCarryRenderer = null;
+
         if (pickupRoutine != null) StopCoroutine(pickupRoutine);
         if (releaseRoutine != null) StopCoroutine(releaseRoutine);
         if (landWatchRoutine != null) StopCoroutine(landWatchRoutine);
@@ -217,17 +255,16 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
         releaseRoutine = null;
         landWatchRoutine = null;
 
-        holding = false;
-        isHoldingBomb = false;
-        animLocking = false;
-        activeCarryRenderer = null;
-
+        // FIX: hard reset visual da luva (carry/pickup)
         SetAllPickupSprites(false);
         SetAllCarrySprites(false);
 
         if (movement != null)
         {
             movement.SetExternalVisualSuppressed(false);
+
+            // garante que os sprites base do movement voltem a aparecer (caso tenham sido desligados durante pickup)
+            SetMoveSprites(true);
 
             if (!movement.isDead && !movement.IsEndingStage && !movement.IsRidingPlaying())
                 movement.EnableExclusiveFromState();
@@ -257,7 +294,50 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
             heldBombSpriteRenderer = null;
         }
 
-        RestoreMovementLockToBaseline(IsGlobalLockActive());
+        RestoreMovementLockToBaseline(IsGlobalLockActive(), "DestroyHeldBombIfHolding");
+        RestoreBombControllerInputModeIfNeeded("DestroyHeldBombIfHolding");
+    }
+
+    private void EmergencyUnlockAndReset(string reason)
+    {
+        Log($"EmergencyUnlockAndReset reason={reason} holding={holding} isHoldingBomb={isHoldingBomb} animLocking={animLocking} heldBomb={(heldBomb ? heldBomb.name : "NULL")}");
+
+        if (pickupRoutine != null) StopCoroutine(pickupRoutine);
+        if (releaseRoutine != null) StopCoroutine(releaseRoutine);
+        if (landWatchRoutine != null) StopCoroutine(landWatchRoutine);
+
+        pickupRoutine = null;
+        releaseRoutine = null;
+        landWatchRoutine = null;
+
+        holding = false;
+        isHoldingBomb = false;
+        animLocking = false;
+        activeCarryRenderer = null;
+
+        // FIX: hard reset visual da luva
+        SetAllPickupSprites(false);
+        SetAllCarrySprites(false);
+
+        if (movement != null)
+        {
+            movement.SetExternalVisualSuppressed(false);
+            SetMoveSprites(true);
+
+            if (!movement.isDead && !movement.IsEndingStage && !movement.IsRidingPlaying())
+                movement.EnableExclusiveFromState();
+        }
+
+        RestoreMovementLockToBaseline(IsGlobalLockActive(), $"Emergency:{reason}");
+
+        heldBomb = null;
+        heldBombCollider = null;
+        heldBombAnim = null;
+        heldBombRb = null;
+        heldBombNotifier = null;
+        heldBombSpriteRenderer = null;
+
+        RestoreBombControllerInputModeIfNeeded($"Emergency:{reason}");
     }
 
     private void LoadThrowSfxClipsIfNeeded()
@@ -303,7 +383,7 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
 
         if (IsExternalBlockingDismount())
         {
-            ApplyExternalBlockAndCancel();
+            ApplyExternalBlockAndCancel("TryPickupInput_ExternalBlock");
             return;
         }
 
@@ -333,6 +413,8 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
 
         if (bomb.GetComponent<BoilerCapturedBomb>() != null) return;
 
+        Log($"Pickup input. Found bomb={bomb.name} exploded={bomb.HasExploded} origin={origin} lastFacing={lastFacingDir}");
+
         if (pickupRoutine != null) StopCoroutine(pickupRoutine);
         pickupRoutine = StartCoroutine(PickupRoutine(bomb, lastFacingDir));
     }
@@ -343,20 +425,22 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
 
         dir = NormalizeCardinalOrDown(dir);
 
-        CaptureMovementLockBaselineIfNeeded();
+        Log($"PickupRoutine START bomb={(bomb ? bomb.name : "NULL")} dir={dir} inputLocked(before)={(movement ? movement.InputLocked : false)} extSupp(before)={(movement ? movement.ExternalVisualSuppressed : false)}");
+
+        CaptureMovementLockBaselineIfNeeded("PickupRoutine_Start");
         movement.SetInputLocked(true, false);
 
         CacheBombRefs(bomb);
 
         if (IsExternalBlockingDismount())
         {
-            ApplyExternalBlockAndCancel();
+            ApplyExternalBlockAndCancel("PickupRoutine_ExternalBlock");
             yield break;
         }
 
         if (!IsHeldBombValid())
         {
-            EmergencyUnlockAndReset();
+            EmergencyUnlockAndReset("PickupRoutine_InvalidBombEarly");
             yield break;
         }
 
@@ -389,7 +473,7 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
         if (!IsHeldBombValid())
         {
             if (pick != null) pick.enabled = false;
-            EmergencyUnlockAndReset();
+            EmergencyUnlockAndReset("PickupRoutine_BombInvalidAfterAttach");
             yield break;
         }
 
@@ -412,14 +496,14 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
             if (IsExternalBlockingDismount())
             {
                 if (pick != null) pick.enabled = false;
-                ApplyExternalBlockAndCancel();
+                ApplyExternalBlockAndCancel("PickupRoutine_ExternalBlock_Loop");
                 yield break;
             }
 
             if (!IsHeldBombValid())
             {
                 if (pick != null) pick.enabled = false;
-                EmergencyUnlockAndReset();
+                EmergencyUnlockAndReset("PickupRoutine_BombInvalid_Loop");
                 yield break;
             }
 
@@ -435,14 +519,14 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
         if (IsExternalBlockingDismount())
         {
             if (pick != null) pick.enabled = false;
-            ApplyExternalBlockAndCancel();
+            ApplyExternalBlockAndCancel("PickupRoutine_ExternalBlock_End");
             yield break;
         }
 
         if (!IsHeldBombValid())
         {
             if (pick != null) pick.enabled = false;
-            EmergencyUnlockAndReset();
+            EmergencyUnlockAndReset("PickupRoutine_BombInvalid_End");
             yield break;
         }
 
@@ -462,15 +546,18 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
             {
                 prevBombControllerUseAIInput = bombController.useAIInput;
                 bombControllerUseAIInputOverridden = true;
+                Log($"PickupRoutine captured bombController.useAIInput baseline={prevBombControllerUseAIInput}");
             }
 
             bombController.useAIInput = true;
         }
 
-        RestoreMovementLockToBaseline(IsGlobalLockActive());
+        RestoreMovementLockToBaseline(IsGlobalLockActive(), "PickupRoutine_End");
 
         animLocking = false;
         pickupRoutine = null;
+
+        Log($"PickupRoutine END holding={holding} isHoldingBomb={isHoldingBomb} inputLocked(now)={(movement ? movement.InputLocked : false)} extSupp(now)={(movement ? movement.ExternalVisualSuppressed : false)} heldBomb={(heldBomb ? heldBomb.name : "NULL")}");
 
         var input = PlayerInputManager.Instance;
         if (input == null || !input.Get(movement.PlayerId, PlayerAction.ActionA))
@@ -484,13 +571,13 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
 
         if (IsExternalBlockingDismount())
         {
-            ApplyExternalBlockAndCancel();
+            ApplyExternalBlockAndCancel("BeginRelease_ExternalBlock");
             return;
         }
 
         if (!IsHeldBombValid())
         {
-            EmergencyUnlockAndReset();
+            EmergencyUnlockAndReset("BeginRelease_InvalidBomb");
             return;
         }
 
@@ -504,12 +591,14 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
 
         dir = NormalizeCardinalOrDown(dir);
 
-        CaptureMovementLockBaselineIfNeeded();
+        Log($"ReleaseRoutine START dir={dir} inputLocked(before)={(movement ? movement.InputLocked : false)} extSupp(before)={(movement ? movement.ExternalVisualSuppressed : false)} heldBomb={(heldBomb ? heldBomb.name : "NULL")}");
+
+        CaptureMovementLockBaselineIfNeeded("ReleaseRoutine_Start");
         movement.SetInputLocked(true, false);
 
         if (IsExternalBlockingDismount())
         {
-            ApplyExternalBlockAndCancel();
+            ApplyExternalBlockAndCancel("ReleaseRoutine_ExternalBlock");
             yield break;
         }
 
@@ -533,12 +622,11 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
         if (!IsHeldBombValid())
         {
             if (pick != null) pick.enabled = false;
-            EmergencyUnlockAndReset();
+            EmergencyUnlockAndReset("ReleaseRoutine_InvalidBombEarly");
             yield break;
         }
 
         SnapHeldBombToPlayerGround();
-
         DetachBombFromPlayerKeepWorld();
 
         SetBombSorting(GroundOrderInLayer);
@@ -549,7 +637,7 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
         if (!IsHeldBombValid())
         {
             if (pick != null) pick.enabled = false;
-            EmergencyUnlockAndReset();
+            EmergencyUnlockAndReset("ReleaseRoutine_InvalidBombAfterDetach");
             yield break;
         }
 
@@ -564,14 +652,14 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
             if (IsExternalBlockingDismount())
             {
                 if (pick != null) pick.enabled = false;
-                ApplyExternalBlockAndCancel();
+                ApplyExternalBlockAndCancel("ReleaseRoutine_ExternalBlock_Loop");
                 yield break;
             }
 
             if (!IsHeldBombValid())
             {
                 if (pick != null) pick.enabled = false;
-                EmergencyUnlockAndReset();
+                EmergencyUnlockAndReset("ReleaseRoutine_InvalidBomb_Loop");
                 yield break;
             }
 
@@ -602,12 +690,13 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
         movement.SetExternalVisualSuppressed(false);
         movement.EnableExclusiveFromState();
 
-        RestoreMovementLockToBaseline(IsGlobalLockActive());
-
-        RestoreBombControllerInputModeIfNeeded();
+        RestoreMovementLockToBaseline(IsGlobalLockActive(), "ReleaseRoutine_End");
+        RestoreBombControllerInputModeIfNeeded("ReleaseRoutine_End");
 
         animLocking = false;
         releaseRoutine = null;
+
+        Log($"ReleaseRoutine END holding={holding} isHoldingBomb={isHoldingBomb} inputLocked(now)={(movement ? movement.InputLocked : false)} extSupp(now)={(movement ? movement.ExternalVisualSuppressed : false)}");
 
         if (landWatchRoutine != null)
             StopCoroutine(landWatchRoutine);
@@ -615,7 +704,7 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
         if (heldBomb != null && !heldBomb.HasExploded)
             landWatchRoutine = StartCoroutine(WatchBombLandingThenResume(heldBomb));
         else
-            RestoreBombControllerInputModeIfNeeded();
+            RestoreBombControllerInputModeIfNeeded("ReleaseRoutine_End_NoWatch");
     }
 
     private void UpdateCarryVisual()
@@ -624,13 +713,13 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
 
         if (IsExternalBlockingDismount())
         {
-            ApplyExternalBlockAndCancel();
+            ApplyExternalBlockAndCancel("UpdateCarryVisual_ExternalBlock");
             return;
         }
 
         if (!IsHeldBombValid())
         {
-            EmergencyUnlockAndReset();
+            EmergencyUnlockAndReset("UpdateCarryVisual_InvalidBomb");
             return;
         }
 
@@ -700,7 +789,7 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
         {
             if (IsExternalBlockingDismount())
             {
-                ApplyExternalBlockAndCancel();
+                ApplyExternalBlockAndCancel("WatchLanding_ExternalBlock");
                 landWatchRoutine = null;
                 yield break;
             }
@@ -738,7 +827,7 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
                     PauseBombFuse(bomb, false);
 
                 landWatchRoutine = null;
-                RestoreBombControllerInputModeIfNeeded();
+                RestoreBombControllerInputModeIfNeeded("WatchLanding_Aligned");
                 yield break;
             }
 
@@ -760,7 +849,7 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
         }
 
         landWatchRoutine = null;
-        RestoreBombControllerInputModeIfNeeded();
+        RestoreBombControllerInputModeIfNeeded("WatchLanding_Timeout");
     }
 
     private void ThrowHeldBomb(Vector2 dir)
@@ -870,7 +959,7 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
         bomb.SetFusePaused(pause);
     }
 
-    private void RestoreBombControllerInputModeIfNeeded()
+    private void RestoreBombControllerInputModeIfNeeded(string reason)
     {
         if (bombController == null)
             return;
@@ -880,18 +969,20 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
 
         bombController.useAIInput = prevBombControllerUseAIInput;
         bombControllerUseAIInputOverridden = false;
+        Log($"Restore bombController.useAIInput={prevBombControllerUseAIInput} reason={reason}");
     }
 
-    private void CaptureMovementLockBaselineIfNeeded()
+    private void CaptureMovementLockBaselineIfNeeded(string reason)
     {
         if (movementLockCaptured) return;
         if (movement == null) return;
 
         prevMovementLocked = movement.InputLocked;
         movementLockCaptured = true;
+        Log($"CaptureMovementLockBaseline reason={reason} prevMovementLocked={prevMovementLocked}");
     }
 
-    private void RestoreMovementLockToBaseline(bool globalLock)
+    private void RestoreMovementLockToBaseline(bool globalLock, string reason)
     {
         if (movement == null)
         {
@@ -905,18 +996,22 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
         if (globalLock)
         {
             movement.SetInputLocked(true, false);
+            Log($"RestoreMovementLockToBaseline reason={reason} globalLock=TRUE -> set InputLocked=true");
             movementLockCaptured = false;
             return;
         }
 
         bool baseline = prevMovementLocked;
         movement.SetInputLocked(baseline, false);
+        Log($"RestoreMovementLockToBaseline reason={reason} globalLock=FALSE -> set InputLocked={baseline}");
 
         movementLockCaptured = false;
     }
 
-    private void EmergencyUnlockAndReset()
+    private void CancelPowerGloveAndDestroyHeldBomb(string reason)
     {
+        Log($"CancelPowerGloveAndDestroyHeldBomb reason={reason}");
+
         if (pickupRoutine != null) StopCoroutine(pickupRoutine);
         if (releaseRoutine != null) StopCoroutine(releaseRoutine);
         if (landWatchRoutine != null) StopCoroutine(landWatchRoutine);
@@ -930,45 +1025,20 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
         animLocking = false;
         activeCarryRenderer = null;
 
+        // FIX: hard reset visual da luva (carry/pickup)
         SetAllPickupSprites(false);
         SetAllCarrySprites(false);
 
         if (movement != null)
         {
             movement.SetExternalVisualSuppressed(false);
+
+            // garante retorno dos sprites base (caso tenham sido desligados durante pickup)
+            SetMoveSprites(true);
+
             if (!movement.isDead && !movement.IsEndingStage && !movement.IsRidingPlaying())
                 movement.EnableExclusiveFromState();
         }
-
-        RestoreMovementLockToBaseline(IsGlobalLockActive());
-
-        heldBomb = null;
-        heldBombCollider = null;
-        heldBombAnim = null;
-        heldBombRb = null;
-        heldBombNotifier = null;
-        heldBombSpriteRenderer = null;
-
-        RestoreBombControllerInputModeIfNeeded();
-    }
-
-    public void DestroyHeldBombIfHolding()
-    {
-        if (!holding && !isHoldingBomb)
-            return;
-
-        holding = false;
-        isHoldingBomb = false;
-        activeCarryRenderer = null;
-        animLocking = false;
-
-        if (pickupRoutine != null) StopCoroutine(pickupRoutine);
-        if (releaseRoutine != null) StopCoroutine(releaseRoutine);
-        if (landWatchRoutine != null) StopCoroutine(landWatchRoutine);
-
-        pickupRoutine = null;
-        releaseRoutine = null;
-        landWatchRoutine = null;
 
         if (heldBomb != null)
         {
@@ -994,33 +1064,22 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
             heldBombSpriteRenderer = null;
         }
 
-        if (movement != null)
-        {
-            movement.SetExternalVisualSuppressed(false);
-
-            if (!movement.isDead && !movement.IsEndingStage && !movement.IsRidingPlaying())
-                movement.EnableExclusiveFromState();
-        }
-
-        RestoreMovementLockToBaseline(IsGlobalLockActive());
-
-        RestoreBombControllerInputModeIfNeeded();
+        RestoreMovementLockToBaseline(IsGlobalLockActive(), $"Cancel:{reason}");
+        RestoreBombControllerInputModeIfNeeded($"Cancel:{reason}");
     }
 
     private void ForceDropIfHolding()
     {
         if (!holding)
         {
-            RestoreBombControllerInputModeIfNeeded();
+            RestoreBombControllerInputModeIfNeeded("ForceDrop_NotHolding");
             isHoldingBomb = false;
 
-            RestoreBombControllerInputModeIfNeeded();
-            isHoldingBomb = false;
-
-            RestoreMovementLockToBaseline(false);
-
+            RestoreMovementLockToBaseline(false, "ForceDrop_NotHolding");
             return;
         }
+
+        Log($"ForceDropIfHolding. heldBomb={(heldBomb ? heldBomb.name : "NULL")}");
 
         holding = false;
         isHoldingBomb = false;
@@ -1064,21 +1123,15 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
         heldBombNotifier = null;
         heldBombSpriteRenderer = null;
 
-        RestoreMovementLockToBaseline(IsGlobalLockActive());
-
-        RestoreBombControllerInputModeIfNeeded();
+        RestoreMovementLockToBaseline(IsGlobalLockActive(), "ForceDropIfHolding");
+        RestoreBombControllerInputModeIfNeeded("ForceDropIfHolding");
     }
 
     private bool IsGlobalLockActive()
     {
-        if (GamePauseController.IsPaused)
-            return true;
-
-        if (ClownMaskBoss.BossIntroRunning)
-            return true;
-
-        if (IsExternalBlockingDismount())
-            return true;
+        if (GamePauseController.IsPaused) return true;
+        if (ClownMaskBoss.BossIntroRunning) return true;
+        if (IsExternalBlockingDismount()) return true;
 
         if (StageIntroTransition.Instance != null &&
             (StageIntroTransition.Instance.IntroRunning || StageIntroTransition.Instance.EndingRunning))
@@ -1159,22 +1212,18 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
 
     public void TryDestroyHeldBombByHoleUsingBombController()
     {
-        if (bombController == null)
-            return;
-
-        if (movement == null)
-            return;
-
-        if (heldBomb == null)
-            return;
+        if (bombController == null) return;
+        if (movement == null) return;
+        if (heldBomb == null) return;
 
         var bombGo = heldBomb.gameObject;
-        if (bombGo == null)
-            return;
+        if (bombGo == null) return;
+
+        Log($"TryDestroyHeldBombByHoleUsingBombController bomb={heldBomb.name} exploded={heldBomb.HasExploded}");
 
         if (heldBomb.HasExploded)
         {
-            EmergencyUnlockAndReset();
+            EmergencyUnlockAndReset("Hole_Destroy_AlreadyExploded");
             return;
         }
 
@@ -1218,7 +1267,6 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
             heldBombSpriteRenderer.sortingOrder = CarryOrderInLayer;
 
         DetachBombFromPlayerKeepWorld();
-
         bombGo.transform.position = new Vector3(visual.x, visual.y, bombGo.transform.position.z);
 
         heldBomb = null;
@@ -1228,16 +1276,13 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
         heldBombNotifier = null;
         heldBombSpriteRenderer = null;
 
-        RestoreBombControllerInputModeIfNeeded();
-        RestoreMovementLockToBaseline(IsGlobalLockActive());
+        RestoreBombControllerInputModeIfNeeded("Hole_Destroy");
+        RestoreMovementLockToBaseline(IsGlobalLockActive(), "Hole_Destroy");
 
         bombController.NotifyBombAtHoleWithVisualOffset(ground, bombGo, 1f, refund: true);
     }
 
-    public void Enable()
-    {
-        enabledAbility = true;
-    }
+    public void Enable() => enabledAbility = true;
 
     public void Disable()
     {

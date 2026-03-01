@@ -92,6 +92,7 @@ public class MovementController : MonoBehaviour, IKillable
 
     [Header("Visual Suppress (external)")]
     [SerializeField] private bool externalVisualSuppressed;
+    public bool ExternalVisualSuppressed => externalVisualSuppressed;
     private SpriteUpdateLock spriteLock;
     private bool IsSpriteLocked => spriteLock != null && spriteLock.IsLocked;
 

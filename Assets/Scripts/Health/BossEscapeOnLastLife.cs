@@ -8,6 +8,10 @@ using UnityEngine;
 [RequireComponent(typeof(MovementController))]
 public class BossEscapeOnLastLife : MonoBehaviour
 {
+    private const string LOG = "[BossEscape]";
+
+    void Log(string msg) => Debug.Log($"{LOG} {msg}", this);
+
     [Header("Boss Refs")]
     [SerializeField] private MovementController boss;
     [SerializeField] private MovementControllerAI aiMove;
@@ -79,6 +83,8 @@ public class BossEscapeOnLastLife : MonoBehaviour
 
     private void OnDisable()
     {
+        Log("OnDisable -> UnlockPlayers + UnregisterEscapeRunning");
+
         if (health != null)
         {
             health.Damaged -= OnDamaged;
@@ -95,7 +101,10 @@ public class BossEscapeOnLastLife : MonoBehaviour
         if (!health) return;
 
         if (health.life == 1)
+        {
             escapeArmed = true;
+            Log("OnDamaged -> escapeArmed=true");
+        }
     }
 
     private void OnHitInvulnerabilityEnded()
@@ -105,6 +114,7 @@ public class BossEscapeOnLastLife : MonoBehaviour
 
         escapeStarted = true;
         RegisterEscapeRunning();
+        Log("OnHitInvulnerabilityEnded -> EscapeRoutine START");
         StartCoroutine(EscapeRoutine());
     }
 
@@ -112,7 +122,7 @@ public class BossEscapeOnLastLife : MonoBehaviour
     {
         if (!boss)
         {
-            FinalizeEscape(GetBossPos());
+            FinalizeEscape(GetBossPos(), "BossMissing");
             yield break;
         }
 
@@ -151,7 +161,7 @@ public class BossEscapeOnLastLife : MonoBehaviour
 
         if (IsAt(goal))
         {
-            FinalizeEscape(goal);
+            FinalizeEscape(goal, "AlreadyAtGoal");
             yield break;
         }
 
@@ -167,8 +177,9 @@ public class BossEscapeOnLastLife : MonoBehaviour
 
         if (path == null || path.Count == 0)
         {
+            Log("No path -> fallback walk");
             yield return StartCoroutine(FallbackWalkTowards(goal));
-            if (!escapeFinished) FinalizeEscape(goal);
+            if (!escapeFinished) FinalizeEscape(goal, "FallbackFinish");
             yield break;
         }
 
@@ -179,7 +190,7 @@ public class BossEscapeOnLastLife : MonoBehaviour
         }
 
         if (!escapeFinished)
-            FinalizeEscape(goal);
+            FinalizeEscape(goal, "PathComplete");
     }
 
     private void RegisterEscapeRunning()
@@ -187,6 +198,7 @@ public class BossEscapeOnLastLife : MonoBehaviour
         if (escapeRegistered) return;
         escapeRegistered = true;
         s_escapeRunningCount++;
+        Log($"RegisterEscapeRunning -> count={s_escapeRunningCount}");
     }
 
     private void UnregisterEscapeRunning()
@@ -194,6 +206,7 @@ public class BossEscapeOnLastLife : MonoBehaviour
         if (!escapeRegistered) return;
         escapeRegistered = false;
         s_escapeRunningCount = Mathf.Max(0, s_escapeRunningCount - 1);
+        Log($"UnregisterEscapeRunning -> count={s_escapeRunningCount}");
     }
 
     private void TryDropItemOnEscapeStart()
@@ -214,12 +227,16 @@ public class BossEscapeOnLastLife : MonoBehaviour
 
         Instantiate(escapeDropItemPrefab, pos, Quaternion.identity);
         droppedItem = true;
+
+        Log($"Drop item at {pos}");
     }
 
-    private void FinalizeEscape(Vector2 finalGoal)
+    private void FinalizeEscape(Vector2 finalGoal, string reason)
     {
         if (escapeFinished) return;
         escapeFinished = true;
+
+        Log($"FinalizeEscape reason={reason} finalGoal={finalGoal} destroyBoss={destroyBossGameObject} snap={snapToGoalOnFinish}");
 
         StopAllCoroutines();
 
@@ -270,6 +287,8 @@ public class BossEscapeOnLastLife : MonoBehaviour
         }
 
         if (aiMove) aiMove.SetAIDirection(Vector2.zero);
+
+        Log("LockBossForEscape done");
     }
 
     private IEnumerator MoveToTile(Vector2 tileCenter, float tile)
@@ -309,8 +328,9 @@ public class BossEscapeOnLastLife : MonoBehaviour
             float distToGoal = Vector2.Distance(pos, goal);
             if (distToGoal <= immediateFinishDistance)
             {
+                Log($"Immediate finish dist={distToGoal} <= {immediateFinishDistance}");
                 SnapBossTo(goal);
-                FinalizeEscape(goal);
+                FinalizeEscape(goal, "ImmediateFinishDistance");
                 yield break;
             }
 
@@ -426,16 +446,25 @@ public class BossEscapeOnLastLife : MonoBehaviour
             if (move.TryGetComponent(out BombController bomb))
                 playerBombs.Add(bomb);
         }
+
+        Log($"RefreshPlayersRefs -> players={players.Count} bombs={playerBombs.Count}");
     }
 
     private void LockPlayers()
     {
+        Log("LockPlayers");
+
         cachedPlayerColliders.Clear();
         cachedColliderEnabled.Clear();
 
         foreach (var p in players)
         {
             if (!p) continue;
+
+            // IMPORTANT: limpa estados da PowerGlove antes do lock (evita estado preso)
+            var glove = p.GetComponent<PowerGloveAbility>();
+            if (glove != null)
+                glove.DestroyHeldBombIfHolding();
 
             p.SetInputLocked(true, true);
             p.ApplyDirectionFromVector(Vector2.zero);
@@ -471,6 +500,8 @@ public class BossEscapeOnLastLife : MonoBehaviour
 
     private void UnlockPlayers()
     {
+        Log("UnlockPlayers");
+
         foreach (var p in players)
         {
             if (!p) continue;
