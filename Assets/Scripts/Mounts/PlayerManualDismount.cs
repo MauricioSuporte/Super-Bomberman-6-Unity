@@ -36,6 +36,9 @@ public sealed class PlayerManualDismount : MonoBehaviour
         if (movement.isDead || GamePauseController.IsPaused)
             return;
 
+        if (IsMechaIntroBlockingDismount())
+            return;
+
         if (rider != null && rider.IsPlaying)
             return;
 
@@ -54,9 +57,24 @@ public sealed class PlayerManualDismount : MonoBehaviour
         wasHeld = held;
     }
 
+    static bool IsMechaIntroBlockingDismount()
+    {
+        if (MechaBossSequence.MechaIntroRunning)
+            return true;
+
+        var mechaIntro = StageMechaIntroController.Instance;
+        if (mechaIntro != null && (mechaIntro.IntroRunning || mechaIntro.FlashRunning))
+            return true;
+
+        return false;
+    }
+
     void TryManualDismount()
     {
         if (movement == null || companion == null || rider == null)
+            return;
+
+        if (IsMechaIntroBlockingDismount())
             return;
 
         if (!movement.IsMountedOnLouie || !companion.HasMountedLouie())
