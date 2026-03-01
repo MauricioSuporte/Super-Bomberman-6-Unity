@@ -23,6 +23,9 @@ public abstract class BossIntroFlowBase : MonoBehaviour
     bool started;
     bool released;
 
+    static int s_bossIntroRunningCount;
+    public static bool BossIntroRunning => s_bossIntroRunningCount > 0;
+
     protected virtual void Awake()
     {
         if (!enableFlow) return;
@@ -42,6 +45,8 @@ public abstract class BossIntroFlowBase : MonoBehaviour
     {
         RefreshPlayersRefs();
         PushPlayersSafety();
+
+        s_bossIntroRunningCount++;
 
         try
         {
@@ -101,6 +106,8 @@ public abstract class BossIntroFlowBase : MonoBehaviour
             UnlockBoss();
 
             OnIntroFinished();
+
+            s_bossIntroRunningCount = Mathf.Max(0, s_bossIntroRunningCount - 1);
         }
     }
 
