@@ -8142,8 +8142,8 @@ Tilemap:
   - first: {x: -5, y: 17, z: 0}
     second:
       serializedVersion: 2
-      m_TileIndex: 187
-      m_TileSpriteIndex: 38
+      m_TileIndex: 189
+      m_TileSpriteIndex: 22
       m_TileMatrixIndex: 2
       m_TileColorIndex: 0
       m_TileObjectToInstantiateIndex: 65535
@@ -9929,11 +9929,11 @@ Tilemap:
     m_Data: {fileID: 11400000, guid: 600266ccef7d7c1459765491815db92e, type: 2}
   - m_RefCount: 37
     m_Data: {fileID: 11400000, guid: b6b9bb81fb56e784bb2c3394788d7f12, type: 2}
-  - m_RefCount: 1
-    m_Data: {fileID: 11400000, guid: 2047d5c408d003c46826017d7c18a37c, type: 2}
+  - m_RefCount: 0
+    m_Data: {fileID: 0}
   - m_RefCount: 4
     m_Data: {fileID: 11400000, guid: e213f51cf88fae546abaa9d86279d095, type: 2}
-  - m_RefCount: 7
+  - m_RefCount: 8
     m_Data: {fileID: 11400000, guid: 5db6880be7e1ec046b00286353a83044, type: 2}
   - m_RefCount: 2
     m_Data: {fileID: 11400000, guid: da4cc128d55fefb4da5e2309c1e5e699, type: 2}
@@ -10024,7 +10024,7 @@ Tilemap:
     m_Data: {fileID: 3945133241877227524, guid: 17991a6676ded78438138725c62fac7c, type: 3}
   - m_RefCount: 4
     m_Data: {fileID: -3289418597711066827, guid: 17991a6676ded78438138725c62fac7c, type: 3}
-  - m_RefCount: 7
+  - m_RefCount: 8
     m_Data: {fileID: 3099508826837671288, guid: 17991a6676ded78438138725c62fac7c, type: 3}
   - m_RefCount: 2
     m_Data: {fileID: 3084943385654839415, guid: 17991a6676ded78438138725c62fac7c, type: 3}
@@ -10056,8 +10056,8 @@ Tilemap:
     m_Data: {fileID: -6088800945719919605, guid: 17991a6676ded78438138725c62fac7c, type: 3}
   - m_RefCount: 0
     m_Data: {fileID: 0}
-  - m_RefCount: 1
-    m_Data: {fileID: -8640203682804661590, guid: 17991a6676ded78438138725c62fac7c, type: 3}
+  - m_RefCount: 0
+    m_Data: {fileID: 0}
   - m_RefCount: 16
     m_Data: {fileID: 2666516837060376466, guid: 17991a6676ded78438138725c62fac7c, type: 3}
   - m_RefCount: 18
@@ -11378,6 +11378,7 @@ MonoBehaviour:
   gameplayRoot: {fileID: 679601670}
   stage17SceneName: Stage_1-7
   skinSelectMenu: {fileID: 0}
+  preIntroWalk: {fileID: 0}
 --- !u!114 &1389130173
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -11764,12 +11765,18 @@ MonoBehaviour:
   animationTime: 0.02
   useSequenceDuration: 0
   sequenceDuration: 0.5
+  useUnscaledTime: 1
+  respectGamePause: 1
   loop: 0
   idle: 0
   frameOffsets: []
   pingPong: 0
   disableOffsetsIfThisObjectHasRigidbody2D: 1
   disableOffsetsIfStandaloneRoot: 1
+  debug: 0
+  debugLogEverySeconds: 0.25
+  debugLogFrameAdvance: 1
+  debugLogEarlyReturns: 1
 --- !u!212 &1472254272
 SpriteRenderer:
   serializedVersion: 2
