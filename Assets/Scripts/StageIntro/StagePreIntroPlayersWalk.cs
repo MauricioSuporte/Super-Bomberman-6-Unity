@@ -1068,4 +1068,21 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
         queue.RebindAndReseedNow(resetHistoryToOwnerNow: true);
         queue.SnapQueueToOwnerNow(resetHistoryToOwnerNow: true);
     }
+
+    public void ForceMainCameraActive()
+    {
+        if (entranceCamera != null)
+        {
+            entranceCamera.enabled = false;
+            if (entranceCamera.TryGetComponent<AudioListener>(out var al))
+                al.enabled = false;
+        }
+
+        if (mainCamera != null)
+        {
+            mainCamera.enabled = true;
+            if (mainCamera.TryGetComponent<AudioListener>(out var al))
+                al.enabled = true;
+        }
+    }
 }

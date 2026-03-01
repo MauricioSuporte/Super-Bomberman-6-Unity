@@ -614,8 +614,6 @@ public class MovementController : MonoBehaviour, IKillable
 
     private bool ShouldSkipFixedUpdate()
     {
-        // NOVO: durante preintro/cutscene controlada externamente,
-        // nunca deixe o MovementController “brigar” com sua movimentação manual.
         if (externalMovementOverride)
         {
             if (Rigidbody != null)
@@ -2032,11 +2030,6 @@ public class MovementController : MonoBehaviour, IKillable
 
     public void SetExternalMovementOverride(bool active)
     {
-        // Quando true:
-        // - você pode continuar chamando ApplyDirectionFromVector() para animar,
-        // - mas o FixedUpdate não movimenta/colide,
-        // - e o personagem fica “safe” para preintro/cutscene.
-
         externalMovementOverride = active;
 
         if (active)
@@ -2050,13 +2043,10 @@ public class MovementController : MonoBehaviour, IKillable
             if (Rigidbody != null)
             {
                 Rigidbody.linearVelocity = Vector2.zero;
-                // Não desliga simulated aqui porque a preintro pode estar mexendo em RB do root;
-                // quem decide é o StagePreIntroPlayersWalk.
             }
         }
         else
         {
-            // Ao sair do override, mantenha neutro
             direction = Vector2.zero;
             hasInput = false;
             currentAxis = MoveAxis.None;

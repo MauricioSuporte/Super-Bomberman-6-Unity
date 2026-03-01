@@ -4992,6 +4992,7 @@ MonoBehaviour:
   entranceGateHiddenSeconds: 1
   cameraSwapEpsilon: 0.05
   cameraTransitionMaxSeconds: 3.5
+  cameraTransitionSeconds: 1
   obstacleMask:
     serializedVersion: 2
     m_Bits: 64
@@ -11722,7 +11723,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2258062271764064381, guid: a009117f38ad56d4fb5e2e5fa7445a16, type: 3}
       propertyPath: life
-      value: 2
+      value: 6
       objectReference: {fileID: 0}
     - target: {fileID: 2258062271764064381, guid: a009117f38ad56d4fb5e2e5fa7445a16, type: 3}
       propertyPath: hitInvulnerableDuration

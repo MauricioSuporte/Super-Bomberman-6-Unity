@@ -510,6 +510,7 @@ public class GameManager : MonoBehaviour
         yield return new WaitForSecondsRealtime(restartAfterDeathSeconds);
 
         StageIntroTransition.SkipTitleScreenOnNextLoad();
+        StageIntroTransition.SkipPreIntroWalkOnNextLoad();
 
         Scene current = SceneManager.GetActiveScene();
         SceneManager.LoadScene(current.buildIndex);

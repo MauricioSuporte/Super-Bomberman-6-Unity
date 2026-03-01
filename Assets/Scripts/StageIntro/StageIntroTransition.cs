@@ -51,6 +51,8 @@ public class StageIntroTransition : MonoBehaviour
     static bool hasPlayedLogoIntro;
     static bool skipTitleNextRound;
 
+    static bool skipPreIntroWalkNextRound;
+
     MovementController[] movementControllers = new MovementController[0];
     BombController[] bombControllers = new BombController[0];
 
@@ -325,13 +327,17 @@ public class StageIntroTransition : MonoBehaviour
         if (spawner != null)
             spawner.SpawnNow();
 
-        bool hasPreIntro = (preIntroWalk != null && preIntroWalk.IsEnabled);
+        bool skipPreIntroNow = skipPreIntroWalkNextRound;
+        if (skipPreIntroNow && preIntroWalk != null)
+        {
+            preIntroWalk.ForceMainCameraActive();
+        }
+        skipPreIntroWalkNextRound = false;
 
-        // prepara a câmera inicial ainda com a tela preta
+        bool hasPreIntro = (preIntroWalk != null && preIntroWalk.IsEnabled && !skipPreIntroNow);
         if (hasPreIntro)
             preIntroWalk.PrepareEntranceCamerasForIntro();
 
-        // agora o snap inicial depende do modo (EntranceOrigin OU commonOrigin)
         if (hasPreIntro)
             preIntroWalk.PreSnapPlayersForSequence();
 
@@ -750,5 +756,10 @@ public class StageIntroTransition : MonoBehaviour
             return;
 
         GameMusicController.Instance.PlaySfx(introMusic, 1f);
+    }
+
+    public static void SkipPreIntroWalkOnNextLoad()
+    {
+        skipPreIntroWalkNextRound = true;
     }
 }
