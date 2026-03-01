@@ -104,12 +104,12 @@ public class PlayerMountCompanion : MonoBehaviour
         if (punchAbility != null)
             punchAbility.SetLockedByLouie(false);
 
-        punchOwned = PlayerPersistentStats.Get(GetPlayerId()).CanPunchBombs;
+        punchOwned = PlayerPersistentStats.GetRuntime(GetPlayerId()).CanPunchBombs;
     }
 
     void Update()
     {
-        punchOwned = PlayerPersistentStats.Get(GetPlayerId()).CanPunchBombs;
+        punchOwned = PlayerPersistentStats.GetRuntime(GetPlayerId()).CanPunchBombs;
 
         bool shouldLock =
             MechaBossSequence.MechaIntroRunning ||

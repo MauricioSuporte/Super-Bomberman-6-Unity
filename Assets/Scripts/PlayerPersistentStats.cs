@@ -17,7 +17,7 @@ public static class PlayerPersistentStats
 
     public sealed class PlayerState
     {
-        public int Life = 1;
+        public int Life = 99;
 
         public int BombAmount = 9;
         public int ExplosionRadius = 10;
@@ -28,8 +28,8 @@ public static class PlayerPersistentStats
         public bool CanPunchBombs = false;
         public bool HasPowerGlove = false;
         public bool CanPassBombs = false;
-        public bool CanPassDestructibles = false;
-        public bool HasPierceBombs = false;
+        public bool CanPassDestructibles = true;
+        public bool HasPierceBombs = true;
         public bool HasControlBombs = false;
         public bool HasPowerBomb = false;
         public bool HasRubberBombs = false;
@@ -43,8 +43,8 @@ public static class PlayerPersistentStats
         public PlayerState()
         {
             QueuedEggs.Clear();
-            QueuedEggs.Add(ItemType.GreenLouieEgg);
-            QueuedEggs.Add(ItemType.PinkLouieEgg);
+            //QueuedEggs.Add(ItemType.GreenLouieEgg);
+            //QueuedEggs.Add(ItemType.PinkLouieEgg);
         }
     }
 
@@ -58,8 +58,6 @@ public static class PlayerPersistentStats
 
     static bool goldenUnlockedSession;
     static bool sessionBooted;
-
-    public static bool GoldenUnlocked => goldenUnlockedSession;
 
     public static PlayerState Get(int playerId)
     {
@@ -127,13 +125,6 @@ public static class PlayerPersistentStats
 
         if (s.Skin == BomberSkin.Golden)
             s.Skin = BomberSkin.White;
-    }
-
-    public static void LoadSelectedSkin(int playerId)
-    {
-        EnsureSessionBooted();
-        LoadSelectedSkinInternal(playerId);
-        ClampSelectedSkinIfLocked(playerId);
     }
 
     public static void ClampSelectedSkinIfLocked(int playerId)
@@ -255,16 +246,6 @@ public static class PlayerPersistentStats
         return q;
     }
 
-    public static void LoadInto(MovementController movement, BombController bomb)
-    {
-        int playerId = 1;
-
-        if (movement != null) playerId = GetPlayerIdFrom(movement);
-        else if (bomb != null) playerId = GetPlayerIdFrom(bomb);
-
-        LoadInto(playerId, movement, bomb);
-    }
-
     public static void LoadInto(int playerId, MovementController movement, BombController bomb)
     {
         var s = Get(playerId);
@@ -298,7 +279,11 @@ public static class PlayerPersistentStats
             if (s.CanKickBombs) abilitySystem.Enable(BombKickAbility.AbilityId);
             else abilitySystem.Disable(BombKickAbility.AbilityId);
 
-            if (s.CanPunchBombs) abilitySystem.Enable(BombPunchAbility.AbilityId);
+            bool shouldEnablePunch =
+                s.CanPunchBombs ||
+                s.MountedLouie == MountedType.Blue;
+
+            if (shouldEnablePunch) abilitySystem.Enable(BombPunchAbility.AbilityId);
             else abilitySystem.Disable(BombPunchAbility.AbilityId);
 
             if (s.HasPowerGlove) abilitySystem.Enable(PowerGloveAbility.AbilityId);
@@ -410,8 +395,7 @@ public static class PlayerPersistentStats
             var kick = abilitySystem != null ? abilitySystem.Get<BombKickAbility>(BombKickAbility.AbilityId) : null;
             s.CanKickBombs = kick != null && kick.IsEnabled;
 
-            var punch = abilitySystem != null ? abilitySystem.Get<BombPunchAbility>(BombPunchAbility.AbilityId) : null;
-            s.CanPunchBombs = punch != null && punch.IsEnabled;
+            PersistPunchAbility(movement, s, abilitySystem);
 
             var glove = abilitySystem != null ? abilitySystem.Get<PowerGloveAbility>(PowerGloveAbility.AbilityId) : null;
             s.HasPowerGlove = glove != null && glove.IsEnabled;
@@ -458,6 +442,19 @@ public static class PlayerPersistentStats
             s.BombAmount = Mathf.Min(bomb.bombAmout, MaxBombAmount);
             s.ExplosionRadius = Mathf.Min(bomb.explosionRadius, MaxExplosionRadius);
         }
+    }
+
+    private static void PersistPunchAbility(MovementController movement, PlayerState s, AbilitySystem abilitySystem)
+    {
+        var punch = abilitySystem != null ? abilitySystem.Get<BombPunchAbility>(BombPunchAbility.AbilityId) : null;
+        bool punchEnabled = punch != null && punch.IsEnabled;
+
+        bool mountedBlue = false;
+        if (movement != null && movement.TryGetComponent<PlayerMountCompanion>(out var mount) && mount != null)
+            mountedBlue = mount.GetMountedLouieType() == MountedType.Blue;
+
+        if (punchEnabled && !mountedBlue)
+            s.CanPunchBombs = true;
     }
 
     static readonly PlayerState[] _stage = new PlayerState[4]
@@ -513,11 +510,6 @@ public static class PlayerPersistentStats
         }
 
         stageActive = true;
-    }
-
-    public static void DiscardStage()
-    {
-        stageActive = false;
     }
 
     public static void CommitStage()
@@ -687,8 +679,7 @@ public static class PlayerPersistentStats
             var kick = abilitySystem != null ? abilitySystem.Get<BombKickAbility>(BombKickAbility.AbilityId) : null;
             s.CanKickBombs = kick != null && kick.IsEnabled;
 
-            var punch = abilitySystem != null ? abilitySystem.Get<BombPunchAbility>(BombPunchAbility.AbilityId) : null;
-            s.CanPunchBombs = punch != null && punch.IsEnabled;
+            PersistPunchAbility(movement, s, abilitySystem);
 
             var glove = abilitySystem != null ? abilitySystem.Get<PowerGloveAbility>(PowerGloveAbility.AbilityId) : null;
             s.HasPowerGlove = glove != null && glove.IsEnabled;
@@ -739,5 +730,11 @@ public static class PlayerPersistentStats
         ResetToDefaultsAll();
         BootSession();
         PlayerPrefs.Save();
+    }
+
+    public static PlayerState GetRuntime(int playerId)
+    {
+        playerId = Mathf.Clamp(playerId, 1, 4);
+        return stageActive ? _stage[playerId - 1] : _p[playerId - 1];
     }
 }
