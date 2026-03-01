@@ -21,6 +21,36 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
     [Tooltip("Optional per-player offsets (index 0..3 => player 1..4).")]
     [SerializeField] private Vector2[] perPlayerOriginOffset = new Vector2[4];
 
+    [Header("Entrance Pre-Intro (optional)")]
+    [SerializeField] private bool enabledEntrancePreIntro = true;
+
+    [Tooltip("Where players appear first (entrance cutscene start).")]
+    [SerializeField] private Transform entranceOrigin;
+
+    [Tooltip("Where players walk to and disappear (entrance gate).")]
+    [SerializeField] private Transform entranceGate;
+
+    [Tooltip("Camera used to show entrance cutscene.")]
+    [SerializeField] private Camera entranceCamera;
+
+    [Tooltip("Main stage camera (normal gameplay camera).")]
+    [SerializeField] private Camera mainCamera;
+
+    [Tooltip("CameraFollowClamp2D attached to EntranceCamera. Used ONLY during transition to MainCamera.")]
+    [SerializeField] private CameraFollowClamp2D entranceCameraFollow;
+
+    [Tooltip("Seconds to keep players hidden after reaching EntranceGate (before teleport to commonOrigin).")]
+    [SerializeField, Min(0f)] private float entranceGateHiddenSeconds = 1f;
+
+    [Tooltip("How close EntranceCamera must be to MainCamera (XY) to swap cameras.")]
+    [SerializeField, Min(0.001f)] private float cameraSwapEpsilon = 0.05f;
+
+    [Tooltip("Safety timeout for camera transition.")]
+    [SerializeField, Min(0.1f)] private float cameraTransitionMaxSeconds = 3.5f;
+
+    [Tooltip("How long (seconds) the EntranceCamera moves to MainCamera before swapping.")]
+    [SerializeField, Min(0.05f)] private float cameraTransitionSeconds = 1f;
+
     [Header("Pathfinding")]
     [SerializeField] private LayerMask obstacleMask;
     [SerializeField, Min(16)] private int maxNodes = 4096;
@@ -60,6 +90,7 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
     private AudioSource walkLoopSource;
 
     public bool IsEnabled => enabledPreIntro;
+    public bool EntranceEnabled => enabledEntrancePreIntro && entranceOrigin != null && entranceGate != null && entranceCamera != null && mainCamera != null;
 
     private struct PlayerWalkData
     {
@@ -79,21 +110,47 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
         walkLoopSource.playOnAwake = false;
         walkLoopSource.loop = false;
         walkLoopSource.spatialBlend = 0f;
+
+        if (entranceCameraFollow != null)
+            entranceCameraFollow.enabled = false;
     }
 
-    public void PreSnapPlayersToOrigin()
+    public void PrepareEntranceCamerasForIntro()
+    {
+        if (!EntranceEnabled)
+            return;
+
+        SetCameraActive(entranceCamera, true);
+        SetCameraActive(mainCamera, false);
+
+        if (entranceCameraFollow != null)
+            entranceCameraFollow.enabled = false;
+    }
+
+    public void PreSnapPlayersForSequence()
     {
         if (!enabledPreIntro)
             return;
 
-        if (commonOrigin == null)
+        if (EntranceEnabled)
+        {
+            SnapPlayersToOrigin(entranceOrigin);
+            return;
+        }
+
+        SnapPlayersToOrigin(commonOrigin);
+    }
+
+    private void SnapPlayersToOrigin(Transform originTransform)
+    {
+        if (originTransform == null)
             return;
 
         var ids = FindObjectsByType<PlayerIdentity>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
         if (ids == null || ids.Length == 0)
             return;
 
-        Vector2 commonOriginWorld = commonOrigin.position;
+        Vector2 originWorld = originTransform.position;
 
         for (int i = 0; i < ids.Length; i++)
         {
@@ -114,10 +171,10 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
 
             float tile = Mathf.Max(0.0001f, move.tileSize);
             Vector2 offset = GetOriginOffset(playerId);
-            Vector2 originRaw = commonOriginWorld + offset;
-            Vector2 originRounded = RoundToGrid(originRaw, tile);
+            Vector2 raw = originWorld + offset;
+            Vector2 rounded = RoundToGrid(raw, tile);
 
-            SnapRootToWorld(root, originRounded);
+            SnapRootToWorld(root, rounded);
 
             var queue = move.GetComponentInChildren<MountEggQueue>(true);
             if (queue != null)
@@ -130,7 +187,7 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
             {
                 move.Rigidbody.simulated = true;
                 move.Rigidbody.linearVelocity = Vector2.zero;
-                move.Rigidbody.position = originRounded;
+                move.Rigidbody.position = rounded;
             }
 
             var rbRoot = root != null ? root.GetComponent<Rigidbody2D>() : null;
@@ -138,55 +195,114 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
             {
                 rbRoot.simulated = true;
                 rbRoot.linearVelocity = Vector2.zero;
-                rbRoot.position = originRounded;
-
-                root.position = originRounded;
+                rbRoot.position = rounded;
+                root.position = rounded;
             }
         }
     }
 
     public IEnumerator Play(PlayersSpawner spawner)
     {
-        Log($"PLAY_BEGIN enabledPreIntro={enabledPreIntro} spawner={(spawner ? spawner.name : "NULL")} commonOrigin={(commonOrigin ? commonOrigin.name : "NULL")} " +
-            $"timeScale={Time.timeScale:0.###} paused={GamePauseController.IsPaused} t_unscaled={Time.unscaledTime:0.###}");
+        Log($"PLAY_BEGIN enabledPreIntro={enabledPreIntro} EntranceEnabled={EntranceEnabled} spawner={(spawner ? spawner.name : "NULL")}");
 
         StopWalkLoopSfx();
 
-        if (!enabledPreIntro)
+        if (!enabledPreIntro || spawner == null)
+            yield break;
+
+        if (!TryCollectAndSetupPlayers(out var players,
+                out var cachedColliders,
+                out var cachedColliderEnabled,
+                out var cachedBombEnabled))
         {
-            Log("PLAY_EARLY_EXIT reason=enabledPreIntro_false");
             yield break;
         }
 
-        if (spawner == null)
+        players.Sort((a, b) => b.playerId.CompareTo(a.playerId));
+
+        if (EntranceEnabled)
         {
-            Log("PLAY_EARLY_EXIT reason=spawner_null");
-            yield break;
+            yield return RunEntrancePreIntro(players);
+
+            SnapPlayersToOrigin(commonOrigin);
+
+            for (int i = 0; i < players.Count; i++)
+            {
+                if (players[i].mover != null)
+                    players[i].mover.SetAllSpritesVisible(true);
+            }
+
+            yield return TransitionEntranceCameraToMain();
+        }
+        else
+        {
+            SnapPlayersToOrigin(commonOrigin);
         }
 
-        if (commonOrigin == null)
+        if (delayBeforeWalkSeconds > 0f)
+            yield return WaitRealtime(delayBeforeWalkSeconds);
+
+        bool anyWillWalk = AnyPlayerNeedsWalk(players, spawner);
+        if (anyWillWalk)
+            StartWalkLoopSfx();
+
+        try
         {
-            Log("PLAY_EARLY_EXIT reason=commonOrigin_null");
-            yield break;
+            int doneCount = 0;
+            bool[] done = new bool[players.Count];
+
+            for (int i = 0; i < players.Count; i++)
+            {
+                int idx = i;
+                var pw = players[idx];
+
+                if (pw.mover == null || pw.root == null)
+                {
+                    done[idx] = true;
+                    doneCount++;
+                    continue;
+                }
+
+                float tile = Mathf.Max(0.0001f, pw.tileSize);
+
+                float secondsPerTile = tile / Mathf.Max(0.0001f, walkSpeedUnitsPerSecond);
+                float startDelay = (queueWalk && queueSpacingTiles > 0)
+                    ? (idx * queueSpacingTiles * secondsPerTile)
+                    : 0f;
+
+                StartCoroutine(WalkSinglePlayer(idx, pw, spawner, startDelay, done, () => doneCount++));
+            }
+
+            while (doneCount < players.Count)
+                yield return null;
         }
+        finally
+        {
+            StopWalkLoopSfx();
+        }
+
+        RestorePlayersAfterWalk(players, cachedColliders, cachedColliderEnabled, cachedBombEnabled);
+
+        if (delayAfterWalkSeconds > 0f)
+            yield return WaitRealtime(delayAfterWalkSeconds);
+
+        Log($"PLAY_END t_unscaled={Time.unscaledTime:0.###}");
+    }
+
+    private bool TryCollectAndSetupPlayers(
+        out List<PlayerWalkData> players,
+        out Dictionary<MovementController, Collider2D> cachedColliders,
+        out Dictionary<MovementController, bool> cachedColliderEnabled,
+        out Dictionary<MovementController, bool> cachedBombEnabled)
+    {
+        players = new List<PlayerWalkData>(4);
+        cachedColliders = new Dictionary<MovementController, Collider2D>();
+        cachedColliderEnabled = new Dictionary<MovementController, bool>();
+        cachedBombEnabled = new Dictionary<MovementController, bool>();
 
         var ids = FindObjectsByType<PlayerIdentity>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
-        Log($"FOUND_PlayerIdentity count={(ids != null ? ids.Length : 0)}");
-
         if (ids == null || ids.Length == 0)
-        {
-            Log("PLAY_EARLY_EXIT reason=no_PlayerIdentity_found");
-            yield break;
-        }
-
-        Vector2 commonOriginWorld = commonOrigin.position;
-        Log($"ORIGIN commonOriginWorld={Fmt(commonOriginWorld)} commonOriginTransformPos={Fmt((Vector2)commonOrigin.position)} thisGO={name} thisPos={Fmt((Vector2)transform.position)}");
-
-        var cachedColliders = new Dictionary<MovementController, Collider2D>();
-        var cachedColliderEnabled = new Dictionary<MovementController, bool>();
-        var cachedBombEnabled = new Dictionary<MovementController, bool>();
-
-        var players = new List<PlayerWalkData>(4);
+            return false;
 
         for (int i = 0; i < ids.Length; i++)
         {
@@ -199,32 +315,13 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
             if (!id.TryGetComponent(out move))
                 move = id.GetComponentInChildren<MovementController>(true);
 
-            if (!move)
-            {
-                Log($"P{playerId} SKIP reason=no_MovementController (idGO={id.name})");
-                continue;
-            }
-
-            if (!move.CompareTag("Player"))
-            {
-                Log($"P{playerId} SKIP reason=not_tag_Player (tag={move.tag})");
-                continue;
-            }
-
-            if (move.isDead)
-            {
-                Log($"P{playerId} SKIP reason=isDead_true");
-                continue;
-            }
+            if (!move) continue;
+            if (!move.CompareTag("Player")) continue;
+            if (move.isDead) continue;
 
             Transform root = id.transform != null ? id.transform : move.transform;
 
-            LogHierarchyState("HIER_BEFORE_SETUP", playerId, id, move, root);
-            LogPlayerState("BEFORE_SETUP", playerId, move);
-            Vector2 savedFacing = GetCurrentFacingFromMove(move);
-
             move.SetExternalMovementOverride(true);
-
             move.SetInputLocked(true, true);
 
             if (!cachedColliders.ContainsKey(move))
@@ -254,62 +351,13 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
             move.enabled = true;
             move.EnableExclusiveFromState();
 
-            ApplyFacingIdle(move, savedFacing);
-
             if (move.Rigidbody != null)
             {
                 move.Rigidbody.simulated = true;
                 move.Rigidbody.linearVelocity = Vector2.zero;
             }
 
-            Vector2 offset = GetOriginOffset(playerId);
-            Vector2 originRaw = commonOriginWorld + offset;
-
             float tile = Mathf.Max(0.0001f, move.tileSize);
-            Vector2 originRounded = RoundToGrid(originRaw, tile);
-
-            Log($"P{playerId} ORIGIN_CALC common={Fmt(commonOriginWorld)} offset={Fmt(offset)} raw={Fmt(originRaw)} tile={tile:0.###} rounded={Fmt(originRounded)}");
-
-            SnapRootToWorld(root, originRounded);
-
-            var queue = move.GetComponentInChildren<MountEggQueue>(true);
-            if (queue != null)
-            {
-                queue.RebindAndReseedNow(resetHistoryToOwnerNow: true);
-                queue.SnapQueueToOwnerNow(resetHistoryToOwnerNow: true);
-            }
-
-            var rbRoot = root != null ? root.GetComponent<Rigidbody2D>() : null;
-            if (rbRoot != null)
-            {
-                rbRoot.simulated = true;
-                rbRoot.linearVelocity = Vector2.zero;
-                rbRoot.position = originRounded;
-
-                root.position = originRounded;
-            }
-
-            LogHierarchyState("HIER_AFTER_SNAP", playerId, id, move, root);
-
-            Vector2 afterSnap = GetRootWorldPos(root, move);
-            Log($"P{playerId} AFTER_SNAP rootPosNow={Fmt(afterSnap)} deltaToOrigin={Fmt(originRounded - afterSnap)} rootRB={(rbRoot ? "YES" : "NO")} rootRbSim={(rbRoot ? rbRoot.simulated.ToString() : "NA")}");
-
-            float watchSeconds = 0f;
-            if (debugLogs && watchAfterSnapSeconds > 0f)
-                watchSeconds = Mathf.Min(watchAfterSnapSeconds, Mathf.Max(0f, delayBeforeWalkSeconds - 0.01f));
-
-            if (debugLogs && watchSeconds > 0f && root != null)
-                StartCoroutine(WatchForExternalTeleport("WATCH_AFTER_SNAP", playerId, root, originRounded, watchSeconds));
-
-            yield return null;
-
-            Vector2 after1 = GetRootWorldPos(root, move);
-            Log($"P{playerId} AFTER_1FRAME rootPosNow={Fmt(after1)} deltaFromOrigin={Fmt(after1 - originRounded)}");
-
-            LogHierarchyState("HIER_AFTER_1FRAME", playerId, id, move, root);
-
-            if (debugLogs)
-                LogActiveAnimSnapshot("ANIM_AFTER_SETUP", playerId, move, Vector2.zero, after1);
 
             players.Add(new PlayerWalkData
             {
@@ -319,24 +367,95 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
                 root = root,
                 tileSize = tile
             });
-
-            LogPlayerState("AFTER_SETUP", playerId, move);
         }
 
-        Log($"READY_TO_WALK playersCount={players.Count}");
-        if (players.Count == 0)
+        return players.Count > 0;
+    }
+
+    private IEnumerator RunEntrancePreIntro(List<PlayerWalkData> players)
+    {
+        SetCameraActive(entranceCamera, true);
+        SetCameraActive(mainCamera, false);
+
+        if (entranceCameraFollow != null)
+            entranceCameraFollow.enabled = false;
+
+        SnapPlayersToOrigin(entranceOrigin);
+        for (int i = 0; i < players.Count; i++)
         {
-            Log("PLAY_EARLY_EXIT reason=no_valid_players_after_filter");
+            if (players[i].mover != null)
+                players[i].mover.SetAllSpritesVisible(true);
+        }
+
+        yield return null;
+
+        yield return WalkPlayersToCustomGoal(players, (pid) =>
+        {
+            Vector2 gate = entranceGate.position;
+            return gate + GetOriginOffset(pid);
+        });
+
+        for (int i = 0; i < players.Count; i++)
+        {
+            if (players[i].mover != null)
+                players[i].mover.SetAllSpritesVisible(false);
+        }
+
+        if (entranceGateHiddenSeconds > 0f)
+            yield return WaitRealtime(entranceGateHiddenSeconds);
+    }
+
+    private IEnumerator TransitionEntranceCameraToMain()
+    {
+        if (!EntranceEnabled || entranceCamera == null || mainCamera == null)
             yield break;
-        }
 
-        players.Sort((a, b) => b.playerId.CompareTo(a.playerId));
+        if (entranceCameraFollow != null)
+            entranceCameraFollow.enabled = false;
 
-        if (delayBeforeWalkSeconds > 0f)
+        Vector3 startPos = entranceCamera.transform.position;
+        Vector3 endPos = mainCamera.transform.position;
+
+        endPos.z = startPos.z;
+
+        float duration = Mathf.Min(cameraTransitionSeconds, cameraTransitionMaxSeconds);
+        duration = Mathf.Max(0.05f, duration);
+
+        float t = 0f;
+
+        while (t < duration)
         {
-            Log($"WAIT_BEFORE seconds={delayBeforeWalkSeconds:0.###}");
-            yield return WaitRealtime(delayBeforeWalkSeconds);
+            if (!GamePauseController.IsPaused)
+                t += Time.unscaledDeltaTime;
+
+            float u = Mathf.Clamp01(t / duration);
+            float s = u * u * (3f - 2f * u);
+
+            entranceCamera.transform.position = Vector3.LerpUnclamped(startPos, endPos, s);
+            yield return null;
         }
+
+        entranceCamera.transform.position = endPos;
+
+        SetCameraActive(entranceCamera, false);
+        SetCameraActive(mainCamera, true);
+    }
+
+    private static void SetCameraActive(Camera cam, bool active)
+    {
+        if (cam == null) return;
+
+        cam.enabled = active;
+
+        var al = cam.GetComponent<AudioListener>();
+        if (al != null)
+            al.enabled = active;
+    }
+
+    private IEnumerator WalkPlayersToCustomGoal(List<PlayerWalkData> players, System.Func<int, Vector2> goalByPlayerId)
+    {
+        if (players == null || players.Count == 0)
+            yield break;
 
         bool anyWillWalk = false;
         for (int i = 0; i < players.Count; i++)
@@ -346,7 +465,7 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
 
             int pid = Mathf.Clamp(pw.playerId, 1, 4);
 
-            Vector2 goal = spawner.GetResolvedSpawnPosition(pid);
+            Vector2 goal = goalByPlayerId(pid);
             float tile = Mathf.Max(0.0001f, pw.tileSize);
 
             Vector2 start = RoundToGrid(GetRootWorldPos(pw.root, pw.mover), tile);
@@ -386,7 +505,7 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
                     ? (idx * queueSpacingTiles * secondsPerTile)
                     : 0f;
 
-                StartCoroutine(WalkSinglePlayer(idx, pw, spawner, startDelay, done, () => doneCount++));
+                StartCoroutine(WalkSinglePlayerToGoal(idx, pw, goalByPlayerId(pw.playerId), startDelay, done, () => doneCount++));
             }
 
             while (doneCount < players.Count)
@@ -396,15 +515,106 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
         {
             StopWalkLoopSfx();
         }
+    }
 
+    private IEnumerator WalkSinglePlayerToGoal(
+        int idx,
+        PlayerWalkData pw,
+        Vector2 goalRaw,
+        float startDelay,
+        bool[] doneFlags,
+        System.Action onDone)
+    {
+        if (startDelay > 0f)
+            yield return WaitRealtime(startDelay);
+
+        if (pw.mover == null || pw.root == null)
+        {
+            if (doneFlags != null && idx >= 0 && idx < doneFlags.Length) doneFlags[idx] = true;
+            onDone?.Invoke();
+            yield break;
+        }
+
+        int pid = Mathf.Clamp(pw.playerId, 1, 4);
+
+        float tile = Mathf.Max(0.0001f, pw.tileSize);
+
+        Vector2 start = RoundToGrid(GetRootWorldPos(pw.root, pw.mover), tile);
+        Vector2 goalRounded = RoundToGrid(goalRaw, tile);
+
+        var usedMask = obstacleMask.value != 0 ? obstacleMask : pw.mover.obstacleMask;
+
+        if (start == goalRounded)
+        {
+            if (doneFlags != null && idx >= 0 && idx < doneFlags.Length) doneFlags[idx] = true;
+            onDone?.Invoke();
+            yield break;
+        }
+
+        var path = pathfinder.FindPath(
+            start,
+            goalRounded,
+            tile,
+            usedMask,
+            pw.mover.gameObject,
+            maxNodes,
+            maxExpandSteps,
+            overlapBoxScale);
+
+        if (path == null || path.Count == 0)
+        {
+            yield return FallbackWalkTowards(pw, goalRounded, tile);
+            SnapRootToWorld(pw.root, goalRounded);
+
+            if (doneFlags != null && idx >= 0 && idx < doneFlags.Length) doneFlags[idx] = true;
+            onDone?.Invoke();
+            yield break;
+        }
+
+        for (int p = 1; p < path.Count; p++)
+            yield return MoveToTile(pw, path[p], tile);
+
+        SnapRootToWorld(pw.root, goalRounded);
+        pw.mover.ApplyDirectionFromVector(Vector2.zero);
+
+        if (doneFlags != null && idx >= 0 && idx < doneFlags.Length) doneFlags[idx] = true;
+        onDone?.Invoke();
+    }
+
+    private bool AnyPlayerNeedsWalk(List<PlayerWalkData> players, PlayersSpawner spawner)
+    {
+        for (int i = 0; i < players.Count; i++)
+        {
+            var pw = players[i];
+            if (pw.mover == null || pw.root == null) continue;
+
+            int pid = Mathf.Clamp(pw.playerId, 1, 4);
+
+            Vector2 goal = spawner.GetResolvedSpawnPosition(pid);
+            float tile = Mathf.Max(0.0001f, pw.tileSize);
+
+            Vector2 start = RoundToGrid(GetRootWorldPos(pw.root, pw.mover), tile);
+            Vector2 goalRounded = RoundToGrid(goal, tile);
+
+            if (start != goalRounded)
+                return true;
+        }
+
+        return false;
+    }
+
+    private void RestorePlayersAfterWalk(
+        List<PlayerWalkData> players,
+        Dictionary<MovementController, Collider2D> cachedColliders,
+        Dictionary<MovementController, bool> cachedColliderEnabled,
+        Dictionary<MovementController, bool> cachedBombEnabled)
+    {
         for (int i = 0; i < players.Count; i++)
         {
             var pw = players[i];
             if (pw.mover == null) continue;
 
             pw.mover.EnableExclusiveFromState();
-
-            pw.mover.ApplyDirectionFromVector(Vector2.up);
             pw.mover.ApplyDirectionFromVector(Vector2.zero);
 
             if (pw.mover.Rigidbody != null) pw.mover.Rigidbody.linearVelocity = Vector2.zero;
@@ -431,23 +641,8 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
             }
 
             pw.mover.SetExternalMovementOverride(false);
-
             pw.mover.SetInputLocked(false, false);
-
-            LogPlayerState("AFTER_WALK_IDLE", pw.playerId, pw.mover);
-            LogHierarchyState("HIER_AFTER_WALK_IDLE", pw.playerId, pw.identity, pw.mover, pw.root);
-
-            if (debugLogs)
-                LogActiveAnimSnapshot("ANIM_AFTER_WALK_IDLE", pw.playerId, pw.mover, Vector2.zero, GetRootWorldPos(pw.root, pw.mover));
         }
-
-        if (delayAfterWalkSeconds > 0f)
-        {
-            Log($"WAIT_AFTER seconds={delayAfterWalkSeconds:0.###}");
-            yield return WaitRealtime(delayAfterWalkSeconds);
-        }
-
-        Log($"PLAY_END t_unscaled={Time.unscaledTime:0.###}");
     }
 
     private IEnumerator MoveToTile(PlayerWalkData pw, Vector2 tileCenter, float tile)
@@ -474,9 +669,6 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
 
         float stepEps = Mathf.Max(reachEpsilon, tile * 0.08f);
 
-        if (debugLogs)
-            LogActiveAnimSnapshot("ANIM_TILESTEP_BEGIN", pw.playerId, pw.mover, desiredDir, startPos);
-
         while (t < maxTime)
         {
             if (GamePauseController.IsPaused)
@@ -492,16 +684,9 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
             float absRemaining = Mathf.Abs(remaining);
 
             if (absRemaining <= stepEps || Mathf.Sign(remaining) != Mathf.Sign(dirSign))
-            {
-                if (debugLogs)
-                    LogActiveAnimSnapshot("ANIM_TILESTEP_REACHED_BREAK", pw.playerId, pw.mover, Vector2.zero, pos);
                 break;
-            }
 
             pw.mover.ApplyDirectionFromVector(desiredDir);
-
-            if (debugLogs)
-                LogActiveAnimSnapshot("ANIM_TILESTEP_APPLYDIR", pw.playerId, pw.mover, desiredDir, pos);
 
             float step = walkSpeedUnitsPerSecond * Time.unscaledDeltaTime;
             Vector2 next = pos + desiredDir * step;
@@ -527,10 +712,6 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
 
         SnapRootToWorld(pw.root, tileCenter);
         pw.mover.ApplyDirectionFromVector(Vector2.zero);
-
-        if (debugLogs)
-            LogActiveAnimSnapshot("ANIM_TILESTEP_END_SNAPPED", pw.playerId, pw.mover, Vector2.zero, tileCenter);
-
         yield return null;
     }
 
@@ -562,16 +743,8 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
 
         var usedMask = obstacleMask.value != 0 ? obstacleMask : pw.mover.obstacleMask;
 
-        LogHierarchyState("HIER_BEFORE_WALK", pid, pw.identity, pw.mover, pw.root);
-        Log($"P{pid} WALK_BEGIN(QUEUE) start={Fmt(start)} goalRaw={Fmt(goal)} goalRounded={Fmt(goalRounded)} tile={tile:0.###} " +
-            $"startDelay={startDelay:0.###} obstacleMask={(obstacleMask.value != 0 ? obstacleMask.value : pw.mover.obstacleMask.value)}");
-
-        if (debugLogs)
-            LogActiveAnimSnapshot("ANIM_WALK_BEGIN", pid, pw.mover, (goalRounded - start), start);
-
         if (start == goalRounded)
         {
-            Log($"P{pid} WALK_SKIP reason=start_equals_goal");
             if (doneFlags != null && idx >= 0 && idx < doneFlags.Length) doneFlags[idx] = true;
             onDone?.Invoke();
             yield break;
@@ -589,36 +762,19 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
 
         if (path == null || path.Count == 0)
         {
-            Log($"P{pid} PATH_FAIL path={(path == null ? "NULL" : "EMPTY")} -> FALLBACK");
             yield return FallbackWalkTowards(pw, goalRounded, tile);
             SnapRootToWorld(pw.root, goalRounded);
-            Log($"P{pid} FALLBACK_DONE finalPos={Fmt(GetRootWorldPos(pw.root, pw.mover))}");
-
-            if (debugLogs)
-                LogActiveAnimSnapshot("ANIM_FALLBACK_DONE", pid, pw.mover, Vector2.zero, goalRounded);
 
             if (doneFlags != null && idx >= 0 && idx < doneFlags.Length) doneFlags[idx] = true;
             onDone?.Invoke();
             yield break;
         }
 
-        Log($"P{pid} PATH_OK nodes={path.Count} first={Fmt(path[0])} last={Fmt(path[path.Count - 1])}");
-
         for (int p = 1; p < path.Count; p++)
-        {
-            Log($"P{pid} STEP idx={p}/{path.Count - 1} target={Fmt(path[p])}");
             yield return MoveToTile(pw, path[p], tile);
-        }
 
         SnapRootToWorld(pw.root, goalRounded);
-
-        pw.mover.ApplyDirectionFromVector(Vector2.up);
         pw.mover.ApplyDirectionFromVector(Vector2.zero);
-
-        Log($"P{pid} WALK_DONE finalPos={Fmt(GetRootWorldPos(pw.root, pw.mover))}");
-
-        if (debugLogs)
-            LogActiveAnimSnapshot("ANIM_WALK_DONE", pid, pw.mover, Vector2.zero, goalRounded);
 
         if (doneFlags != null && idx >= 0 && idx < doneFlags.Length) doneFlags[idx] = true;
         onDone?.Invoke();
@@ -649,9 +805,6 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
 
             Vector2 dir = PickCardinal(delta);
             pw.mover.ApplyDirectionFromVector(dir);
-
-            if (debugLogs)
-                LogActiveAnimSnapshot("ANIM_FALLBACK_STEP", pw.playerId, pw.mover, dir, pos);
 
             float step = walkSpeedUnitsPerSecond * Time.unscaledDeltaTime;
             Vector2 next = pos + dir * step;
@@ -701,7 +854,6 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
         {
             rb.position = pos;
             rb.linearVelocity = Vector2.zero;
-
             root.position = pos;
             return;
         }
@@ -709,10 +861,7 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
         root.position = pos;
     }
 
-    private static void SnapRootToWorld(Transform root, Vector2 pos)
-    {
-        SetRootWorldPos(root, pos);
-    }
+    private static void SnapRootToWorld(Transform root, Vector2 pos) => SetRootWorldPos(root, pos);
 
     private static Vector2 PickCardinal(Vector2 delta)
     {
@@ -741,136 +890,6 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
         Debug.Log($"{LOG} {msg}");
     }
 
-    private void LogHierarchyState(string tag, int playerId, PlayerIdentity id, MovementController move, Transform root)
-    {
-        if (!debugLogs) return;
-
-        Vector2 moveT = move ? (Vector2)move.transform.position : Vector2.zero;
-        Vector2 moveRb = (move && move.Rigidbody) ? move.Rigidbody.position : moveT;
-
-        Vector2 idT = id ? (Vector2)id.transform.position : Vector2.zero;
-        Vector2 idRoot = id ? (Vector2)id.transform.root.position : Vector2.zero;
-
-        Vector2 rootT = root ? (Vector2)root.position : Vector2.zero;
-        var rbRoot = root ? root.GetComponent<Rigidbody2D>() : null;
-        Vector2 rootRb = rbRoot ? rbRoot.position : rootT;
-
-        var moveRoot = move ? move.transform.root : null;
-        Vector2 moveRootPos = moveRoot ? (Vector2)moveRoot.position : Vector2.zero;
-
-        Debug.Log($"{LOG} {tag} P{playerId} " +
-                  $"moveGO={move?.name} moveT={Fmt(moveT)} moveRb={Fmt(moveRb)} moveRoot={Fmt(moveRootPos)} " +
-                  $"idGO={id?.name} idT={Fmt(idT)} idRoot={Fmt(idRoot)} " +
-                  $"root={root?.name} rootT={Fmt(rootT)} rootRb={Fmt(rootRb)}");
-    }
-
-    private IEnumerator WatchForExternalTeleport(string tag, int pid, Transform t, Vector2 expected, float seconds)
-    {
-        if (!debugLogs || t == null)
-            yield break;
-
-        var rb = t.GetComponent<Rigidbody2D>();
-        float end = Time.unscaledTime + Mathf.Max(0f, seconds);
-
-        const float sqrThreshold = 0.01f * 0.01f;
-
-        while (Time.unscaledTime < end)
-        {
-            Vector2 now = rb != null ? rb.position : (Vector2)t.position;
-
-            if ((now - expected).sqrMagnitude > sqrThreshold)
-            {
-                Debug.Log($"{LOG} {tag} P{pid} EXTERNAL_MOVE_DETECTED now={Fmt(now)} expected={Fmt(expected)}");
-                yield break;
-            }
-
-            yield return null;
-        }
-    }
-
-    private void LogPlayerState(string tag, int playerId, MovementController move)
-    {
-        if (!debugLogs) return;
-        if (!move)
-        {
-            Debug.Log($"{LOG} {tag} P{playerId} move=NULL");
-            return;
-        }
-
-        Vector2 pos = (move.Rigidbody != null) ? move.Rigidbody.position : (Vector2)move.transform.position;
-        bool rb = move.Rigidbody != null;
-        bool sim = rb && move.Rigidbody.simulated;
-
-        int enabledAnim = 0;
-        int enabledSR = 0;
-
-        var anims = move.GetComponentsInChildren<AnimatedSpriteRenderer>(true);
-        if (anims != null)
-        {
-            for (int i = 0; i < anims.Length; i++)
-                if (anims[i] != null && anims[i].enabled)
-                    enabledAnim++;
-        }
-
-        var srs = move.GetComponentsInChildren<SpriteRenderer>(true);
-        if (srs != null)
-        {
-            for (int i = 0; i < srs.Length; i++)
-                if (srs[i] != null && srs[i].enabled)
-                    enabledSR++;
-        }
-
-        Debug.Log(
-            $"{LOG} {tag} P{playerId} pos={Fmt(pos)} moveEnabled={move.enabled} inputLocked={move.InputLocked} dead={move.isDead} " +
-            $"rb={(rb ? "YES" : "NO")} rbSim={(rb ? sim.ToString() : "NA")} timeScale={Time.timeScale:0.###} paused={GamePauseController.IsPaused} " +
-            $"enabledAnimatedSpriteRenderers={enabledAnim} enabledSpriteRenderers={enabledSR}"
-        );
-    }
-
-    private void LogActiveAnimSnapshot(string tag, int playerId, MovementController move, Vector2 desiredDir, Vector2 pos)
-    {
-        if (!debugLogs) return;
-        if (!move) { Debug.Log($"{LOG} {tag} P{playerId} move=NULL"); return; }
-
-        AnimatedSpriteRenderer best = null;
-
-        var anims = move.GetComponentsInChildren<AnimatedSpriteRenderer>(true);
-        if (anims != null)
-        {
-            for (int i = 0; i < anims.Length; i++)
-            {
-                var a = anims[i];
-                if (a == null || !a.enabled) continue;
-
-                if (a.TryGetComponent<SpriteRenderer>(out var sr) && sr != null && !sr.enabled)
-                    continue;
-
-                best = a;
-                break;
-            }
-        }
-
-        if (best == null)
-        {
-            Debug.Log($"{LOG} {tag} P{playerId} NO_ACTIVE_AnimatedSpriteRenderer dir={Fmt(desiredDir)} pos={Fmt(pos)}");
-            return;
-        }
-
-        string srDesc;
-        if (best.TryGetComponent<SpriteRenderer>(out var bestSr) && bestSr != null)
-            srDesc = $"sr=Y sprite={(bestSr.sprite ? bestSr.sprite.name : "NULL")} enabled={bestSr.enabled} flipX={bestSr.flipX}";
-        else
-            srDesc = "sr=N";
-
-        Debug.Log($"{LOG} {tag} P{playerId} ACTIVE_ANIM={best.name} enabled={best.enabled} idle={best.idle} loop={best.loop} pingPong={best.pingPong} " +
-                  $"animTime={best.animationTime:0.###} useSeq={best.useSequenceDuration} seqDur={best.sequenceDuration:0.###} " +
-                  $"curFrame={best.CurrentFrame} animLen={(best.animationSprite != null ? best.animationSprite.Length : 0)} " +
-                  $"useUnscaled={best.UseUnscaledTime} respectPause={best.RespectGamePause} " +
-                  $"{srDesc} dir={Fmt(desiredDir)} pos={Fmt(pos)}");
-    }
-
-    private static string Fmt(Vector2 v) => $"({v.x:0.###},{v.y:0.###})";
-
     private static void EnsureWalkLoopClipLoaded()
     {
         if (s_walkLoopClip != null)
@@ -883,14 +902,8 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
     {
         EnsureWalkLoopClipLoaded();
 
-        if (walkLoopSource == null)
-            return;
-
-        if (s_walkLoopClip == null)
-            return;
-
-        walkLoopSource.loop = false;
-        walkLoopSource.volume = walkLoopVolume;
+        if (walkLoopSource == null) return;
+        if (s_walkLoopClip == null) return;
 
         if (walkSfxRoutine != null)
             return;
@@ -910,10 +923,7 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
             walkSfxRoutine = null;
         }
 
-        if (walkLoopSource == null)
-            return;
-
-        if (walkLoopSource.isPlaying)
+        if (walkLoopSource != null && walkLoopSource.isPlaying)
             walkLoopSource.Stop();
     }
 
@@ -941,43 +951,5 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
 
             yield return null;
         }
-    }
-
-    private static Vector2 GetCurrentFacingFromMove(MovementController move)
-    {
-        if (!move) return Vector2.down;
-
-        var anims = move.GetComponentsInChildren<AnimatedSpriteRenderer>(true);
-        if (anims != null)
-        {
-            for (int i = 0; i < anims.Length; i++)
-            {
-                var a = anims[i];
-                if (a == null || !a.enabled) continue;
-
-                if (a.TryGetComponent<SpriteRenderer>(out var sr) && sr != null && !sr.enabled)
-                    continue;
-
-                string n = a.name.ToLowerInvariant();
-                if (n.Contains("up")) return Vector2.up;
-                if (n.Contains("down")) return Vector2.down;
-                if (n.Contains("left")) return Vector2.left;
-                if (n.Contains("right")) return Vector2.right;
-
-                break;
-            }
-        }
-
-        return Vector2.down;
-    }
-
-    private static void ApplyFacingIdle(MovementController move, Vector2 facing)
-    {
-        if (!move) return;
-
-        if (facing == Vector2.zero) facing = Vector2.down;
-
-        move.ApplyDirectionFromVector(facing);
-        move.ApplyDirectionFromVector(Vector2.zero);
     }
 }

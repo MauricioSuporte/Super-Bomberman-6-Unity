@@ -327,8 +327,13 @@ public class StageIntroTransition : MonoBehaviour
 
         bool hasPreIntro = (preIntroWalk != null && preIntroWalk.IsEnabled);
 
+        // prepara a câmera inicial ainda com a tela preta
         if (hasPreIntro)
-            preIntroWalk.PreSnapPlayersToOrigin();
+            preIntroWalk.PrepareEntranceCamerasForIntro();
+
+        // agora o snap inicial depende do modo (EntranceOrigin OU commonOrigin)
+        if (hasPreIntro)
+            preIntroWalk.PreSnapPlayersForSequence();
 
         RefreshControllers(includeInactive: false);
         DisableGameplayControllersAndHideSprites(hideLouieAndEggs: IsStage17());
