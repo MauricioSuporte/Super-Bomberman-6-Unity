@@ -957,16 +957,20 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
     {
         if (move == null) return;
 
-        // 1) limpa tudo pra não ficar sprite “pendurado” ligado
+        var rider = move.GetComponentInChildren<MountVisualController>(true);
+        if (rider != null)
+        {
+            rider.enabled = true;
+
+            rider.Bind(move);
+        }
+
         move.SetAllSpritesVisible(false);
 
-        // 2) força idle/direção neutra
         move.ApplyDirectionFromVector(Vector2.zero);
 
-        // 3) liga SOMENTE o sprite correto do estado atual
         move.EnableExclusiveFromState();
 
-        // 4) se tiver fila/egg/mount, re-sincroniza
         var queue = move.GetComponentInChildren<MountEggQueue>(true);
         if (queue != null)
         {
@@ -974,7 +978,6 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
             queue.SnapQueueToOwnerNow(resetHistoryToOwnerNow: true);
         }
 
-        // opcional: garante velocity 0
         if (move.Rigidbody != null)
             move.Rigidbody.linearVelocity = Vector2.zero;
     }
@@ -982,7 +985,13 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
     private static void HidePlayerVisual(MovementController move)
     {
         if (move == null) return;
+
         move.ApplyDirectionFromVector(Vector2.zero);
+
         move.SetAllSpritesVisible(false);
+
+        var rider = move.GetComponentInChildren<MountVisualController>(true);
+        if (rider != null)
+            rider.enabled = false;
     }
 }
