@@ -9,8 +9,6 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
 {
     public const string AbilityId = "PowerGlove";
 
-    private const string LOG = "[PowerGlove]";
-
     [SerializeField] private bool enabledAbility;
 
     [Header("State (read-only)")]
@@ -87,11 +85,6 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
     private const int CarryOrderInLayer = 6;
     private const int GroundOrderInLayer = 3;
 
-    private void Log(string msg)
-    {
-        Debug.Log($"{LOG} {msg}", this);
-    }
-
     private void Awake()
     {
         audioSource = GetComponent<AudioSource>();
@@ -123,18 +116,11 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
         if (!CompareTag("Player")) return;
         if (movement == null) return;
 
-        // FIX: se o baseline ficou capturado durante um lock externo, libera quando o lock externo acabou.
         if (movementLockCaptured && !IsGlobalLockActive() && !animLocking && !holding && !isHoldingBomb)
-        {
-            Log($"Clear stale movement baseline (lockCaptured=true, globalLock=false, holding=false). prevMovementLocked={prevMovementLocked} movement.InputLocked={movement.InputLocked}");
             movementLockCaptured = false;
-        }
 
         if ((animLocking || holding || isHoldingBomb) && !IsHeldBombValid())
-        {
-            Log($"LateUpdate emergency reset: state says holding/locking but bomb invalid. holding={holding} isHoldingBomb={isHoldingBomb} animLocking={animLocking} heldBomb={(heldBomb ? heldBomb.name : "NULL")}");
             EmergencyUnlockAndReset("LateUpdate_InvalidBomb");
-        }
     }
 
     private void Update()
@@ -167,7 +153,6 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
 
         if (!IsHeldBombValid())
         {
-            Log($"Update emergency reset: holding but bomb invalid. heldBomb={(heldBomb ? heldBomb.name : "NULL")}");
             EmergencyUnlockAndReset("Update_InvalidBomb");
             return;
         }
@@ -183,7 +168,6 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
             {
                 prevBombControllerUseAIInput = bombController.useAIInput;
                 bombControllerUseAIInputOverridden = true;
-                Log($"Captured bombController.useAIInput baseline={prevBombControllerUseAIInput}");
             }
 
             bombController.useAIInput = true;
@@ -216,21 +200,13 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
         if (movement == null)
             return;
 
-        // FIX: NÃO capturar baseline aqui. Esse método roda em loop durante escape.
-        // Se capturar baseline aqui, você “grava” InputLocked=true do escape e isso vaza pro próximo uso.
         movement.SetInputLocked(true, false);
-
-        Log($"ApplyExternalBlockAndCancel reason={reason}. holding={holding} isHoldingBomb={isHoldingBomb} animLocking={animLocking} heldBomb={(heldBomb ? heldBomb.name : "NULL")} inputLocked={movement.InputLocked} extSupp={movement.ExternalVisualSuppressed}");
 
         if (animLocking || holding || isHoldingBomb || heldBomb != null)
             CancelPowerGloveAndDestroyHeldBomb("ExternalBlockCancel");
 
-        // Garantia extra: não deixar sprite suprimido quando estamos só em lock externo
         if (!holding && !animLocking && movement.ExternalVisualSuppressed)
-        {
-            Log("ApplyExternalBlockAndCancel forcing externalVisualSuppressed=false (no holding/locking).");
             movement.SetExternalVisualSuppressed(false);
-        }
 
         RestoreBombControllerInputModeIfNeeded("ExternalBlockCancel");
     }
@@ -239,8 +215,6 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
     {
         if (!holding && !isHoldingBomb)
             return;
-
-        Log($"DestroyHeldBombIfHolding called. heldBomb={(heldBomb ? heldBomb.name : "NULL")}");
 
         holding = false;
         isHoldingBomb = false;
@@ -255,15 +229,12 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
         releaseRoutine = null;
         landWatchRoutine = null;
 
-        // FIX: hard reset visual da luva (carry/pickup)
         SetAllPickupSprites(false);
         SetAllCarrySprites(false);
 
         if (movement != null)
         {
             movement.SetExternalVisualSuppressed(false);
-
-            // garante que os sprites base do movement voltem a aparecer (caso tenham sido desligados durante pickup)
             SetMoveSprites(true);
 
             if (!movement.isDead && !movement.IsEndingStage && !movement.IsRidingPlaying())
@@ -300,8 +271,6 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
 
     private void EmergencyUnlockAndReset(string reason)
     {
-        Log($"EmergencyUnlockAndReset reason={reason} holding={holding} isHoldingBomb={isHoldingBomb} animLocking={animLocking} heldBomb={(heldBomb ? heldBomb.name : "NULL")}");
-
         if (pickupRoutine != null) StopCoroutine(pickupRoutine);
         if (releaseRoutine != null) StopCoroutine(releaseRoutine);
         if (landWatchRoutine != null) StopCoroutine(landWatchRoutine);
@@ -315,7 +284,6 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
         animLocking = false;
         activeCarryRenderer = null;
 
-        // FIX: hard reset visual da luva
         SetAllPickupSprites(false);
         SetAllCarrySprites(false);
 
@@ -413,8 +381,6 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
 
         if (bomb.GetComponent<BoilerCapturedBomb>() != null) return;
 
-        Log($"Pickup input. Found bomb={bomb.name} exploded={bomb.HasExploded} origin={origin} lastFacing={lastFacingDir}");
-
         if (pickupRoutine != null) StopCoroutine(pickupRoutine);
         pickupRoutine = StartCoroutine(PickupRoutine(bomb, lastFacingDir));
     }
@@ -424,8 +390,6 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
         animLocking = true;
 
         dir = NormalizeCardinalOrDown(dir);
-
-        Log($"PickupRoutine START bomb={(bomb ? bomb.name : "NULL")} dir={dir} inputLocked(before)={(movement ? movement.InputLocked : false)} extSupp(before)={(movement ? movement.ExternalVisualSuppressed : false)}");
 
         CaptureMovementLockBaselineIfNeeded("PickupRoutine_Start");
         movement.SetInputLocked(true, false);
@@ -546,7 +510,6 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
             {
                 prevBombControllerUseAIInput = bombController.useAIInput;
                 bombControllerUseAIInputOverridden = true;
-                Log($"PickupRoutine captured bombController.useAIInput baseline={prevBombControllerUseAIInput}");
             }
 
             bombController.useAIInput = true;
@@ -556,8 +519,6 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
 
         animLocking = false;
         pickupRoutine = null;
-
-        Log($"PickupRoutine END holding={holding} isHoldingBomb={isHoldingBomb} inputLocked(now)={(movement ? movement.InputLocked : false)} extSupp(now)={(movement ? movement.ExternalVisualSuppressed : false)} heldBomb={(heldBomb ? heldBomb.name : "NULL")}");
 
         var input = PlayerInputManager.Instance;
         if (input == null || !input.Get(movement.PlayerId, PlayerAction.ActionA))
@@ -590,8 +551,6 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
         animLocking = true;
 
         dir = NormalizeCardinalOrDown(dir);
-
-        Log($"ReleaseRoutine START dir={dir} inputLocked(before)={(movement ? movement.InputLocked : false)} extSupp(before)={(movement ? movement.ExternalVisualSuppressed : false)} heldBomb={(heldBomb ? heldBomb.name : "NULL")}");
 
         CaptureMovementLockBaselineIfNeeded("ReleaseRoutine_Start");
         movement.SetInputLocked(true, false);
@@ -695,8 +654,6 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
 
         animLocking = false;
         releaseRoutine = null;
-
-        Log($"ReleaseRoutine END holding={holding} isHoldingBomb={isHoldingBomb} inputLocked(now)={(movement ? movement.InputLocked : false)} extSupp(now)={(movement ? movement.ExternalVisualSuppressed : false)}");
 
         if (landWatchRoutine != null)
             StopCoroutine(landWatchRoutine);
@@ -969,7 +926,6 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
 
         bombController.useAIInput = prevBombControllerUseAIInput;
         bombControllerUseAIInputOverridden = false;
-        Log($"Restore bombController.useAIInput={prevBombControllerUseAIInput} reason={reason}");
     }
 
     private void CaptureMovementLockBaselineIfNeeded(string reason)
@@ -979,7 +935,6 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
 
         prevMovementLocked = movement.InputLocked;
         movementLockCaptured = true;
-        Log($"CaptureMovementLockBaseline reason={reason} prevMovementLocked={prevMovementLocked}");
     }
 
     private void RestoreMovementLockToBaseline(bool globalLock, string reason)
@@ -996,22 +951,18 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
         if (globalLock)
         {
             movement.SetInputLocked(true, false);
-            Log($"RestoreMovementLockToBaseline reason={reason} globalLock=TRUE -> set InputLocked=true");
             movementLockCaptured = false;
             return;
         }
 
         bool baseline = prevMovementLocked;
         movement.SetInputLocked(baseline, false);
-        Log($"RestoreMovementLockToBaseline reason={reason} globalLock=FALSE -> set InputLocked={baseline}");
 
         movementLockCaptured = false;
     }
 
     private void CancelPowerGloveAndDestroyHeldBomb(string reason)
     {
-        Log($"CancelPowerGloveAndDestroyHeldBomb reason={reason}");
-
         if (pickupRoutine != null) StopCoroutine(pickupRoutine);
         if (releaseRoutine != null) StopCoroutine(releaseRoutine);
         if (landWatchRoutine != null) StopCoroutine(landWatchRoutine);
@@ -1025,15 +976,12 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
         animLocking = false;
         activeCarryRenderer = null;
 
-        // FIX: hard reset visual da luva (carry/pickup)
         SetAllPickupSprites(false);
         SetAllCarrySprites(false);
 
         if (movement != null)
         {
             movement.SetExternalVisualSuppressed(false);
-
-            // garante retorno dos sprites base (caso tenham sido desligados durante pickup)
             SetMoveSprites(true);
 
             if (!movement.isDead && !movement.IsEndingStage && !movement.IsRidingPlaying())
@@ -1078,8 +1026,6 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
             RestoreMovementLockToBaseline(false, "ForceDrop_NotHolding");
             return;
         }
-
-        Log($"ForceDropIfHolding. heldBomb={(heldBomb ? heldBomb.name : "NULL")}");
 
         holding = false;
         isHoldingBomb = false;
@@ -1218,8 +1164,6 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
 
         var bombGo = heldBomb.gameObject;
         if (bombGo == null) return;
-
-        Log($"TryDestroyHeldBombByHoleUsingBombController bomb={heldBomb.name} exploded={heldBomb.HasExploded}");
 
         if (heldBomb.HasExploded)
         {
