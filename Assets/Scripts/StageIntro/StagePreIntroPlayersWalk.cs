@@ -229,7 +229,7 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
             for (int i = 0; i < players.Count; i++)
             {
                 if (players[i].mover != null)
-                    players[i].mover.SetAllSpritesVisible(true);
+                    ShowPlayerVisualSpawnLike(players[i].mover);
             }
 
             yield return TransitionEntranceCameraToMain();
@@ -384,7 +384,7 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
         for (int i = 0; i < players.Count; i++)
         {
             if (players[i].mover != null)
-                players[i].mover.SetAllSpritesVisible(true);
+                ShowPlayerVisualSpawnLike(players[i].mover);
         }
 
         yield return null;
@@ -398,7 +398,7 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
         for (int i = 0; i < players.Count; i++)
         {
             if (players[i].mover != null)
-                players[i].mover.SetAllSpritesVisible(false);
+                HidePlayerVisual(players[i].mover);
         }
 
         if (entranceGateHiddenSeconds > 0f)
@@ -951,5 +951,38 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
 
             yield return null;
         }
+    }
+
+    private static void ShowPlayerVisualSpawnLike(MovementController move)
+    {
+        if (move == null) return;
+
+        // 1) limpa tudo pra não ficar sprite “pendurado” ligado
+        move.SetAllSpritesVisible(false);
+
+        // 2) força idle/direção neutra
+        move.ApplyDirectionFromVector(Vector2.zero);
+
+        // 3) liga SOMENTE o sprite correto do estado atual
+        move.EnableExclusiveFromState();
+
+        // 4) se tiver fila/egg/mount, re-sincroniza
+        var queue = move.GetComponentInChildren<MountEggQueue>(true);
+        if (queue != null)
+        {
+            queue.RebindAndReseedNow(resetHistoryToOwnerNow: true);
+            queue.SnapQueueToOwnerNow(resetHistoryToOwnerNow: true);
+        }
+
+        // opcional: garante velocity 0
+        if (move.Rigidbody != null)
+            move.Rigidbody.linearVelocity = Vector2.zero;
+    }
+
+    private static void HidePlayerVisual(MovementController move)
+    {
+        if (move == null) return;
+        move.ApplyDirectionFromVector(Vector2.zero);
+        move.SetAllSpritesVisible(false);
     }
 }
