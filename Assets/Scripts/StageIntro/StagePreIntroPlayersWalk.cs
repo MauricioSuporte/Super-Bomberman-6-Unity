@@ -248,6 +248,8 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
                     ShowPlayerVisualSpawnLike(players[i].mover);
             }
 
+            StopWalkLoopSfx();
+
             yield return TransitionEntranceCameraToMain();
         }
         else
@@ -409,11 +411,16 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
         var ordered = new List<PlayerWalkData>(players);
         ordered.Sort((a, b) => a.playerId.CompareTo(b.playerId));
 
-        yield return WalkPlayersToCustomGoal(ordered, (pid) =>
-        {
-            Vector2 gate = entranceGate.position;
-            return gate + GetOriginOffset(pid);
-        }, sequentialByPlayerId: true);
+        yield return WalkPlayersToCustomGoal(
+            ordered,
+            (pid) =>
+            {
+                Vector2 gate = entranceGate.position;
+                return gate + GetOriginOffset(pid);
+            },
+            sequentialByPlayerId: true,
+            stopSfxOnExit: false
+        );
 
         for (int i = 0; i < players.Count; i++)
         {
@@ -471,7 +478,11 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
             al.enabled = active;
     }
 
-    private IEnumerator WalkPlayersToCustomGoal(List<PlayerWalkData> players, System.Func<int, Vector2> goalByPlayerId, bool sequentialByPlayerId)
+    private IEnumerator WalkPlayersToCustomGoal(
+        List<PlayerWalkData> players,
+        System.Func<int, Vector2> goalByPlayerId,
+        bool sequentialByPlayerId,
+        bool stopSfxOnExit)
     {
         if (players == null || players.Count == 0)
             yield break;
@@ -521,7 +532,6 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
                         onDone: null);
 
                     HidePlayerVisual(pw.mover);
-
                     yield return null;
                 }
 
@@ -558,7 +568,8 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
         }
         finally
         {
-            StopWalkLoopSfx();
+            if (stopSfxOnExit)
+                StopWalkLoopSfx();
         }
     }
 
