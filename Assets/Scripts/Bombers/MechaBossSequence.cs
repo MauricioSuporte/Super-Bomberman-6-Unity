@@ -6,6 +6,9 @@ using UnityEngine.Tilemaps;
 
 public class MechaBossSequence : MonoBehaviour
 {
+    private const string LOG = "[MechaBossSeq]";
+    private const string MDLOG = "[MechaIntroDir]";
+
     private static readonly WaitForSeconds _waitForSeconds1 = new(1f);
     private static readonly WaitForSeconds _waitForSeconds2 = new(2f);
 
@@ -64,6 +67,10 @@ public class MechaBossSequence : MonoBehaviour
     [SerializeField] private bool playRandomGoodSfx = true;
     [SerializeField, Range(0f, 1f)] private float goodSfxVolume = 1f;
 
+    [Header("Debug (Surgical)")]
+    [SerializeField] private bool debugMechaIntroDir = true;
+    [SerializeField] private int watchLogEveryNFrames = 15;
+
     private static bool s_goodSfxPlayedThisStage;
     private static AudioClip[] s_goodClips;
 
@@ -98,6 +105,9 @@ public class MechaBossSequence : MonoBehaviour
     readonly Dictionary<MovementController, bool> cachedColliderEnabled = new();
 
     int playersSafetyLocks;
+
+    Coroutine watchCoroutine;
+    private readonly Dictionary<int, int> _lastBadLogFrameByPid = new();
 
     void Awake()
     {
@@ -160,9 +170,13 @@ public class MechaBossSequence : MonoBehaviour
         EnsurePlayersRefs();
         SetLouieAbilitiesLockedForAll(true);
 
+        StartWatch("FirstSpawn_WaitStageIntro");
+        LogPlayersSnapshot("FirstSpawn_BEGIN");
+
         if (StageIntroTransition.Instance != null)
         {
             PushPlayersSafety();
+            LogPlayersSnapshot("FirstSpawn_SafetyPushed_WaitStageIntroTransition");
             try
             {
                 while (StageIntroTransition.Instance.IntroRunning)
@@ -183,10 +197,13 @@ public class MechaBossSequence : MonoBehaviour
 
         LockPlayers(true);
         ForcePlayersMountedUpIfNeeded();
+        LogPlayersSnapshot("FirstSpawn_AfterPause_LockedForcedUp");
 
         PushPlayersSafety();
+        LogPlayersSnapshot("FirstSpawn_SafetyPushed_Delay2s");
         yield return _waitForSeconds2;
         PopPlayersSafety();
+        LogPlayersSnapshot("FirstSpawn_SafetyPopped_StartMechaIntro0");
 
         StartMechaIntro(0);
     }
@@ -210,6 +227,9 @@ public class MechaBossSequence : MonoBehaviour
         ForcePlayersMountedUpIfNeeded();
         PushPlayersSafety();
 
+        StartWatch($"StartMechaIntro_{index}");
+        LogPlayersSnapshot($"StartMechaIntro_{index}_AfterLockForceSafety");
+
         StartCoroutine(MechaIntroRoutine(mechas[index]));
     }
 
@@ -225,17 +245,23 @@ public class MechaBossSequence : MonoBehaviour
         LockPlayers(true);
         ForcePlayersMountedUpIfNeeded();
 
+        LogPlayersSnapshot($"MechaIntroRoutine_BEGIN mecha={(mecha != null ? mecha.name : "null")}");
+
         try
         {
+            LogPlayersSnapshot("BeforeOpenGateRoutine");
             yield return StartCoroutine(OpenGateRoutine());
+            LogPlayersSnapshot("AfterOpenGateRoutine");
 
             ForcePlayersMountedUpIfNeeded();
+            LogPlayersSnapshot("AfterForcePlayersMountedUp_PostGateOpen");
 
             bool isGolden = mecha == goldenMecha;
 
             if (isGolden)
             {
                 yield return _waitForSeconds2;
+                LogPlayersSnapshot("Golden_BeforeFlash");
 
                 if (StageMechaIntroController.Instance != null)
                 {
@@ -247,6 +273,7 @@ public class MechaBossSequence : MonoBehaviour
                         EnsurePlayersRefs();
                         MoveAllPlayersToBossIntroPositions();
                         ForcePlayersMountedUpIfNeeded();
+                        LogPlayersSnapshot("Golden_OnLastBlack_MovePlayersToIntroPositions");
                     });
                 }
                 else
@@ -256,8 +283,11 @@ public class MechaBossSequence : MonoBehaviour
                         EnsurePlayersRefs();
                         MoveAllPlayersToBossIntroPositions();
                         ForcePlayersMountedUpIfNeeded();
+                        LogPlayersSnapshot("Golden_NoController_MovePlayersToIntroPositions");
                     }
                 }
+
+                LogPlayersSnapshot("Golden_AfterFlash");
             }
 
             if (mecha == null) yield break;
@@ -330,8 +360,11 @@ public class MechaBossSequence : MonoBehaviour
                 float moveSpeed = mecha.speed > 0f ? mecha.speed : 2f;
 
                 yield return MoveMechaVertically(mecha, startPos, midPos, moveSpeed);
+                LogPlayersSnapshot("Golden_AfterMove_StartToMid");
                 yield return _waitForSeconds2;
+                LogPlayersSnapshot("Golden_AfterWait2s_AtMid");
                 yield return MoveMechaVertically(mecha, midPos, endPos, moveSpeed);
+                LogPlayersSnapshot("Golden_AfterMove_MidToEnd");
 
                 if (aiMove != null)
                     aiMove.enabled = true;
@@ -341,13 +374,16 @@ public class MechaBossSequence : MonoBehaviour
                 aiMove.SetAIDirection(Vector2.zero);
 
             yield return _waitForSeconds2;
+            LogPlayersSnapshot("AfterWait2s_BeforeEnableBossAI");
 
             if (bossAI != null) bossAI.enabled = true;
 
             if (mecha != null)
                 mecha.SetExplosionInvulnerable(false);
 
+            LogPlayersSnapshot("BeforeCloseGateRoutine");
             yield return StartCoroutine(CloseGateRoutine());
+            LogPlayersSnapshot("AfterCloseGateRoutine");
 
             if (!itemLoopStarted && groundTilemap != null && itemPrefabs != null && itemPrefabs.Length > 0)
             {
@@ -363,6 +399,8 @@ public class MechaBossSequence : MonoBehaviour
             MechaIntroRunning = false;
             if (StageMechaIntroController.Instance != null)
                 StageMechaIntroController.Instance.SetIntroRunning(false);
+
+            LogPlayersSnapshot("MechaIntroRoutine_END_Normal");
         }
         finally
         {
@@ -376,6 +414,9 @@ public class MechaBossSequence : MonoBehaviour
             MechaIntroRunning = false;
             if (StageMechaIntroController.Instance != null)
                 StageMechaIntroController.Instance.SetIntroRunning(false);
+
+            StopWatch();
+            LogPlayersSnapshot("MechaIntroRoutine_END_Finally");
         }
     }
 
@@ -1014,5 +1055,134 @@ public class MechaBossSequence : MonoBehaviour
 
         cachedPlayerColliders.Clear();
         cachedColliderEnabled.Clear();
+    }
+
+    private void MLog(string msg)
+    {
+        if (!debugMechaIntroDir) return;
+        Debug.Log($"{MDLOG} f={Time.frameCount} t={Time.time:F3} {msg}", this);
+    }
+
+    private void SeqLog(string msg)
+    {
+        if (!debugMechaIntroDir) return;
+        Debug.Log($"{LOG} f={Time.frameCount} t={Time.time:F3} {msg}", this);
+    }
+
+    private static bool IsAnimVisible(AnimatedSpriteRenderer r)
+    {
+        if (r == null) return false;
+        if (!r.enabled) return false;
+
+        if (r.TryGetComponent(out SpriteRenderer sr) && sr != null)
+            return sr.enabled;
+
+        return true;
+    }
+
+    private static string VisualEnabledSummary(MovementController p)
+    {
+        if (p == null) return "null";
+
+        var parts = new List<string>(8);
+
+        void Add(string label, AnimatedSpriteRenderer r)
+        {
+            if (IsAnimVisible(r))
+                parts.Add(label);
+        }
+
+        Add("footUp", p.spriteRendererUp);
+        Add("footDown", p.spriteRendererDown);
+        Add("footLeft", p.spriteRendererLeft);
+        Add("footRight", p.spriteRendererRight);
+
+        Add("mntUp", p.mountedSpriteUp);
+        Add("mntDown", p.mountedSpriteDown);
+        Add("mntLeft", p.mountedSpriteLeft);
+        Add("mntRight", p.mountedSpriteRight);
+
+        if (parts.Count == 0) return "none";
+        return string.Join(",", parts);
+    }
+
+    private void LogPlayersSnapshot(string reason)
+    {
+        if (!debugMechaIntroDir) return;
+
+        EnsurePlayersRefs();
+
+        SeqLog($"SNAPSHOT: {reason} | players={players.Count} safetyLocks={playersSafetyLocks} MechaIntroRunning={MechaIntroRunning}");
+        for (int i = 0; i < players.Count; i++)
+        {
+            var p = players[i];
+            if (p == null) continue;
+
+            string vis = VisualEnabledSummary(p);
+            SeqLog($"  P{p.PlayerId} name={p.name} face={p.FacingDirection} locked={p.InputLocked} mounted={p.IsMountedOnLouie} enabled={p.enabled} rbSim={(p.Rigidbody != null ? p.Rigidbody.simulated : false)} vis=[{vis}]");
+        }
+    }
+
+    private void StartWatch(string contextTag)
+    {
+        if (!debugMechaIntroDir) return;
+
+        StopWatch();
+        _lastBadLogFrameByPid.Clear();
+        watchCoroutine = StartCoroutine(WatchPlayersFacingUpWhileMechaIntro(contextTag));
+        MLog($"WATCH_START tag={contextTag}");
+    }
+
+    private void StopWatch()
+    {
+        if (watchCoroutine != null)
+        {
+            StopCoroutine(watchCoroutine);
+            watchCoroutine = null;
+            MLog("WATCH_STOP");
+        }
+    }
+
+    private IEnumerator WatchPlayersFacingUpWhileMechaIntro(string contextTag)
+    {
+        while (MechaIntroRunning)
+        {
+            if (watchLogEveryNFrames > 0 && (Time.frameCount % watchLogEveryNFrames) != 0)
+            {
+                yield return null;
+                continue;
+            }
+
+            EnsurePlayersRefs();
+
+            for (int i = 0; i < players.Count; i++)
+            {
+                var p = players[i];
+                if (p == null) continue;
+
+                int pid = Mathf.Clamp(p.PlayerId, 1, 4);
+
+                bool faceIsUp = (p.FacingDirection == Vector2.up);
+
+                string vis = VisualEnabledSummary(p);
+                bool looksUp = vis.Contains("Up");
+
+                if (!faceIsUp || !looksUp)
+                {
+                    int lastFrame = 0;
+                    _lastBadLogFrameByPid.TryGetValue(pid, out lastFrame);
+
+                    if (Time.frameCount - lastFrame >= 30)
+                    {
+                        _lastBadLogFrameByPid[pid] = Time.frameCount;
+
+                        MLog($"BAD-UP [{contextTag}] P{pid} faceIsUp={faceIsUp} looksUp={looksUp} face={p.FacingDirection} locked={p.InputLocked} mounted={p.IsMountedOnLouie} vis=[{vis}]");
+                        LogPlayersSnapshot($"BAD-UP detected [{contextTag}] on P{pid}");
+                    }
+                }
+            }
+
+            yield return null;
+        }
     }
 }
