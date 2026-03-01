@@ -56,6 +56,11 @@ public class BossEscapeOnLastLife : MonoBehaviour
 
     private readonly GridAStarPathfinder2D pathfinder = new();
 
+    static int s_escapeRunningCount;
+    public static bool AnyBossEscapeRunning => s_escapeRunningCount > 0;
+
+    bool escapeRegistered;
+
     private void Awake()
     {
         if (!boss) boss = GetComponent<MovementController>();
@@ -81,6 +86,7 @@ public class BossEscapeOnLastLife : MonoBehaviour
         }
 
         UnlockPlayers();
+        UnregisterEscapeRunning();
     }
 
     private void OnDamaged(int amount)
@@ -98,19 +104,23 @@ public class BossEscapeOnLastLife : MonoBehaviour
         if (!escapeArmed) return;
 
         escapeStarted = true;
+        RegisterEscapeRunning();
         StartCoroutine(EscapeRoutine());
     }
 
     private IEnumerator EscapeRoutine()
     {
-        if (!boss) yield break;
+        if (!boss)
+        {
+            FinalizeEscape(GetBossPos());
+            yield break;
+        }
 
         RefreshPlayersRefs();
         LockPlayers();
 
         LockBossForEscape();
 
-        // Drop do item exatamente quando a fuga começa
         TryDropItemOnEscapeStart();
 
         var gate = FindFirstObjectByType<EndStageGateAnimated>();
@@ -172,6 +182,20 @@ public class BossEscapeOnLastLife : MonoBehaviour
             FinalizeEscape(goal);
     }
 
+    private void RegisterEscapeRunning()
+    {
+        if (escapeRegistered) return;
+        escapeRegistered = true;
+        s_escapeRunningCount++;
+    }
+
+    private void UnregisterEscapeRunning()
+    {
+        if (!escapeRegistered) return;
+        escapeRegistered = false;
+        s_escapeRunningCount = Mathf.Max(0, s_escapeRunningCount - 1);
+    }
+
     private void TryDropItemOnEscapeStart()
     {
         if (escapeDropItemPrefab == null)
@@ -216,6 +240,7 @@ public class BossEscapeOnLastLife : MonoBehaviour
         }
 
         UnlockPlayers();
+        UnregisterEscapeRunning();
 
         if (destroyBossGameObject)
         {

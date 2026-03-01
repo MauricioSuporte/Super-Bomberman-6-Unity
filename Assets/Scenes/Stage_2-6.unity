@@ -11722,7 +11722,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2258062271764064381, guid: a009117f38ad56d4fb5e2e5fa7445a16, type: 3}
       propertyPath: life
-      value: 6
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 2258062271764064381, guid: a009117f38ad56d4fb5e2e5fa7445a16, type: 3}
       propertyPath: hitInvulnerableDuration
@@ -12456,10 +12456,6 @@ MonoBehaviour:
   pingPong: 0
   disableOffsetsIfThisObjectHasRigidbody2D: 1
   disableOffsetsIfStandaloneRoot: 1
-  debug: 0
-  debugLogEverySeconds: 0.25
-  debugLogFrameAdvance: 1
-  debugLogEarlyReturns: 1
 --- !u!212 &1472254272
 SpriteRenderer:
   serializedVersion: 2
@@ -12548,7 +12544,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1aa1ef842d43d4449a4b672797ff89e5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameSession
-  activePlayerCount: 4
+  activePlayerCount: 1
 --- !u!4 &1522516126
 Transform:
   m_ObjectHideFlags: 0
