@@ -397,6 +397,7 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
             entranceCameraFollow.enabled = false;
 
         SnapPlayersToOrigin(entranceOrigin);
+
         for (int i = 0; i < players.Count; i++)
         {
             if (players[i].mover != null)
@@ -405,11 +406,14 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
 
         yield return null;
 
-        yield return WalkPlayersToCustomGoal(players, (pid) =>
+        var ordered = new List<PlayerWalkData>(players);
+        ordered.Sort((a, b) => a.playerId.CompareTo(b.playerId));
+
+        yield return WalkPlayersToCustomGoal(ordered, (pid) =>
         {
             Vector2 gate = entranceGate.position;
             return gate + GetOriginOffset(pid);
-        });
+        }, sequentialByPlayerId: true);
 
         for (int i = 0; i < players.Count; i++)
         {
@@ -463,17 +467,17 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
 
         cam.enabled = active;
 
-        var al = cam.GetComponent<AudioListener>();
-        if (al != null)
+        if (cam.TryGetComponent<AudioListener>(out var al))
             al.enabled = active;
     }
 
-    private IEnumerator WalkPlayersToCustomGoal(List<PlayerWalkData> players, System.Func<int, Vector2> goalByPlayerId)
+    private IEnumerator WalkPlayersToCustomGoal(List<PlayerWalkData> players, System.Func<int, Vector2> goalByPlayerId, bool sequentialByPlayerId)
     {
         if (players == null || players.Count == 0)
             yield break;
 
         bool anyWillWalk = false;
+
         for (int i = 0; i < players.Count; i++)
         {
             var pw = players[i];
@@ -499,6 +503,31 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
 
         try
         {
+            if (sequentialByPlayerId)
+            {
+                for (int i = 0; i < players.Count; i++)
+                {
+                    var pw = players[i];
+
+                    if (pw.mover == null || pw.root == null)
+                        continue;
+
+                    yield return WalkSinglePlayerToGoal(
+                        idx: i,
+                        pw: pw,
+                        goalRaw: goalByPlayerId(pw.playerId),
+                        startDelay: 0f,
+                        doneFlags: null,
+                        onDone: null);
+
+                    HidePlayerVisual(pw.mover);
+
+                    yield return null;
+                }
+
+                yield break;
+            }
+
             int doneCount = 0;
             bool[] done = new bool[players.Count];
 
