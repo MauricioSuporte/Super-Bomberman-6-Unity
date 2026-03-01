@@ -102,9 +102,7 @@ public class MovementController : MonoBehaviour, IKillable
 
     [Header("Axis Lock")]
     [SerializeField] private bool enableCorridorAxisLock = true;
-
     [SerializeField, Range(0.0001f, 0.25f)] private float corridorCenterEpsilon = 0.06f;
-
     [SerializeField, Range(0.2f, 1.2f)] private float corridorSolidProbeSizeMul = 0.9f;
 
     [Header("Special Pass (by Tag)")]
@@ -119,7 +117,6 @@ public class MovementController : MonoBehaviour, IKillable
     private float accPixelsY;
 
     private Vector2 lastMoveDirCardinal = Vector2.zero;
-
     private float PixelWorldStep => (pixelsPerUnit > 0) ? (1f / pixelsPerUnit) : 0.0625f;
 
     [Header("Inactivity (external)")]
@@ -185,6 +182,28 @@ public class MovementController : MonoBehaviour, IKillable
     private int enemyLayer;
 
     private bool inactivityMountedDownOverride;
+
+    [SerializeField] private bool externalMovementOverride;
+    public bool ExternalMovementOverride => externalMovementOverride;
+
+    [Header("Debug (Surgical)")]
+    [SerializeField] private bool debugDirectionSurgical = false;
+
+    private const string DLOG = "[MoveDir]";
+
+    private string DWho()
+    {
+        return $"{name}(P{playerId})";
+    }
+
+    private void SetFacingDirection(Vector2 newFace, string reason)
+    {
+        var prev = facingDirection;
+        facingDirection = newFace;
+
+        if (debugDirectionSurgical && prev != facingDirection)
+            Debug.Log($"{DLOG} {DWho()} f={Time.frameCount} t={Time.time:F3} facing {prev} -> {facingDirection} REASON={reason}", this);
+    }
 
     public void SetPlayerId(int id)
     {
@@ -307,11 +326,10 @@ public class MovementController : MonoBehaviour, IKillable
             return;
 
         var st = PlayerPersistentStats.Get(playerId);
-        bool before = isMounted;
         isMounted = st.MountedLouie != MountedType.None;
 
         if (facingDirection == Vector2.zero)
-            facingDirection = Vector2.down;
+            SetFacingDirection(Vector2.down, "SyncMountedFromPersistent");
     }
 
     private bool IsPlayer() => CompareTag("Player");
@@ -433,45 +451,23 @@ public class MovementController : MonoBehaviour, IKillable
 
     public void ApplyDirectionFromVector(Vector2 dir)
     {
-        DLog($"ApplyDirectionFromVector(dir={dir}) ENTER");
-
         if (IsRidingPlaying())
-        {
-            DLog("ApplyDirectionFromVector EARLY-RETURN: IsRidingPlaying()");
             return;
-        }
 
         if (inactivityMountedDownOverride)
-        {
-            DLog("ApplyDirectionFromVector EARLY-RETURN: inactivityMountedDownOverride");
             return;
-        }
 
         hasInput = dir != Vector2.zero;
 
         direction = dir;
         if (dir != Vector2.zero)
-        {
-            facingDirection = dir;
-            DLog($"ApplyDirectionFromVector sets facingDirection -> {facingDirection}");
-        }
-        else
-        {
-            // aqui é onde costuma “vazar” o DOWN:
-            DLog("ApplyDirectionFromVector received ZERO (does NOT change facingDirection)");
-        }
+            SetFacingDirection(dir, "ApplyDirectionFromVector");
 
         if (externalVisualSuppressed || visualOverrideActive)
-        {
-            DLog($"ApplyDirectionFromVector EARLY-RETURN: externalVisualSuppressed={externalVisualSuppressed} OR visualOverrideActive={visualOverrideActive}");
             return;
-        }
 
         if (IsSpriteLocked)
-        {
-            DLog("ApplyDirectionFromVector EARLY-RETURN: IsSpriteLocked");
             return;
-        }
 
         if (isMounted)
         {
@@ -482,17 +478,12 @@ public class MovementController : MonoBehaviour, IKillable
             if (target == null)
                 target = mountedSpriteDown;
 
-            DLog($"ApplyDirectionFromVector (mounted) -> SetDirection(dir={dir}, target={(target != null ? target.name : "null")})");
             SetDirection(dir, target);
-            DLog("ApplyDirectionFromVector EXIT (mounted)");
             return;
         }
 
         var foot = PickFootRenderer(dir);
-        DLog($"ApplyDirectionFromVector (foot) -> SetDirection(dir={(dir == Vector2.zero ? Vector2.zero : dir)}, foot={(foot != null ? foot.name : "null")})");
         SetDirection(dir == Vector2.zero ? Vector2.zero : dir, foot);
-
-        DLog("ApplyDirectionFromVector EXIT");
     }
 
     private Vector2 GetFacing(Vector2 dir)
@@ -600,7 +591,6 @@ public class MovementController : MonoBehaviour, IKillable
             return;
 
         float rawMoveWorld = GetRawMoveWorldPerFixedFrame();
-
         float moveWorld = GetQuantizedMoveWorldPerFixedFrame(direction, rawMoveWorld);
 
         Vector2 position = Rigidbody.position;
@@ -1022,29 +1012,18 @@ public class MovementController : MonoBehaviour, IKillable
 
     protected void SetDirection(Vector2 newDirection, AnimatedSpriteRenderer spriteRenderer)
     {
-        DLog($"SetDirection(newDir={newDirection}, renderer={(spriteRenderer != null ? spriteRenderer.name : "null")}) ENTER");
-
         if (visualOverrideActive || inactivityMountedDownOverride)
-        {
-            DLog("SetDirection EARLY-RETURN: visualOverrideActive OR inactivityMountedDownOverride");
             return;
-        }
 
         if (IsRidingPlaying())
-        {
-            DLog("SetDirection EARLY-RETURN: IsRidingPlaying()");
             return;
-        }
 
         direction = newDirection;
         if (newDirection != Vector2.zero)
-            facingDirection = newDirection;
+            SetFacingDirection(newDirection, "SetDirection");
 
         if (IsSpriteLocked)
-        {
-            DLog("SetDirection EARLY-RETURN: IsSpriteLocked");
             return;
-        }
 
         if (spriteRenderer == null)
         {
@@ -1053,7 +1032,6 @@ public class MovementController : MonoBehaviour, IKillable
                 activeSpriteRenderer.idle = (direction == Vector2.zero);
                 activeSpriteRenderer.RefreshFrame();
             }
-            DLog("SetDirection EXIT (renderer null)");
             return;
         }
 
@@ -1076,8 +1054,6 @@ public class MovementController : MonoBehaviour, IKillable
 
         activeSpriteRenderer.RefreshFrame();
         ApplyFlipForHorizontal(facingDirection);
-
-        DLog("SetDirection EXIT");
     }
 
     protected virtual void OnTriggerEnter2D(Collider2D other)
@@ -1484,7 +1460,7 @@ public class MovementController : MonoBehaviour, IKillable
 
         if (isMounted)
         {
-            facingDirection = Vector2.down;
+            SetFacingDirection(Vector2.down, "PlayEndStageSequence");
 
             var r = PickMountedRenderer(Vector2.down);
             if (r == null)
@@ -1537,17 +1513,10 @@ public class MovementController : MonoBehaviour, IKillable
 
     public void SetInputLocked(bool locked, bool forceIdle)
     {
-        DLog($"SetInputLocked(locked={locked}, forceIdle={forceIdle}) BEFORE");
-
         inputLocked = locked;
 
         if (locked && forceIdle)
-        {
-            DLog("SetInputLocked -> ForceIdleUp()");
             ForceIdleUp();
-        }
-
-        DLog($"SetInputLocked(...) AFTER");
     }
 
     public void SetInputLocked(bool locked)
@@ -1557,19 +1526,18 @@ public class MovementController : MonoBehaviour, IKillable
 
     public void ForceIdleUp()
     {
-        DLog("ForceIdleUp() ENTER");
-
         direction = Vector2.zero;
         hasInput = false;
 
-        facingDirection = Vector2.up;
+        SetFacingDirection(Vector2.up, "ForceIdleUp");
+
+        DisableAllFootSprites();
+        DisableAllMountedSprites();
 
         if (spriteRendererUp != null)
             SetDirection(Vector2.zero, spriteRendererUp);
         else
             SetDirection(Vector2.zero, activeSpriteRenderer);
-
-        DLog("ForceIdleUp() EXIT");
     }
 
     public void ForceIdleUpConsideringMount()
@@ -1577,7 +1545,7 @@ public class MovementController : MonoBehaviour, IKillable
         direction = Vector2.zero;
         hasInput = false;
 
-        facingDirection = Vector2.up;
+        SetFacingDirection(Vector2.up, "ForceIdleUpConsideringMount");
 
         if (isMounted)
         {
@@ -1599,16 +1567,13 @@ public class MovementController : MonoBehaviour, IKillable
 
     public void ForceMountedUpExclusive()
     {
-        DLog("ForceMountedUpExclusive() ENTER");
-
         direction = Vector2.zero;
         hasInput = false;
 
-        facingDirection = Vector2.up;
+        SetFacingDirection(Vector2.up, "ForceMountedUpExclusive");
 
         if (!isMounted)
         {
-            DLog("ForceMountedUpExclusive -> not mounted, calling ForceIdleUp()");
             ForceIdleUp();
             return;
         }
@@ -1632,8 +1597,6 @@ public class MovementController : MonoBehaviour, IKillable
         var rider = GetComponentInChildren<MountVisualController>(true);
         if (rider != null)
             rider.ForceOnlyUpEnabled();
-
-        DLog("ForceMountedUpExclusive() EXIT");
     }
 
     public void SetExplosionInvulnerable(bool value)
@@ -1741,7 +1704,7 @@ public class MovementController : MonoBehaviour, IKillable
             DisableAllMountedSprites();
 
             if (facingDirection == Vector2.zero)
-                facingDirection = Vector2.down;
+                SetFacingDirection(Vector2.down, "SetMountedOnLouie");
 
             direction = Vector2.zero;
             hasInput = false;
@@ -1823,7 +1786,7 @@ public class MovementController : MonoBehaviour, IKillable
         if (faceDir == Vector2.zero)
             faceDir = Vector2.down;
 
-        facingDirection = faceDir;
+        SetFacingDirection(faceDir, "ForceFacingDirection");
 
         if (isDead || isEndingStage) return;
         if (IsRidingPlaying()) return;
@@ -2084,9 +2047,6 @@ public class MovementController : MonoBehaviour, IKillable
         Rigidbody.MovePosition(QuantizeToPixelGrid(worldPos));
     }
 
-    [SerializeField] private bool externalMovementOverride;
-    public bool ExternalMovementOverride => externalMovementOverride;
-
     public void SetExternalMovementOverride(bool active)
     {
         externalMovementOverride = active;
@@ -2100,9 +2060,7 @@ public class MovementController : MonoBehaviour, IKillable
             ResetPixelAccumulators();
 
             if (Rigidbody != null)
-            {
                 Rigidbody.linearVelocity = Vector2.zero;
-            }
         }
         else
         {
@@ -2113,33 +2071,5 @@ public class MovementController : MonoBehaviour, IKillable
             if (Rigidbody != null)
                 Rigidbody.linearVelocity = Vector2.zero;
         }
-    }
-
-    // =========================
-    // [Surgical Direction Logs]
-    // =========================
-    [Header("Debug (Surgical)")]
-    [SerializeField] private bool debugDirectionSurgical = false;
-
-    private const string DLOG = "[MoveDir]";
-
-    private string DWho()
-    {
-        // playerId pode mudar em runtime; ok para log
-        return $"{name}(P{playerId})";
-    }
-
-    private string DState()
-    {
-        string active = (activeSpriteRenderer != null) ? activeSpriteRenderer.name : "null";
-        return $"dir={direction} face={facingDirection} inputLocked={inputLocked} mounted={isMounted} " +
-               $"riding={IsRidingPlaying()} visOv={visualOverrideActive} extSupp={externalVisualSuppressed} " +
-               $"spriteLocked={IsSpriteLocked} active={active}";
-    }
-
-    private void DLog(string msg)
-    {
-        if (!debugDirectionSurgical) return;
-        Debug.Log($"{DLOG} {DWho()} f={Time.frameCount} t={Time.time:F3} {msg} | {DState()}", this);
     }
 }
