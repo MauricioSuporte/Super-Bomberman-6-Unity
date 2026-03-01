@@ -4975,7 +4975,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6d30c2de090977b438401e2e569ac171, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::StagePreIntroPlayersWalk
-  debugLogs: 1
   enabledPreIntro: 1
   commonOrigin: {fileID: 786849906}
   perPlayerOriginOffset:
@@ -12549,7 +12548,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1aa1ef842d43d4449a4b672797ff89e5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameSession
-  activePlayerCount: 1
+  activePlayerCount: 4
 --- !u!4 &1522516126
 Transform:
   m_ObjectHideFlags: 0

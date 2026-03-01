@@ -6,11 +6,6 @@ using UnityEngine;
 [RequireComponent(typeof(AudioSource))]
 public sealed class StagePreIntroPlayersWalk : MonoBehaviour
 {
-    private const string LOG = "[PreIntroWalk]";
-
-    [Header("Debug")]
-    [SerializeField] private bool debugLogs = true;
-
     [Header("Enable")]
     [SerializeField] private bool enabledPreIntro = true;
 
@@ -66,19 +61,14 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
     [SerializeField, Min(0f)] private float delayBeforeWalkSeconds = 0.15f;
     [SerializeField, Min(0f)] private float delayAfterWalkSeconds = 0.05f;
 
-    [Header("Debug / Watch External Move")]
+    [Header("External Move Guard")]
     [SerializeField, Min(0f)] private float watchAfterSnapSeconds = 0.35f;
 
     private const string WalkLoopClipResourcesPath = "Sounds/walk";
     private static AudioClip s_walkLoopClip;
 
     private const float WalkStepSfxIntervalSeconds = 0.3f;
-
     [SerializeField, Range(0f, 1f)] private float walkLoopVolume = 0.8f;
-
-    private Coroutine walkSfxRoutine;
-    private bool walkSfxActive;
-    private float nextWalkStepSfxAtUnscaled;
 
     [Header("Queue Walk (fila)")]
     [SerializeField] private bool queueWalk = true;
@@ -86,11 +76,21 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
     [Tooltip("Distância em tiles entre um player e o próximo (ex: 1 = 1 tile).")]
     [SerializeField, Min(0)] private int queueSpacingTiles = 1;
 
+    private Coroutine walkSfxRoutine;
+    private bool walkSfxActive;
+    private float nextWalkStepSfxAtUnscaled;
+
     private readonly GridAStarPathfinder2D pathfinder = new();
     private AudioSource walkLoopSource;
 
     public bool IsEnabled => enabledPreIntro;
-    public bool EntranceEnabled => enabledEntrancePreIntro && entranceOrigin != null && entranceGate != null && entranceCamera != null && mainCamera != null;
+
+    public bool EntranceEnabled =>
+        enabledEntrancePreIntro &&
+        entranceOrigin != null &&
+        entranceGate != null &&
+        entranceCamera != null &&
+        mainCamera != null;
 
     private struct PlayerWalkData
     {
@@ -139,6 +139,12 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
         }
 
         SnapPlayersToOrigin(commonOrigin);
+    }
+
+    public void ForceMainCameraActive()
+    {
+        SetCameraActive(entranceCamera, false);
+        SetCameraActive(mainCamera, true);
     }
 
     private void SnapPlayersToOrigin(Transform originTransform)
@@ -219,8 +225,6 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
 
     public IEnumerator Play(PlayersSpawner spawner)
     {
-        Log($"PLAY_BEGIN enabledPreIntro={enabledPreIntro} EntranceEnabled={EntranceEnabled} spawner={(spawner ? spawner.name : "NULL")}");
-
         StopWalkLoopSfx();
 
         if (!enabledPreIntro || spawner == null)
@@ -303,8 +307,6 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
 
         if (delayAfterWalkSeconds > 0f)
             yield return WaitRealtime(delayAfterWalkSeconds);
-
-        Log($"PLAY_END t_unscaled={Time.unscaledTime:0.###}");
     }
 
     private bool TryCollectAndSetupPlayers(
@@ -442,7 +444,6 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
 
         Vector3 startPos = entranceCamera.transform.position;
         Vector3 endPos = mainCamera.transform.position;
-
         endPos.z = startPos.z;
 
         float duration = Mathf.Min(cameraTransitionSeconds, cameraTransitionMaxSeconds);
@@ -463,6 +464,8 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
         }
 
         entranceCamera.transform.position = endPos;
+
+        _ = cameraSwapEpsilon;
 
         SetCameraActive(entranceCamera, false);
         SetCameraActive(mainCamera, true);
@@ -519,7 +522,6 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
                 for (int i = 0; i < players.Count; i++)
                 {
                     var pw = players[i];
-
                     if (pw.mover == null || pw.root == null)
                         continue;
 
@@ -560,7 +562,8 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
                     ? (idx * queueSpacingTiles * secondsPerTile)
                     : 0f;
 
-                StartCoroutine(WalkSinglePlayerToGoal(idx, pw, goalByPlayerId(pw.playerId), startDelay, done, () => doneCount++));
+                StartCoroutine(WalkSinglePlayerToGoal(
+                    idx, pw, goalByPlayerId(pw.playerId), startDelay, done, () => doneCount++));
             }
 
             while (doneCount < players.Count)
@@ -590,8 +593,6 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
             onDone?.Invoke();
             yield break;
         }
-
-        int pid = Mathf.Clamp(pw.playerId, 1, 4);
 
         float tile = Mathf.Max(0.0001f, pw.tileSize);
 
@@ -940,12 +941,6 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
         }
     }
 
-    private void Log(string msg)
-    {
-        if (!debugLogs) return;
-        Debug.Log($"{LOG} {msg}");
-    }
-
     private static void EnsureWalkLoopClipLoaded()
     {
         if (s_walkLoopClip != null)
@@ -960,9 +955,7 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
 
         if (walkLoopSource == null) return;
         if (s_walkLoopClip == null) return;
-
-        if (walkSfxRoutine != null)
-            return;
+        if (walkSfxRoutine != null) return;
 
         walkSfxActive = true;
         nextWalkStepSfxAtUnscaled = Time.unscaledTime;
@@ -1067,22 +1060,5 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
         queue.ForceVisible(true);
         queue.RebindAndReseedNow(resetHistoryToOwnerNow: true);
         queue.SnapQueueToOwnerNow(resetHistoryToOwnerNow: true);
-    }
-
-    public void ForceMainCameraActive()
-    {
-        if (entranceCamera != null)
-        {
-            entranceCamera.enabled = false;
-            if (entranceCamera.TryGetComponent<AudioListener>(out var al))
-                al.enabled = false;
-        }
-
-        if (mainCamera != null)
-        {
-            mainCamera.enabled = true;
-            if (mainCamera.TryGetComponent<AudioListener>(out var al))
-                al.enabled = true;
-        }
     }
 }
