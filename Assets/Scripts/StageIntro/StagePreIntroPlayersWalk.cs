@@ -151,6 +151,7 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
             return;
 
         Vector2 originWorld = originTransform.position;
+        bool isEntrance = (entranceOrigin != null && originTransform == entranceOrigin);
 
         for (int i = 0; i < ids.Length; i++)
         {
@@ -159,8 +160,7 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
 
             int playerId = Mathf.Clamp(id.playerId, 1, 4);
 
-            MovementController move = null;
-            if (!id.TryGetComponent(out move))
+            if (!id.TryGetComponent(out MovementController move))
                 move = id.GetComponentInChildren<MovementController>(true);
 
             if (!move) continue;
@@ -170,7 +170,23 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
             Transform root = id.transform != null ? id.transform : move.transform;
 
             float tile = Mathf.Max(0.0001f, move.tileSize);
+
             Vector2 offset = GetOriginOffset(playerId);
+
+            if (isEntrance)
+            {
+                float xTiles = playerId switch
+                {
+                    1 => 0f,
+                    2 => 1f,
+                    3 => -1f,
+                    4 => 2f,
+                    _ => 0f
+                };
+
+                offset += new Vector2(xTiles * tile, 0f);
+            }
+
             Vector2 raw = originWorld + offset;
             Vector2 rounded = RoundToGrid(raw, tile);
 
