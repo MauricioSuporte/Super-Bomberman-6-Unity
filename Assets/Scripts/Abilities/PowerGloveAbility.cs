@@ -95,7 +95,6 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
 
     private void OnDisable()
     {
-        ForceDropIfHolding();
         SetAllPickupSprites(false);
         SetAllCarrySprites(false);
         activeCarryRenderer = null;
@@ -122,13 +121,17 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
         if (!enabledAbility) return;
         if (!CompareTag("Player")) return;
         if (GamePauseController.IsPaused) return;
-        if (ClownMaskBoss.BossIntroRunning) return;
-
         if (movement == null || movement.isDead) return;
 
         if (StageIntroTransition.Instance != null &&
             (StageIntroTransition.Instance.IntroRunning || StageIntroTransition.Instance.EndingRunning))
             return;
+
+        if (IsExternalBlockingDismount())
+        {
+            ApplyExternalBlockAndCancel();
+            return;
+        }
 
         if (movement.InputLocked) return;
 
@@ -172,6 +175,91 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
         UpdateCarryVisual();
     }
 
+    static bool IsExternalBlockingDismount()
+    {
+        if (MechaBossSequence.MechaIntroRunning)
+            return true;
+
+        if (BossIntroFlowBase.BossIntroRunning)
+            return true;
+
+        if (BossEscapeOnLastLife.AnyBossEscapeRunning)
+            return true;
+
+        var mechaIntro = StageMechaIntroController.Instance;
+        if (mechaIntro != null && (mechaIntro.IntroRunning || mechaIntro.FlashRunning))
+            return true;
+
+        return false;
+    }
+
+    private void ApplyExternalBlockAndCancel()
+    {
+        if (movement == null)
+            return;
+
+        CaptureMovementLockBaselineIfNeeded();
+        movement.SetInputLocked(true, false);
+
+        if (animLocking || holding || isHoldingBomb || heldBomb != null)
+            CancelPowerGloveAndDestroyHeldBomb();
+
+        RestoreBombControllerInputModeIfNeeded();
+    }
+
+    private void CancelPowerGloveAndDestroyHeldBomb()
+    {
+        if (pickupRoutine != null) StopCoroutine(pickupRoutine);
+        if (releaseRoutine != null) StopCoroutine(releaseRoutine);
+        if (landWatchRoutine != null) StopCoroutine(landWatchRoutine);
+
+        pickupRoutine = null;
+        releaseRoutine = null;
+        landWatchRoutine = null;
+
+        holding = false;
+        isHoldingBomb = false;
+        animLocking = false;
+        activeCarryRenderer = null;
+
+        SetAllPickupSprites(false);
+        SetAllCarrySprites(false);
+
+        if (movement != null)
+        {
+            movement.SetExternalVisualSuppressed(false);
+
+            if (!movement.isDead && !movement.IsEndingStage && !movement.IsRidingPlaying())
+                movement.EnableExclusiveFromState();
+        }
+
+        if (heldBomb != null)
+        {
+            var go = heldBomb.gameObject;
+
+            heldBomb = null;
+            heldBombCollider = null;
+            heldBombAnim = null;
+            heldBombRb = null;
+            heldBombNotifier = null;
+            heldBombSpriteRenderer = null;
+
+            if (go != null)
+                Destroy(go);
+        }
+        else
+        {
+            heldBomb = null;
+            heldBombCollider = null;
+            heldBombAnim = null;
+            heldBombRb = null;
+            heldBombNotifier = null;
+            heldBombSpriteRenderer = null;
+        }
+
+        RestoreMovementLockToBaseline(IsGlobalLockActive());
+    }
+
     private void LoadThrowSfxClipsIfNeeded()
     {
         if (throwSfxClips != null && throwSfxClips.Length == ThrowSfxPaths.Length)
@@ -213,6 +301,12 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
         if (movement.IsMountedOnLouie) return;
         if (movement.IsRidingPlaying()) return;
 
+        if (IsExternalBlockingDismount())
+        {
+            ApplyExternalBlockAndCancel();
+            return;
+        }
+
         var input = PlayerInputManager.Instance;
         if (input == null) return;
 
@@ -253,6 +347,12 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
         movement.SetInputLocked(true, false);
 
         CacheBombRefs(bomb);
+
+        if (IsExternalBlockingDismount())
+        {
+            ApplyExternalBlockAndCancel();
+            yield break;
+        }
 
         if (!IsHeldBombValid())
         {
@@ -309,6 +409,13 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
 
         while (t < dur)
         {
+            if (IsExternalBlockingDismount())
+            {
+                if (pick != null) pick.enabled = false;
+                ApplyExternalBlockAndCancel();
+                yield break;
+            }
+
             if (!IsHeldBombValid())
             {
                 if (pick != null) pick.enabled = false;
@@ -323,6 +430,13 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
             heldBomb.transform.position = new Vector3(p.x, p.y + y, z);
 
             yield return null;
+        }
+
+        if (IsExternalBlockingDismount())
+        {
+            if (pick != null) pick.enabled = false;
+            ApplyExternalBlockAndCancel();
+            yield break;
         }
 
         if (!IsHeldBombValid())
@@ -368,6 +482,12 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
         if (!holding) return;
         if (animLocking) return;
 
+        if (IsExternalBlockingDismount())
+        {
+            ApplyExternalBlockAndCancel();
+            return;
+        }
+
         if (!IsHeldBombValid())
         {
             EmergencyUnlockAndReset();
@@ -386,6 +506,12 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
 
         CaptureMovementLockBaselineIfNeeded();
         movement.SetInputLocked(true, false);
+
+        if (IsExternalBlockingDismount())
+        {
+            ApplyExternalBlockAndCancel();
+            yield break;
+        }
 
         SetAllPickupSprites(false);
         SetAllCarrySprites(false);
@@ -435,6 +561,13 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
 
         while (t < dur)
         {
+            if (IsExternalBlockingDismount())
+            {
+                if (pick != null) pick.enabled = false;
+                ApplyExternalBlockAndCancel();
+                yield break;
+            }
+
             if (!IsHeldBombValid())
             {
                 if (pick != null) pick.enabled = false;
@@ -488,6 +621,12 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
     private void UpdateCarryVisual()
     {
         if (!holding) return;
+
+        if (IsExternalBlockingDismount())
+        {
+            ApplyExternalBlockAndCancel();
+            return;
+        }
 
         if (!IsHeldBombValid())
         {
@@ -559,6 +698,13 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
 
         while (t < timeout)
         {
+            if (IsExternalBlockingDismount())
+            {
+                ApplyExternalBlockAndCancel();
+                landWatchRoutine = null;
+                yield break;
+            }
+
             t += Time.deltaTime;
 
             if (bomb == null || bomb.HasExploded)
@@ -571,6 +717,7 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
             bool aligned =
                 Mathf.Abs(pos.x - Mathf.Round(pos.x / movement.tileSize) * movement.tileSize) <= 0.02f &&
                 Mathf.Abs(pos.y - Mathf.Round(pos.y / movement.tileSize) * movement.tileSize) <= 0.02f;
+
             if (bomb.IsBeingPunched || bomb.IsBeingKicked)
             {
                 yield return null;
@@ -755,8 +902,14 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
         if (!movementLockCaptured)
             return;
 
-        bool baseline = prevMovementLocked;
+        if (globalLock)
+        {
+            movement.SetInputLocked(true, false);
+            movementLockCaptured = false;
+            return;
+        }
 
+        bool baseline = prevMovementLocked;
         movement.SetInputLocked(baseline, false);
 
         movementLockCaptured = false;
@@ -918,12 +1071,20 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
 
     private bool IsGlobalLockActive()
     {
-        return
-            GamePauseController.IsPaused ||
-            MechaBossSequence.MechaIntroRunning ||
-            ClownMaskBoss.BossIntroRunning ||
-            (StageIntroTransition.Instance != null &&
-             (StageIntroTransition.Instance.IntroRunning || StageIntroTransition.Instance.EndingRunning));
+        if (GamePauseController.IsPaused)
+            return true;
+
+        if (ClownMaskBoss.BossIntroRunning)
+            return true;
+
+        if (IsExternalBlockingDismount())
+            return true;
+
+        if (StageIntroTransition.Instance != null &&
+            (StageIntroTransition.Instance.IntroRunning || StageIntroTransition.Instance.EndingRunning))
+            return true;
+
+        return false;
     }
 
     private AnimatedSpriteRenderer GetPickupSprite(Vector2 dir)
