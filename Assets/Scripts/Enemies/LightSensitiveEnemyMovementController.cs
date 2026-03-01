@@ -55,9 +55,15 @@ public sealed class LightSensitiveEnemyMovementController : JunctionTurningEnemy
     private static FieldInfo _fiActive;
     private static FieldInfo _fiBlackoutImage;
 
+    private bool _startedOnce;
+    private bool _baseSpeedCaptured;
+
     void OnEnable()
     {
         DisableAllVisualsHard();
+
+        if (_startedOnce)
+            ResyncAfterEnable();
     }
 
     protected override void Awake()
@@ -80,8 +86,7 @@ public sealed class LightSensitiveEnemyMovementController : JunctionTurningEnemy
         if (stageLayerMask.value == 0)
             stageLayerMask = LayerMask.GetMask("Stage");
 
-        var audioSource = GetComponent<AudioSource>();
-        if (audioSource != null)
+        if (TryGetComponent<AudioSource>(out var audioSource))
         {
             audioSource.playOnAwake = false;
             audioSource.loop = false;
@@ -94,7 +99,12 @@ public sealed class LightSensitiveEnemyMovementController : JunctionTurningEnemy
             _health.Died += OnHealthDiedInternal;
         }
 
-        _baseSpeed = speed;
+        if (!_baseSpeedCaptured)
+        {
+            _baseSpeed = speed;
+            _baseSpeedCaptured = true;
+        }
+
         DisableAllVisualsHard();
     }
 
@@ -112,7 +122,11 @@ public sealed class LightSensitiveEnemyMovementController : JunctionTurningEnemy
 
     protected override void Start()
     {
-        _baseSpeed = speed;
+        if (!_baseSpeedCaptured)
+        {
+            _baseSpeed = speed;
+            _baseSpeedCaptured = true;
+        }
 
         SnapToGrid();
         ChooseInitialDirection();
@@ -120,6 +134,22 @@ public sealed class LightSensitiveEnemyMovementController : JunctionTurningEnemy
         ForceSyncFromBlackout();
         UpdateEnemySpriteDirection(direction);
 
+        DecideNextTile();
+
+        _startedOnce = true;
+    }
+
+    private void ResyncAfterEnable()
+    {
+        speed = _baseSpeed;
+
+        SnapToGrid();
+
+        if (direction == Vector2.zero)
+            ChooseInitialDirection();
+
+        ForceSyncFromBlackout();
+        UpdateEnemySpriteDirection(direction);
         DecideNextTile();
     }
 
