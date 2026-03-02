@@ -94,7 +94,6 @@ public sealed class PushIndestructibleTileHandler : MonoBehaviour, IIndestructib
             toPos.z = visualZOverride;
         }
 
-        // Determine movement axis for wiggle
         bool moveIsHorizontal = Mathf.Abs(toPos.x - fromPos.x) >= Mathf.Abs(toPos.y - fromPos.y);
 
         Color prevFromColor = indestructibleTilemap.GetColor(fromCell);
@@ -136,7 +135,7 @@ public sealed class PushIndestructibleTileHandler : MonoBehaviour, IIndestructib
                     while (wiggleTimer >= wiggleIntervalSeconds)
                     {
                         wiggleTimer -= wiggleIntervalSeconds;
-                        wiggleSign = -wiggleSign; // alterna: + / -
+                        wiggleSign = -wiggleSign;
                     }
 
                     Vector3 off = moveIsHorizontal
