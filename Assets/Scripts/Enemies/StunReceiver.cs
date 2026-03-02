@@ -188,10 +188,18 @@ public class StunReceiver : MonoBehaviour
 
         UnfreezeAnimationsKeepCurrentFrame();
 
+        if (stunAnimatedRenderer != null)
+        {
+            stunAnimatedRenderer.idle = true;
+            stunAnimatedRenderer.loop = false;
+            SetAnimEnabled(stunAnimatedRenderer, false);
+        }
+
+        customStunActive = false;
+
         spriteBases.Clear();
         animStates.Clear();
 
-        customStunActive = false;
         stunVisualSuppressedByDamaged = false;
         hadFrozenBeforeDamaged = false;
     }
