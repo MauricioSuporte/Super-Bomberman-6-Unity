@@ -655,7 +655,6 @@ public class StunReceiver : MonoBehaviour
             }
         }
 
-        spriteBases.Clear();
         animStates.Clear();
 
         customStunControllersRestored = false;
@@ -772,6 +771,9 @@ public class StunReceiver : MonoBehaviour
         if (wantsCustomAnim)
         {
             EnterCustomStunOverride();
+
+            if (shakeWhileStunned)
+                CaptureSpriteBases();
         }
         else
         {
