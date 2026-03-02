@@ -7738,7 +7738,7 @@ MonoBehaviour:
   gameplayRoot: {fileID: 679601670}
   stage17SceneName: Stage_1-7
   skinSelectMenu: {fileID: 0}
-  skipPreIntroWalkNextRound_Inspector: 0
+  skipPreIntroWalkNextRound_Inspector: 1
   preIntroWalk: {fileID: 786849905}
 --- !u!114 &1389130173
 MonoBehaviour:
@@ -8190,6 +8190,22 @@ PrefabInstance:
     - target: {fileID: 4621539847840114947, guid: ce721f59039141f44914bc55bc788281, type: 3}
       propertyPath: m_Name
       value: SunMask
+      objectReference: {fileID: 0}
+    - target: {fileID: 4873712702074537722, guid: ce721f59039141f44914bc55bc788281, type: 3}
+      propertyPath: maxBounds.x
+      value: 3.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 4873712702074537722, guid: ce721f59039141f44914bc55bc788281, type: 3}
+      propertyPath: maxBounds.y
+      value: 3.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 4873712702074537722, guid: ce721f59039141f44914bc55bc788281, type: 3}
+      propertyPath: minBounds.x
+      value: -9.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 4873712702074537722, guid: ce721f59039141f44914bc55bc788281, type: 3}
+      propertyPath: minBounds.y
+      value: -7.5
       objectReference: {fileID: 0}
     - target: {fileID: 6140704871382649758, guid: ce721f59039141f44914bc55bc788281, type: 3}
       propertyPath: m_Name
