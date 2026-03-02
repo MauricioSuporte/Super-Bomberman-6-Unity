@@ -5414,7 +5414,7 @@ MonoBehaviour:
   entranceGate: {fileID: 704221593}
   entranceCamera: {fileID: 1934522010}
   mainCamera: {fileID: 1083402155}
-  entranceCameraFollow: {fileID: 1083402153}
+  entranceCameraFollow: {fileID: 0}
   entranceGateHiddenSeconds: 1
   cameraSwapEpsilon: 0.05
   cameraTransitionMaxSeconds: 3.5
@@ -7517,7 +7517,6 @@ GameObject:
   - component: {fileID: 1083402156}
   - component: {fileID: 1083402155}
   - component: {fileID: 1083402154}
-  - component: {fileID: 1083402153}
   - component: {fileID: 1083402152}
   m_Layer: 0
   m_Name: Main Camera
@@ -7546,25 +7545,6 @@ MonoBehaviour:
   m_CropFrameX: 1
   m_CropFrameY: 1
   m_StretchFill: 0
---- !u!114 &1083402153
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1083402151}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 76189a1af81d3fa4faa37300e3ca1ec4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::CameraFollowClamp2D
-  followAllPlayers: 0
-  boundsCollider: {fileID: 1577369973}
-  followOffset: {x: 0, y: 0}
-  smoothTime: 0.1
-  pixelSnap: 1
-  pixelsPerUnit: 16
-  refreshPlayersEverySeconds: 0.1
 --- !u!81 &1083402154
 AudioListener:
   m_ObjectHideFlags: 0
@@ -8057,7 +8037,6 @@ GameObject:
   - component: {fileID: 1934522011}
   - component: {fileID: 1934522010}
   - component: {fileID: 1934522009}
-  - component: {fileID: 1934522008}
   - component: {fileID: 1934522007}
   m_Layer: 0
   m_Name: Entrance Camera
@@ -8086,25 +8065,6 @@ MonoBehaviour:
   m_CropFrameX: 1
   m_CropFrameY: 1
   m_StretchFill: 0
---- !u!114 &1934522008
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1934522006}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 76189a1af81d3fa4faa37300e3ca1ec4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::CameraFollowClamp2D
-  followAllPlayers: 1
-  boundsCollider: {fileID: 1577369973}
-  followOffset: {x: 0, y: 0}
-  smoothTime: 0.1
-  pixelSnap: 1
-  pixelsPerUnit: 16
-  refreshPlayersEverySeconds: 0.1
 --- !u!81 &1934522009
 AudioListener:
   m_ObjectHideFlags: 0
