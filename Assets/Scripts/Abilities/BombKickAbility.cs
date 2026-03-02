@@ -101,7 +101,11 @@ public class BombKickAbility : MonoBehaviour, IMovementAbility
             direction,
             tileSize,
             bombObstacles,
-            bombController != null ? bombController.destructibleTiles : null
+            bombController != null ? bombController.destructibleTiles : null,
+            LayerMask.GetMask("Player", "Stage", "Bomb", "Enemy", "Louie"),
+            0.60f,
+            0.90f,
+            false
         );
 
         if (!kicked)

@@ -11722,7 +11722,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2258062271764064381, guid: a009117f38ad56d4fb5e2e5fa7445a16, type: 3}
       propertyPath: life
-      value: 99
+      value: 6
       objectReference: {fileID: 0}
     - target: {fileID: 2258062271764064381, guid: a009117f38ad56d4fb5e2e5fa7445a16, type: 3}
       propertyPath: hitInvulnerableDuration
@@ -11738,7 +11738,7 @@ PrefabInstance:
       objectReference: {fileID: 672307155}
     - target: {fileID: 8243230538853254392, guid: a009117f38ad56d4fb5e2e5fa7445a16, type: 3}
       propertyPath: bombFuseTime
-      value: 5
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 8243230538853254392, guid: a009117f38ad56d4fb5e2e5fa7445a16, type: 3}
       propertyPath: stageBoundsTiles

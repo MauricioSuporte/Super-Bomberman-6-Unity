@@ -97,8 +97,18 @@ public class Bomb : MonoBehaviour, IMagnetPullable
 
     private static readonly WaitForFixedUpdate waitFixed = new();
 
-    // Magnet safety: origin blocker (like PushIndestructibleTileHandler)
     private GameObject magnetOriginBlocker;
+
+    private GameObject kickOriginBlocker;
+    private LayerMask kickBlockMoveMask;
+    private float kickOverlapBoxSize = 0.60f;
+    private float kickOriginBlockerSize = 0.90f;
+    private bool kickOriginBlockerUseTrigger = false;
+
+    private int stageLayer;
+    private int stageMask;
+    private const string TagDestructibles = "Destructibles";
+    private const string TagIndestructibles = "Indestructibles";
 
     private void Awake()
     {
@@ -121,16 +131,15 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         }
 
         if (magnetPullSfx == null)
-        {
             magnetPullSfx = Resources.Load<AudioClip>("Sounds/magnetbomb");
-        }
 
         if (cachedRubberBounceClip == null)
-        {
             cachedRubberBounceClip = Resources.Load<AudioClip>(RubberBounceClipResourcesPath);
-        }
 
         lastPos = rb.position;
+
+        stageLayer = LayerMask.NameToLayer("Stage");
+        stageMask = stageLayer >= 0 ? (1 << stageLayer) : 0;
     }
 
     private void FixedUpdate()
@@ -262,6 +271,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         }
 
         RemoveMagnetOriginBlocker();
+        RemoveKickOriginBlocker();
     }
 
     private void RecalculateCharactersInsideAt(Vector2 worldPos)
@@ -929,6 +939,21 @@ public class Bomb : MonoBehaviour, IMagnetPullable
 
     public bool StartKick(Vector2 direction, float tileSize, LayerMask obstacleMask, Tilemap destructibleTilemap)
     {
+        LayerMask defaultBlockMoveMask = LayerMask.GetMask("Player", "Bomb", "Enemy", "Louie");
+        return StartKick(direction, tileSize, obstacleMask, destructibleTilemap,
+            defaultBlockMoveMask, 0.60f, 0.90f, false);
+    }
+
+    public bool StartKick(
+        Vector2 direction,
+        float tileSize,
+        LayerMask obstacleMask,
+        Tilemap destructibleTilemap,
+        LayerMask blockMoveMask,
+        float overlapBoxSize,
+        float originBlockerSize,
+        bool originBlockerUseTrigger)
+    {
         if (!CanBeKicked || direction == Vector2.zero)
             return false;
 
@@ -937,6 +962,11 @@ public class Bomb : MonoBehaviour, IMagnetPullable
 
         kickObstacleMask = obstacleMask | LayerMask.GetMask("Enemy");
         kickDestructibleTilemap = destructibleTilemap;
+
+        kickBlockMoveMask = blockMoveMask;
+        kickOverlapBoxSize = Mathf.Clamp(overlapBoxSize, 0.1f, 1.5f);
+        kickOriginBlockerSize = Mathf.Clamp(originBlockerSize, 0.2f, 1.2f);
+        kickOriginBlockerUseTrigger = originBlockerUseTrigger;
 
         Vector2 origin = SnapToGrid(rb.position, tileSize);
 
@@ -981,9 +1011,9 @@ public class Bomb : MonoBehaviour, IMagnetPullable
                     if (IsKickBlocked(back))
                         break;
 
-                    TryPlayKickSfx_StopOthers(GetKickBounceClip(), bounceSfxVolume); continue;
+                    TryPlayKickSfx_StopOthers(GetKickBounceClip(), bounceSfxVolume);
+                    continue;
                 }
-
                 break;
             }
 
@@ -1001,20 +1031,58 @@ public class Bomb : MonoBehaviour, IMagnetPullable
                     if (TileHasCharacter(back, LayerMask.GetMask("Player", "Enemy")))
                         break;
 
-                    TryPlayKickSfx_StopOthers(GetKickBounceClip(), bounceSfxVolume); continue;
+                    TryPlayKickSfx_StopOthers(GetKickBounceClip(), bounceSfxVolume);
+                    continue;
                 }
 
                 break;
             }
 
+            if (IsBlockedByMaskAtWorld(next, kickBlockMoveMask, kickOverlapBoxSize, debugFrom: "KickRoutine:preMove"))
+            {
+                if (IsRubberBomb)
+                {
+                    kickDirection = -kickDirection;
+
+                    Vector2 back = currentTileCenter + kickDirection * kickTileSize;
+
+                    if (IsKickBlocked(back))
+                        break;
+
+                    if (TileHasCharacter(back, LayerMask.GetMask("Player", "Enemy")))
+                        break;
+
+                    if (IsBlockedByMaskAtWorld(back, kickBlockMoveMask, kickOverlapBoxSize))
+                        break;
+
+                    TryPlayKickSfx_StopOthers(GetKickBounceClip(), bounceSfxVolume);
+                    continue;
+                }
+
+                break;
+            }
+
+            EnsureKickOriginBlocker(currentTileCenter, kickOriginBlockerSize, kickOriginBlockerUseTrigger);
+
             float travelTime = kickTileSize / Mathf.Max(0.0001f, kickSpeed);
             float elapsed = 0f;
             Vector2 start = currentTileCenter;
 
+            bool cancelAndReturn = false;
+
             while (elapsed < travelTime)
             {
                 if (HasExploded || !isKicked)
+                {
+                    RemoveKickOriginBlocker();
                     break;
+                }
+
+                if (IsBlockedByMaskAtWorld(next, kickBlockMoveMask, kickOverlapBoxSize))
+                {
+                    cancelAndReturn = true;
+                    break;
+                }
 
                 elapsed += Time.fixedDeltaTime;
 
@@ -1030,6 +1098,46 @@ public class Bomb : MonoBehaviour, IMagnetPullable
             if (HasExploded || !isKicked)
                 break;
 
+            if (cancelAndReturn)
+            {
+                rb.position = start;
+                transform.position = start;
+                lastPos = start;
+                currentTileCenter = start;
+
+                RemoveKickOriginBlocker();
+
+                if (IsRubberBomb)
+                {
+                    kickDirection = -kickDirection;
+                    TryPlayKickSfx_StopOthers(GetKickBounceClip(), bounceSfxVolume);
+                    continue;
+                }
+
+                break;
+            }
+
+            if (IsBlockedByMaskAtWorld(next, kickBlockMoveMask, kickOverlapBoxSize))
+            {
+                rb.position = start;
+                transform.position = start;
+                lastPos = start;
+                currentTileCenter = start;
+
+                RemoveKickOriginBlocker();
+
+                if (IsRubberBomb)
+                {
+                    kickDirection = -kickDirection;
+                    TryPlayKickSfx_StopOthers(GetKickBounceClip(), bounceSfxVolume);
+                    continue;
+                }
+
+                break;
+            }
+
+            RemoveKickOriginBlocker();
+
             currentTileCenter = next;
             lastPos = next;
 
@@ -1037,12 +1145,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
             transform.position = next;
 
             if (owner != null)
-            {
                 owner.NotifyBombAt(next, gameObject);
-
-                if (HasExploded || !isKicked)
-                    break;
-            }
         }
 
         rb.position = currentTileCenter;
@@ -1119,6 +1222,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         }
 
         RemoveMagnetOriginBlocker();
+        RemoveKickOriginBlocker();
     }
 
     private void OnTriggerEnter2D(Collider2D other)
@@ -1181,7 +1285,6 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         FuseSeconds = Mathf.Max(0.01f, fuseSeconds);
     }
 
-    // Backward-compatible overload (older call sites)
     public bool StartMagnetPull(
         Vector2 directionToMagnet,
         float tileSize,
@@ -1204,7 +1307,6 @@ public class Bomb : MonoBehaviour, IMagnetPullable
             false);
     }
 
-    // New overload used by MagnetBomb (safety like PushIndestructibleTileHandler)
     public bool StartMagnetPull(
         Vector2 directionToMagnet,
         float tileSize,
@@ -1277,11 +1379,9 @@ public class Bomb : MonoBehaviour, IMagnetPullable
             Vector2 start = currentTileCenter;
             Vector2 next = currentTileCenter + kickDirection * kickTileSize;
 
-            // If destination is blocked, stop immediately
             if (IsBlockedByMaskAtWorld(next, blockMoveMask, overlapBoxSize))
                 break;
 
-            // Block the origin tile while moving out (prevents player entering same tile mid-move)
             EnsureMagnetOriginBlocker(start, originBlockerSize, originBlockerUseTrigger);
 
             float baseSpeed = Mathf.Max(0.0001f, magnetPullSpeed);
@@ -1300,7 +1400,6 @@ public class Bomb : MonoBehaviour, IMagnetPullable
                     yield break;
                 }
 
-                // Continuous destination check: if someone arrives/appears there, cancel & go back
                 if (IsBlockedByMaskAtWorld(next, blockMoveMask, overlapBoxSize))
                 {
                     cancelAndReturn = true;
@@ -1329,7 +1428,6 @@ public class Bomb : MonoBehaviour, IMagnetPullable
                 break;
             }
 
-            // Final check at arrival
             if (IsBlockedByMaskAtWorld(next, blockMoveMask, overlapBoxSize))
             {
                 rb.position = start;
@@ -1341,7 +1439,6 @@ public class Bomb : MonoBehaviour, IMagnetPullable
                 break;
             }
 
-            // Step complete
             RemoveMagnetOriginBlocker();
 
             currentTileCenter = next;
@@ -1369,27 +1466,48 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         magnetRoutine = null;
     }
 
-    private bool IsBlockedByMaskAtWorld(Vector2 worldCenter, LayerMask mask, float boxSize)
+    private bool IsBlockedByMaskAtWorld(Vector2 worldCenter, LayerMask mask, float boxSize, string debugFrom = null)
     {
         Vector2 size = Vector2.one * (kickTileSize * Mathf.Max(0.1f, boxSize));
+
         Collider2D[] hits = Physics2D.OverlapBoxAll(worldCenter, size, 0f, mask);
-
-        if (hits == null || hits.Length == 0)
-            return false;
-
-        for (int i = 0; i < hits.Length; i++)
+        if (hits != null && hits.Length > 0)
         {
-            var h = hits[i];
-            if (h == null)
-                continue;
+            for (int i = 0; i < hits.Length; i++)
+            {
+                var h = hits[i];
+                if (h == null) continue;
+                if (h.gameObject == gameObject) continue;
+                if (h.isTrigger) continue;
 
-            if (h.gameObject == gameObject)
-                continue;
+                if (h.transform.IsChildOf(transform))
+                    continue;
 
-            if (h.isTrigger)
-                continue;
+                if (h.gameObject.name == "KickBombOriginBlocker" || h.gameObject.name == "MagnetBombOriginBlocker")
+                    continue;
 
-            return true;
+                return true;
+            }
+        }
+
+        if (stageMask != 0)
+        {
+            Collider2D[] stageHits = Physics2D.OverlapBoxAll(worldCenter, size, 0f, stageMask);
+            if (stageHits != null && stageHits.Length > 0)
+            {
+                for (int i = 0; i < stageHits.Length; i++)
+                {
+                    var h = stageHits[i];
+                    if (h == null) continue;
+                    if (h.gameObject == gameObject) continue;
+                    if (h.isTrigger) continue;
+
+                    bool isBlockTag = h.CompareTag(TagDestructibles) || h.CompareTag(TagIndestructibles);
+
+                    if (isBlockTag)
+                        return true;
+                }
+            }
         }
 
         return false;
@@ -1402,9 +1520,9 @@ public class Bomb : MonoBehaviour, IMagnetPullable
             magnetOriginBlocker = new GameObject("MagnetBombOriginBlocker");
             magnetOriginBlocker.transform.SetParent(transform, worldPositionStays: true);
 
-            int stageLayer = LayerMask.NameToLayer("Stage");
-            if (stageLayer >= 0)
-                magnetOriginBlocker.layer = stageLayer;
+            int sLayer = LayerMask.NameToLayer("Stage");
+            if (sLayer >= 0)
+                magnetOriginBlocker.layer = sLayer;
 
             var col = magnetOriginBlocker.AddComponent<BoxCollider2D>();
             col.isTrigger = useTrigger;
@@ -1412,8 +1530,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         }
         else
         {
-            var col = magnetOriginBlocker.GetComponent<BoxCollider2D>();
-            if (col != null)
+            if (magnetOriginBlocker.TryGetComponent<BoxCollider2D>(out var col))
             {
                 col.isTrigger = useTrigger;
                 col.size = Vector2.one * Mathf.Max(0.01f, size);
@@ -1430,6 +1547,42 @@ public class Bomb : MonoBehaviour, IMagnetPullable
 
         Destroy(magnetOriginBlocker);
         magnetOriginBlocker = null;
+    }
+
+    private void EnsureKickOriginBlocker(Vector2 worldCenter, float size, bool useTrigger)
+    {
+        if (kickOriginBlocker == null)
+        {
+            kickOriginBlocker = new GameObject("KickBombOriginBlocker");
+            kickOriginBlocker.transform.SetParent(transform, worldPositionStays: true);
+
+            int sLayer = LayerMask.NameToLayer("Stage");
+            if (sLayer >= 0)
+                kickOriginBlocker.layer = sLayer;
+
+            var col = kickOriginBlocker.AddComponent<BoxCollider2D>();
+            col.isTrigger = useTrigger;
+            col.size = Vector2.one * Mathf.Max(0.01f, size);
+        }
+        else
+        {
+            if (kickOriginBlocker.TryGetComponent<BoxCollider2D>(out var col))
+            {
+                col.isTrigger = useTrigger;
+                col.size = Vector2.one * Mathf.Max(0.01f, size);
+            }
+        }
+
+        kickOriginBlocker.transform.position = new Vector3(worldCenter.x, worldCenter.y, transform.position.z);
+    }
+
+    private void RemoveKickOriginBlocker()
+    {
+        if (kickOriginBlocker == null)
+            return;
+
+        Destroy(kickOriginBlocker);
+        kickOriginBlocker = null;
     }
 
     public void EnsureMinRemainingFuse(float minSeconds)
@@ -1530,9 +1683,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         lock (kickSfxGate)
         {
             if (kickSfxCurrentSource != null && kickSfxCurrentSource != audioSource)
-            {
                 kickSfxCurrentSource.Stop();
-            }
 
             kickSfxCurrentSource = audioSource;
         }

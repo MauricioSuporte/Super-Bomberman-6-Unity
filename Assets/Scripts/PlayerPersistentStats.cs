@@ -24,7 +24,7 @@ public static class PlayerPersistentStats
 
         public int SpeedInternal = MaxSpeedInternal;
 
-        public bool CanKickBombs = false;
+        public bool CanKickBombs = true;
         public bool CanPunchBombs = false;
         public bool HasPowerGlove = false;
         public bool CanPassBombs = false;
@@ -32,7 +32,7 @@ public static class PlayerPersistentStats
         public bool HasPierceBombs = false;
         public bool HasControlBombs = false;
         public bool HasPowerBomb = false;
-        public bool HasRubberBombs = false;
+        public bool HasRubberBombs = true;
         public bool HasFullFire = false;
 
         public MountedType MountedLouie = MountedType.None;
