@@ -20,7 +20,7 @@ public static class PlayerPersistentStats
         public int Life = 99;
 
         public int BombAmount = 9;
-        public int ExplosionRadius = 10;
+        public int ExplosionRadius = 1;
 
         public int SpeedInternal = MaxSpeedInternal;
 
@@ -31,8 +31,8 @@ public static class PlayerPersistentStats
         public bool CanPassDestructibles = false;
         public bool HasPierceBombs = false;
         public bool HasControlBombs = false;
-        public bool HasPowerBomb = false;
-        public bool HasRubberBombs = true;
+        public bool HasPowerBomb = true;
+        public bool HasRubberBombs = false;
         public bool HasFullFire = false;
 
         public MountedType MountedLouie = MountedType.None;

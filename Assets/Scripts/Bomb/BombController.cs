@@ -28,6 +28,8 @@ public partial class BombController : MonoBehaviour
     [Header("Chain Explosion")]
     [SerializeField] private float chainBombDelaySeconds = 0.1f;
     private readonly HashSet<int> scheduledChainBombs = new();
+    private int _lastChainScheduleFrame = -1;
+    private int _chainIndexThisFrame = 0;
 
     private int bombsRemaining = 0;
     public int BombsRemaining => bombsRemaining;
@@ -1202,15 +1204,31 @@ public partial class BombController : MonoBehaviour
         if (_removedBombIds.Contains(id))
             return;
 
-        if (bomb.TryGetComponent<Bomb>(out var bombComp) && bombComp.HasExploded)
+        Bomb bombComp = null;
+        bomb.TryGetComponent(out bombComp);
+
+        if (bombComp != null && bombComp.HasExploded)
             return;
 
         if (!scheduledChainBombs.Add(id))
             return;
 
-        float delay = chainBombDelaySeconds;
+        // NEW: treat all chain schedules done in the same frame as a single queue/batch
+        if (Time.frameCount != _lastChainScheduleFrame)
+        {
+            _lastChainScheduleFrame = Time.frameCount;
+            _chainIndexThisFrame = 0;
+        }
+
+        _chainIndexThisFrame++;
+
+        float queuedDelay = Mathf.Max(0f, chainBombDelaySeconds) * _chainIndexThisFrame;
+
+        // If the bomb has its own configured chainStepDelay, respect it as a minimum,
+        // but never collapse the queued spacing.
+        float delay = queuedDelay;
         if (bombComp != null)
-            delay = Mathf.Max(0f, bombComp.chainStepDelay);
+            delay = Mathf.Max(delay, Mathf.Max(0f, bombComp.chainStepDelay));
 
         StartCoroutine(ExplodeBombAfterDelay(bomb, id, delay));
     }
@@ -1318,7 +1336,7 @@ public partial class BombController : MonoBehaviour
                     _removedBombIds.Remove(oid);
                 }
 
-                break;
+                continue;
             }
 
             positionsToSpawn.Add(position);
