@@ -51,11 +51,13 @@ public class StageIntroTransition : MonoBehaviour
     static bool hasPlayedLogoIntro;
     static bool skipTitleNextRound;
 
+    [Header("Debug / Overrides (Inspector is display-only during Play)")]
+    [SerializeField] private bool skipPreIntroWalkNextRound_Inspector;
+
     static bool skipPreIntroWalkNextRound;
 
     MovementController[] movementControllers = new MovementController[0];
     BombController[] bombControllers = new BombController[0];
-
     PlayerManualDismount[] manualDismounts = new PlayerManualDismount[0];
 
     static AudioClip s_startSfxClip;
@@ -69,6 +71,11 @@ public class StageIntroTransition : MonoBehaviour
         hasPlayedLogoIntro = true;
     }
 
+    public static void SkipPreIntroWalkOnNextLoad()
+    {
+        skipPreIntroWalkNextRound = true;
+    }
+
     void Awake()
     {
         if (Instance != null && Instance != this)
@@ -79,12 +86,24 @@ public class StageIntroTransition : MonoBehaviour
 
         Instance = this;
 
+        skipPreIntroWalkNextRound_Inspector = skipPreIntroWalkNextRound;
+
         if (titleScreen != null)
             titleScreen.ForceHide();
 
         if (hudsonLogoIntro != null)
             hudsonLogoIntro.ForceHide();
     }
+
+#if UNITY_EDITOR
+    void OnValidate()
+    {
+        if (Application.isPlaying)
+            return;
+
+        skipPreIntroWalkNextRound = skipPreIntroWalkNextRound_Inspector;
+    }
+#endif
 
     void Start()
     {
@@ -142,7 +161,6 @@ public class StageIntroTransition : MonoBehaviour
 
         movementControllers = FindObjectsByType<MovementController>(inactive, FindObjectsSortMode.None);
         bombControllers = FindObjectsByType<BombController>(inactive, FindObjectsSortMode.None);
-
         manualDismounts = FindObjectsByType<PlayerManualDismount>(inactive, FindObjectsSortMode.None);
     }
 
@@ -329,11 +347,14 @@ public class StageIntroTransition : MonoBehaviour
             spawner.SpawnNow();
 
         bool skipPreIntroNow = skipPreIntroWalkNextRound;
+
+        skipPreIntroWalkNextRound_Inspector = skipPreIntroWalkNextRound;
+
         if (skipPreIntroNow && preIntroWalk != null)
-        {
             preIntroWalk.ForceMainCameraActive();
-        }
+
         skipPreIntroWalkNextRound = false;
+        skipPreIntroWalkNextRound_Inspector = false;
 
         bool hasPreIntro = (preIntroWalk != null && preIntroWalk.IsEnabled && !skipPreIntroNow);
         if (hasPreIntro)
@@ -503,7 +524,6 @@ public class StageIntroTransition : MonoBehaviour
         if (GameMusicController.Instance != null && GameMusicController.Instance.defaultMusic != null)
         {
             var clip = GameMusicController.Instance.defaultMusic;
-
             float volume = GameMusicController.Instance.defaultMusicVolume;
             GameMusicController.Instance.PlayMusic(clip, volume, true);
         }
@@ -757,11 +777,6 @@ public class StageIntroTransition : MonoBehaviour
             return;
 
         GameMusicController.Instance.PlaySfx(introMusic, 1f);
-    }
-
-    public static void SkipPreIntroWalkOnNextLoad()
-    {
-        skipPreIntroWalkNextRound = true;
     }
 
     bool ShouldFaceUpOnIntro()

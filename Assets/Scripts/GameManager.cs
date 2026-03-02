@@ -12,14 +12,12 @@ public class GameManager : MonoBehaviour
     private readonly List<GameObject> runtimePlayers = new();
 
     public int EnemiesAlive { get; private set; }
-
     public int PendingHiddenEnemies { get; private set; }
 
     public event Action OnAllEnemiesDefeated;
 
     [Header("Auto Prefab Loading (Resources)")]
     [SerializeField] private string portalResourcesPath = "Portal/EndStagePortal";
-
     private EndStagePortal portalPrefab;
 
     [Header("Hidden Objects Amounts")]

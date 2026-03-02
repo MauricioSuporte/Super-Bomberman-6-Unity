@@ -12257,6 +12257,7 @@ MonoBehaviour:
   gameplayRoot: {fileID: 679601670}
   stage17SceneName: Stage_1-7
   skinSelectMenu: {fileID: 0}
+  skipPreIntroWalkNextRound_Inspector: 0
   preIntroWalk: {fileID: 786849905}
 --- !u!114 &1389130173
 MonoBehaviour:
