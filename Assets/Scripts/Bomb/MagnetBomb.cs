@@ -21,10 +21,16 @@ public sealed class MagnetBomb : MonoBehaviour
     [SerializeField] private string bombLayerName = "Bomb";
 
     [Header("Pull Speed")]
-    [SerializeField, Min(0.1f)]
-    private float magnetPullSpeedMultiplier = 1f;
-
+    [SerializeField, Min(0.1f)] private float magnetPullSpeedMultiplier = 1f;
     [SerializeField, Range(0.2f, 0.95f)] private float tileCheckBoxSize = 0.60f;
+
+    [Header("Magnet Safety (like PushIndestructibleTileHandler)")]
+    [SerializeField] private LayerMask blockMoveMask;
+    [SerializeField, Range(0.1f, 1.5f)] private float overlapBoxSize = 0.60f;
+
+    [Header("Origin Blocker (while moving)")]
+    [SerializeField, Range(0.2f, 1.2f)] private float originBlockerSize = 0.90f;
+    [SerializeField] private bool originBlockerUseTrigger = false;
 
     private Bomb bomb;
 
@@ -52,7 +58,10 @@ public sealed class MagnetBomb : MonoBehaviour
         if (bombLayer >= 0) m |= (1 << bombLayer);
         if (playerLayer >= 0) m |= (1 << playerLayer);
 
-        blockMask = (m != 0) ? m : LayerMask.GetMask("Stage", "Bomb", "Player");
+        blockMask = (m != 0) ? m : LayerMask.GetMask("Bomb", "Player");
+
+        if (blockMoveMask.value == 0)
+            blockMoveMask = LayerMask.GetMask("Player", "Bomb", "Enemy", "Louie");
 
         reattractAllowedAt = 0f;
     }
@@ -98,7 +107,19 @@ public sealed class MagnetBomb : MonoBehaviour
         if (stepsToTarget <= 1)
             return;
 
-        if (bomb.StartMagnetPull(dir, tileSize, 0, obstacleMask, destructibleTilemap, magnetPullSpeedMultiplier))
+        int steps = Mathf.Clamp(stepsToTarget - 1, 1, Mathf.Max(1, maxPullSteps));
+
+        if (bomb.StartMagnetPull(
+                dir,
+                tileSize,
+                steps,
+                obstacleMask,
+                destructibleTilemap,
+                magnetPullSpeedMultiplier,
+                blockMoveMask,
+                overlapBoxSize,
+                originBlockerSize,
+                originBlockerUseTrigger))
         {
             waitingMovementToEnd = true;
         }

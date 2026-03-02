@@ -97,6 +97,9 @@ public class Bomb : MonoBehaviour, IMagnetPullable
 
     private static readonly WaitForFixedUpdate waitFixed = new();
 
+    // Magnet safety: origin blocker (like PushIndestructibleTileHandler)
+    private GameObject magnetOriginBlocker;
+
     private void Awake()
     {
         bombCollider = GetComponent<Collider2D>();
@@ -257,6 +260,8 @@ public class Bomb : MonoBehaviour, IMagnetPullable
             StopCoroutine(magnetRoutine);
             magnetRoutine = null;
         }
+
+        RemoveMagnetOriginBlocker();
     }
 
     private void RecalculateCharactersInsideAt(Vector2 worldPos)
@@ -1112,6 +1117,8 @@ public class Bomb : MonoBehaviour, IMagnetPullable
             StopCoroutine(fuseRoutine);
             fuseRoutine = null;
         }
+
+        RemoveMagnetOriginBlocker();
     }
 
     private void OnTriggerEnter2D(Collider2D other)
@@ -1174,6 +1181,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         FuseSeconds = Mathf.Max(0.01f, fuseSeconds);
     }
 
+    // Backward-compatible overload (older call sites)
     public bool StartMagnetPull(
         Vector2 directionToMagnet,
         float tileSize,
@@ -1182,11 +1190,40 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         Tilemap destructibleTilemap,
         float speedMultiplier)
     {
+        LayerMask defaultBlockMoveMask = LayerMask.GetMask("Player", "Stage", "Bomb", "Enemy", "Louie");
+        return StartMagnetPull(
+            directionToMagnet,
+            tileSize,
+            steps,
+            obstacleMask,
+            destructibleTilemap,
+            speedMultiplier,
+            defaultBlockMoveMask,
+            0.60f,
+            0.90f,
+            false);
+    }
+
+    // New overload used by MagnetBomb (safety like PushIndestructibleTileHandler)
+    public bool StartMagnetPull(
+        Vector2 directionToMagnet,
+        float tileSize,
+        int steps,
+        LayerMask obstacleMask,
+        Tilemap destructibleTilemap,
+        float speedMultiplier,
+        LayerMask blockMoveMask,
+        float overlapBoxSize,
+        float originBlockerSize,
+        bool originBlockerUseTrigger)
+    {
         if (HasExploded || isKicked || isPunched)
             return false;
 
         if (magnetRoutine != null)
             StopCoroutine(magnetRoutine);
+
+        RemoveMagnetOriginBlocker();
 
         magnetSpeedMultiplier = Mathf.Max(0.05f, speedMultiplier);
 
@@ -1206,16 +1243,28 @@ public class Bomb : MonoBehaviour, IMagnetPullable
 
         TryPlayBombSfx_NoOverlap(magnetPullSfx, magnetPullSfxVolume);
 
-        magnetRoutine = StartCoroutine(MagnetPullRoutineFixed(steps, magnetSpeedMultiplier));
+        magnetRoutine = StartCoroutine(MagnetPullRoutineFixed(
+            steps,
+            magnetSpeedMultiplier,
+            blockMoveMask,
+            Mathf.Clamp(overlapBoxSize, 0.1f, 1.5f),
+            Mathf.Clamp(originBlockerSize, 0.2f, 1.2f),
+            originBlockerUseTrigger));
+
         return true;
     }
 
-    private IEnumerator MagnetPullRoutineFixed(int steps, float speedMultiplier)
+    private IEnumerator MagnetPullRoutineFixed(
+        int steps,
+        float speedMultiplier,
+        LayerMask blockMoveMask,
+        float overlapBoxSize,
+        float originBlockerSize,
+        bool originBlockerUseTrigger)
     {
         float mult = Mathf.Max(0.05f, speedMultiplier);
 
-        int remainingSteps = steps;
-
+        int remainingSteps = Mathf.Max(0, steps);
 
         while (true)
         {
@@ -1225,25 +1274,38 @@ public class Bomb : MonoBehaviour, IMagnetPullable
             if (remainingSteps > 0 && remainingSteps-- == 0)
                 break;
 
+            Vector2 start = currentTileCenter;
             Vector2 next = currentTileCenter + kickDirection * kickTileSize;
 
-            if (TileHasCharacter(next, LayerMask.GetMask("Player")))
+            // If destination is blocked, stop immediately
+            if (IsBlockedByMaskAtWorld(next, blockMoveMask, overlapBoxSize))
                 break;
 
-            if (IsKickBlocked(next))
-                break;
+            // Block the origin tile while moving out (prevents player entering same tile mid-move)
+            EnsureMagnetOriginBlocker(start, originBlockerSize, originBlockerUseTrigger);
 
             float baseSpeed = Mathf.Max(0.0001f, magnetPullSpeed);
             float speed = Mathf.Max(0.0001f, baseSpeed * mult);
 
             float travelTime = kickTileSize / speed;
             float elapsed = 0f;
-            Vector2 start = currentTileCenter;
+
+            bool cancelAndReturn = false;
 
             while (elapsed < travelTime)
             {
                 if (HasExploded)
+                {
+                    RemoveMagnetOriginBlocker();
                     yield break;
+                }
+
+                // Continuous destination check: if someone arrives/appears there, cancel & go back
+                if (IsBlockedByMaskAtWorld(next, blockMoveMask, overlapBoxSize))
+                {
+                    cancelAndReturn = true;
+                    break;
+                }
 
                 elapsed += Time.fixedDeltaTime;
 
@@ -1256,6 +1318,32 @@ public class Bomb : MonoBehaviour, IMagnetPullable
                 yield return waitFixed;
             }
 
+            if (cancelAndReturn)
+            {
+                rb.position = start;
+                transform.position = start;
+                lastPos = start;
+                currentTileCenter = start;
+
+                RemoveMagnetOriginBlocker();
+                break;
+            }
+
+            // Final check at arrival
+            if (IsBlockedByMaskAtWorld(next, blockMoveMask, overlapBoxSize))
+            {
+                rb.position = start;
+                transform.position = start;
+                lastPos = start;
+                currentTileCenter = start;
+
+                RemoveMagnetOriginBlocker();
+                break;
+            }
+
+            // Step complete
+            RemoveMagnetOriginBlocker();
+
             currentTileCenter = next;
             lastPos = next;
 
@@ -1265,6 +1353,8 @@ public class Bomb : MonoBehaviour, IMagnetPullable
             if (owner != null)
                 owner.NotifyBombAt(next, gameObject);
         }
+
+        RemoveMagnetOriginBlocker();
 
         rb.position = currentTileCenter;
         transform.position = currentTileCenter;
@@ -1277,6 +1367,69 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         }
 
         magnetRoutine = null;
+    }
+
+    private bool IsBlockedByMaskAtWorld(Vector2 worldCenter, LayerMask mask, float boxSize)
+    {
+        Vector2 size = Vector2.one * (kickTileSize * Mathf.Max(0.1f, boxSize));
+        Collider2D[] hits = Physics2D.OverlapBoxAll(worldCenter, size, 0f, mask);
+
+        if (hits == null || hits.Length == 0)
+            return false;
+
+        for (int i = 0; i < hits.Length; i++)
+        {
+            var h = hits[i];
+            if (h == null)
+                continue;
+
+            if (h.gameObject == gameObject)
+                continue;
+
+            if (h.isTrigger)
+                continue;
+
+            return true;
+        }
+
+        return false;
+    }
+
+    private void EnsureMagnetOriginBlocker(Vector2 worldCenter, float size, bool useTrigger)
+    {
+        if (magnetOriginBlocker == null)
+        {
+            magnetOriginBlocker = new GameObject("MagnetBombOriginBlocker");
+            magnetOriginBlocker.transform.SetParent(transform, worldPositionStays: true);
+
+            int stageLayer = LayerMask.NameToLayer("Stage");
+            if (stageLayer >= 0)
+                magnetOriginBlocker.layer = stageLayer;
+
+            var col = magnetOriginBlocker.AddComponent<BoxCollider2D>();
+            col.isTrigger = useTrigger;
+            col.size = Vector2.one * Mathf.Max(0.01f, size);
+        }
+        else
+        {
+            var col = magnetOriginBlocker.GetComponent<BoxCollider2D>();
+            if (col != null)
+            {
+                col.isTrigger = useTrigger;
+                col.size = Vector2.one * Mathf.Max(0.01f, size);
+            }
+        }
+
+        magnetOriginBlocker.transform.position = new Vector3(worldCenter.x, worldCenter.y, transform.position.z);
+    }
+
+    private void RemoveMagnetOriginBlocker()
+    {
+        if (magnetOriginBlocker == null)
+            return;
+
+        Destroy(magnetOriginBlocker);
+        magnetOriginBlocker = null;
     }
 
     public void EnsureMinRemainingFuse(float minSeconds)

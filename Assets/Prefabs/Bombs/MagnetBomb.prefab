@@ -14,8 +14,8 @@ GameObject:
   - component: {fileID: 147425199346742610}
   - component: {fileID: 147425199346742613}
   - component: {fileID: 2484313177524847551}
-  - component: {fileID: 4491695425928016186}
   - component: {fileID: 1584574550123671064}
+  - component: {fileID: 4491695425928016186}
   m_Layer: 7
   m_Name: MagnetBomb
   m_TagString: Untagged
@@ -119,6 +119,8 @@ MonoBehaviour:
   animationTime: 0.25
   useSequenceDuration: 0
   sequenceDuration: 0
+  useUnscaledTime: 1
+  respectGamePause: 1
   loop: 1
   idle: 0
   frameOffsets: []
@@ -212,6 +214,27 @@ MonoBehaviour:
   FuseSeconds: 2
   stageBoundsTilemap: {fileID: 0}
   magnetPullSpeed: 10
+--- !u!114 &1584574550123671064
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 147425199346742615}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 80cf9b3f17a431d46acf4e7ad59f1ebb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MagnetBomb
+  scanInterval: 0.08
+  scanMaxDistanceTiles: 12
+  maxPullSteps: 12
+  reattractDelaySeconds: 1
+  playerLayerName: Player
+  stageLayerName: Stage
+  bombLayerName: Bomb
+  magnetPullSpeedMultiplier: 0.5
+  tileCheckBoxSize: 0.6
 --- !u!82 &4491695425928016186
 AudioSource:
   m_ObjectHideFlags: 0
@@ -309,24 +332,3 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
---- !u!114 &1584574550123671064
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 147425199346742615}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 80cf9b3f17a431d46acf4e7ad59f1ebb, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::MagnetBomb
-  scanInterval: 0.08
-  scanMaxDistanceTiles: 12
-  maxPullSteps: 12
-  reattractDelaySeconds: 1
-  playerLayerName: Player
-  stageLayerName: Stage
-  bombLayerName: Bomb
-  magnetPullSpeedMultiplier: 0.5
-  tileCheckBoxSize: 0.6
