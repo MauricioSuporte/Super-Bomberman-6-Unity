@@ -19,6 +19,8 @@ public class SunMaskBoss : MonoBehaviour, IKillable
 
     [Header("Timings")]
     [Min(0f)] public float hurtStopDuration = 0.5f;
+
+    [Tooltip("Duração das explosões (NÃO inclui o 1s inicial de Damaged dos olhos).")]
     [Min(0f)] public float deathHoldDuration = 5f;
 
     [Header("Death Eyes Flow")]
@@ -29,6 +31,16 @@ public class SunMaskBoss : MonoBehaviour, IKillable
     [SerializeField] private bool enableDeathFinalBlink = true;
     [SerializeField, Min(0f)] private float deathFinalBlinkDuration = 1.0f;
     [SerializeField, Min(0.001f)] private float deathFinalBlinkInterval = 0.06f;
+
+    [Header("After Death Spawn")]
+    [Tooltip("Prefab do MagnetBomber (ou root) para spawnar quando o SunMask for destruído.")]
+    [SerializeField] private GameObject magnetBomberPrefab;
+
+    [Tooltip("Se true, ao spawnar o MagnetBomber, força tocar a animação 'Death' (AnimatedSpriteRenderer) e depois destrói o objeto.")]
+    [SerializeField] private bool playMagnetBomberDeathOnSpawn = true;
+
+    [Tooltip("Fallback caso não dê para calcular a duração pela animação.")]
+    [SerializeField, Min(0.05f)] private float magnetBomberDeathFallbackDuration = 2.0f;
 
     [Header("Damage")]
     public int explosionDamage = 1;
@@ -369,14 +381,14 @@ public class SunMaskBoss : MonoBehaviour, IKillable
         float eyesDelay = Mathf.Max(0f, deathEyesDamagedDuration);
         float explosionDuration = Mathf.Max(0f, deathHoldDuration);
 
-        // 1) olhos Damaged no começo
+        // 1) olhos Damaged no começo (1s)
         if (eyes != null)
             eyes.BeginDeathEyesFlowDamagedThenSul(deathEyesDamagedDuration);
 
         if (eyesDelay > 0f)
             yield return new WaitForSeconds(eyesDelay);
 
-        // 2) inicia explosões por 5s (inteiros)
+        // 2) inicia explosões por 5s
         if (explosionPrefab != null && explosionDuration > 0f)
         {
             nextDeathSfxTime = 0f;
@@ -402,7 +414,6 @@ public class SunMaskBoss : MonoBehaviour, IKillable
             }
             else if (blinkDur > 0f)
             {
-                // fallback: só espera o final se não puder piscar
                 yield return new WaitForSeconds(blinkDur);
             }
         }
@@ -412,6 +423,8 @@ public class SunMaskBoss : MonoBehaviour, IKillable
             StopCoroutine(deathExplosionsRoutine);
             deathExplosionsRoutine = null;
         }
+
+        SpawnMagnetBomberDeath();
 
         Destroy(gameObject);
     }
@@ -569,5 +582,50 @@ public class SunMaskBoss : MonoBehaviour, IKillable
         r.loop = looping;
         r.CurrentFrame = 0;
         r.RefreshFrame();
+    }
+
+    private void SpawnMagnetBomberDeath()
+    {
+        if (magnetBomberPrefab == null)
+            return;
+
+        Vector3 pos = transform.position;
+        GameObject go = Instantiate(magnetBomberPrefab, pos, Quaternion.identity);
+        if (go == null)
+            return;
+
+        if (!playMagnetBomberDeathOnSpawn)
+            return;
+
+        var ai = go.GetComponentInChildren<MovementControllerAI>(true);
+        if (ai != null)
+        {
+            ai.SetIntroIdle(false);
+            ai.ForceDisableOptionalVisualsNow();
+        }
+
+        var mc = go.GetComponentInChildren<MovementController>(true);
+
+        if (mc != null)
+            mc.SetExternalMovementOverride(true);
+
+        if (mc != null)
+        {
+            mc.Kill();
+
+            float life = Mathf.Max(0.05f, mc.deathDisableSeconds);
+            Destroy(go, life + 0.2f);
+            return;
+        }
+
+        var ch = go.GetComponentInChildren<CharacterHealth>(true);
+        if (ch != null)
+        {
+            ch.TakeDamage(9999);
+            Destroy(go, Mathf.Max(0.05f, magnetBomberDeathFallbackDuration) + 0.2f);
+            return;
+        }
+
+        Destroy(go, Mathf.Max(0.05f, magnetBomberDeathFallbackDuration) + 0.2f);
     }
 }

@@ -1002,6 +1002,12 @@ MonoBehaviour:
   deathHoldDuration: 5
   deathEyesDamagedDuration: 1
   deathEyesFrontDuration: 0.75
+  enableDeathFinalBlink: 1
+  deathFinalBlinkDuration: 1
+  deathFinalBlinkInterval: 0.06
+  magnetBomberPrefab: {fileID: 444576652216317808, guid: a009117f38ad56d4fb5e2e5fa7445a16, type: 3}
+  playMagnetBomberDeathOnSpawn: 1
+  magnetBomberDeathFallbackDuration: 2
   explosionDamage: 1
   damagedSfx: {fileID: 8300000, guid: e829374635807124eb2e0a46f2e7d3cc, type: 3}
   damagedSfxVolume: 0.9

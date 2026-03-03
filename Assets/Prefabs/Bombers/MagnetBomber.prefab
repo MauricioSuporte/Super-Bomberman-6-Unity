@@ -195,8 +195,11 @@ MonoBehaviour:
   corridorSolidProbeSizeMul: 0.9
   canPassTaggedObstacles: 0
   passObstacleTag: Water
+  pixelsPerUnit: 16
+  useIntegerPixelSteps: 1
   suppressInactivityAnimation: 0
   isDead: 0
+  externalMovementOverride: 0
   aiDirection: {x: 0, y: 0}
   isBoss: 1
   stuckSeconds: 0.3
@@ -232,9 +235,12 @@ MonoBehaviour:
   bombPrefab: {fileID: 147425199346742615, guid: 851ce7b3e6e8c724dbbf6dae1abc11dc, type: 3}
   pierceBombPrefab: {fileID: 0}
   controlBombPrefab: {fileID: 0}
+  powerBombPrefab: {fileID: 0}
+  rubberBombPrefab: {fileID: 0}
   bombFuseTime: 2
   bombAmout: 3
   chainBombDelaySeconds: 0.1
+  powerBombRadius: 15
   explosionPrefab: {fileID: -38777085001033807, guid: 8280631722d6ef14fb951aaaf859563b, type: 3}
   explosionLayerMask:
     serializedVersion: 2
@@ -345,9 +351,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7034f6eeeab99fd45bf2cf2feeac7281, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BossEscapeOnLastLife
-  debugLogs: 1
-  debugLogsVerbose: 1
-  debugNearGoalLogEvery: 0.15
   boss: {fileID: 1907593265075809238}
   aiMove: {fileID: 1907593265075809238}
   bossAIToDisable: {fileID: 4730492100800285400}
@@ -356,13 +359,15 @@ MonoBehaviour:
   waitBeforeEscapeSeconds: 4
   destroyBossGameObject: 0
   snapToGoalOnFinish: 1
+  immediateFinishDistance: 0.4
   maxNodes: 4096
   maxExpandSteps: 20000
   disablePlayerBombControllerWhileLocked: 1
   disablePlayerCollidersWhileLocked: 1
-  nearGoalWindowSeconds: 1.2
-  nearGoalDistance: 0.14
-  forceSnapIfOscillatingDistance: 0.25
+  escapeDropItemPrefab: {fileID: 0}
+  dropAlignToGrid: 1
+  dropOffset: {x: 0, y: 0}
+  dropOnlyOnce: 1
 --- !u!82 &3101258277916350091
 AudioSource:
   m_ObjectHideFlags: 0
@@ -620,6 +625,8 @@ MonoBehaviour:
   animationTime: 0.1
   useSequenceDuration: 0
   sequenceDuration: 0.5
+  useUnscaledTime: 1
+  respectGamePause: 1
   loop: 0
   idle: 0
   frameOffsets: []
@@ -740,6 +747,8 @@ MonoBehaviour:
   animationTime: 0.16666667
   useSequenceDuration: 0
   sequenceDuration: 0.5
+  useUnscaledTime: 1
+  respectGamePause: 1
   loop: 1
   idle: 1
   frameOffsets: []
@@ -860,6 +869,8 @@ MonoBehaviour:
   animationTime: 0.16666667
   useSequenceDuration: 0
   sequenceDuration: 0.5
+  useUnscaledTime: 1
+  respectGamePause: 1
   loop: 1
   idle: 1
   frameOffsets: []
@@ -978,6 +989,8 @@ MonoBehaviour:
   animationTime: 0.1
   useSequenceDuration: 0
   sequenceDuration: 0.5
+  useUnscaledTime: 1
+  respectGamePause: 1
   loop: 0
   idle: 0
   frameOffsets: []
@@ -1119,6 +1132,8 @@ MonoBehaviour:
   animationTime: 0.07142857
   useSequenceDuration: 0
   sequenceDuration: 0.5
+  useUnscaledTime: 1
+  respectGamePause: 1
   loop: 0
   idle: 0
   frameOffsets: []
@@ -1239,6 +1254,8 @@ MonoBehaviour:
   animationTime: 0.16666667
   useSequenceDuration: 0
   sequenceDuration: 0.5
+  useUnscaledTime: 1
+  respectGamePause: 1
   loop: 1
   idle: 1
   frameOffsets: []
@@ -1362,6 +1379,8 @@ MonoBehaviour:
   animationTime: 0.071428575
   useSequenceDuration: 0
   sequenceDuration: 0.5
+  useUnscaledTime: 1
+  respectGamePause: 1
   loop: 0
   idle: 0
   frameOffsets: []
@@ -1482,6 +1501,8 @@ MonoBehaviour:
   animationTime: 0.16666667
   useSequenceDuration: 0
   sequenceDuration: 0.5
+  useUnscaledTime: 1
+  respectGamePause: 1
   loop: 1
   idle: 1
   frameOffsets: []
@@ -1599,6 +1620,8 @@ MonoBehaviour:
   animationTime: 0.1
   useSequenceDuration: 0
   sequenceDuration: 0.5
+  useUnscaledTime: 1
+  respectGamePause: 1
   loop: 0
   idle: 0
   frameOffsets: []

@@ -77,8 +77,7 @@ public class MovementControllerAI : MovementController
 
         CacheHealthEvents();
 
-        EndDamagedVisual();
-        EndIntroIdleVisual();
+        ForceDisableOptionalVisualsNow();
     }
 
     protected override void OnEnable()
@@ -95,14 +94,13 @@ public class MovementControllerAI : MovementController
 
         CacheHealthEvents();
 
-        EndDamagedVisual();
+        ForceDisableOptionalVisualsNow();
     }
 
     protected override void OnDisable()
     {
         UnhookHealthEvents();
-        EndDamagedVisual();
-        EndIntroIdleVisual();
+        ForceDisableOptionalVisualsNow();
         base.OnDisable();
     }
 
@@ -399,6 +397,21 @@ public class MovementControllerAI : MovementController
         else EndIntroIdleVisual();
     }
 
+    public void ForceDisableOptionalVisualsNow()
+    {
+        damagedVisualActive = false;
+        introIdleVisualActive = false;
+
+        if (spriteRendererDamaged != null)
+            SetAnimEnabledLocal(spriteRendererDamaged, false);
+
+        if (spriteRendererIntroIdle != null)
+            SetAnimEnabledLocal(spriteRendererIntroIdle, false);
+
+        if (VisualOverrideActive)
+            SetVisualOverrideActive(false);
+    }
+
     private void BeginIntroIdleVisual()
     {
         if (introIdleVisualActive)
@@ -436,9 +449,6 @@ public class MovementControllerAI : MovementController
 
     private void EndIntroIdleVisual()
     {
-        if (!introIdleVisualActive)
-            return;
-
         introIdleVisualActive = false;
 
         if (spriteRendererIntroIdle != null)
@@ -497,7 +507,7 @@ public class MovementControllerAI : MovementController
 
     private void OnHealthDied()
     {
-        EndDamagedVisual();
+        ForceDisableOptionalVisualsNow();
     }
 
     private void BeginDamagedVisual()
@@ -537,9 +547,6 @@ public class MovementControllerAI : MovementController
 
     private void EndDamagedVisual()
     {
-        if (!damagedVisualActive)
-            return;
-
         damagedVisualActive = false;
 
         if (spriteRendererDamaged != null)
