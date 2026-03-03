@@ -17,6 +17,25 @@ public class SunMaskBoss : MonoBehaviour, IKillable
     public AnimatedSpriteRenderer hurtRenderer;
     public AnimatedSpriteRenderer deathRenderer;
 
+    [Header("Wink Attack")]
+    [SerializeField] private bool enableWinkAttack = true;
+    [SerializeField, Min(0f)] private float winkMinInterval = 3f;
+    [SerializeField, Min(0f)] private float winkMaxInterval = 5f;
+    [SerializeField, Min(0f)] private float winkHoldDuration = 1f;
+
+    [Tooltip("Renderer do corpo que representa o Wink (ex: SunMask/Wink).")]
+    [SerializeField] private AnimatedSpriteRenderer winkRenderer;
+
+    [Header("Wink Attack - Star Burst")]
+    [Tooltip("Prefab do projétil (ex: StarProjectile) com script StarProjectile.")]
+    [SerializeField] private StarProjectile starProjectilePrefab;
+
+    [SerializeField, Min(0f)] private float starSpeed = 6f;
+    [SerializeField, Min(0f)] private float starLifeTime = 3f;
+    [SerializeField, Min(0f)] private float starSpawnRadius = 0.5f;
+    [SerializeField] private int starDamage = 1;
+    [SerializeField] private LayerMask starObstacleMask;
+
     [Header("Timings")]
     [Min(0f)] public float hurtStopDuration = 0.5f;
 
@@ -80,9 +99,11 @@ public class SunMaskBoss : MonoBehaviour, IKillable
     public float deathSfxSpatialBlend = 0f;
 
     private bool isDead;
+    private bool inWinkAttack;
     private Coroutine hurtRoutine;
     private Coroutine deathRoutine;
     private Coroutine deathExplosionsRoutine;
+    private Coroutine winkRoutine;
 
     private Rigidbody2D rb;
     private AudioSource audioSource;
@@ -99,6 +120,18 @@ public class SunMaskBoss : MonoBehaviour, IKillable
 
     private static readonly object deathSfxGate = new();
     private static AudioSource deathSfxOwner;
+
+    private static readonly Vector2[] StarDirs =
+    {
+        Vector2.up,
+        Vector2.down,
+        Vector2.left,
+        Vector2.right,
+        new Vector2(1f, 1f).normalized,
+        new Vector2(1f, -1f).normalized,
+        new Vector2(-1f, 1f).normalized,
+        new Vector2(-1f, -1f).normalized
+    };
 
     void Awake()
     {
@@ -137,6 +170,7 @@ public class SunMaskBoss : MonoBehaviour, IKillable
     void OnEnable()
     {
         isDead = false;
+        inWinkAttack = false;
         nextTouchDamageTime = 0f;
         nextDeathSfxTime = 0f;
 
@@ -146,12 +180,16 @@ public class SunMaskBoss : MonoBehaviour, IKillable
         if (hurtRoutine != null) { StopCoroutine(hurtRoutine); hurtRoutine = null; }
         if (deathRoutine != null) { StopCoroutine(deathRoutine); deathRoutine = null; }
         if (deathExplosionsRoutine != null) { StopCoroutine(deathExplosionsRoutine); deathExplosionsRoutine = null; }
+        if (winkRoutine != null) { StopCoroutine(winkRoutine); winkRoutine = null; }
 
         if (movement != null)
             movement.enabled = true;
 
         EnableOnly(walkRenderer);
         SetRendererAsLooping(walkRenderer, looping: true);
+
+        if (enableWinkAttack)
+            winkRoutine = StartCoroutine(WinkAttackLoop());
     }
 
     void OnDisable()
@@ -159,6 +197,9 @@ public class SunMaskBoss : MonoBehaviour, IKillable
         if (hurtRoutine != null) { StopCoroutine(hurtRoutine); hurtRoutine = null; }
         if (deathRoutine != null) { StopCoroutine(deathRoutine); deathRoutine = null; }
         if (deathExplosionsRoutine != null) { StopCoroutine(deathExplosionsRoutine); deathExplosionsRoutine = null; }
+        if (winkRoutine != null) { StopCoroutine(winkRoutine); winkRoutine = null; }
+
+        inWinkAttack = false;
     }
 
     void OnTriggerEnter2D(Collider2D other)
@@ -340,7 +381,7 @@ public class SunMaskBoss : MonoBehaviour, IKillable
         if (t > 0f)
             yield return new WaitForSeconds(t);
 
-        if (!isDead)
+        if (!isDead && !inWinkAttack)
         {
             if (movement != null && hasCachedMoveDirection)
                 movement.SetCurrentDirection(cachedMoveDirection);
@@ -363,6 +404,13 @@ public class SunMaskBoss : MonoBehaviour, IKillable
             return;
 
         isDead = true;
+        inWinkAttack = false;
+
+        if (winkRoutine != null)
+        {
+            StopCoroutine(winkRoutine);
+            winkRoutine = null;
+        }
 
         if (hurtRoutine != null)
         {
@@ -561,9 +609,130 @@ public class SunMaskBoss : MonoBehaviour, IKillable
             rb.linearVelocity = Vector2.zero;
     }
 
+    IEnumerator WinkAttackLoop()
+    {
+        while (!isDead)
+        {
+            float minI = Mathf.Max(0f, winkMinInterval);
+            float maxI = Mathf.Max(minI, winkMaxInterval);
+            float wait = Random.Range(minI, maxI);
+
+            if (wait > 0f)
+                yield return new WaitForSeconds(wait);
+            else
+                yield return null;
+
+            if (isDead)
+                continue;
+
+            if (!enableWinkAttack)
+                continue;
+
+            if (winkRenderer == null || starProjectilePrefab == null)
+                continue;
+
+            if (inWinkAttack)
+                continue;
+
+            if (hurtRoutine != null)
+                continue;
+
+            if (deathRoutine != null)
+                continue;
+
+            if (movement != null && !movement.enabled)
+                continue;
+
+            yield return WinkAttackOnce();
+        }
+    }
+
+    IEnumerator WinkAttackOnce()
+    {
+        inWinkAttack = true;
+
+        CacheDirectionBeforeHurt();
+
+        if (rb != null)
+            rb.linearVelocity = Vector2.zero;
+
+        if (movement != null)
+        {
+            movement.OnHit(Mathf.Max(0f, winkHoldDuration));
+            if (hasCachedMoveDirection)
+                movement.SetCurrentDirection(cachedMoveDirection);
+        }
+
+        AnimatedSpriteRenderer previous = GetCurrentRenderer();
+
+        // 1) muda para Wink (visual)
+        EnableOnly(winkRenderer);
+        SetRendererStaticFirstFrame(winkRenderer);
+
+        // 2) DISPARA IMEDIATAMENTE (sem esperar winkHoldDuration)
+        if (!isDead)
+            SpawnStarBurst();
+
+        // 3) segura Wink por 1s (ou o valor configurado)
+        float hold = Mathf.Max(0f, winkHoldDuration);
+        if (hold > 0f)
+            yield return new WaitForSeconds(hold);
+
+        // 4) volta para o renderer anterior
+        if (!isDead)
+        {
+            if (previous != null && previous != winkRenderer)
+            {
+                EnableOnly(previous);
+                if (previous == walkRenderer)
+                    SetRendererAsLooping(walkRenderer, looping: true);
+            }
+            else
+            {
+                EnableOnly(walkRenderer);
+                SetRendererAsLooping(walkRenderer, looping: true);
+            }
+        }
+
+        inWinkAttack = false;
+    }
+
+    void SpawnStarBurst()
+    {
+        if (starProjectilePrefab == null)
+            return;
+
+        Vector2 origin = transform.position;
+
+        for (int i = 0; i < StarDirs.Length; i++)
+        {
+            Vector2 dir = StarDirs[i];
+            Vector2 spawnPos = origin + dir * Mathf.Max(0f, starSpawnRadius);
+
+            StarProjectile proj = Instantiate(starProjectilePrefab, spawnPos, Quaternion.identity);
+            if (proj == null)
+                continue;
+
+            proj.damage = Mathf.Max(1, starDamage);
+            proj.obstacleMask = starObstacleMask;
+
+            proj.Initialize(dir, starSpeed, starLifeTime);
+        }
+    }
+
+    AnimatedSpriteRenderer GetCurrentRenderer()
+    {
+        if (walkRenderer != null && walkRenderer.enabled) return walkRenderer;
+        if (winkRenderer != null && winkRenderer.enabled) return winkRenderer;
+        if (hurtRenderer != null && hurtRenderer.enabled) return hurtRenderer;
+        if (deathRenderer != null && deathRenderer.enabled) return deathRenderer;
+        return null;
+    }
+
     void EnableOnly(AnimatedSpriteRenderer target)
     {
         if (walkRenderer != null) walkRenderer.enabled = (target == walkRenderer);
+        if (winkRenderer != null) winkRenderer.enabled = (target == winkRenderer);
         if (hurtRenderer != null) hurtRenderer.enabled = (target == hurtRenderer);
         if (deathRenderer != null) deathRenderer.enabled = (target == deathRenderer);
 
@@ -584,6 +753,22 @@ public class SunMaskBoss : MonoBehaviour, IKillable
         r.idle = false;
         r.loop = looping;
         r.CurrentFrame = 0;
+        r.RefreshFrame();
+    }
+
+    void SetRendererStaticFirstFrame(AnimatedSpriteRenderer r)
+    {
+        if (r == null)
+            return;
+
+        if (r.animationSprite != null && r.animationSprite.Length > 0)
+        {
+            r.CurrentFrame = 0;
+            r.idleSprite = r.animationSprite[0];
+        }
+
+        r.idle = true;
+        r.loop = false;
         r.RefreshFrame();
     }
 

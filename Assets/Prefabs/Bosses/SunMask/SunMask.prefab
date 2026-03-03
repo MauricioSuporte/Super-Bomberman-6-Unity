@@ -994,12 +994,24 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f62f1f9ab8b2a5d4cbee2b172ffc2e5f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SunMaskBoss
-  enableSurgicalLogs: 1
   characterHealth: {fileID: 1116198084690886847}
   movement: {fileID: 4873712702074537722}
   walkRenderer: {fileID: 5554180369288328576}
   hurtRenderer: {fileID: 5292329079700839116}
   deathRenderer: {fileID: 0}
+  enableWinkAttack: 1
+  winkMinInterval: 3
+  winkMaxInterval: 5
+  winkHoldDuration: 1
+  winkRenderer: {fileID: 1239999045062863431}
+  starProjectilePrefab: {fileID: 6629787450339986792, guid: 1cadd277b252f834d93bca0f9933bcac, type: 3}
+  starSpeed: 6
+  starLifeTime: 3
+  starSpawnRadius: 0.5
+  starDamage: 1
+  starObstacleMask:
+    serializedVersion: 2
+    m_Bits: 0
   hurtStopDuration: 1
   deathHoldDuration: 5
   deathEyesDamagedDuration: 1

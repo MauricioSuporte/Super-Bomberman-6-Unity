@@ -1,7 +1,7 @@
 using UnityEngine;
 
 [RequireComponent(typeof(Rigidbody2D))]
-public class ClownStarProjectile : MonoBehaviour
+public class StarProjectile : MonoBehaviour
 {
     public float speed = 6f;
     public float lifeTime = 3f;

@@ -66,7 +66,7 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
     public float hurtWalkDuration = 3f;
 
     [Header("Attack")]
-    public ClownStarProjectile clownStarProjectile;
+    public StarProjectile clownStarProjectile;
     public float starSpeed = 6f;
     public float starLifeTime = 3f;
     public float starSpawnRadius = 0.5f;
@@ -1017,7 +1017,7 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
             Vector2 dir = dirs[i];
             Vector2 spawnPos = origin + dir * starSpawnRadius;
 
-            ClownStarProjectile proj = Instantiate(clownStarProjectile, spawnPos, Quaternion.identity);
+            StarProjectile proj = Instantiate(clownStarProjectile, spawnPos, Quaternion.identity);
             if (proj != null)
                 proj.Initialize(dir, starSpeed, starLifeTime);
         }
