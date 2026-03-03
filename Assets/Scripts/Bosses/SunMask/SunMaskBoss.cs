@@ -20,6 +20,10 @@ public class SunMaskBoss : MonoBehaviour, IKillable
     [Min(0f)] public float hurtStopDuration = 0.5f;
     [Min(0f)] public float deathHoldDuration = 5f;
 
+    [Header("Death Eyes Flow")]
+    [Min(0f)] public float deathEyesDamagedDuration = 1f;
+    [Min(0f)] public float deathEyesFrontDuration = 0.75f;
+
     [Header("Damage")]
     public int explosionDamage = 1;
 
@@ -43,6 +47,8 @@ public class SunMaskBoss : MonoBehaviour, IKillable
     private Vector2 cachedMoveDirection;
     private bool hasCachedMoveDirection;
 
+    private SunMaskEyesController eyes;
+
     void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
@@ -52,6 +58,8 @@ public class SunMaskBoss : MonoBehaviour, IKillable
 
         if (!movement)
             movement = GetComponent<SunMaskMovement>();
+
+        eyes = GetComponentInChildren<SunMaskEyesController>(true);
 
         if (characterHealth != null)
         {
@@ -249,16 +257,13 @@ public class SunMaskBoss : MonoBehaviour, IKillable
 
     IEnumerator HurtStopRoutine()
     {
-        // NÃO desabilita o componente (isso chamaria OnEnable e poderia resetar direção).
         if (rb != null)
             rb.linearVelocity = Vector2.zero;
 
         if (movement != null)
         {
-            // pausa o movimento pelo tempo do hurt (sem mexer na direção)
             movement.OnHit(hurtStopDuration);
 
-            // reforça a direção salva (caso algum outro sistema tenha tocado nela)
             if (hasCachedMoveDirection)
                 movement.SetCurrentDirection(cachedMoveDirection);
         }
@@ -272,7 +277,6 @@ public class SunMaskBoss : MonoBehaviour, IKillable
 
         if (!isDead)
         {
-            // garante que voltou com a mesma direção
             if (movement != null && hasCachedMoveDirection)
                 movement.SetCurrentDirection(cachedMoveDirection);
 
@@ -311,8 +315,14 @@ public class SunMaskBoss : MonoBehaviour, IKillable
     {
         StopMovement_DisableComponent();
 
+        // Durante TODO o fluxo de morte: manter o SunMask com sprite Damaged (hurtRenderer)
         EnableOnly(hurtRenderer);
         SetRendererAsLooping(hurtRenderer, looping: false);
+
+        // Fluxo dos olhos no hit fatal:
+        // 1s Damaged -> 0.75s Front -> volta a seguir player (mesmo com hurtRenderer ligado)
+        if (eyes != null)
+            eyes.BeginDeathEyesFlow(deathEyesDamagedDuration, deathEyesFrontDuration);
 
         float t = Mathf.Max(0f, deathHoldDuration);
         if (t > 0f)
