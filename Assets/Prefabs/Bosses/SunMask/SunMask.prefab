@@ -994,7 +994,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f62f1f9ab8b2a5d4cbee2b172ffc2e5f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SunMaskBoss
-  enableSurgicalLogs: 1
   characterHealth: {fileID: 1116198084690886847}
   movement: {fileID: 4873712702074537722}
   walkRenderer: {fileID: 5554180369288328576}
@@ -1005,6 +1004,9 @@ MonoBehaviour:
   angryChaseSeconds: 5
   angryAfterChaseStopSeconds: 1
   angryEyesYOffset: 0.3
+  angryArcSeconds: 1
+  angryArcRadius: 1.25
+  angryArcClockwise: 1
   enableWinkAttack: 1
   winkMinInterval: 3
   winkMaxInterval: 5
@@ -1787,7 +1789,7 @@ SpriteRenderer:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6342123993178624700}
-  m_Enabled: 1
+  m_Enabled: 0
   m_CastShadows: 0
   m_ReceiveShadows: 0
   m_DynamicOccludee: 1
