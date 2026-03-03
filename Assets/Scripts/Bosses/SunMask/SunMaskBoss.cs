@@ -1,4 +1,5 @@
 ﻿using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 [RequireComponent(typeof(CharacterHealth))]
@@ -6,6 +7,7 @@ using UnityEngine;
 [RequireComponent(typeof(Collider2D))]
 [RequireComponent(typeof(Rigidbody2D))]
 [RequireComponent(typeof(AudioSource))]
+[RequireComponent(typeof(CircleCollider2D))]
 public class SunMaskBoss : MonoBehaviour, IKillable
 {
     [Header("References")]
@@ -113,6 +115,15 @@ public class SunMaskBoss : MonoBehaviour, IKillable
     [Header("Pixel Perfect")]
     [SerializeField, Min(1)] private int pixelsPerUnit = 16;
 
+    private static readonly List<Bomb> s_bombSnapshot = new(256);
+    private static readonly List<Bomb> s_bombsToDestroy = new(32);
+
+    [SerializeField, Min(0f)] private float extraBombDestroyRadius = 0.10f;
+    [SerializeField, Min(0.01f)] private float bombScanInterval = 0.05f;
+
+    private CircleCollider2D bossCircle;
+    private float nextBombScanTime;
+
     private bool isDead;
     private bool inWinkAttack;
     private bool inAngry;
@@ -151,6 +162,84 @@ public class SunMaskBoss : MonoBehaviour, IKillable
         new Vector2(-1f, -1f).normalized
     };
 
+    void FixedUpdate()
+    {
+        ScanAndDestroyPunchedBombsTouchingBoss();
+    }
+
+    void ScanAndDestroyPunchedBombsTouchingBoss()
+    {
+        if (!destroyBombsOnTouch) return;
+        if (isDead) return;
+
+        float now = Time.time;
+        if (now < nextBombScanTime) return;
+        nextBombScanTime = now + Mathf.Max(0.01f, bombScanInterval);
+
+        Vector2 bossPos = rb != null ? rb.position : (Vector2)transform.position;
+
+        float bossRadius;
+        if (bossCircle != null)
+        {
+            float sx = Mathf.Abs(transform.lossyScale.x);
+            float sy = Mathf.Abs(transform.lossyScale.y);
+            bossRadius = Mathf.Max(0.01f, bossCircle.radius * Mathf.Max(sx, sy));
+        }
+        else
+        {
+            var col = GetComponent<Collider2D>();
+            var ext = col != null ? col.bounds.extents : (Vector3.one * 0.5f);
+            bossRadius = Mathf.Max(0.01f, Mathf.Max(ext.x, ext.y));
+        }
+
+        float extra = Mathf.Max(0f, extraBombDestroyRadius);
+
+        s_bombSnapshot.Clear();
+        s_bombsToDestroy.Clear();
+
+        // snapshot para não explodir com "collection modified"
+        foreach (var b in Bomb.ActiveBombs)
+            s_bombSnapshot.Add(b);
+
+        for (int i = 0; i < s_bombSnapshot.Count; i++)
+        {
+            var bomb = s_bombSnapshot[i];
+            if (bomb == null) continue;
+            if (bomb.HasExploded) continue;
+
+            if (!bomb.IsBeingPunched && !bomb.IsBeingKicked && !bomb.IsBeingMagnetPulled)
+                continue;
+
+            Vector2 bombPos = (Vector2)bomb.transform.position;
+
+            float r = bossRadius + Mathf.Max(0.01f, bomb.ApproxRadius) + extra;
+            if ((bombPos - bossPos).sqrMagnitude > r * r)
+                continue;
+
+            s_bombsToDestroy.Add(bomb);
+        }
+
+        // destrói fora do loop (e fora do snapshot)
+        for (int i = 0; i < s_bombsToDestroy.Count; i++)
+            DestroyBombLikeTouch(s_bombsToDestroy[i]);
+    }
+
+    void DestroyBombLikeTouch(Bomb bomb)
+    {
+        if (bomb == null) return;
+        if (bomb.HasExploded) return;
+
+        BombController owner = bomb.Owner;
+        if (owner != null)
+        {
+            owner.DestroyBombExternally(bomb.gameObject, refund: true);
+            return;
+        }
+
+        bomb.MarkAsExploded();
+        Destroy(bomb.gameObject);
+    }
+
     void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
@@ -174,6 +263,7 @@ public class SunMaskBoss : MonoBehaviour, IKillable
 
         EnableOnly(walkRenderer);
         SetRendererAsLooping(walkRenderer, looping: true);
+        bossCircle = GetComponent<CircleCollider2D>();
 
         if (rb != null)
         {

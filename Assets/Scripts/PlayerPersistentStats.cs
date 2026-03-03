@@ -25,7 +25,7 @@ public static class PlayerPersistentStats
         public int SpeedInternal = MaxSpeedInternal;
 
         public bool CanKickBombs = true;
-        public bool CanPunchBombs = false;
+        public bool CanPunchBombs = true;
         public bool HasPowerGlove = true;
         public bool CanPassBombs = false;
         public bool CanPassDestructibles = true;
@@ -35,7 +35,7 @@ public static class PlayerPersistentStats
         public bool HasRubberBombs = false;
         public bool HasFullFire = false;
 
-        public MountedType MountedLouie = MountedType.Pink;
+        public MountedType MountedLouie = MountedType.None;
         public BomberSkin Skin = BomberSkin.White;
 
         public readonly List<ItemType> QueuedEggs = new(8);
@@ -43,8 +43,8 @@ public static class PlayerPersistentStats
         public PlayerState()
         {
             QueuedEggs.Clear();
-            QueuedEggs.Add(ItemType.GreenLouieEgg);
-            QueuedEggs.Add(ItemType.PinkLouieEgg);
+            //QueuedEggs.Add(ItemType.GreenLouieEgg);
+            //QueuedEggs.Add(ItemType.PinkLouieEgg);
         }
     }
 

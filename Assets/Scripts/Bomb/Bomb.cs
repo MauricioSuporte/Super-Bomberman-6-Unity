@@ -61,6 +61,10 @@ public class Bomb : MonoBehaviour, IMagnetPullable
 
     public bool IsBeingMagnetPulled => magnetRoutine != null;
 
+    public static readonly HashSet<Bomb> ActiveBombs = new();
+
+    public float ApproxRadius { get; private set; } = 0.5f;
+
     private Collider2D bombCollider;
     private Rigidbody2D rb;
     private AnimatedSpriteRenderer anim;
@@ -140,6 +144,33 @@ public class Bomb : MonoBehaviour, IMagnetPullable
 
         stageLayer = LayerMask.NameToLayer("Stage");
         stageMask = stageLayer >= 0 ? (1 << stageLayer) : 0;
+
+        if (TryGetComponent<CircleCollider2D>(out var cc))
+        {
+            float sx = Mathf.Abs(transform.lossyScale.x);
+            float sy = Mathf.Abs(transform.lossyScale.y);
+            float s = Mathf.Max(sx, sy);
+            ApproxRadius = Mathf.Max(0.01f, cc.radius * s);
+        }
+        else
+        {
+            ApproxRadius = 0.5f;
+        }
+    }
+
+    private void OnEnable()
+    {
+        ActiveBombs.Add(this);
+    }
+
+    private void OnDisable()
+    {
+        ActiveBombs.Remove(this);
+    }
+
+    private void OnDestroy()
+    {
+        ActiveBombs.Remove(this);
     }
 
     private void FixedUpdate()
