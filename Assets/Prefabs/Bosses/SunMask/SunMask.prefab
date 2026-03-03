@@ -41,7 +41,7 @@ SpriteRenderer:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 573310933562377919}
-  m_Enabled: 0
+  m_Enabled: 1
   m_CastShadows: 0
   m_ReceiveShadows: 0
   m_DynamicOccludee: 1
@@ -888,6 +888,7 @@ GameObject:
   - component: {fileID: 1116198084690886847}
   - component: {fileID: 4873712702074537722}
   - component: {fileID: 8751596311904218179}
+  - component: {fileID: 707636302417938483}
   m_Layer: 10
   m_Name: SunMask
   m_TagString: Untagged
@@ -1007,6 +1008,17 @@ MonoBehaviour:
   touchDamage: 1
   touchDamageCooldown: 0.35
   destroyBombsOnTouch: 1
+  explosionPrefab: {fileID: 6808800731990316043, guid: 06a9299c4ed9c7b44b6b21cfbc68c27b, type: 3}
+  explosionSpawnInterval: 0.1
+  explosionSpawnRadius: 3
+  explosionMinScale: 0.7
+  explosionMaxScale: 1.2
+  deathExplosionSfx: {fileID: 8300000, guid: 4b7848255d7d0b8409feb0a8c7ae8a00, type: 3}
+  deathExplosionSfxInterval: 0.25
+  deathExplosionSfxVolume: 0.8
+  deathExplosionPitchRange: {x: 0.95, y: 1.05}
+  deathSfxUseTempAudioObject: 1
+  deathSfxSpatialBlend: 0
 --- !u!114 &1116198084690886847
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1066,6 +1078,103 @@ MonoBehaviour:
   useDamagedEyesWhenBossHurt: 1
   useDominantAxisFor8Dir: 1
   diagonalBias: 0.22
+--- !u!82 &707636302417938483
+AudioSource:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4621539847840114947}
+  m_Enabled: 1
+  serializedVersion: 4
+  OutputAudioMixerGroup: {fileID: 0}
+  m_audioClip: {fileID: 0}
+  m_Resource: {fileID: 0}
+  m_PlayOnAwake: 1
+  m_Volume: 1
+  m_Pitch: 1
+  Loop: 0
+  Mute: 0
+  Spatialize: 0
+  SpatializePostEffects: 0
+  Priority: 128
+  DopplerLevel: 1
+  MinDistance: 1
+  MaxDistance: 500
+  Pan2D: 0
+  rolloffMode: 0
+  BypassEffects: 0
+  BypassListenerEffects: 0
+  BypassReverbZones: 0
+  rolloffCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 1
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  panLevelCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  spreadCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  reverbZoneMixCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
 --- !u!1 &4878805714892888565
 GameObject:
   m_ObjectHideFlags: 0
@@ -1863,7 +1972,7 @@ SpriteRenderer:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7145458630328802068}
-  m_Enabled: 0
+  m_Enabled: 1
   m_CastShadows: 0
   m_ReceiveShadows: 0
   m_DynamicOccludee: 1

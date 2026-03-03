@@ -40,9 +40,25 @@ public class SunMaskBoss : MonoBehaviour, IKillable
     [Tooltip("Se true, destrói bombas ao encostar.")]
     public bool destroyBombsOnTouch = true;
 
+    [Header("Death Explosions")]
+    public GameObject explosionPrefab;
+    [Min(0.001f)] public float explosionSpawnInterval = 0.05f;
+    [Min(0f)] public float explosionSpawnRadius = 1.2f;
+    [Min(0.01f)] public float explosionMinScale = 0.7f;
+    [Min(0.01f)] public float explosionMaxScale = 1.2f;
+
+    [Header("Death Explosion SFX")]
+    public AudioClip deathExplosionSfx;
+    [Min(0.001f)] public float deathExplosionSfxInterval = 0.12f;
+    [Range(0f, 1f)] public float deathExplosionSfxVolume = 1f;
+    public Vector2 deathExplosionPitchRange = new(0.95f, 1.05f);
+    public bool deathSfxUseTempAudioObject = true;
+    public float deathSfxSpatialBlend = 0f;
+
     private bool isDead;
     private Coroutine hurtRoutine;
     private Coroutine deathRoutine;
+    private Coroutine deathExplosionsRoutine;
 
     private Rigidbody2D rb;
     private AudioSource audioSource;
@@ -54,6 +70,12 @@ public class SunMaskBoss : MonoBehaviour, IKillable
     private bool hasCachedMoveDirection;
 
     private SunMaskEyesController eyes;
+
+    private float nextDeathSfxTime;
+
+    // Ensures only ONE death explosion SFX plays at a time (replaces/stops previous).
+    private static readonly object deathSfxGate = new();
+    private static AudioSource deathSfxOwner;
 
     void Awake()
     {
@@ -93,12 +115,14 @@ public class SunMaskBoss : MonoBehaviour, IKillable
     {
         isDead = false;
         nextTouchDamageTime = 0f;
+        nextDeathSfxTime = 0f;
 
         hasCachedMoveDirection = false;
         cachedMoveDirection = default;
 
         if (hurtRoutine != null) { StopCoroutine(hurtRoutine); hurtRoutine = null; }
         if (deathRoutine != null) { StopCoroutine(deathRoutine); deathRoutine = null; }
+        if (deathExplosionsRoutine != null) { StopCoroutine(deathExplosionsRoutine); deathExplosionsRoutine = null; }
 
         if (movement != null)
             movement.enabled = true;
@@ -111,6 +135,7 @@ public class SunMaskBoss : MonoBehaviour, IKillable
     {
         if (hurtRoutine != null) { StopCoroutine(hurtRoutine); hurtRoutine = null; }
         if (deathRoutine != null) { StopCoroutine(deathRoutine); deathRoutine = null; }
+        if (deathExplosionsRoutine != null) { StopCoroutine(deathExplosionsRoutine); deathExplosionsRoutine = null; }
     }
 
     void OnTriggerEnter2D(Collider2D other)
@@ -335,17 +360,151 @@ public class SunMaskBoss : MonoBehaviour, IKillable
     {
         StopMovement_DisableComponent();
 
-        EnableOnly(hurtRenderer);
-        SetRendererAsLooping(hurtRenderer, looping: false);
+        AnimatedSpriteRenderer target = deathRenderer != null ? deathRenderer : hurtRenderer;
+        EnableOnly(target);
+        SetRendererAsLooping(target, looping: false);
 
         if (eyes != null)
             eyes.BeginDeathEyesFlowDamagedThenSul(deathEyesDamagedDuration);
 
         float t = Mathf.Max(0f, deathHoldDuration);
+
+        if (explosionPrefab != null && t > 0f)
+        {
+            nextDeathSfxTime = 0f;
+            deathExplosionsRoutine = StartCoroutine(SpawnDeathExplosions(t));
+        }
+
         if (t > 0f)
             yield return new WaitForSeconds(t);
 
+        if (deathExplosionsRoutine != null)
+        {
+            StopCoroutine(deathExplosionsRoutine);
+            deathExplosionsRoutine = null;
+        }
+
         Destroy(gameObject);
+    }
+
+    IEnumerator SpawnDeathExplosions(float duration)
+    {
+        float elapsed = 0f;
+        float interval = Mathf.Max(0.001f, explosionSpawnInterval);
+
+        while (elapsed < duration)
+        {
+            SpawnOneExplosion();
+            yield return new WaitForSeconds(interval);
+            elapsed += interval;
+        }
+    }
+
+    void SpawnOneExplosion()
+    {
+        if (explosionPrefab == null)
+            return;
+
+        Vector2 origin = transform.position;
+        Vector2 offset = Random.insideUnitCircle * Mathf.Max(0f, explosionSpawnRadius);
+        Vector3 pos = new(origin.x + offset.x, origin.y + offset.y, transform.position.z);
+
+        GameObject fxGo = Instantiate(explosionPrefab, pos, Quaternion.identity);
+
+        float minS = Mathf.Max(0.01f, explosionMinScale);
+        float maxS = Mathf.Max(minS, explosionMaxScale);
+        float scale = Random.Range(minS, maxS);
+
+        if (fxGo != null)
+            fxGo.transform.localScale = new Vector3(scale, scale, 1f);
+
+        if (fxGo != null)
+        {
+            float life = 0.5f;
+
+            var anim = fxGo.GetComponentInChildren<AnimatedSpriteRenderer>(true);
+            if (anim != null)
+            {
+                if (anim.useSequenceDuration && anim.sequenceDuration > 0f) life = anim.sequenceDuration;
+                else if (anim.animationSprite != null && anim.animationSprite.Length > 0) life = anim.animationTime * anim.animationSprite.Length;
+            }
+
+            Destroy(fxGo, Mathf.Max(0.05f, life) + 0.05f);
+        }
+
+        TryPlayDeathExplosionSfx();
+    }
+
+    void TryPlayDeathExplosionSfx()
+    {
+        if (deathExplosionSfx == null)
+            return;
+
+        float interval = deathExplosionSfxInterval <= 0f ? 0.01f : deathExplosionSfxInterval;
+        if (Time.time < nextDeathSfxTime)
+            return;
+
+        nextDeathSfxTime = Time.time + interval;
+
+        float pitch = Random.Range(deathExplosionPitchRange.x, deathExplosionPitchRange.y);
+        Vector3 pos = transform.position;
+
+        if (deathSfxUseTempAudioObject)
+        {
+            lock (deathSfxGate)
+            {
+                if (deathSfxOwner != null)
+                {
+                    var oldGo = deathSfxOwner.gameObject;
+                    deathSfxOwner.Stop();
+                    deathSfxOwner = null;
+                    if (oldGo != null) Destroy(oldGo);
+                }
+
+                GameObject go = new("SunMaskDeathSfx");
+                go.transform.position = pos;
+
+                AudioSource s = go.AddComponent<AudioSource>();
+                s.playOnAwake = false;
+                s.spatialBlend = deathSfxSpatialBlend;
+                s.volume = deathExplosionSfxVolume;
+                s.pitch = pitch;
+
+                var tracker = go.AddComponent<TempDeathSfxOwnerTracker>();
+                tracker.source = s;
+
+                deathSfxOwner = s;
+
+                s.PlayOneShot(deathExplosionSfx, 1f);
+
+                float clipDuration = deathExplosionSfx.length / Mathf.Max(0.01f, Mathf.Abs(pitch));
+                Destroy(go, clipDuration + 0.1f);
+            }
+
+            return;
+        }
+
+        if (audioSource == null)
+            return;
+
+        audioSource.Stop();
+        audioSource.pitch = pitch;
+        audioSource.PlayOneShot(deathExplosionSfx, deathExplosionSfxVolume);
+        audioSource.pitch = 1f;
+    }
+
+    private sealed class TempDeathSfxOwnerTracker : MonoBehaviour
+    {
+        public AudioSource source;
+
+        void OnDestroy()
+        {
+            lock (deathSfxGate)
+            {
+                if (deathSfxOwner != null && deathSfxOwner == source)
+                    deathSfxOwner = null;
+            }
+        }
     }
 
     void StopMovement_DisableComponent()
