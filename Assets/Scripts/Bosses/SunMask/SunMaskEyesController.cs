@@ -27,7 +27,9 @@ public sealed class SunMaskEyesController : MonoBehaviour
     {
         None,
         Damaged,
-        HoldSul
+        HoldSul,
+        IntroHold,
+        IntroSpin
     }
 
     [Header("Eye Roots (children of SunMask)")]
@@ -66,6 +68,7 @@ public sealed class SunMaskEyesController : MonoBehaviour
 
     private EyeOverride _override = EyeOverride.None;
     private Coroutine _deathEyesRoutine;
+    private Coroutine _introEyesRoutine;
 
     private Vector3 _rightEyeBaseLocalPos;
     private Vector3 _leftEyeBaseLocalPos;
@@ -108,6 +111,12 @@ public sealed class SunMaskEyesController : MonoBehaviour
 
         _override = EyeOverride.None;
 
+        if (_introEyesRoutine != null)
+        {
+            StopCoroutine(_introEyesRoutine);
+            _introEyesRoutine = null;
+        }
+
         _angryOffsetApplied = false;
         RestoreEyeRootsBaseLocalPos();
 
@@ -123,6 +132,12 @@ public sealed class SunMaskEyesController : MonoBehaviour
             _deathEyesRoutine = null;
         }
 
+        if (_introEyesRoutine != null)
+        {
+            StopCoroutine(_introEyesRoutine);
+            _introEyesRoutine = null;
+        }
+
         RestoreEyeRootsBaseLocalPos();
 
         _currentTarget = null;
@@ -136,7 +151,7 @@ public sealed class SunMaskEyesController : MonoBehaviour
 
         UpdateAngryEyeOffset();
 
-        if (_override == EyeOverride.Damaged || _override == EyeOverride.HoldSul)
+        if (_override == EyeOverride.Damaged || _override == EyeOverride.HoldSul || _override == EyeOverride.IntroHold || _override == EyeOverride.IntroSpin)
             return;
 
         if (useDamagedEyesWhenBossHurt)
@@ -210,12 +225,130 @@ public sealed class SunMaskEyesController : MonoBehaviour
         ApplyDirection(dir, force: false);
     }
 
+    // =========================
+    // INTRO CONTROLS
+    // =========================
+
+    public void BeginIntroHoldDown()
+    {
+        if (_override == EyeOverride.IntroHold || _override == EyeOverride.IntroSpin)
+            return;
+
+        if (_introEyesRoutine != null)
+        {
+            StopCoroutine(_introEyesRoutine);
+            _introEyesRoutine = null;
+        }
+
+        _override = EyeOverride.IntroHold;
+
+        ApplyEyeSet(EyeSet.Normal, force: true);
+        ApplyDirection(EyeDir.Sul, force: true);
+
+        _currentDir = EyeDir.Sul;
+        _hasDir = true;
+
+        _currentTarget = null;
+    }
+
+    public void ClearOverrideIfIntro()
+    {
+        if (_override != EyeOverride.IntroHold && _override != EyeOverride.IntroSpin)
+            return;
+
+        if (_introEyesRoutine != null)
+        {
+            StopCoroutine(_introEyesRoutine);
+            _introEyesRoutine = null;
+        }
+
+        _override = EyeOverride.None;
+        _currentTarget = null;
+        _nextRetargetTime = 0f;
+    }
+
+    public IEnumerator PlayIntroSpinCounterClockwise(float totalDuration)
+    {
+        if (totalDuration <= 0f)
+        {
+            ClearOverrideIfIntro();
+            yield break;
+        }
+
+        if (_introEyesRoutine != null)
+        {
+            StopCoroutine(_introEyesRoutine);
+            _introEyesRoutine = null;
+        }
+
+        _introEyesRoutine = StartCoroutine(IntroSpinCCWRoutine(totalDuration));
+        yield return _introEyesRoutine;
+        _introEyesRoutine = null;
+    }
+
+    private IEnumerator IntroSpinCCWRoutine(float totalDuration)
+    {
+        _override = EyeOverride.IntroSpin;
+
+        ApplyEyeSet(EyeSet.Normal, force: true);
+        ApplyDirection(EyeDir.Sul, force: true);
+
+        EyeDir[] seq =
+        {
+            EyeDir.Sul,
+            EyeDir.Sudeste,
+            EyeDir.Leste,
+            EyeDir.Nordeste,
+            EyeDir.Norte,
+            EyeDir.Noroeste,
+            EyeDir.Oeste,
+            EyeDir.Sudoeste,
+            EyeDir.Sul
+        };
+
+        int steps = seq.Length;
+        float stepDur = totalDuration / Mathf.Max(1, steps);
+        stepDur = Mathf.Max(0.001f, stepDur);
+
+        for (int i = 0; i < seq.Length; i++)
+        {
+            ApplyDirection(seq[i], force: true);
+            _currentDir = seq[i];
+            _hasDir = true;
+
+            float t = 0f;
+            while (t < stepDur)
+            {
+                if (GamePauseController.IsPaused)
+                {
+                    yield return null;
+                    continue;
+                }
+
+                t += Time.deltaTime;
+                yield return null;
+            }
+        }
+
+        ClearOverrideIfIntro();
+    }
+
+    // =========================
+    // DEATH FLOW (existing)
+    // =========================
+
     public void BeginDeathEyesFlowDamagedThenSul(float damagedDuration = 1f)
     {
         if (_deathEyesRoutine != null)
         {
             StopCoroutine(_deathEyesRoutine);
             _deathEyesRoutine = null;
+        }
+
+        if (_introEyesRoutine != null)
+        {
+            StopCoroutine(_introEyesRoutine);
+            _introEyesRoutine = null;
         }
 
         _deathEyesRoutine = StartCoroutine(DeathEyesRoutine_DamagedThenSul(damagedDuration));
@@ -237,7 +370,6 @@ public sealed class SunMaskEyesController : MonoBehaviour
     private void SetOverrideDamaged()
     {
         _override = EyeOverride.Damaged;
-
         ApplyEyeSet(EyeSet.Damaged, force: true);
     }
 

@@ -15,7 +15,7 @@ public abstract class BossIntroFlowBase : MonoBehaviour
     protected readonly List<BombController> playerBombs = new();
     protected readonly List<PlayerMountCompanion> playerCompanions = new();
 
-    int playersSafetyLocks;
+    protected int playersSafetyLocks;
 
     readonly Dictionary<MovementController, Collider2D> cachedPlayerColliders = new();
     readonly Dictionary<MovementController, bool> cachedColliderEnabled = new();
@@ -23,7 +23,7 @@ public abstract class BossIntroFlowBase : MonoBehaviour
     bool started;
     bool released;
 
-    static int s_bossIntroRunningCount;
+    protected static int s_bossIntroRunningCount;
     public static bool BossIntroRunning => s_bossIntroRunningCount > 0;
 
     protected virtual void Awake()

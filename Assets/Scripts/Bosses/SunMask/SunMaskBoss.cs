@@ -14,6 +14,7 @@ public class SunMaskBoss : MonoBehaviour, IKillable
 
     [Header("Renderers")]
     public AnimatedSpriteRenderer walkRenderer;
+    public AnimatedSpriteRenderer closedRenderer;
     public AnimatedSpriteRenderer hurtRenderer;
     public AnimatedSpriteRenderer deathRenderer;
 
@@ -21,7 +22,6 @@ public class SunMaskBoss : MonoBehaviour, IKillable
     [SerializeField] private AnimatedSpriteRenderer angryRenderer;
     [SerializeField, Min(0f)] private float angryFreezeSeconds = 1f;
 
-    [Tooltip("Tempo TOTAL do Angry (inclui o arco + perseguição). Ex.: 5s = 1s arco + 4s chase.")]
     [SerializeField, Min(0f)] private float angryChaseSeconds = 5f;
 
     [SerializeField, Min(0f)] private float angryAfterChaseStopSeconds = 1f;

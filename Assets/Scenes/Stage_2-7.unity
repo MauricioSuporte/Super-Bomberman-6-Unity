@@ -7361,6 +7361,59 @@ Tilemap:
     e31: 0
     e32: 0
     e33: 1
+--- !u!1 &840111321
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 840111322}
+  - component: {fileID: 840111323}
+  m_Layer: 6
+  m_Name: BossBattleController
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &840111322
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 840111321}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -3, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &840111323
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 840111321}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8d4ea201aa1819f409cbec9367aca506, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SunMaskBossIntroFlow
+  enableFlow: 1
+  extraHoldAfterIntroSeconds: 0
+  disablePlayerBombControllerWhileLocked: 1
+  boss: {fileID: 7103122268278295921}
+  bossStopPoint: {fileID: 840111322}
+  bossDescendSeconds: 3
+  lockBossByDisablingBehaviour: 1
+  stopHoldSeconds: 0.5
+  eyesSpinSeconds: 1
 --- !u!1 &988695574
 GameObject:
   m_ObjectHideFlags: 0
@@ -8153,7 +8206,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 673570701823906346, guid: ce721f59039141f44914bc55bc788281, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0
+      value: 8.5
       objectReference: {fileID: 0}
     - target: {fileID: 673570701823906346, guid: ce721f59039141f44914bc55bc788281, type: 3}
       propertyPath: m_LocalPosition.z
@@ -8224,6 +8277,17 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: ce721f59039141f44914bc55bc788281, type: 3}
+--- !u!114 &7103122268278295921 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 5438964542736687964, guid: ce721f59039141f44914bc55bc788281, type: 3}
+  m_PrefabInstance: {fileID: 7103122268278295920}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f62f1f9ab8b2a5d4cbee2b172ffc2e5f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SunMaskBoss
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -8241,3 +8305,4 @@ SceneRoots:
   - {fileID: 704221593}
   - {fileID: 1934522011}
   - {fileID: 7103122268278295920}
+  - {fileID: 840111322}
