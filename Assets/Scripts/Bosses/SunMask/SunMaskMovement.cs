@@ -27,21 +27,30 @@ public class SunMaskMovement : MonoBehaviour
     private float pixelAccumulatorY;
 
     private const float EPS = 0.0001f;
+    private bool initialized;
 
     void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
         rb.gravityScale = 0f;
         rb.constraints = RigidbodyConstraints2D.FreezeRotation;
+
         PickInitialDirection();
+        initialized = true;
     }
 
     void OnEnable()
     {
+        // Importante: NÃO resetar direção aqui, senão qualquer disable/enable muda o caminho.
         hitStopTimer = 0f;
         pixelAccumulatorX = 0f;
         pixelAccumulatorY = 0f;
-        PickInitialDirection();
+
+        if (!initialized)
+        {
+            PickInitialDirection();
+            initialized = true;
+        }
     }
 
     void FixedUpdate()
@@ -158,4 +167,10 @@ public class SunMaskMovement : MonoBehaviour
         hitStopTimer = Mathf.Max(hitStopTimer, duration);
         rb.linearVelocity = Vector2.zero;
     }
+
+    public Vector2 GetCurrentDirection()
+        => currentDirection;
+
+    public void SetCurrentDirection(Vector2 direction)
+        => currentDirection = direction;
 }

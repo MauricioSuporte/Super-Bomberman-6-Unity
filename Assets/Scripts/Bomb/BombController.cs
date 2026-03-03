@@ -2065,4 +2065,34 @@ public partial class BombController : MonoBehaviour
 
         return true;
     }
+
+    public void DestroyBombExternally(GameObject bombGo, bool refund = true)
+    {
+        if (bombGo == null)
+            return;
+
+        int id = bombGo.GetInstanceID();
+        if (_removedBombIds.Contains(id))
+            return;
+
+        _removedBombIds.Add(id);
+
+        UnregisterBomb(bombGo);
+
+        if (bombGo.TryGetComponent<Bomb>(out var bomb) && bomb != null)
+        {
+            if (bomb.IsPowerBomb)
+                ClearActivePowerBombIfMatches(bombGo);
+
+            if (!bomb.HasExploded)
+                bomb.MarkAsExploded();
+
+            bomb.ForceStopExternalMovementAndSnap(bomb.GetLogicalPosition());
+        }
+
+        if (refund)
+            bombsRemaining = Mathf.Min(bombsRemaining + 1, bombAmout);
+
+        Destroy(bombGo);
+    }
 }

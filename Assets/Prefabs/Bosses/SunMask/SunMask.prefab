@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 5748939947626423731}
   - component: {fileID: 3544614133702379273}
   - component: {fileID: 5539008035070810275}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: RigthEye
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -80,7 +80,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 6
+  m_SortingOrder: 3
   m_MaskInteraction: 0
   m_Sprite: {fileID: -1821986477, guid: 441327c21ac6d0441acafad8deeb1682, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -130,7 +130,7 @@ GameObject:
   - component: {fileID: 6613230125400729919}
   - component: {fileID: 5567364472086012430}
   - component: {fileID: 1239999045062863431}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: Wink
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -199,7 +199,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 6
+  m_SortingOrder: 3
   m_MaskInteraction: 0
   m_Sprite: {fileID: -3938791644569641682, guid: 0d07110758b24a74195df6c69e425544, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -249,7 +249,7 @@ GameObject:
   - component: {fileID: 1080390361807558740}
   - component: {fileID: 3959945924749233709}
   - component: {fileID: 209237640579710390}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: Kiss
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -318,7 +318,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 6
+  m_SortingOrder: 3
   m_MaskInteraction: 0
   m_Sprite: {fileID: -1226291330728262345, guid: 0d07110758b24a74195df6c69e425544, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -368,8 +368,10 @@ GameObject:
   - component: {fileID: 673570701823906346}
   - component: {fileID: 6068685214249699722}
   - component: {fileID: 1683716617722822189}
+  - component: {fileID: 5438964542736687964}
+  - component: {fileID: 1116198084690886847}
   - component: {fileID: 4873712702074537722}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: SunMask
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -462,6 +464,47 @@ Rigidbody2D:
   m_SleepingMode: 1
   m_CollisionDetection: 0
   m_Constraints: 4
+--- !u!114 &5438964542736687964
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4621539847840114947}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f62f1f9ab8b2a5d4cbee2b172ffc2e5f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SunMaskBoss
+  characterHealth: {fileID: 1116198084690886847}
+  movement: {fileID: 4873712702074537722}
+  walkRenderer: {fileID: 5554180369288328576}
+  hurtRenderer: {fileID: 5292329079700839116}
+  deathRenderer: {fileID: 3735269560577711333}
+  hurtStopDuration: 1
+  deathHoldDuration: 5
+  explosionDamage: 1
+  touchDamage: 1
+  touchDamageCooldown: 0.35
+--- !u!114 &1116198084690886847
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4621539847840114947}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 205f7fc6fe6408f419811c6c486b9cd6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CharacterHealth
+  life: 5
+  hitInvulnerableDuration: 1
+  hitBlinkInterval: 0.05
+  tempSlowdownStartNormalized: 0.7
+  tempEndBlinkMultiplier: 4
+  playDamagedLoopInsteadOfBlink: 0
+  playDamagedLoopAndBlink: 0
 --- !u!114 &4873712702074537722
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -493,7 +536,7 @@ GameObject:
   - component: {fileID: 4926740484086283365}
   - component: {fileID: 3185898951401507212}
   - component: {fileID: 5084572211645712223}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: Angry
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -562,7 +605,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 6
+  m_SortingOrder: 3
   m_MaskInteraction: 0
   m_Sprite: {fileID: 4200183971177769408, guid: 0d07110758b24a74195df6c69e425544, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -614,7 +657,7 @@ GameObject:
   - component: {fileID: 3616639374198250255}
   - component: {fileID: 6708452858348312446}
   - component: {fileID: 6582295374304994755}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: LeftEye
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -683,7 +726,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 6
+  m_SortingOrder: 3
   m_MaskInteraction: 0
   m_Sprite: {fileID: -1821986477, guid: 441327c21ac6d0441acafad8deeb1682, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -733,7 +776,7 @@ GameObject:
   - component: {fileID: 8095681757410377161}
   - component: {fileID: 8211803272259686602}
   - component: {fileID: 5554180369288328576}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: Walking
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -802,7 +845,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 6
+  m_SortingOrder: 3
   m_MaskInteraction: 0
   m_Sprite: {fileID: 3460787535467032635, guid: 0d07110758b24a74195df6c69e425544, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -852,7 +895,7 @@ GameObject:
   - component: {fileID: 6210976396201120261}
   - component: {fileID: 1179330697667422327}
   - component: {fileID: 3735269560577711333}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: Dieing
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -921,7 +964,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 6
+  m_SortingOrder: 3
   m_MaskInteraction: 0
   m_Sprite: {fileID: 551258229594904538, guid: 0d07110758b24a74195df6c69e425544, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -971,7 +1014,7 @@ GameObject:
   - component: {fileID: 330178665588440686}
   - component: {fileID: 5614424314523052716}
   - component: {fileID: 5292329079700839116}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: Damaged
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1040,7 +1083,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 6
+  m_SortingOrder: 3
   m_MaskInteraction: 0
   m_Sprite: {fileID: 551258229594904538, guid: 0d07110758b24a74195df6c69e425544, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
