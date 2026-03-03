@@ -222,16 +222,14 @@ public class SunMaskBoss : MonoBehaviour, IKillable
         if (!other.CompareTag("Player") && other.gameObject.layer != LayerMask.NameToLayer("Player"))
             return;
 
-        MovementController player;
-        if (!other.TryGetComponent<MovementController>(out player) || player == null)
+        if (!other.TryGetComponent<MovementController>(out var player) || player == null)
             return;
 
         if (player.isDead || player.IsEndingStage)
             return;
 
         CharacterHealth playerHealth = null;
-        CharacterHealth ph;
-        if (player.TryGetComponent<CharacterHealth>(out ph) && ph != null)
+        if (player.TryGetComponent<CharacterHealth>(out var ph) && ph != null)
             playerHealth = ph;
 
         if (playerHealth != null && playerHealth.IsInvulnerable)
@@ -241,8 +239,7 @@ public class SunMaskBoss : MonoBehaviour, IKillable
 
         if (player.IsMountedOnLouie)
         {
-            PlayerMountCompanion companion;
-            if (player.TryGetComponent<PlayerMountCompanion>(out companion) && companion != null)
+            if (player.TryGetComponent<PlayerMountCompanion>(out var companion) && companion != null)
             {
                 companion.OnMountedLouieHit(dmg, false);
                 nextTouchDamageTime = Time.time + touchDamageCooldown;
@@ -364,19 +361,29 @@ public class SunMaskBoss : MonoBehaviour, IKillable
         EnableOnly(target);
         SetRendererAsLooping(target, looping: false);
 
+        float totalDeath = Mathf.Max(0f, deathHoldDuration);
+
+        // 1) inicia o fluxo de olhos (Damaged 1s, depois muda para Down/Sul dentro do EyesController)
+        float eyesDelay = Mathf.Clamp(deathEyesDamagedDuration, 0f, totalDeath);
         if (eyes != null)
             eyes.BeginDeathEyesFlowDamagedThenSul(deathEyesDamagedDuration);
 
-        float t = Mathf.Max(0f, deathHoldDuration);
+        // 2) espera os 1s iniciais (até os olhos trocarem para Down/Sul)
+        if (eyesDelay > 0f)
+            yield return new WaitForSeconds(eyesDelay);
 
-        if (explosionPrefab != null && t > 0f)
+        // 3) só agora começa VFX/SFX de explosão (no tempo restante)
+        float remaining = Mathf.Max(0f, totalDeath - eyesDelay);
+
+        if (explosionPrefab != null && remaining > 0f)
         {
             nextDeathSfxTime = 0f;
-            deathExplosionsRoutine = StartCoroutine(SpawnDeathExplosions(t));
+            deathExplosionsRoutine = StartCoroutine(SpawnDeathExplosions(remaining));
         }
 
-        if (t > 0f)
-            yield return new WaitForSeconds(t);
+        // 4) segura até terminar o total da morte (restante)
+        if (remaining > 0f)
+            yield return new WaitForSeconds(remaining);
 
         if (deathExplosionsRoutine != null)
         {
@@ -526,8 +533,7 @@ public class SunMaskBoss : MonoBehaviour, IKillable
         {
             target.RefreshFrame();
 
-            SpriteRenderer sr;
-            if (target.TryGetComponent<SpriteRenderer>(out sr))
+            if (target.TryGetComponent<SpriteRenderer>(out var sr))
                 sr.enabled = true;
         }
     }
