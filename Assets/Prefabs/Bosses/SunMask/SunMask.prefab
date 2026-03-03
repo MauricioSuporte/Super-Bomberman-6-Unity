@@ -889,6 +889,7 @@ GameObject:
   - component: {fileID: 4873712702074537722}
   - component: {fileID: 8751596311904218179}
   - component: {fileID: 707636302417938483}
+  - component: {fileID: 8996538740913992431}
   m_Layer: 10
   m_Name: SunMask
   m_TagString: Untagged
@@ -993,6 +994,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f62f1f9ab8b2a5d4cbee2b172ffc2e5f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SunMaskBoss
+  enableSurgicalLogs: 1
   characterHealth: {fileID: 1116198084690886847}
   movement: {fileID: 4873712702074537722}
   walkRenderer: {fileID: 5554180369288328576}
@@ -1008,6 +1010,8 @@ MonoBehaviour:
   magnetBomberPrefab: {fileID: 444576652216317808, guid: a009117f38ad56d4fb5e2e5fa7445a16, type: 3}
   playMagnetBomberDeathOnSpawn: 1
   magnetBomberDeathFallbackDuration: 2
+  bossEndSequence: {fileID: 8996538740913992431}
+  endStageDelayAfterMagnetDeath: 1
   explosionDamage: 1
   damagedSfx: {fileID: 8300000, guid: e829374635807124eb2e0a46f2e7d3cc, type: 3}
   damagedSfxVolume: 0.9
@@ -1181,6 +1185,25 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+--- !u!114 &8996538740913992431
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4621539847840114947}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e655c5993e8d876428887ccde067207f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BossEndStageSequence
+  enableSurgicalLogs: 1
+  endStageMusic: {fileID: 8300000, guid: 2c3c7b7d0c168a14a844d32e484a0c28, type: 3}
+  playRandomGoodSfx: 1
+  goodSfxVolume: 1
+  delayBeforeStart: 0
+  celebrationSeconds: 5
+  fadeDuration: 3
 --- !u!1 &4878805714892888565
 GameObject:
   m_ObjectHideFlags: 0

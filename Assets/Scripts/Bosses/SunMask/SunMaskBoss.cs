@@ -8,6 +8,11 @@ using UnityEngine;
 [RequireComponent(typeof(AudioSource))]
 public class SunMaskBoss : MonoBehaviour, IKillable
 {
+    private const string LOG = "[SunMaskBoss]";
+
+    [Header("Debug")]
+    [SerializeField] private bool enableSurgicalLogs = true;
+
     [Header("References")]
     public CharacterHealth characterHealth;
     public SunMaskMovement movement;
@@ -25,7 +30,7 @@ public class SunMaskBoss : MonoBehaviour, IKillable
 
     [Header("Death Eyes Flow")]
     [Min(0f)] public float deathEyesDamagedDuration = 1f;
-    [Min(0f)] public float deathEyesFrontDuration = 0.75f; // mantido por compatibilidade (não usado agora)
+    [Min(0f)] public float deathEyesFrontDuration = 0.75f;
 
     [Header("Death Final Blink (Body + Eyes via CharacterHealth SpriteRenderers)")]
     [SerializeField] private bool enableDeathFinalBlink = true;
@@ -41,6 +46,13 @@ public class SunMaskBoss : MonoBehaviour, IKillable
 
     [Tooltip("Fallback caso não dê para calcular a duração pela animação.")]
     [SerializeField, Min(0.05f)] private float magnetBomberDeathFallbackDuration = 2.0f;
+
+    [Header("End Stage (after MagnetBomber dies)")]
+    [Tooltip("Opcional. Se NULL, tenta FindFirstObjectByType<BossEndStageSequence>() no momento de disparar.")]
+    [SerializeField] private BossEndStageSequence bossEndSequence;
+
+    [Tooltip("Delay após a morte do MagnetBomber para iniciar o EndStage (igual ao ClownMaskBoss).")]
+    [SerializeField, Min(0f)] private float endStageDelayAfterMagnetDeath = 1f;
 
     [Header("Damage")]
     public int explosionDamage = 1;
@@ -90,7 +102,6 @@ public class SunMaskBoss : MonoBehaviour, IKillable
 
     private float nextDeathSfxTime;
 
-    // Ensures only ONE death explosion SFX plays at a time (replaces/stops previous).
     private static readonly object deathSfxGate = new();
     private static AudioSource deathSfxOwner;
 
@@ -117,6 +128,8 @@ public class SunMaskBoss : MonoBehaviour, IKillable
 
         EnableOnly(walkRenderer);
         SetRendererAsLooping(walkRenderer, looping: true);
+
+        SLog($"Awake | instance={GetInstanceID()} | bossEndSequence={(bossEndSequence != null ? bossEndSequence.name : "NULL")} | magnetPrefab={(magnetBomberPrefab != null ? magnetBomberPrefab.name : "NULL")}");
     }
 
     void OnDestroy()
@@ -126,6 +139,8 @@ public class SunMaskBoss : MonoBehaviour, IKillable
             characterHealth.Damaged -= OnDamaged;
             characterHealth.Died -= OnDied;
         }
+
+        SLog($"OnDestroy | instance={GetInstanceID()}");
     }
 
     void OnEnable()
@@ -146,6 +161,8 @@ public class SunMaskBoss : MonoBehaviour, IKillable
 
         EnableOnly(walkRenderer);
         SetRendererAsLooping(walkRenderer, looping: true);
+
+        SLog($"OnEnable | timeScale={Time.timeScale:0.###}");
     }
 
     void OnDisable()
@@ -153,6 +170,8 @@ public class SunMaskBoss : MonoBehaviour, IKillable
         if (hurtRoutine != null) { StopCoroutine(hurtRoutine); hurtRoutine = null; }
         if (deathRoutine != null) { StopCoroutine(deathRoutine); deathRoutine = null; }
         if (deathExplosionsRoutine != null) { StopCoroutine(deathExplosionsRoutine); deathExplosionsRoutine = null; }
+
+        SLog("OnDisable");
     }
 
     void OnTriggerEnter2D(Collider2D other)
@@ -348,6 +367,7 @@ public class SunMaskBoss : MonoBehaviour, IKillable
 
     void OnDied()
     {
+        SLog("CharacterHealth.Died event -> Kill()");
         Kill();
     }
 
@@ -357,6 +377,8 @@ public class SunMaskBoss : MonoBehaviour, IKillable
             return;
 
         isDead = true;
+
+        SLog($"Kill | timeScale={Time.timeScale:0.###} | hold={deathHoldDuration:0.###} | eyesDamaged={deathEyesDamagedDuration:0.###} | endStageDelayAfterMagnetDeath={endStageDelayAfterMagnetDeath:0.###}");
 
         if (hurtRoutine != null)
         {
@@ -381,21 +403,32 @@ public class SunMaskBoss : MonoBehaviour, IKillable
         float eyesDelay = Mathf.Max(0f, deathEyesDamagedDuration);
         float explosionDuration = Mathf.Max(0f, deathHoldDuration);
 
-        // 1) olhos Damaged no começo (1s)
+        SLog($"DeathRoutine START | timeScale={Time.timeScale:0.###} | eyesDelay={eyesDelay:0.###} | explosionDuration={explosionDuration:0.###}");
+
         if (eyes != null)
+        {
             eyes.BeginDeathEyesFlowDamagedThenSul(deathEyesDamagedDuration);
+            SLog("DeathRoutine | Eyes flow started (DamagedThenSul)");
+        }
+        else
+        {
+            SLog("DeathRoutine | Eyes=NULL (skipping eyes flow)");
+        }
 
         if (eyesDelay > 0f)
             yield return new WaitForSeconds(eyesDelay);
 
-        // 2) inicia explosões por 5s
         if (explosionPrefab != null && explosionDuration > 0f)
         {
             nextDeathSfxTime = 0f;
             deathExplosionsRoutine = StartCoroutine(SpawnDeathExplosions(explosionDuration));
+            SLog($"DeathRoutine | Explosions START | prefab={explosionPrefab.name}");
+        }
+        else
+        {
+            SLog($"DeathRoutine | Explosions SKIP | prefab={(explosionPrefab != null ? explosionPrefab.name : "NULL")} | duration={explosionDuration:0.###}");
         }
 
-        // 3) blink só no final da janela de explosões
         if (explosionDuration > 0f)
         {
             float blinkDur = (enableDeathFinalBlink && deathFinalBlinkDuration > 0f) ? deathFinalBlinkDuration : 0f;
@@ -409,11 +442,13 @@ public class SunMaskBoss : MonoBehaviour, IKillable
             if (blinkDur > 0f && characterHealth != null && characterHealth.enabled)
             {
                 float interval = Mathf.Max(0.001f, deathFinalBlinkInterval);
+                SLog($"DeathRoutine | FinalBlink START | dur={blinkDur:0.###} interval={interval:0.###}");
                 characterHealth.StartSpawnInvulnerability(blinkDur, interval);
                 yield return new WaitForSeconds(blinkDur);
             }
             else if (blinkDur > 0f)
             {
+                SLog($"DeathRoutine | FinalBlink WAIT ONLY | dur={blinkDur:0.###} (CharacterHealth missing/disabled?)");
                 yield return new WaitForSeconds(blinkDur);
             }
         }
@@ -422,10 +457,12 @@ public class SunMaskBoss : MonoBehaviour, IKillable
         {
             StopCoroutine(deathExplosionsRoutine);
             deathExplosionsRoutine = null;
+            SLog("DeathRoutine | Explosions STOP");
         }
 
-        SpawnMagnetBomberDeath();
+        CreateEndStageRunnerAndSpawnMagnet();
 
+        SLog("DeathRoutine END -> Destroy(boss)");
         Destroy(gameObject);
     }
 
@@ -584,48 +621,29 @@ public class SunMaskBoss : MonoBehaviour, IKillable
         r.RefreshFrame();
     }
 
-    private void SpawnMagnetBomberDeath()
+    private void CreateEndStageRunnerAndSpawnMagnet()
     {
-        if (magnetBomberPrefab == null)
-            return;
+        var runnerGo = new GameObject("SunMask_EndStageAfterMagnetRunner");
+        runnerGo.transform.position = transform.position;
 
-        Vector3 pos = transform.position;
-        GameObject go = Instantiate(magnetBomberPrefab, pos, Quaternion.identity);
-        if (go == null)
-            return;
+        var runner = runnerGo.AddComponent<EndStageAfterMagnetRunner>();
+        runner.enableSurgicalLogs = enableSurgicalLogs;
 
-        if (!playMagnetBomberDeathOnSpawn)
-            return;
+        runner.magnetBomberPrefab = magnetBomberPrefab;
+        runner.playMagnetBomberDeathOnSpawn = playMagnetBomberDeathOnSpawn;
+        runner.magnetBomberDeathFallbackDuration = magnetBomberDeathFallbackDuration;
 
-        var ai = go.GetComponentInChildren<MovementControllerAI>(true);
-        if (ai != null)
-        {
-            ai.SetIntroIdle(false);
-            ai.ForceDisableOptionalVisualsNow();
-        }
+        runner.endStageDelayAfterMagnetDeath = endStageDelayAfterMagnetDeath;
 
-        var mc = go.GetComponentInChildren<MovementController>(true);
+        runner.CopyEndStageConfigFrom(bossEndSequence);
 
-        if (mc != null)
-            mc.SetExternalMovementOverride(true);
+        if (enableSurgicalLogs)
+            Debug.Log($"{LOG} [t={Time.unscaledTime:0.00}] CreateRunner | runner={runnerGo.GetInstanceID()} | copyFrom={(bossEndSequence != null ? bossEndSequence.name : "NULL")}", this);
+    }
 
-        if (mc != null)
-        {
-            mc.Kill();
-
-            float life = Mathf.Max(0.05f, mc.deathDisableSeconds);
-            Destroy(go, life + 0.2f);
-            return;
-        }
-
-        var ch = go.GetComponentInChildren<CharacterHealth>(true);
-        if (ch != null)
-        {
-            ch.TakeDamage(9999);
-            Destroy(go, Mathf.Max(0.05f, magnetBomberDeathFallbackDuration) + 0.2f);
-            return;
-        }
-
-        Destroy(go, Mathf.Max(0.05f, magnetBomberDeathFallbackDuration) + 0.2f);
+    private void SLog(string msg)
+    {
+        if (!enableSurgicalLogs) return;
+        Debug.Log($"{LOG} [t={Time.unscaledTime:0.00}] {msg}", this);
     }
 }

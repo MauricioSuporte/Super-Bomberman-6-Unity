@@ -8211,6 +8211,10 @@ PrefabInstance:
       propertyPath: minBounds.y
       value: -7.5
       objectReference: {fileID: 0}
+    - target: {fileID: 5438964542736687964, guid: ce721f59039141f44914bc55bc788281, type: 3}
+      propertyPath: enableSurgicalLogs
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 6140704871382649758, guid: ce721f59039141f44914bc55bc788281, type: 3}
       propertyPath: m_Name
       value: Normal
