@@ -994,6 +994,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f62f1f9ab8b2a5d4cbee2b172ffc2e5f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SunMaskBoss
+  enableSurgicalLogs: 1
   characterHealth: {fileID: 1116198084690886847}
   movement: {fileID: 4873712702074537722}
   walkRenderer: {fileID: 5554180369288328576}
@@ -1004,6 +1005,7 @@ MonoBehaviour:
   winkMaxInterval: 5
   winkHoldDuration: 1
   winkRenderer: {fileID: 1239999045062863431}
+  kissRenderer: {fileID: 209237640579710390}
   starProjectilePrefab: {fileID: 6629787450339986792, guid: 1cadd277b252f834d93bca0f9933bcac, type: 3}
   starSpeed: 6
   starLifeTime: 3
@@ -1012,6 +1014,12 @@ MonoBehaviour:
   starObstacleMask:
     serializedVersion: 2
     m_Bits: 0
+  heartPrefab: {fileID: 1435116006548860624, guid: cc767635278ef9b478e5173a4467f7d7, type: 3}
+  heartSpeed: 30
+  heartLifeTime: 6
+  heartSpawnRadius: 0.35
+  heartFloatAmplitude: 0.08
+  heartFloatFrequency: 3.5
   hurtStopDuration: 1
   deathHoldDuration: 5
   deathEyesDamagedDuration: 1
@@ -1053,7 +1061,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 205f7fc6fe6408f419811c6c486b9cd6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CharacterHealth
-  life: 5
+  life: 10
   hitInvulnerableDuration: 1
   hitBlinkInterval: 0.05
   tempSlowdownStartNormalized: 0.7
@@ -1209,7 +1217,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e655c5993e8d876428887ccde067207f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BossEndStageSequence
-  enableSurgicalLogs: 1
   endStageMusic: {fileID: 8300000, guid: 2c3c7b7d0c168a14a844d32e484a0c28, type: 3}
   playRandomGoodSfx: 1
   goodSfxVolume: 1

@@ -8,6 +8,11 @@ using UnityEngine;
 [RequireComponent(typeof(AudioSource))]
 public class SunMaskBoss : MonoBehaviour, IKillable
 {
+    private const string LOG = "[SunMaskBoss]";
+
+    [Header("Debug")]
+    [SerializeField] private bool enableSurgicalLogs = true;
+
     [Header("References")]
     public CharacterHealth characterHealth;
     public SunMaskMovement movement;
@@ -17,29 +22,36 @@ public class SunMaskBoss : MonoBehaviour, IKillable
     public AnimatedSpriteRenderer hurtRenderer;
     public AnimatedSpriteRenderer deathRenderer;
 
-    [Header("Wink Attack")]
+    [Header("Wink / Kiss Attack")]
     [SerializeField] private bool enableWinkAttack = true;
     [SerializeField, Min(0f)] private float winkMinInterval = 3f;
     [SerializeField, Min(0f)] private float winkMaxInterval = 5f;
     [SerializeField, Min(0f)] private float winkHoldDuration = 1f;
 
-    [Tooltip("Renderer do corpo que representa o Wink (ex: SunMask/Wink).")]
     [SerializeField] private AnimatedSpriteRenderer winkRenderer;
 
-    [Header("Wink Attack - Star Burst")]
-    [Tooltip("Prefab do projétil (ex: StarProjectile) com script StarProjectile.")]
-    [SerializeField] private StarProjectile starProjectilePrefab;
+    [SerializeField] private AnimatedSpriteRenderer kissRenderer;
 
+    [Header("Wink (50%) - Star Burst")]
+    [SerializeField] private StarProjectile starProjectilePrefab;
     [SerializeField, Min(0f)] private float starSpeed = 6f;
     [SerializeField, Min(0f)] private float starLifeTime = 3f;
     [SerializeField, Min(0f)] private float starSpawnRadius = 0.5f;
     [SerializeField] private int starDamage = 1;
     [SerializeField] private LayerMask starObstacleMask;
 
+    [Header("Kiss (50%) - Heart")]
+    [SerializeField] private SunMaskHeartProjectile heartPrefab;
+
+    [SerializeField, Min(0f)] private float heartSpeed = 2.25f;
+    [SerializeField, Min(0f)] private float heartLifeTime = 6f;
+    [SerializeField, Min(0f)] private float heartSpawnRadius = 0.35f;
+    [SerializeField, Min(0f)] private float heartFloatAmplitude = 0.08f;
+    [SerializeField, Min(0f)] private float heartFloatFrequency = 3.5f;
+
     [Header("Timings")]
     [Min(0f)] public float hurtStopDuration = 0.5f;
 
-    [Tooltip("Duração das explosões (NÃO inclui o 1s inicial de Damaged dos olhos).")]
     [Min(0f)] public float deathHoldDuration = 5f;
 
     [Header("Death Eyes Flow")]
@@ -52,20 +64,15 @@ public class SunMaskBoss : MonoBehaviour, IKillable
     [SerializeField, Min(0.001f)] private float deathFinalBlinkInterval = 0.06f;
 
     [Header("After Death Spawn")]
-    [Tooltip("Prefab do MagnetBomber (ou root) para spawnar quando o SunMask for destruído.")]
     [SerializeField] private GameObject magnetBomberPrefab;
 
-    [Tooltip("Se true, ao spawnar o MagnetBomber, força tocar a animação 'Death' (AnimatedSpriteRenderer) e depois destrói o objeto.")]
     [SerializeField] private bool playMagnetBomberDeathOnSpawn = true;
 
-    [Tooltip("Fallback caso não dê para calcular a duração pela animação.")]
     [SerializeField, Min(0.05f)] private float magnetBomberDeathFallbackDuration = 2.0f;
 
     [Header("End Stage (after MagnetBomber dies)")]
-    [Tooltip("Opcional. Se NULL, tenta FindFirstObjectByType<BossEndStageSequence>() no momento de disparar.")]
     [SerializeField] private BossEndStageSequence bossEndSequence;
 
-    [Tooltip("Delay após a morte do MagnetBomber para iniciar o EndStage (igual ao ClownMaskBoss).")]
     [SerializeField, Min(0f)] private float endStageDelayAfterMagnetDeath = 1f;
 
     [Header("Damage")]
@@ -80,7 +87,6 @@ public class SunMaskBoss : MonoBehaviour, IKillable
     [Min(0f)] public float touchDamageCooldown = 0.35f;
 
     [Header("Bomb Destroy")]
-    [Tooltip("Se true, destrói bombas ao encostar.")]
     public bool destroyBombsOnTouch = true;
 
     [Header("Death Explosions")]
@@ -217,30 +223,16 @@ public class SunMaskBoss : MonoBehaviour, IKillable
 
     void TryDestroyBombOnTouch(Collider2D other)
     {
-        if (!destroyBombsOnTouch)
-            return;
-
-        if (isDead)
-            return;
-
-        if (bombLayer < 0)
-            return;
-
-        if (other == null || other.gameObject == null)
-            return;
-
-        if (other.gameObject.layer != bombLayer)
-            return;
+        if (!destroyBombsOnTouch) return;
+        if (isDead) return;
+        if (bombLayer < 0) return;
+        if (other == null || other.gameObject == null) return;
+        if (other.gameObject.layer != bombLayer) return;
 
         Bomb bomb = other.GetComponentInParent<Bomb>();
-        if (bomb == null)
-            bomb = other.GetComponent<Bomb>();
-
-        if (bomb == null)
-            return;
-
-        if (bomb.HasExploded)
-            return;
+        if (bomb == null) bomb = other.GetComponent<Bomb>();
+        if (bomb == null) return;
+        if (bomb.HasExploded) return;
 
         BombController owner = bomb.Owner;
         if (owner != null)
@@ -255,21 +247,13 @@ public class SunMaskBoss : MonoBehaviour, IKillable
 
     void TryApplyExplosionDamage(Collider2D other)
     {
-        if (isDead)
-            return;
-
-        if (characterHealth == null || !characterHealth.enabled)
-            return;
-
-        if (characterHealth.IsInvulnerable)
-            return;
+        if (isDead) return;
+        if (characterHealth == null || !characterHealth.enabled) return;
+        if (characterHealth.IsInvulnerable) return;
 
         int explosionLayer = LayerMask.NameToLayer("Explosion");
-        if (explosionLayer < 0)
-            return;
-
-        if (other.gameObject.layer != explosionLayer)
-            return;
+        if (explosionLayer < 0) return;
+        if (other.gameObject.layer != explosionLayer) return;
 
         int dmg = Mathf.Max(1, explosionDamage);
         characterHealth.TakeDamage(dmg);
@@ -277,11 +261,8 @@ public class SunMaskBoss : MonoBehaviour, IKillable
 
     void TryApplyTouchDamage(Collider2D other)
     {
-        if (isDead)
-            return;
-
-        if (Time.time < nextTouchDamageTime)
-            return;
+        if (isDead) return;
+        if (Time.time < nextTouchDamageTime) return;
 
         if (!other.CompareTag("Player") && other.gameObject.layer != LayerMask.NameToLayer("Player"))
             return;
@@ -328,7 +309,6 @@ public class SunMaskBoss : MonoBehaviour, IKillable
             return;
 
         PlayDamagedSfx();
-
         CacheDirectionBeforeHurt();
 
         if (hurtRoutine != null)
@@ -339,11 +319,8 @@ public class SunMaskBoss : MonoBehaviour, IKillable
 
     void PlayDamagedSfx()
     {
-        if (audioSource == null)
-            return;
-
-        if (damagedSfx == null)
-            return;
+        if (audioSource == null) return;
+        if (damagedSfx == null) return;
 
         audioSource.PlayOneShot(damagedSfx, Mathf.Clamp01(damagedSfxVolume));
     }
@@ -369,7 +346,6 @@ public class SunMaskBoss : MonoBehaviour, IKillable
         if (movement != null)
         {
             movement.OnHit(hurtStopDuration);
-
             if (hasCachedMoveDirection)
                 movement.SetCurrentDirection(cachedMoveDirection);
         }
@@ -393,10 +369,7 @@ public class SunMaskBoss : MonoBehaviour, IKillable
         hurtRoutine = null;
     }
 
-    void OnDied()
-    {
-        Kill();
-    }
+    void OnDied() => Kill();
 
     public void Kill()
     {
@@ -406,17 +379,8 @@ public class SunMaskBoss : MonoBehaviour, IKillable
         isDead = true;
         inWinkAttack = false;
 
-        if (winkRoutine != null)
-        {
-            StopCoroutine(winkRoutine);
-            winkRoutine = null;
-        }
-
-        if (hurtRoutine != null)
-        {
-            StopCoroutine(hurtRoutine);
-            hurtRoutine = null;
-        }
+        if (winkRoutine != null) { StopCoroutine(winkRoutine); winkRoutine = null; }
+        if (hurtRoutine != null) { StopCoroutine(hurtRoutine); hurtRoutine = null; }
 
         if (deathRoutine != null)
             StopCoroutine(deathRoutine);
@@ -622,32 +586,24 @@ public class SunMaskBoss : MonoBehaviour, IKillable
             else
                 yield return null;
 
-            if (isDead)
+            if (isDead) continue;
+            if (!enableWinkAttack) continue;
+            if (inWinkAttack) continue;
+            if (hurtRoutine != null) continue;
+            if (deathRoutine != null) continue;
+            if (movement != null && !movement.enabled) continue;
+
+            bool canWink = (winkRenderer != null && starProjectilePrefab != null);
+            bool canKiss = (kissRenderer != null && heartPrefab != null);
+
+            if (!canWink && !canKiss)
                 continue;
 
-            if (!enableWinkAttack)
-                continue;
-
-            if (winkRenderer == null || starProjectilePrefab == null)
-                continue;
-
-            if (inWinkAttack)
-                continue;
-
-            if (hurtRoutine != null)
-                continue;
-
-            if (deathRoutine != null)
-                continue;
-
-            if (movement != null && !movement.enabled)
-                continue;
-
-            yield return WinkAttackOnce();
+            yield return WinkOrKissOnce(canWink, canKiss);
         }
     }
 
-    IEnumerator WinkAttackOnce()
+    IEnumerator WinkOrKissOnce(bool canWink, bool canKiss)
     {
         inWinkAttack = true;
 
@@ -665,23 +621,39 @@ public class SunMaskBoss : MonoBehaviour, IKillable
 
         AnimatedSpriteRenderer previous = GetCurrentRenderer();
 
-        // 1) muda para Wink (visual)
-        EnableOnly(winkRenderer);
-        SetRendererStaticFirstFrame(winkRenderer);
+        float roll = Random.value;
+        bool doWink;
+        if (canWink && canKiss) doWink = roll < 0.5f;
+        else doWink = canWink;
 
-        // 2) DISPARA IMEDIATAMENTE (sem esperar winkHoldDuration)
-        if (!isDead)
-            SpawnStarBurst();
+        if (doWink)
+        {
+            EnableOnly(winkRenderer);
+            SetRendererStaticFirstFrame(winkRenderer);
 
-        // 3) segura Wink por 1s (ou o valor configurado)
+            if (!isDead)
+            {
+                SpawnStarBurst();
+            }
+        }
+        else
+        {
+            EnableOnly(kissRenderer);
+            SetRendererStaticFirstFrame(kissRenderer);
+
+            if (!isDead)
+            {
+                SpawnHeart();
+            }
+        }
+
         float hold = Mathf.Max(0f, winkHoldDuration);
         if (hold > 0f)
             yield return new WaitForSeconds(hold);
 
-        // 4) volta para o renderer anterior
         if (!isDead)
         {
-            if (previous != null && previous != winkRenderer)
+            if (previous != null && previous != winkRenderer && previous != kissRenderer)
             {
                 EnableOnly(previous);
                 if (previous == walkRenderer)
@@ -699,9 +671,6 @@ public class SunMaskBoss : MonoBehaviour, IKillable
 
     void SpawnStarBurst()
     {
-        if (starProjectilePrefab == null)
-            return;
-
         Vector2 origin = transform.position;
 
         for (int i = 0; i < StarDirs.Length; i++)
@@ -715,15 +684,31 @@ public class SunMaskBoss : MonoBehaviour, IKillable
 
             proj.damage = Mathf.Max(1, starDamage);
             proj.obstacleMask = starObstacleMask;
-
             proj.Initialize(dir, starSpeed, starLifeTime);
         }
+    }
+
+    void SpawnHeart()
+    {
+        Vector2 origin = transform.position;
+        Vector2 randomOffset = Random.insideUnitCircle * Mathf.Max(0f, heartSpawnRadius);
+        Vector2 spawnPos = origin + randomOffset;
+
+        var heart = Instantiate(heartPrefab, spawnPos, Quaternion.identity);
+
+        heart.Initialize(
+            speed: heartSpeed,
+            lifeTime: heartLifeTime,
+            floatAmplitude: heartFloatAmplitude,
+            floatFrequency: heartFloatFrequency
+        );
     }
 
     AnimatedSpriteRenderer GetCurrentRenderer()
     {
         if (walkRenderer != null && walkRenderer.enabled) return walkRenderer;
         if (winkRenderer != null && winkRenderer.enabled) return winkRenderer;
+        if (kissRenderer != null && kissRenderer.enabled) return kissRenderer;
         if (hurtRenderer != null && hurtRenderer.enabled) return hurtRenderer;
         if (deathRenderer != null && deathRenderer.enabled) return deathRenderer;
         return null;
@@ -733,6 +718,7 @@ public class SunMaskBoss : MonoBehaviour, IKillable
     {
         if (walkRenderer != null) walkRenderer.enabled = (target == walkRenderer);
         if (winkRenderer != null) winkRenderer.enabled = (target == winkRenderer);
+        if (kissRenderer != null) kissRenderer.enabled = (target == kissRenderer);
         if (hurtRenderer != null) hurtRenderer.enabled = (target == hurtRenderer);
         if (deathRenderer != null) deathRenderer.enabled = (target == deathRenderer);
 
