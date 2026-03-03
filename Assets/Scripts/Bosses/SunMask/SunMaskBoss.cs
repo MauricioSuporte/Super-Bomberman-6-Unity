@@ -8,11 +8,6 @@ using UnityEngine;
 [RequireComponent(typeof(AudioSource))]
 public class SunMaskBoss : MonoBehaviour, IKillable
 {
-    private const string LOG = "[SunMaskBoss]";
-
-    [Header("Debug")]
-    [SerializeField] private bool enableSurgicalLogs = true;
-
     [Header("References")]
     public CharacterHealth characterHealth;
     public SunMaskMovement movement;
@@ -128,8 +123,6 @@ public class SunMaskBoss : MonoBehaviour, IKillable
 
         EnableOnly(walkRenderer);
         SetRendererAsLooping(walkRenderer, looping: true);
-
-        SLog($"Awake | instance={GetInstanceID()} | bossEndSequence={(bossEndSequence != null ? bossEndSequence.name : "NULL")} | magnetPrefab={(magnetBomberPrefab != null ? magnetBomberPrefab.name : "NULL")}");
     }
 
     void OnDestroy()
@@ -139,8 +132,6 @@ public class SunMaskBoss : MonoBehaviour, IKillable
             characterHealth.Damaged -= OnDamaged;
             characterHealth.Died -= OnDied;
         }
-
-        SLog($"OnDestroy | instance={GetInstanceID()}");
     }
 
     void OnEnable()
@@ -161,8 +152,6 @@ public class SunMaskBoss : MonoBehaviour, IKillable
 
         EnableOnly(walkRenderer);
         SetRendererAsLooping(walkRenderer, looping: true);
-
-        SLog($"OnEnable | timeScale={Time.timeScale:0.###}");
     }
 
     void OnDisable()
@@ -170,8 +159,6 @@ public class SunMaskBoss : MonoBehaviour, IKillable
         if (hurtRoutine != null) { StopCoroutine(hurtRoutine); hurtRoutine = null; }
         if (deathRoutine != null) { StopCoroutine(deathRoutine); deathRoutine = null; }
         if (deathExplosionsRoutine != null) { StopCoroutine(deathExplosionsRoutine); deathExplosionsRoutine = null; }
-
-        SLog("OnDisable");
     }
 
     void OnTriggerEnter2D(Collider2D other)
@@ -367,7 +354,6 @@ public class SunMaskBoss : MonoBehaviour, IKillable
 
     void OnDied()
     {
-        SLog("CharacterHealth.Died event -> Kill()");
         Kill();
     }
 
@@ -377,8 +363,6 @@ public class SunMaskBoss : MonoBehaviour, IKillable
             return;
 
         isDead = true;
-
-        SLog($"Kill | timeScale={Time.timeScale:0.###} | hold={deathHoldDuration:0.###} | eyesDamaged={deathEyesDamagedDuration:0.###} | endStageDelayAfterMagnetDeath={endStageDelayAfterMagnetDeath:0.###}");
 
         if (hurtRoutine != null)
         {
@@ -403,17 +387,8 @@ public class SunMaskBoss : MonoBehaviour, IKillable
         float eyesDelay = Mathf.Max(0f, deathEyesDamagedDuration);
         float explosionDuration = Mathf.Max(0f, deathHoldDuration);
 
-        SLog($"DeathRoutine START | timeScale={Time.timeScale:0.###} | eyesDelay={eyesDelay:0.###} | explosionDuration={explosionDuration:0.###}");
-
         if (eyes != null)
-        {
             eyes.BeginDeathEyesFlowDamagedThenSul(deathEyesDamagedDuration);
-            SLog("DeathRoutine | Eyes flow started (DamagedThenSul)");
-        }
-        else
-        {
-            SLog("DeathRoutine | Eyes=NULL (skipping eyes flow)");
-        }
 
         if (eyesDelay > 0f)
             yield return new WaitForSeconds(eyesDelay);
@@ -422,11 +397,6 @@ public class SunMaskBoss : MonoBehaviour, IKillable
         {
             nextDeathSfxTime = 0f;
             deathExplosionsRoutine = StartCoroutine(SpawnDeathExplosions(explosionDuration));
-            SLog($"DeathRoutine | Explosions START | prefab={explosionPrefab.name}");
-        }
-        else
-        {
-            SLog($"DeathRoutine | Explosions SKIP | prefab={(explosionPrefab != null ? explosionPrefab.name : "NULL")} | duration={explosionDuration:0.###}");
         }
 
         if (explosionDuration > 0f)
@@ -442,13 +412,11 @@ public class SunMaskBoss : MonoBehaviour, IKillable
             if (blinkDur > 0f && characterHealth != null && characterHealth.enabled)
             {
                 float interval = Mathf.Max(0.001f, deathFinalBlinkInterval);
-                SLog($"DeathRoutine | FinalBlink START | dur={blinkDur:0.###} interval={interval:0.###}");
                 characterHealth.StartSpawnInvulnerability(blinkDur, interval);
                 yield return new WaitForSeconds(blinkDur);
             }
             else if (blinkDur > 0f)
             {
-                SLog($"DeathRoutine | FinalBlink WAIT ONLY | dur={blinkDur:0.###} (CharacterHealth missing/disabled?)");
                 yield return new WaitForSeconds(blinkDur);
             }
         }
@@ -457,12 +425,10 @@ public class SunMaskBoss : MonoBehaviour, IKillable
         {
             StopCoroutine(deathExplosionsRoutine);
             deathExplosionsRoutine = null;
-            SLog("DeathRoutine | Explosions STOP");
         }
 
         CreateEndStageRunnerAndSpawnMagnet();
 
-        SLog("DeathRoutine END -> Destroy(boss)");
         Destroy(gameObject);
     }
 
@@ -627,7 +593,6 @@ public class SunMaskBoss : MonoBehaviour, IKillable
         runnerGo.transform.position = transform.position;
 
         var runner = runnerGo.AddComponent<EndStageAfterMagnetRunner>();
-        runner.enableSurgicalLogs = enableSurgicalLogs;
 
         runner.magnetBomberPrefab = magnetBomberPrefab;
         runner.playMagnetBomberDeathOnSpawn = playMagnetBomberDeathOnSpawn;
@@ -636,14 +601,5 @@ public class SunMaskBoss : MonoBehaviour, IKillable
         runner.endStageDelayAfterMagnetDeath = endStageDelayAfterMagnetDeath;
 
         runner.CopyEndStageConfigFrom(bossEndSequence);
-
-        if (enableSurgicalLogs)
-            Debug.Log($"{LOG} [t={Time.unscaledTime:0.00}] CreateRunner | runner={runnerGo.GetInstanceID()} | copyFrom={(bossEndSequence != null ? bossEndSequence.name : "NULL")}", this);
-    }
-
-    private void SLog(string msg)
-    {
-        if (!enableSurgicalLogs) return;
-        Debug.Log($"{LOG} [t={Time.unscaledTime:0.00}] {msg}", this);
     }
 }
