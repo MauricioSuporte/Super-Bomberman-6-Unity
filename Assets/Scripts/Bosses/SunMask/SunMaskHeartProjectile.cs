@@ -32,6 +32,9 @@ public class SunMaskHeartProjectile : MonoBehaviour
     public bool playDestroyAnimation = true;
     [Min(0.05f)] public float destroyFallbackDuration = 0.5f;
 
+    [Header("Pixel Perfect (SNES)")]
+    [SerializeField, Min(1)] private int pixelsPerUnit = 16;
+
     private Rigidbody2D rb;
     private Transform target;
     private bool initialized;
@@ -40,7 +43,9 @@ public class SunMaskHeartProjectile : MonoBehaviour
 
     private float nextRetargetTime;
     private MovementController[] cachedPlayers = new MovementController[0];
-    private Vector2 lastFloatOffset;
+
+    private float pixelAccX;
+    private float pixelAccY;
 
     private SunMaskBoss boss;
 
@@ -64,6 +69,8 @@ public class SunMaskHeartProjectile : MonoBehaviour
             rb.gravityScale = 0f;
             rb.freezeRotation = true;
             rb.collisionDetectionMode = CollisionDetectionMode2D.Discrete;
+            rb.position = SnapToPixel(rb.position);
+            rb.MovePosition(rb.position);
         }
 
         var col = GetComponent<Collider2D>();
@@ -97,7 +104,9 @@ public class SunMaskHeartProjectile : MonoBehaviour
         dying = false;
         startTime = Time.time;
         nextRetargetTime = 0f;
-        lastFloatOffset = Vector2.zero;
+
+        pixelAccX = 0f;
+        pixelAccY = 0f;
 
         if (destroyRenderer != null)
             destroyRenderer.enabled = false;
@@ -113,6 +122,16 @@ public class SunMaskHeartProjectile : MonoBehaviour
 
         RefreshPlayersCache();
         AcquireNearestTarget();
+
+        if (rb != null)
+        {
+            rb.position = SnapToPixel(rb.position);
+            rb.MovePosition(rb.position);
+        }
+        else
+        {
+            transform.position = SnapToPixel(transform.position);
+        }
 
         if (lifeTime > 0f)
             StartCoroutine(LifeTimer());
@@ -134,10 +153,16 @@ public class SunMaskHeartProjectile : MonoBehaviour
         Destroy(gameObject);
     }
 
-    void Update()
+    void FixedUpdate()
     {
         if (dying || !initialized)
             return;
+
+        if (GamePauseController.IsPaused)
+        {
+            if (rb != null) rb.linearVelocity = Vector2.zero;
+            return;
+        }
 
         if (Time.time >= nextRetargetTime || TargetInvalid(target))
         {
@@ -146,40 +171,81 @@ public class SunMaskHeartProjectile : MonoBehaviour
             AcquireNearestTarget();
         }
 
-        Vector2 pos = transform.position;
+        Vector2 pos = rb != null ? rb.position : (Vector2)transform.position;
 
-        Vector2 desired;
-        Vector2 to = Vector2.zero;
-
+        Vector2 desiredDir;
         if (target != null)
         {
-            to = (Vector2)target.position - pos;
+            Vector2 to = (Vector2)target.position - pos;
             float dist = to.magnitude;
 
             if (dist <= Mathf.Max(0f, stopNearTargetDistance))
-                desired = Vector2.zero;
+                desiredDir = Vector2.zero;
             else
-                desired = to.sqrMagnitude > 0.0001f ? to.normalized : Vector2.zero;
+                desiredDir = to.sqrMagnitude > 0.0001f ? to.normalized : Vector2.zero;
         }
         else
         {
-            desired = Vector2.up;
+            desiredDir = Vector2.up;
         }
 
-        float t = Time.time - startTime;
-        Vector2 perp = desired.sqrMagnitude > 0.0001f ? new Vector2(-desired.y, desired.x) : Vector2.right;
+        float dt = Time.fixedDeltaTime;
 
-        Vector2 floatOffsetNow = perp * (Mathf.Sin(t * floatFrequency) * floatAmplitude);
-        Vector2 floatOffsetDelta = floatOffsetNow - lastFloatOffset;
-        lastFloatOffset = floatOffsetNow;
+        float worldStep = speed * dt;
+        float pixelStep = worldStep * pixelsPerUnit;
 
-        Vector2 step = desired * (speed * Time.deltaTime);
-        Vector2 newPos = pos + step + floatOffsetDelta;
+        pixelAccX += desiredDir.x * pixelStep;
+        pixelAccY += desiredDir.y * pixelStep;
+
+        int movePxX = (int)pixelAccX;
+        int movePxY = (int)pixelAccY;
+
+        pixelAccX -= movePxX;
+        pixelAccY -= movePxY;
+
+        Vector2 stepWorld = new(
+            movePxX / (float)pixelsPerUnit,
+            movePxY / (float)pixelsPerUnit
+        );
+
+        Vector2 floatDelta = ComputeFloatDeltaPixels(desiredDir, Time.time - startTime, dt);
+
+        Vector2 next = pos + stepWorld + floatDelta;
+        next = SnapToPixel(next);
 
         if (rb != null)
-            rb.MovePosition(newPos);
+            rb.MovePosition(next);
         else
-            transform.position = newPos;
+            transform.position = next;
+    }
+
+    Vector2 ComputeFloatDeltaPixels(Vector2 dir, float t, float dt)
+    {
+        if (floatAmplitude <= 0f || floatFrequency <= 0f)
+            return Vector2.zero;
+
+        Vector2 perp = dir.sqrMagnitude > 0.0001f ? new Vector2(-dir.y, dir.x) : Vector2.right;
+
+        float s0 = Mathf.Sin(t * floatFrequency);
+        float s1 = Mathf.Sin((t + dt) * floatFrequency);
+
+        float a = floatAmplitude;
+
+        float d = (s1 - s0) * a;
+
+        int dp = Mathf.RoundToInt(d * pixelsPerUnit);
+        float dw = dp / (float)pixelsPerUnit;
+
+        return perp * dw;
+    }
+
+    Vector2 SnapToPixel(Vector2 world)
+    {
+        int ppu = Mathf.Max(1, pixelsPerUnit);
+        float s = 1f / ppu;
+        world.x = Mathf.Round(world.x / s) * s;
+        world.y = Mathf.Round(world.y / s) * s;
+        return world;
     }
 
     bool TargetInvalid(Transform t)

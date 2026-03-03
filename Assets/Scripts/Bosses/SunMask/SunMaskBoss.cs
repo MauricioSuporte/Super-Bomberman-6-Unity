@@ -21,9 +21,7 @@ public class SunMaskBoss : MonoBehaviour, IKillable
     [Header("Angry")]
     [SerializeField] private AnimatedSpriteRenderer angryRenderer;
     [SerializeField, Min(0f)] private float angryFreezeSeconds = 1f;
-
     [SerializeField, Min(0f)] private float angryChaseSeconds = 5f;
-
     [SerializeField, Min(0f)] private float angryAfterChaseStopSeconds = 1f;
     [SerializeField] private float angryEyesYOffset = 0.3f;
 
@@ -63,7 +61,6 @@ public class SunMaskBoss : MonoBehaviour, IKillable
 
     [Header("Timings")]
     [Min(0f)] public float hurtStopDuration = 0.5f;
-
     [Min(0f)] public float deathHoldDuration = 5f;
 
     [Header("Death Eyes Flow")]
@@ -77,14 +74,11 @@ public class SunMaskBoss : MonoBehaviour, IKillable
 
     [Header("After Death Spawn")]
     [SerializeField] private GameObject magnetBomberPrefab;
-
     [SerializeField] private bool playMagnetBomberDeathOnSpawn = true;
-
     [SerializeField, Min(0.05f)] private float magnetBomberDeathFallbackDuration = 2.0f;
 
     [Header("End Stage (after MagnetBomber dies)")]
     [SerializeField] private BossEndStageSequence bossEndSequence;
-
     [SerializeField, Min(0f)] private float endStageDelayAfterMagnetDeath = 1f;
 
     [Header("Damage")]
@@ -115,6 +109,9 @@ public class SunMaskBoss : MonoBehaviour, IKillable
     public Vector2 deathExplosionPitchRange = new(0.95f, 1.05f);
     public bool deathSfxUseTempAudioObject = true;
     public float deathSfxSpatialBlend = 0f;
+
+    [Header("Pixel Perfect")]
+    [SerializeField, Min(1)] private int pixelsPerUnit = 16;
 
     private bool isDead;
     private bool inWinkAttack;
@@ -177,6 +174,16 @@ public class SunMaskBoss : MonoBehaviour, IKillable
 
         EnableOnly(walkRenderer);
         SetRendererAsLooping(walkRenderer, looping: true);
+
+        if (rb != null)
+        {
+            rb.position = SnapToPixel(rb.position);
+            rb.MovePosition(rb.position);
+        }
+        else
+        {
+            transform.position = SnapToPixel(transform.position);
+        }
     }
 
     void OnDestroy()
@@ -211,6 +218,16 @@ public class SunMaskBoss : MonoBehaviour, IKillable
 
         EnableOnly(walkRenderer);
         SetRendererAsLooping(walkRenderer, looping: true);
+
+        if (rb != null)
+        {
+            rb.position = SnapToPixel(rb.position);
+            rb.MovePosition(rb.position);
+        }
+        else
+        {
+            transform.position = SnapToPixel(transform.position);
+        }
 
         if (enableWinkAttack)
             winkRoutine = StartCoroutine(WinkAttackLoop());
@@ -707,6 +724,7 @@ public class SunMaskBoss : MonoBehaviour, IKillable
         {
             Vector2 dir = StarDirs[i];
             Vector2 spawnPos = origin + dir * Mathf.Max(0f, starSpawnRadius);
+            spawnPos = SnapToPixel(spawnPos);
 
             StarProjectile proj = Instantiate(starProjectilePrefab, spawnPos, Quaternion.identity);
             if (proj == null)
@@ -723,6 +741,7 @@ public class SunMaskBoss : MonoBehaviour, IKillable
         Vector2 origin = transform.position;
         Vector2 randomOffset = Random.insideUnitCircle * Mathf.Max(0f, heartSpawnRadius);
         Vector2 spawnPos = origin + randomOffset;
+        spawnPos = SnapToPixel(spawnPos);
 
         var heart = Instantiate(heartPrefab, spawnPos, Quaternion.identity);
         if (heart == null)
@@ -765,7 +784,11 @@ public class SunMaskBoss : MonoBehaviour, IKillable
     IEnumerator AngryRoutine(MovementController targetPlayer)
     {
         if (rb != null)
+        {
             rb.linearVelocity = Vector2.zero;
+            rb.position = SnapToPixel(rb.position);
+            rb.MovePosition(rb.position);
+        }
 
         if (movement != null)
             movement.enabled = false;
@@ -803,7 +826,9 @@ public class SunMaskBoss : MonoBehaviour, IKillable
                 float spd = (movement != null) ? Mathf.Max(0.01f, movement.speed) : 2.5f;
 
                 Vector2 step = dir * (spd * Time.fixedDeltaTime);
-                rb.MovePosition(pos + step);
+                Vector2 next = SnapToPixel(pos + step);
+
+                rb.MovePosition(next);
             }
 
             yield return new WaitForFixedUpdate();
@@ -812,7 +837,11 @@ public class SunMaskBoss : MonoBehaviour, IKillable
         if (!isDead)
         {
             if (rb != null)
+            {
                 rb.linearVelocity = Vector2.zero;
+                rb.position = SnapToPixel(rb.position);
+                rb.MovePosition(rb.position);
+            }
 
             float stopAfter = Mathf.Max(0f, angryAfterChaseStopSeconds);
 
@@ -849,7 +878,7 @@ public class SunMaskBoss : MonoBehaviour, IKillable
         if (rb == null || target == null)
             yield break;
 
-        Vector2 start = rb.position;
+        Vector2 start = SnapToPixel(rb.position);
         Vector2 toTarget = (Vector2)target.transform.position - start;
 
         if (toTarget.sqrMagnitude < 0.0001f)
@@ -857,8 +886,7 @@ public class SunMaskBoss : MonoBehaviour, IKillable
 
         Vector2 dir = toTarget.normalized;
 
-        Vector2 center = start + dir * radius;
-
+        Vector2 center = SnapToPixel(start + dir * radius);
         Vector2 v0 = start - center;
 
         float sign = clockwise ? -1f : 1f;
@@ -871,6 +899,7 @@ public class SunMaskBoss : MonoBehaviour, IKillable
 
             float a = (t / duration) * 180f * sign;
             Vector2 p = center + Rotate(v0, a);
+            p = SnapToPixel(p);
 
             rb.MovePosition(p);
 
@@ -881,8 +910,17 @@ public class SunMaskBoss : MonoBehaviour, IKillable
         if (!isDead && target != null && !target.isDead && !target.IsEndingStage)
         {
             Vector2 endP = center + Rotate(v0, 180f * sign);
-            rb.MovePosition(endP);
+            rb.MovePosition(SnapToPixel(endP));
         }
+    }
+
+    Vector2 SnapToPixel(Vector2 world)
+    {
+        int ppu = Mathf.Max(1, pixelsPerUnit);
+        float s = 1f / ppu;
+        world.x = Mathf.Round(world.x / s) * s;
+        world.y = Mathf.Round(world.y / s) * s;
+        return world;
     }
 
     static Vector2 Rotate(Vector2 v, float degrees)

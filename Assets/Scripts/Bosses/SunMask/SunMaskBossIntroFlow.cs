@@ -95,23 +95,19 @@ public class SunMaskBossIntroFlow : BossIntroFlowBase
 
             if (!enableFlow) yield break;
 
-            // SPIN: durante o spin, o próprio EyesController controla a animação
             if (bossEyes != null && eyesSpinSeconds > 0f)
                 yield return bossEyes.PlayIntroSpinCounterClockwise(eyesSpinSeconds);
 
             if (!enableFlow) yield break;
 
-            // Depois do spin: manter olhos Down durante toda a sequência
             HoldEyesDown();
 
-            // 0.1s Closed
             if (closedHoldSeconds > 0f)
             {
                 SetBodyClosed(true);
                 yield return PauseAwareWait(closedHoldSeconds);
             }
 
-            // volta Walking + olhos Down por 0.4s
             SetBodyClosed(false);
 
             if (postClosedHoldSeconds > 0f)
@@ -146,7 +142,6 @@ public class SunMaskBossIntroFlow : BossIntroFlowBase
         if (boss == null)
             return;
 
-        // Desliga tudo do corpo e liga só o alvo
         if (boss.walkRenderer != null) boss.walkRenderer.enabled = false;
         if (boss.closedRenderer != null) boss.closedRenderer.enabled = false;
         if (boss.hurtRenderer != null) boss.hurtRenderer.enabled = false;

@@ -43,7 +43,6 @@ public sealed class SunMaskEyesController : MonoBehaviour
     [Header("Boss State / Events")]
     [SerializeField] private SunMaskBoss boss;
 
-    [Tooltip("Se true, troca automaticamente pro conjunto Damaged enquanto o boss está no hurtRenderer.")]
     [SerializeField] private bool useDamagedEyesWhenBossHurt = true;
 
     [Header("Direction")]

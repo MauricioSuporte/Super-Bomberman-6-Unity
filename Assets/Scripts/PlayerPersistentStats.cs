@@ -17,7 +17,7 @@ public static class PlayerPersistentStats
 
     public sealed class PlayerState
     {
-        public int Life = 99;
+        public int Life = 1;
 
         public int BombAmount = 9;
         public int ExplosionRadius = 10;
@@ -35,7 +35,7 @@ public static class PlayerPersistentStats
         public bool HasRubberBombs = false;
         public bool HasFullFire = false;
 
-        public MountedType MountedLouie = MountedType.None;
+        public MountedType MountedLouie = MountedType.Pink;
         public BomberSkin Skin = BomberSkin.White;
 
         public readonly List<ItemType> QueuedEggs = new(8);
@@ -43,8 +43,8 @@ public static class PlayerPersistentStats
         public PlayerState()
         {
             QueuedEggs.Clear();
-            //QueuedEggs.Add(ItemType.GreenLouieEgg);
-            //QueuedEggs.Add(ItemType.PinkLouieEgg);
+            QueuedEggs.Add(ItemType.GreenLouieEgg);
+            QueuedEggs.Add(ItemType.PinkLouieEgg);
         }
     }
 

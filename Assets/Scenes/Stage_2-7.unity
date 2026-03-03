@@ -7414,6 +7414,8 @@ MonoBehaviour:
   lockBossByDisablingBehaviour: 1
   stopHoldSeconds: 0.5
   eyesSpinSeconds: 1
+  closedHoldSeconds: 0.1
+  postClosedHoldSeconds: 0.4
 --- !u!1 &988695574
 GameObject:
   m_ObjectHideFlags: 0
@@ -7791,7 +7793,7 @@ MonoBehaviour:
   gameplayRoot: {fileID: 679601670}
   stage17SceneName: Stage_1-7
   skinSelectMenu: {fileID: 0}
-  skipPreIntroWalkNextRound_Inspector: 1
+  skipPreIntroWalkNextRound_Inspector: 0
   preIntroWalk: {fileID: 786849905}
 --- !u!114 &1389130173
 MonoBehaviour:
@@ -7908,7 +7910,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1aa1ef842d43d4449a4b672797ff89e5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameSession
-  activePlayerCount: 1
+  activePlayerCount: 4
 --- !u!4 &1522516126
 Transform:
   m_ObjectHideFlags: 0
@@ -8263,6 +8265,10 @@ PrefabInstance:
     - target: {fileID: 4873712702074537722, guid: ce721f59039141f44914bc55bc788281, type: 3}
       propertyPath: minBounds.y
       value: -7.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 5438964542736687964, guid: ce721f59039141f44914bc55bc788281, type: 3}
+      propertyPath: heartSpeed
+      value: 5
       objectReference: {fileID: 0}
     - target: {fileID: 5438964542736687964, guid: ce721f59039141f44914bc55bc788281, type: 3}
       propertyPath: enableSurgicalLogs

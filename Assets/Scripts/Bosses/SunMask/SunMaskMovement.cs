@@ -17,12 +17,13 @@ public class SunMaskMovement : MonoBehaviour
     public Vector2 minBounds = new(-7f, -7f);
     public Vector2 maxBounds = new(7f, 7f);
 
-    [Header("Pixel Perfect Step")]
-    [SerializeField] private int pixelsPerUnit = 16;
+    [Header("Pixel Perfect (SNES)")]
+    [SerializeField, Min(1)] private int pixelsPerUnit = 16;
 
     private Rigidbody2D rb;
     private Vector2 currentDirection;
     private float hitStopTimer;
+
     private float pixelAccumulatorX;
     private float pixelAccumulatorY;
 
@@ -37,6 +38,9 @@ public class SunMaskMovement : MonoBehaviour
 
         PickInitialDirection();
         initialized = true;
+
+        rb.position = SnapToPixel(rb.position);
+        rb.MovePosition(rb.position);
     }
 
     void OnEnable()
@@ -49,6 +53,12 @@ public class SunMaskMovement : MonoBehaviour
         {
             PickInitialDirection();
             initialized = true;
+        }
+
+        if (rb != null)
+        {
+            rb.position = SnapToPixel(rb.position);
+            rb.MovePosition(rb.position);
         }
     }
 
@@ -91,6 +101,8 @@ public class SunMaskMovement : MonoBehaviour
         Vector2 pos = rb.position;
         Vector2 desired = pos + moveWorld;
 
+        desired = SnapToPixel(desired);
+
         if (useBounds)
         {
             bool hitX = false;
@@ -124,10 +136,20 @@ public class SunMaskMovement : MonoBehaviour
             desired.x = Mathf.Clamp(desired.x, minBounds.x, maxBounds.x);
             desired.y = Mathf.Clamp(desired.y, minBounds.y, maxBounds.y);
 
+            desired = SnapToPixel(desired);
             currentDirection = ForceDiagonal(currentDirection);
         }
 
         rb.MovePosition(desired);
+    }
+
+    Vector2 SnapToPixel(Vector2 world)
+    {
+        int ppu = Mathf.Max(1, pixelsPerUnit);
+        float s = 1f / ppu;
+        world.x = Mathf.Round(world.x / s) * s;
+        world.y = Mathf.Round(world.y / s) * s;
+        return world;
     }
 
     private void PickInitialDirection()
@@ -167,9 +189,6 @@ public class SunMaskMovement : MonoBehaviour
         rb.linearVelocity = Vector2.zero;
     }
 
-    public Vector2 GetCurrentDirection()
-        => currentDirection;
-
-    public void SetCurrentDirection(Vector2 direction)
-        => currentDirection = direction;
+    public Vector2 GetCurrentDirection() => currentDirection;
+    public void SetCurrentDirection(Vector2 direction) => currentDirection = direction;
 }
