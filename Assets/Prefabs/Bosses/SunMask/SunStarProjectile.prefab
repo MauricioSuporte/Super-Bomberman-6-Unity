@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 822375641627638850}
   - component: {fileID: 3329292135196737253}
   - component: {fileID: 6629787450339986792}
-  m_Layer: 11
+  m_Layer: 10
   m_Name: SunStarProjectile
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -127,7 +127,7 @@ GameObject:
   - component: {fileID: 5642123902539985491}
   - component: {fileID: 7057445815955113614}
   - component: {fileID: 8418495339508750779}
-  m_Layer: 11
+  m_Layer: 10
   m_Name: Sprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}

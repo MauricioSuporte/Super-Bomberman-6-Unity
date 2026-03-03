@@ -1135,7 +1135,7 @@ MonoBehaviour:
   winkRenderer: {fileID: 1239999045062863431}
   kissRenderer: {fileID: 209237640579710390}
   starProjectilePrefab: {fileID: 6629787450339986792, guid: 1cadd277b252f834d93bca0f9933bcac, type: 3}
-  starSpeed: 6
+  starSpeed: 7
   starLifeTime: 3
   starSpawnRadius: 0.5
   starDamage: 1
@@ -1143,7 +1143,7 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 0
   heartPrefab: {fileID: 1435116006548860624, guid: cc767635278ef9b478e5173a4467f7d7, type: 3}
-  heartSpeed: 5
+  heartSpeed: 4
   heartLifeTime: 6
   heartSpawnRadius: 0.35
   heartFloatAmplitude: 0.08
@@ -1178,6 +1178,8 @@ MonoBehaviour:
   deathSfxUseTempAudioObject: 1
   deathSfxSpatialBlend: 0
   pixelsPerUnit: 16
+  extraBombDestroyRadius: 0.1
+  bombScanInterval: 0.05
 --- !u!114 &1116198084690886847
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -7793,7 +7793,7 @@ MonoBehaviour:
   gameplayRoot: {fileID: 679601670}
   stage17SceneName: Stage_1-7
   skinSelectMenu: {fileID: 0}
-  skipPreIntroWalkNextRound_Inspector: 1
+  skipPreIntroWalkNextRound_Inspector: 0
   preIntroWalk: {fileID: 786849905}
 --- !u!114 &1389130173
 MonoBehaviour:
@@ -8268,7 +8268,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5438964542736687964, guid: ce721f59039141f44914bc55bc788281, type: 3}
       propertyPath: heartSpeed
-      value: 5
+      value: 4
       objectReference: {fileID: 0}
     - target: {fileID: 5438964542736687964, guid: ce721f59039141f44914bc55bc788281, type: 3}
       propertyPath: enableSurgicalLogs
