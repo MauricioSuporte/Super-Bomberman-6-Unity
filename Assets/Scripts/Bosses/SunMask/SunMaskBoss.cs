@@ -20,9 +20,17 @@ public class SunMaskBoss : MonoBehaviour, IKillable
     [Header("Angry")]
     [SerializeField] private AnimatedSpriteRenderer angryRenderer;
     [SerializeField, Min(0f)] private float angryFreezeSeconds = 1f;
+
+    [Tooltip("Tempo TOTAL do Angry (inclui o arco + perseguição). Ex.: 5s = 1s arco + 4s chase.")]
     [SerializeField, Min(0f)] private float angryChaseSeconds = 5f;
+
     [SerializeField, Min(0f)] private float angryAfterChaseStopSeconds = 1f;
     [SerializeField] private float angryEyesYOffset = 0.3f;
+
+    [Header("Angry - Arc (pre-chase)")]
+    [SerializeField, Min(0f)] private float angryArcSeconds = 1f;
+    [SerializeField, Min(0f)] private float angryArcRadius = 1.25f;
+    [SerializeField] private bool angryArcClockwise = true;
 
     public bool IsAngryRendererActive => angryRenderer != null && angryRenderer.enabled;
     public float AngryEyesYOffset => angryEyesYOffset;
@@ -770,8 +778,16 @@ public class SunMaskBoss : MonoBehaviour, IKillable
         if (freeze > 0f)
             yield return new WaitForSeconds(freeze);
 
-        float chase = Mathf.Max(0f, angryChaseSeconds);
-        float endTime = Time.time + chase;
+        float total = Mathf.Max(0f, angryChaseSeconds);
+        float arcDur = Mathf.Clamp(angryArcSeconds, 0f, total);
+        float chaseDur = Mathf.Max(0f, total - arcDur);
+
+        if (!isDead && arcDur > 0f && angryArcRadius > 0f && targetPlayer != null && !targetPlayer.isDead && !targetPlayer.IsEndingStage)
+        {
+            yield return MoveSemiCircleTowardTarget(targetPlayer, arcDur, angryArcRadius, angryArcClockwise);
+        }
+
+        float endTime = Time.time + chaseDur;
 
         while (!isDead && Time.time < endTime)
         {
@@ -826,6 +842,55 @@ public class SunMaskBoss : MonoBehaviour, IKillable
 
         inAngry = false;
         angryRoutine = null;
+    }
+
+    IEnumerator MoveSemiCircleTowardTarget(MovementController target, float duration, float radius, bool clockwise)
+    {
+        if (rb == null || target == null)
+            yield break;
+
+        Vector2 start = rb.position;
+        Vector2 toTarget = (Vector2)target.transform.position - start;
+
+        if (toTarget.sqrMagnitude < 0.0001f)
+            yield break;
+
+        Vector2 dir = toTarget.normalized;
+
+        Vector2 center = start + dir * radius;
+
+        Vector2 v0 = start - center;
+
+        float sign = clockwise ? -1f : 1f;
+
+        float t = 0f;
+        while (!isDead && t < duration)
+        {
+            if (target == null || target.isDead || target.IsEndingStage)
+                break;
+
+            float a = (t / duration) * 180f * sign;
+            Vector2 p = center + Rotate(v0, a);
+
+            rb.MovePosition(p);
+
+            t += Time.fixedDeltaTime;
+            yield return new WaitForFixedUpdate();
+        }
+
+        if (!isDead && target != null && !target.isDead && !target.IsEndingStage)
+        {
+            Vector2 endP = center + Rotate(v0, 180f * sign);
+            rb.MovePosition(endP);
+        }
+    }
+
+    static Vector2 Rotate(Vector2 v, float degrees)
+    {
+        float rad = degrees * Mathf.Deg2Rad;
+        float cs = Mathf.Cos(rad);
+        float sn = Mathf.Sin(rad);
+        return new Vector2(v.x * cs - v.y * sn, v.x * sn + v.y * cs);
     }
 
     static Vector2 ForceDiagonal(Vector2 dir)
