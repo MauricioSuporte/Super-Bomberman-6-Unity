@@ -8,11 +8,6 @@ using UnityEngine;
 [RequireComponent(typeof(AudioSource))]
 public class SunMaskBoss : MonoBehaviour, IKillable
 {
-    private const string LOG = "[SunMaskBoss]";
-
-    [Header("Debug")]
-    [SerializeField] private bool enableSurgicalLogs = true;
-
     [Header("References")]
     public CharacterHealth characterHealth;
     public SunMaskMovement movement;
@@ -22,6 +17,16 @@ public class SunMaskBoss : MonoBehaviour, IKillable
     public AnimatedSpriteRenderer hurtRenderer;
     public AnimatedSpriteRenderer deathRenderer;
 
+    [Header("Angry")]
+    [SerializeField] private AnimatedSpriteRenderer angryRenderer;
+    [SerializeField, Min(0f)] private float angryFreezeSeconds = 1f;
+    [SerializeField, Min(0f)] private float angryChaseSeconds = 5f;
+    [SerializeField, Min(0f)] private float angryAfterChaseStopSeconds = 1f;
+    [SerializeField] private float angryEyesYOffset = 0.3f;
+
+    public bool IsAngryRendererActive => angryRenderer != null && angryRenderer.enabled;
+    public float AngryEyesYOffset => angryEyesYOffset;
+
     [Header("Wink / Kiss Attack")]
     [SerializeField] private bool enableWinkAttack = true;
     [SerializeField, Min(0f)] private float winkMinInterval = 3f;
@@ -29,7 +34,6 @@ public class SunMaskBoss : MonoBehaviour, IKillable
     [SerializeField, Min(0f)] private float winkHoldDuration = 1f;
 
     [SerializeField] private AnimatedSpriteRenderer winkRenderer;
-
     [SerializeField] private AnimatedSpriteRenderer kissRenderer;
 
     [Header("Wink (50%) - Star Burst")]
@@ -106,10 +110,13 @@ public class SunMaskBoss : MonoBehaviour, IKillable
 
     private bool isDead;
     private bool inWinkAttack;
+    private bool inAngry;
+
     private Coroutine hurtRoutine;
     private Coroutine deathRoutine;
     private Coroutine deathExplosionsRoutine;
     private Coroutine winkRoutine;
+    private Coroutine angryRoutine;
 
     private Rigidbody2D rb;
     private AudioSource audioSource;
@@ -177,6 +184,8 @@ public class SunMaskBoss : MonoBehaviour, IKillable
     {
         isDead = false;
         inWinkAttack = false;
+        inAngry = false;
+
         nextTouchDamageTime = 0f;
         nextDeathSfxTime = 0f;
 
@@ -187,6 +196,7 @@ public class SunMaskBoss : MonoBehaviour, IKillable
         if (deathRoutine != null) { StopCoroutine(deathRoutine); deathRoutine = null; }
         if (deathExplosionsRoutine != null) { StopCoroutine(deathExplosionsRoutine); deathExplosionsRoutine = null; }
         if (winkRoutine != null) { StopCoroutine(winkRoutine); winkRoutine = null; }
+        if (angryRoutine != null) { StopCoroutine(angryRoutine); angryRoutine = null; }
 
         if (movement != null)
             movement.enabled = true;
@@ -204,8 +214,10 @@ public class SunMaskBoss : MonoBehaviour, IKillable
         if (deathRoutine != null) { StopCoroutine(deathRoutine); deathRoutine = null; }
         if (deathExplosionsRoutine != null) { StopCoroutine(deathExplosionsRoutine); deathExplosionsRoutine = null; }
         if (winkRoutine != null) { StopCoroutine(winkRoutine); winkRoutine = null; }
+        if (angryRoutine != null) { StopCoroutine(angryRoutine); angryRoutine = null; }
 
         inWinkAttack = false;
+        inAngry = false;
     }
 
     void OnTriggerEnter2D(Collider2D other)
@@ -309,6 +321,10 @@ public class SunMaskBoss : MonoBehaviour, IKillable
             return;
 
         PlayDamagedSfx();
+
+        if (inAngry)
+            return;
+
         CacheDirectionBeforeHurt();
 
         if (hurtRoutine != null)
@@ -357,7 +373,7 @@ public class SunMaskBoss : MonoBehaviour, IKillable
         if (t > 0f)
             yield return new WaitForSeconds(t);
 
-        if (!isDead && !inWinkAttack)
+        if (!isDead && !inWinkAttack && !inAngry)
         {
             if (movement != null && hasCachedMoveDirection)
                 movement.SetCurrentDirection(cachedMoveDirection);
@@ -378,9 +394,11 @@ public class SunMaskBoss : MonoBehaviour, IKillable
 
         isDead = true;
         inWinkAttack = false;
+        inAngry = false;
 
         if (winkRoutine != null) { StopCoroutine(winkRoutine); winkRoutine = null; }
         if (hurtRoutine != null) { StopCoroutine(hurtRoutine); hurtRoutine = null; }
+        if (angryRoutine != null) { StopCoroutine(angryRoutine); angryRoutine = null; }
 
         if (deathRoutine != null)
             StopCoroutine(deathRoutine);
@@ -589,6 +607,7 @@ public class SunMaskBoss : MonoBehaviour, IKillable
             if (isDead) continue;
             if (!enableWinkAttack) continue;
             if (inWinkAttack) continue;
+            if (inAngry) continue;
             if (hurtRoutine != null) continue;
             if (deathRoutine != null) continue;
             if (movement != null && !movement.enabled) continue;
@@ -653,16 +672,19 @@ public class SunMaskBoss : MonoBehaviour, IKillable
 
         if (!isDead)
         {
-            if (previous != null && previous != winkRenderer && previous != kissRenderer)
+            if (!inAngry)
             {
-                EnableOnly(previous);
-                if (previous == walkRenderer)
+                if (previous != null && previous != winkRenderer && previous != kissRenderer)
+                {
+                    EnableOnly(previous);
+                    if (previous == walkRenderer)
+                        SetRendererAsLooping(walkRenderer, looping: true);
+                }
+                else
+                {
+                    EnableOnly(walkRenderer);
                     SetRendererAsLooping(walkRenderer, looping: true);
-            }
-            else
-            {
-                EnableOnly(walkRenderer);
-                SetRendererAsLooping(walkRenderer, looping: true);
+                }
             }
         }
 
@@ -695,6 +717,10 @@ public class SunMaskBoss : MonoBehaviour, IKillable
         Vector2 spawnPos = origin + randomOffset;
 
         var heart = Instantiate(heartPrefab, spawnPos, Quaternion.identity);
+        if (heart == null)
+            return;
+
+        heart.SetBoss(this);
 
         heart.Initialize(
             speed: heartSpeed,
@@ -704,9 +730,121 @@ public class SunMaskBoss : MonoBehaviour, IKillable
         );
     }
 
+    public void NotifyHeartDestroyedByPlayer(MovementController playerWhoDestroyed)
+    {
+        if (isDead) return;
+        if (playerWhoDestroyed == null) return;
+        if (playerWhoDestroyed.isDead || playerWhoDestroyed.IsEndingStage) return;
+
+        EnterAngry(playerWhoDestroyed);
+    }
+
+    void EnterAngry(MovementController targetPlayer)
+    {
+        if (isDead) return;
+
+        inAngry = true;
+        inWinkAttack = false;
+
+        if (hurtRoutine != null) { StopCoroutine(hurtRoutine); hurtRoutine = null; }
+
+        if (angryRoutine != null)
+            StopCoroutine(angryRoutine);
+
+        angryRoutine = StartCoroutine(AngryRoutine(targetPlayer));
+    }
+
+    IEnumerator AngryRoutine(MovementController targetPlayer)
+    {
+        if (rb != null)
+            rb.linearVelocity = Vector2.zero;
+
+        if (movement != null)
+            movement.enabled = false;
+
+        AnimatedSpriteRenderer r = angryRenderer != null ? angryRenderer : walkRenderer;
+        EnableOnly(r);
+        SetRendererAsLooping(r, looping: true);
+
+        float freeze = Mathf.Max(0f, angryFreezeSeconds);
+        if (freeze > 0f)
+            yield return new WaitForSeconds(freeze);
+
+        float chase = Mathf.Max(0f, angryChaseSeconds);
+        float endTime = Time.time + chase;
+
+        while (!isDead && Time.time < endTime)
+        {
+            if (targetPlayer == null || targetPlayer.isDead || targetPlayer.IsEndingStage)
+                break;
+
+            if (rb != null)
+            {
+                Vector2 pos = rb.position;
+                Vector2 to = (Vector2)targetPlayer.transform.position - pos;
+
+                Vector2 dir = ForceDiagonal(to);
+                float spd = (movement != null) ? Mathf.Max(0.01f, movement.speed) : 2.5f;
+
+                Vector2 step = dir * (spd * Time.fixedDeltaTime);
+                rb.MovePosition(pos + step);
+            }
+
+            yield return new WaitForFixedUpdate();
+        }
+
+        if (!isDead)
+        {
+            if (rb != null)
+                rb.linearVelocity = Vector2.zero;
+
+            float stopAfter = Mathf.Max(0f, angryAfterChaseStopSeconds);
+
+            if (stopAfter > 0f)
+            {
+                float half = stopAfter * 0.5f;
+
+                if (half > 0f)
+                    yield return new WaitForSeconds(half);
+
+                if (!isDead)
+                {
+                    EnableOnly(walkRenderer);
+                    SetRendererAsLooping(walkRenderer, looping: true);
+                }
+
+                if (half > 0f)
+                    yield return new WaitForSeconds(half);
+            }
+
+            if (!isDead)
+            {
+                if (movement != null)
+                    movement.enabled = true;
+            }
+        }
+
+        inAngry = false;
+        angryRoutine = null;
+    }
+
+    static Vector2 ForceDiagonal(Vector2 dir)
+    {
+        const float EPS = 0.0001f;
+
+        if (dir.sqrMagnitude < EPS)
+            dir = new Vector2(1f, 1f);
+
+        float sx = dir.x >= 0f ? 1f : -1f;
+        float sy = dir.y >= 0f ? 1f : -1f;
+
+        return new Vector2(sx, sy).normalized;
+    }
+
     AnimatedSpriteRenderer GetCurrentRenderer()
     {
         if (walkRenderer != null && walkRenderer.enabled) return walkRenderer;
+        if (angryRenderer != null && angryRenderer.enabled) return angryRenderer;
         if (winkRenderer != null && winkRenderer.enabled) return winkRenderer;
         if (kissRenderer != null && kissRenderer.enabled) return kissRenderer;
         if (hurtRenderer != null && hurtRenderer.enabled) return hurtRenderer;
@@ -717,6 +855,7 @@ public class SunMaskBoss : MonoBehaviour, IKillable
     void EnableOnly(AnimatedSpriteRenderer target)
     {
         if (walkRenderer != null) walkRenderer.enabled = (target == walkRenderer);
+        if (angryRenderer != null) angryRenderer.enabled = (target == angryRenderer);
         if (winkRenderer != null) winkRenderer.enabled = (target == winkRenderer);
         if (kissRenderer != null) kissRenderer.enabled = (target == kissRenderer);
         if (hurtRenderer != null) hurtRenderer.enabled = (target == hurtRenderer);

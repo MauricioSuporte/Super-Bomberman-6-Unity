@@ -1,28 +1,28 @@
 fileFormatVersion: 2
-guid: 0d07110758b24a74195df6c69e425544
+guid: 55d93141299fdd243807003a000459e0
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 3460787535467032635
-    second: SunMask_0
+      213: 5127997494398237225
+    second: SunMask-export_0
   - first:
-      213: 551258229594904538
-    second: SunMask_1
+      213: -4596037619601716391
+    second: SunMask-export_1
   - first:
-      213: -3938791644569641682
-    second: SunMask_2
+      213: 3532684678925768496
+    second: SunMask-export_2
   - first:
-      213: -1226291330728262345
-    second: SunMask_3
+      213: -3878612223561779779
+    second: SunMask-export_3
   - first:
-      213: 4200183971177769408
-    second: SunMask_4
+      213: -5430607871990248249
+    second: SunMask-export_4
   - first:
-      213: 7414295138949558812
-    second: SunMask_5
+      213: -1011073673512738570
+    second: SunMask-export_5
   - first:
-      213: -7956557122393765759
-    second: SunMask_6
+      213: 388659426122518134
+    second: SunMask-export_6
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -131,10 +131,10 @@ TextureImporter:
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: b30bc9e6def270030800000000000000
-      internalID: 3460787535467032635
+      spriteID: 5a058fb44c9e83944bd27cbd4eff637b
+      internalID: -534088779
       vertices: []
       indices: 
       edges: []
@@ -153,10 +153,10 @@ TextureImporter:
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: ad7d38a607676a700800000000000000
-      internalID: 551258229594904538
+      spriteID: b875b4b83ca65ac42b36829bd80a2541
+      internalID: 1646137371
       vertices: []
       indices: 
       edges: []
@@ -175,10 +175,10 @@ TextureImporter:
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: e2d562d2ed99659c0800000000000000
-      internalID: -3938791644569641682
+      spriteID: 8b91d55156ab5f54dbb9056a97c95073
+      internalID: 1177107629
       vertices: []
       indices: 
       edges: []
@@ -197,10 +197,10 @@ TextureImporter:
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: 7350dc828865bfee0800000000000000
-      internalID: -1226291330728262345
+      spriteID: d5dfca226a184a3418093b0acac70b47
+      internalID: -667251386
       vertices: []
       indices: 
       edges: []
@@ -219,10 +219,10 @@ TextureImporter:
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: 0c92759711d0a4a30800000000000000
-      internalID: 4200183971177769408
+      spriteID: 32ee0a005ad619e41b5d6c17fdc3fa1d
+      internalID: 947010576
       vertices: []
       indices: 
       edges: []
@@ -241,10 +241,10 @@ TextureImporter:
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: c127ef0752ed4e660800000000000000
-      internalID: 7414295138949558812
+      spriteID: 165c16280c5b7c147992d8fedcb7aead
+      internalID: -1170734965
       vertices: []
       indices: 
       edges: []
@@ -263,10 +263,10 @@ TextureImporter:
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: 1888d9ce371a49190800000000000000
-      internalID: -7956557122393765759
+      spriteID: 0e96f53d1ddae304caa9562aeedd1258
+      internalID: 1901493491
       vertices: []
       indices: 
       edges: []
@@ -275,7 +275,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 10d23f161890863459c6b03aed6ec088
+    spriteID: cd48536e600d83e4d8242e4672789b4a
     internalID: 0
     vertices: []
     indices: 
@@ -287,13 +287,13 @@ TextureImporter:
       - key: SpriteEditor.SliceSettings
         value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":96.0,"y":96.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":1,"keepEmptyRects":false,"isAlternate":false}'
     nameFileIdTable:
-      SunMask_0: 3460787535467032635
-      SunMask_1: 551258229594904538
-      SunMask_2: -3938791644569641682
-      SunMask_3: -1226291330728262345
-      SunMask_4: 4200183971177769408
-      SunMask_5: 7414295138949558812
-      SunMask_6: -7956557122393765759
+      SunMask_0: -534088779
+      SunMask_1: 1646137371
+      SunMask_2: 1177107629
+      SunMask_3: -667251386
+      SunMask_4: 947010576
+      SunMask_5: -1170734965
+      SunMask_6: 1901493491
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

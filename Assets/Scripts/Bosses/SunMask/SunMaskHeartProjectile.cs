@@ -42,6 +42,10 @@ public class SunMaskHeartProjectile : MonoBehaviour
     private MovementController[] cachedPlayers = new MovementController[0];
     private Vector2 lastFloatOffset;
 
+    private SunMaskBoss boss;
+
+    public void SetBoss(SunMaskBoss b) => boss = b;
+
     public void Initialize(float speed, float lifeTime, float floatAmplitude, float floatFrequency)
     {
         if (speed > 0f) this.speed = speed;
@@ -271,13 +275,18 @@ public class SunMaskHeartProjectile : MonoBehaviour
 
         int explosionLayer = LayerMask.NameToLayer("Explosion");
         if (explosionLayer >= 0 && other.gameObject.layer == explosionLayer)
-            TriggerDestroy();
+            TriggerDestroy(other);
     }
 
-    public void TriggerDestroy()
+    public void TriggerDestroy(Collider2D explosionCollider = null)
     {
         if (dying) return;
         dying = true;
+
+        MovementController whoDestroyed = ResolvePlayerFromExplosion(explosionCollider);
+
+        if (boss != null && whoDestroyed != null)
+            boss.NotifyHeartDestroyedByPlayer(whoDestroyed);
 
         if (!playDestroyAnimation || destroyRenderer == null)
         {
@@ -286,6 +295,49 @@ public class SunMaskHeartProjectile : MonoBehaviour
         }
 
         StartCoroutine(DestroyRoutine());
+    }
+
+    MovementController ResolvePlayerFromExplosion(Collider2D explosionCollider)
+    {
+        if (explosionCollider != null)
+        {
+            var bc = explosionCollider.GetComponentInParent<BombController>();
+            if (bc != null)
+            {
+                var mc = bc.GetComponent<MovementController>();
+                if (mc != null && !mc.isDead && !mc.IsEndingStage)
+                    return mc;
+            }
+
+            Vector2 origin = explosionCollider.transform.position;
+            return FindNearestAlivePlayer(origin);
+        }
+
+        return FindNearestAlivePlayer(transform.position);
+    }
+
+    MovementController FindNearestAlivePlayer(Vector2 origin)
+    {
+        RefreshPlayersCache();
+
+        MovementController best = null;
+        float bestDist = float.PositiveInfinity;
+
+        for (int i = 0; i < cachedPlayers.Length; i++)
+        {
+            var p = cachedPlayers[i];
+            if (p == null) continue;
+            if (p.isDead || p.IsEndingStage) continue;
+
+            float d = ((Vector2)p.transform.position - origin).sqrMagnitude;
+            if (d < bestDist)
+            {
+                bestDist = d;
+                best = p;
+            }
+        }
+
+        return best;
     }
 
     IEnumerator DestroyRoutine()

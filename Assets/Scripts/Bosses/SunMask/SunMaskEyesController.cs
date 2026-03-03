@@ -31,8 +31,8 @@ public sealed class SunMaskEyesController : MonoBehaviour
     }
 
     [Header("Eye Roots (children of SunMask)")]
-    [SerializeField] private Transform rightEyeRoot; // "RigthEye"
-    [SerializeField] private Transform leftEyeRoot;  // "LeftEye"
+    [SerializeField] private Transform rightEyeRoot;
+    [SerializeField] private Transform leftEyeRoot;
 
     [Header("Targeting")]
     [SerializeField] private bool autoFindPlayers = true;
@@ -67,12 +67,22 @@ public sealed class SunMaskEyesController : MonoBehaviour
     private EyeOverride _override = EyeOverride.None;
     private Coroutine _deathEyesRoutine;
 
+    private Vector3 _rightEyeBaseLocalPos;
+    private Vector3 _leftEyeBaseLocalPos;
+    private bool _hasEyeBasePos;
+    private bool _angryOffsetApplied;
+
     private void Awake()
     {
         if (boss == null)
             boss = GetComponentInParent<SunMaskBoss>();
 
         AutoResolveEyeRootsIfNeeded();
+
+        if (rightEyeRoot != null) _rightEyeBaseLocalPos = rightEyeRoot.localPosition;
+        if (leftEyeRoot != null) _leftEyeBaseLocalPos = leftEyeRoot.localPosition;
+        _hasEyeBasePos = (rightEyeRoot != null || leftEyeRoot != null);
+        _angryOffsetApplied = false;
 
         CacheEyeChildren(rightEyeRoot, _rightNormal, out _rightDamagedSingle);
         CacheEyeChildren(leftEyeRoot, _leftNormal, out _leftDamagedSingle);
@@ -98,6 +108,9 @@ public sealed class SunMaskEyesController : MonoBehaviour
 
         _override = EyeOverride.None;
 
+        _angryOffsetApplied = false;
+        RestoreEyeRootsBaseLocalPos();
+
         if (autoFindPlayers)
             RefreshPlayers();
     }
@@ -110,6 +123,8 @@ public sealed class SunMaskEyesController : MonoBehaviour
             _deathEyesRoutine = null;
         }
 
+        RestoreEyeRootsBaseLocalPos();
+
         _currentTarget = null;
         _players.Clear();
     }
@@ -118,6 +133,8 @@ public sealed class SunMaskEyesController : MonoBehaviour
     {
         if (boss != null && !boss.isActiveAndEnabled)
             return;
+
+        UpdateAngryEyeOffset();
 
         if (_override == EyeOverride.Damaged || _override == EyeOverride.HoldSul)
             return;
@@ -132,6 +149,42 @@ public sealed class SunMaskEyesController : MonoBehaviour
             return;
 
         TickTracking();
+    }
+
+    private void UpdateAngryEyeOffset()
+    {
+        if (boss == null || !_hasEyeBasePos)
+        {
+            _angryOffsetApplied = false;
+            return;
+        }
+
+        bool shouldApply = boss.IsAngryRendererActive;
+
+        if (shouldApply == _angryOffsetApplied)
+            return;
+
+        _angryOffsetApplied = shouldApply;
+
+        if (shouldApply)
+        {
+            float y = boss.AngryEyesYOffset;
+            if (rightEyeRoot != null) rightEyeRoot.localPosition = _rightEyeBaseLocalPos + new Vector3(0f, y, 0f);
+            if (leftEyeRoot != null) leftEyeRoot.localPosition = _leftEyeBaseLocalPos + new Vector3(0f, y, 0f);
+        }
+        else
+        {
+            RestoreEyeRootsBaseLocalPos();
+        }
+    }
+
+    private void RestoreEyeRootsBaseLocalPos()
+    {
+        if (!_hasEyeBasePos)
+            return;
+
+        if (rightEyeRoot != null) rightEyeRoot.localPosition = _rightEyeBaseLocalPos;
+        if (leftEyeRoot != null) leftEyeRoot.localPosition = _leftEyeBaseLocalPos;
     }
 
     private void TickTracking()

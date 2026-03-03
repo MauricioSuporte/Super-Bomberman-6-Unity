@@ -41,7 +41,6 @@ public class SunMaskMovement : MonoBehaviour
 
     void OnEnable()
     {
-        // Importante: NÃO resetar direção aqui, senão qualquer disable/enable muda o caminho.
         hitStopTimer = 0f;
         pixelAccumulatorX = 0f;
         pixelAccumulatorY = 0f;
