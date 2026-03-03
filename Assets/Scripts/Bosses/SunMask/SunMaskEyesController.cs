@@ -27,8 +27,7 @@ public sealed class SunMaskEyesController : MonoBehaviour
     {
         None,
         Damaged,
-        Front,
-        Track
+        HoldSul
     }
 
     [Header("Eye Roots (children of SunMask)")]
@@ -46,25 +45,18 @@ public sealed class SunMaskEyesController : MonoBehaviour
     [SerializeField] private bool useDamagedEyesWhenBossHurt = true;
 
     [Header("Direction")]
-    [Tooltip("Se true, prioriza eixo dominante (8-direções estilo grid). Se false, usa ângulos (setores).")]
     [SerializeField] private bool useDominantAxisFor8Dir = true;
-
-    [Tooltip("Deadzone do eixo (evita flicker quando quase diagonal). Recomendado 0.15~0.30.")]
     [SerializeField, Range(0f, 0.49f)] private float diagonalBias = 0.22f;
 
     private readonly List<MovementController> _players = new(8);
     private MovementController _currentTarget;
     private float _nextRetargetTime;
 
-    // direções "normais"
     private readonly Dictionary<EyeDir, AnimatedSpriteRenderer> _rightNormal = new(8);
     private readonly Dictionary<EyeDir, AnimatedSpriteRenderer> _leftNormal = new(8);
 
-    // sprites especiais por olho (single)
     private AnimatedSpriteRenderer _rightDamagedSingle;
     private AnimatedSpriteRenderer _leftDamagedSingle;
-    private AnimatedSpriteRenderer _rightFrontSingle;
-    private AnimatedSpriteRenderer _leftFrontSingle;
 
     private EyeDir _currentDir = EyeDir.Noroeste;
     private bool _hasDir;
@@ -82,8 +74,8 @@ public sealed class SunMaskEyesController : MonoBehaviour
 
         AutoResolveEyeRootsIfNeeded();
 
-        CacheEyeChildren(rightEyeRoot, _rightNormal, out _rightDamagedSingle, out _rightFrontSingle);
-        CacheEyeChildren(leftEyeRoot, _leftNormal, out _leftDamagedSingle, out _leftFrontSingle);
+        CacheEyeChildren(rightEyeRoot, _rightNormal, out _rightDamagedSingle);
+        CacheEyeChildren(leftEyeRoot, _leftNormal, out _leftDamagedSingle);
 
         _currentSet = EyeSet.Normal;
         _hasSet = true;
@@ -127,29 +119,18 @@ public sealed class SunMaskEyesController : MonoBehaviour
         if (boss != null && !boss.isActiveAndEnabled)
             return;
 
-        // 0) Override (fluxo de morte / comandos externos)
-        if (_override != EyeOverride.None)
-        {
-            if (_override == EyeOverride.Track)
-            {
-                TickTracking();
-            }
-
+        if (_override == EyeOverride.Damaged || _override == EyeOverride.HoldSul)
             return;
-        }
 
-        // 1) Damaged automático durante hurt (modo normal)
         if (useDamagedEyesWhenBossHurt)
         {
             bool bossHurtActive = boss != null && boss.hurtRenderer != null && boss.hurtRenderer.enabled;
             ApplyEyeSet(bossHurtActive ? EyeSet.Damaged : EyeSet.Normal, force: false);
         }
 
-        // Se estiver em Damaged (auto), não mira (é sprite fixo)
         if (_currentSet == EyeSet.Damaged)
             return;
 
-        // tracking normal
         TickTracking();
     }
 
@@ -176,9 +157,7 @@ public sealed class SunMaskEyesController : MonoBehaviour
         ApplyDirection(dir, force: false);
     }
 
-    // ======= PUBLIC API: fluxo de morte dos olhos =======
-
-    public void BeginDeathEyesFlow(float damagedDuration = 1f, float frontDuration = 0.75f)
+    public void BeginDeathEyesFlowDamagedThenSul(float damagedDuration = 1f)
     {
         if (_deathEyesRoutine != null)
         {
@@ -186,77 +165,41 @@ public sealed class SunMaskEyesController : MonoBehaviour
             _deathEyesRoutine = null;
         }
 
-        _deathEyesRoutine = StartCoroutine(DeathEyesRoutine(damagedDuration, frontDuration));
+        _deathEyesRoutine = StartCoroutine(DeathEyesRoutine_DamagedThenSul(damagedDuration));
     }
 
-    private IEnumerator DeathEyesRoutine(float damagedDuration, float frontDuration)
+    private IEnumerator DeathEyesRoutine_DamagedThenSul(float damagedDuration)
     {
-        // 1) Damaged por 1s (ou configurável)
-        SetOverride(EyeOverride.Damaged);
-        float t1 = Mathf.Max(0f, damagedDuration);
-        if (t1 > 0f) yield return new WaitForSeconds(t1);
+        SetOverrideDamaged();
 
-        // 2) Front por 0.75s (ou configurável)
-        SetOverride(EyeOverride.Front);
-        float t2 = Mathf.Max(0f, frontDuration);
-        if (t2 > 0f) yield return new WaitForSeconds(t2);
+        float t = Mathf.Max(0f, damagedDuration);
+        if (t > 0f)
+            yield return new WaitForSeconds(t);
 
-        // 3) Volta a seguir player, mesmo com boss mantendo sprite Damaged
-        SetOverride(EyeOverride.Track);
+        SetOverrideHoldSul();
 
         _deathEyesRoutine = null;
     }
 
-    private void SetOverride(EyeOverride ov)
+    private void SetOverrideDamaged()
     {
-        _override = ov;
+        _override = EyeOverride.Damaged;
 
-        switch (ov)
-        {
-            case EyeOverride.Damaged:
-                ApplyFront(false);
-                ApplyDamaged(true);
-                // garante que normais fiquem off
-                DisableAll(_rightNormal);
-                DisableAll(_leftNormal);
-                break;
-
-            case EyeOverride.Front:
-                ApplyDamaged(false);
-                ApplyFront(true);
-                DisableAll(_rightNormal);
-                DisableAll(_leftNormal);
-                break;
-
-            case EyeOverride.Track:
-                ApplyDamaged(false);
-                ApplyFront(false);
-                // força conjunto normal e reaplica direção
-                _currentSet = EyeSet.Normal;
-                _hasSet = true;
-                ApplyDirection(_currentDir, force: true);
-                break;
-
-            default:
-                ApplyDamaged(false);
-                ApplyFront(false);
-                break;
-        }
+        ApplyEyeSet(EyeSet.Damaged, force: true);
     }
 
-    private void ApplyDamaged(bool on)
+    private void SetOverrideHoldSul()
     {
-        SetRendererEnabled(_rightDamagedSingle, on, refresh: on);
-        SetRendererEnabled(_leftDamagedSingle, on, refresh: on);
-    }
+        _override = EyeOverride.HoldSul;
 
-    private void ApplyFront(bool on)
-    {
-        SetRendererEnabled(_rightFrontSingle, on, refresh: on);
-        SetRendererEnabled(_leftFrontSingle, on, refresh: on);
-    }
+        ApplyEyeSet(EyeSet.Normal, force: true);
+        ApplyDirection(EyeDir.Sul, force: true);
 
-    // ======= Core switching =======
+        _currentDir = EyeDir.Sul;
+        _hasDir = true;
+
+        _currentTarget = null;
+    }
 
     private void ApplyEyeSet(EyeSet set, bool force)
     {
@@ -268,16 +211,16 @@ public sealed class SunMaskEyesController : MonoBehaviour
 
         if (_currentSet == EyeSet.Damaged)
         {
-            ApplyFront(false);
+            SetRendererEnabled(_rightDamagedSingle, true, refresh: true);
+            SetRendererEnabled(_leftDamagedSingle, true, refresh: true);
 
-            ApplyDamaged(true);
             DisableAll(_rightNormal);
             DisableAll(_leftNormal);
             return;
         }
 
-        ApplyDamaged(false);
-        ApplyFront(false);
+        SetRendererEnabled(_rightDamagedSingle, false, refresh: false);
+        SetRendererEnabled(_leftDamagedSingle, false, refresh: false);
 
         ApplyDirection(_currentDir, force: true);
     }
@@ -376,8 +319,6 @@ public sealed class SunMaskEyesController : MonoBehaviour
         }
     }
 
-    // ======= Direction math =======
-
     private EyeDir Get8Dir(Vector2 v)
     {
         v.Normalize();
@@ -424,8 +365,6 @@ public sealed class SunMaskEyesController : MonoBehaviour
         return angle >= minInclusive || angle < maxExclusive;
     }
 
-    // ======= Resolve / Cache =======
-
     private void AutoResolveEyeRootsIfNeeded()
     {
         if (rightEyeRoot != null && leftEyeRoot != null)
@@ -453,12 +392,10 @@ public sealed class SunMaskEyesController : MonoBehaviour
     private static void CacheEyeChildren(
         Transform root,
         Dictionary<EyeDir, AnimatedSpriteRenderer> normalMap,
-        out AnimatedSpriteRenderer damagedSingle,
-        out AnimatedSpriteRenderer frontSingle)
+        out AnimatedSpriteRenderer damagedSingle)
     {
         normalMap.Clear();
         damagedSingle = null;
-        frontSingle = null;
 
         if (root == null)
             return;
@@ -478,14 +415,6 @@ public sealed class SunMaskEyesController : MonoBehaviour
             {
                 damagedSingle = r;
                 SetRendererEnabled(damagedSingle, false, refresh: false);
-                continue;
-            }
-
-            if (t.name.Equals("Front", System.StringComparison.OrdinalIgnoreCase) ||
-                t.name.Equals("Frente", System.StringComparison.OrdinalIgnoreCase))
-            {
-                frontSingle = r;
-                SetRendererEnabled(frontSingle, false, refresh: false);
                 continue;
             }
 
@@ -517,8 +446,6 @@ public sealed class SunMaskEyesController : MonoBehaviour
 
         return false;
     }
-
-    // ======= Players =======
 
     private void EnsurePlayersRefsIfNeeded()
     {

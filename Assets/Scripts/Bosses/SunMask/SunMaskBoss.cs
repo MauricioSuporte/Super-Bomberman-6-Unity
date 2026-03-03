@@ -5,6 +5,7 @@ using UnityEngine;
 [RequireComponent(typeof(SunMaskMovement))]
 [RequireComponent(typeof(Collider2D))]
 [RequireComponent(typeof(Rigidbody2D))]
+[RequireComponent(typeof(AudioSource))]
 public class SunMaskBoss : MonoBehaviour, IKillable
 {
     [Header("References")]
@@ -22,10 +23,14 @@ public class SunMaskBoss : MonoBehaviour, IKillable
 
     [Header("Death Eyes Flow")]
     [Min(0f)] public float deathEyesDamagedDuration = 1f;
-    [Min(0f)] public float deathEyesFrontDuration = 0.75f;
+    [Min(0f)] public float deathEyesFrontDuration = 0.75f; // mantido por compatibilidade (não usado agora)
 
     [Header("Damage")]
     public int explosionDamage = 1;
+
+    [Header("Damage SFX")]
+    public AudioClip damagedSfx;
+    [Range(0f, 1f)] public float damagedSfxVolume = 0.9f;
 
     [Header("Touch Damage")]
     public int touchDamage = 1;
@@ -40,6 +45,7 @@ public class SunMaskBoss : MonoBehaviour, IKillable
     private Coroutine deathRoutine;
 
     private Rigidbody2D rb;
+    private AudioSource audioSource;
     private float nextTouchDamageTime;
 
     private int bombLayer;
@@ -52,6 +58,7 @@ public class SunMaskBoss : MonoBehaviour, IKillable
     void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
+        audioSource = GetComponent<AudioSource>();
 
         if (!characterHealth)
             characterHealth = GetComponent<CharacterHealth>();
@@ -234,12 +241,25 @@ public class SunMaskBoss : MonoBehaviour, IKillable
         if (isDead)
             return;
 
+        PlayDamagedSfx();
+
         CacheDirectionBeforeHurt();
 
         if (hurtRoutine != null)
             StopCoroutine(hurtRoutine);
 
         hurtRoutine = StartCoroutine(HurtStopRoutine());
+    }
+
+    void PlayDamagedSfx()
+    {
+        if (audioSource == null)
+            return;
+
+        if (damagedSfx == null)
+            return;
+
+        audioSource.PlayOneShot(damagedSfx, Mathf.Clamp01(damagedSfxVolume));
     }
 
     void CacheDirectionBeforeHurt()
@@ -315,14 +335,11 @@ public class SunMaskBoss : MonoBehaviour, IKillable
     {
         StopMovement_DisableComponent();
 
-        // Durante TODO o fluxo de morte: manter o SunMask com sprite Damaged (hurtRenderer)
         EnableOnly(hurtRenderer);
         SetRendererAsLooping(hurtRenderer, looping: false);
 
-        // Fluxo dos olhos no hit fatal:
-        // 1s Damaged -> 0.75s Front -> volta a seguir player (mesmo com hurtRenderer ligado)
         if (eyes != null)
-            eyes.BeginDeathEyesFlow(deathEyesDamagedDuration, deathEyesFrontDuration);
+            eyes.BeginDeathEyesFlowDamagedThenSul(deathEyesDamagedDuration);
 
         float t = Mathf.Max(0f, deathHoldDuration);
         if (t > 0f)
