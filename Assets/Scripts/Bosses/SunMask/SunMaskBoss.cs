@@ -25,6 +25,11 @@ public class SunMaskBoss : MonoBehaviour, IKillable
     [Min(0f)] public float deathEyesDamagedDuration = 1f;
     [Min(0f)] public float deathEyesFrontDuration = 0.75f; // mantido por compatibilidade (não usado agora)
 
+    [Header("Death Final Blink (Body + Eyes via CharacterHealth SpriteRenderers)")]
+    [SerializeField] private bool enableDeathFinalBlink = true;
+    [SerializeField, Min(0f)] private float deathFinalBlinkDuration = 1.0f;
+    [SerializeField, Min(0.001f)] private float deathFinalBlinkInterval = 0.06f;
+
     [Header("Damage")]
     public int explosionDamage = 1;
 
@@ -361,29 +366,46 @@ public class SunMaskBoss : MonoBehaviour, IKillable
         EnableOnly(target);
         SetRendererAsLooping(target, looping: false);
 
-        float totalDeath = Mathf.Max(0f, deathHoldDuration);
+        float eyesDelay = Mathf.Max(0f, deathEyesDamagedDuration);
+        float explosionDuration = Mathf.Max(0f, deathHoldDuration);
 
-        // 1) inicia o fluxo de olhos (Damaged 1s, depois muda para Down/Sul dentro do EyesController)
-        float eyesDelay = Mathf.Clamp(deathEyesDamagedDuration, 0f, totalDeath);
+        // 1) olhos Damaged no começo
         if (eyes != null)
             eyes.BeginDeathEyesFlowDamagedThenSul(deathEyesDamagedDuration);
 
-        // 2) espera os 1s iniciais (até os olhos trocarem para Down/Sul)
         if (eyesDelay > 0f)
             yield return new WaitForSeconds(eyesDelay);
 
-        // 3) só agora começa VFX/SFX de explosão (no tempo restante)
-        float remaining = Mathf.Max(0f, totalDeath - eyesDelay);
-
-        if (explosionPrefab != null && remaining > 0f)
+        // 2) inicia explosões por 5s (inteiros)
+        if (explosionPrefab != null && explosionDuration > 0f)
         {
             nextDeathSfxTime = 0f;
-            deathExplosionsRoutine = StartCoroutine(SpawnDeathExplosions(remaining));
+            deathExplosionsRoutine = StartCoroutine(SpawnDeathExplosions(explosionDuration));
         }
 
-        // 4) segura até terminar o total da morte (restante)
-        if (remaining > 0f)
-            yield return new WaitForSeconds(remaining);
+        // 3) blink só no final da janela de explosões
+        if (explosionDuration > 0f)
+        {
+            float blinkDur = (enableDeathFinalBlink && deathFinalBlinkDuration > 0f) ? deathFinalBlinkDuration : 0f;
+            blinkDur = Mathf.Min(blinkDur, explosionDuration);
+
+            float waitBeforeBlink = explosionDuration - blinkDur;
+
+            if (waitBeforeBlink > 0f)
+                yield return new WaitForSeconds(waitBeforeBlink);
+
+            if (blinkDur > 0f && characterHealth != null && characterHealth.enabled)
+            {
+                float interval = Mathf.Max(0.001f, deathFinalBlinkInterval);
+                characterHealth.StartSpawnInvulnerability(blinkDur, interval);
+                yield return new WaitForSeconds(blinkDur);
+            }
+            else if (blinkDur > 0f)
+            {
+                // fallback: só espera o final se não puder piscar
+                yield return new WaitForSeconds(blinkDur);
+            }
+        }
 
         if (deathExplosionsRoutine != null)
         {
