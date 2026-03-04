@@ -85,8 +85,11 @@ public class TitleScreenController : MonoBehaviour
     [SerializeField] int defaultWindowSizeMultiplier = 4;
     [SerializeField] int[] windowSizeMultipliers = new int[] { 2, 3, 4, 5, 6, 7, 8 };
 
-    [Header("Video Menu Layout")]
-    [SerializeField, Range(55f, 95f)] float videoValuePosPercent = 90f;
+    [Header("Video Values (Separate TMP)")]
+    [SerializeField] TextMeshProUGUI videoValuesText;
+
+    [Tooltip("Recuo da borda direita da camera/canvas (BASE @ designUpscale).")]
+    [SerializeField] float videoValuesRightPadding = 18f;
 
     [Header("Audio")]
     public AudioClip titleMusic;
@@ -176,6 +179,8 @@ public class TitleScreenController : MonoBehaviour
 
     Coroutine bossRushLockedRoutine;
     RectTransform bossRushLockedRect;
+
+    RectTransform videoValuesRect;
 
     Rect _lastCamRect;
     int _lastBaseScaleInt = -999;
@@ -271,6 +276,7 @@ public class TitleScreenController : MonoBehaviour
         EnsurePushStartText();
         EnsureFooterText();
         EnsureBossRushLockedText();
+        EnsureVideoValuesText();
 
         ForceHide();
     }
@@ -404,12 +410,14 @@ public class TitleScreenController : MonoBehaviour
         EnsurePushStartText();
         EnsureFooterText();
         EnsureBossRushLockedText();
+        EnsureVideoValuesText();
 
         RefreshMenuText();
         UpdateCursorPosition();
         UpdatePushStartPosition();
         UpdateFooterPosition();
         UpdateBossRushLockedPosition();
+        UpdateVideoValuesPosition();
     }
 
     void ApplyCursorScale()
@@ -509,6 +517,9 @@ public class TitleScreenController : MonoBehaviour
 
         if (bossRushLockedText != null)
             bossRushLockedText.fontMaterial = runtimeMenuMat;
+
+        if (videoValuesText != null)
+            videoValuesText.fontMaterial = runtimeMenuMat;
     }
 
     void ApplyMenuAnchoredPosition()
@@ -548,6 +559,49 @@ public class TitleScreenController : MonoBehaviour
         if (parent != null) return parent;
 
         return menuText.rectTransform;
+    }
+
+    void EnsureVideoValuesText()
+    {
+        if (menuText == null)
+            return;
+
+        if (videoValuesText == null)
+        {
+            var go = new GameObject("VideoValuesText", typeof(RectTransform));
+            var root = GetUiRootForGeneratedText();
+            if (root != null) go.transform.SetParent(root, false);
+            else go.transform.SetParent(menuText.transform, false);
+
+            videoValuesText = go.AddComponent<TextMeshProUGUI>();
+            videoValuesText.raycastTarget = false;
+        }
+
+        videoValuesRect = videoValuesText.rectTransform;
+
+        if (videoValuesRect != null)
+        {
+            videoValuesRect.anchorMin = new Vector2(1f, 0.5f);
+            videoValuesRect.anchorMax = new Vector2(1f, 0.5f);
+            videoValuesRect.pivot = new Vector2(1f, 1f);
+            videoValuesRect.sizeDelta = Vector2.zero;
+            videoValuesRect.localScale = Vector3.one;
+        }
+
+        videoValuesText.richText = false;
+        videoValuesText.font = menuText.font;
+        videoValuesText.fontStyle = menuText.fontStyle;
+        videoValuesText.fontSize = MenuFontSizeScaled;
+        videoValuesText.textWrappingMode = TextWrappingModes.NoWrap;
+        videoValuesText.overflowMode = TextOverflowModes.Overflow;
+        videoValuesText.extraPadding = true;
+        videoValuesText.fontMaterial = runtimeMenuMat != null ? runtimeMenuMat : menuText.fontMaterial;
+
+        videoValuesText.alignment = TextAlignmentOptions.TopRight;
+        videoValuesText.color = Color.white;
+
+        if (videoValuesText != null)
+            videoValuesText.gameObject.SetActive(false);
     }
 
     void EnsurePushStartText()
@@ -682,6 +736,48 @@ public class TitleScreenController : MonoBehaviour
         bossRushLockedRect.anchoredPosition = new Vector2(0f, BossRushLockedBottomMarginScaled);
     }
 
+    void UpdateVideoValuesPosition()
+    {
+        if (videoValuesText == null || videoValuesRect == null || menuText == null)
+            return;
+
+        bool show = (menuMode == MenuMode.Video) && allowVideoMenu;
+        if (!show)
+        {
+            if (videoValuesText.gameObject.activeSelf)
+                videoValuesText.gameObject.SetActive(false);
+            return;
+        }
+
+        videoValuesText.fontSize = MenuFontSizeScaled;
+        videoValuesText.font = menuText.font;
+        videoValuesText.fontStyle = menuText.fontStyle;
+        videoValuesText.fontMaterial = runtimeMenuMat != null ? runtimeMenuMat : menuText.fontMaterial;
+
+        menuText.ForceMeshUpdate();
+        var ti = menuText.textInfo;
+        if (ti == null || ti.lineCount <= 0)
+            return;
+
+        var root = GetUiRootForGeneratedText();
+        if (root == null)
+            return;
+
+        var li0 = ti.lineInfo[0];
+        float yTopMenuLocal = li0.ascender;
+
+        Vector3 world = menuText.rectTransform.TransformPoint(new Vector3(0f, yTopMenuLocal, 0f));
+        Vector3 rootLocal = root.InverseTransformPoint(world);
+
+        float x = -Mathf.Round(ScaledFloat(videoValuesRightPadding));
+        float y = Mathf.Round(rootLocal.y);
+
+        videoValuesRect.anchoredPosition = new Vector2(x, y);
+
+        if (!videoValuesText.gameObject.activeSelf)
+            videoValuesText.gameObject.SetActive(true);
+    }
+
     public void ForceHide()
     {
         Running = false;
@@ -714,6 +810,9 @@ public class TitleScreenController : MonoBehaviour
 
         if (bossRushLockedText != null)
             bossRushLockedText.gameObject.SetActive(false);
+
+        if (videoValuesText != null)
+            videoValuesText.gameObject.SetActive(false);
     }
 
     void ApplyTitleVisualNow()
@@ -757,6 +856,7 @@ public class TitleScreenController : MonoBehaviour
         EnsurePushStartText();
         EnsureFooterText();
         EnsureBossRushLockedText();
+        EnsureVideoValuesText();
 
         if (cursorRenderer != null)
         {
@@ -1147,6 +1247,9 @@ public class TitleScreenController : MonoBehaviour
         if (bossRushLockedText != null)
             bossRushLockedText.gameObject.SetActive(false);
 
+        if (videoValuesText != null)
+            videoValuesText.gameObject.SetActive(false);
+
         StopPushStartBlink();
         HideBossRushLockedMessageImmediate();
         Running = false;
@@ -1189,14 +1292,9 @@ public class TitleScreenController : MonoBehaviour
 
             string bossRush;
             if (bossRushUnlocked)
-            {
                 bossRush = $"<color=#{baseRgb}FF>BOSS RUSH</color>";
-            }
             else
-            {
-                string c = ColorWithAlpha(baseRgb, bossRushLockedAlpha);
-                bossRush = $"<color={c}>BOSS RUSH</color>";
-            }
+                bossRush = $"<color={ColorWithAlpha(baseRgb, bossRushLockedAlpha)}>BOSS RUSH</color>";
 
             string controls = $"<color=#{baseRgb}FF>CONTROLS</color>";
             string video = $"<color=#{baseRgb}FF>VIDEO</color>";
@@ -1210,6 +1308,8 @@ public class TitleScreenController : MonoBehaviour
                 $"<size={size}>{video}</size>\n" +
                 $"<size={size}>{exit}</size>" +
                 "</align>";
+
+            if (videoValuesText != null) videoValuesText.gameObject.SetActive(false);
 
             UpdateCursorPosition();
             UpdatePushStartPosition();
@@ -1233,6 +1333,8 @@ public class TitleScreenController : MonoBehaviour
                 $"<size={size}>{p4}</size>" +
                 "</align>";
 
+            if (videoValuesText != null) videoValuesText.gameObject.SetActive(false);
+
             UpdateCursorPosition();
             UpdatePushStartPosition();
             UpdateFooterPosition();
@@ -1240,20 +1342,26 @@ public class TitleScreenController : MonoBehaviour
             return;
         }
 
-        string fs = _videoFullscreen ? "ON" : "OFF";
-        string ws = $"{Mathf.Max(1, _videoWindowMult)}x";
-        int pos = Mathf.Clamp(Mathf.RoundToInt(videoValuePosPercent), 55, 95);
-
         menuText.text =
             "<align=left>" +
-            $"<size={size}>FULLSCREEN</size> <pos={pos}%><size={size}>{fs}</size></pos>\n" +
-            $"<size={size}>WINDOW SIZE</size> <pos={pos}%><size={size}>{ws}</size></pos>" +
+            $"<size={size}>FULLSCREEN</size>\n" +
+            $"<size={size}>WINDOW SIZE</size>" +
             "</align>";
+
+        EnsureVideoValuesText();
+
+        if (videoValuesText != null)
+        {
+            string fs = _videoFullscreen ? "ON" : "OFF";
+            string ws = $"{Mathf.Max(1, _videoWindowMult)}x";
+            videoValuesText.text = $"{fs}\n{ws}";
+        }
 
         UpdateCursorPosition();
         UpdatePushStartPosition();
         UpdateFooterPosition();
         UpdateBossRushLockedPosition();
+        UpdateVideoValuesPosition();
     }
 
     void StartPushStartBlink()
@@ -1496,6 +1604,9 @@ public class TitleScreenController : MonoBehaviour
 
         if (bossRushLockedText != null)
             bossRushLockedText.gameObject.SetActive(false);
+
+        if (videoValuesText != null)
+            videoValuesText.gameObject.SetActive(false);
     }
 
     void RestoreTitleScreenAfterControls()
