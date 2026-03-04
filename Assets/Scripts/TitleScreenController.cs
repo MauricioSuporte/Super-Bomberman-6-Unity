@@ -17,6 +17,10 @@ public class TitleScreenController : MonoBehaviour
     [SerializeField] AudioClip backOptionSfx;
     [SerializeField, Range(0f, 1f)] float backOptionVolume = 1f;
 
+    [Header("Denied SFX")]
+    [SerializeField] AudioClip deniedOptionSfx;
+    [SerializeField, Range(0f, 1f)] float deniedOptionVolume = 1f;
+
     [Header("UI / Title")]
     public RawImage titleScreenRawImage;
 
@@ -1232,8 +1236,12 @@ public class TitleScreenController : MonoBehaviour
         if (GameMusicController.Instance == null)
             return;
 
-        if (backOptionSfx != null) GameMusicController.Instance.PlaySfx(backOptionSfx, backOptionVolume);
-        else if (selectOptionSfx != null) GameMusicController.Instance.PlaySfx(selectOptionSfx, selectOptionVolume);
+        if (deniedOptionSfx != null)
+            GameMusicController.Instance.PlaySfx(deniedOptionSfx, deniedOptionVolume);
+        else if (backOptionSfx != null)
+            GameMusicController.Instance.PlaySfx(backOptionSfx, backOptionVolume);
+        else if (selectOptionSfx != null)
+            GameMusicController.Instance.PlaySfx(selectOptionSfx, selectOptionVolume);
     }
 
     int Wrap(int v, int count)

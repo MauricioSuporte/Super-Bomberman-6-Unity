@@ -1711,14 +1711,16 @@ MonoBehaviour:
   selectOptionVolume: 1
   backOptionSfx: {fileID: 8300000, guid: 30ca55f720379e64ab9b908db035db4c, type: 3}
   backOptionVolume: 1
+  deniedOptionSfx: {fileID: 8300000, guid: 2f98cb783cdc9bb4d8ff3b868291f743, type: 3}
+  deniedOptionVolume: 1
   titleScreenRawImage: {fileID: 362350263}
   titleScreenSprite: {fileID: 21300000, guid: 7405f44018067d94aaa2264833063c44, type: 3}
   menuText: {fileID: 1287610048}
-  menuAnchoredPos: {x: -50, y: 60}
+  menuAnchoredPos: {x: -91.2, y: 60}
   menuFontSize: 46
   menuExtraYOffset: -180
   pushStartExtraYOffset: 0
-  forceMenuCenterX: 1
+  forceMenuCenterX: 0
   dynamicScale: 1
   referenceWidth: 256
   referenceHeight: 224
