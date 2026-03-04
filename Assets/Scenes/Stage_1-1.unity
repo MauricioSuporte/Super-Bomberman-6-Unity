@@ -1741,6 +1741,11 @@ MonoBehaviour:
   underlaySoftness: 0.2
   underlayOffsetX: 0
   underlayOffsetY: -0.2
+  allowVideoMenu: 1
+  defaultFullscreen: 1
+  defaultWindowSizeMultiplier: 4
+  windowSizeMultipliers: 02000000030000000400000005000000060000000700000008000000
+  videoValuePosPercent: 55
   titleMusic: {fileID: 8300000, guid: c4def1af64d2e154f8c8cbd7a0472a10, type: 3}
   titleMusicVolume: 1
   exitDelayRealtime: 1
@@ -1768,6 +1773,7 @@ MonoBehaviour:
   bossRushLockedBottomMargin: 30
   bossRushLockedShowSeconds: 2
   controlsMenu: {fileID: 1789443840}
+  enableVideoSurgicalLogs: 1
 --- !u!114 &362350265
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2086,8 +2092,6 @@ MonoBehaviour:
   baseRectWidthAtDesign: 600
   baseRectHeightAtDesign: 200
   autoResizeRectTransform: 1
-  enableSurgicalLogs: 1
-  logInterval: 0.5
 --- !u!114 &556523583
 MonoBehaviour:
   m_ObjectHideFlags: 0

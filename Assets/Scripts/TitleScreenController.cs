@@ -79,6 +79,15 @@ public class TitleScreenController : MonoBehaviour
     [SerializeField, Range(-2f, 2f)] float underlayOffsetX = 0.35f;
     [SerializeField, Range(-2f, 2f)] float underlayOffsetY = -0.35f;
 
+    [Header("Video Settings")]
+    [SerializeField] bool allowVideoMenu = true;
+    [SerializeField] bool defaultFullscreen = true;
+    [SerializeField] int defaultWindowSizeMultiplier = 4;
+    [SerializeField] int[] windowSizeMultipliers = new int[] { 2, 3, 4, 5, 6, 7, 8 };
+
+    [Header("Video Menu Layout")]
+    [SerializeField, Range(55f, 95f)] float videoValuePosPercent = 90f;
+
     [Header("Audio")]
     public AudioClip titleMusic;
     [Range(0f, 1f)] public float titleMusicVolume = 1f;
@@ -135,7 +144,8 @@ public class TitleScreenController : MonoBehaviour
     enum MenuMode
     {
         Main = 0,
-        PlayerCount = 1
+        PlayerCount = 1,
+        Video = 2
     }
 
     MenuMode menuMode = MenuMode.Main;
@@ -145,6 +155,9 @@ public class TitleScreenController : MonoBehaviour
     const int MAIN_IDX_CONTROLS = 2;
     const int MAIN_IDX_VIDEO = 3;
     const int MAIN_IDX_EXIT = 4;
+
+    const int VIDEO_IDX_FULLSCREEN = 0;
+    const int VIDEO_IDX_WINDOWSIZE = 1;
 
     int menuIndex;
     bool locked;
@@ -170,6 +183,12 @@ public class TitleScreenController : MonoBehaviour
 
     Vector3 _cursorBaseLocalScale = Vector3.one;
     bool _cursorBaseScaleCaptured;
+
+    bool _videoFullscreen;
+    int _videoWindowMult;
+
+    const string PREF_FULLSCREEN = "ts_video_fullscreen";
+    const string PREF_WINMULT = "ts_video_window_mult";
 
     float UiScale
     {
@@ -246,6 +265,9 @@ public class TitleScreenController : MonoBehaviour
             _cursorBaseScaleCaptured = true;
         }
 
+        LoadVideoPrefs();
+        ApplyVideoSettingsImmediate();
+
         EnsurePushStartText();
         EnsureFooterText();
         EnsureBossRushLockedText();
@@ -270,6 +292,95 @@ public class TitleScreenController : MonoBehaviour
     {
         if (runtimeMenuMat != null)
             Destroy(runtimeMenuMat);
+    }
+
+    void LoadVideoPrefs()
+    {
+        _videoFullscreen = PlayerPrefs.GetInt(PREF_FULLSCREEN, defaultFullscreen ? 1 : 0) == 1;
+
+        int fallback = defaultWindowSizeMultiplier;
+        if (windowSizeMultipliers != null && windowSizeMultipliers.Length > 0)
+            fallback = windowSizeMultipliers[Mathf.Clamp(IndexOf(windowSizeMultipliers, defaultWindowSizeMultiplier), 0, windowSizeMultipliers.Length - 1)];
+
+        _videoWindowMult = PlayerPrefs.GetInt(PREF_WINMULT, fallback);
+
+        if (windowSizeMultipliers != null && windowSizeMultipliers.Length > 0)
+        {
+            int idx = IndexOf(windowSizeMultipliers, _videoWindowMult);
+            if (idx < 0) _videoWindowMult = windowSizeMultipliers[Mathf.Clamp(0, 0, windowSizeMultipliers.Length - 1)];
+        }
+        else
+        {
+            _videoWindowMult = Mathf.Max(1, _videoWindowMult);
+        }
+
+        if (_videoFullscreen)
+            _videoWindowMult = GetBestWindowMultiplierForCurrentMonitor();
+    }
+
+    void SaveVideoPrefs()
+    {
+        PlayerPrefs.SetInt(PREF_FULLSCREEN, _videoFullscreen ? 1 : 0);
+        PlayerPrefs.SetInt(PREF_WINMULT, _videoWindowMult);
+        PlayerPrefs.Save();
+    }
+
+    int GetBestWindowMultiplierForCurrentMonitor()
+    {
+        int rw = Mathf.Max(1, referenceWidth);
+        int rh = Mathf.Max(1, referenceHeight);
+
+        var res = Screen.currentResolution;
+        float sx = res.width / (float)rw;
+        float sy = res.height / (float)rh;
+
+        int target = Mathf.Max(1, Mathf.RoundToInt(Mathf.Min(sx, sy)));
+
+        if (windowSizeMultipliers == null || windowSizeMultipliers.Length == 0)
+            return target;
+
+        int best = windowSizeMultipliers[0];
+        int bestDist = Mathf.Abs(best - target);
+
+        for (int i = 1; i < windowSizeMultipliers.Length; i++)
+        {
+            int m = windowSizeMultipliers[i];
+            int d = Mathf.Abs(m - target);
+            if (d < bestDist)
+            {
+                bestDist = d;
+                best = m;
+            }
+        }
+
+        return Mathf.Max(1, best);
+    }
+
+    void ApplyVideoSettingsImmediate()
+    {
+        if (!allowVideoMenu) return;
+
+        if (_videoFullscreen)
+        {
+            Screen.fullScreenMode = FullScreenMode.FullScreenWindow;
+            Screen.fullScreen = true;
+        }
+        else
+        {
+            int mult = Mathf.Max(1, _videoWindowMult);
+            int w = Mathf.Max(64, referenceWidth * mult);
+            int h = Mathf.Max(64, referenceHeight * mult);
+            Screen.SetResolution(w, h, FullScreenMode.Windowed);
+            Screen.fullScreen = false;
+        }
+    }
+
+    static int IndexOf(int[] arr, int value)
+    {
+        if (arr == null) return -1;
+        for (int i = 0; i < arr.Length; i++)
+            if (arr[i] == value) return i;
+        return -1;
     }
 
     void ApplyDynamicLayoutIfNeeded(bool force)
@@ -768,17 +879,91 @@ public class TitleScreenController : MonoBehaviour
                 RefreshMenuText();
             }
 
-            if (menuMode == MenuMode.PlayerCount && TryGetAnyPlayerDown(PlayerAction.ActionB, out _))
+            if ((menuMode == MenuMode.PlayerCount || menuMode == MenuMode.Video) && TryGetAnyPlayerDown(PlayerAction.ActionB, out _))
             {
                 PlayBackSfx();
+
                 menuMode = MenuMode.Main;
                 menuIndex = 0;
+
                 HideFooterMessageImmediate();
                 HideBossRushLockedMessageImmediate();
                 RefreshMenuText();
 
                 while (AnyPlayerHeld(PlayerAction.ActionB))
                     yield return null;
+
+                yield return null;
+                continue;
+            }
+
+            if (menuMode == MenuMode.Video)
+            {
+                bool left = TryGetAnyPlayerDown(PlayerAction.MoveLeft, out _);
+                bool right = TryGetAnyPlayerDown(PlayerAction.MoveRight, out _);
+                bool confirm = TryGetAnyPlayerDownEither(PlayerAction.Start, PlayerAction.ActionA, out _);
+
+                if (left || right || confirm)
+                {
+                    bool changed = false;
+
+                    if (menuIndex == VIDEO_IDX_FULLSCREEN)
+                    {
+                        _videoFullscreen = !_videoFullscreen;
+
+                        if (_videoFullscreen)
+                        {
+                            int best = GetBestWindowMultiplierForCurrentMonitor();
+                            _videoWindowMult = best;
+                        }
+
+                        changed = true;
+                    }
+                    else if (menuIndex == VIDEO_IDX_WINDOWSIZE)
+                    {
+                        if (!_videoFullscreen)
+                        {
+                            int idx = IndexOf(windowSizeMultipliers, _videoWindowMult);
+                            if (idx < 0) idx = 0;
+
+                            if (left) idx--;
+                            else idx++;
+
+                            idx = Wrap(idx, windowSizeMultipliers.Length);
+                            _videoWindowMult = windowSizeMultipliers[idx];
+
+                            changed = true;
+                        }
+                        else
+                        {
+                            PlayDeniedSfx();
+                        }
+                    }
+
+                    if (changed)
+                    {
+                        PlaySelectSfx();
+                        SaveVideoPrefs();
+                        ApplyVideoSettingsImmediate();
+                        RefreshMenuText();
+
+                        while (AnyPlayerHeld(PlayerAction.Start) || AnyPlayerHeld(PlayerAction.ActionA) ||
+                               AnyPlayerHeld(PlayerAction.MoveLeft) || AnyPlayerHeld(PlayerAction.MoveRight))
+                            yield return null;
+
+                        yield return null;
+                        continue;
+                    }
+
+                    if (confirm && menuIndex == VIDEO_IDX_WINDOWSIZE && _videoFullscreen)
+                    {
+                        while (AnyPlayerHeld(PlayerAction.Start) || AnyPlayerHeld(PlayerAction.ActionA))
+                            yield return null;
+
+                        yield return null;
+                        continue;
+                    }
+                }
 
                 yield return null;
                 continue;
@@ -868,8 +1053,25 @@ public class TitleScreenController : MonoBehaviour
                     if (menuIndex == MAIN_IDX_VIDEO)
                     {
                         locked = false;
+
+                        if (allowVideoMenu)
+                        {
+                            menuMode = MenuMode.Video;
+                            menuIndex = 0;
+                            HideFooterMessageImmediate();
+                            HideBossRushLockedMessageImmediate();
+                            RefreshMenuText();
+
+                            while (AnyPlayerHeld(PlayerAction.Start) || AnyPlayerHeld(PlayerAction.ActionA))
+                                yield return null;
+
+                            yield return null;
+                            continue;
+                        }
+
                         while (AnyPlayerHeld(PlayerAction.Start) || AnyPlayerHeld(PlayerAction.ActionA))
                             yield return null;
+
                         yield return null;
                         continue;
                     }
@@ -907,6 +1109,9 @@ public class TitleScreenController : MonoBehaviour
     {
         if (menuMode == MenuMode.PlayerCount)
             return 4;
+
+        if (menuMode == MenuMode.Video)
+            return 2;
 
         return 5;
     }
@@ -1013,17 +1218,36 @@ public class TitleScreenController : MonoBehaviour
             return;
         }
 
-        string p1 = $"<color=#{baseRgb}FF>1 PLAYER</color>";
-        string p2 = $"<color=#{baseRgb}FF>2 PLAYERS</color>";
-        string p3 = $"<color=#{baseRgb}FF>3 PLAYERS</color>";
-        string p4 = $"<color=#{baseRgb}FF>4 PLAYERS</color>";
+        if (menuMode == MenuMode.PlayerCount)
+        {
+            string p1 = $"<color=#{baseRgb}FF>1 PLAYER</color>";
+            string p2 = $"<color=#{baseRgb}FF>2 PLAYERS</color>";
+            string p3 = $"<color=#{baseRgb}FF>3 PLAYERS</color>";
+            string p4 = $"<color=#{baseRgb}FF>4 PLAYERS</color>";
+
+            menuText.text =
+                "<align=left>" +
+                $"<size={size}>{p1}</size>\n" +
+                $"<size={size}>{p2}</size>\n" +
+                $"<size={size}>{p3}</size>\n" +
+                $"<size={size}>{p4}</size>" +
+                "</align>";
+
+            UpdateCursorPosition();
+            UpdatePushStartPosition();
+            UpdateFooterPosition();
+            UpdateBossRushLockedPosition();
+            return;
+        }
+
+        string fs = _videoFullscreen ? "ON" : "OFF";
+        string ws = $"{Mathf.Max(1, _videoWindowMult)}x";
+        int pos = Mathf.Clamp(Mathf.RoundToInt(videoValuePosPercent), 55, 95);
 
         menuText.text =
             "<align=left>" +
-            $"<size={size}>{p1}</size>\n" +
-            $"<size={size}>{p2}</size>\n" +
-            $"<size={size}>{p3}</size>\n" +
-            $"<size={size}>{p4}</size>" +
+            $"<size={size}>FULLSCREEN</size> <pos={pos}%><size={size}>{fs}</size></pos>\n" +
+            $"<size={size}>WINDOW SIZE</size> <pos={pos}%><size={size}>{ws}</size></pos>" +
             "</align>";
 
         UpdateCursorPosition();
@@ -1131,44 +1355,6 @@ public class TitleScreenController : MonoBehaviour
         footerRect.localPosition = new Vector3(centerX, y, 0f);
     }
 
-    void ShowFooterMessage(string msg, string hex, float seconds)
-    {
-        EnsureFooterText();
-        if (footerText == null) return;
-
-        if (footerRoutine != null)
-        {
-            StopCoroutine(footerRoutine);
-            footerRoutine = null;
-        }
-
-        footerText.fontSize = FooterFontSizeScaled;
-        footerText.text = $"<color={hex}>{msg}</color>";
-        footerText.gameObject.SetActive(true);
-        UpdateFooterPosition();
-
-        footerRoutine = StartCoroutine(FooterRoutine(seconds));
-    }
-
-    IEnumerator FooterRoutine(float seconds)
-    {
-        float t = Mathf.Max(0.05f, seconds);
-        yield return new WaitForSecondsRealtime(t);
-        HideFooterMessageImmediate();
-    }
-
-    void HideFooterMessageImmediate()
-    {
-        if (footerRoutine != null)
-        {
-            StopCoroutine(footerRoutine);
-            footerRoutine = null;
-        }
-
-        if (footerText != null)
-            footerText.gameObject.SetActive(false);
-    }
-
     void ShowBossRushLockedMessage(string msg, string hex, float seconds)
     {
         EnsureBossRushLockedText();
@@ -1195,16 +1381,16 @@ public class TitleScreenController : MonoBehaviour
         HideBossRushLockedMessageImmediate();
     }
 
-    void HideBossRushLockedMessageImmediate()
+    void HideFooterMessageImmediate()
     {
-        if (bossRushLockedRoutine != null)
+        if (footerRoutine != null)
         {
-            StopCoroutine(bossRushLockedRoutine);
-            bossRushLockedRoutine = null;
+            StopCoroutine(footerRoutine);
+            footerRoutine = null;
         }
 
-        if (bossRushLockedText != null)
-            bossRushLockedText.gameObject.SetActive(false);
+        if (footerText != null)
+            footerText.gameObject.SetActive(false);
     }
 
     void PlayMoveSfx()
@@ -1273,6 +1459,18 @@ public class TitleScreenController : MonoBehaviour
 
         Vector3 localPos = new(x + offs.x, y + offs.y, 0f);
         cursorRenderer.SetExternalBaseLocalPosition(localPos);
+    }
+
+    void HideBossRushLockedMessageImmediate()
+    {
+        if (bossRushLockedRoutine != null)
+        {
+            StopCoroutine(bossRushLockedRoutine);
+            bossRushLockedRoutine = null;
+        }
+
+        if (bossRushLockedText != null)
+            bossRushLockedText.gameObject.SetActive(false);
     }
 
     void HideTitleScreenCompletely()
