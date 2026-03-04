@@ -186,56 +186,25 @@ public class TitleScreenController : MonoBehaviour
     int _lastBaseScaleInt = -999;
     float _lastUiScale = -999f;
 
+    float _currentUiScale = 1f;
+    int _currentBaseScaleInt = 1;
+
     Vector3 _cursorBaseLocalScale = Vector3.one;
     bool _cursorBaseScaleCaptured;
 
     bool _videoFullscreen;
+
     int _videoWindowMult;
+    int _videoWindowMultWindowed;
 
     const string PREF_FULLSCREEN = "ts_video_fullscreen";
     const string PREF_WINMULT = "ts_video_window_mult";
 
-    float UiScale
-    {
-        get
-        {
-            if (!dynamicScale)
-            {
-                if (menuText == null) return 1f;
-                var c = menuText.canvas;
-                if (c == null) return 1f;
-                return Mathf.Max(0.01f, c.scaleFactor);
-            }
+    Coroutine _postResolutionRefreshRoutine;
 
-            var cam = Camera.main;
-
-            float usedW = (cam != null) ? cam.pixelRect.width : Screen.width;
-            float usedH = (cam != null) ? cam.pixelRect.height : Screen.height;
-
-            float sx = usedW / Mathf.Max(1f, referenceWidth);
-            float sy = usedH / Mathf.Max(1f, referenceHeight);
-            float baseScaleRaw = Mathf.Min(sx, sy);
-
-            float baseScaleForUi = useIntegerUpscale ? Mathf.Round(baseScaleRaw) : baseScaleRaw;
-            if (baseScaleForUi < 1f) baseScaleForUi = 1f;
-
-            int baseScaleInt = Mathf.Max(1, Mathf.RoundToInt(baseScaleForUi));
-
-            float normalized = baseScaleInt / Mathf.Max(1f, designUpscale);
-
-            float ui = normalized * Mathf.Max(0.01f, extraScaleMultiplier);
-            ui = Mathf.Clamp(ui, minScale, maxScale);
-
-            _lastBaseScaleInt = baseScaleInt;
-            _lastUiScale = ui;
-
-            return ui;
-        }
-    }
-
-    int ScaledFont(int baseSize) => Mathf.Clamp(Mathf.RoundToInt(baseSize * UiScale), 10, 500);
-    float ScaledFloat(float baseValue) => baseValue * UiScale;
-    Vector2 ScaledVec(Vector2 v) => v * UiScale;
+    int ScaledFont(int baseSize) => Mathf.Clamp(Mathf.RoundToInt(baseSize * _currentUiScale), 10, 500);
+    float ScaledFloat(float baseValue) => baseValue * _currentUiScale;
+    Vector2 ScaledVec(Vector2 v) => v * _currentUiScale;
 
     int MenuFontSizeScaled => ScaledFont(menuFontSize);
     int PushStartFontSizeScaled => ScaledFont(pushStartFontSize);
@@ -286,12 +255,16 @@ public class TitleScreenController : MonoBehaviour
         _lastCamRect = default;
         _lastBaseScaleInt = -999;
         _lastUiScale = -999f;
-        ApplyDynamicLayoutIfNeeded(true);
+
+        _currentUiScale = 1f;
+        _currentBaseScaleInt = 1;
+
+        ApplyDynamicLayoutIfNeeded(true, "OnEnable");
     }
 
     void Update()
     {
-        ApplyDynamicLayoutIfNeeded(false);
+        ApplyDynamicLayoutIfNeeded(false, "Update");
     }
 
     void OnDestroy()
@@ -306,28 +279,34 @@ public class TitleScreenController : MonoBehaviour
 
         int fallback = defaultWindowSizeMultiplier;
         if (windowSizeMultipliers != null && windowSizeMultipliers.Length > 0)
-            fallback = windowSizeMultipliers[Mathf.Clamp(IndexOf(windowSizeMultipliers, defaultWindowSizeMultiplier), 0, windowSizeMultipliers.Length - 1)];
+        {
+            int fallbackIdx = IndexOf(windowSizeMultipliers, defaultWindowSizeMultiplier);
+            if (fallbackIdx < 0) fallbackIdx = 0;
+            fallback = windowSizeMultipliers[Mathf.Clamp(fallbackIdx, 0, windowSizeMultipliers.Length - 1)];
+        }
 
-        _videoWindowMult = PlayerPrefs.GetInt(PREF_WINMULT, fallback);
+        _videoWindowMultWindowed = PlayerPrefs.GetInt(PREF_WINMULT, fallback);
 
         if (windowSizeMultipliers != null && windowSizeMultipliers.Length > 0)
         {
-            int idx = IndexOf(windowSizeMultipliers, _videoWindowMult);
-            if (idx < 0) _videoWindowMult = windowSizeMultipliers[Mathf.Clamp(0, 0, windowSizeMultipliers.Length - 1)];
+            int idx = IndexOf(windowSizeMultipliers, _videoWindowMultWindowed);
+            if (idx < 0) _videoWindowMultWindowed = windowSizeMultipliers[0];
         }
         else
         {
-            _videoWindowMult = Mathf.Max(1, _videoWindowMult);
+            _videoWindowMultWindowed = Mathf.Max(1, _videoWindowMultWindowed);
         }
 
         if (_videoFullscreen)
             _videoWindowMult = GetBestWindowMultiplierForCurrentMonitor();
+        else
+            _videoWindowMult = _videoWindowMultWindowed;
     }
 
     void SaveVideoPrefs()
     {
         PlayerPrefs.SetInt(PREF_FULLSCREEN, _videoFullscreen ? 1 : 0);
-        PlayerPrefs.SetInt(PREF_WINMULT, _videoWindowMult);
+        PlayerPrefs.SetInt(PREF_WINMULT, Mathf.Max(1, _videoWindowMultWindowed));
         PlayerPrefs.Save();
     }
 
@@ -366,19 +345,98 @@ public class TitleScreenController : MonoBehaviour
     {
         if (!allowVideoMenu) return;
 
+        var curRes = Screen.currentResolution;
+
         if (_videoFullscreen)
         {
+            _videoWindowMult = GetBestWindowMultiplierForCurrentMonitor();
+
+            int w = Mathf.Max(64, curRes.width);
+            int h = Mathf.Max(64, curRes.height);
+
+            Screen.SetResolution(w, h, FullScreenMode.FullScreenWindow);
             Screen.fullScreenMode = FullScreenMode.FullScreenWindow;
             Screen.fullScreen = true;
         }
         else
         {
-            int mult = Mathf.Max(1, _videoWindowMult);
-            int w = Mathf.Max(64, referenceWidth * mult);
-            int h = Mathf.Max(64, referenceHeight * mult);
+            _videoWindowMult = Mathf.Max(1, _videoWindowMultWindowed);
+
+            int w = Mathf.Max(64, referenceWidth * _videoWindowMult);
+            int h = Mathf.Max(64, referenceHeight * _videoWindowMult);
+
             Screen.SetResolution(w, h, FullScreenMode.Windowed);
+            Screen.fullScreenMode = FullScreenMode.Windowed;
             Screen.fullScreen = false;
         }
+
+        ForceRecomputeLayoutAfterResolutionChange();
+        StartFullscreenWatchdogIfNeeded();
+    }
+
+    Coroutine _fullscreenWatchdog;
+
+    void StartFullscreenWatchdogIfNeeded()
+    {
+        if (_fullscreenWatchdog != null)
+            StopCoroutine(_fullscreenWatchdog);
+
+        _fullscreenWatchdog = StartCoroutine(FullscreenWatchdogRoutine());
+    }
+
+    IEnumerator FullscreenWatchdogRoutine()
+    {
+        for (int i = 0; i < 12; i++)
+        {
+            yield return null;
+
+            bool fsOk = Screen.fullScreen == _videoFullscreen;
+            bool modeOk = _videoFullscreen
+                ? Screen.fullScreenMode == FullScreenMode.FullScreenWindow
+                : Screen.fullScreenMode == FullScreenMode.Windowed;
+
+            if (fsOk && modeOk)
+            {
+                _fullscreenWatchdog = null;
+                yield break;
+            }
+
+            if (_videoFullscreen)
+            {
+                var r = Screen.currentResolution;
+                Screen.SetResolution(r.width, r.height, FullScreenMode.FullScreenWindow);
+                Screen.fullScreenMode = FullScreenMode.FullScreenWindow;
+                Screen.fullScreen = true;
+            }
+        }
+
+        _fullscreenWatchdog = null;
+    }
+
+    void ForceRecomputeLayoutAfterResolutionChange()
+    {
+        _lastCamRect = default;
+        _lastBaseScaleInt = -999;
+        _lastUiScale = -999f;
+
+        if (_postResolutionRefreshRoutine != null)
+            StopCoroutine(_postResolutionRefreshRoutine);
+
+        _postResolutionRefreshRoutine = StartCoroutine(PostResolutionRefreshRoutine());
+    }
+
+    IEnumerator PostResolutionRefreshRoutine()
+    {
+        yield return null;
+        ApplyDynamicLayoutIfNeeded(true, "PostResChange:f1");
+
+        yield return null;
+        ApplyDynamicLayoutIfNeeded(true, "PostResChange:f2");
+
+        yield return new WaitForSecondsRealtime(0.05f);
+        ApplyDynamicLayoutIfNeeded(true, "PostResChange:0.05s");
+
+        _postResolutionRefreshRoutine = null;
     }
 
     static int IndexOf(int[] arr, int value)
@@ -389,20 +447,70 @@ public class TitleScreenController : MonoBehaviour
         return -1;
     }
 
-    void ApplyDynamicLayoutIfNeeded(bool force)
+    float ComputeUiScaleForSize(float usedW, float usedH, out int baseScaleInt, out float baseScaleRawOut)
+    {
+        baseScaleInt = 1;
+        baseScaleRawOut = 1f;
+
+        if (!dynamicScale)
+        {
+            if (menuText == null) return 1f;
+            var c = menuText.canvas;
+            if (c == null) return 1f;
+            return Mathf.Max(0.01f, c.scaleFactor);
+        }
+
+        float sx = usedW / Mathf.Max(1f, referenceWidth);
+        float sy = usedH / Mathf.Max(1f, referenceHeight);
+        float baseScaleRaw = Mathf.Min(sx, sy);
+        baseScaleRawOut = baseScaleRaw;
+
+        float baseScaleForUi = useIntegerUpscale ? Mathf.Round(baseScaleRaw) : baseScaleRaw;
+        if (baseScaleForUi < 1f) baseScaleForUi = 1f;
+
+        baseScaleInt = Mathf.Max(1, Mathf.RoundToInt(baseScaleForUi));
+
+        float normalized = baseScaleInt / Mathf.Max(1f, designUpscale);
+
+        float ui = normalized * Mathf.Max(0.01f, extraScaleMultiplier);
+        ui = Mathf.Clamp(ui, minScale, maxScale);
+
+        return ui;
+    }
+
+    void ApplyDynamicLayoutIfNeeded(bool force, string where)
     {
         var cam = Camera.main;
-        Rect r = cam != null ? cam.pixelRect : new Rect(0, 0, Screen.width, Screen.height);
+        Rect camRect = cam != null ? cam.pixelRect : new Rect(0, 0, Screen.width, Screen.height);
 
-        float ui = UiScale;
+        float usedW = Screen.width;
+        float usedH = Screen.height;
 
-        bool rectChanged = r != _lastCamRect;
-        bool scaleChanged = Mathf.Abs(ui - _lastUiScale) > 0.0001f;
+        if (_videoFullscreen)
+        {
+            var res = Screen.currentResolution;
+            if (res.width > 0 && res.height > 0)
+            {
+                usedW = res.width;
+                usedH = res.height;
+            }
+        }
 
-        _lastCamRect = r;
+        float ui = ComputeUiScaleForSize(usedW, usedH, out int baseScaleInt, out float baseScaleRaw);
+
+        bool rectChanged = camRect != _lastCamRect;
+        bool scaleChanged = Mathf.Abs(ui - _lastUiScale) > 0.0001f || baseScaleInt != _lastBaseScaleInt;
 
         if (!force && !rectChanged && !scaleChanged)
             return;
+
+        _currentUiScale = ui;
+        _currentBaseScaleInt = baseScaleInt;
+
+        _lastCamRect = camRect;
+        _lastUiScale = ui;
+        _lastBaseScaleInt = baseScaleInt;
+
 
         ApplyMenuAnchoredPosition();
         ApplyCursorScale();
@@ -431,7 +539,7 @@ public class TitleScreenController : MonoBehaviour
             _cursorBaseScaleCaptured = true;
         }
 
-        float s = UiScale;
+        float s = _currentUiScale;
         var baseScale = _cursorBaseLocalScale;
         cursorRenderer.transform.localScale = new Vector3(baseScale.x * s, baseScale.y * s, baseScale.z);
     }
@@ -864,7 +972,7 @@ public class TitleScreenController : MonoBehaviour
             cursorRenderer.RefreshFrame();
         }
 
-        ApplyDynamicLayoutIfNeeded(true);
+        ApplyDynamicLayoutIfNeeded(true, "ShowTitleScreenNow");
     }
 
     bool TryGetAnyPlayerDown(PlayerAction action, out int pid)
@@ -1012,10 +1120,9 @@ public class TitleScreenController : MonoBehaviour
                         _videoFullscreen = !_videoFullscreen;
 
                         if (_videoFullscreen)
-                        {
-                            int best = GetBestWindowMultiplierForCurrentMonitor();
-                            _videoWindowMult = best;
-                        }
+                            _videoWindowMult = GetBestWindowMultiplierForCurrentMonitor();
+                        else
+                            _videoWindowMult = Mathf.Max(1, _videoWindowMultWindowed);
 
                         changed = true;
                     }
@@ -1023,14 +1130,16 @@ public class TitleScreenController : MonoBehaviour
                     {
                         if (!_videoFullscreen)
                         {
-                            int idx = IndexOf(windowSizeMultipliers, _videoWindowMult);
+                            int idx = IndexOf(windowSizeMultipliers, _videoWindowMultWindowed);
                             if (idx < 0) idx = 0;
 
                             if (left) idx--;
                             else idx++;
 
                             idx = Wrap(idx, windowSizeMultipliers.Length);
-                            _videoWindowMult = windowSizeMultipliers[idx];
+
+                            _videoWindowMultWindowed = windowSizeMultipliers[idx];
+                            _videoWindowMult = _videoWindowMultWindowed;
 
                             changed = true;
                         }
@@ -1341,6 +1450,11 @@ public class TitleScreenController : MonoBehaviour
             UpdateBossRushLockedPosition();
             return;
         }
+
+        if (_videoFullscreen)
+            _videoWindowMult = GetBestWindowMultiplierForCurrentMonitor();
+        else
+            _videoWindowMult = Mathf.Max(1, _videoWindowMultWindowed);
 
         menuText.text =
             "<align=left>" +
