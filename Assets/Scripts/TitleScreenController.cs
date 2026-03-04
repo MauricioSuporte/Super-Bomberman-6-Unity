@@ -27,8 +27,15 @@ public class TitleScreenController : MonoBehaviour
     public TMP_Text menuText;
 
     [Header("Menu Layout (BASE @ designUpscale)")]
-    [SerializeField] Vector2 menuAnchoredPos = new(-70f, 75f);
+    [SerializeField] Vector2 menuAnchoredPos = new(-70f, 55f);
     [SerializeField] int menuFontSize = 46;
+
+    [Header("Extra Offsets (BASE @ designUpscale)")]
+    [SerializeField] float menuExtraYOffset = -10f;
+    [SerializeField] float pushStartExtraYOffset = -8f;
+
+    [Header("Menu Centering")]
+    [SerializeField] bool forceMenuCenterX = true;
 
     [Header("Dynamic Scale (Pixel Perfect friendly)")]
     [SerializeField] bool dynamicScale = true;
@@ -94,6 +101,22 @@ public class TitleScreenController : MonoBehaviour
     [SerializeField] float pushStartBlinkInterval = 1f;
     [SerializeField] float pushStartYOffset = 18f;
 
+    [Header("Footer Message (TMP)")]
+    [SerializeField] TextMeshProUGUI footerText;
+    [SerializeField] int footerFontSize = 36;
+    [SerializeField] float footerOffsetFromLastLineY = -40f;
+    [SerializeField] float footerShowSeconds = 2.0f;
+
+    [Header("Boss Rush Lock (separate bottom message)")]
+    [SerializeField] bool bossRushUnlocked = false;
+    [SerializeField, Range(0.05f, 1f)] float bossRushLockedAlpha = 0.35f;
+    [SerializeField] string bossRushLockedMessage = "Unlocked after completing Normal Game";
+    [SerializeField] string bossRushLockedMessageHex = "#FF3B30";
+    [SerializeField] TextMeshProUGUI bossRushLockedText;
+    [SerializeField] int bossRushLockedFontSize = 34;
+    [SerializeField] float bossRushLockedBottomMargin = 8f;
+    [SerializeField] float bossRushLockedShowSeconds = 2.0f;
+
     [Header("Controls Menu")]
     [SerializeField] ControlsConfigMenu controlsMenu;
 
@@ -113,6 +136,12 @@ public class TitleScreenController : MonoBehaviour
 
     MenuMode menuMode = MenuMode.Main;
 
+    const int MAIN_IDX_NORMAL = 0;
+    const int MAIN_IDX_BOSS_RUSH = 1;
+    const int MAIN_IDX_CONTROLS = 2;
+    const int MAIN_IDX_VIDEO = 3;
+    const int MAIN_IDX_EXIT = 4;
+
     int menuIndex;
     bool locked;
     bool ignoreStartKeyUntilRelease;
@@ -124,6 +153,12 @@ public class TitleScreenController : MonoBehaviour
     Coroutine pushStartRoutine;
     bool pushStartVisible = true;
     RectTransform pushStartRect;
+
+    Coroutine footerRoutine;
+    RectTransform footerRect;
+
+    Coroutine bossRushLockedRoutine;
+    RectTransform bossRushLockedRect;
 
     Rect _lastCamRect;
     int _lastBaseScaleInt = -999;
@@ -179,6 +214,14 @@ public class TitleScreenController : MonoBehaviour
     float PushStartYOffsetScaled => ScaledFloat(pushStartYOffset);
     Vector2 MenuAnchoredPosScaled => ScaledVec(menuAnchoredPos);
     Vector2 CursorOffsetScaled => ScaledVec(cursorOffset);
+    int FooterFontSizeScaled => ScaledFont(footerFontSize);
+    float FooterOffsetFromLastLineYScaled => ScaledFloat(footerOffsetFromLastLineY);
+
+    int BossRushLockedFontSizeScaled => ScaledFont(bossRushLockedFontSize);
+    float BossRushLockedBottomMarginScaled => ScaledFloat(bossRushLockedBottomMargin);
+
+    float MenuExtraYOffsetScaled => ScaledFloat(menuExtraYOffset);
+    float PushStartExtraYOffsetScaled => ScaledFloat(pushStartExtraYOffset);
 
     void Awake()
     {
@@ -200,6 +243,9 @@ public class TitleScreenController : MonoBehaviour
         }
 
         EnsurePushStartText();
+        EnsureFooterText();
+        EnsureBossRushLockedText();
+
         ForceHide();
     }
 
@@ -239,11 +285,16 @@ public class TitleScreenController : MonoBehaviour
 
         ApplyMenuAnchoredPosition();
         ApplyCursorScale();
+
         EnsurePushStartText();
+        EnsureFooterText();
+        EnsureBossRushLockedText();
 
         RefreshMenuText();
         UpdateCursorPosition();
         UpdatePushStartPosition();
+        UpdateFooterPosition();
+        UpdateBossRushLockedPosition();
     }
 
     void ApplyCursorScale()
@@ -281,12 +332,15 @@ public class TitleScreenController : MonoBehaviour
         if (menuText == null)
             return;
 
+        menuText.richText = true;
         menuText.textWrappingMode = TextWrappingModes.NoWrap;
         menuText.overflowMode = TextOverflowModes.Overflow;
         menuText.extraPadding = true;
 
         if (forceBold)
             menuText.fontStyle |= FontStyles.Bold;
+
+        menuText.alignment = TextAlignmentOptions.Center;
 
         ApplyMenuAnchoredPosition();
 
@@ -334,6 +388,12 @@ public class TitleScreenController : MonoBehaviour
 
         if (pushStartText != null)
             pushStartText.fontMaterial = runtimeMenuMat;
+
+        if (footerText != null)
+            footerText.fontMaterial = runtimeMenuMat;
+
+        if (bossRushLockedText != null)
+            bossRushLockedText.fontMaterial = runtimeMenuMat;
     }
 
     void ApplyMenuAnchoredPosition()
@@ -344,7 +404,13 @@ public class TitleScreenController : MonoBehaviour
         if (menuRect == null)
             return;
 
-        menuRect.anchoredPosition = MenuAnchoredPosScaled;
+        Vector2 pos = MenuAnchoredPosScaled;
+        if (forceMenuCenterX)
+            pos.x = 0f;
+
+        pos.y += MenuExtraYOffsetScaled;
+
+        menuRect.anchoredPosition = pos;
     }
 
     static void TrySetFloat(Material m, string prop, float value)
@@ -359,6 +425,16 @@ public class TitleScreenController : MonoBehaviour
             m.SetColor(prop, value);
     }
 
+    RectTransform GetUiRootForGeneratedText()
+    {
+        if (menuText == null) return null;
+
+        var parent = menuText.transform.parent as RectTransform;
+        if (parent != null) return parent;
+
+        return menuText.rectTransform;
+    }
+
     void EnsurePushStartText()
     {
         if (menuText == null)
@@ -367,7 +443,9 @@ public class TitleScreenController : MonoBehaviour
         if (pushStartText == null)
         {
             var go = new GameObject("PushStartText", typeof(RectTransform));
-            go.transform.SetParent(menuText.transform, false);
+            var root = GetUiRootForGeneratedText();
+            if (root != null) go.transform.SetParent(root, false);
+            else go.transform.SetParent(menuText.transform, false);
 
             pushStartText = go.AddComponent<TextMeshProUGUI>();
             pushStartText.raycastTarget = false;
@@ -375,6 +453,16 @@ public class TitleScreenController : MonoBehaviour
 
         pushStartRect = pushStartText.rectTransform;
 
+        if (pushStartRect != null)
+        {
+            pushStartRect.anchorMin = new Vector2(0f, 0.5f);
+            pushStartRect.anchorMax = new Vector2(1f, 0.5f);
+            pushStartRect.pivot = new Vector2(0.5f, 0.5f);
+            pushStartRect.sizeDelta = Vector2.zero;
+            pushStartRect.localScale = Vector3.one;
+        }
+
+        pushStartText.richText = true;
         pushStartText.font = menuText.font;
         pushStartText.fontSize = PushStartFontSizeScaled;
         pushStartText.fontStyle = menuText.fontStyle;
@@ -390,6 +478,95 @@ public class TitleScreenController : MonoBehaviour
         pushStartText.gameObject.SetActive(false);
     }
 
+    void EnsureFooterText()
+    {
+        if (menuText == null)
+            return;
+
+        if (footerText == null)
+        {
+            var go = new GameObject("FooterText", typeof(RectTransform));
+            var root = GetUiRootForGeneratedText();
+            if (root != null) go.transform.SetParent(root, false);
+            else go.transform.SetParent(menuText.transform, false);
+
+            footerText = go.AddComponent<TextMeshProUGUI>();
+            footerText.raycastTarget = false;
+        }
+
+        footerRect = footerText.rectTransform;
+
+        footerText.richText = true;
+        footerText.font = menuText.font;
+        footerText.fontSize = FooterFontSizeScaled;
+        footerText.fontStyle = menuText.fontStyle;
+        footerText.textWrappingMode = TextWrappingModes.NoWrap;
+        footerText.overflowMode = TextOverflowModes.Overflow;
+        footerText.extraPadding = true;
+
+        footerText.fontMaterial = runtimeMenuMat != null ? runtimeMenuMat : menuText.fontMaterial;
+
+        footerText.alignment = TextAlignmentOptions.Center;
+        footerText.color = Color.white;
+        footerText.text = "";
+        footerText.gameObject.SetActive(false);
+    }
+
+    void EnsureBossRushLockedText()
+    {
+        if (menuText == null)
+            return;
+
+        if (bossRushLockedText == null)
+        {
+            var go = new GameObject("BossRushLockedText", typeof(RectTransform));
+            var root = GetUiRootForGeneratedText();
+            if (root != null) go.transform.SetParent(root, false);
+            else go.transform.SetParent(menuText.transform, false);
+
+            bossRushLockedText = go.AddComponent<TextMeshProUGUI>();
+            bossRushLockedText.raycastTarget = false;
+        }
+
+        bossRushLockedRect = bossRushLockedText.rectTransform;
+
+        bossRushLockedText.richText = true;
+        bossRushLockedText.font = menuText.font;
+        bossRushLockedText.fontStyle = menuText.fontStyle;
+        bossRushLockedText.fontSize = BossRushLockedFontSizeScaled;
+        bossRushLockedText.textWrappingMode = TextWrappingModes.NoWrap;
+        bossRushLockedText.overflowMode = TextOverflowModes.Overflow;
+        bossRushLockedText.extraPadding = true;
+
+        bossRushLockedText.fontMaterial = runtimeMenuMat != null ? runtimeMenuMat : menuText.fontMaterial;
+
+        bossRushLockedText.alignment = TextAlignmentOptions.Center;
+        bossRushLockedText.text = "";
+        bossRushLockedText.gameObject.SetActive(false);
+
+        if (bossRushLockedRect != null)
+        {
+            bossRushLockedRect.anchorMin = new Vector2(0f, 0f);
+            bossRushLockedRect.anchorMax = new Vector2(1f, 0f);
+            bossRushLockedRect.pivot = new Vector2(0.5f, 0f);
+            bossRushLockedRect.anchoredPosition = new Vector2(0f, BossRushLockedBottomMarginScaled);
+            bossRushLockedRect.sizeDelta = new Vector2(0f, 0f);
+            bossRushLockedRect.localScale = Vector3.one;
+        }
+    }
+
+    void UpdateBossRushLockedPosition()
+    {
+        if (bossRushLockedRect == null || bossRushLockedText == null)
+            return;
+
+        if (!bossRushLockedText.gameObject.activeSelf)
+            return;
+
+        bossRushLockedText.fontSize = BossRushLockedFontSizeScaled;
+        bossRushLockedRect.anchoredPosition = new Vector2(0f, BossRushLockedBottomMarginScaled);
+    }
+
     public void ForceHide()
     {
         Running = false;
@@ -402,6 +579,8 @@ public class TitleScreenController : MonoBehaviour
         menuMode = MenuMode.Main;
 
         StopPushStartBlink();
+        HideFooterMessageImmediate();
+        HideBossRushLockedMessageImmediate();
 
         if (titleScreenRawImage != null)
             titleScreenRawImage.gameObject.SetActive(false);
@@ -414,6 +593,12 @@ public class TitleScreenController : MonoBehaviour
 
         if (pushStartText != null)
             pushStartText.gameObject.SetActive(false);
+
+        if (footerText != null)
+            footerText.gameObject.SetActive(false);
+
+        if (bossRushLockedText != null)
+            bossRushLockedText.gameObject.SetActive(false);
     }
 
     void ApplyTitleVisualNow()
@@ -455,6 +640,8 @@ public class TitleScreenController : MonoBehaviour
         }
 
         EnsurePushStartText();
+        EnsureFooterText();
+        EnsureBossRushLockedText();
 
         if (cursorRenderer != null)
         {
@@ -563,6 +750,8 @@ public class TitleScreenController : MonoBehaviour
             {
                 menuIndex = Wrap(menuIndex - 1, itemCount);
                 PlayMoveSfx();
+                HideFooterMessageImmediate();
+                HideBossRushLockedMessageImmediate();
                 RefreshMenuText();
             }
 
@@ -570,6 +759,8 @@ public class TitleScreenController : MonoBehaviour
             {
                 menuIndex = Wrap(menuIndex + 1, itemCount);
                 PlayMoveSfx();
+                HideFooterMessageImmediate();
+                HideBossRushLockedMessageImmediate();
                 RefreshMenuText();
             }
 
@@ -578,6 +769,8 @@ public class TitleScreenController : MonoBehaviour
                 PlayBackSfx();
                 menuMode = MenuMode.Main;
                 menuIndex = 0;
+                HideFooterMessageImmediate();
+                HideBossRushLockedMessageImmediate();
                 RefreshMenuText();
 
                 while (AnyPlayerHeld(PlayerAction.ActionB))
@@ -591,7 +784,7 @@ public class TitleScreenController : MonoBehaviour
             {
                 if (menuMode == MenuMode.Main)
                 {
-                    if (menuIndex == 0)
+                    if (menuIndex == MAIN_IDX_NORMAL)
                     {
                         locked = true;
                         PlaySelectSfx();
@@ -603,11 +796,32 @@ public class TitleScreenController : MonoBehaviour
                         menuIndex = 0;
                         locked = false;
 
+                        HideFooterMessageImmediate();
+                        HideBossRushLockedMessageImmediate();
                         RefreshMenuText();
 
                         while (AnyPlayerHeld(PlayerAction.Start) || AnyPlayerHeld(PlayerAction.ActionA))
                             yield return null;
 
+                        yield return null;
+                        continue;
+                    }
+
+                    if (menuIndex == MAIN_IDX_BOSS_RUSH)
+                    {
+                        if (!bossRushUnlocked)
+                        {
+                            PlayDeniedSfx();
+                            ShowBossRushLockedMessage(bossRushLockedMessage, bossRushLockedMessageHex, bossRushLockedShowSeconds);
+                            while (AnyPlayerHeld(PlayerAction.Start) || AnyPlayerHeld(PlayerAction.ActionA))
+                                yield return null;
+                            yield return null;
+                            continue;
+                        }
+
+                        PlaySelectSfx();
+                        while (AnyPlayerHeld(PlayerAction.Start) || AnyPlayerHeld(PlayerAction.ActionA))
+                            yield return null;
                         yield return null;
                         continue;
                     }
@@ -618,7 +832,7 @@ public class TitleScreenController : MonoBehaviour
                     if (cursorRenderer != null)
                         yield return cursorRenderer.PlayCycles(2);
 
-                    if (menuIndex == 1)
+                    if (menuIndex == MAIN_IDX_CONTROLS)
                     {
                         ControlsRequested = true;
 
@@ -635,12 +849,23 @@ public class TitleScreenController : MonoBehaviour
                         menuMode = MenuMode.Main;
                         menuIndex = 0;
 
+                        HideFooterMessageImmediate();
+                        HideBossRushLockedMessageImmediate();
                         RefreshMenuText();
                         StartPushStartBlink();
 
                         while (AnyPlayerHeldAnyMenuKey())
                             yield return null;
 
+                        yield return null;
+                        continue;
+                    }
+
+                    if (menuIndex == MAIN_IDX_VIDEO)
+                    {
+                        locked = false;
+                        while (AnyPlayerHeld(PlayerAction.Start) || AnyPlayerHeld(PlayerAction.ActionA))
+                            yield return null;
                         yield return null;
                         continue;
                     }
@@ -679,7 +904,7 @@ public class TitleScreenController : MonoBehaviour
         if (menuMode == MenuMode.PlayerCount)
             return 4;
 
-        return 3;
+        return 5;
     }
 
     IEnumerator StartNormalGame()
@@ -707,7 +932,14 @@ public class TitleScreenController : MonoBehaviour
         if (pushStartText != null)
             pushStartText.gameObject.SetActive(false);
 
+        if (footerText != null)
+            footerText.gameObject.SetActive(false);
+
+        if (bossRushLockedText != null)
+            bossRushLockedText.gameObject.SetActive(false);
+
         StopPushStartBlink();
+        HideBossRushLockedMessageImmediate();
         Running = false;
     }
 
@@ -724,7 +956,14 @@ public class TitleScreenController : MonoBehaviour
 #endif
 
         StopPushStartBlink();
+        HideBossRushLockedMessageImmediate();
         Running = false;
+    }
+
+    static string ColorWithAlpha(string rgbHexNoAlpha, float alpha01)
+    {
+        int a = Mathf.Clamp(Mathf.RoundToInt(alpha01 * 255f), 0, 255);
+        return $"#{rgbHexNoAlpha}{a:X2}";
     }
 
     void RefreshMenuText()
@@ -732,31 +971,48 @@ public class TitleScreenController : MonoBehaviour
         if (menuText == null)
             return;
 
-        const string color = "#FFFFE7";
+        const string baseRgb = "FFFFE7";
         int size = MenuFontSizeScaled;
 
         if (menuMode == MenuMode.Main)
         {
-            string normal = $"<color={color}>NORMAL GAME</color>";
-            string controls = $"<color={color}>CONTROLS</color>";
-            string exit = $"<color={color}>EXIT</color>";
+            string normal = $"<color=#{baseRgb}FF>NORMAL GAME</color>";
+
+            string bossRush;
+            if (bossRushUnlocked)
+            {
+                bossRush = $"<color=#{baseRgb}FF>BOSS RUSH</color>";
+            }
+            else
+            {
+                string c = ColorWithAlpha(baseRgb, bossRushLockedAlpha);
+                bossRush = $"<color={c}>BOSS RUSH</color>";
+            }
+
+            string controls = $"<color=#{baseRgb}FF>CONTROLS</color>";
+            string video = $"<color=#{baseRgb}FF>VIDEO</color>";
+            string exit = $"<color=#{baseRgb}FF>EXIT</color>";
 
             menuText.text =
                 "<align=left>" +
                 $"<size={size}>{normal}</size>\n" +
+                $"<size={size}>{bossRush}</size>\n" +
                 $"<size={size}>{controls}</size>\n" +
+                $"<size={size}>{video}</size>\n" +
                 $"<size={size}>{exit}</size>" +
                 "</align>";
 
             UpdateCursorPosition();
             UpdatePushStartPosition();
+            UpdateFooterPosition();
+            UpdateBossRushLockedPosition();
             return;
         }
 
-        string p1 = $"<color={color}>1 PLAYER</color>";
-        string p2 = $"<color={color}>2 PLAYERS</color>";
-        string p3 = $"<color={color}>3 PLAYERS</color>";
-        string p4 = $"<color={color}>4 PLAYERS</color>";
+        string p1 = $"<color=#{baseRgb}FF>1 PLAYER</color>";
+        string p2 = $"<color=#{baseRgb}FF>2 PLAYERS</color>";
+        string p3 = $"<color=#{baseRgb}FF>3 PLAYERS</color>";
+        string p4 = $"<color=#{baseRgb}FF>4 PLAYERS</color>";
 
         menuText.text =
             "<align=left>" +
@@ -768,6 +1024,8 @@ public class TitleScreenController : MonoBehaviour
 
         UpdateCursorPosition();
         UpdatePushStartPosition();
+        UpdateFooterPosition();
+        UpdateBossRushLockedPosition();
     }
 
     void StartPushStartBlink()
@@ -818,6 +1076,34 @@ public class TitleScreenController : MonoBehaviour
         if (menuText == null || pushStartRect == null)
             return;
 
+        var root = GetUiRootForGeneratedText();
+        if (root == null)
+            return;
+
+        menuText.ForceMeshUpdate();
+        var ti = menuText.textInfo;
+        if (ti == null || ti.lineCount <= 0)
+            return;
+
+        var first = ti.lineInfo[0];
+        float yMenuLocal = first.ascender + PushStartYOffsetScaled + PushStartExtraYOffsetScaled;
+
+        Vector3 world = menuText.rectTransform.TransformPoint(new Vector3(0f, yMenuLocal, 0f));
+        Vector3 yRootLocal = root.InverseTransformPoint(world);
+
+        float y = Mathf.Round(yRootLocal.y);
+
+        pushStartRect.anchoredPosition = new Vector2(0f, y);
+    }
+
+    void UpdateFooterPosition()
+    {
+        if (menuText == null || footerRect == null || footerText == null)
+            return;
+
+        if (!footerText.gameObject.activeSelf)
+            return;
+
         menuText.ForceMeshUpdate();
         var ti = menuText.textInfo;
         if (ti == null || ti.lineCount <= 0)
@@ -835,10 +1121,86 @@ public class TitleScreenController : MonoBehaviour
 
         float centerX = (minX + maxX) * 0.5f;
 
-        var first = ti.lineInfo[0];
-        float y = first.ascender + PushStartYOffsetScaled;
+        var last = ti.lineInfo[ti.lineCount - 1];
+        float y = last.descender + FooterOffsetFromLastLineYScaled;
 
-        pushStartRect.localPosition = new Vector3(centerX, y, 0f);
+        footerRect.localPosition = new Vector3(centerX, y, 0f);
+    }
+
+    void ShowFooterMessage(string msg, string hex, float seconds)
+    {
+        EnsureFooterText();
+        if (footerText == null) return;
+
+        if (footerRoutine != null)
+        {
+            StopCoroutine(footerRoutine);
+            footerRoutine = null;
+        }
+
+        footerText.fontSize = FooterFontSizeScaled;
+        footerText.text = $"<color={hex}>{msg}</color>";
+        footerText.gameObject.SetActive(true);
+        UpdateFooterPosition();
+
+        footerRoutine = StartCoroutine(FooterRoutine(seconds));
+    }
+
+    IEnumerator FooterRoutine(float seconds)
+    {
+        float t = Mathf.Max(0.05f, seconds);
+        yield return new WaitForSecondsRealtime(t);
+        HideFooterMessageImmediate();
+    }
+
+    void HideFooterMessageImmediate()
+    {
+        if (footerRoutine != null)
+        {
+            StopCoroutine(footerRoutine);
+            footerRoutine = null;
+        }
+
+        if (footerText != null)
+            footerText.gameObject.SetActive(false);
+    }
+
+    void ShowBossRushLockedMessage(string msg, string hex, float seconds)
+    {
+        EnsureBossRushLockedText();
+        if (bossRushLockedText == null) return;
+
+        if (bossRushLockedRoutine != null)
+        {
+            StopCoroutine(bossRushLockedRoutine);
+            bossRushLockedRoutine = null;
+        }
+
+        bossRushLockedText.fontSize = BossRushLockedFontSizeScaled;
+        bossRushLockedText.text = $"<color={hex}>{msg}</color>";
+        bossRushLockedText.gameObject.SetActive(true);
+        UpdateBossRushLockedPosition();
+
+        bossRushLockedRoutine = StartCoroutine(BossRushLockedRoutine(seconds));
+    }
+
+    IEnumerator BossRushLockedRoutine(float seconds)
+    {
+        float t = Mathf.Max(0.05f, seconds);
+        yield return new WaitForSecondsRealtime(t);
+        HideBossRushLockedMessageImmediate();
+    }
+
+    void HideBossRushLockedMessageImmediate()
+    {
+        if (bossRushLockedRoutine != null)
+        {
+            StopCoroutine(bossRushLockedRoutine);
+            bossRushLockedRoutine = null;
+        }
+
+        if (bossRushLockedText != null)
+            bossRushLockedText.gameObject.SetActive(false);
     }
 
     void PlayMoveSfx()
@@ -863,6 +1225,15 @@ public class TitleScreenController : MonoBehaviour
             return;
 
         GameMusicController.Instance.PlaySfx(backOptionSfx, backOptionVolume);
+    }
+
+    void PlayDeniedSfx()
+    {
+        if (GameMusicController.Instance == null)
+            return;
+
+        if (backOptionSfx != null) GameMusicController.Instance.PlaySfx(backOptionSfx, backOptionVolume);
+        else if (selectOptionSfx != null) GameMusicController.Instance.PlaySfx(selectOptionSfx, selectOptionVolume);
     }
 
     int Wrap(int v, int count)
@@ -899,6 +1270,8 @@ public class TitleScreenController : MonoBehaviour
     void HideTitleScreenCompletely()
     {
         StopPushStartBlink();
+        HideFooterMessageImmediate();
+        HideBossRushLockedMessageImmediate();
 
         if (titleScreenRawImage != null)
             titleScreenRawImage.gameObject.SetActive(false);
@@ -911,6 +1284,12 @@ public class TitleScreenController : MonoBehaviour
 
         if (pushStartText != null)
             pushStartText.gameObject.SetActive(false);
+
+        if (footerText != null)
+            footerText.gameObject.SetActive(false);
+
+        if (bossRushLockedText != null)
+            bossRushLockedText.gameObject.SetActive(false);
     }
 
     void RestoreTitleScreenAfterControls()

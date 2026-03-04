@@ -1716,6 +1716,17 @@ MonoBehaviour:
   menuText: {fileID: 1287610048}
   menuAnchoredPos: {x: -50, y: 60}
   menuFontSize: 46
+  menuExtraYOffset: -180
+  pushStartExtraYOffset: 0
+  forceMenuCenterX: 1
+  dynamicScale: 1
+  referenceWidth: 256
+  referenceHeight: 224
+  useIntegerUpscale: 1
+  designUpscale: 4
+  extraScaleMultiplier: 1
+  minScale: 0.5
+  maxScale: 10
   forceBold: 1
   outlineColor: {r: 0, g: 0, b: 0, a: 1}
   outlineWidth: 0.35
@@ -1735,12 +1746,25 @@ MonoBehaviour:
   cursorRenderer: {fileID: 544397349}
   cursorOffset: {x: -28, y: 5}
   cursorAsChildOfMenuText: 1
+  scaleCursorWithUi: 1
   pushStartText: {fileID: 0}
   pushStartLabel: PUSH START BUTTON
   pushStartHex: '#FFA621'
   pushStartFontSize: 46
   pushStartBlinkInterval: 1
   pushStartYOffset: 18
+  footerText: {fileID: 0}
+  footerFontSize: 36
+  footerOffsetFromLastLineY: -40
+  footerShowSeconds: 2
+  bossRushUnlocked: 0
+  bossRushLockedAlpha: 0.35
+  bossRushLockedMessage: UNLOCKED AFTER COMPLETING NORMAL GAME
+  bossRushLockedMessageHex: '#FF3B30'
+  bossRushLockedText: {fileID: 0}
+  bossRushLockedFontSize: 34
+  bossRushLockedBottomMargin: 30
+  bossRushLockedShowSeconds: 2
   controlsMenu: {fileID: 1789443840}
 --- !u!114 &362350265
 MonoBehaviour:
