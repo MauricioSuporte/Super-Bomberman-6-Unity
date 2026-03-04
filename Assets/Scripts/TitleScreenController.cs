@@ -2,10 +2,8 @@
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using UnityEngine.Video;
 
 [RequireComponent(typeof(RawImage))]
-[RequireComponent(typeof(VideoPlayer))]
 public class TitleScreenController : MonoBehaviour
 {
     [Header("Menu SFX")]
@@ -19,16 +17,36 @@ public class TitleScreenController : MonoBehaviour
     [SerializeField] AudioClip backOptionSfx;
     [SerializeField, Range(0f, 1f)] float backOptionVolume = 1f;
 
-    [Header("UI / Video")]
+    [Header("UI / Title")]
     public RawImage titleScreenRawImage;
-    public VideoPlayer titleVideoPlayer;
+
+    [Tooltip("Sprite 256x224 para a tela de título (pixel perfect).")]
+    [SerializeField] Sprite titleScreenSprite;
 
     [Header("Menu Text (TMP)")]
     public TMP_Text menuText;
 
-    [Header("Menu Layout")]
+    [Header("Menu Layout (BASE @ designUpscale)")]
     [SerializeField] Vector2 menuAnchoredPos = new(-70f, 75f);
     [SerializeField] int menuFontSize = 46;
+
+    [Header("Dynamic Scale (Pixel Perfect friendly)")]
+    [SerializeField] bool dynamicScale = true;
+
+    [SerializeField] int referenceWidth = 256;
+    [SerializeField] int referenceHeight = 224;
+
+    [Tooltip("If true, uses integer upscale steps like PixelPerfectCamera.")]
+    [SerializeField] bool useIntegerUpscale = true;
+
+    [Tooltip("The upscale you tuned your BASE sizes for. Example: FullHD looks like ~4x, set 4.")]
+    [SerializeField, Min(1)] int designUpscale = 4;
+
+    [Tooltip("Optional extra multiplier after normalization.")]
+    [SerializeField, Min(0.01f)] float extraScaleMultiplier = 1f;
+
+    [SerializeField, Min(0.01f)] float minScale = 0.5f;
+    [SerializeField, Min(0.01f)] float maxScale = 10f;
 
     [Header("Text Style (SB5-like)")]
     [SerializeField] bool forceBold = true;
@@ -64,6 +82,9 @@ public class TitleScreenController : MonoBehaviour
     public AnimatedSpriteRenderer cursorRenderer;
     [SerializeField] Vector2 cursorOffset = new(-30f, 0f);
     [SerializeField] bool cursorAsChildOfMenuText = true;
+
+    [Header("Cursor Scaling")]
+    [SerializeField] bool scaleCursorWithUi = true;
 
     [Header("Push Start (TMP)")]
     [SerializeField] TextMeshProUGUI pushStartText;
@@ -104,13 +125,65 @@ public class TitleScreenController : MonoBehaviour
     bool pushStartVisible = true;
     RectTransform pushStartRect;
 
+    Rect _lastCamRect;
+    int _lastBaseScaleInt = -999;
+    float _lastUiScale = -999f;
+
+    Vector3 _cursorBaseLocalScale = Vector3.one;
+    bool _cursorBaseScaleCaptured;
+
+    float UiScale
+    {
+        get
+        {
+            if (!dynamicScale)
+            {
+                if (menuText == null) return 1f;
+                var c = menuText.canvas;
+                if (c == null) return 1f;
+                return Mathf.Max(0.01f, c.scaleFactor);
+            }
+
+            var cam = Camera.main;
+
+            float usedW = (cam != null) ? cam.pixelRect.width : Screen.width;
+            float usedH = (cam != null) ? cam.pixelRect.height : Screen.height;
+
+            float sx = usedW / Mathf.Max(1f, referenceWidth);
+            float sy = usedH / Mathf.Max(1f, referenceHeight);
+            float baseScaleRaw = Mathf.Min(sx, sy);
+
+            float baseScaleForUi = useIntegerUpscale ? Mathf.Round(baseScaleRaw) : baseScaleRaw;
+            if (baseScaleForUi < 1f) baseScaleForUi = 1f;
+
+            int baseScaleInt = Mathf.Max(1, Mathf.RoundToInt(baseScaleForUi));
+
+            float normalized = baseScaleInt / Mathf.Max(1f, designUpscale);
+
+            float ui = normalized * Mathf.Max(0.01f, extraScaleMultiplier);
+            ui = Mathf.Clamp(ui, minScale, maxScale);
+
+            _lastBaseScaleInt = baseScaleInt;
+            _lastUiScale = ui;
+
+            return ui;
+        }
+    }
+
+    int ScaledFont(int baseSize) => Mathf.Clamp(Mathf.RoundToInt(baseSize * UiScale), 10, 500);
+    float ScaledFloat(float baseValue) => baseValue * UiScale;
+    Vector2 ScaledVec(Vector2 v) => v * UiScale;
+
+    int MenuFontSizeScaled => ScaledFont(menuFontSize);
+    int PushStartFontSizeScaled => ScaledFont(pushStartFontSize);
+    float PushStartYOffsetScaled => ScaledFloat(pushStartYOffset);
+    Vector2 MenuAnchoredPosScaled => ScaledVec(menuAnchoredPos);
+    Vector2 CursorOffsetScaled => ScaledVec(cursorOffset);
+
     void Awake()
     {
         if (titleScreenRawImage == null)
             titleScreenRawImage = GetComponent<RawImage>();
-
-        if (titleVideoPlayer == null)
-            titleVideoPlayer = GetComponent<VideoPlayer>();
 
         if (menuText != null)
             menuRect = menuText.rectTransform;
@@ -121,16 +194,72 @@ public class TitleScreenController : MonoBehaviour
 
             if (cursorAsChildOfMenuText && menuText != null)
                 cursorRenderer.transform.SetParent(menuText.transform, false);
+
+            _cursorBaseLocalScale = cursorRenderer.transform.localScale;
+            _cursorBaseScaleCaptured = true;
         }
 
         EnsurePushStartText();
         ForceHide();
     }
 
+    void OnEnable()
+    {
+        _lastCamRect = default;
+        _lastBaseScaleInt = -999;
+        _lastUiScale = -999f;
+        ApplyDynamicLayoutIfNeeded(true);
+    }
+
+    void Update()
+    {
+        ApplyDynamicLayoutIfNeeded(false);
+    }
+
     void OnDestroy()
     {
         if (runtimeMenuMat != null)
             Destroy(runtimeMenuMat);
+    }
+
+    void ApplyDynamicLayoutIfNeeded(bool force)
+    {
+        var cam = Camera.main;
+        Rect r = cam != null ? cam.pixelRect : new Rect(0, 0, Screen.width, Screen.height);
+
+        float ui = UiScale;
+
+        bool rectChanged = r != _lastCamRect;
+        bool scaleChanged = Mathf.Abs(ui - _lastUiScale) > 0.0001f;
+
+        _lastCamRect = r;
+
+        if (!force && !rectChanged && !scaleChanged)
+            return;
+
+        ApplyMenuAnchoredPosition();
+        ApplyCursorScale();
+        EnsurePushStartText();
+
+        RefreshMenuText();
+        UpdateCursorPosition();
+        UpdatePushStartPosition();
+    }
+
+    void ApplyCursorScale()
+    {
+        if (!scaleCursorWithUi || cursorRenderer == null)
+            return;
+
+        if (!_cursorBaseScaleCaptured)
+        {
+            _cursorBaseLocalScale = cursorRenderer.transform.localScale;
+            _cursorBaseScaleCaptured = true;
+        }
+
+        float s = UiScale;
+        var baseScale = _cursorBaseLocalScale;
+        cursorRenderer.transform.localScale = new Vector3(baseScale.x * s, baseScale.y * s, baseScale.z);
     }
 
     void EnsureBootSession()
@@ -215,7 +344,7 @@ public class TitleScreenController : MonoBehaviour
         if (menuRect == null)
             return;
 
-        menuRect.anchoredPosition = menuAnchoredPos;
+        menuRect.anchoredPosition = MenuAnchoredPosScaled;
     }
 
     static void TrySetFloat(Material m, string prop, float value)
@@ -247,7 +376,7 @@ public class TitleScreenController : MonoBehaviour
         pushStartRect = pushStartText.rectTransform;
 
         pushStartText.font = menuText.font;
-        pushStartText.fontSize = pushStartFontSize;
+        pushStartText.fontSize = PushStartFontSizeScaled;
         pushStartText.fontStyle = menuText.fontStyle;
         pushStartText.textWrappingMode = TextWrappingModes.NoWrap;
         pushStartText.overflowMode = TextOverflowModes.Overflow;
@@ -274,9 +403,6 @@ public class TitleScreenController : MonoBehaviour
 
         StopPushStartBlink();
 
-        if (titleVideoPlayer != null)
-            titleVideoPlayer.Stop();
-
         if (titleScreenRawImage != null)
             titleScreenRawImage.gameObject.SetActive(false);
 
@@ -290,10 +416,37 @@ public class TitleScreenController : MonoBehaviour
             pushStartText.gameObject.SetActive(false);
     }
 
+    void ApplyTitleVisualNow()
+    {
+        if (titleScreenRawImage == null)
+            return;
+
+        titleScreenRawImage.gameObject.SetActive(true);
+
+        if (titleScreenSprite != null)
+        {
+            var tex = titleScreenSprite.texture;
+            if (tex != null)
+            {
+                tex.filterMode = FilterMode.Point;
+                tex.wrapMode = TextureWrapMode.Clamp;
+            }
+
+            titleScreenRawImage.texture = tex;
+
+            var r = titleScreenSprite.textureRect;
+            var tr = tex != null ? new Rect(0f, 0f, tex.width, tex.height) : r;
+            var uv = tex != null && tr.width > 0f && tr.height > 0f
+                ? new Rect(r.x / tr.width, r.y / tr.height, r.width / tr.width, r.height / tr.height)
+                : new Rect(0f, 0f, 1f, 1f);
+
+            titleScreenRawImage.uvRect = uv;
+        }
+    }
+
     void ShowTitleScreenNow()
     {
-        if (titleScreenRawImage != null)
-            titleScreenRawImage.gameObject.SetActive(true);
+        ApplyTitleVisualNow();
 
         if (menuText != null)
         {
@@ -308,6 +461,8 @@ public class TitleScreenController : MonoBehaviour
             cursorRenderer.gameObject.SetActive(true);
             cursorRenderer.RefreshFrame();
         }
+
+        ApplyDynamicLayoutIfNeeded(true);
     }
 
     bool TryGetAnyPlayerDown(PlayerAction action, out int pid)
@@ -384,13 +539,6 @@ public class TitleScreenController : MonoBehaviour
 
         if (titleMusic != null && GameMusicController.Instance != null)
             GameMusicController.Instance.PlayMusic(titleMusic, titleMusicVolume, true);
-
-        if (titleVideoPlayer != null)
-        {
-            titleVideoPlayer.isLooping = true;
-            titleVideoPlayer.Stop();
-            titleVideoPlayer.Play();
-        }
 
         if (ignoreStartKeyUntilRelease ||
             AnyPlayerHeld(PlayerAction.Start) ||
@@ -547,9 +695,6 @@ public class TitleScreenController : MonoBehaviour
         if (GameMusicController.Instance != null)
             GameMusicController.Instance.StopMusic();
 
-        if (titleVideoPlayer != null)
-            titleVideoPlayer.Stop();
-
         if (titleScreenRawImage != null)
             titleScreenRawImage.gameObject.SetActive(false);
 
@@ -588,6 +733,7 @@ public class TitleScreenController : MonoBehaviour
             return;
 
         const string color = "#FFFFE7";
+        int size = MenuFontSizeScaled;
 
         if (menuMode == MenuMode.Main)
         {
@@ -597,9 +743,9 @@ public class TitleScreenController : MonoBehaviour
 
             menuText.text =
                 "<align=left>" +
-                $"<size={menuFontSize}>{normal}</size>\n" +
-                $"<size={menuFontSize}>{controls}</size>\n" +
-                $"<size={menuFontSize}>{exit}</size>" +
+                $"<size={size}>{normal}</size>\n" +
+                $"<size={size}>{controls}</size>\n" +
+                $"<size={size}>{exit}</size>" +
                 "</align>";
 
             UpdateCursorPosition();
@@ -614,10 +760,10 @@ public class TitleScreenController : MonoBehaviour
 
         menuText.text =
             "<align=left>" +
-            $"<size={menuFontSize}>{p1}</size>\n" +
-            $"<size={menuFontSize}>{p2}</size>\n" +
-            $"<size={menuFontSize}>{p3}</size>\n" +
-            $"<size={menuFontSize}>{p4}</size>" +
+            $"<size={size}>{p1}</size>\n" +
+            $"<size={size}>{p2}</size>\n" +
+            $"<size={size}>{p3}</size>\n" +
+            $"<size={size}>{p4}</size>" +
             "</align>";
 
         UpdateCursorPosition();
@@ -690,7 +836,7 @@ public class TitleScreenController : MonoBehaviour
         float centerX = (minX + maxX) * 0.5f;
 
         var first = ti.lineInfo[0];
-        float y = first.ascender + pushStartYOffset;
+        float y = first.ascender + PushStartYOffsetScaled;
 
         pushStartRect.localPosition = new Vector3(centerX, y, 0f);
     }
@@ -744,16 +890,15 @@ public class TitleScreenController : MonoBehaviour
         float y = (li.ascender + li.descender) * 0.5f;
         float x = li.lineExtents.min.x;
 
-        Vector3 localPos = new(x + cursorOffset.x, y + cursorOffset.y, 0f);
+        Vector2 offs = CursorOffsetScaled;
+
+        Vector3 localPos = new(x + offs.x, y + offs.y, 0f);
         cursorRenderer.SetExternalBaseLocalPosition(localPos);
     }
 
     void HideTitleScreenCompletely()
     {
         StopPushStartBlink();
-
-        if (titleVideoPlayer != null)
-            titleVideoPlayer.Stop();
 
         if (titleScreenRawImage != null)
             titleScreenRawImage.gameObject.SetActive(false);
@@ -771,12 +916,5 @@ public class TitleScreenController : MonoBehaviour
     void RestoreTitleScreenAfterControls()
     {
         ShowTitleScreenNow();
-
-        if (titleVideoPlayer != null)
-        {
-            titleVideoPlayer.isLooping = true;
-            titleVideoPlayer.Stop();
-            titleVideoPlayer.Play();
-        }
     }
 }

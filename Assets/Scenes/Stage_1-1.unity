@@ -1627,11 +1627,10 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 362350262}
-  - component: {fileID: 362350265}
+  - component: {fileID: 362350264}
   - component: {fileID: 362350261}
   - component: {fileID: 362350263}
-  - component: {fileID: 362350260}
-  - component: {fileID: 362350264}
+  - component: {fileID: 362350265}
   m_Layer: 5
   m_Name: TitleScreen
   m_TagString: Untagged
@@ -1639,40 +1638,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!328 &362350260
-VideoPlayer:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 362350259}
-  m_Enabled: 1
-  m_VideoClip: {fileID: 32900000, guid: 41c2eda819708914e95056882885610d, type: 3}
-  m_TargetCameraAlpha: 1
-  m_TargetCamera3DLayout: 0
-  m_TargetCamera: {fileID: 0}
-  m_TargetTexture: {fileID: 8400000, guid: 8bd297d7d90798d42b0b1296a678fcd0, type: 2}
-  m_TimeReference: 0
-  m_TargetMaterialRenderer: {fileID: 0}
-  m_TargetMaterialProperty: _MainTex
-  m_RenderMode: 2
-  m_AspectRatio: 2
-  m_DataSource: 0
-  m_TimeUpdateMode: 2
-  m_PlaybackSpeed: 1
-  m_AudioOutputMode: 0
-  m_TargetAudioSources: []
-  m_DirectAudioVolumes: []
-  m_Url: 
-  m_EnabledAudioTracks: 
-  m_DirectAudioMutes: 
-  m_ControlledAudioTrackCount: 0
-  m_PlayOnAwake: 0
-  m_SkipOnDrop: 1
-  m_Looping: 1
-  m_WaitForFirstFrame: 1
-  m_FrameReadyEventEnabled: 0
-  m_VideoShaders: []
 --- !u!222 &362350261
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -1688,13 +1653,13 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 362350259}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1287610047}
-  m_Father: {fileID: 1389130176}
+  m_Father: {fileID: 1599199474}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
@@ -1715,13 +1680,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Texture: {fileID: 8400000, guid: 8bd297d7d90798d42b0b1296a678fcd0, type: 2}
+  m_Texture: {fileID: 2800000, guid: 7405f44018067d94aaa2264833063c44, type: 3}
   m_UVRect:
     serializedVersion: 2
     x: 0
@@ -1747,7 +1712,7 @@ MonoBehaviour:
   backOptionSfx: {fileID: 8300000, guid: 30ca55f720379e64ab9b908db035db4c, type: 3}
   backOptionVolume: 1
   titleScreenRawImage: {fileID: 362350263}
-  titleVideoPlayer: {fileID: 362350260}
+  titleScreenSprite: {fileID: 21300000, guid: 7405f44018067d94aaa2264833063c44, type: 3}
   menuText: {fileID: 1287610048}
   menuAnchoredPos: {x: -50, y: 60}
   menuFontSize: 46
@@ -1790,7 +1755,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.AspectRatioFitter
   m_AspectMode: 3
-  m_AspectRatio: 1
+  m_AspectRatio: 1.1428572
 --- !u!1 &534844155
 GameObject:
   m_ObjectHideFlags: 0
@@ -1976,6 +1941,8 @@ MonoBehaviour:
   animationTime: 0.045454547
   useSequenceDuration: 0
   sequenceDuration: 0.5
+  useUnscaledTime: 1
+  respectGamePause: 1
   loop: 1
   idle: 1
   frameOffsets:
@@ -2082,6 +2049,19 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::StageLabel
   stageText: {fileID: 556523583}
+  dynamicScale: 1
+  referenceWidth: 256
+  referenceHeight: 224
+  useIntegerUpscale: 1
+  designUpscale: 4
+  extraScaleMultiplier: 1
+  minScale: 0.5
+  maxScale: 10
+  baseRectWidthAtDesign: 600
+  baseRectHeightAtDesign: 200
+  autoResizeRectTransform: 1
+  enableSurgicalLogs: 1
+  logInterval: 0.5
 --- !u!114 &556523583
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5734,6 +5714,8 @@ MonoBehaviour:
   gameplayRoot: {fileID: 679601670}
   stage17SceneName: Stage_1-7
   skinSelectMenu: {fileID: 1311323897}
+  skipPreIntroWalkNextRound_Inspector: 0
+  preIntroWalk: {fileID: 0}
 --- !u!114 &1389130173
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5786,7 +5768,7 @@ Canvas:
   m_RenderMode: 0
   m_Camera: {fileID: 0}
   m_PlaneDistance: 100
-  m_PixelPerfect: 0
+  m_PixelPerfect: 1
   m_ReceivesEvents: 1
   m_OverrideSorting: 0
   m_OverridePixelPerfect: 0
@@ -5809,8 +5791,8 @@ RectTransform:
   m_LocalScale: {x: 0, y: 0, z: 0}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 1599199474}
   - {fileID: 336813437}
-  - {fileID: 362350262}
   - {fileID: 676188640}
   - {fileID: 556523585}
   - {fileID: 1311323898}
@@ -5862,6 +5844,8 @@ MonoBehaviour:
   animationTime: 0.16666667
   useSequenceDuration: 0
   sequenceDuration: 0.5
+  useUnscaledTime: 1
+  respectGamePause: 1
   loop: 1
   idle: 1
   frameOffsets: []
@@ -6188,6 +6172,56 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+--- !u!1 &1599199473
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1599199474}
+  - component: {fileID: 1599199475}
+  m_Layer: 5
+  m_Name: SafeFrame4x3
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &1599199474
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1599199473}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 362350262}
+  m_Father: {fileID: 1389130176}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &1599199475
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1599199473}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a01596bb412f1f8488c94e655d298436, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::UICameraViewportFitter
+  targetCamera: {fileID: 1520869091}
 --- !u!1 &1789443839
 GameObject:
   m_ObjectHideFlags: 0
