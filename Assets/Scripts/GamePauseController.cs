@@ -37,6 +37,8 @@ public class GamePauseController : MonoBehaviour
     bool exitingToTitle;
     Coroutine exitRoutine;
 
+    int lastScreenW, lastScreenH;
+
     public static GamePauseController Instance { get; private set; }
 
     void Awake()
@@ -49,6 +51,9 @@ public class GamePauseController : MonoBehaviour
 
         Instance = this;
         DontDestroyOnLoad(gameObject);
+
+        lastScreenW = Screen.width;
+        lastScreenH = Screen.height;
     }
 
     void Update()
@@ -76,6 +81,13 @@ public class GamePauseController : MonoBehaviour
             if (StageIntroTransition.Instance.IntroRunning ||
                 StageIntroTransition.Instance.EndingRunning)
                 return;
+        }
+
+        if (Screen.width != lastScreenW || Screen.height != lastScreenH)
+        {
+            lastScreenW = Screen.width;
+            lastScreenH = Screen.height;
+            RefreshPauseUI();
         }
 
         TickPauseMenu();
@@ -113,6 +125,9 @@ public class GamePauseController : MonoBehaviour
         menuIndex = 0;
         confirmReturn = false;
         confirmIndex = 0;
+
+        lastScreenW = Screen.width;
+        lastScreenH = Screen.height;
 
         RefreshPauseUI();
     }
