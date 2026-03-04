@@ -152,14 +152,18 @@ public class SunMaskBoss : MonoBehaviour, IKillable
 
     private static readonly Vector2[] StarDirs =
     {
-        Vector2.up,
-        Vector2.down,
-        Vector2.left,
-        Vector2.right,
-        new Vector2(1f, 1f).normalized,
-        new Vector2(1f, -1f).normalized,
-        new Vector2(-1f, 1f).normalized,
-        new Vector2(-1f, -1f).normalized
+        new Vector2(1f, 0f).normalized,
+        new Vector2(0.8660254f, 0.5f).normalized,
+        new Vector2(0.5f, 0.8660254f).normalized,
+        new Vector2(0f, 1f).normalized,
+        new Vector2(-0.5f, 0.8660254f).normalized,
+        new Vector2(-0.8660254f, 0.5f).normalized,
+        new Vector2(-1f, 0f).normalized,
+        new Vector2(-0.8660254f, -0.5f).normalized,
+        new Vector2(-0.5f, -0.8660254f).normalized,
+        new Vector2(0f, -1f).normalized,
+        new Vector2(0.5f, -0.8660254f).normalized,
+        new Vector2(0.8660254f, -0.5f).normalized
     };
 
     void FixedUpdate()
