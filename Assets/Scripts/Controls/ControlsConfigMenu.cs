@@ -13,7 +13,7 @@ public class ControlsConfigMenu : MonoBehaviour
 
     [Header("UI")]
     [SerializeField] GameObject root;
-    [SerializeField] Image backgroundImage;
+    [SerializeField] RawImage backgroundImage;
 
     [Header("Layout Root (moves menu as a whole)")]
     [SerializeField] RectTransform menuLayoutRoot;
@@ -82,6 +82,25 @@ public class ControlsConfigMenu : MonoBehaviour
     [Header("Players Block - Global Indent")]
     [SerializeField] float playersBlockIndentX = 400f;
 
+    [Header("Dynamic Scale (Pixel Perfect like TitleScreen)")]
+    [SerializeField] bool dynamicScale = true;
+    [SerializeField] int referenceWidth = 256;
+    [SerializeField] int referenceHeight = 224;
+    [SerializeField] bool useIntegerUpscale = true;
+
+    [Tooltip("Upscale para o qual você ajustou os BASE sizes (font/offsets). Ex: 1080p ~4x => 4.")]
+    [SerializeField, Min(1)] int designUpscale = 4;
+
+    [SerializeField, Min(0.01f)] float extraScaleMultiplier = 1f;
+    [SerializeField, Min(0.01f)] float minScale = 0.5f;
+    [SerializeField, Min(0.01f)] float maxScale = 10f;
+
+    [Header("Cursor Scaling")]
+    [SerializeField] bool scaleCursorWithUi = true;
+
+    [Header("Cursor Rounding")]
+    [SerializeField] bool roundCursorToWholePixels = true;
+
     const string colorNormal = "#FFFFE7";
     const string colorHint = "#FFA621";
     const string colorWhite = "#FFFFFF";
@@ -129,6 +148,15 @@ public class ControlsConfigMenu : MonoBehaviour
     float blockedMessageUntil;
     string blockedMessageLine;
 
+    float _currentUiScale = 1f;
+    int _currentBaseScaleInt = 1;
+
+    int _lastW = -1;
+    int _lastH = -1;
+
+    Vector3 _cursorBaseLocalScale = Vector3.one;
+    bool _cursorBaseScaleCaptured;
+
     static readonly PlayerAction[] BulkActions = new[]
     {
         PlayerAction.MoveUp,
@@ -143,21 +171,102 @@ public class ControlsConfigMenu : MonoBehaviour
         PlayerAction.ActionR
     };
 
+    int ScaledFont(int baseSize) => Mathf.Clamp(Mathf.RoundToInt(baseSize * _currentUiScale), 10, 500);
+    float ScaledFloat(float baseValue) => baseValue * _currentUiScale;
+
+    float ComputeUiScaleForSize(float usedW, float usedH, out int baseScaleInt)
+    {
+        baseScaleInt = 1;
+
+        if (!dynamicScale)
+            return 1f;
+
+        float sx = usedW / Mathf.Max(1f, referenceWidth);
+        float sy = usedH / Mathf.Max(1f, referenceHeight);
+
+        float baseScaleRaw = Mathf.Min(sx, sy);
+        float baseScaleForUi = useIntegerUpscale ? Mathf.Round(baseScaleRaw) : baseScaleRaw;
+        if (baseScaleForUi < 1f) baseScaleForUi = 1f;
+
+        baseScaleInt = Mathf.Max(1, Mathf.RoundToInt(baseScaleForUi));
+
+        float normalized = baseScaleInt / Mathf.Max(1f, designUpscale);
+
+        float ui = normalized * Mathf.Max(0.01f, extraScaleMultiplier);
+        ui = Mathf.Clamp(ui, minScale, maxScale);
+        return ui;
+    }
+
+    void ApplyDynamicScaleIfNeeded(bool force = false)
+    {
+        int w = Screen.width;
+        int h = Screen.height;
+
+        if (!force && w == _lastW && h == _lastH)
+            return;
+
+        _lastW = w;
+        _lastH = h;
+
+        _currentUiScale = ComputeUiScaleForSize(w, h, out _currentBaseScaleInt);
+
+        ApplyCursorScale();
+        ApplyMenuGlobalOffset();
+        RefreshText();
+    }
+
+    void ApplyCursorScale()
+    {
+        if (!scaleCursorWithUi || cursorRenderer == null)
+            return;
+
+        if (!_cursorBaseScaleCaptured)
+        {
+            _cursorBaseLocalScale = cursorRenderer.transform.localScale;
+            _cursorBaseScaleCaptured = true;
+        }
+
+        float s = _currentUiScale;
+        cursorRenderer.transform.localScale = new Vector3(
+            _cursorBaseLocalScale.x * s,
+            _cursorBaseLocalScale.y * s,
+            _cursorBaseLocalScale.z
+        );
+    }
+
     void Awake()
     {
         if (root == null)
             root = gameObject;
 
         SetupMenuTextMaterial();
-
         ResolveMenuLayoutRoot();
         CacheMenuLayoutRootBasePos();
 
         if (root != null)
             root.SetActive(false);
 
+        if (backgroundImage != null)
+            backgroundImage.gameObject.SetActive(false);
+
         if (cursorRenderer != null)
+        {
+            _cursorBaseLocalScale = cursorRenderer.transform.localScale;
+            _cursorBaseScaleCaptured = true;
             cursorRenderer.gameObject.SetActive(false);
+        }
+    }
+
+    void OnDisable()
+    {
+        if (backgroundImage != null)
+            backgroundImage.gameObject.SetActive(false);
+    }
+
+    void Update()
+    {
+        if (root != null && root.activeInHierarchy)
+            ApplyDynamicScaleIfNeeded(false);
     }
 
     void OnDestroy()
@@ -228,7 +337,10 @@ public class ControlsConfigMenu : MonoBehaviour
         CacheMenuLayoutRootBasePos();
 
         if (menuLayoutRoot != null && menuLayoutRootCached)
-            menuLayoutRoot.anchoredPosition = menuLayoutRootBasePos + new Vector2(0f, menuGlobalYOffset);
+        {
+            float y = ScaledFloat(menuGlobalYOffset);
+            menuLayoutRoot.anchoredPosition = menuLayoutRootBasePos + new Vector2(0f, y);
+        }
     }
 
     void SetupMenuTextMaterial()
@@ -238,7 +350,7 @@ public class ControlsConfigMenu : MonoBehaviour
 
         menuText.textWrappingMode = TextWrappingModes.NoWrap;
         menuText.overflowMode = TextOverflowModes.Overflow;
-        menuText.extraPadding = false;
+        menuText.extraPadding = true;
 
         if (forceBold)
             menuText.fontStyle |= FontStyles.Bold;
@@ -408,9 +520,15 @@ public class ControlsConfigMenu : MonoBehaviour
         root.transform.SetAsLastSibling();
         root.SetActive(true);
 
-        SetupMenuTextMaterial();
+        if (backgroundImage != null)
+        {
+            backgroundImage.gameObject.SetActive(true);
+            backgroundImage.color = Color.white;
+            backgroundImage.transform.SetAsFirstSibling();
+        }
 
-        ApplyMenuGlobalOffset();
+        SetupMenuTextMaterial();
+        ApplyDynamicScaleIfNeeded(true);
 
         if (controlsMusic != null && GameMusicController.Instance != null)
             GameMusicController.Instance.PlayMusic(controlsMusic, controlsMusicVolume, true);
@@ -712,6 +830,9 @@ public class ControlsConfigMenu : MonoBehaviour
         if (menuLayoutRoot != null && menuLayoutRootCached)
             menuLayoutRoot.anchoredPosition = menuLayoutRootBasePos;
 
+        if (backgroundImage != null)
+            backgroundImage.gameObject.SetActive(false);
+
         if (root != null)
             root.SetActive(false);
 
@@ -876,24 +997,30 @@ public class ControlsConfigMenu : MonoBehaviour
         if (menuText == null)
             return;
 
+        int titleSize = ScaledFont(titleFontSize);
+        float titleVO = ScaledFloat(titleVOffset);
+        int bodySize = ScaledFont(bodyFontSize);
+        int footerSize = ScaledFont(footerFontSize);
+        int gridSize = ScaledFont(selectGridFontSize);
+
         string header =
             RepeatNewLine(Mathf.Max(0, headerTopPaddingLines)) +
-            $"<align=center><size={titleFontSize}><color={colorHint}><voffset={titleVOffset}>CONTROLS</voffset></color></size></align>" +
+            $"<align=center><size={titleSize}><color={colorHint}><voffset={titleVO}>CONTROLS</voffset></color></size></align>" +
             RepeatNewLine(Mathf.Max(0, headerBottomPaddingLines)) +
             "\n";
 
         string body = "<align=center>";
-        body += $"<size={bodyFontSize}><color={colorBlueSoft}>CHOOSE A PLAYER TO EDIT CONTROLS</color></size>\n\n";
+        body += $"<size={bodySize}><color={colorBlueSoft}>CHOOSE A PLAYER TO EDIT CONTROLS</color></size>\n\n";
         body += "</align>";
 
         body += "<align=left>";
-        AppendPlayerBlock(ref body, 0, colorNormal, colorHint);
+        AppendPlayerBlock(ref body, 0, colorNormal, colorHint, gridSize);
         body += RepeatNewLine(playerBlockGapLines);
-        AppendPlayerBlock(ref body, 1, colorNormal, colorHint);
+        AppendPlayerBlock(ref body, 1, colorNormal, colorHint, gridSize);
         body += RepeatNewLine(playerBlockGapLines);
-        AppendPlayerBlock(ref body, 2, colorNormal, colorHint);
+        AppendPlayerBlock(ref body, 2, colorNormal, colorHint, gridSize);
         body += RepeatNewLine(playerBlockGapLines);
-        AppendPlayerBlock(ref body, 3, colorNormal, colorHint);
+        AppendPlayerBlock(ref body, 3, colorNormal, colorHint, gridSize);
 
         int footerLift = Mathf.Max(0, footerGapLines + footerExtraNewLines);
         body += RepeatNewLine(footerLift);
@@ -901,7 +1028,7 @@ public class ControlsConfigMenu : MonoBehaviour
         if (state == MenuState.SelectPlayer)
         {
             body +=
-                $"<align=center><size={footerFontSize}>" +
+                $"<align=center><size={footerSize}>" +
                 $"<color={colorHint}>A / START:</color> <color={colorWhite}>CONFIRM / PLACE BOMB</color>\n" +
                 $"<color={colorHint}>B:</color> <color={colorWhite}>RETURN / EXPLODE CONTROL BOMB</color>\n" +
                 $"<color={colorHint}>C:</color> <color={colorWhite}>RESTORE DEFAULT KEYS / ABILITIES</color>\n" +
@@ -915,7 +1042,7 @@ public class ControlsConfigMenu : MonoBehaviour
             string noText = confirmResetIndex == 1 ? $"<color={colorHint}>NO</color>" : $"<color={colorWhite}>NO</color>";
 
             body +=
-                $"<align=center><size={footerFontSize}>" +
+                $"<align=center><size={footerSize}>" +
                 $"<color={colorHint}>RESTORE DEFAULT KEYS?</color>\n" +
                 $"<color={colorWhite}>PLAYER {confirmResetPlayerId}</color>\n\n" +
                 $"<link=\"{LINK_RESET_YES}\">{yesText}</link>    <link=\"{LINK_RESET_NO}\">{noText}</link>\n\n" +
@@ -931,7 +1058,7 @@ public class ControlsConfigMenu : MonoBehaviour
                 : "\n";
 
             body +=
-                $"<align=center><size={footerFontSize}>" +
+                $"<align=center><size={footerSize}>" +
                 $"<color={colorHint}>REMAPPING PLAYER {targetPlayerId}:</color> <color={colorWhite}>{ActionToLabel(a)}</color>\n" +
                 $"<color={colorHint}>PRESS A KEY...</color>" +
                 blocked +
@@ -957,11 +1084,11 @@ public class ControlsConfigMenu : MonoBehaviour
         }
     }
 
-    void AppendPlayerBlock(ref string body, int index, string cn, string ch)
+    void AppendPlayerBlock(ref string body, int index, string cn, string ch, int gridSize)
     {
         for (int line = 0; line < 6; line++)
         {
-            string l = PlayerLine(index + 1, line, cn, ch, index);
+            string l = PlayerLine(index + 1, line, cn, ch, index, gridSize);
             if (state == MenuState.SelectPlayer)
                 body += $"<link=\"sel{index}\">{l}</link>\n";
             else
@@ -977,7 +1104,7 @@ public class ControlsConfigMenu : MonoBehaviour
         return $"<color={ch}>{label}</color>";
     }
 
-    string PlayerLine(int pid, int lineIndex, string cn, string ch, int selIndex)
+    string PlayerLine(int pid, int lineIndex, string cn, string ch, int selIndex, int gridSize)
     {
         var p = PlayerInputManager.Instance.GetPlayer(pid);
 
@@ -998,10 +1125,12 @@ public class ControlsConfigMenu : MonoBehaviour
         string lBtn = BindingToShort(p.GetBinding(PlayerAction.ActionL));
         string rBtn = BindingToShort(p.GetBinding(PlayerAction.ActionR));
 
-        float ll = COLUMN_LEFT_LABEL_BASE + playersBlockIndentX;
-        float lv = COLUMN_LEFT_VALUE_BASE + playersBlockIndentX;
-        float rl = COLUMN_RIGHT_LABEL_BASE + playersBlockIndentX;
-        float rv = COLUMN_RIGHT_VALUE_BASE + playersBlockIndentX;
+        float indent = ScaledFloat(playersBlockIndentX);
+
+        float ll = ScaledFloat(COLUMN_LEFT_LABEL_BASE) + indent;
+        float lv = ScaledFloat(COLUMN_LEFT_VALUE_BASE) + indent;
+        float rl = ScaledFloat(COLUMN_RIGHT_LABEL_BASE) + indent;
+        float rv = ScaledFloat(COLUMN_RIGHT_VALUE_BASE) + indent;
 
         bool isTarget = (state == MenuState.BulkRemap && pid == targetPlayerId);
 
@@ -1030,11 +1159,10 @@ public class ControlsConfigMenu : MonoBehaviour
             5 => $"<pos={ll}>{Lbl(PlayerAction.Start, "START:")}</pos><pos={lv}>{st}</pos>" +
                  $"<pos={rl}>{Lbl(PlayerAction.ActionR, "R:")}</pos><pos={rv}>{rBtn}</pos>",
 
-            6 => string.Empty,
             _ => string.Empty
         };
 
-        return $"<size={selectGridFontSize}><color={cn}>{txt}</color></size>";
+        return $"<size={gridSize}><color={cn}>{txt}</color></size>";
     }
 
     static string BindingToShort(Binding b)
@@ -1093,6 +1221,10 @@ public class ControlsConfigMenu : MonoBehaviour
         float bestY = float.NegativeInfinity;
         Vector3 bestLocalPos = default;
 
+        float gapLeft = ScaledFloat(cursorGapLeft);
+        float lineAdjustY = ScaledFloat(cursorLineCenterAdjustY);
+        Vector2 offs = new Vector2(ScaledFloat(cursorOffset.x), ScaledFloat(cursorOffset.y));
+
         for (int i = 0; i < ti.linkCount; i++)
         {
             var li = ti.linkInfo[i];
@@ -1125,19 +1257,25 @@ public class ControlsConfigMenu : MonoBehaviour
 
             var ci = ti.characterInfo[anchorChar];
 
-            float x = ci.bottomLeft.x - cursorGapLeft;
-            float y = (ci.ascender + ci.descender) * 0.5f + cursorLineCenterAdjustY;
+            float x = ci.bottomLeft.x - gapLeft;
+            float y = (ci.ascender + ci.descender) * 0.5f + lineAdjustY;
 
             if (y > bestY)
             {
                 bestY = y;
-                bestLocalPos = new Vector3(x + cursorOffset.x, y + cursorOffset.y, 0f);
+                bestLocalPos = new Vector3(x + offs.x, y + offs.y, 0f);
                 foundAny = true;
             }
         }
 
         if (!foundAny)
             return;
+
+        if (roundCursorToWholePixels)
+        {
+            bestLocalPos.x = Mathf.Round(bestLocalPos.x);
+            bestLocalPos.y = Mathf.Round(bestLocalPos.y);
+        }
 
         cursorRenderer.SetExternalBaseLocalPosition(bestLocalPos);
     }
