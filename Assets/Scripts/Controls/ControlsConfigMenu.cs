@@ -515,7 +515,7 @@ public class ControlsConfigMenu : MonoBehaviour
 
         if (menuLayoutRoot != null && menuLayoutRootCached)
         {
-            float y = ScaledFloat(menuGlobalYOffset);
+            float y = menuGlobalYOffset;
             menuLayoutRoot.anchoredPosition = menuLayoutRootBasePos + new Vector2(0f, y);
         }
     }
@@ -1323,7 +1323,7 @@ public class ControlsConfigMenu : MonoBehaviour
         string lBtn = BindingToShort(p.GetBinding(PlayerAction.ActionL));
         string rBtn = BindingToShort(p.GetBinding(PlayerAction.ActionR));
 
-        float indent = playersBlockIndentX;
+        float indent = playersBlockIndentX * _currentUiScale;
 
         float ll = ScaledFloat(COLUMN_LEFT_LABEL_BASE) + indent;
         float lv = ScaledFloat(COLUMN_LEFT_VALUE_BASE) + indent;
