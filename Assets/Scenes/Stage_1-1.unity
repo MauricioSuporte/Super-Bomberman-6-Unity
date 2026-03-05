@@ -6283,9 +6283,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 15b14ab88f8808a4183ec8ebd7dfc660, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ControlsConfigMenu
+  enableSurgicalLogs: 1
+  logOnResolutionOrRefChange: 1
+  logDumpOnLayoutRecompute: 1
+  logOnRefreshText: 1
+  logOnCursor: 1
   ownerPlayerId: 1
   root: {fileID: 1107666575}
   backgroundImage: {fileID: 700387565}
+  referenceRect: {fileID: 1599199474}
   menuLayoutRoot: {fileID: 1876253041}
   menuGlobalYOffset: 50
   fadeImage: {fileID: 336813435}

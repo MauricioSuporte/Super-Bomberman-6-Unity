@@ -8,12 +8,33 @@ using UnityEngine.UI;
 
 public class ControlsConfigMenu : MonoBehaviour
 {
+    const string LOG = "[ControlsMenu]";
+
+    [Header("Debug (Surgical Logs)")]
+    [SerializeField] bool enableSurgicalLogs = true;
+
+    [Tooltip("Loga quando Screen/cameraRect/referenceRect mudar e recalcular escala/layout.")]
+    [SerializeField] bool logOnResolutionOrRefChange = true;
+
+    [Tooltip("Dump completo de geometria (Canvas/RectTransforms) quando recomputar layout.")]
+    [SerializeField] bool logDumpOnLayoutRecompute = true;
+
+    [Tooltip("Loga detalhes do TMP (preferred/bounds/rect) quando fizer RefreshText.")]
+    [SerializeField] bool logOnRefreshText = true;
+
+    [Tooltip("Loga detalhes do cursor/link quando atualizar posição do cursor.")]
+    [SerializeField] bool logOnCursor = true;
+
     [Header("Menu Owner (who navigates UI)")]
     [SerializeField, Range(1, 4)] int ownerPlayerId = 1;
 
     [Header("UI")]
     [SerializeField] GameObject root;
     [SerializeField] RawImage backgroundImage;
+
+    [Header("Reference Frame (SafeFrame4x3)")]
+    [Tooltip("Arraste aqui o SafeFrame4x3 (RectTransform). É esse retângulo que define o 'mundo UI' que deve caber no background.")]
+    [SerializeField] RectTransform referenceRect;
 
     [Header("Layout Root (moves menu as a whole)")]
     [SerializeField] RectTransform menuLayoutRoot;
@@ -151,8 +172,14 @@ public class ControlsConfigMenu : MonoBehaviour
     float _currentUiScale = 1f;
     int _currentBaseScaleInt = 1;
 
-    int _lastW = -1;
-    int _lastH = -1;
+    int _lastScreenW = -1;
+    int _lastScreenH = -1;
+
+    Rect _lastCameraRect;
+    Rect _lastRefPixelRect;
+
+    Vector2 _menuTextBaseSizeDelta;
+    bool _menuTextBaseCaptured;
 
     Vector3 _cursorBaseLocalScale = Vector3.one;
     bool _cursorBaseScaleCaptured;
@@ -174,7 +201,75 @@ public class ControlsConfigMenu : MonoBehaviour
     int ScaledFont(int baseSize) => Mathf.Clamp(Mathf.RoundToInt(baseSize * _currentUiScale), 10, 500);
     float ScaledFloat(float baseValue) => baseValue * _currentUiScale;
 
-    float ComputeUiScaleForSize(float usedW, float usedH, out int baseScaleInt)
+    void SLog(string msg)
+    {
+        if (!enableSurgicalLogs) return;
+        Debug.Log($"{LOG} {msg}", this);
+    }
+
+    Canvas GetRootCanvas()
+    {
+        if (menuText != null)
+            return menuText.canvas;
+
+        if (root != null)
+            return root.GetComponentInParent<Canvas>();
+
+        return GetComponentInParent<Canvas>();
+    }
+
+    Camera GetMainCameraSafe()
+    {
+        var cam = Camera.main;
+        if (cam != null) return cam;
+
+        var any = FindObjectOfType<Camera>();
+        return any;
+    }
+
+    Rect GetReferencePixelRect(out string source)
+    {
+        source = "NONE";
+
+        var canvas = GetRootCanvas();
+        if (canvas == null)
+        {
+            source = "NO_CANVAS";
+            return new Rect(0, 0, Screen.width, Screen.height);
+        }
+
+        RectTransform rt = referenceRect;
+        if (rt == null)
+        {
+            if (menuLayoutRoot != null) rt = menuLayoutRoot;
+            else if (root != null) rt = root.GetComponent<RectTransform>();
+            else if (menuText != null) rt = menuText.rectTransform;
+        }
+
+        if (rt == null)
+        {
+            source = "FALLBACK_SCREEN";
+            return new Rect(0, 0, Screen.width, Screen.height);
+        }
+
+        source = rt.name;
+
+        Rect px = RectTransformUtility.PixelAdjustRect(rt, canvas);
+        if (px.width <= 1f || px.height <= 1f)
+        {
+            var r = rt.rect;
+            px = new Rect(0, 0, r.width, r.height);
+            source += "+rt.rect";
+        }
+        else
+        {
+            source += "+PixelAdjustRect";
+        }
+
+        return px;
+    }
+
+    float ComputeUiScaleForRect(float usedW, float usedH, out int baseScaleInt)
     {
         baseScaleInt = 1;
 
@@ -185,7 +280,8 @@ public class ControlsConfigMenu : MonoBehaviour
         float sy = usedH / Mathf.Max(1f, referenceHeight);
 
         float baseScaleRaw = Mathf.Min(sx, sy);
-        float baseScaleForUi = useIntegerUpscale ? Mathf.Round(baseScaleRaw) : baseScaleRaw;
+
+        float baseScaleForUi = useIntegerUpscale ? Mathf.Floor(baseScaleRaw) : baseScaleRaw;
         if (baseScaleForUi < 1f) baseScaleForUi = 1f;
 
         baseScaleInt = Mathf.Max(1, Mathf.RoundToInt(baseScaleForUi));
@@ -199,20 +295,83 @@ public class ControlsConfigMenu : MonoBehaviour
 
     void ApplyDynamicScaleIfNeeded(bool force = false)
     {
-        int w = Screen.width;
-        int h = Screen.height;
+        int sw = Screen.width;
+        int sh = Screen.height;
 
-        if (!force && w == _lastW && h == _lastH)
+        var cam = GetMainCameraSafe();
+        Rect camRect = cam != null ? cam.rect : new Rect(0, 0, 1, 1);
+
+        Rect refPx = GetReferencePixelRect(out string refSource);
+
+        bool changed =
+            force ||
+            sw != _lastScreenW ||
+            sh != _lastScreenH ||
+            camRect != _lastCameraRect ||
+            !ApproximatelyRect(refPx, _lastRefPixelRect);
+
+        if (!changed)
             return;
 
-        _lastW = w;
-        _lastH = h;
+        _lastScreenW = sw;
+        _lastScreenH = sh;
+        _lastCameraRect = camRect;
+        _lastRefPixelRect = refPx;
 
-        _currentUiScale = ComputeUiScaleForSize(w, h, out _currentBaseScaleInt);
+        _currentUiScale = ComputeUiScaleForRect(refPx.width, refPx.height, out _currentBaseScaleInt);
+
+        if (logOnResolutionOrRefChange)
+        {
+            SLog($"RecomputeLayout | Screen=({sw}x{sh}) cam.rect=({camRect.x:F3},{camRect.y:F3},{camRect.width:F3},{camRect.height:F3}) refPx=({refPx.width:F1}x{refPx.height:F1}) refSource={refSource} baseScaleInt={_currentBaseScaleInt} uiScale={_currentUiScale:F4} intUpscale={useIntegerUpscale} designUpscale={designUpscale} extraMult={extraScaleMultiplier}");
+        }
 
         ApplyCursorScale();
         ApplyMenuGlobalOffset();
+        ApplyMenuTextRectScale();
         RefreshText();
+
+        if (logDumpOnLayoutRecompute)
+            DumpGeometry(refSource, refPx, camRect);
+    }
+
+    static bool ApproximatelyRect(Rect a, Rect b)
+    {
+        return
+            Mathf.Abs(a.x - b.x) < 0.01f &&
+            Mathf.Abs(a.y - b.y) < 0.01f &&
+            Mathf.Abs(a.width - b.width) < 0.01f &&
+            Mathf.Abs(a.height - b.height) < 0.01f;
+    }
+
+    void DumpGeometry(string refSource, Rect refPx, Rect camRect)
+    {
+        var canvas = GetRootCanvas();
+        float canvasScale = canvas != null ? canvas.scaleFactor : 1f;
+
+        RectTransform canvasRt = canvas != null ? canvas.transform as RectTransform : null;
+        Rect canvasRect = canvasRt != null ? canvasRt.rect : new Rect(0, 0, Screen.width, Screen.height);
+
+        SLog($"Dump | canvas={(canvas != null ? canvas.name : "NULL")} mode={(canvas != null ? canvas.renderMode.ToString() : "NULL")} scaleFactor={canvasScale:F3} canvasRect=({canvasRect.width:F1}x{canvasRect.height:F1})");
+        SLog($"Dump | cameraRectNorm=({camRect.x:F3},{camRect.y:F3},{camRect.width:F3},{camRect.height:F3}) refSource={refSource} refPxSize=({refPx.width:F1}x{refPx.height:F1})");
+
+        if (referenceRect != null) DumpRectTransform("referenceRect", referenceRect);
+        if (menuLayoutRoot != null) DumpRectTransform("menuLayoutRoot", menuLayoutRoot);
+        if (backgroundImage != null) DumpRectTransform("backgroundImage", backgroundImage.rectTransform);
+        if (menuText != null) DumpRectTransform("menuText", menuText.rectTransform);
+    }
+
+    void DumpRectTransform(string label, RectTransform rt)
+    {
+        if (rt == null) return;
+
+        Vector2 amin = rt.anchorMin;
+        Vector2 amax = rt.anchorMax;
+        Vector2 piv = rt.pivot;
+        Vector2 ap = rt.anchoredPosition;
+        Vector2 sd = rt.sizeDelta;
+        Rect r = rt.rect;
+
+        SLog($"RT {label} '{rt.name}' | anchors=({amin.x:F3},{amin.y:F3})-({amax.x:F3},{amax.y:F3}) pivot=({piv.x:F3},{piv.y:F3}) anchoredPos=({ap.x:F2},{ap.y:F2}) sizeDelta=({sd.x:F2},{sd.y:F2}) rect=({r.width:F2}x{r.height:F2}) lossyScale=({rt.lossyScale.x:F3},{rt.lossyScale.y:F3},{rt.lossyScale.z:F3})");
     }
 
     void ApplyCursorScale()
@@ -246,6 +405,12 @@ public class ControlsConfigMenu : MonoBehaviour
         if (root != null)
             root.SetActive(false);
 
+        if (menuText != null && !_menuTextBaseCaptured)
+        {
+            _menuTextBaseSizeDelta = menuText.rectTransform.sizeDelta;
+            _menuTextBaseCaptured = true;
+        }
+
         if (backgroundImage != null)
             backgroundImage.gameObject.SetActive(false);
 
@@ -255,6 +420,18 @@ public class ControlsConfigMenu : MonoBehaviour
             _cursorBaseScaleCaptured = true;
             cursorRenderer.gameObject.SetActive(false);
         }
+
+        _lastCameraRect = new Rect(-999, -999, -999, -999);
+        _lastRefPixelRect = new Rect(-999, -999, -999, -999);
+    }
+
+    void ApplyMenuTextRectScale()
+    {
+        if (menuText == null || !_menuTextBaseCaptured)
+            return;
+
+        var rt = menuText.rectTransform;
+        rt.sizeDelta = _menuTextBaseSizeDelta * _currentUiScale;
     }
 
     void OnDisable()
@@ -316,7 +493,7 @@ public class ControlsConfigMenu : MonoBehaviour
             return;
 
         warnedAboutAutoLayoutRoot = true;
-        Debug.LogWarning($"ControlsConfigMenu: 'Menu Layout Root' was not set. Auto-using {source}. Assign it in the Inspector to control what moves as a whole.", this);
+        Debug.LogWarning($"{LOG} 'Menu Layout Root' was not set. Auto-using {source}. Assign it in the Inspector.", this);
     }
 
     void CacheMenuLayoutRootBasePos()
@@ -1070,6 +1247,9 @@ public class ControlsConfigMenu : MonoBehaviour
 
         menuText.text = header + body;
 
+        if (logOnRefreshText)
+            LogTmpMetrics();
+
         if (state == MenuState.SelectPlayer)
         {
             UpdateCursorPosition_ByLinkId($"sel{playerSelectIndex}");
@@ -1082,6 +1262,24 @@ public class ControlsConfigMenu : MonoBehaviour
         {
             UpdateCursorPosition_ByLinkId(CurrentWaitLinkId());
         }
+    }
+
+    void LogTmpMetrics()
+    {
+        if (!enableSurgicalLogs || menuText == null) return;
+
+        menuText.ForceMeshUpdate();
+
+        var rt = menuText.rectTransform;
+        var r = rt != null ? rt.rect : new Rect();
+        Vector2 pref = menuText.GetPreferredValues(menuText.text, Mathf.Infinity, Mathf.Infinity);
+
+        var ti = menuText.textInfo;
+        int charCount = ti != null ? ti.characterCount : -1;
+        int lineCount = ti != null ? ti.lineCount : -1;
+        int linkCount = ti != null ? ti.linkCount : -1;
+
+        SLog($"TMP | fontSize={menuText.fontSize:F2} autoSize={menuText.enableAutoSizing} rect=({r.width:F1}x{r.height:F1}) pref=({pref.x:F1}x{pref.y:F1}) chars={charCount} lines={lineCount} links={linkCount} uiScale={_currentUiScale:F4} baseScaleInt={_currentBaseScaleInt}");
     }
 
     void AppendPlayerBlock(ref string body, int index, string cn, string ch, int gridSize)
@@ -1125,7 +1323,7 @@ public class ControlsConfigMenu : MonoBehaviour
         string lBtn = BindingToShort(p.GetBinding(PlayerAction.ActionL));
         string rBtn = BindingToShort(p.GetBinding(PlayerAction.ActionR));
 
-        float indent = ScaledFloat(playersBlockIndentX);
+        float indent = playersBlockIndentX;
 
         float ll = ScaledFloat(COLUMN_LEFT_LABEL_BASE) + indent;
         float lv = ScaledFloat(COLUMN_LEFT_VALUE_BASE) + indent;
@@ -1278,6 +1476,9 @@ public class ControlsConfigMenu : MonoBehaviour
         }
 
         cursorRenderer.SetExternalBaseLocalPosition(bestLocalPos);
+
+        if (logOnCursor)
+            SLog($"Cursor | linkId={linkId} local=({bestLocalPos.x:F2},{bestLocalPos.y:F2}) uiScale={_currentUiScale:F4}");
     }
 
     void PlaySfx(AudioClip clip, float volume)
