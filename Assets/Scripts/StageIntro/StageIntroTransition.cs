@@ -18,6 +18,12 @@ public class StageIntroTransition : MonoBehaviour
     [Header("Hudson Logo")]
     public HudsonLogoIntro hudsonLogoIntro;
 
+    [Header("Hudson Background (white)")]
+    [Tooltip("Imagem branca (UI Image) para cobrir o fundo durante a Hudson Logo. Ideal: fora do SafeFrame4x3, com anchors em Stretch para cobrir a tela toda.")]
+    public Image hudsonBackgroundImage;
+
+    [SerializeField] private bool showHudsonBackground = true;
+
     [Header("Title Screen")]
     public TitleScreenController titleScreen;
 
@@ -97,6 +103,8 @@ public class StageIntroTransition : MonoBehaviour
 
         if (hudsonLogoIntro != null)
             hudsonLogoIntro.ForceHide();
+
+        SetHudsonBackgroundVisible(false);
     }
 
 #if UNITY_EDITOR
@@ -129,7 +137,6 @@ public class StageIntroTransition : MonoBehaviour
             gameplayRoot.SetActive(false);
 
         RefreshControllers(includeInactive: true);
-
         DisableGameplayControllersAndHideSprites(hideLouieAndEggs: IsStage17());
 
         if (fadeImage != null)
@@ -145,6 +152,8 @@ public class StageIntroTransition : MonoBehaviour
         if (hudsonLogoIntro != null)
             hudsonLogoIntro.ForceHide();
 
+        SetHudsonBackgroundVisible(false);
+
         if (skipTitleNextRound)
         {
             skipTitleNextRound = false;
@@ -156,6 +165,25 @@ public class StageIntroTransition : MonoBehaviour
             StartCoroutine(FullIntroSequence());
         else
             StartCoroutine(StageIntroOnlySequence());
+    }
+
+    void SetHudsonBackgroundVisible(bool visible)
+    {
+        if (!showHudsonBackground)
+            visible = false;
+
+        if (hudsonBackgroundImage == null)
+            return;
+
+        hudsonBackgroundImage.gameObject.SetActive(visible);
+
+        if (visible)
+        {
+            hudsonBackgroundImage.transform.SetAsFirstSibling();
+            var c = hudsonBackgroundImage.color;
+            c.a = 1f;
+            hudsonBackgroundImage.color = c;
+        }
     }
 
     void RefreshControllers(bool includeInactive)
@@ -250,6 +278,8 @@ public class StageIntroTransition : MonoBehaviour
     {
         hasPlayedLogoIntro = true;
 
+        SetHudsonBackgroundVisible(true);
+
         if (fadeImage != null)
             yield return FadeAlphaRoutine(1f, 0f, fadeOpenBeforeHudsonSeconds);
 
@@ -265,6 +295,8 @@ public class StageIntroTransition : MonoBehaviour
 
         if (fadeImage != null)
             yield return FadeAlphaRoutine(0f, 1f, fadeCloseAfterHudsonSeconds);
+
+        SetHudsonBackgroundVisible(false);
 
         yield return ShowTitleScreen();
     }
@@ -288,6 +320,8 @@ public class StageIntroTransition : MonoBehaviour
             fadeImage.transform.SetAsLastSibling();
             SetFadeAlpha(1f);
         }
+
+        SetHudsonBackgroundVisible(false);
 
         yield return titleScreen.Play(fadeImage);
 
@@ -388,6 +422,8 @@ public class StageIntroTransition : MonoBehaviour
 
     IEnumerator FadeInToGame()
     {
+        SetHudsonBackgroundVisible(false);
+
         if (gameplayRoot != null)
             gameplayRoot.SetActive(true);
 
@@ -676,6 +712,8 @@ public class StageIntroTransition : MonoBehaviour
 
     IEnumerator EndingScreenSequence()
     {
+        SetHudsonBackgroundVisible(false);
+
         GamePauseController.ClearPauseFlag();
         Time.timeScale = 0f;
 
