@@ -65,6 +65,10 @@ public class StageIntroTransition : MonoBehaviour
     [Header("Pre-Intro Walk (optional)")]
     public StagePreIntroPlayersWalk preIntroWalk;
 
+    [Header("Hudson Logo Fade")]
+    [SerializeField, Min(0f)] private float fadeOpenBeforeHudsonSeconds = 0.20f;
+    [SerializeField, Min(0f)] private float fadeCloseAfterHudsonSeconds = 0.12f;
+
     public static void SkipTitleScreenOnNextLoad()
     {
         skipTitleNextRound = true;
@@ -130,10 +134,9 @@ public class StageIntroTransition : MonoBehaviour
 
         if (fadeImage != null)
         {
-            var c = fadeImage.color;
-            c.a = 1f;
-            fadeImage.color = c;
             fadeImage.gameObject.SetActive(true);
+            fadeImage.transform.SetAsLastSibling();
+            SetFadeAlpha(1f);
         }
 
         if (titleScreen != null)
@@ -247,11 +250,21 @@ public class StageIntroTransition : MonoBehaviour
     {
         hasPlayedLogoIntro = true;
 
+        if (fadeImage != null)
+            yield return FadeAlphaRoutine(1f, 0f, fadeOpenBeforeHudsonSeconds);
+
         if (hudsonLogoIntro != null)
+        {
+            hudsonLogoIntro.gameObject.SetActive(true);
+            hudsonLogoIntro.transform.SetAsLastSibling();
             yield return hudsonLogoIntro.Play();
+        }
 
         if (titleScreen != null && hudsonLogoIntro != null && hudsonLogoIntro.Skipped)
             titleScreen.SetIgnoreStartKeyUntilRelease();
+
+        if (fadeImage != null)
+            yield return FadeAlphaRoutine(0f, 1f, fadeCloseAfterHudsonSeconds);
 
         yield return ShowTitleScreen();
     }
@@ -267,6 +280,13 @@ public class StageIntroTransition : MonoBehaviour
         {
             yield return FadeInToGame();
             yield break;
+        }
+
+        if (fadeImage != null)
+        {
+            fadeImage.gameObject.SetActive(true);
+            fadeImage.transform.SetAsLastSibling();
+            SetFadeAlpha(1f);
         }
 
         yield return titleScreen.Play(fadeImage);
@@ -312,6 +332,37 @@ public class StageIntroTransition : MonoBehaviour
         }
 
         yield return FadeInToGame();
+    }
+
+    void SetFadeAlpha(float a)
+    {
+        if (fadeImage == null) return;
+        var c = fadeImage.color;
+        c.a = a;
+        fadeImage.color = c;
+    }
+
+    IEnumerator FadeAlphaRoutine(float from, float to, float seconds)
+    {
+        if (fadeImage == null)
+            yield break;
+
+        fadeImage.gameObject.SetActive(true);
+        fadeImage.transform.SetAsLastSibling();
+
+        float t = 0f;
+        Color baseColor = fadeImage.color;
+
+        while (t < seconds)
+        {
+            t += Time.unscaledDeltaTime;
+            float k = seconds <= 0.0001f ? 1f : Mathf.Clamp01(t / seconds);
+            float a = Mathf.Lerp(from, to, k);
+            fadeImage.color = new Color(baseColor.r, baseColor.g, baseColor.b, a);
+            yield return null;
+        }
+
+        fadeImage.color = new Color(baseColor.r, baseColor.g, baseColor.b, to);
     }
 
     IEnumerator PreloadIntroAudio()
@@ -637,6 +688,7 @@ public class StageIntroTransition : MonoBehaviour
         if (fadeImage != null)
         {
             fadeImage.gameObject.SetActive(true);
+            fadeImage.transform.SetAsLastSibling();
             var fc = fadeImage.color;
             fc.a = 1f;
             fadeImage.color = fc;
