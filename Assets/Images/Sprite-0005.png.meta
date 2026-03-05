@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: d9b40f7c613f2bf4dad34adcd19bfd2d
+guid: 7d9f65848e6eafb49987b86490b98073
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -8249060897850787685
-    second: flat-design-pixel-art-cloud-illustration_23-2150209316_0
+      213: -4885373251318296212
+    second: Sprite-0005_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -100,7 +100,7 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: flat-design-pixel-art-cloud-illustration_23-2150209316_0
+      name: Sprite-0005_0
       rect:
         serializedVersion: 2
         x: 0
@@ -115,8 +115,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: b98f90d91d2758d80800000000000000
-      internalID: -8249060897850787685
+      spriteID: c615af769eaa33cb0800000000000000
+      internalID: -4885373251318296212
       vertices: []
       indices: 
       edges: []
@@ -135,7 +135,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      flat-design-pixel-art-cloud-illustration_23-2150209316_0: -8249060897850787685
+      Sprite-0005_0: -4885373251318296212
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
