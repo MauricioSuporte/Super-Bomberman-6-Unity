@@ -6293,22 +6293,22 @@ MonoBehaviour:
   backgroundImage: {fileID: 700387565}
   referenceRect: {fileID: 1599199474}
   menuLayoutRoot: {fileID: 1876253041}
-  menuGlobalYOffset: 50
+  menuGlobalYOffset: 0
   fadeImage: {fileID: 336813435}
   fadeInDuration: 0.25
   fadeOutDuration: 0.2
   controlsMusic: {fileID: 8300000, guid: 995a31f86fa5dcd4e8e4ba88dc2854cf, type: 3}
   controlsMusicVolume: 1
   menuText: {fileID: 534844157}
-  titleFontSize: 36
+  titleFontSize: 32
   titleVOffset: 26
   headerTopPaddingLines: 1
   headerBottomPaddingLines: 0
-  bodyFontSize: 28
+  bodyFontSize: 24
   footerGapLines: 0
   footerFontSize: 20
-  footerExtraNewLines: 2
-  selectGridFontSize: 24
+  footerExtraNewLines: 1
+  selectGridFontSize: 22
   playerBlockGapLines: 1
   forceBold: 1
   outlineColor: {r: 0, g: 0, b: 0, a: 1}

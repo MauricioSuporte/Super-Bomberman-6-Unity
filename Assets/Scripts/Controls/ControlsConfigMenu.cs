@@ -130,9 +130,9 @@ public class ControlsConfigMenu : MonoBehaviour
     const string colorPlayerGreen = "#8CFFB3";
     const string colorPlayerSelectedRed = "#FF5A5A";
 
-    const float COLUMN_LEFT_LABEL_BASE = -400f;
-    const float COLUMN_LEFT_VALUE_BASE = -240f;
-    const float COLUMN_RIGHT_LABEL_BASE = 100f;
+    const float COLUMN_LEFT_LABEL_BASE = -350f;
+    const float COLUMN_LEFT_VALUE_BASE = -190f;
+    const float COLUMN_RIGHT_LABEL_BASE = 200f;
     const float COLUMN_RIGHT_VALUE_BASE = 260f;
 
     const string LINK_WAIT_PREFIX = "wait_";

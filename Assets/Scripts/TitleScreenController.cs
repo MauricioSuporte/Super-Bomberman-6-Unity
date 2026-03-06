@@ -126,7 +126,7 @@ public class TitleScreenController : MonoBehaviour
     [Header("Boss Rush Lock (separate bottom message)")]
     [SerializeField] bool bossRushUnlocked = false;
     [SerializeField, Range(0.05f, 1f)] float bossRushLockedAlpha = 0.35f;
-    [SerializeField] string bossRushLockedMessage = "Unlocked after completing Normal Game";
+    string bossRushLockedMessage = "UNLOCKED BY COMPLETING NORMAL MODE";
     [SerializeField] string bossRushLockedMessageHex = "#FF3B30";
     [SerializeField] TextMeshProUGUI bossRushLockedText;
     [SerializeField] int bossRushLockedFontSize = 34;
