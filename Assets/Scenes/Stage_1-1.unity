@@ -1767,7 +1767,6 @@ MonoBehaviour:
   footerShowSeconds: 2
   bossRushUnlocked: 0
   bossRushLockedAlpha: 0.35
-  bossRushLockedMessage: UNLOCKED AFTER COMPLETING NORMAL GAME
   bossRushLockedMessageHex: '#FF3B30'
   bossRushLockedText: {fileID: 0}
   bossRushLockedFontSize: 34
@@ -3687,6 +3686,7 @@ GameObject:
   - component: {fileID: 700387561}
   - component: {fileID: 700387563}
   - component: {fileID: 700387565}
+  - component: {fileID: 700387566}
   m_Layer: 5
   m_Name: Background
   m_TagString: Untagged
@@ -3741,13 +3741,38 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Texture: {fileID: 2800000, guid: 7d9f65848e6eafb49987b86490b98073, type: 3}
+  m_Texture: {fileID: 2800000, guid: 72512c15f17154041b6e19b542f88e96, type: 3}
   m_UVRect:
     serializedVersion: 2
     x: 0
     y: 0
     width: 1
     height: 1
+--- !u!114 &700387566
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 700387560}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 19e691830ed75a249ba9b4761a55d21f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PixelPerfectScrollingRawImage
+  targetImage: {fileID: 700387565}
+  referenceRect: {fileID: 1599199474}
+  textureOverride: {fileID: 0}
+  spriteOverride: {fileID: 21300000, guid: 72512c15f17154041b6e19b542f88e96, type: 3}
+  viewportWidth: 256
+  viewportHeight: 224
+  scroll: 1
+  unscaledTime: 1
+  scrollSpeedPixelsPerSecond: 8
+  direction: 1
+  snapUvToTexturePixels: 1
+  applySizeToReferenceRect: 1
+  logChanges: 0
 --- !u!1 &732032079
 GameObject:
   m_ObjectHideFlags: 0
