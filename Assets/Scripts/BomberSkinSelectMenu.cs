@@ -1299,14 +1299,12 @@ public class BomberSkinSelectMenu : MonoBehaviour
         var cam = Camera.main;
         if (cam != null) return cam;
 
-        var any = FindObjectOfType<Camera>();
+        var any = FindFirstObjectByType<Camera>();
         return any;
     }
 
     Rect GetReferencePixelRect(out string source)
     {
-        source = "NONE";
-
         var canvas = GetRootCanvas();
         if (canvas == null)
         {
