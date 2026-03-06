@@ -6,19 +6,7 @@ using UnityEngine.UI;
 
 public class BomberSkinSelectMenu : MonoBehaviour
 {
-    const string LOG = "[SkinSelectMenu]";
-
-    [Header("Debug (Surgical Logs)")]
-    [SerializeField] bool enableSurgicalLogs = true;
-    [SerializeField] bool logOnAwake = true;
-    [SerializeField] bool logOnOpen = true;
-    [SerializeField] bool logOnResolutionOrRefChange = true;
-    [SerializeField] bool logDumpOnLayoutRecompute = true;
-    [SerializeField] bool logOnBuildGrid = true;
-    [SerializeField] bool logOnCursorLayout = true;
-    [SerializeField] bool warnWhenLayoutIsSuspicious = true;
-
-    [Header("Auto Fix Layout (for diagnosis)")]
+    [Header("Auto Fix Layout")]
     [SerializeField] bool forceRootPanelStretchToParent = false;
     [SerializeField] bool forceBackgroundStretchToRootPanel = false;
 
@@ -218,18 +206,6 @@ public class BomberSkinSelectMenu : MonoBehaviour
 
     readonly List<PlayerCursorState> players = new();
 
-    void SLog(string msg)
-    {
-        if (!enableSurgicalLogs) return;
-        Debug.Log($"{LOG} {msg}", this);
-    }
-
-    void SWarn(string msg)
-    {
-        if (!enableSurgicalLogs) return;
-        Debug.LogWarning($"{LOG} {msg}", this);
-    }
-
     void Awake()
     {
         if (root == null)
@@ -243,9 +219,6 @@ public class BomberSkinSelectMenu : MonoBehaviour
 
         BuildGrid();
         ApplyDynamicScaleIfNeeded(true);
-
-        if (logOnAwake)
-            DumpAllGeometry("Awake");
 
         if (root != null)
             root.SetActive(false);
@@ -303,9 +276,6 @@ public class BomberSkinSelectMenu : MonoBehaviour
 
         ApplyAutoFixesIfEnabled();
         ApplyDynamicScaleIfNeeded(true);
-
-        if (logOnOpen)
-            DumpAllGeometry("OpenRoutine:AfterActivate");
 
         if (fadeImage != null)
         {
@@ -871,9 +841,6 @@ public class BomberSkinSelectMenu : MonoBehaviour
 
             players.Add(st);
         }
-
-        if (logOnCursorLayout)
-            SLog($"BuildPlayerCursors | activeCount={activeCount} playersCreated={players.Count}");
     }
 
     void BuildGrid()
@@ -882,10 +849,7 @@ public class BomberSkinSelectMenu : MonoBehaviour
         slotImages.Clear();
 
         if (gridRoot == null || skinItemPrefab == null)
-        {
-            SLog($"BuildGrid aborted | gridRoot={(gridRoot == null ? "NULL" : gridRoot.name)} skinItemPrefab={(skinItemPrefab == null ? "NULL" : skinItemPrefab.name)}");
             return;
-        }
 
         if (gridRoot.TryGetComponent<GridLayoutGroup>(out var grid))
         {
@@ -934,13 +898,6 @@ public class BomberSkinSelectMenu : MonoBehaviour
             slotRoots.Add(slotRt);
             slotImages.Add(img);
         }
-
-        if (logOnBuildGrid)
-        {
-            SLog($"BuildGrid | slots={slotRoots.Count} selectableSkins={selectableSkins.Count} columns={columns} cellSize=({cellSize.x:F2},{cellSize.y:F2}) spacing=({spacing.x:F2},{spacing.y:F2})");
-            DumpRectTransform("gridRoot", gridRoot as RectTransform);
-            DumpRectTransform("skinItemPrefab", skinItemPrefab.rectTransform);
-        }
     }
 
     void UpdateAllCursorsToSelected()
@@ -978,11 +935,6 @@ public class BomberSkinSelectMenu : MonoBehaviour
             ps.cursorRt.sizeDelta = targetSize;
             ps.cursorRt.localScale = Vector3.one;
             ps.cursorRt.localRotation = Quaternion.identity;
-
-            if (logOnCursorLayout)
-            {
-                SLog($"CursorLayout | P{ps.playerId} slot={idx} slotRect=({baseSize.x:F2}x{baseSize.y:F2}) targetSize=({targetSize.x:F2}x{targetSize.y:F2}) cursorYOffset={cursorYOffset:F2} uiScale={_currentUiScale:F4}");
-            }
         }
     }
 
@@ -1434,8 +1386,6 @@ public class BomberSkinSelectMenu : MonoBehaviour
         _baseCursorYOffset = cursorYOffset;
         _baseEndStageYOffset = endStageYOffset;
         _baseValuesCaptured = true;
-
-        SLog($"CaptureBaseValues | baseCellSize=({_baseCellSize.x:F2},{_baseCellSize.y:F2}) baseSpacing=({_baseSpacing.x:F2},{_baseSpacing.y:F2}) baseCursorPadding=({_baseCursorPadding.x:F2},{_baseCursorPadding.y:F2}) baseCursorYOffset={_baseCursorYOffset:F2} baseEndStageYOffset={_baseEndStageYOffset:F2}");
     }
 
     void ApplyDynamicScaleIfNeeded(bool force = false)
@@ -1448,7 +1398,7 @@ public class BomberSkinSelectMenu : MonoBehaviour
 
         var cam = GetMainCameraSafe();
         Rect camRect = cam != null ? cam.rect : new Rect(0, 0, 1, 1);
-        Rect refPx = GetReferencePixelRect(out string refSource);
+        Rect refPx = GetReferencePixelRect(out _);
 
         bool changed =
             force ||
@@ -1473,27 +1423,13 @@ public class BomberSkinSelectMenu : MonoBehaviour
         cursorYOffset = _baseCursorYOffset * _currentUiScale;
         endStageYOffset = _baseEndStageYOffset * _currentUiScale;
 
-        if (logOnResolutionOrRefChange)
-        {
-            SLog($"RecomputeLayout | Screen=({sw}x{sh}) cam.rect=({camRect.x:F3},{camRect.y:F3},{camRect.width:F3},{camRect.height:F3}) refPx=({refPx.width:F2}x{refPx.height:F2}) refSource={refSource} baseScaleInt={_currentBaseScaleInt} uiScale={_currentUiScale:F4} intUpscale={useIntegerUpscale} designUpscale={designUpscale} extraMult={extraScaleMultiplier}");
-        }
-
         ApplyScaledLayout();
-
-        if (warnWhenLayoutIsSuspicious)
-            ValidateSuspiciousLayout(refPx);
-
-        if (logDumpOnLayoutRecompute)
-            DumpAllGeometry($"RecomputeLayout:{refSource}");
     }
 
     void ApplyScaledLayout()
     {
         if (gridRoot == null)
-        {
-            SLog("ApplyScaledLayout aborted | gridRoot=NULL");
             return;
-        }
 
         if (gridRoot.TryGetComponent<GridLayoutGroup>(out var grid))
         {
@@ -1516,28 +1452,16 @@ public class BomberSkinSelectMenu : MonoBehaviour
             float totalH = rows * cellSize.y + (rows - 1) * spacing.y;
 
             gridRt.sizeDelta = new Vector2(totalW, totalH);
-
-            SLog($"ApplyScaledLayout | rows={rows} columns={columns} scaledCellSize=({cellSize.x:F2},{cellSize.y:F2}) scaledSpacing=({spacing.x:F2},{spacing.y:F2}) gridPos=({gridRt.anchoredPosition.x:F2},{gridRt.anchoredPosition.y:F2}) gridSize=({gridRt.sizeDelta.x:F2},{gridRt.sizeDelta.y:F2})");
-        }
-        else
-        {
-            SLog("ApplyScaledLayout | gridRoot is not RectTransform");
         }
     }
 
     void ApplyAutoFixesIfEnabled()
     {
         if (forceRootPanelStretchToParent && rootPanel != null)
-        {
             StretchToParent(rootPanel);
-            SLog("AutoFix | rootPanel stretched to parent");
-        }
 
         if (forceBackgroundStretchToRootPanel && backgroundImage != null)
-        {
             StretchToParent(backgroundImage.rectTransform);
-            SLog("AutoFix | backgroundImage stretched to parent");
-        }
     }
 
     static void StretchToParent(RectTransform rt)
@@ -1551,81 +1475,5 @@ public class BomberSkinSelectMenu : MonoBehaviour
         rt.sizeDelta = Vector2.zero;
         rt.localScale = Vector3.one;
         rt.localRotation = Quaternion.identity;
-    }
-
-    void ValidateSuspiciousLayout(Rect refPx)
-    {
-        if (rootPanel != null)
-        {
-            var parentRt = rootPanel.parent as RectTransform;
-            if (parentRt != null)
-            {
-                Rect parentRect = RectTransformUtility.PixelAdjustRect(parentRt, GetRootCanvas());
-                Rect panelRect = RectTransformUtility.PixelAdjustRect(rootPanel, GetRootCanvas());
-
-                if (panelRect.width < parentRect.width * 0.5f || panelRect.height < parentRect.height * 0.5f)
-                {
-                    SWarn($"SuspiciousLayout | rootPanel pixel size ({panelRect.width:F2}x{panelRect.height:F2}) is much smaller than parent ({parentRect.width:F2}x{parentRect.height:F2}). This usually means RootPanel is NOT stretch and will make background/grid look like they are not scaling with SafeFrame.");
-                }
-            }
-        }
-
-        if (backgroundImage != null && rootPanel != null)
-        {
-            Rect bgRect = RectTransformUtility.PixelAdjustRect(backgroundImage.rectTransform, GetRootCanvas());
-            Rect panelRect = RectTransformUtility.PixelAdjustRect(rootPanel, GetRootCanvas());
-
-            if (bgRect.width < panelRect.width * 0.9f || bgRect.height < panelRect.height * 0.9f)
-            {
-                SWarn($"SuspiciousLayout | background pixel size ({bgRect.width:F2}x{bgRect.height:F2}) is smaller than rootPanel ({panelRect.width:F2}x{panelRect.height:F2}). Background may not be stretched to fill the layout root.");
-            }
-        }
-
-        if (gridRoot is RectTransform gridRt)
-        {
-            Rect gridRect = RectTransformUtility.PixelAdjustRect(gridRt, GetRootCanvas());
-
-            if (gridRect.width > refPx.width + 1f || gridRect.height > refPx.height + 1f)
-            {
-                SWarn($"SuspiciousLayout | grid pixel size ({gridRect.width:F2}x{gridRect.height:F2}) exceeds reference frame ({refPx.width:F2}x{refPx.height:F2}).");
-            }
-        }
-    }
-
-    void DumpAllGeometry(string reason)
-    {
-        var canvas = GetRootCanvas();
-        float canvasScale = canvas != null ? canvas.scaleFactor : 1f;
-        RectTransform canvasRt = canvas != null ? canvas.transform as RectTransform : null;
-        Rect canvasRect = canvasRt != null ? canvasRt.rect : new Rect(0, 0, Screen.width, Screen.height);
-
-        SLog($"Dump[{reason}] | canvas={(canvas != null ? canvas.name : "NULL")} mode={(canvas != null ? canvas.renderMode.ToString() : "NULL")} scaleFactor={canvasScale:F3} canvasRect=({canvasRect.width:F2}x{canvasRect.height:F2})");
-        SLog($"Dump[{reason}] | uiScale={_currentUiScale:F4} baseScaleInt={_currentBaseScaleInt} dynamicScale={dynamicScale} ref=({referenceWidth}x{referenceHeight})");
-
-        if (referenceRect != null) DumpRectTransform("referenceRect", referenceRect);
-        if (root != null && root.TryGetComponent<RectTransform>(out var rootRt)) DumpRectTransform("root", rootRt);
-        if (rootPanel != null) DumpRectTransform("rootPanel", rootPanel);
-        if (backgroundImage != null) DumpRectTransform("backgroundImage", backgroundImage.rectTransform);
-        if (gridRoot is RectTransform gridRt) DumpRectTransform("gridRoot", gridRt);
-        if (skinItemPrefab != null) DumpRectTransform("skinItemPrefab", skinItemPrefab.rectTransform);
-    }
-
-    void DumpRectTransform(string label, RectTransform rt)
-    {
-        if (rt == null) return;
-
-        var canvas = GetRootCanvas();
-        Rect px = canvas != null ? RectTransformUtility.PixelAdjustRect(rt, canvas) : new Rect();
-        Rect r = rt.rect;
-
-        SLog(
-            $"RT {label} '{rt.name}' | " +
-            $"anchors=({rt.anchorMin.x:F3},{rt.anchorMin.y:F3})-({rt.anchorMax.x:F3},{rt.anchorMax.y:F3}) " +
-            $"pivot=({rt.pivot.x:F3},{rt.pivot.y:F3}) " +
-            $"anchoredPos=({rt.anchoredPosition.x:F2},{rt.anchoredPosition.y:F2}) " +
-            $"sizeDelta=({rt.sizeDelta.x:F2},{rt.sizeDelta.y:F2}) " +
-            $"rect=({r.width:F2}x{r.height:F2}) " +
-            $"pixelAdjustRect=({px.width:F2}x{px.height:F2}) " +
-            $"lossyScale=({rt.lossyScale.x:F3},{rt.lossyScale.y:F3},{rt.lossyScale.z:F3})");
     }
 }
