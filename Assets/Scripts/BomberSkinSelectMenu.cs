@@ -6,6 +6,22 @@ using UnityEngine.UI;
 
 public class BomberSkinSelectMenu : MonoBehaviour
 {
+    const string LOG = "[SkinSelectMenu]";
+
+    [Header("Debug (Surgical Logs)")]
+    [SerializeField] bool enableSurgicalLogs = true;
+    [SerializeField] bool logOnAwake = true;
+    [SerializeField] bool logOnOpen = true;
+    [SerializeField] bool logOnResolutionOrRefChange = true;
+    [SerializeField] bool logDumpOnLayoutRecompute = true;
+    [SerializeField] bool logOnBuildGrid = true;
+    [SerializeField] bool logOnCursorLayout = true;
+    [SerializeField] bool warnWhenLayoutIsSuspicious = true;
+
+    [Header("Auto Fix Layout (for diagnosis)")]
+    [SerializeField] bool forceRootPanelStretchToParent = false;
+    [SerializeField] bool forceBackgroundStretchToRootPanel = false;
+
     [Header("UI")]
     [SerializeField] GameObject root;
     [SerializeField] Image backgroundImage;
@@ -53,7 +69,6 @@ public class BomberSkinSelectMenu : MonoBehaviour
     [Header("Preview Animations")]
     [SerializeField] float downFrameTime = 0.22f;
     [SerializeField] float endStageFrameTime = 0.14f;
-
     [SerializeField] int[] downFrames = new[] { 14, 16, 18, 16 };
     [SerializeField] int[] endStageFrames = new[] { 148, 148, 146, 148, 147, 148, 146, 148, 147, 147 };
 
@@ -81,6 +96,40 @@ public class BomberSkinSelectMenu : MonoBehaviour
     [SerializeField] AudioClip returnSfx;
     [FormerlySerializedAs("backToTitleSfxVolume")]
     [SerializeField, Range(0f, 1f)] float returnSfxVolume = 1f;
+
+    [Header("Reference Frame (SafeFrame4x3)")]
+    [SerializeField] RectTransform referenceRect;
+
+    [Header("Layout Root")]
+    [SerializeField] RectTransform rootPanel;
+
+    [Header("Dynamic Scale (Pixel Perfect SNES)")]
+    [SerializeField] bool dynamicScale = true;
+    [SerializeField] int referenceWidth = 256;
+    [SerializeField] int referenceHeight = 224;
+    [SerializeField] bool useIntegerUpscale = true;
+    [SerializeField, Min(1)] int designUpscale = 4;
+    [SerializeField, Min(0.01f)] float extraScaleMultiplier = 1f;
+    [SerializeField, Min(0.01f)] float minScale = 0.5f;
+    [SerializeField, Min(0.01f)] float maxScale = 10f;
+
+    [Header("Grid Position")]
+    [SerializeField] Vector2 gridBaseAnchoredPos = new(0f, -10f);
+
+    float _currentUiScale = 1f;
+    int _currentBaseScaleInt = 1;
+
+    int _lastScreenW = -1;
+    int _lastScreenH = -1;
+    Rect _lastRefPixelRect;
+    Rect _lastCameraRect;
+
+    Vector2 _baseCellSize;
+    Vector2 _baseSpacing;
+    Vector2 _baseCursorPadding;
+    float _baseCursorYOffset;
+    float _baseEndStageYOffset;
+    bool _baseValuesCaptured;
 
     Coroutine fadeInCoroutine;
     public bool ReturnToTitleRequested { get; private set; }
@@ -169,15 +218,34 @@ public class BomberSkinSelectMenu : MonoBehaviour
 
     readonly List<PlayerCursorState> players = new();
 
+    void SLog(string msg)
+    {
+        if (!enableSurgicalLogs) return;
+        Debug.Log($"{LOG} {msg}", this);
+    }
+
+    void SWarn(string msg)
+    {
+        if (!enableSurgicalLogs) return;
+        Debug.LogWarning($"{LOG} {msg}", this);
+    }
+
     void Awake()
     {
         if (root == null)
             root = gameObject;
 
+        CaptureBaseValuesIfNeeded();
+        ApplyAutoFixesIfEnabled();
+
         if (backgroundImage != null && backgroundSprite != null)
             backgroundImage.sprite = backgroundSprite;
 
         BuildGrid();
+        ApplyDynamicScaleIfNeeded(true);
+
+        if (logOnAwake)
+            DumpAllGeometry("Awake");
 
         if (root != null)
             root.SetActive(false);
@@ -187,6 +255,8 @@ public class BomberSkinSelectMenu : MonoBehaviour
     {
         if (!menuActive)
             return;
+
+        ApplyDynamicScaleIfNeeded(false);
 
         TickCursorBlink();
         TickDownClock();
@@ -216,6 +286,7 @@ public class BomberSkinSelectMenu : MonoBehaviour
             if (players[i].cursorRt != null)
                 Destroy(players[i].cursorRt.gameObject);
         }
+
         players.Clear();
 
         if (root != null) root.SetActive(false);
@@ -229,6 +300,12 @@ public class BomberSkinSelectMenu : MonoBehaviour
 
         root.transform.SetAsLastSibling();
         root.SetActive(true);
+
+        ApplyAutoFixesIfEnabled();
+        ApplyDynamicScaleIfNeeded(true);
+
+        if (logOnOpen)
+            DumpAllGeometry("OpenRoutine:AfterActivate");
 
         if (fadeImage != null)
         {
@@ -524,6 +601,7 @@ public class BomberSkinSelectMenu : MonoBehaviour
         for (int i = 0; i < players.Count; i++)
             if (players[i].playerId == playerId)
                 return players[i];
+
         return null;
     }
 
@@ -531,6 +609,7 @@ public class BomberSkinSelectMenu : MonoBehaviour
     {
         if (selectedBySlot == null || slotIndex < 0 || slotIndex >= selectedBySlot.Length)
             return 0;
+
         return selectedBySlot[slotIndex];
     }
 
@@ -561,9 +640,7 @@ public class BomberSkinSelectMenu : MonoBehaviour
             {
                 var img = slotImages[slotIndex];
                 if (img != null && img.rectTransform != null)
-                {
                     img.rectTransform.anchoredPosition = st.baseCaptured ? st.baseAnchoredPos : Vector2.zero;
-                }
             }
         }
 
@@ -575,6 +652,7 @@ public class BomberSkinSelectMenu : MonoBehaviour
         for (int i = 0; i < players.Count; i++)
             if (!players[i].confirmed)
                 return false;
+
         return players.Count > 0;
     }
 
@@ -638,9 +716,7 @@ public class BomberSkinSelectMenu : MonoBehaviour
         foreach (var kv in endStageBySlot)
         {
             var st = kv.Value;
-            if (st == null) continue;
-
-            if (st.stopped)
+            if (st == null || st.stopped)
                 continue;
 
             st.timer += Time.unscaledDeltaTime;
@@ -682,7 +758,6 @@ public class BomberSkinSelectMenu : MonoBehaviour
 
             var skin = selectableSkins[i];
             bool unlocked = PlayerPersistentStats.IsSkinUnlocked(skin);
-
             bool selected = IsSlotSelected(i);
 
             bool anyCursorHere = false;
@@ -712,6 +787,7 @@ public class BomberSkinSelectMenu : MonoBehaviour
                         st.baseAnchoredPos = rt.anchoredPosition;
                         st.baseCaptured = true;
                     }
+
                     rt.anchoredPosition = st.baseAnchoredPos + new Vector2(0f, endStageYOffset);
                 }
 
@@ -758,6 +834,7 @@ public class BomberSkinSelectMenu : MonoBehaviour
             if (players[i].cursorRt != null)
                 Destroy(players[i].cursorRt.gameObject);
         }
+
         players.Clear();
 
         for (int p = 1; p <= Mathf.Clamp(activeCount, 1, 4); p++)
@@ -778,7 +855,8 @@ public class BomberSkinSelectMenu : MonoBehaviour
 
                     int spriteIdx = p - 1;
                     if (cursorSpriteByPlayer != null &&
-                        spriteIdx >= 0 && spriteIdx < cursorSpriteByPlayer.Length &&
+                        spriteIdx >= 0 &&
+                        spriteIdx < cursorSpriteByPlayer.Length &&
                         cursorSpriteByPlayer[spriteIdx] != null)
                     {
                         st.cursorImg.sprite = cursorSpriteByPlayer[spriteIdx];
@@ -793,6 +871,9 @@ public class BomberSkinSelectMenu : MonoBehaviour
 
             players.Add(st);
         }
+
+        if (logOnCursorLayout)
+            SLog($"BuildPlayerCursors | activeCount={activeCount} playersCreated={players.Count}");
     }
 
     void BuildGrid()
@@ -801,7 +882,10 @@ public class BomberSkinSelectMenu : MonoBehaviour
         slotImages.Clear();
 
         if (gridRoot == null || skinItemPrefab == null)
+        {
+            SLog($"BuildGrid aborted | gridRoot={(gridRoot == null ? "NULL" : gridRoot.name)} skinItemPrefab={(skinItemPrefab == null ? "NULL" : skinItemPrefab.name)}");
             return;
+        }
 
         if (gridRoot.TryGetComponent<GridLayoutGroup>(out var grid))
         {
@@ -828,6 +912,10 @@ public class BomberSkinSelectMenu : MonoBehaviour
             var slotRt = slotGo.GetComponent<RectTransform>();
             slotRt.SetParent(gridRoot, false);
             slotRt.localScale = Vector3.one;
+            slotRt.localRotation = Quaternion.identity;
+            slotRt.anchorMin = new Vector2(0.5f, 0.5f);
+            slotRt.anchorMax = new Vector2(0.5f, 0.5f);
+            slotRt.pivot = new Vector2(0.5f, 0.5f);
 
             var img = Instantiate(skinItemPrefab, slotRt);
             img.gameObject.SetActive(true);
@@ -845,6 +933,13 @@ public class BomberSkinSelectMenu : MonoBehaviour
 
             slotRoots.Add(slotRt);
             slotImages.Add(img);
+        }
+
+        if (logOnBuildGrid)
+        {
+            SLog($"BuildGrid | slots={slotRoots.Count} selectableSkins={selectableSkins.Count} columns={columns} cellSize=({cellSize.x:F2},{cellSize.y:F2}) spacing=({spacing.x:F2},{spacing.y:F2})");
+            DumpRectTransform("gridRoot", gridRoot as RectTransform);
+            DumpRectTransform("skinItemPrefab", skinItemPrefab.rectTransform);
         }
     }
 
@@ -872,7 +967,6 @@ public class BomberSkinSelectMenu : MonoBehaviour
             ps.cursorRt.anchorMin = new Vector2(0.5f, 0.5f);
             ps.cursorRt.anchorMax = new Vector2(0.5f, 0.5f);
             ps.cursorRt.pivot = new Vector2(0.5f, 0.5f);
-
             ps.cursorRt.anchoredPosition = new Vector2(0f, cursorYOffset);
 
             var baseSize = slotRt.rect.size;
@@ -882,9 +976,13 @@ public class BomberSkinSelectMenu : MonoBehaviour
             ) + cursorPadding;
 
             ps.cursorRt.sizeDelta = targetSize;
-
             ps.cursorRt.localScale = Vector3.one;
             ps.cursorRt.localRotation = Quaternion.identity;
+
+            if (logOnCursorLayout)
+            {
+                SLog($"CursorLayout | P{ps.playerId} slot={idx} slotRect=({baseSize.x:F2}x{baseSize.y:F2}) targetSize=({targetSize.x:F2}x{targetSize.y:F2}) cursorYOffset={cursorYOffset:F2} uiScale={_currentUiScale:F4}");
+            }
         }
     }
 
@@ -931,7 +1029,6 @@ public class BomberSkinSelectMenu : MonoBehaviour
     bool ProcessKonamiCode(bool upDown, bool downDown, bool leftDown, bool rightDown, bool bDown, bool aDown, out bool blockMenuThisFrame)
     {
         KonamiToken pressed = ReadKonamiTokenThisFrame(upDown, downDown, leftDown, rightDown, bDown, aDown);
-
         bool unlocked = AdvanceKonami(pressed, out bool consumed);
 
         blockMenuThisFrame = consumed && (pressed == KonamiToken.A || pressed == KonamiToken.B);
@@ -1102,8 +1199,8 @@ public class BomberSkinSelectMenu : MonoBehaviour
                 if (sp == null) continue;
 
                 string n = sp.name;
-
                 int u = n.LastIndexOf('_');
+
                 if (u < 0 || u >= n.Length - 1)
                     continue;
 
@@ -1235,5 +1332,300 @@ public class BomberSkinSelectMenu : MonoBehaviour
             candidate -= columns;
 
         return Mathf.Clamp(candidate, 0, count - 1);
+    }
+
+    Canvas GetRootCanvas()
+    {
+        if (root != null)
+            return root.GetComponentInParent<Canvas>();
+
+        return GetComponentInParent<Canvas>();
+    }
+
+    Camera GetMainCameraSafe()
+    {
+        var cam = Camera.main;
+        if (cam != null) return cam;
+
+        var any = FindObjectOfType<Camera>();
+        return any;
+    }
+
+    Rect GetReferencePixelRect(out string source)
+    {
+        source = "NONE";
+
+        var canvas = GetRootCanvas();
+        if (canvas == null)
+        {
+            source = "NO_CANVAS";
+            return new Rect(0, 0, Screen.width, Screen.height);
+        }
+
+        RectTransform rt = referenceRect;
+        if (rt == null)
+        {
+            if (rootPanel != null) rt = rootPanel;
+            else if (root != null) rt = root.GetComponent<RectTransform>();
+        }
+
+        if (rt == null)
+        {
+            source = "FALLBACK_SCREEN";
+            return new Rect(0, 0, Screen.width, Screen.height);
+        }
+
+        source = rt.name;
+
+        Rect px = RectTransformUtility.PixelAdjustRect(rt, canvas);
+        if (px.width <= 1f || px.height <= 1f)
+        {
+            var r = rt.rect;
+            px = new Rect(0, 0, r.width, r.height);
+            source += "+rt.rect";
+        }
+        else
+        {
+            source += "+PixelAdjustRect";
+        }
+
+        return px;
+    }
+
+    float ComputeUiScaleForRect(float usedW, float usedH, out int baseScaleInt)
+    {
+        baseScaleInt = 1;
+
+        if (!dynamicScale)
+            return 1f;
+
+        float sx = usedW / Mathf.Max(1f, referenceWidth);
+        float sy = usedH / Mathf.Max(1f, referenceHeight);
+
+        float baseScaleRaw = Mathf.Min(sx, sy);
+        float baseScaleForUi = useIntegerUpscale ? Mathf.Floor(baseScaleRaw) : baseScaleRaw;
+        if (baseScaleForUi < 1f) baseScaleForUi = 1f;
+
+        baseScaleInt = Mathf.Max(1, Mathf.RoundToInt(baseScaleForUi));
+
+        float normalized = baseScaleInt / Mathf.Max(1f, designUpscale);
+        float ui = normalized * Mathf.Max(0.01f, extraScaleMultiplier);
+        ui = Mathf.Clamp(ui, minScale, maxScale);
+        return ui;
+    }
+
+    static bool ApproximatelyRect(Rect a, Rect b)
+    {
+        return
+            Mathf.Abs(a.x - b.x) < 0.01f &&
+            Mathf.Abs(a.y - b.y) < 0.01f &&
+            Mathf.Abs(a.width - b.width) < 0.01f &&
+            Mathf.Abs(a.height - b.height) < 0.01f;
+    }
+
+    void CaptureBaseValuesIfNeeded()
+    {
+        if (_baseValuesCaptured)
+            return;
+
+        _baseCellSize = cellSize;
+        _baseSpacing = spacing;
+        _baseCursorPadding = cursorPadding;
+        _baseCursorYOffset = cursorYOffset;
+        _baseEndStageYOffset = endStageYOffset;
+        _baseValuesCaptured = true;
+
+        SLog($"CaptureBaseValues | baseCellSize=({_baseCellSize.x:F2},{_baseCellSize.y:F2}) baseSpacing=({_baseSpacing.x:F2},{_baseSpacing.y:F2}) baseCursorPadding=({_baseCursorPadding.x:F2},{_baseCursorPadding.y:F2}) baseCursorYOffset={_baseCursorYOffset:F2} baseEndStageYOffset={_baseEndStageYOffset:F2}");
+    }
+
+    void ApplyDynamicScaleIfNeeded(bool force = false)
+    {
+        CaptureBaseValuesIfNeeded();
+        ApplyAutoFixesIfEnabled();
+
+        int sw = Screen.width;
+        int sh = Screen.height;
+
+        var cam = GetMainCameraSafe();
+        Rect camRect = cam != null ? cam.rect : new Rect(0, 0, 1, 1);
+        Rect refPx = GetReferencePixelRect(out string refSource);
+
+        bool changed =
+            force ||
+            sw != _lastScreenW ||
+            sh != _lastScreenH ||
+            camRect != _lastCameraRect ||
+            !ApproximatelyRect(refPx, _lastRefPixelRect);
+
+        if (!changed)
+            return;
+
+        _lastScreenW = sw;
+        _lastScreenH = sh;
+        _lastCameraRect = camRect;
+        _lastRefPixelRect = refPx;
+
+        _currentUiScale = ComputeUiScaleForRect(refPx.width, refPx.height, out _currentBaseScaleInt);
+
+        cellSize = _baseCellSize * _currentUiScale;
+        spacing = _baseSpacing * _currentUiScale;
+        cursorPadding = _baseCursorPadding * _currentUiScale;
+        cursorYOffset = _baseCursorYOffset * _currentUiScale;
+        endStageYOffset = _baseEndStageYOffset * _currentUiScale;
+
+        if (logOnResolutionOrRefChange)
+        {
+            SLog($"RecomputeLayout | Screen=({sw}x{sh}) cam.rect=({camRect.x:F3},{camRect.y:F3},{camRect.width:F3},{camRect.height:F3}) refPx=({refPx.width:F2}x{refPx.height:F2}) refSource={refSource} baseScaleInt={_currentBaseScaleInt} uiScale={_currentUiScale:F4} intUpscale={useIntegerUpscale} designUpscale={designUpscale} extraMult={extraScaleMultiplier}");
+        }
+
+        ApplyScaledLayout();
+
+        if (warnWhenLayoutIsSuspicious)
+            ValidateSuspiciousLayout(refPx);
+
+        if (logDumpOnLayoutRecompute)
+            DumpAllGeometry($"RecomputeLayout:{refSource}");
+    }
+
+    void ApplyScaledLayout()
+    {
+        if (gridRoot == null)
+        {
+            SLog("ApplyScaledLayout aborted | gridRoot=NULL");
+            return;
+        }
+
+        if (gridRoot.TryGetComponent<GridLayoutGroup>(out var grid))
+        {
+            grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
+            grid.constraintCount = Mathf.Max(1, columns);
+            grid.cellSize = cellSize;
+            grid.spacing = spacing;
+        }
+
+        var gridRt = gridRoot as RectTransform;
+        if (gridRt != null)
+        {
+            gridRt.anchorMin = new Vector2(0.5f, 0.5f);
+            gridRt.anchorMax = new Vector2(0.5f, 0.5f);
+            gridRt.pivot = new Vector2(0.5f, 0.5f);
+            gridRt.anchoredPosition = gridBaseAnchoredPos * _currentUiScale;
+
+            int rows = Mathf.CeilToInt(selectableSkins.Count / (float)Mathf.Max(1, columns));
+            float totalW = columns * cellSize.x + (columns - 1) * spacing.x;
+            float totalH = rows * cellSize.y + (rows - 1) * spacing.y;
+
+            gridRt.sizeDelta = new Vector2(totalW, totalH);
+
+            SLog($"ApplyScaledLayout | rows={rows} columns={columns} scaledCellSize=({cellSize.x:F2},{cellSize.y:F2}) scaledSpacing=({spacing.x:F2},{spacing.y:F2}) gridPos=({gridRt.anchoredPosition.x:F2},{gridRt.anchoredPosition.y:F2}) gridSize=({gridRt.sizeDelta.x:F2},{gridRt.sizeDelta.y:F2})");
+        }
+        else
+        {
+            SLog("ApplyScaledLayout | gridRoot is not RectTransform");
+        }
+    }
+
+    void ApplyAutoFixesIfEnabled()
+    {
+        if (forceRootPanelStretchToParent && rootPanel != null)
+        {
+            StretchToParent(rootPanel);
+            SLog("AutoFix | rootPanel stretched to parent");
+        }
+
+        if (forceBackgroundStretchToRootPanel && backgroundImage != null)
+        {
+            StretchToParent(backgroundImage.rectTransform);
+            SLog("AutoFix | backgroundImage stretched to parent");
+        }
+    }
+
+    static void StretchToParent(RectTransform rt)
+    {
+        if (rt == null) return;
+
+        rt.anchorMin = Vector2.zero;
+        rt.anchorMax = Vector2.one;
+        rt.pivot = new Vector2(0.5f, 0.5f);
+        rt.anchoredPosition = Vector2.zero;
+        rt.sizeDelta = Vector2.zero;
+        rt.localScale = Vector3.one;
+        rt.localRotation = Quaternion.identity;
+    }
+
+    void ValidateSuspiciousLayout(Rect refPx)
+    {
+        if (rootPanel != null)
+        {
+            var parentRt = rootPanel.parent as RectTransform;
+            if (parentRt != null)
+            {
+                Rect parentRect = RectTransformUtility.PixelAdjustRect(parentRt, GetRootCanvas());
+                Rect panelRect = RectTransformUtility.PixelAdjustRect(rootPanel, GetRootCanvas());
+
+                if (panelRect.width < parentRect.width * 0.5f || panelRect.height < parentRect.height * 0.5f)
+                {
+                    SWarn($"SuspiciousLayout | rootPanel pixel size ({panelRect.width:F2}x{panelRect.height:F2}) is much smaller than parent ({parentRect.width:F2}x{parentRect.height:F2}). This usually means RootPanel is NOT stretch and will make background/grid look like they are not scaling with SafeFrame.");
+                }
+            }
+        }
+
+        if (backgroundImage != null && rootPanel != null)
+        {
+            Rect bgRect = RectTransformUtility.PixelAdjustRect(backgroundImage.rectTransform, GetRootCanvas());
+            Rect panelRect = RectTransformUtility.PixelAdjustRect(rootPanel, GetRootCanvas());
+
+            if (bgRect.width < panelRect.width * 0.9f || bgRect.height < panelRect.height * 0.9f)
+            {
+                SWarn($"SuspiciousLayout | background pixel size ({bgRect.width:F2}x{bgRect.height:F2}) is smaller than rootPanel ({panelRect.width:F2}x{panelRect.height:F2}). Background may not be stretched to fill the layout root.");
+            }
+        }
+
+        if (gridRoot is RectTransform gridRt)
+        {
+            Rect gridRect = RectTransformUtility.PixelAdjustRect(gridRt, GetRootCanvas());
+
+            if (gridRect.width > refPx.width + 1f || gridRect.height > refPx.height + 1f)
+            {
+                SWarn($"SuspiciousLayout | grid pixel size ({gridRect.width:F2}x{gridRect.height:F2}) exceeds reference frame ({refPx.width:F2}x{refPx.height:F2}).");
+            }
+        }
+    }
+
+    void DumpAllGeometry(string reason)
+    {
+        var canvas = GetRootCanvas();
+        float canvasScale = canvas != null ? canvas.scaleFactor : 1f;
+        RectTransform canvasRt = canvas != null ? canvas.transform as RectTransform : null;
+        Rect canvasRect = canvasRt != null ? canvasRt.rect : new Rect(0, 0, Screen.width, Screen.height);
+
+        SLog($"Dump[{reason}] | canvas={(canvas != null ? canvas.name : "NULL")} mode={(canvas != null ? canvas.renderMode.ToString() : "NULL")} scaleFactor={canvasScale:F3} canvasRect=({canvasRect.width:F2}x{canvasRect.height:F2})");
+        SLog($"Dump[{reason}] | uiScale={_currentUiScale:F4} baseScaleInt={_currentBaseScaleInt} dynamicScale={dynamicScale} ref=({referenceWidth}x{referenceHeight})");
+
+        if (referenceRect != null) DumpRectTransform("referenceRect", referenceRect);
+        if (root != null && root.TryGetComponent<RectTransform>(out var rootRt)) DumpRectTransform("root", rootRt);
+        if (rootPanel != null) DumpRectTransform("rootPanel", rootPanel);
+        if (backgroundImage != null) DumpRectTransform("backgroundImage", backgroundImage.rectTransform);
+        if (gridRoot is RectTransform gridRt) DumpRectTransform("gridRoot", gridRt);
+        if (skinItemPrefab != null) DumpRectTransform("skinItemPrefab", skinItemPrefab.rectTransform);
+    }
+
+    void DumpRectTransform(string label, RectTransform rt)
+    {
+        if (rt == null) return;
+
+        var canvas = GetRootCanvas();
+        Rect px = canvas != null ? RectTransformUtility.PixelAdjustRect(rt, canvas) : new Rect();
+        Rect r = rt.rect;
+
+        SLog(
+            $"RT {label} '{rt.name}' | " +
+            $"anchors=({rt.anchorMin.x:F3},{rt.anchorMin.y:F3})-({rt.anchorMax.x:F3},{rt.anchorMax.y:F3}) " +
+            $"pivot=({rt.pivot.x:F3},{rt.pivot.y:F3}) " +
+            $"anchoredPos=({rt.anchoredPosition.x:F2},{rt.anchoredPosition.y:F2}) " +
+            $"sizeDelta=({rt.sizeDelta.x:F2},{rt.sizeDelta.y:F2}) " +
+            $"rect=({r.width:F2}x{r.height:F2}) " +
+            $"pixelAdjustRect=({px.width:F2}x{px.height:F2}) " +
+            $"lossyScale=({rt.lossyScale.x:F3},{rt.lossyScale.y:F3},{rt.lossyScale.z:F3})");
     }
 }

@@ -2220,6 +2220,7 @@ GameObject:
   m_Component:
   - component: {fileID: 607783271}
   - component: {fileID: 607783272}
+  - component: {fileID: 607783273}
   m_Layer: 5
   m_Name: SkinGrid
   m_TagString: Untagged
@@ -2244,7 +2245,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: -12}
+  m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &607783272
@@ -2267,10 +2268,24 @@ MonoBehaviour:
   m_ChildAlignment: 4
   m_StartCorner: 0
   m_StartAxis: 0
-  m_CellSize: {x: 24, y: 24}
-  m_Spacing: {x: 8, y: 8}
+  m_CellSize: {x: 100, y: 100}
+  m_Spacing: {x: 0, y: 0}
   m_Constraint: 1
   m_ConstraintCount: 4
+--- !u!114 &607783273
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 607783270}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3245ec927659c4140ac4f8d17403cc18, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.ContentSizeFitter
+  m_HorizontalFit: 2
+  m_VerticalFit: 2
 --- !u!1 &672307152
 GameObject:
   m_ObjectHideFlags: 0
@@ -5253,10 +5268,10 @@ RectTransform:
   - {fileID: 607783271}
   m_Father: {fileID: 1311323898}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!4 &954914517 stripped
 Transform:
@@ -5556,26 +5571,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b76f6e41b0d6bc54c80af4d359c9ab98, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BomberSkinSelectMenu
-  enableSurgicalLogs: 1
-  logOnAwake: 1
-  logOnOpen: 1
-  logOnResolutionOrRefChange: 1
-  logDumpOnLayoutRecompute: 1
-  logOnBuildGrid: 1
-  logOnCursorLayout: 1
-  warnWhenLayoutIsSuspicious: 1
-  forceRootPanelStretchToParent: 0
-  forceBackgroundStretchToRootPanel: 0
   root: {fileID: 861532794}
-  backgroundImage: {fileID: 1806562754}
+  backgroundImage: {fileID: 0}
   fadeImage: {fileID: 336813435}
   fadeDuration: 1
   fadeOutOnConfirmDuration: 2
   gridRoot: {fileID: 607783271}
   skinItemPrefab: {fileID: 136072051}
-  columns: 5
-  cellSize: {x: 56, y: 56}
-  spacing: {x: 12, y: 12}
+  columns: 4
+  cellSize: {x: 120, y: 120}
+  spacing: {x: 16, y: 16}
   lockedTint: {r: 1, g: 1, b: 1, a: 0.35}
   normalTint: {r: 1, g: 1, b: 1, a: 1}
   selectedTint: {r: 1, g: 1, b: 1, a: 1}
@@ -5586,9 +5591,9 @@ MonoBehaviour:
   - {fileID: 21300000, guid: 0651b2f0c4d59a34393bfef0a2fa0885, type: 3}
   - {fileID: 21300000, guid: 0773d25e48d28f140a6ef2ed138c7c1c, type: 3}
   - {fileID: 21300000, guid: 5910d083c37a4d844b9556c47f19a862, type: 3}
-  cursorPadding: {x: 6, y: 4}
+  cursorPadding: {x: 10, y: 6}
   cursorSizeMultiplier: {x: 1, y: 1}
-  cursorYOffset: 10
+  cursorYOffset: 25
   cursorBlinkWhileNotConfirmed: 1
   cursorBlinkSpeed: 5.5
   cursorBlinkMinAlpha: 0.25
@@ -5600,7 +5605,7 @@ MonoBehaviour:
   endStageFrameTime: 0.14
   downFrames: 0e000000100000001200000010000000
   endStageFrames: 94000000940000009200000094000000930000009400000092000000940000009300000093000000
-  endStageYOffset: 10
+  endStageYOffset: 25
   endStageLoopsToStop: 1
   selectMusic: {fileID: 8300000, guid: c6132799148651946aad210a09325333, type: 3}
   selectMusicVolume: 1
@@ -5615,17 +5620,6 @@ MonoBehaviour:
   konamiUnlockSfxVolume: 1
   returnSfx: {fileID: 8300000, guid: 30ca55f720379e64ab9b908db035db4c, type: 3}
   returnSfxVolume: 1
-  referenceRect: {fileID: 1599199474}
-  rootPanel: {fileID: 861532795}
-  dynamicScale: 1
-  referenceWidth: 256
-  referenceHeight: 224
-  useIntegerUpscale: 1
-  designUpscale: 4
-  extraScaleMultiplier: 2
-  minScale: 0.5
-  maxScale: 10
-  gridBaseAnchoredPos: {x: 0, y: -10}
   selectableSkins: 0100000003000000040000000b00000008000000060000000f0000000a00000000000000
 --- !u!224 &1311323898
 RectTransform:
@@ -6445,9 +6439,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 1806562751}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Script: {fileID: 11500000, guid: 1344c3c82d62a2a41a3576d8abb8e3ea, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.RawImage
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
@@ -6456,16 +6450,13 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: f2974e771f8eab04bb59e5bc19f4a6ca, type: 3}
-  m_Type: 0
-  m_PreserveAspect: 0
-  m_FillCenter: 1
-  m_FillMethod: 4
-  m_FillAmount: 1
-  m_FillClockwise: 1
-  m_FillOrigin: 0
-  m_UseSpriteMesh: 0
-  m_PixelsPerUnitMultiplier: 1
+  m_Texture: {fileID: 2800000, guid: f2974e771f8eab04bb59e5bc19f4a6ca, type: 3}
+  m_UVRect:
+    serializedVersion: 2
+    x: 0
+    y: 0
+    width: 1
+    height: 1
 --- !u!1 &1876253040
 GameObject:
   m_ObjectHideFlags: 0
