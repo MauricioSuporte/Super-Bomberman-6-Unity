@@ -52,12 +52,18 @@ public class StageLabel : MonoBehaviour
     {
         get
         {
+            float canvasScale = 1f;
+            if (stageText != null && stageText.canvas != null)
+                canvasScale = Mathf.Max(0.01f, stageText.canvas.scaleFactor);
+
             if (!dynamicScale)
             {
-                if (stageText == null) return 1f;
-                var c = stageText.canvas;
-                if (c == null) return 1f;
-                return Mathf.Max(0.01f, c.scaleFactor);
+                float fallback = 1f / canvasScale;
+
+                _lastBaseScaleInt = -1;
+                _lastUiScale = fallback;
+
+                return fallback;
             }
 
             var cam = Camera.main;
@@ -77,6 +83,9 @@ public class StageLabel : MonoBehaviour
             float normalized = baseScaleInt / Mathf.Max(1f, designUpscale);
 
             float ui = normalized * Mathf.Max(0.01f, extraScaleMultiplier);
+
+            ui /= canvasScale;
+
             ui = Mathf.Clamp(ui, minScale, maxScale);
 
             _lastBaseScaleInt = baseScaleInt;
