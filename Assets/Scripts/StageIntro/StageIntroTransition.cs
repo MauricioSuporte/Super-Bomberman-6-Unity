@@ -51,6 +51,10 @@ public class StageIntroTransition : MonoBehaviour
     [Header("Skin Select")]
     public BomberSkinSelectMenu skinSelectMenu;
 
+    [Header("Flow")]
+    [SerializeField] private bool useWorldMapAfterSkinSelect = true;
+    [SerializeField] private string worldMapSceneName = "WorldMap";
+
     public bool IntroRunning { get; private set; }
     public bool EndingRunning { get; private set; }
 
@@ -357,6 +361,12 @@ public class StageIntroTransition : MonoBehaviour
             PlayerPrefs.Save();
 
             SkipTitleScreenOnNextLoad();
+
+            if (useWorldMapAfterSkinSelect && !string.IsNullOrEmpty(worldMapSceneName))
+            {
+                SceneManager.LoadScene(worldMapSceneName);
+                yield break;
+            }
 
             if (!string.IsNullOrEmpty(firstStageSceneName))
             {

@@ -524,7 +524,7 @@ MonoBehaviour:
   clockAmount: 1
   destructibleTilemap: {fileID: 285353618}
   indestructibleTilemap: {fileID: 0}
-  nextStageSceneName: 
+  nextStageSceneName: Stage_2-6
   destructiblePrefab: {fileID: 3440613785117735154, guid: 75354832aaed18641b111a634067f982, type: 3}
   groundTilemap: {fileID: 672307155}
   groundTile: {fileID: 11400000, guid: ada74cfa1fdef9e4c86ccafaa1b2ae66, type: 2}
@@ -1634,6 +1634,17 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::StageLabel
   stageText: {fileID: 556523583}
+  dynamicScale: 1
+  referenceWidth: 256
+  referenceHeight: 224
+  useIntegerUpscale: 1
+  designUpscale: 4
+  extraScaleMultiplier: 1
+  minScale: 0.5
+  maxScale: 10
+  baseRectWidthAtDesign: 600
+  baseRectHeightAtDesign: 200
+  autoResizeRectTransform: 1
 --- !u!114 &556523583
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -11368,6 +11379,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   fadeImage: {fileID: 336813435}
   hudsonLogoIntro: {fileID: 0}
+  hudsonBackgroundImage: {fileID: 0}
+  showHudsonBackground: 1
   titleScreen: {fileID: 0}
   introMusic: {fileID: 8300000, guid: ff7109298c0b4734d8113eeb4b86601c, type: 3}
   playStartSfxOnIntroEnd: 1
@@ -11378,7 +11391,10 @@ MonoBehaviour:
   gameplayRoot: {fileID: 679601670}
   stage17SceneName: Stage_1-7
   skinSelectMenu: {fileID: 0}
+  skipPreIntroWalkNextRound_Inspector: 0
   preIntroWalk: {fileID: 0}
+  fadeOpenBeforeHudsonSeconds: 0.2
+  fadeCloseAfterHudsonSeconds: 0.12
 --- !u!114 &1389130173
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -11773,10 +11789,6 @@ MonoBehaviour:
   pingPong: 0
   disableOffsetsIfThisObjectHasRigidbody2D: 1
   disableOffsetsIfStandaloneRoot: 1
-  debug: 0
-  debugLogEverySeconds: 0.25
-  debugLogFrameAdvance: 1
-  debugLogEarlyReturns: 1
 --- !u!212 &1472254272
 SpriteRenderer:
   serializedVersion: 2
