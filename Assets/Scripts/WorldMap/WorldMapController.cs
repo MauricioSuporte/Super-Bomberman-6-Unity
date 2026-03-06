@@ -35,10 +35,14 @@ public class WorldMapController : MonoBehaviour
 
     [Header("Debug")]
     [SerializeField] bool enableSurgicalLogs = true;
-    [SerializeField] bool logIconSizeDiagnosticsOnStart = true;
-    [SerializeField] bool logIconSizeDiagnosticsOnWorldChange = true;
-    [SerializeField] bool logIconSizeDiagnosticsOnResolutionChange = true;
-    [SerializeField] bool warnIfIconLooksTooSmall = true;
+
+    [SerializeField] bool logDiagnosticsOnStart = true;
+    [SerializeField] bool logDiagnosticsOnWorldChange = true;
+    [SerializeField] bool logDiagnosticsOnResolutionChange = true;
+
+    [SerializeField] bool logCursorMoveStartStop = true;
+    [SerializeField] bool logHoveredAnchorChanges = true;
+    [SerializeField] bool logAllActiveWorldAnchorsInDiagnostics = true;
 
     [Header("Input Owner")]
     [SerializeField, Range(1, 4)] int ownerPlayerId = 1;
@@ -50,6 +54,7 @@ public class WorldMapController : MonoBehaviour
     [Header("Cursor")]
     [SerializeField] RectTransform cursor;
     [SerializeField] RectTransform cursorMovementArea;
+    [SerializeField] float cursorMoveSpeedNormalized = 0.25f;
     [SerializeField] float cursorMoveSpeed = 140f;
     [SerializeField] bool clampCursorInsideArea = true;
     [SerializeField] bool snapCursorToDefaultStageOnStart = true;
@@ -57,7 +62,6 @@ public class WorldMapController : MonoBehaviour
 
     [Tooltip("Tamanho lógico SNES do cursor, antes do upscale.")]
     [SerializeField] Vector2 baseCursorLogicalSize = new Vector2(16f, 22f);
-
     [SerializeField] bool preserveCursorAspect = true;
     [SerializeField] float extraCursorScaleMultiplier = 1f;
     [SerializeField] float minCursorScale = 1f;
@@ -79,7 +83,7 @@ public class WorldMapController : MonoBehaviour
     [SerializeField] bool createIconsOnStart = true;
     [SerializeField] string runtimeIconObjectName = "_StageIcon";
 
-    [Header("SNES Icon Scaling")]
+    [Header("SNES Scaling Reference")]
     [SerializeField] int snesReferenceWidth = 256;
     [SerializeField] int snesReferenceHeight = 224;
     [SerializeField] bool useIntegerUpscaleForIcons = true;
@@ -115,6 +119,8 @@ public class WorldMapController : MonoBehaviour
 
     int currentWorldIndex;
     int hoveredNodeIndex = -1;
+    int lastLoggedHoveredNodeIndex = -2;
+
     bool transitioning;
     bool wasMovingLastFrame;
 
@@ -125,6 +131,8 @@ public class WorldMapController : MonoBehaviour
     int lastScreenW = -1;
     int lastScreenH = -1;
     float lastCanvasScaleFactor = -1f;
+    Rect lastMovementAreaPxRect;
+    Rect lastMovementAreaLocalRect;
 
     void SLog(string msg)
     {
@@ -169,8 +177,8 @@ public class WorldMapController : MonoBehaviour
 
         SLog($"Start | world={currentWorldIndex} hoveredNode={hoveredNodeIndex}");
 
-        if (logIconSizeDiagnosticsOnStart)
-            DumpIconSizeDiagnostics("Start");
+        if (logDiagnosticsOnStart)
+            DumpResolutionSpeedAndAnchorDiagnostics("Start");
     }
 
     void Update()
@@ -229,14 +237,50 @@ public class WorldMapController : MonoBehaviour
         if (isMoving)
         {
             move = move.normalized;
+
+            Vector2 oldPos = cursor.anchoredPosition;
+
             cursor.SetParent(cursorMovementArea, false);
-            cursor.anchoredPosition += move * cursorMoveSpeed * Time.unscaledDeltaTime;
+            float speedX = cursorMovementArea.rect.width * cursorMoveSpeedNormalized;
+            float speedY = cursorMovementArea.rect.height * cursorMoveSpeedNormalized;
+            Vector2 scaledMove = new Vector2(move.x * speedX, move.y * speedY);
+            cursor.anchoredPosition += scaledMove * Time.unscaledDeltaTime;
 
             ClampCursorIfNeeded();
             RefreshHoveredStage();
 
+            Vector2 newPos = cursor.anchoredPosition;
+
+            if (logCursorMoveStartStop && !wasMovingLastFrame)
+            {
+                Vector2 pxPerLocal = GetPixelsPerLocalUnitInMovementArea();
+                Vector2 deltaLocal = newPos - oldPos;
+                Vector2 deltaPx = new Vector2(deltaLocal.x * pxPerLocal.x, deltaLocal.y * pxPerLocal.y);
+                Vector2 speedPx = new Vector2(cursorMoveSpeed * pxPerLocal.x, cursorMoveSpeed * pxPerLocal.y);
+
+                SLog(
+                    $"CursorMoveStart | dir=({move.x:F3},{move.y:F3}) " +
+                    $"cursorMoveSpeedLocal={cursorMoveSpeed:F3}u/s " +
+                    $"pixelsPerLocal=({pxPerLocal.x:F4},{pxPerLocal.y:F4}) " +
+                    $"estimatedSpeedPx=({speedPx.x:F2},{speedPx.y:F2})px/s " +
+                    $"deltaLocal=({deltaLocal.x:F3},{deltaLocal.y:F3}) " +
+                    $"deltaPx=({deltaPx.x:F3},{deltaPx.y:F3}) " +
+                    $"oldPos=({oldPos.x:F3},{oldPos.y:F3}) newPos=({newPos.x:F3},{newPos.y:F3})");
+            }
+
             if (!wasMovingLastFrame)
                 PlaySfx(moveCursorSfx, moveCursorSfxVolume);
+        }
+        else if (logCursorMoveStartStop && wasMovingLastFrame)
+        {
+            Vector2 pxPerLocal = GetPixelsPerLocalUnitInMovementArea();
+            Vector2 speedPx = new Vector2(cursorMoveSpeed * pxPerLocal.x, cursorMoveSpeed * pxPerLocal.y);
+
+            SLog(
+                $"CursorMoveStop | cursorMoveSpeedLocal={cursorMoveSpeed:F3}u/s " +
+                $"pixelsPerLocal=({pxPerLocal.x:F4},{pxPerLocal.y:F4}) " +
+                $"estimatedSpeedPx=({speedPx.x:F2},{speedPx.y:F2})px/s " +
+                $"cursorPos=({cursor.anchoredPosition.x:F3},{cursor.anchoredPosition.y:F3})");
         }
 
         wasMovingLastFrame = isMoving;
@@ -269,8 +313,8 @@ public class WorldMapController : MonoBehaviour
 
         SLog($"ChangeWorld | from={oldWorld} to={currentWorldIndex} hoveredNode={hoveredNodeIndex}");
 
-        if (logIconSizeDiagnosticsOnWorldChange)
-            DumpIconSizeDiagnostics("ChangeWorld");
+        if (logDiagnosticsOnWorldChange)
+            DumpResolutionSpeedAndAnchorDiagnostics("ChangeWorld");
     }
 
     void ConfirmCurrentStage()
@@ -311,10 +355,8 @@ public class WorldMapController : MonoBehaviour
     void ApplyWorldVisibility()
     {
         for (int i = 0; i < worlds.Count; i++)
-        {
             if (worlds[i].root != null)
                 worlds[i].root.SetActive(i == currentWorldIndex);
-        }
     }
 
     void SnapCursorToDefaultStage()
@@ -342,9 +384,21 @@ public class WorldMapController : MonoBehaviour
         if (hoveredNodeIndex >= 0)
         {
             var node = GetHoveredNode();
-            if (node != null)
-                SLog($"Hover | world={currentWorldIndex} node={hoveredNodeIndex} displayName='{node.displayName}' scene='{node.sceneName}' unlocked={node.unlocked}");
+            if (node != null && (logHoveredAnchorChanges && hoveredNodeIndex != lastLoggedHoveredNodeIndex))
+            {
+                Vector2 anchorLocal = GetAnchorPositionInMovementArea(node.anchor);
+                Vector2 anchorNorm = GetNormalizedPointInMovementArea(anchorLocal);
+
+                SLog(
+                    $"HoverChanged | world={currentWorldIndex} node={hoveredNodeIndex} " +
+                    $"displayName='{node.displayName}' scene='{node.sceneName}' unlocked={node.unlocked} " +
+                    $"anchorLocalInArea=({anchorLocal.x:F3},{anchorLocal.y:F3}) " +
+                    $"anchorNormInArea=({anchorNorm.x:F4},{anchorNorm.y:F4}) " +
+                    $"cursorPos=({cursor.anchoredPosition.x:F3},{cursor.anchoredPosition.y:F3})");
+            }
         }
+
+        lastLoggedHoveredNodeIndex = hoveredNodeIndex;
     }
 
     int FindNearestNodeIndexToCursor()
@@ -391,6 +445,35 @@ public class WorldMapController : MonoBehaviour
         Vector3 worldPos = anchor.TransformPoint(anchor.rect.center);
         Vector3 localPos = cursorMovementArea.InverseTransformPoint(worldPos);
         return new Vector2(localPos.x, localPos.y);
+    }
+
+    Vector2 GetNormalizedPointInMovementArea(Vector2 localPoint)
+    {
+        if (cursorMovementArea == null)
+            return Vector2.zero;
+
+        Rect r = cursorMovementArea.rect;
+        if (Mathf.Abs(r.width) < 0.0001f || Mathf.Abs(r.height) < 0.0001f)
+            return Vector2.zero;
+
+        float nx = Mathf.InverseLerp(r.xMin, r.xMax, localPoint.x);
+        float ny = Mathf.InverseLerp(r.yMin, r.yMax, localPoint.y);
+        return new Vector2(nx, ny);
+    }
+
+    Vector2 GetPixelsPerLocalUnitInMovementArea()
+    {
+        var canvas = GetRootCanvas();
+        if (canvas == null || cursorMovementArea == null)
+            return Vector2.one;
+
+        Rect px = RectTransformUtility.PixelAdjustRect(cursorMovementArea, canvas);
+        Rect lr = cursorMovementArea.rect;
+
+        float pxPerLocalX = Mathf.Abs(lr.width) > 0.0001f ? px.width / lr.width : 1f;
+        float pxPerLocalY = Mathf.Abs(lr.height) > 0.0001f ? px.height / lr.height : 1f;
+
+        return new Vector2(pxPerLocalX, pxPerLocalY);
     }
 
     void ClampCursorIfNeeded()
@@ -673,63 +756,81 @@ public class WorldMapController : MonoBehaviour
             : default;
 
         Vector2 scaledIconSize = GetScaledIconSize();
+        Vector2 scaledCursorSize = GetScaledCursorSize();
+        Vector2 pxPerLocal = GetPixelsPerLocalUnitInMovementArea();
 
         SLog(
-            $"IconDiag[{reason}] | " +
+            $"Diag[{reason}] | " +
             $"screen=({Screen.width}x{Screen.height}) " +
             $"canvasScaleFactor={canvas.scaleFactor:F4} referencePPU={canvas.referencePixelsPerUnit:F2} " +
+            $"movementAreaLocal=({cursorMovementArea.rect.width:F3}x{cursorMovementArea.rect.height:F3}) " +
             $"movementAreaPx=({movementAreaPx.width:F2}x{movementAreaPx.height:F2}) " +
-            $"baseIconLogicalSize=({baseIconLogicalSize.x:F2}x{baseIconLogicalSize.y:F2}) " +
-            $"scaledIconSize=({scaledIconSize.x:F2}x{scaledIconSize.y:F2})");
+            $"pxPerLocal=({pxPerLocal.x:F4},{pxPerLocal.y:F4}) " +
+            $"cursorMoveSpeedLocal={cursorMoveSpeed:F3}u/s estimatedCursorSpeedPx=({cursorMoveSpeed * pxPerLocal.x:F2},{cursorMoveSpeed * pxPerLocal.y:F2})px/s " +
+            $"baseIconLogicalSize=({baseIconLogicalSize.x:F2}x{baseIconLogicalSize.y:F2}) scaledIconSize=({scaledIconSize.x:F2}x{scaledIconSize.y:F2}) " +
+            $"baseCursorLogicalSize=({baseCursorLogicalSize.x:F2}x{baseCursorLogicalSize.y:F2}) scaledCursorSize=({scaledCursorSize.x:F2}x{scaledCursorSize.y:F2})");
 
         var world = GetCurrentWorld();
         if (world == null || world.nodes == null)
             return;
 
+        if (!logAllActiveWorldAnchorsInDiagnostics)
+            return;
+
         for (int i = 0; i < world.nodes.Count; i++)
         {
             var node = world.nodes[i];
-            if (node == null || node.anchor == null || node.runtimeIcon == null)
+            if (node == null || node.anchor == null)
                 continue;
 
-            Rect iconPx = RectTransformUtility.PixelAdjustRect(node.runtimeIcon.rectTransform, canvas);
-            Rect anchorPx = RectTransformUtility.PixelAdjustRect(node.anchor, canvas);
-            Sprite sp = node.runtimeIcon.sprite;
+            Vector2 anchorLocalInArea = GetAnchorPositionInMovementArea(node.anchor);
+            Vector2 anchorNormInArea = GetNormalizedPointInMovementArea(anchorLocalInArea);
 
-            string spriteInfo = sp == null
-                ? "sprite=NULL"
-                : $"sprite='{sp.name}' spriteRect=({sp.rect.width:F0}x{sp.rect.height:F0}) spritePPU={sp.pixelsPerUnit:F2}";
+            Rect anchorPx = RectTransformUtility.PixelAdjustRect(node.anchor, canvas);
+
+            string iconInfo = "icon=NULL";
+            if (node.runtimeIcon != null)
+            {
+                Rect iconPx = RectTransformUtility.PixelAdjustRect(node.runtimeIcon.rectTransform, canvas);
+                Vector3 iconWorld = node.runtimeIcon.rectTransform.TransformPoint(node.runtimeIcon.rectTransform.rect.center);
+                Vector3 iconLocalInArea = cursorMovementArea.InverseTransformPoint(iconWorld);
+
+                iconInfo =
+                    $"iconAnchored=({node.runtimeIcon.rectTransform.anchoredPosition.x:F3},{node.runtimeIcon.rectTransform.anchoredPosition.y:F3}) " +
+                    $"iconPx=({iconPx.width:F2}x{iconPx.height:F2}) " +
+                    $"iconLocalInArea=({iconLocalInArea.x:F3},{iconLocalInArea.y:F3})";
+            }
 
             SLog(
-                $"IconDiag[{reason}] | " +
-                $"world={currentWorldIndex} node={i} displayName='{node.displayName}' unlocked={node.unlocked} " +
-                $"anchor='{node.anchor.name}' anchorPx=({anchorPx.width:F2}x{anchorPx.height:F2}) " +
-                $"iconSizeDelta=({node.runtimeIcon.rectTransform.sizeDelta.x:F2}x{node.runtimeIcon.rectTransform.sizeDelta.y:F2}) " +
-                $"iconPx=({iconPx.width:F2}x{iconPx.height:F2}) " +
-                $"iconLossyScale=({node.runtimeIcon.rectTransform.lossyScale.x:F4},{node.runtimeIcon.rectTransform.lossyScale.y:F4}) " +
-                $"{spriteInfo}");
-
-            if (warnIfIconLooksTooSmall && iconPx.width > 0f && iconPx.width < 8f)
-            {
-                SWarn(
-                    $"IconLooksTooSmall | world={currentWorldIndex} node={i} displayName='{node.displayName}' " +
-                    $"iconPx=({iconPx.width:F2}x{iconPx.height:F2}) baseIconLogicalSize=({baseIconLogicalSize.x:F2}x{baseIconLogicalSize.y:F2}) scaledIconSize=({scaledIconSize.x:F2}x{scaledIconSize.y:F2})");
-            }
+                $"AnchorDiag[{reason}] | world={currentWorldIndex} node={i} displayName='{node.displayName}' unlocked={node.unlocked} " +
+                $"anchor='{node.anchor.name}' anchorAnchored=({node.anchor.anchoredPosition.x:F3},{node.anchor.anchoredPosition.y:F3}) " +
+                $"anchorPxRect=({anchorPx.width:F2}x{anchorPx.height:F2}) " +
+                $"anchorLocalInArea=({anchorLocalInArea.x:F3},{anchorLocalInArea.y:F3}) " +
+                $"anchorNormInArea=({anchorNormInArea.x:F4},{anchorNormInArea.y:F4}) " +
+                $"{iconInfo}");
         }
     }
 
     void CheckResolutionOrScaleChanges()
     {
-        if (!logIconSizeDiagnosticsOnResolutionChange)
+        if (!logDiagnosticsOnResolutionChange)
             return;
 
         var canvas = GetRootCanvas();
         float scaleFactor = canvas != null ? canvas.scaleFactor : -1f;
+        Rect movementAreaPx = canvas != null && cursorMovementArea != null
+            ? RectTransformUtility.PixelAdjustRect(cursorMovementArea, canvas)
+            : default;
+        Rect movementAreaLocal = cursorMovementArea != null ? cursorMovementArea.rect : default;
 
         bool changed =
             Screen.width != lastScreenW ||
             Screen.height != lastScreenH ||
-            !Mathf.Approximately(scaleFactor, lastCanvasScaleFactor);
+            !Mathf.Approximately(scaleFactor, lastCanvasScaleFactor) ||
+            movementAreaPx.width != lastMovementAreaPxRect.width ||
+            movementAreaPx.height != lastMovementAreaPxRect.height ||
+            movementAreaLocal.width != lastMovementAreaLocalRect.width ||
+            movementAreaLocal.height != lastMovementAreaLocalRect.height;
 
         if (!changed)
             return;
@@ -737,9 +838,30 @@ public class WorldMapController : MonoBehaviour
         lastScreenW = Screen.width;
         lastScreenH = Screen.height;
         lastCanvasScaleFactor = scaleFactor;
+        lastMovementAreaPxRect = movementAreaPx;
+        lastMovementAreaLocalRect = movementAreaLocal;
 
         ApplyScaledCursorSize();
-        DumpIconSizeDiagnostics("ResolutionOrScaleChanged");
+        UpdateAllStageIcons();
+
+        DumpResolutionSpeedAndAnchorDiagnostics("ResolutionOrScaleChanged");
+    }
+
+    void DumpResolutionSpeedAndAnchorDiagnostics(string reason)
+    {
+        DumpIconSizeDiagnostics(reason);
+
+        if (cursor != null)
+        {
+            Vector2 cursorNorm = GetNormalizedPointInMovementArea(cursor.anchoredPosition);
+
+            SLog(
+                $"CursorDiag[{reason}] | " +
+                $"cursorAnchored=({cursor.anchoredPosition.x:F3},{cursor.anchoredPosition.y:F3}) " +
+                $"cursorNormInArea=({cursorNorm.x:F4},{cursorNorm.y:F4}) " +
+                $"cursorRectSize=({cursor.rect.width:F3}x{cursor.rect.height:F3}) " +
+                $"cursorSizeDelta=({cursor.sizeDelta.x:F3}x{cursor.sizeDelta.y:F3})");
+        }
     }
 
     Vector2 GetScaledIconSize()
