@@ -5556,14 +5556,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b76f6e41b0d6bc54c80af4d359c9ab98, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BomberSkinSelectMenu
-  enableSurgicalLogs: 1
-  logOnAwake: 1
-  logOnOpen: 1
-  logOnResolutionOrRefChange: 1
-  logDumpOnLayoutRecompute: 1
-  logOnBuildGrid: 1
-  logOnCursorLayout: 1
-  warnWhenLayoutIsSuspicious: 1
   forceRootPanelStretchToParent: 0
   forceBackgroundStretchToRootPanel: 0
   root: {fileID: 861532794}
@@ -5593,7 +5585,11 @@ MonoBehaviour:
   cursorBlinkSpeed: 5.5
   cursorBlinkMinAlpha: 0.25
   cursorBlinkMaxAlpha: 1
-  backgroundSprite: {fileID: 21300000, guid: 06139589de34eed4a966c3011469d4c3, type: 3}
+  backgroundSprites:
+  - {fileID: 21300000, guid: 1410e109189a8d44c817d0170574c977, type: 3}
+  - {fileID: -4504312422501787600, guid: eaa9627faa60f324db3163a9b5403bf9, type: 3}
+  backgroundSwapInterval: 2
+  backgroundSwapLoop: 1
   spritesResourcesPath: Sprites/Bombers/Bomberman
   idleFrameIndex: 16
   downFrameTime: 0.22
@@ -5738,6 +5734,8 @@ MonoBehaviour:
   gameplayRoot: {fileID: 679601670}
   stage17SceneName: Stage_1-7
   skinSelectMenu: {fileID: 1311323897}
+  useWorldMapAfterSkinSelect: 1
+  worldMapSceneName: WorldMap
   skipPreIntroWalkNextRound_Inspector: 0
   preIntroWalk: {fileID: 0}
   fadeOpenBeforeHudsonSeconds: 0.2

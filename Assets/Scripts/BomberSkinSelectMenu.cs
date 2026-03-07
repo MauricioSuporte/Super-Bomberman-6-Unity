@@ -48,7 +48,12 @@ public class BomberSkinSelectMenu : MonoBehaviour
     [SerializeField, Range(0f, 1f)] float cursorBlinkMaxAlpha = 1f;
 
     [Header("Background Sprite")]
-    [SerializeField] Sprite backgroundSprite;
+    [SerializeField] Sprite[] backgroundSprites = new Sprite[2];
+    [SerializeField] float backgroundSwapInterval = 2f;
+    [SerializeField] bool backgroundSwapLoop = true;
+
+    int _backgroundSpriteIndex;
+    float _backgroundSwapTimer;
 
     [Header("Resources")]
     [SerializeField] string spritesResourcesPath = "Sprites/Bombers/Bomberman";
@@ -214,8 +219,7 @@ public class BomberSkinSelectMenu : MonoBehaviour
         CaptureBaseValuesIfNeeded();
         ApplyAutoFixesIfEnabled();
 
-        if (backgroundImage != null && backgroundSprite != null)
-            backgroundImage.sprite = backgroundSprite;
+        ApplyCurrentBackgroundSprite();
 
         BuildGrid();
         ApplyDynamicScaleIfNeeded(true);
@@ -231,6 +235,7 @@ public class BomberSkinSelectMenu : MonoBehaviour
 
         ApplyDynamicScaleIfNeeded(false);
 
+        TickBackgroundSpriteSwap();
         TickCursorBlink();
         TickDownClock();
         TickEndStageClocks();
@@ -284,8 +289,8 @@ public class BomberSkinSelectMenu : MonoBehaviour
             SetFadeAlpha(1f);
         }
 
-        if (backgroundImage != null && backgroundSprite != null)
-            backgroundImage.sprite = backgroundSprite;
+        ResetBackgroundSpriteSwap();
+        ApplyCurrentBackgroundSprite();
 
         if (slotImages.Count != selectableSkins.Count)
             BuildGrid();
@@ -1473,5 +1478,59 @@ public class BomberSkinSelectMenu : MonoBehaviour
         rt.sizeDelta = Vector2.zero;
         rt.localScale = Vector3.one;
         rt.localRotation = Quaternion.identity;
+    }
+
+    void ResetBackgroundSpriteSwap()
+    {
+        _backgroundSpriteIndex = 0;
+        _backgroundSwapTimer = 0f;
+    }
+
+    void TickBackgroundSpriteSwap()
+    {
+        if (backgroundImage == null)
+            return;
+
+        if (backgroundSprites == null || backgroundSprites.Length == 0)
+            return;
+
+        if (backgroundSprites.Length == 1)
+        {
+            if (backgroundImage.sprite != backgroundSprites[0])
+                backgroundImage.sprite = backgroundSprites[0];
+            return;
+        }
+
+        _backgroundSwapTimer += Time.unscaledDeltaTime;
+
+        if (_backgroundSwapTimer < Mathf.Max(0.01f, backgroundSwapInterval))
+            return;
+
+        _backgroundSwapTimer = 0f;
+        _backgroundSpriteIndex++;
+
+        if (_backgroundSpriteIndex >= backgroundSprites.Length)
+        {
+            if (backgroundSwapLoop)
+                _backgroundSpriteIndex = 0;
+            else
+                _backgroundSpriteIndex = backgroundSprites.Length - 1;
+        }
+
+        ApplyCurrentBackgroundSprite();
+    }
+
+    void ApplyCurrentBackgroundSprite()
+    {
+        if (backgroundImage == null)
+            return;
+
+        if (backgroundSprites == null || backgroundSprites.Length == 0)
+            return;
+
+        _backgroundSpriteIndex = Mathf.Clamp(_backgroundSpriteIndex, 0, backgroundSprites.Length - 1);
+
+        if (backgroundSprites[_backgroundSpriteIndex] != null)
+            backgroundImage.sprite = backgroundSprites[_backgroundSpriteIndex];
     }
 }
