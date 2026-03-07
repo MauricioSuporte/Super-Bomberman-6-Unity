@@ -31,6 +31,19 @@ public class WorldMapController : MonoBehaviour
         public bool loopWorldMusic = true;
     }
 
+    const string LOG = "[WorldMapCursor]";
+
+    [Header("Debug (Surgical Logs)")]
+    [SerializeField] bool enableSurgicalLogs = true;
+    [SerializeField] bool logOnStart = true;
+    [SerializeField] bool logCanvasAndCameraState = true;
+    [SerializeField] bool logCursorTransform = true;
+    [SerializeField] bool logCursorScale = true;
+    [SerializeField] bool logHoveredStage = true;
+    [SerializeField] bool logResolutionChanges = true;
+    [SerializeField] bool logRendererState = true;
+    [SerializeField] bool logWarningsOnlyWhenBroken = true;
+
     [Header("Input Owner")]
     [SerializeField, Range(1, 4)] int ownerPlayerId = 1;
 
@@ -47,19 +60,27 @@ public class WorldMapController : MonoBehaviour
     [SerializeField] float minStageAnchorScale = 1f;
     [SerializeField] float maxStageAnchorScale = 20f;
 
-    [Header("Cursor")]
-    [SerializeField] RectTransform cursor;
+    [Header("Cursor Logic")]
     [SerializeField] RectTransform cursorMovementArea;
     [SerializeField] float cursorMoveSpeedNormalized = 0.25f;
     [SerializeField] float cursorMoveSpeed = 140f;
     [SerializeField] bool clampCursorInsideArea = true;
     [SerializeField] bool snapCursorToDefaultStageOnStart = true;
     [SerializeField] bool snapCursorToDefaultStageOnWorldChange = true;
-    [SerializeField] Vector2 baseCursorLogicalSize = new Vector2(16f, 22f);
+    [SerializeField] Vector2 baseCursorLogicalSize = new Vector2(20f, 29f);
     [SerializeField] bool preserveCursorAspect = true;
     [SerializeField] float extraCursorScaleMultiplier = 1f;
     [SerializeField] float minCursorScale = 1f;
     [SerializeField] float maxCursorScale = 20f;
+
+    [Header("Cursor Visual")]
+    [SerializeField] bool useAnimatedCursorVisuals = true;
+    [SerializeField] RectTransform cursorVisualRoot;
+    [SerializeField] GameObject movingCursorVisual;
+    [SerializeField] GameObject selectedCursorVisual;
+    [SerializeField] Vector2 cursorVisualBaseSize = new Vector2(20f, 29f);
+    [SerializeField] bool scaleCursorVisualWithLogicalSize = true;
+    [SerializeField] float selectedAnimationDelayBeforeLoad = 0.25f;
 
     [Header("Stage Detection")]
     [SerializeField] float stageDetectRadius = 18f;
@@ -128,6 +149,7 @@ public class WorldMapController : MonoBehaviour
     bool transitioning;
     bool wasMovingLastFrame;
     bool authoredStageAnchorsCaptured;
+    bool playingSelectedAnimation;
 
     AudioClip lastPlayedWorldMusic;
     float lastPlayedWorldMusicVolume;
@@ -138,6 +160,13 @@ public class WorldMapController : MonoBehaviour
     float lastCanvasScaleFactor = -1f;
     Rect lastMovementAreaPxRect;
     Rect lastMovementAreaLocalRect;
+
+    Vector2 cursorLocalPosition;
+
+    Vector3 lastLoggedCursorWorldPosition = new Vector3(float.MinValue, float.MinValue, float.MinValue);
+    Vector2 lastLoggedCursorLocalPosition = new Vector2(float.MinValue, float.MinValue);
+    Vector3 lastLoggedCursorScale = new Vector3(float.MinValue, float.MinValue, float.MinValue);
+    int lastLoggedHoveredNodeIndex = int.MinValue;
 
     readonly Dictionary<string, Vector2> authoredStageAnchorPositions = new Dictionary<string, Vector2>();
 
@@ -172,11 +201,62 @@ public class WorldMapController : MonoBehaviour
         ClampCursorIfNeeded();
         RefreshHoveredStage();
         RefreshWorldStageLabel();
+        RefreshCursorVisualState(false, true);
+        ApplyCursorVisualTransform();
+
+        if (enableSurgicalLogs && logOnStart)
+        {
+            DumpCanvasAndCameraState("Start");
+            DumpCursorState("Start");
+            DumpCursorRendererState("Start");
+        }
 
         if (fadeImage != null)
             StartCoroutine(FadeInRoutine());
 
         PlayMusicForCurrentWorld(forceRestart: true);
+    }
+
+    void LateUpdate()
+    {
+        ApplyCursorVisualTransform();
+        SurgicalTick();
+    }
+
+    void SurgicalTick()
+    {
+        if (!enableSurgicalLogs)
+            return;
+
+        if (logCursorTransform)
+        {
+            Vector2 cursorAnchored = cursorVisualRoot != null ? cursorVisualRoot.anchoredPosition : Vector2.zero;
+            if (cursorLocalPosition != lastLoggedCursorLocalPosition || (Vector3)cursorAnchored != lastLoggedCursorWorldPosition)
+            {
+                lastLoggedCursorLocalPosition = cursorLocalPosition;
+                lastLoggedCursorWorldPosition = cursorAnchored;
+                Debug.Log(
+                    $"{LOG} CursorTransform | local={cursorLocalPosition} anchored={cursorAnchored} hoveredNodeIndex={hoveredNodeIndex}",
+                    this);
+            }
+        }
+
+        if (logCursorScale && cursorVisualRoot != null && cursorVisualRoot.localScale != lastLoggedCursorScale)
+        {
+            lastLoggedCursorScale = cursorVisualRoot.localScale;
+            Debug.Log(
+                $"{LOG} CursorScale | visualRoot='{cursorVisualRoot.name}' localScale={cursorVisualRoot.localScale} " +
+                $"scaledLogicalSize={GetScaledCursorSize()} baseVisualSize={cursorVisualBaseSize}",
+                this);
+        }
+
+        if (logHoveredStage && hoveredNodeIndex != lastLoggedHoveredNodeIndex)
+        {
+            lastLoggedHoveredNodeIndex = hoveredNodeIndex;
+            var hovered = GetHoveredNode();
+            string hoveredName = hovered != null ? hovered.displayName : "<none>";
+            Debug.Log($"{LOG} HoveredStage | hoveredNodeIndex={hoveredNodeIndex} hovered='{hoveredName}'", this);
+        }
     }
 
     void Update()
@@ -216,7 +296,7 @@ public class WorldMapController : MonoBehaviour
 
     void UpdateFreeCursorMovement(PlayerInputManager input)
     {
-        if (cursor == null || cursorMovementArea == null)
+        if (cursorMovementArea == null || playingSelectedAnimation)
             return;
 
         float x = 0f;
@@ -234,11 +314,10 @@ public class WorldMapController : MonoBehaviour
         {
             move = move.normalized;
 
-            cursor.SetParent(cursorMovementArea, false);
             float speedX = cursorMovementArea.rect.width * cursorMoveSpeedNormalized;
             float speedY = cursorMovementArea.rect.height * cursorMoveSpeedNormalized;
             Vector2 scaledMove = new Vector2(move.x * speedX, move.y * speedY);
-            cursor.anchoredPosition += scaledMove * Time.unscaledDeltaTime;
+            cursorLocalPosition += scaledMove * Time.unscaledDeltaTime;
 
             ClampCursorIfNeeded();
             RefreshHoveredStage();
@@ -248,6 +327,7 @@ public class WorldMapController : MonoBehaviour
         }
 
         wasMovingLastFrame = isMoving;
+        RefreshCursorVisualState(isMoving, false);
     }
 
     void ChangeWorld(int delta)
@@ -261,6 +341,8 @@ public class WorldMapController : MonoBehaviour
             currentWorldIndex = worlds.Count - 1;
         else if (currentWorldIndex >= worlds.Count)
             currentWorldIndex = 0;
+
+        playingSelectedAnimation = false;
 
         ApplyWorldVisibility();
         ApplyScaledStageAnchorPositions();
@@ -276,6 +358,15 @@ public class WorldMapController : MonoBehaviour
         ClampCursorIfNeeded();
         RefreshHoveredStage();
         RefreshWorldStageLabel();
+        RefreshCursorVisualState(false, true);
+        ApplyCursorVisualTransform();
+
+        if (enableSurgicalLogs)
+        {
+            DumpCursorState("ChangeWorld");
+            DumpCursorRendererState("ChangeWorld");
+        }
+
         PlaySfx(changeWorldSfx, changeWorldSfxVolume);
         PlayMusicForCurrentWorld(forceRestart: false);
     }
@@ -285,16 +376,47 @@ public class WorldMapController : MonoBehaviour
         var node = GetHoveredNode();
 
         if (node == null)
+        {
+            if (enableSurgicalLogs && logWarningsOnlyWhenBroken)
+                Debug.LogWarning($"{LOG} ConfirmCurrentStage failed: no hovered node.", this);
             return;
+        }
 
         if (!node.unlocked || string.IsNullOrEmpty(node.sceneName))
         {
+            if (enableSurgicalLogs && logWarningsOnlyWhenBroken)
+                Debug.LogWarning(
+                    $"{LOG} ConfirmCurrentStage denied | node='{node.displayName}' unlocked={node.unlocked} scene='{node.sceneName}'",
+                    this);
+
             PlaySfx(deniedSfx, deniedSfxVolume);
             return;
         }
 
+        StartCoroutine(ConfirmStageRoutine(node.sceneName));
+    }
+
+    IEnumerator ConfirmStageRoutine(string sceneName)
+    {
+        if (transitioning)
+            yield break;
+
+        transitioning = true;
+        playingSelectedAnimation = true;
+
+        if (enableSurgicalLogs)
+            Debug.Log($"{LOG} ConfirmStageRoutine | scene='{sceneName}'", this);
+
         PlaySfx(confirmStageSfx, confirmStageSfxVolume);
-        StartCoroutine(LoadSceneRoutine(node.sceneName));
+        RefreshCursorVisualState(false, true, true);
+
+        if (selectedAnimationDelayBeforeLoad > 0f)
+            yield return new WaitForSecondsRealtime(selectedAnimationDelayBeforeLoad);
+
+        if (fadeImage != null)
+            yield return FadeOutRoutine();
+
+        SceneManager.LoadScene(sceneName);
     }
 
     IEnumerator LoadSceneRoutine(string sceneName)
@@ -319,7 +441,7 @@ public class WorldMapController : MonoBehaviour
 
     void SnapCursorToDefaultStage()
     {
-        if (cursor == null || cursorMovementArea == null)
+        if (cursorMovementArea == null)
             return;
 
         int defaultIndex = GetSafeDefaultNodeIndex(currentWorldIndex);
@@ -327,9 +449,11 @@ public class WorldMapController : MonoBehaviour
         if (node == null || node.anchor == null)
             return;
 
-        cursor.SetParent(cursorMovementArea, false);
-        cursor.anchoredPosition = GetAnchorPositionInMovementArea(node.anchor);
+        cursorLocalPosition = GetAnchorPositionInMovementArea(node.anchor);
         hoveredNodeIndex = defaultIndex;
+
+        if (enableSurgicalLogs)
+            Debug.Log($"{LOG} SnapCursorToDefaultStage | node='{node.displayName}' local={cursorLocalPosition}", this);
     }
 
     void RefreshHoveredStage()
@@ -340,14 +464,14 @@ public class WorldMapController : MonoBehaviour
 
     int FindNearestNodeIndexToCursor()
     {
-        if (cursor == null || cursorMovementArea == null)
+        if (cursorMovementArea == null)
             return -1;
 
         var world = GetCurrentWorld();
         if (world == null || world.nodes == null || world.nodes.Count == 0)
             return -1;
 
-        Vector2 cursorPos = cursor.anchoredPosition;
+        Vector2 cursorPos = cursorLocalPosition;
 
         int bestIndex = -1;
         float bestDist = float.MaxValue;
@@ -387,26 +511,40 @@ public class WorldMapController : MonoBehaviour
 
     void ClampCursorIfNeeded()
     {
-        if (!clampCursorInsideArea || cursor == null || cursorMovementArea == null)
+        if (!clampCursorInsideArea || cursorMovementArea == null)
             return;
 
         Rect r = cursorMovementArea.rect;
-        Vector2 p = cursor.anchoredPosition;
+        Vector2 p = cursorLocalPosition;
+        Vector2 size = GetScaledCursorSize();
 
-        float halfW = cursor.rect.width * cursor.pivot.x;
-        float halfH = cursor.rect.height * cursor.pivot.y;
-        float halfWRight = cursor.rect.width * (1f - cursor.pivot.x);
-        float halfHUp = cursor.rect.height * (1f - cursor.pivot.y);
+        float halfW = size.x * 0.5f;
+        float halfH = size.y * 0.5f;
 
         float minX = r.xMin + halfW;
-        float maxX = r.xMax - halfWRight;
+        float maxX = r.xMax - halfW;
         float minY = r.yMin + halfH;
-        float maxY = r.yMax - halfHUp;
+        float maxY = r.yMax - halfH;
 
         p.x = Mathf.Clamp(p.x, minX, maxX);
         p.y = Mathf.Clamp(p.y, minY, maxY);
 
-        cursor.anchoredPosition = p;
+        cursorLocalPosition = p;
+    }
+
+    void ApplyCursorVisualTransform()
+    {
+        if (cursorVisualRoot == null || cursorMovementArea == null)
+            return;
+
+        if (cursorVisualRoot.parent != cursorMovementArea)
+            cursorVisualRoot.SetParent(cursorMovementArea, false);
+
+        cursorVisualRoot.anchorMin = new Vector2(0.5f, 0.5f);
+        cursorVisualRoot.anchorMax = new Vector2(0.5f, 0.5f);
+        cursorVisualRoot.pivot = new Vector2(0.5f, 0.5f);
+        cursorVisualRoot.anchoredPosition = cursorLocalPosition;
+        cursorVisualRoot.localRotation = Quaternion.identity;
     }
 
     void EnsureAllStageIcons()
@@ -500,6 +638,48 @@ public class WorldMapController : MonoBehaviour
         var rt = node.runtimeIcon.rectTransform;
         rt.anchoredPosition = iconOffset;
         rt.sizeDelta = GetScaledIconSize();
+    }
+
+    void RefreshCursorVisualState(bool isMoving, bool forceRestart = false, bool showSelected = false)
+    {
+        if (!useAnimatedCursorVisuals)
+        {
+            if (movingCursorVisual != null)
+                movingCursorVisual.SetActive(false);
+
+            if (selectedCursorVisual != null)
+                selectedCursorVisual.SetActive(false);
+
+            return;
+        }
+
+        bool usingSelected = showSelected || playingSelectedAnimation;
+
+        if (usingSelected)
+        {
+            if (movingCursorVisual != null)
+                movingCursorVisual.SetActive(false);
+
+            RestartAndShow(selectedCursorVisual, forceRestart);
+            return;
+        }
+
+        if (selectedCursorVisual != null)
+            selectedCursorVisual.SetActive(false);
+
+        if (movingCursorVisual != null)
+            RestartAndShow(movingCursorVisual, forceRestart);
+    }
+
+    void RestartAndShow(GameObject target, bool restart)
+    {
+        if (target == null)
+            return;
+
+        if (restart && target.activeSelf)
+            target.SetActive(false);
+
+        target.SetActive(true);
     }
 
     WorldData GetCurrentWorld()
@@ -772,8 +952,23 @@ public class WorldMapController : MonoBehaviour
         if (hoveredNodeIndex >= 0)
         {
             var hovered = GetHoveredNode();
-            if (hovered != null && hovered.anchor != null && cursor != null)
-                cursor.anchoredPosition = GetAnchorPositionInMovementArea(hovered.anchor);
+            if (hovered != null && hovered.anchor != null)
+                cursorLocalPosition = GetAnchorPositionInMovementArea(hovered.anchor);
+        }
+
+        ClampCursorIfNeeded();
+        ApplyCursorVisualTransform();
+
+        if (enableSurgicalLogs && logResolutionChanges)
+        {
+            Debug.Log(
+                $"{LOG} ResolutionOrScaleChanged | screen={Screen.width}x{Screen.height} " +
+                $"canvasScaleFactor={scaleFactor} movementAreaPx={movementAreaPx} movementAreaLocal={movementAreaLocal}",
+                this);
+
+            DumpCanvasAndCameraState("ResolutionChange");
+            DumpCursorState("ResolutionChange");
+            DumpCursorRendererState("ResolutionChange");
         }
     }
 
@@ -831,14 +1026,31 @@ public class WorldMapController : MonoBehaviour
 
     void ApplyScaledCursorSize()
     {
-        if (cursor == null)
+        if (!scaleCursorVisualWithLogicalSize || cursorVisualRoot == null)
             return;
 
-        cursor.sizeDelta = GetScaledCursorSize();
+        Vector2 scaledSize = GetScaledCursorSize();
 
-        var img = cursor.GetComponent<Image>();
-        if (img != null)
-            img.preserveAspect = preserveCursorAspect;
+        float sx = cursorVisualBaseSize.x > 0.0001f ? scaledSize.x / cursorVisualBaseSize.x : 1f;
+        float sy = cursorVisualBaseSize.y > 0.0001f ? scaledSize.y / cursorVisualBaseSize.y : 1f;
+
+        if (preserveCursorAspect)
+        {
+            float uniform = Mathf.Min(sx, sy);
+            cursorVisualRoot.localScale = new Vector3(uniform, uniform, 1f);
+        }
+        else
+        {
+            cursorVisualRoot.localScale = new Vector3(sx, sy, 1f);
+        }
+
+        if (enableSurgicalLogs && logCursorScale)
+        {
+            Debug.Log(
+                $"{LOG} ApplyScaledCursorSize | scaledLogicalSize={scaledSize} baseVisualSize={cursorVisualBaseSize} " +
+                $"appliedScale={cursorVisualRoot.localScale}",
+                this);
+        }
     }
 
     void RefreshWorldStageLabel()
@@ -901,5 +1113,89 @@ public class WorldMapController : MonoBehaviour
         rt.sizeDelta = baseWorldStageLabelSize * scale;
 
         worldStageLabel.fontSize = Mathf.RoundToInt(baseWorldStageLabelFontSize * scale);
+    }
+
+    void DumpCanvasAndCameraState(string reason)
+    {
+        if (!logCanvasAndCameraState)
+            return;
+
+        Canvas canvas = GetRootCanvas();
+        Camera mainCam = Camera.main;
+
+        string canvasInfo = canvas == null
+            ? "canvas=<null>"
+            : $"canvas='{canvas.name}' renderMode={canvas.renderMode} worldCamera={(canvas.worldCamera ? canvas.worldCamera.name : "<null>")} scaleFactor={canvas.scaleFactor} pixelPerfect={canvas.pixelPerfect}";
+
+        string cameraInfo = mainCam == null
+            ? "mainCamera=<null>"
+            : $"mainCamera='{mainCam.name}' position={mainCam.transform.position} orthographic={mainCam.orthographic} orthographicSize={mainCam.orthographicSize} pixelRect={mainCam.pixelRect}";
+
+        Debug.Log($"{LOG} CanvasCameraState | reason={reason} {canvasInfo} {cameraInfo}", this);
+
+        if (canvas != null && canvas.renderMode == RenderMode.ScreenSpaceOverlay)
+        {
+            Debug.Log(
+                $"{LOG} Canvas is Screen Space Overlay and cursor is now UI/Image-based, which is correct for this setup.",
+                this);
+        }
+    }
+
+    void DumpCursorState(string reason)
+    {
+        if (!logCursorTransform)
+            return;
+
+        Vector2 scaledCursor = GetScaledCursorSize();
+        Vector3 worldPos = cursorVisualRoot != null ? cursorVisualRoot.position : Vector3.zero;
+        Rect localRect = cursorMovementArea != null ? cursorMovementArea.rect : default;
+
+        Debug.Log(
+            $"{LOG} CursorState | reason={reason} local={cursorLocalPosition} world={worldPos} " +
+            $"scaledCursorSize={scaledCursor} movementAreaRect={localRect} visualRoot={(cursorVisualRoot ? cursorVisualRoot.name : "<null>")} " +
+            $"movingActive={(movingCursorVisual != null && movingCursorVisual.activeSelf)} selectedActive={(selectedCursorVisual != null && selectedCursorVisual.activeSelf)}",
+            this);
+    }
+
+    void DumpCursorRendererState(string reason)
+    {
+        if (!logRendererState)
+            return;
+
+        DumpOneImageState(reason, "Root", cursorVisualRoot != null ? cursorVisualRoot.GetComponent<Image>() : null);
+        DumpOneImageState(reason, "Moving", movingCursorVisual != null ? movingCursorVisual.GetComponent<Image>() : null);
+        DumpOneImageState(reason, "Select", selectedCursorVisual != null ? selectedCursorVisual.GetComponent<Image>() : null);
+    }
+
+    void DumpOneImageState(string reason, string label, Image img)
+    {
+        if (img == null)
+        {
+            Debug.LogWarning($"{LOG} ImageState | reason={reason} label={label} image=<null>", this);
+            return;
+        }
+
+        string spriteName = img.sprite != null ? img.sprite.name : "<null>";
+        RectTransform rt = img.rectTransform;
+
+        Debug.Log(
+            $"{LOG} ImageState | reason={reason} label={label} go='{img.gameObject.name}' enabled={img.enabled} activeInHierarchy={img.gameObject.activeInHierarchy} " +
+            $"sprite='{spriteName}' color={img.color} anchoredPos={rt.anchoredPosition} sizeDelta={rt.sizeDelta} localScale={rt.localScale}",
+            img);
+
+        if (logWarningsOnlyWhenBroken)
+        {
+            if (img.sprite == null)
+                Debug.LogWarning($"{LOG} ImageState problem | label={label} has no sprite.", img);
+
+            if (!img.enabled)
+                Debug.LogWarning($"{LOG} ImageState problem | label={label} image disabled.", img);
+
+            if (!img.gameObject.activeInHierarchy)
+                Debug.LogWarning($"{LOG} ImageState problem | label={label} GameObject inactive.", img);
+
+            if (rt.rect.width <= 0.0001f || rt.rect.height <= 0.0001f)
+                Debug.LogWarning($"{LOG} ImageState problem | label={label} rect too small: {rt.rect.size}", img);
+        }
     }
 }
