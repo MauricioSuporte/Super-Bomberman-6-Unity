@@ -8608,8 +8608,8 @@ RectTransform:
   - {fileID: 1972834740}
   - {fileID: 11074956}
   - {fileID: 4069565910624342804}
-  - {fileID: 87393866}
   - {fileID: 2106112392}
+  - {fileID: 87393866}
   m_Father: {fileID: 1389130176}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -9031,14 +9031,12 @@ MonoBehaviour:
   fadeInDuration: 0.5
   worldChangeFadeOutDuration: 0.5
   worldChangeFadeInDuration: 0.5
-  moveCursorSfx: {fileID: 0}
-  moveCursorSfxVolume: 1
-  changeWorldSfx: {fileID: 0}
-  changeWorldSfxVolume: 1
   confirmStageSfx: {fileID: 8300000, guid: f4ca5a046054f404aa2ac2df051e75c0, type: 3}
   confirmStageSfxVolume: 1
   deniedSfx: {fileID: 8300000, guid: 2f98cb783cdc9bb4d8ff3b868291f743, type: 3}
   deniedSfxVolume: 1
+  returnToTitleSfx: {fileID: 8300000, guid: 30ca55f720379e64ab9b908db035db4c, type: 3}
+  returnToTitleSfxVolume: 1
   titleSceneName: TitleScreen
   worldStageLabel: {fileID: 1860410134}
   worldLabelPrefix: 'WORLD '

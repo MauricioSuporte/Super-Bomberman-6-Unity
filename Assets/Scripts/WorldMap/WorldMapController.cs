@@ -209,13 +209,15 @@ public class WorldMapController : MonoBehaviour
 
         if (input.GetDown(ownerPlayerId, PlayerAction.ActionL))
         {
-            StartCoroutine(ChangeWorldRoutine(-1));
+            if (CanChangeWorld(-1))
+                StartCoroutine(ChangeWorldRoutine(-1));
             return;
         }
 
         if (input.GetDown(ownerPlayerId, PlayerAction.ActionR))
         {
-            StartCoroutine(ChangeWorldRoutine(+1));
+            if (CanChangeWorld(+1))
+                StartCoroutine(ChangeWorldRoutine(+1));
             return;
         }
 
@@ -264,9 +266,22 @@ public class WorldMapController : MonoBehaviour
         RefreshCursorVisualState(isMoving, false);
     }
 
+    bool CanChangeWorld(int delta)
+    {
+        if (worlds == null || worlds.Count <= 1)
+            return false;
+
+        int targetIndex = currentWorldIndex + delta;
+        return targetIndex >= 0 && targetIndex < worlds.Count;
+    }
+
     IEnumerator ChangeWorldRoutine(int delta)
     {
         if (transitioning || worlds.Count == 0)
+            yield break;
+
+        int targetWorldIndex = currentWorldIndex + delta;
+        if (targetWorldIndex < 0 || targetWorldIndex >= worlds.Count)
             yield break;
 
         transitioning = true;
@@ -278,12 +293,7 @@ public class WorldMapController : MonoBehaviour
         else
             yield return FadeMusicOutRoutine(worldChangeFadeOutDuration);
 
-        currentWorldIndex += delta;
-
-        if (currentWorldIndex < 0)
-            currentWorldIndex = worlds.Count - 1;
-        else if (currentWorldIndex >= worlds.Count)
-            currentWorldIndex = 0;
+        currentWorldIndex = targetWorldIndex;
 
         ApplyWorldVisibility();
         ApplyScaledStageAnchorPositions();
