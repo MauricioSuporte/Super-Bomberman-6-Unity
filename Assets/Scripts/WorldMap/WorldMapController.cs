@@ -262,11 +262,9 @@ public class WorldMapController : MonoBehaviour
     void ConfirmCurrentStage()
     {
         var node = GetHoveredNode();
+
         if (node == null)
-        {
-            PlaySfx(deniedSfx, deniedSfxVolume);
             return;
-        }
 
         if (!node.unlocked || string.IsNullOrEmpty(node.sceneName))
         {
