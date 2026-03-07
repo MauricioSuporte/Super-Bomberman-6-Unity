@@ -9,6 +9,9 @@ EditorBuildSettings:
     path: Assets/Scenes/TitleScreen.unity
     guid: 1f8e6a374594b3941b9167038880a853
   - enabled: 1
+    path: Assets/Scenes/SkinSelect.unity
+    guid: b4cc81dbfd94cf04199367c927a923f2
+  - enabled: 1
     path: Assets/Scenes/WorldMap.unity
     guid: b2ac7d841cc69844a801216ad517c0da
   - enabled: 1

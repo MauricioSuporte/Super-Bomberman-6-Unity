@@ -20,13 +20,8 @@ public class TitleScreenBootstrap : MonoBehaviour
     [Header("Title Screen")]
     [SerializeField] TitleScreenController titleScreen;
 
-    [Header("Skin Select")]
-    [SerializeField] BomberSkinSelectMenu skinSelectMenu;
-
     [Header("Flow")]
-    [SerializeField] bool useWorldMapAfterSkinSelect = true;
-    [SerializeField] string worldMapSceneName = "WorldMap";
-    [SerializeField] string firstStageSceneName = "Stage_1-1";
+    [SerializeField] string skinSelectSceneName = "SkinSelect";
 
     [Header("Hudson Fade")]
     [SerializeField, Min(0f)] float fadeOpenBeforeHudsonSeconds = 0.20f;
@@ -146,46 +141,19 @@ public class TitleScreenBootstrap : MonoBehaviour
         if (fadeImage != null)
             fadeImage.gameObject.SetActive(false);
 
-        if (skinSelectMenu != null)
+        if (titleScreen.ExitRequested)
+            yield break;
+
+        if (titleScreen.NormalGameRequested)
         {
-            yield return skinSelectMenu.SelectSkinRoutine();
-
-            if (skinSelectMenu.ReturnToTitleRequested)
+            if (!string.IsNullOrEmpty(skinSelectSceneName))
             {
-                if (titleScreen != null)
-                    titleScreen.SetIgnoreStartKeyUntilRelease();
-
-                yield return ShowTitleScreen();
-                yield break;
-            }
-
-            int count = 1;
-            if (GameSession.Instance != null)
-                count = GameSession.Instance.ActivePlayerCount;
-
-            for (int p = 1; p <= count; p++)
-            {
-                var chosen = skinSelectMenu.GetSelectedSkin(p);
-                PlayerPersistentStats.Get(p).Skin = chosen;
-
-                if (chosen != BomberSkin.Golden)
-                    PlayerPersistentStats.SaveSelectedSkin(p);
-            }
-
-            PlayerPrefs.Save();
-
-            if (useWorldMapAfterSkinSelect && !string.IsNullOrEmpty(worldMapSceneName))
-            {
-                SceneManager.LoadScene(worldMapSceneName);
-                yield break;
-            }
-
-            if (!string.IsNullOrEmpty(firstStageSceneName))
-            {
-                SceneManager.LoadScene(firstStageSceneName);
+                SceneManager.LoadScene(skinSelectSceneName);
                 yield break;
             }
         }
+
+        yield return ShowTitleScreen();
     }
 
     void SetFadeAlpha(float a)
