@@ -9,6 +9,9 @@ public class GamePauseController : MonoBehaviour
 {
     public static bool IsPaused { get; private set; }
 
+    [Header("Pause Availability")]
+    [SerializeField] string[] blockedSceneNames = { "TitleScreen", "WorldMap" };
+
     [Header("SFX (Pause toggle)")]
     public AudioClip pauseSfx;
     public AudioSource sfxSource;
@@ -37,7 +40,8 @@ public class GamePauseController : MonoBehaviour
     bool exitingToTitle;
     Coroutine exitRoutine;
 
-    int lastScreenW, lastScreenH;
+    int lastScreenW;
+    int lastScreenH;
 
     public static GamePauseController Instance { get; private set; }
 
@@ -54,6 +58,31 @@ public class GamePauseController : MonoBehaviour
 
         lastScreenW = Screen.width;
         lastScreenH = Screen.height;
+
+        SceneManager.sceneLoaded += OnSceneLoaded;
+    }
+
+    void OnDestroy()
+    {
+        if (Instance == this)
+            SceneManager.sceneLoaded -= OnSceneLoaded;
+    }
+
+    void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        exitingToTitle = false;
+        confirmReturn = false;
+        menuIndex = 0;
+        confirmIndex = 0;
+
+        ClearPauseFlag();
+        Time.timeScale = 1f;
+
+        if (StageIntroTransition.Instance != null && StageIntroTransition.Instance.stageLabel != null)
+            StageIntroTransition.Instance.stageLabel.gameObject.SetActive(false);
+
+        lastScreenW = Screen.width;
+        lastScreenH = Screen.height;
     }
 
     void Update()
@@ -64,6 +93,14 @@ public class GamePauseController : MonoBehaviour
         var input = PlayerInputManager.Instance;
         if (input == null)
             return;
+
+        if (!IsPauseAllowedInCurrentScene())
+        {
+            if (IsPaused)
+                ForceUnpause(resumeMusic: true);
+
+            return;
+        }
 
         if (!IsPaused)
         {
@@ -76,12 +113,8 @@ public class GamePauseController : MonoBehaviour
             return;
         }
 
-        if (StageIntroTransition.Instance != null)
-        {
-            if (StageIntroTransition.Instance.IntroRunning ||
-                StageIntroTransition.Instance.EndingRunning)
-                return;
-        }
+        if (IsPauseBlockedByGameplayState())
+            return;
 
         if (Screen.width != lastScreenW || Screen.height != lastScreenH)
         {
@@ -93,17 +126,69 @@ public class GamePauseController : MonoBehaviour
         TickPauseMenu();
     }
 
+    bool IsPauseAllowedInCurrentScene()
+    {
+        Scene scene = SceneManager.GetActiveScene();
+        if (!scene.IsValid())
+            return false;
+
+        string sceneName = scene.name;
+        if (string.IsNullOrEmpty(sceneName))
+            return false;
+
+        if (blockedSceneNames != null)
+        {
+            for (int i = 0; i < blockedSceneNames.Length; i++)
+            {
+                string blocked = blockedSceneNames[i];
+                if (!string.IsNullOrEmpty(blocked) && sceneName == blocked)
+                    return false;
+            }
+        }
+
+        return true;
+    }
+
+    bool IsPauseBlockedByGameplayState()
+    {
+        if (StageIntroTransition.Instance != null)
+        {
+            if (StageIntroTransition.Instance.IntroRunning ||
+                StageIntroTransition.Instance.EndingRunning)
+                return true;
+        }
+
+        var players = FindObjectsByType<MovementController>(
+            FindObjectsInactive.Exclude,
+            FindObjectsSortMode.None);
+
+        for (int i = 0; i < players.Length; i++)
+        {
+            var p = players[i];
+            if (p == null)
+                continue;
+
+            bool isPlayer = p.CompareTag("Player") || p.GetComponent<PlayerIdentity>() != null;
+            if (!isPlayer)
+                continue;
+
+            if (p.isDead || p.IsHoleDeathInProgress || p.IsEndingStage)
+                return true;
+        }
+
+        return false;
+    }
+
     void TogglePause()
     {
         if (exitingToTitle)
             return;
 
-        if (StageIntroTransition.Instance != null)
-        {
-            if (StageIntroTransition.Instance.IntroRunning ||
-                StageIntroTransition.Instance.EndingRunning)
-                return;
-        }
+        if (!IsPauseAllowedInCurrentScene())
+            return;
+
+        if (IsPauseBlockedByGameplayState())
+            return;
 
         IsPaused = !IsPaused;
 

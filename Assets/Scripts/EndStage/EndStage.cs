@@ -86,8 +86,7 @@ public abstract class EndStage : MonoBehaviour
         if (!other.CompareTag("Player"))
             return false;
 
-        var triggerMovement = other.GetComponent<MovementController>();
-        if (triggerMovement == null)
+        if (!other.TryGetComponent<MovementController>(out var triggerMovement))
             return false;
 
         if (triggerMovement.isDead || triggerMovement.IsEndingStage)
