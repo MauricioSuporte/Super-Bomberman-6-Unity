@@ -17,7 +17,7 @@ public class GameMusicController : MonoBehaviour
     {
         audioSource = GetComponent<AudioSource>();
 
-        if (Instance != null)
+        if (Instance != null && Instance != this)
         {
             Destroy(gameObject);
             return;
