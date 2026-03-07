@@ -33,16 +33,42 @@ public class WorldMapController : MonoBehaviour
         public bool loopWorldMusic = true;
     }
 
-    [Header("Debug")]
+    [Header("Debug (Surgical Logs)")]
     [SerializeField] bool enableSurgicalLogs = true;
 
-    [SerializeField] bool logDiagnosticsOnStart = true;
-    [SerializeField] bool logDiagnosticsOnWorldChange = true;
-    [SerializeField] bool logDiagnosticsOnResolutionChange = true;
-
-    [SerializeField] bool logCursorMoveStartStop = true;
+    [SerializeField] bool logLayoutDiagnosticsOnStart = true;
+    [SerializeField] bool logLayoutDiagnosticsOnWorldChange = true;
+    [SerializeField] bool logLayoutDiagnosticsOnResolutionChange = true;
     [SerializeField] bool logHoveredAnchorChanges = true;
+
+    [Header("Anchor Drift Diagnostics")]
+    [SerializeField] bool captureNormalizedBaselineOnStart = true;
+    [SerializeField] bool recaptureNormalizedBaselineOnWorldChange = true;
+    [SerializeField] bool logCapturedBaseline = true;
+    [SerializeField] bool logAnchorDriftAgainstBaseline = true;
+    [SerializeField] float driftLogThresholdNormalized = 0.0001f;
+    [SerializeField] bool logFullAnchorHierarchy = true;
+    [SerializeField] bool logMovementAreaWorldCorners = true;
     [SerializeField] bool logAllActiveWorldAnchorsInDiagnostics = true;
+
+    [Header("Stage Anchor Scaling Fix")]
+    [Tooltip("Posições das stages são tratadas como coordenadas lógicas SNES e reescaladas para o SafeFrame atual.")]
+    [SerializeField] bool scaleStageAnchorsWithSafeFrame = true;
+
+    [Tooltip("Largura lógica usada ao posicionar as stages no mapa.")]
+    [SerializeField] int stageAnchorReferenceWidth = 256;
+
+    [Tooltip("Altura lógica usada ao posicionar as stages no mapa.")]
+    [SerializeField] int stageAnchorReferenceHeight = 224;
+
+    [Tooltip("Usa upscale inteiro igual ao mapa SNES.")]
+    [SerializeField] bool useIntegerUpscaleForStageAnchors = true;
+
+    [SerializeField] float extraStageAnchorScaleMultiplier = 1f;
+    [SerializeField] float minStageAnchorScale = 1f;
+    [SerializeField] float maxStageAnchorScale = 20f;
+
+    [SerializeField] bool logStageAnchorScaling = true;
 
     [Header("Input Owner")]
     [SerializeField, Range(1, 4)] int ownerPlayerId = 1;
@@ -70,6 +96,7 @@ public class WorldMapController : MonoBehaviour
     [Header("Stage Detection")]
     [SerializeField] float stageDetectRadius = 18f;
     [SerializeField] bool requireStageInRangeToConfirm = true;
+    [SerializeField] bool scaleStageDetectRadiusWithSafeFrame = true;
 
     [Header("Stage Icons")]
     [SerializeField] Sprite unlockedStageSprite;
@@ -123,6 +150,7 @@ public class WorldMapController : MonoBehaviour
 
     bool transitioning;
     bool wasMovingLastFrame;
+    bool authoredStageAnchorsCaptured;
 
     AudioClip lastPlayedWorldMusic;
     float lastPlayedWorldMusicVolume;
@@ -133,6 +161,9 @@ public class WorldMapController : MonoBehaviour
     float lastCanvasScaleFactor = -1f;
     Rect lastMovementAreaPxRect;
     Rect lastMovementAreaLocalRect;
+
+    readonly Dictionary<string, Vector2> capturedAnchorNormalizedPositions = new Dictionary<string, Vector2>();
+    readonly Dictionary<string, Vector2> authoredStageAnchorPositions = new Dictionary<string, Vector2>();
 
     void SLog(string msg)
     {
@@ -154,15 +185,25 @@ public class WorldMapController : MonoBehaviour
         if (cursorMovementArea == null)
             cursorMovementArea = transform as RectTransform;
 
+        currentWorldIndex = Mathf.Clamp(startWorldIndex, 0, Mathf.Max(0, worlds.Count - 1));
+
+        Canvas.ForceUpdateCanvases();
+
+        CaptureAuthoredStageAnchorPositionsOnce();
+        ApplyScaledStageAnchorPositions();
+
         ApplyScaledCursorSize();
 
         if (createIconsOnStart)
             EnsureAllStageIcons();
 
-        currentWorldIndex = Mathf.Clamp(startWorldIndex, 0, Mathf.Max(0, worlds.Count - 1));
-
         ApplyWorldVisibility();
         UpdateAllStageIcons();
+
+        Canvas.ForceUpdateCanvases();
+
+        if (captureNormalizedBaselineOnStart)
+            CaptureNormalizedPositionsFromCurrentLayout("Start");
 
         if (snapCursorToDefaultStageOnStart)
             SnapCursorToDefaultStage();
@@ -175,9 +216,7 @@ public class WorldMapController : MonoBehaviour
 
         PlayMusicForCurrentWorld(forceRestart: true);
 
-        SLog($"Start | world={currentWorldIndex} hoveredNode={hoveredNodeIndex}");
-
-        if (logDiagnosticsOnStart)
+        if (logLayoutDiagnosticsOnStart)
             DumpResolutionSpeedAndAnchorDiagnostics("Start");
     }
 
@@ -213,9 +252,21 @@ public class WorldMapController : MonoBehaviour
         }
 
         if (allowReturnToTitle && input.GetDown(ownerPlayerId, PlayerAction.ActionB))
-        {
             StartCoroutine(LoadSceneRoutine(titleSceneName));
-        }
+    }
+
+    void OnRectTransformDimensionsChange()
+    {
+        if (!isActiveAndEnabled)
+            return;
+
+        if (!enableSurgicalLogs || !logLayoutDiagnosticsOnResolutionChange)
+            return;
+
+        if (cursorMovementArea == null)
+            return;
+
+        SLog("OnRectTransformDimensionsChange | detected on controller hierarchy");
     }
 
     void UpdateFreeCursorMovement(PlayerInputManager input)
@@ -238,8 +289,6 @@ public class WorldMapController : MonoBehaviour
         {
             move = move.normalized;
 
-            Vector2 oldPos = cursor.anchoredPosition;
-
             cursor.SetParent(cursorMovementArea, false);
             float speedX = cursorMovementArea.rect.width * cursorMoveSpeedNormalized;
             float speedY = cursorMovementArea.rect.height * cursorMoveSpeedNormalized;
@@ -249,38 +298,8 @@ public class WorldMapController : MonoBehaviour
             ClampCursorIfNeeded();
             RefreshHoveredStage();
 
-            Vector2 newPos = cursor.anchoredPosition;
-
-            if (logCursorMoveStartStop && !wasMovingLastFrame)
-            {
-                Vector2 pxPerLocal = GetPixelsPerLocalUnitInMovementArea();
-                Vector2 deltaLocal = newPos - oldPos;
-                Vector2 deltaPx = new Vector2(deltaLocal.x * pxPerLocal.x, deltaLocal.y * pxPerLocal.y);
-                Vector2 speedPx = new Vector2(cursorMoveSpeed * pxPerLocal.x, cursorMoveSpeed * pxPerLocal.y);
-
-                SLog(
-                    $"CursorMoveStart | dir=({move.x:F3},{move.y:F3}) " +
-                    $"cursorMoveSpeedLocal={cursorMoveSpeed:F3}u/s " +
-                    $"pixelsPerLocal=({pxPerLocal.x:F4},{pxPerLocal.y:F4}) " +
-                    $"estimatedSpeedPx=({speedPx.x:F2},{speedPx.y:F2})px/s " +
-                    $"deltaLocal=({deltaLocal.x:F3},{deltaLocal.y:F3}) " +
-                    $"deltaPx=({deltaPx.x:F3},{deltaPx.y:F3}) " +
-                    $"oldPos=({oldPos.x:F3},{oldPos.y:F3}) newPos=({newPos.x:F3},{newPos.y:F3})");
-            }
-
             if (!wasMovingLastFrame)
                 PlaySfx(moveCursorSfx, moveCursorSfxVolume);
-        }
-        else if (logCursorMoveStartStop && wasMovingLastFrame)
-        {
-            Vector2 pxPerLocal = GetPixelsPerLocalUnitInMovementArea();
-            Vector2 speedPx = new Vector2(cursorMoveSpeed * pxPerLocal.x, cursorMoveSpeed * pxPerLocal.y);
-
-            SLog(
-                $"CursorMoveStop | cursorMoveSpeedLocal={cursorMoveSpeed:F3}u/s " +
-                $"pixelsPerLocal=({pxPerLocal.x:F4},{pxPerLocal.y:F4}) " +
-                $"estimatedSpeedPx=({speedPx.x:F2},{speedPx.y:F2})px/s " +
-                $"cursorPos=({cursor.anchoredPosition.x:F3},{cursor.anchoredPosition.y:F3})");
         }
 
         wasMovingLastFrame = isMoving;
@@ -300,8 +319,14 @@ public class WorldMapController : MonoBehaviour
             currentWorldIndex = 0;
 
         ApplyWorldVisibility();
+        ApplyScaledStageAnchorPositions();
         UpdateAllStageIcons();
         ApplyScaledCursorSize();
+
+        Canvas.ForceUpdateCanvases();
+
+        if (recaptureNormalizedBaselineOnWorldChange)
+            CaptureNormalizedPositionsFromCurrentLayout("WorldChange");
 
         if (snapCursorToDefaultStageOnWorldChange)
             SnapCursorToDefaultStage();
@@ -313,7 +338,7 @@ public class WorldMapController : MonoBehaviour
 
         SLog($"ChangeWorld | from={oldWorld} to={currentWorldIndex} hoveredNode={hoveredNodeIndex}");
 
-        if (logDiagnosticsOnWorldChange)
+        if (logLayoutDiagnosticsOnWorldChange)
             DumpResolutionSpeedAndAnchorDiagnostics("ChangeWorld");
     }
 
@@ -384,7 +409,7 @@ public class WorldMapController : MonoBehaviour
         if (hoveredNodeIndex >= 0)
         {
             var node = GetHoveredNode();
-            if (node != null && (logHoveredAnchorChanges && hoveredNodeIndex != lastLoggedHoveredNodeIndex))
+            if (node != null && logHoveredAnchorChanges && hoveredNodeIndex != lastLoggedHoveredNodeIndex)
             {
                 Vector2 anchorLocal = GetAnchorPositionInMovementArea(node.anchor);
                 Vector2 anchorNorm = GetNormalizedPointInMovementArea(anchorLocal);
@@ -415,6 +440,8 @@ public class WorldMapController : MonoBehaviour
         int bestIndex = -1;
         float bestDist = float.MaxValue;
 
+        float detectRadius = GetScaledStageDetectRadius();
+
         for (int i = 0; i < world.nodes.Count; i++)
         {
             var node = world.nodes[i];
@@ -431,7 +458,7 @@ public class WorldMapController : MonoBehaviour
             }
         }
 
-        if (requireStageInRangeToConfirm && bestDist > stageDetectRadius)
+        if (requireStageInRangeToConfirm && bestDist > detectRadius)
             return -1;
 
         return bestIndex;
@@ -636,21 +663,11 @@ public class WorldMapController : MonoBehaviour
     void PlayMusicForCurrentWorld(bool forceRestart)
     {
         var world = GetCurrentWorld();
-        if (world == null)
-        {
-            SLog("PlayMusicForCurrentWorld aborted | current world is NULL");
+        if (world == null || GameMusicController.Instance == null)
             return;
-        }
-
-        if (GameMusicController.Instance == null)
-        {
-            SLog("PlayMusicForCurrentWorld aborted | GameMusicController.Instance is NULL");
-            return;
-        }
 
         if (world.worldMusic == null)
         {
-            SLog($"PlayMusicForCurrentWorld | world={currentWorldIndex} '{world.worldName}' has no music clip");
             GameMusicController.Instance.StopMusic();
             lastPlayedWorldMusic = null;
             lastPlayedWorldMusicVolume = 0f;
@@ -664,18 +681,13 @@ public class WorldMapController : MonoBehaviour
             lastPlayedWorldMusicLoop == world.loopWorldMusic;
 
         if (!forceRestart && sameClip)
-        {
-            SLog($"PlayMusicForCurrentWorld skipped | world={currentWorldIndex} '{world.worldName}' music already playing");
             return;
-        }
 
         GameMusicController.Instance.PlayMusic(world.worldMusic, world.worldMusicVolume, world.loopWorldMusic);
 
         lastPlayedWorldMusic = world.worldMusic;
         lastPlayedWorldMusicVolume = world.worldMusicVolume;
         lastPlayedWorldMusicLoop = world.loopWorldMusic;
-
-        SLog($"PlayMusicForCurrentWorld | world={currentWorldIndex} '{world.worldName}' clip='{world.worldMusic.name}' volume={world.worldMusicVolume:F2} loop={world.loopWorldMusic}");
     }
 
     void PlaySfx(AudioClip clip, float volume)
@@ -742,14 +754,213 @@ public class WorldMapController : MonoBehaviour
         return GetComponentInParent<Canvas>();
     }
 
+    CanvasScaler GetRootCanvasScaler()
+    {
+        var canvas = GetRootCanvas();
+        if (canvas == null)
+            return null;
+
+        return canvas.GetComponent<CanvasScaler>();
+    }
+
+    void CaptureAuthoredStageAnchorPositionsOnce()
+    {
+        if (authoredStageAnchorsCaptured)
+            return;
+
+        authoredStageAnchorPositions.Clear();
+
+        for (int w = 0; w < worlds.Count; w++)
+        {
+            var world = worlds[w];
+            if (world == null || world.nodes == null)
+                continue;
+
+            for (int n = 0; n < world.nodes.Count; n++)
+            {
+                var node = world.nodes[n];
+                if (node == null || node.anchor == null)
+                    continue;
+
+                string key = GetAnchorKey(w, n);
+                authoredStageAnchorPositions[key] = node.anchor.anchoredPosition;
+
+                if (logStageAnchorScaling)
+                {
+                    SLog(
+                        $"CaptureAuthoredAnchor | world={w} node={n} displayName='{node.displayName}' " +
+                        $"anchor='{node.anchor.name}' authoredLogical=({node.anchor.anchoredPosition.x:F3},{node.anchor.anchoredPosition.y:F3})");
+                }
+            }
+        }
+
+        authoredStageAnchorsCaptured = true;
+    }
+
+    void ApplyScaledStageAnchorPositions()
+    {
+        if (!scaleStageAnchorsWithSafeFrame)
+            return;
+
+        CaptureAuthoredStageAnchorPositionsOnce();
+
+        float anchorScale = GetStageAnchorScale();
+
+        for (int w = 0; w < worlds.Count; w++)
+        {
+            var world = worlds[w];
+            if (world == null || world.nodes == null)
+                continue;
+
+            for (int n = 0; n < world.nodes.Count; n++)
+            {
+                var node = world.nodes[n];
+                if (node == null || node.anchor == null)
+                    continue;
+
+                string key = GetAnchorKey(w, n);
+                if (!authoredStageAnchorPositions.TryGetValue(key, out Vector2 authoredLogical))
+                    continue;
+
+                Vector2 scaled = authoredLogical * anchorScale;
+                node.anchor.anchoredPosition = scaled;
+
+                if (logStageAnchorScaling)
+                {
+                    SLog(
+                        $"ApplyScaledStageAnchor | world={w} node={n} displayName='{node.displayName}' " +
+                        $"anchor='{node.anchor.name}' authoredLogical=({authoredLogical.x:F3},{authoredLogical.y:F3}) " +
+                        $"scale={anchorScale:F4} scaledAnchored=({scaled.x:F3},{scaled.y:F3})");
+                }
+            }
+        }
+    }
+
+    float GetStageAnchorScale()
+    {
+        if (cursorMovementArea == null)
+            return 1f;
+
+        var canvas = GetRootCanvas();
+        if (canvas == null)
+            return 1f;
+
+        Rect safePx = RectTransformUtility.PixelAdjustRect(cursorMovementArea, canvas);
+
+        float sx = safePx.width / Mathf.Max(1f, stageAnchorReferenceWidth);
+        float sy = safePx.height / Mathf.Max(1f, stageAnchorReferenceHeight);
+
+        float rawScale = Mathf.Min(sx, sy);
+        float usedScale = useIntegerUpscaleForStageAnchors ? Mathf.Floor(rawScale) : rawScale;
+
+        if (usedScale < 1f)
+            usedScale = 1f;
+
+        usedScale *= Mathf.Max(0.01f, extraStageAnchorScaleMultiplier);
+        usedScale = Mathf.Clamp(usedScale, minStageAnchorScale, maxStageAnchorScale);
+
+        return usedScale;
+    }
+
+    float GetScaledStageDetectRadius()
+    {
+        if (!scaleStageDetectRadiusWithSafeFrame)
+            return stageDetectRadius;
+
+        return stageDetectRadius * GetStageAnchorScale();
+    }
+
+    void CaptureNormalizedPositionsFromCurrentLayout(string reason)
+    {
+        capturedAnchorNormalizedPositions.Clear();
+
+        var world = GetCurrentWorld();
+        if (world == null || world.nodes == null)
+        {
+            SLog($"CaptureNormalized skipped | reason={reason} world=NULL");
+            return;
+        }
+
+        Canvas.ForceUpdateCanvases();
+
+        for (int i = 0; i < world.nodes.Count; i++)
+        {
+            var node = world.nodes[i];
+            if (node == null || node.anchor == null)
+                continue;
+
+            Vector2 localInArea = GetAnchorPositionInMovementArea(node.anchor);
+            Vector2 normalized = GetNormalizedPointInMovementArea(localInArea);
+
+            string key = GetAnchorKey(currentWorldIndex, i);
+            capturedAnchorNormalizedPositions[key] = normalized;
+
+            if (logCapturedBaseline)
+            {
+                SLog(
+                    $"CaptureNormalized | world={currentWorldIndex} node={i} displayName='{node.displayName}' " +
+                    $"anchor='{node.anchor.name}' localInArea=({localInArea.x:F3},{localInArea.y:F3}) " +
+                    $"normalized=({normalized.x:F4},{normalized.y:F4})");
+            }
+        }
+    }
+
+    void DumpAnchorDriftFromCapturedBaseline(string reason)
+    {
+        if (!logAnchorDriftAgainstBaseline)
+            return;
+
+        var world = GetCurrentWorld();
+        if (world == null || world.nodes == null)
+            return;
+
+        if (capturedAnchorNormalizedPositions.Count == 0)
+        {
+            SLog($"AnchorDrift[{reason}] | baseline empty");
+            return;
+        }
+
+        for (int i = 0; i < world.nodes.Count; i++)
+        {
+            var node = world.nodes[i];
+            if (node == null || node.anchor == null)
+                continue;
+
+            string key = GetAnchorKey(currentWorldIndex, i);
+            if (!capturedAnchorNormalizedPositions.TryGetValue(key, out Vector2 baseline))
+                continue;
+
+            Vector2 localInArea = GetAnchorPositionInMovementArea(node.anchor);
+            Vector2 current = GetNormalizedPointInMovementArea(localInArea);
+            Vector2 delta = current - baseline;
+
+            if (Mathf.Abs(delta.x) < driftLogThresholdNormalized &&
+                Mathf.Abs(delta.y) < driftLogThresholdNormalized)
+                continue;
+
+            SLog(
+                $"AnchorDrift[{reason}] | world={currentWorldIndex} node={i} displayName='{node.displayName}' " +
+                $"anchor='{node.anchor.name}' baselineNorm=({baseline.x:F4},{baseline.y:F4}) " +
+                $"currentNorm=({current.x:F4},{current.y:F4}) deltaNorm=({delta.x:F4},{delta.y:F4}) " +
+                $"localInArea=({localInArea.x:F3},{localInArea.y:F3})");
+        }
+    }
+
+    string GetAnchorKey(int worldIndex, int nodeIndex)
+    {
+        return $"{worldIndex}:{nodeIndex}";
+    }
+
     void DumpIconSizeDiagnostics(string reason)
     {
         var canvas = GetRootCanvas();
         if (canvas == null)
         {
-            SLog($"IconDiag[{reason}] | canvas=NULL");
+            SLog($"Diag[{reason}] | canvas=NULL");
             return;
         }
+
+        var scaler = GetRootCanvasScaler();
 
         Rect movementAreaPx = cursorMovementArea != null
             ? RectTransformUtility.PixelAdjustRect(cursorMovementArea, canvas)
@@ -758,23 +969,32 @@ public class WorldMapController : MonoBehaviour
         Vector2 scaledIconSize = GetScaledIconSize();
         Vector2 scaledCursorSize = GetScaledCursorSize();
         Vector2 pxPerLocal = GetPixelsPerLocalUnitInMovementArea();
+        float stageAnchorScale = GetStageAnchorScale();
+
+        string scalerInfo = scaler == null
+            ? "canvasScaler=NULL"
+            : $"canvasScaler(uiScaleMode={scaler.uiScaleMode} refRes=({scaler.referenceResolution.x:F0}x{scaler.referenceResolution.y:F0}) match={scaler.matchWidthOrHeight:F3})";
 
         SLog(
             $"Diag[{reason}] | " +
             $"screen=({Screen.width}x{Screen.height}) " +
             $"canvasScaleFactor={canvas.scaleFactor:F4} referencePPU={canvas.referencePixelsPerUnit:F2} " +
-            $"movementAreaLocal=({cursorMovementArea.rect.width:F3}x{cursorMovementArea.rect.height:F3}) " +
-            $"movementAreaPx=({movementAreaPx.width:F2}x{movementAreaPx.height:F2}) " +
+            $"{scalerInfo} " +
+            $"movementAreaLocal=({cursorMovementArea.rect.xMin:F3},{cursorMovementArea.rect.yMin:F3},{cursorMovementArea.rect.width:F3},{cursorMovementArea.rect.height:F3}) " +
+            $"movementAreaPx=({movementAreaPx.xMin:F2},{movementAreaPx.yMin:F2},{movementAreaPx.width:F2},{movementAreaPx.height:F2}) " +
             $"pxPerLocal=({pxPerLocal.x:F4},{pxPerLocal.y:F4}) " +
-            $"cursorMoveSpeedLocal={cursorMoveSpeed:F3}u/s estimatedCursorSpeedPx=({cursorMoveSpeed * pxPerLocal.x:F2},{cursorMoveSpeed * pxPerLocal.y:F2})px/s " +
+            $"stageAnchorScale={stageAnchorScale:F4} stageDetectRadiusScaled={GetScaledStageDetectRadius():F3} " +
             $"baseIconLogicalSize=({baseIconLogicalSize.x:F2}x{baseIconLogicalSize.y:F2}) scaledIconSize=({scaledIconSize.x:F2}x{scaledIconSize.y:F2}) " +
             $"baseCursorLogicalSize=({baseCursorLogicalSize.x:F2}x{baseCursorLogicalSize.y:F2}) scaledCursorSize=({scaledCursorSize.x:F2}x{scaledCursorSize.y:F2})");
 
-        var world = GetCurrentWorld();
-        if (world == null || world.nodes == null)
-            return;
+        if (cursorMovementArea != null)
+            DumpRectTransformGeometry($"MovementArea[{reason}]", cursorMovementArea);
 
-        if (!logAllActiveWorldAnchorsInDiagnostics)
+        if (logMovementAreaWorldCorners && cursorMovementArea != null)
+            DumpWorldCorners($"MovementAreaCorners[{reason}]", cursorMovementArea);
+
+        var world = GetCurrentWorld();
+        if (world == null || world.nodes == null || !logAllActiveWorldAnchorsInDiagnostics)
             return;
 
         for (int i = 0; i < world.nodes.Count; i++)
@@ -783,37 +1003,153 @@ public class WorldMapController : MonoBehaviour
             if (node == null || node.anchor == null)
                 continue;
 
-            Vector2 anchorLocalInArea = GetAnchorPositionInMovementArea(node.anchor);
-            Vector2 anchorNormInArea = GetNormalizedPointInMovementArea(anchorLocalInArea);
+            DumpAnchorDetailedDiagnostics(reason, i, node);
+        }
+    }
 
-            Rect anchorPx = RectTransformUtility.PixelAdjustRect(node.anchor, canvas);
+    void DumpAnchorDetailedDiagnostics(string reason, int nodeIndex, StageNode node)
+    {
+        var canvas = GetRootCanvas();
+        if (canvas == null || node == null || node.anchor == null)
+            return;
 
-            string iconInfo = "icon=NULL";
-            if (node.runtimeIcon != null)
+        Rect anchorPx = RectTransformUtility.PixelAdjustRect(node.anchor, canvas);
+        Vector2 anchorLocalInArea = GetAnchorPositionInMovementArea(node.anchor);
+        Vector2 anchorNormInArea = GetNormalizedPointInMovementArea(anchorLocalInArea);
+
+        Vector3 worldCenter = node.anchor.TransformPoint(node.anchor.rect.center);
+        Vector3 worldPivot = node.anchor.position;
+        Vector3 localPivotInArea = cursorMovementArea != null
+            ? cursorMovementArea.InverseTransformPoint(worldPivot)
+            : Vector3.zero;
+        Vector3 localCenterInArea = cursorMovementArea != null
+            ? cursorMovementArea.InverseTransformPoint(worldCenter)
+            : Vector3.zero;
+
+        string key = GetAnchorKey(currentWorldIndex, nodeIndex);
+        Vector2 authoredLogical = authoredStageAnchorPositions.TryGetValue(key, out Vector2 authored)
+            ? authored
+            : node.anchor.anchoredPosition;
+
+        string iconInfo = "icon=NULL";
+        if (node.runtimeIcon != null)
+        {
+            Rect iconPx = RectTransformUtility.PixelAdjustRect(node.runtimeIcon.rectTransform, canvas);
+            Vector3 iconWorld = node.runtimeIcon.rectTransform.TransformPoint(node.runtimeIcon.rectTransform.rect.center);
+            Vector3 iconLocalInArea = cursorMovementArea.InverseTransformPoint(iconWorld);
+
+            iconInfo =
+                $"iconAnchored=({node.runtimeIcon.rectTransform.anchoredPosition.x:F3},{node.runtimeIcon.rectTransform.anchoredPosition.y:F3}) " +
+                $"iconSizeDelta=({node.runtimeIcon.rectTransform.sizeDelta.x:F3},{node.runtimeIcon.rectTransform.sizeDelta.y:F3}) " +
+                $"iconPxRect=({iconPx.xMin:F2},{iconPx.yMin:F2},{iconPx.width:F2},{iconPx.height:F2}) " +
+                $"iconLocalInArea=({iconLocalInArea.x:F3},{iconLocalInArea.y:F3})";
+        }
+
+        SLog(
+            $"AnchorDiag[{reason}] | world={currentWorldIndex} node={nodeIndex} displayName='{node.displayName}' unlocked={node.unlocked} " +
+            $"anchor='{node.anchor.name}' " +
+            $"authoredLogical=({authoredLogical.x:F3},{authoredLogical.y:F3}) " +
+            $"anchorMin=({node.anchor.anchorMin.x:F3},{node.anchor.anchorMin.y:F3}) " +
+            $"anchorMax=({node.anchor.anchorMax.x:F3},{node.anchor.anchorMax.y:F3}) " +
+            $"pivot=({node.anchor.pivot.x:F3},{node.anchor.pivot.y:F3}) " +
+            $"anchored=({node.anchor.anchoredPosition.x:F3},{node.anchor.anchoredPosition.y:F3}) " +
+            $"sizeDelta=({node.anchor.sizeDelta.x:F3},{node.anchor.sizeDelta.y:F3}) " +
+            $"rect=({node.anchor.rect.xMin:F3},{node.anchor.rect.yMin:F3},{node.anchor.rect.width:F3},{node.anchor.rect.height:F3}) " +
+            $"localPos=({node.anchor.localPosition.x:F3},{node.anchor.localPosition.y:F3},{node.anchor.localPosition.z:F3}) " +
+            $"worldPivot=({worldPivot.x:F3},{worldPivot.y:F3},{worldPivot.z:F3}) " +
+            $"worldCenter=({worldCenter.x:F3},{worldCenter.y:F3},{worldCenter.z:F3}) " +
+            $"lossyScale=({node.anchor.lossyScale.x:F4},{node.anchor.lossyScale.y:F4},{node.anchor.lossyScale.z:F4}) " +
+            $"anchorPxRect=({anchorPx.xMin:F2},{anchorPx.yMin:F2},{anchorPx.width:F2},{anchorPx.height:F2}) " +
+            $"localPivotInArea=({localPivotInArea.x:F3},{localPivotInArea.y:F3}) " +
+            $"localCenterInArea=({localCenterInArea.x:F3},{localCenterInArea.y:F3}) " +
+            $"anchorNormInArea=({anchorNormInArea.x:F4},{anchorNormInArea.y:F4}) " +
+            $"{iconInfo}");
+
+        if (logFullAnchorHierarchy)
+            DumpRectTransformHierarchy($"AnchorHierarchy[{reason}] world={currentWorldIndex} node={nodeIndex}", node.anchor);
+    }
+
+    void DumpRectTransformGeometry(string label, RectTransform rt)
+    {
+        if (rt == null)
+        {
+            SLog($"{label} | NULL");
+            return;
+        }
+
+        SLog(
+            $"{label} | " +
+            $"name='{rt.name}' parent='{(rt.parent != null ? rt.parent.name : "NULL")}' " +
+            $"anchorMin=({rt.anchorMin.x:F3},{rt.anchorMin.y:F3}) " +
+            $"anchorMax=({rt.anchorMax.x:F3},{rt.anchorMax.y:F3}) " +
+            $"pivot=({rt.pivot.x:F3},{rt.pivot.y:F3}) " +
+            $"anchored=({rt.anchoredPosition.x:F3},{rt.anchoredPosition.y:F3}) " +
+            $"sizeDelta=({rt.sizeDelta.x:F3},{rt.sizeDelta.y:F3}) " +
+            $"rect=({rt.rect.xMin:F3},{rt.rect.yMin:F3},{rt.rect.width:F3},{rt.rect.height:F3}) " +
+            $"offsetMin=({rt.offsetMin.x:F3},{rt.offsetMin.y:F3}) " +
+            $"offsetMax=({rt.offsetMax.x:F3},{rt.offsetMax.y:F3}) " +
+            $"localPos=({rt.localPosition.x:F3},{rt.localPosition.y:F3},{rt.localPosition.z:F3}) " +
+            $"lossyScale=({rt.lossyScale.x:F4},{rt.lossyScale.y:F4},{rt.lossyScale.z:F4})");
+    }
+
+    void DumpRectTransformHierarchy(string label, RectTransform rt)
+    {
+        if (rt == null)
+        {
+            SLog($"{label} | NULL");
+            return;
+        }
+
+        int depth = 0;
+        Transform t = rt;
+
+        while (t != null)
+        {
+            var crt = t as RectTransform;
+            if (crt != null)
             {
-                Rect iconPx = RectTransformUtility.PixelAdjustRect(node.runtimeIcon.rectTransform, canvas);
-                Vector3 iconWorld = node.runtimeIcon.rectTransform.TransformPoint(node.runtimeIcon.rectTransform.rect.center);
-                Vector3 iconLocalInArea = cursorMovementArea.InverseTransformPoint(iconWorld);
-
-                iconInfo =
-                    $"iconAnchored=({node.runtimeIcon.rectTransform.anchoredPosition.x:F3},{node.runtimeIcon.rectTransform.anchoredPosition.y:F3}) " +
-                    $"iconPx=({iconPx.width:F2}x{iconPx.height:F2}) " +
-                    $"iconLocalInArea=({iconLocalInArea.x:F3},{iconLocalInArea.y:F3})";
+                SLog(
+                    $"{label} | depth={depth} name='{crt.name}' " +
+                    $"anchorMin=({crt.anchorMin.x:F3},{crt.anchorMin.y:F3}) " +
+                    $"anchorMax=({crt.anchorMax.x:F3},{crt.anchorMax.y:F3}) " +
+                    $"pivot=({crt.pivot.x:F3},{crt.pivot.y:F3}) " +
+                    $"anchored=({crt.anchoredPosition.x:F3},{crt.anchoredPosition.y:F3}) " +
+                    $"sizeDelta=({crt.sizeDelta.x:F3},{crt.sizeDelta.y:F3}) " +
+                    $"rect=({crt.rect.xMin:F3},{crt.rect.yMin:F3},{crt.rect.width:F3},{crt.rect.height:F3}) " +
+                    $"localPos=({crt.localPosition.x:F3},{crt.localPosition.y:F3},{crt.localPosition.z:F3}) " +
+                    $"lossyScale=({crt.lossyScale.x:F4},{crt.lossyScale.y:F4},{crt.lossyScale.z:F4})");
+            }
+            else
+            {
+                SLog($"{label} | depth={depth} name='{t.name}' non-RectTransform");
             }
 
-            SLog(
-                $"AnchorDiag[{reason}] | world={currentWorldIndex} node={i} displayName='{node.displayName}' unlocked={node.unlocked} " +
-                $"anchor='{node.anchor.name}' anchorAnchored=({node.anchor.anchoredPosition.x:F3},{node.anchor.anchoredPosition.y:F3}) " +
-                $"anchorPxRect=({anchorPx.width:F2}x{anchorPx.height:F2}) " +
-                $"anchorLocalInArea=({anchorLocalInArea.x:F3},{anchorLocalInArea.y:F3}) " +
-                $"anchorNormInArea=({anchorNormInArea.x:F4},{anchorNormInArea.y:F4}) " +
-                $"{iconInfo}");
+            t = t.parent;
+            depth++;
         }
+    }
+
+    void DumpWorldCorners(string label, RectTransform rt)
+    {
+        if (rt == null)
+        {
+            SLog($"{label} | NULL");
+            return;
+        }
+
+        Vector3[] corners = new Vector3[4];
+        rt.GetWorldCorners(corners);
+
+        SLog(
+            $"{label} | BL=({corners[0].x:F3},{corners[0].y:F3},{corners[0].z:F3}) " +
+            $"TL=({corners[1].x:F3},{corners[1].y:F3},{corners[1].z:F3}) " +
+            $"TR=({corners[2].x:F3},{corners[2].y:F3},{corners[2].z:F3}) " +
+            $"BR=({corners[3].x:F3},{corners[3].y:F3},{corners[3].z:F3})");
     }
 
     void CheckResolutionOrScaleChanges()
     {
-        if (!logDiagnosticsOnResolutionChange)
+        if (!logLayoutDiagnosticsOnResolutionChange)
             return;
 
         var canvas = GetRootCanvas();
@@ -829,8 +1165,12 @@ public class WorldMapController : MonoBehaviour
             !Mathf.Approximately(scaleFactor, lastCanvasScaleFactor) ||
             movementAreaPx.width != lastMovementAreaPxRect.width ||
             movementAreaPx.height != lastMovementAreaPxRect.height ||
+            movementAreaPx.x != lastMovementAreaPxRect.x ||
+            movementAreaPx.y != lastMovementAreaPxRect.y ||
             movementAreaLocal.width != lastMovementAreaLocalRect.width ||
-            movementAreaLocal.height != lastMovementAreaLocalRect.height;
+            movementAreaLocal.height != lastMovementAreaLocalRect.height ||
+            movementAreaLocal.x != lastMovementAreaLocalRect.x ||
+            movementAreaLocal.y != lastMovementAreaLocalRect.y;
 
         if (!changed)
             return;
@@ -841,8 +1181,17 @@ public class WorldMapController : MonoBehaviour
         lastMovementAreaPxRect = movementAreaPx;
         lastMovementAreaLocalRect = movementAreaLocal;
 
+        Canvas.ForceUpdateCanvases();
+        ApplyScaledStageAnchorPositions();
         ApplyScaledCursorSize();
         UpdateAllStageIcons();
+
+        if (hoveredNodeIndex >= 0)
+        {
+            var hovered = GetHoveredNode();
+            if (hovered != null && hovered.anchor != null && cursor != null)
+                cursor.anchoredPosition = GetAnchorPositionInMovementArea(hovered.anchor);
+        }
 
         DumpResolutionSpeedAndAnchorDiagnostics("ResolutionOrScaleChanged");
     }
@@ -850,6 +1199,7 @@ public class WorldMapController : MonoBehaviour
     void DumpResolutionSpeedAndAnchorDiagnostics(string reason)
     {
         DumpIconSizeDiagnostics(reason);
+        DumpAnchorDriftFromCapturedBaseline(reason);
 
         if (cursor != null)
         {
@@ -860,7 +1210,8 @@ public class WorldMapController : MonoBehaviour
                 $"cursorAnchored=({cursor.anchoredPosition.x:F3},{cursor.anchoredPosition.y:F3}) " +
                 $"cursorNormInArea=({cursorNorm.x:F4},{cursorNorm.y:F4}) " +
                 $"cursorRectSize=({cursor.rect.width:F3}x{cursor.rect.height:F3}) " +
-                $"cursorSizeDelta=({cursor.sizeDelta.x:F3}x{cursor.sizeDelta.y:F3})");
+                $"cursorSizeDelta=({cursor.sizeDelta.x:F3}x{cursor.sizeDelta.y:F3}) " +
+                $"cursorPivot=({cursor.pivot.x:F3},{cursor.pivot.y:F3})");
         }
     }
 
