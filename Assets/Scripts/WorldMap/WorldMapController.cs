@@ -103,8 +103,25 @@ public class WorldMapController : MonoBehaviour
     [SerializeField, Range(0f, 1f)] float deniedSfxVolume = 1f;
 
     [Header("Optional Back")]
-    [SerializeField] bool allowReturnToTitle = false;
+    private readonly bool allowReturnToTitle = true;
     [SerializeField] string titleSceneName = "TitleScreen";
+
+    [Header("Top Left Label")]
+    [SerializeField] Text worldStageLabel;
+    [SerializeField] string worldLabelPrefix = "WORLD ";
+    [SerializeField] string stageSeparator = " - ";
+
+    [SerializeField] int worldStageLabelReferenceWidth = 256;
+    [SerializeField] int worldStageLabelReferenceHeight = 224;
+    [SerializeField] bool useIntegerUpscaleForWorldStageLabel = true;
+
+    [SerializeField] int baseWorldStageLabelFontSize = 8;
+    [SerializeField] Vector2 baseWorldStageLabelAnchoredPosition = new Vector2(3f, -3f);
+    [SerializeField] Vector2 baseWorldStageLabelSize = new Vector2(80f, 12f);
+
+    [SerializeField] float extraWorldStageLabelScaleMultiplier = 1f;
+    [SerializeField] float minWorldStageLabelScale = 1f;
+    [SerializeField] float maxWorldStageLabelScale = 20f;
 
     int currentWorldIndex;
     int hoveredNodeIndex = -1;
@@ -139,6 +156,7 @@ public class WorldMapController : MonoBehaviour
         CaptureAuthoredStageAnchorPositionsOnce();
         ApplyScaledStageAnchorPositions();
         ApplyScaledCursorSize();
+        ApplyScaledWorldStageLabelLayout();
 
         if (createIconsOnStart)
             EnsureAllStageIcons();
@@ -153,6 +171,7 @@ public class WorldMapController : MonoBehaviour
 
         ClampCursorIfNeeded();
         RefreshHoveredStage();
+        RefreshWorldStageLabel();
 
         if (fadeImage != null)
             StartCoroutine(FadeInRoutine());
@@ -247,6 +266,7 @@ public class WorldMapController : MonoBehaviour
         ApplyScaledStageAnchorPositions();
         UpdateAllStageIcons();
         ApplyScaledCursorSize();
+        ApplyScaledWorldStageLabelLayout();
 
         Canvas.ForceUpdateCanvases();
 
@@ -255,6 +275,7 @@ public class WorldMapController : MonoBehaviour
 
         ClampCursorIfNeeded();
         RefreshHoveredStage();
+        RefreshWorldStageLabel();
         PlaySfx(changeWorldSfx, changeWorldSfxVolume);
         PlayMusicForCurrentWorld(forceRestart: false);
     }
@@ -314,6 +335,7 @@ public class WorldMapController : MonoBehaviour
     void RefreshHoveredStage()
     {
         hoveredNodeIndex = FindNearestNodeIndexToCursor();
+        RefreshWorldStageLabel();
     }
 
     int FindNearestNodeIndexToCursor()
@@ -744,6 +766,7 @@ public class WorldMapController : MonoBehaviour
         Canvas.ForceUpdateCanvases();
         ApplyScaledStageAnchorPositions();
         ApplyScaledCursorSize();
+        ApplyScaledWorldStageLabelLayout();
         UpdateAllStageIcons();
 
         if (hoveredNodeIndex >= 0)
@@ -816,5 +839,67 @@ public class WorldMapController : MonoBehaviour
         var img = cursor.GetComponent<Image>();
         if (img != null)
             img.preserveAspect = preserveCursorAspect;
+    }
+
+    void RefreshWorldStageLabel()
+    {
+        if (worldStageLabel == null)
+            return;
+
+        int worldNumber = currentWorldIndex + 1;
+        string text = worldLabelPrefix + worldNumber;
+
+        var node = GetHoveredNode();
+        if (node != null)
+        {
+            string stageSuffix = node.displayName;
+            int dashIndex = stageSuffix.IndexOf('-');
+            if (dashIndex >= 0 && dashIndex < stageSuffix.Length - 1)
+                stageSuffix = stageSuffix.Substring(dashIndex + 1);
+
+            text += stageSeparator + stageSuffix;
+        }
+
+        worldStageLabel.text = text;
+    }
+
+    float GetWorldStageLabelScale()
+    {
+        if (cursorMovementArea == null)
+            return 1f;
+
+        var canvas = GetRootCanvas();
+        if (canvas == null)
+            return 1f;
+
+        Rect safePx = RectTransformUtility.PixelAdjustRect(cursorMovementArea, canvas);
+
+        float sx = safePx.width / Mathf.Max(1f, worldStageLabelReferenceWidth);
+        float sy = safePx.height / Mathf.Max(1f, worldStageLabelReferenceHeight);
+
+        float rawScale = Mathf.Min(sx, sy);
+        float usedScale = useIntegerUpscaleForWorldStageLabel ? Mathf.Floor(rawScale) : rawScale;
+
+        if (usedScale < 1f)
+            usedScale = 1f;
+
+        usedScale *= Mathf.Max(0.01f, extraWorldStageLabelScaleMultiplier);
+        usedScale = Mathf.Clamp(usedScale, minWorldStageLabelScale, maxWorldStageLabelScale);
+
+        return usedScale;
+    }
+
+    void ApplyScaledWorldStageLabelLayout()
+    {
+        if (worldStageLabel == null)
+            return;
+
+        float scale = GetWorldStageLabelScale();
+
+        RectTransform rt = worldStageLabel.rectTransform;
+        rt.anchoredPosition = baseWorldStageLabelAnchoredPosition * scale;
+        rt.sizeDelta = baseWorldStageLabelSize * scale;
+
+        worldStageLabel.fontSize = Mathf.RoundToInt(baseWorldStageLabelFontSize * scale);
     }
 }
