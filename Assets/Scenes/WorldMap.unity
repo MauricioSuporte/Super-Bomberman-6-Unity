@@ -8630,9 +8630,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UICameraViewportFitter
   targetCamera: {fileID: 1520869091}
-  enableSurgicalLogs: 1
-  logOnLateUpdateWhenChanged: 1
-  logMissingCamera: 1
 --- !u!1 &1651243175
 GameObject:
   m_ObjectHideFlags: 0
@@ -8900,15 +8897,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e21126072d09b2a47a589c6e03230d48, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WorldMapController
-  enableSurgicalLogs: 1
-  logOnStart: 1
-  logCanvasAndCameraState: 1
-  logCursorTransform: 1
-  logCursorScale: 1
-  logHoveredStage: 1
-  logResolutionChanges: 1
-  logRendererState: 1
-  logWarningsOnlyWhenBroken: 1
   ownerPlayerId: 1
   worlds:
   - worldName: Super Bomberman 1 World
@@ -9020,7 +9008,7 @@ MonoBehaviour:
   selectedCursorVisual: {fileID: 4069565910624342805}
   cursorVisualBaseSize: {x: 20, y: 29}
   scaleCursorVisualWithLogicalSize: 1
-  selectedAnimationDelayBeforeLoad: 1
+  selectedTransitionDuration: 1
   stageDetectRadius: 10
   requireStageInRangeToConfirm: 1
   scaleStageDetectRadiusWithSafeFrame: 1
@@ -9041,7 +9029,8 @@ MonoBehaviour:
   lockedStageColor: {r: 1, g: 1, b: 1, a: 1}
   fadeImage: {fileID: 87393867}
   fadeInDuration: 0.5
-  fadeOutDuration: 0.5
+  worldChangeFadeOutDuration: 0.5
+  worldChangeFadeInDuration: 0.5
   moveCursorSfx: {fileID: 0}
   moveCursorSfxVolume: 1
   changeWorldSfx: {fileID: 0}

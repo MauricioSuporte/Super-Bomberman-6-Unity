@@ -742,7 +742,10 @@ public class WorldMapController : MonoBehaviour
     {
         float usedDuration = Mathf.Max(0.01f, duration);
 
-        AudioSource musicSource = GetMusicAudioSource();
+        AudioSource musicSource = GameMusicController.Instance != null
+            ? GameMusicController.Instance.GetMusicSource()
+            : null;
+
         float initialMusicVolume = musicSource != null ? musicSource.volume : 0f;
 
         if (fadeImage == null)
@@ -778,7 +781,10 @@ public class WorldMapController : MonoBehaviour
     {
         float usedDuration = Mathf.Max(0.01f, duration);
 
-        AudioSource musicSource = GetMusicAudioSource();
+        AudioSource musicSource = GameMusicController.Instance != null
+            ? GameMusicController.Instance.GetMusicSource()
+            : null;
+
         if (musicSource == null)
         {
             yield return new WaitForSecondsRealtime(usedDuration);
@@ -797,53 +803,6 @@ public class WorldMapController : MonoBehaviour
         }
 
         musicSource.volume = 0f;
-    }
-
-    AudioSource GetMusicAudioSource()
-    {
-        if (GameMusicController.Instance == null)
-            return null;
-
-        AudioSource[] sources = GameMusicController.Instance.GetComponentsInChildren<AudioSource>(true);
-        if (sources == null || sources.Length == 0)
-            return null;
-
-        AudioSource best = null;
-        float bestVolume = -1f;
-
-        for (int i = 0; i < sources.Length; i++)
-        {
-            AudioSource s = sources[i];
-            if (s == null)
-                continue;
-
-            if (!s.isPlaying)
-                continue;
-
-            if (s.clip == null)
-                continue;
-
-            if (s.volume > bestVolume)
-            {
-                bestVolume = s.volume;
-                best = s;
-            }
-        }
-
-        if (best != null)
-            return best;
-
-        for (int i = 0; i < sources.Length; i++)
-        {
-            AudioSource s = sources[i];
-            if (s == null)
-                continue;
-
-            if (s.clip != null)
-                return s;
-        }
-
-        return null;
     }
 
     void SetFadeAlpha(float a)
