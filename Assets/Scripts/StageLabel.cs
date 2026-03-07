@@ -22,28 +22,17 @@ public class StageLabel : MonoBehaviour
     [SerializeField] int referenceWidth = 256;
     [SerializeField] int referenceHeight = 224;
 
-    [Tooltip("If true, uses integer upscale steps like PixelPerfectCamera.")]
     [SerializeField] bool useIntegerUpscale = true;
-
-    [Tooltip("The upscale you tuned your BASE SIZES for. Example: FullHD gameplay looks like ~4x, set 4.")]
     [SerializeField, Min(1)] int designUpscale = 4;
-
-    [Tooltip("Optional extra multiplier after normalization.")]
     [SerializeField, Min(0.01f)] float extraScaleMultiplier = 1f;
-
     [SerializeField, Min(0.01f)] float minScale = 0.5f;
     [SerializeField, Min(0.01f)] float maxScale = 10f;
 
     [Header("RectTransform Scaling")]
-    [Tooltip("Your current TMP RectTransform width at the DESIGN upscale (ex: 600 when designUpscale=4).")]
     [SerializeField, Min(1f)] float baseRectWidthAtDesign = 600f;
-
-    [Tooltip("Your current TMP RectTransform height at the DESIGN upscale (ex: 200 when designUpscale=4).")]
     [SerializeField, Min(1f)] float baseRectHeightAtDesign = 200f;
-
     [SerializeField] bool autoResizeRectTransform = true;
 
-    float _nextLogTime;
     float _lastUiScale = -999f;
     int _lastBaseScaleInt = -999;
     Rect _lastCamRect;
@@ -68,8 +57,8 @@ public class StageLabel : MonoBehaviour
 
             var cam = Camera.main;
 
-            float usedW = (cam != null) ? cam.pixelRect.width : Screen.width;
-            float usedH = (cam != null) ? cam.pixelRect.height : Screen.height;
+            float usedW = cam != null ? cam.pixelRect.width : Screen.width;
+            float usedH = cam != null ? cam.pixelRect.height : Screen.height;
 
             float sx = usedW / Mathf.Max(1f, referenceWidth);
             float sy = usedH / Mathf.Max(1f, referenceHeight);
@@ -81,11 +70,9 @@ public class StageLabel : MonoBehaviour
             int baseScaleInt = Mathf.Max(1, Mathf.RoundToInt(baseScaleForUi));
 
             float normalized = baseScaleInt / Mathf.Max(1f, designUpscale);
-
             float ui = normalized * Mathf.Max(0.01f, extraScaleMultiplier);
 
             ui /= canvasScale;
-
             ui = Mathf.Clamp(ui, minScale, maxScale);
 
             _lastBaseScaleInt = baseScaleInt;
@@ -114,7 +101,6 @@ public class StageLabel : MonoBehaviour
     void Update()
     {
         if (stageText == null) return;
-
         ApplyRectScale("Update");
     }
 
@@ -145,15 +131,19 @@ public class StageLabel : MonoBehaviour
 
         string stageNumber = $"{world}-{stage}";
 
-        string resume = (selectedIndex == 0)
+        string resume = selectedIndex == 0
             ? "<color=#FF6F31>> RESUME</color>"
             : "<color=#E8E8E8>  RESUME</color>";
 
-        string returnToTitleText = $"RETURN{NBSP}TO{NBSP}TITLE";
+        string worldMapText = $"RETURN{NBSP}TO{NBSP}WORLD{NBSP}MAP";
+        string retWorldMap = selectedIndex == 1
+            ? $"<color=#FF6F31>> {worldMapText}</color>"
+            : $"<color=#E8E8E8>  {worldMapText}</color>";
 
-        string ret = (selectedIndex == 1)
-            ? $"<color=#FF6F31>> {returnToTitleText}</color>"
-            : $"<color=#E8E8E8>  {returnToTitleText}</color>";
+        string titleText = $"RETURN{NBSP}TO{NBSP}TITLE";
+        string retTitle = selectedIndex == 2
+            ? $"<color=#FF6F31>> {titleText}</color>"
+            : $"<color=#E8E8E8>  {titleText}</color>";
 
         stageText.text =
             "<align=center>" +
@@ -161,11 +151,22 @@ public class StageLabel : MonoBehaviour
             $"<size={S(SizeStageNumber)}><color=#E8E8E8>{stageNumber}</color></size>\n" +
             $"<size={S(SizePauseTitle)}><color=#3392FF>PAUSE!</color></size>\n\n" +
             $"<size={S(SizeMenuItem)}>{resume}</size>\n" +
-            $"<size={S(SizeMenuItem)}>{ret}</size>" +
+            $"<size={S(SizeMenuItem)}>{retWorldMap}</size>\n" +
+            $"<size={S(SizeMenuItem)}>{retTitle}</size>" +
             "</align>";
     }
 
+    public void SetPauseConfirmReturnToWorldMap(int world, int stage, int selectedIndex)
+    {
+        SetPauseConfirmQuestion(world, stage, selectedIndex, "Return to World Map?");
+    }
+
     public void SetPauseConfirmReturnToTitle(int world, int stage, int selectedIndex)
+    {
+        SetPauseConfirmQuestion(world, stage, selectedIndex, "Return to Title Screen?");
+    }
+
+    void SetPauseConfirmQuestion(int world, int stage, int selectedIndex, string question)
     {
         EnsureNoWrap();
 
@@ -174,11 +175,11 @@ public class StageLabel : MonoBehaviour
         string ArrowVisible(string text) => $"<color=#FF6F31>> </color>{text}";
         string ArrowHidden(string text) => $"<color=#00000000>> </color>{text}";
 
-        string noOpt = (selectedIndex == 0)
+        string noOpt = selectedIndex == 0
             ? ArrowVisible("<color=#FF6F31>NO</color>")
             : ArrowHidden("<color=#E8E8E8>NO</color>");
 
-        string yesOpt = (selectedIndex == 1)
+        string yesOpt = selectedIndex == 1
             ? ArrowVisible("<color=#FF6F31>YES</color>")
             : ArrowHidden("<color=#E8E8E8>YES</color>");
 
@@ -189,7 +190,7 @@ public class StageLabel : MonoBehaviour
             $"<size={S(SizeStageLabel)}><color=#1ABC00>STAGE</color></size>  " +
             $"<size={S(SizeStageNumber)}><color=#E8E8E8>{stageNumber}</color></size>\n" +
             $"<size={S(SizePauseTitle)}><color=#3392FF>PAUSE!</color></size>\n\n" +
-            $"<size={S(SizeConfirmTitle)}><color=#E8E8E8>Return to Title Screen?</color></size>\n\n" +
+            $"<size={S(SizeConfirmTitle)}><color=#E8E8E8>{question}</color></size>\n\n" +
             $"<size={S(SizeMenuItem)}><indent={indent}>{noOpt}</indent></size>\n" +
             $"<size={S(SizeMenuItem)}><indent={indent}>{yesOpt}</indent></size>" +
             "</align>";
@@ -215,8 +216,6 @@ public class StageLabel : MonoBehaviour
         var rt = stageText.rectTransform;
 
         if (Mathf.Abs(rt.sizeDelta.x - rectW) > 0.01f || Mathf.Abs(rt.sizeDelta.y - rectH) > 0.01f)
-        {
             rt.sizeDelta = new Vector2(rectW, rectH);
-        }
     }
 }

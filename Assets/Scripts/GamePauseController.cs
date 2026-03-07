@@ -9,6 +9,13 @@ public class GamePauseController : MonoBehaviour
 {
     public static bool IsPaused { get; private set; }
 
+    enum PauseExitTarget
+    {
+        None = 0,
+        WorldMap = 1,
+        TitleScreen = 2
+    }
+
     [Header("Pause Availability")]
     [SerializeField] string[] blockedSceneNames = { "TitleScreen", "WorldMap" };
 
@@ -27,17 +34,19 @@ public class GamePauseController : MonoBehaviour
     [SerializeField] AudioClip backConfirmSfx;
     [SerializeField, Range(0f, 1f)] float backConfirmVolume = 1f;
 
-    [Header("Return To Title")]
-    [SerializeField] float returnToTitleDelayRealtime = 1f;
+    [Header("Return / Exit")]
+    [SerializeField] float returnToSceneDelayRealtime = 1f;
 
-    [Header("Title Scene")]
+    [Header("Scene Targets")]
+    [SerializeField] string worldMapSceneName = "WorldMap";
     [SerializeField] string titleSceneName = "TitleScreen";
 
     int menuIndex;
     bool confirmReturn;
     int confirmIndex;
+    PauseExitTarget confirmTarget = PauseExitTarget.None;
 
-    bool exitingToTitle;
+    bool exitingToScene;
     Coroutine exitRoutine;
 
     int lastScreenW;
@@ -70,8 +79,9 @@ public class GamePauseController : MonoBehaviour
 
     void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        exitingToTitle = false;
+        exitingToScene = false;
         confirmReturn = false;
+        confirmTarget = PauseExitTarget.None;
         menuIndex = 0;
         confirmIndex = 0;
 
@@ -87,7 +97,7 @@ public class GamePauseController : MonoBehaviour
 
     void Update()
     {
-        if (exitingToTitle)
+        if (exitingToScene)
             return;
 
         var input = PlayerInputManager.Instance;
@@ -181,7 +191,7 @@ public class GamePauseController : MonoBehaviour
 
     void TogglePause()
     {
-        if (exitingToTitle)
+        if (exitingToScene)
             return;
 
         if (!IsPauseAllowedInCurrentScene())
@@ -210,6 +220,7 @@ public class GamePauseController : MonoBehaviour
         menuIndex = 0;
         confirmReturn = false;
         confirmIndex = 0;
+        confirmTarget = PauseExitTarget.None;
 
         lastScreenW = Screen.width;
         lastScreenH = Screen.height;
@@ -228,11 +239,12 @@ public class GamePauseController : MonoBehaviour
             StageIntroTransition.Instance.stageLabel.gameObject.SetActive(false);
 
         confirmReturn = false;
+        confirmTarget = PauseExitTarget.None;
     }
 
     void TickPauseMenu()
     {
-        if (exitingToTitle)
+        if (exitingToScene)
             return;
 
         bool confirmPressed = IsStartPressed();
@@ -241,7 +253,7 @@ public class GamePauseController : MonoBehaviour
         {
             if (TryGetAnyPlayerDown(PlayerAction.MoveUp, out _))
             {
-                menuIndex = Wrap(menuIndex - 1, 2);
+                menuIndex = Wrap(menuIndex - 1, 3);
                 PlayMoveSfx();
                 RefreshPauseUI();
                 return;
@@ -249,7 +261,7 @@ public class GamePauseController : MonoBehaviour
 
             if (TryGetAnyPlayerDown(PlayerAction.MoveDown, out _))
             {
-                menuIndex = Wrap(menuIndex + 1, 2);
+                menuIndex = Wrap(menuIndex + 1, 3);
                 PlayMoveSfx();
                 RefreshPauseUI();
                 return;
@@ -265,6 +277,9 @@ public class GamePauseController : MonoBehaviour
 
                 confirmReturn = true;
                 confirmIndex = 0;
+                confirmTarget = menuIndex == 1
+                    ? PauseExitTarget.WorldMap
+                    : PauseExitTarget.TitleScreen;
 
                 PlaySelectSfx();
                 RefreshPauseUI();
@@ -295,23 +310,29 @@ public class GamePauseController : MonoBehaviour
             if (confirmIndex == 0)
             {
                 confirmReturn = false;
-                menuIndex = 1;
+                menuIndex = confirmTarget == PauseExitTarget.WorldMap ? 1 : 2;
 
                 PlayBackConfirmSfx();
                 RefreshPauseUI();
                 return;
             }
 
-            BeginExitToTitle();
+            if (confirmTarget == PauseExitTarget.WorldMap)
+            {
+                BeginExitToScene(worldMapSceneName, resetSessionForTitle: false);
+                return;
+            }
+
+            BeginExitToScene(titleSceneName, resetSessionForTitle: true);
         }
     }
 
-    void BeginExitToTitle()
+    void BeginExitToScene(string sceneName, bool resetSessionForTitle)
     {
-        if (exitingToTitle)
+        if (exitingToScene)
             return;
 
-        exitingToTitle = true;
+        exitingToScene = true;
 
         IsPaused = true;
         Time.timeScale = 0f;
@@ -321,12 +342,12 @@ public class GamePauseController : MonoBehaviour
         if (exitRoutine != null)
             StopCoroutine(exitRoutine);
 
-        exitRoutine = StartCoroutine(ExitToTitleRoutine());
+        exitRoutine = StartCoroutine(ExitToSceneRoutine(sceneName, resetSessionForTitle));
     }
 
-    IEnumerator ExitToTitleRoutine()
+    IEnumerator ExitToSceneRoutine(string sceneName, bool resetSessionForTitle)
     {
-        float wait = Mathf.Max(0f, returnToTitleDelayRealtime);
+        float wait = Mathf.Max(0f, returnToSceneDelayRealtime);
         if (wait > 0f)
             yield return new WaitForSecondsRealtime(wait);
 
@@ -335,12 +356,14 @@ public class GamePauseController : MonoBehaviour
 
         ForceUnpause(resumeMusic: false);
 
-        exitingToTitle = false;
+        exitingToScene = false;
         confirmReturn = false;
+        confirmTarget = PauseExitTarget.None;
 
-        PlayerPersistentStats.ResetSessionForReturnToTitle();
+        if (resetSessionForTitle)
+            PlayerPersistentStats.ResetSessionForReturnToTitle();
 
-        SceneManager.LoadScene(titleSceneName, LoadSceneMode.Single);
+        SceneManager.LoadScene(sceneName, LoadSceneMode.Single);
     }
 
     void RefreshPauseUI()
@@ -355,7 +378,13 @@ public class GamePauseController : MonoBehaviour
         int s = StageIntroTransition.Instance.stageNumber;
 
         if (!confirmReturn)
+        {
             label.SetPauseMenu(w, s, menuIndex);
+            return;
+        }
+
+        if (confirmTarget == PauseExitTarget.WorldMap)
+            label.SetPauseConfirmReturnToWorldMap(w, s, confirmIndex);
         else
             label.SetPauseConfirmReturnToTitle(w, s, confirmIndex);
     }
