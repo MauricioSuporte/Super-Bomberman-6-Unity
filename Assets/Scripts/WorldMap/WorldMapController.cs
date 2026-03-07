@@ -97,7 +97,9 @@ public class WorldMapController : MonoBehaviour
 
     [Header("Fade")]
     [SerializeField] Image fadeImage;
-    [SerializeField, Min(0.01f)] float fadeInDuration = 0.35f;
+    [SerializeField, Min(0.01f)] float fadeInDuration = 0.5f;
+    [SerializeField, Min(0.01f)] float worldChangeFadeOutDuration = 0.5f;
+    [SerializeField, Min(0.01f)] float worldChangeFadeInDuration = 0.5f;
 
     [Header("Audio SFX")]
     [SerializeField] AudioClip moveCursorSfx;
@@ -185,10 +187,10 @@ public class WorldMapController : MonoBehaviour
         RefreshCursorVisualState(false, true);
         ApplyCursorVisualTransform();
 
-        if (fadeImage != null)
-            StartCoroutine(FadeInRoutine());
-
         PlayMusicForCurrentWorld(forceRestart: true);
+
+        if (fadeImage != null)
+            StartCoroutine(FadeInRoutine(fadeInDuration));
     }
 
     void LateUpdate()
@@ -209,13 +211,13 @@ public class WorldMapController : MonoBehaviour
 
         if (input.GetDown(ownerPlayerId, PlayerAction.ActionL))
         {
-            ChangeWorld(-1);
+            StartCoroutine(ChangeWorldRoutine(-1));
             return;
         }
 
         if (input.GetDown(ownerPlayerId, PlayerAction.ActionR))
         {
-            ChangeWorld(+1);
+            StartCoroutine(ChangeWorldRoutine(+1));
             return;
         }
 
@@ -267,10 +269,21 @@ public class WorldMapController : MonoBehaviour
         RefreshCursorVisualState(isMoving, false);
     }
 
-    void ChangeWorld(int delta)
+    IEnumerator ChangeWorldRoutine(int delta)
     {
-        if (worlds.Count == 0)
-            return;
+        if (transitioning || worlds.Count == 0)
+            yield break;
+
+        transitioning = true;
+        playingSelectedAnimation = false;
+        wasMovingLastFrame = false;
+
+        PlaySfx(changeWorldSfx, changeWorldSfxVolume);
+
+        if (fadeImage != null)
+            yield return FadeOutWithMusicRoutine(worldChangeFadeOutDuration);
+        else
+            yield return FadeMusicOutRoutine(worldChangeFadeOutDuration);
 
         currentWorldIndex += delta;
 
@@ -278,8 +291,6 @@ public class WorldMapController : MonoBehaviour
             currentWorldIndex = worlds.Count - 1;
         else if (currentWorldIndex >= worlds.Count)
             currentWorldIndex = 0;
-
-        playingSelectedAnimation = false;
 
         ApplyWorldVisibility();
         ApplyScaledStageAnchorPositions();
@@ -298,8 +309,12 @@ public class WorldMapController : MonoBehaviour
         RefreshCursorVisualState(false, true);
         ApplyCursorVisualTransform();
 
-        PlaySfx(changeWorldSfx, changeWorldSfxVolume);
-        PlayMusicForCurrentWorld(forceRestart: false);
+        PlayMusicForCurrentWorld(forceRestart: true);
+
+        if (fadeImage != null)
+            yield return FadeInRoutine(worldChangeFadeInDuration);
+
+        transitioning = false;
     }
 
     void ConfirmCurrentStage()
@@ -346,9 +361,9 @@ public class WorldMapController : MonoBehaviour
         transitioning = true;
 
         if (fadeImage != null)
-            yield return FadeOutRoutine(selectedTransitionDuration);
+            yield return FadeOutWithMusicRoutine(selectedTransitionDuration);
         else
-            yield return new WaitForSecondsRealtime(selectedTransitionDuration);
+            yield return FadeMusicOutRoutine(selectedTransitionDuration);
 
         SceneManager.LoadScene(sceneName);
     }
@@ -678,19 +693,21 @@ public class WorldMapController : MonoBehaviour
         GameMusicController.Instance.PlaySfx(clip, volume);
     }
 
-    IEnumerator FadeInRoutine()
+    IEnumerator FadeInRoutine(float duration)
     {
         if (fadeImage == null)
             yield break;
+
+        float usedDuration = Mathf.Max(0.01f, duration);
 
         fadeImage.gameObject.SetActive(true);
         SetFadeAlpha(1f);
 
         float t = 0f;
-        while (t < fadeInDuration)
+        while (t < usedDuration)
         {
             t += Time.unscaledDeltaTime;
-            float a = 1f - Mathf.Clamp01(t / fadeInDuration);
+            float a = 1f - Mathf.Clamp01(t / usedDuration);
             SetFadeAlpha(a);
             yield return null;
         }
@@ -719,6 +736,114 @@ public class WorldMapController : MonoBehaviour
         }
 
         SetFadeAlpha(1f);
+    }
+
+    IEnumerator FadeOutWithMusicRoutine(float duration)
+    {
+        float usedDuration = Mathf.Max(0.01f, duration);
+
+        AudioSource musicSource = GetMusicAudioSource();
+        float initialMusicVolume = musicSource != null ? musicSource.volume : 0f;
+
+        if (fadeImage == null)
+        {
+            yield return FadeMusicOutRoutine(usedDuration);
+            yield break;
+        }
+
+        fadeImage.gameObject.SetActive(true);
+        SetFadeAlpha(0f);
+
+        float t = 0f;
+        while (t < usedDuration)
+        {
+            t += Time.unscaledDeltaTime;
+            float normalized = Mathf.Clamp01(t / usedDuration);
+
+            SetFadeAlpha(normalized);
+
+            if (musicSource != null)
+                musicSource.volume = Mathf.Lerp(initialMusicVolume, 0f, normalized);
+
+            yield return null;
+        }
+
+        SetFadeAlpha(1f);
+
+        if (musicSource != null)
+            musicSource.volume = 0f;
+    }
+
+    IEnumerator FadeMusicOutRoutine(float duration)
+    {
+        float usedDuration = Mathf.Max(0.01f, duration);
+
+        AudioSource musicSource = GetMusicAudioSource();
+        if (musicSource == null)
+        {
+            yield return new WaitForSecondsRealtime(usedDuration);
+            yield break;
+        }
+
+        float initialMusicVolume = musicSource.volume;
+        float t = 0f;
+
+        while (t < usedDuration)
+        {
+            t += Time.unscaledDeltaTime;
+            float normalized = Mathf.Clamp01(t / usedDuration);
+            musicSource.volume = Mathf.Lerp(initialMusicVolume, 0f, normalized);
+            yield return null;
+        }
+
+        musicSource.volume = 0f;
+    }
+
+    AudioSource GetMusicAudioSource()
+    {
+        if (GameMusicController.Instance == null)
+            return null;
+
+        AudioSource[] sources = GameMusicController.Instance.GetComponentsInChildren<AudioSource>(true);
+        if (sources == null || sources.Length == 0)
+            return null;
+
+        AudioSource best = null;
+        float bestVolume = -1f;
+
+        for (int i = 0; i < sources.Length; i++)
+        {
+            AudioSource s = sources[i];
+            if (s == null)
+                continue;
+
+            if (!s.isPlaying)
+                continue;
+
+            if (s.clip == null)
+                continue;
+
+            if (s.volume > bestVolume)
+            {
+                bestVolume = s.volume;
+                best = s;
+            }
+        }
+
+        if (best != null)
+            return best;
+
+        for (int i = 0; i < sources.Length; i++)
+        {
+            AudioSource s = sources[i];
+            if (s == null)
+                continue;
+
+            if (s.clip != null)
+                return s;
+        }
+
+        return null;
     }
 
     void SetFadeAlpha(float a)
