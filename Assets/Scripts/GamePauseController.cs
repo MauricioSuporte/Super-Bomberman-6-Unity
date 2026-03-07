@@ -28,7 +28,7 @@ public class GamePauseController : MonoBehaviour
     [SerializeField] float returnToTitleDelayRealtime = 1f;
 
     [Header("Title Scene")]
-    [SerializeField] string titleSceneName = "Stage_1-1";
+    [SerializeField] string titleSceneName = "TitleScreen";
 
     int menuIndex;
     bool confirmReturn;
@@ -254,8 +254,6 @@ public class GamePauseController : MonoBehaviour
         confirmReturn = false;
 
         PlayerPersistentStats.ResetSessionForReturnToTitle();
-
-        StageIntroTransition.SkipHudsonLogoOnNextLoad();
 
         SceneManager.LoadScene(titleSceneName, LoadSceneMode.Single);
     }

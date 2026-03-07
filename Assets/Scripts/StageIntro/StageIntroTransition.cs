@@ -15,18 +15,6 @@ public class StageIntroTransition : MonoBehaviour
 
     Coroutine fadeOutCoroutine;
 
-    [Header("Hudson Logo")]
-    public HudsonLogoIntro hudsonLogoIntro;
-
-    [Header("Hudson Background (white)")]
-    [Tooltip("Imagem branca (UI Image) para cobrir o fundo durante a Hudson Logo. Ideal: fora do SafeFrame4x3, com anchors em Stretch para cobrir a tela toda.")]
-    public Image hudsonBackgroundImage;
-
-    [SerializeField] private bool showHudsonBackground = true;
-
-    [Header("Title Screen")]
-    public TitleScreenController titleScreen;
-
     [Header("Audio")]
     public AudioClip introMusic;
 
@@ -39,27 +27,14 @@ public class StageIntroTransition : MonoBehaviour
     public int world = 1;
     public int stageNumber = 1;
 
-    [Header("First Stage")]
-    public string firstStageSceneName = "Stage_1-1";
-
     [Header("Gameplay Root")]
     public GameObject gameplayRoot;
 
     [Header("Only Stage_1-7")]
     public string stage17SceneName = "Stage_1-7";
 
-    [Header("Skin Select")]
-    public BomberSkinSelectMenu skinSelectMenu;
-
-    [Header("Flow")]
-    [SerializeField] private bool useWorldMapAfterSkinSelect = true;
-    [SerializeField] private string worldMapSceneName = "WorldMap";
-
     public bool IntroRunning { get; private set; }
     public bool EndingRunning { get; private set; }
-
-    static bool hasPlayedLogoIntro;
-    static bool skipTitleNextRound;
 
     [Header("Debug / Overrides (Inspector is display-only during Play)")]
     [SerializeField] private bool skipPreIntroWalkNextRound_Inspector;
@@ -75,16 +50,6 @@ public class StageIntroTransition : MonoBehaviour
     [Header("Pre-Intro Walk (optional)")]
     public StagePreIntroPlayersWalk preIntroWalk;
 
-    [Header("Hudson Logo Fade")]
-    [SerializeField, Min(0f)] private float fadeOpenBeforeHudsonSeconds = 0.20f;
-    [SerializeField, Min(0f)] private float fadeCloseAfterHudsonSeconds = 0.12f;
-
-    public static void SkipTitleScreenOnNextLoad()
-    {
-        skipTitleNextRound = true;
-        hasPlayedLogoIntro = true;
-    }
-
     public static void SkipPreIntroWalkOnNextLoad()
     {
         skipPreIntroWalkNextRound = true;
@@ -99,16 +64,7 @@ public class StageIntroTransition : MonoBehaviour
         }
 
         Instance = this;
-
         skipPreIntroWalkNextRound_Inspector = skipPreIntroWalkNextRound;
-
-        if (titleScreen != null)
-            titleScreen.ForceHide();
-
-        if (hudsonLogoIntro != null)
-            hudsonLogoIntro.ForceHide();
-
-        SetHudsonBackgroundVisible(false);
     }
 
 #if UNITY_EDITOR
@@ -150,44 +106,7 @@ public class StageIntroTransition : MonoBehaviour
             SetFadeAlpha(1f);
         }
 
-        if (titleScreen != null)
-            titleScreen.ForceHide();
-
-        if (hudsonLogoIntro != null)
-            hudsonLogoIntro.ForceHide();
-
-        SetHudsonBackgroundVisible(false);
-
-        if (skipTitleNextRound)
-        {
-            skipTitleNextRound = false;
-            StartCoroutine(FadeInToGame());
-            return;
-        }
-
-        if (!hasPlayedLogoIntro && hudsonLogoIntro != null)
-            StartCoroutine(FullIntroSequence());
-        else
-            StartCoroutine(StageIntroOnlySequence());
-    }
-
-    void SetHudsonBackgroundVisible(bool visible)
-    {
-        if (!showHudsonBackground)
-            visible = false;
-
-        if (hudsonBackgroundImage == null)
-            return;
-
-        hudsonBackgroundImage.gameObject.SetActive(visible);
-
-        if (visible)
-        {
-            hudsonBackgroundImage.transform.SetAsFirstSibling();
-            var c = hudsonBackgroundImage.color;
-            c.a = 1f;
-            hudsonBackgroundImage.color = c;
-        }
+        StartCoroutine(FadeInToGame());
     }
 
     void RefreshControllers(bool includeInactive)
@@ -278,135 +197,12 @@ public class StageIntroTransition : MonoBehaviour
         return scene.IsValid() && scene.name == stage17SceneName;
     }
 
-    IEnumerator FullIntroSequence()
-    {
-        hasPlayedLogoIntro = true;
-
-        SetHudsonBackgroundVisible(true);
-
-        if (fadeImage != null)
-            yield return FadeAlphaRoutine(1f, 0f, fadeOpenBeforeHudsonSeconds);
-
-        if (hudsonLogoIntro != null)
-        {
-            hudsonLogoIntro.gameObject.SetActive(true);
-            hudsonLogoIntro.transform.SetAsLastSibling();
-            yield return hudsonLogoIntro.Play();
-        }
-
-        if (titleScreen != null && hudsonLogoIntro != null && hudsonLogoIntro.Skipped)
-            titleScreen.SetIgnoreStartKeyUntilRelease();
-
-        if (fadeImage != null)
-            yield return FadeAlphaRoutine(0f, 1f, fadeCloseAfterHudsonSeconds);
-
-        SetHudsonBackgroundVisible(false);
-
-        yield return ShowTitleScreen();
-    }
-
-    IEnumerator StageIntroOnlySequence()
-    {
-        yield return ShowTitleScreen();
-    }
-
-    IEnumerator ShowTitleScreen()
-    {
-        if (titleScreen == null)
-        {
-            yield return FadeInToGame();
-            yield break;
-        }
-
-        if (fadeImage != null)
-        {
-            fadeImage.gameObject.SetActive(true);
-            fadeImage.transform.SetAsLastSibling();
-            SetFadeAlpha(1f);
-        }
-
-        SetHudsonBackgroundVisible(false);
-
-        yield return titleScreen.Play(fadeImage);
-
-        if (fadeImage != null)
-            fadeImage.gameObject.SetActive(false);
-
-        if (skinSelectMenu != null)
-        {
-            yield return skinSelectMenu.SelectSkinRoutine();
-
-            if (skinSelectMenu.ReturnToTitleRequested)
-            {
-                if (titleScreen != null)
-                    titleScreen.SetIgnoreStartKeyUntilRelease();
-
-                yield return ShowTitleScreen();
-                yield break;
-            }
-
-            int count = 1;
-            if (GameSession.Instance != null)
-                count = GameSession.Instance.ActivePlayerCount;
-
-            for (int p = 1; p <= count; p++)
-            {
-                var chosen = skinSelectMenu.GetSelectedSkin(p);
-                PlayerPersistentStats.Get(p).Skin = chosen;
-
-                if (chosen != BomberSkin.Golden)
-                    PlayerPersistentStats.SaveSelectedSkin(p);
-            }
-
-            PlayerPrefs.Save();
-
-            SkipTitleScreenOnNextLoad();
-
-            if (useWorldMapAfterSkinSelect && !string.IsNullOrEmpty(worldMapSceneName))
-            {
-                SceneManager.LoadScene(worldMapSceneName);
-                yield break;
-            }
-
-            if (!string.IsNullOrEmpty(firstStageSceneName))
-            {
-                SceneManager.LoadScene(firstStageSceneName);
-                yield break;
-            }
-        }
-
-        yield return FadeInToGame();
-    }
-
     void SetFadeAlpha(float a)
     {
         if (fadeImage == null) return;
         var c = fadeImage.color;
         c.a = a;
         fadeImage.color = c;
-    }
-
-    IEnumerator FadeAlphaRoutine(float from, float to, float seconds)
-    {
-        if (fadeImage == null)
-            yield break;
-
-        fadeImage.gameObject.SetActive(true);
-        fadeImage.transform.SetAsLastSibling();
-
-        float t = 0f;
-        Color baseColor = fadeImage.color;
-
-        while (t < seconds)
-        {
-            t += Time.unscaledDeltaTime;
-            float k = seconds <= 0.0001f ? 1f : Mathf.Clamp01(t / seconds);
-            float a = Mathf.Lerp(from, to, k);
-            fadeImage.color = new Color(baseColor.r, baseColor.g, baseColor.b, a);
-            yield return null;
-        }
-
-        fadeImage.color = new Color(baseColor.r, baseColor.g, baseColor.b, to);
     }
 
     IEnumerator PreloadIntroAudio()
@@ -432,8 +228,6 @@ public class StageIntroTransition : MonoBehaviour
 
     IEnumerator FadeInToGame()
     {
-        SetHudsonBackgroundVisible(false);
-
         if (gameplayRoot != null)
             gameplayRoot.SetActive(true);
 
@@ -722,8 +516,6 @@ public class StageIntroTransition : MonoBehaviour
 
     IEnumerator EndingScreenSequence()
     {
-        SetHudsonBackgroundVisible(false);
-
         GamePauseController.ClearPauseFlag();
         Time.timeScale = 0f;
 
@@ -742,12 +534,6 @@ public class StageIntroTransition : MonoBehaviour
             fadeImage.color = fc;
         }
 
-        if (titleScreen != null)
-            titleScreen.ForceHide();
-
-        if (hudsonLogoIntro != null)
-            hudsonLogoIntro.ForceHide();
-
         if (EndingScreenController.Instance != null)
             yield return EndingScreenController.Instance.Play(null);
 
@@ -759,16 +545,7 @@ public class StageIntroTransition : MonoBehaviour
 
         PlayerPersistentStats.ResetToDefaultsAll();
 
-        hasPlayedLogoIntro = true;
-        skipTitleNextRound = false;
-
         EndingRunning = false;
-
-        if (titleScreen != null)
-            titleScreen.SetIgnoreStartKeyUntilRelease();
-
-        EndingRunning = false;
-        yield break;
     }
 
     void ApplyPersistentPlayerSkin()
@@ -861,11 +638,6 @@ public class StageIntroTransition : MonoBehaviour
             fadeImage.color = new Color(baseColor.r, baseColor.g, baseColor.b, a);
             yield return null;
         }
-    }
-
-    public static void SkipHudsonLogoOnNextLoad()
-    {
-        hasPlayedLogoIntro = true;
     }
 
     private void TryPlayIntroMusic()

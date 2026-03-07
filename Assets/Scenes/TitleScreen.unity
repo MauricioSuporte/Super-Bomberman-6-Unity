@@ -1938,7 +1938,7 @@ GameObject:
   - component: {fileID: 1389130175}
   - component: {fileID: 1389130174}
   - component: {fileID: 1389130173}
-  - component: {fileID: 1389130172}
+  - component: {fileID: 1389130177}
   m_Layer: 5
   m_Name: Canvas
   m_TagString: Untagged
@@ -1946,38 +1946,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1389130172
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1389130171}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 98c1acda7aa60e043b90d01e4a1b6459, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  fadeImage: {fileID: 336813435}
-  hudsonLogoIntro: {fileID: 336813438}
-  hudsonBackgroundImage: {fileID: 676188641}
-  showHudsonBackground: 1
-  titleScreen: {fileID: 362350264}
-  introMusic: {fileID: 8300000, guid: ff7109298c0b4734d8113eeb4b86601c, type: 3}
-  playStartSfxOnIntroEnd: 1
-  stageLabel: {fileID: 556523582}
-  world: 1
-  stageNumber: 1
-  firstStageSceneName: Stage_1-1
-  gameplayRoot: {fileID: 0}
-  stage17SceneName: Stage_1-7
-  skinSelectMenu: {fileID: 1311323897}
-  useWorldMapAfterSkinSelect: 1
-  worldMapSceneName: WorldMap
-  skipPreIntroWalkNextRound_Inspector: 0
-  preIntroWalk: {fileID: 0}
-  fadeOpenBeforeHudsonSeconds: 0.2
-  fadeCloseAfterHudsonSeconds: 0.12
 --- !u!114 &1389130173
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2064,6 +2032,29 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 0}
+--- !u!114 &1389130177
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1389130171}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 545258d13abad1a4592e8e3b23d2bb28, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TitleScreenBootstrap
+  fadeImage: {fileID: 336813435}
+  hudsonLogoIntro: {fileID: 336813438}
+  hudsonBackgroundImage: {fileID: 676188641}
+  showHudsonBackground: 1
+  titleScreen: {fileID: 362350264}
+  skinSelectMenu: {fileID: 1311323897}
+  useWorldMapAfterSkinSelect: 1
+  worldMapSceneName: WorldMap
+  firstStageSceneName: Stage_1-1
+  fadeOpenBeforeHudsonSeconds: 0.2
+  fadeCloseAfterHudsonSeconds: 0.12
 --- !u!1 &1434090858
 GameObject:
   m_ObjectHideFlags: 0
