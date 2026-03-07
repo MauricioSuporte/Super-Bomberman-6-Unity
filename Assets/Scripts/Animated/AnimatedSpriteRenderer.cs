@@ -127,6 +127,7 @@ public class AnimatedSpriteRenderer : MonoBehaviour
 
         direction = 1;
         frameTimer = 0f;
+        animationFrame = 0;
 
         SetupTiming();
         ApplyFrame();

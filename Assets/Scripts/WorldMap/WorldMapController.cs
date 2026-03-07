@@ -80,7 +80,7 @@ public class WorldMapController : MonoBehaviour
     [SerializeField] GameObject selectedCursorVisual;
     [SerializeField] Vector2 cursorVisualBaseSize = new Vector2(20f, 29f);
     [SerializeField] bool scaleCursorVisualWithLogicalSize = true;
-    [SerializeField] float selectedAnimationDelayBeforeLoad = 0.25f;
+    [SerializeField, Min(0.01f)] float selectedTransitionDuration = 1f;
 
     [Header("Stage Detection")]
     [SerializeField] float stageDetectRadius = 18f;
@@ -111,7 +111,6 @@ public class WorldMapController : MonoBehaviour
     [Header("Fade")]
     [SerializeField] Image fadeImage;
     [SerializeField, Min(0.01f)] float fadeInDuration = 0.35f;
-    [SerializeField, Min(0.01f)] float fadeOutDuration = 0.35f;
 
     [Header("Audio SFX")]
     [SerializeField] AudioClip moveCursorSfx;
@@ -405,16 +404,16 @@ public class WorldMapController : MonoBehaviour
         playingSelectedAnimation = true;
 
         if (enableSurgicalLogs)
-            Debug.Log($"{LOG} ConfirmStageRoutine | scene='{sceneName}'", this);
+            Debug.Log($"{LOG} ConfirmStageRoutine | scene='{sceneName}' transitionDuration={selectedTransitionDuration}", this);
 
         PlaySfx(confirmStageSfx, confirmStageSfxVolume);
+
         RefreshCursorVisualState(false, true, true);
 
-        if (selectedAnimationDelayBeforeLoad > 0f)
-            yield return new WaitForSecondsRealtime(selectedAnimationDelayBeforeLoad);
-
         if (fadeImage != null)
-            yield return FadeOutRoutine();
+            yield return FadeOutRoutine(selectedTransitionDuration);
+        else
+            yield return new WaitForSecondsRealtime(selectedTransitionDuration);
 
         SceneManager.LoadScene(sceneName);
     }
@@ -427,7 +426,9 @@ public class WorldMapController : MonoBehaviour
         transitioning = true;
 
         if (fadeImage != null)
-            yield return FadeOutRoutine();
+            yield return FadeOutRoutine(selectedTransitionDuration);
+        else
+            yield return new WaitForSecondsRealtime(selectedTransitionDuration);
 
         SceneManager.LoadScene(sceneName);
     }
@@ -781,7 +782,7 @@ public class WorldMapController : MonoBehaviour
         fadeImage.gameObject.SetActive(false);
     }
 
-    IEnumerator FadeOutRoutine()
+    IEnumerator FadeOutRoutine(float duration)
     {
         if (fadeImage == null)
             yield break;
@@ -790,10 +791,12 @@ public class WorldMapController : MonoBehaviour
         SetFadeAlpha(0f);
 
         float t = 0f;
-        while (t < fadeOutDuration)
+        float usedDuration = Mathf.Max(0.01f, duration);
+
+        while (t < usedDuration)
         {
             t += Time.unscaledDeltaTime;
-            float a = Mathf.Clamp01(t / fadeOutDuration);
+            float a = Mathf.Clamp01(t / usedDuration);
             SetFadeAlpha(a);
             yield return null;
         }
