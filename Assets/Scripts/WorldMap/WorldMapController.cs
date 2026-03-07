@@ -31,19 +31,6 @@ public class WorldMapController : MonoBehaviour
         public bool loopWorldMusic = true;
     }
 
-    const string LOG = "[WorldMapCursor]";
-
-    [Header("Debug (Surgical Logs)")]
-    [SerializeField] bool enableSurgicalLogs = true;
-    [SerializeField] bool logOnStart = true;
-    [SerializeField] bool logCanvasAndCameraState = true;
-    [SerializeField] bool logCursorTransform = true;
-    [SerializeField] bool logCursorScale = true;
-    [SerializeField] bool logHoveredStage = true;
-    [SerializeField] bool logResolutionChanges = true;
-    [SerializeField] bool logRendererState = true;
-    [SerializeField] bool logWarningsOnlyWhenBroken = true;
-
     [Header("Input Owner")]
     [SerializeField, Range(1, 4)] int ownerPlayerId = 1;
 
@@ -162,11 +149,6 @@ public class WorldMapController : MonoBehaviour
 
     Vector2 cursorLocalPosition;
 
-    Vector3 lastLoggedCursorWorldPosition = new Vector3(float.MinValue, float.MinValue, float.MinValue);
-    Vector2 lastLoggedCursorLocalPosition = new Vector2(float.MinValue, float.MinValue);
-    Vector3 lastLoggedCursorScale = new Vector3(float.MinValue, float.MinValue, float.MinValue);
-    int lastLoggedHoveredNodeIndex = int.MinValue;
-
     readonly Dictionary<string, Vector2> authoredStageAnchorPositions = new Dictionary<string, Vector2>();
 
     void Start()
@@ -203,13 +185,6 @@ public class WorldMapController : MonoBehaviour
         RefreshCursorVisualState(false, true);
         ApplyCursorVisualTransform();
 
-        if (enableSurgicalLogs && logOnStart)
-        {
-            DumpCanvasAndCameraState("Start");
-            DumpCursorState("Start");
-            DumpCursorRendererState("Start");
-        }
-
         if (fadeImage != null)
             StartCoroutine(FadeInRoutine());
 
@@ -219,43 +194,6 @@ public class WorldMapController : MonoBehaviour
     void LateUpdate()
     {
         ApplyCursorVisualTransform();
-        SurgicalTick();
-    }
-
-    void SurgicalTick()
-    {
-        if (!enableSurgicalLogs)
-            return;
-
-        if (logCursorTransform)
-        {
-            Vector2 cursorAnchored = cursorVisualRoot != null ? cursorVisualRoot.anchoredPosition : Vector2.zero;
-            if (cursorLocalPosition != lastLoggedCursorLocalPosition || (Vector3)cursorAnchored != lastLoggedCursorWorldPosition)
-            {
-                lastLoggedCursorLocalPosition = cursorLocalPosition;
-                lastLoggedCursorWorldPosition = cursorAnchored;
-                Debug.Log(
-                    $"{LOG} CursorTransform | local={cursorLocalPosition} anchored={cursorAnchored} hoveredNodeIndex={hoveredNodeIndex}",
-                    this);
-            }
-        }
-
-        if (logCursorScale && cursorVisualRoot != null && cursorVisualRoot.localScale != lastLoggedCursorScale)
-        {
-            lastLoggedCursorScale = cursorVisualRoot.localScale;
-            Debug.Log(
-                $"{LOG} CursorScale | visualRoot='{cursorVisualRoot.name}' localScale={cursorVisualRoot.localScale} " +
-                $"scaledLogicalSize={GetScaledCursorSize()} baseVisualSize={cursorVisualBaseSize}",
-                this);
-        }
-
-        if (logHoveredStage && hoveredNodeIndex != lastLoggedHoveredNodeIndex)
-        {
-            lastLoggedHoveredNodeIndex = hoveredNodeIndex;
-            var hovered = GetHoveredNode();
-            string hoveredName = hovered != null ? hovered.displayName : "<none>";
-            Debug.Log($"{LOG} HoveredStage | hoveredNodeIndex={hoveredNodeIndex} hovered='{hoveredName}'", this);
-        }
     }
 
     void Update()
@@ -360,12 +298,6 @@ public class WorldMapController : MonoBehaviour
         RefreshCursorVisualState(false, true);
         ApplyCursorVisualTransform();
 
-        if (enableSurgicalLogs)
-        {
-            DumpCursorState("ChangeWorld");
-            DumpCursorRendererState("ChangeWorld");
-        }
-
         PlaySfx(changeWorldSfx, changeWorldSfxVolume);
         PlayMusicForCurrentWorld(forceRestart: false);
     }
@@ -375,19 +307,10 @@ public class WorldMapController : MonoBehaviour
         var node = GetHoveredNode();
 
         if (node == null)
-        {
-            if (enableSurgicalLogs && logWarningsOnlyWhenBroken)
-                Debug.LogWarning($"{LOG} ConfirmCurrentStage failed: no hovered node.", this);
             return;
-        }
 
         if (!node.unlocked || string.IsNullOrEmpty(node.sceneName))
         {
-            if (enableSurgicalLogs && logWarningsOnlyWhenBroken)
-                Debug.LogWarning(
-                    $"{LOG} ConfirmCurrentStage denied | node='{node.displayName}' unlocked={node.unlocked} scene='{node.sceneName}'",
-                    this);
-
             PlaySfx(deniedSfx, deniedSfxVolume);
             return;
         }
@@ -402,9 +325,6 @@ public class WorldMapController : MonoBehaviour
 
         transitioning = true;
         playingSelectedAnimation = true;
-
-        if (enableSurgicalLogs)
-            Debug.Log($"{LOG} ConfirmStageRoutine | scene='{sceneName}' transitionDuration={selectedTransitionDuration}", this);
 
         PlaySfx(confirmStageSfx, confirmStageSfxVolume);
 
@@ -452,9 +372,6 @@ public class WorldMapController : MonoBehaviour
 
         cursorLocalPosition = GetAnchorPositionInMovementArea(node.anchor);
         hoveredNodeIndex = defaultIndex;
-
-        if (enableSurgicalLogs)
-            Debug.Log($"{LOG} SnapCursorToDefaultStage | node='{node.displayName}' local={cursorLocalPosition}", this);
     }
 
     void RefreshHoveredStage()
@@ -961,18 +878,6 @@ public class WorldMapController : MonoBehaviour
 
         ClampCursorIfNeeded();
         ApplyCursorVisualTransform();
-
-        if (enableSurgicalLogs && logResolutionChanges)
-        {
-            Debug.Log(
-                $"{LOG} ResolutionOrScaleChanged | screen={Screen.width}x{Screen.height} " +
-                $"canvasScaleFactor={scaleFactor} movementAreaPx={movementAreaPx} movementAreaLocal={movementAreaLocal}",
-                this);
-
-            DumpCanvasAndCameraState("ResolutionChange");
-            DumpCursorState("ResolutionChange");
-            DumpCursorRendererState("ResolutionChange");
-        }
     }
 
     Vector2 GetScaledIconSize()
@@ -1046,14 +951,6 @@ public class WorldMapController : MonoBehaviour
         {
             cursorVisualRoot.localScale = new Vector3(sx, sy, 1f);
         }
-
-        if (enableSurgicalLogs && logCursorScale)
-        {
-            Debug.Log(
-                $"{LOG} ApplyScaledCursorSize | scaledLogicalSize={scaledSize} baseVisualSize={cursorVisualBaseSize} " +
-                $"appliedScale={cursorVisualRoot.localScale}",
-                this);
-        }
     }
 
     void RefreshWorldStageLabel()
@@ -1116,89 +1013,5 @@ public class WorldMapController : MonoBehaviour
         rt.sizeDelta = baseWorldStageLabelSize * scale;
 
         worldStageLabel.fontSize = Mathf.RoundToInt(baseWorldStageLabelFontSize * scale);
-    }
-
-    void DumpCanvasAndCameraState(string reason)
-    {
-        if (!logCanvasAndCameraState)
-            return;
-
-        Canvas canvas = GetRootCanvas();
-        Camera mainCam = Camera.main;
-
-        string canvasInfo = canvas == null
-            ? "canvas=<null>"
-            : $"canvas='{canvas.name}' renderMode={canvas.renderMode} worldCamera={(canvas.worldCamera ? canvas.worldCamera.name : "<null>")} scaleFactor={canvas.scaleFactor} pixelPerfect={canvas.pixelPerfect}";
-
-        string cameraInfo = mainCam == null
-            ? "mainCamera=<null>"
-            : $"mainCamera='{mainCam.name}' position={mainCam.transform.position} orthographic={mainCam.orthographic} orthographicSize={mainCam.orthographicSize} pixelRect={mainCam.pixelRect}";
-
-        Debug.Log($"{LOG} CanvasCameraState | reason={reason} {canvasInfo} {cameraInfo}", this);
-
-        if (canvas != null && canvas.renderMode == RenderMode.ScreenSpaceOverlay)
-        {
-            Debug.Log(
-                $"{LOG} Canvas is Screen Space Overlay and cursor is now UI/Image-based, which is correct for this setup.",
-                this);
-        }
-    }
-
-    void DumpCursorState(string reason)
-    {
-        if (!logCursorTransform)
-            return;
-
-        Vector2 scaledCursor = GetScaledCursorSize();
-        Vector3 worldPos = cursorVisualRoot != null ? cursorVisualRoot.position : Vector3.zero;
-        Rect localRect = cursorMovementArea != null ? cursorMovementArea.rect : default;
-
-        Debug.Log(
-            $"{LOG} CursorState | reason={reason} local={cursorLocalPosition} world={worldPos} " +
-            $"scaledCursorSize={scaledCursor} movementAreaRect={localRect} visualRoot={(cursorVisualRoot ? cursorVisualRoot.name : "<null>")} " +
-            $"movingActive={(movingCursorVisual != null && movingCursorVisual.activeSelf)} selectedActive={(selectedCursorVisual != null && selectedCursorVisual.activeSelf)}",
-            this);
-    }
-
-    void DumpCursorRendererState(string reason)
-    {
-        if (!logRendererState)
-            return;
-
-        DumpOneImageState(reason, "Root", cursorVisualRoot != null ? cursorVisualRoot.GetComponent<Image>() : null);
-        DumpOneImageState(reason, "Moving", movingCursorVisual != null ? movingCursorVisual.GetComponent<Image>() : null);
-        DumpOneImageState(reason, "Select", selectedCursorVisual != null ? selectedCursorVisual.GetComponent<Image>() : null);
-    }
-
-    void DumpOneImageState(string reason, string label, Image img)
-    {
-        if (img == null)
-        {
-            Debug.LogWarning($"{LOG} ImageState | reason={reason} label={label} image=<null>", this);
-            return;
-        }
-
-        string spriteName = img.sprite != null ? img.sprite.name : "<null>";
-        RectTransform rt = img.rectTransform;
-
-        Debug.Log(
-            $"{LOG} ImageState | reason={reason} label={label} go='{img.gameObject.name}' enabled={img.enabled} activeInHierarchy={img.gameObject.activeInHierarchy} " +
-            $"sprite='{spriteName}' color={img.color} anchoredPos={rt.anchoredPosition} sizeDelta={rt.sizeDelta} localScale={rt.localScale}",
-            img);
-
-        if (logWarningsOnlyWhenBroken)
-        {
-            if (img.sprite == null)
-                Debug.LogWarning($"{LOG} ImageState problem | label={label} has no sprite.", img);
-
-            if (!img.enabled)
-                Debug.LogWarning($"{LOG} ImageState problem | label={label} image disabled.", img);
-
-            if (!img.gameObject.activeInHierarchy)
-                Debug.LogWarning($"{LOG} ImageState problem | label={label} GameObject inactive.", img);
-
-            if (rt.rect.width <= 0.0001f || rt.rect.height <= 0.0001f)
-                Debug.LogWarning($"{LOG} ImageState problem | label={label} rect too small: {rt.rect.size}", img);
-        }
     }
 }
