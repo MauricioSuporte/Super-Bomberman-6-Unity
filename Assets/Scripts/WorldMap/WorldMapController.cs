@@ -102,14 +102,12 @@ public class WorldMapController : MonoBehaviour
     [SerializeField, Min(0.01f)] float worldChangeFadeInDuration = 0.5f;
 
     [Header("Audio SFX")]
-    [SerializeField] AudioClip moveCursorSfx;
-    [SerializeField, Range(0f, 1f)] float moveCursorSfxVolume = 1f;
-    [SerializeField] AudioClip changeWorldSfx;
-    [SerializeField, Range(0f, 1f)] float changeWorldSfxVolume = 1f;
     [SerializeField] AudioClip confirmStageSfx;
     [SerializeField, Range(0f, 1f)] float confirmStageSfxVolume = 1f;
     [SerializeField] AudioClip deniedSfx;
     [SerializeField, Range(0f, 1f)] float deniedSfxVolume = 1f;
+    [SerializeField] AudioClip returnToTitleSfx;
+    [SerializeField, Range(0f, 1f)] float returnToTitleSfxVolume = 1f;
 
     [Header("Optional Back")]
     private readonly bool allowReturnToTitle = true;
@@ -230,7 +228,7 @@ public class WorldMapController : MonoBehaviour
         }
 
         if (allowReturnToTitle && input.GetDown(ownerPlayerId, PlayerAction.ActionB))
-            StartCoroutine(LoadSceneRoutine(titleSceneName));
+            StartCoroutine(LoadSceneRoutine(titleSceneName, returnToTitleSfx, returnToTitleSfxVolume));
     }
 
     void UpdateFreeCursorMovement(PlayerInputManager input)
@@ -260,9 +258,6 @@ public class WorldMapController : MonoBehaviour
 
             ClampCursorIfNeeded();
             RefreshHoveredStage();
-
-            if (!wasMovingLastFrame)
-                PlaySfx(moveCursorSfx, moveCursorSfxVolume);
         }
 
         wasMovingLastFrame = isMoving;
@@ -277,8 +272,6 @@ public class WorldMapController : MonoBehaviour
         transitioning = true;
         playingSelectedAnimation = false;
         wasMovingLastFrame = false;
-
-        PlaySfx(changeWorldSfx, changeWorldSfxVolume);
 
         if (fadeImage != null)
             yield return FadeOutWithMusicRoutine(worldChangeFadeOutDuration);
@@ -353,12 +346,15 @@ public class WorldMapController : MonoBehaviour
         SceneManager.LoadScene(sceneName);
     }
 
-    IEnumerator LoadSceneRoutine(string sceneName)
+    IEnumerator LoadSceneRoutine(string sceneName, AudioClip sfxClip = null, float sfxVolume = 1f)
     {
         if (transitioning)
             yield break;
 
         transitioning = true;
+
+        if (sfxClip != null)
+            PlaySfx(sfxClip, sfxVolume);
 
         if (fadeImage != null)
             yield return FadeOutWithMusicRoutine(selectedTransitionDuration);
