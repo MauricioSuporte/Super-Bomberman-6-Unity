@@ -141,9 +141,6 @@ public class BombKickAbility : MonoBehaviour, IMovementAbility
                 continue;
             }
 
-            if (b.IsRubberBomb)
-                continue;
-
             b.StopKickAndSnapToGrid(movement != null ? movement.tileSize : 1f);
             stoppedAny = true;
             toRemove.Add(b);
