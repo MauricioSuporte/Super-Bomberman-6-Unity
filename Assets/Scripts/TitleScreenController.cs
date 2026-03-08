@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using TMPro;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 [RequireComponent(typeof(RawImage))]
@@ -126,15 +127,15 @@ public class TitleScreenController : MonoBehaviour
     [Header("Boss Rush Lock (separate bottom message)")]
     [SerializeField] bool bossRushUnlocked = false;
     [SerializeField, Range(0.05f, 1f)] float bossRushLockedAlpha = 0.35f;
-    string bossRushLockedMessage = "UNLOCKED BY COMPLETING NORMAL MODE";
+    private readonly string bossRushLockedMessage = "UNLOCKED BY COMPLETING NORMAL MODE";
     [SerializeField] string bossRushLockedMessageHex = "#FF3B30";
     [SerializeField] TextMeshProUGUI bossRushLockedText;
     [SerializeField] int bossRushLockedFontSize = 34;
     [SerializeField] float bossRushLockedBottomMargin = 8f;
     [SerializeField] float bossRushLockedShowSeconds = 2.0f;
 
-    [Header("Controls Menu")]
-    [SerializeField] ControlsConfigMenu controlsMenu;
+    [Header("Controls Scene")]
+    [SerializeField] string controlsSceneName = "ControlsMenu";
 
     public bool ControlsRequested { get; private set; }
 
@@ -1234,23 +1235,18 @@ public class TitleScreenController : MonoBehaviour
                     {
                         ControlsRequested = true;
 
-                        HideTitleScreenCompletely();
-
-                        if (controlsMenu != null)
-                            yield return controlsMenu.OpenRoutine(pidConfirm, titleMusic, titleMusicVolume);
-
-                        RestoreTitleScreenAfterControls();
-
-                        ControlsRequested = false;
-
-                        locked = false;
-                        menuMode = MenuMode.Main;
-                        menuIndex = 0;
-
                         HideFooterMessageImmediate();
                         HideBossRushLockedMessageImmediate();
-                        RefreshMenuText();
-                        StartPushStartBlink();
+                        StopPushStartBlink();
+
+                        if (!string.IsNullOrEmpty(controlsSceneName))
+                        {
+                            SceneManager.LoadScene(controlsSceneName);
+                            yield break;
+                        }
+
+                        ControlsRequested = false;
+                        locked = false;
 
                         while (AnyPlayerHeldAnyMenuKey())
                             yield return null;
