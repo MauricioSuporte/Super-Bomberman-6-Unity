@@ -17,7 +17,7 @@ public class GamePauseController : MonoBehaviour
     }
 
     [Header("Pause Availability")]
-    [SerializeField] string[] blockedSceneNames = { "TitleScreen", "WorldMap" };
+    private readonly string[] blockedSceneNames = { "TitleScreen", "WorldMap", "SkinSelect", "ControlsMenu" };
 
     [Header("SFX (Pause toggle)")]
     public AudioClip pauseSfx;
@@ -151,7 +151,8 @@ public class GamePauseController : MonoBehaviour
             for (int i = 0; i < blockedSceneNames.Length; i++)
             {
                 string blocked = blockedSceneNames[i];
-                if (!string.IsNullOrEmpty(blocked) && sceneName == blocked)
+                if (!string.IsNullOrEmpty(blocked) &&
+                    string.Equals(sceneName, blocked, System.StringComparison.OrdinalIgnoreCase))
                     return false;
             }
         }
