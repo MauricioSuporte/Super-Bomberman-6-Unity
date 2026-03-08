@@ -11,10 +11,13 @@ public abstract class EndStage : MonoBehaviour
 
     [Header("End Stage - Random Good SFX (Resources/Sounds)")]
     [SerializeField] private bool playRandomGoodSfx = true;
-    [SerializeField, Range(0f, 1f)] private float goodSfxVolume = 1f;
 
     [Header("Unlock Mode")]
     [SerializeField] private bool manualUnlockOnly = false;
+
+    private const float Good1Volume = 0.5f;
+    private const float Good2Volume = 0.5f;
+    private const float Good3Volume = 1f;
 
     private static bool s_goodSfxPlayedThisStage;
     private static AudioClip[] s_goodClips;
@@ -114,6 +117,17 @@ public abstract class EndStage : MonoBehaviour
         s_goodClips[2] = Resources.Load<AudioClip>("Sounds/good3");
     }
 
+    private float GetGoodClipVolume(int clipIndex)
+    {
+        return clipIndex switch
+        {
+            0 => Good1Volume,
+            1 => Good2Volume,
+            2 => Good3Volume,
+            _ => 1f,
+        };
+    }
+
     private void PlayRandomGoodOnce(AudioSource audio)
     {
         if (!playRandomGoodSfx)
@@ -142,8 +156,10 @@ public abstract class EndStage : MonoBehaviour
         if (clip == null)
             return;
 
+        float volume = GetGoodClipVolume(pick);
+
         s_goodSfxPlayedThisStage = true;
-        audio.PlayOneShot(clip, goodSfxVolume);
+        audio.PlayOneShot(clip, volume);
     }
 
     protected virtual void OnTriggerEnter2D(Collider2D other)
@@ -180,7 +196,7 @@ public abstract class EndStage : MonoBehaviour
             if (bombController != null)
                 bombController.ClearPlantedBombsOnStageEnd(false);
 
-            bool snapThisOne = (triggerMovement != null && m == triggerMovement);
+            bool snapThisOne = triggerMovement != null && m == triggerMovement;
             m.PlayEndStageSequence(portalCenter, snapThisOne);
         }
 

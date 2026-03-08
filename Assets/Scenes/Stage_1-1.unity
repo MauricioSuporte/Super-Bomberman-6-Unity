@@ -2915,7 +2915,7 @@ GameObject:
   - component: {fileID: 818279433}
   m_Layer: 6
   m_Name: Indestructibles
-  m_TagString: Untagged
+  m_TagString: Indestructibles
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -4713,25 +4713,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   fadeImage: {fileID: 765618197}
-  hudsonLogoIntro: {fileID: 0}
-  hudsonBackgroundImage: {fileID: 0}
-  showHudsonBackground: 1
-  titleScreen: {fileID: 0}
   introMusic: {fileID: 8300000, guid: ff7109298c0b4734d8113eeb4b86601c, type: 3}
   playStartSfxOnIntroEnd: 1
   stageLabel: {fileID: 124024469}
   world: 1
   stageNumber: 1
-  firstStageSceneName: Stage_1-1
   gameplayRoot: {fileID: 0}
   stage17SceneName: Stage_1-7
-  skinSelectMenu: {fileID: 0}
-  useWorldMapAfterSkinSelect: 1
-  worldMapSceneName: WorldMap
   skipPreIntroWalkNextRound_Inspector: 0
   preIntroWalk: {fileID: 0}
-  fadeOpenBeforeHudsonSeconds: 0.2
-  fadeCloseAfterHudsonSeconds: 0.12
 --- !u!114 &1866114538
 MonoBehaviour:
   m_ObjectHideFlags: 0

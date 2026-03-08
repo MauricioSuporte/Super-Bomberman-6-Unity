@@ -112,7 +112,6 @@ public class Bomb : MonoBehaviour, IMagnetPullable
     private int stageLayer;
     private int stageMask;
     private const string TagDestructibles = "Destructibles";
-    private const string TagIndestructibles = "Indestructibles";
 
     private void Awake()
     {
@@ -1533,7 +1532,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
                     if (h.gameObject == gameObject) continue;
                     if (h.isTrigger) continue;
 
-                    bool isBlockTag = h.CompareTag(TagDestructibles) || h.CompareTag(TagIndestructibles);
+                    bool isBlockTag = h.CompareTag(TagDestructibles);
 
                     if (isBlockTag)
                         return true;
