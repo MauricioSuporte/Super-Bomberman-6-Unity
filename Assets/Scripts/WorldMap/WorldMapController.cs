@@ -106,12 +106,12 @@ public class WorldMapController : MonoBehaviour
     [SerializeField, Range(0f, 1f)] float confirmStageSfxVolume = 1f;
     [SerializeField] AudioClip deniedSfx;
     [SerializeField, Range(0f, 1f)] float deniedSfxVolume = 1f;
-    [SerializeField] AudioClip returnToTitleSfx;
-    [SerializeField, Range(0f, 1f)] float returnToTitleSfxVolume = 1f;
+    [SerializeField] AudioClip backSceneSfx;
+    [SerializeField, Range(0f, 1f)] float backSceneSfxVolume = 1f;
 
     [Header("Optional Back")]
-    private readonly bool allowReturnToTitle = true;
-    [SerializeField] string titleSceneName = "TitleScreen";
+    [SerializeField] bool allowBackScene = true;
+    [SerializeField] string backSceneName = "SkinSelect";
 
     [Header("Top Left Label")]
     [SerializeField] Text worldStageLabel;
@@ -229,8 +229,8 @@ public class WorldMapController : MonoBehaviour
             return;
         }
 
-        if (allowReturnToTitle && input.GetDown(ownerPlayerId, PlayerAction.ActionB))
-            StartCoroutine(LoadSceneRoutine(titleSceneName, returnToTitleSfx, returnToTitleSfxVolume));
+        if (allowBackScene && input.GetDown(ownerPlayerId, PlayerAction.ActionB))
+            StartCoroutine(LoadSceneRoutine(backSceneName, backSceneSfx, backSceneSfxVolume));
     }
 
     void UpdateFreeCursorMovement(PlayerInputManager input)

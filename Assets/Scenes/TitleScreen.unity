@@ -582,7 +582,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Texture: {fileID: 2800000, guid: 7405f44018067d94aaa2264833063c44, type: 3}
+  m_Texture: {fileID: 2800000, guid: e0e4851c102a35946b072ee04747eafd, type: 3}
   m_UVRect:
     serializedVersion: 2
     x: 0
@@ -668,7 +668,7 @@ MonoBehaviour:
   bossRushLockedFontSize: 34
   bossRushLockedBottomMargin: 30
   bossRushLockedShowSeconds: 2
-  controlsMenu: {fileID: 0}
+  controlsSceneName: ControlsMenu
 --- !u!114 &362350265
 MonoBehaviour:
   m_ObjectHideFlags: 0
