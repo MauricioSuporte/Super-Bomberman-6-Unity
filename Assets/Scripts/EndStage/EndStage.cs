@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public abstract class EndStage : MonoBehaviour
 {
@@ -201,6 +202,8 @@ public abstract class EndStage : MonoBehaviour
         }
 
         PlayerPersistentStats.CommitStage();
+
+        StageUnlockProgress.UnlockCurrentAndNext(SceneManager.GetActiveScene().name);
 
         var audio = other.GetComponent<AudioSource>();
 

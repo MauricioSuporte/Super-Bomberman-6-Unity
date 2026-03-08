@@ -180,6 +180,9 @@ public class WorldMapController : MonoBehaviour
         ApplyScaledCursorSize();
         ApplyScaledWorldStageLabelLayout();
 
+        RegisterStageOrderInProgress();
+        ApplyUnlockedStagesFromProgress();
+
         if (createIconsOnStart)
             EnsureAllStageIcons();
 
@@ -415,7 +418,7 @@ public class WorldMapController : MonoBehaviour
         if (cursorMovementArea == null)
             return;
 
-        int defaultIndex = GetSafeDefaultNodeIndex(currentWorldIndex);
+        int defaultIndex = GetBestDefaultNodeIndex(currentWorldIndex);
         var node = GetNode(currentWorldIndex, defaultIndex);
         if (node == null || node.anchor == null)
             return;
@@ -1159,5 +1162,72 @@ public class WorldMapController : MonoBehaviour
             world.cameraPosition.x,
             world.cameraPosition.y,
             currentCameraPosition.z);
+    }
+
+    void RegisterStageOrderInProgress()
+    {
+        List<string> orderedSceneNames = new List<string>();
+
+        for (int w = 0; w < worlds.Count; w++)
+        {
+            var world = worlds[w];
+            if (world == null || world.nodes == null)
+                continue;
+
+            for (int n = 0; n < world.nodes.Count; n++)
+            {
+                var node = world.nodes[n];
+                if (node == null || string.IsNullOrWhiteSpace(node.sceneName))
+                    continue;
+
+                orderedSceneNames.Add(node.sceneName);
+            }
+        }
+
+        StageUnlockProgress.RegisterStageOrder(orderedSceneNames);
+    }
+
+    void ApplyUnlockedStagesFromProgress()
+    {
+        for (int w = 0; w < worlds.Count; w++)
+        {
+            var world = worlds[w];
+            if (world == null || world.nodes == null)
+                continue;
+
+            for (int n = 0; n < world.nodes.Count; n++)
+            {
+                var node = world.nodes[n];
+                if (node == null)
+                    continue;
+
+                node.unlocked = StageUnlockProgress.IsUnlocked(node.sceneName);
+            }
+        }
+    }
+
+    int GetBestDefaultNodeIndex(int worldIndex)
+    {
+        if (worldIndex < 0 || worldIndex >= worlds.Count)
+            return 0;
+
+        var world = worlds[worldIndex];
+        if (world == null || world.nodes == null || world.nodes.Count == 0)
+            return 0;
+
+        int configuredIndex = Mathf.Clamp(world.defaultNodeIndex, 0, world.nodes.Count - 1);
+        var configuredNode = world.nodes[configuredIndex];
+
+        if (configuredNode != null && configuredNode.unlocked)
+            return configuredIndex;
+
+        for (int i = 0; i < world.nodes.Count; i++)
+        {
+            var node = world.nodes[i];
+            if (node != null && node.unlocked)
+                return i;
+        }
+
+        return configuredIndex;
     }
 }
