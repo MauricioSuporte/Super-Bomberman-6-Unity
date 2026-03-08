@@ -27,7 +27,7 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
     public int maxChainTransfers = 32;
 
     [Header("Stop Shake (visual feedback)")]
-    public float stopShakeAmplitude = 0.03f;
+    public float stopShakeAmplitude = 0.05f;
     public float stopShakeFrequency = 22f;
 
     [Header("SFX")]
@@ -363,6 +363,13 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
                             yield return WaitSecondsAndReleaseInput(chainTransferDuration, animEndTime, releaseInputIfNeeded);
 
                         SettleCurrentTileAtCurrentCell();
+                        yield return ShakeSettledTileVisual(
+                            destructibleTilemap,
+                            currentTileCell,
+                            currentTile,
+                            chainTransferDuration,
+                            stopShakeAmplitude,
+                            stopShakeFrequency);
 
                         currentBomb = nextBomb;
                         moverType = ChainMoverType.Bomb;
@@ -380,6 +387,14 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
                             yield return WaitSecondsAndReleaseInput(chainTransferDuration, animEndTime, releaseInputIfNeeded);
 
                         SettleCurrentTileAtCurrentCell();
+                        yield return ShakeSettledTileVisual(
+                            destructibleTilemap,
+                            currentTileCell,
+                            currentTile,
+                            chainTransferDuration,
+                            stopShakeAmplitude,
+                            stopShakeFrequency);
+
                         BeginTileMover(nextCell, nextTile);
 
                         SLog($"MixedChain | transfer Tile -> Tile | nextCell={nextCell} tile={nextTile.name}");
@@ -395,6 +410,13 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
                             yield return WaitSecondsAndReleaseInput(chainTransferDuration, animEndTime, releaseInputIfNeeded);
 
                         SettleCurrentTileAtCurrentCell();
+                        yield return ShakeSettledTileVisual(
+                            destructibleTilemap,
+                            currentTileCell,
+                            currentTile,
+                            chainTransferDuration,
+                            stopShakeAmplitude,
+                            stopShakeFrequency);
 
                         SLog($"MixedChain | Tile ended by solid | nextCell={nextCell}");
                         break;
@@ -1114,5 +1136,80 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
         externalAnimator = null;
 
         SLog("CancelKickForDeath");
+    }
+
+    GameObject CreateVisualGhost(Tilemap tilemap, Vector3Int cell, TileBase tile, int extraSortingOrder = 1)
+    {
+        if (tilemap == null || tile == null)
+            return null;
+
+        GameObject ghost = new("YellowKickBlock_StopShakeFx");
+        ghost.transform.position = tilemap.GetCellCenterWorld(cell);
+
+        int stageLayer = LayerMask.NameToLayer("Stage");
+        if (stageLayer >= 0)
+            ghost.layer = stageLayer;
+
+        var sr = ghost.AddComponent<SpriteRenderer>();
+        sr.sprite = GetPreviewSprite(tile);
+
+        TilemapRenderer tilemapRenderer = tilemap.GetComponent<TilemapRenderer>();
+        if (tilemapRenderer != null)
+        {
+            sr.sortingLayerID = tilemapRenderer.sortingLayerID;
+            sr.sortingOrder = tilemapRenderer.sortingOrder + extraSortingOrder;
+        }
+        else
+        {
+            sr.sortingOrder = 11;
+        }
+
+        return ghost;
+    }
+
+    IEnumerator ShakeSettledTileVisual(Tilemap tilemap, Vector3Int cell, TileBase tile, float duration, float amplitude, float frequencyHz)
+    {
+        if (tilemap == null || tile == null)
+            yield break;
+
+        GameObject visual = CreateVisualGhost(tilemap, cell, tile, 1);
+        if (visual == null)
+            yield break;
+
+        Vector3 basePos = tilemap.GetCellCenterWorld(cell);
+
+        float dur = Mathf.Max(0.01f, duration);
+        float amp = Mathf.Max(0f, amplitude);
+        float hz = Mathf.Max(1f, frequencyHz);
+
+        float end = Time.time + dur;
+        float seed = Random.value * 1000f;
+
+        SLog($"ShakeSettledTileVisual | cell={cell} tile={tile.name} duration={dur:0.000}");
+
+        while (Time.time < end)
+        {
+            if (!enabledAbility || movement == null || movement.isDead || visual == null)
+            {
+                if (visual != null)
+                    Destroy(visual);
+                yield break;
+            }
+
+            float t = Time.time - (end - dur);
+            float phase = (t * hz) * (Mathf.PI * 2f);
+
+            float x = Mathf.Sin(phase + seed) * amp;
+            float y = Mathf.Cos(phase * 1.23f + seed) * amp;
+
+            visual.transform.position = basePos + new Vector3(x, y, 0f);
+            yield return null;
+        }
+
+        if (visual != null)
+        {
+            visual.transform.position = basePos;
+            Destroy(visual);
+        }
     }
 }
