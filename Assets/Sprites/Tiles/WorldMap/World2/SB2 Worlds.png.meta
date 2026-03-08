@@ -1,0 +1,559 @@
+fileFormatVersion: 2
+guid: 17a514d88da07934f88259b847c5cbb3
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -878855132165650379
+    second: SB2 Worlds_0
+  - first:
+      213: 724558439245679294
+    second: SB2 Worlds_1
+  - first:
+      213: -5002855683597183021
+    second: SB2 Worlds_2
+  - first:
+      213: -1171178008131487967
+    second: SB2 Worlds_3
+  - first:
+      213: -7890188798011377358
+    second: SB2 Worlds_4
+  - first:
+      213: 7160545529383182523
+    second: SB2 Worlds_5
+  - first:
+      213: 8373801795935656446
+    second: SB2 Worlds_6
+  - first:
+      213: 4675321195555037838
+    second: SB2 Worlds_7
+  - first:
+      213: 6527567748197173543
+    second: SB2 Worlds_8
+  - first:
+      213: -5551046874711184932
+    second: SB2 Worlds_9
+  - first:
+      213: -7866102512070061680
+    second: SB2 Worlds_10
+  - first:
+      213: 5195198653646089276
+    second: SB2 Worlds_11
+  - first:
+      213: 2062781896835219268
+    second: SB2 Worlds_12
+  - first:
+      213: 7290120197089824339
+    second: SB2 Worlds_13
+  - first:
+      213: -5068927876238522609
+    second: SB2 Worlds_14
+  - first:
+      213: -615254691741876929
+    second: SB2 Worlds_15
+  - first:
+      213: -7726661742377672880
+    second: SB2 Worlds_16
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 16
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: SB2 Worlds_0
+      rect:
+        serializedVersion: 2
+        x: 12
+        y: 255
+        width: 52
+        height: 65
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 538cc36e9edadc3f0800000000000000
+      internalID: -878855132165650379
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SB2 Worlds_1
+      rect:
+        serializedVersion: 2
+        x: 71
+        y: 255
+        width: 50
+        height: 54
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: eba0046cf062e0a00800000000000000
+      internalID: 724558439245679294
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SB2 Worlds_2
+      rect:
+        serializedVersion: 2
+        x: 133
+        y: 255
+        width: 48
+        height: 79
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3d755a41349429ab0800000000000000
+      internalID: -5002855683597183021
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SB2 Worlds_3
+      rect:
+        serializedVersion: 2
+        x: 192
+        y: 255
+        width: 42
+        height: 65
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 127b2988ec32fbfe0800000000000000
+      internalID: -1171178008131487967
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SB2 Worlds_4
+      rect:
+        serializedVersion: 2
+        x: 249
+        y: 255
+        width: 50
+        height: 55
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 239f3cb971b608290800000000000000
+      internalID: -7890188798011377358
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SB2 Worlds_5
+      rect:
+        serializedVersion: 2
+        x: 404
+        y: 103
+        width: 52
+        height: 160
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bb065e4883e5f5360800000000000000
+      internalID: 7160545529383182523
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SB2 Worlds_6
+      rect:
+        serializedVersion: 2
+        x: 12
+        y: 175
+        width: 52
+        height: 65
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ef9d54afd58b53470800000000000000
+      internalID: 8373801795935656446
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SB2 Worlds_7
+      rect:
+        serializedVersion: 2
+        x: 71
+        y: 175
+        width: 50
+        height: 54
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e82a9ef3bd312e040800000000000000
+      internalID: 4675321195555037838
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SB2 Worlds_8
+      rect:
+        serializedVersion: 2
+        x: 133
+        y: 175
+        width: 48
+        height: 79
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 729c69e4844969a50800000000000000
+      internalID: 6527567748197173543
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SB2 Worlds_9
+      rect:
+        serializedVersion: 2
+        x: 192
+        y: 175
+        width: 42
+        height: 65
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: cd92c453748b6f2b0800000000000000
+      internalID: -5551046874711184932
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SB2 Worlds_10
+      rect:
+        serializedVersion: 2
+        x: 249
+        y: 175
+        width: 50
+        height: 55
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0919141117df5d290800000000000000
+      internalID: -7866102512070061680
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SB2 Worlds_11
+      rect:
+        serializedVersion: 2
+        x: 361
+        y: 154
+        width: 42
+        height: 65
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c3ca92076ad091840800000000000000
+      internalID: 5195198653646089276
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SB2 Worlds_12
+      rect:
+        serializedVersion: 2
+        x: 457
+        y: 152
+        width: 50
+        height: 54
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 44f38f1c43970ac10800000000000000
+      internalID: 2062781896835219268
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SB2 Worlds_13
+      rect:
+        serializedVersion: 2
+        x: 12
+        y: 95
+        width: 52
+        height: 65
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 35e807dc1b5bb2560800000000000000
+      internalID: 7290120197089824339
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SB2 Worlds_14
+      rect:
+        serializedVersion: 2
+        x: 133
+        y: 95
+        width: 48
+        height: 79
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f074ab0f3fc87a9b0800000000000000
+      internalID: -5068927876238522609
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SB2 Worlds_15
+      rect:
+        serializedVersion: 2
+        x: 249
+        y: 95
+        width: 50
+        height: 55
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f3d355c1e1d2677f0800000000000000
+      internalID: -615254691741876929
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: SB2 Worlds_16
+      rect:
+        serializedVersion: 2
+        x: 12
+        y: 15
+        width: 52
+        height: 65
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 05f5af9351265c490800000000000000
+      internalID: -7726661742377672880
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      SB2 Worlds_0: -878855132165650379
+      SB2 Worlds_1: 724558439245679294
+      SB2 Worlds_10: -7866102512070061680
+      SB2 Worlds_11: 5195198653646089276
+      SB2 Worlds_12: 2062781896835219268
+      SB2 Worlds_13: 7290120197089824339
+      SB2 Worlds_14: -5068927876238522609
+      SB2 Worlds_15: -615254691741876929
+      SB2 Worlds_16: -7726661742377672880
+      SB2 Worlds_2: -5002855683597183021
+      SB2 Worlds_3: -1171178008131487967
+      SB2 Worlds_4: -7890188798011377358
+      SB2 Worlds_5: 7160545529383182523
+      SB2 Worlds_6: 8373801795935656446
+      SB2 Worlds_7: 4675321195555037838
+      SB2 Worlds_8: 6527567748197173543
+      SB2 Worlds_9: -5551046874711184932
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
