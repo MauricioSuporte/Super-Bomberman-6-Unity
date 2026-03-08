@@ -201,9 +201,16 @@ public abstract class EndStage : MonoBehaviour
             m.PlayEndStageSequence(portalCenter, snapThisOne);
         }
 
+        bool isPerfectClear = PlayerPersistentStats.IsCurrentStagePerfectClear();
+
         PlayerPersistentStats.CommitStage();
 
-        StageUnlockProgress.UnlockCurrentAndNext(SceneManager.GetActiveScene().name);
+        string currentSceneName = SceneManager.GetActiveScene().name;
+
+        StageUnlockProgress.UnlockCurrentAndNext(currentSceneName);
+
+        if (isPerfectClear)
+            StageUnlockProgress.MarkPerfect(currentSceneName);
 
         var audio = other.GetComponent<AudioSource>();
 

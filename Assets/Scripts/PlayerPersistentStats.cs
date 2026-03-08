@@ -3,6 +3,11 @@ using UnityEngine;
 
 public static class PlayerPersistentStats
 {
+    static bool goldenUnlockedSession;
+    static bool sessionBooted;
+    static bool stageAnyItemPickupCollected;
+    static bool stageStartedWithDefaultState;
+
     public const int MaxBombAmount = 8;
     public const int MaxExplosionRadius = 10;
 
@@ -55,9 +60,6 @@ public static class PlayerPersistentStats
         new(),
         new()
     };
-
-    static bool goldenUnlockedSession;
-    static bool sessionBooted;
 
     public static PlayerState Get(int playerId)
     {
@@ -509,6 +511,9 @@ public static class PlayerPersistentStats
             CopyState(baseState, st);
         }
 
+        stageAnyItemPickupCollected = false;
+        stageStartedWithDefaultState = AreAllTrackedPlayersInDefaultState(_stage);
+
         stageActive = true;
     }
 
@@ -525,6 +530,8 @@ public static class PlayerPersistentStats
         }
 
         stageActive = false;
+        stageAnyItemPickupCollected = false;
+        stageStartedWithDefaultState = false;
     }
 
     static MountedType EggToLouie(ItemType t)
@@ -736,5 +743,76 @@ public static class PlayerPersistentStats
     {
         playerId = Mathf.Clamp(playerId, 1, 4);
         return stageActive ? _stage[playerId - 1] : _p[playerId - 1];
+    }
+
+    static bool IsDefaultState(PlayerState s)
+    {
+        if (s == null)
+            return false;
+
+        if (s.Life != 1)
+            return false;
+
+        if (s.BombAmount != 1)
+            return false;
+
+        if (s.ExplosionRadius != 1)
+            return false;
+
+        if (s.SpeedInternal != MinSpeedInternal)
+            return false;
+
+        if (s.CanKickBombs) return false;
+        if (s.CanPunchBombs) return false;
+        if (s.HasPowerGlove) return false;
+        if (s.CanPassBombs) return false;
+        if (s.CanPassDestructibles) return false;
+        if (s.HasPierceBombs) return false;
+        if (s.HasControlBombs) return false;
+        if (s.HasPowerBomb) return false;
+        if (s.HasRubberBombs) return false;
+        if (s.HasFullFire) return false;
+
+        if (s.MountedLouie != MountedType.None)
+            return false;
+
+        if (s.QueuedEggs != null && s.QueuedEggs.Count > 0)
+            return false;
+
+        return true;
+    }
+
+    static bool AreAllTrackedPlayersInDefaultState(PlayerState[] states)
+    {
+        if (states == null || states.Length == 0)
+            return false;
+
+        for (int i = 0; i < states.Length; i++)
+        {
+            if (!IsDefaultState(states[i]))
+                return false;
+        }
+
+        return true;
+    }
+
+    public static void NotifyStageItemPickupCollected()
+    {
+        BeginStage();
+        stageAnyItemPickupCollected = true;
+    }
+
+    public static bool IsCurrentStagePerfectClear()
+    {
+        if (!stageActive)
+            return false;
+
+        if (!stageStartedWithDefaultState)
+            return false;
+
+        if (stageAnyItemPickupCollected)
+            return false;
+
+        return AreAllTrackedPlayersInDefaultState(_stage);
     }
 }

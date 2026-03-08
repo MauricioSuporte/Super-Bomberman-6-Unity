@@ -10060,8 +10060,9 @@ MonoBehaviour:
   requireStageInRangeToConfirm: 1
   scaleStageDetectRadiusWithSafeFrame: 1
   lockedStageSprite: {fileID: 3724445575597181823, guid: be604b99019ed804ba4a0d0dfc07e674, type: 3}
-  clearedStageSprite: {fileID: -652033127, guid: be604b99019ed804ba4a0d0dfc07e674, type: 3}
   availableStageSprite: {fileID: -101075982, guid: be604b99019ed804ba4a0d0dfc07e674, type: 3}
+  clearedStageSprite: {fileID: -652033127, guid: be604b99019ed804ba4a0d0dfc07e674, type: 3}
+  perfectStageSprite: {fileID: -1294499027, guid: be604b99019ed804ba4a0d0dfc07e674, type: 3}
   baseIconLogicalSize: {x: 8, y: 8}
   iconOffset: {x: 0, y: 0}
   preserveAspectOnIcons: 1
@@ -10077,8 +10078,9 @@ MonoBehaviour:
   minIconScale: 1
   maxIconScale: 20
   lockedStageColor: {r: 1, g: 1, b: 1, a: 1}
-  clearedStageColor: {r: 1, g: 1, b: 1, a: 1}
   availableStageColor: {r: 1, g: 1, b: 1, a: 1}
+  clearedStageColor: {r: 1, g: 1, b: 1, a: 1}
+  perfectStageColor: {r: 1, g: 1, b: 1, a: 1}
   fadeImage: {fileID: 87393867}
   fadeInDuration: 0.5
   worldChangeFadeOutDuration: 0.5

@@ -87,8 +87,9 @@ public class WorldMapController : MonoBehaviour
 
     [Header("Stage Icons")]
     [SerializeField] Sprite lockedStageSprite;
-    [SerializeField] Sprite clearedStageSprite;
     [SerializeField] Sprite availableStageSprite;
+    [SerializeField] Sprite clearedStageSprite;
+    [SerializeField] Sprite perfectStageSprite;
     [SerializeField] Vector2 baseIconLogicalSize = new Vector2(8f, 8f);
     [SerializeField] Vector2 iconOffset = Vector2.zero;
     [SerializeField] bool preserveAspectOnIcons = true;
@@ -110,8 +111,9 @@ public class WorldMapController : MonoBehaviour
 
     [Header("Stage Icon Colors")]
     [SerializeField] Color lockedStageColor = Color.white;
-    [SerializeField] Color clearedStageColor = Color.white;
     [SerializeField] Color availableStageColor = Color.white;
+    [SerializeField] Color clearedStageColor = Color.white;
+    [SerializeField] Color perfectStageColor = Color.white;
 
     [Header("Fade")]
     [SerializeField] Image fadeImage;
@@ -614,6 +616,7 @@ public class WorldMapController : MonoBehaviour
 
         bool isUnlocked = StageUnlockProgress.IsUnlocked(node.sceneName);
         bool isCleared = StageUnlockProgress.IsCleared(node.sceneName);
+        bool isPerfect = StageUnlockProgress.IsPerfect(node.sceneName);
 
         Sprite sprite;
         Color color;
@@ -622,6 +625,11 @@ public class WorldMapController : MonoBehaviour
         {
             sprite = lockedStageSprite;
             color = lockedStageColor;
+        }
+        else if (isPerfect)
+        {
+            sprite = perfectStageSprite;
+            color = perfectStageColor;
         }
         else if (isCleared)
         {
