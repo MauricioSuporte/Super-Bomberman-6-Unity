@@ -31,6 +31,11 @@ public class YellowLouieDestructibleKickAbility : MonoBehaviour, IPlayerAbility
     public AudioClip kickSfx;
     [Range(0f, 1f)] public float kickSfxVolume = 1f;
 
+    [Header("Bomb Kick")]
+    [SerializeField] private float bombKickOverlapSize = 0.60f;
+    [SerializeField] private float bombKickOriginBlockerSize = 0.90f;
+    [SerializeField] private bool bombKickOriginBlockerUseTrigger = false;
+
     MovementController movement;
     Rigidbody2D rb;
     AudioSource audioSource;
@@ -135,31 +140,56 @@ public class YellowLouieDestructibleKickAbility : MonoBehaviour, IPlayerAbility
         float animEndTime = Time.time + kickCooldownSeconds;
         bool inputUnlockedAfterAnim = false;
 
-        var gm = FindFirstObjectByType<GameManager>();
-        var tilemap = gm != null ? gm.destructibleTilemap : null;
-
         movement.SetInputLocked(true, false);
 
-        if (tilemap == null)
+        var gm = FindFirstObjectByType<GameManager>();
+        var destructibleTilemap = gm != null ? gm.destructibleTilemap : null;
+
+        if (TryKickBombInFront(dir, destructibleTilemap))
+        {
+            if (audioSource != null && kickSfx != null)
+                audioSource.PlayOneShot(kickSfx, kickSfxVolume);
+
+            yield return WaitSecondsAndReleaseInput(kickCooldownSeconds, animEndTime, () =>
+            {
+                if (!inputUnlockedAfterAnim)
+                {
+                    inputUnlockedAfterAnim = true;
+                    if (movement != null)
+                        movement.SetInputLocked(false);
+                }
+            });
+
+            if (movement != null)
+                movement.SetInputLocked(false);
+
+            routine = null;
+            yield break;
+        }
+
+        if (destructibleTilemap == null)
         {
             yield return WaitSecondsAndReleaseInput(kickCooldownSeconds, animEndTime, () =>
             {
                 if (!inputUnlockedAfterAnim)
                 {
                     inputUnlockedAfterAnim = true;
-                    if (movement != null) movement.SetInputLocked(false);
+                    if (movement != null)
+                        movement.SetInputLocked(false);
                 }
             });
 
-            if (movement != null) movement.SetInputLocked(false);
+            if (movement != null)
+                movement.SetInputLocked(false);
+
             routine = null;
             yield break;
         }
 
-        Vector3Int playerCell = tilemap.WorldToCell(rb.position);
+        Vector3Int playerCell = destructibleTilemap.WorldToCell(rb.position);
         Vector3Int hitCell = playerCell + step;
 
-        TileBase movingTile = tilemap.GetTile(hitCell);
+        TileBase movingTile = destructibleTilemap.GetTile(hitCell);
         if (movingTile == null)
         {
             yield return WaitSecondsAndReleaseInput(kickCooldownSeconds, animEndTime, () =>
@@ -167,11 +197,14 @@ public class YellowLouieDestructibleKickAbility : MonoBehaviour, IPlayerAbility
                 if (!inputUnlockedAfterAnim)
                 {
                     inputUnlockedAfterAnim = true;
-                    if (movement != null) movement.SetInputLocked(false);
+                    if (movement != null)
+                        movement.SetInputLocked(false);
                 }
             });
 
-            if (movement != null) movement.SetInputLocked(false);
+            if (movement != null)
+                movement.SetInputLocked(false);
+
             routine = null;
             yield break;
         }
@@ -199,11 +232,11 @@ public class YellowLouieDestructibleKickAbility : MonoBehaviour, IPlayerAbility
 
         try
         {
-            tilemap.SetTile(hitCell, null);
-            tilemap.RefreshTile(hitCell);
+            destructibleTilemap.SetTile(hitCell, null);
+            destructibleTilemap.RefreshTile(hitCell);
             tileRemovedFromMap = true;
 
-            ghost = CreateGhost(tilemap, hitCell, movingTile);
+            ghost = CreateGhost(destructibleTilemap, hitCell, movingTile);
             reserve(currentCell);
 
             ApplyShadowForCell(currentCell);
@@ -224,7 +257,7 @@ public class YellowLouieDestructibleKickAbility : MonoBehaviour, IPlayerAbility
                 Vector3Int nextCell = currentCell + step;
 
                 TileBase blockingTile;
-                var blockType = GetBlockType(tilemap, nextCell, dir, out blockingTile);
+                var blockType = GetBlockType(destructibleTilemap, nextCell, dir, out blockingTile);
 
                 if (blockType == BlockType.Solid)
                 {
@@ -238,7 +271,7 @@ public class YellowLouieDestructibleKickAbility : MonoBehaviour, IPlayerAbility
                     if (transfers > maxChainTransfers)
                         break;
 
-                    Vector3 basePos = tilemap.GetCellCenterWorld(currentCell);
+                    Vector3 basePos = destructibleTilemap.GetCellCenterWorld(currentCell);
 
                     if (ghost != null)
                     {
@@ -253,13 +286,14 @@ public class YellowLouieDestructibleKickAbility : MonoBehaviour, IPlayerAbility
                             if (!inputUnlockedAfterAnim)
                             {
                                 inputUnlockedAfterAnim = true;
-                                if (movement != null) movement.SetInputLocked(false);
+                                if (movement != null)
+                                    movement.SetInputLocked(false);
                             }
                         });
                     }
 
-                    tilemap.SetTile(currentCell, movingTile);
-                    tilemap.RefreshTile(currentCell);
+                    destructibleTilemap.SetTile(currentCell, movingTile);
+                    destructibleTilemap.RefreshTile(currentCell);
                     tileRemovedFromMap = false;
 
                     if (ghost != null)
@@ -272,11 +306,11 @@ public class YellowLouieDestructibleKickAbility : MonoBehaviour, IPlayerAbility
                     movingTile = blockingTile;
                     currentCell = nextCell;
 
-                    tilemap.SetTile(currentCell, null);
-                    tilemap.RefreshTile(currentCell);
+                    destructibleTilemap.SetTile(currentCell, null);
+                    destructibleTilemap.RefreshTile(currentCell);
                     tileRemovedFromMap = true;
 
-                    ghost = CreateGhost(tilemap, currentCell, movingTile);
+                    ghost = CreateGhost(destructibleTilemap, currentCell, movingTile);
                     reserve(currentCell);
 
                     ApplyShadowForCell(currentCell);
@@ -287,8 +321,8 @@ public class YellowLouieDestructibleKickAbility : MonoBehaviour, IPlayerAbility
                 reserve(nextCell);
                 ApplyShadowForCell(nextCell);
 
-                Vector3 from = tilemap.GetCellCenterWorld(currentCell);
-                Vector3 to = tilemap.GetCellCenterWorld(nextCell);
+                Vector3 from = destructibleTilemap.GetCellCenterWorld(currentCell);
+                Vector3 to = destructibleTilemap.GetCellCenterWorld(nextCell);
 
                 float tMove = 0f;
                 while (tMove < 1f)
@@ -324,7 +358,8 @@ public class YellowLouieDestructibleKickAbility : MonoBehaviour, IPlayerAbility
                     if (!inputUnlockedAfterAnim)
                     {
                         inputUnlockedAfterAnim = true;
-                        if (movement != null) movement.SetInputLocked(false);
+                        if (movement != null)
+                            movement.SetInputLocked(false);
                     }
                 });
             }
@@ -339,7 +374,7 @@ public class YellowLouieDestructibleKickAbility : MonoBehaviour, IPlayerAbility
 
             if (endedBySolid && ghost != null && enabledAbility && movement != null && !movement.isDead)
             {
-                Vector3 basePos = tilemap.GetCellCenterWorld(currentCell);
+                Vector3 basePos = destructibleTilemap.GetCellCenterWorld(currentCell);
                 yield return ShakeGhost(ghost, basePos, chainTransferDelaySeconds, stopShakeAmplitude, stopShakeFrequency);
                 if (ghost != null)
                     ghost.transform.position = basePos;
@@ -353,10 +388,10 @@ public class YellowLouieDestructibleKickAbility : MonoBehaviour, IPlayerAbility
             foreach (var c in reservedLocal)
                 _reservedCells.Remove(c);
 
-            if (tilemap != null && tileRemovedFromMap)
+            if (destructibleTilemap != null && tileRemovedFromMap)
             {
-                tilemap.SetTile(currentCell, movingTile);
-                tilemap.RefreshTile(currentCell);
+                destructibleTilemap.SetTile(currentCell, movingTile);
+                destructibleTilemap.RefreshTile(currentCell);
             }
 
             ApplyShadowForCell(currentCell);
@@ -370,6 +405,55 @@ public class YellowLouieDestructibleKickAbility : MonoBehaviour, IPlayerAbility
             routine = null;
             deathCancelInProgress = false;
         }
+    }
+
+    bool TryKickBombInFront(Vector2 dir, Tilemap destructibleTilemap)
+    {
+        if (movement == null || rb == null)
+            return false;
+
+        int bombLayer = LayerMask.NameToLayer("Bomb");
+        if (bombLayer < 0)
+            return false;
+
+        Vector2 origin = SnapToGrid(rb.position, movement.tileSize);
+        Vector2 target = origin + dir.normalized * movement.tileSize;
+
+        Collider2D hit = Physics2D.OverlapBox(
+            target,
+            Vector2.one * (movement.tileSize * 0.6f),
+            0f,
+            1 << bombLayer);
+
+        if (hit == null)
+            return false;
+
+        Bomb bomb = hit.GetComponent<Bomb>();
+        if (bomb == null || bomb.IsBeingKicked || !bomb.CanBeKicked)
+            return false;
+
+        LayerMask bombObstacles = movement.obstacleMask.value | LayerMask.GetMask("Enemy");
+
+        bool kicked = bomb.StartKick(
+            dir.normalized,
+            movement.tileSize,
+            bombObstacles,
+            destructibleTilemap,
+            LayerMask.GetMask("Player", "Stage", "Bomb", "Enemy", "Louie"),
+            bombKickOverlapSize,
+            bombKickOriginBlockerSize,
+            bombKickOriginBlockerUseTrigger
+        );
+
+        return kicked;
+    }
+
+    Vector2 SnapToGrid(Vector2 worldPos, float tileSize)
+    {
+        tileSize = Mathf.Max(0.0001f, tileSize);
+        worldPos.x = Mathf.Round(worldPos.x / tileSize) * tileSize;
+        worldPos.y = Mathf.Round(worldPos.y / tileSize) * tileSize;
+        return worldPos;
     }
 
     void StartKickVisuals(Vector2 dir)
