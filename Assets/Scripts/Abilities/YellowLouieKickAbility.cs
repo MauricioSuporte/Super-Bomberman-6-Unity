@@ -252,6 +252,9 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
         GameObject ghost = null;
         bool tileRemovedFromMap = false;
 
+        GameObject currentCellBlocker = null;
+        GameObject nextCellBlocker = null;
+
         var reservedLocal = new HashSet<Vector3Int>();
 
         System.Action<Vector3Int> reserve = c =>
@@ -272,6 +275,30 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
                 releaseInputIfNeeded?.Invoke();
         }
 
+        void RefreshCurrentCellBlockerPosition(Vector3Int cell)
+        {
+            if (currentCellBlocker != null && destructibleTilemap != null)
+                currentCellBlocker.transform.position = destructibleTilemap.GetCellCenterWorld(cell);
+        }
+
+        void DestroyNextCellBlocker()
+        {
+            if (nextCellBlocker != null)
+            {
+                Destroy(nextCellBlocker);
+                nextCellBlocker = null;
+            }
+        }
+
+        void DestroyCurrentCellBlocker()
+        {
+            if (currentCellBlocker != null)
+            {
+                Destroy(currentCellBlocker);
+                currentCellBlocker = null;
+            }
+        }
+
         void BeginTileMover(Vector3Int cell, TileBase tile)
         {
             currentTileCell = cell;
@@ -285,8 +312,12 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
                 Destroy(ghost);
 
             ghost = CreateGhost(destructibleTilemap, cell, tile);
+
             reserve(cell);
             ApplyShadowForCell(cell);
+
+            DestroyCurrentCellBlocker();
+            currentCellBlocker = CreateCellBlocker(destructibleTilemap.GetCellCenterWorld(cell), "YellowKickBlock_CurrentCell");
 
             moverType = ChainMoverType.Tile;
 
@@ -304,6 +335,9 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
 
             release(currentTileCell);
             ApplyShadowForCell(currentTileCell);
+
+            DestroyNextCellBlocker();
+            DestroyCurrentCellBlocker();
 
             if (ghost != null)
             {
@@ -389,6 +423,21 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
                         continue;
                     }
 
+                    if (HasEnemyAt(destructibleTilemap.GetCellCenterWorld(nextCell)))
+                    {
+                        SettleCurrentTileAtCurrentCell();
+                        yield return ShakeSettledTileVisual(
+                            destructibleTilemap,
+                            currentTileCell,
+                            currentTile,
+                            stopShakeDuration,
+                            stopShakeAmplitude,
+                            stopShakeFrequency);
+
+                        SLog($"MixedChain | Tile ended before enemy | nextCell={nextCell}");
+                        break;
+                    }
+
                     if (IsMixedChainSolidAt(destructibleTilemap.GetCellCenterWorld(nextCell), kickDir, currentBomb))
                     {
                         SettleCurrentTileAtCurrentCell();
@@ -407,11 +456,15 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
                     reserve(nextCell);
                     ApplyShadowForCell(nextCell);
 
+                    DestroyNextCellBlocker();
+                    nextCellBlocker = CreateCellBlocker(destructibleTilemap.GetCellCenterWorld(nextCell), "YellowKickBlock_NextCell");
+
                     Vector3 from = destructibleTilemap.GetCellCenterWorld(currentTileCell);
                     Vector3 to = destructibleTilemap.GetCellCenterWorld(nextCell);
 
                     float stepSeconds = cellsPerSecond <= 0.01f ? 0.05f : (1f / cellsPerSecond);
                     float tMove = 0f;
+                    bool enemyEnteredDestinationDuringMove = false;
 
                     while (tMove < 1f)
                     {
@@ -419,6 +472,13 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
                             break;
 
                         ReleaseInputIfNeeded();
+
+                        if (HasEnemyAt(to))
+                        {
+                            enemyEnteredDestinationDuringMove = true;
+                            SLog($"MixedChain | enemy entered destination during move | currentCell={currentTileCell} nextCell={nextCell}");
+                            break;
+                        }
 
                         tMove += Time.deltaTime / Mathf.Max(0.0001f, stepSeconds);
 
@@ -428,6 +488,30 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
                         yield return null;
                     }
 
+                    if (enemyEnteredDestinationDuringMove)
+                    {
+                        release(nextCell);
+                        ApplyShadowForCell(nextCell);
+                        DestroyNextCellBlocker();
+
+                        if (ghost != null)
+                            ghost.transform.position = from;
+
+                        RefreshCurrentCellBlockerPosition(currentTileCell);
+                        SettleCurrentTileAtCurrentCell();
+
+                        yield return ShakeSettledTileVisual(
+                            destructibleTilemap,
+                            currentTileCell,
+                            currentTile,
+                            stopShakeDuration,
+                            stopShakeAmplitude,
+                            stopShakeFrequency);
+
+                        SLog($"MixedChain | Tile returned to previous cell because enemy occupied destination | cell={currentTileCell}");
+                        break;
+                    }
+
                     release(currentTileCell);
                     ApplyShadowForCell(currentTileCell);
 
@@ -435,6 +519,11 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
 
                     if (ghost != null)
                         ghost.transform.position = destructibleTilemap.GetCellCenterWorld(currentTileCell);
+
+                    DestroyCurrentCellBlocker();
+                    currentCellBlocker = nextCellBlocker;
+                    nextCellBlocker = null;
+                    RefreshCurrentCellBlockerPosition(currentTileCell);
 
                     SLog($"MixedChain | Tile advanced | cell={currentTileCell}");
                     continue;
@@ -596,6 +685,9 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
         {
             if (ghost != null)
                 Destroy(ghost);
+
+            DestroyNextCellBlocker();
+            DestroyCurrentCellBlocker();
 
             foreach (var c in reservedLocal)
                 _reservedCells.Remove(c);
@@ -785,6 +877,9 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
             if (hit.gameObject.name == "KickBombOriginBlocker" || hit.gameObject.name == "MagnetBombOriginBlocker")
                 continue;
 
+            if (hit.gameObject.name == "YellowKickBlock_CurrentCell" || hit.gameObject.name == "YellowKickBlock_NextCell")
+                continue;
+
             if (hit.isTrigger)
                 continue;
 
@@ -953,6 +1048,25 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
         return ghost;
     }
 
+    GameObject CreateCellBlocker(Vector3 worldCenter, string objectName)
+    {
+        GameObject blocker = new(objectName);
+        blocker.transform.position = worldCenter;
+
+        int stageLayer = LayerMask.NameToLayer("Stage");
+        if (stageLayer >= 0)
+            blocker.layer = stageLayer;
+
+        var col = blocker.AddComponent<BoxCollider2D>();
+        col.isTrigger = false;
+
+        float ts = movement != null ? Mathf.Max(0.1f, movement.tileSize) : 1f;
+        col.size = new Vector2(ts * 0.90f, ts * 0.90f);
+        col.offset = Vector2.zero;
+
+        return blocker;
+    }
+
     Sprite GetPreviewSprite(TileBase tile)
     {
         if (tile == null)
@@ -1009,6 +1123,15 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
             return false;
 
         return HasAnyColliderAt(center, 1 << playerLayer);
+    }
+
+    bool HasEnemyAt(Vector3 center)
+    {
+        int enemyLayer = LayerMask.NameToLayer("Enemy");
+        if (enemyLayer < 0)
+            return false;
+
+        return HasAnyColliderAt(center, 1 << enemyLayer);
     }
 
     bool HasAnyColliderAt(Vector3 center, int mask)
