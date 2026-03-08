@@ -40,7 +40,7 @@ public static class PlayerPersistentStats
         public bool HasRubberBombs = true;
         public bool HasFullFire = false;
 
-        public MountedType MountedLouie = MountedType.None;
+        public MountedType MountedLouie = MountedType.Yellow;
         public BomberSkin Skin = BomberSkin.White;
 
         public readonly List<ItemType> QueuedEggs = new(8);

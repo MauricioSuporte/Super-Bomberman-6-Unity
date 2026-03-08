@@ -977,14 +977,14 @@ public class PlayerMountCompanion : MonoBehaviour
 
         abilitySystem.Disable(PurpleLouieBombLineAbility.AbilityId);
         abilitySystem.Disable(GreenLouieDashAbility.AbilityId);
-        abilitySystem.Disable(YellowLouieDestructibleKickAbility.AbilityId);
+        abilitySystem.Disable(YellowLouieKickAbility.AbilityId);
         abilitySystem.Disable(PinkLouieJumpAbility.AbilityId);
         abilitySystem.Disable(RedLouiePunchStunAbility.AbilityId);
         abilitySystem.Disable(BlackLouieDashPushAbility.AbilityId);
         abilitySystem.Disable(MoleMountDrillAbility.AbilityId);
         abilitySystem.Disable(TankMountShootAbility.AbilityId);
 
-        var kick = abilitySystem.Get<YellowLouieDestructibleKickAbility>(YellowLouieDestructibleKickAbility.AbilityId);
+        var kick = abilitySystem.Get<YellowLouieKickAbility>(YellowLouieKickAbility.AbilityId);
         if (kick != null) { kick.SetExternalAnimator(null); kick.SetKickSfx(null, 1f); }
 
         var dash = abilitySystem.Get<GreenLouieDashAbility>(GreenLouieDashAbility.AbilityId);
@@ -1070,8 +1070,8 @@ public class PlayerMountCompanion : MonoBehaviour
 
     void ApplyYellow()
     {
-        abilitySystem.Enable(YellowLouieDestructibleKickAbility.AbilityId);
-        var kick = abilitySystem.Get<YellowLouieDestructibleKickAbility>(YellowLouieDestructibleKickAbility.AbilityId);
+        abilitySystem.Enable(YellowLouieKickAbility.AbilityId);
+        var kick = abilitySystem.Get<YellowLouieKickAbility>(YellowLouieKickAbility.AbilityId);
         if (kick == null) return;
 
         var anim = currentLouie.GetComponentInChildren<IYellowLouieDestructibleKickExternalAnimator>(true);

@@ -7,11 +7,15 @@ using UnityEngine.Tilemaps;
 [DisallowMultipleComponent]
 [RequireComponent(typeof(MovementController))]
 [RequireComponent(typeof(AudioSource))]
-public class YellowLouieDestructibleKickAbility : MonoBehaviour, IPlayerAbility
+public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
 {
     public const string AbilityId = "YellowLouieDestructibleKick";
+    const string LOG = "[YellowLouieKick]";
 
     [SerializeField] private bool enabledAbility = true;
+
+    [Header("Debug (Surgical Logs)")]
+    [SerializeField] private bool enableSurgicalLogs = true;
 
     [Header("Move")]
     public float cellsPerSecond = 10f;
@@ -61,11 +65,21 @@ public class YellowLouieDestructibleKickAbility : MonoBehaviour, IPlayerAbility
         Destructible = 2
     }
 
+    void SLog(string message)
+    {
+        if (!enableSurgicalLogs)
+            return;
+
+        Debug.Log($"{LOG} {message}", this);
+    }
+
     void Awake()
     {
         movement = GetComponent<MovementController>();
         rb = movement != null ? movement.Rigidbody : null;
         audioSource = GetComponent<AudioSource>();
+
+        SLog($"Awake | movement={(movement != null)} rb={(rb != null)} audio={(audioSource != null)}");
     }
 
     void OnDisable() => CancelKick();
@@ -74,12 +88,14 @@ public class YellowLouieDestructibleKickAbility : MonoBehaviour, IPlayerAbility
     public void SetExternalAnimator(IYellowLouieDestructibleKickExternalAnimator animator)
     {
         externalAnimator = animator;
+        SLog($"SetExternalAnimator | animator={(animator != null ? animator.GetType().Name : "null")}");
     }
 
     public void SetKickSfx(AudioClip clip, float volume)
     {
         kickSfx = clip;
         kickSfxVolume = Mathf.Clamp01(volume);
+        SLog($"SetKickSfx | clip={(clip != null ? clip.name : "null")} volume={kickSfxVolume:0.00}");
     }
 
     void Update()
@@ -111,8 +127,12 @@ public class YellowLouieDestructibleKickAbility : MonoBehaviour, IPlayerAbility
         nextAllowedKickTime = Time.time + kickCooldownSeconds;
 
         if (routine != null)
+        {
+            SLog("Update | ActionC ignored because routine already running");
             return;
+        }
 
+        SLog($"Update | ActionC detected | playerId={pid}");
         routine = StartCoroutine(KickRoutine());
     }
 
@@ -120,6 +140,7 @@ public class YellowLouieDestructibleKickAbility : MonoBehaviour, IPlayerAbility
     {
         if (movement == null || rb == null)
         {
+            SLog("KickRoutine | aborted because movement or rb is null");
             routine = null;
             yield break;
         }
@@ -131,9 +152,12 @@ public class YellowLouieDestructibleKickAbility : MonoBehaviour, IPlayerAbility
         Vector3Int step = new Vector3Int(Mathf.RoundToInt(dir.x), Mathf.RoundToInt(dir.y), 0);
         if (step == Vector3Int.zero)
         {
+            SLog("KickRoutine | aborted because step == zero");
             routine = null;
             yield break;
         }
+
+        SLog($"KickRoutine | start | dir={dir} facing={movement.FacingDirection} moveDir={movement.Direction}");
 
         StartKickVisuals(dir);
 
@@ -141,34 +165,53 @@ public class YellowLouieDestructibleKickAbility : MonoBehaviour, IPlayerAbility
         bool inputUnlockedAfterAnim = false;
 
         movement.SetInputLocked(true, false);
+        SLog("KickRoutine | input locked");
 
         var gm = FindFirstObjectByType<GameManager>();
         var destructibleTilemap = gm != null ? gm.destructibleTilemap : null;
 
-        if (TryKickBombInFront(dir, destructibleTilemap))
+        SLog($"KickRoutine | gameManager={(gm != null)} destructibleTilemap={(destructibleTilemap != null ? destructibleTilemap.name : "null")}");
+
+        bool bombChainStarted = false;
+        if (TryGetBombInFront(dir, out Bomb firstBomb))
         {
+            SLog($"KickRoutine | bomb found in front | bomb={(firstBomb != null ? firstBomb.name : "null")} pos={(firstBomb != null ? firstBomb.transform.position.ToString() : "null")}");
+
             if (audioSource != null && kickSfx != null)
                 audioSource.PlayOneShot(kickSfx, kickSfxVolume);
 
-            yield return WaitSecondsAndReleaseInput(kickCooldownSeconds, animEndTime, () =>
+            yield return KickBombChainRoutine(firstBomb, dir, destructibleTilemap, animEndTime, () =>
             {
                 if (!inputUnlockedAfterAnim)
                 {
                     inputUnlockedAfterAnim = true;
                     if (movement != null)
                         movement.SetInputLocked(false);
+                    SLog("KickRoutine | input unlocked from bomb chain callback");
                 }
             });
 
+            bombChainStarted = true;
+        }
+        else
+        {
+            SLog("KickRoutine | no bomb found in front");
+        }
+
+        if (bombChainStarted)
+        {
             if (movement != null)
                 movement.SetInputLocked(false);
 
+            SLog("KickRoutine | finished by bomb chain path");
             routine = null;
             yield break;
         }
 
         if (destructibleTilemap == null)
         {
+            SLog("KickRoutine | no destructibleTilemap, waiting only animation window");
+
             yield return WaitSecondsAndReleaseInput(kickCooldownSeconds, animEndTime, () =>
             {
                 if (!inputUnlockedAfterAnim)
@@ -176,6 +219,7 @@ public class YellowLouieDestructibleKickAbility : MonoBehaviour, IPlayerAbility
                     inputUnlockedAfterAnim = true;
                     if (movement != null)
                         movement.SetInputLocked(false);
+                    SLog("KickRoutine | input unlocked (no tilemap path)");
                 }
             });
 
@@ -190,6 +234,9 @@ public class YellowLouieDestructibleKickAbility : MonoBehaviour, IPlayerAbility
         Vector3Int hitCell = playerCell + step;
 
         TileBase movingTile = destructibleTilemap.GetTile(hitCell);
+
+        SLog($"KickRoutine | destructible path | playerCell={playerCell} hitCell={hitCell} tile={(movingTile != null ? movingTile.name : "null")}");
+
         if (movingTile == null)
         {
             yield return WaitSecondsAndReleaseInput(kickCooldownSeconds, animEndTime, () =>
@@ -199,6 +246,7 @@ public class YellowLouieDestructibleKickAbility : MonoBehaviour, IPlayerAbility
                     inputUnlockedAfterAnim = true;
                     if (movement != null)
                         movement.SetInputLocked(false);
+                    SLog("KickRoutine | input unlocked (no destructible in front)");
                 }
             });
 
@@ -248,10 +296,11 @@ public class YellowLouieDestructibleKickAbility : MonoBehaviour, IPlayerAbility
 
             while (enabledAbility && movement != null && !movement.isDead)
             {
-                if (!inputUnlockedAfterAnim && Time.time >= animEndTime)
+                if (Time.time >= animEndTime && !inputUnlockedAfterAnim)
                 {
                     inputUnlockedAfterAnim = true;
                     movement.SetInputLocked(false);
+                    SLog("KickRoutine | input unlocked during destructible movement");
                 }
 
                 Vector3Int nextCell = currentCell + step;
@@ -259,9 +308,12 @@ public class YellowLouieDestructibleKickAbility : MonoBehaviour, IPlayerAbility
                 TileBase blockingTile;
                 var blockType = GetBlockType(destructibleTilemap, nextCell, dir, out blockingTile);
 
+                SLog($"KickRoutine | destructible step | current={currentCell} next={nextCell} blockType={blockType} blockingTile={(blockingTile != null ? blockingTile.name : "null")}");
+
                 if (blockType == BlockType.Solid)
                 {
                     endedBySolid = true;
+                    SLog($"KickRoutine | destructible chain ended by solid at {nextCell}");
                     break;
                 }
 
@@ -269,12 +321,16 @@ public class YellowLouieDestructibleKickAbility : MonoBehaviour, IPlayerAbility
                 {
                     transfers++;
                     if (transfers > maxChainTransfers)
+                    {
+                        SLog($"KickRoutine | destructible chain stopped by max transfers={maxChainTransfers}");
                         break;
+                    }
 
                     Vector3 basePos = destructibleTilemap.GetCellCenterWorld(currentCell);
 
                     if (ghost != null)
                     {
+                        SLog($"KickRoutine | destructible transfer | current={currentCell} next={nextCell}");
                         yield return ShakeGhost(ghost, basePos, chainTransferDelaySeconds, stopShakeAmplitude, stopShakeFrequency);
                         if (ghost != null)
                             ghost.transform.position = basePos;
@@ -288,6 +344,7 @@ public class YellowLouieDestructibleKickAbility : MonoBehaviour, IPlayerAbility
                                 inputUnlockedAfterAnim = true;
                                 if (movement != null)
                                     movement.SetInputLocked(false);
+                                SLog("KickRoutine | input unlocked during destructible transfer wait");
                             }
                         });
                     }
@@ -330,10 +387,11 @@ public class YellowLouieDestructibleKickAbility : MonoBehaviour, IPlayerAbility
                     if (!enabledAbility || movement == null || movement.isDead)
                         break;
 
-                    if (!inputUnlockedAfterAnim && Time.time >= animEndTime)
+                    if (Time.time >= animEndTime && !inputUnlockedAfterAnim)
                     {
                         inputUnlockedAfterAnim = true;
                         movement.SetInputLocked(false);
+                        SLog("KickRoutine | input unlocked during destructible lerp");
                     }
 
                     tMove += Time.deltaTime / Mathf.Max(0.0001f, stepSeconds);
@@ -360,16 +418,15 @@ public class YellowLouieDestructibleKickAbility : MonoBehaviour, IPlayerAbility
                         inputUnlockedAfterAnim = true;
                         if (movement != null)
                             movement.SetInputLocked(false);
+                        SLog("KickRoutine | input unlocked in finalWait");
                     }
                 });
             }
-            else
+            else if (!inputUnlockedAfterAnim && movement != null)
             {
-                if (!inputUnlockedAfterAnim && movement != null)
-                {
-                    inputUnlockedAfterAnim = true;
-                    movement.SetInputLocked(false);
-                }
+                inputUnlockedAfterAnim = true;
+                movement.SetInputLocked(false);
+                SLog("KickRoutine | input unlocked after destructible path");
             }
 
             if (endedBySolid && ghost != null && enabledAbility && movement != null && !movement.isDead)
@@ -402,39 +459,249 @@ public class YellowLouieDestructibleKickAbility : MonoBehaviour, IPlayerAbility
                     movement.SetInputLocked(false);
             }
 
+            SLog("KickRoutine | finally end");
             routine = null;
             deathCancelInProgress = false;
         }
     }
 
-    bool TryKickBombInFront(Vector2 dir, Tilemap destructibleTilemap)
+    IEnumerator KickBombChainRoutine(Bomb firstBomb, Vector2 dir, Tilemap destructibleTilemap, float animEndTime, System.Action releaseInputIfNeeded)
     {
-        if (movement == null || rb == null)
-            return false;
+        if (firstBomb == null)
+        {
+            SLog("KickBombChainRoutine | firstBomb is null");
+            yield return WaitSecondsAndReleaseInput(kickCooldownSeconds, animEndTime, releaseInputIfNeeded);
+            yield break;
+        }
 
-        int bombLayer = LayerMask.NameToLayer("Bomb");
-        if (bombLayer < 0)
+        Vector2 kickDir = dir.normalized;
+        float tileSize = movement != null ? movement.tileSize : 1f;
+
+        Bomb currentBomb = firstBomb;
+        int transfers = 0;
+
+        SLog($"KickBombChainRoutine | start | firstBomb={firstBomb.name} dir={kickDir} tileSize={tileSize:0.###}");
+
+        while (currentBomb != null && enabledAbility && movement != null && !movement.isDead)
+        {
+            if (Time.time >= animEndTime)
+                releaseInputIfNeeded?.Invoke();
+
+            SLog($"KickBombChainRoutine | trying StartBombKick | bomb={currentBomb.name} pos={currentBomb.transform.position} isBeingKicked={currentBomb.IsBeingKicked} canBeKicked={currentBomb.CanBeKicked}");
+
+            bool started = StartBombKick(currentBomb, kickDir, destructibleTilemap);
+            if (!started)
+            {
+                SLog($"KickBombChainRoutine | StartBombKick FAILED | bomb={currentBomb.name}");
+                break;
+            }
+
+            SLog($"KickBombChainRoutine | StartBombKick OK | bomb={currentBomb.name}");
+
+            Vector2 currentCell = SnapToGrid(currentBomb.transform.position, tileSize);
+            Bomb nextBomb = null;
+            bool endedBySolid = false;
+            float nextMoveLogTime = Time.time;
+
+            while (currentBomb != null && currentBomb.IsBeingKicked && enabledAbility && movement != null && !movement.isDead)
+            {
+                if (Time.time >= animEndTime)
+                    releaseInputIfNeeded?.Invoke();
+
+                Vector2 snapped = SnapToGrid(currentBomb.transform.position, tileSize);
+                if (snapped != currentCell)
+                {
+                    currentCell = snapped;
+                    SLog($"KickBombChainRoutine | bomb advanced cell | bomb={currentBomb.name} cell={currentCell}");
+                }
+
+                if (Time.time >= nextMoveLogTime)
+                {
+                    nextMoveLogTime = Time.time + 0.08f;
+                    SLog($"KickBombChainRoutine | bomb moving | bomb={currentBomb.name} worldPos={currentBomb.transform.position} snapped={snapped} currentCell={currentCell} isBeingKicked={currentBomb.IsBeingKicked}");
+                }
+
+                Vector2 nextCell = currentCell + kickDir * tileSize;
+
+                if (TryGetBombAtCell(nextCell, out Bomb foundBomb) &&
+                    foundBomb != null &&
+                    foundBomb != currentBomb &&
+                    !foundBomb.IsBeingKicked)
+                {
+                    nextBomb = foundBomb;
+                    SLog($"KickBombChainRoutine | collision with next bomb | currentBomb={currentBomb.name} nextBomb={nextBomb.name} nextCell={nextCell}");
+                    break;
+                }
+
+                if (IsBombChainSolidAt(nextCell, kickDir, currentBomb))
+                {
+                    endedBySolid = true;
+                    SLog($"KickBombChainRoutine | endedBySolid at nextCell={nextCell} for bomb={currentBomb.name}");
+                    break;
+                }
+
+                yield return null;
+            }
+
+            if (currentBomb != null)
+            {
+                SLog($"KickBombChainRoutine | bomb loop ended | bomb={currentBomb.name} isBeingKicked={currentBomb.IsBeingKicked} pos={currentBomb.transform.position}");
+            }
+
+            if (currentBomb != null && currentBomb.IsBeingKicked)
+            {
+                SLog($"KickBombChainRoutine | StopKickAndSnapToGrid | bomb={currentBomb.name}");
+                currentBomb.StopKickAndSnapToGrid(tileSize);
+            }
+
+            if (nextBomb != null)
+            {
+                transfers++;
+                if (transfers > maxChainTransfers)
+                {
+                    SLog($"KickBombChainRoutine | stopped by max transfers={maxChainTransfers}");
+                    break;
+                }
+
+                Vector3 stopPos = currentBomb != null
+                    ? (Vector3)SnapToGrid(currentBomb.transform.position, tileSize)
+                    : Vector3.zero;
+
+                if (currentBomb != null)
+                {
+                    SLog($"KickBombChainRoutine | transfer shake | currentBomb={currentBomb.name} nextBomb={nextBomb.name} stopPos={stopPos}");
+                    yield return ShakeBombVisual(currentBomb, stopPos, chainTransferDelaySeconds, stopShakeAmplitude, stopShakeFrequency);
+                }
+                else
+                {
+                    yield return WaitSecondsAndReleaseInput(chainTransferDelaySeconds, animEndTime, releaseInputIfNeeded);
+                }
+
+                currentBomb = nextBomb;
+                continue;
+            }
+
+            if (endedBySolid)
+            {
+                Vector3 basePos = currentBomb != null
+                    ? (Vector3)SnapToGrid(currentBomb.transform.position, tileSize)
+                    : Vector3.zero;
+
+                if (currentBomb != null)
+                {
+                    SLog($"KickBombChainRoutine | final shake on bomb={currentBomb.name} at {basePos}");
+                    yield return ShakeBombVisual(currentBomb, basePos, chainTransferDelaySeconds, stopShakeAmplitude, stopShakeFrequency);
+                }
+            }
+
+            break;
+        }
+
+        float finalWait = Mathf.Max(0f, animEndTime - Time.time);
+        if (finalWait > 0f)
+        {
+            SLog($"KickBombChainRoutine | finalWait={finalWait:0.000}");
+            yield return WaitSecondsAndReleaseInput(finalWait, animEndTime, releaseInputIfNeeded);
+        }
+        else
+        {
+            SLog("KickBombChainRoutine | release input immediately");
+            releaseInputIfNeeded?.Invoke();
+        }
+
+        SLog("KickBombChainRoutine | end");
+    }
+
+    bool TryGetBombInFront(Vector2 dir, out Bomb bomb)
+    {
+        bomb = null;
+
+        if (movement == null || rb == null)
+        {
+            SLog("TryGetBombInFront | movement or rb is null");
             return false;
+        }
 
         Vector2 origin = SnapToGrid(rb.position, movement.tileSize);
         Vector2 target = origin + dir.normalized * movement.tileSize;
 
-        Collider2D hit = Physics2D.OverlapBox(
-            target,
+        bool found = TryGetBombAtCell(target, out bomb);
+
+        SLog($"TryGetBombInFront | origin={origin} target={target} found={found} bomb={(bomb != null ? bomb.name : "null")}");
+
+        return found;
+    }
+
+    bool TryGetBombAtCell(Vector2 worldCellCenter, out Bomb bomb)
+    {
+        bomb = null;
+
+        int bombLayer = LayerMask.NameToLayer("Bomb");
+        if (bombLayer < 0)
+        {
+            SLog("TryGetBombAtCell | Bomb layer not found");
+            return false;
+        }
+
+        Collider2D[] hits = Physics2D.OverlapBoxAll(
+            worldCellCenter,
             Vector2.one * (movement.tileSize * 0.6f),
             0f,
             1 << bombLayer);
 
-        if (hit == null)
+        if (hits == null || hits.Length == 0)
+        {
+            SLog($"TryGetBombAtCell | no collider at cell={worldCellCenter}");
             return false;
+        }
 
-        Bomb bomb = hit.GetComponent<Bomb>();
-        if (bomb == null || bomb.IsBeingKicked || !bomb.CanBeKicked)
+        for (int i = 0; i < hits.Length; i++)
+        {
+            var hit = hits[i];
+            if (hit == null)
+                continue;
+
+            var foundBomb = hit.GetComponent<Bomb>();
+            if (foundBomb == null)
+                continue;
+
+            bomb = foundBomb;
+            SLog($"TryGetBombAtCell | hit={hit.name} bomb={bomb.name} cell={worldCellCenter}");
+            return true;
+        }
+
+        SLog($"TryGetBombAtCell | colliders found but no Bomb component at cell={worldCellCenter}");
+        return false;
+    }
+
+    bool StartBombKick(Bomb bomb, Vector2 dir, Tilemap destructibleTilemap)
+    {
+        if (bomb == null)
+        {
+            SLog("StartBombKick | bomb is null");
             return false;
+        }
+
+        if (bomb.IsBeingKicked)
+        {
+            SLog($"StartBombKick | aborted because already IsBeingKicked | bomb={bomb.name}");
+            return false;
+        }
+
+        if (!bomb.CanBeKicked)
+        {
+            SLog($"StartBombKick | aborted because CanBeKicked=false | bomb={bomb.name} hasExploded={bomb.HasExploded} isBeingKicked={bomb.IsBeingKicked} isSolid={bomb.IsSolid}");
+            return false;
+        }
 
         LayerMask bombObstacles = movement.obstacleMask.value | LayerMask.GetMask("Enemy");
 
-        bool kicked = bomb.StartKick(
+        Vector2 snappedBombPos = SnapToGrid(bomb.transform.position, movement.tileSize);
+        Vector2 nextCell = snappedBombPos + dir.normalized * movement.tileSize;
+
+        SLog($"StartBombKick | calling Bomb.StartKick | bomb={bomb.name} pos={bomb.transform.position} snapped={snappedBombPos} dir={dir.normalized} nextCell={nextCell} bombObstacles={bombObstacles.value} destructibleTilemap={(destructibleTilemap != null ? destructibleTilemap.name : "null")} overlap={bombKickOverlapSize:0.00} blockerSize={bombKickOriginBlockerSize:0.00} blockerTrigger={bombKickOriginBlockerUseTrigger}");
+
+        bool result = bomb.StartKick(
             dir.normalized,
             movement.tileSize,
             bombObstacles,
@@ -445,7 +712,105 @@ public class YellowLouieDestructibleKickAbility : MonoBehaviour, IPlayerAbility
             bombKickOriginBlockerUseTrigger
         );
 
-        return kicked;
+        SLog($"StartBombKick | Bomb.StartKick returned {result} | bomb={bomb.name}");
+
+        return result;
+    }
+
+    bool IsBombChainSolidAt(Vector2 nextCell, Vector2 dir, Bomb currentBomb)
+    {
+        if (movement == null)
+        {
+            SLog("IsBombChainSolidAt | movement is null, returning true");
+            return true;
+        }
+
+        if (HasItemAt(nextCell))
+        {
+            SLog($"IsBombChainSolidAt | item blocking at {nextCell}");
+            return true;
+        }
+
+        if (HasPlayerAt(nextCell))
+        {
+            SLog($"IsBombChainSolidAt | player blocking at {nextCell}");
+            return true;
+        }
+
+        Vector2 size = Mathf.Abs(dir.x) > 0.01f
+            ? new Vector2(movement.tileSize * 0.6f, movement.tileSize * 0.2f)
+            : new Vector2(movement.tileSize * 0.2f, movement.tileSize * 0.6f);
+
+        int mask = movement.obstacleMask.value;
+        int enemyLayer = LayerMask.NameToLayer("Enemy");
+        int bombLayer = LayerMask.NameToLayer("Bomb");
+
+        if (enemyLayer >= 0)
+            mask |= 1 << enemyLayer;
+
+        Collider2D[] hits = Physics2D.OverlapBoxAll(nextCell, size, 0f, mask);
+        if (hits == null || hits.Length == 0)
+            return false;
+
+        for (int i = 0; i < hits.Length; i++)
+        {
+            Collider2D hit = hits[i];
+            if (hit == null)
+                continue;
+
+            if (currentBomb != null && hit.gameObject == currentBomb.gameObject)
+                continue;
+
+            if (hit.gameObject == gameObject)
+                continue;
+
+            if (bombLayer >= 0 && hit.gameObject.layer == bombLayer)
+                continue;
+
+            if (hit.gameObject.name == "KickBombOriginBlocker" || hit.gameObject.name == "MagnetBombOriginBlocker")
+                continue;
+
+            if (hit.isTrigger)
+                continue;
+
+            SLog($"IsBombChainSolidAt | collider blocking | nextCell={nextCell} hit={hit.name} layer={LayerMask.LayerToName(hit.gameObject.layer)} trigger={hit.isTrigger}");
+            return true;
+        }
+
+        return false;
+    }
+
+    IEnumerator ShakeBombVisual(Bomb bomb, Vector3 basePos, float duration, float amplitude, float frequencyHz)
+    {
+        if (bomb == null)
+            yield break;
+
+        float dur = Mathf.Max(0.01f, duration);
+        float amp = Mathf.Max(0f, amplitude);
+        float hz = Mathf.Max(1f, frequencyHz);
+
+        float end = Time.time + dur;
+        float seed = Random.value * 1000f;
+
+        SLog($"ShakeBombVisual | bomb={bomb.name} basePos={basePos} duration={dur:0.000}");
+
+        while (Time.time < end)
+        {
+            if (!enabledAbility || movement == null || movement.isDead || bomb == null)
+                yield break;
+
+            float t = Time.time - (end - dur);
+            float phase = (t * hz) * (Mathf.PI * 2f);
+
+            float x = Mathf.Sin(phase + seed) * amp;
+            float y = Mathf.Cos(phase * 1.23f + seed) * amp;
+
+            bomb.transform.position = basePos + new Vector3(x, y, 0f);
+            yield return null;
+        }
+
+        if (bomb != null)
+            bomb.transform.position = basePos;
     }
 
     Vector2 SnapToGrid(Vector2 worldPos, float tileSize)
@@ -462,6 +827,8 @@ public class YellowLouieDestructibleKickAbility : MonoBehaviour, IPlayerAbility
 
         if (kickVisualRoutine != null)
             StopCoroutine(kickVisualRoutine);
+
+        SLog($"StartKickVisuals | dir={dir}");
 
         externalAnimator?.Play(dir);
 
@@ -489,6 +856,8 @@ public class YellowLouieDestructibleKickAbility : MonoBehaviour, IPlayerAbility
             return;
 
         kickActive = false;
+        SLog("StopKickVisuals");
+
         externalAnimator?.Stop();
 
         if (kickVisualRoutine != null)
@@ -700,14 +1069,21 @@ public class YellowLouieDestructibleKickAbility : MonoBehaviour, IPlayerAbility
 
         if (movement != null)
             movement.SetInputLocked(false);
+
+        SLog("CancelKick");
     }
 
-    public void Enable() => enabledAbility = true;
+    public void Enable()
+    {
+        enabledAbility = true;
+        SLog("Enable");
+    }
 
     public void Disable()
     {
         enabledAbility = false;
         CancelKick();
+        SLog("Disable");
     }
 
     public void CancelKickForDeath()
@@ -735,5 +1111,7 @@ public class YellowLouieDestructibleKickAbility : MonoBehaviour, IPlayerAbility
             movement.SetInputLocked(false);
 
         externalAnimator = null;
+
+        SLog("CancelKickForDeath");
     }
 }

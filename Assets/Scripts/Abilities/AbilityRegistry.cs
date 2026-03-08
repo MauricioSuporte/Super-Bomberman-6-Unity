@@ -16,7 +16,7 @@ public static class AbilityRegistry
         { InvincibleSuitAbility.AbilityId, typeof(InvincibleSuitAbility) },
         { PurpleLouieBombLineAbility.AbilityId, typeof(PurpleLouieBombLineAbility) },
         { GreenLouieDashAbility.AbilityId, typeof(GreenLouieDashAbility) },
-        { YellowLouieDestructibleKickAbility.AbilityId, typeof(YellowLouieDestructibleKickAbility) },
+        { YellowLouieKickAbility.AbilityId, typeof(YellowLouieKickAbility) },
         { PinkLouieJumpAbility.AbilityId, typeof(PinkLouieJumpAbility) },
         { RedLouiePunchStunAbility.AbilityId, typeof(RedLouiePunchStunAbility) },
         { BlackLouieDashPushAbility.AbilityId, typeof(BlackLouieDashPushAbility) },
