@@ -86,13 +86,19 @@ public class WorldMapController : MonoBehaviour
     [SerializeField] bool scaleStageDetectRadiusWithSafeFrame = true;
 
     [Header("Stage Icons")]
-    [SerializeField] Sprite unlockedStageSprite;
     [SerializeField] Sprite lockedStageSprite;
+    [SerializeField] Sprite clearedStageSprite;
+    [SerializeField] Sprite availableStageSprite;
     [SerializeField] Vector2 baseIconLogicalSize = new Vector2(8f, 8f);
     [SerializeField] Vector2 iconOffset = Vector2.zero;
     [SerializeField] bool preserveAspectOnIcons = true;
     [SerializeField] bool createIconsOnStart = true;
     [SerializeField] string runtimeIconObjectName = "_StageIcon";
+
+    [Header("Cleared Stage Spin")]
+    [SerializeField] bool animateClearedStageIcons = true;
+    [SerializeField, Min(0.01f)] float clearedStageSpinInterval = 2f;
+    [SerializeField, Min(1f)] float clearedStageSpinStepMilliseconds = 80f;
 
     [Header("SNES Scaling Reference")]
     [SerializeField] int snesReferenceWidth = 256;
@@ -103,8 +109,9 @@ public class WorldMapController : MonoBehaviour
     [SerializeField] float maxIconScale = 20f;
 
     [Header("Stage Icon Colors")]
-    [SerializeField] Color unlockedStageColor = Color.white;
     [SerializeField] Color lockedStageColor = Color.white;
+    [SerializeField] Color clearedStageColor = Color.white;
+    [SerializeField] Color availableStageColor = Color.white;
 
     [Header("Fade")]
     [SerializeField] Image fadeImage;
@@ -161,6 +168,7 @@ public class WorldMapController : MonoBehaviour
     Vector2 cursorLocalPosition;
 
     readonly Dictionary<string, Vector2> authoredStageAnchorPositions = new Dictionary<string, Vector2>();
+    readonly Dictionary<Image, Coroutine> clearedStageSpinRoutines = new Dictionary<Image, Coroutine>();
 
     void Start()
     {
@@ -205,6 +213,7 @@ public class WorldMapController : MonoBehaviour
 
         if (fadeImage != null)
             StartCoroutine(FadeInRoutine(fadeInDuration));
+        RefreshClearedStageSpinAnimations();
     }
 
     void LateUpdate()
@@ -317,6 +326,7 @@ public class WorldMapController : MonoBehaviour
         RefreshOptionalWorldScrollers();
         ApplyScaledStageAnchorPositions();
         UpdateAllStageIcons();
+        RefreshClearedStageSpinAnimations();
         ApplyScaledCursorSize();
         ApplyScaledWorldStageLabelLayout();
 
@@ -602,13 +612,36 @@ public class WorldMapController : MonoBehaviour
         if (node == null || node.runtimeIcon == null)
             return;
 
-        node.runtimeIcon.sprite = node.unlocked ? unlockedStageSprite : lockedStageSprite;
-        node.runtimeIcon.color = node.unlocked ? unlockedStageColor : lockedStageColor;
+        bool isUnlocked = StageUnlockProgress.IsUnlocked(node.sceneName);
+        bool isCleared = StageUnlockProgress.IsCleared(node.sceneName);
+
+        Sprite sprite;
+        Color color;
+
+        if (!isUnlocked)
+        {
+            sprite = lockedStageSprite;
+            color = lockedStageColor;
+        }
+        else if (isCleared)
+        {
+            sprite = clearedStageSprite;
+            color = clearedStageColor;
+        }
+        else
+        {
+            sprite = availableStageSprite;
+            color = availableStageColor;
+        }
+
+        node.runtimeIcon.sprite = sprite;
+        node.runtimeIcon.color = color;
         node.runtimeIcon.enabled = node.runtimeIcon.sprite != null;
 
         var rt = node.runtimeIcon.rectTransform;
         rt.anchoredPosition = iconOffset;
         rt.sizeDelta = GetScaledIconSize();
+        rt.localRotation = Quaternion.identity;
     }
 
     void RefreshCursorVisualState(bool isMoving, bool forceRestart = false, bool showSelected = false)
@@ -990,6 +1023,7 @@ public class WorldMapController : MonoBehaviour
         ApplyScaledCursorSize();
         ApplyScaledWorldStageLabelLayout();
         UpdateAllStageIcons();
+        RefreshClearedStageSpinAnimations();
 
         if (hoveredNodeIndex >= 0)
         {
@@ -1228,5 +1262,94 @@ public class WorldMapController : MonoBehaviour
             return lastUnlocked;
 
         return Mathf.Clamp(world.defaultNodeIndex, 0, world.nodes.Count - 1);
+    }
+
+    void RefreshClearedStageSpinAnimations()
+    {
+        StopAllClearedStageSpinAnimations();
+
+        if (!animateClearedStageIcons)
+            return;
+
+        for (int w = 0; w < worlds.Count; w++)
+        {
+            var world = worlds[w];
+            if (world == null || world.nodes == null)
+                continue;
+
+            bool worldVisible = w == currentWorldIndex;
+
+            for (int n = 0; n < world.nodes.Count; n++)
+            {
+                var node = world.nodes[n];
+                if (node == null || node.runtimeIcon == null)
+                    continue;
+
+                bool isCleared = StageUnlockProgress.IsCleared(node.sceneName);
+                bool shouldAnimate = worldVisible && isCleared && node.runtimeIcon.enabled;
+
+                if (!shouldAnimate)
+                {
+                    node.runtimeIcon.rectTransform.localRotation = Quaternion.identity;
+                    continue;
+                }
+
+                Coroutine routine = StartCoroutine(ClearedStageSpinRoutine(node.runtimeIcon));
+                clearedStageSpinRoutines[node.runtimeIcon] = routine;
+            }
+        }
+    }
+
+    void StopAllClearedStageSpinAnimations()
+    {
+        foreach (var kvp in clearedStageSpinRoutines)
+        {
+            if (kvp.Value != null)
+                StopCoroutine(kvp.Value);
+
+            if (kvp.Key != null)
+                kvp.Key.rectTransform.localRotation = Quaternion.identity;
+        }
+
+        clearedStageSpinRoutines.Clear();
+    }
+
+    IEnumerator ClearedStageSpinRoutine(Image icon)
+    {
+        if (icon == null)
+            yield break;
+
+        float stepDelay = Mathf.Max(0.001f, clearedStageSpinStepMilliseconds / 1000f);
+
+        while (icon != null)
+        {
+            yield return new WaitForSecondsRealtime(clearedStageSpinInterval);
+
+            if (icon == null || !icon.isActiveAndEnabled)
+                continue;
+
+            RectTransform rt = icon.rectTransform;
+            if (rt == null)
+                continue;
+
+            rt.localRotation = Quaternion.identity;
+
+            for (int i = 0; i < 4; i++)
+            {
+                if (rt == null)
+                    yield break;
+
+                rt.localRotation = Quaternion.Euler(0f, 0f, -90f * (i + 1));
+                yield return new WaitForSecondsRealtime(stepDelay);
+            }
+
+            if (rt != null)
+                rt.localRotation = Quaternion.identity;
+        }
+    }
+
+    void OnDestroy()
+    {
+        StopAllClearedStageSpinAnimations();
     }
 }

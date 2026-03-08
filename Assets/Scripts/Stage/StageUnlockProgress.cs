@@ -4,11 +4,13 @@ using UnityEngine;
 public static class StageUnlockProgress
 {
     private const string UnlockedStagesKey = "SB6_UnlockedStages";
+    private const string ClearedStagesKey = "SB6_ClearedStages";
     private const string StageOrderKey = "SB6_StageOrder";
     private const char Separator = '|';
 
     private static bool loaded;
     private static readonly HashSet<string> unlockedStages = new();
+    private static readonly HashSet<string> clearedStages = new();
     private static List<string> stageOrder = new();
 
     public static void RegisterStageOrder(IEnumerable<string> orderedSceneNames)
@@ -60,6 +62,18 @@ public static class StageUnlockProgress
         return unlockedStages.Contains(normalized);
     }
 
+    public static bool IsCleared(string sceneName)
+    {
+        Load();
+        EnsureDefaultUnlocked();
+
+        string normalized = Normalize(sceneName);
+        if (string.IsNullOrEmpty(normalized))
+            return false;
+
+        return clearedStages.Contains(normalized);
+    }
+
     public static void Unlock(string sceneName)
     {
         Load();
@@ -73,6 +87,30 @@ public static class StageUnlockProgress
             SaveUnlockedStages();
     }
 
+    public static void MarkCleared(string sceneName)
+    {
+        Load();
+        EnsureDefaultUnlocked();
+
+        string normalized = Normalize(sceneName);
+        if (string.IsNullOrEmpty(normalized))
+            return;
+
+        bool changed = false;
+
+        if (unlockedStages.Add(normalized))
+            changed = true;
+
+        if (clearedStages.Add(normalized))
+            changed = true;
+
+        if (changed)
+        {
+            SaveUnlockedStages();
+            SaveClearedStages();
+        }
+    }
+
     public static void UnlockCurrentAndNext(string currentSceneName)
     {
         Load();
@@ -82,10 +120,14 @@ public static class StageUnlockProgress
         if (string.IsNullOrEmpty(normalizedCurrent))
             return;
 
-        bool changed = false;
+        bool unlockedChanged = false;
+        bool clearedChanged = false;
 
         if (unlockedStages.Add(normalizedCurrent))
-            changed = true;
+            unlockedChanged = true;
+
+        if (clearedStages.Add(normalizedCurrent))
+            clearedChanged = true;
 
         int currentIndex = stageOrder.IndexOf(normalizedCurrent);
         if (currentIndex >= 0)
@@ -95,21 +137,26 @@ public static class StageUnlockProgress
             {
                 string nextScene = stageOrder[nextIndex];
                 if (!string.IsNullOrEmpty(nextScene) && unlockedStages.Add(nextScene))
-                    changed = true;
+                    unlockedChanged = true;
             }
         }
 
-        if (changed)
+        if (unlockedChanged)
             SaveUnlockedStages();
+
+        if (clearedChanged)
+            SaveClearedStages();
     }
 
     public static void ResetProgress()
     {
         loaded = true;
         unlockedStages.Clear();
+        clearedStages.Clear();
         stageOrder.Clear();
 
         PlayerPrefs.DeleteKey(UnlockedStagesKey);
+        PlayerPrefs.DeleteKey(ClearedStagesKey);
         PlayerPrefs.DeleteKey(StageOrderKey);
         PlayerPrefs.Save();
     }
@@ -138,6 +185,7 @@ public static class StageUnlockProgress
 
         loaded = true;
         unlockedStages.Clear();
+        clearedStages.Clear();
         stageOrder.Clear();
 
         string unlockedRaw = PlayerPrefs.GetString(UnlockedStagesKey, string.Empty);
@@ -149,6 +197,18 @@ public static class StageUnlockProgress
                 string normalized = Normalize(parts[i]);
                 if (!string.IsNullOrEmpty(normalized))
                     unlockedStages.Add(normalized);
+            }
+        }
+
+        string clearedRaw = PlayerPrefs.GetString(ClearedStagesKey, string.Empty);
+        if (!string.IsNullOrEmpty(clearedRaw))
+        {
+            string[] parts = clearedRaw.Split(Separator);
+            for (int i = 0; i < parts.Length; i++)
+            {
+                string normalized = Normalize(parts[i]);
+                if (!string.IsNullOrEmpty(normalized))
+                    clearedStages.Add(normalized);
             }
         }
 
@@ -169,6 +229,13 @@ public static class StageUnlockProgress
     {
         string raw = string.Join(Separator.ToString(), new List<string>(unlockedStages));
         PlayerPrefs.SetString(UnlockedStagesKey, raw);
+        PlayerPrefs.Save();
+    }
+
+    private static void SaveClearedStages()
+    {
+        string raw = string.Join(Separator.ToString(), new List<string>(clearedStages));
+        PlayerPrefs.SetString(ClearedStagesKey, raw);
         PlayerPrefs.Save();
     }
 
