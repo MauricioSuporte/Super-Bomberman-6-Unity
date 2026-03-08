@@ -45,6 +45,10 @@ public class WorldMapController : MonoBehaviour
     [SerializeField] List<WorldData> worlds = new List<WorldData>();
     [SerializeField] int startWorldIndex = 0;
 
+    [Header("Optional World Background Scroll")]
+    [SerializeField] PixelPerfectScrollingSpriteRenderer world2BackgroundScroller;
+    [SerializeField] int world2ScrollerWorldIndex = 1;
+
     [Header("Stage Anchor Scaling")]
     [SerializeField] bool scaleStageAnchorsWithSafeFrame = true;
     [SerializeField] int stageAnchorReferenceWidth = 256;
@@ -180,6 +184,7 @@ public class WorldMapController : MonoBehaviour
             EnsureAllStageIcons();
 
         ApplyWorldVisibility();
+        RefreshOptionalWorldScrollers();
         UpdateAllStageIcons();
 
         Canvas.ForceUpdateCanvases();
@@ -210,6 +215,7 @@ public class WorldMapController : MonoBehaviour
             return;
 
         CheckResolutionOrScaleChanges();
+        RefreshOptionalWorldScrollers();
 
         var input = PlayerInputManager.Instance;
         if (input == null || worlds.Count == 0)
@@ -305,6 +311,7 @@ public class WorldMapController : MonoBehaviour
 
         ApplyCurrentWorldCameraPosition();
         ApplyWorldVisibility();
+        RefreshOptionalWorldScrollers();
         ApplyScaledStageAnchorPositions();
         UpdateAllStageIcons();
         ApplyScaledCursorSize();
@@ -386,9 +393,23 @@ public class WorldMapController : MonoBehaviour
     void ApplyWorldVisibility()
     {
         for (int i = 0; i < worlds.Count; i++)
+        {
             if (worlds[i].root != null)
                 worlds[i].root.SetActive(i == currentWorldIndex);
+        }
     }
+
+    void RefreshOptionalWorldScrollers()
+    {
+        if (world2BackgroundScroller == null)
+            return;
+
+        bool shouldEnable = currentWorldIndex == world2ScrollerWorldIndex;
+
+        if (world2BackgroundScroller.enabled != shouldEnable)
+            world2BackgroundScroller.enabled = shouldEnable;
+    }
+
     void SnapCursorToDefaultStage()
     {
         if (cursorMovementArea == null)

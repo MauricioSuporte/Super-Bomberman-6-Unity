@@ -416,7 +416,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 117835865}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 3d01c168160a1094a9324cb3122e29d2, type: 3}
   m_Name: 
@@ -9386,6 +9386,8 @@ MonoBehaviour:
     loopWorldMusic: 1
     cameraPosition: {x: 19.5, y: -1}
   startWorldIndex: 0
+  world2BackgroundScroller: {fileID: 117835868}
+  world2ScrollerWorldIndex: 1
   scaleStageAnchorsWithSafeFrame: 1
   stageAnchorReferenceWidth: 256
   stageAnchorReferenceHeight: 224

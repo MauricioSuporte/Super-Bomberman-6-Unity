@@ -76,6 +76,17 @@ public class PixelPerfectScrollingSpriteRenderer : MonoBehaviour
         Initialize();
     }
 
+    void OnDisable()
+    {
+        ResetMainRendererToStartPosition();
+        DestroyCopiesImmediate();
+    }
+
+    void OnDestroy()
+    {
+        DestroyCopiesImmediate();
+    }
+
     void OnValidate()
     {
         Initialize();
@@ -527,6 +538,37 @@ public class PixelPerfectScrollingSpriteRenderer : MonoBehaviour
         pos.x = Mathf.Round(pos.x * pixelsPerUnit) / pixelsPerUnit;
         pos.y = Mathf.Round(pos.y * pixelsPerUnit) / pixelsPerUnit;
         return pos;
+    }
+
+    void ResetMainRendererToStartPosition()
+    {
+        EnsureRefs();
+
+        if (targetRenderer == null)
+            return;
+
+        Vector3 pos = targetRenderer.transform.position;
+
+        switch (direction)
+        {
+            case ScrollDirection.TopToBottom:
+            case ScrollDirection.BottomToTop:
+                pos.x = startPosition.x;
+                pos.y = startPosition.y;
+                break;
+
+            default:
+                pos.x = startPosition.x;
+                pos.y = startPosition.y;
+                break;
+        }
+
+        pos.z = cachedTransform != null ? cachedTransform.position.z : pos.z;
+
+        if (snapToPixels && pixelsPerUnit > 0f)
+            pos = SnapPosition(pos);
+
+        targetRenderer.transform.position = pos;
     }
 
     void DestroyCopiesImmediate()
