@@ -242,7 +242,7 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
     {
         Vector2 kickDir = dir.normalized;
         float tileSize = movement != null ? movement.tileSize : 1f;
-        float chainTransferDuration = GetChainTransferDuration();
+        float stopShakeDuration = GetChainTransferDuration();
         int transfers = 0;
 
         ChainMoverType moverType = ChainMoverType.None;
@@ -356,20 +356,14 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
 
                     if (hasBombAhead && nextBomb != null)
                     {
-                        Vector3 basePos = destructibleTilemap.GetCellCenterWorld(currentTileCell);
-                        if (ghost != null)
-                            yield return ShakeGhost(ghost, basePos, chainTransferDuration, stopShakeAmplitude, stopShakeFrequency);
-                        else
-                            yield return WaitSecondsAndReleaseInput(chainTransferDuration, animEndTime, releaseInputIfNeeded);
-
                         SettleCurrentTileAtCurrentCell();
-                        yield return ShakeSettledTileVisual(
+                        StartCoroutine(ShakeSettledTileVisual(
                             destructibleTilemap,
                             currentTileCell,
                             currentTile,
-                            chainTransferDuration,
+                            stopShakeDuration,
                             stopShakeAmplitude,
-                            stopShakeFrequency);
+                            stopShakeFrequency));
 
                         currentBomb = nextBomb;
                         moverType = ChainMoverType.Bomb;
@@ -380,20 +374,14 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
 
                     if (hasTileAhead && nextTile != null)
                     {
-                        Vector3 basePos = destructibleTilemap.GetCellCenterWorld(currentTileCell);
-                        if (ghost != null)
-                            yield return ShakeGhost(ghost, basePos, chainTransferDuration, stopShakeAmplitude, stopShakeFrequency);
-                        else
-                            yield return WaitSecondsAndReleaseInput(chainTransferDuration, animEndTime, releaseInputIfNeeded);
-
                         SettleCurrentTileAtCurrentCell();
-                        yield return ShakeSettledTileVisual(
+                        StartCoroutine(ShakeSettledTileVisual(
                             destructibleTilemap,
                             currentTileCell,
                             currentTile,
-                            chainTransferDuration,
+                            stopShakeDuration,
                             stopShakeAmplitude,
-                            stopShakeFrequency);
+                            stopShakeFrequency));
 
                         BeginTileMover(nextCell, nextTile);
 
@@ -403,18 +391,12 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
 
                     if (IsMixedChainSolidAt(destructibleTilemap.GetCellCenterWorld(nextCell), kickDir, currentBomb))
                     {
-                        Vector3 basePos = destructibleTilemap.GetCellCenterWorld(currentTileCell);
-                        if (ghost != null)
-                            yield return ShakeGhost(ghost, basePos, chainTransferDuration, stopShakeAmplitude, stopShakeFrequency);
-                        else
-                            yield return WaitSecondsAndReleaseInput(chainTransferDuration, animEndTime, releaseInputIfNeeded);
-
                         SettleCurrentTileAtCurrentCell();
                         yield return ShakeSettledTileVisual(
                             destructibleTilemap,
                             currentTileCell,
                             currentTile,
-                            chainTransferDuration,
+                            stopShakeDuration,
                             stopShakeAmplitude,
                             stopShakeFrequency);
 
@@ -481,9 +463,6 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
 
                     if (hasAdjacentBomb)
                     {
-                        Vector3 basePos = currentBombCell;
-                        yield return ShakeBombVisual(currentBomb, basePos, chainTransferDuration, stopShakeAmplitude, stopShakeFrequency);
-
                         currentBomb = adjacentBomb;
                         moverType = ChainMoverType.Bomb;
 
@@ -493,9 +472,6 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
 
                     if (hasAdjacentTile)
                     {
-                        Vector3 basePos = currentBombCell;
-                        yield return ShakeBombVisual(currentBomb, basePos, chainTransferDuration, stopShakeAmplitude, stopShakeFrequency);
-
                         BeginTileMover(nextCell, adjacentTile);
 
                         SLog($"MixedChain | transfer Bomb -> Tile (adjacent) | nextCell={nextCell} tile={adjacentTile.name}");
@@ -583,15 +559,6 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
 
                     if (nextBomb != null)
                     {
-                        Vector3 stopPos = currentBomb != null
-                            ? (Vector3)SnapToGrid(currentBomb.transform.position, tileSize)
-                            : Vector3.zero;
-
-                        if (currentBomb != null)
-                            yield return ShakeBombVisual(currentBomb, stopPos, chainTransferDuration, stopShakeAmplitude, stopShakeFrequency);
-                        else
-                            yield return WaitSecondsAndReleaseInput(chainTransferDuration, animEndTime, releaseInputIfNeeded);
-
                         currentBomb = nextBomb;
                         moverType = ChainMoverType.Bomb;
                         continue;
@@ -599,15 +566,6 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
 
                     if (nextTile != null)
                     {
-                        Vector3 stopPos = currentBomb != null
-                            ? (Vector3)SnapToGrid(currentBomb.transform.position, tileSize)
-                            : Vector3.zero;
-
-                        if (currentBomb != null)
-                            yield return ShakeBombVisual(currentBomb, stopPos, chainTransferDuration, stopShakeAmplitude, stopShakeFrequency);
-                        else
-                            yield return WaitSecondsAndReleaseInput(chainTransferDuration, animEndTime, releaseInputIfNeeded);
-
                         BeginTileMover(nextTileCell, nextTile);
                         continue;
                     }
@@ -615,7 +573,7 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
                     if (endedBySolid && currentBomb != null)
                     {
                         Vector3 basePos = SnapToGrid(currentBomb.transform.position, tileSize);
-                        yield return ShakeBombVisual(currentBomb, basePos, chainTransferDuration, stopShakeAmplitude, stopShakeFrequency);
+                        yield return ShakeBombVisual(currentBomb, basePos, stopShakeDuration, stopShakeAmplitude, stopShakeFrequency);
                     }
 
                     break;
