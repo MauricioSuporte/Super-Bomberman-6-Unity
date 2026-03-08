@@ -418,7 +418,7 @@ public class WorldMapController : MonoBehaviour
         if (cursorMovementArea == null)
             return;
 
-        int defaultIndex = GetBestDefaultNodeIndex(currentWorldIndex);
+        int defaultIndex = GetLastUnlockedNodeIndex(currentWorldIndex);
         var node = GetNode(currentWorldIndex, defaultIndex);
         if (node == null || node.anchor == null)
             return;
@@ -1206,7 +1206,7 @@ public class WorldMapController : MonoBehaviour
         }
     }
 
-    int GetBestDefaultNodeIndex(int worldIndex)
+    int GetLastUnlockedNodeIndex(int worldIndex)
     {
         if (worldIndex < 0 || worldIndex >= worlds.Count)
             return 0;
@@ -1215,19 +1215,18 @@ public class WorldMapController : MonoBehaviour
         if (world == null || world.nodes == null || world.nodes.Count == 0)
             return 0;
 
-        int configuredIndex = Mathf.Clamp(world.defaultNodeIndex, 0, world.nodes.Count - 1);
-        var configuredNode = world.nodes[configuredIndex];
-
-        if (configuredNode != null && configuredNode.unlocked)
-            return configuredIndex;
+        int lastUnlocked = -1;
 
         for (int i = 0; i < world.nodes.Count; i++)
         {
             var node = world.nodes[i];
             if (node != null && node.unlocked)
-                return i;
+                lastUnlocked = i;
         }
 
-        return configuredIndex;
+        if (lastUnlocked >= 0)
+            return lastUnlocked;
+
+        return Mathf.Clamp(world.defaultNodeIndex, 0, world.nodes.Count - 1);
     }
 }
