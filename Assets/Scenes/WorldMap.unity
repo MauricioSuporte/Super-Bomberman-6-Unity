@@ -9009,9 +9009,15 @@ MonoBehaviour:
   cursorVisualBaseSize: {x: 20, y: 29}
   scaleCursorVisualWithLogicalSize: 1
   selectedTransitionDuration: 1
-  stageDetectRadius: 10
+  stageDetectRadius: 5
   requireStageInRangeToConfirm: 1
   scaleStageDetectRadiusWithSafeFrame: 1
+  showDebugStageDetectArea: 1
+  debugStageDetectAreaRoot: {fileID: 0}
+  debugStageDetectAreaColor: {r: 1, g: 0, b: 0, a: 0.12}
+  debugStageDetectAreaBorderColor: {r: 1, g: 0, b: 0, a: 0.85}
+  debugGeneratedTextureSize: 128
+  debugRingThicknessPixels: 4
   unlockedStageSprite: {fileID: -101075982, guid: be604b99019ed804ba4a0d0dfc07e674, type: 3}
   lockedStageSprite: {fileID: 3724445575597181823, guid: be604b99019ed804ba4a0d0dfc07e674, type: 3}
   baseIconLogicalSize: {x: 8, y: 8}
