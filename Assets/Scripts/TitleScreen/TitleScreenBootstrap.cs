@@ -144,6 +144,9 @@ public class TitleScreenBootstrap : MonoBehaviour
         if (titleScreen.ExitRequested)
             yield break;
 
+        if (titleScreen.ControlsRequested)
+            yield break;
+
         if (titleScreen.NormalGameRequested)
         {
             if (!string.IsNullOrEmpty(skinSelectSceneName))

@@ -8,35 +8,17 @@ using UnityEngine.UI;
 
 public class ControlsConfigMenu : MonoBehaviour
 {
-    const string LOG = "[ControlsMenu]";
-
-    [Header("Debug (Surgical Logs)")]
-    [SerializeField] bool enableSurgicalLogs = true;
-
-    [Tooltip("Loga quando Screen/cameraRect/referenceRect mudar e recalcular escala/layout.")]
-    [SerializeField] bool logOnResolutionOrRefChange = true;
-
-    [Tooltip("Dump completo de geometria (Canvas/RectTransforms) quando recomputar layout.")]
-    [SerializeField] bool logDumpOnLayoutRecompute = true;
-
-    [Tooltip("Loga detalhes do TMP (preferred/bounds/rect) quando fizer RefreshText.")]
-    [SerializeField] bool logOnRefreshText = true;
-
-    [Tooltip("Loga detalhes do cursor/link quando atualizar posição do cursor.")]
-    [SerializeField] bool logOnCursor = true;
-
-    [Header("Menu Owner (who navigates UI)")]
+    [Header("Menu Owner")]
     [SerializeField, Range(1, 4)] int ownerPlayerId = 1;
 
     [Header("UI")]
     [SerializeField] GameObject root;
     [SerializeField] RawImage backgroundImage;
 
-    [Header("Reference Frame (SafeFrame4x3)")]
-    [Tooltip("Arraste aqui o SafeFrame4x3 (RectTransform). É esse retângulo que define o 'mundo UI' que deve caber no background.")]
+    [Header("Reference Frame")]
     [SerializeField] RectTransform referenceRect;
 
-    [Header("Layout Root (moves menu as a whole)")]
+    [Header("Layout Root")]
     [SerializeField] RectTransform menuLayoutRoot;
     [SerializeField] float menuGlobalYOffset = 140;
 
@@ -70,15 +52,15 @@ public class ControlsConfigMenu : MonoBehaviour
     [SerializeField] int selectGridFontSize = 24;
     [SerializeField, Range(0, 6)] int playerBlockGapLines = 1;
 
-    [Header("Text Style (SB5-like)")]
+    [Header("Text Style")]
     [SerializeField] bool forceBold = true;
 
-    [Header("Outline (TMP SDF)")]
+    [Header("Outline")]
     [SerializeField] Color outlineColor = Color.black;
     [SerializeField, Range(0f, 1f)] float outlineWidth = 0.42f;
     [SerializeField, Range(0f, 1f)] float outlineSoftness = 0.0f;
 
-    [Header("Cursor (AnimatedSpriteRenderer)")]
+    [Header("Cursor")]
     [SerializeField] AnimatedSpriteRenderer cursorRenderer;
     [SerializeField] Vector2 cursorOffset = new(-100f, 0f);
     [SerializeField, Range(0f, 200f)] float cursorGapLeft = 18f;
@@ -103,15 +85,12 @@ public class ControlsConfigMenu : MonoBehaviour
     [Header("Players Block - Global Indent")]
     [SerializeField] float playersBlockIndentX = 400f;
 
-    [Header("Dynamic Scale (Pixel Perfect like TitleScreen)")]
+    [Header("Dynamic Scale")]
     [SerializeField] bool dynamicScale = true;
     [SerializeField] int referenceWidth = 256;
     [SerializeField] int referenceHeight = 224;
     [SerializeField] bool useIntegerUpscale = true;
-
-    [Tooltip("Upscale para o qual você ajustou os BASE sizes (font/offsets). Ex: 1080p ~4x => 4.")]
     [SerializeField, Min(1)] int designUpscale = 4;
-
     [SerializeField, Min(0.01f)] float extraScaleMultiplier = 1f;
     [SerializeField, Min(0.01f)] float minScale = 0.5f;
     [SerializeField, Min(0.01f)] float maxScale = 10f;
@@ -125,7 +104,6 @@ public class ControlsConfigMenu : MonoBehaviour
     const string colorNormal = "#FFFFE7";
     const string colorHint = "#FFA621";
     const string colorWhite = "#FFFFFF";
-
     const string colorBlueSoft = "#8FD3FF";
     const string colorPlayerGreen = "#8CFFB3";
     const string colorPlayerSelectedRed = "#FF5A5A";
@@ -161,10 +139,22 @@ public class ControlsConfigMenu : MonoBehaviour
 
     Vector2 menuLayoutRootBasePos;
     bool menuLayoutRootCached;
-    bool warnedAboutAutoLayoutRoot;
 
-    struct DpadHit { public int dir; public int joyIndex; public int deviceId; public string product; }
-    struct JoyBtnHit { public int btn; public int joyIndex; public int deviceId; public string product; }
+    struct DpadHit
+    {
+        public int dir;
+        public int joyIndex;
+        public int deviceId;
+        public string product;
+    }
+
+    struct JoyBtnHit
+    {
+        public int btn;
+        public int joyIndex;
+        public int deviceId;
+        public string product;
+    }
 
     float blockedMessageUntil;
     string blockedMessageLine;
@@ -201,12 +191,6 @@ public class ControlsConfigMenu : MonoBehaviour
     int ScaledFont(int baseSize) => Mathf.Clamp(Mathf.RoundToInt(baseSize * _currentUiScale), 10, 500);
     float ScaledFloat(float baseValue) => baseValue * _currentUiScale;
 
-    void SLog(string msg)
-    {
-        if (!enableSurgicalLogs) return;
-        Debug.Log($"{LOG} {msg}", this);
-    }
-
     Canvas GetRootCanvas()
     {
         if (menuText != null)
@@ -222,9 +206,7 @@ public class ControlsConfigMenu : MonoBehaviour
     {
         var cam = Camera.main;
         if (cam != null) return cam;
-
-        var any = FindObjectOfType<Camera>();
-        return any;
+        return UnityEngine.Object.FindFirstObjectByType<Camera>();
     }
 
     Rect GetReferencePixelRect(out string source)
@@ -280,14 +262,12 @@ public class ControlsConfigMenu : MonoBehaviour
         float sy = usedH / Mathf.Max(1f, referenceHeight);
 
         float baseScaleRaw = Mathf.Min(sx, sy);
-
         float baseScaleForUi = useIntegerUpscale ? Mathf.Floor(baseScaleRaw) : baseScaleRaw;
         if (baseScaleForUi < 1f) baseScaleForUi = 1f;
 
         baseScaleInt = Mathf.Max(1, Mathf.RoundToInt(baseScaleForUi));
 
         float normalized = baseScaleInt / Mathf.Max(1f, designUpscale);
-
         float ui = normalized * Mathf.Max(0.01f, extraScaleMultiplier);
         ui = Mathf.Clamp(ui, minScale, maxScale);
         return ui;
@@ -301,7 +281,7 @@ public class ControlsConfigMenu : MonoBehaviour
         var cam = GetMainCameraSafe();
         Rect camRect = cam != null ? cam.rect : new Rect(0, 0, 1, 1);
 
-        Rect refPx = GetReferencePixelRect(out string refSource);
+        Rect refPx = GetReferencePixelRect(out _);
 
         bool changed =
             force ||
@@ -320,18 +300,10 @@ public class ControlsConfigMenu : MonoBehaviour
 
         _currentUiScale = ComputeUiScaleForRect(refPx.width, refPx.height, out _currentBaseScaleInt);
 
-        if (logOnResolutionOrRefChange)
-        {
-            SLog($"RecomputeLayout | Screen=({sw}x{sh}) cam.rect=({camRect.x:F3},{camRect.y:F3},{camRect.width:F3},{camRect.height:F3}) refPx=({refPx.width:F1}x{refPx.height:F1}) refSource={refSource} baseScaleInt={_currentBaseScaleInt} uiScale={_currentUiScale:F4} intUpscale={useIntegerUpscale} designUpscale={designUpscale} extraMult={extraScaleMultiplier}");
-        }
-
         ApplyCursorScale();
         ApplyMenuGlobalOffset();
         ApplyMenuTextRectScale();
         RefreshText();
-
-        if (logDumpOnLayoutRecompute)
-            DumpGeometry(refSource, refPx, camRect);
     }
 
     static bool ApproximatelyRect(Rect a, Rect b)
@@ -341,37 +313,6 @@ public class ControlsConfigMenu : MonoBehaviour
             Mathf.Abs(a.y - b.y) < 0.01f &&
             Mathf.Abs(a.width - b.width) < 0.01f &&
             Mathf.Abs(a.height - b.height) < 0.01f;
-    }
-
-    void DumpGeometry(string refSource, Rect refPx, Rect camRect)
-    {
-        var canvas = GetRootCanvas();
-        float canvasScale = canvas != null ? canvas.scaleFactor : 1f;
-
-        RectTransform canvasRt = canvas != null ? canvas.transform as RectTransform : null;
-        Rect canvasRect = canvasRt != null ? canvasRt.rect : new Rect(0, 0, Screen.width, Screen.height);
-
-        SLog($"Dump | canvas={(canvas != null ? canvas.name : "NULL")} mode={(canvas != null ? canvas.renderMode.ToString() : "NULL")} scaleFactor={canvasScale:F3} canvasRect=({canvasRect.width:F1}x{canvasRect.height:F1})");
-        SLog($"Dump | cameraRectNorm=({camRect.x:F3},{camRect.y:F3},{camRect.width:F3},{camRect.height:F3}) refSource={refSource} refPxSize=({refPx.width:F1}x{refPx.height:F1})");
-
-        if (referenceRect != null) DumpRectTransform("referenceRect", referenceRect);
-        if (menuLayoutRoot != null) DumpRectTransform("menuLayoutRoot", menuLayoutRoot);
-        if (backgroundImage != null) DumpRectTransform("backgroundImage", backgroundImage.rectTransform);
-        if (menuText != null) DumpRectTransform("menuText", menuText.rectTransform);
-    }
-
-    void DumpRectTransform(string label, RectTransform rt)
-    {
-        if (rt == null) return;
-
-        Vector2 amin = rt.anchorMin;
-        Vector2 amax = rt.anchorMax;
-        Vector2 piv = rt.pivot;
-        Vector2 ap = rt.anchoredPosition;
-        Vector2 sd = rt.sizeDelta;
-        Rect r = rt.rect;
-
-        SLog($"RT {label} '{rt.name}' | anchors=({amin.x:F3},{amin.y:F3})-({amax.x:F3},{amax.y:F3}) pivot=({piv.x:F3},{piv.y:F3}) anchoredPos=({ap.x:F2},{ap.y:F2}) sizeDelta=({sd.x:F2},{sd.y:F2}) rect=({r.width:F2}x{r.height:F2}) lossyScale=({rt.lossyScale.x:F3},{rt.lossyScale.y:F3},{rt.lossyScale.z:F3})");
     }
 
     void ApplyCursorScale()
@@ -457,14 +398,10 @@ public class ControlsConfigMenu : MonoBehaviour
         if (menuLayoutRoot != null)
             return;
 
-        if (root != null)
+        if (root != null && root.TryGetComponent<RectTransform>(out var rt))
         {
-            if (root.TryGetComponent<RectTransform>(out var rt))
-            {
-                menuLayoutRoot = rt;
-                WarnAutoLayoutRoot("root RectTransform");
-                return;
-            }
+            menuLayoutRoot = rt;
+            return;
         }
 
         if (menuText != null)
@@ -473,7 +410,6 @@ public class ControlsConfigMenu : MonoBehaviour
             if (parentRt != null)
             {
                 menuLayoutRoot = parentRt;
-                WarnAutoLayoutRoot("menuText parent RectTransform");
                 return;
             }
 
@@ -481,19 +417,9 @@ public class ControlsConfigMenu : MonoBehaviour
             if (textRt != null)
             {
                 menuLayoutRoot = textRt;
-                WarnAutoLayoutRoot("menuText RectTransform");
                 return;
             }
         }
-    }
-
-    void WarnAutoLayoutRoot(string source)
-    {
-        if (warnedAboutAutoLayoutRoot)
-            return;
-
-        warnedAboutAutoLayoutRoot = true;
-        Debug.LogWarning($"{LOG} 'Menu Layout Root' was not set. Auto-using {source}. Assign it in the Inspector.", this);
     }
 
     void CacheMenuLayoutRootBasePos()
@@ -782,11 +708,9 @@ public class ControlsConfigMenu : MonoBehaviour
                 if (TryGetAnyPlayerDown(PlayerAction.ActionC, out int pidAskReset))
                 {
                     ownerPlayerId = pidAskReset;
-
                     confirmResetPlayerId = playerSelectIndex + 1;
                     confirmResetIndex = 1;
                     state = MenuState.ConfirmReset;
-
                     PlaySfx(confirmSfx, confirmVolume);
                     RefreshText();
                     yield return PulseCursor();
@@ -797,17 +721,13 @@ public class ControlsConfigMenu : MonoBehaviour
                 if (TryGetAnyPlayerDownEither(PlayerAction.Start, PlayerAction.ActionA, out int pidConfirm))
                 {
                     ownerPlayerId = pidConfirm;
-
                     targetPlayerId = playerSelectIndex + 1;
                     var p = PlayerInputManager.Instance.GetPlayer(targetPlayerId);
-
                     bulkSnapshot = p.CloneBindings();
                     bulkStep = 0;
                     state = MenuState.BulkRemap;
-
                     blockedMessageUntil = 0f;
                     blockedMessageLine = null;
-
                     PlaySfx(confirmSfx, confirmVolume);
                     RefreshText();
                     yield return PulseCursor();
@@ -870,7 +790,6 @@ public class ControlsConfigMenu : MonoBehaviour
                         var pReset = PlayerInputManager.Instance.GetPlayer(confirmResetPlayerId);
                         pReset.ResetToDefault();
                         pReset.SaveToPrefs();
-
                         PlaySfx(resetSfx, resetVolume);
                         state = MenuState.SelectPlayer;
                         RefreshText();
@@ -945,7 +864,6 @@ public class ControlsConfigMenu : MonoBehaviour
                         p.joyIndex = dpad.Value.joyIndex;
                         p.gamepadDeviceId = dpad.Value.deviceId;
                         p.gamepadProduct = dpad.Value.product ?? "";
-
                         p.SetBinding(action, Binding.FromDpad(p.joyIndex, dpad.Value.dir));
                     }
                     else if (joyBtn.HasValue)
@@ -956,14 +874,12 @@ public class ControlsConfigMenu : MonoBehaviour
                         p.joyIndex = joyBtn.Value.joyIndex;
                         p.gamepadDeviceId = joyBtn.Value.deviceId;
                         p.gamepadProduct = joyBtn.Value.product ?? "";
-
                         p.SetBinding(action, Binding.FromJoyButton(p.joyIndex, joyBtn.Value.btn));
                     }
                     else if (key.HasValue)
                     {
                         blockedMessageUntil = 0f;
                         blockedMessageLine = null;
-
                         p.SetBinding(action, Binding.FromKey(key.Value));
                     }
 
@@ -1057,13 +973,10 @@ public class ControlsConfigMenu : MonoBehaviour
             if (pad.buttonEast.wasPressedThisFrame) return new JoyBtnHit { btn = 1, joyIndex = joyIndex, deviceId = deviceId, product = product };
             if (pad.buttonWest.wasPressedThisFrame) return new JoyBtnHit { btn = 2, joyIndex = joyIndex, deviceId = deviceId, product = product };
             if (pad.buttonNorth.wasPressedThisFrame) return new JoyBtnHit { btn = 3, joyIndex = joyIndex, deviceId = deviceId, product = product };
-
             if (pad.leftShoulder.wasPressedThisFrame) return new JoyBtnHit { btn = 4, joyIndex = joyIndex, deviceId = deviceId, product = product };
             if (pad.rightShoulder.wasPressedThisFrame) return new JoyBtnHit { btn = 5, joyIndex = joyIndex, deviceId = deviceId, product = product };
-
             if (pad.leftTrigger.wasPressedThisFrame) return new JoyBtnHit { btn = 6, joyIndex = joyIndex, deviceId = deviceId, product = product };
             if (pad.rightTrigger.wasPressedThisFrame) return new JoyBtnHit { btn = 7, joyIndex = joyIndex, deviceId = deviceId, product = product };
-
             if (pad.startButton.wasPressedThisFrame) return new JoyBtnHit { btn = 8, joyIndex = joyIndex, deviceId = deviceId, product = product };
             if (pad.selectButton.wasPressedThisFrame) return new JoyBtnHit { btn = 9, joyIndex = joyIndex, deviceId = deviceId, product = product };
         }
@@ -1247,9 +1160,6 @@ public class ControlsConfigMenu : MonoBehaviour
 
         menuText.text = header + body;
 
-        if (logOnRefreshText)
-            LogTmpMetrics();
-
         if (state == MenuState.SelectPlayer)
         {
             UpdateCursorPosition_ByLinkId($"sel{playerSelectIndex}");
@@ -1262,24 +1172,6 @@ public class ControlsConfigMenu : MonoBehaviour
         {
             UpdateCursorPosition_ByLinkId(CurrentWaitLinkId());
         }
-    }
-
-    void LogTmpMetrics()
-    {
-        if (!enableSurgicalLogs || menuText == null) return;
-
-        menuText.ForceMeshUpdate();
-
-        var rt = menuText.rectTransform;
-        var r = rt != null ? rt.rect : new Rect();
-        Vector2 pref = menuText.GetPreferredValues(menuText.text, Mathf.Infinity, Mathf.Infinity);
-
-        var ti = menuText.textInfo;
-        int charCount = ti != null ? ti.characterCount : -1;
-        int lineCount = ti != null ? ti.lineCount : -1;
-        int linkCount = ti != null ? ti.linkCount : -1;
-
-        SLog($"TMP | fontSize={menuText.fontSize:F2} autoSize={menuText.enableAutoSizing} rect=({r.width:F1}x{r.height:F1}) pref=({pref.x:F1}x{pref.y:F1}) chars={charCount} lines={lineCount} links={linkCount} uiScale={_currentUiScale:F4} baseScaleInt={_currentBaseScaleInt}");
     }
 
     void AppendPlayerBlock(ref string body, int index, string cn, string ch, int gridSize)
@@ -1306,7 +1198,7 @@ public class ControlsConfigMenu : MonoBehaviour
     {
         var p = PlayerInputManager.Instance.GetPlayer(pid);
 
-        bool selected = (playerSelectIndex == selIndex);
+        bool selected = playerSelectIndex == selIndex;
         string playerColor = selected ? colorPlayerSelectedRed : colorPlayerGreen;
         string tag = $"<color={playerColor}>PLAYER {pid}</color>";
 
@@ -1330,7 +1222,7 @@ public class ControlsConfigMenu : MonoBehaviour
         float rl = ScaledFloat(COLUMN_RIGHT_LABEL_BASE) + indent;
         float rv = ScaledFloat(COLUMN_RIGHT_VALUE_BASE) + indent;
 
-        bool isTarget = (state == MenuState.BulkRemap && pid == targetPlayerId);
+        bool isTarget = state == MenuState.BulkRemap && pid == targetPlayerId;
 
         string Lbl(PlayerAction act, string s)
         {
@@ -1341,22 +1233,16 @@ public class ControlsConfigMenu : MonoBehaviour
         string txt = lineIndex switch
         {
             0 => $"<align=center>{tag}</align>",
-
             1 => $"<pos={ll}>{Lbl(PlayerAction.MoveUp, "UP:")}</pos><pos={lv}>{u}</pos>" +
                  $"<pos={rl}>{Lbl(PlayerAction.ActionA, "A:")}</pos><pos={rv}>{a}</pos>",
-
             2 => $"<pos={ll}>{Lbl(PlayerAction.MoveDown, "DOWN:")}</pos><pos={lv}>{d}</pos>" +
                  $"<pos={rl}>{Lbl(PlayerAction.ActionB, "B:")}</pos><pos={rv}>{b}</pos>",
-
             3 => $"<pos={ll}>{Lbl(PlayerAction.MoveLeft, "LEFT:")}</pos><pos={lv}>{l}</pos>" +
                  $"<pos={rl}>{Lbl(PlayerAction.ActionC, "C:")}</pos><pos={rv}>{c}</pos>",
-
             4 => $"<pos={ll}>{Lbl(PlayerAction.MoveRight, "RIGHT:")}</pos><pos={lv}>{r}</pos>" +
                  $"<pos={rl}>{Lbl(PlayerAction.ActionL, "L:")}</pos><pos={rv}>{lBtn}</pos>",
-
             5 => $"<pos={ll}>{Lbl(PlayerAction.Start, "START:")}</pos><pos={lv}>{st}</pos>" +
                  $"<pos={rl}>{Lbl(PlayerAction.ActionR, "R:")}</pos><pos={rv}>{rBtn}</pos>",
-
             _ => string.Empty
         };
 
@@ -1476,9 +1362,6 @@ public class ControlsConfigMenu : MonoBehaviour
         }
 
         cursorRenderer.SetExternalBaseLocalPosition(bestLocalPos);
-
-        if (logOnCursor)
-            SLog($"Cursor | linkId={linkId} local=({bestLocalPos.x:F2},{bestLocalPos.y:F2}) uiScale={_currentUiScale:F4}");
     }
 
     void PlaySfx(AudioClip clip, float volume)
@@ -1551,24 +1434,17 @@ public class ControlsConfigMenu : MonoBehaviour
             KeyCode.DownArrow => "DOWN ARROW",
             KeyCode.LeftArrow => "LEFT ARROW",
             KeyCode.RightArrow => "RIGHT ARROW",
-
             KeyCode.LeftShift => "LEFT SHIFT",
             KeyCode.RightShift => "RIGHT SHIFT",
-
             KeyCode.LeftControl => "LEFT CTRL",
             KeyCode.RightControl => "RIGHT CTRL",
-
             KeyCode.LeftAlt => "LEFT ALT",
             KeyCode.RightAlt => "RIGHT ALT",
-
             KeyCode.Return => "ENTER",
             KeyCode.Escape => "ESC",
-
             KeyCode.Backspace => "BACK SPACE",
             KeyCode.Delete => "DELETE",
-
             KeyCode.Space => "SPACE",
-
             KeyCode.Keypad0 => "KEYPAD 0",
             KeyCode.Keypad1 => "KEYPAD 1",
             KeyCode.Keypad2 => "KEYPAD 2",
@@ -1579,13 +1455,10 @@ public class ControlsConfigMenu : MonoBehaviour
             KeyCode.Keypad7 => "KEYPAD 7",
             KeyCode.Keypad8 => "KEYPAD 8",
             KeyCode.Keypad9 => "KEYPAD 9",
-
             KeyCode.KeypadEnter => "KEYPAD ENTER",
-
             KeyCode.Comma => ",",
             KeyCode.Period => ".",
             KeyCode.Slash => "/",
-
             _ => SplitCamelCase(key.ToString()).ToUpperInvariant()
         };
     }

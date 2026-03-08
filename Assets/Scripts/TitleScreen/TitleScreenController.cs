@@ -1690,37 +1690,4 @@ public class TitleScreenController : MonoBehaviour
         if (bossRushLockedText != null)
             bossRushLockedText.gameObject.SetActive(false);
     }
-
-    void HideTitleScreenCompletely()
-    {
-        StopPushStartBlink();
-        HideFooterMessageImmediate();
-        HideBossRushLockedMessageImmediate();
-
-        if (titleScreenRawImage != null)
-            titleScreenRawImage.gameObject.SetActive(false);
-
-        if (menuText != null)
-            menuText.gameObject.SetActive(false);
-
-        if (cursorRenderer != null)
-            cursorRenderer.gameObject.SetActive(false);
-
-        if (pushStartText != null)
-            pushStartText.gameObject.SetActive(false);
-
-        if (footerText != null)
-            footerText.gameObject.SetActive(false);
-
-        if (bossRushLockedText != null)
-            bossRushLockedText.gameObject.SetActive(false);
-
-        if (videoValuesText != null)
-            videoValuesText.gameObject.SetActive(false);
-    }
-
-    void RestoreTitleScreenAfterControls()
-    {
-        ShowTitleScreenNow();
-    }
 }
