@@ -58,11 +58,11 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
 
     bool deathCancelInProgress;
 
-    enum BlockType
+    enum ChainMoverType
     {
         None = 0,
-        Solid = 1,
-        Destructible = 2
+        Bomb = 1,
+        Tile = 2
     }
 
     void SLog(string message)
@@ -172,72 +172,19 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
 
         SLog($"KickRoutine | gameManager={(gm != null)} destructibleTilemap={(destructibleTilemap != null ? destructibleTilemap.name : "null")}");
 
-        bool bombChainStarted = false;
-        if (TryGetBombInFront(dir, out Bomb firstBomb))
-        {
-            SLog($"KickRoutine | bomb found in front | bomb={(firstBomb != null ? firstBomb.name : "null")} pos={(firstBomb != null ? firstBomb.transform.position.ToString() : "null")}");
+        Vector3Int frontCell = destructibleTilemap != null
+            ? destructibleTilemap.WorldToCell(rb.position) + step
+            : new Vector3Int(
+                Mathf.RoundToInt((rb.position.x + dir.normalized.x * movement.tileSize) / movement.tileSize),
+                Mathf.RoundToInt((rb.position.y + dir.normalized.y * movement.tileSize) / movement.tileSize),
+                0);
 
-            if (audioSource != null && kickSfx != null)
-                audioSource.PlayOneShot(kickSfx, kickSfxVolume);
+        bool hasBombInFront = TryGetBombAtCell(SnapToGrid(rb.position, movement.tileSize) + dir.normalized * movement.tileSize, out Bomb firstBomb);
+        bool hasTileInFront = TryGetDestructibleAtCell(destructibleTilemap, frontCell, out TileBase firstTile);
 
-            yield return KickBombChainRoutine(firstBomb, dir, destructibleTilemap, animEndTime, () =>
-            {
-                if (!inputUnlockedAfterAnim)
-                {
-                    inputUnlockedAfterAnim = true;
-                    if (movement != null)
-                        movement.SetInputLocked(false);
-                    SLog("KickRoutine | input unlocked from bomb chain callback");
-                }
-            });
+        SLog($"KickRoutine | front inspect | frontCell={frontCell} hasBomb={hasBombInFront} bomb={(firstBomb != null ? firstBomb.name : "null")} hasTile={hasTileInFront} tile={(firstTile != null ? firstTile.name : "null")}");
 
-            bombChainStarted = true;
-        }
-        else
-        {
-            SLog("KickRoutine | no bomb found in front");
-        }
-
-        if (bombChainStarted)
-        {
-            if (movement != null)
-                movement.SetInputLocked(false);
-
-            SLog("KickRoutine | finished by bomb chain path");
-            routine = null;
-            yield break;
-        }
-
-        if (destructibleTilemap == null)
-        {
-            SLog("KickRoutine | no destructibleTilemap, waiting only animation window");
-
-            yield return WaitSecondsAndReleaseInput(kickCooldownSeconds, animEndTime, () =>
-            {
-                if (!inputUnlockedAfterAnim)
-                {
-                    inputUnlockedAfterAnim = true;
-                    if (movement != null)
-                        movement.SetInputLocked(false);
-                    SLog("KickRoutine | input unlocked (no tilemap path)");
-                }
-            });
-
-            if (movement != null)
-                movement.SetInputLocked(false);
-
-            routine = null;
-            yield break;
-        }
-
-        Vector3Int playerCell = destructibleTilemap.WorldToCell(rb.position);
-        Vector3Int hitCell = playerCell + step;
-
-        TileBase movingTile = destructibleTilemap.GetTile(hitCell);
-
-        SLog($"KickRoutine | destructible path | playerCell={playerCell} hitCell={hitCell} tile={(movingTile != null ? movingTile.name : "null")}");
-
-        if (movingTile == null)
+        if (!hasBombInFront && !hasTileInFront)
         {
             yield return WaitSecondsAndReleaseInput(kickCooldownSeconds, animEndTime, () =>
             {
@@ -246,7 +193,7 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
                     inputUnlockedAfterAnim = true;
                     if (movement != null)
                         movement.SetInputLocked(false);
-                    SLog("KickRoutine | input unlocked (no destructible in front)");
+                    SLog("KickRoutine | input unlocked (nothing in front)");
                 }
             });
 
@@ -260,9 +207,50 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
         if (audioSource != null && kickSfx != null)
             audioSource.PlayOneShot(kickSfx, kickSfxVolume);
 
+        yield return MixedChainRoutine(
+            dir,
+            destructibleTilemap,
+            frontCell,
+            firstBomb,
+            firstTile,
+            animEndTime,
+            () =>
+            {
+                if (!inputUnlockedAfterAnim)
+                {
+                    inputUnlockedAfterAnim = true;
+                    if (movement != null)
+                        movement.SetInputLocked(false);
+                    SLog("KickRoutine | input unlocked from mixed chain callback");
+                }
+            });
+
+        if (movement != null)
+            movement.SetInputLocked(false);
+
+        SLog("KickRoutine | finished by mixed chain path");
+        routine = null;
+    }
+
+    IEnumerator MixedChainRoutine(
+        Vector2 dir,
+        Tilemap destructibleTilemap,
+        Vector3Int firstCell,
+        Bomb firstBomb,
+        TileBase firstTile,
+        float animEndTime,
+        System.Action releaseInputIfNeeded)
+    {
+        Vector2 kickDir = dir.normalized;
+        float tileSize = movement != null ? movement.tileSize : 1f;
+        int transfers = 0;
+
+        ChainMoverType moverType = ChainMoverType.None;
+        Bomb currentBomb = null;
+        TileBase currentTile = null;
+        Vector3Int currentTileCell = firstCell;
         GameObject ghost = null;
         bool tileRemovedFromMap = false;
-        Vector3Int currentCell = hitCell;
 
         var reservedLocal = new HashSet<Vector3Int>();
 
@@ -278,163 +266,350 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
             reservedLocal.Remove(c);
         };
 
-        try
+        void ReleaseInputIfNeeded()
         {
-            destructibleTilemap.SetTile(hitCell, null);
-            destructibleTilemap.RefreshTile(hitCell);
+            if (Time.time >= animEndTime)
+                releaseInputIfNeeded?.Invoke();
+        }
+
+        void BeginTileMover(Vector3Int cell, TileBase tile)
+        {
+            currentTileCell = cell;
+            currentTile = tile;
+
+            destructibleTilemap.SetTile(cell, null);
+            destructibleTilemap.RefreshTile(cell);
             tileRemovedFromMap = true;
 
-            ghost = CreateGhost(destructibleTilemap, hitCell, movingTile);
-            reserve(currentCell);
+            if (ghost != null)
+                Destroy(ghost);
 
-            ApplyShadowForCell(currentCell);
+            ghost = CreateGhost(destructibleTilemap, cell, tile);
+            reserve(cell);
+            ApplyShadowForCell(cell);
 
-            float stepSeconds = cellsPerSecond <= 0.01f ? 0.05f : (1f / cellsPerSecond);
-            int transfers = 0;
+            moverType = ChainMoverType.Tile;
 
-            bool endedBySolid = false;
+            SLog($"MixedChain | BeginTileMover | cell={cell} tile={(tile != null ? tile.name : "null")}");
+        }
 
-            while (enabledAbility && movement != null && !movement.isDead)
+        void SettleCurrentTileAtCurrentCell()
+        {
+            if (destructibleTilemap == null || !tileRemovedFromMap || currentTile == null)
+                return;
+
+            destructibleTilemap.SetTile(currentTileCell, currentTile);
+            destructibleTilemap.RefreshTile(currentTileCell);
+            tileRemovedFromMap = false;
+
+            release(currentTileCell);
+            ApplyShadowForCell(currentTileCell);
+
+            if (ghost != null)
             {
-                if (Time.time >= animEndTime && !inputUnlockedAfterAnim)
+                Destroy(ghost);
+                ghost = null;
+            }
+
+            SLog($"MixedChain | SettleCurrentTileAtCurrentCell | cell={currentTileCell} tile={(currentTile != null ? currentTile.name : "null")}");
+        }
+
+        try
+        {
+            if (firstBomb != null)
+            {
+                moverType = ChainMoverType.Bomb;
+                currentBomb = firstBomb;
+                SLog($"MixedChain | start with Bomb | bomb={currentBomb.name} cell={SnapToGrid(currentBomb.transform.position, tileSize)}");
+            }
+            else if (firstTile != null && destructibleTilemap != null)
+            {
+                BeginTileMover(firstCell, firstTile);
+                SLog($"MixedChain | start with Tile | cell={firstCell} tile={(firstTile != null ? firstTile.name : "null")}");
+            }
+            else
+            {
+                SLog("MixedChain | nothing valid to move");
+                yield return WaitSecondsAndReleaseInput(kickCooldownSeconds, animEndTime, releaseInputIfNeeded);
+                yield break;
+            }
+
+            while (enabledAbility && movement != null && !movement.isDead && moverType != ChainMoverType.None)
+            {
+                ReleaseInputIfNeeded();
+
+                transfers++;
+                if (transfers > maxChainTransfers)
                 {
-                    inputUnlockedAfterAnim = true;
-                    movement.SetInputLocked(false);
-                    SLog("KickRoutine | input unlocked during destructible movement");
-                }
-
-                Vector3Int nextCell = currentCell + step;
-
-                TileBase blockingTile;
-                var blockType = GetBlockType(destructibleTilemap, nextCell, dir, out blockingTile);
-
-                SLog($"KickRoutine | destructible step | current={currentCell} next={nextCell} blockType={blockType} blockingTile={(blockingTile != null ? blockingTile.name : "null")}");
-
-                if (blockType == BlockType.Solid)
-                {
-                    endedBySolid = true;
-                    SLog($"KickRoutine | destructible chain ended by solid at {nextCell}");
+                    SLog($"MixedChain | stopped by max transfers={maxChainTransfers}");
                     break;
                 }
 
-                if (blockType == BlockType.Destructible)
+                if (moverType == ChainMoverType.Tile)
                 {
-                    transfers++;
-                    if (transfers > maxChainTransfers)
+                    Vector3Int nextCell = currentTileCell + new Vector3Int(Mathf.RoundToInt(kickDir.x), Mathf.RoundToInt(kickDir.y), 0);
+
+                    bool hasBombAhead = TryGetBombAtCell(destructibleTilemap.GetCellCenterWorld(nextCell), out Bomb nextBomb);
+                    bool hasTileAhead = TryGetDestructibleAtCell(destructibleTilemap, nextCell, out TileBase nextTile);
+
+                    SLog($"MixedChain | Tile inspect | currentCell={currentTileCell} nextCell={nextCell} hasBombAhead={hasBombAhead} bomb={(nextBomb != null ? nextBomb.name : "null")} hasTileAhead={hasTileAhead} tile={(nextTile != null ? nextTile.name : "null")}");
+
+                    if (hasBombAhead && nextBomb != null)
                     {
-                        SLog($"KickRoutine | destructible chain stopped by max transfers={maxChainTransfers}");
+                        Vector3 basePos = destructibleTilemap.GetCellCenterWorld(currentTileCell);
+                        if (ghost != null)
+                            yield return ShakeGhost(ghost, basePos, chainTransferDelaySeconds, stopShakeAmplitude, stopShakeFrequency);
+                        else
+                            yield return WaitSecondsAndReleaseInput(chainTransferDelaySeconds, animEndTime, releaseInputIfNeeded);
+
+                        SettleCurrentTileAtCurrentCell();
+
+                        currentBomb = nextBomb;
+                        moverType = ChainMoverType.Bomb;
+
+                        SLog($"MixedChain | transfer Tile -> Bomb | bomb={currentBomb.name} atCell={nextCell}");
+                        continue;
+                    }
+
+                    if (hasTileAhead && nextTile != null)
+                    {
+                        Vector3 basePos = destructibleTilemap.GetCellCenterWorld(currentTileCell);
+                        if (ghost != null)
+                            yield return ShakeGhost(ghost, basePos, chainTransferDelaySeconds, stopShakeAmplitude, stopShakeFrequency);
+                        else
+                            yield return WaitSecondsAndReleaseInput(chainTransferDelaySeconds, animEndTime, releaseInputIfNeeded);
+
+                        SettleCurrentTileAtCurrentCell();
+                        BeginTileMover(nextCell, nextTile);
+
+                        SLog($"MixedChain | transfer Tile -> Tile | nextCell={nextCell} tile={nextTile.name}");
+                        continue;
+                    }
+
+                    if (IsMixedChainSolidAt(destructibleTilemap.GetCellCenterWorld(nextCell), kickDir, currentBomb))
+                    {
+                        Vector3 basePos = destructibleTilemap.GetCellCenterWorld(currentTileCell);
+                        if (ghost != null)
+                            yield return ShakeGhost(ghost, basePos, chainTransferDelaySeconds, stopShakeAmplitude, stopShakeFrequency);
+                        else
+                            yield return WaitSecondsAndReleaseInput(chainTransferDelaySeconds, animEndTime, releaseInputIfNeeded);
+
+                        SettleCurrentTileAtCurrentCell();
+
+                        SLog($"MixedChain | Tile ended by solid | nextCell={nextCell}");
                         break;
                     }
 
-                    Vector3 basePos = destructibleTilemap.GetCellCenterWorld(currentCell);
+                    reserve(nextCell);
+                    ApplyShadowForCell(nextCell);
 
-                    if (ghost != null)
+                    Vector3 from = destructibleTilemap.GetCellCenterWorld(currentTileCell);
+                    Vector3 to = destructibleTilemap.GetCellCenterWorld(nextCell);
+
+                    float stepSeconds = cellsPerSecond <= 0.01f ? 0.05f : (1f / cellsPerSecond);
+                    float tMove = 0f;
+
+                    while (tMove < 1f)
                     {
-                        SLog($"KickRoutine | destructible transfer | current={currentCell} next={nextCell}");
-                        yield return ShakeGhost(ghost, basePos, chainTransferDelaySeconds, stopShakeAmplitude, stopShakeFrequency);
+                        if (!enabledAbility || movement == null || movement.isDead)
+                            break;
+
+                        ReleaseInputIfNeeded();
+
+                        tMove += Time.deltaTime / Mathf.Max(0.0001f, stepSeconds);
+
                         if (ghost != null)
-                            ghost.transform.position = basePos;
-                    }
-                    else
-                    {
-                        yield return WaitSecondsAndReleaseInput(chainTransferDelaySeconds, animEndTime, () =>
-                        {
-                            if (!inputUnlockedAfterAnim)
-                            {
-                                inputUnlockedAfterAnim = true;
-                                if (movement != null)
-                                    movement.SetInputLocked(false);
-                                SLog("KickRoutine | input unlocked during destructible transfer wait");
-                            }
-                        });
+                            ghost.transform.position = Vector3.Lerp(from, to, Mathf.Clamp01(tMove));
+
+                        yield return null;
                     }
 
-                    destructibleTilemap.SetTile(currentCell, movingTile);
-                    destructibleTilemap.RefreshTile(currentCell);
-                    tileRemovedFromMap = false;
+                    release(currentTileCell);
+                    ApplyShadowForCell(currentTileCell);
+
+                    currentTileCell = nextCell;
 
                     if (ghost != null)
-                        Destroy(ghost);
-                    ghost = null;
+                        ghost.transform.position = destructibleTilemap.GetCellCenterWorld(currentTileCell);
 
-                    release(currentCell);
-                    ApplyShadowForCell(currentCell);
-
-                    movingTile = blockingTile;
-                    currentCell = nextCell;
-
-                    destructibleTilemap.SetTile(currentCell, null);
-                    destructibleTilemap.RefreshTile(currentCell);
-                    tileRemovedFromMap = true;
-
-                    ghost = CreateGhost(destructibleTilemap, currentCell, movingTile);
-                    reserve(currentCell);
-
-                    ApplyShadowForCell(currentCell);
-
+                    SLog($"MixedChain | Tile advanced | cell={currentTileCell}");
                     continue;
                 }
 
-                reserve(nextCell);
-                ApplyShadowForCell(nextCell);
-
-                Vector3 from = destructibleTilemap.GetCellCenterWorld(currentCell);
-                Vector3 to = destructibleTilemap.GetCellCenterWorld(nextCell);
-
-                float tMove = 0f;
-                while (tMove < 1f)
+                if (moverType == ChainMoverType.Bomb)
                 {
-                    if (!enabledAbility || movement == null || movement.isDead)
-                        break;
-
-                    if (Time.time >= animEndTime && !inputUnlockedAfterAnim)
+                    if (currentBomb == null)
                     {
-                        inputUnlockedAfterAnim = true;
-                        movement.SetInputLocked(false);
-                        SLog("KickRoutine | input unlocked during destructible lerp");
+                        SLog("MixedChain | currentBomb became null");
+                        break;
                     }
 
-                    tMove += Time.deltaTime / Mathf.Max(0.0001f, stepSeconds);
+                    Vector2 currentBombCell = SnapToGrid(currentBomb.transform.position, tileSize);
+                    Vector3Int nextCell = new Vector3Int(
+                        Mathf.RoundToInt((currentBombCell.x + kickDir.x * tileSize) / tileSize),
+                        Mathf.RoundToInt((currentBombCell.y + kickDir.y * tileSize) / tileSize),
+                        0);
 
-                    if (ghost != null)
-                        ghost.transform.position = Vector3.Lerp(from, to, Mathf.Clamp01(tMove));
+                    bool hasAdjacentBomb = TryGetBombAtCell(SnapToGrid(currentBomb.transform.position, tileSize) + kickDir * tileSize, out Bomb adjacentBomb)
+                                           && adjacentBomb != null
+                                           && adjacentBomb != currentBomb
+                                           && !adjacentBomb.IsBeingKicked;
 
-                    yield return null;
+                    bool hasAdjacentTile = TryGetDestructibleAtCell(destructibleTilemap, nextCell, out TileBase adjacentTile);
+
+                    if (hasAdjacentBomb)
+                    {
+                        Vector3 basePos = currentBombCell;
+                        yield return ShakeBombVisual(currentBomb, basePos, chainTransferDelaySeconds, stopShakeAmplitude, stopShakeFrequency);
+
+                        currentBomb = adjacentBomb;
+                        moverType = ChainMoverType.Bomb;
+
+                        SLog($"MixedChain | transfer Bomb -> Bomb (adjacent) | bomb={currentBomb.name} atCell={nextCell}");
+                        continue;
+                    }
+
+                    if (hasAdjacentTile)
+                    {
+                        Vector3 basePos = currentBombCell;
+                        yield return ShakeBombVisual(currentBomb, basePos, chainTransferDelaySeconds, stopShakeAmplitude, stopShakeFrequency);
+
+                        BeginTileMover(nextCell, adjacentTile);
+
+                        SLog($"MixedChain | transfer Bomb -> Tile (adjacent) | nextCell={nextCell} tile={adjacentTile.name}");
+                        continue;
+                    }
+
+                    SLog($"MixedChain | trying StartBombKick | bomb={currentBomb.name} pos={currentBomb.transform.position} isBeingKicked={currentBomb.IsBeingKicked} canBeKicked={currentBomb.CanBeKicked}");
+
+                    bool started = StartBombKick(currentBomb, kickDir, destructibleTilemap);
+                    if (!started)
+                    {
+                        SLog($"MixedChain | StartBombKick FAILED | bomb={currentBomb.name}");
+                        break;
+                    }
+
+                    SLog($"MixedChain | StartBombKick OK | bomb={currentBomb.name}");
+
+                    Vector2 currentCell = SnapToGrid(currentBomb.transform.position, tileSize);
+                    Bomb nextBomb = null;
+                    TileBase nextTile = null;
+                    Vector3Int nextTileCell = default;
+                    bool endedBySolid = false;
+                    float nextMoveLogTime = Time.time;
+
+                    while (currentBomb != null && currentBomb.IsBeingKicked && enabledAbility && movement != null && !movement.isDead)
+                    {
+                        ReleaseInputIfNeeded();
+
+                        Vector2 snapped = SnapToGrid(currentBomb.transform.position, tileSize);
+                        if (snapped != currentCell)
+                        {
+                            currentCell = snapped;
+                            SLog($"MixedChain | Bomb advanced cell | bomb={currentBomb.name} cell={currentCell}");
+                        }
+
+                        if (Time.time >= nextMoveLogTime)
+                        {
+                            nextMoveLogTime = Time.time + 0.08f;
+                            SLog($"MixedChain | Bomb moving | bomb={currentBomb.name} worldPos={currentBomb.transform.position} snapped={snapped} currentCell={currentCell} isBeingKicked={currentBomb.IsBeingKicked}");
+                        }
+
+                        Vector2 nextBombCellWorld = currentCell + kickDir * tileSize;
+                        nextTileCell = new Vector3Int(
+                            Mathf.RoundToInt(nextBombCellWorld.x / tileSize),
+                            Mathf.RoundToInt(nextBombCellWorld.y / tileSize),
+                            0);
+
+                        if (TryGetBombAtCell(nextBombCellWorld, out Bomb foundBomb) &&
+                            foundBomb != null &&
+                            foundBomb != currentBomb &&
+                            !foundBomb.IsBeingKicked)
+                        {
+                            nextBomb = foundBomb;
+                            SLog($"MixedChain | transfer Bomb -> Bomb | currentBomb={currentBomb.name} nextBomb={nextBomb.name} nextCell={nextBombCellWorld}");
+                            break;
+                        }
+
+                        if (TryGetDestructibleAtCell(destructibleTilemap, nextTileCell, out TileBase foundTile))
+                        {
+                            nextTile = foundTile;
+                            SLog($"MixedChain | transfer Bomb -> Tile | currentBomb={currentBomb.name} nextCell={nextTileCell} tile={nextTile.name}");
+                            break;
+                        }
+
+                        if (IsMixedChainSolidAt(nextBombCellWorld, kickDir, currentBomb))
+                        {
+                            endedBySolid = true;
+                            SLog($"MixedChain | Bomb endedBySolid | nextCell={nextBombCellWorld} bomb={currentBomb.name}");
+                            break;
+                        }
+
+                        yield return null;
+                    }
+
+                    if (currentBomb != null)
+                    {
+                        SLog($"MixedChain | Bomb loop ended | bomb={currentBomb.name} isBeingKicked={currentBomb.IsBeingKicked} pos={currentBomb.transform.position}");
+                    }
+
+                    if (currentBomb != null && currentBomb.IsBeingKicked)
+                    {
+                        SLog($"MixedChain | StopKickAndSnapToGrid | bomb={currentBomb.name}");
+                        currentBomb.StopKickAndSnapToGrid(tileSize);
+                    }
+
+                    if (nextBomb != null)
+                    {
+                        Vector3 stopPos = currentBomb != null
+                            ? (Vector3)SnapToGrid(currentBomb.transform.position, tileSize)
+                            : Vector3.zero;
+
+                        if (currentBomb != null)
+                            yield return ShakeBombVisual(currentBomb, stopPos, chainTransferDelaySeconds, stopShakeAmplitude, stopShakeFrequency);
+                        else
+                            yield return WaitSecondsAndReleaseInput(chainTransferDelaySeconds, animEndTime, releaseInputIfNeeded);
+
+                        currentBomb = nextBomb;
+                        moverType = ChainMoverType.Bomb;
+                        continue;
+                    }
+
+                    if (nextTile != null)
+                    {
+                        Vector3 stopPos = currentBomb != null
+                            ? (Vector3)SnapToGrid(currentBomb.transform.position, tileSize)
+                            : Vector3.zero;
+
+                        if (currentBomb != null)
+                            yield return ShakeBombVisual(currentBomb, stopPos, chainTransferDelaySeconds, stopShakeAmplitude, stopShakeFrequency);
+                        else
+                            yield return WaitSecondsAndReleaseInput(chainTransferDelaySeconds, animEndTime, releaseInputIfNeeded);
+
+                        BeginTileMover(nextTileCell, nextTile);
+                        continue;
+                    }
+
+                    if (endedBySolid && currentBomb != null)
+                    {
+                        Vector3 basePos = SnapToGrid(currentBomb.transform.position, tileSize);
+                        yield return ShakeBombVisual(currentBomb, basePos, chainTransferDelaySeconds, stopShakeAmplitude, stopShakeFrequency);
+                    }
+
+                    break;
                 }
-
-                release(currentCell);
-                ApplyShadowForCell(currentCell);
-
-                currentCell = nextCell;
             }
 
             float finalWait = Mathf.Max(0f, animEndTime - Time.time);
             if (finalWait > 0f)
             {
-                yield return WaitSecondsAndReleaseInput(finalWait, animEndTime, () =>
-                {
-                    if (!inputUnlockedAfterAnim)
-                    {
-                        inputUnlockedAfterAnim = true;
-                        if (movement != null)
-                            movement.SetInputLocked(false);
-                        SLog("KickRoutine | input unlocked in finalWait");
-                    }
-                });
+                SLog($"MixedChain | finalWait={finalWait:0.000}");
+                yield return WaitSecondsAndReleaseInput(finalWait, animEndTime, releaseInputIfNeeded);
             }
-            else if (!inputUnlockedAfterAnim && movement != null)
+            else
             {
-                inputUnlockedAfterAnim = true;
-                movement.SetInputLocked(false);
-                SLog("KickRoutine | input unlocked after destructible path");
-            }
-
-            if (endedBySolid && ghost != null && enabledAbility && movement != null && !movement.isDead)
-            {
-                Vector3 basePos = destructibleTilemap.GetCellCenterWorld(currentCell);
-                yield return ShakeGhost(ghost, basePos, chainTransferDelaySeconds, stopShakeAmplitude, stopShakeFrequency);
-                if (ghost != null)
-                    ghost.transform.position = basePos;
+                SLog("MixedChain | release input immediately");
+                releaseInputIfNeeded?.Invoke();
             }
         }
         finally
@@ -445,171 +620,17 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
             foreach (var c in reservedLocal)
                 _reservedCells.Remove(c);
 
-            if (destructibleTilemap != null && tileRemovedFromMap)
+            if (destructibleTilemap != null && tileRemovedFromMap && currentTile != null)
             {
-                destructibleTilemap.SetTile(currentCell, movingTile);
-                destructibleTilemap.RefreshTile(currentCell);
+                destructibleTilemap.SetTile(currentTileCell, currentTile);
+                destructibleTilemap.RefreshTile(currentTileCell);
             }
 
-            ApplyShadowForCell(currentCell);
+            if (destructibleTilemap != null)
+                ApplyShadowForCell(currentTileCell);
 
-            if (!deathCancelInProgress)
-            {
-                if (movement != null)
-                    movement.SetInputLocked(false);
-            }
-
-            SLog("KickRoutine | finally end");
-            routine = null;
-            deathCancelInProgress = false;
+            SLog("MixedChain | end");
         }
-    }
-
-    IEnumerator KickBombChainRoutine(Bomb firstBomb, Vector2 dir, Tilemap destructibleTilemap, float animEndTime, System.Action releaseInputIfNeeded)
-    {
-        if (firstBomb == null)
-        {
-            SLog("KickBombChainRoutine | firstBomb is null");
-            yield return WaitSecondsAndReleaseInput(kickCooldownSeconds, animEndTime, releaseInputIfNeeded);
-            yield break;
-        }
-
-        Vector2 kickDir = dir.normalized;
-        float tileSize = movement != null ? movement.tileSize : 1f;
-
-        Bomb currentBomb = firstBomb;
-        int transfers = 0;
-
-        SLog($"KickBombChainRoutine | start | firstBomb={firstBomb.name} dir={kickDir} tileSize={tileSize:0.###}");
-
-        while (currentBomb != null && enabledAbility && movement != null && !movement.isDead)
-        {
-            if (Time.time >= animEndTime)
-                releaseInputIfNeeded?.Invoke();
-
-            SLog($"KickBombChainRoutine | trying StartBombKick | bomb={currentBomb.name} pos={currentBomb.transform.position} isBeingKicked={currentBomb.IsBeingKicked} canBeKicked={currentBomb.CanBeKicked}");
-
-            bool started = StartBombKick(currentBomb, kickDir, destructibleTilemap);
-            if (!started)
-            {
-                SLog($"KickBombChainRoutine | StartBombKick FAILED | bomb={currentBomb.name}");
-                break;
-            }
-
-            SLog($"KickBombChainRoutine | StartBombKick OK | bomb={currentBomb.name}");
-
-            Vector2 currentCell = SnapToGrid(currentBomb.transform.position, tileSize);
-            Bomb nextBomb = null;
-            bool endedBySolid = false;
-            float nextMoveLogTime = Time.time;
-
-            while (currentBomb != null && currentBomb.IsBeingKicked && enabledAbility && movement != null && !movement.isDead)
-            {
-                if (Time.time >= animEndTime)
-                    releaseInputIfNeeded?.Invoke();
-
-                Vector2 snapped = SnapToGrid(currentBomb.transform.position, tileSize);
-                if (snapped != currentCell)
-                {
-                    currentCell = snapped;
-                    SLog($"KickBombChainRoutine | bomb advanced cell | bomb={currentBomb.name} cell={currentCell}");
-                }
-
-                if (Time.time >= nextMoveLogTime)
-                {
-                    nextMoveLogTime = Time.time + 0.08f;
-                    SLog($"KickBombChainRoutine | bomb moving | bomb={currentBomb.name} worldPos={currentBomb.transform.position} snapped={snapped} currentCell={currentCell} isBeingKicked={currentBomb.IsBeingKicked}");
-                }
-
-                Vector2 nextCell = currentCell + kickDir * tileSize;
-
-                if (TryGetBombAtCell(nextCell, out Bomb foundBomb) &&
-                    foundBomb != null &&
-                    foundBomb != currentBomb &&
-                    !foundBomb.IsBeingKicked)
-                {
-                    nextBomb = foundBomb;
-                    SLog($"KickBombChainRoutine | collision with next bomb | currentBomb={currentBomb.name} nextBomb={nextBomb.name} nextCell={nextCell}");
-                    break;
-                }
-
-                if (IsBombChainSolidAt(nextCell, kickDir, currentBomb))
-                {
-                    endedBySolid = true;
-                    SLog($"KickBombChainRoutine | endedBySolid at nextCell={nextCell} for bomb={currentBomb.name}");
-                    break;
-                }
-
-                yield return null;
-            }
-
-            if (currentBomb != null)
-            {
-                SLog($"KickBombChainRoutine | bomb loop ended | bomb={currentBomb.name} isBeingKicked={currentBomb.IsBeingKicked} pos={currentBomb.transform.position}");
-            }
-
-            if (currentBomb != null && currentBomb.IsBeingKicked)
-            {
-                SLog($"KickBombChainRoutine | StopKickAndSnapToGrid | bomb={currentBomb.name}");
-                currentBomb.StopKickAndSnapToGrid(tileSize);
-            }
-
-            if (nextBomb != null)
-            {
-                transfers++;
-                if (transfers > maxChainTransfers)
-                {
-                    SLog($"KickBombChainRoutine | stopped by max transfers={maxChainTransfers}");
-                    break;
-                }
-
-                Vector3 stopPos = currentBomb != null
-                    ? (Vector3)SnapToGrid(currentBomb.transform.position, tileSize)
-                    : Vector3.zero;
-
-                if (currentBomb != null)
-                {
-                    SLog($"KickBombChainRoutine | transfer shake | currentBomb={currentBomb.name} nextBomb={nextBomb.name} stopPos={stopPos}");
-                    yield return ShakeBombVisual(currentBomb, stopPos, chainTransferDelaySeconds, stopShakeAmplitude, stopShakeFrequency);
-                }
-                else
-                {
-                    yield return WaitSecondsAndReleaseInput(chainTransferDelaySeconds, animEndTime, releaseInputIfNeeded);
-                }
-
-                currentBomb = nextBomb;
-                continue;
-            }
-
-            if (endedBySolid)
-            {
-                Vector3 basePos = currentBomb != null
-                    ? (Vector3)SnapToGrid(currentBomb.transform.position, tileSize)
-                    : Vector3.zero;
-
-                if (currentBomb != null)
-                {
-                    SLog($"KickBombChainRoutine | final shake on bomb={currentBomb.name} at {basePos}");
-                    yield return ShakeBombVisual(currentBomb, basePos, chainTransferDelaySeconds, stopShakeAmplitude, stopShakeFrequency);
-                }
-            }
-
-            break;
-        }
-
-        float finalWait = Mathf.Max(0f, animEndTime - Time.time);
-        if (finalWait > 0f)
-        {
-            SLog($"KickBombChainRoutine | finalWait={finalWait:0.000}");
-            yield return WaitSecondsAndReleaseInput(finalWait, animEndTime, releaseInputIfNeeded);
-        }
-        else
-        {
-            SLog("KickBombChainRoutine | release input immediately");
-            releaseInputIfNeeded?.Invoke();
-        }
-
-        SLog("KickBombChainRoutine | end");
     }
 
     bool TryGetBombInFront(Vector2 dir, out Bomb bomb)
@@ -674,6 +695,20 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
         return false;
     }
 
+    bool TryGetDestructibleAtCell(Tilemap destructibleTilemap, Vector3Int cell, out TileBase tile)
+    {
+        tile = null;
+
+        if (destructibleTilemap == null)
+            return false;
+
+        tile = destructibleTilemap.GetTile(cell);
+        if (tile == null)
+            return false;
+
+        return true;
+    }
+
     bool StartBombKick(Bomb bomb, Vector2 dir, Tilemap destructibleTilemap)
     {
         if (bomb == null)
@@ -717,23 +752,23 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
         return result;
     }
 
-    bool IsBombChainSolidAt(Vector2 nextCell, Vector2 dir, Bomb currentBomb)
+    bool IsMixedChainSolidAt(Vector2 nextCell, Vector2 dir, Bomb currentBomb)
     {
         if (movement == null)
         {
-            SLog("IsBombChainSolidAt | movement is null, returning true");
+            SLog("IsMixedChainSolidAt | movement is null, returning true");
             return true;
         }
 
         if (HasItemAt(nextCell))
         {
-            SLog($"IsBombChainSolidAt | item blocking at {nextCell}");
+            SLog($"IsMixedChainSolidAt | item blocking at {nextCell}");
             return true;
         }
 
         if (HasPlayerAt(nextCell))
         {
-            SLog($"IsBombChainSolidAt | player blocking at {nextCell}");
+            SLog($"IsMixedChainSolidAt | player blocking at {nextCell}");
             return true;
         }
 
@@ -773,7 +808,7 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
             if (hit.isTrigger)
                 continue;
 
-            SLog($"IsBombChainSolidAt | collider blocking | nextCell={nextCell} hit={hit.name} layer={LayerMask.LayerToName(hit.gameObject.layer)} trigger={hit.isTrigger}");
+            SLog($"IsMixedChainSolidAt | collider blocking | nextCell={nextCell} hit={hit.name} layer={LayerMask.LayerToName(hit.gameObject.layer)} trigger={hit.isTrigger}");
             return true;
         }
 
@@ -896,7 +931,7 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
             if (!enabledAbility || movement == null || movement.isDead || ghost == null)
                 yield break;
 
-            float t = (Time.time - (end - dur));
+            float t = Time.time - (end - dur);
             float phase = (t * hz) * (Mathf.PI * 2f);
 
             float x = Mathf.Sin(phase + seed) * amp;
@@ -971,45 +1006,6 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
             if (currentGround == gm.groundShadowTile)
                 gm.groundTilemap.SetTile(below, gm.groundTile);
         }
-    }
-
-    BlockType GetBlockType(Tilemap destructibleTilemap, Vector3Int cell, Vector2 dir, out TileBase blockingTile)
-    {
-        blockingTile = destructibleTilemap.GetTile(cell);
-        if (blockingTile != null)
-            return BlockType.Destructible;
-
-        if (_reservedCells.Contains(cell))
-            return BlockType.Solid;
-
-        Vector3 center = destructibleTilemap.GetCellCenterWorld(cell);
-
-        if (HasItemAt(center) || HasPlayerAt(center))
-            return BlockType.Solid;
-
-        Vector2 size = Mathf.Abs(dir.x) > 0.01f
-            ? new Vector2(movement.tileSize * 0.6f, movement.tileSize * 0.2f)
-            : new Vector2(movement.tileSize * 0.2f, movement.tileSize * 0.6f);
-
-        int mask = movement.obstacleMask.value;
-        int enemyLayer = LayerMask.NameToLayer("Enemy");
-        if (enemyLayer >= 0)
-            mask |= 1 << enemyLayer;
-
-        var hits = Physics2D.OverlapBoxAll(center, size, 0f, mask);
-        if (hits == null || hits.Length == 0)
-            return BlockType.None;
-
-        for (int i = 0; i < hits.Length; i++)
-        {
-            var hit = hits[i];
-            if (hit == null || hit.gameObject == gameObject)
-                continue;
-
-            return BlockType.Solid;
-        }
-
-        return BlockType.None;
     }
 
     bool HasItemAt(Vector3 center)
