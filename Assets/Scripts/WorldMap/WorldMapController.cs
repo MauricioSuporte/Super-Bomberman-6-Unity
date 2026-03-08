@@ -29,7 +29,14 @@ public class WorldMapController : MonoBehaviour
         public AudioClip worldMusic;
         [Range(0f, 1f)] public float worldMusicVolume = 1f;
         public bool loopWorldMusic = true;
+
+        [Header("World Focus")]
+        public Vector2 cameraPosition = new Vector2(-1f, -1f);
     }
+
+    [Header("World Camera Focus")]
+    [SerializeField] Camera targetWorldCamera;
+    [SerializeField] bool applyWorldCameraPosition = true;
 
     [Header("Input Owner")]
     [SerializeField, Range(1, 4)] int ownerPlayerId = 1;
@@ -160,6 +167,7 @@ public class WorldMapController : MonoBehaviour
             cursorMovementArea = transform as RectTransform;
 
         currentWorldIndex = Mathf.Clamp(startWorldIndex, 0, Mathf.Max(0, worlds.Count - 1));
+        ApplyCurrentWorldCameraPosition();
 
         Canvas.ForceUpdateCanvases();
 
@@ -295,6 +303,7 @@ public class WorldMapController : MonoBehaviour
 
         currentWorldIndex = targetWorldIndex;
 
+        ApplyCurrentWorldCameraPosition();
         ApplyWorldVisibility();
         ApplyScaledStageAnchorPositions();
         UpdateAllStageIcons();
@@ -380,7 +389,6 @@ public class WorldMapController : MonoBehaviour
             if (worlds[i].root != null)
                 worlds[i].root.SetActive(i == currentWorldIndex);
     }
-
     void SnapCursorToDefaultStage()
     {
         if (cursorMovementArea == null)
@@ -1103,5 +1111,32 @@ public class WorldMapController : MonoBehaviour
         rt.sizeDelta = baseWorldStageLabelSize * scale;
 
         worldStageLabel.fontSize = Mathf.RoundToInt(baseWorldStageLabelFontSize * scale);
+    }
+
+    void EnsureTargetWorldCamera()
+    {
+        if (targetWorldCamera == null)
+            targetWorldCamera = Camera.main;
+    }
+
+    void ApplyCurrentWorldCameraPosition()
+    {
+        if (!applyWorldCameraPosition)
+            return;
+
+        EnsureTargetWorldCamera();
+
+        if (targetWorldCamera == null)
+            return;
+
+        var world = GetCurrentWorld();
+        if (world == null)
+            return;
+
+        Vector3 currentCameraPosition = targetWorldCamera.transform.position;
+        targetWorldCamera.transform.position = new Vector3(
+            world.cameraPosition.x,
+            world.cameraPosition.y,
+            currentCameraPosition.z);
     }
 }
