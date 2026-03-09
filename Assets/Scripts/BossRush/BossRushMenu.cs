@@ -27,16 +27,8 @@ public class BossRushMenu : MonoBehaviour
     [Header("Right Panel")]
     [SerializeField] BossRushRightPanel rightPanel;
 
-    [Header("Top Items")]
-    [SerializeField] Image bombAmountIcon;
-    [SerializeField] Text bombAmountText;
-    [SerializeField] Image fireBlastIcon;
-    [SerializeField] Text fireBlastText;
-    [SerializeField] Image speedIcon;
-    [SerializeField] Text speedText;
-    [SerializeField] Image heartIcon;
-    [SerializeField] Text heartText;
-    [SerializeField] int topItemsFontSize = 16;
+    [Header("Top Panel")]
+    [SerializeField] BossRushTopPanel topPanel;
 
     [Header("Background Sprite")]
     [SerializeField] Sprite[] backgroundSprites = new Sprite[2];
@@ -87,6 +79,9 @@ public class BossRushMenu : MonoBehaviour
     Rect _lastCameraRect;
     Rect _lastRefPixelRect;
 
+    BossRushDifficulty _lastTopDifficulty;
+    bool _topDifficultyInitialized;
+
     public bool ReturnToTitleRequested { get; private set; }
 
     public BossRushDifficulty SelectedDifficulty
@@ -100,8 +95,6 @@ public class BossRushMenu : MonoBehaviour
         }
     }
 
-    int ScaledFont(int baseSize) => Mathf.Clamp(Mathf.RoundToInt(baseSize * _currentUiScale), 8, 300);
-
     void Awake()
     {
         if (root == null)
@@ -110,7 +103,8 @@ public class BossRushMenu : MonoBehaviour
         SLog(
             $"Awake | root={(root != null ? root.name : "NULL")} " +
             $"leftPanel={(leftPanel != null ? leftPanel.name : "NULL")} " +
-            $"rightPanel={(rightPanel != null ? rightPanel.name : "NULL")}"
+            $"rightPanel={(rightPanel != null ? rightPanel.name : "NULL")} " +
+            $"topPanel={(topPanel != null ? topPanel.name : "NULL")}"
         );
 
         ApplyDynamicScaleIfNeeded(true);
@@ -120,6 +114,9 @@ public class BossRushMenu : MonoBehaviour
 
         if (rightPanel != null)
             rightPanel.Initialize(_currentUiScale);
+
+        if (topPanel != null)
+            topPanel.Initialize(_currentUiScale);
 
         ApplyCurrentBackgroundSprite();
 
@@ -140,6 +137,17 @@ public class BossRushMenu : MonoBehaviour
 
         if (rightPanel != null)
             rightPanel.SetDifficulty(SelectedDifficulty);
+
+        if (topPanel != null)
+        {
+            BossRushDifficulty current = SelectedDifficulty;
+            if (!_topDifficultyInitialized || current != _lastTopDifficulty)
+            {
+                topPanel.SetDifficulty(current);
+                _lastTopDifficulty = current;
+                _topDifficultyInitialized = true;
+            }
+        }
     }
 
     public void Hide()
@@ -176,6 +184,7 @@ public class BossRushMenu : MonoBehaviour
 
         ReturnToTitleRequested = false;
         confirmed = false;
+        _topDifficultyInitialized = false;
 
         ResetBackgroundSpriteSwap();
         ApplyCurrentBackgroundSprite();
@@ -184,7 +193,12 @@ public class BossRushMenu : MonoBehaviour
         if (leftPanel != null)
             leftPanel.BuildDifficultyList();
 
-        selectedIndex = Mathf.Clamp((int)BossRushProgress.GetSelectedDifficulty(), 0, leftPanel != null ? Mathf.Max(0, leftPanel.Count - 1) : 0);
+        selectedIndex = Mathf.Clamp(
+            (int)BossRushProgress.GetSelectedDifficulty(),
+            0,
+            leftPanel != null ? Mathf.Max(0, leftPanel.Count - 1) : 0
+        );
+
         SLog($"SelectDifficultyRoutine | selectedIndex={selectedIndex} difficulty={SelectedDifficulty}");
 
         if (leftPanel != null)
@@ -250,6 +264,7 @@ public class BossRushMenu : MonoBehaviour
             {
                 SLog($"Input Move | selectedIndex={selectedIndex} difficulty={SelectedDifficulty}");
                 PlaySfx(moveCursorSfx, moveCursorSfxVolume);
+
                 UpdateDifficultyVisuals();
                 UpdateTopItems();
                 UpdateBestTimes();
@@ -301,33 +316,15 @@ public class BossRushMenu : MonoBehaviour
             leftPanel.UpdateDifficultyVisuals(selectedIndex, confirmed);
     }
 
-    void ApplyScaledFontsToStaticTexts()
-    {
-        if (bombAmountText != null)
-            bombAmountText.fontSize = ScaledFont(topItemsFontSize);
-
-        if (fireBlastText != null)
-            fireBlastText.fontSize = ScaledFont(topItemsFontSize);
-
-        if (speedText != null)
-            speedText.fontSize = ScaledFont(topItemsFontSize);
-
-        if (heartText != null)
-            heartText.fontSize = ScaledFont(topItemsFontSize);
-    }
-
     void UpdateTopItems()
     {
-        int amount = BossRushProgress.GetStartingItemAmount(SelectedDifficulty);
+        if (topPanel == null)
+            return;
 
-        ApplyScaledFontsToStaticTexts();
-
-        if (bombAmountText != null) bombAmountText.text = $"x{amount}";
-        if (fireBlastText != null) fireBlastText.text = $"x{amount}";
-        if (speedText != null) speedText.text = $"x{amount}";
-        if (heartText != null) heartText.text = $"x{amount}";
-
-        SLog($"UpdateTopItems | difficulty={SelectedDifficulty} amount={amount}");
+        BossRushDifficulty current = SelectedDifficulty;
+        topPanel.SetDifficulty(current);
+        _lastTopDifficulty = current;
+        _topDifficultyInitialized = true;
     }
 
     void UpdateBestTimes()
@@ -511,7 +508,9 @@ public class BossRushMenu : MonoBehaviour
     Camera GetMainCameraSafe()
     {
         var cam = Camera.main;
-        if (cam != null) return cam;
+        if (cam != null)
+            return cam;
+
         return FindFirstObjectByType<Camera>();
     }
 
@@ -529,7 +528,8 @@ public class BossRushMenu : MonoBehaviour
         RectTransform rt = referenceRect;
         if (rt == null)
         {
-            if (root != null) rt = root.GetComponent<RectTransform>();
+            if (root != null)
+                rt = root.GetComponent<RectTransform>();
         }
 
         if (rt == null)
@@ -567,7 +567,8 @@ public class BossRushMenu : MonoBehaviour
 
         float baseScaleRaw = Mathf.Min(sx, sy);
         float baseScaleForUi = useIntegerUpscale ? Mathf.Floor(baseScaleRaw) : baseScaleRaw;
-        if (baseScaleForUi < 1f) baseScaleForUi = 1f;
+        if (baseScaleForUi < 1f)
+            baseScaleForUi = 1f;
 
         baseScaleInt = Mathf.Max(1, Mathf.RoundToInt(baseScaleForUi));
 
@@ -605,13 +606,14 @@ public class BossRushMenu : MonoBehaviour
 
         SLog($"ApplyDynamicScaleIfNeeded | uiScale={_currentUiScale:0.###} baseScaleInt={_currentBaseScaleInt} refPx={refPx}");
 
-        ApplyScaledFontsToStaticTexts();
-
         if (leftPanel != null)
             leftPanel.SetUiScale(_currentUiScale);
 
         if (rightPanel != null)
             rightPanel.SetUiScale(_currentUiScale);
+
+        if (topPanel != null)
+            topPanel.SetUiScale(_currentUiScale);
     }
 
     static bool ApproximatelyRect(Rect a, Rect b)
