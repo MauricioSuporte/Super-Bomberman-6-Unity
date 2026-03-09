@@ -26,8 +26,12 @@ public class BossRushLeftPanel : MonoBehaviour
     [SerializeField] Vector2 cursorOffset = new Vector2(-28f, 0f);
     [SerializeField] bool scaleCursorWithUi = true;
     [SerializeField] bool roundCursorToWholePixels = true;
-    [SerializeField] float cursorHeightMultiplier = 1.2f;
+    [SerializeField] float cursorHeightMultiplier = 1.5f;
     [SerializeField] float minCursorSize = 24f;
+    bool _cursorBaseIdle = true;
+    bool _cursorBaseLoop = true;
+    bool _cursorAnimationStateCaptured;
+    bool _cursorAnimatingConfirmed;
 
     readonly List<Text> difficultyTexts = new();
     readonly List<BossRushDifficulty> difficulties = new()
@@ -66,6 +70,10 @@ public class BossRushLeftPanel : MonoBehaviour
                 _cursorBaseSizeDelta = cursorRt.sizeDelta;
                 _cursorBaseSizeCaptured = true;
             }
+
+            _cursorBaseIdle = cursorRenderer.idle;
+            _cursorBaseLoop = cursorRenderer.loop;
+            _cursorAnimationStateCaptured = true;
 
             cursorRenderer.gameObject.SetActive(false);
         }
@@ -240,6 +248,7 @@ public class BossRushLeftPanel : MonoBehaviour
                     : difficultyNormalColor;
         }
 
+        UpdateCursorAnimationState(confirmed);
         UpdateCursorPosition(selectedIndex);
     }
 
@@ -255,7 +264,10 @@ public class BossRushLeftPanel : MonoBehaviour
     public void HideCursor()
     {
         if (cursorRenderer != null)
+        {
+            UpdateCursorAnimationState(false);
             cursorRenderer.gameObject.SetActive(false);
+        }
     }
 
     public void UpdateCursorPosition(int selectedIndex)
@@ -441,6 +453,43 @@ public class BossRushLeftPanel : MonoBehaviour
                 $"canvasRendererCull={txt.canvasRenderer.cull}",
                 this
             );
+        }
+    }
+
+    void UpdateCursorAnimationState(bool confirmed)
+    {
+        if (cursorRenderer == null)
+            return;
+
+        if (!_cursorAnimationStateCaptured)
+        {
+            _cursorBaseIdle = cursorRenderer.idle;
+            _cursorBaseLoop = cursorRenderer.loop;
+            _cursorAnimationStateCaptured = true;
+        }
+
+        if (_cursorAnimatingConfirmed == confirmed)
+            return;
+
+        _cursorAnimatingConfirmed = confirmed;
+
+        if (confirmed)
+        {
+            cursorRenderer.idle = false;
+            cursorRenderer.loop = true;
+            cursorRenderer.CurrentFrame = 0;
+            cursorRenderer.RefreshFrame();
+
+            SLog("UpdateCursorAnimationState | confirmed=True -> cursor animating in loop");
+        }
+        else
+        {
+            cursorRenderer.idle = _cursorBaseIdle;
+            cursorRenderer.loop = _cursorBaseLoop;
+            cursorRenderer.CurrentFrame = 0;
+            cursorRenderer.RefreshFrame();
+
+            SLog("UpdateCursorAnimationState | confirmed=False -> cursor restored to base state");
         }
     }
 

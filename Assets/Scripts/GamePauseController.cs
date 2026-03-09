@@ -17,7 +17,7 @@ public class GamePauseController : MonoBehaviour
     }
 
     [Header("Pause Availability")]
-    private readonly string[] blockedSceneNames = { "TitleScreen", "WorldMap", "SkinSelect", "ControlsMenu" };
+    private readonly string[] blockedSceneNames = { "TitleScreen", "WorldMap", "SkinSelect", "ControlsMenu", "BossRush" };
 
     [Header("SFX (Pause toggle)")]
     public AudioClip pauseSfx;
@@ -36,8 +36,6 @@ public class GamePauseController : MonoBehaviour
 
     [Header("Return / Exit")]
     [SerializeField] float returnToSceneDelayRealtime = 1f;
-
-    [Header("Scene Targets")]
     [SerializeField] string worldMapSceneName = "WorldMap";
     [SerializeField] string titleSceneName = "TitleScreen";
 
