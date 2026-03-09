@@ -1274,26 +1274,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BossRushMenu
   enableSurgicalLogs: 1
-  dumpDifficultyLayoutEveryUpdate: 0
   root: {fileID: 1311323896}
   backgroundImage: {fileID: 1806562754}
   referenceRect: {fileID: 1599199474}
   fadeImage: {fileID: 336813435}
   fadeDuration: 1
   fadeOutOnConfirmDuration: 1.5
-  difficultyListRoot: {fileID: 470050462}
-  difficultyItemPrefab: {fileID: 2139593659}
-  difficultyNormalColor: {r: 1, g: 1, b: 1, a: 1}
-  difficultySelectedColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
-  difficultyConfirmedColor: {r: 1, g: 0.8, b: 0.2, a: 1}
-  fontSize: 42
-  difficultyItemHeight: 32
-  difficultySpacing: {x: 0, y: 10}
-  difficultyContentOffsetX: 64
-  cursorRenderer: {fileID: 1595472544}
-  cursorOffset: {x: -28, y: 0}
-  scaleCursorWithUi: 1
-  roundCursorToWholePixels: 1
+  leftPanel: {fileID: 2134452605}
   bestTimesTitleText: {fileID: 0}
   bestTimesBodyText: {fileID: 0}
   noTimesText: No clear times recorded yet for this difficulty.
@@ -2014,6 +2001,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2134452604}
+  - component: {fileID: 2134452605}
   m_Layer: 5
   m_Name: LeftPanel
   m_TagString: Untagged
@@ -2041,6 +2029,33 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &2134452605
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2134452603}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 944833f79ecad8046b768e1ce2158b3b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BossRushLeftPanel
+  enableSurgicalLogs: 1
+  dumpDifficultyLayoutEveryUpdate: 0
+  difficultyListRoot: {fileID: 470050462}
+  difficultyItemPrefab: {fileID: 2139593659}
+  difficultyNormalColor: {r: 1, g: 1, b: 1, a: 1}
+  difficultySelectedColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
+  difficultyConfirmedColor: {r: 1, g: 0.8, b: 0.2, a: 1}
+  fontSize: 32
+  difficultyItemHeight: 32
+  difficultySpacing: {x: 0, y: 10}
+  difficultyContentOffsetX: 64
+  cursorRenderer: {fileID: 1595472544}
+  cursorOffset: {x: -28, y: 0}
+  scaleCursorWithUi: 1
+  roundCursorToWholePixels: 1
 --- !u!1 &2139593657
 GameObject:
   m_ObjectHideFlags: 0

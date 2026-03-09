@@ -9,7 +9,6 @@ public class BossRushMenu : MonoBehaviour
 
     [Header("Debug (Surgical Logs)")]
     [SerializeField] bool enableSurgicalLogs = true;
-    [SerializeField] bool dumpDifficultyLayoutEveryUpdate = false;
 
     [Header("UI Root")]
     [SerializeField] GameObject root;
@@ -23,22 +22,8 @@ public class BossRushMenu : MonoBehaviour
     [SerializeField] float fadeDuration = 1f;
     [SerializeField] float fadeOutOnConfirmDuration = 1.5f;
 
-    [Header("Difficulty List")]
-    [SerializeField] RectTransform difficultyListRoot;
-    [SerializeField] Text difficultyItemPrefab;
-    [SerializeField] Color difficultyNormalColor = Color.white;
-    [SerializeField] Color difficultySelectedColor = Color.yellow;
-    [SerializeField] Color difficultyConfirmedColor = new Color(1f, 0.8f, 0.2f, 1f);
-    [SerializeField] int fontSize = 18;
-    [SerializeField] float difficultyItemHeight = 32f;
-    [SerializeField] Vector2 difficultySpacing = new Vector2(0f, 10f);
-    [SerializeField] float difficultyContentOffsetX = 32f;
-
-    [Header("Cursor")]
-    [SerializeField] AnimatedSpriteRenderer cursorRenderer;
-    [SerializeField] Vector2 cursorOffset = new Vector2(-28f, 0f);
-    [SerializeField] bool scaleCursorWithUi = true;
-    [SerializeField] bool roundCursorToWholePixels = true;
+    [Header("Left Panel")]
+    [SerializeField] BossRushLeftPanel leftPanel;
 
     [Header("Best Times")]
     [SerializeField] Text bestTimesTitleText;
@@ -86,15 +71,6 @@ public class BossRushMenu : MonoBehaviour
     [SerializeField, Min(0.01f)] float minScale = 0.5f;
     [SerializeField, Min(0.01f)] float maxScale = 10f;
 
-    readonly List<Text> difficultyTexts = new();
-    readonly List<BossRushDifficulty> difficulties = new()
-    {
-        BossRushDifficulty.Easy,
-        BossRushDifficulty.Normal,
-        BossRushDifficulty.Hard,
-        BossRushDifficulty.Nightmare
-    };
-
     int selectedIndex;
     bool confirmed;
     bool menuActive;
@@ -116,38 +92,33 @@ public class BossRushMenu : MonoBehaviour
     Rect _lastCameraRect;
     Rect _lastRefPixelRect;
 
-    Vector3 _cursorBaseLocalScale = Vector3.one;
-    bool _cursorBaseScaleCaptured;
-
-    int _baseLayoutPaddingLeft;
-    int _baseLayoutPaddingRight;
-    int _baseLayoutPaddingTop;
-    int _baseLayoutPaddingBottom;
-    bool _layoutPaddingCaptured;
-
     public bool ReturnToTitleRequested { get; private set; }
-    public BossRushDifficulty SelectedDifficulty => difficulties[Mathf.Clamp(selectedIndex, 0, difficulties.Count - 1)];
+
+    public BossRushDifficulty SelectedDifficulty
+    {
+        get
+        {
+            if (leftPanel == null || leftPanel.Count == 0)
+                return BossRushDifficulty.Normal;
+
+            return leftPanel.GetDifficultyAt(selectedIndex);
+        }
+    }
 
     int ScaledFont(int baseSize) => Mathf.Clamp(Mathf.RoundToInt(baseSize * _currentUiScale), 8, 300);
-    float ScaledFloat(float baseValue) => baseValue * _currentUiScale;
 
     void Awake()
     {
         if (root == null)
             root = gameObject;
 
-        SLog($"Awake | root={(root != null ? root.name : "NULL")} difficultyListRoot={(difficultyListRoot != null ? difficultyListRoot.name : "NULL")} difficultyItemPrefab={(difficultyItemPrefab != null ? difficultyItemPrefab.name : "NULL")}");
+        SLog($"Awake | root={(root != null ? root.name : "NULL")} leftPanel={(leftPanel != null ? leftPanel.name : "NULL")}");
 
-        if (cursorRenderer != null)
-        {
-            _cursorBaseLocalScale = cursorRenderer.transform.localScale;
-            _cursorBaseScaleCaptured = true;
-            cursorRenderer.gameObject.SetActive(false);
-        }
-
-        CaptureBaseLayoutPadding();
         ApplyDynamicScaleIfNeeded(true);
-        BuildDifficultyList();
+
+        if (leftPanel != null)
+            leftPanel.Initialize(_currentUiScale);
+
         ApplyCurrentBackgroundSprite();
 
         if (root != null)
@@ -161,10 +132,9 @@ public class BossRushMenu : MonoBehaviour
 
         ApplyDynamicScaleIfNeeded(false);
         TickBackgroundSpriteSwap();
-        UpdateDifficultyVisuals();
 
-        if (dumpDifficultyLayoutEveryUpdate)
-            DumpDifficultyState("Update");
+        if (leftPanel != null)
+            leftPanel.UpdateDifficultyVisuals(selectedIndex, confirmed);
     }
 
     public void Hide()
@@ -172,8 +142,8 @@ public class BossRushMenu : MonoBehaviour
         menuActive = false;
         SLog("Hide | menuActive=false");
 
-        if (cursorRenderer != null)
-            cursorRenderer.gameObject.SetActive(false);
+        if (leftPanel != null)
+            leftPanel.HideCursor();
 
         if (root != null)
             root.SetActive(false);
@@ -205,22 +175,22 @@ public class BossRushMenu : MonoBehaviour
         ResetBackgroundSpriteSwap();
         ApplyCurrentBackgroundSprite();
         ApplyDynamicScaleIfNeeded(true);
-        BuildDifficultyList();
 
-        selectedIndex = Mathf.Clamp((int)BossRushProgress.GetSelectedDifficulty(), 0, difficulties.Count - 1);
+        if (leftPanel != null)
+            leftPanel.BuildDifficultyList();
+
+        selectedIndex = Mathf.Clamp((int)BossRushProgress.GetSelectedDifficulty(), 0, leftPanel != null ? Mathf.Max(0, leftPanel.Count - 1) : 0);
         SLog($"SelectDifficultyRoutine | selectedIndex={selectedIndex} difficulty={SelectedDifficulty}");
 
-        if (cursorRenderer != null)
-        {
-            cursorRenderer.gameObject.SetActive(true);
-            cursorRenderer.RefreshFrame();
-        }
+        if (leftPanel != null)
+            leftPanel.ShowCursor();
 
         UpdateDifficultyVisuals();
         UpdateTopItems();
         UpdateBestTimes();
 
-        DumpDifficultyState("After Build + UpdateVisuals");
+        if (leftPanel != null)
+            leftPanel.DumpState("After Build + UpdateVisuals");
 
         StartSelectMusic();
 
@@ -260,13 +230,13 @@ public class BossRushMenu : MonoBehaviour
             {
                 selectedIndex--;
                 if (selectedIndex < 0)
-                    selectedIndex = difficulties.Count - 1;
+                    selectedIndex = leftPanel != null ? leftPanel.Count - 1 : 0;
                 moved = true;
             }
             else if (input.GetDown(1, PlayerAction.MoveDown))
             {
                 selectedIndex++;
-                if (selectedIndex >= difficulties.Count)
+                if (leftPanel != null && selectedIndex >= leftPanel.Count)
                     selectedIndex = 0;
                 moved = true;
             }
@@ -278,7 +248,9 @@ public class BossRushMenu : MonoBehaviour
                 UpdateDifficultyVisuals();
                 UpdateTopItems();
                 UpdateBestTimes();
-                DumpDifficultyState("After Move");
+
+                if (leftPanel != null)
+                    leftPanel.DumpState("After Move");
             }
 
             if (input.GetDown(1, PlayerAction.ActionB))
@@ -318,147 +290,14 @@ public class BossRushMenu : MonoBehaviour
             fadeImage.gameObject.SetActive(false);
     }
 
-    void CaptureBaseLayoutPadding()
+    void UpdateDifficultyVisuals()
     {
-        if (_layoutPaddingCaptured || difficultyListRoot == null)
-            return;
-
-        var layout = difficultyListRoot.GetComponent<VerticalLayoutGroup>();
-        if (layout == null)
-            return;
-
-        _baseLayoutPaddingLeft = layout.padding.left;
-        _baseLayoutPaddingRight = layout.padding.right;
-        _baseLayoutPaddingTop = layout.padding.top;
-        _baseLayoutPaddingBottom = layout.padding.bottom;
-        _layoutPaddingCaptured = true;
-    }
-
-    void ApplyDifficultyListLayoutSettings()
-    {
-        if (difficultyListRoot == null)
-            return;
-
-        var layout = difficultyListRoot.GetComponent<VerticalLayoutGroup>();
-        if (layout == null)
-            return;
-
-        CaptureBaseLayoutPadding();
-
-        layout.spacing = ScaledFloat(difficultySpacing.y);
-        layout.childAlignment = TextAnchor.MiddleLeft;
-        layout.childForceExpandHeight = false;
-        layout.childForceExpandWidth = true;
-        layout.childControlHeight = true;
-        layout.childControlWidth = true;
-
-        layout.padding.left = _baseLayoutPaddingLeft + Mathf.RoundToInt(ScaledFloat(difficultyContentOffsetX));
-        layout.padding.right = _baseLayoutPaddingRight;
-        layout.padding.top = _baseLayoutPaddingTop;
-        layout.padding.bottom = _baseLayoutPaddingBottom;
-    }
-
-    void BuildDifficultyList()
-    {
-        difficultyTexts.Clear();
-
-        if (difficultyListRoot == null || difficultyItemPrefab == null)
-        {
-            SLog($"BuildDifficultyList ABORT | difficultyListRoot={(difficultyListRoot == null ? "NULL" : difficultyListRoot.name)} difficultyItemPrefab={(difficultyItemPrefab == null ? "NULL" : difficultyItemPrefab.name)}");
-            return;
-        }
-
-        SLog($"BuildDifficultyList START | root={difficultyListRoot.name} childCount(before)={difficultyListRoot.childCount} prefabActiveSelf={difficultyItemPrefab.gameObject.activeSelf}");
-
-        ApplyDifficultyListLayoutSettings();
-
-        var layout = difficultyListRoot.GetComponent<VerticalLayoutGroup>();
-        if (layout != null)
-            SLog($"BuildDifficultyList | VerticalLayoutGroup found spacing={layout.spacing} childAlignment={layout.childAlignment} paddingLeft={layout.padding.left}");
-        else
-            SLog("BuildDifficultyList | VerticalLayoutGroup NOT FOUND on difficultyListRoot");
-
-        for (int i = difficultyListRoot.childCount - 1; i >= 0; i--)
-        {
-            var child = difficultyListRoot.GetChild(i);
-            if (child == null)
-                continue;
-
-            if (child == difficultyItemPrefab.transform)
-                continue;
-
-            if (cursorRenderer != null && child == cursorRenderer.transform)
-                continue;
-
-            SLog($"BuildDifficultyList | Destroy old child='{child.name}' index={i}");
-            Destroy(child.gameObject);
-        }
-
-        difficultyItemPrefab.gameObject.SetActive(false);
-
-        for (int i = 0; i < difficulties.Count; i++)
-        {
-            var txt = Instantiate(difficultyItemPrefab, difficultyListRoot);
-            txt.gameObject.SetActive(true);
-            txt.enabled = true;
-            txt.text = GetDifficultyDisplayName(difficulties[i]);
-            txt.fontSize = ScaledFont(fontSize);
-            txt.color = difficultyNormalColor;
-            txt.transform.SetAsLastSibling();
-            txt.horizontalOverflow = HorizontalWrapMode.Overflow;
-            txt.verticalOverflow = VerticalWrapMode.Overflow;
-            txt.alignment = TextAnchor.MiddleLeft;
-            txt.resizeTextForBestFit = false;
-
-            var rt = txt.rectTransform;
-            rt.anchorMin = new Vector2(0f, 0.5f);
-            rt.anchorMax = new Vector2(1f, 0.5f);
-            rt.pivot = new Vector2(0f, 0.5f);
-            rt.anchoredPosition = Vector2.zero;
-            rt.sizeDelta = new Vector2(0f, ScaledFloat(difficultyItemHeight));
-            rt.offsetMin = new Vector2(0f, 0f);
-            rt.offsetMax = new Vector2(0f, 0f);
-
-            var le = txt.GetComponent<LayoutElement>();
-            if (le == null)
-                le = txt.gameObject.AddComponent<LayoutElement>();
-
-            le.ignoreLayout = false;
-            le.minHeight = ScaledFloat(difficultyItemHeight);
-            le.preferredHeight = ScaledFloat(difficultyItemHeight);
-            le.flexibleHeight = 0f;
-            le.minWidth = 0f;
-            le.preferredWidth = 0f;
-            le.flexibleWidth = 1f;
-
-            difficultyTexts.Add(txt);
-
-            SLog(
-                $"BuildDifficultyList | Created index={i} name='{txt.name}' text='{txt.text}' " +
-                $"activeSelf={txt.gameObject.activeSelf} activeInHierarchy={txt.gameObject.activeInHierarchy} " +
-                $"parent='{txt.transform.parent.name}' siblingIndex={txt.transform.GetSiblingIndex()} " +
-                $"anchoredPos={rt.anchoredPosition} sizeDelta={rt.sizeDelta} rect={rt.rect} " +
-                $"anchorMin={rt.anchorMin} anchorMax={rt.anchorMax} pivot={rt.pivot} " +
-                $"color={txt.color} font={(txt.font != null ? txt.font.name : "NULL")} fontSize={txt.fontSize}"
-            );
-        }
-
-        if (cursorRenderer != null)
-            cursorRenderer.transform.SetAsLastSibling();
-
-        ApplyScaledFontsToStaticTexts();
-
-        Canvas.ForceUpdateCanvases();
-        LayoutRebuilder.ForceRebuildLayoutImmediate(difficultyListRoot);
-        UpdateCursorPosition();
-        DumpDifficultyState("BuildDifficultyList END");
+        if (leftPanel != null)
+            leftPanel.UpdateDifficultyVisuals(selectedIndex, confirmed);
     }
 
     void ApplyScaledFontsToStaticTexts()
     {
-        if (difficultyItemPrefab != null)
-            difficultyItemPrefab.fontSize = ScaledFont(fontSize);
-
         if (bestTimesTitleText != null)
             bestTimesTitleText.fontSize = ScaledFont(bestTimesTitleFontSize);
 
@@ -476,86 +315,6 @@ public class BossRushMenu : MonoBehaviour
 
         if (heartText != null)
             heartText.fontSize = ScaledFont(topItemsFontSize);
-    }
-
-    void ApplyCursorScale()
-    {
-        if (!scaleCursorWithUi || cursorRenderer == null)
-            return;
-
-        if (!_cursorBaseScaleCaptured)
-        {
-            _cursorBaseLocalScale = cursorRenderer.transform.localScale;
-            _cursorBaseScaleCaptured = true;
-        }
-
-        float s = _currentUiScale;
-        cursorRenderer.transform.localScale = new Vector3(
-            _cursorBaseLocalScale.x * s,
-            _cursorBaseLocalScale.y * s,
-            _cursorBaseLocalScale.z
-        );
-    }
-
-    void UpdateCursorPosition()
-    {
-        if (cursorRenderer == null)
-            return;
-
-        if (selectedIndex < 0 || selectedIndex >= difficultyTexts.Count)
-        {
-            cursorRenderer.gameObject.SetActive(false);
-            return;
-        }
-
-        var txt = difficultyTexts[selectedIndex];
-        if (txt == null)
-        {
-            cursorRenderer.gameObject.SetActive(false);
-            return;
-        }
-
-        cursorRenderer.gameObject.SetActive(true);
-
-        Vector3 localPos = txt.rectTransform.localPosition;
-        localPos.x += ScaledFloat(cursorOffset.x);
-        localPos.y += ScaledFloat(cursorOffset.y);
-        localPos.z = 0f;
-
-        if (roundCursorToWholePixels)
-        {
-            localPos.x = Mathf.Round(localPos.x);
-            localPos.y = Mathf.Round(localPos.y);
-        }
-
-        cursorRenderer.SetExternalBaseLocalPosition(localPos);
-    }
-
-    void UpdateDifficultyVisuals()
-    {
-        for (int i = 0; i < difficultyTexts.Count; i++)
-        {
-            var txt = difficultyTexts[i];
-            if (txt == null)
-            {
-                SLog($"UpdateDifficultyVisuals | index={i} text=NULL");
-                continue;
-            }
-
-            txt.fontSize = ScaledFont(fontSize);
-
-            bool isSelected = i == selectedIndex;
-
-            txt.text = GetDifficultyDisplayName(difficulties[i]);
-
-            txt.color = confirmed && isSelected
-                ? difficultyConfirmedColor
-                : isSelected
-                    ? difficultySelectedColor
-                    : difficultyNormalColor;
-        }
-
-        UpdateCursorPosition();
     }
 
     void UpdateTopItems()
@@ -806,8 +565,7 @@ public class BossRushMenu : MonoBehaviour
         RectTransform rt = referenceRect;
         if (rt == null)
         {
-            if (difficultyListRoot != null) rt = difficultyListRoot;
-            else if (root != null) rt = root.GetComponent<RectTransform>();
+            if (root != null) rt = root.GetComponent<RectTransform>();
         }
 
         if (rt == null)
@@ -884,39 +642,9 @@ public class BossRushMenu : MonoBehaviour
         SLog($"ApplyDynamicScaleIfNeeded | uiScale={_currentUiScale:0.###} baseScaleInt={_currentBaseScaleInt} refPx={refPx}");
 
         ApplyScaledFontsToStaticTexts();
-        ApplyCursorScale();
-        ApplyDifficultyListLayoutSettings();
 
-        if (difficultyTexts.Count > 0)
-        {
-            for (int i = 0; i < difficultyTexts.Count; i++)
-            {
-                if (difficultyTexts[i] == null)
-                    continue;
-
-                difficultyTexts[i].fontSize = ScaledFont(fontSize);
-
-                var rt = difficultyTexts[i].rectTransform;
-                rt.sizeDelta = new Vector2(0f, ScaledFloat(difficultyItemHeight));
-
-                var le = difficultyTexts[i].GetComponent<LayoutElement>();
-                if (le != null)
-                {
-                    le.minHeight = ScaledFloat(difficultyItemHeight);
-                    le.preferredHeight = ScaledFloat(difficultyItemHeight);
-                }
-            }
-
-            var layout = difficultyListRoot != null ? difficultyListRoot.GetComponent<VerticalLayoutGroup>() : null;
-            if (layout != null)
-                layout.spacing = ScaledFloat(difficultySpacing.y);
-
-            Canvas.ForceUpdateCanvases();
-            if (difficultyListRoot != null)
-                LayoutRebuilder.ForceRebuildLayoutImmediate(difficultyListRoot);
-
-            UpdateCursorPosition();
-        }
+        if (leftPanel != null)
+            leftPanel.SetUiScale(_currentUiScale);
     }
 
     static bool ApproximatelyRect(Rect a, Rect b)
@@ -926,58 +654,6 @@ public class BossRushMenu : MonoBehaviour
             Mathf.Abs(a.y - b.y) < 0.01f &&
             Mathf.Abs(a.width - b.width) < 0.01f &&
             Mathf.Abs(a.height - b.height) < 0.01f;
-    }
-
-    void DumpDifficultyState(string context)
-    {
-        if (!enableSurgicalLogs)
-            return;
-
-        if (difficultyListRoot == null)
-        {
-            Debug.Log($"{LOG} {context} | difficultyListRoot=NULL", this);
-            return;
-        }
-
-        var rootRt = difficultyListRoot;
-        var rootRect = rootRt.rect;
-        var layout = difficultyListRoot.GetComponent<VerticalLayoutGroup>();
-
-        Debug.Log(
-            $"{LOG} {context} | " +
-            $"difficultyListRoot='{difficultyListRoot.name}' activeSelf={difficultyListRoot.gameObject.activeSelf} activeInHierarchy={difficultyListRoot.gameObject.activeInHierarchy} " +
-            $"childCount={difficultyListRoot.childCount} difficultyTexts.Count={difficultyTexts.Count} " +
-            $"rect={rootRect} sizeDelta={rootRt.sizeDelta} anchoredPos={rootRt.anchoredPosition} " +
-            $"anchorMin={rootRt.anchorMin} anchorMax={rootRt.anchorMax} pivot={rootRt.pivot} " +
-            $"hasVerticalLayout={(layout != null)} uiScale={_currentUiScale:0.###}" +
-            $"{(layout != null ? $" paddingLeft={layout.padding.left}" : "")}",
-            this
-        );
-
-        for (int i = 0; i < difficultyTexts.Count; i++)
-        {
-            var txt = difficultyTexts[i];
-            if (txt == null)
-            {
-                Debug.Log($"{LOG} {context} | item[{i}] = NULL", this);
-                continue;
-            }
-
-            var go = txt.gameObject;
-            var rt = txt.rectTransform;
-            var col = txt.color;
-
-            Debug.Log(
-                $"{LOG} {context} | item[{i}] name='{go.name}' text='{txt.text}' " +
-                $"activeSelf={go.activeSelf} activeInHierarchy={go.activeInHierarchy} enabled={txt.enabled} " +
-                $"rect={rt.rect} sizeDelta={rt.sizeDelta} anchoredPos={rt.anchoredPosition} localPos={rt.localPosition} " +
-                $"anchorMin={rt.anchorMin} anchorMax={rt.anchorMax} pivot={rt.pivot} siblingIndex={go.transform.GetSiblingIndex()} " +
-                $"color=({col.r:0.###},{col.g:0.###},{col.b:0.###},{col.a:0.###}) " +
-                $"font={(txt.font != null ? txt.font.name : "NULL")} fontSize={txt.fontSize} " +
-                $"canvasRendererCull={txt.canvasRenderer.cull}",
-                this
-            );
-        }
     }
 
     void SLog(string message)
