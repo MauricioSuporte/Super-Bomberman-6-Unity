@@ -10,12 +10,8 @@ using UnityEngine.Tilemaps;
 public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
 {
     public const string AbilityId = "YellowLouieDestructibleKick";
-    const string LOG = "[YellowLouieKick]";
 
     [SerializeField] private bool enabledAbility = true;
-
-    [Header("Debug (Surgical Logs)")]
-    [SerializeField] private bool enableSurgicalLogs = true;
 
     [Header("Move")]
     public float cellsPerSecond = 10f;
@@ -64,21 +60,11 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
         Tile = 2
     }
 
-    void SLog(string message)
-    {
-        if (!enableSurgicalLogs)
-            return;
-
-        Debug.Log($"{LOG} {message}", this);
-    }
-
     void Awake()
     {
         movement = GetComponent<MovementController>();
         rb = movement != null ? movement.Rigidbody : null;
         audioSource = GetComponent<AudioSource>();
-
-        SLog($"Awake | movement={(movement != null)} rb={(rb != null)} audio={(audioSource != null)}");
     }
 
     void OnDisable() => CancelKick();
@@ -87,14 +73,12 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
     public void SetExternalAnimator(IYellowLouieDestructibleKickExternalAnimator animator)
     {
         externalAnimator = animator;
-        SLog($"SetExternalAnimator | animator={(animator != null ? animator.GetType().Name : "null")}");
     }
 
     public void SetKickSfx(AudioClip clip, float volume)
     {
         kickSfx = clip;
         kickSfxVolume = Mathf.Clamp01(volume);
-        SLog($"SetKickSfx | clip={(clip != null ? clip.name : "null")} volume={kickSfxVolume:0.00}");
     }
 
     void Update()
@@ -126,12 +110,8 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
         nextAllowedKickTime = Time.time + kickCooldownSeconds;
 
         if (routine != null)
-        {
-            SLog("Update | ActionC ignored because routine already running");
             return;
-        }
 
-        SLog($"Update | ActionC detected | playerId={pid}");
         routine = StartCoroutine(KickRoutine());
     }
 
@@ -139,7 +119,6 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
     {
         if (movement == null || rb == null)
         {
-            SLog("KickRoutine | aborted because movement or rb is null");
             routine = null;
             yield break;
         }
@@ -151,12 +130,9 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
         Vector3Int step = new Vector3Int(Mathf.RoundToInt(dir.x), Mathf.RoundToInt(dir.y), 0);
         if (step == Vector3Int.zero)
         {
-            SLog("KickRoutine | aborted because step == zero");
             routine = null;
             yield break;
         }
-
-        SLog($"KickRoutine | start | dir={dir} facing={movement.FacingDirection} moveDir={movement.Direction}");
 
         StartKickVisuals(dir);
 
@@ -164,12 +140,9 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
         bool inputUnlockedAfterAnim = false;
 
         movement.SetInputLocked(true, false);
-        SLog("KickRoutine | input locked");
 
         var gm = FindFirstObjectByType<GameManager>();
         var destructibleTilemap = gm != null ? gm.destructibleTilemap : null;
-
-        SLog($"KickRoutine | gameManager={(gm != null)} destructibleTilemap={(destructibleTilemap != null ? destructibleTilemap.name : "null")}");
 
         Vector3Int frontCell = destructibleTilemap != null
             ? destructibleTilemap.WorldToCell(rb.position) + step
@@ -181,8 +154,6 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
         bool hasBombInFront = TryGetBombAtCell(SnapToGrid(rb.position, movement.tileSize) + dir.normalized * movement.tileSize, out Bomb firstBomb);
         bool hasTileInFront = TryGetDestructibleAtCell(destructibleTilemap, frontCell, out TileBase firstTile);
 
-        SLog($"KickRoutine | front inspect | frontCell={frontCell} hasBomb={hasBombInFront} bomb={(firstBomb != null ? firstBomb.name : "null")} hasTile={hasTileInFront} tile={(firstTile != null ? firstTile.name : "null")}");
-
         if (!hasBombInFront && !hasTileInFront)
         {
             yield return WaitSecondsAndReleaseInput(kickCooldownSeconds, animEndTime, () =>
@@ -192,7 +163,6 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
                     inputUnlockedAfterAnim = true;
                     if (movement != null)
                         movement.SetInputLocked(false);
-                    SLog("KickRoutine | input unlocked (nothing in front)");
                 }
             });
 
@@ -220,14 +190,12 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
                     inputUnlockedAfterAnim = true;
                     if (movement != null)
                         movement.SetInputLocked(false);
-                    SLog("KickRoutine | input unlocked from mixed chain callback");
                 }
             });
 
         if (movement != null)
             movement.SetInputLocked(false);
 
-        SLog("KickRoutine | finished by mixed chain path");
         routine = null;
     }
 
@@ -320,8 +288,6 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
             currentCellBlocker = CreateCellBlocker(destructibleTilemap.GetCellCenterWorld(cell), "YellowKickBlock_CurrentCell");
 
             moverType = ChainMoverType.Tile;
-
-            SLog($"MixedChain | BeginTileMover | cell={cell} tile={(tile != null ? tile.name : "null")}");
         }
 
         void SettleCurrentTileAtCurrentCell()
@@ -344,8 +310,6 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
                 Destroy(ghost);
                 ghost = null;
             }
-
-            SLog($"MixedChain | SettleCurrentTileAtCurrentCell | cell={currentTileCell} tile={(currentTile != null ? currentTile.name : "null")}");
         }
 
         try
@@ -354,16 +318,13 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
             {
                 moverType = ChainMoverType.Bomb;
                 currentBomb = firstBomb;
-                SLog($"MixedChain | start with Bomb | bomb={currentBomb.name} cell={SnapToGrid(currentBomb.transform.position, tileSize)}");
             }
             else if (firstTile != null && destructibleTilemap != null)
             {
                 BeginTileMover(firstCell, firstTile);
-                SLog($"MixedChain | start with Tile | cell={firstCell} tile={(firstTile != null ? firstTile.name : "null")}");
             }
             else
             {
-                SLog("MixedChain | nothing valid to move");
                 yield return WaitSecondsAndReleaseInput(kickCooldownSeconds, animEndTime, releaseInputIfNeeded);
                 yield break;
             }
@@ -374,10 +335,7 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
 
                 transfers++;
                 if (transfers > maxChainTransfers)
-                {
-                    SLog($"MixedChain | stopped by max transfers={maxChainTransfers}");
                     break;
-                }
 
                 if (moverType == ChainMoverType.Tile)
                 {
@@ -385,8 +343,6 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
 
                     bool hasBombAhead = TryGetBombAtCell(destructibleTilemap.GetCellCenterWorld(nextCell), out Bomb nextBomb);
                     bool hasTileAhead = TryGetDestructibleAtCell(destructibleTilemap, nextCell, out TileBase nextTile);
-
-                    SLog($"MixedChain | Tile inspect | currentCell={currentTileCell} nextCell={nextCell} hasBombAhead={hasBombAhead} bomb={(nextBomb != null ? nextBomb.name : "null")} hasTileAhead={hasTileAhead} tile={(nextTile != null ? nextTile.name : "null")}");
 
                     if (hasBombAhead && nextBomb != null)
                     {
@@ -401,8 +357,6 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
 
                         currentBomb = nextBomb;
                         moverType = ChainMoverType.Bomb;
-
-                        SLog($"MixedChain | transfer Tile -> Bomb | bomb={currentBomb.name} atCell={nextCell}");
                         continue;
                     }
 
@@ -418,8 +372,6 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
                             stopShakeFrequency));
 
                         BeginTileMover(nextCell, nextTile);
-
-                        SLog($"MixedChain | transfer Tile -> Tile | nextCell={nextCell} tile={nextTile.name}");
                         continue;
                     }
 
@@ -434,7 +386,6 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
                             stopShakeAmplitude,
                             stopShakeFrequency);
 
-                        SLog($"MixedChain | Tile ended before enemy | nextCell={nextCell}");
                         break;
                     }
 
@@ -449,7 +400,6 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
                             stopShakeAmplitude,
                             stopShakeFrequency);
 
-                        SLog($"MixedChain | Tile ended by solid | nextCell={nextCell}");
                         break;
                     }
 
@@ -476,7 +426,6 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
                         if (HasEnemyAt(to))
                         {
                             enemyEnteredDestinationDuringMove = true;
-                            SLog($"MixedChain | enemy entered destination during move | currentCell={currentTileCell} nextCell={nextCell}");
                             break;
                         }
 
@@ -508,7 +457,6 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
                             stopShakeAmplitude,
                             stopShakeFrequency);
 
-                        SLog($"MixedChain | Tile returned to previous cell because enemy occupied destination | cell={currentTileCell}");
                         break;
                     }
 
@@ -525,17 +473,13 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
                     nextCellBlocker = null;
                     RefreshCurrentCellBlockerPosition(currentTileCell);
 
-                    SLog($"MixedChain | Tile advanced | cell={currentTileCell}");
                     continue;
                 }
 
                 if (moverType == ChainMoverType.Bomb)
                 {
                     if (currentBomb == null)
-                    {
-                        SLog("MixedChain | currentBomb became null");
                         break;
-                    }
 
                     Vector2 currentBombCell = SnapToGrid(currentBomb.transform.position, tileSize);
                     Vector3Int nextCell = new Vector3Int(
@@ -554,36 +498,24 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
                     {
                         currentBomb = adjacentBomb;
                         moverType = ChainMoverType.Bomb;
-
-                        SLog($"MixedChain | transfer Bomb -> Bomb (adjacent) | bomb={currentBomb.name} atCell={nextCell}");
                         continue;
                     }
 
                     if (hasAdjacentTile)
                     {
                         BeginTileMover(nextCell, adjacentTile);
-
-                        SLog($"MixedChain | transfer Bomb -> Tile (adjacent) | nextCell={nextCell} tile={adjacentTile.name}");
                         continue;
                     }
 
-                    SLog($"MixedChain | trying StartBombKick | bomb={currentBomb.name} pos={currentBomb.transform.position} isBeingKicked={currentBomb.IsBeingKicked} canBeKicked={currentBomb.CanBeKicked}");
-
                     bool started = StartBombKick(currentBomb, kickDir, destructibleTilemap);
                     if (!started)
-                    {
-                        SLog($"MixedChain | StartBombKick FAILED | bomb={currentBomb.name}");
                         break;
-                    }
-
-                    SLog($"MixedChain | StartBombKick OK | bomb={currentBomb.name}");
 
                     Vector2 currentCell = SnapToGrid(currentBomb.transform.position, tileSize);
                     Bomb nextBomb = null;
                     TileBase nextTile = null;
                     Vector3Int nextTileCell = default;
                     bool endedBySolid = false;
-                    float nextMoveLogTime = Time.time;
 
                     while (currentBomb != null && currentBomb.IsBeingKicked && enabledAbility && movement != null && !movement.isDead)
                     {
@@ -591,16 +523,7 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
 
                         Vector2 snapped = SnapToGrid(currentBomb.transform.position, tileSize);
                         if (snapped != currentCell)
-                        {
                             currentCell = snapped;
-                            SLog($"MixedChain | Bomb advanced cell | bomb={currentBomb.name} cell={currentCell}");
-                        }
-
-                        if (Time.time >= nextMoveLogTime)
-                        {
-                            nextMoveLogTime = Time.time + 0.08f;
-                            SLog($"MixedChain | Bomb moving | bomb={currentBomb.name} worldPos={currentBomb.transform.position} snapped={snapped} currentCell={currentCell} isBeingKicked={currentBomb.IsBeingKicked}");
-                        }
 
                         Vector2 nextBombCellWorld = currentCell + kickDir * tileSize;
                         nextTileCell = new Vector3Int(
@@ -614,37 +537,26 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
                             !foundBomb.IsBeingKicked)
                         {
                             nextBomb = foundBomb;
-                            SLog($"MixedChain | transfer Bomb -> Bomb | currentBomb={currentBomb.name} nextBomb={nextBomb.name} nextCell={nextBombCellWorld}");
                             break;
                         }
 
                         if (TryGetDestructibleAtCell(destructibleTilemap, nextTileCell, out TileBase foundTile))
                         {
                             nextTile = foundTile;
-                            SLog($"MixedChain | transfer Bomb -> Tile | currentBomb={currentBomb.name} nextCell={nextTileCell} tile={nextTile.name}");
                             break;
                         }
 
                         if (IsMixedChainSolidAt(nextBombCellWorld, kickDir, currentBomb))
                         {
                             endedBySolid = true;
-                            SLog($"MixedChain | Bomb endedBySolid | nextCell={nextBombCellWorld} bomb={currentBomb.name}");
                             break;
                         }
 
                         yield return null;
                     }
 
-                    if (currentBomb != null)
-                    {
-                        SLog($"MixedChain | Bomb loop ended | bomb={currentBomb.name} isBeingKicked={currentBomb.IsBeingKicked} pos={currentBomb.transform.position}");
-                    }
-
                     if (currentBomb != null && currentBomb.IsBeingKicked)
-                    {
-                        SLog($"MixedChain | StopKickAndSnapToGrid | bomb={currentBomb.name}");
                         currentBomb.StopKickAndSnapToGrid(tileSize);
-                    }
 
                     if (nextBomb != null)
                     {
@@ -672,12 +584,10 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
             float finalWait = Mathf.Max(0f, animEndTime - Time.time);
             if (finalWait > 0f)
             {
-                SLog($"MixedChain | finalWait={finalWait:0.000}");
                 yield return WaitSecondsAndReleaseInput(finalWait, animEndTime, releaseInputIfNeeded);
             }
             else
             {
-                SLog("MixedChain | release input immediately");
                 releaseInputIfNeeded?.Invoke();
             }
         }
@@ -700,8 +610,6 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
 
             if (destructibleTilemap != null)
                 ApplyShadowForCell(currentTileCell);
-
-            SLog("MixedChain | end");
         }
     }
 
@@ -710,18 +618,12 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
         bomb = null;
 
         if (movement == null || rb == null)
-        {
-            SLog("TryGetBombInFront | movement or rb is null");
             return false;
-        }
 
         Vector2 origin = SnapToGrid(rb.position, movement.tileSize);
         Vector2 target = origin + dir.normalized * movement.tileSize;
 
         bool found = TryGetBombAtCell(target, out bomb);
-
-        SLog($"TryGetBombInFront | origin={origin} target={target} found={found} bomb={(bomb != null ? bomb.name : "null")}");
-
         return found;
     }
 
@@ -731,10 +633,7 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
 
         int bombLayer = LayerMask.NameToLayer("Bomb");
         if (bombLayer < 0)
-        {
-            SLog("TryGetBombAtCell | Bomb layer not found");
             return false;
-        }
 
         Collider2D[] hits = Physics2D.OverlapBoxAll(
             worldCellCenter,
@@ -743,10 +642,7 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
             1 << bombLayer);
 
         if (hits == null || hits.Length == 0)
-        {
-            SLog($"TryGetBombAtCell | no collider at cell={worldCellCenter}");
             return false;
-        }
 
         for (int i = 0; i < hits.Length; i++)
         {
@@ -759,11 +655,9 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
                 continue;
 
             bomb = foundBomb;
-            SLog($"TryGetBombAtCell | hit={hit.name} bomb={bomb.name} cell={worldCellCenter}");
             return true;
         }
 
-        SLog($"TryGetBombAtCell | colliders found but no Bomb component at cell={worldCellCenter}");
         return false;
     }
 
@@ -784,29 +678,15 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
     bool StartBombKick(Bomb bomb, Vector2 dir, Tilemap destructibleTilemap)
     {
         if (bomb == null)
-        {
-            SLog("StartBombKick | bomb is null");
             return false;
-        }
 
         if (bomb.IsBeingKicked)
-        {
-            SLog($"StartBombKick | aborted because already IsBeingKicked | bomb={bomb.name}");
             return false;
-        }
 
         if (!bomb.CanBeKicked)
-        {
-            SLog($"StartBombKick | aborted because CanBeKicked=false | bomb={bomb.name} hasExploded={bomb.HasExploded} isBeingKicked={bomb.IsBeingKicked} isSolid={bomb.IsSolid}");
             return false;
-        }
 
         LayerMask bombObstacles = movement.obstacleMask.value | LayerMask.GetMask("Enemy");
-
-        Vector2 snappedBombPos = SnapToGrid(bomb.transform.position, movement.tileSize);
-        Vector2 nextCell = snappedBombPos + dir.normalized * movement.tileSize;
-
-        SLog($"StartBombKick | calling Bomb.StartKick | bomb={bomb.name} pos={bomb.transform.position} snapped={snappedBombPos} dir={dir.normalized} nextCell={nextCell} bombObstacles={bombObstacles.value} destructibleTilemap={(destructibleTilemap != null ? destructibleTilemap.name : "null")} overlap={bombKickOverlapSize:0.00} blockerSize={bombKickOriginBlockerSize:0.00} blockerTrigger={bombKickOriginBlockerUseTrigger}");
 
         bool result = bomb.StartKick(
             dir.normalized,
@@ -819,30 +699,19 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
             bombKickOriginBlockerUseTrigger
         );
 
-        SLog($"StartBombKick | Bomb.StartKick returned {result} | bomb={bomb.name}");
-
         return result;
     }
 
     bool IsMixedChainSolidAt(Vector2 nextCell, Vector2 dir, Bomb currentBomb)
     {
         if (movement == null)
-        {
-            SLog("IsMixedChainSolidAt | movement is null, returning true");
             return true;
-        }
 
         if (HasItemAt(nextCell))
-        {
-            SLog($"IsMixedChainSolidAt | item blocking at {nextCell}");
             return true;
-        }
 
         if (HasPlayerAt(nextCell))
-        {
-            SLog($"IsMixedChainSolidAt | player blocking at {nextCell}");
             return true;
-        }
 
         Vector2 size = Mathf.Abs(dir.x) > 0.01f
             ? new Vector2(movement.tileSize * 0.6f, movement.tileSize * 0.2f)
@@ -883,7 +752,6 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
             if (hit.isTrigger)
                 continue;
 
-            SLog($"IsMixedChainSolidAt | collider blocking | nextCell={nextCell} hit={hit.name} layer={LayerMask.LayerToName(hit.gameObject.layer)} trigger={hit.isTrigger}");
             return true;
         }
 
@@ -901,8 +769,6 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
 
         float end = Time.time + dur;
         float seed = Random.value * 1000f;
-
-        SLog($"ShakeBombVisual | bomb={bomb.name} basePos={basePos} duration={dur:0.000}");
 
         while (Time.time < end)
         {
@@ -943,8 +809,6 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
         if (kickVisualRoutine != null)
             StopCoroutine(kickVisualRoutine);
 
-        SLog($"StartKickVisuals | dir={dir}");
-
         externalAnimator?.Play(dir);
 
         kickVisualRoutine = StartCoroutine(StopKickVisualsAfter(kickCooldownSeconds));
@@ -971,7 +835,6 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
             return;
 
         kickActive = false;
-        SLog("StopKickVisuals");
 
         externalAnimator?.Stop();
 
@@ -1173,21 +1036,17 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
 
         if (movement != null)
             movement.SetInputLocked(false);
-
-        SLog("CancelKick");
     }
 
     public void Enable()
     {
         enabledAbility = true;
-        SLog("Enable");
     }
 
     public void Disable()
     {
         enabledAbility = false;
         CancelKick();
-        SLog("Disable");
     }
 
     public void CancelKickForDeath()
@@ -1215,8 +1074,6 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
             movement.SetInputLocked(false);
 
         externalAnimator = null;
-
-        SLog("CancelKickForDeath");
     }
 
     GameObject CreateVisualGhost(Tilemap tilemap, Vector3Int cell, TileBase tile, int extraSortingOrder = 1)
@@ -1265,8 +1122,6 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
 
         float end = Time.time + dur;
         float seed = Random.value * 1000f;
-
-        SLog($"ShakeSettledTileVisual | cell={cell} tile={tile.name} duration={dur:0.000}");
 
         while (Time.time < end)
         {
