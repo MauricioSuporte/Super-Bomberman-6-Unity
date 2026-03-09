@@ -1342,7 +1342,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 1}
   m_AnchorMax: {x: 0.5, y: 1}
-  m_AnchoredPosition: {x: 0, y: -258.74}
+  m_AnchoredPosition: {x: -50, y: -258.74}
   m_SizeDelta: {x: 900, y: 64}
   m_Pivot: {x: 0.5, y: 1}
 --- !u!114 &607783273
@@ -1357,11 +1357,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 37a255ea6c092794cbeea6dc18c99fdb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BossRushTopPanel
-  enableSurgicalLogs: 1
+  enableSurgicalLogs: 0
   startWithText: {fileID: 2114126119}
   startWithLabel: Start with
-  headerFontSize: 16
-  headerPreferredWidth: 180
+  headerFontSize: 24
+  headerPreferredWidth: 240
   headerRightSpacing: 24
   bombAmountRoot: {fileID: 1759841735}
   fireBlastRoot: {fileID: 1392017679}
@@ -1375,11 +1375,11 @@ MonoBehaviour:
   fireBlastText: {fileID: 254414264}
   speedText: {fileID: 895377651}
   heartText: {fileID: 63686861}
-  amountFontSize: 16
+  amountFontSize: 24
   rowHeight: 28
   iconPreferredWidth: 28
   iconPreferredHeight: 28
-  amountPreferredWidth: 44
+  amountPreferredWidth: 36
   rootSpacing: 18
   rootAlignment: 4
   rootLeftPadding: 140
