@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -22,11 +23,12 @@ public class BossRushRightPanel : MonoBehaviour
     [SerializeField] RectTransform thirdRow;
 
     [SerializeField] Text firstRankText;
-    [SerializeField] Text firstTimeText;
     [SerializeField] Text secondRankText;
-    [SerializeField] Text secondTimeText;
     [SerializeField] Text thirdRankText;
-    [SerializeField] Text thirdTimeText;
+
+    [SerializeField] TextMeshProUGUI firstTimeText;
+    [SerializeField] TextMeshProUGUI secondTimeText;
+    [SerializeField] TextMeshProUGUI thirdTimeText;
 
     [SerializeField] int rowFontSize = 16;
     [SerializeField] float rowHeight = 24f;
@@ -56,6 +58,31 @@ public class BossRushRightPanel : MonoBehaviour
     [SerializeField] Color secondRankBackgroundColor = new Color32(201, 201, 201, 255);
     [SerializeField] Color thirdRankBackgroundColor = new Color32(224, 151, 98, 255);
 
+    [Header("Time TMP Font")]
+    [SerializeField] TMP_FontAsset timeFontAsset;
+    [SerializeField] Material timeFontMaterialPreset;
+    [SerializeField] bool forceTimeBold = true;
+
+    [Header("Time TMP Colors")]
+    [SerializeField] Color timeTextColor = Color.white;
+    [SerializeField] Color timeOutlineColor = Color.black;
+
+    [Header("Time TMP Outline")]
+    [SerializeField, Range(0f, 1f)] float timeOutlineWidth = 0.35f;
+    [SerializeField, Range(0f, 1f)] float timeOutlineSoftness = 0f;
+
+    [Header("Time TMP Face")]
+    [SerializeField, Range(-1f, 1f)] float timeFaceDilate = 0.25f;
+    [SerializeField, Range(0f, 1f)] float timeFaceSoftness = 0f;
+
+    [Header("Time TMP Underlay")]
+    [SerializeField] bool enableTimeUnderlay = true;
+    [SerializeField] Color timeUnderlayColor = new Color(0f, 0f, 0f, 1f);
+    [SerializeField, Range(-1f, 1f)] float timeUnderlayDilate = 0.15f;
+    [SerializeField, Range(0f, 1f)] float timeUnderlaySoftness = 0f;
+    [SerializeField, Range(-2f, 2f)] float timeUnderlayOffsetX = 0.25f;
+    [SerializeField, Range(-2f, 2f)] float timeUnderlayOffsetY = -0.25f;
+
     [Header("Generated Badge")]
     [SerializeField] int generatedCircleTextureSize = 64;
     [SerializeField] float generatedCircleSoftEdge = 1.5f;
@@ -65,6 +92,8 @@ public class BossRushRightPanel : MonoBehaviour
     [SerializeField] float contentOffsetY = 0f;
 
     static Sprite s_circleSprite;
+
+    readonly Dictionary<TMP_Text, Material> runtimeTimeMaterials = new Dictionary<TMP_Text, Material>();
 
     int _baseTopPadding;
     int _baseBottomPadding;
@@ -123,6 +152,17 @@ public class BossRushRightPanel : MonoBehaviour
         );
     }
 
+    void OnDestroy()
+    {
+        foreach (var kv in runtimeTimeMaterials)
+        {
+            if (kv.Value != null)
+                Destroy(kv.Value);
+        }
+
+        runtimeTimeMaterials.Clear();
+    }
+
     void ResolveMissingReferences()
     {
         if (firstRow == null && firstRankText != null)
@@ -152,20 +192,30 @@ public class BossRushRightPanel : MonoBehaviour
         if (firstRankText != null)
             firstRankText.fontSize = ScaledFont(rowFontSize);
 
-        if (firstTimeText != null)
-            firstTimeText.fontSize = ScaledFont(rowFontSize);
-
         if (secondRankText != null)
             secondRankText.fontSize = ScaledFont(rowFontSize);
-
-        if (secondTimeText != null)
-            secondTimeText.fontSize = ScaledFont(rowFontSize);
 
         if (thirdRankText != null)
             thirdRankText.fontSize = ScaledFont(rowFontSize);
 
-        if (thirdTimeText != null)
-            thirdTimeText.fontSize = ScaledFont(rowFontSize);
+        ApplyTimeFontSizing(firstTimeText);
+        ApplyTimeFontSizing(secondTimeText);
+        ApplyTimeFontSizing(thirdTimeText);
+    }
+
+    void ApplyTimeFontSizing(TextMeshProUGUI target)
+    {
+        if (target == null)
+            return;
+
+        float maxSize = ScaledFont(rowFontSize);
+        float minSize = Mathf.Max(8f, Mathf.Floor(maxSize * 0.60f));
+
+        target.enableAutoSizing = true;
+        target.fontSizeMax = maxSize;
+        target.fontSizeMin = minSize;
+
+        target.fontSize = maxSize;
     }
 
     void ApplyLayoutFormatting()
@@ -315,17 +365,19 @@ public class BossRushRightPanel : MonoBehaviour
         }
     }
 
-    void ConfigureLayoutElementWidth(Text target, float preferredWidth)
+    void ConfigureLayoutElementWidth(Component target, float preferredWidth)
     {
         if (target == null)
             return;
+
+        float w = ScaledFloat(preferredWidth);
 
         LayoutElement le = target.GetComponent<LayoutElement>();
         if (le == null)
             le = target.gameObject.AddComponent<LayoutElement>();
 
-        le.preferredWidth = ScaledFloat(preferredWidth);
-        le.minWidth = 0f;
+        le.minWidth = w;
+        le.preferredWidth = w;
         le.flexibleWidth = 0f;
     }
 
@@ -366,16 +418,102 @@ public class BossRushRightPanel : MonoBehaviour
         shadow.useGraphicAlpha = false;
     }
 
-    void ConfigureTimeText(Text target)
+    void ConfigureTimeText(TextMeshProUGUI target)
     {
         if (target == null)
             return;
 
-        target.alignment = TextAnchor.MiddleRight;
-        target.horizontalOverflow = HorizontalWrapMode.Overflow;
-        target.verticalOverflow = VerticalWrapMode.Overflow;
-        target.resizeTextForBestFit = false;
-        target.supportRichText = false;
+        if (timeFontAsset != null)
+            target.font = timeFontAsset;
+
+        target.alignment = TextAlignmentOptions.MidlineRight;
+        target.textWrappingMode = TextWrappingModes.NoWrap;
+
+        // importante: não deixar transbordar para cima do rank
+        target.overflowMode = TextOverflowModes.Truncate;
+
+        target.enableAutoSizing = true;
+        target.extraPadding = true;
+        target.color = timeTextColor;
+        target.margin = Vector4.zero;
+
+        float maxSize = ScaledFont(rowFontSize);
+        float minSize = Mathf.Max(8f, Mathf.Floor(maxSize * 0.60f));
+        target.fontSizeMax = maxSize;
+        target.fontSizeMin = minSize;
+        target.fontSize = maxSize;
+
+        if (forceTimeBold)
+            target.fontStyle |= FontStyles.Bold;
+        else
+            target.fontStyle &= ~FontStyles.Bold;
+
+        Material runtimeMat = GetOrCreateRuntimeTimeMaterial(target);
+        ApplyTimeMaterialStyle(runtimeMat);
+
+        target.fontMaterial = runtimeMat;
+        target.UpdateMeshPadding();
+        target.ForceMeshUpdate();
+        target.SetVerticesDirty();
+    }
+
+    Material GetOrCreateRuntimeTimeMaterial(TMP_Text target)
+    {
+        if (target == null)
+            return null;
+
+        Material runtimeMat;
+        if (runtimeTimeMaterials.TryGetValue(target, out runtimeMat) && runtimeMat != null)
+            return runtimeMat;
+
+        Material baseMat = null;
+
+        if (timeFontMaterialPreset != null)
+            baseMat = timeFontMaterialPreset;
+        else if (target.fontSharedMaterial != null)
+            baseMat = target.fontSharedMaterial;
+        else if (target.font != null)
+            baseMat = target.font.material;
+
+        if (baseMat == null)
+            return null;
+
+        runtimeMat = new Material(baseMat);
+        runtimeMat.name = baseMat.name + "_BossRushRuntime";
+
+        runtimeTimeMaterials[target] = runtimeMat;
+        return runtimeMat;
+    }
+
+    void ApplyTimeMaterialStyle(Material mat)
+    {
+        if (mat == null)
+            return;
+
+        TrySetColor(mat, "_FaceColor", timeTextColor);
+
+        TrySetColor(mat, "_OutlineColor", timeOutlineColor);
+        TrySetFloat(mat, "_OutlineWidth", timeOutlineWidth);
+        TrySetFloat(mat, "_OutlineSoftness", timeOutlineSoftness);
+
+        TrySetFloat(mat, "_FaceDilate", timeFaceDilate);
+        TrySetFloat(mat, "_FaceSoftness", timeFaceSoftness);
+
+        if (enableTimeUnderlay)
+        {
+            TrySetColor(mat, "_UnderlayColor", timeUnderlayColor);
+            TrySetFloat(mat, "_UnderlayDilate", timeUnderlayDilate);
+            TrySetFloat(mat, "_UnderlaySoftness", timeUnderlaySoftness);
+            TrySetFloat(mat, "_UnderlayOffsetX", timeUnderlayOffsetX);
+            TrySetFloat(mat, "_UnderlayOffsetY", timeUnderlayOffsetY);
+        }
+        else
+        {
+            TrySetFloat(mat, "_UnderlayDilate", 0f);
+            TrySetFloat(mat, "_UnderlaySoftness", 0f);
+            TrySetFloat(mat, "_UnderlayOffsetX", 0f);
+            TrySetFloat(mat, "_UnderlayOffsetY", 0f);
+        }
     }
 
     void ConfigureRankSlot(Text rankText, ref Image background, Color backgroundColor)
@@ -577,12 +715,24 @@ public class BossRushRightPanel : MonoBehaviour
         return s_circleSprite;
     }
 
+    static void TrySetFloat(Material mat, string prop, float value)
+    {
+        if (mat != null && mat.HasProperty(prop))
+            mat.SetFloat(prop, value);
+    }
+
+    static void TrySetColor(Material mat, string prop, Color value)
+    {
+        if (mat != null && mat.HasProperty(prop))
+            mat.SetColor(prop, value);
+    }
+
     Vector2 ScaledVector(Vector2 value)
     {
         return new Vector2(ScaledFloat(value.x), ScaledFloat(value.y));
     }
 
-    void SetTimeText(Text target, string value)
+    void SetTimeText(TextMeshProUGUI target, string value)
     {
         if (target != null)
             target.text = value;
