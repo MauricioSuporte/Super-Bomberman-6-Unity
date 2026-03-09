@@ -1,7 +1,7 @@
 ﻿public enum BossRushDifficulty
 {
-    Easy = 0,
-    Normal = 1,
-    Hard = 2,
-    Nightmare = 3
+    EASY = 0,
+    NORMAL = 1,
+    HARD = 2,
+    NIGHTMARE = 3
 }

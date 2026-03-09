@@ -7,7 +7,7 @@ public static class BossRushProgress
 
     public static BossRushDifficulty GetSelectedDifficulty()
     {
-        return (BossRushDifficulty)PlayerPrefs.GetInt(SelectedDifficultyKey, (int)BossRushDifficulty.Normal);
+        return (BossRushDifficulty)PlayerPrefs.GetInt(SelectedDifficultyKey, (int)BossRushDifficulty.NORMAL);
     }
 
     public static void SetSelectedDifficulty(BossRushDifficulty difficulty)
@@ -20,10 +20,10 @@ public static class BossRushProgress
     {
         switch (difficulty)
         {
-            case BossRushDifficulty.Easy: return 4;
-            case BossRushDifficulty.Normal: return 3;
-            case BossRushDifficulty.Hard: return 2;
-            case BossRushDifficulty.Nightmare: return 1;
+            case BossRushDifficulty.EASY: return 4;
+            case BossRushDifficulty.NORMAL: return 3;
+            case BossRushDifficulty.HARD: return 2;
+            case BossRushDifficulty.NIGHTMARE: return 1;
             default: return 3;
         }
     }

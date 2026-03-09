@@ -1,5 +1,4 @@
 ﻿using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -25,12 +24,8 @@ public class BossRushMenu : MonoBehaviour
     [Header("Left Panel")]
     [SerializeField] BossRushLeftPanel leftPanel;
 
-    [Header("Best Times")]
-    [SerializeField] Text bestTimesTitleText;
-    [SerializeField] Text bestTimesBodyText;
-    [SerializeField] string noTimesText = "No clear times recorded yet for this difficulty.";
-    [SerializeField] int bestTimesTitleFontSize = 18;
-    [SerializeField] int bestTimesBodyFontSize = 16;
+    [Header("Right Panel")]
+    [SerializeField] BossRushRightPanel rightPanel;
 
     [Header("Top Items")]
     [SerializeField] Image bombAmountIcon;
@@ -99,7 +94,7 @@ public class BossRushMenu : MonoBehaviour
         get
         {
             if (leftPanel == null || leftPanel.Count == 0)
-                return BossRushDifficulty.Normal;
+                return BossRushDifficulty.NORMAL;
 
             return leftPanel.GetDifficultyAt(selectedIndex);
         }
@@ -112,12 +107,19 @@ public class BossRushMenu : MonoBehaviour
         if (root == null)
             root = gameObject;
 
-        SLog($"Awake | root={(root != null ? root.name : "NULL")} leftPanel={(leftPanel != null ? leftPanel.name : "NULL")}");
+        SLog(
+            $"Awake | root={(root != null ? root.name : "NULL")} " +
+            $"leftPanel={(leftPanel != null ? leftPanel.name : "NULL")} " +
+            $"rightPanel={(rightPanel != null ? rightPanel.name : "NULL")}"
+        );
 
         ApplyDynamicScaleIfNeeded(true);
 
         if (leftPanel != null)
             leftPanel.Initialize(_currentUiScale);
+
+        if (rightPanel != null)
+            rightPanel.Initialize(_currentUiScale);
 
         ApplyCurrentBackgroundSprite();
 
@@ -135,6 +137,9 @@ public class BossRushMenu : MonoBehaviour
 
         if (leftPanel != null)
             leftPanel.UpdateDifficultyVisuals(selectedIndex, confirmed);
+
+        if (rightPanel != null)
+            rightPanel.SetDifficulty(SelectedDifficulty);
     }
 
     public void Hide()
@@ -298,12 +303,6 @@ public class BossRushMenu : MonoBehaviour
 
     void ApplyScaledFontsToStaticTexts()
     {
-        if (bestTimesTitleText != null)
-            bestTimesTitleText.fontSize = ScaledFont(bestTimesTitleFontSize);
-
-        if (bestTimesBodyText != null)
-            bestTimesBodyText.fontSize = ScaledFont(bestTimesBodyFontSize);
-
         if (bombAmountText != null)
             bombAmountText.fontSize = ScaledFont(topItemsFontSize);
 
@@ -333,43 +332,8 @@ public class BossRushMenu : MonoBehaviour
 
     void UpdateBestTimes()
     {
-        ApplyScaledFontsToStaticTexts();
-
-        if (bestTimesTitleText != null)
-            bestTimesTitleText.text = $"Best Times - {GetDifficultyDisplayName(SelectedDifficulty)}";
-
-        if (bestTimesBodyText == null)
-            return;
-
-        List<float> times = BossRushProgress.GetTopTimes(SelectedDifficulty);
-
-        if (times == null || times.Count == 0)
-        {
-            bestTimesBodyText.text = noTimesText;
-            SLog($"UpdateBestTimes | difficulty={SelectedDifficulty} no times");
-            return;
-        }
-
-        System.Text.StringBuilder sb = new System.Text.StringBuilder();
-
-        int max = Mathf.Min(3, times.Count);
-        for (int i = 0; i < max; i++)
-            sb.AppendLine($"{i + 1}. {BossRushProgress.FormatTime(times[i])}");
-
-        bestTimesBodyText.text = sb.ToString().TrimEnd();
-        SLog($"UpdateBestTimes | difficulty={SelectedDifficulty} count={times.Count}");
-    }
-
-    string GetDifficultyDisplayName(BossRushDifficulty difficulty)
-    {
-        switch (difficulty)
-        {
-            case BossRushDifficulty.Easy: return "Easy";
-            case BossRushDifficulty.Normal: return "Normal";
-            case BossRushDifficulty.Hard: return "Hard";
-            case BossRushDifficulty.Nightmare: return "Nightmare";
-            default: return difficulty.ToString();
-        }
+        if (rightPanel != null)
+            rightPanel.SetDifficulty(SelectedDifficulty);
     }
 
     void PlaySfx(AudioClip clip, float volume)
@@ -645,6 +609,9 @@ public class BossRushMenu : MonoBehaviour
 
         if (leftPanel != null)
             leftPanel.SetUiScale(_currentUiScale);
+
+        if (rightPanel != null)
+            rightPanel.SetUiScale(_currentUiScale);
     }
 
     static bool ApproximatelyRect(Rect a, Rect b)

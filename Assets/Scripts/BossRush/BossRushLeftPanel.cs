@@ -30,10 +30,10 @@ public class BossRushLeftPanel : MonoBehaviour
     readonly List<Text> difficultyTexts = new();
     readonly List<BossRushDifficulty> difficulties = new()
     {
-        BossRushDifficulty.Easy,
-        BossRushDifficulty.Normal,
-        BossRushDifficulty.Hard,
-        BossRushDifficulty.Nightmare
+        BossRushDifficulty.EASY,
+        BossRushDifficulty.NORMAL,
+        BossRushDifficulty.HARD,
+        BossRushDifficulty.NIGHTMARE
     };
 
     float _currentUiScale = 1f;
@@ -299,10 +299,10 @@ public class BossRushLeftPanel : MonoBehaviour
     {
         switch (difficulty)
         {
-            case BossRushDifficulty.Easy: return "Easy";
-            case BossRushDifficulty.Normal: return "Normal";
-            case BossRushDifficulty.Hard: return "Hard";
-            case BossRushDifficulty.Nightmare: return "Nightmare";
+            case BossRushDifficulty.EASY: return "EASY";
+            case BossRushDifficulty.NORMAL: return "NORMAL";
+            case BossRushDifficulty.HARD: return "HARD";
+            case BossRushDifficulty.NIGHTMARE: return "NIGHTMARE";
             default: return difficulty.ToString();
         }
     }
