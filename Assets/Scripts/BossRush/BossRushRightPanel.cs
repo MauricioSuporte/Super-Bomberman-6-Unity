@@ -36,13 +36,35 @@ public class BossRushRightPanel : MonoBehaviour
     [SerializeField] float timePreferredWidth = 220f;
 
     [Header("Labels")]
-    [SerializeField] string firstLabel = "1ST";
-    [SerializeField] string secondLabel = "2ND";
-    [SerializeField] string thirdLabel = "3RD";
+    [SerializeField] string firstLabel = "1";
+    [SerializeField] string secondLabel = "2";
+    [SerializeField] string thirdLabel = "3";
     [SerializeField] string defaultTimeText = "--:--.--";
+
+    [Header("Rank Visuals")]
+    [SerializeField] Image firstRankBackground;
+    [SerializeField] Image secondRankBackground;
+    [SerializeField] Image thirdRankBackground;
+
+    [SerializeField] float rankBadgeSize = 56f;
+    [SerializeField] float rankRotationZ = -8f;
+    [SerializeField] Color rankTextColor = Color.black;
+    [SerializeField] Color rankShadowColor = Color.white;
+    [SerializeField] Vector2 rankShadowDistance = new Vector2(3f, -3f);
+
+    [SerializeField] Color firstRankBackgroundColor = new Color32(214, 183, 24, 255);
+    [SerializeField] Color secondRankBackgroundColor = new Color32(201, 201, 201, 255);
+    [SerializeField] Color thirdRankBackgroundColor = new Color32(224, 151, 98, 255);
+
+    [Header("Generated Badge")]
+    [SerializeField] int generatedCircleTextureSize = 64;
+    [SerializeField] float generatedCircleSoftEdge = 1.5f;
+    [SerializeField] bool autoCreateRankBackground = true;
 
     [Header("Panel Offset")]
     [SerializeField] float contentOffsetY = 0f;
+
+    static Sprite s_circleSprite;
 
     int _baseTopPadding;
     int _baseBottomPadding;
@@ -58,6 +80,7 @@ public class BossRushRightPanel : MonoBehaviour
     public void Initialize(float uiScale)
     {
         _currentUiScale = uiScale;
+        ResolveMissingReferences();
         CaptureBaseLayoutPadding();
         ApplyScaledFonts();
         ApplyLayoutFormatting();
@@ -67,12 +90,15 @@ public class BossRushRightPanel : MonoBehaviour
     public void SetUiScale(float uiScale)
     {
         _currentUiScale = uiScale;
+        ResolveMissingReferences();
         ApplyScaledFonts();
         ApplyLayoutFormatting();
     }
 
     public void SetDifficulty(BossRushDifficulty difficulty)
     {
+        ResolveMissingReferences();
+
         ApplyScaledFonts();
         ApplyLayoutFormatting();
 
@@ -89,10 +115,33 @@ public class BossRushRightPanel : MonoBehaviour
         SetTimeText(secondTimeText, GetFormattedTime(times, 1));
         SetTimeText(thirdTimeText, GetFormattedTime(times, 2));
 
+        RefreshRankBackgroundPositions();
+
         SLog(
             $"SetDifficulty | difficulty={difficulty} " +
             $"t0={GetFormattedTime(times, 0)} t1={GetFormattedTime(times, 1)} t2={GetFormattedTime(times, 2)}"
         );
+    }
+
+    void ResolveMissingReferences()
+    {
+        if (firstRow == null && firstRankText != null)
+            firstRow = firstRankText.transform.parent as RectTransform;
+
+        if (secondRow == null && secondRankText != null)
+            secondRow = secondRankText.transform.parent as RectTransform;
+
+        if (thirdRow == null && thirdRankText != null)
+            thirdRow = thirdRankText.transform.parent as RectTransform;
+
+        if (firstRankBackground == null && firstRankText != null)
+            firstRankBackground = FindGeneratedBackground(firstRankText);
+
+        if (secondRankBackground == null && secondRankText != null)
+            secondRankBackground = FindGeneratedBackground(secondRankText);
+
+        if (thirdRankBackground == null && thirdRankText != null)
+            thirdRankBackground = FindGeneratedBackground(thirdRankText);
     }
 
     void ApplyScaledFonts()
@@ -121,12 +170,14 @@ public class BossRushRightPanel : MonoBehaviour
 
     void ApplyLayoutFormatting()
     {
+        ResolveMissingReferences();
         ApplyPanelVerticalOffset();
 
         ConfigureTitleText(titleText);
-        ConfigureLabelText(firstRankText);
-        ConfigureLabelText(secondRankText);
-        ConfigureLabelText(thirdRankText);
+
+        ConfigureRankText(firstRankText);
+        ConfigureRankText(secondRankText);
+        ConfigureRankText(thirdRankText);
 
         ConfigureTimeText(firstTimeText);
         ConfigureTimeText(secondTimeText);
@@ -136,16 +187,39 @@ public class BossRushRightPanel : MonoBehaviour
         ConfigureRow(secondRow);
         ConfigureRow(thirdRow);
 
-        ConfigureLayoutElementWidth(firstRankText, rankPreferredWidth);
-        ConfigureLayoutElementWidth(secondRankText, rankPreferredWidth);
-        ConfigureLayoutElementWidth(thirdRankText, rankPreferredWidth);
-
         ConfigureLayoutElementWidth(firstTimeText, timePreferredWidth);
         ConfigureLayoutElementWidth(secondTimeText, timePreferredWidth);
         ConfigureLayoutElementWidth(thirdTimeText, timePreferredWidth);
 
+        ConfigureRankSlot(firstRankText, ref firstRankBackground, firstRankBackgroundColor);
+        ConfigureRankSlot(secondRankText, ref secondRankBackground, secondRankBackgroundColor);
+        ConfigureRankSlot(thirdRankText, ref thirdRankBackground, thirdRankBackgroundColor);
+
+        ForceRebuildLayouts();
+        RefreshRankBackgroundPositions();
+
         ConfigureTitleHeight();
         ConfigureTitleWidthAndPosition();
+    }
+
+    void ForceRebuildLayouts()
+    {
+        Canvas.ForceUpdateCanvases();
+
+        if (firstRow != null)
+            LayoutRebuilder.ForceRebuildLayoutImmediate(firstRow);
+
+        if (secondRow != null)
+            LayoutRebuilder.ForceRebuildLayoutImmediate(secondRow);
+
+        if (thirdRow != null)
+            LayoutRebuilder.ForceRebuildLayoutImmediate(thirdRow);
+
+        RectTransform root = transform as RectTransform;
+        if (root != null)
+            LayoutRebuilder.ForceRebuildLayoutImmediate(root);
+
+        Canvas.ForceUpdateCanvases();
     }
 
     void ConfigureTitleHeight()
@@ -180,7 +254,7 @@ public class BossRushRightPanel : MonoBehaviour
 
         float rowSpacing = GetRowSpacing();
         float contentWidth =
-            ScaledFloat(rankPreferredWidth) +
+            ScaledFloat(rankBadgeSize) +
             rowSpacing +
             ScaledFloat(timePreferredWidth);
 
@@ -217,7 +291,9 @@ public class BossRushRightPanel : MonoBehaviour
         if (row == null)
             return;
 
-        float h = Mathf.Max(ScaledFloat(rowHeight), ScaledFont(rowFontSize) + ScaledFloat(12f));
+        float badgeSize = ScaledFloat(rankBadgeSize);
+        float h = Mathf.Max(ScaledFloat(rowHeight), ScaledFont(rowFontSize) + ScaledFloat(12f), badgeSize);
+
         row.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, h);
 
         LayoutElement le = row.GetComponent<LayoutElement>();
@@ -265,16 +341,29 @@ public class BossRushRightPanel : MonoBehaviour
         target.supportRichText = false;
     }
 
-    void ConfigureLabelText(Text target)
+    void ConfigureRankText(Text target)
     {
         if (target == null)
             return;
 
-        target.alignment = TextAnchor.MiddleLeft;
+        target.alignment = TextAnchor.MiddleCenter;
         target.horizontalOverflow = HorizontalWrapMode.Overflow;
         target.verticalOverflow = VerticalWrapMode.Overflow;
         target.resizeTextForBestFit = false;
         target.supportRichText = false;
+        target.color = rankTextColor;
+
+        RectTransform rt = target.rectTransform;
+        if (rt != null)
+            rt.localRotation = Quaternion.Euler(0f, 0f, rankRotationZ);
+
+        Shadow shadow = target.GetComponent<Shadow>();
+        if (shadow == null)
+            shadow = target.gameObject.AddComponent<Shadow>();
+
+        shadow.effectColor = rankShadowColor;
+        shadow.effectDistance = ScaledVector(rankShadowDistance);
+        shadow.useGraphicAlpha = false;
     }
 
     void ConfigureTimeText(Text target)
@@ -287,6 +376,210 @@ public class BossRushRightPanel : MonoBehaviour
         target.verticalOverflow = VerticalWrapMode.Overflow;
         target.resizeTextForBestFit = false;
         target.supportRichText = false;
+    }
+
+    void ConfigureRankSlot(Text rankText, ref Image background, Color backgroundColor)
+    {
+        if (rankText == null)
+            return;
+
+        float badgeSize = ScaledFloat(rankBadgeSize);
+
+        LayoutElement textLayout = rankText.GetComponent<LayoutElement>();
+        if (textLayout == null)
+            textLayout = rankText.gameObject.AddComponent<LayoutElement>();
+
+        textLayout.preferredWidth = badgeSize;
+        textLayout.minWidth = badgeSize;
+        textLayout.preferredHeight = badgeSize;
+        textLayout.minHeight = badgeSize;
+        textLayout.flexibleWidth = 0f;
+        textLayout.flexibleHeight = 0f;
+
+        RectTransform textRt = rankText.rectTransform;
+        if (textRt != null)
+        {
+            textRt.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, badgeSize);
+            textRt.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, badgeSize);
+        }
+
+        if (background == null && autoCreateRankBackground)
+            background = GetOrCreateGeneratedBackground(rankText);
+
+        if (background == null)
+            return;
+
+        background.sprite = GetOrCreateCircleSprite();
+        background.type = Image.Type.Simple;
+        background.preserveAspect = false;
+        background.raycastTarget = false;
+        background.color = backgroundColor;
+
+        RectTransform bgRt = background.rectTransform;
+        if (bgRt != null)
+        {
+            bgRt.anchorMin = textRt.anchorMin;
+            bgRt.anchorMax = textRt.anchorMax;
+            bgRt.pivot = textRt.pivot;
+            bgRt.anchoredPosition = textRt.anchoredPosition;
+            bgRt.localRotation = Quaternion.identity;
+            bgRt.localScale = Vector3.one;
+            bgRt.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, badgeSize);
+            bgRt.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, badgeSize);
+        }
+
+        LayoutElement bgLayout = background.GetComponent<LayoutElement>();
+        if (bgLayout == null)
+            bgLayout = background.gameObject.AddComponent<LayoutElement>();
+
+        bgLayout.ignoreLayout = true;
+        bgLayout.preferredWidth = badgeSize;
+        bgLayout.minWidth = badgeSize;
+        bgLayout.preferredHeight = badgeSize;
+        bgLayout.minHeight = badgeSize;
+        bgLayout.flexibleWidth = 0f;
+        bgLayout.flexibleHeight = 0f;
+    }
+
+    void RefreshRankBackgroundPositions()
+    {
+        RefreshSingleBackground(firstRankText, firstRankBackground);
+        RefreshSingleBackground(secondRankText, secondRankBackground);
+        RefreshSingleBackground(thirdRankText, thirdRankBackground);
+    }
+
+    void RefreshSingleBackground(Text rankText, Image background)
+    {
+        if (rankText == null || background == null)
+            return;
+
+        RectTransform textRt = rankText.rectTransform;
+        RectTransform bgRt = background.rectTransform;
+
+        if (textRt == null || bgRt == null)
+            return;
+
+        float badgeSize = ScaledFloat(rankBadgeSize);
+
+        bgRt.anchorMin = textRt.anchorMin;
+        bgRt.anchorMax = textRt.anchorMax;
+        bgRt.pivot = textRt.pivot;
+        bgRt.anchoredPosition = textRt.anchoredPosition;
+        bgRt.localRotation = Quaternion.identity;
+        bgRt.localScale = Vector3.one;
+        bgRt.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, badgeSize);
+        bgRt.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, badgeSize);
+
+        Transform parent = background.transform.parent;
+        if (parent != null)
+            background.transform.SetSiblingIndex(0);
+    }
+
+    Image GetOrCreateGeneratedBackground(Text rankText)
+    {
+        if (rankText == null)
+            return null;
+
+        RectTransform row = rankText.transform.parent as RectTransform;
+        if (row == null)
+            return null;
+
+        string bgName = rankText.gameObject.name + "_GeneratedBadge";
+
+        Transform existing = row.Find(bgName);
+        if (existing != null)
+        {
+            Image existingImage = existing.GetComponent<Image>();
+            if (existingImage != null)
+            {
+                existing.SetSiblingIndex(0);
+                return existingImage;
+            }
+        }
+
+        GameObject bgObject = new GameObject(bgName, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(LayoutElement));
+        bgObject.transform.SetParent(row, false);
+        bgObject.transform.SetSiblingIndex(0);
+
+        Image bg = bgObject.GetComponent<Image>();
+        bg.raycastTarget = false;
+
+        LayoutElement le = bgObject.GetComponent<LayoutElement>();
+        le.ignoreLayout = true;
+
+        return bg;
+    }
+
+    Image FindGeneratedBackground(Text rankText)
+    {
+        if (rankText == null)
+            return null;
+
+        Transform parent = rankText.transform.parent;
+        if (parent == null)
+            return null;
+
+        Transform bg = parent.Find(rankText.gameObject.name + "_GeneratedBadge");
+        if (bg == null)
+            return null;
+
+        return bg.GetComponent<Image>();
+    }
+
+    Sprite GetOrCreateCircleSprite()
+    {
+        if (s_circleSprite != null)
+            return s_circleSprite;
+
+        int size = Mathf.Clamp(generatedCircleTextureSize, 16, 512);
+        float softEdge = Mathf.Max(0.25f, generatedCircleSoftEdge);
+
+        Texture2D texture = new Texture2D(size, size, TextureFormat.ARGB32, false);
+        texture.name = "BossRushGeneratedCircle";
+        texture.filterMode = FilterMode.Bilinear;
+        texture.wrapMode = TextureWrapMode.Clamp;
+
+        float radius = (size - 1) * 0.5f;
+        Vector2 center = new Vector2(radius, radius);
+
+        for (int y = 0; y < size; y++)
+        {
+            for (int x = 0; x < size; x++)
+            {
+                Vector2 p = new Vector2(x, y);
+                float dist = Vector2.Distance(p, center);
+
+                float alpha = 1f;
+                float edgeStart = radius - softEdge;
+
+                if (dist > radius)
+                {
+                    alpha = 0f;
+                }
+                else if (dist > edgeStart)
+                {
+                    alpha = 1f - Mathf.InverseLerp(edgeStart, radius, dist);
+                }
+
+                texture.SetPixel(x, y, new Color(1f, 1f, 1f, alpha));
+            }
+        }
+
+        texture.Apply();
+
+        s_circleSprite = Sprite.Create(
+            texture,
+            new Rect(0f, 0f, size, size),
+            new Vector2(0.5f, 0.5f),
+            size
+        );
+
+        return s_circleSprite;
+    }
+
+    Vector2 ScaledVector(Vector2 value)
+    {
+        return new Vector2(ScaledFloat(value.x), ScaledFloat(value.y));
     }
 
     void SetTimeText(Text target, string value)

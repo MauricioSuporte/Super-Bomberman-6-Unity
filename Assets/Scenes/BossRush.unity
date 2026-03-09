@@ -382,7 +382,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a67f16fa70d813a4da8d0f4ea8898945, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BossRushRightPanel
-  enableSurgicalLogs: 0
+  enableSurgicalLogs: 1
   titleText: {fileID: 1745869990}
   titleFormat: '{0}'
   titleFontSize: 32
@@ -401,10 +401,24 @@ MonoBehaviour:
   rowHeight: 24
   rankPreferredWidth: 120
   timePreferredWidth: 220
-  firstLabel: 1ST
-  secondLabel: 2ND
-  thirdLabel: 3RD
+  firstLabel: 1
+  secondLabel: 2
+  thirdLabel: 3
   defaultTimeText: --:--.--
+  firstRankBackground: {fileID: 0}
+  secondRankBackground: {fileID: 0}
+  thirdRankBackground: {fileID: 0}
+  rankBadgeSize: 56
+  rankRotationZ: 8
+  rankTextColor: {r: 0, g: 0, b: 0, a: 1}
+  rankShadowColor: {r: 1, g: 1, b: 1, a: 1}
+  rankShadowDistance: {x: 3, y: -3}
+  firstRankBackgroundColor: {r: 0.8392157, g: 0.7176471, b: 0.09411765, a: 1}
+  secondRankBackgroundColor: {r: 0.7882353, g: 0.7882353, b: 0.7882353, a: 1}
+  thirdRankBackgroundColor: {r: 0.8784314, g: 0.5921569, b: 0.38431373, a: 1}
+  generatedCircleTextureSize: 64
+  generatedCircleSoftEdge: 1.5
+  autoCreateRankBackground: 1
   contentOffsetY: 170
 --- !u!114 &190842364
 MonoBehaviour:
@@ -1342,7 +1356,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 1}
   m_AnchorMax: {x: 0.5, y: 1}
-  m_AnchoredPosition: {x: -50, y: -258.74}
+  m_AnchoredPosition: {x: -75, y: -258.74}
   m_SizeDelta: {x: 900, y: 64}
   m_Pivot: {x: 0.5, y: 1}
 --- !u!114 &607783273
@@ -3966,7 +3980,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 944833f79ecad8046b768e1ce2158b3b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BossRushLeftPanel
-  enableSurgicalLogs: 1
+  enableSurgicalLogs: 0
   dumpDifficultyLayoutEveryUpdate: 0
   difficultyListRoot: {fileID: 470050462}
   difficultyItemPrefab: {fileID: 2139593659}
@@ -3981,6 +3995,8 @@ MonoBehaviour:
   cursorOffset: {x: -28, y: 0}
   scaleCursorWithUi: 1
   roundCursorToWholePixels: 1
+  cursorHeightMultiplier: 1
+  minCursorSize: 24
 --- !u!1 &2139593657
 GameObject:
   m_ObjectHideFlags: 0
