@@ -26,6 +26,8 @@ public class BossRushLeftPanel : MonoBehaviour
     [SerializeField] Vector2 cursorOffset = new Vector2(-28f, 0f);
     [SerializeField] bool scaleCursorWithUi = true;
     [SerializeField] bool roundCursorToWholePixels = true;
+    [SerializeField] float cursorHeightMultiplier = 1.2f;
+    [SerializeField] float minCursorSize = 24f;
 
     readonly List<Text> difficultyTexts = new();
     readonly List<BossRushDifficulty> difficulties = new()
@@ -38,8 +40,8 @@ public class BossRushLeftPanel : MonoBehaviour
 
     float _currentUiScale = 1f;
 
-    Vector3 _cursorBaseLocalScale = Vector3.one;
-    bool _cursorBaseScaleCaptured;
+    Vector2 _cursorBaseSizeDelta = new Vector2(16f, 16f);
+    bool _cursorBaseSizeCaptured;
 
     int _baseLayoutPaddingLeft;
     int _baseLayoutPaddingRight;
@@ -58,8 +60,13 @@ public class BossRushLeftPanel : MonoBehaviour
     {
         if (cursorRenderer != null)
         {
-            _cursorBaseLocalScale = cursorRenderer.transform.localScale;
-            _cursorBaseScaleCaptured = true;
+            RectTransform cursorRt = cursorRenderer.transform as RectTransform;
+            if (cursorRt != null)
+            {
+                _cursorBaseSizeDelta = cursorRt.sizeDelta;
+                _cursorBaseSizeCaptured = true;
+            }
+
             cursorRenderer.gameObject.SetActive(false);
         }
 
@@ -349,20 +356,39 @@ public class BossRushLeftPanel : MonoBehaviour
 
     void ApplyCursorScale()
     {
-        if (!scaleCursorWithUi || cursorRenderer == null)
+        if (cursorRenderer == null)
             return;
 
-        if (!_cursorBaseScaleCaptured)
+        RectTransform cursorRt = cursorRenderer.transform as RectTransform;
+        if (cursorRt == null)
+            return;
+
+        if (!_cursorBaseSizeCaptured)
         {
-            _cursorBaseLocalScale = cursorRenderer.transform.localScale;
-            _cursorBaseScaleCaptured = true;
+            _cursorBaseSizeDelta = cursorRt.sizeDelta;
+            _cursorBaseSizeCaptured = true;
         }
 
-        float s = _currentUiScale;
-        cursorRenderer.transform.localScale = new Vector3(
-            _cursorBaseLocalScale.x * s,
-            _cursorBaseLocalScale.y * s,
-            _cursorBaseLocalScale.z
+        float targetHeight = ScaledFloat(difficultyItemHeight);
+        float targetSize = Mathf.Max(targetHeight * cursorHeightMultiplier, minCursorSize);
+
+        float baseAspect = _cursorBaseSizeDelta.y > 0f
+            ? _cursorBaseSizeDelta.x / _cursorBaseSizeDelta.y
+            : 1f;
+
+        cursorRt.sizeDelta = new Vector2(
+            Mathf.Round(targetSize * baseAspect),
+            Mathf.Round(targetSize)
+        );
+
+        cursorRt.localScale = Vector3.one;
+
+        SLog(
+            $"ApplyCursorScale | " +
+            $"uiScale={_currentUiScale:0.###} " +
+            $"targetHeight={targetHeight:0.##} " +
+            $"cursorHeightMultiplier={cursorHeightMultiplier:0.##} " +
+            $"cursorSize={cursorRt.sizeDelta}"
         );
     }
 

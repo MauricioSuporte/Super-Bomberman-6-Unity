@@ -516,43 +516,39 @@ public class BossRushMenu : MonoBehaviour
 
     Rect GetReferencePixelRect(out string source)
     {
-        source = "NONE";
+        source = "SCREEN";
 
-        var canvas = GetRootCanvas();
-        if (canvas == null)
+        if (referenceRect == null)
+            return new Rect(0, 0, Screen.width, Screen.height);
+
+        Canvas canvas = GetRootCanvas();
+        Camera cam = null;
+
+        if (canvas != null && canvas.renderMode != RenderMode.ScreenSpaceOverlay)
+            cam = canvas.worldCamera != null ? canvas.worldCamera : GetMainCameraSafe();
+
+        Vector3[] corners = new Vector3[4];
+        referenceRect.GetWorldCorners(corners);
+
+        Vector2 bl = RectTransformUtility.WorldToScreenPoint(cam, corners[0]);
+        Vector2 tr = RectTransformUtility.WorldToScreenPoint(cam, corners[2]);
+
+        float xMin = Mathf.Min(bl.x, tr.x);
+        float yMin = Mathf.Min(bl.y, tr.y);
+        float xMax = Mathf.Max(bl.x, tr.x);
+        float yMax = Mathf.Max(bl.y, tr.y);
+
+        float width = xMax - xMin;
+        float height = yMax - yMin;
+
+        if (width <= 1f || height <= 1f)
         {
-            source = "NO_CANVAS";
+            source = "SCREEN_FALLBACK";
             return new Rect(0, 0, Screen.width, Screen.height);
         }
 
-        RectTransform rt = referenceRect;
-        if (rt == null)
-        {
-            if (root != null)
-                rt = root.GetComponent<RectTransform>();
-        }
-
-        if (rt == null)
-        {
-            source = "FALLBACK_SCREEN";
-            return new Rect(0, 0, Screen.width, Screen.height);
-        }
-
-        source = rt.name;
-
-        Rect px = RectTransformUtility.PixelAdjustRect(rt, canvas);
-        if (px.width <= 1f || px.height <= 1f)
-        {
-            var r = rt.rect;
-            px = new Rect(0, 0, r.width, r.height);
-            source += "+rt.rect";
-        }
-        else
-        {
-            source += "+PixelAdjustRect";
-        }
-
-        return px;
+        source = "REFERENCE_WORLD_CORNERS";
+        return new Rect(xMin, yMin, width, height);
     }
 
     float ComputeUiScaleForRect(float usedW, float usedH, out int baseScaleInt)
@@ -585,7 +581,9 @@ public class BossRushMenu : MonoBehaviour
 
         var cam = GetMainCameraSafe();
         Rect camRect = cam != null ? cam.rect : new Rect(0, 0, 1, 1);
-        Rect refPx = GetReferencePixelRect(out _);
+
+        string refSource;
+        Rect refPx = GetReferencePixelRect(out refSource);
 
         bool changed =
             force ||
@@ -604,7 +602,13 @@ public class BossRushMenu : MonoBehaviour
 
         _currentUiScale = ComputeUiScaleForRect(refPx.width, refPx.height, out _currentBaseScaleInt);
 
-        SLog($"ApplyDynamicScaleIfNeeded | uiScale={_currentUiScale:0.###} baseScaleInt={_currentBaseScaleInt} refPx={refPx}");
+        SLog(
+            $"ApplyDynamicScaleIfNeeded | " +
+            $"Screen=({Screen.width}x{Screen.height}) " +
+            $"uiScale={_currentUiScale:0.###} " +
+            $"baseScaleInt={_currentBaseScaleInt} " +
+            $"refSource={refSource} refPx={refPx}"
+        );
 
         if (leftPanel != null)
             leftPanel.SetUiScale(_currentUiScale);

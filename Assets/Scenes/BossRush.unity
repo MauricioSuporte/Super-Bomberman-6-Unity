@@ -2875,7 +2875,7 @@ RectTransform:
   m_GameObject: {fileID: 1595472542}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 3, y: 3, z: 1}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 470050462}
@@ -3966,7 +3966,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 944833f79ecad8046b768e1ce2158b3b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BossRushLeftPanel
-  enableSurgicalLogs: 0
+  enableSurgicalLogs: 1
   dumpDifficultyLayoutEveryUpdate: 0
   difficultyListRoot: {fileID: 470050462}
   difficultyItemPrefab: {fileID: 2139593659}
