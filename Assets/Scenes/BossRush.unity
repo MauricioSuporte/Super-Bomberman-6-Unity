@@ -1377,8 +1377,8 @@ MonoBehaviour:
   heartText: {fileID: 63686861}
   amountFontSize: 24
   rowHeight: 28
-  iconPreferredWidth: 28
-  iconPreferredHeight: 28
+  iconPreferredWidth: 56
+  iconPreferredHeight: 56
   amountPreferredWidth: 36
   rootSpacing: 18
   rootAlignment: 4
