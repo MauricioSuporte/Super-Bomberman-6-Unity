@@ -2319,6 +2319,32 @@ MonoBehaviour:
   extraScaleMultiplier: 1
   minScale: 0.5
   maxScale: 10
+  useSavedNightmareUnlock: 0
+  nightmareUnlocked: 0
+  deniedOptionSfx: {fileID: 8300000, guid: 2f98cb783cdc9bb4d8ff3b868291f743, type: 3}
+  deniedOptionVolume: 1
+  nightmareLockedMessage: UNLOCKED BY BEATING HARD DIFFICULTY
+  nightmareLockedText: {fileID: 0}
+  nightmareLockedFontSize: 26
+  nightmareLockedMessageHex: '#FF3B30'
+  nightmareLockedShowSeconds: 2
+  nightmareLockedBottomMargin: 18
+  nightmareLockedFontAsset: {fileID: 11400000, guid: ecf098b5ead05a94fa9fde052327d9de, type: 2}
+  nightmareLockedFontMaterialPreset: {fileID: 0}
+  forceNightmareLockedBold: 1
+  nightmareLockedFaceColor: {r: 0.90588236, g: 0.24705882, b: 0.24705882, a: 1}
+  nightmareLockedOutlineColor: {r: 0, g: 0, b: 0, a: 1}
+  useNightmareLockedOutline: 1
+  nightmareLockedOutlineWidth: 0.35
+  nightmareLockedOutlineSoftness: 0
+  nightmareLockedFaceDilate: 0.2
+  nightmareLockedFaceSoftness: 0
+  enableNightmareLockedUnderlay: 1
+  nightmareLockedUnderlayColor: {r: 0, g: 0, b: 0, a: 1}
+  nightmareLockedUnderlayDilate: 0.1
+  nightmareLockedUnderlaySoftness: 0
+  nightmareLockedUnderlayOffsetX: 0.25
+  nightmareLockedUnderlayOffsetY: -0.25
 --- !u!1 &1334625508
 GameObject:
   m_ObjectHideFlags: 0
@@ -2482,6 +2508,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bd4762bae7b650f46b63ddbb8842ee02, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BossRushBootstrap
+  enableSurgicalLogs: 1
   bossRushMenu: {fileID: 1311323899}
   returnSceneName: SkinSelect
   bossRushSceneName: BossRush
@@ -4638,6 +4665,8 @@ MonoBehaviour:
   normalSelectedColor: {r: 0.1764706, g: 0.45882353, b: 1, a: 1}
   hardSelectedColor: {r: 0.90588236, g: 0.24705882, b: 0.24705882, a: 1}
   nightmareSelectedColor: {r: 0, g: 0, b: 0, a: 1}
+  nightmareUnlocked: 1
+  lockedAlpha: 0.35
   defaultOutlineColor: {r: 0, g: 0, b: 0, a: 1}
   nightmareOutlineColor: {r: 0.90588236, g: 0.24705882, b: 0.24705882, a: 1}
   difficultyFontAsset: {fileID: 11400000, guid: 0cd596907be67a34f9e1cd590b869e4e, type: 2}

@@ -28,6 +28,10 @@ public class BossRushLeftPanel : MonoBehaviour
     [SerializeField] Color hardSelectedColor = new Color32(231, 63, 63, 255);
     [SerializeField] Color nightmareSelectedColor = Color.black;
 
+    [Header("Locked Difficulty")]
+    [SerializeField] bool nightmareUnlocked = true;
+    [SerializeField, Range(0.05f, 1f)] float lockedAlpha = 0.35f;
+
     [Header("Outline Colors")]
     [SerializeField] Color defaultOutlineColor = Color.black;
     [SerializeField] Color nightmareOutlineColor = new Color32(231, 63, 63, 255);
@@ -294,12 +298,19 @@ public class BossRushLeftPanel : MonoBehaviour
 
             bool isSelected = i == selectedIndex;
             BossRushDifficulty difficulty = difficulties[i];
+            bool unlocked = IsDifficultyUnlocked(difficulty);
 
             txt.text = GetDifficultyDisplayName(difficulty);
 
             DifficultyVisualStyle style = isSelected
                 ? GetSelectedStyle(difficulty)
                 : GetUnselectedStyle();
+
+            if (!unlocked)
+            {
+                style.FaceColor = ApplyLockedAlpha(style.FaceColor);
+                style.OutlineColor = ApplyLockedAlpha(style.OutlineColor);
+            }
 
             ApplyDifficultyTextStyle(txt, style);
         }
@@ -689,6 +700,25 @@ public class BossRushLeftPanel : MonoBehaviour
     {
         if (mat != null && mat.HasProperty(prop))
             mat.SetColor(prop, value);
+    }
+
+    public void SetNightmareUnlocked(bool unlocked)
+    {
+        nightmareUnlocked = unlocked;
+    }
+
+    bool IsDifficultyUnlocked(BossRushDifficulty difficulty)
+    {
+        if (difficulty == BossRushDifficulty.NIGHTMARE)
+            return nightmareUnlocked;
+
+        return true;
+    }
+
+    Color ApplyLockedAlpha(Color color)
+    {
+        color.a *= lockedAlpha;
+        return color;
     }
 
     void SLog(string message)

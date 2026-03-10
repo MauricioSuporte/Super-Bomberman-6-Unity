@@ -1,4 +1,5 @@
 ﻿using System.Collections;
+using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -62,6 +63,46 @@ public class BossRushMenu : MonoBehaviour
     [SerializeField, Min(0.01f)] float minScale = 0.5f;
     [SerializeField, Min(0.01f)] float maxScale = 10f;
 
+    [Header("Locked Difficulty")]
+    [SerializeField] bool useSavedNightmareUnlock = true;
+    [SerializeField] bool nightmareUnlocked = false;
+    [SerializeField] AudioClip deniedOptionSfx;
+    [SerializeField, Range(0f, 1f)] float deniedOptionVolume = 1f;
+    [SerializeField] string nightmareLockedMessage = "UNLOCKED BY CLEARING HARD";
+
+    [Header("Locked Difficulty Message UI")]
+    [SerializeField] TextMeshProUGUI nightmareLockedText;
+    [SerializeField] int nightmareLockedFontSize = 32;
+    [SerializeField] string nightmareLockedMessageHex = "#E73F3F";
+    [SerializeField] float nightmareLockedShowSeconds = 2f;
+    [SerializeField] float nightmareLockedBottomMargin = 12f;
+
+    [Header("Locked Difficulty Message TMP")]
+    [SerializeField] TMP_FontAsset nightmareLockedFontAsset;
+    [SerializeField] Material nightmareLockedFontMaterialPreset;
+    [SerializeField] bool forceNightmareLockedBold = true;
+
+    [Header("Locked Difficulty Message Colors")]
+    [SerializeField] Color nightmareLockedFaceColor = new Color32(231, 63, 63, 255);
+    [SerializeField] Color nightmareLockedOutlineColor = Color.black;
+
+    [Header("Locked Difficulty Message TMP Outline")]
+    [SerializeField] bool useNightmareLockedOutline = true;
+    [SerializeField, Range(0f, 1f)] float nightmareLockedOutlineWidth = 0.35f;
+    [SerializeField, Range(0f, 1f)] float nightmareLockedOutlineSoftness = 0f;
+
+    [Header("Locked Difficulty Message TMP Face")]
+    [SerializeField, Range(-1f, 1f)] float nightmareLockedFaceDilate = 0.2f;
+    [SerializeField, Range(0f, 1f)] float nightmareLockedFaceSoftness = 0f;
+
+    [Header("Locked Difficulty Message TMP Underlay")]
+    [SerializeField] bool enableNightmareLockedUnderlay = true;
+    [SerializeField] Color nightmareLockedUnderlayColor = new Color(0f, 0f, 0f, 1f);
+    [SerializeField, Range(-1f, 1f)] float nightmareLockedUnderlayDilate = 0.1f;
+    [SerializeField, Range(0f, 1f)] float nightmareLockedUnderlaySoftness = 0f;
+    [SerializeField, Range(-2f, 2f)] float nightmareLockedUnderlayOffsetX = 0.25f;
+    [SerializeField, Range(-2f, 2f)] float nightmareLockedUnderlayOffsetY = -0.25f;
+
     int selectedIndex;
     bool confirmed;
     bool menuActive;
@@ -70,6 +111,7 @@ public class BossRushMenu : MonoBehaviour
     float backgroundSwapTimer;
 
     Coroutine fadeInCoroutine;
+    Coroutine nightmareLockedMessageRoutine;
 
     AudioClip previousClip;
     float previousVolume;
@@ -85,6 +127,9 @@ public class BossRushMenu : MonoBehaviour
 
     BossRushDifficulty _lastTopDifficulty;
     bool _topDifficultyInitialized;
+
+    RectTransform nightmareLockedRect;
+    Material nightmareLockedRuntimeMaterial;
 
     public bool ReturnRequested { get; private set; }
 
@@ -123,9 +168,16 @@ public class BossRushMenu : MonoBehaviour
             topPanel.Initialize(_currentUiScale);
 
         ApplyCurrentBackgroundSprite();
+        EnsureNightmareLockedText();
 
         if (root != null)
             root.SetActive(false);
+    }
+
+    void OnDestroy()
+    {
+        if (nightmareLockedRuntimeMaterial != null)
+            Destroy(nightmareLockedRuntimeMaterial);
     }
 
     void Update()
@@ -135,6 +187,7 @@ public class BossRushMenu : MonoBehaviour
 
         ApplyDynamicScaleIfNeeded(false);
         TickBackgroundSpriteSwap();
+        RefreshDifficultyLocks();
 
         if (leftPanel != null)
             leftPanel.UpdateDifficultyVisuals(selectedIndex, confirmed);
@@ -158,6 +211,8 @@ public class BossRushMenu : MonoBehaviour
     {
         menuActive = false;
         SLog("Hide | menuActive=false");
+
+        HideNightmareLockedMessageImmediate();
 
         if (leftPanel != null)
             leftPanel.HideCursor();
@@ -186,6 +241,9 @@ public class BossRushMenu : MonoBehaviour
             SLog($"SelectDifficultyRoutine | fadeImage active={fadeImage.gameObject.activeInHierarchy}");
         }
 
+        EnsureNightmareLockedText();
+        HideNightmareLockedMessageImmediate();
+
         ReturnRequested = false;
         confirmed = false;
         _topDifficultyInitialized = false;
@@ -196,6 +254,8 @@ public class BossRushMenu : MonoBehaviour
 
         if (leftPanel != null)
             leftPanel.BuildDifficultyList();
+
+        RefreshDifficultyLocks();
 
         selectedIndex = Mathf.Clamp(
             (int)BossRushProgress.GetSelectedDifficulty(),
@@ -269,6 +329,7 @@ public class BossRushMenu : MonoBehaviour
                 SLog($"Input Move | selectedIndex={selectedIndex} difficulty={SelectedDifficulty}");
                 PlaySfx(moveCursorSfx, moveCursorSfxVolume);
 
+                HideNightmareLockedMessageImmediate();
                 UpdateDifficultyVisuals();
                 UpdateTopItems();
                 UpdateBestTimes();
@@ -289,6 +350,26 @@ public class BossRushMenu : MonoBehaviour
 
             if (input.GetDown(1, PlayerAction.ActionA) || input.GetDown(1, PlayerAction.Start))
             {
+                if (!IsSelectedDifficultyUnlocked())
+                {
+                    SLog(
+                        $"Input Confirm Denied | difficulty={SelectedDifficulty} locked " +
+                        $"useSavedNightmareUnlock={useSavedNightmareUnlock} " +
+                        $"nightmareUnlocked(serialized)={nightmareUnlocked} " +
+                        $"nightmareUnlocked(resolved)={GetNightmareUnlocked()}"
+                    );
+
+                    PlayDeniedSfx();
+
+                    if (!string.IsNullOrEmpty(nightmareLockedMessage))
+                        ShowNightmareLockedMessage();
+                    else
+                        SLog("Input Confirm Denied | nightmareLockedMessage empty");
+
+                    yield return null;
+                    continue;
+                }
+
                 BossRushProgress.SetSelectedDifficulty(SelectedDifficulty);
 
                 var preset = GetLoadoutPreset(SelectedDifficulty);
@@ -347,6 +428,8 @@ public class BossRushMenu : MonoBehaviour
     {
         if (leftPanel != null)
             leftPanel.UpdateDifficultyVisuals(selectedIndex, confirmed);
+
+        RefreshDifficultyLocks();
     }
 
     void UpdateTopItems()
@@ -651,6 +734,8 @@ public class BossRushMenu : MonoBehaviour
 
         if (topPanel != null)
             topPanel.SetUiScale(_currentUiScale);
+
+        ApplyNightmareLockedTextVisualStyle();
     }
 
     static bool ApproximatelyRect(Rect a, Rect b)
@@ -660,6 +745,279 @@ public class BossRushMenu : MonoBehaviour
             Mathf.Abs(a.y - b.y) < 0.01f &&
             Mathf.Abs(a.width - b.width) < 0.01f &&
             Mathf.Abs(a.height - b.height) < 0.01f;
+    }
+
+    bool IsSelectedDifficultyUnlocked()
+    {
+        if (SelectedDifficulty == BossRushDifficulty.NIGHTMARE)
+            return GetNightmareUnlocked();
+
+        return true;
+    }
+
+    void RefreshDifficultyLocks()
+    {
+        if (leftPanel != null)
+            leftPanel.SetNightmareUnlocked(GetNightmareUnlocked());
+
+        SLog(
+            $"RefreshDifficultyLocks | " +
+            $"useSavedNightmareUnlock={useSavedNightmareUnlock} " +
+            $"nightmareUnlocked(serialized)={nightmareUnlocked} " +
+            $"nightmareUnlocked(resolved)={GetNightmareUnlocked()}"
+        );
+    }
+
+    void PlayDeniedSfx()
+    {
+        if (deniedOptionSfx == null)
+        {
+            SLog("PlayDeniedSfx | deniedOptionSfx=NULL");
+            return;
+        }
+
+        var music = GameMusicController.Instance;
+        if (music == null)
+        {
+            SLog("PlayDeniedSfx | GameMusicController.Instance=NULL");
+            return;
+        }
+
+        music.PlaySfx(deniedOptionSfx, deniedOptionVolume);
+        SLog($"PlayDeniedSfx | played volume={deniedOptionVolume:0.##}");
+    }
+
+    bool GetNightmareUnlocked()
+    {
+        if (useSavedNightmareUnlock)
+            return BossRushDifficultyUnlocks.IsNightmareUnlocked();
+
+        return nightmareUnlocked;
+    }
+
+    void EnsureNightmareLockedText()
+    {
+        if (root == null)
+        {
+            SLog("EnsureNightmareLockedText | root=NULL");
+            return;
+        }
+
+        if (nightmareLockedText == null)
+        {
+            GameObject go = new GameObject("NightmareLockedText", typeof(RectTransform));
+            go.transform.SetParent(root.transform, false);
+
+            nightmareLockedText = go.AddComponent<TextMeshProUGUI>();
+            nightmareLockedText.raycastTarget = false;
+
+            SLog("EnsureNightmareLockedText | created runtime TMP text");
+        }
+
+        nightmareLockedRect = nightmareLockedText.rectTransform;
+
+        nightmareLockedRect.anchorMin = new Vector2(0f, 0f);
+        nightmareLockedRect.anchorMax = new Vector2(1f, 0f);
+        nightmareLockedRect.pivot = new Vector2(0.5f, 0f);
+        nightmareLockedRect.anchoredPosition = new Vector2(0f, nightmareLockedBottomMargin * _currentUiScale);
+        nightmareLockedRect.sizeDelta = new Vector2(0f, 0f);
+        nightmareLockedRect.localScale = Vector3.one;
+
+        if (nightmareLockedFontAsset == null)
+            nightmareLockedFontAsset = Resources.Load<TMP_FontAsset>("Font/Retro Gaming SDF");
+
+        ApplyNightmareLockedTextVisualStyle();
+
+        nightmareLockedText.text = string.Empty;
+        nightmareLockedText.gameObject.SetActive(false);
+
+        SLog(
+            $"EnsureNightmareLockedText | " +
+            $"exists={(nightmareLockedText != null)} " +
+            $"activeSelf={(nightmareLockedText != null && nightmareLockedText.gameObject.activeSelf)} " +
+            $"anchoredPos={(nightmareLockedRect != null ? nightmareLockedRect.anchoredPosition.ToString() : "NULL")} " +
+            $"fontSize={(nightmareLockedText != null ? nightmareLockedText.fontSize.ToString() : "NULL")} " +
+            $"font={(nightmareLockedText != null && nightmareLockedText.font != null ? nightmareLockedText.font.name : "NULL")} " +
+            $"rootActive={(root != null && root.activeInHierarchy)}"
+        );
+    }
+
+    void ShowNightmareLockedMessage()
+    {
+        EnsureNightmareLockedText();
+
+        if (nightmareLockedText == null)
+        {
+            SLog("ShowNightmareLockedMessage | nightmareLockedText=NULL");
+            return;
+        }
+
+        if (nightmareLockedMessageRoutine != null)
+        {
+            StopCoroutine(nightmareLockedMessageRoutine);
+            nightmareLockedMessageRoutine = null;
+        }
+
+        ApplyNightmareLockedTextVisualStyle();
+
+        nightmareLockedText.text = nightmareLockedMessage;
+        nightmareLockedText.gameObject.SetActive(true);
+        nightmareLockedText.transform.SetAsLastSibling();
+
+        SLog(
+            $"ShowNightmareLockedMessage | " +
+            $"text='{nightmareLockedMessage}' " +
+            $"activeSelf={nightmareLockedText.gameObject.activeSelf} " +
+            $"activeInHierarchy={nightmareLockedText.gameObject.activeInHierarchy} " +
+            $"rootActive={(root != null && root.activeInHierarchy)} " +
+            $"fontSize={nightmareLockedText.fontSize} " +
+            $"font={(nightmareLockedText.font != null ? nightmareLockedText.font.name : "NULL")} " +
+            $"anchoredPos={(nightmareLockedRect != null ? nightmareLockedRect.anchoredPosition.ToString() : "NULL")} " +
+            $"sizeDelta={(nightmareLockedRect != null ? nightmareLockedRect.sizeDelta.ToString() : "NULL")}"
+        );
+
+        nightmareLockedMessageRoutine = StartCoroutine(HideNightmareLockedMessageRoutine());
+    }
+
+    void ApplyNightmareLockedTextVisualStyle()
+    {
+        if (nightmareLockedText == null)
+            return;
+
+        if (nightmareLockedFontAsset == null)
+            nightmareLockedFontAsset = Resources.Load<TMP_FontAsset>("Font/Retro Gaming SDF");
+
+        if (nightmareLockedFontAsset != null)
+            nightmareLockedText.font = nightmareLockedFontAsset;
+
+        nightmareLockedText.alignment = TextAlignmentOptions.Center;
+        nightmareLockedText.textWrappingMode = TextWrappingModes.NoWrap;
+        nightmareLockedText.overflowMode = TextOverflowModes.Overflow;
+        nightmareLockedText.extraPadding = true;
+        nightmareLockedText.fontSize = Mathf.Clamp(Mathf.RoundToInt(nightmareLockedFontSize * _currentUiScale), 8, 300);
+        nightmareLockedText.color = nightmareLockedFaceColor;
+        nightmareLockedText.margin = Vector4.zero;
+        nightmareLockedText.raycastTarget = false;
+
+        if (forceNightmareLockedBold)
+            nightmareLockedText.fontStyle |= FontStyles.Bold;
+        else
+            nightmareLockedText.fontStyle &= ~FontStyles.Bold;
+
+        Material runtimeMat = GetOrCreateNightmareLockedRuntimeMaterial();
+        ApplyNightmareLockedMaterialStyle(runtimeMat);
+
+        if (runtimeMat != null)
+            nightmareLockedText.fontMaterial = runtimeMat;
+
+        nightmareLockedText.UpdateMeshPadding();
+        nightmareLockedText.ForceMeshUpdate();
+        nightmareLockedText.SetVerticesDirty();
+    }
+
+    Material GetOrCreateNightmareLockedRuntimeMaterial()
+    {
+        if (nightmareLockedText == null)
+            return null;
+
+        if (nightmareLockedRuntimeMaterial != null)
+            return nightmareLockedRuntimeMaterial;
+
+        Material baseMat = null;
+
+        if (nightmareLockedFontMaterialPreset != null)
+            baseMat = nightmareLockedFontMaterialPreset;
+        else if (nightmareLockedText.fontSharedMaterial != null)
+            baseMat = nightmareLockedText.fontSharedMaterial;
+        else if (nightmareLockedText.font != null)
+            baseMat = nightmareLockedText.font.material;
+
+        if (baseMat == null)
+            return null;
+
+        nightmareLockedRuntimeMaterial = new Material(baseMat);
+        nightmareLockedRuntimeMaterial.name = baseMat.name + "_BossRushNightmareLockedRuntime";
+        return nightmareLockedRuntimeMaterial;
+    }
+
+    void ApplyNightmareLockedMaterialStyle(Material mat)
+    {
+        if (mat == null)
+            return;
+
+        TrySetColor(mat, "_FaceColor", nightmareLockedFaceColor);
+
+        if (useNightmareLockedOutline)
+        {
+            TrySetColor(mat, "_OutlineColor", nightmareLockedOutlineColor);
+            TrySetFloat(mat, "_OutlineWidth", nightmareLockedOutlineWidth);
+            TrySetFloat(mat, "_OutlineSoftness", nightmareLockedOutlineSoftness);
+        }
+        else
+        {
+            TrySetFloat(mat, "_OutlineWidth", 0f);
+            TrySetFloat(mat, "_OutlineSoftness", 0f);
+        }
+
+        TrySetFloat(mat, "_FaceDilate", nightmareLockedFaceDilate);
+        TrySetFloat(mat, "_FaceSoftness", nightmareLockedFaceSoftness);
+
+        if (enableNightmareLockedUnderlay)
+        {
+            TrySetColor(mat, "_UnderlayColor", nightmareLockedUnderlayColor);
+            TrySetFloat(mat, "_UnderlayDilate", nightmareLockedUnderlayDilate);
+            TrySetFloat(mat, "_UnderlaySoftness", nightmareLockedUnderlaySoftness);
+            TrySetFloat(mat, "_UnderlayOffsetX", nightmareLockedUnderlayOffsetX);
+            TrySetFloat(mat, "_UnderlayOffsetY", nightmareLockedUnderlayOffsetY);
+        }
+        else
+        {
+            TrySetFloat(mat, "_UnderlayDilate", 0f);
+            TrySetFloat(mat, "_UnderlaySoftness", 0f);
+            TrySetFloat(mat, "_UnderlayOffsetX", 0f);
+            TrySetFloat(mat, "_UnderlayOffsetY", 0f);
+        }
+    }
+
+    IEnumerator HideNightmareLockedMessageRoutine()
+    {
+        float wait = Mathf.Max(0.05f, nightmareLockedShowSeconds);
+        SLog($"HideNightmareLockedMessageRoutine | waiting {wait:0.##}s");
+
+        yield return new WaitForSecondsRealtime(wait);
+
+        HideNightmareLockedMessageImmediate();
+    }
+
+    void HideNightmareLockedMessageImmediate()
+    {
+        if (nightmareLockedMessageRoutine != null)
+        {
+            StopCoroutine(nightmareLockedMessageRoutine);
+            nightmareLockedMessageRoutine = null;
+        }
+
+        if (nightmareLockedText != null)
+        {
+            nightmareLockedText.gameObject.SetActive(false);
+
+            SLog(
+                $"HideNightmareLockedMessageImmediate | hidden " +
+                $"activeSelf={nightmareLockedText.gameObject.activeSelf}"
+            );
+        }
+    }
+
+    static void TrySetFloat(Material mat, string prop, float value)
+    {
+        if (mat != null && mat.HasProperty(prop))
+            mat.SetFloat(prop, value);
+    }
+
+    static void TrySetColor(Material mat, string prop, Color value)
+    {
+        if (mat != null && mat.HasProperty(prop))
+            mat.SetColor(prop, value);
     }
 
     void SLog(string message)
