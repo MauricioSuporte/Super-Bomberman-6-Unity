@@ -103,6 +103,28 @@ public class BossRushMenu : MonoBehaviour
     [SerializeField, Range(-2f, 2f)] float nightmareLockedUnderlayOffsetX = 0.25f;
     [SerializeField, Range(-2f, 2f)] float nightmareLockedUnderlayOffsetY = -0.25f;
 
+    [Header("Result Music - New Record")]
+    [SerializeField] AudioClip newRecordIntroMusic;
+    [SerializeField, Range(0f, 1f)] float newRecordIntroMusicVolume = 1f;
+    [SerializeField] AudioClip newRecordLoopMusic;
+    [SerializeField, Range(0f, 1f)] float newRecordLoopMusicVolume = 1f;
+
+    [Header("Result Music - 2nd / 3rd Place")]
+    [SerializeField] AudioClip top3IntroMusic;
+    [SerializeField, Range(0f, 1f)] float top3IntroMusicVolume = 1f;
+    [SerializeField] AudioClip top3LoopMusic;
+    [SerializeField, Range(0f, 1f)] float top3LoopMusicVolume = 1f;
+
+    [Header("Result Highlight")]
+    [SerializeField] float newTopTimeBlinkSeconds = 5f;
+
+    Coroutine resultMusicRoutine;
+
+    bool hasMenuCelebrationResult;
+    BossRushDifficulty menuCelebrationDifficulty;
+    int menuCelebrationRank = -1;
+    float menuCelebrationTime = -1f;
+
     int selectedIndex;
     bool confirmed;
     bool menuActive;
@@ -176,6 +198,9 @@ public class BossRushMenu : MonoBehaviour
 
     void OnDestroy()
     {
+        if (resultMusicRoutine != null)
+            StopCoroutine(resultMusicRoutine);
+
         if (nightmareLockedRuntimeMaterial != null)
             Destroy(nightmareLockedRuntimeMaterial);
     }
@@ -209,6 +234,12 @@ public class BossRushMenu : MonoBehaviour
 
     public void Hide()
     {
+        if (resultMusicRoutine != null)
+        {
+            StopCoroutine(resultMusicRoutine);
+            resultMusicRoutine = null;
+        }
+
         menuActive = false;
         SLog("Hide | menuActive=false");
 
@@ -275,7 +306,9 @@ public class BossRushMenu : MonoBehaviour
         if (leftPanel != null)
             leftPanel.DumpState("After Build + UpdateVisuals");
 
-        StartSelectMusic();
+        ConsumeLastCompletedRunResult();
+        ApplyCompletedRunVisualFeedback();
+        StartMenuMusicFlow();
 
         var input = PlayerInputManager.Instance;
 
@@ -467,19 +500,13 @@ public class BossRushMenu : MonoBehaviour
         if (music == null || selectMusic == null)
             return;
 
-        if (!capturedPreviousMusic)
-        {
-            var src = music.GetComponent<AudioSource>();
-            if (src != null)
-            {
-                previousClip = src.clip;
-                previousVolume = src.volume;
-                previousLoop = src.loop;
-                capturedPreviousMusic = true;
-            }
-        }
-
+        CapturePreviousMusicIfNeeded();
         music.PlayMusic(selectMusic, selectMusicVolume, loopSelectMusic);
+
+        SLog(
+            $"StartSelectMusic | clip={(selectMusic != null ? selectMusic.name : "NULL")} " +
+            $"volume={selectMusicVolume:0.##} loop={loopSelectMusic}"
+        );
     }
 
     void StopSelectMusicAndRestorePrevious(bool restorePrevious)
@@ -1018,6 +1045,155 @@ public class BossRushMenu : MonoBehaviour
     {
         if (mat != null && mat.HasProperty(prop))
             mat.SetColor(prop, value);
+    }
+
+    void ConsumeLastCompletedRunResult()
+    {
+        hasMenuCelebrationResult = false;
+        menuCelebrationRank = -1;
+        menuCelebrationTime = -1f;
+        menuCelebrationDifficulty = BossRushDifficulty.NORMAL;
+
+        if (!BossRushSession.HasLastCompletedRun)
+        {
+            SLog("ConsumeLastCompletedRunResult | no completed run result");
+            return;
+        }
+
+        hasMenuCelebrationResult = true;
+        menuCelebrationDifficulty = BossRushSession.LastCompletedDifficulty;
+        menuCelebrationRank = BossRushSession.LastCompletedRank;
+        menuCelebrationTime = BossRushSession.LastCompletedTime;
+
+        SLog(
+            $"ConsumeLastCompletedRunResult | difficulty={menuCelebrationDifficulty} " +
+            $"rank={menuCelebrationRank} time={BossRushProgress.FormatTime(menuCelebrationTime)}"
+        );
+
+        BossRushSession.ClearLastCompletedRun();
+    }
+
+    void ApplyCompletedRunVisualFeedback()
+    {
+        if (rightPanel == null)
+            return;
+
+        if (!hasMenuCelebrationResult || menuCelebrationRank < 0 || menuCelebrationRank > 2)
+        {
+            rightPanel.ClearNewTopTimeBlink();
+            return;
+        }
+
+        rightPanel.StartNewTopTimeBlink(
+            menuCelebrationDifficulty,
+            menuCelebrationRank,
+            Mathf.Max(0.1f, newTopTimeBlinkSeconds)
+        );
+
+        SLog(
+            $"ApplyCompletedRunVisualFeedback | blink difficulty={menuCelebrationDifficulty} " +
+            $"rank={menuCelebrationRank} duration={newTopTimeBlinkSeconds:0.##}"
+        );
+    }
+
+    void StartMenuMusicFlow()
+    {
+        CapturePreviousMusicIfNeeded();
+
+        if (resultMusicRoutine != null)
+        {
+            StopCoroutine(resultMusicRoutine);
+            resultMusicRoutine = null;
+        }
+
+        if (!hasMenuCelebrationResult || menuCelebrationRank < 0 || menuCelebrationRank > 2)
+        {
+            StartSelectMusic();
+            return;
+        }
+
+        if (menuCelebrationRank == 0)
+        {
+            resultMusicRoutine = StartCoroutine(
+                PlayMenuMusicFlowRoutine(
+                    newRecordIntroMusic,
+                    newRecordIntroMusicVolume,
+                    newRecordLoopMusic,
+                    newRecordLoopMusicVolume
+                )
+            );
+
+            SLog("StartMenuMusicFlow | using NEW RECORD music flow");
+            return;
+        }
+
+        resultMusicRoutine = StartCoroutine(
+            PlayMenuMusicFlowRoutine(
+                top3IntroMusic,
+                top3IntroMusicVolume,
+                top3LoopMusic,
+                top3LoopMusicVolume
+            )
+        );
+
+        SLog("StartMenuMusicFlow | using TOP3 music flow");
+    }
+
+    IEnumerator PlayMenuMusicFlowRoutine(
+        AudioClip introClip,
+        float introVolume,
+        AudioClip loopClip,
+        float loopVolume)
+    {
+        var music = GameMusicController.Instance;
+        if (music == null)
+            yield break;
+
+        if (introClip != null)
+        {
+            music.PlayMusic(introClip, introVolume, false);
+            SLog($"PlayMenuMusicFlowRoutine | intro={introClip.name}");
+
+            yield return new WaitForSecondsRealtime(Mathf.Max(0.01f, introClip.length));
+        }
+
+        if (loopClip != null)
+        {
+            music.PlayMusic(loopClip, loopVolume, true);
+            SLog($"PlayMenuMusicFlowRoutine | loop={loopClip.name}");
+            yield break;
+        }
+
+        if (introClip == null)
+        {
+            StartSelectMusic();
+            yield break;
+        }
+    }
+
+    void CapturePreviousMusicIfNeeded()
+    {
+        if (capturedPreviousMusic)
+            return;
+
+        var music = GameMusicController.Instance;
+        if (music == null)
+            return;
+
+        var src = music.GetComponent<AudioSource>();
+        if (src == null)
+            return;
+
+        previousClip = src.clip;
+        previousVolume = src.volume;
+        previousLoop = src.loop;
+        capturedPreviousMusic = true;
+
+        SLog(
+            $"CapturePreviousMusicIfNeeded | " +
+            $"clip={(previousClip != null ? previousClip.name : "NULL")} " +
+            $"volume={previousVolume:0.##} loop={previousLoop}"
+        );
     }
 
     void SLog(string message)

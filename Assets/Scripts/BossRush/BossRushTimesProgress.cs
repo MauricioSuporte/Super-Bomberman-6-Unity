@@ -21,11 +21,6 @@ public static class BossRushTimesProgress
         return new List<float>(times);
     }
 
-    /// <summary>
-    /// Registra um tempo na dificuldade informada.
-    /// Retorna a posição do ranking (0, 1, 2) se entrou no top 3.
-    /// Retorna -1 se não entrou.
-    /// </summary>
     public static int RegisterTime(BossRushDifficulty difficulty, float seconds)
     {
         Load();

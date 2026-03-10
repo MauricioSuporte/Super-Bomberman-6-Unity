@@ -123,6 +123,13 @@ public class BossRushRightPanel : MonoBehaviour
     [Header("Panel Offset")]
     [SerializeField] float contentOffsetY = 0f;
 
+    [Header("New Time Blink")]
+    [SerializeField] float newTopTimeBlinkInterval = 0.12f;
+
+    BossRushDifficulty _blinkDifficulty;
+    int _blinkRank = -1;
+    float _blinkEndTime = -1f;
+
     struct DifficultyVisualStyle
     {
         public Color FaceColor;
@@ -193,6 +200,7 @@ public class BossRushRightPanel : MonoBehaviour
         SetTimeText(thirdTimeText, GetFormattedTime(times, 2));
 
         RefreshRankBackgroundPositions();
+        ApplyBlinkState(difficulty);
 
         SLog(
             $"SetDifficulty | difficulty={difficulty} " +
@@ -948,6 +956,74 @@ public class BossRushRightPanel : MonoBehaviour
         layout.padding.bottom = _baseBottomPadding;
         layout.padding.left = _baseLeftPadding;
         layout.padding.right = _baseRightPadding;
+    }
+
+    public void StartNewTopTimeBlink(BossRushDifficulty difficulty, int rank, float durationSeconds)
+    {
+        if (rank < 0 || rank > 2 || durationSeconds <= 0f)
+        {
+            ClearNewTopTimeBlink();
+            return;
+        }
+
+        _blinkDifficulty = difficulty;
+        _blinkRank = rank;
+        _blinkEndTime = Time.unscaledTime + durationSeconds;
+
+        SLog(
+            $"StartNewTopTimeBlink | difficulty={difficulty} rank={rank} " +
+            $"duration={durationSeconds:0.##} endTime={_blinkEndTime:0.##}"
+        );
+    }
+
+    public void ClearNewTopTimeBlink()
+    {
+        _blinkRank = -1;
+        _blinkEndTime = -1f;
+
+        SetTimeAlpha(firstTimeText, 1f);
+        SetTimeAlpha(secondTimeText, 1f);
+        SetTimeAlpha(thirdTimeText, 1f);
+
+        SLog("ClearNewTopTimeBlink");
+    }
+
+    void ApplyBlinkState(BossRushDifficulty currentDifficulty)
+    {
+        bool blinkActive =
+            _blinkRank >= 0 &&
+            _blinkRank <= 2 &&
+            currentDifficulty == _blinkDifficulty &&
+            Time.unscaledTime < _blinkEndTime;
+
+        if (!blinkActive)
+        {
+            SetTimeAlpha(firstTimeText, 1f);
+            SetTimeAlpha(secondTimeText, 1f);
+            SetTimeAlpha(thirdTimeText, 1f);
+
+            if (_blinkRank >= 0 && Time.unscaledTime >= _blinkEndTime)
+            {
+                _blinkRank = -1;
+                _blinkEndTime = -1f;
+            }
+
+            return;
+        }
+
+        bool visible = Mathf.FloorToInt(Time.unscaledTime / Mathf.Max(0.03f, newTopTimeBlinkInterval)) % 2 == 0;
+
+        SetTimeAlpha(firstTimeText, _blinkRank == 0 ? (visible ? 1f : 0f) : 1f);
+        SetTimeAlpha(secondTimeText, _blinkRank == 1 ? (visible ? 1f : 0f) : 1f);
+        SetTimeAlpha(thirdTimeText, _blinkRank == 2 ? (visible ? 1f : 0f) : 1f);
+    }
+
+    void SetTimeAlpha(TextMeshProUGUI target, float alpha)
+    {
+        if (target == null)
+            return;
+
+        target.alpha = Mathf.Clamp01(alpha);
     }
 
     void SLog(string message)

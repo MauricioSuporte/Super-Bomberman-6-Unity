@@ -513,6 +513,7 @@ MonoBehaviour:
   generatedCircleSoftEdge: 1.5
   autoCreateRankBackground: 1
   contentOffsetY: 170
+  newTopTimeBlinkInterval: 0.12
 --- !u!114 &190842364
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2345,6 +2346,15 @@ MonoBehaviour:
   nightmareLockedUnderlaySoftness: 0
   nightmareLockedUnderlayOffsetX: 0.25
   nightmareLockedUnderlayOffsetY: -0.25
+  newRecordIntroMusic: {fileID: 8300000, guid: 488479ae62b79ef45bd82489aec3b3c7, type: 3}
+  newRecordIntroMusicVolume: 1
+  newRecordLoopMusic: {fileID: 8300000, guid: 21f7c8dce60c760429be2e65d1247b62, type: 3}
+  newRecordLoopMusicVolume: 1
+  top3IntroMusic: {fileID: 0}
+  top3IntroMusicVolume: 1
+  top3LoopMusic: {fileID: 8300000, guid: ea420e51706c7504c917662ed0afcf0b, type: 3}
+  top3LoopMusicVolume: 1
+  newTopTimeBlinkSeconds: 5
 --- !u!1 &1334625508
 GameObject:
   m_ObjectHideFlags: 0
