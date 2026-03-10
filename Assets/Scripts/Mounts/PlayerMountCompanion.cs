@@ -140,6 +140,14 @@ public class PlayerMountCompanion : MonoBehaviour
     public void MountPinkLouie() => Mount(MountedType.Pink);
     public void MountRedLouie() => Mount(MountedType.Red);
 
+    public void MountBlueLouie(Vector2 facingDirection) => Mount(MountedType.Blue, facingDirection);
+    public void MountBlackLouie(Vector2 facingDirection) => Mount(MountedType.Black, facingDirection);
+    public void MountPurpleLouie(Vector2 facingDirection) => Mount(MountedType.Purple, facingDirection);
+    public void MountGreenLouie(Vector2 facingDirection) => Mount(MountedType.Green, facingDirection);
+    public void MountYellowLouie(Vector2 facingDirection) => Mount(MountedType.Yellow, facingDirection);
+    public void MountPinkLouie(Vector2 facingDirection) => Mount(MountedType.Pink, facingDirection);
+    public void MountRedLouie(Vector2 facingDirection) => Mount(MountedType.Red, facingDirection);
+
     public void RestoreMountedBlueLouie() => RestoreMounted(MountedType.Blue);
     public void RestoreMountedBlackLouie() => RestoreMounted(MountedType.Black);
     public void RestoreMountedPurpleLouie() => RestoreMounted(MountedType.Purple);
@@ -177,7 +185,17 @@ public class PlayerMountCompanion : MonoBehaviour
         if (type == MountedType.None)
             return;
 
-        TryMount(GetPrefab(type), type);
+        Vector2 facing = ResolveFacingForMount(Vector2.zero);
+        TryMount(GetPrefab(type), type, facing);
+    }
+
+    public void Mount(MountedType type, Vector2 facingDirection)
+    {
+        if (type == MountedType.None)
+            return;
+
+        Vector2 facing = ResolveFacingForMount(facingDirection);
+        TryMount(GetPrefab(type), type, facing);
     }
 
     public void RestoreMounted(MountedType type)
@@ -188,6 +206,43 @@ public class PlayerMountCompanion : MonoBehaviour
     #endregion
 
     #region Core Mount Flow
+
+    Vector2 ResolveFacingForMount(Vector2 requestedFacing)
+    {
+        Vector2 facing = requestedFacing;
+
+        if (facing == Vector2.zero && movement != null)
+        {
+            if (movement.Direction != Vector2.zero)
+                facing = movement.Direction;
+            else
+                facing = movement.FacingDirection;
+        }
+
+        if (facing == Vector2.zero)
+            facing = Vector2.down;
+
+        if (Mathf.Abs(facing.x) >= Mathf.Abs(facing.y))
+            return facing.x >= 0f ? Vector2.right : Vector2.left;
+
+        return facing.y >= 0f ? Vector2.up : Vector2.down;
+    }
+
+    void ApplyMountFacing(Vector2 facingDirection)
+    {
+        Vector2 facing = ResolveFacingForMount(facingDirection);
+
+        if (movement != null)
+            movement.ForceFacingDirection(facing);
+
+        if (currentLouie != null)
+        {
+            if (currentLouie.TryGetComponent<MountMovementController>(out var lm) && lm != null)
+                lm.ForceFacingDirection(facing);
+            else if (currentLouie.TryGetComponent<MovementController>(out var mc) && mc != null)
+                mc.ForceFacingDirection(facing);
+        }
+    }
 
     void RestoreMountedImmediate(MountedType type)
     {
@@ -206,26 +261,28 @@ public class PlayerMountCompanion : MonoBehaviour
         CacheMountedLouieHealth(currentLouie);
         DisableLouieComponentsForMount(currentLouie);
 
-        FinalizeMount(type);
+        FinalizeMount(type, movement.FacingDirection);
     }
 
-    void TryMount(GameObject prefab, MountedType type)
+    void TryMount(GameObject prefab, MountedType type, Vector2 facingDirection)
     {
         if (prefab == null || movement == null || currentLouie != null)
             return;
 
+        Vector2 resolvedFacing = ResolveFacingForMount(facingDirection);
+
         var rider = GetComponent<PlayerRidingController>();
         if (rider != null && rider.TryPlayRiding(
-            movement.FacingDirection,
-            onComplete: () => FinalizeMount(type),
-            onStart: () => SpawnLouieForMount(prefab, type, duringRiding: true)))
+            resolvedFacing,
+            onComplete: () => FinalizeMount(type, resolvedFacing),
+            onStart: () => SpawnLouieForMount(prefab, type, duringRiding: true, resolvedFacing)))
             return;
 
-        SpawnLouieForMount(prefab, type, duringRiding: false);
-        FinalizeMount(type);
+        SpawnLouieForMount(prefab, type, duringRiding: false, resolvedFacing);
+        FinalizeMount(type, resolvedFacing);
     }
 
-    void SpawnLouieForMount(GameObject prefab, MountedType type, bool duringRiding)
+    void SpawnLouieForMount(GameObject prefab, MountedType type, bool duringRiding, Vector2 facingDirection)
     {
         if (prefab == null || currentLouie != null)
             return;
@@ -238,13 +295,15 @@ public class PlayerMountCompanion : MonoBehaviour
         CacheMountedLouieHealth(currentLouie);
         DisableLouieComponentsForMount(currentLouie);
 
+        ApplyMountFacing(facingDirection);
+
         if (duringRiding)
             SetMountedLouieVisible(true);
 
         PlayMountSfxIfAny();
     }
 
-    void FinalizeMount(MountedType type)
+    void FinalizeMount(MountedType type, Vector2 facingDirection)
     {
         if (currentLouie == null || movement == null)
             return;
@@ -262,6 +321,8 @@ public class PlayerMountCompanion : MonoBehaviour
         movement.SetMountedSpritesLocalYOverride(isPink, movement.pinkMountedSpritesLocalY);
 
         EnableAndBindLouieRidingVisual(currentLouie);
+        ApplyMountFacing(facingDirection);
+
         SetMountedLouieVisible(true);
 
         ApplyRulesForCurrentMount();
@@ -392,31 +453,33 @@ public class PlayerMountCompanion : MonoBehaviour
 
         if (rider != null && movement != null)
         {
+            Vector2 facing = movement.FacingDirection;
+
             DetachCurrentLouieBeforeRiding();
 
             if (hasQueuedEgg)
             {
                 if (rider.TryPlayRiding(
-                    movement.FacingDirection,
-                    onComplete: () => FinalizeMount(queuedMountedType),
+                    facing,
+                    onComplete: () => FinalizeMount(queuedMountedType, facing),
                     onStart: () =>
                     {
                         MarkRidingUninterruptible(rider.ridingSeconds, blink: true);
 
                         DetachAndKillCurrentLouieOnly();
                         SetNextMountSfx(queuedSfx, queuedVol);
-                        SpawnLouieForMount(queuedPrefab, queuedMountedType, duringRiding: true);
+                        SpawnLouieForMount(queuedPrefab, queuedMountedType, duringRiding: true, facing);
                     }))
                     return;
 
                 DetachAndKillCurrentLouieOnly();
                 SetNextMountSfx(queuedSfx, queuedVol);
-                TryMount(queuedPrefab, queuedMountedType);
+                TryMount(queuedPrefab, queuedMountedType, facing);
                 return;
             }
 
             if (rider.TryPlayRiding(
-                movement.FacingDirection,
+                facing,
                 onComplete: LoseLouie_AfterRiding,
                 onStart: () => MarkRidingUninterruptible(rider.ridingSeconds, blink: true)))
                 return;
@@ -563,24 +626,25 @@ public class PlayerMountCompanion : MonoBehaviour
             Destroy(worldQueueToAdopt);
         }
 
+        Vector2 facing = movement.FacingDirection;
+
         if (rider != null && rider.TryPlayRiding(
-            movement.FacingDirection,
+            facing,
             onComplete: () =>
             {
-                FinalizeMount(louieType);
+                FinalizeMount(louieType, facing);
                 AdoptWorldQueueIfAny();
             },
-            onStart: () => AttachExistingLouieForMount(louieWorldInstance, louieType, duringRiding: true)))
+            onStart: () => AttachExistingLouieForMount(louieWorldInstance, louieType, duringRiding: true, facing)))
             return true;
 
-        AttachExistingLouieForMount(louieWorldInstance, louieType, duringRiding: false);
-        FinalizeMount(louieType);
+        AttachExistingLouieForMount(louieWorldInstance, louieType, duringRiding: false, facing);
+        FinalizeMount(louieType, facing);
         AdoptWorldQueueIfAny();
         return true;
     }
 
-
-    void AttachExistingLouieForMount(GameObject louieWorldInstance, MountedType type, bool duringRiding)
+    void AttachExistingLouieForMount(GameObject louieWorldInstance, MountedType type, bool duringRiding, Vector2 facingDirection)
     {
         if (louieWorldInstance == null || currentLouie != null)
             return;
@@ -599,6 +663,8 @@ public class PlayerMountCompanion : MonoBehaviour
 
         CacheMountedLouieHealth(currentLouie);
         DisableLouieComponentsForMount(currentLouie);
+
+        ApplyMountFacing(facingDirection);
 
         if (duringRiding)
             SetMountedLouieVisible(true);
@@ -1193,7 +1259,7 @@ public class PlayerMountCompanion : MonoBehaviour
         if (prefab == null)
             return false;
 
-        TryMount(prefab, type);
+        TryMount(prefab, type, movement != null ? movement.FacingDirection : Vector2.down);
         return true;
     }
 
@@ -1374,10 +1440,10 @@ public class PlayerMountCompanion : MonoBehaviour
         if (visual == null)
             return;
 
-            visual.localOffset = localOffset;
-            visual.Bind(movement);
-            visual.enabled = true;
-        }
+        visual.localOffset = localOffset;
+        visual.Bind(movement);
+        visual.enabled = true;
+    }
 
     #endregion
 

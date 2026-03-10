@@ -267,6 +267,24 @@ public class ItemPickup : MonoBehaviour
         return true;
     }
 
+    Vector2 ResolveMountFacing(GameObject player)
+    {
+        Vector2 face = Vector2.down;
+
+        if (player != null && player.TryGetComponent<MovementController>(out var mv) && mv != null)
+        {
+            if (mv.Direction != Vector2.zero)
+                face = mv.Direction;
+            else if (mv.FacingDirection != Vector2.zero)
+                face = mv.FacingDirection;
+        }
+
+        if (Mathf.Abs(face.x) >= Mathf.Abs(face.y))
+            return face.x >= 0f ? Vector2.right : Vector2.left;
+
+        return face.y >= 0f ? Vector2.up : Vector2.down;
+    }
+
     void ConsumeNow(bool playDestroyAnim)
     {
         if (playDestroyAnim)
@@ -330,6 +348,7 @@ public class ItemPickup : MonoBehaviour
         PlayerPersistentStats.NotifyStageItemPickupCollected();
 
         bool isEgg = IsLouieEgg(type);
+        Vector2 mountFacing = ResolveMountFacing(player);
 
         if (isEgg && PlayerHoldingBombWithPowerGlove(player))
             return;
@@ -473,37 +492,37 @@ public class ItemPickup : MonoBehaviour
 
             case ItemType.BlueLouieEgg:
                 if (player.TryGetComponent<PlayerMountCompanion>(out var louieBlue))
-                    louieBlue.MountBlueLouie();
+                    louieBlue.MountBlueLouie(mountFacing);
                 break;
 
             case ItemType.BlackLouieEgg:
                 if (player.TryGetComponent<PlayerMountCompanion>(out var louieBlack))
-                    louieBlack.MountBlackLouie();
+                    louieBlack.MountBlackLouie(mountFacing);
                 break;
 
             case ItemType.PurpleLouieEgg:
                 if (player.TryGetComponent<PlayerMountCompanion>(out var louiePurple))
-                    louiePurple.MountPurpleLouie();
+                    louiePurple.MountPurpleLouie(mountFacing);
                 break;
 
             case ItemType.GreenLouieEgg:
                 if (player.TryGetComponent<PlayerMountCompanion>(out var louieGreen))
-                    louieGreen.MountGreenLouie();
+                    louieGreen.MountGreenLouie(mountFacing);
                 break;
 
             case ItemType.YellowLouieEgg:
                 if (player.TryGetComponent<PlayerMountCompanion>(out var louieYellow))
-                    louieYellow.MountYellowLouie();
+                    louieYellow.MountYellowLouie(mountFacing);
                 break;
 
             case ItemType.PinkLouieEgg:
                 if (player.TryGetComponent<PlayerMountCompanion>(out var louiePink))
-                    louiePink.MountPinkLouie();
+                    louiePink.MountPinkLouie(mountFacing);
                 break;
 
             case ItemType.RedLouieEgg:
                 if (player.TryGetComponent<PlayerMountCompanion>(out var louieRed))
-                    louieRed.MountRedLouie();
+                    louieRed.MountRedLouie(mountFacing);
                 break;
         }
 
