@@ -66,6 +66,7 @@ public class GameManager : MonoBehaviour
 
     [Header("Round Restart")]
     [SerializeField] private float restartAfterDeathSeconds = 4f;
+    [SerializeField] private string bossRushSceneName = "BossRush";
 
     private int totalDestructibleBlocks;
     private int destroyedDestructibleBlocks;
@@ -93,6 +94,7 @@ public class GameManager : MonoBehaviour
     void Start()
     {
         PlayerPersistentStats.EnsureSessionBooted();
+        BossRushSession.NotifySceneLoaded(SceneManager.GetActiveScene().name);
 
         CachePlayers();
 
@@ -507,7 +509,17 @@ public class GameManager : MonoBehaviour
     {
         yield return new WaitForSecondsRealtime(restartAfterDeathSeconds);
 
+        GamePauseController.ClearPauseFlag();
+        Time.timeScale = 1f;
+
         StageIntroTransition.SkipPreIntroWalkOnNextLoad();
+
+        if (BossRushSession.IsActive)
+        {
+            BossRushSession.CancelRun();
+            SceneManager.LoadScene(bossRushSceneName);
+            yield break;
+        }
 
         Scene current = SceneManager.GetActiveScene();
         SceneManager.LoadScene(current.buildIndex);
@@ -530,6 +542,22 @@ public class GameManager : MonoBehaviour
                 state.BombAmount = Mathf.Min(bomb.bombAmout, PlayerPersistentStats.MaxBombAmount);
                 state.ExplosionRadius = Mathf.Min(bomb.explosionRadius, PlayerPersistentStats.MaxExplosionRadius);
             }
+
+            if (primaryPlayer.TryGetComponent<MovementController>(out var movement))
+            {
+                if (primaryPlayer.TryGetComponent<BombController>(out var playerBomb))
+                    PlayerPersistentStats.StageCaptureFromRuntime(movement, playerBomb);
+                else
+                    PlayerPersistentStats.StageCaptureFromRuntime(movement, null);
+            }
+        }
+
+        PlayerPersistentStats.CommitStage();
+
+        if (BossRushSession.IsActive)
+        {
+            StartCoroutine(LoadNextBossRushStageRoutine());
+            return;
         }
 
         if (!string.IsNullOrEmpty(nextStageSceneName) && nextStageSceneName == "END_SCREEN")
@@ -555,6 +583,23 @@ public class GameManager : MonoBehaviour
         Time.timeScale = 1f;
 
         SceneManager.LoadScene(nextStageSceneName);
+    }
+
+    IEnumerator LoadNextBossRushStageRoutine()
+    {
+        yield return waitNextStageDelay;
+
+        GamePauseController.ClearPauseFlag();
+        Time.timeScale = 1f;
+
+        if (BossRushSession.TryAdvanceToNextStage(out var nextBossRushScene))
+        {
+            SceneManager.LoadScene(nextBossRushScene);
+            yield break;
+        }
+
+        BossRushSession.FinishRun();
+        StartCoroutine(ShowEndingAfterDelayRoutine());
     }
 
     IEnumerator ShowEndingAfterDelayRoutine()

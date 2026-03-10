@@ -2224,6 +2224,75 @@ MonoBehaviour:
   fadeImage: {fileID: 336813435}
   fadeDuration: 1
   fadeOutOnConfirmDuration: 1.5
+  difficultyLoadouts:
+  - difficulty: 0
+    life: 4
+    bombAmount: 4
+    explosionRadius: 4
+    speedUps: 4
+    canKickBombs: 0
+    canPunchBombs: 0
+    hasPowerGlove: 0
+    canPassBombs: 0
+    canPassDestructibles: 0
+    hasPierceBombs: 0
+    hasControlBombs: 0
+    hasPowerBomb: 0
+    hasRubberBombs: 0
+    hasFullFire: 0
+    mountedLouie: 0
+    queuedEggs: 
+  - difficulty: 1
+    life: 3
+    bombAmount: 3
+    explosionRadius: 3
+    speedUps: 3
+    canKickBombs: 0
+    canPunchBombs: 0
+    hasPowerGlove: 0
+    canPassBombs: 0
+    canPassDestructibles: 0
+    hasPierceBombs: 0
+    hasControlBombs: 0
+    hasPowerBomb: 0
+    hasRubberBombs: 0
+    hasFullFire: 0
+    mountedLouie: 0
+    queuedEggs: 
+  - difficulty: 2
+    life: 0
+    bombAmount: 2
+    explosionRadius: 2
+    speedUps: 2
+    canKickBombs: 0
+    canPunchBombs: 0
+    hasPowerGlove: 0
+    canPassBombs: 0
+    canPassDestructibles: 0
+    hasPierceBombs: 0
+    hasControlBombs: 0
+    hasPowerBomb: 0
+    hasRubberBombs: 0
+    hasFullFire: 0
+    mountedLouie: 0
+    queuedEggs: 
+  - difficulty: 3
+    life: 1
+    bombAmount: 1
+    explosionRadius: 1
+    speedUps: 1
+    canKickBombs: 0
+    canPunchBombs: 0
+    hasPowerGlove: 0
+    canPassBombs: 0
+    canPassDestructibles: 0
+    hasPierceBombs: 0
+    hasControlBombs: 0
+    hasPowerBomb: 0
+    hasRubberBombs: 0
+    hasFullFire: 0
+    mountedLouie: 0
+    queuedEggs: 
   leftPanel: {fileID: 2134452605}
   rightPanel: {fileID: 190842363}
   topPanel: {fileID: 607783273}
@@ -2413,8 +2482,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BossRushBootstrap
   bossRushMenu: {fileID: 1311323899}
-  titleSceneName: TitleScreen
+  returnSceneName: SkinSelect
   nextSceneName: BossRushStage01
+  bossRushSceneName: BossRush
 --- !u!1 &1392017678
 GameObject:
   m_ObjectHideFlags: 0

@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 public class BossRushMenu : MonoBehaviour
@@ -20,6 +21,9 @@ public class BossRushMenu : MonoBehaviour
     [SerializeField] Image fadeImage;
     [SerializeField] float fadeDuration = 1f;
     [SerializeField] float fadeOutOnConfirmDuration = 1.5f;
+
+    [Header("Boss Rush Loadouts")]
+    [SerializeField] BossRushLoadoutPreset[] difficultyLoadouts;
 
     [Header("Left Panel")]
     [SerializeField] BossRushLeftPanel leftPanel;
@@ -277,6 +281,7 @@ public class BossRushMenu : MonoBehaviour
             {
                 ReturnRequested = true;
                 confirmed = true;
+                BossRushSession.CancelRun();
                 SLog("Input Back | ReturnToTitleRequested=true");
                 PlaySfx(returnSfx, returnSfxVolume);
                 break;
@@ -285,8 +290,12 @@ public class BossRushMenu : MonoBehaviour
             if (input.GetDown(1, PlayerAction.ActionA) || input.GetDown(1, PlayerAction.Start))
             {
                 BossRushProgress.SetSelectedDifficulty(SelectedDifficulty);
+
+                var preset = GetLoadoutPreset(SelectedDifficulty);
+                BossRushSession.StartRun(SelectedDifficulty, preset);
+
                 confirmed = true;
-                SLog($"Input Confirm | saved difficulty={SelectedDifficulty}");
+                SLog($"Input Confirm | saved difficulty={SelectedDifficulty} startScene={BossRushSession.GetCurrentStageSceneName()}");
                 PlaySfx(confirmSfx, confirmSfxVolume);
                 break;
             }
@@ -308,6 +317,30 @@ public class BossRushMenu : MonoBehaviour
 
         if (fadeImage != null)
             fadeImage.gameObject.SetActive(false);
+
+        if (!ReturnRequested && BossRushSession.IsActive)
+        {
+            GamePauseController.ClearPauseFlag();
+            Time.timeScale = 1f;
+            SceneManager.LoadScene(BossRushSession.GetCurrentStageSceneName());
+        }
+    }
+
+    BossRushLoadoutPreset GetLoadoutPreset(BossRushDifficulty difficulty)
+    {
+        if (difficultyLoadouts == null || difficultyLoadouts.Length == 0)
+            return null;
+
+        for (int i = 0; i < difficultyLoadouts.Length; i++)
+        {
+            if (difficultyLoadouts[i] == null)
+                continue;
+
+            if (difficultyLoadouts[i].difficulty.Equals(difficulty))
+                return difficultyLoadouts[i];
+        }
+
+        return null;
     }
 
     void UpdateDifficultyVisuals()
