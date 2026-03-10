@@ -26,6 +26,11 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
     public AnimatedSpriteRenderer hurtRenderer;
     public AnimatedSpriteRenderer deathRenderer;
 
+    [Header("Low Health Tint")]
+    [SerializeField] bool tintWhenBelowHalfLife = true;
+    Color lowHealthTintColor = new(1.35f, 0.45f, 0.45f, 1f);
+    [SerializeField, Range(0f, 1f)] float lowHealthTintStrength = 0.4f;
+
     [Header("Intro")]
     public float introDuration = 2f;
 
@@ -102,6 +107,9 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
     bool inDamageSequence;
     bool isInHurtWalk;
     bool bossSpawned;
+
+    int initialFightLife;
+    bool fightLifeInitialized;
 
     Coroutine introRoutine;
     Coroutine specialRoutine;
@@ -246,6 +254,10 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
         inDamageSequence = false;
         isInHurtWalk = false;
         bossSpawned = false;
+        fightLifeInitialized = false;
+        initialFightLife = 0;
+
+        ClearLowHealthTint();
 
         if (clownMovement != null)
             clownMovement.enabled = false;
@@ -419,6 +431,37 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
             clownMovement.enabled = true;
 
         bossSpawned = true;
+
+        if (!fightLifeInitialized && characterHealth != null)
+        {
+            initialFightLife = Mathf.Max(1, characterHealth.life);
+            fightLifeInitialized = true;
+        }
+
+        RefreshLowHealthTint();
+    }
+
+    void RefreshLowHealthTint()
+    {
+        if (characterHealth == null)
+            return;
+
+        if (!tintWhenBelowHalfLife || !fightLifeInitialized || isDead)
+        {
+            ClearLowHealthTint();
+            return;
+        }
+
+        if (characterHealth.life < (initialFightLife * 0.5f))
+            characterHealth.SetPersistentTint(lowHealthTintColor, lowHealthTintStrength);
+        else
+            characterHealth.ClearPersistentTint();
+    }
+
+    void ClearLowHealthTint()
+    {
+        if (characterHealth != null)
+            characterHealth.ClearPersistentTint();
     }
 
     void MoveBossToIntroPosition()
@@ -888,6 +931,8 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
         if (isDead || !bossSpawned || !introFinished)
             return;
 
+        RefreshLowHealthTint();
+
         bool wasInHurtWalk = isInHurtWalk;
         bool wasInHurtAnim = hurtRenderer != null && hurtRenderer.enabled && !hurtRenderer.idle;
         bool useHurtIdleDuringInvuln = wasInHurtWalk || wasInHurtAnim;
@@ -1034,6 +1079,7 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
             return;
 
         isDead = true;
+        ClearLowHealthTint();
 
         if (specialRoutine != null)
         {

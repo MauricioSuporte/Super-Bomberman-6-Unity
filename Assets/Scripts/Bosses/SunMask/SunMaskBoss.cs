@@ -20,6 +20,11 @@ public class SunMaskBoss : MonoBehaviour, IKillable
     public AnimatedSpriteRenderer hurtRenderer;
     public AnimatedSpriteRenderer deathRenderer;
 
+    [Header("Low Health Tint")]
+    [SerializeField] bool tintWhenBelowHalfLife = true;
+    Color lowHealthTintColor = new(1.35f, 0.45f, 0.45f, 1f);
+    [SerializeField, Range(0f, 1f)] float lowHealthTintStrength = 0.4f;
+
     [Header("Angry")]
     [SerializeField] private AnimatedSpriteRenderer angryRenderer;
     [SerializeField, Min(0f)] private float angryFreezeSeconds = 1f;
@@ -128,6 +133,9 @@ public class SunMaskBoss : MonoBehaviour, IKillable
     private bool inWinkAttack;
     private bool inAngry;
 
+    private int initialFightLife;
+    private bool fightLifeInitialized;
+
     private Coroutine hurtRoutine;
     private Coroutine deathRoutine;
     private Coroutine deathExplosionsRoutine;
@@ -201,7 +209,6 @@ public class SunMaskBoss : MonoBehaviour, IKillable
         s_bombSnapshot.Clear();
         s_bombsToDestroy.Clear();
 
-        // snapshot para não explodir com "collection modified"
         foreach (var b in Bomb.ActiveBombs)
             s_bombSnapshot.Add(b);
 
@@ -223,7 +230,6 @@ public class SunMaskBoss : MonoBehaviour, IKillable
             s_bombsToDestroy.Add(bomb);
         }
 
-        // destrói fora do loop (e fora do snapshot)
         for (int i = 0; i < s_bombsToDestroy.Count; i++)
             DestroyBombLikeTouch(s_bombsToDestroy[i]);
     }
@@ -301,6 +307,9 @@ public class SunMaskBoss : MonoBehaviour, IKillable
         hasCachedMoveDirection = false;
         cachedMoveDirection = default;
 
+        fightLifeInitialized = false;
+        initialFightLife = 0;
+
         if (hurtRoutine != null) { StopCoroutine(hurtRoutine); hurtRoutine = null; }
         if (deathRoutine != null) { StopCoroutine(deathRoutine); deathRoutine = null; }
         if (deathExplosionsRoutine != null) { StopCoroutine(deathExplosionsRoutine); deathExplosionsRoutine = null; }
@@ -323,6 +332,13 @@ public class SunMaskBoss : MonoBehaviour, IKillable
             transform.position = SnapToPixel(transform.position);
         }
 
+        if (characterHealth != null)
+        {
+            initialFightLife = Mathf.Max(1, characterHealth.life);
+            fightLifeInitialized = true;
+            RefreshLowHealthTint();
+        }
+
         if (enableWinkAttack)
             winkRoutine = StartCoroutine(WinkAttackLoop());
     }
@@ -337,6 +353,31 @@ public class SunMaskBoss : MonoBehaviour, IKillable
 
         inWinkAttack = false;
         inAngry = false;
+
+        ClearLowHealthTint();
+    }
+
+    void RefreshLowHealthTint()
+    {
+        if (characterHealth == null)
+            return;
+
+        if (!tintWhenBelowHalfLife || !fightLifeInitialized || isDead)
+        {
+            ClearLowHealthTint();
+            return;
+        }
+
+        if (characterHealth.life < (initialFightLife * 0.5f))
+            characterHealth.SetPersistentTint(lowHealthTintColor, lowHealthTintStrength);
+        else
+            characterHealth.ClearPersistentTint();
+    }
+
+    void ClearLowHealthTint()
+    {
+        if (characterHealth != null)
+            characterHealth.ClearPersistentTint();
     }
 
     void OnTriggerEnter2D(Collider2D other)
@@ -439,6 +480,7 @@ public class SunMaskBoss : MonoBehaviour, IKillable
         if (isDead)
             return;
 
+        RefreshLowHealthTint();
         PlayDamagedSfx();
 
         if (inAngry)
@@ -514,6 +556,8 @@ public class SunMaskBoss : MonoBehaviour, IKillable
         isDead = true;
         inWinkAttack = false;
         inAngry = false;
+
+        ClearLowHealthTint();
 
         if (winkRoutine != null) { StopCoroutine(winkRoutine); winkRoutine = null; }
         if (hurtRoutine != null) { StopCoroutine(hurtRoutine); hurtRoutine = null; }

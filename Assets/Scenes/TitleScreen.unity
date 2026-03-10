@@ -165,85 +165,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &268450098
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 268450099}
-  - component: {fileID: 268450100}
-  m_Layer: 0
-  m_Name: Game Manager
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &268450099
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 268450098}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.79389346, y: 0.063484, z: -2.0320916}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &268450100
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 268450098}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a1fd4d59ac55eac49a2c862ee57d8ae9, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  portalResourcesPath: Portal/EndStagePortal
-  portalAmount: 1
-  extraBombAmount: 1
-  blastRadiusAmount: 1
-  speedIncreaseAmount: 1
-  kickBombAmount: 0
-  punchBombAmount: 0
-  pierceBombAmount: 0
-  controlBombAmount: 0
-  powerBombAmount: 0
-  rubberBombAmount: 0
-  fullFireAmount: 0
-  bombPassAmount: 0
-  destructiblePassAmount: 0
-  invincibleSuitAmount: 1
-  heartAmount: 0
-  powerGloveAmount: 0
-  blueLouieEggAmount: 0
-  blackLouieEggAmount: 0
-  purpleLouieEggAmount: 0
-  greenLouieEggAmount: 0
-  yellowLouieEggAmount: 0
-  pinkLouieEggAmount: 0
-  redLouieEggAmount: 0
-  clockAmount: 1
-  destructibleTilemap: {fileID: 0}
-  indestructibleTilemap: {fileID: 0}
-  nextStageSceneName: Stage_1-2
-  destructiblePrefab: {fileID: 3440613785117735154, guid: 227477c28434b21439475c6f07347eda, type: 3}
-  groundTilemap: {fileID: 0}
-  groundTile: {fileID: 11400000, guid: ada74cfa1fdef9e4c86ccafaa1b2ae66, type: 2}
-  groundShadowTile: {fileID: 11400000, guid: e0f633282caacc742af95bdd334dd0cf, type: 2}
-  autoResolveStageTilemaps: 1
-  restartAfterDeathSeconds: 4
-  destructibleTileResolver: {fileID: 0}
 --- !u!1 &290470824
 GameObject:
   m_ObjectHideFlags: 0
@@ -1793,7 +1714,6 @@ RectTransform:
 SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
-  - {fileID: 268450099}
   - {fileID: 1520869092}
   - {fileID: 1560934950}
   - {fileID: 1389130176}

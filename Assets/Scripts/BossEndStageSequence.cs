@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class BossEndStageSequence : MonoBehaviour
 {
@@ -21,6 +22,7 @@ public class BossEndStageSequence : MonoBehaviour
 
     GameManager gameManager;
     bool sequenceStarted;
+    bool progressMarked;
 
     readonly List<Collider2D> cachedPlayerColliders = new();
     readonly List<bool> cachedColliderEnabled = new();
@@ -97,6 +99,8 @@ public class BossEndStageSequence : MonoBehaviour
             MakePlayerSafeForEnding(m);
         }
 
+        MarkStageProgressIfNeeded();
+
         if (GameMusicController.Instance != null)
             GameMusicController.Instance.StopMusic();
 
@@ -122,6 +126,22 @@ public class BossEndStageSequence : MonoBehaviour
             gameManager.EndStage();
 
         Destroy(gameObject);
+    }
+
+    void MarkStageProgressIfNeeded()
+    {
+        if (progressMarked)
+            return;
+
+        progressMarked = true;
+
+        string currentSceneName = SceneManager.GetActiveScene().name;
+        bool isPerfectClear = PlayerPersistentStats.IsCurrentStagePerfectClear();
+
+        StageUnlockProgress.UnlockCurrentAndNext(currentSceneName);
+
+        if (isPerfectClear)
+            StageUnlockProgress.MarkPerfect(currentSceneName);
     }
 
     private static void EnsureGoodClipsLoaded()

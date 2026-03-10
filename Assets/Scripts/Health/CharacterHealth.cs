@@ -47,6 +47,11 @@ public class CharacterHealth : MonoBehaviour
     private int _blinkOverrideToken;
     private Coroutine _restoreBlinkIntervalRoutine;
 
+    bool hasPersistentTint;
+    Color persistentTintColor = Color.white;
+    float persistentTintStrength = 1f;
+    SpriteRenderer[] persistentTintExcluded = Array.Empty<SpriteRenderer>();
+
     void Awake()
     {
         killable = GetComponent<IKillable>();
@@ -78,7 +83,7 @@ public class CharacterHealth : MonoBehaviour
                     {
                         if (h()) { cancel = true; break; }
                     }
-                    catch { /* ignore */ }
+                    catch { }
                 }
 
                 if (cancel)
@@ -165,7 +170,68 @@ public class CharacterHealth : MonoBehaviour
 
         for (int i = 0; i < spriteRenderers.Length; i++)
             if (spriteRenderers[i] != null)
-                spriteRenderers[i].color = originalColors[i];
+                spriteRenderers[i].color = GetBaseColorForRendererIndex(i);
+    }
+
+    public void SetPersistentTint(Color tintColor, float strength = 1f, SpriteRenderer[] excludedRenderers = null)
+    {
+        hasPersistentTint = true;
+        persistentTintColor = tintColor;
+        persistentTintStrength = Mathf.Clamp01(strength);
+        persistentTintExcluded = excludedRenderers ?? Array.Empty<SpriteRenderer>();
+
+        RefreshVisualColors();
+    }
+
+    public void ClearPersistentTint()
+    {
+        hasPersistentTint = false;
+        persistentTintExcluded = Array.Empty<SpriteRenderer>();
+        RefreshVisualColors();
+    }
+
+    public void RefreshVisualColors()
+    {
+        if (spriteRenderers == null || originalColors == null)
+            return;
+
+        if (isInvulnerable && hitRoutine != null)
+            return;
+
+        for (int i = 0; i < spriteRenderers.Length; i++)
+        {
+            if (spriteRenderers[i] == null)
+                continue;
+
+            spriteRenderers[i].color = GetBaseColorForRendererIndex(i);
+        }
+    }
+
+    bool IsRendererExcludedFromTint(SpriteRenderer sr)
+    {
+        if (sr == null || persistentTintExcluded == null || persistentTintExcluded.Length == 0)
+            return false;
+
+        for (int i = 0; i < persistentTintExcluded.Length; i++)
+        {
+            if (persistentTintExcluded[i] == sr)
+                return true;
+        }
+
+        return false;
+    }
+
+    Color GetBaseColorForRendererIndex(int index)
+    {
+        Color baseColor = originalColors[index];
+        SpriteRenderer sr = spriteRenderers[index];
+
+        if (!hasPersistentTint || sr == null || IsRendererExcludedFromTint(sr))
+            return baseColor;
+
+        Color tint = persistentTintColor;
+        tint.a = baseColor.a;
+        return Color.Lerp(baseColor, tint, persistentTintStrength);
     }
 
     IEnumerator TemporaryInvulnerabilityNoBlinkRoutine(float seconds)
@@ -174,13 +240,13 @@ public class CharacterHealth : MonoBehaviour
 
         for (int i = 0; i < spriteRenderers.Length; i++)
             if (spriteRenderers[i] != null)
-                spriteRenderers[i].color = originalColors[i];
+                spriteRenderers[i].color = GetBaseColorForRendererIndex(i);
 
         yield return new WaitForSeconds(seconds);
 
         for (int i = 0; i < spriteRenderers.Length; i++)
             if (spriteRenderers[i] != null)
-                spriteRenderers[i].color = originalColors[i];
+                spriteRenderers[i].color = GetBaseColorForRendererIndex(i);
 
         isInvulnerable = false;
         hitRoutine = null;
@@ -204,7 +270,7 @@ public class CharacterHealth : MonoBehaviour
                 if (spriteRenderers[i] == null)
                     continue;
 
-                Color baseColor = originalColors[i];
+                Color baseColor = GetBaseColorForRendererIndex(i);
 
                 if (faded)
                     spriteRenderers[i].color = new Color(baseColor.r, baseColor.g, baseColor.b, 0.2f);
@@ -222,7 +288,7 @@ public class CharacterHealth : MonoBehaviour
 
         for (int i = 0; i < spriteRenderers.Length; i++)
             if (spriteRenderers[i] != null)
-                spriteRenderers[i].color = originalColors[i];
+                spriteRenderers[i].color = GetBaseColorForRendererIndex(i);
 
         isInvulnerable = false;
         hitRoutine = null;
@@ -241,10 +307,6 @@ public class CharacterHealth : MonoBehaviour
     {
         isInvulnerable = true;
 
-        // NEW:
-        // - If damaged loop is OFF => blink
-        // - If damaged loop is ON and "and blink" is ON => blink
-        // - If damaged loop is ON and "and blink" is OFF => no blink (just wait)
         bool shouldBlink = !playDamagedLoopInsteadOfBlink || playDamagedLoopAndBlink;
 
         if (shouldBlink)
@@ -261,7 +323,7 @@ public class CharacterHealth : MonoBehaviour
                     if (spriteRenderers[i] == null)
                         continue;
 
-                    Color baseColor = originalColors[i];
+                    Color baseColor = GetBaseColorForRendererIndex(i);
 
                     if (faded)
                         spriteRenderers[i].color = new Color(baseColor.r, baseColor.g, baseColor.b, 0.2f);
@@ -276,13 +338,13 @@ public class CharacterHealth : MonoBehaviour
 
             for (int i = 0; i < spriteRenderers.Length; i++)
                 if (spriteRenderers[i] != null)
-                    spriteRenderers[i].color = originalColors[i];
+                    spriteRenderers[i].color = GetBaseColorForRendererIndex(i);
         }
         else
         {
             for (int i = 0; i < spriteRenderers.Length; i++)
                 if (spriteRenderers[i] != null)
-                    spriteRenderers[i].color = originalColors[i];
+                    spriteRenderers[i].color = GetBaseColorForRendererIndex(i);
 
             yield return new WaitForSeconds(hitInvulnerableDuration);
         }
@@ -309,7 +371,7 @@ public class CharacterHealth : MonoBehaviour
 
         for (int i = 0; i < spriteRenderers.Length; i++)
             if (spriteRenderers[i] != null)
-                spriteRenderers[i].color = originalColors[i];
+                spriteRenderers[i].color = GetBaseColorForRendererIndex(i);
 
         Died?.Invoke();
 
@@ -335,7 +397,7 @@ public class CharacterHealth : MonoBehaviour
 
             for (int i = 0; i < spriteRenderers.Length; i++)
                 if (spriteRenderers[i] != null)
-                    spriteRenderers[i].color = originalColors[i];
+                    spriteRenderers[i].color = GetBaseColorForRendererIndex(i);
         }
         else
         {
@@ -343,7 +405,7 @@ public class CharacterHealth : MonoBehaviour
 
             for (int i = 0; i < spriteRenderers.Length; i++)
                 if (spriteRenderers[i] != null)
-                    spriteRenderers[i].color = originalColors[i];
+                    spriteRenderers[i].color = GetBaseColorForRendererIndex(i);
         }
     }
 }
