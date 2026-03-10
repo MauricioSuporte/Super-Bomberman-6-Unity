@@ -466,6 +466,26 @@ MonoBehaviour:
   titleUnderlaySoftness: 0
   titleUnderlayOffsetX: 0.25
   titleUnderlayOffsetY: -0.25
+  newRecordText: {fileID: 0}
+  newRecordLabel: NEW RECORD!
+  newRecordFontSize: 32
+  newRecordHeight: 20
+  newRecordOffsetY: -6
+  newRecordFontAsset: {fileID: 0}
+  newRecordFontMaterialPreset: {fileID: 0}
+  forceNewRecordBold: 1
+  newRecordTextColor: {r: 1, g: 0.8745098, b: 0.36078432, a: 1}
+  newRecordOutlineColor: {r: 0.2509804, g: 0.03137255, b: 0.03137255, a: 1}
+  newRecordOutlineWidth: 0.35
+  newRecordOutlineSoftness: 0
+  newRecordFaceDilate: 0.2
+  newRecordFaceSoftness: 0
+  enableNewRecordUnderlay: 1
+  newRecordUnderlayColor: {r: 0, g: 0, b: 0, a: 1}
+  newRecordUnderlayDilate: 0.1
+  newRecordUnderlaySoftness: 0
+  newRecordUnderlayOffsetX: 0.25
+  newRecordUnderlayOffsetY: -0.25
   firstRow: {fileID: 0}
   secondRow: {fileID: 0}
   thirdRow: {fileID: 0}

@@ -49,6 +49,38 @@ public class BossRushRightPanel : MonoBehaviour
     [SerializeField, Range(-2f, 2f)] float titleUnderlayOffsetX = 0.25f;
     [SerializeField, Range(-2f, 2f)] float titleUnderlayOffsetY = -0.25f;
 
+    [Header("New Record Label")]
+    [SerializeField] TextMeshProUGUI newRecordText;
+    [SerializeField] string newRecordLabel = "NEW RECORD!";
+    [SerializeField] int newRecordFontSize = 14;
+    [SerializeField] float newRecordHeight = 20f;
+    [SerializeField] float newRecordOffsetY = -6f;
+
+    [Header("New Record TMP")]
+    [SerializeField] TMP_FontAsset newRecordFontAsset;
+    [SerializeField] Material newRecordFontMaterialPreset;
+    [SerializeField] bool forceNewRecordBold = true;
+
+    [Header("New Record Colors")]
+    [SerializeField] Color newRecordTextColor = new Color32(255, 223, 92, 255);
+    [SerializeField] Color newRecordOutlineColor = new Color32(64, 8, 8, 255);
+
+    [Header("New Record Outline")]
+    [SerializeField, Range(0f, 1f)] float newRecordOutlineWidth = 0.35f;
+    [SerializeField, Range(0f, 1f)] float newRecordOutlineSoftness = 0f;
+
+    [Header("New Record Face")]
+    [SerializeField, Range(-1f, 1f)] float newRecordFaceDilate = 0.2f;
+    [SerializeField, Range(0f, 1f)] float newRecordFaceSoftness = 0f;
+
+    [Header("New Record Underlay")]
+    [SerializeField] bool enableNewRecordUnderlay = true;
+    [SerializeField] Color newRecordUnderlayColor = new Color(0f, 0f, 0f, 1f);
+    [SerializeField, Range(-1f, 1f)] float newRecordUnderlayDilate = 0.1f;
+    [SerializeField, Range(0f, 1f)] float newRecordUnderlaySoftness = 0f;
+    [SerializeField, Range(-2f, 2f)] float newRecordUnderlayOffsetX = 0.25f;
+    [SerializeField, Range(-2f, 2f)] float newRecordUnderlayOffsetY = -0.25f;
+
     [Header("Rows")]
     [SerializeField] RectTransform firstRow;
     [SerializeField] RectTransform secondRow;
@@ -146,6 +178,7 @@ public class BossRushRightPanel : MonoBehaviour
 
     readonly Dictionary<TMP_Text, Material> runtimeTimeMaterials = new Dictionary<TMP_Text, Material>();
     readonly Dictionary<TMP_Text, Material> runtimeTitleMaterials = new Dictionary<TMP_Text, Material>();
+    readonly Dictionary<TMP_Text, Material> runtimeNewRecordMaterials = new Dictionary<TMP_Text, Material>();
 
     int _baseTopPadding;
     int _baseBottomPadding;
@@ -222,8 +255,15 @@ public class BossRushRightPanel : MonoBehaviour
                 Destroy(kv.Value);
         }
 
+        foreach (var kv in runtimeNewRecordMaterials)
+        {
+            if (kv.Value != null)
+                Destroy(kv.Value);
+        }
+
         runtimeTimeMaterials.Clear();
         runtimeTitleMaterials.Clear();
+        runtimeNewRecordMaterials.Clear();
     }
 
     void ResolveMissingReferences()
@@ -264,6 +304,9 @@ public class BossRushRightPanel : MonoBehaviour
         ApplyTimeFontSizing(firstTimeText);
         ApplyTimeFontSizing(secondTimeText);
         ApplyTimeFontSizing(thirdTimeText);
+
+        if (newRecordText != null)
+            newRecordText.fontSize = ScaledFont(newRecordFontSize);
     }
 
     void ApplyTimeFontSizing(TextMeshProUGUI target)
@@ -283,6 +326,7 @@ public class BossRushRightPanel : MonoBehaviour
     void ApplyLayoutFormatting()
     {
         ResolveMissingReferences();
+        EnsureNewRecordText();
         ApplyPanelVerticalOffset();
 
         ConfigureTitleText(titleText);
@@ -383,6 +427,22 @@ public class BossRushRightPanel : MonoBehaviour
         le.minWidth = contentWidth;
         le.preferredWidth = contentWidth;
         le.flexibleWidth = 0f;
+
+        if (newRecordText != null)
+        {
+            RectTransform newRt = newRecordText.rectTransform;
+            newRt.anchorMin = new Vector2(0.5f, 0.5f);
+            newRt.anchorMax = new Vector2(0.5f, 0.5f);
+            newRt.pivot = new Vector2(0.5f, 0.5f);
+            newRt.anchoredPosition = new Vector2(
+                rt.anchoredPosition.x,
+                rt.anchoredPosition.y + ScaledFloat(newRecordHeight + newRecordOffsetY)
+            );
+            newRt.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, rt.rect.width);
+            newRt.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, Mathf.Max(ScaledFloat(newRecordHeight), 8f));
+
+            ConfigureNewRecordText(newRecordText);
+        }
     }
 
     float GetRowSpacing()
@@ -676,6 +736,135 @@ public class BossRushRightPanel : MonoBehaviour
             TrySetFloat(mat, "_UnderlaySoftness", timeUnderlaySoftness);
             TrySetFloat(mat, "_UnderlayOffsetX", timeUnderlayOffsetX);
             TrySetFloat(mat, "_UnderlayOffsetY", timeUnderlayOffsetY);
+        }
+        else
+        {
+            TrySetFloat(mat, "_UnderlayDilate", 0f);
+            TrySetFloat(mat, "_UnderlaySoftness", 0f);
+            TrySetFloat(mat, "_UnderlayOffsetX", 0f);
+            TrySetFloat(mat, "_UnderlayOffsetY", 0f);
+        }
+    }
+
+    void EnsureNewRecordText()
+    {
+        if (titleText == null)
+            return;
+
+        if (newRecordText == null)
+        {
+            Transform existing = titleText.transform.parent.Find("NewRecordText");
+            if (existing != null)
+                newRecordText = existing.GetComponent<TextMeshProUGUI>();
+        }
+
+        if (newRecordText == null)
+        {
+            GameObject go = new GameObject("NewRecordText", typeof(RectTransform), typeof(TextMeshProUGUI));
+            go.transform.SetParent(titleText.transform.parent, false);
+            go.transform.SetSiblingIndex(titleText.transform.GetSiblingIndex());
+
+            newRecordText = go.GetComponent<TextMeshProUGUI>();
+            newRecordText.raycastTarget = false;
+        }
+
+        RectTransform titleRt = titleText.rectTransform;
+        RectTransform rt = newRecordText.rectTransform;
+
+        rt.anchorMin = new Vector2(0.5f, 0.5f);
+        rt.anchorMax = new Vector2(0.5f, 0.5f);
+        rt.pivot = new Vector2(0.5f, 0.5f);
+        rt.anchoredPosition = new Vector2(
+            titleRt.anchoredPosition.x,
+            titleRt.anchoredPosition.y + ScaledFloat(newRecordHeight + newRecordOffsetY)
+        );
+        rt.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, titleRt.rect.width);
+        rt.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, Mathf.Max(ScaledFloat(newRecordHeight), 8f));
+
+        ConfigureNewRecordText(newRecordText);
+        newRecordText.text = newRecordLabel;
+        newRecordText.gameObject.SetActive(false);
+    }
+
+    void ConfigureNewRecordText(TextMeshProUGUI target)
+    {
+        if (target == null)
+            return;
+
+        if (newRecordFontAsset != null)
+            target.font = newRecordFontAsset;
+        else if (titleFontAsset != null)
+            target.font = titleFontAsset;
+
+        target.alignment = TextAlignmentOptions.Center;
+        target.textWrappingMode = TextWrappingModes.NoWrap;
+        target.overflowMode = TextOverflowModes.Overflow;
+        target.enableAutoSizing = false;
+        target.extraPadding = true;
+        target.margin = Vector4.zero;
+        target.fontSize = ScaledFont(newRecordFontSize);
+        target.color = newRecordTextColor;
+
+        if (forceNewRecordBold)
+            target.fontStyle |= FontStyles.Bold;
+        else
+            target.fontStyle &= ~FontStyles.Bold;
+
+        Material runtimeMat = GetOrCreateRuntimeNewRecordMaterial(target);
+        ApplyNewRecordMaterialStyle(runtimeMat);
+
+        target.fontMaterial = runtimeMat;
+        target.UpdateMeshPadding();
+        target.ForceMeshUpdate();
+        target.SetVerticesDirty();
+    }
+
+    Material GetOrCreateRuntimeNewRecordMaterial(TMP_Text target)
+    {
+        if (target == null)
+            return null;
+
+        if (runtimeNewRecordMaterials.TryGetValue(target, out Material runtimeMat) && runtimeMat != null)
+            return runtimeMat;
+
+        Material baseMat = null;
+
+        if (newRecordFontMaterialPreset != null)
+            baseMat = newRecordFontMaterialPreset;
+        else if (target.fontSharedMaterial != null)
+            baseMat = target.fontSharedMaterial;
+        else if (target.font != null)
+            baseMat = target.font.material;
+
+        if (baseMat == null)
+            return null;
+
+        runtimeMat = new Material(baseMat);
+        runtimeMat.name = baseMat.name + "_BossRushNewRecordRuntime";
+        runtimeNewRecordMaterials[target] = runtimeMat;
+        return runtimeMat;
+    }
+
+    void ApplyNewRecordMaterialStyle(Material mat)
+    {
+        if (mat == null)
+            return;
+
+        TrySetColor(mat, "_FaceColor", newRecordTextColor);
+        TrySetColor(mat, "_OutlineColor", newRecordOutlineColor);
+        TrySetFloat(mat, "_OutlineWidth", newRecordOutlineWidth);
+        TrySetFloat(mat, "_OutlineSoftness", newRecordOutlineSoftness);
+
+        TrySetFloat(mat, "_FaceDilate", newRecordFaceDilate);
+        TrySetFloat(mat, "_FaceSoftness", newRecordFaceSoftness);
+
+        if (enableNewRecordUnderlay)
+        {
+            TrySetColor(mat, "_UnderlayColor", newRecordUnderlayColor);
+            TrySetFloat(mat, "_UnderlayDilate", newRecordUnderlayDilate);
+            TrySetFloat(mat, "_UnderlaySoftness", newRecordUnderlaySoftness);
+            TrySetFloat(mat, "_UnderlayOffsetX", newRecordUnderlayOffsetX);
+            TrySetFloat(mat, "_UnderlayOffsetY", newRecordUnderlayOffsetY);
         }
         else
         {
@@ -984,6 +1173,7 @@ public class BossRushRightPanel : MonoBehaviour
         SetTimeAlpha(firstTimeText, 1f);
         SetTimeAlpha(secondTimeText, 1f);
         SetTimeAlpha(thirdTimeText, 1f);
+        SetNewRecordVisible(false, 1f);
 
         SLog("ClearNewTopTimeBlink");
     }
@@ -996,11 +1186,14 @@ public class BossRushRightPanel : MonoBehaviour
             currentDifficulty == _blinkDifficulty &&
             Time.unscaledTime < _blinkEndTime;
 
+        bool showNewRecordThisDifficulty = blinkActive && _blinkRank == 0;
+
         if (!blinkActive)
         {
             SetTimeAlpha(firstTimeText, 1f);
             SetTimeAlpha(secondTimeText, 1f);
             SetTimeAlpha(thirdTimeText, 1f);
+            SetNewRecordVisible(false, 1f);
 
             if (_blinkRank >= 0 && Time.unscaledTime >= _blinkEndTime)
             {
@@ -1012,10 +1205,13 @@ public class BossRushRightPanel : MonoBehaviour
         }
 
         bool visible = Mathf.FloorToInt(Time.unscaledTime / Mathf.Max(0.03f, newTopTimeBlinkInterval)) % 2 == 0;
+        float blinkAlpha = visible ? 1f : 0f;
 
-        SetTimeAlpha(firstTimeText, _blinkRank == 0 ? (visible ? 1f : 0f) : 1f);
-        SetTimeAlpha(secondTimeText, _blinkRank == 1 ? (visible ? 1f : 0f) : 1f);
-        SetTimeAlpha(thirdTimeText, _blinkRank == 2 ? (visible ? 1f : 0f) : 1f);
+        SetTimeAlpha(firstTimeText, _blinkRank == 0 ? blinkAlpha : 1f);
+        SetTimeAlpha(secondTimeText, _blinkRank == 1 ? blinkAlpha : 1f);
+        SetTimeAlpha(thirdTimeText, _blinkRank == 2 ? blinkAlpha : 1f);
+
+        SetNewRecordVisible(showNewRecordThisDifficulty, blinkAlpha);
     }
 
     void SetTimeAlpha(TextMeshProUGUI target, float alpha)
@@ -1024,6 +1220,18 @@ public class BossRushRightPanel : MonoBehaviour
             return;
 
         target.alpha = Mathf.Clamp01(alpha);
+    }
+
+    void SetNewRecordVisible(bool visible, float alpha = 1f)
+    {
+        if (newRecordText == null)
+            return;
+
+        if (newRecordText.gameObject.activeSelf != visible)
+            newRecordText.gameObject.SetActive(visible);
+
+        if (visible)
+            newRecordText.alpha = Mathf.Clamp01(alpha);
     }
 
     void SLog(string message)
