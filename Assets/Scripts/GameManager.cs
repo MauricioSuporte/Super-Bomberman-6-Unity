@@ -561,6 +561,7 @@ public class GameManager : MonoBehaviour
 
         if (BossRushSession.IsActive)
         {
+            BossRushSession.PauseTimer();
             StartCoroutine(LoadNextBossRushStageRoutine());
             return;
         }
@@ -603,8 +604,10 @@ public class GameManager : MonoBehaviour
             yield break;
         }
 
-        BossRushSession.FinishRun();
-        StartCoroutine(ShowEndingAfterDelayRoutine());
+        int rank = BossRushSession.CompleteRunAndStoreTime();
+        Debug.Log($"[GameManager] Boss Rush finished | rank={rank}");
+
+        SceneManager.LoadScene(bossRushSceneName);
     }
 
     IEnumerator ShowEndingAfterDelayRoutine()

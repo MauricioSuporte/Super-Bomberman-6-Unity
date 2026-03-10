@@ -197,6 +197,7 @@ MonoBehaviour:
   groundShadowTile: {fileID: 11400000, guid: e0f633282caacc742af95bdd334dd0cf, type: 2}
   autoResolveStageTilemaps: 1
   restartAfterDeathSeconds: 4
+  bossRushSceneName: BossRush
   destructibleTileResolver: {fileID: 0}
 --- !u!1 &285353614
 GameObject:
@@ -3467,6 +3468,17 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::StageLabel
   stageText: {fileID: 556523583}
+  dynamicScale: 1
+  referenceWidth: 256
+  referenceHeight: 224
+  useIntegerUpscale: 1
+  designUpscale: 4
+  extraScaleMultiplier: 1
+  minScale: 0.5
+  maxScale: 10
+  baseRectWidthAtDesign: 600
+  baseRectHeightAtDesign: 200
+  autoResizeRectTransform: 1
 --- !u!114 &556523583
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7782,17 +7794,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   fadeImage: {fileID: 336813435}
-  hudsonLogoIntro: {fileID: 0}
-  titleScreen: {fileID: 0}
   introMusic: {fileID: 8300000, guid: ff7109298c0b4734d8113eeb4b86601c, type: 3}
   playStartSfxOnIntroEnd: 1
   stageLabel: {fileID: 556523582}
   world: 2
   stageNumber: 7
-  firstStageSceneName: Stage_1-1
   gameplayRoot: {fileID: 679601670}
   stage17SceneName: Stage_1-7
-  skinSelectMenu: {fileID: 0}
   skipPreIntroWalkNextRound_Inspector: 0
   preIntroWalk: {fileID: 786849905}
 --- !u!114 &1389130173
@@ -8244,7 +8252,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1116198084690886847, guid: ce721f59039141f44914bc55bc788281, type: 3}
       propertyPath: life
-      value: 10
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4621539847840114947, guid: ce721f59039141f44914bc55bc788281, type: 3}
       propertyPath: m_Name

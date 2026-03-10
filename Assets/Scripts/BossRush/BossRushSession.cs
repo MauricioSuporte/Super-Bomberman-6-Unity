@@ -16,15 +16,27 @@ public static class BossRushSession
     };
 
     static bool active;
+    static bool timerPaused;
     static int currentStageIndex;
     static BossRushDifficulty selectedDifficulty;
     static BossRushLoadoutPreset selectedPreset;
 
     static float elapsedSeconds;
 
+    static bool hasLastCompletedRun;
+    static BossRushDifficulty lastCompletedDifficulty;
+    static float lastCompletedTime;
+    static int lastCompletedRank = -1;
+
     public static bool IsActive => active;
+    public static bool IsTimerPaused => timerPaused;
     public static BossRushDifficulty SelectedDifficulty => selectedDifficulty;
     public static float ElapsedSeconds => elapsedSeconds;
+
+    public static bool HasLastCompletedRun => hasLastCompletedRun;
+    public static BossRushDifficulty LastCompletedDifficulty => lastCompletedDifficulty;
+    public static float LastCompletedTime => lastCompletedTime;
+    public static int LastCompletedRank => lastCompletedRank;
 
     public static IReadOnlyList<string> StageOrder => stageOrder;
 
@@ -33,10 +45,15 @@ public static class BossRushSession
         PlayerPersistentStats.EnsureSessionBooted();
 
         active = true;
+        timerPaused = false;
         selectedDifficulty = difficulty;
         selectedPreset = preset;
         currentStageIndex = 0;
         elapsedSeconds = 0f;
+
+        hasLastCompletedRun = false;
+        lastCompletedRank = -1;
+        lastCompletedTime = 0f;
 
         ApplySelectedLoadoutToAllPlayers();
 
@@ -53,10 +70,7 @@ public static class BossRushSession
             $"prevElapsed={GetFormattedElapsed()}"
         );
 
-        active = false;
-        currentStageIndex = 0;
-        selectedPreset = null;
-        elapsedSeconds = 0f;
+        ClearRuntimeState();
     }
 
     public static void FinishRun()
@@ -66,15 +80,65 @@ public static class BossRushSession
             $"prevElapsed={GetFormattedElapsed()}"
         );
 
-        active = false;
-        currentStageIndex = 0;
-        selectedPreset = null;
-        elapsedSeconds = 0f;
+        ClearRuntimeState();
+    }
+
+    public static void PauseTimer()
+    {
+        if (!active)
+            return;
+
+        timerPaused = true;
+        SLog($"PauseTimer | elapsed={GetFormattedElapsed()}");
+    }
+
+    public static void ResumeTimer()
+    {
+        if (!active)
+            return;
+
+        timerPaused = false;
+        SLog($"ResumeTimer | elapsed={GetFormattedElapsed()}");
+    }
+
+    public static int CompleteRunAndStoreTime()
+    {
+        if (!active)
+        {
+            SLog("CompleteRunAndStoreTime | inactive");
+            return -1;
+        }
+
+        timerPaused = true;
+
+        BossRushDifficulty completedDifficulty = selectedDifficulty;
+        float completedTime = elapsedSeconds;
+        int rank = BossRushTimesProgress.RegisterTime(completedDifficulty, completedTime);
+
+        hasLastCompletedRun = true;
+        lastCompletedDifficulty = completedDifficulty;
+        lastCompletedTime = completedTime;
+        lastCompletedRank = rank;
+
+        SLog(
+            $"CompleteRunAndStoreTime | difficulty={completedDifficulty} " +
+            $"time={BossRushProgress.FormatTime(completedTime)} rank={rank}"
+        );
+
+        ClearRuntimeState(keepLastCompletedRun: true);
+        return rank;
+    }
+
+    public static void ClearLastCompletedRun()
+    {
+        hasLastCompletedRun = false;
+        lastCompletedTime = 0f;
+        lastCompletedRank = -1;
     }
 
     public static void AddElapsed(float deltaSeconds)
     {
-        if (!active)
+        if (!active || timerPaused)
             return;
 
         if (deltaSeconds <= 0f)
@@ -158,7 +222,8 @@ public static class BossRushSession
             if (string.Equals(stageOrder[i], sceneName, StringComparison.Ordinal))
             {
                 currentStageIndex = i;
-                SLog($"NotifySceneLoaded | matched stage index={i}");
+                timerPaused = false;
+                SLog($"NotifySceneLoaded | matched stage index={i} timerPaused={timerPaused}");
                 return;
             }
         }
@@ -209,6 +274,22 @@ public static class BossRushSession
         }
 
         SLog("ApplySelectedLoadoutToAllPlayers | applied for players 1..4");
+    }
+
+    static void ClearRuntimeState(bool keepLastCompletedRun = false)
+    {
+        active = false;
+        timerPaused = false;
+        currentStageIndex = 0;
+        selectedPreset = null;
+        elapsedSeconds = 0f;
+
+        if (!keepLastCompletedRun)
+        {
+            hasLastCompletedRun = false;
+            lastCompletedTime = 0f;
+            lastCompletedRank = -1;
+        }
     }
 
     static void SLog(string message)

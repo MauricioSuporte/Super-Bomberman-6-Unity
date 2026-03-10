@@ -30,9 +30,7 @@ public static class BossRushProgress
 
     public static List<float> GetTopTimes(BossRushDifficulty difficulty)
     {
-        // Placeholder por enquanto.
-        // Depois a gente troca para ler PlayerPrefs / arquivo / save real.
-        return new List<float>();
+        return BossRushTimesProgress.GetTopTimes(difficulty);
     }
 
     public static string FormatTime(float seconds)
