@@ -55,7 +55,7 @@ MonoBehaviour:
   musicVolume: 1
   outlineColor: {r: 0, g: 0, b: 0, a: 1}
   outlineWidth: 0.4
-  titleSceneName: Stage_1-1
+  titleSceneName: TitleScreen
   message: '<size=52><color=#1ABC00>WORLD 2</color>  <color=#E8E8E8>DEMO COMPLETE!</color></size>
 
 
