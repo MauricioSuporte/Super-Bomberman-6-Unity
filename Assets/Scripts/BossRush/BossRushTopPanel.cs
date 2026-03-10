@@ -1,4 +1,6 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
+using TMPro;
+using UnityEngine;
 using UnityEngine.UI;
 
 [DisallowMultipleComponent]
@@ -10,7 +12,7 @@ public class BossRushTopPanel : MonoBehaviour
     [SerializeField] bool enableSurgicalLogs = true;
 
     [Header("Header")]
-    [SerializeField] Text startWithText;
+    [SerializeField] TextMeshProUGUI startWithText;
     [SerializeField] string startWithLabel = "Start with";
     [SerializeField] int headerFontSize = 16;
     [SerializeField] float headerPreferredWidth = 180f;
@@ -29,13 +31,39 @@ public class BossRushTopPanel : MonoBehaviour
     [SerializeField] Image heartIcon;
 
     [Header("Amounts")]
-    [SerializeField] Text bombAmountText;
-    [SerializeField] Text fireBlastText;
-    [SerializeField] Text speedText;
-    [SerializeField] Text heartText;
+    [SerializeField] TextMeshProUGUI bombAmountText;
+    [SerializeField] TextMeshProUGUI fireBlastText;
+    [SerializeField] TextMeshProUGUI speedText;
+    [SerializeField] TextMeshProUGUI heartText;
 
     [Header("Text")]
     [SerializeField] int amountFontSize = 16;
+
+    [Header("TMP Font")]
+    [SerializeField] TMP_FontAsset topPanelFontAsset;
+    [SerializeField] Material topPanelFontMaterialPreset;
+    [SerializeField] bool forceBold = true;
+
+    [Header("TMP Colors")]
+    [SerializeField] Color textColor = Color.white;
+    [SerializeField] Color outlineColor = Color.black;
+
+    [Header("TMP Outline")]
+    [SerializeField] bool useOutline = true;
+    [SerializeField, Range(0f, 1f)] float outlineWidth = 0.35f;
+    [SerializeField, Range(0f, 1f)] float outlineSoftness = 0f;
+
+    [Header("TMP Face")]
+    [SerializeField, Range(-1f, 1f)] float faceDilate = 0.2f;
+    [SerializeField, Range(0f, 1f)] float faceSoftness = 0f;
+
+    [Header("TMP Underlay")]
+    [SerializeField] bool enableUnderlay = true;
+    [SerializeField] Color underlayColor = new Color(0f, 0f, 0f, 1f);
+    [SerializeField, Range(-1f, 1f)] float underlayDilate = 0.1f;
+    [SerializeField, Range(0f, 1f)] float underlaySoftness = 0f;
+    [SerializeField, Range(-2f, 2f)] float underlayOffsetX = 0.25f;
+    [SerializeField, Range(-2f, 2f)] float underlayOffsetY = -0.25f;
 
     [Header("Sizing")]
     [SerializeField] float rowHeight = 28f;
@@ -66,6 +94,8 @@ public class BossRushTopPanel : MonoBehaviour
     bool _rootRectCaptured;
     Vector2 _baseAnchoredPosition;
     Vector2 _baseSizeDelta;
+
+    readonly Dictionary<TMP_Text, Material> runtimeMaterials = new Dictionary<TMP_Text, Material>();
 
     int ScaledFont(int baseSize) => Mathf.Clamp(Mathf.RoundToInt(baseSize * _currentUiScale), 8, 300);
     float ScaledSize(float baseValue) => baseValue * _currentUiScale;
@@ -128,6 +158,17 @@ public class BossRushTopPanel : MonoBehaviour
             $"bomb={itemAmount} fire={itemAmount} speed={itemAmount} heart={heartAmount} " +
             $"uiScale={_currentUiScale:0.###}"
         );
+    }
+
+    void OnDestroy()
+    {
+        foreach (var kv in runtimeMaterials)
+        {
+            if (kv.Value != null)
+                Destroy(kv.Value);
+        }
+
+        runtimeMaterials.Clear();
     }
 
     int GetItemAmount(BossRushDifficulty difficulty)
@@ -226,9 +267,7 @@ public class BossRushTopPanel : MonoBehaviour
         _baseSizeDelta = rt.sizeDelta;
         _rootRectCaptured = true;
 
-        SLog(
-            $"CaptureBaseRootRect | anchoredPos={_baseAnchoredPosition} sizeDelta={_baseSizeDelta}"
-        );
+        SLog($"CaptureBaseRootRect | anchoredPos={_baseAnchoredPosition} sizeDelta={_baseSizeDelta}");
     }
 
     void ApplyScaledRootRect()
@@ -258,7 +297,7 @@ public class BossRushTopPanel : MonoBehaviour
         );
     }
 
-    void SetAmountText(Text target, int value)
+    void SetAmountText(TextMeshProUGUI target, int value)
     {
         if (target != null)
             target.text = $"x{value}";
@@ -266,20 +305,106 @@ public class BossRushTopPanel : MonoBehaviour
 
     void ApplyScaledFonts()
     {
-        if (startWithText != null)
-            startWithText.fontSize = ScaledFont(headerFontSize);
+        ApplyTmpFontStyle(startWithText, headerFontSize);
+        ApplyTmpFontStyle(bombAmountText, amountFontSize);
+        ApplyTmpFontStyle(fireBlastText, amountFontSize);
+        ApplyTmpFontStyle(speedText, amountFontSize);
+        ApplyTmpFontStyle(heartText, amountFontSize);
+    }
 
-        if (bombAmountText != null)
-            bombAmountText.fontSize = ScaledFont(amountFontSize);
+    void ApplyTmpFontStyle(TextMeshProUGUI target, int baseFontSize)
+    {
+        if (target == null)
+            return;
 
-        if (fireBlastText != null)
-            fireBlastText.fontSize = ScaledFont(amountFontSize);
+        if (topPanelFontAsset != null)
+            target.font = topPanelFontAsset;
 
-        if (speedText != null)
-            speedText.fontSize = ScaledFont(amountFontSize);
+        target.fontSize = ScaledFont(baseFontSize);
+        target.enableAutoSizing = false;
+        target.textWrappingMode = TextWrappingModes.NoWrap;
+        target.overflowMode = TextOverflowModes.Overflow;
+        target.extraPadding = true;
+        target.margin = Vector4.zero;
+        target.color = textColor;
 
-        if (heartText != null)
-            heartText.fontSize = ScaledFont(amountFontSize);
+        if (forceBold)
+            target.fontStyle |= FontStyles.Bold;
+        else
+            target.fontStyle &= ~FontStyles.Bold;
+
+        Material runtimeMat = GetOrCreateRuntimeMaterial(target);
+        ApplyMaterialStyle(runtimeMat);
+
+        target.fontMaterial = runtimeMat;
+        target.UpdateMeshPadding();
+        target.ForceMeshUpdate();
+        target.SetVerticesDirty();
+    }
+
+    Material GetOrCreateRuntimeMaterial(TMP_Text target)
+    {
+        if (target == null)
+            return null;
+
+        if (runtimeMaterials.TryGetValue(target, out Material runtimeMat) && runtimeMat != null)
+            return runtimeMat;
+
+        Material baseMat = null;
+
+        if (topPanelFontMaterialPreset != null)
+            baseMat = topPanelFontMaterialPreset;
+        else if (target.fontSharedMaterial != null)
+            baseMat = target.fontSharedMaterial;
+        else if (target.font != null)
+            baseMat = target.font.material;
+
+        if (baseMat == null)
+            return null;
+
+        runtimeMat = new Material(baseMat);
+        runtimeMat.name = baseMat.name + "_BossRushTopRuntime";
+        runtimeMaterials[target] = runtimeMat;
+        return runtimeMat;
+    }
+
+    void ApplyMaterialStyle(Material mat)
+    {
+        if (mat == null)
+            return;
+
+        TrySetColor(mat, "_FaceColor", textColor);
+
+        if (useOutline)
+        {
+            TrySetColor(mat, "_OutlineColor", outlineColor);
+            TrySetFloat(mat, "_OutlineWidth", outlineWidth);
+            TrySetFloat(mat, "_OutlineSoftness", outlineSoftness);
+        }
+        else
+        {
+            TrySetFloat(mat, "_OutlineWidth", 0f);
+            TrySetFloat(mat, "_OutlineSoftness", 0f);
+        }
+
+        TrySetFloat(mat, "_FaceDilate", faceDilate);
+        TrySetFloat(mat, "_FaceSoftness", faceSoftness);
+
+        if (enableUnderlay)
+        {
+            TrySetColor(mat, "_UnderlayColor", underlayColor);
+            TrySetFloat(mat, "_UnderlayDilate", underlayDilate);
+            TrySetFloat(mat, "_UnderlaySoftness", underlaySoftness);
+            TrySetFloat(mat, "_UnderlayOffsetX", underlayOffsetX);
+            TrySetFloat(mat, "_UnderlayOffsetY", underlayOffsetY);
+        }
+        else
+        {
+            TrySetFloat(mat, "_UnderlayDilate", 0f);
+            TrySetFloat(mat, "_UnderlaySoftness", 0f);
+            TrySetFloat(mat, "_UnderlayOffsetX", 0f);
+            TrySetFloat(mat, "_UnderlayOffsetY", 0f);
+        }
     }
 
     void ApplyLayoutFormatting()
@@ -322,16 +447,15 @@ public class BossRushTopPanel : MonoBehaviour
         layout.childForceExpandHeight = false;
     }
 
-    void ConfigureHeaderText(Text target)
+    void ConfigureHeaderText(TextMeshProUGUI target)
     {
         if (target == null)
             return;
 
-        target.alignment = TextAnchor.MiddleLeft;
-        target.horizontalOverflow = HorizontalWrapMode.Overflow;
-        target.verticalOverflow = VerticalWrapMode.Overflow;
-        target.resizeTextForBestFit = false;
-        target.supportRichText = false;
+        target.alignment = TextAlignmentOptions.MidlineLeft;
+        target.textWrappingMode = TextWrappingModes.NoWrap;
+        target.overflowMode = TextOverflowModes.Overflow;
+        target.enableAutoSizing = false;
 
         float h = Mathf.Max(ScaledSize(rowHeight), target.fontSize + ScaledSize(12f));
 
@@ -348,7 +472,7 @@ public class BossRushTopPanel : MonoBehaviour
         le.flexibleWidth = 0f;
     }
 
-    void ConfigureItemGroup(RectTransform root, Image icon, Text amountText)
+    void ConfigureItemGroup(RectTransform root, Image icon, TextMeshProUGUI amountText)
     {
         if (root == null)
             return;
@@ -390,19 +514,18 @@ public class BossRushTopPanel : MonoBehaviour
         target.preserveAspect = false;
     }
 
-    void ConfigureAmountText(Text target)
+    void ConfigureAmountText(TextMeshProUGUI target)
     {
         if (target == null)
             return;
 
-        target.alignment = TextAnchor.MiddleLeft;
-        target.horizontalOverflow = HorizontalWrapMode.Overflow;
-        target.verticalOverflow = VerticalWrapMode.Overflow;
-        target.resizeTextForBestFit = false;
-        target.supportRichText = false;
+        target.alignment = TextAlignmentOptions.MidlineLeft;
+        target.textWrappingMode = TextWrappingModes.NoWrap;
+        target.overflowMode = TextOverflowModes.Overflow;
+        target.enableAutoSizing = false;
     }
 
-    void ConfigureHeaderWidth(Text target, float preferredWidth)
+    void ConfigureHeaderWidth(TextMeshProUGUI target, float preferredWidth)
     {
         if (target == null)
             return;
@@ -420,7 +543,7 @@ public class BossRushTopPanel : MonoBehaviour
         le.flexibleWidth = 0f;
     }
 
-    void ConfigureAmountWidth(Text target)
+    void ConfigureAmountWidth(TextMeshProUGUI target)
     {
         if (target == null)
             return;
@@ -517,6 +640,18 @@ public class BossRushTopPanel : MonoBehaviour
 
         if (heartRoot != null)
             LayoutRebuilder.ForceRebuildLayoutImmediate(heartRoot);
+    }
+
+    static void TrySetFloat(Material mat, string prop, float value)
+    {
+        if (mat != null && mat.HasProperty(prop))
+            mat.SetFloat(prop, value);
+    }
+
+    static void TrySetColor(Material mat, string prop, Color value)
+    {
+        if (mat != null && mat.HasProperty(prop))
+            mat.SetColor(prop, value);
     }
 
     void SLog(string message)
