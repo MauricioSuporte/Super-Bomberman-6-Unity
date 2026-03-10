@@ -382,12 +382,32 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a67f16fa70d813a4da8d0f4ea8898945, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BossRushRightPanel
-  enableSurgicalLogs: 1
-  titleText: {fileID: 1745869990}
+  enableSurgicalLogs: 0
+  titleText: {fileID: 1745869992}
   titleFormat: '{0}'
   titleFontSize: 32
   titleHeight: 28
   titleOffsetX: 0
+  titleFontAsset: {fileID: 11400000, guid: ecf098b5ead05a94fa9fde052327d9de, type: 2}
+  titleFontMaterialPreset: {fileID: 0}
+  forceTitleBold: 1
+  easySelectedColor: {r: 0.21960784, g: 0.7882353, b: 0.21176471, a: 1}
+  normalSelectedColor: {r: 0.1764706, g: 0.45882353, b: 1, a: 1}
+  hardSelectedColor: {r: 0.90588236, g: 0.24705882, b: 0.24705882, a: 1}
+  nightmareSelectedColor: {r: 0, g: 0, b: 0, a: 1}
+  defaultTitleOutlineColor: {r: 0, g: 0, b: 0, a: 1}
+  nightmareTitleOutlineColor: {r: 0.90588236, g: 0.24705882, b: 0.24705882, a: 1}
+  useTitleOutline: 1
+  titleOutlineWidth: 0.35
+  titleOutlineSoftness: 0
+  titleFaceDilate: 0.2
+  titleFaceSoftness: 0
+  enableTitleUnderlay: 1
+  titleUnderlayColor: {r: 0, g: 0, b: 0, a: 1}
+  titleUnderlayDilate: 0.1
+  titleUnderlaySoftness: 0
+  titleUnderlayOffsetX: 0.25
+  titleUnderlayOffsetY: -0.25
   firstRow: {fileID: 0}
   secondRow: {fileID: 0}
   thirdRow: {fileID: 0}
@@ -3177,7 +3197,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1745869989}
   - component: {fileID: 1745869991}
-  - component: {fileID: 1745869990}
+  - component: {fileID: 1745869992}
   m_Layer: 5
   m_Name: TitleText
   m_TagString: Untagged
@@ -3204,40 +3224,6 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 1420.8, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &1745869990
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1745869988}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5f7201a12d95ffc409449d95f23cf332, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Text
-  m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 1
-  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
-  m_Maskable: 1
-  m_OnCullStateChanged:
-    m_PersistentCalls:
-      m_Calls: []
-  m_FontData:
-    m_Font: {fileID: 12800000, guid: 6748eca4216c7d64682a8e26e793d076, type: 3}
-    m_FontSize: 14
-    m_FontStyle: 0
-    m_BestFit: 0
-    m_MinSize: 10
-    m_MaxSize: 40
-    m_Alignment: 4
-    m_AlignByGeometry: 0
-    m_RichText: 1
-    m_HorizontalOverflow: 1
-    m_VerticalOverflow: 1
-    m_LineSpacing: 1
-  m_Text: 
 --- !u!222 &1745869991
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -3246,6 +3232,98 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1745869988}
   m_CullTransparentMesh: 1
+--- !u!114 &1745869992
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1745869988}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_RaycastTarget: 1
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_text: 
+  m_isRightToLeft: 0
+  m_fontAsset: {fileID: 11400000, guid: ecf098b5ead05a94fa9fde052327d9de, type: 2}
+  m_sharedMaterial: {fileID: 8045997824858538805, guid: ecf098b5ead05a94fa9fde052327d9de, type: 2}
+  m_fontSharedMaterials: []
+  m_fontMaterial: {fileID: 0}
+  m_fontMaterials: []
+  m_fontColor32:
+    serializedVersion: 2
+    rgba: 4294967295
+  m_fontColor: {r: 1, g: 1, b: 1, a: 1}
+  m_enableVertexGradient: 0
+  m_colorMode: 3
+  m_fontColorGradient:
+    topLeft: {r: 1, g: 1, b: 1, a: 1}
+    topRight: {r: 1, g: 1, b: 1, a: 1}
+    bottomLeft: {r: 1, g: 1, b: 1, a: 1}
+    bottomRight: {r: 1, g: 1, b: 1, a: 1}
+  m_fontColorGradientPreset: {fileID: 0}
+  m_spriteAsset: {fileID: 0}
+  m_tintAllSprites: 0
+  m_StyleSheet: {fileID: 0}
+  m_TextStyleHashCode: -1183493901
+  m_overrideHtmlColors: 0
+  m_faceColor:
+    serializedVersion: 2
+    rgba: 4294967295
+  m_fontSize: 36
+  m_fontSizeBase: 36
+  m_fontWeight: 400
+  m_enableAutoSizing: 0
+  m_fontSizeMin: 18
+  m_fontSizeMax: 72
+  m_fontStyle: 0
+  m_HorizontalAlignment: 1
+  m_VerticalAlignment: 256
+  m_textAlignment: 65535
+  m_characterSpacing: 0
+  m_characterHorizontalScale: 1
+  m_wordSpacing: 0
+  m_lineSpacing: 0
+  m_lineSpacingMax: 0
+  m_paragraphSpacing: 0
+  m_charWidthMaxAdj: 0
+  m_TextWrappingMode: 1
+  m_wordWrappingRatios: 0.4
+  m_overflowMode: 0
+  m_linkedTextComponent: {fileID: 0}
+  parentLinkedComponent: {fileID: 0}
+  m_enableKerning: 0
+  m_ActiveFontFeatures: 6e72656b
+  m_enableExtraPadding: 0
+  checkPaddingRequired: 0
+  m_isRichText: 1
+  m_EmojiFallbackSupport: 1
+  m_parseCtrlCharacters: 1
+  m_isOrthographic: 1
+  m_isCullingEnabled: 0
+  m_horizontalMapping: 0
+  m_verticalMapping: 0
+  m_uvLineOffset: 0
+  m_geometrySortingOrder: 0
+  m_IsTextObjectScaleStatic: 0
+  m_VertexBufferAutoSizeReduction: 0
+  m_useMaxVisibleDescender: 1
+  m_pageToDisplay: 1
+  m_margin: {x: 0, y: 0, z: 0, w: 0}
+  m_isUsingLegacyAnimationComponent: 0
+  m_isVolumetricText: 0
+  m_hasFontAssetChanged: 0
+  m_baseMaterial: {fileID: 0}
+  m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
 --- !u!1 &1754168065
 GameObject:
   m_ObjectHideFlags: 0
@@ -4174,19 +4252,24 @@ MonoBehaviour:
   difficultyListRoot: {fileID: 470050462}
   difficultyItemPrefab: {fileID: 2139593661}
   difficultyNormalColor: {r: 1, g: 1, b: 1, a: 1}
-  difficultySelectedColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
-  difficultyConfirmedColor: {r: 1, g: 0.8, b: 0.2, a: 1}
   fontSize: 32
   difficultyItemHeight: 32
   difficultySpacing: {x: 0, y: 10}
   difficultyContentOffsetX: 64
+  difficultyContentOffsetY: 125
+  cursorExtraOffsetY: 0
+  easySelectedColor: {r: 0.21960784, g: 0.7882353, b: 0.21176471, a: 1}
+  normalSelectedColor: {r: 0.1764706, g: 0.45882353, b: 1, a: 1}
+  hardSelectedColor: {r: 0.90588236, g: 0.24705882, b: 0.24705882, a: 1}
+  nightmareSelectedColor: {r: 0, g: 0, b: 0, a: 1}
+  defaultOutlineColor: {r: 0, g: 0, b: 0, a: 1}
+  nightmareOutlineColor: {r: 0.90588236, g: 0.24705882, b: 0.24705882, a: 1}
   difficultyFontAsset: {fileID: 11400000, guid: 0cd596907be67a34f9e1cd590b869e4e, type: 2}
   difficultyFontMaterialPreset: {fileID: 0}
   forceDifficultyBold: 1
   difficultyAutoSize: 0
   difficultyAutoSizeMinRatio: 0.75
   useDifficultyOutline: 1
-  difficultyOutlineColor: {r: 0, g: 0, b: 0, a: 1}
   difficultyOutlineWidth: 0.35
   difficultyOutlineSoftness: 0
   difficultyFaceDilate: 0.2

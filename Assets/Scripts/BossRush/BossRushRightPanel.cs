@@ -11,11 +11,43 @@ public class BossRushRightPanel : MonoBehaviour
     [SerializeField] bool enableSurgicalLogs = true;
 
     [Header("Title")]
-    [SerializeField] Text titleText;
+    [SerializeField] TextMeshProUGUI titleText;
     [SerializeField] string titleFormat = "{0}";
     [SerializeField] int titleFontSize = 18;
     [SerializeField] float titleHeight = 28f;
     [SerializeField] float titleOffsetX = 0f;
+
+    [Header("Title TMP")]
+    [SerializeField] TMP_FontAsset titleFontAsset;
+    [SerializeField] Material titleFontMaterialPreset;
+    [SerializeField] bool forceTitleBold = true;
+
+    [Header("Title Selected Difficulty Colors")]
+    [SerializeField] Color easySelectedColor = new Color32(56, 201, 54, 255);
+    [SerializeField] Color normalSelectedColor = new Color32(45, 117, 255, 255);
+    [SerializeField] Color hardSelectedColor = new Color32(231, 63, 63, 255);
+    [SerializeField] Color nightmareSelectedColor = Color.black;
+
+    [Header("Title Outline Colors")]
+    [SerializeField] Color defaultTitleOutlineColor = Color.black;
+    [SerializeField] Color nightmareTitleOutlineColor = new Color32(231, 63, 63, 255);
+
+    [Header("Title TMP Outline")]
+    [SerializeField] bool useTitleOutline = true;
+    [SerializeField, Range(0f, 1f)] float titleOutlineWidth = 0.35f;
+    [SerializeField, Range(0f, 1f)] float titleOutlineSoftness = 0f;
+
+    [Header("Title TMP Face")]
+    [SerializeField, Range(-1f, 1f)] float titleFaceDilate = 0.2f;
+    [SerializeField, Range(0f, 1f)] float titleFaceSoftness = 0f;
+
+    [Header("Title TMP Underlay")]
+    [SerializeField] bool enableTitleUnderlay = true;
+    [SerializeField] Color titleUnderlayColor = new Color(0f, 0f, 0f, 1f);
+    [SerializeField, Range(-1f, 1f)] float titleUnderlayDilate = 0.1f;
+    [SerializeField, Range(0f, 1f)] float titleUnderlaySoftness = 0f;
+    [SerializeField, Range(-2f, 2f)] float titleUnderlayOffsetX = 0.25f;
+    [SerializeField, Range(-2f, 2f)] float titleUnderlayOffsetY = -0.25f;
 
     [Header("Rows")]
     [SerializeField] RectTransform firstRow;
@@ -91,9 +123,22 @@ public class BossRushRightPanel : MonoBehaviour
     [Header("Panel Offset")]
     [SerializeField] float contentOffsetY = 0f;
 
+    struct DifficultyVisualStyle
+    {
+        public Color FaceColor;
+        public Color OutlineColor;
+
+        public DifficultyVisualStyle(Color faceColor, Color outlineColor)
+        {
+            FaceColor = faceColor;
+            OutlineColor = outlineColor;
+        }
+    }
+
     static Sprite s_circleSprite;
 
     readonly Dictionary<TMP_Text, Material> runtimeTimeMaterials = new Dictionary<TMP_Text, Material>();
+    readonly Dictionary<TMP_Text, Material> runtimeTitleMaterials = new Dictionary<TMP_Text, Material>();
 
     int _baseTopPadding;
     int _baseBottomPadding;
@@ -132,7 +177,10 @@ public class BossRushRightPanel : MonoBehaviour
         ApplyLayoutFormatting();
 
         if (titleText != null)
+        {
             titleText.text = string.Format(titleFormat, GetDifficultyDisplayName(difficulty));
+            ApplyTitleStyleForDifficulty(difficulty);
+        }
 
         if (firstRankText != null) firstRankText.text = firstLabel;
         if (secondRankText != null) secondRankText.text = secondLabel;
@@ -160,7 +208,14 @@ public class BossRushRightPanel : MonoBehaviour
                 Destroy(kv.Value);
         }
 
+        foreach (var kv in runtimeTitleMaterials)
+        {
+            if (kv.Value != null)
+                Destroy(kv.Value);
+        }
+
         runtimeTimeMaterials.Clear();
+        runtimeTitleMaterials.Clear();
     }
 
     void ResolveMissingReferences()
@@ -214,7 +269,6 @@ public class BossRushRightPanel : MonoBehaviour
         target.enableAutoSizing = true;
         target.fontSizeMax = maxSize;
         target.fontSizeMin = minSize;
-
         target.fontSize = maxSize;
     }
 
@@ -381,16 +435,129 @@ public class BossRushRightPanel : MonoBehaviour
         le.flexibleWidth = 0f;
     }
 
-    void ConfigureTitleText(Text target)
+    void ConfigureTitleText(TextMeshProUGUI target)
     {
         if (target == null)
             return;
 
-        target.alignment = TextAnchor.MiddleCenter;
-        target.horizontalOverflow = HorizontalWrapMode.Overflow;
-        target.verticalOverflow = VerticalWrapMode.Overflow;
-        target.resizeTextForBestFit = false;
-        target.supportRichText = false;
+        if (titleFontAsset != null)
+            target.font = titleFontAsset;
+
+        target.alignment = TextAlignmentOptions.Center;
+        target.textWrappingMode = TextWrappingModes.NoWrap;
+        target.overflowMode = TextOverflowModes.Overflow;
+        target.enableAutoSizing = false;
+        target.extraPadding = true;
+        target.margin = Vector4.zero;
+
+        if (forceTitleBold)
+            target.fontStyle |= FontStyles.Bold;
+        else
+            target.fontStyle &= ~FontStyles.Bold;
+    }
+
+    void ApplyTitleStyleForDifficulty(BossRushDifficulty difficulty)
+    {
+        if (titleText == null)
+            return;
+
+        DifficultyVisualStyle style = GetTitleSelectedStyle(difficulty);
+
+        titleText.color = style.FaceColor;
+
+        Material runtimeMat = GetOrCreateRuntimeTitleMaterial(titleText);
+        ApplyTitleMaterialStyle(runtimeMat, style);
+
+        titleText.fontMaterial = runtimeMat;
+        titleText.UpdateMeshPadding();
+        titleText.ForceMeshUpdate();
+        titleText.SetVerticesDirty();
+    }
+
+    DifficultyVisualStyle GetTitleSelectedStyle(BossRushDifficulty difficulty)
+    {
+        switch (difficulty)
+        {
+            case BossRushDifficulty.EASY:
+                return new DifficultyVisualStyle(easySelectedColor, defaultTitleOutlineColor);
+
+            case BossRushDifficulty.NORMAL:
+                return new DifficultyVisualStyle(normalSelectedColor, defaultTitleOutlineColor);
+
+            case BossRushDifficulty.HARD:
+                return new DifficultyVisualStyle(hardSelectedColor, defaultTitleOutlineColor);
+
+            case BossRushDifficulty.NIGHTMARE:
+                return new DifficultyVisualStyle(nightmareSelectedColor, nightmareTitleOutlineColor);
+
+            default:
+                return new DifficultyVisualStyle(Color.white, defaultTitleOutlineColor);
+        }
+    }
+
+    Material GetOrCreateRuntimeTitleMaterial(TMP_Text target)
+    {
+        if (target == null)
+            return null;
+
+        if (runtimeTitleMaterials.TryGetValue(target, out Material runtimeMat) && runtimeMat != null)
+            return runtimeMat;
+
+        Material baseMat = null;
+
+        if (titleFontMaterialPreset != null)
+            baseMat = titleFontMaterialPreset;
+        else if (target.fontSharedMaterial != null)
+            baseMat = target.fontSharedMaterial;
+        else if (target.font != null)
+            baseMat = target.font.material;
+
+        if (baseMat == null)
+            return null;
+
+        runtimeMat = new Material(baseMat);
+        runtimeMat.name = baseMat.name + "_BossRushTitleRuntime";
+        runtimeTitleMaterials[target] = runtimeMat;
+        return runtimeMat;
+    }
+
+    void ApplyTitleMaterialStyle(Material mat, DifficultyVisualStyle style)
+    {
+        if (mat == null)
+            return;
+
+        TrySetColor(mat, "_FaceColor", style.FaceColor);
+
+        if (useTitleOutline)
+        {
+            TrySetColor(mat, "_OutlineColor", style.OutlineColor);
+            TrySetFloat(mat, "_OutlineWidth", titleOutlineWidth);
+            TrySetFloat(mat, "_OutlineSoftness", titleOutlineSoftness);
+        }
+        else
+        {
+            TrySetFloat(mat, "_OutlineWidth", 0f);
+            TrySetFloat(mat, "_OutlineSoftness", 0f);
+        }
+
+        TrySetFloat(mat, "_FaceDilate", titleFaceDilate);
+        TrySetFloat(mat, "_FaceSoftness", titleFaceSoftness);
+
+        if (enableTitleUnderlay)
+        {
+            TrySetColor(mat, "_UnderlayColor", titleUnderlayColor);
+            TrySetFloat(mat, "_UnderlayDilate", titleUnderlayDilate);
+            TrySetFloat(mat, "_UnderlaySoftness", titleUnderlaySoftness);
+            TrySetFloat(mat, "_UnderlayOffsetX", titleUnderlayOffsetX);
+            TrySetFloat(mat, "_UnderlayOffsetY", titleUnderlayOffsetY);
+        }
+        else
+        {
+            TrySetFloat(mat, "_UnderlayDilate", 0f);
+            TrySetFloat(mat, "_UnderlaySoftness", 0f);
+            TrySetFloat(mat, "_UnderlayOffsetX", 0f);
+            TrySetFloat(mat, "_UnderlayOffsetY", 0f);
+        }
     }
 
     void ConfigureRankText(Text target)
@@ -428,10 +595,7 @@ public class BossRushRightPanel : MonoBehaviour
 
         target.alignment = TextAlignmentOptions.MidlineRight;
         target.textWrappingMode = TextWrappingModes.NoWrap;
-
-        // importante: não deixar transbordar para cima do rank
         target.overflowMode = TextOverflowModes.Truncate;
-
         target.enableAutoSizing = true;
         target.extraPadding = true;
         target.color = timeTextColor;
@@ -462,8 +626,7 @@ public class BossRushRightPanel : MonoBehaviour
         if (target == null)
             return null;
 
-        Material runtimeMat;
-        if (runtimeTimeMaterials.TryGetValue(target, out runtimeMat) && runtimeMat != null)
+        if (runtimeTimeMaterials.TryGetValue(target, out Material runtimeMat) && runtimeMat != null)
             return runtimeMat;
 
         Material baseMat = null;
@@ -480,7 +643,6 @@ public class BossRushRightPanel : MonoBehaviour
 
         runtimeMat = new Material(baseMat);
         runtimeMat.name = baseMat.name + "_BossRushRuntime";
-
         runtimeTimeMaterials[target] = runtimeMat;
         return runtimeMat;
     }

@@ -15,12 +15,22 @@ public class BossRushLeftPanel : MonoBehaviour
     [SerializeField] RectTransform difficultyListRoot;
     [SerializeField] TextMeshProUGUI difficultyItemPrefab;
     [SerializeField] Color difficultyNormalColor = Color.white;
-    [SerializeField] Color difficultySelectedColor = Color.yellow;
-    [SerializeField] Color difficultyConfirmedColor = new Color(1f, 0.8f, 0.2f, 1f);
     [SerializeField] int fontSize = 18;
     [SerializeField] float difficultyItemHeight = 32f;
     [SerializeField] Vector2 difficultySpacing = new Vector2(0f, 10f);
     [SerializeField] float difficultyContentOffsetX = 32f;
+    [SerializeField] float difficultyContentOffsetY = 0f;
+    [SerializeField] float cursorExtraOffsetY = 0f;
+
+    [Header("Selected Difficulty Colors")]
+    [SerializeField] Color easySelectedColor = new Color32(56, 201, 54, 255);
+    [SerializeField] Color normalSelectedColor = new Color32(45, 117, 255, 255);
+    [SerializeField] Color hardSelectedColor = new Color32(231, 63, 63, 255);
+    [SerializeField] Color nightmareSelectedColor = Color.black;
+
+    [Header("Outline Colors")]
+    [SerializeField] Color defaultOutlineColor = Color.black;
+    [SerializeField] Color nightmareOutlineColor = new Color32(231, 63, 63, 255);
 
     [Header("Difficulty TMP")]
     [SerializeField] TMP_FontAsset difficultyFontAsset;
@@ -31,7 +41,6 @@ public class BossRushLeftPanel : MonoBehaviour
 
     [Header("Difficulty TMP Outline")]
     [SerializeField] bool useDifficultyOutline = true;
-    [SerializeField] Color difficultyOutlineColor = Color.black;
     [SerializeField, Range(0f, 1f)] float difficultyOutlineWidth = 0.35f;
     [SerializeField, Range(0f, 1f)] float difficultyOutlineSoftness = 0f;
 
@@ -68,6 +77,18 @@ public class BossRushLeftPanel : MonoBehaviour
         BossRushDifficulty.HARD,
         BossRushDifficulty.NIGHTMARE
     };
+
+    struct DifficultyVisualStyle
+    {
+        public Color FaceColor;
+        public Color OutlineColor;
+
+        public DifficultyVisualStyle(Color faceColor, Color outlineColor)
+        {
+            FaceColor = faceColor;
+            OutlineColor = outlineColor;
+        }
+    }
 
     float _currentUiScale = 1f;
 
@@ -147,7 +168,8 @@ public class BossRushLeftPanel : MonoBehaviour
                 if (difficultyTexts[i] == null)
                     continue;
 
-                ApplyDifficultyTextStyle(difficultyTexts[i], difficultyTexts[i].color);
+                DifficultyVisualStyle style = GetUnselectedStyle();
+                ApplyDifficultyTextStyle(difficultyTexts[i], style);
 
                 RectTransform rt = difficultyTexts[i].rectTransform;
                 rt.sizeDelta = new Vector2(0f, ScaledFloat(difficultyItemHeight));
@@ -216,7 +238,7 @@ public class BossRushLeftPanel : MonoBehaviour
             txt.text = GetDifficultyDisplayName(difficulties[i]);
             txt.transform.SetAsLastSibling();
 
-            ApplyDifficultyTextStyle(txt, difficultyNormalColor);
+            ApplyDifficultyTextStyle(txt, GetUnselectedStyle());
 
             RectTransform rt = txt.rectTransform;
             rt.anchorMin = new Vector2(0f, 0.5f);
@@ -271,16 +293,15 @@ public class BossRushLeftPanel : MonoBehaviour
             }
 
             bool isSelected = i == selectedIndex;
+            BossRushDifficulty difficulty = difficulties[i];
 
-            txt.text = GetDifficultyDisplayName(difficulties[i]);
+            txt.text = GetDifficultyDisplayName(difficulty);
 
-            Color targetColor = confirmed && isSelected
-                ? difficultyConfirmedColor
-                : isSelected
-                    ? difficultySelectedColor
-                    : difficultyNormalColor;
+            DifficultyVisualStyle style = isSelected
+                ? GetSelectedStyle(difficulty)
+                : GetUnselectedStyle();
 
-            ApplyDifficultyTextStyle(txt, targetColor);
+            ApplyDifficultyTextStyle(txt, style);
         }
 
         UpdateCursorAnimationState(confirmed);
@@ -327,7 +348,7 @@ public class BossRushLeftPanel : MonoBehaviour
 
         Vector3 localPos = txt.rectTransform.localPosition;
         localPos.x += ScaledFloat(cursorOffset.x);
-        localPos.y += ScaledFloat(cursorOffset.y);
+        localPos.y += ScaledFloat(cursorOffset.y) + ScaledFloat(cursorExtraOffsetY);
         localPos.z = 0f;
 
         if (roundCursorToWholePixels)
@@ -361,7 +382,33 @@ public class BossRushLeftPanel : MonoBehaviour
         }
     }
 
-    void ApplyDifficultyTextStyle(TextMeshProUGUI txt, Color faceColor)
+    DifficultyVisualStyle GetUnselectedStyle()
+    {
+        return new DifficultyVisualStyle(difficultyNormalColor, defaultOutlineColor);
+    }
+
+    DifficultyVisualStyle GetSelectedStyle(BossRushDifficulty difficulty)
+    {
+        switch (difficulty)
+        {
+            case BossRushDifficulty.EASY:
+                return new DifficultyVisualStyle(easySelectedColor, defaultOutlineColor);
+
+            case BossRushDifficulty.NORMAL:
+                return new DifficultyVisualStyle(normalSelectedColor, defaultOutlineColor);
+
+            case BossRushDifficulty.HARD:
+                return new DifficultyVisualStyle(hardSelectedColor, defaultOutlineColor);
+
+            case BossRushDifficulty.NIGHTMARE:
+                return new DifficultyVisualStyle(nightmareSelectedColor, nightmareOutlineColor);
+
+            default:
+                return new DifficultyVisualStyle(difficultyNormalColor, defaultOutlineColor);
+        }
+    }
+
+    void ApplyDifficultyTextStyle(TextMeshProUGUI txt, DifficultyVisualStyle style)
     {
         if (txt == null)
             return;
@@ -374,7 +421,7 @@ public class BossRushLeftPanel : MonoBehaviour
         txt.enableAutoSizing = difficultyAutoSize;
         txt.extraPadding = true;
         txt.alignment = TextAlignmentOptions.MidlineLeft;
-        txt.color = faceColor;
+        txt.color = style.FaceColor;
         txt.margin = Vector4.zero;
 
         float scaledSize = ScaledFont(fontSize);
@@ -392,7 +439,7 @@ public class BossRushLeftPanel : MonoBehaviour
             txt.fontStyle &= ~FontStyles.Bold;
 
         Material runtimeMat = GetOrCreateRuntimeDifficultyMaterial(txt);
-        ApplyDifficultyMaterialStyle(runtimeMat, faceColor);
+        ApplyDifficultyMaterialStyle(runtimeMat, style);
 
         txt.fontMaterial = runtimeMat;
         txt.UpdateMeshPadding();
@@ -426,16 +473,16 @@ public class BossRushLeftPanel : MonoBehaviour
         return runtimeMat;
     }
 
-    void ApplyDifficultyMaterialStyle(Material mat, Color faceColor)
+    void ApplyDifficultyMaterialStyle(Material mat, DifficultyVisualStyle style)
     {
         if (mat == null)
             return;
 
-        TrySetColor(mat, "_FaceColor", faceColor);
+        TrySetColor(mat, "_FaceColor", style.FaceColor);
 
         if (useDifficultyOutline)
         {
-            TrySetColor(mat, "_OutlineColor", difficultyOutlineColor);
+            TrySetColor(mat, "_OutlineColor", style.OutlineColor);
             TrySetFloat(mat, "_OutlineWidth", difficultyOutlineWidth);
             TrySetFloat(mat, "_OutlineSoftness", difficultyOutlineSoftness);
         }
@@ -501,7 +548,7 @@ public class BossRushLeftPanel : MonoBehaviour
 
         layout.padding.left = _baseLayoutPaddingLeft + Mathf.RoundToInt(ScaledFloat(difficultyContentOffsetX));
         layout.padding.right = _baseLayoutPaddingRight;
-        layout.padding.top = _baseLayoutPaddingTop;
+        layout.padding.top = _baseLayoutPaddingTop + Mathf.RoundToInt(ScaledFloat(difficultyContentOffsetY));
         layout.padding.bottom = _baseLayoutPaddingBottom;
     }
 
