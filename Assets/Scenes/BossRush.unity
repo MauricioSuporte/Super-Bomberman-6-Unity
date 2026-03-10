@@ -2538,7 +2538,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bd4762bae7b650f46b63ddbb8842ee02, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BossRushBootstrap
-  enableSurgicalLogs: 1
+  enableSurgicalLogs: 0
   bossRushMenu: {fileID: 1311323899}
   returnSceneName: SkinSelect
   bossRushSceneName: BossRush

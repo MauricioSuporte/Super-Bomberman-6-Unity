@@ -5,14 +5,10 @@ using UnityEngine.UI;
 [DisallowMultipleComponent]
 public class BossRushTimerPresenter : MonoBehaviour
 {
-    const string LOG = "[BossRushTimerPresenter]";
     const string RootName = "__BossRushTimerPresenter";
     const string TextName = "BossRushTimerText";
 
     static BossRushTimerPresenter instanceInScene;
-
-    [Header("Debug (Surgical Logs)")]
-    [SerializeField] bool enableSurgicalLogs = true;
 
     [Header("Text")]
     [SerializeField] TMP_Text timerText;
@@ -69,7 +65,7 @@ public class BossRushTimerPresenter : MonoBehaviour
         RectTransform parentRoot = FindTargetRoot();
         if (parentRoot == null)
         {
-            Debug.LogWarning($"{LOG} EnsureInScene | no valid UI root found");
+            Debug.LogWarning("BossRushTimerPresenter EnsureInScene | no valid UI root found");
             return;
         }
 
@@ -79,7 +75,6 @@ public class BossRushTimerPresenter : MonoBehaviour
         instanceInScene = root.AddComponent<BossRushTimerPresenter>();
         instanceInScene.targetRoot = parentRoot;
         instanceInScene.EnsureBuilt();
-        instanceInScene.SLog($"EnsureInScene | created under parent={parentRoot.name}");
     }
 
     static RectTransform FindTargetRoot()
@@ -307,13 +302,6 @@ public class BossRushTimerPresenter : MonoBehaviour
 
         ApplyRectScaleIfNeeded(force: true);
         SetVisible(BossRushSession.IsActive);
-
-        SLog(
-            $"EnsureBuilt | targetRoot={(targetRoot != null ? targetRoot.name : "NULL")} " +
-            $"camera={(Camera.main != null ? Camera.main.name : "NULL")} " +
-            $"camRect={GetMainCameraViewportRect()} camPixelRect={GetMainCameraPixelRect()} " +
-            $"active={BossRushSession.IsActive}"
-        );
     }
 
     void ApplyMaterialColors(Material mat)
@@ -402,12 +390,6 @@ public class BossRushTimerPresenter : MonoBehaviour
 
             rt.sizeDelta = new Vector2(rectW, rectH);
         }
-
-        SLog(
-            $"ApplyRectScaleIfNeeded | root={(targetRoot != null ? targetRoot.name : "NULL")} " +
-            $"camRect={camViewportRect} camPixelRect={camPixelRect} " +
-            $"textPos={rt.anchoredPosition} textSize={rt.sizeDelta} fontSize={timerText.fontSize}"
-        );
     }
 
     void SetVisible(bool visible)
@@ -418,18 +400,6 @@ public class BossRushTimerPresenter : MonoBehaviour
         if (timerText.gameObject.activeSelf != visible)
             timerText.gameObject.SetActive(visible);
 
-        if (lastVisibleState != visible)
-        {
-            lastVisibleState = visible;
-            SLog($"SetVisible | visible={visible}");
-        }
-    }
-
-    void SLog(string message)
-    {
-        if (!enableSurgicalLogs)
-            return;
-
-        Debug.Log($"{LOG} {message}", this);
+        lastVisibleState = visible;
     }
 }

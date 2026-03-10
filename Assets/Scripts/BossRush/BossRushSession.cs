@@ -4,9 +4,6 @@ using UnityEngine;
 
 public static class BossRushSession
 {
-    const string LOG = "[BossRushSession]";
-    static readonly bool enableSurgicalLogs = true;
-
     static readonly string[] stageOrder =
     {
         "Stage_1-6",
@@ -50,20 +47,10 @@ public static class BossRushSession
         lastCompletedTime = 0f;
 
         ApplySelectedLoadoutToAllPlayers();
-
-        SLog(
-            $"StartRun | difficulty={difficulty} presetNull={preset == null} " +
-            $"currentStageIndex={currentStageIndex} currentStage={GetCurrentStageSceneName()}"
-        );
     }
 
     public static void CancelRun()
     {
-        SLog(
-            $"CancelRun | prevActive={active} prevStageIndex={currentStageIndex} " +
-            $"prevElapsed={GetFormattedElapsed()}"
-        );
-
         ClearRuntimeState();
     }
 
@@ -73,14 +60,12 @@ public static class BossRushSession
             return;
 
         timerPaused = true;
-        SLog($"PauseTimer | elapsed={GetFormattedElapsed()}");
     }
 
     public static int CompleteRunAndStoreTime()
     {
         if (!active)
         {
-            SLog("CompleteRunAndStoreTime | inactive");
             return -1;
         }
 
@@ -94,11 +79,6 @@ public static class BossRushSession
         lastCompletedDifficulty = completedDifficulty;
         lastCompletedTime = completedTime;
         lastCompletedRank = rank;
-
-        SLog(
-            $"CompleteRunAndStoreTime | difficulty={completedDifficulty} " +
-            $"time={BossRushProgress.FormatTime(completedTime)} rank={rank}"
-        );
 
         ClearRuntimeState(keepLastCompletedRun: true);
         return rank;
@@ -150,21 +130,17 @@ public static class BossRushSession
 
         if (!active)
         {
-            SLog("TryAdvanceToNextStage | inactive");
             return false;
         }
 
         int nextIndex = currentStageIndex + 1;
         if (nextIndex >= stageOrder.Length)
         {
-            SLog($"TryAdvanceToNextStage | no next stage | currentStageIndex={currentStageIndex}");
             return false;
         }
 
         currentStageIndex = nextIndex;
         nextSceneName = stageOrder[currentStageIndex];
-
-        SLog($"TryAdvanceToNextStage | nextStageIndex={currentStageIndex} nextScene={nextSceneName}");
         return true;
     }
 
@@ -184,11 +160,6 @@ public static class BossRushSession
 
     public static void NotifySceneLoaded(string sceneName)
     {
-        SLog(
-            $"NotifySceneLoaded | scene={sceneName} active={active} " +
-            $"elapsed={GetFormattedElapsed()}"
-        );
-
         if (!active || string.IsNullOrWhiteSpace(sceneName))
             return;
 
@@ -198,12 +169,9 @@ public static class BossRushSession
             {
                 currentStageIndex = i;
                 timerPaused = false;
-                SLog($"NotifySceneLoaded | matched stage index={i} timerPaused={timerPaused}");
                 return;
             }
         }
-
-        SLog("NotifySceneLoaded | scene is not part of boss rush order");
     }
 
     static void ApplySelectedLoadoutToAllPlayers()
@@ -238,8 +206,6 @@ public static class BossRushSession
 
             state.Skin = preservedSkin;
         }
-
-        SLog("ApplySelectedLoadoutToAllPlayers | applied for players 1..4");
     }
 
     static void ClearRuntimeState(bool keepLastCompletedRun = false)
@@ -256,13 +222,5 @@ public static class BossRushSession
             lastCompletedTime = 0f;
             lastCompletedRank = -1;
         }
-    }
-
-    static void SLog(string message)
-    {
-        if (!enableSurgicalLogs)
-            return;
-
-        Debug.Log($"{LOG} {message}");
     }
 }
