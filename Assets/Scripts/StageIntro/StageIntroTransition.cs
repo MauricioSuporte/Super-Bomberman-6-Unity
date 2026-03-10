@@ -237,17 +237,18 @@ public class StageIntroTransition : MonoBehaviour
         if (spawner != null)
             spawner.SpawnNow();
 
-        bool skipPreIntroNow = skipPreIntroWalkNextRound;
-
-        skipPreIntroWalkNextRound_Inspector = skipPreIntroWalkNextRound;
-
-        if (skipPreIntroNow && preIntroWalk != null)
-            preIntroWalk.ForceMainCameraActive();
+        bool skipPreIntroNow =
+            skipPreIntroWalkNextRound ||
+            StagePreIntroPlayersWalk.ConsumeSkipOnNextLoad();
 
         skipPreIntroWalkNextRound = false;
         skipPreIntroWalkNextRound_Inspector = false;
 
         bool hasPreIntro = (preIntroWalk != null && preIntroWalk.IsEnabled && !skipPreIntroNow);
+
+        if (skipPreIntroNow && preIntroWalk != null)
+            preIntroWalk.ForceMainCameraActive();
+
         if (hasPreIntro)
             preIntroWalk.PrepareEntranceCamerasForIntro();
 

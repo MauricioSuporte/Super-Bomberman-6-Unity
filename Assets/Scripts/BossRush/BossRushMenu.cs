@@ -436,6 +436,8 @@ public class BossRushMenu : MonoBehaviour
         {
             GamePauseController.ClearPauseFlag();
             Time.timeScale = 1f;
+
+            StagePreIntroPlayersWalk.SkipOnNextLoad();
             SceneManager.LoadScene(BossRushSession.GetCurrentStageSceneName());
         }
     }

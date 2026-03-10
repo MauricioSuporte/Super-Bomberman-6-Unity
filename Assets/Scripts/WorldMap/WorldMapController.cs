@@ -394,6 +394,7 @@ public class WorldMapController : MonoBehaviour
         else
             yield return new WaitForSecondsRealtime(selectedTransitionDuration);
 
+        StagePreIntroPlayersWalk.SkipOnNextLoad();
         SceneManager.LoadScene(sceneName);
     }
 

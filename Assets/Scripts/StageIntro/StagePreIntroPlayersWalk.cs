@@ -928,7 +928,7 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
     }
 
     private static Vector2 RoundToGrid(Vector2 p, float tile)
-        => new Vector2(Mathf.Round(p.x / tile) * tile, Mathf.Round(p.y / tile) * tile);
+        => new(Mathf.Round(p.x / tile) * tile, Mathf.Round(p.y / tile) * tile);
 
     private static IEnumerator WaitRealtime(float seconds)
     {
@@ -1060,5 +1060,21 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
         queue.ForceVisible(true);
         queue.RebindAndReseedNow(resetHistoryToOwnerNow: true);
         queue.SnapQueueToOwnerNow(resetHistoryToOwnerNow: true);
+    }
+
+    private static bool skipNextPlay;
+
+    public static void SkipOnNextLoad()
+    {
+        skipNextPlay = true;
+    }
+
+    public static bool ConsumeSkipOnNextLoad()
+    {
+        if (!skipNextPlay)
+            return false;
+
+        skipNextPlay = false;
+        return true;
     }
 }

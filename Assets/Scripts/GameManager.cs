@@ -546,7 +546,7 @@ public class GameManager : MonoBehaviour
         GamePauseController.ClearPauseFlag();
         Time.timeScale = 1f;
 
-        StageIntroTransition.SkipPreIntroWalkOnNextLoad();
+        StagePreIntroPlayersWalk.SkipOnNextLoad();
 
         if (BossRushSession.IsActive)
         {
@@ -610,6 +610,7 @@ public class GameManager : MonoBehaviour
 
         if (BossRushSession.TryAdvanceToNextStage(out var nextBossRushScene))
         {
+            StagePreIntroPlayersWalk.SkipOnNextLoad();
             SceneManager.LoadScene(nextBossRushScene);
             yield break;
         }

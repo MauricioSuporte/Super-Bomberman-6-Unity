@@ -897,6 +897,7 @@ MonoBehaviour:
   groundShadowTile: {fileID: 11400000, guid: e0f633282caacc742af95bdd334dd0cf, type: 2}
   autoResolveStageTilemaps: 1
   restartAfterDeathSeconds: 4
+  bossRushSceneName: BossRush
   destructibleTileResolver: {fileID: 0}
 --- !u!1 &290470824
 GameObject:
