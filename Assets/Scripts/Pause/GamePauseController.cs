@@ -12,8 +12,9 @@ public class GamePauseController : MonoBehaviour
     enum PauseExitTarget
     {
         None = 0,
-        WorldMap = 1,
-        TitleScreen = 2
+        BossRush = 1,
+        WorldMap = 2,
+        TitleScreen = 3
     }
 
     [Header("Pause Availability")]
@@ -38,6 +39,7 @@ public class GamePauseController : MonoBehaviour
     [SerializeField] float returnToSceneDelayRealtime = 1f;
     [SerializeField] string worldMapSceneName = "WorldMap";
     [SerializeField] string titleSceneName = "TitleScreen";
+    [SerializeField] string bossRushSceneName = "BossRush";
 
     int menuIndex;
     bool confirmReturn;
@@ -51,6 +53,8 @@ public class GamePauseController : MonoBehaviour
     int lastScreenH;
 
     public static GamePauseController Instance { get; private set; }
+
+    bool IsBossRushGameplayActive => BossRushSession.IsActive;
 
     void Awake()
     {
@@ -276,9 +280,11 @@ public class GamePauseController : MonoBehaviour
 
                 confirmReturn = true;
                 confirmIndex = 0;
-                confirmTarget = menuIndex == 1
-                    ? PauseExitTarget.WorldMap
-                    : PauseExitTarget.TitleScreen;
+
+                if (menuIndex == 1)
+                    confirmTarget = IsBossRushGameplayActive ? PauseExitTarget.BossRush : PauseExitTarget.WorldMap;
+                else
+                    confirmTarget = PauseExitTarget.TitleScreen;
 
                 PlaySelectSfx();
                 RefreshPauseUI();
@@ -309,24 +315,35 @@ public class GamePauseController : MonoBehaviour
             if (confirmIndex == 0)
             {
                 confirmReturn = false;
-                menuIndex = confirmTarget == PauseExitTarget.WorldMap ? 1 : 2;
+
+                if (confirmTarget == PauseExitTarget.BossRush ||
+                    confirmTarget == PauseExitTarget.WorldMap)
+                    menuIndex = 1;
+                else
+                    menuIndex = 2;
 
                 PlayBackConfirmSfx();
                 RefreshPauseUI();
                 return;
             }
 
-            if (confirmTarget == PauseExitTarget.WorldMap)
+            if (confirmTarget == PauseExitTarget.BossRush)
             {
-                BeginExitToScene(worldMapSceneName, resetSessionForTitle: false);
+                BeginExitToScene(bossRushSceneName, resetSessionForTitle: false, cancelBossRushRun: true);
                 return;
             }
 
-            BeginExitToScene(titleSceneName, resetSessionForTitle: true);
+            if (confirmTarget == PauseExitTarget.WorldMap)
+            {
+                BeginExitToScene(worldMapSceneName, resetSessionForTitle: false, cancelBossRushRun: false);
+                return;
+            }
+
+            BeginExitToScene(titleSceneName, resetSessionForTitle: true, cancelBossRushRun: true);
         }
     }
 
-    void BeginExitToScene(string sceneName, bool resetSessionForTitle)
+    void BeginExitToScene(string sceneName, bool resetSessionForTitle, bool cancelBossRushRun)
     {
         if (exitingToScene)
             return;
@@ -341,10 +358,10 @@ public class GamePauseController : MonoBehaviour
         if (exitRoutine != null)
             StopCoroutine(exitRoutine);
 
-        exitRoutine = StartCoroutine(ExitToSceneRoutine(sceneName, resetSessionForTitle));
+        exitRoutine = StartCoroutine(ExitToSceneRoutine(sceneName, resetSessionForTitle, cancelBossRushRun));
     }
 
-    IEnumerator ExitToSceneRoutine(string sceneName, bool resetSessionForTitle)
+    IEnumerator ExitToSceneRoutine(string sceneName, bool resetSessionForTitle, bool cancelBossRushRun)
     {
         float wait = Mathf.Max(0f, returnToSceneDelayRealtime);
         if (wait > 0f)
@@ -358,6 +375,9 @@ public class GamePauseController : MonoBehaviour
         exitingToScene = false;
         confirmReturn = false;
         confirmTarget = PauseExitTarget.None;
+
+        if (cancelBossRushRun && BossRushSession.IsActive)
+            BossRushSession.CancelRun();
 
         if (resetSessionForTitle)
             PlayerPersistentStats.ResetSessionForReturnToTitle();
@@ -378,11 +398,13 @@ public class GamePauseController : MonoBehaviour
 
         if (!confirmReturn)
         {
-            label.SetPauseMenu(w, s, menuIndex);
+            label.SetPauseMenu(w, s, menuIndex, IsBossRushGameplayActive);
             return;
         }
 
-        if (confirmTarget == PauseExitTarget.WorldMap)
+        if (confirmTarget == PauseExitTarget.BossRush)
+            label.SetPauseConfirmReturnToBossRush(w, s, confirmIndex);
+        else if (confirmTarget == PauseExitTarget.WorldMap)
             label.SetPauseConfirmReturnToWorldMap(w, s, confirmIndex);
         else
             label.SetPauseConfirmReturnToTitle(w, s, confirmIndex);

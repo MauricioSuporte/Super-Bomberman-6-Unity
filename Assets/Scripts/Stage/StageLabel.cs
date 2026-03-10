@@ -125,7 +125,7 @@ public class StageLabel : MonoBehaviour
             "</align>";
     }
 
-    public void SetPauseMenu(int world, int stage, int selectedIndex)
+    public void SetPauseMenu(int world, int stage, int selectedIndex, bool isBossRush)
     {
         EnsureNoWrap();
 
@@ -135,10 +135,13 @@ public class StageLabel : MonoBehaviour
             ? "<color=#FF6F31>> RESUME</color>"
             : "<color=#E8E8E8>  RESUME</color>";
 
-        string worldMapText = $"RETURN{NBSP}TO{NBSP}WORLD{NBSP}MAP";
-        string retWorldMap = selectedIndex == 1
-            ? $"<color=#FF6F31>> {worldMapText}</color>"
-            : $"<color=#E8E8E8>  {worldMapText}</color>";
+        string secondOptionText = isBossRush
+            ? $"RETURN{NBSP}TO{NBSP}BOSS{NBSP}RUSH"
+            : $"RETURN{NBSP}TO{NBSP}WORLD{NBSP}MAP";
+
+        string retSecondOption = selectedIndex == 1
+            ? $"<color=#FF6F31>> {secondOptionText}</color>"
+            : $"<color=#E8E8E8>  {secondOptionText}</color>";
 
         string titleText = $"RETURN{NBSP}TO{NBSP}TITLE";
         string retTitle = selectedIndex == 2
@@ -151,7 +154,7 @@ public class StageLabel : MonoBehaviour
             $"<size={S(SizeStageNumber)}><color=#E8E8E8>{stageNumber}</color></size>\n" +
             $"<size={S(SizePauseTitle)}><color=#3392FF>PAUSE!</color></size>\n\n" +
             $"<size={S(SizeMenuItem)}>{resume}</size>\n" +
-            $"<size={S(SizeMenuItem)}>{retWorldMap}</size>\n" +
+            $"<size={S(SizeMenuItem)}>{retSecondOption}</size>\n" +
             $"<size={S(SizeMenuItem)}>{retTitle}</size>" +
             "</align>";
     }
@@ -159,6 +162,11 @@ public class StageLabel : MonoBehaviour
     public void SetPauseConfirmReturnToWorldMap(int world, int stage, int selectedIndex)
     {
         SetPauseConfirmQuestion(world, stage, selectedIndex, "Return to World Map?");
+    }
+
+    public void SetPauseConfirmReturnToBossRush(int world, int stage, int selectedIndex)
+    {
+        SetPauseConfirmQuestion(world, stage, selectedIndex, "Return to Boss Rush?");
     }
 
     public void SetPauseConfirmReturnToTitle(int world, int stage, int selectedIndex)
