@@ -871,6 +871,7 @@ MonoBehaviour:
   groundShadowTile: {fileID: 11400000, guid: e0f633282caacc742af95bdd334dd0cf, type: 2}
   autoResolveStageTilemaps: 1
   restartAfterDeathSeconds: 4
+  bossRushSceneName: BossRush
   destructibleTileResolver: {fileID: 0}
 --- !u!1 &290470824
 GameObject:
@@ -2217,7 +2218,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 203873e699250004ebce98e8d83345cd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BossRushMenu
-  enableSurgicalLogs: 1
+  enableSurgicalLogs: 0
   root: {fileID: 1311323896}
   backgroundImage: {fileID: 1806562754}
   referenceRect: {fileID: 1599199474}
@@ -2483,7 +2484,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BossRushBootstrap
   bossRushMenu: {fileID: 1311323899}
   returnSceneName: SkinSelect
-  nextSceneName: BossRushStage01
   bossRushSceneName: BossRush
 --- !u!1 &1392017678
 GameObject:

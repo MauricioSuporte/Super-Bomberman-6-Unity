@@ -94,7 +94,12 @@ public class GameManager : MonoBehaviour
     void Start()
     {
         PlayerPersistentStats.EnsureSessionBooted();
-        BossRushSession.NotifySceneLoaded(SceneManager.GetActiveScene().name);
+
+        string currentSceneName = SceneManager.GetActiveScene().name;
+        BossRushSession.NotifySceneLoaded(currentSceneName);
+
+        if (BossRushSession.IsActive && BossRushSession.IsBossRushScene(currentSceneName))
+            BossRushTimerPresenter.EnsureInScene();
 
         CachePlayers();
 

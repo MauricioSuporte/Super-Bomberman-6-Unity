@@ -1,10 +1,12 @@
-﻿
-using System;
+﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
 
 public static class BossRushSession
 {
+    const string LOG = "[BossRushSession]";
+    static bool enableSurgicalLogs = true;
+
     static readonly string[] stageOrder =
     {
         "Stage_1-6",
@@ -18,8 +20,11 @@ public static class BossRushSession
     static BossRushDifficulty selectedDifficulty;
     static BossRushLoadoutPreset selectedPreset;
 
+    static float elapsedSeconds;
+
     public static bool IsActive => active;
     public static BossRushDifficulty SelectedDifficulty => selectedDifficulty;
+    public static float ElapsedSeconds => elapsedSeconds;
 
     public static IReadOnlyList<string> StageOrder => stageOrder;
 
@@ -31,22 +36,64 @@ public static class BossRushSession
         selectedDifficulty = difficulty;
         selectedPreset = preset;
         currentStageIndex = 0;
+        elapsedSeconds = 0f;
 
         ApplySelectedLoadoutToAllPlayers();
+
+        SLog(
+            $"StartRun | difficulty={difficulty} presetNull={preset == null} " +
+            $"currentStageIndex={currentStageIndex} currentStage={GetCurrentStageSceneName()}"
+        );
     }
 
     public static void CancelRun()
     {
+        SLog(
+            $"CancelRun | prevActive={active} prevStageIndex={currentStageIndex} " +
+            $"prevElapsed={GetFormattedElapsed()}"
+        );
+
         active = false;
         currentStageIndex = 0;
         selectedPreset = null;
+        elapsedSeconds = 0f;
     }
 
     public static void FinishRun()
     {
+        SLog(
+            $"FinishRun | prevActive={active} prevStageIndex={currentStageIndex} " +
+            $"prevElapsed={GetFormattedElapsed()}"
+        );
+
         active = false;
         currentStageIndex = 0;
         selectedPreset = null;
+        elapsedSeconds = 0f;
+    }
+
+    public static void AddElapsed(float deltaSeconds)
+    {
+        if (!active)
+            return;
+
+        if (deltaSeconds <= 0f)
+            return;
+
+        elapsedSeconds += deltaSeconds;
+    }
+
+    public static string GetFormattedElapsed()
+    {
+        if (elapsedSeconds < 0f)
+            elapsedSeconds = 0f;
+
+        int totalCentiseconds = Mathf.FloorToInt(elapsedSeconds * 100f);
+        int minutes = totalCentiseconds / 6000;
+        int seconds = (totalCentiseconds / 100) % 60;
+        int centiseconds = totalCentiseconds % 100;
+
+        return $"{minutes:00}:{seconds:00}.{centiseconds:00}";
     }
 
     public static string GetCurrentStageSceneName()
@@ -63,14 +110,22 @@ public static class BossRushSession
         nextSceneName = null;
 
         if (!active)
+        {
+            SLog("TryAdvanceToNextStage | inactive");
             return false;
+        }
 
         int nextIndex = currentStageIndex + 1;
         if (nextIndex >= stageOrder.Length)
+        {
+            SLog($"TryAdvanceToNextStage | no next stage | currentStageIndex={currentStageIndex}");
             return false;
+        }
 
         currentStageIndex = nextIndex;
         nextSceneName = stageOrder[currentStageIndex];
+
+        SLog($"TryAdvanceToNextStage | nextStageIndex={currentStageIndex} nextScene={nextSceneName}");
         return true;
     }
 
@@ -90,6 +145,11 @@ public static class BossRushSession
 
     public static void NotifySceneLoaded(string sceneName)
     {
+        SLog(
+            $"NotifySceneLoaded | scene={sceneName} active={active} " +
+            $"elapsed={GetFormattedElapsed()}"
+        );
+
         if (!active || string.IsNullOrWhiteSpace(sceneName))
             return;
 
@@ -98,9 +158,12 @@ public static class BossRushSession
             if (string.Equals(stageOrder[i], sceneName, StringComparison.Ordinal))
             {
                 currentStageIndex = i;
+                SLog($"NotifySceneLoaded | matched stage index={i}");
                 return;
             }
         }
+
+        SLog("NotifySceneLoaded | scene is not part of boss rush order");
     }
 
     public static void ReapplyLoadoutToAllPlayers()
@@ -109,6 +172,7 @@ public static class BossRushSession
             return;
 
         ApplySelectedLoadoutToAllPlayers();
+        SLog("ReapplyLoadoutToAllPlayers | reapplied");
     }
 
     static void ApplySelectedLoadoutToAllPlayers()
@@ -143,5 +207,15 @@ public static class BossRushSession
 
             state.Skin = preservedSkin;
         }
+
+        SLog("ApplySelectedLoadoutToAllPlayers | applied for players 1..4");
+    }
+
+    static void SLog(string message)
+    {
+        if (!enableSurgicalLogs)
+            return;
+
+        Debug.Log($"{LOG} {message}");
     }
 }
