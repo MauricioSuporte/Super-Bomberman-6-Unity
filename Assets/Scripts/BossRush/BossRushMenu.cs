@@ -82,7 +82,7 @@ public class BossRushMenu : MonoBehaviour
     BossRushDifficulty _lastTopDifficulty;
     bool _topDifficultyInitialized;
 
-    public bool ReturnToTitleRequested { get; private set; }
+    public bool ReturnRequested { get; private set; }
 
     public BossRushDifficulty SelectedDifficulty
     {
@@ -182,7 +182,7 @@ public class BossRushMenu : MonoBehaviour
             SLog($"SelectDifficultyRoutine | fadeImage active={fadeImage.gameObject.activeInHierarchy}");
         }
 
-        ReturnToTitleRequested = false;
+        ReturnRequested = false;
         confirmed = false;
         _topDifficultyInitialized = false;
 
@@ -275,7 +275,7 @@ public class BossRushMenu : MonoBehaviour
 
             if (input.GetDown(1, PlayerAction.ActionB))
             {
-                ReturnToTitleRequested = true;
+                ReturnRequested = true;
                 confirmed = true;
                 SLog("Input Back | ReturnToTitleRequested=true");
                 PlaySfx(returnSfx, returnSfxVolume);
@@ -303,7 +303,7 @@ public class BossRushMenu : MonoBehaviour
         fadeDuration = fadeOutOnConfirmDuration;
         yield return FadeOutRoutine();
 
-        StopSelectMusicAndRestorePrevious(restorePrevious: ReturnToTitleRequested);
+        StopSelectMusicAndRestorePrevious(restorePrevious: ReturnRequested);
         Hide();
 
         if (fadeImage != null)

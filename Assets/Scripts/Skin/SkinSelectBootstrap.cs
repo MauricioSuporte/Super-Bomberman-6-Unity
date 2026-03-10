@@ -7,7 +7,7 @@ public class SkinSelectBootstrap : MonoBehaviour
     [Header("Skin Select")]
     [SerializeField] BomberSkinSelectMenu skinSelectMenu;
 
-    [Header("Flow")]
+    [Header("Default Flow")]
     [SerializeField] bool useWorldMapAfterSkinSelect = true;
     [SerializeField] string worldMapSceneName = "WorldMap";
     [SerializeField] string firstStageSceneName = "Stage_1-1";
@@ -22,6 +22,26 @@ public class SkinSelectBootstrap : MonoBehaviour
         StartCoroutine(RunFlow());
     }
 
+    public void SetNextDestinationToWorldMap()
+    {
+        SkinSelectFlowRouter.SetReturnToWorldMap();
+    }
+
+    public void SetNextDestinationToBossRush(string sceneName)
+    {
+        SkinSelectFlowRouter.SetReturnToBossRush(sceneName);
+    }
+
+    public void SetNextDestinationToFirstStage()
+    {
+        SkinSelectFlowRouter.SetReturnToFirstStage();
+    }
+
+    public void SetNextDestinationToCustomScene(string sceneName)
+    {
+        SkinSelectFlowRouter.SetReturnToCustomScene(sceneName);
+    }
+
     IEnumerator RunFlow()
     {
         if (skinSelectMenu == null)
@@ -31,6 +51,8 @@ public class SkinSelectBootstrap : MonoBehaviour
 
         if (skinSelectMenu.ReturnToTitleRequested)
         {
+            SkinSelectFlowRouter.Clear();
+
             if (!string.IsNullOrEmpty(titleSceneName))
             {
                 SceneManager.LoadScene(titleSceneName);
@@ -53,16 +75,68 @@ public class SkinSelectBootstrap : MonoBehaviour
 
         PlayerPrefs.Save();
 
-        if (useWorldMapAfterSkinSelect && !string.IsNullOrEmpty(worldMapSceneName))
+        switch (SkinSelectFlowRouter.NextDestination)
         {
-            SceneManager.LoadScene(worldMapSceneName);
-            yield break;
-        }
+            case SkinSelectFlowRouter.Destination.BossRush:
+                {
+                    string bossRushScene = SkinSelectFlowRouter.BossRushSceneName;
+                    SkinSelectFlowRouter.Clear();
 
-        if (!string.IsNullOrEmpty(firstStageSceneName))
-        {
-            SceneManager.LoadScene(firstStageSceneName);
-            yield break;
+                    if (!string.IsNullOrEmpty(bossRushScene))
+                    {
+                        SceneManager.LoadScene(bossRushScene);
+                        yield break;
+                    }
+
+                    break;
+                }
+
+            case SkinSelectFlowRouter.Destination.CustomScene:
+                {
+                    string customScene = SkinSelectFlowRouter.CustomSceneName;
+                    SkinSelectFlowRouter.Clear();
+
+                    if (!string.IsNullOrEmpty(customScene))
+                    {
+                        SceneManager.LoadScene(customScene);
+                        yield break;
+                    }
+
+                    break;
+                }
+
+            case SkinSelectFlowRouter.Destination.FirstStage:
+                {
+                    SkinSelectFlowRouter.Clear();
+
+                    if (!string.IsNullOrEmpty(firstStageSceneName))
+                    {
+                        SceneManager.LoadScene(firstStageSceneName);
+                        yield break;
+                    }
+
+                    break;
+                }
+
+            case SkinSelectFlowRouter.Destination.WorldMap:
+            default:
+                {
+                    SkinSelectFlowRouter.Clear();
+
+                    if (useWorldMapAfterSkinSelect && !string.IsNullOrEmpty(worldMapSceneName))
+                    {
+                        SceneManager.LoadScene(worldMapSceneName);
+                        yield break;
+                    }
+
+                    if (!string.IsNullOrEmpty(firstStageSceneName))
+                    {
+                        SceneManager.LoadScene(firstStageSceneName);
+                        yield break;
+                    }
+
+                    break;
+                }
         }
     }
 }

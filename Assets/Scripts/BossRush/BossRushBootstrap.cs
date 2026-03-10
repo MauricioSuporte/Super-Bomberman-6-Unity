@@ -8,8 +8,11 @@ public class BossRushBootstrap : MonoBehaviour
     [SerializeField] BossRushMenu bossRushMenu;
 
     [Header("Flow")]
-    [SerializeField] string titleSceneName = "TitleScreen";
+    [SerializeField] string returnSceneName = "SkinSelect";
     [SerializeField] string nextSceneName = "BossRushStage01";
+
+    [Header("Boss Rush Scene Identity")]
+    [SerializeField] string bossRushSceneName = "BossRush";
 
     void Start()
     {
@@ -27,11 +30,16 @@ public class BossRushBootstrap : MonoBehaviour
 
         yield return bossRushMenu.SelectDifficultyRoutine();
 
-        if (bossRushMenu.ReturnToTitleRequested)
+        if (bossRushMenu.ReturnRequested)
         {
-            if (!string.IsNullOrEmpty(titleSceneName))
+            if (!string.IsNullOrEmpty(returnSceneName))
             {
-                SceneManager.LoadScene(titleSceneName);
+                string targetBossRushScene = !string.IsNullOrEmpty(bossRushSceneName)
+                    ? bossRushSceneName
+                    : SceneManager.GetActiveScene().name;
+
+                SkinSelectFlowRouter.SetReturnToBossRush(targetBossRushScene);
+                SceneManager.LoadScene(returnSceneName);
                 yield break;
             }
         }

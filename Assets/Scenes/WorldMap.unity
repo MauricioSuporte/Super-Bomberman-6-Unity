@@ -9982,7 +9982,7 @@ MonoBehaviour:
       runtimeIcon: {fileID: 0}
     defaultNodeIndex: 0
     worldMusic: {fileID: 8300000, guid: 3ad6f1d03c49e6745828a2c6177acf06, type: 3}
-    worldMusicVolume: 0.5
+    worldMusicVolume: 1
     loopWorldMusic: 1
     cameraPosition: {x: -1, y: -1}
   - worldName: Super Bomberman 2 World
