@@ -2282,7 +2282,7 @@ MonoBehaviour:
     mountedLouie: 0
     queuedEggs: 
   - difficulty: 2
-    life: 0
+    life: 1
     bombAmount: 2
     explosionRadius: 2
     speedUps: 2

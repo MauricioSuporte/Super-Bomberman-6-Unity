@@ -49,26 +49,6 @@ public static class BossRushTimesProgress
         return insertIndex;
     }
 
-    public static void ResetDifficulty(BossRushDifficulty difficulty)
-    {
-        Load();
-
-        GetOrCreateList(difficulty).Clear();
-        SaveDifficulty(difficulty);
-        PlayerPrefs.Save();
-    }
-
-    public static void ResetAll()
-    {
-        loaded = true;
-        topTimesByDifficulty.Clear();
-
-        foreach (BossRushDifficulty difficulty in Enum.GetValues(typeof(BossRushDifficulty)))
-            PlayerPrefs.DeleteKey(GetTimesKey(difficulty));
-
-        PlayerPrefs.Save();
-    }
-
     private static void Load()
     {
         if (loaded)
@@ -136,5 +116,15 @@ public static class BossRushTimesProgress
     private static string GetTimesKey(BossRushDifficulty difficulty)
     {
         return $"{TimesKeyPrefix}{difficulty}";
+    }
+
+    public static bool HasAnyRecordedTime(BossRushDifficulty difficulty)
+    {
+        Load();
+
+        if (!topTimesByDifficulty.TryGetValue(difficulty, out var times))
+            return false;
+
+        return times != null && times.Count > 0;
     }
 }

@@ -16,18 +16,6 @@ public static class BossRushProgress
         PlayerPrefs.Save();
     }
 
-    public static int GetStartingItemAmount(BossRushDifficulty difficulty)
-    {
-        switch (difficulty)
-        {
-            case BossRushDifficulty.EASY: return 4;
-            case BossRushDifficulty.NORMAL: return 3;
-            case BossRushDifficulty.HARD: return 2;
-            case BossRushDifficulty.NIGHTMARE: return 1;
-            default: return 3;
-        }
-    }
-
     public static List<float> GetTopTimes(BossRushDifficulty difficulty)
     {
         return BossRushTimesProgress.GetTopTimes(difficulty);

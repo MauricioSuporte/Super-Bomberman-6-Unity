@@ -816,10 +816,12 @@ public class BossRushMenu : MonoBehaviour
 
     bool GetNightmareUnlocked()
     {
-        if (useSavedNightmareUnlock)
-            return BossRushDifficultyUnlocks.IsNightmareUnlocked();
+        bool unlockedByHardTime = BossRushTimesProgress.HasAnyRecordedTime(BossRushDifficulty.HARD);
 
-        return nightmareUnlocked;
+        if (useSavedNightmareUnlock)
+            return BossRushDifficultyUnlocks.IsNightmareUnlocked() || unlockedByHardTime;
+
+        return nightmareUnlocked || unlockedByHardTime;
     }
 
     void EnsureNightmareLockedText()
@@ -1180,8 +1182,7 @@ public class BossRushMenu : MonoBehaviour
         if (music == null)
             return;
 
-        var src = music.GetComponent<AudioSource>();
-        if (src == null)
+        if (!music.TryGetComponent<AudioSource>(out var src))
             return;
 
         previousClip = src.clip;

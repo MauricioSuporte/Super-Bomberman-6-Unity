@@ -5,7 +5,7 @@ using UnityEngine;
 public static class BossRushSession
 {
     const string LOG = "[BossRushSession]";
-    static bool enableSurgicalLogs = true;
+    static readonly bool enableSurgicalLogs = true;
 
     static readonly string[] stageOrder =
     {
@@ -29,16 +29,10 @@ public static class BossRushSession
     static int lastCompletedRank = -1;
 
     public static bool IsActive => active;
-    public static bool IsTimerPaused => timerPaused;
-    public static BossRushDifficulty SelectedDifficulty => selectedDifficulty;
-    public static float ElapsedSeconds => elapsedSeconds;
-
     public static bool HasLastCompletedRun => hasLastCompletedRun;
     public static BossRushDifficulty LastCompletedDifficulty => lastCompletedDifficulty;
     public static float LastCompletedTime => lastCompletedTime;
     public static int LastCompletedRank => lastCompletedRank;
-
-    public static IReadOnlyList<string> StageOrder => stageOrder;
 
     public static void StartRun(BossRushDifficulty difficulty, BossRushLoadoutPreset preset)
     {
@@ -73,16 +67,6 @@ public static class BossRushSession
         ClearRuntimeState();
     }
 
-    public static void FinishRun()
-    {
-        SLog(
-            $"FinishRun | prevActive={active} prevStageIndex={currentStageIndex} " +
-            $"prevElapsed={GetFormattedElapsed()}"
-        );
-
-        ClearRuntimeState();
-    }
-
     public static void PauseTimer()
     {
         if (!active)
@@ -90,15 +74,6 @@ public static class BossRushSession
 
         timerPaused = true;
         SLog($"PauseTimer | elapsed={GetFormattedElapsed()}");
-    }
-
-    public static void ResumeTimer()
-    {
-        if (!active)
-            return;
-
-        timerPaused = false;
-        SLog($"ResumeTimer | elapsed={GetFormattedElapsed()}");
     }
 
     public static int CompleteRunAndStoreTime()
@@ -229,15 +204,6 @@ public static class BossRushSession
         }
 
         SLog("NotifySceneLoaded | scene is not part of boss rush order");
-    }
-
-    public static void ReapplyLoadoutToAllPlayers()
-    {
-        if (!active)
-            return;
-
-        ApplySelectedLoadoutToAllPlayers();
-        SLog("ReapplyLoadoutToAllPlayers | reapplied");
     }
 
     static void ApplySelectedLoadoutToAllPlayers()
