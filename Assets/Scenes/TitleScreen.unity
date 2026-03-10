@@ -661,7 +661,7 @@ MonoBehaviour:
   footerFontSize: 36
   footerOffsetFromLastLineY: -40
   footerShowSeconds: 2
-  bossRushUnlocked: 0
+  bossRushUnlocked: 1
   bossRushLockedAlpha: 0.35
   bossRushLockedMessageHex: '#FF3B30'
   bossRushLockedText: {fileID: 0}
@@ -1441,6 +1441,7 @@ MonoBehaviour:
   showHudsonBackground: 1
   titleScreen: {fileID: 362350264}
   skinSelectSceneName: SkinSelect
+  bossRushSceneName: BossRush
   fadeOpenBeforeHudsonSeconds: 0.2
   fadeCloseAfterHudsonSeconds: 0.12
 --- !u!1 &1520869088

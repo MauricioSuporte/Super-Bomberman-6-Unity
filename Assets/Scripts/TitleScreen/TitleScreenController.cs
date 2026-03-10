@@ -125,7 +125,7 @@ public class TitleScreenController : MonoBehaviour
     [SerializeField] float footerShowSeconds = 2.0f;
 
     [Header("Boss Rush Lock (separate bottom message)")]
-    [SerializeField] bool bossRushUnlocked = false;
+    [SerializeField] bool bossRushUnlocked = true;
     [SerializeField, Range(0.05f, 1f)] float bossRushLockedAlpha = 0.35f;
     private readonly string bossRushLockedMessage = "UNLOCKED BY COMPLETING NORMAL MODE";
     [SerializeField] string bossRushLockedMessageHex = "#FF3B30";
@@ -143,6 +143,7 @@ public class TitleScreenController : MonoBehaviour
 
     public bool Running { get; private set; }
     public bool NormalGameRequested { get; private set; }
+    public bool BossRushRequested { get; private set; }
     public bool ExitRequested { get; private set; }
 
     enum MenuMode
@@ -152,7 +153,15 @@ public class TitleScreenController : MonoBehaviour
         Video = 2
     }
 
+    enum StartFlowMode
+    {
+        None = 0,
+        Normal = 1,
+        BossRush = 2
+    }
+
     MenuMode menuMode = MenuMode.Main;
+    StartFlowMode pendingStartFlow = StartFlowMode.None;
 
     const int MAIN_IDX_NORMAL = 0;
     const int MAIN_IDX_BOSS_RUSH = 1;
@@ -511,7 +520,6 @@ public class TitleScreenController : MonoBehaviour
         _lastCamRect = camRect;
         _lastUiScale = ui;
         _lastBaseScaleInt = baseScaleInt;
-
 
         ApplyMenuAnchoredPosition();
         ApplyCursorScale();
@@ -893,10 +901,12 @@ public class TitleScreenController : MonoBehaviour
         locked = false;
 
         NormalGameRequested = false;
+        BossRushRequested = false;
         ExitRequested = false;
         ControlsRequested = false;
 
         menuMode = MenuMode.Main;
+        pendingStartFlow = StartFlowMode.None;
 
         StopPushStartBlink();
         HideFooterMessageImmediate();
@@ -1038,8 +1048,10 @@ public class TitleScreenController : MonoBehaviour
 
         menuMode = MenuMode.Main;
         menuIndex = 0;
+        pendingStartFlow = StartFlowMode.None;
 
         NormalGameRequested = false;
+        BossRushRequested = false;
         ExitRequested = false;
         ControlsRequested = false;
 
@@ -1094,6 +1106,7 @@ public class TitleScreenController : MonoBehaviour
 
                 menuMode = MenuMode.Main;
                 menuIndex = 0;
+                pendingStartFlow = StartFlowMode.None;
 
                 HideFooterMessageImmediate();
                 HideBossRushLockedMessageImmediate();
@@ -1191,6 +1204,7 @@ public class TitleScreenController : MonoBehaviour
                         if (cursorRenderer != null)
                             yield return cursorRenderer.PlayCycles(2);
 
+                        pendingStartFlow = StartFlowMode.Normal;
                         menuMode = MenuMode.PlayerCount;
                         menuIndex = 0;
                         locked = false;
@@ -1212,15 +1226,32 @@ public class TitleScreenController : MonoBehaviour
                         {
                             PlayDeniedSfx();
                             ShowBossRushLockedMessage(bossRushLockedMessage, bossRushLockedMessageHex, bossRushLockedShowSeconds);
+
                             while (AnyPlayerHeld(PlayerAction.Start) || AnyPlayerHeld(PlayerAction.ActionA))
                                 yield return null;
+
                             yield return null;
                             continue;
                         }
 
+                        locked = true;
                         PlaySelectSfx();
+
+                        if (cursorRenderer != null)
+                            yield return cursorRenderer.PlayCycles(2);
+
+                        pendingStartFlow = StartFlowMode.BossRush;
+                        menuMode = MenuMode.PlayerCount;
+                        menuIndex = 0;
+                        locked = false;
+
+                        HideFooterMessageImmediate();
+                        HideBossRushLockedMessageImmediate();
+                        RefreshMenuText();
+
                         while (AnyPlayerHeld(PlayerAction.Start) || AnyPlayerHeld(PlayerAction.ActionA))
                             yield return null;
+
                         yield return null;
                         continue;
                     }
@@ -1294,14 +1325,21 @@ public class TitleScreenController : MonoBehaviour
                         GameSession.Instance.SetActivePlayerCount(chosenCount);
 
                     locked = true;
-                    NormalGameRequested = true;
 
                     PlaySelectSfx();
 
                     if (cursorRenderer != null)
                         yield return cursorRenderer.PlayCycles(2);
 
-                    yield return StartNormalGame();
+                    if (pendingStartFlow == StartFlowMode.BossRush)
+                    {
+                        BossRushRequested = true;
+                        yield return StartSelectedGameFlow();
+                        yield break;
+                    }
+
+                    NormalGameRequested = true;
+                    yield return StartSelectedGameFlow();
                     yield break;
                 }
             }
@@ -1321,7 +1359,7 @@ public class TitleScreenController : MonoBehaviour
         return 5;
     }
 
-    IEnumerator StartNormalGame()
+    IEnumerator StartSelectedGameFlow()
     {
         float d = Mathf.Max(0.01f, startGameFadeOutDuration);
 
@@ -1394,13 +1432,11 @@ public class TitleScreenController : MonoBehaviour
         if (menuMode == MenuMode.Main)
         {
             string normal = $"<color=#{baseRgb}FF>NORMAL GAME</color>";
-
             string bossRush;
             if (bossRushUnlocked)
                 bossRush = $"<color=#{baseRgb}FF>BOSS RUSH</color>";
             else
                 bossRush = $"<color={ColorWithAlpha(baseRgb, bossRushLockedAlpha)}>BOSS RUSH</color>";
-
             string controls = $"<color=#{baseRgb}FF>CONTROLS</color>";
             string video = $"<color=#{baseRgb}FF>VIDEO</color>";
             string exit = $"<color=#{baseRgb}FF>EXIT</color>";

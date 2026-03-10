@@ -22,6 +22,7 @@ public class TitleScreenBootstrap : MonoBehaviour
 
     [Header("Flow")]
     [SerializeField] string skinSelectSceneName = "SkinSelect";
+    [SerializeField] string bossRushSceneName = "BossRush";
 
     [Header("Hudson Fade")]
     [SerializeField, Min(0f)] float fadeOpenBeforeHudsonSeconds = 0.20f;
@@ -147,10 +148,21 @@ public class TitleScreenBootstrap : MonoBehaviour
         if (titleScreen.ControlsRequested)
             yield break;
 
+        if (titleScreen.BossRushRequested)
+        {
+            if (!string.IsNullOrEmpty(skinSelectSceneName))
+            {
+                SkinSelectFlowRouter.SetReturnToBossRush(bossRushSceneName);
+                SceneManager.LoadScene(skinSelectSceneName);
+                yield break;
+            }
+        }
+
         if (titleScreen.NormalGameRequested)
         {
             if (!string.IsNullOrEmpty(skinSelectSceneName))
             {
+                SkinSelectFlowRouter.SetReturnToWorldMap();
                 SceneManager.LoadScene(skinSelectSceneName);
                 yield break;
             }
