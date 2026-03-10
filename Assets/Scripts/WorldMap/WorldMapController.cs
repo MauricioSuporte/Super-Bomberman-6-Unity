@@ -172,6 +172,16 @@ public class WorldMapController : MonoBehaviour
     readonly Dictionary<string, Vector2> authoredStageAnchorPositions = new Dictionary<string, Vector2>();
     readonly Dictionary<Image, Coroutine> clearedStageSpinRoutines = new Dictionary<Image, Coroutine>();
 
+    void Awake()
+    {
+        if (fadeImage != null)
+        {
+            fadeImage.gameObject.SetActive(true);
+            fadeImage.transform.SetAsLastSibling();
+            SetFadeAlpha(1f);
+        }
+    }
+
     void Start()
     {
         Time.timeScale = 1f;
