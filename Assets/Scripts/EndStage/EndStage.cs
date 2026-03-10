@@ -192,8 +192,6 @@ public abstract class EndStage : MonoBehaviour
 
             var bombController = m.GetComponent<BombController>();
 
-            PlayerPersistentStats.StageCaptureFromRuntime(m, bombController);
-
             if (bombController != null)
                 bombController.ClearPlantedBombsOnStageEnd(false);
 
@@ -202,8 +200,6 @@ public abstract class EndStage : MonoBehaviour
         }
 
         bool isPerfectClear = PlayerPersistentStats.IsCurrentStagePerfectClear();
-
-        PlayerPersistentStats.CommitStage();
 
         string currentSceneName = SceneManager.GetActiveScene().name;
 

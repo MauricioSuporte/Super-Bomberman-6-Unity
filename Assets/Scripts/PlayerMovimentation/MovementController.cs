@@ -1214,7 +1214,6 @@ public class MovementController : MonoBehaviour, IKillable
         if (IsPlayer())
         {
             PlayerPersistentStats.StageResetTemporaryPowerupsOnDeath(playerId);
-            PlayerPersistentStats.ResetTemporaryPowerups(playerId);
 
             if (TryGetComponent<MountEggQueue>(out var q) && q != null)
                 q.ClearQueueNow(resetHistoryToOwner: true, animateShift: false);

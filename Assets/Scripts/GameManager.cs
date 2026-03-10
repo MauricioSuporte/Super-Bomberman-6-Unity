@@ -9,8 +9,6 @@ public class GameManager : MonoBehaviour
 {
     static readonly WaitForSecondsRealtime waitNextStageDelay = new(4f);
 
-    private readonly List<GameObject> runtimePlayers = new();
-
     public int EnemiesAlive { get; private set; }
     public int PendingHiddenEnemies { get; private set; }
 
@@ -74,6 +72,7 @@ public class GameManager : MonoBehaviour
     private readonly Dictionary<int, GameObject> orderToSpawn = new();
 
     private bool restartingRound;
+    private bool endStageTriggered;
 
     private bool pendingEnemyCheck;
     private Coroutine enemyCheckRoutine;
@@ -93,6 +92,8 @@ public class GameManager : MonoBehaviour
 
     void Start()
     {
+        endStageTriggered = false;
+
         PlayerPersistentStats.EnsureSessionBooted();
 
         string currentSceneName = SceneManager.GetActiveScene().name;
@@ -100,8 +101,6 @@ public class GameManager : MonoBehaviour
 
         if (BossRushSession.IsActive && BossRushSession.IsBossRushScene(currentSceneName))
             BossRushTimerPresenter.EnsureInScene();
-
-        CachePlayers();
 
         EnemiesAlive = FindObjectsByType<EnemyMovementController>(
             FindObjectsInactive.Exclude,
@@ -114,6 +113,90 @@ public class GameManager : MonoBehaviour
         CountPendingHiddenEnemiesFromTiles();
 
         ScheduleEnemyCheckNextFrame();
+    }
+
+    int GetConfiguredActivePlayerCount()
+    {
+        if (GameSession.Instance != null)
+            return Mathf.Clamp(GameSession.Instance.ActivePlayerCount, 1, 4);
+
+        return 1;
+    }
+
+    List<PlayerIdentity> GetOrderedPlayerIdentities(bool includeInactive)
+    {
+        var result = new List<PlayerIdentity>();
+        var inactiveMode = includeInactive ? FindObjectsInactive.Include : FindObjectsInactive.Exclude;
+        var ids = FindObjectsByType<PlayerIdentity>(inactiveMode, FindObjectsSortMode.None);
+        int activePlayerCount = GetConfiguredActivePlayerCount();
+
+        for (int i = 0; i < ids.Length; i++)
+        {
+            var id = ids[i];
+            if (id == null)
+                continue;
+
+            int playerId = Mathf.Clamp(id.playerId, 1, 4);
+            if (playerId > activePlayerCount)
+                continue;
+
+            result.Add(id);
+        }
+
+        result.Sort((a, b) => a.playerId.CompareTo(b.playerId));
+        return result;
+    }
+
+    bool TryGetRuntimePlayerComponents(
+        PlayerIdentity identity,
+        out MovementController movement,
+        out BombController bomb)
+    {
+        movement = null;
+        bomb = null;
+
+        if (identity == null)
+            return false;
+
+        if (!identity.TryGetComponent(out movement))
+            movement = identity.GetComponentInChildren<MovementController>(true);
+
+        if (!identity.TryGetComponent(out bomb))
+            bomb = identity.GetComponentInChildren<BombController>(true);
+
+        if (movement == null)
+            return false;
+
+        if (!movement.CompareTag("Player"))
+            return false;
+
+        return true;
+    }
+
+    void CaptureAllPlayersForStageEnd()
+    {
+        var ids = GetOrderedPlayerIdentities(includeInactive: false);
+
+        for (int i = 0; i < ids.Count; i++)
+        {
+            var identity = ids[i];
+            if (identity == null)
+                continue;
+
+            if (!TryGetRuntimePlayerComponents(identity, out var movement, out var bomb))
+                continue;
+
+            if (!movement.gameObject.activeInHierarchy)
+                continue;
+
+            if (movement.isDead)
+                continue;
+
+            if (movement.TryGetComponent<PowerGloveAbility>(out var glove) && glove != null)
+                glove.DestroyHeldBombIfHolding();
+
+            PlayerPersistentStats.StageCaptureFromRuntime(movement, bomb);
+        }
     }
 
     public bool AreAllEnemiesCleared()
@@ -247,70 +330,6 @@ public class GameManager : MonoBehaviour
         }
 
         return false;
-    }
-
-    void CachePlayers()
-    {
-        runtimePlayers.Clear();
-
-        var ids = FindObjectsByType<PlayerIdentity>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
-
-        for (int i = 0; i < ids.Length; i++)
-        {
-            if (ids[i] == null)
-                continue;
-
-            var go = ids[i].gameObject;
-            if (go == null)
-                continue;
-
-            runtimePlayers.Add(go);
-        }
-    }
-
-    GameObject GetPrimaryPlayer()
-    {
-        PlayerIdentity best = null;
-
-        var ids = FindObjectsByType<PlayerIdentity>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
-        for (int i = 0; i < ids.Length; i++)
-        {
-            if (ids[i] == null)
-                continue;
-
-            if (ids[i].playerId == 1)
-            {
-                best = ids[i];
-                break;
-            }
-        }
-
-        if (best != null && best.gameObject != null)
-            return best.gameObject;
-
-        CachePlayers();
-
-        for (int i = 0; i < runtimePlayers.Count; i++)
-        {
-            if (runtimePlayers[i] != null)
-                return runtimePlayers[i];
-        }
-
-        return null;
-    }
-
-    int GetPlayerIdFromGO(GameObject go)
-    {
-        if (go == null) return 1;
-
-        if (go.TryGetComponent<PlayerIdentity>(out var id) && id != null)
-            return Mathf.Clamp(id.playerId, 1, 4);
-
-        var parentId = go.GetComponentInParent<PlayerIdentity>(true);
-        if (parentId != null)
-            return Mathf.Clamp(parentId.playerId, 1, 4);
-
-        return 1;
     }
 
     void ResolveStageTilemapsIfNeeded()
@@ -481,15 +500,25 @@ public class GameManager : MonoBehaviour
         if (restartingRound)
             return;
 
-        CachePlayers();
-
         int aliveCount = 0;
+        var ids = GetOrderedPlayerIdentities(includeInactive: false);
 
-        for (int i = 0; i < runtimePlayers.Count; i++)
+        for (int i = 0; i < ids.Count; i++)
         {
-            var p = runtimePlayers[i];
-            if (p != null && p.activeSelf)
-                aliveCount++;
+            var id = ids[i];
+            if (id == null)
+                continue;
+
+            if (!TryGetRuntimePlayerComponents(id, out var movement, out _))
+                continue;
+
+            if (!movement.gameObject.activeInHierarchy)
+                continue;
+
+            if (movement.isDead)
+                continue;
+
+            aliveCount++;
         }
 
         if (aliveCount <= 0)
@@ -532,31 +561,12 @@ public class GameManager : MonoBehaviour
 
     public void EndStage()
     {
-        var primaryPlayer = GetPrimaryPlayer();
+        if (endStageTriggered)
+            return;
 
-        if (primaryPlayer != null)
-        {
-            if (primaryPlayer.TryGetComponent<AbilitySystem>(out var abilitySystem))
-                abilitySystem.Disable(InvincibleSuitAbility.AbilityId);
+        endStageTriggered = true;
 
-            if (primaryPlayer.TryGetComponent<BombController>(out var bomb))
-            {
-                int playerId = GetPlayerIdFromGO(primaryPlayer);
-
-                var state = PlayerPersistentStats.Get(playerId);
-                state.BombAmount = Mathf.Min(bomb.bombAmout, PlayerPersistentStats.MaxBombAmount);
-                state.ExplosionRadius = Mathf.Min(bomb.explosionRadius, PlayerPersistentStats.MaxExplosionRadius);
-            }
-
-            if (primaryPlayer.TryGetComponent<MovementController>(out var movement))
-            {
-                if (primaryPlayer.TryGetComponent<BombController>(out var playerBomb))
-                    PlayerPersistentStats.StageCaptureFromRuntime(movement, playerBomb);
-                else
-                    PlayerPersistentStats.StageCaptureFromRuntime(movement, null);
-            }
-        }
-
+        CaptureAllPlayersForStageEnd();
         PlayerPersistentStats.CommitStage();
 
         if (BossRushSession.IsActive)
@@ -604,9 +614,7 @@ public class GameManager : MonoBehaviour
             yield break;
         }
 
-        int rank = BossRushSession.CompleteRunAndStoreTime();
-        Debug.Log($"[GameManager] Boss Rush finished | rank={rank}");
-
+        BossRushSession.CompleteRunAndStoreTime();
         SceneManager.LoadScene(bossRushSceneName);
     }
 
@@ -667,26 +675,22 @@ public class GameManager : MonoBehaviour
         if (restartingRound)
             return;
 
-        var players = FindObjectsByType<MovementController>(
-            FindObjectsInactive.Exclude,
-            FindObjectsSortMode.None
-        );
-
         int aliveNotDead = 0;
+        var ids = GetOrderedPlayerIdentities(includeInactive: false);
 
-        for (int i = 0; i < players.Length; i++)
+        for (int i = 0; i < ids.Count; i++)
         {
-            var m = players[i];
-            if (m == null)
+            var id = ids[i];
+            if (id == null)
                 continue;
 
-            if (!m.CompareTag("Player"))
+            if (!TryGetRuntimePlayerComponents(id, out var movement, out _))
                 continue;
 
-            if (!m.isActiveAndEnabled && !m.gameObject.activeInHierarchy)
+            if (!movement.gameObject.activeInHierarchy)
                 continue;
 
-            if (m.isDead)
+            if (movement.isDead)
                 continue;
 
             aliveNotDead++;

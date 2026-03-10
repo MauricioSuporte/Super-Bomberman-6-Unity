@@ -30,7 +30,7 @@ public static class PlayerPersistentStats
         public int SpeedInternal = MaxSpeedInternal;
 
         public bool CanKickBombs = false;
-        public bool CanPunchBombs = true;
+        public bool CanPunchBombs = false;
         public bool HasPowerGlove = true;
         public bool CanPassBombs = false;
         public bool CanPassDestructibles = true;
@@ -48,8 +48,6 @@ public static class PlayerPersistentStats
         public PlayerState()
         {
             QueuedEggs.Clear();
-            //QueuedEggs.Add(ItemType.GreenLouieEgg);
-            //QueuedEggs.Add(ItemType.PinkLouieEgg);
         }
     }
 
@@ -60,6 +58,16 @@ public static class PlayerPersistentStats
         new(),
         new()
     };
+
+    static readonly PlayerState[] _stage = new PlayerState[4]
+    {
+        new(),
+        new(),
+        new(),
+        new()
+    };
+
+    static bool stageActive;
 
     public static PlayerState Get(int playerId)
     {
@@ -166,6 +174,8 @@ public static class PlayerPersistentStats
         s.CanPassDestructibles = false;
         s.HasPierceBombs = false;
         s.HasControlBombs = false;
+        s.HasPowerBomb = false;
+        s.HasRubberBombs = false;
         s.HasFullFire = false;
 
         s.MountedLouie = MountedType.None;
@@ -177,7 +187,8 @@ public static class PlayerPersistentStats
 
     static void ResetTemporaryPowerups(PlayerState s)
     {
-        if (s == null) return;
+        if (s == null)
+            return;
 
         s.CanKickBombs = false;
         s.CanPunchBombs = false;
@@ -192,7 +203,6 @@ public static class PlayerPersistentStats
         s.HasFullFire = false;
 
         s.MountedLouie = MountedType.None;
-
         s.QueuedEggs?.Clear();
     }
 
@@ -205,14 +215,15 @@ public static class PlayerPersistentStats
     public static void StageResetTemporaryPowerupsOnDeath(int playerId)
     {
         playerId = Mathf.Clamp(playerId, 1, 4);
+
         BeginStage();
 
         var sStage = _stage[playerId - 1];
         ResetTemporaryPowerups(sStage);
-
         sStage.Life = 1;
 
         var sBase = Get(playerId);
+        ResetTemporaryPowerups(sBase);
         sBase.Life = 1;
     }
 
@@ -226,10 +237,12 @@ public static class PlayerPersistentStats
     {
         if (c == null) return 1;
 
-        if (c.TryGetComponent<PlayerIdentity>(out var id)) return Mathf.Clamp(id.playerId, 1, 4);
+        if (c.TryGetComponent<PlayerIdentity>(out var id))
+            return Mathf.Clamp(id.playerId, 1, 4);
 
         var parentId = c.GetComponentInParent<PlayerIdentity>(true);
-        if (parentId != null) return Mathf.Clamp(parentId.playerId, 1, 4);
+        if (parentId != null)
+            return Mathf.Clamp(parentId.playerId, 1, 4);
 
         return 1;
     }
@@ -246,6 +259,106 @@ public static class PlayerPersistentStats
             q.BindOwner(movement);
 
         return q;
+    }
+
+    static void ApplyRuntimeAbilitiesPreservingStageState(
+        int playerId,
+        MovementController movement,
+        PlayerState s,
+        AbilitySystem abilitySystem,
+        string context)
+    {
+        bool runtimeKick = false;
+        bool runtimePunch = false;
+        bool runtimeGlove = false;
+        bool runtimeBombPass = false;
+        bool runtimeDestructiblePass = false;
+        bool runtimeFullFire = false;
+
+        bool runtimePierce = false;
+        bool runtimeControl = false;
+        bool runtimePower = false;
+        bool runtimeRubber = false;
+
+        if (abilitySystem != null)
+        {
+            var kick = abilitySystem.Get<BombKickAbility>(BombKickAbility.AbilityId);
+            runtimeKick = kick != null && kick.IsEnabled;
+
+            var punch = abilitySystem.Get<BombPunchAbility>(BombPunchAbility.AbilityId);
+            runtimePunch = punch != null && punch.IsEnabled;
+
+            var glove = abilitySystem.Get<PowerGloveAbility>(PowerGloveAbility.AbilityId);
+            runtimeGlove = glove != null && glove.IsEnabled;
+
+            var passBomb = abilitySystem.Get<BombPassAbility>(BombPassAbility.AbilityId);
+            runtimeBombPass = passBomb != null && passBomb.IsEnabled;
+
+            var passDestructibles = abilitySystem.Get<DestructiblePassAbility>(DestructiblePassAbility.AbilityId);
+            runtimeDestructiblePass = passDestructibles != null && passDestructibles.IsEnabled;
+
+            var fullFire = abilitySystem.Get<FullFireAbility>(FullFireAbility.AbilityId);
+            runtimeFullFire = fullFire != null && fullFire.IsEnabled;
+
+            var pierce = abilitySystem.Get<PierceBombAbility>(PierceBombAbility.AbilityId);
+            runtimePierce = pierce != null && pierce.IsEnabled;
+
+            var control = abilitySystem.Get<ControlBombAbility>(ControlBombAbility.AbilityId);
+            runtimeControl = control != null && control.IsEnabled;
+
+            var power = abilitySystem.Get<PowerBombAbility>(PowerBombAbility.AbilityId);
+            runtimePower = power != null && power.IsEnabled;
+
+            var rubber = abilitySystem.Get<RubberBombAbility>(RubberBombAbility.AbilityId);
+            runtimeRubber = rubber != null && rubber.IsEnabled;
+        }
+
+        if (runtimeKick)
+            s.CanKickBombs = true;
+
+        if (runtimePunch)
+            PersistPunchAbility(movement, s, abilitySystem);
+
+        if (runtimeGlove)
+            s.HasPowerGlove = true;
+
+        if (runtimeBombPass)
+            s.CanPassBombs = true;
+
+        if (runtimeDestructiblePass)
+            s.CanPassDestructibles = true;
+
+        if (runtimeFullFire)
+            s.HasFullFire = true;
+
+        if (runtimeControl)
+        {
+            s.HasControlBombs = true;
+            s.HasPierceBombs = false;
+            s.HasPowerBomb = false;
+            s.HasRubberBombs = false;
+        }
+        else if (runtimePierce)
+        {
+            s.HasPierceBombs = true;
+            s.HasControlBombs = false;
+            s.HasPowerBomb = false;
+            s.HasRubberBombs = false;
+        }
+        else if (runtimePower)
+        {
+            s.HasPowerBomb = true;
+            s.HasControlBombs = false;
+            s.HasPierceBombs = false;
+            s.HasRubberBombs = false;
+        }
+        else if (runtimeRubber)
+        {
+            s.HasRubberBombs = true;
+            s.HasControlBombs = false;
+            s.HasPierceBombs = false;
+            s.HasPowerBomb = false;
+        }
     }
 
     public static void LoadInto(int playerId, MovementController movement, BombController bomb)
@@ -394,39 +507,7 @@ public static class PlayerPersistentStats
                 abilitySystem.RebuildCache();
             }
 
-            var kick = abilitySystem != null ? abilitySystem.Get<BombKickAbility>(BombKickAbility.AbilityId) : null;
-            s.CanKickBombs = kick != null && kick.IsEnabled;
-
-            PersistPunchAbility(movement, s, abilitySystem);
-
-            var glove = abilitySystem != null ? abilitySystem.Get<PowerGloveAbility>(PowerGloveAbility.AbilityId) : null;
-            s.HasPowerGlove = glove != null && glove.IsEnabled;
-
-            var pierce = abilitySystem != null ? abilitySystem.Get<PierceBombAbility>(PierceBombAbility.AbilityId) : null;
-            s.HasPierceBombs = pierce != null && pierce.IsEnabled;
-
-            var control = abilitySystem != null ? abilitySystem.Get<ControlBombAbility>(ControlBombAbility.AbilityId) : null;
-            s.HasControlBombs = control != null && control.IsEnabled;
-
-            var power = abilitySystem != null ? abilitySystem.Get<PowerBombAbility>(PowerBombAbility.AbilityId) : null;
-            s.HasPowerBomb = power != null && power.IsEnabled;
-
-            var rubber = abilitySystem != null ? abilitySystem.Get<RubberBombAbility>(RubberBombAbility.AbilityId) : null;
-            s.HasRubberBombs = rubber != null && rubber.IsEnabled;
-
-            var fullFire = abilitySystem != null ? abilitySystem.Get<FullFireAbility>(FullFireAbility.AbilityId) : null;
-            s.HasFullFire = fullFire != null && fullFire.IsEnabled;
-
-            var passBomb = abilitySystem != null ? abilitySystem.Get<BombPassAbility>(BombPassAbility.AbilityId) : null;
-            s.CanPassBombs = passBomb != null && passBomb.IsEnabled;
-
-            var passDestructibles = abilitySystem != null ? abilitySystem.Get<DestructiblePassAbility>(DestructiblePassAbility.AbilityId) : null;
-            s.CanPassDestructibles = passDestructibles != null && passDestructibles.IsEnabled;
-
-            if (s.HasControlBombs) { s.HasPierceBombs = false; s.HasRubberBombs = false; s.HasPowerBomb = false; }
-            else if (s.HasPierceBombs) { s.HasControlBombs = false; s.HasRubberBombs = false; s.HasPowerBomb = false; }
-            else if (s.HasPowerBomb) { s.HasControlBombs = false; s.HasPierceBombs = false; s.HasRubberBombs = false; }
-            else if (s.HasRubberBombs) { s.HasControlBombs = false; s.HasPierceBombs = false; s.HasPowerBomb = false; }
+            ApplyRuntimeAbilitiesPreservingStageState(playerId, movement, s, abilitySystem, "SaveFrom");
 
             s.MountedLouie = MountedType.None;
 
@@ -459,19 +540,10 @@ public static class PlayerPersistentStats
             s.CanPunchBombs = true;
     }
 
-    static readonly PlayerState[] _stage = new PlayerState[4]
-    {
-        new(),
-        new(),
-        new(),
-        new()
-    };
-
-    static bool stageActive;
-
     static void CopyState(PlayerState from, PlayerState to)
     {
-        if (from == null || to == null) return;
+        if (from == null || to == null)
+            return;
 
         to.Life = from.Life;
 
@@ -683,37 +755,7 @@ public static class PlayerPersistentStats
                 abilitySystem.RebuildCache();
             }
 
-            var kick = abilitySystem != null ? abilitySystem.Get<BombKickAbility>(BombKickAbility.AbilityId) : null;
-            s.CanKickBombs = kick != null && kick.IsEnabled;
-
-            PersistPunchAbility(movement, s, abilitySystem);
-
-            var glove = abilitySystem != null ? abilitySystem.Get<PowerGloveAbility>(PowerGloveAbility.AbilityId) : null;
-            s.HasPowerGlove = glove != null && glove.IsEnabled;
-
-            var pierce = abilitySystem != null ? abilitySystem.Get<PierceBombAbility>(PierceBombAbility.AbilityId) : null;
-            s.HasPierceBombs = pierce != null && pierce.IsEnabled;
-
-            var control = abilitySystem != null ? abilitySystem.Get<ControlBombAbility>(ControlBombAbility.AbilityId) : null;
-            s.HasControlBombs = control != null && control.IsEnabled;
-
-            var power = abilitySystem != null ? abilitySystem.Get<PowerBombAbility>(PowerBombAbility.AbilityId) : null;
-            s.HasPowerBomb = power != null && power.IsEnabled;
-
-            var rubber = abilitySystem != null ? abilitySystem.Get<RubberBombAbility>(RubberBombAbility.AbilityId) : null;
-            s.HasRubberBombs = rubber != null && rubber.IsEnabled;
-
-            var fullFire = abilitySystem != null ? abilitySystem.Get<FullFireAbility>(FullFireAbility.AbilityId) : null;
-            s.HasFullFire = fullFire != null && fullFire.IsEnabled;
-
-            var passBomb = abilitySystem != null ? abilitySystem.Get<BombPassAbility>(BombPassAbility.AbilityId) : null;
-            s.CanPassBombs = passBomb != null && passBomb.IsEnabled;
-
-            var passDestructibles = abilitySystem != null ? abilitySystem.Get<DestructiblePassAbility>(DestructiblePassAbility.AbilityId) : null;
-            s.CanPassDestructibles = passDestructibles != null && passDestructibles.IsEnabled;
-
-            if (s.HasControlBombs) s.HasPierceBombs = false;
-            else if (s.HasPierceBombs) s.HasControlBombs = false;
+            ApplyRuntimeAbilitiesPreservingStageState(playerId, movement, s, abilitySystem, "StageCaptureFromRuntime");
 
             s.MountedLouie = MountedType.None;
             if (movement.TryGetComponent<PlayerMountCompanion>(out var louieCompanion))

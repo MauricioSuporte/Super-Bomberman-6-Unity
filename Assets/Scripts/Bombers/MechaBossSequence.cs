@@ -715,8 +715,6 @@ public class MechaBossSequence : MonoBehaviour
 
             var bomb = p.GetComponent<BombController>();
 
-            PlayerPersistentStats.SaveFrom(p, bomb);
-
             if (bomb != null)
                 bomb.ClearPlantedBombsOnStageEnd(false);
 

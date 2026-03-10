@@ -85,8 +85,6 @@ public class BossEndStageSequence : MonoBehaviour
 
             var bombController = m.GetComponent<BombController>();
 
-            PlayerPersistentStats.SaveFrom(m, bombController);
-
             if (bombController != null)
                 bombController.ClearPlantedBombsOnStageEnd(false);
 
