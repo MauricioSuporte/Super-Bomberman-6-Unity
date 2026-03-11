@@ -197,6 +197,7 @@ MonoBehaviour:
   groundShadowTile: {fileID: 11400000, guid: e0f633282caacc742af95bdd334dd0cf, type: 2}
   autoResolveStageTilemaps: 1
   restartAfterDeathSeconds: 4
+  bossRushSceneName: BossRush
   destructibleTileResolver: {fileID: 0}
 --- !u!1 &285353614
 GameObject:
@@ -1553,6 +1554,17 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::StageLabel
   stageText: {fileID: 556523583}
+  dynamicScale: 1
+  referenceWidth: 256
+  referenceHeight: 224
+  useIntegerUpscale: 1
+  designUpscale: 4
+  extraScaleMultiplier: 1
+  minScale: 0.5
+  maxScale: 10
+  baseRectWidthAtDesign: 600
+  baseRectHeightAtDesign: 200
+  autoResizeRectTransform: 1
 --- !u!114 &556523583
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7352,7 +7364,7 @@ Tilemap:
       m_AnimatedSprites:
       - {fileID: 125573341, guid: 9ca3acaac181aaa4da91fd60f6063a21, type: 3}
       - {fileID: 79229513, guid: 9ca3acaac181aaa4da91fd60f6063a21, type: 3}
-      m_AnimationSpeed: 5
+      m_AnimationSpeed: 5.0000005
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: -19, y: 17, z: 0}
@@ -7534,7 +7546,7 @@ Tilemap:
       - {fileID: -541303470, guid: 9ca3acaac181aaa4da91fd60f6063a21, type: 3}
       - {fileID: 44329480, guid: 9ca3acaac181aaa4da91fd60f6063a21, type: 3}
       - {fileID: -541303470, guid: 9ca3acaac181aaa4da91fd60f6063a21, type: 3}
-      m_AnimationSpeed: 10
+      m_AnimationSpeed: 10.000001
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: -8, y: 18, z: 0}
@@ -7572,7 +7584,7 @@ Tilemap:
       m_AnimatedSprites:
       - {fileID: -512380286, guid: 9ca3acaac181aaa4da91fd60f6063a21, type: 3}
       - {fileID: 146987460, guid: 9ca3acaac181aaa4da91fd60f6063a21, type: 3}
-      m_AnimationSpeed: 5.0000005
+      m_AnimationSpeed: 5
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: 0, y: 18, z: 0}
@@ -7599,7 +7611,7 @@ Tilemap:
       m_AnimatedSprites:
       - {fileID: -512380286, guid: 9ca3acaac181aaa4da91fd60f6063a21, type: 3}
       - {fileID: 146987460, guid: 9ca3acaac181aaa4da91fd60f6063a21, type: 3}
-      m_AnimationSpeed: 5
+      m_AnimationSpeed: 5.0000005
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: 10, y: 18, z: 0}
@@ -8878,6 +8890,8 @@ MonoBehaviour:
   animationTime: 0.125
   useSequenceDuration: 0
   sequenceDuration: 0.5
+  useUnscaledTime: 1
+  respectGamePause: 1
   loop: 0
   idle: 0
   frameOffsets: []
@@ -8976,17 +8990,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   fadeImage: {fileID: 336813435}
-  hudsonLogoIntro: {fileID: 0}
-  titleScreen: {fileID: 0}
   introMusic: {fileID: 8300000, guid: ff7109298c0b4734d8113eeb4b86601c, type: 3}
   playStartSfxOnIntroEnd: 1
   stageLabel: {fileID: 556523582}
   world: 2
   stageNumber: 4
-  firstStageSceneName: Stage_1-1
   gameplayRoot: {fileID: 679601670}
   stage17SceneName: Stage_1-7
-  skinSelectMenu: {fileID: 0}
+  skipPreIntroWalkNextRound_Inspector: 0
+  preIntroWalk: {fileID: 0}
 --- !u!114 &1389130173
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -12956,7 +12968,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::StageMusicConfigurator
   stageDefaultMusic: {fileID: 8300000, guid: fdf233f2331d4cb41898dda404e233d3, type: 3}
-  musicVolume: 0.6
+  musicVolume: 1
 --- !u!4 &1746315304
 Transform:
   m_ObjectHideFlags: 0
@@ -13117,7 +13129,6 @@ MonoBehaviour:
   enterSfx: {fileID: 8300000, guid: 778da4e4d7313e54195e6cbca646d851, type: 3}
   endStageMusic: {fileID: 0}
   playRandomGoodSfx: 1
-  goodSfxVolume: 1
   manualUnlockOnly: 0
   unlockGateSfx: {fileID: 8300000, guid: 9f1639c45a104994a87b186228d5b8e7, type: 3}
   openGateSfx: {fileID: 8300000, guid: 66686e87bc1a8994880d4f9972de6d54, type: 3}

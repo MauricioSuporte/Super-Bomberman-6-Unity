@@ -2997,7 +2997,7 @@ Tilemap:
       - {fileID: -4301117888644429131, guid: 17991a6676ded78438138725c62fac7c, type: 3}
       - {fileID: 6982989271821945363, guid: 17991a6676ded78438138725c62fac7c, type: 3}
       - {fileID: 3171655041305257236, guid: 17991a6676ded78438138725c62fac7c, type: 3}
-      m_AnimationSpeed: 10.000001
+      m_AnimationSpeed: 10
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: 1, y: -11, z: 0}
@@ -8073,7 +8073,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::StageMusicConfigurator
   stageDefaultMusic: {fileID: 8300000, guid: cb45df10fdb3c604dba7c3a65912b9f6, type: 3}
-  musicVolume: 0.6
+  musicVolume: 1
 --- !u!4 &1746315304
 Transform:
   m_ObjectHideFlags: 0

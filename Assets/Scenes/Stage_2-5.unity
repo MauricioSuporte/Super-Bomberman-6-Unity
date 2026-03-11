@@ -531,6 +531,7 @@ MonoBehaviour:
   groundShadowTile: {fileID: 11400000, guid: e0f633282caacc742af95bdd334dd0cf, type: 2}
   autoResolveStageTilemaps: 1
   restartAfterDeathSeconds: 4
+  bossRushSceneName: BossRush
   destructibleTileResolver: {fileID: 0}
 --- !u!1 &285353614
 GameObject:
@@ -1408,7 +1409,6 @@ MonoBehaviour:
   enterSfx: {fileID: 8300000, guid: 778da4e4d7313e54195e6cbca646d851, type: 3}
   endStageMusic: {fileID: 0}
   playRandomGoodSfx: 1
-  goodSfxVolume: 1
   manualUnlockOnly: 0
   unlockGateSfx: {fileID: 8300000, guid: 9f1639c45a104994a87b186228d5b8e7, type: 3}
   openGateSfx: {fileID: 8300000, guid: 66686e87bc1a8994880d4f9972de6d54, type: 3}
@@ -11378,23 +11378,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   fadeImage: {fileID: 336813435}
-  hudsonLogoIntro: {fileID: 0}
-  hudsonBackgroundImage: {fileID: 0}
-  showHudsonBackground: 1
-  titleScreen: {fileID: 0}
   introMusic: {fileID: 8300000, guid: ff7109298c0b4734d8113eeb4b86601c, type: 3}
   playStartSfxOnIntroEnd: 1
   stageLabel: {fileID: 556523582}
   world: 2
   stageNumber: 5
-  firstStageSceneName: Stage_1-1
   gameplayRoot: {fileID: 679601670}
   stage17SceneName: Stage_1-7
-  skinSelectMenu: {fileID: 0}
   skipPreIntroWalkNextRound_Inspector: 0
   preIntroWalk: {fileID: 0}
-  fadeOpenBeforeHudsonSeconds: 0.2
-  fadeCloseAfterHudsonSeconds: 0.12
 --- !u!114 &1389130173
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -12308,7 +12300,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::StageMusicConfigurator
   stageDefaultMusic: {fileID: 8300000, guid: 73321c32dd3c34b4a94bcbb735e2fda0, type: 3}
-  musicVolume: 0.6
+  musicVolume: 1
 --- !u!4 &1746315304
 Transform:
   m_ObjectHideFlags: 0
