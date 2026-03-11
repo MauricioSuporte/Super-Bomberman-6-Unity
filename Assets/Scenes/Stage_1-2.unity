@@ -184,7 +184,7 @@ MonoBehaviour:
   blackLouieEggAmount: 0
   purpleLouieEggAmount: 0
   greenLouieEggAmount: 0
-  yellowLouieEggAmount: 99
+  yellowLouieEggAmount: 1
   pinkLouieEggAmount: 0
   redLouieEggAmount: 0
   clockAmount: 0

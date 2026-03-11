@@ -88,6 +88,52 @@ public static class StageUnlockProgress
         return perfectStages.Contains(normalized);
     }
 
+    public static bool HasClearedAllRegisteredStages()
+    {
+        Load();
+        EnsureDefaultUnlocked();
+
+        if (stageOrder == null || stageOrder.Count <= 0)
+            return false;
+
+        for (int i = 0; i < stageOrder.Count; i++)
+        {
+            string sceneName = stageOrder[i];
+            if (string.IsNullOrEmpty(sceneName))
+                continue;
+
+            if (!clearedStages.Contains(sceneName))
+                return false;
+        }
+
+        return true;
+    }
+
+    public static int GetRegisteredStageCount()
+    {
+        Load();
+        return stageOrder != null ? stageOrder.Count : 0;
+    }
+
+    public static int GetClearedRegisteredStageCount()
+    {
+        Load();
+
+        if (stageOrder == null || stageOrder.Count <= 0)
+            return 0;
+
+        int count = 0;
+
+        for (int i = 0; i < stageOrder.Count; i++)
+        {
+            string sceneName = stageOrder[i];
+            if (!string.IsNullOrEmpty(sceneName) && clearedStages.Contains(sceneName))
+                count++;
+        }
+
+        return count;
+    }
+
     public static void Unlock(string sceneName)
     {
         Load();

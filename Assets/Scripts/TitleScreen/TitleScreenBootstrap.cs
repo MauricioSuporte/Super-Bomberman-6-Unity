@@ -56,6 +56,8 @@ public class TitleScreenBootstrap : MonoBehaviour
         GamePauseController.ClearPauseFlag();
         Time.timeScale = 1f;
 
+        RefreshBossRushUnlockState();
+
         if (fadeImage != null)
         {
             fadeImage.gameObject.SetActive(true);
@@ -75,6 +77,15 @@ public class TitleScreenBootstrap : MonoBehaviour
             StartCoroutine(FullIntroSequence());
         else
             StartCoroutine(ShowTitleScreen());
+    }
+
+    void RefreshBossRushUnlockState()
+    {
+        if (titleScreen == null)
+            return;
+
+        bool unlocked = StageUnlockProgress.HasClearedAllRegisteredStages();
+        titleScreen.SetBossRushUnlocked(unlocked);
     }
 
     void SetHudsonBackgroundVisible(bool visible)
@@ -127,6 +138,8 @@ public class TitleScreenBootstrap : MonoBehaviour
     {
         if (titleScreen == null)
             yield break;
+
+        RefreshBossRushUnlockState();
 
         if (fadeImage != null)
         {

@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.Tilemaps;
 
 public class MechaBossSequence : MonoBehaviour
@@ -77,6 +78,7 @@ public class MechaBossSequence : MonoBehaviour
     bool itemSpawnEnabled = true;
 
     bool endStageLikeStarted;
+    bool progressMarked;
 
     TileBase gateCenterTile;
     TileBase gateLeftTile;
@@ -750,6 +752,8 @@ public class MechaBossSequence : MonoBehaviour
             }
         }
 
+        MarkStageProgressIfNeeded();
+
         if (GameMusicController.Instance != null)
             GameMusicController.Instance.StopMusic();
 
@@ -761,6 +765,22 @@ public class MechaBossSequence : MonoBehaviour
 
         if (gameManager != null)
             gameManager.EndStage();
+    }
+
+    void MarkStageProgressIfNeeded()
+    {
+        if (progressMarked)
+            return;
+
+        progressMarked = true;
+
+        string currentSceneName = SceneManager.GetActiveScene().name;
+        bool isPerfectClear = PlayerPersistentStats.IsCurrentStagePerfectClear();
+
+        StageUnlockProgress.UnlockCurrentAndNext(currentSceneName);
+
+        if (isPerfectClear)
+            StageUnlockProgress.MarkPerfect(currentSceneName);
     }
 
     private static void EnsureGoodClipsLoaded()

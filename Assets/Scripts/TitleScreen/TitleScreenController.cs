@@ -127,7 +127,7 @@ public class TitleScreenController : MonoBehaviour
     [Header("Boss Rush Lock (separate bottom message)")]
     [SerializeField] bool bossRushUnlocked = true;
     [SerializeField, Range(0.05f, 1f)] float bossRushLockedAlpha = 0.35f;
-    private readonly string bossRushLockedMessage = "UNLOCKED BY COMPLETING NORMAL MODE";
+    [SerializeField] string bossRushLockedMessage = "UNLOCKED BY CLEARING ALL STAGES";
     [SerializeField] string bossRushLockedMessageHex = "#FF3B30";
     [SerializeField] TextMeshProUGUI bossRushLockedText;
     [SerializeField] int bossRushLockedFontSize = 34;
@@ -211,6 +211,7 @@ public class TitleScreenController : MonoBehaviour
     const string PREF_WINMULT = "ts_video_window_mult";
 
     Coroutine _postResolutionRefreshRoutine;
+    Coroutine _fullscreenWatchdog;
 
     int ScaledFont(int baseSize) => Mathf.Clamp(Mathf.RoundToInt(baseSize * _currentUiScale), 10, 500);
     float ScaledFloat(float baseValue) => baseValue * _currentUiScale;
@@ -229,6 +230,14 @@ public class TitleScreenController : MonoBehaviour
 
     float MenuExtraYOffsetScaled => ScaledFloat(menuExtraYOffset);
     float PushStartExtraYOffsetScaled => ScaledFloat(pushStartExtraYOffset);
+
+    public void SetBossRushUnlocked(bool unlocked)
+    {
+        bossRushUnlocked = unlocked;
+
+        if (menuMode == MenuMode.Main && menuText != null && menuText.gameObject.activeInHierarchy)
+            RefreshMenuText();
+    }
 
     void Awake()
     {
@@ -353,7 +362,8 @@ public class TitleScreenController : MonoBehaviour
 
     void ApplyVideoSettingsImmediate()
     {
-        if (!allowVideoMenu) return;
+        if (!allowVideoMenu)
+            return;
 
         var curRes = Screen.currentResolution;
 
@@ -383,8 +393,6 @@ public class TitleScreenController : MonoBehaviour
         ForceRecomputeLayoutAfterResolutionChange();
         StartFullscreenWatchdogIfNeeded();
     }
-
-    Coroutine _fullscreenWatchdog;
 
     void StartFullscreenWatchdogIfNeeded()
     {
@@ -1432,11 +1440,9 @@ public class TitleScreenController : MonoBehaviour
         if (menuMode == MenuMode.Main)
         {
             string normal = $"<color=#{baseRgb}FF>NORMAL GAME</color>";
-            string bossRush;
-            if (bossRushUnlocked)
-                bossRush = $"<color=#{baseRgb}FF>BOSS RUSH</color>";
-            else
-                bossRush = $"<color={ColorWithAlpha(baseRgb, bossRushLockedAlpha)}>BOSS RUSH</color>";
+            string bossRush = bossRushUnlocked
+                ? $"<color=#{baseRgb}FF>BOSS RUSH</color>"
+                : $"<color={ColorWithAlpha(baseRgb, bossRushLockedAlpha)}>BOSS RUSH</color>";
             string controls = $"<color=#{baseRgb}FF>CONTROLS</color>";
             string video = $"<color=#{baseRgb}FF>VIDEO</color>";
             string exit = $"<color=#{baseRgb}FF>EXIT</color>";
@@ -1711,7 +1717,7 @@ public class TitleScreenController : MonoBehaviour
 
         Vector2 offs = CursorOffsetScaled;
 
-        Vector3 localPos = new(x + offs.x, y + offs.y, 0f);
+        Vector3 localPos = new Vector3(x + offs.x, y + offs.y, 0f);
         cursorRenderer.SetExternalBaseLocalPosition(localPos);
     }
 

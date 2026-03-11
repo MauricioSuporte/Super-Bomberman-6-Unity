@@ -9,7 +9,7 @@ public static class PlayerPersistentStats
     static bool stageStartedWithDefaultState;
 
     public const int MaxBombAmount = 8;
-    public const int MaxExplosionRadius = 10;
+    public const int MaxExplosionRadius = 9;
 
     public const int SpeedStep = 32;
     public const int BaseSpeedNormal = 224;
