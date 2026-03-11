@@ -190,7 +190,8 @@ public class WorldMapController : MonoBehaviour
         if (cursorMovementArea == null)
             cursorMovementArea = transform as RectTransform;
 
-        currentWorldIndex = Mathf.Clamp(startWorldIndex, 0, Mathf.Max(0, worlds.Count - 1));
+        RegisterStageOrderInProgress();
+        currentWorldIndex = GetInitialWorldIndexFromProgress();
         ApplyCurrentWorldCameraPosition();
 
         Canvas.ForceUpdateCanvases();
@@ -200,7 +201,6 @@ public class WorldMapController : MonoBehaviour
         ApplyScaledCursorSize();
         ApplyScaledWorldStageLabelLayout();
 
-        RegisterStageOrderInProgress();
         ApplyUnlockedStagesFromProgress();
 
         if (createIconsOnStart)
@@ -225,6 +225,7 @@ public class WorldMapController : MonoBehaviour
 
         if (fadeImage != null)
             StartCoroutine(FadeInRoutine(fadeInDuration));
+
         RefreshClearedStageSpinAnimations();
     }
 
@@ -1257,6 +1258,57 @@ public class WorldMapController : MonoBehaviour
                 node.unlocked = StageUnlockProgress.IsUnlocked(node.sceneName);
             }
         }
+    }
+
+    int GetInitialWorldIndexFromProgress()
+    {
+        if (worlds == null || worlds.Count == 0)
+            return 0;
+
+        int fallbackIndex = Mathf.Clamp(startWorldIndex, 0, worlds.Count - 1);
+
+        if (!IsWorldFullyCleared(fallbackIndex))
+            return fallbackIndex;
+
+        for (int i = fallbackIndex + 1; i < worlds.Count; i++)
+        {
+            if (!IsWorldFullyCleared(i))
+                return i;
+        }
+
+        for (int i = 0; i < fallbackIndex; i++)
+        {
+            if (!IsWorldFullyCleared(i))
+                return i;
+        }
+
+        return Mathf.Clamp(worlds.Count - 1, 0, worlds.Count - 1);
+    }
+
+    bool IsWorldFullyCleared(int worldIndex)
+    {
+        if (worldIndex < 0 || worldIndex >= worlds.Count)
+            return false;
+
+        var world = worlds[worldIndex];
+        if (world == null || world.nodes == null || world.nodes.Count == 0)
+            return false;
+
+        bool hasAtLeastOneValidStage = false;
+
+        for (int i = 0; i < world.nodes.Count; i++)
+        {
+            var node = world.nodes[i];
+            if (node == null || string.IsNullOrWhiteSpace(node.sceneName))
+                continue;
+
+            hasAtLeastOneValidStage = true;
+
+            if (!StageUnlockProgress.IsCleared(node.sceneName))
+                return false;
+        }
+
+        return hasAtLeastOneValidStage;
     }
 
     int GetLastUnlockedNodeIndex(int worldIndex)
