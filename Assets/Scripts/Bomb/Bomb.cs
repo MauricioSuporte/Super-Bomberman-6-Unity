@@ -36,8 +36,9 @@ public class Bomb : MonoBehaviour, IMagnetPullable
     public float FuseSeconds = 2f;
     public bool IsFusePaused => fusePaused;
 
-    [Header("Stage Wrap")]
+    [Header("Stage Wrap / Tilemaps")]
     [SerializeField] private Tilemap stageBoundsTilemap;
+    [SerializeField] private Tilemap indestructibleTilemap;
 
     [SerializeField] private float magnetPullSpeed = 10f;
 
@@ -155,6 +156,9 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         {
             ApproxRadius = 0.5f;
         }
+
+        ResolveIndestructibleTilemapIfNeeded();
+        ResolveStageBoundsTilemapIfNeeded();
     }
 
     private void OnEnable()
@@ -785,7 +789,10 @@ public class Bomb : MonoBehaviour, IMagnetPullable
             stageCellBounds = new BoundsInt(xMin, yMin, 0, xMax - xMin, yMax - yMin, 1);
             stageBoundsReady = true;
 
-            stageBoundsTilemap = ind;
+            stageBoundsTilemap = ground;
+            if (indestructibleTilemap == null)
+                indestructibleTilemap = ind;
+
             return;
         }
 
@@ -794,9 +801,10 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         {
             stageCellBounds = fallback.cellBounds;
             stageBoundsReady = true;
+            stageBoundsTilemap = fallback;
 
-            if (stageBoundsTilemap == null && ind != null)
-                stageBoundsTilemap = ind;
+            if (indestructibleTilemap == null && ind != null)
+                indestructibleTilemap = ind;
         }
     }
 
@@ -911,6 +919,12 @@ public class Bomb : MonoBehaviour, IMagnetPullable
     public void SetStageBoundsTilemap(Tilemap tilemap)
     {
         stageBoundsTilemap = tilemap;
+        stageBoundsReady = false;
+    }
+
+    public void SetIndestructibleTilemap(Tilemap tilemap)
+    {
+        indestructibleTilemap = tilemap;
     }
 
     private void ResolveStageBoundsTilemapIfNeeded()
@@ -939,9 +953,34 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         stageBoundsTilemap = tilemaps[0];
     }
 
+    private void ResolveIndestructibleTilemapIfNeeded()
+    {
+        if (indestructibleTilemap != null)
+            return;
+
+        var tilemaps = FindObjectsByType<Tilemap>(FindObjectsSortMode.None);
+        if (tilemaps == null || tilemaps.Length == 0)
+            return;
+
+        for (int i = 0; i < tilemaps.Length; i++)
+        {
+            var tm = tilemaps[i];
+            if (tm == null)
+                continue;
+
+            string n = tm.name.ToLowerInvariant();
+            if (n.Contains("indestruct"))
+            {
+                indestructibleTilemap = tm;
+                return;
+            }
+        }
+    }
+
     public void Initialize(BombController owner)
     {
         ResolveStageBoundsTilemapIfNeeded();
+        ResolveIndestructibleTilemapIfNeeded();
 
         this.owner = owner;
         PlacedTime = Time.time;
@@ -1068,7 +1107,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
                 break;
             }
 
-            if (IsBlockedByMaskAtWorld(next, kickBlockMoveMask, kickOverlapBoxSize, debugFrom: "KickRoutine:preMove"))
+            if (IsBlockedByMaskAtWorld(next, kickBlockMoveMask, kickOverlapBoxSize))
             {
                 if (IsRubberBomb)
                 {
@@ -1365,6 +1404,8 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         kickObstacleMask = obstacleMask | LayerMask.GetMask("Enemy");
         kickDestructibleTilemap = destructibleTilemap;
 
+        ResolveIndestructibleTilemapIfNeeded();
+
         Vector2 origin = SnapToGrid(rb.position, tileSize);
 
         currentTileCenter = origin;
@@ -1498,6 +1539,8 @@ public class Bomb : MonoBehaviour, IMagnetPullable
 
     private bool IsBlockedByMaskAtWorld(Vector2 worldCenter, LayerMask mask, float boxSize, string debugFrom = null)
     {
+        ResolveIndestructibleTilemapIfNeeded();
+
         Vector2 size = Vector2.one * (kickTileSize * Mathf.Max(0.1f, boxSize));
 
         Collider2D[] hits = Physics2D.OverlapBoxAll(worldCenter, size, 0f, mask);
@@ -1539,6 +1582,16 @@ public class Bomb : MonoBehaviour, IMagnetPullable
                 }
             }
         }
+
+        if (kickDestructibleTilemap != null)
+        {
+            Vector3Int dCell = kickDestructibleTilemap.WorldToCell(worldCenter);
+            if (kickDestructibleTilemap.GetTile(dCell) != null)
+                return true;
+        }
+
+        if (HasIndestructibleAt(worldCenter))
+            return true;
 
         return false;
     }
@@ -1659,11 +1712,13 @@ public class Bomb : MonoBehaviour, IMagnetPullable
 
     private bool HasIndestructibleAt(Vector2 worldPos)
     {
-        if (stageBoundsTilemap == null)
+        ResolveIndestructibleTilemapIfNeeded();
+
+        if (indestructibleTilemap == null)
             return false;
 
-        Vector3Int cell = stageBoundsTilemap.WorldToCell(worldPos);
-        return stageBoundsTilemap.GetTile(cell) != null;
+        Vector3Int cell = indestructibleTilemap.WorldToCell(worldPos);
+        return indestructibleTilemap.GetTile(cell) != null;
     }
 
     private bool IsHoleCollider(Collider2D c)
