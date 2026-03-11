@@ -112,6 +112,8 @@ MonoBehaviour:
   animationTime: 0.1
   useSequenceDuration: 0
   sequenceDuration: 0.3
+  useUnscaledTime: 1
+  respectGamePause: 1
   loop: 0
   idle: 0
   frameOffsets: []
@@ -226,10 +228,13 @@ MonoBehaviour:
   animationSprite:
   - {fileID: -8111853111605297771, guid: 68710310f0c0e9a44b1af7bfe3d2dd3d, type: 3}
   - {fileID: 1111081566028510163, guid: 68710310f0c0e9a44b1af7bfe3d2dd3d, type: 3}
+  - {fileID: 0}
   allowFlipX: 0
-  animationTime: 0.01
+  animationTime: 0.1
   useSequenceDuration: 0
   sequenceDuration: 0.5
+  useUnscaledTime: 1
+  respectGamePause: 1
   loop: 1
   idle: 0
   frameOffsets: []
@@ -663,6 +668,8 @@ MonoBehaviour:
   animationTime: 0.25
   useSequenceDuration: 1
   sequenceDuration: 1
+  useUnscaledTime: 1
+  respectGamePause: 1
   loop: 1
   idle: 0
   frameOffsets: []
@@ -783,6 +790,8 @@ MonoBehaviour:
   animationTime: 0.25
   useSequenceDuration: 1
   sequenceDuration: 1
+  useUnscaledTime: 1
+  respectGamePause: 1
   loop: 1
   idle: 0
   frameOffsets: []
@@ -903,6 +912,8 @@ MonoBehaviour:
   animationTime: 0.25
   useSequenceDuration: 1
   sequenceDuration: 1
+  useUnscaledTime: 1
+  respectGamePause: 1
   loop: 1
   idle: 0
   frameOffsets: []
@@ -1023,6 +1034,8 @@ MonoBehaviour:
   animationTime: 0.25
   useSequenceDuration: 1
   sequenceDuration: 1
+  useUnscaledTime: 1
+  respectGamePause: 1
   loop: 1
   idle: 0
   frameOffsets: []
@@ -1146,6 +1159,8 @@ MonoBehaviour:
   animationTime: 0.1
   useSequenceDuration: 0
   sequenceDuration: 0.5
+  useUnscaledTime: 1
+  respectGamePause: 1
   loop: 0
   idle: 0
   frameOffsets: []
@@ -1264,6 +1279,8 @@ MonoBehaviour:
   animationTime: 0.1
   useSequenceDuration: 0
   sequenceDuration: 0.3
+  useUnscaledTime: 1
+  respectGamePause: 1
   loop: 1
   idle: 0
   frameOffsets: []
@@ -1382,6 +1399,8 @@ MonoBehaviour:
   animationTime: 0.1
   useSequenceDuration: 0
   sequenceDuration: 0.3
+  useUnscaledTime: 1
+  respectGamePause: 1
   loop: 0
   idle: 0
   frameOffsets: []
@@ -1500,6 +1519,8 @@ MonoBehaviour:
   animationTime: 0.1
   useSequenceDuration: 0
   sequenceDuration: 0.3
+  useUnscaledTime: 1
+  respectGamePause: 1
   loop: 1
   idle: 0
   frameOffsets: []
@@ -1614,10 +1635,13 @@ MonoBehaviour:
   animationSprite:
   - {fileID: 6623346035759396847, guid: 68710310f0c0e9a44b1af7bfe3d2dd3d, type: 3}
   - {fileID: 5735564509424453082, guid: 68710310f0c0e9a44b1af7bfe3d2dd3d, type: 3}
+  - {fileID: 0}
   allowFlipX: 0
-  animationTime: 0.01
+  animationTime: 0.1
   useSequenceDuration: 0
   sequenceDuration: 0.5
+  useUnscaledTime: 1
+  respectGamePause: 1
   loop: 1
   idle: 0
   frameOffsets: []
@@ -1736,6 +1760,8 @@ MonoBehaviour:
   animationTime: 0.1
   useSequenceDuration: 0
   sequenceDuration: 0.3
+  useUnscaledTime: 1
+  respectGamePause: 1
   loop: 1
   idle: 0
   frameOffsets: []
@@ -1854,6 +1880,8 @@ MonoBehaviour:
   animationTime: 0.1
   useSequenceDuration: 0
   sequenceDuration: 0.3
+  useUnscaledTime: 1
+  respectGamePause: 1
   loop: 1
   idle: 0
   frameOffsets: []
@@ -1971,6 +1999,8 @@ MonoBehaviour:
   animationTime: 0.1
   useSequenceDuration: 0
   sequenceDuration: 0.5
+  useUnscaledTime: 1
+  respectGamePause: 1
   loop: 0
   idle: 0
   frameOffsets: []
@@ -2089,6 +2119,8 @@ MonoBehaviour:
   animationTime: 0.1
   useSequenceDuration: 0
   sequenceDuration: 0.3
+  useUnscaledTime: 1
+  respectGamePause: 1
   loop: 0
   idle: 0
   frameOffsets: []
@@ -2207,6 +2239,8 @@ MonoBehaviour:
   animationTime: 0.1
   useSequenceDuration: 0
   sequenceDuration: 0.3
+  useUnscaledTime: 1
+  respectGamePause: 1
   loop: 0
   idle: 0
   frameOffsets: []

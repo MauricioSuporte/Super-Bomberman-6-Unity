@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-public sealed class ElectoMovementController : PersecutingEnemyMovementController
+public sealed class ElectroMovementController : PersecutingEnemyMovementController
 {
     private enum VisualState
     {
@@ -9,6 +9,12 @@ public sealed class ElectoMovementController : PersecutingEnemyMovementControlle
         Charging = 2,
         Unpreparing = 3
     }
+
+    private const string LOG = "[ElectroMovementController]";
+
+    [Header("Debug (Surgical Logs)")]
+    [SerializeField] private bool enableSurgicalLogs = true;
+    [SerializeField, Min(0.05f)] private float abilityLogInterval = 0.5f;
 
     [Header("Walk Sprites (4 dirs)")]
     [SerializeField] private AnimatedSpriteRenderer walkUp;
@@ -61,6 +67,13 @@ public sealed class ElectoMovementController : PersecutingEnemyMovementControlle
     private AnimatedSpriteRenderer abilityLeftInstance;
     private AnimatedSpriteRenderer abilityRightInstance;
 
+    private float nextAbilityLogTime;
+
+    private int lastLoggedFrameUp = -999;
+    private int lastLoggedFrameDown = -999;
+    private int lastLoggedFrameLeft = -999;
+    private int lastLoggedFrameRight = -999;
+
     protected override void Awake()
     {
         base.Awake();
@@ -71,9 +84,7 @@ public sealed class ElectoMovementController : PersecutingEnemyMovementControlle
     protected override void OnDestroy()
     {
         UnhookHealth();
-
         DestroyAbilityInstances();
-
         base.OnDestroy();
     }
 
@@ -83,6 +94,9 @@ public sealed class ElectoMovementController : PersecutingEnemyMovementControlle
         wasStun = false;
 
         HookHealth();
+
+        ValidateAbilityPrototype(abilityHorizontal, "AbilityHorizontal");
+        ValidateAbilityPrototype(abilityVertical, "AbilityVertical");
 
         SnapToGrid();
         ChooseInitialDirection();
@@ -131,6 +145,7 @@ public sealed class ElectoMovementController : PersecutingEnemyMovementControlle
             SetVisualState(VisualState.Walking);
             UpdateSpriteDirection(direction);
             DecideNextTile();
+
             return;
         }
 
@@ -168,7 +183,10 @@ public sealed class ElectoMovementController : PersecutingEnemyMovementControlle
                 damageTimer = 0f;
 
                 EnsureAbilityInstances();
-                EnableAllAbilityInstancesAt4Dirs();
+                SyncAbilityInstancesAt4Dirs(forceEnable: true);
+
+                ResetAbilityFrameLogs();
+
             }
 
             return;
@@ -193,6 +211,7 @@ public sealed class ElectoMovementController : PersecutingEnemyMovementControlle
                 SetVisualState(VisualState.Walking);
                 UpdateSpriteDirection(direction);
                 DecideNextTile();
+
             }
 
             return;
@@ -212,10 +231,12 @@ public sealed class ElectoMovementController : PersecutingEnemyMovementControlle
 
                     SetVisualState(VisualState.Charging);
                     UpdateSpriteDirection(direction);
+
                 }
 
                 EnsureAbilityInstances();
-                EnableAllAbilityInstancesAt4Dirs();
+                SyncAbilityInstancesAt4Dirs(forceEnable: false);
+                TryLogAbilityFrames();
             }
             else
             {
@@ -282,7 +303,7 @@ public sealed class ElectoMovementController : PersecutingEnemyMovementControlle
         if (charging)
         {
             EnsureAbilityInstances();
-            EnableAllAbilityInstancesAt4Dirs();
+            SyncAbilityInstancesAt4Dirs(forceEnable: false);
         }
     }
 
@@ -318,6 +339,7 @@ public sealed class ElectoMovementController : PersecutingEnemyMovementControlle
         UpdateSpriteDirection(direction);
 
         SnapToGrid();
+
     }
 
     private void StartUnprepare(Vector2 dir)
@@ -337,6 +359,7 @@ public sealed class ElectoMovementController : PersecutingEnemyMovementControlle
         UpdateSpriteDirection(direction);
 
         SnapToGrid();
+
     }
 
     private void SetVisualState(VisualState state)
@@ -496,25 +519,25 @@ public sealed class ElectoMovementController : PersecutingEnemyMovementControlle
             return;
 
         if (abilityLeftInstance == null && abilityHorizontal != null)
-            abilityLeftInstance = CreateAbilityInstance(abilityHorizontal);
+            abilityLeftInstance = CreateAbilityInstance(abilityHorizontal, "Left");
 
         if (abilityRightInstance == null && abilityHorizontal != null)
-            abilityRightInstance = CreateAbilityInstance(abilityHorizontal);
+            abilityRightInstance = CreateAbilityInstance(abilityHorizontal, "Right");
 
         if (abilityUpInstance == null && abilityVertical != null)
-            abilityUpInstance = CreateAbilityInstance(abilityVertical);
+            abilityUpInstance = CreateAbilityInstance(abilityVertical, "Up");
 
         if (abilityDownInstance == null && abilityVertical != null)
-            abilityDownInstance = CreateAbilityInstance(abilityVertical);
+            abilityDownInstance = CreateAbilityInstance(abilityVertical, "Down");
     }
 
-    private AnimatedSpriteRenderer CreateAbilityInstance(AnimatedSpriteRenderer prototype)
+    private AnimatedSpriteRenderer CreateAbilityInstance(AnimatedSpriteRenderer prototype, string tag)
     {
         if (prototype == null)
             return null;
 
         var go = Instantiate(prototype.gameObject, null);
-        go.name = prototype.gameObject.name + "_Inst";
+        go.name = prototype.gameObject.name + "_" + tag + "_Inst";
         go.SetActive(true);
 
         var r = go.GetComponent<AnimatedSpriteRenderer>();
@@ -524,24 +547,23 @@ public sealed class ElectoMovementController : PersecutingEnemyMovementControlle
             r.idle = false;
             r.loop = true;
             r.SetExternalBaseLocalPosition(Vector3.zero);
+
         }
 
         return r;
     }
 
-    private void EnableAllAbilityInstancesAt4Dirs()
+    private void SyncAbilityInstancesAt4Dirs(bool forceEnable)
     {
-        DisableAbilityInstances();
-
         Vector2 basePos = rb != null ? rb.position : (Vector2)transform.position;
 
-        EnableAbilityInstance(abilityUpInstance, Vector2.up, basePos);
-        EnableAbilityInstance(abilityDownInstance, Vector2.down, basePos);
-        EnableAbilityInstance(abilityLeftInstance, Vector2.left, basePos);
-        EnableAbilityInstance(abilityRightInstance, Vector2.right, basePos);
+        SyncAbilityInstance(abilityUpInstance, Vector2.up, basePos, forceEnable);
+        SyncAbilityInstance(abilityDownInstance, Vector2.down, basePos, forceEnable);
+        SyncAbilityInstance(abilityLeftInstance, Vector2.left, basePos, forceEnable);
+        SyncAbilityInstance(abilityRightInstance, Vector2.right, basePos, forceEnable);
     }
 
-    private void EnableAbilityInstance(AnimatedSpriteRenderer inst, Vector2 dir, Vector2 basePos)
+    private void SyncAbilityInstance(AnimatedSpriteRenderer inst, Vector2 dir, Vector2 basePos, bool forceEnable)
     {
         if (inst == null)
             return;
@@ -549,12 +571,18 @@ public sealed class ElectoMovementController : PersecutingEnemyMovementControlle
         Vector2 w2 = basePos + dir * tileSize;
         Vector3 w3 = new Vector3(w2.x, w2.y, inst.transform.position.z);
 
-        inst.enabled = true;
-        inst.idle = false;
-        inst.loop = true;
+        bool wasEnabled = inst.enabled;
 
         inst.SetExternalBaseLocalPosition(Vector3.zero);
         inst.transform.position = w3;
+
+        if (!wasEnabled || forceEnable)
+        {
+            inst.enabled = true;
+            inst.idle = false;
+            inst.loop = true;
+
+        }
 
         if (inst.TryGetComponent<SpriteRenderer>(out var sr) && sr != null)
         {
@@ -580,33 +608,22 @@ public sealed class ElectoMovementController : PersecutingEnemyMovementControlle
 
     private void DisableAbilityInstances()
     {
-        if (abilityUpInstance != null)
-        {
-            abilityUpInstance.enabled = false;
-            abilityUpInstance.ClearExternalBase();
-            ApplyAbilityFlip(abilityUpInstance, false, false);
-        }
+        DisableAbilityInstance(abilityUpInstance, "Up");
+        DisableAbilityInstance(abilityDownInstance, "Down");
+        DisableAbilityInstance(abilityLeftInstance, "Left");
+        DisableAbilityInstance(abilityRightInstance, "Right");
+    }
 
-        if (abilityDownInstance != null)
-        {
-            abilityDownInstance.enabled = false;
-            abilityDownInstance.ClearExternalBase();
-            ApplyAbilityFlip(abilityDownInstance, false, false);
-        }
+    private void DisableAbilityInstance(AnimatedSpriteRenderer inst, string tag)
+    {
+        if (inst == null)
+            return;
 
-        if (abilityLeftInstance != null)
-        {
-            abilityLeftInstance.enabled = false;
-            abilityLeftInstance.ClearExternalBase();
-            ApplyAbilityFlip(abilityLeftInstance, false, false);
-        }
+        if (inst.enabled)
 
-        if (abilityRightInstance != null)
-        {
-            abilityRightInstance.enabled = false;
-            abilityRightInstance.ClearExternalBase();
-            ApplyAbilityFlip(abilityRightInstance, false, false);
-        }
+        inst.enabled = false;
+        inst.ClearExternalBase();
+        ApplyAbilityFlip(inst, false, false);
     }
 
     private void DestroyAbilityInstances()
@@ -712,6 +729,7 @@ public sealed class ElectoMovementController : PersecutingEnemyMovementControlle
 
         DisableAbilityInstances();
         DisableAllStateSprites();
+
     }
 
     private void OnHealthInvulnEnded()
@@ -724,6 +742,7 @@ public sealed class ElectoMovementController : PersecutingEnemyMovementControlle
         SetVisualState(VisualState.Walking);
         UpdateSpriteDirection(direction);
         DecideNextTile();
+
     }
 
     private void OnHealthDiedInternal()
@@ -734,6 +753,7 @@ public sealed class ElectoMovementController : PersecutingEnemyMovementControlle
 
         DisableAbilityInstances();
         DisableAllStateSprites();
+
     }
 
     protected override void OnDrawGizmosSelected()
@@ -755,5 +775,75 @@ public sealed class ElectoMovementController : PersecutingEnemyMovementControlle
         Gizmos.DrawWireCube(GetAbilityTileCenterWorld(Vector2.down), size);
         Gizmos.DrawWireCube(GetAbilityTileCenterWorld(Vector2.left), size);
         Gizmos.DrawWireCube(GetAbilityTileCenterWorld(Vector2.right), size);
+    }
+
+    private void ValidateAbilityPrototype(AnimatedSpriteRenderer prototype, string tag)
+    {
+        if (prototype == null)
+        {
+            return;
+        }
+
+    }
+
+    private void TryLogAbilityFrames()
+    {
+        if (!enableSurgicalLogs)
+            return;
+
+        if (Time.unscaledTime < nextAbilityLogTime)
+            return;
+
+        nextAbilityLogTime = Time.unscaledTime + abilityLogInterval;
+
+        LogAbilityFrame("Up", abilityUpInstance, ref lastLoggedFrameUp);
+        LogAbilityFrame("Down", abilityDownInstance, ref lastLoggedFrameDown);
+        LogAbilityFrame("Left", abilityLeftInstance, ref lastLoggedFrameLeft);
+        LogAbilityFrame("Right", abilityRightInstance, ref lastLoggedFrameRight);
+    }
+
+    private void LogAbilityFrame(string tag, AnimatedSpriteRenderer inst, ref int lastLoggedFrame)
+    {
+        if (inst == null)
+        {
+            return;
+        }
+
+        int current = inst.CurrentFrame;
+        bool changed = current != lastLoggedFrame;
+
+
+        lastLoggedFrame = current;
+    }
+
+    private void ResetAbilityFrameLogs()
+    {
+        lastLoggedFrameUp = -999;
+        lastLoggedFrameDown = -999;
+        lastLoggedFrameLeft = -999;
+        lastLoggedFrameRight = -999;
+        nextAbilityLogTime = 0f;
+    }
+
+    private int GetAnimCount(AnimatedSpriteRenderer r)
+    {
+        if (r == null || r.animationSprite == null)
+            return 0;
+
+        return r.animationSprite.Length;
+    }
+
+    private bool HasNullAnimationSprite(AnimatedSpriteRenderer r)
+    {
+        if (r == null || r.animationSprite == null)
+            return false;
+
+        for (int i = 0; i < r.animationSprite.Length; i++)
+        {
+            if (r.animationSprite[i] == null)
+                return true;
+        }
+
+        return false;
     }
 }
