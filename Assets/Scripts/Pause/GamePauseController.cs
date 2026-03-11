@@ -329,21 +329,33 @@ public class GamePauseController : MonoBehaviour
 
             if (confirmTarget == PauseExitTarget.BossRush)
             {
-                BeginExitToScene(bossRushSceneName, resetSessionForTitle: false, cancelBossRushRun: true);
+                BeginExitToScene(
+                    bossRushSceneName,
+                    resetSessionForTitle: false,
+                    cancelBossRushRun: true,
+                    resetPlayersToBaseState: true);
                 return;
             }
 
             if (confirmTarget == PauseExitTarget.WorldMap)
             {
-                BeginExitToScene(worldMapSceneName, resetSessionForTitle: false, cancelBossRushRun: false);
+                BeginExitToScene(
+                    worldMapSceneName,
+                    resetSessionForTitle: false,
+                    cancelBossRushRun: false,
+                    resetPlayersToBaseState: true);
                 return;
             }
 
-            BeginExitToScene(titleSceneName, resetSessionForTitle: true, cancelBossRushRun: true);
+            BeginExitToScene(
+                titleSceneName,
+                resetSessionForTitle: true,
+                cancelBossRushRun: true,
+                resetPlayersToBaseState: false);
         }
     }
 
-    void BeginExitToScene(string sceneName, bool resetSessionForTitle, bool cancelBossRushRun)
+    void BeginExitToScene(string sceneName, bool resetSessionForTitle, bool cancelBossRushRun, bool resetPlayersToBaseState)
     {
         if (exitingToScene)
             return;
@@ -358,10 +370,10 @@ public class GamePauseController : MonoBehaviour
         if (exitRoutine != null)
             StopCoroutine(exitRoutine);
 
-        exitRoutine = StartCoroutine(ExitToSceneRoutine(sceneName, resetSessionForTitle, cancelBossRushRun));
+        exitRoutine = StartCoroutine(ExitToSceneRoutine(sceneName, resetSessionForTitle, cancelBossRushRun, resetPlayersToBaseState));
     }
 
-    IEnumerator ExitToSceneRoutine(string sceneName, bool resetSessionForTitle, bool cancelBossRushRun)
+    IEnumerator ExitToSceneRoutine(string sceneName, bool resetSessionForTitle, bool cancelBossRushRun, bool resetPlayersToBaseState)
     {
         float wait = Mathf.Max(0f, returnToSceneDelayRealtime);
         if (wait > 0f)
@@ -380,7 +392,13 @@ public class GamePauseController : MonoBehaviour
             BossRushSession.CancelRun();
 
         if (resetSessionForTitle)
+        {
             PlayerPersistentStats.ResetSessionForReturnToTitle();
+        }
+        else if (resetPlayersToBaseState)
+        {
+            PlayerPersistentStats.ResetGameplayPersistenceToBaseValues();
+        }
 
         SceneManager.LoadScene(sceneName, LoadSceneMode.Single);
     }

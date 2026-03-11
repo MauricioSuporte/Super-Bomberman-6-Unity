@@ -25,22 +25,22 @@ public static class PlayerPersistentStats
         public int Life = 9;
 
         public int BombAmount = 9;
-        public int ExplosionRadius = 10;
+        public int ExplosionRadius = 9;
 
         public int SpeedInternal = MaxSpeedInternal;
 
         public bool CanKickBombs = false;
         public bool CanPunchBombs = false;
-        public bool HasPowerGlove = true;
+        public bool HasPowerGlove = false;
         public bool CanPassBombs = false;
         public bool CanPassDestructibles = true;
         public bool HasPierceBombs = true;
         public bool HasControlBombs = false;
         public bool HasPowerBomb = false;
-        public bool HasRubberBombs = true;
+        public bool HasRubberBombs = false;
         public bool HasFullFire = false;
 
-        public MountedType MountedLouie = MountedType.None;
+        public MountedType MountedLouie = MountedType.Pink;
         public BomberSkin Skin = BomberSkin.White;
 
         public readonly List<ItemType> QueuedEggs = new(8);
@@ -48,6 +48,8 @@ public static class PlayerPersistentStats
         public PlayerState()
         {
             QueuedEggs.Clear();
+            QueuedEggs.Add(ItemType.RedLouieEgg);
+            QueuedEggs.Add(ItemType.PurpleLouieEgg);
         }
     }
 
@@ -569,6 +571,44 @@ public static class PlayerPersistentStats
         to.QueuedEggs.Clear();
         if (from.QueuedEggs != null && from.QueuedEggs.Count > 0)
             to.QueuedEggs.AddRange(from.QueuedEggs);
+    }
+
+    static void ResetGameplayStateKeepingSkin(PlayerState s)
+    {
+        if (s == null)
+            return;
+
+        s.Life = 1;
+        s.BombAmount = 1;
+        s.ExplosionRadius = 1;
+        s.SpeedInternal = BaseSpeedNormal;
+
+        s.CanKickBombs = false;
+        s.CanPunchBombs = false;
+        s.HasPowerGlove = false;
+        s.CanPassBombs = false;
+        s.CanPassDestructibles = false;
+        s.HasPierceBombs = false;
+        s.HasControlBombs = false;
+        s.HasPowerBomb = false;
+        s.HasRubberBombs = false;
+        s.HasFullFire = false;
+
+        s.MountedLouie = MountedType.None;
+        s.QueuedEggs.Clear();
+    }
+
+    public static void ResetGameplayPersistenceToBaseValues()
+    {
+        for (int i = 0; i < _p.Length; i++)
+            ResetGameplayStateKeepingSkin(_p[i]);
+
+        for (int i = 0; i < _stage.Length; i++)
+            ResetGameplayStateKeepingSkin(_stage[i]);
+
+        stageActive = false;
+        stageAnyItemPickupCollected = false;
+        stageStartedWithDefaultState = false;
     }
 
     public static void BeginStage()
