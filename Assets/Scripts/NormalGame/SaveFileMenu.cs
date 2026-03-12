@@ -6,6 +6,12 @@ using UnityEngine.UI;
 
 public class SaveFileMenu : MonoBehaviour
 {
+    const string LOG = "[SaveFileMenu]";
+
+    [Header("Debug (Surgical Logs)")]
+    [SerializeField] bool enableSurgicalLogs = true;
+    [SerializeField] bool logScaleReapply = true;
+
     [Header("UI Root")]
     [SerializeField] GameObject root;
     [SerializeField] Image backgroundImage;
@@ -97,6 +103,8 @@ public class SaveFileMenu : MonoBehaviour
     RectTransform disabledMessageRect;
     Material disabledMessageRuntimeMaterial;
 
+    int _applyScaleCount;
+
     public SaveFileOption SelectedOption
     {
         get
@@ -113,11 +121,6 @@ public class SaveFileMenu : MonoBehaviour
         if (root == null)
             root = gameObject;
 
-        ApplyDynamicScaleIfNeeded(true);
-
-        if (leftPanel != null)
-            leftPanel.Initialize(_currentUiScale);
-
         ApplyCurrentBackgroundSprite();
         EnsureDisabledOptionText();
 
@@ -127,6 +130,7 @@ public class SaveFileMenu : MonoBehaviour
 
     void Start()
     {
+        SLog($"Start | frame={Time.frameCount} -> OpenMenuRoutine()");
         StartCoroutine(OpenMenuRoutine());
     }
 
@@ -171,10 +175,23 @@ public class SaveFileMenu : MonoBehaviour
 
         ResetBackgroundSpriteSwap();
         ApplyCurrentBackgroundSprite();
+
+        // espera a hierarquia ativar e o canvas/câmera estabilizarem
+        yield return null;
+        Canvas.ForceUpdateCanvases();
+        yield return new WaitForEndOfFrame();
+        Canvas.ForceUpdateCanvases();
+
         ApplyDynamicScaleIfNeeded(true);
 
         if (leftPanel != null)
+        {
+            leftPanel.Initialize(_currentUiScale);
             leftPanel.BuildOptionList();
+        }
+
+        Canvas.ForceUpdateCanvases();
+        yield return null;
 
         selectedIndex = 0;
 
@@ -243,9 +260,6 @@ public class SaveFileMenu : MonoBehaviour
                 confirmed = true;
                 yield return FadeOutRoutine();
                 Hide();
-
-                // Ajuste aqui se quiser voltar para outra cena
-                // SceneManager.LoadScene("TitleScreen");
                 yield break;
             }
 
@@ -329,6 +343,7 @@ public class SaveFileMenu : MonoBehaviour
             return;
 
         music.PlayMusic(selectMusic, selectMusicVolume, loopSelectMusic);
+        SLog($"StartSelectMusic | clip={(selectMusic != null ? selectMusic.name : "NULL")}");
     }
 
     void PlayDeniedSfx()
@@ -356,6 +371,8 @@ public class SaveFileMenu : MonoBehaviour
             root.SetActive(false);
         else
             gameObject.SetActive(false);
+
+        SLog($"Hide | frame={Time.frameCount}");
     }
 
     void SetFadeAlpha(float a)
@@ -386,6 +403,8 @@ public class SaveFileMenu : MonoBehaviour
 
         SetFadeAlpha(0f);
         fadeImage.gameObject.SetActive(false);
+
+        SLog($"FadeInRoutine END | frame={Time.frameCount}");
     }
 
     IEnumerator FadeOutRoutine()
@@ -409,6 +428,8 @@ public class SaveFileMenu : MonoBehaviour
         }
 
         SetFadeAlpha(1f);
+
+        SLog($"FadeOutRoutine END | frame={Time.frameCount}");
     }
 
     void ResetBackgroundSpriteSwap()
@@ -544,6 +565,8 @@ public class SaveFileMenu : MonoBehaviour
 
     void ApplyDynamicScaleIfNeeded(bool force = false)
     {
+        _applyScaleCount++;
+
         int sw = Screen.width;
         int sh = Screen.height;
 
@@ -561,7 +584,17 @@ public class SaveFileMenu : MonoBehaviour
             !ApproximatelyRect(refPx, _lastRefPixelRect);
 
         if (!changed)
+        {
+            if (logScaleReapply)
+            {
+                SLog(
+                    $"ApplyDynamicScaleIfNeeded SKIP | call={_applyScaleCount} frame={Time.frameCount} " +
+                    $"force={force} screen=({sw}x{sh}) refPx={refPx} uiScale={_currentUiScale:0.###}"
+                );
+            }
+
             return;
+        }
 
         _lastScreenW = sw;
         _lastScreenH = sh;
@@ -569,6 +602,12 @@ public class SaveFileMenu : MonoBehaviour
         _lastRefPixelRect = refPx;
 
         _currentUiScale = ComputeUiScaleForRect(refPx.width, refPx.height, out _currentBaseScaleInt);
+
+        SLog(
+            $"ApplyDynamicScaleIfNeeded APPLY | call={_applyScaleCount} frame={Time.frameCount} " +
+            $"force={force} screen=({sw}x{sh}) camRect={camRect} " +
+            $"refSource={refSource} refPx={refPx} uiScale={_currentUiScale:0.###} baseScaleInt={_currentBaseScaleInt}"
+        );
 
         if (leftPanel != null)
             leftPanel.SetUiScale(_currentUiScale);
@@ -597,6 +636,8 @@ public class SaveFileMenu : MonoBehaviour
 
             disabledOptionText = go.AddComponent<TextMeshProUGUI>();
             disabledOptionText.raycastTarget = false;
+
+            SLog("EnsureDisabledOptionText | runtime TMP created");
         }
 
         disabledMessageRect = disabledOptionText.rectTransform;
@@ -612,6 +653,11 @@ public class SaveFileMenu : MonoBehaviour
 
         disabledOptionText.text = string.Empty;
         disabledOptionText.gameObject.SetActive(false);
+
+        SLog(
+            $"EnsureDisabledOptionText | frame={Time.frameCount} rect={GetRectInfo(disabledMessageRect)} " +
+            $"fontSize={disabledOptionText.fontSize}"
+        );
     }
 
     void ShowDisabledMessageForCurrentOption()
@@ -645,6 +691,8 @@ public class SaveFileMenu : MonoBehaviour
         disabledOptionText.text = message;
         disabledOptionText.gameObject.SetActive(true);
         disabledOptionText.transform.SetAsLastSibling();
+
+        SLog($"ShowDisabledMessageForCurrentOption | frame={Time.frameCount} text='{message}'");
 
         disabledMessageRoutine = StartCoroutine(HideDisabledMessageRoutine());
     }
@@ -762,6 +810,24 @@ public class SaveFileMenu : MonoBehaviour
             TrySetFloat(mat, "_UnderlayOffsetX", 0f);
             TrySetFloat(mat, "_UnderlayOffsetY", 0f);
         }
+    }
+
+    string GetRectInfo(RectTransform rt)
+    {
+        if (rt == null)
+            return "NULL";
+
+        return
+            $"name='{rt.name}' rect={rt.rect} sizeDelta={rt.sizeDelta} anchoredPos={rt.anchoredPosition} " +
+            $"localPos={rt.localPosition} anchorMin={rt.anchorMin} anchorMax={rt.anchorMax} pivot={rt.pivot}";
+    }
+
+    void SLog(string message)
+    {
+        if (!enableSurgicalLogs)
+            return;
+
+        Debug.Log($"{LOG} {message}", this);
     }
 
     static void TrySetFloat(Material mat, string prop, float value)

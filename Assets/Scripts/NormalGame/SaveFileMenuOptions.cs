@@ -5,6 +5,13 @@ using UnityEngine.UI;
 
 public class SaveFileMenuOptions : MonoBehaviour
 {
+    const string LOG = "[SaveFileMenuOptions]";
+
+    [Header("Debug (Surgical Logs)")]
+    [SerializeField] bool enableSurgicalLogs = true;
+    [SerializeField] bool logEveryLayoutApply = true;
+    [SerializeField] bool logOptionPositionsAfterBuild = true;
+
     [Header("Option List")]
     [SerializeField] RectTransform optionListRoot;
     [SerializeField] TextMeshProUGUI optionItemPrefab;
@@ -59,10 +66,10 @@ public class SaveFileMenuOptions : MonoBehaviour
     [SerializeField] float cursorHeightMultiplier = 1.45f;
     [SerializeField] float minCursorSize = 24f;
 
-    readonly List<TextMeshProUGUI> optionTexts = new List<TextMeshProUGUI>();
-    readonly Dictionary<TMP_Text, Material> runtimeMaterials = new Dictionary<TMP_Text, Material>();
+    readonly List<TextMeshProUGUI> optionTexts = new();
+    readonly Dictionary<TMP_Text, Material> runtimeMaterials = new();
 
-    readonly List<SaveFileOption> options = new List<SaveFileOption>()
+    readonly List<SaveFileOption> options = new()
     {
         SaveFileOption.NewGame,
         SaveFileOption.Continue,
@@ -85,8 +92,12 @@ public class SaveFileMenuOptions : MonoBehaviour
     int _baseLayoutPaddingBottom;
     bool _layoutPaddingCaptured;
 
-    public int Count { get { return options.Count; } }
-    public IReadOnlyList<SaveFileOption> Options { get { return options; } }
+    int _layoutApplyCount;
+    int _buildCount;
+    int _setUiScaleCount;
+
+    public int Count => options.Count;
+    public IReadOnlyList<SaveFileOption> Options => options;
 
     public SaveFileOption GetOptionAt(int index)
     {
@@ -105,6 +116,14 @@ public class SaveFileMenuOptions : MonoBehaviour
 
     void Awake()
     {
+        SLog(
+            $"Awake START | frame={Time.frameCount} " +
+            $"goActiveSelf={gameObject.activeSelf} activeInHierarchy={gameObject.activeInHierarchy} " +
+            $"rect={GetRectInfo(transform as RectTransform)} " +
+            $"optionListRoot={(optionListRoot != null ? optionListRoot.name : "NULL")} " +
+            $"optionItemPrefab={(optionItemPrefab != null ? optionItemPrefab.name : "NULL")}"
+        );
+
         if (cursorRenderer != null)
         {
             RectTransform cursorRt = cursorRenderer.transform as RectTransform;
@@ -118,9 +137,20 @@ public class SaveFileMenuOptions : MonoBehaviour
             _cursorBaseLoop = cursorRenderer.loop;
             _cursorAnimationStateCaptured = true;
             cursorRenderer.gameObject.SetActive(false);
+
+            SLog(
+                $"Awake Cursor | baseSizeDelta={_cursorBaseSizeDelta} " +
+                $"idle={_cursorBaseIdle} loop={_cursorBaseLoop} " +
+                $"cursorRect={GetRectInfo(cursorRt)}"
+            );
         }
 
         CaptureBaseLayoutPadding();
+
+        SLog(
+            $"Awake END | capturedPadding={_layoutPaddingCaptured} " +
+            $"basePadding=({_baseLayoutPaddingLeft},{_baseLayoutPaddingRight},{_baseLayoutPaddingTop},{_baseLayoutPaddingBottom})"
+        );
     }
 
     void OnDestroy()
@@ -140,12 +170,19 @@ public class SaveFileMenuOptions : MonoBehaviour
         CaptureBaseLayoutPadding();
         ApplyCursorScale();
         ApplyOptionListLayoutSettings();
-        BuildOptionList();
     }
 
     public void SetUiScale(float uiScale)
     {
+        _setUiScaleCount++;
         _currentUiScale = uiScale;
+
+        SLog(
+            $"SetUiScale START | call={_setUiScaleCount} frame={Time.frameCount} uiScale={_currentUiScale:0.###} " +
+            $"panelRect(before)={GetRectInfo(transform as RectTransform)} " +
+            $"listRect(before)={GetRectInfo(optionListRoot)}"
+        );
+
         ApplyCursorScale();
         ApplyOptionListLayoutSettings();
 
@@ -165,6 +202,11 @@ public class SaveFileMenuOptions : MonoBehaviour
                 le.minHeight = Mathf.Round(ScaledFloat(optionItemHeight));
                 le.preferredHeight = Mathf.Round(ScaledFloat(optionItemHeight));
             }
+
+            SLog(
+                $"SetUiScale Item | index={i} text='{optionTexts[i].text}' " +
+                $"rt={GetRectInfo(rt)}"
+            );
         }
 
         VerticalLayoutGroup layout = optionListRoot != null ? optionListRoot.GetComponent<VerticalLayoutGroup>() : null;
@@ -174,14 +216,33 @@ public class SaveFileMenuOptions : MonoBehaviour
         Canvas.ForceUpdateCanvases();
         if (optionListRoot != null)
             LayoutRebuilder.ForceRebuildLayoutImmediate(optionListRoot);
+
+        SLog(
+            $"SetUiScale END | call={_setUiScaleCount} " +
+            $"panelRect(after)={GetRectInfo(transform as RectTransform)} " +
+            $"listRect(after)={GetRectInfo(optionListRoot)} " +
+            $"layoutPadding={GetLayoutPaddingInfo(optionListRoot)}"
+        );
     }
 
     public void BuildOptionList()
     {
+        _buildCount++;
+
+        SLog(
+            $"BuildOptionList START | call={_buildCount} frame={Time.frameCount} " +
+            $"panelRect={GetRectInfo(transform as RectTransform)} " +
+            $"listRect={GetRectInfo(optionListRoot)} " +
+            $"childCount(before)={(optionListRoot != null ? optionListRoot.childCount : -1)}"
+        );
+
         optionTexts.Clear();
 
         if (optionListRoot == null || optionItemPrefab == null)
+        {
+            SLog("BuildOptionList ABORT | optionListRoot or optionItemPrefab is NULL");
             return;
+        }
 
         ApplyOptionListLayoutSettings();
 
@@ -197,6 +258,7 @@ public class SaveFileMenuOptions : MonoBehaviour
             if (cursorRenderer != null && child == cursorRenderer.transform)
                 continue;
 
+            SLog($"BuildOptionList DestroyChild | index={i} name='{child.name}'");
             Destroy(child.gameObject);
         }
 
@@ -234,6 +296,11 @@ public class SaveFileMenuOptions : MonoBehaviour
             le.flexibleWidth = 1f;
 
             optionTexts.Add(txt);
+
+            SLog(
+                $"BuildOptionList CreateItem | index={i} text='{txt.text}' " +
+                $"rt={GetRectInfo(rt)} prefValues={txt.GetPreferredValues(txt.text)}"
+            );
         }
 
         if (cursorRenderer != null)
@@ -243,6 +310,16 @@ public class SaveFileMenuOptions : MonoBehaviour
 
         Canvas.ForceUpdateCanvases();
         LayoutRebuilder.ForceRebuildLayoutImmediate(optionListRoot);
+
+        SLog(
+            $"BuildOptionList END | call={_buildCount} " +
+            $"panelRect={GetRectInfo(transform as RectTransform)} " +
+            $"listRect={GetRectInfo(optionListRoot)} " +
+            $"layoutPadding={GetLayoutPaddingInfo(optionListRoot)}"
+        );
+
+        if (logOptionPositionsAfterBuild)
+            DumpOptionPositions("BuildOptionList END");
     }
 
     public void UpdateOptionVisuals(int selectedIndex, bool confirmed, bool hasAnySaveFile)
@@ -277,6 +354,8 @@ public class SaveFileMenuOptions : MonoBehaviour
         {
             cursorRenderer.gameObject.SetActive(true);
             cursorRenderer.RefreshFrame();
+
+            SLog($"ShowCursor | frame={Time.frameCount} cursorRect={GetRectInfo(cursorRenderer.transform as RectTransform)}");
         }
     }
 
@@ -286,6 +365,7 @@ public class SaveFileMenuOptions : MonoBehaviour
         {
             UpdateCursorAnimationState(false);
             cursorRenderer.gameObject.SetActive(false);
+            SLog($"HideCursor | frame={Time.frameCount}");
         }
     }
 
@@ -297,6 +377,7 @@ public class SaveFileMenuOptions : MonoBehaviour
         if (selectedIndex < 0 || selectedIndex >= optionTexts.Count)
         {
             cursorRenderer.gameObject.SetActive(false);
+            SLog($"UpdateCursorPosition HIDE | invalid selectedIndex={selectedIndex}");
             return;
         }
 
@@ -304,6 +385,7 @@ public class SaveFileMenuOptions : MonoBehaviour
         if (txt == null)
         {
             cursorRenderer.gameObject.SetActive(false);
+            SLog($"UpdateCursorPosition HIDE | text NULL at index={selectedIndex}");
             return;
         }
 
@@ -333,6 +415,12 @@ public class SaveFileMenuOptions : MonoBehaviour
         }
 
         cursorRenderer.SetExternalBaseLocalPosition(localPos);
+
+        SLog(
+            $"UpdateCursorPosition | frame={Time.frameCount} selectedIndex={selectedIndex} text='{txt.text}' " +
+            $"textLocalPos={txtRt.localPosition} finalCursorLocalPos={localPos} " +
+            $"textRect={GetRectInfo(txtRt)} cursorRect={GetRectInfo(cursorRt)}"
+        );
     }
 
     string GetOptionDisplayName(SaveFileOption option)
@@ -405,8 +493,7 @@ public class SaveFileMenuOptions : MonoBehaviour
         if (target == null)
             return null;
 
-        Material runtimeMat;
-        if (runtimeMaterials.TryGetValue(target, out runtimeMat) && runtimeMat != null)
+        if (runtimeMaterials.TryGetValue(target, out Material runtimeMat) && runtimeMat != null)
             return runtimeMat;
 
         Material baseMat = null;
@@ -422,7 +509,7 @@ public class SaveFileMenuOptions : MonoBehaviour
             return null;
 
         runtimeMat = new Material(baseMat);
-        runtimeMat.name = baseMat.name + "_SaveFileLeftPanelRuntime";
+        runtimeMat.name = baseMat.name + "_SaveFileMenuOptionsRuntime";
         runtimeMaterials[target] = runtimeMat;
         return runtimeMat;
     }
@@ -480,16 +567,30 @@ public class SaveFileMenuOptions : MonoBehaviour
         _baseLayoutPaddingTop = layout.padding.top;
         _baseLayoutPaddingBottom = layout.padding.bottom;
         _layoutPaddingCaptured = true;
+
+        SLog(
+            $"CaptureBaseLayoutPadding | " +
+            $"left={_baseLayoutPaddingLeft} right={_baseLayoutPaddingRight} " +
+            $"top={_baseLayoutPaddingTop} bottom={_baseLayoutPaddingBottom}"
+        );
     }
 
     void ApplyOptionListLayoutSettings()
     {
+        _layoutApplyCount++;
+
         if (optionListRoot == null)
+        {
+            SLog($"ApplyOptionListLayoutSettings ABORT | optionListRoot NULL | call={_layoutApplyCount}");
             return;
+        }
 
         VerticalLayoutGroup layout = optionListRoot.GetComponent<VerticalLayoutGroup>();
         if (layout == null)
+        {
+            SLog($"ApplyOptionListLayoutSettings ABORT | VerticalLayoutGroup NULL | call={_layoutApplyCount}");
             return;
+        }
 
         CaptureBaseLayoutPadding();
 
@@ -502,13 +603,23 @@ public class SaveFileMenuOptions : MonoBehaviour
 
         RectTransform panelRt = transform as RectTransform;
         if (panelRt == null)
+        {
+            SLog($"ApplyOptionListLayoutSettings ABORT | panelRt NULL | call={_layoutApplyCount}");
             return;
+        }
 
         float panelWidth = panelRt.rect.width;
         float panelHeight = panelRt.rect.height;
 
         if (panelWidth <= 0f || panelHeight <= 0f)
+        {
+            SLog(
+                $"ApplyOptionListLayoutSettings EARLY-RECT | call={_layoutApplyCount} frame={Time.frameCount} " +
+                $"panelWidth={panelWidth:0.##} panelHeight={panelHeight:0.##} " +
+                $"panelRect={GetRectInfo(panelRt)} listRect={GetRectInfo(optionListRoot)}"
+            );
             return;
+        }
 
         float blockWidth = GetVisualBlockWidth();
         float blockHeight = GetVisualBlockHeight();
@@ -516,16 +627,41 @@ public class SaveFileMenuOptions : MonoBehaviour
         int centeredLeft = Mathf.RoundToInt((panelWidth * blockCenterX) - (blockWidth * 0.5f));
         int centeredTop = Mathf.RoundToInt((panelHeight * (1f - blockCenterY)) - (blockHeight * 0.5f));
 
-        layout.padding.left = Mathf.Max(0, _baseLayoutPaddingLeft + centeredLeft + Mathf.RoundToInt(ScaledFloat(optionContentOffsetX)));
+        int finalLeft = Mathf.Max(0, _baseLayoutPaddingLeft + centeredLeft + Mathf.RoundToInt(ScaledFloat(optionContentOffsetX)));
+        int finalTop = Mathf.Max(0, _baseLayoutPaddingTop + centeredTop + Mathf.RoundToInt(ScaledFloat(optionContentOffsetY)));
+
+        layout.padding.left = finalLeft;
         layout.padding.right = _baseLayoutPaddingRight;
-        layout.padding.top = Mathf.Max(0, _baseLayoutPaddingTop + centeredTop + Mathf.RoundToInt(ScaledFloat(optionContentOffsetY)));
+        layout.padding.top = finalTop;
         layout.padding.bottom = _baseLayoutPaddingBottom;
+
+        if (logEveryLayoutApply)
+        {
+            SLog(
+                $"ApplyOptionListLayoutSettings | call={_layoutApplyCount} frame={Time.frameCount} " +
+                $"uiScale={_currentUiScale:0.###} panel=({panelWidth:0.##}x{panelHeight:0.##}) " +
+                $"block=({blockWidth:0.##}x{blockHeight:0.##}) " +
+                $"center=({blockCenterX:0.###},{blockCenterY:0.###}) " +
+                $"centeredLeft={centeredLeft} centeredTop={centeredTop} " +
+                $"offsetX={optionContentOffsetX} offsetY={optionContentOffsetY} " +
+                $"finalPadding=(L:{finalLeft},T:{finalTop},R:{layout.padding.right},B:{layout.padding.bottom}) " +
+                $"panelRect={GetRectInfo(panelRt)} listRect={GetRectInfo(optionListRoot)}"
+            );
+        }
     }
 
     float GetVisualBlockWidth()
     {
         float maxTextWidth = GetMaxTextWidth();
-        return Mathf.Ceil(ScaledFloat(cursorReservedWidth) + maxTextWidth + ScaledFloat(extraBlockWidth));
+        float result = Mathf.Ceil(ScaledFloat(cursorReservedWidth) + maxTextWidth + ScaledFloat(extraBlockWidth));
+
+        SLog(
+            $"GetVisualBlockWidth | frame={Time.frameCount} " +
+            $"cursorReservedWidth={cursorReservedWidth} maxTextWidth={maxTextWidth:0.##} " +
+            $"extraBlockWidth={extraBlockWidth} result={result:0.##}"
+        );
+
+        return result;
     }
 
     float GetVisualBlockHeight()
@@ -533,14 +669,25 @@ public class SaveFileMenuOptions : MonoBehaviour
         float itemHeight = Mathf.Round(ScaledFloat(optionItemHeight));
         float spacingY = Mathf.Round(ScaledFloat(optionSpacing.y));
         float totalSpacing = Mathf.Max(0, options.Count - 1) * spacingY;
-        return Mathf.Ceil((options.Count * itemHeight) + totalSpacing + ScaledFloat(extraBlockHeight));
+        float result = Mathf.Ceil((options.Count * itemHeight) + totalSpacing + ScaledFloat(extraBlockHeight));
+
+        SLog(
+            $"GetVisualBlockHeight | frame={Time.frameCount} " +
+            $"itemHeight={itemHeight:0.##} spacingY={spacingY:0.##} totalSpacing={totalSpacing:0.##} " +
+            $"extraBlockHeight={extraBlockHeight} result={result:0.##}"
+        );
+
+        return result;
     }
 
     float GetMaxTextWidth()
     {
         TMP_Text measureTarget = optionItemPrefab != null ? optionItemPrefab : null;
         if (measureTarget == null)
+        {
+            SLog("GetMaxTextWidth | optionItemPrefab NULL");
             return 0f;
+        }
 
         if (optionFontAsset != null)
             measureTarget.font = optionFontAsset;
@@ -562,9 +709,15 @@ public class SaveFileMenuOptions : MonoBehaviour
             Vector2 preferred = measureTarget.GetPreferredValues(text);
             if (preferred.x > max)
                 max = preferred.x;
+
+            SLog(
+                $"GetMaxTextWidth Item | index={i} text='{text}' preferred={preferred} currentMax={max:0.##}"
+            );
         }
 
-        return Mathf.Ceil(max);
+        float result = Mathf.Ceil(max);
+        SLog($"GetMaxTextWidth END | result={result:0.##}");
+        return result;
     }
 
     void ApplyCursorScale()
@@ -595,6 +748,12 @@ public class SaveFileMenuOptions : MonoBehaviour
         );
 
         cursorRt.localScale = Vector3.one;
+
+        SLog(
+            $"ApplyCursorScale | frame={Time.frameCount} targetHeight={targetHeight:0.##} " +
+            $"targetSize={targetSize:0.##} baseAspect={baseAspect:0.###} " +
+            $"cursorRect={GetRectInfo(cursorRt)}"
+        );
     }
 
     void UpdateCursorAnimationState(bool confirmed)
@@ -620,6 +779,7 @@ public class SaveFileMenuOptions : MonoBehaviour
             cursorRenderer.loop = true;
             cursorRenderer.CurrentFrame = 0;
             cursorRenderer.RefreshFrame();
+            SLog("UpdateCursorAnimationState | confirmed=True");
         }
         else
         {
@@ -627,7 +787,65 @@ public class SaveFileMenuOptions : MonoBehaviour
             cursorRenderer.loop = _cursorBaseLoop;
             cursorRenderer.CurrentFrame = 0;
             cursorRenderer.RefreshFrame();
+            SLog("UpdateCursorAnimationState | confirmed=False");
         }
+    }
+
+    void DumpOptionPositions(string context)
+    {
+        if (!enableSurgicalLogs)
+            return;
+
+        SLog(
+            $"DumpOptionPositions {context} | frame={Time.frameCount} " +
+            $"panelRect={GetRectInfo(transform as RectTransform)} listRect={GetRectInfo(optionListRoot)}"
+        );
+
+        for (int i = 0; i < optionTexts.Count; i++)
+        {
+            TextMeshProUGUI txt = optionTexts[i];
+            if (txt == null)
+            {
+                SLog($"DumpOptionPositions {context} | item[{i}] NULL");
+                continue;
+            }
+
+            SLog(
+                $"DumpOptionPositions {context} | item[{i}] text='{txt.text}' " +
+                $"rt={GetRectInfo(txt.rectTransform)} localPos={txt.rectTransform.localPosition} " +
+                $"anchoredPos={txt.rectTransform.anchoredPosition}"
+            );
+        }
+    }
+
+    string GetRectInfo(RectTransform rt)
+    {
+        if (rt == null)
+            return "NULL";
+
+        return
+            $"name='{rt.name}' rect={rt.rect} sizeDelta={rt.sizeDelta} anchoredPos={rt.anchoredPosition} " +
+            $"localPos={rt.localPosition} anchorMin={rt.anchorMin} anchorMax={rt.anchorMax} pivot={rt.pivot}";
+    }
+
+    string GetLayoutPaddingInfo(RectTransform rt)
+    {
+        if (rt == null)
+            return "NULL";
+
+        VerticalLayoutGroup layout = rt.GetComponent<VerticalLayoutGroup>();
+        if (layout == null)
+            return "NO_LAYOUT";
+
+        return $"L:{layout.padding.left} R:{layout.padding.right} T:{layout.padding.top} B:{layout.padding.bottom} spacing={layout.spacing}";
+    }
+
+    void SLog(string message)
+    {
+        if (!enableSurgicalLogs)
+            return;
+
+        Debug.Log($"{LOG} {message}", this);
     }
 
     static void TrySetFloat(Material mat, string prop, float value)
