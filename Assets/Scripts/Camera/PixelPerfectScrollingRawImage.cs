@@ -162,14 +162,6 @@ public class PixelPerfectScrollingRawImage : MonoBehaviour
             uX = Mathf.Repeat(uX, 1f);
 
         targetImage.uvRect = new Rect(uX, 0f, visibleU, visibleV);
-
-        if (logChanges || forceLog)
-        {
-            Debug.Log(
-                $"[PixelPerfectScrollingRawImage] tex=({texW}x{texH}) viewport=({viewportWidth}x{viewportHeight}) uv=({targetImage.uvRect.x:F4},{targetImage.uvRect.y:F4},{targetImage.uvRect.width:F4},{targetImage.uvRect.height:F4}) scrollPixels={scrollPixels:F2}",
-                this
-            );
-        }
     }
 
     static bool ApproximatelyRect(Rect a, Rect b)
