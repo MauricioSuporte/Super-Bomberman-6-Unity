@@ -144,7 +144,10 @@ public abstract class EndStage : MonoBehaviour
 
         int count = 0;
         for (int i = 0; i < s_goodClips.Length; i++)
-            if (s_goodClips[i] != null) count++;
+        {
+            if (s_goodClips[i] != null)
+                count++;
+        }
 
         if (count <= 0)
             return;
@@ -153,7 +156,7 @@ public abstract class EndStage : MonoBehaviour
         for (int tries = 0; tries < s_goodClips.Length && s_goodClips[pick] == null; tries++)
             pick = (pick + 1) % s_goodClips.Length;
 
-        var clip = s_goodClips[pick];
+        AudioClip clip = s_goodClips[pick];
         if (clip == null)
             return;
 
@@ -170,18 +173,18 @@ public abstract class EndStage : MonoBehaviour
 
         isActivated = true;
 
-        var triggerMovement = other.GetComponent<MovementController>();
+        MovementController triggerMovement = other.GetComponent<MovementController>();
 
         Vector2 portalCenter = GetPortalCenterWorld(other);
 
-        var players = FindObjectsByType<MovementController>(
+        MovementController[] players = FindObjectsByType<MovementController>(
             FindObjectsInactive.Exclude,
             FindObjectsSortMode.None
         );
 
         for (int i = 0; i < players.Length; i++)
         {
-            var m = players[i];
+            MovementController m = players[i];
             if (m == null) continue;
             if (!m.CompareTag("Player")) continue;
             if (!m.gameObject.activeInHierarchy) continue;
@@ -189,10 +192,8 @@ public abstract class EndStage : MonoBehaviour
 
             if (m.TryGetComponent<PowerGloveAbility>(out var glove) && glove != null)
                 glove.DestroyHeldBombIfHolding();
-
-            var bombController = m.GetComponent<BombController>();
-
-            if (bombController != null)
+            
+            if (m.TryGetComponent<BombController>(out var bombController))
                 bombController.ClearPlantedBombsOnStageEnd(false);
 
             bool snapThisOne = triggerMovement != null && m == triggerMovement;
@@ -200,7 +201,6 @@ public abstract class EndStage : MonoBehaviour
         }
 
         bool isPerfectClear = PlayerPersistentStats.IsCurrentStagePerfectClear();
-
         string currentSceneName = SceneManager.GetActiveScene().name;
 
         StageUnlockProgress.UnlockCurrentAndNext(currentSceneName);
@@ -208,7 +208,7 @@ public abstract class EndStage : MonoBehaviour
         if (isPerfectClear)
             StageUnlockProgress.MarkPerfect(currentSceneName);
 
-        var audio = other.GetComponent<AudioSource>();
+        AudioSource audio = other.GetComponent<AudioSource>();
 
         PlayRandomGoodOnce(audio);
 

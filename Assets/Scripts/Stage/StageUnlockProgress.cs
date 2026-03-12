@@ -15,6 +15,13 @@ public static class StageUnlockProgress
     private static readonly HashSet<string> perfectStages = new();
     private static List<string> stageOrder = new();
 
+    public static void ReloadFromPrefs()
+    {
+        loaded = false;
+        Load();
+        EnsureDefaultUnlocked();
+    }
+
     public static void RegisterStageOrder(IEnumerable<string> orderedSceneNames)
     {
         Load();

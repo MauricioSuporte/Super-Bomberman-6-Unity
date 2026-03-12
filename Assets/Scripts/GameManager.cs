@@ -125,14 +125,14 @@ public class GameManager : MonoBehaviour
 
     List<PlayerIdentity> GetOrderedPlayerIdentities(bool includeInactive)
     {
-        var result = new List<PlayerIdentity>();
-        var inactiveMode = includeInactive ? FindObjectsInactive.Include : FindObjectsInactive.Exclude;
-        var ids = FindObjectsByType<PlayerIdentity>(inactiveMode, FindObjectsSortMode.None);
+        List<PlayerIdentity> result = new();
+        FindObjectsInactive inactiveMode = includeInactive ? FindObjectsInactive.Include : FindObjectsInactive.Exclude;
+        PlayerIdentity[] ids = FindObjectsByType<PlayerIdentity>(inactiveMode, FindObjectsSortMode.None);
         int activePlayerCount = GetConfiguredActivePlayerCount();
 
         for (int i = 0; i < ids.Length; i++)
         {
-            var id = ids[i];
+            PlayerIdentity id = ids[i];
             if (id == null)
                 continue;
 
@@ -175,11 +175,11 @@ public class GameManager : MonoBehaviour
 
     void CaptureAllPlayersForStageEnd()
     {
-        var ids = GetOrderedPlayerIdentities(includeInactive: false);
+        List<PlayerIdentity> ids = GetOrderedPlayerIdentities(includeInactive: false);
 
         for (int i = 0; i < ids.Count; i++)
         {
-            var identity = ids[i];
+            PlayerIdentity identity = ids[i];
             if (identity == null)
                 continue;
 
@@ -285,7 +285,7 @@ public class GameManager : MonoBehaviour
         if (destructibleTileResolver != null)
             return;
 
-        var stage = GameObject.Find("Stage");
+        GameObject stage = GameObject.Find("Stage");
         if (stage != null)
             destructibleTileResolver = stage.GetComponentInChildren<DestructibleTileResolver>(true);
     }
@@ -301,11 +301,11 @@ public class GameManager : MonoBehaviour
         if (destructibleTileResolver == null)
             return;
 
-        var bounds = destructibleTilemap.cellBounds;
+        BoundsInt bounds = destructibleTilemap.cellBounds;
 
-        foreach (var pos in bounds.allPositionsWithin)
+        foreach (Vector3Int pos in bounds.allPositionsWithin)
         {
-            var tile = destructibleTilemap.GetTile(pos);
+            TileBase tile = destructibleTilemap.GetTile(pos);
             if (tile == null)
                 continue;
 
@@ -322,8 +322,8 @@ public class GameManager : MonoBehaviour
         if (destructibleTilemap == null)
             return false;
 
-        var bounds = destructibleTilemap.cellBounds;
-        foreach (var pos in bounds.allPositionsWithin)
+        BoundsInt bounds = destructibleTilemap.cellBounds;
+        foreach (Vector3Int pos in bounds.allPositionsWithin)
         {
             if (destructibleTilemap.GetTile(pos) != null)
                 return true;
@@ -337,7 +337,7 @@ public class GameManager : MonoBehaviour
         if (destructibleTilemap != null && indestructibleTilemap != null && groundTilemap != null)
             return;
 
-        var gameplayRoot = GameObject.Find("GameplayRoot");
+        GameObject gameplayRoot = GameObject.Find("GameplayRoot");
         Transform stageRoot = gameplayRoot != null ? gameplayRoot.transform.Find("Stage") : null;
 
         if (stageRoot != null)
@@ -367,11 +367,11 @@ public class GameManager : MonoBehaviour
         if (root == null)
             return null;
 
-        var t = root.Find(childName);
+        Transform t = root.Find(childName);
         if (t == null)
             return null;
 
-        var tm = t.GetComponent<Tilemap>();
+        Tilemap tm = t.GetComponent<Tilemap>();
         if (tm != null)
             return tm;
 
@@ -380,18 +380,18 @@ public class GameManager : MonoBehaviour
 
     Tilemap FindTilemapByNameFallback(string exactName)
     {
-        var all = FindObjectsByType<Tilemap>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        Tilemap[] all = FindObjectsByType<Tilemap>(FindObjectsInactive.Include, FindObjectsSortMode.None);
 
         for (int i = 0; i < all.Length; i++)
         {
-            var tm = all[i];
+            Tilemap tm = all[i];
             if (tm != null && tm.name == exactName)
                 return tm;
         }
 
         for (int i = 0; i < all.Length; i++)
         {
-            var tm = all[i];
+            Tilemap tm = all[i];
             if (tm != null && tm.name != null &&
                 tm.name.IndexOf(exactName, StringComparison.OrdinalIgnoreCase) >= 0)
                 return tm;
@@ -411,16 +411,18 @@ public class GameManager : MonoBehaviour
 
         AutoItemDatabase.BuildIfNeeded();
 
-        var bounds = destructibleTilemap.cellBounds;
+        BoundsInt bounds = destructibleTilemap.cellBounds;
 
-        foreach (var pos in bounds.allPositionsWithin)
+        foreach (Vector3Int pos in bounds.allPositionsWithin)
+        {
             if (destructibleTilemap.GetTile(pos) != null)
                 totalDestructibleBlocks++;
+        }
 
         if (totalDestructibleBlocks <= 0)
             return;
 
-        var indices = new List<int>(totalDestructibleBlocks);
+        List<int> indices = new(totalDestructibleBlocks);
         for (int i = 1; i <= totalDestructibleBlocks; i++)
             indices.Add(i);
 
@@ -446,7 +448,7 @@ public class GameManager : MonoBehaviour
             if (amount <= 0)
                 return;
 
-            var prefab = AutoItemDatabase.Get(type);
+            ItemPickup prefab = AutoItemDatabase.Get(type);
 
             for (int i = 0; i < amount && cursor < indices.Count; i++)
                 orderToSpawn[indices[cursor++]] = prefab.gameObject;
@@ -501,11 +503,11 @@ public class GameManager : MonoBehaviour
             return;
 
         int aliveCount = 0;
-        var ids = GetOrderedPlayerIdentities(includeInactive: false);
+        List<PlayerIdentity> ids = GetOrderedPlayerIdentities(includeInactive: false);
 
         for (int i = 0; i < ids.Count; i++)
         {
-            var id = ids[i];
+            PlayerIdentity id = ids[i];
             if (id == null)
                 continue;
 
@@ -568,6 +570,7 @@ public class GameManager : MonoBehaviour
 
         CaptureAllPlayersForStageEnd();
         PlayerPersistentStats.CommitStage();
+        SaveFileMenu.SaveCurrentProgressToActiveSlot();
 
         if (BossRushSession.IsActive)
         {
@@ -640,16 +643,16 @@ public class GameManager : MonoBehaviour
             groundShadowTile == null)
             return;
 
-        var bounds = destructibleTilemap.cellBounds;
+        BoundsInt bounds = destructibleTilemap.cellBounds;
 
-        foreach (var pos in bounds.allPositionsWithin)
+        foreach (Vector3Int pos in bounds.allPositionsWithin)
         {
             if (destructibleTilemap.GetTile(pos) == null)
                 continue;
 
-            var below = new Vector3Int(pos.x, pos.y - 1, pos.z);
+            Vector3Int below = new(pos.x, pos.y - 1, pos.z);
 
-            var currentGround = groundTilemap.GetTile(below);
+            TileBase currentGround = groundTilemap.GetTile(below);
 
             if (currentGround == groundTile)
                 groundTilemap.SetTile(below, groundShadowTile);
@@ -663,9 +666,9 @@ public class GameManager : MonoBehaviour
             groundShadowTile == null)
             return;
 
-        var below = new Vector3Int(cell.x, cell.y - 1, cell.z);
+        Vector3Int below = new(cell.x, cell.y - 1, cell.z);
 
-        var current = groundTilemap.GetTile(below);
+        TileBase current = groundTilemap.GetTile(below);
 
         if (current == groundShadowTile)
             groundTilemap.SetTile(below, groundTile);
@@ -677,11 +680,11 @@ public class GameManager : MonoBehaviour
             return;
 
         int aliveNotDead = 0;
-        var ids = GetOrderedPlayerIdentities(includeInactive: false);
+        List<PlayerIdentity> ids = GetOrderedPlayerIdentities(includeInactive: false);
 
         for (int i = 0; i < ids.Count; i++)
         {
-            var id = ids[i];
+            PlayerIdentity id = ids[i];
             if (id == null)
                 continue;
 
