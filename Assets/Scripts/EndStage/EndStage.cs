@@ -192,21 +192,13 @@ public abstract class EndStage : MonoBehaviour
 
             if (m.TryGetComponent<PowerGloveAbility>(out var glove) && glove != null)
                 glove.DestroyHeldBombIfHolding();
-            
+
             if (m.TryGetComponent<BombController>(out var bombController))
                 bombController.ClearPlantedBombsOnStageEnd(false);
 
             bool snapThisOne = triggerMovement != null && m == triggerMovement;
             m.PlayEndStageSequence(portalCenter, snapThisOne);
         }
-
-        bool isPerfectClear = PlayerPersistentStats.IsCurrentStagePerfectClear();
-        string currentSceneName = SceneManager.GetActiveScene().name;
-
-        StageUnlockProgress.UnlockCurrentAndNext(currentSceneName);
-
-        if (isPerfectClear)
-            StageUnlockProgress.MarkPerfect(currentSceneName);
 
         AudioSource audio = other.GetComponent<AudioSource>();
 

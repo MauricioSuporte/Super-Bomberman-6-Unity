@@ -568,7 +568,17 @@ public class GameManager : MonoBehaviour
 
         endStageTriggered = true;
 
+        string currentSceneName = SceneManager.GetActiveScene().name;
+
         CaptureAllPlayersForStageEnd();
+
+        bool isPerfectClear = PlayerPersistentStats.IsCurrentStagePerfectClear();
+
+        StageUnlockProgress.UnlockCurrentAndNext(currentSceneName);
+
+        if (isPerfectClear)
+            StageUnlockProgress.MarkPerfect(currentSceneName);
+
         PlayerPersistentStats.CommitStage();
         SaveFileMenu.SaveCurrentProgressToActiveSlot();
 
