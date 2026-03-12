@@ -16,6 +16,12 @@ public class SaveFileMenu : MonoBehaviour
         SelectDeleteSlot = 3
     }
 
+    [System.Serializable]
+    private sealed class BackgroundSet
+    {
+        public Sprite[] sprites = new Sprite[2];
+    }
+
     private sealed class SaveSlotInfo
     {
         public int SlotIndex;
@@ -67,9 +73,12 @@ public class SaveFileMenu : MonoBehaviour
     [SerializeField] private string deletedMessage = "FILE DELETED";
     [SerializeField] private float deleteFeedbackSeconds = 1.0f;
 
-    [Header("Background Sprite")]
-    [SerializeField] private Sprite[] backgroundSprites = new Sprite[2];
-    [SerializeField] private float backgroundSwapInterval = 2f;
+    [Header("Animated Backgrounds")]
+    [SerializeField] private BackgroundSet mainMenuBackgrounds = new BackgroundSet();
+    [SerializeField] private BackgroundSet newGameBackgrounds = new BackgroundSet();
+    [SerializeField] private BackgroundSet continueBackgrounds = new BackgroundSet();
+    [SerializeField] private BackgroundSet deleteBackgrounds = new BackgroundSet();
+    [SerializeField, Min(0.01f)] private float backgroundSwapInterval = 2f;
     [SerializeField] private bool backgroundSwapLoop = true;
 
     [Header("Music")]
@@ -140,6 +149,7 @@ public class SaveFileMenu : MonoBehaviour
 
     private int backgroundSpriteIndex;
     private float backgroundSwapTimer;
+    private MenuState _lastAppliedBackgroundState = (MenuState)(-1);
 
     private Coroutine fadeInCoroutine;
     private Coroutine disabledMessageRoutine;
@@ -169,7 +179,6 @@ public class SaveFileMenu : MonoBehaviour
     }
 
     public static int ActiveSlotIndex => PlayerPrefs.GetInt(ActiveSlotKey, -1);
-
     public static bool HasActiveSlot => ActiveSlotIndex >= 1;
 
     public static void SaveCurrentProgressToActiveSlot()
@@ -196,7 +205,7 @@ public class SaveFileMenu : MonoBehaviour
         if (root == null)
             root = gameObject;
 
-        ApplyCurrentBackgroundSprite();
+        ApplyCurrentBackgroundSprite(true);
         EnsureDisabledOptionText();
         UpdatePromptTitle();
 
@@ -217,11 +226,14 @@ public class SaveFileMenu : MonoBehaviour
 
     private void Update()
     {
+        if (root != null && root.activeInHierarchy)
+        {
+            ApplyDynamicScaleIfNeeded(false);
+            TickBackgroundSpriteSwap();
+        }
+
         if (!menuActive)
             return;
-
-        ApplyDynamicScaleIfNeeded(false);
-        TickBackgroundSpriteSwap();
 
         if (leftPanel != null)
             leftPanel.UpdateOptionVisuals(selectedIndex, confirmed || _cursorConfirmVisual);
@@ -250,7 +262,7 @@ public class SaveFileMenu : MonoBehaviour
         menuActive = false;
 
         ResetBackgroundSpriteSwap();
-        ApplyCurrentBackgroundSprite();
+        ApplyCurrentBackgroundSprite(true);
 
         yield return null;
         Canvas.ForceUpdateCanvases();
@@ -506,6 +518,7 @@ public class SaveFileMenu : MonoBehaviour
         selectedIndex = GetFirstSelectableIndex();
         ApplyEntriesToPanel();
         UpdatePromptTitle();
+        ApplyCurrentBackgroundSprite(true);
     }
 
     private void BuildSlotMenu(MenuState targetState)
@@ -533,6 +546,7 @@ public class SaveFileMenu : MonoBehaviour
         selectedIndex = GetFirstSelectableIndex();
         ApplyEntriesToPanel();
         UpdatePromptTitle();
+        ApplyCurrentBackgroundSprite(true);
     }
 
     private void ApplyEntriesToPanel()
@@ -1008,6 +1022,7 @@ public class SaveFileMenu : MonoBehaviour
     {
         backgroundSpriteIndex = 0;
         backgroundSwapTimer = 0f;
+        _lastAppliedBackgroundState = (MenuState)(-1);
     }
 
     private void TickBackgroundSpriteSwap()
@@ -1015,47 +1030,120 @@ public class SaveFileMenu : MonoBehaviour
         if (backgroundImage == null)
             return;
 
-        if (backgroundSprites == null || backgroundSprites.Length == 0)
+        Sprite[] currentSprites = GetCurrentBackgroundSprites();
+        if (currentSprites == null || currentSprites.Length == 0)
             return;
 
-        if (backgroundSprites.Length == 1)
+        int validCount = GetValidSpriteCount(currentSprites);
+        if (validCount <= 0)
+            return;
+
+        if (_lastAppliedBackgroundState != _state)
+            ApplyCurrentBackgroundSprite(true);
+
+        if (validCount == 1)
         {
-            if (backgroundImage.sprite != backgroundSprites[0])
-                backgroundImage.sprite = backgroundSprites[0];
+            if (backgroundImage.sprite != GetSpriteFromSet(currentSprites, 0))
+                backgroundImage.sprite = GetSpriteFromSet(currentSprites, 0);
             return;
         }
 
         backgroundSwapTimer += Time.unscaledDeltaTime;
 
-        if (backgroundSwapTimer < Mathf.Max(0.01f, backgroundSwapInterval))
-            return;
+        float interval = Mathf.Max(0.01f, backgroundSwapInterval);
 
-        backgroundSwapTimer = 0f;
-        backgroundSpriteIndex++;
-
-        if (backgroundSpriteIndex >= backgroundSprites.Length)
+        while (backgroundSwapTimer >= interval)
         {
-            if (backgroundSwapLoop)
-                backgroundSpriteIndex = 0;
-            else
-                backgroundSpriteIndex = backgroundSprites.Length - 1;
+            backgroundSwapTimer -= interval;
+            backgroundSpriteIndex++;
+
+            if (backgroundSpriteIndex >= validCount)
+            {
+                if (backgroundSwapLoop)
+                    backgroundSpriteIndex = 0;
+                else
+                    backgroundSpriteIndex = validCount - 1;
+            }
         }
 
-        ApplyCurrentBackgroundSprite();
+        ApplyCurrentBackgroundSprite(false);
     }
 
-    private void ApplyCurrentBackgroundSprite()
+    private void ApplyCurrentBackgroundSprite(bool force)
     {
         if (backgroundImage == null)
             return;
 
-        if (backgroundSprites == null || backgroundSprites.Length == 0)
+        Sprite[] currentSprites = GetCurrentBackgroundSprites();
+        if (currentSprites == null || currentSprites.Length == 0)
             return;
 
-        backgroundSpriteIndex = Mathf.Clamp(backgroundSpriteIndex, 0, backgroundSprites.Length - 1);
+        int validCount = GetValidSpriteCount(currentSprites);
+        if (validCount <= 0)
+            return;
 
-        if (backgroundSprites[backgroundSpriteIndex] != null)
-            backgroundImage.sprite = backgroundSprites[backgroundSpriteIndex];
+        int clampedIndex = validCount == 1
+            ? 0
+            : Mathf.Clamp(backgroundSpriteIndex, 0, validCount - 1);
+
+        Sprite sprite = GetSpriteFromSet(currentSprites, clampedIndex);
+        if (sprite == null)
+            return;
+
+        if (force || backgroundImage.sprite != sprite)
+            backgroundImage.sprite = sprite;
+
+        _lastAppliedBackgroundState = _state;
+    }
+
+    private Sprite[] GetCurrentBackgroundSprites()
+    {
+        return _state switch
+        {
+            MenuState.SelectNewGameSlot => newGameBackgrounds != null ? newGameBackgrounds.sprites : null,
+            MenuState.SelectContinueSlot => continueBackgrounds != null ? continueBackgrounds.sprites : null,
+            MenuState.SelectDeleteSlot => deleteBackgrounds != null ? deleteBackgrounds.sprites : null,
+            _ => mainMenuBackgrounds != null ? mainMenuBackgrounds.sprites : null
+        };
+    }
+
+    private int GetValidSpriteCount(Sprite[] sprites)
+    {
+        if (sprites == null || sprites.Length == 0)
+            return 0;
+
+        int count = 0;
+
+        for (int i = 0; i < sprites.Length; i++)
+        {
+            if (sprites[i] != null)
+                count++;
+        }
+
+        return count;
+    }
+
+    private Sprite GetSpriteFromSet(Sprite[] sprites, int index)
+    {
+        if (sprites == null || sprites.Length == 0)
+            return null;
+
+        List<Sprite> validSprites = null;
+
+        for (int i = 0; i < sprites.Length; i++)
+        {
+            if (sprites[i] == null)
+                continue;
+
+            validSprites ??= new List<Sprite>(sprites.Length);
+            validSprites.Add(sprites[i]);
+        }
+
+        if (validSprites == null || validSprites.Count == 0)
+            return null;
+
+        index = Mathf.Clamp(index, 0, validSprites.Count - 1);
+        return validSprites[index];
     }
 
     private Canvas GetRootCanvas()

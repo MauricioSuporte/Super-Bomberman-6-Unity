@@ -666,17 +666,43 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f1443b288cfb8ad4b946e391432b042d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SaveFileMenu
-  enableSurgicalLogs: 1
-  logScaleReapply: 1
   root: {fileID: 861532794}
   backgroundImage: {fileID: 1806562754}
   referenceRect: {fileID: 1599199474}
   fadeImage: {fileID: 336813435}
   fadeDuration: 0.5
+  useWorldMapAfterSelection: 1
+  worldMapSceneName: WorldMap
+  titleSceneName: TitleScreen
+  backSceneName: SkinSelect
+  promptTitleText: {fileID: 0}
+  mainPrompt: NORMAL GAME
+  newGamePrompt: START WHICH FILE?
+  continuePrompt: CONTINUE WHICH FILE?
+  deletePrompt: DELETE WHICH FILE?
   leftPanel: {fileID: 2134452605}
-  backgroundSprites:
-  - {fileID: 0}
-  - {fileID: 0}
+  slotCount: 3
+  slotLabelPrefix: 'File '
+  emptySlotDisplay: '- - -'
+  noEmptyFileMessage: NO EMPTY FILE
+  deletedMessage: FILE DELETED
+  deleteFeedbackSeconds: 1
+  mainMenuBackgrounds:
+    sprites:
+    - {fileID: 21300000, guid: 068d08be88af8ba41bdbd719a6aa67be, type: 3}
+    - {fileID: 21300000, guid: eff5aaaa85c9d07458a1d9b2cc8abc3c, type: 3}
+  newGameBackgrounds:
+    sprites:
+    - {fileID: 21300000, guid: 864b9b6b5efe49d45899170f19dde598, type: 3}
+    - {fileID: 21300000, guid: ef20af382c81c974d8af72830ebe1fbc, type: 3}
+  continueBackgrounds:
+    sprites:
+    - {fileID: 21300000, guid: c956a44a74dbb164f95ad363992b3ed7, type: 3}
+    - {fileID: 21300000, guid: 721fb8db48d8d0842b0764d721f644f2, type: 3}
+  deleteBackgrounds:
+    sprites:
+    - {fileID: 21300000, guid: bb00b6b1eb4df3a49bccd359b419711f, type: 3}
+    - {fileID: 21300000, guid: 66ab2fcdf144f8444bf09b24ffb7402a, type: 3}
   backgroundSwapInterval: 2
   backgroundSwapLoop: 1
   selectMusic: {fileID: 8300000, guid: f00d9f900fd297944919451c777a3a99, type: 3}
@@ -690,7 +716,6 @@ MonoBehaviour:
   returnSfxVolume: 1
   deniedOptionSfx: {fileID: 8300000, guid: 2f98cb783cdc9bb4d8ff3b868291f743, type: 3}
   deniedOptionVolume: 1
-  hasAnySaveFile: 1
   disabledOptionText: {fileID: 0}
   disabledContinueMessage: NO SAVE DATA
   disabledDeleteMessage: NO SAVE DATA
@@ -1443,9 +1468,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 001eeea5487e3ea4daf8a8f07c9db308, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SaveFileLeftPanel
-  enableSurgicalLogs: 1
-  logEveryLayoutApply: 1
-  logOptionPositionsAfterBuild: 1
   optionListRoot: {fileID: 470050462}
   optionItemPrefab: {fileID: 2139593661}
   fontSize: 32
