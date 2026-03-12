@@ -8,8 +8,7 @@ public class SkinSelectBootstrap : MonoBehaviour
     [SerializeField] BomberSkinSelectMenu skinSelectMenu;
 
     [Header("Default Flow")]
-    [SerializeField] bool useWorldMapAfterSkinSelect = true;
-    [SerializeField] string worldMapSceneName = "WorldMap";
+    [SerializeField] string saveFileMenuSceneName = "SaveFileMenu";
     [SerializeField] string firstStageSceneName = "Stage_1-1";
     [SerializeField] string titleSceneName = "TitleScreen";
 
@@ -24,7 +23,7 @@ public class SkinSelectBootstrap : MonoBehaviour
 
     public void SetNextDestinationToWorldMap()
     {
-        SkinSelectFlowRouter.SetReturnToWorldMap();
+        SkinSelectFlowRouter.SetReturnToCustomScene(saveFileMenuSceneName);
     }
 
     public void SetNextDestinationToBossRush(string sceneName)
@@ -118,14 +117,14 @@ public class SkinSelectBootstrap : MonoBehaviour
                     break;
                 }
 
-            case SkinSelectFlowRouter.Destination.WorldMap:
+            case SkinSelectFlowRouter.Destination.SaveFileMenu:
             default:
                 {
                     SkinSelectFlowRouter.Clear();
 
-                    if (useWorldMapAfterSkinSelect && !string.IsNullOrEmpty(worldMapSceneName))
+                    if (!string.IsNullOrEmpty(saveFileMenuSceneName))
                     {
-                        SceneManager.LoadScene(worldMapSceneName);
+                        SceneManager.LoadScene(saveFileMenuSceneName);
                         yield break;
                     }
 

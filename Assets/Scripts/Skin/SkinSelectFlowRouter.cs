@@ -4,13 +4,13 @@ public static class SkinSelectFlowRouter
 {
     public enum Destination
     {
-        WorldMap = 0,
+        SaveFileMenu = 0,
         BossRush = 1,
         FirstStage = 2,
         CustomScene = 3
     }
 
-    static Destination nextDestination = Destination.WorldMap;
+    static Destination nextDestination = Destination.SaveFileMenu;
     static string customSceneName;
     static string bossRushSceneName;
 
@@ -18,9 +18,9 @@ public static class SkinSelectFlowRouter
     public static string CustomSceneName => customSceneName;
     public static string BossRushSceneName => bossRushSceneName;
 
-    public static void SetReturnToWorldMap()
+    public static void SetReturnToSaveFileMenu()
     {
-        nextDestination = Destination.WorldMap;
+        nextDestination = Destination.SaveFileMenu;
         customSceneName = null;
         bossRushSceneName = null;
     }
@@ -48,7 +48,7 @@ public static class SkinSelectFlowRouter
 
     public static void Clear()
     {
-        nextDestination = Destination.WorldMap;
+        nextDestination = Destination.SaveFileMenu;
         customSceneName = null;
         bossRushSceneName = null;
     }

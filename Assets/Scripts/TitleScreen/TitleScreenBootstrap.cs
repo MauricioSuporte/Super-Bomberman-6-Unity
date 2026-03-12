@@ -175,7 +175,7 @@ public class TitleScreenBootstrap : MonoBehaviour
         {
             if (!string.IsNullOrEmpty(skinSelectSceneName))
             {
-                SkinSelectFlowRouter.SetReturnToWorldMap();
+                SkinSelectFlowRouter.SetReturnToSaveFileMenu();
                 SceneManager.LoadScene(skinSelectSceneName);
                 yield break;
             }
