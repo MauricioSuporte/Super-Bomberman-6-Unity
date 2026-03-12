@@ -47,6 +47,7 @@ public class SaveFileMenu : MonoBehaviour
     [SerializeField] private bool useWorldMapAfterSelection = true;
     [SerializeField] private string worldMapSceneName = "WorldMap";
     [SerializeField] private string titleSceneName = "TitleScreen";
+    [SerializeField] private string backSceneName = "SkinSelect";
 
     [Header("Prompt Title (optional)")]
     [SerializeField] private TextMeshProUGUI promptTitleText;
@@ -335,6 +336,7 @@ public class SaveFileMenu : MonoBehaviour
                 confirmed = true;
                 yield return FadeOutRoutine();
                 Hide();
+                LoadBackScene();
                 yield break;
             }
 
@@ -456,6 +458,21 @@ public class SaveFileMenu : MonoBehaviour
         if (useWorldMapAfterSelection && !string.IsNullOrWhiteSpace(worldMapSceneName))
         {
             SceneManager.LoadScene(worldMapSceneName);
+            return;
+        }
+
+        if (!string.IsNullOrWhiteSpace(titleSceneName))
+            SceneManager.LoadScene(titleSceneName);
+    }
+
+    private void LoadBackScene()
+    {
+        GamePauseController.ClearPauseFlag();
+        Time.timeScale = 1f;
+
+        if (!string.IsNullOrWhiteSpace(backSceneName))
+        {
+            SceneManager.LoadScene(backSceneName);
             return;
         }
 
