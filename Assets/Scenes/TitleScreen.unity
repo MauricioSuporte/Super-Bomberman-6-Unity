@@ -582,8 +582,9 @@ MonoBehaviour:
   footerFontSize: 36
   footerOffsetFromLastLineY: -40
   footerShowSeconds: 2
-  bossRushUnlocked: 1
+  forceBossRushUnlocked: 1
   bossRushLockedAlpha: 0.35
+  bossRushLockedMessage: UNLOCKED BY CLEARING ALL STAGES
   bossRushLockedMessageHex: '#FF3B30'
   bossRushLockedText: {fileID: 0}
   bossRushLockedFontSize: 34

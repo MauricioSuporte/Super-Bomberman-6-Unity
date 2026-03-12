@@ -84,7 +84,10 @@ public class TitleScreenBootstrap : MonoBehaviour
         if (titleScreen == null)
             return;
 
-        bool unlocked = StageUnlockProgress.HasClearedAllRegisteredStages();
+        bool unlockedByInspector = titleScreen.BossRushInspectorOverrideUnlocked;
+        bool unlockedByProgress = StageUnlockProgress.HasClearedAllRegisteredStages();
+        bool unlocked = unlockedByInspector || unlockedByProgress;
+
         titleScreen.SetBossRushUnlocked(unlocked);
     }
 

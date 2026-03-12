@@ -102,7 +102,7 @@ public class TitleScreenController : MonoBehaviour
     [Header("Start Game Timing")]
     [SerializeField] float startGameFadeOutDuration = 0.25f;
 
-    [Header("Cursor (AnimatedSpriteRenderer)")]
+    [Header("Cursor")]
     public AnimatedSpriteRenderer cursorRenderer;
     [SerializeField] Vector2 cursorOffset = new(-30f, 0f);
     [SerializeField] bool cursorAsChildOfMenuText = true;
@@ -124,8 +124,8 @@ public class TitleScreenController : MonoBehaviour
     [SerializeField] float footerOffsetFromLastLineY = -40f;
     [SerializeField] float footerShowSeconds = 2.0f;
 
-    [Header("Boss Rush Lock (separate bottom message)")]
-    [SerializeField] bool bossRushUnlocked = true;
+    [Header("Boss Rush Lock")]
+    [SerializeField] bool forceBossRushUnlocked = true;
     [SerializeField, Range(0.05f, 1f)] float bossRushLockedAlpha = 0.35f;
     [SerializeField] string bossRushLockedMessage = "UNLOCKED BY CLEARING ALL STAGES";
     [SerializeField] string bossRushLockedMessageHex = "#FF3B30";
@@ -139,12 +139,14 @@ public class TitleScreenController : MonoBehaviour
 
     public bool ControlsRequested { get; private set; }
 
-    RectTransform cursorRect;
-
     public bool Running { get; private set; }
     public bool NormalGameRequested { get; private set; }
     public bool BossRushRequested { get; private set; }
     public bool ExitRequested { get; private set; }
+
+    bool bossRushInspectorDefaultUnlocked;
+
+    public bool BossRushInspectorOverrideUnlocked => bossRushInspectorDefaultUnlocked;
 
     enum MenuMode
     {
@@ -233,7 +235,7 @@ public class TitleScreenController : MonoBehaviour
 
     public void SetBossRushUnlocked(bool unlocked)
     {
-        bossRushUnlocked = unlocked;
+        forceBossRushUnlocked = unlocked;
 
         if (menuMode == MenuMode.Main && menuText != null && menuText.gameObject.activeInHierarchy)
             RefreshMenuText();
@@ -241,6 +243,8 @@ public class TitleScreenController : MonoBehaviour
 
     void Awake()
     {
+        bossRushInspectorDefaultUnlocked = forceBossRushUnlocked;
+
         if (titleScreenRawImage == null)
             titleScreenRawImage = GetComponent<RawImage>();
 
@@ -249,8 +253,6 @@ public class TitleScreenController : MonoBehaviour
 
         if (cursorRenderer != null)
         {
-            cursorRect = cursorRenderer.GetComponent<RectTransform>();
-
             if (cursorAsChildOfMenuText && menuText != null)
                 cursorRenderer.transform.SetParent(menuText.transform, false);
 
@@ -1230,7 +1232,7 @@ public class TitleScreenController : MonoBehaviour
 
                     if (menuIndex == MAIN_IDX_BOSS_RUSH)
                     {
-                        if (!bossRushUnlocked)
+                        if (!forceBossRushUnlocked)
                         {
                             PlayDeniedSfx();
                             ShowBossRushLockedMessage(bossRushLockedMessage, bossRushLockedMessageHex, bossRushLockedShowSeconds);
@@ -1440,7 +1442,7 @@ public class TitleScreenController : MonoBehaviour
         if (menuMode == MenuMode.Main)
         {
             string normal = $"<color=#{baseRgb}FF>NORMAL GAME</color>";
-            string bossRush = bossRushUnlocked
+            string bossRush = forceBossRushUnlocked
                 ? $"<color=#{baseRgb}FF>BOSS RUSH</color>"
                 : $"<color={ColorWithAlpha(baseRgb, bossRushLockedAlpha)}>BOSS RUSH</color>";
             string controls = $"<color=#{baseRgb}FF>CONTROLS</color>";
