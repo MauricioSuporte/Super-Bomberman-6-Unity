@@ -16,5 +16,6 @@
     Purple,
     Magenta,
     Pink,
-    Brown
+    Brown,
+    Gold
 }
