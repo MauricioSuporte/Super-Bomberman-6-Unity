@@ -1008,8 +1008,8 @@ MonoBehaviour:
   root: {fileID: 861532794}
   backgroundImage: {fileID: 1806562754}
   fadeImage: {fileID: 336813435}
-  fadeDuration: 1
-  fadeOutOnConfirmDuration: 2
+  fadeDuration: 0.5
+  fadeOutOnConfirmDuration: 1
   gridRoot: {fileID: 607783271}
   skinItemPrefab: {fileID: 136072051}
   columns: 5
@@ -1040,7 +1040,7 @@ MonoBehaviour:
   spritesResourcesPath: Sprites/Bombers/Bomberman
   idleFrameIndex: 16
   downFrameTime: 0.22
-  endStageFrameTime: 0.14
+  endStageFrameTime: 0.1
   downFrames: 0e000000100000001200000010000000
   endStageFrames: 94000000940000009200000094000000930000009400000092000000940000009300000093000000
   endStageYOffset: 10
@@ -1069,7 +1069,7 @@ MonoBehaviour:
   minScale: 0.5
   maxScale: 10
   gridBaseAnchoredPos: {x: 0, y: -10}
-  selectableSkins: 0100000003000000040000000b00000008000000060000000f0000000a0000000000000009000000
+  selectableSkins: 0100000003000000040000000b00000008000000060000000f0000000a000000020000000500000007000000090000000c0000000d0000000e0000001000000000000000
 --- !u!224 &1311323898
 RectTransform:
   m_ObjectHideFlags: 0

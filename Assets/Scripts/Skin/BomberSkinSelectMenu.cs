@@ -61,13 +61,13 @@ public class BomberSkinSelectMenu : MonoBehaviour
 
     [Header("Preview Animations")]
     [SerializeField] float downFrameTime = 0.22f;
-    [SerializeField] float endStageFrameTime = 0.14f;
+    [SerializeField] float endStageFrameTime = 0.1f;
     [SerializeField] int[] downFrames = new[] { 14, 16, 18, 16 };
     [SerializeField] int[] endStageFrames = new[] { 148, 148, 146, 148, 147, 148, 146, 148, 147, 147 };
 
     [Header("EndStage Offset + Stop")]
     [SerializeField] float endStageYOffset = 10f;
-    [SerializeField] int endStageLoopsToStop = 2;
+    [SerializeField] int endStageLoopsToStop = 1;
 
     [Header("Music")]
     [SerializeField] AudioClip selectMusic;
