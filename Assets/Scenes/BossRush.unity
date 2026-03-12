@@ -2244,8 +2244,8 @@ MonoBehaviour:
   backgroundImage: {fileID: 1806562754}
   referenceRect: {fileID: 1599199474}
   fadeImage: {fileID: 336813435}
-  fadeDuration: 1
-  fadeOutOnConfirmDuration: 1.5
+  fadeDuration: 0.5
+  fadeOutOnConfirmDuration: 0.5
   difficultyLoadouts:
   - difficulty: 0
     life: 4
