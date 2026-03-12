@@ -4680,16 +4680,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 944833f79ecad8046b768e1ce2158b3b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BossRushLeftPanel
-  enableSurgicalLogs: 0
+  enableSurgicalLogs: 1
   dumpDifficultyLayoutEveryUpdate: 0
   difficultyListRoot: {fileID: 470050462}
   difficultyItemPrefab: {fileID: 2139593661}
   difficultyNormalColor: {r: 1, g: 1, b: 1, a: 1}
-  fontSize: 32
+  fontSize: 42
   difficultyItemHeight: 32
-  difficultySpacing: {x: 0, y: 10}
+  difficultySpacing: {x: 0, y: 20}
   difficultyContentOffsetX: 64
-  difficultyContentOffsetY: 125
+  difficultyContentOffsetY: 140
   cursorExtraOffsetY: 0
   easySelectedColor: {r: 0.21960784, g: 0.7882353, b: 0.21176471, a: 1}
   normalSelectedColor: {r: 0.1764706, g: 0.45882353, b: 1, a: 1}
@@ -4719,8 +4719,8 @@ MonoBehaviour:
   cursorOffset: {x: -28, y: 0}
   scaleCursorWithUi: 1
   roundCursorToWholePixels: 1
-  cursorHeightMultiplier: 1
-  minCursorSize: 24
+  cursorHeightMultiplier: 1.42
+  minCursorSize: 42
 --- !u!1 &2139593657
 GameObject:
   m_ObjectHideFlags: 0

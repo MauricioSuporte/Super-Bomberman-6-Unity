@@ -357,9 +357,23 @@ public class BossRushLeftPanel : MonoBehaviour
 
         cursorRenderer.gameObject.SetActive(true);
 
-        Vector3 localPos = txt.rectTransform.localPosition;
-        localPos.x += ScaledFloat(cursorOffset.x);
-        localPos.y += ScaledFloat(cursorOffset.y) + ScaledFloat(cursorExtraOffsetY);
+        RectTransform txtRt = txt.rectTransform;
+        RectTransform cursorRt = cursorRenderer.transform as RectTransform;
+
+        float effectiveScale = scaleCursorWithUi ? _currentUiScale : 1f;
+
+        Vector3 localPos = txtRt.localPosition;
+        localPos.x += Mathf.Round(cursorOffset.x * effectiveScale);
+
+        float textCenterOffsetY = 0f;
+        if (cursorRt != null)
+        {
+            float textHeight = txtRt.rect.height;
+            float cursorHeight = cursorRt.rect.height;
+            textCenterOffsetY = (textHeight - cursorHeight) * 0.5f;
+        }
+
+        localPos.y += Mathf.Round((cursorOffset.y + cursorExtraOffsetY) * effectiveScale - textCenterOffsetY);
         localPos.z = 0f;
 
         if (roundCursorToWholePixels)
@@ -578,7 +592,9 @@ public class BossRushLeftPanel : MonoBehaviour
             _cursorBaseSizeCaptured = true;
         }
 
-        float targetHeight = ScaledFloat(difficultyItemHeight);
+        float effectiveScale = scaleCursorWithUi ? _currentUiScale : 1f;
+
+        float targetHeight = Mathf.Round(difficultyItemHeight * effectiveScale);
         float targetSize = Mathf.Max(targetHeight * cursorHeightMultiplier, minCursorSize);
 
         float baseAspect = _cursorBaseSizeDelta.y > 0f
@@ -595,6 +611,7 @@ public class BossRushLeftPanel : MonoBehaviour
         SLog(
             $"ApplyCursorScale | " +
             $"uiScale={_currentUiScale:0.###} " +
+            $"effectiveScale={effectiveScale:0.###} " +
             $"targetHeight={targetHeight:0.##} " +
             $"cursorHeightMultiplier={cursorHeightMultiplier:0.##} " +
             $"cursorSize={cursorRt.sizeDelta}"
