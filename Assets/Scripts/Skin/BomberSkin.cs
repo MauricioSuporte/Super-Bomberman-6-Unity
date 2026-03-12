@@ -17,5 +17,6 @@
     Magenta,
     Pink,
     Brown,
+    DarkGreen,
     Gold
 }
