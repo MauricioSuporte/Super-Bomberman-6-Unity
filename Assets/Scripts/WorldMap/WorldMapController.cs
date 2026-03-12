@@ -129,9 +129,8 @@ public class WorldMapController : MonoBehaviour
     [SerializeField] AudioClip backSceneSfx;
     [SerializeField, Range(0f, 1f)] float backSceneSfxVolume = 1f;
 
-    [Header("Optional Back")]
-    [SerializeField] bool allowBackScene = true;
-    [SerializeField] string backSceneName = "SkinSelect";
+    [Header("Back Scene")]
+    private readonly string backSceneName = "SaveFileMenu";
 
     [Header("Top Left Label")]
     [SerializeField] Text worldStageLabel;
@@ -268,7 +267,7 @@ public class WorldMapController : MonoBehaviour
             return;
         }
 
-        if (allowBackScene && input.GetDown(ownerPlayerId, PlayerAction.ActionB))
+        if (input.GetDown(ownerPlayerId, PlayerAction.ActionB))
             StartCoroutine(LoadSceneRoutine(backSceneName, backSceneSfx, backSceneSfxVolume));
     }
 
