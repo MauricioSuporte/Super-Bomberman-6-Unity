@@ -117,7 +117,7 @@ public class WorldMapController : MonoBehaviour
 
     [Header("Fade")]
     [SerializeField] Image fadeImage;
-    [SerializeField, Min(0.01f)] float fadeInDuration = 0.5f;
+    [SerializeField, Min(0.01f)] float fadeDuration = 0.5f;
     [SerializeField, Min(0.01f)] float worldChangeFadeOutDuration = 0.5f;
     [SerializeField, Min(0.01f)] float worldChangeFadeInDuration = 0.5f;
 
@@ -223,7 +223,7 @@ public class WorldMapController : MonoBehaviour
         PlayMusicForCurrentWorld(forceRestart: true);
 
         if (fadeImage != null)
-            StartCoroutine(FadeInRoutine(fadeInDuration));
+            StartCoroutine(FadeInRoutine(fadeDuration));
 
         RefreshClearedStageSpinAnimations();
     }
@@ -409,9 +409,9 @@ public class WorldMapController : MonoBehaviour
             PlaySfx(sfxClip, sfxVolume);
 
         if (fadeImage != null)
-            yield return FadeOutWithMusicRoutine(selectedTransitionDuration);
+            yield return FadeOutWithMusicRoutine(fadeDuration);
         else
-            yield return FadeMusicOutRoutine(selectedTransitionDuration);
+            yield return FadeMusicOutRoutine(fadeDuration);
 
         SceneManager.LoadScene(sceneName);
     }
