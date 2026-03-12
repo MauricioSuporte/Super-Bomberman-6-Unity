@@ -143,6 +143,9 @@ public static class StageUnlockProgress
 
     public static void Unlock(string sceneName)
     {
+        if (ShouldIgnoreProgressPersistence())
+            return;
+
         Load();
         EnsureDefaultUnlocked();
 
@@ -156,6 +159,9 @@ public static class StageUnlockProgress
 
     public static void MarkCleared(string sceneName)
     {
+        if (ShouldIgnoreProgressPersistence())
+            return;
+
         Load();
         EnsureDefaultUnlocked();
 
@@ -181,6 +187,9 @@ public static class StageUnlockProgress
 
     public static void MarkPerfect(string sceneName)
     {
+        if (ShouldIgnoreProgressPersistence())
+            return;
+
         Load();
         EnsureDefaultUnlocked();
 
@@ -213,6 +222,9 @@ public static class StageUnlockProgress
 
     public static void UnlockCurrentAndNext(string currentSceneName)
     {
+        if (ShouldIgnoreProgressPersistence())
+            return;
+
         Load();
         EnsureDefaultUnlocked();
 
@@ -391,5 +403,10 @@ public static class StageUnlockProgress
         }
 
         return true;
+    }
+
+    private static bool ShouldIgnoreProgressPersistence()
+    {
+        return BossRushSession.IsActive;
     }
 }
