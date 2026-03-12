@@ -574,6 +574,7 @@ public class GameManager : MonoBehaviour
 
         if (BossRushSession.IsActive)
         {
+            BossRushSession.CapturePlayerSurvivalStateFromScene();
             BossRushSession.PauseTimer();
             StartCoroutine(LoadNextBossRushStageRoutine());
             return;

@@ -24,11 +24,15 @@ public static class BossRushSession
     static float lastCompletedTime;
     static int lastCompletedRank = -1;
 
+    static int runPlayerCount = 1;
+    static readonly bool[] eliminatedPlayers = new bool[4];
+
     public static bool IsActive => active;
     public static bool HasLastCompletedRun => hasLastCompletedRun;
     public static BossRushDifficulty LastCompletedDifficulty => lastCompletedDifficulty;
     public static float LastCompletedTime => lastCompletedTime;
     public static int LastCompletedRank => lastCompletedRank;
+    public static int RunPlayerCount => Mathf.Clamp(runPlayerCount, 1, 4);
 
     public static void StartRun(BossRushDifficulty difficulty, BossRushLoadoutPreset preset)
     {
@@ -45,7 +49,12 @@ public static class BossRushSession
         lastCompletedRank = -1;
         lastCompletedTime = 0f;
 
-        ApplySelectedLoadoutToAllPlayers();
+        runPlayerCount = 1;
+        if (GameSession.Instance != null)
+            runPlayerCount = Mathf.Clamp(GameSession.Instance.ActivePlayerCount, 1, 4);
+
+        ClearEliminatedPlayers();
+        ApplySelectedLoadoutToRunPlayers();
     }
 
     public static void CancelRun()
@@ -64,9 +73,7 @@ public static class BossRushSession
     public static int CompleteRunAndStoreTime()
     {
         if (!active)
-        {
             return -1;
-        }
 
         timerPaused = true;
 
@@ -128,15 +135,11 @@ public static class BossRushSession
         nextSceneName = null;
 
         if (!active)
-        {
             return false;
-        }
 
         int nextIndex = currentStageIndex + 1;
         if (nextIndex >= stageOrder.Length)
-        {
             return false;
-        }
 
         currentStageIndex = nextIndex;
         nextSceneName = stageOrder[currentStageIndex];
@@ -173,9 +176,95 @@ public static class BossRushSession
         }
     }
 
-    static void ApplySelectedLoadoutToAllPlayers()
+    public static bool ShouldSpawnPlayer(int playerId)
     {
-        for (int playerId = 1; playerId <= 4; playerId++)
+        playerId = Mathf.Clamp(playerId, 1, 4);
+
+        if (!active)
+            return true;
+
+        if (playerId > RunPlayerCount)
+            return false;
+
+        return !eliminatedPlayers[playerId - 1];
+    }
+
+    public static bool IsPlayerEliminated(int playerId)
+    {
+        playerId = Mathf.Clamp(playerId, 1, 4);
+
+        if (playerId > RunPlayerCount)
+            return true;
+
+        return eliminatedPlayers[playerId - 1];
+    }
+
+    public static void MarkPlayerEliminated(int playerId)
+    {
+        if (!active)
+            return;
+
+        playerId = Mathf.Clamp(playerId, 1, 4);
+
+        if (playerId > RunPlayerCount)
+            return;
+
+        eliminatedPlayers[playerId - 1] = true;
+
+        var state = PlayerPersistentStats.Get(playerId);
+        if (state != null)
+            state.Life = 0;
+    }
+
+    public static void CapturePlayerSurvivalStateFromScene()
+    {
+        if (!active)
+            return;
+
+        if (RunPlayerCount <= 1)
+            return;
+
+        bool[] aliveFlags = new bool[4];
+
+        var identities = UnityEngine.Object.FindObjectsByType<PlayerIdentity>(
+            FindObjectsInactive.Include,
+            FindObjectsSortMode.None
+        );
+
+        for (int i = 0; i < identities.Length; i++)
+        {
+            var identity = identities[i];
+            if (identity == null)
+                continue;
+
+            int playerId = Mathf.Clamp(identity.playerId, 1, 4);
+            if (playerId > RunPlayerCount)
+                continue;
+
+            MovementController movement = null;
+
+            if (!identity.TryGetComponent(out movement))
+                movement = identity.GetComponentInChildren<MovementController>(true);
+
+            bool alive =
+                movement != null &&
+                movement.gameObject.activeInHierarchy &&
+                !movement.isDead;
+
+            if (alive)
+                aliveFlags[playerId - 1] = true;
+        }
+
+        for (int playerId = 1; playerId <= RunPlayerCount; playerId++)
+        {
+            if (!aliveFlags[playerId - 1])
+                MarkPlayerEliminated(playerId);
+        }
+    }
+
+    static void ApplySelectedLoadoutToRunPlayers()
+    {
+        for (int playerId = 1; playerId <= RunPlayerCount; playerId++)
         {
             var state = PlayerPersistentStats.Get(playerId);
             if (state == null)
@@ -207,6 +296,12 @@ public static class BossRushSession
         }
     }
 
+    static void ClearEliminatedPlayers()
+    {
+        for (int i = 0; i < eliminatedPlayers.Length; i++)
+            eliminatedPlayers[i] = false;
+    }
+
     static void ClearRuntimeState(bool keepLastCompletedRun = false)
     {
         active = false;
@@ -214,6 +309,9 @@ public static class BossRushSession
         currentStageIndex = 0;
         selectedPreset = null;
         elapsedSeconds = 0f;
+        runPlayerCount = 1;
+
+        ClearEliminatedPlayers();
 
         if (!keepLastCompletedRun)
         {

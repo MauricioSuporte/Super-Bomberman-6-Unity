@@ -99,14 +99,17 @@ public sealed class PlayersSpawner : MonoBehaviour
     void DestroyExistingPlayers()
     {
         var ids = FindObjectsByType<PlayerIdentity>(FindObjectsInactive.Include, FindObjectsSortMode.None);
-        if (ids == null) return;
+        if (ids == null)
+            return;
 
         for (int i = 0; i < ids.Length; i++)
         {
-            if (ids[i] == null) continue;
+            if (ids[i] == null)
+                continue;
 
             var go = ids[i].gameObject;
-            if (go == null) continue;
+            if (go == null)
+                continue;
 
             Destroy(go);
         }
@@ -116,23 +119,28 @@ public sealed class PlayersSpawner : MonoBehaviour
     {
         int count = 1;
 
-        if (GameSession.Instance != null)
+        if (BossRushSession.IsActive)
+            count = BossRushSession.RunPlayerCount;
+        else if (GameSession.Instance != null)
             count = Mathf.Clamp(GameSession.Instance.ActivePlayerCount, 1, 4);
 
         PlayerPersistentStats.EnsureSessionBooted();
 
         Vector2[] preset = isBossStage ? BossStagePositions : NormalStagePositions;
 
-        for (int i = 0; i < count; i++)
+        for (int playerId = 1; playerId <= count; playerId++)
         {
-            Vector3 spawnPos = ResolveSpawnPosition(i, preset);
+            if (BossRushSession.IsActive && !BossRushSession.ShouldSpawnPlayer(playerId))
+                continue;
+
+            int index = playerId - 1;
+            Vector3 spawnPos = ResolveSpawnPosition(index, preset);
 
             var go = Instantiate(playerPrefab, spawnPos, Quaternion.identity, playersParent);
 
             if (!go.TryGetComponent<PlayerIdentity>(out var id))
                 id = go.AddComponent<PlayerIdentity>();
 
-            int playerId = i + 1;
             id.playerId = playerId;
 
             var move = go.GetComponent<MovementController>();
@@ -149,8 +157,10 @@ public sealed class PlayersSpawner : MonoBehaviour
 
             var skins = go.GetComponentsInChildren<PlayerBomberSkinController>(true);
             for (int s = 0; s < skins.Length; s++)
+            {
                 if (skins[s] != null)
                     skins[s].ApplyFromIdentity();
+            }
         }
     }
 
@@ -183,10 +193,6 @@ public sealed class PlayersSpawner : MonoBehaviour
 
     public Vector2 GetResolvedSpawnPosition(int playerId)
     {
-        int count = 1;
-        if (GameSession.Instance != null)
-            count = Mathf.Clamp(GameSession.Instance.ActivePlayerCount, 1, 4);
-
         int idx = Mathf.Clamp(playerId - 1, 0, 3);
 
         Vector2[] preset = isBossStage ? BossStagePositions : NormalStagePositions;
