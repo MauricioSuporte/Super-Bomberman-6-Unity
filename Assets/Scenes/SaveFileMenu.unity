@@ -686,7 +686,7 @@ MonoBehaviour:
   emptySlotDisplay: '- - -'
   noEmptyFileMessage: NO EMPTY FILE
   deletedMessage: FILE DELETED
-  deleteFeedbackSeconds: 1
+  deleteFeedbackSeconds: 0.5
   mainMenuBackgrounds:
     sprites:
     - {fileID: 21300000, guid: 068d08be88af8ba41bdbd719a6aa67be, type: 3}

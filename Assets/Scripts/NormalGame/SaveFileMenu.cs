@@ -69,15 +69,13 @@ public class SaveFileMenu : MonoBehaviour
     [SerializeField, Min(1)] private int slotCount = 3;
     [SerializeField] private string slotLabelPrefix = "File ";
     [SerializeField] private string emptySlotDisplay = "- - -";
-    [SerializeField] private string noEmptyFileMessage = "NO EMPTY FILE";
-    [SerializeField] private string deletedMessage = "FILE DELETED";
-    [SerializeField] private float deleteFeedbackSeconds = 1.0f;
+    [SerializeField] private float deleteFeedbackSeconds = 0.5f;
 
     [Header("Animated Backgrounds")]
-    [SerializeField] private BackgroundSet mainMenuBackgrounds = new BackgroundSet();
-    [SerializeField] private BackgroundSet newGameBackgrounds = new BackgroundSet();
-    [SerializeField] private BackgroundSet continueBackgrounds = new BackgroundSet();
-    [SerializeField] private BackgroundSet deleteBackgrounds = new BackgroundSet();
+    [SerializeField] private BackgroundSet mainMenuBackgrounds = new();
+    [SerializeField] private BackgroundSet newGameBackgrounds = new();
+    [SerializeField] private BackgroundSet continueBackgrounds = new();
+    [SerializeField] private BackgroundSet deleteBackgrounds = new();
     [SerializeField, Min(0.01f)] private float backgroundSwapInterval = 2f;
     [SerializeField] private bool backgroundSwapLoop = true;
 
@@ -98,6 +96,7 @@ public class SaveFileMenu : MonoBehaviour
 
     [Header("Disabled / Feedback Message")]
     [SerializeField] private TextMeshProUGUI disabledOptionText;
+    [SerializeField] private string disabledNewGameMessage = "NO EMPTY SLOT";
     [SerializeField] private string disabledContinueMessage = "NO SAVE DATA";
     [SerializeField] private string disabledDeleteMessage = "NO SAVE DATA";
     [SerializeField] private float disabledMessageShowSeconds = 1.5f;
@@ -381,6 +380,13 @@ public class SaveFileMenu : MonoBehaviour
             switch (SelectedOption)
             {
                 case SaveFileOption.NewGame:
+                    if (!HasAnyAvailableNewGameSlot())
+                    {
+                        PlayDeniedSfx();
+                        ShowDisabledMessage(disabledNewGameMessage, disabledMessageShowSeconds);
+                        yield break;
+                    }
+
                     PlaySfx(confirmSfx, confirmSfxVolume);
                     BuildSlotMenu(MenuState.SelectNewGameSlot);
                     UpdateOptionVisuals();
@@ -460,8 +466,6 @@ public class SaveFileMenu : MonoBehaviour
                 if (ActiveSlotIndex == slotIndex)
                     PlayerPrefs.DeleteKey(ActiveSlotKey);
 
-                ShowDisabledMessage(deletedMessage, deleteFeedbackSeconds);
-
                 yield return new WaitForSecondsRealtime(deleteFeedbackSeconds);
 
                 _cursorConfirmVisual = false;
@@ -515,7 +519,7 @@ public class SaveFileMenu : MonoBehaviour
             _displayEnabled.Add(IsMainOptionEnabled(option));
         }
 
-        selectedIndex = GetFirstSelectableIndex();
+        selectedIndex = GetDefaultMainMenuSelectedIndex();
         ApplyEntriesToPanel();
         UpdatePromptTitle();
         ApplyCurrentBackgroundSprite(true);
@@ -572,6 +576,7 @@ public class SaveFileMenu : MonoBehaviour
     {
         return option switch
         {
+            SaveFileOption.NewGame => HasAnyAvailableNewGameSlot(),
             SaveFileOption.Continue => HasAnyExistingSlot(),
             SaveFileOption.DeleteFile => HasAnyExistingSlot(),
             _ => true
@@ -589,12 +594,41 @@ public class SaveFileMenu : MonoBehaviour
         return false;
     }
 
+    private bool HasAnyAvailableNewGameSlot()
+    {
+        for (int i = 1; i <= slotCount; i++)
+        {
+            if (!SlotExists(i))
+                return true;
+        }
+
+        return false;
+    }
+
     private bool IsCurrentSelectionEnabled()
     {
         if (selectedIndex < 0 || selectedIndex >= _displayEnabled.Count)
             return false;
 
         return _displayEnabled[selectedIndex];
+    }
+
+    private int GetDefaultMainMenuSelectedIndex()
+    {
+        bool hasExistingSlot = HasAnyExistingSlot();
+
+        if (hasExistingSlot)
+        {
+            int continueIndex = _mainOptions.IndexOf(SaveFileOption.Continue);
+            if (continueIndex >= 0 &&
+                continueIndex < _displayEnabled.Count &&
+                _displayEnabled[continueIndex])
+            {
+                return continueIndex;
+            }
+        }
+
+        return GetFirstSelectableIndex();
     }
 
     private int GetFirstSelectableIndex()
@@ -1299,13 +1333,27 @@ public class SaveFileMenu : MonoBehaviour
     {
         string message = _state switch
         {
-            MenuState.SelectNewGameSlot => noEmptyFileMessage,
+            MenuState.Main => GetMainDisabledMessage(),
             MenuState.SelectContinueSlot => disabledContinueMessage,
             MenuState.SelectDeleteSlot => disabledDeleteMessage,
+            MenuState.SelectNewGameSlot => disabledNewGameMessage,
             _ => disabledContinueMessage
         };
 
         ShowDisabledMessage(message, disabledMessageShowSeconds);
+    }
+
+    private string GetMainDisabledMessage()
+    {
+        SaveFileOption option = SelectedOption;
+
+        return option switch
+        {
+            SaveFileOption.NewGame => disabledNewGameMessage,
+            SaveFileOption.Continue => disabledContinueMessage,
+            SaveFileOption.DeleteFile => disabledDeleteMessage,
+            _ => disabledContinueMessage
+        };
     }
 
     private void ShowDisabledMessage(string message, float duration)
