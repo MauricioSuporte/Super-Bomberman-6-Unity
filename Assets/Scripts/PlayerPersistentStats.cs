@@ -10,31 +10,25 @@ public static class PlayerPersistentStats
 
     public const int MaxBombAmount = 8;
     public const int MaxExplosionRadius = 9;
-
     public const int SpeedStep = 32;
     public const int BaseSpeedNormal = 224;
-
     public const int MaxSpeedUps = 8;
     public const int MaxSpeedInternal = BaseSpeedNormal + (MaxSpeedUps * SpeedStep);
     public const int MinSpeedInternal = BaseSpeedNormal;
-
     public const int SpeedDivisor = 64;
 
     public sealed class PlayerState
     {
-        public int Life = 9;
-
-        public int BombAmount = 9;
-        public int ExplosionRadius = 9;
-
-        public int SpeedInternal = MaxSpeedInternal;
-
+        public int Life = 1;
+        public int BombAmount = 1;
+        public int ExplosionRadius = 1;
+        public int SpeedInternal = MinSpeedInternal;
         public bool CanKickBombs = false;
         public bool CanPunchBombs = false;
         public bool HasPowerGlove = false;
         public bool CanPassBombs = false;
-        public bool CanPassDestructibles = true;
-        public bool HasPierceBombs = true;
+        public bool CanPassDestructibles = false;
+        public bool HasPierceBombs = false;
         public bool HasControlBombs = false;
         public bool HasPowerBomb = false;
         public bool HasRubberBombs = false;

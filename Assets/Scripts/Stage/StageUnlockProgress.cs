@@ -7,6 +7,7 @@ public static class StageUnlockProgress
     private const string ClearedStagesKey = "SB6_ClearedStages";
     private const string PerfectStagesKey = "SB6_PerfectStages";
     private const string StageOrderKey = "SB6_StageOrder";
+    private const string BossRushUnlockedKey = "SB6_BossRushUnlocked";
     private const char Separator = '|';
 
     private static bool loaded;
@@ -20,6 +21,7 @@ public static class StageUnlockProgress
         loaded = false;
         Load();
         EnsureDefaultUnlocked();
+        TryUnlockBossRush();
     }
 
     public static void RegisterStageOrder(IEnumerable<string> orderedSceneNames)
@@ -45,6 +47,7 @@ public static class StageUnlockProgress
         if (newOrder.Count <= 0)
         {
             EnsureDefaultUnlocked();
+            TryUnlockBossRush();
             return;
         }
 
@@ -57,6 +60,7 @@ public static class StageUnlockProgress
         }
 
         EnsureDefaultUnlocked();
+        TryUnlockBossRush();
     }
 
     public static bool IsUnlocked(string sceneName)
@@ -114,6 +118,26 @@ public static class StageUnlockProgress
         }
 
         return true;
+    }
+
+    public static bool IsBossRushUnlocked()
+    {
+        return PlayerPrefs.GetInt(BossRushUnlockedKey, 0) == 1;
+    }
+
+    public static void UnlockBossRushPermanently()
+    {
+        if (IsBossRushUnlocked())
+            return;
+
+        PlayerPrefs.SetInt(BossRushUnlockedKey, 1);
+        PlayerPrefs.Save();
+    }
+
+    public static void ResetBossRushUnlock()
+    {
+        PlayerPrefs.DeleteKey(BossRushUnlockedKey);
+        PlayerPrefs.Save();
     }
 
     public static int GetRegisteredStageCount()
@@ -183,6 +207,8 @@ public static class StageUnlockProgress
 
         if (clearedChanged)
             SaveClearedStages();
+
+        TryUnlockBossRush();
     }
 
     public static void MarkPerfect(string sceneName)
@@ -218,6 +244,8 @@ public static class StageUnlockProgress
 
         if (perfectChanged)
             SavePerfectStages();
+
+        TryUnlockBossRush();
     }
 
     public static void UnlockCurrentAndNext(string currentSceneName)
@@ -258,6 +286,8 @@ public static class StageUnlockProgress
 
         if (clearedChanged)
             SaveClearedStages();
+
+        TryUnlockBossRush();
     }
 
     public static void ResetProgress()
@@ -378,6 +408,15 @@ public static class StageUnlockProgress
         string raw = string.Join(Separator.ToString(), stageOrder);
         PlayerPrefs.SetString(StageOrderKey, raw);
         PlayerPrefs.Save();
+    }
+
+    private static void TryUnlockBossRush()
+    {
+        if (IsBossRushUnlocked())
+            return;
+
+        if (HasClearedAllRegisteredStages())
+            UnlockBossRushPermanently();
     }
 
     private static string Normalize(string sceneName)

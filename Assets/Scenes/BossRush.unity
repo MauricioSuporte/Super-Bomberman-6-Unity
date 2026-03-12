@@ -4680,7 +4680,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 944833f79ecad8046b768e1ce2158b3b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BossRushLeftPanel
-  enableSurgicalLogs: 1
+  enableSurgicalLogs: 0
   dumpDifficultyLayoutEveryUpdate: 0
   difficultyListRoot: {fileID: 470050462}
   difficultyItemPrefab: {fileID: 2139593661}
