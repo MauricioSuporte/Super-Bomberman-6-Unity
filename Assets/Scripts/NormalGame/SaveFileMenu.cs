@@ -136,6 +136,7 @@ public class SaveFileMenu : MonoBehaviour
     private int selectedIndex;
     private bool confirmed;
     private bool menuActive;
+    private bool _cursorConfirmVisual;
 
     private int backgroundSpriteIndex;
     private float backgroundSwapTimer;
@@ -223,7 +224,7 @@ public class SaveFileMenu : MonoBehaviour
         TickBackgroundSpriteSwap();
 
         if (leftPanel != null)
-            leftPanel.UpdateOptionVisuals(selectedIndex, confirmed);
+            leftPanel.UpdateOptionVisuals(selectedIndex, confirmed || _cursorConfirmVisual);
     }
 
     private IEnumerator OpenMenuRoutine()
@@ -245,6 +246,7 @@ public class SaveFileMenu : MonoBehaviour
         HideDisabledMessageImmediate();
 
         confirmed = false;
+        _cursorConfirmVisual = false;
         menuActive = false;
 
         ResetBackgroundSpriteSwap();
@@ -326,6 +328,7 @@ public class SaveFileMenu : MonoBehaviour
                 {
                     PlaySfx(returnSfx, returnSfxVolume);
                     HideDisabledMessageImmediate();
+                    _cursorConfirmVisual = false;
                     BuildMainMenu();
                     UpdateOptionVisuals();
                     yield return null;
@@ -437,6 +440,9 @@ public class SaveFileMenu : MonoBehaviour
             case MenuState.SelectDeleteSlot:
                 PlaySfx(confirmSfx, confirmSfxVolume);
 
+                _cursorConfirmVisual = true;
+                UpdateOptionVisuals();
+
                 DeleteSlot(slotIndex);
 
                 if (ActiveSlotIndex == slotIndex)
@@ -444,7 +450,11 @@ public class SaveFileMenu : MonoBehaviour
 
                 ShowDisabledMessage(deletedMessage, deleteFeedbackSeconds);
 
-                BuildSlotMenu(MenuState.SelectDeleteSlot);
+                yield return new WaitForSecondsRealtime(deleteFeedbackSeconds);
+
+                _cursorConfirmVisual = false;
+                HideDisabledMessageImmediate();
+                BuildMainMenu();
                 UpdateOptionVisuals();
                 yield break;
         }
@@ -897,7 +907,7 @@ public class SaveFileMenu : MonoBehaviour
     private void UpdateOptionVisuals()
     {
         if (leftPanel != null)
-            leftPanel.UpdateOptionVisuals(selectedIndex, confirmed);
+            leftPanel.UpdateOptionVisuals(selectedIndex, confirmed || _cursorConfirmVisual);
     }
 
     private void PlaySfx(AudioClip clip, float volume)
@@ -930,6 +940,7 @@ public class SaveFileMenu : MonoBehaviour
     {
         menuActive = false;
         HideDisabledMessageImmediate();
+        _cursorConfirmVisual = false;
 
         if (leftPanel != null)
             leftPanel.HideCursor();
