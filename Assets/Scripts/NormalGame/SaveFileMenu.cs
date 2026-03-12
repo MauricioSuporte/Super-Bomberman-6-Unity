@@ -1,4 +1,5 @@
 ﻿using System.Collections;
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -6,141 +7,211 @@ using UnityEngine.UI;
 
 public class SaveFileMenu : MonoBehaviour
 {
-    const string LOG = "[SaveFileMenu]";
+    private enum MenuState
+    {
+        Main = 0,
+        SelectNewGameSlot = 1,
+        SelectContinueSlot = 2,
+        SelectDeleteSlot = 3
+    }
 
-    [Header("Debug (Surgical Logs)")]
-    [SerializeField] bool enableSurgicalLogs = true;
-    [SerializeField] bool logScaleReapply = true;
+    private sealed class SaveSlotInfo
+    {
+        public int SlotIndex;
+        public bool Exists;
+        public int RegisteredStageCount;
+        public int ClearedStageCount;
+        public int PerfectStageCount;
+        public int CompletionPercent;
+    }
+
+    private const string ActiveSlotKey = "SB6_ActiveSaveSlot";
+    private const string LiveUnlockedStagesKey = "SB6_UnlockedStages";
+    private const string LiveClearedStagesKey = "SB6_ClearedStages";
+    private const string LivePerfectStagesKey = "SB6_PerfectStages";
+    private const string LiveStageOrderKey = "SB6_StageOrder";
 
     [Header("UI Root")]
-    [SerializeField] GameObject root;
-    [SerializeField] Image backgroundImage;
+    [SerializeField] private GameObject root;
+    [SerializeField] private Image backgroundImage;
 
     [Header("Reference Frame")]
-    [SerializeField] RectTransform referenceRect;
+    [SerializeField] private RectTransform referenceRect;
 
     [Header("Fade")]
-    [SerializeField] Image fadeImage;
-    [SerializeField] float fadeDuration = 0.75f;
+    [SerializeField] private Image fadeImage;
+    [SerializeField, Min(0.01f)] private float fadeDuration = 0.5f;
 
-    [Header("Left Panel")]
-    [SerializeField] SaveFileMenuOptions leftPanel;
+    [Header("Flow")]
+    [SerializeField] private bool useWorldMapAfterSelection = true;
+    [SerializeField] private string worldMapSceneName = "WorldMap";
+    [SerializeField] private string titleSceneName = "TitleScreen";
+
+    [Header("Prompt Title (optional)")]
+    [SerializeField] private TextMeshProUGUI promptTitleText;
+    [SerializeField] private string mainPrompt = "NORMAL GAME";
+    [SerializeField] private string newGamePrompt = "START WHICH FILE?";
+    [SerializeField] private string continuePrompt = "CONTINUE WHICH FILE?";
+    [SerializeField] private string deletePrompt = "DELETE WHICH FILE?";
+
+    [Header("Options Panel")]
+    [SerializeField] private SaveFileMenuOptions leftPanel;
+
+    [Header("Save Slots")]
+    [SerializeField, Min(1)] private int slotCount = 3;
+    [SerializeField] private string slotLabelPrefix = "File ";
+    [SerializeField] private string emptySlotDisplay = "- - -";
+    [SerializeField] private string noEmptyFileMessage = "NO EMPTY FILE";
+    [SerializeField] private string deletedMessage = "FILE DELETED";
+    [SerializeField] private float deleteFeedbackSeconds = 1.0f;
 
     [Header("Background Sprite")]
-    [SerializeField] Sprite[] backgroundSprites = new Sprite[2];
-    [SerializeField] float backgroundSwapInterval = 2f;
-    [SerializeField] bool backgroundSwapLoop = true;
+    [SerializeField] private Sprite[] backgroundSprites = new Sprite[2];
+    [SerializeField] private float backgroundSwapInterval = 2f;
+    [SerializeField] private bool backgroundSwapLoop = true;
 
     [Header("Music")]
-    [SerializeField] AudioClip selectMusic;
-    [SerializeField, Range(0f, 1f)] float selectMusicVolume = 1f;
-    [SerializeField] bool loopSelectMusic = true;
+    [SerializeField] private AudioClip selectMusic;
+    [SerializeField, Range(0f, 1f)] private float selectMusicVolume = 1f;
+    [SerializeField] private bool loopSelectMusic = true;
 
     [Header("SFX")]
-    [SerializeField] AudioClip moveCursorSfx;
-    [SerializeField, Range(0f, 1f)] float moveCursorSfxVolume = 1f;
-    [SerializeField] AudioClip confirmSfx;
-    [SerializeField, Range(0f, 1f)] float confirmSfxVolume = 1f;
-    [SerializeField] AudioClip returnSfx;
-    [SerializeField, Range(0f, 1f)] float returnSfxVolume = 1f;
-    [SerializeField] AudioClip deniedOptionSfx;
-    [SerializeField, Range(0f, 1f)] float deniedOptionVolume = 1f;
+    [SerializeField] private AudioClip moveCursorSfx;
+    [SerializeField, Range(0f, 1f)] private float moveCursorSfxVolume = 1f;
+    [SerializeField] private AudioClip confirmSfx;
+    [SerializeField, Range(0f, 1f)] private float confirmSfxVolume = 1f;
+    [SerializeField] private AudioClip returnSfx;
+    [SerializeField, Range(0f, 1f)] private float returnSfxVolume = 1f;
+    [SerializeField] private AudioClip deniedOptionSfx;
+    [SerializeField, Range(0f, 1f)] private float deniedOptionVolume = 1f;
 
-    [Header("State")]
-    [SerializeField] bool hasAnySaveFile = false;
-
-    [Header("Disabled Option Message")]
-    [SerializeField] TextMeshProUGUI disabledOptionText;
-    [SerializeField] string disabledContinueMessage = "NO SAVE DATA";
-    [SerializeField] string disabledDeleteMessage = "NO SAVE DATA";
-    [SerializeField] float disabledMessageShowSeconds = 1.5f;
-    [SerializeField] int disabledMessageFontSize = 22;
-    [SerializeField] Color disabledMessageFaceColor = new Color32(231, 63, 63, 255);
-    [SerializeField] Color disabledMessageOutlineColor = Color.black;
-    [SerializeField] TMP_FontAsset disabledMessageFontAsset;
-    [SerializeField] Material disabledMessageFontMaterialPreset;
-    [SerializeField] bool forceDisabledMessageBold = true;
-    [SerializeField] bool useDisabledMessageOutline = true;
-    [SerializeField, Range(0f, 1f)] float disabledMessageOutlineWidth = 0.35f;
-    [SerializeField, Range(0f, 1f)] float disabledMessageOutlineSoftness = 0f;
-    [SerializeField, Range(-1f, 1f)] float disabledMessageFaceDilate = 0.2f;
-    [SerializeField, Range(0f, 1f)] float disabledMessageFaceSoftness = 0f;
-    [SerializeField] bool enableDisabledMessageUnderlay = true;
-    [SerializeField] Color disabledMessageUnderlayColor = new Color(0f, 0f, 0f, 1f);
-    [SerializeField, Range(-1f, 1f)] float disabledMessageUnderlayDilate = 0.1f;
-    [SerializeField, Range(0f, 1f)] float disabledMessageUnderlaySoftness = 0f;
-    [SerializeField, Range(-2f, 2f)] float disabledMessageUnderlayOffsetX = 0.25f;
-    [SerializeField, Range(-2f, 2f)] float disabledMessageUnderlayOffsetY = -0.25f;
-    [SerializeField] float disabledMessageBottomMargin = 12f;
+    [Header("Disabled / Feedback Message")]
+    [SerializeField] private TextMeshProUGUI disabledOptionText;
+    [SerializeField] private string disabledContinueMessage = "NO SAVE DATA";
+    [SerializeField] private string disabledDeleteMessage = "NO SAVE DATA";
+    [SerializeField] private float disabledMessageShowSeconds = 1.5f;
+    [SerializeField] private int disabledMessageFontSize = 22;
+    [SerializeField] private Color disabledMessageFaceColor = new Color32(231, 63, 63, 255);
+    [SerializeField] private Color disabledMessageOutlineColor = Color.black;
+    [SerializeField] private TMP_FontAsset disabledMessageFontAsset;
+    [SerializeField] private Material disabledMessageFontMaterialPreset;
+    [SerializeField] private bool forceDisabledMessageBold = true;
+    [SerializeField] private bool useDisabledMessageOutline = true;
+    [SerializeField, Range(0f, 1f)] private float disabledMessageOutlineWidth = 0.35f;
+    [SerializeField, Range(0f, 1f)] private float disabledMessageOutlineSoftness = 0f;
+    [SerializeField, Range(-1f, 1f)] private float disabledMessageFaceDilate = 0.2f;
+    [SerializeField, Range(0f, 1f)] private float disabledMessageFaceSoftness = 0f;
+    [SerializeField] private bool enableDisabledMessageUnderlay = true;
+    [SerializeField] private Color disabledMessageUnderlayColor = new Color(0f, 0f, 0f, 1f);
+    [SerializeField, Range(-1f, 1f)] private float disabledMessageUnderlayDilate = 0.1f;
+    [SerializeField, Range(0f, 1f)] private float disabledMessageUnderlaySoftness = 0f;
+    [SerializeField, Range(-2f, 2f)] private float disabledMessageUnderlayOffsetX = 0.25f;
+    [SerializeField, Range(-2f, 2f)] private float disabledMessageUnderlayOffsetY = -0.25f;
+    [SerializeField] private float disabledMessageBottomMargin = 12f;
 
     [Header("Dynamic Scale (Pixel Perfect SNES)")]
-    [SerializeField] bool dynamicScale = true;
-    [SerializeField] int referenceWidth = 256;
-    [SerializeField] int referenceHeight = 224;
-    [SerializeField] bool useIntegerUpscale = true;
-    [SerializeField, Min(1)] int designUpscale = 4;
-    [SerializeField, Min(0.01f)] float extraScaleMultiplier = 1f;
-    [SerializeField, Min(0.01f)] float minScale = 0.5f;
-    [SerializeField, Min(0.01f)] float maxScale = 10f;
+    [SerializeField] private bool dynamicScale = true;
+    [SerializeField] private int referenceWidth = 256;
+    [SerializeField] private int referenceHeight = 224;
+    [SerializeField] private bool useIntegerUpscale = true;
+    [SerializeField, Min(1)] private int designUpscale = 4;
+    [SerializeField, Min(0.01f)] private float extraScaleMultiplier = 1f;
+    [SerializeField, Min(0.01f)] private float minScale = 0.5f;
+    [SerializeField, Min(0.01f)] private float maxScale = 10f;
 
-    int selectedIndex;
-    bool confirmed;
-    bool menuActive;
+    private readonly List<SaveFileOption> _mainOptions = new()
+    {
+        SaveFileOption.NewGame,
+        SaveFileOption.Continue,
+        SaveFileOption.DeleteFile
+    };
 
-    int backgroundSpriteIndex;
-    float backgroundSwapTimer;
+    private readonly List<string> _displayEntries = new();
+    private readonly List<bool> _displayEnabled = new();
 
-    Coroutine fadeInCoroutine;
-    Coroutine disabledMessageRoutine;
+    private MenuState _state = MenuState.Main;
 
-    float _currentUiScale = 1f;
-    int _currentBaseScaleInt = 1;
-    int _lastScreenW = -1;
-    int _lastScreenH = -1;
-    Rect _lastCameraRect;
-    Rect _lastRefPixelRect;
+    private int selectedIndex;
+    private bool confirmed;
+    private bool menuActive;
 
-    RectTransform disabledMessageRect;
-    Material disabledMessageRuntimeMaterial;
+    private int backgroundSpriteIndex;
+    private float backgroundSwapTimer;
 
-    int _applyScaleCount;
+    private Coroutine fadeInCoroutine;
+    private Coroutine disabledMessageRoutine;
+
+    private float _currentUiScale = 1f;
+    private int _currentBaseScaleInt = 1;
+    private int _lastScreenW = -1;
+    private int _lastScreenH = -1;
+    private Rect _lastCameraRect;
+    private Rect _lastRefPixelRect;
+
+    private RectTransform disabledMessageRect;
+    private Material disabledMessageRuntimeMaterial;
 
     public SaveFileOption SelectedOption
     {
         get
         {
-            if (leftPanel == null || leftPanel.Count == 0)
+            if (_state != MenuState.Main)
                 return SaveFileOption.NewGame;
 
-            return leftPanel.GetOptionAt(selectedIndex);
+            if (_mainOptions.Count <= 0)
+                return SaveFileOption.NewGame;
+
+            return _mainOptions[Mathf.Clamp(selectedIndex, 0, _mainOptions.Count - 1)];
         }
     }
 
-    void Awake()
+    public static int ActiveSlotIndex => PlayerPrefs.GetInt(ActiveSlotKey, -1);
+
+    public static bool HasActiveSlot => ActiveSlotIndex >= 1;
+
+    public static void SaveCurrentProgressToActiveSlot()
+    {
+        int activeSlot = ActiveSlotIndex;
+        if (activeSlot < 1)
+            return;
+
+        SaveLiveProgressToSlot(activeSlot);
+    }
+
+    public static void LoadActiveSlotToCurrentProgress()
+    {
+        int activeSlot = ActiveSlotIndex;
+        if (activeSlot < 1)
+            return;
+
+        LoadSlotIntoLiveProgress(activeSlot);
+    }
+
+    private void Awake()
     {
         if (root == null)
             root = gameObject;
 
         ApplyCurrentBackgroundSprite();
         EnsureDisabledOptionText();
+        UpdatePromptTitle();
 
         if (root != null)
             root.SetActive(false);
     }
 
-    void Start()
+    private void Start()
     {
-        SLog($"Start | frame={Time.frameCount} -> OpenMenuRoutine()");
         StartCoroutine(OpenMenuRoutine());
     }
 
-    void OnDestroy()
+    private void OnDestroy()
     {
         if (disabledMessageRuntimeMaterial != null)
             Destroy(disabledMessageRuntimeMaterial);
     }
 
-    void Update()
+    private void Update()
     {
         if (!menuActive)
             return;
@@ -149,10 +220,10 @@ public class SaveFileMenu : MonoBehaviour
         TickBackgroundSpriteSwap();
 
         if (leftPanel != null)
-            leftPanel.UpdateOptionVisuals(selectedIndex, confirmed, hasAnySaveFile);
+            leftPanel.UpdateOptionVisuals(selectedIndex, confirmed);
     }
 
-    IEnumerator OpenMenuRoutine()
+    private IEnumerator OpenMenuRoutine()
     {
         if (root == null)
             root = gameObject;
@@ -176,7 +247,6 @@ public class SaveFileMenu : MonoBehaviour
         ResetBackgroundSpriteSwap();
         ApplyCurrentBackgroundSprite();
 
-        // espera a hierarquia ativar e o canvas/câmera estabilizarem
         yield return null;
         Canvas.ForceUpdateCanvases();
         yield return new WaitForEndOfFrame();
@@ -185,15 +255,12 @@ public class SaveFileMenu : MonoBehaviour
         ApplyDynamicScaleIfNeeded(true);
 
         if (leftPanel != null)
-        {
             leftPanel.Initialize(_currentUiScale);
-            leftPanel.BuildOptionList();
-        }
+
+        BuildMainMenu();
 
         Canvas.ForceUpdateCanvases();
         yield return null;
-
-        selectedIndex = 0;
 
         if (leftPanel != null)
             leftPanel.ShowCursor();
@@ -234,16 +301,12 @@ public class SaveFileMenu : MonoBehaviour
 
             if (input.GetDown(1, PlayerAction.MoveUp))
             {
-                selectedIndex--;
-                if (selectedIndex < 0)
-                    selectedIndex = leftPanel != null ? leftPanel.Count - 1 : 0;
+                selectedIndex = GetPreviousSelectableIndex(selectedIndex);
                 moved = true;
             }
             else if (input.GetDown(1, PlayerAction.MoveDown))
             {
-                selectedIndex++;
-                if (leftPanel != null && selectedIndex >= leftPanel.Count)
-                    selectedIndex = 0;
+                selectedIndex = GetNextSelectableIndex(selectedIndex);
                 moved = true;
             }
 
@@ -256,6 +319,16 @@ public class SaveFileMenu : MonoBehaviour
 
             if (input.GetDown(1, PlayerAction.ActionB))
             {
+                if (_state != MenuState.Main)
+                {
+                    PlaySfx(returnSfx, returnSfxVolume);
+                    HideDisabledMessageImmediate();
+                    BuildMainMenu();
+                    UpdateOptionVisuals();
+                    yield return null;
+                    continue;
+                }
+
                 PlaySfx(returnSfx, returnSfxVolume);
                 confirmed = true;
                 yield return FadeOutRoutine();
@@ -265,66 +338,413 @@ public class SaveFileMenu : MonoBehaviour
 
             if (input.GetDown(1, PlayerAction.ActionA) || input.GetDown(1, PlayerAction.Start))
             {
-                if (!IsSelectedOptionEnabled())
+                if (!IsCurrentSelectionEnabled())
                 {
                     PlayDeniedSfx();
-                    ShowDisabledMessageForCurrentOption();
+                    ShowDisabledMessageForCurrentContext();
                     yield return null;
                     continue;
                 }
 
-                PlaySfx(confirmSfx, confirmSfxVolume);
-                confirmed = true;
-
-                yield return FadeOutRoutine();
-                Hide();
-
-                HandleConfirmedOption();
-                yield break;
+                yield return HandleCurrentSelection();
+                if (confirmed)
+                    yield break;
             }
 
             yield return null;
         }
     }
 
-    void HandleConfirmedOption()
+    private IEnumerator HandleCurrentSelection()
     {
-        switch (SelectedOption)
+        if (_state == MenuState.Main)
         {
-            case SaveFileOption.NewGame:
-                Debug.Log("[SaveFileMenu] Confirmed: New Game");
-                break;
+            switch (SelectedOption)
+            {
+                case SaveFileOption.NewGame:
+                    PlaySfx(confirmSfx, confirmSfxVolume);
+                    BuildSlotMenu(MenuState.SelectNewGameSlot);
+                    UpdateOptionVisuals();
+                    break;
 
-            case SaveFileOption.Continue:
-                Debug.Log("[SaveFileMenu] Confirmed: Continue");
-                break;
+                case SaveFileOption.Continue:
+                    if (!HasAnyExistingSlot())
+                    {
+                        PlayDeniedSfx();
+                        ShowDisabledMessage(disabledContinueMessage, disabledMessageShowSeconds);
+                        yield break;
+                    }
 
-            case SaveFileOption.DeleteFile:
-                Debug.Log("[SaveFileMenu] Confirmed: Delete File");
-                break;
+                    PlaySfx(confirmSfx, confirmSfxVolume);
+                    BuildSlotMenu(MenuState.SelectContinueSlot);
+                    UpdateOptionVisuals();
+                    break;
+
+                case SaveFileOption.DeleteFile:
+                    if (!HasAnyExistingSlot())
+                    {
+                        PlayDeniedSfx();
+                        ShowDisabledMessage(disabledDeleteMessage, disabledMessageShowSeconds);
+                        yield break;
+                    }
+
+                    PlaySfx(confirmSfx, confirmSfxVolume);
+                    BuildSlotMenu(MenuState.SelectDeleteSlot);
+                    UpdateOptionVisuals();
+                    break;
+            }
+
+            yield break;
+        }
+
+        int slotIndex = selectedIndex + 1;
+
+        switch (_state)
+        {
+            case MenuState.SelectNewGameSlot:
+                PlaySfx(confirmSfx, confirmSfxVolume);
+
+                DeleteSlot(slotIndex);
+                SetActiveSlot(slotIndex);
+                StageUnlockProgress.ResetProgress();
+                SaveLiveProgressToSlot(slotIndex);
+
+                confirmed = true;
+                yield return FadeOutRoutine();
+                Hide();
+                LoadWorldMapAfterSelection();
+                yield break;
+
+            case MenuState.SelectContinueSlot:
+                PlaySfx(confirmSfx, confirmSfxVolume);
+
+                SetActiveSlot(slotIndex);
+                LoadSlotIntoLiveProgress(slotIndex);
+
+                confirmed = true;
+                yield return FadeOutRoutine();
+                Hide();
+                LoadWorldMapAfterSelection();
+                yield break;
+
+            case MenuState.SelectDeleteSlot:
+                PlaySfx(confirmSfx, confirmSfxVolume);
+
+                DeleteSlot(slotIndex);
+
+                if (ActiveSlotIndex == slotIndex)
+                    PlayerPrefs.DeleteKey(ActiveSlotKey);
+
+                ShowDisabledMessage(deletedMessage, deleteFeedbackSeconds);
+
+                BuildSlotMenu(MenuState.SelectDeleteSlot);
+                UpdateOptionVisuals();
+                yield break;
         }
     }
 
-    bool IsSelectedOptionEnabled()
+    private void LoadWorldMapAfterSelection()
     {
-        switch (SelectedOption)
-        {
-            case SaveFileOption.Continue:
-            case SaveFileOption.DeleteFile:
-                return hasAnySaveFile;
+        GamePauseController.ClearPauseFlag();
+        Time.timeScale = 1f;
 
-            default:
+        if (useWorldMapAfterSelection && !string.IsNullOrWhiteSpace(worldMapSceneName))
+        {
+            SceneManager.LoadScene(worldMapSceneName);
+            return;
+        }
+
+        if (!string.IsNullOrWhiteSpace(titleSceneName))
+            SceneManager.LoadScene(titleSceneName);
+    }
+
+    private void BuildMainMenu()
+    {
+        _state = MenuState.Main;
+        _displayEntries.Clear();
+        _displayEnabled.Clear();
+
+        for (int i = 0; i < _mainOptions.Count; i++)
+        {
+            SaveFileOption option = _mainOptions[i];
+            _displayEntries.Add(GetMainOptionDisplayName(option));
+            _displayEnabled.Add(IsMainOptionEnabled(option));
+        }
+
+        selectedIndex = GetFirstSelectableIndex();
+        ApplyEntriesToPanel();
+        UpdatePromptTitle();
+    }
+
+    private void BuildSlotMenu(MenuState targetState)
+    {
+        _state = targetState;
+        _displayEntries.Clear();
+        _displayEnabled.Clear();
+
+        for (int i = 1; i <= slotCount; i++)
+        {
+            SaveSlotInfo info = GetSaveSlotInfo(i);
+            _displayEntries.Add(BuildSlotDisplayText(info));
+
+            bool enabled = targetState switch
+            {
+                MenuState.SelectNewGameSlot => !info.Exists,
+                MenuState.SelectContinueSlot => info.Exists,
+                MenuState.SelectDeleteSlot => info.Exists,
+                _ => false
+            };
+
+            _displayEnabled.Add(enabled);
+        }
+
+        selectedIndex = GetFirstSelectableIndex();
+        ApplyEntriesToPanel();
+        UpdatePromptTitle();
+    }
+
+    private void ApplyEntriesToPanel()
+    {
+        if (leftPanel == null)
+            return;
+
+        leftPanel.SetEntries(_displayEntries, _displayEnabled);
+    }
+
+    private string GetMainOptionDisplayName(SaveFileOption option)
+    {
+        return option switch
+        {
+            SaveFileOption.NewGame => "New Game",
+            SaveFileOption.Continue => "Continue",
+            SaveFileOption.DeleteFile => "Delete File",
+            _ => option.ToString()
+        };
+    }
+
+    private bool IsMainOptionEnabled(SaveFileOption option)
+    {
+        return option switch
+        {
+            SaveFileOption.Continue => HasAnyExistingSlot(),
+            SaveFileOption.DeleteFile => HasAnyExistingSlot(),
+            _ => true
+        };
+    }
+
+    private bool HasAnyExistingSlot()
+    {
+        for (int i = 1; i <= slotCount; i++)
+        {
+            if (SlotExists(i))
                 return true;
         }
+
+        return false;
     }
 
-    void UpdateOptionVisuals()
+    private bool IsCurrentSelectionEnabled()
+    {
+        if (selectedIndex < 0 || selectedIndex >= _displayEnabled.Count)
+            return false;
+
+        return _displayEnabled[selectedIndex];
+    }
+
+    private int GetFirstSelectableIndex()
+    {
+        for (int i = 0; i < _displayEnabled.Count; i++)
+        {
+            if (_displayEnabled[i])
+                return i;
+        }
+
+        return Mathf.Clamp(selectedIndex, 0, Mathf.Max(0, _displayEnabled.Count - 1));
+    }
+
+    private int GetNextSelectableIndex(int currentIndex)
+    {
+        if (_displayEnabled.Count <= 0)
+            return 0;
+
+        int start = Mathf.Clamp(currentIndex, 0, _displayEnabled.Count - 1);
+
+        for (int step = 1; step <= _displayEnabled.Count; step++)
+        {
+            int idx = (start + step) % _displayEnabled.Count;
+            if (_displayEnabled[idx])
+                return idx;
+        }
+
+        return start;
+    }
+
+    private int GetPreviousSelectableIndex(int currentIndex)
+    {
+        if (_displayEnabled.Count <= 0)
+            return 0;
+
+        int start = Mathf.Clamp(currentIndex, 0, _displayEnabled.Count - 1);
+
+        for (int step = 1; step <= _displayEnabled.Count; step++)
+        {
+            int idx = (start - step + _displayEnabled.Count) % _displayEnabled.Count;
+            if (_displayEnabled[idx])
+                return idx;
+        }
+
+        return start;
+    }
+
+    private void UpdatePromptTitle()
+    {
+        if (promptTitleText == null)
+            return;
+
+        promptTitleText.text = _state switch
+        {
+            MenuState.SelectNewGameSlot => newGamePrompt,
+            MenuState.SelectContinueSlot => continuePrompt,
+            MenuState.SelectDeleteSlot => deletePrompt,
+            _ => mainPrompt
+        };
+    }
+
+    private string BuildSlotDisplayText(SaveSlotInfo info)
+    {
+        string fileText = $"{slotLabelPrefix}{info.SlotIndex}";
+        string progressText = info.Exists
+            ? $"{Mathf.Clamp(info.CompletionPercent, 0, 200):000}%"
+            : emptySlotDisplay;
+
+        return $"{fileText,-8} {progressText}";
+    }
+
+    private SaveSlotInfo GetSaveSlotInfo(int slotIndex)
+    {
+        SaveSlotInfo info = new SaveSlotInfo
+        {
+            SlotIndex = slotIndex,
+            Exists = SlotExists(slotIndex),
+            RegisteredStageCount = 0,
+            ClearedStageCount = 0,
+            PerfectStageCount = 0,
+            CompletionPercent = 0
+        };
+
+        if (!info.Exists)
+            return info;
+
+        string orderRaw = PlayerPrefs.GetString(GetSlotStageOrderKey(slotIndex), string.Empty);
+        string clearedRaw = PlayerPrefs.GetString(GetSlotClearedKey(slotIndex), string.Empty);
+        string perfectRaw = PlayerPrefs.GetString(GetSlotPerfectKey(slotIndex), string.Empty);
+
+        int registeredStageCount = CountSeparatedEntries(orderRaw);
+
+        if (registeredStageCount <= 0)
+            registeredStageCount = Mathf.Max(0, StageUnlockProgress.GetRegisteredStageCount());
+
+        int clearedCount = CountSeparatedEntries(clearedRaw);
+        int perfectCount = CountSeparatedEntries(perfectRaw);
+
+        info.RegisteredStageCount = registeredStageCount;
+        info.ClearedStageCount = clearedCount;
+        info.PerfectStageCount = perfectCount;
+        info.CompletionPercent = ComputeCompletionPercent(registeredStageCount, clearedCount, perfectCount);
+
+        return info;
+    }
+
+    private int ComputeCompletionPercent(int totalStages, int clearedCount, int perfectCount)
+    {
+        if (totalStages <= 0)
+            return 0;
+
+        float clearedPercent = (Mathf.Clamp(clearedCount, 0, totalStages) / (float)totalStages) * 100f;
+        float perfectPercent = (Mathf.Clamp(perfectCount, 0, totalStages) / (float)totalStages) * 100f;
+        return Mathf.RoundToInt(clearedPercent + perfectPercent);
+    }
+
+    private int CountSeparatedEntries(string raw)
+    {
+        if (string.IsNullOrWhiteSpace(raw))
+            return 0;
+
+        string[] parts = raw.Split('|');
+        int count = 0;
+
+        for (int i = 0; i < parts.Length; i++)
+        {
+            if (!string.IsNullOrWhiteSpace(parts[i]))
+                count++;
+        }
+
+        return count;
+    }
+
+    private static void SetActiveSlot(int slotIndex)
+    {
+        PlayerPrefs.SetInt(ActiveSlotKey, slotIndex);
+        PlayerPrefs.Save();
+    }
+
+    private static bool SlotExists(int slotIndex)
+    {
+        return PlayerPrefs.GetInt(GetSlotExistsKey(slotIndex), 0) == 1;
+    }
+
+    private static void SaveLiveProgressToSlot(int slotIndex)
+    {
+        CopyStringKey(LiveUnlockedStagesKey, GetSlotUnlockedKey(slotIndex));
+        CopyStringKey(LiveClearedStagesKey, GetSlotClearedKey(slotIndex));
+        CopyStringKey(LivePerfectStagesKey, GetSlotPerfectKey(slotIndex));
+        CopyStringKey(LiveStageOrderKey, GetSlotStageOrderKey(slotIndex));
+
+        PlayerPrefs.SetInt(GetSlotExistsKey(slotIndex), 1);
+        PlayerPrefs.Save();
+    }
+
+    private static void LoadSlotIntoLiveProgress(int slotIndex)
+    {
+        CopyStringKey(GetSlotUnlockedKey(slotIndex), LiveUnlockedStagesKey);
+        CopyStringKey(GetSlotClearedKey(slotIndex), LiveClearedStagesKey);
+        CopyStringKey(GetSlotPerfectKey(slotIndex), LivePerfectStagesKey);
+        CopyStringKey(GetSlotStageOrderKey(slotIndex), LiveStageOrderKey);
+
+        PlayerPrefs.Save();
+    }
+
+    private static void DeleteSlot(int slotIndex)
+    {
+        PlayerPrefs.DeleteKey(GetSlotUnlockedKey(slotIndex));
+        PlayerPrefs.DeleteKey(GetSlotClearedKey(slotIndex));
+        PlayerPrefs.DeleteKey(GetSlotPerfectKey(slotIndex));
+        PlayerPrefs.DeleteKey(GetSlotStageOrderKey(slotIndex));
+        PlayerPrefs.DeleteKey(GetSlotExistsKey(slotIndex));
+        PlayerPrefs.Save();
+    }
+
+    private static void CopyStringKey(string sourceKey, string targetKey)
+    {
+        if (PlayerPrefs.HasKey(sourceKey))
+            PlayerPrefs.SetString(targetKey, PlayerPrefs.GetString(sourceKey, string.Empty));
+        else
+            PlayerPrefs.DeleteKey(targetKey);
+    }
+
+    private static string GetSlotExistsKey(int slotIndex) => $"SB6_SaveSlot_{slotIndex}_Exists";
+    private static string GetSlotUnlockedKey(int slotIndex) => $"SB6_UnlockedStages_Slot{slotIndex}";
+    private static string GetSlotClearedKey(int slotIndex) => $"SB6_ClearedStages_Slot{slotIndex}";
+    private static string GetSlotPerfectKey(int slotIndex) => $"SB6_PerfectStages_Slot{slotIndex}";
+    private static string GetSlotStageOrderKey(int slotIndex) => $"SB6_StageOrder_Slot{slotIndex}";
+
+    private void UpdateOptionVisuals()
     {
         if (leftPanel != null)
-            leftPanel.UpdateOptionVisuals(selectedIndex, confirmed, hasAnySaveFile);
+            leftPanel.UpdateOptionVisuals(selectedIndex, confirmed);
     }
 
-    void PlaySfx(AudioClip clip, float volume)
+    private void PlaySfx(AudioClip clip, float volume)
     {
         if (clip == null)
             return;
@@ -336,27 +756,18 @@ public class SaveFileMenu : MonoBehaviour
         music.PlaySfx(clip, volume);
     }
 
-    void StartSelectMusic()
+    private void StartSelectMusic()
     {
         var music = GameMusicController.Instance;
         if (music == null || selectMusic == null)
             return;
 
         music.PlayMusic(selectMusic, selectMusicVolume, loopSelectMusic);
-        SLog($"StartSelectMusic | clip={(selectMusic != null ? selectMusic.name : "NULL")}");
     }
 
-    void PlayDeniedSfx()
+    private void PlayDeniedSfx()
     {
         PlaySfx(deniedOptionSfx, deniedOptionVolume);
-    }
-
-    public void SetHasAnySaveFile(bool value)
-    {
-        hasAnySaveFile = value;
-
-        if (menuActive)
-            UpdateOptionVisuals();
     }
 
     public void Hide()
@@ -371,11 +782,9 @@ public class SaveFileMenu : MonoBehaviour
             root.SetActive(false);
         else
             gameObject.SetActive(false);
-
-        SLog($"Hide | frame={Time.frameCount}");
     }
 
-    void SetFadeAlpha(float a)
+    private void SetFadeAlpha(float a)
     {
         if (fadeImage == null)
             return;
@@ -385,7 +794,7 @@ public class SaveFileMenu : MonoBehaviour
         fadeImage.color = c;
     }
 
-    IEnumerator FadeInRoutine()
+    private IEnumerator FadeInRoutine()
     {
         if (fadeImage == null)
             yield break;
@@ -403,11 +812,9 @@ public class SaveFileMenu : MonoBehaviour
 
         SetFadeAlpha(0f);
         fadeImage.gameObject.SetActive(false);
-
-        SLog($"FadeInRoutine END | frame={Time.frameCount}");
     }
 
-    IEnumerator FadeOutRoutine()
+    private IEnumerator FadeOutRoutine()
     {
         if (fadeImage == null)
             yield break;
@@ -428,17 +835,15 @@ public class SaveFileMenu : MonoBehaviour
         }
 
         SetFadeAlpha(1f);
-
-        SLog($"FadeOutRoutine END | frame={Time.frameCount}");
     }
 
-    void ResetBackgroundSpriteSwap()
+    private void ResetBackgroundSpriteSwap()
     {
         backgroundSpriteIndex = 0;
         backgroundSwapTimer = 0f;
     }
 
-    void TickBackgroundSpriteSwap()
+    private void TickBackgroundSpriteSwap()
     {
         if (backgroundImage == null)
             return;
@@ -472,7 +877,7 @@ public class SaveFileMenu : MonoBehaviour
         ApplyCurrentBackgroundSprite();
     }
 
-    void ApplyCurrentBackgroundSprite()
+    private void ApplyCurrentBackgroundSprite()
     {
         if (backgroundImage == null)
             return;
@@ -486,7 +891,7 @@ public class SaveFileMenu : MonoBehaviour
             backgroundImage.sprite = backgroundSprites[backgroundSpriteIndex];
     }
 
-    Canvas GetRootCanvas()
+    private Canvas GetRootCanvas()
     {
         if (root != null)
             return root.GetComponentInParent<Canvas>();
@@ -494,7 +899,7 @@ public class SaveFileMenu : MonoBehaviour
         return GetComponentInParent<Canvas>();
     }
 
-    Camera GetMainCameraSafe()
+    private Camera GetMainCameraSafe()
     {
         var cam = Camera.main;
         if (cam != null)
@@ -503,7 +908,7 @@ public class SaveFileMenu : MonoBehaviour
         return FindFirstObjectByType<Camera>();
     }
 
-    Rect GetReferencePixelRect(out string source)
+    private Rect GetReferencePixelRect(out string source)
     {
         source = "SCREEN";
 
@@ -540,7 +945,7 @@ public class SaveFileMenu : MonoBehaviour
         return new Rect(xMin, yMin, width, height);
     }
 
-    float ComputeUiScaleForRect(float usedW, float usedH, out int baseScaleInt)
+    private float ComputeUiScaleForRect(float usedW, float usedH, out int baseScaleInt)
     {
         baseScaleInt = 1;
 
@@ -563,10 +968,8 @@ public class SaveFileMenu : MonoBehaviour
         return ui;
     }
 
-    void ApplyDynamicScaleIfNeeded(bool force = false)
+    private void ApplyDynamicScaleIfNeeded(bool force = false)
     {
-        _applyScaleCount++;
-
         int sw = Screen.width;
         int sh = Screen.height;
 
@@ -584,17 +987,7 @@ public class SaveFileMenu : MonoBehaviour
             !ApproximatelyRect(refPx, _lastRefPixelRect);
 
         if (!changed)
-        {
-            if (logScaleReapply)
-            {
-                SLog(
-                    $"ApplyDynamicScaleIfNeeded SKIP | call={_applyScaleCount} frame={Time.frameCount} " +
-                    $"force={force} screen=({sw}x{sh}) refPx={refPx} uiScale={_currentUiScale:0.###}"
-                );
-            }
-
             return;
-        }
 
         _lastScreenW = sw;
         _lastScreenH = sh;
@@ -603,19 +996,13 @@ public class SaveFileMenu : MonoBehaviour
 
         _currentUiScale = ComputeUiScaleForRect(refPx.width, refPx.height, out _currentBaseScaleInt);
 
-        SLog(
-            $"ApplyDynamicScaleIfNeeded APPLY | call={_applyScaleCount} frame={Time.frameCount} " +
-            $"force={force} screen=({sw}x{sh}) camRect={camRect} " +
-            $"refSource={refSource} refPx={refPx} uiScale={_currentUiScale:0.###} baseScaleInt={_currentBaseScaleInt}"
-        );
-
         if (leftPanel != null)
             leftPanel.SetUiScale(_currentUiScale);
 
         ApplyDisabledMessageVisualStyle();
     }
 
-    static bool ApproximatelyRect(Rect a, Rect b)
+    private static bool ApproximatelyRect(Rect a, Rect b)
     {
         return
             Mathf.Abs(a.x - b.x) < 0.01f &&
@@ -624,7 +1011,7 @@ public class SaveFileMenu : MonoBehaviour
             Mathf.Abs(a.height - b.height) < 0.01f;
     }
 
-    void EnsureDisabledOptionText()
+    private void EnsureDisabledOptionText()
     {
         if (root == null)
             return;
@@ -636,8 +1023,6 @@ public class SaveFileMenu : MonoBehaviour
 
             disabledOptionText = go.AddComponent<TextMeshProUGUI>();
             disabledOptionText.raycastTarget = false;
-
-            SLog("EnsureDisabledOptionText | runtime TMP created");
         }
 
         disabledMessageRect = disabledOptionText.rectTransform;
@@ -653,14 +1038,22 @@ public class SaveFileMenu : MonoBehaviour
 
         disabledOptionText.text = string.Empty;
         disabledOptionText.gameObject.SetActive(false);
-
-        SLog(
-            $"EnsureDisabledOptionText | frame={Time.frameCount} rect={GetRectInfo(disabledMessageRect)} " +
-            $"fontSize={disabledOptionText.fontSize}"
-        );
     }
 
-    void ShowDisabledMessageForCurrentOption()
+    private void ShowDisabledMessageForCurrentContext()
+    {
+        string message = _state switch
+        {
+            MenuState.SelectNewGameSlot => noEmptyFileMessage,
+            MenuState.SelectContinueSlot => disabledContinueMessage,
+            MenuState.SelectDeleteSlot => disabledDeleteMessage,
+            _ => disabledContinueMessage
+        };
+
+        ShowDisabledMessage(message, disabledMessageShowSeconds);
+    }
+
+    private void ShowDisabledMessage(string message, float duration)
     {
         EnsureDisabledOptionText();
 
@@ -673,37 +1066,22 @@ public class SaveFileMenu : MonoBehaviour
             disabledMessageRoutine = null;
         }
 
-        string message = disabledContinueMessage;
-
-        switch (SelectedOption)
-        {
-            case SaveFileOption.Continue:
-                message = disabledContinueMessage;
-                break;
-
-            case SaveFileOption.DeleteFile:
-                message = disabledDeleteMessage;
-                break;
-        }
-
         ApplyDisabledMessageVisualStyle();
 
         disabledOptionText.text = message;
         disabledOptionText.gameObject.SetActive(true);
         disabledOptionText.transform.SetAsLastSibling();
 
-        SLog($"ShowDisabledMessageForCurrentOption | frame={Time.frameCount} text='{message}'");
-
-        disabledMessageRoutine = StartCoroutine(HideDisabledMessageRoutine());
+        disabledMessageRoutine = StartCoroutine(HideDisabledMessageRoutine(duration));
     }
 
-    IEnumerator HideDisabledMessageRoutine()
+    private IEnumerator HideDisabledMessageRoutine(float duration)
     {
-        yield return new WaitForSecondsRealtime(Mathf.Max(0.05f, disabledMessageShowSeconds));
+        yield return new WaitForSecondsRealtime(Mathf.Max(0.05f, duration));
         HideDisabledMessageImmediate();
     }
 
-    void HideDisabledMessageImmediate()
+    private void HideDisabledMessageImmediate()
     {
         if (disabledMessageRoutine != null)
         {
@@ -715,7 +1093,7 @@ public class SaveFileMenu : MonoBehaviour
             disabledOptionText.gameObject.SetActive(false);
     }
 
-    void ApplyDisabledMessageVisualStyle()
+    private void ApplyDisabledMessageVisualStyle()
     {
         if (disabledOptionText == null)
             return;
@@ -748,7 +1126,7 @@ public class SaveFileMenu : MonoBehaviour
         disabledOptionText.SetVerticesDirty();
     }
 
-    Material GetOrCreateDisabledMessageRuntimeMaterial()
+    private Material GetOrCreateDisabledMessageRuntimeMaterial()
     {
         if (disabledOptionText == null)
             return null;
@@ -773,7 +1151,7 @@ public class SaveFileMenu : MonoBehaviour
         return disabledMessageRuntimeMaterial;
     }
 
-    void ApplyDisabledMessageMaterialStyle(Material mat)
+    private void ApplyDisabledMessageMaterialStyle(Material mat)
     {
         if (mat == null)
             return;
@@ -812,31 +1190,13 @@ public class SaveFileMenu : MonoBehaviour
         }
     }
 
-    string GetRectInfo(RectTransform rt)
-    {
-        if (rt == null)
-            return "NULL";
-
-        return
-            $"name='{rt.name}' rect={rt.rect} sizeDelta={rt.sizeDelta} anchoredPos={rt.anchoredPosition} " +
-            $"localPos={rt.localPosition} anchorMin={rt.anchorMin} anchorMax={rt.anchorMax} pivot={rt.pivot}";
-    }
-
-    void SLog(string message)
-    {
-        if (!enableSurgicalLogs)
-            return;
-
-        Debug.Log($"{LOG} {message}", this);
-    }
-
-    static void TrySetFloat(Material mat, string prop, float value)
+    private static void TrySetFloat(Material mat, string prop, float value)
     {
         if (mat != null && mat.HasProperty(prop))
             mat.SetFloat(prop, value);
     }
 
-    static void TrySetColor(Material mat, string prop, Color value)
+    private static void TrySetColor(Material mat, string prop, Color value)
     {
         if (mat != null && mat.HasProperty(prop))
             mat.SetColor(prop, value);

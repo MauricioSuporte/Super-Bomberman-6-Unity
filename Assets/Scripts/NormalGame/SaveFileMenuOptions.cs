@@ -5,125 +5,85 @@ using UnityEngine.UI;
 
 public class SaveFileMenuOptions : MonoBehaviour
 {
-    const string LOG = "[SaveFileMenuOptions]";
-
-    [Header("Debug (Surgical Logs)")]
-    [SerializeField] bool enableSurgicalLogs = true;
-    [SerializeField] bool logEveryLayoutApply = true;
-    [SerializeField] bool logOptionPositionsAfterBuild = true;
-
     [Header("Option List")]
-    [SerializeField] RectTransform optionListRoot;
-    [SerializeField] TextMeshProUGUI optionItemPrefab;
-    [SerializeField] int fontSize = 20;
-    [SerializeField] float optionItemHeight = 34f;
-    [SerializeField] Vector2 optionSpacing = new Vector2(0f, 12f);
-    [SerializeField] float optionContentOffsetX = 26f;
-    [SerializeField] float optionContentOffsetY = 0f;
-    [SerializeField] float cursorExtraOffsetY = 0f;
+    [SerializeField] private RectTransform optionListRoot;
+    [SerializeField] private TextMeshProUGUI optionItemPrefab;
+    [SerializeField] private int fontSize = 20;
+    [SerializeField] private float optionItemHeight = 34f;
+    [SerializeField] private Vector2 optionSpacing = new Vector2(0f, 12f);
+    [SerializeField] private float optionContentOffsetX = 26f;
+    [SerializeField] private float optionContentOffsetY = 0f;
+    [SerializeField] private float cursorExtraOffsetY = 0f;
 
     [Header("Menu Block Position")]
-    [SerializeField, Range(0f, 1f)] float blockCenterX = 0.36f;
-    [SerializeField, Range(0f, 1f)] float blockCenterY = 0.47f;
-    [SerializeField] float cursorReservedWidth = 56f;
-    [SerializeField] float extraBlockWidth = 8f;
-    [SerializeField] float extraBlockHeight = 0f;
+    [SerializeField, Range(0f, 1f)] private float blockCenterX = 0.36f;
+    [SerializeField, Range(0f, 1f)] private float blockCenterY = 0.47f;
+    [SerializeField] private float cursorReservedWidth = 56f;
+    [SerializeField] private float extraBlockWidth = 8f;
+    [SerializeField] private float extraBlockHeight = 0f;
 
     [Header("Colors")]
-    [SerializeField] Color normalColor = new Color32(0, 180, 0, 255);
-    [SerializeField] Color selectedColor = new Color32(0, 255, 60, 255);
-    [SerializeField] Color disabledColor = new Color32(0, 120, 0, 180);
+    [SerializeField] private Color normalColor = new Color32(0, 180, 0, 255);
+    [SerializeField] private Color selectedColor = new Color32(0, 255, 60, 255);
+    [SerializeField] private Color disabledColor = new Color32(0, 120, 0, 180);
 
     [Header("TMP")]
-    [SerializeField] TMP_FontAsset optionFontAsset;
-    [SerializeField] Material optionFontMaterialPreset;
-    [SerializeField] bool forceBold = true;
-    [SerializeField] bool autoSize = false;
-    [SerializeField, Range(0.25f, 1f)] float autoSizeMinRatio = 0.75f;
+    [SerializeField] private TMP_FontAsset optionFontAsset;
+    [SerializeField] private Material optionFontMaterialPreset;
+    [SerializeField] private bool forceBold = true;
+    [SerializeField] private bool autoSize = false;
+    [SerializeField, Range(0.25f, 1f)] private float autoSizeMinRatio = 0.75f;
 
     [Header("TMP Outline")]
-    [SerializeField] bool useOutline = true;
-    [SerializeField] Color outlineColor = Color.black;
-    [SerializeField, Range(0f, 1f)] float outlineWidth = 0.35f;
-    [SerializeField, Range(0f, 1f)] float outlineSoftness = 0f;
+    [SerializeField] private bool useOutline = true;
+    [SerializeField] private Color outlineColor = Color.black;
+    [SerializeField, Range(0f, 1f)] private float outlineWidth = 0.35f;
+    [SerializeField, Range(0f, 1f)] private float outlineSoftness = 0f;
 
     [Header("TMP Face")]
-    [SerializeField, Range(-1f, 1f)] float faceDilate = 0.2f;
-    [SerializeField, Range(0f, 1f)] float faceSoftness = 0f;
+    [SerializeField, Range(-1f, 1f)] private float faceDilate = 0.2f;
+    [SerializeField, Range(0f, 1f)] private float faceSoftness = 0f;
 
     [Header("TMP Underlay")]
-    [SerializeField] bool enableUnderlay = true;
-    [SerializeField] Color underlayColor = new Color(0f, 0f, 0f, 1f);
-    [SerializeField, Range(-1f, 1f)] float underlayDilate = 0.1f;
-    [SerializeField, Range(0f, 1f)] float underlaySoftness = 0f;
-    [SerializeField, Range(-2f, 2f)] float underlayOffsetX = 0.25f;
-    [SerializeField, Range(-2f, 2f)] float underlayOffsetY = -0.25f;
+    [SerializeField] private bool enableUnderlay = true;
+    [SerializeField] private Color underlayColor = new Color(0f, 0f, 0f, 1f);
+    [SerializeField, Range(-1f, 1f)] private float underlayDilate = 0.1f;
+    [SerializeField, Range(0f, 1f)] private float underlaySoftness = 0f;
+    [SerializeField, Range(-2f, 2f)] private float underlayOffsetX = 0.25f;
+    [SerializeField, Range(-2f, 2f)] private float underlayOffsetY = -0.25f;
 
     [Header("Cursor")]
-    [SerializeField] AnimatedSpriteRenderer cursorRenderer;
-    [SerializeField] Vector2 cursorOffset = new Vector2(-30f, 0f);
-    [SerializeField] bool roundCursorToWholePixels = true;
-    [SerializeField] float cursorHeightMultiplier = 1.45f;
-    [SerializeField] float minCursorSize = 24f;
+    [SerializeField] private AnimatedSpriteRenderer cursorRenderer;
+    [SerializeField] private Vector2 cursorOffset = new Vector2(-30f, 0f);
+    [SerializeField] private bool roundCursorToWholePixels = true;
+    [SerializeField] private float cursorHeightMultiplier = 1.45f;
+    [SerializeField] private float minCursorSize = 24f;
 
-    readonly List<TextMeshProUGUI> optionTexts = new();
-    readonly Dictionary<TMP_Text, Material> runtimeMaterials = new();
+    private readonly List<TextMeshProUGUI> optionTexts = new();
+    private readonly Dictionary<TMP_Text, Material> runtimeMaterials = new();
+    private readonly List<string> entries = new();
+    private readonly List<bool> entryEnabled = new();
 
-    readonly List<SaveFileOption> options = new()
+    private float _currentUiScale = 1f;
+
+    private Vector2 _cursorBaseSizeDelta = new Vector2(16f, 16f);
+    private bool _cursorBaseSizeCaptured;
+
+    private bool _cursorBaseIdle = true;
+    private bool _cursorBaseLoop = true;
+    private bool _cursorAnimationStateCaptured;
+    private bool _cursorAnimatingConfirmed;
+
+    private int _baseLayoutPaddingLeft;
+    private int _baseLayoutPaddingRight;
+    private int _baseLayoutPaddingTop;
+    private int _baseLayoutPaddingBottom;
+    private bool _layoutPaddingCaptured;
+
+    public int Count => entries.Count;
+
+    public void Awake()
     {
-        SaveFileOption.NewGame,
-        SaveFileOption.Continue,
-        SaveFileOption.DeleteFile
-    };
-
-    float _currentUiScale = 1f;
-
-    Vector2 _cursorBaseSizeDelta = new Vector2(16f, 16f);
-    bool _cursorBaseSizeCaptured;
-
-    bool _cursorBaseIdle = true;
-    bool _cursorBaseLoop = true;
-    bool _cursorAnimationStateCaptured;
-    bool _cursorAnimatingConfirmed;
-
-    int _baseLayoutPaddingLeft;
-    int _baseLayoutPaddingRight;
-    int _baseLayoutPaddingTop;
-    int _baseLayoutPaddingBottom;
-    bool _layoutPaddingCaptured;
-
-    int _layoutApplyCount;
-    int _buildCount;
-    int _setUiScaleCount;
-
-    public int Count => options.Count;
-    public IReadOnlyList<SaveFileOption> Options => options;
-
-    public SaveFileOption GetOptionAt(int index)
-    {
-        return options[Mathf.Clamp(index, 0, options.Count - 1)];
-    }
-
-    int ScaledFont(int baseSize)
-    {
-        return Mathf.Clamp(Mathf.RoundToInt(baseSize * _currentUiScale), 8, 300);
-    }
-
-    float ScaledFloat(float baseValue)
-    {
-        return baseValue * _currentUiScale;
-    }
-
-    void Awake()
-    {
-        SLog(
-            $"Awake START | frame={Time.frameCount} " +
-            $"goActiveSelf={gameObject.activeSelf} activeInHierarchy={gameObject.activeInHierarchy} " +
-            $"rect={GetRectInfo(transform as RectTransform)} " +
-            $"optionListRoot={(optionListRoot != null ? optionListRoot.name : "NULL")} " +
-            $"optionItemPrefab={(optionItemPrefab != null ? optionItemPrefab.name : "NULL")}"
-        );
-
         if (cursorRenderer != null)
         {
             RectTransform cursorRt = cursorRenderer.transform as RectTransform;
@@ -137,23 +97,12 @@ public class SaveFileMenuOptions : MonoBehaviour
             _cursorBaseLoop = cursorRenderer.loop;
             _cursorAnimationStateCaptured = true;
             cursorRenderer.gameObject.SetActive(false);
-
-            SLog(
-                $"Awake Cursor | baseSizeDelta={_cursorBaseSizeDelta} " +
-                $"idle={_cursorBaseIdle} loop={_cursorBaseLoop} " +
-                $"cursorRect={GetRectInfo(cursorRt)}"
-            );
         }
 
         CaptureBaseLayoutPadding();
-
-        SLog(
-            $"Awake END | capturedPadding={_layoutPaddingCaptured} " +
-            $"basePadding=({_baseLayoutPaddingLeft},{_baseLayoutPaddingRight},{_baseLayoutPaddingTop},{_baseLayoutPaddingBottom})"
-        );
     }
 
-    void OnDestroy()
+    private void OnDestroy()
     {
         foreach (var kv in runtimeMaterials)
         {
@@ -174,14 +123,7 @@ public class SaveFileMenuOptions : MonoBehaviour
 
     public void SetUiScale(float uiScale)
     {
-        _setUiScaleCount++;
         _currentUiScale = uiScale;
-
-        SLog(
-            $"SetUiScale START | call={_setUiScaleCount} frame={Time.frameCount} uiScale={_currentUiScale:0.###} " +
-            $"panelRect(before)={GetRectInfo(transform as RectTransform)} " +
-            $"listRect(before)={GetRectInfo(optionListRoot)}"
-        );
 
         ApplyCursorScale();
         ApplyOptionListLayoutSettings();
@@ -191,7 +133,8 @@ public class SaveFileMenuOptions : MonoBehaviour
             if (optionTexts[i] == null)
                 continue;
 
-            ApplyOptionTextStyle(optionTexts[i], normalColor);
+            bool enabled = i < entryEnabled.Count ? entryEnabled[i] : true;
+            ApplyOptionTextStyle(optionTexts[i], enabled ? normalColor : disabledColor);
 
             RectTransform rt = optionTexts[i].rectTransform;
             rt.sizeDelta = new Vector2(0f, Mathf.Round(ScaledFloat(optionItemHeight)));
@@ -202,11 +145,6 @@ public class SaveFileMenuOptions : MonoBehaviour
                 le.minHeight = Mathf.Round(ScaledFloat(optionItemHeight));
                 le.preferredHeight = Mathf.Round(ScaledFloat(optionItemHeight));
             }
-
-            SLog(
-                $"SetUiScale Item | index={i} text='{optionTexts[i].text}' " +
-                $"rt={GetRectInfo(rt)}"
-            );
         }
 
         VerticalLayoutGroup layout = optionListRoot != null ? optionListRoot.GetComponent<VerticalLayoutGroup>() : null;
@@ -216,33 +154,58 @@ public class SaveFileMenuOptions : MonoBehaviour
         Canvas.ForceUpdateCanvases();
         if (optionListRoot != null)
             LayoutRebuilder.ForceRebuildLayoutImmediate(optionListRoot);
+    }
 
-        SLog(
-            $"SetUiScale END | call={_setUiScaleCount} " +
-            $"panelRect(after)={GetRectInfo(transform as RectTransform)} " +
-            $"listRect(after)={GetRectInfo(optionListRoot)} " +
-            $"layoutPadding={GetLayoutPaddingInfo(optionListRoot)}"
-        );
+    public void SetEntries(IReadOnlyList<string> newEntries, IReadOnlyList<bool> enabledStates)
+    {
+        entries.Clear();
+        entryEnabled.Clear();
+
+        if (newEntries != null)
+        {
+            for (int i = 0; i < newEntries.Count; i++)
+                entries.Add(newEntries[i] ?? string.Empty);
+        }
+
+        if (enabledStates != null)
+        {
+            for (int i = 0; i < entries.Count; i++)
+            {
+                bool enabled = i < enabledStates.Count && enabledStates[i];
+                entryEnabled.Add(enabled);
+            }
+        }
+        else
+        {
+            for (int i = 0; i < entries.Count; i++)
+                entryEnabled.Add(true);
+        }
+
+        BuildOptionList();
+    }
+
+    public bool IsEntryEnabled(int index)
+    {
+        if (index < 0 || index >= entryEnabled.Count)
+            return false;
+
+        return entryEnabled[index];
+    }
+
+    public string GetEntryAt(int index)
+    {
+        if (index < 0 || index >= entries.Count)
+            return string.Empty;
+
+        return entries[index];
     }
 
     public void BuildOptionList()
     {
-        _buildCount++;
-
-        SLog(
-            $"BuildOptionList START | call={_buildCount} frame={Time.frameCount} " +
-            $"panelRect={GetRectInfo(transform as RectTransform)} " +
-            $"listRect={GetRectInfo(optionListRoot)} " +
-            $"childCount(before)={(optionListRoot != null ? optionListRoot.childCount : -1)}"
-        );
-
         optionTexts.Clear();
 
         if (optionListRoot == null || optionItemPrefab == null)
-        {
-            SLog("BuildOptionList ABORT | optionListRoot or optionItemPrefab is NULL");
             return;
-        }
 
         ApplyOptionListLayoutSettings();
 
@@ -258,21 +221,21 @@ public class SaveFileMenuOptions : MonoBehaviour
             if (cursorRenderer != null && child == cursorRenderer.transform)
                 continue;
 
-            SLog($"BuildOptionList DestroyChild | index={i} name='{child.name}'");
             Destroy(child.gameObject);
         }
 
         optionItemPrefab.gameObject.SetActive(false);
 
-        for (int i = 0; i < options.Count; i++)
+        for (int i = 0; i < entries.Count; i++)
         {
             TextMeshProUGUI txt = Instantiate(optionItemPrefab, optionListRoot);
             txt.gameObject.SetActive(true);
             txt.enabled = true;
-            txt.text = GetOptionDisplayName(options[i]);
+            txt.text = entries[i];
             txt.transform.SetAsLastSibling();
 
-            ApplyOptionTextStyle(txt, normalColor);
+            Color faceColor = entryEnabled[i] ? normalColor : disabledColor;
+            ApplyOptionTextStyle(txt, faceColor);
 
             RectTransform rt = txt.rectTransform;
             rt.anchorMin = new Vector2(0f, 0.5f);
@@ -296,11 +259,6 @@ public class SaveFileMenuOptions : MonoBehaviour
             le.flexibleWidth = 1f;
 
             optionTexts.Add(txt);
-
-            SLog(
-                $"BuildOptionList CreateItem | index={i} text='{txt.text}' " +
-                $"rt={GetRectInfo(rt)} prefValues={txt.GetPreferredValues(txt.text)}"
-            );
         }
 
         if (cursorRenderer != null)
@@ -310,19 +268,9 @@ public class SaveFileMenuOptions : MonoBehaviour
 
         Canvas.ForceUpdateCanvases();
         LayoutRebuilder.ForceRebuildLayoutImmediate(optionListRoot);
-
-        SLog(
-            $"BuildOptionList END | call={_buildCount} " +
-            $"panelRect={GetRectInfo(transform as RectTransform)} " +
-            $"listRect={GetRectInfo(optionListRoot)} " +
-            $"layoutPadding={GetLayoutPaddingInfo(optionListRoot)}"
-        );
-
-        if (logOptionPositionsAfterBuild)
-            DumpOptionPositions("BuildOptionList END");
     }
 
-    public void UpdateOptionVisuals(int selectedIndex, bool confirmed, bool hasAnySaveFile)
+    public void UpdateOptionVisuals(int selectedIndex, bool confirmed)
     {
         for (int i = 0; i < optionTexts.Count; i++)
         {
@@ -331,13 +279,11 @@ public class SaveFileMenuOptions : MonoBehaviour
                 continue;
 
             bool isSelected = i == selectedIndex;
-            SaveFileOption option = options[i];
-            bool enabled = IsOptionEnabled(option, hasAnySaveFile);
+            bool enabled = i < entryEnabled.Count ? entryEnabled[i] : true;
 
-            txt.text = GetOptionDisplayName(option);
+            txt.text = i < entries.Count ? entries[i] : string.Empty;
 
             Color faceColor = isSelected ? selectedColor : normalColor;
-
             if (!enabled)
                 faceColor = disabledColor;
 
@@ -354,8 +300,6 @@ public class SaveFileMenuOptions : MonoBehaviour
         {
             cursorRenderer.gameObject.SetActive(true);
             cursorRenderer.RefreshFrame();
-
-            SLog($"ShowCursor | frame={Time.frameCount} cursorRect={GetRectInfo(cursorRenderer.transform as RectTransform)}");
         }
     }
 
@@ -365,7 +309,6 @@ public class SaveFileMenuOptions : MonoBehaviour
         {
             UpdateCursorAnimationState(false);
             cursorRenderer.gameObject.SetActive(false);
-            SLog($"HideCursor | frame={Time.frameCount}");
         }
     }
 
@@ -377,7 +320,6 @@ public class SaveFileMenuOptions : MonoBehaviour
         if (selectedIndex < 0 || selectedIndex >= optionTexts.Count)
         {
             cursorRenderer.gameObject.SetActive(false);
-            SLog($"UpdateCursorPosition HIDE | invalid selectedIndex={selectedIndex}");
             return;
         }
 
@@ -385,7 +327,6 @@ public class SaveFileMenuOptions : MonoBehaviour
         if (txt == null)
         {
             cursorRenderer.gameObject.SetActive(false);
-            SLog($"UpdateCursorPosition HIDE | text NULL at index={selectedIndex}");
             return;
         }
 
@@ -415,39 +356,9 @@ public class SaveFileMenuOptions : MonoBehaviour
         }
 
         cursorRenderer.SetExternalBaseLocalPosition(localPos);
-
-        SLog(
-            $"UpdateCursorPosition | frame={Time.frameCount} selectedIndex={selectedIndex} text='{txt.text}' " +
-            $"textLocalPos={txtRt.localPosition} finalCursorLocalPos={localPos} " +
-            $"textRect={GetRectInfo(txtRt)} cursorRect={GetRectInfo(cursorRt)}"
-        );
     }
 
-    string GetOptionDisplayName(SaveFileOption option)
-    {
-        switch (option)
-        {
-            case SaveFileOption.NewGame: return "New Game";
-            case SaveFileOption.Continue: return "Continue";
-            case SaveFileOption.DeleteFile: return "Delete File";
-            default: return option.ToString();
-        }
-    }
-
-    bool IsOptionEnabled(SaveFileOption option, bool hasAnySaveFile)
-    {
-        switch (option)
-        {
-            case SaveFileOption.Continue:
-            case SaveFileOption.DeleteFile:
-                return hasAnySaveFile;
-
-            default:
-                return true;
-        }
-    }
-
-    void ApplyOptionTextStyle(TextMeshProUGUI txt, Color faceColor)
+    private void ApplyOptionTextStyle(TextMeshProUGUI txt, Color faceColor)
     {
         if (txt == null)
             return;
@@ -488,7 +399,7 @@ public class SaveFileMenuOptions : MonoBehaviour
         txt.SetVerticesDirty();
     }
 
-    Material GetOrCreateRuntimeMaterial(TMP_Text target)
+    private Material GetOrCreateRuntimeMaterial(TMP_Text target)
     {
         if (target == null)
             return null;
@@ -514,7 +425,7 @@ public class SaveFileMenuOptions : MonoBehaviour
         return runtimeMat;
     }
 
-    void ApplyMaterialStyle(Material mat, Color faceColor)
+    private void ApplyMaterialStyle(Material mat, Color faceColor)
     {
         if (mat == null)
             return;
@@ -553,7 +464,7 @@ public class SaveFileMenuOptions : MonoBehaviour
         }
     }
 
-    void CaptureBaseLayoutPadding()
+    private void CaptureBaseLayoutPadding()
     {
         if (_layoutPaddingCaptured || optionListRoot == null)
             return;
@@ -567,30 +478,16 @@ public class SaveFileMenuOptions : MonoBehaviour
         _baseLayoutPaddingTop = layout.padding.top;
         _baseLayoutPaddingBottom = layout.padding.bottom;
         _layoutPaddingCaptured = true;
-
-        SLog(
-            $"CaptureBaseLayoutPadding | " +
-            $"left={_baseLayoutPaddingLeft} right={_baseLayoutPaddingRight} " +
-            $"top={_baseLayoutPaddingTop} bottom={_baseLayoutPaddingBottom}"
-        );
     }
 
-    void ApplyOptionListLayoutSettings()
+    private void ApplyOptionListLayoutSettings()
     {
-        _layoutApplyCount++;
-
         if (optionListRoot == null)
-        {
-            SLog($"ApplyOptionListLayoutSettings ABORT | optionListRoot NULL | call={_layoutApplyCount}");
             return;
-        }
 
         VerticalLayoutGroup layout = optionListRoot.GetComponent<VerticalLayoutGroup>();
         if (layout == null)
-        {
-            SLog($"ApplyOptionListLayoutSettings ABORT | VerticalLayoutGroup NULL | call={_layoutApplyCount}");
             return;
-        }
 
         CaptureBaseLayoutPadding();
 
@@ -603,23 +500,13 @@ public class SaveFileMenuOptions : MonoBehaviour
 
         RectTransform panelRt = transform as RectTransform;
         if (panelRt == null)
-        {
-            SLog($"ApplyOptionListLayoutSettings ABORT | panelRt NULL | call={_layoutApplyCount}");
             return;
-        }
 
         float panelWidth = panelRt.rect.width;
         float panelHeight = panelRt.rect.height;
 
         if (panelWidth <= 0f || panelHeight <= 0f)
-        {
-            SLog(
-                $"ApplyOptionListLayoutSettings EARLY-RECT | call={_layoutApplyCount} frame={Time.frameCount} " +
-                $"panelWidth={panelWidth:0.##} panelHeight={panelHeight:0.##} " +
-                $"panelRect={GetRectInfo(panelRt)} listRect={GetRectInfo(optionListRoot)}"
-            );
             return;
-        }
 
         float blockWidth = GetVisualBlockWidth();
         float blockHeight = GetVisualBlockHeight();
@@ -634,60 +521,27 @@ public class SaveFileMenuOptions : MonoBehaviour
         layout.padding.right = _baseLayoutPaddingRight;
         layout.padding.top = finalTop;
         layout.padding.bottom = _baseLayoutPaddingBottom;
-
-        if (logEveryLayoutApply)
-        {
-            SLog(
-                $"ApplyOptionListLayoutSettings | call={_layoutApplyCount} frame={Time.frameCount} " +
-                $"uiScale={_currentUiScale:0.###} panel=({panelWidth:0.##}x{panelHeight:0.##}) " +
-                $"block=({blockWidth:0.##}x{blockHeight:0.##}) " +
-                $"center=({blockCenterX:0.###},{blockCenterY:0.###}) " +
-                $"centeredLeft={centeredLeft} centeredTop={centeredTop} " +
-                $"offsetX={optionContentOffsetX} offsetY={optionContentOffsetY} " +
-                $"finalPadding=(L:{finalLeft},T:{finalTop},R:{layout.padding.right},B:{layout.padding.bottom}) " +
-                $"panelRect={GetRectInfo(panelRt)} listRect={GetRectInfo(optionListRoot)}"
-            );
-        }
     }
 
-    float GetVisualBlockWidth()
+    private float GetVisualBlockWidth()
     {
         float maxTextWidth = GetMaxTextWidth();
-        float result = Mathf.Ceil(ScaledFloat(cursorReservedWidth) + maxTextWidth + ScaledFloat(extraBlockWidth));
-
-        SLog(
-            $"GetVisualBlockWidth | frame={Time.frameCount} " +
-            $"cursorReservedWidth={cursorReservedWidth} maxTextWidth={maxTextWidth:0.##} " +
-            $"extraBlockWidth={extraBlockWidth} result={result:0.##}"
-        );
-
-        return result;
+        return Mathf.Ceil(ScaledFloat(cursorReservedWidth) + maxTextWidth + ScaledFloat(extraBlockWidth));
     }
 
-    float GetVisualBlockHeight()
+    private float GetVisualBlockHeight()
     {
         float itemHeight = Mathf.Round(ScaledFloat(optionItemHeight));
         float spacingY = Mathf.Round(ScaledFloat(optionSpacing.y));
-        float totalSpacing = Mathf.Max(0, options.Count - 1) * spacingY;
-        float result = Mathf.Ceil((options.Count * itemHeight) + totalSpacing + ScaledFloat(extraBlockHeight));
-
-        SLog(
-            $"GetVisualBlockHeight | frame={Time.frameCount} " +
-            $"itemHeight={itemHeight:0.##} spacingY={spacingY:0.##} totalSpacing={totalSpacing:0.##} " +
-            $"extraBlockHeight={extraBlockHeight} result={result:0.##}"
-        );
-
-        return result;
+        float totalSpacing = Mathf.Max(0, entries.Count - 1) * spacingY;
+        return Mathf.Ceil((entries.Count * itemHeight) + totalSpacing + ScaledFloat(extraBlockHeight));
     }
 
-    float GetMaxTextWidth()
+    private float GetMaxTextWidth()
     {
         TMP_Text measureTarget = optionItemPrefab != null ? optionItemPrefab : null;
         if (measureTarget == null)
-        {
-            SLog("GetMaxTextWidth | optionItemPrefab NULL");
             return 0f;
-        }
 
         if (optionFontAsset != null)
             measureTarget.font = optionFontAsset;
@@ -703,24 +557,17 @@ public class SaveFileMenuOptions : MonoBehaviour
 
         float max = 0f;
 
-        for (int i = 0; i < options.Count; i++)
+        for (int i = 0; i < entries.Count; i++)
         {
-            string text = GetOptionDisplayName(options[i]);
-            Vector2 preferred = measureTarget.GetPreferredValues(text);
+            Vector2 preferred = measureTarget.GetPreferredValues(entries[i]);
             if (preferred.x > max)
                 max = preferred.x;
-
-            SLog(
-                $"GetMaxTextWidth Item | index={i} text='{text}' preferred={preferred} currentMax={max:0.##}"
-            );
         }
 
-        float result = Mathf.Ceil(max);
-        SLog($"GetMaxTextWidth END | result={result:0.##}");
-        return result;
+        return Mathf.Ceil(max);
     }
 
-    void ApplyCursorScale()
+    private void ApplyCursorScale()
     {
         if (cursorRenderer == null)
             return;
@@ -748,15 +595,9 @@ public class SaveFileMenuOptions : MonoBehaviour
         );
 
         cursorRt.localScale = Vector3.one;
-
-        SLog(
-            $"ApplyCursorScale | frame={Time.frameCount} targetHeight={targetHeight:0.##} " +
-            $"targetSize={targetSize:0.##} baseAspect={baseAspect:0.###} " +
-            $"cursorRect={GetRectInfo(cursorRt)}"
-        );
     }
 
-    void UpdateCursorAnimationState(bool confirmed)
+    private void UpdateCursorAnimationState(bool confirmed)
     {
         if (cursorRenderer == null)
             return;
@@ -779,7 +620,6 @@ public class SaveFileMenuOptions : MonoBehaviour
             cursorRenderer.loop = true;
             cursorRenderer.CurrentFrame = 0;
             cursorRenderer.RefreshFrame();
-            SLog("UpdateCursorAnimationState | confirmed=True");
         }
         else
         {
@@ -787,74 +627,26 @@ public class SaveFileMenuOptions : MonoBehaviour
             cursorRenderer.loop = _cursorBaseLoop;
             cursorRenderer.CurrentFrame = 0;
             cursorRenderer.RefreshFrame();
-            SLog("UpdateCursorAnimationState | confirmed=False");
         }
     }
 
-    void DumpOptionPositions(string context)
+    private int ScaledFont(int baseSize)
     {
-        if (!enableSurgicalLogs)
-            return;
-
-        SLog(
-            $"DumpOptionPositions {context} | frame={Time.frameCount} " +
-            $"panelRect={GetRectInfo(transform as RectTransform)} listRect={GetRectInfo(optionListRoot)}"
-        );
-
-        for (int i = 0; i < optionTexts.Count; i++)
-        {
-            TextMeshProUGUI txt = optionTexts[i];
-            if (txt == null)
-            {
-                SLog($"DumpOptionPositions {context} | item[{i}] NULL");
-                continue;
-            }
-
-            SLog(
-                $"DumpOptionPositions {context} | item[{i}] text='{txt.text}' " +
-                $"rt={GetRectInfo(txt.rectTransform)} localPos={txt.rectTransform.localPosition} " +
-                $"anchoredPos={txt.rectTransform.anchoredPosition}"
-            );
-        }
+        return Mathf.Clamp(Mathf.RoundToInt(baseSize * _currentUiScale), 8, 300);
     }
 
-    string GetRectInfo(RectTransform rt)
+    private float ScaledFloat(float baseValue)
     {
-        if (rt == null)
-            return "NULL";
-
-        return
-            $"name='{rt.name}' rect={rt.rect} sizeDelta={rt.sizeDelta} anchoredPos={rt.anchoredPosition} " +
-            $"localPos={rt.localPosition} anchorMin={rt.anchorMin} anchorMax={rt.anchorMax} pivot={rt.pivot}";
+        return baseValue * _currentUiScale;
     }
 
-    string GetLayoutPaddingInfo(RectTransform rt)
-    {
-        if (rt == null)
-            return "NULL";
-
-        VerticalLayoutGroup layout = rt.GetComponent<VerticalLayoutGroup>();
-        if (layout == null)
-            return "NO_LAYOUT";
-
-        return $"L:{layout.padding.left} R:{layout.padding.right} T:{layout.padding.top} B:{layout.padding.bottom} spacing={layout.spacing}";
-    }
-
-    void SLog(string message)
-    {
-        if (!enableSurgicalLogs)
-            return;
-
-        Debug.Log($"{LOG} {message}", this);
-    }
-
-    static void TrySetFloat(Material mat, string prop, float value)
+    private static void TrySetFloat(Material mat, string prop, float value)
     {
         if (mat != null && mat.HasProperty(prop))
             mat.SetFloat(prop, value);
     }
 
-    static void TrySetColor(Material mat, string prop, Color value)
+    private static void TrySetColor(Material mat, string prop, Color value)
     {
         if (mat != null && mat.HasProperty(prop))
             mat.SetColor(prop, value);

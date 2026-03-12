@@ -666,11 +666,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f1443b288cfb8ad4b946e391432b042d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SaveFileMenu
+  enableSurgicalLogs: 1
+  logScaleReapply: 1
   root: {fileID: 861532794}
   backgroundImage: {fileID: 1806562754}
   referenceRect: {fileID: 1599199474}
   fadeImage: {fileID: 336813435}
-  fadeDuration: 0.75
+  fadeDuration: 0.5
   leftPanel: {fileID: 2134452605}
   backgroundSprites:
   - {fileID: 0}
@@ -1441,6 +1443,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 001eeea5487e3ea4daf8a8f07c9db308, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SaveFileLeftPanel
+  enableSurgicalLogs: 1
+  logEveryLayoutApply: 1
+  logOptionPositionsAfterBuild: 1
   optionListRoot: {fileID: 470050462}
   optionItemPrefab: {fileID: 2139593661}
   fontSize: 32
