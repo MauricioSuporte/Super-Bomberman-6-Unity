@@ -243,6 +243,7 @@ MonoBehaviour:
   groundShadowTile: {fileID: 11400000, guid: e0f633282caacc742af95bdd334dd0cf, type: 2}
   autoResolveStageTilemaps: 1
   restartAfterDeathSeconds: 4
+  bossRushSceneName: BossRush
   destructibleTileResolver: {fileID: 0}
 --- !u!1 &290470824
 GameObject:
@@ -1666,11 +1667,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 15b14ab88f8808a4183ec8ebd7dfc660, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ControlsConfigMenu
-  enableSurgicalLogs: 1
-  logOnResolutionOrRefChange: 1
-  logDumpOnLayoutRecompute: 1
-  logOnRefreshText: 1
-  logOnCursor: 1
   ownerPlayerId: 1
   root: {fileID: 1107666575}
   backgroundImage: {fileID: 700387565}
@@ -1678,8 +1674,8 @@ MonoBehaviour:
   menuLayoutRoot: {fileID: 1876253041}
   menuGlobalYOffset: 0
   fadeImage: {fileID: 336813435}
-  fadeInDuration: 0.25
-  fadeOutDuration: 0.2
+  fadeInDuration: 0.5
+  fadeOutDuration: 0.5
   controlsMusic: {fileID: 8300000, guid: 995a31f86fa5dcd4e8e4ba88dc2854cf, type: 3}
   controlsMusicVolume: 1
   menuText: {fileID: 534844157}

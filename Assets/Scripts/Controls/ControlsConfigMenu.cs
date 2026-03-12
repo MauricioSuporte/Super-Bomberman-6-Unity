@@ -24,8 +24,7 @@ public class ControlsConfigMenu : MonoBehaviour
 
     [Header("Fade")]
     [SerializeField] Image fadeImage;
-    [SerializeField] float fadeInDuration = 0.25f;
-    [SerializeField] float fadeOutDuration = 0.2f;
+    [SerializeField] float fadeDuration = 0.5f;
 
     [Header("Music")]
     [SerializeField] AudioClip controlsMusic;
@@ -641,7 +640,7 @@ public class ControlsConfigMenu : MonoBehaviour
             fadeImage.gameObject.SetActive(true);
             fadeImage.transform.SetAsLastSibling();
             SetFadeAlpha(1f);
-            yield return FadeTo(0f, fadeInDuration);
+            yield return FadeTo(0f, fadeDuration);
             fadeImage.gameObject.SetActive(false);
         }
 
@@ -699,7 +698,15 @@ public class ControlsConfigMenu : MonoBehaviour
                 {
                     ownerPlayerId = pidBack;
                     PlaySfx(backSfx, backVolume);
-                    yield return PulseCursor();
+
+                    if (cursorRenderer != null)
+                    {
+                        if (cursorPulseRoutine != null)
+                            StopCoroutine(cursorPulseRoutine);
+
+                        cursorPulseRoutine = StartCoroutine(cursorRenderer.PlayCycles(1));
+                    }
+
                     done = true;
                     yield return null;
                     continue;
@@ -914,7 +921,7 @@ public class ControlsConfigMenu : MonoBehaviour
             fadeImage.gameObject.SetActive(true);
             fadeImage.transform.SetAsLastSibling();
             SetFadeAlpha(0f);
-            yield return FadeTo(1f, fadeOutDuration);
+            yield return FadeTo(1f, fadeDuration);
         }
 
         if (cursorRenderer != null)
