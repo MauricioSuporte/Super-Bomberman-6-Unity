@@ -18,5 +18,6 @@
     Pink,
     Brown,
     DarkGreen,
+    Nightmare,
     Gold
 }
