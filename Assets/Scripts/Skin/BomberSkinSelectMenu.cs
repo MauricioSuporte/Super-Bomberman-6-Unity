@@ -81,8 +81,6 @@ public class BomberSkinSelectMenu : MonoBehaviour
     [SerializeField, Range(0f, 1f)] float confirmSfxVolume = 1f;
     [SerializeField] AudioClip lockedConfirmSfx;
     [SerializeField, Range(0f, 1f)] float lockedConfirmSfxVolume = 1f;
-    [SerializeField] AudioClip konamiUnlockSfx;
-    [SerializeField, Range(0f, 1f)] float konamiUnlockSfxVolume = 1f;
 
     [Header("SFX (Return)")]
     [FormerlySerializedAs("backToTitleSfx")]
@@ -131,15 +129,26 @@ public class BomberSkinSelectMenu : MonoBehaviour
     [SerializeField]
     List<BomberSkin> selectableSkins = new()
     {
+        BomberSkin.Golden,
         BomberSkin.White,
+        BomberSkin.Gray,
         BomberSkin.Black,
         BomberSkin.Red,
-        BomberSkin.Blue,
-        BomberSkin.Green,
+        BomberSkin.Orange,
         BomberSkin.Yellow,
-        BomberSkin.Pink,
+        BomberSkin.Lime,
+        BomberSkin.Green,
+        BomberSkin.Cyan,
         BomberSkin.Aqua,
-        BomberSkin.Golden
+        BomberSkin.Blue,
+        BomberSkin.DarkBlue,
+        BomberSkin.Purple,
+        BomberSkin.Magenta,
+        BomberSkin.Pink,
+        BomberSkin.Brown,
+        BomberSkin.DarkGreen,
+        BomberSkin.Nightmare,
+        BomberSkin.Gold
     };
 
     readonly Dictionary<BomberSkin, Sprite> idleCache = new();
@@ -152,29 +161,6 @@ public class BomberSkinSelectMenu : MonoBehaviour
     float previousVolume;
     bool previousLoop;
     bool capturedPreviousMusic;
-
-    enum KonamiToken
-    {
-        None = 0,
-        Up,
-        Down,
-        Left,
-        Right,
-        B,
-        A
-    }
-
-    static readonly KonamiToken[] _konamiTokens = new[]
-    {
-        KonamiToken.Up, KonamiToken.Up,
-        KonamiToken.Down, KonamiToken.Down,
-        KonamiToken.Left, KonamiToken.Right,
-        KonamiToken.Left, KonamiToken.Right,
-        KonamiToken.B, KonamiToken.A
-    };
-
-    int konamiStep;
-    bool menuActive;
 
     float downTimer;
     int downFrameIdx;
@@ -252,6 +238,8 @@ public class BomberSkinSelectMenu : MonoBehaviour
         CycleOverlappedCursors();
     }
 
+    bool menuActive;
+
     public void Hide()
     {
         menuActive = false;
@@ -297,7 +285,6 @@ public class BomberSkinSelectMenu : MonoBehaviour
 
         PlayerPersistentStats.EnsureSessionBooted();
 
-        konamiStep = 0;
         ReturnToTitleRequested = false;
 
         downTimer = 0f;
@@ -374,43 +361,6 @@ public class BomberSkinSelectMenu : MonoBehaviour
         while (!done)
         {
             bool anyReturnToTitle = false;
-
-            bool globalUp = false, globalDown = false, globalLeft = false, globalRight = false, globalB = false, globalA = false;
-
-            for (int i = 0; i < players.Count; i++)
-            {
-                int pid = players[i].playerId;
-
-                bool upDown = input.GetDown(pid, PlayerAction.MoveUp);
-                bool downDown = input.GetDown(pid, PlayerAction.MoveDown);
-                bool leftDown = input.GetDown(pid, PlayerAction.MoveLeft);
-                bool rightDown = input.GetDown(pid, PlayerAction.MoveRight);
-                bool aDown = input.GetDown(pid, PlayerAction.ActionA);
-                bool bDown = input.GetDown(pid, PlayerAction.ActionB);
-
-                globalUp |= upDown;
-                globalDown |= downDown;
-                globalLeft |= leftDown;
-                globalRight |= rightDown;
-                globalB |= bDown;
-                globalA |= aDown;
-            }
-
-            bool blockMenuThisFrame;
-            bool didUnlockNow = ProcessKonamiCode(globalUp, globalDown, globalLeft, globalRight, globalB, globalA, out blockMenuThisFrame);
-
-            if (didUnlockNow)
-            {
-                UpdateSlotVisuals();
-                yield return null;
-                continue;
-            }
-
-            if (blockMenuThisFrame)
-            {
-                yield return null;
-                continue;
-            }
 
             for (int i = 0; i < players.Count; i++)
             {
@@ -518,7 +468,7 @@ public class BomberSkinSelectMenu : MonoBehaviour
         int slot = Mathf.Clamp(ps.index, 0, selectableSkins.Count - 1);
         var skin = selectableSkins[slot];
 
-        if (!PlayerPersistentStats.IsSkinUnlocked(skin))
+        if (!BomberSkinUnlockProgress.IsUnlocked(skin))
         {
             PlaySfx(lockedConfirmSfx, lockedConfirmSfxVolume);
             return;
@@ -732,7 +682,7 @@ public class BomberSkinSelectMenu : MonoBehaviour
             if (img == null) continue;
 
             var skin = selectableSkins[i];
-            bool unlocked = PlayerPersistentStats.IsSkinUnlocked(skin);
+            bool unlocked = BomberSkinUnlockProgress.IsUnlocked(skin);
             bool selected = IsSlotSelected(i);
 
             bool anyCursorHere = false;
@@ -981,81 +931,6 @@ public class BomberSkinSelectMenu : MonoBehaviour
                 ps.cursorRt.SetSiblingIndex(1 + k);
             }
         }
-    }
-
-    bool ProcessKonamiCode(bool upDown, bool downDown, bool leftDown, bool rightDown, bool bDown, bool aDown, out bool blockMenuThisFrame)
-    {
-        KonamiToken pressed = ReadKonamiTokenThisFrame(upDown, downDown, leftDown, rightDown, bDown, aDown);
-        bool unlocked = AdvanceKonami(pressed, out bool consumed);
-
-        blockMenuThisFrame = consumed && (pressed == KonamiToken.A || pressed == KonamiToken.B);
-
-        if (!unlocked)
-            return false;
-
-        if (!PlayerPersistentStats.IsSkinUnlocked(BomberSkin.Golden))
-        {
-            PlayerPersistentStats.UnlockGolden();
-
-            for (int p = 1; p <= 4; p++)
-                PlayerPersistentStats.ClampSelectedSkinIfLocked(p);
-
-            PlaySfx(konamiUnlockSfx, konamiUnlockSfxVolume);
-            return true;
-        }
-
-        return false;
-    }
-
-    KonamiToken ReadKonamiTokenThisFrame(bool upDown, bool downDown, bool leftDown, bool rightDown, bool bDown, bool aDown)
-    {
-        if (upDown) return KonamiToken.Up;
-        if (downDown) return KonamiToken.Down;
-        if (leftDown) return KonamiToken.Left;
-        if (rightDown) return KonamiToken.Right;
-        if (bDown) return KonamiToken.B;
-        if (aDown) return KonamiToken.A;
-        return KonamiToken.None;
-    }
-
-    bool AdvanceKonami(KonamiToken pressed, out bool consumedThisFrame)
-    {
-        consumedThisFrame = false;
-
-        if (pressed == KonamiToken.None)
-            return false;
-
-        bool isKonamiToken =
-            pressed == KonamiToken.Up ||
-            pressed == KonamiToken.Down ||
-            pressed == KonamiToken.Left ||
-            pressed == KonamiToken.Right ||
-            pressed == KonamiToken.B ||
-            pressed == KonamiToken.A;
-
-        if (isKonamiToken && (konamiStep > 0 || pressed == _konamiTokens[0]))
-            consumedThisFrame = true;
-
-        if (pressed == _konamiTokens[konamiStep])
-        {
-            konamiStep++;
-
-            if (konamiStep >= _konamiTokens.Length)
-            {
-                konamiStep = 0;
-                consumedThisFrame = true;
-                return true;
-            }
-
-            return false;
-        }
-
-        konamiStep = (pressed == _konamiTokens[0]) ? 1 : 0;
-
-        if (pressed == _konamiTokens[0])
-            consumedThisFrame = true;
-
-        return false;
     }
 
     void PlaySfx(AudioClip clip, float volume)

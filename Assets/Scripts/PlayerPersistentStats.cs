@@ -3,7 +3,6 @@ using UnityEngine;
 
 public static class PlayerPersistentStats
 {
-    static bool goldenUnlockedSession;
     static bool sessionBooted;
     static bool stageAnyItemPickupCollected;
     static bool stageStartedWithDefaultState;
@@ -74,7 +73,7 @@ public static class PlayerPersistentStats
         if (sessionBooted)
             return;
 
-        goldenUnlockedSession = false;
+        SB6SaveSystem.Reload();
 
         for (int i = 1; i <= 4; i++)
         {
@@ -91,53 +90,54 @@ public static class PlayerPersistentStats
         EnsureSessionBooted();
     }
 
-    public static void UnlockGolden()
-    {
-        goldenUnlockedSession = true;
-    }
-
-    public static bool IsSkinUnlocked(BomberSkin skin)
-    {
-        if (skin == BomberSkin.Golden)
-            return goldenUnlockedSession;
-
-        return true;
-    }
-
-    static string PrefSelectedSkin(int playerId) => $"P{playerId}_SKIN_SELECTED";
-
     public static void SaveSelectedSkin(int playerId)
     {
+        playerId = Mathf.Clamp(playerId, 1, 4);
+
         var s = Get(playerId);
+        s.Skin = BomberSkinUnlockProgress.ClampToUnlocked(s.Skin);
 
-        if (s.Skin == BomberSkin.Golden)
-            return;
+        switch (playerId)
+        {
+            case 1: SB6SaveSystem.Data.player1SelectedSkin = (int)s.Skin; break;
+            case 2: SB6SaveSystem.Data.player2SelectedSkin = (int)s.Skin; break;
+            case 3: SB6SaveSystem.Data.player3SelectedSkin = (int)s.Skin; break;
+            case 4: SB6SaveSystem.Data.player4SelectedSkin = (int)s.Skin; break;
+        }
 
-        PlayerPrefs.SetInt(PrefSelectedSkin(playerId), (int)s.Skin);
+        SB6SaveSystem.Save();
     }
 
     static void LoadSelectedSkinInternal(int playerId)
     {
+        playerId = Mathf.Clamp(playerId, 1, 4);
+
         var s = Get(playerId);
-        var key = PrefSelectedSkin(playerId);
 
-        if (!PlayerPrefs.HasKey(key))
-            return;
+        int raw = playerId switch
+        {
+            1 => SB6SaveSystem.Data.player1SelectedSkin,
+            2 => SB6SaveSystem.Data.player2SelectedSkin,
+            3 => SB6SaveSystem.Data.player3SelectedSkin,
+            4 => SB6SaveSystem.Data.player4SelectedSkin,
+            _ => (int)BomberSkin.White
+        };
 
-        int raw = PlayerPrefs.GetInt(key);
+        if (!System.Enum.IsDefined(typeof(BomberSkin), raw))
+            raw = (int)BomberSkin.White;
+
         s.Skin = (BomberSkin)raw;
-
-        if (s.Skin == BomberSkin.Golden)
-            s.Skin = BomberSkin.White;
+        s.Skin = BomberSkinUnlockProgress.ClampToUnlocked(s.Skin);
     }
 
     public static void ClampSelectedSkinIfLocked(int playerId)
     {
         var s = Get(playerId);
+        BomberSkin clamped = BomberSkinUnlockProgress.ClampToUnlocked(s.Skin);
 
-        if (s.Skin == BomberSkin.Golden && !goldenUnlockedSession)
+        if (s.Skin != clamped)
         {
-            s.Skin = BomberSkin.White;
+            s.Skin = clamped;
             SaveSelectedSkin(playerId);
         }
     }
@@ -147,7 +147,6 @@ public static class PlayerPersistentStats
         for (int i = 1; i <= 4; i++)
             ResetToDefaults(i);
 
-        goldenUnlockedSession = false;
         sessionBooted = true;
     }
 
@@ -175,7 +174,7 @@ public static class PlayerPersistentStats
         s.MountedLouie = MountedType.None;
         s.QueuedEggs.Clear();
 
-        s.Skin = BomberSkin.White;
+        s.Skin = BomberSkinUnlockProgress.GetFallbackUnlockedSkin(BomberSkin.White);
         SaveSelectedSkin(playerId);
     }
 
@@ -364,6 +363,7 @@ public static class PlayerPersistentStats
 
         s.SpeedInternal = ClampSpeedInternal(s.SpeedInternal);
         s.Life = Mathf.Max(1, s.Life);
+        s.Skin = BomberSkinUnlockProgress.ClampToUnlocked(s.Skin);
 
         if (movement != null)
             movement.ApplySpeedInternal(s.SpeedInternal);
@@ -588,6 +588,8 @@ public static class PlayerPersistentStats
 
         s.MountedLouie = MountedType.None;
         s.QueuedEggs.Clear();
+
+        s.Skin = BomberSkinUnlockProgress.ClampToUnlocked(s.Skin);
     }
 
     public static void ResetGameplayPersistenceToBaseValues()
@@ -810,7 +812,6 @@ public static class PlayerPersistentStats
     {
         ResetToDefaultsAll();
         BootSession();
-        PlayerPrefs.Save();
     }
 
     public static PlayerState GetRuntime(int playerId)

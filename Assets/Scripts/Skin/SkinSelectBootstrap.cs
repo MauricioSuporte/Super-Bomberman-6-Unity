@@ -67,12 +67,8 @@ public class SkinSelectBootstrap : MonoBehaviour
         {
             var chosen = skinSelectMenu.GetSelectedSkin(p);
             PlayerPersistentStats.Get(p).Skin = chosen;
-
-            if (chosen != BomberSkin.Golden)
-                PlayerPersistentStats.SaveSelectedSkin(p);
+            PlayerPersistentStats.SaveSelectedSkin(p);
         }
-
-        PlayerPrefs.Save();
 
         switch (SkinSelectFlowRouter.NextDestination)
         {
