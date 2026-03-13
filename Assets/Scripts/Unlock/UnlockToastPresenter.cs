@@ -99,6 +99,8 @@ public class UnlockToastPresenter : MonoBehaviour
     Rect lastCamViewportRect;
     Vector2 lastRootSize = new(float.MinValue, float.MinValue);
 
+    readonly Vector3[] targetWorldCorners = new Vector3[4];
+
     sealed class ToastRequest
     {
         public string Title;
@@ -677,6 +679,26 @@ public class UnlockToastPresenter : MonoBehaviour
         return cam.pixelRect;
     }
 
+    Rect GetTargetScreenRect()
+    {
+        if (targetRoot != null)
+        {
+            targetRoot.GetWorldCorners(targetWorldCorners);
+
+            Vector3 bl = RectTransformUtility.WorldToScreenPoint(null, targetWorldCorners[0]);
+            Vector3 tr = RectTransformUtility.WorldToScreenPoint(null, targetWorldCorners[2]);
+
+            Rect rect = Rect.MinMaxRect(bl.x, bl.y, tr.x, tr.y);
+
+            SLog($"GetTargetScreenRect | from targetRoot={targetRoot.name} | rect={rect}");
+            return rect;
+        }
+
+        Rect camRect = GetMainCameraPixelRect();
+        SLog($"GetTargetScreenRect | from camera pixel rect={camRect}");
+        return camRect;
+    }
+
     float UiScale
     {
         get
@@ -882,7 +904,10 @@ public class UnlockToastPresenter : MonoBehaviour
 
     Vector2 GetShownPosition()
     {
-        return new Vector2(ToastPx(anchoredOffsetAtDesign.x), ToastPx(anchoredOffsetAtDesign.y));
+        Rect targetScreenRect = GetTargetScreenRect();
+        float x = (targetScreenRect.xMax - Screen.width) + ToastPx(anchoredOffsetAtDesign.x);
+        float y = (targetScreenRect.yMax - Screen.height) + ToastPx(anchoredOffsetAtDesign.y);
+        return new Vector2(x, y);
     }
 
     Vector2 GetHiddenPosition()
