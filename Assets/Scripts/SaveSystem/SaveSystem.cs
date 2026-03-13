@@ -14,25 +14,14 @@ public static class SaveSystem
 
     private static readonly BomberSkin[] defaultUnlockedSkins =
     {
-        BomberSkin.Golden,
         BomberSkin.White,
         BomberSkin.Black,
-        BomberSkin.Red,
-        BomberSkin.Orange,
-        BomberSkin.Yellow,
-        BomberSkin.Lime,
-        BomberSkin.Green,
-        BomberSkin.Cyan,
-        BomberSkin.Aqua,
         BomberSkin.Blue,
-        BomberSkin.DarkBlue,
-        BomberSkin.Purple,
-        BomberSkin.Magenta,
+        BomberSkin.Red,
+        BomberSkin.Yellow,
+        BomberSkin.Green,
+        BomberSkin.Aqua,
         BomberSkin.Pink,
-        BomberSkin.Brown,
-        BomberSkin.DarkGreen,
-        BomberSkin.Nightmare,
-        BomberSkin.Gold
     };
 
     private static readonly PlayerAction[] controlActions =

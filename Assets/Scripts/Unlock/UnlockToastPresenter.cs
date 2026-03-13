@@ -9,7 +9,6 @@ using UnityEngine.UI;
 public class UnlockToastPresenter : MonoBehaviour
 {
     const string RootName = "__UnlockToastPresenter";
-    const string PersistentCanvasName = "UnlockToastCanvas";
     const string ToastRootName = "UnlockToastRoot";
     const string BackgroundName = "Background";
     const string IconName = "Icon";
@@ -25,10 +24,10 @@ public class UnlockToastPresenter : MonoBehaviour
     [SerializeField] Material fontMaterial;
 
     [Header("Toast Duration")]
-    [SerializeField, Min(0.01f)] float fadeInDuration = 0.16f;
-    [SerializeField, Min(0.01f)] float visibleDuration = 2.6f;
-    [SerializeField, Min(0.01f)] float fadeOutDuration = 0.20f;
-    [SerializeField, Min(0f)] float queueGapDuration = 0.05f;
+    private readonly float fadeInDuration = 0.16f;
+    private readonly float visibleDuration = 5f;
+    private readonly float fadeOutDuration = 0.20f;
+    private readonly float queueGapDuration = 0.05f;
 
     [Header("Dynamic Scale (Pixel Perfect friendly)")]
     [SerializeField] bool dynamicScale = true;
@@ -156,6 +155,24 @@ public class UnlockToastPresenter : MonoBehaviour
         instanceInScene.Enqueue(info.Title, info.Subtitle, icon);
     }
 
+    public static void ShowBossRushUnlocked()
+    {
+        EnsureInScene();
+
+        if (instanceInScene == null)
+        {
+            SLog("ShowBossRushUnlocked aborted | instance null");
+            return;
+        }
+
+        var info = UnlockToastCatalog.GetBossRush();
+        Sprite icon = UnlockToastCatalog.LoadBossRushIcon();
+
+        SLog($"ShowBossRushUnlocked | title={info.Title} | subtitle={info.Subtitle} | iconLoaded={(icon != null)}");
+
+        instanceInScene.Enqueue(info.Title, info.Subtitle, icon);
+    }
+
     public static void Show(string title, string subtitle, Sprite icon = null)
     {
         EnsureInScene();
@@ -192,6 +209,9 @@ public class UnlockToastPresenter : MonoBehaviour
         UnlockProgress.OnSkinUnlocked -= HandleSkinUnlocked;
         UnlockProgress.OnSkinUnlocked += HandleSkinUnlocked;
 
+        UnlockProgress.OnBossRushUnlocked -= HandleBossRushUnlocked;
+        UnlockProgress.OnBossRushUnlocked += HandleBossRushUnlocked;
+
         SceneManager.sceneLoaded -= OnSceneLoaded;
         SceneManager.sceneLoaded += OnSceneLoaded;
 
@@ -209,6 +229,7 @@ public class UnlockToastPresenter : MonoBehaviour
     void OnDisable()
     {
         UnlockProgress.OnSkinUnlocked -= HandleSkinUnlocked;
+        UnlockProgress.OnBossRushUnlocked -= HandleBossRushUnlocked;
         SceneManager.sceneLoaded -= OnSceneLoaded;
         SLog("OnDisable");
     }
@@ -250,6 +271,12 @@ public class UnlockToastPresenter : MonoBehaviour
     {
         SLog($"HandleSkinUnlocked received | skin={skin}");
         ShowSkinUnlocked(skin);
+    }
+
+    void HandleBossRushUnlocked()
+    {
+        SLog("HandleBossRushUnlocked received");
+        ShowBossRushUnlocked();
     }
 
     void Enqueue(string title, string subtitle, Sprite icon)
@@ -519,8 +546,6 @@ public class UnlockToastPresenter : MonoBehaviour
 
         if (subtitleText != null)
             subtitleText.text = string.Empty;
-
-        SLog("HideImmediatelyIfIdle | toast hidden because presenter is idle");
     }
 
     void SetupText(TMP_Text text, bool isTitle)
@@ -689,14 +714,10 @@ public class UnlockToastPresenter : MonoBehaviour
             Vector3 tr = RectTransformUtility.WorldToScreenPoint(null, targetWorldCorners[2]);
 
             Rect rect = Rect.MinMaxRect(bl.x, bl.y, tr.x, tr.y);
-
-            SLog($"GetTargetScreenRect | from targetRoot={targetRoot.name} | rect={rect}");
             return rect;
         }
 
-        Rect camRect = GetMainCameraPixelRect();
-        SLog($"GetTargetScreenRect | from camera pixel rect={camRect}");
-        return camRect;
+        return GetMainCameraPixelRect();
     }
 
     float UiScale
@@ -895,11 +916,6 @@ public class UnlockToastPresenter : MonoBehaviour
         subtitleRt.pivot = new Vector2(0f, 1f);
         subtitleRt.offsetMin = new Vector2(textLeft, -(top + titleHeight + lineSpacing + subtitleHeight + textOffsetY));
         subtitleRt.offsetMax = new Vector2(-textRightInset, -(top + titleHeight + lineSpacing + textOffsetY));
-
-        SLog(
-            $"ApplyRectScaleIfNeeded | force={force} | uiScale={uiScale:0.000} | baseScaleInt={lastBaseScaleInt} | rootSize={rootSize} | " +
-            $"minWidth={minWidth:0.00} | maxWidth={maxWidthFromRoot:0.00} | preferredTextWidth={preferredTextWidth:0.00} | " +
-            $"finalToast=({finalWidth:0.00}, {finalHeight:0.00}) | shown={GetShownPosition()} | hidden={GetHiddenPosition()} | camPixelRect={camPixelRect}");
     }
 
     Vector2 GetShownPosition()
@@ -919,6 +935,9 @@ public class UnlockToastPresenter : MonoBehaviour
 
     static void SLog(string message)
     {
+        if (!EnableSurgicalLogs)
+            return;
+
         Debug.Log($"[UnlockToastPresenter] {message}");
     }
 }

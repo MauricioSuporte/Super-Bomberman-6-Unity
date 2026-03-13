@@ -24,9 +24,23 @@ public static class UnlockToastCatalog
         {
             case BomberSkin.Gray:
                 return new ToastInfo(
-                    "Like a Yoshi",
-                    "Ride in A Louie",
+                    "You Know The One",
+                    "Gray Bomber Unlocked",
                     "UI/Unlocks/Icons/GrayBomber"
+                );
+
+            case BomberSkin.Orange:
+                return new ToastInfo(
+                    "Orange You Glad?",
+                    "Orange Bomber Unlocked",
+                    "UI/Unlocks/Icons/OrangeBomber"
+                );
+
+            case BomberSkin.Purple:
+                return new ToastInfo(
+                    "That’s A Grape Idea!",
+                    "Purple Bomber Unlocked",
+                    "UI/Unlocks/Icons/PurpleBomber"
                 );
 
             default:
@@ -36,6 +50,15 @@ public static class UnlockToastCatalog
                     $"UI/Unlocks/Icons/{skin}"
                 );
         }
+    }
+
+    public static ToastInfo GetBossRush()
+    {
+        return new ToastInfo(
+            "It’s Time To Duel!",
+            "Boss Rush Unlocked",
+            "UI/Unlocks/Icons/BossRush"
+        );
     }
 
     public static Sprite LoadIcon(BomberSkin skin)
@@ -51,6 +74,23 @@ public static class UnlockToastCatalog
         Sprite sprite = Resources.Load<Sprite>(info.IconResourcePath);
 
         SLog($"LoadIcon | skin={skin} | path={info.IconResourcePath} | found={(sprite != null)}");
+
+        return sprite;
+    }
+
+    public static Sprite LoadBossRushIcon()
+    {
+        ToastInfo info = GetBossRush();
+
+        if (string.IsNullOrWhiteSpace(info.IconResourcePath))
+        {
+            SLog("LoadBossRushIcon | resource path is empty");
+            return null;
+        }
+
+        Sprite sprite = Resources.Load<Sprite>(info.IconResourcePath);
+
+        SLog($"LoadBossRushIcon | path={info.IconResourcePath} | found={(sprite != null)}");
 
         return sprite;
     }

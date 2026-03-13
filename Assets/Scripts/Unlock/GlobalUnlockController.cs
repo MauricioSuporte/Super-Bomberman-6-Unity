@@ -60,7 +60,7 @@ public class GlobalUnlockController : MonoBehaviour
         UnlockProgress.ReloadFromDisk();
         lifeUpSfx = Resources.Load<AudioClip>(LifeUpResourcesPath);
 
-        SLog($"Awake | SaveFileExists={UnlockProgress.SaveFileExists()} | GrayUnlocked={UnlockProgress.IsUnlocked(BomberSkin.Gray)} | lifeUpLoaded={(lifeUpSfx != null)}");
+        SLog($"Awake | SaveFileExists={UnlockProgress.SaveFileExists()} | OrangeUnlocked={UnlockProgress.IsUnlocked(BomberSkin.Orange)} | PurpleUnlocked={UnlockProgress.IsUnlocked(BomberSkin.Purple)} | BossRushUnlocked={UnlockProgress.IsBossRushUnlocked()} | lifeUpLoaded={(lifeUpSfx != null)}");
 
         UnlockToastPresenter.EnsureInScene();
     }
@@ -96,23 +96,28 @@ public class GlobalUnlockController : MonoBehaviour
 
         if (AdvanceKonami(pressed))
         {
-            SLog("Konami sequence completed | attempting Gray unlock");
+            SLog("Konami sequence completed | attempting multi unlock test");
 
-            bool unlockedNow = UnlockProgress.UnlockGray();
+            bool unlockedOrange = UnlockProgress.Unlock(BomberSkin.Orange);
+            bool unlockedPurple = UnlockProgress.Unlock(BomberSkin.Purple);
+            bool unlockedBossRush = UnlockProgress.UnlockBossRush();
 
-            SLog($"UnlockGray returned={unlockedNow} | GrayUnlockedNow={UnlockProgress.IsUnlocked(BomberSkin.Gray)}");
+            SLog($"Multi unlock results | Orange={unlockedOrange} | Purple={unlockedPurple} | BossRush={unlockedBossRush}");
 
-            if (unlockedNow)
+            if (unlockedOrange || unlockedPurple)
             {
                 for (int p = 1; p <= 4; p++)
                     PlayerPersistentStats.ClampSelectedSkinIfLocked(p);
+            }
 
-                SLog("Gray unlocked successfully | clamped selected skins | playing unlock sfx");
+            if (unlockedOrange || unlockedPurple || unlockedBossRush)
+            {
+                SLog("At least one unlock succeeded | playing unlock sfx");
                 PlayUnlockSfx();
             }
             else
             {
-                SLog("Gray unlock did not occur. Most likely already unlocked, so toast was not shown.");
+                SLog("No unlock occurred. Most likely everything was already unlocked.");
             }
         }
     }
@@ -185,6 +190,6 @@ public class GlobalUnlockController : MonoBehaviour
 
     private static void SLog(string message)
     {
-        Debug.Log($"[GrayUnlockFlow] {message}");
+        Debug.Log($"[GlobalUnlockFlow] {message}");
     }
 }

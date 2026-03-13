@@ -6,6 +6,7 @@ public static class UnlockProgress
     private const bool EnableSurgicalLogs = true;
 
     public static event Action<BomberSkin> OnSkinUnlocked;
+    public static event Action OnBossRushUnlocked;
 
     public static string SaveDirectoryPath => SaveSystem.SaveDirectoryPath;
     public static string SaveFilePath => SaveSystem.SaveFilePath;
@@ -18,8 +19,12 @@ public static class UnlockProgress
 
     public static bool IsUnlocked(BomberSkin skin)
     {
-        bool unlocked = SaveSystem.Data.unlockedSkins.Contains(skin.ToString());
-        return unlocked;
+        return SaveSystem.Data.unlockedSkins.Contains(skin.ToString());
+    }
+
+    public static bool IsBossRushUnlocked()
+    {
+        return SaveSystem.Data.bossRushUnlocked;
     }
 
     public static bool Unlock(BomberSkin skin)
@@ -44,36 +49,41 @@ public static class UnlockProgress
         return true;
     }
 
-    public static bool UnlockGray()
+    public static bool UnlockBossRush()
     {
-        return Unlock(BomberSkin.Gray);
+        SLog($"UnlockBossRush requested | alreadyUnlocked={SaveSystem.Data.bossRushUnlocked} | listeners={(OnBossRushUnlocked == null ? 0 : OnBossRushUnlocked.GetInvocationList().Length)}");
+
+        if (SaveSystem.Data.bossRushUnlocked)
+        {
+            SLog("UnlockBossRush skipped | already unlocked");
+            return false;
+        }
+
+        SaveSystem.Data.bossRushUnlocked = true;
+        SaveSystem.Save();
+
+        SLog("UnlockBossRush persisted | invoking event now");
+        OnBossRushUnlocked?.Invoke();
+        SLog("UnlockBossRush event invocation finished");
+
+        return true;
     }
 
     public static void ResetProgress()
     {
         SaveSystem.Data.unlockedSkins.Clear();
+        SaveSystem.Data.bossRushUnlocked = false;
 
         BomberSkin[] defaults =
         {
-            BomberSkin.Golden,
             BomberSkin.White,
             BomberSkin.Black,
-            BomberSkin.Red,
-            BomberSkin.Orange,
-            BomberSkin.Yellow,
-            BomberSkin.Lime,
-            BomberSkin.Green,
-            BomberSkin.Cyan,
-            BomberSkin.Aqua,
             BomberSkin.Blue,
-            BomberSkin.DarkBlue,
-            BomberSkin.Purple,
-            BomberSkin.Magenta,
+            BomberSkin.Red,
+            BomberSkin.Yellow,
+            BomberSkin.Green,
+            BomberSkin.Aqua,
             BomberSkin.Pink,
-            BomberSkin.Brown,
-            BomberSkin.DarkGreen,
-            BomberSkin.Nightmare,
-            BomberSkin.Gold
         };
 
         for (int i = 0; i < defaults.Length; i++)
@@ -119,6 +129,6 @@ public static class UnlockProgress
         if (!EnableSurgicalLogs)
             return;
 
-        Debug.Log($"[BomberSkinUnlockProgress] {message}");
+        Debug.Log($"[UnlockProgress] {message}");
     }
 }
