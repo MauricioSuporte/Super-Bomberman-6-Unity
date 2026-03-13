@@ -913,15 +913,12 @@ public class UnlockToastPresenter : MonoBehaviour
     Vector2 GetHiddenPosition()
     {
         Vector2 shown = GetShownPosition();
-        float extra = toastRoot != null ? toastRoot.sizeDelta.x + ToastPx(10f) : ToastPx(baseToastWidthAtDesign);
-        return new Vector2(shown.x + extra, shown.y);
+        float extra = toastRoot != null ? toastRoot.sizeDelta.y + ToastPx(10f) : ToastPx(baseToastHeightAtDesign);
+        return new Vector2(shown.x, shown.y + extra);
     }
 
     static void SLog(string message)
     {
-        if (!EnableSurgicalLogs)
-            return;
-
         Debug.Log($"[UnlockToastPresenter] {message}");
     }
 }
