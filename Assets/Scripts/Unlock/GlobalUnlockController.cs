@@ -1,11 +1,10 @@
 ﻿using UnityEngine;
 
-public class BomberSkinGlobalUnlockController : MonoBehaviour
+public class GlobalUnlockController : MonoBehaviour
 {
     private const string LifeUpResourcesPath = "Sounds/LifeUp";
-    private const bool EnableSurgicalLogs = true;
 
-    private static BomberSkinGlobalUnlockController instance;
+    private static GlobalUnlockController instance;
 
     private AudioClip lifeUpSfx;
     private int konamiStep;
@@ -39,8 +38,8 @@ public class BomberSkinGlobalUnlockController : MonoBehaviour
             return;
         }
 
-        GameObject go = new GameObject(nameof(BomberSkinGlobalUnlockController));
-        instance = go.AddComponent<BomberSkinGlobalUnlockController>();
+        GameObject go = new(nameof(GlobalUnlockController));
+        instance = go.AddComponent<GlobalUnlockController>();
         DontDestroyOnLoad(go);
 
         SLog("Bootstrap created controller instance");
@@ -58,10 +57,10 @@ public class BomberSkinGlobalUnlockController : MonoBehaviour
         instance = this;
         DontDestroyOnLoad(gameObject);
 
-        BomberSkinUnlockProgress.ReloadFromDisk();
+        UnlockProgress.ReloadFromDisk();
         lifeUpSfx = Resources.Load<AudioClip>(LifeUpResourcesPath);
 
-        SLog($"Awake | SaveFileExists={BomberSkinUnlockProgress.SaveFileExists()} | GrayUnlocked={BomberSkinUnlockProgress.IsUnlocked(BomberSkin.Gray)} | lifeUpLoaded={(lifeUpSfx != null)}");
+        SLog($"Awake | SaveFileExists={UnlockProgress.SaveFileExists()} | GrayUnlocked={UnlockProgress.IsUnlocked(BomberSkin.Gray)} | lifeUpLoaded={(lifeUpSfx != null)}");
 
         UnlockToastPresenter.EnsureInScene();
     }
@@ -99,9 +98,9 @@ public class BomberSkinGlobalUnlockController : MonoBehaviour
         {
             SLog("Konami sequence completed | attempting Gray unlock");
 
-            bool unlockedNow = BomberSkinUnlockProgress.UnlockGray();
+            bool unlockedNow = UnlockProgress.UnlockGray();
 
-            SLog($"UnlockGray returned={unlockedNow} | GrayUnlockedNow={BomberSkinUnlockProgress.IsUnlocked(BomberSkin.Gray)}");
+            SLog($"UnlockGray returned={unlockedNow} | GrayUnlockedNow={UnlockProgress.IsUnlocked(BomberSkin.Gray)}");
 
             if (unlockedNow)
             {

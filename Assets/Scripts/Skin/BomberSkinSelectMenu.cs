@@ -468,7 +468,7 @@ public class BomberSkinSelectMenu : MonoBehaviour
         int slot = Mathf.Clamp(ps.index, 0, selectableSkins.Count - 1);
         var skin = selectableSkins[slot];
 
-        if (!BomberSkinUnlockProgress.IsUnlocked(skin))
+        if (!UnlockProgress.IsUnlocked(skin))
         {
             PlaySfx(lockedConfirmSfx, lockedConfirmSfxVolume);
             return;
@@ -682,7 +682,7 @@ public class BomberSkinSelectMenu : MonoBehaviour
             if (img == null) continue;
 
             var skin = selectableSkins[i];
-            bool unlocked = BomberSkinUnlockProgress.IsUnlocked(skin);
+            bool unlocked = UnlockProgress.IsUnlocked(skin);
             bool selected = IsSlotSelected(i);
 
             bool anyCursorHere = false;

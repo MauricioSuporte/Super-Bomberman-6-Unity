@@ -1,7 +1,7 @@
 ﻿using System;
 using UnityEngine;
 
-public static class BomberSkinUnlockProgress
+public static class UnlockProgress
 {
     private const bool EnableSurgicalLogs = true;
 

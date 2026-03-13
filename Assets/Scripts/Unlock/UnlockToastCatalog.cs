@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-public static class BomberSkinUnlockToastCatalog
+public static class UnlockToastCatalog
 {
     private const bool EnableSurgicalLogs = true;
 

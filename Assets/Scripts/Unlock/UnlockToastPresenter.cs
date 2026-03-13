@@ -148,8 +148,8 @@ public class UnlockToastPresenter : MonoBehaviour
             return;
         }
 
-        var info = BomberSkinUnlockToastCatalog.Get(skin);
-        Sprite icon = BomberSkinUnlockToastCatalog.LoadIcon(skin);
+        var info = UnlockToastCatalog.Get(skin);
+        Sprite icon = UnlockToastCatalog.LoadIcon(skin);
 
         SLog($"ShowSkinUnlocked | skin={skin} | title={info.Title} | subtitle={info.Subtitle} | iconLoaded={(icon != null)}");
 
@@ -189,8 +189,8 @@ public class UnlockToastPresenter : MonoBehaviour
 
     void OnEnable()
     {
-        BomberSkinUnlockProgress.OnSkinUnlocked -= HandleSkinUnlocked;
-        BomberSkinUnlockProgress.OnSkinUnlocked += HandleSkinUnlocked;
+        UnlockProgress.OnSkinUnlocked -= HandleSkinUnlocked;
+        UnlockProgress.OnSkinUnlocked += HandleSkinUnlocked;
 
         SceneManager.sceneLoaded -= OnSceneLoaded;
         SceneManager.sceneLoaded += OnSceneLoaded;
@@ -208,7 +208,7 @@ public class UnlockToastPresenter : MonoBehaviour
 
     void OnDisable()
     {
-        BomberSkinUnlockProgress.OnSkinUnlocked -= HandleSkinUnlocked;
+        UnlockProgress.OnSkinUnlocked -= HandleSkinUnlocked;
         SceneManager.sceneLoaded -= OnSceneLoaded;
         SLog("OnDisable");
     }
