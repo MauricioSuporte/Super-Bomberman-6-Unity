@@ -3,6 +3,7 @@
 public class BomberSkinGlobalUnlockController : MonoBehaviour
 {
     private const string LifeUpResourcesPath = "Sounds/LifeUp";
+    private const bool EnableSurgicalLogs = true;
 
     private static BomberSkinGlobalUnlockController instance;
 
@@ -33,17 +34,23 @@ public class BomberSkinGlobalUnlockController : MonoBehaviour
     private static void Bootstrap()
     {
         if (instance != null)
+        {
+            SLog("Bootstrap ignored | instance already exists");
             return;
+        }
 
         GameObject go = new GameObject(nameof(BomberSkinGlobalUnlockController));
         instance = go.AddComponent<BomberSkinGlobalUnlockController>();
         DontDestroyOnLoad(go);
+
+        SLog("Bootstrap created controller instance");
     }
 
     private void Awake()
     {
         if (instance != null && instance != this)
         {
+            SLog("Awake destroying duplicate instance");
             Destroy(gameObject);
             return;
         }
@@ -53,6 +60,10 @@ public class BomberSkinGlobalUnlockController : MonoBehaviour
 
         BomberSkinUnlockProgress.ReloadFromDisk();
         lifeUpSfx = Resources.Load<AudioClip>(LifeUpResourcesPath);
+
+        SLog($"Awake | SaveFileExists={BomberSkinUnlockProgress.SaveFileExists()} | GrayUnlocked={BomberSkinUnlockProgress.IsUnlocked(BomberSkin.Gray)} | lifeUpLoaded={(lifeUpSfx != null)}");
+
+        UnlockToastPresenter.EnsureInScene();
     }
 
     private void Update()
@@ -82,15 +93,29 @@ public class BomberSkinGlobalUnlockController : MonoBehaviour
         if (pressed == KonamiToken.None)
             return;
 
+        SLog($"Input token received={pressed} | currentStep={konamiStep}");
+
         if (AdvanceKonami(pressed))
         {
+            SLog("Konami sequence completed | attempting Gray unlock");
+
             bool unlockedNow = BomberSkinUnlockProgress.UnlockGray();
+
+            SLog($"UnlockGray returned={unlockedNow} | GrayUnlockedNow={BomberSkinUnlockProgress.IsUnlocked(BomberSkin.Gray)}");
+
             if (unlockedNow)
             {
                 for (int p = 1; p <= 4; p++)
                     PlayerPersistentStats.ClampSelectedSkinIfLocked(p);
 
+                SLog("Gray unlocked successfully | clamped selected skins | showing toast | playing unlock sfx");
+
+                UnlockToastPresenter.ShowSkinUnlocked(BomberSkin.Gray);
                 PlayUnlockSfx();
+            }
+            else
+            {
+                SLog("Gray unlock did not occur. Most likely already unlocked, so toast was not shown.");
             }
         }
     }
@@ -111,31 +136,42 @@ public class BomberSkinGlobalUnlockController : MonoBehaviour
         if (pressed == konamiTokens[konamiStep])
         {
             konamiStep++;
+            SLog($"AdvanceKonami match | nextStep={konamiStep}/{konamiTokens.Length}");
 
             if (konamiStep >= konamiTokens.Length)
             {
                 konamiStep = 0;
+                SLog("AdvanceKonami completed full sequence");
                 return true;
             }
 
             return false;
         }
 
+        int previous = konamiStep;
         konamiStep = pressed == konamiTokens[0] ? 1 : 0;
+
+        SLog($"AdvanceKonami mismatch | pressed={pressed} | previousStep={previous} | resetStep={konamiStep}");
         return false;
     }
 
     private void PlayUnlockSfx()
     {
         if (lifeUpSfx == null)
+        {
+            SLog("PlayUnlockSfx aborted | lifeUpSfx is null");
             return;
+        }
 
         var music = GameMusicController.Instance;
         if (music != null)
         {
+            SLog("PlayUnlockSfx via GameMusicController");
             music.PlaySfx(lifeUpSfx, 1f);
             return;
         }
+
+        SLog("PlayUnlockSfx via temporary AudioSource");
 
         GameObject temp = new GameObject("TempUnlockSfx");
         DontDestroyOnLoad(temp);
@@ -148,5 +184,10 @@ public class BomberSkinGlobalUnlockController : MonoBehaviour
         source.Play();
 
         Destroy(temp, lifeUpSfx.length + 0.1f);
+    }
+
+    private static void SLog(string message)
+    {
+        Debug.Log($"[GrayUnlockFlow] {message}");
     }
 }

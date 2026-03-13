@@ -1,29 +1,46 @@
 ﻿using System;
+using UnityEngine;
 
 public static class BomberSkinUnlockProgress
 {
+    private const bool EnableSurgicalLogs = true;
+
+    public static event Action<BomberSkin> OnSkinUnlocked;
+
     public static string SaveDirectoryPath => SaveSystem.SaveDirectoryPath;
     public static string SaveFilePath => SaveSystem.SaveFilePath;
 
     public static void ReloadFromDisk()
     {
         SaveSystem.Reload();
+        SLog("ReloadFromDisk called");
     }
 
     public static bool IsUnlocked(BomberSkin skin)
     {
-        return SaveSystem.Data.unlockedSkins.Contains(skin.ToString());
+        bool unlocked = SaveSystem.Data.unlockedSkins.Contains(skin.ToString());
+        return unlocked;
     }
 
     public static bool Unlock(BomberSkin skin)
     {
         string name = skin.ToString();
 
+        SLog($"Unlock requested | skin={skin} | alreadyUnlocked={SaveSystem.Data.unlockedSkins.Contains(name)} | listeners={(OnSkinUnlocked == null ? 0 : OnSkinUnlocked.GetInvocationList().Length)}");
+
         if (SaveSystem.Data.unlockedSkins.Contains(name))
+        {
+            SLog($"Unlock skipped | skin={skin} already unlocked");
             return false;
+        }
 
         SaveSystem.Data.unlockedSkins.Add(name);
         SaveSystem.Save();
+
+        SLog($"Unlock persisted | skin={skin} | invoking event now");
+        OnSkinUnlocked?.Invoke(skin);
+        SLog($"Unlock event invocation finished | skin={skin}");
+
         return true;
     }
 
@@ -70,6 +87,7 @@ public static class BomberSkinUnlockProgress
             PlayerPersistentStats.ClampSelectedSkinIfLocked(p);
 
         SaveSystem.Save();
+        SLog("ResetProgress completed");
     }
 
     public static BomberSkin GetFallbackUnlockedSkin(BomberSkin preferredFallback = BomberSkin.White)
@@ -94,5 +112,13 @@ public static class BomberSkinUnlockProgress
     public static bool SaveFileExists()
     {
         return System.IO.File.Exists(SaveFilePath);
+    }
+
+    private static void SLog(string message)
+    {
+        if (!EnableSurgicalLogs)
+            return;
+
+        Debug.Log($"[BomberSkinUnlockProgress] {message}");
     }
 }
