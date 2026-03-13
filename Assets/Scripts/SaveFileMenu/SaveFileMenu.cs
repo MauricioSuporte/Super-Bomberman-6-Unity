@@ -32,12 +32,6 @@ public class SaveFileMenu : MonoBehaviour
         public int CompletionPercent;
     }
 
-    private const string ActiveSlotKey = "SB6_ActiveSaveSlot";
-    private const string LiveUnlockedStagesKey = "SB6_UnlockedStages";
-    private const string LiveClearedStagesKey = "SB6_ClearedStages";
-    private const string LivePerfectStagesKey = "SB6_PerfectStages";
-    private const string LiveStageOrderKey = "SB6_StageOrder";
-
     [Header("UI Root")]
     [SerializeField] private GameObject root;
     [SerializeField] private Image backgroundImage;
@@ -177,25 +171,22 @@ public class SaveFileMenu : MonoBehaviour
         }
     }
 
-    public static int ActiveSlotIndex => PlayerPrefs.GetInt(ActiveSlotKey, -1);
-    public static bool HasActiveSlot => ActiveSlotIndex >= 1;
+    public static int ActiveSlotIndex => SaveSystem.Data.activeSlotIndex;
+    public static bool HasActiveSlot => ActiveSlotIndex >= 0;
 
     public static void SaveCurrentProgressToActiveSlot()
     {
-        int activeSlot = ActiveSlotIndex;
-        if (activeSlot < 1)
+        if (!HasActiveSlot)
             return;
 
-        SaveLiveProgressToSlot(activeSlot);
+        SaveSystem.Save();
     }
 
     public static void LoadActiveSlotToCurrentProgress()
     {
-        int activeSlot = ActiveSlotIndex;
-        if (activeSlot < 1)
+        if (!HasActiveSlot)
             return;
 
-        LoadSlotIntoLiveProgress(activeSlot);
         StageUnlockProgress.ReloadFromPrefs();
     }
 
@@ -422,18 +413,18 @@ public class SaveFileMenu : MonoBehaviour
             yield break;
         }
 
-        int slotIndex = selectedIndex + 1;
+        int slotZeroBased = selectedIndex;
+        int slotDisplayIndex = slotZeroBased + 1;
 
         switch (_state)
         {
             case MenuState.SelectNewGameSlot:
                 PlaySfx(confirmSfx, confirmSfxVolume);
 
-                DeleteSlot(slotIndex);
-                SetActiveSlot(slotIndex);
-                StageUnlockProgress.ResetProgress();
-                EnsureLiveStageOrderExistsFromBuildSettings();
-                SaveLiveProgressToSlot(slotIndex);
+                SaveSystem.DeleteSlot(slotZeroBased);
+                SaveSystem.SetActiveSlot(slotZeroBased);
+                SaveSystem.ResetSlot(slotZeroBased);
+                EnsureActiveSlotStageOrderExistsFromBuildSettings();
                 StageUnlockProgress.ReloadFromPrefs();
 
                 confirmed = true;
@@ -445,8 +436,8 @@ public class SaveFileMenu : MonoBehaviour
             case MenuState.SelectContinueSlot:
                 PlaySfx(confirmSfx, confirmSfxVolume);
 
-                SetActiveSlot(slotIndex);
-                LoadSlotIntoLiveProgress(slotIndex);
+                SaveSystem.SetActiveSlot(slotZeroBased);
+                EnsureActiveSlotStageOrderExistsFromBuildSettings();
                 StageUnlockProgress.ReloadFromPrefs();
 
                 confirmed = true;
@@ -461,10 +452,13 @@ public class SaveFileMenu : MonoBehaviour
                 _cursorConfirmVisual = true;
                 UpdateOptionVisuals();
 
-                DeleteSlot(slotIndex);
+                SaveSystem.DeleteSlot(slotZeroBased);
 
-                if (ActiveSlotIndex == slotIndex)
-                    PlayerPrefs.DeleteKey(ActiveSlotKey);
+                if (SaveSystem.Data.activeSlotIndex == slotZeroBased)
+                {
+                    SaveSystem.Data.activeSlotIndex = -1;
+                    SaveSystem.Save();
+                }
 
                 yield return new WaitForSecondsRealtime(deleteFeedbackSeconds);
 
@@ -585,9 +579,11 @@ public class SaveFileMenu : MonoBehaviour
 
     private bool HasAnyExistingSlot()
     {
-        for (int i = 1; i <= slotCount; i++)
+        int count = Mathf.Min(slotCount, 3);
+
+        for (int i = 0; i < count; i++)
         {
-            if (SlotExists(i))
+            if (SaveSystem.SlotExists(i))
                 return true;
         }
 
@@ -596,9 +592,11 @@ public class SaveFileMenu : MonoBehaviour
 
     private bool HasAnyAvailableNewGameSlot()
     {
-        for (int i = 1; i <= slotCount; i++)
+        int count = Mathf.Min(slotCount, 3);
+
+        for (int i = 0; i < count; i++)
         {
-            if (!SlotExists(i))
+            if (!SaveSystem.SlotExists(i))
                 return true;
         }
 
@@ -702,61 +700,29 @@ public class SaveFileMenu : MonoBehaviour
 
     private SaveSlotInfo GetSaveSlotInfo(int slotIndex)
     {
-        string unlockedRaw = PlayerPrefs.GetString(GetSlotUnlockedKey(slotIndex), string.Empty);
-        string clearedRaw = PlayerPrefs.GetString(GetSlotClearedKey(slotIndex), string.Empty);
-        string perfectRaw = PlayerPrefs.GetString(GetSlotPerfectKey(slotIndex), string.Empty);
-        string orderRaw = PlayerPrefs.GetString(GetSlotStageOrderKey(slotIndex), string.Empty);
-
-        bool exists = SlotExists(slotIndex);
+        int zeroBasedIndex = slotIndex - 1;
+        var slot = SaveSystem.GetSlot(zeroBasedIndex);
 
         SaveSlotInfo info = new SaveSlotInfo
         {
             SlotIndex = slotIndex,
-            Exists = exists,
+            Exists = false,
             RegisteredStageCount = 0,
             ClearedStageCount = 0,
             PerfectStageCount = 0,
             CompletionPercent = 0
         };
 
-        if (!exists)
+        if (slot == null)
             return info;
 
-        int clearedCount = CountSeparatedEntries(clearedRaw);
-        int perfectCount = CountSeparatedEntries(perfectRaw);
-        int registeredStageCount = ResolveRegisteredStageCount(slotIndex, orderRaw);
-
-        info.RegisteredStageCount = registeredStageCount;
-        info.ClearedStageCount = clearedCount;
-        info.PerfectStageCount = perfectCount;
-        info.CompletionPercent = ComputeCompletionPercent(registeredStageCount, clearedCount, perfectCount);
+        info.Exists = SaveSystem.SlotExists(zeroBasedIndex);
+        info.RegisteredStageCount = slot.stageOrder != null ? slot.stageOrder.Count : 0;
+        info.ClearedStageCount = slot.clearedStages != null ? slot.clearedStages.Count : 0;
+        info.PerfectStageCount = slot.perfectStages != null ? slot.perfectStages.Count : 0;
+        info.CompletionPercent = ComputeCompletionPercent(info.RegisteredStageCount, info.ClearedStageCount, info.PerfectStageCount);
 
         return info;
-    }
-
-    private int ResolveRegisteredStageCount(int slotIndex, string slotOrderRaw)
-    {
-        int slotOrderCount = CountSeparatedEntries(slotOrderRaw);
-        if (slotOrderCount > 0)
-            return slotOrderCount;
-
-        string liveOrderRaw = PlayerPrefs.GetString(LiveStageOrderKey, string.Empty);
-        int liveOrderCount = CountSeparatedEntries(liveOrderRaw);
-        if (liveOrderCount > 0)
-        {
-            EnsureSlotStageOrderRaw(slotIndex, liveOrderRaw);
-            return liveOrderCount;
-        }
-
-        string buildOrderRaw = BuildStageOrderRawFromBuildSettings();
-        int buildOrderCount = CountSeparatedEntries(buildOrderRaw);
-        if (buildOrderCount > 0)
-        {
-            EnsureSlotStageOrderRaw(slotIndex, buildOrderRaw);
-            return buildOrderCount;
-        }
-
-        return 0;
     }
 
     private int ComputeCompletionPercent(int totalStages, int clearedCount, int perfectCount)
@@ -769,156 +735,21 @@ public class SaveFileMenu : MonoBehaviour
         return Mathf.RoundToInt(clearedPercent + perfectPercent);
     }
 
-    private int CountSeparatedEntries(string raw)
+    private static void EnsureActiveSlotStageOrderExistsFromBuildSettings()
     {
-        if (string.IsNullOrWhiteSpace(raw))
-            return 0;
-
-        string[] parts = raw.Split('|');
-        int count = 0;
-
-        for (int i = 0; i < parts.Length; i++)
-        {
-            if (!string.IsNullOrWhiteSpace(parts[i]))
-                count++;
-        }
-
-        return count;
-    }
-
-    private static void SetActiveSlot(int slotIndex)
-    {
-        PlayerPrefs.SetInt(ActiveSlotKey, slotIndex);
-        PlayerPrefs.Save();
-    }
-
-    private static bool SlotExists(int slotIndex)
-    {
-        if (PlayerPrefs.GetInt(GetSlotExistsKey(slotIndex), 0) == 1)
-            return true;
-
-        bool hasAnyData =
-            HasNonEmptyKey(GetSlotUnlockedKey(slotIndex)) ||
-            HasNonEmptyKey(GetSlotClearedKey(slotIndex)) ||
-            HasNonEmptyKey(GetSlotPerfectKey(slotIndex)) ||
-            HasNonEmptyKey(GetSlotStageOrderKey(slotIndex));
-
-        if (hasAnyData)
-        {
-            PlayerPrefs.SetInt(GetSlotExistsKey(slotIndex), 1);
-            PlayerPrefs.Save();
-            return true;
-        }
-
-        return false;
-    }
-
-    private static bool HasNonEmptyKey(string key)
-    {
-        return PlayerPrefs.HasKey(key) && !string.IsNullOrWhiteSpace(PlayerPrefs.GetString(key, string.Empty));
-    }
-
-    private static void SaveLiveProgressToSlot(int slotIndex)
-    {
-        EnsureLiveStageOrderExistsFromBuildSettings();
-
-        CopyStringKey(LiveUnlockedStagesKey, GetSlotUnlockedKey(slotIndex));
-        CopyStringKey(LiveClearedStagesKey, GetSlotClearedKey(slotIndex));
-        CopyStringKey(LivePerfectStagesKey, GetSlotPerfectKey(slotIndex));
-        CopyStringKey(LiveStageOrderKey, GetSlotStageOrderKey(slotIndex));
-
-        PlayerPrefs.SetInt(GetSlotExistsKey(slotIndex), 1);
-        PlayerPrefs.Save();
-    }
-
-    private static void LoadSlotIntoLiveProgress(int slotIndex)
-    {
-        EnsureSlotStageOrderExistsFromBuildSettings(slotIndex);
-
-        CopyStringKey(GetSlotUnlockedKey(slotIndex), LiveUnlockedStagesKey);
-        CopyStringKey(GetSlotClearedKey(slotIndex), LiveClearedStagesKey);
-        CopyStringKey(GetSlotPerfectKey(slotIndex), LivePerfectStagesKey);
-        CopyStringKey(GetSlotStageOrderKey(slotIndex), LiveStageOrderKey);
-
-        PlayerPrefs.Save();
-    }
-
-    private static void DeleteSlot(int slotIndex)
-    {
-        PlayerPrefs.DeleteKey(GetSlotUnlockedKey(slotIndex));
-        PlayerPrefs.DeleteKey(GetSlotClearedKey(slotIndex));
-        PlayerPrefs.DeleteKey(GetSlotPerfectKey(slotIndex));
-        PlayerPrefs.DeleteKey(GetSlotStageOrderKey(slotIndex));
-        PlayerPrefs.DeleteKey(GetSlotExistsKey(slotIndex));
-        PlayerPrefs.Save();
-    }
-
-    private static void CopyStringKey(string sourceKey, string targetKey)
-    {
-        if (PlayerPrefs.HasKey(sourceKey))
-            PlayerPrefs.SetString(targetKey, PlayerPrefs.GetString(sourceKey, string.Empty));
-        else
-            PlayerPrefs.DeleteKey(targetKey);
-    }
-
-    private static void EnsureSlotStageOrderRaw(int slotIndex, string orderRaw)
-    {
-        if (string.IsNullOrWhiteSpace(orderRaw))
+        var slot = SaveSystem.ActiveSlot;
+        if (slot == null)
             return;
 
-        string slotKey = GetSlotStageOrderKey(slotIndex);
-        if (!HasNonEmptyKey(slotKey))
-        {
-            PlayerPrefs.SetString(slotKey, orderRaw);
-            PlayerPrefs.SetInt(GetSlotExistsKey(slotIndex), 1);
-            PlayerPrefs.Save();
-        }
-    }
-
-    private static void EnsureLiveStageOrderExistsFromBuildSettings()
-    {
-        if (HasNonEmptyKey(LiveStageOrderKey))
+        if (slot.stageOrder != null && slot.stageOrder.Count > 0)
             return;
 
-        string orderRaw = BuildStageOrderRawFromBuildSettings();
-        if (string.IsNullOrWhiteSpace(orderRaw))
+        List<string> buildStages = GetStageSceneNamesFromBuildSettings();
+        if (buildStages.Count <= 0)
             return;
 
-        PlayerPrefs.SetString(LiveStageOrderKey, orderRaw);
-        PlayerPrefs.Save();
-    }
-
-    private static void EnsureSlotStageOrderExistsFromBuildSettings(int slotIndex)
-    {
-        string slotKey = GetSlotStageOrderKey(slotIndex);
-        if (HasNonEmptyKey(slotKey))
-            return;
-
-        string liveOrderRaw = PlayerPrefs.GetString(LiveStageOrderKey, string.Empty);
-        if (!string.IsNullOrWhiteSpace(liveOrderRaw))
-        {
-            PlayerPrefs.SetString(slotKey, liveOrderRaw);
-            PlayerPrefs.SetInt(GetSlotExistsKey(slotIndex), 1);
-            PlayerPrefs.Save();
-            return;
-        }
-
-        string buildOrderRaw = BuildStageOrderRawFromBuildSettings();
-        if (string.IsNullOrWhiteSpace(buildOrderRaw))
-            return;
-
-        PlayerPrefs.SetString(slotKey, buildOrderRaw);
-        PlayerPrefs.SetInt(GetSlotExistsKey(slotIndex), 1);
-        PlayerPrefs.Save();
-    }
-
-    private static string BuildStageOrderRawFromBuildSettings()
-    {
-        List<string> stageNames = GetStageSceneNamesFromBuildSettings();
-        if (stageNames.Count <= 0)
-            return string.Empty;
-
-        return string.Join("|", stageNames);
+        slot.stageOrder = buildStages;
+        SaveSystem.Save();
     }
 
     private static List<string> GetStageSceneNamesFromBuildSettings()
@@ -945,12 +776,6 @@ public class SaveFileMenu : MonoBehaviour
 
         return result;
     }
-
-    private static string GetSlotExistsKey(int slotIndex) => $"SB6_SaveSlot_{slotIndex}_Exists";
-    private static string GetSlotUnlockedKey(int slotIndex) => $"SB6_UnlockedStages_Slot{slotIndex}";
-    private static string GetSlotClearedKey(int slotIndex) => $"SB6_ClearedStages_Slot{slotIndex}";
-    private static string GetSlotPerfectKey(int slotIndex) => $"SB6_PerfectStages_Slot{slotIndex}";
-    private static string GetSlotStageOrderKey(int slotIndex) => $"SB6_StageOrder_Slot{slotIndex}";
 
     private void UpdateOptionVisuals()
     {

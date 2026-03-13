@@ -1,30 +1,29 @@
 ﻿using System;
-using UnityEngine;
 
 public static class BomberSkinUnlockProgress
 {
-    public static string SaveDirectoryPath => SB6SaveSystem.SaveDirectoryPath;
-    public static string SaveFilePath => SB6SaveSystem.SaveFilePath;
+    public static string SaveDirectoryPath => SaveSystem.SaveDirectoryPath;
+    public static string SaveFilePath => SaveSystem.SaveFilePath;
 
     public static void ReloadFromDisk()
     {
-        SB6SaveSystem.Reload();
+        SaveSystem.Reload();
     }
 
     public static bool IsUnlocked(BomberSkin skin)
     {
-        return SB6SaveSystem.Data.unlockedSkins.Contains(skin.ToString());
+        return SaveSystem.Data.unlockedSkins.Contains(skin.ToString());
     }
 
     public static bool Unlock(BomberSkin skin)
     {
         string name = skin.ToString();
 
-        if (SB6SaveSystem.Data.unlockedSkins.Contains(name))
+        if (SaveSystem.Data.unlockedSkins.Contains(name))
             return false;
 
-        SB6SaveSystem.Data.unlockedSkins.Add(name);
-        SB6SaveSystem.Save();
+        SaveSystem.Data.unlockedSkins.Add(name);
+        SaveSystem.Save();
         return true;
     }
 
@@ -35,7 +34,7 @@ public static class BomberSkinUnlockProgress
 
     public static void ResetProgress()
     {
-        SB6SaveSystem.Data.unlockedSkins.Clear();
+        SaveSystem.Data.unlockedSkins.Clear();
 
         BomberSkin[] defaults =
         {
@@ -63,14 +62,14 @@ public static class BomberSkinUnlockProgress
         for (int i = 0; i < defaults.Length; i++)
         {
             string name = defaults[i].ToString();
-            if (!SB6SaveSystem.Data.unlockedSkins.Contains(name))
-                SB6SaveSystem.Data.unlockedSkins.Add(name);
+            if (!SaveSystem.Data.unlockedSkins.Contains(name))
+                SaveSystem.Data.unlockedSkins.Add(name);
         }
 
         for (int p = 1; p <= 4; p++)
             PlayerPersistentStats.ClampSelectedSkinIfLocked(p);
 
-        SB6SaveSystem.Save();
+        SaveSystem.Save();
     }
 
     public static BomberSkin GetFallbackUnlockedSkin(BomberSkin preferredFallback = BomberSkin.White)

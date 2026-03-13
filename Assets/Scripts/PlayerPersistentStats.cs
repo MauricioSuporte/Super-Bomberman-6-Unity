@@ -73,7 +73,7 @@ public static class PlayerPersistentStats
         if (sessionBooted)
             return;
 
-        SB6SaveSystem.Reload();
+        SaveSystem.Reload();
 
         for (int i = 1; i <= 4; i++)
         {
@@ -99,13 +99,13 @@ public static class PlayerPersistentStats
 
         switch (playerId)
         {
-            case 1: SB6SaveSystem.Data.player1SelectedSkin = (int)s.Skin; break;
-            case 2: SB6SaveSystem.Data.player2SelectedSkin = (int)s.Skin; break;
-            case 3: SB6SaveSystem.Data.player3SelectedSkin = (int)s.Skin; break;
-            case 4: SB6SaveSystem.Data.player4SelectedSkin = (int)s.Skin; break;
+            case 1: SaveSystem.Data.player1SelectedSkin = (int)s.Skin; break;
+            case 2: SaveSystem.Data.player2SelectedSkin = (int)s.Skin; break;
+            case 3: SaveSystem.Data.player3SelectedSkin = (int)s.Skin; break;
+            case 4: SaveSystem.Data.player4SelectedSkin = (int)s.Skin; break;
         }
 
-        SB6SaveSystem.Save();
+        SaveSystem.Save();
     }
 
     static void LoadSelectedSkinInternal(int playerId)
@@ -116,10 +116,10 @@ public static class PlayerPersistentStats
 
         int raw = playerId switch
         {
-            1 => SB6SaveSystem.Data.player1SelectedSkin,
-            2 => SB6SaveSystem.Data.player2SelectedSkin,
-            3 => SB6SaveSystem.Data.player3SelectedSkin,
-            4 => SB6SaveSystem.Data.player4SelectedSkin,
+            1 => SaveSystem.Data.player1SelectedSkin,
+            2 => SaveSystem.Data.player2SelectedSkin,
+            3 => SaveSystem.Data.player3SelectedSkin,
+            4 => SaveSystem.Data.player4SelectedSkin,
             _ => (int)BomberSkin.White
         };
 

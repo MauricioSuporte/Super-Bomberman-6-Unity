@@ -5,13 +5,17 @@ public static class StageUnlockProgress
 {
     public static void ReloadFromPrefs()
     {
-        SB6SaveSystem.Reload();
+        SaveSystem.Reload();
         EnsureDefaultUnlocked();
         TryUnlockBossRush();
     }
 
     public static void RegisterStageOrder(IEnumerable<string> orderedSceneNames)
     {
+        var slot = SaveSystem.ActiveSlot;
+        if (slot == null)
+            return;
+
         List<string> newOrder = new();
 
         if (orderedSceneNames != null)
@@ -29,60 +33,76 @@ public static class StageUnlockProgress
         }
 
         if (newOrder.Count > 0)
-            SB6SaveSystem.Data.stageOrder = newOrder;
+            slot.stageOrder = newOrder;
 
         EnsureDefaultUnlocked();
         TryUnlockBossRush();
-        SB6SaveSystem.Save();
+        SaveSystem.Save();
     }
 
     public static bool IsUnlocked(string sceneName)
     {
+        var slot = SaveSystem.ActiveSlot;
+        if (slot == null)
+            return false;
+
         EnsureDefaultUnlocked();
 
         string normalized = Normalize(sceneName);
         if (string.IsNullOrEmpty(normalized))
             return false;
 
-        return SB6SaveSystem.Data.unlockedStages.Contains(normalized);
+        return slot.unlockedStages.Contains(normalized);
     }
 
     public static bool IsCleared(string sceneName)
     {
+        var slot = SaveSystem.ActiveSlot;
+        if (slot == null)
+            return false;
+
         EnsureDefaultUnlocked();
 
         string normalized = Normalize(sceneName);
         if (string.IsNullOrEmpty(normalized))
             return false;
 
-        return SB6SaveSystem.Data.clearedStages.Contains(normalized);
+        return slot.clearedStages.Contains(normalized);
     }
 
     public static bool IsPerfect(string sceneName)
     {
+        var slot = SaveSystem.ActiveSlot;
+        if (slot == null)
+            return false;
+
         EnsureDefaultUnlocked();
 
         string normalized = Normalize(sceneName);
         if (string.IsNullOrEmpty(normalized))
             return false;
 
-        return SB6SaveSystem.Data.perfectStages.Contains(normalized);
+        return slot.perfectStages.Contains(normalized);
     }
 
     public static bool HasClearedAllRegisteredStages()
     {
-        EnsureDefaultUnlocked();
-
-        if (SB6SaveSystem.Data.stageOrder == null || SB6SaveSystem.Data.stageOrder.Count <= 0)
+        var slot = SaveSystem.ActiveSlot;
+        if (slot == null)
             return false;
 
-        for (int i = 0; i < SB6SaveSystem.Data.stageOrder.Count; i++)
+        EnsureDefaultUnlocked();
+
+        if (slot.stageOrder == null || slot.stageOrder.Count <= 0)
+            return false;
+
+        for (int i = 0; i < slot.stageOrder.Count; i++)
         {
-            string sceneName = SB6SaveSystem.Data.stageOrder[i];
+            string sceneName = slot.stageOrder[i];
             if (string.IsNullOrEmpty(sceneName))
                 continue;
 
-            if (!SB6SaveSystem.Data.clearedStages.Contains(sceneName))
+            if (!slot.clearedStages.Contains(sceneName))
                 return false;
         }
 
@@ -91,40 +111,48 @@ public static class StageUnlockProgress
 
     public static bool IsBossRushUnlocked()
     {
-        return SB6SaveSystem.Data.bossRushUnlocked;
+        return SaveSystem.Data.bossRushUnlocked;
     }
 
     public static void UnlockBossRushPermanently()
     {
-        if (SB6SaveSystem.Data.bossRushUnlocked)
+        if (SaveSystem.Data.bossRushUnlocked)
             return;
 
-        SB6SaveSystem.Data.bossRushUnlocked = true;
-        SB6SaveSystem.Save();
+        SaveSystem.Data.bossRushUnlocked = true;
+        SaveSystem.Save();
     }
 
     public static void ResetBossRushUnlock()
     {
-        SB6SaveSystem.Data.bossRushUnlocked = false;
-        SB6SaveSystem.Save();
+        SaveSystem.Data.bossRushUnlocked = false;
+        SaveSystem.Save();
     }
 
     public static int GetRegisteredStageCount()
     {
-        return SB6SaveSystem.Data.stageOrder != null ? SB6SaveSystem.Data.stageOrder.Count : 0;
+        var slot = SaveSystem.ActiveSlot;
+        if (slot == null)
+            return 0;
+
+        return slot.stageOrder != null ? slot.stageOrder.Count : 0;
     }
 
     public static int GetClearedRegisteredStageCount()
     {
-        if (SB6SaveSystem.Data.stageOrder == null || SB6SaveSystem.Data.stageOrder.Count <= 0)
+        var slot = SaveSystem.ActiveSlot;
+        if (slot == null)
+            return 0;
+
+        if (slot.stageOrder == null || slot.stageOrder.Count <= 0)
             return 0;
 
         int count = 0;
 
-        for (int i = 0; i < SB6SaveSystem.Data.stageOrder.Count; i++)
+        for (int i = 0; i < slot.stageOrder.Count; i++)
         {
-            string sceneName = SB6SaveSystem.Data.stageOrder[i];
-            if (!string.IsNullOrEmpty(sceneName) && SB6SaveSystem.Data.clearedStages.Contains(sceneName))
+            string sceneName = slot.stageOrder[i];
+            if (!string.IsNullOrEmpty(sceneName) && slot.clearedStages.Contains(sceneName))
                 count++;
         }
 
@@ -136,16 +164,20 @@ public static class StageUnlockProgress
         if (ShouldIgnoreProgressPersistence())
             return;
 
+        var slot = SaveSystem.ActiveSlot;
+        if (slot == null)
+            return;
+
         EnsureDefaultUnlocked();
 
         string normalized = Normalize(sceneName);
         if (string.IsNullOrEmpty(normalized))
             return;
 
-        if (!SB6SaveSystem.Data.unlockedStages.Contains(normalized))
+        if (!slot.unlockedStages.Contains(normalized))
         {
-            SB6SaveSystem.Data.unlockedStages.Add(normalized);
-            SB6SaveSystem.Save();
+            slot.unlockedStages.Add(normalized);
+            SaveSystem.Save();
         }
     }
 
@@ -154,6 +186,10 @@ public static class StageUnlockProgress
         if (ShouldIgnoreProgressPersistence())
             return;
 
+        var slot = SaveSystem.ActiveSlot;
+        if (slot == null)
+            return;
+
         EnsureDefaultUnlocked();
 
         string normalized = Normalize(sceneName);
@@ -162,23 +198,23 @@ public static class StageUnlockProgress
 
         bool changed = false;
 
-        if (!SB6SaveSystem.Data.unlockedStages.Contains(normalized))
+        if (!slot.unlockedStages.Contains(normalized))
         {
-            SB6SaveSystem.Data.unlockedStages.Add(normalized);
+            slot.unlockedStages.Add(normalized);
             changed = true;
         }
 
-        if (!SB6SaveSystem.Data.clearedStages.Contains(normalized))
+        if (!slot.clearedStages.Contains(normalized))
         {
-            SB6SaveSystem.Data.clearedStages.Add(normalized);
+            slot.clearedStages.Add(normalized);
             changed = true;
         }
 
-        bool bossRushBefore = SB6SaveSystem.Data.bossRushUnlocked;
+        bool bossRushBefore = SaveSystem.Data.bossRushUnlocked;
         TryUnlockBossRush();
 
-        if (changed || SB6SaveSystem.Data.bossRushUnlocked != bossRushBefore)
-            SB6SaveSystem.Save();
+        if (changed || SaveSystem.Data.bossRushUnlocked != bossRushBefore)
+            SaveSystem.Save();
     }
 
     public static void MarkPerfect(string sceneName)
@@ -186,6 +222,10 @@ public static class StageUnlockProgress
         if (ShouldIgnoreProgressPersistence())
             return;
 
+        var slot = SaveSystem.ActiveSlot;
+        if (slot == null)
+            return;
+
         EnsureDefaultUnlocked();
 
         string normalized = Normalize(sceneName);
@@ -194,34 +234,38 @@ public static class StageUnlockProgress
 
         bool changed = false;
 
-        if (!SB6SaveSystem.Data.unlockedStages.Contains(normalized))
+        if (!slot.unlockedStages.Contains(normalized))
         {
-            SB6SaveSystem.Data.unlockedStages.Add(normalized);
+            slot.unlockedStages.Add(normalized);
             changed = true;
         }
 
-        if (!SB6SaveSystem.Data.clearedStages.Contains(normalized))
+        if (!slot.clearedStages.Contains(normalized))
         {
-            SB6SaveSystem.Data.clearedStages.Add(normalized);
+            slot.clearedStages.Add(normalized);
             changed = true;
         }
 
-        if (!SB6SaveSystem.Data.perfectStages.Contains(normalized))
+        if (!slot.perfectStages.Contains(normalized))
         {
-            SB6SaveSystem.Data.perfectStages.Add(normalized);
+            slot.perfectStages.Add(normalized);
             changed = true;
         }
 
-        bool bossRushBefore = SB6SaveSystem.Data.bossRushUnlocked;
+        bool bossRushBefore = SaveSystem.Data.bossRushUnlocked;
         TryUnlockBossRush();
 
-        if (changed || SB6SaveSystem.Data.bossRushUnlocked != bossRushBefore)
-            SB6SaveSystem.Save();
+        if (changed || SaveSystem.Data.bossRushUnlocked != bossRushBefore)
+            SaveSystem.Save();
     }
 
     public static void UnlockCurrentAndNext(string currentSceneName)
     {
         if (ShouldIgnoreProgressPersistence())
+            return;
+
+        var slot = SaveSystem.ActiveSlot;
+        if (slot == null)
             return;
 
         EnsureDefaultUnlocked();
@@ -232,75 +276,83 @@ public static class StageUnlockProgress
 
         bool changed = false;
 
-        if (!SB6SaveSystem.Data.unlockedStages.Contains(normalizedCurrent))
+        if (!slot.unlockedStages.Contains(normalizedCurrent))
         {
-            SB6SaveSystem.Data.unlockedStages.Add(normalizedCurrent);
+            slot.unlockedStages.Add(normalizedCurrent);
             changed = true;
         }
 
-        if (!SB6SaveSystem.Data.clearedStages.Contains(normalizedCurrent))
+        if (!slot.clearedStages.Contains(normalizedCurrent))
         {
-            SB6SaveSystem.Data.clearedStages.Add(normalizedCurrent);
+            slot.clearedStages.Add(normalizedCurrent);
             changed = true;
         }
 
-        int currentIndex = SB6SaveSystem.Data.stageOrder.IndexOf(normalizedCurrent);
+        int currentIndex = slot.stageOrder.IndexOf(normalizedCurrent);
         if (currentIndex >= 0)
         {
             int nextIndex = currentIndex + 1;
-            if (nextIndex < SB6SaveSystem.Data.stageOrder.Count)
+            if (nextIndex < slot.stageOrder.Count)
             {
-                string nextScene = SB6SaveSystem.Data.stageOrder[nextIndex];
-                if (!string.IsNullOrEmpty(nextScene) && !SB6SaveSystem.Data.unlockedStages.Contains(nextScene))
+                string nextScene = slot.stageOrder[nextIndex];
+                if (!string.IsNullOrEmpty(nextScene) && !slot.unlockedStages.Contains(nextScene))
                 {
-                    SB6SaveSystem.Data.unlockedStages.Add(nextScene);
+                    slot.unlockedStages.Add(nextScene);
                     changed = true;
                 }
             }
         }
 
-        bool bossRushBefore = SB6SaveSystem.Data.bossRushUnlocked;
+        bool bossRushBefore = SaveSystem.Data.bossRushUnlocked;
         TryUnlockBossRush();
 
-        if (changed || SB6SaveSystem.Data.bossRushUnlocked != bossRushBefore)
-            SB6SaveSystem.Save();
+        if (changed || SaveSystem.Data.bossRushUnlocked != bossRushBefore)
+            SaveSystem.Save();
     }
 
     public static void ResetProgress()
     {
-        SB6SaveSystem.Data.unlockedStages.Clear();
-        SB6SaveSystem.Data.clearedStages.Clear();
-        SB6SaveSystem.Data.perfectStages.Clear();
-        SB6SaveSystem.Data.stageOrder.Clear();
-        SB6SaveSystem.Data.bossRushUnlocked = false;
+        var slot = SaveSystem.ActiveSlot;
+        if (slot == null)
+            return;
+
+        slot.unlockedStages.Clear();
+        slot.clearedStages.Clear();
+        slot.perfectStages.Clear();
+        slot.stageOrder.Clear();
+        SaveSystem.Data.bossRushUnlocked = false;
 
         EnsureDefaultUnlocked();
-        SB6SaveSystem.Save();
+        SaveSystem.Save();
     }
 
     private static void EnsureDefaultUnlocked()
     {
-        if (SB6SaveSystem.Data.unlockedStages.Count > 0)
+        var slot = SaveSystem.ActiveSlot;
+        if (slot == null)
+            return;
+
+        if (slot.unlockedStages.Count > 0)
             return;
 
         string firstStage = null;
 
-        if (SB6SaveSystem.Data.stageOrder.Count > 0)
-            firstStage = SB6SaveSystem.Data.stageOrder[0];
+        if (slot.stageOrder.Count > 0)
+            firstStage = slot.stageOrder[0];
 
         if (string.IsNullOrEmpty(firstStage))
             firstStage = "Stage_1-1";
 
-        SB6SaveSystem.Data.unlockedStages.Add(firstStage);
+        slot.unlockedStages.Add(firstStage);
     }
 
     private static void TryUnlockBossRush()
     {
-        if (SB6SaveSystem.Data.bossRushUnlocked)
+        if (SaveSystem.Data.bossRushUnlocked)
             return;
 
         if (HasClearedAllRegisteredStages())
-            SB6SaveSystem.Data.bossRushUnlocked = true;
+            SaveSystem.Data.bossRushUnlocked = true;
     }
 
     private static string Normalize(string sceneName)
