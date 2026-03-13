@@ -108,9 +108,7 @@ public class BomberSkinGlobalUnlockController : MonoBehaviour
                 for (int p = 1; p <= 4; p++)
                     PlayerPersistentStats.ClampSelectedSkinIfLocked(p);
 
-                SLog("Gray unlocked successfully | clamped selected skins | showing toast | playing unlock sfx");
-
-                UnlockToastPresenter.ShowSkinUnlocked(BomberSkin.Gray);
+                SLog("Gray unlocked successfully | clamped selected skins | playing unlock sfx");
                 PlayUnlockSfx();
             }
             else

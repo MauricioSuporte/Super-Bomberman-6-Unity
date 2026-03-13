@@ -9,6 +9,7 @@ using UnityEngine.UI;
 public class UnlockToastPresenter : MonoBehaviour
 {
     const string RootName = "__UnlockToastPresenter";
+    const string PersistentCanvasName = "UnlockToastCanvas";
     const string ToastRootName = "UnlockToastRoot";
     const string BackgroundName = "Background";
     const string IconName = "Icon";
@@ -75,12 +76,16 @@ public class UnlockToastPresenter : MonoBehaviour
     [SerializeField, Range(0f, 1f)] float outlineWidth = 0.22f;
 
     RectTransform targetRoot;
+    RectTransform persistentCanvasRoot;
     RectTransform toastRoot;
     Image backgroundImage;
     Image iconImage;
     TMP_Text titleText;
     TMP_Text subtitleText;
     CanvasGroup canvasGroup;
+    Canvas persistentCanvas;
+    GraphicRaycaster persistentRaycaster;
+    CanvasScaler persistentCanvasScaler;
 
     Material runtimeTitleMaterial;
     Material runtimeSubtitleMaterial;
@@ -105,51 +110,30 @@ public class UnlockToastPresenter : MonoBehaviour
     {
         if (instanceInScene != null && instanceInScene.gameObject != null)
         {
-            if (!instanceInScene.gameObject.activeInHierarchy)
-            {
-                SLog("EnsureInScene | cached instance inactive, trying MoveToActiveRoot");
-                instanceInScene.MoveToActiveRoot();
-            }
-
             instanceInScene.RefreshTargetRoot();
             instanceInScene.EnsureBuilt();
             SLog($"EnsureInScene | reused cached instance | activeInHierarchy={instanceInScene.gameObject.activeInHierarchy}");
             return;
         }
 
-        var existing = FindAnyPresenter();
+        UnlockToastPresenter existing = FindAnyPresenter();
         if (existing != null)
         {
             instanceInScene = existing;
-
-            if (!instanceInScene.gameObject.activeInHierarchy)
-            {
-                SLog("EnsureInScene | existing presenter inactive, trying MoveToActiveRoot");
-                instanceInScene.MoveToActiveRoot();
-            }
-
             instanceInScene.RefreshTargetRoot();
             instanceInScene.EnsureBuilt();
             SLog($"EnsureInScene | found existing presenter | activeInHierarchy={instanceInScene.gameObject.activeInHierarchy}");
             return;
         }
 
-        RectTransform parentRoot = FindTargetRoot();
-        if (parentRoot == null)
-        {
-            SLog("EnsureInScene | no valid active UI root found");
-            return;
-        }
-
         GameObject root = new GameObject(RootName, typeof(RectTransform));
-        root.transform.SetParent(parentRoot, false);
         root.SetActive(true);
+        DontDestroyOnLoad(root);
 
         instanceInScene = root.AddComponent<UnlockToastPresenter>();
-        instanceInScene.targetRoot = parentRoot;
         instanceInScene.EnsureBuilt();
 
-        SLog($"EnsureInScene | created presenter under {parentRoot.name} | activeInHierarchy={root.activeInHierarchy}");
+        SLog("EnsureInScene | created persistent presenter");
     }
 
     public static void ShowSkinUnlocked(BomberSkin skin)
@@ -163,7 +147,7 @@ public class UnlockToastPresenter : MonoBehaviour
         }
 
         var info = BomberSkinUnlockToastCatalog.Get(skin);
-        var icon = BomberSkinUnlockToastCatalog.LoadIcon(skin);
+        Sprite icon = BomberSkinUnlockToastCatalog.LoadIcon(skin);
 
         SLog($"ShowSkinUnlocked | skin={skin} | title={info.Title} | subtitle={info.Subtitle} | iconLoaded={(icon != null)}");
 
@@ -194,11 +178,9 @@ public class UnlockToastPresenter : MonoBehaviour
         }
 
         instanceInScene = this;
+        DontDestroyOnLoad(gameObject);
 
-        if (targetRoot == null)
-            targetRoot = transform.parent as RectTransform;
-
-        SLog($"Awake | targetRoot={(targetRoot != null ? targetRoot.name : "null")}");
+        SLog("Awake | persistent presenter ready");
 
         EnsureBuilt();
     }
@@ -215,9 +197,10 @@ public class UnlockToastPresenter : MonoBehaviour
         lastBaseScaleInt = -999;
         lastCamPixelRect = default;
         lastCamViewportRect = default;
-        lastRootSize = new(float.MinValue, float.MinValue);
+        lastRootSize = new Vector2(float.MinValue, float.MinValue);
 
         EnsureBuilt();
+        HideImmediatelyIfIdle();
         SLog("OnEnable");
     }
 
@@ -255,6 +238,9 @@ public class UnlockToastPresenter : MonoBehaviour
 
         RefreshTargetRoot();
         EnsureBuilt();
+        ApplyRectScaleIfNeeded(force: true);
+        HideImmediatelyIfIdle();
+
         SLog($"OnSceneLoaded | scene={scene.name} | mode={mode}");
     }
 
@@ -277,18 +263,6 @@ public class UnlockToastPresenter : MonoBehaviour
 
         if (playRoutine != null)
             return;
-
-        if (!gameObject.activeInHierarchy || !isActiveAndEnabled)
-        {
-            SLog("Enqueue | presenter inactive, attempting MoveToActiveRoot before starting coroutine");
-            MoveToActiveRoot();
-        }
-
-        if (!gameObject.activeInHierarchy || !isActiveAndEnabled)
-        {
-            SLog("Enqueue aborted | presenter still inactive after MoveToActiveRoot");
-            return;
-        }
 
         playRoutine = StartCoroutine(PlayQueue());
         SLog("Enqueue | started PlayQueue coroutine");
@@ -317,6 +291,7 @@ public class UnlockToastPresenter : MonoBehaviour
         }
 
         playRoutine = null;
+        HideImmediatelyIfIdle();
         SLog("PlayQueue finished");
     }
 
@@ -379,6 +354,9 @@ public class UnlockToastPresenter : MonoBehaviour
         }
 
         canvasGroup.alpha = 0f;
+        canvasGroup.interactable = false;
+        canvasGroup.blocksRaycasts = false;
+
         ApplyRectScaleIfNeeded(force: true);
         toastRoot.anchoredPosition = GetHiddenPosition();
 
@@ -387,8 +365,8 @@ public class UnlockToastPresenter : MonoBehaviour
 
     void EnsureBuilt()
     {
-        if (targetRoot == null)
-            targetRoot = FindTargetRoot();
+        EnsurePersistentCanvas();
+        RefreshTargetRoot();
 
         RectTransform rootRect = transform as RectTransform;
         ApplyRootStretch(rootRect);
@@ -401,6 +379,11 @@ public class UnlockToastPresenter : MonoBehaviour
             toastGo.transform.SetParent(transform, false);
             toastRoot = toastGo.GetComponent<RectTransform>();
             canvasGroup = toastGo.GetComponent<CanvasGroup>();
+
+            canvasGroup.alpha = 0f;
+            canvasGroup.interactable = false;
+            canvasGroup.blocksRaycasts = false;
+
             SLog("EnsureBuilt | created toastRoot + canvasGroup");
         }
 
@@ -454,8 +437,88 @@ public class UnlockToastPresenter : MonoBehaviour
         backgroundImage.color = backgroundColor;
 
         ApplyRectScaleIfNeeded(force: true);
+        HideImmediatelyIfIdle();
 
         SLog($"EnsureBuilt | targetRoot={(targetRoot != null ? targetRoot.name : "null")} | fontLoaded={(fontAsset != null)} | bgLoaded={(bgSprite != null)}");
+    }
+
+    void EnsurePersistentCanvas()
+    {
+        if (persistentCanvas == null)
+            persistentCanvas = gameObject.GetComponent<Canvas>();
+
+        if (persistentCanvas == null)
+            persistentCanvas = gameObject.AddComponent<Canvas>();
+
+        if (persistentCanvasScaler == null)
+            persistentCanvasScaler = gameObject.GetComponent<CanvasScaler>();
+
+        if (persistentCanvasScaler == null)
+            persistentCanvasScaler = gameObject.AddComponent<CanvasScaler>();
+
+        if (persistentRaycaster == null)
+            persistentRaycaster = gameObject.GetComponent<GraphicRaycaster>();
+
+        if (persistentRaycaster == null)
+            persistentRaycaster = gameObject.AddComponent<GraphicRaycaster>();
+
+        persistentCanvas.renderMode = RenderMode.ScreenSpaceOverlay;
+        persistentCanvas.sortingOrder = 32760;
+        persistentCanvas.pixelPerfect = true;
+        persistentCanvas.overrideSorting = true;
+        persistentCanvas.gameObject.name = RootName;
+
+        persistentCanvasScaler.uiScaleMode = CanvasScaler.ScaleMode.ConstantPixelSize;
+        persistentCanvasScaler.scaleFactor = 1f;
+        persistentCanvasScaler.referencePixelsPerUnit = 16f;
+
+        if (persistentRaycaster != null)
+            persistentRaycaster.enabled = false;
+
+        RectTransform selfRt = transform as RectTransform;
+        if (selfRt != null)
+        {
+            selfRt.anchorMin = Vector2.zero;
+            selfRt.anchorMax = Vector2.one;
+            selfRt.pivot = new Vector2(0.5f, 0.5f);
+            selfRt.offsetMin = Vector2.zero;
+            selfRt.offsetMax = Vector2.zero;
+            selfRt.anchoredPosition = Vector2.zero;
+            selfRt.localScale = Vector3.one;
+        }
+
+        persistentCanvasRoot = transform as RectTransform;
+
+        SLog("EnsurePersistentCanvas | configured persistent overlay canvas on presenter root");
+    }
+
+    void HideImmediatelyIfIdle()
+    {
+        if (toastRoot == null || canvasGroup == null)
+            return;
+
+        if (playRoutine != null || queue.Count > 0)
+            return;
+
+        canvasGroup.alpha = 0f;
+        canvasGroup.interactable = false;
+        canvasGroup.blocksRaycasts = false;
+
+        toastRoot.anchoredPosition = GetHiddenPosition();
+
+        if (iconImage != null)
+        {
+            iconImage.sprite = null;
+            iconImage.enabled = false;
+        }
+
+        if (titleText != null)
+            titleText.text = string.Empty;
+
+        if (subtitleText != null)
+            subtitleText.text = string.Empty;
+
+        SLog("HideImmediatelyIfIdle | toast hidden because presenter is idle");
     }
 
     void SetupText(TMP_Text text, bool isTitle)
@@ -522,35 +585,17 @@ public class UnlockToastPresenter : MonoBehaviour
 
     void RefreshTargetRoot()
     {
-        RectTransform newRoot = FindTargetRoot();
-        if (newRoot == null)
-        {
-            SLog("RefreshTargetRoot | no valid target root found");
-            return;
-        }
-
-        if (targetRoot != newRoot)
-            SLog($"RefreshTargetRoot | target changed from {(targetRoot != null ? targetRoot.name : "null")} to {newRoot.name}");
-
-        targetRoot = newRoot;
-
-        RectTransform rootRect = transform as RectTransform;
-        if (rootRect != null && rootRect.parent != targetRoot)
-        {
-            rootRect.SetParent(targetRoot, false);
-            ApplyRootStretch(rootRect);
-            transform.SetAsLastSibling();
-            ApplyRectScaleIfNeeded(force: true);
-            SLog($"RefreshTargetRoot | presenter reparented to {targetRoot.name}");
-        }
+        targetRoot = FindTargetRoot();
     }
 
     void RefreshTargetRootIfNeeded()
     {
         if (targetRoot == null || !targetRoot.gameObject.scene.isLoaded)
         {
-            SLog($"RefreshTargetRootIfNeeded | currentRoot={(targetRoot != null ? targetRoot.name : "null")} | loaded={(targetRoot != null && targetRoot.gameObject.scene.isLoaded)}");
             RefreshTargetRoot();
+            ApplyRectScaleIfNeeded(force: true);
+            HideImmediatelyIfIdle();
+            SLog($"RefreshTargetRootIfNeeded | currentRoot={(targetRoot != null ? targetRoot.name : "null")}");
             return;
         }
 
@@ -559,13 +604,14 @@ public class UnlockToastPresenter : MonoBehaviour
         {
             lastRootSize = rootSize;
             ApplyRectScaleIfNeeded(force: true);
+            HideImmediatelyIfIdle();
             SLog($"RefreshTargetRootIfNeeded | root size changed to {rootSize}");
         }
     }
 
     static UnlockToastPresenter FindAnyPresenter()
     {
-        var presenters = FindObjectsByType<UnlockToastPresenter>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        UnlockToastPresenter[] presenters = FindObjectsByType<UnlockToastPresenter>(FindObjectsInactive.Include, FindObjectsSortMode.None);
 
         if (presenters == null || presenters.Length == 0)
             return null;
@@ -586,22 +632,22 @@ public class UnlockToastPresenter : MonoBehaviour
 
     static RectTransform FindTargetRoot()
     {
-        var safeFrameGo = GameObject.Find("SafeFrame4x3");
+        GameObject safeFrameGo = GameObject.Find("SafeFrame4x3");
         if (safeFrameGo != null &&
             safeFrameGo.activeInHierarchy &&
-            safeFrameGo.TryGetComponent<RectTransform>(out var safeFrameRt))
+            safeFrameGo.TryGetComponent<RectTransform>(out RectTransform safeFrameRt))
         {
             SLog("FindTargetRoot | using active SafeFrame4x3");
             return safeFrameRt;
         }
 
-        var fitters = FindObjectsByType<UICameraViewportFitter>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        UICameraViewportFitter[] fitters = FindObjectsByType<UICameraViewportFitter>(FindObjectsInactive.Include, FindObjectsSortMode.None);
         for (int i = 0; i < fitters.Length; i++)
         {
             if (fitters[i] == null || !fitters[i].gameObject.activeInHierarchy)
                 continue;
 
-            var rt = fitters[i].transform as RectTransform;
+            RectTransform rt = fitters[i].transform as RectTransform;
             if (rt != null && rt.gameObject.activeInHierarchy)
             {
                 SLog($"FindTargetRoot | using active UICameraViewportFitter root={rt.name}");
@@ -609,49 +655,13 @@ public class UnlockToastPresenter : MonoBehaviour
             }
         }
 
-        var canvases = FindObjectsByType<Canvas>(FindObjectsInactive.Include, FindObjectsSortMode.None);
-        Canvas bestCanvas = null;
-
-        for (int i = 0; i < canvases.Length; i++)
-        {
-            var c = canvases[i];
-            if (c == null || !c.isActiveAndEnabled || !c.gameObject.activeInHierarchy)
-                continue;
-
-            if (bestCanvas == null)
-                bestCanvas = c;
-
-            if (c.renderMode == RenderMode.ScreenSpaceOverlay)
-            {
-                bestCanvas = c;
-                break;
-            }
-
-            if (Camera.main != null && c.worldCamera == Camera.main)
-            {
-                bestCanvas = c;
-                break;
-            }
-        }
-
-        if (bestCanvas != null)
-        {
-            SLog($"FindTargetRoot | using active canvas root={bestCanvas.name} | renderMode={bestCanvas.renderMode}");
-            return bestCanvas.transform as RectTransform;
-        }
-
-        SLog("FindTargetRoot | nothing active found");
+        SLog("FindTargetRoot | no scene safe root found, using overlay canvas");
         return null;
-    }
-
-    bool IsCanvasRoot(RectTransform rt)
-    {
-        return rt != null && rt.GetComponent<Canvas>() != null;
     }
 
     Rect GetMainCameraViewportRect()
     {
-        var cam = Camera.main;
+        Camera cam = Camera.main;
         if (cam == null)
             return new Rect(0f, 0f, 1f, 1f);
 
@@ -660,7 +670,7 @@ public class UnlockToastPresenter : MonoBehaviour
 
     Rect GetMainCameraPixelRect()
     {
-        var cam = Camera.main;
+        Camera cam = Camera.main;
         if (cam == null)
             return new Rect(0f, 0f, Screen.width, Screen.height);
 
@@ -672,23 +682,32 @@ public class UnlockToastPresenter : MonoBehaviour
         get
         {
             float canvasScale = 1f;
-            if (backgroundImage != null && backgroundImage.canvas != null)
-                canvasScale = Mathf.Max(0.01f, backgroundImage.canvas.scaleFactor);
-
-            float returnValue;
+            if (persistentCanvas != null)
+                canvasScale = Mathf.Max(0.01f, persistentCanvas.scaleFactor);
 
             if (!dynamicScale)
             {
-                returnValue = 1f / canvasScale;
+                float fallback = 1f / canvasScale;
                 lastBaseScaleInt = -1;
-                lastUiScale = returnValue;
-                return returnValue;
+                lastUiScale = fallback;
+                return fallback;
             }
 
-            Rect camPixelRect = GetMainCameraPixelRect();
+            float usedW;
+            float usedH;
 
-            float usedW = camPixelRect.width;
-            float usedH = camPixelRect.height;
+            if (targetRoot != null)
+            {
+                Vector2 rootSize = targetRoot.rect.size;
+                usedW = Mathf.Max(1f, rootSize.x);
+                usedH = Mathf.Max(1f, rootSize.y);
+            }
+            else
+            {
+                Rect camPixelRect = GetMainCameraPixelRect();
+                usedW = camPixelRect.width;
+                usedH = camPixelRect.height;
+            }
 
             float sx = usedW / Mathf.Max(1f, referenceWidth);
             float sy = usedH / Mathf.Max(1f, referenceHeight);
@@ -708,50 +727,30 @@ public class UnlockToastPresenter : MonoBehaviour
 
             lastBaseScaleInt = baseScaleInt;
             lastUiScale = ui;
-            returnValue = ui;
 
-            return returnValue;
+            return ui;
         }
     }
 
     int TextS(int baseSize)
     {
-        int returnValue = Mathf.Clamp(Mathf.RoundToInt(baseSize * UiScale * textScaleMultiplier), 8, 300);
-        return returnValue;
+        return Mathf.Clamp(Mathf.RoundToInt(baseSize * UiScale * textScaleMultiplier), 8, 300);
     }
 
     float ToastPx(float basePx)
     {
-        float returnValue = Mathf.Round(basePx * UiScale * toastScaleMultiplier);
-        return returnValue;
+        return Mathf.Round(basePx * UiScale * toastScaleMultiplier);
     }
 
     float TextPx(float basePx)
     {
-        float returnValue = Mathf.Round(basePx * UiScale * textScaleMultiplier);
-        return returnValue;
+        return Mathf.Round(basePx * UiScale * textScaleMultiplier);
     }
 
     void ApplyRootStretch(RectTransform rootRect)
     {
         if (rootRect == null)
             return;
-
-        bool useCameraViewport = IsCanvasRoot(targetRoot);
-
-        if (useCameraViewport)
-        {
-            Rect vr = GetMainCameraViewportRect();
-
-            rootRect.anchorMin = new Vector2(vr.xMin, vr.yMin);
-            rootRect.anchorMax = new Vector2(vr.xMax, vr.yMax);
-            rootRect.pivot = new Vector2(0.5f, 0.5f);
-            rootRect.offsetMin = Vector2.zero;
-            rootRect.offsetMax = Vector2.zero;
-            rootRect.anchoredPosition = Vector2.zero;
-            rootRect.localScale = Vector3.one;
-            return;
-        }
 
         rootRect.anchorMin = Vector2.zero;
         rootRect.anchorMax = Vector2.one;
@@ -770,7 +769,7 @@ public class UnlockToastPresenter : MonoBehaviour
         Rect camPixelRect = GetMainCameraPixelRect();
         Rect camViewportRect = GetMainCameraViewportRect();
         float uiScale = UiScale;
-        Vector2 rootSize = targetRoot != null ? targetRoot.rect.size : Vector2.zero;
+        Vector2 rootSize = targetRoot != null ? targetRoot.rect.size : new Vector2(Screen.width, Screen.height);
 
         bool changed =
             force ||
@@ -881,42 +880,16 @@ public class UnlockToastPresenter : MonoBehaviour
             $"finalToast=({finalWidth:0.00}, {finalHeight:0.00}) | shown={GetShownPosition()} | hidden={GetHiddenPosition()} | camPixelRect={camPixelRect}");
     }
 
-    void MoveToActiveRoot()
-    {
-        RectTransform newRoot = FindTargetRoot();
-        if (newRoot == null)
-        {
-            SLog("MoveToActiveRoot | no active target root found");
-            return;
-        }
-
-        targetRoot = newRoot;
-
-        RectTransform rootRect = transform as RectTransform;
-        if (rootRect != null)
-        {
-            rootRect.SetParent(newRoot, false);
-            ApplyRootStretch(rootRect);
-            transform.SetAsLastSibling();
-        }
-
-        gameObject.SetActive(true);
-
-        SLog($"MoveToActiveRoot | moved presenter to {newRoot.name} | activeInHierarchy={gameObject.activeInHierarchy}");
-    }
-
     Vector2 GetShownPosition()
     {
-        Vector2 returnValue = new Vector2(ToastPx(anchoredOffsetAtDesign.x), ToastPx(anchoredOffsetAtDesign.y));
-        return returnValue;
+        return new Vector2(ToastPx(anchoredOffsetAtDesign.x), ToastPx(anchoredOffsetAtDesign.y));
     }
 
     Vector2 GetHiddenPosition()
     {
         Vector2 shown = GetShownPosition();
         float extra = toastRoot != null ? toastRoot.sizeDelta.x + ToastPx(10f) : ToastPx(baseToastWidthAtDesign);
-        Vector2 returnValue = new Vector2(shown.x + extra, shown.y);
-        return returnValue;
+        return new Vector2(shown.x + extra, shown.y);
     }
 
     static void SLog(string message)
