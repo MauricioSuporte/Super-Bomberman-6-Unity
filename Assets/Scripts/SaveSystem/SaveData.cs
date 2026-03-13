@@ -1,5 +1,4 @@
-﻿
-using Assets.Scripts.SaveSystem;
+﻿using Assets.Scripts.SaveSystem;
 using System;
 using System.Collections.Generic;
 
@@ -22,5 +21,13 @@ public sealed class SaveData
         new StageSlot(),
         new StageSlot(),
         new StageSlot()
+    };
+
+    public List<SavedPlayerControls> controls = new()
+    {
+        new SavedPlayerControls { playerId = 1 },
+        new SavedPlayerControls { playerId = 2 },
+        new SavedPlayerControls { playerId = 3 },
+        new SavedPlayerControls { playerId = 4 }
     };
 }

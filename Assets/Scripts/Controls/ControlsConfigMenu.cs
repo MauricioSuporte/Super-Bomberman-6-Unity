@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using Assets.Scripts.SaveSystem;
 using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -617,6 +618,8 @@ public class ControlsConfigMenu : MonoBehaviour
     {
         ownerPlayerId = Mathf.Clamp(openerPlayerId, 1, 4);
 
+        SaveSystem.LoadControlsIntoInputManager();
+
         if (root == null) root = gameObject;
 
         root.transform.SetAsLastSibling();
@@ -796,7 +799,7 @@ public class ControlsConfigMenu : MonoBehaviour
                     {
                         var pReset = PlayerInputManager.Instance.GetPlayer(confirmResetPlayerId);
                         pReset.ResetToDefault();
-                        pReset.SaveToPrefs();
+                        SaveSystem.SaveControlsFromInputManager();
                         PlaySfx(resetSfx, resetVolume);
                         state = MenuState.SelectPlayer;
                         RefreshText();
@@ -897,7 +900,7 @@ public class ControlsConfigMenu : MonoBehaviour
 
                     if (bulkStep >= BulkActions.Length)
                     {
-                        p.SaveToPrefs();
+                        SaveSystem.SaveControlsFromInputManager();
                         bulkSnapshot = null;
                         bulkStep = 0;
                         state = MenuState.SelectPlayer;

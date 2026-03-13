@@ -35,6 +35,20 @@ public static class SaveSystem
         BomberSkin.Gold
     };
 
+    private static readonly PlayerAction[] controlActions =
+    {
+        PlayerAction.MoveUp,
+        PlayerAction.MoveDown,
+        PlayerAction.MoveLeft,
+        PlayerAction.MoveRight,
+        PlayerAction.Start,
+        PlayerAction.ActionA,
+        PlayerAction.ActionB,
+        PlayerAction.ActionC,
+        PlayerAction.ActionL,
+        PlayerAction.ActionR
+    };
+
     public static SaveData Data
     {
         get
@@ -139,6 +153,114 @@ public static class SaveSystem
         }
     }
 
+    public static void SaveControlsFromInputManager()
+    {
+        EnsureLoaded();
+
+        var input = PlayerInputManager.Instance;
+        if (input == null)
+            return;
+
+        EnsureControlProfiles(data);
+
+        for (int i = 0; i < 4; i++)
+        {
+            int playerId = i + 1;
+            var runtimeProfile = input.GetPlayer(playerId);
+            if (runtimeProfile == null)
+                continue;
+
+            var savedProfile = data.controls[i];
+            if (savedProfile == null)
+            {
+                savedProfile = new SavedPlayerControls();
+                data.controls[i] = savedProfile;
+            }
+
+            savedProfile.playerId = playerId;
+            savedProfile.joyIndex = Mathf.Clamp(runtimeProfile.joyIndex, 1, 11);
+            savedProfile.gamepadDeviceId = runtimeProfile.gamepadDeviceId;
+            savedProfile.gamepadProduct = runtimeProfile.gamepadProduct ?? "";
+
+            if (savedProfile.bindings == null)
+                savedProfile.bindings = new List<SavedBinding>();
+            else
+                savedProfile.bindings.Clear();
+
+            for (int a = 0; a < controlActions.Length; a++)
+            {
+                var action = controlActions[a];
+                var binding = runtimeProfile.GetBinding(action);
+
+                savedProfile.bindings.Add(new SavedBinding
+                {
+                    action = (int)action,
+                    kind = (int)binding.kind,
+                    key = (int)binding.key,
+                    dpadDir = binding.dpadDir,
+                    joyIndex = binding.joyIndex,
+                    joyButton = binding.joyButton
+                });
+            }
+        }
+
+        Save();
+    }
+
+    public static void LoadControlsIntoInputManager()
+    {
+        EnsureLoaded();
+
+        var input = PlayerInputManager.Instance;
+        if (input == null)
+            return;
+
+        EnsureControlProfiles(data);
+
+        for (int i = 0; i < 4; i++)
+        {
+            int playerId = i + 1;
+            var runtimeProfile = input.GetPlayer(playerId);
+            var savedProfile = data.controls[i];
+
+            if (runtimeProfile == null || savedProfile == null)
+                continue;
+
+            runtimeProfile.ResetToDefault();
+
+            runtimeProfile.joyIndex = Mathf.Clamp(savedProfile.joyIndex, 1, 11);
+            runtimeProfile.gamepadDeviceId = savedProfile.gamepadDeviceId;
+            runtimeProfile.gamepadProduct = savedProfile.gamepadProduct ?? "";
+
+            if (savedProfile.bindings == null)
+                continue;
+
+            for (int b = 0; b < savedProfile.bindings.Count; b++)
+            {
+                var savedBinding = savedProfile.bindings[b];
+
+                if (!Enum.IsDefined(typeof(PlayerAction), savedBinding.action))
+                    continue;
+
+                if (!Enum.IsDefined(typeof(BindKind), savedBinding.kind))
+                    continue;
+
+                var action = (PlayerAction)savedBinding.action;
+                var kind = (BindKind)savedBinding.kind;
+
+                Binding binding = kind switch
+                {
+                    BindKind.Key => Binding.FromKey((KeyCode)savedBinding.key),
+                    BindKind.DPad => Binding.FromDpad(savedBinding.joyIndex, savedBinding.dpadDir),
+                    BindKind.JoyButton => Binding.FromJoyButton(savedBinding.joyIndex, savedBinding.joyButton),
+                    _ => runtimeProfile.GetBinding(action)
+                };
+
+                runtimeProfile.SetBinding(action, binding);
+            }
+        }
+    }
+
     private static void EnsureLoaded()
     {
         if (loaded)
@@ -217,6 +339,8 @@ public static class SaveSystem
                 d.slots[i].unlockedStages.Add("Stage_1-1");
         }
 
+        EnsureControlProfiles(d);
+
         for (int i = 0; i < defaultUnlockedSkins.Length; i++)
         {
             string skinName = defaultUnlockedSkins[i].ToString();
@@ -238,6 +362,32 @@ public static class SaveSystem
 
         if (d.activeSlotIndex < -1 || d.activeSlotIndex >= d.slots.Count)
             d.activeSlotIndex = -1;
+    }
+
+    private static void EnsureControlProfiles(SaveData d)
+    {
+        if (d.controls == null)
+            d.controls = new List<SavedPlayerControls>();
+
+        while (d.controls.Count < 4)
+            d.controls.Add(new SavedPlayerControls { playerId = d.controls.Count + 1 });
+
+        if (d.controls.Count > 4)
+            d.controls.RemoveRange(4, d.controls.Count - 4);
+
+        for (int i = 0; i < d.controls.Count; i++)
+        {
+            if (d.controls[i] == null)
+                d.controls[i] = new SavedPlayerControls();
+
+            d.controls[i].playerId = i + 1;
+
+            if (d.controls[i].joyIndex < 1)
+                d.controls[i].joyIndex = 1;
+
+            if (d.controls[i].bindings == null)
+                d.controls[i].bindings = new List<SavedBinding>();
+        }
     }
 
     private static void EnsureDirectoryExists()

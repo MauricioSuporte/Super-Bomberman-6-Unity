@@ -35,7 +35,6 @@ public class PlayerInputProfile
         BuildDefaultBindingsForPlayer(id);
 
         ResetToDefault();
-        LoadFromPrefs();
     }
 
     void BuildDefaultBindingsForPlayer(int id)
@@ -120,6 +119,10 @@ public class PlayerInputProfile
         foreach (var kv in defaultBindings)
             bindings[kv.Key] = kv.Value;
 
+        joyIndex = 1;
+        gamepadDeviceId = -1;
+        gamepadProduct = "";
+
         EnsureAllActionsExist();
     }
 
@@ -171,11 +174,9 @@ public class PlayerInputProfile
         }
 
         PlayerPrefs.SetInt(PrefHasAny(), 1);
-
         PlayerPrefs.SetInt(PrefJoyIndex(), joyIndex);
         PlayerPrefs.SetInt(PrefGamepadDeviceId(), gamepadDeviceId);
         PlayerPrefs.SetString(PrefGamepadProduct(), gamepadProduct ?? "");
-
         PlayerPrefs.Save();
     }
 

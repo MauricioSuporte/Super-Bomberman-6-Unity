@@ -1,4 +1,5 @@
 ﻿using System.Collections;
+using Assets.Scripts.SaveSystem;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -16,6 +17,8 @@ public class ControlsMenuBootstrap : MonoBehaviour
         PlayerPersistentStats.EnsureSessionBooted();
         GamePauseController.ClearPauseFlag();
         Time.timeScale = 1f;
+
+        SaveSystem.LoadControlsIntoInputManager();
 
         StartCoroutine(RunFlow());
     }
