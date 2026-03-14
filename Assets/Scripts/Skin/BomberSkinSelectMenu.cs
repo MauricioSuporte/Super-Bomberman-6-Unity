@@ -7,6 +7,12 @@ using UnityEngine.UI;
 
 public class BomberSkinSelectMenu : MonoBehaviour
 {
+    const string LOG = "[BomberSkinSelectMenu]";
+
+    [Header("Debug (Surgical Logs)")]
+    [SerializeField] bool enableSurgicalLogs = true;
+    [SerializeField] bool logHintSpacingEveryUpdate = false;
+
     [Header("Auto Fix Layout")]
     [SerializeField] bool forceRootPanelStretchToParent = false;
     [SerializeField] bool forceBackgroundStretchToRootPanel = false;
@@ -144,6 +150,9 @@ public class BomberSkinSelectMenu : MonoBehaviour
     [SerializeField, Range(-2f, 2f)] float unlockHintUnderlayOffsetX = 0.25f;
     [SerializeField, Range(-2f, 2f)] float unlockHintUnderlayOffsetY = -0.25f;
 
+    [Header("Unlock Hint Position")]
+    [SerializeField, Range(0f, 0.25f)] float unlockHintBottomPercentOfReferenceHeight = 0.040179f;
+
     float _currentUiScale = 1f;
     int _currentBaseScaleInt = 1;
 
@@ -165,6 +174,9 @@ public class BomberSkinSelectMenu : MonoBehaviour
     RectTransform unlockHintRect;
     Material unlockHintRuntimeMaterial;
     string _lastUnlockHintMessage = string.Empty;
+
+    readonly Vector3[] _hintWorldCorners = new Vector3[4];
+    readonly Vector3[] _refWorldCorners = new Vector3[4];
 
     [Header("Skins (menu order)")]
     [SerializeField]
@@ -254,6 +266,13 @@ public class BomberSkinSelectMenu : MonoBehaviour
         ApplyDynamicScaleIfNeeded(true);
         EnsureUnlockHintText();
 
+        SLog(
+            $"Awake | root={(root != null ? root.name : "NULL")} " +
+            $"referenceRect={(referenceRect != null ? referenceRect.name : "NULL")} " +
+            $"rootPanel={(rootPanel != null ? rootPanel.name : "NULL")} " +
+            $"uiScale={_currentUiScale:0.###} baseScaleInt={_currentBaseScaleInt}"
+        );
+
         if (root != null)
             root.SetActive(false);
     }
@@ -277,6 +296,9 @@ public class BomberSkinSelectMenu : MonoBehaviour
         TickEndStageClocks();
         UpdateSlotVisuals();
         UpdateUnlockHint();
+
+        if (logHintSpacingEveryUpdate)
+            DumpHintSpacing("Update");
     }
 
     void LateUpdate()
@@ -287,6 +309,9 @@ public class BomberSkinSelectMenu : MonoBehaviour
         Canvas.ForceUpdateCanvases();
         UpdateAllCursorsToSelected();
         CycleOverlappedCursors();
+
+        if (logHintSpacingEveryUpdate)
+            DumpHintSpacing("LateUpdate");
     }
 
     public void Hide()
@@ -305,6 +330,8 @@ public class BomberSkinSelectMenu : MonoBehaviour
         }
 
         players.Clear();
+
+        SLog("Hide | menuActive=false");
 
         if (root != null) root.SetActive(false);
         else gameObject.SetActive(false);
@@ -405,6 +432,8 @@ public class BomberSkinSelectMenu : MonoBehaviour
         yield return null;
 
         menuActive = true;
+
+        DumpHintSpacing("SelectSkinRoutine.BeforeFadeIn");
 
         if (fadeInCoroutine != null)
             StopCoroutine(fadeInCoroutine);
@@ -1351,7 +1380,8 @@ public class BomberSkinSelectMenu : MonoBehaviour
 
         var cam = GetMainCameraSafe();
         Rect camRect = cam != null ? cam.rect : new Rect(0, 0, 1, 1);
-        Rect refPx = GetReferencePixelRect(out _);
+
+        Rect refPx = GetReferencePixelRect(out string refSource);
 
         bool changed =
             force ||
@@ -1379,14 +1409,34 @@ public class BomberSkinSelectMenu : MonoBehaviour
         ApplyScaledLayout();
         ApplyUnlockHintVisualStyle();
 
+        float bottomOffsetForLog;
+        if (referenceRect != null)
+            bottomOffsetForLog = referenceRect.rect.height * unlockHintBottomPercentOfReferenceHeight;
+        else
+            bottomOffsetForLog = unlockHintBottomMargin * _currentUiScale;
+
         if (unlockHintRect != null)
         {
-            unlockHintRect.anchoredPosition = new Vector2(0f, unlockHintBottomMargin * _currentUiScale);
+            unlockHintRect.anchoredPosition = new Vector2(0f, bottomOffsetForLog);
             unlockHintRect.sizeDelta = new Vector2(
                 unlockHintWidth * _currentUiScale,
                 unlockHintHeight * _currentUiScale
             );
         }
+
+        SLog(
+            $"ApplyDynamicScaleIfNeeded | " +
+            $"Screen=({sw}x{sh}) camRect={camRect} " +
+            $"refSource={refSource} refPx={refPx} " +
+            $"uiScale={_currentUiScale:0.###} baseScaleInt={_currentBaseScaleInt} " +
+            $"hintBottomMargin={unlockHintBottomMargin:0.###} " +
+            $"hintBottomPercent={unlockHintBottomPercentOfReferenceHeight:0.######} " +
+            $"resolvedBottomOffset={bottomOffsetForLog:0.###} " +
+            $"hintWidth={unlockHintWidth:0.###} scaledHintWidth={unlockHintWidth * _currentUiScale:0.###} " +
+            $"hintHeight={unlockHintHeight:0.###} scaledHintHeight={unlockHintHeight * _currentUiScale:0.###}"
+        );
+
+        DumpHintSpacing("ApplyDynamicScaleIfNeeded");
     }
 
     void ApplyScaledLayout()
@@ -1507,6 +1557,8 @@ public class BomberSkinSelectMenu : MonoBehaviour
 
             unlockHintText = go.AddComponent<TextMeshProUGUI>();
             unlockHintText.raycastTarget = false;
+
+            SLog("EnsureUnlockHintText | created runtime TMP");
         }
 
         unlockHintRect = unlockHintText.rectTransform;
@@ -1514,7 +1566,15 @@ public class BomberSkinSelectMenu : MonoBehaviour
         unlockHintRect.anchorMin = new Vector2(0.5f, 0f);
         unlockHintRect.anchorMax = new Vector2(0.5f, 0f);
         unlockHintRect.pivot = new Vector2(0.5f, 0f);
-        unlockHintRect.anchoredPosition = new Vector2(0f, unlockHintBottomMargin * _currentUiScale);
+
+        float bottomOffset = 0f;
+
+        if (referenceRect != null)
+            bottomOffset = referenceRect.rect.height * unlockHintBottomPercentOfReferenceHeight;
+        else
+            bottomOffset = unlockHintBottomMargin * _currentUiScale;
+
+        unlockHintRect.anchoredPosition = new Vector2(0f, bottomOffset);
         unlockHintRect.sizeDelta = new Vector2(
             unlockHintWidth * _currentUiScale,
             unlockHintHeight * _currentUiScale
@@ -1529,6 +1589,17 @@ public class BomberSkinSelectMenu : MonoBehaviour
         unlockHintText.text = string.Empty;
         unlockHintText.gameObject.SetActive(false);
         _lastUnlockHintMessage = string.Empty;
+
+        SLog(
+            $"EnsureUnlockHintText | " +
+            $"anchoredPos={unlockHintRect.anchoredPosition} " +
+            $"sizeDelta={unlockHintRect.sizeDelta} " +
+            $"fontSize={unlockHintText.fontSize:0.###} " +
+            $"font={(unlockHintText.font != null ? unlockHintText.font.name : "NULL")} " +
+            $"bottomOffsetResolved={bottomOffset:0.###}"
+        );
+
+        DumpHintSpacing("EnsureUnlockHintText");
     }
 
     void ApplyUnlockHintVisualStyle()
@@ -1545,7 +1616,6 @@ public class BomberSkinSelectMenu : MonoBehaviour
         unlockHintText.alignment = TextAlignmentOptions.Center;
         unlockHintText.textWrappingMode = TextWrappingModes.Normal;
         unlockHintText.overflowMode = TextOverflowModes.Overflow;
-        unlockHintText.enableWordWrapping = true;
         unlockHintText.extraPadding = true;
         unlockHintText.fontSize = Mathf.Clamp(Mathf.RoundToInt(unlockHintFontSize * _currentUiScale), 8, 300);
         unlockHintText.color = unlockHintFaceColor;
@@ -1662,10 +1732,21 @@ public class BomberSkinSelectMenu : MonoBehaviour
 
             float preferredHeight = unlockHintText.GetPreferredValues(message, width, 0f).y;
             float minHeight = unlockHintMinHeight * _currentUiScale;
-            unlockHintRect.sizeDelta = new Vector2(width, Mathf.Max(minHeight, preferredHeight));
+            float finalHeight = Mathf.Max(minHeight, preferredHeight);
+
+            unlockHintRect.sizeDelta = new Vector2(width, finalHeight);
+
+            SLog(
+                $"ShowUnlockHint | " +
+                $"message='{message}' " +
+                $"width={width:0.###} baseHeight={baseHeight:0.###} " +
+                $"preferredHeight={preferredHeight:0.###} minHeight={minHeight:0.###} finalHeight={finalHeight:0.###} " +
+                $"anchoredPos={unlockHintRect.anchoredPosition}"
+            );
         }
 
         _lastUnlockHintMessage = message;
+        DumpHintSpacing("ShowUnlockHint");
     }
 
     void HideUnlockHintImmediate()
@@ -1719,6 +1800,70 @@ public class BomberSkinSelectMenu : MonoBehaviour
         ShowUnlockHint(hint);
     }
 
+    void DumpHintSpacing(string context)
+    {
+        if (!enableSurgicalLogs)
+            return;
+
+        if (unlockHintRect == null)
+        {
+            SLog($"{context} | unlockHintRect=NULL");
+            return;
+        }
+
+        if (referenceRect == null)
+        {
+            SLog($"{context} | referenceRect=NULL");
+            return;
+        }
+
+        Canvas canvas = GetRootCanvas();
+        Camera cam = null;
+
+        if (canvas != null && canvas.renderMode != RenderMode.ScreenSpaceOverlay)
+            cam = canvas.worldCamera != null ? canvas.worldCamera : GetMainCameraSafe();
+
+        referenceRect.GetWorldCorners(_refWorldCorners);
+        unlockHintRect.GetWorldCorners(_hintWorldCorners);
+
+        Vector2 refBL = RectTransformUtility.WorldToScreenPoint(cam, _refWorldCorners[0]);
+        Vector2 refTL = RectTransformUtility.WorldToScreenPoint(cam, _refWorldCorners[1]);
+        Vector2 refTR = RectTransformUtility.WorldToScreenPoint(cam, _refWorldCorners[2]);
+
+        Vector2 hintBL = RectTransformUtility.WorldToScreenPoint(cam, _hintWorldCorners[0]);
+        Vector2 hintTL = RectTransformUtility.WorldToScreenPoint(cam, _hintWorldCorners[1]);
+        Vector2 hintTR = RectTransformUtility.WorldToScreenPoint(cam, _hintWorldCorners[2]);
+
+        float bottomGapPx = hintBL.y - refBL.y;
+        float leftInsetPx = hintBL.x - refBL.x;
+        float rightInsetPx = refTR.x - hintTR.x;
+
+        float normalizedBottomGap = referenceRect.rect.height > 0.001f
+            ? bottomGapPx / referenceRect.rect.height
+            : 0f;
+
+        float resolvedBottomOffset = 0f;
+
+        if (referenceRect != null)
+            resolvedBottomOffset = referenceRect.rect.height * unlockHintBottomPercentOfReferenceHeight;
+        else
+            resolvedBottomOffset = unlockHintBottomMargin * _currentUiScale;
+
+        SLog(
+            $"{context} | " +
+            $"screen=({Screen.width}x{Screen.height}) " +
+            $"uiScale={_currentUiScale:0.###} baseScaleInt={_currentBaseScaleInt} " +
+            $"hintBottomMargin={unlockHintBottomMargin:0.###} " +
+            $"hintBottomPercent={unlockHintBottomPercentOfReferenceHeight:0.######} " +
+            $"resolvedBottomOffset={resolvedBottomOffset:0.###} " +
+            $"hintAnchoredPos={unlockHintRect.anchoredPosition} hintSize={unlockHintRect.sizeDelta} " +
+            $"refRectLocalSize={referenceRect.rect.size} refScreenBL={refBL} refScreenTL={refTL} " +
+            $"hintScreenBL={hintBL} hintScreenTL={hintTL} " +
+            $"bottomGapPx={bottomGapPx:0.###} normalizedBottomGap={normalizedBottomGap:0.######} " +
+            $"leftInsetPx={leftInsetPx:0.###} rightInsetPx={rightInsetPx:0.###}"
+        );
+    }
+
     static void TrySetFloat(Material mat, string prop, float value)
     {
         if (mat != null && mat.HasProperty(prop))
@@ -1729,5 +1874,13 @@ public class BomberSkinSelectMenu : MonoBehaviour
     {
         if (mat != null && mat.HasProperty(prop))
             mat.SetColor(prop, value);
+    }
+
+    void SLog(string message)
+    {
+        if (!enableSurgicalLogs)
+            return;
+
+        Debug.Log($"{LOG} {message}", this);
     }
 }

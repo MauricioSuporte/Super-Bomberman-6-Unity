@@ -1003,6 +1003,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b76f6e41b0d6bc54c80af4d359c9ab98, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BomberSkinSelectMenu
+  enableSurgicalLogs: 1
+  logHintSpacingEveryUpdate: 0
   forceRootPanelStretchToParent: 0
   forceBackgroundStretchToRootPanel: 0
   root: {fileID: 861532794}
@@ -1076,7 +1078,7 @@ MonoBehaviour:
   unlockHintFontAsset: {fileID: 11400000, guid: ecf098b5ead05a94fa9fde052327d9de, type: 2}
   unlockHintFontMaterialPreset: {fileID: 0}
   forceUnlockHintBold: 1
-  unlockHintFaceColor: {r: 0.90588236, g: 0.24705882, b: 0.1882353, a: 1}
+  unlockHintFaceColor: {r: 1, g: 0.84705883, b: 0, a: 1}
   unlockHintOutlineColor: {r: 0, g: 0, b: 0, a: 1}
   useUnlockHintOutline: 1
   unlockHintOutlineWidth: 0.35
@@ -1089,6 +1091,7 @@ MonoBehaviour:
   unlockHintUnderlaySoftness: 0
   unlockHintUnderlayOffsetX: 0.25
   unlockHintUnderlayOffsetY: -0.25
+  unlockHintBottomPercentOfReferenceHeight: 0.12
   selectableSkins: 0100000003000000040000000b00000008000000060000000f0000000a000000050000000d000000020000000700000011000000090000000c000000100000000e000000120000001300000000000000
 --- !u!224 &1311323898
 RectTransform:
