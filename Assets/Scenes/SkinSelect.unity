@@ -1003,7 +1003,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b76f6e41b0d6bc54c80af4d359c9ab98, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BomberSkinSelectMenu
-  enableSurgicalLogs: 1
+  enableSurgicalLogs: 0
   logHintSpacingEveryUpdate: 0
   forceRootPanelStretchToParent: 0
   forceBackgroundStretchToRootPanel: 0
