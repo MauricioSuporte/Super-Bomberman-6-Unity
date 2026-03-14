@@ -2308,17 +2308,17 @@ MonoBehaviour:
     mountedLouie: 0
     queuedEggs: 
   - difficulty: 3
-    life: 999
-    bombAmount: 9
-    explosionRadius: 9
-    speedUps: 8
+    life: 1
+    bombAmount: 1
+    explosionRadius: 1
+    speedUps: 0
     canKickBombs: 0
     canPunchBombs: 0
     hasPowerGlove: 0
     canPassBombs: 0
     canPassDestructibles: 0
     hasPierceBombs: 0
-    hasControlBombs: 1
+    hasControlBombs: 0
     hasPowerBomb: 0
     hasRubberBombs: 0
     hasFullFire: 0

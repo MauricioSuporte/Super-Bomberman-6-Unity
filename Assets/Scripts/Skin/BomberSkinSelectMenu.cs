@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using UnityEngine.Serialization;
 using UnityEngine.UI;
@@ -107,6 +108,42 @@ public class BomberSkinSelectMenu : MonoBehaviour
     [Header("Grid Position")]
     [SerializeField] Vector2 gridBaseAnchoredPos = new(0f, -10f);
 
+    [Header("Unlock Hint Message UI")]
+    [SerializeField] TextMeshProUGUI unlockHintText;
+    [SerializeField] int unlockHintFontSize = 26;
+    [SerializeField] float unlockHintBottomMargin = 18f;
+
+    [Header("Unlock Hint Message Rect")]
+    [SerializeField] float unlockHintWidth = 220f;
+    [SerializeField] float unlockHintHeight = 48f;
+    [SerializeField] float unlockHintMinHeight = 32f;
+
+    [Header("Unlock Hint Message TMP")]
+    [SerializeField] TMP_FontAsset unlockHintFontAsset;
+    [SerializeField] Material unlockHintFontMaterialPreset;
+    [SerializeField] bool forceUnlockHintBold = true;
+
+    [Header("Unlock Hint Message Colors")]
+    [SerializeField] Color unlockHintFaceColor = new Color32(231, 63, 48, 255);
+    [SerializeField] Color unlockHintOutlineColor = Color.black;
+
+    [Header("Unlock Hint Message TMP Outline")]
+    [SerializeField] bool useUnlockHintOutline = true;
+    [SerializeField, Range(0f, 1f)] float unlockHintOutlineWidth = 0.35f;
+    [SerializeField, Range(0f, 1f)] float unlockHintOutlineSoftness = 0f;
+
+    [Header("Unlock Hint Message TMP Face")]
+    [SerializeField, Range(-1f, 1f)] float unlockHintFaceDilate = 0.2f;
+    [SerializeField, Range(0f, 1f)] float unlockHintFaceSoftness = 0f;
+
+    [Header("Unlock Hint Message TMP Underlay")]
+    [SerializeField] bool enableUnlockHintUnderlay = true;
+    [SerializeField] Color unlockHintUnderlayColor = new Color(0f, 0f, 0f, 1f);
+    [SerializeField, Range(-1f, 1f)] float unlockHintUnderlayDilate = 0.1f;
+    [SerializeField, Range(0f, 1f)] float unlockHintUnderlaySoftness = 0f;
+    [SerializeField, Range(-2f, 2f)] float unlockHintUnderlayOffsetX = 0.25f;
+    [SerializeField, Range(-2f, 2f)] float unlockHintUnderlayOffsetY = -0.25f;
+
     float _currentUiScale = 1f;
     int _currentBaseScaleInt = 1;
 
@@ -124,6 +161,10 @@ public class BomberSkinSelectMenu : MonoBehaviour
 
     Coroutine fadeInCoroutine;
     public bool ReturnToTitleRequested { get; private set; }
+
+    RectTransform unlockHintRect;
+    Material unlockHintRuntimeMaterial;
+    string _lastUnlockHintMessage = string.Empty;
 
     [Header("Skins (menu order)")]
     [SerializeField]
@@ -197,6 +238,8 @@ public class BomberSkinSelectMenu : MonoBehaviour
 
     readonly List<PlayerCursorState> players = new();
 
+    bool menuActive;
+
     void Awake()
     {
         if (root == null)
@@ -209,9 +252,16 @@ public class BomberSkinSelectMenu : MonoBehaviour
 
         BuildGrid();
         ApplyDynamicScaleIfNeeded(true);
+        EnsureUnlockHintText();
 
         if (root != null)
             root.SetActive(false);
+    }
+
+    void OnDestroy()
+    {
+        if (unlockHintRuntimeMaterial != null)
+            Destroy(unlockHintRuntimeMaterial);
     }
 
     void Update()
@@ -226,6 +276,7 @@ public class BomberSkinSelectMenu : MonoBehaviour
         TickDownClock();
         TickEndStageClocks();
         UpdateSlotVisuals();
+        UpdateUnlockHint();
     }
 
     void LateUpdate()
@@ -238,11 +289,11 @@ public class BomberSkinSelectMenu : MonoBehaviour
         CycleOverlappedCursors();
     }
 
-    bool menuActive;
-
     public void Hide()
     {
         menuActive = false;
+
+        HideUnlockHintImmediate();
 
         RestoreAllSlotPositions();
         endStageBySlot.Clear();
@@ -269,6 +320,8 @@ public class BomberSkinSelectMenu : MonoBehaviour
 
         ApplyAutoFixesIfEnabled();
         ApplyDynamicScaleIfNeeded(true);
+        EnsureUnlockHintText();
+        HideUnlockHintImmediate();
 
         if (fadeImage != null)
         {
@@ -346,6 +399,7 @@ public class BomberSkinSelectMenu : MonoBehaviour
         }
 
         UpdateSlotVisuals();
+        UpdateUnlockHint();
 
         Canvas.ForceUpdateCanvases();
         yield return null;
@@ -380,6 +434,7 @@ public class BomberSkinSelectMenu : MonoBehaviour
                     DeselectPlayer(pid);
                     PlaySfx(returnSfx, returnSfxVolume);
                     UpdateSlotVisuals();
+                    UpdateUnlockHint();
                     continue;
                 }
 
@@ -403,6 +458,7 @@ public class BomberSkinSelectMenu : MonoBehaviour
                             ps.index = nextIndex;
                             PlaySfx(moveCursorSfx, moveCursorSfxVolume);
                             UpdateSlotVisuals();
+                            UpdateUnlockHint();
                         }
                     }
                     else if (backPressed)
@@ -413,6 +469,7 @@ public class BomberSkinSelectMenu : MonoBehaviour
                     {
                         TryConfirm(pid);
                         UpdateSlotVisuals();
+                        UpdateUnlockHint();
 
                         if (AllPlayersConfirmed())
                         {
@@ -463,7 +520,8 @@ public class BomberSkinSelectMenu : MonoBehaviour
     void TryConfirm(int playerId)
     {
         var ps = GetPlayerState(playerId);
-        if (ps == null) return;
+        if (ps == null)
+            return;
 
         int slot = Mathf.Clamp(ps.index, 0, selectableSkins.Count - 1);
         var skin = selectableSkins[slot];
@@ -505,7 +563,8 @@ public class BomberSkinSelectMenu : MonoBehaviour
     void DeselectPlayer(int playerId)
     {
         var ps = GetPlayerState(playerId);
-        if (ps == null) return;
+        if (ps == null)
+            return;
 
         if (!ps.confirmed || ps.selectedIndex < 0)
             return;
@@ -538,7 +597,10 @@ public class BomberSkinSelectMenu : MonoBehaviour
         return selectedBySlot[slotIndex];
     }
 
-    bool IsSlotSelected(int slotIndex) => GetSelectedOwner(slotIndex) != 0;
+    bool IsSlotSelected(int slotIndex)
+    {
+        return GetSelectedOwner(slotIndex) != 0;
+    }
 
     void StartEndStageForSlot(int slotIndex, BomberSkin skin)
     {
@@ -679,7 +741,8 @@ public class BomberSkinSelectMenu : MonoBehaviour
         for (int i = 0; i < slotImages.Count; i++)
         {
             var img = slotImages[i];
-            if (img == null) continue;
+            if (img == null)
+                continue;
 
             var skin = selectableSkins[i];
             bool unlocked = UnlockProgress.IsUnlocked(skin);
@@ -817,9 +880,12 @@ public class BomberSkinSelectMenu : MonoBehaviour
         for (int i = gridRoot.childCount - 1; i >= 0; i--)
         {
             var child = gridRoot.GetChild(i);
-            if (child == null) continue;
-            if (skinItemPrefab != null && child == skinItemPrefab.transform) continue;
-            if (skinCursorPrefab != null && child == skinCursorPrefab.transform) continue;
+            if (child == null)
+                continue;
+            if (skinItemPrefab != null && child == skinItemPrefab.transform)
+                continue;
+            if (skinCursorPrefab != null && child == skinCursorPrefab.transform)
+                continue;
             Destroy(child.gameObject);
         }
 
@@ -860,7 +926,8 @@ public class BomberSkinSelectMenu : MonoBehaviour
         for (int i = 0; i < players.Count; i++)
         {
             var ps = players[i];
-            if (ps.cursorRt == null) continue;
+            if (ps.cursorRt == null)
+                continue;
 
             int idx = ps.confirmed ? ps.selectedIndex : ps.index;
 
@@ -900,18 +967,22 @@ public class BomberSkinSelectMenu : MonoBehaviour
         for (int slot = 0; slot < slotRoots.Count; slot++)
         {
             var slotRt = slotRoots[slot];
-            if (slotRt == null) continue;
+            if (slotRt == null)
+                continue;
 
             List<PlayerCursorState> here = null;
 
             for (int i = 0; i < players.Count; i++)
             {
                 var ps = players[i];
-                if (ps.cursorRt == null) continue;
-                if (!ps.cursorRt.gameObject.activeSelf) continue;
+                if (ps.cursorRt == null)
+                    continue;
+                if (!ps.cursorRt.gameObject.activeSelf)
+                    continue;
 
                 int idx = ps.confirmed ? ps.selectedIndex : ps.index;
-                if (idx != slot) continue;
+                if (idx != slot)
+                    continue;
 
                 here ??= new List<PlayerCursorState>(4);
                 here.Add(ps);
@@ -927,7 +998,8 @@ public class BomberSkinSelectMenu : MonoBehaviour
             {
                 int pick = (k + shift) % n;
                 var ps = here[pick];
-                if (ps.cursorRt == null) continue;
+                if (ps.cursorRt == null)
+                    continue;
                 ps.cursorRt.SetSiblingIndex(1 + k);
             }
         }
@@ -1028,7 +1100,8 @@ public class BomberSkinSelectMenu : MonoBehaviour
             for (int i = 0; i < sprites.Length; i++)
             {
                 var sp = sprites[i];
-                if (sp == null) continue;
+                if (sp == null)
+                    continue;
 
                 string n = sp.name;
                 int u = n.LastIndexOf('_');
@@ -1177,7 +1250,8 @@ public class BomberSkinSelectMenu : MonoBehaviour
     Camera GetMainCameraSafe()
     {
         var cam = Camera.main;
-        if (cam != null) return cam;
+        if (cam != null)
+            return cam;
 
         var any = FindFirstObjectByType<Camera>();
         return any;
@@ -1234,7 +1308,8 @@ public class BomberSkinSelectMenu : MonoBehaviour
 
         float baseScaleRaw = Mathf.Min(sx, sy);
         float baseScaleForUi = useIntegerUpscale ? Mathf.Floor(baseScaleRaw) : baseScaleRaw;
-        if (baseScaleForUi < 1f) baseScaleForUi = 1f;
+        if (baseScaleForUi < 1f)
+            baseScaleForUi = 1f;
 
         baseScaleInt = Mathf.Max(1, Mathf.RoundToInt(baseScaleForUi));
 
@@ -1302,6 +1377,16 @@ public class BomberSkinSelectMenu : MonoBehaviour
         endStageYOffset = _baseEndStageYOffset * _currentUiScale;
 
         ApplyScaledLayout();
+        ApplyUnlockHintVisualStyle();
+
+        if (unlockHintRect != null)
+        {
+            unlockHintRect.anchoredPosition = new Vector2(0f, unlockHintBottomMargin * _currentUiScale);
+            unlockHintRect.sizeDelta = new Vector2(
+                unlockHintWidth * _currentUiScale,
+                unlockHintHeight * _currentUiScale
+            );
+        }
     }
 
     void ApplyScaledLayout()
@@ -1344,7 +1429,8 @@ public class BomberSkinSelectMenu : MonoBehaviour
 
     static void StretchToParent(RectTransform rt)
     {
-        if (rt == null) return;
+        if (rt == null)
+            return;
 
         rt.anchorMin = Vector2.zero;
         rt.anchorMax = Vector2.one;
@@ -1407,5 +1493,241 @@ public class BomberSkinSelectMenu : MonoBehaviour
 
         if (backgroundSprites[_backgroundSpriteIndex] != null)
             backgroundImage.sprite = backgroundSprites[_backgroundSpriteIndex];
+    }
+
+    void EnsureUnlockHintText()
+    {
+        if (root == null)
+            return;
+
+        if (unlockHintText == null)
+        {
+            GameObject go = new GameObject("UnlockHintText", typeof(RectTransform));
+            go.transform.SetParent(root.transform, false);
+
+            unlockHintText = go.AddComponent<TextMeshProUGUI>();
+            unlockHintText.raycastTarget = false;
+        }
+
+        unlockHintRect = unlockHintText.rectTransform;
+
+        unlockHintRect.anchorMin = new Vector2(0.5f, 0f);
+        unlockHintRect.anchorMax = new Vector2(0.5f, 0f);
+        unlockHintRect.pivot = new Vector2(0.5f, 0f);
+        unlockHintRect.anchoredPosition = new Vector2(0f, unlockHintBottomMargin * _currentUiScale);
+        unlockHintRect.sizeDelta = new Vector2(
+            unlockHintWidth * _currentUiScale,
+            unlockHintHeight * _currentUiScale
+        );
+        unlockHintRect.localScale = Vector3.one;
+
+        if (unlockHintFontAsset == null)
+            unlockHintFontAsset = Resources.Load<TMP_FontAsset>("Font/Retro Gaming SDF");
+
+        ApplyUnlockHintVisualStyle();
+
+        unlockHintText.text = string.Empty;
+        unlockHintText.gameObject.SetActive(false);
+        _lastUnlockHintMessage = string.Empty;
+    }
+
+    void ApplyUnlockHintVisualStyle()
+    {
+        if (unlockHintText == null)
+            return;
+
+        if (unlockHintFontAsset == null)
+            unlockHintFontAsset = Resources.Load<TMP_FontAsset>("Font/Retro Gaming SDF");
+
+        if (unlockHintFontAsset != null)
+            unlockHintText.font = unlockHintFontAsset;
+
+        unlockHintText.alignment = TextAlignmentOptions.Center;
+        unlockHintText.textWrappingMode = TextWrappingModes.Normal;
+        unlockHintText.overflowMode = TextOverflowModes.Overflow;
+        unlockHintText.enableWordWrapping = true;
+        unlockHintText.extraPadding = true;
+        unlockHintText.fontSize = Mathf.Clamp(Mathf.RoundToInt(unlockHintFontSize * _currentUiScale), 8, 300);
+        unlockHintText.color = unlockHintFaceColor;
+        unlockHintText.margin = Vector4.zero;
+        unlockHintText.raycastTarget = false;
+
+        if (forceUnlockHintBold)
+            unlockHintText.fontStyle |= FontStyles.Bold;
+        else
+            unlockHintText.fontStyle &= ~FontStyles.Bold;
+
+        Material runtimeMat = GetOrCreateUnlockHintRuntimeMaterial();
+        ApplyUnlockHintMaterialStyle(runtimeMat);
+
+        if (runtimeMat != null)
+            unlockHintText.fontMaterial = runtimeMat;
+
+        unlockHintText.UpdateMeshPadding();
+        unlockHintText.ForceMeshUpdate();
+        unlockHintText.SetVerticesDirty();
+    }
+
+    Material GetOrCreateUnlockHintRuntimeMaterial()
+    {
+        if (unlockHintText == null)
+            return null;
+
+        if (unlockHintRuntimeMaterial != null)
+            return unlockHintRuntimeMaterial;
+
+        Material baseMat = null;
+
+        if (unlockHintFontMaterialPreset != null)
+            baseMat = unlockHintFontMaterialPreset;
+        else if (unlockHintText.fontSharedMaterial != null)
+            baseMat = unlockHintText.fontSharedMaterial;
+        else if (unlockHintText.font != null)
+            baseMat = unlockHintText.font.material;
+
+        if (baseMat == null)
+            return null;
+
+        unlockHintRuntimeMaterial = new Material(baseMat);
+        unlockHintRuntimeMaterial.name = baseMat.name + "_SkinUnlockHintRuntime";
+        return unlockHintRuntimeMaterial;
+    }
+
+    void ApplyUnlockHintMaterialStyle(Material mat)
+    {
+        if (mat == null)
+            return;
+
+        TrySetColor(mat, "_FaceColor", unlockHintFaceColor);
+
+        if (useUnlockHintOutline)
+        {
+            TrySetColor(mat, "_OutlineColor", unlockHintOutlineColor);
+            TrySetFloat(mat, "_OutlineWidth", unlockHintOutlineWidth);
+            TrySetFloat(mat, "_OutlineSoftness", unlockHintOutlineSoftness);
+        }
+        else
+        {
+            TrySetFloat(mat, "_OutlineWidth", 0f);
+            TrySetFloat(mat, "_OutlineSoftness", 0f);
+        }
+
+        TrySetFloat(mat, "_FaceDilate", unlockHintFaceDilate);
+        TrySetFloat(mat, "_FaceSoftness", unlockHintFaceSoftness);
+
+        if (enableUnlockHintUnderlay)
+        {
+            TrySetColor(mat, "_UnderlayColor", unlockHintUnderlayColor);
+            TrySetFloat(mat, "_UnderlayDilate", unlockHintUnderlayDilate);
+            TrySetFloat(mat, "_UnderlaySoftness", unlockHintUnderlaySoftness);
+            TrySetFloat(mat, "_UnderlayOffsetX", unlockHintUnderlayOffsetX);
+            TrySetFloat(mat, "_UnderlayOffsetY", unlockHintUnderlayOffsetY);
+        }
+        else
+        {
+            TrySetFloat(mat, "_UnderlayDilate", 0f);
+            TrySetFloat(mat, "_UnderlaySoftness", 0f);
+            TrySetFloat(mat, "_UnderlayOffsetX", 0f);
+            TrySetFloat(mat, "_UnderlayOffsetY", 0f);
+        }
+    }
+
+    void ShowUnlockHint(string message)
+    {
+        EnsureUnlockHintText();
+
+        if (unlockHintText == null)
+            return;
+
+        if (string.IsNullOrWhiteSpace(message))
+        {
+            HideUnlockHintImmediate();
+            return;
+        }
+
+        ApplyUnlockHintVisualStyle();
+
+        unlockHintText.text = message;
+        unlockHintText.gameObject.SetActive(true);
+        unlockHintText.transform.SetAsLastSibling();
+
+        if (unlockHintRect != null)
+        {
+            float width = unlockHintWidth * _currentUiScale;
+            float baseHeight = unlockHintHeight * _currentUiScale;
+
+            unlockHintRect.sizeDelta = new Vector2(width, baseHeight);
+
+            unlockHintText.ForceMeshUpdate();
+
+            float preferredHeight = unlockHintText.GetPreferredValues(message, width, 0f).y;
+            float minHeight = unlockHintMinHeight * _currentUiScale;
+            unlockHintRect.sizeDelta = new Vector2(width, Mathf.Max(minHeight, preferredHeight));
+        }
+
+        _lastUnlockHintMessage = message;
+    }
+
+    void HideUnlockHintImmediate()
+    {
+        if (unlockHintText == null)
+            return;
+
+        unlockHintText.text = string.Empty;
+        unlockHintText.gameObject.SetActive(false);
+        _lastUnlockHintMessage = string.Empty;
+    }
+
+    void UpdateUnlockHint()
+    {
+        if (unlockHintText == null)
+            return;
+
+        if (players == null || players.Count == 0)
+        {
+            HideUnlockHintImmediate();
+            return;
+        }
+
+        int index = players[0].index;
+
+        if (index < 0 || index >= selectableSkins.Count)
+        {
+            HideUnlockHintImmediate();
+            return;
+        }
+
+        BomberSkin skin = selectableSkins[index];
+
+        if (UnlockProgress.IsUnlocked(skin))
+        {
+            HideUnlockHintImmediate();
+            return;
+        }
+
+        string hint = SkinUnlockHintCatalog.GetHint(skin);
+
+        if (string.IsNullOrWhiteSpace(hint))
+        {
+            HideUnlockHintImmediate();
+            return;
+        }
+
+        if (_lastUnlockHintMessage == hint && unlockHintText.gameObject.activeSelf)
+            return;
+
+        ShowUnlockHint(hint);
+    }
+
+    static void TrySetFloat(Material mat, string prop, float value)
+    {
+        if (mat != null && mat.HasProperty(prop))
+            mat.SetFloat(prop, value);
+    }
+
+    static void TrySetColor(Material mat, string prop, Color value)
+    {
+        if (mat != null && mat.HasProperty(prop))
+            mat.SetColor(prop, value);
     }
 }

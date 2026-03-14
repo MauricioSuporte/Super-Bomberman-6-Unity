@@ -1067,6 +1067,28 @@ MonoBehaviour:
   minScale: 0.5
   maxScale: 10
   gridBaseAnchoredPos: {x: 0, y: -10}
+  unlockHintText: {fileID: 0}
+  unlockHintFontSize: 16
+  unlockHintBottomMargin: 18
+  unlockHintWidth: 450
+  unlockHintHeight: 80
+  unlockHintMinHeight: 32
+  unlockHintFontAsset: {fileID: 11400000, guid: ecf098b5ead05a94fa9fde052327d9de, type: 2}
+  unlockHintFontMaterialPreset: {fileID: 0}
+  forceUnlockHintBold: 1
+  unlockHintFaceColor: {r: 0.90588236, g: 0.24705882, b: 0.1882353, a: 1}
+  unlockHintOutlineColor: {r: 0, g: 0, b: 0, a: 1}
+  useUnlockHintOutline: 1
+  unlockHintOutlineWidth: 0.35
+  unlockHintOutlineSoftness: 0
+  unlockHintFaceDilate: 0.2
+  unlockHintFaceSoftness: 0
+  enableUnlockHintUnderlay: 1
+  unlockHintUnderlayColor: {r: 0, g: 0, b: 0, a: 1}
+  unlockHintUnderlayDilate: 0.1
+  unlockHintUnderlaySoftness: 0
+  unlockHintUnderlayOffsetX: 0.25
+  unlockHintUnderlayOffsetY: -0.25
   selectableSkins: 0100000003000000040000000b00000008000000060000000f0000000a000000050000000d000000020000000700000011000000090000000c000000100000000e000000120000001300000000000000
 --- !u!224 &1311323898
 RectTransform:

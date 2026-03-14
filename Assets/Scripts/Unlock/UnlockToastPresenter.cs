@@ -173,20 +173,6 @@ public class UnlockToastPresenter : MonoBehaviour
         instanceInScene.Enqueue(info.Title, info.Subtitle, icon);
     }
 
-    public static void Show(string title, string subtitle, Sprite icon = null)
-    {
-        EnsureInScene();
-
-        if (instanceInScene == null)
-        {
-            SLog("Show aborted | instance null");
-            return;
-        }
-
-        SLog($"Show | title={title} | subtitle={subtitle} | iconLoaded={(icon != null)}");
-        instanceInScene.Enqueue(title, subtitle, icon);
-    }
-
     void Awake()
     {
         if (instanceInScene != null && instanceInScene != this)
