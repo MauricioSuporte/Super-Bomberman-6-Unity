@@ -89,6 +89,17 @@ public class GlobalUnlockController : MonoBehaviour
 
     private void Update()
     {
+        if (UnlockProgress.IsUnlocked(BomberSkin.Gray))
+        {
+            if (konamiStep != 0)
+            {
+                konamiStep = 0;
+                SLog("Update | Gray already unlocked, konamiStep reset");
+            }
+
+            return;
+        }
+
         var input = PlayerInputManager.Instance;
         if (input == null)
             return;
