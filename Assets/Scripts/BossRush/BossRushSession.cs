@@ -81,6 +81,8 @@ public static class BossRushSession
         float completedTime = elapsedSeconds;
         int rank = BossRushTimesProgress.RegisterTime(completedDifficulty, completedTime);
 
+        UnlockRewardSkinForDifficulty(completedDifficulty);
+
         hasLastCompletedRun = true;
         lastCompletedDifficulty = completedDifficulty;
         lastCompletedTime = completedTime;
@@ -293,6 +295,39 @@ public static class BossRushSession
             selectedPreset?.ApplyTo(state);
 
             state.Skin = preservedSkin;
+        }
+    }
+
+    static void UnlockRewardSkinForDifficulty(BossRushDifficulty difficulty)
+    {
+        BomberSkin? rewardSkin = GetRewardSkinForDifficulty(difficulty);
+        if (!rewardSkin.HasValue)
+            return;
+
+        bool unlocked = UnlockProgress.Unlock(rewardSkin.Value);
+
+        if (unlocked)
+        {
+            for (int playerId = 1; playerId <= 4; playerId++)
+                PlayerPersistentStats.ClampSelectedSkinIfLocked(playerId);
+        }
+    }
+
+    static BomberSkin? GetRewardSkinForDifficulty(BossRushDifficulty difficulty)
+    {
+        switch (difficulty)
+        {
+            case BossRushDifficulty.EASY:
+                return BomberSkin.Olive;
+
+            case BossRushDifficulty.NORMAL:
+                return BomberSkin.Cyan;
+
+            case BossRushDifficulty.HARD:
+                return BomberSkin.Brown;
+
+            default:
+                return null;
         }
     }
 

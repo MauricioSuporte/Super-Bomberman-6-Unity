@@ -7,7 +7,7 @@
     Red,
     Orange,
     Yellow,
-    Lime,
+    Olive,
     Green,
     Cyan,
     Aqua,

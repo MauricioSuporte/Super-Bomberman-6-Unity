@@ -43,10 +43,31 @@ public static class UnlockToastCatalog
                     "UI/Unlocks/Icons/PurpleBomber"
                 );
 
+            case BomberSkin.Olive:
+                return new ToastInfo(
+                    "Olive You!",
+                    "Olive Bomber Unlocked",
+                    "UI/Unlocks/Icons/OliveBomber"
+                );
+
+            case BomberSkin.Cyan:
+                return new ToastInfo(
+                    "Cyan is the impostor!",
+                    "Cyan Bomber Unlocked",
+                    "UI/Unlocks/Icons/CyanBomber"
+                );
+
+            case BomberSkin.Brown:
+                return new ToastInfo(
+                    "That Stinks!",
+                    "Brown Bomber Unlocked",
+                    "UI/Unlocks/Icons/BrownBomber"
+                );
+
             default:
                 return new ToastInfo(
                     "New Character",
-                    $"{skin} unlocked",
+                    $"{skin} Unlocked",
                     $"UI/Unlocks/Icons/{skin}"
                 );
         }

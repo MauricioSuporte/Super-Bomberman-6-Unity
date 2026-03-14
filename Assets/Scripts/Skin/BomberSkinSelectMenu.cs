@@ -136,7 +136,7 @@ public class BomberSkinSelectMenu : MonoBehaviour
         BomberSkin.Red,
         BomberSkin.Orange,
         BomberSkin.Yellow,
-        BomberSkin.Lime,
+        BomberSkin.Olive,
         BomberSkin.Green,
         BomberSkin.Cyan,
         BomberSkin.Aqua,
