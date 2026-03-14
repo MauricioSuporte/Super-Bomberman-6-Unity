@@ -8,6 +8,7 @@ public static class SaveSystem
 {
     private const string SaveFolderName = "SaveData";
     private const string SaveFileName = "save.dat";
+    private const int MaxBossRushTopTimes = 3;
 
     private static bool loaded;
     private static SaveData data;
@@ -250,6 +251,87 @@ public static class SaveSystem
         }
     }
 
+    public static List<float> GetBossRushTopTimes(BossRushDifficulty difficulty)
+    {
+        EnsureLoaded();
+
+        BossRushDifficultyTimesSave entry = GetOrCreateBossRushTimesEntry(difficulty);
+        return new List<float>(entry.topTimes);
+    }
+
+    public static void SetBossRushTopTimes(BossRushDifficulty difficulty, List<float> times)
+    {
+        EnsureLoaded();
+
+        BossRushDifficultyTimesSave entry = GetOrCreateBossRushTimesEntry(difficulty);
+
+        if (entry.topTimes == null)
+            entry.topTimes = new List<float>();
+        else
+            entry.topTimes.Clear();
+
+        if (times != null)
+        {
+            for (int i = 0; i < times.Count; i++)
+            {
+                float value = times[i];
+
+                if (float.IsNaN(value) || float.IsInfinity(value) || value < 0f)
+                    continue;
+
+                entry.topTimes.Add(value);
+            }
+        }
+
+        entry.topTimes.Sort((a, b) => a.CompareTo(b));
+
+        if (entry.topTimes.Count > MaxBossRushTopTimes)
+            entry.topTimes.RemoveRange(MaxBossRushTopTimes, entry.topTimes.Count - MaxBossRushTopTimes);
+
+        Save();
+    }
+
+    public static bool HasBossRushRecordedTime(BossRushDifficulty difficulty)
+    {
+        EnsureLoaded();
+
+        BossRushDifficultyTimesSave entry = GetOrCreateBossRushTimesEntry(difficulty);
+        return entry.topTimes != null && entry.topTimes.Count > 0;
+    }
+
+    private static BossRushDifficultyTimesSave GetOrCreateBossRushTimesEntry(BossRushDifficulty difficulty)
+    {
+        EnsureLoaded();
+
+        if (data.bossRushTimes == null)
+            data.bossRushTimes = new List<BossRushDifficultyTimesSave>();
+
+        for (int i = 0; i < data.bossRushTimes.Count; i++)
+        {
+            BossRushDifficultyTimesSave current = data.bossRushTimes[i];
+            if (current == null)
+                continue;
+
+            if (current.difficulty == (int)difficulty)
+            {
+                if (current.topTimes == null)
+                    current.topTimes = new List<float>();
+
+                NormalizeBossRushTimesList(current.topTimes);
+                return current;
+            }
+        }
+
+        BossRushDifficultyTimesSave created = new BossRushDifficultyTimesSave
+        {
+            difficulty = (int)difficulty,
+            topTimes = new List<float>()
+        };
+
+        data.bossRushTimes.Add(created);
+        return created;
+    }
+
     private static void EnsureLoaded()
     {
         if (loaded)
@@ -329,6 +411,7 @@ public static class SaveSystem
         }
 
         EnsureControlProfiles(d);
+        EnsureBossRushTimes(d);
 
         for (int i = 0; i < defaultUnlockedSkins.Length; i++)
         {
@@ -377,6 +460,66 @@ public static class SaveSystem
             if (d.controls[i].bindings == null)
                 d.controls[i].bindings = new List<SavedBinding>();
         }
+    }
+
+    private static void EnsureBossRushTimes(SaveData d)
+    {
+        if (d.bossRushTimes == null)
+            d.bossRushTimes = new List<BossRushDifficultyTimesSave>();
+
+        for (int i = d.bossRushTimes.Count - 1; i >= 0; i--)
+        {
+            if (d.bossRushTimes[i] == null)
+                d.bossRushTimes.RemoveAt(i);
+        }
+
+        foreach (BossRushDifficulty difficulty in Enum.GetValues(typeof(BossRushDifficulty)))
+        {
+            BossRushDifficultyTimesSave entry = null;
+
+            for (int i = 0; i < d.bossRushTimes.Count; i++)
+            {
+                if (d.bossRushTimes[i].difficulty == (int)difficulty)
+                {
+                    entry = d.bossRushTimes[i];
+                    break;
+                }
+            }
+
+            if (entry == null)
+            {
+                entry = new BossRushDifficultyTimesSave
+                {
+                    difficulty = (int)difficulty,
+                    topTimes = new List<float>()
+                };
+
+                d.bossRushTimes.Add(entry);
+            }
+
+            if (entry.topTimes == null)
+                entry.topTimes = new List<float>();
+
+            NormalizeBossRushTimesList(entry.topTimes);
+        }
+    }
+
+    private static void NormalizeBossRushTimesList(List<float> times)
+    {
+        if (times == null)
+            return;
+
+        for (int i = times.Count - 1; i >= 0; i--)
+        {
+            float value = times[i];
+            if (float.IsNaN(value) || float.IsInfinity(value) || value < 0f)
+                times.RemoveAt(i);
+        }
+
+        times.Sort((a, b) => a.CompareTo(b));
+
+        if (times.Count > MaxBossRushTopTimes)
+            times.RemoveRange(MaxBossRushTopTimes, times.Count - MaxBossRushTopTimes);
     }
 
     private static void EnsureDirectoryExists()

@@ -30,4 +30,6 @@ public sealed class SaveData
         new SavedPlayerControls { playerId = 3 },
         new SavedPlayerControls { playerId = 4 }
     };
+
+    public List<BossRushDifficultyTimesSave> bossRushTimes = new();
 }

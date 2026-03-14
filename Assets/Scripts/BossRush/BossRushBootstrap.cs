@@ -65,8 +65,7 @@ public class BossRushBootstrap : MonoBehaviour
             }
         }
 
-        PlayerPrefs.Save();
-        SLog("RunFlow | PlayerPrefs.Save done");
+        SLog("RunFlow | finished");
     }
 
     void SLog(string message)
