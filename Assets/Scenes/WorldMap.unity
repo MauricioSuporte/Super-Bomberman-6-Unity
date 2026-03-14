@@ -654,8 +654,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 81, y: -81}
-  m_SizeDelta: {x: 990, y: 144}
+  m_AnchoredPosition: {x: 36, y: -36}
+  m_SizeDelta: {x: 440, y: 64}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &210954078
 MonoBehaviour:
@@ -679,7 +679,7 @@ MonoBehaviour:
       m_Calls: []
   m_FontData:
     m_Font: {fileID: 12800000, guid: 6748eca4216c7d64682a8e26e793d076, type: 3}
-    m_FontSize: 108
+    m_FontSize: 48
     m_FontStyle: 0
     m_BestFit: 0
     m_MinSize: 10
@@ -1506,8 +1506,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 63, y: -63}
-  m_SizeDelta: {x: 990, y: 144}
+  m_AnchoredPosition: {x: 28, y: -28}
+  m_SizeDelta: {x: 440, y: 64}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &1095574955
 MonoBehaviour:
@@ -1531,7 +1531,7 @@ MonoBehaviour:
       m_Calls: []
   m_FontData:
     m_Font: {fileID: 12800000, guid: 6748eca4216c7d64682a8e26e793d076, type: 3}
-    m_FontSize: 108
+    m_FontSize: 48
     m_FontStyle: 0
     m_BestFit: 0
     m_MinSize: 10
@@ -9846,8 +9846,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 72, y: -72}
-  m_SizeDelta: {x: 990, y: 144}
+  m_AnchoredPosition: {x: 32, y: -32}
+  m_SizeDelta: {x: 440, y: 64}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &1860410134
 MonoBehaviour:
@@ -9871,7 +9871,7 @@ MonoBehaviour:
       m_Calls: []
   m_FontData:
     m_Font: {fileID: 12800000, guid: 6748eca4216c7d64682a8e26e793d076, type: 3}
-    m_FontSize: 108
+    m_FontSize: 48
     m_FontStyle: 0
     m_BestFit: 0
     m_MinSize: 10
@@ -10061,9 +10061,9 @@ MonoBehaviour:
   requireStageInRangeToConfirm: 1
   scaleStageDetectRadiusWithSafeFrame: 1
   lockedStageSprite: {fileID: 3724445575597181823, guid: be604b99019ed804ba4a0d0dfc07e674, type: 3}
-  availableStageSprite: {fileID: -101075982, guid: be604b99019ed804ba4a0d0dfc07e674, type: 3}
-  clearedStageSprite: {fileID: -652033127, guid: be604b99019ed804ba4a0d0dfc07e674, type: 3}
-  perfectStageSprite: {fileID: -1294499027, guid: be604b99019ed804ba4a0d0dfc07e674, type: 3}
+  availableStageSprite: {fileID: -81104472, guid: be604b99019ed804ba4a0d0dfc07e674, type: 3}
+  clearedStageSprite: {fileID: 1732243599, guid: be604b99019ed804ba4a0d0dfc07e674, type: 3}
+  perfectStageSprite: {fileID: -1440008998, guid: be604b99019ed804ba4a0d0dfc07e674, type: 3}
   baseIconLogicalSize: {x: 8, y: 8}
   iconOffset: {x: 0, y: 0}
   preserveAspectOnIcons: 1
@@ -10083,7 +10083,7 @@ MonoBehaviour:
   clearedStageColor: {r: 1, g: 1, b: 1, a: 1}
   perfectStageColor: {r: 1, g: 1, b: 1, a: 1}
   fadeImage: {fileID: 87393867}
-  fadeInDuration: 0.5
+  fadeDuration: 0.5
   worldChangeFadeOutDuration: 0.5
   worldChangeFadeInDuration: 0.5
   confirmStageSfx: {fileID: 8300000, guid: f4ca5a046054f404aa2ac2df051e75c0, type: 3}
@@ -10092,8 +10092,6 @@ MonoBehaviour:
   deniedSfxVolume: 1
   backSceneSfx: {fileID: 8300000, guid: 30ca55f720379e64ab9b908db035db4c, type: 3}
   backSceneSfxVolume: 1
-  allowBackScene: 1
-  backSceneName: SkinSelect
   worldStageLabel: {fileID: 1860410134}
   worldLabelPrefix: 'WORLD '
   stageSeparator: ' - '
