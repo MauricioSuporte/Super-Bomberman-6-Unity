@@ -308,13 +308,22 @@ public static class SaveSystem
         return entry.targetUnlockTime;
     }
 
-    public static void SetBossRushUnlockTargetTime(BossRushDifficulty difficulty, float seconds)
+    public static bool IsNightmareUnlocked()
+    {
+        EnsureLoaded();
+        return data.nightmareUnlocked;
+    }
+
+    public static bool UnlockNightmare()
     {
         EnsureLoaded();
 
-        BossRushDifficultyTimesSave entry = GetOrCreateBossRushTimesEntry(difficulty);
-        entry.targetUnlockTime = NormalizeBossRushUnlockTargetTime(seconds, difficulty);
+        if (data.nightmareUnlocked)
+            return false;
+
+        data.nightmareUnlocked = true;
         Save();
+        return true;
     }
 
     private static BossRushDifficultyTimesSave GetOrCreateBossRushTimesEntry(BossRushDifficulty difficulty)

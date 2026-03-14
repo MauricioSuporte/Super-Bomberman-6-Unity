@@ -933,6 +933,24 @@ public class UnlockToastPresenter : MonoBehaviour
         return new Vector2(shown.x, shown.y + extra);
     }
 
+    public static void ShowNightmareUnlocked()
+    {
+        EnsureInScene();
+
+        if (instanceInScene == null)
+        {
+            SLog("ShowNightmareUnlocked aborted | instance null");
+            return;
+        }
+
+        var info = UnlockToastCatalog.GetNightmare();
+        Sprite icon = UnlockToastCatalog.LoadNightmareIcon();
+
+        SLog($"ShowNightmareUnlocked | title={info.Title} | subtitle={info.Subtitle} | iconLoaded={(icon != null)}");
+
+        instanceInScene.Enqueue(info.Title, info.Subtitle, icon);
+    }
+
     static void SLog(string message)
     {
         if (!EnableSurgicalLogs)

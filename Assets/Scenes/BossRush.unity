@@ -2311,7 +2311,7 @@ MonoBehaviour:
     life: 1
     bombAmount: 1
     explosionRadius: 1
-    speedUps: 1
+    speedUps: 0
     canKickBombs: 0
     canPunchBombs: 0
     hasPowerGlove: 0
@@ -2349,7 +2349,7 @@ MonoBehaviour:
   extraScaleMultiplier: 1
   minScale: 0.5
   maxScale: 10
-  useSavedNightmareUnlock: 0
+  useSavedNightmareUnlock: 1
   nightmareUnlocked: 0
   deniedOptionSfx: {fileID: 8300000, guid: 2f98cb783cdc9bb4d8ff3b868291f743, type: 3}
   deniedOptionVolume: 1

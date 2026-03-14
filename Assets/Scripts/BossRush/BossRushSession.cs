@@ -83,6 +83,7 @@ public static class BossRushSession
 
         UnlockCompletionRewardSkinForDifficulty(completedDifficulty);
         UnlockTimeTargetRewardSkinIfNeeded(completedDifficulty, completedTime);
+        UnlockNightmareIfNeeded(completedDifficulty);
 
         hasLastCompletedRun = true;
         lastCompletedDifficulty = completedDifficulty;
@@ -330,6 +331,18 @@ public static class BossRushSession
             for (int playerId = 1; playerId <= 4; playerId++)
                 PlayerPersistentStats.ClampSelectedSkinIfLocked(playerId);
         }
+    }
+
+    static void UnlockNightmareIfNeeded(BossRushDifficulty difficulty)
+    {
+        if (difficulty != BossRushDifficulty.HARD)
+            return;
+
+        bool unlockedNow = BossRushDifficultyUnlocks.UnlockNightmare();
+        if (!unlockedNow)
+            return;
+
+        UnlockToastPresenter.ShowNightmareUnlocked();
     }
 
     static BomberSkin? GetCompletionRewardSkinForDifficulty(BossRushDifficulty difficulty)

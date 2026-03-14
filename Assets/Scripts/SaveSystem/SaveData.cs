@@ -10,6 +10,7 @@ public sealed class SaveData
     public List<string> unlockedSkins = new();
 
     public bool bossRushUnlocked = false;
+    public bool nightmareUnlocked = false;
 
     public int player1SelectedSkin = (int)BomberSkin.White;
     public int player2SelectedSkin = (int)BomberSkin.White;

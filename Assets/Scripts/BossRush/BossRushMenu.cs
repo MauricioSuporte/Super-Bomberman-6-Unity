@@ -818,12 +818,10 @@ public class BossRushMenu : MonoBehaviour
 
     bool GetNightmareUnlocked()
     {
-        bool unlockedByHardTime = BossRushTimesProgress.HasAnyRecordedTime(BossRushDifficulty.HARD);
-
         if (useSavedNightmareUnlock)
-            return BossRushDifficultyUnlocks.IsNightmareUnlocked() || unlockedByHardTime;
+            return BossRushDifficultyUnlocks.IsNightmareUnlocked();
 
-        return nightmareUnlocked || unlockedByHardTime;
+        return nightmareUnlocked;
     }
 
     void EnsureNightmareLockedText()

@@ -103,6 +103,15 @@ public static class UnlockToastCatalog
         );
     }
 
+    public static ToastInfo GetNightmare()
+    {
+        return new ToastInfo(
+            "Are You Good Enough?",
+            "Nightmare Difficulty Unlocked",
+            "UI/Unlocks/Icons/NightmareDifficulty"
+        );
+    }
+
     public static Sprite LoadIcon(BomberSkin skin)
     {
         ToastInfo info = Get(skin);
@@ -133,6 +142,23 @@ public static class UnlockToastCatalog
         Sprite sprite = Resources.Load<Sprite>(info.IconResourcePath);
 
         SLog($"LoadBossRushIcon | path={info.IconResourcePath} | found={(sprite != null)}");
+
+        return sprite;
+    }
+
+    public static Sprite LoadNightmareIcon()
+    {
+        ToastInfo info = GetNightmare();
+
+        if (string.IsNullOrWhiteSpace(info.IconResourcePath))
+        {
+            SLog("LoadNightmareIcon | resource path is empty");
+            return null;
+        }
+
+        Sprite sprite = Resources.Load<Sprite>(info.IconResourcePath);
+
+        SLog($"LoadNightmareIcon | path={info.IconResourcePath} | found={(sprite != null)}");
 
         return sprite;
     }
