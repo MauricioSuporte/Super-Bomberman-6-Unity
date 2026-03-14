@@ -37,6 +37,10 @@ public class SunMaskBoss : MonoBehaviour, IKillable
     [SerializeField, Min(0f)] private float angryArcRadius = 1.25f;
     [SerializeField] private bool angryArcClockwise = true;
 
+    [Header("Angry - Chase Steering")]
+    [SerializeField, Min(0.01f)] private float angryRetargetInterval = 0.08f;
+    [SerializeField, Min(1f)] private float angryTurnSpeedDegrees = 220f;
+
     public bool IsAngryRendererActive => angryRenderer != null && angryRenderer.enabled;
     public float AngryEyesYOffset => angryEyesYOffset;
 
@@ -950,6 +954,23 @@ public class SunMaskBoss : MonoBehaviour, IKillable
 
         float endTime = Time.time + chaseDur;
 
+        Vector2 chaseDir;
+        if (targetPlayer != null)
+        {
+            Vector2 initialTo = (Vector2)targetPlayer.transform.position - rb.position;
+            if (initialTo.sqrMagnitude > 0.0001f)
+                chaseDir = initialTo.normalized;
+            else
+                chaseDir = Vector2.down;
+        }
+        else
+        {
+            chaseDir = Vector2.down;
+        }
+
+        float nextRetargetTime = 0f;
+        Vector2 desiredDir = chaseDir;
+
         while (!isDead && Time.time < endTime)
         {
             if (targetPlayer == null || targetPlayer.isDead || targetPlayer.IsEndingStage)
@@ -958,12 +979,22 @@ public class SunMaskBoss : MonoBehaviour, IKillable
             if (rb != null)
             {
                 Vector2 pos = rb.position;
-                Vector2 to = (Vector2)targetPlayer.transform.position - pos;
 
-                Vector2 dir = ForceDiagonal(to);
+                if (Time.time >= nextRetargetTime)
+                {
+                    nextRetargetTime = Time.time + Mathf.Max(0.01f, angryRetargetInterval);
+
+                    Vector2 to = (Vector2)targetPlayer.transform.position - pos;
+                    if (to.sqrMagnitude > 0.0001f)
+                        desiredDir = to.normalized;
+                }
+
+                float maxRadiansDelta = angryTurnSpeedDegrees * Mathf.Deg2Rad * Time.fixedDeltaTime;
+                Vector3 v = Vector3.RotateTowards(chaseDir, desiredDir, maxRadiansDelta, 0f);
+                chaseDir = (Vector2)v.normalized;
+
                 float spd = (movement != null) ? Mathf.Max(0.01f, movement.speed) : 2.5f;
-
-                Vector2 step = dir * (spd * Time.fixedDeltaTime);
+                Vector2 step = chaseDir * (spd * Time.fixedDeltaTime);
                 Vector2 next = SnapToPixel(pos + step);
 
                 rb.MovePosition(next);
@@ -1067,19 +1098,6 @@ public class SunMaskBoss : MonoBehaviour, IKillable
         float cs = Mathf.Cos(rad);
         float sn = Mathf.Sin(rad);
         return new Vector2(v.x * cs - v.y * sn, v.x * sn + v.y * cs);
-    }
-
-    static Vector2 ForceDiagonal(Vector2 dir)
-    {
-        const float EPS = 0.0001f;
-
-        if (dir.sqrMagnitude < EPS)
-            dir = new Vector2(1f, 1f);
-
-        float sx = dir.x >= 0f ? 1f : -1f;
-        float sy = dir.y >= 0f ? 1f : -1f;
-
-        return new Vector2(sx, sy).normalized;
     }
 
     AnimatedSpriteRenderer GetCurrentRenderer()
