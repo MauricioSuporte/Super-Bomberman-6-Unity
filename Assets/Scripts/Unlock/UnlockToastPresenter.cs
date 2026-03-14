@@ -14,7 +14,7 @@ public class UnlockToastPresenter : MonoBehaviour
     const string IconName = "Icon";
     const string TitleName = "Title";
     const string SubtitleName = "Subtitle";
-    const bool EnableSurgicalLogs = true;
+    const bool EnableSurgicalLogs = false;
 
     static UnlockToastPresenter instanceInScene;
 

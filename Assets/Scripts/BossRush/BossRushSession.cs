@@ -81,7 +81,8 @@ public static class BossRushSession
         float completedTime = elapsedSeconds;
         int rank = BossRushTimesProgress.RegisterTime(completedDifficulty, completedTime);
 
-        UnlockRewardSkinForDifficulty(completedDifficulty);
+        UnlockCompletionRewardSkinForDifficulty(completedDifficulty);
+        UnlockTimeTargetRewardSkinIfNeeded(completedDifficulty, completedTime);
 
         hasLastCompletedRun = true;
         lastCompletedDifficulty = completedDifficulty;
@@ -298,9 +299,9 @@ public static class BossRushSession
         }
     }
 
-    static void UnlockRewardSkinForDifficulty(BossRushDifficulty difficulty)
+    static void UnlockCompletionRewardSkinForDifficulty(BossRushDifficulty difficulty)
     {
-        BomberSkin? rewardSkin = GetRewardSkinForDifficulty(difficulty);
+        BomberSkin? rewardSkin = GetCompletionRewardSkinForDifficulty(difficulty);
         if (!rewardSkin.HasValue)
             return;
 
@@ -313,7 +314,25 @@ public static class BossRushSession
         }
     }
 
-    static BomberSkin? GetRewardSkinForDifficulty(BossRushDifficulty difficulty)
+    static void UnlockTimeTargetRewardSkinIfNeeded(BossRushDifficulty difficulty, float completedTime)
+    {
+        if (!BossRushTimesProgress.MeetsUnlockTarget(difficulty, completedTime))
+            return;
+
+        BomberSkin? rewardSkin = GetTimeTargetRewardSkinForDifficulty(difficulty);
+        if (!rewardSkin.HasValue)
+            return;
+
+        bool unlocked = UnlockProgress.Unlock(rewardSkin.Value);
+
+        if (unlocked)
+        {
+            for (int playerId = 1; playerId <= 4; playerId++)
+                PlayerPersistentStats.ClampSelectedSkinIfLocked(playerId);
+        }
+    }
+
+    static BomberSkin? GetCompletionRewardSkinForDifficulty(BossRushDifficulty difficulty)
     {
         switch (difficulty)
         {
@@ -325,6 +344,24 @@ public static class BossRushSession
 
             case BossRushDifficulty.HARD:
                 return BomberSkin.Brown;
+
+            default:
+                return null;
+        }
+    }
+
+    static BomberSkin? GetTimeTargetRewardSkinForDifficulty(BossRushDifficulty difficulty)
+    {
+        switch (difficulty)
+        {
+            case BossRushDifficulty.EASY:
+                return BomberSkin.DarkGreen;
+
+            case BossRushDifficulty.NORMAL:
+                return BomberSkin.DarkBlue;
+
+            case BossRushDifficulty.HARD:
+                return BomberSkin.Magenta;
 
             default:
                 return null;

@@ -300,6 +300,23 @@ public static class SaveSystem
         return entry.topTimes != null && entry.topTimes.Count > 0;
     }
 
+    public static float GetBossRushUnlockTargetTime(BossRushDifficulty difficulty)
+    {
+        EnsureLoaded();
+
+        BossRushDifficultyTimesSave entry = GetOrCreateBossRushTimesEntry(difficulty);
+        return entry.targetUnlockTime;
+    }
+
+    public static void SetBossRushUnlockTargetTime(BossRushDifficulty difficulty, float seconds)
+    {
+        EnsureLoaded();
+
+        BossRushDifficultyTimesSave entry = GetOrCreateBossRushTimesEntry(difficulty);
+        entry.targetUnlockTime = NormalizeBossRushUnlockTargetTime(seconds, difficulty);
+        Save();
+    }
+
     private static BossRushDifficultyTimesSave GetOrCreateBossRushTimesEntry(BossRushDifficulty difficulty)
     {
         EnsureLoaded();
@@ -319,6 +336,7 @@ public static class SaveSystem
                     current.topTimes = new List<float>();
 
                 NormalizeBossRushTimesList(current.topTimes);
+                current.targetUnlockTime = NormalizeBossRushUnlockTargetTime(current.targetUnlockTime, difficulty);
                 return current;
             }
         }
@@ -326,7 +344,8 @@ public static class SaveSystem
         BossRushDifficultyTimesSave created = new BossRushDifficultyTimesSave
         {
             difficulty = (int)difficulty,
-            topTimes = new List<float>()
+            topTimes = new List<float>(),
+            targetUnlockTime = GetDefaultBossRushUnlockTargetTime(difficulty)
         };
 
         data.bossRushTimes.Add(created);
@@ -492,7 +511,8 @@ public static class SaveSystem
                 entry = new BossRushDifficultyTimesSave
                 {
                     difficulty = (int)difficulty,
-                    topTimes = new List<float>()
+                    topTimes = new List<float>(),
+                    targetUnlockTime = GetDefaultBossRushUnlockTargetTime(difficulty)
                 };
 
                 d.bossRushTimes.Add(entry);
@@ -502,6 +522,7 @@ public static class SaveSystem
                 entry.topTimes = new List<float>();
 
             NormalizeBossRushTimesList(entry.topTimes);
+            entry.targetUnlockTime = NormalizeBossRushUnlockTargetTime(entry.targetUnlockTime, difficulty);
         }
     }
 
@@ -521,6 +542,32 @@ public static class SaveSystem
 
         if (times.Count > MaxBossRushTopTimes)
             times.RemoveRange(MaxBossRushTopTimes, times.Count - MaxBossRushTopTimes);
+    }
+
+    private static float NormalizeBossRushUnlockTargetTime(float currentValue, BossRushDifficulty difficulty)
+    {
+        if (!float.IsNaN(currentValue) && !float.IsInfinity(currentValue) && currentValue > 0f)
+            return currentValue;
+
+        return GetDefaultBossRushUnlockTargetTime(difficulty);
+    }
+
+    private static float GetDefaultBossRushUnlockTargetTime(BossRushDifficulty difficulty)
+    {
+        switch (difficulty)
+        {
+            case BossRushDifficulty.EASY:
+                return 4f * 60f;
+
+            case BossRushDifficulty.NORMAL:
+                return 4f * 60f;
+
+            case BossRushDifficulty.HARD:
+                return 5f * 60f;
+
+            default:
+                return -1f;
+        }
     }
 
     private static void EnsureDirectoryExists()

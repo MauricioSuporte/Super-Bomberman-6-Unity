@@ -49,6 +49,17 @@ public class BossRushRightPanel : MonoBehaviour
     [SerializeField, Range(-2f, 2f)] float titleUnderlayOffsetX = 0.25f;
     [SerializeField, Range(-2f, 2f)] float titleUnderlayOffsetY = -0.25f;
 
+    [Header("Target Time")]
+    [SerializeField] TextMeshProUGUI targetTimeText;
+    [SerializeField] string targetTimeFormat = "TARGET {0}";
+    [SerializeField] string noTargetTimeText = "";
+    [SerializeField] int targetTimeFontSize = 15;
+    [SerializeField] float targetTimeHeight = 22f;
+    [SerializeField] float targetTimeOffsetY = -8f;
+    [SerializeField] float targetTimeOffsetX = 0f;
+    [SerializeField] bool targetTimeUseAutoSizing = true;
+    [SerializeField] float targetTimeMinScaleMultiplier = 0.75f;
+
     [Header("New Record Label")]
     [SerializeField] TextMeshProUGUI newRecordText;
     [SerializeField] string newRecordLabel = "NEW RECORD!";
@@ -187,6 +198,7 @@ public class BossRushRightPanel : MonoBehaviour
     bool _layoutPaddingCaptured;
 
     float _currentUiScale = 1f;
+    bool _targetPlacementDirty;
 
     int ScaledFont(int baseSize) => Mathf.Clamp(Mathf.RoundToInt(baseSize * _currentUiScale), 8, 300);
     float ScaledFloat(float baseValue) => baseValue * _currentUiScale;
@@ -207,6 +219,16 @@ public class BossRushRightPanel : MonoBehaviour
         ResolveMissingReferences();
         ApplyScaledFonts();
         ApplyLayoutFormatting();
+        _targetPlacementDirty = true;
+    }
+
+    void LateUpdate()
+    {
+        if (_targetPlacementDirty)
+        {
+            ConfigureTargetTimePosition();
+            _targetPlacementDirty = false;
+        }
     }
 
     public void SetDifficulty(BossRushDifficulty difficulty)
@@ -226,19 +248,16 @@ public class BossRushRightPanel : MonoBehaviour
         if (secondRankText != null) secondRankText.text = secondLabel;
         if (thirdRankText != null) thirdRankText.text = thirdLabel;
 
-        List<float> times = BossRushProgress.GetTopTimes(difficulty);
+        List<float> times = BossRushTimesProgress.GetTopTimes(difficulty);
 
         SetTimeText(firstTimeText, GetFormattedTime(times, 0));
         SetTimeText(secondTimeText, GetFormattedTime(times, 1));
         SetTimeText(thirdTimeText, GetFormattedTime(times, 2));
 
+        RefreshTargetTimeText(difficulty);
+
         RefreshRankBackgroundPositions();
         ApplyBlinkState(difficulty);
-
-        SLog(
-            $"SetDifficulty | difficulty={difficulty} " +
-            $"t0={GetFormattedTime(times, 0)} t1={GetFormattedTime(times, 1)} t2={GetFormattedTime(times, 2)}"
-        );
     }
 
     void OnDestroy()
@@ -307,6 +326,8 @@ public class BossRushRightPanel : MonoBehaviour
 
         if (newRecordText != null)
             newRecordText.fontSize = ScaledFont(newRecordFontSize);
+
+        ApplyTargetTimeFontSizing(targetTimeText);
     }
 
     void ApplyTimeFontSizing(TextMeshProUGUI target)
@@ -323,10 +344,25 @@ public class BossRushRightPanel : MonoBehaviour
         target.fontSize = maxSize;
     }
 
+    void ApplyTargetTimeFontSizing(TextMeshProUGUI target)
+    {
+        if (target == null)
+            return;
+
+        float maxSize = ScaledFont(targetTimeFontSize);
+        float minSize = Mathf.Max(8f, Mathf.Floor(maxSize * Mathf.Clamp(targetTimeMinScaleMultiplier, 0.4f, 1f)));
+
+        target.enableAutoSizing = targetTimeUseAutoSizing;
+        target.fontSizeMax = maxSize;
+        target.fontSizeMin = minSize;
+        target.fontSize = maxSize;
+    }
+
     void ApplyLayoutFormatting()
     {
         ResolveMissingReferences();
         EnsureNewRecordText();
+        EnsureTargetTimeText();
         ApplyPanelVerticalOffset();
 
         ConfigureTitleText(titleText);
@@ -338,6 +374,7 @@ public class BossRushRightPanel : MonoBehaviour
         ConfigureTimeText(firstTimeText);
         ConfigureTimeText(secondTimeText);
         ConfigureTimeText(thirdTimeText);
+        ConfigureTargetTimeText(targetTimeText);
 
         ConfigureRow(firstRow);
         ConfigureRow(secondRow);
@@ -356,6 +393,8 @@ public class BossRushRightPanel : MonoBehaviour
 
         ConfigureTitleHeight();
         ConfigureTitleWidthAndPosition();
+
+        _targetPlacementDirty = true;
     }
 
     void ForceRebuildLayouts()
@@ -443,6 +482,101 @@ public class BossRushRightPanel : MonoBehaviour
 
             ConfigureNewRecordText(newRecordText);
         }
+    }
+
+    void ConfigureTargetTimePosition()
+    {
+        if (targetTimeText == null)
+        {
+            SLog("TargetPos | targetTimeText=NULL");
+            return;
+        }
+
+        RectTransform panelRt = transform as RectTransform;
+        RectTransform targetRt = targetTimeText.rectTransform;
+        RectTransform anchorTimeRt = thirdTimeText != null ? thirdTimeText.rectTransform : null;
+
+        if (panelRt == null)
+        {
+            SLog("TargetPos | panelRt=NULL");
+            return;
+        }
+
+        if (targetRt == null)
+        {
+            SLog("TargetPos | targetRt=NULL");
+            return;
+        }
+
+        if (anchorTimeRt == null)
+        {
+            SLog("TargetPos | anchorTimeRt=NULL");
+            return;
+        }
+
+        Canvas canvas = GetComponentInParent<Canvas>();
+        Camera cam = null;
+
+        if (canvas != null && canvas.renderMode != RenderMode.ScreenSpaceOverlay)
+            cam = canvas.worldCamera != null ? canvas.worldCamera : Camera.main;
+
+        Vector3[] corners = new Vector3[4];
+        anchorTimeRt.GetWorldCorners(corners);
+
+        Vector3 bottomLeft = corners[0];
+        Vector3 topRight = corners[2];
+        Vector3 bottomCenterWorld = new Vector3(
+            (bottomLeft.x + topRight.x) * 0.5f,
+            bottomLeft.y,
+            (bottomLeft.z + topRight.z) * 0.5f
+        );
+
+        Vector2 screenPoint = RectTransformUtility.WorldToScreenPoint(cam, bottomCenterWorld);
+
+        Vector2 localPoint;
+        RectTransformUtility.ScreenPointToLocalPointInRectangle(
+            panelRt,
+            screenPoint,
+            cam,
+            out localPoint
+        );
+
+        float x = localPoint.x + ScaledFloat(targetTimeOffsetX);
+        float y = localPoint.y - Mathf.Max(ScaledFloat(targetTimeHeight), 8f) * 0.5f + ScaledFloat(targetTimeOffsetY);
+
+        float targetHeightScaled = Mathf.Max(ScaledFloat(targetTimeHeight), 8f);
+        float targetWidth = Mathf.Max(anchorTimeRt.rect.width, ScaledFloat(timePreferredWidth) * 0.95f);
+
+        targetRt.anchorMin = new Vector2(0.5f, 0.5f);
+        targetRt.anchorMax = new Vector2(0.5f, 0.5f);
+        targetRt.pivot = new Vector2(0.5f, 0.5f);
+        targetRt.anchoredPosition = new Vector2(x, y);
+        targetRt.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, targetWidth);
+        targetRt.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, targetHeightScaled);
+
+        LayoutElement le = targetTimeText.GetComponent<LayoutElement>();
+        if (le == null)
+            le = targetTimeText.gameObject.AddComponent<LayoutElement>();
+
+        le.ignoreLayout = true;
+        le.minWidth = targetWidth;
+        le.preferredWidth = targetWidth;
+        le.flexibleWidth = 0f;
+        le.minHeight = targetHeightScaled;
+        le.preferredHeight = targetHeightScaled;
+        le.flexibleHeight = 0f;
+
+        SLog(
+            $"TargetPos | " +
+            $"screen={screenPoint} " +
+            $"local={localPoint} " +
+            $"final=({x:0.##},{y:0.##}) " +
+            $"anchorTimeRectPos={anchorTimeRt.anchoredPosition} " +
+            $"anchorTimeRectSize=({anchorTimeRt.rect.width:0.##},{anchorTimeRt.rect.height:0.##}) " +
+            $"targetSize=({targetWidth:0.##},{targetHeightScaled:0.##}) " +
+            $"panelRect=({panelRt.rect.width:0.##},{panelRt.rect.height:0.##}) " +
+            $"targetText='{targetTimeText.text}'"
+        );
     }
 
     float GetRowSpacing()
@@ -1102,7 +1236,7 @@ public class BossRushRightPanel : MonoBehaviour
         if (times == null || index < 0 || index >= times.Count)
             return defaultTimeText;
 
-        return BossRushProgress.FormatTime(times[index]);
+        return BossRushTimesProgress.FormatTime(times[index]);
     }
 
     string GetDifficultyDisplayName(BossRushDifficulty difficulty)
@@ -1232,6 +1366,114 @@ public class BossRushRightPanel : MonoBehaviour
 
         if (visible)
             newRecordText.alpha = Mathf.Clamp01(alpha);
+    }
+
+    void EnsureTargetTimeText()
+    {
+        if (targetTimeText == null)
+        {
+            Transform existing = transform.Find("TargetTimeText");
+            if (existing != null)
+                targetTimeText = existing.GetComponent<TextMeshProUGUI>();
+        }
+
+        if (targetTimeText == null)
+        {
+            GameObject go = new GameObject("TargetTimeText", typeof(RectTransform), typeof(TextMeshProUGUI), typeof(LayoutElement));
+            go.transform.SetParent(transform, false);
+            go.transform.SetAsLastSibling();
+
+            targetTimeText = go.GetComponent<TextMeshProUGUI>();
+            targetTimeText.raycastTarget = false;
+        }
+
+        LayoutElement le = targetTimeText.GetComponent<LayoutElement>();
+        if (le == null)
+            le = targetTimeText.gameObject.AddComponent<LayoutElement>();
+
+        le.ignoreLayout = true;
+
+        float h = Mathf.Max(ScaledFloat(targetTimeHeight), 8f);
+        le.minHeight = h;
+        le.preferredHeight = h;
+        le.flexibleHeight = 0f;
+    }
+
+    void ConfigureTargetTimeText(TextMeshProUGUI target)
+    {
+        if (target == null)
+            return;
+
+        if (timeFontAsset != null)
+            target.font = timeFontAsset;
+
+        target.alignment = TextAlignmentOptions.Center;
+        target.textWrappingMode = TextWrappingModes.NoWrap;
+        target.overflowMode = TextOverflowModes.Overflow;
+        target.extraPadding = true;
+        target.margin = Vector4.zero;
+        target.color = timeTextColor;
+
+        float maxSize = ScaledFont(targetTimeFontSize);
+        float minSize = Mathf.Max(8f, Mathf.Floor(maxSize * Mathf.Clamp(targetTimeMinScaleMultiplier, 0.4f, 1f)));
+
+        target.enableAutoSizing = targetTimeUseAutoSizing;
+        target.fontSizeMax = maxSize;
+        target.fontSizeMin = minSize;
+        target.fontSize = maxSize;
+
+        if (forceTimeBold)
+            target.fontStyle |= FontStyles.Bold;
+        else
+            target.fontStyle &= ~FontStyles.Bold;
+
+        Material runtimeMat = GetOrCreateRuntimeTimeMaterial(target);
+        ApplyTimeMaterialStyle(runtimeMat);
+
+        target.fontMaterial = runtimeMat;
+        target.UpdateMeshPadding();
+        target.ForceMeshUpdate();
+        target.SetVerticesDirty();
+    }
+
+    void RefreshTargetTimeText(BossRushDifficulty difficulty)
+    {
+        if (targetTimeText == null)
+            return;
+
+        if (BossRushTimesProgress.HasMetUnlockTarget(difficulty))
+        {
+            targetTimeText.text = noTargetTimeText;
+            targetTimeText.gameObject.SetActive(false);
+            SLog($"TargetPos | hidden because target already beaten | difficulty={difficulty}");
+            return;
+        }
+
+        string formatted = GetFormattedTargetTime(difficulty);
+
+        if (string.IsNullOrWhiteSpace(formatted))
+        {
+            targetTimeText.text = noTargetTimeText;
+            targetTimeText.gameObject.SetActive(false);
+            SLog("TargetPos | hidden because formatted target is empty");
+            return;
+        }
+
+        targetTimeText.text = formatted;
+        targetTimeText.gameObject.SetActive(true);
+
+        _targetPlacementDirty = true;
+
+        SLog($"TargetPos | refresh requested | difficulty={difficulty} text='{formatted}'");
+    }
+
+    string GetFormattedTargetTime(BossRushDifficulty difficulty)
+    {
+        float target = BossRushTimesProgress.GetUnlockTargetTime(difficulty);
+        if (target <= 0f)
+            return noTargetTimeText;
+
+        return string.Format(targetTimeFormat, BossRushTimesProgress.FormatTime(target));
     }
 
     void SLog(string message)

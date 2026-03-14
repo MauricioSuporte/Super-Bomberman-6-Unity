@@ -8,5 +8,7 @@ namespace Assets.Scripts.SaveSystem
     {
         public int difficulty;
         public List<float> topTimes = new();
+
+        public float targetUnlockTime = -1f;
     }
 }

@@ -466,6 +466,15 @@ MonoBehaviour:
   titleUnderlaySoftness: 0
   titleUnderlayOffsetX: 0.25
   titleUnderlayOffsetY: -0.25
+  targetTimeText: {fileID: 0}
+  targetTimeFormat: TARGET {0}
+  noTargetTimeText: 
+  targetTimeFontSize: 20
+  targetTimeHeight: 18
+  targetTimeOffsetY: -10
+  targetTimeOffsetX: 0
+  targetTimeUseAutoSizing: 1
+  targetTimeMinScaleMultiplier: 0.75
   newRecordText: {fileID: 0}
   newRecordLabel: NEW RECORD!
   newRecordFontSize: 32
@@ -2248,7 +2257,7 @@ MonoBehaviour:
   fadeOutOnConfirmDuration: 0.5
   difficultyLoadouts:
   - difficulty: 0
-    life: 4
+    life: 5
     bombAmount: 4
     explosionRadius: 4
     speedUps: 4
@@ -2265,7 +2274,7 @@ MonoBehaviour:
     mountedLouie: 0
     queuedEggs: 
   - difficulty: 1
-    life: 3
+    life: 4
     bombAmount: 3
     explosionRadius: 3
     speedUps: 3

@@ -2,6 +2,7 @@
 
 public class GlobalUnlockController : MonoBehaviour
 {
+    private const bool EnableSurgicalLogs = false;
     private const string LifeUpResourcesPath = "Sounds/LifeUp";
 
     private static GlobalUnlockController instance;
@@ -242,6 +243,9 @@ public class GlobalUnlockController : MonoBehaviour
 
     private static void SLog(string message)
     {
+        if (!EnableSurgicalLogs)
+            return;
+
         Debug.Log($"[GlobalUnlockFlow] {message}");
     }
 }

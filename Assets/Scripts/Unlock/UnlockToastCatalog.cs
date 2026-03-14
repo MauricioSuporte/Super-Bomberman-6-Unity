@@ -64,6 +64,27 @@ public static class UnlockToastCatalog
                     "UI/Unlocks/Icons/BrownBomber"
                 );
 
+            case BomberSkin.DarkGreen:
+                return new ToastInfo(
+                    "Green Means Go!",
+                    "Dark Green Bomber Unlocked",
+                    "UI/Unlocks/Icons/DarkGreenBomber"
+                );
+
+            case BomberSkin.DarkBlue:
+                return new ToastInfo(
+                    "Feeling Blue?",
+                    "Dark Blue Bomber Unlocked",
+                    "UI/Unlocks/Icons/DarkBlueBomber"
+                );
+
+            case BomberSkin.Magenta:
+                return new ToastInfo(
+                    "Magenta Mayhem",
+                    "Magenta Bomber Unlocked",
+                    "UI/Unlocks/Icons/MagentaBomber"
+                );
+
             default:
                 return new ToastInfo(
                     "New Character",

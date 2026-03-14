@@ -3,7 +3,7 @@ using UnityEngine;
 
 public static class UnlockProgress
 {
-    private const bool EnableSurgicalLogs = true;
+    private const bool EnableSurgicalLogs = false;
 
     public static event Action<BomberSkin> OnSkinUnlocked;
     public static event Action OnBossRushUnlocked;
