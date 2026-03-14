@@ -99,6 +99,13 @@ public static class UnlockToastCatalog
                     "UI/Unlocks/Icons/GoldBomber"
                 );
 
+            case BomberSkin.Golden:
+                return new ToastInfo(
+                    "Are You Human?",
+                    "Golden Bomber Unlocked",
+                    "UI/Unlocks/Icons/GoldenBomber"
+                );
+
             default:
                 return new ToastInfo(
                     "New Character",

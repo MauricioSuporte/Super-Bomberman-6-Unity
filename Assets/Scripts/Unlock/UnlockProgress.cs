@@ -5,6 +5,29 @@ public static class UnlockProgress
 {
     private const bool EnableSurgicalLogs = false;
 
+    private static readonly BomberSkin[] skinsRequiredForGoldenUnlock =
+    {
+        BomberSkin.White,
+        BomberSkin.Gray,
+        BomberSkin.Black,
+        BomberSkin.Red,
+        BomberSkin.Orange,
+        BomberSkin.Yellow,
+        BomberSkin.Olive,
+        BomberSkin.Green,
+        BomberSkin.Cyan,
+        BomberSkin.Aqua,
+        BomberSkin.Blue,
+        BomberSkin.DarkBlue,
+        BomberSkin.Purple,
+        BomberSkin.Magenta,
+        BomberSkin.Pink,
+        BomberSkin.Brown,
+        BomberSkin.DarkGreen,
+        BomberSkin.Nightmare,
+        BomberSkin.Gold
+    };
+
     public static event Action<BomberSkin> OnSkinUnlocked;
     public static event Action OnBossRushUnlocked;
 
@@ -14,6 +37,7 @@ public static class UnlockProgress
     public static void ReloadFromDisk()
     {
         SaveSystem.Reload();
+        TryUnlockGoldenBomberIfEligible(raiseEvent: false);
         SLog("ReloadFromDisk called");
     }
 
@@ -45,6 +69,8 @@ public static class UnlockProgress
         SLog($"Unlock persisted | skin={skin} | invoking event now");
         OnSkinUnlocked?.Invoke(skin);
         SLog($"Unlock event invocation finished | skin={skin}");
+
+        TryUnlockGoldenBomberIfEligible(raiseEvent: true);
 
         return true;
     }
@@ -91,6 +117,46 @@ public static class UnlockProgress
     public static bool SaveFileExists()
     {
         return System.IO.File.Exists(SaveFilePath);
+    }
+
+    private static void TryUnlockGoldenBomberIfEligible(bool raiseEvent)
+    {
+        if (IsUnlocked(BomberSkin.Golden))
+        {
+            SLog("TryUnlockGoldenBomberIfEligible | Golden already unlocked");
+            return;
+        }
+
+        if (!AreAllOtherBombersUnlocked())
+        {
+            SLog("TryUnlockGoldenBomberIfEligible | requirements not met");
+            return;
+        }
+
+        string goldenName = BomberSkin.Golden.ToString();
+        SaveSystem.Data.unlockedSkins.Add(goldenName);
+        SaveSystem.Save();
+
+        SLog($"TryUnlockGoldenBomberIfEligible | Golden unlocked | raiseEvent={raiseEvent}");
+
+        if (raiseEvent)
+            OnSkinUnlocked?.Invoke(BomberSkin.Golden);
+    }
+
+    private static bool AreAllOtherBombersUnlocked()
+    {
+        for (int i = 0; i < skinsRequiredForGoldenUnlock.Length; i++)
+        {
+            BomberSkin skin = skinsRequiredForGoldenUnlock[i];
+
+            if (!IsUnlocked(skin))
+            {
+                SLog($"AreAllOtherBombersUnlocked | missing skin={skin}");
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private static void SLog(string message)
