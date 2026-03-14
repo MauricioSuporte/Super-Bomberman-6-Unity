@@ -190,7 +190,8 @@ public class WorldMapController : MonoBehaviour
             cursorMovementArea = transform as RectTransform;
 
         RegisterStageOrderInProgress();
-        currentWorldIndex = GetInitialWorldIndexFromProgress();
+
+        currentWorldIndex = GetInitialWorldIndexFromProgress(out int initialNodeIndex);
         ApplyCurrentWorldCameraPosition();
 
         Canvas.ForceUpdateCanvases();
@@ -212,7 +213,7 @@ public class WorldMapController : MonoBehaviour
         Canvas.ForceUpdateCanvases();
 
         if (snapCursorToDefaultStageOnStart)
-            SnapCursorToDefaultStage();
+            SnapCursorToStage(currentWorldIndex, initialNodeIndex);
 
         ClampCursorIfNeeded();
         RefreshHoveredStage();
@@ -1259,29 +1260,71 @@ public class WorldMapController : MonoBehaviour
         }
     }
 
-    int GetInitialWorldIndexFromProgress()
+    int GetInitialWorldIndexFromProgress(out int initialNodeIndex)
     {
+        initialNodeIndex = 0;
+
         if (worlds == null || worlds.Count == 0)
             return 0;
+
+        if (AreAllStagesCleared())
+        {
+            int allClearWorldIndex;
+            int allClearNodeIndex;
+
+            if (TryGetNextStageAfterLastPerfect(out allClearWorldIndex, out allClearNodeIndex))
+            {
+                initialNodeIndex = allClearNodeIndex;
+                return allClearWorldIndex;
+            }
+
+            if (TryGetFirstValidStage(out allClearWorldIndex, out allClearNodeIndex))
+            {
+                initialNodeIndex = allClearNodeIndex;
+                return allClearWorldIndex;
+            }
+
+            initialNodeIndex = 0;
+            return 0;
+        }
 
         int fallbackIndex = Mathf.Clamp(startWorldIndex, 0, worlds.Count - 1);
 
         if (!IsWorldFullyCleared(fallbackIndex))
+        {
+            initialNodeIndex = GetLastUnlockedNodeIndex(fallbackIndex);
             return fallbackIndex;
+        }
 
         for (int i = fallbackIndex + 1; i < worlds.Count; i++)
         {
             if (!IsWorldFullyCleared(i))
+            {
+                initialNodeIndex = GetLastUnlockedNodeIndex(i);
                 return i;
+            }
         }
 
         for (int i = 0; i < fallbackIndex; i++)
         {
             if (!IsWorldFullyCleared(i))
+            {
+                initialNodeIndex = GetLastUnlockedNodeIndex(i);
                 return i;
+            }
         }
 
-        return Mathf.Clamp(worlds.Count - 1, 0, worlds.Count - 1);
+        int firstWorldIndex;
+        int firstNodeIndex;
+
+        if (TryGetFirstValidStage(out firstWorldIndex, out firstNodeIndex))
+        {
+            initialNodeIndex = firstNodeIndex;
+            return firstWorldIndex;
+        }
+
+        initialNodeIndex = 0;
+        return 0;
     }
 
     bool IsWorldFullyCleared(int worldIndex)
@@ -1416,6 +1459,128 @@ public class WorldMapController : MonoBehaviour
             if (rt != null)
                 rt.localRotation = Quaternion.identity;
         }
+    }
+
+    void SnapCursorToStage(int worldIndex, int nodeIndex)
+    {
+        if (cursorMovementArea == null)
+            return;
+
+        var node = GetNode(worldIndex, nodeIndex);
+        if (node == null || node.anchor == null)
+            return;
+
+        currentWorldIndex = Mathf.Clamp(worldIndex, 0, worlds.Count - 1);
+        cursorLocalPosition = GetAnchorPositionInMovementArea(node.anchor);
+        hoveredNodeIndex = nodeIndex;
+    }
+
+    bool AreAllStagesCleared()
+    {
+        bool hasAnyValidStage = false;
+
+        for (int w = 0; w < worlds.Count; w++)
+        {
+            var world = worlds[w];
+            if (world == null || world.nodes == null)
+                continue;
+
+            for (int n = 0; n < world.nodes.Count; n++)
+            {
+                var node = world.nodes[n];
+                if (node == null || string.IsNullOrWhiteSpace(node.sceneName))
+                    continue;
+
+                hasAnyValidStage = true;
+
+                if (!StageUnlockProgress.IsCleared(node.sceneName))
+                    return false;
+            }
+        }
+
+        return hasAnyValidStage;
+    }
+
+    bool TryGetFirstValidStage(out int worldIndex, out int nodeIndex)
+    {
+        for (int w = 0; w < worlds.Count; w++)
+        {
+            var world = worlds[w];
+            if (world == null || world.nodes == null)
+                continue;
+
+            for (int n = 0; n < world.nodes.Count; n++)
+            {
+                var node = world.nodes[n];
+                if (node == null || string.IsNullOrWhiteSpace(node.sceneName))
+                    continue;
+
+                worldIndex = w;
+                nodeIndex = n;
+                return true;
+            }
+        }
+
+        worldIndex = Mathf.Clamp(startWorldIndex, 0, Mathf.Max(0, worlds.Count - 1));
+        nodeIndex = 0;
+        return false;
+    }
+
+    bool TryGetNextStageAfterLastPerfect(out int worldIndex, out int nodeIndex)
+    {
+        int lastPerfectWorld = -1;
+        int lastPerfectNode = -1;
+
+        for (int w = 0; w < worlds.Count; w++)
+        {
+            var world = worlds[w];
+            if (world == null || world.nodes == null)
+                continue;
+
+            for (int n = 0; n < world.nodes.Count; n++)
+            {
+                var node = world.nodes[n];
+                if (node == null || string.IsNullOrWhiteSpace(node.sceneName))
+                    continue;
+
+                if (StageUnlockProgress.IsPerfect(node.sceneName))
+                {
+                    lastPerfectWorld = w;
+                    lastPerfectNode = n;
+                }
+            }
+        }
+
+        if (lastPerfectWorld < 0 || lastPerfectNode < 0)
+        {
+            worldIndex = 0;
+            nodeIndex = 0;
+            return false;
+        }
+
+        for (int w = lastPerfectWorld; w < worlds.Count; w++)
+        {
+            var world = worlds[w];
+            if (world == null || world.nodes == null)
+                continue;
+
+            int startNode = w == lastPerfectWorld ? lastPerfectNode + 1 : 0;
+
+            for (int n = startNode; n < world.nodes.Count; n++)
+            {
+                var node = world.nodes[n];
+                if (node == null || string.IsNullOrWhiteSpace(node.sceneName))
+                    continue;
+
+                worldIndex = w;
+                nodeIndex = n;
+                return true;
+            }
+        }
+
+        worldIndex = 0;
+        nodeIndex = 0;
+        return false;
     }
 
     void OnDestroy()
