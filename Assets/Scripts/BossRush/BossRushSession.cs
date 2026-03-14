@@ -347,20 +347,14 @@ public static class BossRushSession
 
     static BomberSkin? GetCompletionRewardSkinForDifficulty(BossRushDifficulty difficulty)
     {
-        switch (difficulty)
+        return difficulty switch
         {
-            case BossRushDifficulty.EASY:
-                return BomberSkin.Olive;
-
-            case BossRushDifficulty.NORMAL:
-                return BomberSkin.Cyan;
-
-            case BossRushDifficulty.HARD:
-                return BomberSkin.Brown;
-
-            default:
-                return null;
-        }
+            BossRushDifficulty.EASY => (BomberSkin?)BomberSkin.Olive,
+            BossRushDifficulty.NORMAL => (BomberSkin?)BomberSkin.Cyan,
+            BossRushDifficulty.HARD => (BomberSkin?)BomberSkin.Brown,
+            BossRushDifficulty.NIGHTMARE => (BomberSkin?)BomberSkin.Nightmare,
+            _ => null,
+        };
     }
 
     static BomberSkin? GetTimeTargetRewardSkinForDifficulty(BossRushDifficulty difficulty)

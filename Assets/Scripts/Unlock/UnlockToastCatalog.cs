@@ -85,6 +85,13 @@ public static class UnlockToastCatalog
                     "UI/Unlocks/Icons/MagentaBomber"
                 );
 
+            case BomberSkin.Nightmare:
+                return new ToastInfo(
+                    "You Are The Nightmare",
+                    "Nightmare Bomber Unlocked",
+                    "UI/Unlocks/Icons/NightmareBomber"
+                );
+
             default:
                 return new ToastInfo(
                     "New Character",
