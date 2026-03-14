@@ -3,8 +3,8 @@ guid: e0e4851c102a35946b072ee04747eafd
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 2397191019076521969
-    second: Super_Bomberman_6_Title_Screen_Exemplo_0
+      213: -7875101878517908142
+    second: Super_Bomberman_6_Title_Screen_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -100,7 +100,7 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Super_Bomberman_6_Title_Screen_Exemplo_0
+      name: Super_Bomberman_6_Title_Screen_0
       rect:
         serializedVersion: 2
         x: 0
@@ -115,8 +115,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 1ff00dee788844120800000000000000
-      internalID: 2397191019076521969
+      spriteID: 25dbde8c09406b290800000000000000
+      internalID: -7875101878517908142
       vertices: []
       indices: 
       edges: []
@@ -135,7 +135,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      Super_Bomberman_6_Title_Screen_Exemplo_0: 2397191019076521969
+      Super_Bomberman_6_Title_Screen_0: -7875101878517908142
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

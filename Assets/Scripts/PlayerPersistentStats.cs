@@ -18,16 +18,16 @@ public static class PlayerPersistentStats
 
     public sealed class PlayerState
     {
-        public int Life = 1;
-        public int BombAmount = 1;
-        public int ExplosionRadius = 1;
-        public int SpeedInternal = MinSpeedInternal;
+        public int Life = 999;
+        public int BombAmount = 9;
+        public int ExplosionRadius = 9;
+        public int SpeedInternal = MaxSpeedInternal;
         public bool CanKickBombs = false;
         public bool CanPunchBombs = false;
         public bool HasPowerGlove = false;
-        public bool CanPassBombs = false;
+        public bool CanPassBombs = true;
         public bool CanPassDestructibles = false;
-        public bool HasPierceBombs = false;
+        public bool HasPierceBombs = true;
         public bool HasControlBombs = false;
         public bool HasPowerBomb = false;
         public bool HasRubberBombs = false;
@@ -255,11 +255,9 @@ public static class PlayerPersistentStats
     }
 
     static void ApplyRuntimeAbilitiesPreservingStageState(
-        int playerId,
         MovementController movement,
         PlayerState s,
-        AbilitySystem abilitySystem,
-        string context)
+        AbilitySystem abilitySystem)
     {
         bool runtimeKick = false;
         bool runtimePunch = false;
@@ -307,16 +305,21 @@ public static class PlayerPersistentStats
         }
 
         if (runtimeKick)
+        {
             s.CanKickBombs = true;
+            s.CanPassBombs = false;
+        }
+        else if (runtimeBombPass)
+        {
+            s.CanPassBombs = true;
+            s.CanKickBombs = false;
+        }
 
         if (runtimePunch)
             PersistPunchAbility(movement, s, abilitySystem);
 
         if (runtimeGlove)
             s.HasPowerGlove = true;
-
-        if (runtimeBombPass)
-            s.CanPassBombs = true;
 
         if (runtimeDestructiblePass)
             s.CanPassDestructibles = true;
@@ -357,6 +360,9 @@ public static class PlayerPersistentStats
     public static void LoadInto(int playerId, MovementController movement, BombController bomb)
     {
         var s = Get(playerId);
+
+        if (s.CanKickBombs && s.CanPassBombs)
+            s.CanPassBombs = false;
 
         s.BombAmount = Mathf.Min(s.BombAmount, MaxBombAmount);
         s.ExplosionRadius = Mathf.Min(s.ExplosionRadius, MaxExplosionRadius);
@@ -501,7 +507,7 @@ public static class PlayerPersistentStats
                 abilitySystem.RebuildCache();
             }
 
-            ApplyRuntimeAbilitiesPreservingStageState(playerId, movement, s, abilitySystem, "SaveFrom");
+            ApplyRuntimeAbilitiesPreservingStageState(movement, s, abilitySystem);
 
             s.MountedLouie = MountedType.None;
 
@@ -689,6 +695,7 @@ public static class PlayerPersistentStats
 
             case ItemType.BombKick:
                 s.CanKickBombs = true;
+                s.CanPassBombs = false;
                 break;
 
             case ItemType.BombPunch:
@@ -705,6 +712,7 @@ public static class PlayerPersistentStats
 
             case ItemType.BombPass:
                 s.CanPassBombs = true;
+                s.CanKickBombs = false;
                 break;
 
             case ItemType.DestructiblePass:
@@ -789,7 +797,7 @@ public static class PlayerPersistentStats
                 abilitySystem.RebuildCache();
             }
 
-            ApplyRuntimeAbilitiesPreservingStageState(playerId, movement, s, abilitySystem, "StageCaptureFromRuntime");
+            ApplyRuntimeAbilitiesPreservingStageState(movement, s, abilitySystem);
 
             s.MountedLouie = MountedType.None;
             if (movement.TryGetComponent<PlayerMountCompanion>(out var louieCompanion))
