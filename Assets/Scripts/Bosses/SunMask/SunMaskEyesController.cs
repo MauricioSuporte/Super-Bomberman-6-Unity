@@ -42,12 +42,15 @@ public sealed class SunMaskEyesController : MonoBehaviour
 
     [Header("Boss State / Events")]
     [SerializeField] private SunMaskBoss boss;
-
     [SerializeField] private bool useDamagedEyesWhenBossHurt = true;
 
     [Header("Direction")]
     [SerializeField] private bool useDominantAxisFor8Dir = true;
     [SerializeField, Range(0f, 0.49f)] private float diagonalBias = 0.22f;
+
+    [Header("Death Sul Offset")]
+    [SerializeField] private bool applyDeathSulOffset = true;
+    [SerializeField] private float deathSulLocalY = 0.06f;
 
     private readonly List<MovementController> _players = new(8);
     private MovementController _currentTarget;
@@ -58,6 +61,9 @@ public sealed class SunMaskEyesController : MonoBehaviour
 
     private AnimatedSpriteRenderer _rightDamagedSingle;
     private AnimatedSpriteRenderer _leftDamagedSingle;
+
+    private AnimatedSpriteRenderer _rightSulNormal;
+    private AnimatedSpriteRenderer _leftSulNormal;
 
     private EyeDir _currentDir = EyeDir.Noroeste;
     private bool _hasDir;
@@ -74,6 +80,11 @@ public sealed class SunMaskEyesController : MonoBehaviour
     private bool _hasEyeBasePos;
     private bool _angryOffsetApplied;
 
+    private Vector3 _rightSulBaseLocalPos;
+    private Vector3 _leftSulBaseLocalPos;
+    private bool _hasSulBaseLocalPos;
+    private bool _deathSulOffsetApplied;
+
     private void Awake()
     {
         if (boss == null)
@@ -88,6 +99,14 @@ public sealed class SunMaskEyesController : MonoBehaviour
 
         CacheEyeChildren(rightEyeRoot, _rightNormal, out _rightDamagedSingle);
         CacheEyeChildren(leftEyeRoot, _leftNormal, out _leftDamagedSingle);
+
+        _rightNormal.TryGetValue(EyeDir.Sul, out _rightSulNormal);
+        _leftNormal.TryGetValue(EyeDir.Sul, out _leftSulNormal);
+
+        if (_rightSulNormal != null) _rightSulBaseLocalPos = _rightSulNormal.transform.localPosition;
+        if (_leftSulNormal != null) _leftSulBaseLocalPos = _leftSulNormal.transform.localPosition;
+        _hasSulBaseLocalPos = (_rightSulNormal != null || _leftSulNormal != null);
+        _deathSulOffsetApplied = false;
 
         _currentSet = EyeSet.Normal;
         _hasSet = true;
@@ -119,6 +138,9 @@ public sealed class SunMaskEyesController : MonoBehaviour
         _angryOffsetApplied = false;
         RestoreEyeRootsBaseLocalPos();
 
+        _deathSulOffsetApplied = false;
+        RestoreDeathSulOffset();
+
         if (autoFindPlayers)
             RefreshPlayers();
     }
@@ -138,6 +160,8 @@ public sealed class SunMaskEyesController : MonoBehaviour
         }
 
         RestoreEyeRootsBaseLocalPos();
+        RestoreDeathSulOffset();
+        _deathSulOffsetApplied = false;
 
         _currentTarget = null;
         _players.Clear();
@@ -149,6 +173,7 @@ public sealed class SunMaskEyesController : MonoBehaviour
             return;
 
         UpdateAngryEyeOffset();
+        UpdateDeathSulOffset();
 
         if (_override == EyeOverride.Damaged || _override == EyeOverride.HoldSul || _override == EyeOverride.IntroHold || _override == EyeOverride.IntroSpin)
             return;
@@ -192,6 +217,43 @@ public sealed class SunMaskEyesController : MonoBehaviour
         }
     }
 
+    private void UpdateDeathSulOffset()
+    {
+        if (!_hasSulBaseLocalPos)
+        {
+            _deathSulOffsetApplied = false;
+            return;
+        }
+
+        bool shouldApply =
+            applyDeathSulOffset &&
+            _override == EyeOverride.HoldSul;
+
+        if (shouldApply == _deathSulOffsetApplied)
+            return;
+
+        _deathSulOffsetApplied = shouldApply;
+
+        if (shouldApply)
+        {
+            ApplyRendererRuntimeLocalY(_rightSulNormal, deathSulLocalY);
+            ApplyRendererRuntimeLocalY(_leftSulNormal, deathSulLocalY);
+        }
+        else
+        {
+            RestoreDeathSulOffset();
+        }
+    }
+
+    private void ApplyRendererRuntimeLocalY(AnimatedSpriteRenderer renderer, float desiredY)
+    {
+        if (renderer == null)
+            return;
+
+        renderer.SetRuntimeBaseLocalY(desiredY);
+        renderer.RefreshFrame();
+    }
+
     private void RestoreEyeRootsBaseLocalPos()
     {
         if (!_hasEyeBasePos)
@@ -199,6 +261,24 @@ public sealed class SunMaskEyesController : MonoBehaviour
 
         if (rightEyeRoot != null) rightEyeRoot.localPosition = _rightEyeBaseLocalPos;
         if (leftEyeRoot != null) leftEyeRoot.localPosition = _leftEyeBaseLocalPos;
+    }
+
+    private void RestoreDeathSulOffset()
+    {
+        if (!_hasSulBaseLocalPos)
+            return;
+
+        if (_rightSulNormal != null)
+        {
+            _rightSulNormal.ClearRuntimeBaseOffset();
+            _rightSulNormal.RefreshFrame();
+        }
+
+        if (_leftSulNormal != null)
+        {
+            _leftSulNormal.ClearRuntimeBaseOffset();
+            _leftSulNormal.RefreshFrame();
+        }
     }
 
     private void TickTracking()
@@ -223,10 +303,6 @@ public sealed class SunMaskEyesController : MonoBehaviour
         EyeDir dir = Get8Dir(toTarget);
         ApplyDirection(dir, force: false);
     }
-
-    // =========================
-    // INTRO CONTROLS
-    // =========================
 
     public void BeginIntroHoldDown()
     {
@@ -331,10 +407,6 @@ public sealed class SunMaskEyesController : MonoBehaviour
 
         ClearOverrideIfIntro();
     }
-
-    // =========================
-    // DEATH FLOW (existing)
-    // =========================
 
     public void BeginDeathEyesFlowDamagedThenSul(float damagedDuration = 1f)
     {
