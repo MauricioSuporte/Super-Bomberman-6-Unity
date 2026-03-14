@@ -87,8 +87,7 @@ public static class SaveSystem
         if (slot == null)
             return false;
 
-        return (slot.clearedStages != null && slot.clearedStages.Count > 0) ||
-               (slot.unlockedStages != null && slot.unlockedStages.Count > 1);
+        return slot.started;
     }
 
     public static void ResetSlot(int slotIndex)
@@ -97,6 +96,7 @@ public static class SaveSystem
         if (slot == null)
             return;
 
+        slot.started = true;
         slot.unlockedStages.Clear();
         slot.clearedStages.Clear();
         slot.perfectStages.Clear();
@@ -113,6 +113,7 @@ public static class SaveSystem
         if (slot == null)
             return;
 
+        slot.started = false;
         slot.unlockedStages.Clear();
         slot.clearedStages.Clear();
         slot.perfectStages.Clear();

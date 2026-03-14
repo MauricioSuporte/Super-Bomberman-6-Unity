@@ -20,7 +20,7 @@ public class StageIntroTransition : MonoBehaviour
 
     [Header("Stage Start SFX (Resources/Sounds)")]
     [SerializeField] private bool playStartSfxOnIntroEnd = true;
-    private readonly float startSfxVolume = 0.8f;
+    private readonly float startSfxVolume = 0.5f;
 
     [Header("Stage Intro")]
     public StageLabel stageLabel;
