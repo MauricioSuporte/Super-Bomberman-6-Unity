@@ -1,6 +1,5 @@
 ﻿using System.Collections;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 public abstract class EndStage : MonoBehaviour
 {
@@ -13,6 +12,10 @@ public abstract class EndStage : MonoBehaviour
     [Header("End Stage - Random Good SFX (Resources/Sounds)")]
     [SerializeField] private bool playRandomGoodSfx = true;
 
+    [Header("End Stage - Nightmare Bomber Override")]
+    [SerializeField] private bool playSkullForNightmareBomber = true;
+    [SerializeField] private float skullVolume = 1f;
+
     [Header("Unlock Mode")]
     [SerializeField] private bool manualUnlockOnly = false;
 
@@ -22,6 +25,7 @@ public abstract class EndStage : MonoBehaviour
 
     private static bool s_goodSfxPlayedThisStage;
     private static AudioClip[] s_goodClips;
+    private static AudioClip s_skullClip;
 
     protected bool isActivated;
     protected bool isUnlocked;
@@ -118,6 +122,14 @@ public abstract class EndStage : MonoBehaviour
         s_goodClips[2] = Resources.Load<AudioClip>("Sounds/good3");
     }
 
+    private static void EnsureSkullClipLoaded()
+    {
+        if (s_skullClip != null)
+            return;
+
+        s_skullClip = Resources.Load<AudioClip>("Sounds/skull");
+    }
+
     private float GetGoodClipVolume(int clipIndex)
     {
         return clipIndex switch
@@ -129,7 +141,7 @@ public abstract class EndStage : MonoBehaviour
         };
     }
 
-    private void PlayRandomGoodOnce(AudioSource audio)
+    private void PlayEndStageVoiceOnce(AudioSource audio, bool hasNightmareBomber)
     {
         if (!playRandomGoodSfx)
             return;
@@ -139,6 +151,18 @@ public abstract class EndStage : MonoBehaviour
 
         if (audio == null)
             return;
+
+        if (playSkullForNightmareBomber && hasNightmareBomber)
+        {
+            EnsureSkullClipLoaded();
+
+            if (s_skullClip != null)
+            {
+                s_goodSfxPlayedThisStage = true;
+                audio.PlayOneShot(s_skullClip, skullVolume);
+                return;
+            }
+        }
 
         EnsureGoodClipsLoaded();
 
@@ -166,6 +190,47 @@ public abstract class EndStage : MonoBehaviour
         audio.PlayOneShot(clip, volume);
     }
 
+    private bool HasAnyActiveNightmareBomber(MovementController[] players)
+    {
+        if (players == null || players.Length == 0)
+            return false;
+
+        PlayerPersistentStats.EnsureSessionBooted();
+
+        for (int i = 0; i < players.Length; i++)
+        {
+            MovementController movement = players[i];
+            if (movement == null)
+                continue;
+
+            if (!movement.CompareTag("Player"))
+                continue;
+
+            if (!movement.gameObject.activeInHierarchy)
+                continue;
+
+            if (movement.isDead || movement.IsEndingStage)
+                continue;
+
+            int playerId = 1;
+
+            if (movement.TryGetComponent<PlayerIdentity>(out var identity) && identity != null)
+                playerId = Mathf.Clamp(identity.playerId, 1, 4);
+
+            var state = PlayerPersistentStats.GetRuntime(playerId);
+            if (state == null)
+                state = PlayerPersistentStats.Get(playerId);
+
+            if (state == null)
+                continue;
+
+            if (state.Skin == BomberSkin.Nightmare)
+                return true;
+        }
+
+        return false;
+    }
+
     protected virtual void OnTriggerEnter2D(Collider2D other)
     {
         if (!CanTrigger(other))
@@ -181,6 +246,8 @@ public abstract class EndStage : MonoBehaviour
             FindObjectsInactive.Exclude,
             FindObjectsSortMode.None
         );
+
+        bool hasNightmareBomber = HasAnyActiveNightmareBomber(players);
 
         for (int i = 0; i < players.Length; i++)
         {
@@ -202,7 +269,7 @@ public abstract class EndStage : MonoBehaviour
 
         AudioSource audio = other.GetComponent<AudioSource>();
 
-        PlayRandomGoodOnce(audio);
+        PlayEndStageVoiceOnce(audio, hasNightmareBomber);
 
         if (audio != null && enterSfx != null)
             audio.PlayOneShot(enterSfx);
