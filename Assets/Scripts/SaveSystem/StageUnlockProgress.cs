@@ -108,6 +108,30 @@ public static class StageUnlockProgress
         return true;
     }
 
+    public static bool HasPerfectAllRegisteredStages()
+    {
+        var slot = SaveSystem.ActiveSlot;
+        if (slot == null)
+            return false;
+
+        EnsureDefaultUnlocked();
+
+        if (slot.stageOrder == null || slot.stageOrder.Count <= 0)
+            return false;
+
+        for (int i = 0; i < slot.stageOrder.Count; i++)
+        {
+            string sceneName = slot.stageOrder[i];
+            if (string.IsNullOrEmpty(sceneName))
+                continue;
+
+            if (!slot.perfectStages.Contains(sceneName))
+                return false;
+        }
+
+        return true;
+    }
+
     public static bool IsBossRushUnlocked()
     {
         return SaveSystem.Data.bossRushUnlocked;
@@ -305,22 +329,6 @@ public static class StageUnlockProgress
             SaveSystem.Save();
     }
 
-    public static void ResetProgress()
-    {
-        var slot = SaveSystem.ActiveSlot;
-        if (slot == null)
-            return;
-
-        slot.unlockedStages.Clear();
-        slot.clearedStages.Clear();
-        slot.perfectStages.Clear();
-        slot.stageOrder.Clear();
-        SaveSystem.Data.bossRushUnlocked = false;
-
-        EnsureDefaultUnlocked();
-        SaveSystem.Save();
-    }
-
     private static void EnsureDefaultUnlocked()
     {
         var slot = SaveSystem.ActiveSlot;
@@ -343,18 +351,21 @@ public static class StageUnlockProgress
 
     private static bool TryUnlockAllClearRewards()
     {
-        if (!HasClearedAllRegisteredStages())
-            return false;
-
         bool changed = false;
 
-        if (UnlockProgress.Unlock(BomberSkin.Orange))
-            changed = true;
+        if (HasClearedAllRegisteredStages())
+        {
+            if (UnlockProgress.Unlock(BomberSkin.Orange))
+                changed = true;
 
-        if (UnlockProgress.Unlock(BomberSkin.Purple))
-            changed = true;
+            if (UnlockProgress.Unlock(BomberSkin.Purple))
+                changed = true;
 
-        if (UnlockProgress.UnlockBossRush())
+            if (UnlockProgress.UnlockBossRush())
+                changed = true;
+        }
+
+        if (TryUnlockAllPerfectRewards())
             changed = true;
 
         if (changed)
@@ -362,6 +373,19 @@ public static class StageUnlockProgress
             for (int p = 1; p <= 4; p++)
                 PlayerPersistentStats.ClampSelectedSkinIfLocked(p);
         }
+
+        return changed;
+    }
+
+    private static bool TryUnlockAllPerfectRewards()
+    {
+        if (!HasPerfectAllRegisteredStages())
+            return false;
+
+        bool changed = false;
+
+        if (UnlockProgress.Unlock(BomberSkin.Gold))
+            changed = true;
 
         return changed;
     }

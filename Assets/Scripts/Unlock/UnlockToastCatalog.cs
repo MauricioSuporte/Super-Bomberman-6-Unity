@@ -92,6 +92,13 @@ public static class UnlockToastCatalog
                     "UI/Unlocks/Icons/NightmareBomber"
                 );
 
+            case BomberSkin.Gold:
+                return new ToastInfo(
+                    "Perfect As Gold",
+                    "Gold Bomber Unlocked",
+                    "UI/Unlocks/Icons/GoldBomber"
+                );
+
             default:
                 return new ToastInfo(
                     "New Character",
