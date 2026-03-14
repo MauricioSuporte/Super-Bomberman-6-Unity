@@ -6,7 +6,7 @@ public static class StageUnlockProgress
     {
         SaveSystem.Reload();
         EnsureDefaultUnlocked();
-        TryUnlockBossRush();
+        TryUnlockAllClearRewards();
     }
 
     public static void RegisterStageOrder(IEnumerable<string> orderedSceneNames)
@@ -35,7 +35,7 @@ public static class StageUnlockProgress
             slot.stageOrder = newOrder;
 
         EnsureDefaultUnlocked();
-        TryUnlockBossRush();
+        TryUnlockAllClearRewards();
         SaveSystem.Save();
     }
 
@@ -118,8 +118,7 @@ public static class StageUnlockProgress
         if (SaveSystem.Data.bossRushUnlocked)
             return;
 
-        SaveSystem.Data.bossRushUnlocked = true;
-        SaveSystem.Save();
+        UnlockProgress.UnlockBossRush();
     }
 
     public static void ResetBossRushUnlock()
@@ -209,10 +208,9 @@ public static class StageUnlockProgress
             changed = true;
         }
 
-        bool bossRushBefore = SaveSystem.Data.bossRushUnlocked;
-        TryUnlockBossRush();
+        bool rewardsChanged = TryUnlockAllClearRewards();
 
-        if (changed || SaveSystem.Data.bossRushUnlocked != bossRushBefore)
+        if (changed || rewardsChanged)
             SaveSystem.Save();
     }
 
@@ -251,10 +249,9 @@ public static class StageUnlockProgress
             changed = true;
         }
 
-        bool bossRushBefore = SaveSystem.Data.bossRushUnlocked;
-        TryUnlockBossRush();
+        bool rewardsChanged = TryUnlockAllClearRewards();
 
-        if (changed || SaveSystem.Data.bossRushUnlocked != bossRushBefore)
+        if (changed || rewardsChanged)
             SaveSystem.Save();
     }
 
@@ -302,10 +299,9 @@ public static class StageUnlockProgress
             }
         }
 
-        bool bossRushBefore = SaveSystem.Data.bossRushUnlocked;
-        TryUnlockBossRush();
+        bool rewardsChanged = TryUnlockAllClearRewards();
 
-        if (changed || SaveSystem.Data.bossRushUnlocked != bossRushBefore)
+        if (changed || rewardsChanged)
             SaveSystem.Save();
     }
 
@@ -345,13 +341,29 @@ public static class StageUnlockProgress
         slot.unlockedStages.Add(firstStage);
     }
 
-    private static void TryUnlockBossRush()
+    private static bool TryUnlockAllClearRewards()
     {
-        if (SaveSystem.Data.bossRushUnlocked)
-            return;
+        if (!HasClearedAllRegisteredStages())
+            return false;
 
-        if (HasClearedAllRegisteredStages())
-            SaveSystem.Data.bossRushUnlocked = true;
+        bool changed = false;
+
+        if (UnlockProgress.Unlock(BomberSkin.Orange))
+            changed = true;
+
+        if (UnlockProgress.Unlock(BomberSkin.Purple))
+            changed = true;
+
+        if (UnlockProgress.UnlockBossRush())
+            changed = true;
+
+        if (changed)
+        {
+            for (int p = 1; p <= 4; p++)
+                PlayerPersistentStats.ClampSelectedSkinIfLocked(p);
+        }
+
+        return changed;
     }
 
     private static string Normalize(string sceneName)

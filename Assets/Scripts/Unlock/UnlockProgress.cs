@@ -69,37 +69,6 @@ public static class UnlockProgress
         return true;
     }
 
-    public static void ResetProgress()
-    {
-        SaveSystem.Data.unlockedSkins.Clear();
-        SaveSystem.Data.bossRushUnlocked = false;
-
-        BomberSkin[] defaults =
-        {
-            BomberSkin.White,
-            BomberSkin.Black,
-            BomberSkin.Blue,
-            BomberSkin.Red,
-            BomberSkin.Yellow,
-            BomberSkin.Green,
-            BomberSkin.Aqua,
-            BomberSkin.Pink,
-        };
-
-        for (int i = 0; i < defaults.Length; i++)
-        {
-            string name = defaults[i].ToString();
-            if (!SaveSystem.Data.unlockedSkins.Contains(name))
-                SaveSystem.Data.unlockedSkins.Add(name);
-        }
-
-        for (int p = 1; p <= 4; p++)
-            PlayerPersistentStats.ClampSelectedSkinIfLocked(p);
-
-        SaveSystem.Save();
-        SLog("ResetProgress completed");
-    }
-
     public static BomberSkin GetFallbackUnlockedSkin(BomberSkin preferredFallback = BomberSkin.White)
     {
         if (IsUnlocked(preferredFallback))

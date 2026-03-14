@@ -8,6 +8,9 @@ public class GlobalUnlockController : MonoBehaviour
 
     private AudioClip lifeUpSfx;
     private int konamiStep;
+    private float lastUnlockSfxRealtime = -999f;
+
+    [SerializeField] private float unlockSfxDebounceSeconds = 0.20f;
 
     private enum KonamiToken
     {
@@ -60,9 +63,28 @@ public class GlobalUnlockController : MonoBehaviour
         UnlockProgress.ReloadFromDisk();
         lifeUpSfx = Resources.Load<AudioClip>(LifeUpResourcesPath);
 
-        SLog($"Awake | SaveFileExists={UnlockProgress.SaveFileExists()} | OrangeUnlocked={UnlockProgress.IsUnlocked(BomberSkin.Orange)} | PurpleUnlocked={UnlockProgress.IsUnlocked(BomberSkin.Purple)} | BossRushUnlocked={UnlockProgress.IsBossRushUnlocked()} | lifeUpLoaded={(lifeUpSfx != null)}");
+        SLog($"Awake | SaveFileExists={UnlockProgress.SaveFileExists()} | GrayUnlocked={UnlockProgress.IsUnlocked(BomberSkin.Gray)} | OrangeUnlocked={UnlockProgress.IsUnlocked(BomberSkin.Orange)} | PurpleUnlocked={UnlockProgress.IsUnlocked(BomberSkin.Purple)} | BossRushUnlocked={UnlockProgress.IsBossRushUnlocked()} | lifeUpLoaded={(lifeUpSfx != null)}");
 
         UnlockToastPresenter.EnsureInScene();
+    }
+
+    private void OnEnable()
+    {
+        UnlockProgress.OnSkinUnlocked -= HandleSkinUnlocked;
+        UnlockProgress.OnSkinUnlocked += HandleSkinUnlocked;
+
+        UnlockProgress.OnBossRushUnlocked -= HandleBossRushUnlocked;
+        UnlockProgress.OnBossRushUnlocked += HandleBossRushUnlocked;
+
+        SLog("OnEnable | unlock listeners registered");
+    }
+
+    private void OnDisable()
+    {
+        UnlockProgress.OnSkinUnlocked -= HandleSkinUnlocked;
+        UnlockProgress.OnBossRushUnlocked -= HandleBossRushUnlocked;
+
+        SLog("OnDisable | unlock listeners removed");
     }
 
     private void Update()
@@ -96,30 +118,49 @@ public class GlobalUnlockController : MonoBehaviour
 
         if (AdvanceKonami(pressed))
         {
-            SLog("Konami sequence completed | attempting multi unlock test");
+            SLog("Konami sequence completed | attempting Gray Bomber unlock");
 
-            bool unlockedOrange = UnlockProgress.Unlock(BomberSkin.Orange);
-            bool unlockedPurple = UnlockProgress.Unlock(BomberSkin.Purple);
-            bool unlockedBossRush = UnlockProgress.UnlockBossRush();
+            bool unlockedGray = UnlockProgress.Unlock(BomberSkin.Gray);
 
-            SLog($"Multi unlock results | Orange={unlockedOrange} | Purple={unlockedPurple} | BossRush={unlockedBossRush}");
+            SLog($"Gray unlock result | Gray={unlockedGray}");
 
-            if (unlockedOrange || unlockedPurple)
+            if (unlockedGray)
             {
                 for (int p = 1; p <= 4; p++)
                     PlayerPersistentStats.ClampSelectedSkinIfLocked(p);
             }
-
-            if (unlockedOrange || unlockedPurple || unlockedBossRush)
-            {
-                SLog("At least one unlock succeeded | playing unlock sfx");
-                PlayUnlockSfx();
-            }
             else
             {
-                SLog("No unlock occurred. Most likely everything was already unlocked.");
+                SLog("Gray Bomber already unlocked");
             }
         }
+    }
+
+    private void HandleSkinUnlocked(BomberSkin skin)
+    {
+        SLog($"HandleSkinUnlocked | skin={skin}");
+        TryPlayUnlockSfx();
+    }
+
+    private void HandleBossRushUnlocked()
+    {
+        SLog("HandleBossRushUnlocked");
+        TryPlayUnlockSfx();
+    }
+
+    private void TryPlayUnlockSfx()
+    {
+        float now = Time.unscaledTime;
+
+        if (now - lastUnlockSfxRealtime < unlockSfxDebounceSeconds)
+        {
+            SLog($"TryPlayUnlockSfx skipped by debounce | elapsed={(now - lastUnlockSfxRealtime):0.000} | debounce={unlockSfxDebounceSeconds:0.000}");
+            return;
+        }
+
+        lastUnlockSfxRealtime = now;
+        SLog("TryPlayUnlockSfx accepted");
+        PlayUnlockSfx();
     }
 
     private KonamiToken ReadKonamiTokenThisFrame(bool upDown, bool downDown, bool leftDown, bool rightDown, bool bDown, bool aDown)
