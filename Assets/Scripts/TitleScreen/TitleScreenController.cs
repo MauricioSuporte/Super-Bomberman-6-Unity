@@ -40,6 +40,14 @@ public class TitleScreenController : MonoBehaviour
     [SerializeField] AudioClip deniedOptionSfx;
     [SerializeField, Range(0f, 1f)] float deniedOptionVolume = 1f;
 
+    [Header("Reset Save SFX")]
+    [SerializeField] AudioClip resetSaveCompletedSfx;
+    [SerializeField, Range(0f, 1f)] float resetSaveCompletedVolume = 1f;
+
+    [Header("Reset Save Message")]
+    [SerializeField] string resetSaveCompletedMessage = "SAVE DATA ERASED";
+    [SerializeField] float resetSaveCompletedShowSeconds = 2f;
+
     [Header("UI / Title")]
     public RawImage titleScreenRawImage;
 
@@ -180,7 +188,6 @@ public class TitleScreenController : MonoBehaviour
     const int MAIN_IDX_NORMAL = 0;
     const int MAIN_IDX_BOSS_RUSH = 1;
     const int MAIN_IDX_OPTIONS = 2;
-    const int MAIN_IDX_EXIT = 3;
 
     const int OPTIONS_IDX_CONTROLS = 0;
     const int OPTIONS_IDX_VIDEO = 1;
@@ -189,9 +196,9 @@ public class TitleScreenController : MonoBehaviour
     const int VIDEO_IDX_FULLSCREEN = 0;
     const int VIDEO_IDX_WINDOWSIZE = 1;
 
-    const int RESET_SAVE_IDX_CONFIRM = 0;
-    const int RESET_SAVE_IDX_CANCEL = 1;
-    const int RESET_SAVE_SELECTABLE_LINE_START = 5;
+    const int RESET_SAVE_IDX_CANCEL = 0;
+    const int RESET_SAVE_IDX_CONFIRM = 1;
+    const int RESET_SAVE_SELECTABLE_LINE_START = 6;
 
     int menuIndex;
     bool locked;
@@ -1429,16 +1436,9 @@ public class TitleScreenController : MonoBehaviour
 
                 if (menuMode == MenuMode.ResetSaveConfirm)
                 {
-                    locked = true;
-                    PlaySelectSfx();
-
-                    if (cursorRenderer != null)
-                        yield return cursorRenderer.PlayCycles(2);
-
-                    if (menuIndex == RESET_SAVE_IDX_CONFIRM)
+                    if (menuIndex == RESET_SAVE_IDX_CANCEL)
                     {
-                        ResetEntireSaveFile();
-                        forceBossRushUnlocked = bossRushInspectorDefaultUnlocked;
+                        PlayBackSfx();
 
                         menuMode = MenuMode.Options;
                         menuIndex = OPTIONS_IDX_RESET_SAVE;
@@ -1455,13 +1455,29 @@ public class TitleScreenController : MonoBehaviour
                         continue;
                     }
 
+                    locked = true;
+                    PlaySelectSfx();
+
+                    if (cursorRenderer != null)
+                        yield return cursorRenderer.PlayCycles(2);
+
+                    ResetEntireSaveFile();
+                    forceBossRushUnlocked = bossRushInspectorDefaultUnlocked;
+
+                    PlayResetSaveCompletedSfx();
+
                     menuMode = MenuMode.Options;
                     menuIndex = OPTIONS_IDX_RESET_SAVE;
                     locked = false;
 
                     HideFooterMessageImmediate();
-                    HideBossRushLockedMessageImmediate();
                     RefreshMenuText();
+
+                    ShowBossRushLockedMessage(
+                        resetSaveCompletedMessage,
+                        bossRushLockedMessageHex,
+                        resetSaveCompletedShowSeconds
+                    );
 
                     while (AnyPlayerHeld(PlayerAction.Start) || AnyPlayerHeld(PlayerAction.ActionA))
                         yield return null;
@@ -1562,6 +1578,12 @@ public class TitleScreenController : MonoBehaviour
     {
         RefreshMenuTextInternal();
         UpdateCursorPosition();
+
+        if (menuMode == MenuMode.ResetSaveConfirm)
+            StopPushStartBlink();
+        else if (Running && pushStartRoutine == null)
+            StartPushStartBlink();
+
         UpdatePushStartPosition();
         UpdateFooterPosition();
         UpdateBossRushLockedPosition();
@@ -1636,26 +1658,29 @@ public class TitleScreenController : MonoBehaviour
 
         if (menuMode == MenuMode.ResetSaveConfirm)
         {
-            string l1 = $"<color={warnRgb}>THIS WILL ERASE:</color>";
-            string l2 = $"<color=#{baseRgb}FF>ALL 3 SAVE SLOTS</color>";
-            string l3 = $"<color=#{baseRgb}FF>UNLOCKED SKINS / MODES</color>";
-            string l4 = $"<color=#{baseRgb}FF>TIME RECORDS / SETTINGS</color>";
-            string l5 = $"<color=#{baseRgb}FF>ARE YOU SURE?</color>";
-            string confirm = $"<color={warnRgb}>RESET SAVE</color>";
+            string l2 = $"<color={warnRgb}>THIS WILL ERASE:</color>";
+            string l3 = $"<color={pushStartHex}>ALL NORMAL GAME SAVES</color>";
+            string l4 = $"<color={pushStartHex}>UNLOCKED SKINS / MODES</color>";
+            string l5 = $"<color={pushStartHex}>BOSS RUSH RECORDS</color>";
+            string l6 = $"<color={pushStartHex}>CONTROLS</color>";
             string cancel = $"<color=#{baseRgb}FF>CANCEL</color>";
+            string confirm = $"<color={warnRgb}>RESET SAVE</color>";
 
             menuText.text =
                 "<align=left>" +
-                $"<size={size}>{l1}</size>\n" +
                 $"<size={size}>{l2}</size>\n" +
                 $"<size={size}>{l3}</size>\n" +
                 $"<size={size}>{l4}</size>\n" +
                 $"<size={size}>{l5}</size>\n" +
-                $"<size={size}>{confirm}</size>\n" +
-                $"<size={size}>{cancel}</size>" +
+                $"<size={size}>{l6}</size>\n" +
+                "\n" +
+                $"<size={size}>{cancel}</size>\n" +
+                $"<size={size}>{confirm}</size>" +
                 "</align>";
 
-            if (videoValuesText != null) videoValuesText.gameObject.SetActive(false);
+            if (videoValuesText != null)
+                videoValuesText.gameObject.SetActive(false);
+
             return;
         }
 
@@ -1687,6 +1712,12 @@ public class TitleScreenController : MonoBehaviour
         if (pushStartText == null)
             return;
 
+        if (menuMode == MenuMode.ResetSaveConfirm)
+        {
+            pushStartText.gameObject.SetActive(false);
+            return;
+        }
+
         StopPushStartBlink();
 
         pushStartVisible = true;
@@ -1714,6 +1745,15 @@ public class TitleScreenController : MonoBehaviour
 
         while (Running)
         {
+            if (menuMode == MenuMode.ResetSaveConfirm)
+            {
+                if (pushStartText != null)
+                    pushStartText.gameObject.SetActive(false);
+
+                pushStartRoutine = null;
+                yield break;
+            }
+
             pushStartVisible = !pushStartVisible;
 
             if (pushStartText != null)
@@ -1721,6 +1761,8 @@ public class TitleScreenController : MonoBehaviour
 
             yield return wait;
         }
+
+        pushStartRoutine = null;
     }
 
     void UpdatePushStartPosition()
@@ -1802,6 +1844,41 @@ public class TitleScreenController : MonoBehaviour
         float t = Mathf.Max(0.05f, seconds);
         yield return new WaitForSecondsRealtime(t);
         HideBossRushLockedMessageImmediate();
+    }
+
+    void PlayResetSaveCompletedSfx()
+    {
+        if (resetSaveCompletedSfx == null || GameMusicController.Instance == null)
+            return;
+
+        GameMusicController.Instance.PlaySfx(resetSaveCompletedSfx, resetSaveCompletedVolume);
+    }
+
+    void ShowFooterMessage(string msg, string hex, float seconds)
+    {
+        EnsureFooterText();
+        if (footerText == null)
+            return;
+
+        if (footerRoutine != null)
+        {
+            StopCoroutine(footerRoutine);
+            footerRoutine = null;
+        }
+
+        footerText.fontSize = FooterFontSizeScaled;
+        footerText.text = $"<color={hex}>{msg}</color>";
+        footerText.gameObject.SetActive(true);
+        UpdateFooterPosition();
+
+        footerRoutine = StartCoroutine(FooterMessageRoutine(seconds));
+    }
+
+    IEnumerator FooterMessageRoutine(float seconds)
+    {
+        float t = Mathf.Max(0.05f, seconds);
+        yield return new WaitForSecondsRealtime(t);
+        HideFooterMessageImmediate();
     }
 
     void HideFooterMessageImmediate()

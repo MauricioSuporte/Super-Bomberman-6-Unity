@@ -1689,6 +1689,10 @@ MonoBehaviour:
   backOptionVolume: 1
   deniedOptionSfx: {fileID: 8300000, guid: 2f98cb783cdc9bb4d8ff3b868291f743, type: 3}
   deniedOptionVolume: 1
+  resetSaveCompletedSfx: {fileID: 8300000, guid: 19e972fda0569ce48901fd1e9d453520, type: 3}
+  resetSaveCompletedVolume: 1
+  resetSaveCompletedMessage: SAVE DATA ERASED
+  resetSaveCompletedShowSeconds: 2
   titleScreenRawImage: {fileID: 362350263}
   titleScreenSprite: {fileID: 21300000, guid: 7405f44018067d94aaa2264833063c44, type: 3}
   menuText: {fileID: 1287610048}
