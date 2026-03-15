@@ -2,8 +2,11 @@
 using System.IO;
 using TMPro;
 using UnityEngine;
+using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.EnhancedTouch;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using Touch = UnityEngine.InputSystem.EnhancedTouch.Touch;
 
 public class TitleScreenController : MonoBehaviour
 {
@@ -157,6 +160,10 @@ public class TitleScreenController : MonoBehaviour
     [Header("Controls Scene")]
     [SerializeField] string controlsSceneName = "ControlsMenu";
 
+    [Header("Mouse / Touch")]
+    [SerializeField] bool allowMouseInteraction = true;
+    [SerializeField] bool allowRightClickBack = true;
+
     public bool ControlsRequested { get; private set; }
     public bool Running { get; private set; }
     public bool NormalGameRequested { get; private set; }
@@ -180,6 +187,14 @@ public class TitleScreenController : MonoBehaviour
         None = 0,
         Normal = 1,
         BossRush = 2
+    }
+
+    struct PointerState
+    {
+        public bool valid;
+        public Vector2 screenPosition;
+        public bool pressedThisFrame;
+        public bool secondaryPressedThisFrame;
     }
 
     MenuMode menuMode = MenuMode.Main;
@@ -298,7 +313,14 @@ public class TitleScreenController : MonoBehaviour
 
     void OnEnable()
     {
+        EnhancedTouchSupport.Enable();
         RequestStabilizedLayoutRefresh("OnEnable");
+    }
+
+    void OnDisable()
+    {
+        if (EnhancedTouchSupport.enabled)
+            EnhancedTouchSupport.Disable();
     }
 
     void Start()
@@ -1095,6 +1117,144 @@ public class TitleScreenController : MonoBehaviour
                AnyPlayerHeld(PlayerAction.MoveRight);
     }
 
+    PointerState GetPointerState()
+    {
+        PointerState state = default;
+
+        if (!allowMouseInteraction)
+            return state;
+
+        if (Touchscreen.current != null)
+        {
+            var touches = Touchscreen.current.touches;
+            for (int i = 0; i < touches.Count; i++)
+            {
+                var touch = touches[i];
+                if (!touch.press.isPressed && !touch.press.wasPressedThisFrame)
+                    continue;
+
+                state.valid = true;
+                state.screenPosition = touch.position.ReadValue();
+                state.pressedThisFrame = touch.press.wasPressedThisFrame;
+                state.secondaryPressedThisFrame = false;
+                return state;
+            }
+        }
+
+        if (Mouse.current != null)
+        {
+            state.valid = true;
+            state.screenPosition = Mouse.current.position.ReadValue();
+            state.pressedThisFrame = Mouse.current.leftButton.wasPressedThisFrame;
+            state.secondaryPressedThisFrame = allowRightClickBack && Mouse.current.rightButton.wasPressedThisFrame;
+            return state;
+        }
+
+        return state;
+    }
+
+    bool TryGetPointerHoveredMenuIndex(Vector2 screenPosition, out int hoveredIndex)
+    {
+        hoveredIndex = -1;
+
+        if (menuText == null)
+            return false;
+
+        RectTransform textRect = menuText.rectTransform;
+        Canvas canvas = GetRootCanvas();
+        Camera cam = null;
+
+        if (canvas != null && canvas.renderMode != RenderMode.ScreenSpaceOverlay)
+            cam = canvas.worldCamera != null ? canvas.worldCamera : Camera.main;
+
+        if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(textRect, screenPosition, cam, out Vector2 localPoint))
+            return false;
+
+        menuText.ForceMeshUpdate();
+        TMP_TextInfo ti = menuText.textInfo;
+        if (ti == null || ti.lineCount <= 0)
+            return false;
+
+        int firstSelectableLine = 0;
+        int selectableCount = GetMenuItemCount();
+
+        if (menuMode == MenuMode.ResetSaveConfirm)
+            firstSelectableLine = RESET_SAVE_SELECTABLE_LINE_START;
+
+        float padX = ScaledFloat(24f);
+        float padY = ScaledFloat(8f);
+
+        for (int i = 0; i < selectableCount; i++)
+        {
+            int lineIndex = firstSelectableLine + i;
+            if (lineIndex < 0 || lineIndex >= ti.lineCount)
+                continue;
+
+            TMP_LineInfo li = ti.lineInfo[lineIndex];
+
+            float top = li.ascender + padY;
+            float bottom = li.descender - padY;
+            float left = li.lineExtents.min.x - padX;
+            float right = li.lineExtents.max.x + padX;
+
+            if (menuMode == MenuMode.Video)
+                right += Mathf.Max(40f, ScaledFloat(videoValuesRightPadding + 40f));
+
+            if (localPoint.x >= left && localPoint.x <= right &&
+                localPoint.y >= bottom && localPoint.y <= top)
+            {
+                hoveredIndex = i;
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    bool TryHandlePointerHover()
+    {
+        PointerState pointer = GetPointerState();
+        if (!pointer.valid)
+            return false;
+
+        if (!TryGetPointerHoveredMenuIndex(pointer.screenPosition, out int hovered))
+            return false;
+
+        if (hovered == menuIndex)
+            return false;
+
+        menuIndex = hovered;
+        PlayMoveSfx();
+        HideFooterMessageImmediate();
+        HideBossRushLockedMessageImmediate();
+        RefreshMenuText();
+        return true;
+    }
+
+    bool IsPointerConfirmPressedOnCurrentSelection()
+    {
+        PointerState pointer = GetPointerState();
+        if (!pointer.valid || !pointer.pressedThisFrame)
+            return false;
+
+        if (!TryGetPointerHoveredMenuIndex(pointer.screenPosition, out int hovered))
+            return false;
+
+        if (hovered != menuIndex)
+        {
+            menuIndex = hovered;
+            RefreshMenuText();
+        }
+
+        return true;
+    }
+
+    bool IsPointerBackPressed()
+    {
+        PointerState pointer = GetPointerState();
+        return pointer.valid && pointer.secondaryPressedThisFrame;
+    }
+
     public IEnumerator Play(Image fadeToHideOptional)
     {
         EnsureBootSession();
@@ -1148,6 +1308,8 @@ public class TitleScreenController : MonoBehaviour
         {
             int itemCount = GetMenuItemCount();
 
+            TryHandlePointerHover();
+
             if (TryGetAnyPlayerDown(PlayerAction.MoveUp, out _))
             {
                 menuIndex = Wrap(menuIndex - 1, itemCount);
@@ -1166,8 +1328,15 @@ public class TitleScreenController : MonoBehaviour
                 RefreshMenuText();
             }
 
-            if ((menuMode == MenuMode.PlayerCount || menuMode == MenuMode.Options || menuMode == MenuMode.Video || menuMode == MenuMode.ResetSaveConfirm) &&
-                TryGetAnyPlayerDown(PlayerAction.ActionB, out _))
+            bool backPressedByPad =
+                (menuMode == MenuMode.PlayerCount || menuMode == MenuMode.Options || menuMode == MenuMode.Video || menuMode == MenuMode.ResetSaveConfirm) &&
+                TryGetAnyPlayerDown(PlayerAction.ActionB, out _);
+
+            bool backPressedByMouse =
+                (menuMode == MenuMode.PlayerCount || menuMode == MenuMode.Options || menuMode == MenuMode.Video || menuMode == MenuMode.ResetSaveConfirm) &&
+                IsPointerBackPressed();
+
+            if (backPressedByPad || backPressedByMouse)
             {
                 PlayBackSfx();
 
@@ -1208,7 +1377,7 @@ public class TitleScreenController : MonoBehaviour
             {
                 bool left = TryGetAnyPlayerDown(PlayerAction.MoveLeft, out _);
                 bool right = TryGetAnyPlayerDown(PlayerAction.MoveRight, out _);
-                bool confirm = TryGetAnyPlayerDownEither(PlayerAction.Start, PlayerAction.ActionA, out _);
+                bool confirm = TryGetAnyPlayerDownEither(PlayerAction.Start, PlayerAction.ActionA, out _) || IsPointerConfirmPressedOnCurrentSelection();
 
                 if (left || right || confirm)
                 {
@@ -1273,7 +1442,10 @@ public class TitleScreenController : MonoBehaviour
                 continue;
             }
 
-            if (TryGetAnyPlayerDownEither(PlayerAction.Start, PlayerAction.ActionA, out _))
+            bool confirmByPad = TryGetAnyPlayerDownEither(PlayerAction.Start, PlayerAction.ActionA, out _);
+            bool confirmByMouse = IsPointerConfirmPressedOnCurrentSelection();
+
+            if (confirmByPad || confirmByMouse)
             {
                 if (menuMode == MenuMode.Main)
                 {
