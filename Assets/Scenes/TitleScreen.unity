@@ -1694,9 +1694,9 @@ MonoBehaviour:
   menuText: {fileID: 1287610048}
   referenceRect: {fileID: 1599199474}
   layoutRoot: {fileID: 1599199474}
-  menuAnchoredPos: {x: -91.2, y: 60}
-  menuFontSize: 46
-  menuExtraYOffset: -180
+  menuAnchoredPos: {x: 100, y: 60}
+  menuFontSize: 36
+  menuExtraYOffset: -40
   pushStartExtraYOffset: 0
   forceMenuCenterX: 0
   dynamicScale: 1
@@ -1734,7 +1734,7 @@ MonoBehaviour:
   pushStartText: {fileID: 0}
   pushStartLabel: PUSH START BUTTON
   pushStartHex: '#FFA621'
-  pushStartFontSize: 46
+  pushStartFontSize: 36
   pushStartBlinkInterval: 1
   pushStartYOffset: 18
   footerText: {fileID: 0}
