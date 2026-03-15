@@ -444,7 +444,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 362350262}
-  - component: {fileID: 362350264}
   - component: {fileID: 362350261}
   - component: {fileID: 362350263}
   - component: {fileID: 362350265}
@@ -474,8 +473,7 @@ RectTransform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 1287610047}
+  m_Children: []
   m_Father: {fileID: 1599199474}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -510,87 +508,6 @@ MonoBehaviour:
     y: 0
     width: 1
     height: 1
---- !u!114 &362350264
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 362350259}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4d2807c5c57c72e4a8a52390ba37be9a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::TitleScreenController
-  moveOptionSfx: {fileID: 8300000, guid: 9095599de31cf8543bb7e82ff2782f12, type: 3}
-  moveOptionVolume: 1
-  selectOptionSfx: {fileID: 8300000, guid: f4ca5a046054f404aa2ac2df051e75c0, type: 3}
-  selectOptionVolume: 1
-  backOptionSfx: {fileID: 8300000, guid: 30ca55f720379e64ab9b908db035db4c, type: 3}
-  backOptionVolume: 1
-  deniedOptionSfx: {fileID: 8300000, guid: 2f98cb783cdc9bb4d8ff3b868291f743, type: 3}
-  deniedOptionVolume: 1
-  titleScreenRawImage: {fileID: 362350263}
-  titleScreenSprite: {fileID: 21300000, guid: 7405f44018067d94aaa2264833063c44, type: 3}
-  menuText: {fileID: 1287610048}
-  menuAnchoredPos: {x: -91.2, y: 60}
-  menuFontSize: 46
-  menuExtraYOffset: -180
-  pushStartExtraYOffset: 0
-  forceMenuCenterX: 0
-  dynamicScale: 1
-  referenceWidth: 256
-  referenceHeight: 224
-  useIntegerUpscale: 1
-  designUpscale: 4
-  extraScaleMultiplier: 1
-  minScale: 0.5
-  maxScale: 10
-  forceBold: 1
-  outlineColor: {r: 0, g: 0, b: 0, a: 1}
-  outlineWidth: 0.35
-  outlineSoftness: 0.05
-  faceDilate: 0.18
-  faceSoftness: 0.02
-  enableUnderlay: 0
-  underlayColor: {r: 0, g: 0, b: 0, a: 1}
-  underlayDilate: 0.05
-  underlaySoftness: 0.2
-  underlayOffsetX: 0
-  underlayOffsetY: -0.2
-  allowVideoMenu: 1
-  defaultFullscreen: 1
-  defaultWindowSizeMultiplier: 4
-  windowSizeMultipliers: 02000000030000000400000005000000060000000700000008000000
-  videoValuesText: {fileID: 0}
-  videoValuesRightPadding: 100
-  titleMusic: {fileID: 8300000, guid: c4def1af64d2e154f8c8cbd7a0472a10, type: 3}
-  titleMusicVolume: 1
-  exitDelayRealtime: 1
-  startGameFadeOutDuration: 0.25
-  cursorRenderer: {fileID: 544397349}
-  cursorOffset: {x: -28, y: 5}
-  cursorAsChildOfMenuText: 1
-  scaleCursorWithUi: 1
-  pushStartText: {fileID: 0}
-  pushStartLabel: PUSH START BUTTON
-  pushStartHex: '#FFA621'
-  pushStartFontSize: 46
-  pushStartBlinkInterval: 1
-  pushStartYOffset: 18
-  footerText: {fileID: 0}
-  footerFontSize: 36
-  footerOffsetFromLastLineY: -40
-  footerShowSeconds: 2
-  forceBossRushUnlocked: 0
-  bossRushLockedAlpha: 0.35
-  bossRushLockedMessage: UNLOCKED BY CLEARING ALL STAGES
-  bossRushLockedMessageHex: '#FF3B30'
-  bossRushLockedText: {fileID: 0}
-  bossRushLockedFontSize: 34
-  bossRushLockedBottomMargin: 30
-  bossRushLockedShowSeconds: 2
-  controlsSceneName: ControlsMenu
 --- !u!114 &362350265
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -717,16 +634,16 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 544397348}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 0.5, y: 0.5, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 1287610047}
+  m_Father: {fileID: 1599199474}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 150, y: -25}
+  m_AnchoredPosition: {x: 1010, y: -480}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 1, y: 0.5}
 --- !u!1 &556523581
@@ -1081,18 +998,17 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1287610046}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 544397352}
-  m_Father: {fileID: 362350262}
+  m_Children: []
+  m_Father: {fileID: 1599199474}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 60}
-  m_SizeDelta: {x: 200, y: 50}
+  m_SizeDelta: {x: 520, y: 260}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1287610048
 MonoBehaviour:
@@ -1361,7 +1277,7 @@ MonoBehaviour:
   hudsonLogoIntro: {fileID: 336813438}
   hudsonBackgroundImage: {fileID: 676188641}
   showHudsonBackground: 1
-  titleScreen: {fileID: 362350264}
+  titleScreen: {fileID: 1724740267}
   skinSelectSceneName: SkinSelect
   bossRushSceneName: BossRush
   fadeOpenBeforeHudsonSeconds: 0.2
@@ -1654,6 +1570,9 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 362350262}
+  - {fileID: 1287610047}
+  - {fileID: 544397352}
+  - {fileID: 1724740266}
   - {fileID: 1601403390}
   m_Father: {fileID: 1389130176}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -1671,9 +1590,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 1599199473}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a01596bb412f1f8488c94e655d298436, type: 3}
+  m_Script: {fileID: 11500000, guid: 48296a0c1d96c7a47a88238d5bb11325, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::UICameraViewportFitter
+  m_EditorClassIdentifier: Assembly-CSharp::UICameraViewportFitterPixelRect
   targetCamera: {fileID: 1520869091}
 --- !u!1 &1601403389
 GameObject:
@@ -1711,6 +1630,134 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!1 &1724740265
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1724740266}
+  - component: {fileID: 1724740268}
+  - component: {fileID: 1724740267}
+  m_Layer: 5
+  m_Name: TitleScreenLogic
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &1724740266
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1724740265}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1599199474}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 100, y: 100}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &1724740267
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1724740265}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4d2807c5c57c72e4a8a52390ba37be9a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TitleScreenController
+  enableSurgicalLogs: 1
+  menuBoxSize: {x: 520, y: 260}
+  moveOptionSfx: {fileID: 8300000, guid: 9095599de31cf8543bb7e82ff2782f12, type: 3}
+  moveOptionVolume: 1
+  selectOptionSfx: {fileID: 8300000, guid: f4ca5a046054f404aa2ac2df051e75c0, type: 3}
+  selectOptionVolume: 1
+  backOptionSfx: {fileID: 8300000, guid: 30ca55f720379e64ab9b908db035db4c, type: 3}
+  backOptionVolume: 1
+  deniedOptionSfx: {fileID: 8300000, guid: 2f98cb783cdc9bb4d8ff3b868291f743, type: 3}
+  deniedOptionVolume: 1
+  titleScreenRawImage: {fileID: 362350263}
+  titleScreenSprite: {fileID: 21300000, guid: 7405f44018067d94aaa2264833063c44, type: 3}
+  menuText: {fileID: 1287610048}
+  referenceRect: {fileID: 1599199474}
+  layoutRoot: {fileID: 1599199474}
+  menuAnchoredPos: {x: -91.2, y: 60}
+  menuFontSize: 46
+  menuExtraYOffset: -180
+  pushStartExtraYOffset: 0
+  forceMenuCenterX: 0
+  dynamicScale: 1
+  referenceWidth: 256
+  referenceHeight: 224
+  designUpscale: 4
+  extraScaleMultiplier: 1
+  minScale: 0.5
+  maxScale: 10
+  forceBold: 1
+  outlineColor: {r: 0, g: 0, b: 0, a: 1}
+  outlineWidth: 0.35
+  outlineSoftness: 0.05
+  faceDilate: 0.18
+  faceSoftness: 0.02
+  enableUnderlay: 0
+  underlayColor: {r: 0, g: 0, b: 0, a: 1}
+  underlayDilate: 0.05
+  underlaySoftness: 0.2
+  underlayOffsetX: 0
+  underlayOffsetY: -0.2
+  allowVideoMenu: 1
+  defaultFullscreen: 1
+  defaultWindowSizeMultiplier: 4
+  windowSizeMultipliers: 02000000030000000400000005000000060000000700000008000000
+  videoValuesText: {fileID: 0}
+  videoValuesRightPadding: 100
+  titleMusic: {fileID: 8300000, guid: c4def1af64d2e154f8c8cbd7a0472a10, type: 3}
+  titleMusicVolume: 1
+  exitDelayRealtime: 1
+  startGameFadeOutDuration: 0.25
+  cursorRenderer: {fileID: 544397349}
+  cursorOffset: {x: -28, y: 5}
+  scaleCursorWithUi: 1
+  pushStartText: {fileID: 0}
+  pushStartLabel: PUSH START BUTTON
+  pushStartHex: '#FFA621'
+  pushStartFontSize: 46
+  pushStartBlinkInterval: 1
+  pushStartYOffset: 18
+  footerText: {fileID: 0}
+  footerFontSize: 36
+  footerOffsetFromLastLineY: -40
+  footerShowSeconds: 2
+  forceBossRushUnlocked: 0
+  bossRushLockedAlpha: 0.35
+  bossRushLockedMessage: UNLOCKED BY CLEARING ALL STAGES
+  bossRushLockedMessageHex: '#FF3B30'
+  bossRushLockedText: {fileID: 0}
+  bossRushLockedFontSize: 34
+  bossRushLockedBottomMargin: 30
+  bossRushLockedShowSeconds: 2
+  controlsSceneName: ControlsMenu
+--- !u!222 &1724740268
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1724740265}
+  m_CullTransparentMesh: 1
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
