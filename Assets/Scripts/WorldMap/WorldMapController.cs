@@ -190,6 +190,7 @@ public class WorldMapController : MonoBehaviour
             cursorMovementArea = transform as RectTransform;
 
         RegisterStageOrderInProgress();
+        ApplyUnlockedStagesFromProgress();
 
         currentWorldIndex = GetInitialWorldIndexFromProgress(out int initialNodeIndex);
         ApplyCurrentWorldCameraPosition();
@@ -200,8 +201,6 @@ public class WorldMapController : MonoBehaviour
         ApplyScaledStageAnchorPositions();
         ApplyScaledCursorSize();
         ApplyScaledWorldStageLabelLayout();
-
-        ApplyUnlockedStagesFromProgress();
 
         if (createIconsOnStart)
             EnsureAllStageIcons();
@@ -1367,7 +1366,10 @@ public class WorldMapController : MonoBehaviour
         for (int i = 0; i < world.nodes.Count; i++)
         {
             var node = world.nodes[i];
-            if (node != null && node.unlocked)
+            if (node == null || string.IsNullOrWhiteSpace(node.sceneName))
+                continue;
+
+            if (StageUnlockProgress.IsUnlocked(node.sceneName))
                 lastUnlocked = i;
         }
 
