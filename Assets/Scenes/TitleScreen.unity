@@ -1679,7 +1679,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4d2807c5c57c72e4a8a52390ba37be9a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TitleScreenController
-  enableSurgicalLogs: 1
+  enableSurgicalLogs: 0
   menuBoxSize: {x: 520, y: 260}
   moveOptionSfx: {fileID: 8300000, guid: 9095599de31cf8543bb7e82ff2782f12, type: 3}
   moveOptionVolume: 1
@@ -1754,6 +1754,8 @@ MonoBehaviour:
   bossRushLockedBottomMargin: 30
   bossRushLockedShowSeconds: 2
   controlsSceneName: ControlsMenu
+  allowMouseInteraction: 1
+  allowRightClickBack: 1
 --- !u!222 &1724740268
 CanvasRenderer:
   m_ObjectHideFlags: 0
