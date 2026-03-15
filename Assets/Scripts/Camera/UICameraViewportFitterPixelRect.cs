@@ -18,6 +18,11 @@ public class UICameraViewportFitterPixelRect : MonoBehaviour
         ApplyNow();
     }
 
+    public void ForceApplyNow()
+    {
+        ApplyNow();
+    }
+
     void ApplyNow()
     {
         if (rt == null)

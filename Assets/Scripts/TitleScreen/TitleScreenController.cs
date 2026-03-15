@@ -1017,6 +1017,9 @@ public class TitleScreenController : MonoBehaviour
 
     void ShowTitleScreenNow()
     {
+        if (enableSurgicalLogs && referenceRect != null)
+            Debug.Log($"{LOG} ShowTitleScreenNow BEFORE ApplyResolvedLayout | RefSize={referenceRect.rect.size}", this);
+
         ApplyTitleVisualNow();
 
         if (menuText != null)
@@ -1096,6 +1099,8 @@ public class TitleScreenController : MonoBehaviour
     {
         EnsureBootSession();
 
+        ForceHide();
+
         Running = true;
         locked = false;
 
@@ -1109,9 +1114,17 @@ public class TitleScreenController : MonoBehaviour
         ControlsRequested = false;
 
         if (fadeToHideOptional != null)
-            fadeToHideOptional.gameObject.SetActive(false);
+        {
+            fadeToHideOptional.gameObject.SetActive(true);
+            fadeToHideOptional.transform.SetAsLastSibling();
+        }
+
+        yield return StartCoroutine(StabilizeLayoutBeforeShow());
 
         ShowTitleScreenNow();
+
+        if (fadeToHideOptional != null)
+            fadeToHideOptional.gameObject.SetActive(false);
 
         if (titleMusic != null && GameMusicController.Instance != null)
             GameMusicController.Instance.PlayMusic(titleMusic, titleMusicVolume, true);
@@ -2106,6 +2119,61 @@ public class TitleScreenController : MonoBehaviour
 
         ApplyResolvedLayout(context);
         _stabilizedRefreshRoutine = null;
+    }
+
+    IEnumerator StabilizeLayoutBeforeShow()
+    {
+        if (referenceRect == null)
+            referenceRect = ResolveReferenceRect();
+
+        if (layoutRoot == null)
+            layoutRoot = ResolveLayoutRoot();
+
+        ForceApplySafeFrameViewportNow();
+        Canvas.ForceUpdateCanvases();
+
+        Vector2 prev = Vector2.zero;
+        int stableFrames = 0;
+
+        for (int i = 0; i < 12; i++)
+        {
+            yield return null;
+
+            ForceApplySafeFrameViewportNow();
+            Canvas.ForceUpdateCanvases();
+
+            if (referenceRect == null)
+                yield break;
+
+            Vector2 current = referenceRect.rect.size;
+
+            if (enableSurgicalLogs)
+                Debug.Log($"{LOG} StabilizeLayoutBeforeShow | frame={i} | RefSize={current}", this);
+
+            if ((current - prev).sqrMagnitude < 0.01f)
+                stableFrames++;
+            else
+                stableFrames = 0;
+
+            prev = current;
+
+            if (stableFrames >= 2)
+                break;
+        }
+
+        ApplyResolvedLayout("StabilizeLayoutBeforeShow");
+    }
+
+    void ForceApplySafeFrameViewportNow()
+    {
+        if (referenceRect == null)
+            return;
+
+        UICameraViewportFitterPixelRect fitter = referenceRect.GetComponent<UICameraViewportFitterPixelRect>();
+        if (fitter == null)
+            return;
+
+        fitter.ForceApplyNow();
     }
 
     void Update()
