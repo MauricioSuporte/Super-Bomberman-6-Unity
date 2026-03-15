@@ -51,32 +51,79 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EndingScreenController
   endingImage: {fileID: 5710711960017553179}
   messageText: {fileID: 7357174030212029195}
-  endingMusic: {fileID: 8300000, guid: e3b8c8f8710bcda4c9ca251a09b52d37, type: 3}
+  endingMusic100: {fileID: 8300000, guid: 131a84364111a584db857a484c052596, type: 3}
+  endingMusic101To199: {fileID: 8300000, guid: 78f686983dd642a4792744c9844e0eab, type: 3}
+  endingMusic200: {fileID: 8300000, guid: 8b79fe552e6094243b8756479f934581, type: 3}
+  endingMusic200AllBombers: {fileID: 8300000, guid: 75da9e5c27243b94189da21d01ed9d8e, type: 3}
   musicVolume: 1
   outlineColor: {r: 0, g: 0, b: 0, a: 1}
   outlineWidth: 0.4
   titleSceneName: TitleScreen
-  message: '<size=52><color=#1ABC00>WORLD 2</color>  <color=#E8E8E8>DEMO COMPLETE!</color></size>
-
-
-    <size=34><color=#E8E8E8>Thank
-    you for playing!</color></size>
-
-    <size=34><color=#E8E8E8>More stages are
-    coming soon!</color></size>
-
-
-    <size=32><color=#3392FF>OPEN SOURCE PROJECT</color></size>
+  worldCompleteLabel: <size=52><color=#1ABC00>WORLD 2</color>  <color=#E8E8E8>DEMO
+    COMPLETE!</color></size>
+  openSourceBlock: '<size=32><color=#3392FF>OPEN SOURCE PROJECT</color></size>
 
     <size=28><color=#E8E8E8>github.com/MauricioSuporte/</color></size>
 
-    <size=28><color=#E8E8E8>Super-Bomberman-6-Unity</color></size>
+    <size=28><color=#E8E8E8>Super-Bomberman-6-Unity</color></size>'
+  returnBlock: '<size=34><color=#FF6F31>PRESS START</color></size>
 
+    <size=30><color=#E8E8E8>TO
+    RETURN TO TITLE SCREEN</color></size>'
+  message100: 'Congratulations!
 
-    <size=34><color=#FF6F31>PRESS
-    START</color></size>
+    You reached <color=#FFD54A>{PERCENT}%</color>
+    completion.
 
-    <size=30><color=#E8E8E8>TO RETURN TO TITLE SCREEN</color></size>'
+    That is only the beginning.
+
+    Can you go beyond 100%, clear
+    every stage without using items,
+
+    and unlock the remaining Bombers?'
+  message101To199: 'Amazing work!
+
+    You pushed the demo to <color=#FFD54A>{PERCENT}%</color>
+    completion.
+
+    You are getting closer to total mastery.
+
+    Keep pushing further,
+
+    clear
+    more stages without using items,
+
+    and unlock every Bomber!'
+  message200NotAllBombers: 'Incredible!
+
+    You reached the full <color=#FFD54A>{PERCENT}%</color>
+    completion.
+
+    Every stage has been perfected.
+
+    Now finish the last challenge:
+
+    unlock
+    every Bomber!'
+  message200AllBombers: 'TRUE COMPLETION!!
+
+    You reached the full <color=#FFD54A>{PERCENT}%</color>
+    completion.
+
+    Every stage has been perfected,
+
+    and every Bomber has been
+    unlocked.
+
+    You truly mastered the demo!'
+  autoRepositionMessageText: 1
+  forceTopAnchor: 1
+  topMargin: 12
+  sideMargin: 8
+  bottomMargin: 10
+  widthPercentOfParent: 0.94
+  heightPercentOfParent: 0.9
+  compactVerticalSpacing: 1
 --- !u!1 &5640839137548934479
 GameObject:
   m_ObjectHideFlags: 0
