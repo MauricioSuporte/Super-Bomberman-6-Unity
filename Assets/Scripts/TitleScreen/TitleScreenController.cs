@@ -1,4 +1,6 @@
 ﻿using System.Collections;
+using System.IO;
+using Assets.Scripts.SaveSystem;
 using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -153,7 +155,8 @@ public class TitleScreenController : MonoBehaviour
         Main = 0,
         PlayerCount = 1,
         Options = 2,
-        Video = 3
+        Video = 3,
+        ResetSaveConfirm = 4
     }
 
     enum StartFlowMode
@@ -173,9 +176,15 @@ public class TitleScreenController : MonoBehaviour
 
     const int OPTIONS_IDX_CONTROLS = 0;
     const int OPTIONS_IDX_VIDEO = 1;
+    const int OPTIONS_IDX_RESET_SAVE = 2;
 
     const int VIDEO_IDX_FULLSCREEN = 0;
     const int VIDEO_IDX_WINDOWSIZE = 1;
+
+    const int RESET_SAVE_IDX_CONFIRM = 0;
+    const int RESET_SAVE_IDX_CANCEL = 1;
+
+    const int RESET_SAVE_SELECTABLE_LINE_START = 5;
 
     int menuIndex;
     bool locked;
@@ -1113,7 +1122,7 @@ public class TitleScreenController : MonoBehaviour
                 RefreshMenuText();
             }
 
-            if ((menuMode == MenuMode.PlayerCount || menuMode == MenuMode.Options || menuMode == MenuMode.Video) &&
+            if ((menuMode == MenuMode.PlayerCount || menuMode == MenuMode.Options || menuMode == MenuMode.Video || menuMode == MenuMode.ResetSaveConfirm) &&
                 TryGetAnyPlayerDown(PlayerAction.ActionB, out _))
             {
                 PlayBackSfx();
@@ -1133,6 +1142,11 @@ public class TitleScreenController : MonoBehaviour
                 {
                     menuMode = MenuMode.Options;
                     menuIndex = OPTIONS_IDX_VIDEO;
+                }
+                else if (menuMode == MenuMode.ResetSaveConfirm)
+                {
+                    menuMode = MenuMode.Options;
+                    menuIndex = OPTIONS_IDX_RESET_SAVE;
                 }
 
                 HideFooterMessageImmediate();
@@ -1219,7 +1233,7 @@ public class TitleScreenController : MonoBehaviour
                 continue;
             }
 
-            if (TryGetAnyPlayerDownEither(PlayerAction.Start, PlayerAction.ActionA, out int pidConfirm))
+            if (TryGetAnyPlayerDownEither(PlayerAction.Start, PlayerAction.ActionA, out _))
             {
                 if (menuMode == MenuMode.Main)
                 {
@@ -1374,6 +1388,66 @@ public class TitleScreenController : MonoBehaviour
                         yield return null;
                         continue;
                     }
+
+                    if (menuIndex == OPTIONS_IDX_RESET_SAVE)
+                    {
+                        menuMode = MenuMode.ResetSaveConfirm;
+                        menuIndex = RESET_SAVE_IDX_CANCEL;
+                        locked = false;
+
+                        HideFooterMessageImmediate();
+                        HideBossRushLockedMessageImmediate();
+                        RefreshMenuText();
+
+                        while (AnyPlayerHeld(PlayerAction.Start) || AnyPlayerHeld(PlayerAction.ActionA))
+                            yield return null;
+
+                        yield return null;
+                        continue;
+                    }
+                }
+
+                if (menuMode == MenuMode.ResetSaveConfirm)
+                {
+                    locked = true;
+                    PlaySelectSfx();
+
+                    if (cursorRenderer != null)
+                        yield return cursorRenderer.PlayCycles(2);
+
+                    if (menuIndex == RESET_SAVE_IDX_CONFIRM)
+                    {
+                        ResetEntireSaveFile();
+                        forceBossRushUnlocked = bossRushInspectorDefaultUnlocked;
+
+                        menuMode = MenuMode.Options;
+                        menuIndex = OPTIONS_IDX_RESET_SAVE;
+                        locked = false;
+
+                        HideFooterMessageImmediate();
+                        HideBossRushLockedMessageImmediate();
+                        RefreshMenuText();
+
+                        while (AnyPlayerHeld(PlayerAction.Start) || AnyPlayerHeld(PlayerAction.ActionA))
+                            yield return null;
+
+                        yield return null;
+                        continue;
+                    }
+
+                    menuMode = MenuMode.Options;
+                    menuIndex = OPTIONS_IDX_RESET_SAVE;
+                    locked = false;
+
+                    HideFooterMessageImmediate();
+                    HideBossRushLockedMessageImmediate();
+                    RefreshMenuText();
+
+                    while (AnyPlayerHeld(PlayerAction.Start) || AnyPlayerHeld(PlayerAction.ActionA))
+                        yield return null;
+
+                    yield return null;
+                    continue;
                 }
 
                 if (menuMode == MenuMode.PlayerCount)
@@ -1413,9 +1487,12 @@ public class TitleScreenController : MonoBehaviour
             return 4;
 
         if (menuMode == MenuMode.Options)
-            return 2;
+            return 3;
 
         if (menuMode == MenuMode.Video)
+            return 2;
+
+        if (menuMode == MenuMode.ResetSaveConfirm)
             return 2;
 
         return 4;
@@ -1489,6 +1566,7 @@ public class TitleScreenController : MonoBehaviour
             return;
 
         const string baseRgb = "FFFFE7";
+        const string warnRgb = "#FF5A4A";
         int size = MenuFontSizeScaled;
 
         if (menuMode == MenuMode.Main)
@@ -1521,11 +1599,13 @@ public class TitleScreenController : MonoBehaviour
         {
             string controls = $"<color=#{baseRgb}FF>CONTROLS</color>";
             string video = $"<color=#{baseRgb}FF>VIDEO</color>";
+            string resetSave = $"<color={warnRgb}>RESET SAVE</color>";
 
             menuText.text =
                 "<align=left>" +
                 $"<size={size}>{controls}</size>\n" +
-                $"<size={size}>{video}</size>" +
+                $"<size={size}>{video}</size>\n" +
+                $"<size={size}>{resetSave}</size>" +
                 "</align>";
 
             if (videoValuesText != null) videoValuesText.gameObject.SetActive(false);
@@ -1550,6 +1630,36 @@ public class TitleScreenController : MonoBehaviour
                 $"<size={size}>{p2}</size>\n" +
                 $"<size={size}>{p3}</size>\n" +
                 $"<size={size}>{p4}</size>" +
+                "</align>";
+
+            if (videoValuesText != null) videoValuesText.gameObject.SetActive(false);
+
+            UpdateCursorPosition();
+            UpdatePushStartPosition();
+            UpdateFooterPosition();
+            UpdateBossRushLockedPosition();
+            return;
+        }
+
+        if (menuMode == MenuMode.ResetSaveConfirm)
+        {
+            string l1 = $"<color={warnRgb}>THIS WILL ERASE:</color>";
+            string l2 = $"<color=#{baseRgb}FF>ALL 3 SAVE SLOTS</color>";
+            string l3 = $"<color=#{baseRgb}FF>UNLOCKED SKINS / MODES</color>";
+            string l4 = $"<color=#{baseRgb}FF>TIME RECORDS / SETTINGS</color>";
+            string l5 = $"<color=#{baseRgb}FF>ARE YOU SURE?</color>";
+            string confirm = $"<color={warnRgb}>RESET SAVE</color>";
+            string cancel = $"<color=#{baseRgb}FF>CANCEL</color>";
+
+            menuText.text =
+                "<align=left>" +
+                $"<size={size}>{l1}</size>\n" +
+                $"<size={size}>{l2}</size>\n" +
+                $"<size={size}>{l3}</size>\n" +
+                $"<size={size}>{l4}</size>\n" +
+                $"<size={size}>{l5}</size>\n" +
+                $"<size={size}>{confirm}</size>\n" +
+                $"<size={size}>{cancel}</size>" +
                 "</align>";
 
             if (videoValuesText != null) videoValuesText.gameObject.SetActive(false);
@@ -1781,7 +1891,7 @@ public class TitleScreenController : MonoBehaviour
         if (ti == null || ti.lineCount <= 0)
             return;
 
-        int line = Mathf.Clamp(menuIndex, 0, ti.lineCount - 1);
+        int line = GetCursorVisualLineIndex(ti.lineCount);
         var li = ti.lineInfo[line];
 
         float y = (li.ascender + li.descender) * 0.5f;
@@ -1791,6 +1901,30 @@ public class TitleScreenController : MonoBehaviour
 
         Vector3 localPos = new Vector3(x + offs.x, y + offs.y, 0f);
         cursorRenderer.SetExternalBaseLocalPosition(localPos);
+    }
+
+    int GetCursorVisualLineIndex(int lineCount)
+    {
+        if (menuMode == MenuMode.ResetSaveConfirm)
+            return Mathf.Clamp(RESET_SAVE_SELECTABLE_LINE_START + menuIndex, 0, lineCount - 1);
+
+        return Mathf.Clamp(menuIndex, 0, lineCount - 1);
+    }
+
+    void ResetEntireSaveFile()
+    {
+        try
+        {
+            string filePath = SaveSystem.SaveFilePath;
+            if (File.Exists(filePath))
+                File.Delete(filePath);
+        }
+        catch (System.Exception ex)
+        {
+            Debug.LogWarning($"[TitleScreenController] Failed to delete save file: {ex.Message}");
+        }
+
+        SaveSystem.Reload();
     }
 
     void HideBossRushLockedMessageImmediate()
