@@ -901,6 +901,137 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 676188639}
   m_CullTransparentMesh: 1
+--- !u!1 &691562832
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 691562833}
+  - component: {fileID: 691562834}
+  m_Layer: 5
+  m_Name: TitleIntroRoot
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &691562833
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 691562832}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 1797125729}
+  m_Father: {fileID: 1599199474}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 100, y: 100}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &691562834
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 691562832}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 03bdb6278ba2c6140a14d36dccb7d80d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TitleScreenLogoDropIntro
+  logoImage: {fileID: 1797125730}
+  logoSprite: {fileID: 21300000, guid: 1dfdb1c04b6f1e8429d5adedf8b6b123, type: 3}
+  characterSlots:
+  - name: Pink
+    image: {fileID: 0}
+    sprite: {fileID: 21300000, guid: 57413b5fd14549146990ec902b3d7f52, type: 3}
+    fallingSprite: {fileID: 21300000, guid: 57413b5fd14549146990ec902b3d7f52, type: 3}
+    landedSprite: {fileID: 21300000, guid: 57413b5fd14549146990ec902b3d7f52, type: 3}
+    baseSize: {x: 80, y: 95}
+    useSpriteNativeSizeAsCharacterSize: 0
+  - name: Blue
+    image: {fileID: 0}
+    sprite: {fileID: 21300000, guid: cca24cad120858e46a53983882e972ef, type: 3}
+    fallingSprite: {fileID: 21300000, guid: cca24cad120858e46a53983882e972ef, type: 3}
+    landedSprite: {fileID: 21300000, guid: 37674deb61adaa643b71255824fe6220, type: 3}
+    baseSize: {x: 80, y: 80}
+    useSpriteNativeSizeAsCharacterSize: 0
+  - name: Yellow
+    image: {fileID: 0}
+    sprite: {fileID: 21300000, guid: 55cc788f3d687674ca60a4a6dbec16b4, type: 3}
+    fallingSprite: {fileID: 21300000, guid: 55cc788f3d687674ca60a4a6dbec16b4, type: 3}
+    landedSprite: {fileID: 21300000, guid: 1b60de100d1343148850883b3fa0fa11, type: 3}
+    baseSize: {x: 80, y: 80}
+    useSpriteNativeSizeAsCharacterSize: 0
+  - name: Purple
+    image: {fileID: 0}
+    sprite: {fileID: 21300000, guid: 1b7894bc5d13dec4b91738f3010bc6dd, type: 3}
+    fallingSprite: {fileID: 21300000, guid: 1b7894bc5d13dec4b91738f3010bc6dd, type: 3}
+    landedSprite: {fileID: 21300000, guid: 1b35e08d09577a84ca50dff92fdebf3c, type: 3}
+    baseSize: {x: 80, y: 80}
+    useSpriteNativeSizeAsCharacterSize: 0
+  - name: Red
+    image: {fileID: 0}
+    sprite: {fileID: 21300000, guid: 5e0dbf0b32e0d9e409a9e65abb159b3c, type: 3}
+    fallingSprite: {fileID: 21300000, guid: 5e0dbf0b32e0d9e409a9e65abb159b3c, type: 3}
+    landedSprite: {fileID: 21300000, guid: 9441f8ec8c2843643be0324cf86ba350, type: 3}
+    baseSize: {x: 80, y: 80}
+    useSpriteNativeSizeAsCharacterSize: 0
+  - name: Black
+    image: {fileID: 0}
+    sprite: {fileID: 21300000, guid: 2fd92abb7e064304b8764ec0e7743abd, type: 3}
+    fallingSprite: {fileID: 21300000, guid: 2fd92abb7e064304b8764ec0e7743abd, type: 3}
+    landedSprite: {fileID: 21300000, guid: ec81e3140b6fbb64ea3efafd3df24815, type: 3}
+    baseSize: {x: 80, y: 80}
+    useSpriteNativeSizeAsCharacterSize: 0
+  - name: Green
+    image: {fileID: 0}
+    sprite: {fileID: 21300000, guid: 31fad902b15a5f94f8e60c3c3ab901e2, type: 3}
+    fallingSprite: {fileID: 21300000, guid: 31fad902b15a5f94f8e60c3c3ab901e2, type: 3}
+    landedSprite: {fileID: 21300000, guid: 1daf15bc074d4ce49ab140971b32240b, type: 3}
+    baseSize: {x: 95, y: 80}
+    useSpriteNativeSizeAsCharacterSize: 0
+  layoutRoot: {fileID: 1599199474}
+  useLayoutRootAsParent: 1
+  referenceWidth: 256
+  referenceHeight: 224
+  logoSize: {x: 233, y: 69}
+  useSpriteNativeSizeAsLogoSize: 0
+  finalAnchoredPosition: {x: 0, y: -8}
+  startOffsetAboveScreen: 72
+  dropDuration: 0.25
+  useUnscaledTime: 1
+  dropCurve:
+    serializedVersion: 2
+    m_Curve: []
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  charactersBottomMargin: 10
+  charactersStartOffsetAboveScreen: 32
+  charactersDropDuration: 0.3
+  charactersDropStagger: 0.035
+  charactersDropCurve:
+    serializedVersion: 2
+    m_Curve: []
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  delayAfterCharactersBeforeLogo: 0.03
+  roundAnchoredPosition: 1
+  applyPointFilter: 1
+  enableSurgicalLogs: 1
 --- !u!1 &1102021990
 GameObject:
   m_ObjectHideFlags: 0
@@ -1588,7 +1719,7 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 362350262}
-  - {fileID: 1797125729}
+  - {fileID: 691562833}
   - {fileID: 1287610047}
   - {fileID: 544397352}
   - {fileID: 1724740266}
@@ -1596,7 +1727,7 @@ RectTransform:
   m_Father: {fileID: 1389130176}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
+  m_AnchorMax: {x: 6, y: 4.5}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
@@ -1776,7 +1907,7 @@ MonoBehaviour:
   allowMouseInteraction: 1
   allowRightClickBack: 1
   titleIntroPan: {fileID: 362350266}
-  titleLogoIntro: {fileID: 1797125732}
+  titleLogoIntro: {fileID: 691562834}
 --- !u!222 &1724740268
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -1796,7 +1927,6 @@ GameObject:
   - component: {fileID: 1797125729}
   - component: {fileID: 1797125731}
   - component: {fileID: 1797125730}
-  - component: {fileID: 1797125732}
   m_Layer: 5
   m_Name: TitleLogo
   m_TagString: Untagged
@@ -1811,12 +1941,12 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1797125728}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 1599199474}
+  m_Father: {fileID: 691562833}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
@@ -1843,7 +1973,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 1404028623067837608, guid: 1dfdb1c04b6f1e8429d5adedf8b6b123, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 1dfdb1c04b6f1e8429d5adedf8b6b123, type: 3}
   m_Type: 0
   m_PreserveAspect: 1
   m_FillCenter: 1
@@ -1861,37 +1991,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1797125728}
   m_CullTransparentMesh: 1
---- !u!114 &1797125732
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1797125728}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 03bdb6278ba2c6140a14d36dccb7d80d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::TitleScreenLogoDropIntro
-  logoImage: {fileID: 1797125730}
-  logoSprite: {fileID: 21300000, guid: 1dfdb1c04b6f1e8429d5adedf8b6b123, type: 3}
-  layoutRoot: {fileID: 1599199474}
-  useLayoutRootAsParent: 1
-  logoSize: {x: 233, y: 69}
-  useSpriteNativeSizeAsLogoSize: 0
-  finalAnchoredPosition: {x: 0, y: -8}
-  startOffsetAboveScreen: 72
-  dropDuration: 0.25
-  useUnscaledTime: 1
-  dropCurve:
-    serializedVersion: 2
-    m_Curve: []
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
-  roundAnchoredPosition: 1
-  applyPointFilter: 1
-  enableSurgicalLogs: 1
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
