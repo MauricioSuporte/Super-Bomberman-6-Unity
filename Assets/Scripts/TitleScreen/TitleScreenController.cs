@@ -165,7 +165,7 @@ public class TitleScreenController : MonoBehaviour
 
     [Header("Title Intro")]
     [SerializeField] TitleScreenVerticalPanIntro titleIntroPan;
-    [SerializeField] TitleScreenLogoDropIntro titleLogoIntro;
+    [SerializeField] TitleScreenDropIntro titleLogoIntro;
 
     public bool ControlsRequested { get; private set; }
     public bool Running { get; private set; }
@@ -616,7 +616,10 @@ public class TitleScreenController : MonoBehaviour
 
         if (titleLogoIntro != null)
         {
+            RectTransform root = GetEffectiveLayoutRoot();
             float logoPixelScale = ComputeFramePixelScale();
+
+            titleLogoIntro.SetLayoutRoot(root);
             titleLogoIntro.SetPixelFrameScale(logoPixelScale);
 
             if (enableSurgicalLogs)
@@ -1087,6 +1090,12 @@ public class TitleScreenController : MonoBehaviour
         {
             cursorRenderer.gameObject.SetActive(true);
             cursorRenderer.RefreshFrame();
+        }
+
+        if (titleLogoIntro != null)
+        {
+            titleLogoIntro.SetLayoutRoot(GetEffectiveLayoutRoot());
+            titleLogoIntro.SetPixelFrameScale(ComputeFramePixelScale());
         }
 
         ApplyResolvedLayout("ShowTitleScreenNow");
@@ -2475,8 +2484,12 @@ public class TitleScreenController : MonoBehaviour
         if (titleLogoIntro == null)
             yield break;
 
-        titleLogoIntro.SetLayoutRoot(GetEffectiveLayoutRoot());
+        RectTransform root = GetEffectiveLayoutRoot();
+
+        titleLogoIntro.SetLayoutRoot(root);
+        titleLogoIntro.SetPixelFrameScale(ComputeFramePixelScale());
         titleLogoIntro.PrepareAboveTop();
+
         yield return titleLogoIntro.PlayIntro();
     }
 

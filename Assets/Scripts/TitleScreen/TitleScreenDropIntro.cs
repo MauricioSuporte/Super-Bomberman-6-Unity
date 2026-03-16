@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class TitleScreenLogoDropIntro : MonoBehaviour
+public class TitleScreenDropIntro : MonoBehaviour
 {
     const string LOG = "[TitleScreenLogoDropIntro]";
 
@@ -23,6 +23,14 @@ public class TitleScreenLogoDropIntro : MonoBehaviour
         public Vector2 baseSize = new(80f, 80f);
         public bool useSpriteNativeSizeAsCharacterSize = false;
         public Vector2 positionOffset = Vector2.zero;
+    }
+
+    enum IntroVisualState
+    {
+        Hidden = 0,
+        CharactersAboveTop = 1,
+        CharactersLanded = 2,
+        Completed = 3
     }
 
     [Header("References")]
@@ -82,14 +90,24 @@ public class TitleScreenLogoDropIntro : MonoBehaviour
 
     RectTransform _logoRect;
     readonly List<RectTransform> _characterRects = new();
+
     float _pixelFrameScale = 1f;
+    IntroVisualState _visualState = IntroVisualState.Hidden;
+
+    Vector2[] _cachedCharacterFinalBasePositions = Array.Empty<Vector2>();
+    Vector2[] _cachedCharacterAboveTopBasePositions = Array.Empty<Vector2>();
+    bool[] _characterHasLanded = Array.Empty<bool>();
+
+    Vector2 _cachedLogoFinalBasePosition;
+    Vector2 _cachedLogoAboveTopBasePosition;
 
     public bool IsPlaying => currentRoutine != null;
 
     public void SetPixelFrameScale(float scale)
     {
         _pixelFrameScale = Mathf.Max(0.01f, scale);
-        ApplyCurrentScaledLayout();
+        RebuildCachedBasePositionsIfPossible();
+        ReapplyCurrentResolvedLayout();
         DumpAllState("SetPixelFrameScale");
     }
 
@@ -104,6 +122,8 @@ public class TitleScreenLogoDropIntro : MonoBehaviour
         SyncThisRectToLayoutRoot();
         EnsureLogo();
         EnsureCharacters();
+        EnsureStateCaches();
+        RebuildCachedBasePositionsIfPossible();
 
         HideImmediate();
         DumpAllState("Awake");
@@ -114,11 +134,11 @@ public class TitleScreenLogoDropIntro : MonoBehaviour
         layoutRoot = root;
 
         SyncThisRectToLayoutRoot();
-
         EnsureLogo();
         EnsureCharacters();
-        ApplyCurrentScaledLayout();
-        UpdateCharacterSiblingOrder();
+        EnsureStateCaches();
+        RebuildCachedBasePositionsIfPossible();
+        ReapplyCurrentResolvedLayout();
 
         DumpAllState("SetLayoutRoot");
         DumpCharacterVisibilityState("SetLayoutRoot");
@@ -128,14 +148,10 @@ public class TitleScreenLogoDropIntro : MonoBehaviour
     {
         StopIntro();
 
-        if (logoImage != null)
-            logoImage.gameObject.SetActive(false);
-
-        for (int i = 0; i < characterSlots.Length; i++)
-        {
-            if (characterSlots[i] != null && characterSlots[i].image != null)
-                characterSlots[i].image.gameObject.SetActive(false);
-        }
+        _visualState = IntroVisualState.Hidden;
+        ResetCharacterLandedState();
+        RebuildCachedBasePositionsIfPossible();
+        ReapplyCurrentResolvedLayout();
 
         DumpAllState("HideImmediate");
     }
@@ -144,14 +160,17 @@ public class TitleScreenLogoDropIntro : MonoBehaviour
     {
         EnsureLogo();
         EnsureCharacters();
+        EnsureStateCaches();
 
         ApplyLogoSprite();
         ApplyCharacterSprites(false);
-        ApplyCurrentScaledLayout();
+        ResetCharacterLandedState();
+
+        RebuildCachedBasePositionsIfPossible();
         UpdateCharacterSiblingOrder();
 
-        PrepareCharactersAboveTop();
-        PrepareLogoAboveTop(false);
+        _visualState = IntroVisualState.CharactersAboveTop;
+        ReapplyCurrentResolvedLayout();
 
         DumpAllState("PrepareAboveTop");
         DumpCharacterVisibilityState("PrepareAboveTop");
@@ -163,10 +182,13 @@ public class TitleScreenLogoDropIntro : MonoBehaviour
 
         EnsureLogo();
         EnsureCharacters();
+        EnsureStateCaches();
 
         ApplyLogoSprite();
         ApplyCharacterSprites(false);
-        ApplyCurrentScaledLayout();
+        ResetCharacterLandedState();
+
+        RebuildCachedBasePositionsIfPossible();
         UpdateCharacterSiblingOrder();
 
         currentRoutine = StartCoroutine(PlayMasterRoutine());
@@ -184,8 +206,12 @@ public class TitleScreenLogoDropIntro : MonoBehaviour
 
     IEnumerator PlayMasterRoutine()
     {
-        PrepareCharactersAboveTop();
-        PrepareLogoAboveTop(false);
+        ResetCharacterLandedState();
+        RebuildCachedBasePositionsIfPossible();
+        UpdateCharacterSiblingOrder();
+
+        _visualState = IntroVisualState.CharactersAboveTop;
+        ReapplyCurrentResolvedLayout();
 
         if (enableSurgicalLogs)
             Debug.Log($"{LOG} PlayMasterRoutine | dropping characters first, then logo", this);
@@ -198,6 +224,9 @@ public class TitleScreenLogoDropIntro : MonoBehaviour
         PrepareLogoAboveTop(true);
         yield return PlayLogoRoutine();
 
+        _visualState = IntroVisualState.Completed;
+        ReapplyCurrentResolvedLayout();
+
         currentRoutine = null;
         DumpAllState("PlayMasterRoutine-End");
         DumpCharacterVisibilityState("PlayMasterRoutine-End");
@@ -209,13 +238,17 @@ public class TitleScreenLogoDropIntro : MonoBehaviour
         if (count == 0)
             yield break;
 
-        Vector2[] finalBasePositions = ComputeCharacterFinalBasePositions();
-        float duration = Mathf.Max(0.01f, charactersDropDuration);
+        EnsureStateCaches();
+        RebuildCachedBasePositionsIfPossible();
 
+        float duration = Mathf.Max(0.01f, charactersDropDuration);
         List<List<int>> waveOrder = BuildCenterOutWaveOrder();
 
         for (int i = 0; i < count; i++)
             ApplyCharacterSprite(i, false);
+
+        _visualState = IntroVisualState.CharactersAboveTop;
+        ReapplyCurrentResolvedLayout();
 
         for (int waveIndex = 0; waveIndex < waveOrder.Count; waveIndex++)
         {
@@ -247,16 +280,15 @@ public class TitleScreenLogoDropIntro : MonoBehaviour
                 for (int j = 0; j < wave.Count; j++)
                 {
                     int i = wave[j];
-
                     CharacterDropSlot slot = characterSlots[i];
                     if (slot == null || slot.image == null)
                         continue;
 
                     RectTransform rt = slot.image.rectTransform;
-                    Vector2 startBase = GetCharacterStartBasePosition(i, finalBasePositions);
-                    Vector2 endBase = finalBasePositions[i];
-
+                    Vector2 startBase = _cachedCharacterAboveTopBasePositions[i];
+                    Vector2 endBase = _cachedCharacterFinalBasePositions[i];
                     Vector2 currentBase = Vector2.LerpUnclamped(startBase, endBase, eased);
+
                     ApplyAnchoredPositionScaled(rt, currentBase);
 
                     if (!slot.image.gameObject.activeSelf)
@@ -269,12 +301,12 @@ public class TitleScreenLogoDropIntro : MonoBehaviour
             for (int j = 0; j < wave.Count; j++)
             {
                 int i = wave[j];
-
                 CharacterDropSlot slot = characterSlots[i];
                 if (slot == null || slot.image == null)
                     continue;
 
-                ApplyAnchoredPositionScaled(slot.image.rectTransform, finalBasePositions[i]);
+                _characterHasLanded[i] = true;
+                ApplyAnchoredPositionScaled(slot.image.rectTransform, _cachedCharacterFinalBasePositions[i]);
                 slot.image.gameObject.SetActive(true);
                 ApplyCharacterSprite(i, true);
 
@@ -289,10 +321,14 @@ public class TitleScreenLogoDropIntro : MonoBehaviour
             if (slot == null || slot.image == null)
                 continue;
 
-            ApplyAnchoredPositionScaled(slot.image.rectTransform, finalBasePositions[i]);
+            _characterHasLanded[i] = true;
+            ApplyAnchoredPositionScaled(slot.image.rectTransform, _cachedCharacterFinalBasePositions[i]);
             slot.image.gameObject.SetActive(true);
             ApplyCharacterSprite(i, true);
         }
+
+        _visualState = IntroVisualState.CharactersLanded;
+        ReapplyCurrentResolvedLayout();
 
         DumpAllState("PlayCharactersRoutine-End");
         DumpCharacterVisibilityState("PlayCharactersRoutine-End");
@@ -306,8 +342,8 @@ public class TitleScreenLogoDropIntro : MonoBehaviour
         float duration = Mathf.Max(0.01f, dropDuration);
         float t = 0f;
 
-        Vector2 startBase = GetLogoStartBasePosition();
-        Vector2 endBase = finalAnchoredPosition;
+        Vector2 startBase = _cachedLogoAboveTopBasePosition;
+        Vector2 endBase = _cachedLogoFinalBasePosition;
 
         while (t < duration)
         {
@@ -320,10 +356,15 @@ public class TitleScreenLogoDropIntro : MonoBehaviour
             Vector2 posBase = Vector2.LerpUnclamped(startBase, endBase, eased);
             ApplyAnchoredPositionScaled(_logoRect, posBase);
 
+            if (!logoImage.gameObject.activeSelf)
+                logoImage.gameObject.SetActive(true);
+
             yield return null;
         }
 
         ApplyAnchoredPositionScaled(_logoRect, endBase);
+        logoImage.gameObject.SetActive(true);
+
         DumpAllState("PlayLogoRoutine-End");
     }
 
@@ -412,6 +453,9 @@ public class TitleScreenLogoDropIntro : MonoBehaviour
 
     Transform GetDesiredParent()
     {
+        if (useLayoutRootAsParent && layoutRoot != null)
+            return transform;
+
         return transform;
     }
 
@@ -484,6 +528,163 @@ public class TitleScreenLogoDropIntro : MonoBehaviour
         return slot.sprite;
     }
 
+    void EnsureStateCaches()
+    {
+        int count = characterSlots != null ? characterSlots.Length : 0;
+
+        if (_cachedCharacterFinalBasePositions == null || _cachedCharacterFinalBasePositions.Length != count)
+            _cachedCharacterFinalBasePositions = new Vector2[count];
+
+        if (_cachedCharacterAboveTopBasePositions == null || _cachedCharacterAboveTopBasePositions.Length != count)
+            _cachedCharacterAboveTopBasePositions = new Vector2[count];
+
+        if (_characterHasLanded == null || _characterHasLanded.Length != count)
+            _characterHasLanded = new bool[count];
+    }
+
+    void ResetCharacterLandedState()
+    {
+        EnsureStateCaches();
+
+        for (int i = 0; i < _characterHasLanded.Length; i++)
+            _characterHasLanded[i] = false;
+    }
+
+    void RebuildCachedBasePositionsIfPossible()
+    {
+        EnsureStateCaches();
+
+        _cachedLogoFinalBasePosition = finalAnchoredPosition;
+        _cachedLogoAboveTopBasePosition = GetLogoStartBasePosition();
+
+        Vector2[] finalPositions = ComputeCharacterFinalBasePositions();
+        for (int i = 0; i < finalPositions.Length; i++)
+        {
+            _cachedCharacterFinalBasePositions[i] = finalPositions[i];
+            _cachedCharacterAboveTopBasePositions[i] = GetCharacterStartBasePosition(i, finalPositions);
+        }
+    }
+
+    void ReapplyCurrentResolvedLayout()
+    {
+        SyncThisRectToLayoutRoot();
+        EnsureLogo();
+        EnsureCharacters();
+
+        ApplyCurrentScaledLayout();
+        UpdateCharacterSiblingOrder();
+
+        switch (_visualState)
+        {
+            case IntroVisualState.Hidden:
+                ApplyHiddenVisualState();
+                break;
+
+            case IntroVisualState.CharactersAboveTop:
+                ApplyCharactersAboveTopVisualState();
+                break;
+
+            case IntroVisualState.CharactersLanded:
+                ApplyCharactersLandedVisualState();
+                break;
+
+            case IntroVisualState.Completed:
+                ApplyCompletedVisualState();
+                break;
+        }
+    }
+
+    void ApplyHiddenVisualState()
+    {
+        if (logoImage != null)
+            logoImage.gameObject.SetActive(false);
+
+        if (characterSlots == null)
+            return;
+
+        for (int i = 0; i < characterSlots.Length; i++)
+        {
+            CharacterDropSlot slot = characterSlots[i];
+            if (slot == null || slot.image == null)
+                continue;
+
+            slot.image.gameObject.SetActive(false);
+        }
+    }
+
+    void ApplyCharactersAboveTopVisualState()
+    {
+        if (characterSlots != null)
+        {
+            for (int i = 0; i < characterSlots.Length; i++)
+            {
+                CharacterDropSlot slot = characterSlots[i];
+                if (slot == null || slot.image == null)
+                    continue;
+
+                ApplyCharacterSprite(i, false);
+                slot.image.gameObject.SetActive(true);
+                ApplyAnchoredPositionScaled(slot.image.rectTransform, _cachedCharacterAboveTopBasePositions[i]);
+            }
+        }
+
+        if (logoImage != null && _logoRect != null)
+        {
+            logoImage.gameObject.SetActive(false);
+            ApplyAnchoredPositionScaled(_logoRect, _cachedLogoAboveTopBasePosition);
+        }
+    }
+
+    void ApplyCharactersLandedVisualState()
+    {
+        if (characterSlots != null)
+        {
+            for (int i = 0; i < characterSlots.Length; i++)
+            {
+                CharacterDropSlot slot = characterSlots[i];
+                if (slot == null || slot.image == null)
+                    continue;
+
+                slot.image.gameObject.SetActive(true);
+                ApplyAnchoredPositionScaled(slot.image.rectTransform, _cachedCharacterFinalBasePositions[i]);
+
+                if (_characterHasLanded != null && i < _characterHasLanded.Length && _characterHasLanded[i])
+                    ApplyCharacterSprite(i, true);
+                else
+                    ApplyCharacterSprite(i, false);
+            }
+        }
+
+        if (logoImage != null && _logoRect != null)
+        {
+            logoImage.gameObject.SetActive(false);
+            ApplyAnchoredPositionScaled(_logoRect, _cachedLogoAboveTopBasePosition);
+        }
+    }
+
+    void ApplyCompletedVisualState()
+    {
+        if (characterSlots != null)
+        {
+            for (int i = 0; i < characterSlots.Length; i++)
+            {
+                CharacterDropSlot slot = characterSlots[i];
+                if (slot == null || slot.image == null)
+                    continue;
+
+                slot.image.gameObject.SetActive(true);
+                ApplyAnchoredPositionScaled(slot.image.rectTransform, _cachedCharacterFinalBasePositions[i]);
+                ApplyCharacterSprite(i, true);
+            }
+        }
+
+        if (logoImage != null && _logoRect != null)
+        {
+            logoImage.gameObject.SetActive(true);
+            ApplyAnchoredPositionScaled(_logoRect, _cachedLogoFinalBasePosition);
+        }
+    }
+
     void ApplyCurrentScaledLayout()
     {
         if (_logoRect != null)
@@ -506,7 +707,7 @@ public class TitleScreenLogoDropIntro : MonoBehaviour
 
     void PrepareCharactersAboveTop()
     {
-        Vector2[] finalBasePositions = ComputeCharacterFinalBasePositions();
+        RebuildCachedBasePositionsIfPossible();
 
         for (int i = 0; i < characterSlots.Length; i++)
         {
@@ -516,16 +717,17 @@ public class TitleScreenLogoDropIntro : MonoBehaviour
 
             ApplyCharacterSprite(i, false);
             slot.image.gameObject.SetActive(true);
-
-            Vector2 startBase = GetCharacterStartBasePosition(i, finalBasePositions);
-            ApplyAnchoredPositionScaled(slot.image.rectTransform, startBase);
+            ApplyAnchoredPositionScaled(slot.image.rectTransform, _cachedCharacterAboveTopBasePositions[i]);
         }
 
         if (enableSurgicalLogs)
         {
             Debug.Log($"{LOG} PrepareCharactersAboveTop | count={characterSlots.Length}", this);
-            for (int i = 0; i < finalBasePositions.Length; i++)
-                Debug.Log($"{LOG} Character[{i}] finalBase={finalBasePositions[i]} offset={(characterSlots[i] != null ? characterSlots[i].positionOffset : Vector2.zero)}", this);
+            for (int i = 0; i < _cachedCharacterFinalBasePositions.Length; i++)
+            {
+                Vector2 offset = characterSlots[i] != null ? characterSlots[i].positionOffset : Vector2.zero;
+                Debug.Log($"{LOG} Character[{i}] finalBase={_cachedCharacterFinalBasePositions[i]} offset={offset}", this);
+            }
         }
     }
 
@@ -535,7 +737,7 @@ public class TitleScreenLogoDropIntro : MonoBehaviour
             return;
 
         logoImage.gameObject.SetActive(visible);
-        ApplyAnchoredPositionScaled(_logoRect, GetLogoStartBasePosition());
+        ApplyAnchoredPositionScaled(_logoRect, _cachedLogoAboveTopBasePosition);
     }
 
     Vector2 GetLogoStartBasePosition()
@@ -820,7 +1022,7 @@ public class TitleScreenLogoDropIntro : MonoBehaviour
         }
 
         Debug.Log(
-            $"{LOG} {context} | pixelFrameScale={_pixelFrameScale:0.###} | {rootInfo} | {logoInfo} | characterCount={(characterSlots != null ? characterSlots.Length : 0)}",
+            $"{LOG} {context} | pixelFrameScale={_pixelFrameScale:0.###} | visualState={_visualState} | {rootInfo} | {logoInfo} | characterCount={(characterSlots != null ? characterSlots.Length : 0)}",
             this
         );
 
