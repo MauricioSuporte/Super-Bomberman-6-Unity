@@ -30,6 +30,10 @@ public class TitleScreenLogoDropIntro : MonoBehaviour
     [Header("Characters (left -> right)")]
     [SerializeField] CharacterDropSlot[] characterSlots = new CharacterDropSlot[7];
 
+    [Header("Audio")]
+    [SerializeField] AudioClip characterDropStartSfx;
+    [SerializeField, Range(0f, 1f)] float characterDropStartSfxVolume = 1f;
+
     [Header("Layout")]
     [SerializeField] RectTransform layoutRoot;
     [SerializeField] bool useLayoutRootAsParent = true;
@@ -205,54 +209,76 @@ public class TitleScreenLogoDropIntro : MonoBehaviour
 
         Vector2[] finalBasePositions = ComputeCharacterFinalBasePositions();
         float duration = Mathf.Max(0.01f, charactersDropDuration);
-        float stagger = Mathf.Max(0f, charactersDropStagger);
 
-        List<int> dropOrder = BuildCenterOutOrder();
-        float totalDuration = duration + stagger * Mathf.Max(0, dropOrder.Count - 1);
-        float t = 0f;
-
-        bool[] landedSpriteApplied = new bool[count];
+        List<List<int>> waveOrder = BuildCenterOutWaveOrder();
 
         for (int i = 0; i < count; i++)
             ApplyCharacterSprite(i, false);
 
-        while (t < totalDuration)
+        for (int waveIndex = 0; waveIndex < waveOrder.Count; waveIndex++)
         {
-            float dt = useUnscaledTime ? Time.unscaledDeltaTime : Time.deltaTime;
-            t += dt;
+            List<int> wave = waveOrder[waveIndex];
+            float t = 0f;
 
-            for (int visualOrder = 0; visualOrder < dropOrder.Count; visualOrder++)
+            PlayCharacterDropStartSfx();
+
+            if (enableSurgicalLogs)
             {
-                int i = dropOrder[visualOrder];
+                string waveText = "";
+                for (int j = 0; j < wave.Count; j++)
+                {
+                    if (j > 0) waveText += ", ";
+                    waveText += wave[j].ToString();
+                }
+
+                Debug.Log($"{LOG} PlayCharactersRoutine | wave={waveIndex} | characters=[{waveText}] | playedDropSfx={(characterDropStartSfx != null)}", this);
+            }
+
+            while (t < duration)
+            {
+                float dt = useUnscaledTime ? Time.unscaledDeltaTime : Time.deltaTime;
+                t += dt;
+
+                float localT = Mathf.Clamp01(t / duration);
+                float eased = charactersDropCurve != null ? charactersDropCurve.Evaluate(localT) : localT;
+
+                for (int j = 0; j < wave.Count; j++)
+                {
+                    int i = wave[j];
+
+                    CharacterDropSlot slot = characterSlots[i];
+                    if (slot == null || slot.image == null)
+                        continue;
+
+                    RectTransform rt = slot.image.rectTransform;
+                    Vector2 startBase = GetCharacterStartBasePosition(i, finalBasePositions);
+                    Vector2 endBase = finalBasePositions[i];
+
+                    Vector2 currentBase = Vector2.LerpUnclamped(startBase, endBase, eased);
+                    ApplyAnchoredPositionScaled(rt, currentBase);
+
+                    if (!slot.image.gameObject.activeSelf)
+                        slot.image.gameObject.SetActive(true);
+                }
+
+                yield return null;
+            }
+
+            for (int j = 0; j < wave.Count; j++)
+            {
+                int i = wave[j];
 
                 CharacterDropSlot slot = characterSlots[i];
                 if (slot == null || slot.image == null)
                     continue;
 
-                RectTransform rt = slot.image.rectTransform;
-                Vector2 startBase = GetCharacterStartBasePosition(i, finalBasePositions);
-                Vector2 endBase = finalBasePositions[i];
+                ApplyAnchoredPositionScaled(slot.image.rectTransform, finalBasePositions[i]);
+                slot.image.gameObject.SetActive(true);
+                ApplyCharacterSprite(i, true);
 
-                float localT = Mathf.Clamp01((t - stagger * visualOrder) / duration);
-                float eased = charactersDropCurve != null ? charactersDropCurve.Evaluate(localT) : localT;
-
-                Vector2 currentBase = Vector2.LerpUnclamped(startBase, endBase, eased);
-                ApplyAnchoredPositionScaled(rt, currentBase);
-
-                if (!slot.image.gameObject.activeSelf)
-                    slot.image.gameObject.SetActive(true);
-
-                if (localT >= 1f && !landedSpriteApplied[i])
-                {
-                    landedSpriteApplied[i] = true;
-                    ApplyCharacterSprite(i, true);
-
-                    if (enableSurgicalLogs)
-                        Debug.Log($"{LOG} Character[{i}] landed -> switched to landed sprite", this);
-                }
+                if (enableSurgicalLogs)
+                    Debug.Log($"{LOG} Character[{i}] landed -> switched to landed sprite", this);
             }
-
-            yield return null;
         }
 
         for (int i = 0; i < count; i++)
@@ -424,6 +450,14 @@ public class TitleScreenLogoDropIntro : MonoBehaviour
 
         if (slot.image.sprite != chosen)
             slot.image.sprite = chosen;
+    }
+
+    void PlayCharacterDropStartSfx()
+    {
+        if (characterDropStartSfx == null)
+            return;
+
+        AudioSource.PlayClipAtPoint(characterDropStartSfx, Vector3.zero, characterDropStartSfxVolume);
     }
 
     Sprite GetFallingSprite(CharacterDropSlot slot)
@@ -685,6 +719,38 @@ public class TitleScreenLogoDropIntro : MonoBehaviour
         }
 
         return order;
+    }
+
+    List<List<int>> BuildCenterOutWaveOrder()
+    {
+        List<List<int>> waves = new();
+
+        if (characterSlots == null || characterSlots.Length == 0)
+            return waves;
+
+        int count = characterSlots.Length;
+        int center = count / 2;
+
+        waves.Add(new List<int> { center });
+
+        for (int dist = 1; dist <= center; dist++)
+        {
+            List<int> wave = new();
+
+            int left = center - dist;
+            int right = center + dist;
+
+            if (left >= 0)
+                wave.Add(left);
+
+            if (right < count)
+                wave.Add(right);
+
+            if (wave.Count > 0)
+                waves.Add(wave);
+        }
+
+        return waves;
     }
 
     void SyncThisRectToLayoutRoot()

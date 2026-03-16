@@ -1002,6 +1002,8 @@ MonoBehaviour:
     landedSprite: {fileID: 21300000, guid: 1daf15bc074d4ce49ab140971b32240b, type: 3}
     baseSize: {x: 95, y: 80}
     useSpriteNativeSizeAsCharacterSize: 0
+  characterDropStartSfx: {fileID: 8300000, guid: 43c84278110b4274bb887f43a4038d31, type: 3}
+  characterDropStartSfxVolume: 1
   layoutRoot: {fileID: 1599199474}
   useLayoutRootAsParent: 1
   referenceWidth: 256
