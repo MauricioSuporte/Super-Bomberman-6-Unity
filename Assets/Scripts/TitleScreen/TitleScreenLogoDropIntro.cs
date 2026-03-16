@@ -19,8 +19,10 @@ public class TitleScreenLogoDropIntro : MonoBehaviour
         public Sprite fallingSprite;
         public Sprite landedSprite;
 
+        [Header("Layout")]
         public Vector2 baseSize = new(80f, 80f);
         public bool useSpriteNativeSizeAsCharacterSize = false;
+        public Vector2 positionOffset = Vector2.zero;
     }
 
     [Header("References")]
@@ -523,7 +525,7 @@ public class TitleScreenLogoDropIntro : MonoBehaviour
         {
             Debug.Log($"{LOG} PrepareCharactersAboveTop | count={characterSlots.Length}", this);
             for (int i = 0; i < finalBasePositions.Length; i++)
-                Debug.Log($"{LOG} Character[{i}] finalBase={finalBasePositions[i]}", this);
+                Debug.Log($"{LOG} Character[{i}] finalBase={finalBasePositions[i]} offset={(characterSlots[i] != null ? characterSlots[i].positionOffset : Vector2.zero)}", this);
         }
     }
 
@@ -561,7 +563,7 @@ public class TitleScreenLogoDropIntro : MonoBehaviour
 
         if (count == 1)
         {
-            positions[0] = new Vector2(0f, charactersBottomMargin);
+            positions[0] = new Vector2(0f, charactersBottomMargin) + GetCharacterPositionOffset(0);
             return positions;
         }
 
@@ -569,7 +571,8 @@ public class TitleScreenLogoDropIntro : MonoBehaviour
         {
             float t = count == 1 ? 0.5f : i / (float)(count - 1);
             float x = Mathf.Lerp(minCenterX, maxCenterX, t);
-            positions[i] = new Vector2(x, charactersBottomMargin);
+            Vector2 autoPosition = new Vector2(x, charactersBottomMargin);
+            positions[i] = autoPosition + GetCharacterPositionOffset(i);
         }
 
         return positions;
@@ -578,7 +581,19 @@ public class TitleScreenLogoDropIntro : MonoBehaviour
     Vector2 GetCharacterStartBasePosition(int index, Vector2[] finalBasePositions)
     {
         Vector2 endBase = finalBasePositions[index];
-        return new Vector2(endBase.x, referenceHeight + charactersStartOffsetAboveScreen);
+        return new Vector2(endBase.x, endBase.y + referenceHeight + charactersStartOffsetAboveScreen);
+    }
+
+    Vector2 GetCharacterPositionOffset(int index)
+    {
+        if (characterSlots == null || index < 0 || index >= characterSlots.Length)
+            return Vector2.zero;
+
+        CharacterDropSlot slot = characterSlots[index];
+        if (slot == null)
+            return Vector2.zero;
+
+        return slot.positionOffset;
     }
 
     void UpdateCharacterSiblingOrder()
@@ -820,7 +835,7 @@ public class TitleScreenLogoDropIntro : MonoBehaviour
 
             RectTransform rt = slot.image.rectTransform;
             Debug.Log(
-                $"{LOG} Character[{i}] name={slot.name} baseSize={GetEffectiveBaseCharacterSize(slot)} " +
+                $"{LOG} Character[{i}] name={slot.name} baseSize={GetEffectiveBaseCharacterSize(slot)} offset={slot.positionOffset} " +
                 $"rect=({rt.rect.width:0.###}x{rt.rect.height:0.###}) " +
                 $"sizeDelta=({rt.sizeDelta.x:0.###}x{rt.sizeDelta.y:0.###}) " +
                 $"anchored=({rt.anchoredPosition.x:0.###},{rt.anchoredPosition.y:0.###}) " +
@@ -864,6 +879,7 @@ public class TitleScreenLogoDropIntro : MonoBehaviour
                 $"cull={cr.cull} " +
                 $"depth={cr.absoluteDepth} " +
                 $"sprite={spriteInfo} " +
+                $"offset={slot.positionOffset} " +
                 $"parent={(parent != null ? parent.name : "NULL")} " +
                 $"sibling={rt.GetSiblingIndex()} " +
                 $"anchored={rt.anchoredPosition} " +
