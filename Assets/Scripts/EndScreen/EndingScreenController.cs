@@ -9,10 +9,6 @@ using UnityEngine.UI;
 public class EndingScreenController : MonoBehaviour
 {
     private static readonly WaitForSecondsRealtime _waitFrame = new(0.01f);
-    const string LOG = "[EndingScreenController]";
-
-    [Header("Debug (Surgical Logs)")]
-    [SerializeField] bool enableSurgicalLogs = true;
 
     [Header("UI")]
     public Image endingImage;
@@ -146,7 +142,6 @@ public class EndingScreenController : MonoBehaviour
     {
         if (Instance != null && Instance != this)
         {
-            SLog("Awake => duplicate instance detected, destroying self");
             Destroy(gameObject);
             return;
         }
@@ -155,10 +150,7 @@ public class EndingScreenController : MonoBehaviour
         DontDestroyOnLoad(gameObject);
 
         if (starComemoration == null)
-        {
             starComemoration = GetComponentInChildren<EndingStarComemoration>(true);
-            SLog($"Awake => auto-find starComemoration = {(starComemoration != null ? starComemoration.name : "NULL")}");
-        }
 
         if (endingImage == null)
         {
@@ -171,8 +163,6 @@ public class EndingScreenController : MonoBehaviour
                     break;
                 }
             }
-
-            SLog($"Awake => auto-find endingImage = {(endingImage != null ? endingImage.name : "NULL")}");
         }
 
         if (messageText == null)
@@ -186,8 +176,6 @@ public class EndingScreenController : MonoBehaviour
                     break;
                 }
             }
-
-            SLog($"Awake => auto-find messageText = {(messageText != null ? messageText.name : "NULL")}");
         }
 
         Canvas canvas = GetComponent<Canvas>();
@@ -198,11 +186,6 @@ public class EndingScreenController : MonoBehaviour
         {
             canvas.overrideSorting = true;
             canvas.sortingOrder = 1000;
-            SLog($"Awake => canvas found = {canvas.name}, sorting forced to {canvas.sortingOrder}");
-        }
-        else
-        {
-            SLog("Awake => canvas not found");
         }
 
         SetupMessageMaterial();
@@ -219,10 +202,7 @@ public class EndingScreenController : MonoBehaviour
     void SetupMessageMaterial()
     {
         if (messageText == null)
-        {
-            SLog("SetupMessageMaterial => messageText is null");
             return;
-        }
 
         Material baseMat = messageText.fontSharedMaterial;
 
@@ -230,10 +210,7 @@ public class EndingScreenController : MonoBehaviour
             baseMat = messageText.font.material;
 
         if (baseMat == null)
-        {
-            SLog("SetupMessageMaterial => no base material found");
             return;
-        }
 
         if (runtimeMsgMat != null)
             Destroy(runtimeMsgMat);
@@ -247,8 +224,6 @@ public class EndingScreenController : MonoBehaviour
             runtimeMsgMat.SetColor("_OutlineColor", outlineColor);
 
         messageText.fontSharedMaterial = runtimeMsgMat;
-
-        SLog($"SetupMessageMaterial => applied outlineWidth={outlineWidth} outlineColor={outlineColor}");
     }
 
     public void ForceHide()
@@ -266,14 +241,11 @@ public class EndingScreenController : MonoBehaviour
 
         if (gameObject.activeSelf)
             gameObject.SetActive(false);
-
-        SLog("ForceHide => ending hidden");
     }
 
     public IEnumerator Play(Image fadeImageOptional)
     {
         Running = true;
-        SLog("Play => started");
 
         if (!gameObject.activeSelf)
             gameObject.SetActive(true);
@@ -287,12 +259,6 @@ public class EndingScreenController : MonoBehaviour
         EndingProgressInfo progress = BuildProgressInfo();
         string finalMessage = BuildEndingMessage(progress);
         AudioClip selectedMusic = GetEndingMusic(progress);
-
-        SLog(
-            $"Play => progress stages={progress.ClearedStageCount}/{progress.RegisteredStageCount} " +
-            $"perfect={progress.PerfectStageCount} percent={progress.CompletionPercent} " +
-            $"bombers={progress.UnlockedBombersCount}/{progress.TotalBombersCount} " +
-            $"allBombers={progress.HasUnlockedAllBombers}");
 
         if (endingImage != null)
         {
@@ -317,35 +283,18 @@ public class EndingScreenController : MonoBehaviour
         }
 
         ApplyVisualHierarchyOrder();
-        DumpVisualHierarchy("Play.AfterHierarchyOrder");
-        DumpUiRects("Play.AfterHierarchyOrder");
 
         if (starComemoration != null)
-        {
-            SLog($"Play => starComemoration activeSelf={starComemoration.gameObject.activeSelf} enabled={starComemoration.enabled}");
             starComemoration.PlayIfEligible();
-        }
-        else
-        {
-            SLog("Play => starComemoration is null");
-        }
 
         if (fadeImageOptional != null)
         {
             fadeImageOptional.gameObject.SetActive(true);
             fadeImageOptional.transform.SetAsLastSibling();
-            SLog("Play => fade image set as last sibling");
         }
 
         if (selectedMusic != null && GameMusicController.Instance != null)
-        {
             GameMusicController.Instance.PlayMusic(selectedMusic, musicVolume, false);
-            SLog($"Play => music started: {selectedMusic.name}");
-        }
-        else
-        {
-            SLog("Play => no music started");
-        }
 
         float duration = 2f;
         float t = 0f;
@@ -378,8 +327,6 @@ public class EndingScreenController : MonoBehaviour
         if (fadeImageOptional != null)
             fadeImageOptional.gameObject.SetActive(false);
 
-        SLog("Play => fade in complete, waiting for Start");
-
         PlayerInputManager input = PlayerInputManager.Instance;
 
         if (input != null && input.AnyGet(PlayerAction.Start))
@@ -398,8 +345,6 @@ public class EndingScreenController : MonoBehaviour
 
             yield return null;
         }
-
-        SLog("Play => Start pressed, exiting ending");
 
         if (GameMusicController.Instance != null)
             GameMusicController.Instance.StopMusic();
@@ -424,10 +369,7 @@ public class EndingScreenController : MonoBehaviour
             parent = messageText.transform.parent;
 
         if (parent == null)
-        {
-            SLog("ApplyVisualHierarchyOrder => parent not found");
             return;
-        }
 
         if (endingImage != null && endingImage.transform.parent == parent)
             endingImage.transform.SetSiblingIndex(0);
@@ -437,8 +379,6 @@ public class EndingScreenController : MonoBehaviour
 
         if (messageText != null && messageText.transform.parent == parent)
             messageText.transform.SetSiblingIndex(2);
-
-        SLog("ApplyVisualHierarchyOrder => background=0, stars=1, text=2");
     }
 
     EndingProgressInfo BuildProgressInfo()
@@ -621,68 +561,5 @@ public class EndingScreenController : MonoBehaviour
         messageText.alignment = TextAlignmentOptions.TopGeoAligned;
         messageText.overflowMode = TextOverflowModes.Overflow;
         messageText.textWrappingMode = TextWrappingModes.NoWrap;
-
-        SLog(
-            $"ApplyMessageLayoutFix => parent=({parentWidth:0.##}x{parentHeight:0.##}) " +
-            $"target=({targetWidth:0.##}x{targetHeight:0.##}) anchored={rt.anchoredPosition}");
-    }
-
-    void DumpVisualHierarchy(string context)
-    {
-        Transform parent = null;
-
-        if (endingImage != null)
-            parent = endingImage.transform.parent;
-        else if (starComemoration != null)
-            parent = starComemoration.transform.parent;
-        else if (messageText != null)
-            parent = messageText.transform.parent;
-
-        if (parent == null)
-        {
-            SLog($"{context} => hierarchy parent NULL");
-            return;
-        }
-
-        string msg = $"{context} => siblings:";
-        for (int i = 0; i < parent.childCount; i++)
-        {
-            Transform child = parent.GetChild(i);
-            msg += $" [{i}] {child.name}";
-        }
-
-        SLog(msg);
-    }
-
-    void DumpUiRects(string context)
-    {
-        if (endingImage != null)
-            DumpRect(context + ".EndingBackground", endingImage.rectTransform);
-
-        if (starComemoration != null)
-            DumpRect(context + ".StarComemoration", starComemoration.transform as RectTransform);
-
-        if (messageText != null)
-            DumpRect(context + ".EndingMessageText", messageText.rectTransform);
-    }
-
-    void DumpRect(string context, RectTransform rt)
-    {
-        if (rt == null)
-        {
-            SLog($"{context} => RectTransform NULL");
-            return;
-        }
-
-        SLog(
-            $"{context} => anchorMin={rt.anchorMin} anchorMax={rt.anchorMax} pivot={rt.pivot} " +
-            $"anchored={rt.anchoredPosition} sizeDelta={rt.sizeDelta} rect=({rt.rect.xMin:0.##},{rt.rect.yMin:0.##},{rt.rect.width:0.##},{rt.rect.height:0.##}) " +
-            $"sibling={rt.GetSiblingIndex()} activeSelf={rt.gameObject.activeSelf} activeInHierarchy={rt.gameObject.activeInHierarchy}");
-    }
-
-    void SLog(string message)
-    {
-        if (enableSurgicalLogs)
-            Debug.Log($"{LOG} {message}", this);
     }
 }

@@ -6,14 +6,6 @@ using UnityEngine.UI;
 
 public class EndingStarComemoration : MonoBehaviour
 {
-    const string LOG = "[EndingStarComemoration]";
-
-    [Header("Debug (Surgical Logs)")]
-    [SerializeField] bool enableSurgicalLogs = true;
-    [SerializeField] bool dumpSpawnAreaOnPlay = true;
-    [SerializeField] bool dumpEachSpawn = true;
-    [SerializeField] bool dumpStarMotionSamples = false;
-
     [Header("References")]
     [SerializeField] RectTransform spawnArea;
     [SerializeField] RectTransform starTemplate;
@@ -87,7 +79,6 @@ public class EndingStarComemoration : MonoBehaviour
         public float Age;
         public float Scale;
         public float MaxAlpha;
-        public float DebugNextLogAge;
 
         public Sprite[] AnimationFrames;
         public float AnimationFrameTime;
@@ -105,24 +96,16 @@ public class EndingStarComemoration : MonoBehaviour
 
         if (starTemplate != null)
             starTemplate.gameObject.SetActive(false);
-
-        SLog(
-            $"Awake => spawnArea={(spawnArea != null ? spawnArea.name : "NULL")} " +
-            $"starTemplate={(starTemplate != null ? starTemplate.name : "NULL")} " +
-            $"controller={(endingScreenController != null ? endingScreenController.name : "NULL")}");
     }
 
     void OnEnable()
     {
-        SLog($"OnEnable => playOnEnable={playOnEnable}");
-
         if (playOnEnable)
             PlayIfEligible();
     }
 
     void OnDisable()
     {
-        SLog("OnDisable => StopAndClear");
         StopAndClear();
     }
 
@@ -169,18 +152,8 @@ public class EndingStarComemoration : MonoBehaviour
                     star.CanvasGroup.alpha = star.MaxAlpha;
             }
 
-            if (dumpStarMotionSamples && star.Age >= star.DebugNextLogAge)
-            {
-                star.DebugNextLogAge += 0.5f;
-                SLog(
-                    $"Star#{star.Id} Move => pos={star.Rect.anchoredPosition} " +
-                    $"age={star.Age:0.00} alpha={(star.CanvasGroup != null ? star.CanvasGroup.alpha.ToString("0.00") : "N/A")} " +
-                    $"frame={star.AnimationFrameIndex}");
-            }
-
             if (star.Y < bottomY)
             {
-                SLog($"Star#{star.Id} Despawn => y={star.Y:0.##} bottomLimit={bottomY:0.##}");
                 Destroy(star.Rect.gameObject);
                 activeStars.RemoveAt(i);
             }
@@ -190,10 +163,7 @@ public class EndingStarComemoration : MonoBehaviour
         {
             int last = activeStars.Count - 1;
             if (activeStars[last]?.Rect != null)
-            {
-                SLog($"Trim => destroying Star#{activeStars[last].Id} because activeStars>{maxAliveStars}");
                 Destroy(activeStars[last].Rect.gameObject);
-            }
 
             activeStars.RemoveAt(last);
         }
@@ -233,40 +203,21 @@ public class EndingStarComemoration : MonoBehaviour
 
     public void PlayIfEligible()
     {
-        SLog("PlayIfEligible => called");
-
         if (requireTrueCompletion && !ShouldPlayForCurrentSave())
         {
-            SLog("PlayIfEligible => not eligible");
             StopAndClear();
             return;
         }
 
         if (spawnArea == null || starTemplate == null)
-        {
-            SLog($"PlayIfEligible => missing references spawnArea={(spawnArea != null)} starTemplate={(starTemplate != null)}");
             return;
-        }
 
         if (playing)
-        {
-            SLog("PlayIfEligible => already playing");
             return;
-        }
-
-        if (dumpSpawnAreaOnPlay)
-        {
-            DumpRect("PlayIfEligible.SpawnArea", spawnArea);
-            DumpRect("PlayIfEligible.StarTemplate", starTemplate);
-            DumpTemplateState();
-            DumpParentHierarchy();
-        }
 
         playing = true;
         spawnedCount = 0;
         spawnRoutine = StartCoroutine(SpawnLoop());
-
-        SLog("PlayIfEligible => started");
     }
 
     public void StopAndClear()
@@ -286,34 +237,24 @@ public class EndingStarComemoration : MonoBehaviour
         }
 
         activeStars.Clear();
-        SLog("StopAndClear => cleared");
     }
 
     IEnumerator SpawnLoop()
     {
-        SLog("SpawnLoop => started");
-
         while (playing)
         {
             if (activeStars.Count < maxAliveStars)
                 SpawnOne();
-            else
-                SLog($"SpawnLoop => max alive reached ({activeStars.Count}/{maxAliveStars})");
 
             float wait = UnityEngine.Random.Range(spawnIntervalMin, spawnIntervalMax);
             yield return new WaitForSecondsRealtime(wait);
         }
-
-        SLog("SpawnLoop => finished");
     }
 
     void SpawnOne()
     {
         if (starTemplate == null || spawnArea == null)
-        {
-            SLog("SpawnOne => missing references");
             return;
-        }
 
         Rect rect = GetSpawnRect();
 
@@ -321,10 +262,7 @@ public class EndingStarComemoration : MonoBehaviour
         float xMax = rect.xMax - spawnPaddingX;
 
         if (xMax < xMin)
-        {
-            SLog($"SpawnOne => invalid horizontal range xMin={xMin:0.##} xMax={xMax:0.##}");
             return;
-        }
 
         float spawnX = UnityEngine.Random.Range(xMin, xMax);
         float spawnY = rect.yMax + spawnOffsetY;
@@ -343,10 +281,6 @@ public class EndingStarComemoration : MonoBehaviour
         clone.localScale = Vector3.one * scale;
         clone.localRotation = Quaternion.identity;
         clone.sizeDelta = new Vector2(48f, 48f);
-
-        SLog(
-            $"SpawnOne => Star#{spawnedCount + 1} AFTER INITIAL POSITION " +
-            $"anchored={clone.anchoredPosition} local={clone.localPosition} world={clone.position}");
 
         Image img = clone.GetComponent<Image>();
         if (img == null)
@@ -404,7 +338,6 @@ public class EndingStarComemoration : MonoBehaviour
             Age = 0f,
             Scale = scale,
             MaxAlpha = maxAlpha,
-            DebugNextLogAge = 0.5f,
             AnimationFrames = frames,
             AnimationFrameTime = Mathf.Max(0.01f, animationFrameTime),
             AnimationTimer = 0f,
@@ -414,28 +347,10 @@ public class EndingStarComemoration : MonoBehaviour
         activeStars.Add(star);
 
         if (fadeIn && cg != null)
-            StartCoroutine(FadeInStar(star.Id, cg, star.MaxAlpha));
-
-        if (dumpEachSpawn)
-        {
-            SLog(
-                $"SpawnOne => Star#{star.Id} spawned " +
-                $"spawnRect=({rect.xMin:0.##},{rect.yMin:0.##},{rect.width:0.##},{rect.height:0.##}) " +
-                $"pos=({spawnX:0.##},{spawnY:0.##}) scale={scale:0.##} alphaMax={maxAlpha:0.##} " +
-                $"fall={star.FallSpeed:0.##} swayAmp={star.SwayAmplitude:0.##} swayFreq={star.SwayFrequency:0.##} driftX={star.DriftX:0.##} rotSpeed={star.RotationSpeed:0.##} " +
-                $"frames={(frames != null ? frames.Length : 0)} " +
-                $"startFrame={startFrame} " +
-                $"image={(img != null ? img.name : "NULL")} alpha={(cg != null ? cg.alpha.ToString("0.00") : "N/A")} sibling={clone.GetSiblingIndex()}");
-
-            SLog(
-                $"SpawnOne => Star#{star.Id} FINAL BEFORE TRACK " +
-                $"anchored={clone.anchoredPosition} local={clone.localPosition} world={clone.position}");
-
-            DumpRect($"SpawnOne.Star#{star.Id}", clone);
-        }
+            StartCoroutine(FadeInStar(cg, star.MaxAlpha));
     }
 
-    IEnumerator FadeInStar(int starId, CanvasGroup cg, float targetAlpha)
+    IEnumerator FadeInStar(CanvasGroup cg, float targetAlpha)
     {
         if (cg == null)
             yield break;
@@ -452,8 +367,6 @@ public class EndingStarComemoration : MonoBehaviour
 
         if (cg != null)
             cg.alpha = targetAlpha;
-
-        SLog($"FadeInStar => Star#{starId} fade complete targetAlpha={targetAlpha:0.00}");
     }
 
     Rect GetSpawnRect()
@@ -485,10 +398,6 @@ public class EndingStarComemoration : MonoBehaviour
 
         bool allBombersUnlocked = totalBombers > 0 && unlockedBombers >= totalBombers;
         bool eligible = percent >= 200 && allBombersUnlocked;
-
-        SLog(
-            $"ShouldPlayForCurrentSave => totalStages={totalStages} cleared={clearedStages} perfect={perfectStages} " +
-            $"percent={percent} bombers={unlockedBombers}/{totalBombers} eligible={eligible}");
 
         return eligible;
     }
@@ -522,71 +431,5 @@ public class EndingStarComemoration : MonoBehaviour
         }
 
         return uniqueUnlocked.Count;
-    }
-
-    void DumpTemplateState()
-    {
-        if (starTemplate == null)
-        {
-            SLog("DumpTemplateState => starTemplate NULL");
-            return;
-        }
-
-        Image img = starTemplate.GetComponent<Image>();
-
-        SLog(
-            $"DumpTemplateState => templateActiveSelf={starTemplate.gameObject.activeSelf} " +
-            $"templateActiveInHierarchy={starTemplate.gameObject.activeInHierarchy} " +
-            $"image={(img != null ? "OK" : "NULL")}");
-
-        if (img != null)
-        {
-            SLog(
-                $"DumpTemplateState => sourceSprite={(img.sprite != null ? img.sprite.name : "NULL")} " +
-                $"color={img.color} enabled={img.enabled} raycastTarget={img.raycastTarget}");
-        }
-
-        SLog(
-            $"DumpTemplateState => animateStars={animateStars} " +
-            $"idleSprite={(idleSprite != null ? idleSprite.name : "NULL")} " +
-            $"frames={(animationFrames != null ? animationFrames.Length : 0)} " +
-            $"frameTime={animationFrameTime:0.###} loop={loopAnimation} randomStart={randomizeStartFrame} " +
-            $"scale=[{scaleMin:0.##},{scaleMax:0.##}] alpha=[{maxAlphaMin:0.##},{maxAlphaMax:0.##}]");
-    }
-
-    void DumpParentHierarchy()
-    {
-        if (spawnArea == null || spawnArea.parent == null)
-        {
-            SLog("DumpParentHierarchy => no parent");
-            return;
-        }
-
-        Transform parent = spawnArea.parent;
-        string msg = "DumpParentHierarchy => siblings:";
-        for (int i = 0; i < parent.childCount; i++)
-            msg += $" [{i}] {parent.GetChild(i).name}";
-
-        SLog(msg);
-    }
-
-    void DumpRect(string context, RectTransform rt)
-    {
-        if (rt == null)
-        {
-            SLog($"{context} => RectTransform NULL");
-            return;
-        }
-
-        SLog(
-            $"{context} => anchorMin={rt.anchorMin} anchorMax={rt.anchorMax} pivot={rt.pivot} " +
-            $"anchored={rt.anchoredPosition} sizeDelta={rt.sizeDelta} rect=({rt.rect.xMin:0.##},{rt.rect.yMin:0.##},{rt.rect.width:0.##},{rt.rect.height:0.##}) " +
-            $"sibling={rt.GetSiblingIndex()} activeSelf={rt.gameObject.activeSelf} activeInHierarchy={rt.gameObject.activeInHierarchy}");
-    }
-
-    void SLog(string message)
-    {
-        if (enableSurgicalLogs)
-            Debug.Log($"{LOG} {message}", this);
     }
 }
