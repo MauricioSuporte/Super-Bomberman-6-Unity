@@ -553,6 +553,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a4b55e1b961d144197e1a7a4a391956, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AnimatedSpriteRenderer
+  enableSurgicalLogs: 0
+  logUiRootReposition: 0
   idleSprite: {fileID: 21300000, guid: efdbc00296c2e4049a4b925e8432840a, type: 3}
   animationSprite:
   - {fileID: 21300000, guid: f9815f75686c8864a9b597e93b90ea24, type: 3}
@@ -589,6 +591,7 @@ MonoBehaviour:
   pingPong: 0
   disableOffsetsIfThisObjectHasRigidbody2D: 1
   disableOffsetsIfStandaloneRoot: 1
+  disableOffsetsWhenTargetIsOwnUIRect: 1
 --- !u!114 &544397350
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1679,7 +1682,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4d2807c5c57c72e4a8a52390ba37be9a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TitleScreenController
-  enableSurgicalLogs: 0
+  enableSurgicalLogs: 1
   menuBoxSize: {x: 520, y: 260}
   moveOptionSfx: {fileID: 8300000, guid: 9095599de31cf8543bb7e82ff2782f12, type: 3}
   moveOptionVolume: 1

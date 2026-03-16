@@ -49,6 +49,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2c1005acf7ac552448f897dd105dd5d4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EndingScreenController
+  enableSurgicalLogs: 1
   endingImage: {fileID: 5710711960017553179}
   messageText: {fileID: 7357174030212029195}
   endingMusic100: {fileID: 8300000, guid: 131a84364111a584db857a484c052596, type: 3}
@@ -58,6 +59,7 @@ MonoBehaviour:
   musicVolume: 1
   outlineColor: {r: 0, g: 0, b: 0, a: 1}
   outlineWidth: 0.4
+  starComemoration: {fileID: 7227861050984187371}
   titleSceneName: TitleScreen
   worldCompleteLabel: <size=52><color=#1ABC00>WORLD 2</color>  <color=#E8E8E8>DEMO
     COMPLETE!</color></size>
@@ -156,6 +158,7 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 4834662218081625974}
+  - {fileID: 6095587562491496810}
   - {fileID: 5735033940268570638}
   m_Father: {fileID: 5732117438780064429}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -227,6 +230,81 @@ MonoBehaviour:
   m_BlockingMask:
     serializedVersion: 2
     m_Bits: 4294967295
+--- !u!1 &6115073979432183783
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 3730897010935685275}
+  - component: {fileID: 4010211402808046820}
+  - component: {fileID: 8334144312546540328}
+  m_Layer: 0
+  m_Name: StarTemplate
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 0
+--- !u!224 &3730897010935685275
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6115073979432183783}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 6095587562491496810}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 24, y: 24}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!222 &4010211402808046820
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6115073979432183783}
+  m_CullTransparentMesh: 1
+--- !u!114 &8334144312546540328
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6115073979432183783}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_RaycastTarget: 0
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_Sprite: {fileID: 695743192020375121, guid: 855c42ca04c955546bb911ff851934b8, type: 3}
+  m_Type: 0
+  m_PreserveAspect: 0
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
+  m_UseSpriteMesh: 0
+  m_PixelsPerUnitMultiplier: 1
 --- !u!1 &6327776663832610285
 GameObject:
   m_ObjectHideFlags: 0
@@ -439,3 +517,92 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!1 &7258383220278075555
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6095587562491496810}
+  - component: {fileID: 7227861050984187371}
+  m_Layer: 0
+  m_Name: StarComemoration
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &6095587562491496810
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7258383220278075555}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 3730897010935685275}
+  m_Father: {fileID: 6475377800087694259}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &7227861050984187371
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7258383220278075555}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5f27df9f7d82d56499297b37bb3c18a2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EndingStarComemoration
+  enableSurgicalLogs: 1
+  dumpSpawnAreaOnPlay: 1
+  dumpEachSpawn: 1
+  dumpStarMotionSamples: 1
+  spawnArea: {fileID: 6095587562491496810}
+  starTemplate: {fileID: 3730897010935685275}
+  endingScreenController: {fileID: 836963714056787448}
+  requireTrueCompletion: 1
+  playOnEnable: 0
+  maxAliveStars: 32
+  spawnIntervalMin: 0.14
+  spawnIntervalMax: 0.28
+  spawnPaddingX: 18
+  spawnOffsetY: 20
+  fallSpeedMin: 52
+  fallSpeedMax: 96
+  swayAmplitudeMin: 4
+  swayAmplitudeMax: 14
+  swayFrequencyMin: 0.55
+  swayFrequencyMax: 1.55
+  driftXMin: -4
+  driftXMax: 4
+  rotationSpeedMin: -18
+  rotationSpeedMax: 18
+  scaleMin: 0.8
+  scaleMax: 1.2
+  maxAlphaMin: 0.353
+  maxAlphaMax: 0.685
+  fadeIn: 1
+  fadeInDuration: 0.22
+  fadeOutNearBottom: 1
+  fadeOutBottomDistance: 150
+  animateStars: 1
+  idleSprite: {fileID: 695743192020375121, guid: 855c42ca04c955546bb911ff851934b8, type: 3}
+  animationFrames:
+  - {fileID: 1637399009915619187, guid: 855c42ca04c955546bb911ff851934b8, type: 3}
+  - {fileID: 695743192020375121, guid: 855c42ca04c955546bb911ff851934b8, type: 3}
+  animationFrameTime: 0.1
+  loopAnimation: 1
+  randomizeStartFrame: 1
