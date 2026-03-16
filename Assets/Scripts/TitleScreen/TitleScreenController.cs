@@ -6,7 +6,6 @@ using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.EnhancedTouch;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
-using Touch = UnityEngine.InputSystem.EnhancedTouch.Touch;
 
 public class TitleScreenController : MonoBehaviour
 {
@@ -164,6 +163,9 @@ public class TitleScreenController : MonoBehaviour
     [SerializeField] bool allowMouseInteraction = true;
     [SerializeField] bool allowRightClickBack = true;
 
+    [Header("Title Intro")]
+    [SerializeField] TitleScreenVerticalPanIntro titleIntroPan;
+
     public bool ControlsRequested { get; private set; }
     public bool Running { get; private set; }
     public bool NormalGameRequested { get; private set; }
@@ -280,6 +282,9 @@ public class TitleScreenController : MonoBehaviour
 
         if (titleScreenRawImage == null)
             Debug.LogWarning($"{LOG} titleScreenRawImage não foi atribuído no Inspector.", this);
+
+        if (titleIntroPan == null && titleScreenRawImage != null)
+            titleIntroPan = titleScreenRawImage.GetComponent<TitleScreenVerticalPanIntro>();
 
         if (menuText != null)
             menuRect = menuText.rectTransform;
@@ -1016,6 +1021,12 @@ public class TitleScreenController : MonoBehaviour
 
         titleScreenRawImage.gameObject.SetActive(true);
 
+        if (titleIntroPan != null)
+        {
+            titleIntroPan.PrepareStaticBottomFrame();
+            return;
+        }
+
         if (titleScreenSprite != null)
         {
             Texture tex = titleScreenSprite.texture;
@@ -1023,17 +1034,9 @@ public class TitleScreenController : MonoBehaviour
             {
                 tex.filterMode = FilterMode.Point;
                 tex.wrapMode = TextureWrapMode.Clamp;
+                titleScreenRawImage.texture = tex;
+                titleScreenRawImage.uvRect = new Rect(0f, 0f, 1f, 1f);
             }
-
-            titleScreenRawImage.texture = tex;
-
-            Rect r = titleScreenSprite.textureRect;
-            Rect tr = tex != null ? new Rect(0f, 0f, tex.width, tex.height) : r;
-            Rect uv = tex != null && tr.width > 0f && tr.height > 0f
-                ? new Rect(r.x / tr.width, r.y / tr.height, r.width / tr.width, r.height / tr.height)
-                : new Rect(0f, 0f, 1f, 1f);
-
-            titleScreenRawImage.uvRect = uv;
         }
     }
 
@@ -1041,8 +1044,6 @@ public class TitleScreenController : MonoBehaviour
     {
         if (enableSurgicalLogs && referenceRect != null)
             Debug.Log($"{LOG} ShowTitleScreenNow BEFORE ApplyResolvedLayout | RefSize={referenceRect.rect.size}", this);
-
-        ApplyTitleVisualNow();
 
         if (menuText != null)
         {
@@ -1281,10 +1282,14 @@ public class TitleScreenController : MonoBehaviour
 
         yield return StartCoroutine(StabilizeLayoutBeforeShow());
 
-        ShowTitleScreenNow();
+        ApplyTitleVisualNow();
 
         if (fadeToHideOptional != null)
             fadeToHideOptional.gameObject.SetActive(false);
+
+        yield return StartCoroutine(PlayTitleIntroIfAny());
+
+        ShowTitleScreenNow();
 
         if (titleMusic != null && GameMusicController.Instance != null)
             GameMusicController.Instance.PlayMusic(titleMusic, titleMusicVolume, true);
@@ -2390,6 +2395,22 @@ public class TitleScreenController : MonoBehaviour
 
             RequestStabilizedLayoutRefresh("RuntimeResolutionChange");
         }
+    }
+
+    IEnumerator PlayTitleIntroIfAny()
+    {
+        if (titleScreenRawImage == null)
+            yield break;
+
+        titleScreenRawImage.gameObject.SetActive(true);
+
+        if (titleIntroPan != null)
+        {
+            yield return titleIntroPan.PlayIntro();
+            yield break;
+        }
+
+        ApplyTitleVisualNow();
     }
 
     void OnRectTransformDimensionsChange()
