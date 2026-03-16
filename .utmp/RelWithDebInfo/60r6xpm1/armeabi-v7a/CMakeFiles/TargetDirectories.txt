@@ -1,0 +1,5 @@
+C:/Users/mauri/source/repos/SuperBomberman6/.utmp/RelWithDebInfo/60r6xpm1/armeabi-v7a/CMakeFiles/edit_cache.dir
+C:/Users/mauri/source/repos/SuperBomberman6/.utmp/RelWithDebInfo/60r6xpm1/armeabi-v7a/CMakeFiles/rebuild_cache.dir
+C:/Users/mauri/source/repos/SuperBomberman6/.utmp/RelWithDebInfo/60r6xpm1/armeabi-v7a/FramePacing/CMakeFiles/swappywrapper.dir
+C:/Users/mauri/source/repos/SuperBomberman6/.utmp/RelWithDebInfo/60r6xpm1/armeabi-v7a/FramePacing/CMakeFiles/edit_cache.dir
+C:/Users/mauri/source/repos/SuperBomberman6/.utmp/RelWithDebInfo/60r6xpm1/armeabi-v7a/FramePacing/CMakeFiles/rebuild_cache.dir
