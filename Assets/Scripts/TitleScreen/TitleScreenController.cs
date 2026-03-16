@@ -312,6 +312,11 @@ public class TitleScreenController : MonoBehaviour
         ForceHide();
     }
 
+    void Start()
+    {
+        RequestStabilizedLayoutRefresh("Start");
+    }
+
     void OnEnable()
     {
         EnhancedTouchSupport.Enable();
@@ -322,11 +327,6 @@ public class TitleScreenController : MonoBehaviour
     {
         if (EnhancedTouchSupport.enabled)
             EnhancedTouchSupport.Disable();
-    }
-
-    void Start()
-    {
-        RequestStabilizedLayoutRefresh("Start");
     }
 
     void OnDestroy()
@@ -1015,7 +1015,9 @@ public class TitleScreenController : MonoBehaviour
         if (footerText != null) footerText.gameObject.SetActive(false);
         if (bossRushLockedText != null) bossRushLockedText.gameObject.SetActive(false);
         if (videoValuesText != null) videoValuesText.gameObject.SetActive(false);
-        if (titleLogoIntro != null) titleLogoIntro.HideImmediate();
+
+        if (titleLogoIntro != null)
+            titleLogoIntro.HideImmediate();
     }
 
     void ApplyTitleVisualNow()
@@ -1763,6 +1765,7 @@ public class TitleScreenController : MonoBehaviour
         if (footerText != null) footerText.gameObject.SetActive(false);
         if (bossRushLockedText != null) bossRushLockedText.gameObject.SetActive(false);
         if (videoValuesText != null) videoValuesText.gameObject.SetActive(false);
+        if (titleLogoIntro != null) titleLogoIntro.HideImmediate();
 
         StopPushStartBlink();
         HideBossRushLockedMessageImmediate();

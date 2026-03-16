@@ -222,30 +222,30 @@ public class TitleScreenDropIntro : MonoBehaviour
         _visualState = IntroVisualState.CharactersAboveTop;
         ReapplyCurrentResolvedLayout();
 
-        if (HandleSkipIfRequested("PlayMasterRoutine-Begin"))
+        if (HandleSkipIfRequested())
             yield break;
 
         yield return PlayCharactersRoutine();
 
-        if (HandleSkipIfRequested("AfterCharacters"))
+        if (HandleSkipIfRequested())
             yield break;
 
         if (delayAfterCharactersBeforeLogo > 0f)
         {
             yield return WaitWithSkip(delayAfterCharactersBeforeLogo);
 
-            if (HandleSkipIfRequested("AfterDelayBeforeLogo"))
+            if (HandleSkipIfRequested())
                 yield break;
         }
 
         PrepareLogoAboveTop(true);
 
-        if (HandleSkipIfRequested("BeforeLogo"))
+        if (HandleSkipIfRequested())
             yield break;
 
         yield return PlayLogoRoutine();
 
-        if (HandleSkipIfRequested("AfterLogo"))
+        if (HandleSkipIfRequested())
             yield break;
 
         _visualState = IntroVisualState.Completed;
@@ -274,7 +274,7 @@ public class TitleScreenDropIntro : MonoBehaviour
 
         for (int waveIndex = 0; waveIndex < waveOrder.Count; waveIndex++)
         {
-            if (HandleSkipIfRequested($"PlayCharactersRoutine-Wave{waveIndex}-Begin"))
+            if (HandleSkipIfRequested())
                 yield break;
 
             List<int> wave = waveOrder[waveIndex];
@@ -287,7 +287,7 @@ public class TitleScreenDropIntro : MonoBehaviour
                 if (PollSkipPressed())
                     Skip();
 
-                if (HandleSkipIfRequested($"PlayCharactersRoutine-Wave{waveIndex}-Loop"))
+                if (HandleSkipIfRequested())
                     yield break;
 
                 float dt = useUnscaledTime ? Time.unscaledDeltaTime : Time.deltaTime;
@@ -363,7 +363,7 @@ public class TitleScreenDropIntro : MonoBehaviour
             if (PollSkipPressed())
                 Skip();
 
-            if (HandleSkipIfRequested("PlayLogoRoutine-Loop"))
+            if (HandleSkipIfRequested())
                 yield break;
 
             float dt = useUnscaledTime ? Time.unscaledDeltaTime : Time.deltaTime;
@@ -394,7 +394,7 @@ public class TitleScreenDropIntro : MonoBehaviour
         return input.AnyGetDown(PlayerAction.Start) || input.AnyGetDown(PlayerAction.ActionA);
     }
 
-    bool HandleSkipIfRequested(string context)
+    bool HandleSkipIfRequested()
     {
         if (PollSkipPressed())
             Skip();
@@ -402,11 +402,11 @@ public class TitleScreenDropIntro : MonoBehaviour
         if (!skipRequested)
             return false;
 
-        CompleteImmediateToEndState(context);
+        CompleteImmediateToEndState();
         return true;
     }
 
-    void CompleteImmediateToEndState(string context)
+    void CompleteImmediateToEndState()
     {
         EnsureLogo();
         EnsureCharacters();
