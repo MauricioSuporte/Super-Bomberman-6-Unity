@@ -165,6 +165,7 @@ public class TitleScreenController : MonoBehaviour
 
     [Header("Title Intro")]
     [SerializeField] TitleScreenVerticalPanIntro titleIntroPan;
+    [SerializeField] TitleScreenLogoDropIntro titleLogoIntro;
 
     public bool ControlsRequested { get; private set; }
     public bool Running { get; private set; }
@@ -294,6 +295,9 @@ public class TitleScreenController : MonoBehaviour
 
         if (layoutRoot == null)
             layoutRoot = ResolveLayoutRoot();
+
+        if (titleLogoIntro != null)
+            titleLogoIntro.SetLayoutRoot(GetEffectiveLayoutRoot());
 
         if (cursorRenderer != null)
         {
@@ -609,6 +613,28 @@ public class TitleScreenController : MonoBehaviour
         UpdateFooterPosition();
         UpdateBossRushLockedPosition();
         UpdateVideoValuesPosition();
+
+        if (titleLogoIntro != null)
+        {
+            float logoPixelScale = ComputeFramePixelScale();
+            titleLogoIntro.SetPixelFrameScale(logoPixelScale);
+
+            if (enableSurgicalLogs)
+            {
+                Debug.Log(
+                    $"{LOG} ApplyResolvedLayout | textUiScale={_currentUiScale:0.###} | logoPixelScale={logoPixelScale:0.###} | reference=({referenceWidth}x{referenceHeight}) | designUpscale={designUpscale}",
+                    this
+                );
+            }
+        }
+
+        if (enableSurgicalLogs && titleLogoIntro != null)
+        {
+            Debug.Log(
+                $"{LOG} ApplyResolvedLayout | uiScale={_currentUiScale:0.###} | reference=({referenceWidth}x{referenceHeight}) | designUpscale={designUpscale}",
+                this
+            );
+        }
 
         DumpLayout(where);
     }
@@ -1012,6 +1038,7 @@ public class TitleScreenController : MonoBehaviour
         if (footerText != null) footerText.gameObject.SetActive(false);
         if (bossRushLockedText != null) bossRushLockedText.gameObject.SetActive(false);
         if (videoValuesText != null) videoValuesText.gameObject.SetActive(false);
+        if (titleLogoIntro != null) titleLogoIntro.HideImmediate();
     }
 
     void ApplyTitleVisualNow()
@@ -1288,11 +1315,9 @@ public class TitleScreenController : MonoBehaviour
             fadeToHideOptional.gameObject.SetActive(false);
 
         yield return StartCoroutine(PlayTitleIntroIfAny());
+        yield return StartCoroutine(PlayTitleLogoIntroIfAny());
 
         ShowTitleScreenNow();
-
-        if (titleMusic != null && GameMusicController.Instance != null)
-            GameMusicController.Instance.PlayMusic(titleMusic, titleMusicVolume, true);
 
         if (ignoreStartKeyUntilRelease ||
             AnyPlayerHeld(PlayerAction.Start) ||
@@ -1308,6 +1333,9 @@ public class TitleScreenController : MonoBehaviour
 
         RefreshMenuText();
         StartPushStartBlink();
+
+        if (titleMusic != null && GameMusicController.Instance != null)
+            GameMusicController.Instance.PlayMusic(titleMusic, titleMusicVolume, true);
 
         while (Running && !locked)
         {
@@ -2251,7 +2279,22 @@ public class TitleScreenController : MonoBehaviour
                 $"anchored=({menuRect.anchoredPosition.x:0.###},{menuRect.anchoredPosition.y:0.###})";
         }
 
-        Debug.Log($"{LOG} {context} | {screenInfo} | {scaleInfo} | {refInfo} | {layoutInfo} | {menuInfo}", this);
+        string logoInfo = "LogoIntro=NULL";
+        if (titleLogoIntro != null)
+        {
+            Image logoImg = titleLogoIntro.GetComponentInChildren<Image>(true);
+            if (logoImg != null)
+            {
+                RectTransform lrt = logoImg.rectTransform;
+                logoInfo =
+                    $"LogoRectSize=({lrt.rect.width:0.###},{lrt.rect.height:0.###}) " +
+                    $"LogoSizeDelta=({lrt.sizeDelta.x:0.###},{lrt.sizeDelta.y:0.###}) " +
+                    $"LogoAnchored=({lrt.anchoredPosition.x:0.###},{lrt.anchoredPosition.y:0.###}) " +
+                    $"LogoParent={(lrt.parent != null ? lrt.parent.name : "NULL")}";
+            }
+        }
+
+        Debug.Log($"{LOG} {context} | {screenInfo} | {scaleInfo} | {refInfo} | {layoutInfo} | {menuInfo} | {logoInfo}", this);
     }
 
     void RequestStabilizedLayoutRefresh(string context)
@@ -2397,6 +2440,20 @@ public class TitleScreenController : MonoBehaviour
         }
     }
 
+    float ComputeFramePixelScale()
+    {
+        RectTransform root = GetEffectiveLayoutRoot();
+        if (root == null)
+            return 1f;
+
+        Rect r = root.rect;
+
+        float sx = r.width / Mathf.Max(1f, referenceWidth);
+        float sy = r.height / Mathf.Max(1f, referenceHeight);
+
+        return Mathf.Min(sx, sy);
+    }
+
     IEnumerator PlayTitleIntroIfAny()
     {
         if (titleScreenRawImage == null)
@@ -2411,6 +2468,16 @@ public class TitleScreenController : MonoBehaviour
         }
 
         ApplyTitleVisualNow();
+    }
+
+    IEnumerator PlayTitleLogoIntroIfAny()
+    {
+        if (titleLogoIntro == null)
+            yield break;
+
+        titleLogoIntro.SetLayoutRoot(GetEffectiveLayoutRoot());
+        titleLogoIntro.PrepareAboveTop();
+        yield return titleLogoIntro.PlayIntro();
     }
 
     void OnRectTransformDimensionsChange()
