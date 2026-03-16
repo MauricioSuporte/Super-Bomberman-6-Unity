@@ -36,7 +36,11 @@ public class TitleScreenVerticalPanIntro : MonoBehaviour
     Coroutine currentRoutine;
     Texture runtimeTexture;
 
+    bool skipRequested;
+
     public bool IsPlaying => currentRoutine != null;
+    public bool Running => currentRoutine != null;
+    public bool Skipped { get; private set; }
 
     void Reset()
     {
@@ -54,6 +58,9 @@ public class TitleScreenVerticalPanIntro : MonoBehaviour
 
     public void PrepareStaticBottomFrame()
     {
+        Skipped = false;
+        skipRequested = false;
+
         if (!TryPrepareTexture(out Texture tex, out Rect spriteRect))
             return;
 
@@ -84,9 +91,24 @@ public class TitleScreenVerticalPanIntro : MonoBehaviour
         ApplyUvRect(uv, tex);
     }
 
+    public void Skip()
+    {
+        if (!Running)
+            return;
+
+        skipRequested = true;
+        Skipped = true;
+
+        if (enableSurgicalLogs)
+            Debug.Log($"{LOG} Skip requested", this);
+    }
+
     public IEnumerator PlayIntro()
     {
         StopIntro();
+
+        Skipped = false;
+        skipRequested = false;
 
         if (!TryPrepareTexture(out Texture tex, out Rect spriteRect))
             yield break;
@@ -113,6 +135,8 @@ public class TitleScreenVerticalPanIntro : MonoBehaviour
             StopCoroutine(currentRoutine);
             currentRoutine = null;
         }
+
+        skipRequested = false;
     }
 
     IEnumerator PlayRoutine(Texture tex, Rect spriteRect, int fromBottom, int toBottom)
@@ -122,6 +146,16 @@ public class TitleScreenVerticalPanIntro : MonoBehaviour
 
         while (t < duration)
         {
+            if (IsSkipPressed())
+                Skip();
+
+            if (skipRequested)
+            {
+                ApplyTopFrameImmediate(tex, spriteRect, toBottom);
+                currentRoutine = null;
+                yield break;
+            }
+
             float delta = useUnscaledTime ? Time.unscaledDeltaTime : Time.deltaTime;
             t += delta;
 
@@ -144,6 +178,12 @@ public class TitleScreenVerticalPanIntro : MonoBehaviour
             yield return null;
         }
 
+        ApplyTopFrameImmediate(tex, spriteRect, toBottom);
+        currentRoutine = null;
+    }
+
+    void ApplyTopFrameImmediate(Texture tex, Rect spriteRect, int toBottom)
+    {
         Rect finalUv = BuildUvRect(
             spriteRect,
             visibleWidthPixels,
@@ -152,7 +192,18 @@ public class TitleScreenVerticalPanIntro : MonoBehaviour
         );
 
         ApplyUvRect(finalUv, tex);
-        currentRoutine = null;
+
+        if (enableSurgicalLogs)
+            Debug.Log($"{LOG} ApplyTopFrameImmediate | skipped={Skipped} | toBottom={toBottom}", this);
+    }
+
+    bool IsSkipPressed()
+    {
+        var input = PlayerInputManager.Instance;
+        if (input == null)
+            return false;
+
+        return input.AnyGetDown(PlayerAction.Start) || input.AnyGetDown(PlayerAction.ActionA);
     }
 
     bool TryPrepareTexture(out Texture tex, out Rect spriteRect)

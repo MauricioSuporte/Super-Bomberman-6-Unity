@@ -1324,7 +1324,17 @@ public class TitleScreenController : MonoBehaviour
             fadeToHideOptional.gameObject.SetActive(false);
 
         yield return StartCoroutine(PlayTitleIntroIfAny());
-        yield return StartCoroutine(PlayTitleLogoIntroIfAny());
+
+        bool skippedDuringPan = titleIntroPan != null && titleIntroPan.Skipped;
+
+        if (skippedDuringPan)
+        {
+            SkipRemainingTitleIntroToEnd();
+        }
+        else
+        {
+            yield return StartCoroutine(PlayTitleLogoIntroIfAny());
+        }
 
         ShowTitleScreenNow();
 
@@ -2491,6 +2501,25 @@ public class TitleScreenController : MonoBehaviour
         titleLogoIntro.PrepareAboveTop();
 
         yield return titleLogoIntro.PlayIntro();
+    }
+
+    void SkipRemainingTitleIntroToEnd()
+    {
+        if (titleScreenRawImage != null)
+            titleScreenRawImage.gameObject.SetActive(true);
+
+        if (titleIntroPan != null)
+            titleIntroPan.PrepareStaticTopFrame();
+
+        if (titleLogoIntro != null)
+        {
+            titleLogoIntro.SetLayoutRoot(GetEffectiveLayoutRoot());
+            titleLogoIntro.SetPixelFrameScale(ComputeFramePixelScale());
+            titleLogoIntro.CompleteImmediate();
+        }
+
+        if (enableSurgicalLogs)
+            Debug.Log($"{LOG} SkipRemainingTitleIntroToEnd", this);
     }
 
     void OnRectTransformDimensionsChange()

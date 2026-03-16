@@ -101,7 +101,11 @@ public class TitleScreenDropIntro : MonoBehaviour
     Vector2 _cachedLogoFinalBasePosition;
     Vector2 _cachedLogoAboveTopBasePosition;
 
+    bool skipRequested;
+
     public bool IsPlaying => currentRoutine != null;
+    public bool Running => currentRoutine != null;
+    public bool Skipped { get; private set; }
 
     public void SetPixelFrameScale(float scale)
     {
@@ -148,7 +152,10 @@ public class TitleScreenDropIntro : MonoBehaviour
     {
         StopIntro();
 
+        Skipped = false;
+        skipRequested = false;
         _visualState = IntroVisualState.Hidden;
+
         ResetCharacterLandedState();
         RebuildCachedBasePositionsIfPossible();
         ReapplyCurrentResolvedLayout();
@@ -161,6 +168,9 @@ public class TitleScreenDropIntro : MonoBehaviour
         EnsureLogo();
         EnsureCharacters();
         EnsureStateCaches();
+
+        Skipped = false;
+        skipRequested = false;
 
         ApplyLogoSprite();
         ApplyCharacterSprites(false);
@@ -176,6 +186,18 @@ public class TitleScreenDropIntro : MonoBehaviour
         DumpCharacterVisibilityState("PrepareAboveTop");
     }
 
+    public void Skip()
+    {
+        if (!Running)
+            return;
+
+        skipRequested = true;
+        Skipped = true;
+
+        if (enableSurgicalLogs)
+            Debug.Log($"{LOG} Skip requested", this);
+    }
+
     public IEnumerator PlayIntro()
     {
         StopIntro();
@@ -183,6 +205,9 @@ public class TitleScreenDropIntro : MonoBehaviour
         EnsureLogo();
         EnsureCharacters();
         EnsureStateCaches();
+
+        Skipped = false;
+        skipRequested = false;
 
         ApplyLogoSprite();
         ApplyCharacterSprites(false);
@@ -202,6 +227,8 @@ public class TitleScreenDropIntro : MonoBehaviour
             StopCoroutine(currentRoutine);
             currentRoutine = null;
         }
+
+        skipRequested = false;
     }
 
     IEnumerator PlayMasterRoutine()
@@ -216,13 +243,31 @@ public class TitleScreenDropIntro : MonoBehaviour
         if (enableSurgicalLogs)
             Debug.Log($"{LOG} PlayMasterRoutine | dropping characters first, then logo", this);
 
+        if (HandleSkipIfRequested("PlayMasterRoutine-Begin"))
+            yield break;
+
         yield return PlayCharactersRoutine();
 
+        if (HandleSkipIfRequested("AfterCharacters"))
+            yield break;
+
         if (delayAfterCharactersBeforeLogo > 0f)
-            yield return Wait(delayAfterCharactersBeforeLogo);
+        {
+            yield return WaitWithSkip(delayAfterCharactersBeforeLogo);
+
+            if (HandleSkipIfRequested("AfterDelayBeforeLogo"))
+                yield break;
+        }
 
         PrepareLogoAboveTop(true);
+
+        if (HandleSkipIfRequested("BeforeLogo"))
+            yield break;
+
         yield return PlayLogoRoutine();
+
+        if (HandleSkipIfRequested("AfterLogo"))
+            yield break;
 
         _visualState = IntroVisualState.Completed;
         ReapplyCurrentResolvedLayout();
@@ -252,6 +297,9 @@ public class TitleScreenDropIntro : MonoBehaviour
 
         for (int waveIndex = 0; waveIndex < waveOrder.Count; waveIndex++)
         {
+            if (HandleSkipIfRequested($"PlayCharactersRoutine-Wave{waveIndex}-Begin"))
+                yield break;
+
             List<int> wave = waveOrder[waveIndex];
             float t = 0f;
 
@@ -271,6 +319,12 @@ public class TitleScreenDropIntro : MonoBehaviour
 
             while (t < duration)
             {
+                if (PollSkipPressed())
+                    Skip();
+
+                if (HandleSkipIfRequested($"PlayCharactersRoutine-Wave{waveIndex}-Loop"))
+                    yield break;
+
                 float dt = useUnscaledTime ? Time.unscaledDeltaTime : Time.deltaTime;
                 t += dt;
 
@@ -347,6 +401,12 @@ public class TitleScreenDropIntro : MonoBehaviour
 
         while (t < duration)
         {
+            if (PollSkipPressed())
+                Skip();
+
+            if (HandleSkipIfRequested("PlayLogoRoutine-Loop"))
+                yield break;
+
             float dt = useUnscaledTime ? Time.unscaledDeltaTime : Time.deltaTime;
             t += dt;
 
@@ -366,6 +426,82 @@ public class TitleScreenDropIntro : MonoBehaviour
         logoImage.gameObject.SetActive(true);
 
         DumpAllState("PlayLogoRoutine-End");
+    }
+
+    bool PollSkipPressed()
+    {
+        var input = PlayerInputManager.Instance;
+        if (input == null)
+            return false;
+
+        return input.AnyGetDown(PlayerAction.Start) || input.AnyGetDown(PlayerAction.ActionA);
+    }
+
+    bool HandleSkipIfRequested(string context)
+    {
+        if (PollSkipPressed())
+            Skip();
+
+        if (!skipRequested)
+            return false;
+
+        CompleteImmediateToEndState(context);
+        return true;
+    }
+
+    void CompleteImmediateToEndState(string context)
+    {
+        EnsureLogo();
+        EnsureCharacters();
+        EnsureStateCaches();
+        RebuildCachedBasePositionsIfPossible();
+
+        for (int i = 0; i < characterSlots.Length; i++)
+        {
+            CharacterDropSlot slot = characterSlots[i];
+            if (slot == null || slot.image == null)
+                continue;
+
+            _characterHasLanded[i] = true;
+            slot.image.gameObject.SetActive(true);
+            ApplyAnchoredPositionScaled(slot.image.rectTransform, _cachedCharacterFinalBasePositions[i]);
+            ApplyCharacterSprite(i, true);
+        }
+
+        if (logoImage != null && _logoRect != null)
+        {
+            logoImage.gameObject.SetActive(true);
+            ApplyLogoSprite();
+            ApplyAnchoredPositionScaled(_logoRect, _cachedLogoFinalBasePosition);
+        }
+
+        _visualState = IntroVisualState.Completed;
+        currentRoutine = null;
+        skipRequested = false;
+
+        if (enableSurgicalLogs)
+            Debug.Log($"{LOG} CompleteImmediateToEndState | context={context}", this);
+
+        DumpAllState($"CompleteImmediateToEndState-{context}");
+        DumpCharacterVisibilityState($"CompleteImmediateToEndState-{context}");
+    }
+
+    IEnumerator WaitWithSkip(float seconds)
+    {
+        float duration = Mathf.Max(0f, seconds);
+        float t = 0f;
+
+        while (t < duration)
+        {
+            if (PollSkipPressed())
+                Skip();
+
+            if (skipRequested)
+                yield break;
+
+            t += useUnscaledTime ? Time.unscaledDeltaTime : Time.deltaTime;
+            yield return null;
+        }
     }
 
     void EnsureLogo()
@@ -1003,6 +1139,42 @@ public class TitleScreenDropIntro : MonoBehaviour
         }
     }
 
+    public void CompleteImmediate()
+    {
+        EnsureLogo();
+        EnsureCharacters();
+        EnsureStateCaches();
+        RebuildCachedBasePositionsIfPossible();
+
+        for (int i = 0; i < characterSlots.Length; i++)
+        {
+            CharacterDropSlot slot = characterSlots[i];
+            if (slot == null || slot.image == null)
+                continue;
+
+            _characterHasLanded[i] = true;
+            slot.image.gameObject.SetActive(true);
+            ApplyAnchoredPositionScaled(slot.image.rectTransform, _cachedCharacterFinalBasePositions[i]);
+            ApplyCharacterSprite(i, true);
+        }
+
+        if (logoImage != null && _logoRect != null)
+        {
+            logoImage.gameObject.SetActive(true);
+            ApplyLogoSprite();
+            ApplyAnchoredPositionScaled(_logoRect, _cachedLogoFinalBasePosition);
+        }
+
+        _visualState = IntroVisualState.Completed;
+        StopIntro();
+
+        if (enableSurgicalLogs)
+            Debug.Log($"{LOG} CompleteImmediate", this);
+
+        DumpAllState("CompleteImmediate");
+        DumpCharacterVisibilityState("CompleteImmediate");
+    }
+
     void DumpAllState(string context)
     {
         if (!enableSurgicalLogs)
@@ -1022,7 +1194,7 @@ public class TitleScreenDropIntro : MonoBehaviour
         }
 
         Debug.Log(
-            $"{LOG} {context} | pixelFrameScale={_pixelFrameScale:0.###} | visualState={_visualState} | {rootInfo} | {logoInfo} | characterCount={(characterSlots != null ? characterSlots.Length : 0)}",
+            $"{LOG} {context} | pixelFrameScale={_pixelFrameScale:0.###} | visualState={_visualState} | skipped={Skipped} | {rootInfo} | {logoInfo} | characterCount={(characterSlots != null ? characterSlots.Length : 0)}",
             this
         );
 
