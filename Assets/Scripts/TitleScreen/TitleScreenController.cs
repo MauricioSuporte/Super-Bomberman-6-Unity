@@ -9,11 +9,6 @@ using UnityEngine.UI;
 
 public class TitleScreenController : MonoBehaviour
 {
-    const string LOG = "[TitleScreenLayout]";
-
-    [Header("Debug (Surgical Logs)")]
-    [SerializeField] bool enableSurgicalLogs = true;
-
     readonly Vector3[] _menuWorldCorners = new Vector3[4];
     readonly Vector3[] _refWorldCorners = new Vector3[4];
     readonly Vector3[] _layoutWorldCorners = new Vector3[4];
@@ -280,9 +275,6 @@ public class TitleScreenController : MonoBehaviour
     void Awake()
     {
         bossRushInspectorDefaultUnlocked = forceBossRushUnlocked;
-
-        if (titleScreenRawImage == null)
-            Debug.LogWarning($"{LOG} titleScreenRawImage não foi atribuído no Inspector.", this);
 
         if (titleIntroPan == null && titleScreenRawImage != null)
             titleIntroPan = titleScreenRawImage.GetComponent<TitleScreenVerticalPanIntro>();
@@ -621,25 +613,7 @@ public class TitleScreenController : MonoBehaviour
 
             titleLogoIntro.SetLayoutRoot(root);
             titleLogoIntro.SetPixelFrameScale(logoPixelScale);
-
-            if (enableSurgicalLogs)
-            {
-                Debug.Log(
-                    $"{LOG} ApplyResolvedLayout | textUiScale={_currentUiScale:0.###} | logoPixelScale={logoPixelScale:0.###} | reference=({referenceWidth}x{referenceHeight}) | designUpscale={designUpscale}",
-                    this
-                );
-            }
         }
-
-        if (enableSurgicalLogs && titleLogoIntro != null)
-        {
-            Debug.Log(
-                $"{LOG} ApplyResolvedLayout | uiScale={_currentUiScale:0.###} | reference=({referenceWidth}x{referenceHeight}) | designUpscale={designUpscale}",
-                this
-            );
-        }
-
-        DumpLayout(where);
     }
 
     void ApplyScaledFontSettings()
@@ -1072,9 +1046,6 @@ public class TitleScreenController : MonoBehaviour
 
     void ShowTitleScreenNow()
     {
-        if (enableSurgicalLogs && referenceRect != null)
-            Debug.Log($"{LOG} ShowTitleScreenNow BEFORE ApplyResolvedLayout | RefSize={referenceRect.rect.size}", this);
-
         if (menuText != null)
         {
             menuText.gameObject.SetActive(true);
@@ -2254,78 +2225,6 @@ public class TitleScreenController : MonoBehaviour
             bossRushLockedText.gameObject.SetActive(false);
     }
 
-    void DumpLayout(string context)
-    {
-        if (!enableSurgicalLogs)
-            return;
-
-        string screenInfo = $"Screen=({Screen.width},{Screen.height})";
-        string scaleInfo = $"uiScale={_currentUiScale:0.###}";
-
-        string refInfo = "Reference=NULL";
-        if (referenceRect != null)
-        {
-            referenceRect.GetWorldCorners(_refWorldCorners);
-
-            Vector2 refBL = RectTransformUtility.WorldToScreenPoint(null, _refWorldCorners[0]);
-            Vector2 refTL = RectTransformUtility.WorldToScreenPoint(null, _refWorldCorners[1]);
-            Vector2 refTR = RectTransformUtility.WorldToScreenPoint(null, _refWorldCorners[2]);
-
-            refInfo =
-                $"RefBL=({refBL.x:0.###},{refBL.y:0.###}) " +
-                $"RefTL=({refTL.x:0.###},{refTL.y:0.###}) " +
-                $"RefTR=({refTR.x:0.###},{refTR.y:0.###})";
-        }
-
-        string layoutInfo = "LayoutRoot=NULL";
-        RectTransform root = GetEffectiveLayoutRoot();
-        if (root != null)
-        {
-            root.GetWorldCorners(_layoutWorldCorners);
-
-            Vector2 bl = RectTransformUtility.WorldToScreenPoint(null, _layoutWorldCorners[0]);
-            Vector2 tl = RectTransformUtility.WorldToScreenPoint(null, _layoutWorldCorners[1]);
-            Vector2 tr = RectTransformUtility.WorldToScreenPoint(null, _layoutWorldCorners[2]);
-
-            layoutInfo =
-                $"LayoutBL=({bl.x:0.###},{bl.y:0.###}) " +
-                $"LayoutTL=({tl.x:0.###},{tl.y:0.###}) " +
-                $"LayoutTR=({tr.x:0.###},{tr.y:0.###}) " +
-                $"LayoutSize=({root.rect.width:0.###},{root.rect.height:0.###})";
-        }
-
-        string menuInfo = "Menu=NULL";
-        if (menuRect != null)
-        {
-            menuRect.GetWorldCorners(_menuWorldCorners);
-
-            Vector2 bl = RectTransformUtility.WorldToScreenPoint(null, _menuWorldCorners[0]);
-            Vector2 tl = RectTransformUtility.WorldToScreenPoint(null, _menuWorldCorners[1]);
-
-            menuInfo =
-                $"MenuBL=({bl.x:0.###},{bl.y:0.###}) " +
-                $"MenuTL=({tl.x:0.###},{tl.y:0.###}) " +
-                $"anchored=({menuRect.anchoredPosition.x:0.###},{menuRect.anchoredPosition.y:0.###})";
-        }
-
-        string logoInfo = "LogoIntro=NULL";
-        if (titleLogoIntro != null)
-        {
-            Image logoImg = titleLogoIntro.GetComponentInChildren<Image>(true);
-            if (logoImg != null)
-            {
-                RectTransform lrt = logoImg.rectTransform;
-                logoInfo =
-                    $"LogoRectSize=({lrt.rect.width:0.###},{lrt.rect.height:0.###}) " +
-                    $"LogoSizeDelta=({lrt.sizeDelta.x:0.###},{lrt.sizeDelta.y:0.###}) " +
-                    $"LogoAnchored=({lrt.anchoredPosition.x:0.###},{lrt.anchoredPosition.y:0.###}) " +
-                    $"LogoParent={(lrt.parent != null ? lrt.parent.name : "NULL")}";
-            }
-        }
-
-        Debug.Log($"{LOG} {context} | {screenInfo} | {scaleInfo} | {refInfo} | {layoutInfo} | {menuInfo} | {logoInfo}", this);
-    }
-
     void RequestStabilizedLayoutRefresh(string context)
     {
         if (!isActiveAndEnabled)
@@ -2396,9 +2295,6 @@ public class TitleScreenController : MonoBehaviour
 
             Vector2 current = referenceRect.rect.size;
 
-            if (enableSurgicalLogs)
-                Debug.Log($"{LOG} StabilizeLayoutBeforeShow | frame={i} | RefSize={current}", this);
-
             if ((current - prev).sqrMagnitude < 0.01f)
                 stableFrames++;
             else
@@ -2461,12 +2357,7 @@ public class TitleScreenController : MonoBehaviour
         }
 
         if (changed)
-        {
-            if (enableSurgicalLogs)
-                Debug.Log($"{LOG} WatchForRuntimeLayoutChanges => {reason}", this);
-
             RequestStabilizedLayoutRefresh("RuntimeResolutionChange");
-        }
     }
 
     float ComputeFramePixelScale()
@@ -2527,9 +2418,6 @@ public class TitleScreenController : MonoBehaviour
             titleLogoIntro.SetPixelFrameScale(ComputeFramePixelScale());
             titleLogoIntro.CompleteImmediate();
         }
-
-        if (enableSurgicalLogs)
-            Debug.Log($"{LOG} SkipRemainingTitleIntroToEnd", this);
     }
 
     void OnRectTransformDimensionsChange()

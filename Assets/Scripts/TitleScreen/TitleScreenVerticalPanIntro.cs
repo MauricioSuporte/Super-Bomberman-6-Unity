@@ -30,9 +30,6 @@ public class TitleScreenVerticalPanIntro : MonoBehaviour
     [SerializeField] bool setNativeTextureOnPrepare = true;
     [SerializeField] bool snapToPixelPerfectUv = false;
 
-    [Header("Debug (Surgical Logs)")]
-    [SerializeField] bool enableSurgicalLogs = true;
-
     Coroutine currentRoutine;
     Texture runtimeTexture;
 
@@ -98,9 +95,6 @@ public class TitleScreenVerticalPanIntro : MonoBehaviour
 
         skipRequested = true;
         Skipped = true;
-
-        if (enableSurgicalLogs)
-            Debug.Log($"{LOG} Skip requested", this);
     }
 
     public IEnumerator PlayIntro()
@@ -115,14 +109,6 @@ public class TitleScreenVerticalPanIntro : MonoBehaviour
 
         int fromBottom = startBottomPixel;
         int toBottom = GetTargetTopBottomPixel(spriteRect);
-
-        if (enableSurgicalLogs)
-        {
-            Debug.Log(
-                $"{LOG} PlayIntro | tex=({tex.width}x{tex.height}) | spriteRect=({spriteRect.x},{spriteRect.y},{spriteRect.width},{spriteRect.height}) | fromBottom={fromBottom} | toBottom={toBottom} | visible=({visibleWidthPixels}x{visibleHeightPixels}) | duration={introDuration}",
-                this
-            );
-        }
 
         currentRoutine = StartCoroutine(PlayRoutine(tex, spriteRect, fromBottom, toBottom));
         yield return currentRoutine;
@@ -192,9 +178,6 @@ public class TitleScreenVerticalPanIntro : MonoBehaviour
         );
 
         ApplyUvRect(finalUv, tex);
-
-        if (enableSurgicalLogs)
-            Debug.Log($"{LOG} ApplyTopFrameImmediate | skipped={Skipped} | toBottom={toBottom}", this);
     }
 
     bool IsSkipPressed()

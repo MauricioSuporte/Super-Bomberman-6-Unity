@@ -6,8 +6,6 @@ using UnityEngine.UI;
 
 public class TitleScreenDropIntro : MonoBehaviour
 {
-    const string LOG = "[TitleScreenLogoDropIntro]";
-
     [Serializable]
     public class CharacterDropSlot
     {
@@ -83,9 +81,6 @@ public class TitleScreenDropIntro : MonoBehaviour
     [SerializeField] bool roundAnchoredPosition = true;
     [SerializeField] bool applyPointFilter = true;
 
-    [Header("Debug (Surgical Logs)")]
-    [SerializeField] bool enableSurgicalLogs = true;
-
     Coroutine currentRoutine;
 
     RectTransform _logoRect;
@@ -112,7 +107,6 @@ public class TitleScreenDropIntro : MonoBehaviour
         _pixelFrameScale = Mathf.Max(0.01f, scale);
         RebuildCachedBasePositionsIfPossible();
         ReapplyCurrentResolvedLayout();
-        DumpAllState("SetPixelFrameScale");
     }
 
     void Awake()
@@ -130,7 +124,6 @@ public class TitleScreenDropIntro : MonoBehaviour
         RebuildCachedBasePositionsIfPossible();
 
         HideImmediate();
-        DumpAllState("Awake");
     }
 
     public void SetLayoutRoot(RectTransform root)
@@ -143,9 +136,6 @@ public class TitleScreenDropIntro : MonoBehaviour
         EnsureStateCaches();
         RebuildCachedBasePositionsIfPossible();
         ReapplyCurrentResolvedLayout();
-
-        DumpAllState("SetLayoutRoot");
-        DumpCharacterVisibilityState("SetLayoutRoot");
     }
 
     public void HideImmediate()
@@ -159,8 +149,6 @@ public class TitleScreenDropIntro : MonoBehaviour
         ResetCharacterLandedState();
         RebuildCachedBasePositionsIfPossible();
         ReapplyCurrentResolvedLayout();
-
-        DumpAllState("HideImmediate");
     }
 
     public void PrepareAboveTop()
@@ -181,9 +169,6 @@ public class TitleScreenDropIntro : MonoBehaviour
 
         _visualState = IntroVisualState.CharactersAboveTop;
         ReapplyCurrentResolvedLayout();
-
-        DumpAllState("PrepareAboveTop");
-        DumpCharacterVisibilityState("PrepareAboveTop");
     }
 
     public void Skip()
@@ -193,9 +178,6 @@ public class TitleScreenDropIntro : MonoBehaviour
 
         skipRequested = true;
         Skipped = true;
-
-        if (enableSurgicalLogs)
-            Debug.Log($"{LOG} Skip requested", this);
     }
 
     public IEnumerator PlayIntro()
@@ -240,9 +222,6 @@ public class TitleScreenDropIntro : MonoBehaviour
         _visualState = IntroVisualState.CharactersAboveTop;
         ReapplyCurrentResolvedLayout();
 
-        if (enableSurgicalLogs)
-            Debug.Log($"{LOG} PlayMasterRoutine | dropping characters first, then logo", this);
-
         if (HandleSkipIfRequested("PlayMasterRoutine-Begin"))
             yield break;
 
@@ -273,8 +252,6 @@ public class TitleScreenDropIntro : MonoBehaviour
         ReapplyCurrentResolvedLayout();
 
         currentRoutine = null;
-        DumpAllState("PlayMasterRoutine-End");
-        DumpCharacterVisibilityState("PlayMasterRoutine-End");
     }
 
     IEnumerator PlayCharactersRoutine()
@@ -304,18 +281,6 @@ public class TitleScreenDropIntro : MonoBehaviour
             float t = 0f;
 
             PlayCharacterDropStartSfx();
-
-            if (enableSurgicalLogs)
-            {
-                string waveText = "";
-                for (int j = 0; j < wave.Count; j++)
-                {
-                    if (j > 0) waveText += ", ";
-                    waveText += wave[j].ToString();
-                }
-
-                Debug.Log($"{LOG} PlayCharactersRoutine | wave={waveIndex} | characters=[{waveText}] | playedDropSfx={(characterDropStartSfx != null)}", this);
-            }
 
             while (t < duration)
             {
@@ -363,9 +328,6 @@ public class TitleScreenDropIntro : MonoBehaviour
                 ApplyAnchoredPositionScaled(slot.image.rectTransform, _cachedCharacterFinalBasePositions[i]);
                 slot.image.gameObject.SetActive(true);
                 ApplyCharacterSprite(i, true);
-
-                if (enableSurgicalLogs)
-                    Debug.Log($"{LOG} Character[{i}] landed -> switched to landed sprite", this);
             }
         }
 
@@ -383,9 +345,6 @@ public class TitleScreenDropIntro : MonoBehaviour
 
         _visualState = IntroVisualState.CharactersLanded;
         ReapplyCurrentResolvedLayout();
-
-        DumpAllState("PlayCharactersRoutine-End");
-        DumpCharacterVisibilityState("PlayCharactersRoutine-End");
     }
 
     IEnumerator PlayLogoRoutine()
@@ -424,8 +383,6 @@ public class TitleScreenDropIntro : MonoBehaviour
 
         ApplyAnchoredPositionScaled(_logoRect, endBase);
         logoImage.gameObject.SetActive(true);
-
-        DumpAllState("PlayLogoRoutine-End");
     }
 
     bool PollSkipPressed()
@@ -478,12 +435,6 @@ public class TitleScreenDropIntro : MonoBehaviour
         _visualState = IntroVisualState.Completed;
         currentRoutine = null;
         skipRequested = false;
-
-        if (enableSurgicalLogs)
-            Debug.Log($"{LOG} CompleteImmediateToEndState | context={context}", this);
-
-        DumpAllState($"CompleteImmediateToEndState-{context}");
-        DumpCharacterVisibilityState($"CompleteImmediateToEndState-{context}");
     }
 
     IEnumerator WaitWithSkip(float seconds)
@@ -855,16 +806,6 @@ public class TitleScreenDropIntro : MonoBehaviour
             slot.image.gameObject.SetActive(true);
             ApplyAnchoredPositionScaled(slot.image.rectTransform, _cachedCharacterAboveTopBasePositions[i]);
         }
-
-        if (enableSurgicalLogs)
-        {
-            Debug.Log($"{LOG} PrepareCharactersAboveTop | count={characterSlots.Length}", this);
-            for (int i = 0; i < _cachedCharacterFinalBasePositions.Length; i++)
-            {
-                Vector2 offset = characterSlots[i] != null ? characterSlots[i].positionOffset : Vector2.zero;
-                Debug.Log($"{LOG} Character[{i}] finalBase={_cachedCharacterFinalBasePositions[i]} offset={offset}", this);
-            }
-        }
     }
 
     void PrepareLogoAboveTop(bool visible)
@@ -976,18 +917,6 @@ public class TitleScreenDropIntro : MonoBehaviour
 
         if (logoImage != null)
             logoImage.transform.SetAsLastSibling();
-
-        if (enableSurgicalLogs)
-        {
-            string msg = "";
-            for (int i = 0; i < drawOrder.Count; i++)
-            {
-                if (i > 0) msg += " -> ";
-                msg += drawOrder[i];
-            }
-
-            Debug.Log($"{LOG} UpdateCharacterSiblingOrder | backToFront={msg}", this);
-        }
     }
 
     Vector2 GetEffectiveBaseLogoSize()
@@ -1126,17 +1055,6 @@ public class TitleScreenDropIntro : MonoBehaviour
         self.anchoredPosition = Vector2.zero;
         self.localScale = Vector3.one;
         self.localRotation = Quaternion.identity;
-
-        if (enableSurgicalLogs)
-        {
-            Debug.Log(
-                $"{LOG} SyncThisRectToLayoutRoot | self={self.name} parent={self.parent.name} " +
-                $"anchorMin={self.anchorMin} anchorMax={self.anchorMax} " +
-                $"offsetMin={self.offsetMin} offsetMax={self.offsetMax} " +
-                $"rect=({self.rect.width:0.###}x{self.rect.height:0.###})",
-                this
-            );
-        }
     }
 
     public void CompleteImmediate()
@@ -1167,117 +1085,5 @@ public class TitleScreenDropIntro : MonoBehaviour
 
         _visualState = IntroVisualState.Completed;
         StopIntro();
-
-        if (enableSurgicalLogs)
-            Debug.Log($"{LOG} CompleteImmediate", this);
-
-        DumpAllState("CompleteImmediate");
-        DumpCharacterVisibilityState("CompleteImmediate");
-    }
-
-    void DumpAllState(string context)
-    {
-        if (!enableSurgicalLogs)
-            return;
-
-        string rootInfo = "layoutRoot=NULL";
-        if (layoutRoot != null)
-            rootInfo = $"layoutRoot={layoutRoot.name} rootRect=({layoutRoot.rect.width:0.###}x{layoutRoot.rect.height:0.###})";
-
-        string logoInfo = "logo=NULL";
-        if (_logoRect != null)
-        {
-            logoInfo =
-                $"logoRect=({_logoRect.rect.width:0.###}x{_logoRect.rect.height:0.###}) " +
-                $"logoSizeDelta=({_logoRect.sizeDelta.x:0.###}x{_logoRect.sizeDelta.y:0.###}) " +
-                $"logoAnchored=({_logoRect.anchoredPosition.x:0.###},{_logoRect.anchoredPosition.y:0.###})";
-        }
-
-        Debug.Log(
-            $"{LOG} {context} | pixelFrameScale={_pixelFrameScale:0.###} | visualState={_visualState} | skipped={Skipped} | {rootInfo} | {logoInfo} | characterCount={(characterSlots != null ? characterSlots.Length : 0)}",
-            this
-        );
-
-        if (characterSlots == null)
-            return;
-
-        for (int i = 0; i < characterSlots.Length; i++)
-        {
-            CharacterDropSlot slot = characterSlots[i];
-            if (slot == null || slot.image == null)
-                continue;
-
-            RectTransform rt = slot.image.rectTransform;
-            Debug.Log(
-                $"{LOG} Character[{i}] name={slot.name} baseSize={GetEffectiveBaseCharacterSize(slot)} offset={slot.positionOffset} " +
-                $"rect=({rt.rect.width:0.###}x{rt.rect.height:0.###}) " +
-                $"sizeDelta=({rt.sizeDelta.x:0.###}x{rt.sizeDelta.y:0.###}) " +
-                $"anchored=({rt.anchoredPosition.x:0.###},{rt.anchoredPosition.y:0.###}) " +
-                $"sibling={rt.GetSiblingIndex()}",
-                this
-            );
-        }
-    }
-
-    void DumpCharacterVisibilityState(string context)
-    {
-        if (!enableSurgicalLogs || characterSlots == null)
-            return;
-
-        Canvas rootCanvas = GetComponentInParent<Canvas>();
-
-        Debug.Log($"{LOG} {context} | rootCanvas={(rootCanvas != null ? rootCanvas.name : "NULL")} | selfActive={gameObject.activeInHierarchy}", this);
-
-        for (int i = 0; i < characterSlots.Length; i++)
-        {
-            CharacterDropSlot slot = characterSlots[i];
-            if (slot == null || slot.image == null)
-                continue;
-
-            RectTransform rt = slot.image.rectTransform;
-            CanvasRenderer cr = slot.image.canvasRenderer;
-            Transform parent = rt.parent;
-
-            string spriteInfo = slot.image.sprite != null
-                ? $"{slot.image.sprite.name} rect=({slot.image.sprite.rect.width}x{slot.image.sprite.rect.height}) tex=({slot.image.sprite.texture.width}x{slot.image.sprite.texture.height})"
-                : "NULL";
-
-            Debug.Log(
-                $"{LOG} Visibility[{i}] " +
-                $"name={slot.name} " +
-                $"activeSelf={slot.image.gameObject.activeSelf} " +
-                $"activeInHierarchy={slot.image.gameObject.activeInHierarchy} " +
-                $"enabled={slot.image.enabled} " +
-                $"color={slot.image.color} " +
-                $"alpha={slot.image.color.a:0.###} " +
-                $"cull={cr.cull} " +
-                $"depth={cr.absoluteDepth} " +
-                $"sprite={spriteInfo} " +
-                $"offset={slot.positionOffset} " +
-                $"parent={(parent != null ? parent.name : "NULL")} " +
-                $"sibling={rt.GetSiblingIndex()} " +
-                $"anchored={rt.anchoredPosition} " +
-                $"sizeDelta={rt.sizeDelta} " +
-                $"scale={rt.lossyScale}",
-                this
-            );
-        }
-
-        if (logoImage != null)
-        {
-            CanvasRenderer cr = logoImage.canvasRenderer;
-            Debug.Log(
-                $"{LOG} LogoVisibility " +
-                $"activeSelf={logoImage.gameObject.activeSelf} " +
-                $"activeInHierarchy={logoImage.gameObject.activeInHierarchy} " +
-                $"enabled={logoImage.enabled} " +
-                $"alpha={logoImage.color.a:0.###} " +
-                $"cull={cr.cull} " +
-                $"depth={cr.absoluteDepth} " +
-                $"parent={(logoImage.transform.parent != null ? logoImage.transform.parent.name : "NULL")} " +
-                $"sibling={logoImage.rectTransform.GetSiblingIndex()}",
-                this
-            );
-        }
     }
 }
