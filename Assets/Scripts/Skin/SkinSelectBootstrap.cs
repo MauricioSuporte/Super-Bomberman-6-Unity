@@ -54,6 +54,8 @@ public class SkinSelectBootstrap : MonoBehaviour
 
             if (!string.IsNullOrEmpty(titleSceneName))
             {
+                TitleScreenSkip.SkipNextIntro = true;
+
                 SceneManager.LoadScene(titleSceneName);
                 yield break;
             }

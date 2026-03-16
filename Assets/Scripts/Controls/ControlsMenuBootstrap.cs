@@ -31,6 +31,9 @@ public class ControlsMenuBootstrap : MonoBehaviour
         yield return controlsMenu.OpenRoutine(openerPlayerId, null, 0f);
 
         if (!string.IsNullOrEmpty(returnSceneName))
+        {
+            TitleScreenSkip.SkipNextIntro = true;
             SceneManager.LoadScene(returnSceneName);
+        }
     }
 }

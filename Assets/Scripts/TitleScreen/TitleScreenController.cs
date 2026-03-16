@@ -1323,17 +1323,27 @@ public class TitleScreenController : MonoBehaviour
         if (fadeToHideOptional != null)
             fadeToHideOptional.gameObject.SetActive(false);
 
-        yield return StartCoroutine(PlayTitleIntroIfAny());
+        bool skipPan = TitleScreenSkip.SkipNextIntro;
+        TitleScreenSkip.SkipNextIntro = false;
 
-        bool skippedDuringPan = titleIntroPan != null && titleIntroPan.Skipped;
-
-        if (skippedDuringPan)
+        if (skipPan)
         {
             SkipRemainingTitleIntroToEnd();
         }
         else
         {
-            yield return StartCoroutine(PlayTitleLogoIntroIfAny());
+            yield return StartCoroutine(PlayTitleIntroIfAny());
+
+            bool skippedDuringPan = titleIntroPan != null && titleIntroPan.Skipped;
+
+            if (skippedDuringPan)
+            {
+                SkipRemainingTitleIntroToEnd();
+            }
+            else
+            {
+                yield return StartCoroutine(PlayTitleLogoIntroIfAny());
+            }
         }
 
         ShowTitleScreenNow();

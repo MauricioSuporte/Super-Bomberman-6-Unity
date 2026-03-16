@@ -354,6 +354,7 @@ public class EndingScreenController : MonoBehaviour
         Running = false;
 
         PlayerPersistentStats.ResetSessionForReturnToTitle();
+        TitleScreenSkip.SkipNextIntro = true;
         SceneManager.LoadScene(titleSceneName, LoadSceneMode.Single);
     }
 
