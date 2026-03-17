@@ -202,6 +202,9 @@ public class PlayerInputManager : MonoBehaviour
         if (ShouldBlockActionBecauseRidingBoat(playerId, action))
             return false;
 
+        if (playerId == 1 && MobileInputBridge.Instance != null && MobileInputBridge.Instance.Get(action))
+            return true;
+
         var p = GetPlayer(playerId);
         var b = p.GetBinding(action);
 
@@ -232,6 +235,9 @@ public class PlayerInputManager : MonoBehaviour
 
         if (ShouldBlockActionBecauseRidingBoat(playerId, action))
             return false;
+
+        if (playerId == 1 && MobileInputBridge.Instance != null && MobileInputBridge.Instance.GetDown(action))
+            return true;
 
         var p = GetPlayer(playerId);
         var b = p.GetBinding(action);

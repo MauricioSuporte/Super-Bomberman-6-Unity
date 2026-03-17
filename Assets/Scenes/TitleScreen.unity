@@ -539,7 +539,6 @@ MonoBehaviour:
   clampWrapMode: 1
   setNativeTextureOnPrepare: 1
   snapToPixelPerfectUv: 0
-  enableSurgicalLogs: 1
 --- !u!1 &544397348
 GameObject:
   m_ObjectHideFlags: 0
@@ -1040,7 +1039,6 @@ MonoBehaviour:
   delayAfterCharactersBeforeLogo: 0.03
   roundAnchoredPosition: 1
   applyPointFilter: 1
-  enableSurgicalLogs: 1
 --- !u!1 &1102021990
 GameObject:
   m_ObjectHideFlags: 0
@@ -1838,7 +1836,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4d2807c5c57c72e4a8a52390ba37be9a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TitleScreenController
-  enableSurgicalLogs: 1
   menuBoxSize: {x: 520, y: 260}
   moveOptionSfx: {fileID: 8300000, guid: 9095599de31cf8543bb7e82ff2782f12, type: 3}
   moveOptionVolume: 1
