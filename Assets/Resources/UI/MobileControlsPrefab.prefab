@@ -133,7 +133,7 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 220751452507279775}
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -220,7 +220,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 220, y: 220}
-  m_SizeDelta: {x: 420, y: 420}
+  m_SizeDelta: {x: 500, y: 500}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &822762107514659740
 GameObject:
@@ -247,7 +247,7 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 822762107514659740}
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -333,8 +333,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 100, y: 0}
-  m_SizeDelta: {x: 170, y: 170}
+  m_AnchoredPosition: {x: 140, y: 0}
+  m_SizeDelta: {x: 120, y: 120}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &8061464203408360289
 CanvasRenderer:
@@ -390,6 +390,9 @@ MonoBehaviour:
   visualTarget: {fileID: 5341747749005702639}
   releasedScale: {x: 1, y: 1, z: 1}
   pressedScale: {x: 0.9, y: 0.9, z: 1}
+  stretchVisualToHitbox: 1
+  disableVisualPreserveAspect: 1
+  disableVisualRaycastTarget: 1
   showDebugHitbox: 1
   debugHitboxColor: {r: 1, g: 0, b: 0, a: 0.2}
 --- !u!1 &1824417324832945828
@@ -492,7 +495,7 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2633470411123301958}
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -635,6 +638,9 @@ MonoBehaviour:
   visualTarget: {fileID: 8287991392621285253}
   releasedScale: {x: 1, y: 1, z: 1}
   pressedScale: {x: 0.9, y: 0.9, z: 1}
+  stretchVisualToHitbox: 1
+  disableVisualPreserveAspect: 1
+  disableVisualRaycastTarget: 1
   showDebugHitbox: 1
   debugHitboxColor: {r: 1, g: 0, b: 0, a: 0.2}
 --- !u!1 &2902342754400333369
@@ -730,6 +736,9 @@ MonoBehaviour:
   visualTarget: {fileID: 7900647361058567878}
   releasedScale: {x: 1, y: 1, z: 1}
   pressedScale: {x: 0.9, y: 0.9, z: 1}
+  stretchVisualToHitbox: 1
+  disableVisualPreserveAspect: 1
+  disableVisualRaycastTarget: 1
   showDebugHitbox: 1
   debugHitboxColor: {r: 1, g: 0, b: 0, a: 0.2}
 --- !u!1 &3044717578577619765
@@ -757,7 +766,7 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3044717578577619765}
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -843,8 +852,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 100}
-  m_SizeDelta: {x: 170, y: 170}
+  m_AnchoredPosition: {x: 0, y: 140}
+  m_SizeDelta: {x: 120, y: 120}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &7099000423986843010
 CanvasRenderer:
@@ -900,6 +909,9 @@ MonoBehaviour:
   visualTarget: {fileID: 172260917514689611}
   releasedScale: {x: 1, y: 1, z: 1}
   pressedScale: {x: 0.9, y: 0.9, z: 1}
+  stretchVisualToHitbox: 1
+  disableVisualPreserveAspect: 1
+  disableVisualRaycastTarget: 1
   showDebugHitbox: 1
   debugHitboxColor: {r: 1, g: 0, b: 0, a: 0.2}
 --- !u!1 &3443399215613234777
@@ -938,8 +950,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: -100}
-  m_SizeDelta: {x: 170, y: 170}
+  m_AnchoredPosition: {x: 0, y: -140}
+  m_SizeDelta: {x: 120, y: 120}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &7817611471565264230
 CanvasRenderer:
@@ -995,6 +1007,9 @@ MonoBehaviour:
   visualTarget: {fileID: 2768462805085741960}
   releasedScale: {x: 1, y: 1, z: 1}
   pressedScale: {x: 0.9, y: 0.9, z: 1}
+  stretchVisualToHitbox: 1
+  disableVisualPreserveAspect: 1
+  disableVisualRaycastTarget: 1
   showDebugHitbox: 1
   debugHitboxColor: {r: 1, g: 0, b: 0, a: 0.2}
 --- !u!1 &4099866647717079013
@@ -1022,7 +1037,7 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4099866647717079013}
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -1165,6 +1180,9 @@ MonoBehaviour:
   visualTarget: {fileID: 2355140500727717784}
   releasedScale: {x: 1, y: 1, z: 1}
   pressedScale: {x: 0.9, y: 0.9, z: 1}
+  stretchVisualToHitbox: 1
+  disableVisualPreserveAspect: 1
+  disableVisualRaycastTarget: 1
   showDebugHitbox: 1
   debugHitboxColor: {r: 1, g: 0, b: 0, a: 0.2}
 --- !u!1 &6063139032465600844
@@ -1260,6 +1278,9 @@ MonoBehaviour:
   visualTarget: {fileID: 3453955247349731197}
   releasedScale: {x: 1, y: 1, z: 1}
   pressedScale: {x: 0.9, y: 0.9, z: 1}
+  stretchVisualToHitbox: 1
+  disableVisualPreserveAspect: 1
+  disableVisualRaycastTarget: 1
   showDebugHitbox: 1
   debugHitboxColor: {r: 1, g: 0, b: 0, a: 0.2}
 --- !u!1 &6456086782017437563
@@ -1346,7 +1367,7 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7353496391929154979}
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -1432,8 +1453,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -100, y: 0}
-  m_SizeDelta: {x: 170, y: 170}
+  m_AnchoredPosition: {x: -140, y: 0}
+  m_SizeDelta: {x: 120, y: 120}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &3365870947744762078
 CanvasRenderer:
@@ -1489,6 +1510,9 @@ MonoBehaviour:
   visualTarget: {fileID: 5893027071178810043}
   releasedScale: {x: 1, y: 1, z: 1}
   pressedScale: {x: 0.9, y: 0.9, z: 1}
+  stretchVisualToHitbox: 1
+  disableVisualPreserveAspect: 1
+  disableVisualRaycastTarget: 1
   showDebugHitbox: 1
   debugHitboxColor: {r: 1, g: 0, b: 0, a: 0.2}
 --- !u!1 &7953980729592010265
@@ -1516,7 +1540,7 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7953980729592010265}
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -1659,6 +1683,9 @@ MonoBehaviour:
   visualTarget: {fileID: 526306769222402006}
   releasedScale: {x: 1, y: 1, z: 1}
   pressedScale: {x: 0.9, y: 0.9, z: 1}
+  stretchVisualToHitbox: 1
+  disableVisualPreserveAspect: 1
+  disableVisualRaycastTarget: 1
   showDebugHitbox: 1
   debugHitboxColor: {r: 1, g: 0, b: 0, a: 0.2}
 --- !u!1 &8069670551746410835
@@ -1754,6 +1781,9 @@ MonoBehaviour:
   visualTarget: {fileID: 8264622470836590758}
   releasedScale: {x: 1, y: 1, z: 1}
   pressedScale: {x: 0.9, y: 0.9, z: 1}
+  stretchVisualToHitbox: 1
+  disableVisualPreserveAspect: 1
+  disableVisualRaycastTarget: 1
   showDebugHitbox: 1
   debugHitboxColor: {r: 1, g: 0, b: 0, a: 0.2}
 --- !u!1 &8110633849546567484
@@ -1781,7 +1811,7 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8110633849546567484}
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -1856,7 +1886,7 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 9108456066737382547}
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
