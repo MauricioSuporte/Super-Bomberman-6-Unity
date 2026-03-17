@@ -170,6 +170,7 @@ public class TitleScreenController : MonoBehaviour
 
     bool bossRushInspectorDefaultUnlocked;
     public bool BossRushInspectorOverrideUnlocked => bossRushInspectorDefaultUnlocked;
+    bool IsVideoMenuAvailable => allowVideoMenu && !Application.isMobilePlatform;
 
     enum MenuMode
     {
@@ -203,8 +204,8 @@ public class TitleScreenController : MonoBehaviour
     const int MAIN_IDX_OPTIONS = 2;
 
     const int OPTIONS_IDX_CONTROLS = 0;
-    const int OPTIONS_IDX_VIDEO = 1;
-    const int OPTIONS_IDX_RESET_SAVE = 2;
+    int OptionsVideoIndex => IsVideoMenuAvailable ? 1 : -1;
+    int OptionsResetSaveIndex => IsVideoMenuAvailable ? 2 : 1;
 
     const int VIDEO_IDX_FULLSCREEN = 0;
     const int VIDEO_IDX_WINDOWSIZE = 1;
@@ -239,9 +240,6 @@ public class TitleScreenController : MonoBehaviour
     bool _videoFullscreen;
     int _videoWindowMult;
     int _videoWindowMultWindowed;
-
-    const string PREF_FULLSCREEN = "ts_video_fullscreen";
-    const string PREF_WINMULT = "ts_video_window_mult";
 
     Coroutine _postResolutionRefreshRoutine;
     Coroutine _fullscreenWatchdog;
@@ -390,23 +388,27 @@ public class TitleScreenController : MonoBehaviour
 
     void LoadVideoPrefs()
     {
-        _videoFullscreen = PlayerPrefs.GetInt(PREF_FULLSCREEN, defaultFullscreen ? 1 : 0) == 1;
+        SavedVideoSettings saved = SaveSystem.GetVideoSettings();
+
+        _videoFullscreen = saved != null ? saved.fullscreen : defaultFullscreen;
 
         int fallback = defaultWindowSizeMultiplier;
         if (windowSizeMultipliers != null && windowSizeMultipliers.Length > 0)
         {
             int fallbackIdx = IndexOf(windowSizeMultipliers, defaultWindowSizeMultiplier);
-            if (fallbackIdx < 0) fallbackIdx = 0;
+            if (fallbackIdx < 0)
+                fallbackIdx = 0;
+
             fallback = windowSizeMultipliers[Mathf.Clamp(fallbackIdx, 0, windowSizeMultipliers.Length - 1)];
         }
 
-        _videoWindowMultWindowed = PlayerPrefs.GetInt(PREF_WINMULT, fallback);
+        _videoWindowMultWindowed = saved != null ? saved.windowSizeMultiplier : fallback;
 
         if (windowSizeMultipliers != null && windowSizeMultipliers.Length > 0)
         {
             int idx = IndexOf(windowSizeMultipliers, _videoWindowMultWindowed);
             if (idx < 0)
-                _videoWindowMultWindowed = windowSizeMultipliers[0];
+                _videoWindowMultWindowed = fallback;
         }
         else
         {
@@ -420,9 +422,7 @@ public class TitleScreenController : MonoBehaviour
 
     void SaveVideoPrefs()
     {
-        PlayerPrefs.SetInt(PREF_FULLSCREEN, _videoFullscreen ? 1 : 0);
-        PlayerPrefs.SetInt(PREF_WINMULT, Mathf.Max(1, _videoWindowMultWindowed));
-        PlayerPrefs.Save();
+        SaveSystem.SetVideoSettings(_videoFullscreen, Mathf.Max(1, _videoWindowMultWindowed));
     }
 
     int GetBestWindowMultiplierForCurrentMonitor()
@@ -458,7 +458,7 @@ public class TitleScreenController : MonoBehaviour
 
     void ApplyVideoSettingsImmediate()
     {
-        if (!allowVideoMenu)
+        if (!IsVideoMenuAvailable)
             return;
 
         Resolution curRes = Screen.currentResolution;
@@ -954,7 +954,7 @@ public class TitleScreenController : MonoBehaviour
         if (videoValuesText == null || videoValuesRect == null || menuText == null)
             return;
 
-        bool show = menuMode == MenuMode.Video && allowVideoMenu;
+        bool show = menuMode == MenuMode.Video && IsVideoMenuAvailable;
         if (!show)
         {
             if (videoValuesText.gameObject.activeSelf)
@@ -1389,12 +1389,12 @@ public class TitleScreenController : MonoBehaviour
                 else if (menuMode == MenuMode.Video)
                 {
                     menuMode = MenuMode.Options;
-                    menuIndex = OPTIONS_IDX_VIDEO;
+                    menuIndex = Mathf.Max(0, OptionsVideoIndex);
                 }
                 else if (menuMode == MenuMode.ResetSaveConfirm)
                 {
                     menuMode = MenuMode.Options;
-                    menuIndex = OPTIONS_IDX_RESET_SAVE;
+                    menuIndex = OptionsResetSaveIndex;
                 }
 
                 HideFooterMessageImmediate();
@@ -1610,24 +1610,15 @@ public class TitleScreenController : MonoBehaviour
                         continue;
                     }
 
-                    if (menuIndex == OPTIONS_IDX_VIDEO)
+                    if (IsVideoMenuAvailable && menuIndex == OptionsVideoIndex)
                     {
                         locked = false;
 
-                        if (allowVideoMenu)
-                        {
-                            menuMode = MenuMode.Video;
-                            menuIndex = 0;
-                            HideFooterMessageImmediate();
-                            HideBossRushLockedMessageImmediate();
-                            RefreshMenuText();
-
-                            while (AnyPlayerHeld(PlayerAction.Start) || AnyPlayerHeld(PlayerAction.ActionA))
-                                yield return null;
-
-                            yield return null;
-                            continue;
-                        }
+                        menuMode = MenuMode.Video;
+                        menuIndex = 0;
+                        HideFooterMessageImmediate();
+                        HideBossRushLockedMessageImmediate();
+                        RefreshMenuText();
 
                         while (AnyPlayerHeld(PlayerAction.Start) || AnyPlayerHeld(PlayerAction.ActionA))
                             yield return null;
@@ -1636,7 +1627,7 @@ public class TitleScreenController : MonoBehaviour
                         continue;
                     }
 
-                    if (menuIndex == OPTIONS_IDX_RESET_SAVE)
+                    if (menuIndex == OptionsResetSaveIndex)
                     {
                         menuMode = MenuMode.ResetSaveConfirm;
                         menuIndex = RESET_SAVE_IDX_CANCEL;
@@ -1661,7 +1652,7 @@ public class TitleScreenController : MonoBehaviour
                         PlayBackSfx();
 
                         menuMode = MenuMode.Options;
-                        menuIndex = OPTIONS_IDX_RESET_SAVE;
+                        menuIndex = OptionsResetSaveIndex;
                         locked = false;
 
                         HideFooterMessageImmediate();
@@ -1687,7 +1678,7 @@ public class TitleScreenController : MonoBehaviour
                     PlayResetSaveCompletedSfx();
 
                     menuMode = MenuMode.Options;
-                    menuIndex = OPTIONS_IDX_RESET_SAVE;
+                    menuIndex = OptionsResetSaveIndex;
                     locked = false;
 
                     HideFooterMessageImmediate();
@@ -1739,7 +1730,7 @@ public class TitleScreenController : MonoBehaviour
     int GetMenuItemCount()
     {
         if (menuMode == MenuMode.PlayerCount) return 4;
-        if (menuMode == MenuMode.Options) return 3;
+        if (menuMode == MenuMode.Options) return IsVideoMenuAvailable ? 3 : 2;
         if (menuMode == MenuMode.Video) return 2;
         if (menuMode == MenuMode.ResetSaveConfirm) return 2;
         return 4;
@@ -1844,15 +1835,27 @@ public class TitleScreenController : MonoBehaviour
         if (menuMode == MenuMode.Options)
         {
             string controls = $"<color=#{baseRgb}FF>CONTROLS</color>";
-            string video = $"<color=#{baseRgb}FF>VIDEO</color>";
             string resetSave = $"<color={warnRgb}>RESET SAVE</color>";
 
-            menuText.text =
-                "<align=left>" +
-                $"<size={size}>{controls}</size>\n" +
-                $"<size={size}>{video}</size>\n" +
-                $"<size={size}>{resetSave}</size>" +
-                "</align>";
+            if (IsVideoMenuAvailable)
+            {
+                string video = $"<color=#{baseRgb}FF>VIDEO</color>";
+
+                menuText.text =
+                    "<align=left>" +
+                    $"<size={size}>{controls}</size>\n" +
+                    $"<size={size}>{video}</size>\n" +
+                    $"<size={size}>{resetSave}</size>" +
+                    "</align>";
+            }
+            else
+            {
+                menuText.text =
+                    "<align=left>" +
+                    $"<size={size}>{controls}</size>\n" +
+                    $"<size={size}>{resetSave}</size>" +
+                    "</align>";
+            }
 
             if (videoValuesText != null) videoValuesText.gameObject.SetActive(false);
             return;

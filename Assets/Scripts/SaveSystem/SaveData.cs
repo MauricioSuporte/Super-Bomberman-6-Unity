@@ -33,4 +33,6 @@ public sealed class SaveData
     };
 
     public List<BossRushDifficultyTimesSave> bossRushTimes = new();
+
+    public SavedVideoSettings videoSettings = new();
 }

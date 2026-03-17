@@ -326,6 +326,27 @@ public static class SaveSystem
         return true;
     }
 
+    public static SavedVideoSettings GetVideoSettings()
+    {
+        EnsureLoaded();
+
+        data.videoSettings ??= new SavedVideoSettings();
+
+        return data.videoSettings;
+    }
+
+    public static void SetVideoSettings(bool fullscreen, int windowSizeMultiplier)
+    {
+        EnsureLoaded();
+
+        data.videoSettings ??= new SavedVideoSettings();
+
+        data.videoSettings.fullscreen = fullscreen;
+        data.videoSettings.windowSizeMultiplier = Mathf.Max(1, windowSizeMultiplier);
+
+        Save();
+    }
+
     private static BossRushDifficultyTimesSave GetOrCreateBossRushTimesEntry(BossRushDifficulty difficulty)
     {
         EnsureLoaded();
@@ -463,6 +484,11 @@ public static class SaveSystem
 
         if (d.activeSlotIndex < -1 || d.activeSlotIndex >= d.slots.Count)
             d.activeSlotIndex = -1;
+
+        d.videoSettings ??= new SavedVideoSettings();
+
+        if (d.videoSettings.windowSizeMultiplier < 1)
+            d.videoSettings.windowSizeMultiplier = 4;
     }
 
     private static void EnsureControlProfiles(SaveData d)
