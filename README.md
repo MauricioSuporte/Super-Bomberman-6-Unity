@@ -1,53 +1,59 @@
-# 🎮 Super Bomberman 6 — Unity Fan Project
+# Super Bomberman 6 (Unity)
 
-Welcome to **Super Bomberman 6 Unity**, an open-source fan-made project that recreates the classic Bomberman gameplay using **Unity** and **C#**.  
+Super Bomberman 6 is a fan-made project inspired by the classic Super Bomberman series from the SNES era. The game focuses on fast-paced gameplay, local multiplayer fun, and faithful mechanics with modern improvements.
 
-This project is currently in **early development** and includes a playable demo featuring title screen, intro sequence, enemies, explosions, items, round restarts and end-of-demo screen.
+## 🎮 Features
 
-👉 **Download the latest demo:**  
-https://github.com/MauricioSuporte/Super-Bomberman-6-Unity/releases
+### Multiplayer
+- Up to **4 local players**
+- Play online using **Parsec** for remote multiplayer sessions
 
+### Bombers & Progression
+- **8 selectable bomber colors** from the start
+- **12 unlockable bombers** — can you unlock them all?
+- **3 save slots** for campaign progression
+- Up to **200% game completion**
 
-## 🚀 Features (Current Demo)
-- Title screen with animated video  
-- Intro and fade transitions  
-- Classic Bomberman movement  
-- Bombs, explosions and destructible blocks  
-- Enemy AI (Red Robot)  
-- Power-ups (Bomb, Fire, Speed, Kick)  
-- Round restart when players die  
-- End-of-demo screen  
-- ESC to close the game anytime  
+### Mounts (Louies & More)
+- All **7 mounts from Super Bomberman 5**, including **Warooi** (previously boss-exclusive)
+- All mounts have **rebalanced abilities** for improved gameplay
+- **New push ability for Warooi**
+- **Egg queue system** for strategic mount usage
+- Ability to **mount and dismount freely**
+- Functional abilities added to mounts from **Super Bomberman 2**
 
-## 🧩 Based On
-The core mechanics were built following the excellent tutorial by **Zigurous**:  
-▶ https://www.youtube.com/watch?v=8agb6x5RpOI
+### Gameplay Content
+- **2 fully playable worlds**, inspired by:
+  - Super Bomberman 1
+  - Super Bomberman 2
+- Includes **boss fights** in each world
+- **Boss Rush mode**:
+  - Up to 4 players
+  - 4 selectable difficulty levels
 
-## ❤️ Open Source — Join the Project!
-Everyone is welcome to:
-- ⭐ Give a star  
-- 🍴 Fork the repository  
-- 🔧 Open pull requests  
-- 🐞 Report issues  
-- 💡 Suggest improvements  
+### Power-ups
+- Over **20 different power-ups** from the SNES Super Bomberman series
 
-### 🎨 Sprite Artists Needed
-If you know pixel art, you can help improve characters, tiles, UI and animations.
+### Controls & Accessibility
+- Play with **any controller**
+- Full **keyboard support**
 
-## 🛠 Tech Stack
-- Unity 2020+
-- C#
-- 2D Pixel Art
-- Tilemaps
+### Settings & System
+- Resolution settings available
+- Option to **reset all game progress**
 
-## 📦 How to Run Locally
-1. Clone the repository  
-```
-git clone https://github.com/MauricioSuporte/Super-Bomberman-6-Unity.git
-```
-2. Open in Unity  
-3. Load scene `Scenes/Bomberman`  
-4. Press Play
+### Platforms
+- **Windows (x64) version**
+- **Android version available** with full feature parity
 
-## 📜 License
-Fan-made educational project. Not affiliated with Konami / Hudson Soft. 
+---
+
+## 🚀 About the Project
+
+This project is a passion-driven recreation and expansion of the Super Bomberman experience, aiming to deliver nostalgic gameplay with new mechanics, improved balance, and modern accessibility.
+
+---
+
+## ⚠️ Disclaimer
+
+This is a fan project and is not affiliated with or endorsed by Konami.
