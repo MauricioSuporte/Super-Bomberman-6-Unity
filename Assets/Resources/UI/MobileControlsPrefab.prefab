@@ -357,7 +357,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 0, b: 0, a: 0.2}
+  m_Color: {r: 1, g: 0, b: 0, a: 0}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -393,7 +393,7 @@ MonoBehaviour:
   stretchVisualToHitbox: 1
   disableVisualPreserveAspect: 1
   disableVisualRaycastTarget: 1
-  showDebugHitbox: 1
+  showDebugHitbox: 0
   debugHitboxColor: {r: 1, g: 0, b: 0, a: 0.2}
 --- !u!1 &1824417324832945828
 GameObject:
@@ -605,7 +605,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 0, b: 0, a: 0.2}
+  m_Color: {r: 1, g: 0, b: 0, a: 0}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -641,7 +641,7 @@ MonoBehaviour:
   stretchVisualToHitbox: 1
   disableVisualPreserveAspect: 1
   disableVisualRaycastTarget: 1
-  showDebugHitbox: 1
+  showDebugHitbox: 0
   debugHitboxColor: {r: 1, g: 0, b: 0, a: 0.2}
 --- !u!1 &2902342754400333369
 GameObject:
@@ -703,7 +703,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 0, b: 0, a: 0.2}
+  m_Color: {r: 1, g: 0, b: 0, a: 0}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -739,7 +739,7 @@ MonoBehaviour:
   stretchVisualToHitbox: 1
   disableVisualPreserveAspect: 1
   disableVisualRaycastTarget: 1
-  showDebugHitbox: 1
+  showDebugHitbox: 0
   debugHitboxColor: {r: 1, g: 0, b: 0, a: 0.2}
 --- !u!1 &3044717578577619765
 GameObject:
@@ -876,7 +876,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 0, b: 0, a: 0.2}
+  m_Color: {r: 1, g: 0, b: 0, a: 0}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -912,7 +912,7 @@ MonoBehaviour:
   stretchVisualToHitbox: 1
   disableVisualPreserveAspect: 1
   disableVisualRaycastTarget: 1
-  showDebugHitbox: 1
+  showDebugHitbox: 0
   debugHitboxColor: {r: 1, g: 0, b: 0, a: 0.2}
 --- !u!1 &3443399215613234777
 GameObject:
@@ -974,7 +974,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 0, b: 0, a: 0.2}
+  m_Color: {r: 1, g: 0, b: 0, a: 0}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -1010,7 +1010,7 @@ MonoBehaviour:
   stretchVisualToHitbox: 1
   disableVisualPreserveAspect: 1
   disableVisualRaycastTarget: 1
-  showDebugHitbox: 1
+  showDebugHitbox: 0
   debugHitboxColor: {r: 1, g: 0, b: 0, a: 0.2}
 --- !u!1 &4099866647717079013
 GameObject:
@@ -1147,7 +1147,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 0, b: 0, a: 0.2}
+  m_Color: {r: 1, g: 0, b: 0, a: 0}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -1183,7 +1183,7 @@ MonoBehaviour:
   stretchVisualToHitbox: 1
   disableVisualPreserveAspect: 1
   disableVisualRaycastTarget: 1
-  showDebugHitbox: 1
+  showDebugHitbox: 0
   debugHitboxColor: {r: 1, g: 0, b: 0, a: 0.2}
 --- !u!1 &6063139032465600844
 GameObject:
@@ -1245,7 +1245,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 0, b: 0, a: 0.2}
+  m_Color: {r: 1, g: 0, b: 0, a: 0}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -1281,7 +1281,7 @@ MonoBehaviour:
   stretchVisualToHitbox: 1
   disableVisualPreserveAspect: 1
   disableVisualRaycastTarget: 1
-  showDebugHitbox: 1
+  showDebugHitbox: 0
   debugHitboxColor: {r: 1, g: 0, b: 0, a: 0.2}
 --- !u!1 &6456086782017437563
 GameObject:
@@ -1477,7 +1477,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 0, b: 0, a: 0.2}
+  m_Color: {r: 1, g: 0, b: 0, a: 0}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -1513,7 +1513,7 @@ MonoBehaviour:
   stretchVisualToHitbox: 1
   disableVisualPreserveAspect: 1
   disableVisualRaycastTarget: 1
-  showDebugHitbox: 1
+  showDebugHitbox: 0
   debugHitboxColor: {r: 1, g: 0, b: 0, a: 0.2}
 --- !u!1 &7953980729592010265
 GameObject:
@@ -1650,7 +1650,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 0, b: 0, a: 0.2}
+  m_Color: {r: 1, g: 0, b: 0, a: 0}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -1686,7 +1686,7 @@ MonoBehaviour:
   stretchVisualToHitbox: 1
   disableVisualPreserveAspect: 1
   disableVisualRaycastTarget: 1
-  showDebugHitbox: 1
+  showDebugHitbox: 0
   debugHitboxColor: {r: 1, g: 0, b: 0, a: 0.2}
 --- !u!1 &8069670551746410835
 GameObject:
@@ -1748,7 +1748,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 0, b: 0, a: 0.2}
+  m_Color: {r: 1, g: 0, b: 0, a: 0}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -1784,7 +1784,7 @@ MonoBehaviour:
   stretchVisualToHitbox: 1
   disableVisualPreserveAspect: 1
   disableVisualRaycastTarget: 1
-  showDebugHitbox: 1
+  showDebugHitbox: 0
   debugHitboxColor: {r: 1, g: 0, b: 0, a: 0.2}
 --- !u!1 &8110633849546567484
 GameObject:
