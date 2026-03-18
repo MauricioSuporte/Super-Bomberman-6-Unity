@@ -603,6 +603,9 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
 
         if (start == goalRounded)
         {
+            SnapRootToWorld(pw.root, goalRounded);
+            ForcePlayerArrivalFacingUp(pw);
+
             if (doneFlags != null && idx >= 0 && idx < doneFlags.Length) doneFlags[idx] = true;
             onDone?.Invoke();
             yield break;
@@ -622,6 +625,7 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
         {
             yield return FallbackWalkTowards(pw, goalRounded, tile);
             SnapRootToWorld(pw.root, goalRounded);
+            ForcePlayerArrivalFacingUp(pw);
 
             if (doneFlags != null && idx >= 0 && idx < doneFlags.Length) doneFlags[idx] = true;
             onDone?.Invoke();
@@ -632,7 +636,7 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
             yield return MoveToTile(pw, path[p], tile);
 
         SnapRootToWorld(pw.root, goalRounded);
-        pw.mover.ApplyDirectionFromVector(Vector2.zero);
+        ForcePlayerArrivalFacingUp(pw);
 
         if (doneFlags != null && idx >= 0 && idx < doneFlags.Length) doneFlags[idx] = true;
         onDone?.Invoke();
@@ -802,6 +806,9 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
 
         if (start == goalRounded)
         {
+            SnapRootToWorld(pw.root, goalRounded);
+            ForcePlayerArrivalFacingUp(pw);
+
             if (doneFlags != null && idx >= 0 && idx < doneFlags.Length) doneFlags[idx] = true;
             onDone?.Invoke();
             yield break;
@@ -821,6 +828,7 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
         {
             yield return FallbackWalkTowards(pw, goalRounded, tile);
             SnapRootToWorld(pw.root, goalRounded);
+            ForcePlayerArrivalFacingUp(pw);
 
             if (doneFlags != null && idx >= 0 && idx < doneFlags.Length) doneFlags[idx] = true;
             onDone?.Invoke();
@@ -831,7 +839,7 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
             yield return MoveToTile(pw, path[p], tile);
 
         SnapRootToWorld(pw.root, goalRounded);
-        pw.mover.ApplyDirectionFromVector(Vector2.zero);
+        ForcePlayerArrivalFacingUp(pw);
 
         if (doneFlags != null && idx >= 0 && idx < doneFlags.Length) doneFlags[idx] = true;
         onDone?.Invoke();
@@ -1060,6 +1068,17 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
         queue.ForceVisible(true);
         queue.RebindAndReseedNow(resetHistoryToOwnerNow: true);
         queue.SnapQueueToOwnerNow(resetHistoryToOwnerNow: true);
+    }
+
+    private static void ForcePlayerArrivalFacingUp(PlayerWalkData pw)
+    {
+        if (pw.mover == null)
+            return;
+
+        if (pw.mover.IsMountedOnLouie)
+            pw.mover.ForceIdleUpConsideringMount();
+        else
+            pw.mover.ForceIdleUp();
     }
 
     private static bool skipNextPlay;
