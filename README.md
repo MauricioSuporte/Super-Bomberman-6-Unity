@@ -64,11 +64,27 @@ The core mechanics were initially built following the excellent tutorial by **Zi
 
 
 ## ❤️ Open Source — Join the Project!
-Everyone is welcome to:
-- ⭐ Give a star  
-@@ -34,20 +69,23 @@ Everyone is welcome to:
+
+Everyone is welcome to contribute:
+
+- ⭐ Star the repository  
+- 🐛 Report bugs and issues  
+- 💡 Suggest new features or improvements  
+- 🔧 Submit pull requests  
+
+---
+
 ### 🎨 Sprite Artists Needed
-If you know pixel art, you can help improve characters, tiles, UI and animations.
+
+If you have pixel art skills, your help is highly appreciated!
+
+We are looking for contributions to improve:
+- Characters  
+- Tilesets  
+- UI elements  
+- Animations  
+
+Help bring the world of Super Bomberman 6 to life 🚀
 
 
 ## 🛠 Tech Stack
