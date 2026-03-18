@@ -7,6 +7,11 @@ This project is currently in **active development** and already includes a playa
 👉 **Download the latest demo:**  
 https://github.com/MauricioSuporte/Super-Bomberman-6-Unity/releases
 
+## 🏆 Community Challenge
+
+Compete with other players and win prizes!
+
+👉 [Join the Community Challenge](./COMMUNITY_CHALLENGE.md)
 
 ## 🚀 Features
 
@@ -61,11 +66,7 @@ The core mechanics were initially built following the excellent tutorial by **Zi
 ## ❤️ Open Source — Join the Project!
 Everyone is welcome to:
 - ⭐ Give a star  
-- 🍴 Fork the repository  
-- 🔧 Open pull requests  
-- 🐞 Report issues  
-- 💡 Suggest improvements  
-
+@@ -34,20 +69,23 @@ Everyone is welcome to:
 ### 🎨 Sprite Artists Needed
 If you know pixel art, you can help improve characters, tiles, UI and animations.
 
