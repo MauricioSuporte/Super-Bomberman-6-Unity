@@ -34,9 +34,9 @@ SUPER BOMBERMAN 6 BOSS RUSH NIGHTMARE
 
 ## 🏆 Prizes (per category)
 
-🥇 1st Place — R$50 (~$10 USD)  
-🥈 2nd Place — R$30 (~$6 USD)  
-🥉 3rd Place — R$20 (~$4 USD)  
+🥇 1st Place — R$50 ($10 USD)  
+🥈 2nd Place — R$30 ($6 USD)  
+🥉 3rd Place — R$20 ($4 USD)  
 
 *USD values are approximate and may vary.*
 
