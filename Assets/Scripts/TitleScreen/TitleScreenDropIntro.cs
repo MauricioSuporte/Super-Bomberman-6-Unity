@@ -33,7 +33,13 @@ public class TitleScreenDropIntro : MonoBehaviour
 
     [Header("References")]
     [SerializeField] Image logoImage;
-    [SerializeField] Sprite logoSprite;
+
+    [Header("Logo Frames")]
+    [SerializeField] Sprite[] logoFrames = Array.Empty<Sprite>();
+    [SerializeField, Min(0.01f)] float logoFrameDuration = 0.08f;
+    [SerializeField] bool animateLogo = true;
+    [SerializeField] bool loopLogoAnimation = true;
+    [SerializeField] bool resetLogoAnimationWhenShown = true;
 
     [Header("Characters (left -> right)")]
     [SerializeField] CharacterDropSlot[] characterSlots = new CharacterDropSlot[7];
@@ -98,6 +104,9 @@ public class TitleScreenDropIntro : MonoBehaviour
 
     bool skipRequested;
 
+    int _currentLogoFrameIndex;
+    float _logoAnimTimer;
+
     public bool IsPlaying => currentRoutine != null;
     public bool Running => currentRoutine != null;
     public bool Skipped { get; private set; }
@@ -123,7 +132,13 @@ public class TitleScreenDropIntro : MonoBehaviour
         EnsureStateCaches();
         RebuildCachedBasePositionsIfPossible();
 
+        ResetLogoAnimation();
         HideImmediate();
+    }
+
+    void Update()
+    {
+        TickLogoAnimation();
     }
 
     public void SetLayoutRoot(RectTransform root)
@@ -147,6 +162,7 @@ public class TitleScreenDropIntro : MonoBehaviour
         _visualState = IntroVisualState.Hidden;
 
         ResetCharacterLandedState();
+        ResetLogoAnimation();
         RebuildCachedBasePositionsIfPossible();
         ReapplyCurrentResolvedLayout();
     }
@@ -160,6 +176,7 @@ public class TitleScreenDropIntro : MonoBehaviour
         Skipped = false;
         skipRequested = false;
 
+        ResetLogoAnimation();
         ApplyLogoSprite();
         ApplyCharacterSprites(false);
         ResetCharacterLandedState();
@@ -191,6 +208,7 @@ public class TitleScreenDropIntro : MonoBehaviour
         Skipped = false;
         skipRequested = false;
 
+        ResetLogoAnimation();
         ApplyLogoSprite();
         ApplyCharacterSprites(false);
         ResetCharacterLandedState();
@@ -216,6 +234,7 @@ public class TitleScreenDropIntro : MonoBehaviour
     IEnumerator PlayMasterRoutine()
     {
         ResetCharacterLandedState();
+        ResetLogoAnimation();
         RebuildCachedBasePositionsIfPossible();
         UpdateCharacterSiblingOrder();
 
@@ -352,6 +371,9 @@ public class TitleScreenDropIntro : MonoBehaviour
         if (_logoRect == null || logoImage == null)
             yield break;
 
+        if (resetLogoAnimationWhenShown)
+            ResetLogoAnimation();
+
         float duration = Mathf.Max(0.01f, dropDuration);
         float t = 0f;
 
@@ -383,6 +405,65 @@ public class TitleScreenDropIntro : MonoBehaviour
 
         ApplyAnchoredPositionScaled(_logoRect, endBase);
         logoImage.gameObject.SetActive(true);
+    }
+
+    void TickLogoAnimation()
+    {
+        if (!animateLogo)
+            return;
+
+        if (logoImage == null || !logoImage.gameObject.activeInHierarchy)
+            return;
+
+        int frameCount = GetLogoFrameCount();
+        if (frameCount <= 1)
+            return;
+
+        float dt = useUnscaledTime ? Time.unscaledDeltaTime : Time.deltaTime;
+        if (dt <= 0f)
+            return;
+
+        _logoAnimTimer += dt;
+        float frameDuration = Mathf.Max(0.01f, logoFrameDuration);
+
+        while (_logoAnimTimer >= frameDuration)
+        {
+            _logoAnimTimer -= frameDuration;
+
+            if (loopLogoAnimation)
+            {
+                _currentLogoFrameIndex = (_currentLogoFrameIndex + 1) % frameCount;
+            }
+            else
+            {
+                if (_currentLogoFrameIndex < frameCount - 1)
+                    _currentLogoFrameIndex++;
+            }
+
+            ApplyLogoSprite();
+        }
+    }
+
+    void ResetLogoAnimation()
+    {
+        _currentLogoFrameIndex = 0;
+        _logoAnimTimer = 0f;
+        ApplyLogoSprite();
+    }
+
+    int GetLogoFrameCount()
+    {
+        return logoFrames != null ? logoFrames.Length : 0;
+    }
+
+    Sprite GetCurrentLogoSprite()
+    {
+        int count = GetLogoFrameCount();
+        if (count <= 0)
+            return null;
+
+        int index = Mathf.Clamp(_currentLogoFrameIndex, 0, count - 1);
+        return logoFrames[index];
     }
 
     bool PollSkipPressed()
@@ -427,6 +508,9 @@ public class TitleScreenDropIntro : MonoBehaviour
 
         if (logoImage != null && _logoRect != null)
         {
+            if (resetLogoAnimationWhenShown)
+                ResetLogoAnimation();
+
             logoImage.gameObject.SetActive(true);
             ApplyLogoSprite();
             ApplyAnchoredPositionScaled(_logoRect, _cachedLogoFinalBasePosition);
@@ -548,14 +632,19 @@ public class TitleScreenDropIntro : MonoBehaviour
 
     void ApplyLogoSprite()
     {
-        if (logoImage == null || logoSprite == null)
+        if (logoImage == null)
             return;
 
-        Texture tex = logoSprite.texture;
+        Sprite sprite = GetCurrentLogoSprite();
+        if (sprite == null)
+            return;
+
+        Texture tex = sprite.texture;
         if (tex != null && applyPointFilter)
             tex.filterMode = FilterMode.Point;
 
-        logoImage.sprite = logoSprite;
+        if (logoImage.sprite != sprite)
+            logoImage.sprite = sprite;
     }
 
     void ApplyCharacterSprites(bool landed)
@@ -768,6 +857,7 @@ public class TitleScreenDropIntro : MonoBehaviour
         if (logoImage != null && _logoRect != null)
         {
             logoImage.gameObject.SetActive(true);
+            ApplyLogoSprite();
             ApplyAnchoredPositionScaled(_logoRect, _cachedLogoFinalBasePosition);
         }
     }
@@ -792,26 +882,13 @@ public class TitleScreenDropIntro : MonoBehaviour
         }
     }
 
-    void PrepareCharactersAboveTop()
-    {
-        RebuildCachedBasePositionsIfPossible();
-
-        for (int i = 0; i < characterSlots.Length; i++)
-        {
-            CharacterDropSlot slot = characterSlots[i];
-            if (slot == null || slot.image == null)
-                continue;
-
-            ApplyCharacterSprite(i, false);
-            slot.image.gameObject.SetActive(true);
-            ApplyAnchoredPositionScaled(slot.image.rectTransform, _cachedCharacterAboveTopBasePositions[i]);
-        }
-    }
-
     void PrepareLogoAboveTop(bool visible)
     {
         if (logoImage == null || _logoRect == null)
             return;
+
+        if (visible && resetLogoAnimationWhenShown)
+            ResetLogoAnimation();
 
         logoImage.gameObject.SetActive(visible);
         ApplyAnchoredPositionScaled(_logoRect, _cachedLogoAboveTopBasePosition);
@@ -921,12 +998,14 @@ public class TitleScreenDropIntro : MonoBehaviour
 
     Vector2 GetEffectiveBaseLogoSize()
     {
-        if (useSpriteNativeSizeAsLogoSize && logoSprite != null)
-        {
-            if (logoSprite.texture != null)
-                return new Vector2(logoSprite.texture.width, logoSprite.texture.height);
+        Sprite sizeSprite = GetCurrentLogoSprite();
 
-            Rect r = logoSprite.rect;
+        if (useSpriteNativeSizeAsLogoSize && sizeSprite != null)
+        {
+            if (sizeSprite.texture != null)
+                return new Vector2(sizeSprite.texture.width, sizeSprite.texture.height);
+
+            Rect r = sizeSprite.rect;
             return new Vector2(r.width, r.height);
         }
 
@@ -968,39 +1047,6 @@ public class TitleScreenDropIntro : MonoBehaviour
     static Vector2 RoundVec(Vector2 v)
     {
         return new Vector2(Mathf.Round(v.x), Mathf.Round(v.y));
-    }
-
-    object Wait(float seconds)
-    {
-        float t = Mathf.Max(0f, seconds);
-        return useUnscaledTime ? new WaitForSecondsRealtime(t) : new WaitForSeconds(t);
-    }
-
-    List<int> BuildCenterOutOrder()
-    {
-        List<int> order = new();
-
-        if (characterSlots == null || characterSlots.Length == 0)
-            return order;
-
-        int count = characterSlots.Length;
-        int center = count / 2;
-
-        order.Add(center);
-
-        for (int dist = 1; dist <= center; dist++)
-        {
-            int left = center - dist;
-            int right = center + dist;
-
-            if (left >= 0)
-                order.Add(left);
-
-            if (right < count)
-                order.Add(right);
-        }
-
-        return order;
     }
 
     List<List<int>> BuildCenterOutWaveOrder()
@@ -1078,6 +1124,9 @@ public class TitleScreenDropIntro : MonoBehaviour
 
         if (logoImage != null && _logoRect != null)
         {
+            if (resetLogoAnimationWhenShown)
+                ResetLogoAnimation();
+
             logoImage.gameObject.SetActive(true);
             ApplyLogoSprite();
             ApplyAnchoredPositionScaled(_logoRect, _cachedLogoFinalBasePosition);

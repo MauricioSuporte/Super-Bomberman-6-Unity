@@ -950,7 +950,16 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TitleScreenLogoDropIntro
   logoImage: {fileID: 1797125730}
-  logoSprite: {fileID: 21300000, guid: 1dfdb1c04b6f1e8429d5adedf8b6b123, type: 3}
+  logoFrames:
+  - {fileID: 101209642910601267, guid: a353270c23de0d74c8129549ba867977, type: 3}
+  - {fileID: -3936444673696339432, guid: a353270c23de0d74c8129549ba867977, type: 3}
+  - {fileID: 9092564933819195439, guid: a353270c23de0d74c8129549ba867977, type: 3}
+  - {fileID: 3095362166596880681, guid: a353270c23de0d74c8129549ba867977, type: 3}
+  - {fileID: -2291964472640486642, guid: a353270c23de0d74c8129549ba867977, type: 3}
+  logoFrameDuration: 0.08
+  animateLogo: 1
+  loopLogoAnimation: 1
+  resetLogoAnimationWhenShown: 1
   characterSlots:
   - name: Pink
     image: {fileID: 0}

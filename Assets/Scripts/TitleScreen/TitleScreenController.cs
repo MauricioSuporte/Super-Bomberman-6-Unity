@@ -9,10 +9,6 @@ using UnityEngine.UI;
 
 public class TitleScreenController : MonoBehaviour
 {
-    readonly Vector3[] _menuWorldCorners = new Vector3[4];
-    readonly Vector3[] _refWorldCorners = new Vector3[4];
-    readonly Vector3[] _layoutWorldCorners = new Vector3[4];
-
     [Header("Menu Box (BASE @ designUpscale)")]
     [SerializeField] Vector2 menuBoxSize = new(520f, 260f);
 
