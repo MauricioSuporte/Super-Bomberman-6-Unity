@@ -2095,4 +2095,38 @@ public partial class BombController : MonoBehaviour
 
         Destroy(bombGo);
     }
+
+    public bool TryExplodeAllControlledBombs()
+    {
+        CleanupNullBombs();
+
+        bool any = false;
+
+        for (int i = plantedBombs.Count - 1; i >= 0; i--)
+        {
+            var b = plantedBombs[i];
+            if (b == null)
+            {
+                plantedBombs.RemoveAt(i);
+                continue;
+            }
+
+            if (!b.TryGetComponent<Bomb>(out var bombComp)
+                || bombComp == null
+                || !bombComp.IsControlBomb)
+            {
+                plantedBombs.RemoveAt(i);
+                continue;
+            }
+
+            if (bombComp.IsBeingPunched)
+                continue;
+
+            plantedBombs.RemoveAt(i);
+            ExplodeBomb(b);
+            any = true;
+        }
+
+        return any;
+    }
 }

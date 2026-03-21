@@ -20,6 +20,8 @@ public class PurpleLouieBombLineAbility : MonoBehaviour, IPlayerAbility
 
     bool deathCancelInProgress;
 
+    bool lastLineWasControlBombs;
+
     public string Id => AbilityId;
     public bool IsEnabled => enabledAbility;
 
@@ -61,7 +63,23 @@ public class PurpleLouieBombLineAbility : MonoBehaviour, IPlayerAbility
 
         var input = PlayerInputManager.Instance;
         int pid = movement.PlayerId;
-        if (input == null || !input.GetDown(pid, PlayerAction.ActionC))
+        if (input == null)
+            return;
+
+        if (lastLineWasControlBombs && input.GetDown(pid, PlayerAction.ActionB))
+        {
+            if (bomb == null)
+                bomb = movement.GetComponent<BombController>();
+
+            if (bomb != null)
+            {
+                bomb.TryExplodeAllControlledBombs();
+                lastLineWasControlBombs = false;
+            }
+            return;
+        }
+
+        if (!input.GetDown(pid, PlayerAction.ActionC))
             return;
 
         if (bomb == null)
@@ -81,9 +99,14 @@ public class PurpleLouieBombLineAbility : MonoBehaviour, IPlayerAbility
         Vector2 dir = lastFacingDir == Vector2.zero ? Vector2.down : lastFacingDir;
         dir = ToCardinal(dir);
 
+        bool isControlLine = bomb != null && IsControlEnabled();
+
         bool placedAny = DropBombsInFrontLine(dir);
         if (placedAny)
+        {
             PlayPlaceBombSfxOnce();
+            lastLineWasControlBombs = isControlLine;
+        }
 
         if (externalAnimator != null)
             yield return externalAnimator.Play(dir, lockSeconds);
@@ -104,6 +127,14 @@ public class PurpleLouieBombLineAbility : MonoBehaviour, IPlayerAbility
 
         routine = null;
         deathCancelInProgress = false;
+    }
+
+    bool IsControlEnabled()
+    {
+        if (TryGetComponent<AbilitySystem>(out var ab) && ab != null)
+            return ab.IsEnabled(ControlBombAbility.AbilityId);
+
+        return false;
     }
 
     private Vector2 ToCardinal(Vector2 v)
@@ -139,7 +170,6 @@ public class PurpleLouieBombLineAbility : MonoBehaviour, IPlayerAbility
         origin.x = Mathf.Round(origin.x / movement.tileSize) * movement.tileSize;
         origin.y = Mathf.Round(origin.y / movement.tileSize) * movement.tileSize;
 
-        // Começa 1 tile à frente, nunca no tile do player
         Vector2 pos = origin + dir * movement.tileSize;
 
         bool placedAny = false;
@@ -171,6 +201,7 @@ public class PurpleLouieBombLineAbility : MonoBehaviour, IPlayerAbility
     public void Disable()
     {
         enabledAbility = false;
+        lastLineWasControlBombs = false;
         externalAnimator?.ForceStop();
 
         if (routine != null)
@@ -198,9 +229,8 @@ public class PurpleLouieBombLineAbility : MonoBehaviour, IPlayerAbility
     public void CancelCastForDeath()
     {
         deathCancelInProgress = true;
-
         enabledAbility = false;
-
+        lastLineWasControlBombs = false;
         externalAnimator?.ForceStop();
 
         if (routine != null)
