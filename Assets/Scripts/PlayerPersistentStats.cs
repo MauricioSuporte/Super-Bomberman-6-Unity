@@ -18,10 +18,10 @@ public static class PlayerPersistentStats
 
     public sealed class PlayerState
     {
-        public int Life = 1;
-        public int BombAmount = 1;
-        public int ExplosionRadius = 1;
-        public int SpeedInternal = MinSpeedInternal;
+        public int Life = 999999;
+        public int BombAmount = 9;
+        public int ExplosionRadius = 9;
+        public int SpeedInternal = MaxSpeedInternal;
         public bool CanKickBombs = false;
         public bool CanPunchBombs = false;
         public bool HasPowerGlove = false;
@@ -33,7 +33,7 @@ public static class PlayerPersistentStats
         public bool HasRubberBombs = false;
         public bool HasFullFire = false;
 
-        public MountedType MountedLouie = MountedType.None;
+        public MountedType MountedLouie = MountedType.Yellow;
         public BomberSkin Skin = BomberSkin.White;
 
         public readonly List<ItemType> QueuedEggs = new(8);

@@ -59,6 +59,9 @@ public class BossRushBootstrap : MonoBehaviour
 
                 SLog($"RunFlow | returning to skin select | targetBossRushScene={targetBossRushScene}");
 
+                if (GameMusicController.Instance != null)
+                    GameMusicController.Instance.StopMusic();
+
                 SkinSelectFlowRouter.SetReturnToBossRush(targetBossRushScene);
                 SceneManager.LoadScene(returnSceneName);
                 yield break;
