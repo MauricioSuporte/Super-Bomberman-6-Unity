@@ -17,6 +17,15 @@ public class TitleScreenDropIntro : MonoBehaviour
         public Sprite fallingSprite;
         public Sprite landedSprite;
 
+        [Header("Idle Alternate Sprite")]
+        public Sprite alternateSprite;
+
+        [Header("Idle Alternate Timing")]
+        [Min(0.1f)] public float idleMinInterval = 2.0f;
+        [Min(0.1f)] public float idleMaxInterval = 4.0f;
+        [Min(0.05f)] public float alternateDuration = 0.5f;
+        [Min(0f)] public float idleStartDelay = 0f;
+
         [Header("Layout")]
         public Vector2 baseSize = new(80f, 80f);
         public bool useSpriteNativeSizeAsCharacterSize = false;
@@ -89,6 +98,9 @@ public class TitleScreenDropIntro : MonoBehaviour
 
     Coroutine currentRoutine;
 
+    // Per-character idle animation coroutines
+    readonly List<Coroutine> _idleRoutines = new();
+
     RectTransform _logoRect;
     readonly List<RectTransform> _characterRects = new();
 
@@ -156,6 +168,7 @@ public class TitleScreenDropIntro : MonoBehaviour
     public void HideImmediate()
     {
         StopIntro();
+        StopAllIdleRoutines();
 
         Skipped = false;
         skipRequested = false;
@@ -180,6 +193,7 @@ public class TitleScreenDropIntro : MonoBehaviour
         ApplyLogoSprite();
         ApplyCharacterSprites(false);
         ResetCharacterLandedState();
+        StopAllIdleRoutines();
 
         RebuildCachedBasePositionsIfPossible();
         UpdateCharacterSiblingOrder();
@@ -200,6 +214,7 @@ public class TitleScreenDropIntro : MonoBehaviour
     public IEnumerator PlayIntro()
     {
         StopIntro();
+        StopAllIdleRoutines();
 
         EnsureLogo();
         EnsureCharacters();
@@ -230,6 +245,128 @@ public class TitleScreenDropIntro : MonoBehaviour
 
         skipRequested = false;
     }
+
+    // -------------------------------------------------------------------------
+    //  Idle alternation helpers
+    // -------------------------------------------------------------------------
+
+    void StopAllIdleRoutines()
+    {
+        for (int i = 0; i < _idleRoutines.Count; i++)
+        {
+            if (_idleRoutines[i] != null)
+                StopCoroutine(_idleRoutines[i]);
+        }
+        _idleRoutines.Clear();
+    }
+
+    void StartIdleRoutinesForAllLanded()
+    {
+        StopAllIdleRoutines();
+
+        if (characterSlots == null)
+            return;
+
+        for (int i = 0; i < characterSlots.Length; i++)
+        {
+            CharacterDropSlot slot = characterSlots[i];
+            if (slot == null || slot.image == null)
+            {
+                _idleRoutines.Add(null);
+                continue;
+            }
+
+            if (slot.alternateSprite == null)
+            {
+                _idleRoutines.Add(null);
+                continue;
+            }
+
+            Coroutine c = StartCoroutine(IdleAlternateRoutine(i, slot));
+            _idleRoutines.Add(c);
+        }
+    }
+
+    void StartIdleRoutineForCharacter(int index)
+    {
+        if (characterSlots == null || index < 0 || index >= characterSlots.Length)
+            return;
+
+        CharacterDropSlot slot = characterSlots[index];
+        if (slot == null || slot.image == null || slot.alternateSprite == null)
+            return;
+
+        // Grow list if needed
+        while (_idleRoutines.Count <= index)
+            _idleRoutines.Add(null);
+
+        if (_idleRoutines[index] != null)
+            StopCoroutine(_idleRoutines[index]);
+
+        _idleRoutines[index] = StartCoroutine(IdleAlternateRoutine(index, slot));
+    }
+
+    IEnumerator IdleAlternateRoutine(int index, CharacterDropSlot slot)
+    {
+        // Each character starts with its own random offset so they never sync up.
+        float startDelay = slot.idleStartDelay > 0f
+            ? slot.idleStartDelay
+            : UnityEngine.Random.Range(0f, Mathf.Max(0f, slot.idleMaxInterval));
+
+        if (startDelay > 0f)
+        {
+            if (useUnscaledTime)
+                yield return new WaitForSecondsRealtime(startDelay);
+            else
+                yield return new WaitForSeconds(startDelay);
+        }
+
+        while (true)
+        {
+            // --- Show alternate sprite ---
+            ApplyCharacterSpriteOverride(index, slot.alternateSprite);
+
+            float altDur = Mathf.Max(0.05f, slot.alternateDuration);
+            if (useUnscaledTime)
+                yield return new WaitForSecondsRealtime(altDur);
+            else
+                yield return new WaitForSeconds(altDur);
+
+            // --- Back to landed sprite ---
+            ApplyCharacterSprite(index, true);
+
+            // --- Wait a random idle interval before the next alternate ---
+            float interval = UnityEngine.Random.Range(
+                Mathf.Max(0.1f, slot.idleMinInterval),
+                Mathf.Max(0.1f, slot.idleMaxInterval));
+
+            if (useUnscaledTime)
+                yield return new WaitForSecondsRealtime(interval);
+            else
+                yield return new WaitForSeconds(interval);
+        }
+    }
+
+    void ApplyCharacterSpriteOverride(int index, Sprite overrideSprite)
+    {
+        if (characterSlots == null || index < 0 || index >= characterSlots.Length)
+            return;
+
+        CharacterDropSlot slot = characterSlots[index];
+        if (slot == null || slot.image == null || overrideSprite == null)
+            return;
+
+        Texture tex = overrideSprite.texture;
+        if (tex != null && applyPointFilter)
+            tex.filterMode = FilterMode.Point;
+
+        if (slot.image.sprite != overrideSprite)
+            slot.image.sprite = overrideSprite;
+    }
+
+    // -------------------------------------------------------------------------
+    //  Master routine
+    // -------------------------------------------------------------------------
 
     IEnumerator PlayMasterRoutine()
     {
@@ -269,6 +406,9 @@ public class TitleScreenDropIntro : MonoBehaviour
 
         _visualState = IntroVisualState.Completed;
         ReapplyCurrentResolvedLayout();
+
+        // All characters are now visibly landed — start idle animations
+        StartIdleRoutinesForAllLanded();
 
         currentRoutine = null;
     }
@@ -336,6 +476,7 @@ public class TitleScreenDropIntro : MonoBehaviour
                 yield return null;
             }
 
+            // Wave landed — apply landed sprite and start this wave's idle routines
             for (int j = 0; j < wave.Count; j++)
             {
                 int i = wave[j];
@@ -347,9 +488,13 @@ public class TitleScreenDropIntro : MonoBehaviour
                 ApplyAnchoredPositionScaled(slot.image.rectTransform, _cachedCharacterFinalBasePositions[i]);
                 slot.image.gameObject.SetActive(true);
                 ApplyCharacterSprite(i, true);
+
+                // Start idle animation as soon as this character lands
+                StartIdleRoutineForCharacter(i);
             }
         }
 
+        // Safety pass
         for (int i = 0; i < count; i++)
         {
             CharacterDropSlot slot = characterSlots[i];
@@ -519,6 +664,8 @@ public class TitleScreenDropIntro : MonoBehaviour
         _visualState = IntroVisualState.Completed;
         currentRoutine = null;
         skipRequested = false;
+
+        StartIdleRoutinesForAllLanded();
     }
 
     IEnumerator WaitWithSkip(float seconds)
@@ -1134,5 +1281,7 @@ public class TitleScreenDropIntro : MonoBehaviour
 
         _visualState = IntroVisualState.Completed;
         StopIntro();
+
+        StartIdleRoutinesForAllLanded();
     }
 }

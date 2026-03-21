@@ -966,6 +966,11 @@ MonoBehaviour:
     sprite: {fileID: 21300000, guid: 57413b5fd14549146990ec902b3d7f52, type: 3}
     fallingSprite: {fileID: 21300000, guid: 57413b5fd14549146990ec902b3d7f52, type: 3}
     landedSprite: {fileID: 21300000, guid: 37baff9a4c369104ab84033bceaa5b9b, type: 3}
+    alternateSprite: {fileID: 21300000, guid: 83a8a9834a2278840aac56fe83acb4e1, type: 3}
+    idleMinInterval: 2
+    idleMaxInterval: 4
+    alternateDuration: 0.5
+    idleStartDelay: 0
     baseSize: {x: 80, y: 95}
     useSpriteNativeSizeAsCharacterSize: 0
     positionOffset: {x: -9, y: -12}
@@ -974,6 +979,11 @@ MonoBehaviour:
     sprite: {fileID: 21300000, guid: cca24cad120858e46a53983882e972ef, type: 3}
     fallingSprite: {fileID: 21300000, guid: cca24cad120858e46a53983882e972ef, type: 3}
     landedSprite: {fileID: 21300000, guid: 37674deb61adaa643b71255824fe6220, type: 3}
+    alternateSprite: {fileID: 0}
+    idleMinInterval: 2
+    idleMaxInterval: 4
+    alternateDuration: 0.5
+    idleStartDelay: 0
     baseSize: {x: 80, y: 80}
     useSpriteNativeSizeAsCharacterSize: 0
     positionOffset: {x: -7, y: 3}
@@ -982,6 +992,11 @@ MonoBehaviour:
     sprite: {fileID: 21300000, guid: 55cc788f3d687674ca60a4a6dbec16b4, type: 3}
     fallingSprite: {fileID: 21300000, guid: 55cc788f3d687674ca60a4a6dbec16b4, type: 3}
     landedSprite: {fileID: 21300000, guid: 1b60de100d1343148850883b3fa0fa11, type: 3}
+    alternateSprite: {fileID: 0}
+    idleMinInterval: 2
+    idleMaxInterval: 4
+    alternateDuration: 0.5
+    idleStartDelay: 0
     baseSize: {x: 80, y: 80}
     useSpriteNativeSizeAsCharacterSize: 0
     positionOffset: {x: -10, y: 5}
@@ -990,6 +1005,11 @@ MonoBehaviour:
     sprite: {fileID: 21300000, guid: 1b7894bc5d13dec4b91738f3010bc6dd, type: 3}
     fallingSprite: {fileID: 21300000, guid: 1b7894bc5d13dec4b91738f3010bc6dd, type: 3}
     landedSprite: {fileID: 21300000, guid: 1b35e08d09577a84ca50dff92fdebf3c, type: 3}
+    alternateSprite: {fileID: 0}
+    idleMinInterval: 2
+    idleMaxInterval: 4
+    alternateDuration: 0.5
+    idleStartDelay: 0
     baseSize: {x: 80, y: 80}
     useSpriteNativeSizeAsCharacterSize: 0
     positionOffset: {x: 0, y: 10}
@@ -998,6 +1018,11 @@ MonoBehaviour:
     sprite: {fileID: 21300000, guid: 5e0dbf0b32e0d9e409a9e65abb159b3c, type: 3}
     fallingSprite: {fileID: 21300000, guid: 5e0dbf0b32e0d9e409a9e65abb159b3c, type: 3}
     landedSprite: {fileID: 21300000, guid: 9441f8ec8c2843643be0324cf86ba350, type: 3}
+    alternateSprite: {fileID: 0}
+    idleMinInterval: 2
+    idleMaxInterval: 4
+    alternateDuration: 0.5
+    idleStartDelay: 0
     baseSize: {x: 80, y: 80}
     useSpriteNativeSizeAsCharacterSize: 0
     positionOffset: {x: 9, y: 4}
@@ -1006,6 +1031,11 @@ MonoBehaviour:
     sprite: {fileID: 21300000, guid: 2fd92abb7e064304b8764ec0e7743abd, type: 3}
     fallingSprite: {fileID: 21300000, guid: 2fd92abb7e064304b8764ec0e7743abd, type: 3}
     landedSprite: {fileID: 21300000, guid: ec81e3140b6fbb64ea3efafd3df24815, type: 3}
+    alternateSprite: {fileID: 0}
+    idleMinInterval: 2
+    idleMaxInterval: 4
+    alternateDuration: 0.5
+    idleStartDelay: 0
     baseSize: {x: 80, y: 80}
     useSpriteNativeSizeAsCharacterSize: 0
     positionOffset: {x: 12, y: -5}
@@ -1014,6 +1044,11 @@ MonoBehaviour:
     sprite: {fileID: 21300000, guid: 31fad902b15a5f94f8e60c3c3ab901e2, type: 3}
     fallingSprite: {fileID: 21300000, guid: 31fad902b15a5f94f8e60c3c3ab901e2, type: 3}
     landedSprite: {fileID: 21300000, guid: 1daf15bc074d4ce49ab140971b32240b, type: 3}
+    alternateSprite: {fileID: 0}
+    idleMinInterval: 2
+    idleMaxInterval: 4
+    alternateDuration: 0.5
+    idleStartDelay: 0
     baseSize: {x: 95, y: 80}
     useSpriteNativeSizeAsCharacterSize: 0
     positionOffset: {x: 9, y: -14}
