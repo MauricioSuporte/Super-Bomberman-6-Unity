@@ -59,6 +59,7 @@ public static class BossRushSession
 
     public static void CancelRun()
     {
+        ResetAllRunPlayers();
         ClearRuntimeState();
     }
 
@@ -90,6 +91,7 @@ public static class BossRushSession
         lastCompletedTime = completedTime;
         lastCompletedRank = rank;
 
+        ResetAllRunPlayers();
         ClearRuntimeState(keepLastCompletedRun: true);
         return rank;
     }
@@ -397,6 +399,40 @@ public static class BossRushSession
             hasLastCompletedRun = false;
             lastCompletedTime = 0f;
             lastCompletedRank = -1;
+        }
+    }
+
+    static void ResetAllRunPlayers()
+    {
+        int count = Mathf.Clamp(runPlayerCount, 1, 4);
+
+        for (int playerId = 1; playerId <= count; playerId++)
+        {
+            var state = PlayerPersistentStats.Get(playerId);
+            if (state == null)
+                continue;
+
+            BomberSkin preservedSkin = state.Skin;
+
+            state.Life = 1;
+            state.BombAmount = 1;
+            state.ExplosionRadius = 1;
+            state.SpeedInternal = PlayerPersistentStats.BaseSpeedNormal;
+
+            state.CanKickBombs = false;
+            state.CanPunchBombs = false;
+            state.HasPowerGlove = false;
+            state.CanPassBombs = false;
+            state.CanPassDestructibles = false;
+            state.HasPierceBombs = false;
+            state.HasControlBombs = false;
+            state.HasPowerBomb = false;
+            state.HasRubberBombs = false;
+            state.HasFullFire = false;
+            state.MountedLouie = MountedType.None;
+            state.QueuedEggs.Clear();
+
+            state.Skin = preservedSkin;
         }
     }
 }
