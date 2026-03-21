@@ -29,6 +29,20 @@ public class MovementController : MonoBehaviour, IKillable
     [SerializeField, Range(1, 4)] private int playerId = 1;
     public int PlayerId => playerId;
 
+    [Header("Dual-Input (Zig-Zag / SB1 Style)")]
+    [Tooltip("Enable the zig-zag behaviour when two directional buttons are held.")]
+    [SerializeField] private bool enableDualInput = true;
+
+    [Tooltip("Distance (world units) from a tile centre on the perpendicular axis that triggers the axis swap.")]
+    [SerializeField, Range(0.01f, 0.49f)] private float dualInputCentreSnapTolerance = 0.18f;
+
+    [Tooltip("Seconds to wait after a switch before the next switch can happen. Prevents rapid toggling on the same tile centre.")]
+    [SerializeField, Range(0f, 0.5f)] private float dualInputSwitchCooldown = 0.08f;
+
+    private Vector2 dualPrimary = Vector2.zero;
+    private Vector2 dualSecondary = Vector2.zero;
+    private float dualSwitchTimer = 0f;
+
     [Header("Sprites")]
     public AnimatedSpriteRenderer spriteRendererUp;
     public AnimatedSpriteRenderer spriteRendererDown;
@@ -259,6 +273,10 @@ public class MovementController : MonoBehaviour, IKillable
         touchingHazards.Clear();
         currentAxis = MoveAxis.None;
 
+        dualPrimary = Vector2.zero;
+        dualSecondary = Vector2.zero;
+        dualSwitchTimer = 0f;
+
         if (bombController != null)
             bombController.SetPlayerId(playerId);
 
@@ -419,6 +437,7 @@ public class MovementController : MonoBehaviour, IKillable
         if (!IsPlayer())
         {
             ApplyDirectionFromVector(Vector2.zero);
+            ResetDualInputAxes();
             return;
         }
 
@@ -426,14 +445,132 @@ public class MovementController : MonoBehaviour, IKillable
         if (input == null)
         {
             ApplyDirectionFromVector(Vector2.zero);
+            ResetDualInputAxes();
             return;
         }
 
-        if (input.Get(playerId, PlayerAction.MoveUp)) ApplyDirectionFromVector(Vector2.up);
-        else if (input.Get(playerId, PlayerAction.MoveDown)) ApplyDirectionFromVector(Vector2.down);
-        else if (input.Get(playerId, PlayerAction.MoveLeft)) ApplyDirectionFromVector(Vector2.left);
-        else if (input.Get(playerId, PlayerAction.MoveRight)) ApplyDirectionFromVector(Vector2.right);
-        else ApplyDirectionFromVector(Vector2.zero);
+        bool holdUp = input.Get(playerId, PlayerAction.MoveUp);
+        bool holdDown = input.Get(playerId, PlayerAction.MoveDown);
+        bool holdLeft = input.Get(playerId, PlayerAction.MoveLeft);
+        bool holdRight = input.Get(playerId, PlayerAction.MoveRight);
+
+        Vector2 vertDir = Vector2.zero;
+        Vector2 horizDir = Vector2.zero;
+
+        if (holdUp && !holdDown) vertDir = Vector2.up;
+        if (holdDown && !holdUp) vertDir = Vector2.down;
+        if (holdLeft && !holdRight) horizDir = Vector2.left;
+        if (holdRight && !holdLeft) horizDir = Vector2.right;
+
+        int axisCount = (vertDir != Vector2.zero ? 1 : 0) + (horizDir != Vector2.zero ? 1 : 0);
+
+        if (!enableDualInput || axisCount <= 1)
+        {
+            Vector2 singleDir = vertDir != Vector2.zero ? vertDir : horizDir;
+            ApplyDirectionFromVector(singleDir);
+            ResetDualInputAxes();
+            return;
+        }
+
+        if (dualPrimary == Vector2.zero)
+        {
+            bool vertFree = !IsMoveBlocked(vertDir);
+            bool horizFree = !IsMoveBlocked(horizDir);
+
+            if (horizFree && !vertFree)
+            {
+                dualPrimary = horizDir;
+                dualSecondary = vertDir;
+            }
+            else
+            {
+                dualPrimary = vertDir;
+                dualSecondary = horizDir;
+            }
+            dualSwitchTimer = 0f;
+        }
+        else
+        {
+            bool primaryStillHeld = (dualPrimary == vertDir || dualPrimary == horizDir);
+            if (!primaryStillHeld)
+            {
+                dualPrimary = (dualSecondary == vertDir || dualSecondary == horizDir)
+                                ? dualSecondary
+                                : (vertDir != Vector2.zero ? vertDir : horizDir);
+                dualSecondary = (dualPrimary == vertDir) ? horizDir : vertDir;
+                dualSwitchTimer = 0f;
+            }
+            else
+            {
+                dualSecondary = (dualPrimary == vertDir) ? horizDir : vertDir;
+            }
+        }
+
+        if (dualSwitchTimer > 0f)
+            dualSwitchTimer -= Time.deltaTime;
+
+        Vector2 chosenDir = ResolveDualInputZigZag();
+        ApplyDirectionFromVector(chosenDir);
+    }
+
+    private Vector2 ResolveDualInputZigZag()
+    {
+        if (dualPrimary == Vector2.zero)
+            return dualSecondary;
+
+        bool primaryBlocked = IsMoveBlocked(dualPrimary);
+        bool secondaryBlocked = dualSecondary != Vector2.zero && IsMoveBlocked(dualSecondary);
+
+        if (primaryBlocked && secondaryBlocked)
+            return Vector2.zero;
+
+        if (primaryBlocked && !secondaryBlocked)
+        {
+            DoAxisSwitch();
+            return dualPrimary;
+        }
+
+        if (dualSwitchTimer <= 0f && dualSecondary != Vector2.zero && !secondaryBlocked)
+        {
+            if (IsAtTileCentreOnPerpendicularAxis(dualSecondary))
+            {
+                DoAxisSwitch();
+                return dualPrimary;
+            }
+        }
+
+        return dualPrimary;
+    }
+
+    private bool IsAtTileCentreOnPerpendicularAxis(Vector2 newDir)
+    {
+        if (tileSize <= 0.0001f) return true;
+
+        Vector2 pos = Rigidbody != null ? Rigidbody.position : (Vector2)transform.position;
+
+        if (Mathf.Abs(newDir.x) > 0.01f)
+        {
+            float nearest = Mathf.Round(pos.y / tileSize) * tileSize;
+            return Mathf.Abs(pos.y - nearest) <= dualInputCentreSnapTolerance;
+        }
+        else
+        {
+            float nearest = Mathf.Round(pos.x / tileSize) * tileSize;
+            return Mathf.Abs(pos.x - nearest) <= dualInputCentreSnapTolerance;
+        }
+    }
+
+    private void DoAxisSwitch()
+    {
+        (dualPrimary, dualSecondary) = (dualSecondary, dualPrimary);
+        dualSwitchTimer = dualInputSwitchCooldown;
+    }
+
+    private void ResetDualInputAxes()
+    {
+        dualPrimary = Vector2.zero;
+        dualSecondary = Vector2.zero;
+        dualSwitchTimer = 0f;
     }
 
     public void ApplyDirectionFromVector(Vector2 dir)
@@ -1196,6 +1333,8 @@ public class MovementController : MonoBehaviour, IKillable
         inputLocked = true;
         inactivityMountedDownOverride = false;
 
+        ResetDualInputAxes();
+
         if (spriteLock != null && spriteLock.IsLocked)
             spriteLock.EndLock();
 
@@ -1420,6 +1559,8 @@ public class MovementController : MonoBehaviour, IKillable
 
         inputLocked = true;
         inactivityMountedDownOverride = false;
+        ResetDualInputAxes();
+
         if (spriteLock != null && spriteLock.IsLocked)
             spriteLock.EndLock();
 
@@ -1500,6 +1641,7 @@ public class MovementController : MonoBehaviour, IKillable
     public void SetInputLocked(bool locked, bool forceIdle, Vector2 idleFacing)
     {
         inputLocked = locked;
+        if (locked) ResetDualInputAxes();
 
         if (locked && forceIdle)
             ForceIdleFacing(idleFacing, "SetInputLockedFacing");
@@ -1508,6 +1650,7 @@ public class MovementController : MonoBehaviour, IKillable
     public void SetInputLocked(bool locked, bool forceIdle)
     {
         inputLocked = locked;
+        if (locked) ResetDualInputAxes();
 
         if (locked && forceIdle)
             ForceIdleUp();
@@ -1522,6 +1665,7 @@ public class MovementController : MonoBehaviour, IKillable
     {
         direction = Vector2.zero;
         hasInput = false;
+        ResetDualInputAxes();
 
         faceDir = NormalizeCardinal(faceDir);
         if (faceDir == Vector2.zero)
@@ -1537,16 +1681,13 @@ public class MovementController : MonoBehaviour, IKillable
             target = isMounted ? mountedSpriteDown : spriteRendererDown;
 
         SetDirection(Vector2.zero, target);
-
-        // opcional: se quiser também forçar o visual do Louie/rider:
-        // var rider = GetComponentInChildren<MountVisualController>(true);
-        // if (rider != null && faceDir == Vector2.up) rider.ForceIdleUp();
     }
 
     public void ForceIdleUp()
     {
         direction = Vector2.zero;
         hasInput = false;
+        ResetDualInputAxes();
 
         SetFacingDirection(Vector2.up, "ForceIdleUp");
 
@@ -1563,6 +1704,7 @@ public class MovementController : MonoBehaviour, IKillable
     {
         direction = Vector2.zero;
         hasInput = false;
+        ResetDualInputAxes();
 
         SetFacingDirection(Vector2.up, "ForceIdleUpConsideringMount");
 
@@ -1588,6 +1730,7 @@ public class MovementController : MonoBehaviour, IKillable
     {
         direction = Vector2.zero;
         hasInput = false;
+        ResetDualInputAxes();
 
         SetFacingDirection(Vector2.up, "ForceMountedUpExclusive");
 
@@ -1727,6 +1870,7 @@ public class MovementController : MonoBehaviour, IKillable
 
             direction = Vector2.zero;
             hasInput = false;
+            ResetDualInputAxes();
 
             activeSpriteRenderer = null;
             ForceExclusiveSpriteFromState();
@@ -2077,6 +2221,7 @@ public class MovementController : MonoBehaviour, IKillable
             currentAxis = MoveAxis.None;
             lastMoveDirCardinal = Vector2.zero;
             ResetPixelAccumulators();
+            ResetDualInputAxes();
 
             if (Rigidbody != null)
                 Rigidbody.linearVelocity = Vector2.zero;
