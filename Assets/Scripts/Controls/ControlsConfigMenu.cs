@@ -159,7 +159,6 @@ public class ControlsConfigMenu : MonoBehaviour
     string blockedMessageLine;
 
     float _currentUiScale = 1f;
-    int _currentBaseScaleInt = 1;
 
     int _lastScreenW = -1;
     int _lastScreenH = -1;
@@ -186,6 +185,14 @@ public class ControlsConfigMenu : MonoBehaviour
         PlayerAction.ActionL,
         PlayerAction.ActionR
     };
+
+    struct PointerState
+    {
+        public bool valid;
+        public Vector2 screenPosition;
+        public bool pressedThisFrame;
+        public bool secondaryPressedThisFrame;
+    }
 
     int ScaledFont(int baseSize) => Mathf.Clamp(Mathf.RoundToInt(baseSize * _currentUiScale), 10, 500);
     float ScaledFloat(float baseValue) => baseValue * _currentUiScale;
@@ -674,6 +681,13 @@ public class ControlsConfigMenu : MonoBehaviour
         bool done = false;
         while (!done)
         {
+            var pointer = GetPointerState();
+            if (pointer.valid)
+                TryHandlePointerHover(pointer.screenPosition);
+
+            bool leftClick = pointer.valid && pointer.pressedThisFrame;
+            bool rightClick = pointer.valid && pointer.secondaryPressedThisFrame;
+
             if (state == MenuState.SelectPlayer)
             {
                 int prev = playerSelectIndex;
@@ -696,16 +710,18 @@ public class ControlsConfigMenu : MonoBehaviour
                     RefreshText();
                 }
 
-                if (TryGetAnyPlayerDown(PlayerAction.ActionB, out int pidBack))
+                bool backByPad = TryGetAnyPlayerDown(PlayerAction.ActionB, out int pidBack);
+                bool backByMouse = rightClick;
+
+                if (backByPad || backByMouse)
                 {
-                    ownerPlayerId = pidBack;
+                    if (backByPad) ownerPlayerId = pidBack;
                     PlaySfx(backSfx, backVolume);
 
                     if (cursorRenderer != null)
                     {
                         if (cursorPulseRoutine != null)
                             StopCoroutine(cursorPulseRoutine);
-
                         cursorPulseRoutine = StartCoroutine(cursorRenderer.PlayCycles(1));
                     }
 
@@ -727,10 +743,17 @@ public class ControlsConfigMenu : MonoBehaviour
                     continue;
                 }
 
-                if (TryGetAnyPlayerDownEither(PlayerAction.Start, PlayerAction.ActionA, out int pidConfirm))
+                bool confirmByPad = TryGetAnyPlayerDownEither(PlayerAction.Start, PlayerAction.ActionA, out int pidConfirm);
+                bool confirmByMouse = leftClick && TryGetPointerHoveredLinkId(pointer.screenPosition, out string clickedSelLink)
+                                      && TryResolveLinkIdToSelectionIndex(clickedSelLink, out _);
+
+                if (confirmByPad || confirmByMouse)
                 {
-                    ownerPlayerId = pidConfirm;
+                    if (confirmByPad)
+                        ownerPlayerId = pidConfirm;
+
                     targetPlayerId = playerSelectIndex + 1;
+
                     var p = PlayerInputManager.Instance.GetPlayer(targetPlayerId);
                     bulkSnapshot = p.CloneBindings();
                     bulkStep = 0;
@@ -779,9 +802,12 @@ public class ControlsConfigMenu : MonoBehaviour
                     RefreshText();
                 }
 
-                if (TryGetAnyPlayerDown(PlayerAction.ActionB, out int pidCancel))
+                bool cancelByPad = TryGetAnyPlayerDown(PlayerAction.ActionB, out int pidCancel);
+                bool cancelByMouse = rightClick;
+
+                if (cancelByPad || cancelByMouse)
                 {
-                    ownerPlayerId = pidCancel;
+                    if (cancelByPad) ownerPlayerId = pidCancel;
                     state = MenuState.SelectPlayer;
                     PlaySfx(backSfx, backVolume);
                     RefreshText();
@@ -790,9 +816,14 @@ public class ControlsConfigMenu : MonoBehaviour
                     continue;
                 }
 
-                if (TryGetAnyPlayerDownEither(PlayerAction.Start, PlayerAction.ActionA, out int pidYesNo))
+                bool confirmResetByPad = TryGetAnyPlayerDownEither(PlayerAction.Start, PlayerAction.ActionA, out int pidYesNo);
+                bool confirmResetByMouse = leftClick
+                                           && TryGetPointerHoveredLinkId(pointer.screenPosition, out string clickedResetLink)
+                                           && TryResolveLinkIdToSelectionIndex(clickedResetLink, out _);
+
+                if (confirmResetByPad || confirmResetByMouse)
                 {
-                    ownerPlayerId = pidYesNo;
+                    if (confirmResetByPad) ownerPlayerId = pidYesNo;
 
                     if (confirmResetIndex == 0)
                     {
@@ -822,9 +853,11 @@ public class ControlsConfigMenu : MonoBehaviour
             if (state == MenuState.BulkRemap)
             {
                 bool escCancel = Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame;
+                bool mouseCancel = rightClick;
+
                 var p = PlayerInputManager.Instance.GetPlayer(targetPlayerId);
 
-                if (escCancel)
+                if (escCancel || mouseCancel)
                 {
                     if (bulkSnapshot != null)
                         p.ApplyBindings(bulkSnapshot);
@@ -1490,5 +1523,163 @@ public class ControlsConfigMenu : MonoBehaviour
         }
 
         return sb.ToString();
+    }
+
+    PointerState GetPointerState()
+    {
+        PointerState state = default;
+
+        if (Touchscreen.current != null)
+        {
+            var touches = Touchscreen.current.touches;
+            for (int i = 0; i < touches.Count; i++)
+            {
+                var touch = touches[i];
+                if (!touch.press.isPressed && !touch.press.wasPressedThisFrame)
+                    continue;
+
+                state.valid = true;
+                state.screenPosition = touch.position.ReadValue();
+                state.pressedThisFrame = touch.press.wasPressedThisFrame;
+                state.secondaryPressedThisFrame = false;
+                return state;
+            }
+        }
+
+        if (Mouse.current != null)
+        {
+            state.valid = true;
+            state.screenPosition = Mouse.current.position.ReadValue();
+            state.pressedThisFrame = Mouse.current.leftButton.wasPressedThisFrame;
+            state.secondaryPressedThisFrame = Mouse.current.rightButton.wasPressedThisFrame;
+            return state;
+        }
+
+        return state;
+    }
+
+    bool TryGetPointerHoveredLinkId(Vector2 screenPosition, out string hoveredLinkId)
+    {
+        hoveredLinkId = null;
+
+        if (menuText == null)
+            return false;
+
+        Canvas canvas = GetRootCanvas();
+        Camera cam = null;
+        if (canvas != null && canvas.renderMode != RenderMode.ScreenSpaceOverlay)
+            cam = canvas.worldCamera != null ? canvas.worldCamera : Camera.main;
+
+        if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(
+                menuText.rectTransform, screenPosition, cam, out Vector2 localPoint))
+            return false;
+
+        menuText.ForceMeshUpdate();
+        TMP_TextInfo ti = menuText.textInfo;
+        if (ti == null || ti.linkCount <= 0)
+            return false;
+
+        float padX = ScaledFloat(20f);
+        float padY = ScaledFloat(6f);
+
+        for (int li = 0; li < ti.linkCount; li++)
+        {
+            var link = ti.linkInfo[li];
+            string id = link.GetLinkID();
+
+            int first = link.linkTextfirstCharacterIndex;
+            int last = first + link.linkTextLength - 1;
+            last = Mathf.Clamp(last, 0, ti.characterCount - 1);
+
+            float minX = float.PositiveInfinity, maxX = float.NegativeInfinity;
+            float minY = float.PositiveInfinity, maxY = float.NegativeInfinity;
+            bool anyVisible = false;
+
+            for (int c = first; c <= last; c++)
+            {
+                var ci = ti.characterInfo[c];
+                if (!ci.isVisible) continue;
+
+                anyVisible = true;
+                minX = Mathf.Min(minX, ci.bottomLeft.x);
+                maxX = Mathf.Max(maxX, ci.topRight.x);
+                minY = Mathf.Min(minY, ci.descender);
+                maxY = Mathf.Max(maxY, ci.ascender);
+            }
+
+            if (!anyVisible) continue;
+
+            if (localPoint.x >= minX - padX && localPoint.x <= maxX + padX &&
+                localPoint.y >= minY - padY && localPoint.y <= maxY + padY)
+            {
+                hoveredLinkId = id;
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    bool TryResolveLinkIdToSelectionIndex(string linkId, out int index)
+    {
+        index = -1;
+
+        if (state == MenuState.SelectPlayer)
+        {
+            if (linkId != null && linkId.StartsWith("sel") && linkId.Length == 4)
+            {
+                if (int.TryParse(linkId.Substring(3), out int i) && i >= 0 && i <= 3)
+                {
+                    index = i;
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        if (state == MenuState.ConfirmReset)
+        {
+            if (linkId == LINK_RESET_YES) { index = 0; return true; }
+            if (linkId == LINK_RESET_NO) { index = 1; return true; }
+            return false;
+        }
+
+        if (state == MenuState.BulkRemap)
+        {
+            return false;
+        }
+
+        return false;
+    }
+
+    bool TryHandlePointerHover(Vector2 screenPosition)
+    {
+        if (!TryGetPointerHoveredLinkId(screenPosition, out string linkId))
+            return false;
+
+        if (!TryResolveLinkIdToSelectionIndex(linkId, out int idx))
+            return false;
+
+        bool changed = false;
+
+        if (state == MenuState.SelectPlayer && idx != playerSelectIndex)
+        {
+            playerSelectIndex = idx;
+            targetPlayerId = playerSelectIndex + 1;
+            changed = true;
+        }
+        else if (state == MenuState.ConfirmReset && idx != confirmResetIndex)
+        {
+            confirmResetIndex = idx;
+            changed = true;
+        }
+
+        if (changed)
+        {
+            PlaySfx(moveOptionSfx, moveOptionVolume);
+            RefreshText();
+        }
+
+        return changed;
     }
 }
