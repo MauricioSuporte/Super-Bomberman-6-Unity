@@ -159,6 +159,7 @@ public class ControlsConfigMenu : MonoBehaviour
     string blockedMessageLine;
 
     float _currentUiScale = 1f;
+    int _currentBaseScaleInt = 1;
 
     int _lastScreenW = -1;
     int _lastScreenH = -1;
