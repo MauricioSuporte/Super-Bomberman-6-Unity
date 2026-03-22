@@ -974,6 +974,8 @@ MonoBehaviour:
     baseSize: {x: 80, y: 95}
     useSpriteNativeSizeAsCharacterSize: 0
     positionOffset: {x: -9, y: -12}
+    alternatePositionOffset: {x: 5, y: 0}
+    alternateSizeOffset: {x: 0, y: 0}
   - name: Blue
     image: {fileID: 0}
     sprite: {fileID: 21300000, guid: cca24cad120858e46a53983882e972ef, type: 3}
@@ -987,6 +989,8 @@ MonoBehaviour:
     baseSize: {x: 80, y: 80}
     useSpriteNativeSizeAsCharacterSize: 0
     positionOffset: {x: -7, y: 3}
+    alternatePositionOffset: {x: 0, y: 0}
+    alternateSizeOffset: {x: 0, y: 0}
   - name: Yellow
     image: {fileID: 0}
     sprite: {fileID: 21300000, guid: 55cc788f3d687674ca60a4a6dbec16b4, type: 3}
@@ -1000,6 +1004,8 @@ MonoBehaviour:
     baseSize: {x: 80, y: 80}
     useSpriteNativeSizeAsCharacterSize: 0
     positionOffset: {x: -10, y: 5}
+    alternatePositionOffset: {x: 0, y: 0}
+    alternateSizeOffset: {x: 0, y: 0}
   - name: Purple
     image: {fileID: 0}
     sprite: {fileID: 21300000, guid: 1b7894bc5d13dec4b91738f3010bc6dd, type: 3}
@@ -1013,6 +1019,8 @@ MonoBehaviour:
     baseSize: {x: 80, y: 80}
     useSpriteNativeSizeAsCharacterSize: 0
     positionOffset: {x: 0, y: 10}
+    alternatePositionOffset: {x: 0, y: 0}
+    alternateSizeOffset: {x: 0, y: 0}
   - name: Red
     image: {fileID: 0}
     sprite: {fileID: 21300000, guid: 5e0dbf0b32e0d9e409a9e65abb159b3c, type: 3}
@@ -1026,6 +1034,8 @@ MonoBehaviour:
     baseSize: {x: 80, y: 80}
     useSpriteNativeSizeAsCharacterSize: 0
     positionOffset: {x: 9, y: 4}
+    alternatePositionOffset: {x: 0, y: 0}
+    alternateSizeOffset: {x: 0, y: 0}
   - name: Black
     image: {fileID: 0}
     sprite: {fileID: 21300000, guid: 2fd92abb7e064304b8764ec0e7743abd, type: 3}
@@ -1039,12 +1049,14 @@ MonoBehaviour:
     baseSize: {x: 80, y: 80}
     useSpriteNativeSizeAsCharacterSize: 0
     positionOffset: {x: 12, y: -5}
+    alternatePositionOffset: {x: 0, y: 0}
+    alternateSizeOffset: {x: 0, y: 0}
   - name: Green
     image: {fileID: 0}
     sprite: {fileID: 21300000, guid: 31fad902b15a5f94f8e60c3c3ab901e2, type: 3}
     fallingSprite: {fileID: 21300000, guid: 31fad902b15a5f94f8e60c3c3ab901e2, type: 3}
     landedSprite: {fileID: 21300000, guid: 1daf15bc074d4ce49ab140971b32240b, type: 3}
-    alternateSprite: {fileID: 0}
+    alternateSprite: {fileID: 21300000, guid: 8bb05e66574593f4883a5f773526ea25, type: 3}
     idleMinInterval: 2
     idleMaxInterval: 4
     alternateDuration: 0.5
@@ -1052,6 +1064,8 @@ MonoBehaviour:
     baseSize: {x: 95, y: 80}
     useSpriteNativeSizeAsCharacterSize: 0
     positionOffset: {x: 9, y: -14}
+    alternatePositionOffset: {x: 1, y: 3}
+    alternateSizeOffset: {x: 0, y: 0}
   characterDropStartSfx: {fileID: 8300000, guid: 43c84278110b4274bb887f43a4038d31, type: 3}
   characterDropStartSfxVolume: 1
   layoutRoot: {fileID: 1599199474}

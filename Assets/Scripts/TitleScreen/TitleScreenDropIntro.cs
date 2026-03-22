@@ -30,6 +30,12 @@ public class TitleScreenDropIntro : MonoBehaviour
         public Vector2 baseSize = new(80f, 80f);
         public bool useSpriteNativeSizeAsCharacterSize = false;
         public Vector2 positionOffset = Vector2.zero;
+
+        [Header("Idle Alternate Offset")]
+        public Vector2 alternatePositionOffset = Vector2.zero;
+
+        [Header("Idle Alternate Size Offset")]
+        public Vector2 alternateSizeOffset = Vector2.zero;
     }
 
     enum IntroVisualState
@@ -98,7 +104,6 @@ public class TitleScreenDropIntro : MonoBehaviour
 
     Coroutine currentRoutine;
 
-    // Per-character idle animation coroutines
     readonly List<Coroutine> _idleRoutines = new();
 
     RectTransform _logoRect;
@@ -118,6 +123,7 @@ public class TitleScreenDropIntro : MonoBehaviour
 
     int _currentLogoFrameIndex;
     float _logoAnimTimer;
+    bool[] _characterUsingAlternatePose = Array.Empty<bool>();
 
     public bool IsPlaying => currentRoutine != null;
     public bool Running => currentRoutine != null;
@@ -362,11 +368,12 @@ public class TitleScreenDropIntro : MonoBehaviour
 
         if (slot.image.sprite != overrideSprite)
             slot.image.sprite = overrideSprite;
-    }
 
-    // -------------------------------------------------------------------------
-    //  Master routine
-    // -------------------------------------------------------------------------
+        if (_characterUsingAlternatePose != null && index < _characterUsingAlternatePose.Length)
+            _characterUsingAlternatePose[index] = true;
+
+        ApplyCharacterPoseLayout(index);
+    }
 
     IEnumerator PlayMasterRoutine()
     {
@@ -819,6 +826,16 @@ public class TitleScreenDropIntro : MonoBehaviour
 
         if (slot.image.sprite != chosen)
             slot.image.sprite = chosen;
+
+        if (_characterUsingAlternatePose != null && index < _characterUsingAlternatePose.Length)
+            _characterUsingAlternatePose[index] = false;
+
+        if (_characterHasLanded != null &&
+            index < _characterHasLanded.Length &&
+            _characterHasLanded[index])
+        {
+            ApplyCharacterPoseLayout(index);
+        }
     }
 
     void PlayCharacterDropStartSfx()
@@ -863,6 +880,9 @@ public class TitleScreenDropIntro : MonoBehaviour
 
         if (_characterHasLanded == null || _characterHasLanded.Length != count)
             _characterHasLanded = new bool[count];
+
+        if (_characterUsingAlternatePose == null || _characterUsingAlternatePose.Length != count)
+            _characterUsingAlternatePose = new bool[count];
     }
 
     void ResetCharacterLandedState()
@@ -871,6 +891,9 @@ public class TitleScreenDropIntro : MonoBehaviour
 
         for (int i = 0; i < _characterHasLanded.Length; i++)
             _characterHasLanded[i] = false;
+
+        for (int i = 0; i < _characterUsingAlternatePose.Length; i++)
+            _characterUsingAlternatePose[i] = false;
     }
 
     void RebuildCachedBasePositionsIfPossible()
@@ -1023,9 +1046,21 @@ public class TitleScreenDropIntro : MonoBehaviour
             if (slot == null || slot.image == null)
                 continue;
 
-            RectTransform rt = slot.image.rectTransform;
-            Vector2 baseSize = GetEffectiveBaseCharacterSize(slot);
-            rt.sizeDelta = RoundVec(baseSize * _pixelFrameScale);
+            bool landed =
+                _characterHasLanded != null &&
+                i < _characterHasLanded.Length &&
+                _characterHasLanded[i];
+
+            if (landed)
+            {
+                ApplyCharacterPoseLayout(i);
+            }
+            else
+            {
+                RectTransform rt = slot.image.rectTransform;
+                Vector2 baseSize = GetEffectiveBaseCharacterSize(slot);
+                rt.sizeDelta = RoundVec(baseSize * _pixelFrameScale);
+            }
         }
     }
 
@@ -1283,5 +1318,34 @@ public class TitleScreenDropIntro : MonoBehaviour
         StopIntro();
 
         StartIdleRoutinesForAllLanded();
+    }
+
+    void ApplyCharacterPoseLayout(int index)
+    {
+        if (characterSlots == null || index < 0 || index >= characterSlots.Length)
+            return;
+
+        CharacterDropSlot slot = characterSlots[index];
+        if (slot == null || slot.image == null)
+            return;
+
+        RectTransform rt = slot.image.rectTransform;
+
+        bool usingAlternate =
+            _characterUsingAlternatePose != null &&
+            index < _characterUsingAlternatePose.Length &&
+            _characterUsingAlternatePose[index];
+
+        Vector2 basePos = _cachedCharacterFinalBasePositions[index];
+        Vector2 baseSize = GetEffectiveBaseCharacterSize(slot);
+
+        if (usingAlternate)
+        {
+            basePos += slot.alternatePositionOffset;
+            baseSize += slot.alternateSizeOffset;
+        }
+
+        ApplyAnchoredPositionScaled(rt, basePos);
+        rt.sizeDelta = RoundVec(baseSize * _pixelFrameScale);
     }
 }
