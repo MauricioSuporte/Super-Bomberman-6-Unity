@@ -1100,35 +1100,70 @@ public class MovementController : MonoBehaviour, IKillable
 
         Collider2D[] hits = Physics2D.OverlapBoxAll(targetPosition, size, 0f, obstacleMask);
         if (hits == null || hits.Length == 0)
-            return false;
-
-        bool canPassDestructibles = abilitySystem != null &&
-                                   abilitySystem.IsEnabled(DestructiblePassAbility.AbilityId);
-
-        for (int h = 0; h < hits.Length; h++)
         {
-            var hit = hits[h];
-            if (hit == null) continue;
-            if (hit.gameObject == gameObject) continue;
-            if (hit.isTrigger) continue;
+        }
+        else
+        {
+            bool canPassDestructibles = abilitySystem != null &&
+                                       abilitySystem.IsEnabled(DestructiblePassAbility.AbilityId);
 
-            if (canPassTaggedObstacles && hit.CompareTag(passObstacleTag))
-                continue;
-
-            if (canPassDestructibles && hit.CompareTag("Destructibles"))
-                continue;
-
-            for (int i = 0; i < movementAbilities.Length; i++)
+            for (int h = 0; h < hits.Length; h++)
             {
-                var ability = movementAbilities[i];
-                if (ability != null && ability.IsEnabled)
-                {
-                    if (ability.TryHandleBlockedHit(hit, dirForSize, tileSize, obstacleMask))
-                        return true;
-                }
-            }
+                var hit = hits[h];
+                if (hit == null) continue;
+                if (hit.gameObject == gameObject) continue;
+                if (hit.isTrigger) continue;
 
-            return true;
+                if (canPassTaggedObstacles && hit.CompareTag(passObstacleTag))
+                    continue;
+
+                if (canPassDestructibles && hit.CompareTag("Destructibles"))
+                    continue;
+
+                for (int i = 0; i < movementAbilities.Length; i++)
+                {
+                    var ability = movementAbilities[i];
+                    if (ability != null && ability.IsEnabled)
+                    {
+                        if (ability.TryHandleBlockedHit(hit, dirForSize, tileSize, obstacleMask))
+                            return true;
+                    }
+                }
+
+                return true;
+            }
+        }
+
+        bool hasBombPass = abilitySystem != null && abilitySystem.IsEnabled(BombPassAbility.AbilityId);
+        if (!hasBombPass)
+        {
+            Vector2 myPos = Rigidbody != null ? Rigidbody.position : (Vector2)transform.position;
+
+            foreach (var bomb in Bomb.ActiveBombs)
+            {
+                if (bomb == null || bomb.HasExploded)
+                    continue;
+
+                if (bomb.IsSolid)
+                    continue;
+
+                if (bomb.Owner == bombController)
+                {
+                    var bombCollider = bomb.GetComponent<Collider2D>();
+                    if (bombCollider != null && bombCollider.isTrigger)
+                        continue;
+                }
+
+                Vector2 bombPos = (Vector2)bomb.transform.position;
+
+                float myDistToBombSq = (myPos - bombPos).sqrMagnitude;
+                if (myDistToBombSq < tileSize * tileSize * 0.25f)
+                    continue;
+
+                float distSq = (bombPos - targetPosition).sqrMagnitude;
+                if (distSq < tileSize * tileSize * 0.25f)
+                    return true;
+            }
         }
 
         return false;
