@@ -157,6 +157,7 @@ public class TitleScreenController : MonoBehaviour
     [Header("Title Intro")]
     [SerializeField] TitleScreenVerticalPanIntro titleIntroPan;
     [SerializeField] TitleScreenDropIntro titleLogoIntro;
+    [SerializeField] bool hideMenuAfterIntro = false;
 
     public bool ControlsRequested { get; private set; }
     public bool Running { get; private set; }
@@ -1316,6 +1317,20 @@ public class TitleScreenController : MonoBehaviour
         }
 
         ShowTitleScreenNow();
+
+        if (hideMenuAfterIntro)
+        {
+            if (menuText != null) menuText.gameObject.SetActive(false);
+            if (cursorRenderer != null) cursorRenderer.gameObject.SetActive(false);
+            if (pushStartText != null) pushStartText.gameObject.SetActive(false);
+            if (footerText != null) footerText.gameObject.SetActive(false);
+            if (videoValuesText != null) videoValuesText.gameObject.SetActive(false);
+
+            while (Running)
+                yield return null;
+
+            yield break;
+        }
 
         if (ignoreStartKeyUntilRelease ||
             AnyPlayerHeld(PlayerAction.Start) ||

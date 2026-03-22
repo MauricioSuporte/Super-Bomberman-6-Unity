@@ -1190,7 +1190,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &1287610047
 RectTransform:
   m_ObjectHideFlags: 0
@@ -1958,6 +1958,7 @@ MonoBehaviour:
   allowRightClickBack: 1
   titleIntroPan: {fileID: 362350266}
   titleLogoIntro: {fileID: 691562834}
+  hideMenuAfterIntro: 0
 --- !u!222 &1724740268
 CanvasRenderer:
   m_ObjectHideFlags: 0
