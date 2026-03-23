@@ -33,11 +33,17 @@ public sealed class PlayerManualDismount : MonoBehaviour
         if (!movement.CompareTag("Player"))
             return;
 
-        if (movement.isDead || GamePauseController.IsPaused)
+        if (movement.isDead || movement.IsEndingStage || GamePauseController.IsPaused)
+        {
+            wasHeld = false;
             return;
+        }
 
         if (IsExternalBlockingDismount())
+        {
+            wasHeld = false;
             return;
+        }
 
         if (rider != null && rider.IsPlaying)
             return;
@@ -78,6 +84,9 @@ public sealed class PlayerManualDismount : MonoBehaviour
     void TryManualDismount()
     {
         if (movement == null || companion == null || rider == null)
+            return;
+
+        if (movement.IsEndingStage)
             return;
 
         if (IsExternalBlockingDismount())
