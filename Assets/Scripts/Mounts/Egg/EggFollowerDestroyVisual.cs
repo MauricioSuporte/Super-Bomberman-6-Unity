@@ -3,17 +3,29 @@
 public sealed class EggFollowerDestroyVisual : MonoBehaviour
 {
     public AnimatedSpriteRenderer destroyRenderer;
+    public AnimatedSpriteRenderer explosionDestroyRenderer;
 
     public void PlayDestroy()
+    {
+        PlayDestroyInternal(destroyRenderer);
+    }
+
+    public void PlayExplosionDestroy()
+    {
+        PlayDestroyInternal(explosionDestroyRenderer != null ? explosionDestroyRenderer : destroyRenderer);
+    }
+
+    void PlayDestroyInternal(AnimatedSpriteRenderer rendererToPlay)
     {
         var allAnim = GetComponentsInChildren<AnimatedSpriteRenderer>(true);
 
         for (int i = 0; i < allAnim.Length; i++)
         {
             var a = allAnim[i];
-            if (a == null) continue;
+            if (a == null)
+                continue;
 
-            bool keep = (destroyRenderer != null && a == destroyRenderer);
+            bool keep = rendererToPlay != null && a == rendererToPlay;
 
             a.enabled = keep;
 
@@ -30,21 +42,21 @@ public sealed class EggFollowerDestroyVisual : MonoBehaviour
         if (dv != null)
             dv.enabled = false;
 
-        if (destroyRenderer == null)
+        if (rendererToPlay == null)
             return;
 
-        if (!destroyRenderer.gameObject.activeInHierarchy)
-            destroyRenderer.gameObject.SetActive(true);
+        if (!rendererToPlay.gameObject.activeInHierarchy)
+            rendererToPlay.gameObject.SetActive(true);
 
-        destroyRenderer.enabled = true;
+        rendererToPlay.enabled = true;
 
-        if (destroyRenderer.TryGetComponent<SpriteRenderer>(out var destroySr) && destroySr != null)
+        if (rendererToPlay.TryGetComponent<SpriteRenderer>(out var destroySr) && destroySr != null)
             destroySr.enabled = true;
 
-        destroyRenderer.idle = false;
-        destroyRenderer.loop = false;
-        destroyRenderer.pingPong = false;
-        destroyRenderer.CurrentFrame = 0;
-        destroyRenderer.RefreshFrame();
+        rendererToPlay.idle = false;
+        rendererToPlay.loop = false;
+        rendererToPlay.pingPong = false;
+        rendererToPlay.CurrentFrame = 0;
+        rendererToPlay.RefreshFrame();
     }
 }

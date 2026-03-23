@@ -1536,10 +1536,10 @@ public sealed class MountEggQueue : MonoBehaviour
         if (tr == null)
             return;
 
-        StartCoroutineSafe(DestroyEggRoutine(tr, 0.5f));
+        StartCoroutineSafe(DestroyEggRoutine(tr, 0.5f, byExplosion: true));
     }
 
-    IEnumerator DestroyEggRoutine(Transform tr, float seconds)
+    IEnumerator DestroyEggRoutine(Transform tr, float seconds, bool byExplosion = false)
     {
         if (tr == null)
             yield break;
@@ -1548,7 +1548,12 @@ public sealed class MountEggQueue : MonoBehaviour
             v = tr.GetComponentInChildren<EggFollowerDestroyVisual>(true);
 
         if (v != null)
-            v.PlayDestroy();
+        {
+            if (byExplosion)
+                v.PlayExplosionDestroy();
+            else
+                v.PlayDestroy();
+        }
 
         if (!tr.TryGetComponent<Collider2D>(out var col))
             col = tr.GetComponentInChildren<Collider2D>(true);
@@ -1762,37 +1767,6 @@ public sealed class MountEggQueue : MonoBehaviour
         }
 
         return removed;
-    }
-
-    public void InvalidateAllEggsByExplosion()
-    {
-        if (_eggs.Count == 0)
-            return;
-
-        for (int i = 0; i < _eggs.Count; i++)
-        {
-            var tr = _eggs[i].rootTr;
-            if (tr == null)
-                continue;
-
-            if (!tr.TryGetComponent<Collider2D>(out var col))
-                col = tr.GetComponentInChildren<Collider2D>(true);
-
-            if (col != null)
-                col.enabled = false;
-
-            StartCoroutineSafe(DestroyEggRoutine(tr, Mathf.Max(0.05f, dequeueDestroySeconds)));
-        }
-
-        _eggs.Clear();
-
-        if (_hardFrozen)
-        {
-            _hardFrozenEggWorld.Clear();
-            _hardFrozenFacing.Clear();
-        }
-
-        PostQueueChanged(animateShift: false);
     }
 
     public void AllowEggExplosionDamageForFrames(int frames = 2)
