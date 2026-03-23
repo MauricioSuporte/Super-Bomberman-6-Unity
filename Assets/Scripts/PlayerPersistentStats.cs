@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public static class PlayerPersistentStats
 {
@@ -828,6 +829,16 @@ public static class PlayerPersistentStats
         return stageActive ? _stage[playerId - 1] : _p[playerId - 1];
     }
 
+    static bool IsValidPerfectExplosionRadiusForCurrentScene(int explosionRadius)
+    {
+        string sceneName = SceneManager.GetActiveScene().name;
+
+        if (sceneName == "Stage_1-1")
+            return explosionRadius == 1;
+
+        return explosionRadius == 1 || explosionRadius == 2;
+    }
+
     static bool IsDefaultState(PlayerState s)
     {
         if (s == null)
@@ -839,7 +850,7 @@ public static class PlayerPersistentStats
         if (s.BombAmount != 1)
             return false;
 
-        if (s.ExplosionRadius != 1)
+        if (!IsValidPerfectExplosionRadiusForCurrentScene(s.ExplosionRadius))
             return false;
 
         if (s.SpeedInternal != MinSpeedInternal)

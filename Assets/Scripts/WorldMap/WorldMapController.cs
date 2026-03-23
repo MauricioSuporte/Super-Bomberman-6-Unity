@@ -395,8 +395,21 @@ public class WorldMapController : MonoBehaviour
             yield return new WaitForSecondsRealtime(selectedTransitionDuration);
 
         PlayerPersistentStats.ResetGameplayPersistenceToBaseValues();
+        ApplyInitialExplosionRadiusForStage(sceneName);
+
         StagePreIntroPlayersWalk.SkipOnNextLoad();
         SceneManager.LoadScene(sceneName);
+    }
+
+    void ApplyInitialExplosionRadiusForStage(string sceneName)
+    {
+        int initialRadius = sceneName == "Stage_1-1" ? 1 : 2;
+
+        for (int playerId = 1; playerId <= 4; playerId++)
+        {
+            var state = PlayerPersistentStats.Get(playerId);
+            state.ExplosionRadius = initialRadius;
+        }
     }
 
     IEnumerator LoadSceneRoutine(string sceneName, AudioClip sfxClip = null, float sfxVolume = 1f)
