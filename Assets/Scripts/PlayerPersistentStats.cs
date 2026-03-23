@@ -829,12 +829,23 @@ public static class PlayerPersistentStats
         return stageActive ? _stage[playerId - 1] : _p[playerId - 1];
     }
 
+    static bool IsStage1_1OnlyUnlockedStage()
+    {
+        if (!StageUnlockProgress.IsUnlocked("Stage_1-1"))
+            return false;
+
+        return !StageUnlockProgress.IsUnlocked("Stage_1-2");
+    }
+
     static bool IsValidPerfectExplosionRadiusForCurrentScene(int explosionRadius)
     {
         string sceneName = SceneManager.GetActiveScene().name;
 
         if (sceneName == "Stage_1-1")
-            return explosionRadius == 1;
+        {
+            int expectedRadius = IsStage1_1OnlyUnlockedStage() ? 1 : 2;
+            return explosionRadius == expectedRadius;
+        }
 
         return explosionRadius == 1 || explosionRadius == 2;
     }

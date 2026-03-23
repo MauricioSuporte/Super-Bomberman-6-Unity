@@ -401,9 +401,25 @@ public class WorldMapController : MonoBehaviour
         SceneManager.LoadScene(sceneName);
     }
 
+    bool IsStage1_1OnlyUnlockedStage()
+    {
+        if (!StageUnlockProgress.IsUnlocked("Stage_1-1"))
+            return false;
+
+        return !StageUnlockProgress.IsUnlocked("Stage_1-2");
+    }
+
+    int GetInitialExplosionRadiusForStage(string sceneName)
+    {
+        if (sceneName == "Stage_1-1")
+            return IsStage1_1OnlyUnlockedStage() ? 1 : 2;
+
+        return 2;
+    }
+
     void ApplyInitialExplosionRadiusForStage(string sceneName)
     {
-        int initialRadius = sceneName == "Stage_1-1" ? 1 : 2;
+        int initialRadius = GetInitialExplosionRadiusForStage(sceneName);
 
         for (int playerId = 1; playerId <= 4; playerId++)
         {
