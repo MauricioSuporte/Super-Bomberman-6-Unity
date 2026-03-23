@@ -115,10 +115,22 @@ public sealed class MunchieJumpEnemyMovementController : JunctionTurningEnemyMov
             return;
 
         GameObject bombGo =
-            bombCol.attachedRigidbody != null ? bombCol.attachedRigidbody.gameObject : bombCol.gameObject;
+            bombCol.attachedRigidbody != null
+                ? bombCol.attachedRigidbody.gameObject
+                : bombCol.gameObject;
 
         if (bombGo == null)
             return;
+
+        if (bombGo.TryGetComponent<Bomb>(out var bomb))
+        {
+            var owner = bomb.Owner;
+
+            if (owner != null)
+            {
+                owner.NotifyBombDestroyedExternally(bombGo);
+            }
+        }
 
         Destroy(bombGo);
     }

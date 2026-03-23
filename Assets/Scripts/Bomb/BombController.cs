@@ -2129,4 +2129,21 @@ public partial class BombController : MonoBehaviour
 
         return any;
     }
+
+    public void NotifyBombDestroyedExternally(GameObject bomb)
+    {
+        if (bomb == null)
+            return;
+
+        int id = bomb.GetInstanceID();
+
+        if (_removedBombIds.Contains(id))
+            return;
+
+        _removedBombIds.Add(id);
+
+        UnregisterBomb(bomb);
+
+        bombsRemaining = Mathf.Min(bombsRemaining + 1, bombAmout);
+    }
 }
