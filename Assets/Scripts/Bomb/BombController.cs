@@ -1283,7 +1283,7 @@ public partial class BombController : MonoBehaviour
             if (itemHit != null)
             {
                 if (itemHit.TryGetComponent<ItemPickup>(out var item))
-                    item.DestroyWithAnimation();
+                    item.DestroyWithExplosionAnimation();
 
                 if (pierce)
                 {

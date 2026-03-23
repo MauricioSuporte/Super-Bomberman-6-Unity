@@ -23,6 +23,9 @@ public class ItemPickup : MonoBehaviour
     public AnimatedSpriteRenderer idleRenderer;
     public AnimatedSpriteRenderer destroyRenderer;
 
+    [Header("Explosion Destroy Animation")]
+    [SerializeField] private AnimatedSpriteRenderer explosionDestroyRenderer;
+
     [Header("Destroy Animation")]
     [SerializeField, Range(0.05f, 3f)]
     private float destroyDelaySeconds = 0.5f;
@@ -79,6 +82,13 @@ public class ItemPickup : MonoBehaviour
             if (t != null)
                 destroyRenderer = t.GetComponent<AnimatedSpriteRenderer>();
         }
+
+        if (explosionDestroyRenderer == null)
+        {
+            var t = transform.Find("ExplosionDestroyAnimation");
+            if (t != null)
+                explosionDestroyRenderer = t.GetComponent<AnimatedSpriteRenderer>();
+        }
     }
 
     void ApplyDefaultsRuntime()
@@ -96,6 +106,13 @@ public class ItemPickup : MonoBehaviour
             var t = transform.Find("DestroyAnimation");
             if (t != null)
                 destroyRenderer = t.GetComponent<AnimatedSpriteRenderer>();
+        }
+
+        if (explosionDestroyRenderer == null)
+        {
+            var t = transform.Find("ExplosionDestroyAnimation");
+            if (t != null)
+                explosionDestroyRenderer = t.GetComponent<AnimatedSpriteRenderer>();
         }
     }
 
@@ -560,11 +577,21 @@ public class ItemPickup : MonoBehaviour
             if (IsSpawnImmune())
                 return;
 
-            DestroyWithAnimation();
+            DestroyWithExplosionAnimation();
         }
     }
 
     public void DestroyWithAnimation()
+    {
+        PlayDestroyAnimation(destroyRenderer);
+    }
+
+    public void DestroyWithExplosionAnimation()
+    {
+        PlayDestroyAnimation(explosionDestroyRenderer != null ? explosionDestroyRenderer : destroyRenderer);
+    }
+
+    void PlayDestroyAnimation(AnimatedSpriteRenderer rendererToPlay)
     {
         if (isBeingDestroyed)
             return;
@@ -582,14 +609,26 @@ public class ItemPickup : MonoBehaviour
 
         if (destroyRenderer != null)
         {
-            destroyRenderer.enabled = true;
-            EnableSpriteBranch(destroyRenderer, true);
+            destroyRenderer.enabled = false;
+            EnableSpriteBranch(destroyRenderer, false);
+        }
 
-            destroyRenderer.idle = false;
-            destroyRenderer.loop = false;
-            destroyRenderer.pingPong = false;
-            destroyRenderer.CurrentFrame = 0;
-            destroyRenderer.RefreshFrame();
+        if (explosionDestroyRenderer != null)
+        {
+            explosionDestroyRenderer.enabled = false;
+            EnableSpriteBranch(explosionDestroyRenderer, false);
+        }
+
+        if (rendererToPlay != null)
+        {
+            rendererToPlay.enabled = true;
+            EnableSpriteBranch(rendererToPlay, true);
+
+            rendererToPlay.idle = false;
+            rendererToPlay.loop = false;
+            rendererToPlay.pingPong = false;
+            rendererToPlay.CurrentFrame = 0;
+            rendererToPlay.RefreshFrame();
         }
 
         Destroy(gameObject, Mathf.Max(0.05f, destroyDelaySeconds));
