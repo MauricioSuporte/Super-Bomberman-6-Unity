@@ -113,6 +113,8 @@ public class MountMovementController : MovementController
 
     protected override void DeathSequence()
     {
+        Debug.Log($"[{name}] MountMovementController.DeathSequence -> START | deathRequestedByExplosion: {deathRequestedByExplosion}");
+
         if (owner != null && owner.TryGetComponent<RedLouiePunchStunAbility>(out var ownerPunch) && ownerPunch != null)
             ownerPunch.Disable();
 
@@ -197,6 +199,52 @@ public class MountMovementController : MovementController
             visual.enabled = false;
         }
 
+        Debug.Log($"[{name}] MountMovementController.DeathSequence -> BEFORE base.DeathSequence() | deathRequestedByExplosion: {deathRequestedByExplosion}");
         base.DeathSequence();
+        Debug.Log($"[{name}] MountMovementController.DeathSequence -> AFTER base.DeathSequence() | activeSpriteRenderer: {(activeSpriteRenderer != null ? activeSpriteRenderer.name : "null")}");
+
+        AnimatedSpriteRenderer rendererToUse =
+            deathRequestedByExplosion && spriteRendererDeathByExplosion != null
+                ? spriteRendererDeathByExplosion
+                : spriteRendererDeath;
+
+        Debug.Log(
+            $"[{name}] MountMovementController.DeathSequence -> rendererToUse final: {(rendererToUse != null ? rendererToUse.name : "null")} | " +
+            $"deathRequestedByExplosion: {deathRequestedByExplosion} | " +
+            $"death: {(spriteRendererDeath != null ? spriteRendererDeath.name : "null")} | " +
+            $"deathByExplosion: {(spriteRendererDeathByExplosion != null ? spriteRendererDeathByExplosion.name : "null")}"
+        );
+
+        if (spriteRendererDeath != null && spriteRendererDeath != rendererToUse)
+        {
+            spriteRendererDeath.enabled = false;
+            if (spriteRendererDeath.TryGetComponent<SpriteRenderer>(out var deathSr) && deathSr != null)
+                deathSr.enabled = false;
+        }
+
+        if (spriteRendererDeathByExplosion != null && spriteRendererDeathByExplosion != rendererToUse)
+        {
+            spriteRendererDeathByExplosion.enabled = false;
+            if (spriteRendererDeathByExplosion.TryGetComponent<SpriteRenderer>(out var deathExplosionSr) && deathExplosionSr != null)
+                deathExplosionSr.enabled = false;
+        }
+
+        if (rendererToUse != null)
+        {
+            rendererToUse.enabled = true;
+
+            if (rendererToUse.TryGetComponent<SpriteRenderer>(out var sr) && sr != null)
+                sr.enabled = true;
+
+            rendererToUse.idle = false;
+            rendererToUse.loop = false;
+            rendererToUse.pingPong = false;
+            rendererToUse.CurrentFrame = 0;
+            rendererToUse.RefreshFrame();
+
+            activeSpriteRenderer = rendererToUse;
+
+            Debug.Log($"[{name}] MountMovementController.DeathSequence -> renderer final FORÇADO: {rendererToUse.name}");
+        }
     }
 }

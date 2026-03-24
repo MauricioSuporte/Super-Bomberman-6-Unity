@@ -359,6 +359,12 @@ public class CharacterHealth : MonoBehaviour
         if (isDead)
             return;
 
+        if (TryGetComponent<MountMovementController>(out _))
+        {
+            Debug.Log($"[{name}] CharacterHealth.Die BLOQUEADO para montaria");
+            return;
+        }
+
         isDead = true;
 
         if (hitRoutine != null)
