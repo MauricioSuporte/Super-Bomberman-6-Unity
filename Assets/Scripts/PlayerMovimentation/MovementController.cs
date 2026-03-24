@@ -52,6 +52,7 @@ public class MovementController : MonoBehaviour, IKillable
     public AnimatedSpriteRenderer spriteRendererDeathByExplosion;
     public AnimatedSpriteRenderer spriteRendererEndStage;
     public AnimatedSpriteRenderer spriteRendererCheering;
+    public AnimatedSpriteRenderer spriteRendererFall;
 
     [Header("Mounted On Louie")]
     public AnimatedSpriteRenderer mountedSpriteUp;
@@ -381,7 +382,7 @@ public class MovementController : MonoBehaviour, IKillable
     {
         SetMany(visible,
             spriteRendererUp, spriteRendererDown, spriteRendererLeft, spriteRendererRight,
-            spriteRendererDeath, spriteRendererDeathByExplosion, spriteRendererEndStage, spriteRendererCheering,
+            spriteRendererDeath, spriteRendererDeathByExplosion, spriteRendererEndStage, spriteRendererCheering, spriteRendererFall,
             mountedSpriteUp, mountedSpriteDown, mountedSpriteLeft, mountedSpriteRight,
             headOnlyUp, headOnlyDown, headOnlyLeft, headOnlyRight);
 
@@ -1443,6 +1444,7 @@ public class MovementController : MonoBehaviour, IKillable
         SetAnimEnabled(spriteRendererEndStage, false);
         SetAnimEnabled(spriteRendererDeath, false);
         SetAnimEnabled(spriteRendererDeathByExplosion, false);
+        SetAnimEnabled(spriteRendererFall, false);
 
         AnimatedSpriteRenderer deathRendererToUse =
             deathRequestedByExplosion && spriteRendererDeathByExplosion != null
@@ -1501,6 +1503,8 @@ public class MovementController : MonoBehaviour, IKillable
         SetAnimEnabled(spriteRendererCheering, false);
         SetAnimEnabled(spriteRendererEndStage, false);
         SetAnimEnabled(spriteRendererDeath, false);
+        SetAnimEnabled(spriteRendererDeathByExplosion, false);
+        SetAnimEnabled(spriteRendererFall, false);
 
         var r = PickRendererForHoleDeathVisual();
         activeSpriteRenderer = r;
@@ -1515,8 +1519,10 @@ public class MovementController : MonoBehaviour, IKillable
         else if (r != null)
         {
             SetAnimEnabled(r, true);
-            r.idle = true;
-            r.loop = false;
+            r.idle = false;
+            r.loop = true;
+            r.pingPong = false;
+            r.CurrentFrame = 0;
             r.RefreshFrame();
         }
 
@@ -1539,13 +1545,17 @@ public class MovementController : MonoBehaviour, IKillable
 
     private AnimatedSpriteRenderer PickRendererForHoleDeathVisual()
     {
+        if (spriteRendererFall != null)
+            return spriteRendererFall;
+
         if (activeSpriteRenderer != null)
             return activeSpriteRenderer;
 
         if (isMounted)
         {
             var r = PickMountedRenderer(facingDirection);
-            if (r != null) return r;
+            if (r != null)
+                return r;
         }
 
         return spriteRendererDown != null ? spriteRendererDown : null;
@@ -1557,9 +1567,10 @@ public class MovementController : MonoBehaviour, IKillable
             yield break;
 
         SetAnimEnabled(r, true);
-        r.idle = true;
-        r.loop = false;
+        r.idle = false;
+        r.loop = true;
         r.pingPong = false;
+        r.CurrentFrame = 0;
         r.RefreshFrame();
 
         var srs = GetComponentsInChildren<SpriteRenderer>(true);
@@ -1646,6 +1657,7 @@ public class MovementController : MonoBehaviour, IKillable
         SetAnimEnabled(spriteRendererDeathByExplosion, false);
         SetAnimEnabled(spriteRendererCheering, false);
         SetAnimEnabled(spriteRendererEndStage, false);
+        SetAnimEnabled(spriteRendererFall, false);
 
         if (isMounted)
         {
