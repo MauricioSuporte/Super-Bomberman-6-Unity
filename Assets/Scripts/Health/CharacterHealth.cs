@@ -360,10 +360,7 @@ public class CharacterHealth : MonoBehaviour
             return;
 
         if (TryGetComponent<MountMovementController>(out _))
-        {
-            Debug.Log($"[{name}] CharacterHealth.Die BLOQUEADO para montaria");
             return;
-        }
 
         isDead = true;
 

@@ -1342,16 +1342,10 @@ public class MovementController : MonoBehaviour, IKillable
 
     public virtual void Kill()
     {
-        Debug.Log($"[{name}] MovementController.Kill -> isEndingStage: {isEndingStage} | isDead: {isDead}");
-
         if (isEndingStage)
-        {
-            Debug.Log($"[{name}] MovementController.Kill ignorado: isEndingStage");
             return;
-        }
 
         deathRequestedByExplosion = false;
-        Debug.Log($"[{name}] MovementController.Kill -> deathRequestedByExplosion = false");
 
         if (!isDead)
             DeathSequence();
@@ -1359,16 +1353,10 @@ public class MovementController : MonoBehaviour, IKillable
 
     public virtual void KillByExplosion()
     {
-        Debug.Log($"[{name}] MovementController.KillByExplosion -> isEndingStage: {isEndingStage} | isDead: {isDead}");
-
         if (isEndingStage)
-        {
-            Debug.Log($"[{name}] MovementController.KillByExplosion ignorado: isEndingStage");
             return;
-        }
 
         deathRequestedByExplosion = true;
-        Debug.Log($"[{name}] MovementController.KillByExplosion -> deathRequestedByExplosion = true");
 
         if (!isDead)
             DeathSequence();
@@ -1438,13 +1426,8 @@ public class MovementController : MonoBehaviour, IKillable
 
     protected virtual void DeathSequence()
     {
-        Debug.Log($"[{name}] MovementController.DeathSequence -> isDead: {isDead} | isEndingStage: {isEndingStage} | deathRequestedByExplosion: {deathRequestedByExplosion}");
-
         if (isDead || isEndingStage)
-        {
-            Debug.Log($"[{name}] MovementController.DeathSequence abortado");
             return;
-        }
 
         holeDeathInProgress = false;
 
@@ -1466,12 +1449,6 @@ public class MovementController : MonoBehaviour, IKillable
                 ? spriteRendererDeathByExplosion
                 : spriteRendererDeath;
 
-        Debug.Log(
-            $"[{name}] MovementController.DeathSequence -> renderer escolhido: {(deathRendererToUse != null ? deathRendererToUse.name : "null")} | " +
-            $"death: {(spriteRendererDeath != null ? spriteRendererDeath.name : "null")} | " +
-            $"deathByExplosion: {(spriteRendererDeathByExplosion != null ? spriteRendererDeathByExplosion.name : "null")}"
-        );
-
         if (deathRendererToUse != null)
         {
             SetAnimEnabled(deathRendererToUse, true);
@@ -1481,8 +1458,6 @@ public class MovementController : MonoBehaviour, IKillable
             deathRendererToUse.CurrentFrame = 0;
             activeSpriteRenderer = deathRendererToUse;
             deathRendererToUse.RefreshFrame();
-
-            Debug.Log($"[{name}] MovementController.DeathSequence -> renderer ativado: {deathRendererToUse.name}");
         }
         else if (activeSpriteRenderer != null)
         {
@@ -1490,8 +1465,6 @@ public class MovementController : MonoBehaviour, IKillable
             activeSpriteRenderer.idle = true;
             activeSpriteRenderer.loop = false;
             activeSpriteRenderer.RefreshFrame();
-
-            Debug.Log($"[{name}] MovementController.DeathSequence -> fallback activeSpriteRenderer: {activeSpriteRenderer.name}");
         }
 
         Invoke(nameof(OnDeathSequenceEnded), deathDisableSeconds);

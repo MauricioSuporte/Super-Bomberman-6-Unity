@@ -378,78 +378,52 @@ public class PlayerMountCompanion : MonoBehaviour
 
     public void OnMountedLouieHit(int damage, bool fromExplosion)
     {
-        Debug.Log($"[{name}] OnMountedLouieHit -> damage: {damage} | fromExplosion: {fromExplosion} | currentLouie: {(currentLouie != null ? currentLouie.name : "null")}");
-
         if (currentLouie == null)
-        {
-            Debug.Log($"[{name}] OnMountedLouieHit ignorado: currentLouie == null");
             return;
-        }
 
         int dmg = Mathf.Max(1, damage);
-        Debug.Log($"[{name}] OnMountedLouieHit -> dmg final: {dmg}");
 
         if (fromExplosion)
         {
-            bool willDie = false;
-
-            if (mountedLouieHealth != null)
-                willDie = (mountedLouieHealth.life - dmg) <= 0;
-            else
-                willDie = (mountedLouieHp - dmg) <= 0;
-
-            Debug.Log($"[{name}] OnMountedLouieHit -> fromExplosion, willDie: {willDie}");
+            bool willDie = mountedLouieHealth != null
+                ? (mountedLouieHealth.life - dmg) <= 0
+                : (mountedLouieHp - dmg) <= 0;
 
             if (willDie)
             {
                 if (TryGetComponent<MountEggQueue>(out var q) && q != null)
-                {
-                    Debug.Log($"[{name}] OnMountedLouieHit -> liberando dano de explosão para ovos da fila");
                     q.AllowEggExplosionDamageForFrames(2);
-                }
             }
         }
 
         if (fromExplosion && mountedLouieHealth != null)
         {
             int lifeAfter = mountedLouieHealth.life - dmg;
-            Debug.Log($"[{name}] OnMountedLouieHit -> mountedLouieHealth.life: {mountedLouieHealth.life} | lifeAfter: {lifeAfter}");
-
             if (lifeAfter <= 0)
             {
                 skipQueueRemountOnce = true;
                 killDetachedLouieByExplosion = true;
-                Debug.Log($"[{name}] OnMountedLouieHit -> marcou killDetachedLouieByExplosion = true");
             }
         }
 
         if (mountedLouieHealth != null)
         {
             if (mountedLouieHealth.IsInvulnerable)
-            {
-                Debug.Log($"[{name}] OnMountedLouieHit ignorado: mountedLouieHealth.IsInvulnerable");
                 return;
-            }
 
             mountedLouieHealth.TakeDamage(dmg);
             mountedLouieHp = Mathf.Max(0, mountedLouieHealth.life);
-
-            Debug.Log($"[{name}] OnMountedLouieHit -> vida após TakeDamage: {mountedLouieHealth.life} | mountedLouieHp cache: {mountedLouieHp}");
 
             if (mountedLouieHealth.life > 0)
                 SyncPlayerBlinkWithLouie();
 
             if (mountedLouieHealth.life <= 0)
-            {
-                Debug.Log($"[{name}] OnMountedLouieHit -> chamando LoseMount()");
                 LoseMount();
-            }
 
             return;
         }
 
         mountedLouieHp -= dmg;
-        Debug.Log($"[{name}] OnMountedLouieHit -> sem CharacterHealth, mountedLouieHp agora: {mountedLouieHp}");
 
         if (mountedLouieHp <= 0)
         {
@@ -457,31 +431,22 @@ public class PlayerMountCompanion : MonoBehaviour
             {
                 skipQueueRemountOnce = true;
                 killDetachedLouieByExplosion = true;
-                Debug.Log($"[{name}] OnMountedLouieHit -> sem CharacterHealth, marcou killDetachedLouieByExplosion = true");
             }
 
-            Debug.Log($"[{name}] OnMountedLouieHit -> chamando LoseMount()");
             LoseMount();
         }
     }
 
     public void LoseMount()
     {
-        Debug.Log($"[{name}] LoseMount -> currentLouie: {(currentLouie != null ? currentLouie.name : "null")} | killDetachedLouieByExplosion: {killDetachedLouieByExplosion} | skipQueueRemountOnce: {skipQueueRemountOnce}");
-
         if (currentLouie == null)
-        {
-            Debug.Log($"[{name}] LoseMount ignorado: currentLouie == null");
             return;
-        }
 
         bool destroyByExplosion = killDetachedLouieByExplosion;
         killDetachedLouieByExplosion = false;
 
         bool allowQueue = !skipQueueRemountOnce;
         skipQueueRemountOnce = false;
-
-        Debug.Log($"[{name}] LoseMount -> destroyByExplosion: {destroyByExplosion} | allowQueue: {allowQueue}");
 
         bool hasQueuedEgg = false;
         GameObject queuedPrefab = null;
@@ -492,17 +457,13 @@ public class PlayerMountCompanion : MonoBehaviour
         if (allowQueue)
             hasQueuedEgg = TryPopQueuedEgg(out queuedPrefab, out queuedMountedType, out queuedSfx, out queuedVol);
 
-        Debug.Log($"[{name}] LoseMount -> hasQueuedEgg: {hasQueuedEgg} | queuedMountedType: {queuedMountedType}");
-
         var rider = GetComponent<PlayerRidingController>();
 
         if (rider != null && movement != null)
         {
             Vector2 facing = movement.FacingDirection;
-            Debug.Log($"[{name}] LoseMount -> facing: {facing}");
 
             DetachCurrentLouieBeforeRiding();
-            Debug.Log($"[{name}] LoseMount -> DetachCurrentLouieBeforeRiding() executado");
 
             if (hasQueuedEgg)
             {
@@ -511,20 +472,14 @@ public class PlayerMountCompanion : MonoBehaviour
                     onComplete: () => FinalizeMount(queuedMountedType, facing),
                     onStart: () =>
                     {
-                        Debug.Log($"[{name}] LoseMount/onStart fila -> destroyByExplosion: {destroyByExplosion}");
-
                         MarkRidingUninterruptible(rider.ridingSeconds, blink: true);
 
                         DetachAndKillCurrentLouieOnly(destroyByExplosion);
                         SetNextMountSfx(queuedSfx, queuedVol);
-                        SpawnLouieForMount(queuedPrefab, queuedMountedType, duringRiding: true, facing);
+                        SpawnLouieForMount(queuedPrefab, queuedMountedType, true, facing);
                     }))
-                {
-                    Debug.Log($"[{name}] LoseMount -> TryPlayRiding com fila retornou true");
                     return;
-                }
 
-                Debug.Log($"[{name}] LoseMount -> TryPlayRiding com fila retornou false, matando imediatamente | destroyByExplosion: {destroyByExplosion}");
                 DetachAndKillCurrentLouieOnly(destroyByExplosion);
                 SetNextMountSfx(queuedSfx, queuedVol);
                 TryMount(queuedPrefab, queuedMountedType, facing);
@@ -536,23 +491,16 @@ public class PlayerMountCompanion : MonoBehaviour
                 onComplete: FinishLoseMountAfterRidingWithoutLouie,
                 onStart: () =>
                 {
-                    Debug.Log($"[{name}] LoseMount/onStart sem fila -> matando montaria imediatamente | destroyByExplosion: {destroyByExplosion}");
-
                     MarkRidingUninterruptible(rider.ridingSeconds, blink: true);
                     DetachAndKillCurrentLouieOnly(destroyByExplosion);
                 }))
-            {
-                Debug.Log($"[{name}] LoseMount -> TryPlayRiding sem fila retornou true | destroyByExplosion: {destroyByExplosion}");
                 return;
-            }
 
-            Debug.Log($"[{name}] LoseMount -> TryPlayRiding sem fila retornou false | matando imediatamente");
             DetachAndKillCurrentLouieOnly(destroyByExplosion);
             FinishLoseMountAfterRidingWithoutLouie();
             return;
         }
 
-        Debug.Log($"[{name}] LoseMount -> fallback direto para DetachAndKillCurrentLouieOnly({destroyByExplosion})");
         DetachAndKillCurrentLouieOnly(destroyByExplosion);
         FinishLoseMountAfterRidingWithoutLouie();
     }
@@ -584,13 +532,8 @@ public class PlayerMountCompanion : MonoBehaviour
 
     void DetachAndKillCurrentLouieOnly(bool byExplosion = false)
     {
-        Debug.Log($"[{name}] DetachAndKillCurrentLouieOnly -> byExplosion: {byExplosion} | currentLouie: {(currentLouie != null ? currentLouie.name : "null")}");
-
         if (currentLouie == null)
-        {
-            Debug.Log($"[{name}] DetachAndKillCurrentLouieOnly ignorado: currentLouie == null");
             return;
-        }
 
         var louie = currentLouie;
         currentLouie = null;
@@ -605,7 +548,6 @@ public class PlayerMountCompanion : MonoBehaviour
 
         DetachLouieToWorld(louie, worldPos, worldRot, disableRidingVisual: false);
 
-        Debug.Log($"[{name}] DetachAndKillCurrentLouieOnly -> chamando KillDetachedLouieGuaranteed({louie.name}, byExplosion: {byExplosion})");
         KillDetachedLouieGuaranteed(louie, byExplosion);
     }
 
@@ -1504,33 +1446,20 @@ public class PlayerMountCompanion : MonoBehaviour
 
     void PrepareDetachedLouieForGuaranteedDeath(GameObject louie, bool byExplosion)
     {
-        Debug.Log($"[{name}] PrepareDetachedLouieForGuaranteedDeath -> louie: {(louie != null ? louie.name : "null")} | byExplosion: {byExplosion}");
-
         if (louie == null)
-        {
-            Debug.Log($"[{name}] PrepareDetachedLouieForGuaranteedDeath ignorado: louie == null");
             return;
-        }
 
         if (!louie.TryGetComponent<MovementController>(out var mc) || mc == null)
-        {
-            Debug.Log($"[{name}] PrepareDetachedLouieForGuaranteedDeath ignorado: MovementController não encontrado");
             return;
-        }
 
         var riderVisual = louie.GetComponentInChildren<MountVisualController>(true);
         if (riderVisual != null)
-        {
-            Debug.Log($"[{name}] PrepareDetachedLouieForGuaranteedDeath -> destruindo MountVisualController");
             Destroy(riderVisual);
-        }
 
         AnimatedSpriteRenderer rendererToUse =
             byExplosion && mc.spriteRendererDeathByExplosion != null
                 ? mc.spriteRendererDeathByExplosion
                 : mc.spriteRendererDeath;
-
-        Debug.Log($"[{name}] PrepareDetachedLouieForGuaranteedDeath -> rendererToUse: {(rendererToUse != null ? rendererToUse.name : "null")} | death: {(mc.spriteRendererDeath != null ? mc.spriteRendererDeath.name : "null")} | deathByExplosion: {(mc.spriteRendererDeathByExplosion != null ? mc.spriteRendererDeathByExplosion.name : "null")}");
 
         var allAnimated = louie.GetComponentsInChildren<AnimatedSpriteRenderer>(true);
         for (int i = 0; i < allAnimated.Length; i++)
@@ -1568,46 +1497,29 @@ public class PlayerMountCompanion : MonoBehaviour
             rendererToUse.pingPong = false;
             rendererToUse.CurrentFrame = 0;
             rendererToUse.RefreshFrame();
-
-            Debug.Log($"[{name}] PrepareDetachedLouieForGuaranteedDeath -> renderer preparado: {rendererToUse.name}");
         }
     }
 
     void KillDetachedLouieGuaranteed(GameObject louie, bool byExplosion = false)
     {
-        Debug.Log($"[{name}] KillDetachedLouieGuaranteed -> louie: {(louie != null ? louie.name : "null")} | byExplosion: {byExplosion}");
-
         if (louie == null)
-        {
-            Debug.Log($"[{name}] KillDetachedLouieGuaranteed ignorado: louie == null");
             return;
-        }
 
         PrepareDetachedLouieForGuaranteedDeath(louie, byExplosion);
 
         if (louie.TryGetComponent<MountMovementController>(out var lm) && lm != null)
         {
-            Debug.Log($"[{name}] KillDetachedLouieGuaranteed -> usando MountMovementController");
-
             lm.enabled = true;
 
             if (byExplosion)
-            {
-                Debug.Log($"[{name}] KillDetachedLouieGuaranteed -> chamando lm.KillByExplosion()");
                 lm.KillByExplosion();
-            }
             else
-            {
-                Debug.Log($"[{name}] KillDetachedLouieGuaranteed -> chamando lm.Kill()");
                 lm.Kill();
-            }
 
             var rendererToUse =
                 byExplosion && lm.spriteRendererDeathByExplosion != null
                     ? lm.spriteRendererDeathByExplosion
                     : lm.spriteRendererDeath;
-
-            Debug.Log($"[{name}] KillDetachedLouieGuaranteed -> renderer final LM: {(rendererToUse != null ? rendererToUse.name : "null")}");
 
             if (rendererToUse != null)
             {
@@ -1623,27 +1535,17 @@ public class PlayerMountCompanion : MonoBehaviour
 
         if (louie.TryGetComponent<MovementController>(out var mc) && mc != null)
         {
-            Debug.Log($"[{name}] KillDetachedLouieGuaranteed -> usando MovementController");
-
             mc.enabled = true;
 
             if (byExplosion)
-            {
-                Debug.Log($"[{name}] KillDetachedLouieGuaranteed -> chamando mc.KillByExplosion()");
                 mc.KillByExplosion();
-            }
             else
-            {
-                Debug.Log($"[{name}] KillDetachedLouieGuaranteed -> chamando mc.Kill()");
                 mc.Kill();
-            }
 
             var rendererToUse =
                 byExplosion && mc.spriteRendererDeathByExplosion != null
                     ? mc.spriteRendererDeathByExplosion
                     : mc.spriteRendererDeath;
-
-            Debug.Log($"[{name}] KillDetachedLouieGuaranteed -> renderer final MC: {(rendererToUse != null ? rendererToUse.name : "null")}");
 
             if (rendererToUse != null)
             {
@@ -1657,14 +1559,11 @@ public class PlayerMountCompanion : MonoBehaviour
             return;
         }
 
-        Debug.Log($"[{name}] KillDetachedLouieGuaranteed -> fallback Destroy(louie)");
         Destroy(louie);
     }
 
     void FinishLoseMountAfterRidingWithoutLouie()
     {
-        Debug.Log($"[{name}] FinishLoseMountAfterRidingWithoutLouie -> currentLouie: {(currentLouie != null ? currentLouie.name : "null")}");
-
         if (movement != null && movement.TryGetComponent<CharacterHealth>(out var health))
             health.StartTemporaryInvulnerability(playerInvulnerabilityAfterLoseLouieSeconds);
 
