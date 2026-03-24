@@ -461,7 +461,9 @@ public class PlayerMountCompanion : MonoBehaviour
 
         if (rider != null && movement != null)
         {
-            Vector2 facing = movement.FacingDirection;
+            Vector2 facing = movement.Direction != Vector2.zero
+                ? movement.Direction
+                : movement.FacingDirection;
 
             DetachCurrentLouieBeforeRiding();
 
@@ -488,7 +490,7 @@ public class PlayerMountCompanion : MonoBehaviour
 
             if (rider.TryPlayRiding(
                 facing,
-                onComplete: FinishLoseMountAfterRidingWithoutLouie,
+                onComplete: () => FinishLoseMountAfterRidingWithoutLouie(facing),
                 onStart: () =>
                 {
                     MarkRidingUninterruptible(rider.ridingSeconds, blink: true);
@@ -497,12 +499,12 @@ public class PlayerMountCompanion : MonoBehaviour
                 return;
 
             DetachAndKillCurrentLouieOnly(destroyByExplosion);
-            FinishLoseMountAfterRidingWithoutLouie();
+            FinishLoseMountAfterRidingWithoutLouie(facing);
             return;
         }
 
         DetachAndKillCurrentLouieOnly(destroyByExplosion);
-        FinishLoseMountAfterRidingWithoutLouie();
+        FinishLoseMountAfterRidingWithoutLouie(Vector2.zero);
     }
 
     void OnPlayerDied(MovementController _) => UnmountLouie();
@@ -1562,8 +1564,17 @@ public class PlayerMountCompanion : MonoBehaviour
         Destroy(louie);
     }
 
-    void FinishLoseMountAfterRidingWithoutLouie()
+    void FinishLoseMountAfterRidingWithoutLouie(Vector2 facingDirection)
     {
+        if (movement != null)
+        {
+            Vector2 facing = facingDirection != Vector2.zero
+                ? facingDirection
+                : movement.FacingDirection;
+
+            movement.ForceIdleFacing(facing, "FinishLoseMountAfterRidingWithoutLouie");
+        }
+
         if (movement != null && movement.TryGetComponent<CharacterHealth>(out var health))
             health.StartTemporaryInvulnerability(playerInvulnerabilityAfterLoseLouieSeconds);
 

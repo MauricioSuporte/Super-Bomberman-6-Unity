@@ -95,7 +95,10 @@ public sealed class PlayerManualDismount : MonoBehaviour
         if (!movement.IsMountedOnLouie || !companion.HasMountedLouie())
             return;
 
-        Vector2 facingAtPress = movement.FacingDirection;
+        Vector2 facingAtPress = movement.Direction != Vector2.zero
+            ? movement.Direction
+            : movement.FacingDirection;
+
         if (facingAtPress == Vector2.zero)
             facingAtPress = Vector2.down;
 
@@ -116,6 +119,9 @@ public sealed class PlayerManualDismount : MonoBehaviour
             facingAtPress,
             onComplete: () =>
             {
+                if (movement != null)
+                    movement.ForceIdleFacing(facingAtPress, "TryManualDismount");
+
                 StartDetachedLouieInactivityLoop(detachedLouie);
             },
             onStart: () =>
