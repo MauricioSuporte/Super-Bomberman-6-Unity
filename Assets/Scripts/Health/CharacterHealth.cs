@@ -52,6 +52,8 @@ public class CharacterHealth : MonoBehaviour
     float persistentTintStrength = 1f;
     SpriteRenderer[] persistentTintExcluded = Array.Empty<SpriteRenderer>();
 
+    bool lastDamageWasExplosion;
+
     void Awake()
     {
         killable = GetComponent<IKillable>();
@@ -65,8 +67,15 @@ public class CharacterHealth : MonoBehaviour
 
     public void TakeDamage(int amount)
     {
+        TakeDamage(amount, fromExplosion: false);
+    }
+
+    public void TakeDamage(int amount, bool fromExplosion)
+    {
         if (isDead || isInvulnerable || externalInvulnerability)
             return;
+
+        lastDamageWasExplosion = fromExplosion;
 
         life -= amount;
 
@@ -359,7 +368,7 @@ public class CharacterHealth : MonoBehaviour
         if (isDead)
             return;
 
-        if (TryGetComponent<MountMovementController>(out _))
+        if (TryGetComponent<MountMovementController>(out var mmc) && mmc.enabled)
             return;
 
         isDead = true;
@@ -379,9 +388,16 @@ public class CharacterHealth : MonoBehaviour
         Died?.Invoke();
 
         if (killable != null)
-            killable.Kill();
+        {
+            if (lastDamageWasExplosion)
+                killable.KillByExplosion();
+            else
+                killable.Kill();
+        }
         else
+        {
             Destroy(gameObject);
+        }
     }
 
     public void SetExternalInvulnerability(bool value)

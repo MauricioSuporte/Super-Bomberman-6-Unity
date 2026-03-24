@@ -1436,4 +1436,9 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
                 q.ForceVisible(visible);
         }
     }
+
+    public void KillByExplosion()
+    {
+        Kill();
+    }
 }

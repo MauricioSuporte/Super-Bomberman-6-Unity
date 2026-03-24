@@ -1171,4 +1171,9 @@ public class SunMaskBoss : MonoBehaviour, IKillable
 
         runner.CopyEndStageConfigFrom(bossEndSequence);
     }
+
+    public void KillByExplosion()
+    {
+        Kill();
+    }
 }

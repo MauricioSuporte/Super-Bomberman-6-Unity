@@ -165,7 +165,7 @@ public class MovementController : MonoBehaviour, IKillable
 
     protected Vector2 direction = Vector2.zero;
     protected bool hasInput;
-    protected bool explosionInvulnerable;
+    public bool explosionInvulnerable;
 
     private bool mountedSpritesYOverridden;
     private float nextContactDamageTime;
@@ -1323,7 +1323,8 @@ public class MovementController : MonoBehaviour, IKillable
 
         if (cachedHealth != null)
         {
-            cachedHealth.TakeDamage(1);
+            bool fromExplosion = (layer == explosionLayer);
+            cachedHealth.TakeDamage(1, fromExplosion);
             nextContactDamageTime = Time.time + cd;
             return;
         }

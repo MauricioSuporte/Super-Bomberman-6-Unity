@@ -603,5 +603,10 @@ public class EnemyMovementController : MonoBehaviour, IKillable
         return true;
     }
 
+    public void KillByExplosion()
+    {
+        Kill();
+    }
+
     public bool IsDamagedVisualActive => isInDamagedLoop;
 }
