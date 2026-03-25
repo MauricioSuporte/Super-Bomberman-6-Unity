@@ -127,7 +127,15 @@ public sealed class SpringLauncher : MonoBehaviour
                     if (heldDir != Vector2.zero)
                         prepFaceDir = heldDir;
 
-                    mover.ShowSpringLauncherLookUp(prepFaceDir);
+                    if (!mover.IsMountedOnLouie)
+                    {
+                        mover.ShowSpringLauncherLookUp(prepFaceDir);
+                    }
+                    else
+                    {
+                        mover.ClearSpringLauncherLookUp();
+                        ApplyIdleFacing(mover, prepFaceDir);
+                    }
 
                     compressStepTimer += Time.deltaTime;
 
