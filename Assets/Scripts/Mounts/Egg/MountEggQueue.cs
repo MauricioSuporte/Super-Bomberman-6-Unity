@@ -1629,16 +1629,23 @@ public sealed class MountEggQueue : MonoBehaviour
         RemoveEggAtIndexNoDestroy(idx);
         PostQueueChanged(animateShift: true);
 
-        if (consumedTr != null)
-            Destroy(consumedTr.gameObject);
-
         MountedType mountedType = EggToMountedType(eggType);
         if (mountedType == MountedType.None)
+        {
+            if (consumedTr != null)
+                StartCoroutineSafe(DestroyEggRoutine(consumedTr, Mathf.Max(0.05f, dequeueDestroySeconds), byExplosion: false));
+
             return false;
+        }
 
         GameObject prefab = comp.GetMountPrefabForType(mountedType);
         if (prefab == null)
+        {
+            if (consumedTr != null)
+                StartCoroutineSafe(DestroyEggRoutine(consumedTr, Mathf.Max(0.05f, dequeueDestroySeconds), byExplosion: false));
+
             return false;
+        }
 
         GameObject louieWorld = Instantiate(prefab, targetWorldPos, Quaternion.identity);
         PrepareSpawnedLouieWorldForPickup(louieWorld, mountedType, ResolveMountFacingForConsumer(consumerPlayer));
@@ -1649,13 +1656,21 @@ public sealed class MountEggQueue : MonoBehaviour
         if (sfx != null)
             comp.SetNextMountSfx(sfx, vol);
 
-        return comp.TryMountExistingLouieFromWorldWithArc(
+        bool mounted = comp.TryMountExistingLouieFromWorldWithArc(
             louieWorldInstance: louieWorld,
             louieType: mountedType,
             worldQueueToAdopt: null,
             startWorldPos: startWorldPos,
             targetWorldPos: targetWorldPos
         );
+
+        if (consumedTr != null)
+            StartCoroutineSafe(DestroyEggRoutine(consumedTr, Mathf.Max(0.05f, dequeueDestroySeconds), byExplosion: false));
+
+        if (!mounted && louieWorld != null)
+            Destroy(louieWorld);
+
+        return mounted;
     }
 
     Vector3 ResolveConsumedEggMountWorldPosition(Transform consumedEggRoot)

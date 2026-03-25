@@ -377,7 +377,6 @@ public class ItemPickup : MonoBehaviour
             if (!q.TryEnqueue(type, GetEggIdleSpriteFallback(), collectSfx, collectVolume))
                 return;
 
-            ConsumeNow(false);
             return;
         }
 
@@ -385,7 +384,7 @@ public class ItemPickup : MonoBehaviour
         {
             if (TryMountEggWithArc(player, mountFacing))
             {
-                ConsumeNow(false);
+                DestroyWithAnimation();
                 return;
             }
 
