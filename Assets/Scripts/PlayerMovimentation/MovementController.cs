@@ -60,11 +60,17 @@ public class MovementController : MonoBehaviour, IKillable
     public AnimatedSpriteRenderer mountedSpriteLeft;
     public AnimatedSpriteRenderer mountedSpriteRight;
 
-    [Header("Mounted On Louie - Head Only (optional)")]
+    [Header("Mounted On Louie - Head Only")]
     [SerializeField] private AnimatedSpriteRenderer headOnlyUp;
     [SerializeField] private AnimatedSpriteRenderer headOnlyDown;
     [SerializeField] private AnimatedSpriteRenderer headOnlyLeft;
     [SerializeField] private AnimatedSpriteRenderer headOnlyRight;
+
+    [Header("Spring Launcher - Looking Up")]
+    [SerializeField] private AnimatedSpriteRenderer springLookUpUp;
+    [SerializeField] private AnimatedSpriteRenderer springLookUpDown;
+    [SerializeField] private AnimatedSpriteRenderer springLookUpLeft;
+    [SerializeField] private AnimatedSpriteRenderer springLookUpRight;
 
     [Header("Mounted On Louie - Use HeadOnly When Mounted (default)")]
     [SerializeField] private bool useHeadOnlyWhenMountedDefault = false;
@@ -2310,5 +2316,84 @@ public class MovementController : MonoBehaviour, IKillable
             if (Rigidbody != null)
                 Rigidbody.linearVelocity = Vector2.zero;
         }
+    }
+
+    public void ShowSpringLauncherLookUp(Vector2 faceDir)
+    {
+        if (isDead || isEndingStage || IsRidingPlaying())
+            return;
+
+        faceDir = NormalizeCardinal(faceDir);
+        if (faceDir == Vector2.zero)
+            faceDir = facingDirection != Vector2.zero ? facingDirection : Vector2.down;
+
+        SetFacingDirection(faceDir, "ShowSpringLauncherLookUp");
+
+        SetVisualOverrideActive(true);
+
+        DisableAllFootSprites();
+        DisableAllMountedSprites();
+
+        SetAnimEnabled(spriteRendererDeath, false);
+        SetAnimEnabled(spriteRendererDeathByExplosion, false);
+        SetAnimEnabled(spriteRendererEndStage, false);
+        SetAnimEnabled(spriteRendererCheering, false);
+        SetAnimEnabled(spriteRendererFall, false);
+
+        SetAnimEnabled(springLookUpUp, false);
+        SetAnimEnabled(springLookUpDown, false);
+        SetAnimEnabled(springLookUpLeft, false);
+        SetAnimEnabled(springLookUpRight, false);
+
+        AnimatedSpriteRenderer target = PickSpringLauncherLookUpRenderer(faceDir);
+        if (target == null)
+        {
+            ForceIdleFacing(faceDir, "ShowSpringLauncherLookUpFallback");
+            return;
+        }
+
+        SetAnimEnabled(target, true);
+        target.idle = false;
+        target.loop = true;
+        target.pingPong = false;
+        target.CurrentFrame = 0;
+        target.RefreshFrame();
+
+        activeSpriteRenderer = target;
+        ApplyFlipForHorizontal(faceDir);
+    }
+
+    public void ClearSpringLauncherLookUp()
+    {
+        SetAnimEnabled(springLookUpUp, false);
+        SetAnimEnabled(springLookUpDown, false);
+        SetAnimEnabled(springLookUpLeft, false);
+        SetAnimEnabled(springLookUpRight, false);
+
+        if (isDead || isEndingStage || IsRidingPlaying())
+            return;
+
+        SetVisualOverrideActive(false);
+    }
+
+    private AnimatedSpriteRenderer PickSpringLauncherLookUpRenderer(Vector2 dir)
+    {
+        Vector2 face = NormalizeCardinal(dir);
+        if (face == Vector2.zero)
+            face = Vector2.up;
+
+        if (face == Vector2.up)
+            return springLookUpUp;
+
+        if (face == Vector2.down)
+            return springLookUpDown;
+
+        if (face == Vector2.left)
+            return springLookUpLeft;
+
+        if (face == Vector2.right)
+            return springLookUpRight;
+
+        return springLookUpUp;
     }
 }

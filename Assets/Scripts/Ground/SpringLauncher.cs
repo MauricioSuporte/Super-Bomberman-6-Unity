@@ -92,117 +92,130 @@ public sealed class SpringLauncher : MonoBehaviour
 
         mover.SetInputLocked(true, forceIdle: false);
 
-        while (true)
+        try
         {
-            if (mover == null || rb == null || mover.isDead || mover.IsEndingStage || !mover.gameObject.activeInHierarchy)
-                break;
-
-            Vector2 center = GetTileCenterWorld(tileSize);
-
-            rb.linearVelocity = Vector2.zero;
-            rb.position = center;
-
-            Vector2 heldDir = Vector2.zero;
-
-            float compressTimer = 0f;
-            float compressStepTimer = 0f;
-            float compressInterval = 0.1f;
-            float compressStep = 0.05f;
-            float totalCompressed = 0f;
-
-            float tEnd = Time.time + Mathf.Max(0f, channelSeconds);
-
-            while (Time.time < tEnd)
+            while (true)
             {
+                if (mover == null || rb == null || mover.isDead || mover.IsEndingStage || !mover.gameObject.activeInHierarchy)
+                    break;
+
+                Vector2 center = GetTileCenterWorld(tileSize);
+
+                rb.linearVelocity = Vector2.zero;
+                rb.position = center;
+
+                Vector2 heldDir = Vector2.zero;
+                Vector2 prepFaceDir = mover.FacingDirection;
+                if (prepFaceDir == Vector2.zero)
+                    prepFaceDir = Vector2.down;
+
+                float compressTimer = 0f;
+                float compressStepTimer = 0f;
+                float compressInterval = 0.1f;
+                float compressStep = 0.05f;
+                float totalCompressed = 0f;
+
+                float tEnd = Time.time + Mathf.Max(0f, channelSeconds);
+
+                while (Time.time < tEnd)
+                {
+                    heldDir = ReadHeldCardinal(mover);
+
+                    if (heldDir != Vector2.zero)
+                        prepFaceDir = heldDir;
+
+                    mover.ShowSpringLauncherLookUp(prepFaceDir);
+
+                    compressTimer += Time.deltaTime;
+                    compressStepTimer += Time.deltaTime;
+
+                    if (compressStepTimer >= compressInterval)
+                    {
+                        compressStepTimer -= compressInterval;
+
+                        Vector2 p = rb.position;
+                        p.y -= compressStep;
+                        rb.position = p;
+
+                        totalCompressed += compressStep;
+                    }
+
+                    yield return null;
+                }
+
+                rb.position = center;
+
                 heldDir = ReadHeldCardinal(mover);
+                mover.ClearSpringLauncherLookUp();
 
                 if (heldDir != Vector2.zero)
                     ApplyIdleFacing(mover, heldDir);
                 else
                     ApplyIdleFacing(mover, Vector2.zero);
 
-                compressTimer += Time.deltaTime;
-                compressStepTimer += Time.deltaTime;
-
-                if (compressStepTimer >= compressInterval)
+                if (jumpSfx != null)
                 {
-                    compressStepTimer -= compressInterval;
-
-                    Vector2 p = rb.position;
-                    p.y -= compressStep;
-                    rb.position = p;
-
-                    totalCompressed += compressStep;
+                    if (audio != null) audio.PlayOneShot(jumpSfx);
+                    else AudioSource.PlayClipAtPoint(jumpSfx, mover.transform.position);
                 }
 
-                yield return null;
+                mover.SetExplosionInvulnerable(true);
+
+                if (bombController != null) bombController.enabled = false;
+                if (playerCol != null) playerCol.enabled = false;
+
+                Vector2 start = rb.position;
+                Vector2 end = start;
+
+                bool isIdleBounce = (heldDir == Vector2.zero);
+
+                if (!isIdleBounce)
+                {
+                    if (heldDir == Vector2.left || heldDir == Vector2.right)
+                        end = start + heldDir * (horizontalJumpTiles * tileSize);
+                    else if (heldDir == Vector2.up || heldDir == Vector2.down)
+                        end = start + heldDir * (verticalJumpTiles * tileSize);
+                }
+
+                float duration = Mathf.Max(0.05f, jumpSeconds);
+
+                if (isIdleBounce)
+                    yield return JumpArcWithFixedIdleFacing(mover, rb, start, start, idleJumpUpTiles * tileSize, duration, Vector2.zero);
+                else
+                    yield return JumpArcWithFixedIdleFacing(mover, rb, start, end, arcHeightTiles * tileSize, duration, heldDir);
+
+                rb.linearVelocity = Vector2.zero;
+
+                if (playerCol != null) playerCol.enabled = prevColliderEnabled;
+                if (bombController != null) bombController.enabled = prevBombEnabled;
+
+                mover.SetExplosionInvulnerable(false);
+
+                Vector2 afterHeld = ReadHeldCardinal(mover);
+
+                bool stillOnCenter = Vector2.Distance(rb.position, center) <= (tileSize * 0.15f);
+                bool keepBouncing = isIdleBounce && afterHeld == Vector2.zero && stillOnCenter;
+
+                if (!keepBouncing)
+                    break;
+
+                if (rearmSeconds > 0f)
+                    yield return new WaitForSeconds(rearmSeconds);
             }
-
-            rb.position = center;
-
-            heldDir = ReadHeldCardinal(mover);
-
-            if (heldDir != Vector2.zero)
-                ApplyIdleFacing(mover, heldDir);
-            else
-                ApplyIdleFacing(mover, Vector2.zero);
-
-            if (jumpSfx != null)
-            {
-                if (audio != null) audio.PlayOneShot(jumpSfx);
-                else AudioSource.PlayClipAtPoint(jumpSfx, mover.transform.position);
-            }
-
-            mover.SetExplosionInvulnerable(true);
-
-            if (bombController != null) bombController.enabled = false;
-            if (playerCol != null) playerCol.enabled = false;
-
-            Vector2 start = rb.position;
-            Vector2 end = start;
-
-            bool isIdleBounce = (heldDir == Vector2.zero);
-
-            if (!isIdleBounce)
-            {
-                if (heldDir == Vector2.left || heldDir == Vector2.right)
-                    end = start + heldDir * (horizontalJumpTiles * tileSize);
-                else if (heldDir == Vector2.up || heldDir == Vector2.down)
-                    end = start + heldDir * (verticalJumpTiles * tileSize);
-            }
-
-            float duration = Mathf.Max(0.05f, jumpSeconds);
-
-            if (isIdleBounce)
-                yield return JumpArcWithFixedIdleFacing(mover, rb, start, start, idleJumpUpTiles * tileSize, duration, Vector2.zero);
-            else
-                yield return JumpArcWithFixedIdleFacing(mover, rb, start, end, arcHeightTiles * tileSize, duration, heldDir);
-
-            rb.linearVelocity = Vector2.zero;
-
-            if (playerCol != null) playerCol.enabled = prevColliderEnabled;
-            if (bombController != null) bombController.enabled = prevBombEnabled;
-
-            mover.SetExplosionInvulnerable(false);
-
-            Vector2 afterHeld = ReadHeldCardinal(mover);
-
-            bool stillOnCenter = Vector2.Distance(rb.position, center) <= (tileSize * 0.15f);
-            bool keepBouncing = isIdleBounce && afterHeld == Vector2.zero && stillOnCenter;
-
-            if (!keepBouncing)
-                break;
-
-            if (rearmSeconds > 0f)
-                yield return new WaitForSeconds(rearmSeconds);
         }
+        finally
+        {
+            if (mover != null)
+            {
+                mover.ClearSpringLauncherLookUp();
+                mover.SetInputLocked(prevInputLocked, forceIdle: false);
+            }
 
-        mover.SetInputLocked(prevInputLocked, forceIdle: false);
+            active.Remove(mover);
 
-        active.Remove(mover);
-
-        if (active.Count == 0)
-            SetSpringIdle(true);
+            if (active.Count == 0)
+                SetSpringIdle(true);
+        }
     }
 
     private void ApplyIdleFacing(MovementController mover, Vector2 faceDir)
