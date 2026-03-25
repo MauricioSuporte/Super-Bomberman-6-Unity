@@ -602,7 +602,12 @@ public class PlayerMountCompanion : MonoBehaviour
         return true;
     }
 
-    public bool TryMountExistingLouieFromWorld(GameObject louieWorldInstance, MountedType louieType, MountEggQueue worldQueueToAdopt)
+    public bool TryMountExistingLouieFromWorldWithArc(
+        GameObject louieWorldInstance,
+        MountedType louieType,
+        MountEggQueue worldQueueToAdopt,
+        Vector3 startWorldPos,
+        Vector3 targetWorldPos)
     {
         if (louieWorldInstance == null || movement == null || currentLouie != null)
             return false;
@@ -623,25 +628,88 @@ public class PlayerMountCompanion : MonoBehaviour
             Destroy(worldQueueToAdopt);
         }
 
-        Vector2 facing = movement.FacingDirection;
+        Vector2 facing = ResolveFacingForMount(movement.FacingDirection);
 
-        if (rider != null && rider.TryPlayRiding(
+        PrepareWorldLouieForStationaryMount(louieWorldInstance, louieType, targetWorldPos, facing);
+
+        if (rider != null && rider.TryPlayMountArc(
             facing,
+            startWorldPos,
+            targetWorldPos,
             onComplete: () =>
             {
+                AttachExistingLouieForMountAtLanding(louieWorldInstance, louieType, facing);
                 FinalizeMount(louieType, facing);
                 AdoptWorldQueueIfAny();
             },
-            onStart: () => AttachExistingLouieForMount(louieWorldInstance, louieType, duringRiding: true, facing)))
+            onStart: () =>
+            {
+                PlayMountSfxIfAny();
+            }))
             return true;
 
-        AttachExistingLouieForMount(louieWorldInstance, louieType, duringRiding: false, facing);
+        PlayMountSfxIfAny();
+
+        AttachExistingLouieForMountAtLanding(louieWorldInstance, louieType, facing);
+
+        Vector3 finalPos = targetWorldPos;
+        finalPos.z = transform.position.z;
+        transform.position = finalPos;
+
         FinalizeMount(louieType, facing);
         AdoptWorldQueueIfAny();
         return true;
     }
 
-    void AttachExistingLouieForMount(GameObject louieWorldInstance, MountedType type, bool duringRiding, Vector2 facingDirection)
+    void PrepareWorldLouieForStationaryMount(
+    GameObject louieWorldInstance,
+    MountedType type,
+    Vector3 worldPos,
+    Vector2 facingDirection)
+    {
+        if (louieWorldInstance == null)
+            return;
+
+        mountedType = type;
+
+        Vector3 pos = worldPos;
+        pos.z = 0f;
+
+        louieWorldInstance.transform.SetParent(null, true);
+        louieWorldInstance.transform.position = pos;
+
+        var pickup = louieWorldInstance.GetComponent<MountWorldPickup>();
+        if (pickup != null)
+            Destroy(pickup);
+
+        DisableLouieRidingVisualForWorld(louieWorldInstance);
+        RestoreDetachedLouieWorldVisual(louieWorldInstance, facingDirection);
+
+        if (louieWorldInstance.TryGetComponent<MountMovementController>(out var lm) && lm != null)
+            lm.enabled = false;
+
+        if (louieWorldInstance.TryGetComponent<Rigidbody2D>(out var rb) && rb != null)
+        {
+            rb.linearVelocity = Vector2.zero;
+            rb.angularVelocity = 0f;
+            rb.simulated = true;
+        }
+
+        if (louieWorldInstance.TryGetComponent<Collider2D>(out var col) && col != null)
+            col.enabled = true;
+
+        if (louieWorldInstance.TryGetComponent<BombController>(out var bc) && bc != null)
+            bc.enabled = false;
+
+        if (louieWorldInstance.TryGetComponent<MovementController>(out var mc) && mc != null)
+        {
+            mc.SetExplosionInvulnerable(false);
+            mc.ForceIdleFacing(ResolveFacingForMount(facingDirection), "PrepareWorldLouieForStationaryMount");
+            mc.EnableExclusiveFromState();
+        }
+    }
+
+    void AttachExistingLouieForMountAtLanding(GameObject louieWorldInstance, MountedType type, Vector2 facingDirection)
     {
         if (louieWorldInstance == null || currentLouie != null)
             return;
@@ -650,23 +718,55 @@ public class PlayerMountCompanion : MonoBehaviour
         currentLouie = louieWorldInstance;
 
         var pickup = currentLouie.GetComponent<MountWorldPickup>();
-        if (pickup != null) Destroy(pickup);
+        if (pickup != null)
+            Destroy(pickup);
 
         currentLouie.transform.SetParent(transform, true);
         SetupLouieAsChildMounted(currentLouie);
 
-        LouieVisualUtils.RestoreLouieVisualAfterWorldDetach(currentLouie);
+        RestoreLouieVisualAfterWorldDetach(currentLouie);
         EnableAndBindLouieRidingVisual(currentLouie);
 
         CacheMountedLouieHealth(currentLouie);
         DisableLouieComponentsForMount(currentLouie);
 
         ApplyMountFacing(facingDirection);
+        SetMountedLouieVisible(true);
+    }
 
-        if (duringRiding)
-            SetMountedLouieVisible(true);
+    void RestoreDetachedLouieWorldVisual(GameObject louie, Vector2 facingDirection)
+    {
+        if (louie == null)
+            return;
 
-        PlayMountSfxIfAny();
+        if (louie.TryGetComponent<MovementController>(out var mc) && mc != null)
+        {
+            mc.ForceIdleFacing(ResolveFacingForMount(facingDirection), "RestoreDetachedLouieWorldVisual");
+            mc.EnableExclusiveFromState();
+        }
+
+        var visual = louie.GetComponentInChildren<MountVisualController>(true);
+        if (visual != null)
+        {
+            var selfMovement = louie.GetComponentInChildren<MovementController>(true);
+            if (selfMovement != null)
+            {
+                visual.localOffset = (Vector2)visual.transform.localPosition;
+                visual.Bind(selfMovement);
+                visual.enabled = true;
+                visual.SetInactivityEmote(false);
+            }
+        }
+    }
+
+    void RestoreLouieVisualAfterWorldDetach(GameObject louie)
+    {
+        if (louie == null)
+            return;
+
+        var visual = louie.GetComponentInChildren<MountVisualController>(true);
+        if (visual != null)
+            visual.enabled = false;
     }
 
     void DetachCurrentLouieBeforeRiding()
@@ -1823,6 +1923,11 @@ public class PlayerMountCompanion : MonoBehaviour
     {
         var v = GetLouieRidingVisual(currentLouie);
         return v != null && v.useHeadOnlyPlayerVisual;
+    }
+
+    public GameObject GetMountPrefabForType(MountedType type)
+    {
+        return GetPrefab(type);
     }
 
     #endregion

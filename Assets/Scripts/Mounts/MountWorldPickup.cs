@@ -73,20 +73,27 @@ public sealed class MountWorldPickup : MonoBehaviour
         if (type == MountedType.None)
             return;
 
-        if (_col != null)
-            mv.SnapToColliderCenter(_col, roundToGrid: false);
-        else
-            mv.SnapToWorldPoint(transform.position, roundToGrid: false);
-
         consumed = true;
 
         var worldQueue = GetComponent<MountEggQueue>();
 
-        comp.TryMountExistingLouieFromWorld(
+        Vector3 startWorldPos = player.transform.position;
+        Vector3 targetWorldPos = ResolveLandingWorldPosition();
+
+        comp.TryMountExistingLouieFromWorldWithArc(
             louieWorldInstance: gameObject,
             louieType: type,
-            worldQueueToAdopt: worldQueue
+            worldQueueToAdopt: worldQueue,
+            startWorldPos: startWorldPos,
+            targetWorldPos: targetWorldPos
         );
+    }
+
+    Vector3 ResolveLandingWorldPosition()
+    {
+        Vector3 p = _col != null ? _col.bounds.center : transform.position;
+        p.z = 0f;
+        return p;
     }
 
     static MountedType ResolveTypeFromNameFallback(string n)

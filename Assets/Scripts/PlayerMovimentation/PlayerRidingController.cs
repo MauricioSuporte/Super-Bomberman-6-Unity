@@ -5,14 +5,25 @@ using UnityEngine;
 [RequireComponent(typeof(MovementController))]
 public sealed class PlayerRidingController : MonoBehaviour
 {
-    [Header("Riding Sprites (Directional)")]
-    public AnimatedSpriteRenderer ridingUp;
-    public AnimatedSpriteRenderer ridingDown;
-    public AnimatedSpriteRenderer ridingLeft;
-    public AnimatedSpriteRenderer ridingRight;
+    [Header("Mount Ascend Sprites")]
+    public AnimatedSpriteRenderer mountAscendUp;
+    public AnimatedSpriteRenderer mountAscendDown;
+    public AnimatedSpriteRenderer mountAscendLeft;
+    public AnimatedSpriteRenderer mountAscendRight;
+
+    [Header("Mount Descend Sprites")]
+    public AnimatedSpriteRenderer mountDescendUp;
+    public AnimatedSpriteRenderer mountDescendDown;
+    public AnimatedSpriteRenderer mountDescendLeft;
+    public AnimatedSpriteRenderer mountDescendRight;
 
     [Header("Timing")]
     public float ridingSeconds = 1f;
+
+    [Header("Arc")]
+    [SerializeField] private float pixelsPerUnit = 16f;
+    [SerializeField] private int jumpPeakPixels = 32;
+    [SerializeField] private bool quantizeToPixel = true;
 
     MovementController movement;
     BombController bomb;
@@ -23,10 +34,12 @@ public sealed class PlayerRidingController : MonoBehaviour
     SpriteRenderer[] cachedSpriteRenderers;
     AnimatedSpriteRenderer[] cachedAnimatedRenderers;
 
-    readonly HashSet<AnimatedSpriteRenderer> allowedAnims = new();
-    readonly HashSet<SpriteRenderer> allowedSrs = new();
+    readonly HashSet<AnimatedSpriteRenderer> allowedAnims = new HashSet<AnimatedSpriteRenderer>();
+    readonly HashSet<SpriteRenderer> allowedSrs = new HashSet<SpriteRenderer>();
 
     public bool IsPlaying => isPlaying;
+
+    float JumpPeakWorld => jumpPeakPixels / Mathf.Max(1f, pixelsPerUnit);
 
     void Awake()
     {
@@ -35,11 +48,8 @@ public sealed class PlayerRidingController : MonoBehaviour
 
         CacheRenderers();
         RebuildAllowedSets();
-
-        SetAnimEnabled(ridingUp, false);
-        SetAnimEnabled(ridingDown, false);
-        SetAnimEnabled(ridingLeft, false);
-        SetAnimEnabled(ridingRight, false);
+        DisableAllRiding();
+        ClearAllRuntimeOffsets();
     }
 
     void OnValidate()
@@ -57,6 +67,19 @@ public sealed class PlayerRidingController : MonoBehaviour
 
     public bool TryPlayRiding(Vector2 facing, System.Action onComplete = null, System.Action onStart = null)
     {
+        Vector3 startWorldPos = transform.position;
+        Vector3 targetWorldPos = transform.position;
+
+        return TryPlayMountArc(facing, startWorldPos, targetWorldPos, onComplete, onStart);
+    }
+
+    public bool TryPlayMountArc(
+        Vector2 facing,
+        Vector3 startWorldPos,
+        Vector3 targetWorldPos,
+        System.Action onComplete = null,
+        System.Action onStart = null)
+    {
         if (isPlaying || movement == null)
             return false;
 
@@ -71,20 +94,17 @@ public sealed class PlayerRidingController : MonoBehaviour
         movement.SetInputLocked(true, forceIdle: true);
         movement.SetAllSpritesVisible(false);
 
-        var r = PickRidingRenderer(facing);
-
         DisableAllRiding();
-
-        if (r != null)
-        {
-            SetAnimEnabled(r, true);
-            r.CurrentFrame = 0;
-            r.RefreshFrame();
-        }
+        ClearAllRuntimeOffsets();
 
         onStart?.Invoke();
 
-        routine = StartCoroutine(FinishRoutine(onComplete));
+        routine = StartCoroutine(PlayMountArcRoutine(
+            facing,
+            startWorldPos,
+            targetWorldPos,
+            onComplete));
+
         return true;
     }
 
@@ -100,6 +120,7 @@ public sealed class PlayerRidingController : MonoBehaviour
         }
 
         DisableAllRiding();
+        ClearAllRuntimeOffsets();
 
         if (movement != null)
         {
@@ -111,13 +132,54 @@ public sealed class PlayerRidingController : MonoBehaviour
         return true;
     }
 
-    IEnumerator FinishRoutine(System.Action onComplete)
+    IEnumerator PlayMountArcRoutine(
+        Vector2 facing,
+        Vector3 startWorldPos,
+        Vector3 targetWorldPos,
+        System.Action onComplete)
     {
         yield return null;
 
-        yield return new WaitForSeconds(ridingSeconds);
+        float duration = Mathf.Max(0.01f, ridingSeconds);
+        float elapsed = 0f;
+
+        transform.position = startWorldPos;
+
+        while (elapsed < duration)
+        {
+            if (GamePauseController.IsPaused)
+            {
+                yield return null;
+                continue;
+            }
+
+            elapsed += Time.deltaTime;
+
+            float t = Mathf.Clamp01(elapsed / duration);
+
+            Vector3 flat = Vector3.Lerp(startWorldPos, targetWorldPos, t);
+
+            float arc = 4f * JumpPeakWorld * t * (1f - t);
+            if (quantizeToPixel)
+                arc = QuantizeWorldToPixel(arc);
+
+            AnimatedSpriteRenderer renderer = PickRendererForPhase(facing, t < 0.5f);
+
+            ApplyExclusiveRenderer(renderer);
+            ApplyRendererArcOffset(renderer, arc);
+
+            flat.z = transform.position.z;
+            transform.position = flat;
+
+            yield return null;
+        }
+
+        Vector3 finalPos = targetWorldPos;
+        finalPos.z = transform.position.z;
+        transform.position = finalPos;
 
         DisableAllRiding();
+        ClearAllRuntimeOffsets();
 
         onComplete?.Invoke();
 
@@ -144,10 +206,15 @@ public sealed class PlayerRidingController : MonoBehaviour
         allowedAnims.Clear();
         allowedSrs.Clear();
 
-        AddAllowed(ridingUp);
-        AddAllowed(ridingDown);
-        AddAllowed(ridingLeft);
-        AddAllowed(ridingRight);
+        AddAllowed(mountAscendUp);
+        AddAllowed(mountAscendDown);
+        AddAllowed(mountAscendLeft);
+        AddAllowed(mountAscendRight);
+
+        AddAllowed(mountDescendUp);
+        AddAllowed(mountDescendDown);
+        AddAllowed(mountDescendLeft);
+        AddAllowed(mountDescendRight);
     }
 
     void AddAllowed(AnimatedSpriteRenderer r)
@@ -157,10 +224,12 @@ public sealed class PlayerRidingController : MonoBehaviour
 
         allowedAnims.Add(r);
 
-        var srs = r.GetComponentsInChildren<SpriteRenderer>(true);
+        SpriteRenderer[] srs = r.GetComponentsInChildren<SpriteRenderer>(true);
         for (int i = 0; i < srs.Length; i++)
+        {
             if (srs[i] != null)
                 allowedSrs.Add(srs[i]);
+        }
     }
 
     void EnforceRidingOnly()
@@ -169,8 +238,9 @@ public sealed class PlayerRidingController : MonoBehaviour
         {
             for (int i = 0; i < cachedAnimatedRenderers.Length; i++)
             {
-                var a = cachedAnimatedRenderers[i];
-                if (a == null) continue;
+                AnimatedSpriteRenderer a = cachedAnimatedRenderers[i];
+                if (a == null)
+                    continue;
 
                 if (!allowedAnims.Contains(a) && a.enabled)
                     a.enabled = false;
@@ -181,8 +251,9 @@ public sealed class PlayerRidingController : MonoBehaviour
         {
             for (int i = 0; i < cachedSpriteRenderers.Length; i++)
             {
-                var sr = cachedSpriteRenderers[i];
-                if (sr == null) continue;
+                SpriteRenderer sr = cachedSpriteRenderers[i];
+                if (sr == null)
+                    continue;
 
                 if (!allowedSrs.Contains(sr) && sr.enabled)
                     sr.enabled = false;
@@ -190,35 +261,132 @@ public sealed class PlayerRidingController : MonoBehaviour
         }
     }
 
-    AnimatedSpriteRenderer PickRidingRenderer(Vector2 facing)
+    AnimatedSpriteRenderer PickRendererForPhase(Vector2 facing, bool ascending)
     {
-        var f = facing;
+        Vector2 f = facing;
         if (f == Vector2.zero)
             f = movement != null ? movement.FacingDirection : Vector2.down;
 
-        if (f == Vector2.up) return ridingUp;
-        if (f == Vector2.down) return ridingDown;
-        if (f == Vector2.left) return ridingLeft;
-        if (f == Vector2.right) return ridingRight;
+        if (Mathf.Abs(f.x) >= Mathf.Abs(f.y))
+            f = f.x >= 0f ? Vector2.right : Vector2.left;
+        else
+            f = f.y >= 0f ? Vector2.up : Vector2.down;
 
-        return ridingDown;
+        if (ascending)
+        {
+            if (f == Vector2.up) return mountAscendUp;
+            if (f == Vector2.down) return mountAscendDown;
+            if (f == Vector2.left) return mountAscendLeft;
+            return mountAscendRight;
+        }
+
+        if (f == Vector2.up) return mountDescendUp;
+        if (f == Vector2.down) return mountDescendDown;
+        if (f == Vector2.left) return mountDescendLeft;
+        return mountDescendRight;
+    }
+
+    void ApplyExclusiveRenderer(AnimatedSpriteRenderer target)
+    {
+        SetAnimEnabled(mountAscendUp, target == mountAscendUp);
+        SetAnimEnabled(mountAscendDown, target == mountAscendDown);
+        SetAnimEnabled(mountAscendLeft, target == mountAscendLeft);
+        SetAnimEnabled(mountAscendRight, target == mountAscendRight);
+
+        SetAnimEnabled(mountDescendUp, target == mountDescendUp);
+        SetAnimEnabled(mountDescendDown, target == mountDescendDown);
+        SetAnimEnabled(mountDescendLeft, target == mountDescendLeft);
+        SetAnimEnabled(mountDescendRight, target == mountDescendRight);
+
+        if (target != null)
+        {
+            if (target.CurrentFrame == 0)
+                target.RefreshFrame();
+            else
+                target.RefreshFrame();
+        }
+    }
+
+    void ApplyRendererArcOffset(AnimatedSpriteRenderer active, float arcY)
+    {
+        ClearAllRuntimeOffsetsExcept(active);
+
+        if (active == null)
+            return;
+
+        active.SetRuntimeBaseLocalY(arcY);
+        active.RefreshFrame();
     }
 
     void DisableAllRiding()
     {
-        SetAnimEnabled(ridingUp, false);
-        SetAnimEnabled(ridingDown, false);
-        SetAnimEnabled(ridingLeft, false);
-        SetAnimEnabled(ridingRight, false);
+        SetAnimEnabled(mountAscendUp, false);
+        SetAnimEnabled(mountAscendDown, false);
+        SetAnimEnabled(mountAscendLeft, false);
+        SetAnimEnabled(mountAscendRight, false);
+
+        SetAnimEnabled(mountDescendUp, false);
+        SetAnimEnabled(mountDescendDown, false);
+        SetAnimEnabled(mountDescendLeft, false);
+        SetAnimEnabled(mountDescendRight, false);
+    }
+
+    void ClearAllRuntimeOffsets()
+    {
+        ClearRuntimeOffset(mountAscendUp);
+        ClearRuntimeOffset(mountAscendDown);
+        ClearRuntimeOffset(mountAscendLeft);
+        ClearRuntimeOffset(mountAscendRight);
+
+        ClearRuntimeOffset(mountDescendUp);
+        ClearRuntimeOffset(mountDescendDown);
+        ClearRuntimeOffset(mountDescendLeft);
+        ClearRuntimeOffset(mountDescendRight);
+    }
+
+    void ClearAllRuntimeOffsetsExcept(AnimatedSpriteRenderer keep)
+    {
+        ClearRuntimeOffsetIfNot(keep, mountAscendUp);
+        ClearRuntimeOffsetIfNot(keep, mountAscendDown);
+        ClearRuntimeOffsetIfNot(keep, mountAscendLeft);
+        ClearRuntimeOffsetIfNot(keep, mountAscendRight);
+
+        ClearRuntimeOffsetIfNot(keep, mountDescendUp);
+        ClearRuntimeOffsetIfNot(keep, mountDescendDown);
+        ClearRuntimeOffsetIfNot(keep, mountDescendLeft);
+        ClearRuntimeOffsetIfNot(keep, mountDescendRight);
+    }
+
+    static void ClearRuntimeOffset(AnimatedSpriteRenderer r)
+    {
+        if (r == null)
+            return;
+
+        r.ClearRuntimeBaseOffset();
+    }
+
+    static void ClearRuntimeOffsetIfNot(AnimatedSpriteRenderer keep, AnimatedSpriteRenderer current)
+    {
+        if (current == null || current == keep)
+            return;
+
+        current.ClearRuntimeBaseOffset();
+    }
+
+    float QuantizeWorldToPixel(float worldValue)
+    {
+        float ppu = Mathf.Max(1f, pixelsPerUnit);
+        return Mathf.Round(worldValue * ppu) / ppu;
     }
 
     static void SetAnimEnabled(AnimatedSpriteRenderer r, bool on)
     {
-        if (r == null) return;
+        if (r == null)
+            return;
 
         r.enabled = on;
 
-        if (r.TryGetComponent<SpriteRenderer>(out var sr))
+        if (r.TryGetComponent<SpriteRenderer>(out SpriteRenderer sr))
             sr.enabled = on;
     }
 }

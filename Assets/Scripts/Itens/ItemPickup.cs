@@ -383,18 +383,22 @@ public class ItemPickup : MonoBehaviour
 
         if (isEgg)
         {
-            TrySetMountSfxForImmediateMount(player);
-        }
-        else
-        {
-            PlayCollectSfxOnPlayer(player);
-            PlayPlayerExtraSfx(player);
-
-            if (_behavior != null)
+            if (TryMountEggWithArc(player, mountFacing))
             {
-                if (_behavior.OnPickedUp(this, player))
-                    return;
+                ConsumeNow(false);
+                return;
             }
+
+            return;
+        }
+
+        PlayCollectSfxOnPlayer(player);
+        PlayPlayerExtraSfx(player);
+
+        if (_behavior != null)
+        {
+            if (_behavior.OnPickedUp(this, player))
+                return;
         }
 
         int pid = 1;
@@ -506,44 +510,9 @@ public class ItemPickup : MonoBehaviour
                 if (player.TryGetComponent<CharacterHealth>(out var health))
                     health.AddLife(1);
                 break;
-
-            case ItemType.BlueLouieEgg:
-                if (player.TryGetComponent<PlayerMountCompanion>(out var louieBlue))
-                    louieBlue.MountBlueLouie(mountFacing);
-                break;
-
-            case ItemType.BlackLouieEgg:
-                if (player.TryGetComponent<PlayerMountCompanion>(out var louieBlack))
-                    louieBlack.MountBlackLouie(mountFacing);
-                break;
-
-            case ItemType.PurpleLouieEgg:
-                if (player.TryGetComponent<PlayerMountCompanion>(out var louiePurple))
-                    louiePurple.MountPurpleLouie(mountFacing);
-                break;
-
-            case ItemType.GreenLouieEgg:
-                if (player.TryGetComponent<PlayerMountCompanion>(out var louieGreen))
-                    louieGreen.MountGreenLouie(mountFacing);
-                break;
-
-            case ItemType.YellowLouieEgg:
-                if (player.TryGetComponent<PlayerMountCompanion>(out var louieYellow))
-                    louieYellow.MountYellowLouie(mountFacing);
-                break;
-
-            case ItemType.PinkLouieEgg:
-                if (player.TryGetComponent<PlayerMountCompanion>(out var louiePink))
-                    louiePink.MountPinkLouie(mountFacing);
-                break;
-
-            case ItemType.RedLouieEgg:
-                if (player.TryGetComponent<PlayerMountCompanion>(out var louieRed))
-                    louieRed.MountRedLouie(mountFacing);
-                break;
         }
 
-        bool playDestroyAnim = isEgg || type == ItemType.LandMine;
+        bool playDestroyAnim = type == ItemType.LandMine;
         ConsumeNow(playDestroyAnim);
     }
 
@@ -560,12 +529,6 @@ public class ItemPickup : MonoBehaviour
             {
                 if (PlayerHoldingBombWithPowerGlove(player))
                     return;
-
-                if (!PlayerAlreadyMounted(player))
-                {
-                    if (other.TryGetComponent<MovementController>(out var mv) && mv != null && _col != null)
-                        mv.SnapToColliderCenter(_col, false);
-                }
             }
 
             OnItemPickup(player);
@@ -645,5 +608,112 @@ public class ItemPickup : MonoBehaviour
         for (int i = 0; i < childSrs.Length; i++)
             if (childSrs[i] != null)
                 childSrs[i].enabled = enabled;
+    }
+
+    bool TryMountEggWithArc(GameObject player, Vector2 mountFacing)
+    {
+        if (player == null)
+            return false;
+
+        if (!player.TryGetComponent<PlayerMountCompanion>(out var companion) || companion == null)
+            return false;
+
+        MountedType mountedType = EggToMountedType(type);
+        if (mountedType == MountedType.None)
+            return false;
+
+        GameObject prefab = companion.GetMountPrefabForType(mountedType);
+        if (prefab == null)
+            return false;
+
+        Vector3 spawnWorldPos = ResolveEggMountSpawnWorldPosition();
+        Vector3 startWorldPos = player.transform.position;
+
+        GameObject louieWorld = Instantiate(prefab, spawnWorldPos, Quaternion.identity);
+        PrepareSpawnedLouieWorldForPickup(louieWorld, mountedType, mountFacing);
+
+        TrySetMountSfxForImmediateMount(player);
+
+        return companion.TryMountExistingLouieFromWorldWithArc(
+            louieWorldInstance: louieWorld,
+            louieType: mountedType,
+            worldQueueToAdopt: null,
+            startWorldPos: startWorldPos,
+            targetWorldPos: spawnWorldPos
+        );
+    }
+
+    Vector3 ResolveEggMountSpawnWorldPosition()
+    {
+        Vector3 p = _col != null ? _col.bounds.center : transform.position;
+        p.z = 0f;
+        return p;
+    }
+
+    void PrepareSpawnedLouieWorldForPickup(GameObject louieWorld, MountedType mountedType, Vector2 facingDirection)
+    {
+        if (louieWorld == null)
+            return;
+
+        var pickup = louieWorld.GetComponent<MountWorldPickup>();
+        if (pickup == null)
+            pickup = louieWorld.AddComponent<MountWorldPickup>();
+
+        pickup.Init(mountedType);
+
+        if (louieWorld.TryGetComponent<Collider2D>(out var col) && col != null)
+            col.enabled = true;
+
+        if (louieWorld.TryGetComponent<Rigidbody2D>(out var rb) && rb != null)
+        {
+            rb.linearVelocity = Vector2.zero;
+            rb.angularVelocity = 0f;
+            rb.simulated = true;
+        }
+
+        ApplyLouieIdleFacing(louieWorld, facingDirection);
+
+        if (louieWorld.TryGetComponent<MountMovementController>(out var lm) && lm != null)
+            lm.enabled = false;
+
+        if (louieWorld.TryGetComponent<BombController>(out var bc) && bc != null)
+            bc.enabled = false;
+
+        if (louieWorld.TryGetComponent<MovementController>(out var mc) && mc != null)
+            mc.SetExplosionInvulnerable(false);
+    }
+
+    MountedType EggToMountedType(ItemType eggType)
+    {
+        switch (eggType)
+        {
+            case ItemType.BlueLouieEgg: return MountedType.Blue;
+            case ItemType.BlackLouieEgg: return MountedType.Black;
+            case ItemType.PurpleLouieEgg: return MountedType.Purple;
+            case ItemType.GreenLouieEgg: return MountedType.Green;
+            case ItemType.YellowLouieEgg: return MountedType.Yellow;
+            case ItemType.PinkLouieEgg: return MountedType.Pink;
+            case ItemType.RedLouieEgg: return MountedType.Red;
+            default: return MountedType.None;
+        }
+    }
+
+    void ApplyLouieIdleFacing(GameObject louieWorld, Vector2 facingDirection)
+    {
+        if (louieWorld == null)
+            return;
+
+        if (!louieWorld.TryGetComponent<MovementController>(out var mv) || mv == null)
+            return;
+
+        Vector2 face = facingDirection;
+
+        if (Mathf.Abs(face.x) >= Mathf.Abs(face.y))
+            face = face.x >= 0f ? Vector2.right : Vector2.left;
+        else
+            face = face.y >= 0f ? Vector2.up : Vector2.down;
+
+        mv.ForceIdleFacing(face, "EggSpawnIdleFacing");
+        mv.EnableExclusiveFromState();
     }
 }
