@@ -31,8 +31,12 @@ public sealed class SpringLauncher : MonoBehaviour
 
     private void Reset()
     {
-        if (TryGetComponent<Collider2D>(out var col)) col.isTrigger = true;
-        if (springAnim == null) springAnim = GetComponent<AnimatedSpriteRenderer>();
+        if (TryGetComponent<Collider2D>(out var col))
+            col.isTrigger = true;
+
+        if (springAnim == null)
+            springAnim = GetComponent<AnimatedSpriteRenderer>();
+
         SetSpringIdle(true);
     }
 
@@ -89,6 +93,7 @@ public sealed class SpringLauncher : MonoBehaviour
         bool prevBombEnabled = (bombController != null) && bombController.enabled;
 
         var audio = mover.GetComponent<AudioSource>();
+        var riding = mover.GetComponent<PlayerRidingController>();
 
         mover.SetInputLocked(true, forceIdle: false);
 
@@ -109,11 +114,9 @@ public sealed class SpringLauncher : MonoBehaviour
                 if (prepFaceDir == Vector2.zero)
                     prepFaceDir = Vector2.down;
 
-                float compressTimer = 0f;
                 float compressStepTimer = 0f;
                 float compressInterval = 0.1f;
                 float compressStep = 0.05f;
-                float totalCompressed = 0f;
 
                 float tEnd = Time.time + Mathf.Max(0f, channelSeconds);
 
@@ -126,7 +129,6 @@ public sealed class SpringLauncher : MonoBehaviour
 
                     mover.ShowSpringLauncherLookUp(prepFaceDir);
 
-                    compressTimer += Time.deltaTime;
                     compressStepTimer += Time.deltaTime;
 
                     if (compressStepTimer >= compressInterval)
@@ -136,8 +138,6 @@ public sealed class SpringLauncher : MonoBehaviour
                         Vector2 p = rb.position;
                         p.y -= compressStep;
                         rb.position = p;
-
-                        totalCompressed += compressStep;
                     }
 
                     yield return null;
@@ -155,14 +155,19 @@ public sealed class SpringLauncher : MonoBehaviour
 
                 if (jumpSfx != null)
                 {
-                    if (audio != null) audio.PlayOneShot(jumpSfx);
-                    else AudioSource.PlayClipAtPoint(jumpSfx, mover.transform.position);
+                    if (audio != null)
+                        audio.PlayOneShot(jumpSfx);
+                    else
+                        AudioSource.PlayClipAtPoint(jumpSfx, mover.transform.position);
                 }
 
                 mover.SetExplosionInvulnerable(true);
 
-                if (bombController != null) bombController.enabled = false;
-                if (playerCol != null) playerCol.enabled = false;
+                if (bombController != null)
+                    bombController.enabled = false;
+
+                if (playerCol != null)
+                    playerCol.enabled = false;
 
                 Vector2 start = rb.position;
                 Vector2 end = start;
@@ -178,16 +183,74 @@ public sealed class SpringLauncher : MonoBehaviour
                 }
 
                 float duration = Mathf.Max(0.05f, jumpSeconds);
+                bool isUnmounted = !mover.IsMountedOnLouie;
 
-                if (isIdleBounce)
-                    yield return JumpArcWithFixedIdleFacing(mover, rb, start, start, idleJumpUpTiles * tileSize, duration, Vector2.zero);
+                if (isUnmounted)
+                {
+                    Vector2 visualDir = heldDir != Vector2.zero ? heldDir : mover.FacingDirection;
+                    if (visualDir == Vector2.zero)
+                        visualDir = Vector2.down;
+
+                    mover.SetVisualOverrideActive(true);
+                    mover.SetAllSpritesVisible(false);
+
+                    if (isIdleBounce)
+                    {
+                        yield return JumpArcUnmountedWithMountSprites(
+                            mover,
+                            riding,
+                            rb,
+                            start,
+                            start,
+                            idleJumpUpTiles * tileSize,
+                            duration,
+                            visualDir);
+                    }
+                    else
+                    {
+                        yield return JumpArcUnmountedWithMountSprites(
+                            mover,
+                            riding,
+                            rb,
+                            start,
+                            end,
+                            arcHeightTiles * tileSize,
+                            duration,
+                            visualDir);
+                    }
+
+                    mover.SetVisualOverrideActive(false);
+                    mover.EnableExclusiveFromState();
+                }
                 else
-                    yield return JumpArcWithFixedIdleFacing(mover, rb, start, end, arcHeightTiles * tileSize, duration, heldDir);
+                {
+                    if (isIdleBounce)
+                        yield return JumpArcWithFixedIdleFacing(
+                            mover,
+                            rb,
+                            start,
+                            start,
+                            idleJumpUpTiles * tileSize,
+                            duration,
+                            Vector2.zero);
+                    else
+                        yield return JumpArcWithFixedIdleFacing(
+                            mover,
+                            rb,
+                            start,
+                            end,
+                            arcHeightTiles * tileSize,
+                            duration,
+                            heldDir);
+                }
 
                 rb.linearVelocity = Vector2.zero;
 
-                if (playerCol != null) playerCol.enabled = prevColliderEnabled;
-                if (bombController != null) bombController.enabled = prevBombEnabled;
+                if (playerCol != null)
+                    playerCol.enabled = prevColliderEnabled;
+
+                if (bombController != null)
+                    bombController.enabled = prevBombEnabled;
 
                 mover.SetExplosionInvulnerable(false);
 
@@ -208,7 +271,9 @@ public sealed class SpringLauncher : MonoBehaviour
             if (mover != null)
             {
                 mover.ClearSpringLauncherLookUp();
+                mover.SetVisualOverrideActive(false);
                 mover.SetInputLocked(prevInputLocked, forceIdle: false);
+                mover.EnableExclusiveFromState();
             }
 
             active.Remove(mover);
@@ -278,6 +343,195 @@ public sealed class SpringLauncher : MonoBehaviour
         }
 
         rb.position = end;
+    }
+
+    private IEnumerator JumpArcUnmountedWithMountSprites(
+        MovementController mover,
+        PlayerRidingController riding,
+        Rigidbody2D rb,
+        Vector2 start,
+        Vector2 end,
+        float arcWorld,
+        float duration,
+        Vector2 fixedFaceDir)
+    {
+        if (mover == null || rb == null)
+            yield break;
+
+        if (riding == null)
+        {
+            yield return JumpArcWithFixedIdleFacing(mover, rb, start, end, arcWorld, duration, fixedFaceDir);
+            yield break;
+        }
+
+        DisableAllUnmountedSpringArcSprites(riding);
+        ClearAllUnmountedSpringArcOffsets(riding);
+
+        float elapsed = 0f;
+
+        while (elapsed < duration)
+        {
+            float t = Mathf.Clamp01(elapsed / duration);
+
+            Vector2 flat = Vector2.Lerp(start, end, t);
+            float parabola = 4f * t * (1f - t);
+            float arcY = arcWorld * parabola;
+
+            AnimatedSpriteRenderer activeRenderer = PickUnmountedSpringArcRenderer(
+                riding,
+                fixedFaceDir,
+                t < 0.5f);
+
+            ApplyExclusiveUnmountedSpringArcRenderer(riding, activeRenderer);
+            ApplyUnmountedSpringArcOffset(riding, activeRenderer, arcY);
+
+            rb.position = flat;
+
+            elapsed += Time.deltaTime;
+            yield return null;
+        }
+
+        rb.position = end;
+
+        DisableAllUnmountedSpringArcSprites(riding);
+        ClearAllUnmountedSpringArcOffsets(riding);
+    }
+
+    private AnimatedSpriteRenderer PickUnmountedSpringArcRenderer(
+        PlayerRidingController riding,
+        Vector2 facing,
+        bool ascending)
+    {
+        Vector2 f = facing;
+        if (f == Vector2.zero)
+            f = Vector2.down;
+
+        if (Mathf.Abs(f.x) >= Mathf.Abs(f.y))
+            f = f.x >= 0f ? Vector2.right : Vector2.left;
+        else
+            f = f.y >= 0f ? Vector2.up : Vector2.down;
+
+        if (ascending)
+        {
+            if (f == Vector2.up) return riding.mountAscendUp;
+            if (f == Vector2.down) return riding.mountAscendDown;
+            if (f == Vector2.left) return riding.mountAscendLeft;
+            return riding.mountAscendRight;
+        }
+
+        if (f == Vector2.up) return riding.mountDescendUp;
+        if (f == Vector2.down) return riding.mountDescendDown;
+        if (f == Vector2.left) return riding.mountDescendLeft;
+        return riding.mountDescendRight;
+    }
+
+    private void ApplyExclusiveUnmountedSpringArcRenderer(
+        PlayerRidingController riding,
+        AnimatedSpriteRenderer target)
+    {
+        SetAnimEnabled(riding.mountAscendUp, target == riding.mountAscendUp);
+        SetAnimEnabled(riding.mountAscendDown, target == riding.mountAscendDown);
+        SetAnimEnabled(riding.mountAscendLeft, target == riding.mountAscendLeft);
+        SetAnimEnabled(riding.mountAscendRight, target == riding.mountAscendRight);
+
+        SetAnimEnabled(riding.mountDescendUp, target == riding.mountDescendUp);
+        SetAnimEnabled(riding.mountDescendDown, target == riding.mountDescendDown);
+        SetAnimEnabled(riding.mountDescendLeft, target == riding.mountDescendLeft);
+        SetAnimEnabled(riding.mountDescendRight, target == riding.mountDescendRight);
+
+        if (target != null)
+            target.RefreshFrame();
+    }
+
+    private void ApplyUnmountedSpringArcOffset(
+        PlayerRidingController riding,
+        AnimatedSpriteRenderer activeRenderer,
+        float arcY)
+    {
+        ClearUnmountedSpringArcOffsetsExcept(riding, activeRenderer);
+
+        if (activeRenderer == null)
+            return;
+
+        activeRenderer.SetRuntimeBaseLocalY(arcY);
+        activeRenderer.RefreshFrame();
+    }
+
+    private void DisableAllUnmountedSpringArcSprites(PlayerRidingController riding)
+    {
+        if (riding == null)
+            return;
+
+        SetAnimEnabled(riding.mountAscendUp, false);
+        SetAnimEnabled(riding.mountAscendDown, false);
+        SetAnimEnabled(riding.mountAscendLeft, false);
+        SetAnimEnabled(riding.mountAscendRight, false);
+
+        SetAnimEnabled(riding.mountDescendUp, false);
+        SetAnimEnabled(riding.mountDescendDown, false);
+        SetAnimEnabled(riding.mountDescendLeft, false);
+        SetAnimEnabled(riding.mountDescendRight, false);
+    }
+
+    private void ClearAllUnmountedSpringArcOffsets(PlayerRidingController riding)
+    {
+        if (riding == null)
+            return;
+
+        ClearRuntimeOffset(riding.mountAscendUp);
+        ClearRuntimeOffset(riding.mountAscendDown);
+        ClearRuntimeOffset(riding.mountAscendLeft);
+        ClearRuntimeOffset(riding.mountAscendRight);
+
+        ClearRuntimeOffset(riding.mountDescendUp);
+        ClearRuntimeOffset(riding.mountDescendDown);
+        ClearRuntimeOffset(riding.mountDescendLeft);
+        ClearRuntimeOffset(riding.mountDescendRight);
+    }
+
+    private void ClearUnmountedSpringArcOffsetsExcept(
+        PlayerRidingController riding,
+        AnimatedSpriteRenderer keep)
+    {
+        if (riding == null)
+            return;
+
+        ClearRuntimeOffsetIfNot(keep, riding.mountAscendUp);
+        ClearRuntimeOffsetIfNot(keep, riding.mountAscendDown);
+        ClearRuntimeOffsetIfNot(keep, riding.mountAscendLeft);
+        ClearRuntimeOffsetIfNot(keep, riding.mountAscendRight);
+
+        ClearRuntimeOffsetIfNot(keep, riding.mountDescendUp);
+        ClearRuntimeOffsetIfNot(keep, riding.mountDescendDown);
+        ClearRuntimeOffsetIfNot(keep, riding.mountDescendLeft);
+        ClearRuntimeOffsetIfNot(keep, riding.mountDescendRight);
+    }
+
+    private static void ClearRuntimeOffset(AnimatedSpriteRenderer r)
+    {
+        if (r == null)
+            return;
+
+        r.ClearRuntimeBaseOffset();
+    }
+
+    private static void ClearRuntimeOffsetIfNot(AnimatedSpriteRenderer keep, AnimatedSpriteRenderer current)
+    {
+        if (current == null || current == keep)
+            return;
+
+        current.ClearRuntimeBaseOffset();
+    }
+
+    private static void SetAnimEnabled(AnimatedSpriteRenderer r, bool on)
+    {
+        if (r == null)
+            return;
+
+        r.enabled = on;
+
+        if (r.TryGetComponent<SpriteRenderer>(out SpriteRenderer sr))
+            sr.enabled = on;
     }
 
     private Vector2 GetTileCenterWorld(float tileSize)
