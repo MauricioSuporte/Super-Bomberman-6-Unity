@@ -298,7 +298,7 @@ public sealed class CannonLauncher : MonoBehaviour
             useMountJumpVisual = mountVisual != null && mountVisual.HasJumpVisuals();
 
             if (useMountJumpVisual)
-                mountVisual.SetJumpVisual(true, dir);
+                mountVisual.SetJumpVisual(true, dir, descending: false);
         }
 
         if (useBallVisual)
@@ -316,6 +316,10 @@ public sealed class CannonLauncher : MonoBehaviour
             }
 
             float t = Mathf.Clamp01(elapsed / duration);
+            bool descendingNow = t >= 0.5f;
+
+            if (useMountJumpVisual && mountVisual != null)
+                mountVisual.SetJumpPhase(descendingNow);
 
             Vector2 flat = Vector2.Lerp(start, end, t);
             float parabola = 4f * t * (1f - t);
