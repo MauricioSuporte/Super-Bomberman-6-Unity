@@ -366,7 +366,7 @@ public sealed class CorneredAnimation : MonoBehaviour
         if (movement == null)
             return corneredLoopRenderer;
 
-        if (!movement.IsMountedOnLouie)
+        if (!movement.IsMounted)
             return corneredLoopRenderer;
 
         var mountVisual = GetComponentInChildren<MountVisualController>(true);
@@ -393,7 +393,7 @@ public sealed class CorneredAnimation : MonoBehaviour
 
         isPlaying = true;
 
-        if (movement.IsMountedOnLouie)
+        if (movement.IsMounted)
         {
             if (hasVisual)
             {
@@ -437,7 +437,7 @@ public sealed class CorneredAnimation : MonoBehaviour
     {
         if (!isPlaying)
         {
-            if (movement != null && movement.IsMountedOnLouie)
+            if (movement != null && movement.IsMounted)
             {
                 var mountVisual = GetComponentInChildren<MountVisualController>(true);
                 if (mountVisual != null)
@@ -458,7 +458,7 @@ public sealed class CorneredAnimation : MonoBehaviour
             return;
         }
 
-        if (movement != null && movement.IsMountedOnLouie)
+        if (movement != null && movement.IsMounted)
         {
             var mountVisual = GetComponentInChildren<MountVisualController>(true);
             if (mountVisual != null)

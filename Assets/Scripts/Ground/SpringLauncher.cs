@@ -127,7 +127,7 @@ public sealed class SpringLauncher : MonoBehaviour
                     if (heldDir != Vector2.zero)
                         prepFaceDir = heldDir;
 
-                    if (!mover.IsMountedOnLouie)
+                    if (!mover.IsMounted)
                     {
                         mover.ShowSpringLauncherLookUp(prepFaceDir);
                     }
@@ -191,7 +191,7 @@ public sealed class SpringLauncher : MonoBehaviour
                 }
 
                 float duration = Mathf.Max(0.05f, jumpSeconds);
-                bool isUnmounted = !mover.IsMountedOnLouie;
+                bool isUnmounted = !mover.IsMounted;
 
                 if (isUnmounted)
                 {

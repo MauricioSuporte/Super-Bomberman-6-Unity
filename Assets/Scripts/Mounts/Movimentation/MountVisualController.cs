@@ -534,7 +534,7 @@ public class MountVisualController : MonoBehaviour
         if (!syncBlinkFromPlayerWhenMounted)
             return;
 
-        if (owner == null || !owner.IsMountedOnLouie)
+        if (owner == null || !owner.IsMounted)
             return;
 
         if (ownerSpriteRenderers == null || louieSpriteRenderers == null)

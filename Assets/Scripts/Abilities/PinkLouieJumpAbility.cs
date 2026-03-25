@@ -122,7 +122,7 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
             yield break;
         }
 
-        bool wasMountedAtStart = movement.IsMountedOnLouie;
+        bool wasMountedAtStart = movement.IsMounted;
         var mountedLouieHealth = wasMountedAtStart ? GetMountedLouieHealth() : null;
 
         Vector2 inputDir = movement.Direction != Vector2.zero ? movement.Direction : Vector2.zero;
@@ -208,7 +208,7 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
 
             rb.position = pos;
 
-            if (wasMountedAtStart && !movement.IsMountedOnLouie)
+            if (wasMountedAtStart && !movement.IsMounted)
             {
                 HandleLoseLouieMidJump(projectedGroundPos3, startCell, destructible, indestructible, ground);
 

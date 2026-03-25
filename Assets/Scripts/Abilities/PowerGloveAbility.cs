@@ -346,7 +346,7 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
         if (animLocking) return;
         if (movement == null) return;
 
-        if (movement.IsMountedOnLouie) return;
+        if (movement.IsMounted) return;
         if (movement.IsRidingPlaying()) return;
 
         if (IsExternalBlockingDismount())

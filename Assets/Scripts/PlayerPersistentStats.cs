@@ -27,14 +27,14 @@ public static class PlayerPersistentStats
         public bool CanPunchBombs = true;
         public bool HasPowerGlove = true;
         public bool CanPassBombs = false;
-        public bool CanPassDestructibles = false;
+        public bool CanPassDestructibles = true;
         public bool HasPierceBombs = false;
         public bool HasControlBombs = true;
         public bool HasPowerBomb = false;
         public bool HasRubberBombs = false;
         public bool HasFullFire = false;
 
-        public MountedType MountedLouie = MountedType.Mole;
+        public MountedType MountedLouie = MountedType.Blue;
         public BomberSkin Skin = BomberSkin.White;
 
         public readonly List<ItemType> QueuedEggs = new(8);

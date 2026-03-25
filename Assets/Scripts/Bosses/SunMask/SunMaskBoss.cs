@@ -458,7 +458,7 @@ public class SunMaskBoss : MonoBehaviour, IKillable
 
         int dmg = Mathf.Max(1, touchDamage);
 
-        if (player.IsMountedOnLouie)
+        if (player.IsMounted)
         {
             if (player.TryGetComponent<PlayerMountCompanion>(out var companion) && companion != null)
             {

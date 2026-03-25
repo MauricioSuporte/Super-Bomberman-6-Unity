@@ -187,7 +187,7 @@ public class ItemPickup : MonoBehaviour
 
     bool PlayerAlreadyMounted(GameObject player)
     {
-        if (player.TryGetComponent<MovementController>(out var movement) && movement.IsMountedOnLouie)
+        if (player.TryGetComponent<MovementController>(out var movement) && movement.IsMounted)
             return true;
 
         if (player.TryGetComponent<PlayerMountCompanion>(out var louieCompanion) && louieCompanion != null)
@@ -335,7 +335,7 @@ public class ItemPickup : MonoBehaviour
                 }
             }
 
-            if (mv.IsMountedOnLouie)
+            if (mv.IsMounted)
             {
                 if (player.TryGetComponent<PlayerMountCompanion>(out var companion) && companion != null)
                 {

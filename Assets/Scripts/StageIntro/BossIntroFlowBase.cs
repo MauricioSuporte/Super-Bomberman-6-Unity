@@ -203,7 +203,7 @@ public abstract class BossIntroFlowBase : MonoBehaviour
             if (p.ExternalMovementOverride)
                 continue;
 
-            if (p.IsMountedOnLouie)
+            if (p.IsMounted)
                 p.ForceMountedUpExclusive();
             else
                 p.ForceIdleUp();

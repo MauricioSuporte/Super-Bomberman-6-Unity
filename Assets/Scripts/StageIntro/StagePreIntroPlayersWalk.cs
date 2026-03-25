@@ -1075,7 +1075,7 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
         if (pw.mover == null)
             return;
 
-        if (pw.mover.IsMountedOnLouie)
+        if (pw.mover.IsMounted)
             pw.mover.ForceIdleUpConsideringMount();
         else
             pw.mover.ForceIdleUp();

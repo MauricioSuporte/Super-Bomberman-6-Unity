@@ -48,7 +48,7 @@ public sealed class PlayerManualDismount : MonoBehaviour
         if (rider != null && rider.IsPlaying)
             return;
 
-        if (!movement.IsMountedOnLouie || !companion.HasMountedLouie())
+        if (!movement.IsMounted || !companion.HasMountedLouie())
             return;
 
         var input = PlayerInputManager.Instance;
@@ -92,7 +92,7 @@ public sealed class PlayerManualDismount : MonoBehaviour
         if (IsExternalBlockingDismount())
             return;
 
-        if (!movement.IsMountedOnLouie || !companion.HasMountedLouie())
+        if (!movement.IsMounted || !companion.HasMountedLouie())
             return;
 
         Vector2 facingAtPress = movement.Direction != Vector2.zero

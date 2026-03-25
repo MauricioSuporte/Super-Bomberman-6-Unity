@@ -1056,7 +1056,7 @@ public class MechaBossSequence : MonoBehaviour
             var p = players[i];
             if (p == null) continue;
 
-            if (p.IsMountedOnLouie)
+            if (p.IsMounted)
                 p.ForceMountedUpExclusive();
             else
                 p.ForceIdleUp();

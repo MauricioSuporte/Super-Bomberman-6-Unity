@@ -54,6 +54,7 @@ public class MovementController : MonoBehaviour, IKillable
     public AnimatedSpriteRenderer spriteRendererCheering;
     public AnimatedSpriteRenderer spriteRendererFall;
     public AnimatedSpriteRenderer spriteRendererCornered;
+    public AnimatedSpriteRenderer spriteRendererBall;
 
     [Header("Mounted On Louie")]
     public AnimatedSpriteRenderer mountedSpriteUp;
@@ -160,7 +161,7 @@ public class MovementController : MonoBehaviour, IKillable
     public Vector2 FacingDirection => facingDirection;
 
     private bool isMounted;
-    public bool IsMountedOnLouie => isMounted;
+    public bool IsMounted => isMounted;
 
     protected bool deathRequestedByExplosion;
     public bool isDead;
@@ -375,7 +376,7 @@ public class MovementController : MonoBehaviour, IKillable
 
     private void DisableAllFootSprites()
     {
-        SetMany(false, spriteRendererUp, spriteRendererDown, spriteRendererLeft, spriteRendererRight);
+        SetMany(false, spriteRendererUp, spriteRendererDown, spriteRendererLeft, spriteRendererRight, spriteRendererBall);
     }
 
     private void DisableAllMountedSprites()
@@ -389,7 +390,7 @@ public class MovementController : MonoBehaviour, IKillable
     {
         SetMany(visible,
             spriteRendererUp, spriteRendererDown, spriteRendererLeft, spriteRendererRight,
-            spriteRendererDeath, spriteRendererDeathByExplosion, spriteRendererEndStage, spriteRendererCheering, spriteRendererFall, spriteRendererCornered,
+            spriteRendererDeath, spriteRendererDeathByExplosion, spriteRendererEndStage, spriteRendererCheering, spriteRendererFall, spriteRendererCornered, spriteRendererBall,
             mountedSpriteUp, mountedSpriteDown, mountedSpriteLeft, mountedSpriteRight,
             headOnlyUp, headOnlyDown, headOnlyLeft, headOnlyRight);
 

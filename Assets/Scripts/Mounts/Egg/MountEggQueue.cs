@@ -1587,7 +1587,7 @@ public sealed class MountEggQueue : MonoBehaviour
         bool mountedByMovement =
             consumerPlayer.TryGetComponent<MovementController>(out var mv) &&
             mv != null &&
-            mv.IsMountedOnLouie;
+            mv.IsMounted;
 
         bool mountedByCompanion =
             consumerPlayer.TryGetComponent<PlayerMountCompanion>(out var compCheck) &&

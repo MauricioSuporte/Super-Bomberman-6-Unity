@@ -557,7 +557,7 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
             if (p.TryGetComponent<BombPunchAbility>(out var punch))
                 punch.ForceResetPunchSprites();
 
-            var keep = p.IsMountedOnLouie
+            var keep = p.IsMounted
                 ? (p.mountedSpriteUp != null ? p.mountedSpriteUp : p.spriteRendererUp)
                 : p.spriteRendererUp;
 
@@ -665,7 +665,7 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
 
             DisableAllPlayerSpritesExcept(
                 p,
-                p.IsMountedOnLouie
+                p.IsMounted
                     ? (p.mountedSpriteUp != null ? p.mountedSpriteUp : p.spriteRendererUp)
                     : p.spriteRendererUp,
                 keepLouieVisual: true
@@ -724,7 +724,7 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
     void EnsureMountedLouieExistsIfNeededOne(MovementController p)
     {
         if (p == null) return;
-        if (!p.IsMountedOnLouie) return;
+        if (!p.IsMounted) return;
 
         if (!p.TryGetComponent<PlayerMountCompanion>(out var comp) || comp == null)
             return;
@@ -863,7 +863,7 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
         for (int i = 0; i < players.Length; i++)
         {
             var p = players[i];
-            if (p == null || !p.IsMountedOnLouie)
+            if (p == null || !p.IsMounted)
                 continue;
 
             var rider = p.GetComponentInChildren<MountVisualController>(true);
@@ -1334,7 +1334,7 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
                 return;
         }
 
-        if (movement.IsMountedOnLouie)
+        if (movement.IsMounted)
         {
             if (movement.TryGetComponent<PlayerMountCompanion>(out var companion) && companion != null)
             {

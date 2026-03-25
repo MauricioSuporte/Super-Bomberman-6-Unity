@@ -80,7 +80,7 @@ public class StarProjectile : MonoBehaviour
         if (playerHealth != null && playerHealth.IsInvulnerable)
             return false;
 
-        if (movement.IsMountedOnLouie)
+        if (movement.IsMounted)
         {
             if (movement.TryGetComponent<PlayerMountCompanion>(out var companion) && companion != null)
             {

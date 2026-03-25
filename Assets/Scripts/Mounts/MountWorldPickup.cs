@@ -62,7 +62,7 @@ public sealed class MountWorldPickup : MonoBehaviour
             return;
 
         bool alreadyMounted =
-            (player.TryGetComponent<MovementController>(out var m2) && m2 != null && m2.IsMountedOnLouie) ||
+            (player.TryGetComponent<MovementController>(out var m2) && m2 != null && m2.IsMounted) ||
             (player.TryGetComponent<PlayerMountCompanion>(out var c2) && c2 != null && c2.HasMountedLouie());
 
         if (alreadyMounted)

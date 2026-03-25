@@ -48,7 +48,8 @@ public sealed class CannonLauncher : MonoBehaviour
 
     private void Reset()
     {
-        if (TryGetComponent<Collider2D>(out var col)) col.isTrigger = true;
+        if (TryGetComponent<Collider2D>(out var col))
+            col.isTrigger = true;
     }
 
     private void Awake()
@@ -74,13 +75,7 @@ public sealed class CannonLauncher : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D other)
     {
-        if (busy)
-            return;
-
-        if (other == null)
-            return;
-
-        if (!other.CompareTag("Player"))
+        if (busy || other == null || !other.CompareTag("Player"))
             return;
 
         var mover = other.GetComponent<MovementController>();
@@ -108,7 +103,6 @@ public sealed class CannonLauncher : MonoBehaviour
         mover.SetInputLocked(true, forceIdle: false);
 
         Vector2 forcedVisualDir = fireToLeft ? Vector2.left : Vector2.right;
-
         mover.ApplyDirectionFromVector(forcedVisualDir);
         mover.ApplyDirectionFromVector(Vector2.zero);
 
@@ -121,7 +115,6 @@ public sealed class CannonLauncher : MonoBehaviour
         StartCoroutine(PlayFireSfxWithDelay());
 
         yield return PlayCannonFire(totalFire, warm);
-
         yield return LaunchPlayerArc(mover, dir);
 
         mover.SetInputLocked(prevInputLocked, forceIdle: false);
@@ -272,34 +265,48 @@ public sealed class CannonLauncher : MonoBehaviour
         float tileSize = Mathf.Max(0.0001f, mover.tileSize);
 
         Rigidbody2D rb = mover.Rigidbody;
-        var playerCol = mover.GetComponent<Collider2D>();
-        var bombController = mover.GetComponent<BombController>();
+        Collider2D playerCol = mover.GetComponent<Collider2D>();
+        BombController bombController = mover.GetComponent<BombController>();
+        AnimatedSpriteRenderer ball = mover.spriteRendererBall;
 
-        bool prevColliderEnabled = (playerCol != null) && playerCol.enabled;
-        bool prevBombEnabled = (bombController != null) && bombController.enabled;
+        bool prevColliderEnabled = playerCol != null && playerCol.enabled;
+        bool prevBombEnabled = bombController != null && bombController.enabled;
 
         mover.SetExplosionInvulnerable(true);
 
-        if (bombController != null) bombController.enabled = false;
-        if (playerCol != null) playerCol.enabled = false;
+        if (bombController != null)
+            bombController.enabled = false;
+
+        if (playerCol != null)
+            playerCol.enabled = false;
 
         rb.linearVelocity = Vector2.zero;
 
         Vector2 start = rb.position;
         float distanceWorld = launchTiles * tileSize;
         Vector2 end = start + dir * distanceWorld;
-
         float arcWorld = arcHeightTiles * tileSize;
+
+        bool useBallVisual = !mover.IsMounted && ball != null;
+
+        if (useBallVisual)
+            ShowBallOnly(mover, ball);
 
         float duration = Mathf.Max(0.05f, flightSeconds);
         float elapsed = 0f;
 
         while (elapsed < duration)
         {
-            float tt = elapsed / duration;
+            if (GamePauseController.IsPaused)
+            {
+                yield return null;
+                continue;
+            }
 
-            Vector2 flat = Vector2.Lerp(start, end, tt);
-            float parabola = 4f * tt * (1f - tt);
+            float t = Mathf.Clamp01(elapsed / duration);
+
+            Vector2 flat = Vector2.Lerp(start, end, t);
+            float parabola = 4f * t * (1f - t);
             Vector2 pos = flat + Vector2.up * (arcWorld * parabola);
 
             rb.position = pos;
@@ -321,9 +328,41 @@ public sealed class CannonLauncher : MonoBehaviour
         rb.position = finalPos;
         rb.linearVelocity = Vector2.zero;
 
-        if (playerCol != null) playerCol.enabled = prevColliderEnabled;
-        if (bombController != null) bombController.enabled = prevBombEnabled;
+        if (playerCol != null)
+            playerCol.enabled = prevColliderEnabled;
+
+        if (bombController != null)
+            bombController.enabled = prevBombEnabled;
+
+        if (useBallVisual)
+        {
+            mover.SetVisualOverrideActive(false);
+            mover.EnableExclusiveFromState();
+        }
 
         mover.SetExplosionInvulnerable(false);
+    }
+
+    private static void ShowBallOnly(MovementController mover, AnimatedSpriteRenderer ball)
+    {
+        if (mover == null || mover.IsMounted)
+            return;
+
+        mover.SetVisualOverrideActive(true);
+        mover.SetAllSpritesVisible(false);
+
+        if (ball == null)
+            return;
+
+        ball.enabled = true;
+        ball.idle = false;
+        ball.loop = true;
+        ball.CurrentFrame = 0;
+        ball.ClearExternalBase();
+        ball.ClearRuntimeBaseOffset();
+        ball.RefreshFrame();
+
+        if (ball.TryGetComponent(out SpriteRenderer sr) && sr != null)
+            sr.enabled = true;
     }
 }

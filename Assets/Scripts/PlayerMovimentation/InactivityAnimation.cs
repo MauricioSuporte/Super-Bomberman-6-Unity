@@ -93,7 +93,7 @@ public sealed class InactivityAnimation : MonoBehaviour
 
     private EmoteTarget ResolveDesiredTarget()
     {
-        if (!movement.IsMountedOnLouie)
+        if (!movement.IsMounted)
             return EmoteTarget.Player;
 
         var lv = ResolveLouieVisual();
@@ -105,7 +105,7 @@ public sealed class InactivityAnimation : MonoBehaviour
 
     private MountVisualController ResolveLouieVisual()
     {
-        if (!movement.IsMountedOnLouie)
+        if (!movement.IsMounted)
         {
             cachedLouieVisual = null;
             nextLouieResolveTime = 0f;
