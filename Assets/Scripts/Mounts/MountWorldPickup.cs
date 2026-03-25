@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using UnityEngine.Tilemaps;
 
 [RequireComponent(typeof(Collider2D))]
 public sealed class MountWorldPickup : MonoBehaviour
@@ -91,9 +92,39 @@ public sealed class MountWorldPickup : MonoBehaviour
 
     Vector3 ResolveLandingWorldPosition()
     {
-        Vector3 p = _col != null ? _col.bounds.center : transform.position;
-        p.z = 0f;
-        return p;
+        Vector3 worldPos = _col != null ? _col.bounds.center : transform.position;
+
+        var tm = ResolveGroundTilemapNear(worldPos);
+        if (tm != null)
+        {
+            Vector3Int cell = tm.WorldToCell(worldPos);
+            Vector3 center = tm.GetCellCenterWorld(cell);
+            center.z = 0f;
+            return center;
+        }
+
+        worldPos.z = 0f;
+        return worldPos;
+    }
+
+    static Tilemap ResolveGroundTilemapNear(Vector3 worldPos)
+    {
+        var tilemaps = Object.FindObjectsByType<Tilemap>(FindObjectsSortMode.None);
+        if (tilemaps == null || tilemaps.Length == 0)
+            return null;
+
+        for (int i = 0; i < tilemaps.Length; i++)
+        {
+            var tm = tilemaps[i];
+            if (tm == null)
+                continue;
+
+            var cell = tm.WorldToCell(worldPos);
+            if (tm.GetTile(cell) != null)
+                return tm;
+        }
+
+        return null;
     }
 
     static MountedType ResolveTypeFromNameFallback(string n)

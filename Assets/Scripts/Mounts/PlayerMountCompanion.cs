@@ -540,7 +540,10 @@ public class PlayerMountCompanion : MonoBehaviour
         var louie = currentLouie;
         currentLouie = null;
 
-        louie.transform.GetPositionAndRotation(out var worldPos, out var worldRot);
+        Vector3 snappedWorldPos = GetPlayerTileCenter();
+        Quaternion worldRot = Quaternion.identity;
+
+        transform.position = snappedWorldPos;
 
         ClearDashInvulnerabilityNow();
         ResetMountedStateAndAbilities();
@@ -548,7 +551,7 @@ public class PlayerMountCompanion : MonoBehaviour
         if (movement.TryGetComponent<CharacterHealth>(out var health))
             health.StartTemporaryInvulnerability(playerInvulnerabilityAfterLoseLouieSeconds);
 
-        DetachLouieToWorld(louie, worldPos, worldRot, disableRidingVisual: false);
+        DetachLouieToWorld(louie, snappedWorldPos, worldRot, disableRidingVisual: false);
 
         KillDetachedLouieGuaranteed(louie, byExplosion);
     }
@@ -570,23 +573,27 @@ public class PlayerMountCompanion : MonoBehaviour
 
         currentLouie = null;
 
-        louie.transform.GetPositionAndRotation(out var worldPos, out var worldRot);
+        Vector3 snappedWorldPos = GetPlayerTileCenter();
+        Quaternion worldRot = Quaternion.identity;
 
         ClearDashInvulnerabilityNow();
         ResetMountedStateAndAbilities();
 
         louie.transform.SetParent(null, true);
-        louie.transform.SetPositionAndRotation(worldPos, worldRot);
+        louie.transform.SetPositionAndRotation(snappedWorldPos, worldRot);
 
         DisableLouieRidingVisualForWorld(louie);
-
-        LouieVisualUtils.ForceDetachedLouieIdleFacing(louie, movement.FacingDirection);
+        RestoreDetachedLouieWorldVisual(louie, movement.FacingDirection);
 
         if (louie.TryGetComponent<MountMovementController>(out var lm))
             lm.enabled = false;
 
         if (louie.TryGetComponent<Rigidbody2D>(out var rb))
+        {
+            rb.linearVelocity = Vector2.zero;
+            rb.angularVelocity = 0f;
             rb.simulated = true;
+        }
 
         if (louie.TryGetComponent<Collider2D>(out var col))
             col.enabled = true;
@@ -596,6 +603,8 @@ public class PlayerMountCompanion : MonoBehaviour
 
         if (louie.TryGetComponent<MovementController>(out var mc) && mc != null)
             mc.SetExplosionInvulnerable(false);
+
+        transform.position = snappedWorldPos;
 
         detachedLouie = louie;
         detachedType = typeBeforeReset;
@@ -630,14 +639,23 @@ public class PlayerMountCompanion : MonoBehaviour
 
         Vector2 facing = ResolveFacingForMount(movement.FacingDirection);
 
-        PrepareWorldLouieForStationaryMount(louieWorldInstance, louieType, targetWorldPos, facing);
+        // IMPORTANTE:
+        // aqui não vamos snapar o target vindo do ovo/pickup.
+        Vector3 exactTargetWorldPos = targetWorldPos;
+        exactTargetWorldPos.z = 0f;
+
+        PrepareWorldLouieForStationaryMount(louieWorldInstance, louieType, exactTargetWorldPos, facing);
 
         if (rider != null && rider.TryPlayMountArc(
             facing,
             startWorldPos,
-            targetWorldPos,
+            exactTargetWorldPos,
             onComplete: () =>
             {
+                Vector3 finalPlayerPos = exactTargetWorldPos;
+                finalPlayerPos.z = transform.position.z;
+                transform.position = finalPlayerPos;
+
                 AttachExistingLouieForMountAtLanding(louieWorldInstance, louieType, facing);
                 FinalizeMount(louieType, facing);
                 AdoptWorldQueueIfAny();
@@ -650,22 +668,21 @@ public class PlayerMountCompanion : MonoBehaviour
 
         PlayMountSfxIfAny();
 
-        AttachExistingLouieForMountAtLanding(louieWorldInstance, louieType, facing);
-
-        Vector3 finalPos = targetWorldPos;
+        Vector3 finalPos = exactTargetWorldPos;
         finalPos.z = transform.position.z;
         transform.position = finalPos;
 
+        AttachExistingLouieForMountAtLanding(louieWorldInstance, louieType, facing);
         FinalizeMount(louieType, facing);
         AdoptWorldQueueIfAny();
         return true;
     }
 
     void PrepareWorldLouieForStationaryMount(
-    GameObject louieWorldInstance,
-    MountedType type,
-    Vector3 worldPos,
-    Vector2 facingDirection)
+        GameObject louieWorldInstance,
+        MountedType type,
+        Vector3 worldPos,
+        Vector2 facingDirection)
     {
         if (louieWorldInstance == null)
             return;
@@ -774,8 +791,12 @@ public class PlayerMountCompanion : MonoBehaviour
         if (currentLouie == null)
             return;
 
-        currentLouie.transform.GetPositionAndRotation(out var worldPos, out var worldRot);
-        DetachLouieToWorld(currentLouie, worldPos, worldRot, disableRidingVisual: true);
+        Vector3 snappedWorldPos = GetPlayerTileCenter();
+        Quaternion worldRot = Quaternion.identity;
+
+        transform.position = snappedWorldPos;
+
+        DetachLouieToWorld(currentLouie, snappedWorldPos, worldRot, disableRidingVisual: true);
     }
 
     void DetachLouieToWorld(GameObject louie, Vector3 worldPos, Quaternion worldRot, bool disableRidingVisual)
@@ -1928,6 +1949,27 @@ public class PlayerMountCompanion : MonoBehaviour
     public GameObject GetMountPrefabForType(MountedType type)
     {
         return GetPrefab(type);
+    }
+
+    Vector3 SnapWorldToTileCenter(Vector3 worldPos)
+    {
+        var tm = ResolveGroundTilemapNear(worldPos);
+        if (tm != null)
+        {
+            Vector3Int cell = tm.WorldToCell(worldPos);
+            Vector3 center = tm.GetCellCenterWorld(cell);
+            center.z = 0f;
+            return center;
+        }
+
+        Vector3 p = worldPos;
+        p.z = 0f;
+        return p;
+    }
+
+    Vector3 GetPlayerTileCenter()
+    {
+        return SnapWorldToTileCenter(transform.position);
     }
 
     #endregion
