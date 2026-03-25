@@ -289,6 +289,18 @@ public sealed class CannonLauncher : MonoBehaviour
 
         bool useBallVisual = !mover.IsMounted && ball != null;
 
+        MountVisualController mountVisual = null;
+        bool useMountJumpVisual = false;
+
+        if (mover.IsMounted)
+        {
+            mountVisual = mover.GetComponentInChildren<MountVisualController>(true);
+            useMountJumpVisual = mountVisual != null && mountVisual.HasJumpVisuals();
+
+            if (useMountJumpVisual)
+                mountVisual.SetJumpVisual(true, dir);
+        }
+
         if (useBallVisual)
             ShowBallOnly(mover, ball);
 
@@ -339,6 +351,9 @@ public sealed class CannonLauncher : MonoBehaviour
             mover.SetVisualOverrideActive(false);
             mover.EnableExclusiveFromState();
         }
+
+        if (useMountJumpVisual && mountVisual != null)
+            mountVisual.SetJumpVisual(false, dir);
 
         mover.SetExplosionInvulnerable(false);
     }

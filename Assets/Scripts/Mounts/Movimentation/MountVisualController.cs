@@ -26,6 +26,12 @@ public class MountVisualController : MonoBehaviour
     public AnimatedSpriteRenderer louieLeft;
     public AnimatedSpriteRenderer louieRight;
 
+    [Header("Jump")]
+    [SerializeField] private AnimatedSpriteRenderer louieJumpUp;
+    [SerializeField] private AnimatedSpriteRenderer louieJumpDown;
+    [SerializeField] private AnimatedSpriteRenderer louieJumpLeft;
+    [SerializeField] private AnimatedSpriteRenderer louieJumpRight;
+
     [Header("End Stage")]
     public AnimatedSpriteRenderer louieEndStage;
 
@@ -74,6 +80,9 @@ public class MountVisualController : MonoBehaviour
 
     public bool HasInactivityEmoteRenderer => louieInactivityEmoteLoop != null;
 
+    private bool playingJump;
+    private Vector2 jumpFacing = Vector2.down;
+
     public void SetTemporaryHeadOnlyDownDelta(Vector2 delta, bool active)
     {
         temporaryHeadOnlyDownDelta = delta;
@@ -106,6 +115,9 @@ public class MountVisualController : MonoBehaviour
         externalTintActive = false;
         externalTintColor = Color.white;
         externalTintNormalized = 1f;
+
+        playingJump = false;
+        jumpFacing = Vector2.down;
 
         CacheAllRenderers();
 
@@ -253,6 +265,7 @@ public class MountVisualController : MonoBehaviour
         {
             playingInactivity = false;
             playingEndStage = false;
+            playingJump = false;
             transform.localPosition = localOffset;
             return;
         }
@@ -297,7 +310,11 @@ public class MountVisualController : MonoBehaviour
         else
             ClearHeadOnlyOffsetsIfNeeded();
 
-        if (playingCornered)
+        if (playingJump)
+        {
+            EnsureJumpExclusive();
+        }
+        else if (playingCornered)
         {
             EnsureCorneredExclusive();
         }
@@ -658,6 +675,11 @@ public class MountVisualController : MonoBehaviour
         SetRendererBranchEnabled(louieLeft, keep == louieLeft);
         SetRendererBranchEnabled(louieRight, keep == louieRight);
         SetRendererBranchEnabled(louieEndStage, keep == louieEndStage);
+        SetRendererBranchEnabled(louieJumpUp, keep == louieJumpUp);
+        SetRendererBranchEnabled(louieJumpDown, keep == louieJumpDown);
+        SetRendererBranchEnabled(louieJumpLeft, keep == louieJumpLeft);
+        SetRendererBranchEnabled(louieJumpRight, keep == louieJumpRight);
+        SetRendererBranchEnabled(louieEndStage, keep == louieEndStage);
 
         if (louieInactivityEmoteLoop != null)
             SetRendererBranchEnabled(louieInactivityEmoteLoop, false);
@@ -758,5 +780,112 @@ public class MountVisualController : MonoBehaviour
         louieCornered.loop = true;
         louieCornered.pingPong = false;
         louieCornered.RefreshFrame();
+    }
+
+    public bool HasJumpVisuals()
+    {
+        return louieJumpUp != null || louieJumpDown != null || louieJumpLeft != null || louieJumpRight != null;
+    }
+
+    public void SetJumpVisual(bool on, Vector2 facing)
+    {
+        if (on && !HasJumpVisuals())
+            return;
+
+        playingJump = on;
+
+        if (facing != Vector2.zero)
+            jumpFacing = Cardinalize(facing);
+        else if (owner != null && owner.FacingDirection != Vector2.zero)
+            jumpFacing = Cardinalize(owner.FacingDirection);
+        else
+            jumpFacing = Vector2.down;
+
+        if (!playingJump)
+        {
+            if (owner == null)
+                return;
+
+            bool isIdle = owner.Direction == Vector2.zero;
+            Vector2 faceDir = isIdle ? owner.FacingDirection : owner.Direction;
+            ApplyDirection(faceDir, isIdle);
+            return;
+        }
+
+        EnsureJumpExclusive();
+    }
+
+    private void EnsureJumpExclusive()
+    {
+        if (!playingJump)
+            return;
+
+        AnimatedSpriteRenderer target = PickJumpRenderer(jumpFacing, out bool flipX);
+        if (target == null)
+            return;
+
+        HardExclusive(target);
+
+        target.idle = false;
+        target.loop = true;
+        target.pingPong = false;
+
+        if (target.TryGetComponent<SpriteRenderer>(out var sr) && sr != null)
+            sr.flipX = flipX;
+
+        target.RefreshFrame();
+    }
+
+    private AnimatedSpriteRenderer PickJumpRenderer(Vector2 faceDir, out bool flipX)
+    {
+        flipX = false;
+        faceDir = Cardinalize(faceDir);
+
+        if (faceDir == Vector2.up)
+            return louieJumpUp != null ? louieJumpUp : null;
+
+        if (faceDir == Vector2.down)
+            return louieJumpDown != null ? louieJumpDown : null;
+
+        if (faceDir == Vector2.left)
+        {
+            if (louieJumpLeft != null)
+                return louieJumpLeft;
+
+            if (louieJumpRight != null)
+                return louieJumpRight;
+
+            return null;
+        }
+
+        if (faceDir == Vector2.right)
+        {
+            if (louieJumpRight != null)
+                return louieJumpRight;
+
+            if (louieJumpLeft != null)
+            {
+                flipX = true;
+                return louieJumpLeft;
+            }
+
+            return null;
+        }
+
+        return louieJumpDown != null ? louieJumpDown :
+               louieJumpUp != null ? louieJumpUp :
+               louieJumpLeft != null ? louieJumpLeft :
+               louieJumpRight;
+    }
+
+    private static Vector2 Cardinalize(Vector2 v)
+    {
+        if (v == Vector2.zero)
+            return Vector2.down;
+
+        if (Mathf.Abs(v.x) >= Mathf.Abs(v.y))
+            return v.x >= 0f ? Vector2.right : Vector2.left;
+
+        return v.y >= 0f ? Vector2.up : Vector2.down;
     }
 }
