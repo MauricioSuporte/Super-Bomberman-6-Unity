@@ -19,17 +19,17 @@ public static class PlayerPersistentStats
 
     public sealed class PlayerState
     {
-        public int Life = 99;
+        public int Life = 1;
         public int BombAmount = 1;
         public int ExplosionRadius = 10;
         public int SpeedInternal = MaxSpeedInternal;
         public bool CanKickBombs = false;
-        public bool CanPunchBombs = false;
+        public bool CanPunchBombs = true;
         public bool HasPowerGlove = true;
-        public bool CanPassBombs = true;
-        public bool CanPassDestructibles = true;
-        public bool HasPierceBombs = true;
-        public bool HasControlBombs = false;
+        public bool CanPassBombs = false;
+        public bool CanPassDestructibles = false;
+        public bool HasPierceBombs = false;
+        public bool HasControlBombs = true;
         public bool HasPowerBomb = false;
         public bool HasRubberBombs = false;
         public bool HasFullFire = false;

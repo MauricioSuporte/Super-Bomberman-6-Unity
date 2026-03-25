@@ -53,6 +53,7 @@ public class MovementController : MonoBehaviour, IKillable
     public AnimatedSpriteRenderer spriteRendererEndStage;
     public AnimatedSpriteRenderer spriteRendererCheering;
     public AnimatedSpriteRenderer spriteRendererFall;
+    public AnimatedSpriteRenderer spriteRendererCornered;
 
     [Header("Mounted On Louie")]
     public AnimatedSpriteRenderer mountedSpriteUp;
@@ -388,7 +389,7 @@ public class MovementController : MonoBehaviour, IKillable
     {
         SetMany(visible,
             spriteRendererUp, spriteRendererDown, spriteRendererLeft, spriteRendererRight,
-            spriteRendererDeath, spriteRendererDeathByExplosion, spriteRendererEndStage, spriteRendererCheering, spriteRendererFall,
+            spriteRendererDeath, spriteRendererDeathByExplosion, spriteRendererEndStage, spriteRendererCheering, spriteRendererFall, spriteRendererCornered,
             mountedSpriteUp, mountedSpriteDown, mountedSpriteLeft, mountedSpriteRight,
             headOnlyUp, headOnlyDown, headOnlyLeft, headOnlyRight);
 
