@@ -438,51 +438,57 @@ public sealed class CorneredAnimation : MonoBehaviour
 
         activeCorneredRenderer = GetCorneredRenderer();
 
-        if (movement.IsMountedOnLouie && activeCorneredRenderer == null)
+        bool hasVisual = activeCorneredRenderer != null;
+
+        if (movement.IsMountedOnLouie && !hasVisual)
         {
-            Log("StartCornered abortado: montado sem animação Cornered");
-            return;
+            Log("StartCornered: sem animação na montaria → apenas SFX");
         }
 
         isPlaying = true;
 
         Log($"StartCornered | visualOverride antes={movement.VisualOverrideActive}");
 
-        movement.SetVisualOverrideActive(true);
-
         if (movement.IsMountedOnLouie)
         {
-            movement.SetInactivityMountedDownOverride(true);
-
-            var mountVisual = GetComponentInChildren<MountVisualController>(true);
-            if (mountVisual != null)
-                mountVisual.SetCornered(true);
-
-            SetCorneredEnabled(false);
-        }
-        else
-        {
-            movement.SetInactivityMountedDownOverride(false);
-
-            if (activeCorneredRenderer != null)
+            if (hasVisual)
             {
-                activeCorneredRenderer.loop = true;
-                activeCorneredRenderer.idle = false;
+                movement.SetVisualOverrideActive(true);
+                movement.SetInactivityMountedDownOverride(true);
+
+                var mountVisual = GetComponentInChildren<MountVisualController>(true);
+                if (mountVisual != null)
+                    mountVisual.SetCornered(true);
             }
             else
             {
-                Log("StartCornered aviso: activeCorneredRenderer == null");
+                movement.SetInactivityMountedDownOverride(false);
             }
+        }
+        else
+        {
+            if (hasVisual)
+            {
+                movement.SetVisualOverrideActive(true);
+                movement.SetInactivityMountedDownOverride(false);
 
-            SetCorneredEnabled(true);
+                activeCorneredRenderer.loop = true;
+                activeCorneredRenderer.idle = false;
 
-            if (refreshFrameOnEnter && activeCorneredRenderer != null)
-                activeCorneredRenderer.RefreshFrame();
+                SetCorneredEnabled(true);
+
+                if (refreshFrameOnEnter)
+                    activeCorneredRenderer.RefreshFrame();
+            }
+            else
+            {
+                Log("StartCornered: player sem renderer → apenas SFX");
+            }
         }
 
         PlayCorneredSfx();
 
-        Log($"StartCornered concluído | visualOverride depois={movement.VisualOverrideActive} | rendererEnabled={(activeCorneredRenderer != null && activeCorneredRenderer.enabled)}");
+        Log($"StartCornered concluído | visual={(hasVisual ? "ON" : "OFF (SFX only)")}");
     }
 
     private void StopCornered()
