@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Tilemaps;
 
 public sealed class MountEggQueue : MonoBehaviour
 {
@@ -1583,8 +1584,16 @@ public sealed class MountEggQueue : MonoBehaviour
         if (rider != null && rider.IsPlaying)
             return false;
 
-        bool mountedByMovement = consumerPlayer.TryGetComponent<MovementController>(out var mv) && mv != null && mv.IsMountedOnLouie;
-        bool mountedByCompanion = consumerPlayer.TryGetComponent<PlayerMountCompanion>(out var compCheck) && compCheck != null && compCheck.HasMountedLouie();
+        bool mountedByMovement =
+            consumerPlayer.TryGetComponent<MovementController>(out var mv) &&
+            mv != null &&
+            mv.IsMountedOnLouie;
+
+        bool mountedByCompanion =
+            consumerPlayer.TryGetComponent<PlayerMountCompanion>(out var compCheck) &&
+            compCheck != null &&
+            compCheck.HasMountedLouie();
+
         if (mountedByMovement || mountedByCompanion)
             return false;
 
@@ -1607,42 +1616,32 @@ public sealed class MountEggQueue : MonoBehaviour
             idx = FindEggIndexByTransform(anyTransformOnEgg);
             if (idx < 0)
                 return false;
-        }
 
-        if (consumerPlayer.TryGetComponent<MovementController>(out var consumerMv) && consumerMv != null)
-        {
-            var eggRoot = _eggs[idx].rootTr;
-            if (eggRoot != null)
-            {
-                if (!eggRoot.TryGetComponent<Collider2D>(out var eggCol))
-                    eggCol = eggRoot.GetComponentInChildren<Collider2D>(true);
-
-                if (eggCol != null)
-                    consumerMv.SnapToColliderCenter(eggCol, roundToGrid: false);
-                else
-                    consumerMv.SnapToWorldPoint((Vector2)eggRoot.position, roundToGrid: false);
-            }
+            egg = _eggs[idx];
+            eggType = egg.type;
         }
 
         Transform consumedTr = _eggs[idx].rootTr;
+
+        Vector3 startWorldPos = consumerPlayer.transform.position;
+        Vector3 targetWorldPos = ResolveConsumedEggMountWorldPosition(consumedTr);
+
         RemoveEggAtIndexNoDestroy(idx);
         PostQueueChanged(animateShift: true);
 
         if (consumedTr != null)
-        {
-            Vector3 destroyAt = consumerPlayer.transform.position;
-            destroyAt.z = 0f;
+            Destroy(consumedTr.gameObject);
 
-            if (consumerPlayer.TryGetComponent<MovementController>(out var cmv) && cmv != null)
-            {
-                destroyAt = (Vector3)cmv.transform.position;
-                destroyAt.z = 0f;
-            }
+        MountedType mountedType = EggToMountedType(eggType);
+        if (mountedType == MountedType.None)
+            return false;
 
-            consumedTr.position = destroyAt;
+        GameObject prefab = comp.GetMountPrefabForType(mountedType);
+        if (prefab == null)
+            return false;
 
-            StartCoroutineSafe(DestroyEggRoutine(consumedTr, Mathf.Max(0.05f, dequeueDestroySeconds)));
-        }
+        GameObject louieWorld = Instantiate(prefab, targetWorldPos, Quaternion.identity);
+        PrepareSpawnedLouieWorldForPickup(louieWorld, mountedType, ResolveMountFacingForConsumer(consumerPlayer));
 
         var sfx = egg.mountSfx != null ? egg.mountSfx : LoadMountSfx(eggType);
         var vol = Mathf.Clamp01(egg.mountSfx != null ? egg.mountVolume : defaultMountVolume);
@@ -1650,8 +1649,123 @@ public sealed class MountEggQueue : MonoBehaviour
         if (sfx != null)
             comp.SetNextMountSfx(sfx, vol);
 
-        MountFromEggType(comp, eggType);
-        return true;
+        return comp.TryMountExistingLouieFromWorldWithArc(
+            louieWorldInstance: louieWorld,
+            louieType: mountedType,
+            worldQueueToAdopt: null,
+            startWorldPos: startWorldPos,
+            targetWorldPos: targetWorldPos
+        );
+    }
+
+    Vector3 ResolveConsumedEggMountWorldPosition(Transform consumedEggRoot)
+    {
+        if (consumedEggRoot == null)
+            return Vector3.zero;
+
+        Vector3 worldPos = consumedEggRoot.position;
+
+        var tm = ResolveGroundTilemapNear(worldPos);
+        if (tm != null)
+        {
+            Vector3Int cell = tm.WorldToCell(worldPos);
+            Vector3 center = tm.GetCellCenterWorld(cell);
+            center.z = 0f;
+            return center;
+        }
+
+        worldPos.z = 0f;
+        return worldPos;
+    }
+
+    Vector2 ResolveMountFacingForConsumer(GameObject consumerPlayer)
+    {
+        Vector2 face = Vector2.down;
+
+        if (consumerPlayer != null &&
+            consumerPlayer.TryGetComponent<MovementController>(out var mv) &&
+            mv != null)
+        {
+            if (mv.Direction != Vector2.zero)
+                face = mv.Direction;
+            else if (mv.FacingDirection != Vector2.zero)
+                face = mv.FacingDirection;
+        }
+
+        if (Mathf.Abs(face.x) >= Mathf.Abs(face.y))
+            return face.x >= 0f ? Vector2.right : Vector2.left;
+
+        return face.y >= 0f ? Vector2.up : Vector2.down;
+    }
+
+    MountedType EggToMountedType(ItemType eggType)
+    {
+        switch (eggType)
+        {
+            case ItemType.BlueLouieEgg: return MountedType.Blue;
+            case ItemType.BlackLouieEgg: return MountedType.Black;
+            case ItemType.PurpleLouieEgg: return MountedType.Purple;
+            case ItemType.GreenLouieEgg: return MountedType.Green;
+            case ItemType.YellowLouieEgg: return MountedType.Yellow;
+            case ItemType.PinkLouieEgg: return MountedType.Pink;
+            case ItemType.RedLouieEgg: return MountedType.Red;
+            default: return MountedType.None;
+        }
+    }
+
+    void PrepareSpawnedLouieWorldForPickup(GameObject louieWorld, MountedType mountedType, Vector2 facingDirection)
+    {
+        if (louieWorld == null)
+            return;
+
+        var pickup = louieWorld.GetComponent<MountWorldPickup>();
+        if (pickup == null)
+            pickup = louieWorld.AddComponent<MountWorldPickup>();
+
+        pickup.Init(mountedType);
+
+        if (louieWorld.TryGetComponent<Collider2D>(out var col) && col != null)
+            col.enabled = true;
+
+        if (louieWorld.TryGetComponent<Rigidbody2D>(out var rb) && rb != null)
+        {
+            rb.linearVelocity = Vector2.zero;
+            rb.angularVelocity = 0f;
+            rb.simulated = true;
+        }
+
+        if (louieWorld.TryGetComponent<MountMovementController>(out var lm) && lm != null)
+            lm.enabled = false;
+
+        if (louieWorld.TryGetComponent<BombController>(out var bc) && bc != null)
+            bc.enabled = false;
+
+        if (louieWorld.TryGetComponent<MovementController>(out var mc) && mc != null)
+        {
+            mc.SetExplosionInvulnerable(false);
+            mc.ForceIdleFacing(facingDirection, "QueueEggSpawnIdleFacing");
+            mc.EnableExclusiveFromState();
+        }
+    }
+
+    static Tilemap ResolveGroundTilemapNear(Vector3 worldPos)
+    {
+        var tilemaps = Object.FindObjectsByType<Tilemap>(FindObjectsSortMode.None);
+        if (tilemaps == null || tilemaps.Length == 0)
+            return null;
+
+        for (int i = 0; i < tilemaps.Length; i++)
+        {
+            var tm = tilemaps[i];
+            if (tm == null)
+                continue;
+
+            var cell = tm.WorldToCell(worldPos);
+            if (tm.GetTile(cell) != null)
+                return tm;
+        }
+
+        return null;
     }
 
     void TransferNewerEggsToConsumer(GameObject consumerPlayer, int idxExclusive)
