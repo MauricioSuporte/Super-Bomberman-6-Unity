@@ -113,31 +113,65 @@ public class MountMovementController : MovementController
 
     protected override void DeathSequence()
     {
-        if (owner != null && owner.TryGetComponent<RedLouiePunchStunAbility>(out var ownerPunch) && ownerPunch != null)
+        RedLouiePunchStunAbility ownerPunch = null;
+        GreenLouieDashAbility ownerDash = null;
+        BombPunchAbility ownerBluePunch = null;
+        PinkLouieJumpAbility ownerPinkJump = null;
+        PurpleLouieBombLineAbility ownerPurpleLine = null;
+        YellowLouieKickAbility ownerYellowKick = null;
+        BlackLouieDashPushAbility ownerBlackDash = null;
+        TankMountShootAbility ownerTankShoot = null;
+        MoleMountDrillAbility ownerMoleDrill = null;
+
+        bool ownerHadRedPunch = false;
+        bool ownerHadGreenDash = false;
+        bool ownerHadBluePunch = false;
+        bool ownerHadPinkJump = false;
+        bool ownerHadPurpleLine = false;
+        bool ownerHadYellowKick = false;
+        bool ownerHadBlackDash = false;
+        bool ownerHadTankShoot = false;
+        bool ownerHadMoleDrill = false;
+
+        if (owner != null)
+        {
+            ownerHadRedPunch = owner.TryGetComponent(out ownerPunch) && ownerPunch != null;
+            ownerHadGreenDash = owner.TryGetComponent(out ownerDash) && ownerDash != null;
+            ownerHadBluePunch = owner.TryGetComponent(out ownerBluePunch) && ownerBluePunch != null;
+            ownerHadPinkJump = owner.TryGetComponent(out ownerPinkJump) && ownerPinkJump != null;
+            ownerHadPurpleLine = owner.TryGetComponent(out ownerPurpleLine) && ownerPurpleLine != null;
+            ownerHadYellowKick = owner.TryGetComponent(out ownerYellowKick) && ownerYellowKick != null;
+            ownerHadBlackDash = owner.TryGetComponent(out ownerBlackDash) && ownerBlackDash != null;
+            ownerHadTankShoot = owner.TryGetComponent(out ownerTankShoot) && ownerTankShoot != null;
+            ownerHadMoleDrill = owner.TryGetComponent(out ownerMoleDrill) && ownerMoleDrill != null;
+        }
+
+        if (ownerHadRedPunch)
             ownerPunch.Disable();
 
-        if (owner != null && owner.TryGetComponent<GreenLouieDashAbility>(out var ownerDash) && ownerDash != null)
+        if (ownerHadGreenDash)
             ownerDash.Disable();
 
-        if (owner != null && owner.TryGetComponent<BombPunchAbility>(out var ownerBluePunch) && ownerBluePunch != null)
-            ownerBluePunch.Disable();
+        // IMPORTANTE: NÃO desabilitar BombPunchAbility do owner
+        // if (ownerHadBluePunch)
+        //     ownerBluePunch.Disable();
 
-        if (owner != null && owner.TryGetComponent<PinkLouieJumpAbility>(out var ownerPinkJump) && ownerPinkJump != null)
+        if (ownerHadPinkJump)
             ownerPinkJump.Disable();
 
-        if (owner != null && owner.TryGetComponent<PurpleLouieBombLineAbility>(out var ownerPurpleLine) && ownerPurpleLine != null)
+        if (ownerHadPurpleLine)
             ownerPurpleLine.Disable();
 
-        if (owner != null && owner.TryGetComponent<YellowLouieKickAbility>(out var ownerYellowKick) && ownerYellowKick != null)
+        if (ownerHadYellowKick)
             ownerYellowKick.Disable();
 
-        if (owner != null && owner.TryGetComponent<BlackLouieDashPushAbility>(out var ownerBlackDash) && ownerBlackDash != null)
+        if (ownerHadBlackDash)
             ownerBlackDash.Disable();
 
-        if (owner != null && owner.TryGetComponent<TankMountShootAbility>(out var ownerTankShoot) && ownerTankShoot != null)
+        if (ownerHadTankShoot)
             ownerTankShoot.Disable();
 
-        if (owner != null && owner.TryGetComponent<MoleMountDrillAbility>(out var ownerMoleDrill) && ownerMoleDrill != null)
+        if (ownerHadMoleDrill)
             ownerMoleDrill.Disable();
 
         if (TryGetComponent<GreenLouieDashAbility>(out var dash) && dash != null)
