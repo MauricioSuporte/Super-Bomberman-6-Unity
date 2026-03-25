@@ -21,11 +21,6 @@ public sealed class CorneredAnimation : MonoBehaviour
     [SerializeField, Range(0f, 1f)] private float corneredSfxVolume = 1f;
     [SerializeField, Min(0f)] private float corneredSfxCooldown = 3f;
 
-    [Header("Debug")]
-    [SerializeField] private bool enableDebugLogs = true;
-    [SerializeField] private bool logEveryFrameWhileBlocked = false;
-    [SerializeField] private bool drawDebugRays = false;
-
     [Header("Input Suppression")]
     [SerializeField, Min(0f)] private float inputSuppressSeconds = 0.25f;
 
@@ -77,36 +72,26 @@ public sealed class CorneredAnimation : MonoBehaviour
         lastInputTime = Time.time;
 
         SetCorneredEnabled(false);
-
-        Log($"Awake | blockMask={LayerMaskToString(blockMask)} | destructiblesTag={destructiblesTag} | indestructiblesName={indestructiblesName} | corneredRenderer={(corneredLoopRenderer != null ? corneredLoopRenderer.name : "NULL")} | sfx={(corneredSfx != null ? corneredSfx.name : "NULL")}");
     }
 
     private void OnEnable()
     {
-        Log("OnEnable");
         lastInputTime = Time.time;
         StopCornered();
     }
 
     private void OnDisable()
     {
-        Log("OnDisable");
         StopCornered();
     }
 
     private void Update()
     {
         if (movement == null)
-        {
-            Log("Update abortado: movement == null");
             return;
-        }
 
         if (movement.InputLocked || movement.isDead || movement.IsEndingStage || GamePauseController.IsPaused)
         {
-            if (isPlaying)
-                Log($"Update abortado por estado | InputLocked={movement.InputLocked} | isDead={movement.isDead} | IsEndingStage={movement.IsEndingStage} | Paused={GamePauseController.IsPaused}");
-
             if (isPlaying)
                 StopCornered();
 
@@ -119,23 +104,15 @@ public sealed class CorneredAnimation : MonoBehaviour
             lastInputTime = Time.time;
 
             if (isPlaying)
-            {
-                Log("Update: Cornered suprimido por input do player");
                 StopCornered();
-            }
 
             return;
         }
 
         bool shouldPlay = IsCornered(out bool bombBlocked, out string summary);
 
-        bool changed = shouldPlay != lastShouldPlay || summary != lastBlockSummary;
-        if (changed || (logEveryFrameWhileBlocked && shouldPlay))
-        {
-            Log($"Evaluate | shouldPlay={shouldPlay} | bombBlocked={bombBlocked} | isPlaying={isPlaying} | summary={summary}");
-            lastShouldPlay = shouldPlay;
-            lastBlockSummary = summary;
-        }
+        lastShouldPlay = shouldPlay;
+        lastBlockSummary = summary;
 
         if (!shouldPlay)
         {
@@ -148,10 +125,7 @@ public sealed class CorneredAnimation : MonoBehaviour
         if ((Time.time - lastInputTime) < inputSuppressSeconds)
         {
             if (isPlaying)
-            {
-                Log($"Cornered bloqueado por janela pós-input | restante={(inputSuppressSeconds - (Time.time - lastInputTime)):0.000}s");
                 StopCornered();
-            }
 
             return;
         }
@@ -206,7 +180,6 @@ public sealed class CorneredAnimation : MonoBehaviour
         {
             sb.Append(" | abort=same-tile-bomb");
             summary = sb.ToString();
-            Log($"IsCornered abortado: player está no mesmo tile de uma bomba | {summary}");
             return false;
         }
 
@@ -216,9 +189,6 @@ public sealed class CorneredAnimation : MonoBehaviour
             Vector2 probePos = origin + (dir * probeDistance);
 
             bool blocked = TryFindBlockingThing(cardinalNames[i], origin, probePos, out bool isBomb, out string blockReason);
-
-            if (drawDebugRays)
-                Debug.DrawLine(origin, probePos, blocked ? Color.red : Color.green, 0f, false);
 
             sb.Append($" | {cardinalNames[i]}: blocked={blocked}, bomb={isBomb}, info={blockReason}");
 
@@ -296,8 +266,6 @@ public sealed class CorneredAnimation : MonoBehaviour
                 isBomb = blockIsBomb;
                 sb.Append($"(VALID bomb={blockIsBomb} reason={validationReason})");
                 reason = sb.ToString();
-
-                Log($"Direction {directionName} BLOQUEADA | {reason}");
                 return true;
             }
 
@@ -305,7 +273,6 @@ public sealed class CorneredAnimation : MonoBehaviour
         }
 
         reason = sb.ToString();
-        Log($"Direction {directionName} NÃO bloqueada por alvo válido | {reason}");
         return false;
     }
 
@@ -388,10 +355,7 @@ public sealed class CorneredAnimation : MonoBehaviour
                 continue;
 
             if (IsSameTile(origin, hit.bounds.center))
-            {
-                Log($"HasBombOnSameTileAsPlayer = true | playerTile={WorldToTile(origin)} | bomb={go.name} bombPos={hit.bounds.center}");
                 return true;
-            }
         }
 
         return false;
@@ -407,47 +371,27 @@ public sealed class CorneredAnimation : MonoBehaviour
 
         var mountVisual = GetComponentInChildren<MountVisualController>(true);
         if (mountVisual == null)
-        {
-            Log("MountVisualController não encontrado → fallback player");
             return corneredLoopRenderer;
-        }
 
         if (mountVisual.louieCornered != null)
-        {
-            Log($"Usando Cornered da montaria: {mountVisual.louieCornered.name}");
             return mountVisual.louieCornered;
-        }
 
-        Log("Montaria não possui Cornered → NÃO trocar sprite");
         return null;
     }
 
     private void StartCornered()
     {
         if (isPlaying)
-        {
-            Log("StartCornered ignorado: já estava ativo");
             return;
-        }
 
         if (!hasBombInBlock)
-        {
-            Log("StartCornered ignorado: 4 lados bloqueados mas nenhuma direção válida com Bomb");
             return;
-        }
 
         activeCorneredRenderer = GetCorneredRenderer();
 
         bool hasVisual = activeCorneredRenderer != null;
 
-        if (movement.IsMountedOnLouie && !hasVisual)
-        {
-            Log("StartCornered: sem animação na montaria → apenas SFX");
-        }
-
         isPlaying = true;
-
-        Log($"StartCornered | visualOverride antes={movement.VisualOverrideActive}");
 
         if (movement.IsMountedOnLouie)
         {
@@ -482,13 +426,11 @@ public sealed class CorneredAnimation : MonoBehaviour
             }
             else
             {
-                Log("StartCornered: player sem renderer → apenas SFX");
+                movement.SetInactivityMountedDownOverride(false);
             }
         }
 
         PlayCorneredSfx();
-
-        Log($"StartCornered concluído | visual={(hasVisual ? "ON" : "OFF (SFX only)")}");
     }
 
     private void StopCornered()
@@ -516,8 +458,6 @@ public sealed class CorneredAnimation : MonoBehaviour
             return;
         }
 
-        Log("StopCornered");
-
         if (movement != null && movement.IsMountedOnLouie)
         {
             var mountVisual = GetComponentInChildren<MountVisualController>(true);
@@ -544,77 +484,29 @@ public sealed class CorneredAnimation : MonoBehaviour
     private void SetCorneredEnabled(bool on)
     {
         if (activeCorneredRenderer == null)
-        {
-            Log($"SetCorneredEnabled({on}) ignorado: activeCorneredRenderer == null");
             return;
-        }
 
         activeCorneredRenderer.enabled = on;
 
         if (activeCorneredRenderer.TryGetComponent(out SpriteRenderer sr) && sr != null)
             sr.enabled = on;
-
-        Log($"SetCorneredEnabled({on}) | spriteRendererEnabled={(activeCorneredRenderer.TryGetComponent(out SpriteRenderer sprite) && sprite != null ? sprite.enabled : false)}");
     }
 
     private void PlayCorneredSfx()
     {
         if (audioSource == null)
-        {
-            Log("PlayCorneredSfx ignorado: audioSource == null");
             return;
-        }
 
         if (corneredSfx == null)
-        {
-            Log("PlayCorneredSfx ignorado: corneredSfx == null");
             return;
-        }
 
         float now = Time.time;
 
         if (now - lastSfxTime < corneredSfxCooldown)
-        {
-            Log($"PlayCorneredSfx bloqueado por cooldown | restante={(corneredSfxCooldown - (now - lastSfxTime)):0.00}s");
             return;
-        }
 
         lastSfxTime = now;
-
         audioSource.PlayOneShot(corneredSfx, corneredSfxVolume);
-        Log($"PlayCorneredSfx | clip={corneredSfx.name} | volume={corneredSfxVolume:0.###}");
-    }
-
-    private void Log(string message)
-    {
-        if (!enableDebugLogs)
-            return;
-
-        Debug.Log($"[CorneredAnimation][{name}] {message}", this);
-    }
-
-    private static string LayerMaskToString(LayerMask mask)
-    {
-        if (mask.value == 0)
-            return "Nothing";
-
-        System.Text.StringBuilder sb = new System.Text.StringBuilder();
-        for (int i = 0; i < 32; i++)
-        {
-            if ((mask.value & (1 << i)) == 0)
-                continue;
-
-            string layerName = LayerMask.LayerToName(i);
-            if (string.IsNullOrWhiteSpace(layerName))
-                layerName = $"Layer{i}";
-
-            if (sb.Length > 0)
-                sb.Append(", ");
-
-            sb.Append(layerName);
-        }
-
-        return sb.ToString();
     }
 
 #if UNITY_EDITOR
