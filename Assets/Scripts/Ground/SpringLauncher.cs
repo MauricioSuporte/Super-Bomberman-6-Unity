@@ -232,24 +232,45 @@ public sealed class SpringLauncher : MonoBehaviour
                 }
                 else
                 {
+                    MountVisualController mountVisual = mover.GetComponentInChildren<MountVisualController>(true);
+                    bool useMountJumpVisual = mountVisual != null && mountVisual.HasJumpVisuals();
+
+                    Vector2 jumpFaceDir = heldDir != Vector2.zero ? heldDir : mover.FacingDirection;
+                    if (jumpFaceDir == Vector2.zero)
+                        jumpFaceDir = Vector2.down;
+
+                    if (useMountJumpVisual)
+                        mountVisual.SetJumpVisual(true, jumpFaceDir, descending: false);
+
                     if (isIdleBounce)
-                        yield return JumpArcWithFixedIdleFacing(
+                    {
+                        yield return JumpArcMountedWithJumpSprites(
                             mover,
+                            mountVisual,
+                            useMountJumpVisual,
                             rb,
                             start,
                             start,
                             idleJumpUpTiles * tileSize,
                             duration,
-                            Vector2.zero);
+                            jumpFaceDir);
+                    }
                     else
-                        yield return JumpArcWithFixedIdleFacing(
+                    {
+                        yield return JumpArcMountedWithJumpSprites(
                             mover,
+                            mountVisual,
+                            useMountJumpVisual,
                             rb,
                             start,
                             end,
                             arcHeightTiles * tileSize,
                             duration,
-                            heldDir);
+                            jumpFaceDir);
+                    }
+
+                    if (useMountJumpVisual)
+                        mountVisual.SetJumpVisual(false, jumpFaceDir);
                 }
 
                 rb.linearVelocity = Vector2.zero;
@@ -342,6 +363,48 @@ public sealed class SpringLauncher : MonoBehaviour
             Vector2 flat = Vector2.Lerp(start, end, t);
             float parabola = 4f * t * (1f - t);
 
+            Vector2 pos = flat + Vector2.up * (arcWorld * parabola);
+
+            rb.position = pos;
+
+            elapsed += Time.deltaTime;
+            yield return null;
+        }
+
+        rb.position = end;
+    }
+
+    private IEnumerator JumpArcMountedWithJumpSprites(
+        MovementController mover,
+        MountVisualController mountVisual,
+        bool useMountJumpVisual,
+        Rigidbody2D rb,
+        Vector2 start,
+        Vector2 end,
+        float arcWorld,
+        float duration,
+        Vector2 fixedFaceDir)
+    {
+        if (mover != null)
+        {
+            if (fixedFaceDir != Vector2.zero)
+                mover.ApplyDirectionFromVector(fixedFaceDir);
+
+            mover.ApplyDirectionFromVector(Vector2.zero);
+        }
+
+        float elapsed = 0f;
+
+        while (elapsed < duration)
+        {
+            float t = Mathf.Clamp01(elapsed / duration);
+            bool descendingNow = t >= 0.5f;
+
+            if (useMountJumpVisual && mountVisual != null)
+                mountVisual.SetJumpPhase(descendingNow);
+
+            Vector2 flat = Vector2.Lerp(start, end, t);
+            float parabola = 4f * t * (1f - t);
             Vector2 pos = flat + Vector2.up * (arcWorld * parabola);
 
             rb.position = pos;
