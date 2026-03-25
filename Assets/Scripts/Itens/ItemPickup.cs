@@ -377,6 +377,7 @@ public class ItemPickup : MonoBehaviour
             if (!q.TryEnqueue(type, GetEggIdleSpriteFallback(), collectSfx, collectVolume))
                 return;
 
+            ConsumeNow(false);
             return;
         }
 
