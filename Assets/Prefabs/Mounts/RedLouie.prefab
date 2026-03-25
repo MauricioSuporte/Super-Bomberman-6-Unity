@@ -689,6 +689,8 @@ MonoBehaviour:
   spriteRendererDeathByExplosion: {fileID: 8461434161662532157}
   spriteRendererEndStage: {fileID: 0}
   spriteRendererCheering: {fileID: 0}
+  spriteRendererFall: {fileID: 0}
+  spriteRendererCornered: {fileID: 0}
   mountedSpriteUp: {fileID: 0}
   mountedSpriteDown: {fileID: 0}
   mountedSpriteLeft: {fileID: 0}
@@ -697,6 +699,10 @@ MonoBehaviour:
   headOnlyDown: {fileID: 0}
   headOnlyLeft: {fileID: 0}
   headOnlyRight: {fileID: 0}
+  springLookUpUp: {fileID: 0}
+  springLookUpDown: {fileID: 0}
+  springLookUpLeft: {fileID: 0}
+  springLookUpRight: {fileID: 0}
   useHeadOnlyWhenMountedDefault: 0
   pinkMountedSpritesLocalY: 1.3
   contactDamageCooldownSeconds: 0.15
@@ -747,6 +753,7 @@ MonoBehaviour:
   useIntegerPixelSteps: 1
   suppressInactivityAnimation: 0
   isDead: 0
+  explosionInvulnerable: 0
   externalMovementOverride: 0
   owner: {fileID: 0}
   followOffset: {x: -0.35, y: -0.15}
@@ -1130,7 +1137,7 @@ Transform:
   m_GameObject: {fileID: 2918505583802702556}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.42, z: 0}
+  m_LocalPosition: {x: 0, y: 0.54, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1254,7 +1261,7 @@ Transform:
   m_GameObject: {fileID: 4252376538640746772}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.42, z: 0}
+  m_LocalPosition: {x: 0, y: 0.54, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

@@ -112,6 +112,8 @@ MonoBehaviour:
   animationTime: 0.05
   useSequenceDuration: 0
   sequenceDuration: 0.5
+  useUnscaledTime: 1
+  respectGamePause: 1
   loop: 1
   idle: 0
   frameOffsets: []
@@ -230,6 +232,8 @@ MonoBehaviour:
   animationTime: 0.05
   useSequenceDuration: 0
   sequenceDuration: 0.5
+  useUnscaledTime: 1
+  respectGamePause: 1
   loop: 1
   idle: 0
   frameOffsets: []
@@ -348,6 +352,8 @@ MonoBehaviour:
   animationTime: 0.05
   useSequenceDuration: 0
   sequenceDuration: 0.5
+  useUnscaledTime: 1
+  respectGamePause: 1
   loop: 1
   idle: 0
   frameOffsets: []
@@ -667,13 +673,19 @@ MonoBehaviour:
     m_Bits: 0
   speedInternal: 224
   playerId: 1
+  enableDualInput: 1
+  dualInputCentreSnapTolerance: 0.18
+  dualInputSwitchCooldown: 0.08
   spriteRendererUp: {fileID: 6685445590595473310}
   spriteRendererDown: {fileID: 4170285985975590271}
   spriteRendererLeft: {fileID: 5930063177854299457}
   spriteRendererRight: {fileID: 0}
   spriteRendererDeath: {fileID: 4693090823104627009}
+  spriteRendererDeathByExplosion: {fileID: 0}
   spriteRendererEndStage: {fileID: 0}
   spriteRendererCheering: {fileID: 0}
+  spriteRendererFall: {fileID: 0}
+  spriteRendererCornered: {fileID: 0}
   mountedSpriteUp: {fileID: 0}
   mountedSpriteDown: {fileID: 0}
   mountedSpriteLeft: {fileID: 0}
@@ -682,6 +694,10 @@ MonoBehaviour:
   headOnlyDown: {fileID: 0}
   headOnlyLeft: {fileID: 0}
   headOnlyRight: {fileID: 0}
+  springLookUpUp: {fileID: 0}
+  springLookUpDown: {fileID: 0}
+  springLookUpLeft: {fileID: 0}
+  springLookUpRight: {fileID: 0}
   useHeadOnlyWhenMountedDefault: 0
   pinkMountedSpritesLocalY: 1.3
   contactDamageCooldownSeconds: 0.15
@@ -732,6 +748,8 @@ MonoBehaviour:
   useIntegerPixelSteps: 1
   suppressInactivityAnimation: 0
   isDead: 0
+  explosionInvulnerable: 0
+  externalMovementOverride: 0
   owner: {fileID: 0}
   followOffset: {x: -0.35, y: -0.15}
   followLerp: 25
@@ -951,6 +969,8 @@ MonoBehaviour:
   animationTime: 0.075
   useSequenceDuration: 0
   sequenceDuration: 0.5
+  useUnscaledTime: 1
+  respectGamePause: 1
   loop: 1
   idle: 0
   frameOffsets: []
@@ -1069,6 +1089,8 @@ MonoBehaviour:
   animationTime: 0.05
   useSequenceDuration: 0
   sequenceDuration: 0.5
+  useUnscaledTime: 1
+  respectGamePause: 1
   loop: 1
   idle: 0
   frameOffsets: []
@@ -1194,6 +1216,8 @@ MonoBehaviour:
   animationTime: 0.1
   useSequenceDuration: 0
   sequenceDuration: 0.5
+  useUnscaledTime: 1
+  respectGamePause: 1
   loop: 0
   idle: 0
   frameOffsets: []
@@ -1326,6 +1350,8 @@ MonoBehaviour:
   animationTime: 0.075
   useSequenceDuration: 0
   sequenceDuration: 0.5
+  useUnscaledTime: 1
+  respectGamePause: 1
   loop: 1
   idle: 0
   frameOffsets: []
@@ -1444,6 +1470,8 @@ MonoBehaviour:
   animationTime: 0.075
   useSequenceDuration: 0
   sequenceDuration: 0.5
+  useUnscaledTime: 1
+  respectGamePause: 1
   loop: 1
   idle: 0
   frameOffsets: []
@@ -1562,6 +1590,8 @@ MonoBehaviour:
   animationTime: 0.05
   useSequenceDuration: 0
   sequenceDuration: 0.5
+  useUnscaledTime: 1
+  respectGamePause: 1
   loop: 1
   idle: 0
   frameOffsets: []
@@ -1680,6 +1710,8 @@ MonoBehaviour:
   animationTime: 0.075
   useSequenceDuration: 0
   sequenceDuration: 0.5
+  useUnscaledTime: 1
+  respectGamePause: 1
   loop: 1
   idle: 0
   frameOffsets: []
@@ -1798,6 +1830,8 @@ MonoBehaviour:
   animationTime: 0.05
   useSequenceDuration: 0
   sequenceDuration: 0.5
+  useUnscaledTime: 1
+  respectGamePause: 1
   loop: 1
   idle: 0
   frameOffsets: []

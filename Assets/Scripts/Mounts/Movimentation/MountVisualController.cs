@@ -20,17 +20,20 @@ public class MountVisualController : MonoBehaviour
     [Header("Visual Offset (local)")]
     public Vector2 localOffset = new(0f, -0.15f);
 
-    [Header("Sprites (Louie)")]
+    [Header("Sprites")]
     public AnimatedSpriteRenderer louieUp;
     public AnimatedSpriteRenderer louieDown;
     public AnimatedSpriteRenderer louieLeft;
     public AnimatedSpriteRenderer louieRight;
 
-    [Header("End Stage (Louie)")]
+    [Header("End Stage")]
     public AnimatedSpriteRenderer louieEndStage;
 
-    [Header("Inactivity Emote (Louie)")]
+    [Header("Inactivity Emote")]
     [SerializeField] private AnimatedSpriteRenderer louieInactivityEmoteLoop;
+
+    [Header("Cornered")]
+    public AnimatedSpriteRenderer louieCornered;
 
     [Header("Pink Louie - Right X Fix")]
     public bool enablePinkRightFix = true;
@@ -45,6 +48,7 @@ public class MountVisualController : MonoBehaviour
     private AnimatedSpriteRenderer active;
     private bool playingEndStage;
     private bool playingInactivity;
+    private bool playingCornered;
 
     private bool isPinkLouieMounted;
     private MovementController louieMovement;
@@ -94,6 +98,7 @@ public class MountVisualController : MonoBehaviour
         owner = movement;
         playingEndStage = false;
         playingInactivity = false;
+        playingCornered = false;
         suppressedByRedBoat = false;
 
         headOnlyOffsetsApplied = false;
@@ -218,6 +223,7 @@ public class MountVisualController : MonoBehaviour
     {
         playingInactivity = false;
         playingEndStage = false;
+        playingCornered = false;
 
         if (louieUp == null)
             return;
@@ -291,7 +297,11 @@ public class MountVisualController : MonoBehaviour
         else
             ClearHeadOnlyOffsetsIfNeeded();
 
-        if (playingInactivity)
+        if (playingCornered)
+        {
+            EnsureCorneredExclusive();
+        }
+        else if (playingInactivity)
         {
             EnsureInactivityExclusive();
         }
@@ -410,6 +420,12 @@ public class MountVisualController : MonoBehaviour
 
         if (owner == null)
             return;
+
+        if (playingCornered)
+        {
+            EnsureCorneredExclusive();
+            return;
+        }
 
         if (playingInactivity)
         {
@@ -678,5 +694,69 @@ public class MountVisualController : MonoBehaviour
         for (int i = 0; i < anims.Length; i++)
             if (anims[i] != null)
                 anims[i].enabled = on;
+    }
+
+    public void SetCornered(bool on)
+    {
+        if (louieCornered == null)
+            return;
+
+        if (louieMovement != null && louieMovement.isDead)
+        {
+            playingCornered = false;
+            SetRendererBranchEnabled(louieCornered, false);
+            return;
+        }
+
+        playingCornered = on;
+
+        if (on)
+        {
+            playingInactivity = false;
+            playingEndStage = false;
+
+            louieCornered.loop = true;
+            louieCornered.idle = false;
+            louieCornered.pingPong = false;
+            louieCornered.CurrentFrame = 0;
+
+            HardExclusive(louieCornered);
+            louieCornered.RefreshFrame();
+            return;
+        }
+
+        if (owner == null)
+        {
+            SetRendererBranchEnabled(louieCornered, false);
+            return;
+        }
+
+        bool isIdle = owner.Direction == Vector2.zero;
+        Vector2 faceDir = isIdle ? owner.FacingDirection : owner.Direction;
+
+        ApplyDirection(faceDir, isIdle);
+        SetRendererBranchEnabled(louieCornered, false);
+    }
+
+    private void EnsureCorneredExclusive()
+    {
+        if (louieMovement != null && louieMovement.isDead)
+        {
+            playingCornered = false;
+            return;
+        }
+
+        if (louieCornered == null)
+        {
+            playingCornered = false;
+            return;
+        }
+
+        HardExclusive(louieCornered);
+
+        louieCornered.idle = false;
+        louieCornered.loop = true;
+        louieCornered.pingPong = false;
+        louieCornered.RefreshFrame();
     }
 }
