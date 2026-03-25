@@ -63,6 +63,10 @@ public sealed class SpringLauncher : MonoBehaviour
         if (mover.isDead || mover.IsEndingStage)
             return;
 
+        var powerGlove = other.GetComponent<PowerGloveAbility>();
+        if (powerGlove != null && powerGlove.IsEnabled && powerGlove.IsHoldingBomb)
+            powerGlove.DestroyHeldBombIfHolding();
+
         if (!active.Add(mover))
             return;
 
@@ -134,7 +138,6 @@ public sealed class SpringLauncher : MonoBehaviour
                 yield return null;
             }
 
-            // volta para o centro antes do salto
             rb.position = center;
 
             heldDir = ReadHeldCardinal(mover);

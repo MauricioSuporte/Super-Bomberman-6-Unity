@@ -87,6 +87,10 @@ public sealed class CannonLauncher : MonoBehaviour
         if (mover == null || mover.Rigidbody == null)
             return;
 
+        var powerGlove = other.GetComponent<PowerGloveAbility>();
+        if (powerGlove != null && powerGlove.IsEnabled && powerGlove.IsHoldingBomb)
+            powerGlove.DestroyHeldBombIfHolding();
+
         StartCoroutine(FireRoutine(mover));
     }
 
