@@ -15,9 +15,6 @@ public class PinkLouieShadowAnimator : MonoBehaviour
     [Header("Walk Timing")]
     public float walkFrameSeconds = 0.1f;
 
-    [Header("Debug")]
-    [SerializeField] private bool enableSurgicalLogs = true;
-
     AnimatedSpriteRenderer active;
 
     SpriteRenderer walkSr;
@@ -33,20 +30,12 @@ public class PinkLouieShadowAnimator : MonoBehaviour
     void Awake()
     {
         CacheRefs();
-
-        LogShadowAnim(
-            $"Awake | walkShadow={(walkShadow != null ? walkShadow.name : "<null>")} " +
-            $"jumpShadow={(jumpShadow != null ? jumpShadow.name : "<null>")} " +
-            $"walkSr={(walkSr != null ? walkSr.name : "<null>")} " +
-            $"jumpSr={(jumpSr != null ? jumpSr.name : "<null>")}");
-
         RestoreDefaultVisualState();
     }
 
     void OnEnable()
     {
         CacheRefs();
-        LogShadowAnim("OnEnable | restoring default visual state");
         RestoreDefaultVisualState();
     }
 
@@ -77,20 +66,16 @@ public class PinkLouieShadowAnimator : MonoBehaviour
 
     void OnDisable()
     {
-        LogShadowAnim("OnDisable | ForceOff");
         ForceOff();
     }
 
     void OnDestroy()
     {
-        LogShadowAnim("OnDestroy | ForceOff");
         ForceOff();
     }
 
     public void SetJumping(bool jumping)
     {
-        LogShadowAnim($"SetJumping | jumping={jumping}");
-
         if (jumping)
         {
             SetExclusive(jumpShadow);
@@ -108,23 +93,32 @@ public class PinkLouieShadowAnimator : MonoBehaviour
                 active.RefreshFrame();
             }
 
+            moving = false;
+            lastMoving = false;
+            walkTimer = 0f;
+            walkFrameIndex = -1;
             return;
         }
 
         SetExclusive(walkShadow);
         ApplyIdleSmall();
-        ForceRefreshWalkRenderer();
+        PrepareWalkRenderer();
         SetMoving(false);
     }
 
     public void SetMoving(bool isMoving)
     {
-        LogShadowAnim($"SetMoving | isMoving={isMoving} lastMoving={lastMoving}");
+        if (active != walkShadow)
+        {
+            moving = false;
+            lastMoving = false;
+            return;
+        }
+
+        if (isMoving == moving)
+            return;
 
         moving = isMoving;
-
-        if (active != walkShadow)
-            return;
 
         walkTimer = 0f;
         walkFrameIndex = -1;
@@ -132,12 +126,12 @@ public class PinkLouieShadowAnimator : MonoBehaviour
         if (!moving)
         {
             ApplyIdleSmall();
-            ForceRefreshWalkRenderer();
+            PrepareWalkRenderer();
         }
         else
         {
             ApplyIdleSmall();
-            ForceRefreshWalkRenderer();
+            PrepareWalkRenderer();
         }
 
         lastMoving = moving;
@@ -161,16 +155,16 @@ public class PinkLouieShadowAnimator : MonoBehaviour
 
         SetExclusive(walkShadow);
         ApplyIdleSmall();
-        ForceRefreshWalkRenderer();
+        PrepareWalkRenderer();
     }
 
-    void ForceRefreshWalkRenderer()
+    void PrepareWalkRenderer()
     {
         if (walkShadow != null)
         {
             walkShadow.enabled = true;
-            walkShadow.idle = true;
-            walkShadow.loop = false;
+            walkShadow.loop = true;
+            walkShadow.idle = !moving;
             walkShadow.RefreshFrame();
         }
 
@@ -186,8 +180,6 @@ public class PinkLouieShadowAnimator : MonoBehaviour
 
     void SetExclusive(AnimatedSpriteRenderer keep)
     {
-        LogShadowAnim($"SetExclusive | keep={(keep != null ? keep.name : "<null>")}");
-
         if (keep == null)
         {
             ForceOff();
@@ -235,14 +227,5 @@ public class PinkLouieShadowAnimator : MonoBehaviour
         lastMoving = false;
         walkTimer = 0f;
         walkFrameIndex = -1;
-    }
-
-    void LogShadowAnim(string message)
-    {
-        if (!enableSurgicalLogs)
-            return;
-
-        string who = gameObject != null ? gameObject.name : "<null>";
-        Debug.Log($"[PinkLouieShadowAnimator][{who}] {message}", this);
     }
 }

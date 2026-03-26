@@ -42,6 +42,7 @@ public static class PlayerPersistentStats
         public PlayerState()
         {
             QueuedEggs.Clear();
+
         }
     }
 

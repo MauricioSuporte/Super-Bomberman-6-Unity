@@ -16,36 +16,41 @@ public class PinkLouieShadowController : MonoBehaviour
     bool hasJumpGroundPos;
 
     MovementController cachedOwner;
+    bool initialSyncDone;
 
     void Awake()
     {
         TryAutoWire();
+        SyncAnimatorState();
+    }
 
-        if (animator != null)
-        {
-            animator.SetJumping(false);
-            animator.SetMoving(false);
-        }
+    void Start()
+    {
+        TryAutoWire();
+        SyncAnimatorState();
+    }
+
+    void OnEnable()
+    {
+        TryAutoWire();
+        SyncAnimatorState();
     }
 
     void LateUpdate()
     {
         TryAutoWire();
 
-        if (followTarget == null)
-            return;
-
-        Vector2 basePos = (jumping && hasJumpGroundPos) ? jumpGroundPos : (Vector2)followTarget.position;
-
-        transform.position = new Vector3(basePos.x, basePos.y + localY, worldZ);
-
-        if (animator != null)
+        if (followTarget != null)
         {
-            if (jumping)
-                animator.SetMoving(false);
-            else
-                animator.SetMoving(IsOwnerMoving());
+            Vector2 basePos = (jumping && hasJumpGroundPos)
+                ? jumpGroundPos
+                : (Vector2)followTarget.position;
+
+            transform.position = new Vector3(basePos.x, basePos.y + localY, worldZ);
         }
+
+        SyncAnimatorState();
+        initialSyncDone = true;
     }
 
     void TryAutoWire()
@@ -53,20 +58,34 @@ public class PinkLouieShadowController : MonoBehaviour
         if (animator == null)
             animator = GetComponentInChildren<PinkLouieShadowAnimator>(true);
 
+        var louieVisual = GetComponentInParent<MountVisualController>();
+
         if (followTarget == null)
-        {
-            var louieVisual = GetComponentInParent<MountVisualController>();
             followTarget = louieVisual != null ? louieVisual.transform : transform.parent;
-        }
 
         if (cachedOwner == null)
         {
-            var louieVisual = GetComponentInParent<MountVisualController>();
             if (louieVisual != null && louieVisual.owner != null)
                 cachedOwner = louieVisual.owner;
             else
                 cachedOwner = GetComponentInParent<MovementController>();
         }
+    }
+
+    void SyncAnimatorState()
+    {
+        if (animator == null)
+            return;
+
+        if (jumping)
+        {
+            animator.SetJumping(true);
+            animator.SetMoving(false);
+            return;
+        }
+
+        animator.SetJumping(false);
+        animator.SetMoving(IsOwnerMoving());
     }
 
     bool IsOwnerMoving()
@@ -94,15 +113,17 @@ public class PinkLouieShadowController : MonoBehaviour
     public void BindToPinkLouieRoot(Transform pinkLouieRoot)
     {
         followTarget = pinkLouieRoot;
-
         cachedOwner = null;
+
         TryAutoWire();
 
-        if (animator != null && !jumping)
-        {
-            animator.SetJumping(false);
-            animator.SetMoving(IsOwnerMoving());
-        }
+        if (followTarget != null)
+            transform.position = new Vector3(
+                followTarget.position.x,
+                followTarget.position.y + localY,
+                worldZ);
+
+        SyncAnimatorState();
     }
 
     public void BeginJump(Vector2 groundPos)
@@ -111,11 +132,7 @@ public class PinkLouieShadowController : MonoBehaviour
         jumpGroundPos = groundPos;
         hasJumpGroundPos = true;
 
-        if (animator != null)
-        {
-            animator.SetJumping(true);
-            animator.SetMoving(false);
-        }
+        SyncAnimatorState();
     }
 
     public void SetJumpGroundPosition(Vector2 groundPos)
@@ -132,10 +149,6 @@ public class PinkLouieShadowController : MonoBehaviour
         jumping = false;
         hasJumpGroundPos = false;
 
-        if (animator != null)
-        {
-            animator.SetJumping(false);
-            animator.SetMoving(IsOwnerMoving());
-        }
+        SyncAnimatorState();
     }
 }
