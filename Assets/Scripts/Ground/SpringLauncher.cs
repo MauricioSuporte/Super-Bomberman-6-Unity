@@ -235,6 +235,14 @@ public sealed class SpringLauncher : MonoBehaviour
                     MountVisualController mountVisual = mover.GetComponentInChildren<MountVisualController>(true);
                     bool useMountJumpVisual = mountVisual != null && mountVisual.HasJumpVisuals();
 
+                    PinkLouieShadowController pinkShadow = null;
+                    if (mountVisual != null)
+                    {
+                        pinkShadow = mountVisual.GetComponentInChildren<PinkLouieShadowController>(true);
+                        if (pinkShadow != null)
+                            pinkShadow.BindToPinkLouieRoot(mountVisual.transform);
+                    }
+
                     Vector2 jumpFaceDir = heldDir != Vector2.zero ? heldDir : mover.FacingDirection;
                     if (jumpFaceDir == Vector2.zero)
                         jumpFaceDir = Vector2.down;
@@ -242,12 +250,16 @@ public sealed class SpringLauncher : MonoBehaviour
                     if (useMountJumpVisual)
                         mountVisual.SetJumpVisual(true, jumpFaceDir, descending: false);
 
+                    if (pinkShadow != null)
+                        pinkShadow.BeginJump(start);
+
                     if (isIdleBounce)
                     {
                         yield return JumpArcMountedWithJumpSprites(
                             mover,
                             mountVisual,
                             useMountJumpVisual,
+                            pinkShadow,
                             rb,
                             start,
                             start,
@@ -261,6 +273,7 @@ public sealed class SpringLauncher : MonoBehaviour
                             mover,
                             mountVisual,
                             useMountJumpVisual,
+                            pinkShadow,
                             rb,
                             start,
                             end,
@@ -268,6 +281,9 @@ public sealed class SpringLauncher : MonoBehaviour
                             duration,
                             jumpFaceDir);
                     }
+
+                    if (pinkShadow != null)
+                        pinkShadow.EndJump();
 
                     if (useMountJumpVisual)
                         mountVisual.SetJumpVisual(false, jumpFaceDir);
@@ -378,6 +394,7 @@ public sealed class SpringLauncher : MonoBehaviour
         MovementController mover,
         MountVisualController mountVisual,
         bool useMountJumpVisual,
+        PinkLouieShadowController pinkShadow,
         Rigidbody2D rb,
         Vector2 start,
         Vector2 end,
@@ -404,6 +421,10 @@ public sealed class SpringLauncher : MonoBehaviour
                 mountVisual.SetJumpPhase(descendingNow);
 
             Vector2 flat = Vector2.Lerp(start, end, t);
+
+            if (pinkShadow != null)
+                pinkShadow.SetJumpGroundPosition(flat);
+
             float parabola = 4f * t * (1f - t);
             Vector2 pos = flat + Vector2.up * (arcWorld * parabola);
 
@@ -414,6 +435,9 @@ public sealed class SpringLauncher : MonoBehaviour
         }
 
         rb.position = end;
+
+        if (pinkShadow != null)
+            pinkShadow.SetJumpGroundPosition(end);
     }
 
     private IEnumerator JumpArcUnmountedWithMountSprites(

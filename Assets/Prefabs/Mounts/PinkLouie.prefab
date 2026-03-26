@@ -1040,9 +1040,9 @@ MonoBehaviour:
   louieDown: {fileID: 4170285985975590271}
   louieLeft: {fileID: 5930063177854299457}
   louieRight: {fileID: 5517004560909071985}
-  louieJumpAscendUp: {fileID: 6191694523290430453}
-  louieJumpAscendDown: {fileID: 3815665861220899473}
-  louieJumpAscendLeft: {fileID: 8282581085954424470}
+  louieJumpAscendUp: {fileID: 0}
+  louieJumpAscendDown: {fileID: 0}
+  louieJumpAscendLeft: {fileID: 0}
   louieJumpAscendRight: {fileID: 0}
   louieJumpDescendUp: {fileID: 0}
   louieJumpDescendDown: {fileID: 0}
