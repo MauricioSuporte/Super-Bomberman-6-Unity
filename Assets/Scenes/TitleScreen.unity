@@ -1011,7 +1011,7 @@ MonoBehaviour:
     sprite: {fileID: 21300000, guid: 1b7894bc5d13dec4b91738f3010bc6dd, type: 3}
     fallingSprite: {fileID: 21300000, guid: 1b7894bc5d13dec4b91738f3010bc6dd, type: 3}
     landedSprite: {fileID: 21300000, guid: 1b35e08d09577a84ca50dff92fdebf3c, type: 3}
-    alternateSprite: {fileID: 0}
+    alternateSprite: {fileID: 21300000, guid: e1687e098adb88a4aa92207636f64295, type: 3}
     idleMinInterval: 2
     idleMaxInterval: 4
     alternateDuration: 0.5
@@ -1792,7 +1792,7 @@ RectTransform:
   m_Father: {fileID: 1389130176}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
+  m_AnchorMax: {x: 3, y: 2.25}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
