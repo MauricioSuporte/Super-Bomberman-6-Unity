@@ -4093,6 +4093,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerInactivityEmote
   secondsToTrigger: 5
   emoteLoopRenderer: {fileID: 8373095307517099465}
+  emoteLoopRendererAlt: {fileID: 0}
+  chanceAltAnimation: 1
   refreshFrameOnEnter: 1
 --- !u!114 &6508769685131206489
 MonoBehaviour:

@@ -10,7 +10,11 @@ public sealed class InactivityAnimation : MonoBehaviour
 
     [Header("Emote Visual (loop)")]
     [SerializeField] private AnimatedSpriteRenderer emoteLoopRenderer;
+    [SerializeField] private AnimatedSpriteRenderer emoteLoopRendererAlt;
+    [SerializeField, Range(0f, 1f)] private float chanceAltAnimation = 0.3f;
     [SerializeField] private bool refreshFrameOnEnter = true;
+
+    private AnimatedSpriteRenderer activeRenderer;
 
     private MovementController movement;
     private float lastInputTime;
@@ -33,6 +37,7 @@ public sealed class InactivityAnimation : MonoBehaviour
         movement = GetComponent<MovementController>();
         lastInputTime = Time.time;
         currentTarget = EmoteTarget.None;
+        activeRenderer = null;
         SetPlayerEmoteEnabled(false);
     }
 
@@ -63,7 +68,9 @@ public sealed class InactivityAnimation : MonoBehaviour
 
         if (movement.InputLocked || movement.isDead || GamePauseController.IsPaused)
         {
-            if (isPlaying) StopEmote();
+            if (isPlaying)
+                StopEmote();
+
             lastInputTime = Time.time;
             return;
         }
@@ -159,6 +166,16 @@ public sealed class InactivityAnimation : MonoBehaviour
             input.Get(id, PlayerAction.ActionR);
     }
 
+    private AnimatedSpriteRenderer ChooseRenderer(AnimatedSpriteRenderer primary, AnimatedSpriteRenderer alternative)
+    {
+        float chance = Mathf.Clamp01(chanceAltAnimation);
+
+        if (alternative != null && Random.value <= chance)
+            return alternative;
+
+        return primary;
+    }
+
     private void StartEmote(EmoteTarget target)
     {
         if (isPlaying)
@@ -173,7 +190,13 @@ public sealed class InactivityAnimation : MonoBehaviour
 
             var lv = ResolveLouieVisual();
             if (lv != null)
-                lv.SetInactivityEmote(true);
+            {
+                var chosenMountRenderer = ChooseRenderer(
+                    lv.LouieInactivityEmoteLoop,
+                    lv.LouieInactivityEmoteLoopAlt);
+
+                lv.SetInactivityEmote(chosenMountRenderer, refreshFrameOnEnter);
+            }
 
             SetPlayerEmoteEnabled(false);
             return;
@@ -182,16 +205,18 @@ public sealed class InactivityAnimation : MonoBehaviour
         movement.SetInactivityMountedDownOverride(false);
         movement.SetVisualOverrideActive(true);
 
-        if (emoteLoopRenderer != null)
+        activeRenderer = ChooseRenderer(emoteLoopRenderer, emoteLoopRendererAlt);
+
+        if (activeRenderer != null)
         {
-            emoteLoopRenderer.loop = true;
-            emoteLoopRenderer.idle = false;
+            activeRenderer.loop = true;
+            activeRenderer.idle = false;
         }
 
         SetPlayerEmoteEnabled(true);
 
-        if (refreshFrameOnEnter && emoteLoopRenderer != null)
-            emoteLoopRenderer.RefreshFrame();
+        if (refreshFrameOnEnter && activeRenderer != null)
+            activeRenderer.RefreshFrame();
     }
 
     private void StopEmote()
@@ -201,6 +226,7 @@ public sealed class InactivityAnimation : MonoBehaviour
             SetPlayerEmoteEnabled(false);
             movement?.SetInactivityMountedDownOverride(false);
             movement?.SetVisualOverrideActive(false);
+            activeRenderer = null;
             return;
         }
 
@@ -228,16 +254,23 @@ public sealed class InactivityAnimation : MonoBehaviour
 
         isPlaying = false;
         currentTarget = EmoteTarget.None;
+        activeRenderer = null;
     }
 
     private void SetPlayerEmoteEnabled(bool on)
     {
-        if (emoteLoopRenderer == null)
-            return;
+        if (emoteLoopRenderer != null)
+            ToggleRenderer(emoteLoopRenderer, on && activeRenderer == emoteLoopRenderer);
 
-        emoteLoopRenderer.enabled = on;
+        if (emoteLoopRendererAlt != null)
+            ToggleRenderer(emoteLoopRendererAlt, on && activeRenderer == emoteLoopRendererAlt);
+    }
 
-        if (emoteLoopRenderer.TryGetComponent(out SpriteRenderer sr) && sr != null)
+    private void ToggleRenderer(AnimatedSpriteRenderer renderer, bool on)
+    {
+        renderer.enabled = on;
+
+        if (renderer.TryGetComponent(out SpriteRenderer sr) && sr != null)
             sr.enabled = on;
     }
 }

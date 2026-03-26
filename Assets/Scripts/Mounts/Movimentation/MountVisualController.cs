@@ -49,6 +49,7 @@ public class MountVisualController : MonoBehaviour
 
     [Header("Inactivity Emote")]
     [SerializeField] private AnimatedSpriteRenderer louieInactivityEmoteLoop;
+    [SerializeField] private AnimatedSpriteRenderer louieInactivityEmoteLoopAlt;
 
     [Header("Cornered")]
     public AnimatedSpriteRenderer louieCornered;
@@ -90,7 +91,13 @@ public class MountVisualController : MonoBehaviour
     private Color externalTintColor = Color.white;
     private float externalTintNormalized;
 
-    public bool HasInactivityEmoteRenderer => louieInactivityEmoteLoop != null;
+    private AnimatedSpriteRenderer activeLouieInactivityRenderer;
+
+    public AnimatedSpriteRenderer LouieInactivityEmoteLoop => louieInactivityEmoteLoop;
+    public AnimatedSpriteRenderer LouieInactivityEmoteLoopAlt => louieInactivityEmoteLoopAlt;
+
+    public bool HasInactivityEmoteRenderer =>
+        louieInactivityEmoteLoop != null || louieInactivityEmoteLoopAlt != null;
 
     private bool playingJump;
     private Vector2 jumpFacing = Vector2.down;
@@ -188,45 +195,73 @@ public class MountVisualController : MonoBehaviour
 
     public void SetInactivityEmote(bool on)
     {
-        if (louieInactivityEmoteLoop == null)
+        if (on)
+        {
+            SetInactivityEmote(louieInactivityEmoteLoop, true);
             return;
+        }
+
+        playingInactivity = false;
+
+        if (louieInactivityEmoteLoop != null)
+            SetRendererBranchEnabled(louieInactivityEmoteLoop, false);
+
+        if (louieInactivityEmoteLoopAlt != null)
+            SetRendererBranchEnabled(louieInactivityEmoteLoopAlt, false);
+
+        activeLouieInactivityRenderer = null;
+
+        if (owner == null)
+            return;
+
+        bool isIdle = owner.Direction == Vector2.zero;
+        Vector2 faceDir = isIdle ? owner.FacingDirection : owner.Direction;
+        ApplyDirection(faceDir, isIdle);
+    }
+
+    public void SetInactivityEmote(AnimatedSpriteRenderer chosenRenderer, bool refreshFrameOnEnter)
+    {
+        playingEndStage = false;
+        playingCornered = false;
+        playingJump = false;
 
         if (louieMovement != null && louieMovement.isDead)
         {
             playingInactivity = false;
+            return;
+        }
+
+        if (louieInactivityEmoteLoop != null)
             SetRendererBranchEnabled(louieInactivityEmoteLoop, false);
-            return;
-        }
 
-        playingInactivity = on;
+        if (louieInactivityEmoteLoopAlt != null)
+            SetRendererBranchEnabled(louieInactivityEmoteLoopAlt, false);
 
-        if (on)
+        activeLouieInactivityRenderer = chosenRenderer;
+
+        if (activeLouieInactivityRenderer == null)
         {
-            playingEndStage = false;
+            playingInactivity = false;
 
-            louieInactivityEmoteLoop.loop = true;
-            louieInactivityEmoteLoop.idle = false;
-            louieInactivityEmoteLoop.pingPong = false;
-            louieInactivityEmoteLoop.CurrentFrame = 0;
+            if (owner == null)
+                return;
 
-            HardExclusive(louieInactivityEmoteLoop);
-            louieInactivityEmoteLoop.RefreshFrame();
+            bool isIdle = owner.Direction == Vector2.zero;
+            Vector2 faceDir = isIdle ? owner.FacingDirection : owner.Direction;
+            ApplyDirection(faceDir, isIdle);
             return;
         }
 
-        if (owner == null)
-        {
-            SetRendererBranchEnabled(louieInactivityEmoteLoop, false);
-            return;
-        }
+        playingInactivity = true;
 
-        bool isIdle = owner.Direction == Vector2.zero;
-        Vector2 faceDir = isIdle ? owner.FacingDirection : owner.Direction;
+        activeLouieInactivityRenderer.loop = true;
+        activeLouieInactivityRenderer.idle = false;
+        activeLouieInactivityRenderer.pingPong = false;
 
-        playingEndStage = false;
+        HardExclusive(activeLouieInactivityRenderer);
 
-        ApplyDirection(faceDir, isIdle);
-        SetRendererBranchEnabled(louieInactivityEmoteLoop, false);
+        if (refreshFrameOnEnter)
+            activeLouieInactivityRenderer.RefreshFrame();
     }
 
     public bool TryPlayEndStage(float totalTime, int frameCount)
@@ -272,6 +307,18 @@ public class MountVisualController : MonoBehaviour
     public void ForceOnlyUpEnabled()
     {
         ForceIdleUp();
+    }
+
+    public void SetInactivityEmoteRandom(float chanceAlt)
+    {
+        float chance = Mathf.Clamp01(chanceAlt);
+
+        var chosen =
+            (louieInactivityEmoteLoopAlt != null && Random.value <= chance)
+                ? louieInactivityEmoteLoopAlt
+                : louieInactivityEmoteLoop;
+
+        SetInactivityEmote(chosen, true);
     }
 
     private void CacheAllRenderers()
@@ -494,18 +541,22 @@ public class MountVisualController : MonoBehaviour
             return;
         }
 
-        if (louieInactivityEmoteLoop == null)
+        var target = activeLouieInactivityRenderer != null
+            ? activeLouieInactivityRenderer
+            : louieInactivityEmoteLoop;
+
+        if (target == null)
         {
             playingInactivity = false;
             return;
         }
 
-        HardExclusive(louieInactivityEmoteLoop);
+        HardExclusive(target);
 
-        louieInactivityEmoteLoop.idle = false;
-        louieInactivityEmoteLoop.loop = true;
-        louieInactivityEmoteLoop.pingPong = false;
-        louieInactivityEmoteLoop.RefreshFrame();
+        target.idle = false;
+        target.loop = true;
+        target.pingPong = false;
+        target.RefreshFrame();
     }
 
     private void EnsureEndStageExclusive()
