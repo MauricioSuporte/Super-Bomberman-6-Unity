@@ -173,12 +173,19 @@ public sealed class CorneredAnimation : MonoBehaviour
         float probeDistance = tileSize * probeDistanceMultiplier;
         Vector2Int playerTile = WorldToTile(origin);
 
-        System.Text.StringBuilder sb = new System.Text.StringBuilder(160);
+        System.Text.StringBuilder sb = new System.Text.StringBuilder(192);
         sb.Append($"origin={origin} playerTile={playerTile} tileSize={tileSize:0.###} probeDistance={probeDistance:0.###}");
 
         if (HasBombOnSameTileAsPlayer(origin))
         {
             sb.Append(" | abort=same-tile-bomb");
+            summary = sb.ToString();
+            return false;
+        }
+
+        if (HasDestructibleOnSameTileAsPlayer(origin))
+        {
+            sb.Append(" | abort=same-tile-destructible");
             summary = sb.ToString();
             return false;
         }
@@ -355,6 +362,32 @@ public sealed class CorneredAnimation : MonoBehaviour
                 continue;
 
             if (IsSameTile(origin, hit.bounds.center))
+                return true;
+        }
+
+        return false;
+    }
+
+    private bool HasDestructibleOnSameTileAsPlayer(Vector2 origin)
+    {
+        float tileSize = Mathf.Max(0.01f, movement.tileSize);
+        Vector2 size = Vector2.one * (tileSize * 0.6f);
+
+        Collider2D[] hits = Physics2D.OverlapBoxAll(origin, size, 0f, blockMask);
+        if (hits == null || hits.Length == 0)
+            return false;
+
+        for (int i = 0; i < hits.Length; i++)
+        {
+            Collider2D hit = hits[i];
+            if (hit == null || hit.isTrigger)
+                continue;
+
+            GameObject go = hit.gameObject;
+            if (go == gameObject)
+                continue;
+
+            if (go.CompareTag(destructiblesTag))
                 return true;
         }
 
