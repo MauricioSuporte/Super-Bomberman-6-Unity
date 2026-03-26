@@ -15,6 +15,9 @@ public class PinkLouieShadowAnimator : MonoBehaviour
     [Header("Walk Timing")]
     public float walkFrameSeconds = 0.1f;
 
+    [Header("Debug")]
+    [SerializeField] private bool enableSurgicalLogs = true;
+
     AnimatedSpriteRenderer active;
 
     SpriteRenderer walkSr;
@@ -29,14 +32,22 @@ public class PinkLouieShadowAnimator : MonoBehaviour
 
     void Awake()
     {
-        if (walkShadow != null)
-            walkShadow.TryGetComponent(out walkSr);
+        CacheRefs();
 
-        if (jumpShadow != null)
-            jumpShadow.TryGetComponent(out jumpSr);
+        LogShadowAnim(
+            $"Awake | walkShadow={(walkShadow != null ? walkShadow.name : "<null>")} " +
+            $"jumpShadow={(jumpShadow != null ? jumpShadow.name : "<null>")} " +
+            $"walkSr={(walkSr != null ? walkSr.name : "<null>")} " +
+            $"jumpSr={(jumpSr != null ? jumpSr.name : "<null>")}");
 
-        SetExclusive(walkShadow);
-        ApplyIdleSmall();
+        RestoreDefaultVisualState();
+    }
+
+    void OnEnable()
+    {
+        CacheRefs();
+        LogShadowAnim("OnEnable | restoring default visual state");
+        RestoreDefaultVisualState();
     }
 
     void Update()
@@ -64,11 +75,22 @@ public class PinkLouieShadowAnimator : MonoBehaviour
             walkSr.sprite = s;
     }
 
-    void OnDisable() => ForceOff();
-    void OnDestroy() => ForceOff();
+    void OnDisable()
+    {
+        LogShadowAnim("OnDisable | ForceOff");
+        ForceOff();
+    }
+
+    void OnDestroy()
+    {
+        LogShadowAnim("OnDestroy | ForceOff");
+        ForceOff();
+    }
 
     public void SetJumping(bool jumping)
     {
+        LogShadowAnim($"SetJumping | jumping={jumping}");
+
         if (jumping)
         {
             SetExclusive(jumpShadow);
@@ -91,17 +113,15 @@ public class PinkLouieShadowAnimator : MonoBehaviour
 
         SetExclusive(walkShadow);
         ApplyIdleSmall();
+        ForceRefreshWalkRenderer();
         SetMoving(false);
     }
 
     public void SetMoving(bool isMoving)
     {
+        LogShadowAnim($"SetMoving | isMoving={isMoving} lastMoving={lastMoving}");
+
         moving = isMoving;
-
-        if (moving == lastMoving)
-            return;
-
-        lastMoving = moving;
 
         if (active != walkShadow)
             return;
@@ -110,9 +130,52 @@ public class PinkLouieShadowAnimator : MonoBehaviour
         walkFrameIndex = -1;
 
         if (!moving)
+        {
             ApplyIdleSmall();
+            ForceRefreshWalkRenderer();
+        }
         else
+        {
             ApplyIdleSmall();
+            ForceRefreshWalkRenderer();
+        }
+
+        lastMoving = moving;
+    }
+
+    void CacheRefs()
+    {
+        if (walkShadow != null && walkSr == null)
+            walkShadow.TryGetComponent(out walkSr);
+
+        if (jumpShadow != null && jumpSr == null)
+            jumpShadow.TryGetComponent(out jumpSr);
+    }
+
+    void RestoreDefaultVisualState()
+    {
+        moving = false;
+        lastMoving = false;
+        walkTimer = 0f;
+        walkFrameIndex = -1;
+
+        SetExclusive(walkShadow);
+        ApplyIdleSmall();
+        ForceRefreshWalkRenderer();
+    }
+
+    void ForceRefreshWalkRenderer()
+    {
+        if (walkShadow != null)
+        {
+            walkShadow.enabled = true;
+            walkShadow.idle = true;
+            walkShadow.loop = false;
+            walkShadow.RefreshFrame();
+        }
+
+        if (walkSr != null)
+            walkSr.enabled = true;
     }
 
     void ApplyIdleSmall()
@@ -123,6 +186,8 @@ public class PinkLouieShadowAnimator : MonoBehaviour
 
     void SetExclusive(AnimatedSpriteRenderer keep)
     {
+        LogShadowAnim($"SetExclusive | keep={(keep != null ? keep.name : "<null>")}");
+
         if (keep == null)
         {
             ForceOff();
@@ -170,5 +235,14 @@ public class PinkLouieShadowAnimator : MonoBehaviour
         lastMoving = false;
         walkTimer = 0f;
         walkFrameIndex = -1;
+    }
+
+    void LogShadowAnim(string message)
+    {
+        if (!enableSurgicalLogs)
+            return;
+
+        string who = gameObject != null ? gameObject.name : "<null>";
+        Debug.Log($"[PinkLouieShadowAnimator][{who}] {message}", this);
     }
 }
