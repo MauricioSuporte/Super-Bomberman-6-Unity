@@ -95,7 +95,13 @@ public sealed class SpringLauncher : MonoBehaviour
         var audio = mover.GetComponent<AudioSource>();
         var riding = mover.GetComponent<PlayerRidingController>();
 
+        int playerId = mover.PlayerId;
+        var inputManager = PlayerInputManager.Instance;
+
         mover.SetInputLocked(true, forceIdle: false);
+
+        if (inputManager != null)
+            inputManager.SetSpringLauncherInputGate(playerId, true);
 
         try
         {
@@ -313,6 +319,9 @@ public sealed class SpringLauncher : MonoBehaviour
         }
         finally
         {
+            if (inputManager != null)
+                inputManager.SetSpringLauncherInputGate(playerId, false);
+
             if (mover != null)
             {
                 mover.ClearSpringLauncherLookUp();

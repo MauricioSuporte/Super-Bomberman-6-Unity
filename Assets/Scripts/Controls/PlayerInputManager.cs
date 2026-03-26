@@ -19,8 +19,12 @@ public class PlayerInputManager : MonoBehaviour
     [SerializeField] bool includeRightStickAsDpad = false;
 
     [Header("Boat Input Gate")]
-    [Tooltip("If true: while the player is riding a Boat, only MoveUp/Down/Left/Right are accepted. Everything else returns false.")]
+    [Tooltip("If true: while the player is riding a Boat, only MoveUp/Down/Left/Right and Start are accepted. Everything else returns false.")]
     [SerializeField] private bool blockNonDirectionalInputsWhileRidingBoat = true;
+
+    [Header("Spring Launcher Input Gate")]
+    [Tooltip("If true: while the player is using a SpringLauncher, only MoveUp/Down/Left/Right and Start are accepted. Everything else returns false.")]
+    [SerializeField] private bool blockNonDirectionalInputsWhileUsingSpringLauncher = true;
 
     [Tooltip("How often to refresh playerId -> MovementController mapping (seconds).")]
     [SerializeField, Min(0.05f)] private float refreshPlayersMapEverySeconds = 0.5f;
@@ -38,6 +42,8 @@ public class PlayerInputManager : MonoBehaviour
     readonly Dictionary<int, bool> curRight = new();
 
     private readonly Dictionary<int, MovementController> playerControllers = new();
+    private readonly HashSet<int> playersUsingSpringLauncher = new();
+
     private float nextPlayersMapRefreshTime;
 
     int PlayerCount
@@ -113,7 +119,6 @@ public class PlayerInputManager : MonoBehaviour
             if (!curUp.ContainsKey(id))
                 curUp[id] = curDown[id] = curLeft[id] = curRight[id] = false;
         }
-
     }
 
     private void RefreshPlayersMap(bool force)
@@ -126,12 +131,14 @@ public class PlayerInputManager : MonoBehaviour
         playerControllers.Clear();
 
         var all = FindObjectsByType<MovementController>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
-        if (all == null) return;
+        if (all == null)
+            return;
 
         for (int i = 0; i < all.Length; i++)
         {
             var mc = all[i];
-            if (mc == null) continue;
+            if (mc == null)
+                continue;
 
             if (!mc.CompareTag("Player"))
                 continue;
@@ -143,12 +150,30 @@ public class PlayerInputManager : MonoBehaviour
                 continue;
 
             int pid = Mathf.Clamp(identity.playerId, 1, 4);
-
             playerControllers[pid] = mc;
         }
     }
 
+    public void SetSpringLauncherInputGate(int playerId, bool enabled)
+    {
+        playerId = Mathf.Clamp(playerId, 1, 4);
+
+        if (enabled)
+            playersUsingSpringLauncher.Add(playerId);
+        else
+            playersUsingSpringLauncher.Remove(playerId);
+    }
+
     private bool IsActionBlockedWhileRidingBoat(PlayerAction action)
+    {
+        return action != PlayerAction.MoveUp &&
+               action != PlayerAction.MoveDown &&
+               action != PlayerAction.MoveLeft &&
+               action != PlayerAction.MoveRight &&
+               action != PlayerAction.Start;
+    }
+
+    private bool IsActionBlockedWhileUsingSpringLauncher(PlayerAction action)
     {
         return action != PlayerAction.MoveUp &&
                action != PlayerAction.MoveDown &&
@@ -176,6 +201,17 @@ public class PlayerInputManager : MonoBehaviour
         return BoatRideZone.IsRidingBoat(mc);
     }
 
+    private bool ShouldBlockActionBecauseUsingSpringLauncher(int playerId, PlayerAction action)
+    {
+        if (!blockNonDirectionalInputsWhileUsingSpringLauncher)
+            return false;
+
+        if (!playersUsingSpringLauncher.Contains(playerId))
+            return false;
+
+        return IsActionBlockedWhileUsingSpringLauncher(action);
+    }
+
     public PlayerInputProfile GetPlayer(int playerId)
     {
         playerId = Mathf.Clamp(playerId, 1, 4);
@@ -200,6 +236,9 @@ public class PlayerInputManager : MonoBehaviour
         playerId = Mathf.Clamp(playerId, 1, 4);
 
         if (ShouldBlockActionBecauseRidingBoat(playerId, action))
+            return false;
+
+        if (ShouldBlockActionBecauseUsingSpringLauncher(playerId, action))
             return false;
 
         if (playerId == 1 && MobileInputBridge.Instance != null && MobileInputBridge.Instance.Get(action))
@@ -234,6 +273,9 @@ public class PlayerInputManager : MonoBehaviour
         playerId = Mathf.Clamp(playerId, 1, 4);
 
         if (ShouldBlockActionBecauseRidingBoat(playerId, action))
+            return false;
+
+        if (ShouldBlockActionBecauseUsingSpringLauncher(playerId, action))
             return false;
 
         if (playerId == 1 && MobileInputBridge.Instance != null && MobileInputBridge.Instance.GetDown(action))
@@ -342,7 +384,8 @@ public class PlayerInputManager : MonoBehaviour
     static void ReadStickAsDigital(StickControl stick, float threshold, out bool up, out bool down, out bool left, out bool right)
     {
         up = down = left = right = false;
-        if (stick == null) return;
+        if (stick == null)
+            return;
 
         Vector2 v = stick.ReadValue();
 
@@ -366,7 +409,8 @@ public class PlayerInputManager : MonoBehaviour
             for (int i = 0; i < all.Count; i++)
             {
                 var pad = all[i];
-                if (pad == null) continue;
+                if (pad == null)
+                    continue;
 
                 if (pad.deviceId == p.gamepadDeviceId)
                 {
@@ -381,7 +425,8 @@ public class PlayerInputManager : MonoBehaviour
             for (int i = 0; i < all.Count; i++)
             {
                 var pad = all[i];
-                if (pad == null) continue;
+                if (pad == null)
+                    continue;
 
                 var product = pad.description.product ?? "";
                 if (string.Equals(product, p.gamepadProduct, StringComparison.OrdinalIgnoreCase))
@@ -409,7 +454,8 @@ public class PlayerInputManager : MonoBehaviour
     static bool ReadKeyHeld(KeyCode k)
     {
         var kb = Keyboard.current;
-        if (kb == null) return false;
+        if (kb == null)
+            return false;
 
         return TryGetKeyControl(k, kb, out var key) && key.isPressed;
     }
@@ -417,7 +463,8 @@ public class PlayerInputManager : MonoBehaviour
     static bool ReadKeyDown(KeyCode k)
     {
         var kb = Keyboard.current;
-        if (kb == null) return false;
+        if (kb == null)
+            return false;
 
         return TryGetKeyControl(k, kb, out var key) && key.wasPressedThisFrame;
     }
@@ -425,11 +472,13 @@ public class PlayerInputManager : MonoBehaviour
     static bool TryGetKeyControl(KeyCode desiredKeyCode, Keyboard kb, out KeyControl key)
     {
         key = null;
-        if (kb == null) return false;
+        if (kb == null)
+            return false;
 
         foreach (var k in kb.allKeys)
         {
-            if (k == null) continue;
+            if (k == null)
+                continue;
 
             if (TryMapInputSystemKeyToUnityKeyCode(k.keyCode, out var kc) && kc == desiredKeyCode)
             {
@@ -514,7 +563,8 @@ public class PlayerInputManager : MonoBehaviour
     static bool ReadGamepadButtonHeld(PlayerInputProfile p, int btn)
     {
         var pad = ResolvePlayerGamepad(p);
-        if (pad == null) return false;
+        if (pad == null)
+            return false;
 
         var c = MapLegacyButtonIndex(pad, btn);
         return c != null && c.isPressed;
@@ -523,7 +573,8 @@ public class PlayerInputManager : MonoBehaviour
     static bool ReadGamepadButtonDown(PlayerInputProfile p, int btn)
     {
         var pad = ResolvePlayerGamepad(p);
-        if (pad == null) return false;
+        if (pad == null)
+            return false;
 
         var c = MapLegacyButtonIndex(pad, btn);
         return c != null && c.wasPressedThisFrame;
