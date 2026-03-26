@@ -36,7 +36,6 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
 
     CharacterHealth playerHealth;
     PlayerMountCompanion companion;
-    AbilitySystem abilitySystem;
 
     Coroutine routine;
     Coroutine visualRoutine;
@@ -44,6 +43,13 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
     float nextAllowedTime;
 
     IPinkLouieJumpExternalAnimator externalAnimator;
+
+    Transform jumpVisualRoot;
+    Vector3 jumpVisualBaseLocalPosition;
+    bool jumpVisualBaseCached;
+
+    float mountedPlayerBaseLocalY;
+    bool mountedPlayerBaseLocalYCached;
 
     public string Id => AbilityId;
     public bool IsEnabled => enabledAbility;
@@ -58,12 +64,12 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
 
         playerHealth = GetComponent<CharacterHealth>();
         TryGetComponent(out companion);
-        TryGetComponent(out abilitySystem);
 
         if (shadow == null)
             shadow = GetComponentInChildren<PinkLouieShadowController>(true);
 
         BindShadowToPinkLouie();
+        CacheMountedPlayerBaseLocalY();
     }
 
     void OnDisable() => CancelJump();
@@ -125,6 +131,8 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
         bool wasMountedAtStart = movement.IsMounted;
         var mountedLouieHealth = wasMountedAtStart ? GetMountedLouieHealth() : null;
 
+        CacheMountedPlayerBaseLocalY();
+
         Vector2 inputDir = movement.Direction != Vector2.zero ? movement.Direction : Vector2.zero;
         Vector2 faceDir = movement.FacingDirection != Vector2.zero ? movement.FacingDirection : Vector2.down;
 
@@ -170,10 +178,15 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
 
         movement.SetInputLocked(true, false);
 
+        rb.linearVelocity = Vector2.zero;
+        rb.angularVelocity = 0f;
+        rb.position = startPos;
+
         if (shadow == null)
             shadow = GetComponentInChildren<PinkLouieShadowController>(true);
 
         BindShadowToPinkLouie();
+        CacheJumpVisualRoot();
 
         shadow?.BeginJump((Vector2)startPos);
 
@@ -202,11 +215,20 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
 
             shadow?.SetJumpGroundPosition(projectedGroundPos);
 
-            Vector3 pos = projectedGroundPos3;
-            float arc = Mathf.Sin(tt * Mathf.PI) * Mathf.Max(0f, jumpArcHeight);
-            pos += new Vector3(0f, arc, 0f);
+            Vector2 rbPos = startPos;
 
-            rb.position = pos;
+            if (dir.x != 0f)
+                rbPos.x = projectedGroundPos.x;
+
+            if (dir.y != 0f)
+                rbPos.y = projectedGroundPos.y;
+
+            rb.position = rbPos;
+
+            float arc = Mathf.Sin(tt * Mathf.PI) * Mathf.Max(0f, jumpArcHeight);
+
+            ApplyJumpVisualOffset(arc);
+            ApplyMountedPlayerJumpArc(arc);
 
             if (wasMountedAtStart && !movement.IsMounted)
             {
@@ -214,6 +236,8 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
 
                 if (!deathCancelInProgress)
                 {
+                    ResetJumpVisualOffset();
+                    ResetMountedPlayerJumpArc();
                     StopJumpVisuals();
                     shadow?.EndJump();
 
@@ -229,6 +253,8 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
             yield return null;
         }
 
+        ResetJumpVisualOffset();
+        ResetMountedPlayerJumpArc();
         rb.position = endPos;
 
         if (invulnerableDuringJump)
@@ -256,7 +282,88 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
         var target = louieVisual != null ? louieVisual.transform : shadow.transform.parent;
 
         if (target != null)
+        {
+            jumpVisualRoot = target;
             shadow.BindToPinkLouieRoot(target);
+        }
+    }
+
+    void CacheJumpVisualRoot()
+    {
+        if (jumpVisualRoot == null)
+            BindShadowToPinkLouie();
+
+        if (jumpVisualRoot == null)
+            return;
+
+        jumpVisualBaseLocalPosition = jumpVisualRoot.localPosition;
+        jumpVisualBaseCached = true;
+    }
+
+    void CacheMountedPlayerBaseLocalY()
+    {
+        if (movement == null)
+            return;
+
+        mountedPlayerBaseLocalY = movement.pinkMountedSpritesLocalY;
+        mountedPlayerBaseLocalYCached = true;
+    }
+
+    void ApplyJumpVisualOffset(float arcY)
+    {
+        if (jumpVisualRoot == null || !jumpVisualBaseCached)
+            return;
+
+        jumpVisualRoot.localPosition =
+            jumpVisualBaseLocalPosition + new Vector3(0f, arcY, 0f);
+    }
+
+    void ResetJumpVisualOffset()
+    {
+        if (jumpVisualRoot == null || !jumpVisualBaseCached)
+            return;
+
+        jumpVisualRoot.localPosition = jumpVisualBaseLocalPosition;
+    }
+
+    void ApplyMountedPlayerJumpArc(float arcY)
+    {
+        if (movement == null || !mountedPlayerBaseLocalYCached)
+            return;
+
+        float desiredY = mountedPlayerBaseLocalY + arcY;
+
+        if (movement.mountedSpriteUp != null)
+            movement.mountedSpriteUp.SetRuntimeBaseLocalY(desiredY);
+
+        if (movement.mountedSpriteDown != null)
+            movement.mountedSpriteDown.SetRuntimeBaseLocalY(desiredY);
+
+        if (movement.mountedSpriteLeft != null)
+            movement.mountedSpriteLeft.SetRuntimeBaseLocalY(desiredY);
+
+        if (movement.mountedSpriteRight != null)
+            movement.mountedSpriteRight.SetRuntimeBaseLocalY(desiredY);
+    }
+
+    void ResetMountedPlayerJumpArc()
+    {
+        if (movement == null || !mountedPlayerBaseLocalYCached)
+            return;
+
+        float desiredY = mountedPlayerBaseLocalY;
+
+        if (movement.mountedSpriteUp != null)
+            movement.mountedSpriteUp.SetRuntimeBaseLocalY(desiredY);
+
+        if (movement.mountedSpriteDown != null)
+            movement.mountedSpriteDown.SetRuntimeBaseLocalY(desiredY);
+
+        if (movement.mountedSpriteLeft != null)
+            movement.mountedSpriteLeft.SetRuntimeBaseLocalY(desiredY);
+
+        if (movement.mountedSpriteRight != null)
+            movement.mountedSpriteRight.SetRuntimeBaseLocalY(desiredY);
     }
 
     void StartJumpInvulnerabilityOnly(CharacterHealth mountedLouieHealth)
@@ -323,6 +430,8 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
         if (!IsLandingAllowed(safeCell, destructible, indestructible, ground))
             safeCell = startCell;
 
+        ResetJumpVisualOffset();
+        ResetMountedPlayerJumpArc();
         rb.position = CellCenter(safeCell, destructible, indestructible, ground);
     }
 
@@ -342,115 +451,70 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
 
     bool IsLandingAllowed(Vector3Int cell, Tilemap destructible, Tilemap indestructible, Tilemap ground)
     {
-        if (!IsInsideStage(cell, ground, destructible, indestructible))
-            return false;
-
-        if (indestructible != null && indestructible.GetTile(cell) != null)
-            return false;
-
-        bool hasDestructibleTile = destructible != null && destructible.GetTile(cell) != null;
-        if (hasDestructibleTile && !CanLandOnDestructibles())
-            return false;
-
-        Vector3 center = CellCenter(cell, destructible, indestructible, ground);
-        if (HasBombAt(center) && !CanLandOnBombs())
-            return false;
-
-        return true;
-    }
-
-    bool IsInsideStage(Vector3Int cell, Tilemap ground, Tilemap destructible, Tilemap indestructible)
-    {
-        Tilemap boundsSource = ground != null ? ground : (destructible != null ? destructible : indestructible);
-        if (boundsSource == null)
-            return true;
-
-        var bounds = boundsSource.cellBounds;
-        if (!bounds.Contains(cell))
-            return false;
+        Vector3 world = CellCenter(cell, destructible, indestructible, ground);
 
         if (ground != null && ground.GetTile(cell) == null)
             return false;
 
-        return true;
-    }
+        int obstacleMask = movement != null ? movement.obstacleMask.value : LayerMask.GetMask("Stage", "Bomb");
+        Vector2 size = Vector2.one * 0.6f;
 
-    bool CanLandOnDestructibles()
-    {
-        if (abilitySystem != null)
-            return abilitySystem.IsEnabled(DestructiblePassAbility.AbilityId);
-
-        return PlayerPersistentStats.Get(GetPlayerId()).CanPassDestructibles;
-    }
-
-    bool CanLandOnBombs()
-    {
-        if (abilitySystem != null)
-            return abilitySystem.IsEnabled(BombPassAbility.AbilityId);
-
-        return PlayerPersistentStats.Get(GetPlayerId()).CanPassBombs;
-    }
-
-    bool HasBombAt(Vector3 worldCenter)
-    {
-        float tile = movement != null && movement.tileSize > 0f ? movement.tileSize : 1f;
-        Vector2 size = Vector2.one * (tile * 0.9f);
-
-        int bombMask = LayerMask.GetMask("Bomb");
-        if (bombMask == 0)
-            return false;
-
-        var hits = Physics2D.OverlapBoxAll(worldCenter, size, 0f, bombMask);
+        var hits = Physics2D.OverlapBoxAll(world, size, 0f, obstacleMask);
         if (hits == null || hits.Length == 0)
-            return false;
+            return true;
 
         for (int i = 0; i < hits.Length; i++)
         {
-            var c = hits[i];
-            if (c == null)
+            var hit = hits[i];
+            if (hit == null)
                 continue;
 
-            return true;
+            if (hit.gameObject == gameObject)
+                continue;
+
+            if (hit.isTrigger)
+                continue;
+
+            if (hit.gameObject.layer == LayerMask.NameToLayer("Bomb"))
+            {
+                var bomb = hit.GetComponent<Bomb>();
+                var myBombController = GetComponent<BombController>();
+
+                if (bomb != null && myBombController != null && bomb.Owner == myBombController)
+                {
+                    var bombCollider = bomb.GetComponent<Collider2D>();
+                    if (bombCollider != null && bombCollider.isTrigger)
+                        continue;
+                }
+            }
+
+            return false;
         }
 
-        return false;
+        return true;
     }
 
     void StartJumpVisuals(Vector2 dir)
     {
-        if (visualRoutine != null)
-        {
-            StopCoroutine(visualRoutine);
-            visualRoutine = null;
-        }
-
         externalAnimator?.Play(dir);
-        visualRoutine = StartCoroutine(StopVisualsAfter(jumpDurationSeconds));
-    }
 
-    IEnumerator StopVisualsAfter(float seconds)
-    {
-        float end = Time.time + Mathf.Max(0.01f, seconds);
-        while (Time.time < end)
-        {
-            if (!enabledAbility || movement == null || movement.isDead)
-                break;
+        if (visualRoutine != null)
+            StopCoroutine(visualRoutine);
 
-            yield return null;
-        }
-
-        StopJumpVisuals();
+        visualRoutine = null;
     }
 
     void StopJumpVisuals()
     {
-        externalAnimator?.Stop();
-
         if (visualRoutine != null)
         {
             StopCoroutine(visualRoutine);
             visualRoutine = null;
         }
+
+        externalAnimator?.Stop();
+        ResetJumpVisualOffset();
+        ResetMountedPlayerJumpArc();
     }
 
     void CancelJump()
@@ -461,15 +525,21 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
             routine = null;
         }
 
-        StopJumpVisuals();
+        deathCancelInProgress = false;
 
+        ResetJumpVisualOffset();
+        ResetMountedPlayerJumpArc();
+        StopJumpVisuals();
         shadow?.EndJump();
 
-        if (movement != null)
+        if (movement != null && !movement.isDead)
             movement.SetInputLocked(false);
     }
 
-    public void Enable() => enabledAbility = true;
+    public void Enable()
+    {
+        enabledAbility = true;
+    }
 
     public void Disable()
     {
@@ -477,55 +547,9 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
         CancelJump();
     }
 
-    int GetPlayerId()
-    {
-        if (TryGetComponent<PlayerIdentity>(out var id) && id != null)
-            return Mathf.Clamp(id.playerId, 1, 4);
-
-        var parentId = GetComponentInParent<PlayerIdentity>(true);
-        if (parentId != null)
-            return Mathf.Clamp(parentId.playerId, 1, 4);
-
-        return 1;
-    }
-
     public void CancelJumpForDeath()
     {
         deathCancelInProgress = true;
-
-        if (routine != null)
-        {
-            StopCoroutine(routine);
-            routine = null;
-        }
-
-        if (visualRoutine != null)
-        {
-            StopCoroutine(visualRoutine);
-            visualRoutine = null;
-        }
-
-        externalAnimator?.Stop();
-        shadow?.EndJump();
-
-        if (movement != null)
-            movement.SetInputLocked(false);
-
-        if (invulnerableDuringJump)
-        {
-            if (playerHealth != null)
-                playerHealth.StopInvulnerability();
-
-            var louieHealth = GetMountedLouieHealth();
-            if (louieHealth != null)
-                louieHealth.StopInvulnerability();
-        }
-
-        if (externalAnimator is PinkLouieJumpAnimator anim && anim != null)
-            anim.CancelForDeath();
-        else if (externalAnimator is MonoBehaviour mb && mb != null)
-            mb.enabled = false;
-
-        externalAnimator = null;
+        CancelJump();
     }
 }
