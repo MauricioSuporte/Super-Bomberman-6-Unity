@@ -99,8 +99,13 @@ public sealed class CannonLauncher : MonoBehaviour
         dir.Normalize();
 
         bool prevInputLocked = mover.InputLocked;
-
         mover.SetInputLocked(true, forceIdle: false);
+
+        var mountVisual = mover.GetComponentInChildren<MountVisualController>(true);
+        GameObject louieGameObject = mountVisual != null ? mountVisual.gameObject : null;
+
+        if (louieGameObject != null)
+            louieGameObject.SetActive(false);
 
         Vector2 forcedVisualDir = fireToLeft ? Vector2.left : Vector2.right;
         mover.ApplyDirectionFromVector(forcedVisualDir);
@@ -118,6 +123,9 @@ public sealed class CannonLauncher : MonoBehaviour
         StartCoroutine(PlayFireSfxWithDelay());
 
         yield return PlayCannonFire(totalFire, warm);
+
+        if (louieGameObject != null)
+            louieGameObject.SetActive(true);
 
         mover.SetVisualOverrideActive(false);
         mover.EnableExclusiveFromState();
