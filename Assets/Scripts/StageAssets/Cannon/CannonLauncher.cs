@@ -108,6 +108,9 @@ public sealed class CannonLauncher : MonoBehaviour
 
         CenterPlayerOnCannon(mover);
 
+        mover.SetVisualOverrideActive(true);
+        mover.SetAllSpritesVisible(false);
+
         float warm = Mathf.Max(0f, warmupSeconds);
         float smoke = Mathf.Max(0f, smokeSeconds);
         float totalFire = warm + smoke;
@@ -115,6 +118,10 @@ public sealed class CannonLauncher : MonoBehaviour
         StartCoroutine(PlayFireSfxWithDelay());
 
         yield return PlayCannonFire(totalFire, warm);
+
+        mover.SetVisualOverrideActive(false);
+        mover.EnableExclusiveFromState();
+
         yield return LaunchPlayerArc(mover, dir);
 
         mover.SetInputLocked(prevInputLocked, forceIdle: false);
