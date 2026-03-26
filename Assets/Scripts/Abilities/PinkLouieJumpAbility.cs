@@ -47,9 +47,11 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
     Transform jumpVisualRoot;
     Vector3 jumpVisualBaseLocalPosition;
     bool jumpVisualBaseCached;
+    bool jumpVisualOffsetActive;
 
     float mountedPlayerBaseLocalY;
     bool mountedPlayerBaseLocalYCached;
+    bool mountedPlayerArcActive;
 
     public string Id => AbilityId;
     public bool IsEnabled => enabledAbility;
@@ -72,8 +74,21 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
         CacheMountedPlayerBaseLocalY();
     }
 
-    void OnDisable() => CancelJump();
-    void OnDestroy() => CancelJump();
+    void OnDisable()
+    {
+        if (deathCancelInProgress)
+            return;
+
+        CancelJump();
+    }
+
+    void OnDestroy()
+    {
+        if (deathCancelInProgress)
+            return;
+
+        CancelJump();
+    }
 
     public void SetExternalAnimator(IPinkLouieJumpExternalAnimator animator)
     {
@@ -186,7 +201,10 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
             shadow = GetComponentInChildren<PinkLouieShadowController>(true);
 
         BindShadowToPinkLouie();
-        CacheJumpVisualRoot();
+        CacheJumpVisualRoot(forceRecache: true);
+
+        jumpVisualOffsetActive = false;
+        mountedPlayerArcActive = false;
 
         shadow?.BeginJump((Vector2)startPos);
 
@@ -288,7 +306,7 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
         }
     }
 
-    void CacheJumpVisualRoot()
+    void CacheJumpVisualRoot(bool forceRecache = false)
     {
         if (jumpVisualRoot == null)
             BindShadowToPinkLouie();
@@ -296,8 +314,11 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
         if (jumpVisualRoot == null)
             return;
 
-        jumpVisualBaseLocalPosition = jumpVisualRoot.localPosition;
-        jumpVisualBaseCached = true;
+        if (!jumpVisualBaseCached || forceRecache)
+        {
+            jumpVisualBaseLocalPosition = jumpVisualRoot.localPosition;
+            jumpVisualBaseCached = true;
+        }
     }
 
     void CacheMountedPlayerBaseLocalY()
@@ -311,19 +332,33 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
 
     void ApplyJumpVisualOffset(float arcY)
     {
-        if (jumpVisualRoot == null || !jumpVisualBaseCached)
+        if (jumpVisualRoot == null)
+            return;
+
+        CacheJumpVisualRoot();
+
+        if (!jumpVisualBaseCached)
             return;
 
         jumpVisualRoot.localPosition =
             jumpVisualBaseLocalPosition + new Vector3(0f, arcY, 0f);
+
+        jumpVisualOffsetActive = true;
     }
 
     void ResetJumpVisualOffset()
     {
-        if (jumpVisualRoot == null || !jumpVisualBaseCached)
+        if (!jumpVisualOffsetActive)
             return;
 
+        if (jumpVisualRoot == null || !jumpVisualBaseCached)
+        {
+            jumpVisualOffsetActive = false;
+            return;
+        }
+
         jumpVisualRoot.localPosition = jumpVisualBaseLocalPosition;
+        jumpVisualOffsetActive = false;
     }
 
     void ApplyMountedPlayerJumpArc(float arcY)
@@ -344,12 +379,20 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
 
         if (movement.mountedSpriteRight != null)
             movement.mountedSpriteRight.SetRuntimeBaseLocalY(desiredY);
+
+        mountedPlayerArcActive = true;
     }
 
     void ResetMountedPlayerJumpArc()
     {
-        if (movement == null || !mountedPlayerBaseLocalYCached)
+        if (!mountedPlayerArcActive)
             return;
+
+        if (movement == null || !mountedPlayerBaseLocalYCached)
+        {
+            mountedPlayerArcActive = false;
+            return;
+        }
 
         float desiredY = mountedPlayerBaseLocalY;
 
@@ -364,6 +407,8 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
 
         if (movement.mountedSpriteRight != null)
             movement.mountedSpriteRight.SetRuntimeBaseLocalY(desiredY);
+
+        mountedPlayerArcActive = false;
     }
 
     void StartJumpInvulnerabilityOnly(CharacterHealth mountedLouieHealth)
@@ -525,11 +570,16 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
             routine = null;
         }
 
-        deathCancelInProgress = false;
+        if (visualRoutine != null)
+        {
+            StopCoroutine(visualRoutine);
+            visualRoutine = null;
+        }
 
         ResetJumpVisualOffset();
         ResetMountedPlayerJumpArc();
-        StopJumpVisuals();
+
+        externalAnimator?.Stop();
         shadow?.EndJump();
 
         if (movement != null && !movement.isDead)
@@ -544,12 +594,31 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
     public void Disable()
     {
         enabledAbility = false;
-        CancelJump();
+
+        if (!deathCancelInProgress)
+            CancelJump();
     }
 
     public void CancelJumpForDeath()
     {
         deathCancelInProgress = true;
-        CancelJump();
+
+        if (routine != null)
+        {
+            StopCoroutine(routine);
+            routine = null;
+        }
+
+        if (visualRoutine != null)
+        {
+            StopCoroutine(visualRoutine);
+            visualRoutine = null;
+        }
+
+        ResetJumpVisualOffset();
+        ResetMountedPlayerJumpArc();
+
+        externalAnimator?.Stop();
+        shadow?.EndJump();
     }
 }

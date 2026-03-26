@@ -152,12 +152,11 @@ public class MountMovementController : MovementController
         if (ownerHadGreenDash)
             ownerDash.Disable();
 
-        // IMPORTANTE: NÃO desabilitar BombPunchAbility do owner
-        // if (ownerHadBluePunch)
-        //     ownerBluePunch.Disable();
-
         if (ownerHadPinkJump)
+        {
+            ownerPinkJump.CancelJumpForDeath();
             ownerPinkJump.Disable();
+        }
 
         if (ownerHadPurpleLine)
             ownerPurpleLine.Disable();
