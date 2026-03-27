@@ -38,6 +38,19 @@ public class BombExplosion : MonoBehaviour
             (Vector2)transform.position);
     }
 
+    void UpdateSpotlightIntensity(float intensity)
+    {
+        if (!_spotlightRegistered)
+            return;
+
+        if (StageBlackout.Instance == null)
+            return;
+
+        StageBlackout.Instance.UpdateExplosionSpotlight(
+            GetInstanceID(),
+            intensity);
+    }
+
     void UnregisterSpotlight()
     {
         if (!_spotlightRegistered)
@@ -120,6 +133,33 @@ public class BombExplosion : MonoBehaviour
         }
 
         RegisterSpotlight();
-        DestroyAfter(duration);
+
+        if (duration <= 0f)
+        {
+            UpdateSpotlightIntensity(1f);
+            DestroyAfter(0f);
+            yield break;
+        }
+
+        float elapsed = 0f;
+
+        while (elapsed < duration)
+        {
+            float t = Mathf.Clamp01(elapsed / duration);
+
+            // Curva triangular: 0 -> 1 -> 0
+            float triangle = 1f - Mathf.Abs((t * 2f) - 1f);
+
+            // Suaviza a subida e a descida
+            float intensity = Mathf.SmoothStep(0f, 1f, triangle);
+
+            UpdateSpotlightIntensity(intensity);
+
+            elapsed += Time.deltaTime;
+            yield return null;
+        }
+
+        UpdateSpotlightIntensity(0f);
+        DestroyAfter(0f);
     }
 }

@@ -40,12 +40,14 @@ public sealed class StageBlackout : MonoBehaviour
     private static readonly int IdSpotlightCenters = Shader.PropertyToID("_SpotlightCenters");
     private static readonly int IdSpotlightHalfSize = Shader.PropertyToID("_SpotlightHalfSize");
     private static readonly int IdSpotlightSoftness = Shader.PropertyToID("_SpotlightSoftness");
+    private static readonly int IdSpotlightIntensity = Shader.PropertyToID("_SpotlightIntensity");
 
     private sealed class ExplosionSpotlightData
     {
         public int Id;
         public Transform Transform;
         public Vector2 LastKnownWorldPosition;
+        public float Intensity;
     }
 
     Material _originalMat;
@@ -59,6 +61,7 @@ public sealed class StageBlackout : MonoBehaviour
     Vector4[] _spotlightCentersCache;
     Vector4[] _spotlightHalfSizeCache;
     float[] _spotlightSoftnessCache;
+    float[] _spotlightIntensityCache;
 
     RectTransform _blackoutRect;
     Canvas _canvas;
@@ -108,6 +111,7 @@ public sealed class StageBlackout : MonoBehaviour
         _spotlightCentersCache = new Vector4[cacheSize];
         _spotlightHalfSizeCache = new Vector4[cacheSize];
         _spotlightSoftnessCache = new float[cacheSize];
+        _spotlightIntensityCache = new float[cacheSize];
 
         if (_matInstance != null)
             ApplyFullBlackout(0f);
@@ -210,7 +214,8 @@ public sealed class StageBlackout : MonoBehaviour
         {
             Id = id,
             Transform = FindExplosionTransformByInstanceId(id),
-            LastKnownWorldPosition = worldPosition
+            LastKnownWorldPosition = worldPosition,
+            Intensity = 0f
         };
 
         if (enableSurgicalLogs)
@@ -230,6 +235,12 @@ public sealed class StageBlackout : MonoBehaviour
         }
 
         ApplyExplosionSpotlights();
+    }
+
+    public void UpdateExplosionSpotlight(int id, float intensity)
+    {
+        if (_activeExplosionSpotlights.TryGetValue(id, out var data))
+            data.Intensity = Mathf.Clamp01(intensity);
     }
 
     public void UnregisterExplosionSpotlight(int id)
@@ -335,6 +346,7 @@ public sealed class StageBlackout : MonoBehaviour
             _spotlightCentersCache[count] = new Vector4(uv.x, uv.y, 0f, 0f);
             _spotlightHalfSizeCache[count] = new Vector4(halfSize.x, halfSize.y, 0f, 0f);
             _spotlightSoftnessCache[count] = explosionSpotlightSoftness;
+            _spotlightIntensityCache[count] = data.Intensity;
             count++;
         }
 
@@ -342,6 +354,7 @@ public sealed class StageBlackout : MonoBehaviour
         _matInstance.SetVectorArray(IdSpotlightCenters, _spotlightCentersCache);
         _matInstance.SetVectorArray(IdSpotlightHalfSize, _spotlightHalfSizeCache);
         _matInstance.SetFloatArray(IdSpotlightSoftness, _spotlightSoftnessCache);
+        _matInstance.SetFloatArray(IdSpotlightIntensity, _spotlightIntensityCache);
     }
 
     void ClearExplosionSpotlights()

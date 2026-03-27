@@ -67,6 +67,7 @@ Shader "UI/SpotlightMask"
             float4 _SpotlightCenters[MAX_SPOTLIGHTS];
             float4 _SpotlightHalfSize[MAX_SPOTLIGHTS];
             float _SpotlightSoftness[MAX_SPOTLIGHTS];
+            float _SpotlightIntensity[MAX_SPOTLIGHTS];
 
             v2f vert(appdata_t v)
             {
@@ -119,13 +120,15 @@ Shader "UI/SpotlightMask"
                     if (idx >= _SpotlightCount)
                         break;
 
-                    hole = max(
-                        hole,
-                        ComputeBoxHole(
-                            i.uv,
-                            _SpotlightCenters[idx].xy,
-                            _SpotlightHalfSize[idx].xy,
-                            _SpotlightSoftness[idx]));
+                    float boxHole = ComputeBoxHole(
+                        i.uv,
+                        _SpotlightCenters[idx].xy,
+                        _SpotlightHalfSize[idx].xy,
+                        _SpotlightSoftness[idx]);
+
+                    boxHole *= saturate(_SpotlightIntensity[idx]);
+
+                    hole = max(hole, boxHole);
                 }
 
                 fixed4 col = _Color;
