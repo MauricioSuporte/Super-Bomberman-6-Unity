@@ -32,6 +32,9 @@ public sealed class InactivityAnimation : MonoBehaviour
         Mount = 2
     }
 
+    public float ChanceAltAnimation => Mathf.Clamp01(chanceAltAnimation);
+    public bool RefreshFrameOnEnter => refreshFrameOnEnter;
+
     private void Awake()
     {
         movement = GetComponent<MovementController>();

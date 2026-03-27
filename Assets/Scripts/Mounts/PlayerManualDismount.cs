@@ -122,7 +122,7 @@ public sealed class PlayerManualDismount : MonoBehaviour
                 if (movement != null)
                     movement.ForceIdleFacing(facingAtPress, "TryManualDismount");
 
-                StartDetachedLouieInactivityLoop(detachedLouie);
+                StartDetachedLouieInactivityLoop(detachedLouie, movement);
             },
             onStart: () =>
             {
@@ -164,7 +164,7 @@ public sealed class PlayerManualDismount : MonoBehaviour
             return;
     }
 
-    static void StartDetachedLouieInactivityLoop(GameObject detachedLouie)
+    static void StartDetachedLouieInactivityLoop(GameObject detachedLouie, MovementController playerMovement)
     {
         if (detachedLouie == null)
             return;
@@ -185,7 +185,23 @@ public sealed class PlayerManualDismount : MonoBehaviour
         visual.Bind(selfMovement);
         visual.enabled = true;
 
-        visual.SetInactivityEmote(true);
+        float chanceAlt = 0f;
+        bool refreshFrameOnEnter = true;
+
+        if (playerMovement != null &&
+            playerMovement.TryGetComponent<InactivityAnimation>(out var inactivity) &&
+            inactivity != null)
+        {
+            chanceAlt = inactivity.ChanceAltAnimation;
+            refreshFrameOnEnter = inactivity.RefreshFrameOnEnter;
+        }
+
+        var chosen =
+            (visual.LouieInactivityEmoteLoopAlt != null && Random.value <= chanceAlt)
+                ? visual.LouieInactivityEmoteLoopAlt
+                : visual.LouieInactivityEmoteLoop;
+
+        visual.SetInactivityEmote(chosen, refreshFrameOnEnter);
     }
 
     static void ClearDetachedLouieInvulnerability(GameObject detachedLouie)
