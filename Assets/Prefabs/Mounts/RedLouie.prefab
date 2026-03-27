@@ -1754,11 +1754,27 @@ MonoBehaviour:
   idleSprite: {fileID: 1360583926, guid: 68508f5db59727244b49d067c55da6de, type: 3}
   animationSprite:
   - {fileID: 1360583926, guid: 68508f5db59727244b49d067c55da6de, type: 3}
-  - {fileID: 657592119, guid: 68508f5db59727244b49d067c55da6de, type: 3}
   - {fileID: 1360583926, guid: 68508f5db59727244b49d067c55da6de, type: 3}
+  - {fileID: 1360583926, guid: 68508f5db59727244b49d067c55da6de, type: 3}
+  - {fileID: 1360583926, guid: 68508f5db59727244b49d067c55da6de, type: 3}
+  - {fileID: 1360583926, guid: 68508f5db59727244b49d067c55da6de, type: 3}
+  - {fileID: 657592119, guid: 68508f5db59727244b49d067c55da6de, type: 3}
   - {fileID: -639422343, guid: 68508f5db59727244b49d067c55da6de, type: 3}
+  - {fileID: 657592119, guid: 68508f5db59727244b49d067c55da6de, type: 3}
+  - {fileID: -639422343, guid: 68508f5db59727244b49d067c55da6de, type: 3}
+  - {fileID: 657592119, guid: 68508f5db59727244b49d067c55da6de, type: 3}
+  - {fileID: -639422343, guid: 68508f5db59727244b49d067c55da6de, type: 3}
+  - {fileID: 657592119, guid: 68508f5db59727244b49d067c55da6de, type: 3}
+  - {fileID: -639422343, guid: 68508f5db59727244b49d067c55da6de, type: 3}
+  - {fileID: 657592119, guid: 68508f5db59727244b49d067c55da6de, type: 3}
+  - {fileID: -639422343, guid: 68508f5db59727244b49d067c55da6de, type: 3}
+  - {fileID: 657592119, guid: 68508f5db59727244b49d067c55da6de, type: 3}
+  - {fileID: -639422343, guid: 68508f5db59727244b49d067c55da6de, type: 3}
+  - {fileID: 657592119, guid: 68508f5db59727244b49d067c55da6de, type: 3}
+  - {fileID: -639422343, guid: 68508f5db59727244b49d067c55da6de, type: 3}
+  - {fileID: 657592119, guid: 68508f5db59727244b49d067c55da6de, type: 3}
   allowFlipX: 0
-  animationTime: 0.25
+  animationTime: 0.1
   useSequenceDuration: 0
   sequenceDuration: 0.5
   useUnscaledTime: 1
