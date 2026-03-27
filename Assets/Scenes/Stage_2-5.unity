@@ -1409,6 +1409,8 @@ MonoBehaviour:
   enterSfx: {fileID: 8300000, guid: 778da4e4d7313e54195e6cbca646d851, type: 3}
   endStageMusic: {fileID: 0}
   playRandomGoodSfx: 1
+  playSkullForNightmareBomber: 1
+  skullVolume: 1
   manualUnlockOnly: 0
   unlockGateSfx: {fileID: 8300000, guid: 9f1639c45a104994a87b186228d5b8e7, type: 3}
   openGateSfx: {fileID: 8300000, guid: 66686e87bc1a8994880d4f9972de6d54, type: 3}
@@ -5154,6 +5156,11 @@ MonoBehaviour:
   targetStage: 5
   blackoutAlpha: 0.85
   fadeInSeconds: 0
+  tileWorldSize: 1
+  extraTilesAroundExplosion: 0.4
+  explosionSpotlightSoftness: 0.02
+  maxExplosionSpotlights: 16
+  enableSurgicalLogs: 1
 --- !u!114 &732032092
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -12401,9 +12408,9 @@ GameObject:
   m_Component:
   - component: {fileID: 2066683485}
   - component: {fileID: 2066683484}
+  - component: {fileID: 2066683481}
   - component: {fileID: 2066683483}
   - component: {fileID: 2066683482}
-  - component: {fileID: 2066683481}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
