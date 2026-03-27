@@ -4193,6 +4193,10 @@ MonoBehaviour:
   pixelsPerUnit: 16
   jumpPeakPixels: 32
   quantizeToPixel: 1
+  mountStartHeightPixels: 0
+  mountEndHeightPixels: 16
+  dismountStartHeightPixels: 16
+  dismountEndHeightPixels: 0
 --- !u!114 &429751358522082578
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -115,7 +115,7 @@ public sealed class PlayerManualDismount : MonoBehaviour
             ClearDetachedLouieInvulnerability(detachedLouie);
         }
 
-        bool started = rider.TryPlayRiding(
+        bool started = rider.TryPlayDismount(
             facingAtPress,
             onComplete: () =>
             {

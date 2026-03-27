@@ -273,7 +273,7 @@ public class PlayerMountCompanion : MonoBehaviour
         Vector2 resolvedFacing = ResolveFacingForMount(facingDirection);
 
         var rider = GetComponent<PlayerRidingController>();
-        if (rider != null && rider.TryPlayRiding(
+        if (rider != null && rider.TryPlayMount(
             resolvedFacing,
             onComplete: () => FinalizeMount(type, resolvedFacing),
             onStart: () => SpawnLouieForMount(prefab, type, duringRiding: true, resolvedFacing)))
@@ -469,7 +469,7 @@ public class PlayerMountCompanion : MonoBehaviour
 
             if (hasQueuedEgg)
             {
-                if (rider.TryPlayRiding(
+                if (rider.TryPlayMount(
                     facing,
                     onComplete: () => FinalizeMount(queuedMountedType, facing),
                     onStart: () =>
@@ -488,7 +488,7 @@ public class PlayerMountCompanion : MonoBehaviour
                 return;
             }
 
-            if (rider.TryPlayRiding(
+            if (rider.TryPlayDismount(
                 facing,
                 onComplete: () => FinishLoseMountAfterRidingWithoutLouie(facing),
                 onStart: () =>
@@ -512,7 +512,7 @@ public class PlayerMountCompanion : MonoBehaviour
     void UnmountLouie()
     {
         var rider = GetComponent<PlayerRidingController>();
-        if (rider != null && movement != null && rider.TryPlayRiding(
+        if (rider != null && movement != null && rider.TryPlayDismount(
             movement.FacingDirection,
             onComplete: UnmountLouie_AfterRiding,
             onStart: () => MarkRidingUninterruptible(rider.ridingSeconds, blink: true)))
@@ -639,8 +639,6 @@ public class PlayerMountCompanion : MonoBehaviour
 
         Vector2 facing = ResolveFacingForMount(movement.FacingDirection);
 
-        // IMPORTANTE:
-        // aqui não vamos snapar o target vindo do ovo/pickup.
         Vector3 exactTargetWorldPos = targetWorldPos;
         exactTargetWorldPos.z = 0f;
 

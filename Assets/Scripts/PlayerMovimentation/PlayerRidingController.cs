@@ -5,6 +5,12 @@ using UnityEngine;
 [RequireComponent(typeof(MovementController))]
 public sealed class PlayerRidingController : MonoBehaviour
 {
+    public enum RidingArcType
+    {
+        Mount,
+        Dismount
+    }
+
     [Header("Mount Ascend Sprites")]
     public AnimatedSpriteRenderer mountAscendUp;
     public AnimatedSpriteRenderer mountAscendDown;
@@ -24,6 +30,14 @@ public sealed class PlayerRidingController : MonoBehaviour
     [SerializeField] private float pixelsPerUnit = 16f;
     [SerializeField] private int jumpPeakPixels = 32;
     [SerializeField] private bool quantizeToPixel = true;
+
+    [Header("Mount Heights (pixels)")]
+    [SerializeField] private int mountStartHeightPixels = 0;
+    [SerializeField] private int mountEndHeightPixels = 0;
+
+    [Header("Dismount Heights (pixels)")]
+    [SerializeField] private int dismountStartHeightPixels = 0;
+    [SerializeField] private int dismountEndHeightPixels = 0;
 
     MovementController movement;
     BombController bomb;
@@ -67,13 +81,71 @@ public sealed class PlayerRidingController : MonoBehaviour
 
     public bool TryPlayRiding(Vector2 facing, System.Action onComplete = null, System.Action onStart = null)
     {
+        return TryPlayMount(facing, onComplete, onStart);
+    }
+
+    public bool TryPlayMount(Vector2 facing, System.Action onComplete = null, System.Action onStart = null)
+    {
         Vector3 startWorldPos = transform.position;
         Vector3 targetWorldPos = transform.position;
 
-        return TryPlayMountArc(facing, startWorldPos, targetWorldPos, onComplete, onStart);
+        return TryPlayMountArcInternal(
+            RidingArcType.Mount,
+            facing,
+            startWorldPos,
+            targetWorldPos,
+            onComplete,
+            onStart);
+    }
+
+    public bool TryPlayDismount(Vector2 facing, System.Action onComplete = null, System.Action onStart = null)
+    {
+        Vector3 startWorldPos = transform.position;
+        Vector3 targetWorldPos = transform.position;
+
+        return TryPlayMountArcInternal(
+            RidingArcType.Dismount,
+            facing,
+            startWorldPos,
+            targetWorldPos,
+            onComplete,
+            onStart);
     }
 
     public bool TryPlayMountArc(
+        Vector2 facing,
+        Vector3 startWorldPos,
+        Vector3 targetWorldPos,
+        System.Action onComplete = null,
+        System.Action onStart = null)
+    {
+        return TryPlayMountArcInternal(
+            RidingArcType.Mount,
+            facing,
+            startWorldPos,
+            targetWorldPos,
+            onComplete,
+            onStart);
+    }
+
+    public bool TryPlayDismountArc(
+        Vector2 facing,
+        Vector3 startWorldPos,
+        Vector3 targetWorldPos,
+        System.Action onComplete = null,
+        System.Action onStart = null)
+    {
+        return TryPlayMountArcInternal(
+            RidingArcType.Dismount,
+            facing,
+            startWorldPos,
+            targetWorldPos,
+            onComplete,
+            onStart);
+    }
+
+    bool TryPlayMountArcInternal(
+        RidingArcType arcType,
         Vector2 facing,
         Vector3 startWorldPos,
         Vector3 targetWorldPos,
@@ -100,6 +172,7 @@ public sealed class PlayerRidingController : MonoBehaviour
         onStart?.Invoke();
 
         routine = StartCoroutine(PlayMountArcRoutine(
+            arcType,
             facing,
             startWorldPos,
             targetWorldPos,
@@ -133,6 +206,7 @@ public sealed class PlayerRidingController : MonoBehaviour
     }
 
     IEnumerator PlayMountArcRoutine(
+        RidingArcType arcType,
         Vector2 facing,
         Vector3 startWorldPos,
         Vector3 targetWorldPos,
@@ -142,6 +216,9 @@ public sealed class PlayerRidingController : MonoBehaviour
 
         float duration = Mathf.Max(0.01f, ridingSeconds);
         float elapsed = 0f;
+
+        float startHeightWorld = GetStartHeightWorld(arcType);
+        float endHeightWorld = GetEndHeightWorld(arcType);
 
         transform.position = startWorldPos;
 
@@ -159,14 +236,17 @@ public sealed class PlayerRidingController : MonoBehaviour
 
             Vector3 flat = Vector3.Lerp(startWorldPos, targetWorldPos, t);
 
-            float arc = 4f * JumpPeakWorld * t * (1f - t);
+            float baseHeight = Mathf.Lerp(startHeightWorld, endHeightWorld, t);
+            float parabolaHeight = 4f * JumpPeakWorld * t * (1f - t);
+            float totalHeight = baseHeight + parabolaHeight;
+
             if (quantizeToPixel)
-                arc = QuantizeWorldToPixel(arc);
+                totalHeight = QuantizeWorldToPixel(totalHeight);
 
             AnimatedSpriteRenderer renderer = PickRendererForPhase(facing, t < 0.5f);
 
             ApplyExclusiveRenderer(renderer);
-            ApplyRendererArcOffset(renderer, arc);
+            ApplyRendererArcOffset(renderer, totalHeight);
 
             flat.z = transform.position.z;
             transform.position = flat;
@@ -178,6 +258,10 @@ public sealed class PlayerRidingController : MonoBehaviour
         finalPos.z = transform.position.z;
         transform.position = finalPos;
 
+        AnimatedSpriteRenderer finalRenderer = PickRendererForPhase(facing, false);
+        ApplyExclusiveRenderer(finalRenderer);
+        ApplyRendererArcOffset(finalRenderer, endHeightWorld);
+
         DisableAllRiding();
         ClearAllRuntimeOffsets();
 
@@ -188,6 +272,29 @@ public sealed class PlayerRidingController : MonoBehaviour
 
         isPlaying = false;
         routine = null;
+    }
+
+    float GetStartHeightWorld(RidingArcType arcType)
+    {
+        int pixels = arcType == RidingArcType.Mount
+            ? mountStartHeightPixels
+            : dismountStartHeightPixels;
+
+        return PixelsToWorld(pixels);
+    }
+
+    float GetEndHeightWorld(RidingArcType arcType)
+    {
+        int pixels = arcType == RidingArcType.Mount
+            ? mountEndHeightPixels
+            : dismountEndHeightPixels;
+
+        return PixelsToWorld(pixels);
+    }
+
+    float PixelsToWorld(float pixels)
+    {
+        return pixels / Mathf.Max(1f, pixelsPerUnit);
     }
 
     void CacheRenderers()
@@ -299,12 +406,7 @@ public sealed class PlayerRidingController : MonoBehaviour
         SetAnimEnabled(mountDescendRight, target == mountDescendRight);
 
         if (target != null)
-        {
-            if (target.CurrentFrame == 0)
-                target.RefreshFrame();
-            else
-                target.RefreshFrame();
-        }
+            target.RefreshFrame();
     }
 
     void ApplyRendererArcOffset(AnimatedSpriteRenderer active, float arcY)
