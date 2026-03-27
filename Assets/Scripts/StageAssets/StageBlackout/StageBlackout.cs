@@ -7,6 +7,8 @@ public sealed class StageBlackout : MonoBehaviour
 {
     public static StageBlackout Instance { get; private set; }
 
+    private const int ShaderMaxSpotlights = 128;
+
     [Header("UI")]
     [SerializeField] private Image blackoutImage;
 
@@ -24,7 +26,7 @@ public sealed class StageBlackout : MonoBehaviour
     [SerializeField, Min(0.01f)] private float tileWorldSize = 1f;
     [SerializeField, Min(0f)] private float extraTilesAroundExplosion = 1f;
     [SerializeField, Min(0f)] private float explosionSpotlightSoftness = 0.01f;
-    [SerializeField, Min(1)] private int maxExplosionSpotlights = 16;
+    [SerializeField, Min(1)] private int maxExplosionSpotlights = 128;
 
     [Header("Debug")]
     [SerializeField] private bool enableSurgicalLogs = true;
@@ -83,6 +85,8 @@ public sealed class StageBlackout : MonoBehaviour
             return;
         }
 
+        maxExplosionSpotlights = Mathf.Clamp(maxExplosionSpotlights, 1, ShaderMaxSpotlights);
+
         _blackoutRect = blackoutImage.rectTransform;
         _canvas = blackoutImage.canvas;
 
@@ -107,16 +111,20 @@ public sealed class StageBlackout : MonoBehaviour
         _currentA = 0f;
         _targetA = Mathf.Clamp01(blackoutAlpha);
 
-        int cacheSize = Mathf.Max(1, maxExplosionSpotlights);
-        _spotlightCentersCache = new Vector4[cacheSize];
-        _spotlightHalfSizeCache = new Vector4[cacheSize];
-        _spotlightSoftnessCache = new float[cacheSize];
-        _spotlightIntensityCache = new float[cacheSize];
+        _spotlightCentersCache = new Vector4[ShaderMaxSpotlights];
+        _spotlightHalfSizeCache = new Vector4[ShaderMaxSpotlights];
+        _spotlightSoftnessCache = new float[ShaderMaxSpotlights];
+        _spotlightIntensityCache = new float[ShaderMaxSpotlights];
 
         if (_matInstance != null)
             ApplyFullBlackout(0f);
 
         _active = false;
+    }
+
+    void OnValidate()
+    {
+        maxExplosionSpotlights = Mathf.Clamp(maxExplosionSpotlights, 1, ShaderMaxSpotlights);
     }
 
     void Start()
@@ -355,6 +363,15 @@ public sealed class StageBlackout : MonoBehaviour
         _matInstance.SetVectorArray(IdSpotlightHalfSize, _spotlightHalfSizeCache);
         _matInstance.SetFloatArray(IdSpotlightSoftness, _spotlightSoftnessCache);
         _matInstance.SetFloatArray(IdSpotlightIntensity, _spotlightIntensityCache);
+
+        if (enableSurgicalLogs && _activeExplosionSpotlights.Count > maxExplosionSpotlights)
+        {
+            LogSurgical(
+                $"Spotlights excedendo limite do shader. " +
+                $"Ativos={_activeExplosionSpotlights.Count}, " +
+                $"Usados={maxExplosionSpotlights}, " +
+                $"ShaderMax={ShaderMaxSpotlights}");
+        }
     }
 
     void ClearExplosionSpotlights()

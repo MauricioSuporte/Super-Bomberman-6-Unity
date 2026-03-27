@@ -147,10 +147,8 @@ public class BombExplosion : MonoBehaviour
         {
             float t = Mathf.Clamp01(elapsed / duration);
 
-            // Curva triangular: 0 -> 1 -> 0
             float triangle = 1f - Mathf.Abs((t * 2f) - 1f);
 
-            // Suaviza a subida e a descida
             float intensity = Mathf.SmoothStep(0f, 1f, triangle);
 
             UpdateSpotlightIntensity(intensity);

@@ -5159,7 +5159,7 @@ MonoBehaviour:
   tileWorldSize: 1
   extraTilesAroundExplosion: 0.4
   explosionSpotlightSoftness: 0.02
-  maxExplosionSpotlights: 16
+  maxExplosionSpotlights: 999
   enableSurgicalLogs: 1
 --- !u!114 &732032092
 MonoBehaviour:
@@ -9492,7 +9492,7 @@ Tilemap:
       - {fileID: -4301117888644429131, guid: 17991a6676ded78438138725c62fac7c, type: 3}
       - {fileID: 6982989271821945363, guid: 17991a6676ded78438138725c62fac7c, type: 3}
       - {fileID: 3171655041305257236, guid: 17991a6676ded78438138725c62fac7c, type: 3}
-      m_AnimationSpeed: 10
+      m_AnimationSpeed: 10.000001
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: -7, y: 16, z: 0}

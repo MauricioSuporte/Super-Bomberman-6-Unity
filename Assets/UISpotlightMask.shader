@@ -37,7 +37,7 @@ Shader "UI/SpotlightMask"
             #pragma fragment frag
             #include "UnityCG.cginc"
 
-            #define MAX_SPOTLIGHTS 16
+            #define MAX_SPOTLIGHTS 128
 
             struct appdata_t
             {
@@ -127,7 +127,6 @@ Shader "UI/SpotlightMask"
                         _SpotlightSoftness[idx]);
 
                     boxHole *= saturate(_SpotlightIntensity[idx]);
-
                     hole = max(hole, boxHole);
                 }
 
