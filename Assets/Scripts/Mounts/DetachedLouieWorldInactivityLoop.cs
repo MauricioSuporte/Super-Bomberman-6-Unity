@@ -49,8 +49,7 @@ public sealed class DetachedLouieWorldInactivityLoop : MonoBehaviour
 
         if (louieMovement.isDead)
         {
-            visual.SetInactivityEmote(false);
-            Destroy(this);
+            StopLoopForDeath();
             return;
         }
 
@@ -68,6 +67,32 @@ public sealed class DetachedLouieWorldInactivityLoop : MonoBehaviour
 
         started = false;
         Destroy(this);
+    }
+
+    private void StopLoopForDeath()
+    {
+        started = false;
+
+        if (visual != null)
+        {
+            DisableRendererOnly(visual.LouieInactivityEmoteLoop);
+            DisableRendererOnly(visual.LouieInactivityEmoteLoopAlt);
+
+            visual.enabled = false;
+        }
+
+        Destroy(this);
+    }
+
+    private static void DisableRendererOnly(AnimatedSpriteRenderer renderer)
+    {
+        if (renderer == null)
+            return;
+
+        renderer.enabled = false;
+
+        if (renderer.TryGetComponent(out SpriteRenderer sr) && sr != null)
+            sr.enabled = false;
     }
 
     private void StartLoop()
