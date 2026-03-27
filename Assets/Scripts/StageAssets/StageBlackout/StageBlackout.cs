@@ -28,9 +28,6 @@ public sealed class StageBlackout : MonoBehaviour
     [SerializeField, Min(0f)] private float explosionSpotlightSoftness = 0.01f;
     [SerializeField, Min(1)] private int maxExplosionSpotlights = 128;
 
-    [Header("Debug")]
-    [SerializeField] private bool enableSurgicalLogs = true;
-
     private static readonly int IdEllipseX = Shader.PropertyToID("_EllipseX");
     private static readonly int IdEllipseY = Shader.PropertyToID("_EllipseY");
     private static readonly int IdCenter = Shader.PropertyToID("_Center");
@@ -193,7 +190,6 @@ public sealed class StageBlackout : MonoBehaviour
             }
 
             ApplyExplosionSpotlights();
-            LogSurgical($"Blackout ativado. alpha={_targetA:F3}");
             return;
         }
 
@@ -209,8 +205,6 @@ public sealed class StageBlackout : MonoBehaviour
 
         blackoutImage.material = null;
         blackoutImage.gameObject.SetActive(false);
-
-        LogSurgical("Blackout desativado.");
     }
 
     public void RegisterExplosionSpotlight(int id, Vector2 worldPosition)
@@ -226,22 +220,6 @@ public sealed class StageBlackout : MonoBehaviour
             Intensity = 0f
         };
 
-        if (enableSurgicalLogs)
-        {
-            Vector2 uv = WorldToBlackoutUV(worldPosition);
-            Vector2 oneTileUv = GetBlackoutUvDeltaForOneTile(worldPosition);
-            Vector2 halfSize = GetExplosionHalfSizeInBlackoutUV(worldPosition);
-
-            LogSurgical(
-                $"RegisterExplosionSpotlight -> id={id}, " +
-                $"world=({worldPosition.x:F3}, {worldPosition.y:F3}), " +
-                $"uv=({uv.x:F4}, {uv.y:F4}), " +
-                $"oneTileUv=({oneTileUv.x:F4}, {oneTileUv.y:F4}), " +
-                $"halfSize=({halfSize.x:F4}, {halfSize.y:F4}), " +
-                $"extraTiles={extraTilesAroundExplosion:F2}, " +
-                $"activeCount={_activeExplosionSpotlights.Count}");
-        }
-
         ApplyExplosionSpotlights();
     }
 
@@ -254,18 +232,7 @@ public sealed class StageBlackout : MonoBehaviour
     public void UnregisterExplosionSpotlight(int id)
     {
         if (_activeExplosionSpotlights.Remove(id))
-        {
-            LogSurgical($"UnregisterExplosionSpotlight -> id={id}, remaining={_activeExplosionSpotlights.Count}");
             ApplyExplosionSpotlights();
-        }
-    }
-
-    void LogSurgical(string message)
-    {
-        if (!enableSurgicalLogs)
-            return;
-
-        Debug.Log($"[StageBlackout][{gameObject.name}] {message}", this);
     }
 
     Transform FindExplosionTransformByInstanceId(int instanceId)
@@ -363,15 +330,6 @@ public sealed class StageBlackout : MonoBehaviour
         _matInstance.SetVectorArray(IdSpotlightHalfSize, _spotlightHalfSizeCache);
         _matInstance.SetFloatArray(IdSpotlightSoftness, _spotlightSoftnessCache);
         _matInstance.SetFloatArray(IdSpotlightIntensity, _spotlightIntensityCache);
-
-        if (enableSurgicalLogs && _activeExplosionSpotlights.Count > maxExplosionSpotlights)
-        {
-            LogSurgical(
-                $"Spotlights excedendo limite do shader. " +
-                $"Ativos={_activeExplosionSpotlights.Count}, " +
-                $"Usados={maxExplosionSpotlights}, " +
-                $"ShaderMax={ShaderMaxSpotlights}");
-        }
     }
 
     void ClearExplosionSpotlights()
