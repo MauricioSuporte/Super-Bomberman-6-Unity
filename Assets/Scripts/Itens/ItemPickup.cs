@@ -311,9 +311,14 @@ public class ItemPickup : MonoBehaviour
     }
 
     public void Consume(bool playDestroyAnim) => ConsumeNow(playDestroyAnim);
-    public bool TryApplyDamageLikeEnemyContact(GameObject player, int damage) => TryApplyPickupDamageLikeEnemyContact(player, damage);
 
-    bool TryApplyPickupDamageLikeEnemyContact(GameObject player, int damage)
+    public bool TryApplyDamageLikeEnemyContact(GameObject player, int damage)
+        => TryApplyPickupDamageLikeEnemyContact(player, damage, fromExplosion: false);
+
+    public bool TryApplyDamageLikeEnemyContact(GameObject player, int damage, bool fromExplosion)
+        => TryApplyPickupDamageLikeEnemyContact(player, damage, fromExplosion);
+
+    bool TryApplyPickupDamageLikeEnemyContact(GameObject player, int damage, bool fromExplosion)
     {
         if (player == null || damage <= 0)
             return false;
@@ -339,7 +344,7 @@ public class ItemPickup : MonoBehaviour
             {
                 if (player.TryGetComponent<PlayerMountCompanion>(out var companion) && companion != null)
                 {
-                    companion.OnMountedLouieHit(damage, fromExplosion: false);
+                    companion.OnMountedLouieHit(damage, fromExplosion);
                     return true;
                 }
             }
@@ -347,13 +352,17 @@ public class ItemPickup : MonoBehaviour
 
         if (health != null)
         {
-            health.TakeDamage(damage);
+            health.TakeDamage(damage, fromExplosion);
             return true;
         }
 
         if (mv != null)
         {
-            mv.Kill();
+            if (fromExplosion)
+                mv.KillByExplosion();
+            else
+                mv.Kill();
+
             return true;
         }
 
@@ -415,7 +424,7 @@ public class ItemPickup : MonoBehaviour
                 break;
 
             case ItemType.LandMine:
-                TryApplyPickupDamageLikeEnemyContact(player, 1);
+                TryApplyPickupDamageLikeEnemyContact(player, 1, true);
                 break;
 
             case ItemType.ExtraBomb:

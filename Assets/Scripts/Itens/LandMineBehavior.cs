@@ -13,7 +13,7 @@ public sealed class LandMineBehavior : MonoBehaviour, IItemPickupBehavior
         if (pickup == null || player == null)
             return true;
 
-        pickup.TryApplyDamageLikeEnemyContact(player, damage);
+        pickup.TryApplyDamageLikeEnemyContact(player, damage, fromExplosion: true);
         pickup.Consume(playDestroyAnimation);
 
         return true;

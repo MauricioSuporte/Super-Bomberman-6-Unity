@@ -22,7 +22,6 @@ public sealed class InvisibleLandMineBehavior : MonoBehaviour, IItemPickupBehavi
 
     private void Awake()
     {
-        // Se não setar manualmente, tenta puxar do ItemPickup
         if (targetRenderer == null)
         {
             var p = GetComponent<ItemPickup>();
@@ -54,7 +53,6 @@ public sealed class InvisibleLandMineBehavior : MonoBehaviour, IItemPickupBehavi
         float maxDist = tiles * ts;
         float maxSqr = maxDist * maxDist;
 
-        // Busca players pelo MovementController (você já usa nele como “Player”)
 #if UNITY_2023_1_OR_NEWER
         var players = FindObjectsByType<MovementController>(FindObjectsSortMode.None);
 #else
@@ -70,7 +68,7 @@ public sealed class InvisibleLandMineBehavior : MonoBehaviour, IItemPickupBehavi
             var mv = players[i];
             if (mv == null) continue;
             if (!mv.CompareTag("Player")) continue;
-            if (mv.isDead) continue; // seu MovementController tem isDead público
+            if (mv.isDead) continue;
 
             Vector2 p = mv.Rigidbody != null ? mv.Rigidbody.position : (Vector2)mv.transform.position;
             if ((p - minePos).sqrMagnitude <= maxSqr)
@@ -85,21 +83,18 @@ public sealed class InvisibleLandMineBehavior : MonoBehaviour, IItemPickupBehavi
         if (targetRenderer == null)
             return;
 
-        // “sprite permanece idle” quando ninguém está perto
         if (!_isNear)
         {
-            targetRenderer.loop = false;   // tanto faz, idle = true não avança frames
+            targetRenderer.loop = false;
             targetRenderer.idle = true;
             targetRenderer.CurrentFrame = 0;
             targetRenderer.RefreshFrame();
             return;
         }
 
-        // quando alguém chega perto -> anima em loop
         targetRenderer.idle = false;
         targetRenderer.loop = loopWhenNear;
         targetRenderer.pingPong = false;
-        // não reseta frame toda hora; só garante que tá rodando
         targetRenderer.RefreshFrame();
     }
 
@@ -108,7 +103,7 @@ public sealed class InvisibleLandMineBehavior : MonoBehaviour, IItemPickupBehavi
         if (pickup == null || player == null)
             return true;
 
-        pickup.TryApplyDamageLikeEnemyContact(player, damage);
+        pickup.TryApplyDamageLikeEnemyContact(player, damage, fromExplosion: true);
         pickup.Consume(playDestroyAnimationOnPickup);
 
         return true;
