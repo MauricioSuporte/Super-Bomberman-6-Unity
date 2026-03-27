@@ -10,6 +10,9 @@ public sealed class PlayerManualDismount : MonoBehaviour
     [Header("Freeze")]
     [SerializeField] private bool freezeEggQueueOnDismount = true;
 
+    [Header("Detached Louie Inactivity")]
+    [SerializeField, Min(1f)] private float detachedLouieSwitchInterval = 15f;
+
     MovementController movement;
     PlayerMountCompanion companion;
     PlayerRidingController rider;
@@ -122,7 +125,7 @@ public sealed class PlayerManualDismount : MonoBehaviour
                 if (movement != null)
                     movement.ForceIdleFacing(facingAtPress, "TryManualDismount");
 
-                StartDetachedLouieInactivityLoop(detachedLouie, movement);
+                StartDetachedLouieInactivityLoop(detachedLouie, movement, detachedLouieSwitchInterval);
             },
             onStart: () =>
             {
@@ -164,7 +167,10 @@ public sealed class PlayerManualDismount : MonoBehaviour
             return;
     }
 
-    static void StartDetachedLouieInactivityLoop(GameObject detachedLouie, MovementController playerMovement)
+    static void StartDetachedLouieInactivityLoop(
+        GameObject detachedLouie,
+        MovementController playerMovement,
+        float switchInterval)
     {
         if (detachedLouie == null)
             return;
@@ -196,12 +202,16 @@ public sealed class PlayerManualDismount : MonoBehaviour
             refreshFrameOnEnter = inactivity.RefreshFrameOnEnter;
         }
 
-        var chosen =
-            (visual.LouieInactivityEmoteLoopAlt != null && Random.value <= chanceAlt)
-                ? visual.LouieInactivityEmoteLoopAlt
-                : visual.LouieInactivityEmoteLoop;
+        var loop = detachedLouie.GetComponent<DetachedLouieWorldInactivityLoop>();
+        if (loop == null)
+            loop = detachedLouie.AddComponent<DetachedLouieWorldInactivityLoop>();
 
-        visual.SetInactivityEmote(chosen, refreshFrameOnEnter);
+        loop.Init(
+            visual,
+            selfMovement,
+            chanceAlt,
+            refreshFrameOnEnter,
+            switchInterval);
     }
 
     static void ClearDetachedLouieInvulnerability(GameObject detachedLouie)

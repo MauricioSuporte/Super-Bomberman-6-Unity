@@ -14,6 +14,12 @@ public sealed class InactivityAnimation : MonoBehaviour
     [SerializeField, Range(0f, 1f)] private float chanceAltAnimation = 0.3f;
     [SerializeField] private bool refreshFrameOnEnter = true;
 
+    [Header("Alternating")]
+    [SerializeField, Min(1f)] private float switchInterval = 15f;
+
+    private float nextSwitchTime;
+    private bool usingAlt;
+
     private AnimatedSpriteRenderer activeRenderer;
 
     private MovementController movement;
@@ -99,6 +105,12 @@ public sealed class InactivityAnimation : MonoBehaviour
 
         if (!isPlaying && (Time.time - lastInputTime) >= secondsToTrigger)
             StartEmote(desiredTarget);
+
+        if (isPlaying && Time.time >= nextSwitchTime)
+        {
+            SwitchEmote();
+            nextSwitchTime = Time.time + switchInterval;
+        }
     }
 
     private EmoteTarget ResolveDesiredTarget()
@@ -208,7 +220,10 @@ public sealed class InactivityAnimation : MonoBehaviour
         movement.SetInactivityMountedDownOverride(false);
         movement.SetVisualOverrideActive(true);
 
-        activeRenderer = ChooseRenderer(emoteLoopRenderer, emoteLoopRendererAlt);
+        usingAlt = emoteLoopRendererAlt != null && Random.value <= chanceAltAnimation;
+        activeRenderer = usingAlt ? emoteLoopRendererAlt : emoteLoopRenderer;
+
+        nextSwitchTime = Time.time + switchInterval;
 
         if (activeRenderer != null)
         {
@@ -275,5 +290,39 @@ public sealed class InactivityAnimation : MonoBehaviour
 
         if (renderer.TryGetComponent(out SpriteRenderer sr) && sr != null)
             sr.enabled = on;
+    }
+
+    private void SwitchEmote()
+    {
+        usingAlt = !usingAlt;
+
+        if (currentTarget == EmoteTarget.Mount)
+        {
+            var lv = ResolveLouieVisual();
+            if (lv != null)
+            {
+                var renderer = usingAlt
+                    ? lv.LouieInactivityEmoteLoopAlt
+                    : lv.LouieInactivityEmoteLoop;
+
+                if (renderer != null)
+                    lv.SetInactivityEmote(renderer, refreshFrameOnEnter);
+            }
+
+            return;
+        }
+
+        activeRenderer = usingAlt ? emoteLoopRendererAlt : emoteLoopRenderer;
+
+        if (activeRenderer != null)
+        {
+            activeRenderer.loop = true;
+            activeRenderer.idle = false;
+
+            if (refreshFrameOnEnter)
+                activeRenderer.RefreshFrame();
+        }
+
+        SetPlayerEmoteEnabled(true);
     }
 }

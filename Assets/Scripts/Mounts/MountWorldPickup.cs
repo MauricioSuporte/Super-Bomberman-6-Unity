@@ -76,6 +76,9 @@ public sealed class MountWorldPickup : MonoBehaviour
 
         consumed = true;
 
+        if (TryGetComponent<DetachedLouieWorldInactivityLoop>(out var detachedLoop) && detachedLoop != null)
+            detachedLoop.StopLoop();
+
         var worldQueue = GetComponent<MountEggQueue>();
 
         Vector3 startWorldPos = player.transform.position;
