@@ -1729,7 +1729,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 5
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 1464787332, guid: 68508f5db59727244b49d067c55da6de, type: 3}
+  m_Sprite: {fileID: 1360583926, guid: 68508f5db59727244b49d067c55da6de, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -1751,10 +1751,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a4b55e1b961d144197e1a7a4a391956, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  idleSprite: {fileID: 1464787332, guid: 68508f5db59727244b49d067c55da6de, type: 3}
+  idleSprite: {fileID: 1360583926, guid: 68508f5db59727244b49d067c55da6de, type: 3}
   animationSprite:
-  - {fileID: 1464787332, guid: 68508f5db59727244b49d067c55da6de, type: 3}
-  - {fileID: -1500595672, guid: 68508f5db59727244b49d067c55da6de, type: 3}
+  - {fileID: 1360583926, guid: 68508f5db59727244b49d067c55da6de, type: 3}
+  - {fileID: 657592119, guid: 68508f5db59727244b49d067c55da6de, type: 3}
+  - {fileID: 1360583926, guid: 68508f5db59727244b49d067c55da6de, type: 3}
+  - {fileID: -639422343, guid: 68508f5db59727244b49d067c55da6de, type: 3}
   allowFlipX: 0
   animationTime: 0.25
   useSequenceDuration: 0
@@ -1763,17 +1765,7 @@ MonoBehaviour:
   respectGamePause: 1
   loop: 1
   idle: 0
-  frameOffsets:
-  - {x: 0, y: 0.1}
-  - {x: 0, y: 0.2}
-  - {x: 0, y: 0.1}
-  - {x: 0, y: 0.2}
-  - {x: 0, y: 0.1}
-  - {x: 0, y: 0.2}
-  - {x: 0, y: 0.1}
-  - {x: 0, y: 0.2}
-  - {x: 0, y: 0.1}
-  - {x: 0, y: 0.2}
+  frameOffsets: []
   pingPong: 1
   disableOffsetsIfThisObjectHasRigidbody2D: 1
   disableOffsetsIfStandaloneRoot: 1
