@@ -1,5 +1,4 @@
 ﻿using UnityEngine;
-using System.Text;
 
 [DefaultExecutionOrder(-45)]
 [DisallowMultipleComponent]
@@ -25,11 +24,6 @@ public sealed class CorneredAnimation : MonoBehaviour
     [Header("Input Suppression")]
     [SerializeField, Min(0f)] private float inputSuppressSeconds = 0.25f;
 
-    [Header("Debug")]
-    [SerializeField] private bool enableCorneredLogs = true;
-    [SerializeField] private bool logEveryProbe = true;
-    [SerializeField] private bool logOnlyStateChanges = false;
-
     private MovementController movement;
     private AudioSource audioSource;
 
@@ -39,10 +33,6 @@ public sealed class CorneredAnimation : MonoBehaviour
     private float lastInputTime;
 
     private AnimatedSpriteRenderer activeCorneredRenderer;
-
-    private bool lastEvaluatedShouldPlay;
-    private bool lastEvaluatedBombBlocked;
-    private string lastDecisionReason = string.Empty;
 
     private readonly Vector2[] cardinalDirs =
     {
@@ -86,12 +76,10 @@ public sealed class CorneredAnimation : MonoBehaviour
     {
         lastInputTime = Time.time;
         StopCornered();
-        LogCornered("OnEnable -> reset");
     }
 
     private void OnDisable()
     {
-        LogCornered("OnDisable -> StopCornered");
         StopCornered();
     }
 
@@ -102,13 +90,6 @@ public sealed class CorneredAnimation : MonoBehaviour
 
         if (movement.InputLocked || movement.isDead || movement.IsEndingStage || GamePauseController.IsPaused)
         {
-            if (ShouldLogStateChange(false, false, "abort:locked/dead/pause"))
-            {
-                LogCornered(
-                    $"Update abort -> locked={movement.InputLocked} dead={movement.isDead} " +
-                    $"ending={movement.IsEndingStage} paused={GamePauseController.IsPaused}");
-            }
-
             if (isPlaying)
                 StopCornered();
 
@@ -118,9 +99,6 @@ public sealed class CorneredAnimation : MonoBehaviour
 
         if (HasAnyPlayerInput())
         {
-            if (ShouldLogStateChange(false, false, "abort:input"))
-                LogCornered("Update abort -> player input detected");
-
             lastInputTime = Time.time;
 
             if (isPlaying)
@@ -129,14 +107,7 @@ public sealed class CorneredAnimation : MonoBehaviour
             return;
         }
 
-        bool shouldPlay = IsCornered(out bool bombBlocked, out string detail);
-
-        if (ShouldLogStateChange(shouldPlay, bombBlocked, detail))
-        {
-            LogCornered(
-                $"Evaluate -> shouldPlay={shouldPlay} bombBlocked={bombBlocked} " +
-                $"isPlaying={isPlaying} detail={detail}");
-        }
+        bool shouldPlay = IsCornered(out bool bombBlocked);
 
         if (!shouldPlay)
         {
@@ -149,13 +120,6 @@ public sealed class CorneredAnimation : MonoBehaviour
         float silentTime = Time.time - lastInputTime;
         if (silentTime < inputSuppressSeconds)
         {
-            if (ShouldLogStateChange(false, bombBlocked, $"abort:inputSuppress ({silentTime:0.###} < {inputSuppressSeconds:0.###})"))
-            {
-                LogCornered(
-                    $"Evaluate abort -> input suppression active. silentTime={silentTime:0.###} " +
-                    $"required={inputSuppressSeconds:0.###}");
-            }
-
             if (isPlaying)
                 StopCornered();
 
@@ -192,7 +156,7 @@ public sealed class CorneredAnimation : MonoBehaviour
             input.Get(id, PlayerAction.ActionR);
     }
 
-    private bool IsCornered(out bool foundBomb, out string detail)
+    private bool IsCornered(out bool foundBomb)
     {
         foundBomb = false;
 
@@ -201,15 +165,8 @@ public sealed class CorneredAnimation : MonoBehaviour
                 ? movement.Rigidbody.position
                 : (Vector2)transform.position;
 
-        StringBuilder sb = new StringBuilder(256);
-        sb.Append($"origin={Fmt(origin)}");
-
         if (HasDestructibleOnSameTileAsPlayer(origin))
-        {
-            sb.Append(" | abort=same-tile-destructible");
-            detail = sb.ToString();
             return false;
-        }
 
         for (int i = 0; i < cardinalDirs.Length; i++)
         {
@@ -221,30 +178,15 @@ public sealed class CorneredAnimation : MonoBehaviour
                 probePos,
                 dir,
                 cardinalDirNames[i],
-                out bool isBomb,
-                out string blockReason);
-
-            sb.Append($" | {cardinalDirNames[i]}: blocked={blocked} bomb={isBomb} reason={blockReason}");
-
-            if (logEveryProbe)
-            {
-                LogCornered(
-                    $"Probe {cardinalDirNames[i]} -> origin={Fmt(origin)} probe={Fmt(probePos)} " +
-                    $"blocked={blocked} isBomb={isBomb} reason={blockReason}");
-            }
+                out bool isBomb);
 
             if (!blocked)
-            {
-                detail = sb.ToString();
                 return false;
-            }
 
             if (isBomb)
                 foundBomb = true;
         }
 
-        sb.Append($" | foundBomb={foundBomb}");
-        detail = sb.ToString();
         return foundBomb;
     }
 
@@ -269,18 +211,13 @@ public sealed class CorneredAnimation : MonoBehaviour
         Vector2 probePos,
         Vector2 dir,
         string dirName,
-        out bool isBomb,
-        out string reason)
+        out bool isBomb)
     {
         isBomb = false;
 
-        string bombReason;
-        bool bombBlocked = IsBombBlockingForCornered(playerOrigin, probePos, dirName, out bombReason);
-
-        if (bombBlocked)
+        if (IsBombBlockingForCornered(playerOrigin, probePos, dirName))
         {
             isBomb = true;
-            reason = bombReason;
             return true;
         }
 
@@ -288,86 +225,35 @@ public sealed class CorneredAnimation : MonoBehaviour
         Collider2D[] hits = Physics2D.OverlapBoxAll(probePos, size, 0f, blockMask);
 
         if (hits == null || hits.Length == 0)
-        {
-            reason = $"bombCheck={bombReason} | no-hits probe={Fmt(probePos)} size={Fmt(size)}";
             return false;
-        }
-
-        StringBuilder sb = new StringBuilder();
-        sb.Append($"bombCheck={bombReason} | probe={Fmt(probePos)} size={Fmt(size)} hits={hits.Length}");
 
         for (int i = 0; i < hits.Length; i++)
         {
-            Collider2D hit = hits[i];
-            if (hit == null)
-            {
-                sb.Append($" | hit[{i}]=null(ignore)");
-                continue;
-            }
+            var hit = hits[i];
+            if (hit == null) continue;
 
-            GameObject go = hit.gameObject;
-            sb.Append(
-                $" | hit[{i}]={go.name} layer={LayerMask.LayerToName(go.layer)} " +
-                $"tag={go.tag} trigger={hit.isTrigger} center={Fmt(hit.bounds.center)} ext={Fmt(hit.bounds.extents)}");
+            var go = hit.gameObject;
 
-            if (go == gameObject)
-            {
-                sb.Append("(self-ignore)");
-                continue;
-            }
+            if (go == gameObject) continue;
+            if (hit.isTrigger) continue;
+            if (go.layer == LayerMask.NameToLayer("Bomb")) continue;
 
-            if (hit.isTrigger)
-            {
-                sb.Append("(trigger-ignore)");
-                continue;
-            }
-
-            if (go.layer == LayerMask.NameToLayer("Bomb"))
-            {
-                sb.Append("(bomb-ignore-handled-separately)");
-                continue;
-            }
-
-            if (IsValidCorneredBlock(hit, out string validReason))
-            {
-                sb.Append($"(VALID:{validReason})");
-                reason = sb.ToString();
+            if (IsValidCorneredBlock(hit))
                 return true;
-            }
-
-            sb.Append($"(invalid:{validReason})");
         }
 
-        reason = sb.ToString();
         return false;
     }
 
-    private bool IsBombBlockingForCornered(
-        Vector2 playerOrigin,
-        Vector2 probePos,
-        string dirName,
-        out string reason)
+    private bool IsBombBlockingForCornered(Vector2 playerOrigin, Vector2 probePos, string dirName)
     {
-        StringBuilder sb = new StringBuilder();
-
-        int count = 0;
-        Vector2 probeSize = GetProbeSize(dirName == "Left" || dirName == "Right" ? Vector2.right : Vector2.up);
+        Vector2 probeSize = GetProbeSize(
+            dirName == "Left" || dirName == "Right" ? Vector2.right : Vector2.up);
 
         foreach (var bomb in Bomb.ActiveBombs)
         {
-            count++;
-
-            if (bomb == null)
-            {
-                sb.Append(" | bomb=NULL");
+            if (bomb == null || bomb.HasExploded)
                 continue;
-            }
-
-            if (bomb.HasExploded)
-            {
-                sb.Append($" | {bomb.name}:exploded-skip");
-                continue;
-            }
 
             bomb.TryGetComponent<Collider2D>(out var bombCol);
 
@@ -375,73 +261,43 @@ public sealed class CorneredAnimation : MonoBehaviour
                 ? (Vector2)bombCol.bounds.center
                 : (Vector2)bomb.transform.position;
 
-            bool probeHitsCollider = DoesProbeOverlapBombCollider(probePos, probeSize, bombCol);
-            bool currentOverlapsTile = IsInsideBombTileFootprint(playerOrigin, colliderCenter);
-
-            sb.Append(
-                $" | bomb={bomb.name}" +
-                $" solid={bomb.IsSolid}" +
-                $" probeHitsCollider={probeHitsCollider}" +
-                $" currentTileOverlap={currentOverlapsTile}" +
-                $" colliderCenter={Fmt(colliderCenter)}");
+            bool probeHits = DoesProbeOverlapBombCollider(probePos, probeSize, bombCol);
+            bool currentOverlap = IsInsideBombTileFootprint(playerOrigin, colliderCenter);
 
             if (bomb.IsSolid)
             {
-                if (probeHitsCollider)
-                {
-                    reason =
-                        $"solid-bomb-block dir={dirName} bomb={bomb.name} " +
-                        $"probe={Fmt(probePos)} probeSize={Fmt(probeSize)} colliderCenter={Fmt(colliderCenter)}";
+                if (probeHits)
                     return true;
-                }
 
                 continue;
             }
 
-            if (probeHitsCollider && !currentOverlapsTile)
-            {
-                reason =
-                    $"trigger-bomb-block dir={dirName} bomb={bomb.name} " +
-                    $"probe={Fmt(probePos)} probeSize={Fmt(probeSize)} colliderCenter={Fmt(colliderCenter)} " +
-                    $"currentTileOverlap={currentOverlapsTile}";
+            if (probeHits && !currentOverlap)
                 return true;
-            }
         }
 
-        reason =
-            $"no-bomb-block dir={dirName} activeBombs={count} player={Fmt(playerOrigin)} probe={Fmt(probePos)} probeSize={Fmt(probeSize)}{sb}";
         return false;
     }
 
-    private bool IsValidCorneredBlock(Collider2D hit, out string reason)
+    private bool IsValidCorneredBlock(Collider2D hit)
     {
         if (hit == null)
-        {
-            reason = "hit-null";
             return false;
-        }
 
         GameObject go = hit.gameObject;
 
         if (go.CompareTag(destructiblesTag))
-        {
-            reason = $"tag={destructiblesTag}";
             return true;
-        }
 
         Transform t = go.transform;
         while (t != null)
         {
             if (t.name == indestructiblesName)
-            {
-                reason = $"ancestor={indestructiblesName}";
                 return true;
-            }
 
             t = t.parent;
         }
 
-        reason = "not-destructible-or-indestructible";
         return false;
     }
 
@@ -459,209 +315,23 @@ public sealed class CorneredAnimation : MonoBehaviour
         Vector2 size = Vector2.one * (tileSize * 0.6f);
 
         Collider2D[] hits = Physics2D.OverlapBoxAll(origin, size, 0f, blockMask);
-        if (hits == null || hits.Length == 0)
+
+        if (hits == null)
             return false;
 
         for (int i = 0; i < hits.Length; i++)
         {
-            Collider2D hit = hits[i];
-            if (hit == null || hit.isTrigger)
-                continue;
+            var hit = hits[i];
+            if (hit == null || hit.isTrigger) continue;
 
-            GameObject go = hit.gameObject;
-            if (go == gameObject)
-                continue;
+            var go = hit.gameObject;
+            if (go == gameObject) continue;
 
             if (go.CompareTag(destructiblesTag))
-            {
-                LogCornered($"SameTileDestructible -> hit={go.name} origin={Fmt(origin)}");
                 return true;
-            }
         }
 
         return false;
-    }
-
-    private AnimatedSpriteRenderer GetCorneredRenderer()
-    {
-        if (movement == null)
-            return corneredLoopRenderer;
-
-        if (!movement.IsMounted)
-            return corneredLoopRenderer;
-
-        var mountVisual = GetComponentInChildren<MountVisualController>(true);
-        if (mountVisual == null)
-            return corneredLoopRenderer;
-
-        if (mountVisual.louieCornered != null)
-            return mountVisual.louieCornered;
-
-        return null;
-    }
-
-    private void StartCornered()
-    {
-        if (isPlaying)
-            return;
-
-        if (!hasBombInBlock)
-        {
-            LogCornered("StartCornered abort -> hasBombInBlock=false");
-            return;
-        }
-
-        activeCorneredRenderer = GetCorneredRenderer();
-
-        bool hasVisual = activeCorneredRenderer != null;
-
-        isPlaying = true;
-
-        LogCornered(
-            $"StartCornered -> mounted={movement.IsMounted} hasVisual={hasVisual} " +
-            $"renderer={(activeCorneredRenderer != null ? activeCorneredRenderer.name : "<null>")}");
-
-        if (movement.IsMounted)
-        {
-            if (hasVisual)
-            {
-                movement.SetVisualOverrideActive(true);
-                movement.SetInactivityMountedDownOverride(true);
-
-                var mountVisual = GetComponentInChildren<MountVisualController>(true);
-                if (mountVisual != null)
-                    mountVisual.SetCornered(true);
-            }
-            else
-            {
-                movement.SetInactivityMountedDownOverride(false);
-            }
-        }
-        else
-        {
-            if (hasVisual)
-            {
-                movement.SetVisualOverrideActive(true);
-                movement.SetInactivityMountedDownOverride(false);
-
-                activeCorneredRenderer.loop = true;
-                activeCorneredRenderer.idle = false;
-
-                SetCorneredEnabled(true);
-
-                if (refreshFrameOnEnter)
-                    activeCorneredRenderer.RefreshFrame();
-            }
-            else
-            {
-                movement.SetInactivityMountedDownOverride(false);
-            }
-        }
-
-        PlayCorneredSfx();
-    }
-
-    private void StopCornered()
-    {
-        if (!isPlaying)
-        {
-            if (movement != null && movement.IsMounted)
-            {
-                var mountVisual = GetComponentInChildren<MountVisualController>(true);
-                if (mountVisual != null)
-                    mountVisual.SetCornered(false);
-
-                movement.SetInactivityMountedDownOverride(false);
-            }
-            else
-            {
-                SetCorneredEnabled(false);
-
-                if (movement != null)
-                    movement.SetInactivityMountedDownOverride(false);
-            }
-
-            movement?.SetVisualOverrideActive(false);
-            activeCorneredRenderer = null;
-            return;
-        }
-
-        LogCornered("StopCornered -> leaving cornered state");
-
-        if (movement != null && movement.IsMounted)
-        {
-            var mountVisual = GetComponentInChildren<MountVisualController>(true);
-            if (mountVisual != null)
-                mountVisual.SetCornered(false);
-
-            movement.SetInactivityMountedDownOverride(false);
-        }
-        else
-        {
-            SetCorneredEnabled(false);
-
-            if (movement != null)
-                movement.SetInactivityMountedDownOverride(false);
-        }
-
-        movement?.SetVisualOverrideActive(false);
-
-        isPlaying = false;
-        hasBombInBlock = false;
-        activeCorneredRenderer = null;
-    }
-
-    private void SetCorneredEnabled(bool on)
-    {
-        if (activeCorneredRenderer == null)
-            return;
-
-        activeCorneredRenderer.enabled = on;
-
-        if (activeCorneredRenderer.TryGetComponent(out SpriteRenderer sr) && sr != null)
-            sr.enabled = on;
-    }
-
-    private void PlayCorneredSfx()
-    {
-        if (audioSource == null)
-            return;
-
-        if (corneredSfx == null)
-            return;
-
-        float now = Time.time;
-
-        if (now - lastSfxTime < corneredSfxCooldown)
-            return;
-
-        lastSfxTime = now;
-        audioSource.PlayOneShot(corneredSfx, corneredSfxVolume);
-    }
-
-    private bool ShouldLogStateChange(bool shouldPlay, bool bombBlocked, string reason)
-    {
-        if (!enableCorneredLogs)
-            return false;
-
-        if (!logOnlyStateChanges)
-        {
-            lastEvaluatedShouldPlay = shouldPlay;
-            lastEvaluatedBombBlocked = bombBlocked;
-            lastDecisionReason = reason;
-            return true;
-        }
-
-        bool changed =
-            lastEvaluatedShouldPlay != shouldPlay ||
-            lastEvaluatedBombBlocked != bombBlocked ||
-            lastDecisionReason != reason;
-
-        lastEvaluatedShouldPlay = shouldPlay;
-        lastEvaluatedBombBlocked = bombBlocked;
-        lastDecisionReason = reason;
-
-        return changed;
     }
 
     private bool DoesProbeOverlapBombCollider(Vector2 probePos, Vector2 probeSize, Collider2D bombCol)
@@ -682,41 +352,97 @@ public sealed class CorneredAnimation : MonoBehaviour
                  probeMinY > b.max.y);
     }
 
-    private void LogCornered(string message)
+    private AnimatedSpriteRenderer GetCorneredRenderer()
     {
-        if (!enableCorneredLogs)
-            return;
+        if (!movement.IsMounted)
+            return corneredLoopRenderer;
 
-        Debug.Log($"[CorneredAnimation][{name}] {message}", this);
+        var mountVisual = GetComponentInChildren<MountVisualController>(true);
+        return mountVisual != null ? mountVisual.louieCornered : corneredLoopRenderer;
     }
 
-    private static string Fmt(Vector3 v)
+    private void StartCornered()
     {
-        return $"({v.x:0.###}, {v.y:0.###}, {v.z:0.###})";
-    }
-
-#if UNITY_EDITOR
-    private void OnDrawGizmosSelected()
-    {
-        if (movement == null)
-            movement = GetComponent<MovementController>();
-
-        if (movement == null)
+        if (isPlaying)
             return;
 
-        Vector2 origin =
-            movement.Rigidbody != null
-                ? movement.Rigidbody.position
-                : (Vector2)transform.position;
+        if (!hasBombInBlock)
+            return;
 
-        Gizmos.color = Color.yellow;
+        activeCorneredRenderer = GetCorneredRenderer();
 
-        for (int i = 0; i < cardinalDirs.Length; i++)
+        isPlaying = true;
+
+        movement.SetSuppressInactivityAnimation(true);
+
+        if (movement.IsMounted)
         {
-            Vector2 probePos = GetProbePosition(origin, cardinalDirs[i]);
-            Vector2 size = GetProbeSize(cardinalDirs[i]);
-            Gizmos.DrawWireCube(probePos, size);
+            movement.SetVisualOverrideActive(true);
+            movement.SetInactivityMountedDownOverride(true);
+
+            var mountVisual = GetComponentInChildren<MountVisualController>(true);
+            if (mountVisual != null)
+                mountVisual.SetCornered(true);
         }
+        else if (activeCorneredRenderer != null)
+        {
+            movement.SetVisualOverrideActive(true);
+            movement.SetInactivityMountedDownOverride(false);
+
+            activeCorneredRenderer.loop = true;
+            activeCorneredRenderer.idle = false;
+
+            SetCorneredEnabled(true);
+
+            if (refreshFrameOnEnter)
+                activeCorneredRenderer.RefreshFrame();
+        }
+
+        PlayCorneredSfx();
     }
-#endif
+
+    private void StopCornered()
+    {
+        if (movement != null && movement.IsMounted)
+        {
+            var mountVisual = GetComponentInChildren<MountVisualController>(true);
+            if (mountVisual != null)
+                mountVisual.SetCornered(false);
+        }
+
+        SetCorneredEnabled(false);
+
+        movement?.SetVisualOverrideActive(false);
+        movement?.SetInactivityMountedDownOverride(false);
+        movement?.SetSuppressInactivityAnimation(false);
+
+        isPlaying = false;
+        hasBombInBlock = false;
+        activeCorneredRenderer = null;
+    }
+
+    private void SetCorneredEnabled(bool on)
+    {
+        if (activeCorneredRenderer == null)
+            return;
+
+        activeCorneredRenderer.enabled = on;
+
+        if (activeCorneredRenderer.TryGetComponent(out SpriteRenderer sr))
+            sr.enabled = on;
+    }
+
+    private void PlayCorneredSfx()
+    {
+        if (audioSource == null || corneredSfx == null)
+            return;
+
+        float now = Time.time;
+
+        if (now - lastSfxTime < corneredSfxCooldown)
+            return;
+
+        lastSfxTime = now;
+        audioSource.PlayOneShot(corneredSfx, corneredSfxVolume);
+    }
 }
