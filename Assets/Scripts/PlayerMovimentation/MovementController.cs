@@ -1104,16 +1104,10 @@ public class MovementController : MonoBehaviour, IKillable
 
     private bool IsBlockedAtPosition(Vector2 targetPosition, Vector2 dirForSize)
     {
-        Vector2 size =
-            Mathf.Abs(dirForSize.x) > 0f
-                ? new Vector2(tileSize * 0.6f, tileSize * 0.2f)
-                : new Vector2(tileSize * 0.2f, tileSize * 0.6f);
+        Vector2 size = GetBlockProbeSize(dirForSize);
 
         Collider2D[] hits = Physics2D.OverlapBoxAll(targetPosition, size, 0f, obstacleMask);
-        if (hits == null || hits.Length == 0)
-        {
-        }
-        else
+        if (hits != null && hits.Length > 0)
         {
             bool canPassDestructibles = abilitySystem != null &&
                                        abilitySystem.IsEnabled(DestructiblePassAbility.AbilityId);
@@ -1137,10 +1131,18 @@ public class MovementController : MonoBehaviour, IKillable
                     if (ability != null && ability.IsEnabled)
                     {
                         if (ability.TryHandleBlockedHit(hit, dirForSize, tileSize, obstacleMask))
+                        {
+                            LogBombMove(
+                                $"IsBlockedAtPosition -> bloqueado por ability. " +
+                                $"target={Vec(targetPosition)} dir={Vec(dirForSize)} hit={hit.name}");
                             return true;
+                        }
                     }
                 }
 
+                LogBombMove(
+                    $"IsBlockedAtPosition -> bloqueado por collider sólido. " +
+                    $"target={Vec(targetPosition)} dir={Vec(dirForSize)} hit={hit.name} trigger={hit.isTrigger}");
                 return true;
             }
         }
@@ -1158,22 +1160,29 @@ public class MovementController : MonoBehaviour, IKillable
                 if (bomb.IsSolid)
                     continue;
 
-                if (bomb.Owner == bombController)
-                {
-                    var bombCollider = bomb.GetComponent<Collider2D>();
-                    if (bombCollider != null && bombCollider.isTrigger)
-                        continue;
-                }
+                Vector2 bombPos = bomb.GetLogicalPosition();
 
-                Vector2 bombPos = (Vector2)bomb.transform.position;
+                bool overlapsCurrent = IsInsideBombTileFootprint(myPos, bombPos);
+                bool overlapsTarget = IsInsideBombTileFootprint(targetPosition, bombPos);
 
-                float myDistToBombSq = (myPos - bombPos).sqrMagnitude;
-                if (myDistToBombSq < tileSize * tileSize * 0.25f)
+                if (!overlapsTarget)
                     continue;
 
-                float distSq = (bombPos - targetPosition).sqrMagnitude;
-                if (distSq < tileSize * tileSize * 0.25f)
-                    return true;
+                if (overlapsCurrent)
+                {
+                    LogBombMove(
+                        $"IsBlockedAtPosition -> bomba trigger IGNORADA porque o player já está sobrepondo o tile dela. " +
+                        $"myPos={Vec(myPos)} target={Vec(targetPosition)} bomb={bomb.name} bombPos={Vec(bombPos)} " +
+                        $"owner={(bomb.Owner != null ? bomb.Owner.name : "<null>")}");
+                    continue;
+                }
+
+                LogBombMove(
+                    $"IsBlockedAtPosition -> BLOQUEADO por bomba trigger. " +
+                    $"myPos={Vec(myPos)} target={Vec(targetPosition)} bomb={bomb.name} bombPos={Vec(bombPos)} " +
+                    $"owner={(bomb.Owner != null ? bomb.Owner.name : "<null>")} " +
+                    $"overlapsCurrent={overlapsCurrent} overlapsTarget={overlapsTarget}");
+                return true;
             }
         }
 
@@ -2397,5 +2406,36 @@ public class MovementController : MonoBehaviour, IKillable
             return springLookUpRight;
 
         return springLookUpUp;
+    }
+
+    [Header("Debug Bomb Movement")]
+    [SerializeField] private bool enableBombMovementLogs = false;
+
+    private void LogBombMove(string message)
+    {
+        if (!enableBombMovementLogs)
+            return;
+
+        Debug.Log($"[MovementController][{name}] {message}", this);
+    }
+
+    private Vector2 GetBlockProbeSize(Vector2 dirForSize)
+    {
+        return Mathf.Abs(dirForSize.x) > 0f
+            ? new Vector2(tileSize * 0.6f, tileSize * 0.2f)
+            : new Vector2(tileSize * 0.2f, tileSize * 0.6f);
+    }
+
+    private bool IsInsideBombTileFootprint(Vector2 worldPos, Vector2 bombPos)
+    {
+        float halfTile = tileSize * 0.5f + 0.0001f;
+
+        return Mathf.Abs(worldPos.x - bombPos.x) <= halfTile
+            && Mathf.Abs(worldPos.y - bombPos.y) <= halfTile;
+    }
+
+    private static string Vec(Vector2 v)
+    {
+        return $"({v.x:0.###}, {v.y:0.###})";
     }
 }
