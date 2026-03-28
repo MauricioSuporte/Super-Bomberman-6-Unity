@@ -40,9 +40,6 @@ public sealed class FloatingPlatform : MonoBehaviour
     [SerializeField, Min(1)] private int pixelsPerUnit = 16;
     [SerializeField] private bool useIntegerPixelSteps = true;
 
-    [Header("Debug")]
-    [SerializeField] private bool enableSurgicalLogs = false;
-
     private BoxCollider2D _col;
     private Rigidbody2D _rb;
 
@@ -94,14 +91,6 @@ public sealed class FloatingPlatform : MonoBehaviour
 
     private float PixelWorldStep => pixelsPerUnit > 0 ? (1f / pixelsPerUnit) : 0.0625f;
 
-    private void LogP(string msg)
-    {
-        if (!enableSurgicalLogs)
-            return;
-
-        Debug.Log($"[FloatingPlatform][{name}] {msg}", this);
-    }
-
     private void Awake()
     {
         _col = GetComponent<BoxCollider2D>();
@@ -118,13 +107,11 @@ public sealed class FloatingPlatform : MonoBehaviour
         {
             startPos = pointA;
             SetWorldPos2DImmediate(startPos);
-            LogP($"Awake -> transform estava em zero, usando pointA quantizado. startPos={startPos}");
         }
         else
         {
             startPos = QuantizeToPixelGrid(startPos);
             SetWorldPos2DImmediate(startPos);
-            LogP($"Awake -> usando posição atual quantizada. startPos={startPos}");
         }
 
         _atA = Vector2.Distance(startPos, pointA) <= Vector2.Distance(startPos, pointB);
@@ -133,19 +120,15 @@ public sealed class FloatingPlatform : MonoBehaviour
         _stopTimer = Mathf.Max(0f, stopSeconds);
 
         ResetPixelAccumulators();
-
-        LogP($"Awake -> pointA={pointA} | pointB={pointB} | atA={_atA} | isStopping={_isStopping} | stopTimer={_stopTimer} | moveSpeed={moveSpeed} | ppu={pixelsPerUnit} | useIntegerPixelSteps={useIntegerPixelSteps} | rb={(_rb != null ? _rb.bodyType.ToString() : "<null>")}");
     }
 
     private void OnEnable()
     {
         ResetPixelAccumulators();
-        LogP("OnEnable -> reset dos acumuladores");
     }
 
     private void OnDisable()
     {
-        LogP($"OnDisable -> desmontando riders. riders={_riders.Count}");
         ForceUnmountAllInternal();
         ResetPixelAccumulators();
     }
@@ -161,8 +144,6 @@ public sealed class FloatingPlatform : MonoBehaviour
 
     private void FixedUpdate()
     {
-        LogP($"FixedUpdate -> isStopping={_isStopping} | isMoving={_isMoving} | pos={GetWorldPos2D()}");
-
         if (_isStopping)
         {
             TickStopState();
@@ -180,14 +161,10 @@ public sealed class FloatingPlatform : MonoBehaviour
         UnlockAllRidersIfAny();
         ResetPixelAccumulators();
 
-        LogP($"StopState -> timer={_stopTimer}");
-
         if (_stopTimer > 0f)
         {
             float dt = GetStepDeltaTime();
             _stopTimer -= dt;
-
-            LogP($"Stopping... dt={dt} | remaining={_stopTimer}");
 
             if (_stopTimer > 0f)
                 return;
@@ -200,8 +177,6 @@ public sealed class FloatingPlatform : MonoBehaviour
             BeginCarryAllRiders();
 
         _isMoving = true;
-
-        LogP($"Stop finished -> starting movement toward {(_atA ? "pointB" : "pointA")}");
     }
 
     private void TickMoveState()
@@ -211,28 +186,18 @@ public sealed class FloatingPlatform : MonoBehaviour
 
         Vector2 position = QuantizeToPixelGrid(GetWorldPos2D());
 
-        LogP($"MoveState START -> pos={position} | target={target} | atA={_atA}");
-
         Vector2 moveDir = NormalizeCardinal(target - position);
         float rawStep = moveSpeed * GetStepDeltaTime();
         float moveWorld = GetQuantizedMoveWorldPerStep(moveDir, rawStep);
 
-        LogP($"MoveState -> moveDir={moveDir} | rawStep={rawStep} | moveWorld={moveWorld}");
-
-        if (moveDir == Vector2.zero)
-            LogP("MoveState -> moveDir ZERO, plataforma já está no target ou points podem estar iguais");
-
         if (moveWorld <= 0f)
         {
-            LogP("MoveState -> moveWorld == 0, plataforma não andou neste FixedUpdate");
             MoveWorldPosPixelPerfect(position);
             return;
         }
 
         Vector2 next = Vector2.MoveTowards(position, target, moveWorld);
         next = QuantizeToPixelGrid(next);
-
-        LogP($"MoveState -> next={next}");
 
         bool reached =
             Mathf.Abs(next.x - target.x) <= 0.0001f &&
@@ -248,8 +213,6 @@ public sealed class FloatingPlatform : MonoBehaviour
             _atA = !_atA;
             _stopTimer = Mathf.Max(0f, stopSeconds);
             ResetPixelAccumulators();
-
-            LogP($"Reached target -> next={next} | newAtA={_atA} | nextStopTimer={_stopTimer}");
             return;
         }
 
@@ -274,8 +237,6 @@ public sealed class FloatingPlatform : MonoBehaviour
             _rb.position = p;
         else
             transform.position = new Vector3(p.x, p.y, transform.position.z);
-
-        LogP($"SetWorldPos2DImmediate -> {p}");
     }
 
     private void MoveWorldPosPixelPerfect(Vector2 p)
@@ -286,8 +247,6 @@ public sealed class FloatingPlatform : MonoBehaviour
             _rb.MovePosition(p);
         else
             transform.position = new Vector3(p.x, p.y, transform.position.z);
-
-        LogP($"MoveWorldPosPixelPerfect -> {p}");
     }
 
     private Vector2 GetPlatformCenter()
@@ -342,8 +301,6 @@ public sealed class FloatingPlatform : MonoBehaviour
         if (_riders.Count == 0)
             return;
 
-        LogP($"BeginCarryAllRiders -> riders={_riders.Count}");
-
         if (snapRiderToCenterOnMount)
             SnapAllRidersToPlatformCenter();
 
@@ -367,8 +324,6 @@ public sealed class FloatingPlatform : MonoBehaviour
 
         if (!lockInputWhileMoving)
             return;
-
-        LogP($"UnlockAllRidersIfAny -> riders={_riders.Count}");
 
         for (int i = 0; i < _riders.Count; i++)
         {
@@ -396,16 +351,10 @@ public sealed class FloatingPlatform : MonoBehaviour
     public bool TryMount(MovementController mc)
     {
         if (!CanMount(mc))
-        {
-            LogP($"TryMount FAILED -> mc={(mc != null ? mc.name : "<null>")} | isIdleAtStop={IsIdleAtStop} | isMoving={_isMoving} | isStopping={_isStopping}");
             return false;
-        }
 
         if (_riders.Contains(mc))
-        {
-            LogP($"TryMount ignored -> {mc.name} já está montado");
             return false;
-        }
 
         _riders.Add(mc);
         _riderRb[mc] = mc.Rigidbody;
@@ -424,7 +373,6 @@ public sealed class FloatingPlatform : MonoBehaviour
         else
             mc.SetInputLocked(false);
 
-        LogP($"TryMount SUCCESS -> rider={mc.name} | riders={_riders.Count}");
         return true;
     }
 
@@ -449,8 +397,6 @@ public sealed class FloatingPlatform : MonoBehaviour
         _nextAllowedMountTime = Time.time + Mathf.Max(0f, remountBlockSeconds);
 
         mover.SnapToWorldPoint(targetPos, roundRiderToGridOnSnap);
-
-        LogP($"TryUnmount -> rider={mover.name} | targetPos={targetPos} | upper={upper}");
         return true;
     }
 
@@ -467,8 +413,6 @@ public sealed class FloatingPlatform : MonoBehaviour
 
         _riderRb.Remove(mc);
         _riders.Remove(mc);
-
-        LogP($"ForceUnmountInternal -> rider={mc.name} | riders={_riders.Count}");
     }
 
     private void ForceUnmountAllInternal()
@@ -479,8 +423,6 @@ public sealed class FloatingPlatform : MonoBehaviour
 
         _riders.Clear();
         _riderRb.Clear();
-
-        LogP("ForceUnmountAllInternal -> concluído");
     }
 
     private void OnTriggerStay2D(Collider2D other)
@@ -551,8 +493,6 @@ public sealed class FloatingPlatform : MonoBehaviour
         _accPixelsX = 0f;
         _accPixelsY = 0f;
         _lastMoveDirCardinal = Vector2.zero;
-
-        LogP("ResetPixelAccumulators");
     }
 
     private float GetQuantizedMoveWorldPerStep(Vector2 moveDir, float rawWorldStep)
@@ -562,17 +502,13 @@ public sealed class FloatingPlatform : MonoBehaviour
 
         moveDir = NormalizeCardinal(moveDir);
         if (moveDir == Vector2.zero)
-        {
-            LogP("PixelStep -> moveDir zero, retorno 0");
             return 0f;
-        }
 
         if (moveDir != _lastMoveDirCardinal)
         {
             _lastMoveDirCardinal = moveDir;
             _accPixelsX = 0f;
             _accPixelsY = 0f;
-            LogP($"PixelStep -> direção mudou, reset acumuladores. moveDir={moveDir}");
         }
 
         float rawPixels = rawWorldStep * pixelsPerUnit;
@@ -584,9 +520,7 @@ public sealed class FloatingPlatform : MonoBehaviour
             int whole = (int)_accPixelsX;
             _accPixelsX -= whole;
 
-            float result = Mathf.Abs(whole) * PixelWorldStep;
-            LogP($"PixelStep X -> rawPixels={rawPixels} | whole={whole} | accX={_accPixelsX} | result={result}");
-            return result;
+            return Mathf.Abs(whole) * PixelWorldStep;
         }
 
         _accPixelsY += rawPixels * Mathf.Sign(moveDir.y);
@@ -594,9 +528,7 @@ public sealed class FloatingPlatform : MonoBehaviour
         int wholeY = (int)_accPixelsY;
         _accPixelsY -= wholeY;
 
-        float resultY = Mathf.Abs(wholeY) * PixelWorldStep;
-        LogP($"PixelStep Y -> rawPixels={rawPixels} | wholeY={wholeY} | accY={_accPixelsY} | result={resultY}");
-        return resultY;
+        return Mathf.Abs(wholeY) * PixelWorldStep;
     }
 
     private static Vector2 NormalizeCardinal(Vector2 dir)
