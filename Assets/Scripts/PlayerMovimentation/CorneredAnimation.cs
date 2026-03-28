@@ -102,7 +102,7 @@ public sealed class CorneredAnimation : MonoBehaviour
             return;
         }
 
-        if (HasAnyPlayerInput())
+        if (HasAnyMovementIntent())
         {
             lastInputTime = Time.time;
 
@@ -135,6 +135,23 @@ public sealed class CorneredAnimation : MonoBehaviour
 
         if (!isPlaying)
             StartCornered();
+    }
+
+    private bool HasAnyMovementIntent()
+    {
+        if (HasAnyPlayerInput())
+            return true;
+
+        if (movement.Direction.sqrMagnitude > 0.0001f)
+            return true;
+
+        if (movement is MovementControllerAI movementAI)
+        {
+            if (movementAI.aiDirection.sqrMagnitude > 0.0001f)
+                return true;
+        }
+
+        return false;
     }
 
     private bool HasAnyPlayerInput()
