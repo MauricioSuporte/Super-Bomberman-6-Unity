@@ -1014,7 +1014,7 @@ MonoBehaviour:
     alternateSprite: {fileID: 21300000, guid: e1687e098adb88a4aa92207636f64295, type: 3}
     idleMinInterval: 2
     idleMaxInterval: 4
-    alternateDuration: 0.5
+    alternateDuration: 1
     idleStartDelay: 0
     baseSize: {x: 80, y: 80}
     useSpriteNativeSizeAsCharacterSize: 0
@@ -1041,7 +1041,7 @@ MonoBehaviour:
     sprite: {fileID: 21300000, guid: 2fd92abb7e064304b8764ec0e7743abd, type: 3}
     fallingSprite: {fileID: 21300000, guid: 2fd92abb7e064304b8764ec0e7743abd, type: 3}
     landedSprite: {fileID: 21300000, guid: ec81e3140b6fbb64ea3efafd3df24815, type: 3}
-    alternateSprite: {fileID: 0}
+    alternateSprite: {fileID: 21300000, guid: 56e4469daa1a9094ba016cd76ebe2d57, type: 3}
     idleMinInterval: 2
     idleMaxInterval: 4
     alternateDuration: 0.5
