@@ -1131,18 +1131,10 @@ public class MovementController : MonoBehaviour, IKillable
                     if (ability != null && ability.IsEnabled)
                     {
                         if (ability.TryHandleBlockedHit(hit, dirForSize, tileSize, obstacleMask))
-                        {
-                            LogBombMove(
-                                $"IsBlockedAtPosition -> bloqueado por ability. " +
-                                $"target={Vec(targetPosition)} dir={Vec(dirForSize)} hit={hit.name}");
                             return true;
-                        }
                     }
                 }
 
-                LogBombMove(
-                    $"IsBlockedAtPosition -> bloqueado por collider sólido. " +
-                    $"target={Vec(targetPosition)} dir={Vec(dirForSize)} hit={hit.name} trigger={hit.isTrigger}");
                 return true;
             }
         }
@@ -1169,19 +1161,8 @@ public class MovementController : MonoBehaviour, IKillable
                     continue;
 
                 if (overlapsCurrent)
-                {
-                    LogBombMove(
-                        $"IsBlockedAtPosition -> bomba trigger IGNORADA porque o player já está sobrepondo o tile dela. " +
-                        $"myPos={Vec(myPos)} target={Vec(targetPosition)} bomb={bomb.name} bombPos={Vec(bombPos)} " +
-                        $"owner={(bomb.Owner != null ? bomb.Owner.name : "<null>")}");
                     continue;
-                }
 
-                LogBombMove(
-                    $"IsBlockedAtPosition -> BLOQUEADO por bomba trigger. " +
-                    $"myPos={Vec(myPos)} target={Vec(targetPosition)} bomb={bomb.name} bombPos={Vec(bombPos)} " +
-                    $"owner={(bomb.Owner != null ? bomb.Owner.name : "<null>")} " +
-                    $"overlapsCurrent={overlapsCurrent} overlapsTarget={overlapsTarget}");
                 return true;
             }
         }
@@ -2408,17 +2389,6 @@ public class MovementController : MonoBehaviour, IKillable
         return springLookUpUp;
     }
 
-    [Header("Debug Bomb Movement")]
-    [SerializeField] private bool enableBombMovementLogs = false;
-
-    private void LogBombMove(string message)
-    {
-        if (!enableBombMovementLogs)
-            return;
-
-        Debug.Log($"[MovementController][{name}] {message}", this);
-    }
-
     private Vector2 GetBlockProbeSize(Vector2 dirForSize)
     {
         return Mathf.Abs(dirForSize.x) > 0f
@@ -2432,10 +2402,5 @@ public class MovementController : MonoBehaviour, IKillable
 
         return Mathf.Abs(worldPos.x - bombPos.x) <= halfTile
             && Mathf.Abs(worldPos.y - bombPos.y) <= halfTile;
-    }
-
-    private static string Vec(Vector2 v)
-    {
-        return $"({v.x:0.###}, {v.y:0.###})";
     }
 }

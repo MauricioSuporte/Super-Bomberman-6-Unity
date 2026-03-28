@@ -989,12 +989,6 @@ public class Bomb : MonoBehaviour, IMagnetPullable
 
         RecalculateCharactersInsideAt(rb.position);
         bombCollider.isTrigger = charactersInside.Count > 0;
-
-        LogTriggerSolid(
-            $"Initialize -> pos={Vec2Fmt(rb.position)} " +
-            $"charactersInside={charactersInside.Count} " +
-            $"isTrigger={bombCollider.isTrigger} " +
-            $"owner={(owner != null ? owner.name : "<null>")}");
     }
 
     public Vector2 GetLogicalPosition() => lastPos;
@@ -1309,10 +1303,6 @@ public class Bomb : MonoBehaviour, IMagnetPullable
 
         if (layer == LayerMask.NameToLayer("Explosion"))
         {
-            LogTriggerSolid(
-                $"OnTriggerEnter2D[Explosion] -> other={other.name} " +
-                $"isControlBomb={IsControlBomb} isPunched={isPunched}");
-
             if (IsControlBomb && isPunched)
                 return;
 
@@ -1329,18 +1319,8 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         {
             charactersInside.Add(other);
 
-            LogTriggerSolid(
-                $"OnTriggerEnter2D[Character] -> other={other.name} " +
-                $"count={charactersInside.Count} isTriggerBefore={bombCollider.isTrigger}");
-
             if (bombCollider != null && !bombCollider.isTrigger)
-            {
                 bombCollider.isTrigger = true;
-
-                LogTriggerSolid(
-                    $"OnTriggerEnter2D[Character] -> bomba voltou a trigger porque entrou personagem. " +
-                    $"count={charactersInside.Count}");
-            }
         }
     }
 
@@ -1356,19 +1336,10 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         if (layer != playerLayer && layer != enemyLayer)
             return;
 
-        bool removed = charactersInside.Remove(other);
-
-        LogTriggerSolid(
-            $"OnTriggerExit2D -> other={other.name} removed={removed} " +
-            $"remaining={charactersInside.Count} isTriggerBefore={bombCollider.isTrigger}");
+        charactersInside.Remove(other);
 
         if (charactersInside.Count == 0)
-        {
             bombCollider.isTrigger = false;
-
-            LogTriggerSolid(
-                $"OnTriggerExit2D -> bomba ficou sólida. pos={Vec2Fmt(GetLogicalPosition())}");
-        }
     }
 
     public float RemainingFuseSeconds
@@ -1843,21 +1814,5 @@ public class Bomb : MonoBehaviour, IMagnetPullable
 
         bombCollider.enabled = airbornePrevColliderEnabled;
         airborneColliderSuppressed = false;
-    }
-
-    [Header("Debug Trigger/Solid")]
-    [SerializeField] private bool enableTriggerSolidLogs = false;
-
-    private void LogTriggerSolid(string message)
-    {
-        if (!enableTriggerSolidLogs)
-            return;
-
-        Debug.Log($"[Bomb][{name}] {message}", this);
-    }
-
-    private static string Vec2Fmt(Vector2 v)
-    {
-        return $"({v.x:0.###}, {v.y:0.###})";
     }
 }
