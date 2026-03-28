@@ -1,5 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 
 [DisallowMultipleComponent]
@@ -37,6 +36,13 @@ public sealed class FloatingPlatform : MonoBehaviour
     [SerializeField] private Vector2 unmountOffsetUpperTiles = new(0f, 1f);
     [SerializeField] private Vector2 unmountOffsetLowerTiles = new(0f, -1f);
 
+    [Header("Pixel Perfect Step")]
+    [SerializeField, Min(1)] private int pixelsPerUnit = 16;
+    [SerializeField] private bool useIntegerPixelSteps = true;
+
+    [Header("Debug")]
+    [SerializeField] private bool enableSurgicalLogs = false;
+
     private BoxCollider2D _col;
     private Rigidbody2D _rb;
 
@@ -44,10 +50,10 @@ public sealed class FloatingPlatform : MonoBehaviour
     private bool _isStopping;
     private bool _atA = true;
 
+    private float _stopTimer;
+
     private float _nextAllowedMountTime;
     private int _lastUnmountFrame = -999;
-
-    private Coroutine _loop;
 
     private readonly List<MovementController> _riders = new();
     private readonly Dictionary<MovementController, Rigidbody2D> _riderRb = new();
@@ -55,16 +61,24 @@ public sealed class FloatingPlatform : MonoBehaviour
     private static readonly HashSet<MovementController> ridersOnPlatforms = new();
     private static readonly Dictionary<MovementController, FloatingPlatform> riderToPlatform = new();
 
+    private float _accPixelsX;
+    private float _accPixelsY;
+    private Vector2 _lastMoveDirCardinal = Vector2.zero;
+
     public static bool TryGetPlatformForRider(MovementController mc, out FloatingPlatform platform)
     {
         platform = null;
-        if (mc == null) return false;
+        if (mc == null)
+            return false;
+
         return riderToPlatform.TryGetValue(mc, out platform) && platform != null;
     }
 
     public static bool IsRidingPlatform(MovementController mc)
     {
-        if (mc == null) return false;
+        if (mc == null)
+            return false;
+
         return ridersOnPlatforms.Contains(mc);
     }
 
@@ -78,6 +92,16 @@ public sealed class FloatingPlatform : MonoBehaviour
     public bool IsAtLowerStop => LowerStopIsA ? IsAtAStop : IsAtBStop;
     public bool IsAtUpperStop => LowerStopIsA ? IsAtBStop : IsAtAStop;
 
+    private float PixelWorldStep => pixelsPerUnit > 0 ? (1f / pixelsPerUnit) : 0.0625f;
+
+    private void LogP(string msg)
+    {
+        if (!enableSurgicalLogs)
+            return;
+
+        Debug.Log($"[FloatingPlatform][{name}] {msg}", this);
+    }
+
     private void Awake()
     {
         _col = GetComponent<BoxCollider2D>();
@@ -85,123 +109,199 @@ public sealed class FloatingPlatform : MonoBehaviour
 
         TryGetComponent(out _rb);
 
-        if ((Vector2)transform.position == Vector2.zero)
-            transform.position = pointA;
+        pointA = QuantizeToPixelGrid(pointA);
+        pointB = QuantizeToPixelGrid(pointB);
 
-        _loop = StartCoroutine(MoveLoop());
+        Vector2 startPos = GetWorldPos2D();
+
+        if (startPos == Vector2.zero)
+        {
+            startPos = pointA;
+            SetWorldPos2DImmediate(startPos);
+            LogP($"Awake -> transform estava em zero, usando pointA quantizado. startPos={startPos}");
+        }
+        else
+        {
+            startPos = QuantizeToPixelGrid(startPos);
+            SetWorldPos2DImmediate(startPos);
+            LogP($"Awake -> usando posição atual quantizada. startPos={startPos}");
+        }
+
+        _atA = Vector2.Distance(startPos, pointA) <= Vector2.Distance(startPos, pointB);
+        _isMoving = false;
+        _isStopping = true;
+        _stopTimer = Mathf.Max(0f, stopSeconds);
+
+        ResetPixelAccumulators();
+
+        LogP($"Awake -> pointA={pointA} | pointB={pointB} | atA={_atA} | isStopping={_isStopping} | stopTimer={_stopTimer} | moveSpeed={moveSpeed} | ppu={pixelsPerUnit} | useIntegerPixelSteps={useIntegerPixelSteps} | rb={(_rb != null ? _rb.bodyType.ToString() : "<null>")}");
     }
 
     private void OnEnable()
     {
-        if (_loop == null && gameObject.activeInHierarchy)
-            _loop = StartCoroutine(MoveLoop());
+        ResetPixelAccumulators();
+        LogP("OnEnable -> reset dos acumuladores");
     }
 
     private void OnDisable()
     {
-        if (_loop != null)
-        {
-            StopCoroutine(_loop);
-            _loop = null;
-        }
-
+        LogP($"OnDisable -> desmontando riders. riders={_riders.Count}");
         ForceUnmountAllInternal();
+        ResetPixelAccumulators();
     }
 
     private void LateUpdate()
     {
-        if (_riders.Count == 0) return;
+        if (_riders.Count == 0)
+            return;
 
         if (snapRiderToCenterOnMount)
             SnapAllRidersToPlatformCenter();
     }
 
-    private void OnTriggerStay2D(Collider2D other)
+    private void FixedUpdate()
     {
-        if (other == null) return;
+        LogP($"FixedUpdate -> isStopping={_isStopping} | isMoving={_isMoving} | pos={GetWorldPos2D()}");
 
-        var mc = other.GetComponentInParent<MovementController>();
-        if (mc == null) return;
-
-        if (mc.CompareTag("Player"))
-            TryHandlePlatformInput(mc);
-    }
-
-    private IEnumerator MoveLoop()
-    {
-        Vector2 startPos = GetWorldPos2D();
-        _atA = Vector2.Distance(startPos, pointA) <= Vector2.Distance(startPos, pointB);
-
-        while (true)
+        if (_isStopping)
         {
-            _isMoving = false;
-            _isStopping = true;
-
-            UnlockAllRidersIfAny();
-
-            float stop = Mathf.Max(0f, stopSeconds);
-            if (stop > 0f)
-            {
-                if (ignoreTimeScale) yield return new WaitForSecondsRealtime(stop);
-                else yield return new WaitForSeconds(stop);
-            }
-            else
-            {
-                yield return null;
-            }
-
-            _isStopping = false;
-
-            Vector2 target = _atA ? pointB : pointA;
-
-            if (_riders.Count > 0)
-                BeginCarryAllRiders();
-
-            _isMoving = true;
-
-            while (Vector2.Distance(GetWorldPos2D(), target) > 0.001f)
-            {
-                float dt = ignoreTimeScale ? Time.unscaledDeltaTime : Time.deltaTime;
-
-                Vector2 p = GetWorldPos2D();
-                Vector2 np = Vector2.MoveTowards(p, target, moveSpeed * dt);
-                SetWorldPos2D(np);
-
-                yield return null;
-            }
-
-            SetWorldPos2D(target);
-
-            _isMoving = false;
-            _isStopping = true;
-
-            UnlockAllRidersIfAny();
-
-            _atA = !_atA;
+            TickStopState();
+            return;
         }
+
+        TickMoveState();
     }
 
-    private Vector2 GetWorldPos2D() => _rb != null ? _rb.position : (Vector2)transform.position;
-
-    private void SetWorldPos2D(Vector2 p)
+    private void TickStopState()
     {
+        _isMoving = false;
+        _isStopping = true;
+
+        UnlockAllRidersIfAny();
+        ResetPixelAccumulators();
+
+        LogP($"StopState -> timer={_stopTimer}");
+
+        if (_stopTimer > 0f)
+        {
+            float dt = GetStepDeltaTime();
+            _stopTimer -= dt;
+
+            LogP($"Stopping... dt={dt} | remaining={_stopTimer}");
+
+            if (_stopTimer > 0f)
+                return;
+        }
+
+        _stopTimer = 0f;
+        _isStopping = false;
+
+        if (_riders.Count > 0)
+            BeginCarryAllRiders();
+
+        _isMoving = true;
+
+        LogP($"Stop finished -> starting movement toward {(_atA ? "pointB" : "pointA")}");
+    }
+
+    private void TickMoveState()
+    {
+        Vector2 target = _atA ? pointB : pointA;
+        target = QuantizeToPixelGrid(target);
+
+        Vector2 position = QuantizeToPixelGrid(GetWorldPos2D());
+
+        LogP($"MoveState START -> pos={position} | target={target} | atA={_atA}");
+
+        Vector2 moveDir = NormalizeCardinal(target - position);
+        float rawStep = moveSpeed * GetStepDeltaTime();
+        float moveWorld = GetQuantizedMoveWorldPerStep(moveDir, rawStep);
+
+        LogP($"MoveState -> moveDir={moveDir} | rawStep={rawStep} | moveWorld={moveWorld}");
+
+        if (moveDir == Vector2.zero)
+            LogP("MoveState -> moveDir ZERO, plataforma já está no target ou points podem estar iguais");
+
+        if (moveWorld <= 0f)
+        {
+            LogP("MoveState -> moveWorld == 0, plataforma não andou neste FixedUpdate");
+            MoveWorldPosPixelPerfect(position);
+            return;
+        }
+
+        Vector2 next = Vector2.MoveTowards(position, target, moveWorld);
+        next = QuantizeToPixelGrid(next);
+
+        LogP($"MoveState -> next={next}");
+
+        bool reached =
+            Mathf.Abs(next.x - target.x) <= 0.0001f &&
+            Mathf.Abs(next.y - target.y) <= 0.0001f;
+
+        if (reached)
+        {
+            next = target;
+            MoveWorldPosPixelPerfect(next);
+
+            _isMoving = false;
+            _isStopping = true;
+            _atA = !_atA;
+            _stopTimer = Mathf.Max(0f, stopSeconds);
+            ResetPixelAccumulators();
+
+            LogP($"Reached target -> next={next} | newAtA={_atA} | nextStopTimer={_stopTimer}");
+            return;
+        }
+
+        MoveWorldPosPixelPerfect(next);
+    }
+
+    private float GetStepDeltaTime()
+    {
+        return ignoreTimeScale ? Time.fixedUnscaledDeltaTime : Time.fixedDeltaTime;
+    }
+
+    private Vector2 GetWorldPos2D()
+    {
+        return _rb != null ? _rb.position : (Vector2)transform.position;
+    }
+
+    private void SetWorldPos2DImmediate(Vector2 p)
+    {
+        p = QuantizeToPixelGrid(p);
+
+        if (_rb != null)
+            _rb.position = p;
+        else
+            transform.position = new Vector3(p.x, p.y, transform.position.z);
+
+        LogP($"SetWorldPos2DImmediate -> {p}");
+    }
+
+    private void MoveWorldPosPixelPerfect(Vector2 p)
+    {
+        p = QuantizeToPixelGrid(p);
+
         if (_rb != null)
             _rb.MovePosition(p);
         else
             transform.position = new Vector3(p.x, p.y, transform.position.z);
+
+        LogP($"MoveWorldPosPixelPerfect -> {p}");
     }
 
     private Vector2 GetPlatformCenter()
     {
         if (_col != null)
-            return (Vector2)_col.bounds.center;
+            return QuantizeToPixelGrid((Vector2)_col.bounds.center);
 
-        return GetWorldPos2D();
+        return QuantizeToPixelGrid(GetWorldPos2D());
     }
 
     private int GetPlayerId(MovementController mc)
     {
-        if (mc == null) return 1;
+        if (mc == null)
+            return 1;
 
         var pid = mc.GetComponentInParent<PlayerIdentity>();
         if (pid != null)
@@ -211,7 +311,9 @@ public sealed class FloatingPlatform : MonoBehaviour
     }
 
     private Vector2 GetSharedRiderTargetWorldPos()
-        => GetPlatformCenter() + followOffset + riderLocalOffset;
+    {
+        return QuantizeToPixelGrid(GetPlatformCenter() + followOffset + riderLocalOffset);
+    }
 
     private void SnapAllRidersToPlatformCenter()
     {
@@ -220,7 +322,8 @@ public sealed class FloatingPlatform : MonoBehaviour
         for (int i = 0; i < _riders.Count; i++)
         {
             var mc = _riders[i];
-            if (mc == null) continue;
+            if (mc == null)
+                continue;
 
             if (_riderRb.TryGetValue(mc, out var rb) && rb != null)
             {
@@ -236,30 +339,43 @@ public sealed class FloatingPlatform : MonoBehaviour
 
     private void BeginCarryAllRiders()
     {
-        if (_riders.Count == 0) return;
+        if (_riders.Count == 0)
+            return;
+
+        LogP($"BeginCarryAllRiders -> riders={_riders.Count}");
 
         if (snapRiderToCenterOnMount)
             SnapAllRidersToPlatformCenter();
 
-        if (!lockInputWhileMoving) return;
+        if (!lockInputWhileMoving)
+            return;
 
         for (int i = 0; i < _riders.Count; i++)
         {
             var mc = _riders[i];
-            if (mc == null) continue;
+            if (mc == null)
+                continue;
+
             mc.SetInputLocked(true, forceIdleOnLock);
         }
     }
 
     private void UnlockAllRidersIfAny()
     {
-        if (_riders.Count == 0) return;
-        if (!lockInputWhileMoving) return;
+        if (_riders.Count == 0)
+            return;
+
+        if (!lockInputWhileMoving)
+            return;
+
+        LogP($"UnlockAllRidersIfAny -> riders={_riders.Count}");
 
         for (int i = 0; i < _riders.Count; i++)
         {
             var mc = _riders[i];
-            if (mc == null) continue;
+            if (mc == null)
+                continue;
+
             mc.SetInputLocked(false);
         }
     }
@@ -280,10 +396,16 @@ public sealed class FloatingPlatform : MonoBehaviour
     public bool TryMount(MovementController mc)
     {
         if (!CanMount(mc))
+        {
+            LogP($"TryMount FAILED -> mc={(mc != null ? mc.name : "<null>")} | isIdleAtStop={IsIdleAtStop} | isMoving={_isMoving} | isStopping={_isStopping}");
             return false;
+        }
 
         if (_riders.Contains(mc))
+        {
+            LogP($"TryMount ignored -> {mc.name} já está montado");
             return false;
+        }
 
         _riders.Add(mc);
         _riderRb[mc] = mc.Rigidbody;
@@ -302,6 +424,7 @@ public sealed class FloatingPlatform : MonoBehaviour
         else
             mc.SetInputLocked(false);
 
+        LogP($"TryMount SUCCESS -> rider={mc.name} | riders={_riders.Count}");
         return true;
     }
 
@@ -318,7 +441,7 @@ public sealed class FloatingPlatform : MonoBehaviour
         Vector2 offset = applyUnmountOffset ? offsetTiles * tileSize : Vector2.zero;
 
         Vector2 basePos = GetSharedRiderTargetWorldPos();
-        Vector2 targetPos = basePos + offset;
+        Vector2 targetPos = QuantizeToPixelGrid(basePos + offset);
 
         ForceUnmountInternal(mover);
 
@@ -326,12 +449,15 @@ public sealed class FloatingPlatform : MonoBehaviour
         _nextAllowedMountTime = Time.time + Mathf.Max(0f, remountBlockSeconds);
 
         mover.SnapToWorldPoint(targetPos, roundRiderToGridOnSnap);
+
+        LogP($"TryUnmount -> rider={mover.name} | targetPos={targetPos} | upper={upper}");
         return true;
     }
 
     private void ForceUnmountInternal(MovementController mc)
     {
-        if (mc == null) return;
+        if (mc == null)
+            return;
 
         if (lockInputWhileMoving)
             mc.SetInputLocked(false);
@@ -341,6 +467,8 @@ public sealed class FloatingPlatform : MonoBehaviour
 
         _riderRb.Remove(mc);
         _riders.Remove(mc);
+
+        LogP($"ForceUnmountInternal -> rider={mc.name} | riders={_riders.Count}");
     }
 
     private void ForceUnmountAllInternal()
@@ -351,6 +479,21 @@ public sealed class FloatingPlatform : MonoBehaviour
 
         _riders.Clear();
         _riderRb.Clear();
+
+        LogP("ForceUnmountAllInternal -> concluído");
+    }
+
+    private void OnTriggerStay2D(Collider2D other)
+    {
+        if (other == null)
+            return;
+
+        var mc = other.GetComponentInParent<MovementController>();
+        if (mc == null)
+            return;
+
+        if (mc.CompareTag("Player"))
+            TryHandlePlatformInput(mc);
     }
 
     private bool TryHandlePlatformInput(MovementController mc)
@@ -388,5 +531,82 @@ public sealed class FloatingPlatform : MonoBehaviour
         }
 
         return false;
+    }
+
+    private Vector2 QuantizeToPixelGrid(Vector2 world)
+    {
+        if (!useIntegerPixelSteps || pixelsPerUnit <= 0)
+            return world;
+
+        float ppu = pixelsPerUnit;
+
+        return new Vector2(
+            Mathf.Round(world.x * ppu) / ppu,
+            Mathf.Round(world.y * ppu) / ppu
+        );
+    }
+
+    private void ResetPixelAccumulators()
+    {
+        _accPixelsX = 0f;
+        _accPixelsY = 0f;
+        _lastMoveDirCardinal = Vector2.zero;
+
+        LogP("ResetPixelAccumulators");
+    }
+
+    private float GetQuantizedMoveWorldPerStep(Vector2 moveDir, float rawWorldStep)
+    {
+        if (!useIntegerPixelSteps || pixelsPerUnit <= 0)
+            return rawWorldStep;
+
+        moveDir = NormalizeCardinal(moveDir);
+        if (moveDir == Vector2.zero)
+        {
+            LogP("PixelStep -> moveDir zero, retorno 0");
+            return 0f;
+        }
+
+        if (moveDir != _lastMoveDirCardinal)
+        {
+            _lastMoveDirCardinal = moveDir;
+            _accPixelsX = 0f;
+            _accPixelsY = 0f;
+            LogP($"PixelStep -> direção mudou, reset acumuladores. moveDir={moveDir}");
+        }
+
+        float rawPixels = rawWorldStep * pixelsPerUnit;
+
+        if (Mathf.Abs(moveDir.x) > 0.01f)
+        {
+            _accPixelsX += rawPixels * Mathf.Sign(moveDir.x);
+
+            int whole = (int)_accPixelsX;
+            _accPixelsX -= whole;
+
+            float result = Mathf.Abs(whole) * PixelWorldStep;
+            LogP($"PixelStep X -> rawPixels={rawPixels} | whole={whole} | accX={_accPixelsX} | result={result}");
+            return result;
+        }
+
+        _accPixelsY += rawPixels * Mathf.Sign(moveDir.y);
+
+        int wholeY = (int)_accPixelsY;
+        _accPixelsY -= wholeY;
+
+        float resultY = Mathf.Abs(wholeY) * PixelWorldStep;
+        LogP($"PixelStep Y -> rawPixels={rawPixels} | wholeY={wholeY} | accY={_accPixelsY} | result={resultY}");
+        return resultY;
+    }
+
+    private static Vector2 NormalizeCardinal(Vector2 dir)
+    {
+        if (dir.sqrMagnitude <= 0.000001f)
+            return Vector2.zero;
+
+        if (Mathf.Abs(dir.x) > Mathf.Abs(dir.y))
+            return new Vector2(Mathf.Sign(dir.x), 0f);
+
+        return new Vector2(0f, Mathf.Sign(dir.y));
     }
 }

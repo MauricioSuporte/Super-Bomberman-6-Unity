@@ -1237,7 +1237,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3444312159733109208, guid: a98c10fbeaf54d044b77b105b6b44b58, type: 3}
       propertyPath: pointA.y
-      value: 7.2
+      value: 7
       objectReference: {fileID: 0}
     - target: {fileID: 3444312159733109208, guid: a98c10fbeaf54d044b77b105b6b44b58, type: 3}
       propertyPath: pointB.x
@@ -1250,6 +1250,10 @@ PrefabInstance:
     - target: {fileID: 3444312159733109208, guid: a98c10fbeaf54d044b77b105b6b44b58, type: 3}
       propertyPath: forceIdleOnLock
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3444312159733109208, guid: a98c10fbeaf54d044b77b105b6b44b58, type: 3}
+      propertyPath: enableSurgicalLogs
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 3444312159733109208, guid: a98c10fbeaf54d044b77b105b6b44b58, type: 3}
       propertyPath: riderLocalOffset.y
@@ -1302,6 +1306,10 @@ PrefabInstance:
     - target: {fileID: 5136182490446077081, guid: a98c10fbeaf54d044b77b105b6b44b58, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8084457933109457763, guid: a98c10fbeaf54d044b77b105b6b44b58, type: 3}
+      propertyPath: m_Size.y
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -7364,7 +7372,7 @@ Tilemap:
       m_AnimatedSprites:
       - {fileID: 125573341, guid: 9ca3acaac181aaa4da91fd60f6063a21, type: 3}
       - {fileID: 79229513, guid: 9ca3acaac181aaa4da91fd60f6063a21, type: 3}
-      m_AnimationSpeed: 5.0000005
+      m_AnimationSpeed: 5
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: -19, y: 17, z: 0}
@@ -7463,7 +7471,7 @@ Tilemap:
       m_AnimatedSprites:
       - {fileID: 125573341, guid: 9ca3acaac181aaa4da91fd60f6063a21, type: 3}
       - {fileID: 79229513, guid: 9ca3acaac181aaa4da91fd60f6063a21, type: 3}
-      m_AnimationSpeed: 5
+      m_AnimationSpeed: 5.0000005
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: 15, y: 17, z: 0}
@@ -7526,7 +7534,7 @@ Tilemap:
       m_AnimatedSprites:
       - {fileID: -512380286, guid: 9ca3acaac181aaa4da91fd60f6063a21, type: 3}
       - {fileID: 146987460, guid: 9ca3acaac181aaa4da91fd60f6063a21, type: 3}
-      m_AnimationSpeed: 5
+      m_AnimationSpeed: 5.0000005
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: -10, y: 18, z: 0}
@@ -7535,7 +7543,7 @@ Tilemap:
       m_AnimatedSprites:
       - {fileID: 1205232383, guid: 9ca3acaac181aaa4da91fd60f6063a21, type: 3}
       - {fileID: 1801015112, guid: 9ca3acaac181aaa4da91fd60f6063a21, type: 3}
-      m_AnimationSpeed: 5
+      m_AnimationSpeed: 5.0000005
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: -9, y: 18, z: 0}
@@ -7546,7 +7554,7 @@ Tilemap:
       - {fileID: -541303470, guid: 9ca3acaac181aaa4da91fd60f6063a21, type: 3}
       - {fileID: 44329480, guid: 9ca3acaac181aaa4da91fd60f6063a21, type: 3}
       - {fileID: -541303470, guid: 9ca3acaac181aaa4da91fd60f6063a21, type: 3}
-      m_AnimationSpeed: 10.000001
+      m_AnimationSpeed: 10
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: -8, y: 18, z: 0}
@@ -7611,7 +7619,7 @@ Tilemap:
       m_AnimatedSprites:
       - {fileID: -512380286, guid: 9ca3acaac181aaa4da91fd60f6063a21, type: 3}
       - {fileID: 146987460, guid: 9ca3acaac181aaa4da91fd60f6063a21, type: 3}
-      m_AnimationSpeed: 5.0000005
+      m_AnimationSpeed: 5
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: 10, y: 18, z: 0}
@@ -13129,6 +13137,8 @@ MonoBehaviour:
   enterSfx: {fileID: 8300000, guid: 778da4e4d7313e54195e6cbca646d851, type: 3}
   endStageMusic: {fileID: 0}
   playRandomGoodSfx: 1
+  playSkullForNightmareBomber: 1
+  skullVolume: 1
   manualUnlockOnly: 0
   unlockGateSfx: {fileID: 8300000, guid: 9f1639c45a104994a87b186228d5b8e7, type: 3}
   openGateSfx: {fileID: 8300000, guid: 66686e87bc1a8994880d4f9972de6d54, type: 3}
@@ -13347,6 +13357,10 @@ PrefabInstance:
     - target: {fileID: 5136182490446077081, guid: a98c10fbeaf54d044b77b105b6b44b58, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8084457933109457763, guid: a98c10fbeaf54d044b77b105b6b44b58, type: 3}
+      propertyPath: m_Size.y
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

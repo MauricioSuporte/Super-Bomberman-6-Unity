@@ -106,7 +106,7 @@ BoxCollider2D:
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 1, y: 1.25}
+  m_Size: {x: 1, y: 1}
   m_EdgeRadius: 0
 --- !u!212 &4189961800170476209
 SpriteRenderer:
@@ -179,17 +179,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b900dafc6b1827c43b85706e4f0703ce, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::FloatingPlatform
-  dbg: 1
-  dbgMoveLogEverySeconds: 0.35
   pointA: {x: -8, y: 3}
   pointB: {x: -8, y: 0}
-  moveSpeed: 20
+  moveSpeed: 2
   stopSeconds: 2
+  ignoreTimeScale: 1
   snapRiderToCenterOnMount: 1
   roundRiderToGridOnSnap: 1
   lockInputWhileMoving: 0
   forceIdleOnLock: 1
   followOffset: {x: 0, y: 0}
+  riderLocalOffset: {x: 0, y: 0}
   remountBlockSeconds: 0.15
-  applyUnmountYOffset: 1
-  unmountYOffsetTiles: 1
+  applyUnmountOffset: 1
+  unmountOffsetUpperTiles: {x: 0, y: 1}
+  unmountOffsetLowerTiles: {x: 0, y: -1}
+  pixelsPerUnit: 16
+  useIntegerPixelSteps: 1
+  enableSurgicalLogs: 0
