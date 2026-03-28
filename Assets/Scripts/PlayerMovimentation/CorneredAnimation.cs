@@ -72,6 +72,11 @@ public sealed class CorneredAnimation : MonoBehaviour
         SetCorneredEnabled(false);
     }
 
+    private void OnValidate()
+    {
+        blockMask = LayerMask.GetMask("Stage", "Bomb");
+    }
+
     private void OnEnable()
     {
         lastInputTime = Time.time;
