@@ -252,10 +252,6 @@ public class TitleScreenDropIntro : MonoBehaviour
         skipRequested = false;
     }
 
-    // -------------------------------------------------------------------------
-    //  Idle alternation helpers
-    // -------------------------------------------------------------------------
-
     void StopAllIdleRoutines()
     {
         for (int i = 0; i < _idleRoutines.Count; i++)
@@ -302,7 +298,6 @@ public class TitleScreenDropIntro : MonoBehaviour
         if (slot == null || slot.image == null || slot.alternateSprite == null)
             return;
 
-        // Grow list if needed
         while (_idleRoutines.Count <= index)
             _idleRoutines.Add(null);
 
@@ -314,7 +309,6 @@ public class TitleScreenDropIntro : MonoBehaviour
 
     IEnumerator IdleAlternateRoutine(int index, CharacterDropSlot slot)
     {
-        // Each character starts with its own random offset so they never sync up.
         float startDelay = slot.idleStartDelay > 0f
             ? slot.idleStartDelay
             : UnityEngine.Random.Range(0f, Mathf.Max(0f, slot.idleMaxInterval));
@@ -329,19 +323,105 @@ public class TitleScreenDropIntro : MonoBehaviour
 
         while (true)
         {
-            // --- Show alternate sprite ---
             ApplyCharacterSpriteOverride(index, slot.alternateSprite);
 
-            float altDur = Mathf.Max(0.05f, slot.alternateDuration);
-            if (useUnscaledTime)
-                yield return new WaitForSecondsRealtime(altDur);
-            else
-                yield return new WaitForSeconds(altDur);
+            bool isBlackLouie =
+                slot != null &&
+                !string.IsNullOrWhiteSpace(slot.name) &&
+                string.Equals(slot.name.Trim(), "Black", StringComparison.OrdinalIgnoreCase);
 
-            // --- Back to landed sprite ---
+            bool isPinkLouie =
+                slot != null &&
+                !string.IsNullOrWhiteSpace(slot.name) &&
+                string.Equals(slot.name.Trim(), "Pink", StringComparison.OrdinalIgnoreCase);
+
+            Vector2 originalOffset = slot.alternatePositionOffset;
+
+            if (isBlackLouie)
+            {
+                float totalDuration = Mathf.Max(0.05f, slot.alternateDuration);
+                float stepTime = 0.1f;
+
+                float elapsed = 0f;
+                int stepsApplied = 0;
+
+                while (elapsed < totalDuration)
+                {
+                    float dt = useUnscaledTime ? Time.unscaledDeltaTime : Time.deltaTime;
+                    elapsed += dt;
+
+                    int targetSteps = Mathf.FloorToInt(elapsed / stepTime);
+
+                    if (targetSteps > stepsApplied)
+                    {
+                        stepsApplied = targetSteps;
+                        slot.alternatePositionOffset = originalOffset + new Vector2(-stepsApplied, 0f);
+                        ApplyCharacterPoseLayout(index);
+                    }
+
+                    yield return null;
+                }
+
+                slot.alternatePositionOffset = originalOffset;
+            }
+            else if (isPinkLouie)
+            {
+                float stepTime = 0.1f;
+
+                float elapsedUp = 0f;
+                int upStepsApplied = 0;
+
+                while (elapsedUp < 0.5f)
+                {
+                    float dt = useUnscaledTime ? Time.unscaledDeltaTime : Time.deltaTime;
+                    elapsedUp += dt;
+
+                    int targetSteps = Mathf.FloorToInt(elapsedUp / stepTime);
+
+                    if (targetSteps > upStepsApplied)
+                    {
+                        upStepsApplied = Mathf.Min(targetSteps, 5);
+                        slot.alternatePositionOffset = originalOffset + new Vector2(0f, upStepsApplied);
+                        ApplyCharacterPoseLayout(index);
+                    }
+
+                    yield return null;
+                }
+
+                float elapsedDown = 0f;
+                int downStepsApplied = 0;
+
+                while (elapsedDown < 0.5f)
+                {
+                    float dt = useUnscaledTime ? Time.unscaledDeltaTime : Time.deltaTime;
+                    elapsedDown += dt;
+
+                    int targetSteps = Mathf.FloorToInt(elapsedDown / stepTime);
+
+                    if (targetSteps > downStepsApplied)
+                    {
+                        downStepsApplied = Mathf.Min(targetSteps, 5);
+                        slot.alternatePositionOffset = originalOffset + new Vector2(0f, 5 - downStepsApplied);
+                        ApplyCharacterPoseLayout(index);
+                    }
+
+                    yield return null;
+                }
+
+                slot.alternatePositionOffset = originalOffset;
+            }
+            else
+            {
+                float altDur = Mathf.Max(0.05f, slot.alternateDuration);
+
+                if (useUnscaledTime)
+                    yield return new WaitForSecondsRealtime(altDur);
+                else
+                    yield return new WaitForSeconds(altDur);
+            }
+
             ApplyCharacterSprite(index, true);
 
-            // --- Wait a random idle interval before the next alternate ---
             float interval = UnityEngine.Random.Range(
                 Mathf.Max(0.1f, slot.idleMinInterval),
                 Mathf.Max(0.1f, slot.idleMaxInterval));
@@ -414,7 +494,6 @@ public class TitleScreenDropIntro : MonoBehaviour
         _visualState = IntroVisualState.Completed;
         ReapplyCurrentResolvedLayout();
 
-        // All characters are now visibly landed — start idle animations
         StartIdleRoutinesForAllLanded();
 
         currentRoutine = null;
@@ -483,7 +562,6 @@ public class TitleScreenDropIntro : MonoBehaviour
                 yield return null;
             }
 
-            // Wave landed — apply landed sprite and start this wave's idle routines
             for (int j = 0; j < wave.Count; j++)
             {
                 int i = wave[j];
@@ -496,12 +574,10 @@ public class TitleScreenDropIntro : MonoBehaviour
                 slot.image.gameObject.SetActive(true);
                 ApplyCharacterSprite(i, true);
 
-                // Start idle animation as soon as this character lands
                 StartIdleRoutineForCharacter(i);
             }
         }
 
-        // Safety pass
         for (int i = 0; i < count; i++)
         {
             CharacterDropSlot slot = characterSlots[i];
