@@ -36,6 +36,13 @@ public class TitleScreenDropIntro : MonoBehaviour
 
         [Header("Idle Alternate Size Offset")]
         public Vector2 alternateSizeOffset = Vector2.zero;
+
+        [Header("Idle Alternate Extra Sprite")]
+        public Sprite alternateExtraSprite;
+        public bool showAlternateExtraSpriteOnlyDuringAlternate = true;
+        public bool useAlternateExtraSpriteNativeSize = true;
+        public Vector2 alternateExtraSpriteSize = new(16f, 16f);
+        public Vector2 alternateExtraSpriteOffset = Vector2.zero;
     }
 
     enum IntroVisualState
@@ -108,6 +115,7 @@ public class TitleScreenDropIntro : MonoBehaviour
 
     RectTransform _logoRect;
     readonly List<RectTransform> _characterRects = new();
+    readonly List<Image> _characterAlternateExtraImages = new();
 
     float _pixelFrameScale = 1f;
     IntroVisualState _visualState = IntroVisualState.Hidden;
@@ -363,6 +371,7 @@ public class TitleScreenDropIntro : MonoBehaviour
                 }
 
                 slot.alternatePositionOffset = originalOffset;
+                ApplyCharacterPoseLayout(index);
             }
             else if (isPinkLouie)
             {
@@ -409,6 +418,7 @@ public class TitleScreenDropIntro : MonoBehaviour
                 }
 
                 slot.alternatePositionOffset = originalOffset;
+                ApplyCharacterPoseLayout(index);
             }
             else
             {
@@ -557,6 +567,8 @@ public class TitleScreenDropIntro : MonoBehaviour
 
                     if (!slot.image.gameObject.activeSelf)
                         slot.image.gameObject.SetActive(true);
+
+                    SetAlternateExtraSpriteVisible(i, false);
                 }
 
                 yield return null;
@@ -804,6 +816,7 @@ public class TitleScreenDropIntro : MonoBehaviour
     void EnsureCharacters()
     {
         _characterRects.Clear();
+        _characterAlternateExtraImages.Clear();
 
         if (characterSlots == null)
             characterSlots = Array.Empty<CharacterDropSlot>();
@@ -814,7 +827,10 @@ public class TitleScreenDropIntro : MonoBehaviour
         {
             CharacterDropSlot slot = characterSlots[i];
             if (slot == null)
+            {
+                _characterAlternateExtraImages.Add(null);
                 continue;
+            }
 
             if (slot.image == null)
             {
@@ -849,7 +865,42 @@ public class TitleScreenDropIntro : MonoBehaviour
             slot.image.enabled = true;
 
             _characterRects.Add(rt);
+            _characterAlternateExtraImages.Add(EnsureAlternateExtraSpriteImage(slot, i));
         }
+    }
+
+    Image EnsureAlternateExtraSpriteImage(CharacterDropSlot slot, int index)
+    {
+        if (slot == null || slot.image == null)
+            return null;
+
+        string childName = "AlternateExtraSprite";
+        Transform found = slot.image.transform.Find(childName);
+        Image extraImage = found != null ? found.GetComponent<Image>() : null;
+
+        if (extraImage == null)
+        {
+            GameObject go = new(childName, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+            extraImage = go.GetComponent<Image>();
+            RectTransform extraRect = extraImage.rectTransform;
+            extraRect.SetParent(slot.image.transform, false);
+        }
+
+        RectTransform rt = extraImage.rectTransform;
+        rt.anchorMin = new Vector2(0.5f, 0f);
+        rt.anchorMax = new Vector2(0.5f, 0f);
+        rt.pivot = new Vector2(0.5f, 0.5f);
+        rt.localScale = Vector3.one;
+        rt.localRotation = Quaternion.identity;
+
+        extraImage.preserveAspect = true;
+        extraImage.raycastTarget = false;
+        extraImage.enabled = true;
+        extraImage.gameObject.SetActive(false);
+
+        ApplyAlternateExtraSpriteVisual(index, forceHide: true);
+
+        return extraImage;
     }
 
     Transform GetDesiredParent()
@@ -911,6 +962,10 @@ public class TitleScreenDropIntro : MonoBehaviour
             _characterHasLanded[index])
         {
             ApplyCharacterPoseLayout(index);
+        }
+        else
+        {
+            SetAlternateExtraSpriteVisible(index, false);
         }
     }
 
@@ -1031,6 +1086,7 @@ public class TitleScreenDropIntro : MonoBehaviour
                 continue;
 
             slot.image.gameObject.SetActive(false);
+            SetAlternateExtraSpriteVisible(i, false);
         }
     }
 
@@ -1047,6 +1103,7 @@ public class TitleScreenDropIntro : MonoBehaviour
                 ApplyCharacterSprite(i, false);
                 slot.image.gameObject.SetActive(true);
                 ApplyAnchoredPositionScaled(slot.image.rectTransform, _cachedCharacterAboveTopBasePositions[i]);
+                SetAlternateExtraSpriteVisible(i, false);
             }
         }
 
@@ -1136,6 +1193,7 @@ public class TitleScreenDropIntro : MonoBehaviour
                 RectTransform rt = slot.image.rectTransform;
                 Vector2 baseSize = GetEffectiveBaseCharacterSize(slot);
                 rt.sizeDelta = RoundVec(baseSize * _pixelFrameScale);
+                SetAlternateExtraSpriteVisible(i, false);
             }
         }
     }
@@ -1289,6 +1347,23 @@ public class TitleScreenDropIntro : MonoBehaviour
         return slot.baseSize;
     }
 
+    Vector2 GetEffectiveAlternateExtraSpriteSize(CharacterDropSlot slot)
+    {
+        if (slot == null)
+            return new Vector2(16f, 16f);
+
+        if (slot.useAlternateExtraSpriteNativeSize && slot.alternateExtraSprite != null)
+        {
+            if (slot.alternateExtraSprite.texture != null)
+                return new Vector2(slot.alternateExtraSprite.texture.width, slot.alternateExtraSprite.texture.height);
+
+            Rect r = slot.alternateExtraSprite.rect;
+            return new Vector2(r.width, r.height);
+        }
+
+        return slot.alternateExtraSpriteSize;
+    }
+
     void ApplyAnchoredPositionScaled(RectTransform rt, Vector2 basePos)
     {
         if (rt == null)
@@ -1423,5 +1498,67 @@ public class TitleScreenDropIntro : MonoBehaviour
 
         ApplyAnchoredPositionScaled(rt, basePos);
         rt.sizeDelta = RoundVec(baseSize * _pixelFrameScale);
+
+        ApplyAlternateExtraSpriteVisual(index);
+    }
+
+    void ApplyAlternateExtraSpriteVisual(int index, bool forceHide = false)
+    {
+        if (characterSlots == null || index < 0 || index >= characterSlots.Length)
+            return;
+
+        if (_characterAlternateExtraImages == null || index >= _characterAlternateExtraImages.Count)
+            return;
+
+        CharacterDropSlot slot = characterSlots[index];
+        Image extraImage = _characterAlternateExtraImages[index];
+
+        if (slot == null || extraImage == null)
+            return;
+
+        bool usingAlternate =
+            !forceHide &&
+            _characterUsingAlternatePose != null &&
+            index < _characterUsingAlternatePose.Length &&
+            _characterUsingAlternatePose[index];
+
+        bool shouldShow = slot.alternateExtraSprite != null;
+
+        if (slot.showAlternateExtraSpriteOnlyDuringAlternate)
+            shouldShow &= usingAlternate;
+
+        if (!shouldShow)
+        {
+            extraImage.gameObject.SetActive(false);
+            return;
+        }
+
+        if (extraImage.sprite != slot.alternateExtraSprite)
+            extraImage.sprite = slot.alternateExtraSprite;
+
+        Texture tex = slot.alternateExtraSprite.texture;
+        if (tex != null && applyPointFilter)
+            tex.filterMode = FilterMode.Point;
+
+        RectTransform extraRect = extraImage.rectTransform;
+        Vector2 extraBaseSize = GetEffectiveAlternateExtraSpriteSize(slot);
+        Vector2 extraBaseOffset = slot.alternateExtraSpriteOffset;
+
+        extraRect.sizeDelta = RoundVec(extraBaseSize * _pixelFrameScale);
+        ApplyAnchoredPositionScaled(extraRect, extraBaseOffset);
+        extraImage.gameObject.SetActive(true);
+        extraImage.transform.SetAsLastSibling();
+    }
+
+    void SetAlternateExtraSpriteVisible(int index, bool visible)
+    {
+        if (_characterAlternateExtraImages == null || index < 0 || index >= _characterAlternateExtraImages.Count)
+            return;
+
+        Image extraImage = _characterAlternateExtraImages[index];
+        if (extraImage == null)
+            return;
+
+        extraImage.gameObject.SetActive(visible);
     }
 }
