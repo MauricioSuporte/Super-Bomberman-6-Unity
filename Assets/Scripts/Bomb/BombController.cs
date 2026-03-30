@@ -1299,8 +1299,6 @@ public partial class BombController : MonoBehaviour
                 if (!TryHandleDestructibleTileEffect(position, cell, tile))
                     ClearDestructibleForEffect(position);
 
-                positionsToSpawn.Add(position);
-
                 if (!pierce)
                     break;
 
@@ -1309,8 +1307,6 @@ public partial class BombController : MonoBehaviour
 
             if (HasDestroyingDestructibleAt(position))
             {
-                positionsToSpawn.Add(position);
-
                 if (!pierce)
                     break;
 
