@@ -41,6 +41,7 @@ public sealed class StageBlackout : MonoBehaviour
     private static readonly int IdSpotlightSoftness = Shader.PropertyToID("_SpotlightSoftness");
     private static readonly int IdSpotlightIntensity = Shader.PropertyToID("_SpotlightIntensity");
 
+    // ─── PERF: Transform is passed directly at registration — no FindObjectsByType ───
     private sealed class ExplosionSpotlightData
     {
         public int Id;
@@ -65,6 +66,9 @@ public sealed class StageBlackout : MonoBehaviour
     RectTransform _blackoutRect;
     Canvas _canvas;
     Camera _uiCamera;
+
+    // ─── PERF: dirty flag — shader arrays are only uploaded when something changed ───
+    bool _spotlightsDirty;
 
     void Awake()
     {
@@ -96,6 +100,7 @@ public sealed class StageBlackout : MonoBehaviour
 
         _originalMat = blackoutImage.material;
 
+        // ─── PERF: material is created once and reused forever ───
         if (_originalMat != null)
         {
             _matInstance = Instantiate(_originalMat);
@@ -117,6 +122,7 @@ public sealed class StageBlackout : MonoBehaviour
             ApplyFullBlackout(0f);
 
         _active = false;
+        _spotlightsDirty = false;
     }
 
     void OnValidate()
@@ -143,6 +149,7 @@ public sealed class StageBlackout : MonoBehaviour
         if (!_active || _matInstance == null)
             return;
 
+        // ─── Alpha fade ───
         if (fadeInSeconds > 0f && _currentA < _targetA)
         {
             _currentA = Mathf.MoveTowards(
@@ -153,8 +160,20 @@ public sealed class StageBlackout : MonoBehaviour
             ApplyFullBlackout(_currentA);
         }
 
-        ApplyExplosionSpotlights();
+        // ─── PERF: track live transforms every frame (cheap), but only upload to
+        //           the shader when something actually changed (_spotlightsDirty). ───
+        UpdateTrackedPositions();
+
+        if (_spotlightsDirty)
+        {
+            FlushSpotlightsToShader();
+            _spotlightsDirty = false;
+        }
     }
+
+    // ─────────────────────────────────────────────────────────
+    //  Public API
+    // ─────────────────────────────────────────────────────────
 
     public void SetBlackoutActive(bool active)
     {
@@ -170,6 +189,7 @@ public sealed class StageBlackout : MonoBehaviour
 
         if (active)
         {
+            // ─── PERF: never recreate _matInstance if it already exists ───
             if (_matInstance == null && _originalMat != null)
                 _matInstance = Instantiate(_originalMat);
 
@@ -189,7 +209,7 @@ public sealed class StageBlackout : MonoBehaviour
                 ApplyFullBlackout(0f);
             }
 
-            ApplyExplosionSpotlights();
+            _spotlightsDirty = true;
             return;
         }
 
@@ -203,11 +223,13 @@ public sealed class StageBlackout : MonoBehaviour
             ClearExplosionSpotlights();
         }
 
+        // ─── PERF: keep _matInstance alive — only unassign from the image ───
         blackoutImage.material = null;
         blackoutImage.gameObject.SetActive(false);
     }
 
-    public void RegisterExplosionSpotlight(int id, Vector2 worldPosition)
+    // ─── PERF: caller passes the Transform directly — no scene search needed ───
+    public void RegisterExplosionSpotlight(int id, Transform explosionTransform, Vector2 worldPosition)
     {
         if (!_active || _matInstance == null)
             return;
@@ -215,44 +237,113 @@ public sealed class StageBlackout : MonoBehaviour
         _activeExplosionSpotlights[id] = new ExplosionSpotlightData
         {
             Id = id,
-            Transform = FindExplosionTransformByInstanceId(id),
+            Transform = explosionTransform,
             LastKnownWorldPosition = worldPosition,
             Intensity = 0f
         };
 
-        ApplyExplosionSpotlights();
+        _spotlightsDirty = true;
     }
+
+    // ─── Legacy overload (kept for backward compatibility) ───
+    public void RegisterExplosionSpotlight(int id, Vector2 worldPosition)
+        => RegisterExplosionSpotlight(id, null, worldPosition);
 
     public void UpdateExplosionSpotlight(int id, float intensity)
     {
-        if (_activeExplosionSpotlights.TryGetValue(id, out var data))
-            data.Intensity = Mathf.Clamp01(intensity);
+        if (!_activeExplosionSpotlights.TryGetValue(id, out var data))
+            return;
+
+        float clamped = Mathf.Clamp01(intensity);
+        if (Mathf.Approximately(data.Intensity, clamped))
+            return;                 // ─── PERF: skip if unchanged
+
+        data.Intensity = clamped;
+        _spotlightsDirty = true;
     }
 
     public void UnregisterExplosionSpotlight(int id)
     {
         if (_activeExplosionSpotlights.Remove(id))
-            ApplyExplosionSpotlights();
+            _spotlightsDirty = true;
     }
 
-    Transform FindExplosionTransformByInstanceId(int instanceId)
+    // ─────────────────────────────────────────────────────────
+    //  Internal helpers
+    // ─────────────────────────────────────────────────────────
+
+    // ─── PERF: called every Update() — only reads Transform.position, no alloc ───
+    void UpdateTrackedPositions()
     {
-        BombExplosion[] explosions = FindObjectsByType<BombExplosion>(FindObjectsSortMode.None);
-        for (int i = 0; i < explosions.Length; i++)
+        foreach (var kv in _activeExplosionSpotlights)
         {
-            if (explosions[i] != null && explosions[i].GetInstanceID() == instanceId)
-                return explosions[i].transform;
+            var data = kv.Value;
+            if (data.Transform == null)
+                continue;
+
+            Vector2 current = data.Transform.position;
+            if (current == data.LastKnownWorldPosition)
+                continue;
+
+            data.LastKnownWorldPosition = current;
+            _spotlightsDirty = true;
+        }
+    }
+
+    // ─── PERF: separated from Update — only runs when _spotlightsDirty is true ───
+    void FlushSpotlightsToShader()
+    {
+        if (_matInstance == null)
+            return;
+
+        int count = 0;
+
+        foreach (var kv in _activeExplosionSpotlights)
+        {
+            if (count >= maxExplosionSpotlights)
+                break;
+
+            var data = kv.Value;
+            Vector2 worldPos = data.LastKnownWorldPosition;
+            Vector2 uv = WorldToBlackoutUV(worldPos);
+            Vector2 halfSize = GetExplosionHalfSizeInBlackoutUV(worldPos);
+
+            _spotlightCentersCache[count] = new Vector4(uv.x, uv.y, 0f, 0f);
+            _spotlightHalfSizeCache[count] = new Vector4(halfSize.x, halfSize.y, 0f, 0f);
+            _spotlightSoftnessCache[count] = explosionSpotlightSoftness;
+            _spotlightIntensityCache[count] = data.Intensity;
+            count++;
         }
 
-        return null;
+        _matInstance.SetInt(IdSpotlightCount, count);
+        _matInstance.SetVectorArray(IdSpotlightCenters, _spotlightCentersCache);
+        _matInstance.SetVectorArray(IdSpotlightHalfSize, _spotlightHalfSizeCache);
+        _matInstance.SetFloatArray(IdSpotlightSoftness, _spotlightSoftnessCache);
+        _matInstance.SetFloatArray(IdSpotlightIntensity, _spotlightIntensityCache);
     }
 
-    Vector2 GetTrackedWorldPosition(ExplosionSpotlightData data)
+    void ClearExplosionSpotlights()
     {
-        if (data != null && data.Transform != null)
-            data.LastKnownWorldPosition = data.Transform.position;
+        if (_matInstance == null)
+            return;
 
-        return data != null ? data.LastKnownWorldPosition : Vector2.zero;
+        _matInstance.SetInt(IdSpotlightCount, 0);
+    }
+
+    bool IsTargetStage()
+    {
+        if (StageIntroTransition.Instance != null)
+        {
+            return StageIntroTransition.Instance.world == targetWorld &&
+                   StageIntroTransition.Instance.stageNumber == targetStage;
+        }
+
+        var scene = SceneManager.GetActiveScene();
+        if (!scene.IsValid())
+            return false;
+
+        string n = scene.name;
+        return n.Contains("2-5") || n.Contains("2_5");
     }
 
     Vector2 WorldToBlackoutUV(Vector2 worldPos)
@@ -294,66 +385,11 @@ public sealed class StageBlackout : MonoBehaviour
     Vector2 GetExplosionHalfSizeInBlackoutUV(Vector2 worldCenter)
     {
         Vector2 oneTileUv = GetBlackoutUvDeltaForOneTile(worldCenter);
-        float tilesHalfExtent = 0.5f + extraTilesAroundExplosion;
+        float tilesHalfExt = 0.5f + extraTilesAroundExplosion;
 
         return new Vector2(
-            oneTileUv.x * tilesHalfExtent,
-            oneTileUv.y * tilesHalfExtent);
-    }
-
-    void ApplyExplosionSpotlights()
-    {
-        if (_matInstance == null)
-            return;
-
-        int count = 0;
-
-        foreach (var kv in _activeExplosionSpotlights)
-        {
-            if (count >= maxExplosionSpotlights)
-                break;
-
-            ExplosionSpotlightData data = kv.Value;
-            Vector2 worldPos = GetTrackedWorldPosition(data);
-            Vector2 uv = WorldToBlackoutUV(worldPos);
-            Vector2 halfSize = GetExplosionHalfSizeInBlackoutUV(worldPos);
-
-            _spotlightCentersCache[count] = new Vector4(uv.x, uv.y, 0f, 0f);
-            _spotlightHalfSizeCache[count] = new Vector4(halfSize.x, halfSize.y, 0f, 0f);
-            _spotlightSoftnessCache[count] = explosionSpotlightSoftness;
-            _spotlightIntensityCache[count] = data.Intensity;
-            count++;
-        }
-
-        _matInstance.SetInt(IdSpotlightCount, count);
-        _matInstance.SetVectorArray(IdSpotlightCenters, _spotlightCentersCache);
-        _matInstance.SetVectorArray(IdSpotlightHalfSize, _spotlightHalfSizeCache);
-        _matInstance.SetFloatArray(IdSpotlightSoftness, _spotlightSoftnessCache);
-        _matInstance.SetFloatArray(IdSpotlightIntensity, _spotlightIntensityCache);
-    }
-
-    void ClearExplosionSpotlights()
-    {
-        if (_matInstance == null)
-            return;
-
-        _matInstance.SetInt(IdSpotlightCount, 0);
-    }
-
-    bool IsTargetStage()
-    {
-        if (StageIntroTransition.Instance != null)
-        {
-            return StageIntroTransition.Instance.world == targetWorld &&
-                   StageIntroTransition.Instance.stageNumber == targetStage;
-        }
-
-        var scene = SceneManager.GetActiveScene();
-        if (!scene.IsValid())
-            return false;
-
-        string n = scene.name;
-        return n.Contains("2-5") || n.Contains("2_5");
+            oneTileUv.x * tilesHalfExt,
+            oneTileUv.y * tilesHalfExt);
     }
 
     void ApplyFullBlackout(float a)
