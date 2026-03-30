@@ -567,14 +567,19 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
 
                     if (nextTile != null)
                     {
-                        BeginTileMover(nextTileCell, nextTile);
-                        continue;
-                    }
+                        Bomb bombToBounce = currentBomb;
+                        bool shouldBounceBack = bombToBounce != null && bombToBounce.IsRubberBomb;
 
-                    if (endedBySolid && currentBomb != null)
-                    {
-                        Vector3 basePos = SnapToGrid(currentBomb.transform.position, tileSize);
-                        yield return ShakeBombVisual(currentBomb, basePos, stopShakeDuration, stopShakeAmplitude, stopShakeFrequency);
+                        BeginTileMover(nextTileCell, nextTile);
+
+                        if (shouldBounceBack && bombToBounce != null && !bombToBounce.HasExploded)
+                        {
+                            Vector2 reverseDir = -kickDir;
+                            StartBombKickInDirection(bombToBounce, reverseDir, destructibleTilemap);
+                        }
+
+                        currentBomb = null;
+                        continue;
                     }
 
                     break;
@@ -613,18 +618,29 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
         }
     }
 
-    bool TryGetBombInFront(Vector2 dir, out Bomb bomb)
+    bool StartBombKickInDirection(Bomb bomb, Vector2 dir, Tilemap destructibleTilemap)
     {
-        bomb = null;
-
-        if (movement == null || rb == null)
+        if (bomb == null)
             return false;
 
-        Vector2 origin = SnapToGrid(rb.position, movement.tileSize);
-        Vector2 target = origin + dir.normalized * movement.tileSize;
+        if (bomb.IsBeingKicked)
+            return false;
 
-        bool found = TryGetBombAtCell(target, out bomb);
-        return found;
+        if (!bomb.CanBeKicked)
+            return false;
+
+        LayerMask bombObstacles = movement.obstacleMask.value | LayerMask.GetMask("Enemy");
+
+        return bomb.StartKick(
+            dir.normalized,
+            movement.tileSize,
+            bombObstacles,
+            destructibleTilemap,
+            LayerMask.GetMask("Player", "Stage", "Bomb", "Enemy", "Louie"),
+            bombKickOverlapSize,
+            bombKickOriginBlockerSize,
+            bombKickOriginBlockerUseTrigger
+        );
     }
 
     bool TryGetBombAtCell(Vector2 worldCellCenter, out Bomb bomb)
