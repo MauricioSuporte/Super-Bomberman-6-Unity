@@ -398,6 +398,8 @@ MonoBehaviour:
   animationTime: 0.35
   useSequenceDuration: 0
   sequenceDuration: 1
+  useUnscaledTime: 1
+  respectGamePause: 1
   loop: 1
   idle: 0
   frameOffsets:
@@ -518,6 +520,8 @@ MonoBehaviour:
   animationTime: 0.35
   useSequenceDuration: 0
   sequenceDuration: 1
+  useUnscaledTime: 1
+  respectGamePause: 1
   loop: 1
   idle: 0
   frameOffsets:
@@ -638,6 +642,8 @@ MonoBehaviour:
   animationTime: 0.35
   useSequenceDuration: 0
   sequenceDuration: 1
+  useUnscaledTime: 1
+  respectGamePause: 1
   loop: 1
   idle: 0
   frameOffsets:
@@ -758,6 +764,8 @@ MonoBehaviour:
   animationTime: 0.35
   useSequenceDuration: 0
   sequenceDuration: 1
+  useUnscaledTime: 1
+  respectGamePause: 1
   loop: 1
   idle: 0
   frameOffsets:
@@ -793,7 +801,7 @@ Transform:
   m_GameObject: {fileID: 1228606391467010651}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 1.07, z: 0}
+  m_LocalPosition: {x: 0, y: 0.38, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -883,6 +891,8 @@ MonoBehaviour:
   animationTime: 0.1
   useSequenceDuration: 0
   sequenceDuration: 0.5
+  useUnscaledTime: 1
+  respectGamePause: 1
   loop: 0
   idle: 0
   frameOffsets: []
