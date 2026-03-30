@@ -343,7 +343,13 @@ public class TitleScreenDropIntro : MonoBehaviour
                 !string.IsNullOrWhiteSpace(slot.name) &&
                 string.Equals(slot.name.Trim(), "Pink", StringComparison.OrdinalIgnoreCase);
 
+            bool isYellowLouie =
+                slot != null &&
+                !string.IsNullOrWhiteSpace(slot.name) &&
+                string.Equals(slot.name.Trim(), "Yellow", StringComparison.OrdinalIgnoreCase);
+
             Vector2 originalOffset = slot.alternatePositionOffset;
+            Vector2 originalExtraOffset = slot.alternateExtraSpriteOffset;
 
             if (isBlackLouie)
             {
@@ -420,6 +426,34 @@ public class TitleScreenDropIntro : MonoBehaviour
                 slot.alternatePositionOffset = originalOffset;
                 ApplyCharacterPoseLayout(index);
             }
+            else if (isYellowLouie)
+            {
+                float totalDuration = Mathf.Max(0.05f, slot.alternateDuration);
+                float stepTime = 0.1f;
+
+                float elapsed = 0f;
+                int stepsApplied = 0;
+
+                while (elapsed < totalDuration)
+                {
+                    float dt = useUnscaledTime ? Time.unscaledDeltaTime : Time.deltaTime;
+                    elapsed += dt;
+
+                    int targetSteps = Mathf.FloorToInt(elapsed / stepTime);
+
+                    if (targetSteps > stepsApplied)
+                    {
+                        stepsApplied = Mathf.Min(targetSteps, 5);
+                        slot.alternateExtraSpriteOffset = originalExtraOffset + new Vector2(stepsApplied, 0f);
+                        ApplyCharacterPoseLayout(index);
+                    }
+
+                    yield return null;
+                }
+
+                slot.alternateExtraSpriteOffset = originalExtraOffset;
+                ApplyCharacterPoseLayout(index);
+            }
             else
             {
                 float altDur = Mathf.Max(0.05f, slot.alternateDuration);
@@ -429,6 +463,9 @@ public class TitleScreenDropIntro : MonoBehaviour
                 else
                     yield return new WaitForSeconds(altDur);
             }
+
+            slot.alternatePositionOffset = originalOffset;
+            slot.alternateExtraSpriteOffset = originalExtraOffset;
 
             ApplyCharacterSprite(index, true);
 
@@ -1280,9 +1317,10 @@ public class TitleScreenDropIntro : MonoBehaviour
         int count = characterSlots.Length;
         int center = count / 2;
 
-        List<int> drawOrder = new();
-
-        drawOrder.Add(center);
+        List<int> drawOrder = new()
+    {
+        center
+    };
 
         for (int dist = 1; dist <= center; dist++)
         {
@@ -1306,6 +1344,79 @@ public class TitleScreenDropIntro : MonoBehaviour
                 continue;
 
             slot.image.transform.SetSiblingIndex(sibling++);
+        }
+
+        int yellowIndex = Array.FindIndex(characterSlots, s =>
+            s != null &&
+            !string.IsNullOrWhiteSpace(s.name) &&
+            string.Equals(s.name.Trim(), "Yellow", StringComparison.OrdinalIgnoreCase));
+
+        int redIndex = Array.FindIndex(characterSlots, s =>
+            s != null &&
+            !string.IsNullOrWhiteSpace(s.name) &&
+            string.Equals(s.name.Trim(), "Red", StringComparison.OrdinalIgnoreCase));
+
+        int purpleIndex = Array.FindIndex(characterSlots, s =>
+            s != null &&
+            !string.IsNullOrWhiteSpace(s.name) &&
+            string.Equals(s.name.Trim(), "Purple", StringComparison.OrdinalIgnoreCase));
+
+        int blueIndex = Array.FindIndex(characterSlots, s =>
+            s != null &&
+            !string.IsNullOrWhiteSpace(s.name) &&
+            string.Equals(s.name.Trim(), "Blue", StringComparison.OrdinalIgnoreCase));
+
+        int pinkIndex = Array.FindIndex(characterSlots, s =>
+            s != null &&
+            !string.IsNullOrWhiteSpace(s.name) &&
+            string.Equals(s.name.Trim(), "Pink", StringComparison.OrdinalIgnoreCase));
+
+        CharacterDropSlot yellowSlot = yellowIndex >= 0 ? characterSlots[yellowIndex] : null;
+        CharacterDropSlot redSlot = redIndex >= 0 ? characterSlots[redIndex] : null;
+        CharacterDropSlot purpleSlot = purpleIndex >= 0 ? characterSlots[purpleIndex] : null;
+        CharacterDropSlot blueSlot = blueIndex >= 0 ? characterSlots[blueIndex] : null;
+        CharacterDropSlot pinkSlot = pinkIndex >= 0 ? characterSlots[pinkIndex] : null;
+
+        if (yellowSlot?.image != null)
+        {
+            int minFrontSibling = -1;
+            int maxBackSibling = int.MaxValue;
+
+            if (redSlot?.image != null)
+                minFrontSibling = Mathf.Max(minFrontSibling, redSlot.image.transform.GetSiblingIndex());
+
+            if (purpleSlot?.image != null)
+                minFrontSibling = Mathf.Max(minFrontSibling, purpleSlot.image.transform.GetSiblingIndex());
+
+            if (blueSlot?.image != null)
+                maxBackSibling = Mathf.Min(maxBackSibling, blueSlot.image.transform.GetSiblingIndex());
+
+            if (pinkSlot?.image != null)
+                maxBackSibling = Mathf.Min(maxBackSibling, pinkSlot.image.transform.GetSiblingIndex());
+
+            int desiredSibling = yellowSlot.image.transform.GetSiblingIndex();
+
+            if (minFrontSibling >= 0)
+                desiredSibling = Mathf.Max(desiredSibling, minFrontSibling + 1);
+
+            if (maxBackSibling != int.MaxValue)
+                desiredSibling = Mathf.Min(desiredSibling, maxBackSibling - 1);
+
+            desiredSibling = Mathf.Clamp(desiredSibling, 0, Mathf.Max(0, parent.childCount - 1));
+
+            yellowSlot.image.transform.SetSiblingIndex(desiredSibling);
+
+            if (redSlot?.image != null && redSlot.image.transform.GetSiblingIndex() >= yellowSlot.image.transform.GetSiblingIndex())
+                redSlot.image.transform.SetSiblingIndex(Mathf.Max(0, yellowSlot.image.transform.GetSiblingIndex() - 1));
+
+            if (purpleSlot?.image != null && purpleSlot.image.transform.GetSiblingIndex() >= yellowSlot.image.transform.GetSiblingIndex())
+                purpleSlot.image.transform.SetSiblingIndex(Mathf.Max(0, yellowSlot.image.transform.GetSiblingIndex() - 1));
+
+            if (blueSlot?.image != null && blueSlot.image.transform.GetSiblingIndex() <= yellowSlot.image.transform.GetSiblingIndex())
+                blueSlot.image.transform.SetSiblingIndex(yellowSlot.image.transform.GetSiblingIndex() + 1);
+
+            if (pinkSlot?.image != null && pinkSlot.image.transform.GetSiblingIndex() <= yellowSlot.image.transform.GetSiblingIndex())
+                pinkSlot.image.transform.SetSiblingIndex(yellowSlot.image.transform.GetSiblingIndex() + 1);
         }
 
         if (logoImage != null)

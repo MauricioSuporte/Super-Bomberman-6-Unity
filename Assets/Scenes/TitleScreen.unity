@@ -1006,7 +1006,7 @@ MonoBehaviour:
     sprite: {fileID: 21300000, guid: 55cc788f3d687674ca60a4a6dbec16b4, type: 3}
     fallingSprite: {fileID: 21300000, guid: 55cc788f3d687674ca60a4a6dbec16b4, type: 3}
     landedSprite: {fileID: 21300000, guid: 1b60de100d1343148850883b3fa0fa11, type: 3}
-    alternateSprite: {fileID: 0}
+    alternateSprite: {fileID: 21300000, guid: b92c1c9e53d277343967ae56c1ca8269, type: 3}
     idleMinInterval: 2
     idleMaxInterval: 4
     alternateDuration: 0.5
@@ -1016,11 +1016,11 @@ MonoBehaviour:
     positionOffset: {x: -10, y: 5}
     alternatePositionOffset: {x: 0, y: 0}
     alternateSizeOffset: {x: 0, y: 0}
-    alternateExtraSprite: {fileID: 0}
+    alternateExtraSprite: {fileID: 21300000, guid: efdab1c46bbb4814e973930487c0c6ab, type: 3}
     showAlternateExtraSpriteOnlyDuringAlternate: 1
     useAlternateExtraSpriteNativeSize: 1
-    alternateExtraSpriteSize: {x: 16, y: 16}
-    alternateExtraSpriteOffset: {x: 0, y: 0}
+    alternateExtraSpriteSize: {x: 28, y: 26}
+    alternateExtraSpriteOffset: {x: 40, y: 30}
   - name: Purple
     image: {fileID: 0}
     sprite: {fileID: 21300000, guid: 1b7894bc5d13dec4b91738f3010bc6dd, type: 3}
