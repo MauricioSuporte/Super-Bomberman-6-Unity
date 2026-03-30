@@ -1213,7 +1213,6 @@ public partial class BombController : MonoBehaviour
         if (!scheduledChainBombs.Add(id))
             return;
 
-        // NEW: treat all chain schedules done in the same frame as a single queue/batch
         if (Time.frameCount != _lastChainScheduleFrame)
         {
             _lastChainScheduleFrame = Time.frameCount;
@@ -1224,8 +1223,6 @@ public partial class BombController : MonoBehaviour
 
         float queuedDelay = Mathf.Max(0f, chainBombDelaySeconds) * _chainIndexThisFrame;
 
-        // If the bomb has its own configured chainStepDelay, respect it as a minimum,
-        // but never collapse the queued spacing.
         float delay = queuedDelay;
         if (bombComp != null)
             delay = Mathf.Max(delay, Mathf.Max(0f, bombComp.chainStepDelay));
@@ -1257,7 +1254,7 @@ public partial class BombController : MonoBehaviour
         if (length <= 0)
             return;
 
-        List<Vector2> positionsToSpawn = new(length);
+        List<(Vector2 position, BombExplosion.ExplosionPart part)> explosionsToSpawn = new(length);
         Vector2 position = origin;
 
         Tilemap snapTm = GetSnapTilemapForGround();
@@ -1266,6 +1263,8 @@ public partial class BombController : MonoBehaviour
         {
             position += direction;
             position = SnapToTileCenter(snapTm, position);
+
+            bool isMaxRangeTile = i == length - 1;
 
             if (HasWaterAt(position))
                 break;
@@ -1287,7 +1286,7 @@ public partial class BombController : MonoBehaviour
 
                 if (pierce)
                 {
-                    positionsToSpawn.Add(position);
+                    explosionsToSpawn.Add((position, BombExplosion.ExplosionPart.Middle));
                     continue;
                 }
 
@@ -1321,7 +1320,12 @@ public partial class BombController : MonoBehaviour
 
                 if (otherBombGo != null)
                 {
-                    positionsToSpawn.Add(position);
+                    BombExplosion.ExplosionPart part =
+                        isMaxRangeTile
+                            ? BombExplosion.ExplosionPart.End
+                            : BombExplosion.ExplosionPart.Middle;
+
+                    explosionsToSpawn.Add((position, part));
 
                     int oid = otherBombGo.GetInstanceID();
                     if (otherBombGo.TryGetComponent<Bomb>(out var otherBomb) && otherBomb != null && otherBomb.Owner != null)
@@ -1335,20 +1339,18 @@ public partial class BombController : MonoBehaviour
                 continue;
             }
 
-            positionsToSpawn.Add(position);
-        }
-
-        bool reachedMaxRange = positionsToSpawn.Count == length;
-
-        for (int i = 0; i < positionsToSpawn.Count; i++)
-        {
-            Vector2 p = positionsToSpawn[i];
-            bool isLastSpawned = i == positionsToSpawn.Count - 1;
-
-            BombExplosion.ExplosionPart part =
-                (isLastSpawned && reachedMaxRange)
+            BombExplosion.ExplosionPart defaultPart =
+                isMaxRangeTile
                     ? BombExplosion.ExplosionPart.End
                     : BombExplosion.ExplosionPart.Middle;
+
+            explosionsToSpawn.Add((position, defaultPart));
+        }
+
+        for (int i = 0; i < explosionsToSpawn.Count; i++)
+        {
+            Vector2 p = explosionsToSpawn[i].position;
+            BombExplosion.ExplosionPart part = explosionsToSpawn[i].part;
 
             TryHandleGroundExplosionHit(p);
 
