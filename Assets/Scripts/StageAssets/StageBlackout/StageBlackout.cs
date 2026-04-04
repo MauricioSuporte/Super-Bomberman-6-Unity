@@ -25,7 +25,7 @@ public sealed class StageBlackout : MonoBehaviour
     [Header("Explosion Spotlight")]
     [SerializeField, Min(0.01f)] private float tileWorldSize = 1f;
     [SerializeField, Min(0f)] private float explosionSpotlightSoftness = 0.01f;
-    [SerializeField, Min(0f)] private float extraTilesAroundExplosion = 0.6f;
+    [SerializeField, Min(0f)] private float extraTilesAroundExplosion = 0.1f;
     [SerializeField, Min(1)] private int maxExplosionSpotlights = 36;
 
     private static readonly int IdEllipseX = Shader.PropertyToID("_EllipseX");
@@ -45,8 +45,8 @@ public sealed class StageBlackout : MonoBehaviour
         public int Id;
         public Transform Transform;
         public Vector2 LastKnownWorldPosition;
+        public Vector2 HalfSizeInTiles;
         public float Intensity;
-        public int RadiusInTiles;
     }
 
     Material _originalMat;
@@ -127,6 +127,7 @@ public sealed class StageBlackout : MonoBehaviour
             enabled = false;
             return;
         }
+
         SetBlackoutActive(true);
     }
 
@@ -203,7 +204,12 @@ public sealed class StageBlackout : MonoBehaviour
         blackoutImage.gameObject.SetActive(false);
     }
 
-    public void RegisterExplosionSpotlight(int id, Transform t, Vector2 worldPosition, int radiusInTiles = 1)
+    public void RegisterExplosionSpotlight(int id, Vector2 worldPosition, Vector2 halfSizeInTiles)
+    {
+        RegisterExplosionSpotlight(id, null, worldPosition, halfSizeInTiles);
+    }
+
+    public void RegisterExplosionSpotlight(int id, Transform t, Vector2 worldPosition, Vector2 halfSizeInTiles)
     {
         if (!_active || _matInstance == null) return;
 
@@ -212,27 +218,12 @@ public sealed class StageBlackout : MonoBehaviour
             Id = id,
             Transform = t,
             LastKnownWorldPosition = worldPosition,
-            Intensity = 0f,
-            RadiusInTiles = Mathf.Max(1, radiusInTiles)
+            HalfSizeInTiles = new Vector2(
+                Mathf.Max(0.01f, halfSizeInTiles.x),
+                Mathf.Max(0.01f, halfSizeInTiles.y)),
+            Intensity = 0f
         };
 
-        _spotlightsDirty = true;
-    }
-
-    public void RegisterExplosionSpotlight(int id, Transform t, Vector2 worldPosition)
-        => RegisterExplosionSpotlight(id, t, worldPosition, radiusInTiles: 1);
-
-    public void RegisterExplosionSpotlight(int id, Vector2 worldPosition)
-        => RegisterExplosionSpotlight(id, null, worldPosition, radiusInTiles: 1);
-
-    public void UpdateExplosionSpotlightRadius(int id, int radiusInTiles)
-    {
-        if (!_activeExplosionSpotlights.TryGetValue(id, out var data)) return;
-
-        int clamped = Mathf.Max(1, radiusInTiles);
-        if (data.RadiusInTiles == clamped) return;
-
-        data.RadiusInTiles = clamped;
         _spotlightsDirty = true;
     }
 
@@ -252,7 +243,6 @@ public sealed class StageBlackout : MonoBehaviour
         if (_activeExplosionSpotlights.Remove(id))
             _spotlightsDirty = true;
     }
-
 
     void UpdateTrackedPositions()
     {
@@ -289,7 +279,6 @@ public sealed class StageBlackout : MonoBehaviour
 
             var data = kv.Value;
             Vector2 worldPos = data.LastKnownWorldPosition;
-            int radius = data.RadiusInTiles;
 
             Vector3 worldPos3 = new Vector3(worldPos.x, worldPos.y, 0f);
             Vector3 screenC = worldCam.WorldToScreenPoint(worldPos3);
@@ -319,14 +308,11 @@ public sealed class StageBlackout : MonoBehaviour
                     ? Mathf.Abs(Mathf.InverseLerp(rect.yMin, rect.yMax, localU.y) - v)
                     : 0f;
 
-                float longExt = radius + extraTilesAroundExplosion;
-                float shortExt = 0.5f + extraTilesAroundExplosion;
-
                 halfSizes = new Vector4(
-                    tileU * longExt, 
-                    tileV * shortExt,
-                    tileU * shortExt,
-                    tileV * longExt
+                    tileU * (data.HalfSizeInTiles.x + extraTilesAroundExplosion),
+                    tileV * (data.HalfSizeInTiles.y + extraTilesAroundExplosion),
+                    0f,
+                    0f
                 );
             }
             else

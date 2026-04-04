@@ -125,6 +125,12 @@ public partial class BombController : MonoBehaviour
 
     private readonly HashSet<int> _removedBombIds = new(128);
 
+    private struct ExplosionLineResult
+    {
+        public int Reach;
+        public List<(Vector2 position, BombExplosion.ExplosionPart part)> Explosions;
+    }
+
     public void SetPlayerId(int id)
     {
         playerId = Mathf.Clamp(id, 1, 4);
@@ -1166,19 +1172,24 @@ public partial class BombController : MonoBehaviour
 
         int bombSpotlightId = bomb.GetInstanceID();
 
-        RegisterBlackoutSpotlight(bombSpotlightId, snapped, effectiveRadius);
-
         BombExplosion centerExplosion = Instantiate(explosionPrefab, snapped, Quaternion.identity);
         centerExplosion.Play(BombExplosion.ExplosionPart.Start, Vector2.zero, 0f, explosionDuration, snapped);
 
-        Explode(snapped, Vector2.up, effectiveRadius, pierce);
-        Explode(snapped, Vector2.down, effectiveRadius, pierce);
-        Explode(snapped, Vector2.left, effectiveRadius, pierce);
-        Explode(snapped, Vector2.right, effectiveRadius, pierce);
+        ExplosionLineResult up = ExplodeAndCollect(snapped, Vector2.up, effectiveRadius, pierce);
+        ExplosionLineResult down = ExplodeAndCollect(snapped, Vector2.down, effectiveRadius, pierce);
+        ExplosionLineResult left = ExplodeAndCollect(snapped, Vector2.left, effectiveRadius, pierce);
+        ExplosionLineResult right = ExplodeAndCollect(snapped, Vector2.right, effectiveRadius, pierce);
+
+        RegisterBlackoutSpotlightsForExplosion(
+            bombSpotlightId,
+            snapped,
+            up.Reach,
+            down.Reach,
+            left.Reach,
+            right.Reach);
 
         float spotlightDuration = Mathf.Max(0.01f, explosionDuration);
-
-        StartCoroutine(AnimateBlackoutSpotlight(bombSpotlightId, spotlightDuration));
+        StartCoroutine(AnimateBlackoutSpotlights(bombSpotlightId, spotlightDuration));
 
         float destroyDelay = 0.1f;
 
@@ -1199,6 +1210,125 @@ public partial class BombController : MonoBehaviour
 
         Destroy(bomb, destroyDelay);
         bombsRemaining = Mathf.Min(bombsRemaining + 1, bombAmout);
+    }
+
+    private ExplosionLineResult ExplodeAndCollect(Vector2 origin, Vector2 direction, int length, bool pierce)
+    {
+        ExplosionLineResult result = new ExplosionLineResult
+        {
+            Reach = 0,
+            Explosions = new List<(Vector2 position, BombExplosion.ExplosionPart part)>(length)
+        };
+
+        if (length <= 0)
+            return result;
+
+        Vector2 position = origin;
+        Tilemap snapTm = GetSnapTilemapForGround();
+
+        for (int i = 0; i < length; i++)
+        {
+            position += direction;
+            position = SnapToTileCenter(snapTm, position);
+
+            bool isMaxRangeTile = i == length - 1;
+
+            if (HasWaterAt(position))
+                break;
+
+            if (HasHoleAt(position))
+                break;
+
+            if (HasIndestructibleAt(position))
+            {
+                TryHandleIndestructibleTileHit(position, origin);
+                break;
+            }
+
+            var itemHit = Physics2D.OverlapBox(position, Vector2.one * 0.5f, 0f, itemLayerMask);
+            if (itemHit != null)
+            {
+                if (itemHit.TryGetComponent<ItemPickup>(out var item))
+                    item.DestroyWithExplosionAnimation();
+
+                if (pierce)
+                {
+                    result.Explosions.Add((position, BombExplosion.ExplosionPart.Middle));
+                    result.Reach++;
+                    continue;
+                }
+
+                break;
+            }
+
+            if (TryGetDestructibleTileAt(position, out var cell, out var tile))
+            {
+                if (!TryHandleDestructibleTileEffect(position, cell, tile))
+                    ClearDestructibleForEffect(position);
+
+                if (!pierce)
+                    break;
+
+                continue;
+            }
+
+            if (HasDestroyingDestructibleAt(position))
+            {
+                if (!pierce)
+                    break;
+
+                continue;
+            }
+
+            if (TryGetAnyBombColliderAt(position, 0.6f, out var bombHit))
+            {
+                GameObject otherBombGo = bombHit.attachedRigidbody != null
+                    ? bombHit.attachedRigidbody.gameObject
+                    : bombHit.gameObject;
+
+                if (otherBombGo != null)
+                {
+                    BombExplosion.ExplosionPart part =
+                        isMaxRangeTile
+                            ? BombExplosion.ExplosionPart.End
+                            : BombExplosion.ExplosionPart.Middle;
+
+                    result.Explosions.Add((position, part));
+                    result.Reach++;
+
+                    int oid = otherBombGo.GetInstanceID();
+                    if (otherBombGo.TryGetComponent<Bomb>(out var otherBomb) && otherBomb != null && otherBomb.Owner != null)
+                        otherBomb.Owner.ExplodeBombChained(otherBombGo);
+                    else
+                        ExplodeBombChained(otherBombGo);
+
+                    _removedBombIds.Remove(oid);
+                }
+
+                continue;
+            }
+
+            BombExplosion.ExplosionPart defaultPart =
+                isMaxRangeTile
+                    ? BombExplosion.ExplosionPart.End
+                    : BombExplosion.ExplosionPart.Middle;
+
+            result.Explosions.Add((position, defaultPart));
+            result.Reach++;
+        }
+
+        for (int i = 0; i < result.Explosions.Count; i++)
+        {
+            Vector2 p = result.Explosions[i].position;
+            BombExplosion.ExplosionPart part = result.Explosions[i].part;
+
+            TryHandleGroundExplosionHit(p);
+
+            BombExplosion explosion = Instantiate(explosionPrefab, p, Quaternion.identity);
+            explosion.Play(part, direction, 0f, explosionDuration, origin);
+        }
+
+        return result;
     }
 
     public void ExplodeBombChained(GameObject bomb)
@@ -2151,38 +2281,84 @@ public partial class BombController : MonoBehaviour
         bombsRemaining = Mathf.Min(bombsRemaining + 1, bombAmout);
     }
 
-    void RegisterBlackoutSpotlight(int spotlightId, Vector2 center, int radiusInTiles)
+    private int GetSpotlightSubId(int baseId, int offset)
+    {
+        return (baseId * 10) + offset;
+    }
+
+    private void RegisterBlackoutSpotlightsForExplosion(
+        int baseSpotlightId,
+        Vector2 center,
+        int upReach,
+        int downReach,
+        int leftReach,
+        int rightReach)
     {
         if (StageBlackout.Instance == null)
             return;
 
-        StageBlackout.Instance.RegisterExplosionSpotlight(
-            spotlightId,
-            null,
-            center,
-            radiusInTiles);
+        int centerId = GetSpotlightSubId(baseSpotlightId, 0);
+        StageBlackout.Instance.RegisterExplosionSpotlight(centerId, center, new Vector2(0.5f, 0.5f));
+        StageBlackout.Instance.UpdateExplosionSpotlight(centerId, 0f);
+        _activeSpotlightIds.Add(centerId);
 
-        StageBlackout.Instance.UpdateExplosionSpotlight(spotlightId, 0f);
-        _activeSpotlightIds.Add(spotlightId);
+        if (upReach > 0)
+        {
+            int id = GetSpotlightSubId(baseSpotlightId, 1);
+            Vector2 boxCenter = center + (Vector2.up * (upReach * 0.5f));
+            Vector2 halfSize = new Vector2(0.5f, upReach * 0.5f);
+            StageBlackout.Instance.RegisterExplosionSpotlight(id, boxCenter, halfSize);
+            StageBlackout.Instance.UpdateExplosionSpotlight(id, 0f);
+            _activeSpotlightIds.Add(id);
+        }
+
+        if (downReach > 0)
+        {
+            int id = GetSpotlightSubId(baseSpotlightId, 2);
+            Vector2 boxCenter = center + (Vector2.down * (downReach * 0.5f));
+            Vector2 halfSize = new Vector2(0.5f, downReach * 0.5f);
+            StageBlackout.Instance.RegisterExplosionSpotlight(id, boxCenter, halfSize);
+            StageBlackout.Instance.UpdateExplosionSpotlight(id, 0f);
+            _activeSpotlightIds.Add(id);
+        }
+
+        if (leftReach > 0)
+        {
+            int id = GetSpotlightSubId(baseSpotlightId, 3);
+            Vector2 boxCenter = center + (Vector2.left * (leftReach * 0.5f));
+            Vector2 halfSize = new Vector2(leftReach * 0.5f, 0.5f);
+            StageBlackout.Instance.RegisterExplosionSpotlight(id, boxCenter, halfSize);
+            StageBlackout.Instance.UpdateExplosionSpotlight(id, 0f);
+            _activeSpotlightIds.Add(id);
+        }
+
+        if (rightReach > 0)
+        {
+            int id = GetSpotlightSubId(baseSpotlightId, 4);
+            Vector2 boxCenter = center + (Vector2.right * (rightReach * 0.5f));
+            Vector2 halfSize = new Vector2(rightReach * 0.5f, 0.5f);
+            StageBlackout.Instance.RegisterExplosionSpotlight(id, boxCenter, halfSize);
+            StageBlackout.Instance.UpdateExplosionSpotlight(id, 0f);
+            _activeSpotlightIds.Add(id);
+        }
     }
 
-    IEnumerator AnimateBlackoutSpotlight(int spotlightId, float duration)
+    private IEnumerator AnimateBlackoutSpotlights(int baseSpotlightId, float duration)
     {
-        if (!_activeSpotlightIds.Contains(spotlightId))
-            yield break;
-
-        if (StageBlackout.Instance == null)
-            yield break;
-
         duration = Mathf.Max(0.01f, duration);
-        float halfDuration = duration * 0.5f;
         float elapsed = 0f;
+
+        int[] ids =
+        {
+        GetSpotlightSubId(baseSpotlightId, 0),
+        GetSpotlightSubId(baseSpotlightId, 1),
+        GetSpotlightSubId(baseSpotlightId, 2),
+        GetSpotlightSubId(baseSpotlightId, 3),
+        GetSpotlightSubId(baseSpotlightId, 4)
+    };
 
         while (elapsed < duration)
         {
-            if (!_activeSpotlightIds.Contains(spotlightId))
-                yield break;
-
             if (StageBlackout.Instance == null)
                 yield break;
 
@@ -2201,17 +2377,25 @@ public partial class BombController : MonoBehaviour
                 intensity = Mathf.SmoothStep(1f, 0f, fallT);
             }
 
-            StageBlackout.Instance.UpdateExplosionSpotlight(spotlightId, intensity);
+            for (int i = 0; i < ids.Length; i++)
+            {
+                if (_activeSpotlightIds.Contains(ids[i]))
+                    StageBlackout.Instance.UpdateExplosionSpotlight(ids[i], intensity);
+            }
+
             yield return null;
         }
 
         if (StageBlackout.Instance != null)
-            StageBlackout.Instance.UpdateExplosionSpotlight(spotlightId, 0f);
-
-        if (_activeSpotlightIds.Remove(spotlightId))
         {
-            if (StageBlackout.Instance != null)
-                StageBlackout.Instance.UnregisterExplosionSpotlight(spotlightId);
+            for (int i = 0; i < ids.Length; i++)
+            {
+                if (_activeSpotlightIds.Remove(ids[i]))
+                {
+                    StageBlackout.Instance.UpdateExplosionSpotlight(ids[i], 0f);
+                    StageBlackout.Instance.UnregisterExplosionSpotlight(ids[i]);
+                }
+            }
         }
     }
 

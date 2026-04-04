@@ -4,7 +4,6 @@ Shader "UI/SpotlightMask"
     {
         [PerRendererData] _MainTex ("Sprite Texture", 2D) = "white" {}
         _Color ("Color", Color) = (0,0,0,0.8)
-
         _Center ("Center (legacy)", Vector) = (0.5,0.5,0,0)
         _Radius ("Radius", Float) = 0.2
         _Softness ("Softness", Float) = 0.03
@@ -99,13 +98,6 @@ Shader "UI/SpotlightMask"
                 return 1.0 - smoothstep(0.0, max(softness, 1e-5), dist);
             }
 
-            float ComputeCrossHole(float2 uv, float2 center, float4 halfSizes, float softness)
-            {
-                float h = ComputeBoxHole(uv, center, halfSizes.xy, softness);
-                float v = ComputeBoxHole(uv, center, halfSizes.zw, softness);
-                return max(h, v);
-            }
-
             fixed4 frag(v2f i) : SV_Target
             {
                 fixed4 baseCol = tex2D(_MainTex, i.uv) * i.color;
@@ -116,14 +108,14 @@ Shader "UI/SpotlightMask"
                 int count = min(_SpotlightCount, MAX_SPOTLIGHTS);
                 for (int idx = 0; idx < count; idx++)
                 {
-                    float crossHole = ComputeCrossHole(
+                    float boxHole = ComputeBoxHole(
                         i.uv,
                         _SpotlightCenters[idx].xy,
-                        _SpotlightHalfSize[idx],
+                        _SpotlightHalfSize[idx].xy,
                         _SpotlightSoftness[idx]);
 
-                    crossHole *= saturate(_SpotlightIntensity[idx]);
-                    hole = max(hole, crossHole);
+                    boxHole *= saturate(_SpotlightIntensity[idx]);
+                    hole = max(hole, boxHole);
                 }
 
                 fixed4 col = _Color;
