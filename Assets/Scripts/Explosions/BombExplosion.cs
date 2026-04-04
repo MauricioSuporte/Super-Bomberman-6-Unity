@@ -12,47 +12,6 @@ public class BombExplosion : MonoBehaviour
     public ExplosionPart CurrentPart { get; private set; }
     public Vector2 Origin { get; private set; }
 
-    bool _spotlightRegistered;
-
-    void OnDestroy() => UnregisterSpotlight();
-    void OnDisable() => UnregisterSpotlight();
-
-    void RegisterSpotlight()
-    {
-        if (_spotlightRegistered)
-            return;
-
-        if (StageBlackout.Instance == null)
-            return;
-
-        _spotlightRegistered = true;
-
-        // ─── PERF: pass own Transform directly — no FindObjectsByType in StageBlackout ───
-        StageBlackout.Instance.RegisterExplosionSpotlight(
-            GetInstanceID(),
-            transform,                      // <── the key change
-            (Vector2)transform.position);
-    }
-
-    void UpdateSpotlightIntensity(float intensity)
-    {
-        if (!_spotlightRegistered || StageBlackout.Instance == null)
-            return;
-
-        StageBlackout.Instance.UpdateExplosionSpotlight(GetInstanceID(), intensity);
-    }
-
-    void UnregisterSpotlight()
-    {
-        if (!_spotlightRegistered)
-            return;
-
-        _spotlightRegistered = false;
-
-        if (StageBlackout.Instance != null)
-            StageBlackout.Instance.UnregisterExplosionSpotlight(GetInstanceID());
-    }
-
     public void SetOrigin(Vector2 origin) => Origin = origin;
 
     public void SetStart() => SetRenderer(start, ExplosionPart.Start);
@@ -61,8 +20,7 @@ public class BombExplosion : MonoBehaviour
 
     public void UpgradeToMiddleIfNeeded()
     {
-        if (CurrentPart == ExplosionPart.End)
-            SetMiddle();
+        if (CurrentPart == ExplosionPart.End) SetMiddle();
     }
 
     void SetRenderer(AnimatedSpriteRenderer renderer, ExplosionPart part)
@@ -70,7 +28,6 @@ public class BombExplosion : MonoBehaviour
         if (start != null) start.enabled = renderer == start;
         if (middle != null) middle.enabled = renderer == middle;
         if (end != null) end.enabled = renderer == end;
-
         CurrentPart = part;
     }
 
@@ -105,30 +62,10 @@ public class BombExplosion : MonoBehaviour
             case ExplosionPart.End: SetEnd(); break;
         }
 
-        RegisterSpotlight();
+        if (duration <= 0f) { DestroyAfter(0f); yield break; }
 
-        if (duration <= 0f)
-        {
-            UpdateSpotlightIntensity(1f);
-            DestroyAfter(0f);
-            yield break;
-        }
+        yield return new WaitForSeconds(duration);
 
-        float elapsed = 0f;
-
-        while (elapsed < duration)
-        {
-            float t = Mathf.Clamp01(elapsed / duration);
-            float triangle = 1f - Mathf.Abs((t * 2f) - 1f);
-            float intensity = Mathf.SmoothStep(0f, 1f, triangle);
-
-            UpdateSpotlightIntensity(intensity);
-
-            elapsed += Time.deltaTime;
-            yield return null;
-        }
-
-        UpdateSpotlightIntensity(0f);
         DestroyAfter(0f);
     }
 }

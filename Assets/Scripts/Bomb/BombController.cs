@@ -34,6 +34,8 @@ public partial class BombController : MonoBehaviour
     private int bombsRemaining = 0;
     public int BombsRemaining => bombsRemaining;
 
+    private readonly HashSet<int> _activeSpotlightIds = new();
+
     [Header("Control Bomb")]
     private readonly List<GameObject> plantedBombs = new();
 
@@ -1131,15 +1133,11 @@ public partial class BombController : MonoBehaviour
         int effectiveRadius;
 
         if (bombComp != null && bombComp.IsPowerBomb)
-        {
             effectiveRadius = Mathf.Max(1, powerBombRadius);
-        }
         else
-        {
             effectiveRadius = IsFullFireEnabled()
                 ? PlayerPersistentStats.MaxExplosionRadius
                 : explosionRadius;
-        }
 
         bool pierce = bombComp != null && bombComp.IsPierceBomb;
 
@@ -1166,6 +1164,10 @@ public partial class BombController : MonoBehaviour
             return;
         }
 
+        int bombSpotlightId = bomb.GetInstanceID();
+
+        RegisterBlackoutSpotlight(bombSpotlightId, snapped, effectiveRadius);
+
         BombExplosion centerExplosion = Instantiate(explosionPrefab, snapped, Quaternion.identity);
         centerExplosion.Play(BombExplosion.ExplosionPart.Start, Vector2.zero, 0f, explosionDuration, snapped);
 
@@ -1173,6 +1175,10 @@ public partial class BombController : MonoBehaviour
         Explode(snapped, Vector2.down, effectiveRadius, pierce);
         Explode(snapped, Vector2.left, effectiveRadius, pierce);
         Explode(snapped, Vector2.right, effectiveRadius, pierce);
+
+        float spotlightDuration = Mathf.Max(0.01f, explosionDuration);
+
+        StartCoroutine(AnimateBlackoutSpotlight(bombSpotlightId, spotlightDuration));
 
         float destroyDelay = 0.1f;
 
@@ -2143,5 +2149,90 @@ public partial class BombController : MonoBehaviour
         UnregisterBomb(bomb);
 
         bombsRemaining = Mathf.Min(bombsRemaining + 1, bombAmout);
+    }
+
+    void RegisterBlackoutSpotlight(int spotlightId, Vector2 center, int radiusInTiles)
+    {
+        if (StageBlackout.Instance == null)
+            return;
+
+        StageBlackout.Instance.RegisterExplosionSpotlight(
+            spotlightId,
+            null,
+            center,
+            radiusInTiles);
+
+        StageBlackout.Instance.UpdateExplosionSpotlight(spotlightId, 0f);
+        _activeSpotlightIds.Add(spotlightId);
+    }
+
+    IEnumerator AnimateBlackoutSpotlight(int spotlightId, float duration)
+    {
+        if (!_activeSpotlightIds.Contains(spotlightId))
+            yield break;
+
+        if (StageBlackout.Instance == null)
+            yield break;
+
+        duration = Mathf.Max(0.01f, duration);
+        float halfDuration = duration * 0.5f;
+        float elapsed = 0f;
+
+        while (elapsed < duration)
+        {
+            if (!_activeSpotlightIds.Contains(spotlightId))
+                yield break;
+
+            if (StageBlackout.Instance == null)
+                yield break;
+
+            elapsed += Time.deltaTime;
+            float t = Mathf.Clamp01(elapsed / duration);
+
+            float intensity;
+            if (t <= 0.5f)
+            {
+                float riseT = t / 0.5f;
+                intensity = Mathf.SmoothStep(0f, 1f, riseT);
+            }
+            else
+            {
+                float fallT = (t - 0.5f) / 0.5f;
+                intensity = Mathf.SmoothStep(1f, 0f, fallT);
+            }
+
+            StageBlackout.Instance.UpdateExplosionSpotlight(spotlightId, intensity);
+            yield return null;
+        }
+
+        if (StageBlackout.Instance != null)
+            StageBlackout.Instance.UpdateExplosionSpotlight(spotlightId, 0f);
+
+        if (_activeSpotlightIds.Remove(spotlightId))
+        {
+            if (StageBlackout.Instance != null)
+                StageBlackout.Instance.UnregisterExplosionSpotlight(spotlightId);
+        }
+    }
+
+    private void OnDisable()
+    {
+        ClearAllBlackoutSpotlights();
+    }
+
+    private void OnDestroy()
+    {
+        ClearAllBlackoutSpotlights();
+    }
+
+    private void ClearAllBlackoutSpotlights()
+    {
+        if (StageBlackout.Instance != null)
+        {
+            foreach (int spotlightId in _activeSpotlightIds)
+                StageBlackout.Instance.UnregisterExplosionSpotlight(spotlightId);
+        }
+
+        _activeSpotlightIds.Clear();
     }
 }

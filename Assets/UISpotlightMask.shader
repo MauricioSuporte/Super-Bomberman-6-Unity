@@ -37,7 +37,7 @@ Shader "UI/SpotlightMask"
             #pragma fragment frag
             #include "UnityCG.cginc"
 
-            #define MAX_SPOTLIGHTS 128
+            #define MAX_SPOTLIGHTS 36
 
             struct appdata_t
             {
@@ -81,59 +81,54 @@ Shader "UI/SpotlightMask"
             float ComputeCircularHole(float2 uv, float2 center, float radius, float softness, float ellipseX, float ellipseY)
             {
                 float2 d = uv - center;
-
                 float ex = max(ellipseX, 1e-5);
                 float ey = max(ellipseY, 1e-5);
-
                 d.x *= ex;
                 d.y *= ey;
-
                 float dist = length(d);
-                float inner = radius;
                 float outer = radius + max(softness, 1e-5);
-
-                return 1.0 - smoothstep(inner, outer, dist);
+                return 1.0 - smoothstep(radius, outer, dist);
             }
 
             float ComputeBoxHole(float2 uv, float2 center, float2 halfSize, float softness)
             {
                 float2 q = abs(uv - center) - halfSize;
-
                 float outside = length(max(q, 0.0));
-                float inside = min(max(q.x, q.y), 0.0);
+                float inside  = min(max(q.x, q.y), 0.0);
                 float dist = outside + inside;
-
                 return 1.0 - smoothstep(0.0, max(softness, 1e-5), dist);
+            }
+
+            float ComputeCrossHole(float2 uv, float2 center, float4 halfSizes, float softness)
+            {
+                float h = ComputeBoxHole(uv, center, halfSizes.xy, softness);
+                float v = ComputeBoxHole(uv, center, halfSizes.zw, softness);
+                return max(h, v);
             }
 
             fixed4 frag(v2f i) : SV_Target
             {
                 fixed4 baseCol = tex2D(_MainTex, i.uv) * i.color;
 
-                float hole = 0.0;
+                float hole = ComputeCircularHole(
+                    i.uv, _Center.xy, _Radius, _Softness, _EllipseX, _EllipseY);
 
-                hole = max(hole, ComputeCircularHole(i.uv, _Center.xy, _Radius, _Softness, _EllipseX, _EllipseY));
-
-                [unroll]
-                for (int idx = 0; idx < MAX_SPOTLIGHTS; idx++)
+                int count = min(_SpotlightCount, MAX_SPOTLIGHTS);
+                for (int idx = 0; idx < count; idx++)
                 {
-                    if (idx >= _SpotlightCount)
-                        break;
-
-                    float boxHole = ComputeBoxHole(
+                    float crossHole = ComputeCrossHole(
                         i.uv,
                         _SpotlightCenters[idx].xy,
-                        _SpotlightHalfSize[idx].xy,
+                        _SpotlightHalfSize[idx],
                         _SpotlightSoftness[idx]);
 
-                    boxHole *= saturate(_SpotlightIntensity[idx]);
-                    hole = max(hole, boxHole);
+                    crossHole *= saturate(_SpotlightIntensity[idx]);
+                    hole = max(hole, crossHole);
                 }
 
                 fixed4 col = _Color;
                 col.a *= (1.0 - hole);
                 col.a *= baseCol.a;
-
                 return col;
             }
             ENDCG

@@ -7,7 +7,7 @@ public sealed class StageBlackout : MonoBehaviour
 {
     public static StageBlackout Instance { get; private set; }
 
-    private const int ShaderMaxSpotlights = 128;
+    private const int ShaderMaxSpotlights = 36;
 
     [Header("UI")]
     [SerializeField] private Image blackoutImage;
@@ -24,9 +24,9 @@ public sealed class StageBlackout : MonoBehaviour
 
     [Header("Explosion Spotlight")]
     [SerializeField, Min(0.01f)] private float tileWorldSize = 1f;
-    [SerializeField, Min(0f)] private float extraTilesAroundExplosion = 1f;
     [SerializeField, Min(0f)] private float explosionSpotlightSoftness = 0.01f;
-    [SerializeField, Min(1)] private int maxExplosionSpotlights = 128;
+    [SerializeField, Min(0f)] private float extraTilesAroundExplosion = 0.6f;
+    [SerializeField, Min(1)] private int maxExplosionSpotlights = 36;
 
     private static readonly int IdEllipseX = Shader.PropertyToID("_EllipseX");
     private static readonly int IdEllipseY = Shader.PropertyToID("_EllipseY");
@@ -34,20 +34,19 @@ public sealed class StageBlackout : MonoBehaviour
     private static readonly int IdRadius = Shader.PropertyToID("_Radius");
     private static readonly int IdSoftness = Shader.PropertyToID("_Softness");
     private static readonly int IdColor = Shader.PropertyToID("_Color");
-
     private static readonly int IdSpotlightCount = Shader.PropertyToID("_SpotlightCount");
     private static readonly int IdSpotlightCenters = Shader.PropertyToID("_SpotlightCenters");
     private static readonly int IdSpotlightHalfSize = Shader.PropertyToID("_SpotlightHalfSize");
     private static readonly int IdSpotlightSoftness = Shader.PropertyToID("_SpotlightSoftness");
     private static readonly int IdSpotlightIntensity = Shader.PropertyToID("_SpotlightIntensity");
 
-    // ─── PERF: Transform is passed directly at registration — no FindObjectsByType ───
     private sealed class ExplosionSpotlightData
     {
         public int Id;
         public Transform Transform;
         public Vector2 LastKnownWorldPosition;
         public float Intensity;
+        public int RadiusInTiles;
     }
 
     Material _originalMat;
@@ -66,25 +65,16 @@ public sealed class StageBlackout : MonoBehaviour
     RectTransform _blackoutRect;
     Canvas _canvas;
     Camera _uiCamera;
+    Camera _worldCamera;
 
-    // ─── PERF: dirty flag — shader arrays are only uploaded when something changed ───
     bool _spotlightsDirty;
 
     void Awake()
     {
-        if (Instance != null && Instance != this)
-        {
-            Destroy(gameObject);
-            return;
-        }
-
+        if (Instance != null && Instance != this) { Destroy(gameObject); return; }
         Instance = this;
 
-        if (!blackoutImage)
-        {
-            enabled = false;
-            return;
-        }
+        if (!blackoutImage) { enabled = false; return; }
 
         maxExplosionSpotlights = Mathf.Clamp(maxExplosionSpotlights, 1, ShaderMaxSpotlights);
 
@@ -98,9 +88,9 @@ public sealed class StageBlackout : MonoBehaviour
                 : _canvas.worldCamera;
         }
 
-        _originalMat = blackoutImage.material;
+        _worldCamera = Camera.main;
 
-        // ─── PERF: material is created once and reused forever ───
+        _originalMat = blackoutImage.material;
         if (_originalMat != null)
         {
             _matInstance = Instantiate(_originalMat);
@@ -118,8 +108,7 @@ public sealed class StageBlackout : MonoBehaviour
         _spotlightSoftnessCache = new float[ShaderMaxSpotlights];
         _spotlightIntensityCache = new float[ShaderMaxSpotlights];
 
-        if (_matInstance != null)
-            ApplyFullBlackout(0f);
+        if (_matInstance != null) ApplyFullBlackout(0f);
 
         _active = false;
         _spotlightsDirty = false;
@@ -134,34 +123,25 @@ public sealed class StageBlackout : MonoBehaviour
     {
         if (onlyForWorldStage && !IsTargetStage())
         {
-            if (blackoutImage != null)
-                blackoutImage.gameObject.SetActive(false);
-
+            if (blackoutImage != null) blackoutImage.gameObject.SetActive(false);
             enabled = false;
             return;
         }
-
         SetBlackoutActive(true);
     }
 
     void Update()
     {
-        if (!_active || _matInstance == null)
-            return;
+        if (!_active || _matInstance == null) return;
 
-        // ─── Alpha fade ───
         if (fadeInSeconds > 0f && _currentA < _targetA)
         {
             _currentA = Mathf.MoveTowards(
-                _currentA,
-                _targetA,
+                _currentA, _targetA,
                 Time.unscaledDeltaTime / Mathf.Max(0.001f, fadeInSeconds));
-
             ApplyFullBlackout(_currentA);
         }
 
-        // ─── PERF: track live transforms every frame (cheap), but only upload to
-        //           the shader when something actually changed (_spotlightsDirty). ───
         UpdateTrackedPositions();
 
         if (_spotlightsDirty)
@@ -171,14 +151,9 @@ public sealed class StageBlackout : MonoBehaviour
         }
     }
 
-    // ─────────────────────────────────────────────────────────
-    //  Public API
-    // ─────────────────────────────────────────────────────────
-
     public void SetBlackoutActive(bool active)
     {
-        if (blackoutImage == null)
-            return;
+        if (blackoutImage == null) return;
 
         if (onlyForWorldStage && !IsTargetStage())
         {
@@ -189,9 +164,10 @@ public sealed class StageBlackout : MonoBehaviour
 
         if (active)
         {
-            // ─── PERF: never recreate _matInstance if it already exists ───
             if (_matInstance == null && _originalMat != null)
                 _matInstance = Instantiate(_originalMat);
+
+            if (_worldCamera == null) _worldCamera = Camera.main;
 
             blackoutImage.material = _matInstance;
             blackoutImage.gameObject.SetActive(true);
@@ -223,40 +199,49 @@ public sealed class StageBlackout : MonoBehaviour
             ClearExplosionSpotlights();
         }
 
-        // ─── PERF: keep _matInstance alive — only unassign from the image ───
         blackoutImage.material = null;
         blackoutImage.gameObject.SetActive(false);
     }
 
-    // ─── PERF: caller passes the Transform directly — no scene search needed ───
-    public void RegisterExplosionSpotlight(int id, Transform explosionTransform, Vector2 worldPosition)
+    public void RegisterExplosionSpotlight(int id, Transform t, Vector2 worldPosition, int radiusInTiles = 1)
     {
-        if (!_active || _matInstance == null)
-            return;
+        if (!_active || _matInstance == null) return;
 
         _activeExplosionSpotlights[id] = new ExplosionSpotlightData
         {
             Id = id,
-            Transform = explosionTransform,
+            Transform = t,
             LastKnownWorldPosition = worldPosition,
-            Intensity = 0f
+            Intensity = 0f,
+            RadiusInTiles = Mathf.Max(1, radiusInTiles)
         };
 
         _spotlightsDirty = true;
     }
 
-    // ─── Legacy overload (kept for backward compatibility) ───
+    public void RegisterExplosionSpotlight(int id, Transform t, Vector2 worldPosition)
+        => RegisterExplosionSpotlight(id, t, worldPosition, radiusInTiles: 1);
+
     public void RegisterExplosionSpotlight(int id, Vector2 worldPosition)
-        => RegisterExplosionSpotlight(id, null, worldPosition);
+        => RegisterExplosionSpotlight(id, null, worldPosition, radiusInTiles: 1);
+
+    public void UpdateExplosionSpotlightRadius(int id, int radiusInTiles)
+    {
+        if (!_activeExplosionSpotlights.TryGetValue(id, out var data)) return;
+
+        int clamped = Mathf.Max(1, radiusInTiles);
+        if (data.RadiusInTiles == clamped) return;
+
+        data.RadiusInTiles = clamped;
+        _spotlightsDirty = true;
+    }
 
     public void UpdateExplosionSpotlight(int id, float intensity)
     {
-        if (!_activeExplosionSpotlights.TryGetValue(id, out var data))
-            return;
+        if (!_activeExplosionSpotlights.TryGetValue(id, out var data)) return;
 
         float clamped = Mathf.Clamp01(intensity);
-        if (Mathf.Approximately(data.Intensity, clamped))
-            return;                 // ─── PERF: skip if unchanged
+        if (Mathf.Approximately(data.Intensity, clamped)) return;
 
         data.Intensity = clamped;
         _spotlightsDirty = true;
@@ -268,48 +253,90 @@ public sealed class StageBlackout : MonoBehaviour
             _spotlightsDirty = true;
     }
 
-    // ─────────────────────────────────────────────────────────
-    //  Internal helpers
-    // ─────────────────────────────────────────────────────────
 
-    // ─── PERF: called every Update() — only reads Transform.position, no alloc ───
     void UpdateTrackedPositions()
     {
         foreach (var kv in _activeExplosionSpotlights)
         {
             var data = kv.Value;
-            if (data.Transform == null)
-                continue;
+            if (data.Transform == null) continue;
 
             Vector2 current = data.Transform.position;
-            if (current == data.LastKnownWorldPosition)
-                continue;
+            if (current == data.LastKnownWorldPosition) continue;
 
             data.LastKnownWorldPosition = current;
             _spotlightsDirty = true;
         }
     }
 
-    // ─── PERF: separated from Update — only runs when _spotlightsDirty is true ───
     void FlushSpotlightsToShader()
     {
-        if (_matInstance == null)
+        if (_matInstance == null) return;
+
+        Camera worldCam = _worldCamera != null ? _worldCamera : (_worldCamera = Camera.main);
+        if (worldCam == null || _blackoutRect == null)
+        {
+            _matInstance.SetInt(IdSpotlightCount, 0);
             return;
+        }
+
+        Rect rect = _blackoutRect.rect;
 
         int count = 0;
-
         foreach (var kv in _activeExplosionSpotlights)
         {
-            if (count >= maxExplosionSpotlights)
-                break;
+            if (count >= maxExplosionSpotlights) break;
 
             var data = kv.Value;
             Vector2 worldPos = data.LastKnownWorldPosition;
-            Vector2 uv = WorldToBlackoutUV(worldPos);
-            Vector2 halfSize = GetExplosionHalfSizeInBlackoutUV(worldPos);
+            int radius = data.RadiusInTiles;
+
+            Vector3 worldPos3 = new Vector3(worldPos.x, worldPos.y, 0f);
+            Vector3 screenC = worldCam.WorldToScreenPoint(worldPos3);
+            Vector3 screenR = worldCam.WorldToScreenPoint(worldPos3 + new Vector3(tileWorldSize, 0f, 0f));
+            Vector3 screenU = worldCam.WorldToScreenPoint(worldPos3 + new Vector3(0f, tileWorldSize, 0f));
+
+            bool okC = RectTransformUtility.ScreenPointToLocalPointInRectangle(
+                _blackoutRect, screenC, _uiCamera, out Vector2 localC);
+            bool okR = RectTransformUtility.ScreenPointToLocalPointInRectangle(
+                _blackoutRect, screenR, _uiCamera, out Vector2 localR);
+            bool okU = RectTransformUtility.ScreenPointToLocalPointInRectangle(
+                _blackoutRect, screenU, _uiCamera, out Vector2 localU);
+
+            Vector2 uv;
+            Vector4 halfSizes;
+
+            if (okC)
+            {
+                float u = Mathf.InverseLerp(rect.xMin, rect.xMax, localC.x);
+                float v = Mathf.InverseLerp(rect.yMin, rect.yMax, localC.y);
+                uv = new Vector2(u, v);
+
+                float tileU = okR
+                    ? Mathf.Abs(Mathf.InverseLerp(rect.xMin, rect.xMax, localR.x) - u)
+                    : 0f;
+                float tileV = okU
+                    ? Mathf.Abs(Mathf.InverseLerp(rect.yMin, rect.yMax, localU.y) - v)
+                    : 0f;
+
+                float longExt = radius + extraTilesAroundExplosion;
+                float shortExt = 0.5f + extraTilesAroundExplosion;
+
+                halfSizes = new Vector4(
+                    tileU * longExt, 
+                    tileV * shortExt,
+                    tileU * shortExt,
+                    tileV * longExt
+                );
+            }
+            else
+            {
+                uv = new Vector2(0.5f, 0.5f);
+                halfSizes = Vector4.zero;
+            }
 
             _spotlightCentersCache[count] = new Vector4(uv.x, uv.y, 0f, 0f);
-            _spotlightHalfSizeCache[count] = new Vector4(halfSize.x, halfSize.y, 0f, 0f);
+            _spotlightHalfSizeCache[count] = halfSizes;
             _spotlightSoftnessCache[count] = explosionSpotlightSoftness;
             _spotlightIntensityCache[count] = data.Intensity;
             count++;
@@ -324,9 +351,7 @@ public sealed class StageBlackout : MonoBehaviour
 
     void ClearExplosionSpotlights()
     {
-        if (_matInstance == null)
-            return;
-
+        if (_matInstance == null) return;
         _matInstance.SetInt(IdSpotlightCount, 0);
     }
 
@@ -339,64 +364,14 @@ public sealed class StageBlackout : MonoBehaviour
         }
 
         var scene = SceneManager.GetActiveScene();
-        if (!scene.IsValid())
-            return false;
-
+        if (!scene.IsValid()) return false;
         string n = scene.name;
         return n.Contains("2-5") || n.Contains("2_5");
     }
 
-    Vector2 WorldToBlackoutUV(Vector2 worldPos)
-    {
-        Camera worldCamera = Camera.main;
-        if (worldCamera == null || _blackoutRect == null)
-            return new Vector2(0.5f, 0.5f);
-
-        Vector3 screen = worldCamera.WorldToScreenPoint(worldPos);
-
-        if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(
-                _blackoutRect,
-                screen,
-                _uiCamera,
-                out Vector2 localPoint))
-        {
-            return new Vector2(0.5f, 0.5f);
-        }
-
-        Rect rect = _blackoutRect.rect;
-
-        float u = Mathf.InverseLerp(rect.xMin, rect.xMax, localPoint.x);
-        float v = Mathf.InverseLerp(rect.yMin, rect.yMax, localPoint.y);
-
-        return new Vector2(u, v);
-    }
-
-    Vector2 GetBlackoutUvDeltaForOneTile(Vector2 worldCenter)
-    {
-        Vector2 uvCenter = WorldToBlackoutUV(worldCenter);
-        Vector2 uvRight = WorldToBlackoutUV(worldCenter + new Vector2(tileWorldSize, 0f));
-        Vector2 uvUp = WorldToBlackoutUV(worldCenter + new Vector2(0f, tileWorldSize));
-
-        return new Vector2(
-            Mathf.Abs(uvRight.x - uvCenter.x),
-            Mathf.Abs(uvUp.y - uvCenter.y));
-    }
-
-    Vector2 GetExplosionHalfSizeInBlackoutUV(Vector2 worldCenter)
-    {
-        Vector2 oneTileUv = GetBlackoutUvDeltaForOneTile(worldCenter);
-        float tilesHalfExt = 0.5f + extraTilesAroundExplosion;
-
-        return new Vector2(
-            oneTileUv.x * tilesHalfExt,
-            oneTileUv.y * tilesHalfExt);
-    }
-
     void ApplyFullBlackout(float a)
     {
-        if (_matInstance == null)
-            return;
-
+        if (_matInstance == null) return;
         _matInstance.SetFloat(IdEllipseX, 1f);
         _matInstance.SetFloat(IdEllipseY, 1f);
         _matInstance.SetVector(IdCenter, new Vector4(-10f, -10f, 0f, 0f));
