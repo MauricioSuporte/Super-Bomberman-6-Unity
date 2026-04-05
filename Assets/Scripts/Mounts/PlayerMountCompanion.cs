@@ -82,6 +82,10 @@ public class PlayerMountCompanion : MonoBehaviour
     bool autoRemountRequested;
     bool killDetachedLouieByExplosion;
 
+    GameObject pendingWorldMountLouie;
+    MountedType pendingWorldMountType = MountedType.None;
+    MountEggQueue pendingWorldMountQueue;
+
     void Awake()
     {
         movement = GetComponent<MovementController>();
@@ -644,6 +648,10 @@ public class PlayerMountCompanion : MonoBehaviour
 
         PrepareWorldLouieForStationaryMount(louieWorldInstance, louieType, exactTargetWorldPos, facing);
 
+        pendingWorldMountLouie = louieWorldInstance;
+        pendingWorldMountType = louieType;
+        pendingWorldMountQueue = worldQueueToAdopt;
+
         if (rider != null && rider.TryPlayMountArc(
             facing,
             startWorldPos,
@@ -657,6 +665,10 @@ public class PlayerMountCompanion : MonoBehaviour
                 AttachExistingLouieForMountAtLanding(louieWorldInstance, louieType, facing);
                 FinalizeMount(louieType, facing);
                 AdoptWorldQueueIfAny();
+
+                pendingWorldMountLouie = null;
+                pendingWorldMountType = MountedType.None;
+                pendingWorldMountQueue = null;
             },
             onStart: () =>
             {
@@ -673,14 +685,20 @@ public class PlayerMountCompanion : MonoBehaviour
         AttachExistingLouieForMountAtLanding(louieWorldInstance, louieType, facing);
         FinalizeMount(louieType, facing);
         AdoptWorldQueueIfAny();
+
+        pendingWorldMountLouie = null;
+        pendingWorldMountType = MountedType.None;
+        pendingWorldMountQueue = null;
+
         return true;
     }
 
+
     void PrepareWorldLouieForStationaryMount(
-        GameObject louieWorldInstance,
-        MountedType type,
-        Vector3 worldPos,
-        Vector2 facingDirection)
+            GameObject louieWorldInstance,
+            MountedType type,
+            Vector3 worldPos,
+            Vector2 facingDirection)
     {
         if (louieWorldInstance == null)
             return;
@@ -747,6 +765,10 @@ public class PlayerMountCompanion : MonoBehaviour
 
         ApplyMountFacing(facingDirection);
         SetMountedLouieVisible(true);
+
+        pendingWorldMountLouie = null;
+        pendingWorldMountType = MountedType.None;
+        pendingWorldMountQueue = null;
     }
 
     void RestoreDetachedLouieWorldVisual(GameObject louie, Vector2 facingDirection)
@@ -844,13 +866,111 @@ public class PlayerMountCompanion : MonoBehaviour
 
         rider.CancelRiding();
 
-        if (currentLouie != null)
-            DetachAndKillCurrentLouieOnly();
+        RestorePendingWorldMountAsPickup();
 
-        if (movement != null && movement.TryGetComponent<CharacterHealth>(out var health) && health != null)
-            health.StartTemporaryInvulnerability(playerInvulnerabilityAfterLoseLouieSeconds);
+        if (playerHealth != null)
+            playerHealth.TakeDamage(Mathf.Max(1, damage));
 
         return true;
+    }
+
+    void RestorePendingWorldMountAsPickup()
+    {
+        if (pendingWorldMountLouie == null)
+            return;
+
+        Vector2 facing =
+            movement != null
+                ? ResolveFacingForMount(movement.FacingDirection)
+                : Vector2.down;
+
+        var louie = pendingWorldMountLouie;
+        var type = pendingWorldMountType;
+
+        louie.transform.SetParent(null, true);
+
+        if (!louie.TryGetComponent<MountWorldPickup>(out var pickup) || pickup == null)
+            pickup = louie.AddComponent<MountWorldPickup>();
+
+        pickup.Init(type);
+
+        DisableLouieRidingVisualForWorld(louie);
+        RestoreDetachedLouieWorldVisual(louie, facing);
+
+        if (louie.TryGetComponent<MountMovementController>(out var lm) && lm != null)
+            lm.enabled = false;
+
+        if (louie.TryGetComponent<Rigidbody2D>(out var rb) && rb != null)
+        {
+            rb.linearVelocity = Vector2.zero;
+            rb.angularVelocity = 0f;
+            rb.simulated = true;
+        }
+
+        if (louie.TryGetComponent<Collider2D>(out var col) && col != null)
+            col.enabled = true;
+
+        if (louie.TryGetComponent<BombController>(out var bc) && bc != null)
+            bc.enabled = false;
+
+        if (louie.TryGetComponent<MovementController>(out var mc) && mc != null)
+        {
+            mc.SetExplosionInvulnerable(false);
+            mc.ForceIdleFacing(facing, "RestorePendingWorldMountAsPickup");
+            mc.EnableExclusiveFromState();
+        }
+
+        StartDetachedLouieInactivityLoopFromInterruptedMount(louie, movement);
+
+        pendingWorldMountLouie = null;
+        pendingWorldMountType = MountedType.None;
+        pendingWorldMountQueue = null;
+    }
+
+    void StartDetachedLouieInactivityLoopFromInterruptedMount(
+        GameObject detachedLouie,
+        MovementController playerMovement)
+    {
+        if (detachedLouie == null)
+            return;
+
+        if (detachedLouie.TryGetComponent<MovementController>(out var mc) && mc != null && mc.isDead)
+            return;
+
+        var visual = detachedLouie.GetComponentInChildren<MountVisualController>(true);
+        if (visual == null)
+            return;
+
+        visual.localOffset = (Vector2)visual.transform.localPosition;
+
+        var selfMovement = detachedLouie.GetComponentInChildren<MovementController>(true);
+        if (selfMovement == null || selfMovement.isDead)
+            return;
+
+        visual.Bind(selfMovement);
+        visual.enabled = true;
+
+        float chanceAlt = 0f;
+        bool refreshFrameOnEnter = true;
+
+        if (playerMovement != null &&
+            playerMovement.TryGetComponent<InactivityAnimation>(out var inactivity) &&
+            inactivity != null)
+        {
+            chanceAlt = inactivity.ChanceAltAnimation;
+            refreshFrameOnEnter = inactivity.RefreshFrameOnEnter;
+        }
+
+        var loop = detachedLouie.GetComponent<DetachedLouieWorldInactivityLoop>();
+        if (loop == null)
+            loop = detachedLouie.AddComponent<DetachedLouieWorldInactivityLoop>();
+
+        loop.Init(
+            visual,
+            selfMovement,
+            chanceAlt,
+            refreshFrameOnEnter,
+            15f);
     }
 
     #endregion

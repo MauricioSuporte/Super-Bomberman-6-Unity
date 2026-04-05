@@ -95,7 +95,7 @@ public sealed class DetachedLouieWorldInactivityLoop : MonoBehaviour
             sr.enabled = false;
     }
 
-    private void StartLoop()
+    public void StartLoop()
     {
         if (visual == null || louieMovement == null)
             return;
