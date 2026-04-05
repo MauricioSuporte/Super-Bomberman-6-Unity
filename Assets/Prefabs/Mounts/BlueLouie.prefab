@@ -369,12 +369,8 @@ MonoBehaviour:
   - {fileID: -2018389329, guid: 6c2583beff5fe6444abe5f6a150dcc63, type: 3}
   - {fileID: -1724271120, guid: 6c2583beff5fe6444abe5f6a150dcc63, type: 3}
   - {fileID: -1146942863, guid: 6c2583beff5fe6444abe5f6a150dcc63, type: 3}
-  - {fileID: -1146942863, guid: 6c2583beff5fe6444abe5f6a150dcc63, type: 3}
-  - {fileID: -1146942863, guid: 6c2583beff5fe6444abe5f6a150dcc63, type: 3}
-  - {fileID: -1724271120, guid: 6c2583beff5fe6444abe5f6a150dcc63, type: 3}
-  - {fileID: -2018389329, guid: 6c2583beff5fe6444abe5f6a150dcc63, type: 3}
   allowFlipX: 0
-  animationTime: 0.035714287
+  animationTime: 0.033333335
   useSequenceDuration: 0
   sequenceDuration: 0.5
   useUnscaledTime: 1
@@ -616,12 +612,8 @@ MonoBehaviour:
   - {fileID: 999756273, guid: 6c2583beff5fe6444abe5f6a150dcc63, type: 3}
   - {fileID: -2021424871, guid: 6c2583beff5fe6444abe5f6a150dcc63, type: 3}
   - {fileID: -25328927, guid: 6c2583beff5fe6444abe5f6a150dcc63, type: 3}
-  - {fileID: -25328927, guid: 6c2583beff5fe6444abe5f6a150dcc63, type: 3}
-  - {fileID: -25328927, guid: 6c2583beff5fe6444abe5f6a150dcc63, type: 3}
-  - {fileID: -2021424871, guid: 6c2583beff5fe6444abe5f6a150dcc63, type: 3}
-  - {fileID: 999756273, guid: 6c2583beff5fe6444abe5f6a150dcc63, type: 3}
   allowFlipX: 0
-  animationTime: 0.035714287
+  animationTime: 0.033333335
   useSequenceDuration: 0
   sequenceDuration: 0.5
   useUnscaledTime: 1
@@ -1493,12 +1485,8 @@ MonoBehaviour:
   - {fileID: 925624491, guid: 6c2583beff5fe6444abe5f6a150dcc63, type: 3}
   - {fileID: -1764534641, guid: 6c2583beff5fe6444abe5f6a150dcc63, type: 3}
   - {fileID: 1595019359, guid: 6c2583beff5fe6444abe5f6a150dcc63, type: 3}
-  - {fileID: 1595019359, guid: 6c2583beff5fe6444abe5f6a150dcc63, type: 3}
-  - {fileID: 1595019359, guid: 6c2583beff5fe6444abe5f6a150dcc63, type: 3}
-  - {fileID: -1764534641, guid: 6c2583beff5fe6444abe5f6a150dcc63, type: 3}
-  - {fileID: 925624491, guid: 6c2583beff5fe6444abe5f6a150dcc63, type: 3}
   allowFlipX: 0
-  animationTime: 0.035714287
+  animationTime: 0.033333335
   useSequenceDuration: 0
   sequenceDuration: 0.5
   useUnscaledTime: 1
@@ -2848,12 +2836,8 @@ MonoBehaviour:
   - {fileID: 925624491, guid: 6c2583beff5fe6444abe5f6a150dcc63, type: 3}
   - {fileID: -1764534641, guid: 6c2583beff5fe6444abe5f6a150dcc63, type: 3}
   - {fileID: 1595019359, guid: 6c2583beff5fe6444abe5f6a150dcc63, type: 3}
-  - {fileID: 1595019359, guid: 6c2583beff5fe6444abe5f6a150dcc63, type: 3}
-  - {fileID: 1595019359, guid: 6c2583beff5fe6444abe5f6a150dcc63, type: 3}
-  - {fileID: -1764534641, guid: 6c2583beff5fe6444abe5f6a150dcc63, type: 3}
-  - {fileID: 925624491, guid: 6c2583beff5fe6444abe5f6a150dcc63, type: 3}
   allowFlipX: 1
-  animationTime: 0.035714287
+  animationTime: 0.033333335
   useSequenceDuration: 0
   sequenceDuration: 0.5
   useUnscaledTime: 1

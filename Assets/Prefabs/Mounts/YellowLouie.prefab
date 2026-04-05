@@ -228,12 +228,8 @@ MonoBehaviour:
   - {fileID: -2047716836, guid: db1d712e644cc1f4d90176e10cc03307, type: 3}
   - {fileID: -1764831527, guid: db1d712e644cc1f4d90176e10cc03307, type: 3}
   - {fileID: -1923620330, guid: db1d712e644cc1f4d90176e10cc03307, type: 3}
-  - {fileID: -1923620330, guid: db1d712e644cc1f4d90176e10cc03307, type: 3}
-  - {fileID: -1923620330, guid: db1d712e644cc1f4d90176e10cc03307, type: 3}
-  - {fileID: -1764831527, guid: db1d712e644cc1f4d90176e10cc03307, type: 3}
-  - {fileID: -2047716836, guid: db1d712e644cc1f4d90176e10cc03307, type: 3}
   allowFlipX: 0
-  animationTime: 0.035714287
+  animationTime: 0.033333335
   useSequenceDuration: 0
   sequenceDuration: 0.5
   useUnscaledTime: 1
@@ -601,12 +597,8 @@ MonoBehaviour:
   - {fileID: -367825099, guid: db1d712e644cc1f4d90176e10cc03307, type: 3}
   - {fileID: 424709721, guid: db1d712e644cc1f4d90176e10cc03307, type: 3}
   - {fileID: 1795139364, guid: db1d712e644cc1f4d90176e10cc03307, type: 3}
-  - {fileID: 1795139364, guid: db1d712e644cc1f4d90176e10cc03307, type: 3}
-  - {fileID: 1795139364, guid: db1d712e644cc1f4d90176e10cc03307, type: 3}
-  - {fileID: 424709721, guid: db1d712e644cc1f4d90176e10cc03307, type: 3}
-  - {fileID: -367825099, guid: db1d712e644cc1f4d90176e10cc03307, type: 3}
   allowFlipX: 0
-  animationTime: 0.035714287
+  animationTime: 0.033333335
   useSequenceDuration: 0
   sequenceDuration: 0.5
   useUnscaledTime: 1
@@ -1612,12 +1604,8 @@ MonoBehaviour:
   - {fileID: 1011705681, guid: db1d712e644cc1f4d90176e10cc03307, type: 3}
   - {fileID: -338969308, guid: db1d712e644cc1f4d90176e10cc03307, type: 3}
   - {fileID: 164064389, guid: db1d712e644cc1f4d90176e10cc03307, type: 3}
-  - {fileID: 164064389, guid: db1d712e644cc1f4d90176e10cc03307, type: 3}
-  - {fileID: 164064389, guid: db1d712e644cc1f4d90176e10cc03307, type: 3}
-  - {fileID: -338969308, guid: db1d712e644cc1f4d90176e10cc03307, type: 3}
-  - {fileID: 1011705681, guid: db1d712e644cc1f4d90176e10cc03307, type: 3}
   allowFlipX: 0
-  animationTime: 0.035714287
+  animationTime: 0.033333335
   useSequenceDuration: 0
   sequenceDuration: 0.5
   useUnscaledTime: 1
@@ -2726,12 +2714,8 @@ MonoBehaviour:
   - {fileID: 1011705681, guid: db1d712e644cc1f4d90176e10cc03307, type: 3}
   - {fileID: -338969308, guid: db1d712e644cc1f4d90176e10cc03307, type: 3}
   - {fileID: 164064389, guid: db1d712e644cc1f4d90176e10cc03307, type: 3}
-  - {fileID: 164064389, guid: db1d712e644cc1f4d90176e10cc03307, type: 3}
-  - {fileID: 164064389, guid: db1d712e644cc1f4d90176e10cc03307, type: 3}
-  - {fileID: -338969308, guid: db1d712e644cc1f4d90176e10cc03307, type: 3}
-  - {fileID: 1011705681, guid: db1d712e644cc1f4d90176e10cc03307, type: 3}
   allowFlipX: 1
-  animationTime: 0.035714287
+  animationTime: 0.033333335
   useSequenceDuration: 0
   sequenceDuration: 0.5
   useUnscaledTime: 1

@@ -17,7 +17,7 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
     public float cellsPerSecond = 10f;
 
     [Header("Kick Timing")]
-    public float kickCooldownSeconds = 0.25f;
+    public float kickCooldownSeconds = 0.2f;
 
     [Header("Chain")]
     public int maxChainTransfers = 32;
