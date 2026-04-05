@@ -642,13 +642,13 @@ public sealed class PoyoMoleEnemyMovementController : JunctionTurningEnemyMoveme
 
         SnapToGrid();
 
-        if (_collider != null)
-            _collider.enabled = true;
-
         _isHidden = false;
         RefreshDamageAllowed();
 
         yield return PlayAbilityEndPhasesReverseOrderNoPhase1();
+
+        if (_collider != null)
+            _collider.enabled = true;
 
         _isUsingAbility = false;
         _abilityRoutine = null;
@@ -684,6 +684,13 @@ public sealed class PoyoMoleEnemyMovementController : JunctionTurningEnemyMoveme
         DisableAllAbilitySprites();
         ForceAllAbilitySpriteRenderersOff();
 
+        bool disableColliderDuringPhase =
+            phaseSprite == abilityStartPhase3Sprite ||
+            phaseSprite == abilityEndPhase3Sprite;
+
+        if (_collider != null)
+            _collider.enabled = !disableColliderDuringPhase;
+
         float dur = Mathf.Max(0.01f, seconds);
 
         if (phaseSprite != null)
@@ -714,6 +721,9 @@ public sealed class PoyoMoleEnemyMovementController : JunctionTurningEnemyMoveme
 
             yield return new WaitForSecondsRealtime(dur);
         }
+
+        if (_collider != null && !_isHidden && !_isDefeated)
+            _collider.enabled = true;
     }
 
     private void DisableAllAbilitySprites()

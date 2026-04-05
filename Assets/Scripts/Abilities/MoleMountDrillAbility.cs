@@ -34,6 +34,9 @@ public class MoleMountDrillAbility : MonoBehaviour, IPlayerAbility
     [Header("Input Lock")]
     [SerializeField] private bool lockInputWhileDrilling = true;
 
+    [Header("Invulnerability")]
+    [SerializeField] private bool invulnerableDuringDrill = true;
+
     [Header("Burrowed (after Phase 3, before teleport)")]
     [SerializeField, Min(0f)] private float burrowedSeconds = 0.5f;
 
@@ -68,6 +71,9 @@ public class MoleMountDrillAbility : MonoBehaviour, IPlayerAbility
 
     bool deathCancelInProgress;
 
+    CharacterHealth playerHealth;
+    CharacterHealth mountedLouieHealth;
+
     struct CachedAsrState
     {
         public AnimatedSpriteRenderer asr;
@@ -90,6 +96,7 @@ public class MoleMountDrillAbility : MonoBehaviour, IPlayerAbility
         rb = movement != null ? movement.Rigidbody : null;
 
         audioSource = GetComponentInParent<AudioSource>();
+        playerHealth = GetComponent<CharacterHealth>();
 
         if (enemyLayerMask.value == 0)
             enemyLayerMask = LayerMask.GetMask("Enemy");
@@ -107,6 +114,17 @@ public class MoleMountDrillAbility : MonoBehaviour, IPlayerAbility
             return;
 
         EnforceGlobalSuppression();
+    }
+
+    public void Enable()
+    {
+        enabledAbility = true;
+    }
+
+    public void Disable()
+    {
+        enabledAbility = false;
+        Cancel();
     }
 
     public void SetDrillSfx(AudioClip clip, float volume)
@@ -171,6 +189,8 @@ public class MoleMountDrillAbility : MonoBehaviour, IPlayerAbility
             eggQueueCached = true;
         }
 
+        RefreshMountedLouieHealth();
+
         if (eggQueue != null)
         {
             eggQueuePrevVisible = !eggQueue.IsForcedHidden;
@@ -205,6 +225,9 @@ public class MoleMountDrillAbility : MonoBehaviour, IPlayerAbility
 
         if (lockInputWhileDrilling)
             movement.SetInputLocked(true, false);
+
+        if (invulnerableDuringDrill)
+            SetDrillInvulnerability(true);
 
         try
         {
@@ -269,11 +292,12 @@ public class MoleMountDrillAbility : MonoBehaviour, IPlayerAbility
                 movement.SetInactivityMountedDownOverride(false);
                 movement.SetExternalVisualSuppressed(false);
 
-                if (lockInputWhileDrilling && !deathCancelInProgress)
-                    movement.SetInputLocked(false);
-                else if (lockInputWhileDrilling)
+                if (lockInputWhileDrilling)
                     movement.SetInputLocked(false);
             }
+
+            if (invulnerableDuringDrill)
+                SetDrillInvulnerability(false);
 
             RestoreEggQueueIfNeeded();
 
@@ -281,6 +305,105 @@ public class MoleMountDrillAbility : MonoBehaviour, IPlayerAbility
             routine = null;
             deathCancelInProgress = false;
         }
+    }
+
+    void RefreshMountedLouieHealth()
+    {
+        mountedLouieHealth = null;
+
+        var louieMove = GetComponentInChildren<MountMovementController>(true);
+        if (louieMove != null)
+            mountedLouieHealth = louieMove.GetComponent<CharacterHealth>();
+    }
+
+    void SetDrillInvulnerability(bool value)
+    {
+        if (playerHealth != null)
+            playerHealth.SetExternalInvulnerability(value);
+
+        if (mountedLouieHealth != null)
+            mountedLouieHealth.SetExternalInvulnerability(value);
+    }
+
+    void Cancel()
+    {
+        if (routine != null)
+        {
+            StopCoroutine(routine);
+            routine = null;
+        }
+
+        ApplyPhase1HeadOnlyDownDelta(false);
+        EndGlobalSuppression();
+        SetDrillInvulnerability(false);
+
+        if (movement != null)
+        {
+            movement.SetInactivityMountedDownOverride(false);
+            movement.SetExternalVisualSuppressed(false);
+
+            if (lockInputWhileDrilling)
+                movement.SetInputLocked(false);
+        }
+
+        RestoreEggQueueIfNeeded();
+
+        running = false;
+        deathCancelInProgress = false;
+
+        if (externalAnimator != null)
+            externalAnimator.Stop();
+    }
+
+    public void CancelDrillForDeath()
+    {
+        deathCancelInProgress = true;
+        Cancel();
+    }
+
+    void RestoreEggQueueIfNeeded()
+    {
+        if (!eggQueueHiddenByThisAbility)
+            return;
+
+        if (!eggQueueCached)
+        {
+            eggQueue = GetComponentInChildren<MountEggQueue>(true);
+            eggQueueCached = true;
+        }
+
+        if (eggQueue != null)
+        {
+            eggQueue.SnapQueueToOwnerNow(resetHistoryToOwnerNow: true);
+            eggQueue.ForceVisible(eggQueuePrevVisible);
+        }
+
+        eggQueueHiddenByThisAbility = false;
+    }
+
+    void ApplyPhase1HeadOnlyDownDelta(bool on)
+    {
+        if (Phase1HeadOnlyDownDelta == Vector2.zero)
+            return;
+
+        if (movement == null)
+            return;
+
+        if (cachedMountVisual == null)
+            cachedMountVisual = GetComponentInChildren<MountVisualController>(true);
+
+        if (cachedMountVisual == null)
+            return;
+
+        cachedMountVisual.SetTemporaryHeadOnlyDownDelta(Phase1HeadOnlyDownDelta, on);
+    }
+
+    bool IsMountedOnMole()
+    {
+        if (!TryGetComponent<PlayerMountCompanion>(out var mount) || mount == null)
+            return false;
+
+        return mount.GetMountedLouieType() == MountedType.Mole;
     }
 
     void BeginGlobalSuppression()
@@ -379,51 +502,6 @@ public class MoleMountDrillAbility : MonoBehaviour, IPlayerAbility
         }
     }
 
-    void RestoreEggQueueIfNeeded()
-    {
-        if (!eggQueueHiddenByThisAbility)
-            return;
-
-        if (!eggQueueCached)
-        {
-            eggQueue = GetComponentInChildren<MountEggQueue>(true);
-            eggQueueCached = true;
-        }
-
-        if (eggQueue != null)
-        {
-            eggQueue.SnapQueueToOwnerNow(resetHistoryToOwnerNow: true);
-            eggQueue.ForceVisible(eggQueuePrevVisible);
-        }
-
-        eggQueueHiddenByThisAbility = false;
-    }
-
-    void ApplyPhase1HeadOnlyDownDelta(bool on)
-    {
-        if (Phase1HeadOnlyDownDelta == Vector2.zero)
-            return;
-
-        if (movement == null)
-            return;
-
-        if (cachedMountVisual == null)
-            cachedMountVisual = GetComponentInChildren<MountVisualController>(true);
-
-        if (cachedMountVisual == null)
-            return;
-
-        cachedMountVisual.SetTemporaryHeadOnlyDownDelta(Phase1HeadOnlyDownDelta, on);
-    }
-
-    bool IsMountedOnMole()
-    {
-        if (!TryGetComponent<PlayerMountCompanion>(out var mount) || mount == null)
-            return false;
-
-        return mount.GetMountedLouieType() == MountedType.Mole;
-    }
-
     void TryTeleportToOtherGroundTile()
     {
         if (groundTilemap == null)
@@ -442,6 +520,17 @@ public class MoleMountDrillAbility : MonoBehaviour, IPlayerAbility
 
         rb.position = targetWorld;
         transform.position = targetWorld;
+    }
+
+    Component GetSuppressionRoot()
+    {
+        if (externalAnimator is Component c && c != null)
+            return c;
+
+        if (cachedMountVisual != null)
+            return cachedMountVisual;
+
+        return null;
     }
 
     bool TryFindTargetCell(Vector3Int origin, out Vector3Int target)
@@ -628,87 +717,5 @@ public class MoleMountDrillAbility : MonoBehaviour, IPlayerAbility
         }
 
         return false;
-    }
-
-    void Cancel()
-    {
-        if (routine != null)
-        {
-            StopCoroutine(routine);
-            routine = null;
-        }
-
-        ApplyPhase1HeadOnlyDownDelta(false);
-
-        externalAnimator?.Stop();
-
-        EndGlobalSuppression();
-
-        if (movement != null)
-        {
-            movement.SetInactivityMountedDownOverride(false);
-            movement.SetExternalVisualSuppressed(false);
-
-            if (lockInputWhileDrilling)
-                movement.SetInputLocked(false);
-        }
-
-        RestoreEggQueueIfNeeded();
-
-        running = false;
-    }
-
-    public void Enable() => enabledAbility = true;
-
-    public void Disable()
-    {
-        enabledAbility = false;
-        Cancel();
-    }
-
-    Component GetSuppressionRoot()
-    {
-        if (externalAnimator is Component c && c != null)
-            return c;
-
-        if (cachedMountVisual != null)
-            return cachedMountVisual;
-
-        return null;
-    }
-
-    public void CancelDrillForDeath()
-    {
-        deathCancelInProgress = true;
-
-        enabledAbility = false;
-
-        if (routine != null)
-        {
-            StopCoroutine(routine);
-            routine = null;
-        }
-
-        ApplyPhase1HeadOnlyDownDelta(false);
-
-        externalAnimator?.Stop();
-        externalAnimator = null;
-
-        EndGlobalSuppression();
-
-        if (movement != null)
-        {
-            movement.SetInactivityMountedDownOverride(false);
-            movement.SetExternalVisualSuppressed(false);
-
-            if (lockInputWhileDrilling)
-                movement.SetInputLocked(false);
-        }
-
-        RestoreEggQueueIfNeeded();
-
-        running = false;
-
-        _globalSuppressionActive = false;
     }
 }
