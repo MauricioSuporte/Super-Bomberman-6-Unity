@@ -889,10 +889,8 @@ MonoBehaviour:
   animationSprite:
   - {fileID: 2416694255222873370, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
   - {fileID: -6483543200235620609, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
-  - {fileID: -6483543200235620609, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
-  - {fileID: 2416694255222873370, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
   allowFlipX: 0
-  animationTime: 0.0625
+  animationTime: 0.05
   useSequenceDuration: 0
   sequenceDuration: 0.25
   useUnscaledTime: 1
@@ -4210,6 +4208,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerLouieManualDismount
   freezeEggQueueOnDismount: 1
+  detachedLouieSwitchInterval: 15
 --- !u!114 &4481698298045029297
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4227,6 +4226,7 @@ MonoBehaviour:
   emoteLoopRendererAlt: {fileID: 5702039210087986079}
   chanceAltAnimation: 0.1
   refreshFrameOnEnter: 1
+  switchInterval: 15
 --- !u!114 &6508769685131206489
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5014,10 +5014,8 @@ MonoBehaviour:
   animationSprite:
   - {fileID: 1838304852158882139, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
   - {fileID: 4823317564226349528, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
-  - {fileID: 4823317564226349528, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
-  - {fileID: 1838304852158882139, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
   allowFlipX: 0
-  animationTime: 0.0625
+  animationTime: 0.05
   useSequenceDuration: 0
   sequenceDuration: 0.25
   useUnscaledTime: 1
@@ -5868,10 +5866,8 @@ MonoBehaviour:
   animationSprite:
   - {fileID: -7969094100027227725, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
   - {fileID: 5054021255246217886, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
-  - {fileID: 5054021255246217886, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
-  - {fileID: -7969094100027227725, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
   allowFlipX: 0
-  animationTime: 0.0625
+  animationTime: 0.05
   useSequenceDuration: 0
   sequenceDuration: 0.25
   useUnscaledTime: 1
@@ -5990,10 +5986,8 @@ MonoBehaviour:
   animationSprite:
   - {fileID: -7602339355782139553, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
   - {fileID: -7700812863909436665, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
-  - {fileID: -7700812863909436665, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
-  - {fileID: -7602339355782139553, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
   allowFlipX: 0
-  animationTime: 0.0625
+  animationTime: 0.05
   useSequenceDuration: 0
   sequenceDuration: 0.25
   useUnscaledTime: 1

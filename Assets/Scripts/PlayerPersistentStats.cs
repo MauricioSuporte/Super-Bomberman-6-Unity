@@ -24,7 +24,7 @@ public static class PlayerPersistentStats
         public int ExplosionRadius = 9;
         public int SpeedInternal = MaxSpeedInternal;
         public bool CanKickBombs = false;
-        public bool CanPunchBombs = false;
+        public bool CanPunchBombs = true;
         public bool HasPowerGlove = true;
         public bool CanPassBombs = false;
         public bool CanPassDestructibles = false;
@@ -34,7 +34,7 @@ public static class PlayerPersistentStats
         public bool HasRubberBombs = false;
         public bool HasFullFire = false;
 
-        public MountedType MountedLouie = MountedType.Mole;
+        public MountedType MountedLouie = MountedType.None;
         public BomberSkin Skin = BomberSkin.White;
 
         public readonly List<ItemType> QueuedEggs = new(8);

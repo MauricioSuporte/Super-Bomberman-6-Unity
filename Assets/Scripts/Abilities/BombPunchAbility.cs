@@ -16,7 +16,7 @@ public class BombPunchAbility : MonoBehaviour, IPlayerAbility
 
     [Header("Punch Settings")]
     public int punchDistanceTiles = 3;
-    public float punchLockTime = 0.25f;
+    public float punchLockTime = 0.1f;
 
     [Header("Punch Sprites (PLAYER)")]
     public AnimatedSpriteRenderer punchUp;
