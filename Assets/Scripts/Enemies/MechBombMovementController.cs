@@ -112,6 +112,9 @@ public class MechBombMovementController : JunctionTurningEnemyMovementController
             if (isAbilityActive)
                 continue;
 
+            if (isInDamagedLoop)
+                continue;
+
             CacheBombController();
 
             if (spriteAbility == null)
