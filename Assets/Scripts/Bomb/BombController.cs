@@ -1228,8 +1228,13 @@ public partial class BombController : MonoBehaviour
 
         for (int i = 0; i < length; i++)
         {
-            position += direction;
-            position = SnapToTileCenter(snapTm, position);
+            Vector2 nextPosition = position + direction;
+            nextPosition = SnapToTileCenter(snapTm, nextPosition);
+
+            if (HasStartExplosionAt(nextPosition))
+                break;
+
+            position = nextPosition;
 
             bool isMaxRangeTile = i == length - 1;
 
@@ -2411,5 +2416,35 @@ public partial class BombController : MonoBehaviour
         }
 
         _activeSpotlightIds.Clear();
+    }
+
+    private bool HasStartExplosionAt(Vector2 worldPos)
+    {
+        int explosionLayer = LayerMask.NameToLayer("Explosion");
+        if (explosionLayer < 0)
+            return false;
+
+        int mask = 1 << explosionLayer;
+
+        Collider2D[] hits = Physics2D.OverlapBoxAll(worldPos, Vector2.one * 0.6f, 0f, mask);
+        if (hits == null || hits.Length == 0)
+            return false;
+
+        for (int i = 0; i < hits.Length; i++)
+        {
+            var hit = hits[i];
+            if (hit == null)
+                continue;
+
+            BombExplosion explosion =
+                hit.GetComponent<BombExplosion>() ??
+                hit.GetComponentInParent<BombExplosion>() ??
+                hit.GetComponentInChildren<BombExplosion>();
+
+            if (explosion != null && explosion.CurrentPart == BombExplosion.ExplosionPart.Start)
+                return true;
+        }
+
+        return false;
     }
 }
