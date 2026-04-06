@@ -1214,7 +1214,7 @@ public partial class BombController : MonoBehaviour
 
     private ExplosionLineResult ExplodeAndCollect(Vector2 origin, Vector2 direction, int length, bool pierce)
     {
-        ExplosionLineResult result = new ExplosionLineResult
+        ExplosionLineResult result = new()
         {
             Reach = 0,
             Explosions = new List<(Vector2 position, BombExplosion.ExplosionPart part)>(length)
@@ -1288,15 +1288,8 @@ public partial class BombController : MonoBehaviour
 
                 if (otherBombGo != null)
                 {
-                    BombExplosion.ExplosionPart part =
-                        isMaxRangeTile
-                            ? BombExplosion.ExplosionPart.End
-                            : BombExplosion.ExplosionPart.Middle;
-
-                    result.Explosions.Add((position, part));
-                    result.Reach++;
-
                     int oid = otherBombGo.GetInstanceID();
+
                     if (otherBombGo.TryGetComponent<Bomb>(out var otherBomb) && otherBomb != null && otherBomb.Owner != null)
                         otherBomb.Owner.ExplodeBombChained(otherBombGo);
                     else
@@ -1305,7 +1298,7 @@ public partial class BombController : MonoBehaviour
                     _removedBombIds.Remove(oid);
                 }
 
-                continue;
+                break;
             }
 
             BombExplosion.ExplosionPart defaultPart =
