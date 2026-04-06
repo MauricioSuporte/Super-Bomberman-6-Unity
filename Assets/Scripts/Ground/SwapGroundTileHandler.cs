@@ -47,7 +47,8 @@ public sealed class SwapGroundTileHandler : MonoBehaviour, IGroundTileExplosionH
         for (int i = 0; i < tms.Length; i++)
         {
             var tm = tms[i];
-            if (tm == null) continue;
+            if (tm == null)
+                continue;
 
             string n = tm.name.ToLowerInvariant();
             if (n.Contains("ground"))
@@ -118,6 +119,20 @@ public sealed class SwapGroundTileHandler : MonoBehaviour, IGroundTileExplosionH
         if (autoCollectAllTileAOnStart && _puzzleCells.Count == 0 && !_completedOnce)
             CachePuzzleCellsFromTileA(tm);
 
+        if (_completedOnce)
+        {
+            if (_puzzleCells.Count == 0 || _puzzleCells.Contains(cell))
+            {
+                if (groundTile != tileB)
+                {
+                    tm.SetTile(cell, tileB);
+                    tm.RefreshTile(cell);
+                }
+            }
+
+            return;
+        }
+
         TileBase next;
 
         if (groundTile == tileA)
@@ -135,7 +150,7 @@ public sealed class SwapGroundTileHandler : MonoBehaviour, IGroundTileExplosionH
         tm.SetTile(cell, next);
         tm.RefreshTile(cell);
 
-        if (!_completedOnce && _puzzleCells.Count > 0 && _puzzleCells.Contains(cell))
+        if (_puzzleCells.Count > 0 && _puzzleCells.Contains(cell))
         {
             if (groundTile == tileA && next == tileB)
             {
@@ -157,10 +172,30 @@ public sealed class SwapGroundTileHandler : MonoBehaviour, IGroundTileExplosionH
 
         _completedOnce = true;
 
+        ForceAllPuzzleCellsToTileB();
+
         if (floatingPlatformToEnable != null)
             floatingPlatformToEnable.SetActive(true);
 
         PlayPuzzleCompleteSfx();
+    }
+
+    private void ForceAllPuzzleCellsToTileB()
+    {
+        if (tileB == null)
+            return;
+
+        Tilemap tm = ResolveTilemapEarly();
+        if (tm == null)
+            return;
+
+        foreach (var cell in _puzzleCells)
+        {
+            tm.SetTile(cell, tileB);
+            tm.RefreshTile(cell);
+        }
+
+        _remainingA = 0;
     }
 
     private void PlayPuzzleCompleteSfx()
