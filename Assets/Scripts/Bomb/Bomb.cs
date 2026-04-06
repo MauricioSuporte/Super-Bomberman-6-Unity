@@ -1306,8 +1306,11 @@ public class Bomb : MonoBehaviour, IMagnetPullable
             if (IsControlBomb && isPunched)
                 return;
 
+            if (isKicked)
+                StopKickAndSnapToGrid(kickTileSize);
+
             if (owner != null)
-                owner.ExplodeBombChained(gameObject);
+                owner.ExplodeBomb(gameObject);
 
             return;
         }
