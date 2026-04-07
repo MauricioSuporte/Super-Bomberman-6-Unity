@@ -725,4 +725,17 @@ public class ItemPickup : MonoBehaviour
         mv.ForceIdleFacing(face, "EggSpawnIdleFacing");
         mv.EnableExclusiveFromState();
     }
+
+    public void DestroySilently()
+    {
+        if (isBeingDestroyed)
+            return;
+
+        isBeingDestroyed = true;
+
+        if (_col != null)
+            _col.enabled = false;
+
+        Destroy(gameObject);
+    }
 }

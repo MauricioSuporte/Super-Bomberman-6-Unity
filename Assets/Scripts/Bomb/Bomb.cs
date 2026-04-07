@@ -724,6 +724,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
 
     FINISH:
         TeleportTo(cur);
+        DestroyPickupsAtWorld(cur);
 
         isPunched = false;
         punchRoutine = null;
@@ -1160,6 +1161,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
 
                 lastPos = pos;
                 rb.MovePosition(pos);
+                DestroyPickupsAtWorld(pos);
 
                 yield return waitFixed;
             }
@@ -1212,6 +1214,8 @@ public class Bomb : MonoBehaviour, IMagnetPullable
 
             rb.position = next;
             transform.position = next;
+
+            DestroyPickupsAtWorld(next);
 
             if (owner != null)
                 owner.NotifyBombAt(next, gameObject);
@@ -1817,5 +1821,30 @@ public class Bomb : MonoBehaviour, IMagnetPullable
 
         bombCollider.enabled = airbornePrevColliderEnabled;
         airborneColliderSuppressed = false;
+    }
+
+    private void DestroyPickupsAtWorld(Vector2 worldCenter)
+    {
+        Vector2 size = Vector2.one * (kickTileSize * 0.45f);
+        Collider2D[] hits = Physics2D.OverlapBoxAll(worldCenter, size, 0f);
+
+        if (hits == null || hits.Length == 0)
+            return;
+
+        for (int i = 0; i < hits.Length; i++)
+        {
+            var hit = hits[i];
+            if (hit == null)
+                continue;
+
+            var pickup = hit.GetComponent<ItemPickup>();
+            if (pickup == null)
+                pickup = hit.GetComponentInParent<ItemPickup>();
+
+            if (pickup == null)
+                continue;
+
+            pickup.DestroySilently();
+        }
     }
 }
