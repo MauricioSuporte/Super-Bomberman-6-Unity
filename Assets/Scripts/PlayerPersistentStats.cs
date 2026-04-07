@@ -22,7 +22,7 @@ public static class PlayerPersistentStats
         public int Life = 99;
         public int BombAmount = 9;
         public int ExplosionRadius = 3;
-        public int SpeedInternal = MaxSpeedInternal;
+        public int SpeedInternal = MinSpeedInternal;
         public bool CanKickBombs = false;
         public bool CanPunchBombs = true;
         public bool HasPowerGlove = true;

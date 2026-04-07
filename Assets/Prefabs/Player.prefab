@@ -3823,6 +3823,8 @@ MonoBehaviour:
   isDead: 0
   explosionInvulnerable: 0
   externalMovementOverride: 0
+  debugDualInput: 1
+  debugDualInputVerbose: 0
 --- !u!114 &2372813969180496726
 MonoBehaviour:
   m_ObjectHideFlags: 0
