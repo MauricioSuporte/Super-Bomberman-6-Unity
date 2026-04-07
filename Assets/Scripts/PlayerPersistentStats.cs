@@ -21,15 +21,15 @@ public static class PlayerPersistentStats
     {
         public int Life = 99;
         public int BombAmount = 9;
-        public int ExplosionRadius = 9;
+        public int ExplosionRadius = 3;
         public int SpeedInternal = MaxSpeedInternal;
-        public bool CanKickBombs = false;
+        public bool CanKickBombs = true;
         public bool CanPunchBombs = true;
         public bool HasPowerGlove = true;
         public bool CanPassBombs = false;
         public bool CanPassDestructibles = true;
-        public bool HasPierceBombs = true;
-        public bool HasControlBombs = false;
+        public bool HasPierceBombs = false;
+        public bool HasControlBombs = true;
         public bool HasPowerBomb = false;
         public bool HasRubberBombs = false;
         public bool HasFullFire = false;
