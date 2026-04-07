@@ -2591,9 +2591,6 @@ public class MovementController : MonoBehaviour, IKillable
             return;
         }
 
-        if (lockedMovementDirection == Vector2.zero)
-            lockedMovementDirection = currentMove;
-
         pendingSingleTurnDirection = requestedDir;
 
         LogSingleTurnVerbose(
@@ -2612,7 +2609,48 @@ public class MovementController : MonoBehaviour, IKillable
             return;
         }
 
-        ApplyDirectionFromVector(lockedMovementDirection);
+        Vector2 alignDir = GetSingleTurnAlignmentDirection(currentMove, requestedDir);
+
+        if (alignDir == Vector2.zero)
+            alignDir = currentMove;
+
+        lockedMovementDirection = alignDir;
+        ApplyDirectionFromVector(alignDir);
+    }
+
+    private Vector2 GetSingleTurnAlignmentDirection(Vector2 currentMove, Vector2 requestedDir)
+    {
+        if (tileSize <= 0.0001f)
+            return currentMove;
+
+        Vector2 pos = Rigidbody != null ? Rigidbody.position : (Vector2)transform.position;
+
+        bool turningToHorizontal = Mathf.Abs(requestedDir.x) > 0.01f;
+        bool turningToVertical = Mathf.Abs(requestedDir.y) > 0.01f;
+
+        if (turningToVertical)
+        {
+            float centerX = Mathf.Round(pos.x / tileSize) * tileSize;
+            float deltaX = centerX - pos.x;
+
+            if (Mathf.Abs(deltaX) <= alignEpsilon)
+                return Vector2.zero;
+
+            return deltaX > 0f ? Vector2.right : Vector2.left;
+        }
+
+        if (turningToHorizontal)
+        {
+            float centerY = Mathf.Round(pos.y / tileSize) * tileSize;
+            float deltaY = centerY - pos.y;
+
+            if (Mathf.Abs(deltaY) <= alignEpsilon)
+                return Vector2.zero;
+
+            return deltaY > 0f ? Vector2.up : Vector2.down;
+        }
+
+        return currentMove;
     }
 
     private bool ShouldHardBlockForwardFromTileCenter(Vector2 position)
