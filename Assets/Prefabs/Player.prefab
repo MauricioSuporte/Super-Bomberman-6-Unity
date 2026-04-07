@@ -532,7 +532,7 @@ MonoBehaviour:
   - {fileID: 2654148660330044669, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
   - {fileID: 8807407261490140165, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
   allowFlipX: 0
-  animationTime: 0.083333336
+  animationTime: 0.033333335
   useSequenceDuration: 0
   sequenceDuration: 0.25
   useUnscaledTime: 1
@@ -1256,7 +1256,7 @@ MonoBehaviour:
   - {fileID: -4473064897685233622, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
   - {fileID: -355897882055163490, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
   allowFlipX: 0
-  animationTime: 0.0625
+  animationTime: 0.025
   useSequenceDuration: 0
   sequenceDuration: 0.25
   useUnscaledTime: 1
@@ -3195,7 +3195,7 @@ MonoBehaviour:
   - {fileID: 1621839873214276283, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
   - {fileID: 7391007977823753647, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
   allowFlipX: 0
-  animationTime: 0.0625
+  animationTime: 0.025
   useSequenceDuration: 0
   sequenceDuration: 0.25
   useUnscaledTime: 1
@@ -4264,8 +4264,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PowerGloveAbility
   enabledAbility: 1
   isHoldingBomb: 0
-  pickupLockTime: 0.25
-  releaseLockTime: 0.25
   throwDistanceTiles: 3
   pickupUp: {fileID: 2955665185425043085}
   pickupDown: {fileID: 5596076735691532720}
@@ -5625,7 +5623,7 @@ MonoBehaviour:
   - {fileID: 6631305461169108491, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
   - {fileID: 6880199824899251412, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
   allowFlipX: 0
-  animationTime: 0.0625
+  animationTime: 0.025
   useSequenceDuration: 0
   sequenceDuration: 0.25
   useUnscaledTime: 1
