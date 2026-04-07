@@ -15,6 +15,15 @@ public struct Binding
 
     public int joyButton;
 
+    public static Binding Empty() => new()
+    {
+        kind = BindKind.Key,
+        key = KeyCode.None,
+        dpadDir = -1,
+        joyIndex = 0,
+        joyButton = -1
+    };
+
     public static Binding FromKey(KeyCode k) => new()
     {
         kind = BindKind.Key,

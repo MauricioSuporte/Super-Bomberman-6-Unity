@@ -1295,41 +1295,37 @@ public class ControlsConfigMenu : MonoBehaviour
     static string BindingToShort(Binding b)
     {
         if (b.kind == BindKind.Key)
+        {
+            if (b.key == KeyCode.None)
+                return "---";
+
             return PrettyKeyName(b.key);
+        }
 
         if (b.kind == BindKind.DPad)
         {
+            if (b.dpadDir < 0)
+                return "---";
+
             return b.dpadDir switch
             {
-                0 => $"JOY {b.joyIndex} UP",
-                1 => $"JOY {b.joyIndex} DOWN",
-                2 => $"JOY {b.joyIndex} LEFT",
-                3 => $"JOY {b.joyIndex} RIGHT",
-                _ => $"JOY {b.joyIndex} DPAD"
+                0 => "DPAD UP",
+                1 => "DPAD DOWN",
+                2 => "DPAD LEFT",
+                3 => "DPAD RIGHT",
+                _ => "---"
             };
         }
 
         if (b.kind == BindKind.JoyButton)
         {
-            string btn = b.joyButton switch
-            {
-                0 => "A",
-                1 => "B",
-                2 => "X",
-                3 => "Y",
-                4 => "L",
-                5 => "R",
-                6 => "LT",
-                7 => "RT",
-                8 => "START",
-                9 => "SELECT",
-                _ => $"B{b.joyButton}"
-            };
+            if (b.joyButton < 0)
+                return "---";
 
-            return $"JOY {b.joyIndex} {btn}";
+            return $"JOY {b.joyIndex} BTN {b.joyButton}";
         }
 
-        return "UNK";
+        return "---";
     }
 
     void UpdateCursorPosition_ByLinkId(string linkId)
