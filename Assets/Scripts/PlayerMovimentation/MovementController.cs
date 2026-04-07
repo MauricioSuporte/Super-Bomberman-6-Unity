@@ -2614,8 +2614,62 @@ public class MovementController : MonoBehaviour, IKillable
         if (alignDir == Vector2.zero)
             alignDir = currentMove;
 
+        if (alignDir != currentMove && IsSingleTurnAlignmentBlocked(alignDir, requestedDir))
+        {
+            LogSingleTurn(
+                $"Alinhamento cancelado por caminho bloqueado. " +
+                $"alignDir={alignDir} | currentMove={currentMove} | requestedDir={requestedDir}");
+
+            lockedMovementDirection = currentMove;
+
+            if (IsMoveBlocked(currentMove))
+            {
+                LogSingleTurn(
+                    $"Movimento atual também bloqueado. Parando até surgir caminho válido. " +
+                    $"currentMove={currentMove}");
+
+                ApplyDirectionFromVector(Vector2.zero);
+                return;
+            }
+
+            ApplyDirectionFromVector(currentMove);
+            return;
+        }
+
         lockedMovementDirection = alignDir;
         ApplyDirectionFromVector(alignDir);
+    }
+
+    private bool IsSingleTurnAlignmentBlocked(Vector2 alignDir, Vector2 requestedTurnDir)
+    {
+        alignDir = NormalizeCardinal(alignDir);
+        requestedTurnDir = NormalizeCardinal(requestedTurnDir);
+
+        if (alignDir == Vector2.zero || tileSize <= 0.0001f)
+            return false;
+
+        Vector2 pos = Rigidbody != null ? Rigidbody.position : (Vector2)transform.position;
+
+        float centerX = Mathf.Round(pos.x / tileSize) * tileSize;
+        float centerY = Mathf.Round(pos.y / tileSize) * tileSize;
+
+        Vector2 alignTarget =
+            Mathf.Abs(alignDir.x) > 0.01f
+                ? new Vector2(centerX, pos.y)
+                : new Vector2(pos.x, centerY);
+
+        alignTarget = QuantizeToPixelGrid(alignTarget);
+
+        if (IsMoveBlocked(alignDir))
+            return true;
+
+        if (IsBlockedAtPosition(alignTarget, alignDir))
+            return true;
+
+        if (!CanAlignToPerpendicularTarget(alignTarget, requestedTurnDir))
+            return true;
+
+        return false;
     }
 
     private Vector2 GetSingleTurnAlignmentDirection(Vector2 currentMove, Vector2 requestedDir)
