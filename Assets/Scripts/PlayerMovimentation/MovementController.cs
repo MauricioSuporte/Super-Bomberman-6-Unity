@@ -1187,8 +1187,45 @@ public class MovementController : MonoBehaviour, IKillable
                 if (!overlapsTarget)
                     continue;
 
+                var bombCollider = bomb.GetComponent<Collider2D>();
+
                 if (overlapsCurrent)
+                {
+                    bool nearEdgeForKick = IsNearBombEdgeForEarlyKick(myPos, bombPos, dirForSize);
+
+                    if (nearEdgeForKick && bombCollider != null)
+                    {
+                        for (int i = 0; i < movementAbilities.Length; i++)
+                        {
+                            var ability = movementAbilities[i];
+                            if (ability != null && ability.IsEnabled)
+                            {
+                                if (ability.TryHandleBlockedHit(bombCollider, dirForSize, tileSize, obstacleMask))
+                                    return true;
+                            }
+                        }
+                    }
+
                     continue;
+                }
+
+                // Caso especial:
+                // player já saiu da footprint da bomba, mas está bloqueado ao tentar entrar de volta.
+                // Aqui também pode virar chute, se estiver na borda correta.
+                bool nearReentryKickEdge = IsNearBombReentryKickEdge(myPos, bombPos, dirForSize);
+
+                if (nearReentryKickEdge && bombCollider != null)
+                {
+                    for (int i = 0; i < movementAbilities.Length; i++)
+                    {
+                        var ability = movementAbilities[i];
+                        if (ability != null && ability.IsEnabled)
+                        {
+                            if (ability.TryHandleBlockedHit(bombCollider, dirForSize, tileSize, obstacleMask))
+                                return true;
+                        }
+                    }
+                }
 
                 return true;
             }
@@ -2635,5 +2672,76 @@ public class MovementController : MonoBehaviour, IKillable
         }
 
         return true;
+    }
+
+    [Header("Bomb Early Kick")]
+    [SerializeField, Range(0.01f, 0.49f)] private float earlyKickEdgeThreshold = 0.22f;
+
+    private bool IsNearBombEdgeForEarlyKick(Vector2 playerPos, Vector2 bombPos, Vector2 moveDir)
+    {
+        if (tileSize <= 0.0001f)
+            return false;
+
+        float half = tileSize * 0.5f;
+        float edgeBand = Mathf.Clamp(earlyKickEdgeThreshold, 0.01f, half - 0.01f);
+
+        float dx = playerPos.x - bombPos.x;
+        float dy = playerPos.y - bombPos.y;
+
+        if (Mathf.Abs(moveDir.x) > 0.01f)
+        {
+            // Apertando esquerda: player precisa estar na borda direita da bomba
+            if (moveDir.x < 0f)
+                return dx >= (half - edgeBand);
+
+            // Apertando direita: player precisa estar na borda esquerda da bomba
+            return dx <= -(half - edgeBand);
+        }
+
+        if (Mathf.Abs(moveDir.y) > 0.01f)
+        {
+            // Apertando baixo: player precisa estar na borda de cima da bomba
+            if (moveDir.y < 0f)
+                return dy >= (half - edgeBand);
+
+            // Apertando cima: player precisa estar na borda de baixo da bomba
+            return dy <= -(half - edgeBand);
+        }
+
+        return false;
+    }
+
+    private bool IsNearBombReentryKickEdge(Vector2 playerPos, Vector2 bombPos, Vector2 moveDir)
+    {
+        if (tileSize <= 0.0001f)
+            return false;
+
+        float half = tileSize * 0.5f;
+        float edgeBand = Mathf.Clamp(earlyKickEdgeThreshold, 0.01f, half - 0.01f);
+
+        float dx = playerPos.x - bombPos.x;
+        float dy = playerPos.y - bombPos.y;
+
+        if (Mathf.Abs(moveDir.x) > 0.01f)
+        {
+            // Tentando entrar à esquerda da bomba
+            if (moveDir.x < 0f)
+                return dx >= (half - edgeBand);
+
+            // Tentando entrar à direita da bomba
+            return dx <= -(half - edgeBand);
+        }
+
+        if (Mathf.Abs(moveDir.y) > 0.01f)
+        {
+            // Tentando entrar abaixo da bomba
+            if (moveDir.y < 0f)
+                return dy >= (half - edgeBand);
+
+            // Tentando entrar acima da bomba
+            return dy <= -(half - edgeBand);
+        }
+
+        return false;
     }
 }

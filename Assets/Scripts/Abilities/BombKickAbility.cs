@@ -80,20 +80,46 @@ public class BombKickAbility : MonoBehaviour, IMovementAbility
     public bool TryHandleBlockedHit(Collider2D hit, Vector2 direction, float tileSize, LayerMask obstacleMask)
     {
         if (!enabledAbility)
+        {
+            Debug.Log("[BombKickAbility] blocked: ability disabled", this);
             return false;
+        }
 
         if (hit == null)
+        {
+            Debug.Log("[BombKickAbility] blocked: hit null", this);
             return false;
+        }
 
         if (hit.gameObject.layer != LayerMask.NameToLayer("Bomb"))
+        {
+            Debug.Log($"[BombKickAbility] blocked: hit layer is not Bomb, layer={hit.gameObject.layer}", this);
             return false;
+        }
 
         var bomb = hit.GetComponent<Bomb>();
-        if (bomb == null || bomb.IsBeingKicked)
+        if (bomb == null)
+        {
+            Debug.Log("[BombKickAbility] blocked: collider has no Bomb component", this);
             return false;
+        }
 
-        if (!bomb.CanBeKicked)
+        if (bomb.IsBeingKicked)
+        {
+            Debug.Log($"[BombKickAbility] blocked: bomb already being kicked bombPos={bomb.GetLogicalPosition()}", this);
             return false;
+        }
+
+        Debug.Log(
+            $"[BombKickAbility] trying kick bombPos={bomb.GetLogicalPosition()} dir={direction} tileSize={tileSize} " +
+            $"solid={bomb.IsSolid} canBeKicked={bomb.CanBeKicked} canBeKickedEarly={bomb.CanBeKickedEarly}",
+            this);
+
+        if (!bomb.CanBeKicked && !bomb.CanBeKickedEarly)
+        {
+            Debug.Log("[BombKickAbility] blocked: bomb rejected by CanBeKicked/CanBeKickedEarly", this);
+            return false;
+        }
 
         LayerMask bombObstacles = obstacleMask | LayerMask.GetMask("Enemy");
 
@@ -107,6 +133,11 @@ public class BombKickAbility : MonoBehaviour, IMovementAbility
             0.90f,
             false
         );
+
+        Debug.Log(
+            $"[BombKickAbility] StartKick result={kicked} bombPos={bomb.GetLogicalPosition()} " +
+            $"solid={bomb.IsSolid} canBeKicked={bomb.CanBeKicked} canBeKickedEarly={bomb.CanBeKickedEarly}",
+            this);
 
         if (!kicked)
             return false;

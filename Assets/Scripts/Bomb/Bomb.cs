@@ -53,6 +53,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
     public bool IsBeingPunched => isPunched;
 
     public bool IsSolid => bombCollider != null && !bombCollider.isTrigger;
+    public bool CanBeKickedEarly => !HasExploded && !isKicked && !isPunched;
     public bool CanBeKicked => !HasExploded && !isKicked && IsSolid && charactersInside.Count == 0;
     public bool CanBePunched => !HasExploded && !isKicked && !isPunched && IsSolid && charactersInside.Count == 0;
     public bool CanBeMagnetPulled => !HasExploded && !IsBeingKicked && !IsBeingPunched && !IsBeingMagnetPulled;
@@ -1024,8 +1025,20 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         float originBlockerSize,
         bool originBlockerUseTrigger)
     {
-        if (!CanBeKicked || direction == Vector2.zero)
+        Debug.Log(
+            $"[Bomb.StartKick] enter bombPos={GetLogicalPosition()} dir={direction} " +
+            $"solid={IsSolid} canBeKicked={CanBeKicked} canBeKickedEarly={CanBeKickedEarly} " +
+            $"charsInside={charactersInside.Count} isKicked={isKicked} hasExploded={HasExploded}",
+            this);
+
+        if ((!CanBeKicked && !CanBeKickedEarly) || direction == Vector2.zero)
+        {
+            Debug.Log(
+                $"[Bomb.StartKick] blocked by initial validation dirZero={direction == Vector2.zero} " +
+                $"canBeKicked={CanBeKicked} canBeKickedEarly={CanBeKickedEarly}",
+                this);
             return false;
+        }
 
         kickDirection = direction.normalized;
         kickTileSize = tileSize;
@@ -1040,8 +1053,13 @@ public class Bomb : MonoBehaviour, IMagnetPullable
 
         Vector2 origin = SnapToGrid(rb.position, tileSize);
 
+        Debug.Log($"[Bomb.StartKick] snapped origin={origin} next={origin + kickDirection * kickTileSize}", this);
+
         if (IsKickBlocked(origin + kickDirection * kickTileSize))
+        {
+            Debug.Log($"[Bomb.StartKick] blocked: IsKickBlocked next={origin + kickDirection * kickTileSize}", this);
             return false;
+        }
 
         currentTileCenter = origin;
         lastPos = origin;
@@ -1055,6 +1073,8 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         isKicked = true;
 
         kickRoutine = StartCoroutine(KickRoutineFixed());
+
+        Debug.Log($"[Bomb.StartKick] SUCCESS origin={origin} dir={kickDirection}", this);
         return true;
     }
 
