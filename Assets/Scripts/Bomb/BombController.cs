@@ -754,6 +754,14 @@ public partial class BombController : MonoBehaviour
 
         if (!controlEnabled)
             bombComponent.BeginFuse();
+
+        // Notifica a BombKickAbility sobre a direção de plantio para evitar chute acidental
+        if (TryGetComponent<BombKickAbility>(out var kickAbility) && kickAbility != null)
+        {
+            var mc = GetComponent<MovementController>();
+            Vector2 plantDir = mc != null ? mc.Direction : Vector2.zero;
+            kickAbility.NotifyBombPlanted(bombComponent, plantDir);
+        }
     }
 
     private bool TryDestroyBombIfOnWater(GameObject bombGo, Vector2 worldPos, bool refund)
@@ -2043,6 +2051,13 @@ public partial class BombController : MonoBehaviour
 
         if (!controlEnabled)
             bombComponent.BeginFuse();
+
+        if (TryGetComponent<BombKickAbility>(out var kickAbility) && kickAbility != null)
+        {
+            var mc = GetComponent<MovementController>();
+            Vector2 plantDir = mc != null ? mc.Direction : Vector2.zero;
+            kickAbility.NotifyBombPlanted(bombComponent, plantDir);
+        }
 
         return true;
     }

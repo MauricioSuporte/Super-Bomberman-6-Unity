@@ -75,6 +75,7 @@ public class BombKickAbility : MonoBehaviour, IMovementAbility
     {
         enabledAbility = false;
         kickedByMe.Clear();
+        _bombPlantDirection.Clear(); // ← ADICIONAR
     }
 
     public bool TryHandleBlockedHit(Collider2D hit, Vector2 direction, float tileSize, LayerMask obstacleMask)
@@ -119,6 +120,21 @@ public class BombKickAbility : MonoBehaviour, IMovementAbility
         {
             Debug.Log("[BombKickAbility] blocked: bomb rejected by CanBeKicked/CanBeKickedEarly", this);
             return false;
+        }
+
+        // Guard: bomba ainda não sólida + plantada nessa mesma direção = sem chute acidental
+        if (!bomb.IsSolid && _bombPlantDirection.TryGetValue(bomb, out var plantDir))
+        {
+            if (Vector2.Dot(plantDir.normalized, direction.normalized) > 0.9f)
+            {
+                Debug.Log(
+                    $"[BombKickAbility] blocked: early-kick guard — plant dir matches kick dir " +
+                    $"plantDir={plantDir} kickDir={direction}", this);
+                return false;
+            }
+
+            // Direção diferente: player virou, remove o guard e libera o chute
+            _bombPlantDirection.Remove(bomb);
         }
 
         LayerMask bombObstacles = obstacleMask | LayerMask.GetMask("Enemy");
@@ -199,10 +215,15 @@ public class BombKickAbility : MonoBehaviour, IMovementAbility
                 toRemove.Add(b);
         }
 
-        for (int i = 0; i < toRemove.Count; i++)
-            kickedByMe.Remove(toRemove[i]);
-
-        ListPool<Bomb>.Release(toRemove);
+        var deadBombs = ListPool<Bomb>.Get();
+        foreach (var b in _bombPlantDirection.Keys)
+        {
+            if (b == null || b.HasExploded || b.IsSolid)
+                deadBombs.Add(b);
+        }
+        for (int i = 0; i < deadBombs.Count; i++)
+            _bombPlantDirection.Remove(deadBombs[i]);
+        ListPool<Bomb>.Release(deadBombs);
     }
 
     private void PlayKick_InterruptPrevious(AudioClip clip, float volume)
@@ -258,5 +279,15 @@ public class BombKickAbility : MonoBehaviour, IMovementAbility
             list.Clear();
             pool.Push(list);
         }
+    }
+
+    // ── ADICIONAR: campo de rastreamento (junto dos outros campos privados) ──
+    private readonly Dictionary<Bomb, Vector2> _bombPlantDirection = new();
+
+    // ── ADICIONAR: chamado pelo BombController logo após plantar ──
+    public void NotifyBombPlanted(Bomb bomb, Vector2 movementDirectionAtPlant)
+    {
+        if (bomb == null) return;
+        _bombPlantDirection[bomb] = movementDirectionAtPlant;
     }
 }
