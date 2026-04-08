@@ -43,6 +43,14 @@ public class MovementController : MonoBehaviour, IKillable
     private Vector2 dualSecondary = Vector2.zero;
     private float dualSwitchTimer = 0f;
 
+    private Vector2 pendingTurnDirection = Vector2.zero;
+
+    [SerializeField] private bool debugSingleTurn;
+    [SerializeField] private bool debugSingleTurnVerbose;
+
+    private Vector2 lockedMovementDirection = Vector2.zero;
+    private Vector2 pendingSingleTurnDirection = Vector2.zero;
+
     [Header("Sprites")]
     public AnimatedSpriteRenderer spriteRendererUp;
     public AnimatedSpriteRenderer spriteRendererDown;
@@ -533,23 +541,14 @@ public class MovementController : MonoBehaviour, IKillable
         bool primaryBlocked = IsMoveBlocked(dualPrimary);
         bool secondaryBlocked = dualSecondary != Vector2.zero && IsMoveBlocked(dualSecondary);
 
-        Vector2 pos = Rigidbody != null ? Rigidbody.position : (Vector2)transform.position;
-
-        LogDualVerbose(
-            $"ResolveDualInputZigZag | pos={pos} | primary={dualPrimary} | secondary={dualSecondary} | " +
-            $"pendingTurn={pendingTurnDirection} | primaryBlocked={primaryBlocked} | secondaryBlocked={secondaryBlocked} | " +
-            $"switchTimer={dualSwitchTimer:F3}");
-
         if (primaryBlocked && secondaryBlocked)
         {
-            LogDual("Ambas direções bloqueadas. Retornando Vector2.zero.");
             pendingTurnDirection = Vector2.zero;
             return Vector2.zero;
         }
 
         if (primaryBlocked && !secondaryBlocked)
         {
-            LogDual($"Primária bloqueada e secundária livre. Trocando eixo imediatamente. primary={dualPrimary} secondary={dualSecondary}");
             DoAxisSwitch();
             pendingTurnDirection = Vector2.zero;
             return dualPrimary;
@@ -571,33 +570,16 @@ public class MovementController : MonoBehaviour, IKillable
         bool exactlyAligned = IsExactlyAlignedForAxisSwap(dualSecondary);
 
         if (nearCentre && pendingTurnDirection == Vector2.zero)
-        {
             pendingTurnDirection = dualSecondary;
-
-            LogDual(
-                $"Entrou na zona de auxílio de curva. " +
-                $"Mantendo movimento no eixo atual até alinhar exatamente. " +
-                $"currentPos={pos} | primary={dualPrimary} | pendingTurn={pendingTurnDirection}");
-        }
 
         if (pendingTurnDirection != Vector2.zero)
         {
             if (exactlyAligned)
             {
-                LogDual(
-                    $"Alinhamento exato atingido. Efetuando troca de eixo. " +
-                    $"currentPos={pos} | oldPrimary={dualPrimary} | oldSecondary={dualSecondary}");
-
                 DoAxisSwitch();
                 pendingTurnDirection = Vector2.zero;
-
-                LogDual($"Troca concluída. newPrimary={dualPrimary} | newSecondary={dualSecondary}");
                 return dualPrimary;
             }
-
-            LogDualVerbose(
-                $"Aguardando alinhamento exato antes de virar. " +
-                $"currentPos={pos} | primary={dualPrimary} | pendingTurn={pendingTurnDirection}");
 
             return dualPrimary;
         }
@@ -895,14 +877,9 @@ public class MovementController : MonoBehaviour, IKillable
 
             bool corridorVertical = (lrRow0 || lrRow1);
 
-            LogDualVerbose(
-                $"TryApplyCorridorAxisLock(H) | pos={position} | cx={cx:F4} | y0={y0:F4} | y1={y1:F4} | " +
-                $"lrRow0={lrRow0} | lrRow1={lrRow1} | corridorVertical={corridorVertical}");
-
             if (!corridorVertical)
                 return false;
 
-            LogDual($"CorridorAxisLock(H) aplicado. SnapAndStop para X. pos={position} target=({cx:F4},{position.y:F4})");
             SnapAndStop(axisX: true, position, new Vector2(cx, position.y), moveSpeed);
             return true;
         }
@@ -914,14 +891,9 @@ public class MovementController : MonoBehaviour, IKillable
 
             bool corridorHorizontal = (udCol0 || udCol1);
 
-            LogDualVerbose(
-                $"TryApplyCorridorAxisLock(V) | pos={position} | cy={cy:F4} | x0={x0:F4} | x1={x1:F4} | " +
-                $"udCol0={udCol0} | udCol1={udCol1} | corridorHorizontal={corridorHorizontal}");
-
             if (!corridorHorizontal)
                 return false;
 
-            LogDual($"CorridorAxisLock(V) aplicado. SnapAndStop para Y. pos={position} target=({position.x:F4},{cy:F4})");
             SnapAndStop(axisX: false, position, new Vector2(position.x, cy), moveSpeed);
             return true;
         }
@@ -931,9 +903,6 @@ public class MovementController : MonoBehaviour, IKillable
 
     private void SnapAndStop(bool axisX, Vector2 currentPos, Vector2 snapTarget, float moveSpeed)
     {
-        LogDual(
-            $"SnapAndStop chamado | axisX={axisX} | currentPos={currentPos} | snapTarget={snapTarget} | moveSpeed={moveSpeed:F4}");
-
         if (Rigidbody != null)
             Rigidbody.linearVelocity = Vector2.zero;
 
@@ -955,7 +924,6 @@ public class MovementController : MonoBehaviour, IKillable
             snappedPos = new Vector2(currentPos.x, newY);
         }
 
-        LogDualVerbose($"SnapAndStop resultado | snappedPos={snappedPos} | snapStep={snapStep:F4}");
         MovePositionPixelPerfect(snappedPos);
     }
 
@@ -1009,29 +977,17 @@ public class MovementController : MonoBehaviour, IKillable
         if (tileSize <= 0.0001f)
             return;
 
-        float alignStep = Mathf.Min(
-            moveSpeed,
-            tileSize * 0.125f
-        );
+        float alignStep = Mathf.Min(moveSpeed, tileSize * 0.125f);
         Vector2 moveDir = direction;
 
         if (axisIsHorizontal)
         {
             float targetY = Mathf.Round(position.y / tileSize) * tileSize;
 
-            LogSingleTurnVerbose(
-                $"AlignPerpendicular(H) | pos={position} | targetY={targetY:F4} | " +
-                $"currentDir={direction} | pendingSingleTurn={pendingSingleTurnDirection} | alignStep={alignStep:F4}");
-
             if (Mathf.Abs(position.y - targetY) <= alignEpsilon)
             {
                 Vector2 snapped = new(position.x, targetY);
-                bool canAlign = CanAlignToPerpendicularTarget(snapped, moveDir);
-
-                LogDualVerbose(
-                    $"AlignPerpendicular(H) já alinhado | snapped={snapped} | canAlign={canAlign}");
-
-                if (canAlign)
+                if (CanAlignToPerpendicularTarget(snapped, moveDir))
                     position.y = targetY;
 
                 return;
@@ -1039,13 +995,8 @@ public class MovementController : MonoBehaviour, IKillable
 
             float newY = Mathf.MoveTowards(position.y, targetY, alignStep);
             Vector2 nextCandidate = new(position.x, newY);
-            bool canMove = CanAlignToPerpendicularTarget(nextCandidate, moveDir);
 
-            LogDualVerbose(
-                $"AlignPerpendicular(H) movendo | fromY={position.y:F4} -> newY={newY:F4} | " +
-                $"nextCandidate={nextCandidate} | canMove={canMove}");
-
-            if (canMove)
+            if (CanAlignToPerpendicularTarget(nextCandidate, moveDir))
                 position.y = newY;
 
             return;
@@ -1053,19 +1004,10 @@ public class MovementController : MonoBehaviour, IKillable
 
         float targetX = Mathf.Round(position.x / tileSize) * tileSize;
 
-        LogSingleTurnVerbose(
-            $"AlignPerpendicular(V) | pos={position} | targetX={targetX:F4} | " +
-            $"currentDir={direction} | pendingSingleTurn={pendingSingleTurnDirection} | alignStep={alignStep:F4}");
-
         if (Mathf.Abs(position.x - targetX) <= alignEpsilon)
         {
             Vector2 snapped = new(targetX, position.y);
-            bool canAlign = CanAlignToPerpendicularTarget(snapped, moveDir);
-
-            LogDualVerbose(
-                $"AlignPerpendicular(V) já alinhado | snapped={snapped} | canAlign={canAlign}");
-
-            if (canAlign)
+            if (CanAlignToPerpendicularTarget(snapped, moveDir))
                 position.x = targetX;
 
             return;
@@ -1073,13 +1015,8 @@ public class MovementController : MonoBehaviour, IKillable
 
         float newX = Mathf.MoveTowards(position.x, targetX, alignStep);
         Vector2 nextCandidate2 = new(newX, position.y);
-        bool canMove2 = CanAlignToPerpendicularTarget(nextCandidate2, moveDir);
 
-        LogDualVerbose(
-            $"AlignPerpendicular(V) movendo | fromX={position.x:F4} -> newX={newX:F4} | " +
-            $"nextCandidate={nextCandidate2} | canMove={canMove2}");
-
-        if (canMove2)
+        if (CanAlignToPerpendicularTarget(nextCandidate2, moveDir))
             position.x = newX;
     }
 
@@ -2494,34 +2431,6 @@ public class MovementController : MonoBehaviour, IKillable
             && Mathf.Abs(worldPos.y - bombPos.y) <= halfTile;
     }
 
-    [Header("Dual-Input Debug")]
-    [SerializeField] private bool debugDualInput;
-    [SerializeField] private bool debugDualInputVerbose;
-
-    private Vector2 pendingTurnDirection = Vector2.zero;
-
-    [SerializeField] private bool debugSingleTurn;
-    [SerializeField] private bool debugSingleTurnVerbose;
-
-    private Vector2 pendingSingleTurnDirection = Vector2.zero;
-    private Vector2 lockedMovementDirection = Vector2.zero;
-
-    private void LogDual(string message)
-    {
-        if (!debugDualInput)
-            return;
-
-        Debug.Log($"[MovementController][DualInput][{name}] {message}", this);
-    }
-
-    private void LogDualVerbose(string message)
-    {
-        if (!debugDualInput || !debugDualInputVerbose)
-            return;
-
-        Debug.Log($"[MovementController][DualInput][{name}] {message}", this);
-    }
-
     private bool IsExactlyAlignedForAxisSwap(Vector2 newDir)
     {
         if (tileSize <= 0.0001f)
@@ -2539,22 +2448,6 @@ public class MovementController : MonoBehaviour, IKillable
             float nearestX = Mathf.Round(pos.x / tileSize) * tileSize;
             return Mathf.Abs(pos.x - nearestX) <= alignEpsilon;
         }
-    }
-
-    private void LogSingleTurn(string message)
-    {
-        if (!debugSingleTurn)
-            return;
-
-        Debug.Log($"[MovementController][SingleTurn][{name}] {message}", this);
-    }
-
-    private void LogSingleTurnVerbose(string message)
-    {
-        if (!debugSingleTurn || !debugSingleTurnVerbose)
-            return;
-
-        Debug.Log($"[MovementController][SingleTurn][{name}] {message}", this);
     }
 
     private void HandleSingleAxisTurn(Vector2 requestedDir)
@@ -2593,16 +2486,8 @@ public class MovementController : MonoBehaviour, IKillable
 
         pendingSingleTurnDirection = requestedDir;
 
-        LogSingleTurnVerbose(
-            $"Curva simples iniciada | currentMove={currentMove} | requestedDir={requestedDir} | " +
-            $"lockedMovementDirection={lockedMovementDirection} | pendingSingleTurnDirection={pendingSingleTurnDirection}");
-
         if (IsExactlyAlignedForAxisSwap(requestedDir))
         {
-            LogSingleTurn(
-                $"Alinhamento exato atingido em curva simples. Virando agora. " +
-                $"requestedDir={requestedDir}");
-
             lockedMovementDirection = requestedDir;
             pendingSingleTurnDirection = Vector2.zero;
             ApplyDirectionFromVector(requestedDir);
@@ -2616,18 +2501,10 @@ public class MovementController : MonoBehaviour, IKillable
 
         if (alignDir != currentMove && IsSingleTurnAlignmentBlocked(alignDir, requestedDir))
         {
-            LogSingleTurn(
-                $"Alinhamento cancelado por caminho bloqueado. " +
-                $"alignDir={alignDir} | currentMove={currentMove} | requestedDir={requestedDir}");
-
             lockedMovementDirection = currentMove;
 
             if (IsMoveBlocked(currentMove))
             {
-                LogSingleTurn(
-                    $"Movimento atual também bloqueado. Parando até surgir caminho válido. " +
-                    $"currentMove={currentMove}");
-
                 ApplyDirectionFromVector(Vector2.zero);
                 return;
             }
@@ -2717,7 +2594,6 @@ public class MovementController : MonoBehaviour, IKillable
             return false;
 
         bool movingHorizontal = Mathf.Abs(dir.x) > 0.01f;
-        bool movingVertical = Mathf.Abs(dir.y) > 0.01f;
 
         float centeredX = Mathf.Round(position.x / tileSize) * tileSize;
         float centeredY = Mathf.Round(position.y / tileSize) * tileSize;
@@ -2738,7 +2614,7 @@ public class MovementController : MonoBehaviour, IKillable
         if (!alreadyAtCurrentTileCenterOnMoveAxis)
             return false;
 
-        Vector2 currentTileCenter = new Vector2(centeredX, centeredY);
+        Vector2 currentTileCenter = new(centeredX, centeredY);
         Vector2 nextTileCenter = currentTileCenter + dir * tileSize;
 
         bool nextBlocked = IsBlockedAtPosition(nextTileCenter, dir);
@@ -2746,18 +2622,10 @@ public class MovementController : MonoBehaviour, IKillable
         if (!nextBlocked)
             return false;
 
-        LogSingleTurnVerbose(
-            $"HardBlockForwardFromTileCenter | pos={position} | currentTileCenter={currentTileCenter} | " +
-            $"nextTileCenter={nextTileCenter} | dir={dir} | pendingSingleTurn={pendingSingleTurnDirection}");
-
         if (pendingSingleTurnDirection != Vector2.zero &&
             IsExactlyAlignedForAxisSwap(pendingSingleTurnDirection) &&
             !IsMoveBlocked(pendingSingleTurnDirection))
         {
-            LogSingleTurn(
-                $"Forward bloqueado no centro do tile, mas há curva pendente válida. " +
-                $"Virando para {pendingSingleTurnDirection}.");
-
             lockedMovementDirection = pendingSingleTurnDirection;
             Vector2 turnDir = pendingSingleTurnDirection;
             pendingSingleTurnDirection = Vector2.zero;
@@ -2765,10 +2633,6 @@ public class MovementController : MonoBehaviour, IKillable
 
             return false;
         }
-
-        LogSingleTurn(
-            $"Forward bloqueado no centro do tile. Mantendo posição sem avançar. " +
-            $"currentTileCenter={currentTileCenter} | nextTileCenter={nextTileCenter} | dir={dir}");
 
         return true;
     }
