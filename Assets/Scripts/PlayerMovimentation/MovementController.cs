@@ -771,6 +771,19 @@ public class MovementController : MonoBehaviour, IKillable
 
         UpdateCurrentAxis(movingHorizontal, movingVertical);
 
+        if (TryKickAdjacentBombFromCurrentTile(position, direction))
+        {
+            Vector2 holdPos = Rigidbody != null ? Rigidbody.position : position;
+            holdPos = QuantizeToPixelGrid(holdPos);
+
+            Debug.Log(
+                $"[MC FixedUpdate AdjKickHandled] holdPos={holdPos} dir={direction}",
+                this);
+
+            MovePositionPixelPerfect(holdPos);
+            return;
+        }
+
         if (ShouldHardBlockForwardFromTileCenter(position))
         {
             MovePositionPixelPerfect(position);
@@ -880,7 +893,7 @@ public class MovementController : MonoBehaviour, IKillable
             if (!corridorVertical)
                 return false;
 
-            SnapAndStop(axisX: true, position, new Vector2(cx, position.y), moveSpeed);
+            SnapAndStop(axisX: false, position, new Vector2(position.x, cy), moveSpeed);
             return true;
         }
 
@@ -894,7 +907,7 @@ public class MovementController : MonoBehaviour, IKillable
             if (!corridorHorizontal)
                 return false;
 
-            SnapAndStop(axisX: false, position, new Vector2(position.x, cy), moveSpeed);
+            SnapAndStop(axisX: true, position, new Vector2(cx, position.y), moveSpeed);
             return true;
         }
 
@@ -951,10 +964,16 @@ public class MovementController : MonoBehaviour, IKillable
 
     private void TrySlideIfBlocked(Vector2 position, float moveSpeed, bool movingHorizontal, bool movingVertical)
     {
+        Debug.Log(
+            $"[MC TrySlideIfBlocked] position={position} moveSpeed={moveSpeed} dir={direction} movingH={movingHorizontal} movingV={movingVertical}",
+            this);
+
         if (movingVertical)
         {
             float centerX = Mathf.Round(position.x / tileSize) * tileSize;
             float offsetX = Mathf.Abs(position.x - centerX);
+
+            Debug.Log($"[MC TrySlideIfBlocked] vertical centerX={centerX} offsetX={offsetX}", this);
 
             if (offsetX > SlideDeadZone)
                 TrySlideHorizontally(position, moveSpeed);
@@ -966,6 +985,8 @@ public class MovementController : MonoBehaviour, IKillable
         {
             float centerY = Mathf.Round(position.y / tileSize) * tileSize;
             float offsetY = Mathf.Abs(position.y - centerY);
+
+            Debug.Log($"[MC TrySlideIfBlocked] horizontal centerY={centerY} offsetY={offsetY}", this);
 
             if (offsetY > SlideDeadZone)
                 TrySlideVertically(position, moveSpeed);
@@ -1126,10 +1147,10 @@ public class MovementController : MonoBehaviour, IKillable
 
     protected bool IsBlocked(Vector2 targetPosition)
     {
-        return IsBlockedAtPosition(targetPosition, direction);
+        return IsBlockedAtPosition(targetPosition, direction, true);
     }
 
-    private bool IsBlockedAtPosition(Vector2 targetPosition, Vector2 dirForSize)
+    private bool IsBlockedAtPosition(Vector2 targetPosition, Vector2 dirForSize, bool allowMovementAbilities = true)
     {
         Vector2 size = GetBlockProbeSize(dirForSize);
 
@@ -1152,13 +1173,16 @@ public class MovementController : MonoBehaviour, IKillable
                 if (canPassDestructibles && hit.CompareTag("Destructibles"))
                     continue;
 
-                for (int i = 0; i < movementAbilities.Length; i++)
+                if (allowMovementAbilities)
                 {
-                    var ability = movementAbilities[i];
-                    if (ability != null && ability.IsEnabled)
+                    for (int i = 0; i < movementAbilities.Length; i++)
                     {
-                        if (ability.TryHandleBlockedHit(hit, dirForSize, tileSize, obstacleMask))
-                            return true;
+                        var ability = movementAbilities[i];
+                        if (ability != null && ability.IsEnabled)
+                        {
+                            if (ability.TryHandleBlockedHit(hit, dirForSize, tileSize, obstacleMask))
+                                return IsBlockedAtPosition(targetPosition, dirForSize, false);
+                        }
                     }
                 }
 
@@ -1193,7 +1217,7 @@ public class MovementController : MonoBehaviour, IKillable
                 {
                     bool nearEdgeForKick = IsNearBombEdgeForEarlyKick(myPos, bombPos, dirForSize);
 
-                    if (nearEdgeForKick && bombCollider != null)
+                    if (allowMovementAbilities && nearEdgeForKick && bombCollider != null)
                     {
                         for (int i = 0; i < movementAbilities.Length; i++)
                         {
@@ -1201,7 +1225,7 @@ public class MovementController : MonoBehaviour, IKillable
                             if (ability != null && ability.IsEnabled)
                             {
                                 if (ability.TryHandleBlockedHit(bombCollider, dirForSize, tileSize, obstacleMask))
-                                    return true;
+                                    return IsBlockedAtPosition(targetPosition, dirForSize, false);
                             }
                         }
                     }
@@ -1209,12 +1233,9 @@ public class MovementController : MonoBehaviour, IKillable
                     continue;
                 }
 
-                // Caso especial:
-                // player já saiu da footprint da bomba, mas está bloqueado ao tentar entrar de volta.
-                // Aqui também pode virar chute, se estiver na borda correta.
                 bool nearReentryKickEdge = IsNearBombReentryKickEdge(myPos, bombPos, dirForSize);
 
-                if (nearReentryKickEdge && bombCollider != null)
+                if (allowMovementAbilities && nearReentryKickEdge && bombCollider != null)
                 {
                     for (int i = 0; i < movementAbilities.Length; i++)
                     {
@@ -1222,7 +1243,7 @@ public class MovementController : MonoBehaviour, IKillable
                         if (ability != null && ability.IsEnabled)
                         {
                             if (ability.TryHandleBlockedHit(bombCollider, dirForSize, tileSize, obstacleMask))
-                                return true;
+                                return IsBlockedAtPosition(targetPosition, dirForSize, false);
                         }
                     }
                 }
@@ -2101,12 +2122,12 @@ public class MovementController : MonoBehaviour, IKillable
             return true;
 
         Vector2 ahead = pos + moveDir.normalized * (tileSize * 0.5f);
-        return !IsBlockedAtPosition(ahead, moveDir);
+        return !IsBlockedAtPosition(ahead, moveDir, false);
     }
 
     protected bool CanAlignToPerpendicularTarget(Vector2 candidatePos, Vector2 moveDir)
     {
-        if (IsBlockedAtPosition(candidatePos, moveDir))
+        if (IsBlockedAtPosition(candidatePos, moveDir, false))
             return false;
 
         if (!IsForwardOpen(candidatePos, moveDir))
@@ -2126,7 +2147,7 @@ public class MovementController : MonoBehaviour, IKillable
         float halfStep = tileSize * 0.5f;
         Vector2 probe = pos + dir * halfStep;
 
-        return IsBlockedAtPosition(probe, dir);
+        return IsBlockedAtPosition(probe, dir, true);
     }
 
     protected bool IsMoveOpen(Vector2 dir) => !IsMoveBlocked(dir);
@@ -2344,7 +2365,13 @@ public class MovementController : MonoBehaviour, IKillable
         if (Rigidbody == null)
             return;
 
-        Rigidbody.MovePosition(QuantizeToPixelGrid(worldPos));
+        Vector2 quantized = QuantizeToPixelGrid(worldPos);
+
+        Debug.Log(
+            $"[MC MovePositionPixelPerfect] currentRbPos={Rigidbody.position} target={worldPos} quantized={quantized} dir={direction}",
+            this);
+
+        Rigidbody.MovePosition(quantized);
     }
 
     public void SetExternalMovementOverride(bool active)
@@ -2577,7 +2604,7 @@ public class MovementController : MonoBehaviour, IKillable
         if (IsMoveBlocked(alignDir))
             return true;
 
-        if (IsBlockedAtPosition(alignTarget, alignDir))
+        if (IsBlockedAtPosition(alignTarget, alignDir, false))
             return true;
 
         if (!CanAlignToPerpendicularTarget(alignTarget, requestedTurnDir))
@@ -2654,7 +2681,7 @@ public class MovementController : MonoBehaviour, IKillable
         Vector2 currentTileCenter = new(centeredX, centeredY);
         Vector2 nextTileCenter = currentTileCenter + dir * tileSize;
 
-        bool nextBlocked = IsBlockedAtPosition(nextTileCenter, dir);
+        bool nextBlocked = IsBlockedAtPosition(nextTileCenter, dir, false);
 
         if (!nextBlocked)
             return false;
@@ -2740,6 +2767,79 @@ public class MovementController : MonoBehaviour, IKillable
 
             // Tentando entrar acima da bomba
             return dy <= -(half - edgeBand);
+        }
+
+        return false;
+    }
+
+    private bool TryKickAdjacentBombFromCurrentTile(Vector2 position, Vector2 moveDir)
+    {
+        if (moveDir == Vector2.zero)
+            return false;
+
+        if (movementAbilities == null || movementAbilities.Length == 0)
+            return false;
+
+        Vector2 dir = NormalizeCardinal(moveDir);
+        if (dir == Vector2.zero)
+            return false;
+
+        Vector2 snappedCurrentTile = new Vector2(
+            Mathf.Round(position.x / tileSize) * tileSize,
+            Mathf.Round(position.y / tileSize) * tileSize
+        );
+
+        Vector2 targetTileCenter = snappedCurrentTile + dir * tileSize;
+
+        Debug.Log(
+            $"[MC AdjKick Logical] pos={position} snappedCurrentTile={snappedCurrentTile} dir={dir} targetTileCenter={targetTileCenter}",
+            this);
+
+        for (int b = 0; b < Bomb.ActiveBombs.Count; b++)
+        {
+            // HashSet não indexa; então este loop não serve.
+        }
+
+        foreach (var bomb in Bomb.ActiveBombs)
+        {
+            if (bomb == null || bomb.HasExploded)
+                continue;
+
+            if (bomb.IsBeingKicked || bomb.IsBeingPunched)
+                continue;
+
+            Vector2 bombPos = bomb.GetLogicalPosition();
+
+            if (Vector2.Distance(bombPos, targetTileCenter) > 0.05f)
+                continue;
+
+            var bombCollider = bomb.GetComponent<Collider2D>();
+            if (bombCollider == null)
+                continue;
+
+            Debug.Log(
+                $"[MC AdjKick Logical] candidate bombPos={bombPos} playerPos={position} snappedCurrentTile={snappedCurrentTile} dir={dir}",
+                this);
+
+            for (int i = 0; i < movementAbilities.Length; i++)
+            {
+                var ability = movementAbilities[i];
+                if (ability == null || !ability.IsEnabled)
+                    continue;
+
+                bool handled = ability.TryHandleBlockedHit(bombCollider, dir, tileSize, obstacleMask);
+
+                Debug.Log(
+                    $"[MC AdjKick Logical] ability={ability.GetType().Name} handled={handled} " +
+                    $"playerPosAfterAbility={(Rigidbody != null ? Rigidbody.position : (Vector2)transform.position)} " +
+                    $"bombPosAfterAbility={bomb.GetLogicalPosition()}",
+                    this);
+
+                if (handled)
+                    return true;
+            }
+
+            return false;
         }
 
         return false;
