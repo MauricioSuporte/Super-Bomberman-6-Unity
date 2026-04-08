@@ -738,6 +738,12 @@ public class MovementController : MonoBehaviour, IKillable
             if (canPassDestructibles && hit.CompareTag("Destructibles"))
                 continue;
 
+            // ← ADICIONAR AQUI:
+            // Ignorar filhos da bomba recém-chutada (ex: KickBombOriginBlocker)
+            if (_lastAdjKickedBomb != null && _lastAdjKickedBomb.IsBeingKicked
+                && hit.transform.IsChildOf(_lastAdjKickedBomb.transform))
+                continue;
+
             if (hit.gameObject.layer == LayerMask.NameToLayer("Bomb"))
             {
                 var bomb = hit.GetComponent<Bomb>();
@@ -759,6 +765,10 @@ public class MovementController : MonoBehaviour, IKillable
     {
         if (ShouldSkipFixedUpdate())
             return;
+
+        // Limpa referência da bomba adj-kicked assim que ela para de ser chutada
+        if (_lastAdjKickedBomb != null && !_lastAdjKickedBomb.IsBeingKicked)
+            _lastAdjKickedBomb = null;
 
         float rawMoveWorld = GetRawMoveWorldPerFixedFrame();
         float moveWorld = GetQuantizedMoveWorldPerFixedFrame(direction, rawMoveWorld);
@@ -1173,6 +1183,12 @@ public class MovementController : MonoBehaviour, IKillable
                 if (canPassDestructibles && hit.CompareTag("Destructibles"))
                     continue;
 
+                // ← ADICIONAR AQUI:
+                // Ignorar filhos da bomba recém-chutada (ex: KickBombOriginBlocker)
+                if (_lastAdjKickedBomb != null && _lastAdjKickedBomb.IsBeingKicked
+                    && hit.transform.IsChildOf(_lastAdjKickedBomb.transform))
+                    continue;
+
                 if (allowMovementAbilities)
                 {
                     for (int i = 0; i < movementAbilities.Length; i++)
@@ -1233,6 +1249,11 @@ public class MovementController : MonoBehaviour, IKillable
                     continue;
                 }
 
+                // Se esta é a bomba que acabamos de chutar via AdjKick e ela ainda está sendo
+                // chutada, o player não deve ser bloqueado por ela — ela está saindo do tile.
+                if (bomb == _lastAdjKickedBomb && bomb.IsBeingKicked)
+                    continue;
+
                 bool nearReentryKickEdge = IsNearBombReentryKickEdge(myPos, bombPos, dirForSize);
 
                 if (allowMovementAbilities && nearReentryKickEdge && bombCollider != null)
@@ -1247,6 +1268,70 @@ public class MovementController : MonoBehaviour, IKillable
                         }
                     }
                 }
+
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private bool IsBlockedAtPositionIgnoringBomb(Vector2 targetPosition, Vector2 dirForSize, Bomb ignoreBomb)
+    {
+        Vector2 size = GetBlockProbeSize(dirForSize);
+
+        Collider2D[] hits = Physics2D.OverlapBoxAll(targetPosition, size, 0f, obstacleMask);
+        if (hits != null && hits.Length > 0)
+        {
+            bool canPassDestructibles = abilitySystem != null &&
+                                       abilitySystem.IsEnabled(DestructiblePassAbility.AbilityId);
+
+            for (int h = 0; h < hits.Length; h++)
+            {
+                var hit = hits[h];
+                if (hit == null) continue;
+                if (hit.gameObject == gameObject) continue;
+                if (hit.isTrigger) continue;
+
+                if (canPassTaggedObstacles && hit.CompareTag(passObstacleTag))
+                    continue;
+
+                if (canPassDestructibles && hit.CompareTag("Destructibles"))
+                    continue;
+
+                // Ignorar a bomba recém-chutada e todos os seus filhos (ex: KickBombOriginBlocker)
+                if (ignoreBomb != null && hit.transform.IsChildOf(ignoreBomb.transform))
+                    continue;
+
+                return true;
+            }
+        }
+
+        bool hasBombPass = abilitySystem != null && abilitySystem.IsEnabled(BombPassAbility.AbilityId);
+        if (!hasBombPass)
+        {
+            Vector2 myPos = Rigidbody != null ? Rigidbody.position : (Vector2)transform.position;
+
+            foreach (var bomb in Bomb.ActiveBombs)
+            {
+                if (bomb == null || bomb.HasExploded)
+                    continue;
+
+                // Ignorar a bomba recém-chutada
+                if (bomb == ignoreBomb)
+                    continue;
+
+                if (bomb.IsSolid)
+                    continue;
+
+                Vector2 bombPos = bomb.GetLogicalPosition();
+
+                if (!IsInsideBombTileFootprint(targetPosition, bombPos))
+                    continue;
+
+                bool overlapsCurrent = IsInsideBombTileFootprint(myPos, bombPos);
+                if (overlapsCurrent)
+                    continue;
 
                 return true;
             }
@@ -2683,6 +2768,11 @@ public class MovementController : MonoBehaviour, IKillable
 
         bool nextBlocked = IsBlockedAtPosition(nextTileCenter, dir, false);
 
+        // Se o único bloqueio é a bomba que acabamos de chutar (ainda em trânsito),
+        // não bloquear o player — ela está saindo desse tile.
+        if (nextBlocked && _lastAdjKickedBomb != null && _lastAdjKickedBomb.IsBeingKicked)
+            nextBlocked = IsBlockedAtPositionIgnoringBomb(nextTileCenter, dir, _lastAdjKickedBomb);
+
         if (!nextBlocked)
             return false;
 
@@ -2703,6 +2793,9 @@ public class MovementController : MonoBehaviour, IKillable
 
     [Header("Bomb Early Kick")]
     [SerializeField, Range(0.01f, 0.49f)] private float earlyKickEdgeThreshold = 0.22f;
+
+    // ← ADICIONAR ISTO:
+    private Bomb _lastAdjKickedBomb;
 
     private bool IsNearBombEdgeForEarlyKick(Vector2 playerPos, Vector2 bombPos, Vector2 moveDir)
     {
@@ -2836,7 +2929,10 @@ public class MovementController : MonoBehaviour, IKillable
                     this);
 
                 if (handled)
+                {
+                    _lastAdjKickedBomb = bomb;
                     return true;
+                }
             }
 
             return false;
