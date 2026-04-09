@@ -2870,15 +2870,17 @@ public class MovementController : MonoBehaviour, IKillable
 
     private bool TryKickAdjacentBombFromCurrentTile(Vector2 position, Vector2 moveDir)
     {
-        if (moveDir == Vector2.zero)
-            return false;
-
-        if (movementAbilities == null || movementAbilities.Length == 0)
-            return false;
+        if (moveDir == Vector2.zero) return false;
+        if (movementAbilities == null || movementAbilities.Length == 0) return false;
 
         Vector2 dir = NormalizeCardinal(moveDir);
-        if (dir == Vector2.zero)
-            return false;
+        if (dir == Vector2.zero) return false;
+
+        for (int i = 0; i < movementAbilities.Length; i++)
+        {
+            if (movementAbilities[i] is BombKickAbility kickAbility && kickAbility.IsEnabled)
+                kickAbility.NotifyOwnerDirectionChanged(dir);
+        }
 
         Vector2 snappedCurrentTile = new Vector2(
             Mathf.Round(position.x / tileSize) * tileSize,

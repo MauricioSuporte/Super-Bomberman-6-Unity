@@ -85,24 +85,14 @@ public class BombKickAbility : MonoBehaviour, IMovementAbility
 
     public bool TryHandleBlockedHit(Collider2D hit, Vector2 direction, float tileSize, LayerMask obstacleMask)
     {
-        if (!enabledAbility)
-            return false;
-
-        if (hit == null)
-            return false;
-
-        if (hit.gameObject.layer != LayerMask.NameToLayer("Bomb"))
-            return false;
+        if (!enabledAbility) return false;
+        if (hit == null) return false;
+        if (hit.gameObject.layer != LayerMask.NameToLayer("Bomb")) return false;
 
         var bomb = hit.GetComponent<Bomb>();
-        if (bomb == null)
-            return false;
-
-        if (bomb.IsBeingKicked)
-            return false;
-
-        if (!bomb.CanBeKicked && !bomb.CanBeKickedEarly)
-            return false;
+        if (bomb == null) return false;
+        if (bomb.IsBeingKicked) return false;
+        if (!bomb.CanBeKicked && !bomb.CanBeKickedEarly) return false;
 
         direction = direction.normalized;
 
@@ -112,13 +102,13 @@ public class BombKickAbility : MonoBehaviour, IMovementAbility
 
             if (!_bombEarlyKickUnlocked.Contains(bomb))
             {
-                // Enquanto não houve inversão real antes, não libera early kick.
-                return false;
+                if (Vector2.Dot(plantDir, direction) < -0.9f)
+                    _bombEarlyKickUnlocked.Add(bomb);
+                else
+                    return false;
             }
-
-            // Depois de destravar, só libera quando voltar para a direção original do plantio.
-            if (Vector2.Dot(plantDir, direction) <= 0.9f)
-                return false;
+            // Se chegou aqui, a bomba está desbloqueada para early kick.
+            // Não há mais filtro de direção — o player inverteu, pode chutar.
         }
 
         LayerMask bombObstacles = obstacleMask | LayerMask.GetMask("Enemy");
