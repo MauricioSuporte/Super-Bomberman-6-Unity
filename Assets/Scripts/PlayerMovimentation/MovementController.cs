@@ -2868,79 +2868,106 @@ public class MovementController : MonoBehaviour, IKillable
         return false;
     }
 
-    private bool TryKickAdjacentBombFromCurrentTile(Vector2 position, Vector2 moveDir)
+    private bool TryKickAdjacentBombFromCurrentTile(Vector2 position, Vector2 direction)
     {
-        if (moveDir == Vector2.zero)
+        if (direction == Vector2.zero)
             return false;
 
-        if (movementAbilities == null || movementAbilities.Length == 0)
+        if (!TryGetComponent<BombKickAbility>(out var kickAbility) || kickAbility == null || !kickAbility.IsEnabled)
             return false;
 
-        Vector2 dir = NormalizeCardinal(moveDir);
-        if (dir == Vector2.zero)
-            return false;
+        float tile = tileSize > 0.0001f ? tileSize : 1f;
 
         Vector2 snappedCurrentTile = new Vector2(
-            Mathf.Round(position.x / tileSize) * tileSize,
-            Mathf.Round(position.y / tileSize) * tileSize
+            Mathf.Round(position.x / tile) * tile,
+            Mathf.Round(position.y / tile) * tile
         );
 
-        Vector2 targetTileCenter = snappedCurrentTile + dir * tileSize;
+        Vector2 dir = direction.normalized;
+        Vector2 targetTileCenter = snappedCurrentTile + dir * tile;
 
         Debug.Log(
             $"[MC AdjKick Logical] pos={position} snappedCurrentTile={snappedCurrentTile} dir={dir} targetTileCenter={targetTileCenter}",
             this);
 
-        for (int b = 0; b < Bomb.ActiveBombs.Count; b++)
+        int bombLayer = LayerMask.NameToLayer("Bomb");
+        if (bombLayer < 0)
+            return false;
+
+        int bombMask = 1 << bombLayer;
+
+        // 1) Caso especial: bomba no tile atual.
+        // Isso cobre o cenário em que o player planta quase saindo do tile,
+        // volta para ele e precisa executar o early kick ao sair.
+        Collider2D currentTileBombHit = Physics2D.OverlapBox(
+            snappedCurrentTile,
+            Vector2.one * (tile * 0.6f),
+            0f,
+            bombMask
+        );
+
+        if (currentTileBombHit != null)
         {
-            // HashSet não indexa; então este loop não serve.
-        }
+            Bomb currentTileBomb = currentTileBombHit.GetComponent<Bomb>();
+            if (currentTileBomb == null && currentTileBombHit.attachedRigidbody != null)
+                currentTileBomb = currentTileBombHit.attachedRigidbody.GetComponent<Bomb>();
 
-        foreach (var bomb in Bomb.ActiveBombs)
-        {
-            if (bomb == null || bomb.HasExploded)
-                continue;
-
-            if (bomb.IsBeingKicked || bomb.IsBeingPunched)
-                continue;
-
-            Vector2 bombPos = bomb.GetLogicalPosition();
-
-            if (Vector2.Distance(bombPos, targetTileCenter) > 0.05f)
-                continue;
-
-            var bombCollider = bomb.GetComponent<Collider2D>();
-            if (bombCollider == null)
-                continue;
-
-            Debug.Log(
-                $"[MC AdjKick Logical] candidate bombPos={bombPos} playerPos={position} snappedCurrentTile={snappedCurrentTile} dir={dir}",
-                this);
-
-            for (int i = 0; i < movementAbilities.Length; i++)
+            if (currentTileBomb != null)
             {
-                var ability = movementAbilities[i];
-                if (ability == null || !ability.IsEnabled)
-                    continue;
-
-                bool handled = ability.TryHandleBlockedHit(bombCollider, dir, tileSize, obstacleMask);
+                bool handledCurrentTile = kickAbility.TryHandleBombOnCurrentTile(
+                    currentTileBomb,
+                    dir,
+                    tile,
+                    obstacleMask
+                );
 
                 Debug.Log(
-                    $"[MC AdjKick Logical] ability={ability.GetType().Name} handled={handled} " +
-                    $"playerPosAfterAbility={(Rigidbody != null ? Rigidbody.position : (Vector2)transform.position)} " +
-                    $"bombPosAfterAbility={bomb.GetLogicalPosition()}",
+                    $"[MC AdjKick Logical] currentTileBombPos={currentTileBomb.GetLogicalPosition()} " +
+                    $"playerPos={position} snappedCurrentTile={snappedCurrentTile} dir={dir} handledCurrentTile={handledCurrentTile}",
                     this);
 
-                if (handled)
+                if (handledCurrentTile)
                 {
-                    _lastAdjKickedBomb = bomb;
+                    _lastAdjKickedBomb = currentTileBomb;
                     return true;
                 }
             }
-
-            return false;
         }
 
-        return false;
+        // 2) Caso normal: bomba adjacente no tile à frente
+        Collider2D hit = Physics2D.OverlapBox(
+            targetTileCenter,
+            Vector2.one * (tile * 0.6f),
+            0f,
+            bombMask
+        );
+
+        if (hit == null)
+            return false;
+
+        Bomb bomb = hit.GetComponent<Bomb>();
+        if (bomb == null && hit.attachedRigidbody != null)
+            bomb = hit.attachedRigidbody.GetComponent<Bomb>();
+
+        if (bomb == null)
+            return false;
+
+        Debug.Log(
+            $"[MC AdjKick Logical] candidate bombPos={bomb.GetLogicalPosition()} playerPos={position} " +
+            $"snappedCurrentTile={snappedCurrentTile} dir={dir}",
+            this);
+
+        bool handled = kickAbility.TryHandleBlockedHit(hit, dir, tile, obstacleMask);
+
+        Debug.Log(
+            $"[MC AdjKick Logical] ability={nameof(BombKickAbility)} handled={handled} " +
+            $"playerPosAfterAbility={position} bombPosAfterAbility={bomb.GetLogicalPosition()}",
+            this);
+
+        if (!handled)
+            return false;
+
+        _lastAdjKickedBomb = bomb;
+        return true;
     }
 }

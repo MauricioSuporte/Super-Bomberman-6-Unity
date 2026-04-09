@@ -106,20 +106,8 @@ public class BombKickAbility : MonoBehaviour, IMovementAbility
 
         direction = direction.normalized;
 
-        if (!bomb.IsSolid && _bombPlantDirection.TryGetValue(bomb, out var plantDir))
-        {
-            plantDir = plantDir.normalized;
-
-            if (!_bombEarlyKickUnlocked.Contains(bomb))
-            {
-                // Enquanto não houve inversão real antes, não libera early kick.
-                return false;
-            }
-
-            // Depois de destravar, só libera quando voltar para a direção original do plantio.
-            if (Vector2.Dot(plantDir, direction) <= 0.9f)
-                return false;
-        }
+        if (!CanUseEarlyKick(bomb, direction, out _))
+            return false;
 
         LayerMask bombObstacles = obstacleMask | LayerMask.GetMask("Enemy");
 
@@ -320,7 +308,6 @@ public class BombKickAbility : MonoBehaviour, IMovementAbility
             if (bomb == null || bomb.HasExploded || bomb.IsSolid || bomb.IsBeingKicked)
                 continue;
 
-            // Só destrava quando o player realmente inverter para a direção oposta.
             if (Vector2.Dot(plantDir, newDirection) < -0.9f)
                 bombsToUnlock.Add(bomb);
         }
@@ -329,5 +316,77 @@ public class BombKickAbility : MonoBehaviour, IMovementAbility
             _bombEarlyKickUnlocked.Add(bombsToUnlock[i]);
 
         ListPool<Bomb>.Release(bombsToUnlock);
+    }
+
+    public bool TryHandleBombOnCurrentTile(Bomb bomb, Vector2 direction, float tileSize, LayerMask obstacleMask)
+    {
+        if (!enabledAbility || bomb == null)
+            return false;
+
+        if (bomb.IsBeingKicked)
+            return false;
+
+        if (!bomb.CanBeKicked && !bomb.CanBeKickedEarly)
+            return false;
+
+        direction = direction.normalized;
+
+        if (!CanUseEarlyKick(bomb, direction, out _))
+            return false;
+
+        LayerMask bombObstacles = obstacleMask | LayerMask.GetMask("Enemy");
+
+        bool kicked = bomb.StartKick(
+            direction,
+            tileSize,
+            bombObstacles,
+            bombController != null ? bombController.destructibleTiles : null,
+            LayerMask.GetMask("Player", "Stage", "Bomb", "Enemy", "Louie"),
+            0.60f,
+            0.90f,
+            false
+        );
+
+        if (!kicked)
+            return false;
+
+        kickedByMe.Add(bomb);
+        _bombPlantDirection.Remove(bomb);
+        _bombEarlyKickUnlocked.Remove(bomb);
+
+        PlayKick_InterruptPrevious(cachedKickClip, 1f);
+
+        return true;
+    }
+
+    private bool CanUseEarlyKick(Bomb bomb, Vector2 direction, out Vector2 plantDir)
+    {
+        plantDir = Vector2.zero;
+
+        if (bomb == null || bomb.IsSolid)
+            return true;
+
+        if (!_bombPlantDirection.TryGetValue(bomb, out plantDir))
+            return true;
+
+        plantDir = plantDir.normalized;
+        direction = direction.normalized;
+
+        float dot = Vector2.Dot(plantDir, direction);
+
+        // Mesmo sentido do plantio: só libera se já houve reversão antes.
+        if (dot > 0.9f)
+            return _bombEarlyKickUnlocked.Contains(bomb);
+
+        // Sentido oposto ao plantio: libera imediatamente
+        // e já marca como desbloqueado para permitir a volta depois.
+        if (dot < -0.9f)
+        {
+            _bombEarlyKickUnlocked.Add(bomb);
+            return true;
+        }
+
+        // Perpendicular continua bloqueado para evitar chute estranho.
+        return false;
     }
 }
