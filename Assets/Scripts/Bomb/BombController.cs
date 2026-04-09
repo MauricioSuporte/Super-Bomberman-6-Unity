@@ -755,11 +755,20 @@ public partial class BombController : MonoBehaviour
         if (!controlEnabled)
             bombComponent.BeginFuse();
 
-        // Notifica a BombKickAbility sobre a direção de plantio para evitar chute acidental
         if (TryGetComponent<BombKickAbility>(out var kickAbility) && kickAbility != null)
         {
-            var mc = GetComponent<MovementController>();
-            Vector2 plantDir = mc != null ? mc.Direction : Vector2.zero;
+            Vector2 plantDir = Vector2.zero;
+
+            if (movement != null)
+            {
+                if (movement.Direction != Vector2.zero)
+                    plantDir = movement.Direction.normalized;
+                else if (movement.FacingDirection != Vector2.zero)
+                    plantDir = movement.FacingDirection.normalized;
+                else
+                    plantDir = Vector2.down;
+            }
+
             kickAbility.NotifyBombPlanted(bombComponent, plantDir);
         }
     }

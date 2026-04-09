@@ -633,6 +633,9 @@ public class MovementController : MonoBehaviour, IKillable
         if (dir != Vector2.zero)
             SetFacingDirection(dir, "ApplyDirectionFromVector");
 
+        if (dir != Vector2.zero && TryGetComponent<BombKickAbility>(out var kickAbility) && kickAbility != null)
+            kickAbility.NotifyOwnerDirectionChanged(dir);
+
         if (externalVisualSuppressed || visualOverrideActive)
             return;
 

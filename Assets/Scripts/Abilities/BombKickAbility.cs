@@ -25,6 +25,9 @@ public class BombKickAbility : MonoBehaviour, IMovementAbility
     private MovementController movement;
 
     private readonly HashSet<Bomb> kickedByMe = new();
+    private readonly Dictionary<Bomb, Vector2> _bombPlantDirection = new();
+    private readonly HashSet<Bomb> _bombEarlyKickUnlocked = new();
+    private Vector2 _lastOwnerDirection = Vector2.zero;
 
     public string Id => AbilityId;
     public bool IsEnabled => enabledAbility;
@@ -75,66 +78,47 @@ public class BombKickAbility : MonoBehaviour, IMovementAbility
     {
         enabledAbility = false;
         kickedByMe.Clear();
-        _bombPlantDirection.Clear(); // ← ADICIONAR
+        _bombPlantDirection.Clear();
+        _bombEarlyKickUnlocked.Clear();
+        _lastOwnerDirection = Vector2.zero;
     }
 
     public bool TryHandleBlockedHit(Collider2D hit, Vector2 direction, float tileSize, LayerMask obstacleMask)
     {
         if (!enabledAbility)
-        {
-            Debug.Log("[BombKickAbility] blocked: ability disabled", this);
             return false;
-        }
 
         if (hit == null)
-        {
-            Debug.Log("[BombKickAbility] blocked: hit null", this);
             return false;
-        }
 
         if (hit.gameObject.layer != LayerMask.NameToLayer("Bomb"))
-        {
-            Debug.Log($"[BombKickAbility] blocked: hit layer is not Bomb, layer={hit.gameObject.layer}", this);
             return false;
-        }
 
         var bomb = hit.GetComponent<Bomb>();
         if (bomb == null)
-        {
-            Debug.Log("[BombKickAbility] blocked: collider has no Bomb component", this);
             return false;
-        }
 
         if (bomb.IsBeingKicked)
-        {
-            Debug.Log($"[BombKickAbility] blocked: bomb already being kicked bombPos={bomb.GetLogicalPosition()}", this);
             return false;
-        }
-
-        Debug.Log(
-            $"[BombKickAbility] trying kick bombPos={bomb.GetLogicalPosition()} dir={direction} tileSize={tileSize} " +
-            $"solid={bomb.IsSolid} canBeKicked={bomb.CanBeKicked} canBeKickedEarly={bomb.CanBeKickedEarly}",
-            this);
 
         if (!bomb.CanBeKicked && !bomb.CanBeKickedEarly)
-        {
-            Debug.Log("[BombKickAbility] blocked: bomb rejected by CanBeKicked/CanBeKickedEarly", this);
             return false;
-        }
 
-        // Guard: bomba ainda não sólida + plantada nessa mesma direção = sem chute acidental
+        direction = direction.normalized;
+
         if (!bomb.IsSolid && _bombPlantDirection.TryGetValue(bomb, out var plantDir))
         {
-            if (Vector2.Dot(plantDir.normalized, direction.normalized) > 0.9f)
+            plantDir = plantDir.normalized;
+
+            if (!_bombEarlyKickUnlocked.Contains(bomb))
             {
-                Debug.Log(
-                    $"[BombKickAbility] blocked: early-kick guard — plant dir matches kick dir " +
-                    $"plantDir={plantDir} kickDir={direction}", this);
+                // Enquanto não houve inversão real antes, não libera early kick.
                 return false;
             }
 
-            // Direção diferente: player virou, remove o guard e libera o chute
-            _bombPlantDirection.Remove(bomb);
+            // Depois de destravar, só libera quando voltar para a direção original do plantio.
+            if (Vector2.Dot(plantDir, direction) <= 0.9f)
+                return false;
         }
 
         LayerMask bombObstacles = obstacleMask | LayerMask.GetMask("Enemy");
@@ -150,15 +134,12 @@ public class BombKickAbility : MonoBehaviour, IMovementAbility
             false
         );
 
-        Debug.Log(
-            $"[BombKickAbility] StartKick result={kicked} bombPos={bomb.GetLogicalPosition()} " +
-            $"solid={bomb.IsSolid} canBeKicked={bomb.CanBeKicked} canBeKickedEarly={bomb.CanBeKickedEarly}",
-            this);
-
         if (!kicked)
             return false;
 
         kickedByMe.Add(bomb);
+        _bombPlantDirection.Remove(bomb);
+        _bombEarlyKickUnlocked.Remove(bomb);
 
         PlayKick_InterruptPrevious(cachedKickClip, 1f);
 
@@ -204,25 +185,36 @@ public class BombKickAbility : MonoBehaviour, IMovementAbility
 
     private void PruneKickedSet()
     {
-        if (kickedByMe.Count == 0)
-            return;
-
-        var toRemove = ListPool<Bomb>.Get();
-
-        foreach (var b in kickedByMe)
+        if (kickedByMe.Count > 0)
         {
-            if (b == null || !b.IsBeingKicked)
-                toRemove.Add(b);
+            var toRemove = ListPool<Bomb>.Get();
+
+            foreach (var b in kickedByMe)
+            {
+                if (b == null || !b.IsBeingKicked)
+                    toRemove.Add(b);
+            }
+
+            for (int i = 0; i < toRemove.Count; i++)
+                kickedByMe.Remove(toRemove[i]);
+
+            ListPool<Bomb>.Release(toRemove);
         }
 
         var deadBombs = ListPool<Bomb>.Get();
+
         foreach (var b in _bombPlantDirection.Keys)
         {
-            if (b == null || b.HasExploded || b.IsSolid)
+            if (b == null || b.HasExploded || b.IsSolid || b.IsBeingKicked)
                 deadBombs.Add(b);
         }
+
         for (int i = 0; i < deadBombs.Count; i++)
+        {
             _bombPlantDirection.Remove(deadBombs[i]);
+            _bombEarlyKickUnlocked.Remove(deadBombs[i]);
+        }
+
         ListPool<Bomb>.Release(deadBombs);
     }
 
@@ -281,13 +273,61 @@ public class BombKickAbility : MonoBehaviour, IMovementAbility
         }
     }
 
-    // ── ADICIONAR: campo de rastreamento (junto dos outros campos privados) ──
-    private readonly Dictionary<Bomb, Vector2> _bombPlantDirection = new();
-
-    // ── ADICIONAR: chamado pelo BombController logo após plantar ──
     public void NotifyBombPlanted(Bomb bomb, Vector2 movementDirectionAtPlant)
     {
-        if (bomb == null) return;
+        if (bomb == null)
+            return;
+
+        if (movementDirectionAtPlant == Vector2.zero)
+        {
+            if (movement != null && movement.FacingDirection != Vector2.zero)
+                movementDirectionAtPlant = movement.FacingDirection.normalized;
+            else
+                movementDirectionAtPlant = Vector2.down;
+        }
+        else
+        {
+            movementDirectionAtPlant = movementDirectionAtPlant.normalized;
+        }
+
         _bombPlantDirection[bomb] = movementDirectionAtPlant;
+        _bombEarlyKickUnlocked.Remove(bomb);
+        _lastOwnerDirection = movementDirectionAtPlant;
+    }
+
+    public void NotifyOwnerDirectionChanged(Vector2 newDirection)
+    {
+        if (newDirection == Vector2.zero)
+            return;
+
+        newDirection = newDirection.normalized;
+
+        if (_lastOwnerDirection == newDirection)
+            return;
+
+        _lastOwnerDirection = newDirection;
+
+        if (_bombPlantDirection.Count == 0)
+            return;
+
+        var bombsToUnlock = ListPool<Bomb>.Get();
+
+        foreach (var kv in _bombPlantDirection)
+        {
+            var bomb = kv.Key;
+            var plantDir = kv.Value.normalized;
+
+            if (bomb == null || bomb.HasExploded || bomb.IsSolid || bomb.IsBeingKicked)
+                continue;
+
+            // Só destrava quando o player realmente inverter para a direção oposta.
+            if (Vector2.Dot(plantDir, newDirection) < -0.9f)
+                bombsToUnlock.Add(bomb);
+        }
+
+        for (int i = 0; i < bombsToUnlock.Count; i++)
+            _bombEarlyKickUnlocked.Add(bombsToUnlock[i]);
+
+        ListPool<Bomb>.Release(bombsToUnlock);
     }
 }
