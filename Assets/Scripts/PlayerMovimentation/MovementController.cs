@@ -154,6 +154,11 @@ public class MovementController : MonoBehaviour, IKillable
 
     [Header("Inactivity (external)")]
     [SerializeField] private bool suppressInactivityAnimation;
+
+    [Header("Bomb Early Kick")]
+    [SerializeField, Range(0.01f, 0.49f)] private float earlyKickEdgeThreshold = 0.22f;
+
+    private Bomb _lastAdjKickedBomb;
     public bool SuppressInactivityAnimation => suppressInactivityAnimation;
 
     public void SetPassTaggedObstacles(bool canPass, string tag)
@@ -2782,11 +2787,6 @@ public class MovementController : MonoBehaviour, IKillable
 
         return true;
     }
-
-    [Header("Bomb Early Kick")]
-    [SerializeField, Range(0.01f, 0.49f)] private float earlyKickEdgeThreshold = 0.22f;
-
-    private Bomb _lastAdjKickedBomb;
 
     private bool IsNearBombEdgeForEarlyKick(Vector2 playerPos, Vector2 bombPos, Vector2 moveDir)
     {
