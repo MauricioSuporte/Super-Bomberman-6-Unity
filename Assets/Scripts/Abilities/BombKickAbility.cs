@@ -107,8 +107,6 @@ public class BombKickAbility : MonoBehaviour, IMovementAbility
                 else
                     return false;
             }
-            // Se chegou aqui, a bomba está desbloqueada para early kick.
-            // Não há mais filtro de direção — o player inverteu, pode chutar.
         }
 
         LayerMask bombObstacles = obstacleMask | LayerMask.GetMask("Enemy");
@@ -310,7 +308,6 @@ public class BombKickAbility : MonoBehaviour, IMovementAbility
             if (bomb == null || bomb.HasExploded || bomb.IsSolid || bomb.IsBeingKicked)
                 continue;
 
-            // Só destrava quando o player realmente inverter para a direção oposta.
             if (Vector2.Dot(plantDir, newDirection) < -0.9f)
                 bombsToUnlock.Add(bomb);
         }

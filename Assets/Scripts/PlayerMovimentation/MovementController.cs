@@ -741,8 +741,6 @@ public class MovementController : MonoBehaviour, IKillable
             if (canPassDestructibles && hit.CompareTag("Destructibles"))
                 continue;
 
-            // ← ADICIONAR AQUI:
-            // Ignorar filhos da bomba recém-chutada (ex: KickBombOriginBlocker)
             if (_lastAdjKickedBomb != null && _lastAdjKickedBomb.IsBeingKicked
                 && hit.transform.IsChildOf(_lastAdjKickedBomb.transform))
                 continue;
@@ -769,7 +767,6 @@ public class MovementController : MonoBehaviour, IKillable
         if (ShouldSkipFixedUpdate())
             return;
 
-        // Limpa referência da bomba adj-kicked assim que ela para de ser chutada
         if (_lastAdjKickedBomb != null && !_lastAdjKickedBomb.IsBeingKicked)
             _lastAdjKickedBomb = null;
 
@@ -1186,8 +1183,6 @@ public class MovementController : MonoBehaviour, IKillable
                 if (canPassDestructibles && hit.CompareTag("Destructibles"))
                     continue;
 
-                // ← ADICIONAR AQUI:
-                // Ignorar filhos da bomba recém-chutada (ex: KickBombOriginBlocker)
                 if (_lastAdjKickedBomb != null && _lastAdjKickedBomb.IsBeingKicked
                     && hit.transform.IsChildOf(_lastAdjKickedBomb.transform))
                     continue;
@@ -1252,8 +1247,6 @@ public class MovementController : MonoBehaviour, IKillable
                     continue;
                 }
 
-                // Se esta é a bomba que acabamos de chutar via AdjKick e ela ainda está sendo
-                // chutada, o player não deve ser bloqueado por ela — ela está saindo do tile.
                 if (bomb == _lastAdjKickedBomb && bomb.IsBeingKicked)
                     continue;
 
@@ -1302,7 +1295,6 @@ public class MovementController : MonoBehaviour, IKillable
                 if (canPassDestructibles && hit.CompareTag("Destructibles"))
                     continue;
 
-                // Ignorar a bomba recém-chutada e todos os seus filhos (ex: KickBombOriginBlocker)
                 if (ignoreBomb != null && hit.transform.IsChildOf(ignoreBomb.transform))
                     continue;
 
@@ -1320,7 +1312,6 @@ public class MovementController : MonoBehaviour, IKillable
                 if (bomb == null || bomb.HasExploded)
                     continue;
 
-                // Ignorar a bomba recém-chutada
                 if (bomb == ignoreBomb)
                     continue;
 
@@ -2771,8 +2762,6 @@ public class MovementController : MonoBehaviour, IKillable
 
         bool nextBlocked = IsBlockedAtPosition(nextTileCenter, dir, false);
 
-        // Se o único bloqueio é a bomba que acabamos de chutar (ainda em trânsito),
-        // não bloquear o player — ela está saindo desse tile.
         if (nextBlocked && _lastAdjKickedBomb != null && _lastAdjKickedBomb.IsBeingKicked)
             nextBlocked = IsBlockedAtPositionIgnoringBomb(nextTileCenter, dir, _lastAdjKickedBomb);
 
@@ -2797,7 +2786,6 @@ public class MovementController : MonoBehaviour, IKillable
     [Header("Bomb Early Kick")]
     [SerializeField, Range(0.01f, 0.49f)] private float earlyKickEdgeThreshold = 0.22f;
 
-    // ← ADICIONAR ISTO:
     private Bomb _lastAdjKickedBomb;
 
     private bool IsNearBombEdgeForEarlyKick(Vector2 playerPos, Vector2 bombPos, Vector2 moveDir)
@@ -2813,21 +2801,17 @@ public class MovementController : MonoBehaviour, IKillable
 
         if (Mathf.Abs(moveDir.x) > 0.01f)
         {
-            // Apertando esquerda: player precisa estar na borda direita da bomba
             if (moveDir.x < 0f)
                 return dx >= (half - edgeBand);
 
-            // Apertando direita: player precisa estar na borda esquerda da bomba
             return dx <= -(half - edgeBand);
         }
 
         if (Mathf.Abs(moveDir.y) > 0.01f)
         {
-            // Apertando baixo: player precisa estar na borda de cima da bomba
             if (moveDir.y < 0f)
                 return dy >= (half - edgeBand);
 
-            // Apertando cima: player precisa estar na borda de baixo da bomba
             return dy <= -(half - edgeBand);
         }
 
@@ -2847,21 +2831,17 @@ public class MovementController : MonoBehaviour, IKillable
 
         if (Mathf.Abs(moveDir.x) > 0.01f)
         {
-            // Tentando entrar à esquerda da bomba
             if (moveDir.x < 0f)
                 return dx >= (half - edgeBand);
 
-            // Tentando entrar à direita da bomba
             return dx <= -(half - edgeBand);
         }
 
         if (Mathf.Abs(moveDir.y) > 0.01f)
         {
-            // Tentando entrar abaixo da bomba
             if (moveDir.y < 0f)
                 return dy >= (half - edgeBand);
 
-            // Tentando entrar acima da bomba
             return dy <= -(half - edgeBand);
         }
 
@@ -2895,7 +2875,6 @@ public class MovementController : MonoBehaviour, IKillable
 
         for (int b = 0; b < Bomb.ActiveBombs.Count; b++)
         {
-            // HashSet não indexa; então este loop não serve.
         }
 
         foreach (var bomb in Bomb.ActiveBombs)

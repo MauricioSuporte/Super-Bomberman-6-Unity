@@ -1052,12 +1052,25 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         kickOriginBlockerUseTrigger = originBlockerUseTrigger;
 
         Vector2 origin = SnapToGrid(rb.position, tileSize);
+        Vector2 next = origin + kickDirection * kickTileSize;
 
-        Debug.Log($"[Bomb.StartKick] snapped origin={origin} next={origin + kickDirection * kickTileSize}", this);
+        Debug.Log($"[Bomb.StartKick] snapped origin={origin} next={next}", this);
 
-        if (IsKickBlocked(origin + kickDirection * kickTileSize))
+        if (IsKickBlocked(next))
         {
-            Debug.Log($"[Bomb.StartKick] blocked: IsKickBlocked next={origin + kickDirection * kickTileSize}", this);
+            Debug.Log($"[Bomb.StartKick] blocked: IsKickBlocked next={next}", this);
+            return false;
+        }
+
+        if (IsKickBlockedByCharacterOnImmediateExit(origin, next))
+        {
+            Debug.Log($"[Bomb.StartKick] blocked: immediate character on exit next={next}", this);
+            return false;
+        }
+
+        if (IsBlockedByMaskAtWorld(next, kickBlockMoveMask, kickOverlapBoxSize))
+        {
+            Debug.Log($"[Bomb.StartKick] blocked: IsBlockedByMaskAtWorld next={next}", this);
             return false;
         }
 
@@ -1866,5 +1879,35 @@ public class Bomb : MonoBehaviour, IMagnetPullable
 
             pickup.DestroySilently();
         }
+    }
+
+    private bool IsKickBlockedByCharacterOnImmediateExit(Vector2 origin, Vector2 next)
+    {
+        int charMask = LayerMask.GetMask("Player", "Enemy", "Louie");
+        Collider2D[] hits = Physics2D.OverlapBoxAll(next, Vector2.one * (kickTileSize * 0.6f), 0f, charMask);
+
+        if (hits == null || hits.Length == 0)
+            return false;
+
+        for (int i = 0; i < hits.Length; i++)
+        {
+            var hit = hits[i];
+            if (hit == null)
+                continue;
+
+            if (hit.transform == transform || hit.transform.IsChildOf(transform))
+                continue;
+
+            Vector2 hitPos = hit.attachedRigidbody != null
+                ? hit.attachedRigidbody.position
+                : (Vector2)hit.transform.position;
+
+            if (Vector2.Distance(hitPos, origin) <= kickTileSize * 0.2f)
+                continue;
+
+            return true;
+        }
+
+        return false;
     }
 }
