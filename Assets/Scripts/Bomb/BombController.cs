@@ -2068,6 +2068,24 @@ public partial class BombController : MonoBehaviour
             kickAbility.NotifyBombPlanted(bombComponent, plantDir);
         }
 
+        if (TryGetComponent<YellowLouieKickAbility>(out var yellowKickAbility) && yellowKickAbility != null)
+        {
+            var mc = GetComponent<MovementController>();
+            Vector2 plantDir = Vector2.zero;
+
+            if (mc != null)
+            {
+                if (mc.Direction != Vector2.zero)
+                    plantDir = mc.Direction.normalized;
+                else if (mc.FacingDirection != Vector2.zero)
+                    plantDir = mc.FacingDirection.normalized;
+                else
+                    plantDir = Vector2.down;
+            }
+
+            yellowKickAbility.NotifyBombPlanted(bombComponent, plantDir);
+        }
+
         return true;
     }
 
