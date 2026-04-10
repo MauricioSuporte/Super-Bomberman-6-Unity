@@ -830,37 +830,6 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
         return false;
     }
 
-    IEnumerator ShakeBombVisual(Bomb bomb, Vector3 basePos, float duration, float amplitude, float frequencyHz)
-    {
-        if (bomb == null)
-            yield break;
-
-        float dur = Mathf.Max(0.01f, duration);
-        float amp = Mathf.Max(0f, amplitude);
-        float hz = Mathf.Max(1f, frequencyHz);
-
-        float end = Time.time + dur;
-        float seed = Random.value * 1000f;
-
-        while (Time.time < end)
-        {
-            if (!enabledAbility || movement == null || movement.isDead || bomb == null)
-                yield break;
-
-            float t = Time.time - (end - dur);
-            float phase = (t * hz) * (Mathf.PI * 2f);
-
-            float x = Mathf.Sin(phase + seed) * amp;
-            float y = Mathf.Cos(phase * 1.23f + seed) * amp;
-
-            bomb.transform.position = basePos + new Vector3(x, y, 0f);
-            yield return null;
-        }
-
-        if (bomb != null)
-            bomb.transform.position = basePos;
-    }
-
     float GetChainTransferDuration()
     {
         return cellsPerSecond <= 0.01f ? 0.05f : (1f / cellsPerSecond);
