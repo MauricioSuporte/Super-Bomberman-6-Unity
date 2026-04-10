@@ -487,8 +487,24 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         float visualStartYOffset = 0f,
         Vector2? logicalOriginOverride = null)
     {
-        if (!CanBePunched || direction == Vector2.zero)
+        bool canEarlyPunch = !HasExploded && !isKicked && !isPunched;
+
+        bool willPunch = CanBePunched || canEarlyPunch;
+
+        Debug.Log(
+            $"[Bomb.StartPunch] enter bombPos={GetLogicalPosition()} dir={direction} " +
+            $"CanBePunched={CanBePunched} canEarlyPunch={canEarlyPunch} willPunch={willPunch} " +
+            $"IsSolid={IsSolid} charsInside={charactersInside.Count} " +
+            $"isKicked={isKicked} isPunched={isPunched} hasExploded={HasExploded}",
+            this);
+
+        if (!willPunch || direction == Vector2.zero)
+        {
+            Debug.Log(
+                $"[Bomb.StartPunch] BLOCKED willPunch={willPunch} dirZero={direction == Vector2.zero}",
+                this);
             return false;
+        }
 
         kickDirection = direction.normalized;
         kickTileSize = tileSize;
@@ -515,6 +531,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
             StopCoroutine(punchRoutine);
 
         isPunched = true;
+
         charactersInside.Clear();
         bombCollider.isTrigger = true;
 
@@ -524,6 +541,11 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         TryPlayBombSfx_NoOverlap(punchSfx, punchSfxVolume);
 
         float dur = Mathf.Max(punchDuration, Time.fixedDeltaTime);
+
+        Debug.Log(
+            $"[Bomb.StartPunch] SUCCESS logicalOrigin={logicalOrigin} dir={kickDirection} " +
+            $"distanceTiles={distanceTiles} dur={dur}",
+            this);
 
         punchRoutine = StartCoroutine(PunchRoutineFixed_Hybrid(
             logicalOrigin,
