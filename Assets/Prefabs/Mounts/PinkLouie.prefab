@@ -780,10 +780,10 @@ Transform:
   - {fileID: 2256879706850589562}
   - {fileID: 193354633721661751}
   - {fileID: 2145118279089090007}
+  - {fileID: 57579042699043240}
   - {fileID: 2826260144769959810}
   - {fileID: 4500632244093504406}
   - {fileID: 6415395821706802592}
-  - {fileID: 57579042699043240}
   - {fileID: 9131655977267603673}
   - {fileID: 4153890904718329116}
   - {fileID: 5023389770901249726}
@@ -1132,6 +1132,7 @@ MonoBehaviour:
   pixelsPerUnit: 16
   useIntegerPixelSteps: 1
   suppressInactivityAnimation: 0
+  earlyKickEdgeThreshold: 0.22
   isDead: 0
   explosionInvulnerable: 0
   externalMovementOverride: 0
@@ -1183,6 +1184,8 @@ MonoBehaviour:
   pinkRightFixedLocalX: -0.21
   syncBlinkFromPlayerWhenMounted: 1
   allowExternalTint: 1
+  debugPinkRidingFlip: 1
+  visualMountedType: 6
 --- !u!114 &8906398120230729490
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1306,7 +1309,7 @@ Transform:
   m_GameObject: {fileID: 2445788475736444126}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: -0.18, y: 1.3, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1363,7 +1366,7 @@ SpriteRenderer:
   m_MaskInteraction: 0
   m_Sprite: {fileID: 2092707103, guid: 242e9e1d39c8a0e488695bffb494ed5c, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_FlipX: 0
+  m_FlipX: 1
   m_FlipY: 0
   m_DrawMode: 0
   m_Size: {x: 2, y: 2}
@@ -1389,7 +1392,7 @@ MonoBehaviour:
   - {fileID: 1355478188, guid: 242e9e1d39c8a0e488695bffb494ed5c, type: 3}
   - {fileID: 865333172, guid: 242e9e1d39c8a0e488695bffb494ed5c, type: 3}
   - {fileID: 1355478188, guid: 242e9e1d39c8a0e488695bffb494ed5c, type: 3}
-  allowFlipX: 1
+  allowFlipX: 0
   animationTime: 0.1
   useSequenceDuration: 0
   sequenceDuration: 0.5
