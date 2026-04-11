@@ -129,6 +129,11 @@ public sealed class PlayerManualDismount : MonoBehaviour
             },
             onStart: () =>
             {
+                companion.ApplyRidingTransitionInvulnerability(
+                    rider.ridingSeconds,
+                    blink: false,
+                    detachedLouie: detachedLouie);
+
                 if (eggQueue != null)
                     eggQueue.SetIgnoreOwnerInvulnerability(true);
 

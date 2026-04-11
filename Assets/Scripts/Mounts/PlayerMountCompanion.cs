@@ -280,7 +280,11 @@ public class PlayerMountCompanion : MonoBehaviour
         if (rider != null && rider.TryPlayMount(
             resolvedFacing,
             onComplete: () => FinalizeMount(type, resolvedFacing),
-            onStart: () => SpawnLouieForMount(prefab, type, duringRiding: true, resolvedFacing)))
+            onStart: () =>
+            {
+                MarkRidingUninterruptible(rider.ridingSeconds, blink: false);
+                SpawnLouieForMount(prefab, type, duringRiding: true, resolvedFacing);
+            }))
             return;
 
         SpawnLouieForMount(prefab, type, duringRiding: false, resolvedFacing);
@@ -478,8 +482,7 @@ public class PlayerMountCompanion : MonoBehaviour
                     onComplete: () => FinalizeMount(queuedMountedType, facing),
                     onStart: () =>
                     {
-                        MarkRidingUninterruptible(rider.ridingSeconds, blink: true);
-
+                        MarkRidingUninterruptible(rider.ridingSeconds, blink: false);
                         DetachAndKillCurrentLouieOnly(destroyByExplosion);
                         SetNextMountSfx(queuedSfx, queuedVol);
                         SpawnLouieForMount(queuedPrefab, queuedMountedType, true, facing);
@@ -497,7 +500,7 @@ public class PlayerMountCompanion : MonoBehaviour
                 onComplete: () => FinishLoseMountAfterRidingWithoutLouie(facing),
                 onStart: () =>
                 {
-                    MarkRidingUninterruptible(rider.ridingSeconds, blink: true);
+                    MarkRidingUninterruptible(rider.ridingSeconds, blink: false);
                     DetachAndKillCurrentLouieOnly(destroyByExplosion);
                 }))
                 return;
@@ -672,6 +675,7 @@ public class PlayerMountCompanion : MonoBehaviour
             },
             onStart: () =>
             {
+                MarkRidingUninterruptible(rider.ridingSeconds, blink: false);
                 PlayMountSfxIfAny();
             }))
             return true;
@@ -848,8 +852,75 @@ public class PlayerMountCompanion : MonoBehaviour
         float s = Mathf.Max(0.01f, seconds);
         ridingUninterruptibleUntil = Mathf.Max(ridingUninterruptibleUntil, Time.time + s);
 
-        if (playerHealth != null)
-            playerHealth.StartTemporaryInvulnerability(s, withBlink: blink);
+        ApplyTemporaryInvulnerabilityToPlayer(s, blink);
+        ApplyTemporaryInvulnerabilityToTransitionLouie(s, blink);
+    }
+
+    void ApplyTemporaryInvulnerabilityToPlayer(float seconds, bool blink)
+    {
+        if (playerHealth == null)
+            return;
+
+        playerHealth.StartTemporaryInvulnerability(seconds, withBlink: blink);
+    }
+
+    void ApplyTemporaryInvulnerabilityToTransitionLouie(float seconds, bool blink)
+    {
+        GameObject louie = GetTransitionLouieObject();
+        if (louie == null)
+            return;
+
+        ApplyTemporaryInvulnerabilityToLouieObject(louie, seconds, blink);
+    }
+
+    GameObject GetTransitionLouieObject()
+    {
+        if (pendingWorldMountLouie != null)
+            return pendingWorldMountLouie;
+
+        if (currentLouie != null)
+            return currentLouie;
+
+        return null;
+    }
+
+    void ApplyTemporaryInvulnerabilityToLouieObject(GameObject louie, float seconds, bool blink)
+    {
+        if (louie == null)
+            return;
+
+        if (louie.TryGetComponent<CharacterHealth>(out var louieHealth) && louieHealth != null)
+            louieHealth.StartTemporaryInvulnerability(seconds, withBlink: blink);
+
+        if (louie.TryGetComponent<MovementController>(out var louieMovement) && louieMovement != null)
+            louieMovement.SetExplosionInvulnerable(true);
+
+        StartCoroutine(ClearLouieExplosionInvulnerabilityAfter(louie, seconds));
+    }
+
+    IEnumerator ClearLouieExplosionInvulnerabilityAfter(GameObject louie, float seconds)
+    {
+        if (seconds > 0f)
+            yield return new WaitForSeconds(seconds);
+
+        if (louie == null)
+            yield break;
+
+        if (louie.TryGetComponent<MovementController>(out var louieMovement) && louieMovement != null)
+            louieMovement.SetExplosionInvulnerable(false);
+    }
+
+    public void ApplyRidingTransitionInvulnerability(float seconds, bool blink, GameObject detachedLouie = null)
+    {
+        float s = Mathf.Max(0.01f, seconds);
+        ridingUninterruptibleUntil = Mathf.Max(ridingUninterruptibleUntil, Time.time + s);
+
+        ApplyTemporaryInvulnerabilityToPlayer(s, blink);
+
+        if (detachedLouie != null)
+            ApplyTemporaryInvulnerabilityToLouieObject(detachedLouie, s, blink);
+        else
+            ApplyTemporaryInvulnerabilityToTransitionLouie(s, blink);
     }
 
     public bool HandleDamageWhileMounting(int damage)
