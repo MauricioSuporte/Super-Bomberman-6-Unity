@@ -157,12 +157,6 @@ public class BombPunchAbility : MonoBehaviour, IPlayerAbility
 
         Bomb bomb = FindPunchableBombAhead(playerPos, dir);
 
-        Debug.Log(
-            $"[BombPunch] ActionC pressed | playerSnapped={playerPos} dir={dir} | " +
-            $"bombFound={bomb != null}" +
-            (bomb != null ? $" bombPos={bomb.GetLogicalPosition()} CanBePunched={bomb.CanBePunched}" : ""),
-            this);
-
         if (bomb == null)
             return;
 
@@ -178,11 +172,6 @@ public class BombPunchAbility : MonoBehaviour, IPlayerAbility
 
         Vector2 bombLogicalPos = bomb.GetLogicalPosition();
 
-        Debug.Log(
-            $"[BombPunch] Calling StartPunch | bombLogicalPos={bombLogicalPos} dir={dir} " +
-            $"distanceTiles={punchDistanceTiles}",
-            this);
-
         bool punched = bomb.StartPunch(
             dir,
             movement.tileSize,
@@ -192,8 +181,6 @@ public class BombPunchAbility : MonoBehaviour, IPlayerAbility
             visualStartYOffset: 0f,
             logicalOriginOverride: bombLogicalPos
         );
-
-        Debug.Log($"[BombPunch] StartPunch result={punched}", this);
     }
 
     private Bomb FindPunchableBombAhead(Vector2 playerSnappedPos, Vector2 dir)
@@ -207,11 +194,6 @@ public class BombPunchAbility : MonoBehaviour, IPlayerAbility
         float boxSize = tileSize * earlyPunchSearchSize;
 
         Collider2D[] hits = Physics2D.OverlapBoxAll(front, Vector2.one * boxSize, 0f, bombMask);
-
-        Debug.Log(
-            $"[BombPunch FindAhead] playerSnapped={playerSnappedPos} dir={dir} " +
-            $"front={front} boxSize={boxSize} hitsCount={hits?.Length ?? 0}",
-            this);
 
         if (hits == null || hits.Length == 0)
             return null;
@@ -227,7 +209,6 @@ public class BombPunchAbility : MonoBehaviour, IPlayerAbility
             var candidate = hit.GetComponent<Bomb>();
             if (candidate == null)
             {
-                Debug.Log($"[BombPunch FindAhead] hit sem componente Bomb: {hit.name}", this);
                 continue;
             }
 
@@ -238,23 +219,13 @@ public class BombPunchAbility : MonoBehaviour, IPlayerAbility
 
             bool acceptable = candidate.CanBePunched || CanEarlyPunch(candidate, playerSnappedPos, bombPos);
 
-            Debug.Log(
-                $"[BombPunch FindAhead] candidate={candidate.name} bombPos={bombPos} " +
-                $"dot={dot:F2} CanBePunched={candidate.CanBePunched} " +
-                $"IsSolid={candidate.IsSolid} IsBeingKicked={candidate.IsBeingKicked} " +
-                $"IsBeingPunched={candidate.IsBeingPunched} HasExploded={candidate.HasExploded} " +
-                $"earlyOk={CanEarlyPunch(candidate, playerSnappedPos, bombPos)} acceptable={acceptable}",
-                this);
-
             if (dot < 0.1f)
             {
-                Debug.Log($"[BombPunch FindAhead] rejeitada: dot={dot:F2} (bomba atrás/lateral)", this);
                 continue;
             }
 
             if (!acceptable)
             {
-                Debug.Log($"[BombPunch FindAhead] rejeitada: não é socável nem early-punch", this);
                 continue;
             }
 
@@ -265,10 +236,6 @@ public class BombPunchAbility : MonoBehaviour, IPlayerAbility
                 bestBomb = candidate;
             }
         }
-
-        Debug.Log(
-            $"[BombPunch FindAhead] resultado final: {(bestBomb != null ? bestBomb.name + " @ " + bestBomb.GetLogicalPosition() : "nenhuma")}",
-            this);
 
         return bestBomb;
     }
@@ -285,11 +252,6 @@ public class BombPunchAbility : MonoBehaviour, IPlayerAbility
         float minDist = movement.tileSize * earlyPunchMinExitFraction;
 
         bool exitedEnough = dist >= minDist;
-
-        Debug.Log(
-            $"[BombPunch CanEarlyPunch] bombPos={bombPos} playerPos={playerPos} " +
-            $"dist={dist:F3} minDist={minDist:F3} exitedEnough={exitedEnough}",
-            this);
 
         return exitedEnough;
     }

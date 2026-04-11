@@ -45,9 +45,6 @@ public class MovementController : MonoBehaviour, IKillable
 
     private Vector2 pendingTurnDirection = Vector2.zero;
 
-    [SerializeField] private bool debugSingleTurn;
-    [SerializeField] private bool debugSingleTurnVerbose;
-
     private Vector2 lockedMovementDirection = Vector2.zero;
     private Vector2 pendingSingleTurnDirection = Vector2.zero;
 
@@ -791,10 +788,6 @@ public class MovementController : MonoBehaviour, IKillable
             Vector2 holdPos = Rigidbody != null ? Rigidbody.position : position;
             holdPos = QuantizeToPixelGrid(holdPos);
 
-            Debug.Log(
-                $"[MC FixedUpdate AdjKickHandled] holdPos={holdPos} dir={direction}",
-                this);
-
             MovePositionPixelPerfect(holdPos);
             return;
         }
@@ -979,16 +972,10 @@ public class MovementController : MonoBehaviour, IKillable
 
     private void TrySlideIfBlocked(Vector2 position, float moveSpeed, bool movingHorizontal, bool movingVertical)
     {
-        Debug.Log(
-            $"[MC TrySlideIfBlocked] position={position} moveSpeed={moveSpeed} dir={direction} movingH={movingHorizontal} movingV={movingVertical}",
-            this);
-
         if (movingVertical)
         {
             float centerX = Mathf.Round(position.x / tileSize) * tileSize;
             float offsetX = Mathf.Abs(position.x - centerX);
-
-            Debug.Log($"[MC TrySlideIfBlocked] vertical centerX={centerX} offsetX={offsetX}", this);
 
             if (offsetX > SlideDeadZone)
                 TrySlideHorizontally(position, moveSpeed);
@@ -1000,8 +987,6 @@ public class MovementController : MonoBehaviour, IKillable
         {
             float centerY = Mathf.Round(position.y / tileSize) * tileSize;
             float offsetY = Mathf.Abs(position.y - centerY);
-
-            Debug.Log($"[MC TrySlideIfBlocked] horizontal centerY={centerY} offsetY={offsetY}", this);
 
             if (offsetY > SlideDeadZone)
                 TrySlideVertically(position, moveSpeed);
@@ -2451,10 +2436,6 @@ public class MovementController : MonoBehaviour, IKillable
 
         Vector2 quantized = QuantizeToPixelGrid(worldPos);
 
-        Debug.Log(
-            $"[MC MovePositionPixelPerfect] currentRbPos={Rigidbody.position} target={worldPos} quantized={quantized} dir={direction}",
-            this);
-
         Rigidbody.MovePosition(quantized);
     }
 
@@ -2869,10 +2850,6 @@ public class MovementController : MonoBehaviour, IKillable
 
         Vector2 targetTileCenter = snappedCurrentTile + dir * tileSize;
 
-        Debug.Log(
-            $"[MC AdjKick Logical] pos={position} snappedCurrentTile={snappedCurrentTile} dir={dir} targetTileCenter={targetTileCenter}",
-            this);
-
         for (int b = 0; b < Bomb.ActiveBombs.Count; b++)
         {
         }
@@ -2894,9 +2871,6 @@ public class MovementController : MonoBehaviour, IKillable
             if (bombCollider == null)
                 continue;
 
-            Debug.Log(
-                $"[MC AdjKick Logical] candidate bombPos={bombPos} playerPos={position} snappedCurrentTile={snappedCurrentTile} dir={dir}",
-                this);
 
             for (int i = 0; i < movementAbilities.Length; i++)
             {
@@ -2905,12 +2879,6 @@ public class MovementController : MonoBehaviour, IKillable
                     continue;
 
                 bool handled = ability.TryHandleBlockedHit(bombCollider, dir, tileSize, obstacleMask);
-
-                Debug.Log(
-                    $"[MC AdjKick Logical] ability={ability.GetType().Name} handled={handled} " +
-                    $"playerPosAfterAbility={(Rigidbody != null ? Rigidbody.position : (Vector2)transform.position)} " +
-                    $"bombPosAfterAbility={bomb.GetLogicalPosition()}",
-                    this);
 
                 if (handled)
                 {

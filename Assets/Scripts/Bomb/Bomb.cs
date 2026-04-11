@@ -491,18 +491,8 @@ public class Bomb : MonoBehaviour, IMagnetPullable
 
         bool willPunch = CanBePunched || canEarlyPunch;
 
-        Debug.Log(
-            $"[Bomb.StartPunch] enter bombPos={GetLogicalPosition()} dir={direction} " +
-            $"CanBePunched={CanBePunched} canEarlyPunch={canEarlyPunch} willPunch={willPunch} " +
-            $"IsSolid={IsSolid} charsInside={charactersInside.Count} " +
-            $"isKicked={isKicked} isPunched={isPunched} hasExploded={HasExploded}",
-            this);
-
         if (!willPunch || direction == Vector2.zero)
         {
-            Debug.Log(
-                $"[Bomb.StartPunch] BLOCKED willPunch={willPunch} dirZero={direction == Vector2.zero}",
-                this);
             return false;
         }
 
@@ -541,11 +531,6 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         TryPlayBombSfx_NoOverlap(punchSfx, punchSfxVolume);
 
         float dur = Mathf.Max(punchDuration, Time.fixedDeltaTime);
-
-        Debug.Log(
-            $"[Bomb.StartPunch] SUCCESS logicalOrigin={logicalOrigin} dir={kickDirection} " +
-            $"distanceTiles={distanceTiles} dur={dur}",
-            this);
 
         punchRoutine = StartCoroutine(PunchRoutineFixed_Hybrid(
             logicalOrigin,
@@ -1047,18 +1032,9 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         float originBlockerSize,
         bool originBlockerUseTrigger)
     {
-        Debug.Log(
-            $"[Bomb.StartKick] enter bombPos={GetLogicalPosition()} dir={direction} " +
-            $"solid={IsSolid} canBeKicked={CanBeKicked} canBeKickedEarly={CanBeKickedEarly} " +
-            $"charsInside={charactersInside.Count} isKicked={isKicked} hasExploded={HasExploded}",
-            this);
 
         if ((!CanBeKicked && !CanBeKickedEarly) || direction == Vector2.zero)
         {
-            Debug.Log(
-                $"[Bomb.StartKick] blocked by initial validation dirZero={direction == Vector2.zero} " +
-                $"canBeKicked={CanBeKicked} canBeKickedEarly={CanBeKickedEarly}",
-                this);
             return false;
         }
 
@@ -1076,23 +1052,19 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         Vector2 origin = SnapToGrid(rb.position, tileSize);
         Vector2 next = origin + kickDirection * kickTileSize;
 
-        Debug.Log($"[Bomb.StartKick] snapped origin={origin} next={next}", this);
 
         if (IsKickBlocked(next))
         {
-            Debug.Log($"[Bomb.StartKick] blocked: IsKickBlocked next={next}", this);
             return false;
         }
 
         if (IsKickBlockedByCharacterOnImmediateExit(origin, next))
         {
-            Debug.Log($"[Bomb.StartKick] blocked: immediate character on exit next={next}", this);
             return false;
         }
 
         if (IsBlockedByMaskAtWorld(next, kickBlockMoveMask, kickOverlapBoxSize))
         {
-            Debug.Log($"[Bomb.StartKick] blocked: IsBlockedByMaskAtWorld next={next}", this);
             return false;
         }
 
@@ -1109,7 +1081,6 @@ public class Bomb : MonoBehaviour, IMagnetPullable
 
         kickRoutine = StartCoroutine(KickRoutineFixed());
 
-        Debug.Log($"[Bomb.StartKick] SUCCESS origin={origin} dir={kickDirection}", this);
         return true;
     }
 
@@ -1604,7 +1575,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         magnetRoutine = null;
     }
 
-    private bool IsBlockedByMaskAtWorld(Vector2 worldCenter, LayerMask mask, float boxSize, string debugFrom = null)
+    private bool IsBlockedByMaskAtWorld(Vector2 worldCenter, LayerMask mask, float boxSize)
     {
         ResolveIndestructibleTilemapIfNeeded();
 
