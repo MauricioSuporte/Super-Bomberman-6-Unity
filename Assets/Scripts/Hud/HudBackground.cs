@@ -2,7 +2,7 @@
 
 [ExecuteAlways]
 [RequireComponent(typeof(RectTransform))]
-public sealed class HudTopFitter : MonoBehaviour
+public sealed class HudBackground : MonoBehaviour
 {
     const float alturaHud = 23f;
     const float alturaTotal = 224f;
