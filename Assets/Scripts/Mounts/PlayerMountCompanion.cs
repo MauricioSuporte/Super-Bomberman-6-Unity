@@ -1325,7 +1325,7 @@ public class PlayerMountCompanion : MonoBehaviour
 
     static Tilemap ResolveGroundTilemapNear(Vector3 worldPos)
     {
-        var tilemaps = FindObjectsByType<Tilemap>(FindObjectsSortMode.None);
+        var tilemaps = FindObjectsByType<Tilemap>(FindObjectsInactive.Exclude);
         if (tilemaps == null || tilemaps.Length == 0)
             return null;
 

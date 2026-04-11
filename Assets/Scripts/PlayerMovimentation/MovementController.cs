@@ -1547,7 +1547,7 @@ public class MovementController : MonoBehaviour, IKillable
 
         if (IsPlayer() && checkWinStateOnDeath)
         {
-            var gm = FindFirstObjectByType<GameManager>();
+            var gm = FindAnyObjectByType<GameManager>();
             if (gm != null)
                 gm.NotifyPlayerDeathStarted();
         }
