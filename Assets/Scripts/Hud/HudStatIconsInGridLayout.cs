@@ -16,6 +16,7 @@ public sealed class HudStatIconsInGridLayout : MonoBehaviour
         public Image bombAmountNumber;
         public Image firePowerNumber;
         public Image speedNumber;
+        public Image lifePowerupNumber;
 
         public Image kickOrBombPassPowerup;
         public Image punchPowerup;
@@ -49,6 +50,7 @@ public sealed class HudStatIconsInGridLayout : MonoBehaviour
     [SerializeField] private Vector2 bombAmountNumberSize = new(7f, 7f);
     [SerializeField] private Vector2 firePowerNumberSize = new(7f, 7f);
     [SerializeField] private Vector2 speedNumberSize = new(7f, 7f);
+    [SerializeField] private Vector2 lifePowerupNumberSize = new(7f, 7f);
 
     [Header("Main 2x2 Matrix Icon Offsets Inside Grid (SNES pixels)")]
     [SerializeField] private Vector2 bombAmountIconOffset = new(2f, 11f);
@@ -60,6 +62,7 @@ public sealed class HudStatIconsInGridLayout : MonoBehaviour
     [SerializeField] private Vector2 bombAmountNumberOffset = new(2f, 11f);
     [SerializeField] private Vector2 firePowerNumberOffset = new(2f, 1f);
     [SerializeField] private Vector2 speedNumberOffset = new(10f, 1f);
+    [SerializeField] private Vector2 lifePowerupNumberOffset = new(19f, 1f);
 
     [Header("Powerup 2x3 Icon Logical Size (SNES pixels)")]
     [SerializeField] private Vector2 kickOrBombPassPowerupSize = new(7f, 7f);
@@ -142,6 +145,7 @@ public sealed class HudStatIconsInGridLayout : MonoBehaviour
                 continue;
 
             CharacterHealth health = GetPlayerHealth(playerId);
+            int currentLife = health != null ? Mathf.Max(0, health.life) : 0;
 
             SetIconSprite(refs.bombAmountIcon, bombAmountSprite);
             SetIconSprite(refs.firePowerIcon, firePowerSprite);
@@ -166,7 +170,11 @@ public sealed class HudStatIconsInGridLayout : MonoBehaviour
 
             SetOptionalPowerupSprite(
                 refs.lifePowerup,
-                health != null && health.life > 1 ? lifePowerupSprite : null);
+                currentLife > 1 ? lifePowerupSprite : null);
+
+            SetConditionalNumberSprite(
+                refs.lifePowerupNumber,
+                currentLife > 2 ? currentLife - 1 : -1);
 
             SetOptionalPowerupSprite(
                 refs.destructiblePassPowerup,
@@ -200,6 +208,7 @@ public sealed class HudStatIconsInGridLayout : MonoBehaviour
             ApplyElementLayout(refs.bombAmountNumber, logicalGridWidth, gridHeight, bombAmountNumberOffset + playerAdjust, bombAmountNumberSize, true);
             ApplyElementLayout(refs.firePowerNumber, logicalGridWidth, gridHeight, firePowerNumberOffset + playerAdjust, firePowerNumberSize, true);
             ApplyElementLayout(refs.speedNumber, logicalGridWidth, gridHeight, speedNumberOffset + playerAdjust, speedNumberSize, true);
+            ApplyElementLayout(refs.lifePowerupNumber, logicalGridWidth, gridHeight, lifePowerupNumberOffset + playerAdjust, lifePowerupNumberSize, true);
 
             ApplyElementLayout(refs.kickOrBombPassPowerup, logicalGridWidth, gridHeight, kickOrBombPassPowerupOffset + playerAdjust, kickOrBombPassPowerupSize);
             ApplyElementLayout(refs.punchPowerup, logicalGridWidth, gridHeight, punchPowerupOffset + playerAdjust, punchPowerupSize);
@@ -261,6 +270,26 @@ public sealed class HudStatIconsInGridLayout : MonoBehaviour
     {
         if (numberImage == null)
             return;
+
+        int clamped = Mathf.Clamp(value, 0, 9);
+        Sprite sprite = GetDigitSprite(clamped);
+
+        numberImage.sprite = sprite;
+        numberImage.enabled = sprite != null;
+        numberImage.preserveAspect = false;
+    }
+
+    void SetConditionalNumberSprite(Image numberImage, int value)
+    {
+        if (numberImage == null)
+            return;
+
+        if (value < 0)
+        {
+            numberImage.sprite = null;
+            numberImage.enabled = false;
+            return;
+        }
 
         int clamped = Mathf.Clamp(value, 0, 9);
         Sprite sprite = GetDigitSprite(clamped);
