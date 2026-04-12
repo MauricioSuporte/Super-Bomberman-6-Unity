@@ -314,11 +314,11 @@ public sealed class HudStatIconsInGridLayout : MonoBehaviour
 
     int GetSpeedStepCount(int speedInternal)
     {
-        int diff = speedInternal - PlayerPersistentStats.BaseSpeedNormal;
-        if (diff <= 0)
-            return 0;
+        int clampedSpeed = PlayerPersistentStats.ClampSpeedInternal(speedInternal);
+        int diff = clampedSpeed - PlayerPersistentStats.MinSpeedInternal;
+        int steps = diff / PlayerPersistentStats.SpeedStep;
 
-        return Mathf.Clamp(diff / PlayerPersistentStats.SpeedStep, 0, 9);
+        return Mathf.Clamp(steps + 1, 1, 9);
     }
 
     PlayerStatIconRefs GetPlayerRefs(int index)
