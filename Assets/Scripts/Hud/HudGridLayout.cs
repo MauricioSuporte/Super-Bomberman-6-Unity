@@ -6,6 +6,7 @@ public sealed class HudGridLayout : MonoBehaviour
 {
     [Header("Referências")]
     [SerializeField] private RectTransform[] grids;
+    [SerializeField] private RectTransform[] gridsAlternativos;
 
     [Header("Dimensões lógicas da HUD (pixels SNES)")]
     [SerializeField] private float hudWidth = 256f;
@@ -33,10 +34,9 @@ public sealed class HudGridLayout : MonoBehaviour
         if (_rt == null)
             _rt = (RectTransform)transform;
 
-        if (grids == null || grids.Length == 0)
+        int count = ObterMaiorQuantidadeDeSlots();
+        if (count <= 0)
             return;
-
-        int count = grids.Length;
 
         float larguraTotal = CalcularLarguraTotal(count);
 
@@ -51,14 +51,12 @@ public sealed class HudGridLayout : MonoBehaviour
         if (espacamentoInferior <= 0f)
             bottom = hudHeight - espacamentoSuperior - gridHeight;
 
+        int activePlayerCount = ObterQuantidadePlayersAtivos();
+
         float leftAtual = leftInicial;
 
         for (int i = 0; i < count; i++)
         {
-            RectTransform g = grids[i];
-            if (g == null)
-                continue;
-
             float larguraGrid = ObterLarguraGrid(i);
 
             float left = leftAtual;
@@ -69,14 +67,68 @@ public sealed class HudGridLayout : MonoBehaviour
             float minY = bottom / hudHeight;
             float maxY = (bottom + gridHeight) / hudHeight;
 
-            g.anchorMin = new Vector2(minX, minY);
-            g.anchorMax = new Vector2(maxX, maxY);
-            g.offsetMin = Vector2.zero;
-            g.offsetMax = Vector2.zero;
-            g.localScale = Vector3.one;
+            bool playerAtivo = i < activePlayerCount;
+
+            RectTransform gridNormal = ObterGrid(grids, i);
+            RectTransform gridAlternativo = ObterGrid(gridsAlternativos, i);
+
+            AplicarLayout(gridNormal, minX, minY, maxX, maxY);
+            AplicarLayout(gridAlternativo, minX, minY, maxX, maxY);
+
+            DefinirVisibilidade(gridNormal, playerAtivo);
+            DefinirVisibilidade(gridAlternativo, !playerAtivo);
 
             leftAtual += larguraGrid + espacamentoEntreGrids;
         }
+    }
+
+    int ObterMaiorQuantidadeDeSlots()
+    {
+        int countGridsNormais = grids != null ? grids.Length : 0;
+        int countGridsAlternativos = gridsAlternativos != null ? gridsAlternativos.Length : 0;
+        return Mathf.Max(countGridsNormais, countGridsAlternativos);
+    }
+
+    int ObterQuantidadePlayersAtivos()
+    {
+        if (Application.isPlaying && GameSession.Instance != null)
+            return Mathf.Clamp(GameSession.Instance.ActivePlayerCount, 1, 4);
+
+#if UNITY_EDITOR
+        if (!Application.isPlaying)
+            return 4;
+#endif
+
+        return 1;
+    }
+
+    RectTransform ObterGrid(RectTransform[] array, int index)
+    {
+        if (array == null || index < 0 || index >= array.Length)
+            return null;
+
+        return array[index];
+    }
+
+    void AplicarLayout(RectTransform g, float minX, float minY, float maxX, float maxY)
+    {
+        if (g == null)
+            return;
+
+        g.anchorMin = new Vector2(minX, minY);
+        g.anchorMax = new Vector2(maxX, maxY);
+        g.offsetMin = Vector2.zero;
+        g.offsetMax = Vector2.zero;
+        g.localScale = Vector3.one;
+    }
+
+    void DefinirVisibilidade(RectTransform g, bool visible)
+    {
+        if (g == null)
+            return;
+
+        if (g.gameObject.activeSelf != visible)
+            g.gameObject.SetActive(visible);
     }
 
     float CalcularLarguraTotal(int count)
