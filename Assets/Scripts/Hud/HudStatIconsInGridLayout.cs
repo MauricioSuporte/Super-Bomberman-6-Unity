@@ -16,23 +16,30 @@ public sealed class HudStatIconsInGridLayout : MonoBehaviour
         public Image bombAmountNumber;
         public Image firePowerNumber;
         public Image speedNumber;
+
+        public Image kickOrBombPassPowerup;
+        public Image punchPowerup;
+        public Image powerGlovePowerup;
+        public Image lifePowerup;
+        public Image destructiblePassPowerup;
+        public Image fullFirePowerup;
     }
 
     [Header("Icon References Per Player")]
     [SerializeField]
     private PlayerStatIconRefs[] playerIcons = new PlayerStatIconRefs[4]
     {
-        new PlayerStatIconRefs(),
-        new PlayerStatIconRefs(),
-        new PlayerStatIconRefs(),
-        new PlayerStatIconRefs()
+        new(),
+        new(),
+        new(),
+        new()
     };
 
     [Header("Grid Logical Size (SNES pixels)")]
     [SerializeField] private float[] gridWidths = new float[4] { 46f, 46f, 46f, 20f };
     [SerializeField] private float gridHeight = 19f;
 
-    [Header("Icon Logical Size (SNES pixels)")]
+    [Header("Main 2x2 Icon Logical Size (SNES pixels)")]
     [SerializeField] private Vector2 bombAmountIconSize = new(7f, 7f);
     [SerializeField] private Vector2 bombTypeIconSize = new(7f, 7f);
     [SerializeField] private Vector2 firePowerIconSize = new(7f, 7f);
@@ -43,23 +50,43 @@ public sealed class HudStatIconsInGridLayout : MonoBehaviour
     [SerializeField] private Vector2 firePowerNumberSize = new(7f, 7f);
     [SerializeField] private Vector2 speedNumberSize = new(7f, 7f);
 
-    [Header("2x2 Matrix Icon Offsets Inside Grid (SNES pixels)")]
-    [Tooltip("Matrix cell 0,0")]
-    [SerializeField] private Vector2 bombAmountIconOffset = new(20f, 10f);
-
-    [Tooltip("Matrix cell 0,1")]
-    [SerializeField] private Vector2 bombTypeIconOffset = new(28f, 10f);
-
-    [Tooltip("Matrix cell 1,0")]
-    [SerializeField] private Vector2 firePowerIconOffset = new(20f, 2f);
-
-    [Tooltip("Matrix cell 1,1")]
-    [SerializeField] private Vector2 speedIconOffset = new(28f, 2f);
+    [Header("Main 2x2 Matrix Icon Offsets Inside Grid (SNES pixels)")]
+    [SerializeField] private Vector2 bombAmountIconOffset = new(2f, 11f);
+    [SerializeField] private Vector2 bombTypeIconOffset = new(10f, 11f);
+    [SerializeField] private Vector2 firePowerIconOffset = new(2f, 1f);
+    [SerializeField] private Vector2 speedIconOffset = new(10f, 1f);
 
     [Header("Number Offsets Inside Grid (SNES pixels)")]
-    [SerializeField] private Vector2 bombAmountNumberOffset = new(20f, 10f);
-    [SerializeField] private Vector2 firePowerNumberOffset = new(20f, 2f);
-    [SerializeField] private Vector2 speedNumberOffset = new(28f, 2f);
+    [SerializeField] private Vector2 bombAmountNumberOffset = new(2f, 11f);
+    [SerializeField] private Vector2 firePowerNumberOffset = new(2f, 1f);
+    [SerializeField] private Vector2 speedNumberOffset = new(10f, 1f);
+
+    [Header("Powerup 2x3 Icon Logical Size (SNES pixels)")]
+    [SerializeField] private Vector2 kickOrBombPassPowerupSize = new(7f, 7f);
+    [SerializeField] private Vector2 punchPowerupSize = new(7f, 7f);
+    [SerializeField] private Vector2 powerGlovePowerupSize = new(7f, 7f);
+    [SerializeField] private Vector2 lifePowerupSize = new(7f, 7f);
+    [SerializeField] private Vector2 destructiblePassPowerupSize = new(7f, 7f);
+    [SerializeField] private Vector2 fullFirePowerupSize = new(7f, 7f);
+
+    [Header("Powerup 2x3 Offsets Inside Grid (SNES pixels)")]
+    [Tooltip("Cell 0,0 = Kick or BombPass")]
+    [SerializeField] private Vector2 kickOrBombPassPowerupOffset = new(19f, 11f);
+
+    [Tooltip("Cell 0,1 = Punch")]
+    [SerializeField] private Vector2 punchPowerupOffset = new(27f, 11f);
+
+    [Tooltip("Cell 0,2 = PowerGlove")]
+    [SerializeField] private Vector2 powerGlovePowerupOffset = new(35f, 11f);
+
+    [Tooltip("Cell 1,0 = Life")]
+    [SerializeField] private Vector2 lifePowerupOffset = new(19f, 1f);
+
+    [Tooltip("Cell 1,1 = DestructiblePass")]
+    [SerializeField] private Vector2 destructiblePassPowerupOffset = new(27f, 1f);
+
+    [Tooltip("Cell 1,2 = FullFire")]
+    [SerializeField] private Vector2 fullFirePowerupOffset = new(35f, 1f);
 
     [Header("Optional Per Player Global Offset")]
     [SerializeField]
@@ -86,6 +113,17 @@ public sealed class HudStatIconsInGridLayout : MonoBehaviour
     [Header("Number Sprites 0-9")]
     [SerializeField] private Sprite[] digitSprites = new Sprite[10];
 
+    [Header("Powerup Sprites")]
+    [SerializeField] private Sprite kickPowerupSprite;
+    [SerializeField] private Sprite bombPassPowerupSprite;
+    [SerializeField] private Sprite punchPowerupSprite;
+    [SerializeField] private Sprite powerGlovePowerupSprite;
+    [SerializeField] private Sprite lifePowerupSprite;
+    [SerializeField] private Sprite destructiblePassPowerupSprite;
+    [SerializeField] private Sprite fullFirePowerupSprite;
+
+    private CharacterHealth[] playerHealthCache = new CharacterHealth[4];
+
     void LateUpdate()
     {
         UpdateSprites();
@@ -103,6 +141,8 @@ public sealed class HudStatIconsInGridLayout : MonoBehaviour
             if (refs == null || state == null)
                 continue;
 
+            CharacterHealth health = GetPlayerHealth(playerId);
+
             SetIconSprite(refs.bombAmountIcon, bombAmountSprite);
             SetIconSprite(refs.firePowerIcon, firePowerSprite);
             SetIconSprite(refs.speedIcon, speedSprite);
@@ -111,6 +151,30 @@ public sealed class HudStatIconsInGridLayout : MonoBehaviour
             SetNumberSprite(refs.bombAmountNumber, state.BombAmount);
             SetNumberSprite(refs.firePowerNumber, state.ExplosionRadius);
             SetNumberSprite(refs.speedNumber, GetSpeedStepCount(state.SpeedInternal));
+
+            SetOptionalPowerupSprite(
+                refs.kickOrBombPassPowerup,
+                GetKickOrBombPassSprite(state));
+
+            SetOptionalPowerupSprite(
+                refs.punchPowerup,
+                state.CanPunchBombs ? punchPowerupSprite : null);
+
+            SetOptionalPowerupSprite(
+                refs.powerGlovePowerup,
+                state.HasPowerGlove ? powerGlovePowerupSprite : null);
+
+            SetOptionalPowerupSprite(
+                refs.lifePowerup,
+                health != null && health.life > 1 ? lifePowerupSprite : null);
+
+            SetOptionalPowerupSprite(
+                refs.destructiblePassPowerup,
+                state.CanPassDestructibles ? destructiblePassPowerupSprite : null);
+
+            SetOptionalPowerupSprite(
+                refs.fullFirePowerup,
+                state.HasFullFire ? fullFirePowerupSprite : null);
         }
     }
 
@@ -133,13 +197,20 @@ public sealed class HudStatIconsInGridLayout : MonoBehaviour
             ApplyElementLayout(refs.firePowerIcon, logicalGridWidth, gridHeight, firePowerIconOffset + playerAdjust, firePowerIconSize);
             ApplyElementLayout(refs.speedIcon, logicalGridWidth, gridHeight, speedIconOffset + playerAdjust, speedIconSize);
 
-            ApplyElementLayout(refs.bombAmountNumber, logicalGridWidth, gridHeight, bombAmountNumberOffset + playerAdjust, bombAmountNumberSize);
-            ApplyElementLayout(refs.firePowerNumber, logicalGridWidth, gridHeight, firePowerNumberOffset + playerAdjust, firePowerNumberSize);
-            ApplyElementLayout(refs.speedNumber, logicalGridWidth, gridHeight, speedNumberOffset + playerAdjust, speedNumberSize);
+            ApplyElementLayout(refs.bombAmountNumber, logicalGridWidth, gridHeight, bombAmountNumberOffset + playerAdjust, bombAmountNumberSize, true);
+            ApplyElementLayout(refs.firePowerNumber, logicalGridWidth, gridHeight, firePowerNumberOffset + playerAdjust, firePowerNumberSize, true);
+            ApplyElementLayout(refs.speedNumber, logicalGridWidth, gridHeight, speedNumberOffset + playerAdjust, speedNumberSize, true);
+
+            ApplyElementLayout(refs.kickOrBombPassPowerup, logicalGridWidth, gridHeight, kickOrBombPassPowerupOffset + playerAdjust, kickOrBombPassPowerupSize);
+            ApplyElementLayout(refs.punchPowerup, logicalGridWidth, gridHeight, punchPowerupOffset + playerAdjust, punchPowerupSize);
+            ApplyElementLayout(refs.powerGlovePowerup, logicalGridWidth, gridHeight, powerGlovePowerupOffset + playerAdjust, powerGlovePowerupSize);
+            ApplyElementLayout(refs.lifePowerup, logicalGridWidth, gridHeight, lifePowerupOffset + playerAdjust, lifePowerupSize);
+            ApplyElementLayout(refs.destructiblePassPowerup, logicalGridWidth, gridHeight, destructiblePassPowerupOffset + playerAdjust, destructiblePassPowerupSize);
+            ApplyElementLayout(refs.fullFirePowerup, logicalGridWidth, gridHeight, fullFirePowerupOffset + playerAdjust, fullFirePowerupSize);
         }
     }
 
-    void ApplyElementLayout(Image image, float logicalGridWidth, float logicalGridHeight, Vector2 offset, Vector2 size)
+    void ApplyElementLayout(Image image, float logicalGridWidth, float logicalGridHeight, Vector2 offset, Vector2 size, bool bringToFront = false)
     {
         if (image == null)
             return;
@@ -161,9 +232,22 @@ public sealed class HudStatIconsInGridLayout : MonoBehaviour
         rect.offsetMin = Vector2.zero;
         rect.offsetMax = Vector2.zero;
         rect.localScale = Vector3.one;
+
+        if (bringToFront)
+            rect.SetAsLastSibling();
     }
 
     void SetIconSprite(Image iconImage, Sprite sprite)
+    {
+        if (iconImage == null)
+            return;
+
+        iconImage.sprite = sprite;
+        iconImage.enabled = sprite != null;
+        iconImage.preserveAspect = false;
+    }
+
+    void SetOptionalPowerupSprite(Image iconImage, Sprite sprite)
     {
         if (iconImage == null)
             return;
@@ -212,6 +296,20 @@ public sealed class HudStatIconsInGridLayout : MonoBehaviour
             return rubberBombSprite;
 
         return normalBombSprite;
+    }
+
+    Sprite GetKickOrBombPassSprite(PlayerPersistentStats.PlayerState state)
+    {
+        if (state == null)
+            return null;
+
+        if (state.CanKickBombs)
+            return kickPowerupSprite;
+
+        if (state.CanPassBombs)
+            return bombPassPowerupSprite;
+
+        return null;
     }
 
     int GetSpeedStepCount(int speedInternal)
@@ -323,5 +421,34 @@ public sealed class HudStatIconsInGridLayout : MonoBehaviour
 
             digitSprites = newDigits;
         }
+    }
+
+    CharacterHealth GetPlayerHealth(int playerId)
+    {
+        int index = playerId - 1;
+
+        if (index < 0 || index >= playerHealthCache.Length)
+            return null;
+
+        if (playerHealthCache[index] != null)
+            return playerHealthCache[index];
+
+        var players = GameObject.FindGameObjectsWithTag("Player");
+
+        for (int i = 0; i < players.Length; i++)
+        {
+            if (players[i] == null)
+                continue;
+
+            var mv = players[i].GetComponent<MovementController>();
+            if (mv != null && mv.PlayerId == playerId)
+            {
+                var health = players[i].GetComponent<CharacterHealth>();
+                playerHealthCache[index] = health;
+                return health;
+            }
+        }
+
+        return null;
     }
 }
