@@ -15,17 +15,20 @@ public sealed class CameraFollowClamp2D : MonoBehaviour
 
     [Header("Follow")]
     [SerializeField] private Vector2 followOffset;
-    [SerializeField] private float smoothTime = 0.12f;
 
-    [Header("Pixel Perfect Snap")]
-    [SerializeField] private bool pixelSnap = true;
+    [Header("Speed (SB5 Internal)")]
+    [SerializeField] private bool useTrackedPlayersSpeed = true;
+    [SerializeField] private int speedInternal = PlayerPersistentStats.BaseSpeedNormal;
+    public int SpeedInternal => speedInternal;
+
+    [Header("Pixel Perfect Step (igual ao MovementController)")]
     [SerializeField, Min(1)] private int pixelsPerUnit = 16;
+    [SerializeField] private bool useIntegerPixelSteps = true;
 
     [Header("Player Search")]
-    [SerializeField] private float refreshPlayersEverySeconds = 0.5f;
+    [SerializeField] private float refreshPlayersEverySeconds = 0.1f;
 
     private Camera cam;
-    private Vector3 velocity;
 
     private Transform followTarget;
     private PlayerIdentity[] cachedPlayers = new PlayerIdentity[0];
@@ -35,6 +38,7 @@ public sealed class CameraFollowClamp2D : MonoBehaviour
 
     private float accPixelsX;
     private float accPixelsY;
+    private Vector2 lastMoveDirCardinal = Vector2.zero;
 
 #if UNITY_2022_2_OR_NEWER
     private PixelPerfectCamera ppc;
@@ -53,11 +57,9 @@ public sealed class CameraFollowClamp2D : MonoBehaviour
 
 #if UNITY_2022_2_OR_NEWER
         ppc = GetComponent<PixelPerfectCamera>();
-        if (ppc != null)
-        {
-            pixelSnap = false;
-        }
 #endif
+
+        ApplySpeedInternal(speedInternal);
     }
 
     void OnDestroy()
@@ -66,12 +68,12 @@ public sealed class CameraFollowClamp2D : MonoBehaviour
             Destroy(followTarget.gameObject);
     }
 
-    void LateUpdate()
+    void FixedUpdate()
     {
         if (cam == null || !cam.orthographic || boundsCollider == null)
             return;
 
-        refreshTimer -= Time.deltaTime;
+        refreshTimer -= Time.fixedDeltaTime;
         if (refreshTimer <= 0f)
         {
             RefreshPlayers();
@@ -81,26 +83,55 @@ public sealed class CameraFollowClamp2D : MonoBehaviour
         if (!TryUpdateFollowTargetPosition(out var targetPos))
             return;
 
-        var desired = new Vector3(
+        Vector3 desired = new Vector3(
             targetPos.x + followOffset.x,
             targetPos.y + followOffset.y,
             transform.position.z
         );
 
-        var clampedTarget = ClampToBounds(desired, boundsCollider.bounds);
+        desired = ClampToBounds(desired, boundsCollider.bounds);
 
-        rawPos = Vector3.SmoothDamp(rawPos, clampedTarget, ref velocity, smoothTime);
+        Vector2 current = new Vector2(rawPos.x, rawPos.y);
+        current = QuantizeToPixelGrid(current);
 
+        Vector2 delta = new Vector2(desired.x - current.x, desired.y - current.y);
+        Vector2 dir = NormalizeDominantCardinal(delta);
+
+        float rawMoveWorld = GetRawMoveWorldPerFixedFrame();
+        float moveWorld = GetQuantizedMoveWorldPerFixedFrame(dir, rawMoveWorld);
+
+        if (moveWorld <= 0f || dir == Vector2.zero)
+        {
+            rawPos = ClampToBounds(new Vector3(current.x, current.y, rawPos.z), boundsCollider.bounds);
+            transform.position = rawPos;
+            return;
+        }
+
+        Vector2 next = current + dir * moveWorld;
+
+        if (dir.x != 0f)
+        {
+            float remainingX = desired.x - current.x;
+            if (Mathf.Abs(next.x - current.x) > Mathf.Abs(remainingX))
+                next.x = desired.x;
+
+            next.y = current.y;
+        }
+        else
+        {
+            float remainingY = desired.y - current.y;
+            if (Mathf.Abs(next.y - current.y) > Mathf.Abs(remainingY))
+                next.y = desired.y;
+
+            next.x = current.x;
+        }
+
+        next = QuantizeToPixelGrid(next);
+
+        rawPos = new Vector3(next.x, next.y, transform.position.z);
         rawPos = ClampToBounds(rawPos, boundsCollider.bounds);
 
-        var finalPos = rawPos;
-
-        if (pixelSnap)
-            finalPos = SnapWithPixelAccumulator(finalPos, pixelsPerUnit);
-
-        finalPos = ClampToBounds(finalPos, boundsCollider.bounds);
-
-        transform.position = finalPos;
+        transform.position = rawPos;
     }
 
     void RefreshPlayers()
@@ -183,29 +214,127 @@ public sealed class CameraFollowClamp2D : MonoBehaviour
         return new Vector3(x, y, desired.z);
     }
 
-    Vector3 SnapWithPixelAccumulator(Vector3 targetWorldPos, int ppu)
+    private Vector2 QuantizeToPixelGrid(Vector2 world)
     {
-        if (ppu <= 0)
-            return targetWorldPos;
+        if (!useIntegerPixelSteps || pixelsPerUnit <= 0)
+            return world;
 
-        Vector3 current = transform.position;
+        float ppu = pixelsPerUnit;
+        return new Vector2(
+            Mathf.Round(world.x * ppu) / ppu,
+            Mathf.Round(world.y * ppu) / ppu
+        );
+    }
 
-        float dxPixels = (targetWorldPos.x - current.x) * ppu;
-        float dyPixels = (targetWorldPos.y - current.y) * ppu;
+    private void ResetPixelAccumulators()
+    {
+        accPixelsX = 0f;
+        accPixelsY = 0f;
+    }
 
-        accPixelsX += dxPixels;
-        accPixelsY += dyPixels;
+    private float GetRawMoveWorldPerFixedFrame()
+    {
+        float dt = Time.fixedDeltaTime;
+        float speedWorldPerSecond = GetFollowTilesPerSecond();
+        return speedWorldPerSecond * dt;
+    }
 
-        int stepX = (int)accPixelsX;
-        int stepY = (int)accPixelsY;
+    private float GetQuantizedMoveWorldPerFixedFrame(Vector2 moveDir, float rawWorldStep)
+    {
+        if (!useIntegerPixelSteps || pixelsPerUnit <= 0)
+            return rawWorldStep;
 
-        accPixelsX -= stepX;
-        accPixelsY -= stepY;
+        moveDir = NormalizeCardinal(moveDir);
+        if (moveDir == Vector2.zero)
+            return 0f;
 
-        float newX = current.x + (stepX * PixelWorldStep);
-        float newY = current.y + (stepY * PixelWorldStep);
+        if (moveDir != lastMoveDirCardinal)
+        {
+            lastMoveDirCardinal = moveDir;
+            ResetPixelAccumulators();
+        }
 
-        return new Vector3(newX, newY, targetWorldPos.z);
+        float rawPixels = rawWorldStep * pixelsPerUnit;
+
+        if (Mathf.Abs(moveDir.x) > 0.01f)
+        {
+            accPixelsX += rawPixels * Mathf.Sign(moveDir.x);
+
+            int whole = (int)accPixelsX;
+            accPixelsX -= whole;
+
+            return Mathf.Abs(whole) * PixelWorldStep;
+        }
+        else
+        {
+            accPixelsY += rawPixels * Mathf.Sign(moveDir.y);
+
+            int whole = (int)accPixelsY;
+            accPixelsY -= whole;
+
+            return Mathf.Abs(whole) * PixelWorldStep;
+        }
+    }
+
+    private float GetFollowTilesPerSecond()
+    {
+        if (!useTrackedPlayersSpeed || cachedPlayers == null || cachedPlayers.Length == 0)
+            return PlayerPersistentStats.InternalSpeedToTilesPerSecond(speedInternal);
+
+        int activeCount = 1;
+        if (GameSession.Instance != null)
+            activeCount = Mathf.Clamp(GameSession.Instance.ActivePlayerCount, 1, 4);
+
+        int highestInternal = speedInternal;
+        bool foundAny = false;
+
+        for (int i = 0; i < cachedPlayers.Length; i++)
+        {
+            var p = cachedPlayers[i];
+            if (p == null)
+                continue;
+
+            if (p.playerId < 1 || p.playerId > activeCount)
+                continue;
+
+            if (!p.TryGetComponent<MovementController>(out var movement) || movement == null)
+                continue;
+
+            highestInternal = Mathf.Max(highestInternal, movement.SpeedInternal);
+            foundAny = true;
+        }
+
+        if (!foundAny)
+            return PlayerPersistentStats.InternalSpeedToTilesPerSecond(speedInternal);
+
+        return PlayerPersistentStats.InternalSpeedToTilesPerSecond(highestInternal);
+    }
+
+    private static Vector2 NormalizeCardinal(Vector2 dir)
+    {
+        if (Mathf.Abs(dir.x) > Mathf.Abs(dir.y))
+            return new Vector2(Mathf.Sign(dir.x), 0f);
+
+        if (Mathf.Abs(dir.y) > 0f)
+            return new Vector2(0f, Mathf.Sign(dir.y));
+
+        return Vector2.zero;
+    }
+
+    private static Vector2 NormalizeDominantCardinal(Vector2 dir)
+    {
+        if (dir == Vector2.zero)
+            return Vector2.zero;
+
+        if (Mathf.Abs(dir.x) >= Mathf.Abs(dir.y))
+            return new Vector2(Mathf.Sign(dir.x), 0f);
+
+        return new Vector2(0f, Mathf.Sign(dir.y));
+    }
+
+    public void ApplySpeedInternal(int newInternal)
+    {
+        speedInternal = PlayerPersistentStats.ClampSpeedInternal(newInternal);
     }
 
     public void SetBounds(Collider2D newBounds)
@@ -224,36 +353,23 @@ public sealed class CameraFollowClamp2D : MonoBehaviour
         if (!TryUpdateFollowTargetPosition(out var targetPos))
             return;
 
-        var desired = new Vector3(
+        Vector3 desired = new Vector3(
             targetPos.x + followOffset.x,
             targetPos.y + followOffset.y,
             transform.position.z
         );
 
-        var clamped = ClampToBounds(desired, boundsCollider.bounds);
+        desired = ClampToBounds(desired, boundsCollider.bounds);
 
-        rawPos = clamped;
-        velocity = Vector3.zero;
+        rawPos = desired;
+        lastMoveDirCardinal = Vector2.zero;
+        ResetPixelAccumulators();
 
-        accPixelsX = 0f;
-        accPixelsY = 0f;
+        Vector2 quantized = QuantizeToPixelGrid(new Vector2(rawPos.x, rawPos.y));
+        rawPos = new Vector3(quantized.x, quantized.y, rawPos.z);
+        rawPos = ClampToBounds(rawPos, boundsCollider.bounds);
 
-        if (pixelSnap)
-            clamped = SnapToPixelGrid(clamped, pixelsPerUnit);
-
-        clamped = ClampToBounds(clamped, boundsCollider.bounds);
-
-        transform.position = clamped;
-
+        transform.position = rawPos;
         refreshTimer = Mathf.Max(0.05f, refreshPlayersEverySeconds);
-    }
-
-    static Vector3 SnapToPixelGrid(Vector3 worldPos, int ppu)
-    {
-        if (ppu <= 0) return worldPos;
-
-        float x = Mathf.Round(worldPos.x * ppu) / ppu;
-        float y = Mathf.Round(worldPos.y * ppu) / ppu;
-        return new Vector3(x, y, worldPos.z);
     }
 }
