@@ -12,6 +12,10 @@ public sealed class HudStatIconsInGridLayout : MonoBehaviour
         public Image bombTypeIcon;
         public Image firePowerIcon;
         public Image speedIcon;
+
+        public Image bombAmountNumber;
+        public Image firePowerNumber;
+        public Image speedNumber;
     }
 
     [Header("Icon References Per Player")]
@@ -34,7 +38,12 @@ public sealed class HudStatIconsInGridLayout : MonoBehaviour
     [SerializeField] private Vector2 firePowerIconSize = new(7f, 7f);
     [SerializeField] private Vector2 speedIconSize = new(7f, 7f);
 
-    [Header("2x2 Matrix Offsets Inside Grid (SNES pixels)")]
+    [Header("Number Logical Size (SNES pixels)")]
+    [SerializeField] private Vector2 bombAmountNumberSize = new(7f, 7f);
+    [SerializeField] private Vector2 firePowerNumberSize = new(7f, 7f);
+    [SerializeField] private Vector2 speedNumberSize = new(7f, 7f);
+
+    [Header("2x2 Matrix Icon Offsets Inside Grid (SNES pixels)")]
     [Tooltip("Matrix cell 0,0")]
     [SerializeField] private Vector2 bombAmountIconOffset = new(20f, 10f);
 
@@ -46,6 +55,11 @@ public sealed class HudStatIconsInGridLayout : MonoBehaviour
 
     [Tooltip("Matrix cell 1,1")]
     [SerializeField] private Vector2 speedIconOffset = new(28f, 2f);
+
+    [Header("Number Offsets Inside Grid (SNES pixels)")]
+    [SerializeField] private Vector2 bombAmountNumberOffset = new(20f, 10f);
+    [SerializeField] private Vector2 firePowerNumberOffset = new(20f, 2f);
+    [SerializeField] private Vector2 speedNumberOffset = new(28f, 2f);
 
     [Header("Optional Per Player Global Offset")]
     [SerializeField]
@@ -69,6 +83,9 @@ public sealed class HudStatIconsInGridLayout : MonoBehaviour
     [SerializeField] private Sprite powerBombSprite;
     [SerializeField] private Sprite rubberBombSprite;
 
+    [Header("Number Sprites 0-9")]
+    [SerializeField] private Sprite[] digitSprites = new Sprite[10];
+
     void LateUpdate()
     {
         UpdateSprites();
@@ -83,13 +100,17 @@ public sealed class HudStatIconsInGridLayout : MonoBehaviour
             var state = PlayerPersistentStats.GetRuntime(playerId);
             var refs = GetPlayerRefs(i);
 
-            if (refs == null)
+            if (refs == null || state == null)
                 continue;
 
             SetIconSprite(refs.bombAmountIcon, bombAmountSprite);
             SetIconSprite(refs.firePowerIcon, firePowerSprite);
             SetIconSprite(refs.speedIcon, speedSprite);
             SetIconSprite(refs.bombTypeIcon, GetCurrentBombTypeSprite(state));
+
+            SetNumberSprite(refs.bombAmountNumber, state.BombAmount);
+            SetNumberSprite(refs.firePowerNumber, state.ExplosionRadius);
+            SetNumberSprite(refs.speedNumber, GetSpeedStepCount(state.SpeedInternal));
         }
     }
 
@@ -107,19 +128,23 @@ public sealed class HudStatIconsInGridLayout : MonoBehaviour
 
             Vector2 playerAdjust = GetPlayerAdjustment(i);
 
-            ApplyIconLayout(refs.bombAmountIcon, logicalGridWidth, gridHeight, bombAmountIconOffset + playerAdjust, bombAmountIconSize);
-            ApplyIconLayout(refs.bombTypeIcon, logicalGridWidth, gridHeight, bombTypeIconOffset + playerAdjust, bombTypeIconSize);
-            ApplyIconLayout(refs.firePowerIcon, logicalGridWidth, gridHeight, firePowerIconOffset + playerAdjust, firePowerIconSize);
-            ApplyIconLayout(refs.speedIcon, logicalGridWidth, gridHeight, speedIconOffset + playerAdjust, speedIconSize);
+            ApplyElementLayout(refs.bombAmountIcon, logicalGridWidth, gridHeight, bombAmountIconOffset + playerAdjust, bombAmountIconSize);
+            ApplyElementLayout(refs.bombTypeIcon, logicalGridWidth, gridHeight, bombTypeIconOffset + playerAdjust, bombTypeIconSize);
+            ApplyElementLayout(refs.firePowerIcon, logicalGridWidth, gridHeight, firePowerIconOffset + playerAdjust, firePowerIconSize);
+            ApplyElementLayout(refs.speedIcon, logicalGridWidth, gridHeight, speedIconOffset + playerAdjust, speedIconSize);
+
+            ApplyElementLayout(refs.bombAmountNumber, logicalGridWidth, gridHeight, bombAmountNumberOffset + playerAdjust, bombAmountNumberSize);
+            ApplyElementLayout(refs.firePowerNumber, logicalGridWidth, gridHeight, firePowerNumberOffset + playerAdjust, firePowerNumberSize);
+            ApplyElementLayout(refs.speedNumber, logicalGridWidth, gridHeight, speedNumberOffset + playerAdjust, speedNumberSize);
         }
     }
 
-    void ApplyIconLayout(Image iconImage, float logicalGridWidth, float logicalGridHeight, Vector2 offset, Vector2 size)
+    void ApplyElementLayout(Image image, float logicalGridWidth, float logicalGridHeight, Vector2 offset, Vector2 size)
     {
-        if (iconImage == null)
+        if (image == null)
             return;
 
-        RectTransform iconRect = iconImage.rectTransform;
+        RectTransform rect = image.rectTransform;
 
         float left = offset.x;
         float bottom = offset.y;
@@ -131,11 +156,11 @@ public sealed class HudStatIconsInGridLayout : MonoBehaviour
         float minY = bottom / logicalGridHeight;
         float maxY = top / logicalGridHeight;
 
-        iconRect.anchorMin = new Vector2(minX, minY);
-        iconRect.anchorMax = new Vector2(maxX, maxY);
-        iconRect.offsetMin = Vector2.zero;
-        iconRect.offsetMax = Vector2.zero;
-        iconRect.localScale = Vector3.one;
+        rect.anchorMin = new Vector2(minX, minY);
+        rect.anchorMax = new Vector2(maxX, maxY);
+        rect.offsetMin = Vector2.zero;
+        rect.offsetMax = Vector2.zero;
+        rect.localScale = Vector3.one;
     }
 
     void SetIconSprite(Image iconImage, Sprite sprite)
@@ -146,6 +171,27 @@ public sealed class HudStatIconsInGridLayout : MonoBehaviour
         iconImage.sprite = sprite;
         iconImage.enabled = sprite != null;
         iconImage.preserveAspect = false;
+    }
+
+    void SetNumberSprite(Image numberImage, int value)
+    {
+        if (numberImage == null)
+            return;
+
+        int clamped = Mathf.Clamp(value, 0, 9);
+        Sprite sprite = GetDigitSprite(clamped);
+
+        numberImage.sprite = sprite;
+        numberImage.enabled = sprite != null;
+        numberImage.preserveAspect = false;
+    }
+
+    Sprite GetDigitSprite(int digit)
+    {
+        if (digitSprites == null || digit < 0 || digit >= digitSprites.Length)
+            return null;
+
+        return digitSprites[digit];
     }
 
     Sprite GetCurrentBombTypeSprite(PlayerPersistentStats.PlayerState state)
@@ -166,6 +212,15 @@ public sealed class HudStatIconsInGridLayout : MonoBehaviour
             return rubberBombSprite;
 
         return normalBombSprite;
+    }
+
+    int GetSpeedStepCount(int speedInternal)
+    {
+        int diff = speedInternal - PlayerPersistentStats.BaseSpeedNormal;
+        if (diff <= 0)
+            return 0;
+
+        return Mathf.Clamp(diff / PlayerPersistentStats.SpeedStep, 0, 9);
     }
 
     PlayerStatIconRefs GetPlayerRefs(int index)
@@ -196,12 +251,14 @@ public sealed class HudStatIconsInGridLayout : MonoBehaviour
     void OnValidate()
     {
         EnsureArraySizes();
+        EnsureDigitArraySize();
     }
 #endif
 
     void Reset()
     {
         EnsureArraySizes();
+        EnsureDigitArraySize();
     }
 
     void EnsureArraySizes()
@@ -236,10 +293,10 @@ public sealed class HudStatIconsInGridLayout : MonoBehaviour
         {
             PlayerStatIconRefs[] newRefs = new PlayerStatIconRefs[4]
             {
-                new PlayerStatIconRefs(),
-                new PlayerStatIconRefs(),
-                new PlayerStatIconRefs(),
-                new PlayerStatIconRefs()
+                new(),
+                new(),
+                new(),
+                new()
             };
 
             if (playerIcons != null)
@@ -249,6 +306,22 @@ public sealed class HudStatIconsInGridLayout : MonoBehaviour
             }
 
             playerIcons = newRefs;
+        }
+    }
+
+    void EnsureDigitArraySize()
+    {
+        if (digitSprites == null || digitSprites.Length != 10)
+        {
+            Sprite[] newDigits = new Sprite[10];
+
+            if (digitSprites != null)
+            {
+                for (int i = 0; i < Mathf.Min(digitSprites.Length, newDigits.Length); i++)
+                    newDigits[i] = digitSprites[i];
+            }
+
+            digitSprites = newDigits;
         }
     }
 }
