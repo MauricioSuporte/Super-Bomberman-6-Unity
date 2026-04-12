@@ -485,10 +485,18 @@ public class MovementController : MonoBehaviour, IKillable
 
         int axisCount = (vertDir != Vector2.zero ? 1 : 0) + (horizDir != Vector2.zero ? 1 : 0);
 
+        LogCurve(
+            $"HandleInput input U:{holdUp} D:{holdDown} L:{holdLeft} R:{holdRight} " +
+            $"vert:{vertDir} horiz:{horizDir} axisCount:{axisCount} " +
+            $"dirAtual:{direction} face:{facingDirection} dualPrimary:{dualPrimary} dualSecondary:{dualSecondary} " +
+            $"pendingTurn:{pendingTurnDirection} pendingSingle:{pendingSingleTurnDirection}",
+            verbose: true);
+
         if (!enableDualInput || axisCount <= 1)
         {
             Vector2 singleDir = vertDir != Vector2.zero ? vertDir : horizDir;
 
+            LogCurve($"SingleAxis requested:{singleDir} enableDualInput:{enableDualInput}");
             HandleSingleAxisTurn(singleDir);
             ResetDualInputAxes();
             return;
@@ -509,18 +517,31 @@ public class MovementController : MonoBehaviour, IKillable
                 dualPrimary = vertDir;
                 dualSecondary = horizDir;
             }
+
             dualSwitchTimer = 0f;
+
+            LogCurve(
+                $"DualInput init vertFree:{vertFree} horizFree:{horizFree} " +
+                $"dualPrimary:{dualPrimary} dualSecondary:{dualSecondary}");
         }
         else
         {
             bool primaryStillHeld = (dualPrimary == vertDir || dualPrimary == horizDir);
             if (!primaryStillHeld)
             {
+                Vector2 oldPrimary = dualPrimary;
+                Vector2 oldSecondary = dualSecondary;
+
                 dualPrimary = (dualSecondary == vertDir || dualSecondary == horizDir)
-                                ? dualSecondary
-                                : (vertDir != Vector2.zero ? vertDir : horizDir);
+                    ? dualSecondary
+                    : (vertDir != Vector2.zero ? vertDir : horizDir);
+
                 dualSecondary = (dualPrimary == vertDir) ? horizDir : vertDir;
                 dualSwitchTimer = 0f;
+
+                LogCurve(
+                    $"DualInput rebind oldPrimary:{oldPrimary} oldSecondary:{oldSecondary} " +
+                    $"newPrimary:{dualPrimary} newSecondary:{dualSecondary}");
             }
             else
             {
@@ -532,6 +553,11 @@ public class MovementController : MonoBehaviour, IKillable
             dualSwitchTimer -= Time.deltaTime;
 
         Vector2 chosenDir = ResolveDualInputZigZag();
+
+        LogCurve(
+            $"DualInput resolve chosen:{chosenDir} primary:{dualPrimary} secondary:{dualSecondary} " +
+            $"timer:{dualSwitchTimer:F4} pendingTurn:{pendingTurnDirection}");
+
         ApplyDirectionFromVector(chosenDir);
     }
 
@@ -542,6 +568,9 @@ public class MovementController : MonoBehaviour, IKillable
 
         bool primaryBlocked = IsMoveBlocked(dualPrimary);
         bool secondaryBlocked = dualSecondary != Vector2.zero && IsMoveBlocked(dualSecondary);
+
+        bool nearCentre = dualSecondary != Vector2.zero && IsAtTileCentreOnPerpendicularAxis(dualSecondary);
+        bool exactlyAligned = dualSecondary != Vector2.zero && IsExactlyAlignedForAxisSwap(dualSecondary);
 
         if (primaryBlocked && secondaryBlocked)
         {
@@ -568,10 +597,8 @@ public class MovementController : MonoBehaviour, IKillable
             return dualPrimary;
         }
 
-        bool nearCentre = IsAtTileCentreOnPerpendicularAxis(dualSecondary);
-        bool exactlyAligned = IsExactlyAlignedForAxisSwap(dualSecondary);
-
-        if (nearCentre && pendingTurnDirection == Vector2.zero)
+        // arma a curva mais cedo
+        if ((nearCentre || exactlyAligned) && pendingTurnDirection == Vector2.zero)
             pendingTurnDirection = dualSecondary;
 
         if (pendingTurnDirection != Vector2.zero)
@@ -591,19 +618,33 @@ public class MovementController : MonoBehaviour, IKillable
 
     private bool IsAtTileCentreOnPerpendicularAxis(Vector2 newDir)
     {
-        if (tileSize <= 0.0001f) return true;
+        if (tileSize <= 0.0001f)
+            return true;
 
         Vector2 pos = Rigidbody != null ? Rigidbody.position : (Vector2)transform.position;
+
+        float dynamicTolerance = dualInputCentreSnapTolerance;
+
+        if (speed >= 6f)
+            dynamicTolerance += 0.04f;
+
+        if (speed >= 7f)
+            dynamicTolerance += 0.04f;
+
+        if (speed >= 8f)
+            dynamicTolerance += 0.04f;
+
+        dynamicTolerance = Mathf.Min(dynamicTolerance, 0.49f);
 
         if (Mathf.Abs(newDir.x) > 0.01f)
         {
             float nearest = Mathf.Round(pos.y / tileSize) * tileSize;
-            return Mathf.Abs(pos.y - nearest) <= dualInputCentreSnapTolerance;
+            return Mathf.Abs(pos.y - nearest) <= dynamicTolerance;
         }
         else
         {
             float nearest = Mathf.Round(pos.x / tileSize) * tileSize;
-            return Mathf.Abs(pos.x - nearest) <= dualInputCentreSnapTolerance;
+            return Mathf.Abs(pos.x - nearest) <= dynamicTolerance;
         }
     }
 
@@ -772,44 +813,126 @@ public class MovementController : MonoBehaviour, IKillable
         if (_lastAdjKickedBomb != null && !_lastAdjKickedBomb.IsBeingKicked)
             _lastAdjKickedBomb = null;
 
-        float rawMoveWorld = GetRawMoveWorldPerFixedFrame();
-        float moveWorld = GetQuantizedMoveWorldPerFixedFrame(direction, rawMoveWorld);
-
         Vector2 position = Rigidbody.position;
         position = QuantizeToPixelGrid(position);
+
+        if (pendingSingleTurnDirection != Vector2.zero)
+        {
+            bool canTurnNow =
+                !IsMoveBlocked(pendingSingleTurnDirection) &&
+                (IsAtTileCentreOnPerpendicularAxis(pendingSingleTurnDirection) ||
+                 IsExactlyAlignedForAxisSwap(pendingSingleTurnDirection));
+
+            LogCurve(
+                $"FixedUpdate pendingSingle check pending:{pendingSingleTurnDirection} " +
+                $"currentDir:{direction} pos:{position} canTurnNow:{canTurnNow}");
+
+            if (canTurnNow)
+            {
+                direction = pendingSingleTurnDirection;
+                hasInput = true;
+                pendingSingleTurnDirection = Vector2.zero;
+                lockedMovementDirection = Vector2.zero;
+
+                currentAxis = Mathf.Abs(direction.x) > 0.01f
+                    ? MoveAxis.Horizontal
+                    : MoveAxis.Vertical;
+
+                SetFacingDirection(direction, "FixedUpdatePendingSingleTurn");
+                LogCurve($"FixedUpdate pendingSingle -> APPLY turn:{direction}");
+            }
+        }
+
+        float rawMoveWorld = GetRawMoveWorldPerFixedFrame();
+        float moveWorld = GetQuantizedMoveWorldPerFixedFrame(direction, rawMoveWorld);
 
         bool movingVertical = Mathf.Abs(direction.y) > 0.01f;
         bool movingHorizontal = Mathf.Abs(direction.x) > 0.01f;
 
         UpdateCurrentAxis(movingHorizontal, movingVertical);
 
+        if (_debugLastFixedFrameLogged != Time.frameCount)
+        {
+            _debugLastFixedFrameLogged = Time.frameCount;
+            LogCurve(
+                $"FixedUpdate pos:{position} dir:{direction} face:{facingDirection} axis:{currentAxis} " +
+                $"speed:{speed:F3} speedInternal:{speedInternal} rawMove:{rawMoveWorld:F4} move:{moveWorld:F4} " +
+                $"accX:{accPixelsX:F4} accY:{accPixelsY:F4}");
+        }
+
         if (TryKickAdjacentBombFromCurrentTile(position, direction))
         {
             Vector2 holdPos = Rigidbody != null ? Rigidbody.position : position;
             holdPos = QuantizeToPixelGrid(holdPos);
 
+            LogCurve($"FixedUpdate TryKickAdjacentBombFromCurrentTile -> holdPos:{holdPos}");
             MovePositionPixelPerfect(holdPos);
             return;
         }
 
         if (ShouldHardBlockForwardFromTileCenter(position))
         {
+            LogCurve($"FixedUpdate ShouldHardBlockForwardFromTileCenter -> hold position:{position}");
             MovePositionPixelPerfect(position);
             return;
         }
 
+        Vector2 beforeAlign = position;
         AlignPerpendicularForCurrentAxis(ref position, rawMoveWorld);
+        if (beforeAlign != position)
+            LogCurve($"FixedUpdate AlignPerpendicular moved {beforeAlign} -> {position}");
 
         if (enableCorridorAxisLock && tileSize > 0.0001f)
         {
             if (TryApplyCorridorAxisLock(position, movingHorizontal, movingVertical, rawMoveWorld))
+            {
+                LogCurve("FixedUpdate corridor axis lock consumed movement");
                 return;
+            }
         }
 
+        Vector2 beforeCentering = position;
         ApplyCenteringWhenSqueezed(ref position, rawMoveWorld, movingHorizontal, movingVertical);
+        if (beforeCentering != position)
+            LogCurve($"FixedUpdate ApplyCenteringWhenSqueezed moved {beforeCentering} -> {position}");
+
+        if (pendingSingleTurnDirection != Vector2.zero)
+        {
+            bool canTurnAfterAlign =
+                !IsMoveBlocked(pendingSingleTurnDirection) &&
+                (IsAtTileCentreOnPerpendicularAxis(pendingSingleTurnDirection) ||
+                 IsExactlyAlignedForAxisSwap(pendingSingleTurnDirection));
+
+            LogCurve(
+                $"FixedUpdate pendingSingle post-align pending:{pendingSingleTurnDirection} " +
+                $"pos:{position} canTurnAfterAlign:{canTurnAfterAlign}",
+                verbose: true);
+
+            if (canTurnAfterAlign)
+            {
+                direction = pendingSingleTurnDirection;
+                hasInput = true;
+                pendingSingleTurnDirection = Vector2.zero;
+                lockedMovementDirection = Vector2.zero;
+
+                currentAxis = Mathf.Abs(direction.x) > 0.01f
+                    ? MoveAxis.Horizontal
+                    : MoveAxis.Vertical;
+
+                SetFacingDirection(direction, "FixedUpdatePendingSinglePostAlign");
+                LogCurve($"FixedUpdate pendingSingle post-align -> APPLY turn:{direction}");
+
+                rawMoveWorld = GetRawMoveWorldPerFixedFrame();
+                moveWorld = GetQuantizedMoveWorldPerFixedFrame(direction, rawMoveWorld);
+
+                movingVertical = Mathf.Abs(direction.y) > 0.01f;
+                movingHorizontal = Mathf.Abs(direction.x) > 0.01f;
+            }
+        }
 
         if (moveWorld <= 0f)
         {
+            LogCurve($"FixedUpdate moveWorld <= 0 -> hold {position}", verbose: true);
             MovePositionPixelPerfect(position);
             return;
         }
@@ -817,12 +940,17 @@ public class MovementController : MonoBehaviour, IKillable
         Vector2 targetPosition = position + direction * moveWorld;
         targetPosition = QuantizeToPixelGrid(targetPosition);
 
-        if (!IsBlocked(targetPosition))
+        bool blocked = IsBlocked(targetPosition);
+
+        LogCurve($"FixedUpdate target:{targetPosition} blocked:{blocked}");
+
+        if (!blocked)
         {
             MovePositionPixelPerfect(targetPosition);
             return;
         }
 
+        LogCurve("FixedUpdate target blocked -> TrySlideIfBlocked");
         TrySlideIfBlocked(position, moveWorld, movingHorizontal, movingVertical);
     }
 
@@ -895,12 +1023,17 @@ public class MovementController : MonoBehaviour, IKillable
         {
             bool lrRow0 = SolidLRAt(cx, y0);
             bool lrRow1 = SolidLRAt(cx, y1);
-
             bool corridorVertical = (lrRow0 || lrRow1);
+
+            LogCurve(
+                $"AxisLock horizontal pos:{position} cx:{cx:F3} cy:{cy:F3} y0:{y0:F3} y1:{y1:F3} " +
+                $"lrRow0:{lrRow0} lrRow1:{lrRow1} corridorVertical:{corridorVertical}",
+                verbose: true);
 
             if (!corridorVertical)
                 return false;
 
+            LogCurve($"AxisLock horizontal -> SnapAndStop Y toward {cy:F3}");
             SnapAndStop(axisX: false, position, new Vector2(position.x, cy), moveSpeed);
             return true;
         }
@@ -909,12 +1042,17 @@ public class MovementController : MonoBehaviour, IKillable
         {
             bool udCol0 = SolidUDAt(x0, cy);
             bool udCol1 = SolidUDAt(x1, cy);
-
             bool corridorHorizontal = (udCol0 || udCol1);
+
+            LogCurve(
+                $"AxisLock vertical pos:{position} cx:{cx:F3} cy:{cy:F3} x0:{x0:F3} x1:{x1:F3} " +
+                $"udCol0:{udCol0} udCol1:{udCol1} corridorHorizontal:{corridorHorizontal}",
+                verbose: true);
 
             if (!corridorHorizontal)
                 return false;
 
+            LogCurve($"AxisLock vertical -> SnapAndStop X toward {cx:F3}");
             SnapAndStop(axisX: true, position, new Vector2(cx, position.y), moveSpeed);
             return true;
         }
@@ -926,6 +1064,10 @@ public class MovementController : MonoBehaviour, IKillable
     {
         if (Rigidbody != null)
             Rigidbody.linearVelocity = Vector2.zero;
+
+        LogCurve(
+            $"SnapAndStop axisX:{axisX} current:{currentPos} snapTarget:{snapTarget} " +
+            $"moveSpeed:{moveSpeed:F4} dirBefore:{direction} hasInputBefore:{hasInput} axisBefore:{currentAxis}");
 
         direction = Vector2.zero;
         hasInput = false;
@@ -945,6 +1087,7 @@ public class MovementController : MonoBehaviour, IKillable
             snappedPos = new Vector2(currentPos.x, newY);
         }
 
+        LogCurve($"SnapAndStop snappedPos:{snappedPos} snapStep:{snapStep:F4}");
         MovePositionPixelPerfect(snappedPos);
     }
 
@@ -1004,11 +1147,19 @@ public class MovementController : MonoBehaviour, IKillable
         if (axisIsHorizontal)
         {
             float targetY = Mathf.Round(position.y / tileSize) * tileSize;
+            float deltaY = position.y - targetY;
 
-            if (Mathf.Abs(position.y - targetY) <= alignEpsilon)
+            if (Mathf.Abs(deltaY) <= alignEpsilon)
             {
                 Vector2 snapped = new(position.x, targetY);
-                if (CanAlignToPerpendicularTarget(snapped, moveDir))
+                bool canSnap = CanAlignToPerpendicularTarget(snapped, moveDir);
+
+                LogCurve(
+                    $"AlignPerpendicular H snapCheck pos:{position} targetY:{targetY:F3} deltaY:{deltaY:F4} " +
+                    $"alignStep:{alignStep:F4} canSnap:{canSnap}",
+                    verbose: true);
+
+                if (canSnap)
                     position.y = targetY;
 
                 return;
@@ -1016,19 +1167,33 @@ public class MovementController : MonoBehaviour, IKillable
 
             float newY = Mathf.MoveTowards(position.y, targetY, alignStep);
             Vector2 nextCandidate = new(position.x, newY);
+            bool canMove = CanAlignToPerpendicularTarget(nextCandidate, moveDir);
 
-            if (CanAlignToPerpendicularTarget(nextCandidate, moveDir))
+            LogCurve(
+                $"AlignPerpendicular H pos:{position} targetY:{targetY:F3} deltaY:{deltaY:F4} " +
+                $"newY:{newY:F3} alignStep:{alignStep:F4} canMove:{canMove}",
+                verbose: true);
+
+            if (canMove)
                 position.y = newY;
 
             return;
         }
 
         float targetX = Mathf.Round(position.x / tileSize) * tileSize;
+        float deltaX = position.x - targetX;
 
-        if (Mathf.Abs(position.x - targetX) <= alignEpsilon)
+        if (Mathf.Abs(deltaX) <= alignEpsilon)
         {
             Vector2 snapped = new(targetX, position.y);
-            if (CanAlignToPerpendicularTarget(snapped, moveDir))
+            bool canSnap = CanAlignToPerpendicularTarget(snapped, moveDir);
+
+            LogCurve(
+                $"AlignPerpendicular V snapCheck pos:{position} targetX:{targetX:F3} deltaX:{deltaX:F4} " +
+                $"alignStep:{alignStep:F4} canSnap:{canSnap}",
+                verbose: true);
+
+            if (canSnap)
                 position.x = targetX;
 
             return;
@@ -1036,8 +1201,14 @@ public class MovementController : MonoBehaviour, IKillable
 
         float newX = Mathf.MoveTowards(position.x, targetX, alignStep);
         Vector2 nextCandidate2 = new(newX, position.y);
+        bool canMove2 = CanAlignToPerpendicularTarget(nextCandidate2, moveDir);
 
-        if (CanAlignToPerpendicularTarget(nextCandidate2, moveDir))
+        LogCurve(
+            $"AlignPerpendicular V pos:{position} targetX:{targetX:F3} deltaX:{deltaX:F4} " +
+            $"newX:{newX:F3} alignStep:{alignStep:F4} canMove:{canMove2}",
+            verbose: true);
+
+        if (canMove2)
             position.x = newX;
     }
 
@@ -1051,6 +1222,10 @@ public class MovementController : MonoBehaviour, IKillable
         bool leftFree = !IsBlocked(new Vector2(leftCenter, position.y) + verticalStep);
         bool rightFree = !IsBlocked(new Vector2(rightCenter, position.y) + verticalStep);
 
+        LogCurve(
+            $"TrySlideHorizontally pos:{position} moveSpeed:{moveSpeed:F4} leftCenter:{leftCenter:F3} rightCenter:{rightCenter:F3} " +
+            $"leftFree:{leftFree} rightFree:{rightFree}");
+
         if (!leftFree && !rightFree)
             return;
 
@@ -1060,15 +1235,20 @@ public class MovementController : MonoBehaviour, IKillable
         else if (rightFree && !leftFree) targetX = rightCenter;
         else targetX = Mathf.Abs(position.x - leftCenter) <= Mathf.Abs(position.x - rightCenter) ? leftCenter : rightCenter;
 
+        LogCurve($"TrySlideHorizontally targetX:{targetX:F3}");
+
         if (Mathf.Abs(position.x - targetX) > CenterEpsilon)
         {
             float newX = Mathf.MoveTowards(position.x, targetX, moveSpeed);
+            LogCurve($"TrySlideHorizontally centering X {position.x:F3} -> {newX:F3}");
             MovePositionPixelPerfect(new Vector2(newX, position.y));
         }
         else
         {
             Vector2 newPos = new Vector2(targetX, position.y) + verticalStep;
-            if (!IsBlocked(newPos))
+            bool blocked = IsBlocked(newPos);
+            LogCurve($"TrySlideHorizontally advance newPos:{newPos} blocked:{blocked}");
+            if (!blocked)
                 MovePositionPixelPerfect(newPos);
         }
     }
@@ -1083,6 +1263,10 @@ public class MovementController : MonoBehaviour, IKillable
         bool bottomFree = !IsBlocked(new Vector2(position.x, bottomCenter) + horizontalStep);
         bool topFree = !IsBlocked(new Vector2(position.x, topCenter) + horizontalStep);
 
+        LogCurve(
+            $"TrySlideVertically pos:{position} moveSpeed:{moveSpeed:F4} bottomCenter:{bottomCenter:F3} topCenter:{topCenter:F3} " +
+            $"bottomFree:{bottomFree} topFree:{topFree}");
+
         if (!bottomFree && !topFree)
             return;
 
@@ -1092,15 +1276,20 @@ public class MovementController : MonoBehaviour, IKillable
         else if (topFree && !bottomFree) targetY = topCenter;
         else targetY = Mathf.Abs(position.y - bottomCenter) <= Mathf.Abs(position.y - topCenter) ? bottomCenter : topCenter;
 
+        LogCurve($"TrySlideVertically targetY:{targetY:F3}");
+
         if (Mathf.Abs(position.y - targetY) > CenterEpsilon)
         {
             float newY = Mathf.MoveTowards(position.y, targetY, moveSpeed);
+            LogCurve($"TrySlideVertically centering Y {position.y:F3} -> {newY:F3}");
             MovePositionPixelPerfect(new Vector2(position.x, newY));
         }
         else
         {
             Vector2 newPos = new Vector2(position.x, targetY) + horizontalStep;
-            if (!IsBlocked(newPos))
+            bool blocked = IsBlocked(newPos);
+            LogCurve($"TrySlideVertically advance newPos:{newPos} blocked:{blocked}");
+            if (!blocked)
                 MovePositionPixelPerfect(newPos);
         }
     }
@@ -2415,6 +2604,9 @@ public class MovementController : MonoBehaviour, IKillable
 
         if (moveDir != lastMoveDirCardinal)
         {
+            LogCurve(
+                $"QuantizedStep direction changed {lastMoveDirCardinal} -> {moveDir}. " +
+                $"ResetPixelAccumulators accX:{accPixelsX:F4} accY:{accPixelsY:F4}");
             lastMoveDirCardinal = moveDir;
             ResetPixelAccumulators();
         }
@@ -2428,7 +2620,14 @@ public class MovementController : MonoBehaviour, IKillable
             int whole = (int)accPixelsX;
             accPixelsX -= whole;
 
-            return Mathf.Abs(whole) * PixelWorldStep;
+            float result = Mathf.Abs(whole) * PixelWorldStep;
+
+            LogCurve(
+                $"QuantizedStep X rawWorld:{rawWorldStep:F4} rawPixels:{rawPixels:F4} whole:{whole} " +
+                $"accXRest:{accPixelsX:F4} result:{result:F4}",
+                verbose: true);
+
+            return result;
         }
         else
         {
@@ -2437,7 +2636,14 @@ public class MovementController : MonoBehaviour, IKillable
             int whole = (int)accPixelsY;
             accPixelsY -= whole;
 
-            return Mathf.Abs(whole) * PixelWorldStep;
+            float result = Mathf.Abs(whole) * PixelWorldStep;
+
+            LogCurve(
+                $"QuantizedStep Y rawWorld:{rawWorldStep:F4} rawPixels:{rawPixels:F4} whole:{whole} " +
+                $"accYRest:{accPixelsY:F4} result:{result:F4}",
+                verbose: true);
+
+            return result;
         }
     }
 
@@ -2591,11 +2797,17 @@ public class MovementController : MonoBehaviour, IKillable
         }
     }
 
-    private void HandleSingleAxisTurn(Vector2 requestedDir)
+    private void HandleSingleAxisTurn(Vector2 singleDir)
     {
-        requestedDir = NormalizeCardinal(requestedDir);
+        singleDir = NormalizeCardinal(singleDir);
 
-        if (requestedDir == Vector2.zero)
+        LogCurve(
+            $"HandleSingleAxisTurn requested:{singleDir} " +
+            $"currentDir:{direction} currentAxis:{currentAxis} " +
+            $"pendingSingleBefore:{pendingSingleTurnDirection}",
+            verbose: true);
+
+        if (singleDir == Vector2.zero)
         {
             pendingSingleTurnDirection = Vector2.zero;
             lockedMovementDirection = Vector2.zero;
@@ -2603,59 +2815,54 @@ public class MovementController : MonoBehaviour, IKillable
             return;
         }
 
-        Vector2 currentMove = NormalizeCardinal(direction != Vector2.zero ? direction : facingDirection);
-
-        if (currentMove == Vector2.zero)
+        if (direction == Vector2.zero)
         {
             pendingSingleTurnDirection = Vector2.zero;
-            lockedMovementDirection = requestedDir;
-            ApplyDirectionFromVector(requestedDir);
+            lockedMovementDirection = Vector2.zero;
+
+            LogCurve($"HandleSingleAxisTurn -> immediate apply from idle:{singleDir}");
+            ApplyDirectionFromVector(singleDir);
             return;
         }
 
         bool sameAxis =
-            (Mathf.Abs(currentMove.x) > 0.01f && Mathf.Abs(requestedDir.x) > 0.01f) ||
-            (Mathf.Abs(currentMove.y) > 0.01f && Mathf.Abs(requestedDir.y) > 0.01f);
+            (Mathf.Abs(direction.x) > 0.01f && Mathf.Abs(singleDir.x) > 0.01f) ||
+            (Mathf.Abs(direction.y) > 0.01f && Mathf.Abs(singleDir.y) > 0.01f);
 
         if (sameAxis)
         {
             pendingSingleTurnDirection = Vector2.zero;
-            lockedMovementDirection = requestedDir;
-            ApplyDirectionFromVector(requestedDir);
+            lockedMovementDirection = Vector2.zero;
+
+            LogCurve($"HandleSingleAxisTurn -> same axis apply:{singleDir}");
+            ApplyDirectionFromVector(singleDir);
             return;
         }
 
-        pendingSingleTurnDirection = requestedDir;
+        bool moveBlocked = IsMoveBlocked(singleDir);
+        bool nearCentre = IsAtTileCentreOnPerpendicularAxis(singleDir);
+        bool exactlyAligned = IsExactlyAlignedForAxisSwap(singleDir);
 
-        if (IsExactlyAlignedForAxisSwap(requestedDir))
+        LogCurve(
+            $"HandleSingleAxisTurn requested:{singleDir} " +
+            $"moveBlocked:{moveBlocked} nearCentre:{nearCentre} exactlyAligned:{exactlyAligned} " +
+            $"currentDir:{direction} pendingSingleBefore:{pendingSingleTurnDirection}");
+
+        if (!moveBlocked && (nearCentre || exactlyAligned))
         {
-            lockedMovementDirection = requestedDir;
             pendingSingleTurnDirection = Vector2.zero;
-            ApplyDirectionFromVector(requestedDir);
+            lockedMovementDirection = Vector2.zero;
+
+            LogCurve($"HandleSingleAxisTurn -> APPLY turn to:{singleDir}");
+            ApplyDirectionFromVector(singleDir);
             return;
         }
 
-        Vector2 alignDir = GetSingleTurnAlignmentDirection(currentMove, requestedDir);
+        pendingSingleTurnDirection = singleDir;
+        lockedMovementDirection = direction;
 
-        if (alignDir == Vector2.zero)
-            alignDir = currentMove;
-
-        if (alignDir != currentMove && IsSingleTurnAlignmentBlocked(alignDir, requestedDir))
-        {
-            lockedMovementDirection = currentMove;
-
-            if (IsMoveBlocked(currentMove))
-            {
-                ApplyDirectionFromVector(Vector2.zero);
-                return;
-            }
-
-            ApplyDirectionFromVector(currentMove);
-            return;
-        }
-
-        lockedMovementDirection = alignDir;
-        ApplyDirectionFromVector(alignDir);
+        LogCurve($"HandleSingleAxisTurn -> arm pendingSingle:{pendingSingleTurnDirection} keep current:{direction}");
+        ApplyDirectionFromVector(direction);
     }
 
     private bool IsSingleTurnAlignmentBlocked(Vector2 alignDir, Vector2 requestedTurnDir)
@@ -2903,5 +3110,27 @@ public class MovementController : MonoBehaviour, IKillable
         }
 
         return false;
+    }
+
+    [Header("Debug Curva")]
+    [SerializeField] private bool debugCurvas;
+    [SerializeField] private bool debugCurvasVerbose;
+    [SerializeField] private int debugCurvasPlayerId = 1;
+    private int _debugLastFixedFrameLogged = -1;
+
+    private bool ShouldLogCurve()
+    {
+        return debugCurvas && (!IsPlayer() || playerId == debugCurvasPlayerId);
+    }
+
+    private void LogCurve(string msg, bool verbose = false)
+    {
+        if (!ShouldLogCurve())
+            return;
+
+        if (verbose && !debugCurvasVerbose)
+            return;
+
+        Debug.Log($"[MovementCurve][P{playerId}][f:{Time.frameCount}] {msg}", this);
     }
 }

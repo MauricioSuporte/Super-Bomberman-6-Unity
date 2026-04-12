@@ -3820,11 +3820,13 @@ MonoBehaviour:
   pixelsPerUnit: 16
   useIntegerPixelSteps: 1
   suppressInactivityAnimation: 0
+  earlyKickEdgeThreshold: 0.22
   isDead: 0
   explosionInvulnerable: 0
   externalMovementOverride: 0
-  debugDualInput: 1
-  debugDualInputVerbose: 0
+  debugCurvas: 1
+  debugCurvasVerbose: 1
+  debugCurvasPlayerId: 1
 --- !u!114 &2372813969180496726
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4017,6 +4019,8 @@ MonoBehaviour:
   enabledAbility: 0
   punchDistanceTiles: 3
   punchLockTime: 0.25
+  earlyPunchSearchSize: 1.4
+  earlyPunchMinExitFraction: 0.3
   punchUp: {fileID: 1334802762771057975}
   punchDown: {fileID: 9127359846835089177}
   punchLeft: {fileID: 398357160787023457}
@@ -4209,6 +4213,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 68b020415a2b4524a9b95a6531190b6d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerLouieManualDismount
+  manualDismountDuration: 0.5
   freezeEggQueueOnDismount: 1
   detachedLouieSwitchInterval: 15
 --- !u!114 &4481698298045029297
