@@ -1583,6 +1583,8 @@ public class MovementController : MonoBehaviour, IKillable
         if (isDead || isEndingStage)
             return;
 
+        NotifyHudPortraitDeathIfPlayer();
+
         holeDeathInProgress = false;
 
         BeginDeathCommon();
@@ -1772,6 +1774,16 @@ public class MovementController : MonoBehaviour, IKillable
             Color sc = startColors[i];
             sr.color = new Color(0f, 0f, 0f, sc.a);
         }
+    }
+
+    private void NotifyHudPortraitDeathIfPlayer()
+    {
+        if (!IsPlayer())
+            return;
+
+        var hud = FindAnyObjectByType<HudPortraitInGridLayout>();
+        if (hud != null)
+            hud.OnPlayerDied(PlayerId);
     }
 
     public void PlayEndStageSequence(Vector2 portalCenter, bool snapToPortalCenter)

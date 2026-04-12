@@ -23,10 +23,10 @@ public sealed class HudPortraitInGridLayout : MonoBehaviour
     [SerializeField]
     private Vector2[] portraitOffsets = new Vector2[4]
     {
-        new Vector2(2f, 2f),
-        new Vector2(2f, 2f),
-        new Vector2(2f, 2f),
-        new Vector2(2f, 2f)
+        new(2f, 2f),
+        new(2f, 2f),
+        new(2f, 2f),
+        new(2f, 2f)
     };
 
     [Header("Optional Per Portrait Size Override")]
@@ -35,13 +35,14 @@ public sealed class HudPortraitInGridLayout : MonoBehaviour
     [SerializeField]
     private Vector2[] portraitSizes = new Vector2[4]
     {
-        new Vector2(16f, 16f),
-        new Vector2(16f, 16f),
-        new Vector2(16f, 16f),
-        new Vector2(16f, 16f)
+        new(16f, 16f),
+        new(16f, 16f),
+        new(16f, 16f),
+        new(16f, 16f)
     };
 
     readonly Dictionary<int, Sprite> portraitByIndex = new();
+    private bool[] playerDead = new bool[4];
     bool loaded;
 
     void LateUpdate()
@@ -96,18 +97,9 @@ public sealed class HudPortraitInGridLayout : MonoBehaviour
             BomberSkin skin = PlayerPersistentStats.Get(playerId).Skin;
             int portraitIndex = GetPortraitIndex(skin);
 
-            if (portraitByIndex.TryGetValue(portraitIndex, out Sprite portraitSprite))
-            {
-                if (portraitImage.sprite != portraitSprite)
-                    portraitImage.sprite = portraitSprite;
+            bool isDead = playerDead[i];
 
-                portraitImage.enabled = true;
-                portraitImage.preserveAspect = false;
-            }
-            else
-            {
-                portraitImage.enabled = false;
-            }
+            TrySetPortrait(portraitImage, portraitIndex, isDead);
         }
     }
 
@@ -267,5 +259,64 @@ public sealed class HudPortraitInGridLayout : MonoBehaviour
 
             gridWidths = newGridWidths;
         }
+    }
+
+    void TrySetPortrait(Image portraitImage, int index, bool isDead)
+    {
+        string path = isDead
+            ? "HUD/PortraitBombersDead"
+            : "HUD/PortraitBombersLive";
+
+        Sprite[] sprites = Resources.LoadAll<Sprite>(path);
+
+        if (sprites == null || sprites.Length == 0)
+        {
+            portraitImage.enabled = false;
+            return;
+        }
+
+        for (int i = 0; i < sprites.Length; i++)
+        {
+            var sprite = sprites[i];
+            if (sprite == null)
+                continue;
+
+            string name = sprite.name;
+            int underscore = name.LastIndexOf('_');
+
+            if (underscore < 0)
+                continue;
+
+            if (int.TryParse(name[(underscore + 1)..], out int idx))
+            {
+                if (idx == index)
+                {
+                    portraitImage.sprite = sprite;
+                    portraitImage.enabled = true;
+                    portraitImage.preserveAspect = false;
+                    return;
+                }
+            }
+        }
+
+        portraitImage.enabled = false;
+    }
+
+    public void OnPlayerDied(int playerId)
+    {
+        int index = playerId - 1;
+        if (index < 0 || index >= playerDead.Length)
+            return;
+
+        playerDead[index] = true;
+    }
+
+    public void OnPlayerRespawn(int playerId)
+    {
+        int index = playerId - 1;
+        if (index < 0 || index >= playerDead.Length)
+            return;
+
+        playerDead[index] = false;
     }
 }
