@@ -3812,7 +3812,7 @@ MonoBehaviour:
   perpendicularAlignMultiplier: 8
   snapPerpendicularOnAxisStart: 1
   alignEpsilon: 0.0015
-  enableCorridorAxisLock: 1
+  enableCorridorAxisLock: 0
   corridorCenterEpsilon: 0.06
   corridorSolidProbeSizeMul: 0.9
   canPassTaggedObstacles: 0

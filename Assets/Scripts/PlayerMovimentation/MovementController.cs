@@ -930,6 +930,12 @@ public class MovementController : MonoBehaviour, IKillable
             }
         }
 
+        if (TryClampBlockedAxisAndCenter(ref position, rawMoveWorld, movingHorizontal, movingVertical))
+        {
+            MovePositionPixelPerfect(position);
+            return;
+        }
+
         if (moveWorld <= 0f)
         {
             LogCurve($"FixedUpdate moveWorld <= 0 -> hold {position}", verbose: true);
@@ -952,6 +958,63 @@ public class MovementController : MonoBehaviour, IKillable
 
         LogCurve("FixedUpdate target blocked -> TrySlideIfBlocked");
         TrySlideIfBlocked(position, moveWorld, movingHorizontal, movingVertical);
+    }
+
+    private bool TryClampBlockedAxisAndCenter(ref Vector2 position, float moveSpeed, bool movingHorizontal, bool movingVertical)
+    {
+        float half = tileSize * 0.5f;
+
+        bool blockLeft = IsSolidAt(position + Vector2.left * half);
+        bool blockRight = IsSolidAt(position + Vector2.right * half);
+        bool blockUp = IsSolidAt(position + Vector2.up * half);
+        bool blockDown = IsSolidAt(position + Vector2.down * half);
+
+        bool horizontalAxisClosed = blockLeft && blockRight;
+        bool verticalAxisClosed = blockUp && blockDown;
+
+        float snapStep = moveSpeed * Mathf.Max(1f, perpendicularAlignMultiplier);
+
+        if (movingVertical && verticalAxisClosed)
+        {
+            float targetY = Mathf.Round(position.y / tileSize) * tileSize;
+            float newY = Mathf.MoveTowards(position.y, targetY, snapStep);
+
+            LogCurve(
+                $"TryClampBlockedAxisAndCenter vertical CLOSED " +
+                $"pos:{position} targetY:{targetY:F3} newY:{newY:F3} " +
+                $"blockUp:{blockUp} blockDown:{blockDown}");
+
+            position.y = newY;
+            position = QuantizeToPixelGrid(position);
+
+            direction = Vector2.zero;
+            hasInput = false;
+            currentAxis = MoveAxis.None;
+
+            return true;
+        }
+
+        if (movingHorizontal && horizontalAxisClosed)
+        {
+            float targetX = Mathf.Round(position.x / tileSize) * tileSize;
+            float newX = Mathf.MoveTowards(position.x, targetX, snapStep);
+
+            LogCurve(
+                $"TryClampBlockedAxisAndCenter horizontal CLOSED " +
+                $"pos:{position} targetX:{targetX:F3} newX:{newX:F3} " +
+                $"blockLeft:{blockLeft} blockRight:{blockRight}");
+
+            position.x = newX;
+            position = QuantizeToPixelGrid(position);
+
+            direction = Vector2.zero;
+            hasInput = false;
+            currentAxis = MoveAxis.None;
+
+            return true;
+        }
+
+        return false;
     }
 
     private bool ShouldSkipFixedUpdate()
