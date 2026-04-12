@@ -1,6 +1,5 @@
 ﻿using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
 
 [DisallowMultipleComponent]
 public class BossRushTimerPresenter : MonoBehaviour
