@@ -12,6 +12,12 @@ public class MovementController : MonoBehaviour, IKillable
 {
     public event Action<MovementController> Died;
 
+    [Header("Debug Curva")]
+    [SerializeField] private bool debugCurvas;
+    [SerializeField] private bool debugCurvasVerbose;
+    [SerializeField] private int debugCurvasPlayerId = 1;
+    private int _debugLastFixedFrameLogged = -1;
+
     [Header("SFX")]
     public AudioClip deathSfx;
 
@@ -597,7 +603,6 @@ public class MovementController : MonoBehaviour, IKillable
             return dualPrimary;
         }
 
-        // arma a curva mais cedo
         if ((nearCentre || exactlyAligned) && pendingTurnDirection == Vector2.zero)
             pendingTurnDirection = dualSecondary;
 
@@ -3174,12 +3179,6 @@ public class MovementController : MonoBehaviour, IKillable
 
         return false;
     }
-
-    [Header("Debug Curva")]
-    [SerializeField] private bool debugCurvas;
-    [SerializeField] private bool debugCurvasVerbose;
-    [SerializeField] private int debugCurvasPlayerId = 1;
-    private int _debugLastFixedFrameLogged = -1;
 
     private bool ShouldLogCurve()
     {
