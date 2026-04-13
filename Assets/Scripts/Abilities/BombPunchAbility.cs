@@ -18,6 +18,9 @@ public class BombPunchAbility : MonoBehaviour, IPlayerAbility
     public int punchDistanceTiles = 3;
     public float punchLockTime = 0.1f;
 
+    [Header("Auto Punch While Holding ActionC")]
+    [SerializeField] private bool enableAutoPunchWhileHolding = true;
+
     [Header("Early Punch")]
     [SerializeField, Range(0.5f, 2.0f)]
     private float earlyPunchSearchSize = 1.4f;
@@ -134,6 +137,8 @@ public class BombPunchAbility : MonoBehaviour, IPlayerAbility
         Vector2 moveDir = movement.Direction;
         if (moveDir != Vector2.zero)
             lastFacingDir = moveDir;
+        else if (movement.FacingDirection != Vector2.zero)
+            lastFacingDir = movement.FacingDirection;
 
         var input = PlayerInputManager.Instance;
         if (input == null)
@@ -141,12 +146,28 @@ public class BombPunchAbility : MonoBehaviour, IPlayerAbility
 
         int pid = movement.PlayerId;
 
-        if (!input.GetDown(pid, PlayerAction.ActionC))
+        bool wantsPunch =
+            enableAutoPunchWhileHolding
+                ? input.Get(pid, PlayerAction.ActionC)
+                : input.GetDown(pid, PlayerAction.ActionC);
+
+        if (!wantsPunch)
+            return;
+
+        TryPunchAhead();
+    }
+
+    private void TryPunchAhead()
+    {
+        if (movement == null)
+            return;
+
+        if (punchLockRoutine != null)
             return;
 
         Vector2 dir = lastFacingDir;
         if (dir == Vector2.zero)
-            dir = Vector2.down;
+            dir = movement.FacingDirection != Vector2.zero ? movement.FacingDirection : Vector2.down;
 
         Vector2 playerPos = movement.Rigidbody != null
             ? movement.Rigidbody.position
@@ -160,16 +181,7 @@ public class BombPunchAbility : MonoBehaviour, IPlayerAbility
         if (bomb == null)
             return;
 
-        if (audioSource != null && cachedPunchClip != null)
-            audioSource.PlayOneShot(cachedPunchClip);
-
-        if (punchLockRoutine != null)
-            StopCoroutine(punchLockRoutine);
-
-        punchLockRoutine = StartCoroutine(PunchAnimLock(dir));
-
         LayerMask obstacles = movement.obstacleMask | LayerMask.GetMask("Enemy", "Bomb", "Player");
-
         Vector2 bombLogicalPos = bomb.GetLogicalPosition();
 
         bool punched = bomb.StartPunch(
@@ -181,25 +193,41 @@ public class BombPunchAbility : MonoBehaviour, IPlayerAbility
             visualStartYOffset: 0f,
             logicalOriginOverride: bombLogicalPos
         );
+
+        if (!punched)
+            return;
+
+        if (audioSource != null && cachedPunchClip != null)
+            audioSource.PlayOneShot(cachedPunchClip);
+
+        if (punchLockRoutine != null)
+            StopCoroutine(punchLockRoutine);
+
+        punchLockRoutine = StartCoroutine(PunchAnimLock(dir));
     }
 
     private Bomb FindPunchableBombAhead(Vector2 playerSnappedPos, Vector2 dir)
     {
         float tileSize = movement.tileSize;
 
-        Vector2 front = playerSnappedPos + dir * tileSize;
+        Vector2 frontTileCenter = playerSnappedPos + dir * tileSize;
 
         int bombLayer = LayerMask.NameToLayer("Bomb");
         int bombMask = 1 << bombLayer;
-        float boxSize = tileSize * earlyPunchSearchSize;
 
-        Collider2D[] hits = Physics2D.OverlapBoxAll(front, Vector2.one * boxSize, 0f, bombMask);
+        float searchBoxSize = tileSize * 0.55f;
+
+        Collider2D[] hits = Physics2D.OverlapBoxAll(frontTileCenter, Vector2.one * searchBoxSize, 0f, bombMask);
 
         if (hits == null || hits.Length == 0)
             return null;
 
         Bomb bestBomb = null;
-        float bestDist = float.MaxValue;
+        float bestScore = float.MaxValue;
+
+        float maxDistanceFromFrontTile = tileSize * 0.35f;
+
+        float maxPerpendicularOffset = tileSize * 0.15f;
 
         foreach (var hit in hits)
         {
@@ -208,31 +236,31 @@ public class BombPunchAbility : MonoBehaviour, IPlayerAbility
 
             var candidate = hit.GetComponent<Bomb>();
             if (candidate == null)
-            {
                 continue;
-            }
 
             Vector2 bombPos = candidate.GetLogicalPosition();
-            Vector2 towardBomb = bombPos - playerSnappedPos;
+            Vector2 offsetFromPlayer = bombPos - playerSnappedPos;
 
-            float dot = Vector2.Dot(towardBomb.normalized, dir);
+            float forwardDistance = Vector2.Dot(offsetFromPlayer, dir);
+            if (forwardDistance <= 0f)
+                continue;
+
+            Vector2 perpendicular = new Vector2(-dir.y, dir.x);
+            float perpendicularOffset = Mathf.Abs(Vector2.Dot(offsetFromPlayer, perpendicular));
+            if (perpendicularOffset > maxPerpendicularOffset)
+                continue;
+
+            float distanceFromFrontTile = Vector2.Distance(bombPos, frontTileCenter);
+            if (distanceFromFrontTile > maxDistanceFromFrontTile)
+                continue;
 
             bool acceptable = candidate.CanBePunched || CanEarlyPunch(candidate, playerSnappedPos, bombPos);
-
-            if (dot < 0.1f)
-            {
-                continue;
-            }
-
             if (!acceptable)
-            {
                 continue;
-            }
 
-            float dist = Vector2.Distance(bombPos, front);
-            if (dist < bestDist)
+            if (distanceFromFrontTile < bestScore)
             {
-                bestDist = dist;
+                bestScore = distanceFromFrontTile;
                 bestBomb = candidate;
             }
         }
