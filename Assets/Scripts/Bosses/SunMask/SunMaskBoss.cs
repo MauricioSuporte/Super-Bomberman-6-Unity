@@ -394,6 +394,7 @@ public class SunMaskBoss : MonoBehaviour, IKillable
     void OnTriggerStay2D(Collider2D other)
     {
         TryDestroyBombOnTouch(other);
+        TryApplyExplosionDamage(other);
         TryApplyTouchDamage(other);
     }
 
