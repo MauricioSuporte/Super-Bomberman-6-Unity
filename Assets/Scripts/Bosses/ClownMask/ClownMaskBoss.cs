@@ -1291,6 +1291,7 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
 
     void OnTriggerStay2D(Collider2D other)
     {
+        TryApplyExplosionDamage(other);
         TryApplyTouchDamage(other);
     }
 
