@@ -781,6 +781,11 @@ public class MovementController : MonoBehaviour, IKillable
             var hit = hits[i];
             if (hit == null) continue;
             if (hit.gameObject == gameObject) continue;
+
+            var hitBombEarly = hit.GetComponent<Bomb>();
+            if (hitBombEarly != null && !hitBombEarly.IsSolid)
+                continue;
+
             if (hit.isTrigger) continue;
 
             if (canPassTaggedObstacles && hit.CompareTag(passObstacleTag))
@@ -795,12 +800,18 @@ public class MovementController : MonoBehaviour, IKillable
 
             if (hit.gameObject.layer == LayerMask.NameToLayer("Bomb"))
             {
-                var bomb = hit.GetComponent<Bomb>();
-                if (bomb != null && bomb.Owner == bombController)
+                var bomb = hitBombEarly != null ? hitBombEarly : hit.GetComponent<Bomb>();
+                if (bomb != null)
                 {
-                    var bombCollider = bomb.GetComponent<Collider2D>();
-                    if (bombCollider != null && bombCollider.isTrigger)
+                    if (!bomb.IsSolid)
                         continue;
+
+                    if (bomb.Owner == bombController)
+                    {
+                        var bombCollider = bomb.GetComponent<Collider2D>();
+                        if (bombCollider != null && bombCollider.isTrigger)
+                            continue;
+                    }
                 }
             }
 
@@ -1378,20 +1389,40 @@ public class MovementController : MonoBehaviour, IKillable
             var hit = hits[i];
             if (hit == null) continue;
             if (hit.gameObject == gameObject) continue;
+
+            var hitBombEarly = hit.GetComponent<Bomb>();
+            if (hitBombEarly != null && !hitBombEarly.IsSolid)
+            {
+                LogBombEscape(
+                    $"IsSolidAt IGNORE trigger/non-solid bomb probe world:{worldPosition} bomb:{hitBombEarly.name} " +
+                    $"bombPos:{hitBombEarly.GetLogicalPosition()} bombIsSolid:{hitBombEarly.IsSolid}",
+                    verbose: true);
+
+                continue;
+            }
+
             if (hit.isTrigger) continue;
 
             if (canPassTaggedObstacles && hit.CompareTag(passObstacleTag))
                 continue;
 
-            if (canPassDestructibles && hit.CompareTag("Destructibles")) continue;
+            if (canPassDestructibles && hit.CompareTag("Destructibles"))
+                continue;
 
             if (hit.gameObject.layer == LayerMask.NameToLayer("Bomb"))
             {
-                var bomb = hit.GetComponent<Bomb>();
-                if (bomb != null && bomb.Owner == bombController)
+                var bomb = hitBombEarly != null ? hitBombEarly : hit.GetComponent<Bomb>();
+                if (bomb != null)
                 {
-                    var bombCollider = bomb.GetComponent<Collider2D>();
-                    if (bombCollider != null && bombCollider.isTrigger)
+                    bool bombStillTrigger = !bomb.IsSolid;
+
+                    LogBombEscape(
+                        $"IsSolidAt bomb probe world:{worldPosition} bomb:{bomb.name} " +
+                        $"bombPos:{bomb.GetLogicalPosition()} bombIsSolid:{bomb.IsSolid} " +
+                        $"bombColliderIsTrigger:{bombStillTrigger} ownerIsMe:{(bomb.Owner == bombController)}",
+                        verbose: true);
+
+                    if (!bomb.IsSolid)
                         continue;
                 }
             }
@@ -1422,6 +1453,19 @@ public class MovementController : MonoBehaviour, IKillable
                 var hit = hits[h];
                 if (hit == null) continue;
                 if (hit.gameObject == gameObject) continue;
+
+                var hitBombEarly = hit.GetComponent<Bomb>();
+                if (hitBombEarly != null && !hitBombEarly.IsSolid)
+                {
+                    LogBombEscape(
+                        $"IGNORE overlap non-solid bomb:{hitBombEarly.name} " +
+                        $"target:{targetPosition} dir:{dirForSize} playerPos:{(Rigidbody != null ? Rigidbody.position : (Vector2)transform.position)} " +
+                        $"bombPos:{hitBombEarly.GetLogicalPosition()}",
+                        verbose: true);
+
+                    continue;
+                }
+
                 if (hit.isTrigger) continue;
 
                 if (canPassTaggedObstacles && hit.CompareTag(passObstacleTag))
@@ -1432,6 +1476,10 @@ public class MovementController : MonoBehaviour, IKillable
 
                 if (_lastAdjKickedBomb != null && _lastAdjKickedBomb.IsBeingKicked
                     && hit.transform.IsChildOf(_lastAdjKickedBomb.transform))
+                    continue;
+
+                var hitBomb = hitBombEarly != null ? hitBombEarly : hit.GetComponent<Bomb>();
+                if (hitBomb != null && !hitBomb.IsSolid)
                     continue;
 
                 if (allowMovementAbilities)
@@ -1445,6 +1493,17 @@ public class MovementController : MonoBehaviour, IKillable
                                 return IsBlockedAtPosition(targetPosition, dirForSize, false);
                         }
                     }
+                }
+
+                if (hitBomb != null)
+                {
+                    LogBombEscape(
+                        $"BLOCKED by SOLID collider bomb:{hitBomb.name} " +
+                        $"target:{targetPosition} dir:{dirForSize} " +
+                        $"playerPos:{(Rigidbody != null ? Rigidbody.position : (Vector2)transform.position)} " +
+                        $"bombPos:{hitBomb.GetLogicalPosition()} " +
+                        $"bombIsSolid:{hitBomb.IsSolid} " +
+                        $"bombOwnerIsMe:{(hitBomb.Owner == bombController)}");
                 }
 
                 return true;
@@ -1474,9 +1533,22 @@ public class MovementController : MonoBehaviour, IKillable
 
                 var bombCollider = bomb.GetComponent<Collider2D>();
 
+                LogBombEscape(
+                    $"TriggerBombCheck bomb:{bomb.name} " +
+                    $"myPos:{myPos} target:{targetPosition} dir:{dirForSize} bombPos:{bombPos} " +
+                    $"overlapsCurrent:{overlapsCurrent} overlapsTarget:{overlapsTarget} " +
+                    $"bombIsSolid:{bomb.IsSolid} bombColliderIsTrigger:{(bombCollider != null && bombCollider.isTrigger)} " +
+                    $"bombOwnerIsMe:{(bomb.Owner == bombController)}",
+                    verbose: true);
+
                 if (overlapsCurrent)
                 {
                     bool nearEdgeForKick = IsNearBombEdgeForEarlyKick(myPos, bombPos, dirForSize);
+
+                    LogBombEscape(
+                        $"InsideOwnOrSharedBomb bomb:{bomb.name} overlapsCurrent:true overlapsTarget:true " +
+                        $"nearEdgeForKick:{nearEdgeForKick}",
+                        verbose: true);
 
                     if (allowMovementAbilities && nearEdgeForKick && bombCollider != null)
                     {
@@ -1499,6 +1571,13 @@ public class MovementController : MonoBehaviour, IKillable
 
                 bool nearReentryKickEdge = IsNearBombReentryKickEdge(myPos, bombPos, dirForSize);
 
+                LogBombEscape(
+                    $"REENTRY CHECK bomb:{bomb.name} " +
+                    $"myPos:{myPos} target:{targetPosition} bombPos:{bombPos} " +
+                    $"overlapsCurrent:{overlapsCurrent} overlapsTarget:{overlapsTarget} " +
+                    $"nearReentryKickEdge:{nearReentryKickEdge}",
+                    verbose: false);
+
                 if (allowMovementAbilities && nearReentryKickEdge && bombCollider != null)
                 {
                     for (int i = 0; i < movementAbilities.Length; i++)
@@ -1511,6 +1590,10 @@ public class MovementController : MonoBehaviour, IKillable
                         }
                     }
                 }
+
+                LogBombEscape(
+                    $"BLOCKED by REENTRY logic bomb:{bomb.name} " +
+                    $"myPos:{myPos} target:{targetPosition} bombPos:{bombPos}");
 
                 return true;
             }
@@ -1534,6 +1617,11 @@ public class MovementController : MonoBehaviour, IKillable
                 var hit = hits[h];
                 if (hit == null) continue;
                 if (hit.gameObject == gameObject) continue;
+
+                var hitBombEarly = hit.GetComponent<Bomb>();
+                if (hitBombEarly != null && !hitBombEarly.IsSolid)
+                    continue;
+
                 if (hit.isTrigger) continue;
 
                 if (canPassTaggedObstacles && hit.CompareTag(passObstacleTag))
@@ -1543,6 +1631,10 @@ public class MovementController : MonoBehaviour, IKillable
                     continue;
 
                 if (ignoreBomb != null && hit.transform.IsChildOf(ignoreBomb.transform))
+                    continue;
+
+                var hitBomb = hitBombEarly != null ? hitBombEarly : hit.GetComponent<Bomb>();
+                if (hitBomb != null && !hitBomb.IsSolid)
                     continue;
 
                 return true;
@@ -2833,17 +2925,17 @@ public class MovementController : MonoBehaviour, IKillable
 
     private Vector2 GetBlockProbeSize(Vector2 dirForSize)
     {
-        return Mathf.Abs(dirForSize.x) > 0f
+        return Mathf.Abs(dirForSize.x) > 0.01f
             ? new Vector2(tileSize * 0.6f, tileSize * 0.2f)
             : new Vector2(tileSize * 0.2f, tileSize * 0.6f);
     }
 
     private bool IsInsideBombTileFootprint(Vector2 worldPos, Vector2 bombPos)
     {
-        float halfTile = tileSize * 0.5f + 0.0001f;
+        float halfFootprint = tileSize * 0.35f;
 
-        return Mathf.Abs(worldPos.x - bombPos.x) <= halfTile
-            && Mathf.Abs(worldPos.y - bombPos.y) <= halfTile;
+        return Mathf.Abs(worldPos.x - bombPos.x) <= halfFootprint
+            && Mathf.Abs(worldPos.y - bombPos.y) <= halfFootprint;
     }
 
     private bool IsExactlyAlignedForAxisSwap(Vector2 newDir)
@@ -3194,5 +3286,20 @@ public class MovementController : MonoBehaviour, IKillable
             return;
 
         Debug.Log($"[MovementCurve][P{playerId}][f:{Time.frameCount}] {msg}", this);
+    }
+
+    [Header("Debug Bomb Escape")]
+    [SerializeField] private bool debugBombEscape;
+    [SerializeField] private bool debugBombEscapeVerbose;
+
+    private void LogBombEscape(string message, bool verbose = false)
+    {
+        if (!debugBombEscape)
+            return;
+
+        if (verbose && !debugBombEscapeVerbose)
+            return;
+
+        Debug.Log($"[BombEscape][Player:{name}] {message}", this);
     }
 }

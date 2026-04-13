@@ -314,13 +314,12 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         charactersInside.Clear();
 
         int charMask = LayerMask.GetMask("Player", "Enemy");
-        Collider2D[] cols = Physics2D.OverlapBoxAll(worldPos, Vector2.one * 0.4f, 0f, charMask);
 
-        if (cols == null)
+        float searchRadius = Mathf.Max(ApproxRadius + 0.35f, 0.75f);
+        Collider2D[] cols = Physics2D.OverlapCircleAll(worldPos, searchRadius, charMask);
+
+        if (cols == null || cols.Length == 0)
             return;
-
-        int playerLayer = LayerMask.NameToLayer("Player");
-        int enemyLayer = LayerMask.NameToLayer("Enemy");
 
         for (int i = 0; i < cols.Length; i++)
         {
@@ -328,10 +327,17 @@ public class Bomb : MonoBehaviour, IMagnetPullable
             if (c == null)
                 continue;
 
-            int layer = c.gameObject.layer;
-            if (layer == playerLayer || layer == enemyLayer)
+            if (!IsCharacterLayer(c.gameObject.layer))
+                continue;
+
+            if (IsCharacterStillOccupyingBomb(c, worldPos))
                 charactersInside.Add(c);
         }
+
+        LogBombEscape(
+            $"RecalculateCharactersInsideAt worldPos:{worldPos} " +
+            $"searchRadius:{searchRadius:F3} count:{charactersInside.Count}",
+            verbose: true);
     }
 
     private bool TileHasBomb(Vector2 pos)
@@ -998,6 +1004,10 @@ public class Bomb : MonoBehaviour, IMagnetPullable
 
         RecalculateCharactersInsideAt(rb.position);
         bombCollider.isTrigger = charactersInside.Count > 0;
+
+        LogBombEscape(
+            $"Initialize pos:{rb.position} logical:{lastPos} charactersInside:{charactersInside.Count} " +
+            $"isTrigger:{bombCollider.isTrigger} approxRadius:{ApproxRadius:F3}");
     }
 
     public Vector2 GetLogicalPosition() => lastPos;
@@ -1333,6 +1343,10 @@ public class Bomb : MonoBehaviour, IMagnetPullable
 
         if (layer == LayerMask.NameToLayer("Explosion"))
         {
+            LogBombEscape(
+                $"OnTriggerEnter EXPLOSION other:{other.name} " +
+                $"isControlBomb:{IsControlBomb} isPunched:{isPunched} isKicked:{isKicked}");
+
             if (IsControlBomb && isPunched)
                 return;
 
@@ -1345,16 +1359,23 @@ public class Bomb : MonoBehaviour, IMagnetPullable
             return;
         }
 
-        int playerLayer = LayerMask.NameToLayer("Player");
-        int enemyLayer = LayerMask.NameToLayer("Enemy");
+        if (!IsCharacterLayer(layer))
+            return;
 
-        if (layer == playerLayer || layer == enemyLayer)
-        {
+        int before = charactersInside.Count;
+        bool wasTrigger = bombCollider != null && bombCollider.isTrigger;
+
+        if (IsCharacterStillOccupyingBomb(other, rb != null ? rb.position : (Vector2)transform.position))
             charactersInside.Add(other);
 
-            if (bombCollider != null && !bombCollider.isTrigger)
-                bombCollider.isTrigger = true;
-        }
+        if (bombCollider != null && charactersInside.Count > 0)
+            bombCollider.isTrigger = true;
+
+        LogBombEscape(
+            $"OnTriggerEnter CHAR other:{other.name} layer:{LayerMask.LayerToName(layer)} " +
+            $"beforeCount:{before} afterCount:{charactersInside.Count} " +
+            $"wasTrigger:{wasTrigger} nowTrigger:{(bombCollider != null && bombCollider.isTrigger)} " +
+            $"bombPos:{transform.position} otherPos:{other.transform.position}");
     }
 
     private void OnTriggerExit2D(Collider2D other)
@@ -1362,17 +1383,40 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         if (HasExploded || isKicked || isPunched)
             return;
 
-        int layer = other.gameObject.layer;
-        int playerLayer = LayerMask.NameToLayer("Player");
-        int enemyLayer = LayerMask.NameToLayer("Enemy");
-
-        if (layer != playerLayer && layer != enemyLayer)
+        if (other == null)
             return;
+
+        int layer = other.gameObject.layer;
+        if (!IsCharacterLayer(layer))
+            return;
+
+        int before = charactersInside.Count;
+        bool wasTrigger = bombCollider != null && bombCollider.isTrigger;
 
         charactersInside.Remove(other);
 
+        Vector2 bombPos = rb != null ? rb.position : (Vector2)transform.position;
+
+        RecalculateCharactersInsideAt(bombPos);
+
+        bool stillOccupying = charactersInside.Contains(other);
+
+        if (bombCollider != null)
+            bombCollider.isTrigger = charactersInside.Count > 0;
+
+        LogBombEscape(
+            $"OnTriggerExit CHAR other:{other.name} layer:{LayerMask.LayerToName(layer)} " +
+            $"beforeCount:{before} afterRecalcCount:{charactersInside.Count} " +
+            $"wasTrigger:{wasTrigger} nowTrigger:{(bombCollider != null && bombCollider.isTrigger)} " +
+            $"bombPos:{bombPos} otherPos:{other.transform.position} stillOccupying:{stillOccupying}");
+
         if (charactersInside.Count == 0)
-            bombCollider.isTrigger = false;
+        {
+            LogBombEscape(
+                $"Bomb became SOLID at bombPos:{bombPos}. " +
+                $"This is only valid if no player/enemy is still physically overlapping the bomb.",
+                verbose: false);
+        }
     }
 
     public float RemainingFuseSeconds
@@ -1902,5 +1946,55 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         }
 
         return false;
+    }
+
+    [Header("Debug Bomb Escape")]
+    [SerializeField] private bool debugBombEscape;
+    [SerializeField] private bool debugBombEscapeVerbose;
+
+    private void LogBombEscape(string message, bool verbose = false)
+    {
+        if (!debugBombEscape)
+            return;
+
+        if (verbose && !debugBombEscapeVerbose)
+            return;
+
+        Debug.Log($"[BombEscape][Bomb:{name}] {message}", this);
+    }
+
+    private string LayerNameOf(int layer)
+    {
+        return layer >= 0 ? LayerMask.LayerToName(layer) : layer.ToString();
+    }
+
+    private static bool IsCharacterLayer(int layer)
+    {
+        int playerLayer = LayerMask.NameToLayer("Player");
+        int enemyLayer = LayerMask.NameToLayer("Enemy");
+        return layer == playerLayer || layer == enemyLayer;
+    }
+
+    private static float GetColliderApproxRadius(Collider2D col)
+    {
+        if (col == null)
+            return 0f;
+
+        Bounds b = col.bounds;
+        return Mathf.Max(b.extents.x, b.extents.y);
+    }
+
+    private bool IsCharacterStillOccupyingBomb(Collider2D col, Vector2 bombWorldPos)
+    {
+        if (col == null)
+            return false;
+
+        float charRadius = GetColliderApproxRadius(col);
+        float allowedDistance = ApproxRadius + charRadius + 0.02f;
+
+        Vector2 closest = col.ClosestPoint(bombWorldPos);
+        float dist = Vector2.Distance(closest, bombWorldPos);
+
+        return dist <= allowedDistance;
     }
 }

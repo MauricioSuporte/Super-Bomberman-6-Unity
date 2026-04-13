@@ -181,6 +181,8 @@ MonoBehaviour:
   animationTime: 0.25
   useSequenceDuration: 0
   sequenceDuration: 0
+  useUnscaledTime: 1
+  respectGamePause: 1
   loop: 1
   idle: 0
   frameOffsets: []
@@ -210,7 +212,10 @@ MonoBehaviour:
   chainStepDelay: 0.1
   FuseSeconds: 2
   stageBoundsTilemap: {fileID: 0}
+  indestructibleTilemap: {fileID: 0}
   magnetPullSpeed: 10
+  debugBombEscape: 1
+  debugBombEscapeVerbose: 1
 --- !u!82 &4491695425928016186
 AudioSource:
   m_ObjectHideFlags: 0
