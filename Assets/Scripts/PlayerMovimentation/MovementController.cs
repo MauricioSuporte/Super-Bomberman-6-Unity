@@ -10,8 +10,6 @@ using UnityEngine;
 [RequireComponent(typeof(StunReceiver))]
 public class MovementController : MonoBehaviour, IKillable
 {
-    public event Action<MovementController> Died;
-
     [Header("Debug Curva")]
     [SerializeField] private bool debugCurvas;
     [SerializeField] private bool debugCurvasVerbose;
@@ -21,6 +19,8 @@ public class MovementController : MonoBehaviour, IKillable
     [Header("Debug Bomb Escape")]
     [SerializeField] private bool debugBombEscape;
     [SerializeField] private bool debugBombEscapeVerbose;
+
+    public event Action<MovementController> Died;
 
     [Header("SFX")]
     public AudioClip deathSfx;
