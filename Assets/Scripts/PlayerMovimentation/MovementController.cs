@@ -18,6 +18,10 @@ public class MovementController : MonoBehaviour, IKillable
     [SerializeField] private int debugCurvasPlayerId = 1;
     private int _debugLastFixedFrameLogged = -1;
 
+    [Header("Debug Bomb Escape")]
+    [SerializeField] private bool debugBombEscape;
+    [SerializeField] private bool debugBombEscapeVerbose;
+
     [Header("SFX")]
     public AudioClip deathSfx;
 
@@ -159,7 +163,8 @@ public class MovementController : MonoBehaviour, IKillable
     [SerializeField] private bool suppressInactivityAnimation;
 
     [Header("Bomb Early Kick")]
-    [SerializeField, Range(0.01f, 0.49f)] private float earlyKickEdgeThreshold = 0.22f;
+    private readonly float earlyKickMinCenterOffset = 0.5f;
+    private readonly float earlyReentryKickMinCenterOffset = 0.5f;
 
     private Bomb _lastAdjKickedBomb;
     public bool SuppressInactivityAnimation => suppressInactivityAnimation;
@@ -1528,8 +1533,24 @@ public class MovementController : MonoBehaviour, IKillable
                 bool overlapsCurrent = IsInsideBombTileFootprint(myPos, bombPos);
                 bool overlapsTarget = IsInsideBombTileFootprint(targetPosition, bombPos);
 
+                bool physicallyStillInside = IsPhysicallyStillInsideTriggerBomb(bomb, myPos, targetPosition);
+
                 if (!overlapsTarget)
+                {
+                    if (physicallyStillInside)
+                    {
+                        LogBombEscape(
+                            $"IGNORE reentry by physical overlap bomb:{bomb.name} " +
+                            $"myPos:{myPos} target:{targetPosition} bombPos:{bombPos} " +
+                            $"overlapsCurrent:{overlapsCurrent} overlapsTarget:{overlapsTarget} " +
+                            $"physicallyStillInside:{physicallyStillInside}",
+                            verbose: false);
+
+                        continue;
+                    }
+
                     continue;
+                }
 
                 var bombCollider = bomb.GetComponent<Collider2D>();
 
@@ -1537,6 +1558,7 @@ public class MovementController : MonoBehaviour, IKillable
                     $"TriggerBombCheck bomb:{bomb.name} " +
                     $"myPos:{myPos} target:{targetPosition} dir:{dirForSize} bombPos:{bombPos} " +
                     $"overlapsCurrent:{overlapsCurrent} overlapsTarget:{overlapsTarget} " +
+                    $"physicallyStillInside:{physicallyStillInside} " +
                     $"bombIsSolid:{bomb.IsSolid} bombColliderIsTrigger:{(bombCollider != null && bombCollider.isTrigger)} " +
                     $"bombOwnerIsMe:{(bomb.Owner == bombController)}",
                     verbose: true);
@@ -1566,6 +1588,16 @@ public class MovementController : MonoBehaviour, IKillable
                     continue;
                 }
 
+                if (physicallyStillInside)
+                {
+                    LogBombEscape(
+                        $"IGNORE REENTRY because still physically inside trigger bomb:{bomb.name} " +
+                        $"myPos:{myPos} target:{targetPosition} bombPos:{bombPos}",
+                        verbose: false);
+
+                    continue;
+                }
+
                 if (bomb == _lastAdjKickedBomb && bomb.IsBeingKicked)
                     continue;
 
@@ -1575,6 +1607,7 @@ public class MovementController : MonoBehaviour, IKillable
                     $"REENTRY CHECK bomb:{bomb.name} " +
                     $"myPos:{myPos} target:{targetPosition} bombPos:{bombPos} " +
                     $"overlapsCurrent:{overlapsCurrent} overlapsTarget:{overlapsTarget} " +
+                    $"physicallyStillInside:{physicallyStillInside} " +
                     $"nearReentryKickEdge:{nearReentryKickEdge}",
                     verbose: false);
 
@@ -3150,29 +3183,22 @@ public class MovementController : MonoBehaviour, IKillable
 
     private bool IsNearBombEdgeForEarlyKick(Vector2 playerPos, Vector2 bombPos, Vector2 moveDir)
     {
-        if (tileSize <= 0.0001f)
+        moveDir = moveDir.normalized;
+        if (moveDir == Vector2.zero)
             return false;
 
-        float half = tileSize * 0.5f;
-        float edgeBand = Mathf.Clamp(earlyKickEdgeThreshold, 0.01f, half - 0.01f);
-
-        float dx = playerPos.x - bombPos.x;
-        float dy = playerPos.y - bombPos.y;
+        Vector2 delta = playerPos - bombPos;
 
         if (Mathf.Abs(moveDir.x) > 0.01f)
         {
-            if (moveDir.x < 0f)
-                return dx >= (half - edgeBand);
-
-            return dx <= -(half - edgeBand);
+            float signedOffsetX = delta.x * Mathf.Sign(moveDir.x);
+            return signedOffsetX >= earlyKickMinCenterOffset;
         }
 
         if (Mathf.Abs(moveDir.y) > 0.01f)
         {
-            if (moveDir.y < 0f)
-                return dy >= (half - edgeBand);
-
-            return dy <= -(half - edgeBand);
+            float signedOffsetY = delta.y * Mathf.Sign(moveDir.y);
+            return signedOffsetY >= earlyKickMinCenterOffset;
         }
 
         return false;
@@ -3180,29 +3206,22 @@ public class MovementController : MonoBehaviour, IKillable
 
     private bool IsNearBombReentryKickEdge(Vector2 playerPos, Vector2 bombPos, Vector2 moveDir)
     {
-        if (tileSize <= 0.0001f)
+        moveDir = moveDir.normalized;
+        if (moveDir == Vector2.zero)
             return false;
 
-        float half = tileSize * 0.5f;
-        float edgeBand = Mathf.Clamp(earlyKickEdgeThreshold, 0.01f, half - 0.01f);
-
-        float dx = playerPos.x - bombPos.x;
-        float dy = playerPos.y - bombPos.y;
+        Vector2 delta = playerPos - bombPos;
 
         if (Mathf.Abs(moveDir.x) > 0.01f)
         {
-            if (moveDir.x < 0f)
-                return dx >= (half - edgeBand);
-
-            return dx <= -(half - edgeBand);
+            float signedOffsetX = -delta.x * Mathf.Sign(moveDir.x);
+            return signedOffsetX >= earlyReentryKickMinCenterOffset;
         }
 
         if (Mathf.Abs(moveDir.y) > 0.01f)
         {
-            if (moveDir.y < 0f)
-                return dy >= (half - edgeBand);
-
-            return dy <= -(half - edgeBand);
+            float signedOffsetY = -delta.y * Mathf.Sign(moveDir.y);
+            return signedOffsetY >= earlyReentryKickMinCenterOffset;
         }
 
         return false;
@@ -3288,10 +3307,6 @@ public class MovementController : MonoBehaviour, IKillable
         Debug.Log($"[MovementCurve][P{playerId}][f:{Time.frameCount}] {msg}", this);
     }
 
-    [Header("Debug Bomb Escape")]
-    [SerializeField] private bool debugBombEscape;
-    [SerializeField] private bool debugBombEscapeVerbose;
-
     private void LogBombEscape(string message, bool verbose = false)
     {
         if (!debugBombEscape)
@@ -3301,5 +3316,35 @@ public class MovementController : MonoBehaviour, IKillable
             return;
 
         Debug.Log($"[BombEscape][Player:{name}] {message}", this);
+    }
+
+    private float GetOwnApproxRadius()
+    {
+        var col = GetComponent<Collider2D>();
+        if (col == null)
+            return 0.2f;
+
+        Bounds b = col.bounds;
+        return Mathf.Max(b.extents.x, b.extents.y);
+    }
+
+    private bool IsPhysicallyStillInsideTriggerBomb(Bomb bomb, Vector2 playerPos)
+    {
+        if (bomb == null || bomb.IsSolid)
+            return false;
+
+        float playerRadius = GetOwnApproxRadius();
+        float allowedDistance = bomb.ApproxRadius + playerRadius + 0.02f;
+
+        Vector2 bombPos = bomb.GetLogicalPosition();
+        float dist = Vector2.Distance(playerPos, bombPos);
+
+        return dist <= allowedDistance;
+    }
+
+    private bool IsPhysicallyStillInsideTriggerBomb(Bomb bomb, Vector2 currentPos, Vector2 targetPos)
+    {
+        return IsPhysicallyStillInsideTriggerBomb(bomb, currentPos) ||
+               IsPhysicallyStillInsideTriggerBomb(bomb, targetPos);
     }
 }

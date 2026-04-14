@@ -1963,11 +1963,6 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         Debug.Log($"[BombEscape][Bomb:{name}] {message}", this);
     }
 
-    private string LayerNameOf(int layer)
-    {
-        return layer >= 0 ? LayerMask.LayerToName(layer) : layer.ToString();
-    }
-
     private static bool IsCharacterLayer(int layer)
     {
         int playerLayer = LayerMask.NameToLayer("Player");
