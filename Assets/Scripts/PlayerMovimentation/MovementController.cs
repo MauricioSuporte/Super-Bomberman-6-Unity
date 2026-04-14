@@ -828,6 +828,9 @@ public class MovementController : MonoBehaviour, IKillable
 
     protected virtual void FixedUpdate()
     {
+        if (UpdateBombReentryCentering())
+            return;
+
         if (ShouldSkipFixedUpdate())
             return;
 
@@ -1532,15 +1535,14 @@ public class MovementController : MonoBehaviour, IKillable
 
                 bool overlapsCurrent = IsInsideBombTileFootprint(myPos, bombPos);
                 bool overlapsTarget = IsInsideBombTileFootprint(targetPosition, bombPos);
-
                 bool physicallyStillInside = IsPhysicallyStillInsideTriggerBomb(bomb, myPos, targetPosition);
 
                 if (!overlapsTarget)
                 {
-                    if (physicallyStillInside)
+                    if (overlapsCurrent && physicallyStillInside)
                     {
                         LogBombEscape(
-                            $"IGNORE reentry by physical overlap bomb:{bomb.name} " +
+                            $"IGNORE leaving own/shared non-solid bomb by physical overlap bomb:{bomb.name} " +
                             $"myPos:{myPos} target:{targetPosition} bombPos:{bombPos} " +
                             $"overlapsCurrent:{overlapsCurrent} overlapsTarget:{overlapsTarget} " +
                             $"physicallyStillInside:{physicallyStillInside}",
@@ -1588,16 +1590,6 @@ public class MovementController : MonoBehaviour, IKillable
                     continue;
                 }
 
-                if (physicallyStillInside)
-                {
-                    LogBombEscape(
-                        $"IGNORE REENTRY because still physically inside trigger bomb:{bomb.name} " +
-                        $"myPos:{myPos} target:{targetPosition} bombPos:{bombPos}",
-                        verbose: false);
-
-                    continue;
-                }
-
                 if (bomb == _lastAdjKickedBomb && bomb.IsBeingKicked)
                     continue;
 
@@ -1623,6 +1615,32 @@ public class MovementController : MonoBehaviour, IKillable
                         }
                     }
                 }
+
+                bool hasBombKick = abilitySystem != null && abilitySystem.IsEnabled(BombKickAbility.AbilityId);
+
+                if (hasBombKick)
+                {
+                    if (bombReentryCenteringActive)
+                        bombReentryCenteringActive = false;
+
+                    LogBombEscape(
+                        $"IGNORE REENTRY block because has kick ability bomb:{bomb.name} " +
+                        $"myPos:{myPos} target:{targetPosition} bombPos:{bombPos} " +
+                        $"overlapsCurrent:{overlapsCurrent} overlapsTarget:{overlapsTarget} " +
+                        $"physicallyStillInside:{physicallyStillInside}",
+                        verbose: false);
+
+                    continue;
+                }
+
+                Vector2 reentryCenterTarget = GetBombReentryCenterTarget(bombPos, dirForSize);
+
+                LogBombEscape(
+                    $"REENTRY CENTER START bomb:{bomb.name} " +
+                    $"myPos:{myPos} targetCenter:{reentryCenterTarget} hasBombKick:{hasBombKick}",
+                    verbose: false);
+
+                StartBombReentryCentering(myPos, reentryCenterTarget);
 
                 LogBombEscape(
                     $"BLOCKED by REENTRY logic bomb:{bomb.name} " +
@@ -3346,5 +3364,87 @@ public class MovementController : MonoBehaviour, IKillable
     {
         return IsPhysicallyStillInsideTriggerBomb(bomb, currentPos) ||
                IsPhysicallyStillInsideTriggerBomb(bomb, targetPos);
+    }
+
+    [Header("Bomb Reentry Centering")]
+    [SerializeField, Range(0.01f, 0.25f)] private float bombReentryCenterDuration = 0.1f;
+
+    private bool bombReentryCenteringActive;
+    private Vector2 bombReentryCenterStart;
+    private Vector2 bombReentryCenterTarget;
+    private float bombReentryCenterElapsed;
+
+    private void StartBombReentryCentering(Vector2 currentPosition, Vector2 targetPosition)
+    {
+        Vector2 quantizedCurrent = QuantizeToPixelGrid(currentPosition);
+        Vector2 quantizedTarget = QuantizeToPixelGrid(targetPosition);
+
+        if (Vector2.Distance(quantizedCurrent, quantizedTarget) <= PixelWorldStep * 0.5f)
+        {
+            bombReentryCenteringActive = false;
+
+            if (Rigidbody != null)
+                Rigidbody.MovePosition(quantizedTarget);
+
+            return;
+        }
+
+        bombReentryCenteringActive = true;
+        bombReentryCenterStart = quantizedCurrent;
+        bombReentryCenterTarget = quantizedTarget;
+        bombReentryCenterElapsed = 0f;
+    }
+
+    private bool UpdateBombReentryCentering()
+    {
+        if (!bombReentryCenteringActive)
+            return false;
+
+        if (Rigidbody == null)
+        {
+            bombReentryCenteringActive = false;
+            return false;
+        }
+
+        if (bombReentryCenterDuration <= 0.0001f)
+        {
+            bombReentryCenteringActive = false;
+            Rigidbody.MovePosition(QuantizeToPixelGrid(bombReentryCenterTarget));
+            return true;
+        }
+
+        bombReentryCenterElapsed += Time.fixedDeltaTime;
+
+        float t = Mathf.Clamp01(bombReentryCenterElapsed / bombReentryCenterDuration);
+        Vector2 next = Vector2.Lerp(bombReentryCenterStart, bombReentryCenterTarget, t);
+        next = QuantizeToPixelGrid(next);
+
+        Rigidbody.linearVelocity = Vector2.zero;
+        Rigidbody.MovePosition(next);
+
+        if (t >= 1f || Vector2.Distance(next, bombReentryCenterTarget) <= PixelWorldStep * 0.5f)
+        {
+            bombReentryCenteringActive = false;
+            Rigidbody.MovePosition(QuantizeToPixelGrid(bombReentryCenterTarget));
+        }
+
+        return true;
+    }
+
+    private Vector2 GetBombReentryCenterTarget(Vector2 bombPos, Vector2 dirForSize)
+    {
+        Vector2 dir = NormalizeCardinal(dirForSize);
+        if (dir == Vector2.zero)
+            dir = NormalizeCardinal(facingDirection);
+
+        if (dir == Vector2.zero)
+            dir = Vector2.down;
+
+        Vector2 target = bombPos - dir * tileSize;
+
+        target.x = Mathf.Round(target.x / tileSize) * tileSize;
+        target.y = Mathf.Round(target.y / tileSize) * tileSize;
+
+        return target;
     }
 }
