@@ -183,6 +183,8 @@ public class BombPunchAbility : MonoBehaviour, IPlayerAbility
         if (bomb == null)
             return;
 
+        movement.CancelBombReentryCentering();
+
         if (bomb.IsBeingKicked)
         {
             if (kickAbility == null || !kickAbility.TryConvertKickToPunch(bomb))

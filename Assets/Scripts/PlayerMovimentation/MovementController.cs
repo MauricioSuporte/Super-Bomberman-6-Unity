@@ -1528,7 +1528,7 @@ public class MovementController : MonoBehaviour, IKillable
                 if (bomb == null || bomb.HasExploded)
                     continue;
 
-                if (bomb.IsSolid)
+                if (bomb.IsSolid || bomb.IsBeingPunched)
                     continue;
 
                 Vector2 bombPos = bomb.GetLogicalPosition();
@@ -1694,7 +1694,7 @@ public class MovementController : MonoBehaviour, IKillable
                 if (bomb == ignoreBomb)
                     continue;
 
-                if (bomb.IsSolid)
+                if (bomb.IsSolid || bomb.IsBeingPunched)
                     continue;
 
                 Vector2 bombPos = bomb.GetLogicalPosition();
@@ -3427,7 +3427,7 @@ public class MovementController : MonoBehaviour, IKillable
 
     private bool IsPhysicallyStillInsideTriggerBomb(Bomb bomb, Vector2 playerPos)
     {
-        if (bomb == null || bomb.IsSolid)
+        if (bomb == null || bomb.IsSolid || bomb.IsBeingPunched)
             return false;
 
         float playerRadius = GetOwnApproxRadius();
@@ -3472,6 +3472,17 @@ public class MovementController : MonoBehaviour, IKillable
         bombReentryCenterStart = quantizedCurrent;
         bombReentryCenterTarget = quantizedTarget;
         bombReentryCenterElapsed = 0f;
+    }
+
+    public void CancelBombReentryCentering()
+    {
+        bombReentryCenteringActive = false;
+        bombReentryCenterElapsed = 0f;
+
+        Vector2 current = Rigidbody != null ? Rigidbody.position : (Vector2)transform.position;
+        current = QuantizeToPixelGrid(current);
+        bombReentryCenterStart = current;
+        bombReentryCenterTarget = current;
     }
 
     private bool UpdateBombReentryCentering()
