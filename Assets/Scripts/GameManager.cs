@@ -612,7 +612,21 @@ public class GameManager : MonoBehaviour
         GamePauseController.ClearPauseFlag();
         Time.timeScale = 1f;
 
+        EnsureStage1_2PlayersHaveMinimumExplosionRadius();
         SceneManager.LoadScene(nextStageSceneName);
+    }
+
+    void EnsureStage1_2PlayersHaveMinimumExplosionRadius()
+    {
+        if (nextStageSceneName != "Stage_1-2")
+            return;
+
+        for (int playerId = 1; playerId <= 4; playerId++)
+        {
+            var state = PlayerPersistentStats.Get(playerId);
+            if (state.ExplosionRadius == 1)
+                state.ExplosionRadius = 2;
+        }
     }
 
     IEnumerator LoadNextBossRushStageRoutine()
