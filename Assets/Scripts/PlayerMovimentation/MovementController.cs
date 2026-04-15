@@ -1616,35 +1616,24 @@ public class MovementController : MonoBehaviour, IKillable
                     }
                 }
 
-                bool hasBombKick = abilitySystem != null && abilitySystem.IsEnabled(BombKickAbility.AbilityId);
-
-                if (hasBombKick)
-                {
-                    if (bombReentryCenteringActive)
-                        bombReentryCenteringActive = false;
-
-                    LogBombEscape(
-                        $"IGNORE REENTRY block because has kick ability bomb:{bomb.name} " +
-                        $"myPos:{myPos} target:{targetPosition} bombPos:{bombPos} " +
-                        $"overlapsCurrent:{overlapsCurrent} overlapsTarget:{overlapsTarget} " +
-                        $"physicallyStillInside:{physicallyStillInside}",
-                        verbose: false);
-
-                    continue;
-                }
+                if (bombReentryCenteringActive)
+                    bombReentryCenteringActive = false;
 
                 Vector2 reentryCenterTarget = GetBombReentryCenterTarget(bombPos, dirForSize);
 
                 LogBombEscape(
                     $"REENTRY CENTER START bomb:{bomb.name} " +
-                    $"myPos:{myPos} targetCenter:{reentryCenterTarget} hasBombKick:{hasBombKick}",
+                    $"myPos:{myPos} targetCenter:{reentryCenterTarget} " +
+                    $"hasBombKick:{(abilitySystem != null && abilitySystem.IsEnabled(BombKickAbility.AbilityId))}",
                     verbose: false);
 
                 StartBombReentryCentering(myPos, reentryCenterTarget);
 
                 LogBombEscape(
                     $"BLOCKED by REENTRY logic bomb:{bomb.name} " +
-                    $"myPos:{myPos} target:{targetPosition} bombPos:{bombPos}");
+                    $"myPos:{myPos} target:{targetPosition} bombPos:{bombPos} " +
+                    $"reason:cannot re-enter trigger bomb tile even with kick ability",
+                    verbose: false);
 
                 return true;
             }
