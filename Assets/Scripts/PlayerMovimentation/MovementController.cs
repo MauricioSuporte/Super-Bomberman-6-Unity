@@ -582,6 +582,14 @@ public class MovementController : MonoBehaviour, IKillable
 
         bool nearCentre = dualSecondary != Vector2.zero && IsAtTileCentreOnPerpendicularAxis(dualSecondary);
         bool exactlyAligned = dualSecondary != Vector2.zero && IsExactlyAlignedForAxisSwap(dualSecondary);
+        bool willCrossCentreNextStep = dualSecondary != Vector2.zero && WillCrossTileCentreOnPerpendicularAxisNextStep(dualSecondary, dualPrimary);
+
+        LogCurve(
+            $"ResolveDualInputZigZag " +
+            $"primary:{dualPrimary} secondary:{dualSecondary} " +
+            $"primaryBlocked:{primaryBlocked} secondaryBlocked:{secondaryBlocked} " +
+            $"nearCentre:{nearCentre} exactlyAligned:{exactlyAligned} willCrossNext:{willCrossCentreNextStep} " +
+            $"pendingTurnBefore:{pendingTurnDirection} dualSwitchTimer:{dualSwitchTimer:F4}");
 
         if (primaryBlocked && secondaryBlocked)
         {
@@ -591,6 +599,7 @@ public class MovementController : MonoBehaviour, IKillable
 
         if (primaryBlocked && !secondaryBlocked)
         {
+            LogCurve("ResolveDualInputZigZag -> primary blocked, forcing axis switch");
             DoAxisSwitch();
             pendingTurnDirection = Vector2.zero;
             return dualPrimary;
@@ -608,12 +617,24 @@ public class MovementController : MonoBehaviour, IKillable
             return dualPrimary;
         }
 
-        if ((nearCentre || exactlyAligned) && pendingTurnDirection == Vector2.zero)
+        if ((nearCentre || willCrossCentreNextStep || exactlyAligned) && pendingTurnDirection == Vector2.zero)
+        {
             pendingTurnDirection = dualSecondary;
+
+            LogCurve(
+                $"ResolveDualInputZigZag -> arm pending turn:{pendingTurnDirection} " +
+                $"nearCentre:{nearCentre} exactlyAligned:{exactlyAligned} willCrossNext:{willCrossCentreNextStep}");
+        }
 
         if (pendingTurnDirection != Vector2.zero)
         {
-            if (exactlyAligned)
+            bool shouldSwitchNow = exactlyAligned || willCrossCentreNextStep;
+
+            LogCurve(
+                $"ResolveDualInputZigZag pending active:{pendingTurnDirection} " +
+                $"shouldSwitchNow:{shouldSwitchNow} exactlyAligned:{exactlyAligned} willCrossNext:{willCrossCentreNextStep}");
+
+            if (shouldSwitchNow)
             {
                 DoAxisSwitch();
                 pendingTurnDirection = Vector2.zero;
@@ -658,10 +679,83 @@ public class MovementController : MonoBehaviour, IKillable
         }
     }
 
+    private bool WillCrossTileCentreOnPerpendicularAxisNextStep(Vector2 requestedTurnDir, Vector2 movementDir)
+    {
+        if (tileSize <= 0.0001f)
+            return false;
+
+        requestedTurnDir = NormalizeCardinal(requestedTurnDir);
+        movementDir = NormalizeCardinal(movementDir);
+
+        if (requestedTurnDir == Vector2.zero || movementDir == Vector2.zero)
+            return false;
+
+        Vector2 pos = Rigidbody != null ? Rigidbody.position : (Vector2)transform.position;
+
+        float rawMoveWorld = GetRawMoveWorldPerFixedFrame();
+        float moveWorld = GetQuantizedMoveWorldPerFixedFrame(movementDir, rawMoveWorld);
+
+        if (moveWorld <= 0f)
+            return false;
+
+        Vector2 nextPos = QuantizeToPixelGrid(pos + movementDir * moveWorld);
+
+        if (Mathf.Abs(requestedTurnDir.x) > 0.01f)
+        {
+            float nearest = Mathf.Round(pos.y / tileSize) * tileSize;
+
+            float currentDelta = pos.y - nearest;
+            float nextDelta = nextPos.y - nearest;
+
+            bool crosses =
+                Mathf.Abs(currentDelta) <= alignEpsilon ||
+                Mathf.Abs(nextDelta) <= alignEpsilon ||
+                (currentDelta < 0f && nextDelta > 0f) ||
+                (currentDelta > 0f && nextDelta < 0f);
+
+            LogCurve(
+                $"WillCrossCentreNextStep turn:{requestedTurnDir} move:{movementDir} " +
+                $"axis:Y pos:{pos} nextPos:{nextPos} nearest:{nearest:F4} " +
+                $"currentDelta:{currentDelta:F4} nextDelta:{nextDelta:F4} crosses:{crosses}",
+                verbose: true);
+
+            return crosses;
+        }
+        else
+        {
+            float nearest = Mathf.Round(pos.x / tileSize) * tileSize;
+
+            float currentDelta = pos.x - nearest;
+            float nextDelta = nextPos.x - nearest;
+
+            bool crosses =
+                Mathf.Abs(currentDelta) <= alignEpsilon ||
+                Mathf.Abs(nextDelta) <= alignEpsilon ||
+                (currentDelta < 0f && nextDelta > 0f) ||
+                (currentDelta > 0f && nextDelta < 0f);
+
+            LogCurve(
+                $"WillCrossCentreNextStep turn:{requestedTurnDir} move:{movementDir} " +
+                $"axis:X pos:{pos} nextPos:{nextPos} nearest:{nearest:F4} " +
+                $"currentDelta:{currentDelta:F4} nextDelta:{nextDelta:F4} crosses:{crosses}",
+                verbose: true);
+
+            return crosses;
+        }
+    }
+
     private void DoAxisSwitch()
     {
+        Vector2 oldPrimary = dualPrimary;
+        Vector2 oldSecondary = dualSecondary;
+        Vector2 pos = Rigidbody != null ? Rigidbody.position : (Vector2)transform.position;
+
         (dualPrimary, dualSecondary) = (dualSecondary, dualPrimary);
         dualSwitchTimer = dualInputSwitchCooldown;
+
+        LogCurve(
+            $"DoAxisSwitch pos:{pos} oldPrimary:{oldPrimary} oldSecondary:{oldSecondary} " +
+            $"newPrimary:{dualPrimary} newSecondary:{dualSecondary} cooldown:{dualSwitchTimer:F4}");
     }
 
     private void ResetDualInputAxes()
