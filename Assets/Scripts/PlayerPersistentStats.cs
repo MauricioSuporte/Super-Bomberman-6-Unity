@@ -647,6 +647,23 @@ public static class PlayerPersistentStats
         stageStartedWithDefaultState = false;
     }
 
+    public static void RollbackStage()
+    {
+        if (!stageActive)
+            return;
+
+        for (int i = 1; i <= 4; i++)
+        {
+            var baseState = Get(i);
+            var st = _stage[i - 1];
+            CopyState(baseState, st);
+        }
+
+        stageActive = false;
+        stageAnyItemPickupCollected = false;
+        stageStartedWithDefaultState = false;
+    }
+
     static MountedType EggToLouie(ItemType t)
     {
         return t switch

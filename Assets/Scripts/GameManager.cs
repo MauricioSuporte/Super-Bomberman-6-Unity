@@ -544,6 +544,7 @@ public class GameManager : MonoBehaviour
 
         GamePauseController.ClearPauseFlag();
         Time.timeScale = 1f;
+        PlayerPersistentStats.RollbackStage();
 
         StagePreIntroPlayersWalk.SkipOnNextLoad();
 
