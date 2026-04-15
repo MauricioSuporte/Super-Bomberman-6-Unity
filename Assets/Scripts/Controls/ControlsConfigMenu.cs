@@ -100,6 +100,9 @@ public class ControlsConfigMenu : MonoBehaviour
     [Header("Cursor Rounding")]
     [SerializeField] bool roundCursorToWholePixels = true;
 
+    Vector2 _lastMouseScreenPosition;
+    bool _hasLastMouseScreenPosition;
+
     const string colorNormal = "#FFFFE7";
     const string colorHint = "#FFA621";
     const string colorWhite = "#FFFFFF";
@@ -664,6 +667,10 @@ public class ControlsConfigMenu : MonoBehaviour
         confirmResetPlayerId = 1;
 
         blockedMessageUntil = 0f;
+        blockedMessageLine = null;
+
+        _hasLastMouseScreenPosition = false;
+        _lastMouseScreenPosition = Vector2.zero;
         blockedMessageLine = null;
 
         if (cursorRenderer != null)
@@ -1545,8 +1552,22 @@ public class ControlsConfigMenu : MonoBehaviour
 
         if (Mouse.current != null)
         {
-            state.valid = true;
-            state.screenPosition = Mouse.current.position.ReadValue();
+            Vector2 currentMousePosition = Mouse.current.position.ReadValue();
+
+            bool movedThisFrame = !_hasLastMouseScreenPosition ||
+                                  (currentMousePosition - _lastMouseScreenPosition).sqrMagnitude > 0.0001f;
+
+            _lastMouseScreenPosition = currentMousePosition;
+            _hasLastMouseScreenPosition = true;
+
+            state.valid = movedThisFrame ||
+                          Mouse.current.leftButton.wasPressedThisFrame ||
+                          Mouse.current.rightButton.wasPressedThisFrame;
+
+            if (!state.valid)
+                return state;
+
+            state.screenPosition = currentMousePosition;
             state.pressedThisFrame = Mouse.current.leftButton.wasPressedThisFrame;
             state.secondaryPressedThisFrame = Mouse.current.rightButton.wasPressedThisFrame;
             return state;

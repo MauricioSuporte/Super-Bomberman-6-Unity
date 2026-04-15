@@ -169,6 +169,9 @@ public class TitleScreenController : MonoBehaviour
     public bool BossRushInspectorOverrideUnlocked => bossRushInspectorDefaultUnlocked;
     bool IsVideoMenuAvailable => allowVideoMenu && !Application.isMobilePlatform;
 
+    Vector2 _lastMouseScreenPosition;
+    bool _hasLastMouseScreenPosition;
+
     enum MenuMode
     {
         Main = 0,
@@ -1001,6 +1004,9 @@ public class TitleScreenController : MonoBehaviour
         menuMode = MenuMode.Main;
         pendingStartFlow = StartFlowMode.None;
 
+        _hasLastMouseScreenPosition = false;
+        _lastMouseScreenPosition = Vector2.zero;
+
         StopPushStartBlink();
         HideFooterMessageImmediate();
         HideBossRushLockedMessageImmediate();
@@ -1150,8 +1156,22 @@ public class TitleScreenController : MonoBehaviour
 
         if (Mouse.current != null)
         {
-            state.valid = true;
-            state.screenPosition = Mouse.current.position.ReadValue();
+            Vector2 currentMousePosition = Mouse.current.position.ReadValue();
+
+            bool movedThisFrame = !_hasLastMouseScreenPosition ||
+                                  (currentMousePosition - _lastMouseScreenPosition).sqrMagnitude > 0.0001f;
+
+            _lastMouseScreenPosition = currentMousePosition;
+            _hasLastMouseScreenPosition = true;
+
+            state.valid = movedThisFrame ||
+                          Mouse.current.leftButton.wasPressedThisFrame ||
+                          (allowRightClickBack && Mouse.current.rightButton.wasPressedThisFrame);
+
+            if (!state.valid)
+                return state;
+
+            state.screenPosition = currentMousePosition;
             state.pressedThisFrame = Mouse.current.leftButton.wasPressedThisFrame;
             state.secondaryPressedThisFrame = allowRightClickBack && Mouse.current.rightButton.wasPressedThisFrame;
             return state;
