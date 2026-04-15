@@ -206,15 +206,17 @@ public class BombKickAbility : MonoBehaviour, IMovementAbility
             if (hasPlantDir)
             {
                 float dot = Vector2.Dot(plantDir, direction);
+                bool changedEnoughToUnlock = dot <= 0.1f;
 
                 LogBombKick(
                     $"EarlyKick compare bomb:{bomb.name} plantDir:{VecToStr(plantDir)} " +
-                    $"inputDir:{VecToStr(direction)} dot:{dot:F3} earlyUnlocked:{earlyUnlocked}",
+                    $"inputDir:{VecToStr(direction)} dot:{dot:F3} changedEnoughToUnlock:{changedEnoughToUnlock} " +
+                    $"earlyUnlocked:{earlyUnlocked}",
                     verbose: false);
 
                 if (!earlyUnlocked)
                 {
-                    if (dot < -0.9f)
+                    if (changedEnoughToUnlock)
                     {
                         _bombEarlyKickUnlocked.Add(bomb);
                         LogBombKick(
@@ -225,7 +227,8 @@ public class BombKickAbility : MonoBehaviour, IMovementAbility
                     {
                         LogBombKick(
                             $"TryHandleBlockedHit -> false (early kick locked by direction) " +
-                            $"bomb:{bomb.name} plantDir:{VecToStr(plantDir)} inputDir:{VecToStr(direction)} dot:{dot:F3}");
+                            $"bomb:{bomb.name} plantDir:{VecToStr(plantDir)} inputDir:{VecToStr(direction)} " +
+                            $"dot:{dot:F3} changedEnoughToUnlock:{changedEnoughToUnlock}");
                         return false;
                     }
                 }
@@ -484,39 +487,39 @@ public class BombKickAbility : MonoBehaviour, IMovementAbility
 
         _bombPlantDirection[bomb] = movementDirectionAtPlant;
         _bombEarlyKickUnlocked.Remove(bomb);
-        _lastOwnerDirection = movementDirectionAtPlant;
 
         LogBombKick(
             $"NotifyBombPlanted bomb:{bomb.name} bombPos:{VecToStr(bomb.GetLogicalPosition())} " +
             $"originalDir:{VecToStr(originalDirection)} storedDir:{VecToStr(movementDirectionAtPlant)} " +
-            $"plantDirCount:{_bombPlantDirection.Count}");
+            $"lastOwnerDirKept:{VecToStr(_lastOwnerDirection)} " +
+            $"plantDirCount:{_bombPlantDirection.Count} unlockedCount:{_bombEarlyKickUnlocked.Count}");
     }
 
     public void NotifyOwnerDirectionChanged(Vector2 newDirection)
     {
-        newDirection = newDirection.normalized;
         if (newDirection == Vector2.zero)
         {
             LogBombKick("NotifyOwnerDirectionChanged skipped (zero direction)", verbose: true);
             return;
         }
 
-        Vector2 previousDirection = _lastOwnerDirection;
-        if (previousDirection == newDirection)
+        newDirection = newDirection.normalized;
+
+        if (_lastOwnerDirection == newDirection)
         {
-            LogBombKick($"NotifyOwnerDirectionChanged skipped (same direction) dir:{VecToStr(newDirection)}");
+            LogBombKick(
+                $"NotifyOwnerDirectionChanged skipped (same direction) dir:{VecToStr(newDirection)} " +
+                $"trackedBombs:{_bombPlantDirection.Count}",
+                verbose: true);
             return;
         }
 
+        Vector2 previousDirection = _lastOwnerDirection;
         _lastOwnerDirection = newDirection;
-
-        Vector2 ownerPos = movement != null
-            ? (Vector2)movement.transform.position
-            : (Vector2)transform.position;
 
         LogBombKick(
             $"NotifyOwnerDirectionChanged prev:{VecToStr(previousDirection)} new:{VecToStr(newDirection)} " +
-            $"trackedBombs:{_bombPlantDirection.Count} ownerPos:{VecToStr(ownerPos)}",
+            $"trackedBombs:{_bombPlantDirection.Count}",
             verbose: true);
 
         if (_bombPlantDirection.Count == 0)
@@ -539,8 +542,13 @@ public class BombKickAbility : MonoBehaviour, IMovementAbility
                 continue;
             }
 
+            Vector2 ownerPos = movement != null
+                ? (Vector2)movement.transform.position
+                : (Vector2)transform.position;
+
             Vector2 bombPos = bomb.GetLogicalPosition();
             Vector2 delta = ownerPos - bombPos;
+
             float playerToBombDist = Vector2.Distance(ownerPos, bombPos);
             float signedAxisOffset =
                 Mathf.Abs(newDirection.x) > 0.01f
@@ -553,16 +561,18 @@ public class BombKickAbility : MonoBehaviour, IMovementAbility
                     : Mathf.Abs(delta.x);
 
             float dot = Vector2.Dot(plantDir, newDirection);
+            bool changedEnoughToUnlock = dot <= 0.1f;
 
             LogBombKick(
                 $"NotifyOwnerDirectionChanged compare bomb:{bomb.name} " +
                 $"plantDir:{VecToStr(plantDir)} newDir:{VecToStr(newDirection)} dot:{dot:F3} " +
+                $"changedEnoughToUnlock:{changedEnoughToUnlock} " +
                 $"bombPos:{VecToStr(bombPos)} ownerPos:{VecToStr(ownerPos)} " +
                 $"playerToBombDist:{playerToBombDist:F3} signedAxisOffset:{signedAxisOffset:F3} " +
                 $"perpendicularOffset:{perpendicularOffset:F3} alreadyUnlocked:{_bombEarlyKickUnlocked.Contains(bomb)}",
                 verbose: true);
 
-            if (dot < -0.9f)
+            if (changedEnoughToUnlock)
                 bombsToUnlock.Add(bomb);
         }
 
@@ -576,7 +586,7 @@ public class BombKickAbility : MonoBehaviour, IMovementAbility
 
             LogBombKick(
                 $"NotifyOwnerDirectionChanged UNLOCK early kick bomb:{bombsToUnlock[i].name} " +
-                $"ownerPos:{VecToStr(ownerPos)} bombPos:{VecToStr(bombPos)}");
+                $"ownerLastDirNow:{VecToStr(_lastOwnerDirection)} bombPos:{VecToStr(bombPos)}");
         }
 
         ListPool<Bomb>.Release(bombsToUnlock);
