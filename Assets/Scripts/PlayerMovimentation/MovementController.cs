@@ -3247,11 +3247,24 @@ public class MovementController : MonoBehaviour, IKillable
 
     private bool TryKickAdjacentBombFromCurrentTile(Vector2 position, Vector2 moveDir)
     {
-        if (moveDir == Vector2.zero) return false;
-        if (movementAbilities == null || movementAbilities.Length == 0) return false;
+        if (moveDir == Vector2.zero)
+        {
+            LogBombEscape($"[KickAdj] skip moveDir zero pos:{position}", verbose: true);
+            return false;
+        }
+
+        if (movementAbilities == null || movementAbilities.Length == 0)
+        {
+            LogBombEscape($"[KickAdj] skip no movementAbilities pos:{position}", verbose: true);
+            return false;
+        }
 
         Vector2 dir = NormalizeCardinal(moveDir);
-        if (dir == Vector2.zero) return false;
+        if (dir == Vector2.zero)
+        {
+            LogBombEscape($"[KickAdj] skip normalized dir zero moveDir:{moveDir} pos:{position}", verbose: true);
+            return false;
+        }
 
         for (int i = 0; i < movementAbilities.Length; i++)
         {
@@ -3266,45 +3279,122 @@ public class MovementController : MonoBehaviour, IKillable
 
         Vector2 targetTileCenter = snappedCurrentTile + dir * tileSize;
 
-        for (int b = 0; b < Bomb.ActiveBombs.Count; b++)
-        {
-        }
+        LogBombEscape(
+            $"[KickAdj] START pos:{position} dir:{dir} snappedCurrentTile:{snappedCurrentTile} " +
+            $"targetTileCenter:{targetTileCenter} tileSize:{tileSize:F3}",
+            verbose: true);
 
         foreach (var bomb in Bomb.ActiveBombs)
         {
-            if (bomb == null || bomb.HasExploded)
+            if (bomb == null)
+            {
+                LogBombEscape("[KickAdj] skip null bomb", verbose: true);
                 continue;
+            }
+
+            if (bomb.HasExploded)
+            {
+                LogBombEscape($"[KickAdj] skip exploded bomb:{bomb.name}", verbose: true);
+                continue;
+            }
 
             if (bomb.IsBeingKicked || bomb.IsBeingPunched)
+            {
+                LogBombEscape(
+                    $"[KickAdj] skip moving bomb:{bomb.name} kicked:{bomb.IsBeingKicked} punched:{bomb.IsBeingPunched}",
+                    verbose: true);
                 continue;
+            }
 
             Vector2 bombPos = bomb.GetLogicalPosition();
+            float bombToTargetTileDist = Vector2.Distance(bombPos, targetTileCenter);
+            float playerToBombDist = Vector2.Distance(position, bombPos);
+            Vector2 playerMinusBomb = position - bombPos;
 
-            if (Vector2.Distance(bombPos, targetTileCenter) > 0.05f)
+            float signedAxisOffset =
+                Mathf.Abs(dir.x) > 0.01f
+                    ? playerMinusBomb.x * Mathf.Sign(dir.x)
+                    : playerMinusBomb.y * Mathf.Sign(dir.y);
+
+            float perpendicularOffset =
+                Mathf.Abs(dir.x) > 0.01f
+                    ? Mathf.Abs(playerMinusBomb.y)
+                    : Mathf.Abs(playerMinusBomb.x);
+
+            bool bombMatchesTargetTile = bombToTargetTileDist <= 0.05f;
+
+            LogBombEscape(
+                $"[KickAdj] inspect bomb:{bomb.name} bombPos:{bombPos} bombMatchesTargetTile:{bombMatchesTargetTile} " +
+                $"bombToTargetTileDist:{bombToTargetTileDist:F3} playerToBombDist:{playerToBombDist:F3} " +
+                $"signedAxisOffset:{signedAxisOffset:F3} perpendicularOffset:{perpendicularOffset:F3} " +
+                $"bombIsSolid:{bomb.IsSolid} canBeKicked:{bomb.CanBeKicked} canBeKickedEarly:{bomb.CanBeKickedEarly} " +
+                $"isTrigger:{(bomb.GetComponent<Collider2D>() != null ? bomb.GetComponent<Collider2D>().isTrigger : false)}",
+                verbose: true);
+
+            if (!bombMatchesTargetTile)
                 continue;
 
             var bombCollider = bomb.GetComponent<Collider2D>();
             if (bombCollider == null)
+            {
+                LogBombEscape($"[KickAdj] skip bomb without collider bomb:{bomb.name}", verbose: true);
                 continue;
-
+            }
 
             for (int i = 0; i < movementAbilities.Length; i++)
             {
                 var ability = movementAbilities[i];
-                if (ability == null || !ability.IsEnabled)
+                if (ability == null)
+                {
+                    LogBombEscape($"[KickAdj] skip null ability idx:{i} bomb:{bomb.name}", verbose: true);
                     continue;
+                }
+
+                if (!ability.IsEnabled)
+                {
+                    LogBombEscape(
+                        $"[KickAdj] skip disabled ability:{ability.GetType().Name} idx:{i} bomb:{bomb.name}",
+                        verbose: true);
+                    continue;
+                }
+
+                LogBombEscape(
+                    $"[KickAdj] TRY ability:{ability.GetType().Name} bomb:{bomb.name} pos:{position} " +
+                    $"bombPos:{bombPos} playerToBombDist:{playerToBombDist:F3} signedAxisOffset:{signedAxisOffset:F3} " +
+                    $"perpendicularOffset:{perpendicularOffset:F3}",
+                    verbose: true);
 
                 bool handled = ability.TryHandleBlockedHit(bombCollider, dir, tileSize, obstacleMask);
+
+                LogBombEscape(
+                    $"[KickAdj] RESULT ability:{ability.GetType().Name} bomb:{bomb.name} handled:{handled} " +
+                    $"playerPos:{position} bombPos:{bombPos}",
+                    verbose: true);
 
                 if (handled)
                 {
                     _lastAdjKickedBomb = bomb;
+
+                    LogBombEscape(
+                        $"[KickAdj] SUCCESS bomb:{bomb.name} pos:{position} snappedCurrentTile:{snappedCurrentTile} " +
+                        $"targetTileCenter:{targetTileCenter} playerToBombDist:{playerToBombDist:F3} " +
+                        $"signedAxisOffset:{signedAxisOffset:F3} perpendicularOffset:{perpendicularOffset:F3}",
+                        verbose: false);
+
                     return true;
                 }
             }
 
+            LogBombEscape(
+                $"[KickAdj] FAIL bomb matched target tile but no ability handled it bomb:{bomb.name}",
+                verbose: true);
+
             return false;
         }
+
+        LogBombEscape(
+            $"[KickAdj] END no adjacent bomb matched pos:{position} dir:{dir} targetTileCenter:{targetTileCenter}",
+            verbose: true);
 
         return false;
     }

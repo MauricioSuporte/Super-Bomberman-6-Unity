@@ -137,6 +137,39 @@ public class BombKickAbility : MonoBehaviour, IMovementAbility
             return false;
         }
 
+        Vector2 ownerPos = movement != null
+            ? movement.transform.position
+            : transform.position;
+
+        Vector2 bombPos = bomb.GetLogicalPosition();
+        Vector2 delta = ownerPos - bombPos;
+        Vector2 normalizedDir = direction.normalized;
+
+        float playerToBombDist = Vector2.Distance(ownerPos, bombPos);
+        float signedAxisOffset =
+            Mathf.Abs(normalizedDir.x) > 0.01f
+                ? delta.x * Mathf.Sign(normalizedDir.x)
+                : delta.y * Mathf.Sign(normalizedDir.y);
+
+        float perpendicularOffset =
+            Mathf.Abs(normalizedDir.x) > 0.01f
+                ? Mathf.Abs(delta.y)
+                : Mathf.Abs(delta.x);
+
+        bool ownerIsMe = bomb.Owner == bombController;
+        bool earlyUnlocked = _bombEarlyKickUnlocked.Contains(bomb);
+        bool hasPlantDir = _bombPlantDirection.TryGetValue(bomb, out var plantDirRaw);
+        Vector2 plantDir = hasPlantDir ? plantDirRaw.normalized : Vector2.zero;
+
+        LogBombKick(
+            $"TryHandleBlockedHit CONTEXT bomb:{bomb.name} ownerPos:{VecToStr(ownerPos)} bombPos:{VecToStr(bombPos)} " +
+            $"delta:{VecToStr(delta)} playerToBombDist:{playerToBombDist:F3} " +
+            $"signedAxisOffset:{signedAxisOffset:F3} perpendicularOffset:{perpendicularOffset:F3} " +
+            $"ownerIsMe:{ownerIsMe} bombIsSolid:{bomb.IsSolid} canBeKicked:{bomb.CanBeKicked} " +
+            $"canBeKickedEarly:{bomb.CanBeKickedEarly} earlyUnlocked:{earlyUnlocked} hasPlantDir:{hasPlantDir} " +
+            $"plantDir:{VecToStr(plantDir)} isBeingKicked:{bomb.IsBeingKicked}",
+            verbose: false);
+
         if (bomb.IsBeingKicked)
         {
             LogBombKick(
@@ -154,34 +187,32 @@ public class BombKickAbility : MonoBehaviour, IMovementAbility
             return false;
         }
 
-        direction = direction.normalized;
+        direction = normalizedDir;
 
         LogBombKick(
             $"TryHandleBlockedHit bomb:{bomb.name} normalizedDir:{VecToStr(direction)} " +
-            $"bombPos:{VecToStr(bomb.GetLogicalPosition())} " +
+            $"bombPos:{VecToStr(bombPos)} " +
             $"isSolid:{bomb.IsSolid} canBeKicked:{bomb.CanBeKicked} canBeKickedEarly:{bomb.CanBeKickedEarly} " +
-            $"isBeingKicked:{bomb.IsBeingKicked} ownerIsMe:{(bomb.Owner == bombController)}");
+            $"isBeingKicked:{bomb.IsBeingKicked} ownerIsMe:{ownerIsMe}");
 
         if (!bomb.IsSolid)
         {
-            bool hasPlantDir = _bombPlantDirection.TryGetValue(bomb, out var plantDir);
-
             LogBombKick(
-                $"EarlyKick check bomb:{bomb.name} hasPlantDir:{hasPlantDir} " +
-                $"alreadyUnlocked:{_bombEarlyKickUnlocked.Contains(bomb)}",
+                $"EarlyKick check bomb:{bomb.name} hasPlantDir:{hasPlantDir} alreadyUnlocked:{earlyUnlocked} " +
+                $"ownerPos:{VecToStr(ownerPos)} bombPos:{VecToStr(bombPos)} playerToBombDist:{playerToBombDist:F3} " +
+                $"signedAxisOffset:{signedAxisOffset:F3} perpendicularOffset:{perpendicularOffset:F3}",
                 verbose: true);
 
             if (hasPlantDir)
             {
-                plantDir = plantDir.normalized;
                 float dot = Vector2.Dot(plantDir, direction);
 
                 LogBombKick(
                     $"EarlyKick compare bomb:{bomb.name} plantDir:{VecToStr(plantDir)} " +
-                    $"inputDir:{VecToStr(direction)} dot:{dot:F3}",
+                    $"inputDir:{VecToStr(direction)} dot:{dot:F3} earlyUnlocked:{earlyUnlocked}",
                     verbose: false);
 
-                if (!_bombEarlyKickUnlocked.Contains(bomb))
+                if (!earlyUnlocked)
                 {
                     if (dot < -0.9f)
                     {
@@ -201,7 +232,9 @@ public class BombKickAbility : MonoBehaviour, IMovementAbility
                 else
                 {
                     LogBombKick(
-                        $"EarlyKick already unlocked bomb:{bomb.name}",
+                        $"EarlyKick already unlocked bomb:{bomb.name} " +
+                        $"playerToBombDist:{playerToBombDist:F3} signedAxisOffset:{signedAxisOffset:F3} " +
+                        $"perpendicularOffset:{perpendicularOffset:F3}",
                         verbose: true);
                 }
             }
@@ -209,16 +242,28 @@ public class BombKickAbility : MonoBehaviour, IMovementAbility
             {
                 LogBombKick(
                     $"TryHandleBlockedHit non-solid bomb without plant direction. " +
-                    $"bomb:{bomb.name} -> proceeding without early-kick direction gate",
+                    $"bomb:{bomb.name} -> proceeding without early-kick direction gate " +
+                    $"playerToBombDist:{playerToBombDist:F3} signedAxisOffset:{signedAxisOffset:F3} " +
+                    $"perpendicularOffset:{perpendicularOffset:F3}",
                     verbose: false);
             }
+        }
+        else
+        {
+            LogBombKick(
+                $"SolidKick check bomb:{bomb.name} ownerPos:{VecToStr(ownerPos)} bombPos:{VecToStr(bombPos)} " +
+                $"playerToBombDist:{playerToBombDist:F3} signedAxisOffset:{signedAxisOffset:F3} " +
+                $"perpendicularOffset:{perpendicularOffset:F3}",
+                verbose: true);
         }
 
         LayerMask bombObstacles = obstacleMask | LayerMask.GetMask("Enemy");
 
         LogBombKick(
             $"StartKick CALL bomb:{bomb.name} dir:{VecToStr(direction)} tileSize:{tileSize:F2} " +
-            $"bombObstacles:{bombObstacles.value} destructibleTilesNull:{(bombController == null || bombController.destructibleTiles == null)}",
+            $"bombObstacles:{bombObstacles.value} destructibleTilesNull:{(bombController == null || bombController.destructibleTiles == null)} " +
+            $"ownerPos:{VecToStr(ownerPos)} bombPos:{VecToStr(bombPos)} playerToBombDist:{playerToBombDist:F3} " +
+            $"signedAxisOffset:{signedAxisOffset:F3} perpendicularOffset:{perpendicularOffset:F3}",
             verbose: true);
 
         bool kicked = bomb.StartKick(
@@ -234,7 +279,8 @@ public class BombKickAbility : MonoBehaviour, IMovementAbility
 
         LogBombKick(
             $"StartKick RESULT bomb:{bomb.name} kicked:{kicked} " +
-            $"isSolidNow:{bomb.IsSolid} isBeingKickedNow:{bomb.IsBeingKicked}");
+            $"isSolidNow:{bomb.IsSolid} isBeingKickedNow:{bomb.IsBeingKicked} " +
+            $"ownerPos:{VecToStr(ownerPos)} bombPos:{VecToStr(bombPos)} playerToBombDist:{playerToBombDist:F3}");
 
         if (!kicked)
         {
@@ -249,7 +295,10 @@ public class BombKickAbility : MonoBehaviour, IMovementAbility
 
         LogBombKick(
             $"Kick SUCCESS bomb:{bomb.name} kickedByMe:{kickedByMe.Count} " +
-            $"plantDirCount:{_bombPlantDirection.Count} unlockedCount:{_bombEarlyKickUnlocked.Count}");
+            $"plantDirCount:{_bombPlantDirection.Count} unlockedCount:{_bombEarlyKickUnlocked.Count} " +
+            $"ownerPos:{VecToStr(ownerPos)} bombPos:{VecToStr(bombPos)} " +
+            $"playerToBombDist:{playerToBombDist:F3} signedAxisOffset:{signedAxisOffset:F3} " +
+            $"perpendicularOffset:{perpendicularOffset:F3}");
 
         PlayKick_InterruptPrevious(cachedKickClip, 1f);
 
@@ -445,28 +494,29 @@ public class BombKickAbility : MonoBehaviour, IMovementAbility
 
     public void NotifyOwnerDirectionChanged(Vector2 newDirection)
     {
+        newDirection = newDirection.normalized;
         if (newDirection == Vector2.zero)
         {
             LogBombKick("NotifyOwnerDirectionChanged skipped (zero direction)", verbose: true);
             return;
         }
 
-        newDirection = newDirection.normalized;
-
-        if (_lastOwnerDirection == newDirection)
+        Vector2 previousDirection = _lastOwnerDirection;
+        if (previousDirection == newDirection)
         {
-            LogBombKick(
-                $"NotifyOwnerDirectionChanged skipped (same direction) dir:{VecToStr(newDirection)}",
-                verbose: true);
+            LogBombKick($"NotifyOwnerDirectionChanged skipped (same direction) dir:{VecToStr(newDirection)}");
             return;
         }
 
-        Vector2 previousDirection = _lastOwnerDirection;
         _lastOwnerDirection = newDirection;
+
+        Vector2 ownerPos = movement != null
+            ? (Vector2)movement.transform.position
+            : (Vector2)transform.position;
 
         LogBombKick(
             $"NotifyOwnerDirectionChanged prev:{VecToStr(previousDirection)} new:{VecToStr(newDirection)} " +
-            $"trackedBombs:{_bombPlantDirection.Count}",
+            $"trackedBombs:{_bombPlantDirection.Count} ownerPos:{VecToStr(ownerPos)}",
             verbose: true);
 
         if (_bombPlantDirection.Count == 0)
@@ -489,11 +539,27 @@ public class BombKickAbility : MonoBehaviour, IMovementAbility
                 continue;
             }
 
+            Vector2 bombPos = bomb.GetLogicalPosition();
+            Vector2 delta = ownerPos - bombPos;
+            float playerToBombDist = Vector2.Distance(ownerPos, bombPos);
+            float signedAxisOffset =
+                Mathf.Abs(newDirection.x) > 0.01f
+                    ? delta.x * Mathf.Sign(newDirection.x)
+                    : delta.y * Mathf.Sign(newDirection.y);
+
+            float perpendicularOffset =
+                Mathf.Abs(newDirection.x) > 0.01f
+                    ? Mathf.Abs(delta.y)
+                    : Mathf.Abs(delta.x);
+
             float dot = Vector2.Dot(plantDir, newDirection);
 
             LogBombKick(
                 $"NotifyOwnerDirectionChanged compare bomb:{bomb.name} " +
-                $"plantDir:{VecToStr(plantDir)} newDir:{VecToStr(newDirection)} dot:{dot:F3}",
+                $"plantDir:{VecToStr(plantDir)} newDir:{VecToStr(newDirection)} dot:{dot:F3} " +
+                $"bombPos:{VecToStr(bombPos)} ownerPos:{VecToStr(ownerPos)} " +
+                $"playerToBombDist:{playerToBombDist:F3} signedAxisOffset:{signedAxisOffset:F3} " +
+                $"perpendicularOffset:{perpendicularOffset:F3} alreadyUnlocked:{_bombEarlyKickUnlocked.Contains(bomb)}",
                 verbose: true);
 
             if (dot < -0.9f)
@@ -503,7 +569,14 @@ public class BombKickAbility : MonoBehaviour, IMovementAbility
         for (int i = 0; i < bombsToUnlock.Count; i++)
         {
             _bombEarlyKickUnlocked.Add(bombsToUnlock[i]);
-            LogBombKick($"NotifyOwnerDirectionChanged UNLOCK early kick bomb:{bombsToUnlock[i].name}");
+
+            Vector2 bombPos = bombsToUnlock[i] != null
+                ? bombsToUnlock[i].GetLogicalPosition()
+                : Vector2.zero;
+
+            LogBombKick(
+                $"NotifyOwnerDirectionChanged UNLOCK early kick bomb:{bombsToUnlock[i].name} " +
+                $"ownerPos:{VecToStr(ownerPos)} bombPos:{VecToStr(bombPos)}");
         }
 
         ListPool<Bomb>.Release(bombsToUnlock);
