@@ -35,7 +35,7 @@
                 return "CLEAR BOSS RUSH ON NIGHTMARE";
 
             case BomberSkin.Gold:
-                return "CLEAR ALL STAGES WITHOUT USING ANY ITEMS";
+                return "CLEAR STAGES WITHOUT ITEMS (EACH STAGE TRACKED SEPARATELY)";
 
             case BomberSkin.Golden:
                 return "UNLOCK ALL OTHER BOMBERS";
