@@ -1498,7 +1498,12 @@ public class MovementController : MonoBehaviour, IKillable
                         if (ability != null && ability.IsEnabled)
                         {
                             if (ability.TryHandleBlockedHit(hit, dirForSize, tileSize, obstacleMask))
+                            {
+                                if (hitBomb != null && hitBomb.IsBeingKicked)
+                                    _lastAdjKickedBomb = hitBomb;
+
                                 return IsBlockedAtPosition(targetPosition, dirForSize, false);
+                            }
                         }
                     }
                 }
@@ -1582,7 +1587,12 @@ public class MovementController : MonoBehaviour, IKillable
                             if (ability != null && ability.IsEnabled)
                             {
                                 if (ability.TryHandleBlockedHit(bombCollider, dirForSize, tileSize, obstacleMask))
+                                {
+                                    if (bomb.IsBeingKicked)
+                                        _lastAdjKickedBomb = bomb;
+
                                     return IsBlockedAtPosition(targetPosition, dirForSize, false);
+                                }
                             }
                         }
                     }
@@ -1603,7 +1613,7 @@ public class MovementController : MonoBehaviour, IKillable
                     $"nearReentryKickEdge:{nearReentryKickEdge}",
                     verbose: false);
 
-                if (allowMovementAbilities && nearReentryKickEdge && bombCollider != null)
+                if (allowMovementAbilities && bombCollider != null)
                 {
                     for (int i = 0; i < movementAbilities.Length; i++)
                     {
@@ -1611,7 +1621,22 @@ public class MovementController : MonoBehaviour, IKillable
                         if (ability != null && ability.IsEnabled)
                         {
                             if (ability.TryHandleBlockedHit(bombCollider, dirForSize, tileSize, obstacleMask))
+                            {
+                                if (bomb.IsBeingKicked)
+                                    _lastAdjKickedBomb = bomb;
+
+                                if (!nearReentryKickEdge)
+                                {
+                                    LogBombEscape(
+                                        $"REENTRY kick handled before centering bomb:{bomb.name} " +
+                                        $"myPos:{myPos} target:{targetPosition} bombPos:{bombPos} " +
+                                        $"nearReentryKickEdge:{nearReentryKickEdge}",
+                                        verbose: false);
+                                }
+
+                                CancelBombReentryCentering();
                                 return IsBlockedAtPosition(targetPosition, dirForSize, false);
+                            }
                         }
                     }
                 }
@@ -2592,12 +2617,12 @@ public class MovementController : MonoBehaviour, IKillable
             return true;
 
         Vector2 ahead = pos + moveDir.normalized * (tileSize * 0.5f);
-        return !IsBlockedAtPosition(ahead, moveDir, false);
+        return !IsBlockedAtPosition(ahead, moveDir, true);
     }
 
     protected bool CanAlignToPerpendicularTarget(Vector2 candidatePos, Vector2 moveDir)
     {
-        if (IsBlockedAtPosition(candidatePos, moveDir, false))
+        if (IsBlockedAtPosition(candidatePos, moveDir, true))
             return false;
 
         if (!IsForwardOpen(candidatePos, moveDir))
@@ -3088,7 +3113,7 @@ public class MovementController : MonoBehaviour, IKillable
         if (IsMoveBlocked(alignDir))
             return true;
 
-        if (IsBlockedAtPosition(alignTarget, alignDir, false))
+        if (IsBlockedAtPosition(alignTarget, alignDir, true))
             return true;
 
         if (!CanAlignToPerpendicularTarget(alignTarget, requestedTurnDir))
@@ -3165,7 +3190,7 @@ public class MovementController : MonoBehaviour, IKillable
         Vector2 currentTileCenter = new(centeredX, centeredY);
         Vector2 nextTileCenter = currentTileCenter + dir * tileSize;
 
-        bool nextBlocked = IsBlockedAtPosition(nextTileCenter, dir, false);
+        bool nextBlocked = IsBlockedAtPosition(nextTileCenter, dir, true);
 
         if (nextBlocked && _lastAdjKickedBomb != null && _lastAdjKickedBomb.IsBeingKicked)
             nextBlocked = IsBlockedAtPositionIgnoringBomb(nextTileCenter, dir, _lastAdjKickedBomb);

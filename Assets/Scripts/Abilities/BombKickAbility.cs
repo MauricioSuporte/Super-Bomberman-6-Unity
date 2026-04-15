@@ -317,6 +317,8 @@ public class BombKickAbility : MonoBehaviour, IMovementAbility
         _bombPlantDirection.Remove(bomb);
         _bombEarlyKickUnlocked.Remove(bomb);
 
+        movement?.CancelBombReentryCentering();
+
         LogBombKick(
             $"Kick SUCCESS bomb:{bomb.name} kickedByMe:{kickedByMe.Count} " +
             $"plantDirCount:{_bombPlantDirection.Count} unlockedCount:{_bombEarlyKickUnlocked.Count} " +
