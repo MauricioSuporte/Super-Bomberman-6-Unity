@@ -214,8 +214,8 @@ MonoBehaviour:
   stageBoundsTilemap: {fileID: 0}
   indestructibleTilemap: {fileID: 0}
   magnetPullSpeed: 10
-  debugBombEscape: 1
-  debugBombEscapeVerbose: 1
+  debugBombEscape: 0
+  debugBombEscapeVerbose: 0
 --- !u!82 &4491695425928016186
 AudioSource:
   m_ObjectHideFlags: 0

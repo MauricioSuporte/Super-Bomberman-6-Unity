@@ -8,8 +8,8 @@ using UnityEngine;
 public class BombKickAbility : MonoBehaviour, IMovementAbility
 {
     [Header("Debug Bomb Kick")]
-    private readonly bool debugBombKick = true;
-    private readonly bool debugBombKickVerbose = true;
+    private readonly bool debugBombKick = false;
+    private readonly bool debugBombKickVerbose = false;
 
     public const string AbilityId = "BombKick";
 

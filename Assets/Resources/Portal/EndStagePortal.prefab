@@ -82,7 +82,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 2
+  m_SortingOrder: 0
   m_MaskInteraction: 0
   m_Sprite: {fileID: 1197168801, guid: 0ccdeec91ba95d045a63b3eb0c9d57c6, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -155,9 +155,11 @@ MonoBehaviour:
   enterSfx: {fileID: 8300000, guid: 778da4e4d7313e54195e6cbca646d851, type: 3}
   endStageMusic: {fileID: 0}
   playRandomGoodSfx: 1
-  goodSfxVolume: 1
+  playSkullForNightmareBomber: 1
+  skullVolume: 1
   manualUnlockOnly: 0
-  idleRenderer: {fileID: 9020523032431095497}
+  portalRenderer: {fileID: 0}
+  enableLoopWhenUnlocked: 1
 --- !u!114 &9020523032431095497
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -178,6 +180,8 @@ MonoBehaviour:
   animationTime: 0.01
   useSequenceDuration: 0
   sequenceDuration: 0.5
+  useUnscaledTime: 1
+  respectGamePause: 1
   loop: 0
   idle: 1
   frameOffsets: []
