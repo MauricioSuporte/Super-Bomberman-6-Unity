@@ -18,6 +18,8 @@ public class BombKickAbility : MonoBehaviour, IMovementAbility
 
     private const string KickStopClipResourcesPath = "Sounds/kickstop";
     private static AudioClip cachedKickStopClip;
+    private const float MaxKickAxisReachTiles = 1f;
+    private const float MaxKickAxisReachToleranceTiles = 0.05f;
 
     private static readonly object kickSfxGate = new();
     private static AudioSource kickSfxOwner;
@@ -189,7 +191,26 @@ public class BombKickAbility : MonoBehaviour, IMovementAbility
 
         direction = normalizedDir;
 
+        float maxKickAxisDistance =
+            tileSize > 0.0001f
+                ? tileSize * (MaxKickAxisReachTiles + MaxKickAxisReachToleranceTiles)
+                : MaxKickAxisReachTiles + MaxKickAxisReachToleranceTiles;
+
+        float axisDistanceFromBomb = Mathf.Abs(signedAxisOffset);
+
+        if (axisDistanceFromBomb > maxKickAxisDistance)
+        {
+            LogBombKick(
+                $"TryHandleBlockedHit -> false (bomb too far for kick) " +
+                $"bomb:{bomb.name} axisDistanceFromBomb:{axisDistanceFromBomb:F3} " +
+                $"maxKickAxisDistance:{maxKickAxisDistance:F3} " +
+                $"playerToBombDist:{playerToBombDist:F3} " +
+                $"signedAxisOffset:{signedAxisOffset:F3} perpendicularOffset:{perpendicularOffset:F3}");
+            return false;
+        }
+
         LogBombKick(
+            $"TryHandleBlockedHit bomb:{bomb.name} normalizedDir:{VecToStr(direction)} " +
             $"TryHandleBlockedHit bomb:{bomb.name} normalizedDir:{VecToStr(direction)} " +
             $"bombPos:{VecToStr(bombPos)} " +
             $"isSolid:{bomb.IsSolid} canBeKicked:{bomb.CanBeKicked} canBeKickedEarly:{bomb.CanBeKickedEarly} " +
