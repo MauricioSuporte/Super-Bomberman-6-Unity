@@ -164,7 +164,14 @@ public class MovementController : MonoBehaviour, IKillable
     private readonly float earlyKickMinCenterOffset = 0.5f;
     private readonly float earlyReentryKickMinCenterOffset = 0.5f;
 
+    private struct BombPlantTraversalState
+    {
+        public Vector2 PlantDirection;
+        public bool DirectionChangedSincePlant;
+    }
+
     private Bomb _lastAdjKickedBomb;
+    private readonly Dictionary<Bomb, BombPlantTraversalState> _ownedBombPlantTraversal = new();
     public bool SuppressInactivityAnimation => suppressInactivityAnimation;
 
     public void SetPassTaggedObstacles(bool canPass, string tag)
@@ -966,6 +973,7 @@ public class MovementController : MonoBehaviour, IKillable
         bool movingHorizontal = Mathf.Abs(direction.x) > 0.01f;
 
         UpdateCurrentAxis(movingHorizontal, movingVertical);
+        UpdateOwnedBombPlantTraversal(direction);
 
         if (_debugLastFixedFrameLogged != Time.frameCount)
         {
@@ -1695,6 +1703,25 @@ public class MovementController : MonoBehaviour, IKillable
                 if (bomb == _lastAdjKickedBomb && bomb.IsBeingKicked)
                     continue;
 
+                if (ShouldAllowForwardTraversalThroughOwnTriggerBomb(
+                        bomb,
+                        myPos,
+                        dirForSize,
+                        physicallyStillInside,
+                        out Vector2 plantDir))
+                {
+                    CancelBombReentryCentering();
+
+                    LogBombEscape(
+                        $"ALLOW same-direction trigger bomb traversal bomb:{bomb.name} " +
+                        $"myPos:{myPos} target:{targetPosition} bombPos:{bombPos} " +
+                        $"currentDir:{NormalizeCardinal(dirForSize)} plantDir:{plantDir} " +
+                        $"physicallyStillInside:{physicallyStillInside}",
+                        verbose: false);
+
+                    continue;
+                }
+
                 bool nearReentryKickEdge = IsNearBombReentryKickEdge(myPos, bombPos, dirForSize);
 
                 LogBombEscape(
@@ -1757,6 +1784,132 @@ public class MovementController : MonoBehaviour, IKillable
         }
 
         return false;
+    }
+
+    public void NotifyBombPlanted(Bomb bomb, Vector2 movementDirectionAtPlant)
+    {
+        if (bomb == null)
+            return;
+
+        Vector2 storedDir = NormalizeCardinal(movementDirectionAtPlant);
+        if (storedDir == Vector2.zero)
+            storedDir = NormalizeCardinal(facingDirection);
+
+        if (storedDir == Vector2.zero)
+            storedDir = Vector2.down;
+
+        _ownedBombPlantTraversal[bomb] = new BombPlantTraversalState
+        {
+            PlantDirection = storedDir,
+            DirectionChangedSincePlant = false
+        };
+
+        LogBombEscape(
+            $"Track planted bomb traversal bomb:{bomb.name} bombPos:{bomb.GetLogicalPosition()} " +
+            $"storedDir:{storedDir}",
+            verbose: true);
+    }
+
+    private void UpdateOwnedBombPlantTraversal(Vector2 currentDirection)
+    {
+        if (_ownedBombPlantTraversal.Count == 0)
+            return;
+
+        Vector2 normalizedCurrentDirection = NormalizeCardinal(currentDirection);
+        List<Bomb> bombsToRemove = null;
+        List<Bomb> bombsToLock = null;
+
+        foreach (var kv in _ownedBombPlantTraversal)
+        {
+            Bomb bomb = kv.Key;
+            BombPlantTraversalState state = kv.Value;
+
+            if (bomb == null || bomb.HasExploded || bomb.IsSolid || bomb.IsBeingKicked || bomb.Owner != bombController)
+            {
+                bombsToRemove ??= new List<Bomb>();
+                bombsToRemove.Add(bomb);
+                continue;
+            }
+
+            if (state.DirectionChangedSincePlant || normalizedCurrentDirection == Vector2.zero)
+                continue;
+
+            Vector2 plantDir = NormalizeCardinal(state.PlantDirection);
+            if (plantDir == Vector2.zero)
+                continue;
+
+            float directionDot = Vector2.Dot(plantDir, normalizedCurrentDirection);
+            if (directionDot > 0.1f)
+                continue;
+
+            bombsToLock ??= new List<Bomb>();
+            bombsToLock.Add(bomb);
+        }
+
+        if (bombsToRemove != null)
+        {
+            for (int i = 0; i < bombsToRemove.Count; i++)
+                _ownedBombPlantTraversal.Remove(bombsToRemove[i]);
+        }
+
+        if (bombsToLock == null)
+            return;
+
+        for (int i = 0; i < bombsToLock.Count; i++)
+        {
+            Bomb bomb = bombsToLock[i];
+            if (bomb == null)
+                continue;
+
+            if (!_ownedBombPlantTraversal.TryGetValue(bomb, out BombPlantTraversalState state))
+                continue;
+
+            Vector2 plantDir = NormalizeCardinal(state.PlantDirection);
+            state.DirectionChangedSincePlant = true;
+            _ownedBombPlantTraversal[bomb] = state;
+
+            LogBombEscape(
+                $"Track planted bomb traversal LOCKED bomb:{bomb.name} bombPos:{bomb.GetLogicalPosition()} " +
+                $"plantDir:{plantDir} currentDir:{normalizedCurrentDirection}",
+                verbose: false);
+        }
+    }
+
+    private bool ShouldAllowForwardTraversalThroughOwnTriggerBomb(
+        Bomb bomb,
+        Vector2 playerPos,
+        Vector2 moveDir,
+        bool physicallyStillInside,
+        out Vector2 plantDir)
+    {
+        plantDir = Vector2.zero;
+
+        if (!physicallyStillInside || bomb == null || bomb.Owner != bombController)
+            return false;
+
+        if (!_ownedBombPlantTraversal.TryGetValue(bomb, out BombPlantTraversalState state))
+            return false;
+
+        if (state.DirectionChangedSincePlant)
+            return false;
+
+        moveDir = NormalizeCardinal(moveDir);
+        plantDir = NormalizeCardinal(state.PlantDirection);
+
+        if (moveDir == Vector2.zero || plantDir == Vector2.zero)
+            return false;
+
+        float directionDot = Vector2.Dot(plantDir, moveDir);
+        if (directionDot <= 0.1f)
+            return false;
+
+        Vector2 delta = playerPos - bomb.GetLogicalPosition();
+        float signedAxisOffset =
+            Mathf.Abs(moveDir.x) > 0.01f
+                ? delta.x * Mathf.Sign(moveDir.x)
+                : delta.y * Mathf.Sign(moveDir.y);
+
+        return signedAxisOffset <= alignEpsilon;
     }
 
     private bool IsBlockedAtPositionIgnoringBomb(Vector2 targetPosition, Vector2 dirForSize, Bomb ignoreBomb)

@@ -158,6 +158,20 @@ public partial class BombController : MonoBehaviour
         ResolveIndestructibleTileResolver();
     }
 
+    private static Vector2 GetBombPlantDirection(MovementController movement)
+    {
+        if (movement != null)
+        {
+            if (movement.Direction != Vector2.zero)
+                return movement.Direction.normalized;
+
+            if (movement.FacingDirection != Vector2.zero)
+                return movement.FacingDirection.normalized;
+        }
+
+        return Vector2.down;
+    }
+
     private void OnEnable()
     {
         ResolveExplosionPrefab();
@@ -757,22 +771,11 @@ public partial class BombController : MonoBehaviour
         if (!controlEnabled)
             bombComponent.BeginFuse();
 
+        Vector2 plantDir = GetBombPlantDirection(movement);
+        movement?.NotifyBombPlanted(bombComponent, plantDir);
+
         if (TryGetComponent<BombKickAbility>(out var kickAbility) && kickAbility != null)
-        {
-            Vector2 plantDir = Vector2.zero;
-
-            if (movement != null)
-            {
-                if (movement.Direction != Vector2.zero)
-                    plantDir = movement.Direction.normalized;
-                else if (movement.FacingDirection != Vector2.zero)
-                    plantDir = movement.FacingDirection.normalized;
-                else
-                    plantDir = Vector2.down;
-            }
-
             kickAbility.NotifyBombPlanted(bombComponent, plantDir);
-        }
     }
 
     private bool TryDestroyBombIfOnWater(GameObject bombGo, Vector2 worldPos, bool refund)
@@ -2055,30 +2058,14 @@ public partial class BombController : MonoBehaviour
         if (!controlEnabled)
             bombComponent.BeginFuse();
 
+        Vector2 plantDir = GetBombPlantDirection(movement);
+        movement?.NotifyBombPlanted(bombComponent, plantDir);
+
         if (TryGetComponent<BombKickAbility>(out var kickAbility) && kickAbility != null)
-        {
-            var mc = GetComponent<MovementController>();
-            Vector2 plantDir = mc != null ? mc.Direction : Vector2.zero;
             kickAbility.NotifyBombPlanted(bombComponent, plantDir);
-        }
 
         if (TryGetComponent<YellowLouieKickAbility>(out var yellowKickAbility) && yellowKickAbility != null)
-        {
-            var mc = GetComponent<MovementController>();
-            Vector2 plantDir = Vector2.zero;
-
-            if (mc != null)
-            {
-                if (mc.Direction != Vector2.zero)
-                    plantDir = mc.Direction.normalized;
-                else if (mc.FacingDirection != Vector2.zero)
-                    plantDir = mc.FacingDirection.normalized;
-                else
-                    plantDir = Vector2.down;
-            }
-
             yellowKickAbility.NotifyBombPlanted(bombComponent, plantDir);
-        }
 
         return true;
     }
