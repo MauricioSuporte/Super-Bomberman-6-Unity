@@ -526,6 +526,8 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         if (punchRoutine != null)
             StopCoroutine(punchRoutine);
 
+        RemoveKickOriginBlocker();
+
         isPunched = true;
 
         charactersInside.Clear();
@@ -1286,6 +1288,8 @@ public class Bomb : MonoBehaviour, IMagnetPullable
             StopCoroutine(kickRoutine);
             kickRoutine = null;
         }
+
+        RemoveKickOriginBlocker();
 
         isKicked = false;
 

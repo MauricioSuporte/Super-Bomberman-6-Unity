@@ -374,6 +374,43 @@ public class BombKickAbility : MonoBehaviour, IMovementAbility
             PlayKickStop_InterruptPrevious(cachedKickStopClip, 1f);
     }
 
+    public bool CanConvertKickToPunch(Bomb bomb)
+    {
+        return enabledAbility &&
+               bomb != null &&
+               kickedByMe.Contains(bomb) &&
+               bomb.IsBeingKicked &&
+               !bomb.HasExploded;
+    }
+
+    public bool TryConvertKickToPunch(Bomb bomb)
+    {
+        if (!CanConvertKickToPunch(bomb))
+        {
+            LogBombKick(
+                $"TryConvertKickToPunch -> false bomb:{(bomb != null ? bomb.name : "null")} " +
+                $"enabled:{enabledAbility} tracked:{(bomb != null && kickedByMe.Contains(bomb))} " +
+                $"beingKicked:{(bomb != null && bomb.IsBeingKicked)} exploded:{(bomb != null && bomb.HasExploded)}",
+                verbose: true);
+            return false;
+        }
+
+        float snapTileSize = movement != null ? movement.tileSize : 1f;
+
+        LogBombKick(
+            $"TryConvertKickToPunch stopping kicked bomb:{bomb.name} snapTileSize:{snapTileSize:F2}",
+            verbose: false);
+
+        bomb.StopKickAndSnapToGrid(snapTileSize);
+        kickedByMe.Remove(bomb);
+
+        LogBombKick(
+            $"TryConvertKickToPunch success bomb:{bomb.name} remainingKickedByMe:{kickedByMe.Count}",
+            verbose: false);
+
+        return true;
+    }
+
     private void PruneKickedSet()
     {
         if (kickedByMe.Count > 0)

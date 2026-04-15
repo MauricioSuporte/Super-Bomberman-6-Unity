@@ -37,6 +37,7 @@ public class BombPunchAbility : MonoBehaviour, IPlayerAbility
     private AudioSource audioSource;
     private BombController bombController;
     private MovementController movement;
+    private BombKickAbility kickAbility;
 
     private AnimatedSpriteRenderer prevMoveSprite;
     private AnimatedSpriteRenderer activePunchSprite;
@@ -56,6 +57,7 @@ public class BombPunchAbility : MonoBehaviour, IPlayerAbility
         audioSource = GetComponent<AudioSource>();
         bombController = GetComponent<BombController>();
         movement = GetComponent<MovementController>();
+        kickAbility = GetComponent<BombKickAbility>();
 
         if (cachedPunchClip == null)
             cachedPunchClip = Resources.Load<AudioClip>(PunchClipResourcesPath);
@@ -181,6 +183,12 @@ public class BombPunchAbility : MonoBehaviour, IPlayerAbility
         if (bomb == null)
             return;
 
+        if (bomb.IsBeingKicked)
+        {
+            if (kickAbility == null || !kickAbility.TryConvertKickToPunch(bomb))
+                return;
+        }
+
         LayerMask obstacles = movement.obstacleMask | LayerMask.GetMask("Enemy", "Bomb", "Player");
         Vector2 bombLogicalPos = bomb.GetLogicalPosition();
 
@@ -265,7 +273,10 @@ public class BombPunchAbility : MonoBehaviour, IPlayerAbility
             }
         }
 
-        return bestBomb;
+        if (bestBomb != null)
+            return bestBomb;
+
+        return FindKickConvertibleBombAhead(playerSnappedPos, dir);
     }
 
     private bool CanEarlyPunch(Bomb bomb, Vector2 playerPos, Vector2 bombPos)
@@ -282,6 +293,50 @@ public class BombPunchAbility : MonoBehaviour, IPlayerAbility
         bool exitedEnough = dist >= minDist;
 
         return exitedEnough;
+    }
+
+    private Bomb FindKickConvertibleBombAhead(Vector2 playerSnappedPos, Vector2 dir)
+    {
+        if (movement == null || kickAbility == null || !kickAbility.IsEnabled)
+            return null;
+
+        Vector2 perpendicular = new Vector2(-dir.y, dir.x);
+        Vector2 preferredPunchOrigin = playerSnappedPos + dir * movement.tileSize;
+
+        float maxForwardDistance = movement.tileSize * Mathf.Max(1f, earlyPunchSearchSize);
+        float maxPerpendicularOffset = movement.tileSize * 0.35f;
+
+        Bomb bestBomb = null;
+        float bestScore = float.MaxValue;
+
+        foreach (var candidate in Bomb.ActiveBombs)
+        {
+            if (candidate == null || candidate.HasExploded || candidate.IsBeingPunched)
+                continue;
+
+            if (!kickAbility.CanConvertKickToPunch(candidate))
+                continue;
+
+            Vector2 bombPos = candidate.GetLogicalPosition();
+            Vector2 offsetFromPlayer = bombPos - playerSnappedPos;
+
+            float forwardDistance = Vector2.Dot(offsetFromPlayer, dir);
+            if (forwardDistance <= 0f || forwardDistance > maxForwardDistance)
+                continue;
+
+            float perpendicularOffset = Mathf.Abs(Vector2.Dot(offsetFromPlayer, perpendicular));
+            if (perpendicularOffset > maxPerpendicularOffset)
+                continue;
+
+            float score = Vector2.Distance(bombPos, preferredPunchOrigin);
+            if (score < bestScore)
+            {
+                bestScore = score;
+                bestBomb = candidate;
+            }
+        }
+
+        return bestBomb;
     }
 
     private IEnumerator PunchAnimLock(Vector2 dir)
