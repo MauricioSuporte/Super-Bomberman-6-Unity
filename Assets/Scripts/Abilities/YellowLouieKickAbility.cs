@@ -1,4 +1,4 @@
-﻿using Assets.Scripts.Interface;
+using Assets.Scripts.Interface;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -153,7 +153,7 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
 
         movement.SetInputLocked(true, false);
 
-        var gm = FindFirstObjectByType<GameManager>();
+        var gm = FindAnyObjectByType<GameManager>();
         var destructibleTilemap = gm != null ? gm.destructibleTilemap : null;
 
         Vector3Int frontCell = destructibleTilemap != null
@@ -987,7 +987,7 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
 
     void ApplyShadowForCell(Vector3Int cell)
     {
-        var gm = FindFirstObjectByType<GameManager>();
+        var gm = FindAnyObjectByType<GameManager>();
         if (gm == null || gm.groundTilemap == null || gm.groundTile == null || gm.groundShadowTile == null)
             return;
 

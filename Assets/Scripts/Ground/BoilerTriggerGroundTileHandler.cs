@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
@@ -47,7 +47,7 @@ public sealed class BoilerTriggerGroundTileHandler : MonoBehaviour, IGroundTileH
             powderIgniter = GetComponent<BoilerPowderTrailIgniterPrefab>();
 
         if (powderIgniter == null)
-            powderIgniter = FindFirstObjectByType<BoilerPowderTrailIgniterPrefab>();
+            powderIgniter = FindAnyObjectByType<BoilerPowderTrailIgniterPrefab>();
 
         if (bombMoveSfxSource == null)
         {

@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using UnityEngine;
 
 [RequireComponent(typeof(Rigidbody2D))]
@@ -231,7 +231,7 @@ public sealed class FiberMovementController : JunctionTurningEnemyMovementContro
         bestPos = Vector2.zero;
         float bestSqr = float.PositiveInfinity;
 
-        var players = FindObjectsByType<MovementController>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+        var players = FindObjectsByType<MovementController>(FindObjectsInactive.Exclude);
         if (players == null || players.Length == 0)
             return false;
 

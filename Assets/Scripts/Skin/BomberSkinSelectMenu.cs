@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
@@ -1282,7 +1282,7 @@ public class BomberSkinSelectMenu : MonoBehaviour
         if (cam != null)
             return cam;
 
-        var any = FindFirstObjectByType<Camera>();
+        var any = FindAnyObjectByType<Camera>();
         return any;
     }
 

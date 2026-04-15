@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -131,7 +131,7 @@ public abstract class BossIntroFlowBase : MonoBehaviour
         playerBombs.Clear();
         playerCompanions.Clear();
 
-        var ids = FindObjectsByType<PlayerIdentity>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+        var ids = FindObjectsByType<PlayerIdentity>(FindObjectsInactive.Exclude);
 
         for (int i = 0; i < ids.Length; i++)
         {

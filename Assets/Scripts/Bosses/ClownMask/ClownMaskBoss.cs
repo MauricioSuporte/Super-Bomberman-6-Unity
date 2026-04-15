@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using UnityEngine;
 
 [RequireComponent(typeof(CharacterHealth))]
@@ -134,10 +134,10 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
             clownMovement = GetComponent<ClownMaskMovement>();
 
         if (!bossEndSequence)
-            bossEndSequence = FindFirstObjectByType<BossEndStageSequence>();
+            bossEndSequence = FindAnyObjectByType<BossEndStageSequence>();
 
         if (!stageIntroClownMaskBoss)
-            stageIntroClownMaskBoss = FindFirstObjectByType<StageIntroClownMaskBoss>();
+            stageIntroClownMaskBoss = FindAnyObjectByType<StageIntroClownMaskBoss>();
 
         audioSource = GetComponent<AudioSource>();
         if (audioSource != null)
@@ -184,7 +184,7 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
 
     void EnsurePlayersRefs()
     {
-        var ids = FindObjectsByType<PlayerIdentity>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+        var ids = FindObjectsByType<PlayerIdentity>(FindObjectsInactive.Exclude);
 
         if (ids != null && ids.Length > 0)
         {

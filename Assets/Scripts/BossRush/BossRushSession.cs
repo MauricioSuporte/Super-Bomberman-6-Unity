@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using UnityEngine;
 
 public static class BossRushSession
@@ -232,10 +232,7 @@ public static class BossRushSession
 
         bool[] aliveFlags = new bool[4];
 
-        var identities = UnityEngine.Object.FindObjectsByType<PlayerIdentity>(
-            FindObjectsInactive.Include,
-            FindObjectsSortMode.None
-        );
+        var identities = UnityEngine.Object.FindObjectsByType<PlayerIdentity>(FindObjectsInactive.Include);
 
         for (int i = 0; i < identities.Length; i++)
         {

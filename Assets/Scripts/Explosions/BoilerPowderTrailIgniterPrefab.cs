@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -239,7 +239,7 @@ namespace Assets.Scripts.Explosions
             if (screenRedOverlay != null)
                 return;
 
-            var found = FindFirstObjectByType<Canvas>();
+            var found = FindAnyObjectByType<Canvas>();
             if (found == null)
                 return;
 
@@ -390,7 +390,7 @@ namespace Assets.Scripts.Explosions
             if (groundTilemap != null)
                 return;
 
-            var tilemaps = FindObjectsByType<Tilemap>(FindObjectsSortMode.None);
+            var tilemaps = FindObjectsByType<Tilemap>();
             if (tilemaps == null || tilemaps.Length == 0)
                 return;
 

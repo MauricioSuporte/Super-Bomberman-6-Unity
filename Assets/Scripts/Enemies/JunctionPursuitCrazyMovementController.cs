@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 
 [DisallowMultipleComponent]
 [RequireComponent(typeof(Collider2D))]
@@ -206,7 +206,7 @@ public sealed class JunctionPursuitCrazyMovementController : JunctionTurningEnem
             if (sr != null) sr.enabled = true;
         }
 
-        var gameManager = FindFirstObjectByType<GameManager>();
+        var gameManager = FindAnyObjectByType<GameManager>();
         if (gameManager != null)
             gameManager.NotifyEnemyDied();
 

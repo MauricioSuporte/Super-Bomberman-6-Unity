@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -44,10 +44,7 @@ public sealed class ClockStageStunEffect : MonoBehaviour
     {
         int enemyLayer = LayerMask.NameToLayer(enemyLayerName);
 
-        var enemies = FindObjectsByType<EnemyMovementController>(
-            FindObjectsInactive.Include,
-            FindObjectsSortMode.None
-        );
+        var enemies = FindObjectsByType<EnemyMovementController>(FindObjectsInactive.Include);
 
         var targets = new List<Target>(enemies != null ? enemies.Length : 0);
 

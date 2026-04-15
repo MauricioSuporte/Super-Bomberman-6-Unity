@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using UnityEngine;
 
 public sealed class EnemySpawnDestructibleTileHandler : MonoBehaviour, IDestructibleTileHandler
@@ -17,7 +17,7 @@ public sealed class EnemySpawnDestructibleTileHandler : MonoBehaviour, IDestruct
 
     void Awake()
     {
-        _gm = FindFirstObjectByType<GameManager>();
+        _gm = FindAnyObjectByType<GameManager>();
     }
 
     public bool HandleHit(BombController source, Vector2 worldPos, Vector3Int cell)

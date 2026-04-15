@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -260,7 +260,7 @@ public class SunMaskHeartProjectile : MonoBehaviour
 
     void RefreshPlayersCache()
     {
-        var ids = FindObjectsByType<PlayerIdentity>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+        var ids = FindObjectsByType<PlayerIdentity>(FindObjectsInactive.Exclude);
 
         if (ids != null && ids.Length > 0)
         {

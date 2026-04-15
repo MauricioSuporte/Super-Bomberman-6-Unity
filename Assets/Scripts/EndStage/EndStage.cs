@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using UnityEngine;
 
 public abstract class EndStage : MonoBehaviour
@@ -36,7 +36,7 @@ public abstract class EndStage : MonoBehaviour
     {
         s_goodSfxPlayedThisStage = false;
 
-        gameManager = FindFirstObjectByType<GameManager>();
+        gameManager = FindAnyObjectByType<GameManager>();
 
         if (!manualUnlockOnly && gameManager != null)
         {
@@ -242,10 +242,7 @@ public abstract class EndStage : MonoBehaviour
 
         Vector2 portalCenter = GetPortalCenterWorld(other);
 
-        MovementController[] players = FindObjectsByType<MovementController>(
-            FindObjectsInactive.Exclude,
-            FindObjectsSortMode.None
-        );
+        MovementController[] players = FindObjectsByType<MovementController>(FindObjectsInactive.Exclude);
 
         bool hasNightmareBomber = HasAnyActiveNightmareBomber(players);
 

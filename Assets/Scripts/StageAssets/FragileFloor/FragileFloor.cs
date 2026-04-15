@@ -1,4 +1,4 @@
-﻿using Assets.Scripts.StageAssets.FragileFloor;
+using Assets.Scripts.StageAssets.FragileFloor;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Tilemaps;
@@ -53,7 +53,7 @@ public sealed class FragileFloor : MonoBehaviour
 
         if (_groundTilemap == null || _indestructiblesTilemap == null)
         {
-            var maps = Object.FindObjectsByType<Tilemap>(FindObjectsSortMode.None);
+            var maps = Object.FindObjectsByType<Tilemap>();
             for (int i = 0; i < maps.Length; i++)
             {
                 var m = maps[i];

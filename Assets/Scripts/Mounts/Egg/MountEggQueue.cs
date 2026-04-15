@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Tilemaps;
@@ -1765,7 +1765,7 @@ public sealed class MountEggQueue : MonoBehaviour
 
     static Tilemap ResolveGroundTilemapNear(Vector3 worldPos)
     {
-        var tilemaps = Object.FindObjectsByType<Tilemap>(FindObjectsSortMode.None);
+        var tilemaps = Object.FindObjectsByType<Tilemap>();
         if (tilemaps == null || tilemaps.Length == 0)
             return null;
 

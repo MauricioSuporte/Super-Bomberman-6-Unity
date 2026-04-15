@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
@@ -624,7 +624,7 @@ public class UnlockToastPresenter : MonoBehaviour
 
     static UnlockToastPresenter FindAnyPresenter()
     {
-        UnlockToastPresenter[] presenters = FindObjectsByType<UnlockToastPresenter>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        UnlockToastPresenter[] presenters = FindObjectsByType<UnlockToastPresenter>(FindObjectsInactive.Include);
 
         if (presenters == null || presenters.Length == 0)
             return null;
@@ -654,7 +654,7 @@ public class UnlockToastPresenter : MonoBehaviour
             return safeFrameRt;
         }
 
-        UICameraViewportFitter[] fitters = FindObjectsByType<UICameraViewportFitter>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        UICameraViewportFitter[] fitters = FindObjectsByType<UICameraViewportFitter>(FindObjectsInactive.Include);
         for (int i = 0; i < fitters.Length; i++)
         {
             if (fitters[i] == null || !fitters[i].gameObject.activeInHierarchy)

@@ -17,7 +17,7 @@ public class DestructiblePassAbility : MonoBehaviour, IPlayerAbility
     [SerializeField] private float refreshInterval = 0.5f;
 
     private Collider2D selfCollider;
-    private readonly HashSet<int> ignoredColliderIds = new();
+    private readonly HashSet<Collider2D> ignoredColliders = new();
     private Coroutine refreshRoutine;
 
     public string Id => AbilityId;
@@ -85,8 +85,7 @@ public class DestructiblePassAbility : MonoBehaviour, IPlayerAbility
             if (col.isTrigger)
                 continue;
 
-            int id = col.GetInstanceID();
-            if (!ignoredColliderIds.Add(id))
+            if (!ignoredColliders.Add(col))
                 continue;
 
             Physics2D.IgnoreCollision(selfCollider, col, true);
@@ -97,7 +96,7 @@ public class DestructiblePassAbility : MonoBehaviour, IPlayerAbility
     {
         if (selfCollider == null)
         {
-            ignoredColliderIds.Clear();
+            ignoredColliders.Clear();
             return;
         }
 
@@ -114,14 +113,13 @@ public class DestructiblePassAbility : MonoBehaviour, IPlayerAbility
                 if (col.isTrigger)
                     continue;
 
-                int id = col.GetInstanceID();
-                if (!ignoredColliderIds.Contains(id))
+                if (!ignoredColliders.Contains(col))
                     continue;
 
                 Physics2D.IgnoreCollision(selfCollider, col, false);
             }
         }
 
-        ignoredColliderIds.Clear();
+        ignoredColliders.Clear();
     }
 }

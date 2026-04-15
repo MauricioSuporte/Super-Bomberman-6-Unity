@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 
 public sealed class InvisibleLandMineBehavior : MonoBehaviour, IItemPickupBehavior
 {
@@ -54,7 +54,7 @@ public sealed class InvisibleLandMineBehavior : MonoBehaviour, IItemPickupBehavi
         float maxSqr = maxDist * maxDist;
 
 #if UNITY_2023_1_OR_NEWER
-        var players = FindObjectsByType<MovementController>(FindObjectsSortMode.None);
+        var players = FindObjectsByType<MovementController>();
 #else
         var players = FindObjectsOfType<MovementController>();
 #endif

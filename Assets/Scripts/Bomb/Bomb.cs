@@ -776,7 +776,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
             return;
         }
 
-        var tilemaps = FindObjectsByType<Tilemap>(FindObjectsSortMode.None);
+        var tilemaps = FindObjectsByType<Tilemap>();
         Tilemap ground = null;
         Tilemap ind = null;
 
@@ -949,7 +949,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         if (stageBoundsTilemap != null)
             return;
 
-        var tilemaps = FindObjectsByType<Tilemap>(FindObjectsSortMode.None);
+        var tilemaps = FindObjectsByType<Tilemap>();
         if (tilemaps == null || tilemaps.Length == 0)
             return;
 
@@ -975,7 +975,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         if (indestructibleTilemap != null)
             return;
 
-        var tilemaps = FindObjectsByType<Tilemap>(FindObjectsSortMode.None);
+        var tilemaps = FindObjectsByType<Tilemap>();
         if (tilemaps == null || tilemaps.Length == 0)
             return;
 

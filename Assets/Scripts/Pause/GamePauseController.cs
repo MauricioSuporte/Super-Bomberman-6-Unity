@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 #if ENABLE_INPUT_SYSTEM
@@ -171,9 +171,7 @@ public class GamePauseController : MonoBehaviour
                 return true;
         }
 
-        var players = FindObjectsByType<MovementController>(
-            FindObjectsInactive.Exclude,
-            FindObjectsSortMode.None);
+        var players = FindObjectsByType<MovementController>(FindObjectsInactive.Exclude);
 
         for (int i = 0; i < players.Length; i++)
         {

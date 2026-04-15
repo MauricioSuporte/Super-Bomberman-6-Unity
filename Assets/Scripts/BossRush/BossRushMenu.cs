@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -656,7 +656,7 @@ public class BossRushMenu : MonoBehaviour
         if (cam != null)
             return cam;
 
-        return FindFirstObjectByType<Camera>();
+        return FindAnyObjectByType<Camera>();
     }
 
     Rect GetReferencePixelRect(out string source)

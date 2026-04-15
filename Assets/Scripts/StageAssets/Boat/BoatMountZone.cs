@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using UnityEngine;
 
 [RequireComponent(typeof(BoxCollider2D))]
@@ -106,7 +106,7 @@ public sealed class BoatMountZone : MonoBehaviour
 
         if (unique.Count == 0)
         {
-            var all = FindObjectsByType<BoatRideZone>(FindObjectsSortMode.None);
+            var all = FindObjectsByType<BoatRideZone>();
             for (int i = 0; i < all.Length; i++)
                 if (all[i] != null) unique.Add(all[i]);
         }
@@ -140,7 +140,7 @@ public sealed class BoatMountZone : MonoBehaviour
 
         if (candidates.Count == 0)
         {
-            var all = FindObjectsByType<BoatRideZone>(FindObjectsSortMode.None);
+            var all = FindObjectsByType<BoatRideZone>();
             for (int i = 0; i < all.Length; i++)
             {
                 var b = all[i];

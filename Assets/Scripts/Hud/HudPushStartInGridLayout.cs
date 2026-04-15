@@ -134,7 +134,7 @@ public sealed class HudPushStartInGridLayout : MonoBehaviour
             text.color = textColor;
             text.richText = richText;
             text.extraPadding = extraPadding;
-            text.enableWordWrapping = false;
+            text.textWrappingMode = TextWrappingModes.NoWrap;
             text.overflowMode = TextOverflowModes.Overflow;
             text.alignment = TextAlignmentOptions.Center;
 

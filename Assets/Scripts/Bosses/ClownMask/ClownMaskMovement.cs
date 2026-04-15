@@ -120,7 +120,7 @@ public class ClownMaskMovement : MonoBehaviour
         Transform best = null;
         float bestDist = float.PositiveInfinity;
 
-        var ids = FindObjectsByType<PlayerIdentity>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+        var ids = FindObjectsByType<PlayerIdentity>(FindObjectsInactive.Exclude);
 
         if (ids != null && ids.Length > 0)
         {
@@ -147,7 +147,7 @@ public class ClownMaskMovement : MonoBehaviour
         }
         else
         {
-            var players = FindObjectsByType<MovementController>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+            var players = FindObjectsByType<MovementController>(FindObjectsInactive.Exclude);
             for (int i = 0; i < players.Length; i++)
             {
                 var m = players[i];

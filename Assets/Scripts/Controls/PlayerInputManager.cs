@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -130,7 +130,7 @@ public class PlayerInputManager : MonoBehaviour
 
         playerControllers.Clear();
 
-        var all = FindObjectsByType<MovementController>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+        var all = FindObjectsByType<MovementController>(FindObjectsInactive.Exclude);
         if (all == null)
             return;
 

@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using UnityEngine;
 
 [RequireComponent(typeof(BoxCollider2D))]
@@ -77,7 +77,7 @@ public sealed class BoatUnmountZone : MonoBehaviour
                 if (boats[i] != null) return boats[i];
         }
 
-        var all = FindObjectsByType<BoatRideZone>(FindObjectsSortMode.None);
+        var all = FindObjectsByType<BoatRideZone>();
         for (int i = 0; i < all.Length; i++)
         {
             var b = all[i];

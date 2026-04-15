@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using TMPro;
@@ -216,7 +216,7 @@ public class ControlsConfigMenu : MonoBehaviour
     {
         var cam = Camera.main;
         if (cam != null) return cam;
-        return UnityEngine.Object.FindFirstObjectByType<Camera>();
+        return UnityEngine.Object.FindAnyObjectByType<Camera>();
     }
 
     Rect GetReferencePixelRect(out string source)

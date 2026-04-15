@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
@@ -214,7 +214,7 @@ public sealed class PoyoTankEnemyMovementController : JunctionTurningEnemyMoveme
         if (groundTilemapOverride != null)
             return;
 
-        var tilemaps = FindObjectsByType<Tilemap>(FindObjectsSortMode.None);
+        var tilemaps = FindObjectsByType<Tilemap>();
         if (tilemaps == null)
             return;
 
@@ -383,7 +383,7 @@ public sealed class PoyoTankEnemyMovementController : JunctionTurningEnemyMoveme
 
         Vector2 origin = _rb != null ? _rb.position : (Vector2)transform.position;
 
-        var gameManager = FindFirstObjectByType<GameManager>();
+        var gameManager = FindAnyObjectByType<GameManager>();
 
         if (notifyGameManagerOnDefeat)
         {

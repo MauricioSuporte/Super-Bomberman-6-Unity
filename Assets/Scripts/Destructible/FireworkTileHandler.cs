@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -109,7 +109,7 @@ public sealed class FireworkTileHandler : MonoBehaviour, IDestructibleTileHandle
 
     int TryAutoCountFireworks()
     {
-        var gm = FindFirstObjectByType<GameManager>();
+        var gm = FindAnyObjectByType<GameManager>();
         if (gm == null || gm.destructibleTilemap == null)
             return 0;
 

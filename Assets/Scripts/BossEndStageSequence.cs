@@ -37,7 +37,7 @@ public class BossEndStageSequence : MonoBehaviour
 
     void Awake()
     {
-        gameManager = FindFirstObjectByType<GameManager>();
+        gameManager = FindAnyObjectByType<GameManager>();
         s_goodSfxPlayedThisStage = false;
     }
 
@@ -280,7 +280,7 @@ public class BossEndStageSequence : MonoBehaviour
     {
         var list = new List<MovementController>(4);
 
-        var ids = FindObjectsByType<PlayerIdentity>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+        var ids = FindObjectsByType<PlayerIdentity>(FindObjectsInactive.Exclude);
         if (ids != null && ids.Length > 0)
         {
             for (int i = 0; i < ids.Length; i++)
@@ -302,7 +302,7 @@ public class BossEndStageSequence : MonoBehaviour
             return list;
         }
 
-        var players = FindObjectsByType<MovementController>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+        var players = FindObjectsByType<MovementController>(FindObjectsInactive.Exclude);
         for (int i = 0; i < players.Length; i++)
         {
             var m = players[i];

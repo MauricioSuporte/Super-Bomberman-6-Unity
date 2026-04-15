@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -113,9 +113,9 @@ public class StageIntroTransition : MonoBehaviour
     {
         var inactive = includeInactive ? FindObjectsInactive.Include : FindObjectsInactive.Exclude;
 
-        movementControllers = FindObjectsByType<MovementController>(inactive, FindObjectsSortMode.None);
-        bombControllers = FindObjectsByType<BombController>(inactive, FindObjectsSortMode.None);
-        manualDismounts = FindObjectsByType<PlayerManualDismount>(inactive, FindObjectsSortMode.None);
+        movementControllers = FindObjectsByType<MovementController>(inactive);
+        bombControllers = FindObjectsByType<BombController>(inactive);
+        manualDismounts = FindObjectsByType<PlayerManualDismount>(inactive);
     }
 
     void DisableGameplayControllersAndHideSprites(bool hideLouieAndEggs)
@@ -551,7 +551,7 @@ public class StageIntroTransition : MonoBehaviour
 
     void ApplyPersistentPlayerSkin()
     {
-        var ids = FindObjectsByType<PlayerIdentity>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+        var ids = FindObjectsByType<PlayerIdentity>(FindObjectsInactive.Exclude);
 
         for (int i = 0; i < ids.Length; i++)
         {
@@ -570,7 +570,7 @@ public class StageIntroTransition : MonoBehaviour
 
     void ResyncSpawnedPlayersFromIdentity()
     {
-        var ids = FindObjectsByType<PlayerIdentity>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+        var ids = FindObjectsByType<PlayerIdentity>(FindObjectsInactive.Exclude);
 
         for (int i = 0; i < ids.Length; i++)
         {

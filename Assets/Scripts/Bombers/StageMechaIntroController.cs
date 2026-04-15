@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
@@ -27,7 +27,7 @@ public class StageMechaIntroController : MonoBehaviour
         Instance = this;
 
         if (mechaBossSequence == null)
-            mechaBossSequence = FindFirstObjectByType<MechaBossSequence>();
+            mechaBossSequence = FindAnyObjectByType<MechaBossSequence>();
     }
 
     public void SetIntroRunning(bool running)
@@ -74,7 +74,7 @@ public class StageMechaIntroController : MonoBehaviour
                 fadeImage.color = new Color(baseColor.r, baseColor.g, baseColor.b, 1f);
 
                 if (mechaBossSequence == null)
-                    mechaBossSequence = FindFirstObjectByType<MechaBossSequence>();
+                    mechaBossSequence = FindAnyObjectByType<MechaBossSequence>();
 
                 if (mechaBossSequence != null)
                 {

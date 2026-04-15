@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -112,7 +112,7 @@ public class MechaBossSequence : MonoBehaviour
     void Awake()
     {
         mechas = new[] { whiteMecha, blackMecha, goldenMecha };
-        gameManager = FindFirstObjectByType<GameManager>();
+        gameManager = FindAnyObjectByType<GameManager>();
 
         s_goodSfxPlayedThisStage = false;
 
@@ -917,7 +917,7 @@ public class MechaBossSequence : MonoBehaviour
 
     bool HasAnyItemPickupsInStage()
     {
-        var items = FindObjectsByType<ItemPickup>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+        var items = FindObjectsByType<ItemPickup>(FindObjectsInactive.Exclude);
         return items != null && items.Length > 0;
     }
 
@@ -952,7 +952,7 @@ public class MechaBossSequence : MonoBehaviour
         playerBombs.Clear();
         playerCompanions.Clear();
 
-        var ids = FindObjectsByType<PlayerIdentity>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+        var ids = FindObjectsByType<PlayerIdentity>(FindObjectsInactive.Exclude);
 
         if (ids != null && ids.Length > 0)
         {
@@ -976,7 +976,7 @@ public class MechaBossSequence : MonoBehaviour
         }
         else
         {
-            var moves = FindObjectsByType<MovementController>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+            var moves = FindObjectsByType<MovementController>(FindObjectsInactive.Exclude);
             for (int i = 0; i < moves.Length; i++)
                 if (moves[i] != null && moves[i].CompareTag("Player") && moves[i].gameObject.activeInHierarchy && !moves[i].isDead)
                     players.Add(moves[i]);

@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 #if UNITY_2022_2_OR_NEWER
 using UnityEngine.U2D;
 #endif
@@ -136,7 +136,7 @@ public sealed class CameraFollowClamp2D : MonoBehaviour
 
     void RefreshPlayers()
     {
-        cachedPlayers = FindObjectsByType<PlayerIdentity>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+        cachedPlayers = FindObjectsByType<PlayerIdentity>(FindObjectsInactive.Exclude);
     }
 
     bool TryUpdateFollowTargetPosition(out Vector3 position)

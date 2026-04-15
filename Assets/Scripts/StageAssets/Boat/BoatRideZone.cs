@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using UnityEngine;
 
 [RequireComponent(typeof(BoxCollider2D))]
@@ -315,7 +315,7 @@ public sealed class BoatRideZone : MonoBehaviour
     {
         cachedAnchorZones.Clear();
 
-        var zones = FindObjectsByType<BoatMountZone>(FindObjectsSortMode.None);
+        var zones = FindObjectsByType<BoatMountZone>();
         if (zones == null || zones.Length == 0) return;
 
         for (int i = 0; i < zones.Length; i++)

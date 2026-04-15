@@ -1,5 +1,6 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 [RequireComponent(typeof(Rigidbody2D))]
@@ -247,7 +248,7 @@ public class EnemyMovementController : MonoBehaviour, IKillable
                 sr.flipX = false;
         }
 
-        var gameManager = FindFirstObjectByType<GameManager>();
+        var gameManager = FindAnyObjectByType<GameManager>();
         if (gameManager != null)
             gameManager.NotifyEnemyDied();
 
@@ -517,7 +518,7 @@ public class EnemyMovementController : MonoBehaviour, IKillable
         if (otherEnemy == null)
             return;
 
-        if (GetInstanceID() < otherEnemy.GetInstanceID())
+        if (ShouldYieldEnemyCollision(otherEnemy))
             return;
 
         SnapToGrid();
@@ -529,6 +530,20 @@ public class EnemyMovementController : MonoBehaviour, IKillable
             UpdateSpriteDirection(direction);
             targetTile = rb.position + direction * tileSize;
         }
+    }
+
+    // Only one enemy should resolve the collision response for the pair.
+    private bool ShouldYieldEnemyCollision(EnemyMovementController otherEnemy)
+    {
+        if (ReferenceEquals(this, otherEnemy))
+            return true;
+
+        int thisOrder = RuntimeHelpers.GetHashCode(this);
+        int otherOrder = RuntimeHelpers.GetHashCode(otherEnemy);
+        if (thisOrder != otherOrder)
+            return thisOrder < otherOrder;
+
+        return RuntimeHelpers.GetHashCode(gameObject) < RuntimeHelpers.GetHashCode(otherEnemy.gameObject);
     }
 
     protected virtual void OnDrawGizmosSelected()

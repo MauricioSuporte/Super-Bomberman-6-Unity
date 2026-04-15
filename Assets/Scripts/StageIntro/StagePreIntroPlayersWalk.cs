@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -152,7 +152,7 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
         if (originTransform == null)
             return;
 
-        var ids = FindObjectsByType<PlayerIdentity>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+        var ids = FindObjectsByType<PlayerIdentity>(FindObjectsInactive.Exclude);
         if (ids == null || ids.Length == 0)
             return;
 
@@ -320,7 +320,7 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
         cachedColliderEnabled = new Dictionary<MovementController, bool>();
         cachedBombEnabled = new Dictionary<MovementController, bool>();
 
-        var ids = FindObjectsByType<PlayerIdentity>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+        var ids = FindObjectsByType<PlayerIdentity>(FindObjectsInactive.Exclude);
         if (ids == null || ids.Length == 0)
             return false;
 
