@@ -35,7 +35,6 @@ public class StageLabel : MonoBehaviour
 
     float _lastUiScale = -999f;
     int _lastBaseScaleInt = -999;
-    Rect _lastCamRect;
 
     float UiScale
     {
@@ -94,7 +93,6 @@ public class StageLabel : MonoBehaviour
     {
         _lastUiScale = -999f;
         _lastBaseScaleInt = -999;
-        _lastCamRect = default;
         ApplyRectScale("OnEnable");
     }
 

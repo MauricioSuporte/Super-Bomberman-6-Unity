@@ -137,12 +137,10 @@ public class MovementController : MonoBehaviour, IKillable
 
     [Header("Grid Alignment")]
     [SerializeField, Range(0.5f, 20f)] private float perpendicularAlignMultiplier = 8f;
-    [SerializeField] private bool snapPerpendicularOnAxisStart = true;
     [SerializeField, Range(0.0001f, 0.05f)] private float alignEpsilon = 0.0015f;
 
     [Header("Axis Lock")]
     [SerializeField] private bool enableCorridorAxisLock = true;
-    [SerializeField, Range(0.0001f, 0.25f)] private float corridorCenterEpsilon = 0.06f;
     [SerializeField, Range(0.2f, 1.2f)] private float corridorSolidProbeSizeMul = 0.9f;
 
     [Header("Special Pass (by Tag)")]

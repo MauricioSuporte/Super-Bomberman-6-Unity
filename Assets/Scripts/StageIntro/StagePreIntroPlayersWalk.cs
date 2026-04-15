@@ -62,7 +62,6 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
     [SerializeField, Min(0f)] private float delayAfterWalkSeconds = 0.05f;
 
     [Header("External Move Guard")]
-    [SerializeField, Min(0f)] private float watchAfterSnapSeconds = 0.35f;
 
     private const string WalkLoopClipResourcesPath = "Sounds/walk";
     private static AudioClip s_walkLoopClip;

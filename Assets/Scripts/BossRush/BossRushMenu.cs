@@ -73,7 +73,6 @@ public class BossRushMenu : MonoBehaviour
     [Header("Locked Difficulty Message UI")]
     [SerializeField] TextMeshProUGUI nightmareLockedText;
     [SerializeField] int nightmareLockedFontSize = 32;
-    [SerializeField] string nightmareLockedMessageHex = "#E73F3F";
     [SerializeField] float nightmareLockedShowSeconds = 2f;
     [SerializeField] float nightmareLockedBottomMargin = 12f;
 

@@ -2,7 +2,7 @@
 
 public class GlobalUnlockController : MonoBehaviour
 {
-    private const bool EnableSurgicalLogs = false;
+    private static readonly bool EnableSurgicalLogs = false;
     private const string LifeUpResourcesPath = "Sounds/LifeUp";
 
     private static GlobalUnlockController instance;

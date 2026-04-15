@@ -2,7 +2,7 @@
 
 public static class UnlockToastCatalog
 {
-    private const bool EnableSurgicalLogs = true;
+    private static readonly bool EnableSurgicalLogs = true;
 
     public readonly struct ToastInfo
     {

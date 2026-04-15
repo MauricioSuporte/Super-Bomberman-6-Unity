@@ -54,8 +54,6 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
     public string Id => AbilityId;
     public bool IsEnabled => enabledAbility;
 
-    bool deathCancelInProgress;
-
     enum ChainMoverType
     {
         None = 0,
@@ -527,8 +525,6 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
                     Bomb nextBomb = null;
                     TileBase nextTile = null;
                     Vector3Int nextTileCell = default;
-                    bool endedBySolid = false;
-
                     while (currentBomb != null && currentBomb.IsBeingKicked && enabledAbility && movement != null && !movement.isDead)
                     {
                         ReleaseInputIfNeeded();
@@ -560,7 +556,6 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
 
                         if (IsMixedChainSolidAt(nextBombCellWorld, kickDir, currentBomb))
                         {
-                            endedBySolid = true;
                             break;
                         }
 
@@ -1096,8 +1091,6 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
 
     public void CancelKickForDeath()
     {
-        deathCancelInProgress = true;
-
         enabledAbility = false;
 
         if (routine != null)

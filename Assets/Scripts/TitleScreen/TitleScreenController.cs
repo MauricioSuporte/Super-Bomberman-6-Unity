@@ -135,7 +135,6 @@ public class TitleScreenController : MonoBehaviour
     [SerializeField] TextMeshProUGUI footerText;
     [SerializeField] int footerFontSize = 36;
     [SerializeField] float footerOffsetFromLastLineY = -40f;
-    [SerializeField] float footerShowSeconds = 2f;
 
     [Header("Boss Rush Lock")]
     [SerializeField] bool forceBossRushUnlocked = true;
