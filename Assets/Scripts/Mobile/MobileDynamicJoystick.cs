@@ -128,7 +128,11 @@ public class MobileDynamicJoystick : MonoBehaviour, IPointerDownHandler, IDragHa
             out Vector2 localPoint);
 
         if (success)
-            baseVisual.anchoredPosition = localPoint;
+        {
+            Rect rect = touchArea.rect;
+            Vector2 pivotOffset = new Vector2(rect.width * touchArea.pivot.x, rect.height * touchArea.pivot.y);
+            baseVisual.anchoredPosition = localPoint + pivotOffset;
+        }
     }
 
     private void UpdateHandle(Vector2 normalizedInput)
