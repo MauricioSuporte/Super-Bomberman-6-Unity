@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
@@ -110,6 +110,9 @@ public class MechBombMovementController : JunctionTurningEnemyMovementController
                 continue;
 
             if (isAbilityActive)
+                continue;
+
+            if (isInDamagedLoop)
                 continue;
 
             CacheBombController();
@@ -238,7 +241,7 @@ public class MechBombMovementController : JunctionTurningEnemyMovementController
         if (TryGetComponent(out cachedBombController) && cachedBombController != null)
             return;
 
-        var all = FindObjectsByType<BombController>(FindObjectsSortMode.None);
+        var all = FindObjectsByType<BombController>();
         for (int i = 0; i < all.Length; i++)
         {
             var bc = all[i];

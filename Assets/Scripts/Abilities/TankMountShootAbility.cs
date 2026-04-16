@@ -1,4 +1,4 @@
-﻿using Assets.Scripts.Interface;
+using Assets.Scripts.Interface;
 using System.Collections;
 using UnityEngine;
 
@@ -318,7 +318,7 @@ public sealed class TankMountShootAbility : MonoBehaviour, IPlayerAbility
 
     private static AudioSource FindAnyPlayerAudioSource()
     {
-        var all = FindObjectsByType<BombController>(FindObjectsSortMode.None);
+        var all = FindObjectsByType<BombController>();
         for (int i = 0; i < all.Length; i++)
         {
             var bc = all[i];

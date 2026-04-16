@@ -28,7 +28,6 @@ public class PixelPerfectScrollingRawImage : MonoBehaviour
     [SerializeField] bool applySizeToReferenceRect = true;
 
     [Header("Debug")]
-    [SerializeField] bool logChanges = false;
 
     float scrollPixels;
     int lastScreenW = -1;

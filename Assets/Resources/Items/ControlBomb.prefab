@@ -139,7 +139,7 @@ BoxCollider2D:
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 0.5, y: 0.5}
+  m_Size: {x: 1, y: 1}
   m_EdgeRadius: 0
 --- !u!114 &3750686511081856235
 MonoBehaviour:
@@ -165,6 +165,8 @@ MonoBehaviour:
   animationTime: 0.025
   useSequenceDuration: 0
   sequenceDuration: 0.5
+  useUnscaledTime: 1
+  respectGamePause: 1
   loop: 1
   idle: 0
   frameOffsets: []
@@ -190,6 +192,7 @@ MonoBehaviour:
   playPlayerExtraSfxForTypes: 07000000
   idleRenderer: {fileID: 3750686511081856235}
   destroyRenderer: {fileID: 4647420896281376823}
+  explosionDestroyRenderer: {fileID: 0}
   destroyDelaySeconds: 0.5
   spawnImmunitySeconds: 0.5
   damageIgnoresInvulnerability: 0
@@ -313,6 +316,8 @@ MonoBehaviour:
   animationTime: 0.0625
   useSequenceDuration: 0
   sequenceDuration: 0.5
+  useUnscaledTime: 1
+  respectGamePause: 1
   loop: 0
   idle: 0
   frameOffsets: []

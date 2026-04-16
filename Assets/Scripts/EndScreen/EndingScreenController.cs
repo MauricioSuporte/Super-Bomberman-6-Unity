@@ -50,42 +50,41 @@ public class EndingScreenController : MonoBehaviour
         "<size=30><color=#E8E8E8>TO RETURN TO TITLE SCREEN</color></size>";
 
     [Header("Dynamic Messages")]
-    [TextArea(4, 10)]
-    [SerializeField]
-    string message100 =
+    private static readonly string message100 =
         "Congratulations!\n" +
         "You reached <color=#FFD54A>{PERCENT}%</color> completion.\n" +
         "That is only the beginning.\n" +
-        "Can you go beyond 100%, clear every stage without using items,\n" +
-        "and unlock the remaining Bombers?";
+        "Keep progressing through the demo\n" +
+        "and unlock the remaining Bombers.\n" +
+        "Tip: On the character select screen,\n" +
+        "move the cursor over unlocked characters\n" +
+        "to see how to unlock each Bomber.";
 
-    [TextArea(4, 10)]
-    [SerializeField]
-    string message101To199 =
+    private static readonly string message101To199 =
         "Amazing work!\n" +
-        "You pushed the demo to <color=#FFD54A>{PERCENT}%</color> completion.\n" +
+        "You reached <color=#FFD54A>{PERCENT}%</color> completion.\n" +
         "You are getting closer to total mastery.\n" +
-        "Keep pushing further,\n" +
-        "clear more stages without using items,\n" +
-        "and unlock every Bomber!";
+        "Keep pushing further\n" +
+        "and unlock every Bomber!\n" +
+        "Tip: On the character select screen,\n" +
+        "move the cursor over unlocked characters\n" +
+        "to see how to unlock each Bomber.";
 
-    [TextArea(4, 10)]
-    [SerializeField]
-    string message200NotAllBombers =
+    private static readonly string message200NotAllBombers =
         "Incredible!\n" +
-        "You reached the full <color=#FFD54A>{PERCENT}%</color> completion.\n" +
-        "Every stage has been perfected.\n" +
+        "You reached <color=#FFD54A>{PERCENT}%</color> completion.\n" +
+        "You have gone as far as possible in the demo.\n" +
         "Now finish the last challenge:\n" +
-        "unlock every Bomber!";
+        "unlock every Bomber!\n" +
+        "Tip: On the character select screen,\n" +
+        "move the cursor over unlocked characters\n" +
+        "to see how to unlock each Bomber.";
 
-    [TextArea(4, 10)]
-    [SerializeField]
-    string message200AllBombers =
+    private static readonly string message200AllBombers =
         "TRUE COMPLETION!!\n" +
-        "You reached the full <color=#FFD54A>{PERCENT}%</color> completion.\n" +
-        "Every stage has been perfected,\n" +
-        "and every Bomber has been unlocked.\n" +
-        "You truly mastered the demo!";
+        "You reached <color=#FFD54A>{PERCENT}%</color> completion.\n" +
+        "You unlocked every Bomber\n" +
+        "and truly mastered the demo!";
 
     [Header("Auto Layout Fix")]
     [SerializeField] bool autoRepositionMessageText = true;

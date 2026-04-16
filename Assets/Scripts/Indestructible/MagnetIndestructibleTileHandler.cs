@@ -77,6 +77,7 @@ public sealed class MagnetIndestructibleTileHandler : MonoBehaviour, IIndestruct
     private IEnumerator ScanRoutine()
     {
         var wait = new WaitForSeconds(scanEverySeconds);
+
         while (true)
         {
             PullPullables();
@@ -101,25 +102,169 @@ public sealed class MagnetIndestructibleTileHandler : MonoBehaviour, IIndestruct
             {
                 Vector3Int targetCell = magnetCell + dir * dist;
 
-                if (HasAnyIndestructibleAt(targetCell) && targetCell != magnetCell)
+                if (HasIndestructibleBetweenOrAt(magnetCell, targetCell, dir))
                     break;
 
-                if (destructibleTilemap != null && destructibleTilemap.GetTile(targetCell) != null)
+                if (HasDestructibleBetweenOrAt(magnetCell, targetCell, dir))
                     break;
 
-                if (TryGetPullableAtCell(targetCell, out var pullable))
-                {
-                    if (pullable == null || !pullable.CanBeMagnetPulled || pullable.IsBeingMagnetPulled)
-                        break;
-
-                    int steps = dist - 1;
-                    Vector2 pullDir = new(-dir.x, -dir.y);
-
-                    pullable.StartMagnetPull(pullDir, tileSize, steps, obstacleMask, destructibleTilemap, magnetPullSpeedMultiplier);
+                if (HasBombBetween(magnetCell, targetCell, dir))
                     break;
-                }
+
+                if (!TryGetPullableAtExactCell(targetCell, out var pullable))
+                    continue;
+
+                if (pullable == null || !pullable.CanBeMagnetPulled || pullable.IsBeingMagnetPulled)
+                    break;
+
+                int steps = dist - 1;
+                Vector2 pullDir = new(-dir.x, -dir.y);
+
+                pullable.StartMagnetPull(
+                    pullDir,
+                    tileSize,
+                    steps,
+                    obstacleMask,
+                    destructibleTilemap,
+                    magnetPullSpeedMultiplier);
+
+                break;
             }
         }
+    }
+
+    private bool HasIndestructibleBetweenOrAt(Vector3Int magnetCell, Vector3Int targetCell, Vector3Int dir)
+    {
+        int distance = Mathf.Abs(targetCell.x - magnetCell.x) + Mathf.Abs(targetCell.y - magnetCell.y);
+
+        for (int step = 1; step <= distance; step++)
+        {
+            Vector3Int checkCell = magnetCell + dir * step;
+
+            if (HasAnyIndestructibleAt(checkCell))
+                return true;
+        }
+
+        return false;
+    }
+
+    private bool HasDestructibleBetweenOrAt(Vector3Int magnetCell, Vector3Int targetCell, Vector3Int dir)
+    {
+        if (destructibleTilemap == null)
+            return false;
+
+        int distance = Mathf.Abs(targetCell.x - magnetCell.x) + Mathf.Abs(targetCell.y - magnetCell.y);
+
+        for (int step = 1; step <= distance; step++)
+        {
+            Vector3Int checkCell = magnetCell + dir * step;
+
+            if (destructibleTilemap.GetTile(checkCell) != null)
+                return true;
+        }
+
+        return false;
+    }
+
+    private bool HasBombBetween(Vector3Int magnetCell, Vector3Int targetCell, Vector3Int dir)
+    {
+        int distance = Mathf.Abs(targetCell.x - magnetCell.x) + Mathf.Abs(targetCell.y - magnetCell.y);
+
+        for (int step = 1; step < distance; step++)
+        {
+            Vector3Int middleCell = magnetCell + dir * step;
+
+            if (HasBombAtCell(middleCell))
+                return true;
+        }
+
+        return false;
+    }
+
+    private bool HasBombAtCell(Vector3Int cell)
+    {
+        if (indestructibleTilemap == null)
+            return false;
+
+        int bombMask = LayerMask.GetMask("Bomb");
+        if (bombMask == 0)
+            return false;
+
+        Vector2 world = indestructibleTilemap.GetCellCenterWorld(cell);
+        Collider2D[] hits = Physics2D.OverlapBoxAll(world, Vector2.one * 0.6f, 0f, bombMask);
+
+        if (hits == null || hits.Length == 0)
+            return false;
+
+        for (int i = 0; i < hits.Length; i++)
+        {
+            var hit = hits[i];
+            if (hit == null)
+                continue;
+
+            GameObject go = hit.attachedRigidbody != null ? hit.attachedRigidbody.gameObject : hit.gameObject;
+            if (go == null)
+                continue;
+
+            Vector3Int occupiedCell = GetOccupiedCell(go.transform.position);
+            if (occupiedCell == cell)
+                return true;
+
+            if (go.TryGetComponent<Bomb>(out var bomb))
+            {
+                Vector3Int logicalCell = GetOccupiedCell(bomb.GetLogicalPosition());
+                if (logicalCell == cell)
+                    return true;
+            }
+        }
+
+        return false;
+    }
+
+    private bool TryGetPullableAtExactCell(Vector3Int cell, out IMagnetPullable pullable)
+    {
+        pullable = null;
+
+        if (indestructibleTilemap == null)
+            return false;
+
+        Vector2 world = indestructibleTilemap.GetCellCenterWorld(cell);
+        Collider2D[] hits = Physics2D.OverlapBoxAll(world, Vector2.one * 0.6f, 0f, pullableMask);
+
+        if (hits == null || hits.Length == 0)
+            return false;
+
+        for (int i = 0; i < hits.Length; i++)
+        {
+            var hit = hits[i];
+            if (hit == null)
+                continue;
+
+            GameObject go = hit.attachedRigidbody != null ? hit.attachedRigidbody.gameObject : hit.gameObject;
+            if (go == null)
+                continue;
+
+            if (!go.TryGetComponent<IMagnetPullable>(out var p) || p == null)
+                continue;
+
+            Vector3Int occupiedCell = GetOccupiedCell(go.transform.position);
+
+            if (go.TryGetComponent<Bomb>(out var bomb))
+                occupiedCell = GetOccupiedCell(bomb.GetLogicalPosition());
+
+            if (occupiedCell != cell)
+                continue;
+
+            pullable = p;
+            return true;
+        }
+
+        return false;
+    }
+
+    private Vector3Int GetOccupiedCell(Vector2 worldPos)
+    {
+        return indestructibleTilemap.WorldToCell(worldPos);
     }
 
     private void BuildMagnetListAndResetDirection()
@@ -134,6 +279,7 @@ public sealed class MagnetIndestructibleTileHandler : MonoBehaviour, IIndestruct
         var b = indestructibleTilemap.cellBounds;
 
         for (int y = b.yMin; y < b.yMax; y++)
+        {
             for (int x = b.xMin; x < b.xMax; x++)
             {
                 var c = new Vector3Int(x, y, 0);
@@ -143,10 +289,10 @@ public sealed class MagnetIndestructibleTileHandler : MonoBehaviour, IIndestruct
                     continue;
 
                 _magnetCells.Add(c);
-
                 _dirIndexByCell[c] = 0;
                 ApplyDirectionTile(c, 0);
             }
+        }
     }
 
     private void ApplyDirectionTile(Vector3Int cell, int idx)
@@ -155,7 +301,6 @@ public sealed class MagnetIndestructibleTileHandler : MonoBehaviour, IIndestruct
             return;
 
         indestructibleTilemap.SetTransformMatrix(cell, Matrix4x4.identity);
-
         indestructibleTilemap.SetTile(cell, GetTileForIndex(idx));
         indestructibleTilemap.RefreshTile(cell);
     }
@@ -184,32 +329,6 @@ public sealed class MagnetIndestructibleTileHandler : MonoBehaviour, IIndestruct
             return false;
 
         return indestructibleTilemap.GetTile(cell) != null;
-    }
-
-    private bool TryGetPullableAtCell(Vector3Int cell, out IMagnetPullable pullable)
-    {
-        pullable = null;
-
-        if (indestructibleTilemap == null)
-            return false;
-
-        Vector3 world = indestructibleTilemap.GetCellCenterWorld(cell);
-
-        Collider2D hit = Physics2D.OverlapBox((Vector2)world, Vector2.one * 0.6f, 0f, pullableMask);
-        if (hit == null)
-            return false;
-
-        GameObject go = hit.attachedRigidbody != null ? hit.attachedRigidbody.gameObject : hit.gameObject;
-        if (go == null)
-            return false;
-
-        if (go.TryGetComponent<IMagnetPullable>(out var p) && p != null)
-        {
-            pullable = p;
-            return true;
-        }
-
-        return false;
     }
 
     private static Vector3Int DirFromIndex(int idx)

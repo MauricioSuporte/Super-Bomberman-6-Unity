@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using TMPro;
@@ -1019,7 +1019,7 @@ public class SaveFileMenu : MonoBehaviour
         if (cam != null)
             return cam;
 
-        return FindFirstObjectByType<Camera>();
+        return FindAnyObjectByType<Camera>();
     }
 
     private Rect GetReferencePixelRect(out string source)

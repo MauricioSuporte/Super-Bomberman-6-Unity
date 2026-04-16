@@ -16,8 +16,8 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
     public bool IsHoldingBomb => isHoldingBomb;
 
     [Header("Timings")]
-    [SerializeField, Min(0.01f)] private float pickupLockTime = 0.25f;
-    [SerializeField, Min(0.01f)] private float releaseLockTime = 0.25f;
+    private readonly float pickupLockTime = 0.1f;
+    private readonly float releaseLockTime = 0.1f;
 
     [Header("Throw Settings")]
     [SerializeField, Min(1)] private int throwDistanceTiles = 3;

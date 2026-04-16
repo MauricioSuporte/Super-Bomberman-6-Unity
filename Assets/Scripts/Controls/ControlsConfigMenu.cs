@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using TMPro;
@@ -99,6 +99,9 @@ public class ControlsConfigMenu : MonoBehaviour
 
     [Header("Cursor Rounding")]
     [SerializeField] bool roundCursorToWholePixels = true;
+
+    Vector2 _lastMouseScreenPosition;
+    bool _hasLastMouseScreenPosition;
 
     const string colorNormal = "#FFFFE7";
     const string colorHint = "#FFA621";
@@ -213,7 +216,7 @@ public class ControlsConfigMenu : MonoBehaviour
     {
         var cam = Camera.main;
         if (cam != null) return cam;
-        return UnityEngine.Object.FindFirstObjectByType<Camera>();
+        return UnityEngine.Object.FindAnyObjectByType<Camera>();
     }
 
     Rect GetReferencePixelRect(out string source)
@@ -664,6 +667,10 @@ public class ControlsConfigMenu : MonoBehaviour
         confirmResetPlayerId = 1;
 
         blockedMessageUntil = 0f;
+        blockedMessageLine = null;
+
+        _hasLastMouseScreenPosition = false;
+        _lastMouseScreenPosition = Vector2.zero;
         blockedMessageLine = null;
 
         if (cursorRenderer != null)
@@ -1295,41 +1302,37 @@ public class ControlsConfigMenu : MonoBehaviour
     static string BindingToShort(Binding b)
     {
         if (b.kind == BindKind.Key)
+        {
+            if (b.key == KeyCode.None)
+                return "---";
+
             return PrettyKeyName(b.key);
+        }
 
         if (b.kind == BindKind.DPad)
         {
+            if (b.dpadDir < 0)
+                return "---";
+
             return b.dpadDir switch
             {
-                0 => $"JOY {b.joyIndex} UP",
-                1 => $"JOY {b.joyIndex} DOWN",
-                2 => $"JOY {b.joyIndex} LEFT",
-                3 => $"JOY {b.joyIndex} RIGHT",
-                _ => $"JOY {b.joyIndex} DPAD"
+                0 => "DPAD UP",
+                1 => "DPAD DOWN",
+                2 => "DPAD LEFT",
+                3 => "DPAD RIGHT",
+                _ => "---"
             };
         }
 
         if (b.kind == BindKind.JoyButton)
         {
-            string btn = b.joyButton switch
-            {
-                0 => "A",
-                1 => "B",
-                2 => "X",
-                3 => "Y",
-                4 => "L",
-                5 => "R",
-                6 => "LT",
-                7 => "RT",
-                8 => "START",
-                9 => "SELECT",
-                _ => $"B{b.joyButton}"
-            };
+            if (b.joyButton < 0)
+                return "---";
 
-            return $"JOY {b.joyIndex} {btn}";
+            return $"JOY {b.joyIndex} BTN {b.joyButton}";
         }
 
-        return "UNK";
+        return "---";
     }
 
     void UpdateCursorPosition_ByLinkId(string linkId)
@@ -1549,8 +1552,22 @@ public class ControlsConfigMenu : MonoBehaviour
 
         if (Mouse.current != null)
         {
-            state.valid = true;
-            state.screenPosition = Mouse.current.position.ReadValue();
+            Vector2 currentMousePosition = Mouse.current.position.ReadValue();
+
+            bool movedThisFrame = !_hasLastMouseScreenPosition ||
+                                  (currentMousePosition - _lastMouseScreenPosition).sqrMagnitude > 0.0001f;
+
+            _lastMouseScreenPosition = currentMousePosition;
+            _hasLastMouseScreenPosition = true;
+
+            state.valid = movedThisFrame ||
+                          Mouse.current.leftButton.wasPressedThisFrame ||
+                          Mouse.current.rightButton.wasPressedThisFrame;
+
+            if (!state.valid)
+                return state;
+
+            state.screenPosition = currentMousePosition;
             state.pressedThisFrame = Mouse.current.leftButton.wasPressedThisFrame;
             state.secondaryPressedThisFrame = Mouse.current.rightButton.wasPressedThisFrame;
             return state;

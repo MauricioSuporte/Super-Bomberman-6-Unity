@@ -3,7 +3,7 @@ using UnityEngine;
 
 public static class UnlockProgress
 {
-    private const bool EnableSurgicalLogs = false;
+    private static readonly bool EnableSurgicalLogs = false;
 
     private static readonly BomberSkin[] skinsRequiredForGoldenUnlock =
     {

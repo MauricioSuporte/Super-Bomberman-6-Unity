@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using UnityEngine;
 
 public class EndStageAfterMagnetRunner : MonoBehaviour
@@ -17,7 +17,7 @@ public class EndStageAfterMagnetRunner : MonoBehaviour
     public void CopyEndStageConfigFrom(BossEndStageSequence src)
     {
         if (src == null)
-            src = FindFirstObjectByType<BossEndStageSequence>();
+            src = FindAnyObjectByType<BossEndStageSequence>();
 
         if (src == null)
             return;

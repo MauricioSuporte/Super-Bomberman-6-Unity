@@ -109,7 +109,6 @@ public class BossRushRightPanel : MonoBehaviour
     [SerializeField] float rowHeight = 24f;
 
     [Header("Row Widths")]
-    [SerializeField] float rankPreferredWidth = 120f;
     [SerializeField] float timePreferredWidth = 220f;
 
     [Header("Labels")]

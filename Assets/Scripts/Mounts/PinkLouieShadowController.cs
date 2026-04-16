@@ -16,7 +16,6 @@ public class PinkLouieShadowController : MonoBehaviour
     bool hasJumpGroundPos;
 
     MovementController cachedOwner;
-    bool initialSyncDone;
 
     void Awake()
     {
@@ -50,7 +49,6 @@ public class PinkLouieShadowController : MonoBehaviour
         }
 
         SyncAnimatorState();
-        initialSyncDone = true;
     }
 
     void TryAutoWire()

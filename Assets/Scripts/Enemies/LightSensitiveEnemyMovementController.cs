@@ -1,4 +1,4 @@
-﻿using System.Reflection;
+using System.Reflection;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -567,7 +567,7 @@ public sealed class LightSensitiveEnemyMovementController : JunctionTurningEnemy
             if (sr != null) sr.enabled = true;
         }
 
-        var gameManager = FindFirstObjectByType<GameManager>();
+        var gameManager = FindAnyObjectByType<GameManager>();
         if (gameManager != null)
             gameManager.NotifyEnemyDied();
 

@@ -1,11 +1,11 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 public sealed class ClockStageStunEffect : MonoBehaviour
 {
     [SerializeField] private string enemyLayerName = "Enemy";
-    [SerializeField, Min(0.01f)] private float durationSeconds = 5f;
+    private readonly float durationSeconds = 16f;
 
     [Header("End Blink")]
     [SerializeField, Min(0f)] private float endBlinkSeconds = 1.2f;
@@ -32,7 +32,6 @@ public sealed class ClockStageStunEffect : MonoBehaviour
     {
         var go = new GameObject("ClockStageStunEffect");
         var fx = go.AddComponent<ClockStageStunEffect>();
-        fx.durationSeconds = Mathf.Max(0.01f, seconds);
         fx.Begin();
     }
 
@@ -45,10 +44,7 @@ public sealed class ClockStageStunEffect : MonoBehaviour
     {
         int enemyLayer = LayerMask.NameToLayer(enemyLayerName);
 
-        var enemies = FindObjectsByType<EnemyMovementController>(
-            FindObjectsInactive.Include,
-            FindObjectsSortMode.None
-        );
+        var enemies = FindObjectsByType<EnemyMovementController>(FindObjectsInactive.Include);
 
         var targets = new List<Target>(enemies != null ? enemies.Length : 0);
 
@@ -62,14 +58,16 @@ public sealed class ClockStageStunEffect : MonoBehaviour
                 if (enemyLayer >= 0 && e.gameObject.layer != enemyLayer)
                     continue;
 
-                var t = new Target();
-                t.move = e;
-                t.moveWasEnabled = e.enabled;
-                t.rb = e.GetComponent<Rigidbody2D>();
-                t.stun = e.GetComponent<StunReceiver>();
+                var t = new Target
+                {
+                    move = e,
+                    moveWasEnabled = e.enabled,
+                    rb = e.GetComponent<Rigidbody2D>(),
+                    stun = e.GetComponent<StunReceiver>(),
 
-                t.srs = e.GetComponentsInChildren<SpriteRenderer>(true);
-                if (t.srs == null) t.srs = new SpriteRenderer[0];
+                    srs = e.GetComponentsInChildren<SpriteRenderer>(true)
+                };
+                t.srs ??= new SpriteRenderer[0];
 
                 t.colors = new Color[t.srs.Length];
                 for (int s = 0; s < t.srs.Length; s++)

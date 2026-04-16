@@ -394,6 +394,7 @@ public class SunMaskBoss : MonoBehaviour, IKillable
     void OnTriggerStay2D(Collider2D other)
     {
         TryDestroyBombOnTouch(other);
+        TryApplyExplosionDamage(other);
         TryApplyTouchDamage(other);
     }
 
@@ -556,6 +557,8 @@ public class SunMaskBoss : MonoBehaviour, IKillable
     {
         if (isDead)
             return;
+
+        DisableDamageCollisionsForDeath();
 
         isDead = true;
         inWinkAttack = false;
@@ -1170,6 +1173,19 @@ public class SunMaskBoss : MonoBehaviour, IKillable
         runner.endStageDelayAfterMagnetDeath = endStageDelayAfterMagnetDeath;
 
         runner.CopyEndStageConfigFrom(bossEndSequence);
+    }
+
+    void DisableDamageCollisionsForDeath()
+    {
+        var colliders = GetComponents<Collider2D>();
+        for (int i = 0; i < colliders.Length; i++)
+        {
+            if (colliders[i] != null)
+                colliders[i].enabled = false;
+        }
+
+        if (rb != null)
+            rb.simulated = false;
     }
 
     public void KillByExplosion()

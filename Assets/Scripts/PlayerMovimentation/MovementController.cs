@@ -10,6 +10,16 @@ using UnityEngine;
 [RequireComponent(typeof(StunReceiver))]
 public class MovementController : MonoBehaviour, IKillable
 {
+    [Header("Debug Curva")]
+    [SerializeField] private bool debugCurvas;
+    [SerializeField] private bool debugCurvasVerbose;
+    [SerializeField] private int debugCurvasPlayerId = 1;
+    private int _debugLastFixedFrameLogged = -1;
+
+    [Header("Debug Bomb Escape")]
+    [SerializeField] private bool debugBombEscape;
+    [SerializeField] private bool debugBombEscapeVerbose;
+
     public event Action<MovementController> Died;
 
     [Header("SFX")]
@@ -42,6 +52,11 @@ public class MovementController : MonoBehaviour, IKillable
     private Vector2 dualPrimary = Vector2.zero;
     private Vector2 dualSecondary = Vector2.zero;
     private float dualSwitchTimer = 0f;
+
+    private Vector2 pendingTurnDirection = Vector2.zero;
+
+    private Vector2 lockedMovementDirection = Vector2.zero;
+    private Vector2 pendingSingleTurnDirection = Vector2.zero;
 
     [Header("Sprites")]
     public AnimatedSpriteRenderer spriteRendererUp;
@@ -122,12 +137,10 @@ public class MovementController : MonoBehaviour, IKillable
 
     [Header("Grid Alignment")]
     [SerializeField, Range(0.5f, 20f)] private float perpendicularAlignMultiplier = 8f;
-    [SerializeField] private bool snapPerpendicularOnAxisStart = true;
     [SerializeField, Range(0.0001f, 0.05f)] private float alignEpsilon = 0.0015f;
 
     [Header("Axis Lock")]
     [SerializeField] private bool enableCorridorAxisLock = true;
-    [SerializeField, Range(0.0001f, 0.25f)] private float corridorCenterEpsilon = 0.06f;
     [SerializeField, Range(0.2f, 1.2f)] private float corridorSolidProbeSizeMul = 0.9f;
 
     [Header("Special Pass (by Tag)")]
@@ -146,6 +159,20 @@ public class MovementController : MonoBehaviour, IKillable
 
     [Header("Inactivity (external)")]
     [SerializeField] private bool suppressInactivityAnimation;
+
+    [Header("Bomb Early Kick")]
+    [Tooltip("Minimum axis distance from the bomb center before a non-solid bomb can kick or hard-block reentry.")]
+    [SerializeField, Range(0.05f, 1f)] private float bombKickMinCenterOffset = 0.625f;
+    public float BombKickMinCenterOffset => bombKickMinCenterOffset;
+
+    private struct BombPlantTraversalState
+    {
+        public Vector2 PlantDirection;
+        public bool DirectionChangedSincePlant;
+    }
+
+    private Bomb _lastAdjKickedBomb;
+    private readonly Dictionary<Bomb, BombPlantTraversalState> _ownedBombPlantTraversal = new();
     public bool SuppressInactivityAnimation => suppressInactivityAnimation;
 
     public void SetPassTaggedObstacles(bool canPass, string tag)
@@ -284,9 +311,8 @@ public class MovementController : MonoBehaviour, IKillable
         touchingHazards.Clear();
         currentAxis = MoveAxis.None;
 
-        dualPrimary = Vector2.zero;
-        dualSecondary = Vector2.zero;
-        dualSwitchTimer = 0f;
+        ResetDualInputAxes();
+        ResetSingleInputTurnState();
 
         if (bombController != null)
             bombController.SetPlayerId(playerId);
@@ -475,12 +501,42 @@ public class MovementController : MonoBehaviour, IKillable
 
         int axisCount = (vertDir != Vector2.zero ? 1 : 0) + (horizDir != Vector2.zero ? 1 : 0);
 
+        LogCurve(
+            $"HandleInput input U:{holdUp} D:{holdDown} L:{holdLeft} R:{holdRight} " +
+            $"vert:{vertDir} horiz:{horizDir} axisCount:{axisCount} " +
+            $"dirAtual:{direction} face:{facingDirection} dualPrimary:{dualPrimary} dualSecondary:{dualSecondary} " +
+            $"pendingTurn:{pendingTurnDirection} pendingSingle:{pendingSingleTurnDirection}",
+            verbose: true);
+
         if (!enableDualInput || axisCount <= 1)
         {
             Vector2 singleDir = vertDir != Vector2.zero ? vertDir : horizDir;
-            ApplyDirectionFromVector(singleDir);
+            bool wasUsingDualInput = HasDualInputState();
+
             ResetDualInputAxes();
+
+            if (wasUsingDualInput)
+            {
+                LogCurve(
+                    $"DualInput exit -> SingleAxis requested:{singleDir} " +
+                    $"currentDir:{direction} pendingSingle:{pendingSingleTurnDirection}");
+            }
+            else
+            {
+                LogCurve($"SingleAxis requested:{singleDir} enableDualInput:{enableDualInput}");
+            }
+
+            HandleSingleAxisTurn(singleDir, wasUsingDualInput);
             return;
+        }
+
+        if (pendingSingleTurnDirection != Vector2.zero || lockedMovementDirection != Vector2.zero)
+        {
+            LogCurve(
+                $"DualInput takeover -> clear pendingSingle:{pendingSingleTurnDirection} " +
+                $"lockedDir:{lockedMovementDirection}",
+                verbose: true);
+            ResetSingleInputTurnState();
         }
 
         if (dualPrimary == Vector2.zero)
@@ -498,18 +554,31 @@ public class MovementController : MonoBehaviour, IKillable
                 dualPrimary = vertDir;
                 dualSecondary = horizDir;
             }
+
             dualSwitchTimer = 0f;
+
+            LogCurve(
+                $"DualInput init vertFree:{vertFree} horizFree:{horizFree} " +
+                $"dualPrimary:{dualPrimary} dualSecondary:{dualSecondary}");
         }
         else
         {
             bool primaryStillHeld = (dualPrimary == vertDir || dualPrimary == horizDir);
             if (!primaryStillHeld)
             {
+                Vector2 oldPrimary = dualPrimary;
+                Vector2 oldSecondary = dualSecondary;
+
                 dualPrimary = (dualSecondary == vertDir || dualSecondary == horizDir)
-                                ? dualSecondary
-                                : (vertDir != Vector2.zero ? vertDir : horizDir);
+                    ? dualSecondary
+                    : (vertDir != Vector2.zero ? vertDir : horizDir);
+
                 dualSecondary = (dualPrimary == vertDir) ? horizDir : vertDir;
                 dualSwitchTimer = 0f;
+
+                LogCurve(
+                    $"DualInput rebind oldPrimary:{oldPrimary} oldSecondary:{oldSecondary} " +
+                    $"newPrimary:{dualPrimary} newSecondary:{dualSecondary}");
             }
             else
             {
@@ -521,6 +590,11 @@ public class MovementController : MonoBehaviour, IKillable
             dualSwitchTimer -= Time.deltaTime;
 
         Vector2 chosenDir = ResolveDualInputZigZag();
+
+        LogCurve(
+            $"DualInput resolve chosen:{chosenDir} primary:{dualPrimary} secondary:{dualSecondary} " +
+            $"timer:{dualSwitchTimer:F4} pendingTurn:{pendingTurnDirection}");
+
         ApplyDirectionFromVector(chosenDir);
     }
 
@@ -532,22 +606,68 @@ public class MovementController : MonoBehaviour, IKillable
         bool primaryBlocked = IsMoveBlocked(dualPrimary);
         bool secondaryBlocked = dualSecondary != Vector2.zero && IsMoveBlocked(dualSecondary);
 
+        bool nearCentre = dualSecondary != Vector2.zero && IsAtTileCentreOnPerpendicularAxis(dualSecondary);
+        bool exactlyAligned = dualSecondary != Vector2.zero && IsExactlyAlignedForAxisSwap(dualSecondary);
+        bool willCrossCentreNextStep = dualSecondary != Vector2.zero && WillCrossTileCentreOnPerpendicularAxisNextStep(dualSecondary, dualPrimary);
+
+        LogCurve(
+            $"ResolveDualInputZigZag " +
+            $"primary:{dualPrimary} secondary:{dualSecondary} " +
+            $"primaryBlocked:{primaryBlocked} secondaryBlocked:{secondaryBlocked} " +
+            $"nearCentre:{nearCentre} exactlyAligned:{exactlyAligned} willCrossNext:{willCrossCentreNextStep} " +
+            $"pendingTurnBefore:{pendingTurnDirection} dualSwitchTimer:{dualSwitchTimer:F4}");
+
         if (primaryBlocked && secondaryBlocked)
+        {
+            pendingTurnDirection = Vector2.zero;
             return Vector2.zero;
+        }
 
         if (primaryBlocked && !secondaryBlocked)
         {
+            LogCurve("ResolveDualInputZigZag -> primary blocked, forcing axis switch");
             DoAxisSwitch();
+            pendingTurnDirection = Vector2.zero;
             return dualPrimary;
         }
 
-        if (dualSwitchTimer <= 0f && dualSecondary != Vector2.zero && !secondaryBlocked)
+        if (dualSecondary == Vector2.zero || secondaryBlocked)
         {
-            if (IsAtTileCentreOnPerpendicularAxis(dualSecondary))
+            pendingTurnDirection = Vector2.zero;
+            return dualPrimary;
+        }
+
+        if (dualSwitchTimer > 0f)
+        {
+            pendingTurnDirection = Vector2.zero;
+            return dualPrimary;
+        }
+
+        if ((nearCentre || willCrossCentreNextStep || exactlyAligned) && pendingTurnDirection == Vector2.zero)
+        {
+            pendingTurnDirection = dualSecondary;
+
+            LogCurve(
+                $"ResolveDualInputZigZag -> arm pending turn:{pendingTurnDirection} " +
+                $"nearCentre:{nearCentre} exactlyAligned:{exactlyAligned} willCrossNext:{willCrossCentreNextStep}");
+        }
+
+        if (pendingTurnDirection != Vector2.zero)
+        {
+            bool shouldSwitchNow = exactlyAligned || willCrossCentreNextStep;
+
+            LogCurve(
+                $"ResolveDualInputZigZag pending active:{pendingTurnDirection} " +
+                $"shouldSwitchNow:{shouldSwitchNow} exactlyAligned:{exactlyAligned} willCrossNext:{willCrossCentreNextStep}");
+
+            if (shouldSwitchNow)
             {
                 DoAxisSwitch();
+                pendingTurnDirection = Vector2.zero;
                 return dualPrimary;
             }
+
+            return dualPrimary;
         }
 
         return dualPrimary;
@@ -555,26 +675,113 @@ public class MovementController : MonoBehaviour, IKillable
 
     private bool IsAtTileCentreOnPerpendicularAxis(Vector2 newDir)
     {
-        if (tileSize <= 0.0001f) return true;
+        if (tileSize <= 0.0001f)
+            return true;
 
         Vector2 pos = Rigidbody != null ? Rigidbody.position : (Vector2)transform.position;
+
+        float dynamicTolerance = dualInputCentreSnapTolerance;
+
+        if (speed >= 6f)
+            dynamicTolerance += 0.04f;
+
+        if (speed >= 7f)
+            dynamicTolerance += 0.04f;
+
+        if (speed >= 8f)
+            dynamicTolerance += 0.04f;
+
+        dynamicTolerance = Mathf.Min(dynamicTolerance, 0.49f);
 
         if (Mathf.Abs(newDir.x) > 0.01f)
         {
             float nearest = Mathf.Round(pos.y / tileSize) * tileSize;
-            return Mathf.Abs(pos.y - nearest) <= dualInputCentreSnapTolerance;
+            return Mathf.Abs(pos.y - nearest) <= dynamicTolerance;
         }
         else
         {
             float nearest = Mathf.Round(pos.x / tileSize) * tileSize;
-            return Mathf.Abs(pos.x - nearest) <= dualInputCentreSnapTolerance;
+            return Mathf.Abs(pos.x - nearest) <= dynamicTolerance;
+        }
+    }
+
+    private bool WillCrossTileCentreOnPerpendicularAxisNextStep(Vector2 requestedTurnDir, Vector2 movementDir)
+    {
+        if (tileSize <= 0.0001f)
+            return false;
+
+        requestedTurnDir = NormalizeCardinal(requestedTurnDir);
+        movementDir = NormalizeCardinal(movementDir);
+
+        if (requestedTurnDir == Vector2.zero || movementDir == Vector2.zero)
+            return false;
+
+        Vector2 pos = Rigidbody != null ? Rigidbody.position : (Vector2)transform.position;
+
+        float rawMoveWorld = GetRawMoveWorldPerFixedFrame();
+        float moveWorld = GetQuantizedMoveWorldPerFixedFrame(movementDir, rawMoveWorld);
+
+        if (moveWorld <= 0f)
+            return false;
+
+        Vector2 nextPos = QuantizeToPixelGrid(pos + movementDir * moveWorld);
+
+        if (Mathf.Abs(requestedTurnDir.x) > 0.01f)
+        {
+            float nearest = Mathf.Round(pos.y / tileSize) * tileSize;
+
+            float currentDelta = pos.y - nearest;
+            float nextDelta = nextPos.y - nearest;
+
+            bool crosses =
+                Mathf.Abs(currentDelta) <= alignEpsilon ||
+                Mathf.Abs(nextDelta) <= alignEpsilon ||
+                (currentDelta < 0f && nextDelta > 0f) ||
+                (currentDelta > 0f && nextDelta < 0f);
+
+            LogCurve(
+                $"WillCrossCentreNextStep turn:{requestedTurnDir} move:{movementDir} " +
+                $"axis:Y pos:{pos} nextPos:{nextPos} nearest:{nearest:F4} " +
+                $"currentDelta:{currentDelta:F4} nextDelta:{nextDelta:F4} crosses:{crosses}",
+                verbose: true);
+
+            return crosses;
+        }
+        else
+        {
+            float nearest = Mathf.Round(pos.x / tileSize) * tileSize;
+
+            float currentDelta = pos.x - nearest;
+            float nextDelta = nextPos.x - nearest;
+
+            bool crosses =
+                Mathf.Abs(currentDelta) <= alignEpsilon ||
+                Mathf.Abs(nextDelta) <= alignEpsilon ||
+                (currentDelta < 0f && nextDelta > 0f) ||
+                (currentDelta > 0f && nextDelta < 0f);
+
+            LogCurve(
+                $"WillCrossCentreNextStep turn:{requestedTurnDir} move:{movementDir} " +
+                $"axis:X pos:{pos} nextPos:{nextPos} nearest:{nearest:F4} " +
+                $"currentDelta:{currentDelta:F4} nextDelta:{nextDelta:F4} crosses:{crosses}",
+                verbose: true);
+
+            return crosses;
         }
     }
 
     private void DoAxisSwitch()
     {
+        Vector2 oldPrimary = dualPrimary;
+        Vector2 oldSecondary = dualSecondary;
+        Vector2 pos = Rigidbody != null ? Rigidbody.position : (Vector2)transform.position;
+
         (dualPrimary, dualSecondary) = (dualSecondary, dualPrimary);
         dualSwitchTimer = dualInputSwitchCooldown;
+
+        LogCurve(
+            $"DoAxisSwitch pos:{pos} oldPrimary:{oldPrimary} oldSecondary:{oldSecondary} " +
+            $"newPrimary:{dualPrimary} newSecondary:{dualSecondary} cooldown:{dualSwitchTimer:F4}");
     }
 
     private void ResetDualInputAxes()
@@ -582,6 +789,21 @@ public class MovementController : MonoBehaviour, IKillable
         dualPrimary = Vector2.zero;
         dualSecondary = Vector2.zero;
         dualSwitchTimer = 0f;
+        pendingTurnDirection = Vector2.zero;
+    }
+
+    private void ResetSingleInputTurnState()
+    {
+        pendingSingleTurnDirection = Vector2.zero;
+        lockedMovementDirection = Vector2.zero;
+    }
+
+    private bool HasDualInputState()
+    {
+        return dualPrimary != Vector2.zero ||
+               dualSecondary != Vector2.zero ||
+               pendingTurnDirection != Vector2.zero ||
+               dualSwitchTimer > 0f;
     }
 
     public void ApplyDirectionFromVector(Vector2 dir)
@@ -597,6 +819,9 @@ public class MovementController : MonoBehaviour, IKillable
         direction = dir;
         if (dir != Vector2.zero)
             SetFacingDirection(dir, "ApplyDirectionFromVector");
+
+        if (dir != Vector2.zero && TryGetComponent<BombKickAbility>(out var kickAbility) && kickAbility != null)
+            kickAbility.NotifyOwnerDirectionChanged(dir);
 
         if (externalVisualSuppressed || visualOverrideActive)
             return;
@@ -695,6 +920,11 @@ public class MovementController : MonoBehaviour, IKillable
             var hit = hits[i];
             if (hit == null) continue;
             if (hit.gameObject == gameObject) continue;
+
+            var hitBombEarly = hit.GetComponent<Bomb>();
+            if (hitBombEarly != null && !hitBombEarly.IsSolid)
+                continue;
+
             if (hit.isTrigger) continue;
 
             if (canPassTaggedObstacles && hit.CompareTag(passObstacleTag))
@@ -703,14 +933,24 @@ public class MovementController : MonoBehaviour, IKillable
             if (canPassDestructibles && hit.CompareTag("Destructibles"))
                 continue;
 
+            if (_lastAdjKickedBomb != null && _lastAdjKickedBomb.IsBeingKicked
+                && hit.transform.IsChildOf(_lastAdjKickedBomb.transform))
+                continue;
+
             if (hit.gameObject.layer == LayerMask.NameToLayer("Bomb"))
             {
-                var bomb = hit.GetComponent<Bomb>();
-                if (bomb != null && bomb.Owner == bombController)
+                var bomb = hitBombEarly != null ? hitBombEarly : hit.GetComponent<Bomb>();
+                if (bomb != null)
                 {
-                    var bombCollider = bomb.GetComponent<Collider2D>();
-                    if (bombCollider != null && bombCollider.isTrigger)
+                    if (!bomb.IsSolid)
                         continue;
+
+                    if (bomb.Owner == bombController)
+                    {
+                        var bombCollider = bomb.GetComponent<Collider2D>();
+                        if (bombCollider != null && bombCollider.isTrigger)
+                            continue;
+                    }
                 }
             }
 
@@ -722,32 +962,142 @@ public class MovementController : MonoBehaviour, IKillable
 
     protected virtual void FixedUpdate()
     {
+        if (UpdateBombReentryCentering())
+            return;
+
         if (ShouldSkipFixedUpdate())
             return;
 
-        float rawMoveWorld = GetRawMoveWorldPerFixedFrame();
-        float moveWorld = GetQuantizedMoveWorldPerFixedFrame(direction, rawMoveWorld);
+        if (_lastAdjKickedBomb != null && !_lastAdjKickedBomb.IsBeingKicked)
+            _lastAdjKickedBomb = null;
 
         Vector2 position = Rigidbody.position;
         position = QuantizeToPixelGrid(position);
+
+        if (pendingSingleTurnDirection != Vector2.zero)
+        {
+            bool canTurnNow =
+                !IsMoveBlocked(pendingSingleTurnDirection) &&
+                (IsAtTileCentreOnPerpendicularAxis(pendingSingleTurnDirection) ||
+                 IsExactlyAlignedForAxisSwap(pendingSingleTurnDirection));
+
+            LogCurve(
+                $"FixedUpdate pendingSingle check pending:{pendingSingleTurnDirection} " +
+                $"currentDir:{direction} pos:{position} canTurnNow:{canTurnNow}");
+
+            if (canTurnNow)
+            {
+                direction = pendingSingleTurnDirection;
+                hasInput = true;
+                pendingSingleTurnDirection = Vector2.zero;
+                lockedMovementDirection = Vector2.zero;
+
+                currentAxis = Mathf.Abs(direction.x) > 0.01f
+                    ? MoveAxis.Horizontal
+                    : MoveAxis.Vertical;
+
+                SetFacingDirection(direction, "FixedUpdatePendingSingleTurn");
+                LogCurve($"FixedUpdate pendingSingle -> APPLY turn:{direction}");
+            }
+        }
+
+        float rawMoveWorld = GetRawMoveWorldPerFixedFrame();
+        float moveWorld = GetQuantizedMoveWorldPerFixedFrame(direction, rawMoveWorld);
 
         bool movingVertical = Mathf.Abs(direction.y) > 0.01f;
         bool movingHorizontal = Mathf.Abs(direction.x) > 0.01f;
 
         UpdateCurrentAxis(movingHorizontal, movingVertical);
+        UpdateOwnedBombPlantTraversal(direction);
 
+        if (_debugLastFixedFrameLogged != Time.frameCount)
+        {
+            _debugLastFixedFrameLogged = Time.frameCount;
+            LogCurve(
+                $"FixedUpdate pos:{position} dir:{direction} face:{facingDirection} axis:{currentAxis} " +
+                $"speed:{speed:F3} speedInternal:{speedInternal} rawMove:{rawMoveWorld:F4} move:{moveWorld:F4} " +
+                $"accX:{accPixelsX:F4} accY:{accPixelsY:F4}");
+        }
+
+        if (TryKickAdjacentBombFromCurrentTile(position, direction))
+        {
+            Vector2 holdPos = Rigidbody != null ? Rigidbody.position : position;
+            holdPos = QuantizeToPixelGrid(holdPos);
+
+            LogCurve($"FixedUpdate TryKickAdjacentBombFromCurrentTile -> holdPos:{holdPos}");
+            MovePositionPixelPerfect(holdPos);
+            return;
+        }
+
+        if (ShouldHardBlockForwardFromTileCenter(position))
+        {
+            LogCurve($"FixedUpdate ShouldHardBlockForwardFromTileCenter -> hold position:{position}");
+            MovePositionPixelPerfect(position);
+            return;
+        }
+
+        Vector2 beforeAlign = position;
         AlignPerpendicularForCurrentAxis(ref position, rawMoveWorld);
+        if (beforeAlign != position)
+            LogCurve($"FixedUpdate AlignPerpendicular moved {beforeAlign} -> {position}");
 
         if (enableCorridorAxisLock && tileSize > 0.0001f)
         {
             if (TryApplyCorridorAxisLock(position, movingHorizontal, movingVertical, rawMoveWorld))
+            {
+                LogCurve("FixedUpdate corridor axis lock consumed movement");
                 return;
+            }
         }
 
+        Vector2 beforeCentering = position;
         ApplyCenteringWhenSqueezed(ref position, rawMoveWorld, movingHorizontal, movingVertical);
+        if (beforeCentering != position)
+            LogCurve($"FixedUpdate ApplyCenteringWhenSqueezed moved {beforeCentering} -> {position}");
+
+        if (pendingSingleTurnDirection != Vector2.zero)
+        {
+            bool canTurnAfterAlign =
+                !IsMoveBlocked(pendingSingleTurnDirection) &&
+                (IsAtTileCentreOnPerpendicularAxis(pendingSingleTurnDirection) ||
+                 IsExactlyAlignedForAxisSwap(pendingSingleTurnDirection));
+
+            LogCurve(
+                $"FixedUpdate pendingSingle post-align pending:{pendingSingleTurnDirection} " +
+                $"pos:{position} canTurnAfterAlign:{canTurnAfterAlign}",
+                verbose: true);
+
+            if (canTurnAfterAlign)
+            {
+                direction = pendingSingleTurnDirection;
+                hasInput = true;
+                pendingSingleTurnDirection = Vector2.zero;
+                lockedMovementDirection = Vector2.zero;
+
+                currentAxis = Mathf.Abs(direction.x) > 0.01f
+                    ? MoveAxis.Horizontal
+                    : MoveAxis.Vertical;
+
+                SetFacingDirection(direction, "FixedUpdatePendingSinglePostAlign");
+                LogCurve($"FixedUpdate pendingSingle post-align -> APPLY turn:{direction}");
+
+                rawMoveWorld = GetRawMoveWorldPerFixedFrame();
+                moveWorld = GetQuantizedMoveWorldPerFixedFrame(direction, rawMoveWorld);
+
+                movingVertical = Mathf.Abs(direction.y) > 0.01f;
+                movingHorizontal = Mathf.Abs(direction.x) > 0.01f;
+            }
+        }
+
+        if (TryClampBlockedAxisAndCenter(ref position, rawMoveWorld, movingHorizontal, movingVertical))
+        {
+            MovePositionPixelPerfect(position);
+            return;
+        }
 
         if (moveWorld <= 0f)
         {
+            LogCurve($"FixedUpdate moveWorld <= 0 -> hold {position}", verbose: true);
             MovePositionPixelPerfect(position);
             return;
         }
@@ -755,13 +1105,75 @@ public class MovementController : MonoBehaviour, IKillable
         Vector2 targetPosition = position + direction * moveWorld;
         targetPosition = QuantizeToPixelGrid(targetPosition);
 
-        if (!IsBlocked(targetPosition))
+        bool blocked = IsBlocked(targetPosition);
+
+        LogCurve($"FixedUpdate target:{targetPosition} blocked:{blocked}");
+
+        if (!blocked)
         {
             MovePositionPixelPerfect(targetPosition);
             return;
         }
 
+        LogCurve("FixedUpdate target blocked -> TrySlideIfBlocked");
         TrySlideIfBlocked(position, moveWorld, movingHorizontal, movingVertical);
+    }
+
+    private bool TryClampBlockedAxisAndCenter(ref Vector2 position, float moveSpeed, bool movingHorizontal, bool movingVertical)
+    {
+        float half = tileSize * 0.5f;
+
+        bool blockLeft = IsSolidAt(position + Vector2.left * half);
+        bool blockRight = IsSolidAt(position + Vector2.right * half);
+        bool blockUp = IsSolidAt(position + Vector2.up * half);
+        bool blockDown = IsSolidAt(position + Vector2.down * half);
+
+        bool horizontalAxisClosed = blockLeft && blockRight;
+        bool verticalAxisClosed = blockUp && blockDown;
+
+        float snapStep = moveSpeed * Mathf.Max(1f, perpendicularAlignMultiplier);
+
+        if (movingVertical && verticalAxisClosed)
+        {
+            float targetY = Mathf.Round(position.y / tileSize) * tileSize;
+            float newY = Mathf.MoveTowards(position.y, targetY, snapStep);
+
+            LogCurve(
+                $"TryClampBlockedAxisAndCenter vertical CLOSED " +
+                $"pos:{position} targetY:{targetY:F3} newY:{newY:F3} " +
+                $"blockUp:{blockUp} blockDown:{blockDown}");
+
+            position.y = newY;
+            position = QuantizeToPixelGrid(position);
+
+            direction = Vector2.zero;
+            hasInput = false;
+            currentAxis = MoveAxis.None;
+
+            return true;
+        }
+
+        if (movingHorizontal && horizontalAxisClosed)
+        {
+            float targetX = Mathf.Round(position.x / tileSize) * tileSize;
+            float newX = Mathf.MoveTowards(position.x, targetX, snapStep);
+
+            LogCurve(
+                $"TryClampBlockedAxisAndCenter horizontal CLOSED " +
+                $"pos:{position} targetX:{targetX:F3} newX:{newX:F3} " +
+                $"blockLeft:{blockLeft} blockRight:{blockRight}");
+
+            position.x = newX;
+            position = QuantizeToPixelGrid(position);
+
+            direction = Vector2.zero;
+            hasInput = false;
+            currentAxis = MoveAxis.None;
+
+            return true;
+        }
+
+        return false;
     }
 
     private bool ShouldSkipFixedUpdate()
@@ -811,13 +1223,11 @@ public class MovementController : MonoBehaviour, IKillable
     {
         if (currentAxis == MoveAxis.Horizontal)
         {
-            AlignPerpendicular(ref position, axisIsHorizontal: true, moveSpeed: moveSpeed,
-                snapImmediate: snapPerpendicularOnAxisStart);
+            AlignPerpendicular(ref position, axisIsHorizontal: true, moveSpeed: moveSpeed);
         }
         else if (currentAxis == MoveAxis.Vertical)
         {
-            AlignPerpendicular(ref position, axisIsHorizontal: false, moveSpeed: moveSpeed,
-                snapImmediate: snapPerpendicularOnAxisStart);
+            AlignPerpendicular(ref position, axisIsHorizontal: false, moveSpeed: moveSpeed);
         }
     }
 
@@ -835,12 +1245,18 @@ public class MovementController : MonoBehaviour, IKillable
         {
             bool lrRow0 = SolidLRAt(cx, y0);
             bool lrRow1 = SolidLRAt(cx, y1);
-
             bool corridorVertical = (lrRow0 || lrRow1);
+
+            LogCurve(
+                $"AxisLock horizontal pos:{position} cx:{cx:F3} cy:{cy:F3} y0:{y0:F3} y1:{y1:F3} " +
+                $"lrRow0:{lrRow0} lrRow1:{lrRow1} corridorVertical:{corridorVertical}",
+                verbose: true);
+
             if (!corridorVertical)
                 return false;
 
-            SnapAndStop(axisX: true, position, new Vector2(cx, position.y), moveSpeed);
+            LogCurve($"AxisLock horizontal -> SnapAndStop Y toward {cy:F3}");
+            SnapAndStop(axisX: false, position, new Vector2(position.x, cy), moveSpeed);
             return true;
         }
 
@@ -848,12 +1264,18 @@ public class MovementController : MonoBehaviour, IKillable
         {
             bool udCol0 = SolidUDAt(x0, cy);
             bool udCol1 = SolidUDAt(x1, cy);
-
             bool corridorHorizontal = (udCol0 || udCol1);
+
+            LogCurve(
+                $"AxisLock vertical pos:{position} cx:{cx:F3} cy:{cy:F3} x0:{x0:F3} x1:{x1:F3} " +
+                $"udCol0:{udCol0} udCol1:{udCol1} corridorHorizontal:{corridorHorizontal}",
+                verbose: true);
+
             if (!corridorHorizontal)
                 return false;
 
-            SnapAndStop(axisX: false, position, new Vector2(position.x, cy), moveSpeed);
+            LogCurve($"AxisLock vertical -> SnapAndStop X toward {cx:F3}");
+            SnapAndStop(axisX: true, position, new Vector2(cx, position.y), moveSpeed);
             return true;
         }
 
@@ -864,6 +1286,10 @@ public class MovementController : MonoBehaviour, IKillable
     {
         if (Rigidbody != null)
             Rigidbody.linearVelocity = Vector2.zero;
+
+        LogCurve(
+            $"SnapAndStop axisX:{axisX} current:{currentPos} snapTarget:{snapTarget} " +
+            $"moveSpeed:{moveSpeed:F4} dirBefore:{direction} hasInputBefore:{hasInput} axisBefore:{currentAxis}");
 
         direction = Vector2.zero;
         hasInput = false;
@@ -883,6 +1309,7 @@ public class MovementController : MonoBehaviour, IKillable
             snappedPos = new Vector2(currentPos.x, newY);
         }
 
+        LogCurve($"SnapAndStop snappedPos:{snappedPos} snapStep:{snapStep:F4}");
         MovePositionPixelPerfect(snappedPos);
     }
 
@@ -931,65 +1358,79 @@ public class MovementController : MonoBehaviour, IKillable
         }
     }
 
-    private void AlignPerpendicular(ref Vector2 position, bool axisIsHorizontal, float moveSpeed, bool snapImmediate)
+    private void AlignPerpendicular(ref Vector2 position, bool axisIsHorizontal, float moveSpeed)
     {
         if (tileSize <= 0.0001f)
             return;
 
-        float alignStep = moveSpeed * Mathf.Max(0.5f, perpendicularAlignMultiplier);
+        float alignStep = Mathf.Min(moveSpeed, tileSize * 0.125f);
         Vector2 moveDir = direction;
 
         if (axisIsHorizontal)
         {
             float targetY = Mathf.Round(position.y / tileSize) * tileSize;
+            float deltaY = position.y - targetY;
 
-            if (Mathf.Abs(position.y - targetY) <= alignEpsilon)
+            if (Mathf.Abs(deltaY) <= alignEpsilon)
             {
                 Vector2 snapped = new(position.x, targetY);
-                if (CanAlignToPerpendicularTarget(snapped, moveDir))
+                bool canSnap = CanAlignToPerpendicularTarget(snapped, moveDir);
+
+                LogCurve(
+                    $"AlignPerpendicular H snapCheck pos:{position} targetY:{targetY:F3} deltaY:{deltaY:F4} " +
+                    $"alignStep:{alignStep:F4} canSnap:{canSnap}",
+                    verbose: true);
+
+                if (canSnap)
                     position.y = targetY;
-                return;
-            }
 
-            Vector2 candidate = new(position.x, targetY);
-
-            if (snapImmediate && CanAlignToPerpendicularTarget(candidate, moveDir))
-            {
-                position = candidate;
                 return;
             }
 
             float newY = Mathf.MoveTowards(position.y, targetY, alignStep);
             Vector2 nextCandidate = new(position.x, newY);
+            bool canMove = CanAlignToPerpendicularTarget(nextCandidate, moveDir);
 
-            if (CanAlignToPerpendicularTarget(nextCandidate, moveDir))
+            LogCurve(
+                $"AlignPerpendicular H pos:{position} targetY:{targetY:F3} deltaY:{deltaY:F4} " +
+                $"newY:{newY:F3} alignStep:{alignStep:F4} canMove:{canMove}",
+                verbose: true);
+
+            if (canMove)
                 position.y = newY;
 
             return;
         }
 
         float targetX = Mathf.Round(position.x / tileSize) * tileSize;
+        float deltaX = position.x - targetX;
 
-        if (Mathf.Abs(position.x - targetX) <= alignEpsilon)
+        if (Mathf.Abs(deltaX) <= alignEpsilon)
         {
             Vector2 snapped = new(targetX, position.y);
-            if (CanAlignToPerpendicularTarget(snapped, moveDir))
+            bool canSnap = CanAlignToPerpendicularTarget(snapped, moveDir);
+
+            LogCurve(
+                $"AlignPerpendicular V snapCheck pos:{position} targetX:{targetX:F3} deltaX:{deltaX:F4} " +
+                $"alignStep:{alignStep:F4} canSnap:{canSnap}",
+                verbose: true);
+
+            if (canSnap)
                 position.x = targetX;
-            return;
-        }
 
-        Vector2 candidate2 = new(targetX, position.y);
-
-        if (snapImmediate && CanAlignToPerpendicularTarget(candidate2, moveDir))
-        {
-            position = candidate2;
             return;
         }
 
         float newX = Mathf.MoveTowards(position.x, targetX, alignStep);
         Vector2 nextCandidate2 = new(newX, position.y);
+        bool canMove2 = CanAlignToPerpendicularTarget(nextCandidate2, moveDir);
 
-        if (CanAlignToPerpendicularTarget(nextCandidate2, moveDir))
+        LogCurve(
+            $"AlignPerpendicular V pos:{position} targetX:{targetX:F3} deltaX:{deltaX:F4} " +
+            $"newX:{newX:F3} alignStep:{alignStep:F4} canMove:{canMove2}",
+            verbose: true);
+
+        if (canMove2)
             position.x = newX;
     }
 
@@ -1003,6 +1444,10 @@ public class MovementController : MonoBehaviour, IKillable
         bool leftFree = !IsBlocked(new Vector2(leftCenter, position.y) + verticalStep);
         bool rightFree = !IsBlocked(new Vector2(rightCenter, position.y) + verticalStep);
 
+        LogCurve(
+            $"TrySlideHorizontally pos:{position} moveSpeed:{moveSpeed:F4} leftCenter:{leftCenter:F3} rightCenter:{rightCenter:F3} " +
+            $"leftFree:{leftFree} rightFree:{rightFree}");
+
         if (!leftFree && !rightFree)
             return;
 
@@ -1012,15 +1457,20 @@ public class MovementController : MonoBehaviour, IKillable
         else if (rightFree && !leftFree) targetX = rightCenter;
         else targetX = Mathf.Abs(position.x - leftCenter) <= Mathf.Abs(position.x - rightCenter) ? leftCenter : rightCenter;
 
+        LogCurve($"TrySlideHorizontally targetX:{targetX:F3}");
+
         if (Mathf.Abs(position.x - targetX) > CenterEpsilon)
         {
             float newX = Mathf.MoveTowards(position.x, targetX, moveSpeed);
+            LogCurve($"TrySlideHorizontally centering X {position.x:F3} -> {newX:F3}");
             MovePositionPixelPerfect(new Vector2(newX, position.y));
         }
         else
         {
             Vector2 newPos = new Vector2(targetX, position.y) + verticalStep;
-            if (!IsBlocked(newPos))
+            bool blocked = IsBlocked(newPos);
+            LogCurve($"TrySlideHorizontally advance newPos:{newPos} blocked:{blocked}");
+            if (!blocked)
                 MovePositionPixelPerfect(newPos);
         }
     }
@@ -1035,6 +1485,10 @@ public class MovementController : MonoBehaviour, IKillable
         bool bottomFree = !IsBlocked(new Vector2(position.x, bottomCenter) + horizontalStep);
         bool topFree = !IsBlocked(new Vector2(position.x, topCenter) + horizontalStep);
 
+        LogCurve(
+            $"TrySlideVertically pos:{position} moveSpeed:{moveSpeed:F4} bottomCenter:{bottomCenter:F3} topCenter:{topCenter:F3} " +
+            $"bottomFree:{bottomFree} topFree:{topFree}");
+
         if (!bottomFree && !topFree)
             return;
 
@@ -1044,15 +1498,20 @@ public class MovementController : MonoBehaviour, IKillable
         else if (topFree && !bottomFree) targetY = topCenter;
         else targetY = Mathf.Abs(position.y - bottomCenter) <= Mathf.Abs(position.y - topCenter) ? bottomCenter : topCenter;
 
+        LogCurve($"TrySlideVertically targetY:{targetY:F3}");
+
         if (Mathf.Abs(position.y - targetY) > CenterEpsilon)
         {
             float newY = Mathf.MoveTowards(position.y, targetY, moveSpeed);
+            LogCurve($"TrySlideVertically centering Y {position.y:F3} -> {newY:F3}");
             MovePositionPixelPerfect(new Vector2(position.x, newY));
         }
         else
         {
             Vector2 newPos = new Vector2(position.x, targetY) + horizontalStep;
-            if (!IsBlocked(newPos))
+            bool blocked = IsBlocked(newPos);
+            LogCurve($"TrySlideVertically advance newPos:{newPos} blocked:{blocked}");
+            if (!blocked)
                 MovePositionPixelPerfect(newPos);
         }
     }
@@ -1073,20 +1532,40 @@ public class MovementController : MonoBehaviour, IKillable
             var hit = hits[i];
             if (hit == null) continue;
             if (hit.gameObject == gameObject) continue;
+
+            var hitBombEarly = hit.GetComponent<Bomb>();
+            if (hitBombEarly != null && !hitBombEarly.IsSolid)
+            {
+                LogBombEscape(
+                    $"IsSolidAt IGNORE trigger/non-solid bomb probe world:{worldPosition} bomb:{hitBombEarly.name} " +
+                    $"bombPos:{hitBombEarly.GetLogicalPosition()} bombIsSolid:{hitBombEarly.IsSolid}",
+                    verbose: true);
+
+                continue;
+            }
+
             if (hit.isTrigger) continue;
 
             if (canPassTaggedObstacles && hit.CompareTag(passObstacleTag))
                 continue;
 
-            if (canPassDestructibles && hit.CompareTag("Destructibles")) continue;
+            if (canPassDestructibles && hit.CompareTag("Destructibles"))
+                continue;
 
             if (hit.gameObject.layer == LayerMask.NameToLayer("Bomb"))
             {
-                var bomb = hit.GetComponent<Bomb>();
-                if (bomb != null && bomb.Owner == bombController)
+                var bomb = hitBombEarly != null ? hitBombEarly : hit.GetComponent<Bomb>();
+                if (bomb != null)
                 {
-                    var bombCollider = bomb.GetComponent<Collider2D>();
-                    if (bombCollider != null && bombCollider.isTrigger)
+                    bool bombStillTrigger = !bomb.IsSolid;
+
+                    LogBombEscape(
+                        $"IsSolidAt bomb probe world:{worldPosition} bomb:{bomb.name} " +
+                        $"bombPos:{bomb.GetLogicalPosition()} bombIsSolid:{bomb.IsSolid} " +
+                        $"bombColliderIsTrigger:{bombStillTrigger} ownerIsMe:{(bomb.Owner == bombController)}",
+                        verbose: true);
+
+                    if (!bomb.IsSolid)
                         continue;
                 }
             }
@@ -1099,10 +1578,10 @@ public class MovementController : MonoBehaviour, IKillable
 
     protected bool IsBlocked(Vector2 targetPosition)
     {
-        return IsBlockedAtPosition(targetPosition, direction);
+        return IsBlockedAtPosition(targetPosition, direction, true);
     }
 
-    private bool IsBlockedAtPosition(Vector2 targetPosition, Vector2 dirForSize)
+    private bool IsBlockedAtPosition(Vector2 targetPosition, Vector2 dirForSize, bool allowMovementAbilities = true)
     {
         Vector2 size = GetBlockProbeSize(dirForSize);
 
@@ -1117,6 +1596,19 @@ public class MovementController : MonoBehaviour, IKillable
                 var hit = hits[h];
                 if (hit == null) continue;
                 if (hit.gameObject == gameObject) continue;
+
+                var hitBombEarly = hit.GetComponent<Bomb>();
+                if (hitBombEarly != null && !hitBombEarly.IsSolid)
+                {
+                    LogBombEscape(
+                        $"IGNORE overlap non-solid bomb:{hitBombEarly.name} " +
+                        $"target:{targetPosition} dir:{dirForSize} playerPos:{(Rigidbody != null ? Rigidbody.position : (Vector2)transform.position)} " +
+                        $"bombPos:{hitBombEarly.GetLogicalPosition()}",
+                        verbose: true);
+
+                    continue;
+                }
+
                 if (hit.isTrigger) continue;
 
                 if (canPassTaggedObstacles && hit.CompareTag(passObstacleTag))
@@ -1125,14 +1617,41 @@ public class MovementController : MonoBehaviour, IKillable
                 if (canPassDestructibles && hit.CompareTag("Destructibles"))
                     continue;
 
-                for (int i = 0; i < movementAbilities.Length; i++)
+                if (_lastAdjKickedBomb != null && _lastAdjKickedBomb.IsBeingKicked
+                    && hit.transform.IsChildOf(_lastAdjKickedBomb.transform))
+                    continue;
+
+                var hitBomb = hitBombEarly != null ? hitBombEarly : hit.GetComponent<Bomb>();
+                if (hitBomb != null && !hitBomb.IsSolid)
+                    continue;
+
+                if (allowMovementAbilities)
                 {
-                    var ability = movementAbilities[i];
-                    if (ability != null && ability.IsEnabled)
+                    for (int i = 0; i < movementAbilities.Length; i++)
                     {
-                        if (ability.TryHandleBlockedHit(hit, dirForSize, tileSize, obstacleMask))
-                            return true;
+                        var ability = movementAbilities[i];
+                        if (ability != null && ability.IsEnabled)
+                        {
+                            if (ability.TryHandleBlockedHit(hit, dirForSize, tileSize, obstacleMask))
+                            {
+                                if (hitBomb != null && hitBomb.IsBeingKicked)
+                                    _lastAdjKickedBomb = hitBomb;
+
+                                return IsBlockedAtPosition(targetPosition, dirForSize, false);
+                            }
+                        }
                     }
+                }
+
+                if (hitBomb != null)
+                {
+                    LogBombEscape(
+                        $"BLOCKED by SOLID collider bomb:{hitBomb.name} " +
+                        $"target:{targetPosition} dir:{dirForSize} " +
+                        $"playerPos:{(Rigidbody != null ? Rigidbody.position : (Vector2)transform.position)} " +
+                        $"bombPos:{hitBomb.GetLogicalPosition()} " +
+                        $"bombIsSolid:{hitBomb.IsSolid} " +
+                        $"bombOwnerIsMe:{(hitBomb.Owner == bombController)}");
                 }
 
                 return true;
@@ -1149,17 +1668,357 @@ public class MovementController : MonoBehaviour, IKillable
                 if (bomb == null || bomb.HasExploded)
                     continue;
 
-                if (bomb.IsSolid)
+                if (bomb.IsSolid || bomb.IsBeingPunched)
                     continue;
 
                 Vector2 bombPos = bomb.GetLogicalPosition();
 
                 bool overlapsCurrent = IsInsideBombTileFootprint(myPos, bombPos);
                 bool overlapsTarget = IsInsideBombTileFootprint(targetPosition, bombPos);
+                bool physicallyStillInside = IsPhysicallyStillInsideTriggerBomb(bomb, myPos, targetPosition);
 
                 if (!overlapsTarget)
+                {
+                    if (overlapsCurrent && physicallyStillInside)
+                    {
+                        LogBombEscape(
+                            $"IGNORE leaving own/shared non-solid bomb by physical overlap bomb:{bomb.name} " +
+                            $"myPos:{myPos} target:{targetPosition} bombPos:{bombPos} " +
+                            $"overlapsCurrent:{overlapsCurrent} overlapsTarget:{overlapsTarget} " +
+                            $"physicallyStillInside:{physicallyStillInside}",
+                            verbose: false);
+
+                        continue;
+                    }
+
+                    continue;
+                }
+
+                var bombCollider = bomb.GetComponent<Collider2D>();
+
+                LogBombEscape(
+                    $"TriggerBombCheck bomb:{bomb.name} " +
+                    $"myPos:{myPos} target:{targetPosition} dir:{dirForSize} bombPos:{bombPos} " +
+                    $"overlapsCurrent:{overlapsCurrent} overlapsTarget:{overlapsTarget} " +
+                    $"physicallyStillInside:{physicallyStillInside} " +
+                    $"bombIsSolid:{bomb.IsSolid} bombColliderIsTrigger:{(bombCollider != null && bombCollider.isTrigger)} " +
+                    $"bombOwnerIsMe:{(bomb.Owner == bombController)}",
+                    verbose: true);
+
+                if (overlapsCurrent)
+                {
+                    bool nearEdgeForKick = IsNearBombEdgeForEarlyKick(myPos, bombPos, dirForSize);
+
+                    LogBombEscape(
+                        $"InsideOwnOrSharedBomb bomb:{bomb.name} overlapsCurrent:true overlapsTarget:true " +
+                        $"nearEdgeForKick:{nearEdgeForKick}",
+                        verbose: true);
+
+                    if (allowMovementAbilities && nearEdgeForKick && bombCollider != null)
+                    {
+                        for (int i = 0; i < movementAbilities.Length; i++)
+                        {
+                            var ability = movementAbilities[i];
+                            if (ability != null && ability.IsEnabled)
+                            {
+                                if (ability.TryHandleBlockedHit(bombCollider, dirForSize, tileSize, obstacleMask))
+                                {
+                                    if (bomb.IsBeingKicked)
+                                        _lastAdjKickedBomb = bomb;
+
+                                    return IsBlockedAtPosition(targetPosition, dirForSize, false);
+                                }
+                            }
+                        }
+                    }
+
+                    continue;
+                }
+
+                if (bomb == _lastAdjKickedBomb && bomb.IsBeingKicked)
                     continue;
 
+                if (ShouldAllowForwardTraversalThroughOwnTriggerBomb(
+                        bomb,
+                        myPos,
+                        dirForSize,
+                        physicallyStillInside,
+                        out Vector2 plantDir))
+                {
+                    CancelBombReentryCentering();
+
+                    LogBombEscape(
+                        $"ALLOW same-direction trigger bomb traversal bomb:{bomb.name} " +
+                        $"myPos:{myPos} target:{targetPosition} bombPos:{bombPos} " +
+                        $"currentDir:{NormalizeCardinal(dirForSize)} plantDir:{plantDir} " +
+                        $"physicallyStillInside:{physicallyStillInside}",
+                        verbose: false);
+
+                    continue;
+                }
+
+                bool nearReentryKickEdge = IsNearBombReentryKickEdge(myPos, bombPos, dirForSize);
+
+                LogBombEscape(
+                    $"REENTRY CHECK bomb:{bomb.name} " +
+                    $"myPos:{myPos} target:{targetPosition} bombPos:{bombPos} " +
+                    $"overlapsCurrent:{overlapsCurrent} overlapsTarget:{overlapsTarget} " +
+                    $"physicallyStillInside:{physicallyStillInside} " +
+                    $"nearReentryKickEdge:{nearReentryKickEdge}",
+                    verbose: false);
+
+                if (!nearReentryKickEdge)
+                {
+                    LogBombEscape(
+                        $"ALLOW reentry trigger bomb traversal below kick threshold bomb:{bomb.name} " +
+                        $"myPos:{myPos} target:{targetPosition} bombPos:{bombPos} " +
+                        $"minCenterOffset:{bombKickMinCenterOffset:F3}",
+                        verbose: false);
+
+                    continue;
+                }
+
+                if (allowMovementAbilities && bombCollider != null)
+                {
+                    for (int i = 0; i < movementAbilities.Length; i++)
+                    {
+                        var ability = movementAbilities[i];
+                        if (ability != null && ability.IsEnabled)
+                        {
+                            if (ability.TryHandleBlockedHit(bombCollider, dirForSize, tileSize, obstacleMask))
+                            {
+                                if (bomb.IsBeingKicked)
+                                    _lastAdjKickedBomb = bomb;
+
+                                if (!nearReentryKickEdge)
+                                {
+                                    LogBombEscape(
+                                        $"REENTRY kick handled before centering bomb:{bomb.name} " +
+                                        $"myPos:{myPos} target:{targetPosition} bombPos:{bombPos} " +
+                                        $"nearReentryKickEdge:{nearReentryKickEdge}",
+                                        verbose: false);
+                                }
+
+                                CancelBombReentryCentering();
+                                return IsBlockedAtPosition(targetPosition, dirForSize, false);
+                            }
+                        }
+                    }
+                }
+
+                if (bombReentryCenteringActive)
+                    bombReentryCenteringActive = false;
+
+                Vector2 reentryCenterTarget = GetBombReentryCenterTarget(bombPos, dirForSize);
+
+                LogBombEscape(
+                    $"REENTRY CENTER START bomb:{bomb.name} " +
+                    $"myPos:{myPos} targetCenter:{reentryCenterTarget} " +
+                    $"hasBombKick:{(abilitySystem != null && abilitySystem.IsEnabled(BombKickAbility.AbilityId))}",
+                    verbose: false);
+
+                StartBombReentryCentering(myPos, reentryCenterTarget);
+
+                LogBombEscape(
+                    $"BLOCKED by REENTRY logic bomb:{bomb.name} " +
+                    $"myPos:{myPos} target:{targetPosition} bombPos:{bombPos} " +
+                    $"reason:cannot re-enter trigger bomb tile even with kick ability",
+                    verbose: false);
+
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public void NotifyBombPlanted(Bomb bomb, Vector2 movementDirectionAtPlant)
+    {
+        if (bomb == null)
+            return;
+
+        Vector2 storedDir = NormalizeCardinal(movementDirectionAtPlant);
+        if (storedDir == Vector2.zero)
+            storedDir = NormalizeCardinal(facingDirection);
+
+        if (storedDir == Vector2.zero)
+            storedDir = Vector2.down;
+
+        _ownedBombPlantTraversal[bomb] = new BombPlantTraversalState
+        {
+            PlantDirection = storedDir,
+            DirectionChangedSincePlant = false
+        };
+
+        LogBombEscape(
+            $"Track planted bomb traversal bomb:{bomb.name} bombPos:{bomb.GetLogicalPosition()} " +
+            $"storedDir:{storedDir}",
+            verbose: true);
+    }
+
+    private void UpdateOwnedBombPlantTraversal(Vector2 currentDirection)
+    {
+        if (_ownedBombPlantTraversal.Count == 0)
+            return;
+
+        Vector2 normalizedCurrentDirection = NormalizeCardinal(currentDirection);
+        List<Bomb> bombsToRemove = null;
+        List<Bomb> bombsToLock = null;
+
+        foreach (var kv in _ownedBombPlantTraversal)
+        {
+            Bomb bomb = kv.Key;
+            BombPlantTraversalState state = kv.Value;
+
+            if (bomb == null || bomb.HasExploded || bomb.IsSolid || bomb.IsBeingKicked || bomb.Owner != bombController)
+            {
+                bombsToRemove ??= new List<Bomb>();
+                bombsToRemove.Add(bomb);
+                continue;
+            }
+
+            if (state.DirectionChangedSincePlant || normalizedCurrentDirection == Vector2.zero)
+                continue;
+
+            Vector2 plantDir = NormalizeCardinal(state.PlantDirection);
+            if (plantDir == Vector2.zero)
+                continue;
+
+            float directionDot = Vector2.Dot(plantDir, normalizedCurrentDirection);
+            if (directionDot > 0.1f)
+                continue;
+
+            bombsToLock ??= new List<Bomb>();
+            bombsToLock.Add(bomb);
+        }
+
+        if (bombsToRemove != null)
+        {
+            for (int i = 0; i < bombsToRemove.Count; i++)
+                _ownedBombPlantTraversal.Remove(bombsToRemove[i]);
+        }
+
+        if (bombsToLock == null)
+            return;
+
+        for (int i = 0; i < bombsToLock.Count; i++)
+        {
+            Bomb bomb = bombsToLock[i];
+            if (bomb == null)
+                continue;
+
+            if (!_ownedBombPlantTraversal.TryGetValue(bomb, out BombPlantTraversalState state))
+                continue;
+
+            Vector2 plantDir = NormalizeCardinal(state.PlantDirection);
+            state.DirectionChangedSincePlant = true;
+            _ownedBombPlantTraversal[bomb] = state;
+
+            LogBombEscape(
+                $"Track planted bomb traversal LOCKED bomb:{bomb.name} bombPos:{bomb.GetLogicalPosition()} " +
+                $"plantDir:{plantDir} currentDir:{normalizedCurrentDirection}",
+                verbose: false);
+        }
+    }
+
+    private bool ShouldAllowForwardTraversalThroughOwnTriggerBomb(
+        Bomb bomb,
+        Vector2 playerPos,
+        Vector2 moveDir,
+        bool physicallyStillInside,
+        out Vector2 plantDir)
+    {
+        plantDir = Vector2.zero;
+
+        if (!physicallyStillInside || bomb == null || bomb.Owner != bombController)
+            return false;
+
+        if (!_ownedBombPlantTraversal.TryGetValue(bomb, out BombPlantTraversalState state))
+            return false;
+
+        if (state.DirectionChangedSincePlant)
+            return false;
+
+        moveDir = NormalizeCardinal(moveDir);
+        plantDir = NormalizeCardinal(state.PlantDirection);
+
+        if (moveDir == Vector2.zero || plantDir == Vector2.zero)
+            return false;
+
+        float directionDot = Vector2.Dot(plantDir, moveDir);
+        if (directionDot <= 0.1f)
+            return false;
+
+        Vector2 delta = playerPos - bomb.GetLogicalPosition();
+        float signedAxisOffset =
+            Mathf.Abs(moveDir.x) > 0.01f
+                ? delta.x * Mathf.Sign(moveDir.x)
+                : delta.y * Mathf.Sign(moveDir.y);
+
+        return signedAxisOffset <= alignEpsilon;
+    }
+
+    private bool IsBlockedAtPositionIgnoringBomb(Vector2 targetPosition, Vector2 dirForSize, Bomb ignoreBomb)
+    {
+        Vector2 size = GetBlockProbeSize(dirForSize);
+
+        Collider2D[] hits = Physics2D.OverlapBoxAll(targetPosition, size, 0f, obstacleMask);
+        if (hits != null && hits.Length > 0)
+        {
+            bool canPassDestructibles = abilitySystem != null &&
+                                       abilitySystem.IsEnabled(DestructiblePassAbility.AbilityId);
+
+            for (int h = 0; h < hits.Length; h++)
+            {
+                var hit = hits[h];
+                if (hit == null) continue;
+                if (hit.gameObject == gameObject) continue;
+
+                var hitBombEarly = hit.GetComponent<Bomb>();
+                if (hitBombEarly != null && !hitBombEarly.IsSolid)
+                    continue;
+
+                if (hit.isTrigger) continue;
+
+                if (canPassTaggedObstacles && hit.CompareTag(passObstacleTag))
+                    continue;
+
+                if (canPassDestructibles && hit.CompareTag("Destructibles"))
+                    continue;
+
+                if (ignoreBomb != null && hit.transform.IsChildOf(ignoreBomb.transform))
+                    continue;
+
+                var hitBomb = hitBombEarly != null ? hitBombEarly : hit.GetComponent<Bomb>();
+                if (hitBomb != null && !hitBomb.IsSolid)
+                    continue;
+
+                return true;
+            }
+        }
+
+        bool hasBombPass = abilitySystem != null && abilitySystem.IsEnabled(BombPassAbility.AbilityId);
+        if (!hasBombPass)
+        {
+            Vector2 myPos = Rigidbody != null ? Rigidbody.position : (Vector2)transform.position;
+
+            foreach (var bomb in Bomb.ActiveBombs)
+            {
+                if (bomb == null || bomb.HasExploded)
+                    continue;
+
+                if (bomb == ignoreBomb)
+                    continue;
+
+                if (bomb.IsSolid || bomb.IsBeingPunched)
+                    continue;
+
+                Vector2 bombPos = bomb.GetLogicalPosition();
+
+                if (!IsInsideBombTileFootprint(targetPosition, bombPos))
+                    continue;
+
+                bool overlapsCurrent = IsInsideBombTileFootprint(myPos, bombPos);
                 if (overlapsCurrent)
                     continue;
 
@@ -1393,7 +2252,7 @@ public class MovementController : MonoBehaviour, IKillable
 
         if (IsPlayer() && checkWinStateOnDeath)
         {
-            var gm = FindFirstObjectByType<GameManager>();
+            var gm = FindAnyObjectByType<GameManager>();
             if (gm != null)
                 gm.NotifyPlayerDeathStarted();
         }
@@ -1428,6 +2287,8 @@ public class MovementController : MonoBehaviour, IKillable
     {
         if (isDead || isEndingStage)
             return;
+
+        NotifyHudPortraitDeathIfPlayer();
 
         holeDeathInProgress = false;
 
@@ -1618,6 +2479,16 @@ public class MovementController : MonoBehaviour, IKillable
             Color sc = startColors[i];
             sr.color = new Color(0f, 0f, 0f, sc.a);
         }
+    }
+
+    private void NotifyHudPortraitDeathIfPlayer()
+    {
+        if (!IsPlayer())
+            return;
+
+        var hud = FindAnyObjectByType<HudPortraitInGridLayout>();
+        if (hud != null)
+            hud.OnPlayerDied(PlayerId);
     }
 
     public void PlayEndStageSequence(Vector2 portalCenter, bool snapToPortalCenter)
@@ -2037,12 +2908,12 @@ public class MovementController : MonoBehaviour, IKillable
             return true;
 
         Vector2 ahead = pos + moveDir.normalized * (tileSize * 0.5f);
-        return !IsBlockedAtPosition(ahead, moveDir);
+        return !IsBlockedAtPosition(ahead, moveDir, true);
     }
 
     protected bool CanAlignToPerpendicularTarget(Vector2 candidatePos, Vector2 moveDir)
     {
-        if (IsBlockedAtPosition(candidatePos, moveDir))
+        if (IsBlockedAtPosition(candidatePos, moveDir, true))
             return false;
 
         if (!IsForwardOpen(candidatePos, moveDir))
@@ -2062,7 +2933,7 @@ public class MovementController : MonoBehaviour, IKillable
         float halfStep = tileSize * 0.5f;
         Vector2 probe = pos + dir * halfStep;
 
-        return IsBlockedAtPosition(probe, dir);
+        return IsBlockedAtPosition(probe, dir, true);
     }
 
     protected bool IsMoveOpen(Vector2 dir) => !IsMoveBlocked(dir);
@@ -2249,6 +3120,9 @@ public class MovementController : MonoBehaviour, IKillable
 
         if (moveDir != lastMoveDirCardinal)
         {
+            LogCurve(
+                $"QuantizedStep direction changed {lastMoveDirCardinal} -> {moveDir}. " +
+                $"ResetPixelAccumulators accX:{accPixelsX:F4} accY:{accPixelsY:F4}");
             lastMoveDirCardinal = moveDir;
             ResetPixelAccumulators();
         }
@@ -2262,7 +3136,14 @@ public class MovementController : MonoBehaviour, IKillable
             int whole = (int)accPixelsX;
             accPixelsX -= whole;
 
-            return Mathf.Abs(whole) * PixelWorldStep;
+            float result = Mathf.Abs(whole) * PixelWorldStep;
+
+            LogCurve(
+                $"QuantizedStep X rawWorld:{rawWorldStep:F4} rawPixels:{rawPixels:F4} whole:{whole} " +
+                $"accXRest:{accPixelsX:F4} result:{result:F4}",
+                verbose: true);
+
+            return result;
         }
         else
         {
@@ -2271,7 +3152,14 @@ public class MovementController : MonoBehaviour, IKillable
             int whole = (int)accPixelsY;
             accPixelsY -= whole;
 
-            return Mathf.Abs(whole) * PixelWorldStep;
+            float result = Mathf.Abs(whole) * PixelWorldStep;
+
+            LogCurve(
+                $"QuantizedStep Y rawWorld:{rawWorldStep:F4} rawPixels:{rawPixels:F4} whole:{whole} " +
+                $"accYRest:{accPixelsY:F4} result:{result:F4}",
+                verbose: true);
+
+            return result;
         }
     }
 
@@ -2280,7 +3168,9 @@ public class MovementController : MonoBehaviour, IKillable
         if (Rigidbody == null)
             return;
 
-        Rigidbody.MovePosition(QuantizeToPixelGrid(worldPos));
+        Vector2 quantized = QuantizeToPixelGrid(worldPos);
+
+        Rigidbody.MovePosition(quantized);
     }
 
     public void SetExternalMovementOverride(bool active)
@@ -2391,16 +3281,609 @@ public class MovementController : MonoBehaviour, IKillable
 
     private Vector2 GetBlockProbeSize(Vector2 dirForSize)
     {
-        return Mathf.Abs(dirForSize.x) > 0f
+        return Mathf.Abs(dirForSize.x) > 0.01f
             ? new Vector2(tileSize * 0.6f, tileSize * 0.2f)
             : new Vector2(tileSize * 0.2f, tileSize * 0.6f);
     }
 
     private bool IsInsideBombTileFootprint(Vector2 worldPos, Vector2 bombPos)
     {
-        float halfTile = tileSize * 0.5f + 0.0001f;
+        float halfFootprint = tileSize * 0.35f;
 
-        return Mathf.Abs(worldPos.x - bombPos.x) <= halfTile
-            && Mathf.Abs(worldPos.y - bombPos.y) <= halfTile;
+        return Mathf.Abs(worldPos.x - bombPos.x) <= halfFootprint
+            && Mathf.Abs(worldPos.y - bombPos.y) <= halfFootprint;
+    }
+
+    private bool IsExactlyAlignedForAxisSwap(Vector2 newDir)
+    {
+        if (tileSize <= 0.0001f)
+            return true;
+
+        Vector2 pos = Rigidbody != null ? Rigidbody.position : (Vector2)transform.position;
+
+        if (Mathf.Abs(newDir.x) > 0.01f)
+        {
+            float nearestY = Mathf.Round(pos.y / tileSize) * tileSize;
+            return Mathf.Abs(pos.y - nearestY) <= alignEpsilon;
+        }
+        else
+        {
+            float nearestX = Mathf.Round(pos.x / tileSize) * tileSize;
+            return Mathf.Abs(pos.x - nearestX) <= alignEpsilon;
+        }
+    }
+
+    private void HandleSingleAxisTurn(Vector2 singleDir, bool exitedDualInput = false)
+    {
+        singleDir = NormalizeCardinal(singleDir);
+
+        LogCurve(
+            $"HandleSingleAxisTurn requested:{singleDir} " +
+            $"currentDir:{direction} currentAxis:{currentAxis} " +
+            $"pendingSingleBefore:{pendingSingleTurnDirection} " +
+            $"exitedDual:{exitedDualInput}",
+            verbose: true);
+
+        if (singleDir == Vector2.zero)
+        {
+            pendingSingleTurnDirection = Vector2.zero;
+            lockedMovementDirection = Vector2.zero;
+            ApplyDirectionFromVector(Vector2.zero);
+            return;
+        }
+
+        if (direction == Vector2.zero)
+        {
+            pendingSingleTurnDirection = Vector2.zero;
+            lockedMovementDirection = Vector2.zero;
+
+            LogCurve($"HandleSingleAxisTurn -> immediate apply from idle:{singleDir}");
+            ApplyDirectionFromVector(singleDir);
+            return;
+        }
+
+        bool sameAxis =
+            (Mathf.Abs(direction.x) > 0.01f && Mathf.Abs(singleDir.x) > 0.01f) ||
+            (Mathf.Abs(direction.y) > 0.01f && Mathf.Abs(singleDir.y) > 0.01f);
+
+        if (sameAxis)
+        {
+            pendingSingleTurnDirection = Vector2.zero;
+            lockedMovementDirection = Vector2.zero;
+
+            LogCurve($"HandleSingleAxisTurn -> same axis apply:{singleDir}");
+            ApplyDirectionFromVector(singleDir);
+            return;
+        }
+
+        bool moveBlocked = IsMoveBlocked(singleDir);
+        bool nearCentre = IsAtTileCentreOnPerpendicularAxis(singleDir);
+        bool exactlyAligned = IsExactlyAlignedForAxisSwap(singleDir);
+
+        LogCurve(
+            $"HandleSingleAxisTurn requested:{singleDir} " +
+            $"moveBlocked:{moveBlocked} nearCentre:{nearCentre} exactlyAligned:{exactlyAligned} " +
+            $"currentDir:{direction} pendingSingleBefore:{pendingSingleTurnDirection} " +
+            $"exitedDual:{exitedDualInput}");
+
+        if (!moveBlocked && (nearCentre || exactlyAligned))
+        {
+            pendingSingleTurnDirection = Vector2.zero;
+            lockedMovementDirection = Vector2.zero;
+
+            LogCurve($"HandleSingleAxisTurn -> APPLY turn to:{singleDir}");
+            ApplyDirectionFromVector(singleDir);
+            return;
+        }
+
+        if (exitedDualInput)
+        {
+            Vector2 alignmentDirection = GetSingleTurnAlignmentDirection(direction, singleDir);
+            bool canUseAlignmentDirection =
+                alignmentDirection != Vector2.zero &&
+                !IsSingleTurnAlignmentBlocked(alignmentDirection, singleDir);
+
+            pendingSingleTurnDirection = singleDir;
+
+            if (canUseAlignmentDirection)
+            {
+                lockedMovementDirection = alignmentDirection;
+
+                LogCurve(
+                    $"HandleSingleAxisTurn -> dual-exit align pendingSingle:{pendingSingleTurnDirection} " +
+                    $"alignDir:{alignmentDirection}");
+
+                ApplyDirectionFromVector(alignmentDirection);
+                return;
+            }
+
+            lockedMovementDirection = Vector2.zero;
+
+            LogCurve(
+                $"HandleSingleAxisTurn -> dual-exit stop pendingSingle:{pendingSingleTurnDirection} " +
+                $"moveBlocked:{moveBlocked} alignDir:{alignmentDirection}");
+
+            ApplyDirectionFromVector(Vector2.zero);
+            return;
+        }
+
+        pendingSingleTurnDirection = singleDir;
+        lockedMovementDirection = direction;
+
+        LogCurve($"HandleSingleAxisTurn -> arm pendingSingle:{pendingSingleTurnDirection} keep current:{direction}");
+        ApplyDirectionFromVector(direction);
+    }
+
+    private bool IsSingleTurnAlignmentBlocked(Vector2 alignDir, Vector2 requestedTurnDir)
+    {
+        alignDir = NormalizeCardinal(alignDir);
+        requestedTurnDir = NormalizeCardinal(requestedTurnDir);
+
+        if (alignDir == Vector2.zero || tileSize <= 0.0001f)
+            return false;
+
+        Vector2 pos = Rigidbody != null ? Rigidbody.position : (Vector2)transform.position;
+
+        float centerX = Mathf.Round(pos.x / tileSize) * tileSize;
+        float centerY = Mathf.Round(pos.y / tileSize) * tileSize;
+
+        Vector2 alignTarget =
+            Mathf.Abs(alignDir.x) > 0.01f
+                ? new Vector2(centerX, pos.y)
+                : new Vector2(pos.x, centerY);
+
+        alignTarget = QuantizeToPixelGrid(alignTarget);
+
+        if (IsMoveBlocked(alignDir))
+            return true;
+
+        if (IsBlockedAtPosition(alignTarget, alignDir, true))
+            return true;
+
+        if (!CanAlignToPerpendicularTarget(alignTarget, requestedTurnDir))
+            return true;
+
+        return false;
+    }
+
+    private Vector2 GetSingleTurnAlignmentDirection(Vector2 currentMove, Vector2 requestedDir)
+    {
+        if (tileSize <= 0.0001f)
+            return currentMove;
+
+        Vector2 pos = Rigidbody != null ? Rigidbody.position : (Vector2)transform.position;
+
+        bool turningToHorizontal = Mathf.Abs(requestedDir.x) > 0.01f;
+        bool turningToVertical = Mathf.Abs(requestedDir.y) > 0.01f;
+
+        if (turningToVertical)
+        {
+            float centerX = Mathf.Round(pos.x / tileSize) * tileSize;
+            float deltaX = centerX - pos.x;
+
+            if (Mathf.Abs(deltaX) <= alignEpsilon)
+                return Vector2.zero;
+
+            return deltaX > 0f ? Vector2.right : Vector2.left;
+        }
+
+        if (turningToHorizontal)
+        {
+            float centerY = Mathf.Round(pos.y / tileSize) * tileSize;
+            float deltaY = centerY - pos.y;
+
+            if (Mathf.Abs(deltaY) <= alignEpsilon)
+                return Vector2.zero;
+
+            return deltaY > 0f ? Vector2.up : Vector2.down;
+        }
+
+        return currentMove;
+    }
+
+    private bool ShouldHardBlockForwardFromTileCenter(Vector2 position)
+    {
+        if (direction == Vector2.zero || tileSize <= 0.0001f)
+            return false;
+
+        Vector2 dir = NormalizeCardinal(direction);
+        if (dir == Vector2.zero)
+            return false;
+
+        bool movingHorizontal = Mathf.Abs(dir.x) > 0.01f;
+
+        float centeredX = Mathf.Round(position.x / tileSize) * tileSize;
+        float centeredY = Mathf.Round(position.y / tileSize) * tileSize;
+
+        bool alignedOnPerpendicular =
+            movingHorizontal
+                ? Mathf.Abs(position.y - centeredY) <= alignEpsilon
+                : Mathf.Abs(position.x - centeredX) <= alignEpsilon;
+
+        if (!alignedOnPerpendicular)
+            return false;
+
+        bool alreadyAtCurrentTileCenterOnMoveAxis =
+            movingHorizontal
+                ? Mathf.Abs(position.x - centeredX) <= alignEpsilon
+                : Mathf.Abs(position.y - centeredY) <= alignEpsilon;
+
+        if (!alreadyAtCurrentTileCenterOnMoveAxis)
+            return false;
+
+        Vector2 currentTileCenter = new(centeredX, centeredY);
+        Vector2 nextTileCenter = currentTileCenter + dir * tileSize;
+
+        bool nextBlocked = IsBlockedAtPosition(nextTileCenter, dir, true);
+
+        if (nextBlocked && _lastAdjKickedBomb != null && _lastAdjKickedBomb.IsBeingKicked)
+            nextBlocked = IsBlockedAtPositionIgnoringBomb(nextTileCenter, dir, _lastAdjKickedBomb);
+
+        if (!nextBlocked)
+            return false;
+
+        if (pendingSingleTurnDirection != Vector2.zero &&
+            IsExactlyAlignedForAxisSwap(pendingSingleTurnDirection) &&
+            !IsMoveBlocked(pendingSingleTurnDirection))
+        {
+            lockedMovementDirection = pendingSingleTurnDirection;
+            Vector2 turnDir = pendingSingleTurnDirection;
+            pendingSingleTurnDirection = Vector2.zero;
+            ApplyDirectionFromVector(turnDir);
+
+            return false;
+        }
+
+        return true;
+    }
+
+    private bool IsNearBombEdgeForEarlyKick(Vector2 playerPos, Vector2 bombPos, Vector2 moveDir)
+    {
+        moveDir = moveDir.normalized;
+        if (moveDir == Vector2.zero)
+            return false;
+
+        Vector2 delta = playerPos - bombPos;
+
+        if (Mathf.Abs(moveDir.x) > 0.01f)
+        {
+            float signedOffsetX = delta.x * Mathf.Sign(moveDir.x);
+            return signedOffsetX >= bombKickMinCenterOffset;
+        }
+
+        if (Mathf.Abs(moveDir.y) > 0.01f)
+        {
+            float signedOffsetY = delta.y * Mathf.Sign(moveDir.y);
+            return signedOffsetY >= bombKickMinCenterOffset;
+        }
+
+        return false;
+    }
+
+    private bool IsNearBombReentryKickEdge(Vector2 playerPos, Vector2 bombPos, Vector2 moveDir)
+    {
+        moveDir = moveDir.normalized;
+        if (moveDir == Vector2.zero)
+            return false;
+
+        Vector2 delta = playerPos - bombPos;
+
+        if (Mathf.Abs(moveDir.x) > 0.01f)
+        {
+            float signedOffsetX = -delta.x * Mathf.Sign(moveDir.x);
+            return signedOffsetX >= bombKickMinCenterOffset;
+        }
+
+        if (Mathf.Abs(moveDir.y) > 0.01f)
+        {
+            float signedOffsetY = -delta.y * Mathf.Sign(moveDir.y);
+            return signedOffsetY >= bombKickMinCenterOffset;
+        }
+
+        return false;
+    }
+
+    private bool TryKickAdjacentBombFromCurrentTile(Vector2 position, Vector2 moveDir)
+    {
+        if (moveDir == Vector2.zero)
+        {
+            LogBombEscape($"[KickAdj] skip moveDir zero pos:{position}", verbose: true);
+            return false;
+        }
+
+        if (movementAbilities == null || movementAbilities.Length == 0)
+        {
+            LogBombEscape($"[KickAdj] skip no movementAbilities pos:{position}", verbose: true);
+            return false;
+        }
+
+        Vector2 dir = NormalizeCardinal(moveDir);
+        if (dir == Vector2.zero)
+        {
+            LogBombEscape($"[KickAdj] skip normalized dir zero moveDir:{moveDir} pos:{position}", verbose: true);
+            return false;
+        }
+
+        for (int i = 0; i < movementAbilities.Length; i++)
+        {
+            if (movementAbilities[i] is BombKickAbility kickAbility && kickAbility.IsEnabled)
+                kickAbility.NotifyOwnerDirectionChanged(dir);
+        }
+
+        Vector2 snappedCurrentTile = new Vector2(
+            Mathf.Round(position.x / tileSize) * tileSize,
+            Mathf.Round(position.y / tileSize) * tileSize
+        );
+
+        Vector2 targetTileCenter = snappedCurrentTile + dir * tileSize;
+
+        LogBombEscape(
+            $"[KickAdj] START pos:{position} dir:{dir} snappedCurrentTile:{snappedCurrentTile} " +
+            $"targetTileCenter:{targetTileCenter} tileSize:{tileSize:F3}",
+            verbose: true);
+
+        foreach (var bomb in Bomb.ActiveBombs)
+        {
+            if (bomb == null)
+            {
+                LogBombEscape("[KickAdj] skip null bomb", verbose: true);
+                continue;
+            }
+
+            if (bomb.HasExploded)
+            {
+                LogBombEscape($"[KickAdj] skip exploded bomb:{bomb.name}", verbose: true);
+                continue;
+            }
+
+            if (bomb.IsBeingKicked || bomb.IsBeingPunched)
+            {
+                LogBombEscape(
+                    $"[KickAdj] skip moving bomb:{bomb.name} kicked:{bomb.IsBeingKicked} punched:{bomb.IsBeingPunched}",
+                    verbose: true);
+                continue;
+            }
+
+            Vector2 bombPos = bomb.GetLogicalPosition();
+            float bombToTargetTileDist = Vector2.Distance(bombPos, targetTileCenter);
+            float playerToBombDist = Vector2.Distance(position, bombPos);
+            Vector2 playerMinusBomb = position - bombPos;
+
+            float signedAxisOffset =
+                Mathf.Abs(dir.x) > 0.01f
+                    ? playerMinusBomb.x * Mathf.Sign(dir.x)
+                    : playerMinusBomb.y * Mathf.Sign(dir.y);
+
+            float perpendicularOffset =
+                Mathf.Abs(dir.x) > 0.01f
+                    ? Mathf.Abs(playerMinusBomb.y)
+                    : Mathf.Abs(playerMinusBomb.x);
+
+            bool bombMatchesTargetTile = bombToTargetTileDist <= 0.05f;
+
+            LogBombEscape(
+                $"[KickAdj] inspect bomb:{bomb.name} bombPos:{bombPos} bombMatchesTargetTile:{bombMatchesTargetTile} " +
+                $"bombToTargetTileDist:{bombToTargetTileDist:F3} playerToBombDist:{playerToBombDist:F3} " +
+                $"signedAxisOffset:{signedAxisOffset:F3} perpendicularOffset:{perpendicularOffset:F3} " +
+                $"bombIsSolid:{bomb.IsSolid} canBeKicked:{bomb.CanBeKicked} canBeKickedEarly:{bomb.CanBeKickedEarly} " +
+                $"isTrigger:{(bomb.GetComponent<Collider2D>() != null ? bomb.GetComponent<Collider2D>().isTrigger : false)}",
+                verbose: true);
+
+            if (!bombMatchesTargetTile)
+                continue;
+
+            var bombCollider = bomb.GetComponent<Collider2D>();
+            if (bombCollider == null)
+            {
+                LogBombEscape($"[KickAdj] skip bomb without collider bomb:{bomb.name}", verbose: true);
+                continue;
+            }
+
+            for (int i = 0; i < movementAbilities.Length; i++)
+            {
+                var ability = movementAbilities[i];
+                if (ability == null)
+                {
+                    LogBombEscape($"[KickAdj] skip null ability idx:{i} bomb:{bomb.name}", verbose: true);
+                    continue;
+                }
+
+                if (!ability.IsEnabled)
+                {
+                    LogBombEscape(
+                        $"[KickAdj] skip disabled ability:{ability.GetType().Name} idx:{i} bomb:{bomb.name}",
+                        verbose: true);
+                    continue;
+                }
+
+                LogBombEscape(
+                    $"[KickAdj] TRY ability:{ability.GetType().Name} bomb:{bomb.name} pos:{position} " +
+                    $"bombPos:{bombPos} playerToBombDist:{playerToBombDist:F3} signedAxisOffset:{signedAxisOffset:F3} " +
+                    $"perpendicularOffset:{perpendicularOffset:F3}",
+                    verbose: true);
+
+                bool handled = ability.TryHandleBlockedHit(bombCollider, dir, tileSize, obstacleMask);
+
+                LogBombEscape(
+                    $"[KickAdj] RESULT ability:{ability.GetType().Name} bomb:{bomb.name} handled:{handled} " +
+                    $"playerPos:{position} bombPos:{bombPos}",
+                    verbose: true);
+
+                if (handled)
+                {
+                    _lastAdjKickedBomb = bomb;
+
+                    LogBombEscape(
+                        $"[KickAdj] SUCCESS bomb:{bomb.name} pos:{position} snappedCurrentTile:{snappedCurrentTile} " +
+                        $"targetTileCenter:{targetTileCenter} playerToBombDist:{playerToBombDist:F3} " +
+                        $"signedAxisOffset:{signedAxisOffset:F3} perpendicularOffset:{perpendicularOffset:F3}",
+                        verbose: false);
+
+                    return true;
+                }
+            }
+
+            LogBombEscape(
+                $"[KickAdj] FAIL bomb matched target tile but no ability handled it bomb:{bomb.name}",
+                verbose: true);
+
+            return false;
+        }
+
+        LogBombEscape(
+            $"[KickAdj] END no adjacent bomb matched pos:{position} dir:{dir} targetTileCenter:{targetTileCenter}",
+            verbose: true);
+
+        return false;
+    }
+
+    private bool ShouldLogCurve()
+    {
+        return debugCurvas && (!IsPlayer() || playerId == debugCurvasPlayerId);
+    }
+
+    private void LogCurve(string msg, bool verbose = false)
+    {
+        if (!ShouldLogCurve())
+            return;
+
+        if (verbose && !debugCurvasVerbose)
+            return;
+
+        Debug.Log($"[MovementCurve][P{playerId}][f:{Time.frameCount}] {msg}", this);
+    }
+
+    private void LogBombEscape(string message, bool verbose = false)
+    {
+        if (!debugBombEscape)
+            return;
+
+        if (verbose && !debugBombEscapeVerbose)
+            return;
+
+        Debug.Log($"[BombEscape][Player:{name}] {message}", this);
+    }
+
+    private float GetOwnApproxRadius()
+    {
+        var col = GetComponent<Collider2D>();
+        if (col == null)
+            return 0.2f;
+
+        Bounds b = col.bounds;
+        return Mathf.Max(b.extents.x, b.extents.y);
+    }
+
+    private bool IsPhysicallyStillInsideTriggerBomb(Bomb bomb, Vector2 playerPos)
+    {
+        if (bomb == null || bomb.IsSolid || bomb.IsBeingPunched)
+            return false;
+
+        float playerRadius = GetOwnApproxRadius();
+        float allowedDistance = bomb.ApproxRadius + playerRadius + 0.02f;
+
+        Vector2 bombPos = bomb.GetLogicalPosition();
+        float dist = Vector2.Distance(playerPos, bombPos);
+
+        return dist <= allowedDistance;
+    }
+
+    private bool IsPhysicallyStillInsideTriggerBomb(Bomb bomb, Vector2 currentPos, Vector2 targetPos)
+    {
+        return IsPhysicallyStillInsideTriggerBomb(bomb, currentPos) ||
+               IsPhysicallyStillInsideTriggerBomb(bomb, targetPos);
+    }
+
+    [Header("Bomb Reentry Centering")]
+    [SerializeField, Range(0.01f, 0.25f)] private float bombReentryCenterDuration = 0.1f;
+
+    private bool bombReentryCenteringActive;
+    private Vector2 bombReentryCenterStart;
+    private Vector2 bombReentryCenterTarget;
+    private float bombReentryCenterElapsed;
+
+    private void StartBombReentryCentering(Vector2 currentPosition, Vector2 targetPosition)
+    {
+        Vector2 quantizedCurrent = QuantizeToPixelGrid(currentPosition);
+        Vector2 quantizedTarget = QuantizeToPixelGrid(targetPosition);
+
+        if (Vector2.Distance(quantizedCurrent, quantizedTarget) <= PixelWorldStep * 0.5f)
+        {
+            bombReentryCenteringActive = false;
+
+            if (Rigidbody != null)
+                Rigidbody.MovePosition(quantizedTarget);
+
+            return;
+        }
+
+        bombReentryCenteringActive = true;
+        bombReentryCenterStart = quantizedCurrent;
+        bombReentryCenterTarget = quantizedTarget;
+        bombReentryCenterElapsed = 0f;
+    }
+
+    public void CancelBombReentryCentering()
+    {
+        bombReentryCenteringActive = false;
+        bombReentryCenterElapsed = 0f;
+
+        Vector2 current = Rigidbody != null ? Rigidbody.position : (Vector2)transform.position;
+        current = QuantizeToPixelGrid(current);
+        bombReentryCenterStart = current;
+        bombReentryCenterTarget = current;
+    }
+
+    private bool UpdateBombReentryCentering()
+    {
+        if (!bombReentryCenteringActive)
+            return false;
+
+        if (Rigidbody == null)
+        {
+            bombReentryCenteringActive = false;
+            return false;
+        }
+
+        if (bombReentryCenterDuration <= 0.0001f)
+        {
+            bombReentryCenteringActive = false;
+            Rigidbody.MovePosition(QuantizeToPixelGrid(bombReentryCenterTarget));
+            return true;
+        }
+
+        bombReentryCenterElapsed += Time.fixedDeltaTime;
+
+        float t = Mathf.Clamp01(bombReentryCenterElapsed / bombReentryCenterDuration);
+        Vector2 next = Vector2.Lerp(bombReentryCenterStart, bombReentryCenterTarget, t);
+        next = QuantizeToPixelGrid(next);
+
+        Rigidbody.linearVelocity = Vector2.zero;
+        Rigidbody.MovePosition(next);
+
+        if (t >= 1f || Vector2.Distance(next, bombReentryCenterTarget) <= PixelWorldStep * 0.5f)
+        {
+            bombReentryCenteringActive = false;
+            Rigidbody.MovePosition(QuantizeToPixelGrid(bombReentryCenterTarget));
+        }
+
+        return true;
+    }
+
+    private Vector2 GetBombReentryCenterTarget(Vector2 bombPos, Vector2 dirForSize)
+    {
+        Vector2 dir = NormalizeCardinal(dirForSize);
+        if (dir == Vector2.zero)
+            dir = NormalizeCardinal(facingDirection);
+
+        if (dir == Vector2.zero)
+            dir = Vector2.down;
+
+        Vector2 target = bombPos - dir * tileSize;
+
+        target.x = Mathf.Round(target.x / tileSize) * tileSize;
+        target.y = Mathf.Round(target.y / tileSize) * tileSize;
+
+        return target;
     }
 }

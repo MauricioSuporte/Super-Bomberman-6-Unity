@@ -7,6 +7,10 @@ public sealed class PlayerManualDismount : MonoBehaviour
     [Header("Input")]
     private readonly PlayerAction dismountAction = PlayerAction.ActionL;
 
+    [Header("Dismount Animation")]
+    [SerializeField, Range(0.1f, 2f)]
+    private float manualDismountDuration = 0.5f;
+
     [Header("Freeze")]
     [SerializeField] private bool freezeEggQueueOnDismount = true;
 
@@ -118,10 +122,15 @@ public sealed class PlayerManualDismount : MonoBehaviour
             ClearDetachedLouieInvulnerability(detachedLouie);
         }
 
+        float previousRidingSeconds = rider.ridingSeconds;
+        rider.ridingSeconds = manualDismountDuration;
+
         bool started = rider.TryPlayDismount(
             facingAtPress,
             onComplete: () =>
             {
+                rider.ridingSeconds = previousRidingSeconds;
+
                 if (movement != null)
                     movement.ForceIdleFacing(facingAtPress, "TryManualDismount");
 
@@ -129,6 +138,11 @@ public sealed class PlayerManualDismount : MonoBehaviour
             },
             onStart: () =>
             {
+                companion.ApplyRidingTransitionInvulnerability(
+                    manualDismountDuration,
+                    blink: false,
+                    detachedLouie: detachedLouie);
+
                 if (eggQueue != null)
                     eggQueue.SetIgnoreOwnerInvulnerability(true);
 
@@ -164,7 +178,10 @@ public sealed class PlayerManualDismount : MonoBehaviour
         );
 
         if (!started)
+        {
+            rider.ridingSeconds = previousRidingSeconds;
             return;
+        }
     }
 
     static void StartDetachedLouieInactivityLoop(

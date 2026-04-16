@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using UnityEngine;
 
 public static class BossRushSession
@@ -232,10 +232,7 @@ public static class BossRushSession
 
         bool[] aliveFlags = new bool[4];
 
-        var identities = UnityEngine.Object.FindObjectsByType<PlayerIdentity>(
-            FindObjectsInactive.Include,
-            FindObjectsSortMode.None
-        );
+        var identities = UnityEngine.Object.FindObjectsByType<PlayerIdentity>(FindObjectsInactive.Include);
 
         for (int i = 0; i < identities.Length; i++)
         {
@@ -292,6 +289,7 @@ public static class BossRushSession
             state.HasControlBombs = false;
             state.HasPowerBomb = false;
             state.HasRubberBombs = false;
+            state.HasMagnetBomb = false;
             state.HasFullFire = false;
             state.MountedLouie = MountedType.None;
             state.QueuedEggs.Clear();
@@ -428,6 +426,7 @@ public static class BossRushSession
             state.HasControlBombs = false;
             state.HasPowerBomb = false;
             state.HasRubberBombs = false;
+            state.HasMagnetBomb = false;
             state.HasFullFire = false;
             state.MountedLouie = MountedType.None;
             state.QueuedEggs.Clear();

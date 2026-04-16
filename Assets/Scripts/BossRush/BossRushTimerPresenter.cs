@@ -1,6 +1,5 @@
-﻿using TMPro;
+using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
 
 [DisallowMultipleComponent]
 public class BossRushTimerPresenter : MonoBehaviour
@@ -54,7 +53,7 @@ public class BossRushTimerPresenter : MonoBehaviour
 
     public static void EnsureInScene()
     {
-        var existing = FindFirstObjectByType<BossRushTimerPresenter>();
+        var existing = FindAnyObjectByType<BossRushTimerPresenter>();
         if (existing != null)
         {
             instanceInScene = existing;
@@ -83,7 +82,7 @@ public class BossRushTimerPresenter : MonoBehaviour
         if (safeFrameGo != null && safeFrameGo.TryGetComponent<RectTransform>(out var safeFrameRt))
             return safeFrameRt;
 
-        var fitters = FindObjectsByType<UICameraViewportFitter>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        var fitters = FindObjectsByType<UICameraViewportFitter>(FindObjectsInactive.Include);
         for (int i = 0; i < fitters.Length; i++)
         {
             if (fitters[i] == null)
@@ -94,7 +93,7 @@ public class BossRushTimerPresenter : MonoBehaviour
                 return rt;
         }
 
-        var canvases = FindObjectsByType<Canvas>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        var canvases = FindObjectsByType<Canvas>(FindObjectsInactive.Include);
         Canvas bestCanvas = null;
 
         for (int i = 0; i < canvases.Length; i++)

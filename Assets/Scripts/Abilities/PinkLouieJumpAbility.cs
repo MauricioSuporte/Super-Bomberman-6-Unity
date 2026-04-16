@@ -1,4 +1,4 @@
-﻿using Assets.Scripts.Interface;
+using Assets.Scripts.Interface;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.Tilemaps;
@@ -160,7 +160,7 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
                 dir = new Vector2(0f, Mathf.Sign(dir.y));
         }
 
-        var gm = FindFirstObjectByType<GameManager>();
+        var gm = FindAnyObjectByType<GameManager>();
         var destructible = gm != null ? gm.destructibleTilemap : null;
         var indestructible = gm != null ? gm.indestructibleTilemap : null;
         var ground = gm != null ? gm.groundTilemap : null;

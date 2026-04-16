@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
@@ -224,7 +224,7 @@ public sealed class BlockerEnemyMovementController : EnemyMovementController
         if (destructiblesTilemap != null)
             return;
 
-        var tms = FindObjectsByType<Tilemap>(FindObjectsSortMode.None);
+        var tms = FindObjectsByType<Tilemap>();
         if (tms == null)
             return;
 
@@ -246,7 +246,7 @@ public sealed class BlockerEnemyMovementController : EnemyMovementController
         if (indestructiblesTilemap != null)
             return;
 
-        var tms = FindObjectsByType<Tilemap>(FindObjectsSortMode.None);
+        var tms = FindObjectsByType<Tilemap>();
         if (tms == null)
             return;
 

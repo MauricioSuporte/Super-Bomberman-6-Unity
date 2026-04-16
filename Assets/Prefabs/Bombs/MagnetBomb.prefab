@@ -87,7 +87,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 3
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 3671727416473069314, guid: 6e85537cefcdfa848bca3fb60e64908a, type: 3}
+  m_Sprite: {fileID: 8017116906545420059, guid: f2023e27fcd226f4aadd739380e65c6d, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -109,12 +109,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a4b55e1b961d144197e1a7a4a391956, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  idleSprite: {fileID: 3671727416473069314, guid: 6e85537cefcdfa848bca3fb60e64908a, type: 3}
+  idleSprite: {fileID: 8017116906545420059, guid: f2023e27fcd226f4aadd739380e65c6d, type: 3}
   animationSprite:
-  - {fileID: 8622632769309838820, guid: 6e85537cefcdfa848bca3fb60e64908a, type: 3}
-  - {fileID: 3671727416473069314, guid: 6e85537cefcdfa848bca3fb60e64908a, type: 3}
-  - {fileID: -7580392354972000331, guid: 6e85537cefcdfa848bca3fb60e64908a, type: 3}
-  - {fileID: 3671727416473069314, guid: 6e85537cefcdfa848bca3fb60e64908a, type: 3}
+  - {fileID: -4259037732859170913, guid: f2023e27fcd226f4aadd739380e65c6d, type: 3}
+  - {fileID: 8017116906545420059, guid: f2023e27fcd226f4aadd739380e65c6d, type: 3}
+  - {fileID: 3504404868277583788, guid: f2023e27fcd226f4aadd739380e65c6d, type: 3}
+  - {fileID: 8017116906545420059, guid: f2023e27fcd226f4aadd739380e65c6d, type: 3}
   allowFlipX: 1
   animationTime: 0.25
   useSequenceDuration: 0
@@ -213,6 +213,7 @@ MonoBehaviour:
   chainStepDelay: 0.1
   FuseSeconds: 2
   stageBoundsTilemap: {fileID: 0}
+  indestructibleTilemap: {fileID: 0}
   magnetPullSpeed: 10
 --- !u!114 &1584574550123671064
 MonoBehaviour:
@@ -235,6 +236,12 @@ MonoBehaviour:
   bombLayerName: Bomb
   magnetPullSpeedMultiplier: 0.5
   tileCheckBoxSize: 0.6
+  blockMoveMask:
+    serializedVersion: 2
+    m_Bits: 0
+  overlapBoxSize: 0.6
+  originBlockerSize: 0.9
+  originBlockerUseTrigger: 0
 --- !u!82 &4491695425928016186
 AudioSource:
   m_ObjectHideFlags: 0

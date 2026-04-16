@@ -532,7 +532,7 @@ MonoBehaviour:
   - {fileID: 2654148660330044669, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
   - {fileID: 8807407261490140165, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
   allowFlipX: 0
-  animationTime: 0.083333336
+  animationTime: 0.033333335
   useSequenceDuration: 0
   sequenceDuration: 0.25
   useUnscaledTime: 1
@@ -1256,7 +1256,7 @@ MonoBehaviour:
   - {fileID: -4473064897685233622, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
   - {fileID: -355897882055163490, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
   allowFlipX: 0
-  animationTime: 0.0625
+  animationTime: 0.025
   useSequenceDuration: 0
   sequenceDuration: 0.25
   useUnscaledTime: 1
@@ -2989,7 +2989,7 @@ Transform:
   m_GameObject: {fileID: 4428092436107916663}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.11, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -3195,7 +3195,7 @@ MonoBehaviour:
   - {fileID: 1621839873214276283, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
   - {fileID: 7391007977823753647, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
   allowFlipX: 0
-  animationTime: 0.0625
+  animationTime: 0.025
   useSequenceDuration: 0
   sequenceDuration: 0.25
   useUnscaledTime: 1
@@ -3696,7 +3696,7 @@ CircleCollider2D:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4947014498081102474}
-  m_Enabled: 0
+  m_Enabled: 1
   serializedVersion: 3
   m_Density: 1
   m_Material: {fileID: 6200000, guid: 55f48b5f7b2a23949a11de8a8f24b7e2, type: 2}
@@ -3723,8 +3723,8 @@ CircleCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: 0, y: 0}
-  m_Radius: 0.5
+  m_Offset: {x: 0, y: -0.1}
+  m_Radius: 0.2
 --- !u!114 &6013594429678645981
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3737,6 +3737,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ee9b3a4a2762bec41ad14632b1521049, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  debugCurvas: 0
+  debugCurvasVerbose: 0
+  debugCurvasPlayerId: 1
+  debugBombEscape: 0
+  debugBombEscapeVerbose: 0
   deathSfx: {fileID: 8300000, guid: d09be99ae21a8d540ac21a0593b254f5, type: 3}
   speed: 5
   tileSize: 1
@@ -3810,19 +3815,19 @@ MonoBehaviour:
   visualOverrideActive: 0
   externalVisualSuppressed: 0
   perpendicularAlignMultiplier: 8
-  snapPerpendicularOnAxisStart: 1
   alignEpsilon: 0.0015
-  enableCorridorAxisLock: 1
-  corridorCenterEpsilon: 0.06
+  enableCorridorAxisLock: 0
   corridorSolidProbeSizeMul: 0.9
   canPassTaggedObstacles: 0
   passObstacleTag: Water
   pixelsPerUnit: 16
   useIntegerPixelSteps: 1
   suppressInactivityAnimation: 0
+  bombKickMinCenterOffset: 0.625
   isDead: 0
   explosionInvulnerable: 0
   externalMovementOverride: 0
+  bombReentryCenterDuration: 0.1
 --- !u!114 &2372813969180496726
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3842,6 +3847,7 @@ MonoBehaviour:
   controlBombPrefab: {fileID: 147425199346742615, guid: a1062e2cde4a9a944acd70ec09573664, type: 3}
   powerBombPrefab: {fileID: 147425199346742615, guid: 9928ad697fc8ff64587c25df57a4209b, type: 3}
   rubberBombPrefab: {fileID: 147425199346742615, guid: 26d7fe4d167283544b2eef6186339436, type: 3}
+  magnetBombPrefab: {fileID: 147425199346742615, guid: 851ce7b3e6e8c724dbbf6dae1abc11dc, type: 3}
   bombFuseTime: 2
   bombAmout: 1
   chainBombDelaySeconds: 0.1
@@ -4015,6 +4021,9 @@ MonoBehaviour:
   enabledAbility: 0
   punchDistanceTiles: 3
   punchLockTime: 0.25
+  enableAutoPunchWhileHolding: 1
+  earlyPunchSearchSize: 1.4
+  earlyPunchMinExitFraction: 0.3
   punchUp: {fileID: 1334802762771057975}
   punchDown: {fileID: 9127359846835089177}
   punchLeft: {fileID: 398357160787023457}
@@ -4207,6 +4216,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 68b020415a2b4524a9b95a6531190b6d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerLouieManualDismount
+  manualDismountDuration: 0.5
   freezeEggQueueOnDismount: 1
   detachedLouieSwitchInterval: 15
 --- !u!114 &4481698298045029297
@@ -4264,8 +4274,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PowerGloveAbility
   enabledAbility: 1
   isHoldingBomb: 0
-  pickupLockTime: 0.25
-  releaseLockTime: 0.25
   throwDistanceTiles: 3
   pickupUp: {fileID: 2955665185425043085}
   pickupDown: {fileID: 5596076735691532720}
@@ -5625,7 +5633,7 @@ MonoBehaviour:
   - {fileID: 6631305461169108491, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
   - {fileID: 6880199824899251412, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
   allowFlipX: 0
-  animationTime: 0.0625
+  animationTime: 0.025
   useSequenceDuration: 0
   sequenceDuration: 0.25
   useUnscaledTime: 1

@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEngine.Tilemaps;
 
 public sealed class SwapGroundTileBlackoutHandler : MonoBehaviour, IGroundTileExplosionHitHandler, IGroundTileHandler
@@ -59,7 +59,7 @@ public sealed class SwapGroundTileBlackoutHandler : MonoBehaviour, IGroundTileEx
         if (groundTilemapOverride != null)
             return groundTilemapOverride;
 
-        var tms = FindObjectsByType<Tilemap>(FindObjectsSortMode.None);
+        var tms = FindObjectsByType<Tilemap>();
         for (int i = 0; i < tms.Length; i++)
         {
             var tm = tms[i];

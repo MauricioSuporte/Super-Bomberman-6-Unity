@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using UnityEngine;
 
 public sealed class PlayersSpawner : MonoBehaviour
@@ -92,13 +92,13 @@ public sealed class PlayersSpawner : MonoBehaviour
 
     bool FindAnyPlayerInScene()
     {
-        var ids = FindObjectsByType<PlayerIdentity>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+        var ids = FindObjectsByType<PlayerIdentity>(FindObjectsInactive.Exclude);
         return ids != null && ids.Length > 0;
     }
 
     void DestroyExistingPlayers()
     {
-        var ids = FindObjectsByType<PlayerIdentity>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        var ids = FindObjectsByType<PlayerIdentity>(FindObjectsInactive.Include);
         if (ids == null)
             return;
 

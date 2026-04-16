@@ -43,70 +43,35 @@ public class PlayerInputProfile
 
         if (id == 1)
         {
-            defaultBindings[PlayerAction.MoveUp] = Binding.FromKey(KeyCode.W);
-            defaultBindings[PlayerAction.MoveDown] = Binding.FromKey(KeyCode.S);
-            defaultBindings[PlayerAction.MoveLeft] = Binding.FromKey(KeyCode.A);
-            defaultBindings[PlayerAction.MoveRight] = Binding.FromKey(KeyCode.D);
-
-            defaultBindings[PlayerAction.Start] = Binding.FromKey(KeyCode.Return);
-            defaultBindings[PlayerAction.ActionA] = Binding.FromKey(KeyCode.F);
-            defaultBindings[PlayerAction.ActionB] = Binding.FromKey(KeyCode.G);
-            defaultBindings[PlayerAction.ActionC] = Binding.FromKey(KeyCode.H);
-
-            defaultBindings[PlayerAction.ActionL] = Binding.FromKey(KeyCode.R);
-            defaultBindings[PlayerAction.ActionR] = Binding.FromKey(KeyCode.T);
-
-            return;
-        }
-
-        if (id == 2)
-        {
-            defaultBindings[PlayerAction.MoveUp] = Binding.FromKey(KeyCode.I);
-            defaultBindings[PlayerAction.MoveDown] = Binding.FromKey(KeyCode.K);
-            defaultBindings[PlayerAction.MoveLeft] = Binding.FromKey(KeyCode.J);
-            defaultBindings[PlayerAction.MoveRight] = Binding.FromKey(KeyCode.L);
-
-            defaultBindings[PlayerAction.Start] = Binding.FromKey(KeyCode.Y);
-            defaultBindings[PlayerAction.ActionA] = Binding.FromKey(KeyCode.U);
-            defaultBindings[PlayerAction.ActionB] = Binding.FromKey(KeyCode.O);
-            defaultBindings[PlayerAction.ActionC] = Binding.FromKey(KeyCode.P);
-
-            defaultBindings[PlayerAction.ActionL] = Binding.FromKey(KeyCode.LeftBracket);
-            defaultBindings[PlayerAction.ActionR] = Binding.FromKey(KeyCode.RightBracket);
-
-            return;
-        }
-
-        if (id == 3)
-        {
             defaultBindings[PlayerAction.MoveUp] = Binding.FromKey(KeyCode.UpArrow);
             defaultBindings[PlayerAction.MoveDown] = Binding.FromKey(KeyCode.DownArrow);
             defaultBindings[PlayerAction.MoveLeft] = Binding.FromKey(KeyCode.LeftArrow);
             defaultBindings[PlayerAction.MoveRight] = Binding.FromKey(KeyCode.RightArrow);
 
-            defaultBindings[PlayerAction.Start] = Binding.FromKey(KeyCode.RightShift);
-            defaultBindings[PlayerAction.ActionA] = Binding.FromKey(KeyCode.Comma);
-            defaultBindings[PlayerAction.ActionB] = Binding.FromKey(KeyCode.Period);
-            defaultBindings[PlayerAction.ActionC] = Binding.FromKey(KeyCode.Slash);
+            defaultBindings[PlayerAction.Start] = Binding.FromKey(KeyCode.Return);
 
-            defaultBindings[PlayerAction.ActionL] = Binding.FromKey(KeyCode.RightControl);
-            defaultBindings[PlayerAction.ActionR] = Binding.FromKey(KeyCode.RightAlt);
+            defaultBindings[PlayerAction.ActionA] = Binding.FromKey(KeyCode.C);
+            defaultBindings[PlayerAction.ActionB] = Binding.FromKey(KeyCode.X);
+            defaultBindings[PlayerAction.ActionC] = Binding.FromKey(KeyCode.Z);
+
+            defaultBindings[PlayerAction.ActionL] = Binding.FromKey(KeyCode.S);
+            defaultBindings[PlayerAction.ActionR] = Binding.FromKey(KeyCode.D);
 
             return;
         }
 
-        defaultBindings[PlayerAction.MoveUp] = Binding.FromKey(KeyCode.Keypad8);
-        defaultBindings[PlayerAction.MoveDown] = Binding.FromKey(KeyCode.Keypad2);
-        defaultBindings[PlayerAction.MoveLeft] = Binding.FromKey(KeyCode.Keypad4);
-        defaultBindings[PlayerAction.MoveRight] = Binding.FromKey(KeyCode.Keypad6);
+        defaultBindings[PlayerAction.MoveUp] = Binding.Empty();
+        defaultBindings[PlayerAction.MoveDown] = Binding.Empty();
+        defaultBindings[PlayerAction.MoveLeft] = Binding.Empty();
+        defaultBindings[PlayerAction.MoveRight] = Binding.Empty();
 
-        defaultBindings[PlayerAction.Start] = Binding.FromKey(KeyCode.KeypadEnter);
-        defaultBindings[PlayerAction.ActionA] = Binding.FromKey(KeyCode.Keypad1);
-        defaultBindings[PlayerAction.ActionB] = Binding.FromKey(KeyCode.Keypad2);
-        defaultBindings[PlayerAction.ActionC] = Binding.FromKey(KeyCode.Keypad3);
+        defaultBindings[PlayerAction.Start] = Binding.Empty();
+        defaultBindings[PlayerAction.ActionA] = Binding.Empty();
+        defaultBindings[PlayerAction.ActionB] = Binding.Empty();
+        defaultBindings[PlayerAction.ActionC] = Binding.Empty();
 
-        defaultBindings[PlayerAction.ActionL] = Binding.FromKey(KeyCode.Keypad0);
-        defaultBindings[PlayerAction.ActionR] = Binding.FromKey(KeyCode.KeypadPeriod);
+        defaultBindings[PlayerAction.ActionL] = Binding.Empty();
+        defaultBindings[PlayerAction.ActionR] = Binding.Empty();
     }
 
     public Binding GetBinding(PlayerAction action) => bindings[action];

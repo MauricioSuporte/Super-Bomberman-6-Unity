@@ -23,5 +23,6 @@
     LandMine = 20,
     Clock = 21,
     PowerBomb = 22,
-    RubberBomb = 23
+    RubberBomb = 23,
+    MagnetBomb = 24
 }

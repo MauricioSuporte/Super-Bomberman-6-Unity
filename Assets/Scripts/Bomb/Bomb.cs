@@ -53,6 +53,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
     public bool IsBeingPunched => isPunched;
 
     public bool IsSolid => bombCollider != null && !bombCollider.isTrigger;
+    public bool CanBeKickedEarly => !HasExploded && !isKicked && !isPunched;
     public bool CanBeKicked => !HasExploded && !isKicked && IsSolid && charactersInside.Count == 0;
     public bool CanBePunched => !HasExploded && !isKicked && !isPunched && IsSolid && charactersInside.Count == 0;
     public bool CanBeMagnetPulled => !HasExploded && !IsBeingKicked && !IsBeingPunched && !IsBeingMagnetPulled;
@@ -101,6 +102,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
     private float magnetSpeedMultiplier = 1f;
 
     private static readonly WaitForFixedUpdate waitFixed = new();
+    private static readonly Collider2D[] magnetBlockCheckBuffer = new Collider2D[16];
 
     private GameObject magnetOriginBlocker;
 
@@ -313,13 +315,12 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         charactersInside.Clear();
 
         int charMask = LayerMask.GetMask("Player", "Enemy");
-        Collider2D[] cols = Physics2D.OverlapBoxAll(worldPos, Vector2.one * 0.4f, 0f, charMask);
 
-        if (cols == null)
+        float searchRadius = Mathf.Max(ApproxRadius + 0.35f, 0.75f);
+        Collider2D[] cols = Physics2D.OverlapCircleAll(worldPos, searchRadius, charMask);
+
+        if (cols == null || cols.Length == 0)
             return;
-
-        int playerLayer = LayerMask.NameToLayer("Player");
-        int enemyLayer = LayerMask.NameToLayer("Enemy");
 
         for (int i = 0; i < cols.Length; i++)
         {
@@ -327,10 +328,17 @@ public class Bomb : MonoBehaviour, IMagnetPullable
             if (c == null)
                 continue;
 
-            int layer = c.gameObject.layer;
-            if (layer == playerLayer || layer == enemyLayer)
+            if (!IsCharacterLayer(c.gameObject.layer))
+                continue;
+
+            if (IsCharacterStillOccupyingBomb(c, worldPos))
                 charactersInside.Add(c);
         }
+
+        LogBombEscape(
+            $"RecalculateCharactersInsideAt worldPos:{worldPos} " +
+            $"searchRadius:{searchRadius:F3} count:{charactersInside.Count}",
+            verbose: true);
     }
 
     private bool TileHasBomb(Vector2 pos)
@@ -486,8 +494,14 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         float visualStartYOffset = 0f,
         Vector2? logicalOriginOverride = null)
     {
-        if (!CanBePunched || direction == Vector2.zero)
+        bool canEarlyPunch = !HasExploded && !isKicked && !isPunched;
+
+        bool willPunch = CanBePunched || canEarlyPunch;
+
+        if (!willPunch || direction == Vector2.zero)
+        {
             return false;
+        }
 
         kickDirection = direction.normalized;
         kickTileSize = tileSize;
@@ -513,7 +527,10 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         if (punchRoutine != null)
             StopCoroutine(punchRoutine);
 
+        RemoveKickOriginBlocker();
+
         isPunched = true;
+
         charactersInside.Clear();
         bombCollider.isTrigger = true;
 
@@ -724,6 +741,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
 
     FINISH:
         TeleportTo(cur);
+        DestroyPickupsAtWorld(cur);
 
         isPunched = false;
         punchRoutine = null;
@@ -759,7 +777,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
             return;
         }
 
-        var tilemaps = FindObjectsByType<Tilemap>(FindObjectsSortMode.None);
+        var tilemaps = FindObjectsByType<Tilemap>();
         Tilemap ground = null;
         Tilemap ind = null;
 
@@ -932,7 +950,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         if (stageBoundsTilemap != null)
             return;
 
-        var tilemaps = FindObjectsByType<Tilemap>(FindObjectsSortMode.None);
+        var tilemaps = FindObjectsByType<Tilemap>();
         if (tilemaps == null || tilemaps.Length == 0)
             return;
 
@@ -958,7 +976,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         if (indestructibleTilemap != null)
             return;
 
-        var tilemaps = FindObjectsByType<Tilemap>(FindObjectsSortMode.None);
+        var tilemaps = FindObjectsByType<Tilemap>();
         if (tilemaps == null || tilemaps.Length == 0)
             return;
 
@@ -989,6 +1007,10 @@ public class Bomb : MonoBehaviour, IMagnetPullable
 
         RecalculateCharactersInsideAt(rb.position);
         bombCollider.isTrigger = charactersInside.Count > 0;
+
+        LogBombEscape(
+            $"Initialize pos:{rb.position} logical:{lastPos} charactersInside:{charactersInside.Count} " +
+            $"isTrigger:{bombCollider.isTrigger} approxRadius:{ApproxRadius:F3}");
     }
 
     public Vector2 GetLogicalPosition() => lastPos;
@@ -1023,8 +1045,11 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         float originBlockerSize,
         bool originBlockerUseTrigger)
     {
-        if (!CanBeKicked || direction == Vector2.zero)
+
+        if ((!CanBeKicked && !CanBeKickedEarly) || direction == Vector2.zero)
+        {
             return false;
+        }
 
         kickDirection = direction.normalized;
         kickTileSize = tileSize;
@@ -1038,9 +1063,23 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         kickOriginBlockerUseTrigger = originBlockerUseTrigger;
 
         Vector2 origin = SnapToGrid(rb.position, tileSize);
+        Vector2 next = origin + kickDirection * kickTileSize;
 
-        if (IsKickBlocked(origin + kickDirection * kickTileSize))
+
+        if (IsKickBlocked(next))
+        {
             return false;
+        }
+
+        if (IsKickBlockedByCharacterOnImmediateExit(origin, next))
+        {
+            return false;
+        }
+
+        if (IsBlockedByMaskAtWorld(next, kickBlockMoveMask, kickOverlapBoxSize))
+        {
+            return false;
+        }
 
         currentTileCenter = origin;
         lastPos = origin;
@@ -1054,6 +1093,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         isKicked = true;
 
         kickRoutine = StartCoroutine(KickRoutineFixed());
+
         return true;
     }
 
@@ -1160,6 +1200,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
 
                 lastPos = pos;
                 rb.MovePosition(pos);
+                DestroyPickupsAtWorld(pos);
 
                 yield return waitFixed;
             }
@@ -1213,6 +1254,8 @@ public class Bomb : MonoBehaviour, IMagnetPullable
             rb.position = next;
             transform.position = next;
 
+            DestroyPickupsAtWorld(next);
+
             if (owner != null)
                 owner.NotifyBombAt(next, gameObject);
         }
@@ -1246,6 +1289,8 @@ public class Bomb : MonoBehaviour, IMagnetPullable
             StopCoroutine(kickRoutine);
             kickRoutine = null;
         }
+
+        RemoveKickOriginBlocker();
 
         isKicked = false;
 
@@ -1303,25 +1348,39 @@ public class Bomb : MonoBehaviour, IMagnetPullable
 
         if (layer == LayerMask.NameToLayer("Explosion"))
         {
+            LogBombEscape(
+                $"OnTriggerEnter EXPLOSION other:{other.name} " +
+                $"isControlBomb:{IsControlBomb} isPunched:{isPunched} isKicked:{isKicked}");
+
             if (IsControlBomb && isPunched)
                 return;
 
+            if (isKicked)
+                StopKickAndSnapToGrid(kickTileSize);
+
             if (owner != null)
-                owner.ExplodeBombChained(gameObject);
+                owner.ExplodeBomb(gameObject);
 
             return;
         }
 
-        int playerLayer = LayerMask.NameToLayer("Player");
-        int enemyLayer = LayerMask.NameToLayer("Enemy");
+        if (!IsCharacterLayer(layer))
+            return;
 
-        if (layer == playerLayer || layer == enemyLayer)
-        {
+        int before = charactersInside.Count;
+        bool wasTrigger = bombCollider != null && bombCollider.isTrigger;
+
+        if (IsCharacterStillOccupyingBomb(other, rb != null ? rb.position : (Vector2)transform.position))
             charactersInside.Add(other);
 
-            if (bombCollider != null && !bombCollider.isTrigger)
-                bombCollider.isTrigger = true;
-        }
+        if (bombCollider != null && charactersInside.Count > 0)
+            bombCollider.isTrigger = true;
+
+        LogBombEscape(
+            $"OnTriggerEnter CHAR other:{other.name} layer:{LayerMask.LayerToName(layer)} " +
+            $"beforeCount:{before} afterCount:{charactersInside.Count} " +
+            $"wasTrigger:{wasTrigger} nowTrigger:{(bombCollider != null && bombCollider.isTrigger)} " +
+            $"bombPos:{transform.position} otherPos:{other.transform.position}");
     }
 
     private void OnTriggerExit2D(Collider2D other)
@@ -1329,17 +1388,40 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         if (HasExploded || isKicked || isPunched)
             return;
 
-        int layer = other.gameObject.layer;
-        int playerLayer = LayerMask.NameToLayer("Player");
-        int enemyLayer = LayerMask.NameToLayer("Enemy");
-
-        if (layer != playerLayer && layer != enemyLayer)
+        if (other == null)
             return;
+
+        int layer = other.gameObject.layer;
+        if (!IsCharacterLayer(layer))
+            return;
+
+        int before = charactersInside.Count;
+        bool wasTrigger = bombCollider != null && bombCollider.isTrigger;
 
         charactersInside.Remove(other);
 
+        Vector2 bombPos = rb != null ? rb.position : (Vector2)transform.position;
+
+        RecalculateCharactersInsideAt(bombPos);
+
+        bool stillOccupying = charactersInside.Contains(other);
+
+        if (bombCollider != null)
+            bombCollider.isTrigger = charactersInside.Count > 0;
+
+        LogBombEscape(
+            $"OnTriggerExit CHAR other:{other.name} layer:{LayerMask.LayerToName(layer)} " +
+            $"beforeCount:{before} afterRecalcCount:{charactersInside.Count} " +
+            $"wasTrigger:{wasTrigger} nowTrigger:{(bombCollider != null && bombCollider.isTrigger)} " +
+            $"bombPos:{bombPos} otherPos:{other.transform.position} stillOccupying:{stillOccupying}");
+
         if (charactersInside.Count == 0)
-            bombCollider.isTrigger = false;
+        {
+            LogBombEscape(
+                $"Bomb became SOLID at bombPos:{bombPos}. " +
+                $"This is only valid if no player/enemy is still physically overlapping the bomb.",
+                verbose: false);
+        }
     }
 
     public float RemainingFuseSeconds
@@ -1406,12 +1488,16 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         kickDirection = directionToMagnet.normalized;
         kickTileSize = tileSize;
 
-        kickObstacleMask = obstacleMask | LayerMask.GetMask("Enemy");
+        kickObstacleMask = obstacleMask | LayerMask.GetMask("Enemy", "Player", "Louie");
         kickDestructibleTilemap = destructibleTilemap;
 
         ResolveIndestructibleTilemapIfNeeded();
 
         Vector2 origin = SnapToGrid(rb.position, tileSize);
+        Vector2 next = origin + kickDirection * kickTileSize;
+
+        if (IsMagnetTileBlocked(next, blockMoveMask, overlapBoxSize))
+            return false;
 
         currentTileCenter = origin;
         lastPos = origin;
@@ -1441,7 +1527,6 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         bool originBlockerUseTrigger)
     {
         float mult = Mathf.Max(0.05f, speedMultiplier);
-
         int remainingSteps = Mathf.Max(0, steps);
 
         while (true)
@@ -1455,7 +1540,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
             Vector2 start = currentTileCenter;
             Vector2 next = currentTileCenter + kickDirection * kickTileSize;
 
-            if (IsBlockedByMaskAtWorld(next, blockMoveMask, overlapBoxSize))
+            if (IsMagnetTileBlocked(next, blockMoveMask, overlapBoxSize))
                 break;
 
             EnsureMagnetOriginBlocker(start, originBlockerSize, originBlockerUseTrigger);
@@ -1465,7 +1550,6 @@ public class Bomb : MonoBehaviour, IMagnetPullable
 
             float travelTime = kickTileSize / speed;
             float elapsed = 0f;
-
             bool cancelAndReturn = false;
 
             while (elapsed < travelTime)
@@ -1476,7 +1560,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
                     yield break;
                 }
 
-                if (IsBlockedByMaskAtWorld(next, blockMoveMask, overlapBoxSize))
+                if (IsMagnetTileBlocked(next, blockMoveMask, overlapBoxSize))
                 {
                     cancelAndReturn = true;
                     break;
@@ -1504,7 +1588,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
                 break;
             }
 
-            if (IsBlockedByMaskAtWorld(next, blockMoveMask, overlapBoxSize))
+            if (IsMagnetTileBlocked(next, blockMoveMask, overlapBoxSize))
             {
                 rb.position = start;
                 transform.position = start;
@@ -1542,7 +1626,95 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         magnetRoutine = null;
     }
 
-    private bool IsBlockedByMaskAtWorld(Vector2 worldCenter, LayerMask mask, float boxSize, string debugFrom = null)
+    private bool IsMagnetTileBlocked(Vector2 worldCenter, LayerMask mask, float boxSize)
+    {
+        if (TileHasCharacter(worldCenter, LayerMask.GetMask("Player", "Enemy")))
+            return true;
+
+        if (IsLouieAt(worldCenter, boxSize))
+            return true;
+
+        if (HasItemPickupAt(worldCenter, boxSize))
+            return true;
+
+        if (HasBlockingBombAtWorld(worldCenter, boxSize))
+            return true;
+
+        if (kickDestructibleTilemap != null)
+        {
+            Vector3Int cell = kickDestructibleTilemap.WorldToCell(worldCenter);
+            if (kickDestructibleTilemap.GetTile(cell) != null)
+                return true;
+        }
+
+        if (HasIndestructibleAt(worldCenter))
+            return true;
+
+        if (IsBlockedByMaskAtWorld(worldCenter, mask, boxSize))
+            return true;
+
+        return false;
+    }
+
+    private bool IsLouieAt(Vector2 worldCenter, float boxSize)
+    {
+        int louieMask = LayerMask.GetMask("Louie");
+        if (louieMask == 0)
+            return false;
+
+        Vector2 size = Vector2.one * (kickTileSize * Mathf.Max(0.1f, boxSize));
+        Collider2D[] hits = Physics2D.OverlapBoxAll(worldCenter, size, 0f, louieMask);
+
+        if (hits == null || hits.Length == 0)
+            return false;
+
+        for (int i = 0; i < hits.Length; i++)
+        {
+            var hit = hits[i];
+            if (hit == null)
+                continue;
+
+            if (hit.gameObject == gameObject)
+                continue;
+
+            if (hit.transform == transform || hit.transform.IsChildOf(transform))
+                continue;
+
+            return true;
+        }
+
+        return false;
+    }
+
+    private bool HasItemPickupAt(Vector2 worldCenter, float boxSize)
+    {
+        Vector2 size = Vector2.one * (kickTileSize * Mathf.Max(0.1f, boxSize));
+        Collider2D[] hits = Physics2D.OverlapBoxAll(worldCenter, size, 0f);
+
+        if (hits == null || hits.Length == 0)
+            return false;
+
+        for (int i = 0; i < hits.Length; i++)
+        {
+            var hit = hits[i];
+            if (hit == null)
+                continue;
+
+            if (hit.gameObject == gameObject)
+                continue;
+
+            if (hit.transform == transform || hit.transform.IsChildOf(transform))
+                continue;
+
+            var pickup = hit.GetComponent<ItemPickup>() ?? hit.GetComponentInParent<ItemPickup>();
+            if (pickup != null)
+                return true;
+        }
+
+        return false;
+    }
+
+    private bool IsBlockedByMaskAtWorld(Vector2 worldCenter, LayerMask mask, float boxSize)
     {
         ResolveIndestructibleTilemapIfNeeded();
 
@@ -1597,6 +1769,46 @@ public class Bomb : MonoBehaviour, IMagnetPullable
 
         if (HasIndestructibleAt(worldCenter))
             return true;
+
+        return false;
+    }
+
+    private bool HasBlockingBombAtWorld(Vector2 worldCenter, float boxSize)
+    {
+        int bombLayer = LayerMask.NameToLayer("Bomb");
+        if (bombLayer < 0)
+            return false;
+
+        Vector2 size = Vector2.one * (kickTileSize * Mathf.Max(0.1f, boxSize));
+
+        var filter = new ContactFilter2D
+        {
+            useLayerMask = true,
+            useTriggers = true
+        };
+        filter.SetLayerMask(1 << bombLayer);
+
+        int count = Physics2D.OverlapBox(worldCenter, size, 0f, filter, magnetBlockCheckBuffer);
+        for (int i = 0; i < count; i++)
+        {
+            Collider2D hit = magnetBlockCheckBuffer[i];
+            magnetBlockCheckBuffer[i] = null;
+
+            if (hit == null)
+                continue;
+
+            GameObject hitObject = hit.attachedRigidbody != null
+                ? hit.attachedRigidbody.gameObject
+                : hit.gameObject;
+
+            if (hitObject == null || hitObject == gameObject)
+                continue;
+
+            if (hitObject.transform.IsChildOf(transform))
+                continue;
+
+            return true;
+        }
 
         return false;
     }
@@ -1814,5 +2026,105 @@ public class Bomb : MonoBehaviour, IMagnetPullable
 
         bombCollider.enabled = airbornePrevColliderEnabled;
         airborneColliderSuppressed = false;
+    }
+
+    private void DestroyPickupsAtWorld(Vector2 worldCenter)
+    {
+        Vector2 size = Vector2.one * (kickTileSize * 0.45f);
+        Collider2D[] hits = Physics2D.OverlapBoxAll(worldCenter, size, 0f);
+
+        if (hits == null || hits.Length == 0)
+            return;
+
+        for (int i = 0; i < hits.Length; i++)
+        {
+            var hit = hits[i];
+            if (hit == null)
+                continue;
+
+            var pickup = hit.GetComponent<ItemPickup>();
+            if (pickup == null)
+                pickup = hit.GetComponentInParent<ItemPickup>();
+
+            if (pickup == null)
+                continue;
+
+            pickup.DestroySilently();
+        }
+    }
+
+    private bool IsKickBlockedByCharacterOnImmediateExit(Vector2 origin, Vector2 next)
+    {
+        int charMask = LayerMask.GetMask("Player", "Enemy", "Louie");
+        Collider2D[] hits = Physics2D.OverlapBoxAll(next, Vector2.one * (kickTileSize * 0.6f), 0f, charMask);
+
+        if (hits == null || hits.Length == 0)
+            return false;
+
+        for (int i = 0; i < hits.Length; i++)
+        {
+            var hit = hits[i];
+            if (hit == null)
+                continue;
+
+            if (hit.transform == transform || hit.transform.IsChildOf(transform))
+                continue;
+
+            Vector2 hitPos = hit.attachedRigidbody != null
+                ? hit.attachedRigidbody.position
+                : (Vector2)hit.transform.position;
+
+            if (Vector2.Distance(hitPos, origin) <= kickTileSize * 0.2f)
+                continue;
+
+            return true;
+        }
+
+        return false;
+    }
+
+    [Header("Debug Bomb Escape")]
+    [SerializeField] private bool debugBombEscape;
+    [SerializeField] private bool debugBombEscapeVerbose;
+
+    private void LogBombEscape(string message, bool verbose = false)
+    {
+        if (!debugBombEscape)
+            return;
+
+        if (verbose && !debugBombEscapeVerbose)
+            return;
+
+        Debug.Log($"[BombEscape][Bomb:{name}] {message}", this);
+    }
+
+    private static bool IsCharacterLayer(int layer)
+    {
+        int playerLayer = LayerMask.NameToLayer("Player");
+        int enemyLayer = LayerMask.NameToLayer("Enemy");
+        return layer == playerLayer || layer == enemyLayer;
+    }
+
+    private static float GetColliderApproxRadius(Collider2D col)
+    {
+        if (col == null)
+            return 0f;
+
+        Bounds b = col.bounds;
+        return Mathf.Max(b.extents.x, b.extents.y);
+    }
+
+    private bool IsCharacterStillOccupyingBomb(Collider2D col, Vector2 bombWorldPos)
+    {
+        if (col == null)
+            return false;
+
+        float charRadius = GetColliderApproxRadius(col);
+        float allowedDistance = ApproxRadius + charRadius + 0.02f;
+
+        Vector2 closest = col.ClosestPoint(bombWorldPos);
+        float dist = Vector2.Distance(closest, bombWorldPos);
+
+        return dist <= allowedDistance;
     }
 }

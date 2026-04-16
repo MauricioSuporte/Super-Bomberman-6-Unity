@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -102,10 +102,7 @@ public class GameManager : MonoBehaviour
         if (BossRushSession.IsActive && BossRushSession.IsBossRushScene(currentSceneName))
             BossRushTimerPresenter.EnsureInScene();
 
-        EnemiesAlive = FindObjectsByType<EnemyMovementController>(
-            FindObjectsInactive.Exclude,
-            FindObjectsSortMode.None
-        ).Length;
+        EnemiesAlive = FindObjectsByType<EnemyMovementController>(FindObjectsInactive.Exclude).Length;
 
         SetupHiddenObjects();
         ApplyDestructibleShadows();
@@ -127,7 +124,7 @@ public class GameManager : MonoBehaviour
     {
         List<PlayerIdentity> result = new();
         FindObjectsInactive inactiveMode = includeInactive ? FindObjectsInactive.Include : FindObjectsInactive.Exclude;
-        PlayerIdentity[] ids = FindObjectsByType<PlayerIdentity>(inactiveMode, FindObjectsSortMode.None);
+        PlayerIdentity[] ids = FindObjectsByType<PlayerIdentity>(inactiveMode);
         int activePlayerCount = GetConfiguredActivePlayerCount();
 
         for (int i = 0; i < ids.Length; i++)
@@ -275,7 +272,7 @@ public class GameManager : MonoBehaviour
         if (destructibleTileResolver != null)
             return;
 
-        destructibleTileResolver = FindFirstObjectByType<DestructibleTileResolver>();
+        destructibleTileResolver = FindAnyObjectByType<DestructibleTileResolver>();
         if (destructibleTileResolver != null)
             return;
 
@@ -380,7 +377,7 @@ public class GameManager : MonoBehaviour
 
     Tilemap FindTilemapByNameFallback(string exactName)
     {
-        Tilemap[] all = FindObjectsByType<Tilemap>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        Tilemap[] all = FindObjectsByType<Tilemap>(FindObjectsInactive.Include);
 
         for (int i = 0; i < all.Length; i++)
         {
@@ -547,6 +544,7 @@ public class GameManager : MonoBehaviour
 
         GamePauseController.ClearPauseFlag();
         Time.timeScale = 1f;
+        PlayerPersistentStats.RollbackStage();
 
         StagePreIntroPlayersWalk.SkipOnNextLoad();
 
@@ -612,7 +610,21 @@ public class GameManager : MonoBehaviour
         GamePauseController.ClearPauseFlag();
         Time.timeScale = 1f;
 
+        EnsureStage1_2PlayersHaveMinimumExplosionRadius();
         SceneManager.LoadScene(nextStageSceneName);
+    }
+
+    void EnsureStage1_2PlayersHaveMinimumExplosionRadius()
+    {
+        if (nextStageSceneName != "Stage_1-2")
+            return;
+
+        for (int playerId = 1; playerId <= 4; playerId++)
+        {
+            var state = PlayerPersistentStats.Get(playerId);
+            if (state.ExplosionRadius == 1)
+                state.ExplosionRadius = 2;
+        }
     }
 
     IEnumerator LoadNextBossRushStageRoutine()

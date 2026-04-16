@@ -112,7 +112,7 @@ public sealed class MountWorldPickup : MonoBehaviour
 
     static Tilemap ResolveGroundTilemapNear(Vector3 worldPos)
     {
-        var tilemaps = Object.FindObjectsByType<Tilemap>(FindObjectsSortMode.None);
+        var tilemaps = Object.FindObjectsByType<Tilemap>();
         if (tilemaps == null || tilemaps.Length == 0)
             return null;
 

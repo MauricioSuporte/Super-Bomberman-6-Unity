@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -73,7 +73,6 @@ public class BossRushMenu : MonoBehaviour
     [Header("Locked Difficulty Message UI")]
     [SerializeField] TextMeshProUGUI nightmareLockedText;
     [SerializeField] int nightmareLockedFontSize = 32;
-    [SerializeField] string nightmareLockedMessageHex = "#E73F3F";
     [SerializeField] float nightmareLockedShowSeconds = 2f;
     [SerializeField] float nightmareLockedBottomMargin = 12f;
 
@@ -656,7 +655,7 @@ public class BossRushMenu : MonoBehaviour
         if (cam != null)
             return cam;
 
-        return FindFirstObjectByType<Camera>();
+        return FindAnyObjectByType<Camera>();
     }
 
     Rect GetReferencePixelRect(out string source)

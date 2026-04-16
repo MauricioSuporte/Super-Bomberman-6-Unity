@@ -101,7 +101,6 @@ public class TitleScreenDropIntro : MonoBehaviour
 
     [Header("Characters Timing")]
     [SerializeField, Min(0.01f)] float charactersDropDuration = 0.30f;
-    [SerializeField] float charactersDropStagger = 0.035f;
     [SerializeField] AnimationCurve charactersDropCurve = null;
     [SerializeField] float delayAfterCharactersBeforeLogo = 0.03f;
 

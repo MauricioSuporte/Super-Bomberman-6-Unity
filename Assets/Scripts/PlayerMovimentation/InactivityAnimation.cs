@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 
 [DefaultExecutionOrder(-50)]
 [DisallowMultipleComponent]
@@ -142,7 +142,7 @@ public sealed class InactivityAnimation : MonoBehaviour
 
         nextLouieResolveTime = Time.time + 0.25f;
 
-        var all = FindObjectsByType<MountVisualController>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        var all = FindObjectsByType<MountVisualController>(FindObjectsInactive.Include);
         for (int i = 0; i < all.Length; i++)
         {
             var v = all[i];

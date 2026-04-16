@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -123,7 +123,7 @@ public class BossEscapeOnLastLife : MonoBehaviour
 
         TryDropItemOnEscapeStart();
 
-        var gate = FindFirstObjectByType<EndStageGateAnimated>();
+        var gate = FindAnyObjectByType<EndStageGateAnimated>();
         if (gate != null) gate.ForceUnlock();
 
         if (waitBeforeEscapeSeconds > 0f)
@@ -408,7 +408,7 @@ public class BossEscapeOnLastLife : MonoBehaviour
         players.Clear();
         playerBombs.Clear();
 
-        var ids = FindObjectsByType<PlayerIdentity>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+        var ids = FindObjectsByType<PlayerIdentity>(FindObjectsInactive.Exclude);
 
         foreach (var id in ids)
         {

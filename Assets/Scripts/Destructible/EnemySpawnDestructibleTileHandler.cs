@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using UnityEngine;
 
 public sealed class EnemySpawnDestructibleTileHandler : MonoBehaviour, IDestructibleTileHandler
@@ -10,14 +10,14 @@ public sealed class EnemySpawnDestructibleTileHandler : MonoBehaviour, IDestruct
     [SerializeField, Min(0f)] private float spawnDelaySeconds = 0.5f;
 
     [Header("Spawn Invincibility (Real)")]
-    [SerializeField, Min(0f)] private float invincibleSeconds = 1f;
+    private readonly float invincibleSeconds = 2f;
     [SerializeField, Min(0.01f)] private float blinkIntervalSeconds = 0.12f;
 
     private GameManager _gm;
 
     void Awake()
     {
-        _gm = FindFirstObjectByType<GameManager>();
+        _gm = FindAnyObjectByType<GameManager>();
     }
 
     public bool HandleHit(BombController source, Vector2 worldPos, Vector3Int cell)
@@ -60,7 +60,26 @@ public sealed class EnemySpawnDestructibleTileHandler : MonoBehaviour, IDestruct
         if (enemyGo == null)
             yield break;
 
-        if (invincibleSeconds > 0f && enemyGo.TryGetComponent<CharacterHealth>(out var h) && h != null)
+        if (invincibleSeconds > 0f && enemyGo.TryGetComponent<CharacterHealth>(out var h))
+        {
             h.StartSpawnInvulnerability(invincibleSeconds, blinkIntervalSeconds);
+        }
+
+        StartCoroutine(DisableEnemyContactDamage(enemyGo, invincibleSeconds));
+    }
+
+    private IEnumerator DisableEnemyContactDamage(GameObject enemy, float duration)
+    {
+        if (enemy == null)
+            yield break;
+
+        
+        if (enemy.TryGetComponent<Collider2D>(out var col))
+            col.enabled = false;
+
+        yield return new WaitForSeconds(duration);
+
+        if (col != null)
+            col.enabled = true;
     }
 }

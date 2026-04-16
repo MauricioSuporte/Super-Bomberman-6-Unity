@@ -64,12 +64,15 @@ public class MountVisualController : MonoBehaviour
     [Header("External Tint (Ability Cooldown)")]
     [SerializeField] private bool allowExternalTint = true;
 
+    [Header("Louie Type")]
+    [SerializeField] private MountedType visualMountedType = MountedType.None;
+
     private AnimatedSpriteRenderer active;
     private bool playingEndStage;
     private bool playingInactivity;
     private bool playingCornered;
 
-    private bool isPinkLouieMounted;
+    private bool isPinkLouieVisual;
     private MovementController louieMovement;
 
     private SpriteRenderer[] louieSpriteRenderers;
@@ -152,9 +155,9 @@ public class MountVisualController : MonoBehaviour
         if (louieMovement == null)
             TryGetComponent(out louieMovement);
 
-        isPinkLouieMounted = DetectPinkMounted(owner);
+        isPinkLouieVisual = visualMountedType == MountedType.Pink;
 
-        if (isPinkLouieMounted && louieRight == louieLeft)
+        if (isPinkLouieVisual && louieRight == louieLeft)
             louieRight = null;
 
         if (owner != null)
@@ -398,9 +401,13 @@ public class MountVisualController : MonoBehaviour
         {
             bool isIdle = owner.Direction == Vector2.zero;
             Vector2 faceDir = isIdle ? owner.FacingDirection : owner.Direction;
+
+
             ApplyDirection(faceDir, isIdle);
 
-            if (isPinkLouieMounted)
+            ApplyPinkRidingHorizontalFlipOverride(faceDir);
+
+            if (isPinkLouieVisual && !IsPinkRidingAnimationActive())
                 ForceDisableRightRenderer();
         }
 
@@ -483,7 +490,7 @@ public class MountVisualController : MonoBehaviour
             }
         }
 
-        if (allSprite_renderers_notnull())
+        if (allSpriteRenderers != null)
         {
             for (int i = 0; i < allSpriteRenderers.Length; i++)
             {
@@ -492,11 +499,6 @@ public class MountVisualController : MonoBehaviour
                 sr.enabled = false;
             }
         }
-    }
-
-    private bool allSprite_renderers_notnull()
-    {
-        return allSpriteRenderers != null;
     }
 
     private void RestoreAfterBoatSuppression()
@@ -529,7 +531,7 @@ public class MountVisualController : MonoBehaviour
 
         ApplyDirection(faceDir, isIdle);
 
-        if (isPinkLouieMounted)
+        if (isPinkLouieVisual)
             ForceDisableRightRenderer();
     }
 
@@ -614,8 +616,16 @@ public class MountVisualController : MonoBehaviour
 
         active = keep;
 
-        if (isPinkLouieMounted && !playingInactivity)
-            ForceDisableRightRenderer();
+        if (owner != null)
+        {
+            bool isIdle = owner.Direction == Vector2.zero;
+            Vector2 faceDir = isIdle ? owner.FacingDirection : owner.Direction;
+
+            ApplyPinkRidingHorizontalFlipOverride(faceDir);
+
+            if (isPinkLouieVisual && !playingInactivity && !IsPinkRidingAnimationActive())
+                ForceDisableRightRenderer();
+        }
     }
 
     private void ApplyBlinkSyncFromOwnerIfNeeded()
@@ -657,7 +667,9 @@ public class MountVisualController : MonoBehaviour
             return;
 
         if (active == louieRight)
+        {
             return;
+        }
 
         SetRendererBranchEnabled(louieRight, false);
     }
@@ -673,7 +685,7 @@ public class MountVisualController : MonoBehaviour
         else if (faceDir == Vector2.left) target = louieLeft != null ? louieLeft : louieRight;
         else if (faceDir == Vector2.right)
         {
-            if (isPinkLouieMounted)
+            if (isPinkLouieVisual)
                 target = louieLeft != null ? louieLeft : louieRight;
             else
                 target = louieRight != null ? louieRight : louieLeft;
@@ -699,7 +711,7 @@ public class MountVisualController : MonoBehaviour
 
         if (active != null && active.TryGetComponent<SpriteRenderer>(out var sr) && sr != null)
         {
-            if (active == louieLeft && (louieRight == null || isPinkLouieMounted))
+            if (active == louieLeft && (louieRight == null || isPinkLouieVisual))
                 sr.flipX = (faceDir == Vector2.right);
             else
                 sr.flipX = false;
@@ -714,7 +726,7 @@ public class MountVisualController : MonoBehaviour
         if (active == null)
             return;
 
-        if (!enablePinkRightFix || !isPinkLouieMounted)
+        if (!enablePinkRightFix || !isPinkLouieVisual)
         {
             active.ClearRuntimeBaseLocalX();
             return;
@@ -724,20 +736,6 @@ public class MountVisualController : MonoBehaviour
             active.SetRuntimeBaseLocalX(pinkRightFixedLocalX);
         else
             active.ClearRuntimeBaseLocalX();
-    }
-
-    private bool DetectPinkMounted(MovementController movement)
-    {
-        if (movement == null)
-            return false;
-
-        if (!movement.CompareTag("Player"))
-            return false;
-
-        if (!movement.TryGetComponent<PlayerMountCompanion>(out var comp) || comp == null)
-            return false;
-
-        return comp.GetMountedLouieType() == MountedType.Pink;
     }
 
     private void SetExclusive(AnimatedSpriteRenderer keep)
@@ -772,7 +770,7 @@ public class MountVisualController : MonoBehaviour
         if (active != null)
             SetRendererBranchEnabled(active, true);
 
-        if (isPinkLouieMounted)
+        if (isPinkLouieVisual)
             ForceDisableRightRenderer();
 
         if (owner != null && !playingEndStage)
@@ -1038,5 +1036,56 @@ public class MountVisualController : MonoBehaviour
             return v.x >= 0f ? Vector2.right : Vector2.left;
 
         return v.y >= 0f ? Vector2.up : Vector2.down;
+    }
+
+    private bool IsPinkRidingAnimationActive()
+    {
+        PlayerRidingController rider = null;
+
+        bool hasRider =
+            owner != null &&
+            owner.TryGetComponent(out rider);
+
+        bool isTransition =
+            isPinkLouieVisual &&
+            hasRider &&
+            rider != null &&
+            rider.IsPlaying;
+
+        return isTransition;
+    }
+
+    private void ApplyPinkRidingHorizontalFlipOverride(Vector2 faceDir)
+    {
+        if (!isPinkLouieVisual)
+            return;
+
+        ApplyPinkRidingFlipForRenderer(louieLeft, faceDir);
+        ApplyPinkRidingFlipForRenderer(louieRight, faceDir);
+    }
+
+    private void ApplyPinkRidingFlipForRenderer(AnimatedSpriteRenderer renderer, Vector2 faceDir)
+    {
+        if (renderer == null)
+            return;
+
+        if (!renderer.TryGetComponent<SpriteRenderer>(out var sr) || sr == null)
+            return;
+
+        bool isRiding = IsPinkRidingAnimationActive();
+
+        if (!isRiding)
+            return;
+
+        if (renderer == louieRight)
+        {
+            sr.flipX = (faceDir == Vector2.right);
+            return;
+        }
+
+        if (renderer == louieLeft)
+        {
+            sr.flipX = (faceDir == Vector2.left);
+        }
     }
 }

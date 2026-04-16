@@ -94,3 +94,7 @@ MonoBehaviour:
   crackedGroundTile: {fileID: 11400000, guid: 46d2fbd2abc55b944b3ca712342d806a, type: 2}
   indestructibleTile: {fileID: 11400000, guid: b6b9bb81fb56e784bb2c3394788d7f12, type: 2}
   disableTriggerAfterBlocked: 1
+  pendingBlockClearanceMultiplier: 1.2
+  debugLogs: 1
+  debugOnlyPlayerId: 0
+  debugVerboseOverlap: 1

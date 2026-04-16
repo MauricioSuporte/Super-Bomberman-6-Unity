@@ -35,6 +35,7 @@ Transform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!212 &4649285115661217718
 SpriteRenderer:
+  serializedVersion: 2
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -79,7 +80,8 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingOrder: 7
+  m_MaskInteraction: 0
   m_Sprite: {fileID: 21300000, guid: 56e2fbb198a696a45866f6c43b597660, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
@@ -89,7 +91,6 @@ SpriteRenderer:
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
-  m_MaskInteraction: 0
   m_SpriteSortPoint: 0
 --- !u!114 &8521143852540292155
 MonoBehaviour:
@@ -120,13 +121,18 @@ MonoBehaviour:
   - {fileID: 21300000, guid: 794a0e14b5751ae489795e13d3d67941, type: 3}
   - {fileID: 21300000, guid: 56e2fbb198a696a45866f6c43b597660, type: 3}
   - {fileID: 21300000, guid: 56e2fbb198a696a45866f6c43b597660, type: 3}
+  allowFlipX: 0
   animationTime: 0.13333334
   useSequenceDuration: 0
   sequenceDuration: 0.5
+  useUnscaledTime: 1
+  respectGamePause: 1
   loop: 0
   idle: 0
   frameOffsets: []
   pingPong: 0
+  disableOffsetsIfThisObjectHasRigidbody2D: 1
+  disableOffsetsIfStandaloneRoot: 1
 --- !u!1 &3824322337620810543
 GameObject:
   m_ObjectHideFlags: 0
@@ -162,6 +168,7 @@ Transform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!212 &1293652903502735556
 SpriteRenderer:
+  serializedVersion: 2
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -206,7 +213,8 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingOrder: 7
+  m_MaskInteraction: 0
   m_Sprite: {fileID: 21300000, guid: 9b882769a0491e2478d8411575779e8a, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
@@ -216,7 +224,6 @@ SpriteRenderer:
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
-  m_MaskInteraction: 0
   m_SpriteSortPoint: 0
 --- !u!114 &6715821140683036184
 MonoBehaviour:
@@ -232,13 +239,18 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::AnimatedSpriteRenderer
   idleSprite: {fileID: 21300000, guid: 9b882769a0491e2478d8411575779e8a, type: 3}
   animationSprite: []
+  allowFlipX: 0
   animationTime: 0.083333336
   useSequenceDuration: 0
   sequenceDuration: 0.5
+  useUnscaledTime: 1
+  respectGamePause: 1
   loop: 0
   idle: 1
   frameOffsets: []
   pingPong: 0
+  disableOffsetsIfThisObjectHasRigidbody2D: 1
+  disableOffsetsIfStandaloneRoot: 1
 --- !u!1 &3918755806762888193
 GameObject:
   m_ObjectHideFlags: 0
@@ -274,6 +286,7 @@ Transform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!212 &1900726429987480119
 SpriteRenderer:
+  serializedVersion: 2
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -318,7 +331,8 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingOrder: 7
+  m_MaskInteraction: 0
   m_Sprite: {fileID: 21300000, guid: 56e2fbb198a696a45866f6c43b597660, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
@@ -328,7 +342,6 @@ SpriteRenderer:
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
-  m_MaskInteraction: 0
   m_SpriteSortPoint: 0
 --- !u!114 &6834037769492098531
 MonoBehaviour:
@@ -344,13 +357,18 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::AnimatedSpriteRenderer
   idleSprite: {fileID: 21300000, guid: 56e2fbb198a696a45866f6c43b597660, type: 3}
   animationSprite: []
+  allowFlipX: 0
   animationTime: 0.25
   useSequenceDuration: 0
   sequenceDuration: 0.5
+  useUnscaledTime: 1
+  respectGamePause: 1
   loop: 1
   idle: 0
   frameOffsets: []
   pingPong: 0
+  disableOffsetsIfThisObjectHasRigidbody2D: 1
+  disableOffsetsIfStandaloneRoot: 1
 --- !u!1 &4590910971319006447
 GameObject:
   m_ObjectHideFlags: 0
@@ -386,6 +404,7 @@ Transform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!212 &5507382092352564603
 SpriteRenderer:
+  serializedVersion: 2
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -430,7 +449,8 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingOrder: 7
+  m_MaskInteraction: 0
   m_Sprite: {fileID: 21300000, guid: 56e2fbb198a696a45866f6c43b597660, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
@@ -440,7 +460,6 @@ SpriteRenderer:
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
-  m_MaskInteraction: 0
   m_SpriteSortPoint: 0
 --- !u!114 &8502752471605563534
 MonoBehaviour:
@@ -459,13 +478,18 @@ MonoBehaviour:
   - {fileID: 21300000, guid: 56e2fbb198a696a45866f6c43b597660, type: 3}
   - {fileID: 21300000, guid: 7573177d4cb72574bb6ce126ae029dd3, type: 3}
   - {fileID: 21300000, guid: e89c8dd3e12b30f4c8c681c60410a63a, type: 3}
+  allowFlipX: 0
   animationTime: 0.16666667
   useSequenceDuration: 0
   sequenceDuration: 0.5
+  useUnscaledTime: 1
+  respectGamePause: 1
   loop: 0
   idle: 0
   frameOffsets: []
   pingPong: 1
+  disableOffsetsIfThisObjectHasRigidbody2D: 1
+  disableOffsetsIfStandaloneRoot: 1
 --- !u!1 &6315403340219294976
 GameObject:
   m_ObjectHideFlags: 0
@@ -480,6 +504,7 @@ GameObject:
   - component: {fileID: 7131596331579481284}
   - component: {fileID: 109445012059127859}
   - component: {fileID: 4345945350099860788}
+  - component: {fileID: 564348100754709390}
   m_Layer: 10
   m_Name: ClownMask
   m_TagString: Untagged
@@ -585,6 +610,10 @@ MonoBehaviour:
   life: 5
   hitInvulnerableDuration: 3
   hitBlinkInterval: 0.05
+  tempSlowdownStartNormalized: 0.7
+  tempEndBlinkMultiplier: 4
+  playDamagedLoopInsteadOfBlink: 0
+  playDamagedLoopAndBlink: 0
 --- !u!114 &109445012059127859
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -600,10 +629,12 @@ MonoBehaviour:
   speed: 1.75
   changeDirectionInterval: 1.5
   chaseWeight: 0.7
+  retargetInterval: 0.25
   defaultHitStopDuration: 3
   useBounds: 0
   minBounds: {x: 0, y: 0}
   maxBounds: {x: 0, y: 0}
+  pixelsPerUnit: 16
 --- !u!114 &4345945350099860788
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -619,12 +650,28 @@ MonoBehaviour:
   characterHealth: {fileID: 7131596331579481284}
   clownMovement: {fileID: 109445012059127859}
   bossEndSequence: {fileID: 0}
+  stageIntroClownMaskBoss: {fileID: 0}
   introRenderer: {fileID: 8521143852540292155}
   idleRenderer: {fileID: 6834037769492098531}
   specialRenderer: {fileID: 8502752471605563534}
   hurtRenderer: {fileID: 1332262023128591319}
   deathRenderer: {fileID: 6715821140683036184}
+  tintWhenBelowHalfLife: 1
+  lowHealthTintStrength: 0.4
   introDuration: 2
+  bossIntroPosition: {x: -1, y: 2}
+  delayAfterStageIntroToShowPlayer: 1
+  playerIntroPosition: {x: -3, y: -6}
+  playerIntroPositions:
+  - {x: -3, y: -6}
+  - {x: 1, y: -6}
+  - {x: -5, y: -6}
+  - {x: 3, y: -6}
+  introWaitAfterPlayerShown: 1
+  introDarknessAlpha: 0.9
+  introWaitBeforeSpotlight: 1
+  introSpotlightRadiusTiles: 4
+  introSpotlightSoftnessTiles: 1
   minSpecialInterval: 5
   maxSpecialInterval: 12
   extraHitStopDuringAttack: 0.3
@@ -641,6 +688,111 @@ MonoBehaviour:
   explosionSpawnRadius: 3
   explosionMinScale: 0.9
   explosionMaxScale: 1.1
+  deathExplosionSfx: {fileID: 0}
+  deathExplosionSfxInterval: 0.12
+  deathExplosionSfxVolume: 1
+  deathExplosionPitchRange: {x: 0.95, y: 1.05}
+  deathSfxUseTempAudioObject: 1
+  deathSfxSpatialBlend: 0
+  touchDamage: 1
+  touchDamageCooldown: 0.35
+--- !u!82 &564348100754709390
+AudioSource:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6315403340219294976}
+  m_Enabled: 1
+  serializedVersion: 4
+  OutputAudioMixerGroup: {fileID: 0}
+  m_audioClip: {fileID: 0}
+  m_Resource: {fileID: 0}
+  m_PlayOnAwake: 1
+  m_Volume: 1
+  m_Pitch: 1
+  Loop: 0
+  Mute: 0
+  Spatialize: 0
+  SpatializePostEffects: 0
+  Priority: 128
+  DopplerLevel: 1
+  MinDistance: 1
+  MaxDistance: 500
+  Pan2D: 0
+  rolloffMode: 0
+  BypassEffects: 0
+  BypassListenerEffects: 0
+  BypassReverbZones: 0
+  rolloffCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 1
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  panLevelCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  spreadCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  reverbZoneMixCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
 --- !u!1 &8537170913170299511
 GameObject:
   m_ObjectHideFlags: 0
@@ -676,6 +828,7 @@ Transform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!212 &3092122075500398637
 SpriteRenderer:
+  serializedVersion: 2
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -720,7 +873,8 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingOrder: 7
+  m_MaskInteraction: 0
   m_Sprite: {fileID: 21300000, guid: 38211f41812ca3f418ffef99ac8077f8, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
@@ -730,7 +884,6 @@ SpriteRenderer:
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
-  m_MaskInteraction: 0
   m_SpriteSortPoint: 0
 --- !u!114 &1332262023128591319
 MonoBehaviour:
@@ -749,10 +902,15 @@ MonoBehaviour:
   - {fileID: 21300000, guid: 38211f41812ca3f418ffef99ac8077f8, type: 3}
   - {fileID: 21300000, guid: 5d1afa412b4f722438e47e18966f8ff3, type: 3}
   - {fileID: 21300000, guid: 908ae95f6a78d434393ba702c22c2a85, type: 3}
+  allowFlipX: 0
   animationTime: 0.083333336
   useSequenceDuration: 0
   sequenceDuration: 0.5
+  useUnscaledTime: 1
+  respectGamePause: 1
   loop: 0
   idle: 0
   frameOffsets: []
   pingPong: 0
+  disableOffsetsIfThisObjectHasRigidbody2D: 1
+  disableOffsetsIfStandaloneRoot: 1

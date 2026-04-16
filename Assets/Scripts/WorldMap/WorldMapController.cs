@@ -61,7 +61,6 @@ public class WorldMapController : MonoBehaviour
     [Header("Cursor Logic")]
     [SerializeField] RectTransform cursorMovementArea;
     [SerializeField] float cursorMoveSpeedNormalized = 0.25f;
-    [SerializeField] float cursorMoveSpeed = 140f;
     [SerializeField] bool clampCursorInsideArea = true;
     [SerializeField] bool snapCursorToDefaultStageOnStart = true;
     [SerializeField] bool snapCursorToDefaultStageOnWorldChange = true;

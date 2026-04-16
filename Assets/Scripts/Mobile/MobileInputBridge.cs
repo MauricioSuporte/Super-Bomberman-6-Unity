@@ -8,6 +8,12 @@ public class MobileInputBridge : MonoBehaviour
     private readonly Dictionary<PlayerAction, bool> held = new();
     private readonly Dictionary<PlayerAction, bool> down = new();
 
+    private Vector2 moveVector;
+    private bool moveVectorActive;
+
+    public Vector2 MoveVector => moveVectorActive ? moveVector : Vector2.zero;
+    public bool HasMoveVector => moveVectorActive && moveVector.sqrMagnitude > 0f;
+
     void Awake()
     {
         if (Instance != null && Instance != this)
@@ -53,6 +59,18 @@ public class MobileInputBridge : MonoBehaviour
     public bool GetDown(PlayerAction action)
     {
         return down.TryGetValue(action, out bool value) && value;
+    }
+
+    public void SetMoveVector(Vector2 value)
+    {
+        moveVector = Vector2.ClampMagnitude(value, 1f);
+        moveVectorActive = moveVector.sqrMagnitude > 0f;
+    }
+
+    public void ClearMoveVector()
+    {
+        moveVector = Vector2.zero;
+        moveVectorActive = false;
     }
 
     void OnDestroy()

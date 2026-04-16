@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 
 [RequireComponent(typeof(Rigidbody2D))]
 [RequireComponent(typeof(Collider2D))]
@@ -159,7 +159,7 @@ public sealed class TankShot : MonoBehaviour
             }
             else
             {
-                var all = FindObjectsByType<BombController>(FindObjectsSortMode.None);
+                var all = FindObjectsByType<BombController>();
                 for (int i = 0; i < all.Length; i++)
                 {
                     var bc = all[i];

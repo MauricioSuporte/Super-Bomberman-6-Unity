@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using UnityEngine;
 
 [RequireComponent(typeof(MovementControllerAI))]
@@ -110,7 +110,7 @@ public class BrainIA : MonoBehaviour
         Vector2 myWorld = (movement.Rigidbody != null) ? movement.Rigidbody.position : (Vector2)transform.position;
         Vector2 myTile = RoundToTile(myWorld, movement.tileSize);
 
-        Bomb[] bombsNow = FindObjectsByType<Bomb>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+        Bomb[] bombsNow = FindObjectsByType<Bomb>(FindObjectsInactive.Exclude);
 
         bool dangerNow = IsTileDangerousNowOrSoon(myTile, bombsNow, 0f);
         float interval = dangerNow ? thinkIntervalDanger : thinkIntervalSafe;
@@ -133,7 +133,7 @@ public class BrainIA : MonoBehaviour
         Transform best = null;
         float bestDist = float.PositiveInfinity;
 
-        var ids = FindObjectsByType<PlayerIdentity>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+        var ids = FindObjectsByType<PlayerIdentity>(FindObjectsInactive.Exclude);
         if (ids != null && ids.Length > 0)
         {
             for (int i = 0; i < ids.Length; i++)
@@ -163,7 +163,7 @@ public class BrainIA : MonoBehaviour
             return;
         }
 
-        var players = FindObjectsByType<MovementController>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+        var players = FindObjectsByType<MovementController>(FindObjectsInactive.Exclude);
         for (int i = 0; i < players.Length; i++)
         {
             var p = players[i];
@@ -349,7 +349,7 @@ public class BrainIA : MonoBehaviour
 
             lastBombTime = Time.time;
 
-            Bomb[] bombsAfter0 = FindObjectsByType<Bomb>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+            Bomb[] bombsAfter0 = FindObjectsByType<Bomb>(FindObjectsInactive.Exclude);
             isEvading = true;
 
             Vector2 away = GetBestStepAwayFromTarget(myTile, targetTile, bombsAfter0);
@@ -374,7 +374,7 @@ public class BrainIA : MonoBehaviour
 
             lastBombTime = Time.time;
 
-            Bomb[] bombsAfter1 = FindObjectsByType<Bomb>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+            Bomb[] bombsAfter1 = FindObjectsByType<Bomb>(FindObjectsInactive.Exclude);
             isEvading = true;
 
             Vector2 away = GetBestStepAwayFromTarget(myTile, targetTile, bombsAfter1);
@@ -391,7 +391,7 @@ public class BrainIA : MonoBehaviour
 
         lastBombTime = Time.time;
 
-        Bomb[] bombsAfter = FindObjectsByType<Bomb>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+        Bomb[] bombsAfter = FindObjectsByType<Bomb>(FindObjectsInactive.Exclude);
         isEvading = true;
         lastDirection = GetEscapeStep_BFS(myTile, bombsAfter, 0f);
 
@@ -428,7 +428,7 @@ public class BrainIA : MonoBehaviour
 
         lastBombTime = Time.time;
 
-        Bomb[] bombsAfter = FindObjectsByType<Bomb>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+        Bomb[] bombsAfter = FindObjectsByType<Bomb>(FindObjectsInactive.Exclude);
         isEvading = true;
         lastDirection = GetEscapeStep_BFS(myTile, bombsAfter, 0f);
 
@@ -456,7 +456,7 @@ public class BrainIA : MonoBehaviour
 
         lastBombTime = Time.time;
 
-        Bomb[] bombsAfter = FindObjectsByType<Bomb>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+        Bomb[] bombsAfter = FindObjectsByType<Bomb>(FindObjectsInactive.Exclude);
         isEvading = true;
         lastDirection = GetEscapeStep_BFS(myTile, bombsAfter, 0f);
         return true;
