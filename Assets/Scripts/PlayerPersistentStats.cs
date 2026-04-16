@@ -22,17 +22,17 @@ public static class PlayerPersistentStats
         public int Life = 999;
         public int BombAmount = MaxBombAmount;
         public int ExplosionRadius = MaxExplosionRadius;
-        public int SpeedInternal = MinSpeedInternal;
-        public bool CanKickBombs = true;
+        public int SpeedInternal = MaxSpeedInternal;
+        public bool CanKickBombs = false;
         public bool CanPunchBombs = true;
-        public bool HasPowerGlove = false;
+        public bool HasPowerGlove = true;
         public bool CanPassBombs = false;
         public bool CanPassDestructibles = true;
         public bool HasPierceBombs = false;
-        public bool HasControlBombs = true;
+        public bool HasControlBombs = false;
         public bool HasPowerBomb = false;
         public bool HasRubberBombs = false;
-        public bool HasMagnetBomb = false;
+        public bool HasMagnetBomb = true;
         public bool HasFullFire = false;
 
         public MountedType MountedLouie = MountedType.None;

@@ -111,7 +111,7 @@ CircleCollider2D:
   m_CompositeOperation: 0
   m_CompositeOrder: 0
   m_Offset: {x: 0, y: 0}
-  m_Radius: 0.5
+  m_Radius: 0.2
 --- !u!114 &2281332030675466770
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -124,6 +124,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5704045885c5fbb40ad9f0c6dc80db9f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AIMovementController
+  debugCurvas: 0
+  debugCurvasVerbose: 0
+  debugCurvasPlayerId: 1
+  debugBombEscape: 0
+  debugBombEscapeVerbose: 0
   deathSfx: {fileID: 8300000, guid: 1bca940f057193a408297f3bb1132673, type: 3}
   speed: 3
   tileSize: 1
@@ -197,19 +202,19 @@ MonoBehaviour:
   visualOverrideActive: 0
   externalVisualSuppressed: 0
   perpendicularAlignMultiplier: 8
-  snapPerpendicularOnAxisStart: 1
   alignEpsilon: 0.0015
   enableCorridorAxisLock: 1
-  corridorCenterEpsilon: 0.06
   corridorSolidProbeSizeMul: 0.9
   canPassTaggedObstacles: 0
   passObstacleTag: Water
   pixelsPerUnit: 16
   useIntegerPixelSteps: 1
   suppressInactivityAnimation: 0
+  bombKickMinCenterOffset: 0.625
   isDead: 0
   explosionInvulnerable: 0
   externalMovementOverride: 0
+  bombReentryCenterDuration: 0.1
   aiDirection: {x: 0, y: 0}
   isBoss: 1
   stuckSeconds: 0.3
@@ -247,6 +252,7 @@ MonoBehaviour:
   controlBombPrefab: {fileID: 0}
   powerBombPrefab: {fileID: 0}
   rubberBombPrefab: {fileID: 0}
+  magnetBombPrefab: {fileID: 0}
   bombFuseTime: 2
   bombAmout: 1
   chainBombDelaySeconds: 0.1
