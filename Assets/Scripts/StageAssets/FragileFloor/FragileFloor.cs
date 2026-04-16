@@ -1,5 +1,5 @@
 using Assets.Scripts.StageAssets.FragileFloor;
-using System.Collections.Generic;
+using System.Collections;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
@@ -13,26 +13,41 @@ public sealed class FragileFloor : MonoBehaviour
 
     [Header("Optional")]
     [SerializeField] private bool disableTriggerAfterBlocked = true;
+    [SerializeField, Min(1f)] private float pendingBlockClearanceMultiplier = 1.2f;
 
     private Tilemap _groundTilemap;
     private Tilemap _indestructiblesTilemap;
+    private BoxCollider2D _triggerCollider;
 
     private Vector3Int _cell;
     private FragileFloorState _state = FragileFloorState.Normal;
+    private Coroutine _pendingBlockRoutine;
 
-    private readonly HashSet<Collider2D> _playersInside = new();
+    private static readonly WaitForFixedUpdate _waitForFixedUpdate = new();
+    private static readonly Collider2D[] _overlapBuffer = new Collider2D[16];
 
     private void Reset()
     {
-        if (TryGetComponent<BoxCollider2D>(out var bc)) bc.isTrigger = true;
+        if (TryGetComponent<BoxCollider2D>(out var bc))
+            bc.isTrigger = true;
     }
 
     private void Awake()
     {
-        if (TryGetComponent<BoxCollider2D>(out var bc)) bc.isTrigger = true;
+        if (TryGetComponent(out _triggerCollider))
+            _triggerCollider.isTrigger = true;
 
         ResolveTilemaps();
         ResolveCell();
+    }
+
+    private void OnDisable()
+    {
+        if (_pendingBlockRoutine != null)
+        {
+            StopCoroutine(_pendingBlockRoutine);
+            _pendingBlockRoutine = null;
+        }
     }
 
     private void ResolveTilemaps()
@@ -101,7 +116,19 @@ public sealed class FragileFloor : MonoBehaviour
     private static bool IsPlayer(Collider2D col)
     {
         if (col == null) return false;
-        return col.CompareTag("Player") || col.GetComponent<MovementController>() != null;
+        if (col.CompareTag("Player")) return true;
+        return col.GetComponentInParent<MovementController>() != null;
+    }
+
+    private bool TryResolveTilemapsAndCell()
+    {
+        if (_groundTilemap != null && _indestructiblesTilemap != null)
+            return true;
+
+        ResolveTilemaps();
+        ResolveCell();
+
+        return _groundTilemap != null && _indestructiblesTilemap != null;
     }
 
     private void OnTriggerEnter2D(Collider2D other)
@@ -109,24 +136,19 @@ public sealed class FragileFloor : MonoBehaviour
         if (!IsPlayer(other))
             return;
 
-        _playersInside.Add(other);
-
         if (_state == FragileFloorState.Blocked)
             return;
 
-        if (_groundTilemap == null || _indestructiblesTilemap == null)
-        {
-            ResolveTilemaps();
-            ResolveCell();
-
-            if (_groundTilemap == null || _indestructiblesTilemap == null)
-                return;
-        }
+        if (!TryResolveTilemapsAndCell())
+            return;
 
         if (_state == FragileFloorState.Normal)
         {
             if (crackedGroundTile != null)
+            {
                 _groundTilemap.SetTile(_cell, crackedGroundTile);
+                _groundTilemap.RefreshTile(_cell);
+            }
 
             _state = FragileFloorState.Cracked;
             return;
@@ -135,6 +157,7 @@ public sealed class FragileFloor : MonoBehaviour
         if (_state == FragileFloorState.Cracked)
         {
             _state = FragileFloorState.PendingBlock;
+            EnsurePendingBlockRoutine();
             return;
         }
     }
@@ -144,26 +167,31 @@ public sealed class FragileFloor : MonoBehaviour
         if (!IsPlayer(other))
             return;
 
-        _playersInside.Remove(other);
-
         if (_state != FragileFloorState.PendingBlock)
             return;
 
-        if (_playersInside.Count > 0)
+        if (!IsPlayerStillOccupyingFloor())
+        {
+            ApplyBlockNow();
             return;
+        }
 
-        ApplyBlockNow();
+        EnsurePendingBlockRoutine();
     }
 
     private void ApplyBlockNow()
     {
-        if (_groundTilemap == null || _indestructiblesTilemap == null)
+        if (!TryResolveTilemapsAndCell())
             return;
 
         _groundTilemap.SetTile(_cell, null);
+        _groundTilemap.RefreshTile(_cell);
 
         if (indestructibleTile != null)
+        {
             _indestructiblesTilemap.SetTile(_cell, indestructibleTile);
+            _indestructiblesTilemap.RefreshTile(_cell);
+        }
 
         _state = FragileFloorState.Blocked;
 
@@ -173,5 +201,104 @@ public sealed class FragileFloor : MonoBehaviour
 
             enabled = false;
         }
+    }
+
+    private void EnsurePendingBlockRoutine()
+    {
+        if (_state != FragileFloorState.PendingBlock)
+            return;
+
+        if (_pendingBlockRoutine != null)
+            return;
+
+        _pendingBlockRoutine = StartCoroutine(WaitUntilPlayerLeavesThenBlock());
+    }
+
+    private IEnumerator WaitUntilPlayerLeavesThenBlock()
+    {
+        while (_state == FragileFloorState.PendingBlock)
+        {
+            if (!IsPlayerStillOccupyingFloor())
+            {
+                ApplyBlockNow();
+                break;
+            }
+
+            yield return _waitForFixedUpdate;
+        }
+
+        _pendingBlockRoutine = null;
+    }
+
+    private bool TryGetFloorBounds(out Vector2 center, out Vector2 size)
+    {
+        Tilemap tm = _groundTilemap != null ? _groundTilemap : _indestructiblesTilemap;
+        if (tm != null)
+        {
+            Vector3 cellMin = tm.CellToWorld(_cell);
+            Vector3 cellMax = tm.CellToWorld(_cell + new Vector3Int(1, 1, 0));
+            Vector2 cellSize = new Vector2(Mathf.Abs(cellMax.x - cellMin.x), Mathf.Abs(cellMax.y - cellMin.y));
+
+            if (cellSize.x > 0.0001f && cellSize.y > 0.0001f)
+            {
+                center = new Vector2((cellMin.x + cellMax.x) * 0.5f, (cellMin.y + cellMax.y) * 0.5f);
+                size = cellSize;
+                return true;
+            }
+        }
+
+        if (_triggerCollider == null && !TryGetComponent(out _triggerCollider))
+        {
+            center = transform.position;
+            size = Vector2.one;
+            return false;
+        }
+
+        Bounds bounds = _triggerCollider.bounds;
+        center = (Vector2)bounds.center;
+        size = (Vector2)bounds.size;
+        return bounds.size.x > 0.0001f && bounds.size.y > 0.0001f;
+    }
+
+    private bool TryGetPendingClearanceBounds(out Vector2 center, out Vector2 size)
+    {
+        if (!TryGetFloorBounds(out center, out size))
+            return false;
+
+        size *= Mathf.Max(1f, pendingBlockClearanceMultiplier);
+        return true;
+    }
+
+    private bool IsPlayerStillOccupyingFloor()
+    {
+        if (!TryGetPendingClearanceBounds(out Vector2 center, out Vector2 size))
+            return false;
+
+        var filter = new ContactFilter2D
+        {
+            useTriggers = true,
+            useLayerMask = false
+        };
+
+        int count = Physics2D.OverlapBox(
+            center,
+            size,
+            0f,
+            filter,
+            _overlapBuffer);
+
+        for (int i = 0; i < count; i++)
+        {
+            var hit = _overlapBuffer[i];
+            _overlapBuffer[i] = null;
+
+            if (hit == null)
+                continue;
+
+            if (IsPlayer(hit))
+                return true;
+        }
+
+        return false;
     }
 }
