@@ -102,6 +102,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
     private float magnetSpeedMultiplier = 1f;
 
     private static readonly WaitForFixedUpdate waitFixed = new();
+    private static readonly Collider2D[] magnetBlockCheckBuffer = new Collider2D[16];
 
     private GameObject magnetOriginBlocker;
 
@@ -1536,7 +1537,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
             Vector2 start = currentTileCenter;
             Vector2 next = currentTileCenter + kickDirection * kickTileSize;
 
-            if (IsBlockedByMaskAtWorld(next, blockMoveMask, overlapBoxSize))
+            if (IsMagnetBlockedAtWorld(next, blockMoveMask, overlapBoxSize))
                 break;
 
             EnsureMagnetOriginBlocker(start, originBlockerSize, originBlockerUseTrigger);
@@ -1557,7 +1558,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
                     yield break;
                 }
 
-                if (IsBlockedByMaskAtWorld(next, blockMoveMask, overlapBoxSize))
+                if (IsMagnetBlockedAtWorld(next, blockMoveMask, overlapBoxSize))
                 {
                     cancelAndReturn = true;
                     break;
@@ -1585,7 +1586,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
                 break;
             }
 
-            if (IsBlockedByMaskAtWorld(next, blockMoveMask, overlapBoxSize))
+            if (IsMagnetBlockedAtWorld(next, blockMoveMask, overlapBoxSize))
             {
                 rb.position = start;
                 transform.position = start;
@@ -1621,6 +1622,11 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         }
 
         magnetRoutine = null;
+    }
+
+    private bool IsMagnetBlockedAtWorld(Vector2 worldCenter, LayerMask mask, float boxSize)
+    {
+        return HasBlockingBombAtWorld(worldCenter, boxSize) || IsBlockedByMaskAtWorld(worldCenter, mask, boxSize);
     }
 
     private bool IsBlockedByMaskAtWorld(Vector2 worldCenter, LayerMask mask, float boxSize)
@@ -1678,6 +1684,46 @@ public class Bomb : MonoBehaviour, IMagnetPullable
 
         if (HasIndestructibleAt(worldCenter))
             return true;
+
+        return false;
+    }
+
+    private bool HasBlockingBombAtWorld(Vector2 worldCenter, float boxSize)
+    {
+        int bombLayer = LayerMask.NameToLayer("Bomb");
+        if (bombLayer < 0)
+            return false;
+
+        Vector2 size = Vector2.one * (kickTileSize * Mathf.Max(0.1f, boxSize));
+
+        var filter = new ContactFilter2D
+        {
+            useLayerMask = true,
+            useTriggers = true
+        };
+        filter.SetLayerMask(1 << bombLayer);
+
+        int count = Physics2D.OverlapBox(worldCenter, size, 0f, filter, magnetBlockCheckBuffer);
+        for (int i = 0; i < count; i++)
+        {
+            Collider2D hit = magnetBlockCheckBuffer[i];
+            magnetBlockCheckBuffer[i] = null;
+
+            if (hit == null)
+                continue;
+
+            GameObject hitObject = hit.attachedRigidbody != null
+                ? hit.attachedRigidbody.gameObject
+                : hit.gameObject;
+
+            if (hitObject == null || hitObject == gameObject)
+                continue;
+
+            if (hitObject.transform.IsChildOf(transform))
+                continue;
+
+            return true;
+        }
 
         return false;
     }
