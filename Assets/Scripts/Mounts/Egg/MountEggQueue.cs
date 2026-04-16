@@ -312,11 +312,11 @@ public sealed class MountEggQueue : MonoBehaviour
         return null;
     }
 
-    static void SetDestroyAnimationEnabled(Transform eggRoot, bool enabled)
+    static void SetNamedAnimationEnabled(Transform eggRoot, string childName, bool enabled)
     {
-        if (eggRoot == null) return;
+        if (eggRoot == null || string.IsNullOrWhiteSpace(childName)) return;
 
-        var t = FindDeepChildByName(eggRoot, "DestroyAnimation");
+        var t = FindDeepChildByName(eggRoot, childName);
         if (t == null) return;
 
         if (t.TryGetComponent<AnimatedSpriteRenderer>(out var ar)) ar.enabled = enabled;
@@ -324,12 +324,21 @@ public sealed class MountEggQueue : MonoBehaviour
         if (t.TryGetComponent<SpriteRenderer>(out var sr)) sr.enabled = enabled;
     }
 
+    static void SetDestroyAnimationsEnabled(Transform eggRoot, bool enabled)
+    {
+        SetNamedAnimationEnabled(eggRoot, "DestroyAnimation", enabled);
+        SetNamedAnimationEnabled(eggRoot, "ExplosionDestroyAnimation", enabled);
+    }
+
     void ForceEggVisualToNormalIdle(Transform eggRoot, EggFollowerDirectionalVisual directional)
     {
-        SetDestroyAnimationEnabled(eggRoot, false);
+        SetDestroyAnimationsEnabled(eggRoot, false);
 
         if (directional != null)
+        {
+            directional.enabled = true;
             directional.ForceIdleFacing(directional.facing);
+        }
     }
 
     void SetEggVisualRenderersEnabled(bool enabled)
