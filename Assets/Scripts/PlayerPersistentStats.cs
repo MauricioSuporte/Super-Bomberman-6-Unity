@@ -19,23 +19,23 @@ public static class PlayerPersistentStats
 
     public sealed class PlayerState
     {
-        public int Life = 999;
-        public int BombAmount = MaxBombAmount;
-        public int ExplosionRadius = MaxExplosionRadius;
-        public int SpeedInternal = MaxSpeedInternal;
+        public int Life = 1;
+        public int BombAmount = 1;
+        public int ExplosionRadius = 1;
+        public int SpeedInternal = MinSpeedInternal;
         public bool CanKickBombs = false;
-        public bool CanPunchBombs = true;
-        public bool HasPowerGlove = true;
+        public bool CanPunchBombs = false;
+        public bool HasPowerGlove = false;
         public bool CanPassBombs = false;
-        public bool CanPassDestructibles = true;
+        public bool CanPassDestructibles = false;
         public bool HasPierceBombs = false;
         public bool HasControlBombs = false;
         public bool HasPowerBomb = false;
         public bool HasRubberBombs = false;
-        public bool HasMagnetBomb = true;
+        public bool HasMagnetBomb = false;
         public bool HasFullFire = false;
 
-        public MountedType MountedLouie = MountedType.Yellow;
+        public MountedType MountedLouie = MountedType.None;
         public BomberSkin Skin = BomberSkin.White;
 
         public readonly List<ItemType> QueuedEggs = new(8);
@@ -43,8 +43,6 @@ public static class PlayerPersistentStats
         public PlayerState()
         {
             QueuedEggs.Clear();
-            QueuedEggs.Add(ItemType.PinkLouieEgg);
-            QueuedEggs.Add(ItemType.BlueLouieEgg);
         }
     }
 

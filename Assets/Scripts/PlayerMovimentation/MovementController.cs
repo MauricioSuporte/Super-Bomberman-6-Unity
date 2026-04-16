@@ -311,9 +311,8 @@ public class MovementController : MonoBehaviour, IKillable
         touchingHazards.Clear();
         currentAxis = MoveAxis.None;
 
-        dualPrimary = Vector2.zero;
-        dualSecondary = Vector2.zero;
-        dualSwitchTimer = 0f;
+        ResetDualInputAxes();
+        ResetSingleInputTurnState();
 
         if (bombController != null)
             bombController.SetPlayerId(playerId);
@@ -512,11 +511,32 @@ public class MovementController : MonoBehaviour, IKillable
         if (!enableDualInput || axisCount <= 1)
         {
             Vector2 singleDir = vertDir != Vector2.zero ? vertDir : horizDir;
+            bool wasUsingDualInput = HasDualInputState();
 
-            LogCurve($"SingleAxis requested:{singleDir} enableDualInput:{enableDualInput}");
-            HandleSingleAxisTurn(singleDir);
             ResetDualInputAxes();
+
+            if (wasUsingDualInput)
+            {
+                LogCurve(
+                    $"DualInput exit -> SingleAxis requested:{singleDir} " +
+                    $"currentDir:{direction} pendingSingle:{pendingSingleTurnDirection}");
+            }
+            else
+            {
+                LogCurve($"SingleAxis requested:{singleDir} enableDualInput:{enableDualInput}");
+            }
+
+            HandleSingleAxisTurn(singleDir, wasUsingDualInput);
             return;
+        }
+
+        if (pendingSingleTurnDirection != Vector2.zero || lockedMovementDirection != Vector2.zero)
+        {
+            LogCurve(
+                $"DualInput takeover -> clear pendingSingle:{pendingSingleTurnDirection} " +
+                $"lockedDir:{lockedMovementDirection}",
+                verbose: true);
+            ResetSingleInputTurnState();
         }
 
         if (dualPrimary == Vector2.zero)
@@ -770,6 +790,20 @@ public class MovementController : MonoBehaviour, IKillable
         dualSecondary = Vector2.zero;
         dualSwitchTimer = 0f;
         pendingTurnDirection = Vector2.zero;
+    }
+
+    private void ResetSingleInputTurnState()
+    {
+        pendingSingleTurnDirection = Vector2.zero;
+        lockedMovementDirection = Vector2.zero;
+    }
+
+    private bool HasDualInputState()
+    {
+        return dualPrimary != Vector2.zero ||
+               dualSecondary != Vector2.zero ||
+               pendingTurnDirection != Vector2.zero ||
+               dualSwitchTimer > 0f;
     }
 
     public void ApplyDirectionFromVector(Vector2 dir)
@@ -3279,14 +3313,15 @@ public class MovementController : MonoBehaviour, IKillable
         }
     }
 
-    private void HandleSingleAxisTurn(Vector2 singleDir)
+    private void HandleSingleAxisTurn(Vector2 singleDir, bool exitedDualInput = false)
     {
         singleDir = NormalizeCardinal(singleDir);
 
         LogCurve(
             $"HandleSingleAxisTurn requested:{singleDir} " +
             $"currentDir:{direction} currentAxis:{currentAxis} " +
-            $"pendingSingleBefore:{pendingSingleTurnDirection}",
+            $"pendingSingleBefore:{pendingSingleTurnDirection} " +
+            $"exitedDual:{exitedDualInput}",
             verbose: true);
 
         if (singleDir == Vector2.zero)
@@ -3328,7 +3363,8 @@ public class MovementController : MonoBehaviour, IKillable
         LogCurve(
             $"HandleSingleAxisTurn requested:{singleDir} " +
             $"moveBlocked:{moveBlocked} nearCentre:{nearCentre} exactlyAligned:{exactlyAligned} " +
-            $"currentDir:{direction} pendingSingleBefore:{pendingSingleTurnDirection}");
+            $"currentDir:{direction} pendingSingleBefore:{pendingSingleTurnDirection} " +
+            $"exitedDual:{exitedDualInput}");
 
         if (!moveBlocked && (nearCentre || exactlyAligned))
         {
@@ -3337,6 +3373,37 @@ public class MovementController : MonoBehaviour, IKillable
 
             LogCurve($"HandleSingleAxisTurn -> APPLY turn to:{singleDir}");
             ApplyDirectionFromVector(singleDir);
+            return;
+        }
+
+        if (exitedDualInput)
+        {
+            Vector2 alignmentDirection = GetSingleTurnAlignmentDirection(direction, singleDir);
+            bool canUseAlignmentDirection =
+                alignmentDirection != Vector2.zero &&
+                !IsSingleTurnAlignmentBlocked(alignmentDirection, singleDir);
+
+            pendingSingleTurnDirection = singleDir;
+
+            if (canUseAlignmentDirection)
+            {
+                lockedMovementDirection = alignmentDirection;
+
+                LogCurve(
+                    $"HandleSingleAxisTurn -> dual-exit align pendingSingle:{pendingSingleTurnDirection} " +
+                    $"alignDir:{alignmentDirection}");
+
+                ApplyDirectionFromVector(alignmentDirection);
+                return;
+            }
+
+            lockedMovementDirection = Vector2.zero;
+
+            LogCurve(
+                $"HandleSingleAxisTurn -> dual-exit stop pendingSingle:{pendingSingleTurnDirection} " +
+                $"moveBlocked:{moveBlocked} alignDir:{alignmentDirection}");
+
+            ApplyDirectionFromVector(Vector2.zero);
             return;
         }
 
