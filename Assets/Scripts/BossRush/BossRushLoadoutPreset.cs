@@ -23,6 +23,7 @@ public class BossRushLoadoutPreset
     public bool hasControlBombs;
     public bool hasPowerBomb;
     public bool hasRubberBombs;
+    public bool hasMagnetBomb;
     public bool hasFullFire;
 
     [Header("Mount")]
@@ -52,6 +53,7 @@ public class BossRushLoadoutPreset
         state.HasControlBombs = hasControlBombs;
         state.HasPowerBomb = hasPowerBomb;
         state.HasRubberBombs = hasRubberBombs;
+        state.HasMagnetBomb = hasMagnetBomb;
         state.HasFullFire = hasFullFire;
 
         if (state.HasControlBombs)

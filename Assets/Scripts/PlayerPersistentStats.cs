@@ -19,19 +19,20 @@ public static class PlayerPersistentStats
 
     public sealed class PlayerState
     {
-        public int Life = 999;
+        public int Life = 1;
         public int BombAmount = MaxBombAmount;
         public int ExplosionRadius = MaxExplosionRadius;
-        public int SpeedInternal = MinSpeedInternal;
+        public int SpeedInternal = MaxSpeedInternal;
         public bool CanKickBombs = true;
         public bool CanPunchBombs = true;
         public bool HasPowerGlove = false;
         public bool CanPassBombs = false;
         public bool CanPassDestructibles = true;
         public bool HasPierceBombs = false;
-        public bool HasControlBombs = true;
-        public bool HasPowerBomb = true;
+        public bool HasControlBombs = false;
+        public bool HasPowerBomb = false;
         public bool HasRubberBombs = false;
+        public bool HasMagnetBomb = true;
         public bool HasFullFire = false;
 
         public MountedType MountedLouie = MountedType.None;
@@ -170,6 +171,7 @@ public static class PlayerPersistentStats
         s.HasControlBombs = false;
         s.HasPowerBomb = false;
         s.HasRubberBombs = false;
+        s.HasMagnetBomb = false;
         s.HasFullFire = false;
 
         s.MountedLouie = MountedType.None;
@@ -194,6 +196,7 @@ public static class PlayerPersistentStats
         s.HasControlBombs = false;
         s.HasPowerBomb = false;
         s.HasRubberBombs = false;
+        s.HasMagnetBomb = false;
         s.HasFullFire = false;
 
         s.MountedLouie = MountedType.None;
@@ -271,6 +274,7 @@ public static class PlayerPersistentStats
         bool runtimeControl = false;
         bool runtimePower = false;
         bool runtimeRubber = false;
+        bool runtimeMagnet = false;
 
         if (abilitySystem != null)
         {
@@ -303,6 +307,9 @@ public static class PlayerPersistentStats
 
             var rubber = abilitySystem.Get<RubberBombAbility>(RubberBombAbility.AbilityId);
             runtimeRubber = rubber != null && rubber.IsEnabled;
+
+            var magnet = abilitySystem.Get<MagnetBombAbility>(MagnetBombAbility.AbilityId);
+            runtimeMagnet = magnet != null && magnet.IsEnabled;
         }
 
         if (runtimeKick)
@@ -327,6 +334,9 @@ public static class PlayerPersistentStats
 
         if (runtimeFullFire)
             s.HasFullFire = true;
+
+        if (runtimeMagnet)
+            s.HasMagnetBomb = true;
 
         if (runtimeControl)
         {
@@ -407,6 +417,9 @@ public static class PlayerPersistentStats
 
             if (s.HasFullFire) abilitySystem.Enable(FullFireAbility.AbilityId);
             else abilitySystem.Disable(FullFireAbility.AbilityId);
+
+            if (s.HasMagnetBomb) abilitySystem.Enable(MagnetBombAbility.AbilityId);
+            else abilitySystem.Disable(MagnetBombAbility.AbilityId);
 
             if (s.CanPassBombs) abilitySystem.Enable(BombPassAbility.AbilityId);
             else abilitySystem.Disable(BombPassAbility.AbilityId);
@@ -562,6 +575,7 @@ public static class PlayerPersistentStats
         to.HasControlBombs = from.HasControlBombs;
         to.HasPowerBomb = from.HasPowerBomb;
         to.HasRubberBombs = from.HasRubberBombs;
+        to.HasMagnetBomb = from.HasMagnetBomb;
         to.HasFullFire = from.HasFullFire;
 
         to.MountedLouie = from.MountedLouie;
@@ -591,6 +605,7 @@ public static class PlayerPersistentStats
         s.HasControlBombs = false;
         s.HasPowerBomb = false;
         s.HasRubberBombs = false;
+        s.HasMagnetBomb = false;
         s.HasFullFire = false;
 
         s.MountedLouie = MountedType.None;
@@ -893,6 +908,7 @@ public static class PlayerPersistentStats
         if (s.HasControlBombs) return false;
         if (s.HasPowerBomb) return false;
         if (s.HasRubberBombs) return false;
+        if (s.HasMagnetBomb) return false;
         if (s.HasFullFire) return false;
 
         if (s.MountedLouie != MountedType.None)

@@ -22,6 +22,7 @@ public partial class BombController : MonoBehaviour
     public GameObject controlBombPrefab;
     public GameObject powerBombPrefab;
     public GameObject rubberBombPrefab;
+    public GameObject magnetBombPrefab;
     public float bombFuseTime = 2f;
     public int bombAmout = 1;
 
@@ -428,6 +429,14 @@ public partial class BombController : MonoBehaviour
         return false;
     }
 
+    private bool IsMagnetBombEnabled()
+    {
+        if (TryGetComponent<AbilitySystem>(out var abilitySystem))
+            return abilitySystem.IsEnabled(MagnetBombAbility.AbilityId);
+
+        return false;
+    }
+
     private Tilemap GetSnapTilemapForGround()
     {
         return groundTiles != null ? groundTiles : stageBoundsTiles;
@@ -711,8 +720,10 @@ public partial class BombController : MonoBehaviour
         bool controlEnabled = !canUsePowerNow && IsControlEnabled();
         bool pierceEnabled = !canUsePowerNow && !controlEnabled && IsPierceEnabled();
         bool rubberEnabled = !canUsePowerNow && !controlEnabled && !pierceEnabled && IsRubberEnabled();
+        bool shouldMakeFirstPlacedBombMagnetic = IsMagnetBombEnabled() && !HasAnyAliveBombOwnedByMe();
 
         GameObject prefabToUse =
+            (shouldMakeFirstPlacedBombMagnetic && magnetBombPrefab != null) ? magnetBombPrefab :
             (canUsePowerNow && powerBombPrefab != null) ? powerBombPrefab :
             (controlEnabled && controlBombPrefab != null) ? controlBombPrefab :
             (pierceEnabled && pierceBombPrefab != null) ? pierceBombPrefab :
@@ -742,6 +753,14 @@ public partial class BombController : MonoBehaviour
         bombComponent.SetStageBoundsTilemap(stageBoundsTiles);
         bombComponent.SetFuseSeconds(bombFuseTime);
         bombComponent.Initialize(this);
+
+        if (shouldMakeFirstPlacedBombMagnetic)
+        {
+            if (!bomb.TryGetComponent<MagnetBomb>(out var magnetBomb) || magnetBomb == null)
+                magnetBomb = bomb.AddComponent<MagnetBomb>();
+
+            magnetBomb.SetTargetLayer("Enemy");
+        }
 
         if (!bomb.TryGetComponent<BombAtGroundTileNotifier>(out var notifier))
             notifier = bomb.AddComponent<BombAtGroundTileNotifier>();
@@ -1988,8 +2007,10 @@ public partial class BombController : MonoBehaviour
         bool controlEnabled = !canUsePowerNow && IsControlEnabled();
         bool pierceEnabled = !canUsePowerNow && !controlEnabled && IsPierceEnabled();
         bool rubberEnabled = !canUsePowerNow && !controlEnabled && !pierceEnabled && IsRubberEnabled();
+        bool shouldMakeFirstPlacedBombMagnetic = IsMagnetBombEnabled() && !HasAnyAliveBombOwnedByMe();
 
         GameObject prefabToUse =
+            (shouldMakeFirstPlacedBombMagnetic && magnetBombPrefab != null) ? magnetBombPrefab :
             (canUsePowerNow && powerBombPrefab != null) ? powerBombPrefab :
             (controlEnabled && controlBombPrefab != null) ? controlBombPrefab :
             (pierceEnabled && pierceBombPrefab != null) ? pierceBombPrefab :
@@ -2023,6 +2044,14 @@ public partial class BombController : MonoBehaviour
         bombComponent.SetStageBoundsTilemap(stageBoundsTiles);
         bombComponent.SetFuseSeconds(bombFuseTime);
         bombComponent.Initialize(this);
+
+        if (shouldMakeFirstPlacedBombMagnetic)
+        {
+            if (!bomb.TryGetComponent<MagnetBomb>(out var magnetBomb) || magnetBomb == null)
+                magnetBomb = bomb.AddComponent<MagnetBomb>();
+
+            magnetBomb.SetTargetLayer("Enemy");
+        }
 
         if (!bomb.TryGetComponent<BombAtGroundTileNotifier>(out var notifier))
             notifier = bomb.AddComponent<BombAtGroundTileNotifier>();

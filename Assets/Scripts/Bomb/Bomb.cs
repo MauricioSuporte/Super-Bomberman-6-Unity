@@ -1488,12 +1488,16 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         kickDirection = directionToMagnet.normalized;
         kickTileSize = tileSize;
 
-        kickObstacleMask = obstacleMask | LayerMask.GetMask("Enemy");
+        kickObstacleMask = obstacleMask | LayerMask.GetMask("Enemy", "Player", "Louie");
         kickDestructibleTilemap = destructibleTilemap;
 
         ResolveIndestructibleTilemapIfNeeded();
 
         Vector2 origin = SnapToGrid(rb.position, tileSize);
+        Vector2 next = origin + kickDirection * kickTileSize;
+
+        if (IsMagnetTileBlocked(next, blockMoveMask, overlapBoxSize))
+            return false;
 
         currentTileCenter = origin;
         lastPos = origin;
@@ -1523,7 +1527,6 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         bool originBlockerUseTrigger)
     {
         float mult = Mathf.Max(0.05f, speedMultiplier);
-
         int remainingSteps = Mathf.Max(0, steps);
 
         while (true)
@@ -1537,7 +1540,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
             Vector2 start = currentTileCenter;
             Vector2 next = currentTileCenter + kickDirection * kickTileSize;
 
-            if (IsMagnetBlockedAtWorld(next, blockMoveMask, overlapBoxSize))
+            if (IsMagnetTileBlocked(next, blockMoveMask, overlapBoxSize))
                 break;
 
             EnsureMagnetOriginBlocker(start, originBlockerSize, originBlockerUseTrigger);
@@ -1547,7 +1550,6 @@ public class Bomb : MonoBehaviour, IMagnetPullable
 
             float travelTime = kickTileSize / speed;
             float elapsed = 0f;
-
             bool cancelAndReturn = false;
 
             while (elapsed < travelTime)
@@ -1558,7 +1560,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
                     yield break;
                 }
 
-                if (IsMagnetBlockedAtWorld(next, blockMoveMask, overlapBoxSize))
+                if (IsMagnetTileBlocked(next, blockMoveMask, overlapBoxSize))
                 {
                     cancelAndReturn = true;
                     break;
@@ -1586,7 +1588,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
                 break;
             }
 
-            if (IsMagnetBlockedAtWorld(next, blockMoveMask, overlapBoxSize))
+            if (IsMagnetTileBlocked(next, blockMoveMask, overlapBoxSize))
             {
                 rb.position = start;
                 transform.position = start;
@@ -1624,9 +1626,92 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         magnetRoutine = null;
     }
 
-    private bool IsMagnetBlockedAtWorld(Vector2 worldCenter, LayerMask mask, float boxSize)
+    private bool IsMagnetTileBlocked(Vector2 worldCenter, LayerMask mask, float boxSize)
     {
-        return HasBlockingBombAtWorld(worldCenter, boxSize) || IsBlockedByMaskAtWorld(worldCenter, mask, boxSize);
+        if (TileHasCharacter(worldCenter, LayerMask.GetMask("Player", "Enemy")))
+            return true;
+
+        if (IsLouieAt(worldCenter, boxSize))
+            return true;
+
+        if (HasItemPickupAt(worldCenter, boxSize))
+            return true;
+
+        if (HasBlockingBombAtWorld(worldCenter, boxSize))
+            return true;
+
+        if (kickDestructibleTilemap != null)
+        {
+            Vector3Int cell = kickDestructibleTilemap.WorldToCell(worldCenter);
+            if (kickDestructibleTilemap.GetTile(cell) != null)
+                return true;
+        }
+
+        if (HasIndestructibleAt(worldCenter))
+            return true;
+
+        if (IsBlockedByMaskAtWorld(worldCenter, mask, boxSize))
+            return true;
+
+        return false;
+    }
+
+    private bool IsLouieAt(Vector2 worldCenter, float boxSize)
+    {
+        int louieMask = LayerMask.GetMask("Louie");
+        if (louieMask == 0)
+            return false;
+
+        Vector2 size = Vector2.one * (kickTileSize * Mathf.Max(0.1f, boxSize));
+        Collider2D[] hits = Physics2D.OverlapBoxAll(worldCenter, size, 0f, louieMask);
+
+        if (hits == null || hits.Length == 0)
+            return false;
+
+        for (int i = 0; i < hits.Length; i++)
+        {
+            var hit = hits[i];
+            if (hit == null)
+                continue;
+
+            if (hit.gameObject == gameObject)
+                continue;
+
+            if (hit.transform == transform || hit.transform.IsChildOf(transform))
+                continue;
+
+            return true;
+        }
+
+        return false;
+    }
+
+    private bool HasItemPickupAt(Vector2 worldCenter, float boxSize)
+    {
+        Vector2 size = Vector2.one * (kickTileSize * Mathf.Max(0.1f, boxSize));
+        Collider2D[] hits = Physics2D.OverlapBoxAll(worldCenter, size, 0f);
+
+        if (hits == null || hits.Length == 0)
+            return false;
+
+        for (int i = 0; i < hits.Length; i++)
+        {
+            var hit = hits[i];
+            if (hit == null)
+                continue;
+
+            if (hit.gameObject == gameObject)
+                continue;
+
+            if (hit.transform == transform || hit.transform.IsChildOf(transform))
+                continue;
+
+            var pickup = hit.GetComponent<ItemPickup>() ?? hit.GetComponentInParent<ItemPickup>();
+            if (pickup != null)
+                return true;
+        }
+
+        return false;
     }
 
     private bool IsBlockedByMaskAtWorld(Vector2 worldCenter, LayerMask mask, float boxSize)
