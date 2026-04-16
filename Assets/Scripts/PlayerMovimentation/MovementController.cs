@@ -161,8 +161,9 @@ public class MovementController : MonoBehaviour, IKillable
     [SerializeField] private bool suppressInactivityAnimation;
 
     [Header("Bomb Early Kick")]
-    private readonly float earlyKickMinCenterOffset = 0.5f;
-    private readonly float earlyReentryKickMinCenterOffset = 0.5f;
+    [Tooltip("Minimum axis distance from the bomb center before a non-solid bomb can kick or hard-block reentry.")]
+    [SerializeField, Range(0.05f, 1f)] private float bombKickMinCenterOffset = 0.625f;
+    public float BombKickMinCenterOffset => bombKickMinCenterOffset;
 
     private struct BombPlantTraversalState
     {
@@ -1731,6 +1732,17 @@ public class MovementController : MonoBehaviour, IKillable
                     $"physicallyStillInside:{physicallyStillInside} " +
                     $"nearReentryKickEdge:{nearReentryKickEdge}",
                     verbose: false);
+
+                if (!nearReentryKickEdge)
+                {
+                    LogBombEscape(
+                        $"ALLOW reentry trigger bomb traversal below kick threshold bomb:{bomb.name} " +
+                        $"myPos:{myPos} target:{targetPosition} bombPos:{bombPos} " +
+                        $"minCenterOffset:{bombKickMinCenterOffset:F3}",
+                        verbose: false);
+
+                    continue;
+                }
 
                 if (allowMovementAbilities && bombCollider != null)
                 {
@@ -3469,13 +3481,13 @@ public class MovementController : MonoBehaviour, IKillable
         if (Mathf.Abs(moveDir.x) > 0.01f)
         {
             float signedOffsetX = delta.x * Mathf.Sign(moveDir.x);
-            return signedOffsetX >= earlyKickMinCenterOffset;
+            return signedOffsetX >= bombKickMinCenterOffset;
         }
 
         if (Mathf.Abs(moveDir.y) > 0.01f)
         {
             float signedOffsetY = delta.y * Mathf.Sign(moveDir.y);
-            return signedOffsetY >= earlyKickMinCenterOffset;
+            return signedOffsetY >= bombKickMinCenterOffset;
         }
 
         return false;
@@ -3492,13 +3504,13 @@ public class MovementController : MonoBehaviour, IKillable
         if (Mathf.Abs(moveDir.x) > 0.01f)
         {
             float signedOffsetX = -delta.x * Mathf.Sign(moveDir.x);
-            return signedOffsetX >= earlyReentryKickMinCenterOffset;
+            return signedOffsetX >= bombKickMinCenterOffset;
         }
 
         if (Mathf.Abs(moveDir.y) > 0.01f)
         {
             float signedOffsetY = -delta.y * Mathf.Sign(moveDir.y);
-            return signedOffsetY >= earlyReentryKickMinCenterOffset;
+            return signedOffsetY >= bombKickMinCenterOffset;
         }
 
         return false;

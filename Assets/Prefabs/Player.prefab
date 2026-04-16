@@ -3823,6 +3823,7 @@ MonoBehaviour:
   pixelsPerUnit: 16
   useIntegerPixelSteps: 1
   suppressInactivityAnimation: 0
+  bombKickMinCenterOffset: 0.625
   isDead: 0
   explosionInvulnerable: 0
   externalMovementOverride: 0

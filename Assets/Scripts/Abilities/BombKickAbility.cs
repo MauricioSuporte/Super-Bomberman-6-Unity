@@ -20,6 +20,7 @@ public class BombKickAbility : MonoBehaviour, IMovementAbility
     private static AudioClip cachedKickStopClip;
     private const float MaxKickAxisReachTiles = 1f;
     private const float MaxKickAxisReachToleranceTiles = 0.05f;
+    private const float DefaultNonSolidKickMinCenterOffset = 0.625f;
 
     private static readonly object kickSfxGate = new();
     private static AudioSource kickSfxOwner;
@@ -37,6 +38,14 @@ public class BombKickAbility : MonoBehaviour, IMovementAbility
 
     public string Id => AbilityId;
     public bool IsEnabled => enabledAbility;
+
+    private float GetNonSolidKickMinCenterOffset()
+    {
+        if (movement != null)
+            return Mathf.Max(0f, movement.BombKickMinCenterOffset);
+
+        return DefaultNonSolidKickMinCenterOffset;
+    }
 
     private static string VecToStr(Vector2 v)
     {
@@ -218,10 +227,23 @@ public class BombKickAbility : MonoBehaviour, IMovementAbility
 
         if (!bomb.IsSolid)
         {
+            float minNonSolidKickAxisOffset = GetNonSolidKickMinCenterOffset();
+            if (axisDistanceFromBomb < minNonSolidKickAxisOffset)
+            {
+                LogBombKick(
+                    $"TryHandleBlockedHit -> false (too close to bomb center for non-solid kick) " +
+                    $"bomb:{bomb.name} axisDistanceFromBomb:{axisDistanceFromBomb:F3} " +
+                    $"minCenterOffset:{minNonSolidKickAxisOffset:F3} " +
+                    $"playerToBombDist:{playerToBombDist:F3} " +
+                    $"signedAxisOffset:{signedAxisOffset:F3} perpendicularOffset:{perpendicularOffset:F3}");
+                return false;
+            }
+
             LogBombKick(
                 $"EarlyKick check bomb:{bomb.name} hasPlantDir:{hasPlantDir} alreadyUnlocked:{earlyUnlocked} " +
                 $"ownerPos:{VecToStr(ownerPos)} bombPos:{VecToStr(bombPos)} playerToBombDist:{playerToBombDist:F3} " +
-                $"signedAxisOffset:{signedAxisOffset:F3} perpendicularOffset:{perpendicularOffset:F3}",
+                $"signedAxisOffset:{signedAxisOffset:F3} perpendicularOffset:{perpendicularOffset:F3} " +
+                $"minCenterOffset:{minNonSolidKickAxisOffset:F3}",
                 verbose: true);
 
             if (hasPlantDir)
