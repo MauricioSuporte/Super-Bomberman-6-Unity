@@ -14,26 +14,11 @@ public class MobileButton : MonoBehaviour, IPointerDownHandler, IPointerUpHandle
     [SerializeField] private bool disableVisualPreserveAspect = true;
     [SerializeField] private bool disableVisualRaycastTarget = true;
 
-    [Header("Debug Hitbox")]
-    [SerializeField] private bool showDebugHitbox;
-    [SerializeField] private Color debugHitboxColor = new Color(1f, 0f, 0f, 0.20f);
-
     private Image _hitboxImage;
-    private Color _originalColor;
 
     void Awake()
     {
         _hitboxImage = GetComponent<Image>();
-
-        if (_hitboxImage != null)
-        {
-            _originalColor = _hitboxImage.color;
-
-            if (showDebugHitbox)
-                _hitboxImage.color = debugHitboxColor;
-            else
-                _hitboxImage.color = _originalColor;
-        }
 
         ConfigureVisualToMatchHitbox();
         ApplyReleasedVisual();
@@ -92,8 +77,7 @@ public class MobileButton : MonoBehaviour, IPointerDownHandler, IPointerUpHandle
             visualTarget.localRotation = Quaternion.identity;
         }
 
-        var visualImage = visualTarget.GetComponent<Image>();
-        if (visualImage != null)
+        if (visualTarget.TryGetComponent<Image>(out var visualImage))
         {
             if (disableVisualPreserveAspect)
                 visualImage.preserveAspect = false;
@@ -105,15 +89,6 @@ public class MobileButton : MonoBehaviour, IPointerDownHandler, IPointerUpHandle
 
     void OnValidate()
     {
-        var image = GetComponent<Image>();
-        if (image != null)
-        {
-            if (showDebugHitbox)
-                image.color = debugHitboxColor;
-            else if (Application.isPlaying)
-                image.color = _originalColor;
-        }
-
         ConfigureVisualToMatchHitbox();
     }
 }

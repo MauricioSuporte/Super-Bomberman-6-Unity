@@ -15,7 +15,7 @@ public class PlayerInputManager : MonoBehaviour
     [SerializeField] int maxPlayers = 4;
 
     [Header("Analog As Dpad Fallback")]
-    [SerializeField, Range(0.1f, 0.95f)] float analogThreshold = 0.55f;
+    private readonly float analogThreshold = 0.35f;
     [SerializeField] bool includeRightStickAsDpad = false;
 
     [Header("Boat Input Gate")]
@@ -76,14 +76,13 @@ public class PlayerInputManager : MonoBehaviour
     void Update()
     {
         EnsureProfilesForPlayerCount();
-
         RefreshPlayersMap(force: false);
 
         int count = PlayerCount;
         for (int id = 1; id <= count; id++)
         {
             var p = GetPlayer(id);
-            ReadDpadDigital(p, out bool up, out bool down, out bool left, out bool right);
+            ReadDirectionalDigital(p, id, out bool up, out bool down, out bool left, out bool right);
 
             curUp[id] = up;
             curDown[id] = down;
@@ -244,6 +243,9 @@ public class PlayerInputManager : MonoBehaviour
         if (playerId == 1 && MobileInputBridge.Instance != null && MobileInputBridge.Instance.Get(action))
             return true;
 
+        if (TryGetMobileDirectionalHeld(action, playerId, out bool mobileDirectionalHeld) && mobileDirectionalHeld)
+            return true;
+
         var p = GetPlayer(playerId);
         var b = p.GetBinding(action);
 
@@ -281,6 +283,9 @@ public class PlayerInputManager : MonoBehaviour
         if (playerId == 1 && MobileInputBridge.Instance != null && MobileInputBridge.Instance.GetDown(action))
             return true;
 
+        if (TryGetMobileDirectionalDown(action, playerId, out bool mobileDirectionalDown) && mobileDirectionalDown)
+            return true;
+
         var p = GetPlayer(playerId);
         var b = p.GetBinding(action);
 
@@ -314,6 +319,68 @@ public class PlayerInputManager : MonoBehaviour
             return ReadGamepadButtonDown(p, b.joyButton);
 
         return false;
+    }
+
+    bool TryGetMobileDirectionalHeld(PlayerAction action, int playerId, out bool held)
+    {
+        held = false;
+
+        if (playerId != 1 || !IsDirectionalAction(action))
+            return false;
+
+        var bridge = MobileInputBridge.Instance;
+        if (bridge == null)
+            return false;
+
+        Vector2 mobile = bridge.MoveVector;
+        held = action switch
+        {
+            PlayerAction.MoveUp => mobile.y >= analogThreshold,
+            PlayerAction.MoveDown => mobile.y <= -analogThreshold,
+            PlayerAction.MoveLeft => mobile.x <= -analogThreshold,
+            PlayerAction.MoveRight => mobile.x >= analogThreshold,
+            _ => false
+        };
+
+        return true;
+    }
+
+    bool TryGetMobileDirectionalDown(PlayerAction action, int playerId, out bool down)
+    {
+        down = false;
+
+        if (playerId != 1 || !IsDirectionalAction(action) || MobileInputBridge.Instance == null)
+            return false;
+
+        bool was = action switch
+        {
+            PlayerAction.MoveUp => prevUp.TryGetValue(playerId, out bool up) && up,
+            PlayerAction.MoveDown => prevDown.TryGetValue(playerId, out bool heldDown) && heldDown,
+            PlayerAction.MoveLeft => prevLeft.TryGetValue(playerId, out bool left) && left,
+            PlayerAction.MoveRight => prevRight.TryGetValue(playerId, out bool right) && right,
+            _ => false
+        };
+
+        bool now = action switch
+        {
+            PlayerAction.MoveUp => curUp.TryGetValue(playerId, out bool up) && up,
+            PlayerAction.MoveDown => curDown.TryGetValue(playerId, out bool heldDown) && heldDown,
+            PlayerAction.MoveLeft => curLeft.TryGetValue(playerId, out bool left) && left,
+            PlayerAction.MoveRight => curRight.TryGetValue(playerId, out bool right) && right,
+            _ => false
+        };
+
+        down = now && !was;
+
+        return true;
+    }
+
+    static bool IsDirectionalAction(PlayerAction action)
+    {
+        return action == PlayerAction.MoveUp ||
+               action == PlayerAction.MoveDown ||
+               action == PlayerAction.MoveLeft ||
+               action == PlayerAction.MoveRight;
     }
 
     public bool AnyGet(PlayerAction action) => AnyGet(action, out _);
@@ -354,7 +421,33 @@ public class PlayerInputManager : MonoBehaviour
         return false;
     }
 
-    void ReadDpadDigital(PlayerInputProfile p, out bool up, out bool down, out bool left, out bool right)
+    void ReadDirectionalDigital(PlayerInputProfile p, int playerId, out bool up, out bool down, out bool left, out bool right)
+    {
+        up = down = left = right = false;
+
+        ReadGamepadDirectionalDigital(p, out bool padUp, out bool padDown, out bool padLeft, out bool padRight);
+
+        up |= padUp;
+        down |= padDown;
+        left |= padLeft;
+        right |= padRight;
+
+        Vector2 mobile = Vector2.zero;
+        bool hasBridge = MobileInputBridge.Instance != null;
+
+        if (playerId == 1 && hasBridge)
+        {
+            mobile = MobileInputBridge.Instance.MoveVector;
+
+            up |= mobile.y >= analogThreshold;
+            down |= mobile.y <= -analogThreshold;
+            right |= mobile.x >= analogThreshold;
+            left |= mobile.x <= -analogThreshold;
+        }
+
+    }
+
+    void ReadGamepadDirectionalDigital(PlayerInputProfile p, out bool up, out bool down, out bool left, out bool right)
     {
         var pad = ResolvePlayerGamepad(p);
 
