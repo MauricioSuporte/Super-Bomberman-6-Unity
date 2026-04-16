@@ -757,6 +757,7 @@ public static class PlayerPersistentStats
                 s.HasControlBombs = false;
                 s.HasPowerBomb = false;
                 s.HasRubberBombs = false;
+                s.HasMagnetBomb = false;
                 break;
 
             case ItemType.ControlBomb:
@@ -764,6 +765,7 @@ public static class PlayerPersistentStats
                 s.HasPierceBombs = false;
                 s.HasPowerBomb = false;
                 s.HasRubberBombs = false;
+                s.HasMagnetBomb = false;
                 break;
 
             case ItemType.PowerBomb:
@@ -771,6 +773,7 @@ public static class PlayerPersistentStats
                 s.HasPierceBombs = false;
                 s.HasControlBombs = false;
                 s.HasRubberBombs = false;
+                s.HasMagnetBomb = false;
                 break;
 
             case ItemType.RubberBomb:
@@ -778,6 +781,15 @@ public static class PlayerPersistentStats
                 s.HasPierceBombs = false;
                 s.HasControlBombs = false;
                 s.HasPowerBomb = false;
+                s.HasMagnetBomb = false;
+                break;
+
+            case ItemType.MagnetBomb:
+                s.HasMagnetBomb = true;
+                s.HasPierceBombs = false;
+                s.HasControlBombs = false;
+                s.HasPowerBomb = false;
+                s.HasRubberBombs = false;
                 break;
 
             case ItemType.Heart:

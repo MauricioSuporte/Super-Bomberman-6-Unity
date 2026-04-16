@@ -2047,10 +2047,15 @@ public partial class BombController : MonoBehaviour
 
         if (shouldMakeFirstPlacedBombMagnetic)
         {
-            if (!bomb.TryGetComponent<MagnetBomb>(out var magnetBomb) || magnetBomb == null)
-                magnetBomb = bomb.AddComponent<MagnetBomb>();
+            if (TryGetComponent<MagnetBombAbility>(out var magnetAbility) && magnetAbility != null)
+                magnetAbility.ApplyToBomb(bomb);
+            else
+            {
+                if (!bomb.TryGetComponent<MagnetBomb>(out var magnetBomb) || magnetBomb == null)
+                    magnetBomb = bomb.AddComponent<MagnetBomb>();
 
-            magnetBomb.SetTargetLayer("Enemy");
+                magnetBomb.SetTargetLayer("Enemy");
+            }
         }
 
         if (!bomb.TryGetComponent<BombAtGroundTileNotifier>(out var notifier))

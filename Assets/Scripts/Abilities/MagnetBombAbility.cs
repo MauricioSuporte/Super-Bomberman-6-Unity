@@ -19,4 +19,16 @@ public class MagnetBombAbility : MonoBehaviour, IPlayerAbility
     {
         enabledAbility = false;
     }
+
+    public void ApplyToBomb(GameObject bombObject)
+    {
+        if (!enabledAbility || bombObject == null)
+            return;
+
+        if (!bombObject.TryGetComponent<MagnetBomb>(out var magnetBomb) || magnetBomb == null)
+            magnetBomb = bombObject.AddComponent<MagnetBomb>();
+
+        magnetBomb.SetTargetLayer("Enemy");
+        magnetBomb.enabled = true;
+    }
 }
