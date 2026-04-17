@@ -372,22 +372,22 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   portalResourcesPath: Portal/EndStagePortal
-  portalAmount: 1
-  extraBombAmount: 1
-  blastRadiusAmount: 1
-  speedIncreaseAmount: 1
-  kickBombAmount: 0
-  punchBombAmount: 0
-  pierceBombAmount: 0
+  portalAmount: 0
+  extraBombAmount: 12
+  blastRadiusAmount: 10
+  speedIncreaseAmount: 8
+  kickBombAmount: 4
+  punchBombAmount: 3
+  pierceBombAmount: 1
   controlBombAmount: 0
-  powerBombAmount: 0
-  rubberBombAmount: 0
-  fullFireAmount: 0
-  bombPassAmount: 0
-  destructiblePassAmount: 0
-  invincibleSuitAmount: 1
+  powerBombAmount: 1
+  rubberBombAmount: 1
+  fullFireAmount: 1
+  bombPassAmount: 1
+  destructiblePassAmount: 1
+  invincibleSuitAmount: 0
   heartAmount: 0
-  powerGloveAmount: 0
+  powerGloveAmount: 3
   blueLouieEggAmount: 0
   blackLouieEggAmount: 0
   purpleLouieEggAmount: 0
@@ -395,7 +395,9 @@ MonoBehaviour:
   yellowLouieEggAmount: 0
   pinkLouieEggAmount: 0
   redLouieEggAmount: 0
-  clockAmount: 1
+  clockAmount: 0
+  randomEggsMin: 4
+  randomEggsMax: 8
   destructibleTilemap: {fileID: 0}
   indestructibleTilemap: {fileID: 0}
   nextStageSceneName: Stage_1-2

@@ -44,6 +44,10 @@ public class GameManager : MonoBehaviour
     [Min(0)] public int redLouieEggAmount = 0;
     [Min(0)] public int clockAmount = 0;
 
+    [Header("Random Eggs")]
+    [Min(0)] public int randomEggsMin = 0;
+    [Min(0)] public int randomEggsMax = 0;
+
     [Header("Stage")]
     public Tilemap destructibleTilemap;
     public Tilemap indestructibleTilemap;
@@ -453,6 +457,8 @@ public class GameManager : MonoBehaviour
 
         TryAssignPortal(portalAmount);
 
+        TryAssignRandomEggs(indices, ref cursor);
+
         TryAssignItem(ItemType.ExtraBomb, extraBombAmount);
         TryAssignItem(ItemType.BlastRadius, blastRadiusAmount);
         TryAssignItem(ItemType.SpeedIncrese, speedIncreaseAmount);
@@ -745,5 +751,35 @@ public class GameManager : MonoBehaviour
     {
         AutoItemDatabase.BuildIfNeeded();
         return AutoItemDatabase.Get(type);
+    }
+
+    private static readonly ItemType[] louieEggTypes =
+    {
+        ItemType.BlueLouieEgg,
+        ItemType.BlackLouieEgg,
+        ItemType.PurpleLouieEgg,
+        ItemType.GreenLouieEgg,
+        ItemType.YellowLouieEgg,
+        ItemType.PinkLouieEgg,
+        ItemType.RedLouieEgg
+    };
+
+    void TryAssignRandomEggs(List<int> indices, ref int cursor)
+    {
+        if (randomEggsMax <= 0)
+            return;
+
+        int amount = UnityEngine.Random.Range(randomEggsMin, randomEggsMax + 1);
+
+        for (int i = 0; i < amount && cursor < indices.Count; i++)
+        {
+            int randomIndex = UnityEngine.Random.Range(0, louieEggTypes.Length);
+            ItemType randomEgg = louieEggTypes[randomIndex];
+
+            ItemPickup prefab = AutoItemDatabase.Get(randomEgg);
+
+            if (prefab != null)
+                orderToSpawn[indices[cursor++]] = prefab.gameObject;
+        }
     }
 }

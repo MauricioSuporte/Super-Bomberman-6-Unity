@@ -6,6 +6,9 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
+    path: Assets/Scenes/BattleMode_1.unity
+    guid: 5cdd2466e57ae074c8076254cde401e3
+  - enabled: 1
     path: Assets/Scenes/TitleScreen.unity
     guid: 1f8e6a374594b3941b9167038880a853
   - enabled: 1
@@ -66,4 +69,3 @@ EditorBuildSettings:
     path: Assets/Scenes/Stage_2-7.unity
     guid: c029a7f1cabfdfb4aba4665e696a1785
   m_configObjects: {}
-  m_UseUCBPForAssetBundles: 0
