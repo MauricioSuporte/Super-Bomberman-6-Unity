@@ -228,6 +228,8 @@ public class StageIntroTransition : MonoBehaviour
 
     IEnumerator FadeInToGame()
     {
+        bool isBattleMode = IsBattleModeScene();
+
         if (gameplayRoot != null)
             gameplayRoot.SetActive(true);
 
@@ -244,7 +246,7 @@ public class StageIntroTransition : MonoBehaviour
         skipPreIntroWalkNextRound = false;
         skipPreIntroWalkNextRound_Inspector = false;
 
-        bool hasPreIntro = (preIntroWalk != null && preIntroWalk.IsEnabled && !skipPreIntroNow);
+        bool hasPreIntro = !isBattleMode && (preIntroWalk != null && preIntroWalk.IsEnabled && !skipPreIntroNow);
 
         if (skipPreIntroNow && preIntroWalk != null)
             preIntroWalk.ForceMainCameraActive();
@@ -321,6 +323,15 @@ public class StageIntroTransition : MonoBehaviour
             if (hasPreIntro)
                 TryPlayIntroMusic();
 
+            if (isBattleMode)
+            {
+                GamePauseController.ClearPauseFlag();
+                Time.timeScale = 1f;
+                EnableGameplay();
+                TryStartDefaultMusicNormalFlow();
+                yield break;
+            }
+
             if (stageLabel != null)
             {
                 stageLabel.gameObject.SetActive(true);
@@ -344,12 +355,14 @@ public class StageIntroTransition : MonoBehaviour
             yield break;
         }
 
-        float duration = 1f;
+        float duration = isBattleMode ? 0.5f : 1f;
         float t = 0f;
         Color baseColor = fadeImage.color;
 
-        if (!hasPreIntro)
+        if (!isBattleMode && !hasPreIntro)
+        {
             TryPlayIntroMusic();
+        }
 
         while (t < duration)
         {
@@ -360,6 +373,15 @@ public class StageIntroTransition : MonoBehaviour
         }
 
         fadeImage.gameObject.SetActive(false);
+
+        if (isBattleMode)
+        {
+            GamePauseController.ClearPauseFlag();
+            Time.timeScale = 1f;
+            EnableGameplay();
+            TryStartDefaultMusicNormalFlow();
+            yield break;
+        }
 
         if (!IsStage17() && hasPreIntro)
             yield return preIntroWalk.Play(spawner);
@@ -419,6 +441,13 @@ public class StageIntroTransition : MonoBehaviour
             float volume = GameMusicController.Instance.defaultMusicVolume;
             GameMusicController.Instance.PlayMusic(clip, volume, true);
         }
+    }
+
+    bool IsBattleModeScene()
+    {
+        var scene = SceneManager.GetActiveScene();
+        return scene.IsValid() &&
+               scene.name.StartsWith("BattleMode_", System.StringComparison.OrdinalIgnoreCase);
     }
 
     void EnableGameplay()
