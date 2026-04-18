@@ -2518,6 +2518,10 @@ public class MovementController : MonoBehaviour, IKillable
         var hud = FindAnyObjectByType<HudPortraitInGridLayout>();
         if (hud != null)
             hud.OnPlayerDied(PlayerId);
+
+        var battleHud = FindAnyObjectByType<BattleModeHud>();
+        if (battleHud != null)
+            battleHud.OnPlayerDied(PlayerId);
     }
 
     public void PlayEndStageSequence(Vector2 portalCenter, bool snapToPortalCenter)
