@@ -8,6 +8,10 @@ using UnityEngine.Tilemaps;
 public class GameManager : MonoBehaviour
 {
     static readonly WaitForSecondsRealtime waitNextStageDelay = new(4f);
+    static readonly WaitForSecondsRealtime waitBattleVictoryDelay = new(2f);
+    const float BattleVictoryFadeDuration = 3f;
+    const string BattleVictorySfxResourcesPath = "Sounds/SB5 Sound Effects (48)";
+    static AudioClip battleVictorySfx;
 
     public int EnemiesAlive { get; private set; }
     public int PendingHiddenEnemies { get; private set; }
@@ -502,46 +506,10 @@ public class GameManager : MonoBehaviour
 
     public void CheckWinState()
     {
-        if (restartingRound)
+        if (restartingRound || endStageTriggered)
             return;
 
-        int aliveCount = 0;
-        List<PlayerIdentity> ids = GetOrderedPlayerIdentities(includeInactive: false);
-
-        for (int i = 0; i < ids.Count; i++)
-        {
-            PlayerIdentity id = ids[i];
-            if (id == null)
-                continue;
-
-            if (!TryGetRuntimePlayerComponents(id, out var movement, out _))
-                continue;
-
-            if (!movement.gameObject.activeInHierarchy)
-                continue;
-
-            if (movement.isDead)
-                continue;
-
-            aliveCount++;
-        }
-
-        if (aliveCount <= 0)
-        {
-            restartingRound = true;
-
-            if (GameMusicController.Instance != null &&
-                GameMusicController.Instance.deathMusic != null)
-            {
-                GameMusicController.Instance.PlayMusic(
-                    GameMusicController.Instance.deathMusic, 1f, false);
-            }
-
-            if (StageIntroTransition.Instance != null)
-                StageIntroTransition.Instance.StartFadeOut(2f);
-
-            StartCoroutine(RestartRoundRoutine());
-        }
+        EvaluatePlayerWinState();
     }
 
     IEnumerator RestartRoundRoutine()
@@ -565,12 +533,32 @@ public class GameManager : MonoBehaviour
         SceneManager.LoadScene(current.buildIndex);
     }
 
+    IEnumerator RestartBattleStageRoutine()
+    {
+        yield return waitNextStageDelay;
+
+        GamePauseController.ClearPauseFlag();
+        Time.timeScale = 1f;
+        PlayerPersistentStats.RollbackStage();
+
+        StagePreIntroPlayersWalk.SkipOnNextLoad();
+
+        Scene current = SceneManager.GetActiveScene();
+        SceneManager.LoadScene(current.buildIndex);
+    }
+
     public void EndStage()
     {
         if (endStageTriggered)
             return;
 
         endStageTriggered = true;
+
+        if (IsBattleModeScene())
+        {
+            StartCoroutine(RestartBattleStageRoutine());
+            return;
+        }
 
         string currentSceneName = SceneManager.GetActiveScene().name;
 
@@ -705,10 +693,16 @@ public class GameManager : MonoBehaviour
 
     public void NotifyPlayerDeathStarted()
     {
-        if (restartingRound)
+        if (restartingRound || endStageTriggered)
             return;
 
+        EvaluatePlayerWinState();
+    }
+
+    void EvaluatePlayerWinState()
+    {
         int aliveNotDead = 0;
+        MovementController survivingPlayer = null;
         List<PlayerIdentity> ids = GetOrderedPlayerIdentities(includeInactive: false);
 
         for (int i = 0; i < ids.Count; i++)
@@ -727,6 +721,13 @@ public class GameManager : MonoBehaviour
                 continue;
 
             aliveNotDead++;
+            survivingPlayer = movement;
+        }
+
+        if (IsBattleModeScene() && aliveNotDead == 1)
+        {
+            TriggerBattleVictorySequence(survivingPlayer);
+            return;
         }
 
         if (aliveNotDead <= 0)
@@ -745,6 +746,85 @@ public class GameManager : MonoBehaviour
 
             StartCoroutine(RestartRoundRoutine());
         }
+    }
+
+    void TriggerBattleVictorySequence(MovementController survivingPlayer)
+    {
+        if (survivingPlayer == null)
+            return;
+
+        restartingRound = true;
+        endStageTriggered = true;
+
+        if (survivingPlayer.TryGetComponent<PowerGloveAbility>(out var glove) && glove != null)
+            glove.DestroyHeldBombIfHolding();
+
+        if (survivingPlayer.TryGetComponent<BombController>(out var bombController) && bombController != null)
+            bombController.ClearPlantedBombsOnStageEnd(false);
+
+        Vector2 celebrationCenter = new(
+            Mathf.Round(survivingPlayer.transform.position.x),
+            Mathf.Round(survivingPlayer.transform.position.y)
+        );
+
+        survivingPlayer.PlayEndStageSequence(celebrationCenter, snapToPortalCenter: false);
+        StartCoroutine(BattleVictorySequenceRoutine(survivingPlayer));
+    }
+
+    IEnumerator BattleVictorySequenceRoutine(MovementController survivingPlayer)
+    {
+        if (GameMusicController.Instance != null)
+            GameMusicController.Instance.StopMusic();
+
+        PlayBattleVictorySfx(survivingPlayer);
+
+        yield return waitBattleVictoryDelay;
+
+        if (StageIntroTransition.Instance != null)
+            StageIntroTransition.Instance.StartFadeOut(BattleVictoryFadeDuration);
+
+        yield return new WaitForSecondsRealtime(BattleVictoryFadeDuration);
+
+        GamePauseController.ClearPauseFlag();
+        Time.timeScale = 1f;
+        PlayerPersistentStats.RollbackStage();
+
+        StagePreIntroPlayersWalk.SkipOnNextLoad();
+
+        Scene current = SceneManager.GetActiveScene();
+        SceneManager.LoadScene(current.buildIndex);
+    }
+
+    static void PlayBattleVictorySfx(MovementController survivingPlayer)
+    {
+        if (battleVictorySfx == null)
+            battleVictorySfx = Resources.Load<AudioClip>(BattleVictorySfxResourcesPath);
+
+        if (battleVictorySfx == null || survivingPlayer == null)
+            return;
+
+        if (!survivingPlayer.TryGetComponent<AudioSource>(out var audioSource))
+            audioSource = survivingPlayer.GetComponentInChildren<AudioSource>(true);
+
+        if (audioSource != null)
+        {
+            audioSource.PlayOneShot(battleVictorySfx);
+            survivingPlayer.StartCoroutine(
+                PlayGoodAfterDelay(audioSource, 2f)
+            );
+        }
+    }
+
+    static IEnumerator PlayGoodAfterDelay(AudioSource audioSource, float delay)
+    {
+        yield return new WaitForSecondsRealtime(delay);
+        EndStageVoiceSfx.PlayRandomGood(audioSource);
+    }
+
+    static bool IsBattleModeScene()
+    {
+        string sceneName = SceneManager.GetActiveScene().name;
+        return sceneName.StartsWith("BattleMode_", StringComparison.OrdinalIgnoreCase);
     }
 
     public ItemPickup GetItemPrefab(ItemType type)

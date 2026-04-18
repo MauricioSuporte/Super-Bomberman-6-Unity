@@ -111,36 +111,6 @@ public abstract class EndStage : MonoBehaviour
         );
     }
 
-    private static void EnsureGoodClipsLoaded()
-    {
-        if (s_goodClips != null)
-            return;
-
-        s_goodClips = new AudioClip[3];
-        s_goodClips[0] = Resources.Load<AudioClip>("Sounds/good1");
-        s_goodClips[1] = Resources.Load<AudioClip>("Sounds/good2");
-        s_goodClips[2] = Resources.Load<AudioClip>("Sounds/good3");
-    }
-
-    private static void EnsureSkullClipLoaded()
-    {
-        if (s_skullClip != null)
-            return;
-
-        s_skullClip = Resources.Load<AudioClip>("Sounds/skull");
-    }
-
-    private float GetGoodClipVolume(int clipIndex)
-    {
-        return clipIndex switch
-        {
-            0 => Good1Volume,
-            1 => Good2Volume,
-            2 => Good3Volume,
-            _ => 1f,
-        };
-    }
-
     private void PlayEndStageVoiceOnce(AudioSource audio, bool hasNightmareBomber)
     {
         if (!playRandomGoodSfx)
@@ -154,40 +124,15 @@ public abstract class EndStage : MonoBehaviour
 
         if (playSkullForNightmareBomber && hasNightmareBomber)
         {
-            EnsureSkullClipLoaded();
-
-            if (s_skullClip != null)
+            if (EndStageVoiceSfx.TryPlaySkull(audio, skullVolume))
             {
                 s_goodSfxPlayedThisStage = true;
-                audio.PlayOneShot(s_skullClip, skullVolume);
                 return;
             }
         }
 
-        EnsureGoodClipsLoaded();
-
-        int count = 0;
-        for (int i = 0; i < s_goodClips.Length; i++)
-        {
-            if (s_goodClips[i] != null)
-                count++;
-        }
-
-        if (count <= 0)
-            return;
-
-        int pick = Random.Range(0, s_goodClips.Length);
-        for (int tries = 0; tries < s_goodClips.Length && s_goodClips[pick] == null; tries++)
-            pick = (pick + 1) % s_goodClips.Length;
-
-        AudioClip clip = s_goodClips[pick];
-        if (clip == null)
-            return;
-
-        float volume = GetGoodClipVolume(pick);
-
+        EndStageVoiceSfx.PlayRandomGood(audio);
         s_goodSfxPlayedThisStage = true;
-        audio.PlayOneShot(clip, volume);
     }
 
     private bool HasAnyActiveNightmareBomber(MovementController[] players)
