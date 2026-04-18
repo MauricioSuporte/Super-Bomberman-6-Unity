@@ -7,8 +7,9 @@ using UnityEngine.Tilemaps;
 
 public class GameManager : MonoBehaviour
 {
-    static readonly WaitForSecondsRealtime waitNextStageDelay = new(4f);
-    static readonly WaitForSecondsRealtime waitBattleVictoryDelay = new(2f);
+    static readonly WaitForSecondsRealtime waitNextStageDelay = new(3f);
+    static readonly WaitForSecondsRealtime waitBattleVictoryCheckDelay = new(0.5f);
+    static readonly WaitForSecondsRealtime waitBattleVictoryDelay = new(1f);
     const float BattleVictoryFadeDuration = 3f;
     const string BattleVictorySfxResourcesPath = "Sounds/SB5 Sound Effects (48)";
     static AudioClip battleVictorySfx;
@@ -84,6 +85,7 @@ public class GameManager : MonoBehaviour
 
     private bool pendingEnemyCheck;
     private Coroutine enemyCheckRoutine;
+    private Coroutine battleVictoryCheckRoutine;
 
     [Header("Destructible Tile Resolver (optional, auto-find)")]
     [SerializeField] private DestructibleTileResolver destructibleTileResolver;
@@ -696,6 +698,31 @@ public class GameManager : MonoBehaviour
         if (restartingRound || endStageTriggered)
             return;
 
+        if (IsBattleModeScene())
+        {
+            ScheduleBattleVictoryCheck();
+            return;
+        }
+
+        EvaluatePlayerWinState();
+    }
+
+    void ScheduleBattleVictoryCheck()
+    {
+        if (battleVictoryCheckRoutine != null)
+            StopCoroutine(battleVictoryCheckRoutine);
+
+        battleVictoryCheckRoutine = StartCoroutine(BattleVictoryCheckRoutine());
+    }
+
+    IEnumerator BattleVictoryCheckRoutine()
+    {
+        yield return waitBattleVictoryCheckDelay;
+        battleVictoryCheckRoutine = null;
+
+        if (restartingRound || endStageTriggered)
+            yield break;
+
         EvaluatePlayerWinState();
     }
 
@@ -810,7 +837,7 @@ public class GameManager : MonoBehaviour
         {
             audioSource.PlayOneShot(battleVictorySfx);
             survivingPlayer.StartCoroutine(
-                PlayGoodAfterDelay(audioSource, 2f)
+                PlayGoodAfterDelay(audioSource, 1f)
             );
         }
     }
