@@ -119,7 +119,7 @@ public class GameManager : MonoBehaviour
     int GetConfiguredActivePlayerCount()
     {
         if (GameSession.Instance != null)
-            return Mathf.Clamp(GameSession.Instance.ActivePlayerCount, 1, 4);
+            return Mathf.Clamp(GameSession.Instance.ActivePlayerCount, 1, 6);
 
         return 1;
     }
@@ -137,7 +137,7 @@ public class GameManager : MonoBehaviour
             if (id == null)
                 continue;
 
-            int playerId = Mathf.Clamp(id.playerId, 1, 4);
+            int playerId = Mathf.Clamp(id.playerId, 1, 6);
             if (playerId > activePlayerCount)
                 continue;
 
@@ -625,7 +625,7 @@ public class GameManager : MonoBehaviour
         if (nextStageSceneName != "Stage_1-2")
             return;
 
-        for (int playerId = 1; playerId <= 4; playerId++)
+        for (int playerId = 1; playerId <= 6; playerId++)
         {
             var state = PlayerPersistentStats.Get(playerId);
             if (state.ExplosionRadius == 1)

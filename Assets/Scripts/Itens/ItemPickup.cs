@@ -412,7 +412,7 @@ public class ItemPickup : MonoBehaviour
 
         int pid = 1;
         if (player.TryGetComponent<PlayerIdentity>(out var id) && id != null)
-            pid = Mathf.Clamp(id.playerId, 1, 4);
+            pid = Mathf.Clamp(id.playerId, 1, 6);
 
         if (type != ItemType.LandMine && type != ItemType.Clock)
             PlayerPersistentStats.StageApplyPickup(pid, type);

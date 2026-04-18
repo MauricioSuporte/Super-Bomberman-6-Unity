@@ -46,16 +46,20 @@ public static class PlayerPersistentStats
         }
     }
 
-    static readonly PlayerState[] _p = new PlayerState[4]
+    static readonly PlayerState[] _p = new PlayerState[6]
     {
+        new(),
+        new(),
         new(),
         new(),
         new(),
         new()
     };
 
-    static readonly PlayerState[] _stage = new PlayerState[4]
+    static readonly PlayerState[] _stage = new PlayerState[6]
     {
+        new(),
+        new(),
         new(),
         new(),
         new(),
@@ -66,7 +70,7 @@ public static class PlayerPersistentStats
 
     public static PlayerState Get(int playerId)
     {
-        playerId = Mathf.Clamp(playerId, 1, 4);
+        playerId = Mathf.Clamp(playerId, 1, 6);
         return _p[playerId - 1];
     }
 
@@ -77,7 +81,7 @@ public static class PlayerPersistentStats
 
         SaveSystem.Reload();
 
-        for (int i = 1; i <= 4; i++)
+        for (int i = 1; i <= 6; i++)
         {
             LoadSelectedSkinInternal(i);
             ClampSelectedSkinIfLocked(i);
@@ -94,7 +98,7 @@ public static class PlayerPersistentStats
 
     public static void SaveSelectedSkin(int playerId)
     {
-        playerId = Mathf.Clamp(playerId, 1, 4);
+        playerId = Mathf.Clamp(playerId, 1, 6);
 
         var s = Get(playerId);
         s.Skin = UnlockProgress.ClampToUnlocked(s.Skin);
@@ -105,6 +109,8 @@ public static class PlayerPersistentStats
             case 2: SaveSystem.Data.player2SelectedSkin = (int)s.Skin; break;
             case 3: SaveSystem.Data.player3SelectedSkin = (int)s.Skin; break;
             case 4: SaveSystem.Data.player4SelectedSkin = (int)s.Skin; break;
+            case 5: SaveSystem.Data.player5SelectedSkin = (int)s.Skin; break;
+            case 6: SaveSystem.Data.player6SelectedSkin = (int)s.Skin; break;
         }
 
         SaveSystem.Save();
@@ -112,7 +118,7 @@ public static class PlayerPersistentStats
 
     static void LoadSelectedSkinInternal(int playerId)
     {
-        playerId = Mathf.Clamp(playerId, 1, 4);
+        playerId = Mathf.Clamp(playerId, 1, 6);
 
         var s = Get(playerId);
 
@@ -122,11 +128,22 @@ public static class PlayerPersistentStats
             2 => SaveSystem.Data.player2SelectedSkin,
             3 => SaveSystem.Data.player3SelectedSkin,
             4 => SaveSystem.Data.player4SelectedSkin,
+            5 => SaveSystem.Data.player5SelectedSkin,
+            6 => SaveSystem.Data.player6SelectedSkin,
             _ => (int)BomberSkin.White
         };
 
         if (!System.Enum.IsDefined(typeof(BomberSkin), raw))
-            raw = (int)BomberSkin.White;
+            raw = playerId switch
+            {
+                1 => (int)BomberSkin.White,
+                2 => (int)BomberSkin.Black,
+                3 => (int)BomberSkin.Blue,
+                4 => (int)BomberSkin.Red,
+                5 => (int)BomberSkin.Green,
+                6 => (int)BomberSkin.Yellow,
+                _ => (int)BomberSkin.White
+            };
 
         s.Skin = (BomberSkin)raw;
         s.Skin = UnlockProgress.ClampToUnlocked(s.Skin);
@@ -146,7 +163,7 @@ public static class PlayerPersistentStats
 
     public static void ResetToDefaultsAll()
     {
-        for (int i = 1; i <= 4; i++)
+        for (int i = 1; i <= 6; i++)
             ResetToDefaults(i);
 
         sessionBooted = true;
@@ -211,7 +228,7 @@ public static class PlayerPersistentStats
 
     public static void StageResetTemporaryPowerupsOnDeath(int playerId)
     {
-        playerId = Mathf.Clamp(playerId, 1, 4);
+        playerId = Mathf.Clamp(playerId, 1, 6);
 
         BeginStage();
 
@@ -235,11 +252,11 @@ public static class PlayerPersistentStats
         if (c == null) return 1;
 
         if (c.TryGetComponent<PlayerIdentity>(out var id))
-            return Mathf.Clamp(id.playerId, 1, 4);
+            return Mathf.Clamp(id.playerId, 1, 6);
 
         var parentId = c.GetComponentInParent<PlayerIdentity>(true);
         if (parentId != null)
-            return Mathf.Clamp(parentId.playerId, 1, 4);
+            return Mathf.Clamp(parentId.playerId, 1, 6);
 
         return 1;
     }
@@ -632,7 +649,7 @@ public static class PlayerPersistentStats
         if (stageActive)
             return;
 
-        for (int i = 1; i <= 4; i++)
+        for (int i = 1; i <= 6; i++)
         {
             var baseState = Get(i);
             var st = _stage[i - 1];
@@ -650,7 +667,7 @@ public static class PlayerPersistentStats
         if (!stageActive)
             return;
 
-        for (int i = 1; i <= 4; i++)
+        for (int i = 1; i <= 6; i++)
         {
             var baseState = Get(i);
             var st = _stage[i - 1];
@@ -667,7 +684,7 @@ public static class PlayerPersistentStats
         if (!stageActive)
             return;
 
-        for (int i = 1; i <= 4; i++)
+        for (int i = 1; i <= 6; i++)
         {
             var baseState = Get(i);
             var st = _stage[i - 1];
@@ -707,7 +724,7 @@ public static class PlayerPersistentStats
 
     public static void StageApplyPickup(int playerId, ItemType type)
     {
-        playerId = Mathf.Clamp(playerId, 1, 4);
+        playerId = Mathf.Clamp(playerId, 1, 6);
         BeginStage();
 
         var s = _stage[playerId - 1];
@@ -869,7 +886,7 @@ public static class PlayerPersistentStats
 
     public static PlayerState GetRuntime(int playerId)
     {
-        playerId = Mathf.Clamp(playerId, 1, 4);
+        playerId = Mathf.Clamp(playerId, 1, 6);
         return stageActive ? _stage[playerId - 1] : _p[playerId - 1];
     }
 

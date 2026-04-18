@@ -1384,11 +1384,11 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
         if (go == null) return 1;
 
         if (go.TryGetComponent<PlayerIdentity>(out var id) && id != null)
-            return Mathf.Clamp(id.playerId, 1, 4);
+            return Mathf.Clamp(id.playerId, 1, 6);
 
         var parentId = go.GetComponentInParent<PlayerIdentity>(true);
         if (parentId != null)
-            return Mathf.Clamp(parentId.playerId, 1, 4);
+            return Mathf.Clamp(parentId.playerId, 1, 6);
 
         return 1;
     }

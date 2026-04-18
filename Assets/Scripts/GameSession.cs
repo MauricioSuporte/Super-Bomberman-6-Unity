@@ -5,7 +5,7 @@ public class GameSession : MonoBehaviour
     public static GameSession Instance { get; private set; }
 
     [Header("Players")]
-    [Range(1, 4)]
+    [Range(1, 6)]
     [SerializeField] private int activePlayerCount = 1;
 
     public int ActivePlayerCount => activePlayerCount;
@@ -25,11 +25,11 @@ public class GameSession : MonoBehaviour
 
     public void SetActivePlayerCount(int count)
     {
-        activePlayerCount = Mathf.Clamp(count, 1, 4);
+        activePlayerCount = Mathf.Clamp(count, 1, 6);
     }
 
     void Clamp()
     {
-        activePlayerCount = Mathf.Clamp(activePlayerCount, 1, 4);
+        activePlayerCount = Mathf.Clamp(activePlayerCount, 1, 6);
     }
 }

@@ -260,7 +260,7 @@ public class BossEndStageSequence : MonoBehaviour
             int playerId = 1;
 
             if (movement.TryGetComponent<PlayerIdentity>(out var identity) && identity != null)
-                playerId = Mathf.Clamp(identity.playerId, 1, 4);
+                playerId = Mathf.Clamp(identity.playerId, 1, 6);
 
             var state = PlayerPersistentStats.GetRuntime(playerId);
             if (state == null)

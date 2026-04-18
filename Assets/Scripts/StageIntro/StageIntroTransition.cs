@@ -558,7 +558,7 @@ public class StageIntroTransition : MonoBehaviour
             var id = ids[i];
             if (id == null) continue;
 
-            int playerId = Mathf.Clamp(id.playerId, 1, 4);
+            int playerId = Mathf.Clamp(id.playerId, 1, 6);
             var state = PlayerPersistentStats.Get(playerId);
 
             var skins = id.GetComponentsInChildren<PlayerBomberSkinController>(true);
@@ -577,7 +577,7 @@ public class StageIntroTransition : MonoBehaviour
             var id = ids[i];
             if (id == null) continue;
 
-            int playerId = Mathf.Clamp(id.playerId, 1, 4);
+            int playerId = Mathf.Clamp(id.playerId, 1, 6);
 
             if (!id.TryGetComponent<MovementController>(out var move))
                 move = id.GetComponentInChildren<MovementController>(true);

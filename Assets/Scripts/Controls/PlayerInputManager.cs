@@ -11,7 +11,7 @@ public class PlayerInputManager : MonoBehaviour
 
     [Header("Players (fallback if GameSession is missing)")]
     [Tooltip("How many player profiles to create (1-4). Used only if GameSession.Instance is null.")]
-    [Range(1, 4)]
+    [Range(1, 6)]
     [SerializeField] int maxPlayers = 4;
 
     [Header("Analog As Dpad Fallback")]
@@ -52,9 +52,9 @@ public class PlayerInputManager : MonoBehaviour
         {
             var gs = GameSession.Instance;
             if (gs != null)
-                return Mathf.Clamp(gs.ActivePlayerCount, 1, 4);
+                return Mathf.Clamp(gs.ActivePlayerCount, 1, 6);
 
-            return Mathf.Clamp(maxPlayers, 1, 4);
+            return Mathf.Clamp(maxPlayers, 1, 6);
         }
     }
 
@@ -148,14 +148,14 @@ public class PlayerInputManager : MonoBehaviour
             if (identity == null)
                 continue;
 
-            int pid = Mathf.Clamp(identity.playerId, 1, 4);
+            int pid = Mathf.Clamp(identity.playerId, 1, 6);
             playerControllers[pid] = mc;
         }
     }
 
     public void SetSpringLauncherInputGate(int playerId, bool enabled)
     {
-        playerId = Mathf.Clamp(playerId, 1, 4);
+        playerId = Mathf.Clamp(playerId, 1, 6);
 
         if (enabled)
             playersUsingSpringLauncher.Add(playerId);
@@ -213,7 +213,7 @@ public class PlayerInputManager : MonoBehaviour
 
     public PlayerInputProfile GetPlayer(int playerId)
     {
-        playerId = Mathf.Clamp(playerId, 1, 4);
+        playerId = Mathf.Clamp(playerId, 1, 6);
 
         if (!players.TryGetValue(playerId, out var p) || p == null)
         {
@@ -232,7 +232,7 @@ public class PlayerInputManager : MonoBehaviour
 
     public bool Get(PlayerAction action, int playerId = 1)
     {
-        playerId = Mathf.Clamp(playerId, 1, 4);
+        playerId = Mathf.Clamp(playerId, 1, 6);
 
         if (ShouldBlockActionBecauseRidingBoat(playerId, action))
             return false;
@@ -272,7 +272,7 @@ public class PlayerInputManager : MonoBehaviour
 
     public bool GetDown(PlayerAction action, int playerId = 1)
     {
-        playerId = Mathf.Clamp(playerId, 1, 4);
+        playerId = Mathf.Clamp(playerId, 1, 6);
 
         if (ShouldBlockActionBecauseRidingBoat(playerId, action))
             return false;

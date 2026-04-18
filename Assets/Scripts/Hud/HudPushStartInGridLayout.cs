@@ -228,7 +228,7 @@ public sealed class HudPushStartInGridLayout : MonoBehaviour
     int GetActivePlayerCount()
     {
         if (Application.isPlaying && GameSession.Instance != null)
-            return Mathf.Clamp(GameSession.Instance.ActivePlayerCount, 1, 4);
+            return Mathf.Clamp(GameSession.Instance.ActivePlayerCount, 1, 6);
 
 #if UNITY_EDITOR
         if (!Application.isPlaying)

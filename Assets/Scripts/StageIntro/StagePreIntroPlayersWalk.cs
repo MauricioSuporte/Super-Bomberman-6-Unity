@@ -163,7 +163,7 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
             var id = ids[i];
             if (!id) continue;
 
-            int playerId = Mathf.Clamp(id.playerId, 1, 4);
+            int playerId = Mathf.Clamp(id.playerId, 1, 6);
 
             if (!id.TryGetComponent(out MovementController move))
                 move = id.GetComponentInChildren<MovementController>(true);
@@ -328,7 +328,7 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
             var id = ids[i];
             if (!id) continue;
 
-            int playerId = Mathf.Clamp(id.playerId, 1, 4);
+            int playerId = Mathf.Clamp(id.playerId, 1, 6);
 
             MovementController move = null;
             if (!id.TryGetComponent(out move))
@@ -496,7 +496,7 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
             var pw = players[i];
             if (pw.mover == null || pw.root == null) continue;
 
-            int pid = Mathf.Clamp(pw.playerId, 1, 4);
+            int pid = Mathf.Clamp(pw.playerId, 1, 6);
 
             Vector2 goal = goalByPlayerId(pid);
             float tile = Mathf.Max(0.0001f, pw.tileSize);
@@ -648,7 +648,7 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
             var pw = players[i];
             if (pw.mover == null || pw.root == null) continue;
 
-            int pid = Mathf.Clamp(pw.playerId, 1, 4);
+            int pid = Mathf.Clamp(pw.playerId, 1, 6);
 
             Vector2 goal = spawner.GetResolvedSpawnPosition(pid);
             float tile = Mathf.Max(0.0001f, pw.tileSize);
@@ -793,7 +793,7 @@ public sealed class StagePreIntroPlayersWalk : MonoBehaviour
             yield break;
         }
 
-        int pid = Mathf.Clamp(pw.playerId, 1, 4);
+        int pid = Mathf.Clamp(pw.playerId, 1, 6);
 
         Vector2 goal = spawner.GetResolvedSpawnPosition(pid);
         float tile = Mathf.Max(0.0001f, pw.tileSize);

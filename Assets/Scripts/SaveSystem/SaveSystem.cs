@@ -154,7 +154,7 @@ public static class SaveSystem
 
         EnsureControlProfiles(data);
 
-        for (int i = 0; i < 4; i++)
+        for (int i = 0; i < 6; i++)
         {
             int playerId = i + 1;
             var runtimeProfile = input.GetPlayer(playerId);
@@ -208,7 +208,7 @@ public static class SaveSystem
 
         EnsureControlProfiles(data);
 
-        for (int i = 0; i < 4; i++)
+        for (int i = 0; i < 6; i++)
         {
             int playerId = i + 1;
             var runtimeProfile = input.GetPlayer(playerId);
@@ -474,13 +474,19 @@ public static class SaveSystem
             d.player1SelectedSkin = (int)BomberSkin.White;
 
         if (!Enum.IsDefined(typeof(BomberSkin), d.player2SelectedSkin))
-            d.player2SelectedSkin = (int)BomberSkin.White;
+            d.player2SelectedSkin = (int)BomberSkin.Black;
 
         if (!Enum.IsDefined(typeof(BomberSkin), d.player3SelectedSkin))
-            d.player3SelectedSkin = (int)BomberSkin.White;
+            d.player3SelectedSkin = (int)BomberSkin.Blue;
 
         if (!Enum.IsDefined(typeof(BomberSkin), d.player4SelectedSkin))
-            d.player4SelectedSkin = (int)BomberSkin.White;
+            d.player4SelectedSkin = (int)BomberSkin.Red;
+
+        if (!Enum.IsDefined(typeof(BomberSkin), d.player5SelectedSkin))
+            d.player5SelectedSkin = (int)BomberSkin.Green;
+
+        if (!Enum.IsDefined(typeof(BomberSkin), d.player6SelectedSkin))
+            d.player6SelectedSkin = (int)BomberSkin.Yellow;
 
         if (d.activeSlotIndex < -1 || d.activeSlotIndex >= d.slots.Count)
             d.activeSlotIndex = -1;
@@ -493,14 +499,13 @@ public static class SaveSystem
 
     private static void EnsureControlProfiles(SaveData d)
     {
-        if (d.controls == null)
-            d.controls = new List<SavedPlayerControls>();
+        d.controls ??= new List<SavedPlayerControls>();
 
-        while (d.controls.Count < 4)
+        while (d.controls.Count < 6)
             d.controls.Add(new SavedPlayerControls { playerId = d.controls.Count + 1 });
 
-        if (d.controls.Count > 4)
-            d.controls.RemoveRange(4, d.controls.Count - 4);
+        if (d.controls.Count > 6)
+            d.controls.RemoveRange(6, d.controls.Count - 6);
 
         for (int i = 0; i < d.controls.Count; i++)
         {

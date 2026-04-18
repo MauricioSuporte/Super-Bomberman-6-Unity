@@ -899,7 +899,7 @@ public class MechaBossSequence : MonoBehaviour
             int playerId = 1;
 
             if (movement.TryGetComponent<PlayerIdentity>(out var identity) && identity != null)
-                playerId = Mathf.Clamp(identity.playerId, 1, 4);
+                playerId = Mathf.Clamp(identity.playerId, 1, 6);
 
             var state = PlayerPersistentStats.GetRuntime(playerId);
             if (state == null)
@@ -1004,7 +1004,7 @@ public class MechaBossSequence : MonoBehaviour
             var p = players[i];
             if (p == null) continue;
 
-            int pid = Mathf.Clamp(p.PlayerId, 1, 4);
+            int pid = Mathf.Clamp(p.PlayerId, 1, 6);
             Vector2 target = BossStagePositions[pid - 1];
 
             if (p.Rigidbody != null)

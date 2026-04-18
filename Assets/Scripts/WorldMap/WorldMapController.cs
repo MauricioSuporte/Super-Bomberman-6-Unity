@@ -39,7 +39,7 @@ public class WorldMapController : MonoBehaviour
     [SerializeField] bool applyWorldCameraPosition = true;
 
     [Header("Input Owner")]
-    [SerializeField, Range(1, 4)] int ownerPlayerId = 1;
+    [SerializeField, Range(1, 6)] int ownerPlayerId = 1;
 
     [Header("Worlds")]
     [SerializeField] List<WorldData> worlds = new List<WorldData>();

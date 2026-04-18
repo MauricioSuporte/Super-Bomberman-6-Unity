@@ -9,7 +9,7 @@ using UnityEngine.UI;
 public class ControlsConfigMenu : MonoBehaviour
 {
     [Header("Menu Owner")]
-    [SerializeField, Range(1, 4)] int ownerPlayerId = 1;
+    [SerializeField, Range(1, 6)] int ownerPlayerId = 1;
 
     [Header("UI")]
     [SerializeField] GameObject root;
@@ -626,7 +626,7 @@ public class ControlsConfigMenu : MonoBehaviour
 
     public IEnumerator OpenRoutine(int openerPlayerId, AudioClip restoreMusic, float restoreMusicVolume = 1f)
     {
-        ownerPlayerId = Mathf.Clamp(openerPlayerId, 1, 4);
+        ownerPlayerId = Mathf.Clamp(openerPlayerId, 1, 6);
 
         SaveSystem.LoadControlsIntoInputManager();
 

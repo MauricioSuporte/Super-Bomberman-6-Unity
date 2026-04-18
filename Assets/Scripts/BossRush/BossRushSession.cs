@@ -32,7 +32,7 @@ public static class BossRushSession
     public static BossRushDifficulty LastCompletedDifficulty => lastCompletedDifficulty;
     public static float LastCompletedTime => lastCompletedTime;
     public static int LastCompletedRank => lastCompletedRank;
-    public static int RunPlayerCount => Mathf.Clamp(runPlayerCount, 1, 4);
+    public static int RunPlayerCount => Mathf.Clamp(runPlayerCount, 1, 6);
 
     public static void StartRun(BossRushDifficulty difficulty, BossRushLoadoutPreset preset)
     {
@@ -51,7 +51,7 @@ public static class BossRushSession
 
         runPlayerCount = 1;
         if (GameSession.Instance != null)
-            runPlayerCount = Mathf.Clamp(GameSession.Instance.ActivePlayerCount, 1, 4);
+            runPlayerCount = Mathf.Clamp(GameSession.Instance.ActivePlayerCount, 1, 6);
 
         ClearEliminatedPlayers();
         ApplySelectedLoadoutToRunPlayers();
@@ -184,7 +184,7 @@ public static class BossRushSession
 
     public static bool ShouldSpawnPlayer(int playerId)
     {
-        playerId = Mathf.Clamp(playerId, 1, 4);
+        playerId = Mathf.Clamp(playerId, 1, 6);
 
         if (!active)
             return true;
@@ -197,7 +197,7 @@ public static class BossRushSession
 
     public static bool IsPlayerEliminated(int playerId)
     {
-        playerId = Mathf.Clamp(playerId, 1, 4);
+        playerId = Mathf.Clamp(playerId, 1, 6);
 
         if (playerId > RunPlayerCount)
             return true;
@@ -210,7 +210,7 @@ public static class BossRushSession
         if (!active)
             return;
 
-        playerId = Mathf.Clamp(playerId, 1, 4);
+        playerId = Mathf.Clamp(playerId, 1, 6);
 
         if (playerId > RunPlayerCount)
             return;
@@ -240,7 +240,7 @@ public static class BossRushSession
             if (identity == null)
                 continue;
 
-            int playerId = Mathf.Clamp(identity.playerId, 1, 4);
+            int playerId = Mathf.Clamp(identity.playerId, 1, 6);
             if (playerId > RunPlayerCount)
                 continue;
 
@@ -402,7 +402,7 @@ public static class BossRushSession
 
     static void ResetAllRunPlayers()
     {
-        int count = Mathf.Clamp(runPlayerCount, 1, 4);
+        int count = Mathf.Clamp(runPlayerCount, 1, 6);
 
         for (int playerId = 1; playerId <= count; playerId++)
         {

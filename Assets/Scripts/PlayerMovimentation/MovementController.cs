@@ -36,7 +36,7 @@ public class MovementController : MonoBehaviour, IKillable
     public int SpeedInternal => speedInternal;
 
     [Header("Player Id (only used if tagged Player)")]
-    [SerializeField, Range(1, 4)] private int playerId = 1;
+    [SerializeField, Range(1, 6)] private int playerId = 1;
     public int PlayerId => playerId;
 
     [Header("Dual-Input (Zig-Zag / SB1 Style)")]
@@ -246,7 +246,7 @@ public class MovementController : MonoBehaviour, IKillable
 
     public void SetPlayerId(int id)
     {
-        playerId = Mathf.Clamp(id, 1, 4);
+        playerId = Mathf.Clamp(id, 1, 6);
 
         if (!IsPlayer())
             return;

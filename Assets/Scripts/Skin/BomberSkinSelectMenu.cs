@@ -537,7 +537,7 @@ public class BomberSkinSelectMenu : MonoBehaviour
 
     public BomberSkin GetSelectedSkin(int playerId)
     {
-        playerId = Mathf.Clamp(playerId, 1, 4);
+        playerId = Mathf.Clamp(playerId, 1, 6);
 
         for (int i = 0; i < players.Count; i++)
             if (players[i].playerId == playerId)
@@ -854,7 +854,7 @@ public class BomberSkinSelectMenu : MonoBehaviour
 
         players.Clear();
 
-        for (int p = 1; p <= Mathf.Clamp(activeCount, 1, 4); p++)
+        for (int p = 1; p <= Mathf.Clamp(activeCount, 1, 6); p++)
         {
             var st = new PlayerCursorState { playerId = p };
 

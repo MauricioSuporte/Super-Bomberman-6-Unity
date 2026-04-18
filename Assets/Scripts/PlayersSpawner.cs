@@ -6,11 +6,11 @@ public sealed class PlayersSpawner : MonoBehaviour
     [Header("Player Prefab")]
     [SerializeField] private GameObject playerPrefab;
 
-    [Header("Legacy Spawn Points (1..4)")]
-    [SerializeField] private Transform[] spawnPoints = new Transform[4];
+    [Header("Legacy Spawn Points (1..6)")]
+    [SerializeField] private Transform[] spawnPoints = new Transform[6];
 
     [Header("Per Player Spawn Override")]
-    [SerializeField] private SpawnOverride[] playerOverrides = new SpawnOverride[4];
+    [SerializeField] private SpawnOverride[] playerOverrides = new SpawnOverride[6];
 
     [Header("Optional Parent")]
     [SerializeField] private Transform playersParent;
@@ -30,7 +30,9 @@ public sealed class PlayersSpawner : MonoBehaviour
         new(-7f,  4f),
         new( 5f,  4f),
         new(-7f, -6f),
-        new( 5f, -6f)
+        new( 5f, -6f),
+        new(-5f, -1f),
+        new( 3f, -1f) 
     };
 
     static readonly Vector2[] BossStagePositions =
@@ -38,7 +40,9 @@ public sealed class PlayersSpawner : MonoBehaviour
         new(-3f, -6f),
         new( 1f, -6f),
         new(-5f, -6f),
-        new( 3f, -6f)
+        new( 3f, -6f),
+        new(-7f, -6f),
+        new( 5f, -6f) 
     };
 
     [Serializable]
@@ -122,7 +126,7 @@ public sealed class PlayersSpawner : MonoBehaviour
         if (BossRushSession.IsActive)
             count = BossRushSession.RunPlayerCount;
         else if (GameSession.Instance != null)
-            count = Mathf.Clamp(GameSession.Instance.ActivePlayerCount, 1, 4);
+            count = Mathf.Clamp(GameSession.Instance.ActivePlayerCount, 1, 6);
 
         PlayerPersistentStats.EnsureSessionBooted();
 
@@ -193,7 +197,7 @@ public sealed class PlayersSpawner : MonoBehaviour
 
     public Vector2 GetResolvedSpawnPosition(int playerId)
     {
-        int idx = Mathf.Clamp(playerId - 1, 0, 3);
+        int idx = Mathf.Clamp(playerId - 1, 0, 5);
 
         Vector2[] preset = isBossStage ? BossStagePositions : NormalStagePositions;
 

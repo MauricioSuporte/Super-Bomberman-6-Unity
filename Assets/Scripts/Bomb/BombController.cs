@@ -9,7 +9,7 @@ using UnityEngine.Tilemaps;
 public partial class BombController : MonoBehaviour
 {
     [Header("Player Id (only used if tagged Player)")]
-    [SerializeField, Range(1, 4)] private int playerId = 1;
+    [SerializeField, Range(1, 6)] private int playerId = 1;
     public int PlayerId => playerId;
 
     [Header("Input")]
@@ -134,7 +134,7 @@ public partial class BombController : MonoBehaviour
 
     public void SetPlayerId(int id)
     {
-        playerId = Mathf.Clamp(id, 1, 4);
+        playerId = Mathf.Clamp(id, 1, 6);
     }
 
     private void Awake()

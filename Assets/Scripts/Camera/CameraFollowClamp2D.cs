@@ -148,7 +148,7 @@ public sealed class CameraFollowClamp2D : MonoBehaviour
 
         int activeCount = 1;
         if (GameSession.Instance != null)
-            activeCount = Mathf.Clamp(GameSession.Instance.ActivePlayerCount, 1, 4);
+            activeCount = Mathf.Clamp(GameSession.Instance.ActivePlayerCount, 1, 6);
 
         if (!followAllPlayers)
         {
@@ -283,7 +283,7 @@ public sealed class CameraFollowClamp2D : MonoBehaviour
 
         int activeCount = 1;
         if (GameSession.Instance != null)
-            activeCount = Mathf.Clamp(GameSession.Instance.ActivePlayerCount, 1, 4);
+            activeCount = Mathf.Clamp(GameSession.Instance.ActivePlayerCount, 1, 6);
 
         int highestInternal = speedInternal;
         bool foundAny = false;

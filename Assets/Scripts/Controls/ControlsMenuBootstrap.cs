@@ -10,7 +10,7 @@ public class ControlsMenuBootstrap : MonoBehaviour
 
     [Header("Flow")]
     [SerializeField] string returnSceneName = "TitleScreen";
-    [SerializeField, Range(1, 4)] int openerPlayerId = 1;
+    [SerializeField, Range(1, 6)] int openerPlayerId = 1;
 
     void Start()
     {
