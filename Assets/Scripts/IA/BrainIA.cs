@@ -6,6 +6,10 @@ using UnityEngine;
 [RequireComponent(typeof(BombKickAbility))]
 public class BrainIA : MonoBehaviour
 {
+    private static readonly List<Bomb> sharedBombSnapshot = new(32);
+    private static readonly List<PlayerIdentity> sharedPlayerSnapshot = new(8);
+    private static int sharedBombSnapshotFrame = -1;
+
     [Header("Target")]
     public Transform target;
     public float maxChaseDistance = 20f;
@@ -110,7 +114,7 @@ public class BrainIA : MonoBehaviour
         Vector2 myWorld = (movement.Rigidbody != null) ? movement.Rigidbody.position : (Vector2)transform.position;
         Vector2 myTile = RoundToTile(myWorld, movement.tileSize);
 
-        Bomb[] bombsNow = FindObjectsByType<Bomb>(FindObjectsInactive.Exclude);
+        IReadOnlyList<Bomb> bombsNow = GetBombSnapshot();
 
         bool dangerNow = IsTileDangerousNowOrSoon(myTile, bombsNow, 0f);
         float interval = dangerNow ? thinkIntervalDanger : thinkIntervalSafe;
@@ -133,10 +137,10 @@ public class BrainIA : MonoBehaviour
         Transform best = null;
         float bestDist = float.PositiveInfinity;
 
-        var ids = FindObjectsByType<PlayerIdentity>(FindObjectsInactive.Exclude);
-        if (ids != null && ids.Length > 0)
+        var ids = GetPlayerSnapshot();
+        if (ids.Count > 0)
         {
-            for (int i = 0; i < ids.Length; i++)
+            for (int i = 0; i < ids.Count; i++)
             {
                 var id = ids[i];
                 if (id == null) continue;
@@ -185,7 +189,37 @@ public class BrainIA : MonoBehaviour
         target = best;
     }
 
-    void Think(Vector2 myTile, Bomb[] bombsNow, bool dangerNow)
+    private static IReadOnlyList<Bomb> GetBombSnapshot()
+    {
+        if (sharedBombSnapshotFrame != Time.frameCount)
+            return RefreshBombSnapshot();
+
+        return sharedBombSnapshot;
+    }
+
+    private static IReadOnlyList<Bomb> RefreshBombSnapshot()
+    {
+        sharedBombSnapshot.Clear();
+
+        foreach (var activeBomb in Bomb.ActiveBombs)
+        {
+            if (activeBomb == null || !activeBomb.isActiveAndEnabled || !activeBomb.gameObject.activeInHierarchy)
+                continue;
+
+            sharedBombSnapshot.Add(activeBomb);
+        }
+
+        sharedBombSnapshotFrame = Time.frameCount;
+        return sharedBombSnapshot;
+    }
+
+    private static IReadOnlyList<PlayerIdentity> GetPlayerSnapshot()
+    {
+        PlayerIdentity.GetActivePlayers(sharedPlayerSnapshot);
+        return sharedPlayerSnapshot;
+    }
+
+    void Think(Vector2 myTile, IReadOnlyList<Bomb> bombsNow, bool dangerNow)
     {
         if (movement == null || movement.isDead)
         {
@@ -325,7 +359,7 @@ public class BrainIA : MonoBehaviour
         lastDirection = pathStep;
     }
 
-    bool TryPlaceBombAlwaysNearPlayer(Vector2 myTile, Vector2 targetTile, Bomb[] bombsNow)
+    bool TryPlaceBombAlwaysNearPlayer(Vector2 myTile, Vector2 targetTile, IReadOnlyList<Bomb> bombsNow)
     {
         if (movement == null || movement.isDead) return false;
         if (movement.IsDamagedVisualActive) return false;
@@ -349,7 +383,7 @@ public class BrainIA : MonoBehaviour
 
             lastBombTime = Time.time;
 
-            Bomb[] bombsAfter0 = FindObjectsByType<Bomb>(FindObjectsInactive.Exclude);
+            IReadOnlyList<Bomb> bombsAfter0 = RefreshBombSnapshot();
             isEvading = true;
 
             Vector2 away = GetBestStepAwayFromTarget(myTile, targetTile, bombsAfter0);
@@ -374,7 +408,7 @@ public class BrainIA : MonoBehaviour
 
             lastBombTime = Time.time;
 
-            Bomb[] bombsAfter1 = FindObjectsByType<Bomb>(FindObjectsInactive.Exclude);
+            IReadOnlyList<Bomb> bombsAfter1 = RefreshBombSnapshot();
             isEvading = true;
 
             Vector2 away = GetBestStepAwayFromTarget(myTile, targetTile, bombsAfter1);
@@ -391,7 +425,7 @@ public class BrainIA : MonoBehaviour
 
         lastBombTime = Time.time;
 
-        Bomb[] bombsAfter = FindObjectsByType<Bomb>(FindObjectsInactive.Exclude);
+        IReadOnlyList<Bomb> bombsAfter = RefreshBombSnapshot();
         isEvading = true;
         lastDirection = GetEscapeStep_BFS(myTile, bombsAfter, 0f);
 
@@ -401,7 +435,7 @@ public class BrainIA : MonoBehaviour
         return true;
     }
 
-    bool TryPlaceBombFromRangeIfGood(Vector2 myTile, Vector2 targetTile, Bomb[] bombsNow, float distToTarget)
+    bool TryPlaceBombFromRangeIfGood(Vector2 myTile, Vector2 targetTile, IReadOnlyList<Bomb> bombsNow, float distToTarget)
     {
         if (movement == null || movement.isDead) return false;
         if (!allowPlaceBombInRange) return false;
@@ -428,14 +462,14 @@ public class BrainIA : MonoBehaviour
 
         lastBombTime = Time.time;
 
-        Bomb[] bombsAfter = FindObjectsByType<Bomb>(FindObjectsInactive.Exclude);
+        IReadOnlyList<Bomb> bombsAfter = RefreshBombSnapshot();
         isEvading = true;
         lastDirection = GetEscapeStep_BFS(myTile, bombsAfter, 0f);
 
         return true;
     }
 
-    bool TryPlaceBombWithEscape(Vector2 myTile, Bomb[] bombsNow)
+    bool TryPlaceBombWithEscape(Vector2 myTile, IReadOnlyList<Bomb> bombsNow)
     {
         if (movement == null || movement.isDead) return false;
         if (IsStunnedPlaying()) return false;
@@ -456,7 +490,7 @@ public class BrainIA : MonoBehaviour
 
         lastBombTime = Time.time;
 
-        Bomb[] bombsAfter = FindObjectsByType<Bomb>(FindObjectsInactive.Exclude);
+        IReadOnlyList<Bomb> bombsAfter = RefreshBombSnapshot();
         isEvading = true;
         lastDirection = GetEscapeStep_BFS(myTile, bombsAfter, 0f);
         return true;
@@ -479,7 +513,7 @@ public class BrainIA : MonoBehaviour
         return kickAbility != null && kickAbility.IsEnabled;
     }
 
-    bool TryOpportunisticKickPlayerAdjacent(Vector2 myTile, Bomb[] bombsNow, bool dangerNow)
+    bool TryOpportunisticKickPlayerAdjacent(Vector2 myTile, IReadOnlyList<Bomb> bombsNow, bool dangerNow)
     {
         if (movement == null || movement.isDead) return false;
 
@@ -495,7 +529,7 @@ public class BrainIA : MonoBehaviour
         Bomb bestAdjPlayerBomb = null;
         float bestPlaced = float.NegativeInfinity;
 
-        for (int i = 0; i < bombsNow.Length; i++)
+        for (int i = 0; i < bombsNow.Count; i++)
         {
             var b = bombsNow[i];
             if (b == null) continue;
@@ -540,7 +574,7 @@ public class BrainIA : MonoBehaviour
         return true;
     }
 
-    bool TryTrappedKickIfNeeded(Vector2 myTile, Bomb[] bombsNow)
+    bool TryTrappedKickIfNeeded(Vector2 myTile, IReadOnlyList<Bomb> bombsNow)
     {
         if (movement == null || movement.isDead) return false;
 
@@ -555,7 +589,7 @@ public class BrainIA : MonoBehaviour
         float bestTime = float.NegativeInfinity;
         Vector2 bestDir = Vector2.zero;
 
-        for (int i = 0; i < bombsNow.Length; i++)
+        for (int i = 0; i < bombsNow.Count; i++)
         {
             var b = bombsNow[i];
             if (b == null) continue;
@@ -586,7 +620,7 @@ public class BrainIA : MonoBehaviour
         return true;
     }
 
-    Vector2 GetBestStepAwayFromTarget(Vector2 myTile, Vector2 targetTile, Bomb[] bombsNow)
+    Vector2 GetBestStepAwayFromTarget(Vector2 myTile, Vector2 targetTile, IReadOnlyList<Bomb> bombsNow)
     {
         float stepTime = GetSingleStepTravelTimeSeconds();
         Vector2 best = Vector2.zero;
@@ -620,7 +654,7 @@ public class BrainIA : MonoBehaviour
         return Vector2.zero;
     }
 
-    Vector2 WanderSafely(Vector2 myTile, Bomb[] bombsNow)
+    Vector2 WanderSafely(Vector2 myTile, IReadOnlyList<Bomb> bombsNow)
     {
         float stepTime = GetSingleStepTravelTimeSeconds();
         Vector2 best = Vector2.zero;
@@ -646,7 +680,7 @@ public class BrainIA : MonoBehaviour
         return best;
     }
 
-    Vector2 GetEscapeStep_BFS(Vector2 myTile, Bomb[] bombsNow, float arrivalEtaBase)
+    Vector2 GetEscapeStep_BFS(Vector2 myTile, IReadOnlyList<Bomb> bombsNow, float arrivalEtaBase)
     {
         float stepTime = GetSingleStepTravelTimeSeconds();
 
@@ -715,7 +749,7 @@ public class BrainIA : MonoBehaviour
         return bestFirst;
     }
 
-    Vector2 GetChaseStep_AStar(Vector2 start, Vector2 goal, Bomb[] bombsNow, int maxNodes)
+    Vector2 GetChaseStep_AStar(Vector2 start, Vector2 goal, IReadOnlyList<Bomb> bombsNow, int maxNodes)
     {
         float stepTime = GetSingleStepTravelTimeSeconds();
 
@@ -823,7 +857,7 @@ public class BrainIA : MonoBehaviour
         return true;
     }
 
-    bool IsTileDangerousNowOrSoon(Vector2 tileCenter, Bomb[] bombsNow, float arrivalEta)
+    bool IsTileDangerousNowOrSoon(Vector2 tileCenter, IReadOnlyList<Bomb> bombsNow, float arrivalEta)
     {
         if (IsTileWithExplosion(tileCenter))
             return true;
@@ -832,11 +866,11 @@ public class BrainIA : MonoBehaviour
         return t <= arrivalEta + reactionBuffer + imminentWindowSeconds;
     }
 
-    float GetMinTimeUntilBlastHitsTile(Vector2 tileCenter, Bomb[] bombsNow)
+    float GetMinTimeUntilBlastHitsTile(Vector2 tileCenter, IReadOnlyList<Bomb> bombsNow)
     {
         float best = 999f;
 
-        for (int i = 0; i < bombsNow.Length; i++)
+        for (int i = 0; i < bombsNow.Count; i++)
         {
             var b = bombsNow[i];
             if (b == null || b.HasExploded)
@@ -919,7 +953,7 @@ public class BrainIA : MonoBehaviour
         return false;
     }
 
-    float ScoreTile(Vector2 tileCenter, Bomb[] bombsNow, float arrivalEta)
+    float ScoreTile(Vector2 tileCenter, IReadOnlyList<Bomb> bombsNow, float arrivalEta)
     {
         float tHit = GetMinTimeUntilBlastHitsTile(tileCenter, bombsNow);
         if (tHit <= arrivalEta + reactionBuffer)
@@ -928,7 +962,7 @@ public class BrainIA : MonoBehaviour
         float margin = tHit - arrivalEta;
 
         float bombProxPenalty = 0f;
-        for (int i = 0; i < bombsNow.Length; i++)
+        for (int i = 0; i < bombsNow.Count; i++)
         {
             var b = bombsNow[i];
             if (b == null || b.HasExploded) continue;

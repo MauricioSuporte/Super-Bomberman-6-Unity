@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 #if UNITY_2022_2_OR_NEWER
 using UnityEngine.U2D;
@@ -31,7 +32,7 @@ public sealed class CameraFollowClamp2D : MonoBehaviour
     private Camera cam;
 
     private Transform followTarget;
-    private PlayerIdentity[] cachedPlayers = new PlayerIdentity[0];
+    private readonly List<PlayerIdentity> cachedPlayers = new(8);
     private float refreshTimer;
 
     private Vector3 rawPos;
@@ -136,14 +137,14 @@ public sealed class CameraFollowClamp2D : MonoBehaviour
 
     void RefreshPlayers()
     {
-        cachedPlayers = FindObjectsByType<PlayerIdentity>(FindObjectsInactive.Exclude);
+        PlayerIdentity.GetActivePlayers(cachedPlayers);
     }
 
     bool TryUpdateFollowTargetPosition(out Vector3 position)
     {
         position = default;
 
-        if (cachedPlayers == null || cachedPlayers.Length == 0)
+        if (cachedPlayers.Count == 0)
             return false;
 
         int activeCount = 1;
@@ -152,7 +153,7 @@ public sealed class CameraFollowClamp2D : MonoBehaviour
 
         if (!followAllPlayers)
         {
-            for (int i = 0; i < cachedPlayers.Length; i++)
+            for (int i = 0; i < cachedPlayers.Count; i++)
             {
                 var p = cachedPlayers[i];
                 if (p != null && p.playerId == 1)
@@ -171,7 +172,7 @@ public sealed class CameraFollowClamp2D : MonoBehaviour
         Vector3 sum = Vector3.zero;
         int count = 0;
 
-        for (int i = 0; i < cachedPlayers.Length; i++)
+        for (int i = 0; i < cachedPlayers.Count; i++)
         {
             var p = cachedPlayers[i];
             if (p == null)
@@ -278,7 +279,7 @@ public sealed class CameraFollowClamp2D : MonoBehaviour
 
     private float GetFollowTilesPerSecond()
     {
-        if (!useTrackedPlayersSpeed || cachedPlayers == null || cachedPlayers.Length == 0)
+        if (!useTrackedPlayersSpeed || cachedPlayers.Count == 0)
             return PlayerPersistentStats.InternalSpeedToTilesPerSecond(speedInternal);
 
         int activeCount = 1;
@@ -288,7 +289,7 @@ public sealed class CameraFollowClamp2D : MonoBehaviour
         int highestInternal = speedInternal;
         bool foundAny = false;
 
-        for (int i = 0; i < cachedPlayers.Length; i++)
+        for (int i = 0; i < cachedPlayers.Count; i++)
         {
             var p = cachedPlayers[i];
             if (p == null)

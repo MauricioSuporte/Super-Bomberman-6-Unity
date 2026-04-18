@@ -233,6 +233,9 @@ public class MovementController : MonoBehaviour, IKillable
     private IMovementAbility[] movementAbilities = Array.Empty<IMovementAbility>();
     private int explosionLayer;
     private int enemyLayer;
+    private int bombLayer;
+    private ContactFilter2D obstacleContactFilter;
+    private readonly Collider2D[] obstacleOverlapBuffer = new Collider2D[16];
 
     private bool inactivityMountedDownOverride;
 
@@ -289,6 +292,8 @@ public class MovementController : MonoBehaviour, IKillable
 
         explosionLayer = LayerMask.NameToLayer("Explosion");
         enemyLayer = LayerMask.NameToLayer("Enemy");
+        bombLayer = LayerMask.NameToLayer("Bomb");
+        RebuildObstacleContactFilter();
 
         CacheMovementAbilities();
         InitRuntimeState(loadPersistent: true);
@@ -302,6 +307,14 @@ public class MovementController : MonoBehaviour, IKillable
     protected virtual void OnDisable()
     {
         touchingHazards.Clear();
+    }
+
+    private void OnValidate()
+    {
+        RebuildObstacleContactFilter();
+
+        if (!Application.isPlaying)
+            return;
     }
 
     private void InitRuntimeState(bool loadPersistent)
@@ -904,20 +917,33 @@ public class MovementController : MonoBehaviour, IKillable
         return speedInternal != before;
     }
 
+    private void RebuildObstacleContactFilter()
+    {
+        obstacleContactFilter = new ContactFilter2D { useLayerMask = true };
+        obstacleContactFilter.SetLayerMask(obstacleMask);
+        obstacleContactFilter.useTriggers = true;
+    }
+
+    private int GetObstacleHitCount(Vector2 worldPosition, Vector2 size)
+    {
+        return Physics2D.OverlapBox(worldPosition, size, 0f, obstacleContactFilter, obstacleOverlapBuffer);
+    }
+
     private bool IsSolidAtCustom(Vector2 worldPosition, float sizeMul)
     {
         Vector2 size = Vector2.one * (tileSize * sizeMul);
 
-        Collider2D[] hits = Physics2D.OverlapBoxAll(worldPosition, size, 0f, obstacleMask);
-        if (hits == null || hits.Length == 0)
+        int hitCount = GetObstacleHitCount(worldPosition, size);
+        if (hitCount <= 0)
             return false;
 
         bool canPassDestructibles = abilitySystem != null &&
                                    abilitySystem.IsEnabled(DestructiblePassAbility.AbilityId);
 
-        for (int i = 0; i < hits.Length; i++)
+        for (int i = 0; i < hitCount; i++)
         {
-            var hit = hits[i];
+            var hit = obstacleOverlapBuffer[i];
+            obstacleOverlapBuffer[i] = null;
             if (hit == null) continue;
             if (hit.gameObject == gameObject) continue;
 
@@ -937,7 +963,7 @@ public class MovementController : MonoBehaviour, IKillable
                 && hit.transform.IsChildOf(_lastAdjKickedBomb.transform))
                 continue;
 
-            if (hit.gameObject.layer == LayerMask.NameToLayer("Bomb"))
+            if (hit.gameObject.layer == bombLayer)
             {
                 var bomb = hitBombEarly != null ? hitBombEarly : hit.GetComponent<Bomb>();
                 if (bomb != null)
@@ -1520,16 +1546,17 @@ public class MovementController : MonoBehaviour, IKillable
     {
         Vector2 size = Vector2.one * (tileSize * 0.6f);
 
-        Collider2D[] hits = Physics2D.OverlapBoxAll(worldPosition, size, 0f, obstacleMask);
-        if (hits == null || hits.Length == 0)
+        int hitCount = GetObstacleHitCount(worldPosition, size);
+        if (hitCount <= 0)
             return false;
 
         bool canPassDestructibles = abilitySystem != null &&
                                    abilitySystem.IsEnabled(DestructiblePassAbility.AbilityId);
 
-        for (int i = 0; i < hits.Length; i++)
+        for (int i = 0; i < hitCount; i++)
         {
-            var hit = hits[i];
+            var hit = obstacleOverlapBuffer[i];
+            obstacleOverlapBuffer[i] = null;
             if (hit == null) continue;
             if (hit.gameObject == gameObject) continue;
 
@@ -1552,7 +1579,7 @@ public class MovementController : MonoBehaviour, IKillable
             if (canPassDestructibles && hit.CompareTag("Destructibles"))
                 continue;
 
-            if (hit.gameObject.layer == LayerMask.NameToLayer("Bomb"))
+            if (hit.gameObject.layer == bombLayer)
             {
                 var bomb = hitBombEarly != null ? hitBombEarly : hit.GetComponent<Bomb>();
                 if (bomb != null)
@@ -1585,15 +1612,16 @@ public class MovementController : MonoBehaviour, IKillable
     {
         Vector2 size = GetBlockProbeSize(dirForSize);
 
-        Collider2D[] hits = Physics2D.OverlapBoxAll(targetPosition, size, 0f, obstacleMask);
-        if (hits != null && hits.Length > 0)
+        int hitCount = GetObstacleHitCount(targetPosition, size);
+        if (hitCount > 0)
         {
             bool canPassDestructibles = abilitySystem != null &&
                                        abilitySystem.IsEnabled(DestructiblePassAbility.AbilityId);
 
-            for (int h = 0; h < hits.Length; h++)
+            for (int h = 0; h < hitCount; h++)
             {
-                var hit = hits[h];
+                var hit = obstacleOverlapBuffer[h];
+                obstacleOverlapBuffer[h] = null;
                 if (hit == null) continue;
                 if (hit.gameObject == gameObject) continue;
 
@@ -1962,15 +1990,16 @@ public class MovementController : MonoBehaviour, IKillable
     {
         Vector2 size = GetBlockProbeSize(dirForSize);
 
-        Collider2D[] hits = Physics2D.OverlapBoxAll(targetPosition, size, 0f, obstacleMask);
-        if (hits != null && hits.Length > 0)
+        int hitCount = GetObstacleHitCount(targetPosition, size);
+        if (hitCount > 0)
         {
             bool canPassDestructibles = abilitySystem != null &&
                                        abilitySystem.IsEnabled(DestructiblePassAbility.AbilityId);
 
-            for (int h = 0; h < hits.Length; h++)
+            for (int h = 0; h < hitCount; h++)
             {
-                var hit = hits[h];
+                var hit = obstacleOverlapBuffer[h];
+                obstacleOverlapBuffer[h] = null;
                 if (hit == null) continue;
                 if (hit.gameObject == gameObject) continue;
 

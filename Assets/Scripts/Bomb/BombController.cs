@@ -112,8 +112,23 @@ public partial class BombController : MonoBehaviour
 
     private GameManager _gm;
     private AudioSource _localAudio;
+    private MovementController cachedMovement;
+    private AbilitySystem cachedAbilitySystem;
+    private GreenLouieDashAbility cachedGreenLouieDashAbility;
+    private BombKickAbility cachedBombKickAbility;
+    private YellowLouieKickAbility cachedYellowLouieKickAbility;
+    private MagnetBombAbility cachedMagnetBombAbility;
+    private int bombLayer = -1;
+    private int bombMask;
+    private ContactFilter2D bombContactFilter;
+    private int explosionLayer = -1;
+    private int explosionMask;
+    private ContactFilter2D explosionContactFilter;
+    private bool queryCachesInitialized;
 
     private static readonly Collider2D[] _bombOverlapBuffer = new Collider2D[16];
+    private static readonly Collider2D[] _explosionOverlapBuffer = new Collider2D[24];
+    private static readonly List<Bomb> _activeBombSnapshot = new(64);
 
     private GameObject lastPlacedBomb;
     public GameObject GetLastPlacedBomb() => lastPlacedBomb;
@@ -143,6 +158,8 @@ public partial class BombController : MonoBehaviour
         if (playerAudioSource == null)
             playerAudioSource = _localAudio;
 
+        CacheRuntimeReferences();
+        EnsureQueryCaches();
         ResolveExplosionPrefab();
 
         ResolveTilemaps();
@@ -157,6 +174,63 @@ public partial class BombController : MonoBehaviour
         ResolveDestructibleTileResolver();
         ResolveGroundTileResolver();
         ResolveIndestructibleTileResolver();
+    }
+
+    private void CacheRuntimeReferences()
+    {
+        cachedMovement ??= GetComponent<MovementController>();
+        _ = GetCachedComponent(ref cachedAbilitySystem);
+        _ = GetCachedComponent(ref cachedGreenLouieDashAbility);
+        _ = GetCachedComponent(ref cachedBombKickAbility);
+        _ = GetCachedComponent(ref cachedYellowLouieKickAbility);
+        _ = GetCachedComponent(ref cachedMagnetBombAbility);
+    }
+
+    private void EnsureQueryCaches()
+    {
+        if (queryCachesInitialized)
+            return;
+
+        bombLayer = LayerMask.NameToLayer("Bomb");
+        bombMask = bombLayer >= 0 ? (1 << bombLayer) : 0;
+        bombContactFilter = new ContactFilter2D { useLayerMask = true };
+        bombContactFilter.SetLayerMask(bombMask);
+        bombContactFilter.useTriggers = true;
+
+        explosionLayer = LayerMask.NameToLayer("Explosion");
+        explosionMask = explosionLayer >= 0 ? (1 << explosionLayer) : 0;
+        explosionContactFilter = new ContactFilter2D { useLayerMask = true };
+        explosionContactFilter.SetLayerMask(explosionMask);
+        explosionContactFilter.useTriggers = true;
+
+        queryCachesInitialized = true;
+    }
+
+    private T GetCachedComponent<T>(ref T component) where T : Component
+    {
+        if (component == null)
+            TryGetComponent(out component);
+
+        return component;
+    }
+
+    private MovementController GetMovement()
+    {
+        if (cachedMovement == null)
+            cachedMovement = GetComponent<MovementController>();
+
+        return cachedMovement;
+    }
+
+    private AbilitySystem GetAbilitySystem()
+    {
+        return GetCachedComponent(ref cachedAbilitySystem);
+    }
+
+    private bool IsDashActive()
+    {
+        var dashAbility = GetCachedComponent(ref cachedGreenLouieDashAbility);
+        return dashAbility != null && dashAbility.DashActive;
     }
 
     private static Vector2 GetBombPlantDirection(MovementController movement)
@@ -175,6 +249,8 @@ public partial class BombController : MonoBehaviour
 
     private void OnEnable()
     {
+        CacheRuntimeReferences();
+        EnsureQueryCaches();
         ResolveExplosionPrefab();
         bombAmout = Mathf.Min(bombAmout, PlayerPersistentStats.MaxBombAmount);
         bombsRemaining = bombAmout;
@@ -195,11 +271,11 @@ public partial class BombController : MonoBehaviour
             (StageIntroTransition.Instance.IntroRunning || StageIntroTransition.Instance.EndingRunning))
             return;
 
-        var movement = GetComponent<MovementController>();
+        var movement = GetMovement();
         if (movement != null && (movement.InputLocked || movement.isDead || movement.IsEndingStage))
             return;
 
-        if (TryGetComponent<GreenLouieDashAbility>(out var dashAbility) && dashAbility != null && dashAbility.DashActive)
+        if (IsDashActive())
             return;
 
         if (GamePauseController.IsPaused)
@@ -399,42 +475,32 @@ public partial class BombController : MonoBehaviour
 
     private bool IsPierceEnabled()
     {
-        if (TryGetComponent<AbilitySystem>(out var abilitySystem))
-            return abilitySystem.IsEnabled(PierceBombAbility.AbilityId);
-
-        return false;
+        var abilitySystem = GetAbilitySystem();
+        return abilitySystem != null && abilitySystem.IsEnabled(PierceBombAbility.AbilityId);
     }
 
     private bool IsControlEnabled()
     {
-        if (TryGetComponent<AbilitySystem>(out var abilitySystem))
-            return abilitySystem.IsEnabled(ControlBombAbility.AbilityId);
-
-        return false;
+        var abilitySystem = GetAbilitySystem();
+        return abilitySystem != null && abilitySystem.IsEnabled(ControlBombAbility.AbilityId);
     }
 
     private bool IsRubberEnabled()
     {
-        if (TryGetComponent<AbilitySystem>(out var abilitySystem))
-            return abilitySystem.IsEnabled(RubberBombAbility.AbilityId);
-
-        return false;
+        var abilitySystem = GetAbilitySystem();
+        return abilitySystem != null && abilitySystem.IsEnabled(RubberBombAbility.AbilityId);
     }
 
     private bool IsFullFireEnabled()
     {
-        if (TryGetComponent<AbilitySystem>(out var abilitySystem))
-            return abilitySystem.IsEnabled(FullFireAbility.AbilityId);
-
-        return false;
+        var abilitySystem = GetAbilitySystem();
+        return abilitySystem != null && abilitySystem.IsEnabled(FullFireAbility.AbilityId);
     }
 
     private bool IsMagnetBombEnabled()
     {
-        if (TryGetComponent<AbilitySystem>(out var abilitySystem))
-            return abilitySystem.IsEnabled(MagnetBombAbility.AbilityId);
-
-        return false;
+        var abilitySystem = GetAbilitySystem();
+        return abilitySystem != null && abilitySystem.IsEnabled(MagnetBombAbility.AbilityId);
     }
 
     private Tilemap GetSnapTilemapForGround()
@@ -464,14 +530,15 @@ public partial class BombController : MonoBehaviour
 
     private bool TryGetAnyBombColliderAt(Vector2 position, float size, out Collider2D bombCol)
     {
-        int bombLayer = LayerMask.NameToLayer("Bomb");
-        int bombMask = 1 << bombLayer;
+        EnsureQueryCaches();
 
-        var filter = new ContactFilter2D { useLayerMask = true };
-        filter.SetLayerMask(bombMask);
-        filter.useTriggers = true;
+        if (bombMask == 0)
+        {
+            bombCol = null;
+            return false;
+        }
 
-        int count = Physics2D.OverlapBox(position, Vector2.one * size, 0f, filter, _bombOverlapBuffer);
+        int count = Physics2D.OverlapBox(position, Vector2.one * size, 0f, bombContactFilter, _bombOverlapBuffer);
 
         for (int i = 0; i < count; i++)
         {
@@ -496,17 +563,16 @@ public partial class BombController : MonoBehaviour
 
     private bool HasActiveExplosionAt(Vector2 position)
     {
-        int explosionLayer = LayerMask.NameToLayer("Explosion");
-        if (explosionLayer < 0)
-            return false;
+        EnsureQueryCaches();
 
-        int mask = 1 << explosionLayer;
+        if (explosionMask == 0)
+            return false;
 
         var hit = Physics2D.OverlapBox(
             position,
             Vector2.one * 0.6f,
             0f,
-            mask
+            explosionMask
         );
 
         return hit != null;
@@ -514,14 +580,12 @@ public partial class BombController : MonoBehaviour
 
     private void ExplodeAnyBombAt(Vector2 position)
     {
-        int bombLayer = LayerMask.NameToLayer("Bomb");
-        int bombMask = 1 << bombLayer;
+        EnsureQueryCaches();
 
-        var filter = new ContactFilter2D { useLayerMask = true };
-        filter.SetLayerMask(bombMask);
-        filter.useTriggers = true;
+        if (bombMask == 0)
+            return;
 
-        int count = Physics2D.OverlapBox(position, Vector2.one * 0.6f, 0f, filter, _bombOverlapBuffer);
+        int count = Physics2D.OverlapBox(position, Vector2.one * 0.6f, 0f, bombContactFilter, _bombOverlapBuffer);
         if (count <= 0)
             return;
 
@@ -684,11 +748,11 @@ public partial class BombController : MonoBehaviour
             (StageIntroTransition.Instance.IntroRunning || StageIntroTransition.Instance.EndingRunning))
             return;
 
-        var movement = GetComponent<MovementController>();
+        var movement = GetMovement();
         if (movement != null && (movement.InputLocked || movement.isDead || movement.IsEndingStage))
             return;
 
-        if (TryGetComponent<GreenLouieDashAbility>(out var dashAbility) && dashAbility != null && dashAbility.DashActive)
+        if (IsDashActive())
             return;
 
         if (GamePauseController.IsPaused)
@@ -793,7 +857,8 @@ public partial class BombController : MonoBehaviour
         Vector2 plantDir = GetBombPlantDirection(movement);
         movement?.NotifyBombPlanted(bombComponent, plantDir);
 
-        if (TryGetComponent<BombKickAbility>(out var kickAbility) && kickAbility != null)
+        var kickAbility = GetCachedComponent(ref cachedBombKickAbility);
+        if (kickAbility != null)
             kickAbility.NotifyBombPlanted(bombComponent, plantDir);
     }
 
@@ -1210,7 +1275,7 @@ public partial class BombController : MonoBehaviour
 
         int bombSpotlightId = AllocateSpotlightBaseId();
 
-        BombExplosion centerExplosion = Instantiate(explosionPrefab, snapped, Quaternion.identity);
+        BombExplosion centerExplosion = BombExplosion.Spawn(explosionPrefab, snapped, Quaternion.identity);
         centerExplosion.Play(BombExplosion.ExplosionPart.Start, Vector2.zero, 0f, explosionDuration, snapped);
 
         ExplosionLineResult up = ExplodeAndCollect(snapped, Vector2.up, effectiveRadius, pierce);
@@ -1358,7 +1423,7 @@ public partial class BombController : MonoBehaviour
 
             TryHandleGroundExplosionHit(p);
 
-            BombExplosion explosion = Instantiate(explosionPrefab, p, Quaternion.identity);
+            BombExplosion explosion = BombExplosion.Spawn(explosionPrefab, p, Quaternion.identity);
             explosion.Play(part, direction, 0f, explosionDuration, origin);
         }
 
@@ -1522,7 +1587,7 @@ public partial class BombController : MonoBehaviour
 
             TryHandleGroundExplosionHit(p);
 
-            BombExplosion explosion = Instantiate(explosionPrefab, p, Quaternion.identity);
+            BombExplosion explosion = BombExplosion.Spawn(explosionPrefab, p, Quaternion.identity);
             explosion.Play(part, direction, 0f, explosionDuration, origin);
         }
     }
@@ -1866,13 +1931,19 @@ public partial class BombController : MonoBehaviour
 
     public static void ExplodeAllControlBombsInStage()
     {
-        var bombs = FindObjectsByType<Bomb>();
-        if (bombs == null || bombs.Length == 0)
+        if (Bomb.ActiveBombs.Count == 0)
             return;
 
-        for (int i = 0; i < bombs.Length; i++)
+        _activeBombSnapshot.Clear();
+        foreach (var bomb in Bomb.ActiveBombs)
         {
-            var b = bombs[i];
+            if (bomb != null)
+                _activeBombSnapshot.Add(bomb);
+        }
+
+        for (int i = 0; i < _activeBombSnapshot.Count; i++)
+        {
+            var b = _activeBombSnapshot[i];
             if (b == null)
                 continue;
 
@@ -1888,6 +1959,8 @@ public partial class BombController : MonoBehaviour
             else
                 Object.Destroy(b.gameObject);
         }
+
+        _activeBombSnapshot.Clear();
     }
 
     public void NotifyBombAt(Vector2 worldPos, GameObject bombGo)
@@ -1918,7 +1991,7 @@ public partial class BombController : MonoBehaviour
         Tilemap snapTm = GetSnapTilemapForGround();
         Vector2 p = SnapToTileCenter(snapTm, origin, out _, out _);
 
-        BombExplosion centerExp = Instantiate(explosionPrefab, p, Quaternion.identity);
+        BombExplosion centerExp = BombExplosion.Spawn(explosionPrefab, p, Quaternion.identity);
         centerExp.Play(BombExplosion.ExplosionPart.Start, Vector2.zero, 0f, explosionDuration, p);
 
         Explode(p, Vector2.up, radius, pierce);
@@ -1948,7 +2021,7 @@ public partial class BombController : MonoBehaviour
         if (sfxSource != null)
             PlayExplosionSfxExclusive(sfxSource, effectiveRadius);
 
-        BombExplosion centerExp = Instantiate(explosionPrefab, p, Quaternion.identity);
+        BombExplosion centerExp = BombExplosion.Spawn(explosionPrefab, p, Quaternion.identity);
         centerExp.Play(BombExplosion.ExplosionPart.Start, Vector2.zero, 0f, explosionDuration, p);
 
         Explode(p, Vector2.up, effectiveRadius, effectivePierce);
@@ -1971,11 +2044,11 @@ public partial class BombController : MonoBehaviour
         if (GamePauseController.IsPaused)
             return false;
 
-        var movement = GetComponent<MovementController>();
+        var movement = GetMovement();
         if (movement != null && (movement.isDead || movement.IsEndingStage))
             return false;
 
-        if (TryGetComponent<GreenLouieDashAbility>(out var dashAbility) && dashAbility != null && dashAbility.DashActive)
+        if (IsDashActive())
             return false;
 
         if (consumeBomb && bombsRemaining <= 0)
@@ -2047,7 +2120,8 @@ public partial class BombController : MonoBehaviour
 
         if (shouldMakeFirstPlacedBombMagnetic)
         {
-            if (TryGetComponent<MagnetBombAbility>(out var magnetAbility) && magnetAbility != null)
+            var magnetAbility = GetCachedComponent(ref cachedMagnetBombAbility);
+            if (magnetAbility != null)
                 magnetAbility.ApplyToBomb(bomb);
             else
             {
@@ -2095,10 +2169,12 @@ public partial class BombController : MonoBehaviour
         Vector2 plantDir = GetBombPlantDirection(movement);
         movement?.NotifyBombPlanted(bombComponent, plantDir);
 
-        if (TryGetComponent<BombKickAbility>(out var kickAbility) && kickAbility != null)
+        var kickAbility = GetCachedComponent(ref cachedBombKickAbility);
+        if (kickAbility != null)
             kickAbility.NotifyBombPlanted(bombComponent, plantDir);
 
-        if (TryGetComponent<YellowLouieKickAbility>(out var yellowKickAbility) && yellowKickAbility != null)
+        var yellowKickAbility = GetCachedComponent(ref cachedYellowLouieKickAbility);
+        if (yellowKickAbility != null)
             yellowKickAbility.NotifyBombPlanted(bombComponent, plantDir);
 
         return true;
@@ -2167,10 +2243,8 @@ public partial class BombController : MonoBehaviour
 
     private bool IsPowerBombEnabled()
     {
-        if (TryGetComponent<AbilitySystem>(out var ab) && ab != null)
-            return ab.IsEnabled(PowerBombAbility.AbilityId);
-
-        return false;
+        var abilitySystem = GetAbilitySystem();
+        return abilitySystem != null && abilitySystem.IsEnabled(PowerBombAbility.AbilityId);
     }
 
     private bool HasActivePowerBombAlive()
@@ -2211,13 +2285,8 @@ public partial class BombController : MonoBehaviour
 
     private bool HasAnyAliveBombOwnedByMe()
     {
-        var bombs = FindObjectsByType<Bomb>();
-        if (bombs == null || bombs.Length == 0)
-            return false;
-
-        for (int i = 0; i < bombs.Length; i++)
+        foreach (var b in Bomb.ActiveBombs)
         {
-            var b = bombs[i];
             if (b == null) continue;
             if (b.HasExploded) continue;
             if (b.Owner != this) continue;
@@ -2469,19 +2538,25 @@ public partial class BombController : MonoBehaviour
 
     private bool HasStartExplosionAt(Vector2 worldPos)
     {
-        int explosionLayer = LayerMask.NameToLayer("Explosion");
-        if (explosionLayer < 0)
+        EnsureQueryCaches();
+
+        if (explosionMask == 0)
             return false;
 
-        int mask = 1 << explosionLayer;
+        int hitCount = Physics2D.OverlapBox(
+            worldPos,
+            Vector2.one * 0.6f,
+            0f,
+            explosionContactFilter,
+            _explosionOverlapBuffer);
 
-        Collider2D[] hits = Physics2D.OverlapBoxAll(worldPos, Vector2.one * 0.6f, 0f, mask);
-        if (hits == null || hits.Length == 0)
+        if (hitCount <= 0)
             return false;
 
-        for (int i = 0; i < hits.Length; i++)
+        for (int i = 0; i < hitCount; i++)
         {
-            var hit = hits[i];
+            var hit = _explosionOverlapBuffer[i];
+            _explosionOverlapBuffer[i] = null;
             if (hit == null)
                 continue;
 
