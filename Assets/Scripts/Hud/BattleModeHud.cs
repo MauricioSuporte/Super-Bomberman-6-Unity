@@ -27,8 +27,13 @@ public sealed class BattleModeHud : MonoBehaviour
     const string BombBlastSpeedAssetPath = "Assets/Sprites/HUD/BattleMode/BombBlastSpeed.png";
 
     const float PortraitSize = 16f;
-    const float PortraitX = 1f;
     const float PortraitY = 2f;
+    const float OuterHudEdgePadding = 1f;
+    const float PortraitToPowerupGap = 2f;
+    const float AbilityIconStep = 7f;
+    const float AbilityGridWidth = 20f;
+    const float BaseSlotContentWidth = (UsableAreaWidth / MaxPlayers) - OuterHudEdgePadding - (PartitionWidth * 0.5f);
+    const float PowerupGridExtraWidthFactor = 0.1f;
 
     const float NumberSize = 6f;
     const float AbilityIconSize = 6f;
@@ -63,16 +68,7 @@ public sealed class BattleModeHud : MonoBehaviour
         "AltGrid4"
     };
 
-    static readonly Vector2[] AbilityIconPositions =
-    {
-        new Vector2(19f, 15f),
-        new Vector2(26f, 15f),
-        new Vector2(33f, 15f),
-        new Vector2(19f, 8f),
-        new Vector2(26f, 8f)
-    };
-
-    static readonly Vector2 LifeIconPosition = new Vector2(33f, 8f);
+    static readonly float[] PowerupRowYs = { 15f, 8f };
 
     [Header("Battle HUD Sprites")]
     [SerializeField] private Sprite backgroundSprite;
@@ -107,6 +103,7 @@ public sealed class BattleModeHud : MonoBehaviour
     readonly bool[] playerDead = new bool[MaxPlayers];
     readonly CharacterHealth[] playerHealthCache = new CharacterHealth[MaxPlayers];
     readonly List<Sprite> activePowerupBuffer = new List<Sprite>(6);
+    readonly List<int> activePlayerIdsBuffer = new List<int>(MaxPlayers);
     readonly SlotUi[] slots = new SlotUi[MaxPlayers];
     readonly Dictionary<int, Sprite> livePortraits = new Dictionary<int, Sprite>();
     readonly Dictionary<int, Sprite> deadPortraits = new Dictionary<int, Sprite>();
@@ -143,9 +140,12 @@ public sealed class BattleModeHud : MonoBehaviour
         SuppressLegacyHudAtRuntime();
         EnsurePortraitsLoaded();
         EnsureRuntimeUi();
-        UpdateRootImages();
-        UpdateLayout();
-        UpdateContent();
+        PopulateActivePlayerIds(activePlayerIdsBuffer);
+
+        int visiblePlayerCount = GetVisiblePlayerCount();
+        UpdateRootImages(visiblePlayerCount);
+        UpdateLayout(visiblePlayerCount);
+        UpdateContent(visiblePlayerCount);
     }
 
 #if UNITY_EDITOR
@@ -276,7 +276,7 @@ public sealed class BattleModeHud : MonoBehaviour
             slot.AbilityIcons[i] = GetOrCreateImage(slot.Root, "Ability" + (i + 1));
     }
 
-    void UpdateRootImages()
+    void UpdateRootImages(int visiblePlayerCount)
     {
         SetImageSprite(backgroundImage, backgroundSprite, false);
         SetImageSprite(borderImage, borderSprite, false);
@@ -286,12 +286,16 @@ public sealed class BattleModeHud : MonoBehaviour
         ApplyLogicalRect((RectTransform)backgroundImage.transform, 0f, 0f, HudWidth, HudHeight, HudWidth, HudHeight);
         ApplyLogicalRect((RectTransform)borderImage.transform, 0f, 0f, HudWidth, HudHeight, HudWidth, HudHeight);
 
-        float slotWidth = GetSlotWidth();
+        float slotWidth = GetSlotWidth(visiblePlayerCount);
 
         for (int i = 0; i < partitionImages.Length; i++)
         {
             Image partition = partitionImages[i];
-            SetImageSprite(partition, partitionSprite, true);
+            bool shouldShowPartition = i < visiblePlayerCount - 1;
+            SetImageSprite(partition, shouldShowPartition ? partitionSprite : null, true);
+
+            if (!shouldShowPartition)
+                continue;
 
             float slotRight = UsableAreaLeft + ((i + 1) * slotWidth);
             float partitionLeft = slotRight - (PartitionWidth * 0.5f);
@@ -309,9 +313,9 @@ public sealed class BattleModeHud : MonoBehaviour
         UpdateVisualLayerOrder();
     }
 
-    void UpdateLayout()
+    void UpdateLayout(int visiblePlayerCount)
     {
-        float slotWidth = GetSlotWidth();
+        float slotWidth = GetSlotWidth(visiblePlayerCount);
 
         for (int i = 0; i < MaxPlayers; i++)
         {
@@ -320,37 +324,26 @@ public sealed class BattleModeHud : MonoBehaviour
                 continue;
 
             float slotLeft = UsableAreaLeft + i * slotWidth;
-            float portraitOffsetX = i == 0 ? 1f : 0f;
-            float lastPlayerItemsOffsetX = i == MaxPlayers - 1 ? 1f : 0f;
-            float lastPlayerStatsPanelOffsetX = i == MaxPlayers - 1 ? 1f : 0f;
-            float firstFivePlayersAbilityOffsetX = i < MaxPlayers - 1 ? 1f : 0f;
-            float firstFivePlayersLifeIconOffsetX = i < MaxPlayers - 1 ? 1f : 0f;
+            float lastPlayerItemsOffsetX = i == visiblePlayerCount - 1 ? 1f : 0f;
+            float lastPlayerStatsPanelOffsetX = i == visiblePlayerCount - 1 ? 1f : 0f;
+            float statsPanelLeft = GetStatsPanelLeft(i, visiblePlayerCount, slotWidth);
+            float column0X = statsPanelLeft + StatsNumberOffsets[0] + lastPlayerItemsOffsetX;
+            float column1X = statsPanelLeft + StatsNumberOffsets[1] + lastPlayerItemsOffsetX;
+            float column2X = statsPanelLeft + StatsNumberOffsets[2] + lastPlayerItemsOffsetX;
+            float portraitLeft = GetPortraitLeft(i, visiblePlayerCount, slotWidth, column0X);
 
             ApplyLogicalRect(slot.Root, slotLeft, UsableAreaBottom, slotWidth, UsableAreaHeight, HudWidth, HudHeight);
-            ApplyLogicalRect(slot.Portrait.rectTransform, PortraitX + portraitOffsetX, PortraitY, PortraitSize, PortraitSize, slotWidth, UsableAreaHeight);
-            ApplyLogicalRect(slot.PlayerNumber.rectTransform, PortraitX + 5f, PortraitY + 5f, NumberSize, NumberSize, slotWidth, UsableAreaHeight);
+            ApplyLogicalRect(slot.Portrait.rectTransform, portraitLeft, PortraitY, PortraitSize, PortraitSize, slotWidth, UsableAreaHeight);
+            ApplyLogicalRect(slot.PlayerNumber.rectTransform, portraitLeft, PortraitY, NumberSize, NumberSize, slotWidth, UsableAreaHeight);
 
-            float lifeDisplayX = LifeIconPosition.x + lastPlayerItemsOffsetX + firstFivePlayersLifeIconOffsetX;
-            ApplyLogicalRect(slot.LifeIcon.rectTransform, lifeDisplayX, LifeIconPosition.y, LifeIconSize, LifeIconSize, slotWidth, UsableAreaHeight);
-            ApplyLogicalRect(slot.LifeNumber.rectTransform, lifeDisplayX, LifeIconPosition.y, NumberSize, NumberSize, slotWidth, UsableAreaHeight);
+            ApplyLogicalRect(slot.AbilityIcons[0].rectTransform, column0X, PowerupRowYs[0], AbilityIconSize, AbilityIconSize, slotWidth, UsableAreaHeight);
+            ApplyLogicalRect(slot.AbilityIcons[1].rectTransform, column1X, PowerupRowYs[0], AbilityIconSize, AbilityIconSize, slotWidth, UsableAreaHeight);
+            ApplyLogicalRect(slot.AbilityIcons[2].rectTransform, column2X, PowerupRowYs[0], AbilityIconSize, AbilityIconSize, slotWidth, UsableAreaHeight);
+            ApplyLogicalRect(slot.AbilityIcons[3].rectTransform, column0X, PowerupRowYs[1], AbilityIconSize, AbilityIconSize, slotWidth, UsableAreaHeight);
+            ApplyLogicalRect(slot.AbilityIcons[4].rectTransform, column1X, PowerupRowYs[1], AbilityIconSize, AbilityIconSize, slotWidth, UsableAreaHeight);
 
-            for (int abilityIndex = 0; abilityIndex < slot.AbilityIcons.Length && abilityIndex < AbilityIconPositions.Length; abilityIndex++)
-            {
-                Vector2 pos = AbilityIconPositions[abilityIndex];
-                ApplyLogicalRect(
-                    slot.AbilityIcons[abilityIndex].rectTransform,
-                    pos.x + lastPlayerItemsOffsetX + firstFivePlayersAbilityOffsetX,
-                    pos.y,
-                    AbilityIconSize,
-                    AbilityIconSize,
-                    slotWidth,
-                    UsableAreaHeight);
-            }
-
-            float statsPanelLeft = slotWidth - StatsPanelWidth - 1f;
-
-            if (i == MaxPlayers - 1)
-                statsPanelLeft -= 2f;
+            ApplyLogicalRect(slot.LifeIcon.rectTransform, column2X, PowerupRowYs[1], LifeIconSize, LifeIconSize, slotWidth, UsableAreaHeight);
+            ApplyLogicalRect(slot.LifeNumber.rectTransform, column2X, PowerupRowYs[1], NumberSize, NumberSize, slotWidth, UsableAreaHeight);
 
             ApplyLogicalRect(
                 slot.StatsPanel.rectTransform,
@@ -392,7 +385,7 @@ public sealed class BattleModeHud : MonoBehaviour
         }
     }
 
-    void UpdateContent()
+    void UpdateContent(int visiblePlayerCount)
     {
         for (int i = 0; i < MaxPlayers; i++)
         {
@@ -400,36 +393,24 @@ public sealed class BattleModeHud : MonoBehaviour
             if (slot == null)
                 continue;
 
-            int playerId = i + 1;
-            bool activePlayer = IsPlayerConfiguredActive(playerId);
-
-            if (!activePlayer)
+            if (i >= visiblePlayerCount)
             {
-                ShowInactiveSlot(slot, playerId);
+                HideSlot(slot);
                 continue;
             }
 
+            int playerId = GetVisiblePlayerIdAtVisualIndex(i);
+            SetSlotActive(slot, true);
             ShowActiveSlot(slot, playerId);
         }
     }
 
-    void ShowInactiveSlot(SlotUi slot, int playerId)
+    void HideSlot(SlotUi slot)
     {
-        SetImageSprite(slot.Portrait, null, false);
-        SetImageSprite(slot.LifeIcon, null, false);
-        SetImageSprite(slot.LifeNumber, null, false);
-        SetImageSprite(slot.StatsPanel, null, false);
-        SetImageSprite(slot.BombNumber, null, false);
-        SetImageSprite(slot.FireNumber, null, false);
-        SetImageSprite(slot.SpeedNumber, null, false);
+        if (slot == null)
+            return;
 
-        for (int i = 0; i < slot.AbilityIcons.Length; i++)
-            SetImageSprite(slot.AbilityIcons[i], null, false);
-
-        SetImageSprite(slot.PlayerNumber, GetDigitSprite(playerId), false);
-        slot.PlayerNumber.color = Color.white;
-
-        ConfigurePushStart(slot.PushStart, true);
+        SetSlotActive(slot, false);
     }
 
     void ShowActiveSlot(SlotUi slot, int playerId)
@@ -452,6 +433,7 @@ public sealed class BattleModeHud : MonoBehaviour
             : Color.white;
 
         slot.Portrait.color = Color.white;
+        slot.PlayerNumber.color = overlayColor;
         slot.StatsPanel.color = Color.white;
         slot.BombNumber.color = Color.white;
         slot.FireNumber.color = Color.white;
@@ -468,6 +450,74 @@ public sealed class BattleModeHud : MonoBehaviour
 
         UpdateLifeDisplay(slot, currentLife, overlayColor);
         ConfigurePushStart(slot.PushStart, false);
+    }
+
+    float GetSlotContentLeft(int visualIndex)
+    {
+        return visualIndex <= 0
+            ? OuterHudEdgePadding
+            : PartitionWidth * 0.5f;
+    }
+
+    float GetSlotContentRight(int visualIndex, int visiblePlayerCount, float slotWidth)
+    {
+        return visualIndex >= visiblePlayerCount - 1
+            ? slotWidth - OuterHudEdgePadding
+            : slotWidth - (PartitionWidth * 0.5f);
+    }
+
+    float GetStatsPanelLeft(int visualIndex, int visiblePlayerCount, float slotWidth)
+    {
+        float statsPanelLeft = slotWidth - StatsPanelWidth - 1f;
+
+        if (visualIndex == visiblePlayerCount - 1)
+            statsPanelLeft -= 2f;
+
+        return statsPanelLeft;
+    }
+
+    float GetPortraitLeft(int visualIndex, int visiblePlayerCount, float slotWidth, float firstPowerupColumnX)
+    {
+        float contentLeft = GetSlotContentLeft(visualIndex);
+        float portraitAreaRight = Mathf.Max(contentLeft + PortraitSize, firstPowerupColumnX - PortraitToPowerupGap);
+        float portraitAreaWidth = portraitAreaRight - contentLeft;
+        return contentLeft + Mathf.Max(0f, (portraitAreaWidth - PortraitSize) * 0.5f);
+    }
+
+    void PopulateActivePlayerIds(List<int> results)
+    {
+        if (results == null)
+            return;
+
+        results.Clear();
+
+        if (!Application.isPlaying)
+        {
+            for (int playerId = 1; playerId <= MaxPlayers; playerId++)
+                results.Add(playerId);
+
+            return;
+        }
+
+        if (GameSession.Instance != null)
+            GameSession.Instance.GetActivePlayerIds(results);
+
+        if (results.Count <= 0)
+            results.Add(1);
+    }
+
+    int GetVisiblePlayerCount()
+    {
+        return Mathf.Clamp(activePlayerIdsBuffer.Count, 1, MaxPlayers);
+    }
+
+    int GetVisiblePlayerIdAtVisualIndex(int visualIndex)
+    {
+        if (activePlayerIdsBuffer.Count <= 0)
+            return 1;
+
+        int clampedIndex = Mathf.Clamp(visualIndex, 0, activePlayerIdsBuffer.Count - 1);
+        return activePlayerIdsBuffer[clampedIndex];
     }
 
     void UpdateLifeDisplay(SlotUi slot, int currentLife, Color overlayColor)
@@ -489,7 +539,7 @@ public sealed class BattleModeHud : MonoBehaviour
     void PopulateActivePowerups(PlayerPersistentStats.PlayerState state)
     {
         activePowerupBuffer.Clear();
-        for (int i = 0; i < AbilityIconPositions.Length; i++)
+        for (int i = 0; i < 5; i++)
             activePowerupBuffer.Add(null);
 
         activePowerupBuffer[0] = GetKickOrBombPassSprite(state);
@@ -592,14 +642,6 @@ public sealed class BattleModeHud : MonoBehaviour
         return digitSprites[spriteIndex];
     }
 
-    bool IsPlayerConfiguredActive(int playerId)
-    {
-        if (Application.isPlaying && GameSession.Instance != null)
-            return GameSession.Instance.IsPlayerActive(playerId);
-
-        return playerId >= 1 && playerId <= MaxPlayers;
-    }
-
     int GetSpeedStepCount(int speedInternal)
     {
         int clampedSpeed = PlayerPersistentStats.ClampSpeedInternal(speedInternal);
@@ -657,9 +699,18 @@ public sealed class BattleModeHud : MonoBehaviour
         return null;
     }
 
-    float GetSlotWidth()
+    float GetSlotWidth(int visiblePlayerCount)
     {
-        return UsableAreaWidth / MaxPlayers;
+        return UsableAreaWidth / Mathf.Clamp(visiblePlayerCount, 1, MaxPlayers);
+    }
+
+    void SetSlotActive(SlotUi slot, bool active)
+    {
+        if (slot?.Root == null)
+            return;
+
+        if (slot.Root.gameObject.activeSelf != active)
+            slot.Root.gameObject.SetActive(active);
     }
 
     void SetImageSprite(Image image, Sprite sprite, bool preserveAspect)
