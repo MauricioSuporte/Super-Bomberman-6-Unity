@@ -34,6 +34,7 @@ public class GameManager : MonoBehaviour
     [Min(0)] public int controlBombAmount = 0;
     [Min(0)] public int powerBombAmount = 0;
     [Min(0)] public int rubberBombAmount = 0;
+    [Min(0)] public int magnetBombAmount = 0;
     [Min(0)] public int fullFireAmount = 0;
     [Min(0)] public int bombPassAmount = 0;
     [Min(0)] public int destructiblePassAmount = 0;
@@ -474,6 +475,7 @@ public class GameManager : MonoBehaviour
         TryAssignItem(ItemType.ControlBomb, controlBombAmount);
         TryAssignItem(ItemType.PowerBomb, powerBombAmount);
         TryAssignItem(ItemType.RubberBomb, rubberBombAmount);
+        TryAssignItem(ItemType.MagnetBomb, magnetBombAmount);
         TryAssignItem(ItemType.FullFire, fullFireAmount);
         TryAssignItem(ItemType.BombPass, bombPassAmount);
         TryAssignItem(ItemType.DestructiblePass, destructiblePassAmount);
