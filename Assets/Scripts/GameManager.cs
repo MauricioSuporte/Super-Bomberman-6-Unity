@@ -87,6 +87,7 @@ public class GameManager : MonoBehaviour
     private bool pendingEnemyCheck;
     private Coroutine enemyCheckRoutine;
     private Coroutine battleVictoryCheckRoutine;
+    private readonly List<MovementController> winningBattleSurvivorsBuffer = new();
 
     [Header("Destructible Tile Resolver (optional, auto-find)")]
     [SerializeField] private DestructibleTileResolver destructibleTileResolver;
@@ -738,6 +739,15 @@ public class GameManager : MonoBehaviour
         MovementController survivingPlayer = null;
         List<PlayerIdentity> ids = GetOrderedPlayerIdentities(includeInactive: false);
 
+        if (IsBattleModeScene() && IsBattleModeTeamMatch())
+        {
+            if (TryGetWinningTeamSurvivors(ids, winningBattleSurvivorsBuffer, out survivingPlayer))
+            {
+                TriggerBattleVictorySequence(winningBattleSurvivorsBuffer, survivingPlayer);
+                return;
+            }
+        }
+
         for (int i = 0; i < ids.Count; i++)
         {
             PlayerIdentity id = ids[i];
@@ -759,7 +769,12 @@ public class GameManager : MonoBehaviour
 
         if (IsBattleModeScene() && aliveNotDead == 1)
         {
-            TriggerBattleVictorySequence(survivingPlayer);
+            winningBattleSurvivorsBuffer.Clear();
+
+            if (survivingPlayer != null)
+                winningBattleSurvivorsBuffer.Add(survivingPlayer);
+
+            TriggerBattleVictorySequence(winningBattleSurvivorsBuffer, survivingPlayer);
             return;
         }
 
@@ -781,7 +796,54 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    void TriggerBattleVictorySequence(MovementController survivingPlayer)
+    bool TryGetWinningTeamSurvivors(
+        List<PlayerIdentity> ids,
+        List<MovementController> survivingWinners,
+        out MovementController survivingPlayer)
+    {
+        survivingPlayer = null;
+        survivingWinners?.Clear();
+
+        if (ids == null || ids.Count <= 0 || BattleModeRules.Instance == null)
+            return false;
+
+        BattleModeRules.TeamId? winningTeam = null;
+
+        for (int i = 0; i < ids.Count; i++)
+        {
+            PlayerIdentity id = ids[i];
+            if (id == null)
+                continue;
+
+            if (!TryGetRuntimePlayerComponents(id, out var movement, out _))
+                continue;
+
+            if (!movement.gameObject.activeInHierarchy || movement.isDead)
+                continue;
+
+            BattleModeRules.TeamId currentTeam = BattleModeRules.Instance.GetTeamForPlayer(movement.PlayerId);
+
+            if (winningTeam == null)
+            {
+                winningTeam = currentTeam;
+                survivingPlayer = movement;
+                survivingWinners?.Add(movement);
+                continue;
+            }
+
+            if (winningTeam.Value != currentTeam)
+            {
+                survivingWinners?.Clear();
+                return false;
+            }
+
+            survivingWinners?.Add(movement);
+        }
+
+        return survivingPlayer != null;
+    }
+
+    void TriggerBattleVictorySequence(List<MovementController> survivingPlayers, MovementController survivingPlayer)
     {
         if (survivingPlayer == null)
             return;
@@ -789,18 +851,29 @@ public class GameManager : MonoBehaviour
         restartingRound = true;
         endStageTriggered = true;
 
-        if (survivingPlayer.TryGetComponent<PowerGloveAbility>(out var glove) && glove != null)
-            glove.DestroyHeldBombIfHolding();
-
-        if (survivingPlayer.TryGetComponent<BombController>(out var bombController) && bombController != null)
-            bombController.ClearPlantedBombsOnStageEnd(false);
-
         Vector2 celebrationCenter = new(
             Mathf.Round(survivingPlayer.transform.position.x),
             Mathf.Round(survivingPlayer.transform.position.y)
         );
 
-        survivingPlayer.PlayEndStageSequence(celebrationCenter, snapToPortalCenter: false);
+        if (survivingPlayers != null)
+        {
+            for (int i = 0; i < survivingPlayers.Count; i++)
+            {
+                MovementController winner = survivingPlayers[i];
+                if (winner == null)
+                    continue;
+
+                if (winner.TryGetComponent<PowerGloveAbility>(out var glove) && glove != null)
+                    glove.DestroyHeldBombIfHolding();
+
+                if (winner.TryGetComponent<BombController>(out var bombController) && bombController != null)
+                    bombController.ClearPlantedBombsOnStageEnd(false);
+
+                winner.PlayEndStageSequence(celebrationCenter, snapToPortalCenter: false);
+            }
+        }
+
         StartCoroutine(BattleVictorySequenceRoutine(survivingPlayer));
     }
 
@@ -858,6 +931,11 @@ public class GameManager : MonoBehaviour
     {
         string sceneName = SceneManager.GetActiveScene().name;
         return sceneName.StartsWith("BattleMode_", StringComparison.OrdinalIgnoreCase);
+    }
+
+    static bool IsBattleModeTeamMatch()
+    {
+        return BattleModeRules.Instance != null && BattleModeRules.Instance.UsesTeams;
     }
 
     public ItemPickup GetItemPrefab(ItemType type)
