@@ -12,6 +12,7 @@ public class GameManager : MonoBehaviour
     static readonly WaitForSecondsRealtime waitBattleVictoryDelay = new(1f);
     const float BattleVictoryFadeDuration = 3f;
     const string BattleVictorySfxResourcesPath = "Sounds/SB5 Sound Effects (48)";
+    const string TitleScreenSceneName = "TitleScreen";
     static AudioClip battleVictorySfx;
 
     public int EnemiesAlive { get; private set; }
@@ -110,6 +111,9 @@ public class GameManager : MonoBehaviour
 
         string currentSceneName = SceneManager.GetActiveScene().name;
         BossRushSession.NotifySceneLoaded(currentSceneName);
+
+        if (IsBattleModeScene() && GameSession.Instance != null)
+            GameSession.Instance.BeginBattleMatch(currentSceneName, IsBattleModeTeamMatch());
 
         if (BossRushSession.IsActive && BossRushSession.IsBossRushScene(currentSceneName))
             BossRushTimerPresenter.EnsureInScene();
@@ -855,6 +859,7 @@ public class GameManager : MonoBehaviour
             Mathf.Round(survivingPlayer.transform.position.x),
             Mathf.Round(survivingPlayer.transform.position.y)
         );
+        bool matchComplete = RegisterBattleVictory(survivingPlayer);
 
         if (survivingPlayers != null)
         {
@@ -874,10 +879,45 @@ public class GameManager : MonoBehaviour
             }
         }
 
-        StartCoroutine(BattleVictorySequenceRoutine(survivingPlayer));
+        StartCoroutine(BattleVictorySequenceRoutine(survivingPlayer, matchComplete));
     }
 
-    IEnumerator BattleVictorySequenceRoutine(MovementController survivingPlayer)
+    bool RegisterBattleVictory(MovementController survivingPlayer)
+    {
+        if (GameSession.Instance == null || survivingPlayer == null)
+            return false;
+
+        int targetVictories = BattleModeRules.Instance != null
+            ? BattleModeRules.Instance.VictoriesToWinMatch
+            : 3;
+        int highestVictoryCount = 0;
+
+        if (IsBattleModeTeamMatch() && BattleModeRules.Instance != null)
+        {
+            BattleModeRules.TeamId winningTeam = BattleModeRules.Instance.GetTeamForPlayer(survivingPlayer.PlayerId);
+
+            for (int playerId = GameSession.MinPlayerId; playerId <= GameSession.MaxPlayerId; playerId++)
+            {
+                if (!IsConfiguredPlayerActive(playerId))
+                    continue;
+
+                if (BattleModeRules.Instance.GetTeamForPlayer(playerId) != winningTeam)
+                    continue;
+
+                GameSession.Instance.AddBattleMatchWin(playerId);
+                highestVictoryCount = Mathf.Max(highestVictoryCount, GameSession.Instance.GetBattleMatchWins(playerId));
+            }
+        }
+        else
+        {
+            GameSession.Instance.AddBattleMatchWin(survivingPlayer.PlayerId);
+            highestVictoryCount = GameSession.Instance.GetBattleMatchWins(survivingPlayer.PlayerId);
+        }
+
+        return highestVictoryCount >= targetVictories;
+    }
+
+    IEnumerator BattleVictorySequenceRoutine(MovementController survivingPlayer, bool matchComplete)
     {
         if (GameMusicController.Instance != null)
             GameMusicController.Instance.StopMusic();
@@ -896,6 +936,15 @@ public class GameManager : MonoBehaviour
         PlayerPersistentStats.RollbackStage();
 
         StagePreIntroPlayersWalk.SkipOnNextLoad();
+
+        if (matchComplete)
+        {
+            if (GameSession.Instance != null)
+                GameSession.Instance.EndBattleMatch();
+
+            SceneManager.LoadScene(TitleScreenSceneName);
+            yield break;
+        }
 
         Scene current = SceneManager.GetActiveScene();
         SceneManager.LoadScene(current.buildIndex);

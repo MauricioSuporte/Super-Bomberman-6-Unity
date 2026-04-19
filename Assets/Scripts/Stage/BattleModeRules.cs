@@ -28,12 +28,14 @@ public sealed class BattleModeRules : MonoBehaviour
 
     [Header("Match")]
     [SerializeField] private MatchMode matchMode = MatchMode.SingleMatch;
+    [SerializeField, Min(1)] private int victoriesToWinMatch = 3;
 
     [Header("Teams")]
     [SerializeField] private PlayerTeamEntry[] playerTeams = new PlayerTeamEntry[GameSession.MaxPlayerId];
 
     public MatchMode CurrentMatchMode => matchMode;
     public bool UsesTeams => matchMode == MatchMode.TagMatch;
+    public int VictoriesToWinMatch => Mathf.Max(1, victoriesToWinMatch);
 
     void Awake()
     {

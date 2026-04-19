@@ -15,6 +15,12 @@ public sealed class GameSession : MonoBehaviour
     [SerializeField] private int activePlayerCount = 1;
     [SerializeField, HideInInspector] private int activePlayerMask;
 
+    [Header("Battle Match")]
+    [SerializeField, HideInInspector] private bool battleMatchInProgress;
+    [SerializeField, HideInInspector] private string battleMatchSceneName = string.Empty;
+    [SerializeField, HideInInspector] private bool battleMatchUsesTeams;
+    [SerializeField, HideInInspector] private int[] battleMatchWins = new int[MaxPlayerId];
+
     public int ActivePlayerCount => CountPlayersInMask(GetEffectiveActivePlayerMask());
     public int ActivePlayerMask => GetEffectiveActivePlayerMask();
 
@@ -40,6 +46,7 @@ public sealed class GameSession : MonoBehaviour
     {
         activePlayerCount = 1;
         activePlayerMask = CreateMaskFromCount(activePlayerCount);
+        ResetBattleMatch();
     }
 
     public void SetActivePlayerCount(int count)
@@ -111,6 +118,44 @@ public sealed class GameSession : MonoBehaviour
         return false;
     }
 
+    public void BeginBattleMatch(string sceneName, bool usesTeams)
+    {
+        EnsureBattleMatchStorage();
+
+        if (battleMatchInProgress &&
+            battleMatchSceneName == (sceneName ?? string.Empty) &&
+            battleMatchUsesTeams == usesTeams)
+            return;
+
+        battleMatchInProgress = true;
+        battleMatchSceneName = sceneName ?? string.Empty;
+        battleMatchUsesTeams = usesTeams;
+        ClearBattleMatchWins();
+    }
+
+    public void EndBattleMatch()
+    {
+        ResetBattleMatch();
+    }
+
+    public void AddBattleMatchWin(int playerId)
+    {
+        if (!IsValidPlayerId(playerId))
+            return;
+
+        EnsureBattleMatchStorage();
+        battleMatchWins[playerId - 1] = Mathf.Clamp(battleMatchWins[playerId - 1] + 1, 0, 9);
+    }
+
+    public int GetBattleMatchWins(int playerId)
+    {
+        if (!IsValidPlayerId(playerId))
+            return 0;
+
+        EnsureBattleMatchStorage();
+        return Mathf.Clamp(battleMatchWins[playerId - 1], 0, 9);
+    }
+
     public void GetActivePlayerIds(List<int> results)
     {
         if (results == null)
@@ -160,6 +205,7 @@ public sealed class GameSession : MonoBehaviour
         activePlayerCount = Mathf.Clamp(activePlayerCount, MinPlayerId, MaxPlayerId);
         activePlayerMask = SanitizeMask(activePlayerMask, activePlayerCount);
         activePlayerCount = CountPlayersInMask(activePlayerMask);
+        EnsureBattleMatchStorage();
     }
 
     int GetEffectiveActivePlayerMask()
@@ -183,5 +229,27 @@ public sealed class GameSession : MonoBehaviour
     {
         int clampedPlayerId = Mathf.Clamp(playerId, MinPlayerId, MaxPlayerId);
         return 1 << (clampedPlayerId - 1);
+    }
+
+    void EnsureBattleMatchStorage()
+    {
+        if (battleMatchWins == null || battleMatchWins.Length != MaxPlayerId)
+            battleMatchWins = new int[MaxPlayerId];
+    }
+
+    void ClearBattleMatchWins()
+    {
+        EnsureBattleMatchStorage();
+
+        for (int i = 0; i < battleMatchWins.Length; i++)
+            battleMatchWins[i] = 0;
+    }
+
+    void ResetBattleMatch()
+    {
+        battleMatchInProgress = false;
+        battleMatchSceneName = string.Empty;
+        battleMatchUsesTeams = false;
+        ClearBattleMatchWins();
     }
 }

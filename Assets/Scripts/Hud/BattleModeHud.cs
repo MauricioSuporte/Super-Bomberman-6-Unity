@@ -36,6 +36,7 @@ public sealed class BattleModeHud : MonoBehaviour
     const string Team1BackgroundAssetPath = "Assets/Sprites/HUD/BattleMode/Background_Team1.png";
     const string Team2BackgroundAssetPath = "Assets/Sprites/HUD/BattleMode/Background_Team2.png";
     const string Team3BackgroundAssetPath = "Assets/Sprites/HUD/BattleMode/Background_Team3.png";
+    const string VictoryNumbersAssetPath = "Assets/Sprites/HUD/NormalGame/HudNumbers.png";
 
     const float PortraitSize = 16f;
     const float PortraitY = 2f;
@@ -43,6 +44,9 @@ public sealed class BattleModeHud : MonoBehaviour
     const float PortraitToPowerupGap = 2f;
     const float FirstPlayerPortraitExtraOffset = 1f;
     const float LastPlayerItemsExtraOffset = 2f;
+    const float VictoryCounterSize = 7f;
+    const float VictoryCounterOffsetX = 9f;
+    const float VictoryCounterOffsetY = 0f;
 
     const float NumberSize = 6f;
     const float AbilityIconSize = 6f;
@@ -87,6 +91,7 @@ public sealed class BattleModeHud : MonoBehaviour
 
     [Header("Digits 0-9")]
     [SerializeField] private Sprite[] digitSprites = new Sprite[10];
+    [SerializeField] private Sprite[] victoryDigitSprites = new Sprite[10];
 
     [Header("Mini Powerups")]
     [SerializeField] private Sprite kickSprite;
@@ -183,6 +188,9 @@ public sealed class BattleModeHud : MonoBehaviour
 
         if (team3BackgroundSprite == null)
             team3BackgroundSprite = AssetDatabase.LoadAssetAtPath<Sprite>(Team3BackgroundAssetPath);
+
+        if (victoryDigitSprites == null || victoryDigitSprites.Length != 10 || victoryDigitSprites[0] == null)
+            victoryDigitSprites = LoadOrderedSpritesFromSheet(VictoryNumbersAssetPath, "HudNumbers_", 10);
     }
 #endif
 
@@ -372,7 +380,14 @@ public sealed class BattleModeHud : MonoBehaviour
                 slotWidth,
                 UsableAreaHeight);
             ApplyLogicalRect(slot.Portrait.rectTransform, portraitLeft, PortraitY, PortraitSize, PortraitSize, slotWidth, UsableAreaHeight);
-            ApplyLogicalRect(slot.PlayerNumber.rectTransform, portraitLeft, PortraitY, NumberSize, NumberSize, slotWidth, UsableAreaHeight);
+            ApplyLogicalRect(
+                slot.PlayerNumber.rectTransform,
+                portraitLeft + VictoryCounterOffsetX,
+                PortraitY + VictoryCounterOffsetY,
+                VictoryCounterSize,
+                VictoryCounterSize,
+                slotWidth,
+                UsableAreaHeight);
 
             ApplyLogicalRect(slot.AbilityIcons[0].rectTransform, column0X, PowerupRowYs[0], AbilityIconSize, AbilityIconSize, slotWidth, UsableAreaHeight);
             ApplyLogicalRect(slot.AbilityIcons[1].rectTransform, column1X, PowerupRowYs[0], AbilityIconSize, AbilityIconSize, slotWidth, UsableAreaHeight);
@@ -459,7 +474,7 @@ public sealed class BattleModeHud : MonoBehaviour
         int currentLife = health != null ? Mathf.Max(0, health.life) : Mathf.Max(0, state.Life);
 
         SetImageSprite(slot.TeamBackground, GetTeamBackgroundSprite(playerId), false);
-        SetImageSprite(slot.PlayerNumber, null, false);
+        SetImageSprite(slot.PlayerNumber, GetVictoryDigitSprite(GetDisplayedVictoryCount(playerId)), false);
         SetImageSprite(slot.Portrait, GetPortraitSprite(playerId, isDead), false);
 
         SetImageSprite(slot.StatsPanel, isDead ? null : bombBlastSpeedSprite, false);
@@ -470,10 +485,13 @@ public sealed class BattleModeHud : MonoBehaviour
         Color overlayColor = isDead
             ? new Color(1f, 1f, 1f, 0.45f)
             : Color.white;
+        Color victoryCounterColor = isDead
+            ? new Color(1f, 0.55f, 0.55f, 1f)
+            : Color.white;
 
         slot.Portrait.color = Color.white;
         slot.TeamBackground.color = Color.white;
-        slot.PlayerNumber.color = overlayColor;
+        slot.PlayerNumber.color = victoryCounterColor;
         slot.StatsPanel.color = Color.white;
         slot.BombNumber.color = Color.white;
         slot.FireNumber.color = Color.white;
@@ -746,6 +764,24 @@ public sealed class BattleModeHud : MonoBehaviour
             return null;
 
         return digitSprites[spriteIndex];
+    }
+
+    Sprite GetVictoryDigitSprite(int value)
+    {
+        int digit = Mathf.Clamp(value, 0, 9);
+
+        if (victoryDigitSprites == null || digit < 0 || digit >= victoryDigitSprites.Length)
+            return null;
+
+        return victoryDigitSprites[digit];
+    }
+
+    int GetDisplayedVictoryCount(int playerId)
+    {
+        if (GameSession.Instance == null)
+            return 0;
+
+        return GameSession.Instance.GetBattleMatchWins(playerId);
     }
 
     int GetSpeedStepCount(int speedInternal)
@@ -1029,6 +1065,35 @@ public sealed class BattleModeHud : MonoBehaviour
         image.raycastTarget = false;
         return image;
     }
+
+#if UNITY_EDITOR
+    static Sprite[] LoadOrderedSpritesFromSheet(string assetPath, string spriteNamePrefix, int expectedCount)
+    {
+        Sprite[] orderedSprites = new Sprite[expectedCount];
+        Object[] assets = AssetDatabase.LoadAllAssetsAtPath(assetPath);
+
+        for (int i = 0; i < assets.Length; i++)
+        {
+            if (!(assets[i] is Sprite sprite) || sprite == null)
+                continue;
+
+            string spriteName = sprite.name;
+            if (!spriteName.StartsWith(spriteNamePrefix))
+                continue;
+
+            string suffix = spriteName.Substring(spriteNamePrefix.Length);
+            if (!int.TryParse(suffix, out int index))
+                continue;
+
+            if (index < 0 || index >= orderedSprites.Length)
+                continue;
+
+            orderedSprites[index] = sprite;
+        }
+
+        return orderedSprites;
+    }
+#endif
 
     static TextMeshProUGUI GetOrCreateText(Transform parent, string childName)
     {
