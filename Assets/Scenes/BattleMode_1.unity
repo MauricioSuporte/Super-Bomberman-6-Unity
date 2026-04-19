@@ -179,7 +179,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3d86f2d8583d7d84e8f37c4f15eb4bba, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BattleModeRules
-  matchMode: 1
+  matchMode: 0
+  victoriesToWinMatch: 3
   playerTeams:
   - playerId: 1
     teamId: 1
@@ -200,7 +201,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 59654199}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8502dfd34f62ca9418a36160b06d6fb9, type: 3}
   m_Name: 
@@ -4878,8 +4879,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1aa1ef842d43d4449a4b672797ff89e5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameSession
-  activePlayerCount: 4
-  activePlayerMask: 45
+  activePlayerCount: 6
+  activePlayerMask: 63
+  battleMatchInProgress: 0
+  battleMatchSceneName: 
+  battleMatchUsesTeams: 0
+  battleMatchWins: 000000000000000000000000000000000000000000000000
 --- !u!4 &1334625510
 Transform:
   m_ObjectHideFlags: 0
