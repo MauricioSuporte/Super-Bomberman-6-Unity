@@ -30,6 +30,7 @@ public sealed class BattleModeHud : MonoBehaviour
 
     const float PartitionWidth = 3f;
     const float PartitionHeight = 21f;
+    const float PartitionYOffset = 1f;
     const string PartitionAssetPath = "Assets/Sprites/HUD/BattleMode/partition.png";
     const string BombBlastSpeedAssetPath = "Assets/Sprites/HUD/BattleMode/BombBlastSpeed.png";
     const string Team1BackgroundAssetPath = "Assets/Sprites/HUD/BattleMode/Background_Team1.png";
@@ -42,22 +43,15 @@ public sealed class BattleModeHud : MonoBehaviour
     const float PortraitToPowerupGap = 2f;
     const float FirstPlayerPortraitExtraOffset = 1f;
     const float LastPlayerItemsExtraOffset = 2f;
-    const float AbilityIconStep = 7f;
-    const float AbilityGridWidth = 20f;
-    const float BaseSlotContentWidth = (UsableAreaWidth / MaxPlayers) - OuterHudEdgePadding - (PartitionWidth * 0.5f);
-    const float PowerupGridExtraWidthFactor = 0.1f;
 
     const float NumberSize = 6f;
     const float AbilityIconSize = 6f;
     const float LifeIconSize = 6f;
 
-    const float StatsPanelX = 18f;
     const float StatsPanelY = 1f;
     const float StatsPanelWidth = 21f;
     const float StatsPanelHeight = 7f;
 
-    // Painel 21x7 com 1px de margem lateral.
-    // Cada número ocupa 6x6 e fica centralizado sobre cada ícone.
     const float StatsNumberY = 1f;
     static readonly float[] StatsNumberOffsets = { 1f, 8f, 15f };
 
@@ -337,7 +331,7 @@ public sealed class BattleModeHud : MonoBehaviour
             ApplyLogicalRect(
                 partition.rectTransform,
                 partitionLeft,
-                UsableAreaBottom,
+                UsableAreaBottom + PartitionYOffset,
                 PartitionWidth,
                 PartitionHeight,
                 HudWidth,
