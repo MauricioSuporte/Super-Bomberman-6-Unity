@@ -19,10 +19,10 @@ public static class PlayerPersistentStats
 
     public sealed class PlayerState
     {
-        public int Life = 1;
+        public int Life = 3;
         public int BombAmount = 3;
-        public int ExplosionRadius = 9;
-        public int SpeedInternal = MaxSpeedInternal;
+        public int ExplosionRadius = 3;
+        public int SpeedInternal = MinSpeedInternal;
         public bool CanKickBombs = true;
         public bool CanPunchBombs = true;
         public bool HasPowerGlove = true;
@@ -508,6 +508,7 @@ public static class PlayerPersistentStats
                     q.RestoreQueuedEggTypesOldestToNewest(null, null);
             }
         }
+
     }
 
     public static void SaveFrom(MovementController movement, BombController bomb)
