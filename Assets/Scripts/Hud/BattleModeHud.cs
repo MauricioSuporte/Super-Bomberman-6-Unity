@@ -444,17 +444,17 @@ public sealed class BattleModeHud : MonoBehaviour
         SetImageSprite(slot.PlayerNumber, null, false);
         SetImageSprite(slot.Portrait, GetPortraitSprite(playerId, isDead), false);
 
-        SetImageSprite(slot.StatsPanel, bombBlastSpeedSprite, false);
-        SetImageSprite(slot.BombNumber, GetDigitSprite(state.BombAmount), false);
-        SetImageSprite(slot.FireNumber, state.HasFullFire ? fullFireSprite : GetDigitSprite(state.ExplosionRadius), false);
-        SetImageSprite(slot.SpeedNumber, GetDigitSprite(GetSpeedStepCount(state.SpeedInternal)), false);
+        SetImageSprite(slot.StatsPanel, isDead ? null : bombBlastSpeedSprite, false);
+        SetImageSprite(slot.BombNumber, isDead ? null : GetDigitSprite(state.BombAmount), false);
+        SetImageSprite(slot.FireNumber, isDead ? null : state.HasFullFire ? fullFireSprite : GetDigitSprite(state.ExplosionRadius), false);
+        SetImageSprite(slot.SpeedNumber, isDead ? null : GetDigitSprite(GetSpeedStepCount(state.SpeedInternal)), false);
 
         Color overlayColor = isDead
             ? new Color(1f, 1f, 1f, 0.45f)
             : Color.white;
 
         slot.Portrait.color = Color.white;
-        slot.StatsPanel.color = overlayColor;
+        slot.StatsPanel.color = Color.white;
         slot.BombNumber.color = Color.white;
         slot.FireNumber.color = Color.white;
         slot.SpeedNumber.color = Color.white;
