@@ -140,6 +140,19 @@ public sealed class CameraFollowClamp2D : MonoBehaviour
         PlayerIdentity.GetActivePlayers(cachedPlayers);
     }
 
+    bool IsConfiguredPlayerActive(int playerId)
+    {
+        playerId = Mathf.Clamp(playerId, GameSession.MinPlayerId, GameSession.MaxPlayerId);
+
+        if (BossRushSession.IsActive)
+            return BossRushSession.IsRunPlayer(playerId);
+
+        if (GameSession.Instance != null)
+            return GameSession.Instance.IsPlayerActive(playerId);
+
+        return playerId == GameSession.MinPlayerId;
+    }
+
     bool TryUpdateFollowTargetPosition(out Vector3 position)
     {
         position = default;
@@ -147,17 +160,19 @@ public sealed class CameraFollowClamp2D : MonoBehaviour
         if (cachedPlayers.Count == 0)
             return false;
 
-        int activeCount = 1;
-        if (GameSession.Instance != null)
-            activeCount = Mathf.Clamp(GameSession.Instance.ActivePlayerCount, 1, 6);
-
         if (!followAllPlayers)
         {
-            for (int i = 0; i < cachedPlayers.Count; i++)
+            for (int desiredPlayerId = GameSession.MinPlayerId; desiredPlayerId <= GameSession.MaxPlayerId; desiredPlayerId++)
             {
-                var p = cachedPlayers[i];
-                if (p != null && p.playerId == 1)
+                if (!IsConfiguredPlayerActive(desiredPlayerId))
+                    continue;
+
+                for (int i = 0; i < cachedPlayers.Count; i++)
                 {
+                    var p = cachedPlayers[i];
+                    if (p == null || p.playerId != desiredPlayerId)
+                        continue;
+
                     position = p.transform.position;
                     followTarget.position = position;
                     return true;
@@ -178,7 +193,7 @@ public sealed class CameraFollowClamp2D : MonoBehaviour
             if (p == null)
                 continue;
 
-            if (p.playerId < 1 || p.playerId > activeCount)
+            if (!IsConfiguredPlayerActive(p.playerId))
                 continue;
 
             sum += p.transform.position;
@@ -282,10 +297,6 @@ public sealed class CameraFollowClamp2D : MonoBehaviour
         if (!useTrackedPlayersSpeed || cachedPlayers.Count == 0)
             return PlayerPersistentStats.InternalSpeedToTilesPerSecond(speedInternal);
 
-        int activeCount = 1;
-        if (GameSession.Instance != null)
-            activeCount = Mathf.Clamp(GameSession.Instance.ActivePlayerCount, 1, 6);
-
         int highestInternal = speedInternal;
         bool foundAny = false;
 
@@ -295,7 +306,7 @@ public sealed class CameraFollowClamp2D : MonoBehaviour
             if (p == null)
                 continue;
 
-            if (p.playerId < 1 || p.playerId > activeCount)
+            if (!IsConfiguredPlayerActive(p.playerId))
                 continue;
 
             if (!p.TryGetComponent<MovementController>(out var movement) || movement == null)

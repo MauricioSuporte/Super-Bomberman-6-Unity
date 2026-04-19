@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 public sealed class PlayersSpawner : MonoBehaviour
@@ -24,6 +25,7 @@ public sealed class PlayersSpawner : MonoBehaviour
     public bool IsBossStage => isBossStage;
 
     bool spawned;
+    readonly List<int> configuredPlayerIds = new(GameSession.MaxPlayerId);
 
     static readonly Vector2[] NormalStagePositions =
     {
@@ -121,19 +123,16 @@ public sealed class PlayersSpawner : MonoBehaviour
 
     void SpawnPlayersInternal()
     {
-        int count = 1;
-
-        if (BossRushSession.IsActive)
-            count = BossRushSession.RunPlayerCount;
-        else if (GameSession.Instance != null)
-            count = Mathf.Clamp(GameSession.Instance.ActivePlayerCount, 1, 6);
+        ResolveConfiguredPlayerIds(configuredPlayerIds);
 
         PlayerPersistentStats.EnsureSessionBooted();
 
         Vector2[] preset = isBossStage ? BossStagePositions : NormalStagePositions;
 
-        for (int playerId = 1; playerId <= count; playerId++)
+        for (int i = 0; i < configuredPlayerIds.Count; i++)
         {
+            int playerId = configuredPlayerIds[i];
+
             if (BossRushSession.IsActive && !BossRushSession.ShouldSpawnPlayer(playerId))
                 continue;
 
@@ -166,6 +165,22 @@ public sealed class PlayersSpawner : MonoBehaviour
                     skins[s].ApplyFromIdentity();
             }
         }
+    }
+
+    void ResolveConfiguredPlayerIds(List<int> results)
+    {
+        if (results == null)
+            return;
+
+        results.Clear();
+
+        if (BossRushSession.IsActive)
+            BossRushSession.GetRunPlayerIds(results);
+        else if (GameSession.Instance != null)
+            GameSession.Instance.GetActivePlayerIds(results);
+
+        if (results.Count <= 0)
+            results.Add(GameSession.MinPlayerId);
     }
 
     Vector3 ResolveSpawnPosition(int index, Vector2[] preset)

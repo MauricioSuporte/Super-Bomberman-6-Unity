@@ -394,8 +394,6 @@ public sealed class BattleModeHud : MonoBehaviour
 
     void UpdateContent()
     {
-        int activePlayerCount = GetActivePlayerCount();
-
         for (int i = 0; i < MaxPlayers; i++)
         {
             SlotUi slot = slots[i];
@@ -403,7 +401,7 @@ public sealed class BattleModeHud : MonoBehaviour
                 continue;
 
             int playerId = i + 1;
-            bool activePlayer = i < activePlayerCount;
+            bool activePlayer = IsPlayerConfiguredActive(playerId);
 
             if (!activePlayer)
             {
@@ -594,12 +592,12 @@ public sealed class BattleModeHud : MonoBehaviour
         return digitSprites[spriteIndex];
     }
 
-    int GetActivePlayerCount()
+    bool IsPlayerConfiguredActive(int playerId)
     {
         if (Application.isPlaying && GameSession.Instance != null)
-            return Mathf.Clamp(GameSession.Instance.ActivePlayerCount, 1, MaxPlayers);
+            return GameSession.Instance.IsPlayerActive(playerId);
 
-        return MaxPlayers;
+        return playerId >= 1 && playerId <= MaxPlayers;
     }
 
     int GetSpeedStepCount(int speedInternal)

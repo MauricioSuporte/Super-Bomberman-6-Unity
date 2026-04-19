@@ -249,6 +249,7 @@ public class BomberSkinSelectMenu : MonoBehaviour
     }
 
     readonly List<PlayerCursorState> players = new();
+    readonly List<int> configuredPlayerIds = new(GameSession.MaxPlayerId);
 
     bool menuActive;
 
@@ -384,14 +385,13 @@ public class BomberSkinSelectMenu : MonoBehaviour
 
         var input = PlayerInputManager.Instance;
 
-        int count = 1;
-        if (GameSession.Instance != null)
-            count = GameSession.Instance.ActivePlayerCount;
+        PopulateConfiguredPlayerIds(configuredPlayerIds);
 
-        BuildPlayerCursors(count);
+        BuildPlayerCursors(configuredPlayerIds);
 
-        for (int p = 1; p <= count; p++)
+        for (int i = 0; i < configuredPlayerIds.Count; i++)
         {
+            int p = configuredPlayerIds[i];
             while (input.Get(p, PlayerAction.ActionA) ||
                    input.Get(p, PlayerAction.ActionB) ||
                    input.Get(p, PlayerAction.Start) ||
@@ -844,7 +844,7 @@ public class BomberSkinSelectMenu : MonoBehaviour
         }
     }
 
-    void BuildPlayerCursors(int activeCount)
+    void BuildPlayerCursors(List<int> activePlayerIds)
     {
         for (int i = 0; i < players.Count; i++)
         {
@@ -854,8 +854,12 @@ public class BomberSkinSelectMenu : MonoBehaviour
 
         players.Clear();
 
-        for (int p = 1; p <= Mathf.Clamp(activeCount, 1, 6); p++)
+        if (activePlayerIds == null || activePlayerIds.Count <= 0)
+            return;
+
+        for (int i = 0; i < activePlayerIds.Count; i++)
         {
+            int p = Mathf.Clamp(activePlayerIds[i], GameSession.MinPlayerId, GameSession.MaxPlayerId);
             var st = new PlayerCursorState { playerId = p };
 
             if (skinCursorPrefab != null)
@@ -888,6 +892,20 @@ public class BomberSkinSelectMenu : MonoBehaviour
 
             players.Add(st);
         }
+    }
+
+    void PopulateConfiguredPlayerIds(List<int> results)
+    {
+        if (results == null)
+            return;
+
+        results.Clear();
+
+        if (GameSession.Instance != null)
+            GameSession.Instance.GetActivePlayerIds(results);
+
+        if (results.Count <= 0)
+            results.Add(GameSession.MinPlayerId);
     }
 
     void BuildGrid()

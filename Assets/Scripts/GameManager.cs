@@ -123,12 +123,17 @@ public class GameManager : MonoBehaviour
         ScheduleEnemyCheckNextFrame();
     }
 
-    int GetConfiguredActivePlayerCount()
+    bool IsConfiguredPlayerActive(int playerId)
     {
-        if (GameSession.Instance != null)
-            return Mathf.Clamp(GameSession.Instance.ActivePlayerCount, 1, 6);
+        playerId = Mathf.Clamp(playerId, GameSession.MinPlayerId, GameSession.MaxPlayerId);
 
-        return 1;
+        if (BossRushSession.IsActive)
+            return BossRushSession.IsRunPlayer(playerId);
+
+        if (GameSession.Instance != null)
+            return GameSession.Instance.IsPlayerActive(playerId);
+
+        return playerId == GameSession.MinPlayerId;
     }
 
     List<PlayerIdentity> GetOrderedPlayerIdentities(bool includeInactive)
@@ -136,7 +141,6 @@ public class GameManager : MonoBehaviour
         List<PlayerIdentity> result = new();
         FindObjectsInactive inactiveMode = includeInactive ? FindObjectsInactive.Include : FindObjectsInactive.Exclude;
         PlayerIdentity[] ids = FindObjectsByType<PlayerIdentity>(inactiveMode);
-        int activePlayerCount = GetConfiguredActivePlayerCount();
 
         for (int i = 0; i < ids.Length; i++)
         {
@@ -144,8 +148,8 @@ public class GameManager : MonoBehaviour
             if (id == null)
                 continue;
 
-            int playerId = Mathf.Clamp(id.playerId, 1, 6);
-            if (playerId > activePlayerCount)
+            int playerId = Mathf.Clamp(id.playerId, GameSession.MinPlayerId, GameSession.MaxPlayerId);
+            if (!IsConfiguredPlayerActive(playerId))
                 continue;
 
             result.Add(id);

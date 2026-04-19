@@ -72,6 +72,17 @@ public class PlayerInputManager : MonoBehaviour
         }
     }
 
+    bool IsConfiguredActivePlayer(int playerId)
+    {
+        playerId = Mathf.Clamp(playerId, MinSupportedPlayerId, MaxSupportedPlayerId);
+
+        var gs = GameSession.Instance;
+        if (gs != null)
+            return gs.IsPlayerActive(playerId);
+
+        return playerId <= PlayerCount;
+    }
+
     void Awake()
     {
         if (Instance != null)
@@ -92,8 +103,7 @@ public class PlayerInputManager : MonoBehaviour
         EnsureProfilesForPlayerCount();
         RefreshPlayerStateCache(forcePlayersMapRefresh: false);
 
-        int count = PlayerCount;
-        for (int id = 1; id <= count; id++)
+        for (int id = MinSupportedPlayerId; id <= MaxSupportedPlayerId; id++)
         {
             var p = GetPlayer(id);
             ReadDirectionalDigital(p, id, out bool up, out bool down, out bool left, out bool right);
@@ -107,8 +117,7 @@ public class PlayerInputManager : MonoBehaviour
 
     void LateUpdate()
     {
-        int count = PlayerCount;
-        for (int id = 1; id <= count; id++)
+        for (int id = MinSupportedPlayerId; id <= MaxSupportedPlayerId; id++)
         {
             prevUp[id] = curUp[id];
             prevDown[id] = curDown[id];
@@ -119,9 +128,7 @@ public class PlayerInputManager : MonoBehaviour
 
     private void EnsureProfilesForPlayerCount()
     {
-        int count = PlayerCount;
-
-        for (int id = 1; id <= count; id++)
+        for (int id = MinSupportedPlayerId; id <= MaxSupportedPlayerId; id++)
         {
             if (!players.TryGetValue(id, out var p) || p == null)
                 players[id] = new PlayerInputProfile(id);
@@ -185,10 +192,9 @@ public class PlayerInputManager : MonoBehaviour
 
         RefreshPlayersMap(force: forcePlayersMapRefresh);
 
-        int count = PlayerCount;
         for (int id = MinSupportedPlayerId; id <= MaxSupportedPlayerId; id++)
         {
-            bool isActivePlayer = id <= count;
+            bool isActivePlayer = IsConfiguredActivePlayer(id);
             playersRidingBoat[id] = false;
             playersUsingSpringLauncherState[id] = isActivePlayer && playersUsingSpringLauncher.Contains(id);
 
@@ -384,10 +390,11 @@ public class PlayerInputManager : MonoBehaviour
 
     public bool AnyGet(PlayerAction action, out int playerId)
     {
-        int count = PlayerCount;
-
-        for (int id = 1; id <= count; id++)
+        for (int id = MinSupportedPlayerId; id <= MaxSupportedPlayerId; id++)
         {
+            if (!IsConfiguredActivePlayer(id))
+                continue;
+
             if (Get(action, id))
             {
                 playerId = id;
@@ -403,10 +410,11 @@ public class PlayerInputManager : MonoBehaviour
 
     public bool AnyGetDown(PlayerAction action, out int playerId)
     {
-        int count = PlayerCount;
-
-        for (int id = 1; id <= count; id++)
+        for (int id = MinSupportedPlayerId; id <= MaxSupportedPlayerId; id++)
         {
+            if (!IsConfiguredActivePlayer(id))
+                continue;
+
             if (GetDown(action, id))
             {
                 playerId = id;

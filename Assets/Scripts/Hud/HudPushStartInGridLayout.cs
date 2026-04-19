@@ -113,7 +113,6 @@ public sealed class HudPushStartInGridLayout : MonoBehaviour
 
     void UpdateTexts()
     {
-        int activePlayerCount = GetActivePlayerCount();
         int scaledFontSize = ScaledFont(baseFontSize);
 
         for (int i = 0; i < pushStartTexts.Length; i++)
@@ -122,7 +121,7 @@ public sealed class HudPushStartInGridLayout : MonoBehaviour
             if (text == null)
                 continue;
 
-            bool playerAtivo = i < activePlayerCount;
+            bool playerAtivo = IsPlayerAtivo(i + 1);
             bool shouldShow = !playerAtivo && blinkVisible;
 
             if (fontAsset != null)
@@ -225,17 +224,17 @@ public sealed class HudPushStartInGridLayout : MonoBehaviour
         return Mathf.Clamp(Mathf.RoundToInt(baseSize * currentUiScale), 1, 500);
     }
 
-    int GetActivePlayerCount()
+    bool IsPlayerAtivo(int playerId)
     {
         if (Application.isPlaying && GameSession.Instance != null)
-            return Mathf.Clamp(GameSession.Instance.ActivePlayerCount, 1, 6);
+            return GameSession.Instance.IsPlayerActive(playerId);
 
 #if UNITY_EDITOR
         if (!Application.isPlaying)
-            return 4;
+            return playerId >= 1 && playerId <= 4;
 #endif
 
-        return 1;
+        return playerId == 1;
     }
 
     float GetGridWidth(int index)
