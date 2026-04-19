@@ -553,15 +553,18 @@ public sealed class BattleModeHud : MonoBehaviour
         {
             for (int playerId = 1; playerId <= MaxPlayers; playerId++)
                 results.Add(playerId);
+        }
+        else
+        {
+            if (GameSession.Instance != null)
+                GameSession.Instance.GetActivePlayerIds(results);
 
-            return;
+            if (results.Count <= 0)
+                results.Add(1);
         }
 
-        if (GameSession.Instance != null)
-            GameSession.Instance.GetActivePlayerIds(results);
-
-        if (results.Count <= 0)
-            results.Add(1);
+        if (ShouldGroupPlayersByTeam())
+            SortVisiblePlayersByTeam(results);
     }
 
     int GetVisiblePlayerCount()
@@ -576,6 +579,50 @@ public sealed class BattleModeHud : MonoBehaviour
 
         int clampedIndex = Mathf.Clamp(visualIndex, 0, activePlayerIdsBuffer.Count - 1);
         return activePlayerIdsBuffer[clampedIndex];
+    }
+
+    bool ShouldGroupPlayersByTeam()
+    {
+        return BattleModeRules.Instance != null && BattleModeRules.Instance.UsesTeams;
+    }
+
+    void SortVisiblePlayersByTeam(List<int> playerIds)
+    {
+        if (playerIds == null || playerIds.Count <= 1)
+            return;
+
+        for (int i = 1; i < playerIds.Count; i++)
+        {
+            int currentPlayerId = playerIds[i];
+            int insertIndex = i - 1;
+
+            while (insertIndex >= 0 && ComparePlayersForHud(currentPlayerId, playerIds[insertIndex]) < 0)
+            {
+                playerIds[insertIndex + 1] = playerIds[insertIndex];
+                insertIndex--;
+            }
+
+            playerIds[insertIndex + 1] = currentPlayerId;
+        }
+    }
+
+    int ComparePlayersForHud(int leftPlayerId, int rightPlayerId)
+    {
+        int leftTeam = GetHudTeamSortKey(leftPlayerId);
+        int rightTeam = GetHudTeamSortKey(rightPlayerId);
+
+        if (leftTeam != rightTeam)
+            return leftTeam.CompareTo(rightTeam);
+
+        return leftPlayerId.CompareTo(rightPlayerId);
+    }
+
+    int GetHudTeamSortKey(int playerId)
+    {
+        if (BattleModeRules.Instance == null)
+            return (int)BattleModeRules.TeamId.Blue;
+
+        return (int)BattleModeRules.Instance.GetTeamForPlayer(playerId);
     }
 
     void UpdateLifeDisplay(SlotUi slot, int currentLife, Color overlayColor)
