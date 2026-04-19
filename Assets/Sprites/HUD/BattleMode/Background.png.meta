@@ -3,8 +3,8 @@ guid: 735c0300b67dcca488abff35e5d5f510
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 1363120869402070574
-    second: BM_BG_NoTeam_0
+      213: -1955448553306655712
+    second: Background_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -126,7 +126,7 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: BM_BG_NoTeam_0
+      name: Background_0
       rect:
         serializedVersion: 2
         x: 2
@@ -141,8 +141,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: e2ec1a66537cae210800000000000000
-      internalID: 1363120869402070574
+      spriteID: 024fa93b6e9dcd4e0800000000000000
+      internalID: -1955448553306655712
       vertices: []
       indices: 
       edges: []
@@ -161,7 +161,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      BM_BG_NoTeam_0: 1363120869402070574
+      Background_0: -1955448553306655712
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

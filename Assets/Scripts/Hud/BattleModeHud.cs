@@ -65,14 +65,14 @@ public sealed class BattleModeHud : MonoBehaviour
 
     static readonly Vector2[] AbilityIconPositions =
     {
-        new Vector2(19f, 14f),
-        new Vector2(26f, 14f),
+        new Vector2(19f, 15f),
+        new Vector2(26f, 15f),
+        new Vector2(33f, 15f),
         new Vector2(19f, 8f),
-        new Vector2(26f, 8f),
-        new Vector2(33f, 8f)
+        new Vector2(26f, 8f)
     };
 
-    static readonly Vector2 LifeIconPosition = new Vector2(33f, 14f);
+    static readonly Vector2 LifeIconPosition = new Vector2(33f, 8f);
 
     [Header("Battle HUD Sprites")]
     [SerializeField] private Sprite backgroundSprite;
@@ -320,20 +320,26 @@ public sealed class BattleModeHud : MonoBehaviour
                 continue;
 
             float slotLeft = UsableAreaLeft + i * slotWidth;
+            float portraitOffsetX = i == 0 ? 1f : 0f;
+            float lastPlayerItemsOffsetX = i == MaxPlayers - 1 ? 1f : 0f;
+            float lastPlayerStatsPanelOffsetX = i == MaxPlayers - 1 ? 1f : 0f;
+            float firstFivePlayersAbilityOffsetX = i < MaxPlayers - 1 ? 1f : 0f;
+            float firstFivePlayersLifeIconOffsetX = i < MaxPlayers - 1 ? 1f : 0f;
 
             ApplyLogicalRect(slot.Root, slotLeft, UsableAreaBottom, slotWidth, UsableAreaHeight, HudWidth, HudHeight);
-            ApplyLogicalRect(slot.Portrait.rectTransform, PortraitX, PortraitY, PortraitSize, PortraitSize, slotWidth, UsableAreaHeight);
+            ApplyLogicalRect(slot.Portrait.rectTransform, PortraitX + portraitOffsetX, PortraitY, PortraitSize, PortraitSize, slotWidth, UsableAreaHeight);
             ApplyLogicalRect(slot.PlayerNumber.rectTransform, PortraitX + 5f, PortraitY + 5f, NumberSize, NumberSize, slotWidth, UsableAreaHeight);
 
-            ApplyLogicalRect(slot.LifeIcon.rectTransform, LifeIconPosition.x, LifeIconPosition.y, LifeIconSize, LifeIconSize, slotWidth, UsableAreaHeight);
-            ApplyLogicalRect(slot.LifeNumber.rectTransform, LifeIconPosition.x, LifeIconPosition.y, NumberSize, NumberSize, slotWidth, UsableAreaHeight);
+            float lifeDisplayX = LifeIconPosition.x + lastPlayerItemsOffsetX + firstFivePlayersLifeIconOffsetX;
+            ApplyLogicalRect(slot.LifeIcon.rectTransform, lifeDisplayX, LifeIconPosition.y, LifeIconSize, LifeIconSize, slotWidth, UsableAreaHeight);
+            ApplyLogicalRect(slot.LifeNumber.rectTransform, lifeDisplayX, LifeIconPosition.y, NumberSize, NumberSize, slotWidth, UsableAreaHeight);
 
             for (int abilityIndex = 0; abilityIndex < slot.AbilityIcons.Length && abilityIndex < AbilityIconPositions.Length; abilityIndex++)
             {
                 Vector2 pos = AbilityIconPositions[abilityIndex];
                 ApplyLogicalRect(
                     slot.AbilityIcons[abilityIndex].rectTransform,
-                    pos.x,
+                    pos.x + lastPlayerItemsOffsetX + firstFivePlayersAbilityOffsetX,
                     pos.y,
                     AbilityIconSize,
                     AbilityIconSize,
@@ -348,7 +354,7 @@ public sealed class BattleModeHud : MonoBehaviour
 
             ApplyLogicalRect(
                 slot.StatsPanel.rectTransform,
-                statsPanelLeft,
+                statsPanelLeft + lastPlayerStatsPanelOffsetX,
                 StatsPanelY,
                 StatsPanelWidth,
                 StatsPanelHeight,
@@ -357,7 +363,7 @@ public sealed class BattleModeHud : MonoBehaviour
 
             ApplyLogicalRect(
                 slot.BombNumber.rectTransform,
-                statsPanelLeft + StatsNumberOffsets[0],
+                statsPanelLeft + StatsNumberOffsets[0] + lastPlayerItemsOffsetX,
                 StatsPanelY + StatsNumberY - 1f,
                 NumberSize,
                 NumberSize,
@@ -366,7 +372,7 @@ public sealed class BattleModeHud : MonoBehaviour
 
             ApplyLogicalRect(
                 slot.FireNumber.rectTransform,
-                statsPanelLeft + StatsNumberOffsets[1],
+                statsPanelLeft + StatsNumberOffsets[1] + lastPlayerItemsOffsetX,
                 StatsPanelY + StatsNumberY - 1f,
                 NumberSize,
                 NumberSize,
@@ -375,7 +381,7 @@ public sealed class BattleModeHud : MonoBehaviour
 
             ApplyLogicalRect(
                 slot.SpeedNumber.rectTransform,
-                statsPanelLeft + StatsNumberOffsets[2],
+                statsPanelLeft + StatsNumberOffsets[2] + lastPlayerItemsOffsetX,
                 StatsPanelY + StatsNumberY - 1f,
                 NumberSize,
                 NumberSize,
@@ -440,7 +446,7 @@ public sealed class BattleModeHud : MonoBehaviour
 
         SetImageSprite(slot.StatsPanel, bombBlastSpeedSprite, false);
         SetImageSprite(slot.BombNumber, GetDigitSprite(state.BombAmount), false);
-        SetImageSprite(slot.FireNumber, GetDigitSprite(state.ExplosionRadius), false);
+        SetImageSprite(slot.FireNumber, state.HasFullFire ? fullFireSprite : GetDigitSprite(state.ExplosionRadius), false);
         SetImageSprite(slot.SpeedNumber, GetDigitSprite(GetSpeedStepCount(state.SpeedInternal)), false);
 
         Color overlayColor = isDead
@@ -485,24 +491,14 @@ public sealed class BattleModeHud : MonoBehaviour
     void PopulateActivePowerups(PlayerPersistentStats.PlayerState state)
     {
         activePowerupBuffer.Clear();
+        for (int i = 0; i < AbilityIconPositions.Length; i++)
+            activePowerupBuffer.Add(null);
 
-        AddPowerupIfAny(GetCurrentBombTypeSprite(state));
-        AddPowerupIfAny(GetKickOrBombPassSprite(state));
-        AddPowerupIfAny(state.HasPowerGlove ? powerGloveSprite : null);
-        AddPowerupIfAny(state.CanPassDestructibles ? destructiblePassSprite : null);
-        AddPowerupIfAny(state.HasFullFire ? fullFireSprite : null);
-        AddPowerupIfAny(state.CanPunchBombs ? punchSprite : null);
-    }
-
-    void AddPowerupIfAny(Sprite sprite)
-    {
-        if (sprite == null)
-            return;
-
-        if (activePowerupBuffer.Count >= AbilityIconPositions.Length)
-            return;
-
-        activePowerupBuffer.Add(sprite);
+        activePowerupBuffer[0] = GetKickOrBombPassSprite(state);
+        activePowerupBuffer[1] = state != null && state.CanPunchBombs ? punchSprite : null;
+        activePowerupBuffer[2] = state != null && state.HasPowerGlove ? powerGloveSprite : null;
+        activePowerupBuffer[3] = GetCurrentBombTypeSprite(state);
+        activePowerupBuffer[4] = state != null && state.CanPassDestructibles ? destructiblePassSprite : null;
     }
 
     Sprite GetKickOrBombPassSprite(PlayerPersistentStats.PlayerState state)
