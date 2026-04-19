@@ -40,6 +40,8 @@ public sealed class BattleModeHud : MonoBehaviour
     const float PortraitY = 2f;
     const float OuterHudEdgePadding = 1f;
     const float PortraitToPowerupGap = 2f;
+    const float FirstPlayerPortraitExtraOffset = 1f;
+    const float LastPlayerItemsExtraOffset = 2f;
     const float AbilityIconStep = 7f;
     const float AbilityGridWidth = 20f;
     const float BaseSlotContentWidth = (UsableAreaWidth / MaxPlayers) - OuterHudEdgePadding - (PartitionWidth * 0.5f);
@@ -356,8 +358,8 @@ public sealed class BattleModeHud : MonoBehaviour
                 continue;
 
             float slotLeft = UsableAreaLeft + i * slotWidth;
-            float lastPlayerItemsOffsetX = i == visiblePlayerCount - 1 ? 1f : 0f;
-            float lastPlayerStatsPanelOffsetX = i == visiblePlayerCount - 1 ? 1f : 0f;
+            float lastPlayerItemsOffsetX = i == visiblePlayerCount - 1 ? LastPlayerItemsExtraOffset : 0f;
+            float lastPlayerStatsPanelOffsetX = i == visiblePlayerCount - 1 ? LastPlayerItemsExtraOffset : 0f;
             float statsPanelLeft = GetStatsPanelLeft(i, visiblePlayerCount, slotWidth);
             float column0X = statsPanelLeft + StatsNumberOffsets[0] + lastPlayerItemsOffsetX;
             float column1X = statsPanelLeft + StatsNumberOffsets[1] + lastPlayerItemsOffsetX;
@@ -525,7 +527,12 @@ public sealed class BattleModeHud : MonoBehaviour
         float contentLeft = GetSlotContentLeft(visualIndex);
         float portraitAreaRight = Mathf.Max(contentLeft + PortraitSize, firstPowerupColumnX - PortraitToPowerupGap);
         float portraitAreaWidth = portraitAreaRight - contentLeft;
-        return contentLeft + Mathf.Max(0f, (portraitAreaWidth - PortraitSize) * 0.5f);
+        float portraitLeft = contentLeft + Mathf.Max(0f, (portraitAreaWidth - PortraitSize) * 0.5f);
+
+        if (visualIndex <= 0)
+            portraitLeft += FirstPlayerPortraitExtraOffset;
+
+        return portraitLeft;
     }
 
     float GetTeamBackgroundVisibleLeft(int visualIndex)
