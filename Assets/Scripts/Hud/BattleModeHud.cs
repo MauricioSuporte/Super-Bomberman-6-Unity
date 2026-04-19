@@ -20,11 +20,21 @@ public sealed class BattleModeHud : MonoBehaviour
     const float UsableAreaBottom = 1f;
     const float UsableAreaWidth = 250f;
     const float UsableAreaHeight = 21f;
+    const float HudSidePadding = (HudWidth - (UsableAreaLeft + UsableAreaWidth));
+    const float TeamBackgroundVerticalBleed = 1f;
+    const float TeamBackgroundPartitionInset = 1f;
+    const int TeamBackgroundTrimLeft = 2;
+    const int TeamBackgroundTrimRight = 2;
+    const int TeamBackgroundTrimTop = 1;
+    const int TeamBackgroundTrimBottom = 2;
 
     const float PartitionWidth = 3f;
     const float PartitionHeight = 21f;
     const string PartitionAssetPath = "Assets/Sprites/HUD/BattleMode/partition.png";
     const string BombBlastSpeedAssetPath = "Assets/Sprites/HUD/BattleMode/BombBlastSpeed.png";
+    const string Team1BackgroundAssetPath = "Assets/Sprites/HUD/BattleMode/Background_Team1.png";
+    const string Team2BackgroundAssetPath = "Assets/Sprites/HUD/BattleMode/Background_Team2.png";
+    const string Team3BackgroundAssetPath = "Assets/Sprites/HUD/BattleMode/Background_Team3.png";
 
     const float PortraitSize = 16f;
     const float PortraitY = 2f;
@@ -75,6 +85,9 @@ public sealed class BattleModeHud : MonoBehaviour
     [SerializeField] private Sprite borderSprite;
     [SerializeField] private Sprite partitionSprite;
     [SerializeField] private Sprite bombBlastSpeedSprite;
+    [SerializeField] private Sprite team1BackgroundSprite;
+    [SerializeField] private Sprite team2BackgroundSprite;
+    [SerializeField] private Sprite team3BackgroundSprite;
 
     [Header("Digits 0-9")]
     [SerializeField] private Sprite[] digitSprites = new Sprite[10];
@@ -116,10 +129,14 @@ public sealed class BattleModeHud : MonoBehaviour
     Image borderImage;
     bool portraitsLoaded;
     bool legacyHudSuppressed;
+    Sprite trimmedTeam1BackgroundSprite;
+    Sprite trimmedTeam2BackgroundSprite;
+    Sprite trimmedTeam3BackgroundSprite;
 
     sealed class SlotUi
     {
         public RectTransform Root;
+        public Image TeamBackground;
         public Image Portrait;
         public Image PlayerNumber;
         public Image LifeIcon;
@@ -152,23 +169,37 @@ public sealed class BattleModeHud : MonoBehaviour
     void OnValidate()
     {
         portraitsLoaded = false;
+        trimmedTeam1BackgroundSprite = null;
+        trimmedTeam2BackgroundSprite = null;
+        trimmedTeam3BackgroundSprite = null;
 
         if (partitionSprite == null)
             partitionSprite = AssetDatabase.LoadAssetAtPath<Sprite>(PartitionAssetPath);
 
         if (bombBlastSpeedSprite == null)
             bombBlastSpeedSprite = AssetDatabase.LoadAssetAtPath<Sprite>(BombBlastSpeedAssetPath);
+
+        if (team1BackgroundSprite == null)
+            team1BackgroundSprite = AssetDatabase.LoadAssetAtPath<Sprite>(Team1BackgroundAssetPath);
+
+        if (team2BackgroundSprite == null)
+            team2BackgroundSprite = AssetDatabase.LoadAssetAtPath<Sprite>(Team2BackgroundAssetPath);
+
+        if (team3BackgroundSprite == null)
+            team3BackgroundSprite = AssetDatabase.LoadAssetAtPath<Sprite>(Team3BackgroundAssetPath);
     }
 #endif
 
     void OnDisable()
     {
         CleanupRuntimeUi();
+        ReleaseTrimmedTeamBackgroundSprites();
     }
 
     void OnDestroy()
     {
         CleanupRuntimeUi();
+        ReleaseTrimmedTeamBackgroundSprites();
     }
 
     public void OnPlayerDied(int playerId)
@@ -257,6 +288,7 @@ public sealed class BattleModeHud : MonoBehaviour
         slot.Root = GetOrCreateRect(runtimeRoot, slotName);
         slot.Root.SetAsLastSibling();
 
+        slot.TeamBackground = GetOrCreateImage(slot.Root, "TeamBackground");
         slot.Portrait = GetOrCreateImage(slot.Root, "Portrait");
         slot.PlayerNumber = GetOrCreateImage(slot.Root, "PlayerNumber");
         slot.LifeIcon = GetOrCreateImage(slot.Root, "LifeIcon");
@@ -278,7 +310,7 @@ public sealed class BattleModeHud : MonoBehaviour
 
     void UpdateRootImages(int visiblePlayerCount)
     {
-        SetImageSprite(backgroundImage, backgroundSprite, false);
+        SetImageSprite(backgroundImage, ShouldShowDefaultBackground() ? backgroundSprite : null, false);
         SetImageSprite(borderImage, borderSprite, false);
 
         ApplyLogicalRect(runtimeRoot, 0f, 0f, HudWidth, HudHeight, HudWidth, HudHeight);
@@ -331,8 +363,18 @@ public sealed class BattleModeHud : MonoBehaviour
             float column1X = statsPanelLeft + StatsNumberOffsets[1] + lastPlayerItemsOffsetX;
             float column2X = statsPanelLeft + StatsNumberOffsets[2] + lastPlayerItemsOffsetX;
             float portraitLeft = GetPortraitLeft(i, visiblePlayerCount, slotWidth, column0X);
+            float teamBackgroundLeft = GetTeamBackgroundVisibleLeft(i);
+            float teamBackgroundRight = GetTeamBackgroundVisibleRight(i, visiblePlayerCount, slotWidth);
 
             ApplyLogicalRect(slot.Root, slotLeft, UsableAreaBottom, slotWidth, UsableAreaHeight, HudWidth, HudHeight);
+            ApplyLogicalRect(
+                slot.TeamBackground.rectTransform,
+                teamBackgroundLeft,
+                -TeamBackgroundVerticalBleed,
+                teamBackgroundRight - teamBackgroundLeft,
+                HudHeight,
+                slotWidth,
+                UsableAreaHeight);
             ApplyLogicalRect(slot.Portrait.rectTransform, portraitLeft, PortraitY, PortraitSize, PortraitSize, slotWidth, UsableAreaHeight);
             ApplyLogicalRect(slot.PlayerNumber.rectTransform, portraitLeft, PortraitY, NumberSize, NumberSize, slotWidth, UsableAreaHeight);
 
@@ -420,6 +462,7 @@ public sealed class BattleModeHud : MonoBehaviour
         bool isDead = IsPlayerDead(playerId, health);
         int currentLife = health != null ? Mathf.Max(0, health.life) : Mathf.Max(0, state.Life);
 
+        SetImageSprite(slot.TeamBackground, GetTeamBackgroundSprite(playerId), false);
         SetImageSprite(slot.PlayerNumber, null, false);
         SetImageSprite(slot.Portrait, GetPortraitSprite(playerId, isDead), false);
 
@@ -433,6 +476,7 @@ public sealed class BattleModeHud : MonoBehaviour
             : Color.white;
 
         slot.Portrait.color = Color.white;
+        slot.TeamBackground.color = Color.white;
         slot.PlayerNumber.color = overlayColor;
         slot.StatsPanel.color = Color.white;
         slot.BombNumber.color = Color.white;
@@ -482,6 +526,20 @@ public sealed class BattleModeHud : MonoBehaviour
         float portraitAreaRight = Mathf.Max(contentLeft + PortraitSize, firstPowerupColumnX - PortraitToPowerupGap);
         float portraitAreaWidth = portraitAreaRight - contentLeft;
         return contentLeft + Mathf.Max(0f, (portraitAreaWidth - PortraitSize) * 0.5f);
+    }
+
+    float GetTeamBackgroundVisibleLeft(int visualIndex)
+    {
+        return visualIndex <= 0
+            ? -UsableAreaLeft
+            : 0f;
+    }
+
+    float GetTeamBackgroundVisibleRight(int visualIndex, int visiblePlayerCount, float slotWidth)
+    {
+        return visualIndex >= visiblePlayerCount - 1
+            ? slotWidth + HudSidePadding
+            : slotWidth - TeamBackgroundPartitionInset;
     }
 
     void PopulateActivePlayerIds(List<int> results)
@@ -699,6 +757,86 @@ public sealed class BattleModeHud : MonoBehaviour
         return null;
     }
 
+    Sprite GetTeamBackgroundSprite(int playerId)
+    {
+        if (!ShouldShowTeamBackgrounds())
+            return null;
+
+        BattleModeRules.TeamId teamId = BattleModeRules.TeamId.Blue;
+
+        if (BattleModeTeams.Instance != null)
+            teamId = BattleModeTeams.Instance.GetTeamForPlayer(playerId);
+
+        switch (teamId)
+        {
+            case BattleModeRules.TeamId.Red:
+                return GetTrimmedTeamBackgroundSprite(team2BackgroundSprite, ref trimmedTeam2BackgroundSprite);
+            case BattleModeRules.TeamId.Green:
+                return GetTrimmedTeamBackgroundSprite(team3BackgroundSprite, ref trimmedTeam3BackgroundSprite);
+            default:
+                return GetTrimmedTeamBackgroundSprite(team1BackgroundSprite, ref trimmedTeam1BackgroundSprite);
+        }
+    }
+
+    Sprite GetTrimmedTeamBackgroundSprite(Sprite source, ref Sprite cache)
+    {
+        if (source == null)
+            return null;
+
+        if (cache != null)
+            return cache;
+
+        Rect rect = source.rect;
+        float trimmedX = rect.x + TeamBackgroundTrimLeft;
+        float trimmedY = rect.y + TeamBackgroundTrimBottom;
+        float trimmedWidth = rect.width - TeamBackgroundTrimLeft - TeamBackgroundTrimRight;
+        float trimmedHeight = rect.height - TeamBackgroundTrimTop - TeamBackgroundTrimBottom;
+
+        if (trimmedWidth <= 0f || trimmedHeight <= 0f)
+            return source;
+
+        cache = Sprite.Create(
+            source.texture,
+            new Rect(trimmedX, trimmedY, trimmedWidth, trimmedHeight),
+            new Vector2(0.5f, 0.5f),
+            source.pixelsPerUnit,
+            0,
+            SpriteMeshType.FullRect);
+
+        cache.name = source.name + "_TrimmedRuntime";
+        return cache;
+    }
+
+    void ReleaseTrimmedTeamBackgroundSprites()
+    {
+        ReleaseTrimmedSprite(ref trimmedTeam1BackgroundSprite);
+        ReleaseTrimmedSprite(ref trimmedTeam2BackgroundSprite);
+        ReleaseTrimmedSprite(ref trimmedTeam3BackgroundSprite);
+    }
+
+    void ReleaseTrimmedSprite(ref Sprite sprite)
+    {
+        if (sprite == null)
+            return;
+
+        if (Application.isPlaying)
+            Destroy(sprite);
+        else
+            DestroyImmediate(sprite);
+
+        sprite = null;
+    }
+
+    bool ShouldShowDefaultBackground()
+    {
+        return !ShouldShowTeamBackgrounds();
+    }
+
+    bool ShouldShowTeamBackgrounds()
+    {
+        return BattleModeRules.Instance != null && BattleModeRules.Instance.UsesTeams;
+    }
+
     float GetSlotWidth(int visiblePlayerCount)
     {
         return UsableAreaWidth / Mathf.Clamp(visiblePlayerCount, 1, MaxPlayers);
@@ -775,7 +913,12 @@ public sealed class BattleModeHud : MonoBehaviour
         {
             SlotUi slot = slots[i];
             if (slot != null && slot.Root != null)
+            {
                 slot.Root.SetAsLastSibling();
+
+                if (slot.TeamBackground != null)
+                    slot.TeamBackground.rectTransform.SetAsFirstSibling();
+            }
         }
 
         if (partitionsRoot != null)
