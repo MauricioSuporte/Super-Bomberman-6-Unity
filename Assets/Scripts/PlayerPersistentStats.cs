@@ -101,7 +101,7 @@ public static class PlayerPersistentStats
         playerId = Mathf.Clamp(playerId, 1, 6);
 
         var s = Get(playerId);
-        s.Skin = UnlockProgress.ClampToUnlocked(s.Skin);
+        s.Skin = UnlockProgress.ClampToUnlocked(s.Skin, GetDefaultSkinForPlayer(playerId));
 
         switch (playerId)
         {
@@ -130,29 +130,21 @@ public static class PlayerPersistentStats
             4 => SaveSystem.Data.player4SelectedSkin,
             5 => SaveSystem.Data.player5SelectedSkin,
             6 => SaveSystem.Data.player6SelectedSkin,
-            _ => (int)BomberSkin.White
+            _ => (int)GetDefaultSkinForPlayer(playerId)
         };
 
         if (!System.Enum.IsDefined(typeof(BomberSkin), raw))
-            raw = playerId switch
-            {
-                1 => (int)BomberSkin.White,
-                2 => (int)BomberSkin.Black,
-                3 => (int)BomberSkin.Blue,
-                4 => (int)BomberSkin.Red,
-                5 => (int)BomberSkin.Green,
-                6 => (int)BomberSkin.Yellow,
-                _ => (int)BomberSkin.White
-            };
+            raw = (int)GetDefaultSkinForPlayer(playerId);
 
         s.Skin = (BomberSkin)raw;
-        s.Skin = UnlockProgress.ClampToUnlocked(s.Skin);
+        s.Skin = UnlockProgress.ClampToUnlocked(s.Skin, GetDefaultSkinForPlayer(playerId));
     }
 
     public static void ClampSelectedSkinIfLocked(int playerId)
     {
+        playerId = Mathf.Clamp(playerId, 1, 6);
         var s = Get(playerId);
-        BomberSkin clamped = UnlockProgress.ClampToUnlocked(s.Skin);
+        BomberSkin clamped = UnlockProgress.ClampToUnlocked(s.Skin, GetDefaultSkinForPlayer(playerId));
 
         if (s.Skin != clamped)
         {
@@ -171,6 +163,7 @@ public static class PlayerPersistentStats
 
     public static void ResetToDefaults(int playerId)
     {
+        playerId = Mathf.Clamp(playerId, 1, 6);
         var s = Get(playerId);
 
         s.BombAmount = 1;
@@ -194,8 +187,24 @@ public static class PlayerPersistentStats
         s.MountedLouie = MountedType.None;
         s.QueuedEggs.Clear();
 
-        s.Skin = UnlockProgress.GetFallbackUnlockedSkin(BomberSkin.White);
+        s.Skin = UnlockProgress.GetFallbackUnlockedSkin(GetDefaultSkinForPlayer(playerId));
         SaveSelectedSkin(playerId);
+    }
+
+    public static BomberSkin GetDefaultSkinForPlayer(int playerId)
+    {
+        playerId = Mathf.Clamp(playerId, 1, 6);
+
+        return playerId switch
+        {
+            1 => BomberSkin.White,
+            2 => BomberSkin.Black,
+            3 => BomberSkin.Blue,
+            4 => BomberSkin.Red,
+            5 => BomberSkin.Green,
+            6 => BomberSkin.Yellow,
+            _ => BomberSkin.White
+        };
     }
 
     static void ResetTemporaryPowerups(PlayerState s)
