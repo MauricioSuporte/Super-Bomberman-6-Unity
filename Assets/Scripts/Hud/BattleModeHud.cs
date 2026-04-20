@@ -2,6 +2,7 @@
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.SceneManagement;
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -37,6 +38,8 @@ public sealed class BattleModeHud : MonoBehaviour
     const string Team2BackgroundAssetPath = "Assets/Sprites/HUD/BattleMode/Background_Team2.png";
     const string Team3BackgroundAssetPath = "Assets/Sprites/HUD/BattleMode/Background_Team3.png";
     const string VictoryNumbersAssetPath = "Assets/Sprites/HUD/NormalGame/HudNumbers.png";
+    const string TimerBackgroundResourcesPath = "HUD/BattleMode/TimerPanel";
+    const string TimerDigitsResourcesPath = "HUD/BattleMode/TimerDigits";
 
     const float PortraitSize = 16f;
     const float PortraitY = 2f;
@@ -51,6 +54,12 @@ public sealed class BattleModeHud : MonoBehaviour
     const float TimerColonWidth = 3f;
     const float TimerSpacing = 1f;
     const float TimerBottom = -8f;
+    const float TimerPanelWidth = 41f;
+    const float TimerPanelHeight = 12f;
+    const float TimerPanelBottom = -10f;
+    const float TimerPanelInnerPaddingLeft = 4f;
+    const float TimerPanelInnerPaddingRight = 4f;
+    const float TimerPanelInnerPaddingBottom = 2f;
 
     const float NumberSize = 6f;
     const float AbilityIconSize = 6f;
@@ -97,6 +106,12 @@ public sealed class BattleModeHud : MonoBehaviour
     [SerializeField] private Sprite[] digitSprites = new Sprite[10];
     [SerializeField] private Sprite[] victoryDigitSprites = new Sprite[10];
 
+    [Header("Battle Timer")]
+    [SerializeField] private Sprite timerBackgroundSprite;
+    [SerializeField] private Sprite[] timerDigitSprites = new Sprite[10];
+    [SerializeField] private Sprite timerInfinitySprite;
+    [SerializeField] private Sprite timerColonSprite;
+
     [Header("Mini Powerups")]
     [SerializeField] private Sprite kickSprite;
     [SerializeField] private Sprite bombPassSprite;
@@ -133,10 +148,11 @@ public sealed class BattleModeHud : MonoBehaviour
     RectTransform timerRoot;
     Image backgroundImage;
     Image borderImage;
+    Image timerBackgroundImage;
     Image timerMinuteDigitImage;
     Image timerSecondTensDigitImage;
     Image timerSecondOnesDigitImage;
-    TextMeshProUGUI timerColonText;
+    Image timerColonImage;
     bool portraitsLoaded;
     bool legacyHudSuppressed;
     Sprite trimmedTeam1BackgroundSprite;
@@ -201,6 +217,8 @@ public sealed class BattleModeHud : MonoBehaviour
 
         if (victoryDigitSprites == null || victoryDigitSprites.Length != 10 || victoryDigitSprites[0] == null)
             victoryDigitSprites = LoadOrderedSpritesFromSheet(VictoryNumbersAssetPath, "HudNumbers_", 10);
+
+        LoadTimerSpritesIfNeeded();
     }
 #endif
 
@@ -287,10 +305,11 @@ public sealed class BattleModeHud : MonoBehaviour
         for (int i = 0; i < partitionImages.Length; i++)
             partitionImages[i] = GetOrCreateImage(partitionsRoot, "Partition" + (i + 1));
 
+        timerBackgroundImage = GetOrCreateImage(timerRoot, "Background");
         timerMinuteDigitImage = GetOrCreateImage(timerRoot, "MinuteDigit");
         timerSecondTensDigitImage = GetOrCreateImage(timerRoot, "SecondTensDigit");
         timerSecondOnesDigitImage = GetOrCreateImage(timerRoot, "SecondOnesDigit");
-        timerColonText = GetOrCreateText(timerRoot, "Colon");
+        timerColonImage = GetOrCreateImage(timerRoot, "Colon");
 
         for (int i = 0; i < MaxPlayers; i++)
         {
@@ -477,11 +496,44 @@ public sealed class BattleModeHud : MonoBehaviour
 
     void UpdateTimer()
     {
-        bool shouldShowTimer = ShouldShowRoundTimer();
+        LoadTimerSpritesIfNeeded();
+
+        bool shouldShowTimer = ShouldShowBattleTimerDisplay();
         SetTimerActive(shouldShowTimer);
 
         if (!shouldShowTimer)
             return;
+
+        bool showFiniteTimer = ShouldShowRoundTimer();
+        float timerPanelLeft = (HudWidth - TimerPanelWidth) * 0.5f;
+        float digitsAreaWidth = TimerPanelWidth - TimerPanelInnerPaddingLeft - TimerPanelInnerPaddingRight;
+        float timerContentLeft = timerPanelLeft + TimerPanelInnerPaddingLeft;
+        float timerContentBottom = TimerPanelBottom + TimerPanelInnerPaddingBottom;
+
+        SetImageSprite(timerBackgroundImage, timerBackgroundSprite, false);
+        ApplyLogicalRect(timerBackgroundImage.rectTransform, timerPanelLeft, TimerPanelBottom, TimerPanelWidth, TimerPanelHeight, HudWidth, HudHeight);
+
+        if (!showFiniteTimer)
+        {
+            SetImageSprite(timerMinuteDigitImage, timerInfinitySprite, false);
+            SetImageSprite(timerSecondTensDigitImage, null, false);
+            SetImageSprite(timerSecondOnesDigitImage, null, false);
+            SetImageSprite(timerColonImage, null, false);
+
+            float infinityWidth = GetSpriteLogicalWidth(timerInfinitySprite, TimerDigitSize, digitsAreaWidth);
+
+            ApplyLogicalRect(
+                timerMinuteDigitImage.rectTransform,
+                timerContentLeft + ((digitsAreaWidth - infinityWidth) * 0.5f),
+                timerContentBottom,
+                infinityWidth,
+                TimerDigitSize,
+                HudWidth,
+                HudHeight);
+
+            timerMinuteDigitImage.color = Color.white;
+            return;
+        }
 
         int totalSeconds = GetDisplayedBattleTimerSeconds();
         int minutes = Mathf.Clamp(totalSeconds / 60, 0, 9);
@@ -489,35 +541,40 @@ public sealed class BattleModeHud : MonoBehaviour
         int secondsTens = seconds / 10;
         int secondsOnes = seconds % 10;
 
-        SetImageSprite(timerMinuteDigitImage, GetVictoryDigitSprite(minutes), false);
-        SetImageSprite(timerSecondTensDigitImage, GetVictoryDigitSprite(secondsTens), false);
-        SetImageSprite(timerSecondOnesDigitImage, GetVictoryDigitSprite(secondsOnes), false);
+        SetImageSprite(timerMinuteDigitImage, GetTimerDigitSprite(minutes), false);
+        SetImageSprite(timerSecondTensDigitImage, GetTimerDigitSprite(secondsTens), false);
+        SetImageSprite(timerSecondOnesDigitImage, GetTimerDigitSprite(secondsOnes), false);
+        SetImageSprite(timerColonImage, timerColonSprite, false);
 
-        float timerWidth = (TimerDigitSize * 3f) + TimerColonWidth + (TimerSpacing * 3f);
-        float timerLeft = (HudWidth - timerWidth) * 0.5f;
+        float minuteWidth = GetSpriteLogicalWidth(timerMinuteDigitImage.sprite, TimerDigitSize, TimerDigitSize);
+        float colonWidth = GetSpriteLogicalWidth(timerColonImage.sprite, TimerDigitSize, TimerColonWidth);
+        float secondTensWidth = GetSpriteLogicalWidth(timerSecondTensDigitImage.sprite, TimerDigitSize, TimerDigitSize);
+        float secondOnesWidth = GetSpriteLogicalWidth(timerSecondOnesDigitImage.sprite, TimerDigitSize, TimerDigitSize);
+        float timerWidth = minuteWidth + colonWidth + secondTensWidth + secondOnesWidth + (TimerSpacing * 3f);
+        float timerLeft = timerPanelLeft + ((TimerPanelWidth - timerWidth) * 0.5f);
 
-        ApplyLogicalRect(timerMinuteDigitImage.rectTransform, timerLeft, TimerBottom, TimerDigitSize, TimerDigitSize, HudWidth, HudHeight);
+        ApplyLogicalRect(timerMinuteDigitImage.rectTransform, timerLeft, TimerBottom, minuteWidth, TimerDigitSize, HudWidth, HudHeight);
         ApplyLogicalRect(
-            timerColonText.rectTransform,
-            timerLeft + TimerDigitSize + TimerSpacing,
+            timerColonImage.rectTransform,
+            timerLeft + minuteWidth + TimerSpacing,
             TimerBottom,
-            TimerColonWidth,
+            colonWidth,
             TimerDigitSize,
             HudWidth,
             HudHeight);
         ApplyLogicalRect(
             timerSecondTensDigitImage.rectTransform,
-            timerLeft + TimerDigitSize + TimerColonWidth + (TimerSpacing * 2f),
+            timerLeft + minuteWidth + colonWidth + (TimerSpacing * 2f),
             TimerBottom,
-            TimerDigitSize,
+            secondTensWidth,
             TimerDigitSize,
             HudWidth,
             HudHeight);
         ApplyLogicalRect(
             timerSecondOnesDigitImage.rectTransform,
-            timerLeft + (TimerDigitSize * 2f) + TimerColonWidth + (TimerSpacing * 3f),
+            timerLeft + minuteWidth + colonWidth + secondTensWidth + (TimerSpacing * 3f),
             TimerBottom,
-            TimerDigitSize,
+            secondOnesWidth,
             TimerDigitSize,
             HudWidth,
             HudHeight);
@@ -525,7 +582,7 @@ public sealed class BattleModeHud : MonoBehaviour
         timerMinuteDigitImage.color = Color.white;
         timerSecondTensDigitImage.color = Color.white;
         timerSecondOnesDigitImage.color = Color.white;
-        ConfigureTimerColon(timerColonText, true);
+        timerColonImage.color = GetBlinkingTimerColonColor(totalSeconds);
     }
 
     void HideSlot(SlotUi slot)
@@ -846,6 +903,16 @@ public sealed class BattleModeHud : MonoBehaviour
         return victoryDigitSprites[digit];
     }
 
+    Sprite GetTimerDigitSprite(int value)
+    {
+        int digit = Mathf.Clamp(value, 0, 9);
+
+        if (timerDigitSprites == null || digit < 0 || digit >= timerDigitSprites.Length)
+            return null;
+
+        return timerDigitSprites[digit];
+    }
+
     int GetDisplayedVictoryCount(int playerId)
     {
         if (GameSession.Instance == null)
@@ -1007,6 +1074,14 @@ public sealed class BattleModeHud : MonoBehaviour
         return GameManager.Instance != null && GameManager.Instance.HasBattleTimeLimit;
     }
 
+    bool ShouldShowBattleTimerDisplay()
+    {
+        if (!Application.isPlaying)
+            return BattleModeRules.Instance != null;
+
+        return SceneManager.GetActiveScene().name.StartsWith("BattleMode_");
+    }
+
     float GetSlotWidth(int visiblePlayerCount)
     {
         return UsableAreaWidth / Mathf.Clamp(visiblePlayerCount, 1, MaxPlayers);
@@ -1054,24 +1129,90 @@ public sealed class BattleModeHud : MonoBehaviour
         text.richText = true;
     }
 
-    void ConfigureTimerColon(TextMeshProUGUI text, bool visible)
+    void LoadTimerSpritesIfNeeded()
     {
-        if (text == null)
+        if (timerBackgroundSprite != null
+            && timerInfinitySprite != null
+            && timerColonSprite != null
+            && timerDigitSprites != null
+            && timerDigitSprites.Length == 10)
+        {
+            bool hasAllDigits = true;
+            for (int i = 0; i < timerDigitSprites.Length; i++)
+            {
+                if (timerDigitSprites[i] != null)
+                    continue;
+
+                hasAllDigits = false;
+                break;
+            }
+
+            if (hasAllDigits)
+                return;
+        }
+
+        if (timerBackgroundSprite == null)
+            timerBackgroundSprite = Resources.Load<Sprite>(TimerBackgroundResourcesPath);
+
+        Sprite[] loadedSprites = Resources.LoadAll<Sprite>(TimerDigitsResourcesPath);
+        if (loadedSprites == null || loadedSprites.Length <= 0)
             return;
 
-        text.enabled = visible;
-        text.text = ":";
-        text.fontSize = 7;
-        text.color = Color.white;
-        text.fontStyle = FontStyles.Bold;
-        text.enableWordWrapping = false;
-        text.overflowMode = TextOverflowModes.Overflow;
-        text.alignment = TextAlignmentOptions.Center;
-        text.extraPadding = false;
-        text.richText = false;
+        if (timerDigitSprites == null || timerDigitSprites.Length != 10)
+            timerDigitSprites = new Sprite[10];
 
-        if (pushStartFont != null)
-            text.font = pushStartFont;
+        for (int i = 0; i < loadedSprites.Length; i++)
+        {
+            Sprite sprite = loadedSprites[i];
+            if (sprite == null)
+                continue;
+
+            if (TryGetTimerDigitIndex(sprite.name, out int digitIndex))
+            {
+                timerDigitSprites[digitIndex] = sprite;
+                continue;
+            }
+
+            if (sprite.name == "TimerDigits_Infinity")
+            {
+                timerInfinitySprite = sprite;
+                continue;
+            }
+
+            if (sprite.name == "TimerDigits_Colon")
+                timerColonSprite = sprite;
+        }
+    }
+
+    static bool TryGetTimerDigitIndex(string spriteName, out int digitIndex)
+    {
+        digitIndex = -1;
+        const string prefix = "TimerDigits_";
+
+        if (string.IsNullOrEmpty(spriteName) || !spriteName.StartsWith(prefix))
+            return false;
+
+        return int.TryParse(spriteName.Substring(prefix.Length), out digitIndex)
+            && digitIndex >= 0
+            && digitIndex <= 9;
+    }
+
+    static float GetSpriteLogicalWidth(Sprite sprite, float targetHeight, float fallbackWidth)
+    {
+        if (sprite == null || sprite.rect.height <= 0f)
+            return fallbackWidth;
+
+        return targetHeight * (sprite.rect.width / sprite.rect.height);
+    }
+
+    static Color GetBlinkingTimerColonColor(int displayedTotalSeconds)
+    {
+        if (!Application.isPlaying)
+            return Color.white;
+
+        Color color = Color.white;
+        color.a = displayedTotalSeconds % 2 == 0 ? 1f : 0f;
+        return color;
     }
 
     void SetTimerActive(bool active)
@@ -1239,10 +1380,11 @@ public sealed class BattleModeHud : MonoBehaviour
         timerRoot = null;
         backgroundImage = null;
         borderImage = null;
+        timerBackgroundImage = null;
         timerMinuteDigitImage = null;
         timerSecondTensDigitImage = null;
         timerSecondOnesDigitImage = null;
-        timerColonText = null;
+        timerColonImage = null;
         rootRect = null;
 
         for (int i = 0; i < partitionImages.Length; i++)
