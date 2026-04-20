@@ -2283,7 +2283,7 @@ public class MovementController : MonoBehaviour, IKillable
         {
             var gm = FindAnyObjectByType<GameManager>();
             if (gm != null)
-                gm.NotifyPlayerDeathStarted();
+                gm.NotifyPlayerDeathStarted(this);
         }
 
         touchingHazards.Clear();

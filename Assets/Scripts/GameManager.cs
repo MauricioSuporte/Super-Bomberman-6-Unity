@@ -95,6 +95,8 @@ public class GameManager : MonoBehaviour
     private Coroutine enemyCheckRoutine;
     private Coroutine battleVictoryCheckRoutine;
     private readonly List<MovementController> winningBattleSurvivorsBuffer = new();
+    private readonly List<ItemType> battleDroppedItemsBuffer = new();
+    private readonly List<Vector3Int> battleDropCellsBuffer = new();
 
     [Header("Destructible Tile Resolver (optional, auto-find)")]
     [SerializeField] private DestructibleTileResolver destructibleTileResolver;
@@ -727,13 +729,14 @@ public class GameManager : MonoBehaviour
             groundTilemap.SetTile(below, groundTile);
     }
 
-    public void NotifyPlayerDeathStarted()
+    public void NotifyPlayerDeathStarted(MovementController deadPlayer)
     {
         if (restartingRound || endStageTriggered)
             return;
 
         if (IsBattleModeScene())
         {
+            TryDropBattleItemsForDeadPlayer(deadPlayer);
             ScheduleBattleVictoryCheck();
             return;
         }
@@ -903,6 +906,208 @@ public class GameManager : MonoBehaviour
         }
 
         StartCoroutine(BattleVictorySequenceRoutine(survivingPlayer, matchComplete));
+    }
+
+    void TryDropBattleItemsForDeadPlayer(MovementController deadPlayer)
+    {
+        if (!Application.isPlaying || deadPlayer == null || !deadPlayer.CompareTag("Player"))
+            return;
+
+        PlayerPersistentStats.PlayerState state = PlayerPersistentStats.GetRuntime(deadPlayer.PlayerId);
+        if (state == null)
+            return;
+
+        BuildBattleDropItems(state, battleDroppedItemsBuffer);
+        if (battleDroppedItemsBuffer.Count <= 0)
+            return;
+
+        CollectBattleDropCells(battleDropCellsBuffer);
+        if (battleDropCellsBuffer.Count <= 0)
+            return;
+
+        AutoItemDatabase.BuildIfNeeded();
+
+        for (int i = 0; i < battleDroppedItemsBuffer.Count && battleDropCellsBuffer.Count > 0; i++)
+        {
+            ItemPickup prefab = AutoItemDatabase.Get(battleDroppedItemsBuffer[i]);
+            if (prefab == null)
+                continue;
+
+            int randomIndex = UnityEngine.Random.Range(0, battleDropCellsBuffer.Count);
+            Vector3Int cell = battleDropCellsBuffer[randomIndex];
+            battleDropCellsBuffer.RemoveAt(randomIndex);
+
+            Vector3 worldPosition = groundTilemap.GetCellCenterWorld(cell);
+            Instantiate(prefab, worldPosition, Quaternion.identity);
+        }
+    }
+
+    void BuildBattleDropItems(PlayerPersistentStats.PlayerState state, List<ItemType> results)
+    {
+        if (results == null)
+            return;
+
+        results.Clear();
+
+        if (state == null)
+            return;
+
+        AddItemCopies(results, ItemType.ExtraBomb, Mathf.Max(0, state.BombAmount - 1));
+
+        if (state.HasFullFire)
+            results.Add(ItemType.FullFire);
+        else
+            AddItemCopies(results, ItemType.BlastRadius, Mathf.Max(0, state.ExplosionRadius - 1));
+
+        int speedUps = Mathf.Max(
+            0,
+            (PlayerPersistentStats.ClampSpeedInternal(state.SpeedInternal) - PlayerPersistentStats.MinSpeedInternal)
+            / PlayerPersistentStats.SpeedStep);
+        AddItemCopies(results, ItemType.SpeedIncrese, speedUps);
+        AddItemCopies(results, ItemType.Heart, Mathf.Max(0, state.Life - 1));
+
+        if (state.CanKickBombs)
+            results.Add(ItemType.BombKick);
+
+        if (state.CanPassBombs)
+            results.Add(ItemType.BombPass);
+
+        if (state.CanPunchBombs)
+            results.Add(ItemType.BombPunch);
+
+        if (state.HasPowerGlove)
+            results.Add(ItemType.PowerGlove);
+
+        if (state.CanPassDestructibles)
+            results.Add(ItemType.DestructiblePass);
+
+        if (state.HasPierceBombs)
+            results.Add(ItemType.PierceBomb);
+        else if (state.HasControlBombs)
+            results.Add(ItemType.ControlBomb);
+        else if (state.HasPowerBomb)
+            results.Add(ItemType.PowerBomb);
+        else if (state.HasRubberBombs)
+            results.Add(ItemType.RubberBomb);
+        else if (state.HasMagnetBomb)
+            results.Add(ItemType.MagnetBomb);
+
+        ItemType mountedEggType = GetBattleDropEggType(state.MountedLouie);
+        if (mountedEggType != ItemType.LandMine)
+            results.Add(mountedEggType);
+
+        if (state.QueuedEggs != null)
+        {
+            for (int i = 0; i < state.QueuedEggs.Count; i++)
+            {
+                ItemType eggType = state.QueuedEggs[i];
+                if (IsBattleDroppableEgg(eggType))
+                    results.Add(eggType);
+            }
+        }
+    }
+
+    void CollectBattleDropCells(List<Vector3Int> results)
+    {
+        if (results == null)
+            return;
+
+        results.Clear();
+
+        if (groundTilemap == null)
+            return;
+
+        BoundsInt bounds = groundTilemap.cellBounds;
+
+        foreach (Vector3Int cell in bounds.allPositionsWithin)
+        {
+            if (groundTilemap.GetTile(cell) == null)
+                continue;
+
+            if (destructibleTilemap != null && destructibleTilemap.HasTile(cell))
+                continue;
+
+            if (indestructibleTilemap != null && indestructibleTilemap.HasTile(cell))
+                continue;
+
+            if (!CanSpawnBattleDropAtCell(cell))
+                continue;
+
+            results.Add(cell);
+        }
+    }
+
+    bool CanSpawnBattleDropAtCell(Vector3Int cell)
+    {
+        if (groundTilemap == null)
+            return false;
+
+        Vector3 worldPosition = groundTilemap.GetCellCenterWorld(cell);
+        Collider2D[] hits = Physics2D.OverlapCircleAll(worldPosition, 0.2f);
+
+        for (int i = 0; i < hits.Length; i++)
+        {
+            Collider2D hit = hits[i];
+            if (hit == null)
+                continue;
+
+            if (hit.GetComponent<ItemPickup>() != null || hit.GetComponentInParent<ItemPickup>() != null)
+                return false;
+
+            if (hit.CompareTag("Player"))
+                return false;
+
+            if (hit.GetComponent<MovementController>() != null || hit.GetComponentInParent<MovementController>() != null)
+                return false;
+
+            if (hit.GetComponent<Bomb>() != null || hit.GetComponentInParent<Bomb>() != null)
+                return false;
+        }
+
+        return true;
+    }
+
+    static void AddItemCopies(List<ItemType> results, ItemType itemType, int count)
+    {
+        if (results == null || count <= 0)
+            return;
+
+        for (int i = 0; i < count; i++)
+            results.Add(itemType);
+    }
+
+    static ItemType GetBattleDropEggType(MountedType mountedType)
+    {
+        switch (mountedType)
+        {
+            case MountedType.Blue:
+                return ItemType.BlueLouieEgg;
+            case MountedType.Black:
+                return ItemType.BlackLouieEgg;
+            case MountedType.Purple:
+                return ItemType.PurpleLouieEgg;
+            case MountedType.Green:
+                return ItemType.GreenLouieEgg;
+            case MountedType.Yellow:
+                return ItemType.YellowLouieEgg;
+            case MountedType.Pink:
+                return ItemType.PinkLouieEgg;
+            case MountedType.Red:
+                return ItemType.RedLouieEgg;
+            default:
+                return ItemType.LandMine;
+        }
+    }
+
+    static bool IsBattleDroppableEgg(ItemType itemType)
+    {
+        return itemType == ItemType.BlueLouieEgg
+            || itemType == ItemType.BlackLouieEgg
+            || itemType == ItemType.PurpleLouieEgg
+            || itemType == ItemType.GreenLouieEgg
+            || itemType == ItemType.YellowLouieEgg
+            || itemType == ItemType.PinkLouieEgg
+            || itemType == ItemType.RedLouieEgg;
     }
 
     void InitializeBattleRoundTimer()
