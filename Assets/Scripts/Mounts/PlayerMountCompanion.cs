@@ -167,6 +167,16 @@ public class PlayerMountCompanion : MonoBehaviour
     public CharacterHealth GetMountedLouieHealth() => mountedLouieHealth;
     public bool HasMountedLouie() => currentLouie != null;
 
+    public void ClearMountedStateForForcedArenaRemoval()
+    {
+        if (currentLouie != null)
+            Destroy(currentLouie);
+
+        currentLouie = null;
+        ClearDashInvulnerabilityNow();
+        ResetMountedStateAndAbilities();
+    }
+
     public void RestoreMountedFromPersistent()
     {
         if (currentLouie != null)

@@ -904,6 +904,64 @@ public class MovementController : MonoBehaviour, IKillable
         return mountedSpriteDown != null ? mountedSpriteDown : spriteRendererDown;
     }
 
+    public void CopyHeadOnlyVisualsTo(
+        AnimatedSpriteRenderer targetUp,
+        AnimatedSpriteRenderer targetDown,
+        AnimatedSpriteRenderer targetLeft,
+        AnimatedSpriteRenderer targetRight)
+    {
+        CopyAnimatedSpriteRenderer(headOnlyUp != null ? headOnlyUp : spriteRendererUp, targetUp);
+        CopyAnimatedSpriteRenderer(headOnlyDown != null ? headOnlyDown : spriteRendererDown, targetDown);
+        CopyAnimatedSpriteRenderer(headOnlyLeft != null ? headOnlyLeft : spriteRendererLeft, targetLeft);
+        CopyAnimatedSpriteRenderer(headOnlyRight != null ? headOnlyRight : spriteRendererRight, targetRight);
+
+        LogAnimatedRendererState("CopiedTarget-Up", targetUp);
+        LogAnimatedRendererState("CopiedTarget-Down", targetDown);
+        LogAnimatedRendererState("CopiedTarget-Left", targetLeft);
+        LogAnimatedRendererState("CopiedTarget-Right", targetRight);
+    }
+
+    private static void LogAnimatedRendererState(string label, AnimatedSpriteRenderer renderer)
+    {
+        renderer.TryGetComponent(out SpriteRenderer sr);
+
+        int animCount = renderer.animationSprite != null ? renderer.animationSprite.Length : -1;
+        string idleName = renderer.idleSprite != null ? renderer.idleSprite.name : "null";
+        string shownName = sr != null && sr.sprite != null ? sr.sprite.name : "null";
+    }
+
+    static void CopyAnimatedSpriteRenderer(AnimatedSpriteRenderer source, AnimatedSpriteRenderer target)
+    {
+        if (source == null || target == null)
+            return;
+
+        target.idleSprite = source.idleSprite;
+        target.animationSprite = source.animationSprite != null
+            ? (Sprite[])source.animationSprite.Clone()
+            : Array.Empty<Sprite>();
+        target.allowFlipX = source.allowFlipX;
+        target.animationTime = source.animationTime;
+        target.useSequenceDuration = source.useSequenceDuration;
+        target.sequenceDuration = source.sequenceDuration;
+        target.loop = source.loop;
+        target.idle = source.idle;
+        target.frameOffsets = source.frameOffsets != null
+            ? (Vector2[])source.frameOffsets.Clone()
+            : Array.Empty<Vector2>();
+        target.pingPong = source.pingPong;
+        target.disableOffsetsIfThisObjectHasRigidbody2D = source.disableOffsetsIfThisObjectHasRigidbody2D;
+
+        if (source.TryGetComponent<SpriteRenderer>(out var sourceRenderer) &&
+            target.TryGetComponent<SpriteRenderer>(out var targetRenderer))
+        {
+            targetRenderer.flipX = sourceRenderer.flipX;
+            targetRenderer.flipY = sourceRenderer.flipY;
+            targetRenderer.color = sourceRenderer.color;
+        }
+
+        target.RefreshFrame();
+    }
+
     public void ApplySpeedInternal(int newInternal)
     {
         speedInternal = PlayerPersistentStats.ClampSpeedInternal(newInternal);
@@ -2210,6 +2268,16 @@ public class MovementController : MonoBehaviour, IKillable
         if (cachedHealth != null)
         {
             bool fromExplosion = (layer == explosionLayer);
+
+            if (fromExplosion &&
+                cachedHealth.life <= 1 &&
+                BattleRevengeSystem.Instance != null &&
+                BattleRevengeSystem.Instance.TryHandleLethalRevengeHit(this, other))
+            {
+                nextContactDamageTime = Time.time + cd;
+                return;
+            }
+
             cachedHealth.TakeDamage(1, fromExplosion);
             nextContactDamageTime = Time.time + cd;
             return;
@@ -2265,7 +2333,7 @@ public class MovementController : MonoBehaviour, IKillable
         }
     }
 
-    private void BeginDeathCommon()
+    private void BeginArenaRemovalCommon(bool notifyGameManagerDeath, bool resetStagePowerups)
     {
         isDead = true;
         inputLocked = true;
@@ -2279,7 +2347,10 @@ public class MovementController : MonoBehaviour, IKillable
         if (stunReceiver != null)
             stunReceiver.CancelStunForDeath();
 
-        if (IsPlayer() && checkWinStateOnDeath)
+        if (TryGetComponent<PowerGloveAbility>(out var glove) && glove != null)
+            glove.DestroyHeldBombIfHolding();
+
+        if (IsPlayer() && notifyGameManagerDeath && checkWinStateOnDeath)
         {
             var gm = FindAnyObjectByType<GameManager>();
             if (gm != null)
@@ -2290,10 +2361,11 @@ public class MovementController : MonoBehaviour, IKillable
 
         if (IsPlayer())
         {
-            PlayerPersistentStats.StageResetTemporaryPowerupsOnDeath(playerId);
-
             if (TryGetComponent<MountEggQueue>(out var q) && q != null)
                 q.ClearQueueNow(resetHistoryToOwner: true, animateShift: false);
+
+            if (resetStagePowerups)
+                PlayerPersistentStats.StageResetTemporaryPowerupsOnDeath(playerId);
         }
 
         if (abilitySystem != null)
@@ -2310,6 +2382,11 @@ public class MovementController : MonoBehaviour, IKillable
 
         if (TryGetComponent(out Collider2D col) && col != null)
             col.enabled = false;
+    }
+
+    private void BeginDeathCommon()
+    {
+        BeginArenaRemovalCommon(notifyGameManagerDeath: true, resetStagePowerups: true);
     }
 
     protected virtual void DeathSequence()
@@ -2365,6 +2442,7 @@ public class MovementController : MonoBehaviour, IKillable
     {
         deathRequestedByExplosion = false;
 
+        BattleRevengeSystem.Instance?.HandlePlayerDeathCompleted(this);
         Died?.Invoke(this);
         gameObject.SetActive(false);
 
@@ -2373,6 +2451,110 @@ public class MovementController : MonoBehaviour, IKillable
 
         if (!checkWinStateOnDeath)
             return;
+    }
+
+    public void RemoveForBattleRevengeSwap()
+    {
+        if (isEndingStage)
+            return;
+
+        CancelInvoke(nameof(OnDeathSequenceEnded));
+        holeDeathInProgress = false;
+        deathRequestedByExplosion = false;
+
+        if (_holeDeathVisualRoutine != null)
+        {
+            StopCoroutine(_holeDeathVisualRoutine);
+            _holeDeathVisualRoutine = null;
+        }
+
+        NotifyHudPortraitDeathIfPlayer();
+        BeginArenaRemovalCommon(notifyGameManagerDeath: false, resetStagePowerups: false);
+
+        if (cachedCompanion == null)
+            TryGetComponent(out cachedCompanion);
+
+        if (cachedCompanion != null)
+            cachedCompanion.ClearMountedStateForForcedArenaRemoval();
+
+        transform.localScale = Vector3.one;
+        SetAllSpritesVisible(false);
+        gameObject.SetActive(false);
+    }
+
+    public void RespawnFromBattleRevenge(Vector2 worldPosition, float invulnerabilitySeconds, float blinkInterval)
+    {
+        CancelInvoke(nameof(OnDeathSequenceEnded));
+        holeDeathInProgress = false;
+        deathRequestedByExplosion = false;
+        isEndingStage = false;
+        isDead = false;
+        inputLocked = false;
+        inactivityMountedDownOverride = false;
+        nextContactDamageTime = 0f;
+        direction = Vector2.zero;
+        hasInput = false;
+
+        if (_holeDeathVisualRoutine != null)
+        {
+            StopCoroutine(_holeDeathVisualRoutine);
+            _holeDeathVisualRoutine = null;
+        }
+
+        ResetDualInputAxes();
+        ResetSingleInputTurnState();
+        touchingHazards.Clear();
+
+        if (spriteLock != null && spriteLock.IsLocked)
+            spriteLock.EndLock();
+
+        if (cachedCompanion == null)
+            TryGetComponent(out cachedCompanion);
+
+        if (cachedCompanion != null)
+            cachedCompanion.ClearMountedStateForForcedArenaRemoval();
+
+        if (TryGetComponent<PowerGloveAbility>(out var glove) && glove != null)
+            glove.DestroyHeldBombIfHolding();
+
+        if (Rigidbody != null)
+        {
+            Rigidbody.simulated = true;
+            Rigidbody.linearVelocity = Vector2.zero;
+            Rigidbody.angularVelocity = 0f;
+            Rigidbody.position = worldPosition;
+        }
+
+        transform.position = new Vector3(worldPosition.x, worldPosition.y, transform.position.z);
+        transform.localScale = Vector3.one;
+
+        if (TryGetComponent(out Collider2D col) && col != null)
+            col.enabled = true;
+
+        if (cachedHealth == null)
+            cachedHealth = GetComponent<CharacterHealth>();
+
+        int respawnLife = cachedHealth != null ? Mathf.Max(1, cachedHealth.life) : 1;
+        cachedHealth?.ResetForRespawn(respawnLife);
+
+        if (bombController != null)
+        {
+            bombController.enabled = true;
+            PlayerPersistentStats.LoadInto(playerId, this, bombController);
+            bombController.ResetRuntimeStateAfterRespawn();
+        }
+
+        CacheMovementAbilities();
+        SyncMountedFromPersistent();
+        ApplySpeedInternal(speedInternal);
+        SetExplosionInvulnerable(false);
+        SetExternalVisualSuppressed(false);
+        EnableExclusiveFromState();
+
+        if (cachedHealth != null && invulnerabilitySeconds > 0f)
+            cachedHealth.StartSpawnInvulnerability(invulnerabilitySeconds, blinkInterval);
+
+        NotifyHudPortraitRespawnIfPlayer();
     }
 
     private void HoleDeathSequence()
@@ -2522,6 +2704,20 @@ public class MovementController : MonoBehaviour, IKillable
         var battleHud = FindAnyObjectByType<BattleModeHud>();
         if (battleHud != null)
             battleHud.OnPlayerDied(PlayerId);
+    }
+
+    private void NotifyHudPortraitRespawnIfPlayer()
+    {
+        if (!IsPlayer())
+            return;
+
+        var hud = FindAnyObjectByType<HudPortraitInGridLayout>();
+        if (hud != null)
+            hud.OnPlayerRespawn(PlayerId);
+
+        var battleHud = FindAnyObjectByType<BattleModeHud>();
+        if (battleHud != null)
+            battleHud.OnPlayerRespawn(PlayerId);
     }
 
     public void PlayEndStageSequence(Vector2 portalCenter, bool snapToPortalCenter)

@@ -1,0 +1,379 @@
+using UnityEngine;
+
+[DisallowMultipleComponent]
+public sealed class BattleRevengeCartController : MonoBehaviour
+{
+    private enum CartEdge
+    {
+        Left = 0,
+        Right = 1,
+        Top = 2,
+        Bottom = 3
+    }
+
+    [Header("Body")]
+    [SerializeField] private AnimatedSpriteRenderer bodyUp;
+    [SerializeField] private AnimatedSpriteRenderer bodyDown;
+    [SerializeField] private AnimatedSpriteRenderer bodyLeft;
+    [SerializeField] private AnimatedSpriteRenderer bodyRight;
+
+    [Header("Head")]
+    [SerializeField] private AnimatedSpriteRenderer headUp;
+    [SerializeField] private AnimatedSpriteRenderer headDown;
+    [SerializeField] private AnimatedSpriteRenderer headLeft;
+    [SerializeField] private AnimatedSpriteRenderer headRight;
+
+    [Header("Movement")]
+    [SerializeField, Min(0.1f)] private float moveSpeed = 4f;
+
+    [Header("Edge Offset")]
+    [SerializeField, Min(0f)] private float horizontalInnerOffsetTiles = 1f;
+
+    [Header("Per-Edge Offsets (Cart)")]
+    [SerializeField] private Vector2 offsetLeft;
+    [SerializeField] private Vector2 offsetRight;
+    [SerializeField] private Vector2 offsetTop;
+    [SerializeField] private Vector2 offsetBottom;
+
+    [Header("Per-Edge Offsets (Head)")]
+    [SerializeField] private Vector2 headOffsetLeft;
+    [SerializeField] private Vector2 headOffsetRight;
+    [SerializeField] private Vector2 headOffsetTop;
+    [SerializeField] private Vector2 headOffsetBottom;
+
+    private BattleRevengeSystem system;
+    private int ownerPlayerId;
+    private CartEdge currentEdge = CartEdge.Left;
+
+    private float minEdgeX;
+    private float maxEdgeX;
+    private float minEdgeY;
+    private float maxEdgeY;
+
+    private float nextBombAllowedAt;
+
+    public int OwnerPlayerId => ownerPlayerId;
+
+    private float HorizontalInnerOffsetWorld => horizontalInnerOffsetTiles;
+
+    public Vector2 LaunchDirection => currentEdge switch
+    {
+        CartEdge.Left => Vector2.right,
+        CartEdge.Right => Vector2.left,
+        CartEdge.Top => Vector2.down,
+        CartEdge.Bottom => Vector2.up,
+        _ => Vector2.right
+    };
+
+    void Awake()
+    {
+        RefreshVisualByEdge();
+    }
+
+    void Update()
+    {
+        if (!Application.isPlaying || system == null || ownerPlayerId <= 0)
+            return;
+
+        if (!system.IsRuntimeEnabled || GamePauseController.IsPaused)
+            return;
+
+        PlayerInputManager input = PlayerInputManager.Instance;
+        if (input == null)
+            return;
+
+        bool holdUp = input.Get(ownerPlayerId, PlayerAction.MoveUp);
+        bool holdDown = input.Get(ownerPlayerId, PlayerAction.MoveDown);
+        bool holdLeft = input.Get(ownerPlayerId, PlayerAction.MoveLeft);
+        bool holdRight = input.Get(ownerPlayerId, PlayerAction.MoveRight);
+
+        float verticalAxis = holdUp && !holdDown ? 1f :
+                             holdDown && !holdUp ? -1f : 0f;
+
+        float horizontalAxis = holdRight && !holdLeft ? 1f :
+                               holdLeft && !holdRight ? -1f : 0f;
+
+        Vector3 position = transform.position;
+
+        switch (currentEdge)
+        {
+            case CartEdge.Left:
+            case CartEdge.Right:
+                {
+                    if (verticalAxis != 0f)
+                    {
+                        position.y = Mathf.Clamp(
+                            position.y + (verticalAxis * moveSpeed * Time.unscaledDeltaTime),
+                            minEdgeY,
+                            maxEdgeY);
+                    }
+
+                    if (horizontalAxis != 0f)
+                        currentEdge = position.y >= GetVerticalMidpoint() ? CartEdge.Top : CartEdge.Bottom;
+
+                    break;
+                }
+
+            case CartEdge.Top:
+            case CartEdge.Bottom:
+                {
+                    if (horizontalAxis != 0f)
+                    {
+                        position.x = Mathf.Clamp(
+                            position.x + (horizontalAxis * moveSpeed * Time.unscaledDeltaTime),
+                            minEdgeX,
+                            maxEdgeX);
+                    }
+
+                    if (verticalAxis != 0f)
+                        currentEdge = position.x >= GetHorizontalMidpoint() ? CartEdge.Right : CartEdge.Left;
+
+                    break;
+                }
+        }
+
+        ApplyEdgePosition(ref position);
+        transform.position = position;
+        RefreshVisualByEdge();
+
+        if (Time.unscaledTime < nextBombAllowedAt)
+            return;
+
+        if (!input.GetDown(ownerPlayerId, PlayerAction.ActionA))
+            return;
+
+        if (!system.TryLaunchBombFromCart(this))
+            return;
+
+        nextBombAllowedAt = Time.unscaledTime + system.CartBombCooldownSeconds;
+    }
+
+    public void ConfigureBounds(float minX, float maxX, float minY, float maxY)
+    {
+        minEdgeX = Mathf.Min(minX, maxX);
+        maxEdgeX = Mathf.Max(minX, maxX);
+        minEdgeY = Mathf.Min(minY, maxY);
+        maxEdgeY = Mathf.Max(minY, maxY);
+
+        Vector3 position = transform.position;
+        position.x = Mathf.Clamp(position.x, minEdgeX, maxEdgeX);
+        position.y = Mathf.Clamp(position.y, minEdgeY, maxEdgeY);
+
+        ApplyEdgePosition(ref position);
+        transform.position = position;
+
+        RefreshVisualByEdge();
+    }
+
+    public void Activate(
+        BattleRevengeSystem ownerSystem,
+        int newOwnerPlayerId,
+        MovementController sourceVisuals,
+        Vector2 startPosition,
+        Vector2 inwardDirection)
+    {
+        system = ownerSystem;
+        ownerPlayerId = Mathf.Clamp(newOwnerPlayerId, GameSession.MinPlayerId, GameSession.MaxPlayerId);
+        nextBombAllowedAt = 0f;
+
+        ConfigureHeadVisuals(sourceVisuals);
+        currentEdge = ResolveEdgeFromDirection(inwardDirection);
+
+        Vector3 position = transform.position;
+        position.x = Mathf.Clamp(startPosition.x, minEdgeX, maxEdgeX);
+        position.y = Mathf.Clamp(startPosition.y, minEdgeY, maxEdgeY);
+
+        ApplyEdgePosition(ref position);
+        transform.position = position;
+
+        RefreshVisualByEdge();
+
+        if (!gameObject.activeSelf)
+            gameObject.SetActive(true);
+    }
+
+    public void RebindOwner(int newOwnerPlayerId, MovementController sourceVisuals)
+    {
+        ownerPlayerId = Mathf.Clamp(newOwnerPlayerId, GameSession.MinPlayerId, GameSession.MaxPlayerId);
+        nextBombAllowedAt = Time.unscaledTime + 0.1f;
+
+        ConfigureHeadVisuals(sourceVisuals);
+        RefreshVisualByEdge();
+    }
+
+    private void ConfigureHeadVisuals(MovementController sourceVisuals)
+    {
+        if (sourceVisuals == null)
+            return;
+
+        sourceVisuals.CopyHeadOnlyVisualsTo(
+            headDown,
+            headUp,
+            headRight,
+            headLeft
+        );
+    }
+
+    private void RefreshVisualByEdge()
+    {
+        switch (currentEdge)
+        {
+            case CartEdge.Top:
+                SetDirectionVisual(Vector2.up);
+                break;
+
+            case CartEdge.Bottom:
+                SetDirectionVisual(Vector2.down);
+                break;
+
+            case CartEdge.Left:
+                SetDirectionVisual(Vector2.left);
+                break;
+
+            case CartEdge.Right:
+                SetDirectionVisual(Vector2.right);
+                break;
+        }
+
+        ApplyHeadOffsetForCurrentEdge();
+    }
+
+    private void ApplyEdgePosition(ref Vector3 position)
+    {
+        position.x = Mathf.Clamp(position.x, minEdgeX, maxEdgeX);
+        position.y = Mathf.Clamp(position.y, minEdgeY, maxEdgeY);
+
+        switch (currentEdge)
+        {
+            case CartEdge.Left:
+                position.x = Mathf.Min(maxEdgeX, minEdgeX + HorizontalInnerOffsetWorld);
+                break;
+
+            case CartEdge.Right:
+                position.x = Mathf.Max(minEdgeX, maxEdgeX - HorizontalInnerOffsetWorld);
+                break;
+
+            case CartEdge.Top:
+                position.y = maxEdgeY;
+                break;
+
+            case CartEdge.Bottom:
+                position.y = minEdgeY;
+                break;
+        }
+
+        Vector2 cartOffset = GetCartOffset();
+        position.x += cartOffset.x;
+        position.y += cartOffset.y;
+    }
+
+    private void ApplyHeadOffsetForCurrentEdge()
+    {
+        Vector2 offset = GetHeadOffset();
+        AnimatedSpriteRenderer activeHead = GetActiveHeadRenderer();
+
+        ClearHeadRuntimeOffsets(headUp);
+        ClearHeadRuntimeOffsets(headDown);
+        ClearHeadRuntimeOffsets(headLeft);
+        ClearHeadRuntimeOffsets(headRight);
+
+        if (activeHead != null)
+        {
+            activeHead.SetRuntimeBaseLocalX(offset.x);
+            activeHead.SetRuntimeBaseLocalY(offset.y);
+            activeHead.RefreshFrame();
+        }
+    }
+
+    private void ClearHeadRuntimeOffsets(AnimatedSpriteRenderer renderer)
+    {
+        if (renderer == null)
+            return;
+
+        renderer.ClearRuntimeBaseOffset();
+        renderer.RefreshFrame();
+    }
+
+    private Vector2 GetCartOffset() => currentEdge switch
+    {
+        CartEdge.Left => offsetLeft,
+        CartEdge.Right => offsetRight,
+        CartEdge.Top => offsetTop,
+        CartEdge.Bottom => offsetBottom,
+        _ => Vector2.zero
+    };
+
+    private Vector2 GetHeadOffset() => currentEdge switch
+    {
+        CartEdge.Left => headOffsetLeft,
+        CartEdge.Right => headOffsetRight,
+        CartEdge.Top => headOffsetTop,
+        CartEdge.Bottom => headOffsetBottom,
+        _ => Vector2.zero
+    };
+
+    private AnimatedSpriteRenderer GetActiveHeadRenderer() => currentEdge switch
+    {
+        CartEdge.Left => headLeft,
+        CartEdge.Right => headRight,
+        CartEdge.Top => headUp,
+        CartEdge.Bottom => headDown,
+        _ => null
+    };
+
+    private void SetDirectionVisual(Vector2 direction)
+    {
+        AnimatedSpriteRenderer body = PickDirectionalRenderer(bodyUp, bodyDown, bodyLeft, bodyRight, direction);
+        AnimatedSpriteRenderer head = PickDirectionalRenderer(headUp, headDown, headLeft, headRight, direction);
+
+        SetRendererState(bodyUp, body == bodyUp);
+        SetRendererState(bodyDown, body == bodyDown);
+        SetRendererState(bodyLeft, body == bodyLeft);
+        SetRendererState(bodyRight, body == bodyRight);
+
+        SetRendererState(headUp, head == headUp);
+        SetRendererState(headDown, head == headDown);
+        SetRendererState(headLeft, head == headLeft);
+        SetRendererState(headRight, head == headRight);
+    }
+
+    private static AnimatedSpriteRenderer PickDirectionalRenderer(
+        AnimatedSpriteRenderer up,
+        AnimatedSpriteRenderer down,
+        AnimatedSpriteRenderer left,
+        AnimatedSpriteRenderer right,
+        Vector2 direction)
+    {
+        if (direction == Vector2.up) return up;
+        if (direction == Vector2.down) return down;
+        if (direction == Vector2.left) return left;
+        if (direction == Vector2.right) return right;
+
+        return down != null ? down : right;
+    }
+
+    private static void SetRendererState(AnimatedSpriteRenderer renderer, bool active)
+    {
+        if (renderer == null)
+            return;
+
+        renderer.idle = true;
+        renderer.enabled = active;
+        renderer.RefreshFrame();
+
+        if (renderer.TryGetComponent<SpriteRenderer>(out var sr))
+            sr.enabled = active;
+    }
+
+    private float GetHorizontalMidpoint() => (minEdgeX + maxEdgeX) * 0.5f;
+    private float GetVerticalMidpoint() => (minEdgeY + maxEdgeY) * 0.5f;
+
+    private static CartEdge ResolveEdgeFromDirection(Vector2 inwardDirection)
+    {
+        if (inwardDirection == Vector2.right) return CartEdge.Left;
+        if (inwardDirection == Vector2.left) return CartEdge.Right;
+        if (inwardDirection == Vector2.down) return CartEdge.Top;
+        if (inwardDirection == Vector2.up) return CartEdge.Bottom;
+        return CartEdge.Left;
+    }
+}

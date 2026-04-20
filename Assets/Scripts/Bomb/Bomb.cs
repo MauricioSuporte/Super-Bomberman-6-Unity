@@ -60,6 +60,8 @@ public class Bomb : MonoBehaviour, IMagnetPullable
     public bool IsPierceBomb { get; set; }
     public bool IsPowerBomb { get; set; }
     public bool IsRubberBomb { get; set; }
+    public bool IsRevengeBomb { get; set; }
+    public int ExplosionRadiusOverride { get; set; }
 
     public bool IsBeingMagnetPulled => magnetRoutine != null;
 

@@ -40,6 +40,7 @@ public sealed class BattleModeRules : MonoBehaviour
     [SerializeField] private MatchMode matchMode = MatchMode.SingleMatch;
     [SerializeField, Min(1)] private int victoriesToWinMatch = 3;
     [SerializeField] private RoundTimerMode roundTimer = RoundTimerMode.ThreeMinutes;
+    [SerializeField] private bool enableRevengeBomber;
 
     [Header("Teams")]
     [SerializeField] private PlayerTeamEntry[] playerTeams = new PlayerTeamEntry[GameSession.MaxPlayerId];
@@ -50,6 +51,7 @@ public sealed class BattleModeRules : MonoBehaviour
     public RoundTimerMode CurrentRoundTimerMode => roundTimer;
     public bool UsesRoundTimer => roundTimer != RoundTimerMode.Infinite;
     public float RoundTimerSeconds => GetRoundTimerSeconds(roundTimer);
+    public bool EnableRevengeBomber => enableRevengeBomber;
 
     void Awake()
     {

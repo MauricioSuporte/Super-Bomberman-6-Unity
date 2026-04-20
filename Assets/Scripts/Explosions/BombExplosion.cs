@@ -14,6 +14,9 @@ public class BombExplosion : MonoBehaviour
 
     public ExplosionPart CurrentPart { get; private set; }
     public Vector2 Origin { get; private set; }
+    public BombController Owner { get; private set; }
+    public int OwnerPlayerId { get; private set; }
+    public bool IsRevengeBomb { get; private set; }
 
     private Coroutine playRoutine;
     private BombExplosion poolPrefab;
@@ -49,6 +52,12 @@ public class BombExplosion : MonoBehaviour
     }
 
     public void SetOrigin(Vector2 origin) => Origin = origin;
+    public void SetSource(BombController owner, int ownerPlayerId, bool isRevengeBomb)
+    {
+        Owner = owner;
+        OwnerPlayerId = ownerPlayerId;
+        IsRevengeBomb = isRevengeBomb;
+    }
 
     public void SetStart() => SetRenderer(start, ExplosionPart.Start);
     public void SetMiddle() => SetRenderer(middle, ExplosionPart.Middle);
@@ -71,6 +80,9 @@ public class BombExplosion : MonoBehaviour
     {
         transform.SetPositionAndRotation(position, rotation);
         Origin = position;
+        Owner = null;
+        OwnerPlayerId = 0;
+        IsRevengeBomb = false;
         isReleased = false;
         ResetRenderers();
 

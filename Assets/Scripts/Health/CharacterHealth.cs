@@ -53,10 +53,12 @@ public class CharacterHealth : MonoBehaviour
     SpriteRenderer[] persistentTintExcluded = Array.Empty<SpriteRenderer>();
 
     bool lastDamageWasExplosion;
+    float defaultHitBlinkInterval;
 
     void Awake()
     {
         killable = GetComponent<IKillable>();
+        defaultHitBlinkInterval = hitBlinkInterval;
 
         spriteRenderers = GetComponentsInChildren<SpriteRenderer>();
         originalColors = new Color[spriteRenderers.Length];
@@ -180,6 +182,37 @@ public class CharacterHealth : MonoBehaviour
         for (int i = 0; i < spriteRenderers.Length; i++)
             if (spriteRenderers[i] != null)
                 spriteRenderers[i].color = GetBaseColorForRendererIndex(i);
+    }
+
+    public void ResetForRespawn(int restoredLife)
+    {
+        if (hitRoutine != null)
+        {
+            StopCoroutine(hitRoutine);
+            hitRoutine = null;
+        }
+
+        if (_restoreBlinkIntervalRoutine != null)
+        {
+            StopCoroutine(_restoreBlinkIntervalRoutine);
+            _restoreBlinkIntervalRoutine = null;
+        }
+
+        _blinkOverrideToken++;
+        isDead = false;
+        isInvulnerable = false;
+        externalInvulnerability = false;
+        lastDamageWasExplosion = false;
+        life = Mathf.Max(1, restoredLife);
+        hitBlinkInterval = defaultHitBlinkInterval;
+
+        for (int i = 0; i < spriteRenderers.Length; i++)
+        {
+            if (spriteRenderers[i] == null)
+                continue;
+
+            spriteRenderers[i].color = GetBaseColorForRendererIndex(i);
+        }
     }
 
     public void SetPersistentTint(Color tintColor, float strength = 1f, SpriteRenderer[] excludedRenderers = null)

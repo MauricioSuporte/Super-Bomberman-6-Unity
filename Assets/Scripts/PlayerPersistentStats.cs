@@ -28,8 +28,8 @@ public static class PlayerPersistentStats
         public bool HasPowerGlove = true;
         public bool CanPassBombs = false;
         public bool CanPassDestructibles = true;
-        public bool HasPierceBombs = true;
-        public bool HasControlBombs = false;
+        public bool HasPierceBombs = false;
+        public bool HasControlBombs = true;
         public bool HasPowerBomb = false;
         public bool HasRubberBombs = false;
         public bool HasMagnetBomb = false;
@@ -611,6 +611,89 @@ public static class PlayerPersistentStats
         to.QueuedEggs.Clear();
         if (from.QueuedEggs != null && from.QueuedEggs.Count > 0)
             to.QueuedEggs.AddRange(from.QueuedEggs);
+    }
+
+    public static PlayerState CloneState(PlayerState source)
+    {
+        if (source == null)
+            return null;
+
+        PlayerState clone = new();
+        CopyState(source, clone);
+        return clone;
+    }
+
+    public static PlayerState CreateLoadoutSnapshot(int playerId)
+    {
+        playerId = Mathf.Clamp(playerId, 1, 6);
+        return CloneState(Get(playerId));
+    }
+
+    public static void ApplySnapshotToLoadState(int playerId, PlayerState snapshot)
+    {
+        if (snapshot == null)
+            return;
+
+        playerId = Mathf.Clamp(playerId, 1, 6);
+
+        CopyState(snapshot, _p[playerId - 1]);
+
+        if (stageActive)
+            CopyState(snapshot, _stage[playerId - 1]);
+    }
+
+    public static void ApplyBattleRevengeRespawnLoadout(int playerId)
+    {
+        playerId = Mathf.Clamp(playerId, 1, 6);
+
+        var s = Get(playerId);
+
+        s.Life = 1;
+        s.BombAmount = 1;
+        s.ExplosionRadius = 2;
+        s.SpeedInternal = ClampSpeedInternal(BaseSpeedNormal + SpeedStep);
+
+        s.CanKickBombs = false;
+        s.CanPunchBombs = false;
+        s.HasPowerGlove = false;
+        s.CanPassBombs = false;
+        s.CanPassDestructibles = false;
+        s.HasPierceBombs = false;
+        s.HasControlBombs = false;
+        s.HasPowerBomb = false;
+        s.HasRubberBombs = false;
+        s.HasMagnetBomb = false;
+        s.HasFullFire = false;
+
+        s.MountedLouie = MountedType.None;
+        s.QueuedEggs.Clear();
+
+        if (stageActive)
+        {
+            var stageState = _stage[playerId - 1];
+
+            stageState.Life = 1;
+            stageState.BombAmount = 1;
+            stageState.ExplosionRadius = 2;
+            stageState.SpeedInternal = ClampSpeedInternal(BaseSpeedNormal + SpeedStep);
+
+            stageState.CanKickBombs = false;
+            stageState.CanPunchBombs = false;
+            stageState.HasPowerGlove = false;
+            stageState.CanPassBombs = false;
+            stageState.CanPassDestructibles = false;
+            stageState.HasPierceBombs = false;
+            stageState.HasControlBombs = false;
+            stageState.HasPowerBomb = false;
+            stageState.HasRubberBombs = false;
+            stageState.HasMagnetBomb = false;
+            stageState.HasFullFire = false;
+
+            stageState.MountedLouie = MountedType.None;
+            stageState.QueuedEggs.Clear();
+
+            stageState.Skin = s.Skin;
+        }
     }
 
     static void ResetGameplayStateKeepingSkin(PlayerState s)
