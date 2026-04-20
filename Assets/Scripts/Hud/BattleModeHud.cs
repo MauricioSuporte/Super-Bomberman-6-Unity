@@ -47,6 +47,10 @@ public sealed class BattleModeHud : MonoBehaviour
     const float VictoryCounterSize = 7f;
     const float VictoryCounterOffsetX = 9f;
     const float VictoryCounterOffsetY = 0f;
+    const float TimerDigitSize = 7f;
+    const float TimerColonWidth = 3f;
+    const float TimerSpacing = 1f;
+    const float TimerBottom = -8f;
 
     const float NumberSize = 6f;
     const float AbilityIconSize = 6f;
@@ -126,8 +130,13 @@ public sealed class BattleModeHud : MonoBehaviour
     RectTransform rootRect;
     RectTransform runtimeRoot;
     RectTransform partitionsRoot;
+    RectTransform timerRoot;
     Image backgroundImage;
     Image borderImage;
+    Image timerMinuteDigitImage;
+    Image timerSecondTensDigitImage;
+    Image timerSecondOnesDigitImage;
+    TextMeshProUGUI timerColonText;
     bool portraitsLoaded;
     bool legacyHudSuppressed;
     Sprite trimmedTeam1BackgroundSprite;
@@ -164,6 +173,7 @@ public sealed class BattleModeHud : MonoBehaviour
         UpdateRootImages(visiblePlayerCount);
         UpdateLayout(visiblePlayerCount);
         UpdateContent(visiblePlayerCount);
+        UpdateTimer();
     }
 
 #if UNITY_EDITOR
@@ -272,9 +282,15 @@ public sealed class BattleModeHud : MonoBehaviour
         borderImage = GetOrCreateImage(runtimeRoot, BorderName);
 
         partitionsRoot = GetOrCreateRect(runtimeRoot, PartitionsRootName);
+        timerRoot = GetOrCreateRect(runtimeRoot, "Timer");
 
         for (int i = 0; i < partitionImages.Length; i++)
             partitionImages[i] = GetOrCreateImage(partitionsRoot, "Partition" + (i + 1));
+
+        timerMinuteDigitImage = GetOrCreateImage(timerRoot, "MinuteDigit");
+        timerSecondTensDigitImage = GetOrCreateImage(timerRoot, "SecondTensDigit");
+        timerSecondOnesDigitImage = GetOrCreateImage(timerRoot, "SecondOnesDigit");
+        timerColonText = GetOrCreateText(timerRoot, "Colon");
 
         for (int i = 0; i < MaxPlayers; i++)
         {
@@ -319,6 +335,7 @@ public sealed class BattleModeHud : MonoBehaviour
 
         ApplyLogicalRect(runtimeRoot, 0f, 0f, HudWidth, HudHeight, HudWidth, HudHeight);
         ApplyLogicalRect(partitionsRoot, 0f, 0f, HudWidth, HudHeight, HudWidth, HudHeight);
+        ApplyLogicalRect(timerRoot, 0f, 0f, HudWidth, HudHeight, HudWidth, HudHeight);
         ApplyLogicalRect((RectTransform)backgroundImage.transform, 0f, 0f, HudWidth, HudHeight, HudWidth, HudHeight);
         ApplyLogicalRect((RectTransform)borderImage.transform, 0f, 0f, HudWidth, HudHeight, HudWidth, HudHeight);
 
@@ -456,6 +473,59 @@ public sealed class BattleModeHud : MonoBehaviour
             SetSlotActive(slot, true);
             ShowActiveSlot(slot, playerId);
         }
+    }
+
+    void UpdateTimer()
+    {
+        bool shouldShowTimer = ShouldShowRoundTimer();
+        SetTimerActive(shouldShowTimer);
+
+        if (!shouldShowTimer)
+            return;
+
+        int totalSeconds = GetDisplayedBattleTimerSeconds();
+        int minutes = Mathf.Clamp(totalSeconds / 60, 0, 9);
+        int seconds = Mathf.Clamp(totalSeconds % 60, 0, 59);
+        int secondsTens = seconds / 10;
+        int secondsOnes = seconds % 10;
+
+        SetImageSprite(timerMinuteDigitImage, GetVictoryDigitSprite(minutes), false);
+        SetImageSprite(timerSecondTensDigitImage, GetVictoryDigitSprite(secondsTens), false);
+        SetImageSprite(timerSecondOnesDigitImage, GetVictoryDigitSprite(secondsOnes), false);
+
+        float timerWidth = (TimerDigitSize * 3f) + TimerColonWidth + (TimerSpacing * 3f);
+        float timerLeft = (HudWidth - timerWidth) * 0.5f;
+
+        ApplyLogicalRect(timerMinuteDigitImage.rectTransform, timerLeft, TimerBottom, TimerDigitSize, TimerDigitSize, HudWidth, HudHeight);
+        ApplyLogicalRect(
+            timerColonText.rectTransform,
+            timerLeft + TimerDigitSize + TimerSpacing,
+            TimerBottom,
+            TimerColonWidth,
+            TimerDigitSize,
+            HudWidth,
+            HudHeight);
+        ApplyLogicalRect(
+            timerSecondTensDigitImage.rectTransform,
+            timerLeft + TimerDigitSize + TimerColonWidth + (TimerSpacing * 2f),
+            TimerBottom,
+            TimerDigitSize,
+            TimerDigitSize,
+            HudWidth,
+            HudHeight);
+        ApplyLogicalRect(
+            timerSecondOnesDigitImage.rectTransform,
+            timerLeft + (TimerDigitSize * 2f) + TimerColonWidth + (TimerSpacing * 3f),
+            TimerBottom,
+            TimerDigitSize,
+            TimerDigitSize,
+            HudWidth,
+            HudHeight);
+
+        timerMinuteDigitImage.color = Color.white;
+        timerSecondTensDigitImage.color = Color.white;
+        timerSecondOnesDigitImage.color = Color.white;
+        ConfigureTimerColon(timerColonText, true);
     }
 
     void HideSlot(SlotUi slot)
@@ -784,6 +854,14 @@ public sealed class BattleModeHud : MonoBehaviour
         return GameSession.Instance.GetBattleMatchWins(playerId);
     }
 
+    int GetDisplayedBattleTimerSeconds()
+    {
+        if (GameManager.Instance == null || !GameManager.Instance.HasBattleTimeLimit)
+            return 0;
+
+        return Mathf.CeilToInt(GameManager.Instance.BattleTimeRemainingSeconds);
+    }
+
     int GetSpeedStepCount(int speedInternal)
     {
         int clampedSpeed = PlayerPersistentStats.ClampSpeedInternal(speedInternal);
@@ -921,6 +999,14 @@ public sealed class BattleModeHud : MonoBehaviour
         return BattleModeRules.Instance != null && BattleModeRules.Instance.UsesTeams;
     }
 
+    bool ShouldShowRoundTimer()
+    {
+        if (!Application.isPlaying)
+            return BattleModeRules.Instance != null && BattleModeRules.Instance.UsesRoundTimer;
+
+        return GameManager.Instance != null && GameManager.Instance.HasBattleTimeLimit;
+    }
+
     float GetSlotWidth(int visiblePlayerCount)
     {
         return UsableAreaWidth / Mathf.Clamp(visiblePlayerCount, 1, MaxPlayers);
@@ -968,6 +1054,35 @@ public sealed class BattleModeHud : MonoBehaviour
         text.richText = true;
     }
 
+    void ConfigureTimerColon(TextMeshProUGUI text, bool visible)
+    {
+        if (text == null)
+            return;
+
+        text.enabled = visible;
+        text.text = ":";
+        text.fontSize = 7;
+        text.color = Color.white;
+        text.fontStyle = FontStyles.Bold;
+        text.enableWordWrapping = false;
+        text.overflowMode = TextOverflowModes.Overflow;
+        text.alignment = TextAlignmentOptions.Center;
+        text.extraPadding = false;
+        text.richText = false;
+
+        if (pushStartFont != null)
+            text.font = pushStartFont;
+    }
+
+    void SetTimerActive(bool active)
+    {
+        if (timerRoot == null)
+            return;
+
+        if (timerRoot.gameObject.activeSelf != active)
+            timerRoot.gameObject.SetActive(active);
+    }
+
     void SuppressLegacyHudAtRuntime()
     {
         if (!Application.isPlaying || legacyHudSuppressed)
@@ -1007,6 +1122,9 @@ public sealed class BattleModeHud : MonoBehaviour
 
         if (partitionsRoot != null)
             partitionsRoot.SetAsLastSibling();
+
+        if (timerRoot != null)
+            timerRoot.SetAsLastSibling();
 
         if (borderImage != null)
             borderImage.rectTransform.SetAsLastSibling();
@@ -1118,8 +1236,13 @@ public sealed class BattleModeHud : MonoBehaviour
 
         runtimeRoot = null;
         partitionsRoot = null;
+        timerRoot = null;
         backgroundImage = null;
         borderImage = null;
+        timerMinuteDigitImage = null;
+        timerSecondTensDigitImage = null;
+        timerSecondOnesDigitImage = null;
+        timerColonText = null;
         rootRect = null;
 
         for (int i = 0; i < partitionImages.Length; i++)

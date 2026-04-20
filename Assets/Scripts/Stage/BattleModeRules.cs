@@ -9,6 +9,16 @@ public sealed class BattleModeRules : MonoBehaviour
         TagMatch = 1
     }
 
+    public enum RoundTimerMode
+    {
+        OneMinute = 0,
+        TwoMinutes = 1,
+        ThreeMinutes = 2,
+        FourMinutes = 3,
+        FiveMinutes = 4,
+        Infinite = 5
+    }
+
     public enum TeamId
     {
         Blue = 1,
@@ -29,6 +39,7 @@ public sealed class BattleModeRules : MonoBehaviour
     [Header("Match")]
     [SerializeField] private MatchMode matchMode = MatchMode.SingleMatch;
     [SerializeField, Min(1)] private int victoriesToWinMatch = 3;
+    [SerializeField] private RoundTimerMode roundTimer = RoundTimerMode.ThreeMinutes;
 
     [Header("Teams")]
     [SerializeField] private PlayerTeamEntry[] playerTeams = new PlayerTeamEntry[GameSession.MaxPlayerId];
@@ -36,6 +47,9 @@ public sealed class BattleModeRules : MonoBehaviour
     public MatchMode CurrentMatchMode => matchMode;
     public bool UsesTeams => matchMode == MatchMode.TagMatch;
     public int VictoriesToWinMatch => Mathf.Max(1, victoriesToWinMatch);
+    public RoundTimerMode CurrentRoundTimerMode => roundTimer;
+    public bool UsesRoundTimer => roundTimer != RoundTimerMode.Infinite;
+    public float RoundTimerSeconds => GetRoundTimerSeconds(roundTimer);
 
     void Awake()
     {
@@ -92,6 +106,25 @@ public sealed class BattleModeRules : MonoBehaviour
     {
         int normalizedIndex = Mathf.Abs(playerId - 1) % 3;
         return (TeamId)(normalizedIndex + 1);
+    }
+
+    public static float GetRoundTimerSeconds(RoundTimerMode timerMode)
+    {
+        switch (timerMode)
+        {
+            case RoundTimerMode.OneMinute:
+                return 60f;
+            case RoundTimerMode.TwoMinutes:
+                return 120f;
+            case RoundTimerMode.ThreeMinutes:
+                return 180f;
+            case RoundTimerMode.FourMinutes:
+                return 240f;
+            case RoundTimerMode.FiveMinutes:
+                return 300f;
+            default:
+                return Mathf.Infinity;
+        }
     }
 
     void EnsureEntries()

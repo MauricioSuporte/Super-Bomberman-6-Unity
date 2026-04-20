@@ -181,6 +181,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BattleModeRules
   matchMode: 0
   victoriesToWinMatch: 3
+  roundTimer: 5
   playerTeams:
   - playerId: 1
     teamId: 1

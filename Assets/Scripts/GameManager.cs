@@ -10,10 +10,13 @@ public class GameManager : MonoBehaviour
     static readonly WaitForSecondsRealtime waitNextStageDelay = new(3f);
     static readonly WaitForSecondsRealtime waitBattleVictoryCheckDelay = new(0.5f);
     static readonly WaitForSecondsRealtime waitBattleVictoryDelay = new(1f);
+    static readonly WaitForSecondsRealtime waitBattleDrawDelay = new(1f);
     const float BattleVictoryFadeDuration = 3f;
     const string BattleVictorySfxResourcesPath = "Sounds/SB5 Sound Effects (48)";
     const string TitleScreenSceneName = "TitleScreen";
     static AudioClip battleVictorySfx;
+
+    public static GameManager Instance { get; private set; }
 
     public int EnemiesAlive { get; private set; }
     public int PendingHiddenEnemies { get; private set; }
@@ -84,6 +87,9 @@ public class GameManager : MonoBehaviour
 
     private bool restartingRound;
     private bool endStageTriggered;
+    private bool battleTimerExpired;
+    private float battleTimeRemainingSeconds = Mathf.Infinity;
+    private bool hasBattleTimeLimit;
 
     private bool pendingEnemyCheck;
     private Coroutine enemyCheckRoutine;
@@ -93,8 +99,13 @@ public class GameManager : MonoBehaviour
     [Header("Destructible Tile Resolver (optional, auto-find)")]
     [SerializeField] private DestructibleTileResolver destructibleTileResolver;
 
+    public float BattleTimeRemainingSeconds => Mathf.Max(0f, battleTimeRemainingSeconds);
+    public bool HasBattleTimeLimit => hasBattleTimeLimit;
+
     void Awake()
     {
+        Instance = this;
+
         if (autoResolveStageTilemaps)
             ResolveStageTilemapsIfNeeded();
 
@@ -122,10 +133,22 @@ public class GameManager : MonoBehaviour
 
         SetupHiddenObjects();
         ApplyDestructibleShadows();
+        InitializeBattleRoundTimer();
 
         CountPendingHiddenEnemiesFromTiles();
 
         ScheduleEnemyCheckNextFrame();
+    }
+
+    void OnDestroy()
+    {
+        if (Instance == this)
+            Instance = null;
+    }
+
+    void Update()
+    {
+        UpdateBattleRoundTimer();
     }
 
     bool IsConfiguredPlayerActive(int playerId)
@@ -880,6 +903,76 @@ public class GameManager : MonoBehaviour
         }
 
         StartCoroutine(BattleVictorySequenceRoutine(survivingPlayer, matchComplete));
+    }
+
+    void InitializeBattleRoundTimer()
+    {
+        hasBattleTimeLimit = false;
+        battleTimeRemainingSeconds = Mathf.Infinity;
+        battleTimerExpired = false;
+
+        if (!IsBattleModeScene() || BattleModeRules.Instance == null)
+            return;
+
+        hasBattleTimeLimit = BattleModeRules.Instance.UsesRoundTimer;
+        battleTimeRemainingSeconds = BattleModeRules.Instance.RoundTimerSeconds;
+    }
+
+    void UpdateBattleRoundTimer()
+    {
+        if (!Application.isPlaying)
+            return;
+
+        if (!IsBattleModeScene() || !hasBattleTimeLimit)
+            return;
+
+        if (restartingRound || endStageTriggered || battleTimerExpired)
+            return;
+
+        if (Time.timeScale <= 0f)
+            return;
+
+        battleTimeRemainingSeconds = Mathf.Max(0f, battleTimeRemainingSeconds - Time.unscaledDeltaTime);
+
+        if (battleTimeRemainingSeconds > 0f)
+            return;
+
+        TriggerBattleDrawSequence();
+    }
+
+    void TriggerBattleDrawSequence()
+    {
+        if (battleTimerExpired || restartingRound || endStageTriggered)
+            return;
+
+        battleTimerExpired = true;
+        restartingRound = true;
+        endStageTriggered = true;
+        battleTimeRemainingSeconds = 0f;
+
+        StartCoroutine(BattleDrawSequenceRoutine());
+    }
+
+    IEnumerator BattleDrawSequenceRoutine()
+    {
+        if (GameMusicController.Instance != null)
+            GameMusicController.Instance.StopMusic();
+
+        yield return waitBattleDrawDelay;
+
+        if (StageIntroTransition.Instance != null)
+            StageIntroTransition.Instance.StartFadeOut(BattleVictoryFadeDuration);
+
+        yield return new WaitForSecondsRealtime(BattleVictoryFadeDuration);
+
+        GamePauseController.ClearPauseFlag();
+        Time.timeScale = 1f;
+        PlayerPersistentStats.RollbackStage();
+
+        StagePreIntroPlayersWalk.SkipOnNextLoad();
+
+        Scene current = SceneManager.GetActiveScene();
+        SceneManager.LoadScene(current.buildIndex);
     }
 
     bool RegisterBattleVictory(MovementController survivingPlayer)
