@@ -929,6 +929,8 @@ MonoBehaviour:
   rechargeOffsetRight: {x: -0.5, y: 0}
   rechargeOffsetTop: {x: 0, y: -0.5}
   rechargeOffsetBottom: {x: 0, y: 0.5}
+  launchBombSfx: {fileID: 8300000, guid: 91d0210a38e7773428530d691f29b543, type: 3}
+  launchBombSfxVolume: 1
 --- !u!1 &7558149374256022224
 GameObject:
   m_ObjectHideFlags: 0

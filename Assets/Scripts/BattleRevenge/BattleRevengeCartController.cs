@@ -79,6 +79,10 @@ public sealed class BattleRevengeCartController : MonoBehaviour
     [SerializeField] private Vector2 rechargeOffsetTop;
     [SerializeField] private Vector2 rechargeOffsetBottom;
 
+    [Header("SFX")]
+    [SerializeField] private AudioClip launchBombSfx;
+    [SerializeField, Range(0f, 1f)] private float launchBombSfxVolume = 1f;
+
     private const int RechargeFrameCount = 33;
     private const float PixelsPerUnit = 16f;
     private const float MinSegmentLength = 0.0001f;
@@ -181,7 +185,12 @@ public sealed class BattleRevengeCartController : MonoBehaviour
                 if (Time.unscaledTime >= nextBombAllowedAt)
                 {
                     if (system.TryLaunchBombFromCart(this, chargedLaunchDistanceTiles))
+                    {
                         nextBombAllowedAt = Time.unscaledTime + system.CartBombCooldownSeconds;
+
+                        if (GameMusicController.Instance != null)
+                            GameMusicController.Instance.PlaySfx(launchBombSfx, launchBombSfxVolume);
+                    }
                 }
 
                 isChargingLaunch = false;
