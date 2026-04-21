@@ -26,6 +26,15 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
     [SerializeField] private float topScreenSpawnOffset = 0.5f;
     [SerializeField] private int visualSortingOrderOffset = 1;
 
+    [Header("Shadow")]
+    [SerializeField] private bool enableShadowVisual = true;
+    [SerializeField] private float shadowLeadTime = 0.25f;
+    [SerializeField] private float shadowStartSize = 0.15f;
+    [SerializeField] private float shadowEndSize = 1f;
+    [SerializeField, Range(0f, 1f)] private float shadowAlpha = 0.65f;
+    [SerializeField] private int shadowSortingOrderOffset = 100;
+    [SerializeField] private Vector3 shadowWorldOffset = new Vector3(0f, 0f, 0f);
+
     [Header("Damage")]
     [SerializeField] private float damageTickInterval = 0.2f;
     [SerializeField] private int damagePerTick = 1;
@@ -48,14 +57,24 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
     [SerializeField] private bool enableDebugLogs = true;
     [SerializeField] private bool logSuddenDeathFlow = true;
     [SerializeField] private bool logVisualFlow = true;
+    [SerializeField] private bool logShadowFlow = true;
     [SerializeField] private bool logDamageFlow = false;
 
     bool suddenDeathDropsStarted;
     float suddenDeathDropStartRemainingTime;
+    readonly HashSet<Vector3Int> scheduledShadowCells = new HashSet<Vector3Int>();
+    struct QueuedShadowData
+    {
+        public GameObject ShadowObject;
+        public float DropElapsedTime;
+    }
 
+    readonly Dictionary<Vector3Int, QueuedShadowData> queuedShadowVisuals = new Dictionary<Vector3Int, QueuedShadowData>();
     readonly HashSet<Vector3Int> scheduledOrPlacedCells = new HashSet<Vector3Int>();
     readonly Dictionary<Vector3Int, Coroutine> damageCoroutines = new Dictionary<Vector3Int, Coroutine>();
     readonly List<Vector3Int> suddenDeathPath = new List<Vector3Int>();
+
+    static Sprite cachedWhitePixelSprite;
 
     bool suddenDeathStarted;
     bool suddenDeathFinished;
@@ -75,11 +94,26 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
         if (currentStageIndestructibleTile == null && indestructibleTilemap != null)
             currentStageIndestructibleTile = TryGetAnyExistingIndestructibleTile();
 
+        ClampShadowValues();
+
         LogFlow(
             $"Awake: grid={(stageGrid != null ? stageGrid.name : "NULL")}, " +
             $"indestructible={(indestructibleTilemap != null ? indestructibleTilemap.name : "NULL")}, " +
             $"destructible={(destructibleTilemap != null ? destructibleTilemap.name : "NULL")}, " +
             $"tile={(currentStageIndestructibleTile != null ? currentStageIndestructibleTile.name : "NULL")}");
+    }
+
+    void OnValidate()
+    {
+        ClampShadowValues();
+    }
+
+    void ClampShadowValues()
+    {
+        fallingDuration = Mathf.Max(0.01f, fallingDuration);
+        shadowLeadTime = Mathf.Max(0f, shadowLeadTime);
+        shadowStartSize = Mathf.Max(0.0001f, shadowStartSize);
+        shadowEndSize = Mathf.Max(shadowStartSize, shadowEndSize);
     }
 
     void Start()
@@ -144,6 +178,18 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
     {
         suddenDeathStarted = true;
         suddenDeathDropsStarted = false;
+
+
+        scheduledShadowCells.Clear();
+
+        foreach (QueuedShadowData queuedShadow in queuedShadowVisuals.Values)
+        {
+            if (queuedShadow.ShadowObject != null)
+                Destroy(queuedShadow.ShadowObject);
+        }
+
+        queuedShadowVisuals.Clear();
+
         suddenDeathDropStartRemainingTime = Mathf.Clamp(
             remainingTimeAtStart - delayBeforeTileDrops,
             0f,
@@ -183,24 +229,39 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
             LogFlow($"ProcessTileDrops: iniciando quedas com remaining={rawRemaining:0.000}");
         }
 
-        float dropDuration = Mathf.Max(0.0001f, suddenDeathDropStartRemainingTime);
+        float dropWindowDuration = Mathf.Max(0.0001f, suddenDeathDropStartRemainingTime);
         float elapsedSinceDropsStarted = Mathf.Clamp(
-            dropDuration - Mathf.Clamp(rawRemaining, 0f, dropDuration),
+            dropWindowDuration - Mathf.Clamp(rawRemaining, 0f, dropWindowDuration),
             0f,
-            dropDuration);
+            dropWindowDuration);
 
-        float progress = Mathf.Clamp01(elapsedSinceDropsStarted / dropDuration);
+        float dropProgress = Mathf.Clamp01(elapsedSinceDropsStarted / dropWindowDuration);
 
         int targetDropCount = Mathf.Clamp(
-            Mathf.FloorToInt(progress * suddenDeathPath.Count),
+            Mathf.FloorToInt(dropProgress * suddenDeathPath.Count),
             0,
             suddenDeathPath.Count);
+
+        float previewLeadDuration = Mathf.Max(0f, shadowLeadTime);
+        float previewElapsed = elapsedSinceDropsStarted + previewLeadDuration;
+        float previewProgress = Mathf.Clamp01(previewElapsed / dropWindowDuration);
+
+        int targetShadowCount = Mathf.Clamp(
+            Mathf.CeilToInt(previewProgress * suddenDeathPath.Count),
+            0,
+            suddenDeathPath.Count);
+
+        EnsureQueuedShadows(targetShadowCount, dropWindowDuration);
+        UpdateQueuedShadows(elapsedSinceDropsStarted);
 
         while (nextDropIndex < targetDropCount)
             DropNextTile();
 
         if (rawRemaining <= 0f)
         {
+            EnsureQueuedShadows(suddenDeathPath.Count, dropWindowDuration);
+            UpdateQueuedShadows(dropWindowDuration);
+
             while (nextDropIndex < suddenDeathPath.Count)
                 DropNextTile();
 
@@ -300,7 +361,19 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
         }
 
         Vector3 worldCenter = indestructibleTilemap.GetCellCenterWorld(cell);
+
         GameObject visual = null;
+        GameObject shadow = null;
+
+        float duration = Mathf.Max(0.01f, fallingDuration);
+
+        if (queuedShadowVisuals.TryGetValue(cell, out QueuedShadowData queuedShadowData))
+        {
+            shadow = queuedShadowData.ShadowObject;
+            queuedShadowVisuals.Remove(cell);
+
+            LogShadow($"DropTileRoutine: reutilizando sombra antecipada para {cell}");
+        }
 
         if (TryGetCurrentTileSprite(out Sprite tileSprite))
         {
@@ -314,19 +387,37 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
             else
             {
                 LogVisual(
-                    $"DropTileRoutine: queda visual criada. cell={cell}, start={spawnPosition}, end={worldCenter}, duration={fallingDuration:0.000}");
-
-                yield return AnimateFallingVisual(visual.transform, spawnPosition, worldCenter);
-
-                if (visual != null)
-                    Destroy(visual);
+                    $"DropTileRoutine: visual criado. cell={cell}, start={spawnPosition}, end={worldCenter}, duration={duration:0.000}");
             }
+
+            if (enableShadowVisual && shadow == null)
+            {
+                shadow = CreateShadowVisual(worldCenter + shadowWorldOffset);
+                if (shadow == null)
+                {
+                    LogShadow($"DropTileRoutine: falha ao criar sombra para {cell}");
+                }
+                else
+                {
+                    LogShadow(
+                        $"DropTileRoutine: sombra criada no momento da queda. cell={cell}, leadTime={shadowLeadTime:0.000}, " +
+                        $"startSize={shadowStartSize:0.000}, endSize={shadowEndSize:0.000}, alpha={shadowAlpha:0.000}");
+                }
+            }
+
+            yield return AnimateDropVisuals(cell, visual, shadow, spawnPosition, worldCenter);
         }
         else
         {
             LogWarning($"DropTileRoutine: não foi possível obter sprite do tile para {cell}. Usando apenas delay.");
-            yield return new WaitForSeconds(Mathf.Max(0.01f, fallingDuration));
+            yield return new WaitForSeconds(duration);
         }
+
+        if (visual != null)
+            Destroy(visual);
+
+        if (shadow != null)
+            Destroy(shadow);
 
         ClearOnlyCurrentCellIfNeeded(cell);
 
@@ -350,27 +441,75 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
         StartDamageOnCell(cell);
     }
 
-    IEnumerator AnimateFallingVisual(Transform visualTransform, Vector3 start, Vector3 end)
+    IEnumerator AnimateDropVisuals(Vector3Int cell, GameObject visual, GameObject shadow, Vector3 start, Vector3 end)
     {
-        if (visualTransform == null)
-            yield break;
-
         float duration = Mathf.Max(0.01f, fallingDuration);
         float elapsed = 0f;
 
+        bool loggedShadowStart = false;
+        bool loggedShadowGrowth = false;
+
+        Transform visualTransform = visual != null ? visual.transform : null;
+        Transform shadowTransform = shadow != null ? shadow.transform : null;
+        SpriteRenderer shadowRenderer = shadow != null ? shadow.GetComponent<SpriteRenderer>() : null;
+
+        float shadowInitialSize = shadowTransform != null ? shadowTransform.localScale.x : shadowStartSize;
+        float shadowInitialAlpha = shadowRenderer != null ? shadowRenderer.color.a : 0f;
+
+        if (visualTransform != null)
+            visualTransform.position = start;
+
+        if (shadowTransform != null)
+            shadowTransform.position = end + shadowWorldOffset;
+
         while (elapsed < duration)
         {
-            if (visualTransform == null)
-                yield break;
-
             elapsed += Time.deltaTime;
-            float t = Mathf.Clamp01(elapsed / duration);
-            visualTransform.position = Vector3.Lerp(start, end, t);
+            float clampedElapsed = Mathf.Min(elapsed, duration);
+
+            if (shadowTransform != null && shadowRenderer != null)
+            {
+                float shadowT = Mathf.Clamp01(clampedElapsed / duration);
+
+                float size = Mathf.Lerp(shadowInitialSize, shadowEndSize, shadowT);
+                float alpha = Mathf.Lerp(shadowInitialAlpha, shadowAlpha, shadowT);
+
+                shadowTransform.localScale = new Vector3(size, size, 1f);
+                shadowRenderer.color = new Color(0f, 0f, 0f, alpha);
+
+                if (!loggedShadowStart)
+                {
+                    loggedShadowStart = true;
+                    LogShadow($"AnimateDropVisuals: sombra ativa durante a queda. cell={cell}, elapsed={clampedElapsed:0.000}");
+                }
+
+                if (!loggedShadowGrowth && shadowT >= 0.5f)
+                {
+                    loggedShadowGrowth = true;
+                    LogShadow(
+                        $"AnimateDropVisuals: sombra em crescimento. cell={cell}, shadowT={shadowT:0.000}, size={size:0.000}");
+                }
+            }
+
+            if (visualTransform != null)
+            {
+                float visualT = Mathf.Clamp01(clampedElapsed / duration);
+                visualTransform.position = Vector3.Lerp(start, end, visualT);
+            }
+
             yield return null;
         }
 
         if (visualTransform != null)
             visualTransform.position = end;
+
+        if (shadowTransform != null)
+            shadowTransform.localScale = new Vector3(shadowEndSize, shadowEndSize, 1f);
+
+        if (shadowRenderer != null)
+            shadowRenderer.color = new Color(0f, 0f, 0f, shadowAlpha);
+
+        LogShadow($"AnimateDropVisuals: sombra concluída em {cell}");
     }
 
     Vector3 GetFallingVisualSpawnPosition(Vector3 worldCenter)
@@ -430,12 +569,56 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
         return visual;
     }
 
+    GameObject CreateShadowVisual(Vector3 position)
+    {
+        Sprite pixelSprite = GetWhitePixelSprite();
+        if (pixelSprite == null)
+        {
+            LogError("CreateShadowVisual: não foi possível criar/obter o sprite branco 1x1.");
+            return null;
+        }
+
+        GameObject shadow = new GameObject("SuddenDeathFallingTileShadow");
+        shadow.transform.position = position;
+        shadow.transform.localScale = new Vector3(shadowStartSize, shadowStartSize, 1f);
+
+        SpriteRenderer sr = shadow.AddComponent<SpriteRenderer>();
+        sr.sprite = pixelSprite;
+        sr.color = new Color(0f, 0f, 0f, 0f);
+
+        ApplyShadowSorting(sr);
+
+        LogShadow(
+            $"CreateShadowVisual: criada em pos={shadow.transform.position}, " +
+            $"scale={shadow.transform.localScale}, layer={sr.sortingLayerID}, order={sr.sortingOrder}");
+
+        return shadow;
+    }
+
+    Sprite GetWhitePixelSprite()
+    {
+        if (cachedWhitePixelSprite != null)
+            return cachedWhitePixelSprite;
+
+        Texture2D tex = new Texture2D(1, 1, TextureFormat.ARGB32, false);
+        tex.name = "SuddenDeathShadowPixel";
+        tex.filterMode = FilterMode.Point;
+        tex.wrapMode = TextureWrapMode.Clamp;
+        tex.SetPixel(0, 0, Color.white);
+        tex.Apply();
+
+        cachedWhitePixelSprite = Sprite.Create(
+            tex,
+            new Rect(0f, 0f, 1f, 1f),
+            new Vector2(0.5f, 0.5f),
+            1f);
+
+        return cachedWhitePixelSprite;
+    }
+
     void ApplyVisualSorting(SpriteRenderer sr)
     {
-        if (sr == null)
-            return;
-
-        if (indestructibleTilemap == null)
+        if (sr == null || indestructibleTilemap == null)
             return;
 
         TilemapRenderer tilemapRenderer = indestructibleTilemap.GetComponent<TilemapRenderer>();
@@ -444,6 +627,33 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
 
         sr.sortingLayerID = tilemapRenderer.sortingLayerID;
         sr.sortingOrder = tilemapRenderer.sortingOrder + visualSortingOrderOffset;
+    }
+
+    void ApplyShadowSorting(SpriteRenderer sr)
+    {
+        if (sr == null || indestructibleTilemap == null)
+            return;
+
+        TilemapRenderer tilemapRenderer = indestructibleTilemap.GetComponent<TilemapRenderer>();
+        if (tilemapRenderer == null)
+        {
+            LogShadow("ApplyShadowSorting: TilemapRenderer NULL.");
+            return;
+        }
+
+        sr.sortingLayerID = tilemapRenderer.sortingLayerID;
+
+        int visualOrder = tilemapRenderer.sortingOrder + visualSortingOrderOffset;
+
+        if (shadowSortingOrderOffset > 0)
+            sr.sortingOrder = visualOrder + shadowSortingOrderOffset;
+        else
+            sr.sortingOrder = visualOrder - 1;
+
+        LogShadow(
+            $"ApplyShadowSorting: tilemapLayer={tilemapRenderer.sortingLayerID}, " +
+            $"tilemapOrder={tilemapRenderer.sortingOrder}, visualOrder={visualOrder}, " +
+            $"shadowOffset={shadowSortingOrderOffset}, shadowOrder={sr.sortingOrder}");
     }
 
     bool TryGetCurrentTileSprite(out Sprite sprite)
@@ -843,6 +1053,85 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
         return null;
     }
 
+    void EnsureQueuedShadows(int targetShadowCount, float dropWindowDuration)
+    {
+        if (!enableShadowVisual || indestructibleTilemap == null)
+            return;
+
+        targetShadowCount = Mathf.Clamp(targetShadowCount, 0, suddenDeathPath.Count);
+
+        for (int i = 0; i < targetShadowCount; i++)
+        {
+            Vector3Int cell = suddenDeathPath[i];
+
+            if (!scheduledShadowCells.Add(cell))
+                continue;
+
+            if (indestructibleTilemap.HasTile(cell))
+                continue;
+
+            Vector3 worldCenter = indestructibleTilemap.GetCellCenterWorld(cell);
+            GameObject shadow = CreateShadowVisual(worldCenter + shadowWorldOffset);
+
+            if (shadow == null)
+            {
+                LogShadow($"EnsureQueuedShadows: falha ao criar sombra antecipada para {cell}");
+                continue;
+            }
+
+            float dropElapsedTime = ((i + 1f) / Mathf.Max(1, suddenDeathPath.Count)) * dropWindowDuration;
+
+            queuedShadowVisuals[cell] = new QueuedShadowData
+            {
+                ShadowObject = shadow,
+                DropElapsedTime = dropElapsedTime
+            };
+
+            LogShadow(
+                $"EnsureQueuedShadows: sombra antecipada criada. cell={cell}, " +
+                $"queued={queuedShadowVisuals.Count}, targetShadowCount={targetShadowCount}, dropElapsed={dropElapsedTime:0.000}");
+        }
+    }
+
+    void UpdateQueuedShadows(float currentElapsedSinceDropsStarted)
+    {
+        if (!enableShadowVisual || queuedShadowVisuals.Count == 0)
+            return;
+
+        List<Vector3Int> keys = new List<Vector3Int>(queuedShadowVisuals.Keys);
+
+        for (int i = 0; i < keys.Count; i++)
+        {
+            Vector3Int cell = keys[i];
+
+            if (!queuedShadowVisuals.TryGetValue(cell, out QueuedShadowData data))
+                continue;
+
+            if (data.ShadowObject == null)
+                continue;
+
+            float previewStartTime = Mathf.Max(0f, data.DropElapsedTime - shadowLeadTime);
+            float previewDuration = Mathf.Max(0.0001f, data.DropElapsedTime - previewStartTime);
+
+            float t = Mathf.Clamp01((currentElapsedSinceDropsStarted - previewStartTime) / previewDuration);
+
+            Transform shadowTransform = data.ShadowObject.transform;
+            SpriteRenderer shadowRenderer = data.ShadowObject.GetComponent<SpriteRenderer>();
+
+            if (shadowTransform != null)
+            {
+                float size = Mathf.Lerp(shadowStartSize, shadowEndSize, t);
+                shadowTransform.localScale = new Vector3(size, size, 1f);
+            }
+
+            if (shadowRenderer != null)
+            {
+                float alpha = Mathf.Lerp(0f, shadowAlpha, t);
+                shadowRenderer.color = new Color(0f, 0f, 0f, alpha);
+            }
+        }
+    }
+
     void Log(string message)
     {
         if (!enableDebugLogs)
@@ -865,6 +1154,14 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
             return;
 
         Debug.Log($"[BattleSuddenDeathController][Visual] {message}", this);
+    }
+
+    void LogShadow(string message)
+    {
+        if (!enableDebugLogs || !logShadowFlow)
+            return;
+
+        Debug.Log($"[BattleSuddenDeathController][Shadow] {message}", this);
     }
 
     void LogWarning(string message)
