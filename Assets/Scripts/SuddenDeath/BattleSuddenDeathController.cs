@@ -411,23 +411,57 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
 
         Collider2D[] hits = Physics2D.OverlapBoxAll(worldCenter, cleanupOverlapSize, 0f);
 
+        HashSet<GameObject> processedBombs = new HashSet<GameObject>();
+
         for (int i = 0; i < hits.Length; i++)
         {
             Collider2D hit = hits[i];
             if (hit == null)
                 continue;
 
-            Destructible destructible = hit.GetComponent<Destructible>();
-            if (destructible != null)
+            if (hit.TryGetComponent<Destructible>(out var destructible))
             {
                 Destroy(destructible.gameObject);
                 continue;
             }
 
-            ItemPickup item = hit.GetComponent<ItemPickup>();
-            if (item != null)
+            if (hit.TryGetComponent<ItemPickup>(out var item))
             {
                 Destroy(item.gameObject);
+                continue;
+            }
+
+            if (!hit.TryGetComponent<Bomb>(out var bomb))
+                bomb = hit.GetComponentInParent<Bomb>();
+
+            if (bomb != null)
+            {
+                GameObject bombGo = bomb.gameObject;
+
+                if (!processedBombs.Add(bombGo))
+                    continue;
+
+                LogVisual($"ClearOnlyCurrentCellIfNeeded: bomba destruída estilo PowerGlove em {cell}. bomb={bombGo.name}");
+
+                if (bombGo.TryGetComponent<Bomb>(out var b) && b != null)
+                {
+                    b.StopKickPunchMagnetRoutines();
+
+                    Vector2 snapPos = new Vector2(
+                        Mathf.Round(worldCenter.x),
+                        Mathf.Round(worldCenter.y)
+                    );
+
+                    b.ForceStopExternalMovementAndSnap(snapPos);
+                }
+
+                if (bomb.Owner != null)
+                {
+                    bomb.Owner.UnregisterBomb(bombGo);
+                    bomb.Owner.RefundBombSlot();
+                }
+
+                Destroy(bombGo);
                 continue;
             }
         }

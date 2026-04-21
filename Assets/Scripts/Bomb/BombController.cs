@@ -527,6 +527,11 @@ public partial class BombController : MonoBehaviour
         bombsRemaining = Mathf.Min(bombsRemaining + 1, bombAmout);
     }
 
+    public void RefundBombSlot()
+    {
+        bombsRemaining = Mathf.Min(bombsRemaining + 1, bombAmout);
+    }
+
     private bool IsPierceEnabled()
     {
         var abilitySystem = GetAbilitySystem();
@@ -1941,7 +1946,7 @@ public partial class BombController : MonoBehaviour
         plantedBombs.Add(bomb);
     }
 
-    private void UnregisterBomb(GameObject bomb)
+    public void UnregisterBomb(GameObject bomb)
     {
         if (bomb == null)
             return;
