@@ -17,6 +17,10 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
     [SerializeField] private bool usePlayableAreaFromBounds = true;
     [SerializeField] private Vector2Int bottomLeftCell = new Vector2Int(-7, -6);
     [SerializeField] private Vector2Int topRightCell = new Vector2Int(5, 4);
+    [SerializeField] private SuddenDeathDropPattern dropPattern = SuddenDeathDropPattern.Spiral;
+    [SerializeField] private bool randomizeDropPattern = true;
+    [SerializeField] private bool randomizeStartCorner = true;
+    [SerializeField] private bool randomizeRotationDirection = true;
 
     [Header("Falling Block Visual")]
     [SerializeField] private GameObject fallingBlockVisualPrefab;
@@ -81,6 +85,24 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
     int nextDropIndex;
     int existingIndestructibleSlotsInPath;
     int emptySlotsInPath;
+    StartCorner selectedStartCorner;
+    bool selectedClockwise = true;
+    SuddenDeathDropPattern selectedDropPattern;
+
+    enum SuddenDeathDropPattern
+    {
+        Spiral = 0,
+        Horizontal = 1,
+        Vertical = 2,
+    }
+
+    enum StartCorner
+    {
+        TopLeft = 0,
+        TopRight = 1,
+        BottomRight = 2,
+        BottomLeft = 3,
+    }
 
     void Awake()
     {
@@ -181,7 +203,6 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
         suddenDeathStarted = true;
         suddenDeathDropsStarted = false;
 
-
         scheduledShadowCells.Clear();
 
         foreach (QueuedShadowData queuedShadow in queuedShadowVisuals.Values)
@@ -199,6 +220,17 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
 
         BattleRevengeBomberBlocker.Block();
         RemoveAllRevengeBombersFromScene();
+
+        selectedDropPattern = randomizeDropPattern
+            ? (SuddenDeathDropPattern)Random.Range(0, 3)
+            : dropPattern;
+
+        selectedStartCorner = randomizeStartCorner
+            ? (StartCorner)Random.Range(0, 4)
+            : StartCorner.TopLeft;
+
+        selectedClockwise = !randomizeRotationDirection || Random.value >= 0.5f;
+
         BuildClosingPath();
 
         nextDropIndex = 0;
@@ -213,7 +245,8 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
             $"pathCount={suddenDeathPath.Count}, " +
             $"existingSlots={existingIndestructibleSlotsInPath}, " +
             $"emptySlots={emptySlotsInPath}, " +
-            $"slotDuration={slotDuration:0.000}");
+            $"slotDuration={slotDuration:0.000}, " +
+            $"pattern={selectedDropPattern}, startCorner={selectedStartCorner}, clockwise={selectedClockwise}, randomizeDropPattern={randomizeDropPattern}");
 
         StartCoroutine(PlayHurryUpAndResumeMusic());
     }
@@ -928,30 +961,19 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
         int bottom = bounds.yMin;
         int top = bounds.yMax - 1;
 
-        while (left <= right && bottom <= top)
+        switch (selectedDropPattern)
         {
-            for (int x = left; x <= right; x++)
-                AddCellIfValid(new Vector3Int(x, top, 0));
+            case SuddenDeathDropPattern.Spiral:
+                BuildSpiralPath(left, right, bottom, top);
+                break;
 
-            for (int y = top - 1; y >= bottom; y--)
-                AddCellIfValid(new Vector3Int(right, y, 0));
+            case SuddenDeathDropPattern.Horizontal:
+                BuildHorizontalPath(left, right, bottom, top);
+                break;
 
-            if (top > bottom)
-            {
-                for (int x = right - 1; x >= left; x--)
-                    AddCellIfValid(new Vector3Int(x, bottom, 0));
-            }
-
-            if (left < right)
-            {
-                for (int y = bottom + 1; y < top; y++)
-                    AddCellIfValid(new Vector3Int(left, y, 0));
-            }
-
-            left++;
-            right--;
-            bottom++;
-            top--;
+            case SuddenDeathDropPattern.Vertical:
+                BuildVerticalPath(left, right, bottom, top);
+                break;
         }
 
         if (logSuddenDeathFlow)
@@ -967,6 +989,7 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
                     $"existingSlots={existingIndestructibleSlotsInPath}, " +
                     $"emptySlots={emptySlotsInPath}, " +
                     $"slotDuration={slotDuration:0.000}, " +
+                    $"pattern={selectedDropPattern}, startCorner={selectedStartCorner}, clockwise={selectedClockwise}, " +
                     $"first={suddenDeathPath[0]}, last={suddenDeathPath[suddenDeathPath.Count - 1]}");
             }
             else
@@ -1176,6 +1199,204 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
                 float alpha = Mathf.Lerp(0f, shadowAlpha, t);
                 shadowRenderer.color = new Color(0f, 0f, 0f, alpha);
             }
+        }
+    }
+
+    void BuildSpiralPath(int left, int right, int bottom, int top)
+    {
+        while (left <= right && bottom <= top)
+        {
+            List<Vector3Int> ring = new List<Vector3Int>();
+            AddRingCells(ring, left, right, bottom, top);
+
+            ring = ReorderRingFromCorner(ring, left, right, bottom, top, selectedStartCorner, selectedClockwise);
+
+            for (int i = 0; i < ring.Count; i++)
+                AddCellIfValid(ring[i]);
+
+            left++;
+            right--;
+            bottom++;
+            top--;
+        }
+    }
+
+    void BuildHorizontalPath(int left, int right, int bottom, int top)
+    {
+        bool startFromTop = selectedStartCorner == StartCorner.TopLeft || selectedStartCorner == StartCorner.TopRight;
+        bool startLeftToRight = selectedStartCorner == StartCorner.TopLeft || selectedStartCorner == StartCorner.BottomLeft;
+
+        int layer = 0;
+
+        while (bottom <= top)
+        {
+            bool takePrimarySideFirst = true;
+
+            if (!selectedClockwise)
+                takePrimarySideFirst = false;
+
+            int firstRow;
+            int secondRow;
+
+            if (startFromTop)
+            {
+                firstRow = takePrimarySideFirst ? top : bottom;
+                secondRow = takePrimarySideFirst ? bottom : top;
+            }
+            else
+            {
+                firstRow = takePrimarySideFirst ? bottom : top;
+                secondRow = takePrimarySideFirst ? top : bottom;
+            }
+
+            bool firstRowLeftToRight = takePrimarySideFirst ? startLeftToRight : !startLeftToRight;
+            bool secondRowLeftToRight = !firstRowLeftToRight;
+
+            AddHorizontalRow(firstRow, left, right, firstRowLeftToRight);
+
+            if (firstRow != secondRow)
+                AddHorizontalRow(secondRow, left, right, secondRowLeftToRight);
+
+            top--;
+            bottom++;
+            layer++;
+        }
+    }
+
+    void BuildVerticalPath(int left, int right, int bottom, int top)
+    {
+        bool startFromLeft = selectedStartCorner == StartCorner.TopLeft || selectedStartCorner == StartCorner.BottomLeft;
+        bool startTopToBottom = selectedStartCorner == StartCorner.TopLeft || selectedStartCorner == StartCorner.TopRight;
+
+        int layer = 0;
+
+        while (left <= right)
+        {
+            bool takePrimarySideFirst = true;
+
+            if (!selectedClockwise)
+                takePrimarySideFirst = false;
+
+            int firstCol;
+            int secondCol;
+
+            if (startFromLeft)
+            {
+                firstCol = takePrimarySideFirst ? left : right;
+                secondCol = takePrimarySideFirst ? right : left;
+            }
+            else
+            {
+                firstCol = takePrimarySideFirst ? right : left;
+                secondCol = takePrimarySideFirst ? left : right;
+            }
+
+            bool firstColTopToBottom = takePrimarySideFirst ? startTopToBottom : !startTopToBottom;
+            bool secondColTopToBottom = !firstColTopToBottom;
+
+            AddVerticalColumn(firstCol, bottom, top, firstColTopToBottom);
+
+            if (firstCol != secondCol)
+                AddVerticalColumn(secondCol, bottom, top, secondColTopToBottom);
+
+            left++;
+            right--;
+            layer++;
+        }
+    }
+
+    void AddRingCells(List<Vector3Int> ring, int left, int right, int bottom, int top)
+    {
+        for (int x = left; x <= right; x++)
+            ring.Add(new Vector3Int(x, top, 0));
+
+        for (int y = top - 1; y >= bottom; y--)
+            ring.Add(new Vector3Int(right, y, 0));
+
+        if (top > bottom)
+        {
+            for (int x = right - 1; x >= left; x--)
+                ring.Add(new Vector3Int(x, bottom, 0));
+        }
+
+        if (left < right)
+        {
+            for (int y = bottom + 1; y < top; y++)
+                ring.Add(new Vector3Int(left, y, 0));
+        }
+    }
+
+    List<Vector3Int> ReorderRingFromCorner(
+        List<Vector3Int> ring,
+        int left,
+        int right,
+        int bottom,
+        int top,
+        StartCorner startCorner,
+        bool clockwise)
+    {
+        if (ring == null || ring.Count == 0)
+            return ring;
+
+        Vector3Int startCell = startCorner switch
+        {
+            StartCorner.TopLeft => new Vector3Int(left, top, 0),
+            StartCorner.TopRight => new Vector3Int(right, top, 0),
+            StartCorner.BottomRight => new Vector3Int(right, bottom, 0),
+            _ => new Vector3Int(left, bottom, 0),
+        };
+
+        int startIndex = ring.FindIndex(c => c == startCell);
+        if (startIndex < 0)
+            startIndex = 0;
+
+        List<Vector3Int> ordered = new List<Vector3Int>(ring.Count);
+
+        if (clockwise)
+        {
+            for (int i = 0; i < ring.Count; i++)
+                ordered.Add(ring[(startIndex + i) % ring.Count]);
+        }
+        else
+        {
+            for (int i = 0; i < ring.Count; i++)
+            {
+                int index = startIndex - i;
+                if (index < 0)
+                    index += ring.Count;
+
+                ordered.Add(ring[index]);
+            }
+        }
+
+        return ordered;
+    }
+
+    void AddHorizontalRow(int y, int left, int right, bool leftToRight)
+    {
+        if (leftToRight)
+        {
+            for (int x = left; x <= right; x++)
+                AddCellIfValid(new Vector3Int(x, y, 0));
+        }
+        else
+        {
+            for (int x = right; x >= left; x--)
+                AddCellIfValid(new Vector3Int(x, y, 0));
+        }
+    }
+
+    void AddVerticalColumn(int x, int bottom, int top, bool topToBottom)
+    {
+        if (topToBottom)
+        {
+            for (int y = top; y >= bottom; y--)
+                AddCellIfValid(new Vector3Int(x, y, 0));
+        }
+        else
+        {
+            for (int y = bottom; y <= top; y++)
+                AddCellIfValid(new Vector3Int(x, y, 0));
         }
     }
 
