@@ -768,7 +768,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 67ef1c8a37d346eaa4b89d99a0d76fbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BattleRevengeCartController
-  debugOffsetLogs: 1
   bodyUp: {fileID: 5905851964452163826}
   bodyDown: {fileID: 2251954931474294292}
   bodyLeft: {fileID: 4216743398122902378}
@@ -787,6 +786,9 @@ MonoBehaviour:
   headOffsetRight: {x: 0, y: 1.4}
   headOffsetTop: {x: 0, y: 1.2}
   headOffsetBottom: {x: 0, y: 1}
+  enterDuration: 0.5
+  exitDuration: 0.5
+  offscreenDistanceTiles: 2
 --- !u!1 &7558149374256022224
 GameObject:
   m_ObjectHideFlags: 0

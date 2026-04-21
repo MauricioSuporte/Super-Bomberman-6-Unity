@@ -26,7 +26,6 @@ public sealed class BattleRevengeSystem : MonoBehaviour
     private float maxEdgeY;
 
     private bool baseSnapshotsCaptured;
-    private bool warnedMissingPrefab;
 
     public static BattleRevengeSystem Instance { get; private set; }
 
@@ -116,25 +115,156 @@ public sealed class BattleRevengeSystem : MonoBehaviour
 
         int victimPlayerId = victim.PlayerId;
         Vector2 respawnPosition = GetArenaSnapPosition(victim.transform.position);
+        Vector2 newCartPosition = GetCartPositionForDeath(victim.transform.position, out Vector2 newInwardDirection);
 
         PlayerPersistentStats.ApplyBattleRevengeRespawnLoadout(respawnPlayerId);
 
-        cart.RebindOwner(victimPlayerId, victim);
+        bool victimDeathFinished = false;
+        bool revengeJumpFinished = false;
+        bool respawningPlayerReleased = false;
+        bool swapFinalized = false;
 
-        victim.RemoveForBattleRevengeSwap();
-        activeCartsByOwner.Remove(respawnPlayerId);
-        activeCartsByOwner[victimPlayerId] = cart;
+        Vector3 jumpStartWorld = cart.transform.position;
+        Vector3 jumpTargetWorld = new Vector3(respawnPosition.x, respawnPosition.y, cart.transform.position.z);
+        Vector2 jumpFacing = ResolveJumpFacing(jumpStartWorld, jumpTargetWorld);
+
+        void TryFinalizeSwap()
+        {
+            if (swapFinalized)
+                return;
+
+            if (!victimDeathFinished || !revengeJumpFinished)
+                return;
+
+            swapFinalized = true;
+
+            victim.RemoveForBattleRevengeSwap();
+
+            activeCartsByOwner.Remove(respawnPlayerId);
+            activeCartsByOwner[victimPlayerId] = cart;
+
+            if (!respawningPlayerReleased)
+            {
+                respawningPlayer.RespawnFromBattleRevenge(
+                    respawnPosition,
+                    respawnInvulnerabilitySeconds,
+                    respawnBlinkInterval);
+
+                respawningPlayerReleased = true;
+            }
+
+            cart.ReenterAs(
+                victimPlayerId,
+                victim,
+                newCartPosition,
+                newInwardDirection);
+
+            GameManager.Instance?.CheckWinState();
+        }
+
+        victim.PlayBattleRevengeSwapDeathSequence(() =>
+        {
+            victimDeathFinished = true;
+            TryFinalizeSwap();
+        });
+
+        StartCoroutine(PlayRevengeReplacementJump(
+            cart,
+            respawningPlayer,
+            jumpStartWorld,
+            jumpTargetWorld,
+            jumpFacing,
+            () =>
+            {
+                if (!respawningPlayerReleased)
+                {
+                    respawningPlayer.RespawnFromBattleRevenge(
+                        respawnPosition,
+                        respawnInvulnerabilitySeconds,
+                        respawnBlinkInterval);
+
+                    respawningPlayerReleased = true;
+                }
+
+                revengeJumpFinished = true;
+                TryFinalizeSwap();
+            }));
+
+        return true;
+    }
+
+    private IEnumerator PlayRevengeReplacementJump(
+        BattleRevengeCartController cart,
+        MovementController respawningPlayer,
+        Vector3 startWorldPos,
+        Vector3 targetWorldPos,
+        Vector2 facing,
+        Action onFinished)
+    {
+        if (cart != null)
+            cart.HideImmediately();
+
+        if (respawningPlayer == null)
+        {
+            onFinished?.Invoke();
+            yield break;
+        }
+
+        PlayerRidingController riding = respawningPlayer.GetComponent<PlayerRidingController>();
+        if (riding == null)
+        {
+            if (!respawningPlayer.gameObject.activeSelf)
+                respawningPlayer.gameObject.SetActive(true);
+
+            respawningPlayer.transform.position = startWorldPos;
+            onFinished?.Invoke();
+            yield break;
+        }
 
         if (!respawningPlayer.gameObject.activeSelf)
             respawningPlayer.gameObject.SetActive(true);
 
-        respawningPlayer.RespawnFromBattleRevenge(
-            respawnPosition,
-            respawnInvulnerabilitySeconds,
-            respawnBlinkInterval);
+        respawningPlayer.transform.position = startWorldPos;
 
-        GameManager.Instance?.CheckWinState();
-        return true;
+        if (respawningPlayer.Rigidbody != null)
+        {
+            respawningPlayer.Rigidbody.simulated = false;
+            respawningPlayer.Rigidbody.linearVelocity = Vector2.zero;
+            respawningPlayer.Rigidbody.angularVelocity = 0f;
+        }
+
+        if (respawningPlayer.TryGetComponent(out Collider2D col) && col != null)
+            col.enabled = false;
+
+        respawningPlayer.SetExplosionInvulnerable(true);
+        respawningPlayer.SetExternalVisualSuppressed(false);
+        respawningPlayer.SetAllSpritesVisible(false);
+
+        bool finished = false;
+
+        if (!riding.TryPlayMountArc(
+                facing,
+                startWorldPos,
+                targetWorldPos,
+                onComplete: () => finished = true))
+        {
+            finished = true;
+        }
+
+        while (!finished)
+            yield return null;
+
+        onFinished?.Invoke();
+    }
+
+    private static Vector2 ResolveJumpFacing(Vector3 startWorldPos, Vector3 targetWorldPos)
+    {
+        Vector2 delta = targetWorldPos - startWorldPos;
+
+        if (Mathf.Abs(delta.x) >= Mathf.Abs(delta.y))
+            return delta.x >= 0f ? Vector2.right : Vector2.left;
+
+        return delta.y >= 0f ? Vector2.up : Vector2.down;
     }
 
     public bool TryLaunchBombFromCart(BattleRevengeCartController cart)

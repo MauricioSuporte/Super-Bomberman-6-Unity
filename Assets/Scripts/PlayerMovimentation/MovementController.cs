@@ -210,6 +210,9 @@ public class MovementController : MonoBehaviour, IKillable
     private const float CenterEpsilon = 0.01f;
     private float SlideDeadZone => tileSize * 0.25f;
 
+    private bool battleRevengeSwapDeathPending;
+    private Action battleRevengeSwapDeathCompleted;
+
     private enum MoveAxis
     {
         None = 0,
@@ -2350,7 +2353,10 @@ public class MovementController : MonoBehaviour, IKillable
         if (TryGetComponent<PowerGloveAbility>(out var glove) && glove != null)
             glove.DestroyHeldBombIfHolding();
 
-        if (IsPlayer() && notifyGameManagerDeath && checkWinStateOnDeath)
+        if (IsPlayer() &&
+            notifyGameManagerDeath &&
+            checkWinStateOnDeath &&
+            !battleRevengeSwapDeathPending)
         {
             var gm = FindAnyObjectByType<GameManager>();
             if (gm != null)
@@ -2441,6 +2447,17 @@ public class MovementController : MonoBehaviour, IKillable
     protected virtual void OnDeathSequenceEnded()
     {
         deathRequestedByExplosion = false;
+
+        if (battleRevengeSwapDeathPending)
+        {
+            battleRevengeSwapDeathPending = false;
+
+            Action callback = battleRevengeSwapDeathCompleted;
+            battleRevengeSwapDeathCompleted = null;
+
+            callback?.Invoke();
+            return;
+        }
 
         BattleRevengeSystem.Instance?.HandlePlayerDeathCompleted(this);
         Died?.Invoke(this);
@@ -4114,5 +4131,18 @@ public class MovementController : MonoBehaviour, IKillable
         target.y = Mathf.Round(target.y / tileSize) * tileSize;
 
         return target;
+    }
+
+    public void PlayBattleRevengeSwapDeathSequence(Action onCompleted)
+    {
+        if (isEndingStage)
+            return;
+
+        battleRevengeSwapDeathPending = true;
+        battleRevengeSwapDeathCompleted = onCompleted;
+        deathRequestedByExplosion = true;
+
+        if (!isDead)
+            DeathSequence();
     }
 }

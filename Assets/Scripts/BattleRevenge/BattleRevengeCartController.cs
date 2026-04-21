@@ -1,3 +1,5 @@
+using System;
+using System.Collections;
 using UnityEngine;
 
 [DisallowMultipleComponent]
@@ -41,6 +43,14 @@ public sealed class BattleRevengeCartController : MonoBehaviour
     [SerializeField] private Vector2 headOffsetTop;
     [SerializeField] private Vector2 headOffsetBottom;
 
+    [Header("Entrance / Exit Animation")]
+    [SerializeField, Min(0.01f)] private float enterDuration = 0.35f;
+    [SerializeField, Min(0.01f)] private float exitDuration = 0.25f;
+    [SerializeField, Min(0.1f)] private float offscreenDistanceTiles = 2f;
+
+    private bool isAnimating;
+    private Coroutine activeAnimationRoutine;
+
     private BattleRevengeSystem system;
     private int ownerPlayerId;
     private CartEdge currentEdge = CartEdge.Left;
@@ -72,6 +82,9 @@ public sealed class BattleRevengeCartController : MonoBehaviour
 
     void Update()
     {
+        if (isAnimating)
+            return;
+
         if (!Application.isPlaying || system == null || ownerPlayerId <= 0)
             return;
 
@@ -179,17 +192,60 @@ public sealed class BattleRevengeCartController : MonoBehaviour
         ConfigureHeadVisuals(sourceVisuals);
         currentEdge = ResolveEdgeFromDirection(inwardDirection);
 
-        Vector3 position = transform.position;
-        position.x = Mathf.Clamp(startPosition.x, minEdgeX, maxEdgeX);
-        position.y = Mathf.Clamp(startPosition.y, minEdgeY, maxEdgeY);
+        Vector3 targetPosition = new Vector3(startPosition.x, startPosition.y, 0f);
+        ApplyEdgePosition(ref targetPosition);
 
-        ApplyEdgePosition(ref position);
-        transform.position = position;
+        Vector3 spawnPosition = GetOffscreenPosition(targetPosition);
 
+        StopActiveAnimation();
+
+        transform.position = spawnPosition;
         RefreshVisualByEdge();
 
         if (!gameObject.activeSelf)
             gameObject.SetActive(true);
+
+        activeAnimationRoutine = StartCoroutine(EnterRoutine(spawnPosition, targetPosition));
+    }
+
+    public void PlayExit(Action onExitFinished)
+    {
+        if (!gameObject.activeInHierarchy)
+        {
+            onExitFinished?.Invoke();
+            return;
+        }
+
+        StopActiveAnimation();
+        activeAnimationRoutine = StartCoroutine(ExitRoutine(onExitFinished));
+    }
+
+    public void ReenterAs(
+        int newOwnerPlayerId,
+        MovementController newOwnerVisuals,
+        Vector2 startPosition,
+        Vector2 inwardDirection)
+    {
+        ownerPlayerId = Mathf.Clamp(newOwnerPlayerId, GameSession.MinPlayerId, GameSession.MaxPlayerId);
+        nextBombAllowedAt = 0f;
+
+        ConfigureHeadVisuals(newOwnerVisuals);
+        currentEdge = ResolveEdgeFromDirection(inwardDirection);
+
+        Vector3 targetPosition = new Vector3(startPosition.x, startPosition.y, 0f);
+        ApplyEdgePosition(ref targetPosition);
+
+        Vector3 spawnPosition = GetOffscreenPosition(targetPosition);
+
+        StopActiveAnimation();
+
+        transform.position = spawnPosition;
+        RefreshVisualByEdge();
+
+        if (!gameObject.activeSelf)
+            gameObject.SetActive(true);
+
+        activeAnimationRoutine = StartCoroutine(EnterRoutine(spawnPosition, targetPosition));
     }
 
     public void RebindOwner(int newOwnerPlayerId, MovementController sourceVisuals)
@@ -199,6 +255,82 @@ public sealed class BattleRevengeCartController : MonoBehaviour
 
         ConfigureHeadVisuals(sourceVisuals);
         RefreshVisualByEdge();
+    }
+
+    private IEnumerator ExitRoutine(Action onExitFinished)
+    {
+        isAnimating = true;
+
+        Vector3 start = transform.position;
+        Vector3 end = GetOffscreenPosition(start);
+
+        float timer = 0f;
+        while (timer < exitDuration)
+        {
+            timer += Time.unscaledDeltaTime;
+            float t = Mathf.Clamp01(timer / exitDuration);
+            transform.position = PixelPerfectMove(start, end, t);
+            yield return null;
+        }
+
+        transform.position = end;
+        isAnimating = false;
+        activeAnimationRoutine = null;
+
+        onExitFinished?.Invoke();
+    }
+
+    private IEnumerator EnterRoutine(Vector3 start, Vector3 target)
+    {
+        isAnimating = true;
+
+        float timer = 0f;
+        while (timer < enterDuration)
+        {
+            timer += Time.unscaledDeltaTime;
+            float t = Mathf.Clamp01(timer / enterDuration);
+            transform.position = PixelPerfectMove(start, target, t);
+            yield return null;
+        }
+
+        transform.position = target;
+        isAnimating = false;
+        activeAnimationRoutine = null;
+    }
+
+    private void StopActiveAnimation()
+    {
+        if (activeAnimationRoutine != null)
+        {
+            StopCoroutine(activeAnimationRoutine);
+            activeAnimationRoutine = null;
+        }
+
+        isAnimating = false;
+    }
+
+    private Vector3 PixelPerfectMove(Vector3 from, Vector3 to, float t)
+    {
+        const float pixelsPerUnit = 16f;
+
+        Vector3 raw = Vector3.Lerp(from, to, t);
+        raw.x = Mathf.Round(raw.x * pixelsPerUnit) / pixelsPerUnit;
+        raw.y = Mathf.Round(raw.y * pixelsPerUnit) / pixelsPerUnit;
+        return raw;
+    }
+
+    private Vector3 GetOffscreenPosition(Vector3 target)
+    {
+        float offset = offscreenDistanceTiles;
+
+        return currentEdge switch
+        {
+            CartEdge.Left => target + Vector3.left * offset,
+            CartEdge.Right => target + Vector3.right * offset,
+            CartEdge.Top => target + Vector3.up * offset,
+            CartEdge.Bottom => target + Vector3.down * offset,
+            _ => target
+        };
     }
 
     private void ConfigureHeadVisuals(MovementController sourceVisuals)
@@ -221,15 +353,12 @@ public sealed class BattleRevengeCartController : MonoBehaviour
             case CartEdge.Top:
                 SetDirectionVisual(Vector2.up);
                 break;
-
             case CartEdge.Bottom:
                 SetDirectionVisual(Vector2.down);
                 break;
-
             case CartEdge.Left:
                 SetDirectionVisual(Vector2.left);
                 break;
-
             case CartEdge.Right:
                 SetDirectionVisual(Vector2.right);
                 break;
@@ -248,15 +377,12 @@ public sealed class BattleRevengeCartController : MonoBehaviour
             case CartEdge.Left:
                 position.x = Mathf.Min(maxEdgeX, minEdgeX + HorizontalInnerOffsetWorld);
                 break;
-
             case CartEdge.Right:
                 position.x = Mathf.Max(minEdgeX, maxEdgeX - HorizontalInnerOffsetWorld);
                 break;
-
             case CartEdge.Top:
                 position.y = maxEdgeY;
                 break;
-
             case CartEdge.Bottom:
                 position.y = minEdgeY;
                 break;
@@ -375,5 +501,11 @@ public sealed class BattleRevengeCartController : MonoBehaviour
         if (inwardDirection == Vector2.down) return CartEdge.Top;
         if (inwardDirection == Vector2.up) return CartEdge.Bottom;
         return CartEdge.Left;
+    }
+
+    public void HideImmediately()
+    {
+        StopActiveAnimation();
+        gameObject.SetActive(false);
     }
 }
