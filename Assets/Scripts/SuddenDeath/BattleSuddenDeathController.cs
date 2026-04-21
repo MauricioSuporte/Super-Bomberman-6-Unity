@@ -431,6 +431,43 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
                 continue;
             }
 
+            if (hit.TryGetComponent<MountWorldPickup>(out var mountPickup))
+            {
+                GameObject mountGo = mountPickup.gameObject;
+
+                LogVisual($"ClearOnlyCurrentCellIfNeeded: montaria solta atingida pela queda em {cell}. mount={mountGo.name}");
+
+                if (mountGo.TryGetComponent<DetachedLouieWorldInactivityLoop>(out var detachedLoop) && detachedLoop != null)
+                    detachedLoop.StopLoop();
+
+                if (mountPickup != null)
+                    mountPickup.enabled = false;
+
+                if (mountGo.TryGetComponent<Collider2D>(out var mountCollider) && mountCollider != null)
+                    mountCollider.enabled = false;
+
+                if (mountGo.TryGetComponent<MovementController>(out var mountMovement) && mountMovement != null)
+                    mountMovement.SetExplosionInvulnerable(false);
+
+                if (mountGo.TryGetComponent<CharacterHealth>(out var mountHealth) && mountHealth != null)
+                {
+                    mountHealth.StopInvulnerability();
+
+                    int lethalDamage = Mathf.Max(1, mountHealth.life);
+                    mountHealth.TakeDamage(lethalDamage, false);
+                }
+                else if (mountGo.TryGetComponent<MovementController>(out var fallbackMovement) && fallbackMovement != null)
+                {
+                    fallbackMovement.Kill();
+                }
+                else
+                {
+                    Destroy(mountGo);
+                }
+
+                continue;
+            }
+
             if (!hit.TryGetComponent<Bomb>(out var bomb))
                 bomb = hit.GetComponentInParent<Bomb>();
 
@@ -447,7 +484,7 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
                 {
                     b.StopKickPunchMagnetRoutines();
 
-                    Vector2 snapPos = new Vector2(
+                    Vector2 snapPos = new(
                         Mathf.Round(worldCenter.x),
                         Mathf.Round(worldCenter.y)
                     );
