@@ -241,6 +241,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BattleSuddenDeathController
   indestructibleTilemap: {fileID: 818279435}
+  destructibleTilemap: {fileID: 0}
   stageGrid: {fileID: 732032080}
   usePlayableAreaFromBounds: 0
   bottomLeftCell: {x: -7, y: -6}
@@ -251,14 +252,16 @@ MonoBehaviour:
   fallingDuration: 0.15
   damageTickInterval: 0.2
   damagePerTick: 1
+  cleanupOverlapSize: {x: 0.6, y: 0.6}
   hurryUpSfx: {fileID: 8300000, guid: 694df420d1bd8ab4495f804028448184, type: 3}
-  fallingTileSfx: {fileID: 8300000, guid: 97d10b32553c82441b2cbd98edb9b991, type: 3}
+  fallingTileSfx: {fileID: 8300000, guid: 232f86bc3f450a34b887545b1b7630b5, type: 3}
   fastMusicPitch: 1.2
   resumeMusicDelayAfterHurryUp: 0.6
   enableDebugLogs: 1
   logEveryDrop: 1
   logDamageTicks: 0
   logHeartbeat: 0
+  delayBeforeTileDrops: 2
 --- !u!1 &124024468
 GameObject:
   m_ObjectHideFlags: 0

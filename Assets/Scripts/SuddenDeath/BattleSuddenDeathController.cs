@@ -45,6 +45,11 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
     [SerializeField] private bool logDamageTicks;
     [SerializeField] private bool logHeartbeat;
 
+    [SerializeField] private float delayBeforeTileDrops = 2f;
+
+    bool suddenDeathDropsStarted;
+    float suddenDeathDropStartRemainingTime;
+
     float nextHeartbeatLogAt;
 
     readonly HashSet<Vector3Int> scheduledOrPlacedCells = new HashSet<Vector3Int>();
@@ -167,8 +172,14 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
     void BeginSuddenDeath(float remainingTimeAtStart)
     {
         suddenDeathStarted = true;
+        suddenDeathDropsStarted = false;
+        suddenDeathDropStartRemainingTime = Mathf.Clamp(
+            remainingTimeAtStart - delayBeforeTileDrops,
+            0f,
+            SuddenDeathTriggerTime);
 
         Log($"BeginSuddenDeath: iniciado com remainingTimeAtStart={remainingTimeAtStart:0.000}");
+        Log($"BeginSuddenDeath: delayBeforeTileDrops={delayBeforeTileDrops:0.000}, suddenDeathDropStartRemainingTime={suddenDeathDropStartRemainingTime:0.000}");
 
         BattleRevengeBomberBlocker.Block();
         Log("BeginSuddenDeath: novos revenge bombers bloqueados.");
@@ -179,12 +190,6 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
         nextDropIndex = 0;
 
         Log($"BeginSuddenDeath: caminho montado com {suddenDeathPath.Count} células.");
-
-        if (suddenDeathPath.Count > 0)
-        {
-            Log("BeginSuddenDeath: forçando primeiro drop imediato.");
-            DropNextTile();
-        }
 
         StartCoroutine(PlayHurryUpAndResumeMusic());
     }
@@ -201,17 +206,36 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
         }
 
         float rawRemaining = GetBattleTimeRemaining();
-        float remaining = Mathf.Clamp(rawRemaining, 0f, SuddenDeathTriggerTime);
-        float progress = 1f - (remaining / SuddenDeathTriggerTime);
+
+        if (!suddenDeathDropsStarted)
+        {
+            if (rawRemaining > suddenDeathDropStartRemainingTime)
+            {
+                Log(
+                    $"ProcessTileDrops: aguardando início das quedas. " +
+                    $"rawRemaining={rawRemaining:0.000}, startAt={suddenDeathDropStartRemainingTime:0.000}");
+                return;
+            }
+
+            suddenDeathDropsStarted = true;
+            Log(
+                $"ProcessTileDrops: quedas iniciadas. " +
+                $"rawRemaining={rawRemaining:0.000}, startAt={suddenDeathDropStartRemainingTime:0.000}");
+        }
+
+        float dropDuration = Mathf.Max(0.0001f, suddenDeathDropStartRemainingTime);
+        float elapsedSinceDropsStarted = Mathf.Clamp(dropDuration - Mathf.Clamp(rawRemaining, 0f, dropDuration), 0f, dropDuration);
+        float progress = Mathf.Clamp01(elapsedSinceDropsStarted / dropDuration);
 
         int targetDropCount = Mathf.Clamp(
-            Mathf.Max(1, Mathf.FloorToInt(progress * suddenDeathPath.Count)),
+            Mathf.FloorToInt(progress * suddenDeathPath.Count),
             0,
             suddenDeathPath.Count);
 
         Log(
-            $"ProcessTileDrops: rawRemaining={rawRemaining:0.000}, remaining={remaining:0.000}, " +
-            $"progress={progress:0.000000}, targetDropCount={targetDropCount}, nextDropIndex={nextDropIndex}, total={suddenDeathPath.Count}");
+            $"ProcessTileDrops: rawRemaining={rawRemaining:0.000}, dropDuration={dropDuration:0.000}, " +
+            $"elapsedSinceDropsStarted={elapsedSinceDropsStarted:0.000}, progress={progress:0.000000}, " +
+            $"targetDropCount={targetDropCount}, nextDropIndex={nextDropIndex}, total={suddenDeathPath.Count}");
 
         while (nextDropIndex < targetDropCount)
         {
@@ -219,7 +243,7 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
             DropNextTile();
         }
 
-        if (remaining <= 0f)
+        if (rawRemaining <= 0f)
         {
             Log("ProcessTileDrops: tempo zerou. Forçando queda do restante.");
 
