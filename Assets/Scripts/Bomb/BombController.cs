@@ -908,11 +908,15 @@ public partial class BombController : MonoBehaviour
             bombComponent.BeginFuse();
 
         Vector2 plantDir = GetBombPlantDirection(movement);
-        movement?.NotifyBombPlanted(bombComponent, plantDir);
 
-        var kickAbility = GetCachedComponent(ref cachedBombKickAbility);
-        if (kickAbility != null)
-            kickAbility.NotifyBombPlanted(bombComponent, plantDir);
+        if (bombComponent == null || !bombComponent.IsRevengeBomb)
+        {
+            movement?.NotifyBombPlanted(bombComponent, plantDir);
+
+            var kickAbility = GetCachedComponent(ref cachedBombKickAbility);
+            if (kickAbility != null)
+                kickAbility.NotifyBombPlanted(bombComponent, plantDir);
+        }
     }
 
     private bool TryDestroyBombIfOnWater(GameObject bombGo, Vector2 worldPos, bool refund)
