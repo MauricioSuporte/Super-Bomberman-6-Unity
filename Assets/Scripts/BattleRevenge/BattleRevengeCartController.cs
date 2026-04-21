@@ -108,7 +108,6 @@ public sealed class BattleRevengeCartController : MonoBehaviour
     private Sprite[] rechargeSprites;
     private bool rechargeSpritesLoaded;
 
-    // posição lógica ao longo do contorno permitido
     private float perimeterPosition;
 
     public int OwnerPlayerId => ownerPlayerId;

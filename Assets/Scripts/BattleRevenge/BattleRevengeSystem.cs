@@ -9,7 +9,7 @@ using UnityEngine.Tilemaps;
 public sealed class BattleRevengeSystem : MonoBehaviour
 {
     [SerializeField] private BattleRevengeCartController cartPrefab;
-    [SerializeField, Min(0.1f)] private float cartBombCooldownSeconds = 1.75f;
+    private readonly float cartBombCooldownSeconds = 2f;
     [SerializeField, Min(1)] private int cartBombDistanceTiles = 3;
     [SerializeField, Min(1)] private int revengeBombRadius = 2;
     [SerializeField, Min(0.1f)] private float respawnInvulnerabilitySeconds = 2f;
