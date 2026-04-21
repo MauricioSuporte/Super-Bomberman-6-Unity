@@ -79,6 +79,8 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
     bool suddenDeathStarted;
     bool suddenDeathFinished;
     int nextDropIndex;
+    int existingIndestructibleSlotsInPath;
+    int emptySlotsInPath;
 
     void Awake()
     {
@@ -201,10 +203,17 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
 
         nextDropIndex = 0;
 
+        float slotDuration = suddenDeathPath.Count > 0
+            ? suddenDeathDropStartRemainingTime / suddenDeathPath.Count
+            : 0f;
+
         LogFlow(
             $"BeginSuddenDeath: remainingStart={remainingTimeAtStart:0.000}, " +
             $"dropStartAt={suddenDeathDropStartRemainingTime:0.000}, " +
-            $"pathCount={suddenDeathPath.Count}");
+            $"pathCount={suddenDeathPath.Count}, " +
+            $"existingSlots={existingIndestructibleSlotsInPath}, " +
+            $"emptySlots={emptySlotsInPath}, " +
+            $"slotDuration={slotDuration:0.000}");
 
         StartCoroutine(PlayHurryUpAndResumeMusic());
     }
@@ -241,6 +250,20 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
             Mathf.FloorToInt(dropProgress * suddenDeathPath.Count),
             0,
             suddenDeathPath.Count);
+
+        if (logSuddenDeathFlow)
+        {
+            float slotDuration = suddenDeathPath.Count > 0
+                ? dropWindowDuration / suddenDeathPath.Count
+                : 0f;
+
+            LogFlow(
+                $"ProcessTileDrops: rawRemaining={rawRemaining:0.000}, " +
+                $"elapsed={elapsedSinceDropsStarted:0.000}, " +
+                $"targetDropCount={targetDropCount}, " +
+                $"nextDropIndex={nextDropIndex}, " +
+                $"slotDuration={slotDuration:0.000}");
+        }
 
         float previewLeadDuration = Mathf.Max(0f, shadowLeadTime);
         float previewElapsed = elapsedSinceDropsStarted + previewLeadDuration;
@@ -284,12 +307,20 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
             return;
         }
 
+        int slotIndex = nextDropIndex;
         Vector3Int cell = suddenDeathPath[nextDropIndex];
         nextDropIndex++;
 
+        float slotDuration = suddenDeathPath.Count > 0
+            ? suddenDeathDropStartRemainingTime / suddenDeathPath.Count
+            : 0f;
+
         if (indestructibleTilemap.HasTile(cell))
         {
-            LogVisual($"DropNextTile: célula {cell} já tinha tile. Pulando.");
+            LogFlow(
+                $"DropNextTile: slot ocupado consumido sem queda visual. " +
+                $"slotIndex={slotIndex + 1}/{suddenDeathPath.Count}, cell={cell}, slotDuration={slotDuration:0.000}");
+
             return;
         }
 
@@ -298,6 +329,10 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
             LogError($"DropNextTile: currentStageIndestructibleTile NULL na célula {cell}");
             return;
         }
+
+        LogFlow(
+            $"DropNextTile: slot com queda visual. " +
+            $"slotIndex={slotIndex + 1}/{suddenDeathPath.Count}, cell={cell}, slotDuration={slotDuration:0.000}");
 
         StartCoroutine(DropTileRoutine(cell));
     }
@@ -884,6 +919,9 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
         suddenDeathPath.Clear();
         scheduledOrPlacedCells.Clear();
 
+        existingIndestructibleSlotsInPath = 0;
+        emptySlotsInPath = 0;
+
         BoundsInt bounds = GetPlayableBounds();
         int left = bounds.xMin;
         int right = bounds.xMax - 1;
@@ -920,8 +958,15 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
         {
             if (suddenDeathPath.Count > 0)
             {
+                float slotDuration = suddenDeathPath.Count > 0
+                    ? suddenDeathDropStartRemainingTime / suddenDeathPath.Count
+                    : 0f;
+
                 LogFlow(
-                    $"BuildClosingPath: total={suddenDeathPath.Count}, " +
+                    $"BuildClosingPath: totalSlots={suddenDeathPath.Count}, " +
+                    $"existingSlots={existingIndestructibleSlotsInPath}, " +
+                    $"emptySlots={emptySlotsInPath}, " +
+                    $"slotDuration={slotDuration:0.000}, " +
                     $"first={suddenDeathPath[0]}, last={suddenDeathPath[suddenDeathPath.Count - 1]}");
             }
             else
@@ -936,13 +981,15 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
         if (indestructibleTilemap == null)
             return;
 
-        if (indestructibleTilemap.HasTile(cell))
-            return;
-
         if (!scheduledOrPlacedCells.Add(cell))
             return;
 
         suddenDeathPath.Add(cell);
+
+        if (indestructibleTilemap.HasTile(cell))
+            existingIndestructibleSlotsInPath++;
+        else
+            emptySlotsInPath++;
     }
 
     BoundsInt GetPlayableBounds()
