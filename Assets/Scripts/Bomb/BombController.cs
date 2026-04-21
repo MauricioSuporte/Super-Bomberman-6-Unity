@@ -1684,29 +1684,30 @@ public partial class BombController : MonoBehaviour
             _gm.OnDestructibleDestroyed(cell);
 
         Transform parent = destructibleTiles != null ? destructibleTiles.transform : null;
+        Vector3 spawnWorldPosition = destructibleTiles.GetCellCenterWorld(cell);
 
         if (spawnDestructiblePrefab && destructiblePrefab != null)
         {
             if (parent != null)
-                Instantiate(destructiblePrefab, position, Quaternion.identity, parent);
+                Instantiate(destructiblePrefab, spawnWorldPosition, Quaternion.identity, parent);
             else
-                Instantiate(destructiblePrefab, position, Quaternion.identity);
+                Instantiate(destructiblePrefab, spawnWorldPosition, Quaternion.identity);
         }
 
         if (spawnHiddenObject && _gm != null)
         {
-            GameObject spawnPrefab = _gm.GetSpawnForDestroyedBlock();
+            GameObject spawnPrefab = _gm.GetSpawnForDestroyedBlock(cell);
             if (spawnPrefab != null)
             {
                 float delay = GetDestructibleDestroyTime();
-                StartSafeCoroutine(SpawnHiddenObjectAfterDelay(spawnPrefab, position, parent, delay));
+                StartSafeCoroutine(SpawnHiddenObjectAfterDelay(spawnPrefab, cell, parent, delay));
             }
         }
 
         destructibleTiles.SetTile(cell, null);
     }
 
-    private IEnumerator SpawnHiddenObjectAfterDelay(GameObject prefab, Vector2 position, Transform parent, float delay)
+    private IEnumerator SpawnHiddenObjectAfterDelay(GameObject prefab, Vector3Int cell, Transform parent, float delay)
     {
         if (prefab == null)
             yield break;
@@ -1714,10 +1715,26 @@ public partial class BombController : MonoBehaviour
         if (delay > 0f)
             yield return new WaitForSeconds(delay);
 
+        if (_gm == null)
+            _gm = FindAnyObjectByType<GameManager>();
+
+        if (destructibleTiles == null || _gm == null)
+        {
+            _gm?.ReleasePendingHiddenItemCell(cell);
+            yield break;
+        }
+
+        Vector3 spawnWorldPosition = destructibleTiles.GetCellCenterWorld(cell);
+
+        _gm.ReleasePendingHiddenItemCell(cell);
+
+        if (!_gm.TryReserveItemSpawnCell(cell))
+            yield break;
+
         if (parent != null)
-            Instantiate(prefab, position, Quaternion.identity, parent);
+            Instantiate(prefab, spawnWorldPosition, Quaternion.identity, parent);
         else
-            Instantiate(prefab, position, Quaternion.identity);
+            Instantiate(prefab, spawnWorldPosition, Quaternion.identity);
     }
 
     private float GetDestructibleDestroyTime()

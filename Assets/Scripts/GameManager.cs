@@ -98,6 +98,10 @@ public class GameManager : MonoBehaviour
     private readonly List<ItemType> battleDroppedItemsBuffer = new();
     private readonly List<Vector3Int> battleDropCellsBuffer = new();
 
+    private readonly HashSet<Vector3Int> reservedItemSpawnCells = new();
+    private readonly HashSet<Vector3Int> pendingHiddenItemCells = new();
+    private Coroutine clearReservedItemSpawnCellsRoutine;
+
     [Header("Destructible Tile Resolver (optional, auto-find)")]
     [SerializeField] private DestructibleTileResolver destructibleTileResolver;
 
@@ -528,7 +532,7 @@ public class GameManager : MonoBehaviour
         TryAssignItem(ItemType.Clock, clockAmount);
     }
 
-    public GameObject GetSpawnForDestroyedBlock()
+    public GameObject GetSpawnForDestroyedBlock(Vector3Int cell)
     {
         if (totalDestructibleBlocks <= 0)
             return null;
@@ -536,10 +540,13 @@ public class GameManager : MonoBehaviour
         destroyedDestructibleBlocks++;
         int order = destroyedDestructibleBlocks;
 
-        if (orderToSpawn.TryGetValue(order, out var prefabGo))
-            return prefabGo;
+        if (!orderToSpawn.TryGetValue(order, out var prefabGo))
+            return null;
 
-        return null;
+        if (!TryReservePendingHiddenItemCell(cell))
+            return null;
+
+        return prefabGo;
     }
 
     public void CheckWinState()
@@ -937,6 +944,9 @@ public class GameManager : MonoBehaviour
             Vector3Int cell = battleDropCellsBuffer[randomIndex];
             battleDropCellsBuffer.RemoveAt(randomIndex);
 
+            if (!TryReserveItemSpawnCell(cell))
+                continue;
+
             Vector3 worldPosition = groundTilemap.GetCellCenterWorld(cell);
             Instantiate(prefab, worldPosition, Quaternion.identity);
         }
@@ -1039,32 +1049,7 @@ public class GameManager : MonoBehaviour
 
     bool CanSpawnBattleDropAtCell(Vector3Int cell)
     {
-        if (groundTilemap == null)
-            return false;
-
-        Vector3 worldPosition = groundTilemap.GetCellCenterWorld(cell);
-        Collider2D[] hits = Physics2D.OverlapCircleAll(worldPosition, 0.2f);
-
-        for (int i = 0; i < hits.Length; i++)
-        {
-            Collider2D hit = hits[i];
-            if (hit == null)
-                continue;
-
-            if (hit.GetComponent<ItemPickup>() != null || hit.GetComponentInParent<ItemPickup>() != null)
-                return false;
-
-            if (hit.CompareTag("Player"))
-                return false;
-
-            if (hit.GetComponent<MovementController>() != null || hit.GetComponentInParent<MovementController>() != null)
-                return false;
-
-            if (hit.GetComponent<Bomb>() != null || hit.GetComponentInParent<Bomb>() != null)
-                return false;
-        }
-
-        return true;
+        return CanSpawnItemAtCell(cell);
     }
 
     static void AddItemCopies(List<ItemType> results, ItemType itemType, int count)
@@ -1319,5 +1304,84 @@ public class GameManager : MonoBehaviour
             if (prefab != null)
                 orderToSpawn[indices[cursor++]] = prefab.gameObject;
         }
+    }
+
+    bool IsItemSpawnCellReserved(Vector3Int cell)
+    {
+        return reservedItemSpawnCells.Contains(cell) || pendingHiddenItemCells.Contains(cell);
+    }
+
+    void ReserveItemSpawnCell(Vector3Int cell)
+    {
+        if (!reservedItemSpawnCells.Add(cell))
+            return;
+
+        clearReservedItemSpawnCellsRoutine ??= StartCoroutine(ClearReservedItemSpawnCellsAtEndOfFrame());
+    }
+
+    IEnumerator ClearReservedItemSpawnCellsAtEndOfFrame()
+    {
+        yield return new WaitForEndOfFrame();
+        reservedItemSpawnCells.Clear();
+        clearReservedItemSpawnCellsRoutine = null;
+    }
+
+    public bool CanSpawnItemAtCell(Vector3Int cell)
+    {
+        if (groundTilemap == null)
+            return false;
+
+        if (IsItemSpawnCellReserved(cell))
+            return false;
+
+        Vector3 worldPosition = groundTilemap.GetCellCenterWorld(cell);
+        Collider2D[] hits = Physics2D.OverlapCircleAll(worldPosition, 0.2f);
+
+        for (int i = 0; i < hits.Length; i++)
+        {
+            Collider2D hit = hits[i];
+            if (hit == null)
+                continue;
+
+            if (hit.GetComponent<ItemPickup>() != null || hit.GetComponentInParent<ItemPickup>() != null)
+                return false;
+
+            if (hit.GetComponent<Bomb>() != null || hit.GetComponentInParent<Bomb>() != null)
+                return false;
+
+            if (hit.CompareTag("Player"))
+                return false;
+
+            if (hit.GetComponent<MovementController>() != null || hit.GetComponentInParent<MovementController>() != null)
+                return false;
+        }
+
+        return true;
+    }
+
+    public bool TryReserveItemSpawnCell(Vector3Int cell)
+    {
+        if (!CanSpawnItemAtCell(cell))
+            return false;
+
+        ReserveItemSpawnCell(cell);
+        return true;
+    }
+
+    public bool TryReservePendingHiddenItemCell(Vector3Int cell)
+    {
+        if (groundTilemap == null)
+            return false;
+
+        if (IsItemSpawnCellReserved(cell))
+            return false;
+
+        pendingHiddenItemCells.Add(cell);
+        return true;
+    }
+
+    public void ReleasePendingHiddenItemCell(Vector3Int cell)
+    {
+        pendingHiddenItemCells.Remove(cell);
     }
 }
