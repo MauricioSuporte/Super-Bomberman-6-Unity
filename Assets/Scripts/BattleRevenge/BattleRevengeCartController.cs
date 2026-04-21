@@ -63,6 +63,24 @@ public sealed class BattleRevengeCartController : MonoBehaviour
     [SerializeField, Range(0f, 1f)] private float indicatorMaxAlpha = 0.6f;
     [SerializeField, Min(0.01f)] private float indicatorBlinkSpeed = 6f;
 
+    [Header("Recharge Indicator")]
+    [SerializeField] private SpriteRenderer rechargeIndicatorRenderer;
+    [SerializeField] private string rechargeSpritesResourcesPath = "Sprites/MadBomber";
+    [SerializeField] private string rechargeSpriteNamePrefix = "spr_revenge_recharge_";
+
+    [Header("Recharge Indicator Visual")]
+    [SerializeField, Range(0f, 1f)] private float rechargeIndicatorMinAlpha = 0.18f;
+    [SerializeField, Range(0f, 1f)] private float rechargeIndicatorMaxAlpha = 0.45f;
+    [SerializeField, Min(0.01f)] private float rechargeIndicatorBlinkSpeed = 10f;
+
+    [Header("Recharge Indicator Offsets")]
+    [SerializeField] private Vector2 rechargeOffsetLeft;
+    [SerializeField] private Vector2 rechargeOffsetRight;
+    [SerializeField] private Vector2 rechargeOffsetTop;
+    [SerializeField] private Vector2 rechargeOffsetBottom;
+
+    private const int RechargeFrameCount = 33;
+
     private bool isAnimating;
     private Coroutine activeAnimationRoutine;
 
@@ -81,6 +99,9 @@ public sealed class BattleRevengeCartController : MonoBehaviour
     private float nextChargeStepAt;
     private int chargedLaunchDistanceTiles = 3;
 
+    private Sprite[] rechargeSprites;
+    private bool rechargeSpritesLoaded;
+
     public int OwnerPlayerId => ownerPlayerId;
 
     private float HorizontalInnerOffsetWorld => horizontalInnerOffsetTiles;
@@ -95,12 +116,14 @@ public sealed class BattleRevengeCartController : MonoBehaviour
     };
 
     public bool IsOnLeftEdge => currentEdge == CartEdge.Left;
-public bool IsOnRightEdge => currentEdge == CartEdge.Right;
+    public bool IsOnRightEdge => currentEdge == CartEdge.Right;
 
     void Awake()
     {
         RefreshVisualByEdge();
         HideLandingIndicator();
+        HideRechargeIndicator();
+        EnsureRechargeSpritesLoaded();
     }
 
     void Update()
@@ -178,6 +201,8 @@ public bool IsOnRightEdge => currentEdge == CartEdge.Right;
         transform.position = position;
         RefreshVisualByEdge();
 
+        UpdateRechargeIndicator();
+
         bool holdingActionA = input.Get(ownerPlayerId, PlayerAction.ActionA);
 
         if (holdingActionA)
@@ -223,6 +248,22 @@ public bool IsOnRightEdge => currentEdge == CartEdge.Right;
     void OnDisable()
     {
         HideLandingIndicator();
+        HideRechargeIndicator();
+    }
+
+    private void EnsureRechargeSpritesLoaded()
+    {
+        if (rechargeSpritesLoaded)
+            return;
+
+        rechargeSpritesLoaded = true;
+        rechargeSprites = new Sprite[RechargeFrameCount];
+
+        for (int i = 0; i < RechargeFrameCount; i++)
+        {
+            string resourcePath = $"{rechargeSpritesResourcesPath}/{rechargeSpriteNamePrefix}{i}";
+            rechargeSprites[i] = Resources.Load<Sprite>(resourcePath);
+        }
     }
 
     private void UpdateLandingIndicator()
@@ -257,6 +298,66 @@ public bool IsOnRightEdge => currentEdge == CartEdge.Right;
         Color c = landingIndicatorRenderer.color;
         c.a = indicatorMaxAlpha;
         landingIndicatorRenderer.color = c;
+    }
+
+    private void UpdateRechargeIndicator()
+    {
+        if (rechargeIndicatorRenderer == null)
+            return;
+
+        if (Time.unscaledTime >= nextBombAllowedAt)
+        {
+            HideRechargeIndicator();
+            return;
+        }
+
+        EnsureRechargeSpritesLoaded();
+
+        float totalCooldown = Mathf.Max(0.01f, system != null ? system.CartBombCooldownSeconds : 1f);
+        float remaining = Mathf.Max(0f, nextBombAllowedAt - Time.unscaledTime);
+        float normalized = 1f - Mathf.Clamp01(remaining / totalCooldown);
+
+        int frameIndex = Mathf.Clamp(
+            Mathf.RoundToInt(normalized * (RechargeFrameCount - 1)),
+            0,
+            RechargeFrameCount - 1);
+
+        if (rechargeSprites != null &&
+            frameIndex >= 0 &&
+            frameIndex < rechargeSprites.Length &&
+            rechargeSprites[frameIndex] != null)
+        {
+            rechargeIndicatorRenderer.sprite = rechargeSprites[frameIndex];
+        }
+
+        Vector3 basePos = transform.position;
+        Vector2 offset = GetRechargeOffset();
+
+        rechargeIndicatorRenderer.transform.position = new Vector3(
+            basePos.x + offset.x,
+            basePos.y + offset.y,
+            rechargeIndicatorRenderer.transform.position.z);
+
+        float blinkT = Mathf.PingPong(Time.unscaledTime * rechargeIndicatorBlinkSpeed, 1f);
+        float alpha = Mathf.Lerp(rechargeIndicatorMinAlpha, rechargeIndicatorMaxAlpha, blinkT);
+
+        Color c = rechargeIndicatorRenderer.color;
+        c.a = alpha;
+        rechargeIndicatorRenderer.color = c;
+
+        rechargeIndicatorRenderer.enabled = true;
+    }
+
+    private void HideRechargeIndicator()
+    {
+        if (rechargeIndicatorRenderer == null)
+            return;
+
+        rechargeIndicatorRenderer.enabled = false;
+
+        Color c = rechargeIndicatorRenderer.color;
+        c.a = rechargeIndicatorMaxAlpha;
+        rechargeIndicatorRenderer.color = c;
     }
 
     public void ConfigureBounds(float minX, float maxX, float minY, float maxY)
@@ -299,6 +400,8 @@ public bool IsOnRightEdge => currentEdge == CartEdge.Right;
 
         transform.position = spawnPosition;
         RefreshVisualByEdge();
+        HideLandingIndicator();
+        HideRechargeIndicator();
 
         if (!gameObject.activeSelf)
             gameObject.SetActive(true);
@@ -339,6 +442,8 @@ public bool IsOnRightEdge => currentEdge == CartEdge.Right;
 
         transform.position = spawnPosition;
         RefreshVisualByEdge();
+        HideLandingIndicator();
+        HideRechargeIndicator();
 
         if (!gameObject.activeSelf)
             gameObject.SetActive(true);
@@ -552,6 +657,15 @@ public bool IsOnRightEdge => currentEdge == CartEdge.Right;
         _ => Vector2.zero
     };
 
+    private Vector2 GetRechargeOffset() => currentEdge switch
+    {
+        CartEdge.Left => rechargeOffsetLeft,
+        CartEdge.Right => rechargeOffsetRight,
+        CartEdge.Top => rechargeOffsetTop,
+        CartEdge.Bottom => rechargeOffsetBottom,
+        _ => Vector2.zero
+    };
+
     private AnimatedSpriteRenderer GetActiveHeadRenderer() => currentEdge switch
     {
         CartEdge.Left => headLeft,
@@ -622,6 +736,7 @@ public bool IsOnRightEdge => currentEdge == CartEdge.Right;
         StopActiveAnimation();
         gameObject.SetActive(false);
     }
+
     private float GetMinAllowedXForHorizontalEdge()
     {
         return minEdgeX + blockedTilesOnTopBottomEdges;
