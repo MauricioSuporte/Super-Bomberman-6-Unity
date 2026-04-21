@@ -49,6 +49,7 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
     [Header("Audio")]
     [SerializeField] private AudioClip hurryUpSfx;
     [SerializeField] private AudioClip fallingTileSfx;
+    [SerializeField] private AudioClip[] hurryUpVoices;
 
     [Header("Music")]
     [SerializeField] private float fastMusicPitch = 1.2f;
@@ -118,6 +119,8 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
 
         ClampShadowValues();
 
+        LoadHurryUpVoicesIfNeeded();
+
         LogFlow(
             $"Awake: grid={(stageGrid != null ? stageGrid.name : "NULL")}, " +
             $"indestructible={(indestructibleTilemap != null ? indestructibleTilemap.name : "NULL")}, " +
@@ -128,6 +131,18 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
     void OnValidate()
     {
         ClampShadowValues();
+    }
+
+    void LoadHurryUpVoicesIfNeeded()
+    {
+        if (hurryUpVoices != null && hurryUpVoices.Length > 0)
+            return;
+
+        hurryUpVoices = new AudioClip[2];
+        hurryUpVoices[0] = Resources.Load<AudioClip>("Sounds/voicehurryup");
+        hurryUpVoices[1] = Resources.Load<AudioClip>("Sounds/voicehurryup2");
+
+        LogFlow($"Voices carregadas: {hurryUpVoices[0] != null}, {hurryUpVoices[1] != null}");
     }
 
     void ClampShadowValues()
@@ -994,11 +1009,31 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
         if (GameMusicController.Instance != null)
             GameMusicController.Instance.StopMusic();
 
-        if (hurryUpSfx != null && GameMusicController.Instance != null)
-            GameMusicController.Instance.PlayOneShotSfx(hurryUpSfx);
+        float longestClip = 0f;
 
-        float wait = hurryUpSfx != null ? hurryUpSfx.length : 0f;
-        wait += resumeMusicDelayAfterHurryUp;
+        if (hurryUpSfx != null && GameMusicController.Instance != null)
+        {
+            GameMusicController.Instance.PlayOneShotSfx(hurryUpSfx);
+            longestClip = Mathf.Max(longestClip, hurryUpSfx.length);
+
+            LogFlow($"HurryUp SFX tocado: {hurryUpSfx.name}");
+        }
+
+        if (hurryUpVoices != null && hurryUpVoices.Length > 0 && GameMusicController.Instance != null)
+        {
+            int index = Random.Range(0, hurryUpVoices.Length);
+            AudioClip voice = hurryUpVoices[index];
+
+            if (voice != null)
+            {
+                GameMusicController.Instance.PlayOneShotSfx(voice);
+                longestClip = Mathf.Max(longestClip, voice.length);
+
+                LogFlow($"Voice selecionada: {voice.name}");
+            }
+        }
+
+        float wait = longestClip + resumeMusicDelayAfterHurryUp;
 
         yield return new WaitForSeconds(wait);
 
