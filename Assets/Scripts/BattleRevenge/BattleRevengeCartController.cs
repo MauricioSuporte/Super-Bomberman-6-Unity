@@ -80,6 +80,8 @@ public sealed class BattleRevengeCartController : MonoBehaviour
     [SerializeField] private Vector2 rechargeOffsetBottom;
 
     private const int RechargeFrameCount = 33;
+    private const float PixelsPerUnit = 16f;
+    private const float MinSegmentLength = 0.0001f;
 
     private bool isAnimating;
     private Coroutine activeAnimationRoutine;
@@ -101,6 +103,9 @@ public sealed class BattleRevengeCartController : MonoBehaviour
 
     private Sprite[] rechargeSprites;
     private bool rechargeSpritesLoaded;
+
+    // posição lógica ao longo do contorno permitido
+    private float perimeterPosition;
 
     public int OwnerPlayerId => ownerPlayerId;
 
@@ -141,66 +146,10 @@ public sealed class BattleRevengeCartController : MonoBehaviour
         if (input == null)
             return;
 
-        bool holdUp = input.Get(ownerPlayerId, PlayerAction.MoveUp);
-        bool holdDown = input.Get(ownerPlayerId, PlayerAction.MoveDown);
-        bool holdLeft = input.Get(ownerPlayerId, PlayerAction.MoveLeft);
-        bool holdRight = input.Get(ownerPlayerId, PlayerAction.MoveRight);
+        if (TryGetTargetWallFromInput(input, out CartEdge targetWall))
+            MoveTowardWallMidpoint(targetWall);
 
-        float verticalAxis = holdUp && !holdDown ? 1f :
-                             holdDown && !holdUp ? -1f : 0f;
-
-        float horizontalAxis = holdRight && !holdLeft ? 1f :
-                               holdLeft && !holdRight ? -1f : 0f;
-
-        Vector3 position = transform.position;
-
-        switch (currentEdge)
-        {
-            case CartEdge.Left:
-            case CartEdge.Right:
-                {
-                    if (verticalAxis != 0f)
-                    {
-                        float minAllowedY = GetMinAllowedYForVerticalEdge();
-                        float maxAllowedY = GetMaxAllowedYForVerticalEdge();
-
-                        position.y = Mathf.Clamp(
-                            position.y + (verticalAxis * moveSpeed * Time.unscaledDeltaTime),
-                            minAllowedY,
-                            maxAllowedY);
-                    }
-
-                    if (horizontalAxis != 0f)
-                        currentEdge = position.y >= GetVerticalMidpoint() ? CartEdge.Top : CartEdge.Bottom;
-
-                    break;
-                }
-
-            case CartEdge.Top:
-            case CartEdge.Bottom:
-                {
-                    if (horizontalAxis != 0f)
-                    {
-                        float minAllowedX = GetMinAllowedXForHorizontalEdge();
-                        float maxAllowedX = GetMaxAllowedXForHorizontalEdge();
-
-                        position.x = Mathf.Clamp(
-                            position.x + (horizontalAxis * moveSpeed * Time.unscaledDeltaTime),
-                            minAllowedX,
-                            maxAllowedX);
-                    }
-
-                    if (verticalAxis != 0f)
-                        currentEdge = position.x >= GetHorizontalMidpoint() ? CartEdge.Right : CartEdge.Left;
-
-                    break;
-                }
-        }
-
-        ApplyEdgePosition(ref position);
-        transform.position = position;
         RefreshVisualByEdge();
-
         UpdateRechargeIndicator();
 
         bool holdingActionA = input.Get(ownerPlayerId, PlayerAction.ActionA);
@@ -367,13 +316,10 @@ public sealed class BattleRevengeCartController : MonoBehaviour
         minEdgeY = Mathf.Min(minY, maxY);
         maxEdgeY = Mathf.Max(minY, maxY);
 
-        Vector3 position = transform.position;
-        position.x = Mathf.Clamp(position.x, minEdgeX, maxEdgeX);
-        position.y = Mathf.Clamp(position.y, minEdgeY, maxEdgeY);
+        Vector2 logicalPosition = GetLogicalPositionForCurrentEdgeCenter();
+        perimeterPosition = GetPerimeterPositionFromEdge(currentEdge, logicalPosition);
 
-        ApplyEdgePosition(ref position);
-        transform.position = position;
-
+        ApplyTransformFromPerimeterPosition();
         RefreshVisualByEdge();
     }
 
@@ -391,9 +337,10 @@ public sealed class BattleRevengeCartController : MonoBehaviour
         ConfigureHeadVisuals(sourceVisuals);
         currentEdge = ResolveEdgeFromDirection(inwardDirection);
 
-        Vector3 targetPosition = new Vector3(startPosition.x, startPosition.y, 0f);
-        ApplyEdgePosition(ref targetPosition);
+        Vector2 logicalTarget = ClampLogicalPositionToEdge(currentEdge, startPosition);
+        perimeterPosition = GetPerimeterPositionFromEdge(currentEdge, logicalTarget);
 
+        Vector3 targetPosition = BuildWorldPosition(currentEdge, logicalTarget);
         Vector3 spawnPosition = GetOffscreenPosition(targetPosition);
 
         StopActiveAnimation();
@@ -433,9 +380,10 @@ public sealed class BattleRevengeCartController : MonoBehaviour
         ConfigureHeadVisuals(newOwnerVisuals);
         currentEdge = ResolveEdgeFromDirection(inwardDirection);
 
-        Vector3 targetPosition = new Vector3(startPosition.x, startPosition.y, 0f);
-        ApplyEdgePosition(ref targetPosition);
+        Vector2 logicalTarget = ClampLogicalPositionToEdge(currentEdge, startPosition);
+        perimeterPosition = GetPerimeterPositionFromEdge(currentEdge, logicalTarget);
 
+        Vector3 targetPosition = BuildWorldPosition(currentEdge, logicalTarget);
         Vector3 spawnPosition = GetOffscreenPosition(targetPosition);
 
         StopActiveAnimation();
@@ -514,11 +462,9 @@ public sealed class BattleRevengeCartController : MonoBehaviour
 
     private Vector3 PixelPerfectMove(Vector3 from, Vector3 to, float t)
     {
-        const float pixelsPerUnit = 16f;
-
         Vector3 raw = Vector3.Lerp(from, to, t);
-        raw.x = Mathf.Round(raw.x * pixelsPerUnit) / pixelsPerUnit;
-        raw.y = Mathf.Round(raw.y * pixelsPerUnit) / pixelsPerUnit;
+        raw.x = Mathf.Round(raw.x * PixelsPerUnit) / PixelsPerUnit;
+        raw.y = Mathf.Round(raw.y * PixelsPerUnit) / PixelsPerUnit;
         return raw;
     }
 
@@ -568,48 +514,6 @@ public sealed class BattleRevengeCartController : MonoBehaviour
         }
 
         ApplyHeadOffsetForCurrentEdge();
-    }
-
-    private void ApplyEdgePosition(ref Vector3 position)
-    {
-        switch (currentEdge)
-        {
-            case CartEdge.Left:
-                position.x = Mathf.Min(maxEdgeX, minEdgeX + HorizontalInnerOffsetWorld);
-                position.y = Mathf.Clamp(
-                    position.y,
-                    GetMinAllowedYForVerticalEdge(),
-                    GetMaxAllowedYForVerticalEdge());
-                break;
-
-            case CartEdge.Right:
-                position.x = Mathf.Max(minEdgeX, maxEdgeX - HorizontalInnerOffsetWorld);
-                position.y = Mathf.Clamp(
-                    position.y,
-                    GetMinAllowedYForVerticalEdge(),
-                    GetMaxAllowedYForVerticalEdge());
-                break;
-
-            case CartEdge.Top:
-                position.y = maxEdgeY;
-                position.x = Mathf.Clamp(
-                    position.x,
-                    GetMinAllowedXForHorizontalEdge(),
-                    GetMaxAllowedXForHorizontalEdge());
-                break;
-
-            case CartEdge.Bottom:
-                position.y = minEdgeY;
-                position.x = Mathf.Clamp(
-                    position.x,
-                    GetMinAllowedXForHorizontalEdge(),
-                    GetMaxAllowedXForHorizontalEdge());
-                break;
-        }
-
-        Vector2 cartOffset = GetCartOffset();
-        position.x += cartOffset.x;
-        position.y += cartOffset.y;
     }
 
     private void ApplyHeadOffsetForCurrentEdge()
@@ -719,9 +623,6 @@ public sealed class BattleRevengeCartController : MonoBehaviour
             sr.enabled = active;
     }
 
-    private float GetHorizontalMidpoint() => (minEdgeX + maxEdgeX) * 0.5f;
-    private float GetVerticalMidpoint() => (minEdgeY + maxEdgeY) * 0.5f;
-
     private static CartEdge ResolveEdgeFromDirection(Vector2 inwardDirection)
     {
         if (inwardDirection == Vector2.right) return CartEdge.Left;
@@ -755,5 +656,326 @@ public sealed class BattleRevengeCartController : MonoBehaviour
     private float GetMaxAllowedYForVerticalEdge()
     {
         return maxEdgeY - blockedTilesOnLeftRightEdges;
+    }
+
+    private float GetTopSegmentLength()
+    {
+        return Mathf.Max(MinSegmentLength, GetMaxAllowedXForHorizontalEdge() - GetMinAllowedXForHorizontalEdge());
+    }
+
+    private float GetBottomSegmentLength()
+    {
+        return Mathf.Max(MinSegmentLength, GetMaxAllowedXForHorizontalEdge() - GetMinAllowedXForHorizontalEdge());
+    }
+
+    private float GetLeftSegmentLength()
+    {
+        return Mathf.Max(MinSegmentLength, GetMaxAllowedYForVerticalEdge() - GetMinAllowedYForVerticalEdge());
+    }
+
+    private float GetRightSegmentLength()
+    {
+        return Mathf.Max(MinSegmentLength, GetMaxAllowedYForVerticalEdge() - GetMinAllowedYForVerticalEdge());
+    }
+
+    private float GetPerimeterLength()
+    {
+        return GetTopSegmentLength() + GetRightSegmentLength() + GetBottomSegmentLength() + GetLeftSegmentLength();
+    }
+
+    private float GetLogicalLeftX()
+    {
+        return Mathf.Min(maxEdgeX, minEdgeX + HorizontalInnerOffsetWorld);
+    }
+
+    private float GetLogicalRightX()
+    {
+        return Mathf.Max(minEdgeX, maxEdgeX - HorizontalInnerOffsetWorld);
+    }
+
+    private float GetLogicalTopY()
+    {
+        return maxEdgeY;
+    }
+
+    private float GetLogicalBottomY()
+    {
+        return minEdgeY;
+    }
+
+    private Vector2 GetLogicalPositionForCurrentEdgeCenter()
+    {
+        switch (currentEdge)
+        {
+            case CartEdge.Left:
+                return new Vector2(GetLogicalLeftX(), (GetMinAllowedYForVerticalEdge() + GetMaxAllowedYForVerticalEdge()) * 0.5f);
+
+            case CartEdge.Right:
+                return new Vector2(GetLogicalRightX(), (GetMinAllowedYForVerticalEdge() + GetMaxAllowedYForVerticalEdge()) * 0.5f);
+
+            case CartEdge.Top:
+                return new Vector2((GetMinAllowedXForHorizontalEdge() + GetMaxAllowedXForHorizontalEdge()) * 0.5f, GetLogicalTopY());
+
+            case CartEdge.Bottom:
+                return new Vector2((GetMinAllowedXForHorizontalEdge() + GetMaxAllowedXForHorizontalEdge()) * 0.5f, GetLogicalBottomY());
+
+            default:
+                return Vector2.zero;
+        }
+    }
+
+    private Vector2 ClampLogicalPositionToEdge(CartEdge edge, Vector2 rawPosition)
+    {
+        switch (edge)
+        {
+            case CartEdge.Left:
+                return new Vector2(
+                    GetLogicalLeftX(),
+                    Mathf.Clamp(rawPosition.y, GetMinAllowedYForVerticalEdge(), GetMaxAllowedYForVerticalEdge()));
+
+            case CartEdge.Right:
+                return new Vector2(
+                    GetLogicalRightX(),
+                    Mathf.Clamp(rawPosition.y, GetMinAllowedYForVerticalEdge(), GetMaxAllowedYForVerticalEdge()));
+
+            case CartEdge.Top:
+                return new Vector2(
+                    Mathf.Clamp(rawPosition.x, GetMinAllowedXForHorizontalEdge(), GetMaxAllowedXForHorizontalEdge()),
+                    GetLogicalTopY());
+
+            case CartEdge.Bottom:
+                return new Vector2(
+                    Mathf.Clamp(rawPosition.x, GetMinAllowedXForHorizontalEdge(), GetMaxAllowedXForHorizontalEdge()),
+                    GetLogicalBottomY());
+
+            default:
+                return rawPosition;
+        }
+    }
+
+    private float NormalizePerimeterPosition(float value)
+    {
+        float perimeter = GetPerimeterLength();
+        if (perimeter <= 0f)
+            return 0f;
+
+        return Mathf.Repeat(value, perimeter);
+    }
+
+    private float GetPerimeterPositionFromEdge(CartEdge edge, Vector2 logicalPosition)
+    {
+        float minX = GetMinAllowedXForHorizontalEdge();
+        float maxX = GetMaxAllowedXForHorizontalEdge();
+        float minY = GetMinAllowedYForVerticalEdge();
+        float maxY = GetMaxAllowedYForVerticalEdge();
+
+        float topLen = GetTopSegmentLength();
+        float rightLen = GetRightSegmentLength();
+        float bottomLen = GetBottomSegmentLength();
+
+        switch (edge)
+        {
+            case CartEdge.Top:
+                return Mathf.Clamp(logicalPosition.x, minX, maxX) - minX;
+
+            case CartEdge.Right:
+                return topLen + (maxY - Mathf.Clamp(logicalPosition.y, minY, maxY));
+
+            case CartEdge.Bottom:
+                return topLen + rightLen + (maxX - Mathf.Clamp(logicalPosition.x, minX, maxX));
+
+            case CartEdge.Left:
+                return topLen + rightLen + bottomLen + (Mathf.Clamp(logicalPosition.y, minY, maxY) - minY);
+
+            default:
+                return 0f;
+        }
+    }
+
+    private void GetEdgeAndLogicalPositionFromPerimeter(float perimeterValue, out CartEdge edge, out Vector2 logicalPosition)
+    {
+        float s = NormalizePerimeterPosition(perimeterValue);
+
+        float minX = GetMinAllowedXForHorizontalEdge();
+        float maxX = GetMaxAllowedXForHorizontalEdge();
+        float minY = GetMinAllowedYForVerticalEdge();
+        float maxY = GetMaxAllowedYForVerticalEdge();
+
+        float leftX = GetLogicalLeftX();
+        float rightX = GetLogicalRightX();
+        float topY = GetLogicalTopY();
+        float bottomY = GetLogicalBottomY();
+
+        float topLen = GetTopSegmentLength();
+        float rightLen = GetRightSegmentLength();
+        float bottomLen = GetBottomSegmentLength();
+        float leftLen = GetLeftSegmentLength();
+
+        if (s < topLen)
+        {
+            edge = CartEdge.Top;
+            logicalPosition = new Vector2(minX + s, topY);
+            return;
+        }
+
+        s -= topLen;
+        if (s < rightLen)
+        {
+            edge = CartEdge.Right;
+            logicalPosition = new Vector2(rightX, maxY - s);
+            return;
+        }
+
+        s -= rightLen;
+        if (s < bottomLen)
+        {
+            edge = CartEdge.Bottom;
+            logicalPosition = new Vector2(maxX - s, bottomY);
+            return;
+        }
+
+        s -= bottomLen;
+        if (s < leftLen)
+        {
+            edge = CartEdge.Left;
+            logicalPosition = new Vector2(leftX, minY + s);
+            return;
+        }
+
+        edge = CartEdge.Top;
+        logicalPosition = new Vector2(minX, topY);
+    }
+
+    private Vector3 BuildWorldPosition(CartEdge edge, Vector2 logicalPosition)
+    {
+        Vector2 offset = edge switch
+        {
+            CartEdge.Left => offsetLeft,
+            CartEdge.Right => offsetRight,
+            CartEdge.Top => offsetTop,
+            CartEdge.Bottom => offsetBottom,
+            _ => Vector2.zero
+        };
+
+        Vector3 result = new Vector3(
+            logicalPosition.x + offset.x,
+            logicalPosition.y + offset.y,
+            0f);
+
+        result.x = Mathf.Round(result.x * PixelsPerUnit) / PixelsPerUnit;
+        result.y = Mathf.Round(result.y * PixelsPerUnit) / PixelsPerUnit;
+        return result;
+    }
+
+    private void ApplyTransformFromPerimeterPosition()
+    {
+        GetEdgeAndLogicalPositionFromPerimeter(perimeterPosition, out CartEdge edge, out Vector2 logicalPosition);
+        currentEdge = edge;
+        transform.position = BuildWorldPosition(edge, logicalPosition);
+    }
+
+    private float GetWallMidpointPerimeterPosition(CartEdge wall)
+    {
+        float topLen = GetTopSegmentLength();
+        float rightLen = GetRightSegmentLength();
+        float bottomLen = GetBottomSegmentLength();
+        float leftLen = GetLeftSegmentLength();
+
+        switch (wall)
+        {
+            case CartEdge.Top:
+                return topLen * 0.5f;
+
+            case CartEdge.Right:
+                return topLen + (rightLen * 0.5f);
+
+            case CartEdge.Bottom:
+                return topLen + rightLen + (bottomLen * 0.5f);
+
+            case CartEdge.Left:
+                return topLen + rightLen + bottomLen + (leftLen * 0.5f);
+
+            default:
+                return 0f;
+        }
+    }
+
+    private float GetShortestPerimeterDelta(float from, float to)
+    {
+        float perimeter = GetPerimeterLength();
+        if (perimeter <= 0f)
+            return 0f;
+
+        float clockwise = Mathf.Repeat(to - from, perimeter);
+        float counterClockwise = clockwise - perimeter;
+
+        return Mathf.Abs(clockwise) <= Mathf.Abs(counterClockwise)
+            ? clockwise
+            : counterClockwise;
+    }
+
+    private void MoveTowardWallMidpoint(CartEdge targetWall)
+    {
+        float targetPerimeter = GetWallMidpointPerimeterPosition(targetWall);
+        float delta = GetShortestPerimeterDelta(perimeterPosition, targetPerimeter);
+
+        if (Mathf.Approximately(delta, 0f))
+            return;
+
+        float step = moveSpeed * Time.unscaledDeltaTime;
+        float move = Mathf.Clamp(delta, -step, step);
+
+        perimeterPosition = NormalizePerimeterPosition(perimeterPosition + move);
+        ApplyTransformFromPerimeterPosition();
+    }
+
+    private bool TryGetTargetWallFromInput(PlayerInputManager input, out CartEdge targetWall)
+    {
+        bool holdUp = input.Get(ownerPlayerId, PlayerAction.MoveUp);
+        bool holdDown = input.Get(ownerPlayerId, PlayerAction.MoveDown);
+        bool holdLeft = input.Get(ownerPlayerId, PlayerAction.MoveLeft);
+        bool holdRight = input.Get(ownerPlayerId, PlayerAction.MoveRight);
+
+        bool canUp = holdUp && !holdDown;
+        bool canDown = holdDown && !holdUp;
+        bool canLeft = holdLeft && !holdRight;
+        bool canRight = holdRight && !holdLeft;
+
+        bool found = false;
+        float bestDistance = float.MaxValue;
+        CartEdge bestWall = currentEdge;
+
+        if (canLeft)
+            EvaluateTargetCandidate(CartEdge.Left, ref found, ref bestDistance, ref bestWall);
+
+        if (canRight)
+            EvaluateTargetCandidate(CartEdge.Right, ref found, ref bestDistance, ref bestWall);
+
+        if (canUp)
+            EvaluateTargetCandidate(CartEdge.Top, ref found, ref bestDistance, ref bestWall);
+
+        if (canDown)
+            EvaluateTargetCandidate(CartEdge.Bottom, ref found, ref bestDistance, ref bestWall);
+
+        targetWall = bestWall;
+        return found;
+    }
+
+    private void EvaluateTargetCandidate(
+        CartEdge candidate,
+        ref bool found,
+        ref float bestDistance,
+        ref CartEdge bestWall)
+    {
+        float targetPerimeter = GetWallMidpointPerimeterPosition(candidate);
+        float delta = GetShortestPerimeterDelta(perimeterPosition, targetPerimeter);
+        float distance = Mathf.Abs(delta);
+
+        if (!found || distance < bestDistance)
+        {
+            found = true;
+            bestDistance = distance;
+            bestWall = candidate;
+        }
     }
 }
