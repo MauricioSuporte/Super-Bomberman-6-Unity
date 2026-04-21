@@ -8,15 +8,15 @@ using UnityEngine.Tilemaps;
 [DisallowMultipleComponent]
 public sealed class BattleRevengeSystem : MonoBehaviour
 {
-    [SerializeField] private BattleRevengeCartController cartPrefab;
+    [SerializeField] private BattleRevengeController cartPrefab;
     private readonly float cartBombCooldownSeconds = 2f;
     [SerializeField, Min(1)] private int cartBombDistanceTiles = 3;
     [SerializeField, Min(1)] private int revengeBombRadius = 2;
     [SerializeField, Min(0.1f)] private float respawnInvulnerabilitySeconds = 2f;
     [SerializeField, Min(0.01f)] private float respawnBlinkInterval = 0.08f;
 
-    private readonly Dictionary<int, BattleRevengeCartController> activeCartsByOwner = new();
-    private readonly Stack<BattleRevengeCartController> cartPool = new();
+    private readonly Dictionary<int, BattleRevengeController> activeCartsByOwner = new();
+    private readonly Stack<BattleRevengeController> cartPool = new();
     private readonly Dictionary<int, PlayerPersistentStats.PlayerState> baseLoadoutsByPlayer = new();
     private readonly Dictionary<int, MovementController> playersById = new();
 
@@ -76,7 +76,7 @@ public sealed class BattleRevengeSystem : MonoBehaviour
         if (activeCartsByOwner.ContainsKey(deadPlayer.PlayerId))
             return;
 
-        BattleRevengeCartController cart = AcquireCart();
+        BattleRevengeController cart = AcquireCart();
         if (cart == null)
             return;
 
@@ -105,7 +105,7 @@ public sealed class BattleRevengeSystem : MonoBehaviour
         if (respawnPlayerId == victim.PlayerId)
             return false;
 
-        if (!activeCartsByOwner.TryGetValue(respawnPlayerId, out BattleRevengeCartController cart) || cart == null)
+        if (!activeCartsByOwner.TryGetValue(respawnPlayerId, out BattleRevengeController cart) || cart == null)
             return false;
 
         EnsureBattleSetupCached();
@@ -194,7 +194,7 @@ public sealed class BattleRevengeSystem : MonoBehaviour
     }
 
     private IEnumerator PlayRevengeReplacementJump(
-        BattleRevengeCartController cart,
+        BattleRevengeController cart,
         MovementController respawningPlayer,
         Vector3 startWorldPos,
         Vector3 targetWorldPos,
@@ -267,12 +267,12 @@ public sealed class BattleRevengeSystem : MonoBehaviour
         return delta.y >= 0f ? Vector2.up : Vector2.down;
     }
 
-    public bool TryLaunchBombFromCart(BattleRevengeCartController cart)
+    public bool TryLaunchBombFromCart(BattleRevengeController cart)
     {
         return TryLaunchBombFromCart(cart, cartBombDistanceTiles);
     }
 
-    public bool TryLaunchBombFromCart(BattleRevengeCartController cart, int distanceTiles)
+    public bool TryLaunchBombFromCart(BattleRevengeController cart, int distanceTiles)
     {
         if (!IsRuntimeEnabled || cart == null)
             return false;
@@ -300,7 +300,7 @@ public sealed class BattleRevengeSystem : MonoBehaviour
             revengeBombRadius);
     }
 
-    public Vector2 GetPredictedLandingPosition(BattleRevengeCartController cart, int distanceTiles)
+    public Vector2 GetPredictedLandingPosition(BattleRevengeController cart, int distanceTiles)
     {
         if (cart == null)
             return Vector2.zero;
@@ -457,11 +457,11 @@ public sealed class BattleRevengeSystem : MonoBehaviour
         return result;
     }
 
-    private BattleRevengeCartController AcquireCart()
+    private BattleRevengeController AcquireCart()
     {
         while (cartPool.Count > 0)
         {
-            BattleRevengeCartController pooledCart = cartPool.Pop();
+            BattleRevengeController pooledCart = cartPool.Pop();
             if (pooledCart != null)
                 return pooledCart;
         }

@@ -3,7 +3,7 @@ using System.Collections;
 using UnityEngine;
 
 [DisallowMultipleComponent]
-public sealed class BattleRevengeCartController : MonoBehaviour
+public sealed class BattleRevengeController : MonoBehaviour
 {
     private enum CartEdge
     {

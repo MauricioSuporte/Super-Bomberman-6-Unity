@@ -16,7 +16,8 @@ public sealed class BattleModeRules : MonoBehaviour
         ThreeMinutes = 2,
         FourMinutes = 3,
         FiveMinutes = 4,
-        Infinite = 5
+        Infinite = 5,
+        UmE10 = 6
     }
 
     public enum TeamId
@@ -41,6 +42,7 @@ public sealed class BattleModeRules : MonoBehaviour
     [SerializeField, Min(1)] private int victoriesToWinMatch = 3;
     [SerializeField] private RoundTimerMode roundTimer = RoundTimerMode.ThreeMinutes;
     [SerializeField] private bool enableRevengeBomber;
+    [SerializeField] private bool enableSuddenDeath = true;
 
     [Header("Teams")]
     [SerializeField] private PlayerTeamEntry[] playerTeams = new PlayerTeamEntry[GameSession.MaxPlayerId];
@@ -52,6 +54,7 @@ public sealed class BattleModeRules : MonoBehaviour
     public bool UsesRoundTimer => roundTimer != RoundTimerMode.Infinite;
     public float RoundTimerSeconds => GetRoundTimerSeconds(roundTimer);
     public bool EnableRevengeBomber => enableRevengeBomber;
+    public bool EnableSuddenDeath => enableSuddenDeath;
 
     void Awake()
     {
@@ -124,6 +127,8 @@ public sealed class BattleModeRules : MonoBehaviour
                 return 240f;
             case RoundTimerMode.FiveMinutes:
                 return 300f;
+            case RoundTimerMode.UmE10:
+                return 70;
             default:
                 return Mathf.Infinity;
         }

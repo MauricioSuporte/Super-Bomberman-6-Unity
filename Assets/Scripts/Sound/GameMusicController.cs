@@ -85,4 +85,31 @@ public class GameMusicController : MonoBehaviour
     {
         return musicSource;
     }
+
+    public void PlayOneShotSfx(AudioClip clip, float volume = 1f)
+    {
+        if (sfxSource == null || clip == null)
+            return;
+
+        sfxSource.PlayOneShot(clip, volume);
+    }
+
+    public void ResumeMusicWithPitch(float pitch)
+    {
+        if (musicSource == null)
+            return;
+
+        musicSource.pitch = pitch;
+
+        if (musicSource.clip != null)
+            musicSource.Play();
+    }
+
+    public void ResetMusicPitch()
+    {
+        if (musicSource == null)
+            return;
+
+        musicSource.pitch = 1f;
+    }
 }
