@@ -46,6 +46,10 @@ public sealed class BattleRevengeCartController : MonoBehaviour
     [Header("Entrance / Exit Animation")]
     [SerializeField, Min(0.01f)] private float enterDuration = 0.35f;
     [SerializeField, Min(0.01f)] private float exitDuration = 0.25f;
+
+    [Header("Blocked Edge Tiles")]
+    [SerializeField, Min(0f)] private float blockedTilesOnLeftRightEdges = 1f;
+    [SerializeField, Min(0f)] private float blockedTilesOnTopBottomEdges = 2f;
     [SerializeField, Min(0.1f)] private float offscreenDistanceTiles = 2f;
 
     private bool isAnimating;
@@ -115,10 +119,13 @@ public sealed class BattleRevengeCartController : MonoBehaviour
                 {
                     if (verticalAxis != 0f)
                     {
+                        float minAllowedY = GetMinAllowedYForVerticalEdge();
+                        float maxAllowedY = GetMaxAllowedYForVerticalEdge();
+
                         position.y = Mathf.Clamp(
                             position.y + (verticalAxis * moveSpeed * Time.unscaledDeltaTime),
-                            minEdgeY,
-                            maxEdgeY);
+                            minAllowedY,
+                            maxAllowedY);
                     }
 
                     if (horizontalAxis != 0f)
@@ -132,10 +139,13 @@ public sealed class BattleRevengeCartController : MonoBehaviour
                 {
                     if (horizontalAxis != 0f)
                     {
+                        float minAllowedX = GetMinAllowedXForHorizontalEdge();
+                        float maxAllowedX = GetMaxAllowedXForHorizontalEdge();
+
                         position.x = Mathf.Clamp(
                             position.x + (horizontalAxis * moveSpeed * Time.unscaledDeltaTime),
-                            minEdgeX,
-                            maxEdgeX);
+                            minAllowedX,
+                            maxAllowedX);
                     }
 
                     if (verticalAxis != 0f)
@@ -369,22 +379,38 @@ public sealed class BattleRevengeCartController : MonoBehaviour
 
     private void ApplyEdgePosition(ref Vector3 position)
     {
-        position.x = Mathf.Clamp(position.x, minEdgeX, maxEdgeX);
-        position.y = Mathf.Clamp(position.y, minEdgeY, maxEdgeY);
-
         switch (currentEdge)
         {
             case CartEdge.Left:
                 position.x = Mathf.Min(maxEdgeX, minEdgeX + HorizontalInnerOffsetWorld);
+                position.y = Mathf.Clamp(
+                    position.y,
+                    GetMinAllowedYForVerticalEdge(),
+                    GetMaxAllowedYForVerticalEdge());
                 break;
+
             case CartEdge.Right:
                 position.x = Mathf.Max(minEdgeX, maxEdgeX - HorizontalInnerOffsetWorld);
+                position.y = Mathf.Clamp(
+                    position.y,
+                    GetMinAllowedYForVerticalEdge(),
+                    GetMaxAllowedYForVerticalEdge());
                 break;
+
             case CartEdge.Top:
                 position.y = maxEdgeY;
+                position.x = Mathf.Clamp(
+                    position.x,
+                    GetMinAllowedXForHorizontalEdge(),
+                    GetMaxAllowedXForHorizontalEdge());
                 break;
+
             case CartEdge.Bottom:
                 position.y = minEdgeY;
+                position.x = Mathf.Clamp(
+                    position.x,
+                    GetMinAllowedXForHorizontalEdge(),
+                    GetMaxAllowedXForHorizontalEdge());
                 break;
         }
 
@@ -507,5 +533,24 @@ public sealed class BattleRevengeCartController : MonoBehaviour
     {
         StopActiveAnimation();
         gameObject.SetActive(false);
+    }
+    private float GetMinAllowedXForHorizontalEdge()
+    {
+        return minEdgeX + blockedTilesOnTopBottomEdges;
+    }
+
+    private float GetMaxAllowedXForHorizontalEdge()
+    {
+        return maxEdgeX - blockedTilesOnTopBottomEdges;
+    }
+
+    private float GetMinAllowedYForVerticalEdge()
+    {
+        return minEdgeY + blockedTilesOnLeftRightEdges;
+    }
+
+    private float GetMaxAllowedYForVerticalEdge()
+    {
+        return maxEdgeY - blockedTilesOnLeftRightEdges;
     }
 }
