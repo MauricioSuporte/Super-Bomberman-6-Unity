@@ -269,6 +269,11 @@ public sealed class BattleRevengeSystem : MonoBehaviour
 
     public bool TryLaunchBombFromCart(BattleRevengeCartController cart)
     {
+        return TryLaunchBombFromCart(cart, cartBombDistanceTiles);
+    }
+
+    public bool TryLaunchBombFromCart(BattleRevengeCartController cart, int distanceTiles)
+    {
         if (!IsRuntimeEnabled || cart == null)
             return false;
 
@@ -286,19 +291,25 @@ public sealed class BattleRevengeSystem : MonoBehaviour
 
         Vector2 finalStart = snappedPos;
 
-        Debug.Log("[REVENGE LAUNCH]");
-        Debug.Log($"Cart Edge Left: {cart.IsOnLeftEdge}");
-        Debug.Log($"Cart Edge Right: {cart.IsOnRightEdge}");
-        Debug.Log($"Dir: {launchDirection}");
-        Debug.Log($"Raw Cart Pos: {rawCartPos}");
-        Debug.Log($"Snapped Pos: {snappedPos}");
-        Debug.Log($"Final Start Pos: {finalStart}");
+        int clampedDistance = Mathf.Clamp(distanceTiles, 3, 7);
 
         return bombController.LaunchRevengeBomb(
             finalStart,
             launchDirection,
-            cartBombDistanceTiles,
+            clampedDistance,
             revengeBombRadius);
+    }
+
+    public Vector2 GetPredictedLandingPosition(BattleRevengeCartController cart, int distanceTiles)
+    {
+        if (cart == null)
+            return Vector2.zero;
+
+        Vector2 start = GetArenaSnapPosition(cart.transform.position);
+        Vector2 direction = cart.LaunchDirection.normalized;
+        int clampedDistance = Mathf.Clamp(distanceTiles, 3, 7);
+
+        return start + (direction * clampedDistance);
     }
 
     private void EnsureBattleSetupCached()

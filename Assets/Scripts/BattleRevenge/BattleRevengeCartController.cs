@@ -52,6 +52,17 @@ public sealed class BattleRevengeCartController : MonoBehaviour
     [SerializeField, Min(0f)] private float blockedTilesOnTopBottomEdges = 2f;
     [SerializeField, Min(0.1f)] private float offscreenDistanceTiles = 2f;
 
+    [Header("Charged Throw")]
+    [SerializeField, Min(3)] private int minLaunchDistanceTiles = 3;
+    [SerializeField, Min(3)] private int maxLaunchDistanceTiles = 7;
+    [SerializeField, Min(0.01f)] private float chargeStepSeconds = 0.12f;
+
+    [Header("Landing Indicator")]
+    [SerializeField] private SpriteRenderer landingIndicatorRenderer;
+    [SerializeField, Range(0f, 1f)] private float indicatorMinAlpha = 0.25f;
+    [SerializeField, Range(0f, 1f)] private float indicatorMaxAlpha = 0.6f;
+    [SerializeField, Min(0.01f)] private float indicatorBlinkSpeed = 6f;
+
     private bool isAnimating;
     private Coroutine activeAnimationRoutine;
 
@@ -65,6 +76,10 @@ public sealed class BattleRevengeCartController : MonoBehaviour
     private float maxEdgeY;
 
     private float nextBombAllowedAt;
+
+    private bool isChargingLaunch;
+    private float nextChargeStepAt;
+    private int chargedLaunchDistanceTiles = 3;
 
     public int OwnerPlayerId => ownerPlayerId;
 
@@ -80,11 +95,12 @@ public sealed class BattleRevengeCartController : MonoBehaviour
     };
 
     public bool IsOnLeftEdge => currentEdge == CartEdge.Left;
-    public bool IsOnRightEdge => currentEdge == CartEdge.Right;
+public bool IsOnRightEdge => currentEdge == CartEdge.Right;
 
     void Awake()
     {
         RefreshVisualByEdge();
+        HideLandingIndicator();
     }
 
     void Update()
@@ -162,16 +178,85 @@ public sealed class BattleRevengeCartController : MonoBehaviour
         transform.position = position;
         RefreshVisualByEdge();
 
-        if (Time.unscaledTime < nextBombAllowedAt)
+        bool holdingActionA = input.Get(ownerPlayerId, PlayerAction.ActionA);
+
+        if (holdingActionA)
+        {
+            if (!isChargingLaunch)
+            {
+                isChargingLaunch = true;
+                chargedLaunchDistanceTiles = Mathf.Clamp(minLaunchDistanceTiles, 3, 7);
+                nextChargeStepAt = Time.unscaledTime + chargeStepSeconds;
+            }
+            else if (Time.unscaledTime >= nextChargeStepAt)
+            {
+                if (chargedLaunchDistanceTiles < Mathf.Min(maxLaunchDistanceTiles, 7))
+                    chargedLaunchDistanceTiles++;
+
+                nextChargeStepAt = Time.unscaledTime + chargeStepSeconds;
+            }
+
+            UpdateLandingIndicator();
+        }
+        else
+        {
+            if (isChargingLaunch)
+            {
+                HideLandingIndicator();
+
+                if (Time.unscaledTime >= nextBombAllowedAt)
+                {
+                    if (system.TryLaunchBombFromCart(this, chargedLaunchDistanceTiles))
+                        nextBombAllowedAt = Time.unscaledTime + system.CartBombCooldownSeconds;
+                }
+
+                isChargingLaunch = false;
+                chargedLaunchDistanceTiles = Mathf.Clamp(minLaunchDistanceTiles, 3, 7);
+            }
+            else
+            {
+                HideLandingIndicator();
+            }
+        }
+    }
+
+    void OnDisable()
+    {
+        HideLandingIndicator();
+    }
+
+    private void UpdateLandingIndicator()
+    {
+        if (landingIndicatorRenderer == null || system == null)
             return;
 
-        if (!input.GetDown(ownerPlayerId, PlayerAction.ActionA))
+        Vector2 landingPos = system.GetPredictedLandingPosition(this, chargedLaunchDistanceTiles);
+
+        landingIndicatorRenderer.transform.position = new Vector3(
+            landingPos.x,
+            landingPos.y,
+            landingIndicatorRenderer.transform.position.z);
+
+        float t = Mathf.PingPong(Time.unscaledTime * indicatorBlinkSpeed, 1f);
+        float alpha = Mathf.Lerp(indicatorMinAlpha, indicatorMaxAlpha, t);
+
+        Color c = landingIndicatorRenderer.color;
+        c.a = alpha;
+        landingIndicatorRenderer.color = c;
+
+        landingIndicatorRenderer.enabled = true;
+    }
+
+    private void HideLandingIndicator()
+    {
+        if (landingIndicatorRenderer == null)
             return;
 
-        if (!system.TryLaunchBombFromCart(this))
-            return;
+        landingIndicatorRenderer.enabled = false;
 
-        nextBombAllowedAt = Time.unscaledTime + system.CartBombCooldownSeconds;
+        Color c = landingIndicatorRenderer.color;
+        c.a = indicatorMaxAlpha;
+        landingIndicatorRenderer.color = c;
     }
 
     public void ConfigureBounds(float minX, float maxX, float minY, float maxY)
