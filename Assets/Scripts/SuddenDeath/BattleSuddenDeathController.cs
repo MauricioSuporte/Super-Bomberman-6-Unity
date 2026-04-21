@@ -22,7 +22,9 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
     [SerializeField] private GameObject fallingBlockVisualPrefab;
     [SerializeField] private TileBase currentStageIndestructibleTile;
     [SerializeField] private float fallingHeight = 6f;
-    [SerializeField] private float fallingDuration = 0.15f;
+    [SerializeField] private float fallingDuration = 0.1f;
+    [SerializeField] private float topScreenSpawnOffset = 0.5f;
+    [SerializeField] private int visualSortingOrderOffset = 1;
 
     [Header("Damage")]
     [SerializeField] private float damageTickInterval = 0.2f;
@@ -39,18 +41,17 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
     [SerializeField] private float fastMusicPitch = 1.2f;
     [SerializeField] private float resumeMusicDelayAfterHurryUp = 0.6f;
 
+    [Header("Timing")]
+    [SerializeField] private float delayBeforeTileDrops = 2f;
+
     [Header("Debug")]
     [SerializeField] private bool enableDebugLogs = true;
-    [SerializeField] private bool logEveryDrop = true;
-    [SerializeField] private bool logDamageTicks;
-    [SerializeField] private bool logHeartbeat;
-
-    [SerializeField] private float delayBeforeTileDrops = 2f;
+    [SerializeField] private bool logSuddenDeathFlow = true;
+    [SerializeField] private bool logVisualFlow = true;
+    [SerializeField] private bool logDamageFlow = false;
 
     bool suddenDeathDropsStarted;
     float suddenDeathDropStartRemainingTime;
-
-    float nextHeartbeatLogAt;
 
     readonly HashSet<Vector3Int> scheduledOrPlacedCells = new HashSet<Vector3Int>();
     readonly Dictionary<Vector3Int, Coroutine> damageCoroutines = new Dictionary<Vector3Int, Coroutine>();
@@ -62,8 +63,6 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
 
     void Awake()
     {
-        Log("Awake iniciado.");
-
         if (stageGrid == null)
             stageGrid = GetComponentInParent<Grid>();
 
@@ -76,17 +75,16 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
         if (currentStageIndestructibleTile == null && indestructibleTilemap != null)
             currentStageIndestructibleTile = TryGetAnyExistingIndestructibleTile();
 
-        Log(
-            $"Awake finalizado. stageGrid={(stageGrid != null ? stageGrid.name : "NULL")}, " +
-            $"indestructibleTilemap={(indestructibleTilemap != null ? indestructibleTilemap.name : "NULL")}, " +
-            $"destructibleTilemap={(destructibleTilemap != null ? destructibleTilemap.name : "NULL")}, " +
-            $"currentStageIndestructibleTile={(currentStageIndestructibleTile != null ? currentStageIndestructibleTile.name : "NULL")}");
+        LogFlow(
+            $"Awake: grid={(stageGrid != null ? stageGrid.name : "NULL")}, " +
+            $"indestructible={(indestructibleTilemap != null ? indestructibleTilemap.name : "NULL")}, " +
+            $"destructible={(destructibleTilemap != null ? destructibleTilemap.name : "NULL")}, " +
+            $"tile={(currentStageIndestructibleTile != null ? currentStageIndestructibleTile.name : "NULL")}");
     }
 
     void Start()
     {
         BattleRevengeBomberBlocker.Unblock();
-        Log("Start: Revenge bomber desbloqueado para início de round.");
     }
 
     void Update()
@@ -108,55 +106,28 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
         if (!suddenDeathStarted)
             return;
 
-        if (logHeartbeat && Time.unscaledTime >= nextHeartbeatLogAt)
-        {
-            nextHeartbeatLogAt = Time.unscaledTime + 1f;
-            Log(
-                $"Heartbeat: suddenDeathStarted={suddenDeathStarted}, suddenDeathFinished={suddenDeathFinished}, " +
-                $"remaining={remaining:0.000}, nextDropIndex={nextDropIndex}, pathCount={suddenDeathPath.Count}, " +
-                $"componentEnabled={enabled}, gameObjectActive={gameObject.activeInHierarchy}");
-        }
-
         ProcessTileDrops();
     }
 
     bool CanUseSuddenDeath()
     {
         if (BattleModeRules.Instance == null)
-        {
-            Log("CanUseSuddenDeath: BattleModeRules.Instance == null");
             return false;
-        }
 
         if (!BattleModeRules.Instance.EnableSuddenDeath)
-        {
-            Log("CanUseSuddenDeath: Sudden Death desabilitado nas rules.");
             return false;
-        }
 
         if (!BattleModeRules.Instance.UsesRoundTimer)
-        {
-            Log("CanUseSuddenDeath: round timer infinito/desabilitado.");
             return false;
-        }
 
         if (GameManager.Instance == null)
-        {
-            Log("CanUseSuddenDeath: GameManager.Instance == null");
             return false;
-        }
 
         if (!GameManager.Instance.HasBattleTimeLimit)
-        {
-            Log("CanUseSuddenDeath: battle sem limite de tempo.");
             return false;
-        }
 
         if (indestructibleTilemap == null)
-        {
-            Log("CanUseSuddenDeath: indestructibleTilemap == null");
             return false;
-        }
 
         return true;
     }
@@ -178,18 +149,16 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
             0f,
             SuddenDeathTriggerTime);
 
-        Log($"BeginSuddenDeath: iniciado com remainingTimeAtStart={remainingTimeAtStart:0.000}");
-        Log($"BeginSuddenDeath: delayBeforeTileDrops={delayBeforeTileDrops:0.000}, suddenDeathDropStartRemainingTime={suddenDeathDropStartRemainingTime:0.000}");
-
         BattleRevengeBomberBlocker.Block();
-        Log("BeginSuddenDeath: novos revenge bombers bloqueados.");
-
         RemoveAllRevengeBombersFromScene();
         BuildClosingPath();
 
         nextDropIndex = 0;
 
-        Log($"BeginSuddenDeath: caminho montado com {suddenDeathPath.Count} células.");
+        LogFlow(
+            $"BeginSuddenDeath: remainingStart={remainingTimeAtStart:0.000}, " +
+            $"dropStartAt={suddenDeathDropStartRemainingTime:0.000}, " +
+            $"pathCount={suddenDeathPath.Count}");
 
         StartCoroutine(PlayHurryUpAndResumeMusic());
     }
@@ -198,10 +167,8 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
     {
         if (nextDropIndex >= suddenDeathPath.Count)
         {
-            if (!suddenDeathFinished)
-                Log("ProcessTileDrops: sudden death finalizado porque todos os tiles já caíram.");
-
             suddenDeathFinished = true;
+            LogFlow("ProcessTileDrops: finalizado, todos os tiles já caíram.");
             return;
         }
 
@@ -210,21 +177,18 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
         if (!suddenDeathDropsStarted)
         {
             if (rawRemaining > suddenDeathDropStartRemainingTime)
-            {
-                Log(
-                    $"ProcessTileDrops: aguardando início das quedas. " +
-                    $"rawRemaining={rawRemaining:0.000}, startAt={suddenDeathDropStartRemainingTime:0.000}");
                 return;
-            }
 
             suddenDeathDropsStarted = true;
-            Log(
-                $"ProcessTileDrops: quedas iniciadas. " +
-                $"rawRemaining={rawRemaining:0.000}, startAt={suddenDeathDropStartRemainingTime:0.000}");
+            LogFlow($"ProcessTileDrops: iniciando quedas com remaining={rawRemaining:0.000}");
         }
 
         float dropDuration = Mathf.Max(0.0001f, suddenDeathDropStartRemainingTime);
-        float elapsedSinceDropsStarted = Mathf.Clamp(dropDuration - Mathf.Clamp(rawRemaining, 0f, dropDuration), 0f, dropDuration);
+        float elapsedSinceDropsStarted = Mathf.Clamp(
+            dropDuration - Mathf.Clamp(rawRemaining, 0f, dropDuration),
+            0f,
+            dropDuration);
+
         float progress = Mathf.Clamp01(elapsedSinceDropsStarted / dropDuration);
 
         int targetDropCount = Mathf.Clamp(
@@ -232,26 +196,16 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
             0,
             suddenDeathPath.Count);
 
-        Log(
-            $"ProcessTileDrops: rawRemaining={rawRemaining:0.000}, dropDuration={dropDuration:0.000}, " +
-            $"elapsedSinceDropsStarted={elapsedSinceDropsStarted:0.000}, progress={progress:0.000000}, " +
-            $"targetDropCount={targetDropCount}, nextDropIndex={nextDropIndex}, total={suddenDeathPath.Count}");
-
         while (nextDropIndex < targetDropCount)
-        {
-            Log($"ProcessTileDrops: nextDropIndex {nextDropIndex} < targetDropCount {targetDropCount}. Chamando DropNextTile().");
             DropNextTile();
-        }
 
         if (rawRemaining <= 0f)
         {
-            Log("ProcessTileDrops: tempo zerou. Forçando queda do restante.");
-
             while (nextDropIndex < suddenDeathPath.Count)
                 DropNextTile();
 
             suddenDeathFinished = true;
-            Log("ProcessTileDrops: sudden death finalizado por tempo <= 0.");
+            LogFlow("ProcessTileDrops: tempo zerado, restante da arena foi fechado.");
         }
     }
 
@@ -259,86 +213,48 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
     {
         if (nextDropIndex < 0 || nextDropIndex >= suddenDeathPath.Count)
         {
-            Log($"DropNextTile: índice fora do intervalo. nextDropIndex={nextDropIndex}, count={suddenDeathPath.Count}");
+            LogWarning($"DropNextTile: índice inválido {nextDropIndex} para count={suddenDeathPath.Count}");
             return;
         }
 
         if (indestructibleTilemap == null)
         {
-            Log("DropNextTile: indestructibleTilemap NULL.");
+            LogError("DropNextTile: indestructibleTilemap NULL.");
             return;
         }
 
         Vector3Int cell = suddenDeathPath[nextDropIndex];
-        Vector3 cellCenter = indestructibleTilemap.GetCellCenterWorld(cell);
-        Vector3Int roundTripCell = indestructibleTilemap.WorldToCell(cellCenter);
-
-        Log(
-            $"DropNextTile: index={nextDropIndex}, cell={cell}, cellCenter={cellCenter}, " +
-            $"roundTripCell={roundTripCell}, hasTileBefore={indestructibleTilemap.HasTile(cell)}");
-
         nextDropIndex++;
 
         if (indestructibleTilemap.HasTile(cell))
         {
-            Log($"DropNextTile: célula {cell} já possui tile. Pulando.");
+            LogVisual($"DropNextTile: célula {cell} já tinha tile. Pulando.");
             return;
         }
 
         if (currentStageIndestructibleTile == null)
         {
-            LogError($"DropNextTile: currentStageIndestructibleTile está NULL. Não é possível aplicar tile na célula {cell}.");
+            LogError($"DropNextTile: currentStageIndestructibleTile NULL na célula {cell}");
             return;
         }
 
         StartCoroutine(DropTileRoutine(cell));
     }
 
-    void LogTilemapRenderingState(Vector3Int cell)
-    {
-        TilemapRenderer renderer = indestructibleTilemap != null
-            ? indestructibleTilemap.GetComponent<TilemapRenderer>()
-            : null;
-
-        TilemapCollider2D collider = indestructibleTilemap != null
-            ? indestructibleTilemap.GetComponent<TilemapCollider2D>()
-            : null;
-
-        TileBase tile = indestructibleTilemap != null
-            ? indestructibleTilemap.GetTile(cell)
-            : null;
-
-        Log(
-            $"TilemapRenderState: cell={cell}, tile={(tile != null ? tile.name : "NULL")}, " +
-            $"tilemapColor={(indestructibleTilemap != null ? indestructibleTilemap.color.ToString() : "NULL")}, " +
-            $"rendererEnabled={(renderer != null ? renderer.enabled.ToString() : "NULL")}, " +
-            $"rendererLayer={(renderer != null ? renderer.sortingLayerName : "NULL")}, " +
-            $"rendererOrder={(renderer != null ? renderer.sortingOrder.ToString() : "NULL")}, " +
-            $"colliderEnabled={(collider != null ? collider.enabled.ToString() : "NULL")}");
-    }
-
     void ClearOnlyCurrentCellIfNeeded(Vector3Int cell)
     {
         if (indestructibleTilemap == null)
         {
-            LogWarning($"ClearOnlyCurrentCellIfNeeded: indestructibleTilemap NULL para cell={cell}");
+            LogWarning($"ClearOnlyCurrentCellIfNeeded: indestructibleTilemap NULL para {cell}");
             return;
         }
 
         Vector3 worldCenter = indestructibleTilemap.GetCellCenterWorld(cell);
 
-        Log(
-            $"ClearOnlyCurrentCellIfNeeded: início. cell={cell}, worldCenter={worldCenter}, " +
-            $"destructibleTilemap={(destructibleTilemap != null ? destructibleTilemap.name : "NULL")}");
-
         if (destructibleTilemap != null)
         {
             Vector3Int destructibleCell = destructibleTilemap.WorldToCell(worldCenter);
             TileBase destructibleTile = destructibleTilemap.GetTile(destructibleCell);
-
-            Log(
-                $"ClearOnlyCurrentCellIfNeeded: checando tile destrutível. " +
-                $"destructibleCell={destructibleCell}, tile={(destructibleTile != null ? destructibleTile.name : "NULL")}");
 
             if (destructibleTile != null)
             {
@@ -348,21 +264,10 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
                 TilemapCollider2D destructibleCollider = destructibleTilemap.GetComponent<TilemapCollider2D>();
                 if (destructibleCollider != null)
                     destructibleCollider.ProcessTilemapChanges();
-
-                TileBase afterRemoveTile = destructibleTilemap.GetTile(destructibleCell);
-
-                Log(
-                    $"ClearOnlyCurrentCellIfNeeded: tile destrutível removido em {destructibleCell}. " +
-                    $"tileDepois={(afterRemoveTile != null ? afterRemoveTile.name : "NULL")}");
             }
-        }
-        else
-        {
-            LogWarning($"ClearOnlyCurrentCellIfNeeded: destructibleTilemap NULL para cell={cell}");
         }
 
         Collider2D[] hits = Physics2D.OverlapBoxAll(worldCenter, cleanupOverlapSize, 0f);
-        Log($"ClearOnlyCurrentCellIfNeeded: colliders encontrados na célula={hits.Length}");
 
         for (int i = 0; i < hits.Length; i++)
         {
@@ -370,83 +275,62 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
             if (hit == null)
                 continue;
 
-            Log($"ClearOnlyCurrentCellIfNeeded: collider={hit.name}, type={hit.GetType().Name}");
-
             Destructible destructible = hit.GetComponent<Destructible>();
             if (destructible != null)
             {
                 Destroy(destructible.gameObject);
-                Log($"ClearOnlyCurrentCellIfNeeded: prefab Destructible destruído: {destructible.name}");
                 continue;
             }
 
             ItemPickup item = hit.GetComponent<ItemPickup>();
             if (item != null)
             {
-                Log($"ClearOnlyCurrentCellIfNeeded: item destruído pela queda do bloco: {item.name}");
                 Destroy(item.gameObject);
+                continue;
             }
         }
     }
 
     IEnumerator DropTileRoutine(Vector3Int cell)
     {
-        Vector3 worldCenter = indestructibleTilemap.GetCellCenterWorld(cell);
-
-        Log(
-            $"DropTileRoutine: célula={cell}, worldCenter={worldCenter}, " +
-            $"fallingBlockVisualPrefab={(fallingBlockVisualPrefab != null ? fallingBlockVisualPrefab.name : "NULL")}, " +
-            $"tile={(currentStageIndestructibleTile != null ? currentStageIndestructibleTile.name : "NULL")}");
-
-        if (fallingBlockVisualPrefab != null)
+        if (indestructibleTilemap == null)
         {
-            GameObject visual = Instantiate(
-                fallingBlockVisualPrefab,
-                worldCenter + Vector3.up * fallingHeight,
-                Quaternion.identity);
+            LogError($"DropTileRoutine: indestructibleTilemap NULL para {cell}");
+            yield break;
+        }
 
-            Log($"DropTileRoutine: visual instanciado para célula {cell} em {visual.transform.position}");
+        Vector3 worldCenter = indestructibleTilemap.GetCellCenterWorld(cell);
+        GameObject visual = null;
 
-            float elapsed = 0f;
-            Vector3 start = visual.transform.position;
-            Vector3 end = worldCenter;
+        if (TryGetCurrentTileSprite(out Sprite tileSprite))
+        {
+            Vector3 spawnPosition = GetFallingVisualSpawnPosition(worldCenter);
 
-            SpriteRenderer sr = visual.GetComponent<SpriteRenderer>();
-            if (sr != null && currentStageIndestructibleTile is Tile tileAsset && tileAsset.sprite != null)
+            visual = CreateFallingVisual(tileSprite, spawnPosition);
+            if (visual == null)
             {
-                sr.sprite = tileAsset.sprite;
-                Log($"DropTileRoutine: sprite do visual aplicado para célula {cell}: {tileAsset.sprite.name}");
+                LogError($"DropTileRoutine: falha ao criar visual de queda para {cell}");
             }
             else
             {
-                Log($"DropTileRoutine: visual sem SpriteRenderer compatível ou tile sem sprite para célula {cell}");
+                LogVisual(
+                    $"DropTileRoutine: queda visual criada. cell={cell}, start={spawnPosition}, end={worldCenter}, duration={fallingDuration:0.000}");
+
+                yield return AnimateFallingVisual(visual.transform, spawnPosition, worldCenter);
+
+                if (visual != null)
+                    Destroy(visual);
             }
-
-            while (elapsed < fallingDuration)
-            {
-                elapsed += Time.deltaTime;
-                float t = Mathf.Clamp01(elapsed / fallingDuration);
-                visual.transform.position = Vector3.Lerp(start, end, t);
-                yield return null;
-            }
-
-            visual.transform.position = end;
-            Destroy(visual);
-
-            Log($"DropTileRoutine: animação visual concluída para célula {cell}");
         }
         else
         {
-            Log($"DropTileRoutine: sem prefab visual. Aguardando fallingDuration={fallingDuration:0.000} antes de aplicar tile na célula {cell}");
-            yield return new WaitForSeconds(fallingDuration);
+            LogWarning($"DropTileRoutine: não foi possível obter sprite do tile para {cell}. Usando apenas delay.");
+            yield return new WaitForSeconds(Mathf.Max(0.01f, fallingDuration));
         }
 
         ClearOnlyCurrentCellIfNeeded(cell);
 
-        bool hadTileBeforeSet = indestructibleTilemap.HasTile(cell);
-        Log($"DropTileRoutine: antes do SetTile célula {cell} hadTileBeforeSet={hadTileBeforeSet}");
-
-        if (!hadTileBeforeSet)
+        if (!indestructibleTilemap.HasTile(cell))
         {
             indestructibleTilemap.SetTile(cell, currentStageIndestructibleTile);
             indestructibleTilemap.RefreshTile(cell);
@@ -455,22 +339,138 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
             if (collider != null)
                 collider.ProcessTilemapChanges();
 
-            bool hasTileAfterSet = indestructibleTilemap.HasTile(cell);
-            TileBase placedTile = indestructibleTilemap.GetTile(cell);
-
-            Log(
-                $"DropTileRoutine: após SetTile célula {cell} hasTileAfterSet={hasTileAfterSet}, " +
-                $"placedTile={(placedTile != null ? placedTile.name : "NULL")}");
-
-            LogTilemapRenderingState(cell);
+            LogVisual($"DropTileRoutine: tile aplicado em {cell}");
         }
         else
         {
-            Log($"DropTileRoutine: célula {cell} já tinha tile logo antes do SetTile. Nenhuma alteração aplicada.");
+            LogWarning($"DropTileRoutine: a célula {cell} já possuía tile no momento da aplicação.");
         }
 
         PlayFallingSfx();
         StartDamageOnCell(cell);
+    }
+
+    IEnumerator AnimateFallingVisual(Transform visualTransform, Vector3 start, Vector3 end)
+    {
+        if (visualTransform == null)
+            yield break;
+
+        float duration = Mathf.Max(0.01f, fallingDuration);
+        float elapsed = 0f;
+
+        while (elapsed < duration)
+        {
+            if (visualTransform == null)
+                yield break;
+
+            elapsed += Time.deltaTime;
+            float t = Mathf.Clamp01(elapsed / duration);
+            visualTransform.position = Vector3.Lerp(start, end, t);
+            yield return null;
+        }
+
+        if (visualTransform != null)
+            visualTransform.position = end;
+    }
+
+    Vector3 GetFallingVisualSpawnPosition(Vector3 worldCenter)
+    {
+        float spawnY = worldCenter.y + Mathf.Abs(fallingHeight);
+
+        Camera cam = Camera.main;
+        if (cam != null)
+        {
+            Vector3 topWorld = cam.ViewportToWorldPoint(new Vector3(0.5f, 1f, Mathf.Abs(cam.transform.position.z - worldCenter.z)));
+            spawnY = Mathf.Max(spawnY, topWorld.y + topScreenSpawnOffset);
+        }
+        else
+        {
+            LogWarning("GetFallingVisualSpawnPosition: Camera.main NULL. Usando fallingHeight como fallback.");
+        }
+
+        return new Vector3(worldCenter.x, spawnY, worldCenter.z);
+    }
+
+    GameObject CreateFallingVisual(Sprite tileSprite, Vector3 spawnPosition)
+    {
+        GameObject visual = null;
+
+        if (fallingBlockVisualPrefab != null)
+        {
+            visual = Instantiate(fallingBlockVisualPrefab, spawnPosition, Quaternion.identity);
+        }
+        else
+        {
+            visual = new GameObject("SuddenDeathFallingTileVisual");
+            visual.transform.position = spawnPosition;
+        }
+
+        if (visual == null)
+            return null;
+
+        Collider2D[] colliders2D = visual.GetComponentsInChildren<Collider2D>(true);
+        for (int i = 0; i < colliders2D.Length; i++)
+            colliders2D[i].enabled = false;
+
+        Rigidbody2D[] rigidbodies2D = visual.GetComponentsInChildren<Rigidbody2D>(true);
+        for (int i = 0; i < rigidbodies2D.Length; i++)
+            rigidbodies2D[i].simulated = false;
+
+        SpriteRenderer sr = visual.GetComponent<SpriteRenderer>();
+        if (sr == null)
+            sr = visual.GetComponentInChildren<SpriteRenderer>();
+
+        if (sr == null)
+            sr = visual.AddComponent<SpriteRenderer>();
+
+        sr.sprite = tileSprite;
+
+        ApplyVisualSorting(sr);
+
+        return visual;
+    }
+
+    void ApplyVisualSorting(SpriteRenderer sr)
+    {
+        if (sr == null)
+            return;
+
+        if (indestructibleTilemap == null)
+            return;
+
+        TilemapRenderer tilemapRenderer = indestructibleTilemap.GetComponent<TilemapRenderer>();
+        if (tilemapRenderer == null)
+            return;
+
+        sr.sortingLayerID = tilemapRenderer.sortingLayerID;
+        sr.sortingOrder = tilemapRenderer.sortingOrder + visualSortingOrderOffset;
+    }
+
+    bool TryGetCurrentTileSprite(out Sprite sprite)
+    {
+        sprite = null;
+
+        if (currentStageIndestructibleTile is Tile tile && tile.sprite != null)
+        {
+            sprite = tile.sprite;
+            return true;
+        }
+
+        if (currentStageIndestructibleTile != null && indestructibleTilemap != null)
+        {
+            BoundsInt bounds = indestructibleTilemap.cellBounds;
+            foreach (Vector3Int pos in bounds.allPositionsWithin)
+            {
+                TileBase tileBase = indestructibleTilemap.GetTile(pos);
+                if (tileBase is Tile mapTile && mapTile.sprite != null)
+                {
+                    sprite = mapTile.sprite;
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     void OnDrawGizmosSelected()
@@ -494,46 +494,23 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
     [ContextMenu("TESTAR QUEDA TILE AGORA")]
     void TestDropSingleTileNow()
     {
-        Vector3Int cell = new Vector3Int(-7, 4, 0);
-
-        Log($"TestDropSingleTileNow: tentando célula {cell}");
-
         if (indestructibleTilemap == null)
         {
             LogError("TestDropSingleTileNow: indestructibleTilemap NULL");
             return;
         }
 
-        if (currentStageIndestructibleTile == null)
-        {
-            LogError("TestDropSingleTileNow: currentStageIndestructibleTile NULL");
-            return;
-        }
-
-        ClearOnlyCurrentCellIfNeeded(cell);
-
-        indestructibleTilemap.SetTile(cell, currentStageIndestructibleTile);
-        indestructibleTilemap.RefreshTile(cell);
-
-        TilemapCollider2D collider = indestructibleTilemap.GetComponent<TilemapCollider2D>();
-        if (collider != null)
-            collider.ProcessTilemapChanges();
-
-        LogTilemapRenderingState(cell);
+        Vector3Int cell = new Vector3Int(-7, 4, 0);
+        StartCoroutine(DropTileRoutine(cell));
     }
 
     void StartDamageOnCell(Vector3Int cell)
     {
         if (damageCoroutines.ContainsKey(cell))
-        {
-            Log($"StartDamageOnCell: dano já estava ativo na célula {cell}");
             return;
-        }
 
         Coroutine routine = StartCoroutine(DamagePlayersOnCellRoutine(cell));
         damageCoroutines[cell] = routine;
-
-        Log($"StartDamageOnCell: iniciou rotina de dano na célula {cell}");
     }
 
     IEnumerator DamagePlayersOnCellRoutine(Vector3Int cell)
@@ -560,8 +537,8 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
             if (playerCell != cell)
                 continue;
 
-            if (logDamageTicks)
-                Log($"DamagePlayersStandingOnCell: player={player.name}, cell={cell}, damage={damagePerTick}");
+            if (logDamageFlow)
+                Log($"DamagePlayersStandingOnCell: {player.name} recebeu {damagePerTick} em {cell}");
 
             ApplyDamage(player, damagePerTick);
         }
@@ -652,70 +629,43 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
 
     IEnumerator PlayHurryUpAndResumeMusic()
     {
-        Log("PlayHurryUpAndResumeMusic: iniciando.");
-
         if (GameMusicController.Instance != null)
-        {
             GameMusicController.Instance.StopMusic();
-            Log("PlayHurryUpAndResumeMusic: música parada.");
-        }
 
         if (hurryUpSfx != null && GameMusicController.Instance != null)
-        {
             GameMusicController.Instance.PlayOneShotSfx(hurryUpSfx);
-            Log($"PlayHurryUpAndResumeMusic: hurryUpSfx tocado: {hurryUpSfx.name}");
-        }
 
         float wait = hurryUpSfx != null ? hurryUpSfx.length : 0f;
         wait += resumeMusicDelayAfterHurryUp;
 
-        Log($"PlayHurryUpAndResumeMusic: aguardando {wait:0.000}s para retomar música acelerada.");
-
         yield return new WaitForSeconds(wait);
 
         if (GameMusicController.Instance != null)
-        {
             GameMusicController.Instance.PlayDefaultMusicWithPitch(fastMusicPitch, true);
-            Log($"PlayHurryUpAndResumeMusic: música retomada com pitch={fastMusicPitch:0.000}");
-        }
     }
 
     void PlayFallingSfx()
     {
         if (fallingTileSfx == null || GameMusicController.Instance == null)
-        {
-            Log("PlayFallingSfx: fallingTileSfx ou GameMusicController.Instance NULL.");
             return;
-        }
 
         GameMusicController.Instance.PlayOneShotSfx(fallingTileSfx);
-        Log($"PlayFallingSfx: sfx tocado: {fallingTileSfx.name}");
     }
 
     void RemoveAllRevengeBombersFromScene()
     {
-        BattleRevengeController[] revengeCarts = FindObjectsByType<BattleRevengeController>();
-        Log($"RemoveAllRevengeBombersFromScene: revenge carts encontrados={revengeCarts.Length}");
-
+        BattleRevengeController[] revengeCarts = FindObjectsByType<BattleRevengeController>(FindObjectsSortMode.None);
         for (int i = 0; i < revengeCarts.Length; i++)
         {
             if (revengeCarts[i] != null)
-            {
-                Log($"RemoveAllRevengeBombersFromScene: destruindo cart {revengeCarts[i].name}");
                 Destroy(revengeCarts[i].gameObject);
-            }
         }
 
-        BattleRevengeSystem[] revengeSystems = FindObjectsByType<BattleRevengeSystem>();
-        Log($"RemoveAllRevengeBombersFromScene: revenge systems encontrados={revengeSystems.Length}");
-
+        BattleRevengeSystem[] revengeSystems = FindObjectsByType<BattleRevengeSystem>(FindObjectsSortMode.None);
         for (int i = 0; i < revengeSystems.Length; i++)
         {
             if (revengeSystems[i] != null)
-            {
                 revengeSystems[i].enabled = false;
-                Log($"RemoveAllRevengeBombersFromScene: desabilitado system {revengeSystems[i].name}");
-            }
         }
     }
 
@@ -729,10 +679,6 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
         int right = bounds.xMax - 1;
         int bottom = bounds.yMin;
         int top = bounds.yMax - 1;
-
-        Log(
-            $"BuildClosingPath: bounds=({bounds.xMin},{bounds.yMin}) até ({bounds.xMax - 1},{bounds.yMax - 1}), " +
-            $"size=({bounds.size.x},{bounds.size.y}), usePlayableAreaFromBounds={usePlayableAreaFromBounds}");
 
         while (left <= right && bottom <= top)
         {
@@ -760,12 +706,19 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
             top--;
         }
 
-        Log($"BuildClosingPath: total de células no caminho={suddenDeathPath.Count}");
-
-        if (suddenDeathPath.Count > 0)
-            Log($"BuildClosingPath: primeira célula={suddenDeathPath[0]}, última célula={suddenDeathPath[suddenDeathPath.Count - 1]}");
-        else
-            LogWarning("BuildClosingPath: nenhum tile foi agendado para queda.");
+        if (logSuddenDeathFlow)
+        {
+            if (suddenDeathPath.Count > 0)
+            {
+                LogFlow(
+                    $"BuildClosingPath: total={suddenDeathPath.Count}, " +
+                    $"first={suddenDeathPath[0]}, last={suddenDeathPath[suddenDeathPath.Count - 1]}");
+            }
+            else
+            {
+                LogWarning("BuildClosingPath: nenhum tile foi adicionado ao caminho.");
+            }
+        }
     }
 
     void AddCellIfValid(Vector3Int cell)
@@ -774,23 +727,12 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
             return;
 
         if (indestructibleTilemap.HasTile(cell))
-        {
-            if (logEveryDrop)
-                Log($"AddCellIfValid: célula {cell} ignorada porque já possui tile.");
             return;
-        }
 
         if (!scheduledOrPlacedCells.Add(cell))
-        {
-            if (logEveryDrop)
-                Log($"AddCellIfValid: célula {cell} ignorada porque já estava agendada.");
             return;
-        }
 
         suddenDeathPath.Add(cell);
-
-        if (logEveryDrop)
-            Log($"AddCellIfValid: célula adicionada ao caminho {cell}");
     }
 
     BoundsInt GetPlayableBounds()
@@ -805,13 +747,7 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
             int width = (xMax - xMin) + 1;
             int height = (yMax - yMin) + 1;
 
-            BoundsInt manualBounds = new BoundsInt(xMin, yMin, 0, width, height, 1);
-
-            Log(
-                $"GetPlayableBounds: usando bounds manuais. bottomLeftCell={bottomLeftCell}, topRightCell={topRightCell}, " +
-                $"result=({manualBounds.xMin},{manualBounds.yMin}) até ({manualBounds.xMax - 1},{manualBounds.yMax - 1})");
-
-            return manualBounds;
+            return new BoundsInt(xMin, yMin, 0, width, height, 1);
         }
 
         if (indestructibleTilemap == null)
@@ -834,18 +770,12 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
         int autoYMin = b.yMin + 1;
         int autoYMax = b.yMax - 1;
 
-        BoundsInt autoBounds = new BoundsInt(autoXMin, autoYMin, 0, autoXMax - autoXMin, autoYMax - autoYMin, 1);
-
-        Log(
-            $"GetPlayableBounds: usando bounds do tilemap. cellBoundsOrig=({b.xMin},{b.yMin}) até ({b.xMax - 1},{b.yMax - 1}), " +
-            $"result=({autoBounds.xMin},{autoBounds.yMin}) até ({autoBounds.xMax - 1},{autoBounds.yMax - 1})");
-
-        return autoBounds;
+        return new BoundsInt(autoXMin, autoYMin, 0, autoXMax - autoXMin, autoYMax - autoYMin, 1);
     }
 
     Tilemap FindIndestructibleTilemap()
     {
-        Tilemap[] maps = FindObjectsByType<Tilemap>();
+        Tilemap[] maps = FindObjectsByType<Tilemap>(FindObjectsSortMode.None);
 
         for (int i = 0; i < maps.Length; i++)
         {
@@ -864,7 +794,7 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
 
     Tilemap FindDestructibleTilemap()
     {
-        Tilemap[] maps = FindObjectsByType<Tilemap>();
+        Tilemap[] maps = FindObjectsByType<Tilemap>(FindObjectsSortMode.None);
 
         for (int i = 0; i < maps.Length; i++)
         {
@@ -890,12 +820,10 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
                 continue;
 
             string lowerName = maps[i].name.ToLowerInvariant();
-
             if (lowerName.Contains("destruct") && !lowerName.Contains("indestruct"))
                 return maps[i];
         }
 
-        LogWarning("FindDestructibleTilemap: nenhum tilemap de destrutíveis encontrado.");
         return null;
     }
 
@@ -921,6 +849,22 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
             return;
 
         Debug.Log($"[BattleSuddenDeathController] {message}", this);
+    }
+
+    void LogFlow(string message)
+    {
+        if (!enableDebugLogs || !logSuddenDeathFlow)
+            return;
+
+        Debug.Log($"[BattleSuddenDeathController] {message}", this);
+    }
+
+    void LogVisual(string message)
+    {
+        if (!enableDebugLogs || !logVisualFlow)
+            return;
+
+        Debug.Log($"[BattleSuddenDeathController][Visual] {message}", this);
     }
 
     void LogWarning(string message)
