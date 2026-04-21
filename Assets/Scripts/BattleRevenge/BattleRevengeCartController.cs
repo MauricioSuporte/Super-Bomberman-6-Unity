@@ -79,6 +79,9 @@ public sealed class BattleRevengeCartController : MonoBehaviour
         _ => Vector2.right
     };
 
+    public bool IsOnLeftEdge => currentEdge == CartEdge.Left;
+    public bool IsOnRightEdge => currentEdge == CartEdge.Right;
+
     void Awake()
     {
         RefreshVisualByEdge();

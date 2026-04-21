@@ -277,13 +277,26 @@ public sealed class BattleRevengeSystem : MonoBehaviour
         if (!playersById.TryGetValue(cart.OwnerPlayerId, out MovementController ownerMovement) || ownerMovement == null)
             return false;
 
-        BombController bombController = ownerMovement.GetComponent<BombController>();
-        if (bombController == null)
+        if (!ownerMovement.TryGetComponent<BombController>(out var bombController))
             return false;
 
+        Vector2 rawCartPos = cart.transform.position;
+        Vector2 snappedPos = GetArenaSnapPosition(rawCartPos);
+        Vector2 launchDirection = cart.LaunchDirection.normalized;
+
+        Vector2 finalStart = snappedPos;
+
+        Debug.Log("[REVENGE LAUNCH]");
+        Debug.Log($"Cart Edge Left: {cart.IsOnLeftEdge}");
+        Debug.Log($"Cart Edge Right: {cart.IsOnRightEdge}");
+        Debug.Log($"Dir: {launchDirection}");
+        Debug.Log($"Raw Cart Pos: {rawCartPos}");
+        Debug.Log($"Snapped Pos: {snappedPos}");
+        Debug.Log($"Final Start Pos: {finalStart}");
+
         return bombController.LaunchRevengeBomb(
-            cart.transform.position,
-            cart.LaunchDirection,
+            finalStart,
+            launchDirection,
             cartBombDistanceTiles,
             revengeBombRadius);
     }

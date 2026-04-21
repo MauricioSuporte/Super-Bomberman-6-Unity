@@ -2117,6 +2117,10 @@ public partial class BombController : MonoBehaviour
         Tilemap snapTm = GetSnapTilemapForGround();
         Vector2 position = SnapToTileCenter(snapTm, launchWorldPos, out _, out _);
 
+        bool isLaunchingLeft = direction.x < -0.5f && Mathf.Abs(direction.y) < 0.5f;
+        if (isLaunchingLeft)
+            position += Vector2.left;
+
         GameObject bomb = Instantiate(bombPrefab, position, Quaternion.identity);
         if (bomb == null)
             return false;
