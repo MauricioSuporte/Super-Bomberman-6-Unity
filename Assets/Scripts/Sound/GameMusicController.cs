@@ -33,6 +33,7 @@ public class GameMusicController : MonoBehaviour
             musicSource.playOnAwake = false;
             musicSource.loop = true;
             musicSource.clip = null;
+            musicSource.pitch = 1f;
         }
 
         sfxSource = gameObject.AddComponent<AudioSource>();
@@ -41,15 +42,46 @@ public class GameMusicController : MonoBehaviour
         sfxSource.clip = null;
     }
 
-    public void PlayMusic(AudioClip clip, float volume = 1f, bool loop = true)
+    public void PlayMusic(AudioClip clip, float volume = 1f, bool loop = true, float pitch = 1f, bool restart = true)
     {
         if (clip == null || musicSource == null)
             return;
 
+        bool sameClip = musicSource.clip == clip;
+
         musicSource.loop = loop;
         musicSource.clip = clip;
         musicSource.volume = volume;
+        musicSource.pitch = pitch;
+
+        if (restart || !sameClip || !musicSource.isPlaying)
+            musicSource.time = 0f;
+
         musicSource.Play();
+    }
+
+    public void PlayDefaultMusic(bool restart = true)
+    {
+        if (defaultMusic == null || musicSource == null)
+            return;
+
+        PlayMusic(defaultMusic, defaultMusicVolume, true, 1f, restart);
+    }
+
+    public void PlayDefaultMusicWithPitch(float pitch, bool restart = true)
+    {
+        if (defaultMusic == null || musicSource == null)
+            return;
+
+        PlayMusic(defaultMusic, defaultMusicVolume, true, pitch, restart);
+    }
+
+    public void PlayDeathMusic(bool restart = true)
+    {
+        if (deathMusic == null || musicSource == null)
+            return;
+
+        PlayMusic(deathMusic, defaultMusicVolume, true, 1f, restart);
     }
 
     public void PlaySfx(AudioClip clip, float volume = 1f)
@@ -67,6 +99,7 @@ public class GameMusicController : MonoBehaviour
 
         musicSource.Stop();
         musicSource.clip = null;
+        musicSource.pitch = 1f;
     }
 
     public void PauseMusic()
@@ -77,8 +110,10 @@ public class GameMusicController : MonoBehaviour
 
     public void ResumeMusic()
     {
-        if (musicSource != null && !musicSource.isPlaying && musicSource.clip != null)
-            musicSource.UnPause();
+        if (musicSource == null || musicSource.clip == null)
+            return;
+
+        musicSource.UnPause();
     }
 
     public AudioSource GetMusicSource()
@@ -96,13 +131,7 @@ public class GameMusicController : MonoBehaviour
 
     public void ResumeMusicWithPitch(float pitch)
     {
-        if (musicSource == null)
-            return;
-
-        musicSource.pitch = pitch;
-
-        if (musicSource.clip != null)
-            musicSource.Play();
+        PlayDefaultMusicWithPitch(pitch, true);
     }
 
     public void ResetMusicPitch()

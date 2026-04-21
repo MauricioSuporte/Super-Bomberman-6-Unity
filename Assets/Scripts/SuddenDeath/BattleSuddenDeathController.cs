@@ -651,7 +651,7 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
 
         if (GameMusicController.Instance != null)
         {
-            GameMusicController.Instance.ResumeMusicWithPitch(fastMusicPitch);
+            GameMusicController.Instance.PlayDefaultMusicWithPitch(fastMusicPitch, true);
             Log($"PlayHurryUpAndResumeMusic: música retomada com pitch={fastMusicPitch:0.000}");
         }
     }
