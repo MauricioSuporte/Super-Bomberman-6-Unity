@@ -3848,6 +3848,7 @@ MonoBehaviour:
   powerBombPrefab: {fileID: 147425199346742615, guid: 9928ad697fc8ff64587c25df57a4209b, type: 3}
   rubberBombPrefab: {fileID: 147425199346742615, guid: 26d7fe4d167283544b2eef6186339436, type: 3}
   magnetBombPrefab: {fileID: 147425199346742615, guid: 851ce7b3e6e8c724dbbf6dae1abc11dc, type: 3}
+  revengeBombPrefab: {fileID: 147425199346742615, guid: 57db8dbb73a5d57489893e05dba3ca00, type: 3}
   bombFuseTime: 2
   bombAmout: 1
   chainBombDelaySeconds: 0.1
@@ -4232,6 +4233,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerInactivityEmote
   secondsToTrigger: 5
+  idleCheckInterval: 0.1
   emoteLoopRenderer: {fileID: 8373095307517099465}
   emoteLoopRendererAlt: {fileID: 5702039210087986079}
   chanceAltAnimation: 0.1
@@ -4298,6 +4300,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CorneredAnimation
   corneredLoopRenderer: {fileID: 775477095500031198}
   refreshFrameOnEnter: 1
+  corneredCheckInterval: 0.1
   probeDistanceMultiplier: 0.5
   blockMask:
     serializedVersion: 2

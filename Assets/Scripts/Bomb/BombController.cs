@@ -23,6 +23,7 @@ public partial class BombController : MonoBehaviour
     public GameObject powerBombPrefab;
     public GameObject rubberBombPrefab;
     public GameObject magnetBombPrefab;
+    public GameObject revengeBombPrefab;
     public float bombFuseTime = 2f;
     public int bombAmout = 1;
 
@@ -2113,7 +2114,11 @@ public partial class BombController : MonoBehaviour
     {
         ResolveTilemaps();
 
-        if (bombPrefab == null)
+        GameObject prefabToUse = revengeBombPrefab != null
+            ? revengeBombPrefab
+            : bombPrefab;
+
+        if (prefabToUse == null)
             return false;
 
         direction = direction == Vector2.zero ? Vector2.right : direction.normalized;
@@ -2125,7 +2130,7 @@ public partial class BombController : MonoBehaviour
         if (isLaunchingLeft)
             position += Vector2.left;
 
-        GameObject bomb = Instantiate(bombPrefab, position, Quaternion.identity);
+        GameObject bomb = Instantiate(prefabToUse, position, Quaternion.identity);
         if (bomb == null)
             return false;
 
@@ -2164,6 +2169,7 @@ public partial class BombController : MonoBehaviour
         if (!bombComponent.StartPunch(direction, launchTileSize, Mathf.Max(1, distanceTiles), launchObstacleMask, destructibleTiles))
         {
             Destroy(bomb);
+
             if (lastPlacedBomb == bomb)
                 lastPlacedBomb = null;
 
