@@ -183,7 +183,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BattleModeRules
   matchMode: 0
   victoriesToWinMatch: 3
-  roundTimer: 6
+  roundTimer: 0
   enableRevengeBomber: 1
   enableSuddenDeath: 1
   playerTeams:
@@ -247,6 +247,7 @@ MonoBehaviour:
   bottomLeftCell: {x: -7, y: -6}
   topRightCell: {x: 5, y: 4}
   dropPattern: 1
+  randomizeDropPattern: 1
   randomizeStartCorner: 1
   randomizeRotationDirection: 1
   fallingBlockVisualPrefab: {fileID: 0}
@@ -256,7 +257,7 @@ MonoBehaviour:
   topScreenSpawnOffset: 0.5
   visualSortingOrderOffset: 1
   enableShadowVisual: 1
-  shadowLeadTime: 5
+  shadowLeadTime: 2
   shadowStartSize: 0.15
   shadowEndSize: 1
   shadowAlpha: 0.65
@@ -269,11 +270,10 @@ MonoBehaviour:
   fallingTileSfx: {fileID: 8300000, guid: 232f86bc3f450a34b887545b1b7630b5, type: 3}
   fastMusicPitch: 1.2
   resumeMusicDelayAfterHurryUp: 0.6
-  delayBeforeTileDrops: 2
-  enableDebugLogs: 1
+  enableDebugLogs: 0
   logSuddenDeathFlow: 0
   logVisualFlow: 0
-  logShadowFlow: 1
+  logShadowFlow: 0
   logDamageFlow: 0
 --- !u!1 &124024468
 GameObject:
@@ -1874,10 +1874,10 @@ PrefabInstance:
     - target: {fileID: 2430658914873831823, guid: b5c6f6d280a44d5fb48be8cd567c1e62, type: 3}
       propertyPath: m_Sprite
       value: 
-      objectReference: {fileID: 0}
+      objectReference: {fileID: 21300000, guid: 93b68aaed86a2d84cafddc020acecdd9, type: 3}
     - target: {fileID: 2430658914873831823, guid: b5c6f6d280a44d5fb48be8cd567c1e62, type: 3}
       propertyPath: m_Enabled
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 2649763139092034220, guid: b5c6f6d280a44d5fb48be8cd567c1e62, type: 3}
       propertyPath: m_Sprite
@@ -1898,10 +1898,10 @@ PrefabInstance:
     - target: {fileID: 4596193090454659954, guid: b5c6f6d280a44d5fb48be8cd567c1e62, type: 3}
       propertyPath: m_Sprite
       value: 
-      objectReference: {fileID: 0}
+      objectReference: {fileID: 21300000, guid: edc331db8e8709e4a8bba6c1962ce2c5, type: 3}
     - target: {fileID: 4596193090454659954, guid: b5c6f6d280a44d5fb48be8cd567c1e62, type: 3}
       propertyPath: m_Enabled
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4642470739555972227, guid: b5c6f6d280a44d5fb48be8cd567c1e62, type: 3}
       propertyPath: m_Sprite
@@ -1942,10 +1942,10 @@ PrefabInstance:
     - target: {fileID: 5758117326499773164, guid: b5c6f6d280a44d5fb48be8cd567c1e62, type: 3}
       propertyPath: m_Sprite
       value: 
-      objectReference: {fileID: 0}
+      objectReference: {fileID: 21300000, guid: 956432824ec41ee4f9dada2ac877bd1b, type: 3}
     - target: {fileID: 5758117326499773164, guid: b5c6f6d280a44d5fb48be8cd567c1e62, type: 3}
       propertyPath: m_Enabled
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5976918405260490912, guid: b5c6f6d280a44d5fb48be8cd567c1e62, type: 3}
       propertyPath: m_Sprite
@@ -1974,10 +1974,10 @@ PrefabInstance:
     - target: {fileID: 6991349842924055328, guid: b5c6f6d280a44d5fb48be8cd567c1e62, type: 3}
       propertyPath: m_Sprite
       value: 
-      objectReference: {fileID: 0}
+      objectReference: {fileID: 21300000, guid: 33659276ec38d67409e2f708864bfee7, type: 3}
     - target: {fileID: 6991349842924055328, guid: b5c6f6d280a44d5fb48be8cd567c1e62, type: 3}
       propertyPath: m_Enabled
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 7126354152096357310, guid: b5c6f6d280a44d5fb48be8cd567c1e62, type: 3}
       propertyPath: m_Sprite
@@ -1990,10 +1990,10 @@ PrefabInstance:
     - target: {fileID: 7140756365902866019, guid: b5c6f6d280a44d5fb48be8cd567c1e62, type: 3}
       propertyPath: m_Sprite
       value: 
-      objectReference: {fileID: 0}
+      objectReference: {fileID: 21300000, guid: c36fcbd129457ab4596b4cfaef6d8ca3, type: 3}
     - target: {fileID: 7140756365902866019, guid: b5c6f6d280a44d5fb48be8cd567c1e62, type: 3}
       propertyPath: m_Enabled
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 7184509642113375541, guid: b5c6f6d280a44d5fb48be8cd567c1e62, type: 3}
       propertyPath: timerColonSprite

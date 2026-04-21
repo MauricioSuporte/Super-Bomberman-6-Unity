@@ -6,7 +6,7 @@ using UnityEngine.Tilemaps;
 [DisallowMultipleComponent]
 public sealed class BattleSuddenDeathController : MonoBehaviour
 {
-    const float SuddenDeathTriggerTime = 60f;
+    const float SuddenDeathTriggerTime = 50f;
 
     [Header("References")]
     [SerializeField] private Tilemap indestructibleTilemap;
@@ -54,9 +54,6 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
     [SerializeField] private float fastMusicPitch = 1.2f;
     [SerializeField] private float resumeMusicDelayAfterHurryUp = 0.6f;
 
-    [Header("Timing")]
-    [SerializeField] private float delayBeforeTileDrops = 2f;
-
     [Header("Debug")]
     [SerializeField] private bool enableDebugLogs = true;
     [SerializeField] private bool logSuddenDeathFlow = true;
@@ -88,6 +85,7 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
     StartCorner selectedStartCorner;
     bool selectedClockwise = true;
     SuddenDeathDropPattern selectedDropPattern;
+    float suddenDeathShadowStartRemainingTime;
 
     enum SuddenDeathDropPattern
     {
@@ -213,8 +211,13 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
 
         queuedShadowVisuals.Clear();
 
+        suddenDeathShadowStartRemainingTime = Mathf.Clamp(
+            remainingTimeAtStart,
+            0f,
+            SuddenDeathTriggerTime);
+
         suddenDeathDropStartRemainingTime = Mathf.Clamp(
-            remainingTimeAtStart - delayBeforeTileDrops,
+            suddenDeathShadowStartRemainingTime - shadowLeadTime,
             0f,
             SuddenDeathTriggerTime);
 
@@ -241,11 +244,11 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
 
         LogFlow(
             $"BeginSuddenDeath: remainingStart={remainingTimeAtStart:0.000}, " +
+            $"shadowStartAt={suddenDeathShadowStartRemainingTime:0.000}, " +
             $"dropStartAt={suddenDeathDropStartRemainingTime:0.000}, " +
             $"pathCount={suddenDeathPath.Count}, " +
             $"existingSlots={existingIndestructibleSlotsInPath}, " +
             $"emptySlots={emptySlotsInPath}, " +
-            $"slotDuration={slotDuration:0.000}, " +
             $"pattern={selectedDropPattern}, startCorner={selectedStartCorner}, clockwise={selectedClockwise}, randomizeDropPattern={randomizeDropPattern}");
 
         StartCoroutine(PlayHurryUpAndResumeMusic());
@@ -262,8 +265,30 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
 
         float rawRemaining = GetBattleTimeRemaining();
 
+        if (rawRemaining > suddenDeathShadowStartRemainingTime)
+            return;
+
+        float dropWindowDuration = Mathf.Max(0.0001f, suddenDeathDropStartRemainingTime);
+
+        float currentTimelineElapsed = Mathf.Clamp(
+            suddenDeathShadowStartRemainingTime - rawRemaining,
+            0f,
+            shadowLeadTime + dropWindowDuration);
+
+        EnsureQueuedShadows(currentTimelineElapsed, dropWindowDuration);
+        UpdateQueuedShadows(currentTimelineElapsed);
+
         if (!suddenDeathDropsStarted)
         {
+            if (logSuddenDeathFlow)
+            {
+                LogFlow(
+                    $"ProcessTileDrops[ShadowOnly]: rawRemaining={rawRemaining:0.000}, " +
+                    $"timelineElapsed={currentTimelineElapsed:0.000}, " +
+                    $"dropStartAt={suddenDeathDropStartRemainingTime:0.000}, " +
+                    $"nextDropIndex={nextDropIndex}");
+            }
+
             if (rawRemaining > suddenDeathDropStartRemainingTime)
                 return;
 
@@ -271,7 +296,6 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
             LogFlow($"ProcessTileDrops: iniciando quedas com remaining={rawRemaining:0.000}");
         }
 
-        float dropWindowDuration = Mathf.Max(0.0001f, suddenDeathDropStartRemainingTime);
         float elapsedSinceDropsStarted = Mathf.Clamp(
             dropWindowDuration - Mathf.Clamp(rawRemaining, 0f, dropWindowDuration),
             0f,
@@ -291,32 +315,21 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
                 : 0f;
 
             LogFlow(
-                $"ProcessTileDrops: rawRemaining={rawRemaining:0.000}, " +
+                $"ProcessTileDrops[Drop]: rawRemaining={rawRemaining:0.000}, " +
                 $"elapsed={elapsedSinceDropsStarted:0.000}, " +
+                $"timelineElapsed={currentTimelineElapsed:0.000}, " +
                 $"targetDropCount={targetDropCount}, " +
                 $"nextDropIndex={nextDropIndex}, " +
                 $"slotDuration={slotDuration:0.000}");
         }
-
-        float previewLeadDuration = Mathf.Max(0f, shadowLeadTime);
-        float previewElapsed = elapsedSinceDropsStarted + previewLeadDuration;
-        float previewProgress = Mathf.Clamp01(previewElapsed / dropWindowDuration);
-
-        int targetShadowCount = Mathf.Clamp(
-            Mathf.CeilToInt(previewProgress * suddenDeathPath.Count),
-            0,
-            suddenDeathPath.Count);
-
-        EnsureQueuedShadows(targetShadowCount, dropWindowDuration);
-        UpdateQueuedShadows(elapsedSinceDropsStarted);
 
         while (nextDropIndex < targetDropCount)
             DropNextTile();
 
         if (rawRemaining <= 0f)
         {
-            EnsureQueuedShadows(suddenDeathPath.Count, dropWindowDuration);
-            UpdateQueuedShadows(dropWindowDuration);
+            EnsureQueuedShadows(shadowLeadTime + dropWindowDuration, dropWindowDuration);
+            UpdateQueuedShadows(shadowLeadTime + dropWindowDuration);
 
             while (nextDropIndex < suddenDeathPath.Count)
                 DropNextTile();
@@ -1123,21 +1136,25 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
         return null;
     }
 
-    void EnsureQueuedShadows(int targetShadowCount, float dropWindowDuration)
+    void EnsureQueuedShadows(float currentTimelineElapsed, float dropWindowDuration)
     {
         if (!enableShadowVisual || indestructibleTilemap == null)
             return;
 
-        targetShadowCount = Mathf.Clamp(targetShadowCount, 0, suddenDeathPath.Count);
-
-        for (int i = 0; i < targetShadowCount; i++)
+        for (int i = 0; i < suddenDeathPath.Count; i++)
         {
             Vector3Int cell = suddenDeathPath[i];
 
-            if (!scheduledShadowCells.Add(cell))
+            if (scheduledShadowCells.Contains(cell))
                 continue;
 
             if (indestructibleTilemap.HasTile(cell))
+                continue;
+
+            float dropElapsedTime = GetDropElapsedTimeForIndex(i, dropWindowDuration);
+            float previewStartTime = Mathf.Max(0f, dropElapsedTime - shadowLeadTime);
+
+            if (currentTimelineElapsed < previewStartTime)
                 continue;
 
             Vector3 worldCenter = indestructibleTilemap.GetCellCenterWorld(cell);
@@ -1149,7 +1166,7 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
                 continue;
             }
 
-            float dropElapsedTime = ((i + 1f) / Mathf.Max(1, suddenDeathPath.Count)) * dropWindowDuration;
+            scheduledShadowCells.Add(cell);
 
             queuedShadowVisuals[cell] = new QueuedShadowData
             {
@@ -1158,8 +1175,9 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
             };
 
             LogShadow(
-                $"EnsureQueuedShadows: sombra antecipada criada. cell={cell}, " +
-                $"queued={queuedShadowVisuals.Count}, targetShadowCount={targetShadowCount}, dropElapsed={dropElapsedTime:0.000}");
+                $"EnsureQueuedShadows: sombra criada. cell={cell}, " +
+                $"previewStart={previewStartTime:0.000}, dropElapsed={dropElapsedTime:0.000}, " +
+                $"timelineElapsed={currentTimelineElapsed:0.000}");
         }
     }
 
@@ -1398,6 +1416,14 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
             for (int y = bottom; y <= top; y++)
                 AddCellIfValid(new Vector3Int(x, y, 0));
         }
+    }
+
+    float GetDropElapsedTimeForIndex(int index, float dropWindowDuration)
+    {
+        if (suddenDeathPath.Count <= 0)
+            return shadowLeadTime;
+
+        return shadowLeadTime + (((index + 1f) / suddenDeathPath.Count) * dropWindowDuration);
     }
 
     void Log(string message)
