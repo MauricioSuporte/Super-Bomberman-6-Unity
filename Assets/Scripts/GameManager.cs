@@ -888,10 +888,15 @@ public class GameManager : MonoBehaviour
         restartingRound = true;
         endStageTriggered = true;
 
+        BattleSuddenDeathController suddenDeathController = FindAnyObjectByType<BattleSuddenDeathController>();
+        if (suddenDeathController != null)
+            suddenDeathController.StopSuddenDeathAndClearVisuals();
+
         Vector2 celebrationCenter = new(
             Mathf.Round(survivingPlayer.transform.position.x),
             Mathf.Round(survivingPlayer.transform.position.y)
         );
+
         bool matchComplete = RegisterBattleVictory(survivingPlayer);
 
         if (survivingPlayers != null)

@@ -67,6 +67,8 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
     bool suddenDeathDropsStarted;
     float suddenDeathDropStartRemainingTime;
     readonly HashSet<Vector3Int> scheduledShadowCells = new HashSet<Vector3Int>();
+    readonly HashSet<GameObject> activeShadowVisuals = new HashSet<GameObject>();
+    readonly HashSet<GameObject> activeFallingVisuals = new HashSet<GameObject>();
 
     struct QueuedShadowData
     {
@@ -554,6 +556,7 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
         {
             shadow = queuedShadowData.ShadowObject;
             queuedShadowVisuals.Remove(cell);
+            RegisterActiveShadow(shadow);
 
             LogShadow($"DropTileRoutine: reutilizando sombra antecipada para {cell}");
         }
@@ -563,6 +566,7 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
             Vector3 spawnPosition = GetFallingVisualSpawnPosition(worldCenter);
 
             visual = CreateFallingVisual(tileSprite, spawnPosition);
+            RegisterActiveFallingVisual(visual);
             if (visual == null)
             {
                 LogError($"DropTileRoutine: falha ao criar visual de queda para {cell}");
@@ -576,6 +580,7 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
             if (enableShadowVisual && shadow == null)
             {
                 shadow = CreateShadowVisual(worldCenter + shadowWorldOffset);
+                RegisterActiveShadow(shadow);
                 if (shadow == null)
                 {
                     LogShadow($"DropTileRoutine: falha ao criar sombra para {cell}");
@@ -597,10 +602,16 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
         }
 
         if (visual != null)
+        {
+            UnregisterActiveFallingVisual(visual);
             Destroy(visual);
+        }
 
         if (shadow != null)
+        {
+            UnregisterActiveShadow(shadow);
             Destroy(shadow);
+        }
 
         ClearOnlyCurrentCellIfNeeded(cell);
 
@@ -1561,6 +1572,117 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
         return shadowLeadTime + (((index + 1f) / suddenDeathPath.Count) * dropWindowDuration);
     }
 
+    public void StopSuddenDeathAndClearVisuals()
+    {
+        if (!Application.isPlaying)
+            return;
+
+        LogFlow("StopSuddenDeathAndClearVisuals: interrompendo sudden death e limpando visuais/sombras.");
+
+        StopAllCoroutines();
+
+        suddenDeathStarted = false;
+        suddenDeathDropsStarted = false;
+        suddenDeathFinished = true;
+
+        ClearAllQueuedShadowVisuals();
+        ClearAllActiveDropVisuals();
+        ClearAllDamageCoroutines();
+
+        scheduledShadowCells.Clear();
+    }
+
+    void RegisterActiveShadow(GameObject shadow)
+    {
+        if (shadow == null)
+            return;
+
+        activeShadowVisuals.Add(shadow);
+    }
+
+    void RegisterActiveFallingVisual(GameObject visual)
+    {
+        if (visual == null)
+            return;
+
+        activeFallingVisuals.Add(visual);
+    }
+
+    void UnregisterActiveShadow(GameObject shadow)
+    {
+        if (shadow == null)
+            return;
+
+        activeShadowVisuals.Remove(shadow);
+    }
+
+    void UnregisterActiveFallingVisual(GameObject visual)
+    {
+        if (visual == null)
+            return;
+
+        activeFallingVisuals.Remove(visual);
+    }
+
+    void ClearAllActiveDropVisuals()
+    {
+        if (activeShadowVisuals.Count > 0)
+        {
+            foreach (GameObject shadow in activeShadowVisuals)
+            {
+                if (shadow != null)
+                    Destroy(shadow);
+            }
+
+            activeShadowVisuals.Clear();
+        }
+
+        if (activeFallingVisuals.Count > 0)
+        {
+            foreach (GameObject visual in activeFallingVisuals)
+            {
+                if (visual != null)
+                    Destroy(visual);
+            }
+
+            activeFallingVisuals.Clear();
+        }
+
+        LogVisual("ClearAllActiveDropVisuals: todos os visuais ativos de queda/sombra foram removidos.");
+    }
+
+    void ClearAllQueuedShadowVisuals()
+    {
+        if (queuedShadowVisuals.Count <= 0)
+            return;
+
+        foreach (QueuedShadowData queuedShadow in queuedShadowVisuals.Values)
+        {
+            if (queuedShadow.ShadowObject != null)
+                Destroy(queuedShadow.ShadowObject);
+        }
+
+        queuedShadowVisuals.Clear();
+
+        LogShadow("ClearAllQueuedShadowVisuals: todas as sombras agendadas foram removidas.");
+    }
+
+    void ClearAllDamageCoroutines()
+    {
+        if (damageCoroutines.Count <= 0)
+            return;
+
+        foreach (Coroutine routine in damageCoroutines.Values)
+        {
+            if (routine != null)
+                StopCoroutine(routine);
+        }
+
+        damageCoroutines.Clear();
+
+        LogFlow("ClearAllDamageCoroutines: todas as coroutines de dano foram interrompidas.");
+    }
+
     void Log(string message)
     {
         if (!enableDebugLogs)
@@ -1607,5 +1729,21 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
             return;
 
         Debug.LogError($"[BattleSuddenDeathController] {message}", this);
+    }
+
+    void OnDisable()
+    {
+        ClearAllQueuedShadowVisuals();
+        ClearAllActiveDropVisuals();
+        ClearAllDamageCoroutines();
+        scheduledShadowCells.Clear();
+    }
+
+    void OnDestroy()
+    {
+        ClearAllQueuedShadowVisuals();
+        ClearAllActiveDropVisuals();
+        ClearAllDamageCoroutines();
+        scheduledShadowCells.Clear();
     }
 }
