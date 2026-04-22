@@ -10,20 +10,65 @@ public sealed class SuddenDeathHurryUpUI : MonoBehaviour
 
     [Header("Timing")]
     [SerializeField] private float duration = 2f;
-    [SerializeField] private float blinkSpeed = 0.08f;
 
-    [Header("Position")]
+    [Header("Teleport Animation")]
+    [SerializeField] private bool enableTeleportIntro = true;
+    [SerializeField] private float teleportDuration = 1f;
+    [SerializeField] private float teleportInterval = 0.04f;
+    [SerializeField] private Vector2 teleportAreaAtStart = new Vector2(220f, 120f);
+
+    [Header("Dynamic Scale (igual ao StageLabel)")]
+    [SerializeField] private bool dynamicScale = true;
+    [SerializeField] private int referenceWidth = 256;
+    [SerializeField] private int referenceHeight = 224;
+    [SerializeField] private bool useIntegerUpscale = true;
+    [SerializeField] private int designUpscale = 4;
+    [SerializeField] private float extraScaleMultiplier = 1f;
+    [SerializeField] private float minScale = 0.25f;
+    [SerializeField] private float maxScale = 10f;
+
+    [Header("Base Layout")]
     [SerializeField] private Vector2 anchoredPosition = new Vector2(0f, 80f);
+    [SerializeField] private float baseWidthAtDesign = 420f;
+    [SerializeField] private float baseHeightAtDesign = 64f;
 
     [Header("Scale")]
     [SerializeField] private float baseScale = 1f;
 
-    [Header("Debug")]
-    [SerializeField] private bool enableDebugLogs = true;
-    [SerializeField] private bool autoPlayOnStartForDebug = false;
-    [SerializeField] private bool disableBlinkForDebug = false;
-
     Coroutine routine;
+
+    float UiScale
+    {
+        get
+        {
+            float canvasScale = 1f;
+            if (image != null && image.canvas != null)
+                canvasScale = Mathf.Max(0.01f, image.canvas.scaleFactor);
+
+            if (!dynamicScale)
+                return 1f / canvasScale;
+
+            Camera cam = Camera.main;
+
+            float usedW = cam != null ? cam.pixelRect.width : Screen.width;
+            float usedH = cam != null ? cam.pixelRect.height : Screen.height;
+
+            float sx = usedW / referenceWidth;
+            float sy = usedH / referenceHeight;
+
+            float baseScaleRaw = Mathf.Min(sx, sy);
+            float baseScale = useIntegerUpscale ? Mathf.Round(baseScaleRaw) : baseScaleRaw;
+
+            if (baseScale < 1f)
+                baseScale = 1f;
+
+            float normalized = baseScale / designUpscale;
+            float ui = normalized * extraScaleMultiplier;
+
+            ui /= canvasScale;
+            return Mathf.Clamp(ui, minScale, maxScale);
+        }
+    }
 
     void Awake()
     {
@@ -35,137 +80,75 @@ public sealed class SuddenDeathHurryUpUI : MonoBehaviour
 
         if (image != null)
             image.enabled = false;
-
-        Log(
-            $"Awake | image={(image != null ? image.name : "NULL")} " +
-            $"rectTransform={(rectTransform != null ? rectTransform.name : "NULL")} " +
-            $"gameObjectActive={gameObject.activeInHierarchy}");
     }
 
-    void Start()
-    {
-        Log(
-            $"Start | image={(image != null ? "OK" : "NULL")} " +
-            $"sprite={(image != null && image.sprite != null ? image.sprite.name : "NULL")} " +
-            $"canvas={GetComponentInParent<Canvas>()?.name ?? "NULL"} " +
-            $"screen={Screen.width}x{Screen.height}");
-
-        if (autoPlayOnStartForDebug)
-        {
-            Log("Start | autoPlayOnStartForDebug = true, chamando Play()");
-            Play();
-        }
-    }
-
-    [ContextMenu("TESTAR HURRY UP UI")]
     public void Play()
     {
-        Log("Play() chamado");
-
-        if (image == null)
-        {
-            Debug.LogWarning("[SuddenDeathHurryUpUI] Image não configurada.", this);
-            return;
-        }
-
-        if (rectTransform == null)
-            rectTransform = image.rectTransform;
-
-        if (rectTransform == null)
-        {
-            Debug.LogWarning("[SuddenDeathHurryUpUI] RectTransform não encontrado.", this);
-            return;
-        }
-
-        if (image.sprite == null)
-        {
-            Debug.LogWarning("[SuddenDeathHurryUpUI] Sprite da Image está NULL.", this);
-            return;
-        }
-
         if (routine != null)
-        {
-            Log("Play() | parando rotina anterior");
             StopCoroutine(routine);
-        }
 
         routine = StartCoroutine(PlayRoutine());
     }
 
     IEnumerator PlayRoutine()
     {
-        Log("PlayRoutine() iniciou");
-
         rectTransform.anchorMin = new Vector2(0.5f, 0.5f);
         rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
         rectTransform.pivot = new Vector2(0.5f, 0.5f);
-        rectTransform.anchoredPosition = anchoredPosition;
 
-        image.SetNativeSize();
+        float uiScale = UiScale * baseScale;
 
-        rectTransform.localScale = Vector3.one * baseScale;
+        Vector2 basePos = anchoredPosition * uiScale;
+
+        rectTransform.anchoredPosition = basePos;
+        rectTransform.sizeDelta = new Vector2(
+            Mathf.Round(baseWidthAtDesign * uiScale),
+            Mathf.Round(baseHeightAtDesign * uiScale));
+
+        rectTransform.localScale = Vector3.one;
 
         image.enabled = true;
-        image.color = Color.white;
 
-        Canvas.ForceUpdateCanvases();
-
-        Log(
-            $"PlayRoutine() | sprite={image.sprite.name} " +
-            $"nativeSize={image.sprite.rect.width}x{image.sprite.rect.height} " +
-            $"anchoredPosition={rectTransform.anchoredPosition} " +
-            $"sizeDelta={rectTransform.sizeDelta} " +
-            $"localScale={rectTransform.localScale} " +
-            $"enabled={image.enabled}");
-
-        Vector3[] corners = new Vector3[4];
-        rectTransform.GetWorldCorners(corners);
-
-        Log(
-            $"PlayRoutine() | worldCorners BL={corners[0]} TL={corners[1]} TR={corners[2]} BR={corners[3]}");
-
-        if (disableBlinkForDebug)
-        {
-            Log($"PlayRoutine() | disableBlinkForDebug=true, exibindo fixo por {duration:0.000}s");
-            yield return new WaitForSeconds(duration);
-            image.enabled = false;
-            routine = null;
-            Log("PlayRoutine() finalizou sem blink");
-            yield break;
-        }
+        Vector2 teleportArea = teleportAreaAtStart * uiScale;
 
         float elapsed = 0f;
-        bool visible = true;
+        float teleportElapsed = 0f;
 
         while (elapsed < duration)
         {
-            yield return new WaitForSeconds(blinkSpeed);
+            float dt = Time.deltaTime;
+            elapsed += dt;
 
-            elapsed += blinkSpeed;
-            visible = !visible;
-            image.enabled = visible;
+            if (enableTeleportIntro && elapsed <= teleportDuration)
+            {
+                teleportElapsed += dt;
 
-            Log($"Blink | elapsed={elapsed:0.000} visible={visible}");
+                if (teleportElapsed >= teleportInterval)
+                {
+                    teleportElapsed = 0f;
+
+                    float t = Mathf.Clamp01(elapsed / teleportDuration);
+
+                    float rangeX = Mathf.Lerp(teleportArea.x, 0f, t);
+                    float rangeY = Mathf.Lerp(teleportArea.y, 0f, t);
+
+                    Vector2 offset = new Vector2(
+                        Random.Range(-rangeX, rangeX),
+                        Random.Range(-rangeY, rangeY));
+
+                    rectTransform.anchoredPosition = basePos + offset;
+                }
+            }
+            else
+            {
+                rectTransform.anchoredPosition = basePos;
+            }
+
+            yield return null;
         }
 
+        rectTransform.anchoredPosition = basePos;
         image.enabled = false;
         routine = null;
-
-        Log("PlayRoutine() finalizou");
-    }
-
-    float GetPixelPerfectScale()
-    {
-        float scale = Mathf.Max(1, Mathf.RoundToInt((float)Screen.height / 224f));
-        Log($"GetPixelPerfectScale() = {scale}");
-        return scale;
-    }
-
-    void Log(string msg)
-    {
-        if (!enableDebugLogs)
-            return;
-
-        Debug.Log($"[SuddenDeathHurryUpUI] {msg}", this);
     }
 }
