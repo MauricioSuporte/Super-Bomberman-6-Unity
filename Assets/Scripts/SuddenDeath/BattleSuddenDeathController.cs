@@ -67,6 +67,7 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
     bool suddenDeathDropsStarted;
     float suddenDeathDropStartRemainingTime;
     readonly HashSet<Vector3Int> scheduledShadowCells = new HashSet<Vector3Int>();
+
     struct QueuedShadowData
     {
         public GameObject ShadowObject;
@@ -1063,14 +1064,14 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
 
     void RemoveAllRevengeBombersFromScene()
     {
-        BattleRevengeController[] revengeCarts = FindObjectsByType<BattleRevengeController>(FindObjectsSortMode.None);
+        BattleRevengeController[] revengeCarts = FindObjectsByType<BattleRevengeController>();
         for (int i = 0; i < revengeCarts.Length; i++)
         {
             if (revengeCarts[i] != null)
                 Destroy(revengeCarts[i].gameObject);
         }
 
-        BattleRevengeSystem[] revengeSystems = FindObjectsByType<BattleRevengeSystem>(FindObjectsSortMode.None);
+        BattleRevengeSystem[] revengeSystems = FindObjectsByType<BattleRevengeSystem>();
         for (int i = 0; i < revengeSystems.Length; i++)
         {
             if (revengeSystems[i] != null)
@@ -1186,7 +1187,7 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
 
     Tilemap FindIndestructibleTilemap()
     {
-        Tilemap[] maps = FindObjectsByType<Tilemap>(FindObjectsSortMode.None);
+        Tilemap[] maps = FindObjectsByType<Tilemap>();
 
         for (int i = 0; i < maps.Length; i++)
         {
@@ -1205,7 +1206,7 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
 
     Tilemap FindDestructibleTilemap()
     {
-        Tilemap[] maps = FindObjectsByType<Tilemap>(FindObjectsSortMode.None);
+        Tilemap[] maps = FindObjectsByType<Tilemap>();
 
         for (int i = 0; i < maps.Length; i++)
         {
@@ -1362,8 +1363,6 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
         bool startFromTop = selectedStartCorner == StartCorner.TopLeft || selectedStartCorner == StartCorner.TopRight;
         bool startLeftToRight = selectedStartCorner == StartCorner.TopLeft || selectedStartCorner == StartCorner.BottomLeft;
 
-        int layer = 0;
-
         while (bottom <= top)
         {
             bool takePrimarySideFirst = true;
@@ -1395,7 +1394,6 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
 
             top--;
             bottom++;
-            layer++;
         }
     }
 
@@ -1403,8 +1401,6 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
     {
         bool startFromLeft = selectedStartCorner == StartCorner.TopLeft || selectedStartCorner == StartCorner.BottomLeft;
         bool startTopToBottom = selectedStartCorner == StartCorner.TopLeft || selectedStartCorner == StartCorner.TopRight;
-
-        int layer = 0;
 
         while (left <= right)
         {
@@ -1437,7 +1433,6 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
 
             left++;
             right--;
-            layer++;
         }
     }
 
