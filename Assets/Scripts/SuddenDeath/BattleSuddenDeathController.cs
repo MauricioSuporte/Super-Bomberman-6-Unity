@@ -26,13 +26,13 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
     [SerializeField] private GameObject fallingBlockVisualPrefab;
     [SerializeField] private TileBase currentStageIndestructibleTile;
     [SerializeField] private float fallingHeight = 6f;
-    [SerializeField] private float fallingDuration = 0.1f;
+    [SerializeField] private float fallingDuration = 0.5f;
     [SerializeField] private float topScreenSpawnOffset = 0.5f;
     [SerializeField] private int visualSortingOrderOffset = 1;
 
     [Header("Shadow")]
     [SerializeField] private bool enableShadowVisual = true;
-    [SerializeField] private float shadowLeadTime = 0.25f;
+    [SerializeField] private float shadowLeadTime = 3f;
     [SerializeField] private float shadowStartSize = 0.15f;
     [SerializeField] private float shadowEndSize = 1f;
     [SerializeField, Range(0f, 1f)] private float shadowAlpha = 0.65f;
@@ -274,6 +274,8 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
             $"BeginSuddenDeath: remainingStart={remainingTimeAtStart:0.000}, " +
             $"shadowStartAt={suddenDeathShadowStartRemainingTime:0.000}, " +
             $"dropStartAt={suddenDeathDropStartRemainingTime:0.000}, " +
+            $"shadowLeadTime={shadowLeadTime:0.000}, " +
+            $"fallingDuration={fallingDuration:0.000}, " +
             $"pathCount={suddenDeathPath.Count}, " +
             $"existingSlots={existingIndestructibleSlotsInPath}, " +
             $"emptySlots={emptySlotsInPath}, " +
@@ -314,6 +316,7 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
                     $"ProcessTileDrops[ShadowOnly]: rawRemaining={rawRemaining:0.000}, " +
                     $"timelineElapsed={currentTimelineElapsed:0.000}, " +
                     $"dropStartAt={suddenDeathDropStartRemainingTime:0.000}, " +
+                    $"shadowLeadTime={shadowLeadTime:0.000}, " +
                     $"nextDropIndex={nextDropIndex}");
             }
 
@@ -1296,6 +1299,7 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
             LogShadow(
                 $"EnsureQueuedShadows: sombra criada. cell={cell}, " +
                 $"previewStart={previewStartTime:0.000}, dropElapsed={dropElapsedTime:0.000}, " +
+                $"previewDuration={shadowLeadTime:0.000}, " +
                 $"timelineElapsed={currentTimelineElapsed:0.000}");
         }
     }
@@ -1318,7 +1322,8 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
                 continue;
 
             float previewStartTime = Mathf.Max(0f, data.DropElapsedTime - shadowLeadTime);
-            float previewDuration = Mathf.Max(0.0001f, data.DropElapsedTime - previewStartTime);
+            float previewEndTime = data.DropElapsedTime + fallingDuration;
+            float previewDuration = Mathf.Max(0.0001f, previewEndTime - previewStartTime);
 
             float t = Mathf.Clamp01((currentElapsedSinceDropsStarted - previewStartTime) / previewDuration);
 
