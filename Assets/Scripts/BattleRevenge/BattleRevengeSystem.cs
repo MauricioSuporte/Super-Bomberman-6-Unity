@@ -35,7 +35,8 @@ public sealed class BattleRevengeSystem : MonoBehaviour
         Application.isPlaying &&
         IsBattleModeScene() &&
         BattleModeRules.Instance != null &&
-        BattleModeRules.Instance.EnableRevengeBomber;
+        BattleModeRules.Instance.EnableRevengeBomber &&
+        !BattleRevengeBomberBlocker.PreventNewRevengeBombers;
 
     void Awake()
     {
@@ -68,9 +69,13 @@ public sealed class BattleRevengeSystem : MonoBehaviour
 
     public void HandlePlayerDeathCompleted(MovementController deadPlayer)
     {
+        if (BattleRevengeBomberBlocker.PreventNewRevengeBombers)
+            return;
+
         if (!IsRuntimeEnabled || deadPlayer == null || !deadPlayer.CompareTag("Player"))
             return;
 
+        CleanupDestroyedActiveCarts();
         EnsureBattleSetupCached();
 
         if (activeCartsByOwner.ContainsKey(deadPlayer.PlayerId))
@@ -90,8 +95,13 @@ public sealed class BattleRevengeSystem : MonoBehaviour
 
     public bool TryHandleLethalRevengeHit(MovementController victim, Collider2D hazard)
     {
+        if (BattleRevengeBomberBlocker.PreventNewRevengeBombers)
+            return false;
+
         if (!IsRuntimeEnabled || victim == null || hazard == null || !victim.CompareTag("Player"))
             return false;
+
+        CleanupDestroyedActiveCarts();
 
         BombExplosion explosion =
             hazard.GetComponent<BombExplosion>() ??
@@ -131,6 +141,9 @@ public sealed class BattleRevengeSystem : MonoBehaviour
         void TryFinalizeSwap()
         {
             if (swapFinalized)
+                return;
+
+            if (BattleRevengeBomberBlocker.PreventNewRevengeBombers)
                 return;
 
             if (!victimDeathFinished || !revengeJumpFinished)
@@ -176,6 +189,9 @@ public sealed class BattleRevengeSystem : MonoBehaviour
             jumpFacing,
             () =>
             {
+                if (BattleRevengeBomberBlocker.PreventNewRevengeBombers)
+                    return;
+
                 if (!respawningPlayerReleased)
                 {
                     respawningPlayer.RespawnFromBattleRevenge(
@@ -459,6 +475,9 @@ public sealed class BattleRevengeSystem : MonoBehaviour
 
     private BattleRevengeController AcquireCart()
     {
+        if (BattleRevengeBomberBlocker.PreventNewRevengeBombers)
+            return null;
+
         while (cartPool.Count > 0)
         {
             BattleRevengeController pooledCart = cartPool.Pop();
@@ -466,7 +485,33 @@ public sealed class BattleRevengeSystem : MonoBehaviour
                 return pooledCart;
         }
 
+        if (cartPrefab == null)
+            return null;
+
         return Instantiate(cartPrefab, transform);
+    }
+
+    private void CleanupDestroyedActiveCarts()
+    {
+        if (activeCartsByOwner.Count == 0)
+            return;
+
+        List<int> invalidKeys = null;
+
+        foreach (KeyValuePair<int, BattleRevengeController> pair in activeCartsByOwner)
+        {
+            if (pair.Value != null)
+                continue;
+
+            invalidKeys ??= new List<int>();
+            invalidKeys.Add(pair.Key);
+        }
+
+        if (invalidKeys == null)
+            return;
+
+        for (int i = 0; i < invalidKeys.Count; i++)
+            activeCartsByOwner.Remove(invalidKeys[i]);
     }
 
     private bool IsConfiguredActivePlayer(int playerId)
