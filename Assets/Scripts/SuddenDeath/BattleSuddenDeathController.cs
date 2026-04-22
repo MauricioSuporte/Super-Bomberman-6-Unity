@@ -250,7 +250,7 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
             SuddenDeathTriggerTime);
 
         BattleRevengeBomberBlocker.Block();
-        RemoveAllRevengeBombersFromScene();
+        StartCoroutine(RemoveAllRevengeBombersFromSceneRoutine());
 
         selectedDropPattern = randomizeDropPattern
             ? (SuddenDeathDropPattern)Random.Range(0, 3)
@@ -1065,16 +1065,33 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
         GameMusicController.Instance.PlayOneShotSfx(fallingTileSfx);
     }
 
-    void RemoveAllRevengeBombersFromScene()
+    IEnumerator RemoveAllRevengeBombersFromSceneRoutine()
     {
-        BattleRevengeController[] revengeCarts = FindObjectsByType<BattleRevengeController>();
+        BattleRevengeController[] revengeCarts = FindObjectsByType<BattleRevengeController>(FindObjectsInactive.Exclude);
+
+        int pendingExits = 0;
+
         for (int i = 0; i < revengeCarts.Length; i++)
         {
-            if (revengeCarts[i] != null)
-                Destroy(revengeCarts[i].gameObject);
+            BattleRevengeController cart = revengeCarts[i];
+            if (cart == null)
+                continue;
+
+            pendingExits++;
+
+            cart.PlayExit(() =>
+            {
+                if (cart != null)
+                    Destroy(cart.gameObject);
+
+                pendingExits--;
+            });
         }
 
-        BattleRevengeSystem[] revengeSystems = FindObjectsByType<BattleRevengeSystem>();
+        while (pendingExits > 0)
+            yield return null;
+
+        BattleRevengeSystem[] revengeSystems = FindObjectsByType<BattleRevengeSystem>(FindObjectsInactive.Include);
         for (int i = 0; i < revengeSystems.Length; i++)
         {
             if (revengeSystems[i] != null)

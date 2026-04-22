@@ -420,6 +420,9 @@ public sealed class BattleRevengeController : MonoBehaviour
     {
         isAnimating = true;
 
+        HideLandingIndicator();
+        HideRechargeIndicator();
+
         Vector3 start = transform.position;
         Vector3 end = GetOffscreenPosition(start);
 
