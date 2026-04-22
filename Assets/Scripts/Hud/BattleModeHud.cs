@@ -1122,7 +1122,7 @@ public sealed class BattleModeHud : MonoBehaviour
         text.fontSize = pushStartFontSize;
         text.color = pushStartColor;
         text.fontStyle = FontStyles.Bold;
-        text.enableWordWrapping = false;
+        text.textWrappingMode = TextWrappingModes.NoWrap;
         text.overflowMode = TextOverflowModes.Overflow;
         text.alignment = TextAlignmentOptions.Center;
         text.extraPadding = true;
