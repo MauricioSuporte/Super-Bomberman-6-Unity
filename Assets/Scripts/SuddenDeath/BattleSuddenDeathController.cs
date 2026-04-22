@@ -55,6 +55,8 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
     [SerializeField] private float fastMusicPitch = 1.2f;
     [SerializeField] private float resumeMusicDelayAfterHurryUp = 0.6f;
 
+    [SerializeField] private SuddenDeathHurryUpUI hurryUpUI;
+
     [Header("Debug")]
     [SerializeField] private bool enableDebugLogs = true;
     [SerializeField] private bool logSuddenDeathFlow = true;
@@ -215,6 +217,16 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
     {
         suddenDeathStarted = true;
         suddenDeathDropsStarted = false;
+
+        if (hurryUpUI != null)
+        {
+            hurryUpUI.Play();
+            LogFlow("HurryUp UI exibido.");
+        }
+        else
+        {
+            LogWarning("HurryUp UI não configurado.");
+        }
 
         scheduledShadowCells.Clear();
 
