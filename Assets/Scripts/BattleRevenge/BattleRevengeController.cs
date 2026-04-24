@@ -28,6 +28,13 @@ public sealed class BattleRevengeController : MonoBehaviour
     [Header("Movement")]
     [SerializeField, Min(0.1f)] private float moveSpeed = 4f;
 
+    [Header("Movement Tilt")]
+    [SerializeField] private bool useMovementTilt = true;
+    [SerializeField, Min(0f)] private float tiltAngle = 6f;
+    [SerializeField, Min(0.01f)] private float tiltInDuration = 0.08f;
+    [SerializeField, Min(0.01f)] private float tiltOutDuration = 0.12f;
+    [SerializeField, Min(0f)] private float tiltHoldDelay = 0.03f;
+
     [Header("Edge Offset")]
     [SerializeField, Min(0f)] private float horizontalInnerOffsetTiles = 1f;
 
@@ -99,6 +106,11 @@ public sealed class BattleRevengeController : MonoBehaviour
     private float minEdgeY;
     private float maxEdgeY;
 
+    private float currentTilt;
+    private float targetTilt;
+    private float tiltHoldTimer;
+    private CartEdge? lastInputTargetWall;
+
     private float nextBombAllowedAt;
 
     private bool isChargingLaunch;
@@ -149,10 +161,32 @@ public sealed class BattleRevengeController : MonoBehaviour
         if (input == null)
             return;
 
-        if (TryGetTargetWallFromInput(input, out CartEdge targetWall))
+        bool hasMovementInput = TryGetTargetWallFromInput(input, out CartEdge targetWall);
+
+        if (hasMovementInput)
+        {
+            if (!lastInputTargetWall.HasValue || lastInputTargetWall.Value != targetWall)
+            {
+                currentTilt = 0f;
+                tiltHoldTimer = 0f;
+                lastInputTargetWall = targetWall;
+            }
+
+            Vector3 beforeMove = transform.position;
             MoveTowardWallMidpoint(targetWall);
+            Vector3 afterMove = transform.position;
+
+            UpdateMovementTilt(afterMove - beforeMove, true);
+        }
+        else
+        {
+            lastInputTargetWall = null;
+            UpdateMovementTilt(Vector3.zero, false);
+        }
 
         RefreshVisualByEdge();
+        ApplyTiltToActiveVisuals();
+
         UpdateRechargeIndicator();
 
         bool holdingActionA = input.Get(ownerPlayerId, PlayerAction.ActionA);
@@ -206,6 +240,11 @@ public sealed class BattleRevengeController : MonoBehaviour
     {
         HideLandingIndicator();
         HideRechargeIndicator();
+        currentTilt = 0f;
+        targetTilt = 0f;
+        tiltHoldTimer = 0f;
+        lastInputTargetWall = null;
+        ApplyTiltToActiveVisuals();
     }
 
     private void EnsureRechargeSpritesLoaded()
@@ -626,12 +665,17 @@ public sealed class BattleRevengeController : MonoBehaviour
         if (renderer == null)
             return;
 
-        renderer.idle = true;
         renderer.enabled = active;
-        renderer.RefreshFrame();
 
         if (renderer.TryGetComponent<SpriteRenderer>(out var sr))
             sr.enabled = active;
+
+        if (!active)
+            return;
+
+        renderer.idle = false;
+        renderer.loop = true;
+        renderer.RefreshFrame();
     }
 
     private static CartEdge ResolveEdgeFromDirection(Vector2 inwardDirection)
@@ -989,4 +1033,91 @@ public sealed class BattleRevengeController : MonoBehaviour
             bestWall = candidate;
         }
     }
+
+    private void UpdateMovementTilt(Vector3 movementDelta, bool hasInput)
+    {
+        if (!useMovementTilt)
+        {
+            currentTilt = 0f;
+            targetTilt = 0f;
+            return;
+        }
+
+        if (!hasInput || movementDelta.sqrMagnitude <= 0.000001f)
+        {
+            targetTilt = 0f;
+            tiltHoldTimer = 0f;
+
+            currentTilt = Mathf.MoveTowards(
+                currentTilt,
+                targetTilt,
+                (tiltAngle / tiltOutDuration) * Time.unscaledDeltaTime);
+
+            return;
+        }
+
+        Vector2 dir = movementDelta.normalized;
+
+        float sign;
+
+        if (Mathf.Abs(dir.x) >= Mathf.Abs(dir.y))
+            sign = dir.x > 0f ? -1f : 1f;
+        else
+            sign = dir.y > 0f ? 1f : -1f;
+
+        tiltHoldTimer += Time.unscaledDeltaTime;
+
+        targetTilt = sign * tiltAngle;
+
+        float speed = tiltAngle / tiltInDuration;
+
+        currentTilt = Mathf.MoveTowards(
+            currentTilt,
+            targetTilt,
+            speed * Time.unscaledDeltaTime);
+
+        if (tiltHoldTimer >= tiltHoldDelay)
+            currentTilt = targetTilt;
+    }
+
+    private void ApplyTiltToActiveVisuals()
+    {
+        ResetTilt(bodyUp);
+        ResetTilt(bodyDown);
+        ResetTilt(bodyLeft);
+        ResetTilt(bodyRight);
+
+        ResetTilt(headUp);
+        ResetTilt(headDown);
+        ResetTilt(headLeft);
+        ResetTilt(headRight);
+
+        ApplyTilt(GetActiveBodyRenderer());
+        ApplyTilt(GetActiveHeadRenderer());
+    }
+
+    private void ApplyTilt(AnimatedSpriteRenderer renderer)
+    {
+        if (renderer == null)
+            return;
+
+        renderer.transform.localRotation = Quaternion.Euler(0f, 0f, currentTilt);
+    }
+
+    private void ResetTilt(AnimatedSpriteRenderer renderer)
+    {
+        if (renderer == null)
+            return;
+
+        renderer.transform.localRotation = Quaternion.identity;
+    }
+
+    private AnimatedSpriteRenderer GetActiveBodyRenderer() => currentEdge switch
+    {
+        CartEdge.Left => bodyLeft,
+        CartEdge.Right => bodyRight,
+        CartEdge.Top => bodyUp,
+        CartEdge.Bottom => bodyDown,
+        _ => null
+    };
 }

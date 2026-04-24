@@ -82,7 +82,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 10
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 470880199628185174, guid: 21f0953aa5b72e9418d34683a212d569, type: 3}
+  m_Sprite: {fileID: 1332627929250917044, guid: 3811511d4cf563442a6b8c1213a7cc09, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -104,9 +104,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a4b55e1b961d144197e1a7a4a391956, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AnimatedSpriteRenderer
-  idleSprite: {fileID: 470880199628185174, guid: 21f0953aa5b72e9418d34683a212d569, type: 3}
+  idleSprite: {fileID: 1332627929250917044, guid: 3811511d4cf563442a6b8c1213a7cc09, type: 3}
   animationSprite:
-  - {fileID: 470880199628185174, guid: 21f0953aa5b72e9418d34683a212d569, type: 3}
+  - {fileID: 1332627929250917044, guid: 3811511d4cf563442a6b8c1213a7cc09, type: 3}
+  - {fileID: 3346262400092040992, guid: 3811511d4cf563442a6b8c1213a7cc09, type: 3}
+  - {fileID: 6436367571567927456, guid: 3811511d4cf563442a6b8c1213a7cc09, type: 3}
   allowFlipX: 0
   animationTime: 0.1
   useSequenceDuration: 0
@@ -114,7 +116,7 @@ MonoBehaviour:
   useUnscaledTime: 1
   respectGamePause: 1
   loop: 1
-  idle: 1
+  idle: 0
   frameOffsets: []
   pingPong: 0
   disableOffsetsIfThisObjectHasRigidbody2D: 1
@@ -160,7 +162,7 @@ SpriteRenderer:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 445400740266107470}
-  m_Enabled: 1
+  m_Enabled: 0
   m_CastShadows: 0
   m_ReceiveShadows: 0
   m_DynamicOccludee: 1
@@ -201,7 +203,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 10
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 5959851453912606493, guid: 21f0953aa5b72e9418d34683a212d569, type: 3}
+  m_Sprite: {fileID: 6966181950481579209, guid: 58c983464d11db54fac44dd4082f7702, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -223,9 +225,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a4b55e1b961d144197e1a7a4a391956, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AnimatedSpriteRenderer
-  idleSprite: {fileID: 5959851453912606493, guid: 21f0953aa5b72e9418d34683a212d569, type: 3}
+  idleSprite: {fileID: 6966181950481579209, guid: 58c983464d11db54fac44dd4082f7702, type: 3}
   animationSprite:
-  - {fileID: 5959851453912606493, guid: 21f0953aa5b72e9418d34683a212d569, type: 3}
+  - {fileID: 6966181950481579209, guid: 58c983464d11db54fac44dd4082f7702, type: 3}
+  - {fileID: -3528693990171280047, guid: 58c983464d11db54fac44dd4082f7702, type: 3}
+  - {fileID: 3845226566710561645, guid: 58c983464d11db54fac44dd4082f7702, type: 3}
   allowFlipX: 0
   animationTime: 0.1
   useSequenceDuration: 0
@@ -233,7 +237,7 @@ MonoBehaviour:
   useUnscaledTime: 1
   respectGamePause: 1
   loop: 1
-  idle: 1
+  idle: 0
   frameOffsets: []
   pingPong: 0
   disableOffsetsIfThisObjectHasRigidbody2D: 1
@@ -439,7 +443,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 11
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 5959851453912606493, guid: 21f0953aa5b72e9418d34683a212d569, type: 3}
+  m_Sprite: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -447,7 +451,7 @@ SpriteRenderer:
   m_Size: {x: 2.5, y: 1.1875}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
-  m_WasSpriteAssigned: 1
+  m_WasSpriteAssigned: 0
   m_SpriteSortPoint: 0
 --- !u!114 &4001481998693905280
 MonoBehaviour:
@@ -461,9 +465,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a4b55e1b961d144197e1a7a4a391956, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AnimatedSpriteRenderer
-  idleSprite: {fileID: 5959851453912606493, guid: 21f0953aa5b72e9418d34683a212d569, type: 3}
+  idleSprite: {fileID: 0}
   animationSprite:
-  - {fileID: 5959851453912606493, guid: 21f0953aa5b72e9418d34683a212d569, type: 3}
+  - {fileID: 0}
   allowFlipX: 0
   animationTime: 0.1
   useSequenceDuration: 0
@@ -517,7 +521,7 @@ SpriteRenderer:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3078566319677747120}
-  m_Enabled: 0
+  m_Enabled: 1
   m_CastShadows: 0
   m_ReceiveShadows: 0
   m_DynamicOccludee: 1
@@ -558,7 +562,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 10
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 6599976551442434583, guid: 21f0953aa5b72e9418d34683a212d569, type: 3}
+  m_Sprite: {fileID: -6170391831541862863, guid: d783298248ebd59499c56822350c96a8, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -580,10 +584,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a4b55e1b961d144197e1a7a4a391956, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AnimatedSpriteRenderer
-  idleSprite: {fileID: 6599976551442434583, guid: 21f0953aa5b72e9418d34683a212d569, type: 3}
+  idleSprite: {fileID: -6170391831541862863, guid: d783298248ebd59499c56822350c96a8, type: 3}
   animationSprite:
-  - {fileID: 6599976551442434583, guid: 21f0953aa5b72e9418d34683a212d569, type: 3}
-  - {fileID: 6599976551442434583, guid: 21f0953aa5b72e9418d34683a212d569, type: 3}
+  - {fileID: -6170391831541862863, guid: d783298248ebd59499c56822350c96a8, type: 3}
+  - {fileID: 873800165352948243, guid: d783298248ebd59499c56822350c96a8, type: 3}
+  - {fileID: 52928468431062573, guid: d783298248ebd59499c56822350c96a8, type: 3}
   allowFlipX: 0
   animationTime: 0.1
   useSequenceDuration: 0
@@ -591,7 +596,7 @@ MonoBehaviour:
   useUnscaledTime: 1
   respectGamePause: 1
   loop: 1
-  idle: 1
+  idle: 0
   frameOffsets: []
   pingPong: 0
   disableOffsetsIfThisObjectHasRigidbody2D: 1
@@ -678,7 +683,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 10
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 5784168968965044386, guid: 21f0953aa5b72e9418d34683a212d569, type: 3}
+  m_Sprite: {fileID: -6969684974725356330, guid: f7b5228a954f515419c63e0b52c5a0a8, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -700,9 +705,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a4b55e1b961d144197e1a7a4a391956, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AnimatedSpriteRenderer
-  idleSprite: {fileID: 5784168968965044386, guid: 21f0953aa5b72e9418d34683a212d569, type: 3}
+  idleSprite: {fileID: -6969684974725356330, guid: f7b5228a954f515419c63e0b52c5a0a8, type: 3}
   animationSprite:
-  - {fileID: 5784168968965044386, guid: 21f0953aa5b72e9418d34683a212d569, type: 3}
+  - {fileID: -6969684974725356330, guid: f7b5228a954f515419c63e0b52c5a0a8, type: 3}
+  - {fileID: -8241883303617107611, guid: f7b5228a954f515419c63e0b52c5a0a8, type: 3}
+  - {fileID: 5560166329456096805, guid: f7b5228a954f515419c63e0b52c5a0a8, type: 3}
   allowFlipX: 0
   animationTime: 0.1
   useSequenceDuration: 0
@@ -710,7 +717,7 @@ MonoBehaviour:
   useUnscaledTime: 1
   respectGamePause: 1
   loop: 1
-  idle: 1
+  idle: 0
   frameOffsets: []
   pingPong: 0
   disableOffsetsIfThisObjectHasRigidbody2D: 1
@@ -797,7 +804,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 11
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 6599976551442434583, guid: 21f0953aa5b72e9418d34683a212d569, type: 3}
+  m_Sprite: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -805,7 +812,7 @@ SpriteRenderer:
   m_Size: {x: 2.5, y: 1.5}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
-  m_WasSpriteAssigned: 1
+  m_WasSpriteAssigned: 0
   m_SpriteSortPoint: 0
 --- !u!114 &3434938821421392487
 MonoBehaviour:
@@ -819,10 +826,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a4b55e1b961d144197e1a7a4a391956, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AnimatedSpriteRenderer
-  idleSprite: {fileID: 6599976551442434583, guid: 21f0953aa5b72e9418d34683a212d569, type: 3}
+  idleSprite: {fileID: 0}
   animationSprite:
-  - {fileID: 6599976551442434583, guid: 21f0953aa5b72e9418d34683a212d569, type: 3}
-  - {fileID: 6599976551442434583, guid: 21f0953aa5b72e9418d34683a212d569, type: 3}
+  - {fileID: 0}
   allowFlipX: 0
   animationTime: 0.1
   useSequenceDuration: 0
@@ -899,12 +905,12 @@ MonoBehaviour:
   headRight: {fileID: 4211436639759536586}
   moveSpeed: 10
   horizontalInnerOffsetTiles: 1
-  offsetLeft: {x: -0.5, y: 0}
-  offsetRight: {x: 0.5, y: 0}
+  offsetLeft: {x: -0.4, y: 0}
+  offsetRight: {x: 0.4, y: 0}
   offsetTop: {x: 0, y: 0}
   offsetBottom: {x: 0, y: 0}
-  headOffsetLeft: {x: 0, y: 1.4}
-  headOffsetRight: {x: 0, y: 1.4}
+  headOffsetLeft: {x: 0, y: 1.5}
+  headOffsetRight: {x: 0, y: 1.5}
   headOffsetTop: {x: 0, y: 1.2}
   headOffsetBottom: {x: 0, y: 1}
   enterDuration: 0.5
@@ -1013,7 +1019,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 11
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 470880199628185174, guid: 21f0953aa5b72e9418d34683a212d569, type: 3}
+  m_Sprite: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -1021,7 +1027,7 @@ SpriteRenderer:
   m_Size: {x: 1.375, y: 1.9375}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
-  m_WasSpriteAssigned: 1
+  m_WasSpriteAssigned: 0
   m_SpriteSortPoint: 0
 --- !u!114 &1219628951043232422
 MonoBehaviour:
@@ -1035,9 +1041,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a4b55e1b961d144197e1a7a4a391956, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AnimatedSpriteRenderer
-  idleSprite: {fileID: 470880199628185174, guid: 21f0953aa5b72e9418d34683a212d569, type: 3}
+  idleSprite: {fileID: 0}
   animationSprite:
-  - {fileID: 470880199628185174, guid: 21f0953aa5b72e9418d34683a212d569, type: 3}
+  - {fileID: 0}
   allowFlipX: 0
   animationTime: 0.1
   useSequenceDuration: 0
@@ -1251,7 +1257,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 11
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 5784168968965044386, guid: 21f0953aa5b72e9418d34683a212d569, type: 3}
+  m_Sprite: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -1259,7 +1265,7 @@ SpriteRenderer:
   m_Size: {x: 1.375, y: 1.9375}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
-  m_WasSpriteAssigned: 1
+  m_WasSpriteAssigned: 0
   m_SpriteSortPoint: 0
 --- !u!114 &4211436639759536586
 MonoBehaviour:
@@ -1273,9 +1279,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a4b55e1b961d144197e1a7a4a391956, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AnimatedSpriteRenderer
-  idleSprite: {fileID: 5784168968965044386, guid: 21f0953aa5b72e9418d34683a212d569, type: 3}
+  idleSprite: {fileID: 0}
   animationSprite:
-  - {fileID: 5784168968965044386, guid: 21f0953aa5b72e9418d34683a212d569, type: 3}
+  - {fileID: 0}
   allowFlipX: 0
   animationTime: 0.1
   useSequenceDuration: 0
