@@ -220,7 +220,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 445400740266107470}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 3a4b55e1b961d144197e1a7a4a391956, type: 3}
   m_Name: 
@@ -521,7 +521,7 @@ SpriteRenderer:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1837962679985164222}
-  m_Enabled: 1
+  m_Enabled: 0
   m_CastShadows: 0
   m_ReceiveShadows: 0
   m_DynamicOccludee: 1
@@ -579,7 +579,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1837962679985164222}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 3a4b55e1b961d144197e1a7a4a391956, type: 3}
   m_Name: 
@@ -698,7 +698,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2292577608512193757}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 3a4b55e1b961d144197e1a7a4a391956, type: 3}
   m_Name: 
@@ -938,7 +938,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3078566319677747120}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 3a4b55e1b961d144197e1a7a4a391956, type: 3}
   m_Name: 
@@ -1522,12 +1522,17 @@ MonoBehaviour:
   headOffsetTopRight: {x: 0, y: 1.5}
   headOffsetBottomLeft: {x: 0, y: 1.4}
   headOffsetBottomRight: {x: 0, y: 1.4}
-  debugCornerTransition: 0
+  debugCornerTransition: 1
   debugCornerTransitionInterval: 0.05
+  debugActionALaunch: 1
+  debugActionAInterval: 0.08
   cornerTransitionDistanceTiles: 0.85
   cornerVisualDistanceTiles: 0.4
   cornerWorldSpeedMultiplier: 1
   tileAlignmentTolerance: 0.03
+  topBottomCornerVisualDistanceTiles: 0.05
+  topBottomDiagonalLeftX: -9
+  topBottomDiagonalRightX: 4
   moveSpeed: 10
   useMovementTilt: 1
   tiltAngle: 6
@@ -1551,6 +1556,7 @@ MonoBehaviour:
   minLaunchDistanceTiles: 3
   maxLaunchDistanceTiles: 7
   chargeStepSeconds: 0.12
+  cornerLaunchBlockDistanceTiles: 0.4
   landingIndicatorRenderer: {fileID: 2481538032918982670}
   indicatorMinAlpha: 0.25
   indicatorMaxAlpha: 0.6
@@ -2205,7 +2211,7 @@ SpriteRenderer:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8131112497862584279}
-  m_Enabled: 1
+  m_Enabled: 0
   m_CastShadows: 0
   m_ReceiveShadows: 0
   m_DynamicOccludee: 1

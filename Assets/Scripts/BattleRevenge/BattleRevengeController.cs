@@ -54,13 +54,19 @@ public sealed class BattleRevengeController : MonoBehaviour
     [Header("Debug")]
     [SerializeField] private bool debugCornerTransition;
     [SerializeField, Min(0.01f)] private float debugCornerTransitionInterval = 0.1f;
+    [SerializeField] private bool debugActionALaunch;
+    [SerializeField, Min(0.01f)] private float debugActionAInterval = 0.08f;
 
     [Header("Corner Transition")]
     [SerializeField, Min(0f)] private float cornerTransitionDistanceTiles = 0.85f;
     [SerializeField, Min(0f)] private float cornerVisualDistanceTiles = 0.4f;
     [SerializeField, Range(0.1f, 1f)] private float cornerWorldSpeedMultiplier = 1f;
     [SerializeField, Min(0.001f)] private float tileAlignmentTolerance = 0.03f;
+    [SerializeField, Min(0f)] private float topBottomCornerVisualDistanceTiles = 0.05f;
 
+    [Header("Top/Bottom Diagonal X Limits")]
+    [SerializeField] private float topBottomDiagonalLeftX = -9f;
+    [SerializeField] private float topBottomDiagonalRightX = 4f;
 
     [Header("Movement")]
     [SerializeField, Min(0.1f)] private float moveSpeed = 4f;
@@ -100,6 +106,9 @@ public sealed class BattleRevengeController : MonoBehaviour
     [SerializeField, Min(3)] private int minLaunchDistanceTiles = 3;
     [SerializeField, Min(3)] private int maxLaunchDistanceTiles = 7;
     [SerializeField, Min(0.01f)] private float chargeStepSeconds = 0.12f;
+
+    [Header("Launch Rules")]
+    [SerializeField, Min(0f)] private float cornerLaunchBlockDistanceTiles = 0.4f;
 
     [Header("Landing Indicator")]
     [SerializeField] private SpriteRenderer landingIndicatorRenderer;
@@ -162,6 +171,9 @@ public sealed class BattleRevengeController : MonoBehaviour
     private float spawnPerimeterPosition;
     private bool suppressCornerVisualAtSpawn;
 
+    private float nextActionADebugAt;
+    private bool lastHoldingActionA;
+
     public int OwnerPlayerId => ownerPlayerId;
 
     private float HorizontalInnerOffsetWorld => horizontalInnerOffsetTiles;
@@ -187,7 +199,7 @@ public sealed class BattleRevengeController : MonoBehaviour
 
     private bool CanLaunchBombNow()
     {
-        return !IsInPhysicalCornerTransition();
+        return currentCorner == CartCorner.None;
     }
 
     void Awake()
@@ -243,8 +255,13 @@ public sealed class BattleRevengeController : MonoBehaviour
 
         bool canLaunchBomb = CanLaunchBombNow();
 
+        bool holdingActionA = input.Get(ownerPlayerId, PlayerAction.ActionA);
+        DebugActionALaunchState(holdingActionA, canLaunchBomb, isChargingLaunch, "Read");
+
         if (!canLaunchBomb)
         {
+            DebugActionALaunchState(holdingActionA, canLaunchBomb, isChargingLaunch, "BlockedByCorner");
+
             if (isChargingLaunch)
             {
                 isChargingLaunch = false;
@@ -253,8 +270,6 @@ public sealed class BattleRevengeController : MonoBehaviour
 
             HideLandingIndicator();
         }
-
-        bool holdingActionA = input.Get(ownerPlayerId, PlayerAction.ActionA);
 
         if (holdingActionA && canLaunchBomb)
         {
@@ -282,6 +297,8 @@ public sealed class BattleRevengeController : MonoBehaviour
 
                 if (Time.unscaledTime >= nextBombAllowedAt)
                 {
+                    DebugActionALaunchState(holdingActionA, canLaunchBomb, isChargingLaunch, "ReleaseTryingLaunch");
+
                     if (system.TryLaunchBombFromCart(this, chargedLaunchDistanceTiles))
                     {
                         nextBombAllowedAt = Time.unscaledTime + system.CartBombCooldownSeconds;
@@ -366,16 +383,17 @@ public sealed class BattleRevengeController : MonoBehaviour
         if (rechargeIndicatorRenderer == null)
             return;
 
-        if (Time.unscaledTime >= nextBombAllowedAt)
+        float remaining = Mathf.Max(0f, nextBombAllowedAt - Time.unscaledTime);
+
+        if (remaining <= 0f)
         {
-            HideRechargeIndicator();
+            rechargeIndicatorRenderer.enabled = false;
             return;
         }
 
         EnsureRechargeSpritesLoaded();
 
         float totalCooldown = Mathf.Max(0.01f, system != null ? system.CartBombCooldownSeconds : 1f);
-        float remaining = Mathf.Max(0f, nextBombAllowedAt - Time.unscaledTime);
         float normalized = 1f - Mathf.Clamp01(remaining / totalCooldown);
 
         int frameIndex = Mathf.Clamp(
@@ -673,7 +691,7 @@ public sealed class BattleRevengeController : MonoBehaviour
 
         currentCorner = keepSpawnEdgeVisual
             ? CartCorner.None
-            : ResolveCornerTransitionAt(perimeterPosition, GetCornerVisualTransitionDistance());
+            : ResolveCornerVisualTransitionAt(perimeterPosition);
 
         if (currentCorner != CartCorner.None)
         {
@@ -1711,5 +1729,115 @@ public sealed class BattleRevengeController : MonoBehaviour
 
         float delta = Mathf.Repeat(currentPosition - cornerPosition + perimeter * 0.5f, perimeter) - perimeter * 0.5f;
         return delta;
+    }
+
+    private void DebugActionALaunchState(
+        bool holdingActionA,
+        bool canLaunchBomb,
+        bool wasChargingBeforeUpdate,
+        string phase)
+    {
+        if (!debugActionALaunch)
+            return;
+
+        bool actionChanged = holdingActionA != lastHoldingActionA;
+        bool shouldPrint = actionChanged || Time.unscaledTime >= nextActionADebugAt;
+
+        if (!shouldPrint)
+            return;
+
+        nextActionADebugAt = Time.unscaledTime + debugActionAInterval;
+        lastHoldingActionA = holdingActionA;
+
+        CartCorner physicalCorner = ResolveCornerTransitionAt(perimeterPosition, cornerTransitionDistanceTiles);
+        CartCorner visualCorner = ResolveCornerVisualTransitionAt(perimeterPosition);
+
+        float perimeter = GetPerimeterLength();
+        float s = NormalizePerimeterPosition(perimeterPosition);
+
+        float topLen = GetTopSegmentLength();
+        float rightLen = GetRightSegmentLength();
+        float bottomLen = GetBottomSegmentLength();
+
+        float topLeft = 0f;
+        float topRight = topLen;
+        float bottomRight = topLen + rightLen;
+        float bottomLeft = topLen + rightLen + bottomLen;
+
+        float distTL = DistanceOnPerimeter(s, topLeft, perimeter);
+        float distTR = DistanceOnPerimeter(s, topRight, perimeter);
+        float distBR = DistanceOnPerimeter(s, bottomRight, perimeter);
+        float distBL = DistanceOnPerimeter(s, bottomLeft, perimeter);
+
+        Debug.Log(
+            $"[BattleRevenge][ActionA:{phase}] " +
+            $"owner={ownerPlayerId} " +
+            $"holding={holdingActionA} " +
+            $"canLaunch={canLaunchBomb} " +
+            $"isChargingBefore={wasChargingBeforeUpdate} " +
+            $"currentEdge={currentEdge} " +
+            $"currentVisualCorner={currentCorner} " +
+            $"physicalCorner={physicalCorner} " +
+            $"visualCorner={visualCorner} " +
+            $"blockedByPhysicalCorner={!canLaunchBomb} " +
+            $"pos={transform.position} " +
+            $"perimeter={perimeterPosition:F3} normalized={s:F3} " +
+            $"topBottomCornerVisualTiles={topBottomCornerVisualDistanceTiles:F3} " +
+            $"cornerTransitionTiles={cornerTransitionDistanceTiles:F3} " +
+            $"cornerVisualTiles={GetCornerVisualTransitionDistance():F3} " +
+            $"cornerLaunchBlockTiles={cornerLaunchBlockDistanceTiles:F3} " +
+            $"distTL={distTL:F3} distTR={distTR:F3} distBR={distBR:F3} distBL={distBL:F3} " +
+            $"cooldownRemaining={Mathf.Max(0f, nextBombAllowedAt - Time.unscaledTime):F3} " +
+            $"chargedDistance={chargedLaunchDistanceTiles} " +
+            $"launchDirection={LaunchDirection}");
+    }
+
+    private CartCorner ResolveCornerVisualTransitionAt(float perimeterValue)
+    {
+        if (!boundsConfigured)
+            return CartCorner.None;
+
+        float perimeter = GetPerimeterLength();
+
+        if (perimeter <= MinSegmentLength * 4f)
+            return CartCorner.None;
+
+        float s = NormalizePerimeterPosition(perimeterValue);
+
+        float topLen = GetTopSegmentLength();
+        float rightLen = GetRightSegmentLength();
+        float bottomLen = GetBottomSegmentLength();
+
+        CartCorner corner = ResolveCornerTransitionAt(perimeterValue, cornerTransitionDistanceTiles);
+
+        if (corner == CartCorner.None)
+            return CartCorner.None;
+
+        float center = corner switch
+        {
+            CartCorner.TopLeft => 0f,
+            CartCorner.TopRight => topLen,
+            CartCorner.BottomRight => topLen + rightLen,
+            CartCorner.BottomLeft => topLen + rightLen + bottomLen,
+            _ => 0f
+        };
+
+        float signed = GetSignedDistanceFromCorner(center, s, perimeter);
+
+        bool comingFromTopOrBottom =
+            (corner == CartCorner.TopLeft && signed > 0f) ||
+            (corner == CartCorner.TopRight && signed < 0f) ||
+            (corner == CartCorner.BottomRight && signed > 0f) ||
+            (corner == CartCorner.BottomLeft && signed < 0f);
+
+        float visualDistance = comingFromTopOrBottom
+            ? topBottomCornerVisualDistanceTiles
+            : GetCornerVisualTransitionDistance();
+
+        float distance = Mathf.Abs(signed);
+
+        return distance <= visualDistance
+            ? corner
+            : CartCorner.None;
     }
 }
