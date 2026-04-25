@@ -184,6 +184,14 @@ public sealed class BattleRevengeController : MonoBehaviour
     public float DebugCornerTransitionInterval => debugCornerTransitionInterval;
     public bool DebugActionALaunchEnabled => debugActionALaunch;
     public float DebugActionAInterval => debugActionAInterval;
+    public Transform LaunchMuzzleVfxParent
+    {
+        get
+        {
+            EnsureVisualRoot();
+            return visualRoot;
+        }
+    }
 
     private float nextCornerDebugAt;
     private float nextExplicitBoundsDebugAt;

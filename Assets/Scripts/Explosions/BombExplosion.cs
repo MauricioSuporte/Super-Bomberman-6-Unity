@@ -78,6 +78,7 @@ public class BombExplosion : MonoBehaviour
 
     private void PrepareForSpawn(Vector2 position, Quaternion rotation)
     {
+        transform.SetParent(null, true);
         transform.SetPositionAndRotation(position, rotation);
         Origin = position;
         Owner = null;

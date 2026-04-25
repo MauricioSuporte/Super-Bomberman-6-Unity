@@ -2085,6 +2085,53 @@ public partial class BombController : MonoBehaviour
         Explode(p, Vector2.right, radius, pierce);
     }
 
+    public bool SpawnRevengeLaunchMuzzleVisual(
+        Vector2 launchWorldPos,
+        Vector2 direction,
+        float duration,
+        int orderInLayer,
+        Transform parent)
+    {
+        ResolveExplosionPrefab();
+        if (explosionPrefab == null)
+            return false;
+
+        direction = direction == Vector2.zero ? Vector2.right : direction.normalized;
+
+        Vector2 position = launchWorldPos;
+
+        BombExplosion flash = BombExplosion.Spawn(explosionPrefab, position, Quaternion.identity);
+        if (flash == null)
+            return false;
+
+        if (parent != null)
+            flash.transform.SetParent(parent, true);
+
+        SetSortingOrder(flash, orderInLayer);
+
+        flash.Play(
+            BombExplosion.ExplosionPart.End,
+            direction,
+            0f,
+            Mathf.Max(0.01f, duration),
+            position);
+
+        return true;
+    }
+
+    private static void SetSortingOrder(BombExplosion explosion, int orderInLayer)
+    {
+        if (explosion == null)
+            return;
+
+        SpriteRenderer[] renderers = explosion.GetComponentsInChildren<SpriteRenderer>(true);
+        for (int i = 0; i < renderers.Length; i++)
+        {
+            if (renderers[i] != null)
+                renderers[i].sortingOrder = orderInLayer;
+        }
+    }
+
     public void SpawnExplosionCrossForEffectWithTileEffects(
         Vector2 origin,
         int radius,

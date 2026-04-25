@@ -183,7 +183,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BattleModeRules
   matchMode: 0
   victoriesToWinMatch: 3
-  roundTimer: 5
+  roundTimer: 1
   enableRevengeBomber: 1
   enableSuddenDeath: 1
   playerTeams:
@@ -226,6 +226,12 @@ MonoBehaviour:
   cartPrefab: {fileID: 7225057538406863044, guid: 7d42c2e26b3e4c6e8a6d8b6d7f6e1c22, type: 3}
   cartBombDistanceTiles: 3
   revengeBombRadius: 2
+  revengeLaunchMuzzleVfxDuration: 0.16
+  revengeLaunchMuzzleVfxOrderInLayer: 11
+  revengeLaunchMuzzleVfxOffsetLeft: {x: -1, y: 0.4}
+  revengeLaunchMuzzleVfxOffsetRight: {x: 1, y: 0.4}
+  revengeLaunchMuzzleVfxOffsetTop: {x: 0, y: 0.9}
+  revengeLaunchMuzzleVfxOffsetBottom: {x: 0, y: -0.6}
   respawnInvulnerabilitySeconds: 2
   respawnBlinkInterval: 0.08
 --- !u!114 &59654205

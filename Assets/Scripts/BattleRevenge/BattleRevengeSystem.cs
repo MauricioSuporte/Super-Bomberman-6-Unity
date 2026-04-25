@@ -12,6 +12,12 @@ public sealed class BattleRevengeSystem : MonoBehaviour
     private readonly float cartBombCooldownSeconds = 2f;
     [SerializeField, Min(1)] private int cartBombDistanceTiles = 3;
     [SerializeField, Min(1)] private int revengeBombRadius = 2;
+    [SerializeField, Min(0.01f)] private float revengeLaunchMuzzleVfxDuration = 0.16f;
+    [SerializeField] private int revengeLaunchMuzzleVfxOrderInLayer = 11;
+    [SerializeField] private Vector2 revengeLaunchMuzzleVfxOffsetLeft = new(-0.5f, 0f);
+    [SerializeField] private Vector2 revengeLaunchMuzzleVfxOffsetRight = new(0.5f, 0f);
+    [SerializeField] private Vector2 revengeLaunchMuzzleVfxOffsetTop = new(0f, 0.5f);
+    [SerializeField] private Vector2 revengeLaunchMuzzleVfxOffsetBottom = new(0f, -0.5f);
     [SerializeField, Min(0.1f)] private float respawnInvulnerabilitySeconds = 2f;
     [SerializeField, Min(0.01f)] private float respawnBlinkInterval = 0.08f;
 
@@ -322,13 +328,23 @@ public sealed class BattleRevengeSystem : MonoBehaviour
             clampedDistance,
             revengeBombRadius);
 
+        bool muzzleVfxSpawned = false;
+        if (launched)
+            muzzleVfxSpawned = bombController.SpawnRevengeLaunchMuzzleVisual(
+                cart.LaunchStartWorldPosition + GetRevengeLaunchMuzzleVfxOffset(launchDirection),
+                launchDirection,
+                revengeLaunchMuzzleVfxDuration,
+                revengeLaunchMuzzleVfxOrderInLayer,
+                cart.LaunchMuzzleVfxParent);
+
         DebugLaunchResult(
             cart,
             finalStart,
             launchDirection,
             clampedDistance,
             landingPosition,
-            launched);
+            launched,
+            muzzleVfxSpawned);
 
         return launched;
     }
@@ -510,16 +526,29 @@ public sealed class BattleRevengeSystem : MonoBehaviour
         Vector2 direction,
         int distanceTiles,
         Vector2 predictedLanding,
-        bool launched)
+        bool launched,
+        bool muzzleVfxSpawned)
     {
         if (cart == null || !cart.DebugActionALaunchEnabled)
             return;
 
         Debug.Log(
             $"[BattleRevenge][ActionA:LaunchResult] " +
-            $"owner={cart.OwnerPlayerId} launched={launched} " +
+            $"owner={cart.OwnerPlayerId} launched={launched} muzzleVfx={muzzleVfxSpawned} " +
             $"cartPos={cart.transform.position} launchStart={cart.LaunchStartWorldPosition} " +
             $"snappedStart={start} direction={direction} distance={distanceTiles} predictedLanding={predictedLanding}");
+    }
+
+    private Vector2 GetRevengeLaunchMuzzleVfxOffset(Vector2 direction)
+    {
+        if (Mathf.Abs(direction.x) >= Mathf.Abs(direction.y))
+            return direction.x < 0f
+                ? revengeLaunchMuzzleVfxOffsetLeft
+                : revengeLaunchMuzzleVfxOffsetRight;
+
+        return direction.y < 0f
+            ? revengeLaunchMuzzleVfxOffsetBottom
+            : revengeLaunchMuzzleVfxOffsetTop;
     }
 
     private void EnsureBattleSetupCached()
