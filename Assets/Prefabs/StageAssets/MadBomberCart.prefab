@@ -1526,37 +1526,31 @@ MonoBehaviour:
   debugCornerTransitionInterval: 0.05
   debugActionALaunch: 1
   debugActionAInterval: 0.08
-  cornerTransitionDistanceTiles: 0.85
-  cornerVisualDistanceTiles: 0.4
-  cornerWorldSpeedMultiplier: 1
   tileAlignmentTolerance: 0.03
-  topBottomCornerVisualDistanceTiles: 0.05
-  topBottomDiagonalLeftX: -9
-  topBottomDiagonalRightX: 4
+  horizontalWallMinX: -7.5
+  horizontalWallMaxX: 5.5
+  verticalWallMinY: -6.5
+  verticalWallMaxY: 4
+  topWallY: 5
+  bottomWallY: -7
+  leftWallX: -8.4
+  rightWallX: 6.3
   moveSpeed: 10
   useMovementTilt: 1
   tiltAngle: 6
   tiltInDuration: 0.08
   tiltOutDuration: 0.12
   tiltHoldDelay: 0.03
-  horizontalInnerOffsetTiles: 1
-  offsetLeft: {x: -0.4, y: 0}
-  offsetRight: {x: 0.4, y: 0}
-  offsetTop: {x: 0, y: 0}
-  offsetBottom: {x: 0, y: 0}
   headOffsetLeft: {x: 0, y: 1.5}
   headOffsetRight: {x: 0, y: 1.5}
   headOffsetTop: {x: 0, y: 1.2}
   headOffsetBottom: {x: 0, y: 1}
   enterDuration: 0.5
   exitDuration: 0.5
-  blockedTilesOnLeftRightEdges: 1
-  blockedTilesOnTopBottomEdges: 2
   offscreenDistanceTiles: 2
   minLaunchDistanceTiles: 3
   maxLaunchDistanceTiles: 7
   chargeStepSeconds: 0.12
-  cornerLaunchBlockDistanceTiles: 0.4
   landingIndicatorRenderer: {fileID: 2481538032918982670}
   indicatorMinAlpha: 0.25
   indicatorMaxAlpha: 0.6

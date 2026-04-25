@@ -183,7 +183,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BattleModeRules
   matchMode: 0
   victoriesToWinMatch: 3
-  roundTimer: 1
+  roundTimer: 5
   enableRevengeBomber: 1
   enableSuddenDeath: 1
   playerTeams:

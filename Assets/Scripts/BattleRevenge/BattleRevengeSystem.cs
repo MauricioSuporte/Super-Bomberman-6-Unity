@@ -19,6 +19,7 @@ public sealed class BattleRevengeSystem : MonoBehaviour
     private readonly Stack<BattleRevengeController> cartPool = new();
     private readonly Dictionary<int, PlayerPersistentStats.PlayerState> baseLoadoutsByPlayer = new();
     private readonly Dictionary<int, MovementController> playersById = new();
+    private float nextLandingValidationDebugAt;
 
     private float minEdgeX;
     private float maxEdgeX;
@@ -301,13 +302,19 @@ public sealed class BattleRevengeSystem : MonoBehaviour
         if (!ownerMovement.TryGetComponent<BombController>(out var bombController))
             return false;
 
-        Vector2 rawCartPos = cart.transform.position;
-        Vector2 snappedPos = GetArenaSnapPosition(rawCartPos);
+        if (!cart.IsInLaunchableSegment)
+            return false;
+
+        Vector2 snappedPos = GetArenaSnapPosition(cart.LaunchStartWorldPosition);
         Vector2 launchDirection = cart.LaunchDirection.normalized;
 
         Vector2 finalStart = snappedPos;
 
         int clampedDistance = Mathf.Clamp(distanceTiles, 3, 7);
+        Vector2 landingPosition = finalStart + (launchDirection * clampedDistance);
+
+        if (!IsValidRevengeBombLandingPosition(landingPosition, cart, clampedDistance, "Launch"))
+            return false;
 
         return bombController.LaunchRevengeBomb(
             finalStart,
@@ -316,16 +323,152 @@ public sealed class BattleRevengeSystem : MonoBehaviour
             revengeBombRadius);
     }
 
-    public Vector2 GetPredictedLandingPosition(BattleRevengeController cart, int distanceTiles)
+    public bool IsPredictedLandingPositionValid(BattleRevengeController cart, int distanceTiles)
     {
-        if (cart == null)
-            return Vector2.zero;
+        return TryGetPredictedLandingPosition(cart, distanceTiles, out _);
+    }
 
-        Vector2 start = GetArenaSnapPosition(cart.transform.position);
+    public bool TryGetPredictedLandingPosition(BattleRevengeController cart, int distanceTiles, out Vector2 landingPosition)
+    {
+        landingPosition = Vector2.zero;
+
+        if (cart == null || !cart.IsInLaunchableSegment)
+            return false;
+
+        Vector2 start = GetArenaSnapPosition(cart.LaunchStartWorldPosition);
         Vector2 direction = cart.LaunchDirection.normalized;
         int clampedDistance = Mathf.Clamp(distanceTiles, 3, 7);
 
-        return start + (direction * clampedDistance);
+        landingPosition = start + (direction * clampedDistance);
+        return IsValidRevengeBombLandingPosition(landingPosition, cart, clampedDistance, "Predict");
+    }
+
+    public Vector2 GetPredictedLandingPosition(BattleRevengeController cart, int distanceTiles)
+    {
+        return TryGetPredictedLandingPosition(cart, distanceTiles, out Vector2 landingPosition)
+            ? landingPosition
+            : Vector2.zero;
+    }
+
+    private bool IsValidRevengeBombLandingPosition(
+        Vector2 worldPosition,
+        BattleRevengeController cart = null,
+        int distanceTiles = 0,
+        string phase = null)
+    {
+        if (GameManager.Instance == null || GameManager.Instance.groundTilemap == null)
+        {
+            DebugLandingValidation(
+                phase,
+                cart,
+                distanceTiles,
+                worldPosition,
+                Vector3Int.zero,
+                false,
+                false,
+                false,
+                "MissingGroundTilemap");
+
+            return false;
+        }
+
+        Tilemap groundTilemap = GameManager.Instance.groundTilemap;
+        Vector3Int cell = groundTilemap.WorldToCell(worldPosition);
+        bool hasGround = groundTilemap.HasTile(cell);
+        bool hasIndestructible =
+            GameManager.Instance.indestructibleTilemap != null &&
+            GameManager.Instance.indestructibleTilemap.HasTile(cell);
+        bool hasDestructible =
+            GameManager.Instance.destructibleTilemap != null &&
+            GameManager.Instance.destructibleTilemap.HasTile(cell);
+
+        if (!hasGround)
+        {
+            DebugLandingValidation(
+                phase,
+                cart,
+                distanceTiles,
+                worldPosition,
+                cell,
+                hasGround,
+                hasIndestructible,
+                hasDestructible,
+                "NoGround");
+
+            return false;
+        }
+
+        if (hasIndestructible)
+        {
+            DebugLandingValidation(
+                phase,
+                cart,
+                distanceTiles,
+                worldPosition,
+                cell,
+                hasGround,
+                hasIndestructible,
+                hasDestructible,
+                "Indestructible");
+
+            return false;
+        }
+
+        if (hasDestructible)
+        {
+            DebugLandingValidation(
+                phase,
+                cart,
+                distanceTiles,
+                worldPosition,
+                cell,
+                hasGround,
+                hasIndestructible,
+                hasDestructible,
+                "Destructible");
+
+            return false;
+        }
+
+        DebugLandingValidation(
+            phase,
+            cart,
+            distanceTiles,
+            worldPosition,
+            cell,
+            hasGround,
+            hasIndestructible,
+            hasDestructible,
+            "Valid");
+
+        return true;
+    }
+
+    private void DebugLandingValidation(
+        string phase,
+        BattleRevengeController cart,
+        int distanceTiles,
+        Vector2 landingPosition,
+        Vector3Int cell,
+        bool hasGround,
+        bool hasIndestructible,
+        bool hasDestructible,
+        string result)
+    {
+        if (cart == null || !cart.DebugCornerTransitionEnabled)
+            return;
+
+        if (Time.unscaledTime < nextLandingValidationDebugAt && result == "Valid")
+            return;
+
+        nextLandingValidationDebugAt = Time.unscaledTime + cart.DebugCornerTransitionInterval;
+
+        Debug.Log(
+            $"[BattleRevenge][LandingValidation:{phase}] " +
+            $"owner={cart.OwnerPlayerId} result={result} " +
+            $"cartPos={cart.transform.position} launchStart={cart.LaunchStartWorldPosition} " +
+            $"direction={cart.LaunchDirection} distance={distanceTiles} landing={landingPosition} cell={cell} " +
+            $"hasGround={hasGround} hasIndestructible={hasIndestructible} hasDestructible={hasDestructible}");
     }
 
     private void EnsureBattleSetupCached()
@@ -482,13 +625,22 @@ public sealed class BattleRevengeSystem : MonoBehaviour
         {
             BattleRevengeController pooledCart = cartPool.Pop();
             if (pooledCart != null)
-                return pooledCart;
+                return PrepareCartForWorldSpace(pooledCart);
         }
 
         if (cartPrefab == null)
             return null;
 
-        return Instantiate(cartPrefab, transform);
+        return PrepareCartForWorldSpace(Instantiate(cartPrefab));
+    }
+
+    private BattleRevengeController PrepareCartForWorldSpace(BattleRevengeController cart)
+    {
+        if (cart == null)
+            return null;
+
+        cart.transform.SetParent(null, true);
+        return cart;
     }
 
     private void CleanupDestroyedActiveCarts()

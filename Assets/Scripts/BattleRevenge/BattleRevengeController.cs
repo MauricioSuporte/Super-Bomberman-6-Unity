@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 [DisallowMultipleComponent]
 public sealed class BattleRevengeController : MonoBehaviour
@@ -19,6 +20,17 @@ public sealed class BattleRevengeController : MonoBehaviour
         TopRight = 2,
         BottomRight = 3,
         BottomLeft = 4
+    }
+    private enum CartSegment
+    {
+        Top = 0,
+        TopRight = 1,
+        Right = 2,
+        BottomRight = 3,
+        Bottom = 4,
+        BottomLeft = 5,
+        Left = 6,
+        TopLeft = 7
     }
 
     [Header("Body")]
@@ -57,16 +69,20 @@ public sealed class BattleRevengeController : MonoBehaviour
     [SerializeField] private bool debugActionALaunch;
     [SerializeField, Min(0.01f)] private float debugActionAInterval = 0.08f;
 
-    [Header("Corner Transition")]
-    [SerializeField, Min(0f)] private float cornerTransitionDistanceTiles = 0.85f;
-    [SerializeField, Min(0f)] private float cornerVisualDistanceTiles = 0.4f;
-    [SerializeField, Range(0.1f, 1f)] private float cornerWorldSpeedMultiplier = 1f;
+    [Header("Segment Alignment")]
     [SerializeField, Min(0.001f)] private float tileAlignmentTolerance = 0.03f;
-    [SerializeField, Min(0f)] private float topBottomCornerVisualDistanceTiles = 0.05f;
 
-    [Header("Top/Bottom Diagonal X Limits")]
-    [SerializeField] private float topBottomDiagonalLeftX = -9f;
-    [SerializeField] private float topBottomDiagonalRightX = 4f;
+    [Header("Explicit Movement Bounds")]
+    [FormerlySerializedAs("topBottomDiagonalLeftX")]
+    [SerializeField] private float horizontalWallMinX = -9f;
+    [FormerlySerializedAs("topBottomDiagonalRightX")]
+    [SerializeField] private float horizontalWallMaxX = 4f;
+    [SerializeField] private float verticalWallMinY = -6.5f;
+    [SerializeField] private float verticalWallMaxY = 4f;
+    [SerializeField] private float topWallY = 5f;
+    [SerializeField] private float bottomWallY = -7f;
+    [SerializeField] private float leftWallX = -10f;
+    [SerializeField] private float rightWallX = 5f;
 
     [Header("Movement")]
     [SerializeField, Min(0.1f)] private float moveSpeed = 4f;
@@ -78,15 +94,6 @@ public sealed class BattleRevengeController : MonoBehaviour
     [SerializeField, Min(0.01f)] private float tiltOutDuration = 0.12f;
     [SerializeField, Min(0f)] private float tiltHoldDelay = 0.03f;
 
-    [Header("Edge Offset")]
-    [SerializeField, Min(0f)] private float horizontalInnerOffsetTiles = 1f;
-
-    [Header("Per-Edge Offsets (Cart)")]
-    [SerializeField] private Vector2 offsetLeft;
-    [SerializeField] private Vector2 offsetRight;
-    [SerializeField] private Vector2 offsetTop;
-    [SerializeField] private Vector2 offsetBottom;
-
     [Header("Per-Edge Offsets (Head)")]
     [SerializeField] private Vector2 headOffsetLeft;
     [SerializeField] private Vector2 headOffsetRight;
@@ -97,18 +104,13 @@ public sealed class BattleRevengeController : MonoBehaviour
     [SerializeField, Min(0.01f)] private float enterDuration = 0.35f;
     [SerializeField, Min(0.01f)] private float exitDuration = 0.25f;
 
-    [Header("Blocked Edge Tiles")]
-    [SerializeField, Min(0f)] private float blockedTilesOnLeftRightEdges = 1f;
-    [SerializeField, Min(0f)] private float blockedTilesOnTopBottomEdges = 2f;
+    [Header("Offscreen")]
     [SerializeField, Min(0.1f)] private float offscreenDistanceTiles = 2f;
 
     [Header("Charged Throw")]
     [SerializeField, Min(3)] private int minLaunchDistanceTiles = 3;
     [SerializeField, Min(3)] private int maxLaunchDistanceTiles = 7;
     [SerializeField, Min(0.01f)] private float chargeStepSeconds = 0.12f;
-
-    [Header("Launch Rules")]
-    [SerializeField, Min(0f)] private float cornerLaunchBlockDistanceTiles = 0.4f;
 
     [Header("Landing Indicator")]
     [SerializeField] private SpriteRenderer landingIndicatorRenderer;
@@ -146,11 +148,8 @@ public sealed class BattleRevengeController : MonoBehaviour
     private BattleRevengeSystem system;
     private int ownerPlayerId;
     private CartEdge currentEdge = CartEdge.Left;
+    private CartSegment currentSegment = CartSegment.Left;
 
-    private float minEdgeX;
-    private float maxEdgeX;
-    private float minEdgeY;
-    private float maxEdgeY;
     private bool boundsConfigured;
 
     private float currentTilt;
@@ -175,10 +174,11 @@ public sealed class BattleRevengeController : MonoBehaviour
     private bool lastHoldingActionA;
 
     public int OwnerPlayerId => ownerPlayerId;
-
-    private float HorizontalInnerOffsetWorld => horizontalInnerOffsetTiles;
+    public bool DebugCornerTransitionEnabled => debugCornerTransition;
+    public float DebugCornerTransitionInterval => debugCornerTransitionInterval;
 
     private float nextCornerDebugAt;
+    private float nextExplicitBoundsDebugAt;
     private CartCorner lastDebugCorner = CartCorner.None;
     private CartEdge lastDebugEdge = CartEdge.Left;
 
@@ -197,9 +197,19 @@ public sealed class BattleRevengeController : MonoBehaviour
 
     private CartCorner currentCorner = CartCorner.None;
 
+    public Vector2 LaunchStartWorldPosition => GetCurrentLogicalPosition();
+
+    public bool IsInLaunchableSegment => IsLaunchableWallSegment(currentSegment);
+
     private bool CanLaunchBombNow()
     {
-        return currentCorner == CartCorner.None;
+        if (!IsInLaunchableSegment)
+            return false;
+
+        if (system == null)
+            return true;
+
+        return system.IsPredictedLandingPositionValid(this, GetCurrentLaunchDistanceTiles());
     }
 
     void Awake()
@@ -287,7 +297,17 @@ public sealed class BattleRevengeController : MonoBehaviour
                 nextChargeStepAt = Time.unscaledTime + chargeStepSeconds;
             }
 
-            UpdateLandingIndicator();
+            canLaunchBomb = CanLaunchBombNow();
+            if (canLaunchBomb)
+            {
+                UpdateLandingIndicator();
+            }
+            else
+            {
+                isChargingLaunch = false;
+                chargedLaunchDistanceTiles = Mathf.Clamp(minLaunchDistanceTiles, 3, 7);
+                HideLandingIndicator();
+            }
         }
         else
         {
@@ -349,7 +369,11 @@ public sealed class BattleRevengeController : MonoBehaviour
         if (landingIndicatorRenderer == null || system == null)
             return;
 
-        Vector2 landingPos = system.GetPredictedLandingPosition(this, chargedLaunchDistanceTiles);
+        if (!system.TryGetPredictedLandingPosition(this, chargedLaunchDistanceTiles, out Vector2 landingPos))
+        {
+            HideLandingIndicator();
+            return;
+        }
 
         landingIndicatorRenderer.transform.position = new Vector3(
             landingPos.x,
@@ -441,10 +465,6 @@ public sealed class BattleRevengeController : MonoBehaviour
 
     public void ConfigureBounds(float minX, float maxX, float minY, float maxY)
     {
-        minEdgeX = Mathf.Min(minX, maxX);
-        maxEdgeX = Mathf.Max(minX, maxX);
-        minEdgeY = Mathf.Min(minY, maxY);
-        maxEdgeY = Mathf.Max(minY, maxY);
         boundsConfigured = true;
 
         Vector2 logicalPosition = GetLogicalPositionForCurrentEdgeCenter();
@@ -473,7 +493,7 @@ public sealed class BattleRevengeController : MonoBehaviour
         spawnPerimeterPosition = perimeterPosition;
         suppressCornerVisualAtSpawn = IsOnCornerBoundary(perimeterPosition);
 
-        Vector3 targetPosition = BuildWorldPosition(currentEdge, logicalTarget);
+        Vector3 targetPosition = BuildWorldPositionFromPerimeterPosition(perimeterPosition, out currentEdge, out currentSegment);
         Vector3 spawnPosition = GetOffscreenPosition(targetPosition);
 
         StopActiveAnimation();
@@ -518,7 +538,7 @@ public sealed class BattleRevengeController : MonoBehaviour
         spawnPerimeterPosition = perimeterPosition;
         suppressCornerVisualAtSpawn = IsOnCornerBoundary(perimeterPosition);
 
-        Vector3 targetPosition = BuildWorldPosition(currentEdge, logicalTarget);
+        Vector3 targetPosition = BuildWorldPositionFromPerimeterPosition(perimeterPosition, out currentEdge, out currentSegment);
         Vector3 spawnPosition = GetOffscreenPosition(targetPosition);
 
         StopActiveAnimation();
@@ -691,7 +711,7 @@ public sealed class BattleRevengeController : MonoBehaviour
 
         currentCorner = keepSpawnEdgeVisual
             ? CartCorner.None
-            : ResolveCornerVisualTransitionAt(perimeterPosition);
+            : GetCornerForSegment(currentSegment);
 
         if (currentCorner != CartCorner.None)
         {
@@ -882,22 +902,22 @@ public sealed class BattleRevengeController : MonoBehaviour
 
     private float GetMinAllowedXForHorizontalEdge()
     {
-        return minEdgeX + blockedTilesOnTopBottomEdges;
+        return Mathf.Min(horizontalWallMinX, horizontalWallMaxX);
     }
 
     private float GetMaxAllowedXForHorizontalEdge()
     {
-        return maxEdgeX - blockedTilesOnTopBottomEdges;
+        return Mathf.Max(horizontalWallMinX, horizontalWallMaxX);
     }
 
     private float GetMinAllowedYForVerticalEdge()
     {
-        return minEdgeY + blockedTilesOnLeftRightEdges;
+        return Mathf.Min(verticalWallMinY, verticalWallMaxY);
     }
 
     private float GetMaxAllowedYForVerticalEdge()
     {
-        return maxEdgeY - blockedTilesOnLeftRightEdges;
+        return Mathf.Max(verticalWallMinY, verticalWallMaxY);
     }
 
     private float GetTopSegmentLength()
@@ -905,14 +925,42 @@ public sealed class BattleRevengeController : MonoBehaviour
         return Mathf.Max(MinSegmentLength, GetMaxAllowedXForHorizontalEdge() - GetMinAllowedXForHorizontalEdge());
     }
 
+    private float GetTopRightSegmentLength()
+    {
+        return GetDistance(
+            new Vector2(GetMaxAllowedXForHorizontalEdge(), GetLogicalTopY()),
+            new Vector2(GetLogicalRightX(), GetMaxAllowedYForVerticalEdge()));
+    }
+
     private float GetBottomSegmentLength()
     {
         return Mathf.Max(MinSegmentLength, GetMaxAllowedXForHorizontalEdge() - GetMinAllowedXForHorizontalEdge());
     }
 
+    private float GetBottomRightSegmentLength()
+    {
+        return GetDistance(
+            new Vector2(GetLogicalRightX(), GetMinAllowedYForVerticalEdge()),
+            new Vector2(GetMaxAllowedXForHorizontalEdge(), GetLogicalBottomY()));
+    }
+
+    private float GetBottomLeftSegmentLength()
+    {
+        return GetDistance(
+            new Vector2(GetMinAllowedXForHorizontalEdge(), GetLogicalBottomY()),
+            new Vector2(GetLogicalLeftX(), GetMinAllowedYForVerticalEdge()));
+    }
+
     private float GetLeftSegmentLength()
     {
         return Mathf.Max(MinSegmentLength, GetMaxAllowedYForVerticalEdge() - GetMinAllowedYForVerticalEdge());
+    }
+
+    private float GetTopLeftSegmentLength()
+    {
+        return GetDistance(
+            new Vector2(GetLogicalLeftX(), GetMaxAllowedYForVerticalEdge()),
+            new Vector2(GetMinAllowedXForHorizontalEdge(), GetLogicalTopY()));
     }
 
     private float GetRightSegmentLength()
@@ -922,27 +970,40 @@ public sealed class BattleRevengeController : MonoBehaviour
 
     private float GetPerimeterLength()
     {
-        return GetTopSegmentLength() + GetRightSegmentLength() + GetBottomSegmentLength() + GetLeftSegmentLength();
+        return
+            GetTopSegmentLength() +
+            GetTopRightSegmentLength() +
+            GetRightSegmentLength() +
+            GetBottomRightSegmentLength() +
+            GetBottomSegmentLength() +
+            GetBottomLeftSegmentLength() +
+            GetLeftSegmentLength() +
+            GetTopLeftSegmentLength();
+    }
+
+    private float GetDistance(Vector2 a, Vector2 b)
+    {
+        return Mathf.Max(MinSegmentLength, Vector2.Distance(a, b));
     }
 
     private float GetLogicalLeftX()
     {
-        return Mathf.Min(maxEdgeX, minEdgeX + HorizontalInnerOffsetWorld);
+        return leftWallX;
     }
 
     private float GetLogicalRightX()
     {
-        return Mathf.Max(minEdgeX, maxEdgeX - HorizontalInnerOffsetWorld);
+        return rightWallX;
     }
 
     private float GetLogicalTopY()
     {
-        return maxEdgeY;
+        return topWallY;
     }
 
     private float GetLogicalBottomY()
     {
-        return minEdgeY;
+        return bottomWallY;
     }
 
     private Vector2 GetLogicalPositionForCurrentEdgeCenter()
@@ -1012,8 +1073,11 @@ public sealed class BattleRevengeController : MonoBehaviour
         float maxY = GetMaxAllowedYForVerticalEdge();
 
         float topLen = GetTopSegmentLength();
+        float topRightLen = GetTopRightSegmentLength();
         float rightLen = GetRightSegmentLength();
+        float bottomRightLen = GetBottomRightSegmentLength();
         float bottomLen = GetBottomSegmentLength();
+        float bottomLeftLen = GetBottomLeftSegmentLength();
 
         switch (edge)
         {
@@ -1021,20 +1085,43 @@ public sealed class BattleRevengeController : MonoBehaviour
                 return Mathf.Clamp(logicalPosition.x, minX, maxX) - minX;
 
             case CartEdge.Right:
-                return topLen + (maxY - Mathf.Clamp(logicalPosition.y, minY, maxY));
+                return topLen + topRightLen + (maxY - Mathf.Clamp(logicalPosition.y, minY, maxY));
 
             case CartEdge.Bottom:
-                return topLen + rightLen + (maxX - Mathf.Clamp(logicalPosition.x, minX, maxX));
+                return topLen + topRightLen + rightLen + bottomRightLen + (maxX - Mathf.Clamp(logicalPosition.x, minX, maxX));
 
             case CartEdge.Left:
-                return topLen + rightLen + bottomLen + (Mathf.Clamp(logicalPosition.y, minY, maxY) - minY);
+                return topLen + topRightLen + rightLen + bottomRightLen + bottomLen + bottomLeftLen + (Mathf.Clamp(logicalPosition.y, minY, maxY) - minY);
 
             default:
                 return 0f;
         }
     }
 
+    void LateUpdate()
+    {
+        if (!debugCornerTransition || isAnimating)
+            return;
+
+        if (!Application.isPlaying || system == null || ownerPlayerId <= 0)
+            return;
+
+        if (!system.IsRuntimeEnabled || GamePauseController.IsPaused)
+            return;
+
+        DebugExplicitMovementBounds("LateUpdate");
+    }
+
     private void GetEdgeAndLogicalPositionFromPerimeter(float perimeterValue, out CartEdge edge, out Vector2 logicalPosition)
+    {
+        GetSegmentAndLogicalPositionFromPerimeter(perimeterValue, out _, out edge, out logicalPosition);
+    }
+
+    private void GetSegmentAndLogicalPositionFromPerimeter(
+        float perimeterValue,
+        out CartSegment segment,
+        out CartEdge edge,
+        out Vector2 logicalPosition)
     {
         float s = NormalizePerimeterPosition(perimeterValue);
 
@@ -1049,59 +1136,111 @@ public sealed class BattleRevengeController : MonoBehaviour
         float bottomY = GetLogicalBottomY();
 
         float topLen = GetTopSegmentLength();
+        float topRightLen = GetTopRightSegmentLength();
         float rightLen = GetRightSegmentLength();
+        float bottomRightLen = GetBottomRightSegmentLength();
         float bottomLen = GetBottomSegmentLength();
+        float bottomLeftLen = GetBottomLeftSegmentLength();
         float leftLen = GetLeftSegmentLength();
+        float topLeftLen = GetTopLeftSegmentLength();
 
-        if (s < topLen)
+        if (s <= topLen)
         {
+            segment = CartSegment.Top;
             edge = CartEdge.Top;
             logicalPosition = new Vector2(minX + s, topY);
             return;
         }
 
         s -= topLen;
-        if (s < rightLen)
+        if (s < topRightLen)
         {
+            float t = Mathf.Clamp01(s / topRightLen);
+            segment = CartSegment.TopRight;
+            edge = t < 0.5f ? CartEdge.Top : CartEdge.Right;
+            logicalPosition = Vector2.Lerp(
+                new Vector2(maxX, topY),
+                new Vector2(rightX, maxY),
+                t);
+            return;
+        }
+
+        s -= topRightLen;
+        if (s <= rightLen)
+        {
+            segment = CartSegment.Right;
             edge = CartEdge.Right;
             logicalPosition = new Vector2(rightX, maxY - s);
             return;
         }
 
         s -= rightLen;
-        if (s < bottomLen)
+        if (s < bottomRightLen)
         {
+            float t = Mathf.Clamp01(s / bottomRightLen);
+            segment = CartSegment.BottomRight;
+            edge = t < 0.5f ? CartEdge.Right : CartEdge.Bottom;
+            logicalPosition = Vector2.Lerp(
+                new Vector2(rightX, minY),
+                new Vector2(maxX, bottomY),
+                t);
+            return;
+        }
+
+        s -= bottomRightLen;
+        if (s <= bottomLen)
+        {
+            segment = CartSegment.Bottom;
             edge = CartEdge.Bottom;
             logicalPosition = new Vector2(maxX - s, bottomY);
             return;
         }
 
         s -= bottomLen;
-        if (s < leftLen)
+        if (s < bottomLeftLen)
         {
+            float t = Mathf.Clamp01(s / bottomLeftLen);
+            segment = CartSegment.BottomLeft;
+            edge = t < 0.5f ? CartEdge.Bottom : CartEdge.Left;
+            logicalPosition = Vector2.Lerp(
+                new Vector2(minX, bottomY),
+                new Vector2(leftX, minY),
+                t);
+            return;
+        }
+
+        s -= bottomLeftLen;
+        if (s <= leftLen)
+        {
+            segment = CartSegment.Left;
             edge = CartEdge.Left;
             logicalPosition = new Vector2(leftX, minY + s);
             return;
         }
 
+        s -= leftLen;
+        if (s < topLeftLen)
+        {
+            float t = Mathf.Clamp01(s / topLeftLen);
+            segment = CartSegment.TopLeft;
+            edge = t < 0.5f ? CartEdge.Left : CartEdge.Top;
+            logicalPosition = Vector2.Lerp(
+                new Vector2(leftX, maxY),
+                new Vector2(minX, topY),
+                t);
+            return;
+        }
+
+        segment = CartSegment.Top;
         edge = CartEdge.Top;
         logicalPosition = new Vector2(minX, topY);
     }
 
     private Vector3 BuildWorldPosition(CartEdge edge, Vector2 logicalPosition)
     {
-        Vector2 offset = edge switch
-        {
-            CartEdge.Left => offsetLeft,
-            CartEdge.Right => offsetRight,
-            CartEdge.Top => offsetTop,
-            CartEdge.Bottom => offsetBottom,
-            _ => Vector2.zero
-        };
-
         Vector3 result = new Vector3(
-            logicalPosition.x + offset.x,
-            logicalPosition.y + offset.y,
+            logicalPosition.x,
+            logicalPosition.y,
             0f);
 
         result.x = Mathf.Round(result.x * PixelsPerUnit) / PixelsPerUnit;
@@ -1111,15 +1250,22 @@ public sealed class BattleRevengeController : MonoBehaviour
 
     private void ApplyTransformFromPerimeterPosition()
     {
-        transform.position = BuildWorldPositionFromPerimeterPosition(perimeterPosition, out CartEdge edge);
+        Vector3 targetWorldPosition = BuildWorldPositionFromPerimeterPosition(perimeterPosition, out CartEdge edge, out CartSegment segment);
+        transform.position = targetWorldPosition;
         currentEdge = edge;
+        currentSegment = segment;
+
+        DebugExplicitMovementBounds("ApplyTransform", targetWorldPosition);
     }
 
     private float GetWallMidpointPerimeterPosition(CartEdge wall)
     {
         float topLen = GetTopSegmentLength();
+        float topRightLen = GetTopRightSegmentLength();
         float rightLen = GetRightSegmentLength();
+        float bottomRightLen = GetBottomRightSegmentLength();
         float bottomLen = GetBottomSegmentLength();
+        float bottomLeftLen = GetBottomLeftSegmentLength();
         float leftLen = GetLeftSegmentLength();
 
         switch (wall)
@@ -1128,13 +1274,13 @@ public sealed class BattleRevengeController : MonoBehaviour
                 return topLen * 0.5f;
 
             case CartEdge.Right:
-                return topLen + (rightLen * 0.5f);
+                return topLen + topRightLen + (rightLen * 0.5f);
 
             case CartEdge.Bottom:
-                return topLen + rightLen + (bottomLen * 0.5f);
+                return topLen + topRightLen + rightLen + bottomRightLen + (bottomLen * 0.5f);
 
             case CartEdge.Left:
-                return topLen + rightLen + bottomLen + (leftLen * 0.5f);
+                return topLen + topRightLen + rightLen + bottomRightLen + bottomLen + bottomLeftLen + (leftLen * 0.5f);
 
             default:
                 return 0f;
@@ -1170,17 +1316,6 @@ public sealed class BattleRevengeController : MonoBehaviour
 
         float step = moveSpeed * Time.unscaledDeltaTime;
         float move = Mathf.Clamp(delta, -step, step);
-        float maxCornerWorldStep = step * cornerWorldSpeedMultiplier;
-
-        if (IsWithinCornerTransitionDistance(beforePerimeter) ||
-            IsWithinCornerTransitionDistance(NormalizePerimeterPosition(perimeterPosition + move)))
-        {
-            move = ClampCornerMoveByWorldDistance(
-                beforePosition,
-                perimeterPosition,
-                move,
-                maxCornerWorldStep);
-        }
 
         perimeterPosition = NormalizePerimeterPosition(perimeterPosition + move);
         ApplyTransformFromPerimeterPosition();
@@ -1211,8 +1346,7 @@ public sealed class BattleRevengeController : MonoBehaviour
                     $"beforePerimeter={beforePerimeter:F3} afterPerimeter={perimeterPosition:F3} " +
                     $"targetPerimeter={targetPerimeter:F3} delta={delta:F3} step={step:F3} move={move:F3} " +
                     $"beforePos={beforePosition} afterPos={transform.position} " +
-                    $"distanceMoved={Vector3.Distance(beforePosition, transform.position):F3} " +
-                    $"transitionTiles={cornerTransitionDistanceTiles:F3}");
+                    $"distanceMoved={Vector3.Distance(beforePosition, transform.position):F3}");
             }
         }
     }
@@ -1377,77 +1511,6 @@ public sealed class BattleRevengeController : MonoBehaviour
         };
     }
 
-    private float GetCornerVisualTransitionDistance()
-    {
-        if (cornerVisualDistanceTiles > 0f)
-            return Mathf.Min(cornerTransitionDistanceTiles, cornerVisualDistanceTiles);
-
-        return cornerTransitionDistanceTiles;
-    }
-
-    private bool IsWithinCornerTransitionDistance(float perimeterValue)
-    {
-        if (!boundsConfigured || cornerTransitionDistanceTiles <= 0f)
-            return false;
-
-        float perimeter = GetPerimeterLength();
-        if (perimeter <= MinSegmentLength * 4f)
-            return false;
-
-        float s = NormalizePerimeterPosition(perimeterValue);
-        float topLen = GetTopSegmentLength();
-        float rightLen = GetRightSegmentLength();
-        float bottomLen = GetBottomSegmentLength();
-        float transition = Mathf.Max(0.001f, cornerTransitionDistanceTiles);
-
-        return
-            DistanceOnPerimeter(s, 0f, perimeter) <= transition ||
-            DistanceOnPerimeter(s, topLen, perimeter) <= transition ||
-            DistanceOnPerimeter(s, topLen + rightLen, perimeter) <= transition ||
-            DistanceOnPerimeter(s, topLen + rightLen + bottomLen, perimeter) <= transition;
-    }
-
-    private bool IsInPhysicalCornerTransition()
-    {
-        return IsWithinCornerTransitionDistance(perimeterPosition);
-    }
-
-    private float ClampCornerMoveByWorldDistance(
-        Vector3 fromWorldPosition,
-        float fromPerimeter,
-        float requestedMove,
-        float maxWorldDistance)
-    {
-        if (Mathf.Approximately(requestedMove, 0f) || maxWorldDistance <= 0f)
-            return requestedMove;
-
-        Vector3 requestedWorldPosition = BuildWorldPositionFromPerimeterPosition(
-            NormalizePerimeterPosition(fromPerimeter + requestedMove),
-            out _);
-
-        if (Vector3.Distance(fromWorldPosition, requestedWorldPosition) <= maxWorldDistance)
-            return requestedMove;
-
-        float direction = Mathf.Sign(requestedMove);
-        float low = 0f;
-        float high = Mathf.Abs(requestedMove);
-
-        for (int i = 0; i < 10; i++)
-        {
-            float mid = (low + high) * 0.5f;
-            Vector3 candidateWorldPosition = BuildWorldPositionFromPerimeterPosition(
-                NormalizePerimeterPosition(fromPerimeter + direction * mid),
-                out _);
-
-            if (Vector3.Distance(fromWorldPosition, candidateWorldPosition) <= maxWorldDistance)
-                low = mid;
-            else
-                high = mid;
-        }
-
-        return direction * low;
-    }
-
     private bool IsOnCornerBoundary(float perimeterValue)
     {
         if (!boundsConfigured)
@@ -1459,56 +1522,36 @@ public sealed class BattleRevengeController : MonoBehaviour
 
         float s = NormalizePerimeterPosition(perimeterValue);
         float topLen = GetTopSegmentLength();
+        float topRightLen = GetTopRightSegmentLength();
         float rightLen = GetRightSegmentLength();
+        float bottomRightLen = GetBottomRightSegmentLength();
         float bottomLen = GetBottomSegmentLength();
+        float bottomLeftLen = GetBottomLeftSegmentLength();
+        float leftLen = GetLeftSegmentLength();
 
         return
             DistanceOnPerimeter(s, 0f, perimeter) <= tileAlignmentTolerance ||
             DistanceOnPerimeter(s, topLen, perimeter) <= tileAlignmentTolerance ||
-            DistanceOnPerimeter(s, topLen + rightLen, perimeter) <= tileAlignmentTolerance ||
-            DistanceOnPerimeter(s, topLen + rightLen + bottomLen, perimeter) <= tileAlignmentTolerance;
+            DistanceOnPerimeter(s, topLen + topRightLen, perimeter) <= tileAlignmentTolerance ||
+            DistanceOnPerimeter(s, topLen + topRightLen + rightLen, perimeter) <= tileAlignmentTolerance ||
+            DistanceOnPerimeter(s, topLen + topRightLen + rightLen + bottomRightLen, perimeter) <= tileAlignmentTolerance ||
+            DistanceOnPerimeter(s, topLen + topRightLen + rightLen + bottomRightLen + bottomLen, perimeter) <= tileAlignmentTolerance ||
+            DistanceOnPerimeter(s, topLen + topRightLen + rightLen + bottomRightLen + bottomLen + bottomLeftLen, perimeter) <= tileAlignmentTolerance ||
+            DistanceOnPerimeter(s, topLen + topRightLen + rightLen + bottomRightLen + bottomLen + bottomLeftLen + leftLen, perimeter) <= tileAlignmentTolerance;
     }
 
     private CartCorner ResolveCornerTransitionAt(float perimeterValue)
     {
-        return ResolveCornerTransitionAt(perimeterValue, cornerTransitionDistanceTiles);
-    }
-
-    private CartCorner ResolveCornerTransitionAt(float perimeterValue, float transitionDistance)
-    {
-        if (!boundsConfigured || transitionDistance <= 0f)
+        if (!boundsConfigured)
             return CartCorner.None;
 
-        float topLen = GetTopSegmentLength();
-        float rightLen = GetRightSegmentLength();
-        float bottomLen = GetBottomSegmentLength();
         float perimeter = GetPerimeterLength();
 
         if (perimeter <= MinSegmentLength * 4f)
             return CartCorner.None;
 
-        float s = NormalizePerimeterPosition(perimeterValue);
-
-        float topLeft = 0f;
-        float topRight = topLen;
-        float bottomRight = topLen + rightLen;
-        float bottomLeft = topLen + rightLen + bottomLen;
-
-        float distTopLeft = DistanceOnPerimeter(s, topLeft, perimeter);
-        float distTopRight = DistanceOnPerimeter(s, topRight, perimeter);
-        float distBottomRight = DistanceOnPerimeter(s, bottomRight, perimeter);
-        float distBottomLeft = DistanceOnPerimeter(s, bottomLeft, perimeter);
-
-        CartCorner result = CartCorner.None;
-
-        if (distTopLeft <= transitionDistance)
-            result = CartCorner.TopLeft;
-        else if (distTopRight <= transitionDistance)
-            result = CartCorner.TopRight;
-        else if (distBottomRight <= transitionDistance)
-            result = CartCorner.BottomRight;
-        else if (distBottomLeft <= transitionDistance)
-            result = CartCorner.BottomLeft;
+        GetSegmentAndLogicalPositionFromPerimeter(perimeterValue, out CartSegment segment, out _, out _);
+        CartCorner result = GetCornerForSegment(segment);
 
         if (debugCornerTransition && result != CartCorner.None && Time.unscaledTime >= nextCornerDebugAt)
         {
@@ -1516,10 +1559,8 @@ public sealed class BattleRevengeController : MonoBehaviour
 
             Debug.Log(
                 $"[BattleRevenge][CornerResolve] " +
-                $"perimeterValue={perimeterValue:F3} normalized={s:F3} result={result} " +
-                $"transitionTiles={transitionDistance:F3} " +
-                $"distTL={distTopLeft:F3} distTR={distTopRight:F3} distBR={distBottomRight:F3} distBL={distBottomLeft:F3} " +
-                $"topLen={topLen:F3} rightLen={rightLen:F3} bottomLen={bottomLen:F3} perimeter={perimeter:F3}");
+                $"perimeterValue={perimeterValue:F3} normalized={NormalizePerimeterPosition(perimeterValue):F3} " +
+                $"segment={segment} result={result} perimeter={perimeter:F3}");
         }
 
         return result;
@@ -1574,161 +1615,136 @@ public sealed class BattleRevengeController : MonoBehaviour
 
     private Vector3 BuildWorldPositionFromPerimeterPosition(float perimeterValue, out CartEdge edge)
     {
-        CartCorner corner = ResolveCornerTransitionAt(perimeterValue);
-
-        if (corner != CartCorner.None)
-            return BuildCornerTransitionWorldPosition(perimeterValue, corner, out edge);
-
-        GetEdgeAndLogicalPositionFromPerimeter(perimeterValue, out edge, out Vector2 logicalPosition);
-        return BuildWorldPosition(edge, logicalPosition);
+        return BuildWorldPositionFromPerimeterPosition(perimeterValue, out edge, out _);
     }
 
-    private Vector3 BuildCornerTransitionWorldPosition(float perimeterValue, CartCorner corner, out CartEdge edge)
+    private Vector3 BuildWorldPositionFromPerimeterPosition(float perimeterValue, out CartEdge edge, out CartSegment segment)
     {
-        float perimeter = GetPerimeterLength();
-        float s = NormalizePerimeterPosition(perimeterValue);
+        GetSegmentAndLogicalPositionFromPerimeter(perimeterValue, out segment, out edge, out Vector2 logicalPosition);
 
-        float topLen = GetTopSegmentLength();
-        float rightLen = GetRightSegmentLength();
-        float bottomLen = GetBottomSegmentLength();
+        if (IsLaunchableWallSegment(segment))
+            return BuildWorldPosition(edge, logicalPosition);
 
-        float center = corner switch
-        {
-            CartCorner.TopLeft => 0f,
-            CartCorner.TopRight => topLen,
-            CartCorner.BottomRight => topLen + rightLen,
-            CartCorner.BottomLeft => topLen + rightLen + bottomLen,
-            _ => 0f
-        };
+        return BuildDiagonalWorldPosition(segment, logicalPosition);
+    }
 
-        float signed = GetSignedDistanceFromCorner(center, s, perimeter);
-        float transition = Mathf.Max(0.001f, cornerTransitionDistanceTiles);
-        float t = Mathf.Clamp01(Mathf.Abs(signed) / transition);
+    private Vector3 BuildDiagonalWorldPosition(CartSegment segment, Vector2 logicalPosition)
+    {
+        GetDiagonalEndpoints(segment, out CartEdge startEdge, out Vector2 start, out CartEdge endEdge, out Vector2 end);
 
-        Vector3 cornerPoint = GetCornerWorldPosition(corner);
-        Vector3 edgePoint = BuildLinearWorldPositionFromPerimeter(
-            NormalizePerimeterPosition(center + (signed < 0f ? -transition : transition)),
-            out CartEdge targetEdge);
+        float length = GetDistance(start, end);
+        float t = length <= MinSegmentLength
+            ? 0f
+            : Mathf.Clamp01(Vector2.Distance(start, logicalPosition) / length);
 
-        Vector3 control = GetCornerBranchControlWorldPosition(corner, signed < 0f);
+        Vector3 startWorld = BuildWorldPosition(startEdge, start);
+        Vector3 endWorld = BuildWorldPosition(endEdge, end);
+        Vector3 result = Vector3.Lerp(startWorld, endWorld, t);
 
-        edge = targetEdge;
-
-        Vector3 raw = EvaluateQuadraticBezier(cornerPoint, control, edgePoint, t);
-
-        Vector3 result = raw;
         result.x = Mathf.Round(result.x * PixelsPerUnit) / PixelsPerUnit;
         result.y = Mathf.Round(result.y * PixelsPerUnit) / PixelsPerUnit;
         result.z = 0f;
-
-        if (debugCornerTransition && Time.unscaledTime >= nextCornerDebugAt)
-        {
-            nextCornerDebugAt = Time.unscaledTime + debugCornerTransitionInterval;
-
-            Debug.Log(
-                $"[BattleRevenge][CornerBuild] " +
-                $"corner={corner} edge={edge} perimeterValue={perimeterValue:F3} normalized={s:F3} " +
-                $"center={center:F3} signed={signed:F3} transition={transition:F3} t={t:F3}");
-        }
-
         return result;
     }
 
-    private Vector3 BuildLinearWorldPositionFromPerimeter(float perimeterValue, out CartEdge edge)
+    private void GetDiagonalEndpoints(
+        CartSegment segment,
+        out CartEdge startEdge,
+        out Vector2 start,
+        out CartEdge endEdge,
+        out Vector2 end)
     {
-        GetEdgeAndLogicalPositionFromPerimeter(perimeterValue, out edge, out Vector2 logicalPosition);
-        return BuildWorldPosition(edge, logicalPosition);
-    }
+        float minX = GetMinAllowedXForHorizontalEdge();
+        float maxX = GetMaxAllowedXForHorizontalEdge();
+        float minY = GetMinAllowedYForVerticalEdge();
+        float maxY = GetMaxAllowedYForVerticalEdge();
+        float leftX = GetLogicalLeftX();
+        float rightX = GetLogicalRightX();
+        float topY = GetLogicalTopY();
+        float bottomY = GetLogicalBottomY();
 
-    private Vector3 GetCornerWorldPosition(CartCorner corner)
-    {
-        switch (corner)
+        switch (segment)
         {
-            case CartCorner.TopLeft:
-                return BuildWorldPosition(CartEdge.Top, new Vector2(GetMinAllowedXForHorizontalEdge(), GetLogicalTopY()));
+            case CartSegment.TopRight:
+                startEdge = CartEdge.Top;
+                start = new Vector2(maxX, topY);
+                endEdge = CartEdge.Right;
+                end = new Vector2(rightX, maxY);
+                return;
 
-            case CartCorner.TopRight:
-                return BuildWorldPosition(CartEdge.Top, new Vector2(GetMaxAllowedXForHorizontalEdge(), GetLogicalTopY()));
+            case CartSegment.BottomRight:
+                startEdge = CartEdge.Right;
+                start = new Vector2(rightX, minY);
+                endEdge = CartEdge.Bottom;
+                end = new Vector2(maxX, bottomY);
+                return;
 
-            case CartCorner.BottomRight:
-                return BuildWorldPosition(CartEdge.Bottom, new Vector2(GetMaxAllowedXForHorizontalEdge(), GetLogicalBottomY()));
+            case CartSegment.BottomLeft:
+                startEdge = CartEdge.Bottom;
+                start = new Vector2(minX, bottomY);
+                endEdge = CartEdge.Left;
+                end = new Vector2(leftX, minY);
+                return;
 
-            case CartCorner.BottomLeft:
-                return BuildWorldPosition(CartEdge.Bottom, new Vector2(GetMinAllowedXForHorizontalEdge(), GetLogicalBottomY()));
-
-            default:
-                return transform.position;
-        }
-    }
-
-    private Vector3 GetCornerBranchControlWorldPosition(CartCorner corner, bool useNegativeBranch)
-    {
-        Vector3 cornerPoint = GetCornerWorldPosition(corner);
-        Vector3 edgeAnchor;
-        Vector3 control;
-
-        switch (corner)
-        {
-            case CartCorner.TopLeft:
-                edgeAnchor = useNegativeBranch
-                    ? BuildWorldPosition(CartEdge.Left, new Vector2(GetLogicalLeftX(), GetMaxAllowedYForVerticalEdge()))
-                    : BuildWorldPosition(CartEdge.Top, new Vector2(GetMinAllowedXForHorizontalEdge(), GetLogicalTopY()));
-                control = useNegativeBranch
-                    ? new Vector3(edgeAnchor.x, cornerPoint.y, 0f)
-                    : cornerPoint;
-                break;
-
-            case CartCorner.TopRight:
-                edgeAnchor = useNegativeBranch
-                    ? BuildWorldPosition(CartEdge.Top, new Vector2(GetMaxAllowedXForHorizontalEdge(), GetLogicalTopY()))
-                    : BuildWorldPosition(CartEdge.Right, new Vector2(GetLogicalRightX(), GetMaxAllowedYForVerticalEdge()));
-                control = useNegativeBranch
-                    ? cornerPoint
-                    : new Vector3(edgeAnchor.x, cornerPoint.y, 0f);
-                break;
-
-            case CartCorner.BottomRight:
-                edgeAnchor = useNegativeBranch
-                    ? BuildWorldPosition(CartEdge.Right, new Vector2(GetLogicalRightX(), GetMinAllowedYForVerticalEdge()))
-                    : BuildWorldPosition(CartEdge.Bottom, new Vector2(GetMaxAllowedXForHorizontalEdge(), GetLogicalBottomY()));
-                control = useNegativeBranch
-                    ? new Vector3(edgeAnchor.x, cornerPoint.y, 0f)
-                    : cornerPoint;
-                break;
-
-            case CartCorner.BottomLeft:
-                edgeAnchor = useNegativeBranch
-                    ? BuildWorldPosition(CartEdge.Bottom, new Vector2(GetMinAllowedXForHorizontalEdge(), GetLogicalBottomY()))
-                    : BuildWorldPosition(CartEdge.Left, new Vector2(GetLogicalLeftX(), GetMinAllowedYForVerticalEdge()));
-                control = useNegativeBranch
-                    ? cornerPoint
-                    : new Vector3(edgeAnchor.x, cornerPoint.y, 0f);
-                break;
-
-            default:
-                return cornerPoint;
+            case CartSegment.TopLeft:
+                startEdge = CartEdge.Left;
+                start = new Vector2(leftX, maxY);
+                endEdge = CartEdge.Top;
+                end = new Vector2(minX, topY);
+                return;
         }
 
-        control.z = 0f;
-        return control;
+        startEdge = EdgeFromSegment(segment);
+        start = Vector2.zero;
+        endEdge = startEdge;
+        end = Vector2.zero;
     }
 
-    private static Vector3 EvaluateQuadraticBezier(Vector3 start, Vector3 control, Vector3 end, float t)
+    private CartEdge EdgeFromSegment(CartSegment segment)
     {
-        float oneMinusT = 1f - t;
+        return segment switch
+        {
+            CartSegment.Right => CartEdge.Right,
+            CartSegment.Bottom => CartEdge.Bottom,
+            CartSegment.Left => CartEdge.Left,
+            _ => CartEdge.Top
+        };
+    }
+
+    private Vector2 GetCurrentLogicalPosition()
+    {
+        GetSegmentAndLogicalPositionFromPerimeter(perimeterPosition, out _, out _, out Vector2 logicalPosition);
+        return logicalPosition;
+    }
+
+    private int GetCurrentLaunchDistanceTiles()
+    {
+        int requestedDistance = isChargingLaunch
+            ? chargedLaunchDistanceTiles
+            : minLaunchDistanceTiles;
+
+        return Mathf.Clamp(requestedDistance, 3, 7);
+    }
+
+    private bool IsLaunchableWallSegment(CartSegment segment)
+    {
         return
-            (oneMinusT * oneMinusT * start) +
-            (2f * oneMinusT * t * control) +
-            (t * t * end);
+            segment == CartSegment.Top ||
+            segment == CartSegment.Right ||
+            segment == CartSegment.Bottom ||
+            segment == CartSegment.Left;
     }
 
-    private float GetSignedDistanceFromCorner(float cornerPosition, float currentPosition, float perimeter)
+    private CartCorner GetCornerForSegment(CartSegment segment)
     {
-        if (perimeter <= 0f)
-            return 0f;
-
-        float delta = Mathf.Repeat(currentPosition - cornerPosition + perimeter * 0.5f, perimeter) - perimeter * 0.5f;
-        return delta;
+        return segment switch
+        {
+            CartSegment.TopRight => CartCorner.TopRight,
+            CartSegment.BottomRight => CartCorner.BottomRight,
+            CartSegment.BottomLeft => CartCorner.BottomLeft,
+            CartSegment.TopLeft => CartCorner.TopLeft,
+            _ => CartCorner.None
+        };
     }
 
     private void DebugActionALaunchState(
@@ -1749,25 +1765,12 @@ public sealed class BattleRevengeController : MonoBehaviour
         nextActionADebugAt = Time.unscaledTime + debugActionAInterval;
         lastHoldingActionA = holdingActionA;
 
-        CartCorner physicalCorner = ResolveCornerTransitionAt(perimeterPosition, cornerTransitionDistanceTiles);
+        CartCorner physicalCorner = ResolveCornerTransitionAt(perimeterPosition);
         CartCorner visualCorner = ResolveCornerVisualTransitionAt(perimeterPosition);
 
         float perimeter = GetPerimeterLength();
         float s = NormalizePerimeterPosition(perimeterPosition);
-
-        float topLen = GetTopSegmentLength();
-        float rightLen = GetRightSegmentLength();
-        float bottomLen = GetBottomSegmentLength();
-
-        float topLeft = 0f;
-        float topRight = topLen;
-        float bottomRight = topLen + rightLen;
-        float bottomLeft = topLen + rightLen + bottomLen;
-
-        float distTL = DistanceOnPerimeter(s, topLeft, perimeter);
-        float distTR = DistanceOnPerimeter(s, topRight, perimeter);
-        float distBR = DistanceOnPerimeter(s, bottomRight, perimeter);
-        float distBL = DistanceOnPerimeter(s, bottomLeft, perimeter);
+        Vector2 logicalPosition = GetCurrentLogicalPosition();
 
         Debug.Log(
             $"[BattleRevenge][ActionA:{phase}] " +
@@ -1776,17 +1779,15 @@ public sealed class BattleRevengeController : MonoBehaviour
             $"canLaunch={canLaunchBomb} " +
             $"isChargingBefore={wasChargingBeforeUpdate} " +
             $"currentEdge={currentEdge} " +
+            $"currentSegment={currentSegment} " +
             $"currentVisualCorner={currentCorner} " +
             $"physicalCorner={physicalCorner} " +
             $"visualCorner={visualCorner} " +
-            $"blockedByPhysicalCorner={!canLaunchBomb} " +
+            $"launchableSegment={IsInLaunchableSegment} " +
             $"pos={transform.position} " +
+            $"logicalPos={logicalPosition} " +
             $"perimeter={perimeterPosition:F3} normalized={s:F3} " +
-            $"topBottomCornerVisualTiles={topBottomCornerVisualDistanceTiles:F3} " +
-            $"cornerTransitionTiles={cornerTransitionDistanceTiles:F3} " +
-            $"cornerVisualTiles={GetCornerVisualTransitionDistance():F3} " +
-            $"cornerLaunchBlockTiles={cornerLaunchBlockDistanceTiles:F3} " +
-            $"distTL={distTL:F3} distTR={distTR:F3} distBR={distBR:F3} distBL={distBL:F3} " +
+            $"perimeterLength={perimeter:F3} " +
             $"cooldownRemaining={Mathf.Max(0f, nextBombAllowedAt - Time.unscaledTime):F3} " +
             $"chargedDistance={chargedLaunchDistanceTiles} " +
             $"launchDirection={LaunchDirection}");
@@ -1797,47 +1798,75 @@ public sealed class BattleRevengeController : MonoBehaviour
         if (!boundsConfigured)
             return CartCorner.None;
 
-        float perimeter = GetPerimeterLength();
+        GetSegmentAndLogicalPositionFromPerimeter(perimeterValue, out CartSegment segment, out _, out _);
+        return GetCornerForSegment(segment);
+    }
 
-        if (perimeter <= MinSegmentLength * 4f)
-            return CartCorner.None;
+    private void DebugExplicitMovementBounds(string phase)
+    {
+        Vector3 expectedWorldPosition = BuildWorldPositionFromPerimeterPosition(
+            perimeterPosition,
+            out _,
+            out _);
 
-        float s = NormalizePerimeterPosition(perimeterValue);
+        DebugExplicitMovementBounds(phase, expectedWorldPosition);
+    }
 
-        float topLen = GetTopSegmentLength();
-        float rightLen = GetRightSegmentLength();
-        float bottomLen = GetBottomSegmentLength();
+    private void DebugExplicitMovementBounds(string phase, Vector3 expectedWorldPosition)
+    {
+        if (!debugCornerTransition)
+            return;
 
-        CartCorner corner = ResolveCornerTransitionAt(perimeterValue, cornerTransitionDistanceTiles);
+        GetSegmentAndLogicalPositionFromPerimeter(
+            perimeterPosition,
+            out CartSegment segment,
+            out CartEdge edge,
+            out Vector2 logicalPosition);
 
-        if (corner == CartCorner.None)
-            return CartCorner.None;
+        bool isUsefulWall =
+            segment == CartSegment.Left ||
+            segment == CartSegment.Right ||
+            segment == CartSegment.Top ||
+            segment == CartSegment.Bottom;
 
-        float center = corner switch
-        {
-            CartCorner.TopLeft => 0f,
-            CartCorner.TopRight => topLen,
-            CartCorner.BottomRight => topLen + rightLen,
-            CartCorner.BottomLeft => topLen + rightLen + bottomLen,
-            _ => 0f
-        };
+        bool shouldLog = !isUsefulWall;
 
-        float signed = GetSignedDistanceFromCorner(center, s, perimeter);
+        if (segment == CartSegment.Left)
+            shouldLog |= Mathf.Abs(transform.position.x - leftWallX) > tileAlignmentTolerance;
+        else if (segment == CartSegment.Right)
+            shouldLog |= Mathf.Abs(transform.position.x - rightWallX) > tileAlignmentTolerance;
+        else if (segment == CartSegment.Top)
+            shouldLog |= Mathf.Abs(transform.position.y - topWallY) > tileAlignmentTolerance;
+        else if (segment == CartSegment.Bottom)
+            shouldLog |= Mathf.Abs(transform.position.y - bottomWallY) > tileAlignmentTolerance;
 
-        bool comingFromTopOrBottom =
-            (corner == CartCorner.TopLeft && signed > 0f) ||
-            (corner == CartCorner.TopRight && signed < 0f) ||
-            (corner == CartCorner.BottomRight && signed > 0f) ||
-            (corner == CartCorner.BottomLeft && signed < 0f);
+        float worldExpectedDelta = Vector3.Distance(transform.position, expectedWorldPosition);
+        shouldLog |= worldExpectedDelta > tileAlignmentTolerance;
 
-        float visualDistance = comingFromTopOrBottom
-            ? topBottomCornerVisualDistanceTiles
-            : GetCornerVisualTransitionDistance();
+        if (transform.parent != null)
+            shouldLog |= Vector3.Distance(transform.localPosition, transform.position) > tileAlignmentTolerance;
 
-        float distance = Mathf.Abs(signed);
+        if (!shouldLog)
+            return;
 
-        return distance <= visualDistance
-            ? corner
-            : CartCorner.None;
+        if (Time.unscaledTime < nextExplicitBoundsDebugAt && worldExpectedDelta <= tileAlignmentTolerance)
+            return;
+
+        nextExplicitBoundsDebugAt = Time.unscaledTime + debugCornerTransitionInterval;
+
+        Vector3 parentWorldPosition = transform.parent != null
+            ? transform.parent.position
+            : Vector3.zero;
+
+        Debug.Log(
+            $"[BattleRevenge][ExplicitBounds:{phase}] " +
+            $"owner={ownerPlayerId} edge={edge} segment={segment} " +
+            $"worldPos={transform.position} localPos={transform.localPosition} " +
+            $"expectedWorld={expectedWorldPosition} parent={parentWorldPosition} " +
+            $"logicalPos={logicalPosition} perimeter={perimeterPosition:F3} normalized={NormalizePerimeterPosition(perimeterPosition):F3} " +
+            $"boundsX(horizontal={GetMinAllowedXForHorizontalEdge():F3}..{GetMaxAllowedXForHorizontalEdge():F3}, leftWall={leftWallX:F3}, rightWall={rightWallX:F3}) " +
+            $"boundsY(vertical={GetMinAllowedYForVerticalEdge():F3}..{GetMaxAllowedYForVerticalEdge():F3}, topWall={topWallY:F3}, bottomWall={bottomWallY:F3}) " +
+            $"worldMinusLogical=({transform.position.x - logicalPosition.x:F3}, {transform.position.y - logicalPosition.y:F3}) " +
+            $"worldMinusExpected={worldExpectedDelta:F3}");
     }
 }
