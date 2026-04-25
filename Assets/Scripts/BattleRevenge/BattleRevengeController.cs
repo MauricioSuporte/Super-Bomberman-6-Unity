@@ -138,12 +138,18 @@ public sealed class BattleRevengeController : MonoBehaviour
     [SerializeField] private AudioClip launchBombSfx;
     [SerializeField, Range(0f, 1f)] private float launchBombSfxVolume = 1f;
 
+    [Header("Launch Recoil")]
+    [SerializeField, Min(0f)] private float launchRecoilDistance = 0.18f;
+    [SerializeField, Min(0.01f)] private float launchRecoilDuration = 0.12f;
+
     private const int RechargeFrameCount = 33;
     private const float PixelsPerUnit = 16f;
     private const float MinSegmentLength = 0.0001f;
 
     private bool isAnimating;
     private Coroutine activeAnimationRoutine;
+    private Coroutine launchRecoilRoutine;
+    private Transform visualRoot;
 
     private BattleRevengeSystem system;
     private int ownerPlayerId;
@@ -176,6 +182,8 @@ public sealed class BattleRevengeController : MonoBehaviour
     public int OwnerPlayerId => ownerPlayerId;
     public bool DebugCornerTransitionEnabled => debugCornerTransition;
     public float DebugCornerTransitionInterval => debugCornerTransitionInterval;
+    public bool DebugActionALaunchEnabled => debugActionALaunch;
+    public float DebugActionAInterval => debugActionAInterval;
 
     private float nextCornerDebugAt;
     private float nextExplicitBoundsDebugAt;
@@ -214,6 +222,7 @@ public sealed class BattleRevengeController : MonoBehaviour
 
     void Awake()
     {
+        EnsureVisualRoot();
         RefreshVisualByEdge();
         HideLandingIndicator();
         HideRechargeIndicator();
@@ -322,6 +331,7 @@ public sealed class BattleRevengeController : MonoBehaviour
                     if (system.TryLaunchBombFromCart(this, chargedLaunchDistanceTiles))
                     {
                         nextBombAllowedAt = Time.unscaledTime + system.CartBombCooldownSeconds;
+                        PlayLaunchRecoil();
 
                         if (GameMusicController.Instance != null)
                             GameMusicController.Instance.PlaySfx(launchBombSfx, launchBombSfxVolume);
@@ -346,7 +356,82 @@ public sealed class BattleRevengeController : MonoBehaviour
         targetTilt = 0f;
         tiltHoldTimer = 0f;
         lastInputTargetWall = null;
+        StopLaunchRecoil();
         ApplyTiltToActiveVisuals();
+    }
+
+    private void EnsureVisualRoot()
+    {
+        if (visualRoot != null)
+            return;
+
+        GameObject root = new GameObject("RuntimeVisualRoot");
+        visualRoot = root.transform;
+        visualRoot.SetParent(transform, false);
+        visualRoot.localPosition = Vector3.zero;
+        visualRoot.localRotation = Quaternion.identity;
+        visualRoot.localScale = Vector3.one;
+
+        var children = new System.Collections.Generic.List<Transform>();
+        foreach (Transform child in transform)
+        {
+            if (child != visualRoot)
+                children.Add(child);
+        }
+
+        for (int i = 0; i < children.Count; i++)
+            children[i].SetParent(visualRoot, true);
+    }
+
+    private void PlayLaunchRecoil()
+    {
+        if (launchRecoilDistance <= 0f || launchRecoilDuration <= 0f || !gameObject.activeInHierarchy)
+            return;
+
+        StopLaunchRecoil();
+        launchRecoilRoutine = StartCoroutine(LaunchRecoilRoutine(-LaunchDirection.normalized));
+    }
+
+    private IEnumerator LaunchRecoilRoutine(Vector2 recoilDirection)
+    {
+        EnsureVisualRoot();
+
+        if (debugActionALaunch)
+        {
+            Debug.Log(
+                $"[BattleRevenge][ActionA:Recoil] owner={ownerPlayerId} " +
+                $"direction={recoilDirection} distance={launchRecoilDistance:F3} duration={launchRecoilDuration:F3}");
+        }
+
+        Vector3 peak = new Vector3(
+            recoilDirection.x * launchRecoilDistance,
+            recoilDirection.y * launchRecoilDistance,
+            0f);
+
+        float timer = 0f;
+        while (timer < launchRecoilDuration)
+        {
+            timer += Time.unscaledDeltaTime;
+            float t = Mathf.Clamp01(timer / launchRecoilDuration);
+            float amplitude = Mathf.Sin(t * Mathf.PI);
+            visualRoot.localPosition = peak * amplitude;
+            yield return null;
+        }
+
+        visualRoot.localPosition = Vector3.zero;
+        launchRecoilRoutine = null;
+    }
+
+    private void StopLaunchRecoil()
+    {
+        if (launchRecoilRoutine != null)
+        {
+            StopCoroutine(launchRecoilRoutine);
+            launchRecoilRoutine = null;
+        }
+
+        if (visualRoot != null)
+            visualRoot.localPosition = Vector3.zero;
     }
 
     private void EnsureRechargeSpritesLoaded()

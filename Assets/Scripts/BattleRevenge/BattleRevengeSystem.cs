@@ -316,11 +316,21 @@ public sealed class BattleRevengeSystem : MonoBehaviour
         if (!IsValidRevengeBombLandingPosition(landingPosition, cart, clampedDistance, "Launch"))
             return false;
 
-        return bombController.LaunchRevengeBomb(
+        bool launched = bombController.LaunchRevengeBomb(
             finalStart,
             launchDirection,
             clampedDistance,
             revengeBombRadius);
+
+        DebugLaunchResult(
+            cart,
+            finalStart,
+            launchDirection,
+            clampedDistance,
+            landingPosition,
+            launched);
+
+        return launched;
     }
 
     public bool IsPredictedLandingPositionValid(BattleRevengeController cart, int distanceTiles)
@@ -367,6 +377,8 @@ public sealed class BattleRevengeSystem : MonoBehaviour
                 false,
                 false,
                 false,
+                false,
+                default,
                 "MissingGroundTilemap");
 
             return false;
@@ -381,8 +393,9 @@ public sealed class BattleRevengeSystem : MonoBehaviour
         bool hasDestructible =
             GameManager.Instance.destructibleTilemap != null &&
             GameManager.Instance.destructibleTilemap.HasTile(cell);
+        bool insideArena = IsCellInsideArenaBounds(cell, out BoundsInt arenaBounds);
 
-        if (!hasGround)
+        if (!insideArena)
         {
             DebugLandingValidation(
                 phase,
@@ -393,39 +406,9 @@ public sealed class BattleRevengeSystem : MonoBehaviour
                 hasGround,
                 hasIndestructible,
                 hasDestructible,
-                "NoGround");
-
-            return false;
-        }
-
-        if (hasIndestructible)
-        {
-            DebugLandingValidation(
-                phase,
-                cart,
-                distanceTiles,
-                worldPosition,
-                cell,
-                hasGround,
-                hasIndestructible,
-                hasDestructible,
-                "Indestructible");
-
-            return false;
-        }
-
-        if (hasDestructible)
-        {
-            DebugLandingValidation(
-                phase,
-                cart,
-                distanceTiles,
-                worldPosition,
-                cell,
-                hasGround,
-                hasIndestructible,
-                hasDestructible,
-                "Destructible");
+                insideArena,
+                arenaBounds,
+                "OutOfArena");
 
             return false;
         }
@@ -439,9 +422,56 @@ public sealed class BattleRevengeSystem : MonoBehaviour
             hasGround,
             hasIndestructible,
             hasDestructible,
+            insideArena,
+            arenaBounds,
             "Valid");
 
         return true;
+    }
+
+    private bool IsCellInsideArenaBounds(Vector3Int cell, out BoundsInt arenaBounds)
+    {
+        arenaBounds = default;
+
+        bool hasBounds = false;
+
+        IncludeTilemapBounds(GameManager.Instance?.groundTilemap, ref arenaBounds, ref hasBounds);
+        IncludeTilemapBounds(GameManager.Instance?.indestructibleTilemap, ref arenaBounds, ref hasBounds);
+        IncludeTilemapBounds(GameManager.Instance?.destructibleTilemap, ref arenaBounds, ref hasBounds);
+
+        return
+            hasBounds &&
+            cell.x >= arenaBounds.xMin &&
+            cell.x < arenaBounds.xMax &&
+            cell.y >= arenaBounds.yMin &&
+            cell.y < arenaBounds.yMax;
+    }
+
+    private static void IncludeTilemapBounds(Tilemap tilemap, ref BoundsInt arenaBounds, ref bool hasBounds)
+    {
+        if (tilemap == null)
+            return;
+
+        tilemap.CompressBounds();
+        BoundsInt bounds = tilemap.cellBounds;
+        if (bounds.size.x <= 0 || bounds.size.y <= 0)
+            return;
+
+        if (!hasBounds)
+        {
+            arenaBounds = bounds;
+            hasBounds = true;
+            return;
+        }
+
+        int xMin = Mathf.Min(arenaBounds.xMin, bounds.xMin);
+        int yMin = Mathf.Min(arenaBounds.yMin, bounds.yMin);
+        int xMax = Mathf.Max(arenaBounds.xMax, bounds.xMax);
+        int yMax = Mathf.Max(arenaBounds.yMax, bounds.yMax);
+
+        arenaBounds.SetMinMax(
+            new Vector3Int(xMin, yMin, 0),
+            new Vector3Int(xMax, yMax, 1));
     }
 
     private void DebugLandingValidation(
@@ -453,22 +483,43 @@ public sealed class BattleRevengeSystem : MonoBehaviour
         bool hasGround,
         bool hasIndestructible,
         bool hasDestructible,
+        bool insideArena,
+        BoundsInt arenaBounds,
         string result)
     {
-        if (cart == null || !cart.DebugCornerTransitionEnabled)
+        if (cart == null || !cart.DebugActionALaunchEnabled)
             return;
 
-        if (Time.unscaledTime < nextLandingValidationDebugAt && result == "Valid")
+        if (Time.unscaledTime < nextLandingValidationDebugAt && phase != "Launch" && result == "Valid")
             return;
 
-        nextLandingValidationDebugAt = Time.unscaledTime + cart.DebugCornerTransitionInterval;
+        nextLandingValidationDebugAt = Time.unscaledTime + cart.DebugActionAInterval;
 
         Debug.Log(
             $"[BattleRevenge][LandingValidation:{phase}] " +
             $"owner={cart.OwnerPlayerId} result={result} " +
             $"cartPos={cart.transform.position} launchStart={cart.LaunchStartWorldPosition} " +
             $"direction={cart.LaunchDirection} distance={distanceTiles} landing={landingPosition} cell={cell} " +
+            $"insideArena={insideArena} arenaBounds=({arenaBounds.xMin},{arenaBounds.yMin})..({arenaBounds.xMax},{arenaBounds.yMax}) " +
             $"hasGround={hasGround} hasIndestructible={hasIndestructible} hasDestructible={hasDestructible}");
+    }
+
+    private void DebugLaunchResult(
+        BattleRevengeController cart,
+        Vector2 start,
+        Vector2 direction,
+        int distanceTiles,
+        Vector2 predictedLanding,
+        bool launched)
+    {
+        if (cart == null || !cart.DebugActionALaunchEnabled)
+            return;
+
+        Debug.Log(
+            $"[BattleRevenge][ActionA:LaunchResult] " +
+            $"owner={cart.OwnerPlayerId} launched={launched} " +
+            $"cartPos={cart.transform.position} launchStart={cart.LaunchStartWorldPosition} " +
+            $"snappedStart={start} direction={direction} distance={distanceTiles} predictedLanding={predictedLanding}");
     }
 
     private void EnsureBattleSetupCached()
