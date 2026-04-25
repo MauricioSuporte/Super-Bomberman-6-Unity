@@ -1530,7 +1530,7 @@ MonoBehaviour:
   horizontalWallMinX: -7.5
   horizontalWallMaxX: 5.5
   verticalWallMinY: -6.5
-  verticalWallMaxY: 4
+  verticalWallMaxY: 4.5
   topWallY: 5
   bottomWallY: -7
   leftWallX: -8.4
@@ -1567,6 +1567,8 @@ MonoBehaviour:
   rechargeOffsetBottom: {x: 0, y: 0.5}
   launchBombSfx: {fileID: 8300000, guid: 91d0210a38e7773428530d691f29b543, type: 3}
   launchBombSfxVolume: 0.8
+  launchRecoilDistance: 0.18
+  launchRecoilDuration: 0.12
 --- !u!1 &6567150308981180697
 GameObject:
   m_ObjectHideFlags: 0
