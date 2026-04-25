@@ -1518,13 +1518,13 @@ MonoBehaviour:
   headTopRight: {fileID: 6145147535657063855}
   headBottomLeft: {fileID: 2659737030156965555}
   headBottomRight: {fileID: 3515158771829674322}
-  headOffsetTopLeft: {x: 0, y: 1.5}
-  headOffsetTopRight: {x: 0, y: 1.5}
-  headOffsetBottomLeft: {x: 0, y: 1.4}
-  headOffsetBottomRight: {x: 0, y: 1.4}
+  headOffsetTopLeft: {x: 0, y: 1.55}
+  headOffsetTopRight: {x: 0, y: 1.55}
+  headOffsetBottomLeft: {x: 0, y: 1.5}
+  headOffsetBottomRight: {x: 0.05, y: 1.45}
   debugCornerTransition: 0
   debugCornerTransitionInterval: 0.05
-  debugActionALaunch: 1
+  debugActionALaunch: 0
   debugActionAInterval: 0.08
   tileAlignmentTolerance: 0.03
   horizontalWallMinX: -7.5
@@ -1541,10 +1541,10 @@ MonoBehaviour:
   tiltInDuration: 0.08
   tiltOutDuration: 0.12
   tiltHoldDelay: 0.03
-  headOffsetLeft: {x: 0, y: 1.5}
-  headOffsetRight: {x: 0, y: 1.5}
-  headOffsetTop: {x: 0, y: 1.2}
-  headOffsetBottom: {x: 0, y: 1}
+  headOffsetLeft: {x: 0, y: 1.55}
+  headOffsetRight: {x: 0.1, y: 1.6}
+  headOffsetTop: {x: 0, y: 1.3}
+  headOffsetBottom: {x: 0, y: 1.05}
   enterDuration: 0.5
   exitDuration: 0.5
   offscreenDistanceTiles: 2
