@@ -18,7 +18,6 @@ public class GameManager : MonoBehaviour
     const float BattleVictoryFadeDuration = 3f;
     const float BattleRoundWinFinalFadeDuration = 0.5f;
     const string BattleVictorySfxResourcesPath = "Sounds/SB5 Sound Effects (48)";
-    const string BattleRoundWinLogPrefix = "[RoundWinScoreboard]";
     const string TitleScreenSceneName = "TitleScreen";
     static AudioClip battleVictorySfx;
 
@@ -1218,26 +1217,19 @@ public class GameManager : MonoBehaviour
 
         PlayBattleVictorySfx(survivingPlayer);
 
-        Debug.Log(BattleRoundWinLogPrefix + " t=" + Time.unscaledTime.ToString("0.###") + " VictoryFadeOutStart duration=" + BattleVictoryFadeDuration.ToString("0.###"));
-
         if (StageIntroTransition.Instance != null)
             StageIntroTransition.Instance.StartFadeOut(BattleVictoryFadeDuration);
 
         yield return new WaitForSecondsRealtime(BattleVictoryFadeDuration);
-        Debug.Log(BattleRoundWinLogPrefix + " t=" + Time.unscaledTime.ToString("0.###") + " VictoryFadeOutComplete waitBeforeShow=" + BattleRoundWinShowDelay.ToString("0.###"));
 
         yield return waitRoundWinScoreboardDelay;
-        Debug.Log(BattleRoundWinLogPrefix + " t=" + Time.unscaledTime.ToString("0.###") + " ScoreboardShowStart");
 
         yield return BattleRoundWinScoreboardOverlay.PlayRoutine(survivingPlayer.PlayerId);
-
-        Debug.Log(BattleRoundWinLogPrefix + " t=" + Time.unscaledTime.ToString("0.###") + " ScoreboardSequenceComplete finalFadeDuration=" + BattleRoundWinFinalFadeDuration.ToString("0.###"));
 
         if (StageIntroTransition.Instance != null)
             StageIntroTransition.Instance.StartFadeOut(BattleRoundWinFinalFadeDuration);
 
         yield return new WaitForSecondsRealtime(BattleRoundWinFinalFadeDuration);
-        Debug.Log(BattleRoundWinLogPrefix + " t=" + Time.unscaledTime.ToString("0.###") + " FinalFadeComplete restartDelay=" + BattleRoundWinRestartDelay.ToString("0.###"));
 
         yield return waitRoundWinRestartDelay;
 

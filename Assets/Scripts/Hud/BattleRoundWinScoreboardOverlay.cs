@@ -14,7 +14,6 @@ public sealed class BattleRoundWinScoreboardOverlay : MonoBehaviour
     const string PrefabResourcesPath = "HUD/RoundWin/RoundWinScoreboard";
     const string MatchEndJingleResourcesPath = "Sounds/Match End Jingle";
     const string SafeFrameName = "SafeFrame4x3";
-    const string LogPrefix = "[RoundWinScoreboard]";
     static BattleRoundWinScoreboardOverlay activeOverlay;
     static AudioClip matchEndJingleClip;
 
@@ -42,7 +41,6 @@ public sealed class BattleRoundWinScoreboardOverlay : MonoBehaviour
         GameObject prefab = Resources.Load<GameObject>(PrefabResourcesPath);
         RectTransform safeFrame = ResolveSafeFrame();
         Transform parent = safeFrame != null ? safeFrame : ResolveCanvasTransform();
-        Log("CreateOverlay", safeFrame, null);
 
         BattleRoundWinScoreboardPresenter presenter = null;
         if (prefab != null)
@@ -70,7 +68,6 @@ public sealed class BattleRoundWinScoreboardOverlay : MonoBehaviour
         if (overlay == null)
             overlay = presenter.gameObject.AddComponent<BattleRoundWinScoreboardOverlay>();
 
-        Log("OverlayCreated", safeFrame, presenter.transform as RectTransform);
         return overlay;
     }
 
@@ -82,10 +79,7 @@ public sealed class BattleRoundWinScoreboardOverlay : MonoBehaviour
 
         RectTransform existing = FindSafeFrame(canvasTransform);
         if (existing != null)
-        {
-            Log("SafeFrameFound", existing, null);
             return existing;
-        }
 
         GameObject go = new GameObject(SafeFrameName, typeof(RectTransform), typeof(UICameraViewportFitter));
         RectTransform rect = go.GetComponent<RectTransform>();
@@ -95,7 +89,6 @@ public sealed class BattleRoundWinScoreboardOverlay : MonoBehaviour
         rect.anchoredPosition = Vector2.zero;
         rect.sizeDelta = Vector2.zero;
         rect.localScale = Vector3.one;
-        Log("SafeFrameCreated", rect, null);
         return rect;
     }
 
@@ -184,15 +177,6 @@ public sealed class BattleRoundWinScoreboardOverlay : MonoBehaviour
         float slideDistance = GetSlideDistance(parentRect, rect);
         Vector2 hiddenPosition = new(0f, -slideDistance);
         rect.anchoredPosition = hiddenPosition;
-        Log(
-            "PlayStart winner=" + winnerPlayerId +
-            " players=" + activePlayerIds.Count +
-            " teams=" + usesTeams +
-            " target=" + targetVictories +
-            " uiScale=" + uiScale.ToString("0.###") +
-            " slideDistance=" + slideDistance.ToString("0.##"),
-            parentRect,
-            rect);
 
         float t = 0f;
         while (t < SlideDuration)
@@ -204,15 +188,12 @@ public sealed class BattleRoundWinScoreboardOverlay : MonoBehaviour
         }
 
         rect.anchoredPosition = Vector2.zero;
-        Log("SlideComplete elapsed=" + SlideDuration.ToString("0.###"), parentRect, rect);
         PlayMatchEndJingle();
 
         yield return new WaitForSecondsRealtime(TrophyRevealDelay);
         presenter.RevealRoundWinTrophies();
-        Log("TrophyReveal delay=" + TrophyRevealDelay.ToString("0.###"), parentRect, rect);
 
         yield return new WaitForSecondsRealtime(HoldAfterReveal);
-        Log("HoldComplete hold=" + HoldAfterReveal.ToString("0.###"), parentRect, rect);
     }
 
     void PopulateActivePlayerIds()
@@ -238,17 +219,13 @@ public sealed class BattleRoundWinScoreboardOverlay : MonoBehaviour
             matchEndJingleClip = Resources.Load<AudioClip>(MatchEndJingleResourcesPath);
 
         if (matchEndJingleClip == null)
-        {
-            Debug.LogWarning(LogPrefix + " MatchEndJingleMissing path=" + MatchEndJingleResourcesPath);
             return;
-        }
 
         AudioSource audioSource = FindAnyObjectByType<AudioSource>();
         if (audioSource == null)
             audioSource = gameObject.AddComponent<AudioSource>();
 
         audioSource.PlayOneShot(matchEndJingleClip);
-        Debug.Log(LogPrefix + " t=" + Time.unscaledTime.ToString("0.###") + " MatchEndJinglePlay path=" + MatchEndJingleResourcesPath);
     }
 
     void HideBattleModeHud()
@@ -272,8 +249,6 @@ public sealed class BattleRoundWinScoreboardOverlay : MonoBehaviour
             if (hudObject.activeSelf)
                 hudObject.SetActive(false);
         }
-
-        Log("BattleHudHidden count=" + hiddenBattleHuds.Count, transform.parent as RectTransform, transform as RectTransform);
     }
 
     void RestoreBattleModeHud()
@@ -285,7 +260,6 @@ public sealed class BattleRoundWinScoreboardOverlay : MonoBehaviour
                 state.GameObject.SetActive(state.WasActive);
         }
 
-        Log("BattleHudRestored count=" + hiddenBattleHuds.Count, transform.parent as RectTransform, transform as RectTransform);
         hiddenBattleHuds.Clear();
     }
 
@@ -324,37 +298,5 @@ public sealed class BattleRoundWinScoreboardOverlay : MonoBehaviour
         float rawScale = Mathf.Min(parentWidth / ScreenWidth, parentHeight / ScreenHeight);
         float integerScale = Mathf.Max(1f, Mathf.Round(rawScale));
         return integerScale;
-    }
-
-    static void Log(string message, RectTransform parentRect, RectTransform ownRect)
-    {
-        Rect cameraPixelRect = Camera.main != null
-            ? Camera.main.pixelRect
-            : new Rect(0f, 0f, Screen.width, Screen.height);
-        Rect cameraViewportRect = Camera.main != null
-            ? Camera.main.rect
-            : new Rect(0f, 0f, 1f, 1f);
-
-        string parentSize = parentRect != null
-            ? parentRect.rect.size.ToString("F1")
-            : "null";
-        string ownSize = ownRect != null
-            ? ownRect.rect.size.ToString("F1") + " scale=" + ownRect.localScale.ToString("F2")
-            : "null";
-        Vector2 anchorsMin = ownRect != null ? ownRect.anchorMin : Vector2.zero;
-        Vector2 anchorsMax = ownRect != null ? ownRect.anchorMax : Vector2.zero;
-        Vector2 anchoredPosition = ownRect != null ? ownRect.anchoredPosition : Vector2.zero;
-
-        Debug.Log(
-            LogPrefix +
-            " t=" + Time.unscaledTime.ToString("0.###") +
-            " " + message +
-            " screen=" + Screen.width + "x" + Screen.height +
-            " camPixel=" + cameraPixelRect +
-            " camViewport=" + cameraViewportRect +
-            " parentSize=" + parentSize +
-            " rectSize=" + ownSize +
-            " anchors=" + anchorsMin.ToString("F2") + ".." + anchorsMax.ToString("F2") +
-            " pos=" + anchoredPosition.ToString("F1"));
     }
 }

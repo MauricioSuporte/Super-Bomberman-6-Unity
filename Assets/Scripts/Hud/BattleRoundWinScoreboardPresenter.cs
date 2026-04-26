@@ -125,7 +125,6 @@ public sealed class BattleRoundWinScoreboardPresenter : MonoBehaviour
         background.color = Color.black;
         ApplyLogicalRect(background.rectTransform, 0f, 0f, ScreenWidth, ScreenHeight, ScreenWidth, ScreenHeight);
         background.rectTransform.SetAsFirstSibling();
-        Debug.Log("[RoundWinScoreboard] t=" + Time.unscaledTime.ToString("0.###") + " BlackBackgroundReady logicalSize=" + ScreenWidth.ToString("0.#") + "x" + ScreenHeight.ToString("0.#"));
     }
 
     void EnsureRoot()
@@ -269,8 +268,6 @@ public sealed class BattleRoundWinScoreboardPresenter : MonoBehaviour
             scoreboardRect.anchoredPosition = new Vector2(centerX, centerY);
             scoreboardAnimator.RefreshFrame();
         }
-
-        Debug.Log("[RoundWinScoreboard] t=" + Time.unscaledTime.ToString("0.###") + " AnimatedScoreboardReady size=" + width.ToString("0.#") + "x" + ScoreboardHeight.ToString("0.#") + " pos=" + scoreboardRect.anchoredPosition.ToString("F1"));
     }
 
     void ConfigureDividerTemplate()
@@ -380,8 +377,6 @@ public sealed class BattleRoundWinScoreboardPresenter : MonoBehaviour
             if (usesTeams && GetTeamSortKey(visiblePlayerIds[i - 1]) != GetTeamSortKey(visiblePlayerIds[i]))
                 DrawHorizontalDivider(tableLeft, tableRight, ref sequenceIndex, y + TeamGap);
         }
-
-        Debug.Log("[RoundWinScoreboard] t=" + Time.unscaledTime.ToString("0.###") + " AnimatedDividersReady count=" + sequenceIndex + " template=" + (dividerTemplateRect != null));
     }
 
     void DrawHorizontalDivider(float left, float right, ref int sequenceIndex, float y)
