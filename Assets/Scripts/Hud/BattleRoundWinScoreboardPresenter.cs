@@ -17,19 +17,20 @@ public sealed class BattleRoundWinScoreboardPresenter : MonoBehaviour
     const float RowHeight = 24f;
     const float TeamGap = 8f;
     const float PortraitSize = 16f;
-    const float TrophyWidth = 16f;
-    const float TrophyHeight = 14f;
-    const float TrophyStep = 24f;
+    const float TrophyWidth = 26f;
+    const float TrophyHeight = 23f;
+    const float TrophyStep = 26f;
     const float RowSpriteYOffset = 3f;
     const float PortraitExtraYOffset = 1f;
+    const float TrophyExtraYOffset = 2f;
     const float ScoreboardWidth = 158f;
     const float ScoreboardHeight = 16f;
     const float ScoreboardBottom = 198f;
     const string RuntimeRootName = "__RoundWinScoreboardRuntime";
     const string ScoreboardChildName = "Scoreboard";
     const string DividerChildName = "Divisor";
+    const string TrophyChildName = "Trophy";
     const string DividerResourcesPath = "HUD/RoundWin/Divisor";
-    const string TrophyResourcesPath = "HUD/RoundWin/Trophy";
     const string PortraitsResourcesPath = "HUD/PortraitBombersLive";
 
     readonly List<int> activePlayerIds = new(MaxPlayers);
@@ -41,10 +42,11 @@ public sealed class BattleRoundWinScoreboardPresenter : MonoBehaviour
     RectTransform runtimeRoot;
     RectTransform scoreboardRect;
     RectTransform dividerTemplateRect;
+    RectTransform trophyTemplateRect;
     AnimatedSpriteRenderer scoreboardAnimator;
     AnimatedSpriteRenderer dividerTemplateAnimator;
+    AnimatedSpriteRenderer trophyTemplateAnimator;
     Sprite dividerSprite;
-    Sprite trophySprite;
     bool spritesLoaded;
     int winnerPlayerId;
     bool usesTeams;
@@ -52,10 +54,16 @@ public sealed class BattleRoundWinScoreboardPresenter : MonoBehaviour
 
     sealed class RowUi
     {
-        public Image[] Trophies;
+        public TrophyUi[] Trophies;
         public int PreviousWinCount;
         public int CurrentWinCount;
         public bool IsWinner;
+    }
+
+    sealed class TrophyUi
+    {
+        public GameObject Root;
+        public AnimatedSpriteRenderer Animator;
     }
 
     public void Configure(IReadOnlyList<int> players, int winnerId, bool groupByTeam, int victoriesToWinMatch)
@@ -91,10 +99,7 @@ public sealed class BattleRoundWinScoreboardPresenter : MonoBehaviour
 
             int revealCount = Mathf.Clamp(row.CurrentWinCount, 0, targetVictories);
             for (int i = 0; i < revealCount && i < row.Trophies.Length; i++)
-            {
-                if (row.Trophies[i] != null)
-                    row.Trophies[i].enabled = true;
-            }
+                ShowTrophy(row.Trophies[i], animate: i >= row.PreviousWinCount);
         }
     }
 
@@ -110,6 +115,7 @@ public sealed class BattleRoundWinScoreboardPresenter : MonoBehaviour
         BuildBackground();
         ConfigureScoreboardTitle();
         ConfigureDividerTemplate();
+        ConfigureTrophyTemplate();
         BuildTable();
     }
 
@@ -176,14 +182,6 @@ public sealed class BattleRoundWinScoreboardPresenter : MonoBehaviour
             Sprite[] dividerSprites = Resources.LoadAll<Sprite>(DividerResourcesPath);
             if (dividerSprites != null && dividerSprites.Length > 0)
                 dividerSprite = dividerSprites[0];
-        }
-
-        trophySprite = Resources.Load<Sprite>(TrophyResourcesPath);
-        if (trophySprite == null)
-        {
-            Sprite[] trophySprites = Resources.LoadAll<Sprite>(TrophyResourcesPath);
-            if (trophySprites != null && trophySprites.Length > 0)
-                trophySprite = trophySprites[0];
         }
 
         Sprite[] loadedPortraits = Resources.LoadAll<Sprite>(PortraitsResourcesPath);
@@ -288,6 +286,21 @@ public sealed class BattleRoundWinScoreboardPresenter : MonoBehaviour
 
         dividerTemplateAnimator = dividerTemplateRect.GetComponent<AnimatedSpriteRenderer>();
         dividerTemplateRect.gameObject.SetActive(false);
+    }
+
+    void ConfigureTrophyTemplate()
+    {
+        if (trophyTemplateRect == null)
+        {
+            Transform child = transform.Find(TrophyChildName);
+            trophyTemplateRect = child as RectTransform;
+        }
+
+        if (trophyTemplateRect == null)
+            return;
+
+        trophyTemplateAnimator = trophyTemplateRect.GetComponent<AnimatedSpriteRenderer>();
+        trophyTemplateRect.gameObject.SetActive(false);
     }
 
     void BuildTable()
@@ -448,23 +461,101 @@ public sealed class BattleRoundWinScoreboardPresenter : MonoBehaviour
         {
             CurrentWinCount = GetCurrentWinCount(playerId),
             IsWinner = IsWinningPlayerRow(playerId),
-            Trophies = new Image[MaxVisibleTrophies]
+            Trophies = new TrophyUi[MaxVisibleTrophies]
         };
 
         row.PreviousWinCount = Mathf.Clamp(row.CurrentWinCount - (row.IsWinner ? 1 : 0), 0, targetVictories);
 
         float trophiesLeft = tableLeft + 48f;
-        float trophyY = rowBottom + ((RowHeight - TrophyHeight) * 0.5f) + RowSpriteYOffset;
+        float trophyY = rowBottom + ((RowHeight - TrophyHeight) * 0.5f) + RowSpriteYOffset + TrophyExtraYOffset;
 
         for (int i = 0; i < MaxVisibleTrophies; i++)
         {
-            Image trophy = CreateImage("Player" + playerId + "Trophy" + (i + 1), trophySprite);
-            ApplyLogicalRect(trophy.rectTransform, trophiesLeft + (i * TrophyStep), trophyY, TrophyWidth, TrophyHeight, ScreenWidth, ScreenHeight);
-            trophy.enabled = i < row.PreviousWinCount && i < targetVictories;
+            TrophyUi trophy = CreateTrophy("Player" + playerId + "Trophy" + (i + 1), trophiesLeft + (i * TrophyStep), trophyY);
+            if (i < row.PreviousWinCount && i < targetVictories)
+                ShowTrophy(trophy, animate: false);
             row.Trophies[i] = trophy;
         }
 
         rowsByPlayerId[playerId] = row;
+    }
+
+    TrophyUi CreateTrophy(string childName, float left, float bottom)
+    {
+        if (trophyTemplateRect != null && trophyTemplateAnimator != null)
+        {
+            GameObject go = Instantiate(trophyTemplateRect.gameObject, runtimeRoot, false);
+            go.name = childName;
+            go.SetActive(false);
+
+            RectTransform rect = go.GetComponent<RectTransform>();
+            Image image = go.GetComponent<Image>();
+            if (image == null)
+                image = go.AddComponent<Image>();
+
+            image.raycastTarget = false;
+            image.preserveAspect = false;
+
+            float centerX = left + (TrophyWidth * 0.5f) - (ScreenWidth * 0.5f);
+            float centerY = bottom + (TrophyHeight * 0.5f) - (ScreenHeight * 0.5f);
+
+            rect.anchorMin = new Vector2(0.5f, 0.5f);
+            rect.anchorMax = new Vector2(0.5f, 0.5f);
+            rect.pivot = new Vector2(0.5f, 0.5f);
+            rect.sizeDelta = new Vector2(TrophyWidth, TrophyHeight);
+            rect.anchoredPosition = new Vector2(centerX, centerY);
+            rect.localScale = Vector3.one;
+
+            AnimatedSpriteRenderer animator = go.GetComponent<AnimatedSpriteRenderer>();
+            if (animator != null)
+            {
+                animator.loop = false;
+                animator.idle = false;
+                animator.SetExternalBaseLocalPosition(new Vector3(centerX, centerY, 0f));
+            }
+
+            return new TrophyUi
+            {
+                Root = go,
+                Animator = animator
+            };
+        }
+
+        Image fallback = CreateImage(childName, null);
+        ApplyLogicalRect(fallback.rectTransform, left, bottom, TrophyWidth, TrophyHeight, ScreenWidth, ScreenHeight);
+        fallback.gameObject.SetActive(false);
+
+        return new TrophyUi { Root = fallback.gameObject };
+    }
+
+    void ShowTrophy(TrophyUi trophy, bool animate)
+    {
+        if (trophy == null || trophy.Root == null)
+            return;
+
+        trophy.Root.SetActive(true);
+
+        if (trophy.Animator == null)
+            return;
+
+        int frameCount = trophy.Animator.animationSprite != null && trophy.Animator.animationSprite.Length > 0
+            ? trophy.Animator.animationSprite.Length
+            : 1;
+
+        trophy.Animator.loop = false;
+        trophy.Animator.idle = false;
+        trophy.Animator.SetFrozen(false);
+
+        if (animate)
+        {
+            trophy.Animator.CurrentFrame = 0;
+            trophy.Animator.RefreshFrame();
+            return;
+        }
+
+        trophy.Animator.CurrentFrame = frameCount - 1;
+        trophy.Animator.RefreshFrame();
+        trophy.Animator.SetFrozen(true);
     }
 
     bool IsWinningPlayerRow(int playerId)
