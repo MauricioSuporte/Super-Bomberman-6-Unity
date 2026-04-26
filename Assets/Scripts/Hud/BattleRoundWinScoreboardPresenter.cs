@@ -27,6 +27,7 @@ public sealed class BattleRoundWinScoreboardPresenter : MonoBehaviour
     const float ScoreboardBottom = 198f;
     const string RuntimeRootName = "__RoundWinScoreboardRuntime";
     const string ScoreboardChildName = "Scoreboard";
+    const string DividerChildName = "Divisor";
     const string DividerResourcesPath = "HUD/RoundWin/Divisor";
     const string TrophyResourcesPath = "HUD/RoundWin/Trophy";
     const string PortraitsResourcesPath = "HUD/PortraitBombersLive";
@@ -39,7 +40,9 @@ public sealed class BattleRoundWinScoreboardPresenter : MonoBehaviour
     RectTransform rootRect;
     RectTransform runtimeRoot;
     RectTransform scoreboardRect;
+    RectTransform dividerTemplateRect;
     AnimatedSpriteRenderer scoreboardAnimator;
+    AnimatedSpriteRenderer dividerTemplateAnimator;
     Sprite dividerSprite;
     Sprite trophySprite;
     bool spritesLoaded;
@@ -106,6 +109,7 @@ public sealed class BattleRoundWinScoreboardPresenter : MonoBehaviour
 
         BuildBackground();
         ConfigureScoreboardTitle();
+        ConfigureDividerTemplate();
         BuildTable();
     }
 
@@ -271,6 +275,21 @@ public sealed class BattleRoundWinScoreboardPresenter : MonoBehaviour
         Debug.Log("[RoundWinScoreboard] t=" + Time.unscaledTime.ToString("0.###") + " AnimatedScoreboardReady size=" + width.ToString("0.#") + "x" + ScoreboardHeight.ToString("0.#") + " pos=" + scoreboardRect.anchoredPosition.ToString("F1"));
     }
 
+    void ConfigureDividerTemplate()
+    {
+        if (dividerTemplateRect == null)
+        {
+            Transform child = transform.Find(DividerChildName);
+            dividerTemplateRect = child as RectTransform;
+        }
+
+        if (dividerTemplateRect == null)
+            return;
+
+        dividerTemplateAnimator = dividerTemplateRect.GetComponent<AnimatedSpriteRenderer>();
+        dividerTemplateRect.gameObject.SetActive(false);
+    }
+
     void BuildTable()
     {
         float tableLeft = Mathf.Round((ScreenWidth - TableWidth) * 0.5f);
@@ -321,44 +340,99 @@ public sealed class BattleRoundWinScoreboardPresenter : MonoBehaviour
 
     void BuildDividers(float tableLeft, float tableBottom)
     {
-        if (dividerSprite == null)
+        if (dividerSprite == null && dividerTemplateRect == null)
             return;
 
         float tableHeight = GetTableHeight();
         float tableRight = tableLeft + TableWidth;
+        int sequenceIndex = 0;
 
         for (float x = tableLeft; x <= tableRight + 0.1f; x += DividerStep)
         {
-            CreateDivider(x, TableTop);
-            CreateDivider(x, tableBottom);
+            CreateDivider(x, TableTop, sequenceIndex++);
+            CreateDivider(x, tableBottom, sequenceIndex++);
         }
 
         for (float y = tableBottom; y <= TableTop + 0.1f; y += DividerStep)
         {
-            CreateDivider(tableLeft, y);
-            CreateDivider(tableRight, y);
+            CreateDivider(tableLeft, y, sequenceIndex++);
+            CreateDivider(tableRight, y, sequenceIndex++);
         }
 
         for (int i = 1; i < visiblePlayerIds.Count; i++)
         {
             float y = GetRowTop(i);
-            DrawHorizontalDivider(tableLeft, tableRight, y);
+            DrawHorizontalDivider(tableLeft, tableRight, ref sequenceIndex, y);
 
             if (usesTeams && GetTeamSortKey(visiblePlayerIds[i - 1]) != GetTeamSortKey(visiblePlayerIds[i]))
-                DrawHorizontalDivider(tableLeft, tableRight, y + TeamGap);
+                DrawHorizontalDivider(tableLeft, tableRight, ref sequenceIndex, y + TeamGap);
         }
+
+        Debug.Log("[RoundWinScoreboard] t=" + Time.unscaledTime.ToString("0.###") + " AnimatedDividersReady count=" + sequenceIndex + " template=" + (dividerTemplateRect != null));
     }
 
-    void DrawHorizontalDivider(float left, float right, float y)
+    void DrawHorizontalDivider(float left, float right, ref int sequenceIndex, float y)
     {
         for (float x = left; x <= right + 0.1f; x += DividerStep)
-            CreateDivider(x, y);
+            CreateDivider(x, y, sequenceIndex++);
     }
 
-    void CreateDivider(float x, float y)
+    void CreateDivider(float x, float y, int sequenceIndex)
     {
+        if (dividerTemplateRect != null && dividerTemplateAnimator != null)
+        {
+            CreateAnimatedDivider(x, y, sequenceIndex);
+            return;
+        }
+
         Image image = CreateImage("Divider", dividerSprite);
         ApplyLogicalRect(image.rectTransform, x, y, DividerSize, DividerSize, ScreenWidth, ScreenHeight);
+    }
+
+    void CreateAnimatedDivider(float x, float y, int sequenceIndex)
+    {
+        GameObject go = Instantiate(dividerTemplateRect.gameObject, runtimeRoot, false);
+        go.name = "Divider";
+        go.SetActive(false);
+
+        RectTransform rect = go.GetComponent<RectTransform>();
+        Image image = go.GetComponent<Image>();
+        if (image == null)
+            image = go.AddComponent<Image>();
+
+        image.raycastTarget = false;
+        image.preserveAspect = false;
+
+        float centerX = x + (DividerSize * 0.5f) - (ScreenWidth * 0.5f);
+        float centerY = y + (DividerSize * 0.5f) - (ScreenHeight * 0.5f);
+
+        rect.anchorMin = new Vector2(0.5f, 0.5f);
+        rect.anchorMax = new Vector2(0.5f, 0.5f);
+        rect.pivot = new Vector2(0.5f, 0.5f);
+        rect.sizeDelta = new Vector2(DividerSize, DividerSize);
+        rect.anchoredPosition = new Vector2(centerX, centerY);
+        rect.localScale = Vector3.one;
+
+        AnimatedSpriteRenderer animator = go.GetComponent<AnimatedSpriteRenderer>();
+        if (animator != null)
+        {
+            animator.enabled = false;
+            int frameCount = animator.animationSprite != null && animator.animationSprite.Length > 0
+                ? animator.animationSprite.Length
+                : 1;
+            animator.CurrentFrame = Mathf.Abs(sequenceIndex) % frameCount;
+            animator.SetExternalBaseLocalPosition(new Vector3(centerX, centerY, 0f));
+        }
+
+        go.SetActive(true);
+
+        if (animator != null)
+        {
+            animator.enabled = true;
+            animator.CurrentFrame = Mathf.Abs(sequenceIndex) % Mathf.Max(1, animator.animationSprite != null ? animator.animationSprite.Length : 1);
+            animator.SetExternalBaseLocalPosition(new Vector3(centerX, centerY, 0f));
+            animator.RefreshFrame();
+        }
     }
 
     void BuildPlayerRow(int playerId, int rowIndex, float tableLeft)
