@@ -15,7 +15,6 @@ public sealed class BattleRoundWinScoreboardPresenter : MonoBehaviour
     const float TableWidth = 192f;
     const float TableTop = 180f;
     const float RowHeight = 24f;
-    const float TeamGap = 8f;
     const float PortraitSize = 16f;
     const float TrophyWidth = 26f;
     const float TrophyHeight = 23f;
@@ -318,34 +317,12 @@ public sealed class BattleRoundWinScoreboardPresenter : MonoBehaviour
 
     float GetTableHeight()
     {
-        float height = visiblePlayerIds.Count * RowHeight;
-
-        if (usesTeams)
-        {
-            for (int i = 1; i < visiblePlayerIds.Count; i++)
-            {
-                if (GetTeamSortKey(visiblePlayerIds[i - 1]) != GetTeamSortKey(visiblePlayerIds[i]))
-                    height += TeamGap;
-            }
-        }
-
-        return height;
+        return visiblePlayerIds.Count * RowHeight;
     }
 
     float GetRowTop(int rowIndex)
     {
-        float y = TableTop - (rowIndex * RowHeight);
-
-        if (usesTeams)
-        {
-            for (int i = 1; i <= rowIndex && i < visiblePlayerIds.Count; i++)
-            {
-                if (GetTeamSortKey(visiblePlayerIds[i - 1]) != GetTeamSortKey(visiblePlayerIds[i]))
-                    y -= TeamGap;
-            }
-        }
-
-        return y;
+        return TableTop - (rowIndex * RowHeight);
     }
 
     void BuildDividers(float tableLeft, float tableBottom)
@@ -371,11 +348,9 @@ public sealed class BattleRoundWinScoreboardPresenter : MonoBehaviour
 
         for (int i = 1; i < visiblePlayerIds.Count; i++)
         {
-            float y = GetRowTop(i);
-            DrawHorizontalDivider(tableLeft, tableRight, ref sequenceIndex, y);
-
-            if (usesTeams && GetTeamSortKey(visiblePlayerIds[i - 1]) != GetTeamSortKey(visiblePlayerIds[i]))
-                DrawHorizontalDivider(tableLeft, tableRight, ref sequenceIndex, y + TeamGap);
+            bool separatesTeams = usesTeams && GetTeamSortKey(visiblePlayerIds[i - 1]) != GetTeamSortKey(visiblePlayerIds[i]);
+            if (!usesTeams || separatesTeams)
+                DrawHorizontalDivider(tableLeft, tableRight, ref sequenceIndex, GetRowTop(i));
         }
     }
 
@@ -452,6 +427,9 @@ public sealed class BattleRoundWinScoreboardPresenter : MonoBehaviour
         Image portrait = CreateImage("Player" + playerId + "Portrait", GetPortraitSprite(playerId));
         ApplyLogicalRect(portrait.rectTransform, tableLeft + 8f, centerY, PortraitSize, PortraitSize, ScreenWidth, ScreenHeight);
 
+        if (usesTeams && !IsFirstPlayerInTeam(rowIndex))
+            return;
+
         RowUi row = new RowUi
         {
             CurrentWinCount = GetCurrentWinCount(playerId),
@@ -462,7 +440,7 @@ public sealed class BattleRoundWinScoreboardPresenter : MonoBehaviour
         row.PreviousWinCount = Mathf.Clamp(row.CurrentWinCount - (row.IsWinner ? 1 : 0), 0, targetVictories);
 
         float trophiesLeft = tableLeft + 48f;
-        float trophyY = rowBottom + ((RowHeight - TrophyHeight) * 0.5f) + RowSpriteYOffset + TrophyExtraYOffset;
+        float trophyY = GetTrophyBottomForRowGroup(rowIndex);
 
         for (int i = 0; i < MaxVisibleTrophies; i++)
         {
@@ -473,6 +451,39 @@ public sealed class BattleRoundWinScoreboardPresenter : MonoBehaviour
         }
 
         rowsByPlayerId[playerId] = row;
+    }
+
+    bool IsFirstPlayerInTeam(int rowIndex)
+    {
+        if (!usesTeams || rowIndex <= 0 || rowIndex >= visiblePlayerIds.Count)
+            return true;
+
+        return GetTeamSortKey(visiblePlayerIds[rowIndex - 1]) != GetTeamSortKey(visiblePlayerIds[rowIndex]);
+    }
+
+    float GetTrophyBottomForRowGroup(int rowIndex)
+    {
+        if (!usesTeams)
+        {
+            float rowTop = GetRowTop(rowIndex);
+            float rowBottom = rowTop - RowHeight;
+            return rowBottom + ((RowHeight - TrophyHeight) * 0.5f) + RowSpriteYOffset + TrophyExtraYOffset;
+        }
+
+        int team = GetTeamSortKey(visiblePlayerIds[rowIndex]);
+        int lastRowIndex = rowIndex;
+        for (int i = rowIndex + 1; i < visiblePlayerIds.Count; i++)
+        {
+            if (GetTeamSortKey(visiblePlayerIds[i]) != team)
+                break;
+
+            lastRowIndex = i;
+        }
+
+        float groupTop = GetRowTop(rowIndex);
+        float groupBottom = GetRowTop(lastRowIndex) - RowHeight;
+        float groupCenterY = groupBottom + ((groupTop - groupBottom) * 0.5f);
+        return groupCenterY - (TrophyHeight * 0.5f) + RowSpriteYOffset + TrophyExtraYOffset;
     }
 
     TrophyUi CreateTrophy(string childName, float left, float bottom)
