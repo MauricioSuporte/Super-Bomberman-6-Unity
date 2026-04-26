@@ -22,9 +22,11 @@ public sealed class BattleRoundWinScoreboardPresenter : MonoBehaviour
     const float TrophyStep = 24f;
     const float RowSpriteYOffset = 3f;
     const float PortraitExtraYOffset = 1f;
+    const float ScoreboardWidth = 158f;
     const float ScoreboardHeight = 16f;
+    const float ScoreboardBottom = 198f;
     const string RuntimeRootName = "__RoundWinScoreboardRuntime";
-    const string ScoreboardResourcesPath = "HUD/RoundWin/Scoreboard";
+    const string ScoreboardChildName = "Scoreboard";
     const string DividerResourcesPath = "HUD/RoundWin/Divisor";
     const string TrophyResourcesPath = "HUD/RoundWin/Trophy";
     const string PortraitsResourcesPath = "HUD/PortraitBombersLive";
@@ -33,10 +35,11 @@ public sealed class BattleRoundWinScoreboardPresenter : MonoBehaviour
     readonly List<int> visiblePlayerIds = new(MaxPlayers);
     readonly Dictionary<int, Sprite> portraits = new();
     readonly Dictionary<int, RowUi> rowsByPlayerId = new();
-    readonly List<Sprite> scoreboardSprites = new();
 
     RectTransform rootRect;
     RectTransform runtimeRoot;
+    RectTransform scoreboardRect;
+    AnimatedSpriteRenderer scoreboardAnimator;
     Sprite dividerSprite;
     Sprite trophySprite;
     bool spritesLoaded;
@@ -102,7 +105,7 @@ public sealed class BattleRoundWinScoreboardPresenter : MonoBehaviour
         PopulateVisiblePlayerIds();
 
         BuildBackground();
-        BuildScoreboardTitle();
+        ConfigureScoreboardTitle();
         BuildTable();
     }
 
@@ -136,6 +139,7 @@ public sealed class BattleRoundWinScoreboardPresenter : MonoBehaviour
             runtimeRoot.SetParent(transform, false);
         }
 
+        runtimeRoot.SetAsFirstSibling();
         ApplyLogicalRect(runtimeRoot, 0f, 0f, ScreenWidth, ScreenHeight, ScreenWidth, ScreenHeight);
     }
 
@@ -160,15 +164,7 @@ public sealed class BattleRoundWinScoreboardPresenter : MonoBehaviour
             return;
 
         spritesLoaded = true;
-        scoreboardSprites.Clear();
         portraits.Clear();
-
-        Sprite[] loadedScoreboardSprites = Resources.LoadAll<Sprite>(ScoreboardResourcesPath);
-        if (loadedScoreboardSprites != null)
-        {
-            System.Array.Sort(loadedScoreboardSprites, CompareSpritesByNumericSuffix);
-            scoreboardSprites.AddRange(loadedScoreboardSprites);
-        }
 
         dividerSprite = Resources.Load<Sprite>(DividerResourcesPath);
         if (dividerSprite == null)
@@ -231,23 +227,48 @@ public sealed class BattleRoundWinScoreboardPresenter : MonoBehaviour
         return (int)BattleModeRules.Instance.GetTeamForPlayer(playerId);
     }
 
-    void BuildScoreboardTitle()
+    void ConfigureScoreboardTitle()
     {
-        float totalWidth = 0f;
-        for (int i = 0; i < scoreboardSprites.Count; i++)
-            totalWidth += GetLogicalSpriteWidth(scoreboardSprites[i], ScoreboardHeight);
-
-        float x = Mathf.Round((ScreenWidth - totalWidth) * 0.5f);
-        const float y = 198f;
-
-        for (int i = 0; i < scoreboardSprites.Count; i++)
+        if (scoreboardRect == null)
         {
-            Sprite sprite = scoreboardSprites[i];
-            float width = GetLogicalSpriteWidth(sprite, ScoreboardHeight);
-            Image image = CreateImage("ScoreboardLetter" + i, sprite);
-            ApplyLogicalRect(image.rectTransform, x, y, width, ScoreboardHeight, ScreenWidth, ScreenHeight);
-            x += width;
+            Transform child = transform.Find(ScoreboardChildName);
+            scoreboardRect = child as RectTransform;
         }
+
+        if (scoreboardRect == null)
+            return;
+
+        scoreboardAnimator = scoreboardRect.GetComponent<AnimatedSpriteRenderer>();
+        Image scoreboardImage = scoreboardRect.GetComponent<Image>();
+        if (scoreboardImage == null)
+            scoreboardImage = scoreboardRect.gameObject.AddComponent<Image>();
+
+        scoreboardImage.raycastTarget = false;
+        scoreboardImage.preserveAspect = false;
+
+        float width = ScoreboardWidth;
+        float centerX = 0f;
+        float centerY = Mathf.Round(ScoreboardBottom + (ScoreboardHeight * 0.5f) - (ScreenHeight * 0.5f));
+
+        scoreboardRect.gameObject.SetActive(true);
+        scoreboardRect.anchorMin = new Vector2(0.5f, 0.5f);
+        scoreboardRect.anchorMax = new Vector2(0.5f, 0.5f);
+        scoreboardRect.pivot = new Vector2(0.5f, 0.5f);
+        scoreboardRect.sizeDelta = new Vector2(width, ScoreboardHeight);
+        scoreboardRect.anchoredPosition = new Vector2(centerX, centerY);
+        scoreboardRect.localScale = Vector3.one;
+        scoreboardRect.SetAsLastSibling();
+
+        if (scoreboardAnimator != null)
+        {
+            scoreboardAnimator.enabled = false;
+            scoreboardAnimator.enabled = true;
+            scoreboardAnimator.SetExternalBaseLocalPosition(new Vector3(centerX, centerY, 0f));
+            scoreboardRect.anchoredPosition = new Vector2(centerX, centerY);
+            scoreboardAnimator.RefreshFrame();
+        }
+
+        Debug.Log("[RoundWinScoreboard] t=" + Time.unscaledTime.ToString("0.###") + " AnimatedScoreboardReady size=" + width.ToString("0.#") + "x" + ScoreboardHeight.ToString("0.#") + " pos=" + scoreboardRect.anchoredPosition.ToString("F1"));
     }
 
     void BuildTable()
