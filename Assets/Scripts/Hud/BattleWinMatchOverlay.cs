@@ -12,13 +12,19 @@ public sealed class BattleWinMatchOverlay : MonoBehaviour
     const float ScreenHeight = 224f;
     const float FieldHeight = 65f;
     const float TileSize = 16f;
+    const float VictoryBomberWidth = 94f;
+    const float VictoryBomberHeight = 117f;
     const float TotalDuration = 10f;
     const float FadeInDuration = 1f;
+    const float WinnerEntranceDelayAfterFadeIn = 1f;
+    const float WinnerEntranceDuration = 0.55f;
     const float FinalFadeDuration = 1f;
     const int CrowdPaletteCount = 16;
     const string PrefabResourcesPath = "HUD/WinMatch/BattleWinMatchOverlay";
     const string BackgroundResourcesPath = "HUD/WinMatch/WinMatchBackground";
     const string RecoloredFrameResourcesPathFormat = "HUD/WinMatch/Recolors/Bomber{0:00}_{1}";
+    const string VictoryBomberResourcesPathFormat = "HUD/WinMatch/VictoryRecolors/BomberVictory{0:00}";
+    const string VictoryBomberFallbackResourcesPath = "HUD/WinMatch/BomberVictory";
     const string SafeFrameName = "SafeFrame4x3";
     static readonly string[] BlueFrameResourcesPaths =
     {
@@ -40,12 +46,17 @@ public sealed class BattleWinMatchOverlay : MonoBehaviour
     [SerializeField, Min(0f)] private float columnDelay = 0.13f;
 
     readonly List<ColumnUi> columns = new();
+    readonly List<int> winnerPlayerIds = new(GameSession.MaxPlayerId);
+    readonly List<WinnerBomberUi> winnerBomberUis = new(GameSession.MaxPlayerId);
     RectTransform rootRect;
     RectTransform runtimeRoot;
+    RectMask2D runtimeMask;
     CanvasGroup canvasGroup;
     Sprite backgroundSprite;
     Sprite[] blueFrames;
     Sprite[][] recoloredFrames;
+    Sprite[] victoryBomberSprites;
+    Sprite fallbackVictoryBomberSprite;
 
     sealed class ColumnUi
     {
@@ -54,12 +65,20 @@ public sealed class BattleWinMatchOverlay : MonoBehaviour
         public Vector2[] BasePositions;
     }
 
-    public static IEnumerator PlayRoutine()
+    sealed class WinnerBomberUi
+    {
+        public RectTransform Rect;
+        public Vector2 StartPosition;
+        public Vector2 TargetPosition;
+    }
+
+    public static IEnumerator PlayRoutine(int winnerPlayerId)
     {
         BattleWinMatchOverlay overlay = CreateOverlay();
         if (overlay == null)
             yield break;
 
+        overlay.ConfigureWinners(winnerPlayerId);
         yield return overlay.Play();
     }
 
@@ -189,6 +208,14 @@ public sealed class BattleWinMatchOverlay : MonoBehaviour
                 recoloredFrames[paletteIndex][frame - 1] = LoadFirstSprite(path);
             }
         }
+
+        fallbackVictoryBomberSprite = LoadFirstSprite(VictoryBomberFallbackResourcesPath);
+        victoryBomberSprites = new Sprite[CrowdPaletteCount];
+        for (int paletteIndex = 0; paletteIndex < CrowdPaletteCount; paletteIndex++)
+        {
+            string path = string.Format(VictoryBomberResourcesPathFormat, paletteIndex);
+            victoryBomberSprites[paletteIndex] = LoadFirstSprite(path);
+        }
     }
 
     static Sprite LoadFirstSprite(string resourcesPath)
@@ -206,12 +233,14 @@ public sealed class BattleWinMatchOverlay : MonoBehaviour
         EnsureRuntimeRoot();
         ClearRuntimeChildren();
         columns.Clear();
+        winnerBomberUis.Clear();
 
         Image background = CreateImage("WinMatchBackground", backgroundSprite);
         ApplyLogicalRect(background.rectTransform, 0f, 0f, ScreenWidth, ScreenHeight, ScreenWidth, ScreenHeight);
         background.rectTransform.SetAsFirstSibling();
 
         BuildCrowd();
+        BuildVictoryBombers();
     }
 
     void EnsureRuntimeRoot()
@@ -226,6 +255,10 @@ public sealed class BattleWinMatchOverlay : MonoBehaviour
         }
 
         ApplyLogicalRect(runtimeRoot, 0f, 0f, ScreenWidth, ScreenHeight, ScreenWidth, ScreenHeight);
+
+        runtimeMask = runtimeRoot.GetComponent<RectMask2D>();
+        if (runtimeMask == null)
+            runtimeMask = runtimeRoot.gameObject.AddComponent<RectMask2D>();
     }
 
     void ClearRuntimeChildren()
@@ -271,6 +304,99 @@ public sealed class BattleWinMatchOverlay : MonoBehaviour
         }
     }
 
+    void ConfigureWinners(int winnerPlayerId)
+    {
+        winnerPlayerIds.Clear();
+
+        if (!GameSession.IsValidPlayerId(winnerPlayerId))
+            return;
+
+        if (BattleModeRules.Instance != null && BattleModeRules.Instance.UsesTeams)
+        {
+            BattleModeRules.TeamId winningTeam = BattleModeRules.Instance.GetTeamForPlayer(winnerPlayerId);
+            List<int> activePlayerIds = new(GameSession.MaxPlayerId);
+            if (GameSession.Instance != null)
+                GameSession.Instance.GetActivePlayerIds(activePlayerIds);
+
+            for (int i = 0; i < activePlayerIds.Count; i++)
+            {
+                int playerId = activePlayerIds[i];
+                if (BattleModeRules.Instance.GetTeamForPlayer(playerId) == winningTeam)
+                    winnerPlayerIds.Add(playerId);
+            }
+        }
+        else
+        {
+            winnerPlayerIds.Add(winnerPlayerId);
+        }
+
+        if (winnerPlayerIds.Count <= 0)
+            winnerPlayerIds.Add(winnerPlayerId);
+    }
+
+    void BuildVictoryBombers()
+    {
+        if (winnerPlayerIds.Count <= 0)
+            return;
+
+        for (int i = 0; i < winnerPlayerIds.Count; i++)
+        {
+            int playerId = winnerPlayerIds[i];
+            int paletteIndex = GetVictoryPaletteIndex(playerId);
+            Image image = CreateImage("WinnerBomber_" + playerId, GetVictoryBomberSprite(paletteIndex));
+            Vector2 targetPosition = GetWinnerBomberTargetPosition(i, winnerPlayerIds.Count);
+            Vector2 startPosition = GetWinnerBomberStartPosition(targetPosition);
+
+            ConfigureWinnerBomberRect(image.rectTransform, startPosition);
+            image.rectTransform.SetAsLastSibling();
+
+            winnerBomberUis.Add(new WinnerBomberUi
+            {
+                Rect = image.rectTransform,
+                StartPosition = startPosition,
+                TargetPosition = targetPosition
+            });
+        }
+    }
+
+    static Vector2 GetWinnerBomberTargetPosition(int index, int count)
+    {
+        float centerY = GetWinnerBomberCenterY();
+
+        if (count <= 1)
+            return new Vector2(0f, centerY);
+
+        float minCenterX = (VictoryBomberWidth * 0.5f) - (ScreenWidth * 0.5f);
+        float maxCenterX = (ScreenWidth * 0.5f) - (VictoryBomberWidth * 0.5f);
+        float t = index / (float)(count - 1);
+        float centerX = Mathf.Lerp(minCenterX, maxCenterX, t);
+        return new Vector2(Mathf.Round(centerX), centerY);
+    }
+
+    static Vector2 GetWinnerBomberStartPosition(Vector2 targetPosition)
+    {
+        float outsideLeftCenterX = (-ScreenWidth * 0.5f) - (VictoryBomberWidth * 0.5f);
+        return new Vector2(outsideLeftCenterX, targetPosition.y);
+    }
+
+    static float GetWinnerBomberCenterY()
+    {
+        return (VictoryBomberHeight * 0.5f) - (ScreenHeight * 0.5f);
+    }
+
+    static void ConfigureWinnerBomberRect(RectTransform rect, Vector2 anchoredPosition)
+    {
+        if (rect == null)
+            return;
+
+        rect.anchorMin = new Vector2(0.5f, 0.5f);
+        rect.anchorMax = new Vector2(0.5f, 0.5f);
+        rect.pivot = new Vector2(0.5f, 0.5f);
+        rect.sizeDelta = new Vector2(VictoryBomberWidth, VictoryBomberHeight);
+        rect.anchoredPosition = anchoredPosition;
+        rect.localScale = Vector3.one;
+    }
+
     IEnumerator AnimateWave(float duration)
     {
         float elapsed = 0f;
@@ -294,6 +420,8 @@ public sealed class BattleWinMatchOverlay : MonoBehaviour
                     canvasGroup.alpha = 1f;
             }
 
+            UpdateWinnerBomberEntrance(elapsed);
+
             if (!finalFadeStarted && elapsed >= duration - FinalFadeDuration)
             {
                 finalFadeStarted = true;
@@ -306,6 +434,22 @@ public sealed class BattleWinMatchOverlay : MonoBehaviour
 
         if (canvasGroup != null)
             canvasGroup.alpha = 1f;
+    }
+
+    void UpdateWinnerBomberEntrance(float elapsed)
+    {
+        float entranceStart = FadeInDuration + WinnerEntranceDelayAfterFadeIn;
+        float progress = Mathf.Clamp01((elapsed - entranceStart) / WinnerEntranceDuration);
+        float easedProgress = Mathf.SmoothStep(0f, 1f, progress);
+
+        for (int i = 0; i < winnerBomberUis.Count; i++)
+        {
+            WinnerBomberUi ui = winnerBomberUis[i];
+            if (ui?.Rect == null)
+                continue;
+
+            ui.Rect.anchoredPosition = Vector2.Lerp(ui.StartPosition, ui.TargetPosition, easedProgress);
+        }
     }
 
     int GetSequenceIndexForColumn(float elapsed, int columnIndex)
@@ -357,6 +501,48 @@ public sealed class BattleWinMatchOverlay : MonoBehaviour
             return null;
 
         return blueFrames[Mathf.Clamp(frameIndex, 0, blueFrames.Length - 1)];
+    }
+
+    Sprite GetVictoryBomberSprite(int paletteIndex)
+    {
+        if (victoryBomberSprites != null && victoryBomberSprites.Length > 0)
+        {
+            int clampedPaletteIndex = Mathf.Abs(paletteIndex) % victoryBomberSprites.Length;
+            if (victoryBomberSprites[clampedPaletteIndex] != null)
+                return victoryBomberSprites[clampedPaletteIndex];
+        }
+
+        return fallbackVictoryBomberSprite;
+    }
+
+    int GetVictoryPaletteIndex(int playerId)
+    {
+        BomberSkin skin = PlayerPersistentStats.Get(playerId).Skin;
+        return Mathf.Abs(GetPortraitIndex(skin)) % CrowdPaletteCount;
+    }
+
+    static int GetPortraitIndex(BomberSkin skin)
+    {
+        switch (skin)
+        {
+            case BomberSkin.White: return 0;
+            case BomberSkin.Black: return 1;
+            case BomberSkin.Red: return 2;
+            case BomberSkin.Blue: return 3;
+            case BomberSkin.Green: return 4;
+            case BomberSkin.Yellow: return 5;
+            case BomberSkin.Pink: return 6;
+            case BomberSkin.Aqua: return 7;
+            case BomberSkin.Orange: return 8;
+            case BomberSkin.Purple: return 9;
+            case BomberSkin.Gray: return 10;
+            case BomberSkin.Olive: return 11;
+            case BomberSkin.DarkGreen: return 12;
+            case BomberSkin.Cyan: return 13;
+            case BomberSkin.DarkBlue: return 14;
+            case BomberSkin.Brown: return 15;
+            default: return 3;
+        }
     }
 
     void ConfigureRoot(RectTransform parentRect)

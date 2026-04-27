@@ -190,7 +190,7 @@ MonoBehaviour:
   - playerId: 1
     teamId: 1
   - playerId: 2
-    teamId: 2
+    teamId: 1
   - playerId: 3
     teamId: 3
   - playerId: 4

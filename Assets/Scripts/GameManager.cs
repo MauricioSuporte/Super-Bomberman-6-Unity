@@ -1252,7 +1252,7 @@ public class GameManager : MonoBehaviour
             yield return waitWinMatchBlackScreenDelay;
 
             BattleRoundWinScoreboardOverlay.DestroyActiveOverlay();
-            yield return BattleWinMatchOverlay.PlayRoutine();
+            yield return BattleWinMatchOverlay.PlayRoutine(survivingPlayer.PlayerId);
 
             GamePauseController.ClearPauseFlag();
             Time.timeScale = 1f;
