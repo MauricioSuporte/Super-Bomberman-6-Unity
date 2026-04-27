@@ -14,6 +14,9 @@ public class GameManager : MonoBehaviour
     static readonly WaitForSecondsRealtime waitBattleDrawPreFadeDelay = new(BattleDrawPreFadeDuration);
     const float BattleRoundWinShowDelay = 1f;
     static readonly WaitForSecondsRealtime waitRoundWinScoreboardDelay = new(BattleRoundWinShowDelay);
+    const float BattleWinMatchPreFadeDuration = 0.5f;
+    static readonly WaitForSecondsRealtime waitWinMatchPreFadeDuration = new(BattleWinMatchPreFadeDuration);
+    static readonly WaitForSecondsRealtime waitWinMatchBlackScreenDelay = new(2f);
     const float BattleVictoryFadeDuration = 3f;
     const float BattleRoundWinFinalFadeDuration = 0.5f;
     const string BattleVictorySfxResourcesPath = "Sounds/SB5 Sound Effects (48)";
@@ -1237,6 +1240,29 @@ public class GameManager : MonoBehaviour
 
         yield return BattleRoundWinScoreboardOverlay.PlayRoutine(survivingPlayer.PlayerId);
 
+        if (matchComplete)
+        {
+            if (GameSession.Instance != null)
+                GameSession.Instance.EndBattleMatch();
+
+            if (StageIntroTransition.Instance != null)
+                StageIntroTransition.Instance.StartFadeOut(BattleWinMatchPreFadeDuration);
+
+            yield return waitWinMatchPreFadeDuration;
+            yield return waitWinMatchBlackScreenDelay;
+
+            BattleRoundWinScoreboardOverlay.DestroyActiveOverlay();
+            yield return BattleWinMatchOverlay.PlayRoutine();
+
+            GamePauseController.ClearPauseFlag();
+            Time.timeScale = 1f;
+            PlayerPersistentStats.RollbackStage();
+
+            StagePreIntroPlayersWalk.SkipOnNextLoad();
+            SceneManager.LoadScene(TitleScreenSceneName);
+            yield break;
+        }
+
         if (StageIntroTransition.Instance != null)
             StageIntroTransition.Instance.StartFadeOut(BattleRoundWinFinalFadeDuration);
 
@@ -1247,15 +1273,6 @@ public class GameManager : MonoBehaviour
         PlayerPersistentStats.RollbackStage();
 
         StagePreIntroPlayersWalk.SkipOnNextLoad();
-
-        if (matchComplete)
-        {
-            if (GameSession.Instance != null)
-                GameSession.Instance.EndBattleMatch();
-
-            SceneManager.LoadScene(TitleScreenSceneName);
-            yield break;
-        }
 
         Scene current = SceneManager.GetActiveScene();
         SceneManager.LoadScene(current.buildIndex);
