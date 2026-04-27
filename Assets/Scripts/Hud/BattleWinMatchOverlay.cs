@@ -15,8 +15,10 @@ public sealed class BattleWinMatchOverlay : MonoBehaviour
     const float TotalDuration = 10f;
     const float FadeInDuration = 1f;
     const float FinalFadeDuration = 1f;
+    const int CrowdPaletteCount = 16;
     const string PrefabResourcesPath = "HUD/WinMatch/BattleWinMatchOverlay";
     const string BackgroundResourcesPath = "HUD/WinMatch/WinMatchBackground";
+    const string RecoloredFrameResourcesPathFormat = "HUD/WinMatch/Recolors/Bomber{0:00}_{1}";
     const string SafeFrameName = "SafeFrame4x3";
     static readonly string[] BlueFrameResourcesPaths =
     {
@@ -43,9 +45,11 @@ public sealed class BattleWinMatchOverlay : MonoBehaviour
     CanvasGroup canvasGroup;
     Sprite backgroundSprite;
     Sprite[] blueFrames;
+    Sprite[][] recoloredFrames;
 
     sealed class ColumnUi
     {
+        public int PaletteIndex;
         public Image[] Images;
         public Vector2[] BasePositions;
     }
@@ -174,6 +178,17 @@ public sealed class BattleWinMatchOverlay : MonoBehaviour
 
         for (int i = 0; i < BlueFrameResourcesPaths.Length; i++)
             blueFrames[i] = LoadFirstSprite(BlueFrameResourcesPaths[i]);
+
+        recoloredFrames = new Sprite[CrowdPaletteCount][];
+        for (int paletteIndex = 0; paletteIndex < CrowdPaletteCount; paletteIndex++)
+        {
+            recoloredFrames[paletteIndex] = new Sprite[BlueFrameResourcesPaths.Length];
+            for (int frame = 1; frame <= BlueFrameResourcesPaths.Length; frame++)
+            {
+                string path = string.Format(RecoloredFrameResourcesPathFormat, paletteIndex, frame);
+                recoloredFrames[paletteIndex][frame - 1] = LoadFirstSprite(path);
+            }
+        }
     }
 
     static Sprite LoadFirstSprite(string resourcesPath)
@@ -238,6 +253,7 @@ public sealed class BattleWinMatchOverlay : MonoBehaviour
         {
             ColumnUi column = new ColumnUi
             {
+                PaletteIndex = columnIndex % CrowdPaletteCount,
                 Images = new Image[rowCount],
                 BasePositions = new Vector2[rowCount]
             };
@@ -245,7 +261,7 @@ public sealed class BattleWinMatchOverlay : MonoBehaviour
             float left = columnIndex * TileSize;
             for (int rowIndex = 0; rowIndex < rowCount; rowIndex++)
             {
-                Image image = CreateImage("BlueBomber_" + columnIndex + "_" + rowIndex, GetBlueFrame(1));
+                Image image = CreateImage("Bomber_" + columnIndex + "_" + rowIndex, GetCrowdFrame(column.PaletteIndex, 1));
                 ApplyLogicalRect(image.rectTransform, left, bottom + (rowIndex * TileSize), TileSize, TileSize, ScreenWidth, ScreenHeight);
                 column.Images[rowIndex] = image;
                 column.BasePositions[rowIndex] = image.rectTransform.anchoredPosition;
@@ -307,7 +323,7 @@ public sealed class BattleWinMatchOverlay : MonoBehaviour
         if (column == null || column.Images == null)
             return;
 
-        Sprite sprite = GetBlueFrame(frame);
+        Sprite sprite = GetCrowdFrame(column.PaletteIndex, frame);
 
         for (int i = 0; i < column.Images.Length; i++)
         {
@@ -320,13 +336,27 @@ public sealed class BattleWinMatchOverlay : MonoBehaviour
         }
     }
 
-    Sprite GetBlueFrame(int frame)
+    Sprite GetCrowdFrame(int paletteIndex, int frame)
     {
-        int index = Mathf.Clamp(frame - 1, 0, blueFrames != null ? blueFrames.Length - 1 : 0);
+        int frameIndex = Mathf.Clamp(frame - 1, 0, blueFrames != null ? blueFrames.Length - 1 : 0);
+
+        if (recoloredFrames != null && recoloredFrames.Length > 0)
+        {
+            int clampedPaletteIndex = Mathf.Abs(paletteIndex) % recoloredFrames.Length;
+            Sprite[] paletteFrames = recoloredFrames[clampedPaletteIndex];
+            if (paletteFrames != null && frameIndex < paletteFrames.Length && paletteFrames[frameIndex] != null)
+                return paletteFrames[frameIndex];
+        }
+
+        return GetBlueFrame(frameIndex);
+    }
+
+    Sprite GetBlueFrame(int frameIndex)
+    {
         if (blueFrames == null || blueFrames.Length <= 0)
             return null;
 
-        return blueFrames[index];
+        return blueFrames[Mathf.Clamp(frameIndex, 0, blueFrames.Length - 1)];
     }
 
     void ConfigureRoot(RectTransform parentRect)
