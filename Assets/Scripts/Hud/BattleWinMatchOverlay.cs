@@ -23,7 +23,7 @@ public sealed class BattleWinMatchOverlay : MonoBehaviour
     const string PrefabResourcesPath = "HUD/WinMatch/BattleWinMatchOverlay";
     const string BackgroundResourcesPath = "HUD/WinMatch/WinMatchBackground";
     const string RecoloredFrameResourcesPathFormat = "HUD/WinMatch/Recolors/Bomber{0:00}_{1}";
-    const string VictoryBomberResourcesPathFormat = "HUD/WinMatch/VictoryRecolors/BomberVictory{0:00}";
+    const string VictoryBomberResourcesPrefix = "HUD/WinMatch/VictoryRecolors/BomberVictory";
     const string VictoryBomberFallbackResourcesPath = "HUD/WinMatch/BomberVictory";
     const string SafeFrameName = "SafeFrame4x3";
     static readonly string[] BlueFrameResourcesPaths =
@@ -55,7 +55,7 @@ public sealed class BattleWinMatchOverlay : MonoBehaviour
     Sprite backgroundSprite;
     Sprite[] blueFrames;
     Sprite[][] recoloredFrames;
-    Sprite[] victoryBomberSprites;
+    readonly Dictionary<BomberSkin, Sprite> victoryBomberSprites = new();
     Sprite fallbackVictoryBomberSprite;
 
     sealed class ColumnUi
@@ -210,11 +210,11 @@ public sealed class BattleWinMatchOverlay : MonoBehaviour
         }
 
         fallbackVictoryBomberSprite = LoadFirstSprite(VictoryBomberFallbackResourcesPath);
-        victoryBomberSprites = new Sprite[CrowdPaletteCount];
-        for (int paletteIndex = 0; paletteIndex < CrowdPaletteCount; paletteIndex++)
+        victoryBomberSprites.Clear();
+        foreach (BomberSkin skin in System.Enum.GetValues(typeof(BomberSkin)))
         {
-            string path = string.Format(VictoryBomberResourcesPathFormat, paletteIndex);
-            victoryBomberSprites[paletteIndex] = LoadFirstSprite(path);
+            string path = VictoryBomberResourcesPrefix + skin;
+            victoryBomberSprites[skin] = LoadFirstSprite(path);
         }
     }
 
@@ -342,8 +342,8 @@ public sealed class BattleWinMatchOverlay : MonoBehaviour
         for (int i = 0; i < winnerPlayerIds.Count; i++)
         {
             int playerId = winnerPlayerIds[i];
-            int paletteIndex = GetVictoryPaletteIndex(playerId);
-            Image image = CreateImage("WinnerBomber_" + playerId, GetVictoryBomberSprite(paletteIndex));
+            BomberSkin skin = GetVictoryBomberSkin(playerId);
+            Image image = CreateImage("WinnerBomber_" + playerId, GetVictoryBomberSprite(skin));
             Vector2 targetPosition = GetWinnerBomberTargetPosition(i, winnerPlayerIds.Count);
             Vector2 startPosition = GetWinnerBomberStartPosition(targetPosition);
 
@@ -503,46 +503,17 @@ public sealed class BattleWinMatchOverlay : MonoBehaviour
         return blueFrames[Mathf.Clamp(frameIndex, 0, blueFrames.Length - 1)];
     }
 
-    Sprite GetVictoryBomberSprite(int paletteIndex)
+    Sprite GetVictoryBomberSprite(BomberSkin skin)
     {
-        if (victoryBomberSprites != null && victoryBomberSprites.Length > 0)
-        {
-            int clampedPaletteIndex = Mathf.Abs(paletteIndex) % victoryBomberSprites.Length;
-            if (victoryBomberSprites[clampedPaletteIndex] != null)
-                return victoryBomberSprites[clampedPaletteIndex];
-        }
+        if (victoryBomberSprites.TryGetValue(skin, out Sprite sprite) && sprite != null)
+            return sprite;
 
         return fallbackVictoryBomberSprite;
     }
 
-    int GetVictoryPaletteIndex(int playerId)
+    static BomberSkin GetVictoryBomberSkin(int playerId)
     {
-        BomberSkin skin = PlayerPersistentStats.Get(playerId).Skin;
-        return Mathf.Abs(GetPortraitIndex(skin)) % CrowdPaletteCount;
-    }
-
-    static int GetPortraitIndex(BomberSkin skin)
-    {
-        switch (skin)
-        {
-            case BomberSkin.White: return 0;
-            case BomberSkin.Black: return 1;
-            case BomberSkin.Red: return 2;
-            case BomberSkin.Blue: return 3;
-            case BomberSkin.Green: return 4;
-            case BomberSkin.Yellow: return 5;
-            case BomberSkin.Pink: return 6;
-            case BomberSkin.Aqua: return 7;
-            case BomberSkin.Orange: return 8;
-            case BomberSkin.Purple: return 9;
-            case BomberSkin.Gray: return 10;
-            case BomberSkin.Olive: return 11;
-            case BomberSkin.DarkGreen: return 12;
-            case BomberSkin.Cyan: return 13;
-            case BomberSkin.DarkBlue: return 14;
-            case BomberSkin.Brown: return 15;
-            default: return 3;
-        }
+        return PlayerPersistentStats.Get(playerId).Skin;
     }
 
     void ConfigureRoot(RectTransform parentRect)
