@@ -1,10 +1,13 @@
 fileFormatVersion: 2
-guid: 28b267dce7a452d4fa9dfefe74865aff
+guid: 2be6f708891403b4392773937c0b0a91
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -7269551510558187085
-    second: Blue3_0
+      213: -5393427344031628994
+    second: Victory!_0
+  - first:
+      213: -2851543160270772762
+    second: Victory!_1
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -48,7 +51,7 @@ TextureImporter:
   compressionQuality: 50
   spriteMode: 1
   spriteExtrude: 1
-  spriteMeshType: 0
+  spriteMeshType: 1
   alignment: 0
   spritePivot: {x: 0.5, y: 0.5}
   spritePixelsToUnits: 16
@@ -126,13 +129,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Blue3_0
+      name: Victory!_0
       rect:
         serializedVersion: 2
         x: 0
-        y: 0
-        width: 16
-        height: 16
+        y: 10
+        width: 140
+        height: 44
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -141,8 +144,30 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 3b166c8ba6d5d1b90800000000000000
-      internalID: -7269551510558187085
+      spriteID: e31cd1df762b625b0800000000000000
+      internalID: -5393427344031628994
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Victory!_1
+      rect:
+        serializedVersion: 2
+        x: 128
+        y: 0
+        width: 33
+        height: 47
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6e5ad569a984d68d0800000000000000
+      internalID: -2851543160270772762
       vertices: []
       indices: 
       edges: []
@@ -161,7 +186,8 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      Blue3_0: -7269551510558187085
+      Victory!_0: -5393427344031628994
+      Victory!_1: -2851543160270772762
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

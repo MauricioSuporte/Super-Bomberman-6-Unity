@@ -18,10 +18,15 @@ public sealed class BattleWinMatchOverlay : MonoBehaviour
     const float FadeInDuration = 1f;
     const float WinnerEntranceDelayAfterFadeIn = 1f;
     const float WinnerEntranceDuration = 0.55f;
+    const float VictoryTextWidth = 161f;
+    const float VictoryTextHeight = 49f;
+    const float VictoryTextTargetYOffset = 50f;
+    const float VictoryTextEntranceDuration = 1.25f;
     const float FinalFadeDuration = 1f;
     const int CrowdPaletteCount = 16;
     const string PrefabResourcesPath = "HUD/WinMatch/BattleWinMatchOverlay";
     const string BackgroundResourcesPath = "HUD/WinMatch/WinMatchBackground";
+    const string VictoryTextResourcesPath = "HUD/WinMatch/Victory!";
     const string RecoloredFrameResourcesPathFormat = "HUD/WinMatch/Recolors/Bomber{0:00}_{1}";
     const string VictoryBomberResourcesPrefix = "HUD/WinMatch/VictoryRecolors/BomberVictory";
     const string VictoryBomberFallbackResourcesPath = "HUD/WinMatch/BomberVictory";
@@ -53,10 +58,12 @@ public sealed class BattleWinMatchOverlay : MonoBehaviour
     RectMask2D runtimeMask;
     CanvasGroup canvasGroup;
     Sprite backgroundSprite;
+    Sprite victoryTextSprite;
     Sprite[] blueFrames;
     Sprite[][] recoloredFrames;
     readonly Dictionary<BomberSkin, Sprite> victoryBomberSprites = new();
     Sprite fallbackVictoryBomberSprite;
+    VictoryTextUi victoryTextUi;
 
     sealed class ColumnUi
     {
@@ -67,6 +74,14 @@ public sealed class BattleWinMatchOverlay : MonoBehaviour
 
     sealed class WinnerBomberUi
     {
+        public RectTransform Rect;
+        public Vector2 StartPosition;
+        public Vector2 TargetPosition;
+    }
+
+    sealed class VictoryTextUi
+    {
+        public Image Image;
         public RectTransform Rect;
         public Vector2 StartPosition;
         public Vector2 TargetPosition;
@@ -193,6 +208,7 @@ public sealed class BattleWinMatchOverlay : MonoBehaviour
     void EnsureSpritesLoaded()
     {
         backgroundSprite = LoadFirstSprite(BackgroundResourcesPath);
+        victoryTextSprite = LoadFirstSprite(VictoryTextResourcesPath);
         blueFrames = new Sprite[BlueFrameResourcesPaths.Length];
 
         for (int i = 0; i < BlueFrameResourcesPaths.Length; i++)
@@ -234,6 +250,7 @@ public sealed class BattleWinMatchOverlay : MonoBehaviour
         ClearRuntimeChildren();
         columns.Clear();
         winnerBomberUis.Clear();
+        victoryTextUi = null;
 
         Image background = CreateImage("WinMatchBackground", backgroundSprite);
         ApplyLogicalRect(background.rectTransform, 0f, 0f, ScreenWidth, ScreenHeight, ScreenWidth, ScreenHeight);
@@ -241,6 +258,7 @@ public sealed class BattleWinMatchOverlay : MonoBehaviour
 
         BuildCrowd();
         BuildVictoryBombers();
+        BuildVictoryText();
     }
 
     void EnsureRuntimeRoot()
@@ -359,6 +377,28 @@ public sealed class BattleWinMatchOverlay : MonoBehaviour
         }
     }
 
+    void BuildVictoryText()
+    {
+        if (victoryTextSprite == null)
+            return;
+
+        Image image = CreateImage("VictoryText", victoryTextSprite);
+        Vector2 targetPosition = new Vector2(0f, VictoryTextTargetYOffset);
+        Vector2 startPosition = GetVictoryTextStartPosition();
+
+        ConfigureVictoryTextRect(image.rectTransform, startPosition);
+        SetImageAlpha(image, 0f);
+        image.rectTransform.SetAsLastSibling();
+
+        victoryTextUi = new VictoryTextUi
+        {
+            Image = image,
+            Rect = image.rectTransform,
+            StartPosition = startPosition,
+            TargetPosition = targetPosition
+        };
+    }
+
     static Vector2 GetWinnerBomberTargetPosition(int index, int count)
     {
         float centerY = GetWinnerBomberCenterY();
@@ -397,6 +437,26 @@ public sealed class BattleWinMatchOverlay : MonoBehaviour
         rect.localScale = Vector3.one;
     }
 
+    static Vector2 GetVictoryTextStartPosition()
+    {
+        float centerX = (ScreenWidth * 0.5f) - (VictoryTextWidth * 0.5f);
+        float centerY = (ScreenHeight * 0.5f) - (VictoryTextHeight * 0.5f);
+        return new Vector2(centerX, centerY);
+    }
+
+    static void ConfigureVictoryTextRect(RectTransform rect, Vector2 anchoredPosition)
+    {
+        if (rect == null)
+            return;
+
+        rect.anchorMin = new Vector2(0.5f, 0.5f);
+        rect.anchorMax = new Vector2(0.5f, 0.5f);
+        rect.pivot = new Vector2(0.5f, 0.5f);
+        rect.sizeDelta = new Vector2(VictoryTextWidth, VictoryTextHeight);
+        rect.anchoredPosition = anchoredPosition;
+        rect.localScale = Vector3.one;
+    }
+
     IEnumerator AnimateWave(float duration)
     {
         float elapsed = 0f;
@@ -421,6 +481,7 @@ public sealed class BattleWinMatchOverlay : MonoBehaviour
             }
 
             UpdateWinnerBomberEntrance(elapsed);
+            UpdateVictoryTextEntrance(elapsed);
 
             if (!finalFadeStarted && elapsed >= duration - FinalFadeDuration)
             {
@@ -450,6 +511,29 @@ public sealed class BattleWinMatchOverlay : MonoBehaviour
 
             ui.Rect.anchoredPosition = Vector2.Lerp(ui.StartPosition, ui.TargetPosition, easedProgress);
         }
+    }
+
+    void UpdateVictoryTextEntrance(float elapsed)
+    {
+        if (victoryTextUi?.Rect == null)
+            return;
+
+        float entranceStart = FadeInDuration + WinnerEntranceDelayAfterFadeIn + WinnerEntranceDuration;
+        if (elapsed < entranceStart)
+        {
+            victoryTextUi.Rect.anchoredPosition = victoryTextUi.StartPosition;
+            SetImageAlpha(victoryTextUi.Image, 0f);
+            return;
+        }
+
+        SetImageAlpha(victoryTextUi.Image, 1f);
+
+        float progress = Mathf.Clamp01((elapsed - entranceStart) / VictoryTextEntranceDuration);
+        float xProgress = Mathf.SmoothStep(0f, 1f, progress);
+        float yProgress = EaseOutBounce(progress);
+        float x = Mathf.Lerp(victoryTextUi.StartPosition.x, victoryTextUi.TargetPosition.x, xProgress);
+        float y = Mathf.Lerp(victoryTextUi.StartPosition.y, victoryTextUi.TargetPosition.y, yProgress);
+        victoryTextUi.Rect.anchoredPosition = new Vector2(x, y);
     }
 
     int GetSequenceIndexForColumn(float elapsed, int columnIndex)
@@ -514,6 +598,41 @@ public sealed class BattleWinMatchOverlay : MonoBehaviour
     static BomberSkin GetVictoryBomberSkin(int playerId)
     {
         return PlayerPersistentStats.Get(playerId).Skin;
+    }
+
+    static float EaseOutBounce(float t)
+    {
+        t = Mathf.Clamp01(t);
+        const float n1 = 7.5625f;
+        const float d1 = 2.75f;
+
+        if (t < 1f / d1)
+            return n1 * t * t;
+
+        if (t < 2f / d1)
+        {
+            t -= 1.5f / d1;
+            return (n1 * t * t) + 0.75f;
+        }
+
+        if (t < 2.5f / d1)
+        {
+            t -= 2.25f / d1;
+            return (n1 * t * t) + 0.9375f;
+        }
+
+        t -= 2.625f / d1;
+        return (n1 * t * t) + 0.984375f;
+    }
+
+    static void SetImageAlpha(Image image, float alpha)
+    {
+        if (image == null)
+            return;
+
+        Color color = image.color;
+        color.a = Mathf.Clamp01(alpha);
+        image.color = color;
     }
 
     void ConfigureRoot(RectTransform parentRect)
