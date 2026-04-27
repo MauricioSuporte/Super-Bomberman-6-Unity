@@ -10,11 +10,10 @@ public class GameManager : MonoBehaviour
     static readonly WaitForSecondsRealtime waitNextStageDelay = new(3f);
     static readonly WaitForSecondsRealtime waitBattleVictoryCheckDelay = new(0.5f);
     static readonly WaitForSecondsRealtime waitBattleVictoryDelay = new(1f);
-    static readonly WaitForSecondsRealtime waitBattleDrawDelay = new(1f);
+    const float BattleDrawPreFadeDuration = 1f;
+    static readonly WaitForSecondsRealtime waitBattleDrawPreFadeDelay = new(BattleDrawPreFadeDuration);
     const float BattleRoundWinShowDelay = 1f;
     static readonly WaitForSecondsRealtime waitRoundWinScoreboardDelay = new(BattleRoundWinShowDelay);
-    const float BattleRoundWinRestartDelay = 1f;
-    static readonly WaitForSecondsRealtime waitRoundWinRestartDelay = new(BattleRoundWinRestartDelay);
     const float BattleVictoryFadeDuration = 3f;
     const float BattleRoundWinFinalFadeDuration = 0.5f;
     const string BattleVictorySfxResourcesPath = "Sounds/SB5 Sound Effects (48)";
@@ -822,6 +821,12 @@ public class GameManager : MonoBehaviour
 
         if (aliveNotDead <= 0)
         {
+            if (IsBattleModeScene())
+            {
+                TriggerBattleDrawSequence();
+                return;
+            }
+
             restartingRound = true;
 
             if (GameMusicController.Instance != null &&
@@ -1155,15 +1160,21 @@ public class GameManager : MonoBehaviour
 
     IEnumerator BattleDrawSequenceRoutine()
     {
-        if (GameMusicController.Instance != null)
-            GameMusicController.Instance.StopMusic();
-
-        yield return waitBattleDrawDelay;
+        BattleSuddenDeathController suddenDeathController = FindAnyObjectByType<BattleSuddenDeathController>();
+        if (suddenDeathController != null)
+            suddenDeathController.StopSuddenDeathAndClearVisuals();
 
         if (StageIntroTransition.Instance != null)
-            StageIntroTransition.Instance.StartFadeOut(BattleVictoryFadeDuration);
+            StageIntroTransition.Instance.StartFadeOut(BattleDrawPreFadeDuration);
 
-        yield return new WaitForSecondsRealtime(BattleVictoryFadeDuration);
+        yield return waitBattleDrawPreFadeDelay;
+
+        yield return BattleDrawOverlay.PlayRoutine();
+
+        if (StageIntroTransition.Instance != null)
+            StageIntroTransition.Instance.StartFadeOut(BattleRoundWinFinalFadeDuration);
+
+        yield return new WaitForSecondsRealtime(BattleRoundWinFinalFadeDuration);
 
         GamePauseController.ClearPauseFlag();
         Time.timeScale = 1f;
@@ -1230,8 +1241,6 @@ public class GameManager : MonoBehaviour
             StageIntroTransition.Instance.StartFadeOut(BattleRoundWinFinalFadeDuration);
 
         yield return new WaitForSecondsRealtime(BattleRoundWinFinalFadeDuration);
-
-        yield return waitRoundWinRestartDelay;
 
         GamePauseController.ClearPauseFlag();
         Time.timeScale = 1f;
