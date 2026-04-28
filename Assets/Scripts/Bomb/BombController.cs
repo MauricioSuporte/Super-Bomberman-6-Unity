@@ -1443,6 +1443,21 @@ public partial class BombController : MonoBehaviour
         bombsRemaining = Mathf.Min(bombsRemaining + 1, bombAmout);
     }
 
+    private void TryHandleItemHitByExplosion(Collider2D itemHit, Vector2 direction)
+    {
+        if (itemHit == null)
+            return;
+
+        var item = itemHit.GetComponent<ItemPickup>() ?? itemHit.GetComponentInParent<ItemPickup>();
+        if (item == null)
+            return;
+
+        if (item.TryBounceSkull(direction, 1f, itemHit, explosionDuration + 0.05f))
+            return;
+
+        item.DestroyWithExplosionAnimation();
+    }
+
     private ExplosionLineResult ExplodeAndCollect(Vector2 origin, Vector2 direction, int length, bool pierce, Bomb sourceBomb)
     {
         ExplosionLineResult result = new()
@@ -1484,8 +1499,7 @@ public partial class BombController : MonoBehaviour
             var itemHit = Physics2D.OverlapBox(position, Vector2.one * 0.5f, 0f, itemLayerMask);
             if (itemHit != null)
             {
-                if (itemHit.TryGetComponent<ItemPickup>(out var item))
-                    item.DestroyWithExplosionAnimation();
+                TryHandleItemHitByExplosion(itemHit, direction);
 
                 if (pierce)
                 {
@@ -1642,8 +1656,7 @@ public partial class BombController : MonoBehaviour
             var itemHit = Physics2D.OverlapBox(position, Vector2.one * 0.5f, 0f, itemLayerMask);
             if (itemHit != null)
             {
-                if (itemHit.TryGetComponent<ItemPickup>(out var item))
-                    item.DestroyWithExplosionAnimation();
+                TryHandleItemHitByExplosion(itemHit, direction);
 
                 if (pierce)
                 {

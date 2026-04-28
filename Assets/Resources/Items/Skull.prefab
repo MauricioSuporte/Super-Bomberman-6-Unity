@@ -198,6 +198,7 @@ MonoBehaviour:
   damageIgnoresInvulnerability: 0
   behavior: {fileID: 0}
   type: 25
+  debugSkullBounce: 1
 --- !u!1 &6777853137903352683
 GameObject:
   m_ObjectHideFlags: 0

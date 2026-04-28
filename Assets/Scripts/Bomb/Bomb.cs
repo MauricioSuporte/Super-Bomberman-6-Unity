@@ -563,6 +563,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         float arcHeight)
     {
         Vector2 cur = logicalOrigin;
+        Vector2 lastPickupImpactDirection = kickDirection;
         int steps = Mathf.Max(1, forwardSteps);
 
         bool wrapsDuringForward = false;
@@ -682,6 +683,8 @@ public class Bomb : MonoBehaviour, IMagnetPullable
                 if (!TryStepWithWrapDir(cur, dir, out var next, out var didWrap))
                     break;
 
+                lastPickupImpactDirection = dir;
+
                 if (didWrap)
                 {
                     TeleportTo(next);
@@ -743,7 +746,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
 
     FINISH:
         TeleportTo(cur);
-        DestroyPickupsAtWorld(cur);
+        DestroyPickupsAtWorld(cur, lastPickupImpactDirection);
 
         isPunched = false;
         punchRoutine = null;
@@ -2032,6 +2035,11 @@ public class Bomb : MonoBehaviour, IMagnetPullable
 
     private void DestroyPickupsAtWorld(Vector2 worldCenter)
     {
+        DestroyPickupsAtWorld(worldCenter, kickDirection);
+    }
+
+    private void DestroyPickupsAtWorld(Vector2 worldCenter, Vector2 impactDirection)
+    {
         Vector2 size = Vector2.one * (kickTileSize * 0.45f);
         Collider2D[] hits = Physics2D.OverlapBoxAll(worldCenter, size, 0f);
 
@@ -2049,6 +2057,9 @@ public class Bomb : MonoBehaviour, IMagnetPullable
                 pickup = hit.GetComponentInParent<ItemPickup>();
 
             if (pickup == null)
+                continue;
+
+            if (pickup.TryBounceSkull(impactDirection, kickTileSize, bombCollider))
                 continue;
 
             pickup.DestroySilently();
