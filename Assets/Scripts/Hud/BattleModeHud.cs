@@ -141,6 +141,8 @@ public sealed class BattleModeHud : MonoBehaviour
     readonly Dictionary<int, Sprite> livePortraits = new Dictionary<int, Sprite>();
     readonly Dictionary<int, Sprite> deadPortraits = new Dictionary<int, Sprite>();
     readonly Image[] partitionImages = new Image[MaxPlayers - 1];
+    readonly bool[] portraitTintActive = new bool[MaxPlayers];
+    readonly Color[] portraitTintColors = new Color[MaxPlayers];
 
     RectTransform rootRect;
     RectTransform runtimeRoot;
@@ -250,6 +252,26 @@ public sealed class BattleModeHud : MonoBehaviour
             return;
 
         playerDead[index] = false;
+    }
+
+    public void SetPlayerPortraitTint(int playerId, Color color)
+    {
+        int index = playerId - 1;
+        if (index < 0 || index >= MaxPlayers)
+            return;
+
+        portraitTintActive[index] = true;
+        portraitTintColors[index] = color;
+    }
+
+    public void ClearPlayerPortraitTint(int playerId)
+    {
+        int index = playerId - 1;
+        if (index < 0 || index >= MaxPlayers)
+            return;
+
+        portraitTintActive[index] = false;
+        portraitTintColors[index] = Color.white;
     }
 
     void EnsurePortraitsLoaded()
@@ -616,7 +638,7 @@ public sealed class BattleModeHud : MonoBehaviour
             ? new Color(1f, 0.55f, 0.55f, 1f)
             : Color.white;
 
-        slot.Portrait.color = Color.white;
+        slot.Portrait.color = GetPortraitColor(playerId);
         slot.TeamBackground.color = Color.white;
         slot.PlayerNumber.color = victoryCounterColor;
         slot.StatsPanel.color = Color.white;
@@ -635,6 +657,15 @@ public sealed class BattleModeHud : MonoBehaviour
 
         UpdateLifeDisplay(slot, currentLife, overlayColor);
         ConfigurePushStart(slot.PushStart, false);
+    }
+
+    Color GetPortraitColor(int playerId)
+    {
+        int index = playerId - 1;
+        if (index >= 0 && index < portraitTintActive.Length && portraitTintActive[index])
+            return portraitTintColors[index];
+
+        return Color.white;
     }
 
     float GetSlotContentLeft(int visualIndex)

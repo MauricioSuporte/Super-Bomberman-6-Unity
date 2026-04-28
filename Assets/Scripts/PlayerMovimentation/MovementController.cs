@@ -34,6 +34,11 @@ public class MovementController : MonoBehaviour, IKillable
     [Header("Speed (SB5 Internal)")]
     [SerializeField] private int speedInternal = PlayerPersistentStats.BaseSpeedNormal;
     public int SpeedInternal => speedInternal;
+    private Coroutine temporarySpeedOverrideRoutine;
+    private bool hasTemporarySpeedOverride;
+    private int temporarySpeedOverrideRestoreInternal;
+    private Coroutine temporarySpeedBlinkRoutine;
+    private readonly Dictionary<SpriteRenderer, Color> temporarySpeedBlinkOriginalColors = new();
 
     [Header("Player Id (only used if tagged Player)")]
     [SerializeField, Range(1, 6)] private int playerId = 1;
@@ -309,6 +314,7 @@ public class MovementController : MonoBehaviour, IKillable
 
     protected virtual void OnDisable()
     {
+        ClearTemporarySpeedOverride(restoreSpeed: true);
         touchingHazards.Clear();
     }
 
@@ -971,9 +977,206 @@ public class MovementController : MonoBehaviour, IKillable
         speed = PlayerPersistentStats.InternalSpeedToTilesPerSecond(speedInternal);
     }
 
+    public void ApplyTemporarySpeedOverride(int newInternal, float durationSeconds)
+    {
+        if (temporarySpeedOverrideRoutine != null)
+        {
+            StopCoroutine(temporarySpeedOverrideRoutine);
+            temporarySpeedOverrideRoutine = null;
+        }
+
+        if (!hasTemporarySpeedOverride)
+            temporarySpeedOverrideRestoreInternal = speedInternal;
+
+        hasTemporarySpeedOverride = true;
+        ApplySpeedInternalUnclamped(newInternal);
+        StartTemporarySpeedBlink(durationSeconds);
+        temporarySpeedOverrideRoutine = StartCoroutine(TemporarySpeedOverride(durationSeconds));
+    }
+
+    IEnumerator TemporarySpeedOverride(float durationSeconds)
+    {
+        yield return new WaitForSeconds(Mathf.Max(0f, durationSeconds));
+        temporarySpeedOverrideRoutine = null;
+        ClearTemporarySpeedOverride(restoreSpeed: true);
+    }
+
+    void ClearTemporarySpeedOverride(bool restoreSpeed)
+    {
+        if (temporarySpeedOverrideRoutine != null)
+        {
+            StopCoroutine(temporarySpeedOverrideRoutine);
+            temporarySpeedOverrideRoutine = null;
+        }
+
+        if (!hasTemporarySpeedOverride)
+            return;
+
+        hasTemporarySpeedOverride = false;
+
+        if (restoreSpeed)
+            ApplySpeedInternal(temporarySpeedOverrideRestoreInternal);
+
+        StopTemporarySpeedBlink(restoreColors: true);
+    }
+
+    void ApplySpeedInternalUnclamped(int newInternal)
+    {
+        speedInternal = Mathf.Max(0, newInternal);
+        speed = PlayerPersistentStats.InternalSpeedToTilesPerSecond(speedInternal);
+    }
+
+    void StartTemporarySpeedBlink(float durationSeconds)
+    {
+        StopTemporarySpeedBlink(restoreColors: true);
+        temporarySpeedBlinkRoutine = StartCoroutine(TemporarySpeedBlink(durationSeconds));
+    }
+
+    IEnumerator TemporarySpeedBlink(float durationSeconds)
+    {
+        float duration = Mathf.Max(0f, durationSeconds);
+        float elapsed = 0f;
+        const float blinkInterval = 0.1f;
+        bool blackFrame = true;
+
+        while (elapsed < duration)
+        {
+            ApplyTemporarySpeedBlinkColor(blackFrame);
+            blackFrame = !blackFrame;
+
+            float step = Mathf.Min(blinkInterval, duration - elapsed);
+            if (step <= 0f)
+                break;
+
+            elapsed += step;
+            yield return new WaitForSeconds(step);
+        }
+
+        temporarySpeedBlinkRoutine = null;
+        StopTemporarySpeedBlink(restoreColors: true);
+    }
+
+    void ApplyTemporarySpeedBlinkColor(bool useBlack)
+    {
+        var renderers = GetComponentsInChildren<SpriteRenderer>(true);
+        if (renderers == null || renderers.Length == 0)
+            return;
+
+        for (int i = 0; i < renderers.Length; i++)
+        {
+            SpriteRenderer sr = renderers[i];
+            if (sr == null)
+                continue;
+
+            if (!temporarySpeedBlinkOriginalColors.ContainsKey(sr))
+                temporarySpeedBlinkOriginalColors.Add(sr, sr.color);
+
+            Color original = temporarySpeedBlinkOriginalColors[sr];
+            sr.color = useBlack
+                ? new Color(0f, 0f, 0f, original.a)
+                : original;
+        }
+
+        ApplyMountedVisualBlinkColor(useBlack);
+        ApplyHudPortraitBlinkColor(useBlack);
+    }
+
+    void StopTemporarySpeedBlink(bool restoreColors)
+    {
+        if (temporarySpeedBlinkRoutine != null)
+        {
+            StopCoroutine(temporarySpeedBlinkRoutine);
+            temporarySpeedBlinkRoutine = null;
+        }
+
+        if (restoreColors)
+        {
+            foreach (var kv in temporarySpeedBlinkOriginalColors)
+            {
+                if (kv.Key != null)
+                    kv.Key.color = kv.Value;
+            }
+        }
+
+        temporarySpeedBlinkOriginalColors.Clear();
+
+        if (restoreColors)
+        {
+            ClearMountedVisualBlinkColor();
+            ClearHudPortraitBlinkColor();
+        }
+    }
+
+    void ApplyMountedVisualBlinkColor(bool useBlack)
+    {
+        var mountVisuals = GetComponentsInChildren<MountVisualController>(true);
+        if (mountVisuals == null || mountVisuals.Length == 0)
+            return;
+
+        for (int i = 0; i < mountVisuals.Length; i++)
+        {
+            MountVisualController visual = mountVisuals[i];
+            if (visual == null)
+                continue;
+
+            if (useBlack)
+                visual.SetPlayerEffectTint(true, Color.black, 0f);
+            else
+                visual.SetPlayerEffectTint(false, Color.white, 1f);
+        }
+    }
+
+    void ClearMountedVisualBlinkColor()
+    {
+        var mountVisuals = GetComponentsInChildren<MountVisualController>(true);
+        if (mountVisuals == null || mountVisuals.Length == 0)
+            return;
+
+        for (int i = 0; i < mountVisuals.Length; i++)
+        {
+            MountVisualController visual = mountVisuals[i];
+            if (visual != null)
+                visual.SetPlayerEffectTint(false, Color.white, 1f);
+        }
+    }
+
+    void ApplyHudPortraitBlinkColor(bool useBlack)
+    {
+        Color color = useBlack ? Color.black : Color.white;
+
+        var hudPortrait = FindAnyObjectByType<HudPortraitInGridLayout>();
+        if (hudPortrait != null)
+            hudPortrait.SetPlayerPortraitTint(playerId, color);
+
+        var battleHud = FindAnyObjectByType<BattleModeHud>();
+        if (battleHud != null)
+            battleHud.SetPlayerPortraitTint(playerId, color);
+    }
+
+    void ClearHudPortraitBlinkColor()
+    {
+        var hudPortrait = FindAnyObjectByType<HudPortraitInGridLayout>();
+        if (hudPortrait != null)
+            hudPortrait.ClearPlayerPortraitTint(playerId);
+
+        var battleHud = FindAnyObjectByType<BattleModeHud>();
+        if (battleHud != null)
+            battleHud.ClearPlayerPortraitTint(playerId);
+    }
+
     public bool TryAddSpeedUp(int speedStep = PlayerPersistentStats.SpeedStep)
     {
-        int before = speedInternal;
+        int before = hasTemporarySpeedOverride
+            ? temporarySpeedOverrideRestoreInternal
+            : speedInternal;
+
+        if (hasTemporarySpeedOverride)
+        {
+            temporarySpeedOverrideRestoreInternal = PlayerPersistentStats.ClampSpeedInternal(
+                temporarySpeedOverrideRestoreInternal + speedStep);
+            return temporarySpeedOverrideRestoreInternal != before;
+        }
+
         ApplySpeedInternal(speedInternal + speedStep);
         return speedInternal != before;
     }

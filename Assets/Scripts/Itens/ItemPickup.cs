@@ -118,6 +118,9 @@ public class ItemPickup : MonoBehaviour
 
     static AudioClip LoadDefaultCollectSfx(ItemType t)
     {
+        if (t == ItemType.Skull)
+            return Resources.Load<AudioClip>("Sounds/skull collect");
+
         if (IsLouieEggStatic(t))
         {
             string eggPath = GetEggSfxResourcesPath(t);
@@ -414,11 +417,16 @@ public class ItemPickup : MonoBehaviour
         if (player.TryGetComponent<PlayerIdentity>(out var id) && id != null)
             pid = Mathf.Clamp(id.playerId, 1, 6);
 
-        if (type != ItemType.LandMine && type != ItemType.Clock)
+        if (type != ItemType.LandMine && type != ItemType.Clock && type != ItemType.Skull)
             PlayerPersistentStats.StageApplyPickup(pid, type);
 
         switch (type)
         {
+            case ItemType.Skull:
+                if (player.TryGetComponent<MovementController>(out var skullMovement))
+                    skullMovement.ApplyTemporarySpeedOverride(PlayerPersistentStats.MinSpeedInternal / 2, 10f);
+                break;
+
             case ItemType.Clock:
                 ClockStageStunEffect.Trigger(5f);
                 break;

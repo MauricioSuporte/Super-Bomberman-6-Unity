@@ -515,6 +515,7 @@ MonoBehaviour:
   pinkLouieEggAmount: 0
   redLouieEggAmount: 0
   clockAmount: 0
+  skullAmount: 9
   randomEggsMin: 4
   randomEggsMax: 8
   destructibleTilemap: {fileID: 0}

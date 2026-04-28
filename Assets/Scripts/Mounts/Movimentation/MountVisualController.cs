@@ -93,6 +93,9 @@ public class MountVisualController : MonoBehaviour
     private bool externalTintActive;
     private Color externalTintColor = Color.white;
     private float externalTintNormalized;
+    private bool playerEffectTintActive;
+    private Color playerEffectTintColor = Color.white;
+    private float playerEffectTintNormalized;
 
     private AnimatedSpriteRenderer activeLouieInactivityRenderer;
 
@@ -132,6 +135,13 @@ public class MountVisualController : MonoBehaviour
         externalTintNormalized = Mathf.Clamp01(normalized01);
     }
 
+    public void SetPlayerEffectTint(bool active, Color tintColor, float normalized01)
+    {
+        playerEffectTintActive = active;
+        playerEffectTintColor = tintColor;
+        playerEffectTintNormalized = Mathf.Clamp01(normalized01);
+    }
+
     public void Bind(MovementController movement)
     {
         owner = movement;
@@ -145,6 +155,9 @@ public class MountVisualController : MonoBehaviour
         externalTintActive = false;
         externalTintColor = Color.white;
         externalTintNormalized = 1f;
+        playerEffectTintActive = false;
+        playerEffectTintColor = Color.white;
+        playerEffectTintNormalized = 1f;
 
         playingJump = false;
         jumpFacing = Vector2.down;
@@ -413,6 +426,7 @@ public class MountVisualController : MonoBehaviour
 
         ApplyBlinkSyncFromOwnerIfNeeded();
         ApplyExternalTintIfNeeded();
+        ApplyPlayerEffectTintIfNeeded();
     }
 
     private void ApplyExternalTintIfNeeded()
@@ -434,6 +448,28 @@ public class MountVisualController : MonoBehaviour
             tint.a = baseColor.a;
 
             sr.color = Color.Lerp(tint, baseColor, externalTintNormalized);
+        }
+    }
+
+    private void ApplyPlayerEffectTintIfNeeded()
+    {
+        if (!playerEffectTintActive)
+            return;
+
+        if (louieSpriteRenderers == null || louieSpriteRenderers.Length == 0)
+            return;
+
+        for (int i = 0; i < louieSpriteRenderers.Length; i++)
+        {
+            var sr = louieSpriteRenderers[i];
+            if (sr == null)
+                continue;
+
+            var baseColor = sr.color;
+            var tint = playerEffectTintColor;
+            tint.a = baseColor.a;
+
+            sr.color = Color.Lerp(tint, baseColor, playerEffectTintNormalized);
         }
     }
 

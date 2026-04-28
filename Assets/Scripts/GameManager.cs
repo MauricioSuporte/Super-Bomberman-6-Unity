@@ -60,6 +60,7 @@ public class GameManager : MonoBehaviour
     [Min(0)] public int pinkLouieEggAmount = 0;
     [Min(0)] public int redLouieEggAmount = 0;
     [Min(0)] public int clockAmount = 0;
+    [Min(0)] public int skullAmount = 0;
 
     [Header("Random Eggs")]
     [Min(0)] public int randomEggsMin = 0;
@@ -502,6 +503,8 @@ public class GameManager : MonoBehaviour
                 return;
 
             ItemPickup prefab = AutoItemDatabase.Get(type);
+            if (prefab == null)
+                return;
 
             for (int i = 0; i < amount && cursor < indices.Count; i++)
                 orderToSpawn[indices[cursor++]] = prefab.gameObject;
@@ -537,6 +540,7 @@ public class GameManager : MonoBehaviour
         TryAssignItem(ItemType.RedLouieEgg, redLouieEggAmount);
 
         TryAssignItem(ItemType.Clock, clockAmount);
+        TryAssignItem(ItemType.Skull, skullAmount);
     }
 
     public GameObject GetSpawnForDestroyedBlock(Vector3Int cell)
