@@ -315,6 +315,7 @@ public class MovementController : MonoBehaviour, IKillable
     protected virtual void OnDisable()
     {
         ClearTemporarySpeedOverride(restoreSpeed: true);
+        StopTemporarySpeedBlink(restoreColors: true);
         touchingHazards.Clear();
     }
 
@@ -992,6 +993,21 @@ public class MovementController : MonoBehaviour, IKillable
         ApplySpeedInternalUnclamped(newInternal);
         StartTemporarySpeedBlink(durationSeconds);
         temporarySpeedOverrideRoutine = StartCoroutine(TemporarySpeedOverride(durationSeconds));
+    }
+
+    public void ApplyTemporarySkullVisual(float durationSeconds)
+    {
+        StartTemporarySpeedBlink(durationSeconds);
+    }
+
+    public void ClearTemporarySpeedOverride()
+    {
+        ClearTemporarySpeedOverride(restoreSpeed: true);
+    }
+
+    public void ClearTemporarySkullVisual()
+    {
+        StopTemporarySpeedBlink(restoreColors: true);
     }
 
     IEnumerator TemporarySpeedOverride(float durationSeconds)

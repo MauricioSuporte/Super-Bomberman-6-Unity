@@ -133,6 +133,11 @@ public partial class BombController : MonoBehaviour
 
     private GameObject lastPlacedBomb;
     public GameObject GetLastPlacedBomb() => lastPlacedBomb;
+    private float skullBombFuseMultiplier = 1f;
+    private float skullBombFuseMultiplierUntil;
+    private int skullExplosionRadiusOverride;
+    private float skullExplosionRadiusOverrideUntil;
+    private float skullBombPlacementBlockedUntil;
 
     [Header("Ground Tile Effects")]
     [SerializeField] private GroundTileResolver groundTileResolver;
@@ -798,6 +803,53 @@ public partial class BombController : MonoBehaviour
         return true;
     }
 
+    public void ApplyTemporarySkullBombFuseMultiplier(float multiplier, float durationSeconds)
+    {
+        skullBombFuseMultiplier = Mathf.Max(0.01f, multiplier);
+        skullBombFuseMultiplierUntil = Time.time + Mathf.Max(0.01f, durationSeconds);
+    }
+
+    public void ApplyTemporarySkullExplosionRadiusOverride(int radius, float durationSeconds)
+    {
+        skullExplosionRadiusOverride = Mathf.Max(1, radius);
+        skullExplosionRadiusOverrideUntil = Time.time + Mathf.Max(0.01f, durationSeconds);
+    }
+
+    public void ApplyTemporarySkullBombPlacementBlock(float durationSeconds)
+    {
+        skullBombPlacementBlockedUntil = Time.time + Mathf.Max(0.01f, durationSeconds);
+    }
+
+    public void ClearTemporarySkullBombModifiers()
+    {
+        skullBombFuseMultiplier = 1f;
+        skullBombFuseMultiplierUntil = 0f;
+        skullExplosionRadiusOverride = 0;
+        skullExplosionRadiusOverrideUntil = 0f;
+        skullBombPlacementBlockedUntil = 0f;
+    }
+
+    bool IsSkullBombPlacementBlocked()
+    {
+        return Time.time < skullBombPlacementBlockedUntil;
+    }
+
+    float GetSkullModifiedBombFuseTime(float baseFuseSeconds)
+    {
+        if (Time.time >= skullBombFuseMultiplierUntil)
+            return baseFuseSeconds;
+
+        return baseFuseSeconds * skullBombFuseMultiplier;
+    }
+
+    int GetSkullExplosionRadiusOverride()
+    {
+        if (Time.time >= skullExplosionRadiusOverrideUntil)
+            return 0;
+
+        return skullExplosionRadiusOverride;
+    }
+
     private void PlaceBomb()
     {
         if (ClownMaskBoss.BossIntroRunning)
@@ -815,6 +867,9 @@ public partial class BombController : MonoBehaviour
             return;
 
         if (GamePauseController.IsPaused)
+            return;
+
+        if (IsSkullBombPlacementBlocked())
             return;
 
         ResolveTilemaps();
@@ -870,11 +925,15 @@ public partial class BombController : MonoBehaviour
         bombComponent.IsPierceBomb = pierceEnabled;
         bombComponent.IsRubberBomb = rubberEnabled;
 
+        int skullRadiusOverride = GetSkullExplosionRadiusOverride();
+        if (skullRadiusOverride > 0)
+            bombComponent.ExplosionRadiusOverride = skullRadiusOverride;
+
         if (canUsePowerNow)
             TrackNewActivePowerBomb(bomb);
 
         bombComponent.SetStageBoundsTilemap(stageBoundsTiles);
-        bombComponent.SetFuseSeconds(bombFuseTime);
+        bombComponent.SetFuseSeconds(GetSkullModifiedBombFuseTime(bombFuseTime));
         bombComponent.Initialize(this);
 
         if (shouldMakeFirstPlacedBombMagnetic)

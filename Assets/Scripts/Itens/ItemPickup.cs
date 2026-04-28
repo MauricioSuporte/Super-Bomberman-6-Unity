@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using UnityEngine;
 
 [RequireComponent(typeof(SpriteRenderer))]
@@ -423,8 +424,10 @@ public class ItemPickup : MonoBehaviour
         switch (type)
         {
             case ItemType.Skull:
-                if (player.TryGetComponent<MovementController>(out var skullMovement))
-                    skullMovement.ApplyTemporarySpeedOverride(PlayerPersistentStats.MinSpeedInternal / 2, 10f);
+                if (!player.TryGetComponent<SkullDebuffController>(out var skullDebuff) || skullDebuff == null)
+                    skullDebuff = player.AddComponent<SkullDebuffController>();
+
+                skullDebuff.ApplyRandom();
                 break;
 
             case ItemType.Clock:
@@ -760,5 +763,104 @@ public class ItemPickup : MonoBehaviour
             _col.enabled = false;
 
         Destroy(gameObject);
+    }
+}
+
+[DisallowMultipleComponent]
+public sealed class SkullDebuffController : MonoBehaviour
+{
+    const float DefaultDurationSeconds = 10f;
+
+    enum SkullDebuffType
+    {
+        SlowSpeed,
+        FastSpeed,
+        FastBombFuse,
+        SlowBombFuse,
+        ShortExplosion,
+        NoBombs
+    }
+
+    MovementController movement;
+    BombController bombController;
+    Coroutine activeRoutine;
+
+    public void ApplyRandom(float durationSeconds = DefaultDurationSeconds)
+    {
+        CacheReferences();
+        ClearActiveEffect();
+
+        float duration = Mathf.Max(0.01f, durationSeconds);
+        var effect = (SkullDebuffType)UnityEngine.Random.Range(0, 6);
+
+        switch (effect)
+        {
+            case SkullDebuffType.SlowSpeed:
+                movement?.ApplyTemporarySpeedOverride(PlayerPersistentStats.MinSpeedInternal / 2, duration);
+                break;
+
+            case SkullDebuffType.FastSpeed:
+                movement?.ApplyTemporarySpeedOverride(PlayerPersistentStats.MaxSpeedInternal * 2, duration);
+                break;
+
+            case SkullDebuffType.FastBombFuse:
+                movement?.ApplyTemporarySkullVisual(duration);
+                bombController?.ApplyTemporarySkullBombFuseMultiplier(0.5f, duration);
+                break;
+
+            case SkullDebuffType.SlowBombFuse:
+                movement?.ApplyTemporarySkullVisual(duration);
+                bombController?.ApplyTemporarySkullBombFuseMultiplier(2f, duration);
+                break;
+
+            case SkullDebuffType.ShortExplosion:
+                movement?.ApplyTemporarySkullVisual(duration);
+                bombController?.ApplyTemporarySkullExplosionRadiusOverride(1, duration);
+                break;
+
+            case SkullDebuffType.NoBombs:
+                movement?.ApplyTemporarySkullVisual(duration);
+                bombController?.ApplyTemporarySkullBombPlacementBlock(duration);
+                break;
+        }
+
+        activeRoutine = StartCoroutine(ClearAfter(duration));
+    }
+
+    void CacheReferences()
+    {
+        if (movement == null)
+            TryGetComponent(out movement);
+
+        if (bombController == null)
+            TryGetComponent(out bombController);
+    }
+
+    void ClearActiveEffect()
+    {
+        if (activeRoutine != null)
+        {
+            StopCoroutine(activeRoutine);
+            activeRoutine = null;
+        }
+
+        movement?.ClearTemporarySpeedOverride();
+        movement?.ClearTemporarySkullVisual();
+        bombController?.ClearTemporarySkullBombModifiers();
+    }
+
+    IEnumerator ClearAfter(float durationSeconds)
+    {
+        yield return new WaitForSeconds(durationSeconds);
+
+        activeRoutine = null;
+        movement?.ClearTemporarySpeedOverride();
+        movement?.ClearTemporarySkullVisual();
+        bombController?.ClearTemporarySkullBombModifiers();
+    }
+
+    void OnDisable()
+    {
+        ClearActiveEffect();
     }
 }
