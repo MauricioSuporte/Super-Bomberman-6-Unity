@@ -58,6 +58,7 @@ public class ItemPickup : MonoBehaviour
     const float SkullPickupClosestDistance = 0.15f;
     const float SkullBouncePositionDriftEpsilon = 0.01f;
     const int SkullBounceFallbackMaxSteps = 80;
+    int[] skullBounceOriginalSortingOrders;
     static readonly Collider2D[] SkullBounceOverlapBuffer = new Collider2D[24];
 
     [Header("Debug Skull Bounce")]
@@ -1230,10 +1231,12 @@ public class ItemPickup : MonoBehaviour
         skullBounceRenderers = GetComponentsInChildren<SpriteRenderer>(true);
 
         int count = skullBounceRenderers != null ? skullBounceRenderers.Length : 0;
+
         if (skullBounceOriginalFlipX == null || skullBounceOriginalFlipX.Length != count)
         {
             skullBounceOriginalFlipX = new bool[count];
             skullBounceOriginalFlipY = new bool[count];
+            skullBounceOriginalSortingOrders = new int[count];
         }
 
         for (int i = 0; i < count; i++)
@@ -1244,6 +1247,9 @@ public class ItemPickup : MonoBehaviour
 
             skullBounceOriginalFlipX[i] = sr.flipX;
             skullBounceOriginalFlipY[i] = sr.flipY;
+            skullBounceOriginalSortingOrders[i] = sr.sortingOrder;
+
+            sr.sortingOrder = Mathf.Max(sr.sortingOrder, 3);
         }
     }
 
@@ -1289,6 +1295,9 @@ public class ItemPickup : MonoBehaviour
 
             if (skullBounceOriginalFlipY != null && i < skullBounceOriginalFlipY.Length)
                 sr.flipY = skullBounceOriginalFlipY[i];
+
+            if (skullBounceOriginalSortingOrders != null && i < skullBounceOriginalSortingOrders.Length)
+                sr.sortingOrder = skullBounceOriginalSortingOrders[i];
         }
     }
 
