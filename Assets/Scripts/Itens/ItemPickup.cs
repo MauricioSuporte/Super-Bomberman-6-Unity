@@ -798,13 +798,16 @@ public class ItemPickup : MonoBehaviour
             SetSkullWorldPosition(current, syncPhysics: true);
         }
 
+        transform.localRotation = Quaternion.identity;
         RestoreSkullBounceFlipState();
 
         SetSkullWorldPosition(current, syncPhysics: true);
+        SyncSkullAnimatedRendererBasePosition();
         StartSkullBouncePositionLock(current);
 
         yield return new WaitForFixedUpdate();
 
+        transform.localRotation = Quaternion.identity;
         SetSkullWorldPosition(current, syncPhysics: true);
         SyncSkullAnimatedRendererBasePosition();
         StartSkullBouncePositionLock(current);
@@ -827,28 +830,37 @@ public class ItemPickup : MonoBehaviour
     IEnumerator SkullBounceSegment(Vector2 start, Vector2 end, Vector2 direction)
     {
         float elapsed = 0f;
-        float flipElapsed = 0f;
-        bool flipped = false;
+
+        bool horizontal = Mathf.Abs(direction.x) >= Mathf.Abs(direction.y);
 
         while (elapsed < SkullBounceSecondsPerTile)
         {
             elapsed += Time.deltaTime;
-            flipElapsed += Time.deltaTime;
-
-            if (flipElapsed >= SkullBounceFlipIntervalSeconds)
-            {
-                flipElapsed = 0f;
-                flipped = !flipped;
-                ApplySkullBounceFlip(direction, flipped);
-            }
 
             float a = Mathf.Clamp01(elapsed / SkullBounceSecondsPerTile);
-            SetSkullWorldPosition(Vector2.Lerp(start, end, a));
+            float eased = Mathf.SmoothStep(0f, 1f, a);
+
+            Vector2 pos = Vector2.Lerp(start, end, eased);
+            SetSkullWorldPosition(pos);
+
+            float angle = a * 360f;
+
+            if (horizontal)
+            {
+                float signedAngle = direction.x >= 0f ? -angle : angle;
+                transform.localRotation = Quaternion.Euler(0f, signedAngle, 0f);
+            }
+            else
+            {
+                float signedAngle = direction.y >= 0f ? angle : -angle;
+                transform.localRotation = Quaternion.Euler(signedAngle, 0f, 0f);
+            }
 
             yield return null;
         }
 
         SetSkullWorldPosition(end);
+        transform.localRotation = Quaternion.identity;
     }
 
     public void DestroyWithAnimation()
