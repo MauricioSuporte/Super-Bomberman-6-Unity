@@ -829,9 +829,21 @@ public class ItemPickup : MonoBehaviour
 
     IEnumerator SkullBounceSegment(Vector2 start, Vector2 end, Vector2 direction)
     {
-        float elapsed = 0f;
-
         bool horizontal = Mathf.Abs(direction.x) >= Mathf.Abs(direction.y);
+
+        bool wrapped = horizontal
+            ? Mathf.Abs(end.x - start.x) > 1.5f
+            : Mathf.Abs(end.y - start.y) > 1.5f;
+
+        if (wrapped)
+        {
+            transform.localRotation = Quaternion.identity;
+            SetSkullWorldPosition(end, syncPhysics: true);
+            yield return null;
+            yield break;
+        }
+
+        float elapsed = 0f;
 
         while (elapsed < SkullBounceSecondsPerTile)
         {
