@@ -142,8 +142,11 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
 
         if (movement.InputLocked) return;
 
-        if (movement.Direction != Vector2.zero)
-            lastFacingDir = movement.Direction;
+        Vector2 currentFacingDir = GetCurrentFacingDirection();
+        if (currentFacingDir != Vector2.zero)
+        {
+            lastFacingDir = currentFacingDir;
+        }
 
         if (!holding)
         {
@@ -175,7 +178,8 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
 
         if (!input.Get(pid, PlayerAction.ActionA))
         {
-            BeginRelease(lastFacingDir);
+            Vector2 releaseDir = GetCurrentFacingDirection();
+            BeginRelease(releaseDir);
             return;
         }
 
@@ -381,8 +385,10 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
 
         if (bomb.GetComponent<BoilerCapturedBomb>() != null) return;
 
+        Vector2 pickupDir = GetCurrentFacingDirection();
+
         if (pickupRoutine != null) StopCoroutine(pickupRoutine);
-        pickupRoutine = StartCoroutine(PickupRoutine(bomb, lastFacingDir));
+        pickupRoutine = StartCoroutine(PickupRoutine(bomb, pickupDir));
     }
 
     private IEnumerator PickupRoutine(Bomb bomb, Vector2 dir)
@@ -1137,6 +1143,20 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
         if (movement.spriteRendererDown != null) movement.spriteRendererDown.enabled = enabled;
         if (movement.spriteRendererLeft != null) movement.spriteRendererLeft.enabled = enabled;
         if (movement.spriteRendererRight != null) movement.spriteRendererRight.enabled = enabled;
+    }
+
+    private Vector2 GetCurrentFacingDirection()
+    {
+        if (movement == null)
+            return NormalizeCardinalOrDown(lastFacingDir);
+
+        if (movement.FacingDirection.sqrMagnitude > 0.01f)
+            return NormalizeCardinalOrDown(movement.FacingDirection);
+
+        if (movement.Direction.sqrMagnitude > 0.01f)
+            return NormalizeCardinalOrDown(movement.Direction);
+
+        return NormalizeCardinalOrDown(lastFacingDir);
     }
 
     private static Vector2 NormalizeCardinalOrDown(Vector2 dir)
