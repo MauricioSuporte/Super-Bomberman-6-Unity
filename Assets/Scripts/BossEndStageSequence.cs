@@ -20,14 +20,6 @@ public class BossEndStageSequence : MonoBehaviour
     [Min(0f)] public float celebrationSeconds = 5f;
     [Min(0f)] public float fadeDuration = 3f;
 
-    private const float Good1Volume = 0.5f;
-    private const float Good2Volume = 0.5f;
-    private const float Good3Volume = 1f;
-
-    private static bool s_goodSfxPlayedThisStage;
-    private static AudioClip[] s_goodClips;
-    private static AudioClip s_skullClip;
-
     GameManager gameManager;
     bool sequenceStarted;
     bool progressMarked;
@@ -38,7 +30,7 @@ public class BossEndStageSequence : MonoBehaviour
     void Awake()
     {
         gameManager = FindAnyObjectByType<GameManager>();
-        s_goodSfxPlayedThisStage = false;
+        EndStageVoiceSfx.ResetPlaybackState();
     }
 
     public void StartBossDefeatedSequence()
@@ -86,8 +78,14 @@ public class BossEndStageSequence : MonoBehaviour
                 audio = sourceGo.GetComponent<AudioSource>();
         }
 
-        bool hasNightmareBomber = HasAnyActiveNightmareBomber(alivePlayers);
-        PlayEndStageVoiceOnce(audio, hasNightmareBomber);
+        bool hasNightmareBomber = EndStageVoiceSfx.HasAnyActiveNightmareBomber(alivePlayers, "BossEnd");
+        EndStageVoiceSfx.TryPlayVictoryVoice(
+            audio,
+            hasNightmareBomber,
+            playRandomGoodSfx,
+            playSkullForNightmareBomber,
+            skullVolume,
+            "BossEnd");
 
         for (int i = 0; i < alivePlayers.Count; i++)
         {
@@ -154,126 +152,6 @@ public class BossEndStageSequence : MonoBehaviour
 
         if (isPerfectClear)
             StageUnlockProgress.MarkPerfect(currentSceneName);
-    }
-
-    private static void EnsureGoodClipsLoaded()
-    {
-        if (s_goodClips != null)
-            return;
-
-        s_goodClips = new AudioClip[3];
-        s_goodClips[0] = Resources.Load<AudioClip>("Sounds/good1");
-        s_goodClips[1] = Resources.Load<AudioClip>("Sounds/good2");
-        s_goodClips[2] = Resources.Load<AudioClip>("Sounds/good3");
-    }
-
-    private static void EnsureSkullClipLoaded()
-    {
-        if (s_skullClip != null)
-            return;
-
-        s_skullClip = Resources.Load<AudioClip>("Sounds/skull");
-    }
-
-    private float GetGoodClipVolume(int clipIndex)
-    {
-        return clipIndex switch
-        {
-            0 => Good1Volume,
-            1 => Good2Volume,
-            2 => Good3Volume,
-            _ => 1f,
-        };
-    }
-
-    private void PlayEndStageVoiceOnce(AudioSource audio, bool hasNightmareBomber)
-    {
-        if (!playRandomGoodSfx)
-            return;
-
-        if (s_goodSfxPlayedThisStage)
-            return;
-
-        if (audio == null)
-            return;
-
-        if (playSkullForNightmareBomber && hasNightmareBomber)
-        {
-            EnsureSkullClipLoaded();
-
-            if (s_skullClip != null)
-            {
-                s_goodSfxPlayedThisStage = true;
-                audio.PlayOneShot(s_skullClip, skullVolume);
-                return;
-            }
-        }
-
-        EnsureGoodClipsLoaded();
-
-        int count = 0;
-        for (int i = 0; i < s_goodClips.Length; i++)
-        {
-            if (s_goodClips[i] != null)
-                count++;
-        }
-
-        if (count <= 0)
-            return;
-
-        int pick = Random.Range(0, s_goodClips.Length);
-        for (int tries = 0; tries < s_goodClips.Length && s_goodClips[pick] == null; tries++)
-            pick = (pick + 1) % s_goodClips.Length;
-
-        AudioClip clip = s_goodClips[pick];
-        if (clip == null)
-            return;
-
-        float volume = GetGoodClipVolume(pick);
-
-        s_goodSfxPlayedThisStage = true;
-        audio.PlayOneShot(clip, volume);
-    }
-
-    private bool HasAnyActiveNightmareBomber(List<MovementController> players)
-    {
-        if (players == null || players.Count == 0)
-            return false;
-
-        PlayerPersistentStats.EnsureSessionBooted();
-
-        for (int i = 0; i < players.Count; i++)
-        {
-            MovementController movement = players[i];
-            if (movement == null)
-                continue;
-
-            if (!movement.CompareTag("Player"))
-                continue;
-
-            if (!movement.gameObject.activeInHierarchy)
-                continue;
-
-            if (movement.isDead || movement.IsEndingStage)
-                continue;
-
-            int playerId = 1;
-
-            if (movement.TryGetComponent<PlayerIdentity>(out var identity) && identity != null)
-                playerId = Mathf.Clamp(identity.playerId, 1, 6);
-
-            var state = PlayerPersistentStats.GetRuntime(playerId);
-            if (state == null)
-                state = PlayerPersistentStats.Get(playerId);
-
-            if (state == null)
-                continue;
-
-            if (state.Skin == BomberSkin.Nightmare)
-                return true;
-        }
-
-        return false;
     }
 
     List<MovementController> FindAlivePlayers()

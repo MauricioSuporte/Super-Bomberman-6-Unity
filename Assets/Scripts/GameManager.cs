@@ -131,6 +131,7 @@ public class GameManager : MonoBehaviour
     void Start()
     {
         endStageTriggered = false;
+        EndStageVoiceSfx.ResetPlaybackState();
 
         PlayerPersistentStats.EnsureSessionBooted();
 
@@ -964,7 +965,9 @@ public class GameManager : MonoBehaviour
             }
         }
 
-        StartCoroutine(BattleVictorySequenceRoutine(survivingPlayer, matchComplete));
+        bool hasNightmareBomberWinner = EndStageVoiceSfx.HasAnyActiveNightmareBomber(survivingPlayers, "BattleVictory");
+
+        StartCoroutine(BattleVictorySequenceRoutine(survivingPlayer, matchComplete, hasNightmareBomberWinner));
     }
 
     void TryDropBattleItemsForDeadPlayer(MovementController deadPlayer)
@@ -1258,12 +1261,12 @@ public class GameManager : MonoBehaviour
         return highestVictoryCount >= targetVictories;
     }
 
-    IEnumerator BattleVictorySequenceRoutine(MovementController survivingPlayer, bool matchComplete)
+    IEnumerator BattleVictorySequenceRoutine(MovementController survivingPlayer, bool matchComplete, bool hasNightmareBomberWinner)
     {
         if (GameMusicController.Instance != null)
             GameMusicController.Instance.StopMusic();
 
-        PlayBattleVictorySfx(survivingPlayer);
+        PlayBattleVictorySfx(survivingPlayer, hasNightmareBomberWinner);
 
         if (StageIntroTransition.Instance != null)
             StageIntroTransition.Instance.StartFadeOut(BattleVictoryFadeDuration);
@@ -1313,7 +1316,7 @@ public class GameManager : MonoBehaviour
         SceneManager.LoadScene(current.buildIndex);
     }
 
-    static void PlayBattleVictorySfx(MovementController survivingPlayer)
+    static void PlayBattleVictorySfx(MovementController survivingPlayer, bool hasNightmareBomberWinner)
     {
         if (battleVictorySfx == null)
             battleVictorySfx = Resources.Load<AudioClip>(BattleVictorySfxResourcesPath);
@@ -1327,16 +1330,14 @@ public class GameManager : MonoBehaviour
         if (audioSource != null)
         {
             audioSource.PlayOneShot(battleVictorySfx);
-            survivingPlayer.StartCoroutine(
-                PlayGoodAfterDelay(audioSource, 1f)
-            );
+            survivingPlayer.StartCoroutine(PlayVictoryVoiceAfterDelay(audioSource, hasNightmareBomberWinner, 1f));
         }
     }
 
-    static IEnumerator PlayGoodAfterDelay(AudioSource audioSource, float delay)
+    static IEnumerator PlayVictoryVoiceAfterDelay(AudioSource audioSource, bool hasNightmareBomberWinner, float delay)
     {
         yield return new WaitForSecondsRealtime(delay);
-        EndStageVoiceSfx.PlayRandomGood(audioSource);
+        EndStageVoiceSfx.TryPlayVictoryVoice(audioSource, hasNightmareBomberWinner, context: "BattleVictory");
     }
 
     static bool IsBattleModeScene()

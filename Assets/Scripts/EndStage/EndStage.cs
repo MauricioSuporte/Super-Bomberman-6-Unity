@@ -19,14 +19,6 @@ public abstract class EndStage : MonoBehaviour
     [Header("Unlock Mode")]
     [SerializeField] private bool manualUnlockOnly = false;
 
-    private const float Good1Volume = 0.5f;
-    private const float Good2Volume = 0.5f;
-    private const float Good3Volume = 1f;
-
-    private static bool s_goodSfxPlayedThisStage;
-    private static AudioClip[] s_goodClips;
-    private static AudioClip s_skullClip;
-
     protected bool isActivated;
     protected bool isUnlocked;
 
@@ -34,7 +26,7 @@ public abstract class EndStage : MonoBehaviour
 
     protected virtual void Start()
     {
-        s_goodSfxPlayedThisStage = false;
+        EndStageVoiceSfx.ResetPlaybackState();
 
         gameManager = FindAnyObjectByType<GameManager>();
 
@@ -111,71 +103,6 @@ public abstract class EndStage : MonoBehaviour
         );
     }
 
-    private void PlayEndStageVoiceOnce(AudioSource audio, bool hasNightmareBomber)
-    {
-        if (!playRandomGoodSfx)
-            return;
-
-        if (s_goodSfxPlayedThisStage)
-            return;
-
-        if (audio == null)
-            return;
-
-        if (playSkullForNightmareBomber && hasNightmareBomber)
-        {
-            if (EndStageVoiceSfx.TryPlaySkull(audio, skullVolume))
-            {
-                s_goodSfxPlayedThisStage = true;
-                return;
-            }
-        }
-
-        EndStageVoiceSfx.PlayRandomGood(audio);
-        s_goodSfxPlayedThisStage = true;
-    }
-
-    private bool HasAnyActiveNightmareBomber(MovementController[] players)
-    {
-        if (players == null || players.Length == 0)
-            return false;
-
-        PlayerPersistentStats.EnsureSessionBooted();
-
-        for (int i = 0; i < players.Length; i++)
-        {
-            MovementController movement = players[i];
-            if (movement == null)
-                continue;
-
-            if (!movement.CompareTag("Player"))
-                continue;
-
-            if (!movement.gameObject.activeInHierarchy)
-                continue;
-
-            if (movement.isDead || movement.IsEndingStage)
-                continue;
-
-            int playerId = 1;
-
-            if (movement.TryGetComponent<PlayerIdentity>(out var identity) && identity != null)
-                playerId = Mathf.Clamp(identity.playerId, 1, 6);
-
-            var state = PlayerPersistentStats.GetRuntime(playerId);
-            if (state == null)
-                state = PlayerPersistentStats.Get(playerId);
-
-            if (state == null)
-                continue;
-
-            if (state.Skin == BomberSkin.Nightmare)
-                return true;
-        }
-
-        return false;
-    }
-
     protected virtual void OnTriggerEnter2D(Collider2D other)
     {
         if (!CanTrigger(other))
@@ -189,7 +116,7 @@ public abstract class EndStage : MonoBehaviour
 
         MovementController[] players = FindObjectsByType<MovementController>(FindObjectsInactive.Exclude);
 
-        bool hasNightmareBomber = HasAnyActiveNightmareBomber(players);
+        bool hasNightmareBomber = EndStageVoiceSfx.HasAnyActiveNightmareBomber(players, "StageEnd");
 
         for (int i = 0; i < players.Length; i++)
         {
@@ -211,7 +138,13 @@ public abstract class EndStage : MonoBehaviour
 
         AudioSource audio = other.GetComponent<AudioSource>();
 
-        PlayEndStageVoiceOnce(audio, hasNightmareBomber);
+        EndStageVoiceSfx.TryPlayVictoryVoice(
+            audio,
+            hasNightmareBomber,
+            playRandomGoodSfx,
+            playSkullForNightmareBomber,
+            skullVolume,
+            "StageEnd");
 
         if (audio != null && enterSfx != null)
             audio.PlayOneShot(enterSfx);
