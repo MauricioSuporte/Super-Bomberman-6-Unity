@@ -19,7 +19,7 @@ public static class PlayerPersistentStats
 
     public sealed class PlayerState
     {
-        public int Life = 1;
+        public int Life = 99;
         public int BombAmount = 5;
         public int ExplosionRadius = 5;
         public int SpeedInternal = MaxSpeedInternal;
@@ -29,7 +29,7 @@ public static class PlayerPersistentStats
         public bool CanPassBombs = false;
         public bool CanPassDestructibles = true;
         public bool HasPierceBombs = true;
-        public bool HasControlBombs = false;
+        public bool HasControlBombs = true;
         public bool HasPowerBomb = false;
         public bool HasRubberBombs = false;
         public bool HasMagnetBomb = false;
@@ -921,6 +921,197 @@ public static class PlayerPersistentStats
                         s.MountedLouie = louie;
                     }
                 }
+                break;
+        }
+    }
+
+    public static bool StageTryExpelRandomPersistentItem(
+        MovementController movement,
+        BombController bomb,
+        out ItemType expelledType)
+    {
+        expelledType = default;
+
+        if (movement == null || !movement.CompareTag("Player"))
+            return false;
+
+        int playerId = Mathf.Clamp(movement.PlayerId, 1, 6);
+        BeginStage();
+
+        var s = _stage[playerId - 1];
+        var candidates = new List<ItemType>(16);
+
+        if (s.BombAmount > 1)
+            candidates.Add(ItemType.ExtraBomb);
+
+        if (s.ExplosionRadius > 2)
+            candidates.Add(ItemType.BlastRadius);
+
+        if (s.SpeedInternal - SpeedStep >= SpeedStep * 2)
+            candidates.Add(ItemType.SpeedIncrese);
+
+        if (s.CanKickBombs)
+            candidates.Add(ItemType.BombKick);
+
+        if (s.CanPunchBombs)
+            candidates.Add(ItemType.BombPunch);
+
+        if (s.HasPowerGlove)
+            candidates.Add(ItemType.PowerGlove);
+
+        if (s.CanPassBombs)
+            candidates.Add(ItemType.BombPass);
+
+        if (s.CanPassDestructibles)
+            candidates.Add(ItemType.DestructiblePass);
+
+        if (s.HasPierceBombs)
+            candidates.Add(ItemType.PierceBomb);
+
+        if (s.HasControlBombs)
+            candidates.Add(ItemType.ControlBomb);
+
+        if (s.HasPowerBomb)
+            candidates.Add(ItemType.PowerBomb);
+
+        if (s.HasRubberBombs)
+            candidates.Add(ItemType.RubberBomb);
+
+        if (s.HasMagnetBomb)
+            candidates.Add(ItemType.MagnetBomb);
+
+        if (s.HasFullFire)
+            candidates.Add(ItemType.FullFire);
+
+        if (candidates.Count == 0)
+            return false;
+
+        expelledType = candidates[Random.Range(0, candidates.Count)];
+        RemoveStageItem(s, expelledType);
+        ApplyExpelledRuntimeItem(movement, bomb, expelledType, s);
+        return true;
+    }
+
+    static void RemoveStageItem(PlayerState s, ItemType type)
+    {
+        switch (type)
+        {
+            case ItemType.ExtraBomb:
+                s.BombAmount = Mathf.Max(1, s.BombAmount - 1);
+                break;
+
+            case ItemType.BlastRadius:
+                s.ExplosionRadius = Mathf.Max(2, s.ExplosionRadius - 1);
+                break;
+
+            case ItemType.SpeedIncrese:
+                s.SpeedInternal = Mathf.Max(SpeedStep * 2, s.SpeedInternal - SpeedStep);
+                break;
+
+            case ItemType.BombKick:
+                s.CanKickBombs = false;
+                break;
+
+            case ItemType.BombPunch:
+                s.CanPunchBombs = false;
+                break;
+
+            case ItemType.PowerGlove:
+                s.HasPowerGlove = false;
+                break;
+
+            case ItemType.BombPass:
+                s.CanPassBombs = false;
+                break;
+
+            case ItemType.DestructiblePass:
+                s.CanPassDestructibles = false;
+                break;
+
+            case ItemType.PierceBomb:
+                s.HasPierceBombs = false;
+                break;
+
+            case ItemType.ControlBomb:
+                s.HasControlBombs = false;
+                break;
+
+            case ItemType.PowerBomb:
+                s.HasPowerBomb = false;
+                break;
+
+            case ItemType.RubberBomb:
+                s.HasRubberBombs = false;
+                break;
+
+            case ItemType.MagnetBomb:
+                s.HasMagnetBomb = false;
+                break;
+
+            case ItemType.FullFire:
+                s.HasFullFire = false;
+                break;
+        }
+    }
+
+    static void ApplyExpelledRuntimeItem(
+        MovementController movement,
+        BombController bomb,
+        ItemType type,
+        PlayerState s)
+    {
+        if (movement != null && type == ItemType.SpeedIncrese)
+            movement.ApplySpeedInternal(s.SpeedInternal);
+
+        if (bomb != null)
+        {
+            if (type == ItemType.ExtraBomb)
+                bomb.bombAmout = Mathf.Max(1, s.BombAmount);
+
+            if (type == ItemType.BlastRadius)
+                bomb.explosionRadius = Mathf.Max(2, s.ExplosionRadius);
+        }
+
+        if (movement == null)
+            return;
+
+        if (!movement.TryGetComponent<AbilitySystem>(out var abilitySystem) || abilitySystem == null)
+            return;
+
+        switch (type)
+        {
+            case ItemType.BombKick:
+                abilitySystem.Disable(BombKickAbility.AbilityId);
+                break;
+            case ItemType.BombPunch:
+                abilitySystem.Disable(BombPunchAbility.AbilityId);
+                break;
+            case ItemType.PowerGlove:
+                abilitySystem.Disable(PowerGloveAbility.AbilityId);
+                break;
+            case ItemType.BombPass:
+                abilitySystem.Disable(BombPassAbility.AbilityId);
+                break;
+            case ItemType.DestructiblePass:
+                abilitySystem.Disable(DestructiblePassAbility.AbilityId);
+                break;
+            case ItemType.PierceBomb:
+                abilitySystem.Disable(PierceBombAbility.AbilityId);
+                break;
+            case ItemType.ControlBomb:
+                abilitySystem.Disable(ControlBombAbility.AbilityId);
+                break;
+            case ItemType.PowerBomb:
+                abilitySystem.Disable(PowerBombAbility.AbilityId);
+                break;
+            case ItemType.RubberBomb:
+                abilitySystem.Disable(RubberBombAbility.AbilityId);
+                break;
+            case ItemType.MagnetBomb:
+                abilitySystem.Disable(MagnetBombAbility.AbilityId);
+                break;
+            case ItemType.FullFire:
+                abilitySystem.Disable(FullFireAbility.AbilityId);
                 break;
         }
     }

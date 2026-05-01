@@ -394,7 +394,40 @@ public class Bomb : MonoBehaviour, IMagnetPullable
                 continue;
 
             sr.Stun(seconds);
+
+            if (mc.CompareTag("Player") &&
+                PlayerPersistentStats.StageTryExpelRandomPersistentItem(
+                    mc,
+                    mc.GetComponent<BombController>(),
+                    out var expelledType))
+            {
+                SpawnExpelledPersistentItem(mc, expelledType);
+            }
         }
+    }
+
+    private void SpawnExpelledPersistentItem(MovementController movementController, ItemType itemType)
+    {
+        if (movementController == null)
+            return;
+
+        ItemPickup prefab = AutoItemDatabase.Get(itemType);
+        if (prefab == null)
+            return;
+
+        Vector2 origin = movementController.transform.position;
+        float tileSize = Mathf.Max(0.0001f, movementController.tileSize);
+        Vector2 direction = RandomCardinalDir();
+
+        var item = Instantiate(prefab, origin, Quaternion.identity);
+        if (item == null)
+            return;
+
+        Collider2D ignoredCollider = movementController.GetComponent<Collider2D>();
+        if (ignoredCollider == null)
+            ignoredCollider = movementController.GetComponentInChildren<Collider2D>();
+
+        item.TryExpelItem(direction, tileSize, ignoredCollider, 3);
     }
 
     private bool IsKickBlocked(Vector2 target)

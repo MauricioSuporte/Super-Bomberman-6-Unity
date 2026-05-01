@@ -728,6 +728,11 @@ public class ItemPickup : MonoBehaviour
         if (type != ItemType.Skull)
             return false;
 
+        return TryExpelItem(direction, tileSize, ignoredCollider, distanceTiles);
+    }
+
+    public bool TryExpelItem(Vector2 direction, float tileSize, Collider2D ignoredCollider, int distanceTiles)
+    {
         if (isBeingDestroyed || skullBounceMoving)
             return true;
 
