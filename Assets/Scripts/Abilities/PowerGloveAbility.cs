@@ -395,6 +395,7 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
         movement.SetInputLocked(true, false);
 
         CacheBombRefs(bomb);
+        SetHeldBombPowerGloveHeld(true);
 
         if (IsExternalBlockingDismount())
         {
@@ -601,6 +602,7 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
         }
 
         PlayRandomThrowSfx();
+        SetHeldBombPowerGloveHeld(false);
         ThrowHeldBomb(dir);
 
         float t = 0f;
@@ -916,6 +918,12 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
         bomb.SetFusePaused(pause);
     }
 
+    private void SetHeldBombPowerGloveHeld(bool held)
+    {
+        if (heldBomb != null)
+            heldBomb.SetPowerGloveHeld(held);
+    }
+
     private void RestoreBombControllerInputModeIfNeeded(string reason)
     {
         if (bombController == null)
@@ -1042,6 +1050,7 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
 
         if (heldBomb != null && !heldBomb.HasExploded)
         {
+            SetHeldBombPowerGloveHeld(false);
             DetachBombFromPlayerKeepWorld();
 
             SetBombSorting(GroundOrderInLayer);
@@ -1210,6 +1219,7 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
         if (heldBombSpriteRenderer != null)
             heldBombSpriteRenderer.sortingOrder = CarryOrderInLayer;
 
+        SetHeldBombPowerGloveHeld(false);
         DetachBombFromPlayerKeepWorld();
         bombGo.transform.position = new Vector3(visual.x, visual.y, bombGo.transform.position.z);
 

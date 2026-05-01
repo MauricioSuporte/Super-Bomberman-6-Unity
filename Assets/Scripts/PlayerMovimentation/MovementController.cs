@@ -1973,7 +1973,7 @@ public class MovementController : MonoBehaviour, IKillable
 
             foreach (var bomb in Bomb.ActiveBombs)
             {
-                if (bomb == null || bomb.HasExploded)
+                if (bomb == null || bomb.HasExploded || bomb.IsBeingHeldByPowerGlove)
                     continue;
 
                 if (bomb.IsSolid || bomb.IsBeingPunched)
@@ -2178,7 +2178,7 @@ public class MovementController : MonoBehaviour, IKillable
             Bomb bomb = kv.Key;
             BombPlantTraversalState state = kv.Value;
 
-            if (bomb == null || bomb.HasExploded || bomb.IsSolid || bomb.IsBeingKicked || bomb.Owner != bombController)
+            if (bomb == null || bomb.HasExploded || bomb.IsBeingHeldByPowerGlove || bomb.IsSolid || bomb.IsBeingKicked || bomb.Owner != bombController)
             {
                 bombsToRemove ??= new List<Bomb>();
                 bombsToRemove.Add(bomb);
@@ -4098,6 +4098,12 @@ public class MovementController : MonoBehaviour, IKillable
             if (bomb.HasExploded)
             {
                 LogBombEscape($"[KickAdj] skip exploded bomb:{bomb.name}", verbose: true);
+                continue;
+            }
+
+            if (bomb.IsBeingHeldByPowerGlove)
+            {
+                LogBombEscape($"[KickAdj] skip held bomb:{bomb.name}", verbose: true);
                 continue;
             }
 

@@ -51,12 +51,13 @@ public class Bomb : MonoBehaviour, IMagnetPullable
 
     public bool IsBeingKicked => isKicked;
     public bool IsBeingPunched => isPunched;
+    public bool IsBeingHeldByPowerGlove { get; private set; }
 
     public bool IsSolid => bombCollider != null && !bombCollider.isTrigger;
-    public bool CanBeKickedEarly => !HasExploded && !isKicked && !isPunched;
-    public bool CanBeKicked => !HasExploded && !isKicked && IsSolid && charactersInside.Count == 0;
-    public bool CanBePunched => !HasExploded && !isKicked && !isPunched && IsSolid && charactersInside.Count == 0;
-    public bool CanBeMagnetPulled => !HasExploded && !IsBeingKicked && !IsBeingPunched && !IsBeingMagnetPulled;
+    public bool CanBeKickedEarly => !HasExploded && !isKicked && !isPunched && !IsBeingHeldByPowerGlove;
+    public bool CanBeKicked => !HasExploded && !isKicked && !IsBeingHeldByPowerGlove && IsSolid && charactersInside.Count == 0;
+    public bool CanBePunched => !HasExploded && !isKicked && !isPunched && !IsBeingHeldByPowerGlove && IsSolid && charactersInside.Count == 0;
+    public bool CanBeMagnetPulled => !HasExploded && !IsBeingKicked && !IsBeingPunched && !IsBeingHeldByPowerGlove && !IsBeingMagnetPulled;
     public bool IsPierceBomb { get; set; }
     public bool IsPowerBomb { get; set; }
     public bool IsRubberBomb { get; set; }
@@ -311,6 +312,19 @@ public class Bomb : MonoBehaviour, IMagnetPullable
 
         RemoveMagnetOriginBlocker();
         RemoveKickOriginBlocker();
+    }
+
+    public void SetPowerGloveHeld(bool held)
+    {
+        IsBeingHeldByPowerGlove = held;
+
+        if (!held)
+            return;
+
+        charactersInside.Clear();
+
+        if (bombCollider != null)
+            bombCollider.isTrigger = true;
     }
 
     private void RecalculateCharactersInsideAt(Vector2 worldPos)
