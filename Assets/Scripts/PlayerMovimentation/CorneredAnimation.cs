@@ -6,6 +6,12 @@
 [RequireComponent(typeof(AudioSource))]
 public sealed class CorneredAnimation : MonoBehaviour
 {
+    private static readonly string[] BlockedSfxResourcesPaths =
+    {
+        "Sounds/blocked",
+        "Sounds/blocked2"
+    };
+
     [Header("Cornered Visual")]
     [SerializeField] private AnimatedSpriteRenderer corneredLoopRenderer;
     [SerializeField] private bool refreshFrameOnEnter = true;
@@ -18,7 +24,7 @@ public sealed class CorneredAnimation : MonoBehaviour
     [SerializeField] private string indestructiblesName = "Indestructibles";
 
     [Header("SFX")]
-    [SerializeField] private AudioClip corneredSfx;
+    [SerializeField] private AudioClip[] blockedSfxClips;
     [SerializeField, Range(0f, 1f)] private float corneredSfxVolume = 1f;
     [SerializeField, Min(0f)] private float corneredSfxCooldown = 3f;
 
@@ -72,8 +78,7 @@ public sealed class CorneredAnimation : MonoBehaviour
         bombLayer = LayerMask.NameToLayer("Bomb");
         RebuildBlockFilter();
 
-        if (corneredSfx == null)
-            corneredSfx = Resources.Load<AudioClip>("Sounds/Cornered");
+        LoadBlockedSfxClips();
 
         lastInputTime = Time.time;
 
@@ -476,7 +481,11 @@ public sealed class CorneredAnimation : MonoBehaviour
 
     private void PlayCorneredSfx()
     {
-        if (audioSource == null || corneredSfx == null)
+        if (audioSource == null)
+            return;
+
+        AudioClip clip = GetBlockedSfxClip();
+        if (clip == null)
             return;
 
         float now = Time.time;
@@ -485,6 +494,37 @@ public sealed class CorneredAnimation : MonoBehaviour
             return;
 
         lastSfxTime = now;
-        audioSource.PlayOneShot(corneredSfx, corneredSfxVolume);
+        audioSource.PlayOneShot(clip, corneredSfxVolume);
+    }
+
+    private void LoadBlockedSfxClips()
+    {
+        if (blockedSfxClips == null || blockedSfxClips.Length != BlockedSfxResourcesPaths.Length)
+            blockedSfxClips = new AudioClip[BlockedSfxResourcesPaths.Length];
+
+        for (int i = 0; i < BlockedSfxResourcesPaths.Length; i++)
+        {
+            if (blockedSfxClips[i] == null)
+                blockedSfxClips[i] = Resources.Load<AudioClip>(BlockedSfxResourcesPaths[i]);
+        }
+    }
+
+    private AudioClip GetBlockedSfxClip()
+    {
+        LoadBlockedSfxClips();
+
+        if (blockedSfxClips == null || blockedSfxClips.Length == 0)
+            return null;
+
+        int startIndex = Random.Range(0, blockedSfxClips.Length);
+        for (int i = 0; i < blockedSfxClips.Length; i++)
+        {
+            int index = (startIndex + i) % blockedSfxClips.Length;
+            AudioClip clip = blockedSfxClips[index];
+            if (clip != null)
+                return clip;
+        }
+
+        return null;
     }
 }
