@@ -143,6 +143,8 @@ public sealed class MountWorldPickup : MonoBehaviour
         if (n.Contains("yellowlouie")) return MountedType.Yellow;
         if (n.Contains("pinklouie")) return MountedType.Pink;
         if (n.Contains("redlouie")) return MountedType.Red;
+        if (n.Contains("mole")) return MountedType.Mole;
+        if (n.Contains("tank")) return MountedType.Tank;
 
         return MountedType.None;
     }

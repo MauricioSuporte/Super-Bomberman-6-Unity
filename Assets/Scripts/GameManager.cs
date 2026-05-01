@@ -92,6 +92,7 @@ public class GameManager : MonoBehaviour
     private int destroyedDestructibleBlocks;
 
     private readonly Dictionary<int, GameObject> orderToSpawn = new();
+    private readonly Dictionary<GameObject, MountedType> hiddenMountPrefabTypes = new();
 
     private bool restartingRound;
     private bool endStageTriggered;
@@ -460,6 +461,7 @@ public class GameManager : MonoBehaviour
         destroyedDestructibleBlocks = 0;
         totalDestructibleBlocks = 0;
         orderToSpawn.Clear();
+        hiddenMountPrefabTypes.Clear();
 
         if (destructibleTilemap == null)
             return;
@@ -1368,23 +1370,177 @@ public class GameManager : MonoBehaviour
         ItemType.RedLouieEgg
     };
 
+    private static readonly MountedType[] randomEggMountTypes =
+    {
+        MountedType.Mole,
+        MountedType.Tank
+    };
+
     void TryAssignRandomEggs(List<int> indices, ref int cursor)
     {
         if (randomEggsMax <= 0)
             return;
 
         int amount = UnityEngine.Random.Range(randomEggsMin, randomEggsMax + 1);
+        List<GameObject> mountPrefabs = BuildRandomEggMountPrefabPool();
 
         for (int i = 0; i < amount && cursor < indices.Count; i++)
         {
-            int randomIndex = UnityEngine.Random.Range(0, louieEggTypes.Length);
-            ItemType randomEgg = louieEggTypes[randomIndex];
+            int randomIndex = UnityEngine.Random.Range(0, louieEggTypes.Length + mountPrefabs.Count);
 
-            ItemPickup prefab = AutoItemDatabase.Get(randomEgg);
+            if (randomIndex < louieEggTypes.Length)
+            {
+                ItemType randomEgg = louieEggTypes[randomIndex];
+                ItemPickup prefab = AutoItemDatabase.Get(randomEgg);
 
-            if (prefab != null)
-                orderToSpawn[indices[cursor++]] = prefab.gameObject;
+                if (prefab != null)
+                    orderToSpawn[indices[cursor++]] = prefab.gameObject;
+            }
+            else
+            {
+                GameObject prefab = mountPrefabs[randomIndex - louieEggTypes.Length];
+
+                if (prefab != null)
+                    orderToSpawn[indices[cursor++]] = prefab;
+            }
         }
+    }
+
+    List<GameObject> BuildRandomEggMountPrefabPool()
+    {
+        List<GameObject> results = new(randomEggMountTypes.Length);
+
+        for (int i = 0; i < randomEggMountTypes.Length; i++)
+        {
+            MountedType type = randomEggMountTypes[i];
+            GameObject prefab = ResolveRandomEggMountPrefab(type);
+            if (prefab == null)
+                continue;
+
+            results.Add(prefab);
+            hiddenMountPrefabTypes[prefab] = type;
+        }
+
+        return results;
+    }
+
+    GameObject ResolveRandomEggMountPrefab(MountedType type)
+    {
+        var spawner = FindAnyObjectByType<PlayersSpawner>();
+        if (spawner == null)
+            return null;
+
+        return spawner.GetPlayerMountPrefabForType(type);
+    }
+
+    public void PrepareSpawnedHiddenObject(GameObject spawned, GameObject sourcePrefab, Vector3 spawnWorldPosition)
+    {
+        if (spawned == null)
+            return;
+
+        if (!TryResolveHiddenMountType(spawned, sourcePrefab, out MountedType type))
+            return;
+
+        spawnWorldPosition.z = 0f;
+        spawned.transform.SetParent(null, true);
+        spawned.transform.position = spawnWorldPosition;
+        if (spawned.TryGetComponent<Rigidbody2D>(out var rb) && rb != null)
+            rb.position = spawnWorldPosition;
+
+        Physics2D.SyncTransforms();
+
+        if (!spawned.TryGetComponent<MountWorldPickup>(out var pickup) || pickup == null)
+            pickup = spawned.AddComponent<MountWorldPickup>();
+
+        pickup.Init(type);
+
+        if (spawned.TryGetComponent<Collider2D>(out var col) && col != null)
+            col.enabled = true;
+
+        if (spawned.TryGetComponent<Rigidbody2D>(out rb) && rb != null)
+        {
+            rb.position = spawnWorldPosition;
+            rb.linearVelocity = Vector2.zero;
+            rb.angularVelocity = 0f;
+            rb.simulated = true;
+        }
+
+        if (spawned.TryGetComponent<MountMovementController>(out var mountMovement) && mountMovement != null)
+            mountMovement.enabled = false;
+
+        if (spawned.TryGetComponent<BombController>(out var bombController) && bombController != null)
+            bombController.enabled = false;
+
+        if (spawned.TryGetComponent<MovementController>(out var movement) && movement != null)
+        {
+            movement.SetExplosionInvulnerable(false);
+            movement.ForceIdleFacing(Vector2.down, "HiddenMountSpawnWorldPickup");
+            movement.EnableExclusiveFromState();
+        }
+
+        StartHiddenMountWorldAnimation(spawned, movement);
+
+        spawned.transform.position = spawnWorldPosition;
+        if (rb != null)
+            rb.position = spawnWorldPosition;
+
+        Physics2D.SyncTransforms();
+    }
+
+    static void StartHiddenMountWorldAnimation(GameObject spawned, MovementController movement)
+    {
+        if (spawned == null)
+            return;
+
+        var visual = spawned.GetComponentInChildren<MountVisualController>(true);
+        if (visual == null)
+            return;
+
+        if (movement == null || movement.isDead)
+            return;
+
+        visual.localOffset = (Vector2)visual.transform.localPosition;
+        visual.Bind(movement);
+        visual.enabled = true;
+        visual.SetInactivityEmote(false);
+
+        var loop = spawned.GetComponent<DetachedLouieWorldInactivityLoop>();
+        if (loop == null)
+            loop = spawned.AddComponent<DetachedLouieWorldInactivityLoop>();
+
+        loop.Init(
+            visual,
+            movement,
+            chanceAlt: 0f,
+            refreshFrame: true);
+    }
+
+    bool TryResolveHiddenMountType(GameObject spawned, GameObject sourcePrefab, out MountedType type)
+    {
+        if (sourcePrefab != null && hiddenMountPrefabTypes.TryGetValue(sourcePrefab, out type))
+            return type != MountedType.None;
+
+        string nameToResolve = sourcePrefab != null
+            ? sourcePrefab.name
+            : spawned != null
+                ? spawned.name
+                : null;
+
+        type = ResolveMountTypeFromName(nameToResolve);
+        return type != MountedType.None;
+    }
+
+    static MountedType ResolveMountTypeFromName(string n)
+    {
+        if (string.IsNullOrEmpty(n))
+            return MountedType.None;
+
+        n = n.ToLowerInvariant();
+
+        if (n.Contains("mole")) return MountedType.Mole;
+        if (n.Contains("tank")) return MountedType.Tank;
+
+        return MountedType.None;
     }
 
     bool IsItemSpawnCellReserved(Vector3Int cell)

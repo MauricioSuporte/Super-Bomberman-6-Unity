@@ -1835,10 +1835,11 @@ public partial class BombController : MonoBehaviour
         if (!_gm.TryReserveItemSpawnCell(cell))
             yield break;
 
-        if (parent != null)
-            Instantiate(prefab, spawnWorldPosition, Quaternion.identity, parent);
-        else
-            Instantiate(prefab, spawnWorldPosition, Quaternion.identity);
+        GameObject spawned = parent != null
+            ? Instantiate(prefab, spawnWorldPosition, Quaternion.identity, parent)
+            : Instantiate(prefab, spawnWorldPosition, Quaternion.identity);
+
+        _gm.PrepareSpawnedHiddenObject(spawned, prefab, spawnWorldPosition);
     }
 
     private float GetDestructibleDestroyTime()

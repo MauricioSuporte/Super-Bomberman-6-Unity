@@ -96,6 +96,23 @@ public sealed class PlayersSpawner : MonoBehaviour
         spawned = true;
     }
 
+    public GameObject GetPlayerMountPrefabForType(MountedType type)
+    {
+        if (playerPrefab == null)
+            return null;
+
+        var companion = playerPrefab.GetComponent<PlayerMountCompanion>();
+        if (companion == null)
+            return null;
+
+        return type switch
+        {
+            MountedType.Mole => companion.molePrefab,
+            MountedType.Tank => companion.tankPrefab,
+            _ => null
+        };
+    }
+
     bool FindAnyPlayerInScene()
     {
         var ids = FindObjectsByType<PlayerIdentity>(FindObjectsInactive.Exclude);
