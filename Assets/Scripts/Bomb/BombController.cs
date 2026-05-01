@@ -523,6 +523,20 @@ public partial class BombController : MonoBehaviour
         return explosion;
     }
 
+    private BombExplosion SpawnExplosionDamageHitbox(
+        Vector2 position,
+        Vector2 origin,
+        Bomb sourceBomb = null)
+    {
+        BombExplosion explosion = BombExplosion.Spawn(explosionPrefab, position, Quaternion.identity);
+        if (explosion == null)
+            return null;
+
+        ApplyExplosionSource(explosion, sourceBomb);
+        explosion.PlayDamageOnly(explosionDuration, origin);
+        return explosion;
+    }
+
     public void AddBomb()
     {
         if (bombAmout >= PlayerPersistentStats.MaxBombAmount)
@@ -1513,6 +1527,8 @@ public partial class BombController : MonoBehaviour
 
             if (TryGetDestructibleTileAt(position, out var cell, out var tile))
             {
+                SpawnExplosionDamageHitbox(position, origin, sourceBomb);
+
                 if (!TryHandleDestructibleTileEffect(position, cell, tile))
                     ClearDestructibleForEffect(position);
 
@@ -1524,6 +1540,8 @@ public partial class BombController : MonoBehaviour
 
             if (HasDestroyingDestructibleAt(position))
             {
+                SpawnExplosionDamageHitbox(position, origin, sourceBomb);
+
                 if (!pierce)
                     break;
 
@@ -1669,6 +1687,8 @@ public partial class BombController : MonoBehaviour
 
             if (TryGetDestructibleTileAt(position, out var cell, out var tile))
             {
+                SpawnExplosionDamageHitbox(position, origin);
+
                 if (!TryHandleDestructibleTileEffect(position, cell, tile))
                     ClearDestructibleForEffect(position);
 
@@ -1680,6 +1700,8 @@ public partial class BombController : MonoBehaviour
 
             if (HasDestroyingDestructibleAt(position))
             {
+                SpawnExplosionDamageHitbox(position, origin);
+
                 if (!pierce)
                     break;
 

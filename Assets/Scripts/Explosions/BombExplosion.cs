@@ -153,6 +153,25 @@ public class BombExplosion : MonoBehaviour
         playRoutine = StartCoroutine(PlayRoutine(part, delay, duration));
     }
 
+    public void PlayDamageOnly(float duration, Vector2 origin)
+    {
+        if (playRoutine != null)
+            StopCoroutine(playRoutine);
+
+        SetOrigin(origin);
+        CurrentPart = ExplosionPart.Middle;
+        ResetRenderers();
+
+        if (duration <= 0f)
+        {
+            playRoutine = null;
+            Release();
+            return;
+        }
+
+        playRoutine = StartCoroutine(DestroyRoutine(duration));
+    }
+
     IEnumerator PlayRoutine(ExplosionPart part, float delay, float duration)
     {
         ResetRenderers();
