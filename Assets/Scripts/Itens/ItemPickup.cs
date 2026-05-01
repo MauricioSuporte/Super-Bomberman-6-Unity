@@ -448,6 +448,13 @@ public class ItemPickup : MonoBehaviour
             return;
         }
 
+        if (type != ItemType.Skull &&
+            player.TryGetComponent<SkullDebuffController>(out var activeSkullDebuff) &&
+            activeSkullDebuff != null)
+        {
+            activeSkullDebuff.TryExpelActiveSkull(transform.position);
+        }
+
         PlayCollectSfxOnPlayer(player);
         PlayPlayerExtraSfx(player);
 
@@ -713,6 +720,34 @@ public class ItemPickup : MonoBehaviour
             StopCoroutine(skullBounceRoutine);
 
         skullBounceRoutine = StartCoroutine(SkullBounceRoutine(direction, tileSize, ignoredCollider, origin, requestedDirection, source));
+        return true;
+    }
+
+    public bool TryExpelSkull(Vector2 direction, float tileSize, Collider2D ignoredCollider, int distanceTiles)
+    {
+        if (type != ItemType.Skull)
+            return false;
+
+        if (isBeingDestroyed || skullBounceMoving)
+            return true;
+
+        direction = NormalizeCardinalOrDown(direction);
+        tileSize = Mathf.Max(0.0001f, tileSize);
+        int steps = Mathf.Max(1, distanceTiles);
+        Vector2 origin = GetSkullLogicalPosition();
+
+        skullBounceSuppressUntil = Mathf.Max(
+            skullBounceSuppressUntil,
+            Time.time + SkullBounceDefaultProtectionSeconds);
+
+        LogSkullBounce(
+            $"expel start item:{GetDebugIdentity()} origin:{FormatVec(origin)} " +
+            $"dir:{FormatVec(direction)} tileSize:{tileSize:F2} steps:{steps}");
+
+        if (skullBounceRoutine != null)
+            StopCoroutine(skullBounceRoutine);
+
+        skullBounceRoutine = StartCoroutine(SkullExpelRoutine(direction, tileSize, ignoredCollider, origin, steps));
         return true;
     }
 
@@ -1063,6 +1098,88 @@ public class ItemPickup : MonoBehaviour
         LogSkullBounce(
             $"finish item:{GetDebugIdentity()} origin:{FormatVec(origin)} final:{FormatVec(finalPosition)} " +
             $"visual:{FormatVec(visualPos)} physics:{FormatVec(physicsPos)} landed:{landed}");
+
+        skullBounceMoving = false;
+        skullBounceRoutine = null;
+    }
+
+    IEnumerator SkullExpelRoutine(
+        Vector2 direction,
+        float tileSize,
+        Collider2D ignoredCollider,
+        Vector2 origin,
+        int forcedSteps)
+    {
+        skullBounceMoving = true;
+
+        if (_col != null)
+            _col.enabled = false;
+
+        CacheSkullBounceFlipState();
+        ResolveSkullBounceTilemapsIfNeeded();
+
+        Vector2 current = SnapSkullToTileCenter(transform.position, tileSize);
+        SetSkullWorldPosition(current, syncPhysics: true);
+
+        int maxSteps = GetSkullBounceMaxSteps(direction);
+        int steps = Mathf.Min(Mathf.Max(1, forcedSteps), maxSteps);
+        bool landed = false;
+
+        for (int step = 0; step < steps; step++)
+        {
+            if (!TryStepSkullWithWrap(current, direction, tileSize, out var next))
+                break;
+
+            yield return SkullBounceSegment(current, next, direction);
+            current = next;
+            SetSkullWorldPosition(current, syncPhysics: true);
+        }
+
+        if (IsSkullLandingSafe(current, tileSize, ignoredCollider, out _))
+        {
+            landed = true;
+        }
+        else
+        {
+            for (int step = steps; step < maxSteps; step++)
+            {
+                if (!TryStepSkullWithWrap(current, direction, tileSize, out var next))
+                    break;
+
+                yield return SkullBounceSegment(current, next, direction);
+                current = next;
+                SetSkullWorldPosition(current, syncPhysics: true);
+
+                if (IsSkullLandingSafe(current, tileSize, ignoredCollider, out _))
+                {
+                    landed = true;
+                    break;
+                }
+            }
+        }
+
+        transform.localRotation = Quaternion.identity;
+        RestoreSkullBounceFlipState();
+
+        SetSkullWorldPosition(current, syncPhysics: true);
+        SyncSkullAnimatedRendererBasePosition();
+        StartSkullBouncePositionLock(current);
+
+        yield return new WaitForFixedUpdate();
+
+        transform.localRotation = Quaternion.identity;
+        SetSkullWorldPosition(current, syncPhysics: true);
+        SyncSkullAnimatedRendererBasePosition();
+        StartSkullBouncePositionLock(current);
+
+        if (_col != null)
+            _col.enabled = true;
+
+        Physics2D.SyncTransforms();
+
+        LogSkullBounce(
+            $"expel finish item:{GetDebugIdentity()} origin:{FormatVec(origin)} " +
+            $"final:{FormatVec(current)} landed:{landed}");
 
         skullBounceMoving = false;
         skullBounceRoutine = null;

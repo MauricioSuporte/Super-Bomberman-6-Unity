@@ -9,6 +9,7 @@ public sealed class SkullDebuffController : MonoBehaviour
     const float TransferCooldownSeconds = 1f;
     const float ContactCheckRadius = 0.65f;
     const float LogThrottleSeconds = 0.35f;
+    const int ExpelDistanceTiles = 3;
     const string TransferSfxResourcesPath = "Sounds/infected";
     static readonly bool DebugSkullTransfer = true;
 
@@ -142,6 +143,46 @@ public sealed class SkullDebuffController : MonoBehaviour
             return 0f;
 
         return Mathf.Max(0f, activeEffectEndsAt - Time.time);
+    }
+
+    public bool TryExpelActiveSkull(Vector2 origin)
+    {
+        if (!HasTransferableEffect())
+            return false;
+
+        CacheReferences();
+
+        ItemPickup skullPrefab = AutoItemDatabase.Get(ItemType.Skull);
+        if (skullPrefab == null)
+        {
+            LogTransfer($"expel failed owner:{GetOwnerName()} reason:skull-prefab-missing");
+            return false;
+        }
+
+        float tileSize = movement != null
+            ? Mathf.Max(0.0001f, movement.tileSize)
+            : 1f;
+
+        Vector2 direction = RandomCardinalDirection();
+        var spawnedSkull = Instantiate(skullPrefab, origin, Quaternion.identity);
+        if (spawnedSkull == null)
+        {
+            LogTransfer($"expel failed owner:{GetOwnerName()} reason:instantiate-null");
+            return false;
+        }
+
+        Collider2D ignoredCollider = GetComponent<Collider2D>();
+        if (ignoredCollider == null)
+            ignoredCollider = GetComponentInChildren<Collider2D>();
+
+        ClearActiveEffect();
+        spawnedSkull.TryExpelSkull(direction, tileSize, ignoredCollider, ExpelDistanceTiles);
+
+        LogTransfer(
+            $"expel owner:{GetOwnerName()} spawned:{spawnedSkull.name} " +
+            $"origin:{FormatVec(origin)} dir:{FormatVec(direction)} steps:{ExpelDistanceTiles}");
+
+        return true;
     }
 
     void CacheReferences()
@@ -343,6 +384,18 @@ public sealed class SkullDebuffController : MonoBehaviour
             audio.PlayOneShot(transferSfx, 1f);
         else
             AudioSource.PlayClipAtPoint(transferSfx, target.transform.position, 1f);
+    }
+
+    static Vector2 RandomCardinalDirection()
+    {
+        int r = Random.Range(0, 4);
+        return r switch
+        {
+            0 => Vector2.up,
+            1 => Vector2.down,
+            2 => Vector2.left,
+            _ => Vector2.right
+        };
     }
 
     void OnDisable()
