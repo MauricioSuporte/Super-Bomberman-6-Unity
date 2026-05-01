@@ -436,6 +436,9 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
                 destructibleTilemap.SetTile(destructibleCell, null);
                 destructibleTilemap.RefreshTile(destructibleCell);
 
+                if (GameManager.Instance != null)
+                    GameManager.Instance.OnDestructibleDestroyed(destructibleCell);
+
                 TilemapCollider2D destructibleCollider = destructibleTilemap.GetComponent<TilemapCollider2D>();
                 if (destructibleCollider != null)
                     destructibleCollider.ProcessTilemapChanges();
@@ -623,6 +626,9 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
             TilemapCollider2D collider = indestructibleTilemap.GetComponent<TilemapCollider2D>();
             if (collider != null)
                 collider.ProcessTilemapChanges();
+
+            if (GameManager.Instance != null)
+                GameManager.Instance.OnIndestructiblePlaced(cell);
 
             LogVisual($"DropTileRoutine: tile aplicado em {cell}");
         }

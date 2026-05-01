@@ -1762,9 +1762,6 @@ public partial class BombController : MonoBehaviour
         if (_gm == null)
             _gm = FindAnyObjectByType<GameManager>();
 
-        if (_gm != null)
-            _gm.OnDestructibleDestroyed(cell);
-
         Transform parent = destructibleTiles != null ? destructibleTiles.transform : null;
         Vector3 spawnWorldPosition = destructibleTiles.GetCellCenterWorld(cell);
 
@@ -1787,6 +1784,9 @@ public partial class BombController : MonoBehaviour
         }
 
         destructibleTiles.SetTile(cell, null);
+
+        if (_gm != null)
+            _gm.OnDestructibleDestroyed(cell);
     }
 
     private IEnumerator SpawnHiddenObjectAfterDelay(GameObject prefab, Vector3Int cell, Transform parent, float delay)

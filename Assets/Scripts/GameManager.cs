@@ -710,41 +710,70 @@ public class GameManager : MonoBehaviour
 
     void ApplyDestructibleShadows()
     {
-        if (destructibleTilemap == null ||
-            groundTilemap == null ||
+        if (groundTilemap == null ||
             groundTile == null ||
             groundShadowTile == null)
             return;
 
-        BoundsInt bounds = destructibleTilemap.cellBounds;
-
-        foreach (Vector3Int pos in bounds.allPositionsWithin)
+        BoundsInt bounds = groundTilemap.cellBounds;
+        foreach (Vector3Int groundCell in bounds.allPositionsWithin)
         {
-            if (destructibleTilemap.GetTile(pos) == null)
+            TileBase currentGround = groundTilemap.GetTile(groundCell);
+            if (currentGround != groundTile && currentGround != groundShadowTile)
                 continue;
 
-            Vector3Int below = new(pos.x, pos.y - 1, pos.z);
-
-            TileBase currentGround = groundTilemap.GetTile(below);
-
-            if (currentGround == groundTile)
-                groundTilemap.SetTile(below, groundShadowTile);
+            RefreshGroundShadowAt(groundCell);
         }
     }
 
     public void OnDestructibleDestroyed(Vector3Int cell)
+    {
+        Vector3Int below = new(cell.x, cell.y - 1, cell.z);
+        RefreshGroundShadowAt(below);
+    }
+
+    public void OnIndestructiblePlaced(Vector3Int cell)
+    {
+        Vector3Int below = new(cell.x, cell.y - 1, cell.z);
+        RefreshGroundShadowAt(below);
+        RefreshGroundShadowAt(cell);
+    }
+
+    void RefreshGroundShadowAt(Vector3Int groundCell)
     {
         if (groundTilemap == null ||
             groundTile == null ||
             groundShadowTile == null)
             return;
 
-        Vector3Int below = new(cell.x, cell.y - 1, cell.z);
+        TileBase currentGround = groundTilemap.GetTile(groundCell);
+        if (currentGround != groundTile && currentGround != groundShadowTile)
+            return;
 
-        TileBase current = groundTilemap.GetTile(below);
+        bool hasShadowCaster = HasGroundShadowCasterAbove(groundCell);
 
-        if (current == groundShadowTile)
-            groundTilemap.SetTile(below, groundTile);
+        if (hasShadowCaster)
+        {
+            if (currentGround == groundTile)
+                groundTilemap.SetTile(groundCell, groundShadowTile);
+        }
+        else if (currentGround == groundShadowTile)
+        {
+            groundTilemap.SetTile(groundCell, groundTile);
+        }
+    }
+
+    bool HasGroundShadowCasterAbove(Vector3Int groundCell)
+    {
+        Vector3Int above = new(groundCell.x, groundCell.y + 1, groundCell.z);
+
+        if (destructibleTilemap != null && destructibleTilemap.GetTile(above) != null)
+            return true;
+
+        if (indestructibleTilemap != null && indestructibleTilemap.GetTile(above) != null)
+            return true;
+
+        return false;
     }
 
     public void NotifyPlayerDeathStarted(MovementController deadPlayer)
