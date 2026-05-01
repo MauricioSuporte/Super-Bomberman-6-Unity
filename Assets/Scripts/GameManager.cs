@@ -943,6 +943,7 @@ public class GameManager : MonoBehaviour
             Mathf.Round(survivingPlayer.transform.position.y)
         );
 
+        BattleModeHud.CaptureDisplayedVictorySnapshot();
         bool matchComplete = RegisterBattleVictory(survivingPlayer);
 
         if (survivingPlayers != null)
@@ -1272,6 +1273,7 @@ public class GameManager : MonoBehaviour
         yield return waitRoundWinScoreboardDelay;
 
         yield return BattleRoundWinScoreboardOverlay.PlayRoutine(survivingPlayer.PlayerId);
+        BattleModeHud.ReleaseDisplayedVictorySnapshot();
 
         if (matchComplete)
         {

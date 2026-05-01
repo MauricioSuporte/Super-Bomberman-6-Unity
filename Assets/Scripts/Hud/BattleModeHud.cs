@@ -77,6 +77,8 @@ public sealed class BattleModeHud : MonoBehaviour
     const string BorderName = "Border";
     const string PartitionsRootName = "Partitions";
     const string PushStartLabel = "PUSH START";
+    static readonly int[] displayedVictorySnapshot = new int[MaxPlayers];
+    static bool useDisplayedVictorySnapshot;
 
     static readonly string[] LegacyHudChildNames =
     {
@@ -272,6 +274,23 @@ public sealed class BattleModeHud : MonoBehaviour
 
         portraitTintActive[index] = false;
         portraitTintColors[index] = Color.white;
+    }
+
+    public static void CaptureDisplayedVictorySnapshot()
+    {
+        useDisplayedVictorySnapshot = true;
+
+        for (int playerId = 1; playerId <= MaxPlayers; playerId++)
+        {
+            displayedVictorySnapshot[playerId - 1] = GameSession.Instance != null
+                ? GameSession.Instance.GetBattleMatchWins(playerId)
+                : 0;
+        }
+    }
+
+    public static void ReleaseDisplayedVictorySnapshot()
+    {
+        useDisplayedVictorySnapshot = false;
     }
 
     void EnsurePortraitsLoaded()
@@ -946,6 +965,10 @@ public sealed class BattleModeHud : MonoBehaviour
 
     int GetDisplayedVictoryCount(int playerId)
     {
+        int index = playerId - 1;
+        if (useDisplayedVictorySnapshot && index >= 0 && index < displayedVictorySnapshot.Length)
+            return displayedVictorySnapshot[index];
+
         if (GameSession.Instance == null)
             return 0;
 
