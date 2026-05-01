@@ -4094,7 +4094,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::StunReceiver
   isStunned: 0
-  useAnimatedStunRenderer: 0
+  useAnimatedStunRenderer: 1
   stunAnimatedRenderer: {fileID: 3931440256274558322}
   disableShakeWhenUsingAnimatedStun: 1
   visualOverrideWhileStunned: 1
@@ -5758,7 +5758,7 @@ MonoBehaviour:
   - {fileID: 6880199824899251412, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
   - {fileID: 3693556256524085152, guid: ee81c402ec35a4e4da6f7112f8e74826, type: 3}
   allowFlipX: 0
-  animationTime: 0.05
+  animationTime: 0.1
   useSequenceDuration: 0
   sequenceDuration: 0.5
   useUnscaledTime: 1
