@@ -203,6 +203,7 @@ public sealed class BattleWinMatchOverlay : MonoBehaviour
         PlayWinMatchMusic();
 
         yield return AnimateWave(TotalDuration);
+        StopOverlayAudio();
     }
 
     void EnsureSpritesLoaded()
@@ -464,6 +465,9 @@ public sealed class BattleWinMatchOverlay : MonoBehaviour
 
         while (elapsed < duration)
         {
+            if (TrySkipOverlay())
+                yield break;
+
             elapsed += Time.unscaledDeltaTime;
 
             for (int i = 0; i < columns.Count; i++)
@@ -495,6 +499,38 @@ public sealed class BattleWinMatchOverlay : MonoBehaviour
 
         if (canvasGroup != null)
             canvasGroup.alpha = 1f;
+    }
+
+    bool TrySkipOverlay()
+    {
+        if (!WasSkipPressed())
+            return false;
+
+        StopOverlayAudio();
+        return true;
+    }
+
+    static bool WasSkipPressed()
+    {
+        PlayerInputManager input = PlayerInputManager.Instance;
+        return input != null &&
+               (input.AnyGetDown(PlayerAction.ActionA) || input.AnyGetDown(PlayerAction.Start));
+    }
+
+    static void StopOverlayAudio()
+    {
+        if (GameMusicController.Instance != null)
+        {
+            GameMusicController.Instance.StopMusic();
+            GameMusicController.Instance.StopSfx();
+        }
+
+        AudioSource[] audioSources = FindObjectsByType<AudioSource>(FindObjectsInactive.Include);
+        for (int i = 0; i < audioSources.Length; i++)
+        {
+            if (audioSources[i] != null)
+                audioSources[i].Stop();
+        }
     }
 
     void UpdateWinnerBomberEntrance(float elapsed)

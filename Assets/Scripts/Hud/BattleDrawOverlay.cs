@@ -41,6 +41,7 @@ public sealed class BattleDrawOverlay : MonoBehaviour
     CanvasGroup canvasGroup;
     Sprite backgroundSprite;
     Sprite[] letterSprites;
+    bool skipRequested;
 
     struct BattleModeHudState
     {
@@ -165,11 +166,18 @@ public sealed class BattleDrawOverlay : MonoBehaviour
         PlayDrawMusic();
 
         yield return FadeCanvas(0f, 1f, FadeInDuration);
+        if (skipRequested)
+            yield break;
 
         for (int i = 0; i < letterRects.Count; i++)
+        {
             yield return DropLetter(i);
+            if (skipRequested)
+                yield break;
+        }
 
-        yield return new WaitForSecondsRealtime(HoldAfterLetters);
+        yield return WaitRealtimeOrSkip(HoldAfterLetters);
+        StopOverlayAudio();
     }
 
     void EnsureSpritesLoaded()
@@ -285,6 +293,9 @@ public sealed class BattleDrawOverlay : MonoBehaviour
         float t = 0f;
         while (t < LetterDropDuration)
         {
+            if (TrySkipOverlay())
+                yield break;
+
             t += Time.unscaledDeltaTime;
             float p = Mathf.Clamp01(t / LetterDropDuration);
             rect.anchoredPosition = Vector2.Lerp(from, to, SmoothStep(p));
@@ -326,6 +337,9 @@ public sealed class BattleDrawOverlay : MonoBehaviour
         float t = 0f;
         while (t < duration)
         {
+            if (TrySkipOverlay())
+                yield break;
+
             t += Time.unscaledDeltaTime;
             float p = Mathf.Clamp01(t / duration);
             canvasGroup.alpha = Mathf.Lerp(from, to, SmoothStep(p));
@@ -333,6 +347,52 @@ public sealed class BattleDrawOverlay : MonoBehaviour
         }
 
         canvasGroup.alpha = to;
+    }
+
+    IEnumerator WaitRealtimeOrSkip(float duration)
+    {
+        float elapsed = 0f;
+        while (elapsed < duration)
+        {
+            if (TrySkipOverlay())
+                yield break;
+
+            elapsed += Time.unscaledDeltaTime;
+            yield return null;
+        }
+    }
+
+    bool TrySkipOverlay()
+    {
+        if (!WasSkipPressed())
+            return false;
+
+        skipRequested = true;
+        StopOverlayAudio();
+        return true;
+    }
+
+    static bool WasSkipPressed()
+    {
+        PlayerInputManager input = PlayerInputManager.Instance;
+        return input != null &&
+               (input.AnyGetDown(PlayerAction.ActionA) || input.AnyGetDown(PlayerAction.Start));
+    }
+
+    static void StopOverlayAudio()
+    {
+        if (GameMusicController.Instance != null)
+        {
+            GameMusicController.Instance.StopMusic();
+            GameMusicController.Instance.StopSfx();
+        }
+
+        AudioSource[] audioSources = FindObjectsByType<AudioSource>(FindObjectsInactive.Include);
+        for (int i = 0; i < audioSources.Length; i++)
+        {
+            if (audioSources[i] != null)
+                audioSources[i].Stop();
+        }
     }
 
     void PlayDrawMusic()

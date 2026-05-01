@@ -102,6 +102,15 @@ public class GameMusicController : MonoBehaviour
         musicSource.pitch = 1f;
     }
 
+    public void StopSfx()
+    {
+        if (sfxSource == null)
+            return;
+
+        sfxSource.Stop();
+        sfxSource.clip = null;
+    }
+
     public void PauseMusic()
     {
         if (musicSource != null && musicSource.isPlaying)

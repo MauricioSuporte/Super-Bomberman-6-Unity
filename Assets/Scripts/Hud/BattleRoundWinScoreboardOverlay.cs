@@ -19,6 +19,7 @@ public sealed class BattleRoundWinScoreboardOverlay : MonoBehaviour
 
     readonly List<int> activePlayerIds = new(GameSession.MaxPlayerId);
     readonly List<BattleModeHudState> hiddenBattleHuds = new();
+    bool skipRequested;
 
     struct BattleModeHudState
     {
@@ -181,6 +182,9 @@ public sealed class BattleRoundWinScoreboardOverlay : MonoBehaviour
         float t = 0f;
         while (t < SlideDuration)
         {
+            if (TrySkipOverlay())
+                yield break;
+
             t += Time.unscaledDeltaTime;
             float p = Mathf.Clamp01(t / SlideDuration);
             rect.anchoredPosition = Vector2.Lerp(hiddenPosition, Vector2.zero, SmoothStep(p));
@@ -190,10 +194,60 @@ public sealed class BattleRoundWinScoreboardOverlay : MonoBehaviour
         rect.anchoredPosition = Vector2.zero;
         PlayMatchEndJingle();
 
-        yield return new WaitForSecondsRealtime(TrophyRevealDelay);
+        yield return WaitRealtimeOrSkip(TrophyRevealDelay);
+        if (skipRequested)
+            yield break;
+
         presenter.RevealRoundWinTrophies();
 
-        yield return new WaitForSecondsRealtime(HoldAfterReveal);
+        yield return WaitRealtimeOrSkip(HoldAfterReveal);
+        StopOverlayAudio();
+    }
+
+    IEnumerator WaitRealtimeOrSkip(float duration)
+    {
+        float elapsed = 0f;
+        while (elapsed < duration)
+        {
+            if (TrySkipOverlay())
+                yield break;
+
+            elapsed += Time.unscaledDeltaTime;
+            yield return null;
+        }
+    }
+
+    bool TrySkipOverlay()
+    {
+        if (!WasSkipPressed())
+            return false;
+
+        skipRequested = true;
+        StopOverlayAudio();
+        return true;
+    }
+
+    static bool WasSkipPressed()
+    {
+        PlayerInputManager input = PlayerInputManager.Instance;
+        return input != null &&
+               (input.AnyGetDown(PlayerAction.ActionA) || input.AnyGetDown(PlayerAction.Start));
+    }
+
+    static void StopOverlayAudio()
+    {
+        if (GameMusicController.Instance != null)
+        {
+            GameMusicController.Instance.StopMusic();
+            GameMusicController.Instance.StopSfx();
+        }
+
+        AudioSource[] audioSources = FindObjectsByType<AudioSource>(FindObjectsInactive.Include);
+        for (int i = 0; i < audioSources.Length; i++)
+        {
+            if (audioSources[i] != null)
+                audioSources[i].Stop();
+        }
     }
 
     void PopulateActivePlayerIds()
