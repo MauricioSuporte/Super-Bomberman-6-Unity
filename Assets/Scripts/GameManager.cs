@@ -939,11 +939,6 @@ public class GameManager : MonoBehaviour
         if (suddenDeathController != null)
             suddenDeathController.StopSuddenDeathAndClearVisuals();
 
-        Vector2 celebrationCenter = new(
-            Mathf.Round(survivingPlayer.transform.position.x),
-            Mathf.Round(survivingPlayer.transform.position.y)
-        );
-
         BattleModeHud.CaptureDisplayedVictorySnapshot();
         bool matchComplete = RegisterBattleVictory(survivingPlayer);
 
@@ -961,7 +956,12 @@ public class GameManager : MonoBehaviour
                 if (winner.TryGetComponent<BombController>(out var bombController) && bombController != null)
                     bombController.ClearPlantedBombsOnStageEnd(false);
 
-                winner.PlayEndStageSequence(celebrationCenter, snapToPortalCenter: false);
+                Vector2 winnerCelebrationCenter = new(
+                    Mathf.Round(winner.transform.position.x),
+                    Mathf.Round(winner.transform.position.y)
+                );
+
+                winner.PlayEndStageSequence(winnerCelebrationCenter, snapToPortalCenter: true);
             }
         }
 

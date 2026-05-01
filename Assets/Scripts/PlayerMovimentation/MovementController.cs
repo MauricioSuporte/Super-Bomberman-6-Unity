@@ -2958,6 +2958,18 @@ public class MovementController : MonoBehaviour, IKillable
 
     public void PlayEndStageSequence(Vector2 portalCenter, bool snapToPortalCenter)
     {
+        if (cachedCompanion == null)
+            TryGetComponent(out cachedCompanion);
+
+        bool canceledRidingTransition = cachedCompanion != null
+            && cachedCompanion.CancelRidingTransitionForEndStage();
+
+        if (cachedRiding == null)
+            TryGetComponent(out cachedRiding);
+
+        if (!canceledRidingTransition && cachedRiding != null && cachedRiding.IsPlaying)
+            cachedRiding.CancelRiding();
+
         isEndingStage = true;
         SetExplosionInvulnerable(true);
 
@@ -2980,6 +2992,14 @@ public class MovementController : MonoBehaviour, IKillable
 
             if (snapToPortalCenter)
                 Rigidbody.position = portalCenter;
+        }
+
+        if (snapToPortalCenter)
+        {
+            Vector3 snappedPosition = transform.position;
+            snappedPosition.x = portalCenter.x;
+            snappedPosition.y = portalCenter.y;
+            transform.position = snappedPosition;
         }
 
         direction = Vector2.zero;

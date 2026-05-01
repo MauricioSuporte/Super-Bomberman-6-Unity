@@ -195,6 +195,37 @@ public class PlayerMountCompanion : MonoBehaviour
         return visual.TryPlayEndStage(totalTime, frameCount);
     }
 
+    public bool CancelRidingTransitionForEndStage()
+    {
+        var rider = GetComponent<PlayerRidingController>();
+        if (rider == null || !rider.IsPlaying)
+            return false;
+
+        rider.CancelRiding();
+
+        if (autoRemountRoutine != null)
+        {
+            StopCoroutine(autoRemountRoutine);
+            autoRemountRoutine = null;
+        }
+
+        autoRemountRequested = false;
+
+        if (movement != null && !movement.IsMounted)
+        {
+            if (currentLouie != null)
+                Destroy(currentLouie);
+
+            currentLouie = null;
+            pendingMountSfx = null;
+            pendingMountVolume = 1f;
+            ClearDashInvulnerabilityNow();
+            ResetMountedStateAndAbilities();
+        }
+
+        return true;
+    }
+
     public void Mount(MountedType type)
     {
         if (type == MountedType.None)
