@@ -11,7 +11,7 @@ public sealed class SkullDebuffController : MonoBehaviour
     const float LogThrottleSeconds = 0.35f;
     const int ExpelDistanceTiles = 3;
     const string TransferSfxResourcesPath = "Sounds/infected";
-    static readonly bool DebugSkullTransfer = true;
+    static readonly bool DebugSkullTransfer = false;
 
     static readonly Dictionary<string, float> transferCooldownUntil = new();
     static AudioClip transferSfx;
