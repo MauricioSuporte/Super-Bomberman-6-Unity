@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class StageMusicConfigurator : MonoBehaviour
 {
@@ -25,6 +26,14 @@ public class StageMusicConfigurator : MonoBehaviour
         GameMusicController.Instance.defaultMusic = stageDefaultMusic;
         GameMusicController.Instance.defaultMusicVolume = musicVolume;
 
-        GameMusicController.Instance.PlayDefaultMusic(true);
+        if (ShouldPlayMusicOnSceneStart())
+            GameMusicController.Instance.PlayDefaultMusic(true);
+    }
+
+    private static bool ShouldPlayMusicOnSceneStart()
+    {
+        Scene scene = SceneManager.GetActiveScene();
+        return scene.IsValid() &&
+               scene.name.StartsWith("BattleMode_", System.StringComparison.OrdinalIgnoreCase);
     }
 }
