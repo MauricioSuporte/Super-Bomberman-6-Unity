@@ -6,6 +6,10 @@ using UnityEngine;
 [RequireComponent(typeof(Rigidbody2D))]
 public class StunReceiver : MonoBehaviour
 {
+    private const string StunClipResourcesPrefix = "Sounds/stun";
+    private const int StunClipCount = 4;
+    private static readonly AudioClip[] stunClips = new AudioClip[StunClipCount];
+
     [Header("Debug")]
     [SerializeField] private bool isStunned;
 
@@ -71,6 +75,7 @@ public class StunReceiver : MonoBehaviour
     private MovementController cachedMovement;
     private BombController cachedBombController;
     private PlayerManualDismount cachedManualDismount;
+    private AudioSource cachedAudioSource;
 
     private bool savedBombControllerEnabled;
     private bool savedManualDismountEnabled;
@@ -91,6 +96,7 @@ public class StunReceiver : MonoBehaviour
         cachedMovement = GetComponent<MovementController>();
         cachedBombController = GetComponent<BombController>();
         cachedManualDismount = GetComponent<PlayerManualDismount>();
+        cachedAudioSource = GetComponent<AudioSource>();
 
         cachedAIMove = GetComponent<MovementControllerAI>();
         cachedEnemyMove = GetComponent<EnemyMovementController>();
@@ -103,6 +109,7 @@ public class StunReceiver : MonoBehaviour
     {
         float dur = Mathf.Max(0.01f, seconds);
         float newEnd = Time.time + dur;
+        bool startingNewStun = !isStunned && stunRoutine == null;
 
         suppressRestore = false;
 
@@ -115,8 +122,35 @@ public class StunReceiver : MonoBehaviour
         if (!isStunned || newEnd > stunEndTime)
             stunEndTime = newEnd;
 
+        if (startingNewStun)
+            PlayRandomPlayerStunSfx();
+
         if (stunRoutine == null)
             stunRoutine = StartCoroutine(StunRoutine());
+    }
+
+    private void PlayRandomPlayerStunSfx()
+    {
+        if (!CompareTag("Player"))
+            return;
+
+        AudioClip clip = GetRandomStunClip();
+        if (clip == null)
+            return;
+
+        if (cachedAudioSource != null)
+            cachedAudioSource.PlayOneShot(clip, 1f);
+        else
+            AudioSource.PlayClipAtPoint(clip, transform.position, 1f);
+    }
+
+    private static AudioClip GetRandomStunClip()
+    {
+        int index = Random.Range(0, StunClipCount);
+        if (stunClips[index] == null)
+            stunClips[index] = Resources.Load<AudioClip>($"{StunClipResourcesPrefix}{index + 1}");
+
+        return stunClips[index];
     }
 
     public void CancelStun(bool restoreVisuals)
