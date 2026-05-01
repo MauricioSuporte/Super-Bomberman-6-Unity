@@ -66,6 +66,7 @@ public class ItemPickup : MonoBehaviour
 
     Coroutine skullBounceRoutine;
     bool skullBounceMoving;
+    bool skullKickedBombPushActive;
     float skullBounceSuppressUntil;
     bool skullBouncePositionLocked;
     Vector2 skullBounceLockedWorldPosition;
@@ -735,6 +736,245 @@ public class ItemPickup : MonoBehaviour
         return TryBounceSkull(direction, 1f, explosionCollider, SkullBounceExplosionProtectionSeconds);
     }
 
+    public bool StartKickedBombPushSegment(
+        Vector2 direction,
+        float tileSize,
+        Collider2D ignoredCollider,
+        Vector2 bombSegmentStart,
+        int distanceTilesFromBomb = 1)
+    {
+        return UpdateKickedBombPushSegment(
+            direction,
+            tileSize,
+            ignoredCollider,
+            bombSegmentStart,
+            0f,
+            distanceTilesFromBomb);
+    }
+
+    public bool UpdateKickedBombPushSegment(
+        Vector2 direction,
+        float tileSize,
+        Collider2D ignoredCollider,
+        Vector2 bombSegmentStart,
+        float progress,
+        int distanceTilesFromBomb = 1)
+    {
+        if (type != ItemType.Skull)
+            return false;
+
+        if (isBeingDestroyed)
+            return true;
+
+        direction = NormalizeCardinalOrDown(direction);
+        tileSize = Mathf.Max(0.0001f, tileSize);
+
+        EnsureKickedBombPushActive(direction, tileSize, bombSegmentStart);
+
+        skullBounceSuppressUntil = Mathf.Max(
+            skullBounceSuppressUntil,
+            Time.time + SkullBounceDefaultProtectionSeconds);
+
+        int distanceTiles = Mathf.Max(1, distanceTilesFromBomb);
+        Vector2 segmentStart = bombSegmentStart + direction * (tileSize * distanceTiles);
+        if (!TryStepSkullWithWrap(segmentStart, direction, tileSize, out var segmentEnd))
+            segmentEnd = segmentStart + direction * tileSize;
+
+        SetKickedBombPushPose(segmentStart, segmentEnd, direction, progress);
+        return true;
+    }
+
+    public bool TryMoveSkullInFrontOfKickedBomb(
+        Vector2 direction,
+        float tileSize,
+        Collider2D ignoredCollider,
+        Vector2 bombWorldCenter,
+        int distanceTilesFromBomb,
+        bool finishPush)
+    {
+        if (type != ItemType.Skull)
+            return false;
+
+        if (isBeingDestroyed)
+            return true;
+
+        direction = NormalizeCardinalOrDown(direction);
+        tileSize = Mathf.Max(0.0001f, tileSize);
+
+        EnsureKickedBombPushActive(direction, tileSize, bombWorldCenter);
+
+        skullBounceSuppressUntil = Mathf.Max(
+            skullBounceSuppressUntil,
+            Time.time + SkullBounceDefaultProtectionSeconds);
+
+        int distanceTiles = Mathf.Max(1, distanceTilesFromBomb);
+        Vector2 front = bombWorldCenter + direction * (tileSize * distanceTiles);
+        SetSkullWorldPosition(front, syncPhysics: true);
+
+        if (!finishPush)
+            return true;
+
+        if (skullBounceRoutine != null)
+            StopCoroutine(skullBounceRoutine);
+
+        skullBounceRoutine = StartCoroutine(KickedBombPushFinishRoutine(
+            front,
+            direction,
+            tileSize,
+            ignoredCollider,
+            bombWorldCenter));
+        return true;
+    }
+
+    void EnsureKickedBombPushActive(Vector2 direction, float tileSize, Vector2 sourcePosition)
+    {
+        if (skullBounceRoutine != null)
+        {
+            StopCoroutine(skullBounceRoutine);
+            skullBounceRoutine = null;
+            transform.localRotation = Quaternion.identity;
+            RestoreSkullBounceFlipState();
+        }
+
+        if (skullKickedBombPushActive)
+            return;
+
+        ClearSkullBouncePositionLock();
+        skullKickedBombPushActive = true;
+        skullBounceMoving = true;
+
+        if (_col != null)
+            _col.enabled = false;
+
+        CacheSkullBounceFlipState();
+        ResolveSkullBounceTilemapsIfNeeded();
+
+        LogSkullBounce(
+            $"kick-push start item:{GetDebugIdentity()} source:{FormatVec(sourcePosition)} " +
+            $"dir:{FormatVec(direction)} tileSize:{tileSize:F2}");
+    }
+
+    void SetKickedBombPushPose(Vector2 start, Vector2 end, Vector2 direction, float progress)
+    {
+        progress = Mathf.Clamp01(progress);
+
+        bool horizontal = Mathf.Abs(direction.x) >= Mathf.Abs(direction.y);
+        bool wrapped = IsSkullWrappedSegment(start, end, horizontal);
+
+        Vector2 pos = wrapped
+            ? (progress < 0.5f ? start : end)
+            : Vector2.Lerp(start, end, Mathf.SmoothStep(0f, 1f, progress));
+
+        SetSkullWorldPosition(pos, syncPhysics: true);
+
+        float angle = progress * 360f;
+        if (horizontal)
+        {
+            float signedAngle = direction.x >= 0f ? -angle : angle;
+            transform.localRotation = Quaternion.Euler(0f, signedAngle, 0f);
+        }
+        else
+        {
+            float signedAngle = direction.y >= 0f ? angle : -angle;
+            transform.localRotation = Quaternion.Euler(signedAngle, 0f, 0f);
+        }
+
+        if (progress >= 1f)
+            transform.localRotation = Quaternion.identity;
+    }
+
+    static bool IsSkullWrappedSegment(Vector2 start, Vector2 end, bool horizontal)
+    {
+        return horizontal
+            ? Mathf.Abs(end.x - start.x) > 1.5f
+            : Mathf.Abs(end.y - start.y) > 1.5f;
+    }
+
+    Vector2 ResolveKickedBombPushLanding(
+        Vector2 front,
+        Vector2 direction,
+        float tileSize,
+        Collider2D ignoredCollider)
+    {
+        Vector2 current = SnapSkullToTileCenter(front, tileSize);
+
+        if (IsSkullLandingSafe(current, tileSize, ignoredCollider, out _))
+            return current;
+
+        int maxSteps = GetSkullBounceMaxSteps(direction);
+        for (int step = 0; step < maxSteps; step++)
+        {
+            if (!TryStepSkullWithWrap(current, direction, tileSize, out var next))
+                break;
+
+            current = next;
+
+            if (IsSkullLandingSafe(current, tileSize, ignoredCollider, out _))
+                return current;
+        }
+
+        return SnapSkullToTileCenter(front, tileSize);
+    }
+
+    IEnumerator KickedBombPushFinishRoutine(
+        Vector2 front,
+        Vector2 direction,
+        float tileSize,
+        Collider2D ignoredCollider,
+        Vector2 bombWorldCenter)
+    {
+        Vector2 current = SnapSkullToTileCenter(front, tileSize);
+        SetSkullWorldPosition(current, syncPhysics: true);
+
+        bool landed = IsSkullLandingSafe(current, tileSize, ignoredCollider, out _);
+
+        if (!landed)
+        {
+            int maxSteps = GetSkullBounceMaxSteps(direction);
+            for (int step = 0; step < maxSteps; step++)
+            {
+                if (!TryStepSkullWithWrap(current, direction, tileSize, out var next))
+                    break;
+
+                yield return SkullBounceSegment(current, next, direction);
+
+                current = next;
+                SetSkullWorldPosition(current, syncPhysics: true);
+
+                if (IsSkullLandingSafe(current, tileSize, ignoredCollider, out _))
+                {
+                    landed = true;
+                    break;
+                }
+            }
+        }
+
+        FinishKickedBombPush(current);
+
+        LogSkullBounce(
+            $"kick-push finish item:{GetDebugIdentity()} bomb:{FormatVec(bombWorldCenter)} " +
+            $"front:{FormatVec(front)} final:{FormatVec(current)} landed:{landed}");
+
+        skullBounceRoutine = null;
+    }
+
+    void FinishKickedBombPush(Vector2 finalPosition)
+    {
+        transform.localRotation = Quaternion.identity;
+        RestoreSkullBounceFlipState();
+        SetSkullWorldPosition(finalPosition, syncPhysics: true);
+        SyncSkullAnimatedRendererBasePosition();
+        StartSkullBouncePositionLock(finalPosition);
+
+        if (_col != null)
+            _col.enabled = true;
+
+        Physics2D.SyncTransforms();
+
+        skullBounceMoving = false;
+        skullKickedBombPushActive = false;
+    }
+
     IEnumerator SkullBounceRoutine(
         Vector2 direction,
         float tileSize,
@@ -838,9 +1078,18 @@ public class ItemPickup : MonoBehaviour
 
         if (wrapped)
         {
-            transform.localRotation = Quaternion.identity;
+            float wrapElapsed = 0f;
+
+            while (wrapElapsed < SkullBounceSecondsPerTile)
+            {
+                wrapElapsed += Time.deltaTime;
+                float a = Mathf.Clamp01(wrapElapsed / SkullBounceSecondsPerTile);
+                SetKickedBombPushPose(start, end, direction, a);
+                yield return null;
+            }
+
             SetSkullWorldPosition(end, syncPhysics: true);
-            yield return null;
+            transform.localRotation = Quaternion.identity;
             yield break;
         }
 

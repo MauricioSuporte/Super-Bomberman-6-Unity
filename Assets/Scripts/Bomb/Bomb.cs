@@ -113,6 +113,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
     private float kickOverlapBoxSize = 0.60f;
     private float kickOriginBlockerSize = 0.90f;
     private bool kickOriginBlockerUseTrigger = false;
+    private readonly List<ItemPickup> kickPushedSkulls = new();
 
     private int stageLayer;
     private int stageMask;
@@ -1176,11 +1177,14 @@ public class Bomb : MonoBehaviour, IMagnetPullable
                 break;
             }
 
+            TryAttachKickPushedSkullAtWorld(next, kickDirection, currentTileCenter);
+
             EnsureKickOriginBlocker(currentTileCenter, kickOriginBlockerSize, kickOriginBlockerUseTrigger);
 
             float travelTime = kickTileSize / Mathf.Max(0.0001f, kickSpeed);
             float elapsed = 0f;
             Vector2 start = currentTileCenter;
+            StartKickPushedSkullSegment(start);
 
             bool cancelAndReturn = false;
 
@@ -1205,6 +1209,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
 
                 lastPos = pos;
                 rb.MovePosition(pos);
+                UpdateKickPushedSkullSegment(start, a);
                 DestroyPickupsAtWorld(pos);
 
                 yield return waitFixed;
@@ -1219,6 +1224,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
                 transform.position = start;
                 lastPos = start;
                 currentTileCenter = start;
+                FinishKickPushedSkull(start);
 
                 RemoveKickOriginBlocker();
 
@@ -1238,6 +1244,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
                 transform.position = start;
                 lastPos = start;
                 currentTileCenter = start;
+                FinishKickPushedSkull(start);
 
                 RemoveKickOriginBlocker();
 
@@ -1258,6 +1265,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
 
             rb.position = next;
             transform.position = next;
+            UpdateKickPushedSkullSegment(start, 1f);
 
             DestroyPickupsAtWorld(next);
 
@@ -1268,6 +1276,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         rb.position = currentTileCenter;
         transform.position = currentTileCenter;
         lastPos = currentTileCenter;
+        FinishKickPushedSkull(currentTileCenter);
 
         isKicked = false;
         kickRoutine = null;
@@ -1313,6 +1322,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         }
 
         transform.position = snapped;
+        FinishKickPushedSkull(snapped);
 
         if (anim != null)
         {
@@ -2059,11 +2069,141 @@ public class Bomb : MonoBehaviour, IMagnetPullable
             if (pickup == null)
                 continue;
 
+            if (TryAttachKickPushedSkull(pickup, impactDirection, worldCenter))
+                continue;
+
             if (pickup.TryBounceSkull(impactDirection, kickTileSize, bombCollider))
                 continue;
 
             pickup.DestroySilently();
         }
+    }
+
+    private bool TryAttachKickPushedSkull(ItemPickup pickup, Vector2 impactDirection, Vector2 bombWorldCenter)
+    {
+        if (pickup == null || pickup.type != ItemType.Skull)
+            return false;
+
+        if (!kickPushedSkulls.Contains(pickup))
+            kickPushedSkulls.Add(pickup);
+
+        int pushDistanceTiles = GetKickPushedSkullDistanceTiles(pickup);
+        return pickup.TryMoveSkullInFrontOfKickedBomb(
+            impactDirection,
+            kickTileSize,
+            bombCollider,
+            bombWorldCenter,
+            pushDistanceTiles,
+            finishPush: false);
+    }
+
+    private bool TryAttachKickPushedSkullAtWorld(Vector2 worldCenter, Vector2 impactDirection, Vector2 bombWorldCenter)
+    {
+        Vector2 size = Vector2.one * (kickTileSize * 0.45f);
+        Collider2D[] hits = Physics2D.OverlapBoxAll(worldCenter, size, 0f);
+
+        if (hits == null || hits.Length == 0)
+            return false;
+
+        bool attachedAny = false;
+
+        for (int i = 0; i < hits.Length; i++)
+        {
+            var hit = hits[i];
+            if (hit == null)
+                continue;
+
+            var pickup = hit.GetComponent<ItemPickup>();
+            if (pickup == null)
+                pickup = hit.GetComponentInParent<ItemPickup>();
+
+            if (TryAttachKickPushedSkull(pickup, impactDirection, bombWorldCenter))
+                attachedAny = true;
+        }
+
+        return attachedAny;
+    }
+
+    private void StartKickPushedSkullSegment(Vector2 bombSegmentStart)
+    {
+        if (kickPushedSkulls.Count == 0)
+            return;
+
+        for (int i = kickPushedSkulls.Count - 1; i >= 0; i--)
+        {
+            var skull = kickPushedSkulls[i];
+            if (skull == null)
+            {
+                kickPushedSkulls.RemoveAt(i);
+                continue;
+            }
+
+            if (!skull.StartKickedBombPushSegment(
+                    kickDirection,
+                    kickTileSize,
+                    bombCollider,
+                    bombSegmentStart,
+                    i + 1))
+            {
+                kickPushedSkulls.RemoveAt(i);
+            }
+        }
+    }
+
+    private void UpdateKickPushedSkullSegment(Vector2 bombSegmentStart, float progress)
+    {
+        if (kickPushedSkulls.Count == 0)
+            return;
+
+        for (int i = kickPushedSkulls.Count - 1; i >= 0; i--)
+        {
+            var skull = kickPushedSkulls[i];
+            if (skull == null)
+            {
+                kickPushedSkulls.RemoveAt(i);
+                continue;
+            }
+
+            if (!skull.UpdateKickedBombPushSegment(
+                    kickDirection,
+                    kickTileSize,
+                    bombCollider,
+                    bombSegmentStart,
+                    progress,
+                    i + 1))
+            {
+                kickPushedSkulls.RemoveAt(i);
+            }
+        }
+    }
+
+    private void FinishKickPushedSkull(Vector2 bombWorldCenter)
+    {
+        if (kickPushedSkulls.Count == 0)
+            return;
+
+        for (int i = kickPushedSkulls.Count - 1; i >= 0; i--)
+        {
+            var skull = kickPushedSkulls[i];
+            if (skull == null)
+                continue;
+
+            skull.TryMoveSkullInFrontOfKickedBomb(
+                kickDirection,
+                kickTileSize,
+                bombCollider,
+                bombWorldCenter,
+                i + 1,
+                finishPush: true);
+        }
+
+        kickPushedSkulls.Clear();
+    }
+
+    private int GetKickPushedSkullDistanceTiles(ItemPickup pickup)
+    {
+        int index = kickPushedSkulls.IndexOf(pickup);
+        return Mathf.Max(1, index + 1);
     }
 
     private bool IsKickBlockedByCharacterOnImmediateExit(Vector2 origin, Vector2 next)
