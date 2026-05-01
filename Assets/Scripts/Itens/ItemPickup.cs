@@ -58,6 +58,7 @@ public class ItemPickup : MonoBehaviour
     const float SkullPickupClosestDistance = 0.15f;
     const float SkullBouncePositionDriftEpsilon = 0.01f;
     const int SkullBounceFallbackMaxSteps = 80;
+    static AudioSource playerExtraSfxSource;
     int[] skullBounceOriginalSortingOrders;
     static readonly Collider2D[] SkullBounceOverlapBuffer = new Collider2D[24];
 
@@ -312,9 +313,36 @@ public class ItemPickup : MonoBehaviour
         if (!ShouldPlayPlayerExtraSfx())
             return;
 
-        var audio = player.GetComponent<AudioSource>();
-        if (audio != null)
-            audio.PlayOneShot(playerExtraSfx, Mathf.Clamp01(playerExtraVolume));
+        var playerAudio = player.GetComponent<AudioSource>();
+        if (playerAudio == null)
+            return;
+
+        var audio = GetOrCreatePlayerExtraSfxSource();
+        audio.transform.position = playerAudio.transform.position;
+        audio.outputAudioMixerGroup = playerAudio.outputAudioMixerGroup;
+        audio.spatialBlend = playerAudio.spatialBlend;
+        audio.minDistance = playerAudio.minDistance;
+        audio.maxDistance = playerAudio.maxDistance;
+        audio.rolloffMode = playerAudio.rolloffMode;
+        audio.priority = playerAudio.priority;
+        audio.pitch = playerAudio.pitch;
+        audio.Stop();
+        audio.clip = playerExtraSfx;
+        audio.volume = Mathf.Clamp01(playerAudio.volume * playerExtraVolume);
+        audio.Play();
+    }
+
+    static AudioSource GetOrCreatePlayerExtraSfxSource()
+    {
+        if (playerExtraSfxSource != null)
+            return playerExtraSfxSource;
+
+        var go = new GameObject("ItemPickupPlayerExtraSfx");
+        DontDestroyOnLoad(go);
+        playerExtraSfxSource = go.AddComponent<AudioSource>();
+        playerExtraSfxSource.playOnAwake = false;
+        playerExtraSfxSource.loop = false;
+        return playerExtraSfxSource;
     }
 
     bool TrySetMountSfxForImmediateMount(GameObject player)
