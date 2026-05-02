@@ -914,6 +914,20 @@ public class MovementController : MonoBehaviour, IKillable
         return mountedSpriteDown != null ? mountedSpriteDown : spriteRendererDown;
     }
 
+    public AnimatedSpriteRenderer GetMountedDownRendererForExternalStun(bool preferHeadOnly)
+    {
+        if (preferHeadOnly && useHeadOnlyWhenMountedRuntime && headOnlyDown != null)
+            return headOnlyDown;
+
+        if (mountedSpriteDown != null)
+            return mountedSpriteDown;
+
+        if (headOnlyDown != null)
+            return headOnlyDown;
+
+        return spriteRendererDown;
+    }
+
     public void CopyHeadOnlyVisualsTo(
         AnimatedSpriteRenderer targetUp,
         AnimatedSpriteRenderer targetDown,

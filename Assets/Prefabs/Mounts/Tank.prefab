@@ -813,7 +813,7 @@ MonoBehaviour:
   isStunned: 0
   useAnimatedStunRenderer: 0
   stunAnimatedRenderer: {fileID: 0}
-  disableShakeWhenUsingAnimatedStun: 1
+  disableShakeWhenUsingAnimatedStun: 0
   visualOverrideWhileStunned: 1
   disablePlayerControllersWhileStunned: 1
   onlyDisableIfTaggedPlayer: 1

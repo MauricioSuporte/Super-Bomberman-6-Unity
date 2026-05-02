@@ -72,6 +72,7 @@ public class MountVisualController : MonoBehaviour
     private bool playingInactivity;
     private bool playingCornered;
     private bool playingExternalStun;
+    private bool externalStunShakeActive;
 
     private bool isPinkLouieVisual;
     private MovementController louieMovement;
@@ -100,6 +101,7 @@ public class MountVisualController : MonoBehaviour
 
     private AnimatedSpriteRenderer activeLouieInactivityRenderer;
     private AnimatedSpriteRenderer activeExternalStunRenderer;
+    private Vector3 externalStunShakeOffset;
 
     public AnimatedSpriteRenderer LouieInactivityEmoteLoop => louieInactivityEmoteLoop;
     public AnimatedSpriteRenderer LouieInactivityEmoteLoopAlt => louieInactivityEmoteLoopAlt;
@@ -151,7 +153,9 @@ public class MountVisualController : MonoBehaviour
         playingInactivity = false;
         playingCornered = false;
         playingExternalStun = false;
+        externalStunShakeActive = false;
         activeExternalStunRenderer = null;
+        externalStunShakeOffset = Vector3.zero;
         suppressedByRedBoat = false;
 
         headOnlyOffsetsApplied = false;
@@ -369,7 +373,7 @@ public class MountVisualController : MonoBehaviour
             playingInactivity = false;
             playingEndStage = false;
             playingJump = false;
-            transform.localPosition = localOffset;
+            ApplyCurrentLocalOffset();
             return;
         }
 
@@ -383,7 +387,7 @@ public class MountVisualController : MonoBehaviour
         {
             if (owner.IsHoleDeathInProgress)
             {
-                transform.localPosition = localOffset;
+                ApplyCurrentLocalOffset();
                 return;
             }
 
@@ -391,7 +395,7 @@ public class MountVisualController : MonoBehaviour
             return;
         }
 
-        transform.localPosition = localOffset;
+        ApplyCurrentLocalOffset();
 
         bool ownerOnRedBoat = BoatRideZone.IsRidingBoat(owner);
 
@@ -658,6 +662,22 @@ public class MountVisualController : MonoBehaviour
         activeExternalStunRenderer = stunRenderer;
 
         EnsureExternalStunExclusive();
+    }
+
+    public void SetExternalStunShake(Vector3 localOffset, bool on)
+    {
+        externalStunShakeActive = on;
+        externalStunShakeOffset = on ? localOffset : Vector3.zero;
+        ApplyCurrentLocalOffset();
+    }
+
+    private void ApplyCurrentLocalOffset()
+    {
+        Vector3 offset = localOffset;
+        if (externalStunShakeActive)
+            offset += externalStunShakeOffset;
+
+        transform.localPosition = offset;
     }
 
     private void EnsureExternalStunExclusive()
