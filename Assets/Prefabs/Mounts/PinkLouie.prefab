@@ -1205,7 +1205,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PinkLouieJumpAbility
   enabledAbility: 1
-  jumpDurationSeconds: 1
+  jumpDurationSeconds: 0.8
   forwardCells: 2
   jumpArcHeight: 1
   jumpCooldownSeconds: 0.25

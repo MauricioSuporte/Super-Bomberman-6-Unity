@@ -14,7 +14,7 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
     [SerializeField] private bool enabledAbility = true;
 
     [Header("Jump")]
-    public float jumpDurationSeconds = 1f;
+    public float jumpDurationSeconds = 0.8f;
     public int forwardCells = 2;
     public float jumpArcHeight = 1f;
     public float jumpCooldownSeconds = 0.25f;
