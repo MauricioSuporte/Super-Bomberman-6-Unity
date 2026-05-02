@@ -35,7 +35,7 @@ public static class PlayerPersistentStats
         public bool HasMagnetBomb = false;
         public bool HasFullFire = true;
 
-        public MountedType MountedLouie = MountedType.Green;
+        public MountedType MountedLouie = MountedType.Mole;
         public BomberSkin Skin = BomberSkin.White;
 
         public readonly List<ItemType> QueuedEggs = new(8);

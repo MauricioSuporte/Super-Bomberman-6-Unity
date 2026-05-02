@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.Tilemaps;
 
 [DisallowMultipleComponent]
@@ -34,7 +35,7 @@ public class MoleMountDrillAbility : MonoBehaviour, IPlayerAbility
     [Header("Input Lock")]
     [SerializeField] private bool lockInputWhileDrilling = true;
 
-    [Header("Invulnerability")]
+    [Header("Explosion Invulnerability")]
     [SerializeField] private bool invulnerableDuringDrill = true;
 
     [Header("Burrowed (after Phase 3, before teleport)")]
@@ -71,8 +72,10 @@ public class MoleMountDrillAbility : MonoBehaviour, IPlayerAbility
 
     bool deathCancelInProgress;
 
-    CharacterHealth playerHealth;
-    CharacterHealth mountedLouieHealth;
+    MountMovementController mountedLouieMovement;
+    bool cachedExplosionInvulnerability;
+    bool previousPlayerExplosionInvulnerable;
+    bool previousMountExplosionInvulnerable;
 
     struct CachedAsrState
     {
@@ -96,7 +99,6 @@ public class MoleMountDrillAbility : MonoBehaviour, IPlayerAbility
         rb = movement != null ? movement.Rigidbody : null;
 
         audioSource = GetComponentInParent<AudioSource>();
-        playerHealth = GetComponent<CharacterHealth>();
 
         if (enemyLayerMask.value == 0)
             enemyLayerMask = LayerMask.GetMask("Enemy");
@@ -189,7 +191,7 @@ public class MoleMountDrillAbility : MonoBehaviour, IPlayerAbility
             eggQueueCached = true;
         }
 
-        RefreshMountedLouieHealth();
+        RefreshMountedLouieMovement();
 
         if (eggQueue != null)
         {
@@ -226,9 +228,6 @@ public class MoleMountDrillAbility : MonoBehaviour, IPlayerAbility
         if (lockInputWhileDrilling)
             movement.SetInputLocked(true, false);
 
-        if (invulnerableDuringDrill)
-            SetDrillInvulnerability(true);
-
         try
         {
             float p1 = 1f;
@@ -254,6 +253,9 @@ public class MoleMountDrillAbility : MonoBehaviour, IPlayerAbility
             externalAnimator?.PlayPhase(1, dir);
             yield return new WaitForSeconds(p1);
 
+            if (invulnerableDuringDrill)
+                SetDrillExplosionInvulnerability(true);
+
             ApplyPhase1HeadOnlyDownDelta(false);
 
             movement.SetInactivityMountedDownOverride(false);
@@ -267,7 +269,7 @@ public class MoleMountDrillAbility : MonoBehaviour, IPlayerAbility
 
             yield return new WaitForSeconds(burrowedSeconds);
 
-            TryTeleportToOtherGroundTile();
+            TryTeleportAfterBurrow();
 
             externalAnimator?.PlayPhase(4, dir);
             yield return new WaitForSeconds(p2rev);
@@ -297,7 +299,7 @@ public class MoleMountDrillAbility : MonoBehaviour, IPlayerAbility
             }
 
             if (invulnerableDuringDrill)
-                SetDrillInvulnerability(false);
+                SetDrillExplosionInvulnerability(false);
 
             RestoreEggQueueIfNeeded();
 
@@ -307,22 +309,31 @@ public class MoleMountDrillAbility : MonoBehaviour, IPlayerAbility
         }
     }
 
-    void RefreshMountedLouieHealth()
+    void RefreshMountedLouieMovement()
     {
-        mountedLouieHealth = null;
-
-        var louieMove = GetComponentInChildren<MountMovementController>(true);
-        if (louieMove != null)
-            mountedLouieHealth = louieMove.GetComponent<CharacterHealth>();
+        mountedLouieMovement = GetComponentInChildren<MountMovementController>(true);
     }
 
-    void SetDrillInvulnerability(bool value)
+    void SetDrillExplosionInvulnerability(bool value)
     {
-        if (playerHealth != null)
-            playerHealth.SetExternalInvulnerability(value);
+        if (!value && !cachedExplosionInvulnerability)
+            return;
 
-        if (mountedLouieHealth != null)
-            mountedLouieHealth.SetExternalInvulnerability(value);
+        if (value && !cachedExplosionInvulnerability)
+        {
+            previousPlayerExplosionInvulnerable = movement != null && movement.explosionInvulnerable;
+            previousMountExplosionInvulnerable = mountedLouieMovement != null && mountedLouieMovement.explosionInvulnerable;
+            cachedExplosionInvulnerability = true;
+        }
+
+        if (movement != null)
+            movement.SetExplosionInvulnerable(value ? true : previousPlayerExplosionInvulnerable);
+
+        if (mountedLouieMovement != null)
+            mountedLouieMovement.SetExplosionInvulnerable(value ? true : previousMountExplosionInvulnerable);
+
+        if (!value)
+            cachedExplosionInvulnerability = false;
     }
 
     void Cancel()
@@ -335,7 +346,7 @@ public class MoleMountDrillAbility : MonoBehaviour, IPlayerAbility
 
         ApplyPhase1HeadOnlyDownDelta(false);
         EndGlobalSuppression();
-        SetDrillInvulnerability(false);
+        SetDrillExplosionInvulnerability(false);
 
         if (movement != null)
         {
@@ -520,6 +531,50 @@ public class MoleMountDrillAbility : MonoBehaviour, IPlayerAbility
 
         rb.position = targetWorld;
         transform.position = targetWorld;
+    }
+
+    void TryTeleportAfterBurrow()
+    {
+        if (IsBattleModeScene() && TryTeleportToRandomBattlePlayer())
+            return;
+
+        TryTeleportToOtherGroundTile();
+    }
+
+    bool TryTeleportToRandomBattlePlayer()
+    {
+        if (movement == null || rb == null)
+            return false;
+
+        var candidates = new List<MovementController>(GameSession.MaxPlayerId);
+        var players = FindObjectsByType<MovementController>(FindObjectsInactive.Exclude);
+
+        for (int i = 0; i < players.Length; i++)
+        {
+            var candidate = players[i];
+            if (candidate == null)
+                continue;
+
+            if (candidate == movement)
+                continue;
+
+            if (!candidate.CompareTag("Player") || candidate.isDead)
+                continue;
+
+            candidates.Add(candidate);
+        }
+
+        if (candidates.Count == 0)
+            return false;
+
+        var target = candidates[Random.Range(0, candidates.Count)];
+        Vector3 targetWorld = target.Rigidbody != null
+            ? target.Rigidbody.position
+            : target.transform.position;
+
+        rb.position = targetWorld;
+        transform.position = targetWorld;
+        return true;
     }
 
     Component GetSuppressionRoot()
@@ -717,5 +772,11 @@ public class MoleMountDrillAbility : MonoBehaviour, IPlayerAbility
         }
 
         return false;
+    }
+
+    static bool IsBattleModeScene()
+    {
+        string sceneName = SceneManager.GetActiveScene().name;
+        return sceneName.StartsWith("BattleMode_", System.StringComparison.OrdinalIgnoreCase);
     }
 }
