@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 [RequireComponent(typeof(MovementController))]
 [RequireComponent(typeof(AudioSource))]
@@ -49,6 +50,7 @@ public class BlackLouieDashPushAbility : MonoBehaviour, IPlayerAbility
 
     int enemyLayer;
     int bombLayer;
+    int playerLayer;
     int playerLayerMask;
 
     public string Id => AbilityId;
@@ -67,6 +69,7 @@ public class BlackLouieDashPushAbility : MonoBehaviour, IPlayerAbility
 
         enemyLayer = LayerMask.NameToLayer("Enemy");
         bombLayer = LayerMask.NameToLayer("Bomb");
+        playerLayer = LayerMask.NameToLayer("Player");
         playerLayerMask = LayerMask.GetMask("Player");
     }
 
@@ -187,7 +190,7 @@ public class BlackLouieDashPushAbility : MonoBehaviour, IPlayerAbility
                         yield break;
                     }
 
-                    if (TryPushEnemy(hit, dir, tile, out var pushedEnemy))
+                    if (TryPushTarget(hit, dir, tile, out var pushedEnemy))
                     {
                         if (pushedEnemy)
                         {
@@ -229,7 +232,7 @@ public class BlackLouieDashPushAbility : MonoBehaviour, IPlayerAbility
                 {
                     TryKickBomb(hitFinal, dir);
 
-                    if (TryPushEnemy(hitFinal, dir, tile, out var pushedEnemy) && pushedEnemy)
+                    if (TryPushTarget(hitFinal, dir, tile, out var pushedEnemy) && pushedEnemy)
                     {
                         ExtendInvulnerabilityAfterPush();
                         yield return HoldImpactThenEnd();
@@ -306,29 +309,35 @@ public class BlackLouieDashPushAbility : MonoBehaviour, IPlayerAbility
         return true;
     }
 
-    bool TryPushEnemy(Collider2D hit, Vector2 dir, float tileSize, out bool pushedEnemy)
+    bool TryPushTarget(Collider2D hit, Vector2 dir, float tileSize, out bool pushedTarget)
     {
-        pushedEnemy = false;
+        pushedTarget = false;
 
-        if (hit == null || hit.gameObject.layer != enemyLayer)
+        if (hit == null)
             return false;
 
-        var enemyRb = hit.attachedRigidbody;
-        if (enemyRb == null)
+        bool isEnemyTarget = hit.gameObject.layer == enemyLayer;
+        bool isBattlePlayerTarget = IsBattleModeScene() && IsOtherPlayerTarget(hit);
+
+        if (!isEnemyTarget && !isBattlePlayerTarget)
+            return false;
+
+        var targetRb = hit.attachedRigidbody;
+        if (targetRb == null)
         {
-            pushedEnemy = true;
+            pushedTarget = true;
             return true;
         }
 
         var receiver = hit.GetComponentInParent<StunReceiver>() ?? hit.GetComponent<StunReceiver>();
         receiver?.Stun(enemyStunSeconds);
 
-        StartCoroutine(PushEnemyRoutine(enemyRb, dir, tileSize));
-        pushedEnemy = true;
+        StartCoroutine(PushTargetRoutine(targetRb, dir, tileSize));
+        pushedTarget = true;
         return true;
     }
 
-    IEnumerator PushEnemyRoutine(Rigidbody2D enemyRb, Vector2 pushDir, float tileSize)
+    IEnumerator PushTargetRoutine(Rigidbody2D enemyRb, Vector2 pushDir, float tileSize)
     {
         if (enemyRb == null)
             yield break;
@@ -347,15 +356,15 @@ public class BlackLouieDashPushAbility : MonoBehaviour, IPlayerAbility
             Vector2 from = enemyRb.position;
             Vector2 to = from + pushDir * tileSize;
 
-            if (IsBlockedForEnemy(enemyRb, to, pushDir, tileSize))
+            if (IsBlockedForTarget(enemyRb, to, pushDir, tileSize))
                 yield break;
 
-            yield return MoveEnemyOverTime(enemyRb, from, to, enemyPushTilesPerSecond, tileSize);
+            yield return MoveTargetOverTime(enemyRb, from, to, enemyPushTilesPerSecond, tileSize);
             enemyRb.position = SnapToGrid(enemyRb.position, tileSize);
         }
     }
 
-    IEnumerator MoveEnemyOverTime(Rigidbody2D enemyRb, Vector2 from, Vector2 to, float tilesPerSecond, float tileSize)
+    IEnumerator MoveTargetOverTime(Rigidbody2D enemyRb, Vector2 from, Vector2 to, float tilesPerSecond, float tileSize)
     {
         float speed = tilesPerSecond * tileSize;
         float dist = Vector2.Distance(from, to);
@@ -387,6 +396,8 @@ public class BlackLouieDashPushAbility : MonoBehaviour, IPlayerAbility
             : new Vector2(tile * 0.2f, tile * 0.6f);
 
         int mask = (movement != null ? movement.obstacleMask.value : 0) | LayerMask.GetMask("Enemy");
+        if (IsBattleModeScene())
+            mask |= playerLayerMask;
 
         var hits = Physics2D.BoxCastAll(origin, size, 0f, dir, distance, mask);
         if (hits == null || hits.Length == 0)
@@ -406,6 +417,9 @@ public class BlackLouieDashPushAbility : MonoBehaviour, IPlayerAbility
                 continue;
 
             if (col.gameObject == gameObject)
+                continue;
+
+            if (IsOwnPlayerCollider(col))
                 continue;
 
             if (col.isTrigger && col.gameObject.layer != enemyLayer)
@@ -429,7 +443,7 @@ public class BlackLouieDashPushAbility : MonoBehaviour, IPlayerAbility
         return true;
     }
 
-    bool IsBlockedForEnemy(Rigidbody2D enemyRb, Vector2 targetPos, Vector2 dir, float tileSize)
+    bool IsBlockedForTarget(Rigidbody2D enemyRb, Vector2 targetPos, Vector2 dir, float tileSize)
     {
         Vector2 size = Mathf.Abs(dir.x) > 0.01f
             ? new Vector2(tileSize * 0.6f, tileSize * 0.2f)
@@ -459,6 +473,33 @@ public class BlackLouieDashPushAbility : MonoBehaviour, IPlayerAbility
         }
 
         return false;
+    }
+
+    bool IsOtherPlayerTarget(Collider2D hit)
+    {
+        if (hit == null || hit.gameObject.layer != playerLayer)
+            return false;
+
+        if (IsOwnPlayerCollider(hit))
+            return false;
+
+        var targetMovement = hit.GetComponentInParent<MovementController>();
+        return targetMovement != null && targetMovement.CompareTag("Player") && !targetMovement.isDead;
+    }
+
+    bool IsOwnPlayerCollider(Collider2D hit)
+    {
+        if (hit == null || movement == null)
+            return false;
+
+        var targetMovement = hit.GetComponentInParent<MovementController>();
+        return targetMovement == movement;
+    }
+
+    static bool IsBattleModeScene()
+    {
+        string sceneName = SceneManager.GetActiveScene().name;
+        return sceneName.StartsWith("BattleMode_", System.StringComparison.OrdinalIgnoreCase);
     }
 
     Vector2 SnapToGrid(Vector2 pos, float tileSize)
