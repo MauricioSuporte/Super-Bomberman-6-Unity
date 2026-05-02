@@ -28,6 +28,7 @@ public class GreenLouieDashAbility : MonoBehaviour, IPlayerAbility
     IGreenLouieDashExternalAnimator externalAnimator;
 
     int bombLayer;
+    int playerLayer;
 
     bool deathCancelInProgress;
 
@@ -43,6 +44,7 @@ public class GreenLouieDashAbility : MonoBehaviour, IPlayerAbility
         audioSource = GetComponent<AudioSource>();
 
         bombLayer = LayerMask.NameToLayer("Bomb");
+        playerLayer = LayerMask.NameToLayer("Player");
     }
 
     void OnDisable() => CancelDash();
@@ -103,6 +105,13 @@ public class GreenLouieDashAbility : MonoBehaviour, IPlayerAbility
         }
 
         Vector2 dir = lastFacingDir == Vector2.zero ? Vector2.down : lastFacingDir;
+        float dashSpeed = movement.speed * dashSpeedMultiplier;
+
+        if (!CanStartDash(dir, dashSpeed))
+        {
+            routine = null;
+            yield break;
+        }
 
         dashActive = true;
         originalSpeed = movement.speed;
@@ -110,7 +119,7 @@ public class GreenLouieDashAbility : MonoBehaviour, IPlayerAbility
         if (audioSource != null && dashSfx != null)
             audioSource.PlayOneShot(dashSfx, dashSfxVolume);
 
-        movement.speed *= dashSpeedMultiplier;
+        movement.speed = dashSpeed;
         movement.SetInputLocked(true, false);
 
         externalAnimator?.Play(dir);
@@ -244,6 +253,9 @@ public class GreenLouieDashAbility : MonoBehaviour, IPlayerAbility
             if (hit.gameObject == gameObject)
                 continue;
 
+            if (IsPlayerCollider(hit))
+                continue;
+
             if (hit.isTrigger)
                 continue;
 
@@ -257,6 +269,27 @@ public class GreenLouieDashAbility : MonoBehaviour, IPlayerAbility
         }
 
         return false;
+    }
+
+    bool IsPlayerCollider(Collider2D hit)
+    {
+        if (hit == null)
+            return false;
+
+        if (hit.gameObject.layer == playerLayer)
+            return true;
+
+        var targetMovement = hit.GetComponentInParent<MovementController>();
+        return targetMovement != null && targetMovement.CompareTag("Player");
+    }
+
+    bool CanStartDash(Vector2 dir, float dashSpeed)
+    {
+        if (movement == null || rb == null)
+            return false;
+
+        Vector2 nextPos = rb.position + Mathf.Max(0.01f, dashSpeed) * Time.fixedDeltaTime * dir;
+        return !IsBlocked(nextPos, dir);
     }
 
     public void Enable() => enabledAbility = true;
