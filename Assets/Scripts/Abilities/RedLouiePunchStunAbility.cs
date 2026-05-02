@@ -1,6 +1,8 @@
 ﻿using Assets.Scripts.Interface;
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 [RequireComponent(typeof(MovementController))]
 [RequireComponent(typeof(AudioSource))]
@@ -15,7 +17,7 @@ public class RedLouiePunchStunAbility : MonoBehaviour, IPlayerAbility
     public float punchRange = 0.75f;
     public Vector2 punchBoxSize = new(0.65f, 0.45f);
 
-    public float stunSeconds = 2f;
+    public float stunSeconds = 1f;
 
     public float successCooldownSeconds = 2.25f;
 
@@ -105,7 +107,7 @@ public class RedLouiePunchStunAbility : MonoBehaviour, IPlayerAbility
 
         movement.SetInputLocked(true, false);
 
-        bool stunnedSomeone = TryHitEnemy(dir);
+        bool stunnedSomeone = TryHitTarget(dir);
 
         if (stunnedSomeone)
         {
@@ -164,10 +166,14 @@ public class RedLouiePunchStunAbility : MonoBehaviour, IPlayerAbility
         externalAnimator = null;
     }
 
-    bool TryHitEnemy(Vector2 dir)
+    bool TryHitTarget(Vector2 dir)
     {
         int enemyMask = LayerMask.GetMask("Enemy");
-        if (enemyMask == 0)
+        bool isBattleMode = IsBattleModeScene();
+        int playerMask = isBattleMode ? LayerMask.GetMask("Player") : 0;
+        int targetMask = enemyMask | playerMask;
+
+        if (targetMask == 0)
             return false;
 
         Vector2 origin = rb != null ? rb.position : (Vector2)transform.position;
@@ -186,7 +192,7 @@ public class RedLouiePunchStunAbility : MonoBehaviour, IPlayerAbility
         var filter = new ContactFilter2D
         {
             useLayerMask = true,
-            layerMask = enemyMask,
+            layerMask = targetMask,
             useTriggers = true
         };
 
@@ -197,6 +203,7 @@ public class RedLouiePunchStunAbility : MonoBehaviour, IPlayerAbility
             return false;
 
         bool stunnedAny = false;
+        HashSet<StunReceiver> stunnedReceivers = null;
 
         for (int i = 0; i < count; i++)
         {
@@ -204,18 +211,38 @@ public class RedLouiePunchStunAbility : MonoBehaviour, IPlayerAbility
             if (hit == null)
                 continue;
 
+            var targetMovement = hit.GetComponentInParent<MovementController>();
+            if (targetMovement != null)
+            {
+                if (targetMovement == movement)
+                    continue;
+
+                if (targetMovement.CompareTag("Player") && !isBattleMode)
+                    continue;
+            }
+
             var receiver = hit.GetComponentInParent<StunReceiver>();
             if (receiver == null)
                 receiver = hit.GetComponent<StunReceiver>();
 
             if (receiver != null)
             {
+                stunnedReceivers ??= new HashSet<StunReceiver>();
+                if (!stunnedReceivers.Add(receiver))
+                    continue;
+
                 receiver.Stun(stunSeconds);
                 stunnedAny = true;
             }
         }
 
         return stunnedAny;
+    }
+
+    static bool IsBattleModeScene()
+    {
+        string sceneName = SceneManager.GetActiveScene().name;
+        return sceneName.StartsWith("BattleMode_", System.StringComparison.OrdinalIgnoreCase);
     }
 
     void Cancel()

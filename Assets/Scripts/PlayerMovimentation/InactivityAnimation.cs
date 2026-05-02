@@ -43,6 +43,12 @@ public sealed class InactivityAnimation : MonoBehaviour
     public float ChanceAltAnimation => Mathf.Clamp01(chanceAltAnimation);
     public bool RefreshFrameOnEnter => refreshFrameOnEnter;
 
+    public void CancelForExternalOverride()
+    {
+        StopEmote();
+        lastInputTime = Time.time;
+    }
+
     private void Awake()
     {
         movement = GetComponent<MovementController>();
