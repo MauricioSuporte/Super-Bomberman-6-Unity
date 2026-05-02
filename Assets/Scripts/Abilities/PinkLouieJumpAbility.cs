@@ -36,6 +36,7 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
 
     CharacterHealth playerHealth;
     PlayerMountCompanion companion;
+    AbilitySystem abilitySystem;
 
     Coroutine routine;
     Coroutine visualRoutine;
@@ -43,6 +44,8 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
     float nextAllowedTime;
 
     IPinkLouieJumpExternalAnimator externalAnimator;
+
+    int bombLayer;
 
     Transform jumpVisualRoot;
     Vector3 jumpVisualBaseLocalPosition;
@@ -66,6 +69,9 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
 
         playerHealth = GetComponent<CharacterHealth>();
         TryGetComponent(out companion);
+        TryGetComponent(out abilitySystem);
+
+        bombLayer = LayerMask.NameToLayer("Bomb");
 
         if (shadow == null)
             shadow = GetComponentInChildren<PinkLouieShadowController>(true);
@@ -508,6 +514,9 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
         if (hits == null || hits.Length == 0)
             return true;
 
+        bool canPassDestructibles = HasDestructiblePassEnabled();
+        bool canPassBombs = HasBombPassEnabled();
+
         for (int i = 0; i < hits.Length; i++)
         {
             var hit = hits[i];
@@ -520,8 +529,14 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
             if (hit.isTrigger)
                 continue;
 
-            if (hit.gameObject.layer == LayerMask.NameToLayer("Bomb"))
+            if (canPassDestructibles && hit.CompareTag("Destructibles"))
+                continue;
+
+            if (hit.gameObject.layer == bombLayer)
             {
+                if (canPassBombs)
+                    continue;
+
                 var bomb = hit.GetComponent<Bomb>();
                 var myBombController = GetComponent<BombController>();
 
@@ -537,6 +552,42 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
         }
 
         return true;
+    }
+
+    bool HasDestructiblePassEnabled()
+    {
+        if (PlayerPersistentStats.Get(GetPlayerId()).CanPassDestructibles)
+            return true;
+
+        if (abilitySystem == null && !TryGetComponent(out abilitySystem))
+            return false;
+
+        abilitySystem.RebuildCache();
+        return abilitySystem.IsEnabled(DestructiblePassAbility.AbilityId);
+    }
+
+    bool HasBombPassEnabled()
+    {
+        if (PlayerPersistentStats.Get(GetPlayerId()).CanPassBombs)
+            return true;
+
+        if (abilitySystem == null && !TryGetComponent(out abilitySystem))
+            return false;
+
+        abilitySystem.RebuildCache();
+        return abilitySystem.IsEnabled(BombPassAbility.AbilityId);
+    }
+
+    int GetPlayerId()
+    {
+        if (TryGetComponent<PlayerIdentity>(out var id) && id != null)
+            return Mathf.Clamp(id.playerId, 1, 6);
+
+        var parentId = GetComponentInParent<PlayerIdentity>(true);
+        if (parentId != null)
+            return Mathf.Clamp(parentId.playerId, 1, 6);
+
+        return 1;
     }
 
     void StartJumpVisuals(Vector2 dir)
