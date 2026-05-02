@@ -71,6 +71,7 @@ public class MountVisualController : MonoBehaviour
     private bool playingEndStage;
     private bool playingInactivity;
     private bool playingCornered;
+    private bool playingExternalStun;
 
     private bool isPinkLouieVisual;
     private MovementController louieMovement;
@@ -98,6 +99,7 @@ public class MountVisualController : MonoBehaviour
     private float playerEffectTintNormalized;
 
     private AnimatedSpriteRenderer activeLouieInactivityRenderer;
+    private AnimatedSpriteRenderer activeExternalStunRenderer;
 
     public AnimatedSpriteRenderer LouieInactivityEmoteLoop => louieInactivityEmoteLoop;
     public AnimatedSpriteRenderer LouieInactivityEmoteLoopAlt => louieInactivityEmoteLoopAlt;
@@ -148,6 +150,8 @@ public class MountVisualController : MonoBehaviour
         playingEndStage = false;
         playingInactivity = false;
         playingCornered = false;
+        playingExternalStun = false;
+        activeExternalStunRenderer = null;
         suppressedByRedBoat = false;
 
         headOnlyOffsetsApplied = false;
@@ -211,6 +215,9 @@ public class MountVisualController : MonoBehaviour
 
     public void SetInactivityEmote(bool on)
     {
+        if (playingExternalStun)
+            return;
+
         if (on)
         {
             SetInactivityEmote(louieInactivityEmoteLoop, true);
@@ -237,6 +244,9 @@ public class MountVisualController : MonoBehaviour
 
     public void SetInactivityEmote(AnimatedSpriteRenderer chosenRenderer, bool refreshFrameOnEnter)
     {
+        if (playingExternalStun)
+            return;
+
         playingEndStage = false;
         playingCornered = false;
         playingJump = false;
@@ -282,6 +292,9 @@ public class MountVisualController : MonoBehaviour
 
     public bool TryPlayEndStage(float totalTime, int frameCount)
     {
+        if (playingExternalStun)
+            return false;
+
         if (louieEndStage == null)
             return false;
 
@@ -305,6 +318,9 @@ public class MountVisualController : MonoBehaviour
 
     public void ForceIdleUp()
     {
+        if (playingExternalStun)
+            return;
+
         playingInactivity = false;
         playingEndStage = false;
         playingCornered = false;
@@ -327,6 +343,9 @@ public class MountVisualController : MonoBehaviour
 
     public void SetInactivityEmoteRandom(float chanceAlt)
     {
+        if (playingExternalStun)
+            return;
+
         float chance = Mathf.Clamp01(chanceAlt);
 
         var chosen =
@@ -397,6 +416,10 @@ public class MountVisualController : MonoBehaviour
         if (playingJump)
         {
             EnsureJumpExclusive();
+        }
+        else if (playingExternalStun)
+        {
+            EnsureExternalStunExclusive();
         }
         else if (playingCornered)
         {
@@ -608,6 +631,48 @@ public class MountVisualController : MonoBehaviour
         louieEndStage.loop = true;
         louieEndStage.pingPong = false;
         louieEndStage.RefreshFrame();
+    }
+
+    public void SetExternalStunVisual(AnimatedSpriteRenderer stunRenderer, bool on)
+    {
+        if (!on || stunRenderer == null)
+        {
+            bool wasPlayingExternalStun = playingExternalStun;
+            playingExternalStun = false;
+            activeExternalStunRenderer = null;
+
+            if (!wasPlayingExternalStun || owner == null)
+                return;
+
+            bool isIdle = owner.Direction == Vector2.zero;
+            Vector2 faceDir = isIdle ? owner.FacingDirection : owner.Direction;
+            ApplyDirection(faceDir, isIdle);
+            return;
+        }
+
+        playingInactivity = false;
+        playingEndStage = false;
+        playingCornered = false;
+        playingJump = false;
+        playingExternalStun = true;
+        activeExternalStunRenderer = stunRenderer;
+
+        EnsureExternalStunExclusive();
+    }
+
+    private void EnsureExternalStunExclusive()
+    {
+        if (activeExternalStunRenderer == null)
+        {
+            playingExternalStun = false;
+            return;
+        }
+
+        HardExclusive(activeExternalStunRenderer);
+        activeExternalStunRenderer.loop = true;
+        activeExternalStunRenderer.idle = false;
+        activeExternalStunRenderer.pingPong = false;
+        activeExternalStunRenderer.RefreshFrame();
     }
 
     private void HardExclusive(AnimatedSpriteRenderer keep)
@@ -837,6 +902,9 @@ public class MountVisualController : MonoBehaviour
 
     public void SetCornered(bool on)
     {
+        if (playingExternalStun)
+            return;
+
         if (louieCornered == null)
             return;
 
@@ -909,6 +977,9 @@ public class MountVisualController : MonoBehaviour
 
     public void SetJumpVisual(bool on, Vector2 facing, bool descending = false)
     {
+        if (playingExternalStun)
+            return;
+
         if (on && !HasJumpVisuals())
             return;
 

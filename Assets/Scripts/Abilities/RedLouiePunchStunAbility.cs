@@ -20,6 +20,7 @@ public class RedLouiePunchStunAbility : MonoBehaviour, IPlayerAbility
     public float stunSeconds = 1f;
 
     public float successCooldownSeconds = 2.25f;
+    public float battlePlayerSuccessCooldownSeconds = 2f;
 
     public AudioClip punchSfx;
     [Range(0f, 1f)] public float punchSfxVolume = 1f;
@@ -107,14 +108,18 @@ public class RedLouiePunchStunAbility : MonoBehaviour, IPlayerAbility
 
         movement.SetInputLocked(true, false);
 
-        bool stunnedSomeone = TryHitTarget(dir);
+        bool stunnedSomeone = TryHitTarget(dir, out bool stunnedBattlePlayer);
 
         if (stunnedSomeone)
         {
             if (audioSource != null && punchSfx != null)
                 audioSource.PlayOneShot(punchSfx, punchSfxVolume);
 
-            float extra = Mathf.Max(0.01f, successCooldownSeconds);
+            float cooldownSeconds = stunnedBattlePlayer
+                ? battlePlayerSuccessCooldownSeconds
+                : successCooldownSeconds;
+
+            float extra = Mathf.Max(0.01f, cooldownSeconds);
             nextAllowedTime = Mathf.Max(nextAllowedTime, Time.time + extra);
         }
         else
@@ -166,8 +171,10 @@ public class RedLouiePunchStunAbility : MonoBehaviour, IPlayerAbility
         externalAnimator = null;
     }
 
-    bool TryHitTarget(Vector2 dir)
+    bool TryHitTarget(Vector2 dir, out bool stunnedBattlePlayer)
     {
+        stunnedBattlePlayer = false;
+
         int enemyMask = LayerMask.GetMask("Enemy");
         bool isBattleMode = IsBattleModeScene();
         int playerMask = isBattleMode ? LayerMask.GetMask("Player") : 0;
@@ -221,6 +228,11 @@ public class RedLouiePunchStunAbility : MonoBehaviour, IPlayerAbility
                     continue;
             }
 
+            bool isBattlePlayerTarget =
+                isBattleMode &&
+                targetMovement != null &&
+                targetMovement.CompareTag("Player");
+
             var receiver = hit.GetComponentInParent<StunReceiver>();
             if (receiver == null)
                 receiver = hit.GetComponent<StunReceiver>();
@@ -233,6 +245,9 @@ public class RedLouiePunchStunAbility : MonoBehaviour, IPlayerAbility
 
                 receiver.Stun(stunSeconds);
                 stunnedAny = true;
+
+                if (isBattlePlayerTarget)
+                    stunnedBattlePlayer = true;
             }
         }
 

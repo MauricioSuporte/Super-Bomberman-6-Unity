@@ -81,6 +81,12 @@ public class StunReceiver : MonoBehaviour
     private bool savedBombControllerEnabled;
     private bool savedManualDismountEnabled;
     private bool savedSuppressInactivityAnimation;
+    private MountVisualController activeMountedStunVisual;
+    private AnimatedSpriteRenderer activeMountedPlayerStunRenderer;
+    private bool savedMountedPlayerRendererEnabled;
+    private bool savedMountedPlayerRendererIdle;
+    private bool savedMountedPlayerRendererLoop;
+    private bool savedMountedPlayerSpriteEnabled;
 
     private MovementControllerAI cachedAIMove;
     private EnemyMovementController cachedEnemyMove;
@@ -191,9 +197,13 @@ public class StunReceiver : MonoBehaviour
         }
         else
         {
+            HideMountedPlayerDownForMountedStun();
             spriteBases.Clear();
             animStates.Clear();
             customStunActive = false;
+            activeStunAnimatedRenderer = null;
+            activeMountedStunVisual = null;
+            activeMountedPlayerStunRenderer = null;
         }
 
         stunVisualSuppressedByDamaged = false;
@@ -232,6 +242,11 @@ public class StunReceiver : MonoBehaviour
 
         if (renderer != null)
         {
+            if (activeMountedStunVisual != null)
+                activeMountedStunVisual.SetExternalStunVisual(null, false);
+
+            HideMountedPlayerDownForMountedStun();
+
             renderer.idle = true;
             renderer.loop = false;
             SetAnimEnabled(renderer, false);
@@ -239,6 +254,8 @@ public class StunReceiver : MonoBehaviour
 
         customStunActive = false;
         activeStunAnimatedRenderer = null;
+        activeMountedStunVisual = null;
+        activeMountedPlayerStunRenderer = null;
 
         spriteBases.Clear();
         animStates.Clear();
@@ -401,10 +418,13 @@ public class StunReceiver : MonoBehaviour
         }
         else
         {
+            HideMountedPlayerDownForMountedStun();
             spriteBases.Clear();
             animStates.Clear();
             customStunActive = false;
             activeStunAnimatedRenderer = null;
+            activeMountedStunVisual = null;
+            activeMountedPlayerStunRenderer = null;
         }
 
         stunVisualSuppressedByDamaged = false;
@@ -446,9 +466,13 @@ public class StunReceiver : MonoBehaviour
 
         if (suppressRestore || !isActiveAndEnabled || !gameObject.activeInHierarchy)
         {
+            HideMountedPlayerDownForMountedStun();
             spriteBases.Clear();
             animStates.Clear();
             customStunActive = false;
+            activeStunAnimatedRenderer = null;
+            activeMountedStunVisual = null;
+            activeMountedPlayerStunRenderer = null;
             deferredVisualRestoreRoutine = null;
             yield break;
         }
@@ -695,6 +719,11 @@ public class StunReceiver : MonoBehaviour
             renderer.loop = true;
             renderer.idle = false;
 
+            if (activeMountedStunVisual != null)
+                activeMountedStunVisual.SetExternalStunVisual(renderer, true);
+
+            ShowMountedPlayerDownForMountedStun();
+
             SetAnimEnabled(renderer, true);
             renderer.RefreshFrame();
         }
@@ -731,12 +760,22 @@ public class StunReceiver : MonoBehaviour
 
         if (suppress)
         {
+            if (activeMountedStunVisual != null)
+                activeMountedStunVisual.SetExternalStunVisual(null, false);
+
+            HideMountedPlayerDownForMountedStun();
+
             SetAnimEnabled(renderer, false);
             return;
         }
 
         renderer.loop = true;
         renderer.idle = false;
+        if (activeMountedStunVisual != null)
+            activeMountedStunVisual.SetExternalStunVisual(renderer, true);
+
+        ShowMountedPlayerDownForMountedStun();
+
         SetAnimEnabled(renderer, true);
         renderer.RefreshFrame();
     }
@@ -748,6 +787,11 @@ public class StunReceiver : MonoBehaviour
 
         if (activeStunAnimatedRenderer != null)
         {
+            if (activeMountedStunVisual != null)
+                activeMountedStunVisual.SetExternalStunVisual(null, false);
+
+            HideMountedPlayerDownForMountedStun();
+
             activeStunAnimatedRenderer.idle = savedStunRendererIdle;
             activeStunAnimatedRenderer.loop = savedStunRendererLoop;
             SetAnimEnabled(activeStunAnimatedRenderer, savedStunRendererEnabled);
@@ -763,6 +807,8 @@ public class StunReceiver : MonoBehaviour
 
         customStunActive = false;
         activeStunAnimatedRenderer = null;
+        activeMountedStunVisual = null;
+        activeMountedPlayerStunRenderer = null;
     }
 
     private void ExitCustomStunOverride()
@@ -774,6 +820,11 @@ public class StunReceiver : MonoBehaviour
 
         if (activeStunAnimatedRenderer != null)
         {
+            if (activeMountedStunVisual != null)
+                activeMountedStunVisual.SetExternalStunVisual(null, false);
+
+            HideMountedPlayerDownForMountedStun();
+
             activeStunAnimatedRenderer.idle = savedStunRendererIdle;
             activeStunAnimatedRenderer.loop = savedStunRendererLoop;
             SetAnimEnabled(activeStunAnimatedRenderer, savedStunRendererEnabled);
@@ -789,6 +840,8 @@ public class StunReceiver : MonoBehaviour
 
         customStunActive = false;
         activeStunAnimatedRenderer = null;
+        activeMountedStunVisual = null;
+        activeMountedPlayerStunRenderer = null;
     }
 
     void OnDisable()
@@ -831,6 +884,10 @@ public class StunReceiver : MonoBehaviour
     {
         if (cachedMovement != null && cachedMovement.IsMounted)
         {
+            var mountedStunRenderer = ResolveMountedCustomStunAnimatedRenderer();
+            if (mountedStunRenderer != null)
+                return mountedStunRenderer;
+
             AnimatedSpriteRenderer mountedRenderer = null;
             Vector2 face = cachedMovement.FacingDirection;
             if (face == Vector2.zero)
@@ -862,6 +919,76 @@ public class StunReceiver : MonoBehaviour
             stunAnimatedRenderer = GetComponent<AnimatedSpriteRenderer>();
 
         return stunAnimatedRenderer;
+    }
+
+    private AnimatedSpriteRenderer ResolveMountedCustomStunAnimatedRenderer()
+    {
+        if (cachedMovement == null)
+            return null;
+
+        var mountVisual = cachedMovement.GetComponentInChildren<MountVisualController>(true);
+        if (mountVisual == null)
+            return null;
+
+        var mountReceiver = mountVisual.GetComponentInParent<StunReceiver>();
+        if (mountReceiver == null || mountReceiver == this)
+            mountReceiver = mountVisual.GetComponentInChildren<StunReceiver>(true);
+
+        if (mountReceiver == null || mountReceiver == this)
+            return null;
+
+        if (!mountReceiver.useAnimatedStunRenderer || mountReceiver.stunAnimatedRenderer == null)
+            return null;
+
+        activeMountedStunVisual = mountVisual;
+        return mountReceiver.stunAnimatedRenderer;
+    }
+
+    private void ShowMountedPlayerDownForMountedStun()
+    {
+        if (activeMountedStunVisual == null || cachedMovement == null || cachedMovement.mountedSpriteDown == null)
+            return;
+
+        var renderer = cachedMovement.mountedSpriteDown;
+
+        if (activeMountedPlayerStunRenderer != renderer)
+        {
+            activeMountedPlayerStunRenderer = renderer;
+            savedMountedPlayerRendererEnabled = renderer.enabled;
+            savedMountedPlayerRendererIdle = renderer.idle;
+            savedMountedPlayerRendererLoop = renderer.loop;
+
+            if (renderer.TryGetComponent(out SpriteRenderer sr) && sr != null)
+                savedMountedPlayerSpriteEnabled = sr.enabled;
+            else
+                savedMountedPlayerSpriteEnabled = false;
+        }
+
+        renderer.enabled = true;
+        renderer.idle = true;
+        renderer.loop = false;
+        renderer.pingPong = false;
+
+        if (renderer.TryGetComponent(out SpriteRenderer spriteRenderer) && spriteRenderer != null)
+            spriteRenderer.enabled = true;
+
+        renderer.RefreshFrame();
+    }
+
+    private void HideMountedPlayerDownForMountedStun()
+    {
+        if (activeMountedPlayerStunRenderer == null)
+            return;
+
+        var renderer = activeMountedPlayerStunRenderer;
+        renderer.enabled = savedMountedPlayerRendererEnabled;
+        renderer.idle = savedMountedPlayerRendererIdle;
+        renderer.loop = savedMountedPlayerRendererLoop;
+
+        if (renderer.TryGetComponent(out SpriteRenderer spriteRenderer) && spriteRenderer != null)
+            spriteRenderer.enabled = savedMountedPlayerSpriteEnabled;
+
+        renderer.RefreshFrame();
     }
 
     private void InitializeStunVisualIfNeeded(bool wantsCustomAnim)
