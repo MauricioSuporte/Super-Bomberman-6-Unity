@@ -30,10 +30,6 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
     public AudioClip kickSfx;
     [Range(0f, 1f)] public float kickSfxVolume = 1f;
 
-    [Header("Bomb Kick")]
-    [SerializeField] private float bombKickOverlapSize = 0.60f;
-    [SerializeField] private float bombKickOriginBlockerSize = 0.90f;
-    [SerializeField] private bool bombKickOriginBlockerUseTrigger = false;
     private readonly Dictionary<Bomb, Vector2> _bombPlantDirection = new();
     private readonly HashSet<Bomb> _bombEarlyKickUnlocked = new();
     private Vector2 _lastOwnerDirection = Vector2.zero;
@@ -59,6 +55,13 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
         None = 0,
         Bomb = 1,
         Tile = 2
+    }
+
+    sealed class BombQueueTransfer
+    {
+        public bool hitDestructible;
+        public Vector3Int destructibleCell;
+        public TileBase destructibleTile;
     }
 
     void Awake()
@@ -491,101 +494,14 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
                     if (currentBomb == null)
                         break;
 
-                    Vector2 currentBombCell = SnapToGrid(currentBomb.transform.position, tileSize);
-                    Vector3Int nextCell = new Vector3Int(
-                        Mathf.RoundToInt((currentBombCell.x + kickDir.x * tileSize) / tileSize),
-                        Mathf.RoundToInt((currentBombCell.y + kickDir.y * tileSize) / tileSize),
-                        0);
+                    var transfer = new BombQueueTransfer();
+                    yield return BombQueueRoutine(currentBomb, kickDir, destructibleTilemap, animEndTime, ReleaseInputIfNeeded, transfer);
 
-                    bool hasAdjacentBomb = TryGetBombAtCell(SnapToGrid(currentBomb.transform.position, tileSize) + kickDir * tileSize, out Bomb adjacentBomb)
-                                           && adjacentBomb != null
-                                           && adjacentBomb != currentBomb
-                                           && !adjacentBomb.IsBeingKicked;
-
-                    bool hasAdjacentTile = TryGetDestructibleAtCell(destructibleTilemap, nextCell, out TileBase adjacentTile);
-
-                    if (hasAdjacentBomb)
+                    if (transfer.hitDestructible && transfer.destructibleTile != null)
                     {
-                        currentBomb = adjacentBomb;
-                        moverType = ChainMoverType.Bomb;
-                        continue;
-                    }
-
-                    if (hasAdjacentTile)
-                    {
-                        BeginTileMover(nextCell, adjacentTile);
-                        continue;
-                    }
-
-                    bool started = StartBombKick(currentBomb, kickDir, destructibleTilemap);
-                    if (!started)
-                        break;
-
-                    Vector2 currentCell = SnapToGrid(currentBomb.transform.position, tileSize);
-                    Bomb nextBomb = null;
-                    TileBase nextTile = null;
-                    Vector3Int nextTileCell = default;
-                    while (currentBomb != null && currentBomb.IsBeingKicked && enabledAbility && movement != null && !movement.isDead)
-                    {
-                        ReleaseInputIfNeeded();
-
-                        Vector2 snapped = SnapToGrid(currentBomb.transform.position, tileSize);
-                        if (snapped != currentCell)
-                            currentCell = snapped;
-
-                        Vector2 nextBombCellWorld = currentCell + kickDir * tileSize;
-                        nextTileCell = new Vector3Int(
-                            Mathf.RoundToInt(nextBombCellWorld.x / tileSize),
-                            Mathf.RoundToInt(nextBombCellWorld.y / tileSize),
-                            0);
-
-                        if (TryGetBombAtCell(nextBombCellWorld, out Bomb foundBomb) &&
-                            foundBomb != null &&
-                            foundBomb != currentBomb &&
-                            !foundBomb.IsBeingKicked)
-                        {
-                            nextBomb = foundBomb;
-                            break;
-                        }
-
-                        if (TryGetDestructibleAtCell(destructibleTilemap, nextTileCell, out TileBase foundTile))
-                        {
-                            nextTile = foundTile;
-                            break;
-                        }
-
-                        if (IsMixedChainSolidAt(nextBombCellWorld, kickDir, currentBomb))
-                        {
-                            break;
-                        }
-
-                        yield return null;
-                    }
-
-                    if (currentBomb != null && currentBomb.IsBeingKicked)
-                        currentBomb.StopKickAndSnapToGrid(tileSize);
-
-                    if (nextBomb != null)
-                    {
-                        currentBomb = nextBomb;
-                        moverType = ChainMoverType.Bomb;
-                        continue;
-                    }
-
-                    if (nextTile != null)
-                    {
-                        Bomb bombToBounce = currentBomb;
-                        bool shouldBounceBack = bombToBounce != null && bombToBounce.IsRubberBomb;
-
-                        BeginTileMover(nextTileCell, nextTile);
-
-                        if (shouldBounceBack && bombToBounce != null && !bombToBounce.HasExploded)
-                        {
-                            Vector2 reverseDir = -kickDir;
-                            StartBombKickInDirection(bombToBounce, reverseDir, destructibleTilemap);
-                        }
-
+                        BeginTileMover(transfer.destructibleCell, transfer.destructibleTile);
                         currentBomb = null;
+                        moverType = ChainMoverType.Tile;
                         continue;
                     }
 
@@ -623,54 +539,6 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
             if (destructibleTilemap != null)
                 ApplyShadowForCell(currentTileCell);
         }
-    }
-
-    bool StartBombKickInDirection(Bomb bomb, Vector2 dir, Tilemap destructibleTilemap)
-    {
-        if (bomb == null)
-            return false;
-
-        if (bomb.IsBeingKicked)
-            return false;
-
-        if (!bomb.CanBeKicked && !bomb.CanBeKickedEarly)
-            return false;
-
-        dir = dir.normalized;
-
-        if (!bomb.IsSolid && _bombPlantDirection.TryGetValue(bomb, out var plantDir))
-        {
-            plantDir = plantDir.normalized;
-
-            if (!_bombEarlyKickUnlocked.Contains(bomb))
-            {
-                if (Vector2.Dot(plantDir, dir) < -0.9f)
-                    _bombEarlyKickUnlocked.Add(bomb);
-                else
-                    return false;
-            }
-        }
-
-        LayerMask bombObstacles = movement.obstacleMask.value | LayerMask.GetMask("Enemy");
-
-        bool started = bomb.StartKick(
-            dir,
-            movement.tileSize,
-            bombObstacles,
-            destructibleTilemap,
-            LayerMask.GetMask("Player", "Stage", "Bomb", "Enemy", "Louie"),
-            bombKickOverlapSize,
-            bombKickOriginBlockerSize,
-            bombKickOriginBlockerUseTrigger
-        );
-
-        if (!started)
-            return false;
-
-        _bombPlantDirection.Remove(bomb);
-        _bombEarlyKickUnlocked.Remove(bomb);
-
-        return true;
     }
 
     bool TryGetBombAtCell(Vector2 worldCellCenter, out Bomb bomb)
@@ -721,7 +589,175 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
         return true;
     }
 
-    bool StartBombKick(Bomb bomb, Vector2 dir, Tilemap destructibleTilemap)
+    IEnumerator BombQueueRoutine(
+        Bomb firstBomb,
+        Vector2 kickDir,
+        Tilemap destructibleTilemap,
+        float animEndTime,
+        System.Action releaseInputIfNeeded,
+        BombQueueTransfer transfer)
+    {
+        if (firstBomb == null || movement == null)
+            yield break;
+
+        kickDir = kickDir.normalized;
+        float tileSize = movement.tileSize;
+        float stepSeconds = cellsPerSecond <= 0.01f ? 0.05f : (1f / cellsPerSecond);
+        var queue = new List<Bomb>(8) { firstBomb };
+
+        while (enabledAbility && movement != null && !movement.isDead)
+        {
+            releaseInputIfNeeded?.Invoke();
+
+            ExtendBombQueue(queue, kickDir, tileSize);
+
+            if (queue.Count == 0)
+                yield break;
+
+            if (!CanMoveBombQueue(queue, kickDir, tileSize, destructibleTilemap, transfer))
+                yield break;
+
+            var starts = new Vector2[queue.Count];
+            var ends = new Vector2[queue.Count];
+            var bodies = new Rigidbody2D[queue.Count];
+
+            for (int i = 0; i < queue.Count; i++)
+            {
+                Bomb bomb = queue[i];
+                if (bomb == null || bomb.HasExploded)
+                    yield break;
+
+                starts[i] = SnapToGrid(bomb.transform.position, tileSize);
+                ends[i] = starts[i] + kickDir * tileSize;
+                bodies[i] = bomb.GetComponent<Rigidbody2D>();
+            }
+
+            float tMove = 0f;
+            while (tMove < 1f)
+            {
+                if (!enabledAbility || movement == null || movement.isDead)
+                    yield break;
+
+                if (Time.time >= animEndTime)
+                    releaseInputIfNeeded?.Invoke();
+
+                tMove += Time.deltaTime / Mathf.Max(0.0001f, stepSeconds);
+                float t = Mathf.Clamp01(tMove);
+
+                for (int i = 0; i < queue.Count; i++)
+                {
+                    Bomb bomb = queue[i];
+                    if (bomb == null || bomb.HasExploded)
+                        continue;
+
+                    Vector2 pos = Vector2.Lerp(starts[i], ends[i], t);
+                    if (bodies[i] != null)
+                        bodies[i].MovePosition(pos);
+
+                    bomb.transform.position = pos;
+                }
+
+                yield return null;
+            }
+
+            for (int i = 0; i < queue.Count; i++)
+            {
+                Bomb bomb = queue[i];
+                if (bomb == null || bomb.HasExploded)
+                    continue;
+
+                bomb.ForceSetLogicalPosition(ends[i]);
+                _bombPlantDirection.Remove(bomb);
+                _bombEarlyKickUnlocked.Remove(bomb);
+            }
+        }
+    }
+
+    void ExtendBombQueue(List<Bomb> queue, Vector2 kickDir, float tileSize)
+    {
+        if (queue == null || queue.Count == 0)
+            return;
+
+        var seen = new HashSet<Bomb>(queue);
+
+        while (queue.Count < Mathf.Max(1, maxChainTransfers))
+        {
+            Bomb front = queue[queue.Count - 1];
+            if (front == null)
+                return;
+
+            Vector2 frontCell = SnapToGrid(front.transform.position, tileSize);
+            Vector2 nextCell = frontCell + kickDir * tileSize;
+
+            if (!TryGetBombAtCell(nextCell, out Bomb nextBomb))
+                return;
+
+            if (nextBomb == null || seen.Contains(nextBomb))
+                return;
+
+            if (!CanStartYellowBombKick(nextBomb, kickDir, unlockEarlyKick: false))
+                return;
+
+            queue.Add(nextBomb);
+            seen.Add(nextBomb);
+        }
+    }
+
+    bool CanMoveBombQueue(
+        List<Bomb> queue,
+        Vector2 kickDir,
+        float tileSize,
+        Tilemap destructibleTilemap,
+        BombQueueTransfer transfer)
+    {
+        if (queue == null || queue.Count == 0)
+            return false;
+
+        for (int i = 0; i < queue.Count; i++)
+        {
+            Bomb bomb = queue[i];
+            if (!CanStartYellowBombKick(bomb, kickDir, unlockEarlyKick: true))
+                return false;
+        }
+
+        Bomb front = queue[queue.Count - 1];
+        if (front == null)
+            return false;
+
+        Vector2 frontCell = SnapToGrid(front.transform.position, tileSize);
+        Vector2 nextCellWorld = frontCell + kickDir * tileSize;
+        Vector3Int nextTileCell = new Vector3Int(
+            Mathf.RoundToInt(nextCellWorld.x / tileSize),
+            Mathf.RoundToInt(nextCellWorld.y / tileSize),
+            0);
+
+        if (TryGetBombAtCell(nextCellWorld, out Bomb blockingBomb) &&
+            blockingBomb != null &&
+            !queue.Contains(blockingBomb))
+            return false;
+
+        if (TryGetDestructibleAtCell(destructibleTilemap, nextTileCell, out TileBase nextTile))
+        {
+            if (transfer != null)
+            {
+                transfer.hitDestructible = true;
+                transfer.destructibleCell = nextTileCell;
+                transfer.destructibleTile = nextTile;
+            }
+
+            return false;
+        }
+
+        if (HasEnemyAt(nextCellWorld))
+            return false;
+
+        if (IsMixedChainSolidAt(nextCellWorld, kickDir, front))
+            return false;
+
+        return true;
+    }
+
+    bool CanStartYellowBombKick(Bomb bomb, Vector2 dir, bool unlockEarlyKick)
     {
         if (bomb == null)
             return false;
@@ -741,30 +777,16 @@ public class YellowLouieKickAbility : MonoBehaviour, IPlayerAbility
             if (!_bombEarlyKickUnlocked.Contains(bomb))
             {
                 if (Vector2.Dot(plantDir, dir) < -0.9f)
-                    _bombEarlyKickUnlocked.Add(bomb);
+                {
+                    if (unlockEarlyKick)
+                        _bombEarlyKickUnlocked.Add(bomb);
+                }
                 else
+                {
                     return false;
+                }
             }
         }
-
-        LayerMask bombObstacles = movement.obstacleMask.value | LayerMask.GetMask("Enemy");
-
-        bool result = bomb.StartKick(
-            dir,
-            movement.tileSize,
-            bombObstacles,
-            destructibleTilemap,
-            LayerMask.GetMask("Player", "Stage", "Bomb", "Enemy", "Louie"),
-            bombKickOverlapSize,
-            bombKickOriginBlockerSize,
-            bombKickOriginBlockerUseTrigger
-        );
-
-        if (!result)
-            return false;
-
-        _bombPlantDirection.Remove(bomb);
-        _bombEarlyKickUnlocked.Remove(bomb);
 
         return true;
     }
