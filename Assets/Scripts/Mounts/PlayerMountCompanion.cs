@@ -49,6 +49,8 @@ public class PlayerMountCompanion : MonoBehaviour
     MovementController movement;
     CharacterHealth playerHealth;
 
+    const float RidingTransitionInvulnerabilityBufferSeconds = 0.05f;
+
     GameObject currentLouie;
     MountedType mountedType = MountedType.None;
 
@@ -64,8 +66,6 @@ public class PlayerMountCompanion : MonoBehaviour
 
     float dashInvulRemainingPlayer;
     float dashInvulRemainingLouie;
-
-    float ridingUninterruptibleUntil;
 
     float playerOriginalBlinkInterval;
     float playerOriginalTempSlowdownStartNormalized;
@@ -886,12 +886,12 @@ public class PlayerMountCompanion : MonoBehaviour
 
     #region Riding / Damage While Mounting
 
-    bool IsRidingUninterruptible() => Time.time < ridingUninterruptibleUntil;
+    float GetRidingTransitionInvulnerabilitySeconds(float seconds)
+        => Mathf.Max(0.01f, seconds) + RidingTransitionInvulnerabilityBufferSeconds;
 
     void MarkRidingUninterruptible(float seconds, bool blink)
     {
-        float s = Mathf.Max(0.01f, seconds);
-        ridingUninterruptibleUntil = Mathf.Max(ridingUninterruptibleUntil, Time.time + s);
+        float s = GetRidingTransitionInvulnerabilitySeconds(seconds);
 
         ApplyTemporaryInvulnerabilityToPlayer(s, blink);
         ApplyTemporaryInvulnerabilityToTransitionLouie(s, blink);
@@ -953,8 +953,7 @@ public class PlayerMountCompanion : MonoBehaviour
 
     public void ApplyRidingTransitionInvulnerability(float seconds, bool blink, GameObject detachedLouie = null)
     {
-        float s = Mathf.Max(0.01f, seconds);
-        ridingUninterruptibleUntil = Mathf.Max(ridingUninterruptibleUntil, Time.time + s);
+        float s = GetRidingTransitionInvulnerabilitySeconds(seconds);
 
         ApplyTemporaryInvulnerabilityToPlayer(s, blink);
 
@@ -973,16 +972,8 @@ public class PlayerMountCompanion : MonoBehaviour
         if (movement != null && movement.isDead)
             return true;
 
-        if (IsRidingUninterruptible())
-            return true;
-
-        rider.CancelRiding();
-
-        RestorePendingWorldMountAsPickup();
-
-        if (playerHealth != null)
-            playerHealth.TakeDamage(Mathf.Max(1, damage));
-
+        // Riding transitions are resolved by their completion callback: mounting
+        // becomes mounted, and dismounting becomes vulnerable only afterward.
         return true;
     }
 
