@@ -1,5 +1,7 @@
 ﻿using UnityEngine;
 
+using System.Collections.Generic;
+
 public class MountVisualController : MonoBehaviour
 {
     [Header("Owner")]
@@ -10,6 +12,9 @@ public class MountVisualController : MonoBehaviour
 
     [Header("Keep Move Animation When Idle")]
     [SerializeField] private bool keepMoveAnimationWhenIdle = false;
+
+    [Header("Walk Animation Timing")]
+    [SerializeField] private bool scaleWalkAnimationWithOwnerSpeed = true;
 
     [Header("HeadOnly Player Visual Offsets (local, per direction)")]
     [SerializeField] private Vector2 headOnlyUpLocalOffset = Vector2.zero;
@@ -67,6 +72,10 @@ public class MountVisualController : MonoBehaviour
     [Header("Louie Type")]
     [SerializeField] private MountedType visualMountedType = MountedType.None;
 
+    [Header("Debug Walk Animation")]
+    [SerializeField] private bool debugWalkAnimationFrames;
+    [SerializeField, Min(0.01f)] private float debugWalkAnimationLogInterval = 0.1f;
+
     private AnimatedSpriteRenderer active;
     private bool playingEndStage;
     private bool playingInactivity;
@@ -102,6 +111,24 @@ public class MountVisualController : MonoBehaviour
     private AnimatedSpriteRenderer activeLouieInactivityRenderer;
     private AnimatedSpriteRenderer activeExternalStunRenderer;
     private Vector3 externalStunShakeOffset;
+    private float debugWalkAnimationNextLogTime;
+    private int debugWalkAnimationLastLouieFrame = -1;
+    private int debugWalkAnimationLastOwnerFrame = -1;
+    private float debugWalkAnimationLastLouieFrameTime = -1f;
+    private AnimatedSpriteRenderer debugWalkAnimationLastRenderer;
+    private Vector2 debugWalkAnimationLastFaceDir = Vector2.zero;
+    private bool hasLastWalkAnimationState;
+    private Vector2 lastWalkAnimationFaceDir = Vector2.down;
+    private bool lastWalkAnimationWasIdle = true;
+    private AnimatedSpriteRenderer lastWalkAnimationRenderer;
+    private readonly Dictionary<AnimatedSpriteRenderer, AnimationTimingSnapshot> originalAnimationTiming = new();
+
+    private struct AnimationTimingSnapshot
+    {
+        public float AnimationTime;
+        public bool UseSequenceDuration;
+        public float SequenceDuration;
+    }
 
     public AnimatedSpriteRenderer LouieInactivityEmoteLoop => louieInactivityEmoteLoop;
     public AnimatedSpriteRenderer LouieInactivityEmoteLoopAlt => louieInactivityEmoteLoopAlt;
@@ -364,6 +391,27 @@ public class MountVisualController : MonoBehaviour
     {
         allSpriteRenderers = GetComponentsInChildren<SpriteRenderer>(true);
         allAnimatedRenderers = GetComponentsInChildren<AnimatedSpriteRenderer>(true);
+        CacheOriginalAnimationTiming();
+    }
+
+    private void CacheOriginalAnimationTiming()
+    {
+        if (allAnimatedRenderers == null)
+            return;
+
+        for (int i = 0; i < allAnimatedRenderers.Length; i++)
+        {
+            AnimatedSpriteRenderer renderer = allAnimatedRenderers[i];
+            if (renderer == null || originalAnimationTiming.ContainsKey(renderer))
+                continue;
+
+            originalAnimationTiming.Add(renderer, new AnimationTimingSnapshot
+            {
+                AnimationTime = renderer.animationTime,
+                UseSequenceDuration = renderer.useSequenceDuration,
+                SequenceDuration = renderer.sequenceDuration
+            });
+        }
     }
 
     private void LateUpdate()
@@ -444,6 +492,8 @@ public class MountVisualController : MonoBehaviour
 
 
             ApplyDirection(faceDir, isIdle);
+            if (scaleWalkAnimationWithOwnerSpeed)
+                AdvanceManualWalkAnimation();
 
             ApplyPinkRidingHorizontalFlipOverride(faceDir);
 
@@ -454,6 +504,108 @@ public class MountVisualController : MonoBehaviour
         ApplyBlinkSyncFromOwnerIfNeeded();
         ApplyExternalTintIfNeeded();
         ApplyPlayerEffectTintIfNeeded();
+        LogWalkAnimationFramesIfNeeded();
+    }
+
+    private void LogWalkAnimationFramesIfNeeded()
+    {
+        if (!debugWalkAnimationFrames)
+            return;
+
+        if (owner == null || active == null)
+            return;
+
+        if (playingEndStage || playingInactivity || playingCornered || playingExternalStun || playingJump)
+            return;
+
+        AnimatedSpriteRenderer ownerRenderer = owner.ActiveSpriteRenderer;
+        int louieFrame = active.CurrentFrame;
+        int ownerFrame = ownerRenderer != null ? ownerRenderer.CurrentFrame : -1;
+        int louieFrameCount = GetAnimationFrameCount(active);
+
+        Vector2 ownerDir = owner.Direction;
+        bool isIdle = ownerDir == Vector2.zero;
+        Vector2 faceDir = isIdle ? owner.FacingDirection : ownerDir;
+
+        bool rendererChanged = debugWalkAnimationLastRenderer != null && active != debugWalkAnimationLastRenderer;
+        bool faceChanged = debugWalkAnimationLastFaceDir != Vector2.zero && faceDir != debugWalkAnimationLastFaceDir;
+        bool louieFrameChanged = louieFrame != debugWalkAnimationLastLouieFrame;
+        bool ownerFrameChanged = ownerFrame != debugWalkAnimationLastOwnerFrame;
+        bool frameChanged = louieFrameChanged || ownerFrameChanged;
+
+        if (!frameChanged && !rendererChanged && !faceChanged && Time.unscaledTime < debugWalkAnimationNextLogTime)
+            return;
+
+        float now = Time.unscaledTime;
+        bool sameAnimationStream =
+            !rendererChanged &&
+            !faceChanged &&
+            debugWalkAnimationLastLouieFrame >= 0 &&
+            debugWalkAnimationLastRenderer == active;
+
+        int framesAdvanced = sameAnimationStream && louieFrameChanged
+            ? GetLoopedFrameAdvance(debugWalkAnimationLastLouieFrame, louieFrame, louieFrameCount)
+            : 0;
+
+        int skippedFrames = Mathf.Max(0, framesAdvanced - 1);
+        float frameDelta = debugWalkAnimationLastLouieFrameTime >= 0f
+            ? now - debugWalkAnimationLastLouieFrameTime
+            : 0f;
+
+        float expectedFrameTime = Mathf.Max(0.0001f, active.animationTime);
+        float expectedSteps = frameDelta > 0f ? frameDelta / expectedFrameTime : 0f;
+
+        debugWalkAnimationLastLouieFrame = louieFrame;
+        debugWalkAnimationLastOwnerFrame = ownerFrame;
+        debugWalkAnimationLastRenderer = active;
+        debugWalkAnimationLastFaceDir = faceDir;
+        debugWalkAnimationNextLogTime = now + debugWalkAnimationLogInterval;
+
+        if (louieFrameChanged || rendererChanged || faceChanged)
+            debugWalkAnimationLastLouieFrameTime = now;
+
+        Debug.Log(
+            $"[MountWalkAnim][{name}] mountedType:{visualMountedType} " +
+            $"t:{now:F3} unityFrame:{Time.frameCount} dir:{ownerDir} face:{faceDir} idle:{isIdle} " +
+            $"speedInternal:{owner.SpeedInternal} scaleWithOwnerSpeed:{scaleWalkAnimationWithOwnerSpeed} " +
+            $"rendererChanged:{rendererChanged} faceChanged:{faceChanged} " +
+            $"framesAdvanced:{framesAdvanced} skipped:{skippedFrames} frameDelta:{frameDelta:F4} " +
+            $"expectedSteps:{expectedSteps:F2} " +
+            $"louie:{GetRendererDebug(active)} owner:{GetRendererDebug(ownerRenderer)}",
+            this);
+    }
+
+    private static int GetLoopedFrameAdvance(int previousFrame, int currentFrame, int frameCount)
+    {
+        frameCount = Mathf.Max(1, frameCount);
+
+        if (currentFrame >= previousFrame)
+            return currentFrame - previousFrame;
+
+        return currentFrame + frameCount - previousFrame;
+    }
+
+    private static string GetRendererDebug(AnimatedSpriteRenderer renderer)
+    {
+        if (renderer == null)
+            return "null";
+
+        int frameCount = GetAnimationFrameCount(renderer);
+        string spriteName = "null";
+        bool flipX = false;
+        Vector3 localPos = renderer.transform.localPosition;
+
+        if (renderer.TryGetComponent<SpriteRenderer>(out var sr) && sr != null)
+        {
+            spriteName = sr.sprite != null ? sr.sprite.name : "null";
+            flipX = sr.flipX;
+            localPos = sr.transform.localPosition;
+        }
+
+        return $"{renderer.name} frame:{renderer.CurrentFrame}/{frameCount} sprite:{spriteName} " +
+               $"animTime:{renderer.animationTime:F4} timer:{renderer.DebugFrameTimer:F4} " +
+               $"idle:{renderer.idle} loop:{renderer.loop} flipX:{flipX} " +
+               $"localPos:{localPos} enabled:{renderer.isActiveAndEnabled}";
     }
 
     private void ApplyExternalTintIfNeeded()
@@ -819,16 +971,32 @@ public class MountVisualController : MonoBehaviour
         if (target == null)
             return;
 
-        if (active != target)
+        if (scaleWalkAnimationWithOwnerSpeed)
+            ApplyOwnerWalkAnimationTiming(target);
+        else
+            RestoreOriginalAnimationTiming(target);
+
+        bool rendererChanged = active != target;
+        if (rendererChanged)
+        {
+            if (active != null)
+                active.SetManualAnimationUpdate(false);
+
             SetExclusive(target);
+        }
 
         SetRendererBranchEnabled(active, true);
 
         bool shouldIdle = isIdle && !keepMoveAnimationWhenIdle;
+        string restartReason = scaleWalkAnimationWithOwnerSpeed && !shouldIdle && !rendererChanged
+            ? GetWalkAnimationRestartReason(target, faceDir)
+            : null;
+        bool shouldRestart = restartReason != null;
 
         active.pingPong = false;
         active.idle = shouldIdle;
         active.loop = !shouldIdle;
+        active.SetManualAnimationUpdate(scaleWalkAnimationWithOwnerSpeed && !shouldIdle);
 
         if (active != null && active.TryGetComponent<SpriteRenderer>(out var sr) && sr != null)
         {
@@ -839,7 +1007,114 @@ public class MountVisualController : MonoBehaviour
         }
 
         ApplyPinkRightXFix(faceDir);
-        active.RefreshFrame();
+
+        if (debugWalkAnimationFrames && (rendererChanged || shouldRestart))
+        {
+            Debug.Log(
+                $"[MountWalkAnimTransition][{name}] mountedType:{visualMountedType} " +
+                $"dir:{(owner != null ? owner.Direction : Vector2.zero)} face:{faceDir} " +
+                $"scaleWithOwnerSpeed:{scaleWalkAnimationWithOwnerSpeed} " +
+                $"rendererChanged:{rendererChanged} restart:{shouldRestart} reason:{restartReason ?? "none"} " +
+                $"prevRenderer:{(lastWalkAnimationRenderer != null ? lastWalkAnimationRenderer.name : "null")} " +
+                $"newRenderer:{(active != null ? active.name : "null")} " +
+                $"prevFace:{lastWalkAnimationFaceDir} prevIdle:{lastWalkAnimationWasIdle} " +
+                $"current:{GetRendererDebug(active)}",
+                this);
+        }
+
+        if (shouldRestart)
+            active.RestartAnimation();
+        else
+            active.RefreshFrame();
+
+        hasLastWalkAnimationState = true;
+        lastWalkAnimationRenderer = active;
+        lastWalkAnimationFaceDir = faceDir;
+        lastWalkAnimationWasIdle = shouldIdle;
+    }
+
+    private string GetWalkAnimationRestartReason(AnimatedSpriteRenderer target, Vector2 faceDir)
+    {
+        if (!hasLastWalkAnimationState)
+            return "first-active-frame";
+
+        if (lastWalkAnimationRenderer != target)
+            return null;
+
+        if (lastWalkAnimationWasIdle)
+            return "idle-to-move";
+
+        if (UsesMirroredHorizontalRenderer(target) &&
+            IsHorizontalDirectionFlip(lastWalkAnimationFaceDir, faceDir))
+            return "mirrored-horizontal-flip";
+
+        return null;
+    }
+
+    private bool UsesMirroredHorizontalRenderer(AnimatedSpriteRenderer renderer)
+    {
+        return renderer == louieLeft && (louieRight == null || isPinkLouieVisual);
+    }
+
+    private void AdvanceManualWalkAnimation()
+    {
+        if (active == null)
+            return;
+
+        if (active.idle)
+            return;
+
+        if (!IsWalkRenderer(active))
+            return;
+
+        if (active.RespectGamePause && GamePauseController.IsPaused)
+            return;
+
+        active.AdvanceAnimation(Time.unscaledDeltaTime, Time.deltaTime);
+    }
+
+    private bool IsWalkRenderer(AnimatedSpriteRenderer renderer)
+    {
+        return renderer == louieUp ||
+               renderer == louieDown ||
+               renderer == louieLeft ||
+               renderer == louieRight;
+    }
+
+    private static bool IsHorizontalDirectionFlip(Vector2 previousFaceDir, Vector2 currentFaceDir)
+    {
+        return Mathf.Abs(previousFaceDir.x) > 0.01f &&
+               Mathf.Abs(currentFaceDir.x) > 0.01f &&
+               Mathf.Sign(previousFaceDir.x) != Mathf.Sign(currentFaceDir.x);
+    }
+
+    private void ApplyOwnerWalkAnimationTiming(AnimatedSpriteRenderer renderer)
+    {
+        if (renderer == null || owner == null)
+            return;
+
+        renderer.useSequenceDuration = false;
+        renderer.animationTime = owner.GetWalkAnimationFrameTimeForFrameCount(GetAnimationFrameCount(renderer));
+    }
+
+    private void RestoreOriginalAnimationTiming(AnimatedSpriteRenderer renderer)
+    {
+        if (renderer == null)
+            return;
+
+        if (!originalAnimationTiming.TryGetValue(renderer, out var snapshot))
+            return;
+
+        renderer.useSequenceDuration = snapshot.UseSequenceDuration;
+        renderer.sequenceDuration = snapshot.SequenceDuration;
+        renderer.animationTime = snapshot.AnimationTime;
+    }
+
+    private static int GetAnimationFrameCount(AnimatedSpriteRenderer renderer)
+    {
+        return renderer != null && renderer.animationSprite != null && renderer.animationSprite.Length > 0
+            ? renderer.animationSprite.Length
+            : 4;
     }
 
     private void ApplyPinkRightXFix(Vector2 faceDir)
@@ -906,6 +1181,9 @@ public class MountVisualController : MonoBehaviour
     {
         if (r == null)
             return;
+
+        if (!on)
+            r.SetManualAnimationUpdate(false);
 
         r.enabled = on;
 

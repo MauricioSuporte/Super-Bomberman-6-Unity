@@ -1080,6 +1080,8 @@ MonoBehaviour:
   syncBlinkFromPlayerWhenMounted: 1
   allowExternalTint: 1
   visualMountedType: 0
+  debugWalkAnimationFrames: 1
+  debugWalkAnimationLogInterval: 0.1
 --- !u!114 &6278954836837279341
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1109,6 +1111,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::StunReceiver
   isStunned: 0
+  debugStunVisual: 0
   useAnimatedStunRenderer: 1
   stunAnimatedRenderer: {fileID: 4974857857871170771}
   disableShakeWhenUsingAnimatedStun: 1

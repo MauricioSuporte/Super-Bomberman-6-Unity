@@ -34,6 +34,7 @@ public class MovementController : MonoBehaviour, IKillable
     [Header("Speed (SB5 Internal)")]
     [SerializeField] private int speedInternal = PlayerPersistentStats.BaseSpeedNormal;
     public int SpeedInternal => speedInternal;
+    private const int ReferenceWalkAnimationFrameCount = 4;
     private const float BaseWalkAnimationFrameTime = 1f / 6f;
     private const float MinWalkAnimationFrameTime = 1f / 10f;
     private const float MaxWalkAnimationFrameTime = 1f / 3f;
@@ -240,6 +241,7 @@ public class MovementController : MonoBehaviour, IKillable
     private PlayerRidingController cachedRiding;
 
     protected AnimatedSpriteRenderer activeSpriteRenderer;
+    public AnimatedSpriteRenderer ActiveSpriteRenderer => activeSpriteRenderer;
 
     private IMovementAbility[] movementAbilities = Array.Empty<IMovementAbility>();
     private int explosionLayer;
@@ -993,7 +995,9 @@ public class MovementController : MonoBehaviour, IKillable
     {
         speedInternal = PlayerPersistentStats.ClampSpeedInternal(newInternal);
         speed = PlayerPersistentStats.InternalSpeedToTilesPerSecond(speedInternal);
-        ApplyWalkAnimationTimingToMovementSprites();
+
+        if (IsPlayer())
+            ApplyWalkAnimationTimingToMovementSprites();
     }
 
     public void ApplyTemporarySpeedOverride(int newInternal, float durationSeconds)
@@ -1058,15 +1062,23 @@ public class MovementController : MonoBehaviour, IKillable
     {
         speedInternal = Mathf.Max(0, newInternal);
         speed = PlayerPersistentStats.InternalSpeedToTilesPerSecond(speedInternal);
-        ApplyWalkAnimationTimingToMovementSprites();
+
+        if (IsPlayer())
+            ApplyWalkAnimationTimingToMovementSprites();
     }
 
-    float GetWalkAnimationFrameTime()
+    public float GetWalkAnimationFrameTime()
     {
         float speedScale = Mathf.Sqrt(speedInternal / (float)PlayerPersistentStats.BaseSpeedNormal);
         float frameTime = BaseWalkAnimationFrameTime / Mathf.Max(0.01f, speedScale);
 
         return Mathf.Clamp(frameTime, MinWalkAnimationFrameTime, MaxWalkAnimationFrameTime);
+    }
+
+    public float GetWalkAnimationFrameTimeForFrameCount(int animationFrameCount)
+    {
+        int frameCount = Mathf.Max(1, animationFrameCount);
+        return GetWalkAnimationFrameTime() * ReferenceWalkAnimationFrameCount / frameCount;
     }
 
     void ApplyWalkAnimationTiming(AnimatedSpriteRenderer renderer)
@@ -1075,7 +1087,14 @@ public class MovementController : MonoBehaviour, IKillable
             return;
 
         renderer.useSequenceDuration = false;
-        renderer.animationTime = GetWalkAnimationFrameTime();
+        renderer.animationTime = GetWalkAnimationFrameTimeForFrameCount(GetAnimationFrameCount(renderer));
+    }
+
+    static int GetAnimationFrameCount(AnimatedSpriteRenderer renderer)
+    {
+        return renderer != null && renderer.animationSprite != null && renderer.animationSprite.Length > 0
+            ? renderer.animationSprite.Length
+            : ReferenceWalkAnimationFrameCount;
     }
 
     void ApplyWalkAnimationTimingToMovementSprites()
@@ -2416,7 +2435,8 @@ public class MovementController : MonoBehaviour, IKillable
         }
 
         bool isIdle = (direction == Vector2.zero);
-        ApplyWalkAnimationTiming(spriteRenderer);
+        if (IsPlayer())
+            ApplyWalkAnimationTiming(spriteRenderer);
 
         if (activeSpriteRenderer != spriteRenderer)
         {

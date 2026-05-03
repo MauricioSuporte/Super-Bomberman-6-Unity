@@ -592,6 +592,8 @@ MonoBehaviour:
   controlBombPrefab: {fileID: 0}
   powerBombPrefab: {fileID: 0}
   rubberBombPrefab: {fileID: 0}
+  magnetBombPrefab: {fileID: 0}
+  revengeBombPrefab: {fileID: 0}
   bombFuseTime: 3
   bombAmout: 1
   chainBombDelaySeconds: 0.1
@@ -665,6 +667,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 94bf9db0a4fbb7643bd631c16d64a3ab, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LouieMovementController
+  debugCurvas: 0
+  debugCurvasVerbose: 0
+  debugCurvasPlayerId: 1
+  debugBombEscape: 0
+  debugBombEscapeVerbose: 0
   deathSfx: {fileID: 8300000, guid: f168f16b604151f439124bfd47d617b2, type: 3}
   speed: 5
   tileSize: 1
@@ -686,6 +693,7 @@ MonoBehaviour:
   spriteRendererCheering: {fileID: 0}
   spriteRendererFall: {fileID: 0}
   spriteRendererCornered: {fileID: 0}
+  spriteRendererBall: {fileID: 0}
   mountedSpriteUp: {fileID: 0}
   mountedSpriteDown: {fileID: 0}
   mountedSpriteLeft: {fileID: 0}
@@ -737,19 +745,19 @@ MonoBehaviour:
   visualOverrideActive: 0
   externalVisualSuppressed: 0
   perpendicularAlignMultiplier: 8
-  snapPerpendicularOnAxisStart: 1
   alignEpsilon: 0.0015
   enableCorridorAxisLock: 1
-  corridorCenterEpsilon: 0.06
   corridorSolidProbeSizeMul: 0.9
   canPassTaggedObstacles: 0
   passObstacleTag: Water
   pixelsPerUnit: 16
   useIntegerPixelSteps: 1
   suppressInactivityAnimation: 0
+  bombKickMinCenterOffset: 0.625
   isDead: 0
   explosionInvulnerable: 0
   externalMovementOverride: 0
+  bombReentryCenterDuration: 0.1
   owner: {fileID: 0}
   followOffset: {x: -0.35, y: -0.15}
   followLerp: 25
@@ -769,6 +777,7 @@ MonoBehaviour:
   owner: {fileID: 6013594429678645981, guid: a0c9407e33176584981a9df061a537bc, type: 3}
   useHeadOnlyPlayerVisual: 1
   keepMoveAnimationWhenIdle: 1
+  scaleWalkAnimationWithOwnerSpeed: 0
   headOnlyUpLocalOffset: {x: 0, y: 1.4}
   headOnlyDownLocalOffset: {x: 0, y: 1.4}
   headOnlyLeftLocalOffset: {x: 0, y: 1.5}
@@ -778,12 +787,29 @@ MonoBehaviour:
   louieDown: {fileID: 4170285985975590271}
   louieLeft: {fileID: 5930063177854299457}
   louieRight: {fileID: 0}
+  louieJumpAscendUp: {fileID: 0}
+  louieJumpAscendDown: {fileID: 0}
+  louieJumpAscendLeft: {fileID: 0}
+  louieJumpAscendRight: {fileID: 0}
+  louieJumpDescendUp: {fileID: 0}
+  louieJumpDescendDown: {fileID: 0}
+  louieJumpDescendLeft: {fileID: 0}
+  louieJumpDescendRight: {fileID: 0}
+  louieJumpUp: {fileID: 0}
+  louieJumpDown: {fileID: 0}
+  louieJumpLeft: {fileID: 0}
+  louieJumpRight: {fileID: 0}
   louieEndStage: {fileID: 3621091204094490968}
   louieInactivityEmoteLoop: {fileID: 3127205465214528993}
+  louieInactivityEmoteLoopAlt: {fileID: 0}
+  louieCornered: {fileID: 0}
   enablePinkRightFix: 1
   pinkRightFixedLocalX: -1
   syncBlinkFromPlayerWhenMounted: 1
   allowExternalTint: 1
+  visualMountedType: 0
+  debugWalkAnimationFrames: 1
+  debugWalkAnimationLogInterval: 0.1
 --- !u!114 &3822240261114814580
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -811,6 +837,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::StunReceiver
   isStunned: 0
+  debugStunVisual: 0
   useAnimatedStunRenderer: 0
   stunAnimatedRenderer: {fileID: 0}
   disableShakeWhenUsingAnimatedStun: 0
