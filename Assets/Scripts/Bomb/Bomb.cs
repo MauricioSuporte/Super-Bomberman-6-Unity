@@ -14,6 +14,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
     [Range(0f, 1f)] public float punchSfxVolume = 1f;
     public AudioClip bounceSfx;
     [Range(0f, 1f)] public float bounceSfxVolume = 1f;
+    [Range(0f, 1f)] public float loseItemSfxVolume = 1f;
     private static AudioClip magnetPullSfx;
     [Range(0f, 1f)] public float magnetPullSfxVolume = 1f;
     private static float bombSfxBlockedUntil = 0f;
@@ -21,7 +22,9 @@ public class Bomb : MonoBehaviour, IMagnetPullable
     private static readonly object kickSfxGate = new();
     private static AudioSource kickSfxCurrentSource;
     private const string RubberBounceClipResourcesPath = "Sounds/RubberBombBounce";
+    private const string LoseItemClipResourcesPath = "Sounds/Lose Item";
     private static AudioClip cachedRubberBounceClip;
+    private static AudioClip cachedLoseItemClip;
 
     [Header("Kick")]
     public float kickSpeed = 10f;
@@ -145,6 +148,9 @@ public class Bomb : MonoBehaviour, IMagnetPullable
 
         if (cachedRubberBounceClip == null)
             cachedRubberBounceClip = Resources.Load<AudioClip>(RubberBounceClipResourcesPath);
+
+        if (cachedLoseItemClip == null)
+            cachedLoseItemClip = Resources.Load<AudioClip>(LoseItemClipResourcesPath);
 
         lastPos = rb.position;
 
@@ -415,9 +421,32 @@ public class Bomb : MonoBehaviour, IMagnetPullable
                     mc.GetComponent<BombController>(),
                     out var expelledType))
             {
+                PlayLoseItemSfx(mc);
                 SpawnExpelledPersistentItem(mc, expelledType);
             }
         }
+    }
+
+    private void PlayLoseItemSfx(MovementController movementController)
+    {
+        if (cachedLoseItemClip == null)
+            cachedLoseItemClip = Resources.Load<AudioClip>(LoseItemClipResourcesPath);
+
+        if (cachedLoseItemClip == null)
+            return;
+
+        AudioSource source = null;
+        if (movementController != null)
+        {
+            source = movementController.GetComponent<AudioSource>();
+            if (source == null)
+                source = movementController.GetComponentInChildren<AudioSource>(true);
+        }
+
+        source ??= audioSource;
+
+        if (source != null)
+            source.PlayOneShot(cachedLoseItemClip, loseItemSfxVolume);
     }
 
     private void SpawnExpelledPersistentItem(MovementController movementController, ItemType itemType)
