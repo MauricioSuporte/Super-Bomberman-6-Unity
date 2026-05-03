@@ -1364,7 +1364,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         }
     }
 
-    public void StopKickAndSnapToGrid(float tileSize)
+    public void StopKickAndSnapToGrid(float tileSize, Vector2? snapWorldPosOverride = null)
     {
         if (HasExploded)
             return;
@@ -1384,7 +1384,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
 
         isKicked = false;
 
-        Vector2 cur = rb != null ? rb.position : (Vector2)transform.position;
+        Vector2 cur = snapWorldPosOverride ?? (rb != null ? rb.position : (Vector2)transform.position);
         Vector2 snapped = SnapToGrid(cur, tileSize);
 
         currentTileCenter = snapped;
@@ -1409,6 +1409,25 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         RecalculateCharactersInsideAt(snapped);
         if (bombCollider != null)
             bombCollider.isTrigger = charactersInside.Count > 0;
+    }
+
+    private void StopKickAndSnapToExplosionTile(Collider2D explosionCollider, float tileSize)
+    {
+        Vector2 hitWorldPos = rb != null ? rb.position : (Vector2)transform.position;
+
+        if (explosionCollider != null)
+        {
+            BombExplosion explosion =
+                explosionCollider.GetComponent<BombExplosion>() ??
+                explosionCollider.GetComponentInParent<BombExplosion>() ??
+                explosionCollider.GetComponentInChildren<BombExplosion>();
+
+            hitWorldPos = explosion != null
+                ? (Vector2)explosion.transform.position
+                : (Vector2)explosionCollider.bounds.center;
+        }
+
+        StopKickAndSnapToGrid(tileSize, hitWorldPos);
     }
 
     public void MarkAsExploded()
@@ -1447,7 +1466,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
                 return;
 
             if (isKicked)
-                StopKickAndSnapToGrid(kickTileSize);
+                StopKickAndSnapToExplosionTile(other, kickTileSize);
 
             if (owner != null)
                 owner.ExplodeBomb(gameObject);

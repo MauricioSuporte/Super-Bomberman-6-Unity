@@ -30,6 +30,7 @@ public partial class BombController : MonoBehaviour
     [Header("Chain Explosion")]
     [SerializeField] private float chainBombDelaySeconds = 0.1f;
     private readonly HashSet<GameObject> scheduledChainBombs = new();
+    private readonly Dictionary<GameObject, Vector2> scheduledChainBombSnapPositions = new();
     private int _lastChainScheduleFrame = -1;
     private int _chainIndexThisFrame = 0;
 
@@ -1609,9 +1610,9 @@ public partial class BombController : MonoBehaviour
                 if (otherBombGo != null)
                 {
                     if (otherBombGo.TryGetComponent<Bomb>(out var otherBomb) && otherBomb != null && otherBomb.Owner != null)
-                        otherBomb.Owner.ExplodeBombChained(otherBombGo);
+                        otherBomb.Owner.ExplodeBombChained(otherBombGo, position);
                     else
-                        ExplodeBombChained(otherBombGo);
+                        ExplodeBombChained(otherBombGo, position);
 
                     _removedBombs.Remove(otherBombGo);
                 }
@@ -1643,6 +1644,16 @@ public partial class BombController : MonoBehaviour
 
     public void ExplodeBombChained(GameObject bomb)
     {
+        ExplodeBombChained(bomb, null);
+    }
+
+    public void ExplodeBombChained(GameObject bomb, Vector2 chainHitWorldPosition)
+    {
+        ExplodeBombChained(bomb, (Vector2?)chainHitWorldPosition);
+    }
+
+    private void ExplodeBombChained(GameObject bomb, Vector2? chainHitWorldPosition)
+    {
         if (bomb == null)
             return;
 
@@ -1657,6 +1668,12 @@ public partial class BombController : MonoBehaviour
 
         if (!scheduledChainBombs.Add(bomb))
             return;
+
+        if (chainHitWorldPosition.HasValue && bombComp != null && bombComp.IsBeingKicked)
+        {
+            Tilemap snapTm = GetSnapTilemapForGround();
+            scheduledChainBombSnapPositions[bomb] = SnapToTileCenter(snapTm, chainHitWorldPosition.Value);
+        }
 
         if (Time.frameCount != _lastChainScheduleFrame)
         {
@@ -1681,6 +1698,8 @@ public partial class BombController : MonoBehaviour
             yield return new WaitForSeconds(delay);
 
         scheduledChainBombs.Remove(bomb);
+        bool hasSnapPosition = scheduledChainBombSnapPositions.TryGetValue(bomb, out var snapPosition);
+        scheduledChainBombSnapPositions.Remove(bomb);
 
         if (bomb == null)
             yield break;
@@ -1688,8 +1707,14 @@ public partial class BombController : MonoBehaviour
         if (_removedBombs.Contains(bomb))
             yield break;
 
-        if (bomb.TryGetComponent<Bomb>(out var bombComp) && bombComp.HasExploded)
-            yield break;
+        if (bomb.TryGetComponent<Bomb>(out var bombComp))
+        {
+            if (bombComp.HasExploded)
+                yield break;
+
+            if (bombComp.IsBeingKicked && hasSnapPosition)
+                bombComp.ForceStopExternalMovementAndSnap(snapPosition);
+        }
 
         ExplodeBomb(bomb);
     }
@@ -1776,9 +1801,9 @@ public partial class BombController : MonoBehaviour
                     explosionsToSpawn.Add((position, part));
 
                     if (otherBombGo.TryGetComponent<Bomb>(out var otherBomb) && otherBomb != null && otherBomb.Owner != null)
-                        otherBomb.Owner.ExplodeBombChained(otherBombGo);
+                        otherBomb.Owner.ExplodeBombChained(otherBombGo, position);
                     else
-                        ExplodeBombChained(otherBombGo);
+                        ExplodeBombChained(otherBombGo, position);
 
                     _removedBombs.Remove(otherBombGo);
                 }
