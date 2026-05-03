@@ -109,6 +109,12 @@ public partial class BombController : MonoBehaviour
     public AudioClip[] explosionSfxByRadius = new AudioClip[10];
     [Range(0f, 1f)] public float explosionSfxVolume = 1f;
 
+    private const int ExplosionSfxRadiusCount = 10;
+    private const string DefaultExplosionSfxResourcesPath = "Sounds/Explosions/BombExplosion";
+    private const string PierceExplosionSfxResourcesPath = "Sounds/Explosions/PierceBombExplosion";
+    private static AudioClip[] cachedDefaultExplosionSfx;
+    private static AudioClip[] cachedPierceExplosionSfx;
+    private static bool explosionSfxPreloaded;
     private static AudioSource currentExplosionAudio;
 
     private GameManager _gm;
@@ -479,6 +485,7 @@ public partial class BombController : MonoBehaviour
     private void ResolveExplosionPrefab()
     {
         BombExplosion.PreloadPierceSprites();
+        PreloadExplosionSfx();
 
         if (explosionPrefab != null)
             return;
@@ -1400,7 +1407,7 @@ public partial class BombController : MonoBehaviour
                 currentExplosionAudio.Stop();
 
             currentExplosionAudio = explosionAudio;
-            PlayExplosionSfx(currentExplosionAudio, effectiveRadius);
+            PlayExplosionSfx(currentExplosionAudio, effectiveRadius, pierce);
         }
 
         TryHandleGroundExplosionHit(snapped);
@@ -1440,15 +1447,10 @@ public partial class BombController : MonoBehaviour
 
         float destroyDelay = 0.1f;
 
-        if (explosionSfxByRadius != null && explosionSfxByRadius.Length > 0)
+        AudioClip destroyDelaySfx = GetExplosionSfx(effectiveRadius, pierce);
+        if (destroyDelaySfx != null)
         {
-            int sfxIndex = Mathf.Clamp(effectiveRadius - 1, 0, explosionSfxByRadius.Length - 1);
-            AudioClip sfx = explosionSfxByRadius[sfxIndex];
-
-            if (sfx != null)
-                destroyDelay = sfx.length;
-            else if (explosionAudio != null && explosionAudio.clip != null)
-                destroyDelay = explosionAudio.clip.length;
+            destroyDelay = destroyDelaySfx.length;
         }
         else if (explosionAudio != null && explosionAudio.clip != null)
         {
@@ -1457,6 +1459,54 @@ public partial class BombController : MonoBehaviour
 
         Destroy(bomb, destroyDelay);
         bombsRemaining = Mathf.Min(bombsRemaining + 1, bombAmout);
+    }
+
+    private void PreloadExplosionSfx()
+    {
+        if (explosionSfxPreloaded)
+            return;
+
+        cachedDefaultExplosionSfx = LoadExplosionSfxSet(DefaultExplosionSfxResourcesPath, "Explosion", "Exposion");
+        cachedPierceExplosionSfx = LoadExplosionSfxSet(PierceExplosionSfxResourcesPath, "PierceExplosion", "PierceExposion");
+        explosionSfxPreloaded = true;
+    }
+
+    private static AudioClip[] LoadExplosionSfxSet(string resourcesPath, string clipNamePrefix, string fallbackClipNamePrefix)
+    {
+        AudioClip[] clips = new AudioClip[ExplosionSfxRadiusCount];
+        for (int i = 0; i < clips.Length; i++)
+        {
+            int radius = i + 1;
+            clips[i] = Resources.Load<AudioClip>($"{resourcesPath}/{clipNamePrefix}{radius}");
+            if (clips[i] == null && !string.Equals(clipNamePrefix, fallbackClipNamePrefix, System.StringComparison.Ordinal))
+                clips[i] = Resources.Load<AudioClip>($"{resourcesPath}/{fallbackClipNamePrefix}{radius}");
+        }
+
+        return clips;
+    }
+
+    private AudioClip GetExplosionSfx(int radius, bool pierce)
+    {
+        PreloadExplosionSfx();
+
+        AudioClip[] sfxSet = pierce ? cachedPierceExplosionSfx : cachedDefaultExplosionSfx;
+        AudioClip clip = GetExplosionSfxFromSet(sfxSet, radius);
+        if (clip != null)
+            return clip;
+
+        if (!pierce)
+            return GetExplosionSfxFromSet(explosionSfxByRadius, radius);
+
+        return null;
+    }
+
+    private static AudioClip GetExplosionSfxFromSet(AudioClip[] sfxSet, int radius)
+    {
+        if (sfxSet == null || sfxSet.Length == 0)
+            return null;
+
+        int index = Mathf.Clamp(radius - 1, 0, sfxSet.Length - 1);
+        return sfxSet[index];
     }
 
     private void TryHandleItemHitByExplosion(Collider2D itemHit, Vector2 direction)
@@ -1878,25 +1928,23 @@ public partial class BombController : MonoBehaviour
         }
     }
 
-    private void PlayExplosionSfx(AudioSource source, int radius)
+    private void PlayExplosionSfx(AudioSource source, int radius, bool pierce = false)
     {
-        if (source == null || explosionSfxByRadius == null || explosionSfxByRadius.Length == 0)
+        if (source == null)
             return;
 
-        int index = Mathf.Clamp(radius - 1, 0, explosionSfxByRadius.Length - 1);
-        AudioClip clip = explosionSfxByRadius[index];
+        AudioClip clip = GetExplosionSfx(radius, pierce);
 
         if (clip != null)
             source.PlayOneShot(clip, explosionSfxVolume);
     }
 
-    public void PlayExplosionSfxExclusive(AudioSource source, int radius)
+    public void PlayExplosionSfxExclusive(AudioSource source, int radius, bool pierce = false)
     {
-        if (source == null || explosionSfxByRadius == null || explosionSfxByRadius.Length == 0)
+        if (source == null)
             return;
 
-        int index = Mathf.Clamp(radius - 1, 0, explosionSfxByRadius.Length - 1);
-        AudioClip clip = explosionSfxByRadius[index];
+        AudioClip clip = GetExplosionSfx(radius, pierce);
         if (clip == null)
             return;
 
