@@ -514,7 +514,7 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
                 if (!processedBombs.Add(bombGo))
                     continue;
 
-                LogVisual($"ClearOnlyCurrentCellIfNeeded: bomba destruída estilo PowerGlove em {cell}. bomb={bombGo.name}");
+                LogVisual($"ClearOnlyCurrentCellIfNeeded: bomba atingida pela queda em {cell}; explodindo imediatamente. bomb={bombGo.name}");
 
                 if (bombGo.TryGetComponent<Bomb>(out var b) && b != null)
                 {
@@ -530,8 +530,8 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
 
                 if (bomb.Owner != null)
                 {
-                    bomb.Owner.UnregisterBomb(bombGo);
-                    bomb.Owner.RefundBombSlot();
+                    bomb.Owner.ExplodeBomb(bombGo);
+                    continue;
                 }
 
                 Destroy(bombGo);
