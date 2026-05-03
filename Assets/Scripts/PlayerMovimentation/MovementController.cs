@@ -34,6 +34,9 @@ public class MovementController : MonoBehaviour, IKillable
     [Header("Speed (SB5 Internal)")]
     [SerializeField] private int speedInternal = PlayerPersistentStats.BaseSpeedNormal;
     public int SpeedInternal => speedInternal;
+    private const float BaseWalkAnimationFrameTime = 1f / 6f;
+    private const float MinWalkAnimationFrameTime = 1f / 10f;
+    private const float MaxWalkAnimationFrameTime = 1f / 3f;
     private Coroutine temporarySpeedOverrideRoutine;
     private bool hasTemporarySpeedOverride;
     private int temporarySpeedOverrideRestoreInternal;
@@ -990,6 +993,7 @@ public class MovementController : MonoBehaviour, IKillable
     {
         speedInternal = PlayerPersistentStats.ClampSpeedInternal(newInternal);
         speed = PlayerPersistentStats.InternalSpeedToTilesPerSecond(speedInternal);
+        ApplyWalkAnimationTimingToMovementSprites();
     }
 
     public void ApplyTemporarySpeedOverride(int newInternal, float durationSeconds)
@@ -1054,6 +1058,40 @@ public class MovementController : MonoBehaviour, IKillable
     {
         speedInternal = Mathf.Max(0, newInternal);
         speed = PlayerPersistentStats.InternalSpeedToTilesPerSecond(speedInternal);
+        ApplyWalkAnimationTimingToMovementSprites();
+    }
+
+    float GetWalkAnimationFrameTime()
+    {
+        float speedScale = Mathf.Sqrt(speedInternal / (float)PlayerPersistentStats.BaseSpeedNormal);
+        float frameTime = BaseWalkAnimationFrameTime / Mathf.Max(0.01f, speedScale);
+
+        return Mathf.Clamp(frameTime, MinWalkAnimationFrameTime, MaxWalkAnimationFrameTime);
+    }
+
+    void ApplyWalkAnimationTiming(AnimatedSpriteRenderer renderer)
+    {
+        if (renderer == null)
+            return;
+
+        renderer.useSequenceDuration = false;
+        renderer.animationTime = GetWalkAnimationFrameTime();
+    }
+
+    void ApplyWalkAnimationTimingToMovementSprites()
+    {
+        ApplyWalkAnimationTiming(spriteRendererUp);
+        ApplyWalkAnimationTiming(spriteRendererDown);
+        ApplyWalkAnimationTiming(spriteRendererLeft);
+        ApplyWalkAnimationTiming(spriteRendererRight);
+        ApplyWalkAnimationTiming(mountedSpriteUp);
+        ApplyWalkAnimationTiming(mountedSpriteDown);
+        ApplyWalkAnimationTiming(mountedSpriteLeft);
+        ApplyWalkAnimationTiming(mountedSpriteRight);
+        ApplyWalkAnimationTiming(headOnlyUp);
+        ApplyWalkAnimationTiming(headOnlyDown);
+        ApplyWalkAnimationTiming(headOnlyLeft);
+        ApplyWalkAnimationTiming(headOnlyRight);
     }
 
     void StartTemporarySpeedBlink(float durationSeconds)
@@ -2378,6 +2416,7 @@ public class MovementController : MonoBehaviour, IKillable
         }
 
         bool isIdle = (direction == Vector2.zero);
+        ApplyWalkAnimationTiming(spriteRenderer);
 
         if (activeSpriteRenderer != spriteRenderer)
         {
