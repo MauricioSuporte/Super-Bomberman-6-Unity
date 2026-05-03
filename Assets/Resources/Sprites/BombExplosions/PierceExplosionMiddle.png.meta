@@ -1,31 +1,10 @@
 fileFormatVersion: 2
-guid: 002f6d2fc73e37d4bb8fd3d29517b658
+guid: 4c02e0fa94b556a45ac577c99fea16af
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -6199642483750245169
-    second: ExplosionStart_0
-  - first:
-      213: -8283804931705764354
-    second: ExplosionStart_1
-  - first:
-      213: -4016695435015510347
-    second: ExplosionStart_2
-  - first:
-      213: -755595364959066024
-    second: ExplosionStart_3
-  - first:
-      213: 4542206938597643258
-    second: ExplosionStart_4
-  - first:
-      213: 1960144569077839259
-    second: ExplosionStart_5
-  - first:
-      213: -3175918128893223224
-    second: ExplosionStart_6
-  - first:
-      213: -6771676236449578781
-    second: ExplosionStart_7
+      213: 4702993824980079007
+    second: PierceExplosionMiddle_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -89,7 +68,7 @@ TextureImporter:
   ignorePngGamma: 0
   applyGammaDecoding: 0
   swizzle: 50462976
-  cookieLightType: 1
+  cookieLightType: 0
   platformSettings:
   - serializedVersion: 4
     buildTarget: DefaultTexturePlatform
@@ -109,7 +88,7 @@ TextureImporter:
     maxTextureSize: 2048
     resizeAlgorithm: 0
     textureFormat: -1
-    textureCompression: 0
+    textureCompression: 1
     compressionQuality: 50
     crunchedCompression: 0
     allowsAlphaSplitting: 0
@@ -121,7 +100,7 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: ExplosionStart_0
+      name: PierceExplosionMiddle_0
       rect:
         serializedVersion: 2
         x: 0
@@ -129,21 +108,21 @@ TextureImporter:
         width: 16
         height: 16
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: 0
+      tessellationDetail: -1
       bones: []
-      spriteID: fcc65a5120276f9a0800000000000000
-      internalID: -6199642483750245169
+      spriteID: f911bce57f3644140800000000000000
+      internalID: 4702993824980079007
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: ExplosionStart_1
+      name: PierceExplosionMiddle_1
       rect:
         serializedVersion: 2
         x: 16
@@ -151,21 +130,21 @@ TextureImporter:
         width: 16
         height: 16
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: ef58c09dd430a0d80800000000000000
-      internalID: -8283804931705764354
+      spriteID: aea69b1beabbfeb46a6ca50c2dcbbdd2
+      internalID: 82343904
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: ExplosionStart_2
+      name: PierceExplosionMiddle_2
       rect:
         serializedVersion: 2
         x: 32
@@ -173,21 +152,21 @@ TextureImporter:
         width: 16
         height: 16
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 5b6a7f088c4d148c0800000000000000
-      internalID: -4016695435015510347
+      spriteID: 4aa8e3fe11701664eb28205db4c8cba9
+      internalID: 1654558840
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: ExplosionStart_3
+      name: PierceExplosionMiddle_3
       rect:
         serializedVersion: 2
         x: 48
@@ -195,21 +174,21 @@ TextureImporter:
         width: 16
         height: 16
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 858eea5d4069385f0800000000000000
-      internalID: -755595364959066024
+      spriteID: e1cea19629a11b7429718f9aa6c8129c
+      internalID: -1744950028
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: ExplosionStart_4
+      name: PierceExplosionMiddle_4
       rect:
         serializedVersion: 2
         x: 64
@@ -217,21 +196,21 @@ TextureImporter:
         width: 16
         height: 16
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: af35d6f1529290f30800000000000000
-      internalID: 4542206938597643258
+      spriteID: 854510ca1b1a0254d881bea80597e45e
+      internalID: 1576581000
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: ExplosionStart_5
+      name: PierceExplosionMiddle_5
       rect:
         serializedVersion: 2
         x: 80
@@ -239,21 +218,21 @@ TextureImporter:
         width: 16
         height: 16
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: b95bb4ca915d33b10800000000000000
-      internalID: 1960144569077839259
+      spriteID: 44e6540bb599edf44b35783cc165b125
+      internalID: 708489719
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: ExplosionStart_6
+      name: PierceExplosionMiddle_6
       rect:
         serializedVersion: 2
         x: 96
@@ -261,21 +240,21 @@ TextureImporter:
         width: 16
         height: 16
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 8ce989bd94fdce3d0800000000000000
-      internalID: -3175918128893223224
+      spriteID: 5a233e6803191174fbbb811ef1a49f45
+      internalID: -919151579
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: ExplosionStart_7
+      name: PierceExplosionMiddle_7
       rect:
         serializedVersion: 2
         x: 112
@@ -283,15 +262,15 @@ TextureImporter:
         width: 16
         height: 16
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 3e00870475c2602a0800000000000000
-      internalID: -6771676236449578781
+      spriteID: 94fabc9566502fa479998d7fed3023b3
+      internalID: -1018403202
       vertices: []
       indices: 
       edges: []
@@ -300,7 +279,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 5e97eb03825dee720800000000000000
+    spriteID: a934110502e11314485bda4b706893c6
     internalID: 0
     vertices: []
     indices: 
@@ -308,16 +287,18 @@ TextureImporter:
     weights: []
     secondaryTextures: []
     spriteCustomMetadata:
-      entries: []
+      entries:
+      - key: SpriteEditor.SliceSettings
+        value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":16.0,"y":16.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":1,"keepEmptyRects":false,"isAlternate":false}'
     nameFileIdTable:
-      ExplosionStart_0: -6199642483750245169
-      ExplosionStart_1: -8283804931705764354
-      ExplosionStart_2: -4016695435015510347
-      ExplosionStart_3: -755595364959066024
-      ExplosionStart_4: 4542206938597643258
-      ExplosionStart_5: 1960144569077839259
-      ExplosionStart_6: -3175918128893223224
-      ExplosionStart_7: -6771676236449578781
+      PierceExplosionMiddle_0: 4702993824980079007
+      PierceExplosionMiddle_1: 82343904
+      PierceExplosionMiddle_2: 1654558840
+      PierceExplosionMiddle_3: -1744950028
+      PierceExplosionMiddle_4: 1576581000
+      PierceExplosionMiddle_5: 708489719
+      PierceExplosionMiddle_6: -919151579
+      PierceExplosionMiddle_7: -1018403202
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

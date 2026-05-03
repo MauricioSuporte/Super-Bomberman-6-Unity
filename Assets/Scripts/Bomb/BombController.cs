@@ -478,6 +478,8 @@ public partial class BombController : MonoBehaviour
 
     private void ResolveExplosionPrefab()
     {
+        BombExplosion.PreloadPierceSprites();
+
         if (explosionPrefab != null)
             return;
 
@@ -519,7 +521,7 @@ public partial class BombController : MonoBehaviour
     {
         BombExplosion explosion = BombExplosion.Spawn(explosionPrefab, position, Quaternion.identity);
         ApplyExplosionSource(explosion, sourceBomb);
-        explosion.Play(part, direction, 0f, explosionDuration, origin);
+        explosion.Play(part, direction, 0f, explosionDuration, origin, sourceBomb != null && sourceBomb.IsPierceBomb);
         return explosion;
     }
 
