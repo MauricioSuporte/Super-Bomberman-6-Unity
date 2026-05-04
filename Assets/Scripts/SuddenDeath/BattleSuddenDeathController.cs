@@ -42,6 +42,7 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
     [Header("Damage")]
     [SerializeField] private float damageTickInterval = 0.2f;
     [SerializeField] private int damagePerTick = 1;
+    [SerializeField, Min(0.001f)] private float playerCellOverlapDamageThreshold = 0.05f;
 
     [Header("Cleanup")]
     [SerializeField] private Vector2 cleanupOverlapSize = new Vector2(0.6f, 0.6f);
@@ -943,15 +944,78 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
             if (player == null)
                 continue;
 
-            Vector3Int playerCell = indestructibleTilemap.WorldToCell(player.transform.position);
-            if (playerCell != cell)
+            if (!IsPlayerStandingOrOverlappingCell(player, cell, out string damageReason))
                 continue;
 
             if (logDamageFlow)
-                Log($"DamagePlayersStandingOnCell: {player.name} recebeu {damagePerTick} em {cell}");
+                Log($"DamagePlayersStandingOnCell: {player.name} recebeu {damagePerTick} em {cell}. reason={damageReason}");
 
             ApplyDamage(player, damagePerTick);
         }
+    }
+
+    bool IsPlayerStandingOrOverlappingCell(GameObject player, Vector3Int cell, out string damageReason)
+    {
+        damageReason = "none";
+
+        if (player == null || indestructibleTilemap == null)
+            return false;
+
+        Vector3Int playerCell = indestructibleTilemap.WorldToCell(player.transform.position);
+        if (playerCell == cell)
+        {
+            damageReason = $"center cell={playerCell}";
+            return true;
+        }
+
+        Bounds cellBounds = GetWorldCellBounds(cell);
+        Collider2D[] colliders = player.GetComponentsInChildren<Collider2D>();
+
+        for (int i = 0; i < colliders.Length; i++)
+        {
+            Collider2D playerCollider = colliders[i];
+            if (playerCollider == null || !playerCollider.enabled || playerCollider.isTrigger)
+                continue;
+
+            Bounds playerBounds = playerCollider.bounds;
+            float overlapX = Mathf.Min(playerBounds.max.x, cellBounds.max.x) - Mathf.Max(playerBounds.min.x, cellBounds.min.x);
+            float overlapY = Mathf.Min(playerBounds.max.y, cellBounds.max.y) - Mathf.Max(playerBounds.min.y, cellBounds.min.y);
+
+            if (overlapX < playerCellOverlapDamageThreshold || overlapY < playerCellOverlapDamageThreshold)
+                continue;
+
+            damageReason =
+                $"collider overlap playerCell={playerCell}, collider={playerCollider.name}, " +
+                $"overlap=({overlapX:0.000},{overlapY:0.000}), " +
+                $"playerBounds={playerBounds}, cellBounds={cellBounds}";
+            return true;
+        }
+
+        if (logDamageFlow)
+            Log($"DamagePlayersStandingOnCell: {player.name} ignorado em {cell}. playerCell={playerCell}, cellBounds={cellBounds}");
+
+        return false;
+    }
+
+    Bounds GetWorldCellBounds(Vector3Int cell)
+    {
+        Vector3 center = indestructibleTilemap.GetCellCenterWorld(cell);
+        Vector3 right = indestructibleTilemap.GetCellCenterWorld(cell + Vector3Int.right);
+        Vector3 up = indestructibleTilemap.GetCellCenterWorld(cell + Vector3Int.up);
+
+        float width = Mathf.Abs(right.x - center.x);
+        float height = Mathf.Abs(up.y - center.y);
+
+        if (width <= 0.0001f)
+            width = Mathf.Abs(indestructibleTilemap.layoutGrid.cellSize.x * indestructibleTilemap.transform.lossyScale.x);
+
+        if (height <= 0.0001f)
+            height = Mathf.Abs(indestructibleTilemap.layoutGrid.cellSize.y * indestructibleTilemap.transform.lossyScale.y);
+
+        width = Mathf.Max(width, 0.0001f);
+        height = Mathf.Max(height, 0.0001f);
+
+        return new Bounds(center, new Vector3(width, height, 0.1f));
     }
 
     void ApplyDamage(GameObject player, int amount)
