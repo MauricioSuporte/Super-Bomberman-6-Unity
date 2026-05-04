@@ -36,6 +36,8 @@ public class BombExplosion : MonoBehaviour
     private Sprite[] defaultMiddleAnimation;
     private Sprite defaultEndIdle;
     private Sprite[] defaultEndAnimation;
+    private Collider2D[] cachedColliders;
+    private bool[] defaultColliderEnabledStates;
 
     public static BombExplosion Spawn(BombExplosion prefab, Vector2 position, Quaternion rotation)
     {
@@ -119,6 +121,7 @@ public class BombExplosion : MonoBehaviour
         usePierceSprites = false;
         isReleased = false;
         ResetRenderers();
+        RestoreDefaultColliderStates();
 
         if (!gameObject.activeSelf)
             gameObject.SetActive(true);
@@ -187,6 +190,20 @@ public class BombExplosion : MonoBehaviour
         playRoutine = StartCoroutine(PlayRoutine(part, delay, duration));
     }
 
+    public void SetCollisionEnabled(bool enabled)
+    {
+        EnsureColliderCache();
+
+        if (cachedColliders == null)
+            return;
+
+        for (int i = 0; i < cachedColliders.Length; i++)
+        {
+            if (cachedColliders[i] != null)
+                cachedColliders[i].enabled = enabled && defaultColliderEnabledStates[i];
+        }
+    }
+
     public void PlayDamageOnly(float duration, Vector2 origin)
     {
         if (playRoutine != null)
@@ -215,6 +232,32 @@ public class BombExplosion : MonoBehaviour
         CaptureRendererSprites(start, out defaultStartIdle, out defaultStartAnimation);
         CaptureRendererSprites(middle, out defaultMiddleIdle, out defaultMiddleAnimation);
         CaptureRendererSprites(end, out defaultEndIdle, out defaultEndAnimation);
+    }
+
+    private void EnsureColliderCache()
+    {
+        if (cachedColliders != null && defaultColliderEnabledStates != null)
+            return;
+
+        cachedColliders = GetComponentsInChildren<Collider2D>(true);
+        defaultColliderEnabledStates = new bool[cachedColliders.Length];
+
+        for (int i = 0; i < cachedColliders.Length; i++)
+            defaultColliderEnabledStates[i] = cachedColliders[i] != null && cachedColliders[i].enabled;
+    }
+
+    private void RestoreDefaultColliderStates()
+    {
+        EnsureColliderCache();
+
+        if (cachedColliders == null)
+            return;
+
+        for (int i = 0; i < cachedColliders.Length; i++)
+        {
+            if (cachedColliders[i] != null)
+                cachedColliders[i].enabled = defaultColliderEnabledStates[i];
+        }
     }
 
     private static void CaptureRendererSprites(AnimatedSpriteRenderer renderer, out Sprite idle, out Sprite[] animation)

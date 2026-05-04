@@ -1535,7 +1535,7 @@ MonoBehaviour:
   bottomWallY: -7
   leftWallX: -8.4
   rightWallX: 6.3
-  moveSpeed: 10
+  moveSpeed: 7
   useMovementTilt: 1
   tiltAngle: 6
   tiltInDuration: 0.08

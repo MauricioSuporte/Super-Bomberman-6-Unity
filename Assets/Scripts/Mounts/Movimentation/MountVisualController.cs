@@ -72,10 +72,6 @@ public class MountVisualController : MonoBehaviour
     [Header("Louie Type")]
     [SerializeField] private MountedType visualMountedType = MountedType.None;
 
-    [Header("Debug Walk Animation")]
-    [SerializeField] private bool debugWalkAnimationFrames;
-    [SerializeField, Min(0.01f)] private float debugWalkAnimationLogInterval = 0.1f;
-
     private AnimatedSpriteRenderer active;
     private bool playingEndStage;
     private bool playingInactivity;
@@ -509,9 +505,6 @@ public class MountVisualController : MonoBehaviour
 
     private void LogWalkAnimationFramesIfNeeded()
     {
-        if (!debugWalkAnimationFrames)
-            return;
-
         if (owner == null || active == null)
             return;
 
@@ -559,7 +552,7 @@ public class MountVisualController : MonoBehaviour
         debugWalkAnimationLastOwnerFrame = ownerFrame;
         debugWalkAnimationLastRenderer = active;
         debugWalkAnimationLastFaceDir = faceDir;
-        debugWalkAnimationNextLogTime = now + debugWalkAnimationLogInterval;
+        debugWalkAnimationNextLogTime = now;
 
         if (louieFrameChanged || rendererChanged || faceChanged)
             debugWalkAnimationLastLouieFrameTime = now;
@@ -1008,7 +1001,7 @@ public class MountVisualController : MonoBehaviour
 
         ApplyPinkRightXFix(faceDir);
 
-        if (debugWalkAnimationFrames && (rendererChanged || shouldRestart))
+        if (rendererChanged || shouldRestart)
         {
             Debug.Log(
                 $"[MountWalkAnimTransition][{name}] mountedType:{visualMountedType} " +

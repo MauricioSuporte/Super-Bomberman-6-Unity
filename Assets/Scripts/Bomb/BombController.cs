@@ -2278,6 +2278,7 @@ public partial class BombController : MonoBehaviour
             flash.transform.SetParent(parent, true);
 
         SetSortingOrder(flash, orderInLayer);
+        flash.SetCollisionEnabled(false);
 
         flash.Play(
             BombExplosion.ExplosionPart.End,
