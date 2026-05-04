@@ -4094,6 +4094,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::StunReceiver
   isStunned: 0
+  debugStunVisual: 0
   useAnimatedStunRenderer: 1
   stunAnimatedRenderer: {fileID: 3931440256274558322}
   disableShakeWhenUsingAnimatedStun: 1

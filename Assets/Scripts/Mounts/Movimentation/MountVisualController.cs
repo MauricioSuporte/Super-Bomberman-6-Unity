@@ -556,16 +556,6 @@ public class MountVisualController : MonoBehaviour
 
         if (louieFrameChanged || rendererChanged || faceChanged)
             debugWalkAnimationLastLouieFrameTime = now;
-
-        Debug.Log(
-            $"[MountWalkAnim][{name}] mountedType:{visualMountedType} " +
-            $"t:{now:F3} unityFrame:{Time.frameCount} dir:{ownerDir} face:{faceDir} idle:{isIdle} " +
-            $"speedInternal:{owner.SpeedInternal} scaleWithOwnerSpeed:{scaleWalkAnimationWithOwnerSpeed} " +
-            $"rendererChanged:{rendererChanged} faceChanged:{faceChanged} " +
-            $"framesAdvanced:{framesAdvanced} skipped:{skippedFrames} frameDelta:{frameDelta:F4} " +
-            $"expectedSteps:{expectedSteps:F2} " +
-            $"louie:{GetRendererDebug(active)} owner:{GetRendererDebug(ownerRenderer)}",
-            this);
     }
 
     private static int GetLoopedFrameAdvance(int previousFrame, int currentFrame, int frameCount)
@@ -1000,20 +990,6 @@ public class MountVisualController : MonoBehaviour
         }
 
         ApplyPinkRightXFix(faceDir);
-
-        if (rendererChanged || shouldRestart)
-        {
-            Debug.Log(
-                $"[MountWalkAnimTransition][{name}] mountedType:{visualMountedType} " +
-                $"dir:{(owner != null ? owner.Direction : Vector2.zero)} face:{faceDir} " +
-                $"scaleWithOwnerSpeed:{scaleWalkAnimationWithOwnerSpeed} " +
-                $"rendererChanged:{rendererChanged} restart:{shouldRestart} reason:{restartReason ?? "none"} " +
-                $"prevRenderer:{(lastWalkAnimationRenderer != null ? lastWalkAnimationRenderer.name : "null")} " +
-                $"newRenderer:{(active != null ? active.name : "null")} " +
-                $"prevFace:{lastWalkAnimationFaceDir} prevIdle:{lastWalkAnimationWasIdle} " +
-                $"current:{GetRendererDebug(active)}",
-                this);
-        }
 
         if (shouldRestart)
             active.RestartAnimation();

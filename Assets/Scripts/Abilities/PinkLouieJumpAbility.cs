@@ -154,7 +154,10 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
 
         CacheMountedPlayerBaseLocalY();
 
-        Vector2 inputDir = movement.Direction != Vector2.zero ? movement.Direction : Vector2.zero;
+        Vector2 heldInputDir = GetHeldDirectionalInputCardinal();
+        Vector2 inputDir = heldInputDir != Vector2.zero
+            ? heldInputDir
+            : movement.Direction != Vector2.zero ? movement.Direction : Vector2.zero;
         Vector2 faceDir = movement.FacingDirection != Vector2.zero ? movement.FacingDirection : Vector2.down;
 
         Vector2 dir = inputDir != Vector2.zero ? inputDir : Vector2.zero;
@@ -196,6 +199,9 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
 
         Vector3 startPos = CellCenter(startCell, destructible, indestructible, ground);
         Vector3 endPos = CellCenter(targetCell, destructible, indestructible, ground);
+
+        if (dir != Vector2.zero)
+            movement.ForceFacingDirection(dir);
 
         movement.SetInputLocked(true, false);
 
@@ -671,5 +677,47 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
 
         externalAnimator?.Stop();
         shadow?.EndJump();
+    }
+
+    Vector2 GetHeldDirectionalInputCardinal()
+    {
+        var input = PlayerInputManager.Instance;
+        int playerId = movement != null ? movement.PlayerId : GetPlayerId();
+
+        if (input == null)
+            return Vector2.zero;
+
+        return ResolveHeldDirectionalInput(
+            input.Get(playerId, PlayerAction.MoveUp),
+            input.Get(playerId, PlayerAction.MoveDown),
+            input.Get(playerId, PlayerAction.MoveLeft),
+            input.Get(playerId, PlayerAction.MoveRight));
+    }
+
+    static Vector2 ResolveHeldDirectionalInput(bool up, bool down, bool left, bool right)
+    {
+        Vector2 vertical = Vector2.zero;
+        Vector2 horizontal = Vector2.zero;
+
+        if (up && !down)
+            vertical = Vector2.up;
+        else if (down && !up)
+            vertical = Vector2.down;
+
+        if (left && !right)
+            horizontal = Vector2.left;
+        else if (right && !left)
+            horizontal = Vector2.right;
+
+        if (horizontal != Vector2.zero && vertical == Vector2.zero)
+            return horizontal;
+
+        if (vertical != Vector2.zero && horizontal == Vector2.zero)
+            return vertical;
+
+        if (horizontal != Vector2.zero && vertical != Vector2.zero)
+            return horizontal + vertical;
+
+        return Vector2.zero;
     }
 }

@@ -1162,6 +1162,7 @@ MonoBehaviour:
   owner: {fileID: 6013594429678645981, guid: a0c9407e33176584981a9df061a537bc, type: 3}
   useHeadOnlyPlayerVisual: 0
   keepMoveAnimationWhenIdle: 0
+  scaleWalkAnimationWithOwnerSpeed: 1
   headOnlyUpLocalOffset: {x: 0, y: 0}
   headOnlyDownLocalOffset: {x: 0, y: 0}
   headOnlyLeftLocalOffset: {x: 0, y: 0}
@@ -1214,6 +1215,9 @@ MonoBehaviour:
   jumpSfx: {fileID: 8300000, guid: 95d5c4a1f9f75bc47a6022ec1e355617, type: 3}
   jumpSfxVolume: 1
   shadow: {fileID: 5692636436679240875}
+  debugPinkLouieJump: 1
+  debugPinkLouieJumpVerbose: 1
+  debugPinkLouieJumpPlayerId: 1
 --- !u!114 &7875369066394701604
 MonoBehaviour:
   m_ObjectHideFlags: 0
