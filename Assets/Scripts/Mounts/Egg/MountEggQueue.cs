@@ -1560,9 +1560,14 @@ public sealed class MountEggQueue : MonoBehaviour
         if (v != null)
         {
             if (byExplosion)
+            {
                 v.PlayExplosionDestroy();
+                seconds = Mathf.Max(seconds, v.GetExplosionThenDestroyDuration());
+            }
             else
+            {
                 v.PlayDestroy();
+            }
         }
 
         if (!tr.TryGetComponent<Collider2D>(out var col))

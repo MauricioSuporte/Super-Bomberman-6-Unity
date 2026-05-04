@@ -1285,6 +1285,12 @@ public class ItemPickup : MonoBehaviour
         if (type == ItemType.Skull)
             return;
 
+        if (IsLouieEgg(type) && explosionDestroyRenderer != null && destroyRenderer != null)
+        {
+            PlayDestroyAnimationSequence(explosionDestroyRenderer, destroyRenderer);
+            return;
+        }
+
         PlayDestroyAnimation(explosionDestroyRenderer != null ? explosionDestroyRenderer : destroyRenderer);
     }
 
@@ -1329,6 +1335,88 @@ public class ItemPickup : MonoBehaviour
         }
 
         Destroy(gameObject, Mathf.Max(0.05f, destroyDelaySeconds));
+    }
+
+    void PlayDestroyAnimationSequence(AnimatedSpriteRenderer firstRenderer, AnimatedSpriteRenderer secondRenderer)
+    {
+        if (isBeingDestroyed)
+            return;
+
+        isBeingDestroyed = true;
+
+        if (_col != null)
+            _col.enabled = false;
+
+        if (idleRenderer != null)
+        {
+            idleRenderer.enabled = false;
+            EnableSpriteBranch(idleRenderer, false);
+        }
+
+        if (destroyRenderer != null)
+        {
+            destroyRenderer.enabled = false;
+            EnableSpriteBranch(destroyRenderer, false);
+        }
+
+        if (explosionDestroyRenderer != null)
+        {
+            explosionDestroyRenderer.enabled = false;
+            EnableSpriteBranch(explosionDestroyRenderer, false);
+        }
+
+        StartCoroutine(PlayDestroyAnimationSequenceRoutine(firstRenderer, secondRenderer));
+    }
+
+    IEnumerator PlayDestroyAnimationSequenceRoutine(AnimatedSpriteRenderer firstRenderer, AnimatedSpriteRenderer secondRenderer)
+    {
+        PlayDestroyRenderer(firstRenderer);
+
+        float firstDuration = GetDestroyAnimationDuration(firstRenderer);
+        if (firstDuration > 0f)
+            yield return new WaitForSeconds(firstDuration);
+
+        HideDestroyRenderer(firstRenderer);
+        PlayDestroyRenderer(secondRenderer);
+
+        float secondDuration = GetDestroyAnimationDuration(secondRenderer);
+        Destroy(gameObject, Mathf.Max(0.05f, Mathf.Max(secondDuration, destroyDelaySeconds)));
+    }
+
+    void PlayDestroyRenderer(AnimatedSpriteRenderer rendererToPlay)
+    {
+        if (rendererToPlay == null)
+            return;
+
+        rendererToPlay.enabled = true;
+        EnableSpriteBranch(rendererToPlay, true);
+
+        rendererToPlay.idle = false;
+        rendererToPlay.loop = false;
+        rendererToPlay.pingPong = false;
+        rendererToPlay.CurrentFrame = 0;
+        rendererToPlay.RefreshFrame();
+    }
+
+    static void HideDestroyRenderer(AnimatedSpriteRenderer rendererToHide)
+    {
+        if (rendererToHide == null)
+            return;
+
+        rendererToHide.enabled = false;
+        EnableSpriteBranch(rendererToHide, false);
+    }
+
+    static float GetDestroyAnimationDuration(AnimatedSpriteRenderer renderer)
+    {
+        if (renderer == null)
+            return 0f;
+
+        if (renderer.useSequenceDuration)
+            return Mathf.Max(0.0001f, renderer.sequenceDuration);
+
+        int frameCount = renderer.animationSprite != null ? renderer.animationSprite.Length : 0;
+        return Mathf.Max(0.0001f, renderer.animationTime) * Mathf.Max(1, frameCount);
     }
 
     static void EnableSpriteBranch(Component root, bool enabled)

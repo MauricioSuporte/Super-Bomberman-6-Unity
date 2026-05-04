@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+using System.Collections;
+using UnityEngine;
 
 public sealed class EggFollowerDestroyVisual : MonoBehaviour
 {
@@ -12,7 +13,32 @@ public sealed class EggFollowerDestroyVisual : MonoBehaviour
 
     public void PlayExplosionDestroy()
     {
+        if (explosionDestroyRenderer != null && destroyRenderer != null)
+        {
+            StartCoroutine(PlayExplosionThenDestroyRoutine());
+            return;
+        }
+
         PlayDestroyInternal(explosionDestroyRenderer != null ? explosionDestroyRenderer : destroyRenderer);
+    }
+
+    public float GetExplosionThenDestroyDuration()
+    {
+        if (explosionDestroyRenderer == null || destroyRenderer == null)
+            return GetDestroyAnimationDuration(explosionDestroyRenderer != null ? explosionDestroyRenderer : destroyRenderer);
+
+        return GetDestroyAnimationDuration(explosionDestroyRenderer) + GetDestroyAnimationDuration(destroyRenderer);
+    }
+
+    IEnumerator PlayExplosionThenDestroyRoutine()
+    {
+        PlayDestroyInternal(explosionDestroyRenderer);
+
+        float explosionDuration = GetDestroyAnimationDuration(explosionDestroyRenderer);
+        if (explosionDuration > 0f)
+            yield return new WaitForSeconds(explosionDuration);
+
+        PlayDestroyInternal(destroyRenderer);
     }
 
     void PlayDestroyInternal(AnimatedSpriteRenderer rendererToPlay)
@@ -58,5 +84,17 @@ public sealed class EggFollowerDestroyVisual : MonoBehaviour
         rendererToPlay.pingPong = false;
         rendererToPlay.CurrentFrame = 0;
         rendererToPlay.RefreshFrame();
+    }
+
+    static float GetDestroyAnimationDuration(AnimatedSpriteRenderer renderer)
+    {
+        if (renderer == null)
+            return 0f;
+
+        if (renderer.useSequenceDuration)
+            return Mathf.Max(0.0001f, renderer.sequenceDuration);
+
+        int frameCount = renderer.animationSprite != null ? renderer.animationSprite.Length : 0;
+        return Mathf.Max(0.0001f, renderer.animationTime) * Mathf.Max(1, frameCount);
     }
 }
