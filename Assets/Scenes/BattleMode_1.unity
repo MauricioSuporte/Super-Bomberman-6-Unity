@@ -181,9 +181,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3d86f2d8583d7d84e8f37c4f15eb4bba, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BattleModeRules
-  matchMode: 1
+  matchMode: 0
   victoriesToWinMatch: 1
-  roundTimer: 6
+  roundTimer: 5
   enableRevengeBomber: 1
   enableSuddenDeath: 1
   playerTeams:
@@ -206,7 +206,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 59654199}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8502dfd34f62ca9418a36160b06d6fb9, type: 3}
   m_Name: 
@@ -271,6 +271,7 @@ MonoBehaviour:
   shadowWorldOffset: {x: 0, y: 0, z: 0}
   damageTickInterval: 0.2
   damagePerTick: 1
+  playerCellOverlapDamageThreshold: 0.05
   cleanupOverlapSize: {x: 0.6, y: 0.6}
   hurryUpSfx: {fileID: 8300000, guid: 3b78b626520667143ad7378794635023, type: 3}
   fallingTileSfx: {fileID: 8300000, guid: 232f86bc3f450a34b887545b1b7630b5, type: 3}
@@ -515,7 +516,7 @@ MonoBehaviour:
   pinkLouieEggAmount: 0
   redLouieEggAmount: 0
   clockAmount: 0
-  skullAmount: 2
+  skullAmount: 99
   randomEggsMin: 4
   randomEggsMax: 8
   destructibleTilemap: {fileID: 0}

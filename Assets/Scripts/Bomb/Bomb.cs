@@ -824,6 +824,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
     FINISH:
         TeleportTo(cur);
         DestroyPickupsAtWorld(cur, lastPickupImpactDirection);
+        FinishKickPushedSkull(cur);
 
         isPunched = false;
         punchRoutine = null;
