@@ -205,6 +205,7 @@ MonoBehaviour:
   controlBombAmount: 0
   powerBombAmount: 0
   rubberBombAmount: 0
+  magnetBombAmount: 0
   fullFireAmount: 0
   bombPassAmount: 0
   destructiblePassAmount: 0
@@ -219,6 +220,9 @@ MonoBehaviour:
   pinkLouieEggAmount: 0
   redLouieEggAmount: 0
   clockAmount: 1
+  skullAmount: 0
+  randomEggsMin: 0
+  randomEggsMax: 0
   destructibleTilemap: {fileID: 0}
   indestructibleTilemap: {fileID: 0}
   nextStageSceneName: Stage_1-2
@@ -971,7 +975,6 @@ MonoBehaviour:
   direction: 1
   snapUvToTexturePixels: 1
   applySizeToReferenceRect: 1
-  logChanges: 0
 --- !u!1 &1107666575
 GameObject:
   m_ObjectHideFlags: 0
@@ -1038,6 +1041,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameSession
   activePlayerCount: 1
+  activePlayerMask: 1
+  battleMatchInProgress: 0
+  battleMatchSceneName: 
+  battleMatchUsesTeams: 0
+  battleMatchWins: 000000000000000000000000000000000000000000000000
 --- !u!4 &1334625510
 Transform:
   m_ObjectHideFlags: 0
@@ -1131,6 +1139,7 @@ Canvas:
   m_OverridePixelPerfect: 0
   m_SortingBucketNormalizedSize: 0
   m_VertexColorAlwaysGammaSpace: 0
+  m_UseReflectionProbes: 0
   m_AdditionalShaderChannelsFlag: 25
   m_UpdateRectTransformForStandalone: 0
   m_SortingLayerID: 0
@@ -1661,9 +1670,9 @@ MonoBehaviour:
   menuLayoutRoot: {fileID: 1876253041}
   menuGlobalYOffset: 0
   fadeImage: {fileID: 336813435}
-  fadeInDuration: 0.5
-  fadeOutDuration: 0.5
-  controlsMusic: {fileID: 8300000, guid: 995a31f86fa5dcd4e8e4ba88dc2854cf, type: 3}
+  fadeDuration: 0.5
+  controlsMusic: {fileID: 8300000, guid: 58c85641e36842c4eaf8c6bce6a15280, type: 3}
+  controlsMusicLoop: {fileID: 8300000, guid: 90a483711e8d20b468dacd50223706f3, type: 3}
   controlsMusicVolume: 1
   menuText: {fileID: 534844157}
   titleFontSize: 32

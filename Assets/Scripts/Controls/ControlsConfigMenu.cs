@@ -28,6 +28,7 @@ public class ControlsConfigMenu : MonoBehaviour
 
     [Header("Music")]
     [SerializeField] AudioClip controlsMusic;
+    [SerializeField] AudioClip controlsMusicLoop;
     [SerializeField, Range(0f, 1f)] float controlsMusicVolume = 1f;
 
     [Header("Text (TMP)")]
@@ -646,7 +647,7 @@ public class ControlsConfigMenu : MonoBehaviour
         ApplyDynamicScaleIfNeeded(true);
 
         if (controlsMusic != null && GameMusicController.Instance != null)
-            GameMusicController.Instance.PlayMusic(controlsMusic, controlsMusicVolume, true);
+            PlayControlsMusic();
 
         if (fadeImage != null)
         {
@@ -984,6 +985,36 @@ public class ControlsConfigMenu : MonoBehaviour
 
         if (restoreMusic != null && GameMusicController.Instance != null)
             GameMusicController.Instance.PlayMusic(restoreMusic, Mathf.Clamp01(restoreMusicVolume), true);
+    }
+
+    void PlayControlsMusic()
+    {
+        var music = GameMusicController.Instance;
+        if (music == null || controlsMusic == null)
+            return;
+
+        PreloadControlsMusic();
+
+        if (controlsMusicLoop != null)
+        {
+            music.PlayMusicIntroThenLoop(
+                controlsMusic,
+                controlsMusicVolume,
+                controlsMusicLoop,
+                controlsMusicVolume);
+            return;
+        }
+
+        music.PlayMusic(controlsMusic, controlsMusicVolume, true);
+    }
+
+    void PreloadControlsMusic()
+    {
+        if (controlsMusic != null && controlsMusic.loadState == AudioDataLoadState.Unloaded)
+            controlsMusic.LoadAudioData();
+
+        if (controlsMusicLoop != null && controlsMusicLoop.loadState == AudioDataLoadState.Unloaded)
+            controlsMusicLoop.LoadAudioData();
     }
 
     static DpadHit? ReadAnyDpadDownThisFrame()
