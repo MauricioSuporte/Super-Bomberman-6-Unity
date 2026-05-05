@@ -11,6 +11,7 @@ public class GameManager : MonoBehaviour
     static readonly WaitForSecondsRealtime waitBattleVictoryCheckDelay = new(0.5f);
     static readonly WaitForSecondsRealtime waitBattleVictoryDelay = new(1f);
     const float BattleDrawPreFadeDuration = 1f;
+    const float BattleDrawFallbackAfterTimerExpiredSeconds = 15f;
     static readonly WaitForSecondsRealtime waitBattleDrawPreFadeDelay = new(BattleDrawPreFadeDuration);
     const float BattleRoundWinShowDelay = 1f;
     static readonly WaitForSecondsRealtime waitRoundWinScoreboardDelay = new(BattleRoundWinShowDelay);
@@ -98,6 +99,7 @@ public class GameManager : MonoBehaviour
     private bool endStageTriggered;
     private bool battleTimerExpired;
     private float battleTimeRemainingSeconds = Mathf.Infinity;
+    private float battleTimerExpiredElapsedSeconds;
     private bool hasBattleTimeLimit;
 
     private bool pendingEnemyCheck;
@@ -1156,6 +1158,7 @@ public class GameManager : MonoBehaviour
     {
         hasBattleTimeLimit = false;
         battleTimeRemainingSeconds = Mathf.Infinity;
+        battleTimerExpiredElapsedSeconds = 0f;
         battleTimerExpired = false;
 
         if (!IsBattleModeScene() || BattleModeRules.Instance == null)
@@ -1179,9 +1182,20 @@ public class GameManager : MonoBehaviour
         if (Time.timeScale <= 0f)
             return;
 
-        battleTimeRemainingSeconds = Mathf.Max(0f, battleTimeRemainingSeconds - Time.unscaledDeltaTime);
-
         if (battleTimeRemainingSeconds > 0f)
+        {
+            battleTimeRemainingSeconds = Mathf.Max(0f, battleTimeRemainingSeconds - Time.unscaledDeltaTime);
+
+            if (battleTimeRemainingSeconds > 0f)
+            {
+                battleTimerExpiredElapsedSeconds = 0f;
+                return;
+            }
+        }
+
+        battleTimerExpiredElapsedSeconds += Time.unscaledDeltaTime;
+
+        if (battleTimerExpiredElapsedSeconds < BattleDrawFallbackAfterTimerExpiredSeconds)
             return;
 
         TriggerBattleDrawSequence();
