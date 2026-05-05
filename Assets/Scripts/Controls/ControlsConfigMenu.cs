@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Text;
 using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -21,6 +22,12 @@ public class ControlsConfigMenu : MonoBehaviour
     [Header("Layout Root")]
     [SerializeField] RectTransform menuLayoutRoot;
     [SerializeField] float menuGlobalYOffset = 140;
+    [SerializeField] bool usePixelPerfectMenuLayout = true;
+    [SerializeField] Vector2 menuTextBoxReferenceSize = new(246f, 190f);
+    [SerializeField] Vector2 selectMenuOffset = new(0f, 0f);
+    [SerializeField] Vector2 waitMenuOffset = new(0f, 0f);
+    [SerializeField] Vector2 remapMenuOffset = new(0f, 0f);
+    [SerializeField, Range(0, 12)] int selectTitleToBodyGapLines = 2;
 
     [Header("Fade")]
     [SerializeField] Image fadeImage;
@@ -44,13 +51,22 @@ public class ControlsConfigMenu : MonoBehaviour
     [SerializeField] int bodyFontSize = 30;
 
     [Header("Footer")]
+    [SerializeField] TMP_Text footerText;
     [SerializeField] int footerGapLines = 0;
     [SerializeField] int footerFontSize = 22;
     [SerializeField, Range(0, 10)] int footerExtraNewLines = 0;
+    [SerializeField, Range(0f, 80f)] float footerBottomPadding = 12f;
 
     [Header("Select Player Blocks")]
     [SerializeField] int selectGridFontSize = 24;
     [SerializeField, Range(0, 6)] int playerBlockGapLines = 1;
+
+    [Header("Effective Minimum Font Sizes")]
+    [SerializeField] int minTitleFontSize = 42;
+    [SerializeField] int minBodyFontSize = 34;
+    [SerializeField] int minFooterFontSize = 26;
+    [SerializeField] int minSelectGridFontSize = 32;
+    [SerializeField] int minRemapGridFontSize = 30;
 
     [Header("Text Style")]
     [SerializeField] bool forceBold = true;
@@ -101,6 +117,12 @@ public class ControlsConfigMenu : MonoBehaviour
     [Header("Cursor Rounding")]
     [SerializeField] bool roundCursorToWholePixels = true;
 
+    [Header("Debug")]
+    [SerializeField] bool debugLayoutLogs = true;
+    [SerializeField] bool debugLinkBounds = true;
+    [SerializeField] bool debugTextContent = false;
+    [SerializeField, Range(1, 40)] int debugMaxLoggedLines = 24;
+
     Vector2 _lastMouseScreenPosition;
     bool _hasLastMouseScreenPosition;
 
@@ -111,11 +133,14 @@ public class ControlsConfigMenu : MonoBehaviour
     const string colorPlayerGreen = "#8CFFB3";
     const string colorPlayerSelectedRed = "#FF5A5A";
 
+    const int MaxConfigurablePlayers = GameSession.MaxPlayerId;
+
     const float COLUMN_LEFT_LABEL_BASE = -350f;
     const float COLUMN_LEFT_VALUE_BASE = -190f;
     const float COLUMN_RIGHT_LABEL_BASE = 200f;
     const float COLUMN_RIGHT_VALUE_BASE = 260f;
 
+    const string LINK_WAIT_START = "wait_start";
     const string LINK_WAIT_PREFIX = "wait_";
     const string LINK_RESET_YES = "reset_yes";
     const string LINK_RESET_NO = "reset_no";
@@ -124,6 +149,7 @@ public class ControlsConfigMenu : MonoBehaviour
     {
         SelectPlayer,
         ConfirmReset,
+        WaitForInput,
         BulkRemap
     }
 
@@ -177,6 +203,8 @@ public class ControlsConfigMenu : MonoBehaviour
     Vector3 _cursorBaseLocalScale = Vector3.one;
     bool _cursorBaseScaleCaptured;
 
+    int debugRefreshSequence;
+
     static readonly PlayerAction[] BulkActions = new[]
     {
         PlayerAction.MoveUp,
@@ -200,6 +228,14 @@ public class ControlsConfigMenu : MonoBehaviour
     }
 
     int ScaledFont(int baseSize) => Mathf.Clamp(Mathf.RoundToInt(baseSize * _currentUiScale), 10, 500);
+    int EffectiveTitleFontSize => Mathf.Max(titleFontSize, minTitleFontSize);
+    int EffectiveBodyFontSize => Mathf.Max(bodyFontSize, minBodyFontSize);
+    int EffectiveFooterFontSize => Mathf.Max(footerFontSize, minFooterFontSize);
+    int EffectiveSelectGridFontSize => Mathf.Max(selectGridFontSize, minSelectGridFontSize);
+    int EffectiveRemapGridFontSize => Mathf.Max(selectGridFontSize, minRemapGridFontSize);
+    int EffectiveSelectTitleToBodyGapLines => Mathf.Max(selectTitleToBodyGapLines, 5);
+    int EffectiveWaitTitleToBodyGapLines => Mathf.Max(selectTitleToBodyGapLines, 5);
+    int EffectiveRemapTitleToBodyGapLines => Mathf.Max(selectTitleToBodyGapLines, 4);
     float ScaledFloat(float baseValue) => baseValue * _currentUiScale;
 
     Canvas GetRootCanvas()
@@ -273,7 +309,10 @@ public class ControlsConfigMenu : MonoBehaviour
         float sy = usedH / Mathf.Max(1f, referenceHeight);
 
         float baseScaleRaw = Mathf.Min(sx, sy);
-        float baseScaleForUi = useIntegerUpscale ? Mathf.Floor(baseScaleRaw) : baseScaleRaw;
+        float baseScaleForUi = usePixelPerfectMenuLayout
+            ? baseScaleRaw
+            : (useIntegerUpscale ? Mathf.Floor(baseScaleRaw) : baseScaleRaw);
+
         if (baseScaleForUi < 1f) baseScaleForUi = 1f;
 
         baseScaleInt = Mathf.Max(1, Mathf.RoundToInt(baseScaleForUi));
@@ -282,6 +321,35 @@ public class ControlsConfigMenu : MonoBehaviour
         float ui = normalized * Mathf.Max(0.01f, extraScaleMultiplier);
         ui = Mathf.Clamp(ui, minScale, maxScale);
         return ui;
+    }
+
+    Vector2 GetReferenceRectSize()
+    {
+        RectTransform rt = referenceRect;
+        if (rt == null)
+        {
+            if (menuLayoutRoot != null) rt = menuLayoutRoot;
+            else if (root != null) rt = root.GetComponent<RectTransform>();
+            else if (menuText != null) rt = menuText.rectTransform;
+        }
+
+        if (rt != null)
+        {
+            Rect r = rt.rect;
+            if (r.width > 1f && r.height > 1f)
+                return r.size;
+        }
+
+        Rect px = GetReferencePixelRect(out _);
+        return px.size;
+    }
+
+    float ComputeReferencePixelScale()
+    {
+        Vector2 size = GetReferenceRectSize();
+        float sx = size.x / Mathf.Max(1f, referenceWidth);
+        float sy = size.y / Mathf.Max(1f, referenceHeight);
+        return Mathf.Max(1f, Mathf.Min(sx, sy));
     }
 
     void ApplyDynamicScaleIfNeeded(bool force = false)
@@ -351,6 +419,7 @@ public class ControlsConfigMenu : MonoBehaviour
             root = gameObject;
 
         SetupMenuTextMaterial();
+        EnsureFooterText();
         ResolveMenuLayoutRoot();
         CacheMenuLayoutRootBasePos();
 
@@ -383,7 +452,64 @@ public class ControlsConfigMenu : MonoBehaviour
             return;
 
         var rt = menuText.rectTransform;
+
+        if (usePixelPerfectMenuLayout)
+        {
+            float pixelScale = ComputeReferencePixelScale();
+            Vector2 size = new(
+                Mathf.Round(menuTextBoxReferenceSize.x * pixelScale),
+                Mathf.Round(menuTextBoxReferenceSize.y * pixelScale)
+            );
+
+            rt.anchorMin = new Vector2(0.5f, 0.5f);
+            rt.anchorMax = new Vector2(0.5f, 0.5f);
+            rt.pivot = new Vector2(0.5f, 0.5f);
+            rt.anchoredPosition = Vector2.zero;
+            rt.sizeDelta = size;
+            ApplyFooterTextRect(size);
+            return;
+        }
+
         rt.sizeDelta = _menuTextBaseSizeDelta * _currentUiScale;
+        ApplyFooterTextRect(rt.sizeDelta);
+    }
+
+    void ApplyFooterTextRect(Vector2 menuTextSize)
+    {
+        EnsureFooterText();
+
+        if (footerText == null)
+            return;
+
+        var rt = footerText.rectTransform;
+        int footerSize = ScaledFont(EffectiveFooterFontSize);
+        int footerLineCount = EstimateFooterLineCount();
+        float footerHeight = Mathf.Ceil((footerSize * ((footerLineCount * 1.25f) + 0.35f)) + ScaledFloat(footerBottomPadding));
+        float bottomPadding = ScaledFloat(footerBottomPadding);
+        float footerAreaHeight = usePixelPerfectMenuLayout
+            ? GetReferenceRectSize().y
+            : menuTextSize.y;
+
+        rt.anchorMin = new Vector2(0.5f, 0.5f);
+        rt.anchorMax = new Vector2(0.5f, 0.5f);
+        rt.pivot = new Vector2(0.5f, 0.5f);
+        rt.sizeDelta = new Vector2(menuTextSize.x, footerHeight);
+        rt.anchoredPosition = new Vector2(
+            0f,
+            Mathf.Round((-footerAreaHeight * 0.5f) + (footerHeight * 0.5f) + bottomPadding)
+        );
+    }
+
+    int EstimateFooterLineCount()
+    {
+        bool hasBlockedMessage = Time.unscaledTime < blockedMessageUntil && !string.IsNullOrEmpty(blockedMessageLine);
+        return state switch
+        {
+            MenuState.BulkRemap => hasBlockedMessage ? 8 : 7,
+            MenuState.SelectPlayer => hasBlockedMessage ? 5 : 4,
+            MenuState.WaitForInput => 1,
+            _ => 3
+        };
     }
 
     void OnDisable()
@@ -450,11 +576,49 @@ public class ControlsConfigMenu : MonoBehaviour
         ResolveMenuLayoutRoot();
         CacheMenuLayoutRootBasePos();
 
+        if (usePixelPerfectMenuLayout)
+        {
+            if (menuLayoutRoot == null)
+                return;
+
+            float relX = 1f;
+            float relY = 1f;
+
+            Vector2 refSize = GetReferenceRectSize();
+            if (refSize.x > 1f && refSize.y > 1f)
+            {
+                relX = refSize.x / Mathf.Max(1f, referenceWidth * Mathf.Max(1, designUpscale));
+                relY = refSize.y / Mathf.Max(1f, referenceHeight * Mathf.Max(1, designUpscale));
+            }
+
+            Vector2 offset = GetCurrentMenuOffset();
+            Vector2 pos = new(
+                offset.x * relX,
+                (menuGlobalYOffset + offset.y) * relY
+            );
+
+            menuLayoutRoot.anchorMin = new Vector2(0.5f, 0.5f);
+            menuLayoutRoot.anchorMax = new Vector2(0.5f, 0.5f);
+            menuLayoutRoot.pivot = new Vector2(0.5f, 0.5f);
+            menuLayoutRoot.anchoredPosition = new Vector2(Mathf.Round(pos.x), Mathf.Round(pos.y));
+            return;
+        }
+
         if (menuLayoutRoot != null && menuLayoutRootCached)
         {
             float y = menuGlobalYOffset;
             menuLayoutRoot.anchoredPosition = menuLayoutRootBasePos + new Vector2(0f, y);
         }
+    }
+
+    Vector2 GetCurrentMenuOffset()
+    {
+        return state switch
+        {
+            MenuState.WaitForInput => waitMenuOffset,
+            MenuState.BulkRemap => remapMenuOffset,
+            _ => selectMenuOffset
+        };
     }
 
     void SetupMenuTextMaterial()
@@ -469,6 +633,8 @@ public class ControlsConfigMenu : MonoBehaviour
         if (forceBold)
             menuText.fontStyle |= FontStyles.Bold;
 
+        menuText.alignment = TextAlignmentOptions.Center;
+        menuText.verticalAlignment = VerticalAlignmentOptions.Top;
         Material baseMat = menuText.fontSharedMaterial;
         if (baseMat == null) baseMat = menuText.fontMaterial;
         if (baseMat == null && menuText.font != null) baseMat = menuText.font.material;
@@ -498,6 +664,54 @@ public class ControlsConfigMenu : MonoBehaviour
         menuText.havePropertiesChanged = true;
         menuText.UpdateMeshPadding();
         menuText.SetAllDirty();
+
+        if (footerText != null)
+            SetupFooterTextStyle();
+    }
+
+    void EnsureFooterText()
+    {
+        if (footerText != null || menuText == null)
+        {
+            if (footerText != null)
+                SetupFooterTextStyle();
+
+            return;
+        }
+
+        var parent = menuText.transform.parent;
+        if (parent == null)
+            return;
+
+        footerText = Instantiate(menuText, parent);
+        footerText.name = $"{menuText.name}_Footer";
+        footerText.text = string.Empty;
+        footerText.transform.SetSiblingIndex(menuText.transform.GetSiblingIndex() + 1);
+        SetupFooterTextStyle();
+    }
+
+    void SetupFooterTextStyle()
+    {
+        if (footerText == null)
+            return;
+
+        footerText.textWrappingMode = TextWrappingModes.NoWrap;
+        footerText.overflowMode = TextOverflowModes.Overflow;
+        footerText.extraPadding = true;
+        footerText.alignment = TextAlignmentOptions.Center;
+        footerText.verticalAlignment = VerticalAlignmentOptions.Bottom;
+        footerText.raycastTarget = false;
+
+        if (forceBold)
+            footerText.fontStyle |= FontStyles.Bold;
+
+        if (runtimeMenuMat != null)
+        {
+            footerText.fontMaterial = runtimeMenuMat;
+            footerText.havePropertiesChanged = true;
+            footerText.UpdateMeshPadding();
+            footerText.SetAllDirty();
+        }
     }
 
     static void TrySetFloat(Material m, string prop, float value)
@@ -519,7 +733,7 @@ public class ControlsConfigMenu : MonoBehaviour
         var input = PlayerInputManager.Instance;
         if (input == null) return false;
 
-        for (int p = 1; p <= 4; p++)
+        for (int p = 1; p <= MaxConfigurablePlayers; p++)
         {
             if (input.GetDown(p, action))
             {
@@ -544,7 +758,7 @@ public class ControlsConfigMenu : MonoBehaviour
         var input = PlayerInputManager.Instance;
         if (input == null) return false;
 
-        for (int p = 1; p <= 4; p++)
+        for (int p = 1; p <= MaxConfigurablePlayers; p++)
         {
             if (input.Get(p, action))
                 return true;
@@ -572,16 +786,64 @@ public class ControlsConfigMenu : MonoBehaviour
         return BulkActions[Mathf.Clamp(bulkStep, 0, BulkActions.Length - 1)];
     }
 
+    void BeginBulkRemap()
+    {
+        targetPlayerId = Mathf.Clamp(targetPlayerId, 1, MaxConfigurablePlayers);
+
+        var p = PlayerInputManager.Instance.GetPlayer(targetPlayerId);
+        bulkSnapshot = p.CloneBindings();
+        bulkStep = 0;
+        state = MenuState.BulkRemap;
+        blockedMessageUntil = 0f;
+        blockedMessageLine = null;
+    }
+
     string CurrentWaitLinkId()
     {
         return LINK_WAIT_PREFIX + ActionToLabel(CurrentBulkAction());
     }
 
+    bool IsPlayerActiveForMenu(int playerId)
+    {
+        playerId = Mathf.Clamp(playerId, 1, MaxConfigurablePlayers);
+
+        var session = GameSession.Instance;
+        if (session == null)
+            return playerId == 1;
+
+        return session.IsPlayerActive(playerId);
+    }
+
+    bool ToggleSelectedPlayerActive()
+    {
+        int playerId = Mathf.Clamp(playerSelectIndex + 1, 1, MaxConfigurablePlayers);
+        var session = GameSession.Instance;
+        if (session == null)
+        {
+            ShowBlockedMessage("PLAYER ACTIVATION IS UNAVAILABLE.");
+            return false;
+        }
+
+        bool active = session.IsPlayerActive(playerId);
+        if (active && session.ActivePlayerCount <= 1)
+        {
+            ShowBlockedMessage("AT LEAST ONE PLAYER MUST STAY ON.");
+            return false;
+        }
+
+        session.SetPlayerActive(playerId, !active);
+        return session.IsPlayerActive(playerId) != active;
+    }
+
     void ShowBlockedMessageForKey(KeyCode key)
     {
+        ShowBlockedMessage($"KEY {PrettyKeyName(key)} IS ALREADY IN USE!\nPLEASE PRESS ANOTHER KEY.");
+    }
+
+    void ShowBlockedMessage(string message)
+    {
         blockedMessageUntil = Time.unscaledTime + 1.25f;
-        blockedMessageLine =
-            $"<color={colorPlayerSelectedRed}>KEY {PrettyKeyName(key)} IS ALREADY IN USE!\nPLEASE PRESS ANOTHER KEY.</color>";
+        blockedMessageLine = $"<color={colorPlayerSelectedRed}>{message}</color>";
     }
 
     bool IsKeyUsedByOtherPlayers(int targetPid, KeyCode key)
@@ -589,7 +851,7 @@ public class ControlsConfigMenu : MonoBehaviour
         var mgr = PlayerInputManager.Instance;
         if (mgr == null) return false;
 
-        for (int p = 1; p <= 4; p++)
+        for (int p = 1; p <= MaxConfigurablePlayers; p++)
         {
             if (p == targetPid) continue;
 
@@ -627,7 +889,7 @@ public class ControlsConfigMenu : MonoBehaviour
 
     public IEnumerator OpenRoutine(int openerPlayerId, AudioClip restoreMusic, float restoreMusicVolume = 1f)
     {
-        ownerPlayerId = Mathf.Clamp(openerPlayerId, 1, 6);
+        ownerPlayerId = Mathf.Clamp(openerPlayerId, 1, MaxConfigurablePlayers);
 
         SaveSystem.LoadControlsIntoInputManager();
 
@@ -659,7 +921,7 @@ public class ControlsConfigMenu : MonoBehaviour
         }
 
         state = MenuState.SelectPlayer;
-        playerSelectIndex = Mathf.Clamp(ownerPlayerId - 1, 0, 3);
+        playerSelectIndex = Mathf.Clamp(ownerPlayerId - 1, 0, MaxConfigurablePlayers - 1);
         targetPlayerId = playerSelectIndex + 1;
         bulkStep = 0;
         bulkSnapshot = null;
@@ -704,12 +966,12 @@ public class ControlsConfigMenu : MonoBehaviour
                 if (TryGetAnyPlayerDown(PlayerAction.MoveUp, out int pidUp))
                 {
                     ownerPlayerId = pidUp;
-                    playerSelectIndex = Mathf.Clamp(playerSelectIndex - 1, 0, 3);
+                    playerSelectIndex = Mathf.Clamp(playerSelectIndex - 1, 0, MaxConfigurablePlayers - 1);
                 }
                 else if (TryGetAnyPlayerDown(PlayerAction.MoveDown, out int pidDown))
                 {
                     ownerPlayerId = pidDown;
-                    playerSelectIndex = Mathf.Clamp(playerSelectIndex + 1, 0, 3);
+                    playerSelectIndex = Mathf.Clamp(playerSelectIndex + 1, 0, MaxConfigurablePlayers - 1);
                 }
 
                 if (playerSelectIndex != prev)
@@ -739,6 +1001,25 @@ public class ControlsConfigMenu : MonoBehaviour
                     continue;
                 }
 
+                bool toggleLeft = TryGetAnyPlayerDown(PlayerAction.MoveLeft, out int pidToggleLeft);
+                bool toggleRight = TryGetAnyPlayerDown(PlayerAction.MoveRight, out int pidToggleRight);
+                bool toggleByPad = toggleLeft || toggleRight;
+
+                if (toggleByPad)
+                {
+                    ownerPlayerId = toggleLeft ? pidToggleLeft : pidToggleRight;
+
+                    if (ToggleSelectedPlayerActive())
+                        PlaySfx(confirmSfx, confirmVolume);
+                    else
+                        PlaySfx(lockedSfx, lockedVolume);
+
+                    RefreshText();
+                    yield return PulseCursor();
+                    yield return null;
+                    continue;
+                }
+
                 if (TryGetAnyPlayerDown(PlayerAction.ActionC, out int pidAskReset))
                 {
                     ownerPlayerId = pidAskReset;
@@ -763,10 +1044,7 @@ public class ControlsConfigMenu : MonoBehaviour
 
                     targetPlayerId = playerSelectIndex + 1;
 
-                    var p = PlayerInputManager.Instance.GetPlayer(targetPlayerId);
-                    bulkSnapshot = p.CloneBindings();
-                    bulkStep = 0;
-                    state = MenuState.BulkRemap;
+                    state = MenuState.WaitForInput;
                     blockedMessageUntil = 0f;
                     blockedMessageLine = null;
                     PlaySfx(confirmSfx, confirmVolume);
@@ -849,6 +1127,54 @@ public class ControlsConfigMenu : MonoBehaviour
 
                     state = MenuState.SelectPlayer;
                     PlaySfx(backSfx, backVolume);
+                    RefreshText();
+                    yield return PulseCursor();
+                    yield return null;
+                    continue;
+                }
+
+                yield return null;
+                continue;
+            }
+
+            if (state == MenuState.WaitForInput)
+            {
+                bool escCancel = Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame;
+                bool actionBCancel = TryGetAnyPlayerDown(PlayerAction.ActionB, out int pidCancel);
+                bool mouseCancel = rightClick;
+
+                var dpad = ReadAnyDpadDownThisFrame();
+                var joyBtn = ReadAnyGamepadButtonDownThisFrame();
+                KeyCode? key = ReadAnyKeyboardKeyDownNoMouse();
+
+                bool rawGamepadActionBCancel = joyBtn.HasValue && joyBtn.Value.btn == 1;
+                bool rawKeyboardEscCancel = key.HasValue && key.Value == KeyCode.Escape;
+
+                if (escCancel || actionBCancel || mouseCancel || rawGamepadActionBCancel || rawKeyboardEscCancel)
+                {
+                    if (actionBCancel) ownerPlayerId = pidCancel;
+
+                    state = MenuState.SelectPlayer;
+                    PlaySfx(backSfx, backVolume);
+                    RefreshText();
+                    yield return PulseCursor();
+                    yield return null;
+                    continue;
+                }
+
+                bool startByMappedInput = TryGetAnyPlayerDownEither(PlayerAction.Start, PlayerAction.ActionA, out int pidStart);
+                bool startByMouse = leftClick &&
+                                    TryGetPointerHoveredLinkId(pointer.screenPosition, out string clickedWaitLink) &&
+                                    clickedWaitLink == LINK_WAIT_START;
+                bool startByRawInput = dpad.HasValue || joyBtn.HasValue || key.HasValue;
+
+                if (startByMappedInput || startByMouse || startByRawInput)
+                {
+                    if (startByMappedInput)
+                        ownerPlayerId = pidStart;
+
+                    BeginBulkRemap();
+                    PlaySfx(confirmSfx, confirmVolume);
                     RefreshText();
                     yield return PulseCursor();
                     yield return null;
@@ -1168,11 +1494,14 @@ public class ControlsConfigMenu : MonoBehaviour
         if (menuText == null)
             return;
 
-        int titleSize = ScaledFont(titleFontSize);
-        float titleVO = ScaledFloat(titleVOffset);
-        int bodySize = ScaledFont(bodyFontSize);
-        int footerSize = ScaledFont(footerFontSize);
-        int gridSize = ScaledFont(selectGridFontSize);
+        ApplyMenuGlobalOffset();
+        ApplyMenuTextRectScale();
+
+        int titleSize = ScaledFont(EffectiveTitleFontSize);
+        float titleVO = usePixelPerfectMenuLayout ? 0f : ScaledFloat(titleVOffset);
+        int bodySize = ScaledFont(EffectiveBodyFontSize);
+        int footerSize = ScaledFont(EffectiveFooterFontSize);
+        int gridSize = ScaledFont(state == MenuState.BulkRemap ? EffectiveRemapGridFontSize : EffectiveSelectGridFontSize);
 
         string header =
             RepeatNewLine(Mathf.Max(0, headerTopPaddingLines)) +
@@ -1180,31 +1509,37 @@ public class ControlsConfigMenu : MonoBehaviour
             RepeatNewLine(Mathf.Max(0, headerBottomPaddingLines)) +
             "\n";
 
-        string body = "<align=center>";
-        body += $"<size={bodySize}><color={colorBlueSoft}>CHOOSE A PLAYER TO EDIT CONTROLS</color></size>\n\n";
-        body += "</align>";
-
-        body += "<align=left>";
-        AppendPlayerBlock(ref body, 0, colorNormal, colorHint, gridSize);
-        body += RepeatNewLine(playerBlockGapLines);
-        AppendPlayerBlock(ref body, 1, colorNormal, colorHint, gridSize);
-        body += RepeatNewLine(playerBlockGapLines);
-        AppendPlayerBlock(ref body, 2, colorNormal, colorHint, gridSize);
-        body += RepeatNewLine(playerBlockGapLines);
-        AppendPlayerBlock(ref body, 3, colorNormal, colorHint, gridSize);
-
-        int footerLift = Mathf.Max(0, footerGapLines + footerExtraNewLines);
-        body += RepeatNewLine(footerLift);
+        string body = string.Empty;
+        string footer = string.Empty;
 
         if (state == MenuState.SelectPlayer)
         {
-            body +=
-                $"<align=center><size={footerSize}>" +
-                $"<color={colorHint}>A / START:</color> <color={colorWhite}>CONFIRM / PLACE BOMB</color>\n" +
-                $"<color={colorHint}>B:</color> <color={colorWhite}>RETURN / EXPLODE CONTROL BOMB</color>\n" +
-                $"<color={colorHint}>C:</color> <color={colorWhite}>RESTORE DEFAULT KEYS / ABILITIES</color>\n" +
-                $"<color={colorHint}>L (RIDING):</color> <color={colorWhite}>DISMOUNT</color>\n" +
-                $"<color={colorHint}>R:</color> <color={colorWhite}>STOP KICKED BOMBS</color>" +
+            body += "<align=center>";
+            body += RepeatSizedSpacerLines(EffectiveSelectTitleToBodyGapLines, bodySize);
+            body += $"<size={bodySize}><color={colorBlueSoft}>CHOOSE A PLAYER</color></size>\n\n";
+
+            int selectorRowGap = Mathf.Max(0, playerBlockGapLines - 1);
+            for (int i = 0; i < MaxConfigurablePlayers; i++)
+            {
+                AppendPlayerSelectRow(ref body, i, gridSize);
+
+                if (i < MaxConfigurablePlayers - 1)
+                    body += RepeatNewLine(selectorRowGap);
+            }
+
+            if (Time.unscaledTime < blockedMessageUntil && !string.IsNullOrEmpty(blockedMessageLine))
+                footer += $"<size={footerSize}>{blockedMessageLine}</size>\n";
+
+            body += "</align>";
+
+            footer +=
+                RepeatNewLine(Mathf.Max(0, footerGapLines + footerExtraNewLines)) +
+                $"<align=center>" +
+                $"<size={footerSize}>" +
+                $"<color={colorHint}>A / START:</color> <color={colorWhite}>MAP CONTROLS</color>\n" +
+                $"<color={colorHint}>LEFT / RIGHT:</color> <color={colorWhite}>TOGGLE PLAYER</color>\n" +
+                $"<color={colorHint}>C:</color> <color={colorWhite}>RESTORE DEFAULT KEYS</color>\n" +
+                $"<color={colorHint}>B:</color> <color={colorWhite}>RETURN</color>" +
                 $"</size></align>";
         }
         else if (state == MenuState.ConfirmReset)
@@ -1220,26 +1555,57 @@ public class ControlsConfigMenu : MonoBehaviour
                 $"<color={colorHint}>A / START</color><color={colorWhite}>: CONFIRM</color>    <color={colorHint}>B</color><color={colorWhite}>: CANCEL</color>" +
                 $"</size></align>";
         }
+        else if (state == MenuState.WaitForInput)
+        {
+            body += "<align=center>";
+            body += RepeatSizedSpacerLines(EffectiveWaitTitleToBodyGapLines, bodySize);
+            body +=
+                $"<size={bodySize}><color={colorBlueSoft}>CONFIGURING PLAYER {targetPlayerId}</color></size>\n\n" +
+                $"<size={footerSize}>" +
+                $"<color={colorWhite}>PRESS THE CONTROLS YOU WANT</color>\n" +
+                $"<color={colorWhite}>TO USE FOR THIS PLAYER.</color>\n\n" +
+                $"<link=\"{LINK_WAIT_START}\"><color={colorHint}>PRESS ANY KEY OR BUTTON</color></link>\n" +
+                $"<color={colorWhite}>TO START MAPPING</color>" +
+                $"</size></align>";
+
+            footer +=
+                $"<align=center><size={footerSize}>" +
+                $"<color={colorPlayerSelectedRed}>ESC / B TO CANCEL</color>" +
+                $"</size></align>";
+        }
         else
         {
             var a = CurrentBulkAction();
 
             string blocked = (Time.unscaledTime < blockedMessageUntil && !string.IsNullOrEmpty(blockedMessageLine))
-                ? ("\n" + blockedMessageLine + "\n")
-                : "\n";
+                ? (blockedMessageLine + "\n")
+                : string.Empty;
 
+            body += "<align=center>";
+            body += RepeatSizedSpacerLines(EffectiveRemapTitleToBodyGapLines, bodySize);
             body +=
+                $"<size={bodySize}><color={colorBlueSoft}>CONFIGURING PLAYER {targetPlayerId}</color></size>\n\n" +
+                $"<size={gridSize}><color={colorPlayerSelectedRed}>PLAYER {targetPlayerId}</color></size>\n";
+            body += "</align>";
+
+            AppendBulkRemapVerticalList(ref body, targetPlayerId, gridSize);
+
+            footer +=
                 $"<align=center><size={footerSize}>" +
-                $"<color={colorHint}>REMAPPING PLAYER {targetPlayerId}:</color> <color={colorWhite}>{ActionToLabel(a)}</color>\n" +
-                $"<color={colorHint}>PRESS A KEY...</color>" +
+                $"<color={colorHint}>CHOOSE A BUTTON FOR:</color> <color={colorWhite}>{ActionToLabel(a)}</color>\n" +
                 blocked +
-                $"<color={colorPlayerSelectedRed}>ESC TO CANCEL</color>" +
+                $"<color={colorPlayerSelectedRed}>ESC TO CANCEL</color>\n" +
+                $"<color={colorHint}>A / START:</color> <color={colorWhite}>CONFIRM / PLACE BOMB</color>\n" +
+                $"<color={colorHint}>B:</color> <color={colorWhite}>RETURN / EXPLODE CONTROL BOMB</color>\n" +
+                $"<color={colorHint}>C:</color> <color={colorWhite}>RESTORE DEFAULT KEYS / ABILITIES</color>\n" +
+                $"<color={colorHint}>L (RIDING):</color> <color={colorWhite}>DISMOUNT</color>\n" +
+                $"<color={colorHint}>R:</color> <color={colorWhite}>STOP KICKED BOMBS</color>" +
                 $"</size></align>";
         }
 
-        body += "</align>";
-
         menuText.text = header + body;
+        SetFooterText(footer);
+        LogControlsLayoutSnapshot(titleSize, bodySize, footerSize, gridSize);
 
         if (state == MenuState.SelectPlayer)
         {
@@ -1249,22 +1615,281 @@ public class ControlsConfigMenu : MonoBehaviour
         {
             UpdateCursorPosition_ByLinkId(confirmResetIndex == 0 ? LINK_RESET_YES : LINK_RESET_NO);
         }
+        else if (state == MenuState.WaitForInput)
+        {
+            UpdateCursorPosition_ByLinkId(LINK_WAIT_START);
+        }
         else
         {
             UpdateCursorPosition_ByLinkId(CurrentWaitLinkId());
         }
     }
 
-    void AppendPlayerBlock(ref string body, int index, string cn, string ch, int gridSize)
+    void SetFooterText(string text)
     {
-        for (int line = 0; line < 6; line++)
+        EnsureFooterText();
+
+        if (footerText == null)
+            return;
+
+        footerText.gameObject.SetActive(!string.IsNullOrEmpty(text));
+        footerText.text = text ?? string.Empty;
+    }
+
+    void AppendPlayerSelectRow(ref string body, int index, int gridSize)
+    {
+        int playerId = index + 1;
+        bool selected = playerSelectIndex == index;
+        bool active = IsPlayerActiveForMenu(playerId);
+
+        string playerColor = selected ? colorPlayerSelectedRed : colorPlayerGreen;
+        string statusColor = active ? colorPlayerGreen : colorPlayerSelectedRed;
+        string status = active ? "ON" : "OFF";
+        string playerLabel = $"PLAYER {playerId}".PadRight(10, '\u00A0');
+        string paddedStatus = status.PadLeft(3, '\u00A0');
+
+        body +=
+            $"<link=\"sel{index}\">" +
+            $"<size={gridSize}><color={playerColor}>{playerLabel}</color>" +
+            $"<color={statusColor}>{paddedStatus}</color></size>" +
+            $"</link>\n";
+    }
+
+    void LogControlsLayoutSnapshot(int titleSize, int bodySize, int footerSize, int gridSize)
+    {
+        if (!debugLayoutLogs || menuText == null)
+            return;
+
+        debugRefreshSequence++;
+
+        var textRect = menuText.rectTransform;
+        var footerRect = footerText != null ? footerText.rectTransform : null;
+        Vector2 refSize = GetReferenceRectSize();
+        float pixelScale = ComputeReferencePixelScale();
+        Vector2 layoutPos = menuLayoutRoot != null ? menuLayoutRoot.anchoredPosition : Vector2.zero;
+        Vector2 layoutSize = menuLayoutRoot != null ? menuLayoutRoot.rect.size : Vector2.zero;
+
+        menuText.ForceMeshUpdate();
+        if (footerText != null)
+            footerText.ForceMeshUpdate();
+
+        TMP_TextInfo ti = menuText.textInfo;
+        TMP_TextInfo footerTi = footerText != null ? footerText.textInfo : null;
+
+        var sb = new StringBuilder(4096);
+        sb.Append("[ControlsConfigMenu][Layout] ");
+        sb.Append("refresh=").Append(debugRefreshSequence);
+        sb.Append(" state=").Append(state);
+        sb.Append(" selected=").Append(playerSelectIndex + 1);
+        sb.Append(" target=").Append(targetPlayerId);
+        sb.Append(" bulkStep=").Append(bulkStep);
+        sb.Append(" screen=").Append(Screen.width).Append('x').Append(Screen.height);
+        sb.Append(" refSize=").Append(FormatVector2(refSize));
+        sb.Append(" pixelScale=").Append(pixelScale.ToString("0.###"));
+        sb.Append(" uiScale=").Append(_currentUiScale.ToString("0.###"));
+        sb.Append(" baseScale=").Append(_currentBaseScaleInt);
+        sb.Append(" layoutPos=").Append(FormatVector2(layoutPos));
+        sb.Append(" layoutSize=").Append(FormatVector2(layoutSize));
+        sb.Append(" textPos=").Append(FormatVector2(textRect.anchoredPosition));
+        sb.Append(" textSize=").Append(FormatVector2(textRect.rect.size));
+        sb.Append(" textPivot=").Append(FormatVector2(textRect.pivot));
+        sb.Append(" fonts=(").Append(titleSize).Append(',')
+            .Append(bodySize).Append(',')
+            .Append(gridSize).Append(',')
+            .Append(footerSize).Append(')');
+        sb.Append(" selectGaps=(").Append(EffectiveSelectTitleToBodyGapLines).Append('/')
+            .Append(selectTitleToBodyGapLines).Append(',')
+            .Append(footerGapLines + footerExtraNewLines).Append(',')
+            .Append(playerBlockGapLines).Append(')');
+        if (footerRect != null)
         {
-            string l = PlayerLine(index + 1, line, cn, ch, index, gridSize);
-            if (state == MenuState.SelectPlayer)
-                body += $"<link=\"sel{index}\">{l}</link>\n";
-            else
-                body += $"{l}\n";
+            sb.Append(" footerActive=").Append(footerText.gameObject.activeSelf);
+            sb.Append(" footerPos=").Append(FormatVector2(footerRect.anchoredPosition));
+            sb.Append(" footerSize=").Append(FormatVector2(footerRect.rect.size));
+            sb.Append(" footerPivot=").Append(FormatVector2(footerRect.pivot));
+            sb.Append(" footerLineCount=").Append(footerTi != null ? footerTi.lineCount : 0);
         }
+        sb.Append(" selectRowFormat=monospace-padding");
+        sb.Append(" alignment=").Append(menuText.alignment);
+        sb.Append(" lineCount=").Append(ti != null ? ti.lineCount : 0);
+        sb.Append(" linkCount=").Append(ti != null ? ti.linkCount : 0);
+
+        if (ti != null)
+        {
+            AppendLineBounds(sb, ti);
+
+            if (debugLinkBounds)
+                AppendLinkBounds(sb, ti);
+        }
+
+        if (footerTi != null && footerText != null && footerText.gameObject.activeSelf)
+            AppendFooterLineBounds(sb, footerTi);
+
+        if (debugTextContent)
+        {
+            sb.AppendLine();
+            sb.Append("[text]=").Append(menuText.text.Replace("\n", "\\n"));
+        }
+
+        Debug.Log(sb.ToString(), this);
+    }
+
+    void AppendLineBounds(StringBuilder sb, TMP_TextInfo ti)
+    {
+        if (ti == null)
+            return;
+
+        int count = Mathf.Min(ti.lineCount, Mathf.Max(1, debugMaxLoggedLines));
+        sb.AppendLine();
+        sb.Append("  lines:");
+
+        for (int i = 0; i < count; i++)
+        {
+            TMP_LineInfo li = ti.lineInfo[i];
+            sb.AppendLine();
+            sb.Append("    #").Append(i)
+                .Append(" first=").Append(li.firstCharacterIndex)
+                .Append(" chars=").Append(li.characterCount)
+                .Append(" asc=").Append(li.ascender.ToString("0.##"))
+                .Append(" desc=").Append(li.descender.ToString("0.##"))
+                .Append(" extMin=").Append(FormatVector2(li.lineExtents.min))
+                .Append(" extMax=").Append(FormatVector2(li.lineExtents.max));
+        }
+
+        if (ti.lineCount > count)
+        {
+            sb.AppendLine();
+            sb.Append("    ... ").Append(ti.lineCount - count).Append(" more lines");
+        }
+    }
+
+    void AppendFooterLineBounds(StringBuilder sb, TMP_TextInfo ti)
+    {
+        if (ti == null)
+            return;
+
+        int count = Mathf.Min(ti.lineCount, Mathf.Max(1, debugMaxLoggedLines));
+        sb.AppendLine();
+        sb.Append("  footerLines:");
+
+        for (int i = 0; i < count; i++)
+        {
+            TMP_LineInfo li = ti.lineInfo[i];
+            sb.AppendLine();
+            sb.Append("    #").Append(i)
+                .Append(" first=").Append(li.firstCharacterIndex)
+                .Append(" chars=").Append(li.characterCount)
+                .Append(" asc=").Append(li.ascender.ToString("0.##"))
+                .Append(" desc=").Append(li.descender.ToString("0.##"))
+                .Append(" extMin=").Append(FormatVector2(li.lineExtents.min))
+                .Append(" extMax=").Append(FormatVector2(li.lineExtents.max));
+        }
+    }
+
+    void AppendLinkBounds(StringBuilder sb, TMP_TextInfo ti)
+    {
+        if (ti == null)
+            return;
+
+        sb.AppendLine();
+        sb.Append("  links:");
+
+        for (int li = 0; li < ti.linkCount; li++)
+        {
+            TMP_LinkInfo link = ti.linkInfo[li];
+            string id = link.GetLinkID();
+            if (state == MenuState.SelectPlayer && !id.StartsWith("sel", StringComparison.Ordinal))
+                continue;
+
+            if (!TryGetLinkBounds(ti, link, out Vector2 min, out Vector2 max, out int visibleChars))
+            {
+                sb.AppendLine();
+                sb.Append("    ").Append(id).Append(" no-visible-chars");
+                continue;
+            }
+
+            sb.AppendLine();
+            sb.Append("    ").Append(id)
+                .Append(" text=\"").Append(link.GetLinkText()).Append('"')
+                .Append(" first=").Append(link.linkTextfirstCharacterIndex)
+                .Append(" len=").Append(link.linkTextLength)
+                .Append(" visible=").Append(visibleChars)
+                .Append(" min=").Append(FormatVector2(min))
+                .Append(" max=").Append(FormatVector2(max))
+                .Append(" size=").Append(FormatVector2(max - min));
+        }
+    }
+
+    static bool TryGetLinkBounds(
+        TMP_TextInfo ti,
+        TMP_LinkInfo link,
+        out Vector2 min,
+        out Vector2 max,
+        out int visibleChars)
+    {
+        min = new Vector2(float.PositiveInfinity, float.PositiveInfinity);
+        max = new Vector2(float.NegativeInfinity, float.NegativeInfinity);
+        visibleChars = 0;
+
+        if (ti == null || ti.characterCount <= 0)
+            return false;
+
+        int first = link.linkTextfirstCharacterIndex;
+        int last = Mathf.Min(first + link.linkTextLength - 1, ti.characterCount - 1);
+
+        for (int c = Mathf.Max(0, first); c <= last; c++)
+        {
+            TMP_CharacterInfo ch = ti.characterInfo[c];
+            if (!ch.isVisible)
+                continue;
+
+            visibleChars++;
+            min.x = Mathf.Min(min.x, ch.bottomLeft.x);
+            min.y = Mathf.Min(min.y, ch.descender);
+            max.x = Mathf.Max(max.x, ch.topRight.x);
+            max.y = Mathf.Max(max.y, ch.ascender);
+        }
+
+        return visibleChars > 0;
+    }
+
+    static string FormatVector2(Vector2 value)
+    {
+        return $"({value.x:0.##},{value.y:0.##})";
+    }
+
+    void AppendBulkRemapVerticalList(ref string body, int playerId, int gridSize)
+    {
+        var p = PlayerInputManager.Instance.GetPlayer(playerId);
+        if (p == null)
+            return;
+
+        float labelX = ScaledFloat(250f);
+        float valueX = ScaledFloat(480f);
+
+        body += "<align=left>";
+
+        for (int i = 0; i < BulkActions.Length; i++)
+        {
+            PlayerAction action = BulkActions[i];
+
+            string label = $"{ActionToLabel(action)}:";
+            string binding = BindingToShort(p.GetBinding(action));
+
+            bool current = CurrentBulkAction() == action;
+
+            string labelText = current
+                ? $"<link=\"{CurrentWaitLinkId()}\"><color={colorHint}>{label}</color></link>"
+                : $"<color={colorHint}>{label}</color>";
+
+            body +=
+                $"<size={gridSize}>" +
+                $"<pos={labelX}>{labelText}</pos>" +
+                $"<pos={valueX}><color={colorNormal}>{binding}</color></pos>" +
+                $"</size>\n";
+        }
+
+        body += "</align>";
     }
 
     string LabelMaybeWait(PlayerAction action, string label, string ch)
@@ -1485,6 +2110,18 @@ public class ControlsConfigMenu : MonoBehaviour
         return new string('\n', count);
     }
 
+    static string RepeatSizedSpacerLines(int count, int fontSize)
+    {
+        if (count <= 0) return string.Empty;
+
+        var sb = new StringBuilder(count * 24);
+        int safeFontSize = Mathf.Max(1, fontSize);
+        for (int i = 0; i < count; i++)
+            sb.Append("<size=").Append(safeFontSize).Append("> </size>\n");
+
+        return sb.ToString();
+    }
+
     static string ActionToLabel(PlayerAction a)
     {
         return a switch
@@ -1675,9 +2312,9 @@ public class ControlsConfigMenu : MonoBehaviour
 
         if (state == MenuState.SelectPlayer)
         {
-            if (linkId != null && linkId.StartsWith("sel") && linkId.Length == 4)
+            if (linkId != null && linkId.StartsWith("sel", StringComparison.Ordinal) && linkId.Length > 3)
             {
-                if (int.TryParse(linkId.Substring(3), out int i) && i >= 0 && i <= 3)
+                if (int.TryParse(linkId.Substring(3), out int i) && i >= 0 && i < MaxConfigurablePlayers)
                 {
                     index = i;
                     return true;
