@@ -8713,9 +8713,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6bffc50ad51012e4fae8c6d7e54061e1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  defaultMusic: {fileID: 8300000, guid: 02764d0c49db8654e8f5479cc36f1786, type: 3}
+  defaultMusic: {fileID: 8300000, guid: 3820c560abaa03c419bce2bcd7971022, type: 3}
+  defaultMusicLoop: {fileID: 0}
   deathMusic: {fileID: 8300000, guid: 47abcd3e68c750440b01643ffd998e93, type: 3}
   defaultMusicVolume: 1
+  defaultMusicLoopVolume: 1
 --- !u!82 &988695576
 AudioSource:
   m_ObjectHideFlags: 0
@@ -9788,7 +9790,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1746315304}
-  - component: {fileID: 1746315303}
   m_Layer: 0
   m_Name: StageSettings
   m_TagString: Untagged
@@ -9796,20 +9797,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1746315303
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1746315302}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9a284d4030dc9c84caeaae28969ab361, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::StageMusicConfigurator
-  stageDefaultMusic: {fileID: 8300000, guid: 3820c560abaa03c419bce2bcd7971022, type: 3}
-  musicVolume: 1
 --- !u!4 &1746315304
 Transform:
   m_ObjectHideFlags: 0

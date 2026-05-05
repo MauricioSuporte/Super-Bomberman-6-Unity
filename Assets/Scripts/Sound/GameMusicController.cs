@@ -1,10 +1,20 @@
 ﻿using UnityEngine;
 using UnityEngine.Audio;
 using System.Collections;
+using UnityEngine.SceneManagement;
 
 [RequireComponent(typeof(AudioSource))]
 public class GameMusicController : MonoBehaviour
 {
+    const string BattleModeMusicResourcesPath = "Sounds/BattleModeMusics";
+
+    static readonly BattleModeMusicConfig[] BattleModeMusicConfigs =
+    {
+        new("SB1 Battle Mode", 0.5f),
+        new("Sb2 - Battle1", 0.5f),
+        new("Sb2 - Battle2", 0.5f, "Sb2 - Battle2 Loop", 0.5f),
+    };
+
     public static GameMusicController Instance;
 
     private AudioSource musicSource;
@@ -26,6 +36,7 @@ public class GameMusicController : MonoBehaviour
 
         if (Instance != null && Instance != this)
         {
+            Instance.ApplySceneMusicSettingsFrom(this);
             Destroy(gameObject);
             return;
         }
@@ -45,6 +56,48 @@ public class GameMusicController : MonoBehaviour
         sfxSource.playOnAwake = false;
         sfxSource.loop = false;
         sfxSource.clip = null;
+
+        SceneManager.sceneLoaded += HandleSceneLoaded;
+    }
+
+    private void Start()
+    {
+        Scene scene = SceneManager.GetActiveScene();
+        if (!ConfigureBattleModeMusicForScene(scene))
+            return;
+
+        PlayDefaultMusic(true);
+    }
+
+    private void OnDestroy()
+    {
+        if (Instance != this)
+            return;
+
+        SceneManager.sceneLoaded -= HandleSceneLoaded;
+        Instance = null;
+    }
+
+    void HandleSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        if (!ConfigureBattleModeMusicForScene(scene))
+            return;
+
+        PlayDefaultMusic(true);
+    }
+
+    void ApplySceneMusicSettingsFrom(GameMusicController sceneMusicController)
+    {
+        if (sceneMusicController == null)
+            return;
+
+        defaultMusic = sceneMusicController.defaultMusic;
+        defaultMusicLoop = sceneMusicController.defaultMusicLoop;
+        defaultMusicVolume = sceneMusicController.defaultMusicVolume;
+        defaultMusicLoopVolume = sceneMusicController.defaultMusicLoopVolume;
+
+        if (sceneMusicController.deathMusic != null)
+            deathMusic = sceneMusicController.deathMusic;
     }
 
     public void PlayMusic(AudioClip clip, float volume = 1f, bool loop = true, float pitch = 1f, bool restart = true)
@@ -206,5 +259,105 @@ public class GameMusicController : MonoBehaviour
             yield break;
 
         PlayMusic(loopClip, loopVolume, true, pitch, true);
+    }
+
+    bool ConfigureBattleModeMusicForScene(Scene scene)
+    {
+        if (!IsBattleModeScene(scene))
+            return false;
+
+        AudioClip[] battleModeClips = Resources.LoadAll<AudioClip>(BattleModeMusicResourcesPath);
+        if (battleModeClips == null || battleModeClips.Length <= 0)
+            return false;
+
+        BattleModeMusicConfig[] availableConfigs = GetAvailableBattleModeMusicConfigs(battleModeClips);
+        if (availableConfigs.Length <= 0)
+            return false;
+
+        BattleModeMusicConfig selectedConfig = availableConfigs[Random.Range(0, availableConfigs.Length)];
+        AudioClip selectedIntroClip = FindClipByName(battleModeClips, selectedConfig.IntroClipName);
+        if (selectedIntroClip == null)
+            return false;
+
+        defaultMusic = selectedIntroClip;
+        defaultMusicVolume = selectedConfig.IntroVolume;
+        defaultMusicLoop = null;
+        defaultMusicLoopVolume = selectedConfig.LoopVolume;
+
+        if (!string.IsNullOrWhiteSpace(selectedConfig.LoopClipName))
+            defaultMusicLoop = FindClipByName(battleModeClips, selectedConfig.LoopClipName);
+
+        return true;
+    }
+
+    static bool IsBattleModeScene(Scene scene)
+    {
+        return scene.IsValid() &&
+               scene.name.StartsWith("BattleMode_", System.StringComparison.OrdinalIgnoreCase);
+    }
+
+    static BattleModeMusicConfig[] GetAvailableBattleModeMusicConfigs(AudioClip[] clips)
+    {
+        int count = 0;
+
+        for (int i = 0; i < BattleModeMusicConfigs.Length; i++)
+        {
+            if (FindClipByName(clips, BattleModeMusicConfigs[i].IntroClipName) != null)
+                count++;
+        }
+
+        BattleModeMusicConfig[] availableConfigs = new BattleModeMusicConfig[count];
+        int next = 0;
+
+        for (int i = 0; i < BattleModeMusicConfigs.Length; i++)
+        {
+            BattleModeMusicConfig config = BattleModeMusicConfigs[i];
+            if (FindClipByName(clips, config.IntroClipName) == null)
+                continue;
+
+            availableConfigs[next] = config;
+            next++;
+        }
+
+        return availableConfigs;
+    }
+
+    static AudioClip FindClipByName(AudioClip[] clips, string clipName)
+    {
+        if (clips == null || string.IsNullOrWhiteSpace(clipName))
+            return null;
+
+        for (int i = 0; i < clips.Length; i++)
+        {
+            AudioClip clip = clips[i];
+            if (clip != null &&
+                string.Equals(clip.name, clipName, System.StringComparison.OrdinalIgnoreCase))
+            {
+                return clip;
+            }
+        }
+
+        return null;
+    }
+
+    readonly struct BattleModeMusicConfig
+    {
+        public readonly string IntroClipName;
+        public readonly float IntroVolume;
+        public readonly string LoopClipName;
+        public readonly float LoopVolume;
+
+        public BattleModeMusicConfig(string introClipName, float introVolume)
+            : this(introClipName, introVolume, null, introVolume)
+        {
+        }
+
+        public BattleModeMusicConfig(string introClipName, float introVolume, string loopClipName, float loopVolume)
+        {
+            IntroClipName = introClipName;
+            IntroVolume = Mathf.Clamp01(introVolume);
+            LoopClipName = loopClipName;
+            LoopVolume = Mathf.Clamp01(loopVolume);
+        }
     }
 }
