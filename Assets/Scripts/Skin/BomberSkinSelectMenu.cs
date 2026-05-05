@@ -78,6 +78,7 @@ public class BomberSkinSelectMenu : MonoBehaviour
 
     [Header("Music")]
     [SerializeField] AudioClip selectMusic;
+    [SerializeField] AudioClip selectMusicLoop;
     [SerializeField, Range(0f, 1f)] float selectMusicVolume = 1f;
     [SerializeField] bool loopSelectMusic = true;
 
@@ -1082,7 +1083,28 @@ public class BomberSkinSelectMenu : MonoBehaviour
             }
         }
 
+        PreloadSelectMusic();
+
+        if (selectMusicLoop != null)
+        {
+            music.PlayMusicIntroThenLoop(
+                selectMusic,
+                selectMusicVolume,
+                selectMusicLoop,
+                selectMusicVolume);
+            return;
+        }
+
         music.PlayMusic(selectMusic, selectMusicVolume, loopSelectMusic);
+    }
+
+    void PreloadSelectMusic()
+    {
+        if (selectMusic != null && selectMusic.loadState == AudioDataLoadState.Unloaded)
+            selectMusic.LoadAudioData();
+
+        if (selectMusicLoop != null && selectMusicLoop.loadState == AudioDataLoadState.Unloaded)
+            selectMusicLoop.LoadAudioData();
     }
 
     void StopSelectMusicAndRestorePrevious(bool restorePrevious)
