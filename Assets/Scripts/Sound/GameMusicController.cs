@@ -24,6 +24,8 @@ public class GameMusicController : MonoBehaviour
 
     private AudioSource musicSource;
     private AudioSource sfxSource;
+    Coroutine musicTransitionRoutine;
+    Coroutine preloadAndPlayRoutine;
 
     public AudioClip defaultMusic;
     public AudioClip defaultMusicLoop;
@@ -74,7 +76,7 @@ public class GameMusicController : MonoBehaviour
         if (!ConfigureBattleModeMusicForScene(scene))
             return;
 
-        PlayDefaultMusic(true);
+        PreloadSelectedBattleMusicThenPlay();
     }
 
     private void OnDestroy()
@@ -91,7 +93,7 @@ public class GameMusicController : MonoBehaviour
         if (!ConfigureBattleModeMusicForScene(scene))
             return;
 
-        PlayDefaultMusic(true);
+        PreloadSelectedBattleMusicThenPlay();
     }
 
     void ApplySceneMusicSettingsFrom(GameMusicController sceneMusicController)
@@ -115,7 +117,7 @@ public class GameMusicController : MonoBehaviour
         if (clip == null || musicSource == null)
             return;
 
-        StopAllCoroutines();
+        StopMusicTransitionRoutine();
 
         bool sameClip = musicSource.clip == clip;
 
@@ -141,7 +143,7 @@ public class GameMusicController : MonoBehaviour
         if (introClip == null || musicSource == null)
             return;
 
-        StopAllCoroutines();
+        StopMusicTransitionRoutine();
 
         if (loopClip == null)
         {
@@ -160,7 +162,7 @@ public class GameMusicController : MonoBehaviour
             musicSource.time = 0f;
 
         musicSource.Play();
-        StartCoroutine(PlayLoopAfterIntroRoutine(introClip, loopClip, loopVolume, pitch));
+        musicTransitionRoutine = StartCoroutine(PlayLoopAfterIntroRoutine(introClip, loopClip, loopVolume, pitch));
     }
 
     public void PlayDefaultMusic(bool restart = true)
@@ -212,7 +214,7 @@ public class GameMusicController : MonoBehaviour
         musicSource.Stop();
         musicSource.clip = null;
         musicSource.pitch = 1f;
-        StopAllCoroutines();
+        StopMusicTransitionRoutine();
     }
 
     public void StopSfx()
@@ -275,9 +277,22 @@ public class GameMusicController : MonoBehaviour
         }
 
         if (musicSource == null || musicSource.clip != introClip)
+        {
+            musicTransitionRoutine = null;
             yield break;
+        }
 
+        musicTransitionRoutine = null;
         PlayMusic(loopClip, loopVolume, true, pitch, true);
+    }
+
+    void StopMusicTransitionRoutine()
+    {
+        if (musicTransitionRoutine == null)
+            return;
+
+        StopCoroutine(musicTransitionRoutine);
+        musicTransitionRoutine = null;
     }
 
     bool ConfigureBattleModeMusicForScene(Scene scene)
@@ -311,7 +326,59 @@ public class GameMusicController : MonoBehaviour
         if (!string.IsNullOrWhiteSpace(selectedConfig.CriticalClipName))
             battleCriticalMusic = FindClipByName(battleModeClips, selectedConfig.CriticalClipName);
 
+        PreloadSelectedBattleMusic();
+
         return true;
+    }
+
+    void PreloadSelectedBattleMusicThenPlay()
+    {
+        if (preloadAndPlayRoutine != null)
+            StopCoroutine(preloadAndPlayRoutine);
+
+        preloadAndPlayRoutine = StartCoroutine(PreloadSelectedBattleMusicThenPlayRoutine());
+    }
+
+    IEnumerator PreloadSelectedBattleMusicThenPlayRoutine()
+    {
+        PreloadSelectedBattleMusic();
+
+        float timeoutAt = Time.realtimeSinceStartup + 5f;
+        while (!IsAudioDataLoaded(defaultMusic) ||
+               !IsAudioDataLoaded(defaultMusicLoop) ||
+               !IsAudioDataLoaded(battleCriticalMusic))
+        {
+            if (Time.realtimeSinceStartup >= timeoutAt)
+                break;
+
+            yield return null;
+        }
+
+        preloadAndPlayRoutine = null;
+        PlayDefaultMusic(true);
+    }
+
+    void PreloadSelectedBattleMusic()
+    {
+        PreloadAudioData(defaultMusic);
+        PreloadAudioData(defaultMusicLoop);
+        PreloadAudioData(battleCriticalMusic);
+    }
+
+    static void PreloadAudioData(AudioClip clip)
+    {
+        if (clip == null)
+            return;
+
+        if (clip.loadState == AudioDataLoadState.Unloaded)
+            clip.LoadAudioData();
+    }
+
+    static bool IsAudioDataLoaded(AudioClip clip)
+    {
+        return clip == null ||
+               clip.loadState == AudioDataLoadState.Loaded ||
+               clip.loadState == AudioDataLoadState.Failed;
     }
 
     static BattleModeMusicConfig SelectBattleModeMusicConfig(BattleModeMusicConfig[] availableConfigs)
