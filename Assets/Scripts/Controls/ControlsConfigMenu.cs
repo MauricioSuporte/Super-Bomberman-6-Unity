@@ -117,12 +117,6 @@ public class ControlsConfigMenu : MonoBehaviour
     [Header("Cursor Rounding")]
     [SerializeField] bool roundCursorToWholePixels = true;
 
-    [Header("Debug")]
-    [SerializeField] bool debugLayoutLogs = true;
-    [SerializeField] bool debugLinkBounds = true;
-    [SerializeField] bool debugTextContent = false;
-    [SerializeField, Range(1, 40)] int debugMaxLoggedLines = 24;
-
     Vector2 _lastMouseScreenPosition;
     bool _hasLastMouseScreenPosition;
 
@@ -203,8 +197,6 @@ public class ControlsConfigMenu : MonoBehaviour
     Vector3 _cursorBaseLocalScale = Vector3.one;
     bool _cursorBaseScaleCaptured;
 
-    int debugRefreshSequence;
-
     static readonly PlayerAction[] BulkActions = new[]
     {
         PlayerAction.MoveUp,
@@ -235,7 +227,8 @@ public class ControlsConfigMenu : MonoBehaviour
     int EffectiveRemapGridFontSize => Mathf.Max(selectGridFontSize, minRemapGridFontSize);
     int EffectiveSelectTitleToBodyGapLines => Mathf.Max(selectTitleToBodyGapLines, 5);
     int EffectiveWaitTitleToBodyGapLines => Mathf.Max(selectTitleToBodyGapLines, 5);
-    int EffectiveRemapTitleToBodyGapLines => Mathf.Max(selectTitleToBodyGapLines, 4);
+    int EffectiveConfirmTitleToBodyGapLines => Mathf.Max(selectTitleToBodyGapLines, 5);
+    int EffectiveRemapTitleToBodyGapLines => Mathf.Max(selectTitleToBodyGapLines, 3);
     float ScaledFloat(float baseValue) => baseValue * _currentUiScale;
 
     Canvas GetRootCanvas()
@@ -505,7 +498,7 @@ public class ControlsConfigMenu : MonoBehaviour
         bool hasBlockedMessage = Time.unscaledTime < blockedMessageUntil && !string.IsNullOrEmpty(blockedMessageLine);
         return state switch
         {
-            MenuState.BulkRemap => hasBlockedMessage ? 8 : 7,
+            MenuState.BulkRemap => hasBlockedMessage ? 9 : 8,
             MenuState.SelectPlayer => hasBlockedMessage ? 5 : 4,
             MenuState.WaitForInput => 1,
             _ => 3
@@ -1517,6 +1510,7 @@ public class ControlsConfigMenu : MonoBehaviour
             body += "<align=center>";
             body += RepeatSizedSpacerLines(EffectiveSelectTitleToBodyGapLines, bodySize);
             body += $"<size={bodySize}><color={colorBlueSoft}>CHOOSE A PLAYER</color></size>\n\n";
+            body += "</align><align=left>";
 
             int selectorRowGap = Mathf.Max(0, playerBlockGapLines - 1);
             for (int i = 0; i < MaxConfigurablePlayers; i++)
@@ -1547,12 +1541,19 @@ public class ControlsConfigMenu : MonoBehaviour
             string yesText = confirmResetIndex == 0 ? $"<color={colorHint}>YES</color>" : $"<color={colorWhite}>YES</color>";
             string noText = confirmResetIndex == 1 ? $"<color={colorHint}>NO</color>" : $"<color={colorWhite}>NO</color>";
 
+            body += "<align=center>";
+            body += RepeatSizedSpacerLines(EffectiveConfirmTitleToBodyGapLines, bodySize);
             body +=
-                $"<align=center><size={footerSize}>" +
+                $"<size={bodySize}>" +
                 $"<color={colorHint}>RESTORE DEFAULT KEYS?</color>\n" +
                 $"<color={colorWhite}>PLAYER {confirmResetPlayerId}</color>\n\n" +
-                $"<link=\"{LINK_RESET_YES}\">{yesText}</link>    <link=\"{LINK_RESET_NO}\">{noText}</link>\n\n" +
-                $"<color={colorHint}>A / START</color><color={colorWhite}>: CONFIRM</color>    <color={colorHint}>B</color><color={colorWhite}>: CANCEL</color>" +
+                $"<link=\"{LINK_RESET_YES}\">{yesText}</link>    <link=\"{LINK_RESET_NO}\">{noText}</link>" +
+                $"</size></align>";
+
+            footer +=
+                $"<align=center><size={footerSize}>" +
+                $"<color={colorHint}>A / START:</color> <color={colorWhite}>CONFIRM</color>    " +
+                $"<color={colorHint}>B:</color> <color={colorWhite}>CANCEL</color>" +
                 $"</size></align>";
         }
         else if (state == MenuState.WaitForInput)
@@ -1582,9 +1583,10 @@ public class ControlsConfigMenu : MonoBehaviour
                 : string.Empty;
 
             body += "<align=center>";
+            body +=
+                $"<size={bodySize}><color={colorBlueSoft}>CONFIGURING PLAYER {targetPlayerId}</color></size>\n";
             body += RepeatSizedSpacerLines(EffectiveRemapTitleToBodyGapLines, bodySize);
             body +=
-                $"<size={bodySize}><color={colorBlueSoft}>CONFIGURING PLAYER {targetPlayerId}</color></size>\n\n" +
                 $"<size={gridSize}><color={colorPlayerSelectedRed}>PLAYER {targetPlayerId}</color></size>\n";
             body += "</align>";
 
@@ -1594,7 +1596,7 @@ public class ControlsConfigMenu : MonoBehaviour
                 $"<align=center><size={footerSize}>" +
                 $"<color={colorHint}>CHOOSE A BUTTON FOR:</color> <color={colorWhite}>{ActionToLabel(a)}</color>\n" +
                 blocked +
-                $"<color={colorPlayerSelectedRed}>ESC TO CANCEL</color>\n" +
+                $"<color={colorPlayerSelectedRed}>ESC TO CANCEL</color>\n\n" +
                 $"<color={colorHint}>A / START:</color> <color={colorWhite}>CONFIRM / PLACE BOMB</color>\n" +
                 $"<color={colorHint}>B:</color> <color={colorWhite}>RETURN / EXPLODE CONTROL BOMB</color>\n" +
                 $"<color={colorHint}>C:</color> <color={colorWhite}>RESTORE DEFAULT KEYS / ABILITIES</color>\n" +
@@ -1605,7 +1607,6 @@ public class ControlsConfigMenu : MonoBehaviour
 
         menuText.text = header + body;
         SetFooterText(footer);
-        LogControlsLayoutSnapshot(titleSize, bodySize, footerSize, gridSize);
 
         if (state == MenuState.SelectPlayer)
         {
@@ -1645,217 +1646,18 @@ public class ControlsConfigMenu : MonoBehaviour
         string playerColor = selected ? colorPlayerSelectedRed : colorPlayerGreen;
         string statusColor = active ? colorPlayerGreen : colorPlayerSelectedRed;
         string status = active ? "ON" : "OFF";
-        string playerLabel = $"PLAYER {playerId}".PadRight(10, '\u00A0');
-        string paddedStatus = status.PadLeft(3, '\u00A0');
+        string playerLabel = $"PLAYER {playerId}";
+        float labelX = ScaledFloat(250f);
+        float valueX = ScaledFloat(580f);
+        float statusX = valueX + (status.Length == 2 ? gridSize * 0.5f : 0f);
 
         body +=
             $"<link=\"sel{index}\">" +
-            $"<size={gridSize}><color={playerColor}>{playerLabel}</color>" +
-            $"<color={statusColor}>{paddedStatus}</color></size>" +
+            $"<size={gridSize}>" +
+            $"<pos={labelX}><color={playerColor}>{playerLabel}</color></pos>" +
+            $"<pos={statusX}><color={statusColor}>{status}</color></pos>" +
+            $"</size>" +
             $"</link>\n";
-    }
-
-    void LogControlsLayoutSnapshot(int titleSize, int bodySize, int footerSize, int gridSize)
-    {
-        if (!debugLayoutLogs || menuText == null)
-            return;
-
-        debugRefreshSequence++;
-
-        var textRect = menuText.rectTransform;
-        var footerRect = footerText != null ? footerText.rectTransform : null;
-        Vector2 refSize = GetReferenceRectSize();
-        float pixelScale = ComputeReferencePixelScale();
-        Vector2 layoutPos = menuLayoutRoot != null ? menuLayoutRoot.anchoredPosition : Vector2.zero;
-        Vector2 layoutSize = menuLayoutRoot != null ? menuLayoutRoot.rect.size : Vector2.zero;
-
-        menuText.ForceMeshUpdate();
-        if (footerText != null)
-            footerText.ForceMeshUpdate();
-
-        TMP_TextInfo ti = menuText.textInfo;
-        TMP_TextInfo footerTi = footerText != null ? footerText.textInfo : null;
-
-        var sb = new StringBuilder(4096);
-        sb.Append("[ControlsConfigMenu][Layout] ");
-        sb.Append("refresh=").Append(debugRefreshSequence);
-        sb.Append(" state=").Append(state);
-        sb.Append(" selected=").Append(playerSelectIndex + 1);
-        sb.Append(" target=").Append(targetPlayerId);
-        sb.Append(" bulkStep=").Append(bulkStep);
-        sb.Append(" screen=").Append(Screen.width).Append('x').Append(Screen.height);
-        sb.Append(" refSize=").Append(FormatVector2(refSize));
-        sb.Append(" pixelScale=").Append(pixelScale.ToString("0.###"));
-        sb.Append(" uiScale=").Append(_currentUiScale.ToString("0.###"));
-        sb.Append(" baseScale=").Append(_currentBaseScaleInt);
-        sb.Append(" layoutPos=").Append(FormatVector2(layoutPos));
-        sb.Append(" layoutSize=").Append(FormatVector2(layoutSize));
-        sb.Append(" textPos=").Append(FormatVector2(textRect.anchoredPosition));
-        sb.Append(" textSize=").Append(FormatVector2(textRect.rect.size));
-        sb.Append(" textPivot=").Append(FormatVector2(textRect.pivot));
-        sb.Append(" fonts=(").Append(titleSize).Append(',')
-            .Append(bodySize).Append(',')
-            .Append(gridSize).Append(',')
-            .Append(footerSize).Append(')');
-        sb.Append(" selectGaps=(").Append(EffectiveSelectTitleToBodyGapLines).Append('/')
-            .Append(selectTitleToBodyGapLines).Append(',')
-            .Append(footerGapLines + footerExtraNewLines).Append(',')
-            .Append(playerBlockGapLines).Append(')');
-        if (footerRect != null)
-        {
-            sb.Append(" footerActive=").Append(footerText.gameObject.activeSelf);
-            sb.Append(" footerPos=").Append(FormatVector2(footerRect.anchoredPosition));
-            sb.Append(" footerSize=").Append(FormatVector2(footerRect.rect.size));
-            sb.Append(" footerPivot=").Append(FormatVector2(footerRect.pivot));
-            sb.Append(" footerLineCount=").Append(footerTi != null ? footerTi.lineCount : 0);
-        }
-        sb.Append(" selectRowFormat=monospace-padding");
-        sb.Append(" alignment=").Append(menuText.alignment);
-        sb.Append(" lineCount=").Append(ti != null ? ti.lineCount : 0);
-        sb.Append(" linkCount=").Append(ti != null ? ti.linkCount : 0);
-
-        if (ti != null)
-        {
-            AppendLineBounds(sb, ti);
-
-            if (debugLinkBounds)
-                AppendLinkBounds(sb, ti);
-        }
-
-        if (footerTi != null && footerText != null && footerText.gameObject.activeSelf)
-            AppendFooterLineBounds(sb, footerTi);
-
-        if (debugTextContent)
-        {
-            sb.AppendLine();
-            sb.Append("[text]=").Append(menuText.text.Replace("\n", "\\n"));
-        }
-
-        Debug.Log(sb.ToString(), this);
-    }
-
-    void AppendLineBounds(StringBuilder sb, TMP_TextInfo ti)
-    {
-        if (ti == null)
-            return;
-
-        int count = Mathf.Min(ti.lineCount, Mathf.Max(1, debugMaxLoggedLines));
-        sb.AppendLine();
-        sb.Append("  lines:");
-
-        for (int i = 0; i < count; i++)
-        {
-            TMP_LineInfo li = ti.lineInfo[i];
-            sb.AppendLine();
-            sb.Append("    #").Append(i)
-                .Append(" first=").Append(li.firstCharacterIndex)
-                .Append(" chars=").Append(li.characterCount)
-                .Append(" asc=").Append(li.ascender.ToString("0.##"))
-                .Append(" desc=").Append(li.descender.ToString("0.##"))
-                .Append(" extMin=").Append(FormatVector2(li.lineExtents.min))
-                .Append(" extMax=").Append(FormatVector2(li.lineExtents.max));
-        }
-
-        if (ti.lineCount > count)
-        {
-            sb.AppendLine();
-            sb.Append("    ... ").Append(ti.lineCount - count).Append(" more lines");
-        }
-    }
-
-    void AppendFooterLineBounds(StringBuilder sb, TMP_TextInfo ti)
-    {
-        if (ti == null)
-            return;
-
-        int count = Mathf.Min(ti.lineCount, Mathf.Max(1, debugMaxLoggedLines));
-        sb.AppendLine();
-        sb.Append("  footerLines:");
-
-        for (int i = 0; i < count; i++)
-        {
-            TMP_LineInfo li = ti.lineInfo[i];
-            sb.AppendLine();
-            sb.Append("    #").Append(i)
-                .Append(" first=").Append(li.firstCharacterIndex)
-                .Append(" chars=").Append(li.characterCount)
-                .Append(" asc=").Append(li.ascender.ToString("0.##"))
-                .Append(" desc=").Append(li.descender.ToString("0.##"))
-                .Append(" extMin=").Append(FormatVector2(li.lineExtents.min))
-                .Append(" extMax=").Append(FormatVector2(li.lineExtents.max));
-        }
-    }
-
-    void AppendLinkBounds(StringBuilder sb, TMP_TextInfo ti)
-    {
-        if (ti == null)
-            return;
-
-        sb.AppendLine();
-        sb.Append("  links:");
-
-        for (int li = 0; li < ti.linkCount; li++)
-        {
-            TMP_LinkInfo link = ti.linkInfo[li];
-            string id = link.GetLinkID();
-            if (state == MenuState.SelectPlayer && !id.StartsWith("sel", StringComparison.Ordinal))
-                continue;
-
-            if (!TryGetLinkBounds(ti, link, out Vector2 min, out Vector2 max, out int visibleChars))
-            {
-                sb.AppendLine();
-                sb.Append("    ").Append(id).Append(" no-visible-chars");
-                continue;
-            }
-
-            sb.AppendLine();
-            sb.Append("    ").Append(id)
-                .Append(" text=\"").Append(link.GetLinkText()).Append('"')
-                .Append(" first=").Append(link.linkTextfirstCharacterIndex)
-                .Append(" len=").Append(link.linkTextLength)
-                .Append(" visible=").Append(visibleChars)
-                .Append(" min=").Append(FormatVector2(min))
-                .Append(" max=").Append(FormatVector2(max))
-                .Append(" size=").Append(FormatVector2(max - min));
-        }
-    }
-
-    static bool TryGetLinkBounds(
-        TMP_TextInfo ti,
-        TMP_LinkInfo link,
-        out Vector2 min,
-        out Vector2 max,
-        out int visibleChars)
-    {
-        min = new Vector2(float.PositiveInfinity, float.PositiveInfinity);
-        max = new Vector2(float.NegativeInfinity, float.NegativeInfinity);
-        visibleChars = 0;
-
-        if (ti == null || ti.characterCount <= 0)
-            return false;
-
-        int first = link.linkTextfirstCharacterIndex;
-        int last = Mathf.Min(first + link.linkTextLength - 1, ti.characterCount - 1);
-
-        for (int c = Mathf.Max(0, first); c <= last; c++)
-        {
-            TMP_CharacterInfo ch = ti.characterInfo[c];
-            if (!ch.isVisible)
-                continue;
-
-            visibleChars++;
-            min.x = Mathf.Min(min.x, ch.bottomLeft.x);
-            min.y = Mathf.Min(min.y, ch.descender);
-            max.x = Mathf.Max(max.x, ch.topRight.x);
-            max.y = Mathf.Max(max.y, ch.ascender);
-        }
-
-        return visibleChars > 0;
-    }
-
-    static string FormatVector2(Vector2 value)
-    {
-        return $"({value.x:0.##},{value.y:0.##})";
     }
 
     void AppendBulkRemapVerticalList(ref string body, int playerId, int gridSize)
@@ -2120,6 +1922,18 @@ public class ControlsConfigMenu : MonoBehaviour
             sb.Append("<size=").Append(safeFontSize).Append("> </size>\n");
 
         return sb.ToString();
+    }
+
+    static string CenterText(string text, int width)
+    {
+        text ??= string.Empty;
+        if (text.Length >= width)
+            return text;
+
+        int totalPadding = width - text.Length;
+        int leftPadding = totalPadding / 2;
+        int rightPadding = totalPadding - leftPadding;
+        return new string('\u00A0', leftPadding) + text + new string('\u00A0', rightPadding);
     }
 
     static string ActionToLabel(PlayerAction a)
