@@ -350,6 +350,7 @@ MonoBehaviour:
   controlBombAmount: 0
   powerBombAmount: 0
   rubberBombAmount: 0
+  magnetBombAmount: 0
   fullFireAmount: 0
   bombPassAmount: 0
   destructiblePassAmount: 0
@@ -364,6 +365,9 @@ MonoBehaviour:
   pinkLouieEggAmount: 1
   redLouieEggAmount: 0
   clockAmount: 0
+  skullAmount: 0
+  randomEggsMin: 0
+  randomEggsMax: 0
   destructibleTilemap: {fileID: 285353618}
   indestructibleTilemap: {fileID: 0}
   nextStageSceneName: Stage_1-4
@@ -1596,6 +1600,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameSession
   activePlayerCount: 1
+  activePlayerMask: 1
+  battleMatchInProgress: 0
+  battleMatchSceneName: 
+  battleMatchUsesTeams: 0
+  battleMatchWins: 000000000000000000000000000000000000000000000000
 --- !u!4 &434418935
 Transform:
   m_ObjectHideFlags: 0
@@ -5393,13 +5402,21 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 557662987}
     m_Modifications:
-    - target: {fileID: 1909958093259148197, guid: 4a7768e44a12a874ba5548a49ff0bda0, type: 3}
+    - target: {fileID: 770640549414759375, guid: 4a7768e44a12a874ba5548a49ff0bda0, type: 3}
       propertyPath: m_Sprite
       value: 
       objectReference: {fileID: 0}
-    - target: {fileID: 1909958093259148197, guid: 4a7768e44a12a874ba5548a49ff0bda0, type: 3}
+    - target: {fileID: 770640549414759375, guid: 4a7768e44a12a874ba5548a49ff0bda0, type: 3}
       propertyPath: m_Enabled
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1909958093259148197, guid: 4a7768e44a12a874ba5548a49ff0bda0, type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: 33659276ec38d67409e2f708864bfee7, type: 3}
+    - target: {fileID: 1909958093259148197, guid: 4a7768e44a12a874ba5548a49ff0bda0, type: 3}
+      propertyPath: m_Enabled
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 2367064353294770056, guid: 4a7768e44a12a874ba5548a49ff0bda0, type: 3}
       propertyPath: m_Pivot.x
@@ -5497,6 +5514,30 @@ PrefabInstance:
       propertyPath: m_Enabled
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 4596193090454659954, guid: 4a7768e44a12a874ba5548a49ff0bda0, type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 4596193090454659954, guid: 4a7768e44a12a874ba5548a49ff0bda0, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4964860625633737738, guid: 4a7768e44a12a874ba5548a49ff0bda0, type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 4964860625633737738, guid: 4a7768e44a12a874ba5548a49ff0bda0, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5241171386535993749, guid: 4a7768e44a12a874ba5548a49ff0bda0, type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 5241171386535993749, guid: 4a7768e44a12a874ba5548a49ff0bda0, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 5341041689667360623, guid: 4a7768e44a12a874ba5548a49ff0bda0, type: 3}
       propertyPath: m_Name
       value: NormalGameHud
@@ -5504,18 +5545,18 @@ PrefabInstance:
     - target: {fileID: 5976918405260490912, guid: 4a7768e44a12a874ba5548a49ff0bda0, type: 3}
       propertyPath: m_Sprite
       value: 
-      objectReference: {fileID: 0}
+      objectReference: {fileID: 21300000, guid: 33659276ec38d67409e2f708864bfee7, type: 3}
     - target: {fileID: 5976918405260490912, guid: 4a7768e44a12a874ba5548a49ff0bda0, type: 3}
       propertyPath: m_Enabled
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 6264606558984993842, guid: 4a7768e44a12a874ba5548a49ff0bda0, type: 3}
       propertyPath: m_Sprite
       value: 
-      objectReference: {fileID: 0}
+      objectReference: {fileID: 21300000, guid: 33659276ec38d67409e2f708864bfee7, type: 3}
     - target: {fileID: 6264606558984993842, guid: 4a7768e44a12a874ba5548a49ff0bda0, type: 3}
       propertyPath: m_Enabled
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 6307630273264470252, guid: 4a7768e44a12a874ba5548a49ff0bda0, type: 3}
       propertyPath: m_Sprite
@@ -5528,10 +5569,10 @@ PrefabInstance:
     - target: {fileID: 6991349842924055328, guid: 4a7768e44a12a874ba5548a49ff0bda0, type: 3}
       propertyPath: m_Sprite
       value: 
-      objectReference: {fileID: 0}
+      objectReference: {fileID: 21300000, guid: 33659276ec38d67409e2f708864bfee7, type: 3}
     - target: {fileID: 6991349842924055328, guid: 4a7768e44a12a874ba5548a49ff0bda0, type: 3}
       propertyPath: m_Enabled
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 7126354152096357310, guid: 4a7768e44a12a874ba5548a49ff0bda0, type: 3}
       propertyPath: m_Sprite
@@ -5596,7 +5637,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6bffc50ad51012e4fae8c6d7e54061e1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  defaultMusic: {fileID: 8300000, guid: 8fe07e5c25441b14f876bd031e281fc2, type: 3}
+  defaultMusic: {fileID: 8300000, guid: 93cdbef57cc7ad84480567ffe6184c9b, type: 3}
   defaultMusicLoop: {fileID: 0}
   deathMusic: {fileID: 8300000, guid: 47abcd3e68c750440b01643ffd998e93, type: 3}
   defaultMusicVolume: 0.4

@@ -2779,8 +2779,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1aa1ef842d43d4449a4b672797ff89e5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameSession
-  activePlayerCount: 2
-  activePlayerMask: 3
+  activePlayerCount: 1
+  activePlayerMask: 1
   battleMatchInProgress: 0
   battleMatchSceneName: 
   battleMatchUsesTeams: 0
@@ -4406,10 +4406,10 @@ PrefabInstance:
     - target: {fileID: 1271289946209990207, guid: 4a7768e44a12a874ba5548a49ff0bda0, type: 3}
       propertyPath: m_Sprite
       value: 
-      objectReference: {fileID: 21300000, guid: 956432824ec41ee4f9dada2ac877bd1b, type: 3}
+      objectReference: {fileID: 0}
     - target: {fileID: 1271289946209990207, guid: 4a7768e44a12a874ba5548a49ff0bda0, type: 3}
       propertyPath: m_Enabled
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1909958093259148197, guid: 4a7768e44a12a874ba5548a49ff0bda0, type: 3}
       propertyPath: m_Sprite
@@ -4526,10 +4526,10 @@ PrefabInstance:
     - target: {fileID: 4642470739555972227, guid: 4a7768e44a12a874ba5548a49ff0bda0, type: 3}
       propertyPath: m_Sprite
       value: 
-      objectReference: {fileID: 21300000, guid: c36fcbd129457ab4596b4cfaef6d8ca3, type: 3}
+      objectReference: {fileID: 0}
     - target: {fileID: 4642470739555972227, guid: 4a7768e44a12a874ba5548a49ff0bda0, type: 3}
       propertyPath: m_Enabled
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4964860625633737738, guid: 4a7768e44a12a874ba5548a49ff0bda0, type: 3}
       propertyPath: m_Sprite
@@ -4562,10 +4562,10 @@ PrefabInstance:
     - target: {fileID: 5976918405260490912, guid: 4a7768e44a12a874ba5548a49ff0bda0, type: 3}
       propertyPath: m_Sprite
       value: 
-      objectReference: {fileID: 21300000, guid: 33659276ec38d67409e2f708864bfee7, type: 3}
+      objectReference: {fileID: 0}
     - target: {fileID: 5976918405260490912, guid: 4a7768e44a12a874ba5548a49ff0bda0, type: 3}
       propertyPath: m_Enabled
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6264606558984993842, guid: 4a7768e44a12a874ba5548a49ff0bda0, type: 3}
       propertyPath: m_Sprite
@@ -4578,10 +4578,10 @@ PrefabInstance:
     - target: {fileID: 6307630273264470252, guid: 4a7768e44a12a874ba5548a49ff0bda0, type: 3}
       propertyPath: m_Sprite
       value: 
-      objectReference: {fileID: 21300000, guid: 93b68aaed86a2d84cafddc020acecdd9, type: 3}
+      objectReference: {fileID: 0}
     - target: {fileID: 6307630273264470252, guid: 4a7768e44a12a874ba5548a49ff0bda0, type: 3}
       propertyPath: m_Enabled
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6991349842924055328, guid: 4a7768e44a12a874ba5548a49ff0bda0, type: 3}
       propertyPath: m_Sprite
@@ -4789,8 +4789,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6bffc50ad51012e4fae8c6d7e54061e1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  defaultMusic: {fileID: 8300000, guid: 07f92e3b1da722a41ad208c3512e823c, type: 3}
-  defaultMusicLoop: {fileID: 0}
+  defaultMusic: {fileID: 8300000, guid: c52ff3262d578b2428e3d5937c529041, type: 3}
+  defaultMusicLoop: {fileID: 8300000, guid: 0696fdf7e29eb574a8a21b9cccbee800, type: 3}
   deathMusic: {fileID: 8300000, guid: 47abcd3e68c750440b01643ffd998e93, type: 3}
   defaultMusicVolume: 0.4
   defaultMusicLoopVolume: 0.4
