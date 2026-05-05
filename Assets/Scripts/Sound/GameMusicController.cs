@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using UnityEngine.Audio;
+using System.Collections;
 
 [RequireComponent(typeof(AudioSource))]
 public class GameMusicController : MonoBehaviour
@@ -10,10 +11,14 @@ public class GameMusicController : MonoBehaviour
     private AudioSource sfxSource;
 
     public AudioClip defaultMusic;
+    public AudioClip defaultMusicLoop;
     public AudioClip deathMusic;
 
     [Range(0f, 1f)]
     public float defaultMusicVolume = 1f;
+
+    [Range(0f, 1f)]
+    public float defaultMusicLoopVolume = 1f;
 
     private void Awake()
     {
@@ -47,6 +52,8 @@ public class GameMusicController : MonoBehaviour
         if (clip == null || musicSource == null)
             return;
 
+        StopAllCoroutines();
+
         bool sameClip = musicSource.clip == clip;
 
         musicSource.loop = loop;
@@ -60,12 +67,45 @@ public class GameMusicController : MonoBehaviour
         musicSource.Play();
     }
 
+    public void PlayMusicIntroThenLoop(
+        AudioClip introClip,
+        float introVolume,
+        AudioClip loopClip,
+        float loopVolume,
+        float pitch = 1f,
+        bool restart = true)
+    {
+        if (introClip == null || musicSource == null)
+            return;
+
+        StopAllCoroutines();
+
+        if (loopClip == null)
+        {
+            PlayMusic(introClip, introVolume, true, pitch, restart);
+            return;
+        }
+
+        bool sameClip = musicSource.clip == introClip;
+
+        musicSource.loop = false;
+        musicSource.clip = introClip;
+        musicSource.volume = introVolume;
+        musicSource.pitch = pitch;
+
+        if (restart || !sameClip || !musicSource.isPlaying)
+            musicSource.time = 0f;
+
+        musicSource.Play();
+        StartCoroutine(PlayLoopAfterIntroRoutine(introClip, loopClip, loopVolume, pitch));
+    }
+
     public void PlayDefaultMusic(bool restart = true)
     {
         if (defaultMusic == null || musicSource == null)
             return;
 
-        PlayMusic(defaultMusic, defaultMusicVolume, true, 1f, restart);
+        PlayMusicIntroThenLoop(defaultMusic, defaultMusicVolume, defaultMusicLoop, defaultMusicLoopVolume, 1f, restart);
     }
 
     public void PlayDefaultMusicWithPitch(float pitch, bool restart = true)
@@ -73,7 +113,7 @@ public class GameMusicController : MonoBehaviour
         if (defaultMusic == null || musicSource == null)
             return;
 
-        PlayMusic(defaultMusic, defaultMusicVolume, true, pitch, restart);
+        PlayMusicIntroThenLoop(defaultMusic, defaultMusicVolume, defaultMusicLoop, defaultMusicLoopVolume, pitch, restart);
     }
 
     public void PlayDeathMusic(bool restart = true)
@@ -100,6 +140,7 @@ public class GameMusicController : MonoBehaviour
         musicSource.Stop();
         musicSource.clip = null;
         musicSource.pitch = 1f;
+        StopAllCoroutines();
     }
 
     public void StopSfx()
@@ -149,5 +190,21 @@ public class GameMusicController : MonoBehaviour
             return;
 
         musicSource.pitch = 1f;
+    }
+
+    IEnumerator PlayLoopAfterIntroRoutine(AudioClip introClip, AudioClip loopClip, float loopVolume, float pitch)
+    {
+        while (musicSource != null &&
+               musicSource.clip == introClip &&
+               musicSource.isPlaying &&
+               musicSource.time < introClip.length)
+        {
+            yield return null;
+        }
+
+        if (musicSource == null || musicSource.clip != introClip)
+            yield break;
+
+        PlayMusic(loopClip, loopVolume, true, pitch, true);
     }
 }

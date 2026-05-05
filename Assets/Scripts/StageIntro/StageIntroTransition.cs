@@ -436,11 +436,7 @@ public class StageIntroTransition : MonoBehaviour
     void TryStartDefaultMusicNormalFlow()
     {
         if (GameMusicController.Instance != null && GameMusicController.Instance.defaultMusic != null)
-        {
-            var clip = GameMusicController.Instance.defaultMusic;
-            float volume = GameMusicController.Instance.defaultMusicVolume;
-            GameMusicController.Instance.PlayMusic(clip, volume, true);
-        }
+            GameMusicController.Instance.PlayDefaultMusic(true);
     }
 
     bool IsBattleModeScene()
