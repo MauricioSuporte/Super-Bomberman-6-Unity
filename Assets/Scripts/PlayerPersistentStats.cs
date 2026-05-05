@@ -256,6 +256,20 @@ public static class PlayerPersistentStats
     public static int ClampSpeedInternal(int internalSpeed)
         => Mathf.Clamp(internalSpeed, MinSpeedInternal, MaxSpeedInternal);
 
+    public static int SpeedLevelToInternal(int speedLevel)
+    {
+        int clampedLevel = Mathf.Clamp(speedLevel, 1, MaxSpeedUps + 1);
+        return ClampSpeedInternal(MinSpeedInternal + ((clampedLevel - 1) * SpeedStep));
+    }
+
+    public static int SpeedInternalToLevel(int speedInternal)
+    {
+        int clampedSpeed = ClampSpeedInternal(speedInternal);
+        int diff = clampedSpeed - MinSpeedInternal;
+        int steps = diff / SpeedStep;
+        return Mathf.Clamp(steps + 1, 1, MaxSpeedUps + 1);
+    }
+
     static int GetPlayerIdFrom(Component c)
     {
         if (c == null) return 1;
@@ -735,6 +749,49 @@ public static class PlayerPersistentStats
         stageActive = false;
         stageAnyItemPickupCollected = false;
         stageStartedWithDefaultState = false;
+    }
+
+    public static void ResetBattleModeLoadouts(BattleModeRules rules)
+    {
+        for (int i = 1; i <= 6; i++)
+        {
+            ResetBattleModeStateKeepingSkin(_p[i - 1]);
+            rules?.ApplyStartingLoadout(i, _p[i - 1]);
+
+            CopyState(_p[i - 1], _stage[i - 1]);
+        }
+
+        stageActive = false;
+        stageAnyItemPickupCollected = false;
+        stageStartedWithDefaultState = false;
+    }
+
+    static void ResetBattleModeStateKeepingSkin(PlayerState s)
+    {
+        if (s == null)
+            return;
+
+        s.Life = 1;
+        s.BombAmount = 1;
+        s.ExplosionRadius = 2;
+        s.SpeedInternal = SpeedLevelToInternal(2);
+
+        s.CanKickBombs = false;
+        s.CanPunchBombs = false;
+        s.HasPowerGlove = false;
+        s.CanPassBombs = false;
+        s.CanPassDestructibles = false;
+        s.HasPierceBombs = false;
+        s.HasControlBombs = false;
+        s.HasPowerBomb = false;
+        s.HasRubberBombs = false;
+        s.HasMagnetBomb = false;
+        s.HasFullFire = false;
+
+        s.MountedLouie = MountedType.None;
+        s.QueuedEggs.Clear();
+
+        s.Skin = UnlockProgress.ClampToUnlocked(s.Skin);
     }
 
     public static void BeginStage()

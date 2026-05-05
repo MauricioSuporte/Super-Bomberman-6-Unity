@@ -167,8 +167,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BattleModeRules
   matchMode: 0
-  victoriesToWinMatch: 1
-  roundTimer: 0
+  victoriesToWinMatch: 3
+  roundTimer: 1
   battleMusic: 0
   enableRevengeBomber: 1
   enableSuddenDeath: 1
@@ -185,6 +185,75 @@ MonoBehaviour:
     teamId: 2
   - playerId: 6
     teamId: 3
+  sharedStartingLoadout:
+    bombAmount: 1
+    fireLevel: 2
+    speedLevel: 2
+    life: 1
+    powerups: 0a000000
+    mountedLouie: 0
+    queuedEggs: 
+  playerStartingLoadouts:
+  - playerId: 1
+    overrideSharedLoadout: 0
+    loadout:
+      bombAmount: 1
+      fireLevel: 2
+      speedLevel: 2
+      life: 1
+      powerups: 
+      mountedLouie: 0
+      queuedEggs: 
+  - playerId: 2
+    overrideSharedLoadout: 0
+    loadout:
+      bombAmount: 1
+      fireLevel: 2
+      speedLevel: 2
+      life: 1
+      powerups: 
+      mountedLouie: 0
+      queuedEggs: 
+  - playerId: 3
+    overrideSharedLoadout: 0
+    loadout:
+      bombAmount: 1
+      fireLevel: 2
+      speedLevel: 2
+      life: 1
+      powerups: 
+      mountedLouie: 0
+      queuedEggs: 
+  - playerId: 4
+    overrideSharedLoadout: 0
+    loadout:
+      bombAmount: 1
+      fireLevel: 2
+      speedLevel: 2
+      life: 1
+      powerups: 
+      mountedLouie: 0
+      queuedEggs: 
+  - playerId: 5
+    overrideSharedLoadout: 0
+    loadout:
+      bombAmount: 1
+      fireLevel: 2
+      speedLevel: 2
+      life: 1
+      powerups: 
+      mountedLouie: 0
+      queuedEggs: 
+  - playerId: 6
+    overrideSharedLoadout: 0
+    loadout:
+      bombAmount: 1
+      fireLevel: 2
+      speedLevel: 2
+      life: 1
+      powerups: 
+      mountedLouie: 0
+      queuedEggs: 
 --- !u!114 &59654203
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1774,10 +1843,10 @@ PrefabInstance:
     - target: {fileID: 1271289946209990207, guid: b5c6f6d280a44d5fb48be8cd567c1e62, type: 3}
       propertyPath: m_Sprite
       value: 
-      objectReference: {fileID: 21300000, guid: 956432824ec41ee4f9dada2ac877bd1b, type: 3}
+      objectReference: {fileID: 0}
     - target: {fileID: 1271289946209990207, guid: b5c6f6d280a44d5fb48be8cd567c1e62, type: 3}
       propertyPath: m_Enabled
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1909958093259148197, guid: b5c6f6d280a44d5fb48be8cd567c1e62, type: 3}
       propertyPath: m_Sprite
@@ -1902,10 +1971,10 @@ PrefabInstance:
     - target: {fileID: 4642470739555972227, guid: b5c6f6d280a44d5fb48be8cd567c1e62, type: 3}
       propertyPath: m_Sprite
       value: 
-      objectReference: {fileID: 21300000, guid: c36fcbd129457ab4596b4cfaef6d8ca3, type: 3}
+      objectReference: {fileID: 0}
     - target: {fileID: 4642470739555972227, guid: b5c6f6d280a44d5fb48be8cd567c1e62, type: 3}
       propertyPath: m_Enabled
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4670846066677549432, guid: b5c6f6d280a44d5fb48be8cd567c1e62, type: 3}
       propertyPath: m_Sprite
@@ -1946,10 +2015,10 @@ PrefabInstance:
     - target: {fileID: 5976918405260490912, guid: b5c6f6d280a44d5fb48be8cd567c1e62, type: 3}
       propertyPath: m_Sprite
       value: 
-      objectReference: {fileID: 21300000, guid: 33659276ec38d67409e2f708864bfee7, type: 3}
+      objectReference: {fileID: 0}
     - target: {fileID: 5976918405260490912, guid: b5c6f6d280a44d5fb48be8cd567c1e62, type: 3}
       propertyPath: m_Enabled
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6264606558984993842, guid: b5c6f6d280a44d5fb48be8cd567c1e62, type: 3}
       propertyPath: m_Sprite
@@ -1962,10 +2031,10 @@ PrefabInstance:
     - target: {fileID: 6307630273264470252, guid: b5c6f6d280a44d5fb48be8cd567c1e62, type: 3}
       propertyPath: m_Sprite
       value: 
-      objectReference: {fileID: 21300000, guid: 93b68aaed86a2d84cafddc020acecdd9, type: 3}
+      objectReference: {fileID: 0}
     - target: {fileID: 6307630273264470252, guid: b5c6f6d280a44d5fb48be8cd567c1e62, type: 3}
       propertyPath: m_Enabled
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6991349842924055328, guid: b5c6f6d280a44d5fb48be8cd567c1e62, type: 3}
       propertyPath: m_Sprite

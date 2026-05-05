@@ -144,6 +144,9 @@ public class GameManager : MonoBehaviour
         if (IsBattleModeScene() && GameSession.Instance != null)
             GameSession.Instance.BeginBattleMatch(currentSceneName, IsBattleModeTeamMatch());
 
+        if (IsBattleModeScene())
+            PlayerPersistentStats.ResetBattleModeLoadouts(BattleModeRules.Instance);
+
         if (BossRushSession.IsActive && BossRushSession.IsBossRushScene(currentSceneName))
             BossRushTimerPresenter.EnsureInScene();
 
@@ -1026,13 +1029,13 @@ public class GameManager : MonoBehaviour
         if (state.HasFullFire)
             results.Add(ItemType.FullFire);
         else
-            AddItemCopies(results, ItemType.BlastRadius, Mathf.Max(0, state.ExplosionRadius - 1));
+            AddItemCopies(results, ItemType.BlastRadius, Mathf.Max(0, state.ExplosionRadius - 2));
 
-        int speedUps = Mathf.Max(
+        int speedUpsAboveLoadout = Mathf.Max(
             0,
-            (PlayerPersistentStats.ClampSpeedInternal(state.SpeedInternal) - PlayerPersistentStats.MinSpeedInternal)
-            / PlayerPersistentStats.SpeedStep);
-        AddItemCopies(results, ItemType.SpeedIncrese, speedUps);
+            PlayerPersistentStats.SpeedInternalToLevel(state.SpeedInternal)
+            - 2);
+        AddItemCopies(results, ItemType.SpeedIncrese, speedUpsAboveLoadout);
         AddItemCopies(results, ItemType.Heart, Mathf.Max(0, state.Life - 1));
 
         if (state.CanKickBombs)
@@ -1050,30 +1053,11 @@ public class GameManager : MonoBehaviour
         if (state.CanPassDestructibles)
             results.Add(ItemType.DestructiblePass);
 
-        if (state.HasPierceBombs)
-            results.Add(ItemType.PierceBomb);
-        else if (state.HasControlBombs)
-            results.Add(ItemType.ControlBomb);
-        else if (state.HasPowerBomb)
-            results.Add(ItemType.PowerBomb);
-        else if (state.HasRubberBombs)
-            results.Add(ItemType.RubberBomb);
-        else if (state.HasMagnetBomb)
-            results.Add(ItemType.MagnetBomb);
+        ItemType currentBombType = GetBattleDropBombType(state);
+        if (currentBombType != ItemType.LandMine)
+            results.Add(currentBombType);
 
-        ItemType mountedEggType = GetBattleDropEggType(state.MountedLouie);
-        if (mountedEggType != ItemType.LandMine)
-            results.Add(mountedEggType);
-
-        if (state.QueuedEggs != null)
-        {
-            for (int i = 0; i < state.QueuedEggs.Count; i++)
-            {
-                ItemType eggType = state.QueuedEggs[i];
-                if (IsBattleDroppableEgg(eggType))
-                    results.Add(eggType);
-            }
-        }
+        AddBattleMountAndEggDrops(state, results);
     }
 
     void CollectBattleDropCells(List<Vector3Int> results)
@@ -1141,6 +1125,67 @@ public class GameManager : MonoBehaviour
             default:
                 return ItemType.LandMine;
         }
+    }
+
+    static ItemType GetBattleDropBombType(PlayerPersistentStats.PlayerState state)
+    {
+        if (state == null)
+            return ItemType.LandMine;
+
+        if (state.HasPierceBombs)
+            return ItemType.PierceBomb;
+        if (state.HasControlBombs)
+            return ItemType.ControlBomb;
+        if (state.HasPowerBomb)
+            return ItemType.PowerBomb;
+        if (state.HasRubberBombs)
+            return ItemType.RubberBomb;
+        if (state.HasMagnetBomb)
+            return ItemType.MagnetBomb;
+
+        return ItemType.LandMine;
+    }
+
+    static void AddBattleMountAndEggDrops(
+        PlayerPersistentStats.PlayerState state,
+        List<ItemType> results)
+    {
+        if (state == null || results == null)
+            return;
+
+        Dictionary<ItemType, int> currentEggCounts = BuildBattleEggCounts(state);
+
+        foreach (var pair in currentEggCounts)
+            AddItemCopies(results, pair.Key, pair.Value);
+    }
+
+    static Dictionary<ItemType, int> BuildBattleEggCounts(PlayerPersistentStats.PlayerState state)
+    {
+        Dictionary<ItemType, int> counts = new();
+
+        if (state == null)
+            return counts;
+
+        AddBattleEggCount(counts, GetBattleDropEggType(state.MountedLouie));
+
+        if (state.QueuedEggs != null)
+        {
+            for (int i = 0; i < state.QueuedEggs.Count; i++)
+                AddBattleEggCount(counts, state.QueuedEggs[i]);
+        }
+
+        return counts;
+    }
+
+    static void AddBattleEggCount(Dictionary<ItemType, int> counts, ItemType itemType)
+    {
+        if (counts == null || !IsBattleDroppableEgg(itemType))
+            return;
+
+        if (!counts.ContainsKey(itemType))
+            counts[itemType] = 0;
+
+        counts[itemType]++;
     }
 
     static bool IsBattleDroppableEgg(ItemType itemType)
