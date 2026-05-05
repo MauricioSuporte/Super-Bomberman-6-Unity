@@ -1134,8 +1134,11 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
 
         yield return new WaitForSeconds(wait);
 
-        if (GameMusicController.Instance != null)
+        if (GameMusicController.Instance != null &&
+            !GameMusicController.Instance.PlayBattleCriticalMusic(true))
+        {
             GameMusicController.Instance.PlayDefaultMusicWithPitch(fastMusicPitch, true);
+        }
     }
 
     void PlayFallingSfx()

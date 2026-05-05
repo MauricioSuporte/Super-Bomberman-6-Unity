@@ -10,9 +10,14 @@ public class GameMusicController : MonoBehaviour
 
     static readonly BattleModeMusicConfig[] BattleModeMusicConfigs =
     {
-        new("SB1 Battle Mode", 0.5f),
-        new("Sb2 - Battle1", 0.5f),
-        new("Sb2 - Battle2", 0.5f, "Sb2 - Battle2 Loop", 0.5f),
+        new(BattleModeRules.BattleMusicSelection.SB1Battle, "SB1 - Battle", 0.5f),
+        new(BattleModeRules.BattleMusicSelection.SB2Battle1, "SB2 - Battle1", 0.5f),
+        new(BattleModeRules.BattleMusicSelection.SB2Battle2, "SB2 - Battle2", 0.5f, "SB2 - Battle2 Loop", 0.5f),
+        new(BattleModeRules.BattleMusicSelection.SB2Battle3, "SB2 - Battle3", 0.5f, "SB2 - Battle3 Loop", 0.5f),
+        new(BattleModeRules.BattleMusicSelection.SB3Battle, "SB3 - Battle", 0.3f, "SB3 - Battle Loop", 0.3f),
+        new(BattleModeRules.BattleMusicSelection.SB4Battle, "SB4 - Battle", 0.5f, "SB4 - Battle Loop", 0.5f),
+        new(BattleModeRules.BattleMusicSelection.SB5Battle1, "SB5 - Battle1", 0.5f, "SB5 - Battle1 Loop", 0.5f, "SB5 - Battle1 Critical", 0.5f),
+        new(BattleModeRules.BattleMusicSelection.SB5Battle2, "SB5 - Battle2", 0.5f, null, 0.5f, "SB5 - Battle2 Critical", 0.5f),
     };
 
     public static GameMusicController Instance;
@@ -23,12 +28,15 @@ public class GameMusicController : MonoBehaviour
     public AudioClip defaultMusic;
     public AudioClip defaultMusicLoop;
     public AudioClip deathMusic;
+    AudioClip battleCriticalMusic;
 
     [Range(0f, 1f)]
     public float defaultMusicVolume = 1f;
 
     [Range(0f, 1f)]
     public float defaultMusicLoopVolume = 1f;
+
+    float battleCriticalMusicVolume = 1f;
 
     private void Awake()
     {
@@ -93,8 +101,10 @@ public class GameMusicController : MonoBehaviour
 
         defaultMusic = sceneMusicController.defaultMusic;
         defaultMusicLoop = sceneMusicController.defaultMusicLoop;
+        battleCriticalMusic = sceneMusicController.battleCriticalMusic;
         defaultMusicVolume = sceneMusicController.defaultMusicVolume;
         defaultMusicLoopVolume = sceneMusicController.defaultMusicLoopVolume;
+        battleCriticalMusicVolume = sceneMusicController.battleCriticalMusicVolume;
 
         if (sceneMusicController.deathMusic != null)
             deathMusic = sceneMusicController.deathMusic;
@@ -167,6 +177,15 @@ public class GameMusicController : MonoBehaviour
             return;
 
         PlayMusicIntroThenLoop(defaultMusic, defaultMusicVolume, defaultMusicLoop, defaultMusicLoopVolume, pitch, restart);
+    }
+
+    public bool PlayBattleCriticalMusic(bool restart = true)
+    {
+        if (battleCriticalMusic == null || musicSource == null)
+            return false;
+
+        PlayMusic(battleCriticalMusic, battleCriticalMusicVolume, true, 1f, restart);
+        return true;
     }
 
     public void PlayDeathMusic(bool restart = true)
@@ -274,7 +293,7 @@ public class GameMusicController : MonoBehaviour
         if (availableConfigs.Length <= 0)
             return false;
 
-        BattleModeMusicConfig selectedConfig = availableConfigs[Random.Range(0, availableConfigs.Length)];
+        BattleModeMusicConfig selectedConfig = SelectBattleModeMusicConfig(availableConfigs);
         AudioClip selectedIntroClip = FindClipByName(battleModeClips, selectedConfig.IntroClipName);
         if (selectedIntroClip == null)
             return false;
@@ -283,11 +302,34 @@ public class GameMusicController : MonoBehaviour
         defaultMusicVolume = selectedConfig.IntroVolume;
         defaultMusicLoop = null;
         defaultMusicLoopVolume = selectedConfig.LoopVolume;
+        battleCriticalMusic = null;
+        battleCriticalMusicVolume = selectedConfig.CriticalVolume;
 
         if (!string.IsNullOrWhiteSpace(selectedConfig.LoopClipName))
             defaultMusicLoop = FindClipByName(battleModeClips, selectedConfig.LoopClipName);
 
+        if (!string.IsNullOrWhiteSpace(selectedConfig.CriticalClipName))
+            battleCriticalMusic = FindClipByName(battleModeClips, selectedConfig.CriticalClipName);
+
         return true;
+    }
+
+    static BattleModeMusicConfig SelectBattleModeMusicConfig(BattleModeMusicConfig[] availableConfigs)
+    {
+        BattleModeRules.BattleMusicSelection selection = BattleModeRules.Instance != null
+            ? BattleModeRules.Instance.CurrentBattleMusic
+            : BattleModeRules.BattleMusicSelection.Random;
+
+        if (selection != BattleModeRules.BattleMusicSelection.Random)
+        {
+            for (int i = 0; i < availableConfigs.Length; i++)
+            {
+                if (availableConfigs[i].Selection == selection)
+                    return availableConfigs[i];
+            }
+        }
+
+        return availableConfigs[Random.Range(0, availableConfigs.Length)];
     }
 
     static bool IsBattleModeScene(Scene scene)
@@ -342,22 +384,35 @@ public class GameMusicController : MonoBehaviour
 
     readonly struct BattleModeMusicConfig
     {
+        public readonly BattleModeRules.BattleMusicSelection Selection;
         public readonly string IntroClipName;
         public readonly float IntroVolume;
         public readonly string LoopClipName;
         public readonly float LoopVolume;
+        public readonly string CriticalClipName;
+        public readonly float CriticalVolume;
 
-        public BattleModeMusicConfig(string introClipName, float introVolume)
-            : this(introClipName, introVolume, null, introVolume)
+        public BattleModeMusicConfig(BattleModeRules.BattleMusicSelection selection, string introClipName, float introVolume)
+            : this(selection, introClipName, introVolume, null, introVolume, null, introVolume)
         {
         }
 
-        public BattleModeMusicConfig(string introClipName, float introVolume, string loopClipName, float loopVolume)
+        public BattleModeMusicConfig(
+            BattleModeRules.BattleMusicSelection selection,
+            string introClipName,
+            float introVolume,
+            string loopClipName,
+            float loopVolume,
+            string criticalClipName = null,
+            float criticalVolume = -1f)
         {
+            Selection = selection;
             IntroClipName = introClipName;
             IntroVolume = Mathf.Clamp01(introVolume);
             LoopClipName = loopClipName;
-            LoopVolume = Mathf.Clamp01(loopVolume);
+            LoopVolume = Mathf.Clamp01(loopVolume >= 0f ? loopVolume : introVolume);
+            CriticalClipName = criticalClipName;
+            CriticalVolume = Mathf.Clamp01(criticalVolume >= 0f ? criticalVolume : introVolume);
         }
     }
 }

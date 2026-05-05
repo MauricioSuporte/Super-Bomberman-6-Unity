@@ -20,6 +20,19 @@ public sealed class BattleModeRules : MonoBehaviour
         UmE10 = 6
     }
 
+    public enum BattleMusicSelection
+    {
+        Random = 0,
+        SB1Battle = 1,
+        SB2Battle1 = 2,
+        SB2Battle2 = 3,
+        SB2Battle3 = 4,
+        SB3Battle = 5,
+        SB4Battle = 6,
+        SB5Battle1 = 7,
+        SB5Battle2 = 8
+    }
+
     public enum TeamId
     {
         Blue = 1,
@@ -41,6 +54,7 @@ public sealed class BattleModeRules : MonoBehaviour
     [SerializeField] private MatchMode matchMode = MatchMode.SingleMatch;
     [SerializeField, Min(1)] private int victoriesToWinMatch = 3;
     [SerializeField] private RoundTimerMode roundTimer = RoundTimerMode.ThreeMinutes;
+    [SerializeField] private BattleMusicSelection battleMusic = BattleMusicSelection.Random;
     [SerializeField] private bool enableRevengeBomber;
     [SerializeField] private bool enableSuddenDeath = true;
 
@@ -51,6 +65,7 @@ public sealed class BattleModeRules : MonoBehaviour
     public bool UsesTeams => matchMode == MatchMode.TagMatch;
     public int VictoriesToWinMatch => Mathf.Max(1, victoriesToWinMatch);
     public RoundTimerMode CurrentRoundTimerMode => roundTimer;
+    public BattleMusicSelection CurrentBattleMusic => battleMusic;
     public bool UsesRoundTimer => roundTimer != RoundTimerMode.Infinite;
     public float RoundTimerSeconds => GetRoundTimerSeconds(roundTimer);
     public bool EnableRevengeBomber => enableRevengeBomber;
@@ -128,7 +143,7 @@ public sealed class BattleModeRules : MonoBehaviour
             case RoundTimerMode.FiveMinutes:
                 return 300f;
             case RoundTimerMode.UmE10:
-                return 70;
+                return 70f;
             default:
                 return Mathf.Infinity;
         }
