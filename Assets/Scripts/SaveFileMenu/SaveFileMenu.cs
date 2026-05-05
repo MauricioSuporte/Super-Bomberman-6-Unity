@@ -75,6 +75,7 @@ public class SaveFileMenu : MonoBehaviour
 
     [Header("Music")]
     [SerializeField] private AudioClip selectMusic;
+    [SerializeField] private AudioClip selectMusicLoop;
     [SerializeField, Range(0f, 1f)] private float selectMusicVolume = 1f;
     [SerializeField] private bool loopSelectMusic = true;
 
@@ -801,7 +802,28 @@ public class SaveFileMenu : MonoBehaviour
         if (music == null || selectMusic == null)
             return;
 
+        PreloadSelectMusic();
+
+        if (selectMusicLoop != null)
+        {
+            music.PlayMusicIntroThenLoop(
+                selectMusic,
+                selectMusicVolume,
+                selectMusicLoop,
+                selectMusicVolume);
+            return;
+        }
+
         music.PlayMusic(selectMusic, selectMusicVolume, loopSelectMusic);
+    }
+
+    private void PreloadSelectMusic()
+    {
+        if (selectMusic != null && selectMusic.loadState == AudioDataLoadState.Unloaded)
+            selectMusic.LoadAudioData();
+
+        if (selectMusicLoop != null && selectMusicLoop.loadState == AudioDataLoadState.Unloaded)
+            selectMusicLoop.LoadAudioData();
     }
 
     private void PlayDeniedSfx()
