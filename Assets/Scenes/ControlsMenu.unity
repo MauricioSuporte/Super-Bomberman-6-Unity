@@ -1669,6 +1669,12 @@ MonoBehaviour:
   referenceRect: {fileID: 1599199474}
   menuLayoutRoot: {fileID: 1876253041}
   menuGlobalYOffset: 0
+  usePixelPerfectMenuLayout: 1
+  menuTextBoxReferenceSize: {x: 246, y: 190}
+  selectMenuOffset: {x: 0, y: 0}
+  waitMenuOffset: {x: 0, y: 0}
+  remapMenuOffset: {x: 0, y: 0}
+  selectTitleToBodyGapLines: 2
   fadeImage: {fileID: 336813435}
   fadeDuration: 0.5
   controlsMusic: {fileID: 8300000, guid: 58c85641e36842c4eaf8c6bce6a15280, type: 3}
@@ -1680,11 +1686,18 @@ MonoBehaviour:
   headerTopPaddingLines: 1
   headerBottomPaddingLines: 0
   bodyFontSize: 24
+  footerText: {fileID: 0}
   footerGapLines: 0
   footerFontSize: 20
   footerExtraNewLines: 1
+  footerBottomPadding: 12
   selectGridFontSize: 22
   playerBlockGapLines: 1
+  minTitleFontSize: 42
+  minBodyFontSize: 34
+  minFooterFontSize: 26
+  minSelectGridFontSize: 32
+  minRemapGridFontSize: 30
   forceBold: 1
   outlineColor: {r: 0, g: 0, b: 0, a: 1}
   outlineWidth: 0.42

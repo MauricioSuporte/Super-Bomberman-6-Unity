@@ -557,7 +557,7 @@ public class PlayerInputManager : MonoBehaviour
     {
         up = down = left = right = false;
 
-        ReadGamepadDirectionalDigital(p, out bool padUp, out bool padDown, out bool padLeft, out bool padRight);
+        ReadControllerDirectionalDigital(p, out bool padUp, out bool padDown, out bool padLeft, out bool padRight);
 
         up |= padUp;
         down |= padDown;
@@ -579,101 +579,29 @@ public class PlayerInputManager : MonoBehaviour
 
     }
 
-    void ReadGamepadDirectionalDigital(PlayerInputProfile p, out bool up, out bool down, out bool left, out bool right)
+    void ReadControllerDirectionalDigital(PlayerInputProfile p, out bool up, out bool down, out bool left, out bool right)
     {
-        var pad = ResolvePlayerGamepad(p);
+        var device = ResolvePlayerInputDevice(p);
 
-        if (pad == null)
+        if (device == null)
         {
             up = down = left = right = false;
             return;
         }
 
-        bool dUp = pad.dpad.up.isPressed;
-        bool dDown = pad.dpad.down.isPressed;
-        bool dLeft = pad.dpad.left.isPressed;
-        bool dRight = pad.dpad.right.isPressed;
-
-        ReadStickAsDigital(pad.leftStick, analogThreshold, out bool lsUp, out bool lsDown, out bool lsLeft, out bool lsRight);
-
-        bool rsUp = false, rsDown = false, rsLeft = false, rsRight = false;
-        if (includeRightStickAsDpad)
-            ReadStickAsDigital(pad.rightStick, analogThreshold, out rsUp, out rsDown, out rsLeft, out rsRight);
-
-        up = dUp || lsUp || rsUp;
-        down = dDown || lsDown || rsDown;
-        left = dLeft || lsLeft || rsLeft;
-        right = dRight || lsRight || rsRight;
+        UniversalControllerInput.ReadDirectionalDigital(
+            device,
+            analogThreshold,
+            includeRightStickAsDpad,
+            out up,
+            out down,
+            out left,
+            out right);
     }
 
-    static void ReadStickAsDigital(StickControl stick, float threshold, out bool up, out bool down, out bool left, out bool right)
+    static InputDevice ResolvePlayerInputDevice(PlayerInputProfile p)
     {
-        up = down = left = right = false;
-        if (stick == null)
-            return;
-
-        Vector2 v = stick.ReadValue();
-
-        up = v.y >= threshold;
-        down = v.y <= -threshold;
-        right = v.x >= threshold;
-        left = v.x <= -threshold;
-    }
-
-    static Gamepad ResolvePlayerGamepad(PlayerInputProfile p)
-    {
-        if (p == null)
-            return null;
-
-        var all = Gamepad.all;
-        if (all.Count == 0)
-            return null;
-
-        if (p.gamepadDeviceId >= 0)
-        {
-            for (int i = 0; i < all.Count; i++)
-            {
-                var pad = all[i];
-                if (pad == null)
-                    continue;
-
-                if (pad.deviceId == p.gamepadDeviceId)
-                {
-                    p.joyIndex = Mathf.Clamp(i + 1, 1, 11);
-                    return pad;
-                }
-            }
-        }
-
-        if (!string.IsNullOrEmpty(p.gamepadProduct))
-        {
-            for (int i = 0; i < all.Count; i++)
-            {
-                var pad = all[i];
-                if (pad == null)
-                    continue;
-
-                var product = pad.description.product ?? "";
-                if (string.Equals(product, p.gamepadProduct, StringComparison.OrdinalIgnoreCase))
-                {
-                    p.BindToGamepad(pad, i + 1);
-                    return pad;
-                }
-            }
-        }
-
-        int idx = Mathf.Clamp(p.joyIndex, 1, 11) - 1;
-        if (idx < 0 || idx >= all.Count)
-            return null;
-
-        var resolved = all[idx];
-        if (resolved != null)
-        {
-            p.BindToGamepad(resolved, idx + 1);
-            return resolved;
-        }
-
-        return null;
+        return UniversalControllerInput.ResolveProfileDevice(p);
     }
 
     static bool ReadKeyHeld(KeyCode k)
@@ -787,39 +715,19 @@ public class PlayerInputManager : MonoBehaviour
 
     static bool ReadGamepadButtonHeld(PlayerInputProfile p, int btn)
     {
-        var pad = ResolvePlayerGamepad(p);
-        if (pad == null)
+        var device = ResolvePlayerInputDevice(p);
+        if (device == null)
             return false;
 
-        var c = MapLegacyButtonIndex(pad, btn);
-        return c != null && c.isPressed;
+        return UniversalControllerInput.ReadButtonHeld(device, btn);
     }
 
     static bool ReadGamepadButtonDown(PlayerInputProfile p, int btn)
     {
-        var pad = ResolvePlayerGamepad(p);
-        if (pad == null)
+        var device = ResolvePlayerInputDevice(p);
+        if (device == null)
             return false;
 
-        var c = MapLegacyButtonIndex(pad, btn);
-        return c != null && c.wasPressedThisFrame;
-    }
-
-    static ButtonControl MapLegacyButtonIndex(Gamepad pad, int btn)
-    {
-        return btn switch
-        {
-            0 => pad.buttonSouth,
-            1 => pad.buttonEast,
-            2 => pad.buttonWest,
-            3 => pad.buttonNorth,
-            4 => pad.leftShoulder,
-            5 => pad.rightShoulder,
-            6 => pad.leftTrigger,
-            7 => pad.rightTrigger,
-            8 => pad.startButton,
-            9 => pad.selectButton,
-            _ => null
-        };
+        return UniversalControllerInput.ReadButtonDown(device, btn);
     }
 }
