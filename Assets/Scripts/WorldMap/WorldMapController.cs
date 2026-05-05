@@ -27,6 +27,7 @@ public class WorldMapController : MonoBehaviour
 
         [Header("World Music")]
         public AudioClip worldMusic;
+        public AudioClip worldMusicLoop;
         [Range(0f, 1f)] public float worldMusicVolume = 1f;
         public bool loopWorldMusic = true;
 
@@ -156,6 +157,7 @@ public class WorldMapController : MonoBehaviour
     bool playingSelectedAnimation;
 
     AudioClip lastPlayedWorldMusic;
+    AudioClip lastPlayedWorldMusicLoopClip;
     float lastPlayedWorldMusicVolume;
     bool lastPlayedWorldMusicLoop;
 
@@ -822,6 +824,7 @@ public class WorldMapController : MonoBehaviour
         {
             GameMusicController.Instance.StopMusic();
             lastPlayedWorldMusic = null;
+            lastPlayedWorldMusicLoopClip = null;
             lastPlayedWorldMusicVolume = 0f;
             lastPlayedWorldMusicLoop = false;
             return;
@@ -829,17 +832,47 @@ public class WorldMapController : MonoBehaviour
 
         bool sameClip =
             lastPlayedWorldMusic == world.worldMusic &&
+            lastPlayedWorldMusicLoopClip == world.worldMusicLoop &&
             Mathf.Approximately(lastPlayedWorldMusicVolume, world.worldMusicVolume) &&
             lastPlayedWorldMusicLoop == world.loopWorldMusic;
 
         if (!forceRestart && sameClip)
             return;
 
-        GameMusicController.Instance.PlayMusic(world.worldMusic, world.worldMusicVolume, world.loopWorldMusic);
+        PreloadWorldMusic(world);
+
+        if (world.worldMusicLoop != null)
+        {
+            GameMusicController.Instance.PlayMusicIntroThenLoop(
+                world.worldMusic,
+                world.worldMusicVolume,
+                world.worldMusicLoop,
+                world.worldMusicVolume);
+        }
+        else
+        {
+            GameMusicController.Instance.PlayMusic(world.worldMusic, world.worldMusicVolume, world.loopWorldMusic);
+        }
 
         lastPlayedWorldMusic = world.worldMusic;
+        lastPlayedWorldMusicLoopClip = world.worldMusicLoop;
         lastPlayedWorldMusicVolume = world.worldMusicVolume;
         lastPlayedWorldMusicLoop = world.loopWorldMusic;
+    }
+
+    static void PreloadWorldMusic(WorldData world)
+    {
+        if (world == null)
+            return;
+
+        PreloadAudioData(world.worldMusic);
+        PreloadAudioData(world.worldMusicLoop);
+    }
+
+    static void PreloadAudioData(AudioClip clip)
+    {
+        if (clip != null && clip.loadState == AudioDataLoadState.Unloaded)
+            clip.LoadAudioData();
     }
 
     void PlaySfx(AudioClip clip, float volume)
