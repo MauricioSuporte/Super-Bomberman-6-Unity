@@ -1,0 +1,222 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &100000
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 100001}
+  - component: {fileID: 100002}
+  - component: {fileID: 100003}
+  - component: {fileID: 100004}
+  - component: {fileID: 100005}
+  m_Layer: 0
+  m_Name: BattleModeSystems
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &100001
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 100000}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 1.41116, y: -0.07129, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &100002
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 100000}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3d86f2d8583d7d84e8f37c4f15eb4bba, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BattleModeRules
+  matchMode: 0
+  victoriesToWinMatch: 3
+  roundTimer: 1
+  battleMusic: 0
+  enableRevengeBomber: 1
+  enableSuddenDeath: 1
+  playerTeams:
+  - playerId: 1
+    teamId: 1
+  - playerId: 2
+    teamId: 1
+  - playerId: 3
+    teamId: 3
+  - playerId: 4
+    teamId: 1
+  - playerId: 5
+    teamId: 2
+  - playerId: 6
+    teamId: 3
+  sharedStartingLoadout:
+    bombAmount: 1
+    fireLevel: 2
+    speedLevel: 2
+    life: 1
+    powerups: 
+    mountedLouie: 0
+    queuedEggs: 
+  playerStartingLoadouts:
+  - playerId: 1
+    overrideSharedLoadout: 0
+    loadout:
+      bombAmount: 1
+      fireLevel: 2
+      speedLevel: 2
+      life: 1
+      powerups: 
+      mountedLouie: 0
+      queuedEggs: 
+  - playerId: 2
+    overrideSharedLoadout: 0
+    loadout:
+      bombAmount: 1
+      fireLevel: 2
+      speedLevel: 2
+      life: 1
+      powerups: 
+      mountedLouie: 0
+      queuedEggs: 
+  - playerId: 3
+    overrideSharedLoadout: 0
+    loadout:
+      bombAmount: 1
+      fireLevel: 2
+      speedLevel: 2
+      life: 1
+      powerups: 
+      mountedLouie: 0
+      queuedEggs: 
+  - playerId: 4
+    overrideSharedLoadout: 0
+    loadout:
+      bombAmount: 1
+      fireLevel: 2
+      speedLevel: 2
+      life: 1
+      powerups: 
+      mountedLouie: 0
+      queuedEggs: 
+  - playerId: 5
+    overrideSharedLoadout: 0
+    loadout:
+      bombAmount: 1
+      fireLevel: 2
+      speedLevel: 2
+      life: 1
+      powerups: 
+      mountedLouie: 0
+      queuedEggs: 
+  - playerId: 6
+    overrideSharedLoadout: 0
+    loadout:
+      bombAmount: 1
+      fireLevel: 2
+      speedLevel: 2
+      life: 1
+      powerups: 
+      mountedLouie: 0
+      queuedEggs: 
+--- !u!114 &100003
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 100000}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8502dfd34f62ca9418a36160b06d6fb9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BattleModeTeams
+--- !u!114 &100004
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 100000}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 51c41f2808284a289d0f74b6b1ba6a31, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BattleRevengeSystem
+  cartPrefab: {fileID: 7225057538406863044, guid: 7d42c2e26b3e4c6e8a6d8b6d7f6e1c22, type: 3}
+  cartBombDistanceTiles: 3
+  revengeBombRadius: 2
+  revengeLaunchMuzzleVfxDuration: 0.16
+  revengeLaunchMuzzleVfxOrderInLayer: 11
+  revengeLaunchMuzzleVfxOffsetLeft: {x: -1, y: 0.4}
+  revengeLaunchMuzzleVfxOffsetRight: {x: 1, y: 0.4}
+  revengeLaunchMuzzleVfxOffsetTop: {x: 0, y: 0.9}
+  revengeLaunchMuzzleVfxOffsetBottom: {x: 0, y: -0.6}
+  respawnInvulnerabilitySeconds: 2
+  respawnBlinkInterval: 0.08
+--- !u!114 &100005
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 100000}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4b2f0da4c706e624cb72c19f504cbe5a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BattleSuddenDeathController
+  indestructibleTilemap: {fileID: 0}
+  destructibleTilemap: {fileID: 0}
+  stageGrid: {fileID: 0}
+  usePlayableAreaFromBounds: 0
+  bottomLeftCell: {x: -7, y: -6}
+  topRightCell: {x: 5, y: 4}
+  dropPattern: 1
+  randomizeDropPattern: 1
+  randomizeStartCorner: 1
+  randomizeRotationDirection: 1
+  fallingBlockVisualPrefab: {fileID: 0}
+  currentStageIndestructibleTile: {fileID: 11400000, guid: 4a905fea6887c7a49bda7bd992f80aa5, type: 2}
+  fallingHeight: 6
+  fallingDuration: 0.5
+  topScreenSpawnOffset: 0.5
+  visualSortingOrderOffset: 1
+  enableShadowVisual: 1
+  shadowLeadTime: 3
+  shadowStartSize: 0.15
+  shadowEndSize: 1
+  shadowAlpha: 0.65
+  shadowSortingOrderOffset: 100
+  shadowWorldOffset: {x: 0, y: 0, z: 0}
+  damageTickInterval: 0.2
+  damagePerTick: 1
+  playerCellOverlapDamageThreshold: 0.05
+  cleanupOverlapSize: {x: 0.6, y: 0.6}
+  hurryUpSfx: {fileID: 8300000, guid: 3b78b626520667143ad7378794635023, type: 3}
+  fallingTileSfx: {fileID: 8300000, guid: 232f86bc3f450a34b887545b1b7630b5, type: 3}
+  hurryUpVoices: []
+  fastMusicPitch: 1.2
+  resumeMusicDelayAfterHurryUp: 0
+  hurryUpUI: {fileID: 0}
+  enableDebugLogs: 0
+  logSuddenDeathFlow: 0
+  logVisualFlow: 0
+  logShadowFlow: 0
+  logDamageFlow: 0
