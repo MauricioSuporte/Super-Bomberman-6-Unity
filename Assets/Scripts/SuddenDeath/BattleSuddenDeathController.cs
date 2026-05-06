@@ -94,6 +94,8 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
     SuddenDeathDropPattern selectedDropPattern;
     float suddenDeathShadowStartRemainingTime;
 
+    public bool SuddenDeathStarted => suddenDeathStarted;
+
     enum SuddenDeathDropPattern
     {
         Spiral = 0,

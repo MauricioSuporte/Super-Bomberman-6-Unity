@@ -172,6 +172,10 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 100002, guid: 71b8af9db023483395c592bbb40abee9, type: 3}
+      propertyPath: roundTimer
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 100002, guid: 71b8af9db023483395c592bbb40abee9, type: 3}
       propertyPath: sharedStartingLoadout.powerups.Array.size
       value: 0
       objectReference: {fileID: 0}
@@ -436,8 +440,9 @@ MonoBehaviour:
   nextStageSceneName: Stage_1-2
   destructiblePrefab: {fileID: 3440613785117735154, guid: 227477c28434b21439475c6f07347eda, type: 3}
   groundTilemap: {fileID: 672307155}
-  groundTile: {fileID: 11400000, guid: 2f4ad9a0f5225284cbeaf4ac7891131d, type: 2}
-  groundShadowTile: {fileID: 11400000, guid: 42deb2152e5252e489f91fb7832fc8ec, type: 2}
+  groundTile: {fileID: 11400000, guid: 38c5bd8905df69d458fc219d4b5e5102, type: 2}
+  groundShadowTile: {fileID: 11400000, guid: 3116353b5105a864292137d83b8605f4, type: 2}
+  indestructibleGroundShadowTile: {fileID: 11400000, guid: 7124a15206f7a3e48b6ecc46d3c7892e, type: 2}
   autoResolveStageTilemaps: 1
   restartAfterDeathSeconds: 4
   bossRushSceneName: BossRush
@@ -2936,10 +2941,10 @@ PrefabInstance:
     - target: {fileID: 1271289946209990207, guid: b5c6f6d280a44d5fb48be8cd567c1e62, type: 3}
       propertyPath: m_Sprite
       value: 
-      objectReference: {fileID: 0}
+      objectReference: {fileID: 21300000, guid: 956432824ec41ee4f9dada2ac877bd1b, type: 3}
     - target: {fileID: 1271289946209990207, guid: b5c6f6d280a44d5fb48be8cd567c1e62, type: 3}
       propertyPath: m_Enabled
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 1909958093259148197, guid: b5c6f6d280a44d5fb48be8cd567c1e62, type: 3}
       propertyPath: m_Sprite
@@ -3080,10 +3085,10 @@ PrefabInstance:
     - target: {fileID: 4964860625633737738, guid: b5c6f6d280a44d5fb48be8cd567c1e62, type: 3}
       propertyPath: m_Sprite
       value: 
-      objectReference: {fileID: 0}
+      objectReference: {fileID: 21300000, guid: edc331db8e8709e4a8bba6c1962ce2c5, type: 3}
     - target: {fileID: 4964860625633737738, guid: b5c6f6d280a44d5fb48be8cd567c1e62, type: 3}
       propertyPath: m_Enabled
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5241171386535993749, guid: b5c6f6d280a44d5fb48be8cd567c1e62, type: 3}
       propertyPath: m_Sprite
@@ -3124,10 +3129,10 @@ PrefabInstance:
     - target: {fileID: 6307630273264470252, guid: b5c6f6d280a44d5fb48be8cd567c1e62, type: 3}
       propertyPath: m_Sprite
       value: 
-      objectReference: {fileID: 0}
+      objectReference: {fileID: 21300000, guid: 93b68aaed86a2d84cafddc020acecdd9, type: 3}
     - target: {fileID: 6307630273264470252, guid: b5c6f6d280a44d5fb48be8cd567c1e62, type: 3}
       propertyPath: m_Enabled
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 6991349842924055328, guid: b5c6f6d280a44d5fb48be8cd567c1e62, type: 3}
       propertyPath: m_Sprite
