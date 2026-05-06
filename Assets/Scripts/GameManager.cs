@@ -989,6 +989,9 @@ public class GameManager : MonoBehaviour
         if (!Application.isPlaying || deadPlayer == null || !deadPlayer.CompareTag("Player"))
             return;
 
+        if (BattleModeRules.Instance != null && !BattleModeRules.Instance.EnableItemDropsAfterDeath)
+            return;
+
         PlayerPersistentStats.PlayerState state = PlayerPersistentStats.GetRuntime(deadPlayer.PlayerId);
         if (state == null)
             return;
