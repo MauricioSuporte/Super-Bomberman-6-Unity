@@ -206,6 +206,7 @@ MonoBehaviour:
   punchSfxVolume: 1
   bounceSfx: {fileID: 8300000, guid: 691a993233a939b4d8601560e159cf0a, type: 3}
   bounceSfxVolume: 1
+  loseItemSfxVolume: 1
   magnetPullSfxVolume: 1
   kickSpeed: 9
   punchDuration: 0.22
@@ -215,6 +216,8 @@ MonoBehaviour:
   stageBoundsTilemap: {fileID: 0}
   indestructibleTilemap: {fileID: 0}
   magnetPullSpeed: 10
+  debugBombEscape: 0
+  debugBombEscapeVerbose: 0
 --- !u!114 &1584574550123671064
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -230,8 +233,9 @@ MonoBehaviour:
   scanInterval: 0.08
   scanMaxDistanceTiles: 12
   maxPullSteps: 12
+  stopBeforeTargetTiles: 1
   reattractDelaySeconds: 1
-  playerLayerName: Player
+  targetLayerName: Player
   stageLayerName: Stage
   bombLayerName: Bomb
   magnetPullSpeedMultiplier: 0.5
@@ -242,6 +246,8 @@ MonoBehaviour:
   overlapBoxSize: 0.6
   originBlockerSize: 0.9
   originBlockerUseTrigger: 0
+  debugMagnetScan: 1
+  debugLogInterval: 0.5
 --- !u!82 &4491695425928016186
 AudioSource:
   m_ObjectHideFlags: 0
