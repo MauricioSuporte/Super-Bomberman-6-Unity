@@ -721,7 +721,7 @@ public class GameManager : MonoBehaviour
     {
         if (groundTilemap == null ||
             groundTile == null ||
-            groundShadowTile == null)
+            !HasAnyGroundShadowTile())
             return;
 
         BoundsInt bounds = groundTilemap.cellBounds;
@@ -746,7 +746,7 @@ public class GameManager : MonoBehaviour
     {
         if (groundTilemap == null ||
             groundTile == null ||
-            groundShadowTile == null)
+            !HasAnyGroundShadowTile())
             return;
 
         TileBase currentGround = groundTilemap.GetTile(groundCell);
@@ -776,6 +776,11 @@ public class GameManager : MonoBehaviour
             tile == groundTile ||
             tile == groundShadowTile ||
             tile == indestructibleGroundShadowTile;
+    }
+
+    bool HasAnyGroundShadowTile()
+    {
+        return groundShadowTile != null || indestructibleGroundShadowTile != null;
     }
 
     TileBase GetGroundShadowTileForCasterAbove(Vector3Int groundCell)
