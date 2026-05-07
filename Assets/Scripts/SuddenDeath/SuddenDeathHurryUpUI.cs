@@ -15,6 +15,7 @@ public sealed class SuddenDeathHurryUpUI : MonoBehaviour
     [SerializeField] private bool enableTeleportIntro = true;
     [SerializeField] private float teleportDuration = 1f;
     [SerializeField] private float teleportInterval = 0.04f;
+    [SerializeField] private int minimumTeleportMoves = 48;
     [SerializeField] private Vector2 teleportAreaAtStart = new Vector2(220f, 120f);
 
     [Header("Dynamic Scale (igual ao StageLabel)")]
@@ -28,6 +29,8 @@ public sealed class SuddenDeathHurryUpUI : MonoBehaviour
     [SerializeField] private float maxScale = 10f;
 
     [Header("Base Layout")]
+    [SerializeField] private bool centerOnPlayableArea = true;
+    [SerializeField] private float topHudHeightAtDesign = 22f;
     [SerializeField] private Vector2 anchoredPosition = new Vector2(0f, 80f);
     [SerializeField] private float baseWidthAtDesign = 420f;
     [SerializeField] private float baseHeightAtDesign = 64f;
@@ -98,7 +101,7 @@ public sealed class SuddenDeathHurryUpUI : MonoBehaviour
 
         float uiScale = UiScale * baseScale;
 
-        Vector2 basePos = anchoredPosition * uiScale;
+        Vector2 basePos = GetBaseAnchoredPosition(uiScale);
 
         rectTransform.anchoredPosition = basePos;
         rectTransform.sizeDelta = new Vector2(
@@ -110,6 +113,7 @@ public sealed class SuddenDeathHurryUpUI : MonoBehaviour
         image.enabled = true;
 
         Vector2 teleportArea = teleportAreaAtStart * uiScale;
+        float teleportStepInterval = GetTeleportStepInterval();
 
         float elapsed = 0f;
         float teleportElapsed = 0f;
@@ -123,9 +127,9 @@ public sealed class SuddenDeathHurryUpUI : MonoBehaviour
             {
                 teleportElapsed += dt;
 
-                if (teleportElapsed >= teleportInterval)
+                if (teleportElapsed >= teleportStepInterval)
                 {
-                    teleportElapsed = 0f;
+                    teleportElapsed -= teleportStepInterval;
 
                     float t = Mathf.Clamp01(elapsed / teleportDuration);
 
@@ -150,5 +154,34 @@ public sealed class SuddenDeathHurryUpUI : MonoBehaviour
         rectTransform.anchoredPosition = basePos;
         image.enabled = false;
         routine = null;
+    }
+
+    Vector2 GetBaseAnchoredPosition(float uiScale)
+    {
+        Vector2 basePosition = anchoredPosition;
+
+        if (centerOnPlayableArea)
+        {
+            float hudHeight = Mathf.Clamp(topHudHeightAtDesign, 0f, referenceHeight);
+            basePosition = new Vector2(0f, -hudHeight * 0.5f);
+        }
+
+        return RoundToPixel(basePosition * uiScale);
+    }
+
+    float GetTeleportStepInterval()
+    {
+        float interval = Mathf.Max(0.001f, teleportInterval);
+        int moves = Mathf.Max(1, minimumTeleportMoves);
+
+        if (teleportDuration > 0f)
+            interval = Mathf.Min(interval, teleportDuration / moves);
+
+        return interval;
+    }
+
+    static Vector2 RoundToPixel(Vector2 value)
+    {
+        return new Vector2(Mathf.Round(value.x), Mathf.Round(value.y));
     }
 }
