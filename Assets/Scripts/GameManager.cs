@@ -1069,7 +1069,6 @@ public class GameManager : MonoBehaviour
             PlayerPersistentStats.SpeedInternalToLevel(state.SpeedInternal)
             - 2);
         AddItemCopies(results, ItemType.SpeedIncrese, speedUpsAboveLoadout);
-        AddItemCopies(results, ItemType.Heart, Mathf.Max(0, state.Life - 1));
 
         if (state.CanKickBombs)
             results.Add(ItemType.BombKick);

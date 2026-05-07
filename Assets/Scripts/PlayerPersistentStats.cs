@@ -16,6 +16,9 @@ public static class PlayerPersistentStats
     public const int MaxSpeedInternal = BaseSpeedNormal + (MaxSpeedUps * SpeedStep);
     public const int MinSpeedInternal = BaseSpeedNormal;
     public const int SpeedDivisor = 64;
+    const int MinimumDroppedBombAmount = 1;
+    const int MinimumDroppedExplosionRadius = 2;
+    const int MinimumDroppedSpeedLevel = 2;
 
     public sealed class PlayerState
     {
@@ -998,13 +1001,14 @@ public static class PlayerPersistentStats
         var s = _stage[playerId - 1];
         var candidates = new List<ItemType>(16);
 
-        if (s.BombAmount > 1)
+        if (s.BombAmount > MinimumDroppedBombAmount)
             candidates.Add(ItemType.ExtraBomb);
 
-        if (s.ExplosionRadius > 2)
+        if (s.ExplosionRadius > MinimumDroppedExplosionRadius)
             candidates.Add(ItemType.BlastRadius);
 
-        if (s.SpeedInternal - SpeedStep >= SpeedStep * 2)
+        int minimumDroppedSpeedInternal = SpeedLevelToInternal(MinimumDroppedSpeedLevel);
+        if (s.SpeedInternal > minimumDroppedSpeedInternal)
             candidates.Add(ItemType.SpeedIncrese);
 
         if (s.CanKickBombs)
@@ -1054,15 +1058,15 @@ public static class PlayerPersistentStats
         switch (type)
         {
             case ItemType.ExtraBomb:
-                s.BombAmount = Mathf.Max(1, s.BombAmount - 1);
+                s.BombAmount = Mathf.Max(MinimumDroppedBombAmount, s.BombAmount - 1);
                 break;
 
             case ItemType.BlastRadius:
-                s.ExplosionRadius = Mathf.Max(2, s.ExplosionRadius - 1);
+                s.ExplosionRadius = Mathf.Max(MinimumDroppedExplosionRadius, s.ExplosionRadius - 1);
                 break;
 
             case ItemType.SpeedIncrese:
-                s.SpeedInternal = Mathf.Max(SpeedStep * 2, s.SpeedInternal - SpeedStep);
+                s.SpeedInternal = Mathf.Max(SpeedLevelToInternal(MinimumDroppedSpeedLevel), s.SpeedInternal - SpeedStep);
                 break;
 
             case ItemType.BombKick:
@@ -1123,10 +1127,10 @@ public static class PlayerPersistentStats
         if (bomb != null)
         {
             if (type == ItemType.ExtraBomb)
-                bomb.bombAmout = Mathf.Max(1, s.BombAmount);
+                bomb.bombAmout = Mathf.Max(MinimumDroppedBombAmount, s.BombAmount);
 
             if (type == ItemType.BlastRadius)
-                bomb.explosionRadius = Mathf.Max(2, s.ExplosionRadius);
+                bomb.explosionRadius = Mathf.Max(MinimumDroppedExplosionRadius, s.ExplosionRadius);
         }
 
         if (movement == null)
