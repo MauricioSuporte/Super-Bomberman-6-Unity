@@ -794,11 +794,63 @@ public class GameManager : MonoBehaviour
 
         for (int i = 0; i < groundShadowIgnoredTiles.Length; i++)
         {
-            if (tile == groundShadowIgnoredTiles[i])
+            TileBase ignoredTile = groundShadowIgnoredTiles[i];
+            if (ignoredTile == null)
+                continue;
+
+            if (tile == ignoredTile)
+                return true;
+
+            if (IsSameAnimatedTileRuntimeVariant(tile, ignoredTile))
                 return true;
         }
 
         return false;
+    }
+
+    bool IsSameAnimatedTileRuntimeVariant(TileBase tile, TileBase ignoredTile)
+    {
+        if (tile is not AnimatedTile || ignoredTile is not AnimatedTile)
+            return false;
+
+        string tileName = NormalizeRuntimeAnimatedTileName(tile.name);
+        string ignoredName = NormalizeRuntimeAnimatedTileName(ignoredTile.name);
+        if (string.IsNullOrEmpty(tileName) || string.IsNullOrEmpty(ignoredName))
+            return false;
+
+        return string.Equals(tileName, ignoredName, StringComparison.Ordinal) ||
+               tileName.StartsWith(ignoredName + "_", StringComparison.Ordinal);
+    }
+
+    static string NormalizeRuntimeAnimatedTileName(string tileName)
+    {
+        if (string.IsNullOrEmpty(tileName))
+            return string.Empty;
+
+        const string cloneSuffix = "(Clone)";
+        if (tileName.EndsWith(cloneSuffix, StringComparison.Ordinal))
+            tileName = tileName.Substring(0, tileName.Length - cloneSuffix.Length).TrimEnd();
+
+        const string runtimeSuffix = "_Runtime";
+        if (tileName.EndsWith(runtimeSuffix, StringComparison.Ordinal))
+            tileName = tileName.Substring(0, tileName.Length - runtimeSuffix.Length);
+
+        string[] stateSuffixes =
+        {
+            "_ClockwiseSlow",
+            "_ClockwiseFast",
+            "_CounterClockwiseSlow",
+            "_CounterClockwiseFast",
+        };
+
+        for (int i = 0; i < stateSuffixes.Length; i++)
+        {
+            string suffix = stateSuffixes[i];
+            if (tileName.EndsWith(suffix, StringComparison.Ordinal))
+                return tileName.Substring(0, tileName.Length - suffix.Length);
+        }
+
+        return tileName;
     }
 
     TileBase GetGroundShadowTileForCasterAbove(Vector3Int groundCell)

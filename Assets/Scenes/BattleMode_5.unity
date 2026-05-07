@@ -189,7 +189,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 100002, guid: 71b8af9db023483395c592bbb40abee9, type: 3}
       propertyPath: sharedStartingLoadout.powerups.Array.size
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 100002, guid: 71b8af9db023483395c592bbb40abee9, type: 3}
       propertyPath: 'sharedStartingLoadout.powerups.Array.data[0]'
@@ -506,7 +506,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &285353615
 Transform:
   m_ObjectHideFlags: 0
@@ -1536,10 +1536,10 @@ PrefabInstance:
     - target: {fileID: 1271289946209990207, guid: b5c6f6d280a44d5fb48be8cd567c1e62, type: 3}
       propertyPath: m_Sprite
       value: 
-      objectReference: {fileID: 0}
+      objectReference: {fileID: 21300000, guid: 956432824ec41ee4f9dada2ac877bd1b, type: 3}
     - target: {fileID: 1271289946209990207, guid: b5c6f6d280a44d5fb48be8cd567c1e62, type: 3}
       propertyPath: m_Enabled
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 1909958093259148197, guid: b5c6f6d280a44d5fb48be8cd567c1e62, type: 3}
       propertyPath: m_Sprite
@@ -1664,10 +1664,10 @@ PrefabInstance:
     - target: {fileID: 4642470739555972227, guid: b5c6f6d280a44d5fb48be8cd567c1e62, type: 3}
       propertyPath: m_Sprite
       value: 
-      objectReference: {fileID: 0}
+      objectReference: {fileID: 21300000, guid: c36fcbd129457ab4596b4cfaef6d8ca3, type: 3}
     - target: {fileID: 4642470739555972227, guid: b5c6f6d280a44d5fb48be8cd567c1e62, type: 3}
       propertyPath: m_Enabled
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4670846066677549432, guid: b5c6f6d280a44d5fb48be8cd567c1e62, type: 3}
       propertyPath: m_Sprite
@@ -4992,7 +4992,7 @@ Tilemap:
       m_AnimatedSprites:
       - {fileID: 4449135409836199414, guid: 4c745a478d3f0d749b24591978b6aa38, type: 3}
       - {fileID: 6705381191897712659, guid: 4c745a478d3f0d749b24591978b6aa38, type: 3}
-      m_AnimationSpeed: 12.000001
+      m_AnimationSpeed: 12
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: -6, y: -7, z: 0}
@@ -5199,7 +5199,7 @@ Tilemap:
       m_AnimatedSprites:
       - {fileID: 3135224812723779439, guid: 4c745a478d3f0d749b24591978b6aa38, type: 3}
       - {fileID: 4132502062500096886, guid: 4c745a478d3f0d749b24591978b6aa38, type: 3}
-      m_AnimationSpeed: 12.000001
+      m_AnimationSpeed: 12
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: -9, y: 3, z: 0}
@@ -5271,7 +5271,7 @@ Tilemap:
       m_AnimatedSprites:
       - {fileID: -7552911586742008429, guid: 4c745a478d3f0d749b24591978b6aa38, type: 3}
       - {fileID: 9095229337106392085, guid: 4c745a478d3f0d749b24591978b6aa38, type: 3}
-      m_AnimationSpeed: 12.000001
+      m_AnimationSpeed: 12
       m_AnimationTimeOffset: 0
       m_Flags: 0
   - first: {x: 0, y: 5, z: 0}
@@ -6626,11 +6626,12 @@ MonoBehaviour:
   fastSpeedTilesPerSecond: 3
   startFast: 0
   fastAnimatedTileSpeedMultiplier: 2
-  playerWithConveyorSpeedMultiplier: 1.3333334
-  playerAgainstConveyorSpeedMultiplier: 0.6666667
+  playerWithSlowConveyorSpeedMultiplier: 1.3333334
+  playerAgainstSlowConveyorSpeedMultiplier: 0.6666667
+  playerWithFastConveyorSpeedMultiplier: 1.6666666
+  playerAgainstFastConveyorSpeedMultiplier: 0.33333334
   playerSpeedMultiplierRefreshSeconds: 0.12
   startClockwise: 1
-  logConveyorCenterDebug: 1
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

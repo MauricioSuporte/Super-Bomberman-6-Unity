@@ -75,15 +75,14 @@ public sealed class BattleMode5ConveyorController : MonoBehaviour, IGroundTileHa
     [SerializeField, Min(0.01f)] private float fastAnimatedTileSpeedMultiplier = 2f;
 
     [Header("Player Movement Influence")]
-    [SerializeField, Min(0f)] private float playerWithConveyorSpeedMultiplier = 4f / 3f;
-    [SerializeField, Min(0f)] private float playerAgainstConveyorSpeedMultiplier = 2f / 3f;
+    [SerializeField, Min(0f)] private float playerWithSlowConveyorSpeedMultiplier = 4f / 3f;
+    [SerializeField, Min(0f)] private float playerAgainstSlowConveyorSpeedMultiplier = 2f / 3f;
+    [SerializeField, Min(0f)] private float playerWithFastConveyorSpeedMultiplier = 5f / 3f;
+    [SerializeField, Min(0f)] private float playerAgainstFastConveyorSpeedMultiplier = 1f / 3f;
     [SerializeField, Min(0f)] private float playerSpeedMultiplierRefreshSeconds = 0.12f;
 
     [Header("Direction")]
     [SerializeField] private bool startClockwise = true;
-
-    [Header("Debug")]
-    [SerializeField] private bool logConveyorCenterDebug = true;
 
     readonly HashSet<TileBase> registeredTiles = new();
     readonly HashSet<Vector3Int> conveyorCells = new();
@@ -93,8 +92,6 @@ public sealed class BattleMode5ConveyorController : MonoBehaviour, IGroundTileHa
     readonly HashSet<MovementController> speedTilePlayers = new();
     readonly List<Vector3Int> orderedClockwiseCells = new(32);
     readonly List<Bomb> bombSnapshot = new(64);
-    readonly Dictionary<int, Vector3Int> lastLoggedSourceCellByObject = new();
-    readonly Dictionary<int, Vector3Int> lastLoggedTargetCellByObject = new();
     readonly Dictionary<int, Vector3Int> lockedTargetCellByObject = new();
     readonly Dictionary<AnimatedTile, ConveyorAnimatedTileState> conveyorAnimatedTileStates = new();
     readonly Dictionary<AnimatedTile, AnimatedTile> conveyorRuntimeTileOrigins = new();
@@ -193,7 +190,7 @@ public sealed class BattleMode5ConveyorController : MonoBehaviour, IGroundTileHa
                     out Vector2 cellToWorld))
                 continue;
 
-            if (IsBlockedForConveyor(sourceCell, ignoredBomb: null))
+            if (IsBlockedForConveyor(sourceCell, ignoredBomb: null, blockPlayers: false))
             {
                 ClearObjectConveyorState(objectKey);
                 continue;
@@ -201,17 +198,7 @@ public sealed class BattleMode5ConveyorController : MonoBehaviour, IGroundTileHa
 
             ApplyPlayerMovementInfluence(mover, sourceCell);
 
-            LogConveyorTargetIfNeeded(
-                "Player",
-                mover.gameObject,
-                mover.Rigidbody.position,
-                sourceCell,
-                targetCell,
-                target,
-                unityCenter,
-                cellToWorld);
-
-            if (IsBlockedForConveyor(targetCell, ignoredBomb: null))
+            if (IsBlockedForConveyor(targetCell, ignoredBomb: null, blockPlayers: false))
             {
                 ClearObjectConveyorState(objectKey);
                 MoveRigidbodyTowardCellCenter(mover.Rigidbody, sourceCell, maxDistance, respectConveyorDirection: true);
@@ -237,13 +224,13 @@ public sealed class BattleMode5ConveyorController : MonoBehaviour, IGroundTileHa
         if (dot > 0.5f)
         {
             mover.ApplyExternalMovementSpeedMultiplier(
-                playerWithConveyorSpeedMultiplier,
+                fast ? playerWithFastConveyorSpeedMultiplier : playerWithSlowConveyorSpeedMultiplier,
                 playerSpeedMultiplierRefreshSeconds);
         }
         else if (dot < -0.5f)
         {
             mover.ApplyExternalMovementSpeedMultiplier(
-                playerAgainstConveyorSpeedMultiplier,
+                fast ? playerAgainstFastConveyorSpeedMultiplier : playerAgainstSlowConveyorSpeedMultiplier,
                 playerSpeedMultiplierRefreshSeconds);
         }
     }
@@ -280,23 +267,13 @@ public sealed class BattleMode5ConveyorController : MonoBehaviour, IGroundTileHa
                     out Vector2 cellToWorld))
                 continue;
 
-            if (IsBlockedForConveyor(sourceCell, ignoredBomb: bomb))
+            if (IsBlockedForConveyor(sourceCell, ignoredBomb: bomb, blockPlayers: false))
             {
                 ClearObjectConveyorState(objectKey);
                 continue;
             }
 
-            LogConveyorTargetIfNeeded(
-                "Bomb",
-                bomb.gameObject,
-                rb.position,
-                sourceCell,
-                targetCell,
-                target,
-                unityCenter,
-                cellToWorld);
-
-            if (IsBlockedForConveyor(targetCell, ignoredBomb: bomb))
+            if (IsBlockedForConveyor(targetCell, ignoredBomb: bomb, blockPlayers: true))
             {
                 ClearObjectConveyorState(objectKey);
                 MoveBombTowardCellCenter(bomb, rb, sourceCell, maxDistance, respectConveyorDirection: true);
@@ -349,8 +326,6 @@ public sealed class BattleMode5ConveyorController : MonoBehaviour, IGroundTileHa
     void ClearObjectConveyorState(int objectKey)
     {
         lockedTargetCellByObject.Remove(objectKey);
-        lastLoggedSourceCellByObject.Remove(objectKey);
-        lastLoggedTargetCellByObject.Remove(objectKey);
     }
 
     bool TryGetConveyorTarget(
@@ -421,43 +396,7 @@ public sealed class BattleMode5ConveyorController : MonoBehaviour, IGroundTileHa
         return true;
     }
 
-    void LogConveyorTargetIfNeeded(
-        string actorKind,
-        GameObject actor,
-        Vector2 actorPosition,
-        Vector3Int sourceCell,
-        Vector3Int targetCell,
-        Vector2 computedTarget,
-        Vector2 unityCenter,
-        Vector2 cellToWorld)
-    {
-        if (!logConveyorCenterDebug || actor == null || groundTilemap == null)
-            return;
-
-        int id = GetObjectKey(actor);
-        bool sameSource = lastLoggedSourceCellByObject.TryGetValue(id, out Vector3Int previousSource) && previousSource == sourceCell;
-        bool sameTarget = lastLoggedTargetCellByObject.TryGetValue(id, out Vector3Int previousTarget) && previousTarget == targetCell;
-        if (sameSource && sameTarget)
-            return;
-
-        lastLoggedSourceCellByObject[id] = sourceCell;
-        lastLoggedTargetCellByObject[id] = targetCell;
-
-        Grid grid = groundTilemap.layoutGrid;
-        Vector3 cellSize = grid != null ? grid.cellSize : Vector3.one;
-        Vector3 cellGap = grid != null ? grid.cellGap : Vector3.zero;
-
-        Debug.Log(
-            $"[BattleMode5Conveyor] {actorKind} '{actor.name}' conveyor target debug | " +
-            $"pos={Format(actorPosition)} sourceCell={sourceCell} targetCell={targetCell} " +
-            $"clockwise={clockwise} speed={(fast ? "fast" : "slow")} | " +
-            $"CellToWorld={Format(cellToWorld)} UnityGetCellCenterWorld={Format(unityCenter)} computedTarget={Format(computedTarget)} | " +
-            $"tileAnchor={Format(groundTilemap.tileAnchor)} tilemapPos={Format(groundTilemap.transform.position)} " +
-            $"gridCellSize={Format(cellSize)} gridCellGap={Format(cellGap)}",
-            this);
-    }
-
-    bool IsBlockedForConveyor(Vector3Int targetCell, Bomb ignoredBomb)
+    bool IsBlockedForConveyor(Vector3Int targetCell, Bomb ignoredBomb, bool blockPlayers)
     {
         if (destructibleTilemap != null && destructibleTilemap.GetTile(targetCell) != null)
             return true;
@@ -465,7 +404,10 @@ public sealed class BattleMode5ConveyorController : MonoBehaviour, IGroundTileHa
         if (indestructibleTilemap != null && indestructibleTilemap.GetTile(targetCell) != null)
             return true;
 
-        return HasBombAtCell(targetCell, ignoredBomb);
+        if (HasBombAtCell(targetCell, ignoredBomb))
+            return true;
+
+        return blockPlayers && HasPlayerAtCell(targetCell);
     }
 
     bool HasBombAtCell(Vector3Int targetCell, Bomb ignoredBomb)
@@ -477,6 +419,26 @@ public sealed class BattleMode5ConveyorController : MonoBehaviour, IGroundTileHa
 
             Vector3Int bombCell = groundTilemap.WorldToCell(bomb.GetLogicalPosition());
             if (bombCell == targetCell)
+                return true;
+        }
+
+        return false;
+    }
+
+    bool HasPlayerAtCell(Vector3Int targetCell)
+    {
+        var players = FindObjectsByType<MovementController>(FindObjectsInactive.Exclude);
+        for (int i = 0; i < players.Length; i++)
+        {
+            MovementController mover = players[i];
+            if (mover == null || mover.Rigidbody == null || !mover.CompareTag("Player"))
+                continue;
+
+            if (mover.isDead || mover.IsEndingStage || !mover.gameObject.activeInHierarchy)
+                continue;
+
+            Vector3Int playerCell = groundTilemap.WorldToCell(mover.Rigidbody.position);
+            if (playerCell == targetCell)
                 return true;
         }
 
@@ -935,12 +897,6 @@ public sealed class BattleMode5ConveyorController : MonoBehaviour, IGroundTileHa
 
     static int GetObjectKey(GameObject go)
         => go != null ? go.GetHashCode() : 0;
-
-    static string Format(Vector2 value)
-        => $"({value.x:F3}, {value.y:F3})";
-
-    static string Format(Vector3 value)
-        => $"({value.x:F3}, {value.y:F3}, {value.z:F3})";
 
     static bool ContainsTile(TileBase[] tiles, TileBase tile)
     {
