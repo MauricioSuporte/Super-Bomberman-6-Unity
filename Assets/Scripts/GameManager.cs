@@ -82,6 +82,7 @@ public class GameManager : MonoBehaviour
     public TileBase groundTile;
     public TileBase groundShadowTile;
     public TileBase indestructibleGroundShadowTile;
+    public TileBase[] groundShadowIgnoredTiles;
 
     [Header("Auto Resolve (Stage Tilemaps)")]
     [SerializeField] private bool autoResolveStageTilemaps = true;
@@ -755,6 +756,9 @@ public class GameManager : MonoBehaviour
         if (currentGround == null)
             return;
 
+        if (IsGroundShadowIgnoredTile(currentGround))
+            return;
+
         bool refreshable = IsShadowRefreshableGroundTile(currentGround);
         if (!refreshable && shadowTile == null)
             return;
@@ -781,6 +785,20 @@ public class GameManager : MonoBehaviour
     bool HasAnyGroundShadowTile()
     {
         return groundShadowTile != null || indestructibleGroundShadowTile != null;
+    }
+
+    bool IsGroundShadowIgnoredTile(TileBase tile)
+    {
+        if (tile == null || groundShadowIgnoredTiles == null)
+            return false;
+
+        for (int i = 0; i < groundShadowIgnoredTiles.Length; i++)
+        {
+            if (tile == groundShadowIgnoredTiles[i])
+                return true;
+        }
+
+        return false;
     }
 
     TileBase GetGroundShadowTileForCasterAbove(Vector3Int groundCell)
