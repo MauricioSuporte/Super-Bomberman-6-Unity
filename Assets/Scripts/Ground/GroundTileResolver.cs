@@ -16,6 +16,7 @@ public sealed class GroundTileResolver : MonoBehaviour
     [SerializeField] private List<TileGroup> groups = new();
 
     readonly Dictionary<TileBase, IGroundTileHandler> _map = new();
+    readonly Dictionary<TileBase, IGroundTileHandler> _runtimeMap = new();
 
     void Awake() => Rebuild();
 
@@ -54,6 +55,23 @@ public sealed class GroundTileResolver : MonoBehaviour
         }
     }
 
+    public void RegisterRuntimeHandler(TileBase tile, IGroundTileHandler handler)
+    {
+        if (tile == null || handler == null)
+            return;
+
+        _runtimeMap[tile] = handler;
+    }
+
+    public void UnregisterRuntimeHandler(TileBase tile, IGroundTileHandler handler)
+    {
+        if (tile == null || handler == null)
+            return;
+
+        if (_runtimeMap.TryGetValue(tile, out var registered) && ReferenceEquals(registered, handler))
+            _runtimeMap.Remove(tile);
+    }
+
     public bool TryGetHandler(TileBase tile, out IGroundTileHandler handler)
     {
         if (tile == null)
@@ -61,6 +79,9 @@ public sealed class GroundTileResolver : MonoBehaviour
             handler = null;
             return false;
         }
+
+        if (_runtimeMap.TryGetValue(tile, out handler) && handler != null)
+            return true;
 
         return _map.TryGetValue(tile, out handler) && handler != null;
     }
