@@ -254,6 +254,8 @@ public class MovementController : MonoBehaviour, IKillable
 
     [SerializeField] private bool externalMovementOverride;
     public bool ExternalMovementOverride => externalMovementOverride;
+    private float externalMovementSpeedMultiplier = 1f;
+    private float externalMovementSpeedMultiplierUntil;
 
     private void SetFacingDirection(Vector2 newFace, string reason)
     {
@@ -3663,8 +3665,22 @@ public class MovementController : MonoBehaviour, IKillable
     private float GetRawMoveWorldPerFixedFrame()
     {
         float dt = Time.fixedDeltaTime;
-        float speedWorldPerSecond = speed * tileSize;
+        float speedWorldPerSecond = speed * tileSize * GetExternalMovementSpeedMultiplier();
         return speedWorldPerSecond * dt;
+    }
+
+    public void ApplyExternalMovementSpeedMultiplier(float multiplier, float durationSeconds)
+    {
+        externalMovementSpeedMultiplier = Mathf.Max(0f, multiplier);
+        externalMovementSpeedMultiplierUntil = Time.time + Mathf.Max(0f, durationSeconds);
+    }
+
+    private float GetExternalMovementSpeedMultiplier()
+    {
+        if (externalMovementSpeedMultiplierUntil <= 0f || Time.time > externalMovementSpeedMultiplierUntil)
+            return 1f;
+
+        return Mathf.Max(0f, externalMovementSpeedMultiplier);
     }
 
     private float GetQuantizedMoveWorldPerFixedFrame(Vector2 moveDir, float rawWorldStep)
@@ -3734,6 +3750,8 @@ public class MovementController : MonoBehaviour, IKillable
     public void SetExternalMovementOverride(bool active)
     {
         externalMovementOverride = active;
+        externalMovementSpeedMultiplier = 1f;
+        externalMovementSpeedMultiplierUntil = 0f;
 
         if (active)
         {
