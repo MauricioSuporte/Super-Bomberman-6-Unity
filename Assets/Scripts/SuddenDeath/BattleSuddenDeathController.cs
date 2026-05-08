@@ -633,6 +633,8 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
             if (GameManager.Instance != null)
                 GameManager.Instance.OnIndestructiblePlaced(cell);
 
+            NotifyBattleMode6RedirectionIndestructiblePlaced(cell);
+
             LogVisual($"DropTileRoutine: tile aplicado em {cell}");
         }
         else
@@ -642,6 +644,16 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
 
         PlayFallingSfx();
         StartDamageOnCell(cell);
+    }
+
+    void NotifyBattleMode6RedirectionIndestructiblePlaced(Vector3Int cell)
+    {
+        if (!string.Equals(UnityEngine.SceneManagement.SceneManager.GetActiveScene().name, "BattleMode_6", System.StringComparison.Ordinal))
+            return;
+
+        var controllers = FindObjectsByType<BattleMode6RedirectionController>(FindObjectsInactive.Exclude);
+        for (int i = 0; i < controllers.Length; i++)
+            controllers[i]?.OnIndestructiblePlaced(cell);
     }
 
     IEnumerator AnimateDropVisuals(Vector3Int cell, GameObject visual, GameObject shadow, Vector3 start, Vector3 end)

@@ -1111,6 +1111,22 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         transform.position = worldPos;
     }
 
+    public bool TryRedirectKick(Vector2 direction)
+    {
+        if (HasExploded || !isKicked || direction == Vector2.zero)
+            return false;
+
+        Vector2 cardinalDirection = Mathf.Abs(direction.x) > Mathf.Abs(direction.y)
+            ? new Vector2(Mathf.Sign(direction.x), 0f)
+            : new Vector2(0f, Mathf.Sign(direction.y));
+
+        if (cardinalDirection == Vector2.zero)
+            return false;
+
+        kickDirection = cardinalDirection;
+        return true;
+    }
+
     public bool StartKick(Vector2 direction, float tileSize, LayerMask obstacleMask, Tilemap destructibleTilemap)
     {
         LayerMask defaultBlockMoveMask = LayerMask.GetMask("Player", "Bomb", "Enemy", "Louie");
