@@ -74,4 +74,16 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/Stage_2-7.unity
     guid: c029a7f1cabfdfb4aba4665e696a1785
+  - enabled: 1
+    path: Assets/Scenes/BattleMode_6.unity
+    guid: cc1090d77f49f61429f21f3f09e16e79
+  - enabled: 1
+    path: Assets/Scenes/BattleMode_5.unity
+    guid: dda7e7d38fd64c541811f8b5841efbb6
+  - enabled: 1
+    path: Assets/Scenes/BattleMode_4.unity
+    guid: fcdc001fbd61be24b901c9ac155ab31a
+  - enabled: 1
+    path: Assets/Scenes/BattleMode_3.unity
+    guid: 96119de01817c0745a05e25286631308
   m_configObjects: {}
