@@ -34,7 +34,8 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
 
     [Header("Motion")]
     [SerializeField, Min(0.05f)] private float tilesPerSecond = 5f;
-    [SerializeField, Min(0.01f)] private float enterExitAnimationSeconds = 0.25f;
+    [SerializeField, Min(0.01f)] private float enterAnimationSeconds = 0.25f;
+    [SerializeField, Min(0.01f)] private float exitAnimationSeconds = 0.5f;
     [SerializeField, Min(0f)] private float visualHopHeightTiles = 1.75f;
     [SerializeField, Min(0f)] private float retriggerGraceSeconds = 0.08f;
 
@@ -251,7 +252,7 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
 
         try
         {
-            yield return PlayEnterExitVisualRoutine(mover, state, stationWorld, stationWorld, Vector2.right);
+            yield return PlayEnterExitVisualRoutine(mover, state, stationWorld, stationWorld, Vector2.right, enterAnimationSeconds);
             ShowRiderHeadOnly(state, Vector2.right);
             PlayRideLoopSfx();
 
@@ -260,7 +261,7 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
             StopRideLoopSfx();
             PlayOneShot(exitSfx);
             HideRiderHeadOnly(state);
-            yield return PlayEnterExitVisualRoutine(mover, state, stationWorld, exitWorld, Vector2.right);
+            yield return PlayEnterExitVisualRoutine(mover, state, stationWorld, exitWorld, Vector2.right, exitAnimationSeconds);
 
             if (mover != null)
                 mover.SnapToWorldPoint(exitWorld, roundToGrid: false);
@@ -426,12 +427,13 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
         RideState state,
         Vector2 start,
         Vector2 end,
-        Vector2 faceDir)
+        Vector2 faceDir,
+        float animationSeconds)
     {
         if (mover == null || mover.Rigidbody == null)
             yield break;
 
-        float duration = Mathf.Max(0.01f, enterExitAnimationSeconds);
+        float duration = Mathf.Max(0.01f, animationSeconds);
         float half = duration * 0.5f;
         float height = Mathf.Max(0f, visualHopHeightTiles) * Mathf.Max(0.0001f, mover.tileSize);
         var riding = mover.GetComponent<PlayerRidingController>();
@@ -562,7 +564,7 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
         if (item.TryBounceSkull(direction, 1f, hit, 0.25f))
             return;
 
-        item.DestroyWithExplosionAnimation();
+        item.DestroyWithAnimation();
     }
 
     void TryExplodeBomb(Collider2D hit, Vector2 position)
