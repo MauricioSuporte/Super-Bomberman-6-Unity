@@ -40,6 +40,10 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
     [SerializeField, Min(0f)] private float visualHopHeightTiles = 1.75f;
     [SerializeField, Min(0f)] private float retriggerGraceSeconds = 0.08f;
 
+    [Header("Pixel Perfect")]
+    [SerializeField, Min(1)] private int pixelsPerUnit = 16;
+    [SerializeField] private bool useIntegerPixelSteps = true;
+
     [Header("Cart Visuals")]
     [SerializeField] private GameObject minecartPrefab;
     [SerializeField] private AnimatedSpriteRenderer down;
@@ -58,7 +62,6 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
     [SerializeField] private Vector2 headOnlyDownOffset = Vector2.zero;
     [SerializeField] private Vector2 headOnlyLeftOffset = Vector2.zero;
     [SerializeField] private Vector2 headOnlyRightOffset = Vector2.zero;
-    [SerializeField] private bool debugRiderHeadOnlySelection = true;
 
     [Header("Mount HeadOnly Offsets (local, per direction)")]
     [SerializeField] private Vector2 mountHeadOnlyUpOffset = Vector2.zero;
@@ -95,6 +98,7 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
     Transform cartVisualRoot;
     Vector2 currentCartDirection = Vector2.right;
     MovementController currentRider;
+    float cartMovePixelAccumulator;
 
     sealed class RideState
     {
@@ -116,8 +120,6 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
         public AnimatedSpriteRenderer headDown;
         public AnimatedSpriteRenderer headLeft;
         public AnimatedSpriteRenderer headRight;
-        public AnimatedSpriteRenderer lastLoggedHeadRenderer;
-        public Vector2 lastLoggedHeadDirection;
         public Vector2 startFacing;
     }
 
@@ -328,11 +330,12 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
 
         float tileSize = Mathf.Max(0.0001f, mover != null ? mover.tileSize : 1f);
         float speed = Mathf.Max(0.05f, tilesPerSecond) * tileSize;
+        var fixedWait = new WaitForFixedUpdate();
 
         for (int i = 1; i < railPath.Count; i++)
         {
-            Vector2 start = GetCellCenter(railPath[i - 1]);
-            Vector2 end = GetCellCenter(railPath[i]);
+            Vector2 start = QuantizeToPixelGrid(GetCellCenter(railPath[i - 1]));
+            Vector2 end = QuantizeToPixelGrid(GetCellCenter(railPath[i]));
             Vector2 dir = Cardinalize(end - start);
             if (dir == Vector2.zero)
                 dir = currentCartDirection;
@@ -341,31 +344,32 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
             UpdateCartVisual(dir, moving: true);
             ShowRiderHeadOnly(state, dir);
 
-            float distance = Vector2.Distance(start, end);
-            float duration = distance / speed;
-            float elapsed = 0f;
+            Vector2 position = start;
+            ApplyCartRidePosition(mover, state, position, dir);
+            ResetCartPixelAccumulator();
 
-            while (elapsed < duration)
+            while (Vector2.Distance(position, end) > PixelWorldStep * 0.5f)
             {
                 if (GamePauseController.IsPaused)
                 {
-                    yield return null;
+                    yield return fixedWait;
                     continue;
                 }
 
-                float t = duration > 0f ? Mathf.Clamp01(elapsed / duration) : 1f;
-                Vector2 position = Vector2.Lerp(start, end, t);
+                float moveWorld = GetQuantizedCartMoveWorld(speed * Time.fixedDeltaTime);
+                if (moveWorld > 0f)
+                {
+                    position = Vector2.MoveTowards(position, end, moveWorld);
+                    position = QuantizeToPixelGrid(position);
 
-                SetCartWorldPosition(position);
-                MoveRiderWithCart(mover, position);
-                HandleCartCollisions(position, dir, mover);
+                    ApplyCartRidePosition(mover, state, position, dir);
+                    HandleCartCollisions(position, dir, mover);
+                }
 
-                elapsed += Time.deltaTime;
-                yield return null;
+                yield return fixedWait;
             }
 
-            SetCartWorldPosition(end);
-            MoveRiderWithCart(mover, end);
+            ApplyCartRidePosition(mover, state, end, dir);
             HandleCartCollisions(end, dir, mover);
         }
 
@@ -711,8 +715,32 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
         if (mover == null || mover.Rigidbody == null)
             return;
 
-        mover.Rigidbody.position = position;
+        position = QuantizeToPixelGrid(position);
         mover.Rigidbody.linearVelocity = Vector2.zero;
+        mover.Rigidbody.MovePosition(position);
+
+        Vector3 transformPosition = mover.transform.position;
+        transformPosition.x = position.x;
+        transformPosition.y = position.y;
+        mover.transform.position = transformPosition;
+    }
+
+    void ApplyCartRidePosition(MovementController mover, RideState state, Vector2 position, Vector2 direction)
+    {
+        position = QuantizeToPixelGrid(position);
+
+        SetCartWorldPosition(position);
+        MoveRiderWithCart(mover, position);
+
+        if (state?.mountVisual != null && !state.mountVisual.gameObject.activeInHierarchy)
+            return;
+
+        if (state?.mountVisual != null)
+        {
+            ApplyMountHeadOnlyOffsets(state.mountVisual);
+            state.mountVisual.SetCartHeadOnlyVisual(true, direction);
+            state.mountVisual.transform.localPosition = state.mountVisual.localOffset;
+        }
     }
 
     IEnumerator ReleaseRiderAfterGrace(MovementController mover)
@@ -834,10 +862,7 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
             target.RefreshFrame();
         }
 
-        bool hasMountHeadOnly = state.mountVisual != null && state.mountVisual.HasHeadOnlyVisuals();
-        LogRiderHeadOnlySelection(state, dir, target, hasMountHeadOnly);
-
-        if (hasMountHeadOnly)
+        if (state.mountVisual != null && state.mountVisual.HasHeadOnlyVisuals())
         {
             ApplyMountHeadOnlyOffsets(state.mountVisual);
             state.mountVisual.SetCartHeadOnlyVisual(true, dir);
@@ -880,31 +905,6 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
         if (f == Vector2.left) return state.headLeft != null ? state.headLeft : state.headDown;
         if (f == Vector2.right) return state.headRight != null ? state.headRight : state.headDown;
         return state.headDown;
-    }
-
-    void LogRiderHeadOnlySelection(
-        RideState state,
-        Vector2 dir,
-        AnimatedSpriteRenderer selected,
-        bool hasMountHeadOnly)
-    {
-        if (!debugRiderHeadOnlySelection || state == null)
-            return;
-
-        Vector2 facing = Cardinalize(dir);
-        if (state.lastLoggedHeadDirection == facing && state.lastLoggedHeadRenderer == selected)
-            return;
-
-        state.lastLoggedHeadDirection = facing;
-        state.lastLoggedHeadRenderer = selected;
-
-        Debug.Log(
-            $"[BattleMode9MinecartController] Cart HeadOnly dir='{DirectionName(facing)}' " +
-            $"playerSelected='{RendererName(selected)}' mountVisual='{(state.mountVisual != null ? state.mountVisual.name : "null")}' " +
-            $"mountHasHeadOnly='{hasMountHeadOnly}' " +
-            $"playerUp='{RendererName(state.headUp)}' playerDown='{RendererName(state.headDown)}' " +
-            $"playerLeft='{RendererName(state.headLeft)}' playerRight='{RendererName(state.headRight)}'",
-            this);
     }
 
     void ApplyHeadOffsets(RideState state)
@@ -953,20 +953,6 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
         }
 
         return null;
-    }
-
-    static string RendererName(AnimatedSpriteRenderer renderer)
-    {
-        return renderer != null ? renderer.name : "null";
-    }
-
-    static string DirectionName(Vector2 direction)
-    {
-        if (direction == Vector2.up) return "Up";
-        if (direction == Vector2.down) return "Down";
-        if (direction == Vector2.left) return "Left";
-        if (direction == Vector2.right) return "Right";
-        return "Zero";
     }
 
     void UpdateCartVisual(Vector2 dir, bool moving)
@@ -1141,10 +1127,43 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
 
     void SetCartWorldPosition(Vector2 position)
     {
+        position = QuantizeToPixelGrid(position);
+
         Vector3 p = transform.position;
         p.x = position.x;
         p.y = position.y;
         transform.position = p;
+    }
+
+    float PixelWorldStep => useIntegerPixelSteps && pixelsPerUnit > 0 ? 1f / pixelsPerUnit : 0.0001f;
+
+    Vector2 QuantizeToPixelGrid(Vector2 world)
+    {
+        if (!useIntegerPixelSteps || pixelsPerUnit <= 0)
+            return world;
+
+        float ppu = pixelsPerUnit;
+        return new Vector2(
+            Mathf.Round(world.x * ppu) / ppu,
+            Mathf.Round(world.y * ppu) / ppu);
+    }
+
+    void ResetCartPixelAccumulator()
+    {
+        cartMovePixelAccumulator = 0f;
+    }
+
+    float GetQuantizedCartMoveWorld(float rawWorldStep)
+    {
+        if (!useIntegerPixelSteps || pixelsPerUnit <= 0)
+            return rawWorldStep;
+
+        cartMovePixelAccumulator += rawWorldStep * pixelsPerUnit;
+
+        int wholePixels = (int)cartMovePixelAccumulator;
+        cartMovePixelAccumulator -= wholePixels;
+
+        return wholePixels * PixelWorldStep;
     }
 
     void EnsureAudioSource()

@@ -704,7 +704,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 5
+  m_SortingOrder: 4
   m_MaskInteraction: 0
   m_Sprite: {fileID: 835995338, guid: 6c2583beff5fe6444abe5f6a150dcc63, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -1186,7 +1186,6 @@ MonoBehaviour:
   louieHeadOnlyUp: {fileID: 8886360292266972814}
   louieHeadOnlyDown: {fileID: 7935297187021619766}
   louieHeadOnlyLeft: {fileID: 3120548199430366962}
-  debugCartHeadOnlyVisualSelection: 1
   louieJumpAscendUp: {fileID: 3965569061049572590}
   louieJumpAscendDown: {fileID: 6318287924326579842}
   louieJumpAscendLeft: {fileID: 2096025252620372770}
@@ -2080,7 +2079,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 5
+  m_SortingOrder: 4
   m_MaskInteraction: 0
   m_Sprite: {fileID: 835995338, guid: 6c2583beff5fe6444abe5f6a150dcc63, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}

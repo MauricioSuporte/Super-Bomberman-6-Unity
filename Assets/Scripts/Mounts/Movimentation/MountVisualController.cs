@@ -35,7 +35,6 @@ public class MountVisualController : MonoBehaviour
     [SerializeField] private AnimatedSpriteRenderer louieHeadOnlyUp;
     [SerializeField] private AnimatedSpriteRenderer louieHeadOnlyDown;
     [SerializeField] private AnimatedSpriteRenderer louieHeadOnlyLeft;
-    [SerializeField] private bool debugCartHeadOnlyVisualSelection = true;
 
     [Header("Jump Ascend")]
     [SerializeField] private AnimatedSpriteRenderer louieJumpAscendUp;
@@ -130,9 +129,6 @@ public class MountVisualController : MonoBehaviour
     private Vector2 cartHeadOnlyLeftOffset = Vector2.zero;
     private Vector2 cartHeadOnlyRightOffset = Vector2.zero;
     private bool cartHeadOnlyOffsetsActive;
-    private AnimatedSpriteRenderer lastLoggedCartHeadOnlyRenderer;
-    private Vector2 lastLoggedCartHeadOnlyFacing = Vector2.zero;
-    private bool lastLoggedCartHeadOnlyOn;
     private readonly Dictionary<AnimatedSpriteRenderer, AnimationTimingSnapshot> originalAnimationTiming = new();
 
     private struct AnimationTimingSnapshot
@@ -221,9 +217,6 @@ public class MountVisualController : MonoBehaviour
         cartHeadOnlyLeftOffset = Vector2.zero;
         cartHeadOnlyRightOffset = Vector2.zero;
         cartHeadOnlyOffsetsActive = false;
-        lastLoggedCartHeadOnlyRenderer = null;
-        lastLoggedCartHeadOnlyFacing = Vector2.zero;
-        lastLoggedCartHeadOnlyOn = false;
 
         CacheAllRenderers();
         ResolveHeadOnlyVisualReferences();
@@ -1300,7 +1293,6 @@ public class MountVisualController : MonoBehaviour
         {
             playingCartHeadOnly = false;
             HideCartHeadOnlyVisuals();
-            LogCartHeadOnlySelection(on, facing, null, "no HeadOnly renderers found");
             return;
         }
 
@@ -1312,7 +1304,6 @@ public class MountVisualController : MonoBehaviour
         if (!playingCartHeadOnly)
         {
             HideCartHeadOnlyVisuals();
-            LogCartHeadOnlySelection(on, facing, null, "disabled");
             return;
         }
 
@@ -1358,7 +1349,6 @@ public class MountVisualController : MonoBehaviour
         if (target == null)
         {
             playingCartHeadOnly = false;
-            LogCartHeadOnlySelection(true, cartHeadOnlyFacing, null, "pick returned null");
             return;
         }
 
@@ -1369,8 +1359,6 @@ public class MountVisualController : MonoBehaviour
         ApplyHeadOnlyFlip(target, cartHeadOnlyFacing);
         ApplyCartHeadOnlyOffset(target, cartHeadOnlyFacing);
         target.RefreshFrame();
-
-        LogCartHeadOnlySelection(true, cartHeadOnlyFacing, target, "selected");
     }
 
     private AnimatedSpriteRenderer PickHeadOnlyRenderer(Vector2 faceDir)
@@ -1446,47 +1434,6 @@ public class MountVisualController : MonoBehaviour
             return;
 
         renderer.ClearRuntimeBaseOffset();
-    }
-
-    private void LogCartHeadOnlySelection(bool on, Vector2 requestedFacing, AnimatedSpriteRenderer selected, string reason)
-    {
-        if (!debugCartHeadOnlyVisualSelection)
-            return;
-
-        Vector2 facing = Cardinalize(requestedFacing);
-        if (lastLoggedCartHeadOnlyOn == on &&
-            lastLoggedCartHeadOnlyFacing == facing &&
-            lastLoggedCartHeadOnlyRenderer == selected)
-        {
-            return;
-        }
-
-        lastLoggedCartHeadOnlyOn = on;
-        lastLoggedCartHeadOnlyFacing = facing;
-        lastLoggedCartHeadOnlyRenderer = selected;
-
-        bool flipX = selected != null && selected.TryGetComponent<SpriteRenderer>(out var sr) && sr != null && sr.flipX;
-
-        Debug.Log(
-            $"[MountVisualController] Cart HeadOnly {reason} mount='{name}' " +
-            $"requested='{DirectionName(facing)}' selected='{RendererName(selected)}' flipX='{flipX}' " +
-            $"up='{RendererName(louieHeadOnlyUp)}' down='{RendererName(louieHeadOnlyDown)}' " +
-            $"left='{RendererName(louieHeadOnlyLeft)}'",
-            this);
-    }
-
-    private static string RendererName(AnimatedSpriteRenderer renderer)
-    {
-        return renderer != null ? renderer.name : "null";
-    }
-
-    private static string DirectionName(Vector2 direction)
-    {
-        if (direction == Vector2.up) return "Up";
-        if (direction == Vector2.down) return "Down";
-        if (direction == Vector2.left) return "Left";
-        if (direction == Vector2.right) return "Right";
-        return "Zero";
     }
 
     private void HideCartHeadOnlyVisuals()

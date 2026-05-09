@@ -6368,6 +6368,8 @@ MonoBehaviour:
   exitAnimationSeconds: 0.5
   visualHopHeightTiles: 1.75
   retriggerGraceSeconds: 0.08
+  pixelsPerUnit: 16
+  useIntegerPixelSteps: 1
   minecartPrefab: {fileID: 6455273011777866316, guid: 80779e99407b93b48a314fe36483306c, type: 3}
   down: {fileID: 0}
   up: {fileID: 0}
@@ -6379,15 +6381,14 @@ MonoBehaviour:
   headOnlyDownName: HeadOnlyDown
   headOnlyLeftName: HeadOnlyLeft
   headOnlyRightName: HeadOnlyRight
-  headOnlyUpOffset: {x: 0, y: 1}
+  headOnlyUpOffset: {x: 0, y: 0.8}
   headOnlyDownOffset: {x: 0, y: 1}
   headOnlyLeftOffset: {x: 0, y: 1}
   headOnlyRightOffset: {x: 0, y: 1}
-  debugRiderHeadOnlySelection: 1
-  mountHeadOnlyUpOffset: {x: 0, y: 1}
+  mountHeadOnlyUpOffset: {x: 0, y: 0.8}
   mountHeadOnlyDownOffset: {x: 0, y: 0.5}
-  mountHeadOnlyLeftOffset: {x: -0.5, y: 0.5}
-  mountHeadOnlyRightOffset: {x: 0.5, y: 0.5}
+  mountHeadOnlyLeftOffset: {x: -0.5, y: 0.6}
+  mountHeadOnlyRightOffset: {x: 0.5, y: 0.6}
   hitboxSize: {x: 0.8, y: 0.8}
   collisionMask:
     serializedVersion: 2
