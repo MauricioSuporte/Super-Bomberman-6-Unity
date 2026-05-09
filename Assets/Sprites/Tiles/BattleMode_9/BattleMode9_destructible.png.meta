@@ -1,10 +1,28 @@
 fileFormatVersion: 2
-guid: 8a7c230b890634c409531a64863e2896
+guid: 7cb76a855d3ac49439ca35c9d3f96b7c
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 7676728399515451836
-    second: trilho_0
+      213: -807426692185811003
+    second: BattleMode9_destructible_0
+  - first:
+      213: -4506329800661117132
+    second: BattleMode9_destructible_1
+  - first:
+      213: 7654230053705750554
+    second: BattleMode9_destructible_2
+  - first:
+      213: -6470695154570002515
+    second: BattleMode9_destructible_3
+  - first:
+      213: 4116998307433534788
+    second: BattleMode9_destructible_4
+  - first:
+      213: 586951366193055210
+    second: BattleMode9_destructible_5
+  - first:
+      213: -3237827099772169114
+    second: BattleMode9_destructible_6
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -100,7 +118,7 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: trilho_0
+      name: BattleMode9_destructible_0
       rect:
         serializedVersion: 2
         x: 0
@@ -113,19 +131,19 @@ TextureImporter:
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: 0
+      tessellationDetail: -1
       bones: []
-      spriteID: 60848ecd43e712945aee4060d17d4fbb
-      internalID: 613652278
+      spriteID: 5c7981e83b17bc4f0800000000000000
+      internalID: -807426692185811003
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: trilho_1
+      name: BattleMode9_destructible_1
       rect:
         serializedVersion: 2
-        x: 16
+        x: 17
         y: 0
         width: 16
         height: 16
@@ -135,19 +153,19 @@ TextureImporter:
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: 0
+      tessellationDetail: -1
       bones: []
-      spriteID: 14c35f1bb3a6bad49a66b65644264bfe
-      internalID: 1098907695
+      spriteID: 43756defbec4671c0800000000000000
+      internalID: -4506329800661117132
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: trilho_2
+      name: BattleMode9_destructible_2
       rect:
         serializedVersion: 2
-        x: 32
+        x: 34
         y: 0
         width: 16
         height: 16
@@ -157,19 +175,19 @@ TextureImporter:
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: 0
+      tessellationDetail: -1
       bones: []
-      spriteID: ebfca7f73a986ce49b859d5112e03a78
-      internalID: 1254597433
+      spriteID: a1810441ea9493a60800000000000000
+      internalID: 7654230053705750554
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: trilho_3
+      name: BattleMode9_destructible_3
       rect:
         serializedVersion: 2
-        x: 48
+        x: 51
         y: 0
         width: 16
         height: 16
@@ -179,19 +197,19 @@ TextureImporter:
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: 0
+      tessellationDetail: -1
       bones: []
-      spriteID: 40cfafcb4f957864ea2d4fc6ac49b415
-      internalID: -179070884
+      spriteID: daf73064a097336a0800000000000000
+      internalID: -6470695154570002515
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: trilho_4
+      name: BattleMode9_destructible_4
       rect:
         serializedVersion: 2
-        x: 64
+        x: 68
         y: 0
         width: 16
         height: 16
@@ -201,19 +219,19 @@ TextureImporter:
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: 0
+      tessellationDetail: -1
       bones: []
-      spriteID: 50c89c857340adb4fb1c89f2d5b68077
-      internalID: 1243020048
+      spriteID: 445d577d524822930800000000000000
+      internalID: 4116998307433534788
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: trilho_5
+      name: BattleMode9_destructible_5
       rect:
         serializedVersion: 2
-        x: 80
+        x: 85
         y: 0
         width: 16
         height: 16
@@ -223,19 +241,19 @@ TextureImporter:
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: 0
+      tessellationDetail: -1
       bones: []
-      spriteID: 45d1e7190eb6ff146b57a9a96f54ebab
-      internalID: 1960319116
+      spriteID: ae50e526825452800800000000000000
+      internalID: 586951366193055210
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: trilho_6
+      name: BattleMode9_destructible_6
       rect:
         serializedVersion: 2
-        x: 96
+        x: 102
         y: 0
         width: 16
         height: 16
@@ -245,10 +263,10 @@ TextureImporter:
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: 0
+      tessellationDetail: -1
       bones: []
-      spriteID: b8e68773f717b6049ac578e8fdc72956
-      internalID: -1163328102
+      spriteID: 66452f1586de013d0800000000000000
+      internalID: -3237827099772169114
       vertices: []
       indices: 
       edges: []
@@ -257,7 +275,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: b0d92b70f8a86cf4f93158f555271702
+    spriteID: 7c8372f00b98ed14981e5dd49fcbe757
     internalID: 0
     vertices: []
     indices: 
@@ -267,15 +285,15 @@ TextureImporter:
     spriteCustomMetadata:
       entries:
       - key: SpriteEditor.SliceSettings
-        value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":16.0,"y":16.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":1,"keepEmptyRects":false,"isAlternate":false}'
+        value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":16.0,"y":16.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":1.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":1,"keepEmptyRects":false,"isAlternate":false}'
     nameFileIdTable:
-      trilho_0: 613652278
-      trilho_1: 1098907695
-      trilho_2: 1254597433
-      trilho_3: -179070884
-      trilho_4: 1243020048
-      trilho_5: 1960319116
-      trilho_6: -1163328102
+      BattleMode9_destructible_0: -807426692185811003
+      BattleMode9_destructible_1: -4506329800661117132
+      BattleMode9_destructible_2: 7654230053705750554
+      BattleMode9_destructible_3: -6470695154570002515
+      BattleMode9_destructible_4: 4116998307433534788
+      BattleMode9_destructible_5: 586951366193055210
+      BattleMode9_destructible_6: -3237827099772169114
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
