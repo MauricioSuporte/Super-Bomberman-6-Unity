@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using Assets.Scripts.Interface;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.Tilemaps;
@@ -102,6 +103,7 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
         public CharacterHealth[] healths;
         public PlayerMountCompanion mountCompanion;
         public MountEggQueue eggQueue;
+        public IPinkLouieJumpExternalAnimator pinkJumpAnimator;
         public AnimatedSpriteRenderer headUp;
         public AnimatedSpriteRenderer headDown;
         public AnimatedSpriteRenderer headLeft;
@@ -239,6 +241,10 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
         Vector2 stationWorld = GetCellCenter(station);
         Vector3Int exitCell = station + new Vector3Int(exitCellOffset.x, exitCellOffset.y, 0);
         Vector2 exitWorld = GetCellCenter(exitCell);
+        Vector2 exitFacing = Cardinalize(exitWorld - stationWorld);
+        if (exitFacing == Vector2.zero)
+            exitFacing = Vector2.right;
+        Vector2 enterFacing = ResolveEnterHopFacing(mover, exitFacing);
 
         RideState state = CaptureAndApplyRideState(mover);
         activeStates[mover] = state;
@@ -252,7 +258,8 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
 
         try
         {
-            yield return PlayEnterExitVisualRoutine(mover, state, stationWorld, stationWorld, Vector2.right, enterAnimationSeconds);
+            yield return PlayEnterExitVisualRoutine(mover, state, stationWorld, stationWorld, enterFacing, enterAnimationSeconds);
+            SetRideCompanionsVisible(state, false);
             ShowRiderHeadOnly(state, Vector2.right);
             PlayRideLoopSfx();
 
@@ -261,7 +268,9 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
             StopRideLoopSfx();
             PlayOneShot(exitSfx);
             HideRiderHeadOnly(state);
-            yield return PlayEnterExitVisualRoutine(mover, state, stationWorld, exitWorld, Vector2.right, exitAnimationSeconds);
+            SetRideCompanionsVisible(state, true);
+
+            yield return PlayEnterExitVisualRoutine(mover, state, stationWorld, exitWorld, exitFacing, exitAnimationSeconds);
 
             if (mover != null)
                 mover.SnapToWorldPoint(exitWorld, roundToGrid: false);
@@ -273,6 +282,11 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
         {
             StopRideLoopSfx();
             RestoreRideState(mover, state);
+            if (mover != null)
+            {
+                mover.ForceFacingDirection(exitFacing);
+                ForceMountedVisualFacing(mover, exitFacing);
+            }
             activeStates.Remove(mover);
             currentRider = null;
             SetCartWorldPosition(stationWorld);
@@ -280,6 +294,21 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
             SetCartVisible(!hideCartWhenIdleAtStation);
             StartCoroutine(ReleaseRiderAfterGrace(mover));
         }
+    }
+
+    void ForceMountedVisualFacing(MovementController mover, Vector2 facing)
+    {
+        if (mover == null || !mover.IsMounted)
+            return;
+
+        var mountVisual = mover.GetComponentInChildren<MountVisualController>(true);
+        if (mountVisual == null)
+            return;
+
+        if (!mountVisual.enabled)
+            mountVisual.enabled = true;
+
+        mountVisual.SetJumpVisual(false, facing);
     }
 
     IEnumerator MoveCartAroundRail(MovementController mover, RideState state)
@@ -344,6 +373,7 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
             healths = mover.GetComponentsInChildren<CharacterHealth>(true),
             mountCompanion = mover.GetComponent<PlayerMountCompanion>(),
             eggQueue = mover.GetComponentInChildren<MountEggQueue>(true),
+            pinkJumpAnimator = mover.GetComponentInChildren<IPinkLouieJumpExternalAnimator>(true),
             startFacing = mover.FacingDirection != Vector2.zero ? Cardinalize(mover.FacingDirection) : Vector2.down,
         };
 
@@ -369,12 +399,6 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
         if (state.mountMovement != null)
             state.mountMovement.SetExplosionInvulnerable(true);
 
-        if (state.mountCompanion != null)
-            state.mountCompanion.SetMountedLouieVisible(false);
-
-        if (state.eggQueue != null)
-            state.eggQueue.ForceVisible(false);
-
         SetHealthInvulnerability(state.healths, true);
         ApplyHeadOffsets(state);
 
@@ -388,6 +412,7 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
 
         HideRiderHeadOnly(state);
         ClearHeadOffsets(state);
+        state.pinkJumpAnimator?.Stop();
 
         if (mover != null)
         {
@@ -422,6 +447,23 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
         SetHealthInvulnerability(state.healths, false);
     }
 
+    void SetRideCompanionsVisible(RideState state, bool visible)
+    {
+        if (state == null)
+            return;
+
+        if (state.mountCompanion != null)
+            state.mountCompanion.SetMountedLouieVisible(visible);
+
+        if (state.eggQueue != null)
+        {
+            state.eggQueue.ForceVisible(visible);
+
+            if (visible)
+                state.eggQueue.SnapQueueToOwnerNow(resetHistoryToOwnerNow: true);
+        }
+    }
+
     IEnumerator PlayEnterExitVisualRoutine(
         MovementController mover,
         RideState state,
@@ -440,58 +482,85 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
         var mountVisual = mover.GetComponentInChildren<MountVisualController>(true);
         Vector2 baseMountOffset = mountVisual != null ? mountVisual.localOffset : Vector2.zero;
         bool mounted = mover.IsMounted;
+        Vector2 mountedPlayerFacing = Cardinalize(faceDir);
+        if (mountedPlayerFacing == Vector2.zero)
+            mountedPlayerFacing = Vector2.down;
+        bool usePinkJumpAnimator = mounted && state?.pinkJumpAnimator != null;
 
-        if (mounted && mountVisual != null && mountVisual.HasJumpVisuals())
-            mountVisual.SetJumpVisual(true, faceDir, descending: false);
-
-        float elapsed = 0f;
-        while (elapsed < duration)
+        if (usePinkJumpAnimator)
         {
-            if (GamePauseController.IsPaused)
+            state.pinkJumpAnimator.Play(mountedPlayerFacing);
+        }
+        else if (mounted && mountVisual != null && mountVisual.HasJumpVisuals())
+        {
+            mountVisual.SetJumpVisual(true, faceDir, descending: false);
+        }
+
+        try
+        {
+            float elapsed = 0f;
+            while (elapsed < duration)
             {
+                if (GamePauseController.IsPaused)
+                {
+                    yield return null;
+                    continue;
+                }
+
+                float t = Mathf.Clamp01(elapsed / duration);
+                Vector2 ground = Vector2.Lerp(start, end, t);
+
+                bool descending = elapsed >= half;
+                float phaseT = half > 0f
+                    ? (descending ? Mathf.Clamp01((elapsed - half) / half) : Mathf.Clamp01(elapsed / half))
+                    : 1f;
+                float visualHeight = descending
+                    ? Mathf.Lerp(height, 0f, phaseT)
+                    : Mathf.Lerp(0f, height, phaseT);
+
+                if (mounted && mountVisual != null)
+                {
+                    mover.Rigidbody.position = ground + Vector2.up * visualHeight;
+
+                    if (!usePinkJumpAnimator && mountVisual.HasJumpVisuals())
+                        mountVisual.SetJumpPhase(descending);
+
+                    mountVisual.localOffset = baseMountOffset;
+                    ApplyMountedPlayerHopSprite(mover, mountedPlayerFacing);
+                }
+                else
+                {
+                    mover.Rigidbody.position = ground;
+                    ApplyUnmountedSpringSprite(riding, faceDir, !descending, visualHeight);
+                }
+
+                elapsed += Time.deltaTime;
                 yield return null;
-                continue;
             }
 
-            float t = Mathf.Clamp01(elapsed / duration);
-            Vector2 ground = Vector2.Lerp(start, end, t);
-            mover.Rigidbody.position = ground;
-
-            bool descending = elapsed >= half;
-            float phaseT = half > 0f
-                ? (descending ? Mathf.Clamp01((elapsed - half) / half) : Mathf.Clamp01(elapsed / half))
-                : 1f;
-            float visualHeight = descending
-                ? Mathf.Lerp(height, 0f, phaseT)
-                : Mathf.Lerp(0f, height, phaseT);
+            mover.Rigidbody.position = end;
+        }
+        finally
+        {
+            if (usePinkJumpAnimator)
+            {
+                state.pinkJumpAnimator.Stop();
+            }
 
             if (mounted && mountVisual != null)
             {
-                if (mountVisual.HasJumpVisuals())
-                    mountVisual.SetJumpPhase(descending);
+                mountVisual.localOffset = baseMountOffset;
+                if (!usePinkJumpAnimator && mountVisual.HasJumpVisuals())
+                {
+                    mountVisual.SetJumpVisual(false, faceDir);
+                }
 
-                mountVisual.localOffset = baseMountOffset + Vector2.up * visualHeight;
+                ClearMountedPlayerHopSprites(mover);
             }
             else
             {
-                ApplyUnmountedSpringSprite(riding, faceDir, !descending, visualHeight);
+                ClearUnmountedSpringSprites(riding);
             }
-
-            elapsed += Time.deltaTime;
-            yield return null;
-        }
-
-        mover.Rigidbody.position = end;
-
-        if (mounted && mountVisual != null)
-        {
-            mountVisual.localOffset = baseMountOffset;
-            if (mountVisual.HasJumpVisuals())
-                mountVisual.SetJumpVisual(false, faceDir);
-        }
-        else
-        {
-            ClearUnmountedSpringSprites(riding);
         }
     }
 
@@ -1186,6 +1255,67 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
             return;
 
         current.ClearRuntimeBaseOffset();
+    }
+
+    static Vector2 ResolveEnterHopFacing(MovementController mover, Vector2 exitFacing)
+    {
+        if (mover != null)
+        {
+            if (mover.Direction != Vector2.zero)
+                return Cardinalize(mover.Direction);
+
+            if (mover.FacingDirection != Vector2.zero)
+                return Cardinalize(mover.FacingDirection);
+        }
+
+        Vector2 oppositeExit = -Cardinalize(exitFacing);
+        return oppositeExit != Vector2.zero ? oppositeExit : Vector2.left;
+    }
+
+    static void ApplyMountedPlayerHopSprite(MovementController mover, Vector2 facing)
+    {
+        if (mover == null)
+            return;
+
+        AnimatedSpriteRenderer target = PickMountedPlayerRenderer(mover, facing);
+        SetExclusiveMountedPlayerRenderer(mover, target);
+
+        if (target != null)
+        {
+            target.idle = true;
+            target.RefreshFrame();
+        }
+    }
+
+    static AnimatedSpriteRenderer PickMountedPlayerRenderer(MovementController mover, Vector2 facing)
+    {
+        if (mover == null)
+            return null;
+
+        Vector2 f = Cardinalize(facing);
+        if (f == Vector2.up) return mover.mountedSpriteUp != null ? mover.mountedSpriteUp : mover.spriteRendererUp;
+        if (f == Vector2.left) return mover.mountedSpriteLeft != null ? mover.mountedSpriteLeft : mover.spriteRendererLeft;
+        if (f == Vector2.right) return mover.mountedSpriteRight != null ? mover.mountedSpriteRight : mover.spriteRendererRight;
+        return mover.mountedSpriteDown != null ? mover.mountedSpriteDown : mover.spriteRendererDown;
+    }
+
+    static void SetExclusiveMountedPlayerRenderer(MovementController mover, AnimatedSpriteRenderer target)
+    {
+        if (mover == null)
+            return;
+
+        SetAnimEnabled(mover.mountedSpriteUp, target == mover.mountedSpriteUp);
+        SetAnimEnabled(mover.mountedSpriteDown, target == mover.mountedSpriteDown);
+        SetAnimEnabled(mover.mountedSpriteLeft, target == mover.mountedSpriteLeft);
+        SetAnimEnabled(mover.mountedSpriteRight, target == mover.mountedSpriteRight);
+    }
+
+    static void ClearMountedPlayerHopSprites(MovementController mover)
+    {
+        if (mover == null)
+            return;
+
+        SetExclusiveMountedPlayerRenderer(mover, null);
     }
 
     static bool IsBattleMode9Active()
