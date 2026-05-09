@@ -169,6 +169,12 @@ public class MountVisualController : MonoBehaviour
         ApplyHeadOnlyOffsetsIfNeeded(force: true);
     }
 
+    public void RefreshHeadOnlyPlayerOffsets()
+    {
+        headOnlyOffsetsApplied = false;
+        ApplyHeadOnlyOffsetsIfNeeded(force: true);
+    }
+
     public void SetExternalTint(bool active, Color tintColor, float normalized01)
     {
         if (!allowExternalTint)

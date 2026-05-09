@@ -26,6 +26,7 @@ public class GameMusicController : MonoBehaviour
     private AudioSource sfxSource;
     Coroutine musicTransitionRoutine;
     Coroutine preloadAndPlayRoutine;
+    bool musicPausedForGamePause;
 
     public AudioClip defaultMusic;
     public AudioClip defaultMusicLoop;
@@ -130,6 +131,7 @@ public class GameMusicController : MonoBehaviour
             musicSource.time = 0f;
 
         musicSource.Play();
+        ApplyMusicPauseStateIfNeeded();
     }
 
     public void PlayMusicIntroThenLoop(
@@ -162,6 +164,7 @@ public class GameMusicController : MonoBehaviour
             musicSource.time = 0f;
 
         musicSource.Play();
+        ApplyMusicPauseStateIfNeeded();
         musicTransitionRoutine = StartCoroutine(PlayLoopAfterIntroRoutine(introClip, loopClip, loopVolume, pitch));
     }
 
@@ -214,6 +217,7 @@ public class GameMusicController : MonoBehaviour
         musicSource.Stop();
         musicSource.clip = null;
         musicSource.pitch = 1f;
+        musicPausedForGamePause = false;
         StopMusicTransitionRoutine();
     }
 
@@ -228,13 +232,29 @@ public class GameMusicController : MonoBehaviour
 
     public void PauseMusic()
     {
-        if (musicSource != null && musicSource.isPlaying)
+        if (musicSource == null)
+            return;
+
+        musicPausedForGamePause = true;
+
+        if (musicSource.isPlaying)
             musicSource.Pause();
     }
 
     public void ResumeMusic()
     {
-        if (musicSource == null || musicSource.clip == null)
+        if (musicSource == null)
+            return;
+
+        if (GamePauseController.IsPaused)
+            return;
+
+        if (!musicPausedForGamePause)
+            return;
+
+        musicPausedForGamePause = false;
+
+        if (musicSource.clip == null)
             return;
 
         musicSource.UnPause();
@@ -268,11 +288,18 @@ public class GameMusicController : MonoBehaviour
 
     IEnumerator PlayLoopAfterIntroRoutine(AudioClip introClip, AudioClip loopClip, float loopVolume, float pitch)
     {
-        while (musicSource != null &&
-               musicSource.clip == introClip &&
-               musicSource.isPlaying &&
-               musicSource.time < introClip.length)
+        while (musicSource != null && musicSource.clip == introClip)
         {
+            if (GamePauseController.IsPaused || musicPausedForGamePause)
+            {
+                ApplyMusicPauseStateIfNeeded();
+                yield return null;
+                continue;
+            }
+
+            if (!musicSource.isPlaying || musicSource.time >= introClip.length)
+                break;
+
             yield return null;
         }
 
@@ -354,8 +381,25 @@ public class GameMusicController : MonoBehaviour
             yield return null;
         }
 
+        while (GamePauseController.IsPaused)
+            yield return null;
+
         preloadAndPlayRoutine = null;
         PlayDefaultMusic(true);
+    }
+
+    void ApplyMusicPauseStateIfNeeded()
+    {
+        if (musicSource == null)
+            return;
+
+        if (!GamePauseController.IsPaused && !musicPausedForGamePause)
+            return;
+
+        musicPausedForGamePause = true;
+
+        if (musicSource.isPlaying)
+            musicSource.Pause();
     }
 
     void PreloadSelectedBattleMusic()

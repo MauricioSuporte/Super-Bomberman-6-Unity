@@ -99,6 +99,7 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
     Vector2 currentCartDirection = Vector2.right;
     MovementController currentRider;
     float cartMovePixelAccumulator;
+    bool rideLoopPausedForGamePause;
 
     sealed class RideState
     {
@@ -121,6 +122,7 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
         public AnimatedSpriteRenderer headLeft;
         public AnimatedSpriteRenderer headRight;
         public Vector2 startFacing;
+        public Dictionary<SpriteRenderer, int> previousSortingOrders;
     }
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
@@ -199,6 +201,7 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
             return;
 
         ResolveReferences();
+        SyncRideLoopSfxWithPause();
 
         if (railPath.Count == 0)
             BuildRailPath();
@@ -270,7 +273,7 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
 
         try
         {
-            yield return PlayEnterExitVisualRoutine(mover, state, stationWorld, stationWorld, enterFacing, enterAnimationSeconds);
+            yield return PlayEnterExitVisualRoutine(mover, state, stationWorld, stationWorld, enterFacing, enterAnimationSeconds, "Enter");
             SetRideCompanionsVisible(state, false);
             ShowRiderHeadOnly(state, Vector2.right);
             PlayRideLoopSfx();
@@ -282,7 +285,7 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
             HideRiderHeadOnly(state);
             SetRideCompanionsVisible(state, true);
 
-            yield return PlayEnterExitVisualRoutine(mover, state, stationWorld, exitWorld, exitFacing, exitAnimationSeconds);
+            yield return PlayEnterExitVisualRoutine(mover, state, stationWorld, exitWorld, exitFacing, exitAnimationSeconds, "Exit");
 
             if (mover != null)
                 mover.SnapToWorldPoint(exitWorld, roundToGrid: false);
@@ -298,6 +301,7 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
             {
                 mover.ForceFacingDirection(exitFacing);
                 ForceMountedVisualFacing(mover, exitFacing);
+                RestoreMountedHeadOnlyOffsets(state);
             }
             activeStates.Remove(mover);
             currentRider = null;
@@ -306,6 +310,14 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
             SetCartVisible(!hideCartWhenIdleAtStation);
             StartCoroutine(ReleaseRiderAfterGrace(mover));
         }
+    }
+
+    void LateUpdate()
+    {
+        if (!IsBattleMode9Active())
+            return;
+
+        SyncRideLoopSfxWithPause();
     }
 
     void ForceMountedVisualFacing(MovementController mover, Vector2 facing)
@@ -321,6 +333,15 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
             mountVisual.enabled = true;
 
         mountVisual.SetJumpVisual(false, facing);
+    }
+
+    void RestoreMountedHeadOnlyOffsets(RideState state)
+    {
+        if (state?.mountVisual == null || !state.mountVisual.useHeadOnlyPlayerVisual)
+            return;
+
+        ClearHeadOffsets(state);
+        state.mountVisual.RefreshHeadOnlyPlayerOffsets();
     }
 
     IEnumerator MoveCartAroundRail(MovementController mover, RideState state)
@@ -415,7 +436,7 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
             state.mountMovement.SetExplosionInvulnerable(true);
 
         SetHealthInvulnerability(state.healths, true);
-        ApplyHeadOffsets(state);
+        ApplyHeadOffsets(state, "CaptureAndApplyRideState");
 
         return state;
     }
@@ -427,6 +448,7 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
 
         HideRiderHeadOnly(state);
         ClearHeadOffsets(state);
+        RestoreCartRiderSorting(state);
         state.pinkJumpAnimator?.Stop();
 
         if (mover != null)
@@ -504,7 +526,8 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
         Vector2 start,
         Vector2 end,
         Vector2 faceDir,
-        float animationSeconds)
+        float animationSeconds,
+        string phaseName)
     {
         if (mover == null || mover.Rigidbody == null)
             yield break;
@@ -520,6 +543,13 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
         if (mountedPlayerFacing == Vector2.zero)
             mountedPlayerFacing = Vector2.down;
         bool usePinkJumpAnimator = mounted && state?.pinkJumpAnimator != null;
+        bool useMountedHeadOnly = mounted && mountVisual != null && mountVisual.useHeadOnlyPlayerVisual;
+
+        if (mounted)
+            mover.ForceFacingDirection(mountedPlayerFacing);
+
+        if (useMountedHeadOnly)
+            RestoreMountedHeadOnlyOffsets(state);
 
         if (usePinkJumpAnimator)
         {
@@ -560,7 +590,7 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
                         mountVisual.SetJumpPhase(descending);
 
                     mountVisual.localOffset = baseMountOffset;
-                    ApplyMountedPlayerHopSprite(mover, mountedPlayerFacing);
+                    ApplyMountedPlayerHopSprite(mover, state, mountedPlayerFacing, useMountedHeadOnly);
                 }
                 else
                 {
@@ -588,6 +618,9 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
                 {
                     mountVisual.SetJumpVisual(false, faceDir);
                 }
+
+                if (useMountedHeadOnly)
+                    RestoreMountedHeadOnlyOffsets(state);
 
                 ClearMountedPlayerHopSprites(mover);
             }
@@ -843,6 +876,8 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
         if (state == null)
             return;
 
+        ApplyHeadOffsets(state, "ShowRiderHeadOnly");
+
         AnimatedSpriteRenderer target = PickHeadRenderer(state, dir);
         for (int i = 0; i < riderRenderers.Count; i++)
         {
@@ -867,6 +902,8 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
             ApplyMountHeadOnlyOffsets(state.mountVisual);
             state.mountVisual.SetCartHeadOnlyVisual(true, dir);
         }
+
+        ApplyCartRiderSorting(state, dir, target);
     }
 
     void HideRiderHeadOnly(RideState state)
@@ -884,6 +921,76 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
             state.mountVisual.SetCartHeadOnlyVisual(false, currentCartDirection);
             state.mountVisual.ClearCartHeadOnlyOffsets();
         }
+
+        RestoreCartRiderSorting(state);
+    }
+
+    void ApplyCartRiderSorting(RideState state, Vector2 dir, AnimatedSpriteRenderer playerHeadRenderer)
+    {
+        if (state == null)
+            return;
+
+        Vector2 facing = Cardinalize(dir);
+        int cartOrder = cartSortingOrder;
+        int playerOrder = facing == Vector2.down ? cartOrder + 1 : cartOrder + 2;
+        int mountOrder = facing == Vector2.down ? cartOrder + 2 : cartOrder + 1;
+
+        SetRendererBranchSorting(state, playerHeadRenderer, playerOrder);
+
+        if (state.mountVisual != null)
+            SetTransformBranchSorting(state, state.mountVisual.transform, mountOrder);
+
+        ApplyCartSorting(down);
+        ApplyCartSorting(up);
+        ApplyCartSorting(left);
+        ApplyCartSorting(right);
+    }
+
+    void SetRendererBranchSorting(RideState state, AnimatedSpriteRenderer renderer, int order)
+    {
+        if (renderer == null)
+            return;
+
+        var srs = renderer.GetComponentsInChildren<SpriteRenderer>(true);
+        for (int i = 0; i < srs.Length; i++)
+            SetSortingOrderCached(state, srs[i], order);
+    }
+
+    void SetTransformBranchSorting(RideState state, Transform root, int order)
+    {
+        if (root == null)
+            return;
+
+        var srs = root.GetComponentsInChildren<SpriteRenderer>(true);
+        for (int i = 0; i < srs.Length; i++)
+            SetSortingOrderCached(state, srs[i], order);
+    }
+
+    void SetSortingOrderCached(RideState state, SpriteRenderer sr, int order)
+    {
+        if (state == null || sr == null)
+            return;
+
+        state.previousSortingOrders ??= new Dictionary<SpriteRenderer, int>();
+
+        if (!state.previousSortingOrders.ContainsKey(sr))
+            state.previousSortingOrders.Add(sr, sr.sortingOrder);
+
+        sr.sortingOrder = order;
+    }
+
+    void RestoreCartRiderSorting(RideState state)
+    {
+        if (state?.previousSortingOrders == null)
+            return;
+
+        foreach (var pair in state.previousSortingOrders)
+        {
+            if (pair.Key != null)
+                pair.Key.sortingOrder = pair.Value;
+        }
+
+        state.previousSortingOrders.Clear();
     }
 
     void ApplyMountHeadOnlyOffsets(MountVisualController mountVisual)
@@ -907,7 +1014,7 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
         return state.headDown;
     }
 
-    void ApplyHeadOffsets(RideState state)
+    void ApplyHeadOffsets(RideState state, string phase)
     {
         ApplyHeadOffset(state.headUp, headOnlyUpOffset);
         ApplyHeadOffset(state.headDown, headOnlyDownOffset);
@@ -1205,6 +1312,8 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
         audioSource.loop = true;
         audioSource.volume = sfxVolume;
         audioSource.Play();
+        rideLoopPausedForGamePause = false;
+        SyncRideLoopSfxWithPause();
     }
 
     void StopRideLoopSfx()
@@ -1217,6 +1326,37 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
             audioSource.Stop();
             audioSource.loop = false;
             audioSource.clip = null;
+        }
+
+        rideLoopPausedForGamePause = false;
+    }
+
+    void SyncRideLoopSfxWithPause()
+    {
+        if (audioSource == null ||
+            rideLoopSfx == null ||
+            audioSource.clip != rideLoopSfx ||
+            !audioSource.loop)
+        {
+            rideLoopPausedForGamePause = false;
+            return;
+        }
+
+        if (GamePauseController.IsPaused)
+        {
+            if (audioSource.isPlaying)
+            {
+                audioSource.Pause();
+                rideLoopPausedForGamePause = true;
+            }
+
+            return;
+        }
+
+        if (rideLoopPausedForGamePause)
+        {
+            audioSource.UnPause();
+            rideLoopPausedForGamePause = false;
         }
     }
 
@@ -1387,13 +1527,13 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
         return oppositeExit != Vector2.zero ? oppositeExit : Vector2.left;
     }
 
-    static void ApplyMountedPlayerHopSprite(MovementController mover, Vector2 facing)
+    static void ApplyMountedPlayerHopSprite(MovementController mover, RideState state, Vector2 facing, bool preferHeadOnly)
     {
         if (mover == null)
             return;
 
-        AnimatedSpriteRenderer target = PickMountedPlayerRenderer(mover, facing);
-        SetExclusiveMountedPlayerRenderer(mover, target);
+        AnimatedSpriteRenderer target = PickMountedPlayerRenderer(mover, state, facing, preferHeadOnly);
+        SetExclusiveMountedPlayerRenderer(mover, state, target);
 
         if (target != null)
         {
@@ -1402,19 +1542,27 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
         }
     }
 
-    static AnimatedSpriteRenderer PickMountedPlayerRenderer(MovementController mover, Vector2 facing)
+    static AnimatedSpriteRenderer PickMountedPlayerRenderer(MovementController mover, RideState state, Vector2 facing, bool preferHeadOnly = false)
     {
         if (mover == null)
             return null;
 
         Vector2 f = Cardinalize(facing);
+        if (preferHeadOnly)
+        {
+            if (f == Vector2.up && state?.headUp != null) return state.headUp;
+            if (f == Vector2.left && state?.headLeft != null) return state.headLeft;
+            if (f == Vector2.right && state?.headRight != null) return state.headRight;
+            if (state?.headDown != null) return state.headDown;
+        }
+
         if (f == Vector2.up) return mover.mountedSpriteUp != null ? mover.mountedSpriteUp : mover.spriteRendererUp;
         if (f == Vector2.left) return mover.mountedSpriteLeft != null ? mover.mountedSpriteLeft : mover.spriteRendererLeft;
         if (f == Vector2.right) return mover.mountedSpriteRight != null ? mover.mountedSpriteRight : mover.spriteRendererRight;
         return mover.mountedSpriteDown != null ? mover.mountedSpriteDown : mover.spriteRendererDown;
     }
 
-    static void SetExclusiveMountedPlayerRenderer(MovementController mover, AnimatedSpriteRenderer target)
+    static void SetExclusiveMountedPlayerRenderer(MovementController mover, RideState state, AnimatedSpriteRenderer target)
     {
         if (mover == null)
             return;
@@ -1423,6 +1571,10 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
         SetAnimEnabled(mover.mountedSpriteDown, target == mover.mountedSpriteDown);
         SetAnimEnabled(mover.mountedSpriteLeft, target == mover.mountedSpriteLeft);
         SetAnimEnabled(mover.mountedSpriteRight, target == mover.mountedSpriteRight);
+        SetAnimEnabled(state?.headUp, target == state?.headUp);
+        SetAnimEnabled(state?.headDown, target == state?.headDown);
+        SetAnimEnabled(state?.headLeft, target == state?.headLeft);
+        SetAnimEnabled(state?.headRight, target == state?.headRight);
     }
 
     static void ClearMountedPlayerHopSprites(MovementController mover)
@@ -1430,7 +1582,7 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
         if (mover == null)
             return;
 
-        SetExclusiveMountedPlayerRenderer(mover, null);
+        SetExclusiveMountedPlayerRenderer(mover, null, null);
     }
 
     static bool IsBattleMode9Active()
