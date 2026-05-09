@@ -31,6 +31,12 @@ public class MountVisualController : MonoBehaviour
     public AnimatedSpriteRenderer louieLeft;
     public AnimatedSpriteRenderer louieRight;
 
+    [Header("HeadOnly Mount Visuals")]
+    [SerializeField] private AnimatedSpriteRenderer louieHeadOnlyUp;
+    [SerializeField] private AnimatedSpriteRenderer louieHeadOnlyDown;
+    [SerializeField] private AnimatedSpriteRenderer louieHeadOnlyLeft;
+    [SerializeField] private bool debugCartHeadOnlyVisualSelection = true;
+
     [Header("Jump Ascend")]
     [SerializeField] private AnimatedSpriteRenderer louieJumpAscendUp;
     [SerializeField] private AnimatedSpriteRenderer louieJumpAscendDown;
@@ -77,6 +83,7 @@ public class MountVisualController : MonoBehaviour
     private bool playingInactivity;
     private bool playingCornered;
     private bool playingExternalStun;
+    private bool playingCartHeadOnly;
     private bool externalStunShakeActive;
 
     private bool isPinkLouieVisual;
@@ -117,6 +124,15 @@ public class MountVisualController : MonoBehaviour
     private Vector2 lastWalkAnimationFaceDir = Vector2.down;
     private bool lastWalkAnimationWasIdle = true;
     private AnimatedSpriteRenderer lastWalkAnimationRenderer;
+    private Vector2 cartHeadOnlyFacing = Vector2.down;
+    private Vector2 cartHeadOnlyUpOffset = Vector2.zero;
+    private Vector2 cartHeadOnlyDownOffset = Vector2.zero;
+    private Vector2 cartHeadOnlyLeftOffset = Vector2.zero;
+    private Vector2 cartHeadOnlyRightOffset = Vector2.zero;
+    private bool cartHeadOnlyOffsetsActive;
+    private AnimatedSpriteRenderer lastLoggedCartHeadOnlyRenderer;
+    private Vector2 lastLoggedCartHeadOnlyFacing = Vector2.zero;
+    private bool lastLoggedCartHeadOnlyOn;
     private readonly Dictionary<AnimatedSpriteRenderer, AnimationTimingSnapshot> originalAnimationTiming = new();
 
     private struct AnimationTimingSnapshot
@@ -142,6 +158,11 @@ public class MountVisualController : MonoBehaviour
     }
 
     private JumpPhase jumpPhase = JumpPhase.Ascend;
+
+    private void OnValidate()
+    {
+        ResolveHeadOnlyVisualReferences();
+    }
 
     public void SetTemporaryHeadOnlyDownDelta(Vector2 delta, bool active)
     {
@@ -176,6 +197,7 @@ public class MountVisualController : MonoBehaviour
         playingInactivity = false;
         playingCornered = false;
         playingExternalStun = false;
+        playingCartHeadOnly = false;
         externalStunShakeActive = false;
         activeExternalStunRenderer = null;
         externalStunShakeOffset = Vector3.zero;
@@ -193,8 +215,18 @@ public class MountVisualController : MonoBehaviour
         playingJump = false;
         jumpFacing = Vector2.down;
         jumpPhase = JumpPhase.Ascend;
+        cartHeadOnlyFacing = Vector2.down;
+        cartHeadOnlyUpOffset = Vector2.zero;
+        cartHeadOnlyDownOffset = Vector2.zero;
+        cartHeadOnlyLeftOffset = Vector2.zero;
+        cartHeadOnlyRightOffset = Vector2.zero;
+        cartHeadOnlyOffsetsActive = false;
+        lastLoggedCartHeadOnlyRenderer = null;
+        lastLoggedCartHeadOnlyFacing = Vector2.zero;
+        lastLoggedCartHeadOnlyOn = false;
 
         CacheAllRenderers();
+        ResolveHeadOnlyVisualReferences();
 
         if (louieMovement == null)
             TryGetComponent(out louieMovement);
@@ -461,7 +493,11 @@ public class MountVisualController : MonoBehaviour
         else
             ClearHeadOnlyOffsetsIfNeeded();
 
-        if (playingJump)
+        if (playingCartHeadOnly)
+        {
+            EnsureCartHeadOnlyExclusive();
+        }
+        else if (playingJump)
         {
             EnsureJumpExclusive();
         }
@@ -508,7 +544,7 @@ public class MountVisualController : MonoBehaviour
         if (owner == null || active == null)
             return;
 
-        if (playingEndStage || playingInactivity || playingCornered || playingExternalStun || playingJump)
+        if (playingEndStage || playingInactivity || playingCornered || playingExternalStun || playingJump || playingCartHeadOnly)
             return;
 
         AnimatedSpriteRenderer ownerRenderer = owner.ActiveSpriteRenderer;
@@ -1110,6 +1146,10 @@ public class MountVisualController : MonoBehaviour
         SetRendererBranchEnabled(louieLeft, keep == louieLeft);
         SetRendererBranchEnabled(louieRight, keep == louieRight);
 
+        SetRendererBranchEnabled(louieHeadOnlyUp, keep == louieHeadOnlyUp);
+        SetRendererBranchEnabled(louieHeadOnlyDown, keep == louieHeadOnlyDown);
+        SetRendererBranchEnabled(louieHeadOnlyLeft, keep == louieHeadOnlyLeft);
+
         SetRendererBranchEnabled(louieJumpAscendUp, keep == louieJumpAscendUp);
         SetRendererBranchEnabled(louieJumpAscendDown, keep == louieJumpAscendDown);
         SetRendererBranchEnabled(louieJumpAscendLeft, keep == louieJumpAscendLeft);
@@ -1240,6 +1280,269 @@ public class MountVisualController : MonoBehaviour
             louieJumpAscendUp != null || louieJumpAscendDown != null || louieJumpAscendLeft != null || louieJumpAscendRight != null ||
             louieJumpDescendUp != null || louieJumpDescendDown != null || louieJumpDescendLeft != null || louieJumpDescendRight != null ||
             louieJumpUp != null || louieJumpDown != null || louieJumpLeft != null || louieJumpRight != null;
+    }
+
+    public bool HasHeadOnlyVisuals()
+    {
+        ResolveHeadOnlyVisualReferences();
+
+        return
+            louieHeadOnlyUp != null ||
+            louieHeadOnlyDown != null ||
+            louieHeadOnlyLeft != null;
+    }
+
+    public void SetCartHeadOnlyVisual(bool on, Vector2 facing)
+    {
+        ResolveHeadOnlyVisualReferences();
+
+        if (on && !HasHeadOnlyVisuals())
+        {
+            playingCartHeadOnly = false;
+            HideCartHeadOnlyVisuals();
+            LogCartHeadOnlySelection(on, facing, null, "no HeadOnly renderers found");
+            return;
+        }
+
+        playingCartHeadOnly = on;
+
+        if (facing != Vector2.zero)
+            cartHeadOnlyFacing = Cardinalize(facing);
+
+        if (!playingCartHeadOnly)
+        {
+            HideCartHeadOnlyVisuals();
+            LogCartHeadOnlySelection(on, facing, null, "disabled");
+            return;
+        }
+
+        playingInactivity = false;
+        playingEndStage = false;
+        playingCornered = false;
+        playingJump = false;
+        playingExternalStun = false;
+        EnsureCartHeadOnlyExclusive();
+    }
+
+    public void SetCartHeadOnlyOffsets(Vector2 up, Vector2 down, Vector2 left, Vector2 right)
+    {
+        cartHeadOnlyUpOffset = up;
+        cartHeadOnlyDownOffset = down;
+        cartHeadOnlyLeftOffset = left;
+        cartHeadOnlyRightOffset = right;
+        cartHeadOnlyOffsetsActive = true;
+
+        if (playingCartHeadOnly)
+            EnsureCartHeadOnlyExclusive();
+    }
+
+    public void ClearCartHeadOnlyOffsets()
+    {
+        ClearHeadOnlyRendererOffset(louieHeadOnlyUp);
+        ClearHeadOnlyRendererOffset(louieHeadOnlyDown);
+        ClearHeadOnlyRendererOffset(louieHeadOnlyLeft);
+
+        cartHeadOnlyUpOffset = Vector2.zero;
+        cartHeadOnlyDownOffset = Vector2.zero;
+        cartHeadOnlyLeftOffset = Vector2.zero;
+        cartHeadOnlyRightOffset = Vector2.zero;
+        cartHeadOnlyOffsetsActive = false;
+    }
+
+    private void EnsureCartHeadOnlyExclusive()
+    {
+        if (!playingCartHeadOnly)
+            return;
+
+        AnimatedSpriteRenderer target = PickHeadOnlyRenderer(cartHeadOnlyFacing);
+        if (target == null)
+        {
+            playingCartHeadOnly = false;
+            LogCartHeadOnlySelection(true, cartHeadOnlyFacing, null, "pick returned null");
+            return;
+        }
+
+        HardExclusive(target);
+        target.idle = true;
+        target.loop = false;
+        target.pingPong = false;
+        ApplyHeadOnlyFlip(target, cartHeadOnlyFacing);
+        ApplyCartHeadOnlyOffset(target, cartHeadOnlyFacing);
+        target.RefreshFrame();
+
+        LogCartHeadOnlySelection(true, cartHeadOnlyFacing, target, "selected");
+    }
+
+    private AnimatedSpriteRenderer PickHeadOnlyRenderer(Vector2 faceDir)
+    {
+        ResolveHeadOnlyVisualReferences();
+
+        faceDir = Cardinalize(faceDir);
+
+        if (faceDir == Vector2.up)
+            return louieHeadOnlyUp != null ? louieHeadOnlyUp : louieHeadOnlyDown;
+
+        if (faceDir == Vector2.left)
+            return louieHeadOnlyLeft != null ? louieHeadOnlyLeft : louieHeadOnlyDown;
+
+        if (faceDir == Vector2.right)
+            return louieHeadOnlyLeft != null ? louieHeadOnlyLeft : louieHeadOnlyDown;
+
+        return louieHeadOnlyDown ?? louieHeadOnlyUp ?? louieHeadOnlyLeft;
+    }
+
+    private bool ShouldFlipHeadOnlyRenderer(AnimatedSpriteRenderer renderer, Vector2 faceDir)
+    {
+        return faceDir == Vector2.right && renderer == louieHeadOnlyLeft;
+    }
+
+    private void ApplyHeadOnlyFlip(AnimatedSpriteRenderer renderer, Vector2 faceDir)
+    {
+        if (renderer == null)
+            return;
+
+        if (!renderer.TryGetComponent<SpriteRenderer>(out var sr) || sr == null)
+            return;
+
+        sr.flipX = ShouldFlipHeadOnlyRenderer(renderer, faceDir);
+    }
+
+    private void ApplyCartHeadOnlyOffset(AnimatedSpriteRenderer renderer, Vector2 faceDir)
+    {
+        if (renderer == null)
+            return;
+
+        ClearHeadOnlyRendererOffset(louieHeadOnlyUp);
+        ClearHeadOnlyRendererOffset(louieHeadOnlyDown);
+        ClearHeadOnlyRendererOffset(louieHeadOnlyLeft);
+
+        if (!cartHeadOnlyOffsetsActive)
+            return;
+
+        Vector2 offset = PickCartHeadOnlyOffset(faceDir);
+        renderer.SetRuntimeBaseLocalX(offset.x);
+        renderer.SetRuntimeBaseLocalY(offset.y);
+    }
+
+    private Vector2 PickCartHeadOnlyOffset(Vector2 faceDir)
+    {
+        faceDir = Cardinalize(faceDir);
+
+        if (faceDir == Vector2.up)
+            return cartHeadOnlyUpOffset;
+
+        if (faceDir == Vector2.left)
+            return cartHeadOnlyLeftOffset;
+
+        if (faceDir == Vector2.right)
+            return cartHeadOnlyRightOffset;
+
+        return cartHeadOnlyDownOffset;
+    }
+
+    private static void ClearHeadOnlyRendererOffset(AnimatedSpriteRenderer renderer)
+    {
+        if (renderer == null)
+            return;
+
+        renderer.ClearRuntimeBaseOffset();
+    }
+
+    private void LogCartHeadOnlySelection(bool on, Vector2 requestedFacing, AnimatedSpriteRenderer selected, string reason)
+    {
+        if (!debugCartHeadOnlyVisualSelection)
+            return;
+
+        Vector2 facing = Cardinalize(requestedFacing);
+        if (lastLoggedCartHeadOnlyOn == on &&
+            lastLoggedCartHeadOnlyFacing == facing &&
+            lastLoggedCartHeadOnlyRenderer == selected)
+        {
+            return;
+        }
+
+        lastLoggedCartHeadOnlyOn = on;
+        lastLoggedCartHeadOnlyFacing = facing;
+        lastLoggedCartHeadOnlyRenderer = selected;
+
+        bool flipX = selected != null && selected.TryGetComponent<SpriteRenderer>(out var sr) && sr != null && sr.flipX;
+
+        Debug.Log(
+            $"[MountVisualController] Cart HeadOnly {reason} mount='{name}' " +
+            $"requested='{DirectionName(facing)}' selected='{RendererName(selected)}' flipX='{flipX}' " +
+            $"up='{RendererName(louieHeadOnlyUp)}' down='{RendererName(louieHeadOnlyDown)}' " +
+            $"left='{RendererName(louieHeadOnlyLeft)}'",
+            this);
+    }
+
+    private static string RendererName(AnimatedSpriteRenderer renderer)
+    {
+        return renderer != null ? renderer.name : "null";
+    }
+
+    private static string DirectionName(Vector2 direction)
+    {
+        if (direction == Vector2.up) return "Up";
+        if (direction == Vector2.down) return "Down";
+        if (direction == Vector2.left) return "Left";
+        if (direction == Vector2.right) return "Right";
+        return "Zero";
+    }
+
+    private void HideCartHeadOnlyVisuals()
+    {
+        SetRendererBranchEnabled(louieHeadOnlyUp, false);
+        SetRendererBranchEnabled(louieHeadOnlyDown, false);
+        SetRendererBranchEnabled(louieHeadOnlyLeft, false);
+    }
+
+    private void ResolveHeadOnlyVisualReferences()
+    {
+        if (louieHeadOnlyUp == null)
+            louieHeadOnlyUp = FindDirectOrNestedHeadOnly("HeadOnlyUp");
+
+        if (louieHeadOnlyDown == null)
+            louieHeadOnlyDown = FindDirectOrNestedHeadOnly("HeadOnlyDown");
+
+        if (louieHeadOnlyLeft == null)
+            louieHeadOnlyLeft = FindDirectOrNestedHeadOnly("HeadOnlyLeft");
+    }
+
+    private AnimatedSpriteRenderer FindDirectOrNestedHeadOnly(params string[] childNames)
+    {
+        if (childNames == null || childNames.Length == 0)
+            return null;
+
+        var trs = GetComponentsInChildren<Transform>(true);
+        for (int i = 0; i < trs.Length; i++)
+        {
+            Transform t = trs[i];
+            if (t == null)
+                continue;
+
+            if (!MatchesAnyName(t.name, childNames))
+                continue;
+
+            AnimatedSpriteRenderer renderer = t.GetComponent<AnimatedSpriteRenderer>();
+            if (renderer != null)
+                return renderer;
+        }
+
+        return null;
+    }
+
+    private static bool MatchesAnyName(string value, params string[] names)
+    {
+        if (string.IsNullOrWhiteSpace(value) || names == null)
+            return false;
+
+        for (int i = 0; i < names.Length; i++)
+        {
+            if (!string.IsNullOrWhiteSpace(names[i]) && value == names[i])
+                return true;
+        }
+
+        return false;
     }
 
     public void SetJumpVisual(bool on, Vector2 facing, bool descending = false)

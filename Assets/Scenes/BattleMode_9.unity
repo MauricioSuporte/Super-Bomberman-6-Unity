@@ -6381,8 +6381,13 @@ MonoBehaviour:
   headOnlyRightName: HeadOnlyRight
   headOnlyUpOffset: {x: 0, y: 1}
   headOnlyDownOffset: {x: 0, y: 1}
-  headOnlyLeftOffset: {x: -0.2, y: 1}
-  headOnlyRightOffset: {x: 0.2, y: 1}
+  headOnlyLeftOffset: {x: 0, y: 1}
+  headOnlyRightOffset: {x: 0, y: 1}
+  debugRiderHeadOnlySelection: 1
+  mountHeadOnlyUpOffset: {x: 0, y: 1}
+  mountHeadOnlyDownOffset: {x: 0, y: 0.5}
+  mountHeadOnlyLeftOffset: {x: -0.5, y: 0.5}
+  mountHeadOnlyRightOffset: {x: 0.5, y: 0.5}
   hitboxSize: {x: 0.8, y: 0.8}
   collisionMask:
     serializedVersion: 2
@@ -6394,7 +6399,6 @@ MonoBehaviour:
   exitSfx: {fileID: 8300000, guid: a96445640ca1ab0458cb9a2e1f0d231c, type: 3}
   rideLoopSfx: {fileID: 8300000, guid: 32399c2281947be40885f5194b7ed696, type: 3}
   sfxVolume: 0.7
-  debugDirectionSprites: 1
 --- !u!82 &2100000004
 AudioSource:
   m_ObjectHideFlags: 0

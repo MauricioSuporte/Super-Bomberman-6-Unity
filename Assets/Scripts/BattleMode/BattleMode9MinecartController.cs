@@ -58,6 +58,13 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
     [SerializeField] private Vector2 headOnlyDownOffset = Vector2.zero;
     [SerializeField] private Vector2 headOnlyLeftOffset = Vector2.zero;
     [SerializeField] private Vector2 headOnlyRightOffset = Vector2.zero;
+    [SerializeField] private bool debugRiderHeadOnlySelection = true;
+
+    [Header("Mount HeadOnly Offsets (local, per direction)")]
+    [SerializeField] private Vector2 mountHeadOnlyUpOffset = Vector2.zero;
+    [SerializeField] private Vector2 mountHeadOnlyDownOffset = Vector2.zero;
+    [SerializeField] private Vector2 mountHeadOnlyLeftOffset = Vector2.zero;
+    [SerializeField] private Vector2 mountHeadOnlyRightOffset = Vector2.zero;
 
     [Header("Cart Hitbox")]
     [SerializeField] private Vector2 hitboxSize = new(0.8f, 0.8f);
@@ -102,12 +109,15 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
         public MountMovementController mountMovement;
         public CharacterHealth[] healths;
         public PlayerMountCompanion mountCompanion;
+        public MountVisualController mountVisual;
         public MountEggQueue eggQueue;
         public IPinkLouieJumpExternalAnimator pinkJumpAnimator;
         public AnimatedSpriteRenderer headUp;
         public AnimatedSpriteRenderer headDown;
         public AnimatedSpriteRenderer headLeft;
         public AnimatedSpriteRenderer headRight;
+        public AnimatedSpriteRenderer lastLoggedHeadRenderer;
+        public Vector2 lastLoggedHeadDirection;
         public Vector2 startFacing;
     }
 
@@ -372,6 +382,7 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
             mountMovement = mover.GetComponentInChildren<MountMovementController>(true),
             healths = mover.GetComponentsInChildren<CharacterHealth>(true),
             mountCompanion = mover.GetComponent<PlayerMountCompanion>(),
+            mountVisual = mover.GetComponentInChildren<MountVisualController>(true),
             eggQueue = mover.GetComponentInChildren<MountEggQueue>(true),
             pinkJumpAnimator = mover.GetComponentInChildren<IPinkLouieJumpExternalAnimator>(true),
             startFacing = mover.FacingDirection != Vector2.zero ? Cardinalize(mover.FacingDirection) : Vector2.down,
@@ -429,6 +440,12 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
         if (state.mountMovement != null)
             state.mountMovement.SetExplosionInvulnerable(state.prevMountExplosionInvulnerable);
 
+        if (state.mountVisual != null)
+        {
+            state.mountVisual.SetCartHeadOnlyVisual(false, Vector2.down);
+            state.mountVisual.ClearCartHeadOnlyOffsets();
+        }
+
         if (state.bombController != null)
             state.bombController.enabled = state.prevBombEnabled;
 
@@ -452,8 +469,21 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
         if (state == null)
             return;
 
+        bool hasMountHeadOnly = state.mountVisual != null && state.mountVisual.HasHeadOnlyVisuals();
+
+        if (state.mountVisual != null && !visible)
+        {
+            ApplyMountHeadOnlyOffsets(state.mountVisual);
+            state.mountVisual.SetCartHeadOnlyVisual(true, currentCartDirection);
+        }
+        else if (state.mountVisual != null)
+        {
+            state.mountVisual.SetCartHeadOnlyVisual(false, currentCartDirection);
+            state.mountVisual.ClearCartHeadOnlyOffsets();
+        }
+
         if (state.mountCompanion != null)
-            state.mountCompanion.SetMountedLouieVisible(visible);
+            state.mountCompanion.SetMountedLouieVisible(visible || hasMountHeadOnly);
 
         if (state.eggQueue != null)
         {
@@ -803,6 +833,15 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
             target.idle = true;
             target.RefreshFrame();
         }
+
+        bool hasMountHeadOnly = state.mountVisual != null && state.mountVisual.HasHeadOnlyVisuals();
+        LogRiderHeadOnlySelection(state, dir, target, hasMountHeadOnly);
+
+        if (hasMountHeadOnly)
+        {
+            ApplyMountHeadOnlyOffsets(state.mountVisual);
+            state.mountVisual.SetCartHeadOnlyVisual(true, dir);
+        }
     }
 
     void HideRiderHeadOnly(RideState state)
@@ -814,6 +853,24 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
         SetAnimEnabled(state.headDown, false);
         SetAnimEnabled(state.headLeft, false);
         SetAnimEnabled(state.headRight, false);
+
+        if (state.mountVisual != null)
+        {
+            state.mountVisual.SetCartHeadOnlyVisual(false, currentCartDirection);
+            state.mountVisual.ClearCartHeadOnlyOffsets();
+        }
+    }
+
+    void ApplyMountHeadOnlyOffsets(MountVisualController mountVisual)
+    {
+        if (mountVisual == null)
+            return;
+
+        mountVisual.SetCartHeadOnlyOffsets(
+            mountHeadOnlyUpOffset,
+            mountHeadOnlyDownOffset,
+            mountHeadOnlyLeftOffset,
+            mountHeadOnlyRightOffset);
     }
 
     AnimatedSpriteRenderer PickHeadRenderer(RideState state, Vector2 dir)
@@ -823,6 +880,31 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
         if (f == Vector2.left) return state.headLeft != null ? state.headLeft : state.headDown;
         if (f == Vector2.right) return state.headRight != null ? state.headRight : state.headDown;
         return state.headDown;
+    }
+
+    void LogRiderHeadOnlySelection(
+        RideState state,
+        Vector2 dir,
+        AnimatedSpriteRenderer selected,
+        bool hasMountHeadOnly)
+    {
+        if (!debugRiderHeadOnlySelection || state == null)
+            return;
+
+        Vector2 facing = Cardinalize(dir);
+        if (state.lastLoggedHeadDirection == facing && state.lastLoggedHeadRenderer == selected)
+            return;
+
+        state.lastLoggedHeadDirection = facing;
+        state.lastLoggedHeadRenderer = selected;
+
+        Debug.Log(
+            $"[BattleMode9MinecartController] Cart HeadOnly dir='{DirectionName(facing)}' " +
+            $"playerSelected='{RendererName(selected)}' mountVisual='{(state.mountVisual != null ? state.mountVisual.name : "null")}' " +
+            $"mountHasHeadOnly='{hasMountHeadOnly}' " +
+            $"playerUp='{RendererName(state.headUp)}' playerDown='{RendererName(state.headDown)}' " +
+            $"playerLeft='{RendererName(state.headLeft)}' playerRight='{RendererName(state.headRight)}'",
+            this);
     }
 
     void ApplyHeadOffsets(RideState state)
@@ -871,6 +953,20 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
         }
 
         return null;
+    }
+
+    static string RendererName(AnimatedSpriteRenderer renderer)
+    {
+        return renderer != null ? renderer.name : "null";
+    }
+
+    static string DirectionName(Vector2 direction)
+    {
+        if (direction == Vector2.up) return "Up";
+        if (direction == Vector2.down) return "Down";
+        if (direction == Vector2.left) return "Left";
+        if (direction == Vector2.right) return "Right";
+        return "Zero";
     }
 
     void UpdateCartVisual(Vector2 dir, bool moving)
