@@ -558,6 +558,8 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
 
         float duration = Mathf.Max(0.01f, fallingDuration);
 
+        NotifyGameManagerIndestructibleDropStarted(cell);
+
         if (queuedShadowVisuals.TryGetValue(cell, out QueuedShadowData queuedShadowData))
         {
             shadow = queuedShadowData.ShadowObject;
@@ -642,8 +644,24 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
             LogWarning($"DropTileRoutine: a célula {cell} já possuía tile no momento da aplicação.");
         }
 
+        NotifyGameManagerIndestructibleDropFinished(cell);
+
         PlayFallingSfx();
         StartDamageOnCell(cell);
+    }
+
+    void NotifyGameManagerIndestructibleDropStarted(Vector3Int cell)
+    {
+        GameManager gm = GameManager.Instance;
+        if (gm != null)
+            gm.OnIndestructibleDropStarted(cell);
+    }
+
+    void NotifyGameManagerIndestructibleDropFinished(Vector3Int cell)
+    {
+        GameManager gm = GameManager.Instance;
+        if (gm != null)
+            gm.OnIndestructibleDropFinished(cell);
     }
 
     void NotifyBattleMode6RedirectionIndestructiblePlaced(Vector3Int cell)
@@ -1675,6 +1693,9 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
         ClearAllQueuedShadowVisuals();
         ClearAllActiveDropVisuals();
         ClearAllDamageCoroutines();
+
+        if (GameManager.Instance != null)
+            GameManager.Instance.ClearPendingIndestructibleDrops();
 
         scheduledShadowCells.Clear();
     }

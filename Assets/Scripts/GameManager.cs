@@ -82,6 +82,7 @@ public class GameManager : MonoBehaviour
     public TileBase groundTile;
     public TileBase groundShadowTile;
     public TileBase indestructibleGroundShadowTile;
+    public TileBase shadowDestructibleTile;
     public TileBase[] groundShadowIgnoredTiles;
 
     [Header("Auto Resolve (Stage Tilemaps)")]
@@ -96,6 +97,8 @@ public class GameManager : MonoBehaviour
 
     private readonly Dictionary<int, GameObject> orderToSpawn = new();
     private readonly Dictionary<GameObject, MountedType> hiddenMountPrefabTypes = new();
+    private readonly HashSet<Vector3Int> pendingIndestructibleShadowCells = new();
+    private readonly Dictionary<Vector3Int, TileBase> shadowedDestructibleOriginalTiles = new();
 
     private bool restartingRound;
     private bool endStageTriggered;
@@ -720,27 +723,102 @@ public class GameManager : MonoBehaviour
 
     void ApplyDestructibleShadows()
     {
-        if (groundTilemap == null ||
-            groundTile == null ||
-            !HasAnyGroundShadowTile())
-            return;
+        if (destructibleTilemap != null && shadowDestructibleTile != null)
+        {
+            BoundsInt destructibleBounds = destructibleTilemap.cellBounds;
+            foreach (Vector3Int destructibleCell in destructibleBounds.allPositionsWithin)
+                RefreshDestructibleShadowAt(destructibleCell);
+        }
 
-        BoundsInt bounds = groundTilemap.cellBounds;
-        foreach (Vector3Int groundCell in bounds.allPositionsWithin)
-            RefreshGroundShadowAt(groundCell);
+        if (groundTilemap != null &&
+            groundTile != null &&
+            HasAnyGroundShadowTile())
+        {
+            BoundsInt bounds = groundTilemap.cellBounds;
+            foreach (Vector3Int groundCell in bounds.allPositionsWithin)
+                RefreshGroundShadowAt(groundCell);
+        }
     }
 
     public void OnDestructibleDestroyed(Vector3Int cell)
     {
         Vector3Int below = new(cell.x, cell.y - 1, cell.z);
+        shadowedDestructibleOriginalTiles.Remove(cell);
+        RefreshGroundShadowAt(cell);
         RefreshGroundShadowAt(below);
     }
 
     public void OnIndestructiblePlaced(Vector3Int cell)
     {
         Vector3Int below = new(cell.x, cell.y - 1, cell.z);
+        RefreshDestructibleShadowAt(below);
+        RefreshDestructibleShadowAt(cell);
         RefreshGroundShadowAt(below);
         RefreshGroundShadowAt(cell);
+    }
+
+    public void OnIndestructibleDropStarted(Vector3Int cell)
+    {
+        bool added = pendingIndestructibleShadowCells.Add(cell);
+        if (added)
+            OnIndestructiblePlaced(cell);
+    }
+
+    public void OnIndestructibleDropFinished(Vector3Int cell)
+    {
+        bool removed = pendingIndestructibleShadowCells.Remove(cell);
+        if (removed)
+            OnIndestructiblePlaced(cell);
+    }
+
+    public void ClearPendingIndestructibleDrops()
+    {
+        if (pendingIndestructibleShadowCells.Count == 0)
+            return;
+
+        List<Vector3Int> cells = new(pendingIndestructibleShadowCells);
+        pendingIndestructibleShadowCells.Clear();
+
+        for (int i = 0; i < cells.Count; i++)
+            OnIndestructiblePlaced(cells[i]);
+    }
+
+    void RefreshDestructibleShadowAt(Vector3Int destructibleCell)
+    {
+        if (destructibleTilemap == null || shadowDestructibleTile == null)
+            return;
+
+        TileBase currentDestructible = destructibleTilemap.GetTile(destructibleCell);
+        bool hasIndestructibleAbove = HasIndestructibleShadowCasterAt(new Vector3Int(
+            destructibleCell.x,
+            destructibleCell.y + 1,
+            destructibleCell.z));
+
+        if (hasIndestructibleAbove)
+        {
+            if (currentDestructible == null)
+                return;
+
+            if (currentDestructible == shadowDestructibleTile)
+                return;
+
+            if (!shadowedDestructibleOriginalTiles.ContainsKey(destructibleCell))
+                shadowedDestructibleOriginalTiles[destructibleCell] = currentDestructible;
+
+            destructibleTilemap.SetTile(destructibleCell, shadowDestructibleTile);
+            destructibleTilemap.RefreshTile(destructibleCell);
+            return;
+        }
+
+        if (!shadowedDestructibleOriginalTiles.TryGetValue(destructibleCell, out TileBase originalTile))
+            return;
+
+        shadowedDestructibleOriginalTiles.Remove(destructibleCell);
+        if (currentDestructible != shadowDestructibleTile)
+            return;
+
+        destructibleTilemap.SetTile(destructibleCell, originalTile);
+        destructibleTilemap.RefreshTile(destructibleCell);
     }
 
     void RefreshGroundShadowAt(Vector3Int groundCell)
@@ -784,7 +862,9 @@ public class GameManager : MonoBehaviour
 
     bool HasAnyGroundShadowTile()
     {
-        return groundShadowTile != null || indestructibleGroundShadowTile != null;
+        return
+            groundShadowTile != null ||
+            indestructibleGroundShadowTile != null;
     }
 
     bool IsGroundShadowIgnoredTile(TileBase tile)
@@ -857,13 +937,23 @@ public class GameManager : MonoBehaviour
     {
         Vector3Int above = new(groundCell.x, groundCell.y + 1, groundCell.z);
 
-        if (indestructibleTilemap != null && indestructibleTilemap.GetTile(above) != null)
+        if (HasIndestructibleShadowCasterAt(above))
+        {
             return indestructibleGroundShadowTile != null ? indestructibleGroundShadowTile : groundShadowTile;
+        }
 
         if (destructibleTilemap != null && destructibleTilemap.GetTile(above) != null)
             return groundShadowTile;
 
         return null;
+    }
+
+    bool HasIndestructibleShadowCasterAt(Vector3Int cell)
+    {
+        if (indestructibleTilemap != null && indestructibleTilemap.GetTile(cell) != null)
+            return true;
+
+        return pendingIndestructibleShadowCells.Contains(cell);
     }
 
     public void NotifyPlayerDeathStarted(MovementController deadPlayer)
