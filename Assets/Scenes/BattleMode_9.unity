@@ -6377,7 +6377,7 @@ MonoBehaviour:
   left: {fileID: 0}
   right: {fileID: 0}
   hideCartWhenIdleAtStation: 0
-  cartSortingOrder: 4
+  cartSortingOrder: 3
   headOnlyUpName: HeadOnlyUp
   headOnlyDownName: HeadOnlyDown
   headOnlyLeftName: HeadOnlyLeft
@@ -6388,8 +6388,8 @@ MonoBehaviour:
   headOnlyRightOffset: {x: 0, y: 1}
   mountHeadOnlyUpOffset: {x: 0, y: 0.8}
   mountHeadOnlyDownOffset: {x: 0, y: 0.3}
-  mountHeadOnlyLeftOffset: {x: -0.5, y: 0.6}
-  mountHeadOnlyRightOffset: {x: 0.5, y: 0.6}
+  mountHeadOnlyLeftOffset: {x: -0.4, y: 0.6}
+  mountHeadOnlyRightOffset: {x: 0.4, y: 0.6}
   hitboxSize: {x: 0.8, y: 0.8}
   collisionMask:
     serializedVersion: 2
