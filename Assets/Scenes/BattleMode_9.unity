@@ -189,7 +189,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 100002, guid: 71b8af9db023483395c592bbb40abee9, type: 3}
       propertyPath: sharedStartingLoadout.mountedLouie
-      value: 0
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 100002, guid: 71b8af9db023483395c592bbb40abee9, type: 3}
       propertyPath: sharedStartingLoadout.powerups.Array.size
@@ -479,6 +479,7 @@ MonoBehaviour:
   groundTile: {fileID: 11400000, guid: 08e2564e9695195418ed8959e5724382, type: 2}
   groundShadowTile: {fileID: 0}
   indestructibleGroundShadowTile: {fileID: 11400000, guid: 15b14c65f63f75748b86c4a548c6592f, type: 2}
+  shadowDestructibleTile: {fileID: 0}
   groundShadowIgnoredTiles:
   - {fileID: 11400000, guid: 27dc852cef734fe42b00b1a9ea1b37fe, type: 2}
   - {fileID: 11400000, guid: 8e71afb1b70b37a44b31e4737bcac08f, type: 2}
@@ -6382,11 +6383,11 @@ MonoBehaviour:
   headOnlyLeftName: HeadOnlyLeft
   headOnlyRightName: HeadOnlyRight
   headOnlyUpOffset: {x: 0, y: 0.8}
-  headOnlyDownOffset: {x: 0, y: 1}
+  headOnlyDownOffset: {x: 0, y: 0.7}
   headOnlyLeftOffset: {x: 0, y: 1}
   headOnlyRightOffset: {x: 0, y: 1}
   mountHeadOnlyUpOffset: {x: 0, y: 0.8}
-  mountHeadOnlyDownOffset: {x: 0, y: 0.5}
+  mountHeadOnlyDownOffset: {x: 0, y: 0.3}
   mountHeadOnlyLeftOffset: {x: -0.5, y: 0.6}
   mountHeadOnlyRightOffset: {x: 0.5, y: 0.6}
   hitboxSize: {x: 0.8, y: 0.8}
