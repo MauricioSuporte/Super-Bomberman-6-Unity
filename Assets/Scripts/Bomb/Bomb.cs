@@ -32,6 +32,9 @@ public class Bomb : MonoBehaviour, IMagnetPullable
     [Header("Punch")]
     public float punchDuration = 0.22f;
     public float punchArcHeight = 0.9f;
+    [SerializeField, Min(0.01f)] private float punchMinSegmentDuration = 0.28f;
+    [SerializeField, Min(0f)] private float punchSecondsPerTile = 0.055f;
+    [SerializeField, Min(1)] private int punchPixelsPerUnit = 16;
 
     [Header("Chain Explosion")]
     public float chainStepDelay = 0.1f;
@@ -571,7 +574,9 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         LayerMask obstacleMask,
         Tilemap destructibleTilemap,
         float visualStartYOffset = 0f,
-        Vector2? logicalOriginOverride = null)
+        Vector2? logicalOriginOverride = null,
+        float? arcHeightOverride = null,
+        float? bounceArcHeightOverride = null)
     {
         bool canEarlyPunch = !HasExploded && !isKicked && !isPunched;
 
@@ -619,6 +624,12 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         TryPlayBombSfx_NoOverlap(punchSfx, punchSfxVolume);
 
         float dur = Mathf.Max(punchDuration, Time.fixedDeltaTime);
+        float arcHeight = arcHeightOverride.HasValue
+            ? Mathf.Max(0f, arcHeightOverride.Value)
+            : punchArcHeight;
+        float bounceArcHeight = bounceArcHeightOverride.HasValue
+            ? Mathf.Max(0f, bounceArcHeightOverride.Value)
+            : arcHeight;
 
         punchRoutine = StartCoroutine(PunchRoutineFixed_Hybrid(
             logicalOrigin,
@@ -626,7 +637,8 @@ public class Bomb : MonoBehaviour, IMagnetPullable
             distanceTiles,
             80,
             dur,
-            punchArcHeight));
+            arcHeight,
+            bounceArcHeight));
 
         return true;
     }
@@ -637,11 +649,14 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         int forwardSteps,
         int maxExtraBounces,
         float duration,
-        float arcHeight)
+        float arcHeight,
+        float bounceArcHeight)
     {
         Vector2 cur = logicalOrigin;
         Vector2 lastPickupImpactDirection = kickDirection;
         int steps = Mathf.Max(1, forwardSteps);
+        float forwardDuration = GetPunchSegmentDuration(duration, steps);
+        float bounceDuration = GetPunchSegmentDuration(duration, 1);
 
         bool wrapsDuringForward = false;
         {
@@ -701,7 +716,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
             if (HasExploded)
                 goto FINISH;
 
-            yield return PunchArcSegmentFixed(SegmentStart(cur), target, duration, arcHeight);
+            yield return PunchArcSegmentFixed(SegmentStart(cur), target, forwardDuration, arcHeight);
             cur = target;
 
             if (NotifyOwnerAt(cur))
@@ -709,8 +724,6 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         }
         else
         {
-            float segDuration = duration / Mathf.Max(1, steps);
-
             for (int i = 0; i < steps; i++)
             {
                 if (HasExploded)
@@ -730,7 +743,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
                     continue;
                 }
 
-                yield return PunchArcSegmentFixed(SegmentStart(cur), next, segDuration, arcHeight);
+                yield return PunchArcSegmentFixed(SegmentStart(cur), next, bounceDuration, bounceArcHeight);
                 cur = next;
 
                 if (NotifyOwnerAt(cur))
@@ -777,7 +790,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
                 StunMovementControllersAtTile(cur, 0.5f);
                 TryPlayKickSfx_StopOthers(GetKickBounceClip(), bounceSfxVolume);
 
-                yield return PunchArcSegmentFixed(cur, next, duration, arcHeight);
+                yield return PunchArcSegmentFixed(cur, next, bounceDuration, bounceArcHeight);
                 cur = next;
                 bouncesDone++;
 
@@ -813,7 +826,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
                 StunMovementControllersAtTile(cur, 0.5f);
                 TryPlayKickSfx_StopOthers(GetKickBounceClip(), bounceSfxVolume);
 
-                yield return PunchArcSegmentFixed(cur, next, duration, arcHeight);
+                yield return PunchArcSegmentFixed(cur, next, bounceDuration, bounceArcHeight);
                 cur = next;
 
                 if (NotifyOwnerAt(cur))
@@ -987,6 +1000,20 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         lastPos = pos;
     }
 
+    private float GetPunchSegmentDuration(float baseDuration, int distanceTiles)
+    {
+        float distanceDuration = Mathf.Max(1, distanceTiles) * Mathf.Max(0f, punchSecondsPerTile);
+        return Mathf.Max(baseDuration, punchMinSegmentDuration, distanceDuration, Time.fixedDeltaTime);
+    }
+
+    private Vector2 SnapPunchArcPositionToPixelGrid(Vector2 pos)
+    {
+        int ppu = Mathf.Max(1, punchPixelsPerUnit);
+        pos.x = Mathf.Round(pos.x * ppu) / ppu;
+        pos.y = Mathf.Round(pos.y * ppu) / ppu;
+        return pos;
+    }
+
     private IEnumerator PunchArcSegmentFixed(Vector2 start, Vector2 end, float duration, float arcHeight)
     {
         duration = Mathf.Max(duration, Time.fixedDeltaTime);
@@ -1005,6 +1032,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
             Vector2 pos = Vector2.Lerp(start, end, a);
             float arc = Mathf.Sin(a * Mathf.PI) * arcHeight;
             pos.y += arc;
+            pos = SnapPunchArcPositionToPixelGrid(pos);
 
             lastPos = pos;
             rb.MovePosition(pos);

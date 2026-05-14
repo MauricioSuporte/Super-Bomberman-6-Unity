@@ -8,6 +8,12 @@ using UnityEngine.Tilemaps;
 [RequireComponent(typeof(AudioSource))]
 public partial class BombController : MonoBehaviour
 {
+    private const int RevengeLaunchMinDistanceTiles = 3;
+    private const int RevengeLaunchMaxDistanceTiles = 7;
+    private const float RevengeLaunchMinArcHeightTiles = 2f;
+    private const float RevengeLaunchMaxArcHeightTiles = 3f;
+    private const float RevengeLaunchBounceArcHeightTiles = 1f;
+
     [Header("Player Id (only used if tagged Player)")]
     [SerializeField, Range(1, 6)] private int playerId = 1;
     public int PlayerId => playerId;
@@ -2385,7 +2391,25 @@ public partial class BombController : MonoBehaviour
             launchObstacleMask = cachedMovement.obstacleMask;
         }
 
-        if (!bombComponent.StartPunch(direction, launchTileSize, Mathf.Max(1, distanceTiles), launchObstacleMask, destructibleTiles))
+        int launchDistanceTiles = Mathf.Max(1, distanceTiles);
+        float distanceT = Mathf.InverseLerp(
+            RevengeLaunchMinDistanceTiles,
+            RevengeLaunchMaxDistanceTiles,
+            launchDistanceTiles);
+        float launchArcHeight = Mathf.Lerp(
+            RevengeLaunchMinArcHeightTiles,
+            RevengeLaunchMaxArcHeightTiles,
+            distanceT) * launchTileSize;
+        float launchBounceArcHeight = RevengeLaunchBounceArcHeightTiles * launchTileSize;
+
+        if (!bombComponent.StartPunch(
+            direction,
+            launchTileSize,
+            launchDistanceTiles,
+            launchObstacleMask,
+            destructibleTiles,
+            arcHeightOverride: launchArcHeight,
+            bounceArcHeightOverride: launchBounceArcHeight))
         {
             Destroy(bomb);
 
