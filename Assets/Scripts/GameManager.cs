@@ -1231,7 +1231,6 @@ public class GameManager : MonoBehaviour
         if (currentBombType != ItemType.LandMine)
             results.Add(currentBombType);
 
-        AddBattleMountAndEggDrops(state, results);
     }
 
     void CollectBattleDropCells(List<Vector3Int> results)
@@ -1278,29 +1277,6 @@ public class GameManager : MonoBehaviour
             results.Add(itemType);
     }
 
-    static ItemType GetBattleDropEggType(MountedType mountedType)
-    {
-        switch (mountedType)
-        {
-            case MountedType.Blue:
-                return ItemType.BlueLouieEgg;
-            case MountedType.Black:
-                return ItemType.BlackLouieEgg;
-            case MountedType.Purple:
-                return ItemType.PurpleLouieEgg;
-            case MountedType.Green:
-                return ItemType.GreenLouieEgg;
-            case MountedType.Yellow:
-                return ItemType.YellowLouieEgg;
-            case MountedType.Pink:
-                return ItemType.PinkLouieEgg;
-            case MountedType.Red:
-                return ItemType.RedLouieEgg;
-            default:
-                return ItemType.LandMine;
-        }
-    }
-
     static ItemType GetBattleDropBombType(PlayerPersistentStats.PlayerState state)
     {
         if (state == null)
@@ -1318,59 +1294,6 @@ public class GameManager : MonoBehaviour
             return ItemType.MagnetBomb;
 
         return ItemType.LandMine;
-    }
-
-    static void AddBattleMountAndEggDrops(
-        PlayerPersistentStats.PlayerState state,
-        List<ItemType> results)
-    {
-        if (state == null || results == null)
-            return;
-
-        Dictionary<ItemType, int> currentEggCounts = BuildBattleEggCounts(state);
-
-        foreach (var pair in currentEggCounts)
-            AddItemCopies(results, pair.Key, pair.Value);
-    }
-
-    static Dictionary<ItemType, int> BuildBattleEggCounts(PlayerPersistentStats.PlayerState state)
-    {
-        Dictionary<ItemType, int> counts = new();
-
-        if (state == null)
-            return counts;
-
-        AddBattleEggCount(counts, GetBattleDropEggType(state.MountedLouie));
-
-        if (state.QueuedEggs != null)
-        {
-            for (int i = 0; i < state.QueuedEggs.Count; i++)
-                AddBattleEggCount(counts, state.QueuedEggs[i]);
-        }
-
-        return counts;
-    }
-
-    static void AddBattleEggCount(Dictionary<ItemType, int> counts, ItemType itemType)
-    {
-        if (counts == null || !IsBattleDroppableEgg(itemType))
-            return;
-
-        if (!counts.ContainsKey(itemType))
-            counts[itemType] = 0;
-
-        counts[itemType]++;
-    }
-
-    static bool IsBattleDroppableEgg(ItemType itemType)
-    {
-        return itemType == ItemType.BlueLouieEgg
-            || itemType == ItemType.BlackLouieEgg
-            || itemType == ItemType.PurpleLouieEgg
-            || itemType == ItemType.GreenLouieEgg
-            || itemType == ItemType.YellowLouieEgg
-            || itemType == ItemType.PinkLouieEgg
-            || itemType == ItemType.RedLouieEgg;
     }
 
     void InitializeBattleRoundTimer()
