@@ -8,8 +8,6 @@ using UnityEngine.Tilemaps;
 [DisallowMultipleComponent]
 public sealed class BattleRevengeSystem : MonoBehaviour
 {
-    private const string SwapLogPrefix = "[BattleRevenge][Swap]";
-
     [SerializeField] private BattleRevengeController cartPrefab;
     private readonly float cartBombCooldownSeconds = 2f;
     [SerializeField, Min(1)] private int cartBombDistanceTiles = 3;
@@ -105,18 +103,10 @@ public sealed class BattleRevengeSystem : MonoBehaviour
     public bool TryHandleLethalRevengeHit(MovementController victim, Collider2D hazard)
     {
         if (BattleRevengeBomberBlocker.PreventNewRevengeBombers)
-        {
-            Debug.Log($"{SwapLogPrefix} ignored reason=Blocked victim={DescribePlayer(victim)} hazard={DescribeCollider(hazard)}");
             return false;
-        }
 
         if (!IsRuntimeEnabled || victim == null || hazard == null || !victim.CompareTag("Player"))
-        {
-            Debug.Log(
-                $"{SwapLogPrefix} ignored reason=InvalidRuntimeOrVictim " +
-                $"runtime={IsRuntimeEnabled} victim={DescribePlayer(victim)} hazard={DescribeCollider(hazard)}");
             return false;
-        }
 
         CleanupDestroyedActiveCarts();
 
@@ -126,39 +116,19 @@ public sealed class BattleRevengeSystem : MonoBehaviour
             hazard.GetComponentInChildren<BombExplosion>();
 
         if (explosion == null || !explosion.IsRevengeBomb)
-        {
-            Debug.Log(
-                $"{SwapLogPrefix} ignored reason=NotRevengeExplosion " +
-                $"victim={DescribePlayer(victim)} hazard={DescribeCollider(hazard)} explosion={DescribeExplosion(explosion)}");
             return false;
-        }
 
         int respawnPlayerId = Mathf.Clamp(explosion.OwnerPlayerId, GameSession.MinPlayerId, GameSession.MaxPlayerId);
         if (respawnPlayerId == victim.PlayerId)
-        {
-            Debug.Log(
-                $"{SwapLogPrefix} ignored reason=SelfHit victim={DescribePlayer(victim)} " +
-                $"explosion={DescribeExplosion(explosion)} respawnPlayer={respawnPlayerId}");
             return false;
-        }
 
         if (!activeCartsByOwner.TryGetValue(respawnPlayerId, out BattleRevengeController cart) || cart == null)
-        {
-            Debug.LogWarning(
-                $"{SwapLogPrefix} aborted reason=MissingActiveCart victim={DescribePlayer(victim)} " +
-                $"explosion={DescribeExplosion(explosion)} respawnPlayer={respawnPlayerId} activeCarts={DescribeActiveCartOwners()}");
             return false;
-        }
 
         EnsureBattleSetupCached();
 
         if (!playersById.TryGetValue(respawnPlayerId, out MovementController respawningPlayer) || respawningPlayer == null)
-        {
-            Debug.LogWarning(
-                $"{SwapLogPrefix} aborted reason=MissingRespawningPlayer victim={DescribePlayer(victim)} " +
-                $"explosion={DescribeExplosion(explosion)} respawnPlayer={respawnPlayerId} players={DescribeCachedPlayerIds()}");
             return false;
-        }
 
         int victimPlayerId = victim.PlayerId;
         Vector2 respawnPosition = GetArenaSnapPosition(victim.transform.position);
@@ -175,39 +145,18 @@ public sealed class BattleRevengeSystem : MonoBehaviour
         Vector3 jumpTargetWorld = new Vector3(respawnPosition.x, respawnPosition.y, cart.transform.position.z);
         Vector2 jumpFacing = ResolveJumpFacing(jumpStartWorld, jumpTargetWorld);
 
-        Debug.Log(
-            $"{SwapLogPrefix} begin victim={DescribePlayer(victim)} respawning={DescribePlayer(respawningPlayer)} " +
-            $"explosion={DescribeExplosion(explosion)} cart={DescribeCart(cart)} " +
-            $"respawnPos={respawnPosition} newCartPos={newCartPosition} newInward={newInwardDirection} " +
-            $"jumpStart={jumpStartWorld} jumpTarget={jumpTargetWorld} jumpFacing={jumpFacing}");
-
         void TryFinalizeSwap()
         {
             if (swapFinalized)
-            {
-                Debug.Log($"{SwapLogPrefix} finalize skipped reason=AlreadyFinalized victim={victimPlayerId} respawn={respawnPlayerId}");
                 return;
-            }
 
             if (BattleRevengeBomberBlocker.PreventNewRevengeBombers)
-            {
-                Debug.LogWarning($"{SwapLogPrefix} finalize blocked reason=BlockerEnabled victim={victimPlayerId} respawn={respawnPlayerId}");
                 return;
-            }
 
             if (!victimDeathFinished || !revengeJumpFinished)
-            {
-                Debug.Log(
-                    $"{SwapLogPrefix} finalize waiting victimDeathFinished={victimDeathFinished} " +
-                    $"revengeJumpFinished={revengeJumpFinished} victim={victimPlayerId} respawn={respawnPlayerId}");
                 return;
-            }
 
             swapFinalized = true;
-
-            Debug.Log(
-                $"{SwapLogPrefix} finalize-start victim={DescribePlayer(victim)} respawning={DescribePlayer(respawningPlayer)} " +
-                $"cart={DescribeCart(cart)} respawningReleased={respawningPlayerReleased}");
 
             victim.RemoveForBattleRevengeSwap();
 
@@ -222,8 +171,6 @@ public sealed class BattleRevengeSystem : MonoBehaviour
                     respawnBlinkInterval);
 
                 respawningPlayerReleased = true;
-
-                Debug.Log($"{SwapLogPrefix} respawned-during-finalize respawning={DescribePlayer(respawningPlayer)}");
             }
 
             cart.ReenterAs(
@@ -232,16 +179,11 @@ public sealed class BattleRevengeSystem : MonoBehaviour
                 newCartPosition,
                 newInwardDirection);
 
-            Debug.Log(
-                $"{SwapLogPrefix} finalize-complete victim={DescribePlayer(victim)} respawning={DescribePlayer(respawningPlayer)} " +
-                $"cart={DescribeCart(cart)} activeCarts={DescribeActiveCartOwners()}");
-
             GameManager.Instance?.CheckWinState();
         }
 
         victim.PlayBattleRevengeSwapDeathSequence(() =>
         {
-            Debug.Log($"{SwapLogPrefix} victim-death-complete victim={DescribePlayer(victim)}");
             victimDeathFinished = true;
             TryFinalizeSwap();
         });
@@ -255,10 +197,7 @@ public sealed class BattleRevengeSystem : MonoBehaviour
             () =>
             {
                 if (BattleRevengeBomberBlocker.PreventNewRevengeBombers)
-                {
-                    Debug.LogWarning($"{SwapLogPrefix} jump-callback ignored reason=BlockerEnabled respawning={DescribePlayer(respawningPlayer)}");
                     return;
-                }
 
                 if (!respawningPlayerReleased)
                 {
@@ -268,12 +207,9 @@ public sealed class BattleRevengeSystem : MonoBehaviour
                         respawnBlinkInterval);
 
                     respawningPlayerReleased = true;
-
-                    Debug.Log($"{SwapLogPrefix} respawned-after-jump respawning={DescribePlayer(respawningPlayer)}");
                 }
 
                 revengeJumpFinished = true;
-                Debug.Log($"{SwapLogPrefix} jump-complete respawning={DescribePlayer(respawningPlayer)}");
                 TryFinalizeSwap();
             }));
 
@@ -288,16 +224,11 @@ public sealed class BattleRevengeSystem : MonoBehaviour
         Vector2 facing,
         Action onFinished)
     {
-        Debug.Log(
-            $"{SwapLogPrefix} jump-routine-start cart={DescribeCart(cart)} respawning={DescribePlayer(respawningPlayer)} " +
-            $"start={startWorldPos} target={targetWorldPos} facing={facing}");
-
         if (cart != null)
             cart.HideImmediately();
 
         if (respawningPlayer == null)
         {
-            Debug.LogWarning($"{SwapLogPrefix} jump-fallback reason=MissingRespawningPlayer");
             onFinished?.Invoke();
             yield break;
         }
@@ -305,8 +236,6 @@ public sealed class BattleRevengeSystem : MonoBehaviour
         PlayerRidingController riding = respawningPlayer.GetComponent<PlayerRidingController>();
         if (riding == null)
         {
-            Debug.LogWarning($"{SwapLogPrefix} jump-fallback reason=MissingPlayerRidingController respawning={DescribePlayer(respawningPlayer)}");
-
             if (!respawningPlayer.gameObject.activeSelf)
                 respawningPlayer.gameObject.SetActive(true);
 
@@ -316,12 +245,7 @@ public sealed class BattleRevengeSystem : MonoBehaviour
         }
 
         if (riding.IsPlaying)
-        {
-            Debug.LogWarning(
-                $"{SwapLogPrefix} jump-reset-stale-riding respawning={DescribePlayer(respawningPlayer)} " +
-                $"ridingSprites={DescribeRidingSprites(riding)}");
             riding.ResetStaleRidingState();
-        }
 
         if (!respawningPlayer.gameObject.activeSelf)
             respawningPlayer.gameObject.SetActive(true);
@@ -345,19 +269,12 @@ public sealed class BattleRevengeSystem : MonoBehaviour
 
         bool finished = false;
 
-        Debug.Log(
-            $"{SwapLogPrefix} jump-before-arc respawning={DescribePlayer(respawningPlayer)} " +
-            $"ridingPlaying={riding.IsPlaying} ridingSprites={DescribeRidingSprites(riding)}");
-
         if (!riding.TryPlayMountArc(
                 facing,
                 startWorldPos,
                 targetWorldPos,
                 onComplete: () => finished = true))
         {
-            Debug.LogWarning(
-                $"{SwapLogPrefix} jump-fallback reason=TryPlayMountArcReturnedFalse respawning={DescribePlayer(respawningPlayer)} " +
-                $"ridingPlaying={riding.IsPlaying} ridingSprites={DescribeRidingSprites(riding)}");
             finished = true;
         }
 
@@ -365,92 +282,7 @@ public sealed class BattleRevengeSystem : MonoBehaviour
             yield return null;
 
         respawningPlayer.SetBattleRevengeJumpInvulnerabilityNoBlink(false);
-        Debug.Log($"{SwapLogPrefix} jump-routine-finished respawning={DescribePlayer(respawningPlayer)}");
         onFinished?.Invoke();
-    }
-
-    private static string DescribePlayer(MovementController player)
-    {
-        if (player == null)
-            return "null";
-
-        Rigidbody2D rb = player.Rigidbody;
-        Collider2D col = player.GetComponent<Collider2D>();
-        CharacterHealth health = player.GetComponent<CharacterHealth>();
-
-        return
-            $"P{player.PlayerId} name={player.name} activeSelf={player.gameObject.activeSelf} " +
-            $"activeInHierarchy={player.gameObject.activeInHierarchy} isDead={player.isDead} " +
-            $"ending={player.IsEndingStage} pos={player.transform.position} " +
-            $"rbSim={(rb != null ? rb.simulated.ToString() : "null")} " +
-            $"colEnabled={(col != null ? col.enabled.ToString() : "null")} " +
-            $"life={(health != null ? health.life.ToString() : "null")}";
-    }
-
-    private static string DescribeCollider(Collider2D collider)
-    {
-        if (collider == null)
-            return "null";
-
-        return
-            $"name={collider.name} layer={LayerMask.LayerToName(collider.gameObject.layer)} " +
-            $"enabled={collider.enabled} active={collider.gameObject.activeInHierarchy} pos={collider.transform.position}";
-    }
-
-    private static string DescribeExplosion(BombExplosion explosion)
-    {
-        if (explosion == null)
-            return "null";
-
-        return
-            $"owner={explosion.OwnerPlayerId} revenge={explosion.IsRevengeBomb} " +
-            $"part={explosion.CurrentPart} origin={explosion.Origin} pos={explosion.transform.position}";
-    }
-
-    private static string DescribeCart(BattleRevengeController cart)
-    {
-        if (cart == null)
-            return "null";
-
-        return
-            $"owner={cart.OwnerPlayerId} active={cart.gameObject.activeInHierarchy} pos={cart.transform.position} " +
-            $"launchable={cart.IsInLaunchableSegment} launchStart={cart.LaunchStartWorldPosition} launchDir={cart.LaunchDirection}";
-    }
-
-    private static string DescribeRidingSprites(PlayerRidingController riding)
-    {
-        if (riding == null)
-            return "null";
-
-        return
-            $"ascU={riding.mountAscendUp != null} ascD={riding.mountAscendDown != null} " +
-            $"ascL={riding.mountAscendLeft != null} ascR={riding.mountAscendRight != null} " +
-            $"descU={riding.mountDescendUp != null} descD={riding.mountDescendDown != null} " +
-            $"descL={riding.mountDescendLeft != null} descR={riding.mountDescendRight != null}";
-    }
-
-    private string DescribeActiveCartOwners()
-    {
-        if (activeCartsByOwner.Count == 0)
-            return "none";
-
-        List<string> owners = new();
-        foreach (KeyValuePair<int, BattleRevengeController> pair in activeCartsByOwner)
-            owners.Add($"{pair.Key}:{(pair.Value != null ? pair.Value.name : "null")}");
-
-        return string.Join(",", owners);
-    }
-
-    private string DescribeCachedPlayerIds()
-    {
-        if (playersById.Count == 0)
-            return "none";
-
-        List<string> players = new();
-        foreach (KeyValuePair<int, MovementController> pair in playersById)
-            players.Add($"{pair.Key}:{(pair.Value != null ? pair.Value.name : "null")}");
-
-        return string.Join(",", players);
     }
 
     private static Vector2 ResolveJumpFacing(Vector3 startWorldPos, Vector3 targetWorldPos)
