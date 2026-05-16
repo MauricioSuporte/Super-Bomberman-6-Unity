@@ -127,6 +127,7 @@ public partial class BombController : MonoBehaviour
     private GameManager _gm;
     private AudioSource _localAudio;
     private MovementController cachedMovement;
+    private PlayerRidingController cachedRidingController;
     private AbilitySystem cachedAbilitySystem;
     private GreenLouieDashAbility cachedGreenLouieDashAbility;
     private BombKickAbility cachedBombKickAbility;
@@ -198,6 +199,7 @@ public partial class BombController : MonoBehaviour
     private void CacheRuntimeReferences()
     {
         cachedMovement ??= GetComponent<MovementController>();
+        cachedRidingController ??= GetComponent<PlayerRidingController>();
         _ = GetCachedComponent(ref cachedAbilitySystem);
         _ = GetCachedComponent(ref cachedGreenLouieDashAbility);
         _ = GetCachedComponent(ref cachedBombKickAbility);
@@ -250,6 +252,11 @@ public partial class BombController : MonoBehaviour
     {
         var dashAbility = GetCachedComponent(ref cachedGreenLouieDashAbility);
         return dashAbility != null && dashAbility.DashActive;
+    }
+
+    private bool IsRidingTransitionActive()
+    {
+        return cachedRidingController != null && cachedRidingController.IsPlaying;
     }
 
     private static Vector2 GetBombPlantDirection(MovementController movement)
@@ -309,6 +316,9 @@ public partial class BombController : MonoBehaviour
 
         var movement = GetMovement();
         if (movement != null && (movement.InputLocked || movement.isDead || movement.IsEndingStage))
+            return;
+
+        if (IsRidingTransitionActive())
             return;
 
         if (IsDashActive())
@@ -891,6 +901,9 @@ public partial class BombController : MonoBehaviour
 
         var movement = GetMovement();
         if (movement != null && (movement.InputLocked || movement.isDead || movement.IsEndingStage))
+            return;
+
+        if (IsRidingTransitionActive())
             return;
 
         if (IsDashActive())
@@ -2438,6 +2451,9 @@ public partial class BombController : MonoBehaviour
 
         var movement = GetMovement();
         if (movement != null && (movement.isDead || movement.IsEndingStage))
+            return false;
+
+        if (IsRidingTransitionActive())
             return false;
 
         if (IsDashActive())
