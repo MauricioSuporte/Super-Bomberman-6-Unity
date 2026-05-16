@@ -60,7 +60,7 @@ public class CharacterHealth : MonoBehaviour
         killable = GetComponent<IKillable>();
         defaultHitBlinkInterval = hitBlinkInterval;
 
-        spriteRenderers = GetComponentsInChildren<SpriteRenderer>();
+        spriteRenderers = GetComponentsInChildren<SpriteRenderer>(true);
         originalColors = new Color[spriteRenderers.Length];
 
         for (int i = 0; i < spriteRenderers.Length; i++)

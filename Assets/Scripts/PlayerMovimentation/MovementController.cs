@@ -2566,13 +2566,23 @@ public class MovementController : MonoBehaviour, IKillable
         {
             bool fromExplosion = (layer == explosionLayer);
 
-            if (fromExplosion &&
-                cachedHealth.life <= 1 &&
-                BattleRevengeSystem.Instance != null &&
-                BattleRevengeSystem.Instance.TryHandleLethalRevengeHit(this, other))
+            if (fromExplosion && cachedHealth.life <= 1)
             {
-                nextContactDamageTime = Time.time + cd;
-                return;
+                BattleRevengeSystem revengeSystem = BattleRevengeSystem.Instance;
+                if (revengeSystem != null && revengeSystem.TryHandleLethalRevengeHit(this, other))
+                {
+                    nextContactDamageTime = Time.time + cd;
+                    return;
+                }
+
+                BombExplosion revengeExplosion = TryGetRevengeExplosion(other);
+                if (revengeExplosion != null)
+                {
+                    Debug.LogWarning(
+                        $"[BattleRevenge][Swap] handoff-failed victim=P{playerId} name={name} " +
+                        $"life={cachedHealth.life} systemPresent={revengeSystem != null} " +
+                        $"explosionOwner={revengeExplosion.OwnerPlayerId} hazard={other.name}");
+                }
             }
 
             cachedHealth.TakeDamage(1, fromExplosion);
@@ -2582,6 +2592,19 @@ public class MovementController : MonoBehaviour, IKillable
 
         DeathSequence();
         nextContactDamageTime = Time.time + cd;
+    }
+
+    private static BombExplosion TryGetRevengeExplosion(Collider2D hazard)
+    {
+        if (hazard == null)
+            return null;
+
+        BombExplosion explosion =
+            hazard.GetComponent<BombExplosion>() ??
+            hazard.GetComponentInParent<BombExplosion>() ??
+            hazard.GetComponentInChildren<BombExplosion>();
+
+        return explosion != null && explosion.IsRevengeBomb ? explosion : null;
     }
 
     private CharacterHealth GetMountedLouieHealth()
@@ -2866,6 +2889,14 @@ public class MovementController : MonoBehaviour, IKillable
             cachedHealth.StartSpawnInvulnerability(invulnerabilitySeconds, blinkInterval);
 
         NotifyHudPortraitRespawnIfPlayer();
+    }
+
+    public void SetBattleRevengeJumpInvulnerabilityNoBlink(bool enabled)
+    {
+        if (cachedHealth == null)
+            cachedHealth = GetComponent<CharacterHealth>();
+
+        cachedHealth?.SetExternalInvulnerability(enabled);
     }
 
     private void HoleDeathSequence()

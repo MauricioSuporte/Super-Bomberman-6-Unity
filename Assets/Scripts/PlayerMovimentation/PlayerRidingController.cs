@@ -71,6 +71,11 @@ public sealed class PlayerRidingController : MonoBehaviour
         RebuildAllowedSets();
     }
 
+    void OnDisable()
+    {
+        ResetRidingState(restoreMovementState: false);
+    }
+
     void LateUpdate()
     {
         if (!isPlaying)
@@ -186,6 +191,17 @@ public sealed class PlayerRidingController : MonoBehaviour
         if (!isPlaying)
             return false;
 
+        ResetRidingState(restoreMovementState: true);
+        return true;
+    }
+
+    public void ResetStaleRidingState()
+    {
+        ResetRidingState(restoreMovementState: false);
+    }
+
+    void ResetRidingState(bool restoreMovementState)
+    {
         if (routine != null)
         {
             StopCoroutine(routine);
@@ -195,14 +211,13 @@ public sealed class PlayerRidingController : MonoBehaviour
         DisableAllRiding();
         ClearAllRuntimeOffsets();
 
-        if (movement != null)
+        if (restoreMovementState && movement != null)
         {
             movement.EnableExclusiveFromState();
             movement.SetInputLocked(false, forceIdle: true);
         }
 
         isPlaying = false;
-        return true;
     }
 
     IEnumerator PlayMountArcRoutine(
