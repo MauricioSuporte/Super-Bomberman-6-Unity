@@ -34,6 +34,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
     public float punchArcHeight = 0.9f;
     [SerializeField, Min(0.01f)] private float punchMinSegmentDuration = 0.28f;
     [SerializeField, Min(0f)] private float punchSecondsPerTile = 0.055f;
+    [SerializeField, Min(0.01f)] private float punchLandingBounceSpeedMultiplier = 2f;
     [SerializeField, Min(1)] private int punchPixelsPerUnit = 16;
 
     [Header("Chain Explosion")]
@@ -657,6 +658,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
         int steps = Mathf.Max(1, forwardSteps);
         float forwardDuration = GetPunchSegmentDuration(duration, steps);
         float bounceDuration = GetPunchSegmentDuration(duration, 1);
+        float landingBounceDuration = bounceDuration / Mathf.Max(0.01f, punchLandingBounceSpeedMultiplier);
 
         bool wrapsDuringForward = false;
         {
@@ -790,7 +792,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
                 StunMovementControllersAtTile(cur, 0.5f);
                 TryPlayKickSfx_StopOthers(GetKickBounceClip(), bounceSfxVolume);
 
-                yield return PunchArcSegmentFixed(cur, next, bounceDuration, bounceArcHeight);
+                yield return PunchArcSegmentFixed(cur, next, landingBounceDuration, bounceArcHeight);
                 cur = next;
                 bouncesDone++;
 
@@ -826,7 +828,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
                 StunMovementControllersAtTile(cur, 0.5f);
                 TryPlayKickSfx_StopOthers(GetKickBounceClip(), bounceSfxVolume);
 
-                yield return PunchArcSegmentFixed(cur, next, bounceDuration, bounceArcHeight);
+                yield return PunchArcSegmentFixed(cur, next, landingBounceDuration, bounceArcHeight);
                 cur = next;
 
                 if (NotifyOwnerAt(cur))
