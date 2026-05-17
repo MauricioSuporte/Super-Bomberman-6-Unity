@@ -182,6 +182,11 @@ public class GreenLouieDashAbility : MonoBehaviour, IPlayerAbility
         }
     }
 
+    public void CancelDashForExternalInterruption()
+    {
+        CancelDash();
+    }
+
     public void CancelDashForDeath()
     {
         deathCancelInProgress = true;

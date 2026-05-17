@@ -261,6 +261,7 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
             exitFacing = Vector2.right;
         Vector2 enterFacing = ResolveEnterHopFacing(mover, exitFacing);
 
+        CancelActiveMountMovementAbilities(mover);
         RideState state = CaptureAndApplyRideState(mover);
         activeStates[mover] = state;
 
@@ -439,6 +440,24 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
         ApplyHeadOffsets(state, "CaptureAndApplyRideState");
 
         return state;
+    }
+
+    void CancelActiveMountMovementAbilities(MovementController mover)
+    {
+        if (mover == null)
+            return;
+
+        var greenDash = mover.GetComponent<GreenLouieDashAbility>();
+        if (greenDash != null && greenDash.DashActive)
+            greenDash.CancelDashForExternalInterruption();
+
+        var blackDash = mover.GetComponent<BlackLouieDashPushAbility>();
+        if (blackDash != null && blackDash.DashActive)
+            blackDash.CancelDashForExternalInterruption();
+
+        var pinkJump = mover.GetComponent<PinkLouieJumpAbility>();
+        if (pinkJump != null && pinkJump.JumpActive)
+            pinkJump.CancelJumpForExternalInterruption();
     }
 
     void RestoreRideState(MovementController mover, RideState state)

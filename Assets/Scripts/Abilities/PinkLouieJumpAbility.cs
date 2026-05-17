@@ -58,6 +58,7 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
 
     public string Id => AbilityId;
     public bool IsEnabled => enabledAbility;
+    public bool JumpActive => routine != null;
 
     bool deathCancelInProgress;
 
@@ -641,6 +642,14 @@ public class PinkLouieJumpAbility : MonoBehaviour, IPlayerAbility
 
         if (movement != null && !movement.isDead)
             movement.SetInputLocked(false);
+    }
+
+    public void CancelJumpForExternalInterruption()
+    {
+        if (!JumpActive)
+            return;
+
+        CancelJump();
     }
 
     public void Enable()

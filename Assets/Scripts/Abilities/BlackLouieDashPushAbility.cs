@@ -55,6 +55,7 @@ public class BlackLouieDashPushAbility : MonoBehaviour, IPlayerAbility
 
     public string Id => AbilityId;
     public bool IsEnabled => enabledAbility;
+    public bool DashActive => routine != null;
     bool deathCancelInProgress;
 
     void Awake()
@@ -529,6 +530,14 @@ public class BlackLouieDashPushAbility : MonoBehaviour, IPlayerAbility
 
         if (movement != null)
             movement.SetInputLocked(false);
+    }
+
+    public void CancelDashForExternalInterruption()
+    {
+        if (!DashActive)
+            return;
+
+        Cancel();
     }
 
     public void Enable() => enabledAbility = true;
