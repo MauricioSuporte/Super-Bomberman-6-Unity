@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using UnityEngine;
+using UnityEngine.Tilemaps;
 
 [DisallowMultipleComponent]
 [RequireComponent(typeof(Rigidbody2D))]
@@ -32,6 +33,9 @@ public sealed class PlayerPushedOutOfInvalidTile : MonoBehaviour
     [Header("Debug")]
     [SerializeField] private bool debugBounceLogs = true;
 
+    [Header("Stage Wrap")]
+    [SerializeField] private Tilemap stageBoundsTilemap;
+
     private Rigidbody2D _rb;
     private Collider2D _col;
     private MovementController _move;
@@ -43,6 +47,8 @@ public sealed class PlayerPushedOutOfInvalidTile : MonoBehaviour
     private SpriteRenderer _bouncingLeftSpriteRenderer;
     private bool _bouncingLeftOriginalFlipX;
     private bool _usingMountBounceVisual;
+    private bool _stageBoundsReady;
+    private BoundsInt _stageCellBounds;
 
     private static readonly WaitForFixedUpdate _waitFixed = new();
 
@@ -187,8 +193,20 @@ public sealed class PlayerPushedOutOfInvalidTile : MonoBehaviour
 
             PlayBounceSfx();
 
-            Vector2 next = cur + pushDir * tileSize;
-            LogBounce($"Resolve step:{step + 1} from:{FormatVec(cur)} to:{FormatVec(next)} reason:{blockReason}");
+            if (!TryStepWithWrap(cur, pushDir, tileSize, out Vector2 next, out bool didWrap))
+            {
+                LogBounce($"Resolve aborted: unable to calculate next tile from:{FormatVec(cur)} dir:{FormatVec(pushDir)}");
+                break;
+            }
+
+            LogBounce($"Resolve step:{step + 1} from:{FormatVec(cur)} to:{FormatVec(next)} wrap:{didWrap} reason:{blockReason}");
+
+            if (didWrap)
+            {
+                TeleportWrappedBounce(next, pushDir);
+                cur = next;
+                continue;
+            }
 
             if (IsOnHole(next))
             {
@@ -243,6 +261,14 @@ public sealed class PlayerPushedOutOfInvalidTile : MonoBehaviour
         _rb.position = end;
         transform.position = end;
         LogBounce($"Resolve landed tile:{FormatVec(end)} renderer:{GetActiveBounceVisualName(direction)}");
+    }
+
+    private void TeleportWrappedBounce(Vector2 position, Vector2 direction)
+    {
+        SetActiveBounceVisual(direction);
+        _rb.position = position;
+        transform.position = position;
+        LogBounce($"Resolve wrapped to:{FormatVec(position)} renderer:{GetActiveBounceVisualName(direction)}");
     }
 
     private void SetActiveBounceVisual(Vector2 direction)
@@ -400,6 +426,10 @@ public sealed class PlayerPushedOutOfInvalidTile : MonoBehaviour
             _abilitySystem != null &&
             _abilitySystem.IsEnabled(DestructiblePassAbility.AbilityId);
 
+        bool canPassBombs =
+            _abilitySystem != null &&
+            _abilitySystem.IsEnabled(BombPassAbility.AbilityId);
+
         foreach (var hit in hits)
         {
             if (hit == null) continue;
@@ -408,6 +438,9 @@ public sealed class PlayerPushedOutOfInvalidTile : MonoBehaviour
             if (IsBombCollider(hit, out Bomb bomb))
             {
                 if (bomb != null && bomb.HasExploded)
+                    continue;
+
+                if (canPassBombs)
                     continue;
 
                 reason = $"bomb:{hit.name} trigger:{hit.isTrigger} layer:{LayerMask.LayerToName(hit.gameObject.layer)} pos:{FormatVec(hit.transform.position)}";
@@ -424,6 +457,143 @@ public sealed class PlayerPushedOutOfInvalidTile : MonoBehaviour
         }
 
         return false;
+    }
+
+    private void EnsureStageBounds()
+    {
+        if (_stageBoundsReady && stageBoundsTilemap != null)
+            return;
+
+        _stageBoundsReady = false;
+
+        if (stageBoundsTilemap != null)
+        {
+            stageBoundsTilemap.CompressBounds();
+            _stageCellBounds = stageBoundsTilemap.cellBounds;
+            _stageBoundsReady = true;
+            return;
+        }
+
+        var tilemaps = FindObjectsByType<Tilemap>();
+        Tilemap ground = null;
+        Tilemap indestructible = null;
+
+        for (int i = 0; i < tilemaps.Length; i++)
+        {
+            Tilemap tm = tilemaps[i];
+            if (tm == null)
+                continue;
+
+            string n = tm.name.ToLowerInvariant();
+            if (ground == null && n.Contains("ground"))
+                ground = tm;
+
+            if (indestructible == null && n.Contains("indestruct"))
+                indestructible = tm;
+        }
+
+        if (ground != null)
+            ground.CompressBounds();
+
+        if (indestructible != null)
+            indestructible.CompressBounds();
+
+        if (ground != null && indestructible != null)
+        {
+            BoundsInt a = ground.cellBounds;
+            BoundsInt b = indestructible.cellBounds;
+
+            int xMin = Mathf.Min(a.xMin, b.xMin);
+            int xMax = Mathf.Max(a.xMax, b.xMax);
+            int yMin = Mathf.Min(a.yMin, b.yMin);
+            int yMax = Mathf.Max(a.yMax, b.yMax);
+
+            _stageCellBounds = new BoundsInt(xMin, yMin, 0, xMax - xMin, yMax - yMin, 1);
+            stageBoundsTilemap = ground;
+            _stageBoundsReady = true;
+            return;
+        }
+
+        Tilemap fallback = ground != null ? ground : indestructible;
+        if (fallback == null)
+            return;
+
+        _stageCellBounds = fallback.cellBounds;
+        stageBoundsTilemap = fallback;
+        _stageBoundsReady = true;
+    }
+
+    private bool TryStepWithWrap(Vector2 from, Vector2 direction, float tileSize, out Vector2 next, out bool didWrap)
+    {
+        EnsureStageBounds();
+
+        direction = NormalizeCardinal(direction);
+        if (direction == Vector2.zero)
+        {
+            next = from;
+            didWrap = false;
+            return false;
+        }
+
+        Vector2 raw = from + direction * tileSize;
+        didWrap = false;
+
+        if (!_stageBoundsReady)
+        {
+            next = raw;
+            return true;
+        }
+
+        Vector3Int cell = stageBoundsTilemap != null
+            ? stageBoundsTilemap.WorldToCell(raw)
+            : new Vector3Int(Mathf.RoundToInt(raw.x / tileSize), Mathf.RoundToInt(raw.y / tileSize), 0);
+
+        int minX = _stageCellBounds.xMin;
+        int maxX = _stageCellBounds.xMax - 1;
+        int minY = _stageCellBounds.yMin;
+        int maxY = _stageCellBounds.yMax - 1;
+
+        if (cell.x < minX)
+        {
+            cell.x = maxX;
+            didWrap = true;
+        }
+        else if (cell.x > maxX)
+        {
+            cell.x = minX;
+            didWrap = true;
+        }
+
+        if (cell.y < minY)
+        {
+            cell.y = maxY;
+            didWrap = true;
+        }
+        else if (cell.y > maxY)
+        {
+            cell.y = minY;
+            didWrap = true;
+        }
+
+        if (!didWrap)
+        {
+            next = raw;
+            return true;
+        }
+
+        if (stageBoundsTilemap != null)
+        {
+            Vector3 center = stageBoundsTilemap.GetCellCenterWorld(cell);
+            center.z = transform.position.z;
+            next = (Vector2)center;
+        }
+        else
+        {
+            next = new Vector2(cell.x * tileSize, cell.y * tileSize);
+        }
+
+        LogBounce($"Resolve wrap edge raw:{FormatVec(raw)} cell:({cell.x},{cell.y}) bounds:x[{minX},{maxX}] y[{minY},{maxY}] next:{FormatVec(next)}");
+        return true;
     }
 
     private static bool IsBombCollider(Collider2D hit, out Bomb bomb)
