@@ -878,10 +878,10 @@ PrefabInstance:
     - target: {fileID: 1909958093259148197, guid: b5c6f6d280a44d5fb48be8cd567c1e62, type: 3}
       propertyPath: m_Sprite
       value: 
-      objectReference: {fileID: 0}
+      objectReference: {fileID: 21300000, guid: 33659276ec38d67409e2f708864bfee7, type: 3}
     - target: {fileID: 1909958093259148197, guid: b5c6f6d280a44d5fb48be8cd567c1e62, type: 3}
       propertyPath: m_Enabled
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 2367064353294770056, guid: b5c6f6d280a44d5fb48be8cd567c1e62, type: 3}
       propertyPath: m_Pivot.x
@@ -1042,18 +1042,18 @@ PrefabInstance:
     - target: {fileID: 5976918405260490912, guid: b5c6f6d280a44d5fb48be8cd567c1e62, type: 3}
       propertyPath: m_Sprite
       value: 
-      objectReference: {fileID: 0}
+      objectReference: {fileID: 21300000, guid: 33659276ec38d67409e2f708864bfee7, type: 3}
     - target: {fileID: 5976918405260490912, guid: b5c6f6d280a44d5fb48be8cd567c1e62, type: 3}
       propertyPath: m_Enabled
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 6264606558984993842, guid: b5c6f6d280a44d5fb48be8cd567c1e62, type: 3}
       propertyPath: m_Sprite
       value: 
-      objectReference: {fileID: 0}
+      objectReference: {fileID: 21300000, guid: 33659276ec38d67409e2f708864bfee7, type: 3}
     - target: {fileID: 6264606558984993842, guid: b5c6f6d280a44d5fb48be8cd567c1e62, type: 3}
       propertyPath: m_Enabled
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 6307630273264470252, guid: b5c6f6d280a44d5fb48be8cd567c1e62, type: 3}
       propertyPath: m_Sprite
@@ -1066,10 +1066,10 @@ PrefabInstance:
     - target: {fileID: 6991349842924055328, guid: b5c6f6d280a44d5fb48be8cd567c1e62, type: 3}
       propertyPath: m_Sprite
       value: 
-      objectReference: {fileID: 0}
+      objectReference: {fileID: 21300000, guid: 33659276ec38d67409e2f708864bfee7, type: 3}
     - target: {fileID: 6991349842924055328, guid: b5c6f6d280a44d5fb48be8cd567c1e62, type: 3}
       propertyPath: m_Enabled
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 7126354152096357310, guid: b5c6f6d280a44d5fb48be8cd567c1e62, type: 3}
       propertyPath: m_Sprite
@@ -2656,6 +2656,8 @@ GameObject:
   m_Component:
   - component: {fileID: 732032081}
   - component: {fileID: 732032080}
+  - component: {fileID: 732032083}
+  - component: {fileID: 732032082}
   m_Layer: 6
   m_Name: Stage
   m_TagString: Untagged
@@ -2693,6 +2695,47 @@ Transform:
   - {fileID: 285353615}
   m_Father: {fileID: 679601671}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &732032082
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 732032079}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e1e7d621f15a4f589226da734e7367dd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ScorchedGroundTileHandler
+  tileSwaps:
+  - groundTile: {fileID: 11400000, guid: f29fceee652c0bb4ab80bfde591df1c2, type: 2}
+    scorchedTile: {fileID: 11400000, guid: 7caa2641a0b83474e8693d85e92afcfc, type: 2}
+    shadowTile: {fileID: 11400000, guid: 9d7a31e08cf313e4c9b4829d825ba4e4, type: 2}
+    scorchedShadowTile: {fileID: 11400000, guid: 3e940cc912830ce4db219b5f6b13e44b, type: 2}
+  - groundTile: {fileID: 0}
+    scorchedTile: {fileID: 0}
+    shadowTile: {fileID: 0}
+    scorchedShadowTile: {fileID: 0}
+  groundTilemapOverride: {fileID: 0}
+  groundTileResolverOverride: {fileID: 0}
+--- !u!114 &732032083
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 732032079}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2f6d76f13ac00e74dbd4c75930cfa7e1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GroundTileResolver
+  groups:
+  - id: Scorched
+    tiles:
+    - {fileID: 11400000, guid: f29fceee652c0bb4ab80bfde591df1c2, type: 2}
+    - {fileID: 11400000, guid: 9d7a31e08cf313e4c9b4829d825ba4e4, type: 2}
+    handler: {fileID: 732032082}
 --- !u!1 &765618196
 GameObject:
   m_ObjectHideFlags: 0

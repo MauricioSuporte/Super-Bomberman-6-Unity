@@ -101,6 +101,7 @@ public class GameManager : MonoBehaviour
     private readonly Dictionary<GameObject, MountedType> hiddenMountPrefabTypes = new();
     private readonly Dictionary<Vector3Int, TileBase> pendingIndestructibleShadowCells = new();
     private readonly Dictionary<Vector3Int, TileBase> shadowedDestructibleOriginalTiles = new();
+    private readonly List<IGroundTileShadowHandler> groundTileShadowHandlers = new();
 
     private bool restartingRound;
     private bool endStageTriggered;
@@ -135,6 +136,7 @@ public class GameManager : MonoBehaviour
 
         portalPrefab = Resources.Load<EndStagePortal>(portalResourcesPath);
 
+        ResolveGroundTileShadowHandlers();
         ResolveDestructibleTileResolver();
     }
 
@@ -725,6 +727,8 @@ public class GameManager : MonoBehaviour
 
     void ApplyDestructibleShadows()
     {
+        ResolveGroundTileShadowHandlers();
+
         if (destructibleTilemap != null && shadowDestructibleTile != null)
         {
             BoundsInt destructibleBounds = destructibleTilemap.cellBounds;
@@ -845,19 +849,86 @@ public class GameManager : MonoBehaviour
         if (IsGroundShadowIgnoredTile(currentGround))
             return;
 
-        bool refreshable = IsShadowRefreshableGroundTile(currentGround);
+        TileBase customShadowTile = null;
+        TileBase customRestoredTile = null;
+        bool hasCustomShadowTile = shadowTile != null &&
+            TryGetGroundShadowHandlerShadowTile(groundCell, currentGround, shadowTile, out customShadowTile);
+        bool hasCustomRestoredTile = shadowTile == null &&
+            TryGetGroundShadowHandlerRestoredTile(groundCell, currentGround, groundTile, out customRestoredTile);
+
+        bool refreshable = hasCustomShadowTile ||
+            hasCustomRestoredTile ||
+            IsShadowRefreshableGroundTile(currentGround);
         if (!refreshable && shadowTile == null)
             return;
 
         if (shadowTile != null)
         {
-            if (currentGround != shadowTile)
-                groundTilemap.SetTile(groundCell, shadowTile);
+            TileBase targetShadowTile = hasCustomShadowTile ? customShadowTile : shadowTile;
+            if (targetShadowTile != null && currentGround != targetShadowTile)
+                groundTilemap.SetTile(groundCell, targetShadowTile);
         }
         else if (refreshable && currentGround != groundTile)
         {
-            groundTilemap.SetTile(groundCell, groundTile);
+            TileBase targetGroundTile = hasCustomRestoredTile ? customRestoredTile : groundTile;
+            if (targetGroundTile != null && currentGround != targetGroundTile)
+                groundTilemap.SetTile(groundCell, targetGroundTile);
         }
+    }
+
+    void ResolveGroundTileShadowHandlers()
+    {
+        groundTileShadowHandlers.Clear();
+
+        MonoBehaviour[] behaviours = FindObjectsByType<MonoBehaviour>(FindObjectsInactive.Include);
+        for (int i = 0; i < behaviours.Length; i++)
+        {
+            MonoBehaviour behaviour = behaviours[i];
+            if (behaviour is IGroundTileShadowHandler handler)
+                groundTileShadowHandlers.Add(handler);
+        }
+    }
+
+    bool TryGetGroundShadowHandlerShadowTile(
+        Vector3Int cell,
+        TileBase currentGroundTile,
+        TileBase defaultShadowTile,
+        out TileBase shadowTile)
+    {
+        shadowTile = null;
+
+        for (int i = 0; i < groundTileShadowHandlers.Count; i++)
+        {
+            IGroundTileShadowHandler handler = groundTileShadowHandlers[i];
+            if (handler == null)
+                continue;
+
+            if (handler.TryGetShadowTile(cell, currentGroundTile, defaultShadowTile, out shadowTile) && shadowTile != null)
+                return true;
+        }
+
+        return false;
+    }
+
+    bool TryGetGroundShadowHandlerRestoredTile(
+        Vector3Int cell,
+        TileBase currentGroundTile,
+        TileBase defaultGroundTile,
+        out TileBase restoredTile)
+    {
+        restoredTile = null;
+
+        for (int i = 0; i < groundTileShadowHandlers.Count; i++)
+        {
+            IGroundTileShadowHandler handler = groundTileShadowHandlers[i];
+            if (handler == null)
+                continue;
+
+            if (handler.TryGetRestoredTile(cell, currentGroundTile, defaultGroundTile, out restoredTile) && restoredTile != null)
+                return true;
+        }
+
+        return false;
     }
 
     bool IsShadowRefreshableGroundTile(TileBase tile)
