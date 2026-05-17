@@ -84,6 +84,8 @@ public class GameManager : MonoBehaviour
     public TileBase indestructibleGroundShadowTile;
     public TileBase shadowDestructibleTile;
     public TileBase[] groundShadowIgnoredTiles;
+    [Tooltip("Tiles indestrutiveis que aplicam sombra no Ground em Y-1. Se vazio, qualquer tile indestrutivel aplica sombra como antes.")]
+    public TileBase[] indestructibleGroundShadowCasterTiles;
 
     [Header("Auto Resolve (Stage Tilemaps)")]
     [SerializeField] private bool autoResolveStageTilemaps = true;
@@ -97,7 +99,7 @@ public class GameManager : MonoBehaviour
 
     private readonly Dictionary<int, GameObject> orderToSpawn = new();
     private readonly Dictionary<GameObject, MountedType> hiddenMountPrefabTypes = new();
-    private readonly HashSet<Vector3Int> pendingIndestructibleShadowCells = new();
+    private readonly Dictionary<Vector3Int, TileBase> pendingIndestructibleShadowCells = new();
     private readonly Dictionary<Vector3Int, TileBase> shadowedDestructibleOriginalTiles = new();
 
     private bool restartingRound;
@@ -759,7 +761,13 @@ public class GameManager : MonoBehaviour
 
     public void OnIndestructibleDropStarted(Vector3Int cell)
     {
-        bool added = pendingIndestructibleShadowCells.Add(cell);
+        OnIndestructibleDropStarted(cell, null);
+    }
+
+    public void OnIndestructibleDropStarted(Vector3Int cell, TileBase tile)
+    {
+        bool added = !pendingIndestructibleShadowCells.ContainsKey(cell);
+        pendingIndestructibleShadowCells[cell] = tile;
         if (added)
             OnIndestructiblePlaced(cell);
     }
@@ -776,7 +784,7 @@ public class GameManager : MonoBehaviour
         if (pendingIndestructibleShadowCells.Count == 0)
             return;
 
-        List<Vector3Int> cells = new(pendingIndestructibleShadowCells);
+        List<Vector3Int> cells = new(pendingIndestructibleShadowCells.Keys);
         pendingIndestructibleShadowCells.Clear();
 
         for (int i = 0; i < cells.Count; i++)
@@ -937,7 +945,7 @@ public class GameManager : MonoBehaviour
     {
         Vector3Int above = new(groundCell.x, groundCell.y + 1, groundCell.z);
 
-        if (HasIndestructibleShadowCasterAt(above))
+        if (HasIndestructibleGroundShadowCasterAt(above))
         {
             return indestructibleGroundShadowTile != null ? indestructibleGroundShadowTile : groundShadowTile;
         }
@@ -953,7 +961,59 @@ public class GameManager : MonoBehaviour
         if (indestructibleTilemap != null && indestructibleTilemap.GetTile(cell) != null)
             return true;
 
-        return pendingIndestructibleShadowCells.Contains(cell);
+        return pendingIndestructibleShadowCells.ContainsKey(cell);
+    }
+
+    bool HasIndestructibleGroundShadowCasterAt(Vector3Int cell)
+    {
+        TileBase tile = indestructibleTilemap != null ? indestructibleTilemap.GetTile(cell) : null;
+        if (tile != null)
+            return IsIndestructibleGroundShadowCasterTile(tile);
+
+        if (!pendingIndestructibleShadowCells.TryGetValue(cell, out TileBase pendingTile))
+            return false;
+
+        return pendingTile == null
+            ? !HasIndestructibleGroundShadowCasterFilter()
+            : IsIndestructibleGroundShadowCasterTile(pendingTile);
+    }
+
+    bool IsIndestructibleGroundShadowCasterTile(TileBase tile)
+    {
+        if (tile == null)
+            return false;
+
+        if (!HasIndestructibleGroundShadowCasterFilter())
+            return true;
+
+        for (int i = 0; i < indestructibleGroundShadowCasterTiles.Length; i++)
+        {
+            TileBase casterTile = indestructibleGroundShadowCasterTiles[i];
+            if (casterTile == null)
+                continue;
+
+            if (tile == casterTile)
+                return true;
+
+            if (IsSameAnimatedTileRuntimeVariant(tile, casterTile))
+                return true;
+        }
+
+        return false;
+    }
+
+    bool HasIndestructibleGroundShadowCasterFilter()
+    {
+        if (indestructibleGroundShadowCasterTiles == null)
+            return false;
+
+        for (int i = 0; i < indestructibleGroundShadowCasterTiles.Length; i++)
+        {
+            if (indestructibleGroundShadowCasterTiles[i] != null)
+                return true;
+        }
+
+        return false;
     }
 
     public void NotifyPlayerDeathStarted(MovementController deadPlayer)

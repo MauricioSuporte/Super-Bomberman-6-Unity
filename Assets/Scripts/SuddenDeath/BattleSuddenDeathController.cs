@@ -670,7 +670,7 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
     {
         GameManager gm = GameManager.Instance;
         if (gm != null)
-            gm.OnIndestructibleDropStarted(cell);
+            gm.OnIndestructibleDropStarted(cell, currentStageIndestructibleTile);
     }
 
     void NotifyGameManagerIndestructibleDropFinished(Vector3Int cell)
