@@ -2570,6 +2570,8 @@ GameObject:
   m_Component:
   - component: {fileID: 732032081}
   - component: {fileID: 732032080}
+  - component: {fileID: 732032083}
+  - component: {fileID: 732032082}
   m_Layer: 6
   m_Name: Stage
   m_TagString: Untagged
@@ -2607,6 +2609,36 @@ Transform:
   - {fileID: 285353615}
   m_Father: {fileID: 679601671}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &732032082
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 732032079}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 62241670fbcb74c4aaa9e884b9cac159, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PowerGroundTileHandler
+  boostedRadius: 10
+--- !u!114 &732032083
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 732032079}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2f6d76f13ac00e74dbd4c75930cfa7e1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GroundTileResolver
+  groups:
+  - id: PowerGround
+    tiles:
+    - {fileID: 11400000, guid: 84d1498d1b58cfc419383d1822416c6c, type: 2}
+    handler: {fileID: 732032082}
 --- !u!1 &765618196
 GameObject:
   m_ObjectHideFlags: 0
