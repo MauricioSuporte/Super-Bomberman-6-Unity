@@ -4952,7 +4952,7 @@ MonoBehaviour:
   ropeTileAnimations:
   - tile: {fileID: 11400000, guid: 809a7617339c44848ac4c4652a2b112a, type: 2}
     impulseAnimationTiles:
-    - {fileID: 11400000, guid: 809a7617339c44848ac4c4652a2b112a, type: 2}
+    - {fileID: 11400000, guid: cc05b14dd4cb8914ab66403218a74176, type: 2}
     - {fileID: 11400000, guid: 9290456ed23e0544e9b62c91e850b568, type: 2}
     - {fileID: 11400000, guid: 809a7617339c44848ac4c4652a2b112a, type: 2}
     - {fileID: 11400000, guid: 9290456ed23e0544e9b62c91e850b568, type: 2}
@@ -4961,7 +4961,7 @@ MonoBehaviour:
     - {fileID: 11400000, guid: 69befabddfea1e543b218c33f2cc8b89, type: 2}
   - tile: {fileID: 11400000, guid: 056ccb2ef00314b4fa1ac4711b844ab9, type: 2}
     impulseAnimationTiles:
-    - {fileID: 11400000, guid: 056ccb2ef00314b4fa1ac4711b844ab9, type: 2}
+    - {fileID: 11400000, guid: 6580b028f5ec3db43a39df894b660754, type: 2}
     - {fileID: 11400000, guid: 3ee616eab268ba6468a138ecebe9768b, type: 2}
     - {fileID: 11400000, guid: 056ccb2ef00314b4fa1ac4711b844ab9, type: 2}
     - {fileID: 11400000, guid: 3ee616eab268ba6468a138ecebe9768b, type: 2}
@@ -4970,7 +4970,7 @@ MonoBehaviour:
     - {fileID: 11400000, guid: 35c5584fe53725c47a5766c80a461f4c, type: 2}
   - tile: {fileID: 11400000, guid: 7f085c21289be024ebdc24b3326d8a42, type: 2}
     impulseAnimationTiles:
-    - {fileID: 11400000, guid: 7f085c21289be024ebdc24b3326d8a42, type: 2}
+    - {fileID: 11400000, guid: 98ca3b50b7523d240aa0e46bc54064d8, type: 2}
     - {fileID: 11400000, guid: bca5fc7e7324b9a459a05bc468fd69a2, type: 2}
     - {fileID: 11400000, guid: 7f085c21289be024ebdc24b3326d8a42, type: 2}
     - {fileID: 11400000, guid: bca5fc7e7324b9a459a05bc468fd69a2, type: 2}
@@ -4979,7 +4979,7 @@ MonoBehaviour:
     - {fileID: 11400000, guid: 7edf771eab144e545884ac0bb96b6c80, type: 2}
   - tile: {fileID: 11400000, guid: aa5f0d3015061f649ac433c0d5f56cb0, type: 2}
     impulseAnimationTiles:
-    - {fileID: 11400000, guid: aa5f0d3015061f649ac433c0d5f56cb0, type: 2}
+    - {fileID: 11400000, guid: 5cfadd87b623a4546a32c5d246f68aae, type: 2}
     - {fileID: 11400000, guid: 0feb382e9d40648419800a6f3052bc32, type: 2}
     - {fileID: 11400000, guid: aa5f0d3015061f649ac433c0d5f56cb0, type: 2}
     - {fileID: 11400000, guid: 0feb382e9d40648419800a6f3052bc32, type: 2}
@@ -4988,7 +4988,7 @@ MonoBehaviour:
     - {fileID: 11400000, guid: 1c516ed8e0127d14e9ab32a2f88f8aa2, type: 2}
   - tile: {fileID: 11400000, guid: 77fc92754a1660248b6db503e0bc9fd2, type: 2}
     impulseAnimationTiles:
-    - {fileID: 11400000, guid: 77fc92754a1660248b6db503e0bc9fd2, type: 2}
+    - {fileID: 11400000, guid: 1d944a09e5556d5458c67ca1431d423a, type: 2}
     - {fileID: 11400000, guid: 31940fe288ec5024485f59b670755057, type: 2}
     - {fileID: 11400000, guid: 77fc92754a1660248b6db503e0bc9fd2, type: 2}
     - {fileID: 11400000, guid: 31940fe288ec5024485f59b670755057, type: 2}
@@ -4997,7 +4997,7 @@ MonoBehaviour:
     - {fileID: 11400000, guid: 422fbfb5cc14b6f4885a80fde69d5037, type: 2}
   - tile: {fileID: 11400000, guid: c2df3cbca43af484390003cafb53f43b, type: 2}
     impulseAnimationTiles:
-    - {fileID: 11400000, guid: c2df3cbca43af484390003cafb53f43b, type: 2}
+    - {fileID: 11400000, guid: 97967268cf06a3c49ae02a93a9e5e1b5, type: 2}
     - {fileID: 11400000, guid: 60bf760149cde3d4fa594d069058466f, type: 2}
     - {fileID: 11400000, guid: c2df3cbca43af484390003cafb53f43b, type: 2}
     - {fileID: 11400000, guid: 60bf760149cde3d4fa594d069058466f, type: 2}
@@ -5006,7 +5006,7 @@ MonoBehaviour:
     - {fileID: 11400000, guid: 8c2efbcda8def714389861ca7c1e0124, type: 2}
   - tile: {fileID: 11400000, guid: 5813c3a41664e4047b7c1163cff4e196, type: 2}
     impulseAnimationTiles:
-    - {fileID: 11400000, guid: 5813c3a41664e4047b7c1163cff4e196, type: 2}
+    - {fileID: 11400000, guid: cc59ee386877f1543895f3181c70a509, type: 2}
     - {fileID: 11400000, guid: 21723d33b5eb9ef42912d6e10259ac3f, type: 2}
     - {fileID: 11400000, guid: 5813c3a41664e4047b7c1163cff4e196, type: 2}
     - {fileID: 11400000, guid: 21723d33b5eb9ef42912d6e10259ac3f, type: 2}
@@ -5015,7 +5015,7 @@ MonoBehaviour:
     - {fileID: 11400000, guid: e059ffe5a050bc541b1cf803e4dcaf57, type: 2}
   - tile: {fileID: 11400000, guid: 7d41b4898633d334398148b39e702355, type: 2}
     impulseAnimationTiles:
-    - {fileID: 11400000, guid: 7d41b4898633d334398148b39e702355, type: 2}
+    - {fileID: 11400000, guid: ffae7dad13e771844bcac2334bf0f300, type: 2}
     - {fileID: 11400000, guid: 1e636777d1465da40a3cd3ddee9721e5, type: 2}
     - {fileID: 11400000, guid: 7d41b4898633d334398148b39e702355, type: 2}
     - {fileID: 11400000, guid: 1e636777d1465da40a3cd3ddee9721e5, type: 2}
