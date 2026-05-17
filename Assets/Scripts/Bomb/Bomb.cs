@@ -92,6 +92,7 @@ public class Bomb : MonoBehaviour, IMagnetPullable
     private float kickTileSize = 1f;
     private LayerMask kickObstacleMask;
     private Tilemap kickDestructibleTilemap;
+    private IIndestructibleKickedBombHandler[] kickIndestructibleHandlers;
 
     private Coroutine kickRoutine;
     private Coroutine punchRoutine;
@@ -1257,7 +1258,12 @@ public class Bomb : MonoBehaviour, IMagnetPullable
 
             if (IsKickBlocked(next))
             {
-                if (IsRubberBomb)
+                bool handledByIndestructibleKickHandler = TryHandleIndestructibleKickBounce(
+                    next,
+                    out AudioClip handledBounceSfx,
+                    out float handledBounceSfxVolume);
+
+                if (handledByIndestructibleKickHandler || IsRubberBomb)
                 {
                     kickDirection = -kickDirection;
 
@@ -1269,7 +1275,12 @@ public class Bomb : MonoBehaviour, IMagnetPullable
                     if (TileHasCharacter(back, LayerMask.GetMask("Player", "Enemy")))
                         break;
 
-                    TryPlayKickSfx_StopOthers(GetKickBounceClip(), bounceSfxVolume);
+                    if (handledByIndestructibleKickHandler && IsBlockedByMaskAtWorld(back, kickBlockMoveMask, kickOverlapBoxSize))
+                        break;
+
+                    AudioClip bounceClip = handledBounceSfx != null ? handledBounceSfx : GetKickBounceClip();
+                    float bounceVolume = handledBounceSfx != null ? handledBounceSfxVolume : bounceSfxVolume;
+                    TryPlayKickSfx_StopOthers(bounceClip, bounceVolume);
                     continue;
                 }
 
@@ -2219,6 +2230,78 @@ public class Bomb : MonoBehaviour, IMagnetPullable
 
             pickup.DestroySilently();
         }
+    }
+
+    private bool TryHandleIndestructibleKickBounce(
+        Vector2 blockedWorldPos,
+        out AudioClip bounceSfx,
+        out float bounceSfxVolume)
+    {
+        bounceSfx = null;
+        bounceSfxVolume = 1f;
+
+        ResolveIndestructibleTilemapIfNeeded();
+
+        if (indestructibleTilemap == null)
+            return false;
+
+        Vector3Int blockedCell = indestructibleTilemap.WorldToCell(blockedWorldPos);
+        TileBase blockedTile = indestructibleTilemap.GetTile(blockedCell);
+        if (blockedTile == null)
+            return false;
+
+        EnsureKickedBombHandlers();
+        if (kickIndestructibleHandlers == null || kickIndestructibleHandlers.Length == 0)
+            return false;
+
+        for (int i = 0; i < kickIndestructibleHandlers.Length; i++)
+        {
+            var handler = kickIndestructibleHandlers[i];
+            if (handler == null)
+                continue;
+
+            if (handler.TryHandleKickedBombBlocked(
+                    this,
+                    currentTileCenter,
+                    blockedWorldPos,
+                    kickDirection,
+                    indestructibleTilemap,
+                    blockedCell,
+                    blockedTile,
+                    out AudioClip handledBounceSfx,
+                    out float handledBounceSfxVolume))
+            {
+                bounceSfx = handledBounceSfx;
+                bounceSfxVolume = Mathf.Clamp01(handledBounceSfxVolume);
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private void EnsureKickedBombHandlers()
+    {
+        if (kickIndestructibleHandlers != null && kickIndestructibleHandlers.Length > 0)
+            return;
+
+        MonoBehaviour[] behaviours = FindObjectsByType<MonoBehaviour>(FindObjectsInactive.Exclude);
+        if (behaviours == null || behaviours.Length == 0)
+        {
+            kickIndestructibleHandlers = System.Array.Empty<IIndestructibleKickedBombHandler>();
+            return;
+        }
+
+        var handlers = new System.Collections.Generic.List<IIndestructibleKickedBombHandler>();
+        for (int i = 0; i < behaviours.Length; i++)
+        {
+            if (behaviours[i] is IIndestructibleKickedBombHandler handler)
+                handlers.Add(handler);
+        }
+
+        kickIndestructibleHandlers = handlers.Count > 0
+            ? handlers.ToArray()
+            : System.Array.Empty<IIndestructibleKickedBombHandler>();
     }
 
     private bool TryAttachKickPushedSkull(ItemPickup pickup, Vector2 impactDirection, Vector2 bombWorldCenter)
