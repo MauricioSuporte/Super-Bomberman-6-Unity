@@ -21,9 +21,21 @@ public sealed class BattleMode7PortalController : MonoBehaviour
     };
 
     [Header("Teleport")]
-    [SerializeField, Min(0.01f)] private float teleportSeconds = 0.25f;
+    [SerializeField, Min(0.01f)] private float teleportSeconds = 0.5f;
     [SerializeField, Min(0f)] private float retriggerGraceSeconds = 0.05f;
     [SerializeField] private bool snapToDestinationCenter = true;
+
+    [Header("Teleport Stars")]
+    [SerializeField] private bool spawnTeleportStars = true;
+    [SerializeField] private Sprite[] teleportStarSprites;
+    [SerializeField, Min(0)] private int teleportStarCount = 32;
+    [SerializeField, Min(0.01f)] private float teleportStarLifetime = 0.32f;
+    [SerializeField] private Vector2 teleportStarScaleRange = new(0.18f, 0.32f);
+    [SerializeField] private Vector2 teleportStarDriftRange = new(0.16f, 0.42f);
+    [SerializeField] private Vector2 teleportStarSpinRange = new(-220f, 220f);
+    [SerializeField, Range(0f, 1f)] private float teleportStarPathJitter = 0.22f;
+    [SerializeField, Min(0.01f)] private float teleportStarAnimationFrameTime = 0.1f;
+    [SerializeField] private int teleportStarSortingOrder = 90;
 
     [Header("SFX")]
     [SerializeField] private AudioClip enterSfx;
@@ -144,7 +156,7 @@ public sealed class BattleMode7PortalController : MonoBehaviour
         if (portalIndex < 0)
             return;
 
-        int destinationIndex = GetDiagonalDestinationIndex(portalIndex);
+        int destinationIndex = GetClockwiseDestinationIndex(portalIndex);
         StartCoroutine(TeleportRoutine(mover, portalIndex, destinationIndex));
     }
 
@@ -169,6 +181,12 @@ public sealed class BattleMode7PortalController : MonoBehaviour
         {
             float duration = Mathf.Max(0.01f, teleportSeconds);
             float elapsed = 0f;
+            int spawnedStars = 0;
+            if (spawnTeleportStars && teleportStarCount > 0)
+            {
+                SpawnTeleportStar(source);
+                spawnedStars = 1;
+            }
 
             while (elapsed < duration)
             {
@@ -187,6 +205,8 @@ public sealed class BattleMode7PortalController : MonoBehaviour
                 mover.Rigidbody.position = position;
                 mover.Rigidbody.linearVelocity = Vector2.zero;
 
+                spawnedStars = SpawnTeleportStarsAlongPath(source, destination, t, spawnedStars);
+
                 elapsed += Time.deltaTime;
                 yield return null;
             }
@@ -199,6 +219,8 @@ public sealed class BattleMode7PortalController : MonoBehaviour
                 if (state.eggQueue != null)
                     state.eggQueue.SnapQueueToOwnerNow(resetHistoryToOwnerNow: true);
             }
+
+            SpawnTeleportStarsAlongPath(source, destination, 1f, spawnedStars);
         }
         finally
         {
@@ -345,6 +367,115 @@ public sealed class BattleMode7PortalController : MonoBehaviour
             audioSource.PlayOneShot(enterSfx, enterSfxVolume);
     }
 
+    int SpawnTeleportStarsAlongPath(Vector2 source, Vector2 destination, float normalizedTime, int alreadySpawned)
+    {
+        if (!spawnTeleportStars || teleportStarSprites == null || teleportStarSprites.Length == 0)
+            return alreadySpawned;
+
+        int targetCount = Mathf.FloorToInt(Mathf.Clamp01(normalizedTime) * teleportStarCount);
+        while (alreadySpawned < targetCount)
+        {
+            float pathT = teleportStarCount <= 1 ? 1f : alreadySpawned / (float)(teleportStarCount - 1);
+            Vector2 anchor = Vector2.Lerp(source, destination, SmoothTeleportT(pathT));
+            Vector2 jitter = Random.insideUnitCircle * teleportStarPathJitter;
+            SpawnTeleportStar(anchor + jitter);
+            alreadySpawned++;
+        }
+
+        return alreadySpawned;
+    }
+
+    void SpawnTeleportStar(Vector2 position)
+    {
+        Sprite sprite = GetRandomTeleportStarSprite();
+        if (sprite == null)
+            return;
+
+        var star = new GameObject("BattleMode7TeleportStar");
+        star.transform.SetParent(transform, worldPositionStays: true);
+        star.transform.SetPositionAndRotation(position, Quaternion.Euler(0f, 0f, Random.Range(0f, 360f)));
+        float minScale = Mathf.Min(teleportStarScaleRange.x, teleportStarScaleRange.y);
+        float maxScale = Mathf.Max(teleportStarScaleRange.x, teleportStarScaleRange.y);
+        star.transform.localScale = Vector3.one * Random.Range(minScale, maxScale);
+
+        var renderer = star.AddComponent<SpriteRenderer>();
+        renderer.sprite = sprite;
+        renderer.sortingOrder = teleportStarSortingOrder;
+        renderer.color = Color.white;
+
+        float minDrift = Mathf.Min(teleportStarDriftRange.x, teleportStarDriftRange.y);
+        float maxDrift = Mathf.Max(teleportStarDriftRange.x, teleportStarDriftRange.y);
+        Vector2 driftDirection = Random.insideUnitCircle.normalized;
+        if (driftDirection.sqrMagnitude <= 0.001f)
+            driftDirection = Vector2.up;
+
+        Vector2 drift = driftDirection * Random.Range(minDrift, maxDrift);
+        float spin = Random.Range(teleportStarSpinRange.x, teleportStarSpinRange.y);
+        StartCoroutine(AnimateTeleportStar(star.transform, renderer, drift, spin));
+    }
+
+    IEnumerator AnimateTeleportStar(Transform star, SpriteRenderer renderer, Vector2 drift, float spin)
+    {
+        float duration = Mathf.Max(0.01f, teleportStarLifetime);
+        float elapsed = 0f;
+        Vector3 startScale = star != null ? star.localScale : Vector3.one;
+
+        while (elapsed < duration)
+        {
+            if (star == null || renderer == null)
+                yield break;
+
+            if (GamePauseController.IsPaused)
+            {
+                yield return null;
+                continue;
+            }
+
+            float t = Mathf.Clamp01(elapsed / duration);
+            star.position += (Vector3)(drift * Time.deltaTime);
+            star.Rotate(0f, 0f, spin * Time.deltaTime);
+            star.localScale = Vector3.Lerp(startScale, startScale * 0.45f, t);
+
+            Color color = renderer.color;
+            color.a = 1f - t;
+            renderer.color = color;
+
+            UpdateTeleportStarSprite(renderer, elapsed);
+
+            elapsed += Time.deltaTime;
+            yield return null;
+        }
+
+        if (star != null)
+            Destroy(star.gameObject);
+    }
+
+    Sprite GetRandomTeleportStarSprite()
+    {
+        if (teleportStarSprites == null || teleportStarSprites.Length == 0)
+            return null;
+
+        for (int attempts = 0; attempts < teleportStarSprites.Length; attempts++)
+        {
+            Sprite sprite = teleportStarSprites[Random.Range(0, teleportStarSprites.Length)];
+            if (sprite != null)
+                return sprite;
+        }
+
+        return null;
+    }
+
+    void UpdateTeleportStarSprite(SpriteRenderer renderer, float elapsed)
+    {
+        if (renderer == null || teleportStarSprites == null || teleportStarSprites.Length <= 1)
+            return;
+
+        int frame = Mathf.FloorToInt(elapsed / Mathf.Max(0.01f, teleportStarAnimationFrameTime)) % teleportStarSprites.Length;
+        Sprite sprite = teleportStarSprites[frame];
+        if (sprite != null)
+            renderer.sprite = sprite;
+    }
+
     int GetPortalIndex(Vector3Int cell)
     {
         for (int i = 0; i < portalCells.Length; i++)
@@ -387,12 +518,9 @@ public sealed class BattleMode7PortalController : MonoBehaviour
     static Vector3Int ToCell(Vector2Int cell)
         => new(cell.x, cell.y, 0);
 
-    int GetDiagonalDestinationIndex(int portalIndex)
+    int GetClockwiseDestinationIndex(int portalIndex)
     {
-        if (portalCells == null || portalCells.Length != 4)
-            return (portalIndex + 1) % portalCells.Length;
-
-        return portalIndex < 2 ? portalIndex + 2 : portalIndex - 2;
+        return (portalIndex + 1) % portalCells.Length;
     }
 
     static float SmoothTeleportT(float t)
