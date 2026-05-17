@@ -24,13 +24,38 @@ public sealed class BattleMode11ImpulseRopeController : MonoBehaviour, IIndestru
     [SerializeField, Min(0.01f)] private float ropeDeformationSeconds = 0.25f;
     [SerializeField] private RopeTileAnimation[] ropeTileAnimations;
 
+    [Header("Player Impulse")]
+    [SerializeField] private Tilemap indestructibleTilemap;
+    [SerializeField, Min(0.01f)] private float playerHoldToImpulseSeconds = 0.25f;
+    [SerializeField, Min(1)] private int playerImpulseTiles = 8;
+    [SerializeField, Min(0.05f)] private float playerImpulseSeconds = 0.65f;
+    [SerializeField, Range(0.1f, 1f)] private float bombCollisionBoxSize = 0.6f;
+    [SerializeField] private LayerMask bombCollisionMask;
+
     readonly Dictionary<Vector3Int, RunningTileSwap> runningSwaps = new();
+    readonly Dictionary<MovementController, PlayerRopeHoldState> playerHoldStates = new();
+    readonly HashSet<MovementController> playersBeingImpulsed = new();
+    readonly Collider2D[] bombHitBuffer = new Collider2D[8];
 
     sealed class RunningTileSwap
     {
         public Coroutine routine;
         public TileBase originalTile;
         public Tilemap tilemap;
+    }
+
+    sealed class PlayerRopeHoldState
+    {
+        public Vector3Int ropeCell;
+        public Vector2 impactDirection;
+        public float heldSeconds;
+    }
+
+    sealed class PlayerDashVisualState
+    {
+        public AnimatedSpriteRenderer up;
+        public AnimatedSpriteRenderer down;
+        public AnimatedSpriteRenderer left;
     }
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
@@ -64,7 +89,22 @@ public sealed class BattleMode11ImpulseRopeController : MonoBehaviour, IIndestru
     void Awake()
     {
         if (!IsBattleMode11Active())
+        {
             Destroy(gameObject);
+            return;
+        }
+
+        ResolveReferences();
+        ResolveCollisionMasks();
+    }
+
+    void Update()
+    {
+        if (!IsBattleMode11Active())
+            return;
+
+        ResolveReferences();
+        TickPlayerImpulseTriggers();
     }
 
     public bool TryHandleKickedBombBlocked(
@@ -202,6 +242,423 @@ public sealed class BattleMode11ImpulseRopeController : MonoBehaviour, IIndestru
         }
 
         return false;
+    }
+
+    void TickPlayerImpulseTriggers()
+    {
+        var input = PlayerInputManager.Instance;
+        if (input == null || indestructibleTilemap == null)
+        {
+            playerHoldStates.Clear();
+            return;
+        }
+
+        MovementController[] players = FindObjectsByType<MovementController>(FindObjectsInactive.Exclude);
+        HashSet<MovementController> seen = new();
+
+        for (int i = 0; i < players.Length; i++)
+        {
+            MovementController player = players[i];
+            if (player == null)
+                continue;
+
+            seen.Add(player);
+
+            if (!CanStartPlayerImpulse(player))
+            {
+                playerHoldStates.Remove(player);
+                continue;
+            }
+
+            Vector2 inputDirection = GetHeldCardinalDirection(input, player.PlayerId);
+            if (inputDirection == Vector2.zero)
+            {
+                playerHoldStates.Remove(player);
+                continue;
+            }
+
+            if (!TryGetPressedImpulseRope(player, inputDirection, out Vector3Int ropeCell))
+            {
+                playerHoldStates.Remove(player);
+                continue;
+            }
+
+            if (!playerHoldStates.TryGetValue(player, out PlayerRopeHoldState state))
+            {
+                state = new PlayerRopeHoldState();
+                playerHoldStates[player] = state;
+            }
+
+            if (state.ropeCell != ropeCell || state.impactDirection != inputDirection)
+            {
+                state.ropeCell = ropeCell;
+                state.impactDirection = inputDirection;
+                state.heldSeconds = 0f;
+            }
+
+            state.heldSeconds += Time.deltaTime;
+            if (state.heldSeconds < playerHoldToImpulseSeconds)
+                continue;
+
+            playerHoldStates.Remove(player);
+            StartPlayerImpulse(player, ropeCell, inputDirection);
+        }
+
+        PruneMissingPlayers(seen);
+    }
+
+    bool CanStartPlayerImpulse(MovementController player)
+    {
+        return player != null &&
+               !player.isDead &&
+               !player.IsEndingStage &&
+               !player.InputLocked &&
+               !player.ExternalMovementOverride &&
+               !playersBeingImpulsed.Contains(player);
+    }
+
+    bool TryGetPressedImpulseRope(MovementController player, Vector2 inputDirection, out Vector3Int ropeCell)
+    {
+        ropeCell = default;
+
+        if (player == null || indestructibleTilemap == null || inputDirection == Vector2.zero)
+            return false;
+
+        float tileSize = Mathf.Max(0.0001f, player.tileSize);
+        Vector2 position = player.Rigidbody != null ? player.Rigidbody.position : (Vector2)player.transform.position;
+        Vector2 checkWorld = SnapToGrid(position, tileSize) + inputDirection * tileSize;
+        ropeCell = indestructibleTilemap.WorldToCell(checkWorld);
+
+        if (!IsImpulseRopeImpact(ropeCell, inputDirection))
+            return false;
+
+        return indestructibleTilemap.GetTile(ropeCell) != null;
+    }
+
+    void StartPlayerImpulse(MovementController player, Vector3Int ropeCell, Vector2 impactDirection)
+    {
+        if (player == null || playersBeingImpulsed.Contains(player))
+            return;
+
+        StartRopeDeformation(indestructibleTilemap, ropeCell, impactDirection);
+        StartCoroutine(PlayerImpulseRoutine(player, impactDirection));
+    }
+
+    IEnumerator PlayerImpulseRoutine(MovementController player, Vector2 impactDirection)
+    {
+        playersBeingImpulsed.Add(player);
+
+        Vector2 launchDirection = -impactDirection;
+        float tileSize = Mathf.Max(0.0001f, player.tileSize);
+        float duration = Mathf.Max(0.05f, playerImpulseSeconds);
+
+        Rigidbody2D rb = player.Rigidbody;
+        Vector2 start = rb != null ? rb.position : (Vector2)player.transform.position;
+        start = SnapToGrid(start, tileSize);
+
+        Vector2 target = start + launchDirection * (playerImpulseTiles * tileSize);
+        Vector2 lastSafe = start;
+
+        player.SetInputLocked(true, forceIdle: true, idleFacing: launchDirection);
+        player.SetExternalMovementOverride(true);
+        player.SetExplosionInvulnerable(true);
+
+        CharacterHealth[] healths = player.GetComponentsInChildren<CharacterHealth>(true);
+        float invulnerabilitySeconds = duration + 0.1f;
+        for (int i = 0; i < healths.Length; i++)
+        {
+            if (healths[i] != null)
+                healths[i].StartTemporaryInvulnerability(invulnerabilitySeconds, withBlink: false);
+        }
+
+        MountMovementController mountMovement = player.GetComponentInChildren<MountMovementController>(true);
+        if (mountMovement != null)
+            mountMovement.SetExplosionInvulnerable(true);
+
+        PlayerDashVisualState dashVisual = GetPlayerDashVisualState(player);
+        player.SetExternalVisualSuppressed(true);
+        ShowPlayerDashVisual(dashVisual, launchDirection);
+
+        if (rb != null)
+        {
+            rb.linearVelocity = Vector2.zero;
+            rb.position = start;
+        }
+
+        player.transform.position = start;
+
+        float elapsed = 0f;
+        while (elapsed < duration)
+        {
+            if (player == null || player.isDead)
+                break;
+
+            elapsed += Time.fixedDeltaTime;
+
+            float t = Mathf.Clamp01(elapsed / duration);
+            float eased = 1f - Mathf.Pow(1f - t, 2f);
+            Vector2 next = Vector2.Lerp(start, target, eased);
+            next = QuantizeToPixelGrid(next);
+
+            if (HasBombAt(next, tileSize))
+            {
+                MovePlayerTo(player, rb, lastSafe);
+                break;
+            }
+
+            MovePlayerTo(player, rb, next);
+            lastSafe = next;
+
+            yield return new WaitForFixedUpdate();
+        }
+
+        if (player != null)
+        {
+            Vector2 final = rb != null ? rb.position : (Vector2)player.transform.position;
+            final = SnapToGrid(final, tileSize);
+            MovePlayerTo(player, rb, final);
+
+            HidePlayerDashVisual(dashVisual);
+            player.SetExternalVisualSuppressed(false);
+            player.SetExplosionInvulnerable(false);
+            player.SetExternalMovementOverride(false);
+            player.SetInputLocked(false);
+            player.ForceIdleFacing(launchDirection, "BattleMode11ImpulseRope");
+
+            if (mountMovement != null)
+                mountMovement.SetExplosionInvulnerable(false);
+        }
+
+        playersBeingImpulsed.Remove(player);
+    }
+
+    static PlayerDashVisualState GetPlayerDashVisualState(MovementController player)
+    {
+        return new PlayerDashVisualState
+        {
+            up = FindAnimatedChild(player.transform, "DashUp"),
+            down = FindAnimatedChild(player.transform, "DashDown"),
+            left = FindAnimatedChild(player.transform, "DashLeft")
+        };
+    }
+
+    static AnimatedSpriteRenderer FindAnimatedChild(Transform root, string childName)
+    {
+        if (root == null || string.IsNullOrWhiteSpace(childName))
+            return null;
+
+        Transform[] children = root.GetComponentsInChildren<Transform>(true);
+        for (int i = 0; i < children.Length; i++)
+        {
+            Transform child = children[i];
+            if (child != null && child.name == childName && child.TryGetComponent(out AnimatedSpriteRenderer renderer))
+                return renderer;
+        }
+
+        return null;
+    }
+
+    static void ShowPlayerDashVisual(PlayerDashVisualState state, Vector2 direction)
+    {
+        HidePlayerDashVisual(state);
+
+        AnimatedSpriteRenderer target = PickDashRenderer(state, direction, out bool flipX);
+        if (target == null)
+            return;
+
+        target.enabled = true;
+        target.idle = false;
+        target.loop = true;
+        target.CurrentFrame = 0;
+        target.RefreshFrame();
+
+        if (target.TryGetComponent(out SpriteRenderer sr) && sr != null)
+        {
+            sr.enabled = true;
+            sr.flipX = flipX;
+        }
+    }
+
+    static AnimatedSpriteRenderer PickDashRenderer(PlayerDashVisualState state, Vector2 direction, out bool flipX)
+    {
+        flipX = false;
+
+        if (state == null)
+            return null;
+
+        if (direction == Vector2.up)
+            return state.up;
+
+        if (direction == Vector2.down)
+            return state.down;
+
+        if (direction == Vector2.right)
+        {
+            flipX = true;
+            return state.left;
+        }
+
+        return state.left;
+    }
+
+    static void HidePlayerDashVisual(PlayerDashVisualState state)
+    {
+        if (state == null)
+            return;
+
+        SetDashRendererVisible(state.up, false, flipX: false);
+        SetDashRendererVisible(state.down, false, flipX: false);
+        SetDashRendererVisible(state.left, false, flipX: false);
+    }
+
+    static void SetDashRendererVisible(AnimatedSpriteRenderer renderer, bool visible, bool flipX)
+    {
+        if (renderer == null)
+            return;
+
+        renderer.enabled = visible;
+
+        if (renderer.TryGetComponent(out SpriteRenderer sr) && sr != null)
+        {
+            sr.enabled = visible;
+            sr.flipX = flipX;
+        }
+    }
+
+    bool HasBombAt(Vector2 worldPos, float tileSize)
+    {
+        int mask = bombCollisionMask.value != 0 ? bombCollisionMask.value : LayerMask.GetMask("Bomb");
+        if (mask == 0)
+            return false;
+
+        ContactFilter2D filter = new()
+        {
+            useLayerMask = true,
+            layerMask = mask,
+            useTriggers = true
+        };
+
+        int count = Physics2D.OverlapBox(
+            worldPos,
+            Vector2.one * Mathf.Max(0.01f, tileSize * bombCollisionBoxSize),
+            0f,
+            filter,
+            bombHitBuffer);
+
+        for (int i = 0; i < count; i++)
+        {
+            Collider2D hit = bombHitBuffer[i];
+            bombHitBuffer[i] = null;
+
+            if (hit == null)
+                continue;
+
+            GameObject go = hit.attachedRigidbody != null ? hit.attachedRigidbody.gameObject : hit.gameObject;
+            if (go != null && go.TryGetComponent<Bomb>(out _))
+                return true;
+        }
+
+        return false;
+    }
+
+    void PruneMissingPlayers(HashSet<MovementController> seen)
+    {
+        if (playerHoldStates.Count == 0)
+            return;
+
+        List<MovementController> remove = null;
+        foreach (var pair in playerHoldStates)
+        {
+            if (pair.Key != null && seen.Contains(pair.Key))
+                continue;
+
+            remove ??= new List<MovementController>();
+            remove.Add(pair.Key);
+        }
+
+        if (remove == null)
+            return;
+
+        for (int i = 0; i < remove.Count; i++)
+            playerHoldStates.Remove(remove[i]);
+    }
+
+    void ResolveReferences()
+    {
+        if (indestructibleTilemap != null)
+            return;
+
+        GameManager gm = FindAnyObjectByType<GameManager>();
+        if (gm != null && gm.indestructibleTilemap != null)
+        {
+            indestructibleTilemap = gm.indestructibleTilemap;
+            return;
+        }
+
+        Tilemap[] tilemaps = FindObjectsByType<Tilemap>(FindObjectsInactive.Exclude);
+        for (int i = 0; i < tilemaps.Length; i++)
+        {
+            Tilemap tilemap = tilemaps[i];
+            if (tilemap != null && tilemap.name.ToLowerInvariant().Contains("indestruct"))
+            {
+                indestructibleTilemap = tilemap;
+                return;
+            }
+        }
+    }
+
+    void ResolveCollisionMasks()
+    {
+        if (bombCollisionMask.value == 0)
+            bombCollisionMask = LayerMask.GetMask("Bomb");
+    }
+
+    static Vector2 GetHeldCardinalDirection(PlayerInputManager input, int playerId)
+    {
+        bool up = input.Get(playerId, PlayerAction.MoveUp);
+        bool down = input.Get(playerId, PlayerAction.MoveDown);
+        bool left = input.Get(playerId, PlayerAction.MoveLeft);
+        bool right = input.Get(playerId, PlayerAction.MoveRight);
+
+        if (up && !down)
+            return Vector2.up;
+
+        if (down && !up)
+            return Vector2.down;
+
+        if (left && !right)
+            return Vector2.left;
+
+        if (right && !left)
+            return Vector2.right;
+
+        return Vector2.zero;
+    }
+
+    static void MovePlayerTo(MovementController player, Rigidbody2D rb, Vector2 worldPos)
+    {
+        if (rb != null)
+        {
+            rb.linearVelocity = Vector2.zero;
+            rb.MovePosition(worldPos);
+        }
+
+        player.transform.position = worldPos;
+    }
+
+    static Vector2 SnapToGrid(Vector2 worldPos, float tileSize)
+    {
+        worldPos.x = Mathf.Round(worldPos.x / tileSize) * tileSize;
+        worldPos.y = Mathf.Round(worldPos.y / tileSize) * tileSize;
+        return worldPos;
+    }
+
+    static Vector2 QuantizeToPixelGrid(Vector2 worldPos)
+    {
+        const float pixelsPerUnit = 16f;
+        worldPos.x = Mathf.Round(worldPos.x * pixelsPerUnit) / pixelsPerUnit;
+        worldPos.y = Mathf.Round(worldPos.y * pixelsPerUnit) / pixelsPerUnit;
+        return worldPos;
     }
 
     static bool IsImpulseRopeImpact(Vector3Int cell, Vector2 direction)
