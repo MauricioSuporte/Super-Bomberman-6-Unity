@@ -173,7 +173,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 100002, guid: 71b8af9db023483395c592bbb40abee9, type: 3}
       propertyPath: roundTimer
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 100002, guid: 71b8af9db023483395c592bbb40abee9, type: 3}
       propertyPath: victoriesToWinMatch
@@ -870,18 +870,18 @@ PrefabInstance:
     - target: {fileID: 1271289946209990207, guid: b5c6f6d280a44d5fb48be8cd567c1e62, type: 3}
       propertyPath: m_Sprite
       value: 
-      objectReference: {fileID: 21300000, guid: 956432824ec41ee4f9dada2ac877bd1b, type: 3}
+      objectReference: {fileID: 0}
     - target: {fileID: 1271289946209990207, guid: b5c6f6d280a44d5fb48be8cd567c1e62, type: 3}
       propertyPath: m_Enabled
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1909958093259148197, guid: b5c6f6d280a44d5fb48be8cd567c1e62, type: 3}
       propertyPath: m_Sprite
       value: 
-      objectReference: {fileID: 21300000, guid: 33659276ec38d67409e2f708864bfee7, type: 3}
+      objectReference: {fileID: 0}
     - target: {fileID: 1909958093259148197, guid: b5c6f6d280a44d5fb48be8cd567c1e62, type: 3}
       propertyPath: m_Enabled
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 2367064353294770056, guid: b5c6f6d280a44d5fb48be8cd567c1e62, type: 3}
       propertyPath: m_Pivot.x
@@ -998,10 +998,10 @@ PrefabInstance:
     - target: {fileID: 4642470739555972227, guid: b5c6f6d280a44d5fb48be8cd567c1e62, type: 3}
       propertyPath: m_Sprite
       value: 
-      objectReference: {fileID: 21300000, guid: c36fcbd129457ab4596b4cfaef6d8ca3, type: 3}
+      objectReference: {fileID: 0}
     - target: {fileID: 4642470739555972227, guid: b5c6f6d280a44d5fb48be8cd567c1e62, type: 3}
       propertyPath: m_Enabled
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4670846066677549432, guid: b5c6f6d280a44d5fb48be8cd567c1e62, type: 3}
       propertyPath: m_Sprite
@@ -1042,34 +1042,34 @@ PrefabInstance:
     - target: {fileID: 5976918405260490912, guid: b5c6f6d280a44d5fb48be8cd567c1e62, type: 3}
       propertyPath: m_Sprite
       value: 
-      objectReference: {fileID: 21300000, guid: 33659276ec38d67409e2f708864bfee7, type: 3}
+      objectReference: {fileID: 0}
     - target: {fileID: 5976918405260490912, guid: b5c6f6d280a44d5fb48be8cd567c1e62, type: 3}
       propertyPath: m_Enabled
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6264606558984993842, guid: b5c6f6d280a44d5fb48be8cd567c1e62, type: 3}
       propertyPath: m_Sprite
       value: 
-      objectReference: {fileID: 21300000, guid: 33659276ec38d67409e2f708864bfee7, type: 3}
+      objectReference: {fileID: 0}
     - target: {fileID: 6264606558984993842, guid: b5c6f6d280a44d5fb48be8cd567c1e62, type: 3}
       propertyPath: m_Enabled
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6307630273264470252, guid: b5c6f6d280a44d5fb48be8cd567c1e62, type: 3}
       propertyPath: m_Sprite
       value: 
-      objectReference: {fileID: 21300000, guid: 93b68aaed86a2d84cafddc020acecdd9, type: 3}
+      objectReference: {fileID: 0}
     - target: {fileID: 6307630273264470252, guid: b5c6f6d280a44d5fb48be8cd567c1e62, type: 3}
       propertyPath: m_Enabled
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6991349842924055328, guid: b5c6f6d280a44d5fb48be8cd567c1e62, type: 3}
       propertyPath: m_Sprite
       value: 
-      objectReference: {fileID: 21300000, guid: 33659276ec38d67409e2f708864bfee7, type: 3}
+      objectReference: {fileID: 0}
     - target: {fileID: 6991349842924055328, guid: b5c6f6d280a44d5fb48be8cd567c1e62, type: 3}
       propertyPath: m_Enabled
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7126354152096357310, guid: b5c6f6d280a44d5fb48be8cd567c1e62, type: 3}
       propertyPath: m_Sprite
@@ -4946,6 +4946,56 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BattleMode11ImpulseRopeController
   ropeBounceSfx: {fileID: 8300000, guid: 34e755b12d4769f40897fcf5f13757f7, type: 3}
   ropeBounceSfxVolume: 1
+  ropeDeformationSeconds: 0.25
+  ropeTileAnimations:
+  - tile: {fileID: 11400000, guid: 809a7617339c44848ac4c4652a2b112a, type: 2}
+    animationTiles:
+    - {fileID: 11400000, guid: 809a7617339c44848ac4c4652a2b112a, type: 2}
+    - {fileID: 11400000, guid: 9290456ed23e0544e9b62c91e850b568, type: 2}
+    - {fileID: 11400000, guid: 809a7617339c44848ac4c4652a2b112a, type: 2}
+    - {fileID: 11400000, guid: 9290456ed23e0544e9b62c91e850b568, type: 2}
+  - tile: {fileID: 11400000, guid: 056ccb2ef00314b4fa1ac4711b844ab9, type: 2}
+    animationTiles:
+    - {fileID: 11400000, guid: 056ccb2ef00314b4fa1ac4711b844ab9, type: 2}
+    - {fileID: 11400000, guid: 3ee616eab268ba6468a138ecebe9768b, type: 2}
+    - {fileID: 11400000, guid: 056ccb2ef00314b4fa1ac4711b844ab9, type: 2}
+    - {fileID: 11400000, guid: 3ee616eab268ba6468a138ecebe9768b, type: 2}
+  - tile: {fileID: 11400000, guid: 7f085c21289be024ebdc24b3326d8a42, type: 2}
+    animationTiles:
+    - {fileID: 11400000, guid: 7f085c21289be024ebdc24b3326d8a42, type: 2}
+    - {fileID: 11400000, guid: bca5fc7e7324b9a459a05bc468fd69a2, type: 2}
+    - {fileID: 11400000, guid: 7f085c21289be024ebdc24b3326d8a42, type: 2}
+    - {fileID: 11400000, guid: bca5fc7e7324b9a459a05bc468fd69a2, type: 2}
+  - tile: {fileID: 11400000, guid: aa5f0d3015061f649ac433c0d5f56cb0, type: 2}
+    animationTiles:
+    - {fileID: 11400000, guid: aa5f0d3015061f649ac433c0d5f56cb0, type: 2}
+    - {fileID: 11400000, guid: 0feb382e9d40648419800a6f3052bc32, type: 2}
+    - {fileID: 11400000, guid: aa5f0d3015061f649ac433c0d5f56cb0, type: 2}
+    - {fileID: 11400000, guid: 0feb382e9d40648419800a6f3052bc32, type: 2}
+  - tile: {fileID: 11400000, guid: 77fc92754a1660248b6db503e0bc9fd2, type: 2}
+    animationTiles:
+    - {fileID: 11400000, guid: 77fc92754a1660248b6db503e0bc9fd2, type: 2}
+    - {fileID: 11400000, guid: 31940fe288ec5024485f59b670755057, type: 2}
+    - {fileID: 11400000, guid: 77fc92754a1660248b6db503e0bc9fd2, type: 2}
+    - {fileID: 11400000, guid: 31940fe288ec5024485f59b670755057, type: 2}
+  - tile: {fileID: 11400000, guid: c2df3cbca43af484390003cafb53f43b, type: 2}
+    animationTiles:
+    - {fileID: 11400000, guid: c2df3cbca43af484390003cafb53f43b, type: 2}
+    - {fileID: 11400000, guid: 60bf760149cde3d4fa594d069058466f, type: 2}
+    - {fileID: 11400000, guid: c2df3cbca43af484390003cafb53f43b, type: 2}
+    - {fileID: 11400000, guid: 60bf760149cde3d4fa594d069058466f, type: 2}
+  - tile: {fileID: 11400000, guid: 5813c3a41664e4047b7c1163cff4e196, type: 2}
+    animationTiles:
+    - {fileID: 11400000, guid: 5813c3a41664e4047b7c1163cff4e196, type: 2}
+    - {fileID: 11400000, guid: 21723d33b5eb9ef42912d6e10259ac3f, type: 2}
+    - {fileID: 11400000, guid: 5813c3a41664e4047b7c1163cff4e196, type: 2}
+    - {fileID: 11400000, guid: 21723d33b5eb9ef42912d6e10259ac3f, type: 2}
+  - tile: {fileID: 11400000, guid: 7d41b4898633d334398148b39e702355, type: 2}
+    animationTiles:
+    - {fileID: 11400000, guid: 7d41b4898633d334398148b39e702355, type: 2}
+    - {fileID: 11400000, guid: 1e636777d1465da40a3cd3ddee9721e5, type: 2}
+    - {fileID: 11400000, guid: 7d41b4898633d334398148b39e702355, type: 2}
+    - {fileID: 11400000, guid: 1e636777d1465da40a3cd3ddee9721e5, type: 2}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
