@@ -489,7 +489,7 @@ public sealed class BattleMode11ImpulseRopeController : MonoBehaviour, IIndestru
             Vector2 next = Vector2.Lerp(start, target, eased);
             next = QuantizeToPixelGrid(next);
 
-            if (HasBombAt(next, tileSize))
+            if (IsPlayerImpulseBlocked(next, tileSize))
             {
                 MovePlayerTo(player, rb, lastSafe);
                 break;
@@ -776,6 +776,11 @@ public sealed class BattleMode11ImpulseRopeController : MonoBehaviour, IIndestru
             playerHoldStates.Remove(remove[i]);
     }
 
+    bool IsPlayerImpulseBlocked(Vector2 worldPos, float tileSize)
+    {
+        return HasBombAt(worldPos, tileSize) || HasIndestructibleTileAt(worldPos);
+    }
+
     bool HasBombAt(Vector2 worldPos, float tileSize)
     {
         int mask = bombCollisionMask.value != 0 ? bombCollisionMask.value : LayerMask.GetMask("Bomb");
@@ -810,6 +815,15 @@ public sealed class BattleMode11ImpulseRopeController : MonoBehaviour, IIndestru
         }
 
         return false;
+    }
+
+    bool HasIndestructibleTileAt(Vector2 worldPos)
+    {
+        if (indestructibleTilemap == null)
+            return false;
+
+        Vector3Int cell = indestructibleTilemap.WorldToCell(worldPos);
+        return indestructibleTilemap.GetTile(cell) != null;
     }
 
     void ResolveReferences()
