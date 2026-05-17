@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.Serialization;
 using UnityEngine.Tilemaps;
 
 [DisallowMultipleComponent]
@@ -13,7 +14,9 @@ public sealed class BattleMode11ImpulseRopeController : MonoBehaviour, IIndestru
     public sealed class RopeTileAnimation
     {
         public TileBase tile;
-        public TileBase[] animationTiles;
+        [FormerlySerializedAs("animationTiles")]
+        public TileBase[] impulseAnimationTiles;
+        public TileBase[] preparingAnimationTiles;
     }
 
     [Header("SFX")]
@@ -47,6 +50,12 @@ public sealed class BattleMode11ImpulseRopeController : MonoBehaviour, IIndestru
         public Coroutine routine;
         public TileBase originalTile;
         public Tilemap tilemap;
+    }
+
+    enum RopeTileAnimationType
+    {
+        Impulse,
+        Preparing
     }
 
     sealed class PlayerRopeHoldState
@@ -143,14 +152,19 @@ public sealed class BattleMode11ImpulseRopeController : MonoBehaviour, IIndestru
         if (!IsImpulseRopeImpact(blockedCell, dir))
             return false;
 
-        StartRopeDeformation(indestructibleTilemap, blockedCell, dir);
+        StartRopeDeformation(indestructibleTilemap, blockedCell, dir, RopeTileAnimationType.Impulse, ropeDeformationSeconds);
 
         bounceSfx = ropeBounceSfx;
         bounceSfxVolume = ropeBounceSfxVolume;
         return true;
     }
 
-    void StartRopeDeformation(Tilemap tilemap, Vector3Int hitCell, Vector2 impactDirection)
+    void StartRopeDeformation(
+        Tilemap tilemap,
+        Vector3Int hitCell,
+        Vector2 impactDirection,
+        RopeTileAnimationType animationType,
+        float durationSeconds)
     {
         if (tilemap == null)
             return;
@@ -166,10 +180,10 @@ public sealed class BattleMode11ImpulseRopeController : MonoBehaviour, IIndestru
         while (true)
         {
             TileBase originalTile = tilemap.GetTile(cell);
-            if (!TryGetAnimationTiles(originalTile, out TileBase[] animationTiles))
+            if (!TryGetAnimationTiles(originalTile, animationType, out TileBase[] animationTiles))
                 goto NEXT_CELL;
 
-            StartTileSwap(tilemap, cell, originalTile, animationTiles);
+            StartTileSwap(tilemap, cell, originalTile, animationTiles, durationSeconds);
 
         NEXT_CELL:
             if (cell == endCell)
@@ -179,7 +193,7 @@ public sealed class BattleMode11ImpulseRopeController : MonoBehaviour, IIndestru
         }
     }
 
-    void StartTileSwap(Tilemap tilemap, Vector3Int cell, TileBase originalTile, TileBase[] animationTiles)
+    void StartTileSwap(Tilemap tilemap, Vector3Int cell, TileBase originalTile, TileBase[] animationTiles, float durationSeconds)
     {
         if (runningSwaps.TryGetValue(cell, out RunningTileSwap running))
         {
@@ -201,13 +215,13 @@ public sealed class BattleMode11ImpulseRopeController : MonoBehaviour, IIndestru
             tilemap = tilemap
         };
 
-        swap.routine = StartCoroutine(TileSwapRoutine(cell, animationTiles, swap));
+        swap.routine = StartCoroutine(TileSwapRoutine(cell, animationTiles, durationSeconds, swap));
         runningSwaps[cell] = swap;
     }
 
-    IEnumerator TileSwapRoutine(Vector3Int cell, TileBase[] animationTiles, RunningTileSwap swap)
+    IEnumerator TileSwapRoutine(Vector3Int cell, TileBase[] animationTiles, float durationSeconds, RunningTileSwap swap)
     {
-        float duration = Mathf.Max(0.01f, ropeDeformationSeconds);
+        float duration = Mathf.Max(0.01f, durationSeconds);
         float elapsed = 0f;
         int lastFrame = -1;
 
@@ -239,7 +253,7 @@ public sealed class BattleMode11ImpulseRopeController : MonoBehaviour, IIndestru
         runningSwaps.Remove(cell);
     }
 
-    bool TryGetAnimationTiles(TileBase tile, out TileBase[] animationTiles)
+    bool TryGetAnimationTiles(TileBase tile, RopeTileAnimationType animationType, out TileBase[] animationTiles)
     {
         animationTiles = null;
 
@@ -249,10 +263,16 @@ public sealed class BattleMode11ImpulseRopeController : MonoBehaviour, IIndestru
         for (int i = 0; i < ropeTileAnimations.Length; i++)
         {
             RopeTileAnimation entry = ropeTileAnimations[i];
-            if (entry == null || entry.tile != tile || entry.animationTiles == null || entry.animationTiles.Length == 0)
+            if (entry == null || entry.tile != tile)
                 continue;
 
-            animationTiles = entry.animationTiles;
+            animationTiles = animationType == RopeTileAnimationType.Preparing
+                ? entry.preparingAnimationTiles
+                : entry.impulseAnimationTiles;
+
+            if (animationTiles == null || animationTiles.Length == 0)
+                return false;
+
             return true;
         }
 
@@ -371,6 +391,8 @@ public sealed class BattleMode11ImpulseRopeController : MonoBehaviour, IIndestru
         ShowPlayerPreparingVisual(preparingVisual, launchDirection);
 
         float prepareDuration = Mathf.Max(0.01f, playerPreparingSeconds);
+        StartRopeDeformation(indestructibleTilemap, ropeCell, impactDirection, RopeTileAnimationType.Preparing, prepareDuration);
+
         float prepareElapsed = 0f;
         while (prepareElapsed < prepareDuration)
         {
@@ -393,7 +415,7 @@ public sealed class BattleMode11ImpulseRopeController : MonoBehaviour, IIndestru
             yield break;
         }
 
-        StartRopeDeformation(indestructibleTilemap, ropeCell, impactDirection);
+        StartRopeDeformation(indestructibleTilemap, ropeCell, impactDirection, RopeTileAnimationType.Impulse, ropeDeformationSeconds);
         PlayPlayerImpulseSfx(player);
         yield return PlayerImpulseRoutine(player, impactDirection, launchDirection, mountMovement);
     }
