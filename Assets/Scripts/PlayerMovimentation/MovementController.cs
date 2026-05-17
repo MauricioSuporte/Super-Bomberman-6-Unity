@@ -254,6 +254,8 @@ public class MovementController : MonoBehaviour, IKillable
 
     [SerializeField] private bool externalMovementOverride;
     public bool ExternalMovementOverride => externalMovementOverride;
+    private bool externalMovementAllowsHazardDamage;
+    public bool ExternalMovementAllowsHazardDamage => externalMovementAllowsHazardDamage;
     private float externalMovementSpeedMultiplier = 1f;
     private float externalMovementSpeedMultiplierUntil;
 
@@ -2549,7 +2551,7 @@ public class MovementController : MonoBehaviour, IKillable
 
     private void TryApplyHazardDamage(Collider2D other)
     {
-        if (externalMovementOverride)
+        if (externalMovementOverride && !externalMovementAllowsHazardDamage)
             return;
 
         if (isDead || isEndingStage)
@@ -3819,6 +3821,7 @@ public class MovementController : MonoBehaviour, IKillable
 
         if (active)
         {
+            externalMovementAllowsHazardDamage = false;
             direction = Vector2.zero;
             hasInput = false;
             currentAxis = MoveAxis.None;
@@ -3831,6 +3834,7 @@ public class MovementController : MonoBehaviour, IKillable
         }
         else
         {
+            externalMovementAllowsHazardDamage = false;
             direction = Vector2.zero;
             hasInput = false;
             currentAxis = MoveAxis.None;
@@ -3838,6 +3842,11 @@ public class MovementController : MonoBehaviour, IKillable
             if (Rigidbody != null)
                 Rigidbody.linearVelocity = Vector2.zero;
         }
+    }
+
+    public void SetExternalMovementAllowsHazardDamage(bool allowed)
+    {
+        externalMovementAllowsHazardDamage = allowed;
     }
 
     public void ShowSpringLauncherLookUp(Vector2 faceDir)

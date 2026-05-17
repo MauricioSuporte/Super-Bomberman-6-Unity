@@ -4946,6 +4946,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BattleMode11ImpulseRopeController
   ropeBounceSfx: {fileID: 8300000, guid: 34e755b12d4769f40897fcf5f13757f7, type: 3}
   ropeBounceSfxVolume: 1
+  playerImpulseSfx: {fileID: 8300000, guid: c4ba9c82bc0b714479b88cf10f53b834, type: 3}
+  playerImpulseSfxVolume: 1
   ropeDeformationSeconds: 0.25
   ropeTileAnimations:
   - tile: {fileID: 11400000, guid: 809a7617339c44848ac4c4652a2b112a, type: 2}
@@ -4997,13 +4999,16 @@ MonoBehaviour:
     - {fileID: 11400000, guid: 7d41b4898633d334398148b39e702355, type: 2}
     - {fileID: 11400000, guid: 1e636777d1465da40a3cd3ddee9721e5, type: 2}
   indestructibleTilemap: {fileID: 0}
-  playerHoldToImpulseSeconds: 0.25
+  playerHoldToPreparingSeconds: 0.25
+  playerPreparingSeconds: 0.5
   playerImpulseTiles: 8
   playerImpulseSeconds: 0.75
+  preparingMaxOffsetTiles: 0.5
   bombCollisionBoxSize: 0.6
   bombCollisionMask:
     serializedVersion: 2
     m_Bits: 128
+  debugPlayerPreparing: 1
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

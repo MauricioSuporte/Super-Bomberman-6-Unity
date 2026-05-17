@@ -19,6 +19,8 @@ public sealed class BattleMode11ImpulseRopeController : MonoBehaviour, IIndestru
     [Header("SFX")]
     [SerializeField] private AudioClip ropeBounceSfx;
     [SerializeField, Range(0f, 1f)] private float ropeBounceSfxVolume = 1f;
+    [SerializeField] private AudioClip playerImpulseSfx;
+    [SerializeField, Range(0f, 1f)] private float playerImpulseSfxVolume = 1f;
 
     [Header("Rope Deformation")]
     [SerializeField, Min(0.01f)] private float ropeDeformationSeconds = 0.25f;
@@ -26,14 +28,17 @@ public sealed class BattleMode11ImpulseRopeController : MonoBehaviour, IIndestru
 
     [Header("Player Impulse")]
     [SerializeField] private Tilemap indestructibleTilemap;
-    [SerializeField, Min(0.01f)] private float playerHoldToImpulseSeconds = 0.25f;
+    [SerializeField, Min(0.01f)] private float playerHoldToPreparingSeconds = 0.25f;
+    [SerializeField, Min(0.01f)] private float playerPreparingSeconds = 0.5f;
     [SerializeField, Min(1)] private int playerImpulseTiles = 8;
     [SerializeField, Min(0.05f)] private float playerImpulseSeconds = 0.65f;
+    [SerializeField, Min(0f)] private float preparingMaxOffsetTiles = 0.5f;
     [SerializeField, Range(0.1f, 1f)] private float bombCollisionBoxSize = 0.6f;
     [SerializeField] private LayerMask bombCollisionMask;
 
     readonly Dictionary<Vector3Int, RunningTileSwap> runningSwaps = new();
     readonly Dictionary<MovementController, PlayerRopeHoldState> playerHoldStates = new();
+    readonly HashSet<MovementController> playersPreparingImpulse = new();
     readonly HashSet<MovementController> playersBeingImpulsed = new();
     readonly Collider2D[] bombHitBuffer = new Collider2D[8];
 
@@ -56,6 +61,16 @@ public sealed class BattleMode11ImpulseRopeController : MonoBehaviour, IIndestru
         public AnimatedSpriteRenderer up;
         public AnimatedSpriteRenderer down;
         public AnimatedSpriteRenderer left;
+    }
+
+    sealed class PlayerPreparingVisualState
+    {
+        public AnimatedSpriteRenderer up;
+        public AnimatedSpriteRenderer down;
+        public AnimatedSpriteRenderer left;
+        public Vector3 upOriginalLocalPosition;
+        public Vector3 downOriginalLocalPosition;
+        public Vector3 leftOriginalLocalPosition;
     }
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
@@ -297,14 +312,14 @@ public sealed class BattleMode11ImpulseRopeController : MonoBehaviour, IIndestru
             }
 
             state.heldSeconds += Time.deltaTime;
-            if (state.heldSeconds < playerHoldToImpulseSeconds)
+            if (state.heldSeconds < playerHoldToPreparingSeconds)
                 continue;
 
             playerHoldStates.Remove(player);
-            StartPlayerImpulse(player, ropeCell, inputDirection);
+            StartCoroutine(PlayerPreparingImpulseRoutine(player, ropeCell, inputDirection));
         }
 
-        PruneMissingPlayers(seen);
+        PruneMissingPlayerHoldStates(seen);
     }
 
     bool CanStartPlayerImpulse(MovementController player)
@@ -314,6 +329,7 @@ public sealed class BattleMode11ImpulseRopeController : MonoBehaviour, IIndestru
                !player.IsEndingStage &&
                !player.InputLocked &&
                !player.ExternalMovementOverride &&
+               !playersPreparingImpulse.Contains(player) &&
                !playersBeingImpulsed.Contains(player);
     }
 
@@ -335,20 +351,74 @@ public sealed class BattleMode11ImpulseRopeController : MonoBehaviour, IIndestru
         return indestructibleTilemap.GetTile(ropeCell) != null;
     }
 
-    void StartPlayerImpulse(MovementController player, Vector3Int ropeCell, Vector2 impactDirection)
+    IEnumerator PlayerPreparingImpulseRoutine(MovementController player, Vector3Int ropeCell, Vector2 impactDirection)
     {
-        if (player == null || playersBeingImpulsed.Contains(player))
-            return;
+        if (player == null || playersPreparingImpulse.Contains(player) || playersBeingImpulsed.Contains(player))
+            yield break;
+
+        playersPreparingImpulse.Add(player);
+        Vector2 launchDirection = -impactDirection;
+        float tileSize = Mathf.Max(0.0001f, player.tileSize);
+
+        player.SetInputLocked(true, forceIdle: true, idleFacing: launchDirection);
+        player.SetExternalMovementOverride(true);
+        player.SetExternalMovementAllowsHazardDamage(true);
+
+        MountMovementController mountMovement = player.GetComponentInChildren<MountMovementController>(true);
+
+        PlayerPreparingVisualState preparingVisual = GetPlayerPreparingVisualState(player);
+        player.SetExternalVisualSuppressed(true);
+        ShowPlayerPreparingVisual(preparingVisual, launchDirection);
+
+        float prepareDuration = Mathf.Max(0.01f, playerPreparingSeconds);
+        float prepareElapsed = 0f;
+        while (prepareElapsed < prepareDuration)
+        {
+            if (player == null || player.isDead)
+                break;
+
+            prepareElapsed += Time.deltaTime;
+            UpdatePlayerPreparingOffset(preparingVisual, impactDirection, tileSize, prepareElapsed / prepareDuration);
+
+            yield return null;
+        }
+
+        HidePlayerPreparingVisual(preparingVisual);
+        playersPreparingImpulse.Remove(player);
+        player.SetExternalMovementAllowsHazardDamage(false);
+
+        if (player == null || player.isDead)
+        {
+            RestoreDeadPlayerAfterInterruptedImpulse(player, mountMovement);
+            yield break;
+        }
 
         StartRopeDeformation(indestructibleTilemap, ropeCell, impactDirection);
-        StartCoroutine(PlayerImpulseRoutine(player, impactDirection));
+        PlayPlayerImpulseSfx(player);
+        yield return PlayerImpulseRoutine(player, impactDirection, launchDirection, mountMovement);
     }
 
-    IEnumerator PlayerImpulseRoutine(MovementController player, Vector2 impactDirection)
+    void PlayPlayerImpulseSfx(MovementController player)
+    {
+        if (player == null || playerImpulseSfx == null)
+            return;
+
+        AudioSource source = player.GetComponent<AudioSource>();
+        if (source == null)
+            source = player.GetComponentInChildren<AudioSource>(true);
+
+        if (source != null)
+            source.PlayOneShot(playerImpulseSfx, playerImpulseSfxVolume);
+    }
+
+    IEnumerator PlayerImpulseRoutine(
+        MovementController player,
+        Vector2 impactDirection,
+        Vector2 launchDirection,
+        MountMovementController mountMovement)
     {
         playersBeingImpulsed.Add(player);
 
-        Vector2 launchDirection = -impactDirection;
         float tileSize = Mathf.Max(0.0001f, player.tileSize);
         float duration = Mathf.Max(0.05f, playerImpulseSeconds);
 
@@ -359,8 +429,6 @@ public sealed class BattleMode11ImpulseRopeController : MonoBehaviour, IIndestru
         Vector2 target = start + launchDirection * (playerImpulseTiles * tileSize);
         Vector2 lastSafe = start;
 
-        player.SetInputLocked(true, forceIdle: true, idleFacing: launchDirection);
-        player.SetExternalMovementOverride(true);
         player.SetExplosionInvulnerable(true);
 
         CharacterHealth[] healths = player.GetComponentsInChildren<CharacterHealth>(true);
@@ -371,7 +439,6 @@ public sealed class BattleMode11ImpulseRopeController : MonoBehaviour, IIndestru
                 healths[i].StartTemporaryInvulnerability(invulnerabilitySeconds, withBlink: false);
         }
 
-        MountMovementController mountMovement = player.GetComponentInChildren<MountMovementController>(true);
         if (mountMovement != null)
             mountMovement.SetExplosionInvulnerable(true);
 
@@ -419,17 +486,40 @@ public sealed class BattleMode11ImpulseRopeController : MonoBehaviour, IIndestru
             MovePlayerTo(player, rb, final);
 
             HidePlayerDashVisual(dashVisual);
-            player.SetExternalVisualSuppressed(false);
-            player.SetExplosionInvulnerable(false);
-            player.SetExternalMovementOverride(false);
-            player.SetInputLocked(false);
-            player.ForceIdleFacing(launchDirection, "BattleMode11ImpulseRope");
-
-            if (mountMovement != null)
-                mountMovement.SetExplosionInvulnerable(false);
+            RestorePlayerAfterImpulse(player, launchDirection, mountMovement);
         }
 
         playersBeingImpulsed.Remove(player);
+    }
+
+    void RestorePlayerAfterImpulse(MovementController player, Vector2 launchDirection, MountMovementController mountMovement)
+    {
+        if (player == null)
+            return;
+
+        player.SetExternalVisualSuppressed(false);
+        player.SetExternalMovementAllowsHazardDamage(false);
+        player.SetExplosionInvulnerable(false);
+        player.SetExternalMovementOverride(false);
+        player.SetInputLocked(false);
+        player.ForceIdleFacing(launchDirection, "BattleMode11ImpulseRope");
+
+        if (mountMovement != null)
+            mountMovement.SetExplosionInvulnerable(false);
+    }
+
+    void RestoreDeadPlayerAfterInterruptedImpulse(MovementController player, MountMovementController mountMovement)
+    {
+        if (player == null)
+            return;
+
+        player.SetExternalVisualSuppressed(false);
+        player.SetExternalMovementAllowsHazardDamage(false);
+        player.SetExplosionInvulnerable(false);
+        player.SetExternalMovementOverride(false);
+
+        if (mountMovement != null)
+            mountMovement.SetExplosionInvulnerable(false);
     }
 
     static PlayerDashVisualState GetPlayerDashVisualState(MovementController player)
@@ -440,6 +530,22 @@ public sealed class BattleMode11ImpulseRopeController : MonoBehaviour, IIndestru
             down = FindAnimatedChild(player.transform, "DashDown"),
             left = FindAnimatedChild(player.transform, "DashLeft")
         };
+    }
+
+    static PlayerPreparingVisualState GetPlayerPreparingVisualState(MovementController player)
+    {
+        PlayerPreparingVisualState state = new()
+        {
+            up = FindAnimatedChild(player.transform, "PreparingUp"),
+            down = FindAnimatedChild(player.transform, "PreparingDown"),
+            left = FindAnimatedChild(player.transform, "PreparingLeft")
+        };
+
+        state.upOriginalLocalPosition = GetLocalPosition(state.up);
+        state.downOriginalLocalPosition = GetLocalPosition(state.down);
+        state.leftOriginalLocalPosition = GetLocalPosition(state.left);
+
+        return state;
     }
 
     static AnimatedSpriteRenderer FindAnimatedChild(Transform root, string childName)
@@ -525,6 +631,129 @@ public sealed class BattleMode11ImpulseRopeController : MonoBehaviour, IIndestru
         }
     }
 
+    static void ShowPlayerPreparingVisual(PlayerPreparingVisualState state, Vector2 direction)
+    {
+        HidePlayerPreparingVisual(state);
+
+        AnimatedSpriteRenderer target = PickPreparingRenderer(state, direction, out bool flipX);
+        if (target == null)
+            return;
+
+        target.enabled = true;
+        target.idle = false;
+        target.loop = true;
+        target.CurrentFrame = 0;
+        target.RefreshFrame();
+
+        if (target.TryGetComponent(out SpriteRenderer sr) && sr != null)
+        {
+            sr.enabled = true;
+            sr.flipX = flipX;
+        }
+    }
+
+    static AnimatedSpriteRenderer PickPreparingRenderer(PlayerPreparingVisualState state, Vector2 direction, out bool flipX)
+    {
+        flipX = false;
+
+        if (state == null)
+            return null;
+
+        if (direction == Vector2.up)
+            return state.up;
+
+        if (direction == Vector2.down)
+            return state.down;
+
+        if (direction == Vector2.right)
+        {
+            flipX = true;
+            return state.left;
+        }
+
+        return state.left;
+    }
+
+    static void HidePlayerPreparingVisual(PlayerPreparingVisualState state)
+    {
+        if (state == null)
+            return;
+
+        RestorePreparingLocalPositions(state);
+        SetDashRendererVisible(state.up, false, flipX: false);
+        SetDashRendererVisible(state.down, false, flipX: false);
+        SetDashRendererVisible(state.left, false, flipX: false);
+    }
+
+    void UpdatePlayerPreparingOffset(
+        PlayerPreparingVisualState preparingVisual,
+        Vector2 offsetDirection,
+        float tileSize,
+        float normalizedProgress)
+    {
+        if (preparingVisual == null)
+            return;
+
+        AnimatedSpriteRenderer target = PickPreparingRenderer(preparingVisual, -offsetDirection, out _);
+        if (target == null)
+            return;
+
+        float progress = Mathf.Clamp01(normalizedProgress);
+        float distance = Mathf.Max(0f, preparingMaxOffsetTiles) * Mathf.Max(0.0001f, tileSize) * progress;
+
+        Vector3 original = GetPreparingOriginalLocalPosition(preparingVisual, target);
+        target.transform.localPosition = original + (Vector3)(offsetDirection * distance);
+    }
+
+    static Vector3 GetPreparingOriginalLocalPosition(PlayerPreparingVisualState state, AnimatedSpriteRenderer renderer)
+    {
+        if (renderer == state.up)
+            return state.upOriginalLocalPosition;
+
+        if (renderer == state.down)
+            return state.downOriginalLocalPosition;
+
+        return state.leftOriginalLocalPosition;
+    }
+
+    static void RestorePreparingLocalPositions(PlayerPreparingVisualState state)
+    {
+        RestoreLocalPosition(state.up, state.upOriginalLocalPosition);
+        RestoreLocalPosition(state.down, state.downOriginalLocalPosition);
+        RestoreLocalPosition(state.left, state.leftOriginalLocalPosition);
+    }
+
+    static Vector3 GetLocalPosition(AnimatedSpriteRenderer renderer)
+        => renderer != null ? renderer.transform.localPosition : Vector3.zero;
+
+    static void RestoreLocalPosition(AnimatedSpriteRenderer renderer, Vector3 localPosition)
+    {
+        if (renderer != null)
+            renderer.transform.localPosition = localPosition;
+    }
+
+    void PruneMissingPlayerHoldStates(HashSet<MovementController> seen)
+    {
+        if (playerHoldStates.Count == 0)
+            return;
+
+        List<MovementController> remove = null;
+        foreach (var pair in playerHoldStates)
+        {
+            if (pair.Key != null && seen.Contains(pair.Key))
+                continue;
+
+            remove ??= new List<MovementController>();
+            remove.Add(pair.Key);
+        }
+
+        if (remove == null)
+            return;
+
+        for (int i = 0; i < remove.Count; i++)
+            playerHoldStates.Remove(remove[i]);
+    }
+
     bool HasBombAt(Vector2 worldPos, float tileSize)
     {
         int mask = bombCollisionMask.value != 0 ? bombCollisionMask.value : LayerMask.GetMask("Bomb");
@@ -559,28 +788,6 @@ public sealed class BattleMode11ImpulseRopeController : MonoBehaviour, IIndestru
         }
 
         return false;
-    }
-
-    void PruneMissingPlayers(HashSet<MovementController> seen)
-    {
-        if (playerHoldStates.Count == 0)
-            return;
-
-        List<MovementController> remove = null;
-        foreach (var pair in playerHoldStates)
-        {
-            if (pair.Key != null && seen.Contains(pair.Key))
-                continue;
-
-            remove ??= new List<MovementController>();
-            remove.Add(pair.Key);
-        }
-
-        if (remove == null)
-            return;
-
-        for (int i = 0; i < remove.Count; i++)
-            playerHoldStates.Remove(remove[i]);
     }
 
     void ResolveReferences()
