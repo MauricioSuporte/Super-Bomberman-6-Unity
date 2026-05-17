@@ -96,6 +96,21 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
 
     public bool SuddenDeathStarted => suddenDeathStarted;
 
+    public bool IsActiveSuddenDeathCell(Vector3Int cell)
+    {
+        return indestructibleTilemap != null &&
+               damageCoroutines.ContainsKey(cell) &&
+               indestructibleTilemap.HasTile(cell);
+    }
+
+    public bool IsActiveSuddenDeathWorldPosition(Vector2 worldPosition)
+    {
+        if (indestructibleTilemap == null)
+            return false;
+
+        return IsActiveSuddenDeathCell(indestructibleTilemap.WorldToCell(worldPosition));
+    }
+
     enum SuddenDeathDropPattern
     {
         Spiral = 0,
@@ -636,6 +651,7 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
                 GameManager.Instance.OnIndestructiblePlaced(cell);
 
             NotifyBattleMode6RedirectionIndestructiblePlaced(cell);
+            NotifyBattleMode9MinecartIndestructiblePlaced(cell);
 
             LogVisual($"DropTileRoutine: tile aplicado em {cell}");
         }
@@ -672,6 +688,16 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
         var controllers = FindObjectsByType<BattleMode6RedirectionController>(FindObjectsInactive.Exclude);
         for (int i = 0; i < controllers.Length; i++)
             controllers[i]?.OnIndestructiblePlaced(cell);
+    }
+
+    void NotifyBattleMode9MinecartIndestructiblePlaced(Vector3Int cell)
+    {
+        if (!string.Equals(UnityEngine.SceneManagement.SceneManager.GetActiveScene().name, "BattleMode_9", System.StringComparison.Ordinal))
+            return;
+
+        var controllers = FindObjectsByType<BattleMode9MinecartController>(FindObjectsInactive.Exclude);
+        for (int i = 0; i < controllers.Length; i++)
+            controllers[i]?.OnSuddenDeathIndestructiblePlaced(cell);
     }
 
     IEnumerator AnimateDropVisuals(Vector3Int cell, GameObject visual, GameObject shadow, Vector3 start, Vector3 end)

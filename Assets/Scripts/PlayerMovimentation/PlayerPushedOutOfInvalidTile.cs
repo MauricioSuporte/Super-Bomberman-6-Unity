@@ -30,9 +30,6 @@ public sealed class PlayerPushedOutOfInvalidTile : MonoBehaviour
     [SerializeField] private AudioClip bounceSfx;
     [SerializeField, Range(0f, 1f)] private float bounceSfxVolume = 1f;
 
-    [Header("Debug")]
-    [SerializeField] private bool debugBounceLogs = true;
-
     [Header("Stage Wrap")]
     [SerializeField] private Tilemap stageBoundsTilemap;
 
@@ -42,6 +39,7 @@ public sealed class PlayerPushedOutOfInvalidTile : MonoBehaviour
     private AbilitySystem _abilitySystem;
     private AudioSource _audio;
     private MountVisualController _mountVisual;
+    private BattleSuddenDeathController _suddenDeathController;
 
     private Coroutine _resolveRoutine;
     private SpriteRenderer _bouncingLeftSpriteRenderer;
@@ -76,22 +74,16 @@ public sealed class PlayerPushedOutOfInvalidTile : MonoBehaviour
 
     public void NotifyExternalPushed(Vector2 pushDir)
     {
-        Vector2 originalDir = pushDir;
         pushDir = NormalizeCardinal(pushDir);
         if (pushDir == Vector2.zero)
-        {
-            LogBounce($"NotifyExternalPushed ignored invalid dir original:{FormatVec(originalDir)}");
             return;
-        }
 
         if (_resolveRoutine != null)
         {
-            LogBounce($"NotifyExternalPushed restarting active bounce dir:{FormatVec(pushDir)}");
             StopCoroutine(_resolveRoutine);
             ResetResolveState();
         }
 
-        LogBounce($"NotifyExternalPushed start dir:{FormatVec(pushDir)} rb:{FormatVec(_rb != null ? _rb.position : (Vector2)transform.position)} transform:{FormatVec(transform.position)}");
         _resolveRoutine = StartCoroutine(ResolveIfStuckRoutine(pushDir));
     }
 
@@ -122,14 +114,12 @@ public sealed class PlayerPushedOutOfInvalidTile : MonoBehaviour
 
         if (_move.isDead)
         {
-            LogBounce("Resolve aborted: player is dead");
             _resolveRoutine = null;
             yield break;
         }
 
         float tileSize = Mathf.Max(0.0001f, _move.tileSize);
         Vector2 pos = _rb.position;
-        Vector2 beforeSnap = pos;
 
         if (snapToGridBeforeResolve)
             pos = SnapToGrid(pos, tileSize);
@@ -137,24 +127,24 @@ public sealed class PlayerPushedOutOfInvalidTile : MonoBehaviour
         _rb.position = pos;
         transform.position = pos;
 
-        LogBounce($"Resolve check start beforeSnap:{FormatVec(beforeSnap)} snapped:{FormatVec(pos)} dir:{FormatVec(pushDir)} tileSize:{tileSize:F3} obstacleMask:{_move.obstacleMask.value}");
-
         if (IsOnHole(pos))
         {
-            LogBounce($"Resolve landing is hole at:{FormatVec(pos)} -> KillByHole");
             _move.KillByHole();
             _resolveRoutine = null;
             yield break;
         }
 
-        if (!IsBlockedAtPosition(pos, pushDir, out string initialBlockReason))
+        if (IsActiveSuddenDeathIndestructibleAt(pos))
         {
-            LogBounce($"Resolve no bounce: initial tile safe at:{FormatVec(pos)}");
             _resolveRoutine = null;
             yield break;
         }
 
-        LogBounce($"Resolve bounce required at:{FormatVec(pos)} reason:{initialBlockReason}");
+        if (!IsBlockedAtPosition(pos, pushDir))
+        {
+            _resolveRoutine = null;
+            yield break;
+        }
 
         bool prevColliderEnabled = _col.enabled;
 
@@ -177,7 +167,6 @@ public sealed class PlayerPushedOutOfInvalidTile : MonoBehaviour
         {
             if (IsOnHole(cur))
             {
-                LogBounce($"Resolve hit hole during step:{step} at:{FormatVec(cur)} -> KillByHole");
                 ClearActiveBounceVisual(Vector2.zero);
                 _col.enabled = prevColliderEnabled;
                 _move.KillByHole();
@@ -185,9 +174,13 @@ public sealed class PlayerPushedOutOfInvalidTile : MonoBehaviour
                 yield break;
             }
 
-            if (!IsBlockedAtPosition(cur, pushDir, out string blockReason))
+            if (IsActiveSuddenDeathIndestructibleAt(cur))
             {
-                LogBounce($"Resolve found safe tile at step:{step} pos:{FormatVec(cur)}");
+                break;
+            }
+
+            if (!IsBlockedAtPosition(cur, pushDir))
+            {
                 break;
             }
 
@@ -195,11 +188,8 @@ public sealed class PlayerPushedOutOfInvalidTile : MonoBehaviour
 
             if (!TryStepWithWrap(cur, pushDir, tileSize, out Vector2 next, out bool didWrap))
             {
-                LogBounce($"Resolve aborted: unable to calculate next tile from:{FormatVec(cur)} dir:{FormatVec(pushDir)}");
                 break;
             }
-
-            LogBounce($"Resolve step:{step + 1} from:{FormatVec(cur)} to:{FormatVec(next)} wrap:{didWrap} reason:{blockReason}");
 
             if (didWrap)
             {
@@ -210,7 +200,6 @@ public sealed class PlayerPushedOutOfInvalidTile : MonoBehaviour
 
             if (IsOnHole(next))
             {
-                LogBounce($"Resolve next tile is hole at:{FormatVec(next)}; playing final hop then KillByHole");
                 yield return MoveOneTile(cur, next, travelTime, pushDir, tileSize);
                 ClearActiveBounceVisual(pushDir);
                 _col.enabled = prevColliderEnabled;
@@ -234,7 +223,6 @@ public sealed class PlayerPushedOutOfInvalidTile : MonoBehaviour
         if (lockInputWhileResolving && !_move.isDead)
             _move.SetInputLocked(false, true);
 
-        LogBounce($"Resolve finished final:{FormatVec(cur)}");
         _resolveRoutine = null;
     }
 
@@ -260,7 +248,6 @@ public sealed class PlayerPushedOutOfInvalidTile : MonoBehaviour
 
         _rb.position = end;
         transform.position = end;
-        LogBounce($"Resolve landed tile:{FormatVec(end)} renderer:{GetActiveBounceVisualName(direction)}");
     }
 
     private void TeleportWrappedBounce(Vector2 position, Vector2 direction)
@@ -268,7 +255,6 @@ public sealed class PlayerPushedOutOfInvalidTile : MonoBehaviour
         SetActiveBounceVisual(direction);
         _rb.position = position;
         transform.position = position;
-        LogBounce($"Resolve wrapped to:{FormatVec(position)} renderer:{GetActiveBounceVisualName(direction)}");
     }
 
     private void SetActiveBounceVisual(Vector2 direction)
@@ -459,6 +445,21 @@ public sealed class PlayerPushedOutOfInvalidTile : MonoBehaviour
         return false;
     }
 
+    private bool IsActiveSuddenDeathIndestructibleAt(Vector2 worldPosition)
+    {
+        BattleSuddenDeathController controller = GetSuddenDeathController();
+        return controller != null && controller.IsActiveSuddenDeathWorldPosition(worldPosition);
+    }
+
+    private BattleSuddenDeathController GetSuddenDeathController()
+    {
+        if (_suddenDeathController != null && _suddenDeathController.isActiveAndEnabled)
+            return _suddenDeathController;
+
+        _suddenDeathController = FindAnyObjectByType<BattleSuddenDeathController>();
+        return _suddenDeathController;
+    }
+
     private void EnsureStageBounds()
     {
         if (_stageBoundsReady && stageBoundsTilemap != null)
@@ -592,7 +593,6 @@ public sealed class PlayerPushedOutOfInvalidTile : MonoBehaviour
             next = new Vector2(cell.x * tileSize, cell.y * tileSize);
         }
 
-        LogBounce($"Resolve wrap edge raw:{FormatVec(raw)} cell:({cell.x},{cell.y}) bounds:x[{minX},{maxX}] y[{minY},{maxY}] next:{FormatVec(next)}");
         return true;
     }
 
@@ -650,15 +650,6 @@ public sealed class PlayerPushedOutOfInvalidTile : MonoBehaviour
         _audio.clip = bounceSfx;
         _audio.volume = bounceSfxVolume;
         _audio.Play();
-    }
-
-    private void LogBounce(string message)
-    {
-        if (!debugBounceLogs)
-            return;
-
-        string player = _move != null ? $"P{_move.PlayerId}" : name;
-        Debug.Log($"[PlayerBounce] {player} {message}", this);
     }
 
     private static string FormatVec(Vector2 value)

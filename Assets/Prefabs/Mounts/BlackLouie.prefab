@@ -1054,7 +1054,6 @@ MonoBehaviour:
   louieHeadOnlyUp: {fileID: 8074796914221462390}
   louieHeadOnlyDown: {fileID: 6154387953960633939}
   louieHeadOnlyLeft: {fileID: 6500980151359595365}
-  debugHeadOnlyOffsets: 1
   louieJumpAscendUp: {fileID: 0}
   louieJumpAscendDown: {fileID: 0}
   louieJumpAscendLeft: {fileID: 0}

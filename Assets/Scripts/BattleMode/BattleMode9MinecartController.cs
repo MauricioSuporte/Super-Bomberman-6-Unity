@@ -82,13 +82,12 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
     [SerializeField] private AudioClip rideLoopSfx;
     [SerializeField, Range(0f, 1f)] private float sfxVolume = 1f;
 
-    [Header("Debug")]
-    [SerializeField] private bool debugPlayerBounceAfterExit = true;
-
     Tilemap groundTilemap;
     Tilemap destructibleTilemap;
+    Tilemap indestructibleTilemap;
     AudioSource audioSource;
     BombController destructibleClearer;
+    BattleSuddenDeathController suddenDeathController;
 
     readonly List<Vector3Int> railPath = new();
     readonly HashSet<MovementController> activeRiders = new();
@@ -103,6 +102,7 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
     MovementController currentRider;
     float cartMovePixelAccumulator;
     bool rideLoopPausedForGamePause;
+    bool cartDestroyedBySuddenDeath;
 
     sealed class RideState
     {
@@ -126,6 +126,12 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
         public AnimatedSpriteRenderer headRight;
         public Vector2 startFacing;
         public Dictionary<SpriteRenderer, int> previousSortingOrders;
+        public bool forcedExit;
+        public Vector2 forcedExitWorld;
+        public Vector2 forcedExitFacing;
+        public Vector3Int forcedExitCell;
+        public bool forcedExitOnSuddenDeathIndestructible;
+        public bool cartDestroyedBySuddenDeath;
     }
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
@@ -173,7 +179,7 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
         SnapCartToStation();
         currentCartDirection = Vector2.right;
         UpdateCartVisual(currentCartDirection, moving: false);
-        SetCartVisible(!hideCartWhenIdleAtStation);
+        SetCartVisible(!cartDestroyedBySuddenDeath && !hideCartWhenIdleAtStation);
     }
 
     void OnDisable()
@@ -205,6 +211,12 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
 
         ResolveReferences();
         SyncRideLoopSfxWithPause();
+
+        if (cartDestroyedBySuddenDeath)
+        {
+            SetCartVisible(false);
+            return;
+        }
 
         if (railPath.Count == 0)
             BuildRailPath();
@@ -284,17 +296,30 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
 
             yield return MoveCartAroundRail(mover, state);
 
+            Vector2 actualExitWorld = state.forcedExit ? state.forcedExitWorld : exitWorld;
+            Vector2 actualExitFacing = state.forcedExit ? state.forcedExitFacing : exitFacing;
+            Vector2 exitStartWorld = state.forcedExit && mover != null && mover.Rigidbody != null
+                ? mover.Rigidbody.position
+                : stationWorld;
+
             StopRideLoopSfx();
-            PlayOneShot(exitSfx);
             HideRiderHeadOnly(state);
             SetRideCompanionsVisible(state, true);
 
-            yield return PlayEnterExitVisualRoutine(mover, state, stationWorld, exitWorld, exitFacing, exitAnimationSeconds, "Exit");
+            if (!state.cartDestroyedBySuddenDeath)
+            {
+                PlayOneShot(exitSfx);
+                yield return PlayEnterExitVisualRoutine(mover, state, exitStartWorld, actualExitWorld, actualExitFacing, exitAnimationSeconds, "Exit");
+            }
+            else
+            {
+                SetCartVisible(false);
+            }
 
             if (mover != null)
             {
-                mover.SnapToWorldPoint(exitWorld, roundToGrid: false);
-                TryResolvePlayerBounceAfterExit(mover, exitFacing, exitWorld);
+                mover.SnapToWorldPoint(actualExitWorld, roundToGrid: false);
+                TryResolvePlayerBounceAfterExit(mover, actualExitFacing, actualExitWorld);
             }
 
             if (state.eggQueue != null)
@@ -306,15 +331,23 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
             RestoreRideState(mover, state);
             if (mover != null)
             {
-                mover.ForceFacingDirection(exitFacing);
-                ForceMountedVisualFacing(mover, exitFacing);
+                Vector2 finalFacing = state.forcedExit ? state.forcedExitFacing : exitFacing;
+                mover.ForceFacingDirection(finalFacing);
+                ForceMountedVisualFacing(mover, finalFacing);
                 RestoreMountedHeadOnlyOffsets(state);
             }
             activeStates.Remove(mover);
             currentRider = null;
-            SetCartWorldPosition(stationWorld);
-            UpdateCartVisual(Vector2.right, moving: false);
-            SetCartVisible(!hideCartWhenIdleAtStation);
+            if (!cartDestroyedBySuddenDeath)
+            {
+                SetCartWorldPosition(stationWorld);
+                UpdateCartVisual(Vector2.right, moving: false);
+                SetCartVisible(!hideCartWhenIdleAtStation);
+            }
+            else
+            {
+                SetCartVisible(false);
+            }
             StartCoroutine(ReleaseRiderAfterGrace(mover));
         }
     }
@@ -322,22 +355,15 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
     void TryResolvePlayerBounceAfterExit(MovementController mover, Vector2 exitFacing, Vector2 exitWorld)
     {
         if (mover == null)
-        {
-            LogMinecartBounce("skip: mover null after exit");
             return;
-        }
 
         Vector2 dir = Cardinalize(exitFacing);
         if (dir == Vector2.zero)
             dir = Vector2.right;
 
         if (!mover.TryGetComponent<PlayerPushedOutOfInvalidTile>(out var resolver) || resolver == null)
-        {
-            LogMinecartBounce($"skip: no PlayerPushedOutOfInvalidTile on {mover.name} pos:{FormatVec(exitWorld)} dir:{FormatVec(dir)}");
             return;
-        }
 
-        LogMinecartBounce($"notify player bounce player:P{mover.PlayerId} pos:{FormatVec(exitWorld)} dir:{FormatVec(dir)}");
         resolver.NotifyExternalPushed(dir);
     }
 
@@ -384,11 +410,17 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
 
         for (int i = 1; i < railPath.Count; i++)
         {
+            if (state != null && state.cartDestroyedBySuddenDeath)
+                yield break;
+
             Vector2 start = QuantizeToPixelGrid(GetCellCenter(railPath[i - 1]));
             Vector2 end = QuantizeToPixelGrid(GetCellCenter(railPath[i]));
             Vector2 dir = Cardinalize(end - start);
             if (dir == Vector2.zero)
                 dir = currentCartDirection;
+
+            if (TryForceExitBeforeIndestructibleRailCell(state, railPath[i], end, dir, "segment-start"))
+                yield break;
 
             currentCartDirection = dir;
             UpdateCartVisual(dir, moving: true);
@@ -400,11 +432,17 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
 
             while (Vector2.Distance(position, end) > PixelWorldStep * 0.5f)
             {
+                if (state != null && state.cartDestroyedBySuddenDeath)
+                    yield break;
+
                 if (GamePauseController.IsPaused)
                 {
                     yield return fixedWait;
                     continue;
                 }
+
+                if (TryForceExitBeforeIndestructibleRailCell(state, railPath[i], end, dir, "segment-moving"))
+                    yield break;
 
                 float moveWorld = GetQuantizedCartMoveWorld(speed * Time.fixedDeltaTime);
                 if (moveWorld > 0f)
@@ -424,6 +462,64 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
         }
 
         UpdateCartVisual(currentCartDirection, moving: false);
+    }
+
+    bool TryForceExitBeforeIndestructibleRailCell(
+        RideState state,
+        Vector3Int blockedCell,
+        Vector2 exitWorld,
+        Vector2 exitFacing,
+        string reason)
+    {
+        if (state == null || !HasIndestructibleAt(blockedCell))
+            return false;
+
+        Vector2 facing = Cardinalize(exitFacing);
+        if (facing == Vector2.zero)
+            facing = currentCartDirection != Vector2.zero ? currentCartDirection : Vector2.right;
+
+        bool suddenDeathIndestructible = IsActiveSuddenDeathIndestructibleCell(blockedCell);
+        state.forcedExit = true;
+        state.forcedExitCell = blockedCell;
+        state.forcedExitWorld = exitWorld;
+        state.forcedExitFacing = facing;
+        state.forcedExitOnSuddenDeathIndestructible = suddenDeathIndestructible;
+
+        currentCartDirection = facing;
+        UpdateCartVisual(facing, moving: false);
+
+        return true;
+    }
+
+    public void OnSuddenDeathIndestructiblePlaced(Vector3Int cell)
+    {
+        if (cartDestroyedBySuddenDeath)
+            return;
+
+        ResolveReferences();
+
+        Vector3Int cartCell = WorldToCell(transform.position);
+        if (cartCell != cell)
+            return;
+
+        cartDestroyedBySuddenDeath = true;
+        StopRideLoopSfx();
+        SetCartVisible(false);
+
+        if (currentRider == null || !activeStates.TryGetValue(currentRider, out RideState state) || state == null)
+            return;
+
+        Vector2 exitWorld = GetCellCenter(cell);
+        Vector2 facing = currentCartDirection != Vector2.zero ? Cardinalize(currentCartDirection) : Vector2.right;
+
+        state.forcedExit = true;
+        state.forcedExitCell = cell;
+        state.forcedExitWorld = exitWorld;
+        state.forcedExitFacing = facing;
+        state.forcedExitOnSuddenDeathIndestructible = true;
+        state.cartDestroyedBySuddenDeath = true;
+
+        MoveRiderWithCart(currentRider, exitWorld);
     }
 
     RideState CaptureAndApplyRideState(MovementController mover)
@@ -704,6 +800,7 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
                 continue;
 
             TryDamagePlayer(hit);
+            TryDamageWorldMount(hit);
             TryDestroyItem(hit, direction);
             TryExplodeBomb(hit, position);
         }
@@ -736,6 +833,27 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
             health.TakeDamage(damage, fromExplosion: false);
         else
             target.Kill();
+    }
+
+    void TryDamageWorldMount(Collider2D hit)
+    {
+        MountWorldPickup pickup =
+            hit.GetComponent<MountWorldPickup>() ??
+            hit.GetComponentInParent<MountWorldPickup>() ??
+            hit.GetComponentInChildren<MountWorldPickup>();
+
+        if (pickup == null)
+            return;
+
+        CharacterHealth health =
+            pickup.GetComponent<CharacterHealth>() ??
+            pickup.GetComponentInParent<CharacterHealth>() ??
+            pickup.GetComponentInChildren<CharacterHealth>();
+
+        if (health == null || health.life <= 0 || health.IsInvulnerable)
+            return;
+
+        health.TakeDamage(damage, fromExplosion: false);
     }
 
     void TryDestroyItem(Collider2D hit, Vector2 direction)
@@ -890,8 +1008,32 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
             groundTilemap = FindTilemapByName("ground");
         if (destructibleTilemap == null)
             destructibleTilemap = FindTilemapByName("destruct");
+        if (indestructibleTilemap == null)
+            indestructibleTilemap = FindIndestructibleTilemap();
         if (destructibleClearer == null)
             destructibleClearer = FindAnyObjectByType<BombController>();
+        if (suddenDeathController == null)
+            suddenDeathController = FindAnyObjectByType<BattleSuddenDeathController>();
+    }
+
+    Tilemap FindIndestructibleTilemap()
+    {
+        var tilemaps = FindObjectsByType<Tilemap>(FindObjectsInactive.Exclude);
+        for (int i = 0; i < tilemaps.Length; i++)
+        {
+            Tilemap tm = tilemaps[i];
+            if (tm == null)
+                continue;
+
+            if (tm.CompareTag("Indestructibles"))
+                return tm;
+
+            string lowerName = tm.name.ToLowerInvariant();
+            if (lowerName.Contains("indestruct"))
+                return tm;
+        }
+
+        return null;
     }
 
     Tilemap FindTilemapByName(string namePart)
@@ -905,6 +1047,22 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
         }
 
         return null;
+    }
+
+    bool HasIndestructibleAt(Vector3Int cell)
+    {
+        if (indestructibleTilemap == null)
+            indestructibleTilemap = FindIndestructibleTilemap();
+
+        return indestructibleTilemap != null && indestructibleTilemap.HasTile(cell);
+    }
+
+    bool IsActiveSuddenDeathIndestructibleCell(Vector3Int cell)
+    {
+        if (suddenDeathController == null)
+            suddenDeathController = FindAnyObjectByType<BattleSuddenDeathController>();
+
+        return suddenDeathController != null && suddenDeathController.IsActiveSuddenDeathCell(cell);
     }
 
     void CacheHeadOnlyRenderers(MovementController mover, RideState state)
@@ -1572,19 +1730,6 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
 
         Vector2 oppositeExit = -Cardinalize(exitFacing);
         return oppositeExit != Vector2.zero ? oppositeExit : Vector2.left;
-    }
-
-    void LogMinecartBounce(string message)
-    {
-        if (!debugPlayerBounceAfterExit)
-            return;
-
-        Debug.Log($"[MinecartBounce] {message}", this);
-    }
-
-    static string FormatVec(Vector2 value)
-    {
-        return $"({value.x:F2},{value.y:F2})";
     }
 
     static void ApplyMountedPlayerHopSprite(MovementController mover, RideState state, Vector2 facing, bool preferHeadOnly)
