@@ -921,6 +921,62 @@ public class MovementController : MonoBehaviour, IKillable
         return mountedSpriteDown != null ? mountedSpriteDown : spriteRendererDown;
     }
 
+    public void ApplyMountedBounceVisual(Vector2 faceDir, bool preferHeadOnly)
+    {
+        if (!isMounted)
+            return;
+
+        DisableAllFootSprites();
+        DisableAllMountedSprites();
+
+        AnimatedSpriteRenderer target = preferHeadOnly
+            ? PickMountedHeadOnlyRenderer(faceDir)
+            : PickMountedRenderer(faceDir);
+
+        if (target == null)
+            target = PickMountedRenderer(faceDir);
+
+        if (target == null)
+            return;
+
+        Vector2 face = GetFacing(faceDir);
+        if (face != Vector2.zero)
+            SetFacingDirection(face, "ApplyMountedBounceVisual");
+
+        target.idle = true;
+        target.loop = false;
+        target.pingPong = false;
+        SetAnimEnabled(target, true);
+        activeSpriteRenderer = target;
+        target.RefreshFrame();
+        ApplyFlipForHorizontal(facingDirection);
+    }
+
+    public void ClearMountedBounceVisual()
+    {
+        DisableAllMountedSprites();
+    }
+
+    private AnimatedSpriteRenderer PickMountedHeadOnlyRenderer(Vector2 dir)
+    {
+        Vector2 face = GetFacing(dir);
+        bool hasHead =
+            headOnlyUp != null ||
+            headOnlyDown != null ||
+            headOnlyLeft != null ||
+            headOnlyRight != null;
+
+        if (!hasHead)
+            return null;
+
+        if (face == Vector2.up) return headOnlyUp ?? headOnlyDown ?? headOnlyLeft ?? headOnlyRight;
+        if (face == Vector2.down) return headOnlyDown ?? headOnlyUp ?? headOnlyLeft ?? headOnlyRight;
+        if (face == Vector2.left) return headOnlyLeft ?? headOnlyDown ?? headOnlyUp ?? headOnlyRight;
+        if (face == Vector2.right) return headOnlyRight ?? headOnlyLeft ?? headOnlyDown ?? headOnlyUp;
+
+        return headOnlyDown ?? headOnlyUp ?? headOnlyLeft ?? headOnlyRight;
+    }
+
     public AnimatedSpriteRenderer GetMountedDownRendererForExternalStun(bool preferHeadOnly)
     {
         if (preferHeadOnly && useHeadOnlyWhenMountedRuntime && headOnlyDown != null)

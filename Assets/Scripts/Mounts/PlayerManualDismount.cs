@@ -132,7 +132,10 @@ public sealed class PlayerManualDismount : MonoBehaviour
                 rider.ridingSeconds = previousRidingSeconds;
 
                 if (movement != null)
+                {
                     movement.ForceIdleFacing(facingAtPress, "TryManualDismount");
+                    TryResolveDismountBounce(movement, facingAtPress);
+                }
 
                 StartDetachedLouieInactivityLoop(detachedLouie, movement, detachedLouieSwitchInterval);
             },
@@ -182,6 +185,15 @@ public sealed class PlayerManualDismount : MonoBehaviour
             rider.ridingSeconds = previousRidingSeconds;
             return;
         }
+    }
+
+    static void TryResolveDismountBounce(MovementController movement, Vector2 facing)
+    {
+        if (movement == null)
+            return;
+
+        if (movement.TryGetComponent<PlayerPushedOutOfInvalidTile>(out var resolver) && resolver != null)
+            resolver.NotifyExternalPushed(facing);
     }
 
     static void StartDetachedLouieInactivityLoop(

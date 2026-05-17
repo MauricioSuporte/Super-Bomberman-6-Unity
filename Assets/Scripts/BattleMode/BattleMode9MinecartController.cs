@@ -82,6 +82,9 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
     [SerializeField] private AudioClip rideLoopSfx;
     [SerializeField, Range(0f, 1f)] private float sfxVolume = 1f;
 
+    [Header("Debug")]
+    [SerializeField] private bool debugPlayerBounceAfterExit = true;
+
     Tilemap groundTilemap;
     Tilemap destructibleTilemap;
     AudioSource audioSource;
@@ -289,7 +292,10 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
             yield return PlayEnterExitVisualRoutine(mover, state, stationWorld, exitWorld, exitFacing, exitAnimationSeconds, "Exit");
 
             if (mover != null)
+            {
                 mover.SnapToWorldPoint(exitWorld, roundToGrid: false);
+                TryResolvePlayerBounceAfterExit(mover, exitFacing, exitWorld);
+            }
 
             if (state.eggQueue != null)
                 state.eggQueue.SnapQueueToOwnerNow(resetHistoryToOwnerNow: true);
@@ -311,6 +317,28 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
             SetCartVisible(!hideCartWhenIdleAtStation);
             StartCoroutine(ReleaseRiderAfterGrace(mover));
         }
+    }
+
+    void TryResolvePlayerBounceAfterExit(MovementController mover, Vector2 exitFacing, Vector2 exitWorld)
+    {
+        if (mover == null)
+        {
+            LogMinecartBounce("skip: mover null after exit");
+            return;
+        }
+
+        Vector2 dir = Cardinalize(exitFacing);
+        if (dir == Vector2.zero)
+            dir = Vector2.right;
+
+        if (!mover.TryGetComponent<PlayerPushedOutOfInvalidTile>(out var resolver) || resolver == null)
+        {
+            LogMinecartBounce($"skip: no PlayerPushedOutOfInvalidTile on {mover.name} pos:{FormatVec(exitWorld)} dir:{FormatVec(dir)}");
+            return;
+        }
+
+        LogMinecartBounce($"notify player bounce player:P{mover.PlayerId} pos:{FormatVec(exitWorld)} dir:{FormatVec(dir)}");
+        resolver.NotifyExternalPushed(dir);
     }
 
     void LateUpdate()
@@ -1544,6 +1572,19 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
 
         Vector2 oppositeExit = -Cardinalize(exitFacing);
         return oppositeExit != Vector2.zero ? oppositeExit : Vector2.left;
+    }
+
+    void LogMinecartBounce(string message)
+    {
+        if (!debugPlayerBounceAfterExit)
+            return;
+
+        Debug.Log($"[MinecartBounce] {message}", this);
+    }
+
+    static string FormatVec(Vector2 value)
+    {
+        return $"({value.x:F2},{value.y:F2})";
     }
 
     static void ApplyMountedPlayerHopSprite(MovementController mover, RideState state, Vector2 facing, bool preferHeadOnly)

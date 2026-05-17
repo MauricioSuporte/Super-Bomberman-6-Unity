@@ -1281,6 +1281,15 @@ public class MountVisualController : MonoBehaviour
             louieJumpUp != null || louieJumpDown != null || louieJumpLeft != null || louieJumpRight != null;
     }
 
+    public bool HasJumpDescendVisuals()
+    {
+        return
+            louieJumpDescendUp != null ||
+            louieJumpDescendDown != null ||
+            louieJumpDescendLeft != null ||
+            louieJumpDescendRight != null;
+    }
+
     public bool HasHeadOnlyVisuals()
     {
         ResolveHeadOnlyVisualReferences();

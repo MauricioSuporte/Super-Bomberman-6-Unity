@@ -1915,6 +1915,7 @@ public class PlayerMountCompanion : MonoBehaviour
                 : movement.FacingDirection;
 
             movement.ForceIdleFacing(facing, "FinishLoseMountAfterRidingWithoutLouie");
+            TryResolveDismountBounce(movement, facing);
         }
 
         if (movement != null && movement.TryGetComponent<CharacterHealth>(out var health))
@@ -1922,6 +1923,15 @@ public class PlayerMountCompanion : MonoBehaviour
 
         if (currentLouie == null)
             RequestAutoRemountFromQueue();
+    }
+
+    static void TryResolveDismountBounce(MovementController movement, Vector2 facing)
+    {
+        if (movement == null)
+            return;
+
+        if (movement.TryGetComponent<PlayerPushedOutOfInvalidTile>(out var resolver) && resolver != null)
+            resolver.NotifyExternalPushed(facing);
     }
 
     #endregion

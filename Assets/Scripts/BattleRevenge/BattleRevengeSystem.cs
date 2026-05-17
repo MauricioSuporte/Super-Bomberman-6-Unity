@@ -169,6 +169,7 @@ public sealed class BattleRevengeSystem : MonoBehaviour
                     respawnPosition,
                     respawnInvulnerabilitySeconds,
                     respawnBlinkInterval);
+                TryResolveRespawnBounce(respawningPlayer, jumpFacing);
 
                 respawningPlayerReleased = true;
             }
@@ -205,6 +206,7 @@ public sealed class BattleRevengeSystem : MonoBehaviour
                         respawnPosition,
                         respawnInvulnerabilitySeconds,
                         respawnBlinkInterval);
+                    TryResolveRespawnBounce(respawningPlayer, jumpFacing);
 
                     respawningPlayerReleased = true;
                 }
@@ -293,6 +295,15 @@ public sealed class BattleRevengeSystem : MonoBehaviour
             return delta.x >= 0f ? Vector2.right : Vector2.left;
 
         return delta.y >= 0f ? Vector2.up : Vector2.down;
+    }
+
+    private static void TryResolveRespawnBounce(MovementController player, Vector2 jumpFacing)
+    {
+        if (player == null)
+            return;
+
+        if (player.TryGetComponent<PlayerPushedOutOfInvalidTile>(out var resolver) && resolver != null)
+            resolver.NotifyExternalPushed(jumpFacing);
     }
 
     public bool TryLaunchBombFromCart(BattleRevengeController cart)
