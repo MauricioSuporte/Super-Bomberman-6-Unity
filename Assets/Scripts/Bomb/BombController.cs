@@ -1590,7 +1590,7 @@ public partial class BombController : MonoBehaviour
                 if (pierce)
                 {
                     result.Explosions.Add((position, BombExplosion.ExplosionPart.Middle));
-                    result.Reach++;
+                    result.Reach = Mathf.Max(result.Reach, i + 1);
                     continue;
                 }
 
@@ -1600,6 +1600,7 @@ public partial class BombController : MonoBehaviour
             if (TryGetDestructibleTileAt(position, out var cell, out var tile))
             {
                 SpawnExplosionDamageHitbox(position, origin, sourceBomb);
+                result.Reach = Mathf.Max(result.Reach, i + 1);
 
                 if (!TryHandleDestructibleTileEffect(position, cell, tile))
                     ClearDestructibleForEffect(position);
@@ -1613,6 +1614,7 @@ public partial class BombController : MonoBehaviour
             if (HasDestroyingDestructibleAt(position))
             {
                 SpawnExplosionDamageHitbox(position, origin, sourceBomb);
+                result.Reach = Mathf.Max(result.Reach, i + 1);
 
                 if (!pierce)
                     break;
@@ -1645,7 +1647,7 @@ public partial class BombController : MonoBehaviour
                     : BombExplosion.ExplosionPart.Middle;
 
             result.Explosions.Add((position, defaultPart));
-            result.Reach++;
+            result.Reach = Mathf.Max(result.Reach, i + 1);
         }
 
         for (int i = 0; i < result.Explosions.Count; i++)
