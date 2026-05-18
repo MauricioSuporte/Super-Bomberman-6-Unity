@@ -6,8 +6,8 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/Scenes/BattleMode_11.unity
-    guid: fb9adba7df11d7645b6ba2473bc644ac
+    path: Assets/Scenes/BattleMode_12.unity
+    guid: 9ebcaa3a399a3904b8d244b143dde942
   - enabled: 1
     path: Assets/Scenes/TitleScreen.unity
     guid: 1f8e6a374594b3941b9167038880a853
@@ -98,4 +98,7 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/BattleMode_10.unity
     guid: edc980b406d2d0e47869083a92e979c8
+  - enabled: 1
+    path: Assets/Scenes/BattleMode_11.unity
+    guid: fb9adba7df11d7645b6ba2473bc644ac
   m_configObjects: {}
