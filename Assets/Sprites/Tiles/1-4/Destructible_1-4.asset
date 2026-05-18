@@ -10,14 +10,16 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 647854dae32d7cd4d816594a34fcb443, type: 3}
-  m_Name: AnimatedTile
+  m_Name: Destructible_1-4
   m_EditorClassIdentifier: 
   m_AnimatedSprites:
-  - {fileID: -918508573, guid: f1e5692e3d10a804d897441da1a7fe2c, type: 3}
-  - {fileID: 1015330559, guid: f1e5692e3d10a804d897441da1a7fe2c, type: 3}
-  - {fileID: 566355664, guid: f1e5692e3d10a804d897441da1a7fe2c, type: 3}
-  - {fileID: 1530234348, guid: f1e5692e3d10a804d897441da1a7fe2c, type: 3}
+  - {fileID: -8074880809719174170, guid: a192e6c57a711314793279ff31188763, type: 3}
+  - {fileID: -3380898060626557992, guid: a192e6c57a711314793279ff31188763, type: 3}
+  - {fileID: 8048923861419271694, guid: a192e6c57a711314793279ff31188763, type: 3}
+  - {fileID: -5327279360030060877, guid: a192e6c57a711314793279ff31188763, type: 3}
   m_MinSpeed: 10
   m_MaxSpeed: 10
   m_AnimationStartTime: 0
+  UseSpecifiedTime: 0
+  SpecifiedTime: 0.25
   m_TileColliderType: 1

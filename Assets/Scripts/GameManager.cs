@@ -1021,8 +1021,14 @@ public class GameManager : MonoBehaviour
             return indestructibleGroundShadowTile != null ? indestructibleGroundShadowTile : groundShadowTile;
         }
 
-        if (destructibleTilemap != null && destructibleTilemap.GetTile(above) != null)
+        TileBase destructibleTile = destructibleTilemap != null ? destructibleTilemap.GetTile(above) : null;
+        if (destructibleTile != null)
+        {
+            if (IsGroundShadowIgnoredTile(destructibleTile))
+                return null;
+
             return groundShadowTile;
+        }
 
         return null;
     }
