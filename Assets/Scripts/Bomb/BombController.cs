@@ -1578,7 +1578,20 @@ public partial class BombController : MonoBehaviour
 
             if (HasIndestructibleAt(position))
             {
-                TryHandleIndestructibleTileHit(position, origin);
+                bool passThrough = TryHandleIndestructibleTileHit(position, origin);
+
+                if (passThrough)
+                {
+                    BombExplosion.ExplosionPart passThroughPart =
+                        isMaxRangeTile
+                            ? BombExplosion.ExplosionPart.End
+                            : BombExplosion.ExplosionPart.Middle;
+
+                    result.Explosions.Add((position, passThroughPart));
+                    result.Reach = Mathf.Max(result.Reach, i + 1);
+                    continue;
+                }
+
                 break;
             }
 
@@ -1765,7 +1778,19 @@ public partial class BombController : MonoBehaviour
 
             if (HasIndestructibleAt(position))
             {
-                TryHandleIndestructibleTileHit(position, origin);
+                bool passThrough = TryHandleIndestructibleTileHit(position, origin);
+
+                if (passThrough)
+                {
+                    BombExplosion.ExplosionPart passThroughPart =
+                        isMaxRangeTile
+                            ? BombExplosion.ExplosionPart.End
+                            : BombExplosion.ExplosionPart.Middle;
+
+                    explosionsToSpawn.Add((position, passThroughPart));
+                    continue;
+                }
+
                 break;
             }
 
@@ -2079,20 +2104,23 @@ public partial class BombController : MonoBehaviour
         return tile != null;
     }
 
-    private void TryHandleIndestructibleTileHit(Vector2 indestructibleWorldPos, Vector2 hitFromWorldPos)
+    private bool TryHandleIndestructibleTileHit(Vector2 indestructibleWorldPos, Vector2 hitFromWorldPos)
     {
         ResolveIndestructibleTileResolver();
 
         if (indestructibleTileResolver == null)
-            return;
+            return false;
 
         if (!TryGetIndestructibleTileAt(indestructibleWorldPos, out var cell, out var tile))
-            return;
+            return false;
 
         if (!indestructibleTileResolver.TryGetHandler(tile, out var handler))
-            return;
+            return false;
 
         handler.HandleExplosionHit(this, hitFromWorldPos, cell, tile);
+
+        return handler is IIndestructibleExplosionPassThroughHandler passThroughHandler &&
+               passThroughHandler.AllowsExplosionPassThrough(this, hitFromWorldPos, cell, tile);
     }
 
     private void TryHandleGroundBombAt(Vector2 worldPos, GameObject bomb)

@@ -25,6 +25,7 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
     [Header("Falling Block Visual")]
     [SerializeField] private GameObject fallingBlockVisualPrefab;
     [SerializeField] private TileBase currentStageIndestructibleTile;
+    [SerializeField] private TileBase[] replaceableIndestructibleTiles;
     [SerializeField] private float fallingHeight = 6f;
     [SerializeField] private float fallingDuration = 0.5f;
     [SerializeField] private float topScreenSpawnOffset = 0.5f;
@@ -412,7 +413,7 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
             ? suddenDeathDropStartRemainingTime / suddenDeathPath.Count
             : 0f;
 
-        if (indestructibleTilemap.HasTile(cell))
+        if (HasBlockingIndestructibleAt(cell))
         {
             LogFlow(
                 $"DropNextTile: slot ocupado consumido sem queda visual. " +
@@ -638,7 +639,7 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
 
         ClearOnlyCurrentCellIfNeeded(cell);
 
-        if (!indestructibleTilemap.HasTile(cell))
+        if (!HasBlockingIndestructibleAt(cell))
         {
             indestructibleTilemap.SetTile(cell, currentStageIndestructibleTile);
             indestructibleTilemap.RefreshTile(cell);
@@ -1305,10 +1306,33 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
 
         suddenDeathPath.Add(cell);
 
-        if (indestructibleTilemap.HasTile(cell))
+        if (HasBlockingIndestructibleAt(cell))
             existingIndestructibleSlotsInPath++;
         else
             emptySlotsInPath++;
+    }
+
+    bool HasBlockingIndestructibleAt(Vector3Int cell)
+    {
+        if (indestructibleTilemap == null)
+            return false;
+
+        TileBase tile = indestructibleTilemap.GetTile(cell);
+        return tile != null && !IsReplaceableIndestructibleTile(tile);
+    }
+
+    bool IsReplaceableIndestructibleTile(TileBase tile)
+    {
+        if (tile == null || replaceableIndestructibleTiles == null)
+            return false;
+
+        for (int i = 0; i < replaceableIndestructibleTiles.Length; i++)
+        {
+            if (replaceableIndestructibleTiles[i] == tile)
+                return true;
+        }
+
+        return false;
     }
 
     BoundsInt GetPlayableBounds()
@@ -1431,7 +1455,7 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
             if (scheduledShadowCells.Contains(cell))
                 continue;
 
-            if (indestructibleTilemap.HasTile(cell))
+            if (HasBlockingIndestructibleAt(cell))
                 continue;
 
             float dropElapsedTime = GetDropElapsedTimeForIndex(i, dropWindowDuration);
