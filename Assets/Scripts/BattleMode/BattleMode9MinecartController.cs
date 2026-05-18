@@ -312,6 +312,9 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
         if (activeRiders.Contains(mover) || currentCell != station)
             return false;
 
+        if (IsPlayerBusyForMinecartEnter(mover))
+            return false;
+
         StartCoroutine(RideRoutine(mover));
         return true;
     }
@@ -452,6 +455,20 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
             return;
 
         resolver.NotifyExternalPushed(dir);
+    }
+
+    static bool IsPlayerBusyForMinecartEnter(MovementController mover)
+    {
+        if (mover == null)
+            return true;
+
+        if (mover.IsRidingPlaying())
+            return true;
+
+        if (mover.InputLocked || mover.ExternalMovementOverride || mover.VisualOverrideActive)
+            return true;
+
+        return false;
     }
 
     void LateUpdate()
