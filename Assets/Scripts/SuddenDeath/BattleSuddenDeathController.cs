@@ -692,7 +692,9 @@ public sealed class BattleSuddenDeathController : MonoBehaviour
 
     void NotifyBattleMode9MinecartIndestructiblePlaced(Vector3Int cell)
     {
-        if (!string.Equals(UnityEngine.SceneManagement.SceneManager.GetActiveScene().name, "BattleMode_9", System.StringComparison.Ordinal))
+        string sceneName = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
+        if (!string.Equals(sceneName, "BattleMode_9", System.StringComparison.Ordinal) &&
+            !string.Equals(sceneName, "BattleMode_12", System.StringComparison.Ordinal))
             return;
 
         var controllers = FindObjectsByType<BattleMode9MinecartController>(FindObjectsInactive.Exclude);
