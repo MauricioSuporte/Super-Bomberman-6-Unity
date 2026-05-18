@@ -54,6 +54,7 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
 
     [Header("Battle Mode 12 Teleport")]
     [SerializeField, Min(0.01f)] private float teleportSeconds = 0.5f;
+    [SerializeField, Min(0.01f)] private float portalSinkSeconds = 0.1f;
     [SerializeField] private bool spawnTeleportStars = true;
     [SerializeField] private Sprite[] teleportStarSprites;
     [SerializeField, Min(0)] private int teleportStarCount = 32;
@@ -131,6 +132,7 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
     readonly HashSet<GameObject> processedThisFrame = new();
     readonly List<AnimatedSpriteRenderer> riderRenderers = new();
     readonly List<GameObject> activeTeleportStars = new();
+    readonly List<SpriteRenderer> portalVisualRenderers = new();
 
     Transform cartVisualRoot;
     Vector2 currentCartDirection = Vector2.right;
@@ -168,6 +170,22 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
         public Vector3Int forcedExitCell;
         public bool forcedExitOnSuddenDeathIndestructible;
         public bool cartDestroyedBySuddenDeath;
+    }
+
+    readonly struct PortalVisualSnapshot
+    {
+        public readonly Transform transform;
+        public readonly Vector3 localScale;
+        public readonly Vector3 localPosition;
+        public readonly bool rendererEnabled;
+
+        public PortalVisualSnapshot(SpriteRenderer renderer)
+        {
+            transform = renderer != null ? renderer.transform : null;
+            localScale = transform != null ? transform.localScale : Vector3.one;
+            localPosition = transform != null ? transform.localPosition : Vector3.zero;
+            rendererEnabled = renderer != null && renderer.enabled;
+        }
     }
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
@@ -345,7 +363,7 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
                     exitFacing = GetRouteStartDirection(destinationRouteIndex);
 
                 Vector3Int routeStartCell = ToCell(battleMode12Routes[destinationRouteIndex].startCell);
-                exitCell = routeStartCell + ToCellOffset(exitFacing);
+                exitCell = ResolveBattleMode12ExitCell(routeStartCell, ref exitFacing);
                 exitWorld = GetCellCenter(exitCell);
             }
             else
@@ -494,7 +512,8 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
 
         Vector3Int sourcePortal = ToCell(battleMode12Routes[sourceRouteIndex].portalCell);
         Vector3Int destinationPortal = ToCell(battleMode12Routes[destinationRouteIndex].portalCell);
-        yield return TeleportCartBetweenPortals(mover, state, sourcePortal, destinationPortal);
+        Vector2 destinationPortalFacing = GetRoutePortalExitDirection(destinationRouteIndex);
+        yield return TeleportCartBetweenPortals(mover, state, sourcePortal, destinationPortal, destinationPortalFacing);
 
         if (state != null && state.cartDestroyedBySuddenDeath)
             yield break;
@@ -572,7 +591,8 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
         MovementController mover,
         RideState state,
         Vector3Int sourcePortal,
-        Vector3Int destinationPortal)
+        Vector3Int destinationPortal,
+        Vector2 destinationFacing)
     {
         Vector2 source = QuantizeToPixelGrid(GetCellCenter(sourcePortal));
         Vector2 destination = QuantizeToPixelGrid(GetCellCenter(destinationPortal));
@@ -582,9 +602,10 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
 
         ClearActiveTeleportStars();
         PlayOneShot(portalEnterSfx, portalEnterSfxVolume);
+        yield return AnimatePortalSinkRise(mover, state, source, appearing: false);
+
         SetCartVisible(false);
-        HideRiderHeadOnly(state);
-        SetRideCompanionsVisible(state, false);
+        SetTeleportRiderVisualsVisible(state, false);
         MoveRiderWithCart(mover, source);
 
         if (spawnTeleportStars && teleportStarCount > 0)
@@ -625,9 +646,157 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
         }
 
         ClearActiveTeleportStars();
-        ApplyCartRidePosition(mover, state, destination, currentCartDirection);
+        Vector2 facing = Cardinalize(destinationFacing);
+        if (facing == Vector2.zero)
+            facing = currentCartDirection != Vector2.zero ? currentCartDirection : Vector2.right;
+
+        currentCartDirection = facing;
+        UpdateCartVisual(facing, moving: false);
+        ApplyCartRidePosition(mover, state, destination, facing);
+        SetCartVisible(!cartDestroyedBySuddenDeath);
+        SetTeleportRiderVisualsVisible(state, true);
+        yield return AnimatePortalSinkRise(mover, state, destination, appearing: true);
+    }
+
+    void SetTeleportRiderVisualsVisible(RideState state, bool visible)
+    {
+        if (visible)
+        {
+            SetRideCompanionsVisible(state, false);
+            ShowRiderHeadOnly(state, currentCartDirection);
+            return;
+        }
+
+        HideRiderHeadOnly(state);
+
+        if (state?.mountVisual != null)
+        {
+            state.mountVisual.SetCartHeadOnlyVisual(false, currentCartDirection);
+            state.mountVisual.ClearCartHeadOnlyOffsets();
+        }
+
+        if (state?.mountCompanion != null)
+            state.mountCompanion.SetMountedLouieVisible(false);
+
+        if (state?.eggQueue != null)
+            state.eggQueue.ForceVisible(false);
+    }
+
+    IEnumerator AnimatePortalSinkRise(MovementController mover, RideState state, Vector2 portalWorld, bool appearing)
+    {
+        ApplyCartRidePosition(mover, state, portalWorld, currentCartDirection);
         SetCartVisible(!cartDestroyedBySuddenDeath);
         ShowRiderHeadOnly(state, currentCartDirection);
+
+        List<PortalVisualSnapshot> snapshots = CapturePortalVisualSnapshots(mover);
+        if (snapshots.Count == 0)
+            yield break;
+
+        float duration = Mathf.Max(0.01f, portalSinkSeconds);
+        float elapsed = 0f;
+        float initialProgress = appearing ? 0f : 1f;
+
+        ApplyPortalSinkWorldOffset(mover, state, portalWorld, initialProgress);
+        ApplyPortalVisualProgress(snapshots, initialProgress);
+
+        while (elapsed < duration)
+        {
+            if (GamePauseController.IsPaused)
+            {
+                yield return null;
+                continue;
+            }
+
+            float t = Mathf.Clamp01(elapsed / duration);
+            float progress = appearing ? t : 1f - t;
+            ApplyPortalSinkWorldOffset(mover, state, portalWorld, progress);
+            ApplyPortalVisualProgress(snapshots, progress);
+
+            elapsed += Time.deltaTime;
+            yield return null;
+        }
+
+        float finalProgress = appearing ? 1f : 0f;
+        ApplyPortalSinkWorldOffset(mover, state, portalWorld, finalProgress);
+        ApplyPortalVisualProgress(snapshots, finalProgress);
+        RestorePortalVisualSnapshots(snapshots);
+        ApplyCartRidePosition(mover, state, portalWorld, currentCartDirection);
+    }
+
+    List<PortalVisualSnapshot> CapturePortalVisualSnapshots(MovementController mover)
+    {
+        portalVisualRenderers.Clear();
+
+        if (cartVisualRoot != null)
+            AddPortalVisualRenderers(cartVisualRoot);
+
+        var snapshots = new List<PortalVisualSnapshot>(portalVisualRenderers.Count);
+        var seen = new HashSet<SpriteRenderer>();
+        for (int i = 0; i < portalVisualRenderers.Count; i++)
+        {
+            SpriteRenderer renderer = portalVisualRenderers[i];
+            if (renderer == null || !seen.Add(renderer) || !renderer.enabled || renderer.sprite == null)
+                continue;
+
+            snapshots.Add(new PortalVisualSnapshot(renderer));
+        }
+
+        return snapshots;
+    }
+
+    void AddPortalVisualRenderers(Transform root)
+    {
+        if (root == null)
+            return;
+
+        SpriteRenderer[] renderers = root.GetComponentsInChildren<SpriteRenderer>(true);
+        for (int i = 0; i < renderers.Length; i++)
+        {
+            if (renderers[i] != null)
+                portalVisualRenderers.Add(renderers[i]);
+        }
+    }
+
+    void ApplyPortalVisualProgress(List<PortalVisualSnapshot> snapshots, float visibleProgress)
+    {
+        visibleProgress = Mathf.Clamp01(visibleProgress);
+        float sinkOffset = (1f - visibleProgress) * -0.25f;
+
+        for (int i = 0; snapshots != null && i < snapshots.Count; i++)
+        {
+            PortalVisualSnapshot snapshot = snapshots[i];
+            if (snapshot.transform == null)
+                continue;
+
+            Vector3 scale = snapshot.localScale;
+            scale.y = snapshot.localScale.y * visibleProgress;
+            snapshot.transform.localScale = scale;
+
+            Vector3 position = snapshot.localPosition;
+            position.y = snapshot.localPosition.y + sinkOffset;
+            snapshot.transform.localPosition = position;
+        }
+    }
+
+    void ApplyPortalSinkWorldOffset(MovementController mover, RideState state, Vector2 portalWorld, float visibleProgress)
+    {
+        float tileSize = Mathf.Max(0.0001f, mover != null ? mover.tileSize : 1f);
+        float sinkWorldOffset = (1f - Mathf.Clamp01(visibleProgress)) * -(tileSize * 0.5f);
+        Vector2 position = portalWorld + Vector2.up * sinkWorldOffset;
+        ApplyCartRidePosition(mover, state, position, currentCartDirection);
+    }
+
+    void RestorePortalVisualSnapshots(List<PortalVisualSnapshot> snapshots)
+    {
+        for (int i = 0; snapshots != null && i < snapshots.Count; i++)
+        {
+            PortalVisualSnapshot snapshot = snapshots[i];
+            if (snapshot.transform == null)
+                continue;
+
+            snapshot.transform.localScale = snapshot.localScale;
+            snapshot.transform.localPosition = snapshot.localPosition;
+        }
     }
 
     int SpawnTeleportStarsAlongPath(Vector2 source, Vector2 destination, float normalizedTime, int alreadySpawned)
@@ -1402,6 +1571,28 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
         return indestructibleTilemap != null && indestructibleTilemap.HasTile(cell);
     }
 
+    bool HasDestructibleAt(Vector3Int cell)
+    {
+        if (destructibleTilemap == null)
+            destructibleTilemap = FindTilemapByName("destruct");
+
+        return destructibleTilemap != null && destructibleTilemap.HasTile(cell);
+    }
+
+    Vector3Int ResolveBattleMode12ExitCell(Vector3Int cartCell, ref Vector2 exitFacing)
+    {
+        Vector3Int forwardOffset = ToCellOffset(exitFacing);
+        Vector3Int forwardCell = cartCell + forwardOffset;
+        if (!HasDestructibleAt(forwardCell))
+            return forwardCell;
+
+        exitFacing = -Cardinalize(exitFacing);
+        if (exitFacing == Vector2.zero)
+            exitFacing = Vector2.left;
+
+        return cartCell - forwardOffset;
+    }
+
     bool IsActiveSuddenDeathIndestructibleCell(Vector3Int cell)
     {
         if (suddenDeathController == null)
@@ -1751,6 +1942,16 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
 
         PortalRailRoute route = battleMode12Routes[GetValidBattleMode12RouteIndex(routeIndex)];
         Vector3Int delta = ToCell(route.startCell) - ToCell(route.cornerCell);
+        return Cardinalize(new Vector2(delta.x, delta.y));
+    }
+
+    Vector2 GetRoutePortalExitDirection(int routeIndex)
+    {
+        if (!HasUsableBattleMode12Routes())
+            return Vector2.right;
+
+        PortalRailRoute route = battleMode12Routes[GetValidBattleMode12RouteIndex(routeIndex)];
+        Vector3Int delta = ToCell(route.cornerCell) - ToCell(route.portalCell);
         return Cardinalize(new Vector2(delta.x, delta.y));
     }
 
@@ -2234,9 +2435,6 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
 
         SetExclusiveMountedPlayerRenderer(mover, null, null);
     }
-
-    static bool IsBattleMode9Active()
-        => string.Equals(SceneManager.GetActiveScene().name, BattleMode9SceneName, System.StringComparison.Ordinal);
 
     static bool IsBattleMode12Active()
         => string.Equals(SceneManager.GetActiveScene().name, BattleMode12SceneName, System.StringComparison.Ordinal);
