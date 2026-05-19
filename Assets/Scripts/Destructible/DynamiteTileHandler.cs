@@ -1,9 +1,12 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Tilemaps;
 
 public sealed class DynamiteTileHandler : MonoBehaviour, IDestructibleTileHandler
 {
+    private const int PierceExplosionSfxRadius = 10;
+
     [SerializeField] private int explosionRadius = 2;
     [SerializeField] private float startStepDelaySeconds = 0.1f;
 
@@ -35,9 +38,7 @@ public sealed class DynamiteTileHandler : MonoBehaviour, IDestructibleTileHandle
 
         source.ClearDestructibleForEffect(worldPos, spawnDestructiblePrefab: false, spawnHiddenObject: false);
 
-        Vector2 p = worldPos;
-        p.x = Mathf.Round(p.x);
-        p.y = Mathf.Round(p.y);
+        Vector2 p = GetGroundTileCenter(source, worldPos);
 
         StartCoroutine(DetonateRoutine(source, p, cell));
         return true;
@@ -50,38 +51,29 @@ public sealed class DynamiteTileHandler : MonoBehaviour, IDestructibleTileHandle
 
         SpawnStartAndExplode(source, origin);
 
-        if (startStepDelaySeconds > 0f)
-            yield return new WaitForSeconds(startStepDelaySeconds);
-
-        SpawnSecondaryBranches(source, origin);
-
         _scheduled.Remove(cell);
     }
 
     void SpawnStartAndExplode(BombController source, Vector2 p)
     {
-        source.PlayExplosionSfxExclusive(_audio, explosionRadius);
-        source.SpawnExplosionCrossForEffect(p, explosionRadius, pierce: true);
+        source.PlayExplosionSfxExclusive(_audio, PierceExplosionSfxRadius, pierce: true);
+        source.SpawnExplosionAreaForEffect(p, explosionRadius, pierce: true);
     }
 
-    void SpawnSecondaryBranches(BombController source, Vector2 origin)
+    static Vector2 GetGroundTileCenter(BombController source, Vector2 worldPos)
     {
-        SpawnSecondaryBranch(source, origin, Vector2.up);
-        SpawnSecondaryBranch(source, origin, Vector2.down);
-        SpawnSecondaryBranch(source, origin, Vector2.left);
-        SpawnSecondaryBranch(source, origin, Vector2.right);
+        Tilemap ground = source != null ? source.groundTiles : null;
+        if (ground == null)
+            return RoundToWholeTile(worldPos);
+
+        Vector3Int cell = ground.WorldToCell(worldPos);
+        return ground.GetCellCenterWorld(cell);
     }
 
-    void SpawnSecondaryBranch(BombController source, Vector2 origin, Vector2 dir)
+    static Vector2 RoundToWholeTile(Vector2 worldPos)
     {
-        Vector2 branchOrigin = origin + dir * explosionRadius;
-        branchOrigin.x = Mathf.Round(branchOrigin.x);
-        branchOrigin.y = Mathf.Round(branchOrigin.y);
-
-        if (!source.CanSpawnTileEffectAt(branchOrigin))
-            return;
-
-        source.PlayExplosionSfxExclusive(_audio, explosionRadius);
-        source.SpawnExplosionCrossForEffect(branchOrigin, explosionRadius, pierce: true);
+        worldPos.x = Mathf.Round(worldPos.x);
+        worldPos.y = Mathf.Round(worldPos.y);
+        return worldPos;
     }
 }

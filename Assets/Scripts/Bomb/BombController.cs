@@ -2304,6 +2304,198 @@ public partial class BombController : MonoBehaviour
         Explode(p, Vector2.right, radius, pierce);
     }
 
+    public void SpawnExplosionAreaForEffect(Vector2 origin, int radius, bool pierce)
+    {
+        ResolveExplosionPrefab();
+        if (explosionPrefab == null)
+            return;
+
+        Tilemap snapTm = GetSnapTilemapForGround();
+        Vector2 p = SnapToTileCenter(snapTm, origin, out var originCell, out _);
+        int effectiveRadius = Mathf.Max(0, radius);
+
+        for (int y = effectiveRadius; y >= -effectiveRadius; y--)
+        {
+            for (int x = -effectiveRadius; x <= effectiveRadius; x++)
+            {
+                Vector3Int cell = originCell + new Vector3Int(x, y, 0);
+                Vector2 tileWorld = snapTm != null
+                    ? snapTm.GetCellCenterWorld(cell)
+                    : p + new Vector2(x, y);
+
+                SpawnExplosionAreaTileForEffect(
+                    snapTm,
+                    originCell,
+                    cell,
+                    tileWorld,
+                    p,
+                    x,
+                    y,
+                    effectiveRadius,
+                    pierce);
+            }
+        }
+    }
+
+    private void SpawnExplosionAreaTileForEffect(
+        Tilemap snapTm,
+        Vector3Int originCell,
+        Vector3Int cell,
+        Vector2 position,
+        Vector2 origin,
+        int offsetX,
+        int offsetY,
+        int radius,
+        bool pierce)
+    {
+        if (!TryGetAreaExplosionSkipReason(position, out _))
+        {
+            return;
+        }
+
+        BombExplosion.ExplosionPart part = GetAreaExplosionPart(
+            snapTm,
+            originCell,
+            cell,
+            origin,
+            offsetX,
+            offsetY,
+            radius,
+            out var direction);
+
+        var itemHit = Physics2D.OverlapBox(position, Vector2.one * 0.5f, 0f, itemLayerMask);
+        if (itemHit != null)
+            TryHandleItemHitByExplosion(itemHit, direction);
+
+        if (TryGetDestructibleTileAt(position, out var destructibleCell, out var tile))
+        {
+            SpawnExplosionDamageHitbox(position, origin);
+
+            if (!TryHandleDestructibleTileEffect(position, destructibleCell, tile))
+                ClearDestructibleForEffect(position);
+
+            return;
+        }
+
+        if (HasDestroyingDestructibleAt(position))
+        {
+            SpawnExplosionDamageHitbox(position, origin);
+            return;
+        }
+
+        if (TryGetAnyBombColliderAt(position, 0.6f, out var bombHit))
+        {
+            GameObject otherBombGo = bombHit.attachedRigidbody != null
+                ? bombHit.attachedRigidbody.gameObject
+                : bombHit.gameObject;
+
+            if (otherBombGo != null)
+            {
+                if (otherBombGo.TryGetComponent<Bomb>(out var otherBomb) && otherBomb != null && otherBomb.Owner != null)
+                    otherBomb.Owner.ExplodeBombChained(otherBombGo, position);
+                else
+                    ExplodeBombChained(otherBombGo, position);
+
+                _removedBombs.Remove(otherBombGo);
+            }
+        }
+
+        TryHandleGroundExplosionHit(position);
+
+        BombExplosion explosion = BombExplosion.Spawn(explosionPrefab, position, Quaternion.identity);
+        explosion.Play(part, direction, 0f, explosionDuration, origin, pierce);
+    }
+
+    private bool TryGetAreaExplosionSkipReason(Vector2 position, out string reason)
+    {
+        if (!HasGroundAt(position))
+        {
+            reason = "missing ground";
+            return false;
+        }
+
+        if (HasWaterAt(position))
+        {
+            reason = "water";
+            return false;
+        }
+
+        if (HasHoleAt(position))
+        {
+            reason = "hole";
+            return false;
+        }
+
+        if (HasIndestructibleAt(position))
+        {
+            reason = "indestructible";
+            return false;
+        }
+
+        reason = null;
+        return true;
+    }
+
+    private BombExplosion.ExplosionPart GetAreaExplosionPart(
+        Tilemap snapTm,
+        Vector3Int originCell,
+        Vector3Int cell,
+        Vector2 origin,
+        int offsetX,
+        int offsetY,
+        int radius,
+        out Vector2 direction)
+    {
+        bool up = IsAreaExplosionCellAvailable(snapTm, originCell, cell + Vector3Int.up, origin, radius);
+        bool down = IsAreaExplosionCellAvailable(snapTm, originCell, cell + Vector3Int.down, origin, radius);
+        bool left = IsAreaExplosionCellAvailable(snapTm, originCell, cell + Vector3Int.left, origin, radius);
+        bool right = IsAreaExplosionCellAvailable(snapTm, originCell, cell + Vector3Int.right, origin, radius);
+
+        int horizontalConnections = (left ? 1 : 0) + (right ? 1 : 0);
+        int verticalConnections = (up ? 1 : 0) + (down ? 1 : 0);
+        int totalConnections = horizontalConnections + verticalConnections;
+
+        if (totalConnections > 2)
+        {
+            direction = Vector2.zero;
+            return BombExplosion.ExplosionPart.Start;
+        }
+
+        direction = GetAreaExplosionMiddleDirection(horizontalConnections, verticalConnections, offsetX, offsetY);
+        return BombExplosion.ExplosionPart.Middle;
+    }
+
+    private bool IsAreaExplosionCellAvailable(Tilemap snapTm, Vector3Int originCell, Vector3Int cell, Vector2 origin, int radius)
+    {
+        Vector3Int delta = cell - originCell;
+        if (Mathf.Abs(delta.x) > radius || Mathf.Abs(delta.y) > radius)
+            return false;
+
+        Vector2 position = snapTm != null
+            ? snapTm.GetCellCenterWorld(cell)
+            : origin + new Vector2(delta.x, delta.y);
+
+        return TryGetAreaExplosionSkipReason(position, out _);
+    }
+
+    private static Vector2 GetAreaExplosionMiddleDirection(
+        int horizontalConnections,
+        int verticalConnections,
+        int offsetX,
+        int offsetY)
+    {
+        if (horizontalConnections > verticalConnections)
+            return Vector2.right;
+
+        if (verticalConnections > horizontalConnections)
+            return Vector2.up;
+
+        if (Mathf.Abs(offsetX) >= Mathf.Abs(offsetY))
+            return Vector2.right;
+
+        return Vector2.up;
+    }
+
     public bool SpawnRevengeLaunchMuzzleVisual(
         Vector2 launchWorldPos,
         Vector2 direction,
