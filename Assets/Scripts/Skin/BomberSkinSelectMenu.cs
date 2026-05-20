@@ -29,6 +29,7 @@ public class BomberSkinSelectMenu : MonoBehaviour
     [Header("Embedded Flow")]
     [SerializeField] bool useFadeTransitions = true;
     [SerializeField] bool manageSelectMusic = true;
+    [SerializeField] bool useBattleModeComAssignment;
 
     [Header("Grid")]
     [SerializeField] Transform gridRoot;
@@ -249,16 +250,22 @@ public class BomberSkinSelectMenu : MonoBehaviour
     sealed class PlayerCursorState
     {
         public int playerId;
+        public int inputPlayerId;
         public int index;
         public bool confirmed;
         public BomberSkin selected;
         public int selectedIndex = -1;
+        public bool battleComCursor;
         public RectTransform cursorRt;
         public Image cursorImg;
     }
 
     readonly List<PlayerCursorState> players = new();
     readonly List<int> configuredPlayerIds = new(GameSession.MaxPlayerId);
+    readonly List<int> battleSkinTargetPlayerIds = new(GameSession.MaxPlayerId);
+    readonly List<int> battleComQueue = new(GameSession.MaxPlayerId);
+    readonly Dictionary<int, List<PlayerCursorState>> battleConfirmedByInput = new();
+    int nextBattleComQueueIndex;
 
     bool menuActive;
 
@@ -332,6 +339,10 @@ public class BomberSkinSelectMenu : MonoBehaviour
 
         RestoreAllSlotPositions();
         endStageBySlot.Clear();
+        battleConfirmedByInput.Clear();
+        battleSkinTargetPlayerIds.Clear();
+        battleComQueue.Clear();
+        nextBattleComQueueIndex = 0;
 
         for (int i = 0; i < players.Count; i++)
         {
@@ -401,7 +412,10 @@ public class BomberSkinSelectMenu : MonoBehaviour
 
         var input = PlayerInputManager.Instance;
 
-        PopulateConfiguredPlayerIds(configuredPlayerIds);
+        if (useBattleModeComAssignment)
+            PopulateBattleModeSkinSelectionIds(configuredPlayerIds);
+        else
+            PopulateConfiguredPlayerIds(configuredPlayerIds);
 
         BeginCursorPositionDebug("SelectSkinRoutine.BeforeBuildPlayerCursors");
         BuildPlayerCursors(configuredPlayerIds);
@@ -469,11 +483,38 @@ public class BomberSkinSelectMenu : MonoBehaviour
         while (!done)
         {
             bool anyReturnToTitle = false;
+            int cursorCountThisFrame = players.Count;
 
-            for (int i = 0; i < players.Count; i++)
+            if (useBattleModeComAssignment && HandleCompletedBattleModeBackInputs(input))
+            {
+                PlaySfx(returnSfx, returnSfxVolume);
+                UpdateSlotVisuals();
+                UpdateUnlockHint();
+                yield return null;
+                continue;
+            }
+
+            for (int i = 0; i < cursorCountThisFrame && i < players.Count; i++)
             {
                 var ps = players[i];
-                int pid = ps.playerId;
+                if (ps.confirmed)
+                {
+                    if (!useBattleModeComAssignment)
+                    {
+                        int confirmedPid = ps.playerId;
+                        if (input.GetDown(confirmedPid, PlayerAction.ActionB))
+                        {
+                            DeselectPlayer(confirmedPid);
+                            PlaySfx(returnSfx, returnSfxVolume);
+                            UpdateSlotVisuals();
+                            UpdateUnlockHint();
+                        }
+                    }
+
+                    continue;
+                }
+
+                int pid = GetCursorInputPlayerId(ps);
 
                 bool upDown = input.GetDown(pid, PlayerAction.MoveUp);
                 bool downDown = input.GetDown(pid, PlayerAction.MoveDown);
@@ -483,54 +524,56 @@ public class BomberSkinSelectMenu : MonoBehaviour
                 bool bDown = input.GetDown(pid, PlayerAction.ActionB);
                 bool startDown = input.GetDown(pid, PlayerAction.Start);
 
-                if (ps.confirmed && bDown)
+                bool moved = false;
+                int nextIndex = ps.index;
+
+                if (leftDown) { nextIndex = MoveLeftWrap(ps.index); moved = true; }
+                else if (rightDown) { nextIndex = MoveRightWrap(ps.index); moved = true; }
+                else if (upDown) { nextIndex = MoveUpWrap(ps.index); moved = true; }
+                else if (downDown) { nextIndex = MoveDownWrap(ps.index); moved = true; }
+
+                bool confirmPressed = startDown || aDown;
+                bool backPressed = bDown;
+
+                if (moved)
                 {
-                    DeselectPlayer(pid);
-                    PlaySfx(returnSfx, returnSfxVolume);
-                    UpdateSlotVisuals();
-                    UpdateUnlockHint();
-                    continue;
-                }
-
-                if (!ps.confirmed)
-                {
-                    bool moved = false;
-                    int nextIndex = ps.index;
-
-                    if (leftDown) { nextIndex = MoveLeftWrap(ps.index); moved = true; }
-                    else if (rightDown) { nextIndex = MoveRightWrap(ps.index); moved = true; }
-                    else if (upDown) { nextIndex = MoveUpWrap(ps.index); moved = true; }
-                    else if (downDown) { nextIndex = MoveDownWrap(ps.index); moved = true; }
-
-                    bool confirmPressed = startDown || aDown;
-                    bool backPressed = bDown;
-
-                    if (moved)
+                    if (nextIndex != ps.index)
                     {
-                        if (nextIndex != ps.index)
-                        {
-                            ps.index = nextIndex;
-                            PlaySfx(moveCursorSfx, moveCursorSfxVolume);
-                            UpdateSlotVisuals();
-                            UpdateUnlockHint();
-                        }
-                    }
-                    else if (backPressed)
-                    {
-                        anyReturnToTitle = true;
-                    }
-                    else if (confirmPressed)
-                    {
-                        TryConfirm(pid);
+                        ps.index = nextIndex;
+                        PlaySfx(moveCursorSfx, moveCursorSfxVolume);
                         UpdateSlotVisuals();
                         UpdateUnlockHint();
-
-                        if (AllPlayersConfirmed())
+                    }
+                }
+                else if (backPressed)
+                {
+                    if (useBattleModeComAssignment)
+                    {
+                        if (HandleBattleModeBack(ps))
                         {
-                            fadeDuration = fadeOutOnConfirmDuration;
-                            done = true;
-                            break;
+                            PlaySfx(returnSfx, returnSfxVolume);
+                            UpdateSlotVisuals();
+                            UpdateUnlockHint();
+                            continue;
                         }
+                    }
+
+                    anyReturnToTitle = true;
+                }
+                else if (confirmPressed)
+                {
+                    TryConfirm(ps);
+                    UpdateSlotVisuals();
+                    UpdateUnlockHint();
+
+                    if (ps.confirmed && useBattleModeComAssignment)
+                        AssignNextBattleComCursor(pid);
+
+                    if (AllPlayersConfirmed())
+                    {
+                        fadeDuration = fadeOutOnConfirmDuration;
+                        done = true;
+                        break;
                     }
                 }
             }
@@ -580,6 +623,14 @@ public class BomberSkinSelectMenu : MonoBehaviour
         if (ps == null)
             return;
 
+        TryConfirm(ps);
+    }
+
+    void TryConfirm(PlayerCursorState ps)
+    {
+        if (ps == null)
+            return;
+
         int slot = Mathf.Clamp(ps.index, 0, selectableSkins.Count - 1);
         var skin = selectableSkins[slot];
 
@@ -590,20 +641,23 @@ public class BomberSkinSelectMenu : MonoBehaviour
         }
 
         int owner = GetSelectedOwner(slot);
-        if (owner != 0 && owner != playerId)
+        if (owner != 0 && owner != ps.playerId)
         {
             PlaySfx(lockedConfirmSfx, lockedConfirmSfxVolume);
             return;
         }
 
-        selectedBySlot[slot] = playerId;
+        selectedBySlot[slot] = ps.playerId;
 
         ps.selected = skin;
         ps.selectedIndex = slot;
         ps.confirmed = true;
 
-        PlayerPersistentStats.Get(playerId).Skin = skin;
-        PlayerPersistentStats.SaveSelectedSkin(playerId);
+        PlayerPersistentStats.Get(ps.playerId).Skin = skin;
+        PlayerPersistentStats.SaveSelectedSkin(ps.playerId);
+
+        if (useBattleModeComAssignment)
+            PushBattleConfirmedCursor(ps);
 
         StartEndStageForSlot(slot, skin);
 
@@ -623,12 +677,17 @@ public class BomberSkinSelectMenu : MonoBehaviour
         if (ps == null)
             return;
 
-        if (!ps.confirmed || ps.selectedIndex < 0)
+        UnconfirmCursor(ps);
+    }
+
+    void UnconfirmCursor(PlayerCursorState ps)
+    {
+        if (ps == null || !ps.confirmed || ps.selectedIndex < 0)
             return;
 
         int slot = ps.selectedIndex;
 
-        if (slot >= 0 && slot < selectedBySlot.Length && selectedBySlot[slot] == playerId)
+        if (slot >= 0 && slot < selectedBySlot.Length && selectedBySlot[slot] == ps.playerId)
             selectedBySlot[slot] = 0;
 
         StopEndStageForSlot(slot);
@@ -693,11 +752,46 @@ public class BomberSkinSelectMenu : MonoBehaviour
 
     bool AllPlayersConfirmed()
     {
+        if (useBattleModeComAssignment)
+            return AllBattleModeTargetsConfirmed();
+
         for (int i = 0; i < players.Count; i++)
             if (!players[i].confirmed)
                 return false;
 
         return players.Count > 0;
+    }
+
+    bool AllBattleModeTargetsConfirmed()
+    {
+        if (battleSkinTargetPlayerIds.Count <= 0)
+            return false;
+
+        for (int i = 0; i < battleSkinTargetPlayerIds.Count; i++)
+        {
+            int targetPlayerId = battleSkinTargetPlayerIds[i];
+            bool found = false;
+
+            for (int p = 0; p < players.Count; p++)
+            {
+                if (players[p].playerId == targetPlayerId && players[p].confirmed)
+                {
+                    found = true;
+                    break;
+                }
+            }
+
+            if (!found)
+                return false;
+        }
+
+        for (int i = 0; i < players.Count; i++)
+        {
+            if (!players[i].confirmed)
+                return false;
+        }
+
+        return true;
     }
 
     void TickCursorBlink()
@@ -888,39 +982,52 @@ public class BomberSkinSelectMenu : MonoBehaviour
         for (int i = 0; i < activePlayerIds.Count; i++)
         {
             int p = Mathf.Clamp(activePlayerIds[i], GameSession.MinPlayerId, GameSession.MaxPlayerId);
-            var st = new PlayerCursorState { playerId = p };
-
-            if (skinCursorPrefab != null)
-            {
-                var c = Instantiate(skinCursorPrefab, gridRoot);
-                c.gameObject.SetActive(false);
-                c.SetAsLastSibling();
-                st.cursorRt = c;
-
-                st.cursorImg = c.GetComponent<Image>();
-                if (st.cursorImg != null)
-                {
-                    st.cursorImg.raycastTarget = false;
-
-                    int spriteIdx = p - 1;
-
-                    if (cursorSpriteByPlayer != null &&
-                        spriteIdx >= 0 &&
-                        spriteIdx < cursorSpriteByPlayer.Length &&
-                        cursorSpriteByPlayer[spriteIdx] != null)
-                    {
-                        st.cursorImg.sprite = cursorSpriteByPlayer[spriteIdx];
-                        st.cursorImg.preserveAspect = true;
-                    }
-
-                    var col = st.cursorImg.color;
-                    col.a = 1f;
-                    st.cursorImg.color = col;
-                }
-            }
-
+            var st = CreateCursorState(p, p, false);
             players.Add(st);
         }
+    }
+
+    PlayerCursorState CreateCursorState(int inputPlayerId, int targetPlayerId, bool battleComCursor)
+    {
+        int input = Mathf.Clamp(inputPlayerId, GameSession.MinPlayerId, GameSession.MaxPlayerId);
+        int target = Mathf.Clamp(targetPlayerId, GameSession.MinPlayerId, GameSession.MaxPlayerId);
+        var st = new PlayerCursorState
+        {
+            playerId = target,
+            inputPlayerId = input,
+            battleComCursor = battleComCursor
+        };
+
+        if (skinCursorPrefab != null)
+        {
+            var c = Instantiate(skinCursorPrefab, gridRoot);
+            c.gameObject.SetActive(false);
+            c.SetAsLastSibling();
+            st.cursorRt = c;
+
+            st.cursorImg = c.GetComponent<Image>();
+            if (st.cursorImg != null)
+            {
+                st.cursorImg.raycastTarget = false;
+
+                int spriteIdx = target - 1;
+
+                if (cursorSpriteByPlayer != null &&
+                    spriteIdx >= 0 &&
+                    spriteIdx < cursorSpriteByPlayer.Length &&
+                    cursorSpriteByPlayer[spriteIdx] != null)
+                {
+                    st.cursorImg.sprite = cursorSpriteByPlayer[spriteIdx];
+                    st.cursorImg.preserveAspect = true;
+                }
+
+                var col = st.cursorImg.color;
+                col.a = 1f;
+                st.cursorImg.color = col;
+            }
+        }
+
+        return st;
     }
 
     static string FormatPlayerIds(List<int> playerIds)
@@ -947,6 +1054,186 @@ public class BomberSkinSelectMenu : MonoBehaviour
     static string FormatVec3(Vector3 value)
     {
         return $"({value.x:0.##},{value.y:0.##},{value.z:0.##})";
+    }
+
+    void PopulateBattleModeSkinSelectionIds(List<int> results)
+    {
+        if (results == null)
+            return;
+
+        results.Clear();
+        battleSkinTargetPlayerIds.Clear();
+        battleComQueue.Clear();
+        battleConfirmedByInput.Clear();
+        nextBattleComQueueIndex = 0;
+
+        BattleModePlayerControlMode[] modes = SaveSystem.GetBattleModePlayerControlModes();
+        for (int i = 0; i < modes.Length && i < GameSession.MaxPlayerId; i++)
+        {
+            int playerId = i + 1;
+            BattleModePlayerControlMode mode = modes[i];
+
+            if (mode == BattleModePlayerControlMode.Off)
+                continue;
+
+            battleSkinTargetPlayerIds.Add(playerId);
+
+            if (mode == BattleModePlayerControlMode.Man)
+                results.Add(playerId);
+            else if (mode == BattleModePlayerControlMode.Com)
+                battleComQueue.Add(playerId);
+        }
+
+        if (battleSkinTargetPlayerIds.Count <= 0)
+            battleSkinTargetPlayerIds.Add(GameSession.MinPlayerId);
+
+        if (results.Count <= 0)
+            results.Add(GameSession.MinPlayerId);
+    }
+
+    int GetCursorInputPlayerId(PlayerCursorState ps)
+    {
+        if (ps == null)
+            return GameSession.MinPlayerId;
+
+        int input = ps.inputPlayerId != 0 ? ps.inputPlayerId : ps.playerId;
+        return Mathf.Clamp(input, GameSession.MinPlayerId, GameSession.MaxPlayerId);
+    }
+
+    void PushBattleConfirmedCursor(PlayerCursorState ps)
+    {
+        int inputPlayerId = GetCursorInputPlayerId(ps);
+
+        if (!battleConfirmedByInput.TryGetValue(inputPlayerId, out var stack) || stack == null)
+        {
+            stack = new List<PlayerCursorState>();
+            battleConfirmedByInput[inputPlayerId] = stack;
+        }
+
+        if (!stack.Contains(ps))
+            stack.Add(ps);
+    }
+
+    void AssignNextBattleComCursor(int inputPlayerId)
+    {
+        if (!useBattleModeComAssignment)
+            return;
+
+        if (nextBattleComQueueIndex < 0 || nextBattleComQueueIndex >= battleComQueue.Count)
+            return;
+
+        int targetPlayerId = battleComQueue[nextBattleComQueueIndex++];
+        var cursor = CreateCursorState(inputPlayerId, targetPlayerId, battleComCursor: true);
+        InitializeCursorSelection(cursor);
+        players.Add(cursor);
+
+        UpdateAllCursorsToSelected();
+    }
+
+    bool HandleBattleModeBack(PlayerCursorState activeCursor)
+    {
+        if (activeCursor == null)
+            return false;
+
+        int inputPlayerId = GetCursorInputPlayerId(activeCursor);
+        return HandleBattleModeBack(inputPlayerId, activeCursor);
+    }
+
+    bool HandleBattleModeBack(int inputPlayerId, PlayerCursorState activeCursor)
+    {
+        inputPlayerId = Mathf.Clamp(inputPlayerId, GameSession.MinPlayerId, GameSession.MaxPlayerId);
+        if (!battleConfirmedByInput.TryGetValue(inputPlayerId, out var stack) || stack == null || stack.Count <= 0)
+            return false;
+
+        if (activeCursor != null && activeCursor.battleComCursor && !activeCursor.confirmed)
+        {
+            if (activeCursor.playerId >= GameSession.MinPlayerId &&
+                activeCursor.playerId <= GameSession.MaxPlayerId &&
+                nextBattleComQueueIndex > 0)
+            {
+                nextBattleComQueueIndex = Mathf.Max(0, nextBattleComQueueIndex - 1);
+            }
+
+            RemoveCursor(activeCursor);
+        }
+
+        PlayerCursorState previous = stack[stack.Count - 1];
+        stack.RemoveAt(stack.Count - 1);
+        UnconfirmCursor(previous);
+        previous.inputPlayerId = inputPlayerId;
+
+        if (previous.cursorRt != null)
+            previous.cursorRt.gameObject.SetActive(true);
+
+        return true;
+    }
+
+    bool HandleCompletedBattleModeBackInputs(PlayerInputManager input)
+    {
+        if (input == null)
+            return false;
+
+        for (int playerId = GameSession.MinPlayerId; playerId <= GameSession.MaxPlayerId; playerId++)
+        {
+            if (!input.GetDown(playerId, PlayerAction.ActionB))
+                continue;
+
+            if (HasActiveUnconfirmedCursorForInput(playerId))
+                continue;
+
+            if (HandleBattleModeBack(playerId, null))
+                return true;
+        }
+
+        return false;
+    }
+
+    bool HasActiveUnconfirmedCursorForInput(int inputPlayerId)
+    {
+        inputPlayerId = Mathf.Clamp(inputPlayerId, GameSession.MinPlayerId, GameSession.MaxPlayerId);
+
+        for (int i = 0; i < players.Count; i++)
+        {
+            PlayerCursorState ps = players[i];
+            if (ps == null || ps.confirmed)
+                continue;
+
+            if (GetCursorInputPlayerId(ps) == inputPlayerId)
+                return true;
+        }
+
+        return false;
+    }
+
+    void RemoveCursor(PlayerCursorState cursor)
+    {
+        if (cursor == null)
+            return;
+
+        if (cursor.cursorRt != null)
+            Destroy(cursor.cursorRt.gameObject);
+
+        players.Remove(cursor);
+    }
+
+    void InitializeCursorSelection(PlayerCursorState cursor)
+    {
+        if (cursor == null)
+            return;
+
+        int idx;
+        if (staggerCursorStartByPlayer)
+            idx = (cursor.playerId - 1) % selectableSkins.Count;
+        else
+        {
+            idx = selectableSkins.IndexOf(PlayerPersistentStats.Get(cursor.playerId).Skin);
+            if (idx < 0) idx = 0;
+        }
+
+        cursor.index = idx;
+        cursor.selected = PlayerPersistentStats.Get(cursor.playerId).Skin;
+        cursor.confirmed = false;
+        cursor.selectedIndex = -1;
     }
 
     void PopulateConfiguredPlayerIds(List<int> results)

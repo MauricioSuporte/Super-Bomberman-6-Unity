@@ -476,6 +476,7 @@ MonoBehaviour:
   fadeOutOnConfirmDuration: 1
   useFadeTransitions: 0
   manageSelectMusic: 0
+  useBattleModeComAssignment: 1
   gridRoot: {fileID: 300000101}
   skinItemPrefab: {fileID: 300000113}
   columns: 5
