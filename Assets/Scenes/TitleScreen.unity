@@ -1519,6 +1519,7 @@ MonoBehaviour:
   titleScreen: {fileID: 1724740267}
   skinSelectSceneName: SkinSelect
   bossRushSceneName: BossRush
+  battleModeMenuSceneName: BattleModeMenu
   fadeOpenBeforeHudsonSeconds: 0.2
   fadeCloseAfterHudsonSeconds: 0.12
 --- !u!1 &1520869088

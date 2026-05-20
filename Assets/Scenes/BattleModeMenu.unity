@@ -675,7 +675,7 @@ MonoBehaviour:
   playerSelectPrompt: PLAYER SELECT
   leftPanel: {fileID: 2134452605}
   matchModeLayout:
-    fontSize: 38
+    fontSize: 32
     optionItemHeight: 54
     optionSpacing: {x: 0, y: 50}
     optionContentOffsetX: 90

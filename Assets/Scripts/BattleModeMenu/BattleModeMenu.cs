@@ -554,6 +554,11 @@ public sealed class BattleModeMenu : MonoBehaviour
 
     private void LoadTitleScene()
     {
+        if (GameMusicController.Instance != null)
+            GameMusicController.Instance.StopMusic();
+
+        TitleScreenBootstrap.SkipNextIntroSequence();
+
         if (!string.IsNullOrWhiteSpace(titleSceneName))
             LoadScene(titleSceneName);
     }

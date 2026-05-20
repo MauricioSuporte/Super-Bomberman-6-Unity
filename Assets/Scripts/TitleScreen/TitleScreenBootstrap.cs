@@ -23,6 +23,7 @@ public class TitleScreenBootstrap : MonoBehaviour
     [Header("Flow")]
     [SerializeField] string skinSelectSceneName = "SkinSelect";
     [SerializeField] string bossRushSceneName = "BossRush";
+    [SerializeField] string battleModeMenuSceneName = "BattleModeMenu";
 
     [Header("Hudson Fade")]
     [SerializeField, Min(0f)] float fadeOpenBeforeHudsonSeconds = 0.20f;
@@ -176,6 +177,15 @@ public class TitleScreenBootstrap : MonoBehaviour
                 }
             }
 
+            if (titleScreen.BattleModeRequested)
+            {
+                if (!string.IsNullOrEmpty(battleModeMenuSceneName))
+                {
+                    SceneManager.LoadScene(battleModeMenuSceneName);
+                    yield break;
+                }
+            }
+
             if (titleScreen.NormalGameRequested)
             {
                 if (!string.IsNullOrEmpty(skinSelectSceneName))
@@ -224,5 +234,11 @@ public class TitleScreenBootstrap : MonoBehaviour
     public static void ResetLogoState()
     {
         hasPlayedLogoIntro = false;
+    }
+
+    public static void SkipNextIntroSequence()
+    {
+        hasPlayedLogoIntro = true;
+        TitleScreenSkip.SkipNextIntro = true;
     }
 }

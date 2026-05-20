@@ -162,6 +162,7 @@ public class TitleScreenController : MonoBehaviour
     public bool Running { get; private set; }
     public bool NormalGameRequested { get; private set; }
     public bool BossRushRequested { get; private set; }
+    public bool BattleModeRequested { get; private set; }
     public bool ExitRequested { get; private set; }
 
     bool bossRushInspectorDefaultUnlocked;
@@ -177,14 +178,16 @@ public class TitleScreenController : MonoBehaviour
         PlayerCount = 1,
         Options = 2,
         Video = 3,
-        ResetSaveConfirm = 4
+        ResetSaveConfirm = 4,
+        GameModes = 5
     }
 
     enum StartFlowMode
     {
         None = 0,
         Normal = 1,
-        BossRush = 2
+        BossRush = 2,
+        BattleMode = 3
     }
 
     struct PointerState
@@ -198,9 +201,13 @@ public class TitleScreenController : MonoBehaviour
     MenuMode menuMode = MenuMode.Main;
     StartFlowMode pendingStartFlow = StartFlowMode.None;
 
-    const int MAIN_IDX_NORMAL = 0;
-    const int MAIN_IDX_BOSS_RUSH = 1;
+    const int MAIN_IDX_GAME_MODES = 0;
+    const int MAIN_IDX_ACHIEVEMENTS = 1;
     const int MAIN_IDX_OPTIONS = 2;
+
+    const int GAME_MODE_IDX_NORMAL = 0;
+    const int GAME_MODE_IDX_BOSS_RUSH = 1;
+    const int GAME_MODE_IDX_BATTLE = 2;
 
     const int OPTIONS_IDX_CONTROLS = 0;
     int OptionsVideoIndex => IsVideoMenuAvailable ? 1 : -1;
@@ -997,6 +1004,7 @@ public class TitleScreenController : MonoBehaviour
 
         NormalGameRequested = false;
         BossRushRequested = false;
+        BattleModeRequested = false;
         ExitRequested = false;
         ControlsRequested = false;
 
@@ -1296,6 +1304,7 @@ public class TitleScreenController : MonoBehaviour
 
         NormalGameRequested = false;
         BossRushRequested = false;
+        BattleModeRequested = false;
         ExitRequested = false;
         ControlsRequested = false;
 
@@ -1394,11 +1403,11 @@ public class TitleScreenController : MonoBehaviour
             }
 
             bool backPressedByPad =
-                (menuMode == MenuMode.PlayerCount || menuMode == MenuMode.Options || menuMode == MenuMode.Video || menuMode == MenuMode.ResetSaveConfirm) &&
+                (menuMode == MenuMode.PlayerCount || menuMode == MenuMode.GameModes || menuMode == MenuMode.Options || menuMode == MenuMode.Video || menuMode == MenuMode.ResetSaveConfirm) &&
                 TryGetAnyPlayerDown(PlayerAction.ActionB, out _);
 
             bool backPressedByMouse =
-                (menuMode == MenuMode.PlayerCount || menuMode == MenuMode.Options || menuMode == MenuMode.Video || menuMode == MenuMode.ResetSaveConfirm) &&
+                (menuMode == MenuMode.PlayerCount || menuMode == MenuMode.GameModes || menuMode == MenuMode.Options || menuMode == MenuMode.Video || menuMode == MenuMode.ResetSaveConfirm) &&
                 IsPointerBackPressed();
 
             if (backPressedByPad || backPressedByMouse)
@@ -1407,8 +1416,14 @@ public class TitleScreenController : MonoBehaviour
 
                 if (menuMode == MenuMode.PlayerCount)
                 {
+                    menuIndex = GetGameModeIndexForPendingStartFlow();
+                    menuMode = MenuMode.GameModes;
+                    pendingStartFlow = StartFlowMode.None;
+                }
+                else if (menuMode == MenuMode.GameModes)
+                {
                     menuMode = MenuMode.Main;
-                    menuIndex = 0;
+                    menuIndex = MAIN_IDX_GAME_MODES;
                     pendingStartFlow = StartFlowMode.None;
                 }
                 else if (menuMode == MenuMode.Options)
@@ -1514,7 +1529,7 @@ public class TitleScreenController : MonoBehaviour
             {
                 if (menuMode == MenuMode.Main)
                 {
-                    if (menuIndex == MAIN_IDX_NORMAL)
+                    if (menuIndex == MAIN_IDX_GAME_MODES)
                     {
                         locked = true;
                         PlaySelectSfx();
@@ -1522,45 +1537,9 @@ public class TitleScreenController : MonoBehaviour
                         if (cursorRenderer != null)
                             yield return cursorRenderer.PlayCycles(2);
 
-                        pendingStartFlow = StartFlowMode.Normal;
-                        menuMode = MenuMode.PlayerCount;
+                        menuMode = MenuMode.GameModes;
                         menuIndex = 0;
-                        locked = false;
-
-                        HideFooterMessageImmediate();
-                        HideBossRushLockedMessageImmediate();
-                        RefreshMenuText();
-
-                        while (AnyPlayerHeld(PlayerAction.Start) || AnyPlayerHeld(PlayerAction.ActionA))
-                            yield return null;
-
-                        yield return null;
-                        continue;
-                    }
-
-                    if (menuIndex == MAIN_IDX_BOSS_RUSH)
-                    {
-                        if (!forceBossRushUnlocked)
-                        {
-                            PlayDeniedSfx();
-                            ShowBossRushLockedMessage(bossRushLockedMessage, bossRushLockedMessageHex, bossRushLockedShowSeconds);
-
-                            while (AnyPlayerHeld(PlayerAction.Start) || AnyPlayerHeld(PlayerAction.ActionA))
-                                yield return null;
-
-                            yield return null;
-                            continue;
-                        }
-
-                        locked = true;
-                        PlaySelectSfx();
-
-                        if (cursorRenderer != null)
-                            yield return cursorRenderer.PlayCycles(2);
-
-                        pendingStartFlow = StartFlowMode.BossRush;
-                        menuMode = MenuMode.PlayerCount;
-                        menuIndex = 0;
+                        pendingStartFlow = StartFlowMode.None;
                         locked = false;
 
                         HideFooterMessageImmediate();
@@ -1597,6 +1576,17 @@ public class TitleScreenController : MonoBehaviour
                         continue;
                     }
 
+                    if (menuIndex == MAIN_IDX_ACHIEVEMENTS)
+                    {
+                        PlayDeniedSfx();
+
+                        while (AnyPlayerHeld(PlayerAction.Start) || AnyPlayerHeld(PlayerAction.ActionA))
+                            yield return null;
+
+                        yield return null;
+                        continue;
+                    }
+
                     locked = true;
                     PlaySelectSfx();
 
@@ -1606,6 +1596,53 @@ public class TitleScreenController : MonoBehaviour
                     ExitRequested = true;
                     yield return ExitGame();
                     yield break;
+                }
+
+                if (menuMode == MenuMode.GameModes)
+                {
+                    if (menuIndex == GAME_MODE_IDX_BOSS_RUSH && !forceBossRushUnlocked)
+                    {
+                        PlayDeniedSfx();
+                        ShowBossRushLockedMessage(bossRushLockedMessage, bossRushLockedMessageHex, bossRushLockedShowSeconds);
+
+                        while (AnyPlayerHeld(PlayerAction.Start) || AnyPlayerHeld(PlayerAction.ActionA))
+                            yield return null;
+
+                        yield return null;
+                        continue;
+                    }
+
+                    locked = true;
+                    PlaySelectSfx();
+
+                    if (cursorRenderer != null)
+                        yield return cursorRenderer.PlayCycles(2);
+
+                    if (menuIndex == GAME_MODE_IDX_BATTLE)
+                    {
+                        BattleModeRequested = true;
+                        yield return StartSelectedGameFlow();
+                        yield break;
+                    }
+
+                    if (menuIndex == GAME_MODE_IDX_NORMAL)
+                        pendingStartFlow = StartFlowMode.Normal;
+                    else
+                        pendingStartFlow = StartFlowMode.BossRush;
+
+                    menuMode = MenuMode.PlayerCount;
+                    menuIndex = 0;
+                    locked = false;
+
+                    HideFooterMessageImmediate();
+                    HideBossRushLockedMessageImmediate();
+                    RefreshMenuText();
+
+                    while (AnyPlayerHeld(PlayerAction.Start) || AnyPlayerHeld(PlayerAction.ActionA))
+                        yield return null;
+
+                    yield return null;
+                    continue;
                 }
 
                 if (menuMode == MenuMode.Options)
@@ -1747,6 +1784,13 @@ public class TitleScreenController : MonoBehaviour
                         yield break;
                     }
 
+                    if (pendingStartFlow == StartFlowMode.BattleMode)
+                    {
+                        BattleModeRequested = true;
+                        yield return StartSelectedGameFlow();
+                        yield break;
+                    }
+
                     NormalGameRequested = true;
                     yield return StartSelectedGameFlow();
                     yield break;
@@ -1760,10 +1804,21 @@ public class TitleScreenController : MonoBehaviour
     int GetMenuItemCount()
     {
         if (menuMode == MenuMode.PlayerCount) return 4;
+        if (menuMode == MenuMode.GameModes) return 3;
         if (menuMode == MenuMode.Options) return IsVideoMenuAvailable ? 3 : 2;
         if (menuMode == MenuMode.Video) return 2;
         if (menuMode == MenuMode.ResetSaveConfirm) return 2;
         return 4;
+    }
+
+    int GetGameModeIndexForPendingStartFlow()
+    {
+        return pendingStartFlow switch
+        {
+            StartFlowMode.BossRush => GAME_MODE_IDX_BOSS_RUSH,
+            StartFlowMode.BattleMode => GAME_MODE_IDX_BATTLE,
+            _ => GAME_MODE_IDX_NORMAL
+        };
     }
 
     IEnumerator StartSelectedGameFlow()
@@ -1843,19 +1898,36 @@ public class TitleScreenController : MonoBehaviour
 
         if (menuMode == MenuMode.Main)
         {
-            string normal = $"<color=#{baseRgb}FF>NORMAL GAME</color>";
-            string bossRush = forceBossRushUnlocked
-                ? $"<color=#{baseRgb}FF>BOSS RUSH</color>"
-                : $"<color={ColorWithAlpha(baseRgb, bossRushLockedAlpha)}>BOSS RUSH</color>";
+            string gameModes = $"<color=#{baseRgb}FF>GAME MODES</color>";
+            string achievements = $"<color=#{baseRgb}FF>ACHIEVEMENTS</color>";
             string options = $"<color=#{baseRgb}FF>OPTIONS</color>";
             string exit = $"<color=#{baseRgb}FF>EXIT</color>";
 
             menuText.text =
                 "<align=left>" +
-                $"<size={size}>{normal}</size>\n" +
-                $"<size={size}>{bossRush}</size>\n" +
+                $"<size={size}>{gameModes}</size>\n" +
+                $"<size={size}>{achievements}</size>\n" +
                 $"<size={size}>{options}</size>\n" +
                 $"<size={size}>{exit}</size>" +
+                "</align>";
+
+            if (videoValuesText != null) videoValuesText.gameObject.SetActive(false);
+            return;
+        }
+
+        if (menuMode == MenuMode.GameModes)
+        {
+            string normal = $"<color=#{baseRgb}FF>NORMAL GAME</color>";
+            string bossRush = forceBossRushUnlocked
+                ? $"<color=#{baseRgb}FF>BOSS RUSH</color>"
+                : $"<color={ColorWithAlpha(baseRgb, bossRushLockedAlpha)}>BOSS RUSH</color>";
+            string battleMode = $"<color=#{baseRgb}FF>BATTLE MODE</color>";
+
+            menuText.text =
+                "<align=left>" +
+                $"<size={size}>{normal}</size>\n" +
+                $"<size={size}>{bossRush}</size>\n" +
+                $"<size={size}>{battleMode}</size>" +
                 "</align>";
 
             if (videoValuesText != null) videoValuesText.gameObject.SetActive(false);
