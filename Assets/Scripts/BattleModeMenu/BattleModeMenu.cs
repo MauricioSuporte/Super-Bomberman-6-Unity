@@ -10,7 +10,8 @@ public sealed class BattleModeMenu : MonoBehaviour
     private enum MenuState
     {
         MatchMode = 0,
-        PlayerSelect = 1
+        PlayerSelect = 1,
+        SkinSelect = 2
     }
 
     [System.Serializable]
@@ -64,9 +65,11 @@ public sealed class BattleModeMenu : MonoBehaviour
     [SerializeField] private TextMeshProUGUI promptTitleText;
     [SerializeField] private string matchModePrompt = "BATTLE MODE";
     [SerializeField] private string playerSelectPrompt = "PLAYER SELECT";
+    [SerializeField] private string skinSelectPrompt = "CHARACTER SELECT";
 
     [Header("Options Panel")]
     [SerializeField] private SaveFileMenuOptions leftPanel;
+    [SerializeField] private BomberSkinSelectMenu skinSelectMenu;
     [SerializeField] private OptionPanelLayout matchModeLayout = new();
     [SerializeField] private OptionPanelLayout playerSelectLayout = new()
     {
@@ -90,6 +93,7 @@ public sealed class BattleModeMenu : MonoBehaviour
     [Header("Animated Backgrounds")]
     [SerializeField] private BackgroundSet matchModeBackgrounds = new();
     [SerializeField] private BackgroundSet playerSelectBackgrounds = new();
+    [SerializeField] private BackgroundSet skinSelectBackgrounds = new();
     [SerializeField, Min(0.01f)] private float backgroundSwapInterval = 2f;
     [SerializeField] private bool backgroundSwapLoop = true;
 
@@ -141,6 +145,8 @@ public sealed class BattleModeMenu : MonoBehaviour
     };
 
     private readonly List<string> playerEntries = new();
+    private readonly List<int> battleEnabledPlayerIds = new(GameSession.MaxPlayerId);
+    private readonly List<int> battleHumanPlayerIds = new(GameSession.MaxPlayerId);
 
     private readonly List<bool> displayEnabled = new()
     {
@@ -185,6 +191,9 @@ public sealed class BattleModeMenu : MonoBehaviour
         selectedPlayerIndex = 0;
         playerModes = SaveSystem.GetBattleModePlayerControlModes();
 
+        if (skinSelectMenu == null)
+            skinSelectMenu = GetComponent<BomberSkinSelectMenu>();
+
         ApplyCurrentBackgroundSprite(true);
         UpdatePromptTitle();
 
@@ -202,10 +211,12 @@ public sealed class BattleModeMenu : MonoBehaviour
         if (root != null && root.activeInHierarchy)
         {
             ApplyDynamicScaleIfNeeded(false);
-            TickBackgroundSpriteSwap();
+
+            if (state != MenuState.SkinSelect)
+                TickBackgroundSpriteSwap();
         }
 
-        if (!menuActive)
+        if (!menuActive || state == MenuState.SkinSelect)
             return;
 
         UpdateOptionVisuals();
@@ -271,8 +282,10 @@ public sealed class BattleModeMenu : MonoBehaviour
 
             if (state == MenuState.MatchMode)
                 yield return TickMatchModeInput(input);
-            else
+            else if (state == MenuState.PlayerSelect)
                 yield return TickPlayerSelectInput(input);
+            else
+                yield return null;
 
             CapturePreviousHeldInputs(input);
             yield return null;
@@ -397,6 +410,14 @@ public sealed class BattleModeMenu : MonoBehaviour
         if (wait > 0f)
             yield return new WaitForSecondsRealtime(wait);
 
+        cursorConfirmVisual = false;
+
+        if (skinSelectMenu != null)
+        {
+            yield return OpenSkinSelectMenu();
+            yield break;
+        }
+
         if (loadNextSceneAfterSelection && !string.IsNullOrWhiteSpace(nextSceneName))
         {
             confirmed = true;
@@ -406,7 +427,6 @@ public sealed class BattleModeMenu : MonoBehaviour
             yield break;
         }
 
-        cursorConfirmVisual = false;
         UpdateOptionVisuals();
     }
 
@@ -444,6 +464,60 @@ public sealed class BattleModeMenu : MonoBehaviour
         UpdateOptionVisuals();
     }
 
+    private IEnumerator OpenSkinSelectMenu()
+    {
+        state = MenuState.SkinSelect;
+        menuActive = false;
+        cursorConfirmVisual = false;
+
+        ApplyBattleModeActivePlayerIds(includeComPlayers: false);
+
+        if (leftPanel != null)
+        {
+            leftPanel.HideCursor();
+            leftPanel.gameObject.SetActive(false);
+        }
+
+        UpdatePromptTitle();
+        ApplyCurrentBackgroundSprite(true);
+
+        yield return skinSelectMenu.SelectSkinRoutine();
+
+        ApplyBattleModeActivePlayerIds(includeComPlayers: true);
+
+        if (!skinSelectMenu.ReturnToTitleRequested &&
+            loadNextSceneAfterSelection &&
+            !string.IsNullOrWhiteSpace(nextSceneName))
+        {
+            confirmed = true;
+            Hide();
+            LoadScene(nextSceneName);
+            yield break;
+        }
+
+        if (root != null)
+            root.SetActive(true);
+
+        if (fadeImage != null)
+        {
+            fadeImage.gameObject.SetActive(false);
+            SetFadeAlpha(0f);
+        }
+
+        if (leftPanel != null)
+            leftPanel.gameObject.SetActive(true);
+
+        BuildPlayerSelectMenu();
+
+        PlayerInputManager input = PlayerInputManager.Instance;
+        while (input != null && HasAnyRelevantHeldInput(input, out _, out _))
+            yield return null;
+
+        yield return null;
+        CapturePreviousHeldInputs(input);
+        menuActive = true;
+    }
+
     private void RefreshPlayerSelectEntries()
     {
         BuildPlayerEntries();
@@ -466,6 +540,33 @@ public sealed class BattleModeMenu : MonoBehaviour
             string columnSpaces = new string(' ', Mathf.Max(1, playerModeColumnSpaces));
             playerEntries.Add($"<color={playerLabelHex}>{i + 1}PLAYER</color>{columnSpaces}<color={modeColor}>{modeText}</color>");
         }
+    }
+
+    private void ApplyBattleModeActivePlayerIds(bool includeComPlayers)
+    {
+        List<int> playerIds = includeComPlayers ? battleEnabledPlayerIds : battleHumanPlayerIds;
+        playerIds.Clear();
+
+        if (playerModes != null)
+        {
+            for (int i = 0; i < playerModes.Length && i < GameSession.MaxPlayerId; i++)
+            {
+                BattleModePlayerControlMode mode = playerModes[i];
+                if (mode == BattleModePlayerControlMode.Off)
+                    continue;
+
+                if (!includeComPlayers && mode != BattleModePlayerControlMode.Man)
+                    continue;
+
+                playerIds.Add(i + 1);
+            }
+        }
+
+        if (playerIds.Count <= 0)
+            playerIds.Add(GameSession.MinPlayerId);
+
+        if (GameSession.Instance != null)
+            GameSession.Instance.SetActivePlayerIds(playerIds);
     }
 
     private void ApplyPanelLayout(OptionPanelLayout layout)
@@ -751,7 +852,12 @@ public sealed class BattleModeMenu : MonoBehaviour
         if (promptTitleText == null)
             return;
 
-        promptTitleText.text = state == MenuState.PlayerSelect ? playerSelectPrompt : matchModePrompt;
+        promptTitleText.text = state switch
+        {
+            MenuState.PlayerSelect => playerSelectPrompt,
+            MenuState.SkinSelect => skinSelectPrompt,
+            _ => matchModePrompt
+        };
     }
 
     private void PlaySfx(AudioClip clip, float volume)
@@ -889,9 +995,12 @@ public sealed class BattleModeMenu : MonoBehaviour
 
     private Sprite[] GetCurrentBackgroundSprites()
     {
-        return state == MenuState.PlayerSelect
-            ? playerSelectBackgrounds?.sprites
-            : matchModeBackgrounds?.sprites;
+        return state switch
+        {
+            MenuState.PlayerSelect => playerSelectBackgrounds?.sprites,
+            MenuState.SkinSelect => skinSelectBackgrounds?.sprites,
+            _ => matchModeBackgrounds?.sprites
+        };
     }
 
     private static int GetValidSpriteCount(Sprite[] sprites)

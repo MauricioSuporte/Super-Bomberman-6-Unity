@@ -317,6 +317,248 @@ MonoBehaviour:
   m_PointerBehavior: 0
   m_CursorLockBehavior: 0
   m_ScrollDeltaPerTick: 6
+--- !u!1 &300000100
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 300000101}
+  - component: {fileID: 300000102}
+  m_Layer: 5
+  m_Name: BattleModeSkinGrid
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &300000101
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 300000100}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 300000111}
+  m_Father: {fileID: 861532795}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 0, y: -10}
+  m_SizeDelta: {x: 100, y: 100}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &300000102
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 300000100}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8a8695521f0d02e499659fee002a26c2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.GridLayoutGroup
+  m_Padding:
+    m_Left: 0
+    m_Right: 0
+    m_Top: 0
+    m_Bottom: 0
+  m_ChildAlignment: 4
+  m_StartCorner: 0
+  m_StartAxis: 0
+  m_CellSize: {x: 56, y: 56}
+  m_Spacing: {x: 12, y: 12}
+  m_Constraint: 1
+  m_ConstraintCount: 5
+--- !u!1 &300000110
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 300000111}
+  - component: {fileID: 300000112}
+  - component: {fileID: 300000113}
+  m_Layer: 5
+  m_Name: BattleModeSkinItemPrefab
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &300000111
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 300000110}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 300000101}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!222 &300000112
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 300000110}
+  m_CullTransparentMesh: 1
+--- !u!114 &300000113
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 300000110}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_RaycastTarget: 0
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_Sprite: {fileID: 0}
+  m_Type: 0
+  m_PreserveAspect: 1
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
+  m_UseSpriteMesh: 0
+  m_PixelsPerUnitMultiplier: 1
+--- !u!114 &300000200
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1311323896}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b76f6e41b0d6bc54c80af4d359c9ab98, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BomberSkinSelectMenu
+  enableSurgicalLogs: 0
+  logHintSpacingEveryUpdate: 0
+  forceRootPanelStretchToParent: 0
+  forceBackgroundStretchToRootPanel: 0
+  root: {fileID: 861532794}
+  backgroundImage: {fileID: 1806562754}
+  fadeImage: {fileID: 336813435}
+  fadeDuration: 0.5
+  fadeOutOnConfirmDuration: 1
+  useFadeTransitions: 0
+  manageSelectMusic: 0
+  gridRoot: {fileID: 300000101}
+  skinItemPrefab: {fileID: 300000113}
+  columns: 5
+  cellSize: {x: 56, y: 56}
+  spacing: {x: 12, y: 12}
+  lockedTint: {r: 1, g: 1, b: 1, a: 0.35}
+  normalTint: {r: 1, g: 1, b: 1, a: 1}
+  selectedTint: {r: 1, g: 1, b: 1, a: 1}
+  skinCursorPrefab: {fileID: 7207817685866332595, guid: 7343d27b278e105479b8c1724e1c399a, type: 3}
+  staggerCursorStartByPlayer: 1
+  cursorSpriteByPlayer:
+  - {fileID: 21300000, guid: 3dc067a863e2d754b8101e2c9686d9a3, type: 3}
+  - {fileID: 21300000, guid: 0651b2f0c4d59a34393bfef0a2fa0885, type: 3}
+  - {fileID: 21300000, guid: 0773d25e48d28f140a6ef2ed138c7c1c, type: 3}
+  - {fileID: 21300000, guid: 5910d083c37a4d844b9556c47f19a862, type: 3}
+  - {fileID: 21300000, guid: d4ef388d2916b7a4fab942f8f0aa3a0c, type: 3}
+  cursorPadding: {x: 6, y: 4}
+  cursorSizeMultiplier: {x: 1, y: 1}
+  cursorYOffset: 10
+  cursorBlinkWhileNotConfirmed: 1
+  cursorBlinkSpeed: 5.5
+  cursorBlinkMinAlpha: 0.25
+  cursorBlinkMaxAlpha: 1
+  backgroundSprites:
+  - {fileID: 21300000, guid: 9cd8746a4651a2b4681adcb5eb73a623, type: 3}
+  - {fileID: 21300000, guid: 878884cd17e7c3648951f8120973589e, type: 3}
+  backgroundSwapInterval: 2
+  backgroundSwapLoop: 1
+  spritesResourcesPath: Sprites/Bombers/Bomberman
+  idleFrameIndex: 16
+  downFrameTime: 0.22
+  endStageFrameTime: 0.1
+  downFrames: 0e000000100000001200000010000000
+  endStageFrames: 94000000940000009200000094000000930000009400000092000000940000009300000093000000
+  endStageYOffset: 10
+  endStageLoopsToStop: 1
+  selectMusic: {fileID: 8300000, guid: 41467db587cc70f42af59ac5abd81be3, type: 3}
+  selectMusicLoop: {fileID: 8300000, guid: 6a0bcd3577b8b13489cf8bcf2275467b, type: 3}
+  selectMusicVolume: 1
+  loopSelectMusic: 1
+  moveCursorSfx: {fileID: 8300000, guid: 9095599de31cf8543bb7e82ff2782f12, type: 3}
+  moveCursorSfxVolume: 1
+  confirmSfx: {fileID: 8300000, guid: f4ca5a046054f404aa2ac2df051e75c0, type: 3}
+  confirmSfxVolume: 1
+  lockedConfirmSfx: {fileID: 8300000, guid: 2f98cb783cdc9bb4d8ff3b868291f743, type: 3}
+  lockedConfirmSfxVolume: 1
+  returnSfx: {fileID: 8300000, guid: 30ca55f720379e64ab9b908db035db4c, type: 3}
+  returnSfxVolume: 1
+  referenceRect: {fileID: 1599199474}
+  rootPanel: {fileID: 861532795}
+  dynamicScale: 1
+  referenceWidth: 256
+  referenceHeight: 224
+  useIntegerUpscale: 1
+  designUpscale: 4
+  extraScaleMultiplier: 2
+  minScale: 0.5
+  maxScale: 10
+  gridBaseAnchoredPos: {x: 0, y: -10}
+  unlockHintText: {fileID: 0}
+  unlockHintFontSize: 16
+  unlockHintBottomMargin: 18
+  unlockHintWidth: 450
+  unlockHintHeight: 80
+  unlockHintMinHeight: 32
+  unlockHintFontAsset: {fileID: 11400000, guid: ecf098b5ead05a94fa9fde052327d9de, type: 2}
+  unlockHintFontMaterialPreset: {fileID: 0}
+  forceUnlockHintBold: 1
+  unlockHintFaceColor: {r: 1, g: 0.84705883, b: 0, a: 1}
+  unlockHintOutlineColor: {r: 0, g: 0, b: 0, a: 1}
+  useUnlockHintOutline: 1
+  unlockHintOutlineWidth: 0.35
+  unlockHintOutlineSoftness: 0
+  unlockHintFaceDilate: 0.2
+  unlockHintFaceSoftness: 0
+  enableUnlockHintUnderlay: 1
+  unlockHintUnderlayColor: {r: 0, g: 0, b: 0, a: 1}
+  unlockHintUnderlayDilate: 0.1
+  unlockHintUnderlaySoftness: 0
+  unlockHintUnderlayOffsetX: 0.25
+  unlockHintUnderlayOffsetY: -0.25
+  unlockHintBottomPercentOfReferenceHeight: 0.12
+  selectableSkins: 0100000003000000040000000b00000008000000060000000f0000000a000000050000000d000000020000000700000011000000090000000c000000100000000e000000120000001300000000000000
 --- !u!1 &336813434
 GameObject:
   m_ObjectHideFlags: 0
@@ -602,6 +844,7 @@ RectTransform:
   m_Children:
   - {fileID: 1806562752}
   - {fileID: 2134452604}
+  - {fileID: 300000101}
   - {fileID: 336813437}
   m_Father: {fileID: 1311323898}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -620,6 +863,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1311323898}
   - component: {fileID: 1311323899}
+  - component: {fileID: 300000200}
   m_Layer: 5
   m_Name: BattleModeMenu
   m_TagString: Untagged
@@ -673,7 +917,9 @@ MonoBehaviour:
   promptTitleText: {fileID: 0}
   matchModePrompt: BATTLE MODE
   playerSelectPrompt: PLAYER SELECT
+  skinSelectPrompt: CHARACTER SELECT
   leftPanel: {fileID: 2134452605}
+  skinSelectMenu: {fileID: 300000200}
   matchModeLayout:
     fontSize: 32
     optionItemHeight: 54
@@ -714,6 +960,10 @@ MonoBehaviour:
     sprites:
     - {fileID: 21300000, guid: b6b7b37234157ea44b020ca23582cb2f, type: 3}
     - {fileID: 21300000, guid: bd053a7495380c94ea655b5cbe7f9a46, type: 3}
+  skinSelectBackgrounds:
+    sprites:
+    - {fileID: 21300000, guid: 9cd8746a4651a2b4681adcb5eb73a623, type: 3}
+    - {fileID: 21300000, guid: 878884cd17e7c3648951f8120973589e, type: 3}
   backgroundSwapInterval: 2
   backgroundSwapLoop: 1
   playerLabelHex: '#00FF3C'
@@ -723,7 +973,7 @@ MonoBehaviour:
   playerModeColumnSpaces: 2
   logCursorSizeDebug: 1
   selectMusic: {fileID: 8300000, guid: da56bf64ad8b3f346bf9f3a08d30b816, type: 3}
-  selectMusicVolume: 1
+  selectMusicVolume: 0.8
   loopSelectMusic: 1
   moveCursorSfx: {fileID: 8300000, guid: 9095599de31cf8543bb7e82ff2782f12, type: 3}
   moveCursorSfxVolume: 1

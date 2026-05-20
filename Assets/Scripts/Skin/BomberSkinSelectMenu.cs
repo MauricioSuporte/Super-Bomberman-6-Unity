@@ -26,6 +26,10 @@ public class BomberSkinSelectMenu : MonoBehaviour
     [SerializeField] float fadeDuration = 1f;
     [SerializeField] float fadeOutOnConfirmDuration = 2f;
 
+    [Header("Embedded Flow")]
+    [SerializeField] bool useFadeTransitions = true;
+    [SerializeField] bool manageSelectMusic = true;
+
     [Header("Grid")]
     [SerializeField] Transform gridRoot;
     [SerializeField] Image skinItemPrefab;
@@ -333,6 +337,9 @@ public class BomberSkinSelectMenu : MonoBehaviour
 
         players.Clear();
 
+        if (gridRoot != null)
+            gridRoot.gameObject.SetActive(false);
+
         SLog("Hide | menuActive=false");
 
         if (root != null) root.SetActive(false);
@@ -352,7 +359,10 @@ public class BomberSkinSelectMenu : MonoBehaviour
         EnsureUnlockHintText();
         HideUnlockHintImmediate();
 
-        if (fadeImage != null)
+        if (gridRoot != null)
+            gridRoot.gameObject.SetActive(true);
+
+        if (useFadeTransitions && fadeImage != null)
         {
             fadeImage.gameObject.SetActive(true);
             fadeImage.transform.SetAsLastSibling();
@@ -382,7 +392,8 @@ public class BomberSkinSelectMenu : MonoBehaviour
         for (int i = 0; i < selectedBySlot.Length; i++)
             selectedBySlot[i] = 0;
 
-        StartSelectMusic();
+        if (manageSelectMusic)
+            StartSelectMusic();
 
         var input = PlayerInputManager.Instance;
 
@@ -436,10 +447,11 @@ public class BomberSkinSelectMenu : MonoBehaviour
 
         DumpHintSpacing("SelectSkinRoutine.BeforeFadeIn");
 
-        if (fadeInCoroutine != null)
+        if (useFadeTransitions && fadeInCoroutine != null)
             StopCoroutine(fadeInCoroutine);
 
-        fadeInCoroutine = StartCoroutine(FadeInRoutine());
+        if (useFadeTransitions)
+            fadeInCoroutine = StartCoroutine(FadeInRoutine());
 
         bool done = false;
         while (!done)
@@ -527,12 +539,15 @@ public class BomberSkinSelectMenu : MonoBehaviour
             fadeInCoroutine = null;
         }
 
-        yield return FadeOutRoutine();
+        if (useFadeTransitions)
+            yield return FadeOutRoutine();
 
-        StopSelectMusicAndRestorePrevious(restorePrevious: ReturnToTitleRequested);
+        if (manageSelectMusic)
+            StopSelectMusicAndRestorePrevious(restorePrevious: ReturnToTitleRequested);
+
         Hide();
 
-        if (fadeImage != null)
+        if (useFadeTransitions && fadeImage != null)
             fadeImage.gameObject.SetActive(false);
     }
 
