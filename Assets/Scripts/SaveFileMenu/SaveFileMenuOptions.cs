@@ -31,6 +31,7 @@ public class SaveFileMenuOptions : MonoBehaviour
     [SerializeField] private TMP_FontAsset optionFontAsset;
     [SerializeField] private Material optionFontMaterialPreset;
     [SerializeField] private bool forceBold = true;
+    [SerializeField] private bool useRichTextEntryColors;
     [SerializeField] private bool autoSize = false;
     [SerializeField, Range(0.25f, 1f)] private float autoSizeMinRatio = 0.75f;
 
@@ -81,6 +82,14 @@ public class SaveFileMenuOptions : MonoBehaviour
     private bool _layoutPaddingCaptured;
 
     public int Count => entries.Count;
+    public Vector2 CursorSizeDelta
+    {
+        get
+        {
+            RectTransform cursorRt = cursorRenderer != null ? cursorRenderer.transform as RectTransform : null;
+            return cursorRt != null ? cursorRt.sizeDelta : Vector2.zero;
+        }
+    }
 
     public void Awake()
     {
@@ -119,6 +128,42 @@ public class SaveFileMenuOptions : MonoBehaviour
         CaptureBaseLayoutPadding();
         ApplyCursorScale();
         ApplyOptionListLayoutSettings();
+    }
+
+    public void ConfigureLayout(
+        int newFontSize,
+        float newOptionItemHeight,
+        Vector2 newOptionSpacing,
+        float newOptionContentOffsetX,
+        float newOptionContentOffsetY,
+        float newCursorExtraOffsetY,
+        float newBlockCenterX,
+        float newBlockCenterY,
+        float newCursorReservedWidth,
+        float newExtraBlockWidth,
+        float newExtraBlockHeight,
+        Vector2 newCursorOffset,
+        float newCursorHeightMultiplier,
+        float newMinCursorSize,
+        bool newUseRichTextEntryColors = false)
+    {
+        fontSize = Mathf.Max(1, newFontSize);
+        optionItemHeight = Mathf.Max(1f, newOptionItemHeight);
+        optionSpacing = newOptionSpacing;
+        optionContentOffsetX = newOptionContentOffsetX;
+        optionContentOffsetY = newOptionContentOffsetY;
+        cursorExtraOffsetY = newCursorExtraOffsetY;
+        blockCenterX = Mathf.Clamp01(newBlockCenterX);
+        blockCenterY = Mathf.Clamp01(newBlockCenterY);
+        cursorReservedWidth = Mathf.Max(0f, newCursorReservedWidth);
+        extraBlockWidth = newExtraBlockWidth;
+        extraBlockHeight = newExtraBlockHeight;
+        cursorOffset = newCursorOffset;
+        cursorHeightMultiplier = Mathf.Max(0.01f, newCursorHeightMultiplier);
+        minCursorSize = Mathf.Max(1f, newMinCursorSize);
+        useRichTextEntryColors = newUseRichTextEntryColors;
+
+        SetUiScale(_currentUiScale);
     }
 
     public void SetUiScale(float uiScale)
@@ -184,6 +229,23 @@ public class SaveFileMenuOptions : MonoBehaviour
         BuildOptionList();
     }
 
+    public void UpdateEntryTexts(IReadOnlyList<string> newEntries)
+    {
+        if (newEntries == null)
+            return;
+
+        int count = Mathf.Min(entries.Count, newEntries.Count);
+        for (int i = 0; i < count; i++)
+        {
+            entries[i] = newEntries[i] ?? string.Empty;
+
+            if (i >= optionTexts.Count || optionTexts[i] == null)
+                continue;
+
+            optionTexts[i].text = entries[i];
+        }
+    }
+
     public bool IsEntryEnabled(int index)
     {
         if (index < 0 || index >= entryEnabled.Count)
@@ -234,7 +296,9 @@ public class SaveFileMenuOptions : MonoBehaviour
             txt.text = entries[i];
             txt.transform.SetAsLastSibling();
 
-            Color faceColor = entryEnabled[i] ? normalColor : disabledColor;
+            Color faceColor = useRichTextEntryColors
+                ? Color.white
+                : entryEnabled[i] ? normalColor : disabledColor;
             ApplyOptionTextStyle(txt, faceColor);
 
             RectTransform rt = txt.rectTransform;
@@ -283,8 +347,11 @@ public class SaveFileMenuOptions : MonoBehaviour
 
             txt.text = i < entries.Count ? entries[i] : string.Empty;
 
-            Color faceColor = isSelected ? selectedColor : normalColor;
-            if (!enabled)
+            Color faceColor = useRichTextEntryColors
+                ? Color.white
+                : isSelected ? selectedColor : normalColor;
+
+            if (!enabled && !useRichTextEntryColors)
                 faceColor = disabledColor;
 
             ApplyOptionTextStyle(txt, faceColor);

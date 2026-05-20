@@ -18,7 +18,7 @@ public class GamePauseController : MonoBehaviour
     }
 
     [Header("Pause Availability")]
-    private readonly string[] blockedSceneNames = { "TitleScreen", "WorldMap", "SkinSelect", "ControlsMenu", "BossRush", "SaveFileMenu" };
+    private readonly string[] blockedSceneNames = { "TitleScreen", "WorldMap", "SkinSelect", "ControlsMenu", "BossRush", "SaveFileMenu", "BattleModeMenu" };
 
     [Header("SFX (Pause toggle)")]
     public AudioClip pauseSfx;

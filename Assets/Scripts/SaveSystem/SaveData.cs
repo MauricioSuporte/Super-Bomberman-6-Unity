@@ -11,6 +11,16 @@ public sealed class SaveData
 
     public bool bossRushUnlocked = false;
     public bool nightmareUnlocked = false;
+    public int battleModeMatchMode = (int)BattleModeRules.MatchMode.SingleMatch;
+    public int[] battleModePlayerControlModes =
+    {
+        (int)BattleModePlayerControlMode.Man,
+        (int)BattleModePlayerControlMode.Com,
+        (int)BattleModePlayerControlMode.Com,
+        (int)BattleModePlayerControlMode.Com,
+        (int)BattleModePlayerControlMode.Off,
+        (int)BattleModePlayerControlMode.Off
+    };
 
     public int player1SelectedSkin = (int)BomberSkin.White;
     public int player2SelectedSkin = (int)BomberSkin.Black;

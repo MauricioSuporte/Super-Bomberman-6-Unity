@@ -1,5 +1,12 @@
 using UnityEngine;
 
+public enum BattleModePlayerControlMode
+{
+    Man = 0,
+    Com = 1,
+    Off = 2
+}
+
 [DisallowMultipleComponent]
 public sealed class BattleModeRules : MonoBehaviour
 {
@@ -104,6 +111,7 @@ public sealed class BattleModeRules : MonoBehaviour
             Debug.LogWarning("Multiple BattleModeRules instances found in scene. Keeping the most recent one.", this);
 
         Instance = this;
+        ApplySavedMatchMode();
         EnsureEntries();
         EnsureStartingLoadoutEntries();
         NotifyTeamsConfigurationChanged();
@@ -112,6 +120,7 @@ public sealed class BattleModeRules : MonoBehaviour
     void OnEnable()
     {
         Instance = this;
+        ApplySavedMatchMode();
         EnsureEntries();
         EnsureStartingLoadoutEntries();
         NotifyTeamsConfigurationChanged();
@@ -135,6 +144,11 @@ public sealed class BattleModeRules : MonoBehaviour
         EnsureEntries();
         EnsureStartingLoadoutEntries();
         NotifyTeamsConfigurationChanged();
+    }
+
+    void ApplySavedMatchMode()
+    {
+        matchMode = SaveSystem.GetBattleModeMatchMode();
     }
 
     public TeamId GetTeamForPlayer(int playerId)

@@ -300,6 +300,62 @@ public static class SaveSystem
         return entry.topTimes != null && entry.topTimes.Count > 0;
     }
 
+    public static BattleModeRules.MatchMode GetBattleModeMatchMode()
+    {
+        EnsureLoaded();
+        return NormalizeBattleModeMatchMode(data.battleModeMatchMode);
+    }
+
+    public static void SetBattleModeMatchMode(BattleModeRules.MatchMode matchMode)
+    {
+        EnsureLoaded();
+
+        BattleModeRules.MatchMode normalized = NormalizeBattleModeMatchMode((int)matchMode);
+        if (data.battleModeMatchMode == (int)normalized)
+            return;
+
+        data.battleModeMatchMode = (int)normalized;
+        Save();
+    }
+
+    public static BattleModePlayerControlMode[] GetBattleModePlayerControlModes()
+    {
+        EnsureLoaded();
+        EnsureBattleModePlayerControlModes(data);
+
+        BattleModePlayerControlMode[] result = new BattleModePlayerControlMode[6];
+        for (int i = 0; i < result.Length; i++)
+            result[i] = NormalizeBattleModePlayerControlMode(data.battleModePlayerControlModes[i]);
+
+        return result;
+    }
+
+    public static void SetBattleModePlayerControlModes(IReadOnlyList<BattleModePlayerControlMode> modes)
+    {
+        EnsureLoaded();
+        EnsureBattleModePlayerControlModes(data);
+
+        bool changed = false;
+        for (int i = 0; i < data.battleModePlayerControlModes.Length; i++)
+        {
+            BattleModePlayerControlMode mode = modes != null && i < modes.Count
+                ? modes[i]
+                : GetDefaultBattleModePlayerControlMode(i);
+
+            mode = NormalizeBattleModePlayerControlMode((int)mode);
+            int value = (int)mode;
+
+            if (data.battleModePlayerControlModes[i] == value)
+                continue;
+
+            data.battleModePlayerControlModes[i] = value;
+            changed = true;
+        }
+
+        if (changed)
+            Save();
+    }
+
     public static float GetBossRushUnlockTargetTime(BossRushDifficulty difficulty)
     {
         EnsureLoaded();
@@ -495,6 +551,62 @@ public static class SaveSystem
 
         if (d.videoSettings.windowSizeMultiplier < 1)
             d.videoSettings.windowSizeMultiplier = 4;
+
+        d.battleModeMatchMode = (int)NormalizeBattleModeMatchMode(d.battleModeMatchMode);
+        EnsureBattleModePlayerControlModes(d);
+    }
+
+    private static BattleModeRules.MatchMode NormalizeBattleModeMatchMode(int matchMode)
+    {
+        if (Enum.IsDefined(typeof(BattleModeRules.MatchMode), matchMode))
+            return (BattleModeRules.MatchMode)matchMode;
+
+        return BattleModeRules.MatchMode.SingleMatch;
+    }
+
+    private static void EnsureBattleModePlayerControlModes(SaveData d)
+    {
+        if (d == null)
+            return;
+
+        if (d.battleModePlayerControlModes == null || d.battleModePlayerControlModes.Length != 6)
+        {
+            int[] previous = d.battleModePlayerControlModes;
+            d.battleModePlayerControlModes = new int[6];
+
+            for (int i = 0; i < d.battleModePlayerControlModes.Length; i++)
+            {
+                d.battleModePlayerControlModes[i] = previous != null && i < previous.Length
+                    ? previous[i]
+                    : (int)GetDefaultBattleModePlayerControlMode(i);
+            }
+        }
+
+        for (int i = 0; i < d.battleModePlayerControlModes.Length; i++)
+        {
+            d.battleModePlayerControlModes[i] =
+                (int)NormalizeBattleModePlayerControlMode(d.battleModePlayerControlModes[i]);
+        }
+    }
+
+    private static BattleModePlayerControlMode NormalizeBattleModePlayerControlMode(int mode)
+    {
+        if (Enum.IsDefined(typeof(BattleModePlayerControlMode), mode))
+            return (BattleModePlayerControlMode)mode;
+
+        return BattleModePlayerControlMode.Off;
+    }
+
+    private static BattleModePlayerControlMode GetDefaultBattleModePlayerControlMode(int playerIndex)
+    {
+        return playerIndex switch
+        {
+            0 => BattleModePlayerControlMode.Man,
+            1 => BattleModePlayerControlMode.Com,
+            2 => BattleModePlayerControlMode.Com,
+            3 => BattleModePlayerControlMode.Com,
+            _ => BattleModePlayerControlMode.Off
+        };
     }
 
     private static void EnsureControlProfiles(SaveData d)
