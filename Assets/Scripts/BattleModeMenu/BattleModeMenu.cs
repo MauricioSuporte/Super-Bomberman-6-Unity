@@ -105,7 +105,7 @@ public sealed class BattleModeMenu : MonoBehaviour
     [SerializeField, Min(1)] private int playerModeColumnSpaces = 6;
 
     [Header("Debug")]
-    [SerializeField] private bool logCursorSizeDebug = true;
+    [SerializeField] private bool logCursorPositionDebug = true;
 
     [Header("Music")]
     [SerializeField] private AudioClip selectMusic;
@@ -369,7 +369,8 @@ public sealed class BattleModeMenu : MonoBehaviour
         {
             PlaySfx(returnSfx, returnSfxVolume);
             cursorConfirmVisual = false;
-            BuildMatchModeMenu();
+            LogOptionCursorPosition("PlayerSelect.ActionB.BeforeBuildMatchMode");
+            yield return BuildMatchModeMenuAfterTransition("PlayerSelect.ActionB");
             yield break;
         }
 
@@ -389,13 +390,15 @@ public sealed class BattleModeMenu : MonoBehaviour
 
         cursorConfirmVisual = true;
         UpdateOptionVisuals();
+        LogOptionCursorPosition("ConfirmMatchMode.BeforeWait");
 
         float wait = Mathf.Max(0f, confirmFeedbackSeconds);
         if (wait > 0f)
             yield return new WaitForSecondsRealtime(wait);
 
         cursorConfirmVisual = false;
-        BuildPlayerSelectMenu();
+        LogOptionCursorPosition("ConfirmMatchMode.BeforeBuildPlayerSelect");
+        yield return BuildPlayerSelectMenuAfterTransition("ConfirmMatchMode");
     }
 
     private IEnumerator ConfirmPlayerSelection()
@@ -405,6 +408,7 @@ public sealed class BattleModeMenu : MonoBehaviour
 
         cursorConfirmVisual = true;
         UpdateOptionVisuals();
+        LogOptionCursorPosition("ConfirmPlayerSelect.BeforeWait");
 
         float wait = Mathf.Max(0f, confirmFeedbackSeconds);
         if (wait > 0f)
@@ -437,13 +441,14 @@ public sealed class BattleModeMenu : MonoBehaviour
 
         if (leftPanel != null)
         {
+            leftPanel.HideCursor();
             leftPanel.SetEntries(matchModeEntries, displayEnabled);
-            leftPanel.ShowCursor();
         }
 
         UpdatePromptTitle();
         ApplyCurrentBackgroundSprite(true);
         UpdateOptionVisuals();
+        LogOptionCursorPosition("BuildMatchModeMenu.AfterPosition");
     }
 
     private void BuildPlayerSelectMenu()
@@ -455,13 +460,51 @@ public sealed class BattleModeMenu : MonoBehaviour
 
         if (leftPanel != null)
         {
+            leftPanel.HideCursor();
             leftPanel.SetEntries(playerEntries, displayEnabled);
-            leftPanel.ShowCursor();
         }
 
         UpdatePromptTitle();
         ApplyCurrentBackgroundSprite(true);
         UpdateOptionVisuals();
+        LogOptionCursorPosition("BuildPlayerSelectMenu.AfterPosition");
+    }
+
+    private IEnumerator BuildMatchModeMenuAfterTransition(string context)
+    {
+        yield return BuildOptionMenuAfterTransition(context, buildPlayerSelect: false);
+    }
+
+    private IEnumerator BuildPlayerSelectMenuAfterTransition(string context)
+    {
+        yield return BuildOptionMenuAfterTransition(context, buildPlayerSelect: true);
+    }
+
+    private IEnumerator BuildOptionMenuAfterTransition(string context, bool buildPlayerSelect)
+    {
+        if (leftPanel != null)
+            leftPanel.SetCursorVisibilitySuppressed(true);
+
+        if (buildPlayerSelect)
+            BuildPlayerSelectMenu();
+        else
+            BuildMatchModeMenu();
+
+        LogOptionCursorPosition($"{context}.AfterBuildSuppressed");
+
+        Canvas.ForceUpdateCanvases();
+        yield return null;
+        Canvas.ForceUpdateCanvases();
+        ApplyDynamicScaleIfNeeded(true);
+
+        if (leftPanel != null)
+        {
+            UpdateOptionVisuals();
+            leftPanel.SetCursorVisibilitySuppressed(false);
+            UpdateOptionVisuals();
+        }
+
+        LogOptionCursorPosition($"{context}.AfterRevealCursor");
     }
 
     private IEnumerator OpenSkinSelectMenu()
@@ -469,6 +512,7 @@ public sealed class BattleModeMenu : MonoBehaviour
         state = MenuState.SkinSelect;
         menuActive = false;
         cursorConfirmVisual = false;
+        LogOptionCursorPosition("OpenSkinSelectMenu.BeforeHideOptions");
 
         ApplyBattleModeActivePlayerIds(includeComPlayers: false);
 
@@ -477,6 +521,8 @@ public sealed class BattleModeMenu : MonoBehaviour
             leftPanel.HideCursor();
             leftPanel.gameObject.SetActive(false);
         }
+
+        LogOptionCursorPosition("OpenSkinSelectMenu.AfterHideOptions");
 
         UpdatePromptTitle();
         ApplyCurrentBackgroundSprite(true);
@@ -505,9 +551,33 @@ public sealed class BattleModeMenu : MonoBehaviour
         }
 
         if (leftPanel != null)
+        {
+            leftPanel.SetCursorVisibilitySuppressed(false);
             leftPanel.gameObject.SetActive(true);
+        }
 
         BuildPlayerSelectMenu();
+        LogOptionCursorPosition("OpenSkinSelectMenu.AfterReturnBuildPlayerSelect");
+
+        if (leftPanel != null)
+        {
+            leftPanel.SetCursorVisibilitySuppressed(true);
+            UpdateOptionVisuals();
+            LogOptionCursorPosition("OpenSkinSelectMenu.AfterReturnSuppressCursor");
+        }
+
+        Canvas.ForceUpdateCanvases();
+        yield return null;
+        Canvas.ForceUpdateCanvases();
+        ApplyDynamicScaleIfNeeded(true);
+
+        if (leftPanel != null)
+        {
+            UpdateOptionVisuals();
+            leftPanel.SetCursorVisibilitySuppressed(false);
+            UpdateOptionVisuals();
+            LogOptionCursorPosition("OpenSkinSelectMenu.AfterReturnRevealCursor");
+        }
 
         PlayerInputManager input = PlayerInputManager.Instance;
         while (input != null && HasAnyRelevantHeldInput(input, out _, out _))
@@ -526,6 +596,7 @@ public sealed class BattleModeMenu : MonoBehaviour
             leftPanel.UpdateEntryTexts(playerEntries);
 
         UpdateOptionVisuals();
+        LogOptionCursorPosition("RefreshPlayerSelectEntries.AfterPosition");
     }
 
     private void BuildPlayerEntries()
@@ -592,18 +663,33 @@ public sealed class BattleModeMenu : MonoBehaviour
             layout.useRichTextEntryColors);
 
         leftPanel.Initialize(currentUiScale);
-        LogCursorSize(layout);
     }
 
-    private void LogCursorSize(OptionPanelLayout layout)
+    private void LogOptionCursorPosition(string context)
     {
-        if (!logCursorSizeDebug || leftPanel == null || layout == null)
+        if (!logCursorPositionDebug || leftPanel == null)
             return;
 
+        if (!leftPanel.TryGetCursorDebugInfo(
+                out bool active,
+                out Vector3 localPosition,
+                out Vector2 anchoredPosition,
+                out Vector3 worldPosition,
+                out Vector2 sizeDelta,
+                out string parentName))
+        {
+            Debug.Log(
+                $"[BattleModeMenu/CursorPosition] frame={Time.frameCount} time={Time.unscaledTime:0.000} " +
+                $"context={context} state={state} selectedIndex={selectedIndex} selectedPlayerIndex={selectedPlayerIndex} cursor=NULL",
+                this);
+            return;
+        }
+
         Debug.Log(
-            $"[BattleModeMenu/Cursor] state={state} uiScale={currentUiScale:0.###} " +
-            $"optionItemHeight={layout.optionItemHeight:0.###} cursorHeightMultiplier={layout.cursorHeightMultiplier:0.###} " +
-            $"minCursorSize={layout.minCursorSize:0.###} cursorSizeDelta={leftPanel.CursorSizeDelta}",
+            $"[BattleModeMenu/CursorPosition] frame={Time.frameCount} time={Time.unscaledTime:0.000} " +
+            $"context={context} state={state} active={active} selectedIndex={selectedIndex} selectedPlayerIndex={selectedPlayerIndex} " +
+            $"parent={parentName} local={FormatVec3(localPosition)} anchored={FormatVec2(anchoredPosition)} " +
+            $"world={FormatVec3(worldPosition)} size={FormatVec2(sizeDelta)}",
             this);
     }
 
@@ -694,6 +780,16 @@ public sealed class BattleModeMenu : MonoBehaviour
             value += count;
 
         return value;
+    }
+
+    private static string FormatVec2(Vector2 value)
+    {
+        return $"({value.x:0.##},{value.y:0.##})";
+    }
+
+    private static string FormatVec3(Vector3 value)
+    {
+        return $"({value.x:0.##},{value.y:0.##},{value.z:0.##})";
     }
 
     private static bool AnyPlayerGet(PlayerInputManager input, PlayerAction action)

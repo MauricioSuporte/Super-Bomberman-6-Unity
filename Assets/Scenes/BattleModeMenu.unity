@@ -492,6 +492,9 @@ MonoBehaviour:
   - {fileID: 21300000, guid: 0773d25e48d28f140a6ef2ed138c7c1c, type: 3}
   - {fileID: 21300000, guid: 5910d083c37a4d844b9556c47f19a862, type: 3}
   - {fileID: 21300000, guid: d4ef388d2916b7a4fab942f8f0aa3a0c, type: 3}
+  - {fileID: 21300000, guid: dceb9342cd748274aad0d703c60d64d8, type: 3}
+  logCursorPositionDebug: 1
+  cursorPositionDebugFrames: 8
   cursorPadding: {x: 6, y: 4}
   cursorSizeMultiplier: {x: 1, y: 1}
   cursorYOffset: 10
@@ -962,8 +965,8 @@ MonoBehaviour:
     - {fileID: 21300000, guid: bd053a7495380c94ea655b5cbe7f9a46, type: 3}
   skinSelectBackgrounds:
     sprites:
-    - {fileID: 21300000, guid: 9cd8746a4651a2b4681adcb5eb73a623, type: 3}
-    - {fileID: 21300000, guid: 878884cd17e7c3648951f8120973589e, type: 3}
+    - {fileID: -9164324559689746860, guid: 9cd8746a4651a2b4681adcb5eb73a623, type: 3}
+    - {fileID: 5576076537888433769, guid: 878884cd17e7c3648951f8120973589e, type: 3}
   backgroundSwapInterval: 2
   backgroundSwapLoop: 1
   playerLabelHex: '#00FF3C'
@@ -971,7 +974,7 @@ MonoBehaviour:
   comHex: '#FF3030'
   offHex: '#2F90FF'
   playerModeColumnSpaces: 2
-  logCursorSizeDebug: 1
+  logCursorPositionDebug: 1
   selectMusic: {fileID: 8300000, guid: da56bf64ad8b3f346bf9f3a08d30b816, type: 3}
   selectMusicVolume: 0.8
   loopSelectMusic: 1
@@ -1018,8 +1021,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1aa1ef842d43d4449a4b672797ff89e5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameSession
-  activePlayerCount: 1
-  activePlayerMask: 1
+  activePlayerCount: 6
+  activePlayerMask: 63
   battleMatchInProgress: 0
   battleMatchSceneName: 
   battleMatchUsesTeams: 0

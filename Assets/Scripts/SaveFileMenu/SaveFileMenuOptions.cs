@@ -74,6 +74,7 @@ public class SaveFileMenuOptions : MonoBehaviour
     private bool _cursorBaseLoop = true;
     private bool _cursorAnimationStateCaptured;
     private bool _cursorAnimatingConfirmed;
+    private bool _cursorVisibilitySuppressed;
 
     private int _baseLayoutPaddingLeft;
     private int _baseLayoutPaddingRight;
@@ -89,6 +90,41 @@ public class SaveFileMenuOptions : MonoBehaviour
             RectTransform cursorRt = cursorRenderer != null ? cursorRenderer.transform as RectTransform : null;
             return cursorRt != null ? cursorRt.sizeDelta : Vector2.zero;
         }
+    }
+
+    public bool TryGetCursorDebugInfo(
+        out bool active,
+        out Vector3 localPosition,
+        out Vector2 anchoredPosition,
+        out Vector3 worldPosition,
+        out Vector2 sizeDelta,
+        out string parentName)
+    {
+        active = false;
+        localPosition = Vector3.zero;
+        anchoredPosition = Vector2.zero;
+        worldPosition = Vector3.zero;
+        sizeDelta = Vector2.zero;
+        parentName = "NULL";
+
+        if (cursorRenderer == null)
+            return false;
+
+        Transform cursorTransform = cursorRenderer.transform;
+        RectTransform cursorRt = cursorTransform as RectTransform;
+
+        active = cursorRenderer.gameObject.activeInHierarchy;
+        localPosition = cursorTransform.localPosition;
+        worldPosition = cursorTransform.position;
+        parentName = cursorTransform.parent != null ? cursorTransform.parent.name : "NULL";
+
+        if (cursorRt != null)
+        {
+            anchoredPosition = cursorRt.anchoredPosition;
+            sizeDelta = cursorRt.sizeDelta;
+        }
+
+        return true;
     }
 
     public void Awake()
@@ -365,6 +401,7 @@ public class SaveFileMenuOptions : MonoBehaviour
     {
         if (cursorRenderer != null)
         {
+            _cursorVisibilitySuppressed = false;
             cursorRenderer.gameObject.SetActive(true);
             cursorRenderer.RefreshFrame();
         }
@@ -377,6 +414,14 @@ public class SaveFileMenuOptions : MonoBehaviour
             UpdateCursorAnimationState(false);
             cursorRenderer.gameObject.SetActive(false);
         }
+    }
+
+    public void SetCursorVisibilitySuppressed(bool suppressed)
+    {
+        _cursorVisibilitySuppressed = suppressed;
+
+        if (suppressed && cursorRenderer != null)
+            cursorRenderer.gameObject.SetActive(false);
     }
 
     public void UpdateCursorPosition(int selectedIndex)
@@ -396,8 +441,6 @@ public class SaveFileMenuOptions : MonoBehaviour
             cursorRenderer.gameObject.SetActive(false);
             return;
         }
-
-        cursorRenderer.gameObject.SetActive(true);
 
         RectTransform txtRt = txt.rectTransform;
         RectTransform cursorRt = cursorRenderer.transform as RectTransform;
@@ -423,6 +466,9 @@ public class SaveFileMenuOptions : MonoBehaviour
         }
 
         cursorRenderer.SetExternalBaseLocalPosition(localPos);
+
+        if (!_cursorVisibilitySuppressed)
+            cursorRenderer.gameObject.SetActive(true);
     }
 
     private void ApplyOptionTextStyle(TextMeshProUGUI txt, Color faceColor)

@@ -354,6 +354,10 @@ MonoBehaviour:
   groundTilemap: {fileID: 0}
   groundTile: {fileID: 11400000, guid: ada74cfa1fdef9e4c86ccafaa1b2ae66, type: 2}
   groundShadowTile: {fileID: 11400000, guid: e0f633282caacc742af95bdd334dd0cf, type: 2}
+  indestructibleGroundShadowTile: {fileID: 0}
+  shadowDestructibleTile: {fileID: 0}
+  groundShadowIgnoredTiles: []
+  indestructibleGroundShadowCasterTiles: []
   autoResolveStageTilemaps: 1
   restartAfterDeathSeconds: 4
   bossRushSceneName: BossRush
@@ -1001,6 +1005,8 @@ MonoBehaviour:
   fadeImage: {fileID: 336813435}
   fadeDuration: 0.5
   fadeOutOnConfirmDuration: 1
+  useFadeTransitions: 1
+  manageSelectMusic: 1
   gridRoot: {fileID: 607783271}
   skinItemPrefab: {fileID: 136072051}
   columns: 5
@@ -1016,6 +1022,8 @@ MonoBehaviour:
   - {fileID: 21300000, guid: 0651b2f0c4d59a34393bfef0a2fa0885, type: 3}
   - {fileID: 21300000, guid: 0773d25e48d28f140a6ef2ed138c7c1c, type: 3}
   - {fileID: 21300000, guid: 5910d083c37a4d844b9556c47f19a862, type: 3}
+  - {fileID: 21300000, guid: d4ef388d2916b7a4fab942f8f0aa3a0c, type: 3}
+  - {fileID: 21300000, guid: dceb9342cd748274aad0d703c60d64d8, type: 3}
   cursorPadding: {x: 6, y: 4}
   cursorSizeMultiplier: {x: 1, y: 1}
   cursorYOffset: 10
@@ -1132,8 +1140,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1aa1ef842d43d4449a4b672797ff89e5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameSession
-  activePlayerCount: 1
-  activePlayerMask: 1
+  activePlayerCount: 6
+  activePlayerMask: 63
   battleMatchInProgress: 0
   battleMatchSceneName: 
   battleMatchUsesTeams: 0

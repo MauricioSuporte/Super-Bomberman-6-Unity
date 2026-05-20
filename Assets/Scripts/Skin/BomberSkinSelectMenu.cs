@@ -46,8 +46,10 @@ public class BomberSkinSelectMenu : MonoBehaviour
     [Header("Cursor Per Player")]
     [SerializeField] bool staggerCursorStartByPlayer = true;
 
-    [Tooltip("Optional: override cursor sprite per player (index 0 = P1, 1 = P2, 2 = P3, 3 = P4).")]
-    [SerializeField] Sprite[] cursorSpriteByPlayer = new Sprite[4];
+    [Tooltip("Optional: override cursor sprite per player (index 0 = P1, ..., 5 = P6).")]
+    [SerializeField] Sprite[] cursorSpriteByPlayer = new Sprite[GameSession.MaxPlayerId];
+    [SerializeField] bool logCursorPositionDebug = true;
+    [SerializeField, Min(1)] int cursorPositionDebugFrames = 8;
     [SerializeField] Vector2 cursorPadding = new(18f, 18f);
     [SerializeField] Vector2 cursorSizeMultiplier = new(0.9f, 0.9f);
     [SerializeField] float cursorYOffset = 8f;
@@ -241,6 +243,8 @@ public class BomberSkinSelectMenu : MonoBehaviour
     int overlapZTick;
 
     int[] selectedBySlot;
+    int cursorPositionDebugFramesRemaining;
+    string cursorPositionDebugContext = string.Empty;
 
     sealed class PlayerCursorState
     {
@@ -399,6 +403,7 @@ public class BomberSkinSelectMenu : MonoBehaviour
 
         PopulateConfiguredPlayerIds(configuredPlayerIds);
 
+        BeginCursorPositionDebug("SelectSkinRoutine.BeforeBuildPlayerCursors");
         BuildPlayerCursors(configuredPlayerIds);
 
         for (int i = 0; i < configuredPlayerIds.Count; i++)
@@ -441,6 +446,13 @@ public class BomberSkinSelectMenu : MonoBehaviour
         UpdateUnlockHint();
 
         Canvas.ForceUpdateCanvases();
+        if (gridRoot is RectTransform gridRt)
+            LayoutRebuilder.ForceRebuildLayoutImmediate(gridRt);
+
+        UpdateAllCursorsToSelected();
+        Canvas.ForceUpdateCanvases();
+        BeginCursorPositionDebug("SelectSkinRoutine.AfterInitialPosition");
+
         yield return null;
 
         menuActive = true;
@@ -881,7 +893,7 @@ public class BomberSkinSelectMenu : MonoBehaviour
             if (skinCursorPrefab != null)
             {
                 var c = Instantiate(skinCursorPrefab, gridRoot);
-                c.gameObject.SetActive(true);
+                c.gameObject.SetActive(false);
                 c.SetAsLastSibling();
                 st.cursorRt = c;
 
@@ -891,6 +903,7 @@ public class BomberSkinSelectMenu : MonoBehaviour
                     st.cursorImg.raycastTarget = false;
 
                     int spriteIdx = p - 1;
+
                     if (cursorSpriteByPlayer != null &&
                         spriteIdx >= 0 &&
                         spriteIdx < cursorSpriteByPlayer.Length &&
@@ -908,6 +921,32 @@ public class BomberSkinSelectMenu : MonoBehaviour
 
             players.Add(st);
         }
+    }
+
+    static string FormatPlayerIds(List<int> playerIds)
+    {
+        if (playerIds == null || playerIds.Count == 0)
+            return string.Empty;
+
+        string s = string.Empty;
+        for (int i = 0; i < playerIds.Count; i++)
+        {
+            if (i > 0)
+                s += ",";
+            s += playerIds[i].ToString();
+        }
+
+        return s;
+    }
+
+    static string FormatVec2(Vector2 value)
+    {
+        return $"({value.x:0.##},{value.y:0.##})";
+    }
+
+    static string FormatVec3(Vector3 value)
+    {
+        return $"({value.x:0.##},{value.y:0.##},{value.z:0.##})";
     }
 
     void PopulateConfiguredPlayerIds(List<int> results)
@@ -986,6 +1025,8 @@ public class BomberSkinSelectMenu : MonoBehaviour
 
     void UpdateAllCursorsToSelected()
     {
+        bool shouldLog = logCursorPositionDebug && cursorPositionDebugFramesRemaining > 0;
+
         for (int i = 0; i < players.Count; i++)
         {
             var ps = players[i];
@@ -997,6 +1038,8 @@ public class BomberSkinSelectMenu : MonoBehaviour
             if (idx < 0 || idx >= slotRoots.Count || slotRoots[idx] == null)
             {
                 ps.cursorRt.gameObject.SetActive(false);
+                if (shouldLog)
+                    LogSkinCursorPosition(ps, idx, null, "InvalidSlot");
                 continue;
             }
 
@@ -1020,7 +1063,45 @@ public class BomberSkinSelectMenu : MonoBehaviour
             ps.cursorRt.sizeDelta = targetSize;
             ps.cursorRt.localScale = Vector3.one;
             ps.cursorRt.localRotation = Quaternion.identity;
+
+            if (shouldLog)
+                LogSkinCursorPosition(ps, idx, slotRt, "Positioned");
         }
+
+        if (shouldLog)
+            cursorPositionDebugFramesRemaining--;
+    }
+
+    void BeginCursorPositionDebug(string context)
+    {
+        if (!logCursorPositionDebug)
+            return;
+
+        cursorPositionDebugContext = context;
+        cursorPositionDebugFramesRemaining = Mathf.Max(1, cursorPositionDebugFrames);
+        Debug.Log(
+            $"{LOG} CursorPositionDebugStart | frame={Time.frameCount} time={Time.unscaledTime:0.000} " +
+            $"context={context} frames={cursorPositionDebugFramesRemaining} players=[{FormatPlayerIds(configuredPlayerIds)}]",
+            this);
+    }
+
+    void LogSkinCursorPosition(PlayerCursorState ps, int slotIndex, RectTransform slotRt, string phase)
+    {
+        if (ps == null || ps.cursorRt == null)
+            return;
+
+        Vector2 slotAnchored = slotRt != null ? slotRt.anchoredPosition : Vector2.zero;
+        Vector2 slotSize = slotRt != null ? slotRt.rect.size : Vector2.zero;
+        string parentName = ps.cursorRt.parent != null ? ps.cursorRt.parent.name : "NULL";
+
+        Debug.Log(
+            $"{LOG} CursorPosition | frame={Time.frameCount} time={Time.unscaledTime:0.000} " +
+            $"context={cursorPositionDebugContext} phase={phase} player={ps.playerId} slot={slotIndex} " +
+            $"confirmed={ps.confirmed} active={ps.cursorRt.gameObject.activeInHierarchy} parent={parentName} " +
+            $"anchored={FormatVec2(ps.cursorRt.anchoredPosition)} local={FormatVec3(ps.cursorRt.localPosition)} " +
+            $"world={FormatVec3(ps.cursorRt.position)} size={FormatVec2(ps.cursorRt.sizeDelta)} " +
+            $"slotAnchored={FormatVec2(slotAnchored)} slotSize={FormatVec2(slotSize)}",
+            this);
     }
 
     void CycleOverlappedCursors()
