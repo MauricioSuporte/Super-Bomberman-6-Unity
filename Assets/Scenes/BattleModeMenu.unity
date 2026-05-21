@@ -477,6 +477,7 @@ MonoBehaviour:
   useFadeTransitions: 0
   manageSelectMusic: 0
   useBattleModeComAssignment: 1
+  postConfirmHoldSeconds: 0.5
   gridRoot: {fileID: 300000101}
   skinItemPrefab: {fileID: 300000113}
   columns: 5
@@ -494,7 +495,7 @@ MonoBehaviour:
   - {fileID: 21300000, guid: 5910d083c37a4d844b9556c47f19a862, type: 3}
   - {fileID: 21300000, guid: d4ef388d2916b7a4fab942f8f0aa3a0c, type: 3}
   - {fileID: 21300000, guid: dceb9342cd748274aad0d703c60d64d8, type: 3}
-  logCursorPositionDebug: 1
+  logCursorPositionDebug: 0
   cursorPositionDebugFrames: 8
   cursorPadding: {x: 6, y: 4}
   cursorSizeMultiplier: {x: 1, y: 1}
@@ -922,6 +923,7 @@ MonoBehaviour:
   matchModePrompt: BATTLE MODE
   playerSelectPrompt: PLAYER SELECT
   skinSelectPrompt: CHARACTER SELECT
+  teamSelectPrompt: TEAM MEMBERS
   leftPanel: {fileID: 2134452605}
   skinSelectMenu: {fileID: 300000200}
   matchModeLayout:
@@ -968,6 +970,10 @@ MonoBehaviour:
     sprites:
     - {fileID: -9164324559689746860, guid: 9cd8746a4651a2b4681adcb5eb73a623, type: 3}
     - {fileID: 5576076537888433769, guid: 878884cd17e7c3648951f8120973589e, type: 3}
+  teamSelectBackgrounds:
+    sprites:
+    - {fileID: 21300000, guid: c2f2256560e2b0948a0b0905bb480eab, type: 3}
+    - {fileID: 21300000, guid: 72a855177b94d634f8bcd789ed7af4e1, type: 3}
   backgroundSwapInterval: 2
   backgroundSwapLoop: 1
   playerLabelHex: '#00FF3C'
@@ -975,7 +981,28 @@ MonoBehaviour:
   comHex: '#FF3030'
   offHex: '#2F90FF'
   playerModeColumnSpaces: 2
-  logCursorPositionDebug: 1
+  teamRowsOffset: {x: 0, y: -8}
+  teamRowSize: {x: 620, y: 94}
+  teamRowSpacing: 50
+  teamMemberSize: {x: 96, y: 96}
+  teamMemberSpacing: 72
+  teamMembersCenterOffsetX: 40
+  teamWalkingMemberOffsetY: -10
+  teamCelebrationMemberOffsetY: 10
+  teamLabelFontSize: 24
+  teamLabelOffsetMin: {x: 12, y: 0}
+  teamLabelSize: {x: 120, y: 94}
+  teamCursorOffset: {x: -360, y: 0}
+  teamCursorSize: {x: 62, y: 62}
+  teamCurrentMinAlpha: 0.25
+  teamCurrentMaxAlpha: 1
+  teamCurrentBlinkSpeed: 5.5
+  teamRedColor: {r: 0.58, g: 0.03, b: 0.16, a: 0.92}
+  teamBlueColor: {r: 0.05, g: 0.24, b: 0.82, a: 0.92}
+  teamGreenColor: {r: 0.05, g: 0.36, b: 0.12, a: 0.92}
+  logTeamSelectLayoutDebug: 1
+  teamSelectLayoutDebugFrames: 12
+  teamSelectLayoutDebugInterval: 0.25
   selectMusic: {fileID: 8300000, guid: da56bf64ad8b3f346bf9f3a08d30b816, type: 3}
   selectMusicVolume: 0.8
   loopSelectMusic: 1
@@ -985,6 +1012,8 @@ MonoBehaviour:
   confirmSfxVolume: 1
   returnSfx: {fileID: 8300000, guid: 30ca55f720379e64ab9b908db035db4c, type: 3}
   returnSfxVolume: 1
+  deniedSfx: {fileID: 8300000, guid: 2f98cb783cdc9bb4d8ff3b868291f743, type: 3}
+  deniedSfxVolume: 1
   dynamicScale: 1
   referenceWidth: 256
   referenceHeight: 224

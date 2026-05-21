@@ -30,6 +30,7 @@ public class BomberSkinSelectMenu : MonoBehaviour
     [SerializeField] bool useFadeTransitions = true;
     [SerializeField] bool manageSelectMusic = true;
     [SerializeField] bool useBattleModeComAssignment;
+    [SerializeField, Min(0f)] float postConfirmHoldSeconds;
 
     [Header("Grid")]
     [SerializeField] Transform gridRoot;
@@ -588,6 +589,17 @@ public class BomberSkinSelectMenu : MonoBehaviour
             yield return null;
         }
 
+        if (!ReturnToTitleRequested && postConfirmHoldSeconds > 0f)
+        {
+            float hold = 0f;
+            float duration = Mathf.Max(0f, postConfirmHoldSeconds);
+            while (hold < duration)
+            {
+                hold += Time.unscaledDeltaTime;
+                yield return null;
+            }
+        }
+
         if (fadeInCoroutine != null)
         {
             StopCoroutine(fadeInCoroutine);
@@ -615,6 +627,24 @@ public class BomberSkinSelectMenu : MonoBehaviour
                 return players[i].selected;
 
         return PlayerPersistentStats.Get(playerId).Skin;
+    }
+
+    public Sprite GetBattleModeTeamPreviewSprite(BomberSkin skin, int frameIndex)
+    {
+        int frame = idleFrameIndex;
+        if (downFrames != null && downFrames.Length > 0)
+            frame = downFrames[Mathf.Abs(frameIndex) % downFrames.Length];
+
+        return GetSpriteByFrame(skin, frame) ?? GetIdleSprite(skin);
+    }
+
+    public Sprite GetBattleModeTeamCelebrationSprite(BomberSkin skin, int frameIndex)
+    {
+        int frame = idleFrameIndex;
+        if (endStageFrames != null && endStageFrames.Length > 0)
+            frame = endStageFrames[Mathf.Clamp(frameIndex, 0, endStageFrames.Length - 1)];
+
+        return GetSpriteByFrame(skin, frame) ?? GetIdleSprite(skin);
     }
 
     void TryConfirm(int playerId)

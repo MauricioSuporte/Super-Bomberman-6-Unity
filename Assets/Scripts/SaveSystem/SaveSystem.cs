@@ -356,6 +356,44 @@ public static class SaveSystem
             Save();
     }
 
+    public static BattleModeRules.TeamId[] GetBattleModePlayerTeams()
+    {
+        EnsureLoaded();
+        EnsureBattleModePlayerTeams(data);
+
+        BattleModeRules.TeamId[] result = new BattleModeRules.TeamId[6];
+        for (int i = 0; i < result.Length; i++)
+            result[i] = NormalizeBattleModeTeamId(data.battleModePlayerTeams[i]);
+
+        return result;
+    }
+
+    public static void SetBattleModePlayerTeams(IReadOnlyList<BattleModeRules.TeamId> teams)
+    {
+        EnsureLoaded();
+        EnsureBattleModePlayerTeams(data);
+
+        bool changed = false;
+        for (int i = 0; i < data.battleModePlayerTeams.Length; i++)
+        {
+            BattleModeRules.TeamId team = teams != null && i < teams.Count
+                ? teams[i]
+                : BattleModeRules.GetDefaultTeamForPlayer(i + 1);
+
+            team = NormalizeBattleModeTeamId((int)team);
+            int value = (int)team;
+
+            if (data.battleModePlayerTeams[i] == value)
+                continue;
+
+            data.battleModePlayerTeams[i] = value;
+            changed = true;
+        }
+
+        if (changed)
+            Save();
+    }
+
     public static float GetBossRushUnlockTargetTime(BossRushDifficulty difficulty)
     {
         EnsureLoaded();
@@ -554,6 +592,7 @@ public static class SaveSystem
 
         d.battleModeMatchMode = (int)NormalizeBattleModeMatchMode(d.battleModeMatchMode);
         EnsureBattleModePlayerControlModes(d);
+        EnsureBattleModePlayerTeams(d);
     }
 
     private static BattleModeRules.MatchMode NormalizeBattleModeMatchMode(int matchMode)
@@ -607,6 +646,36 @@ public static class SaveSystem
             3 => BattleModePlayerControlMode.Com,
             _ => BattleModePlayerControlMode.Off
         };
+    }
+
+    private static void EnsureBattleModePlayerTeams(SaveData d)
+    {
+        if (d == null)
+            return;
+
+        if (d.battleModePlayerTeams == null || d.battleModePlayerTeams.Length != 6)
+        {
+            int[] previous = d.battleModePlayerTeams;
+            d.battleModePlayerTeams = new int[6];
+
+            for (int i = 0; i < d.battleModePlayerTeams.Length; i++)
+            {
+                d.battleModePlayerTeams[i] = previous != null && i < previous.Length
+                    ? previous[i]
+                    : (int)BattleModeRules.GetDefaultTeamForPlayer(i + 1);
+            }
+        }
+
+        for (int i = 0; i < d.battleModePlayerTeams.Length; i++)
+            d.battleModePlayerTeams[i] = (int)NormalizeBattleModeTeamId(d.battleModePlayerTeams[i]);
+    }
+
+    private static BattleModeRules.TeamId NormalizeBattleModeTeamId(int team)
+    {
+        if (Enum.IsDefined(typeof(BattleModeRules.TeamId), team))
+            return (BattleModeRules.TeamId)team;
+
+        return BattleModeRules.TeamId.Blue;
     }
 
     private static void EnsureControlProfiles(SaveData d)

@@ -11,7 +11,8 @@ public sealed class BattleModeMenu : MonoBehaviour
     {
         MatchMode = 0,
         PlayerSelect = 1,
-        SkinSelect = 2
+        SkinSelect = 2,
+        TeamSelect = 3
     }
 
     [System.Serializable]
@@ -40,6 +41,15 @@ public sealed class BattleModeMenu : MonoBehaviour
         public bool useRichTextEntryColors;
     }
 
+    private sealed class TeamRowVisual
+    {
+        public BattleModeRules.TeamId teamId;
+        public RectTransform root;
+        public Image background;
+        public TextMeshProUGUI label;
+        public readonly List<Image> members = new();
+    }
+
     [Header("UI Root")]
     [SerializeField] private GameObject root;
     [SerializeField] private Image backgroundImage;
@@ -66,6 +76,7 @@ public sealed class BattleModeMenu : MonoBehaviour
     [SerializeField] private string matchModePrompt = "BATTLE MODE";
     [SerializeField] private string playerSelectPrompt = "PLAYER SELECT";
     [SerializeField] private string skinSelectPrompt = "CHARACTER SELECT";
+    [SerializeField] private string teamSelectPrompt = "TEAM MEMBERS";
 
     [Header("Options Panel")]
     [SerializeField] private SaveFileMenuOptions leftPanel;
@@ -94,6 +105,7 @@ public sealed class BattleModeMenu : MonoBehaviour
     [SerializeField] private BackgroundSet matchModeBackgrounds = new();
     [SerializeField] private BackgroundSet playerSelectBackgrounds = new();
     [SerializeField] private BackgroundSet skinSelectBackgrounds = new();
+    [SerializeField] private BackgroundSet teamSelectBackgrounds = new();
     [SerializeField, Min(0.01f)] private float backgroundSwapInterval = 2f;
     [SerializeField] private bool backgroundSwapLoop = true;
 
@@ -104,8 +116,31 @@ public sealed class BattleModeMenu : MonoBehaviour
     [SerializeField] private string offHex = "#2F90FF";
     [SerializeField, Min(1)] private int playerModeColumnSpaces = 6;
 
+    [Header("Team Select")]
+    [SerializeField] private Vector2 teamRowsOffset = new(0f, -8f);
+    [SerializeField] private Vector2 teamRowSize = new(620f, 94f);
+    [SerializeField, Min(0f)] private float teamRowSpacing = 10f;
+    [SerializeField] private Vector2 teamMemberSize = new(96f, 96f);
+    [SerializeField, Min(1f)] private float teamMemberSpacing = 72f;
+    [SerializeField] private float teamMembersCenterOffsetX = 40f;
+    [SerializeField] private float teamWalkingMemberOffsetY = 0f;
+    [SerializeField] private float teamCelebrationMemberOffsetY = 0f;
+    [SerializeField] private int teamLabelFontSize = 16;
+    [SerializeField] private Vector2 teamLabelOffsetMin = new(12f, 0f);
+    [SerializeField] private Vector2 teamLabelSize = new(120f, 94f);
+    [SerializeField] private Vector2 teamCursorOffset = new(-360f, 0f);
+    [SerializeField] private Vector2 teamCursorSize = new(62f, 62f);
+    [SerializeField, Range(0f, 1f)] private float teamCurrentMinAlpha = 0.25f;
+    [SerializeField, Range(0f, 1f)] private float teamCurrentMaxAlpha = 1f;
+    [SerializeField, Min(0.01f)] private float teamCurrentBlinkSpeed = 5.5f;
+    [SerializeField] private Color teamRedColor = new(0.58f, 0.03f, 0.16f, 0.92f);
+    [SerializeField] private Color teamBlueColor = new(0.05f, 0.24f, 0.82f, 0.92f);
+    [SerializeField] private Color teamGreenColor = new(0.05f, 0.36f, 0.12f, 0.92f);
+
     [Header("Debug")]
-    [SerializeField] private bool logCursorPositionDebug = true;
+    [SerializeField] private bool logTeamSelectLayoutDebug = true;
+    [SerializeField, Min(1)] private int teamSelectLayoutDebugFrames = 12;
+    [SerializeField, Min(0.05f)] private float teamSelectLayoutDebugInterval = 0.25f;
 
     [Header("Music")]
     [SerializeField] private AudioClip selectMusic;
@@ -119,6 +154,8 @@ public sealed class BattleModeMenu : MonoBehaviour
     [SerializeField, Range(0f, 1f)] private float confirmSfxVolume = 1f;
     [SerializeField] private AudioClip returnSfx;
     [SerializeField, Range(0f, 1f)] private float returnSfxVolume = 1f;
+    [SerializeField] private AudioClip deniedSfx;
+    [SerializeField, Range(0f, 1f)] private float deniedSfxVolume = 1f;
 
     [Header("Dynamic Scale (Pixel Perfect SNES)")]
     [SerializeField] private bool dynamicScale = true;
@@ -136,6 +173,13 @@ public sealed class BattleModeMenu : MonoBehaviour
         BattleModeRules.MatchMode.TagMatch
     };
 
+    private static readonly BattleModeRules.TeamId[] TeamIds =
+    {
+        BattleModeRules.TeamId.Red,
+        BattleModeRules.TeamId.Blue,
+        BattleModeRules.TeamId.Green
+    };
+
     private const int PlayerActionCount = (int)PlayerAction.ActionR + 1;
 
     private readonly List<string> matchModeEntries = new()
@@ -147,6 +191,8 @@ public sealed class BattleModeMenu : MonoBehaviour
     private readonly List<string> playerEntries = new();
     private readonly List<int> battleEnabledPlayerIds = new(GameSession.MaxPlayerId);
     private readonly List<int> battleHumanPlayerIds = new(GameSession.MaxPlayerId);
+    private readonly List<TeamRowVisual> teamRows = new();
+    private readonly List<int> teamSelectionPlayerIds = new(GameSession.MaxPlayerId);
 
     private readonly List<bool> displayEnabled = new()
     {
@@ -176,6 +222,19 @@ public sealed class BattleModeMenu : MonoBehaviour
     private int lastScreenH = -1;
     private Rect lastCameraRect;
     private Rect lastRefPixelRect;
+    private RectTransform teamSelectRoot;
+    private RectTransform teamCursorRt;
+    private AnimatedSpriteRenderer teamCursorRenderer;
+    private BattleModeRules.TeamId[] workingTeams;
+    private bool[] teamAssigned;
+    private float[] teamCelebrationTimers;
+    private bool[] teamCelebrationCompleted;
+    private int currentTeamPlayerIndex;
+    private int selectedTeamIndex;
+    private float teamPreviewTimer;
+    private bool teamSelectionReturnedToSkinSelect;
+    private int teamLayoutDebugFramesRemaining;
+    private float nextTeamLayoutDebugTime;
     private readonly bool[] previousMenuHeld = new bool[PlayerActionCount];
     private readonly bool[] menuHoldConsumed = new bool[PlayerActionCount];
     private readonly float[] nextMenuRepeatTime = new float[PlayerActionCount];
@@ -215,6 +274,9 @@ public sealed class BattleModeMenu : MonoBehaviour
             if (state != MenuState.SkinSelect)
                 TickBackgroundSpriteSwap();
         }
+
+        if (state == MenuState.TeamSelect)
+            UpdateTeamSelectVisuals(false);
 
         if (!menuActive || state == MenuState.SkinSelect)
             return;
@@ -509,38 +571,70 @@ public sealed class BattleModeMenu : MonoBehaviour
 
     private IEnumerator OpenSkinSelectMenu()
     {
-        state = MenuState.SkinSelect;
-        menuActive = false;
-        cursorConfirmVisual = false;
-        LogOptionCursorPosition("OpenSkinSelectMenu.BeforeHideOptions");
-
-        ApplyBattleModeActivePlayerIds(includeComPlayers: false);
-
-        if (leftPanel != null)
+        while (true)
         {
-            leftPanel.HideCursor();
-            leftPanel.gameObject.SetActive(false);
+            state = MenuState.SkinSelect;
+            menuActive = false;
+            cursorConfirmVisual = false;
+            LogOptionCursorPosition("OpenSkinSelectMenu.BeforeHideOptions");
+
+            ApplyBattleModeActivePlayerIds(includeComPlayers: false);
+
+            if (teamSelectRoot != null)
+                teamSelectRoot.gameObject.SetActive(false);
+
+            if (leftPanel != null)
+            {
+                leftPanel.HideCursor();
+                leftPanel.gameObject.SetActive(false);
+            }
+
+            LogOptionCursorPosition("OpenSkinSelectMenu.AfterHideOptions");
+
+            UpdatePromptTitle();
+            ApplyCurrentBackgroundSprite(true);
+
+            yield return skinSelectMenu.SelectSkinRoutine();
+
+            ApplyBattleModeActivePlayerIds(includeComPlayers: true);
+            RestoreRootAfterEmbeddedSkinSelect();
+
+            if (!skinSelectMenu.ReturnToTitleRequested &&
+                SelectedMatchMode == BattleModeRules.MatchMode.TagMatch)
+            {
+                yield return OpenTeamSelectMenu();
+
+                if (teamSelectionReturnedToSkinSelect)
+                    continue;
+            }
+
+            if (!skinSelectMenu.ReturnToTitleRequested &&
+                !teamSelectionReturnedToSkinSelect &&
+                loadNextSceneAfterSelection &&
+                !string.IsNullOrWhiteSpace(nextSceneName))
+            {
+                confirmed = true;
+                Hide();
+                LoadScene(nextSceneName);
+                yield break;
+            }
+
+            break;
         }
 
-        LogOptionCursorPosition("OpenSkinSelectMenu.AfterHideOptions");
+        ShowPlayerSelectAfterSkinOrTeamReturn();
 
-        UpdatePromptTitle();
-        ApplyCurrentBackgroundSprite(true);
+        PlayerInputManager input = PlayerInputManager.Instance;
+        while (input != null && HasAnyRelevantHeldInput(input, out _, out _))
+            yield return null;
 
-        yield return skinSelectMenu.SelectSkinRoutine();
+        yield return null;
+        CapturePreviousHeldInputs(input);
+        menuActive = true;
+    }
 
-        ApplyBattleModeActivePlayerIds(includeComPlayers: true);
-
-        if (!skinSelectMenu.ReturnToTitleRequested &&
-            loadNextSceneAfterSelection &&
-            !string.IsNullOrWhiteSpace(nextSceneName))
-        {
-            confirmed = true;
-            Hide();
-            LoadScene(nextSceneName);
-            yield break;
-        }
-
+    private void RestoreRootAfterEmbeddedSkinSelect()
+    {
         if (root != null)
             root.SetActive(true);
 
@@ -549,6 +643,148 @@ public sealed class BattleModeMenu : MonoBehaviour
             fadeImage.gameObject.SetActive(false);
             SetFadeAlpha(0f);
         }
+    }
+
+    private IEnumerator OpenTeamSelectMenu()
+    {
+        teamSelectionReturnedToSkinSelect = false;
+        state = MenuState.TeamSelect;
+        menuActive = false;
+        cursorConfirmVisual = false;
+
+        if (leftPanel != null)
+        {
+            leftPanel.HideCursor();
+            leftPanel.gameObject.SetActive(false);
+        }
+
+        EnsureTeamSelectBuilt();
+        ResetBackgroundSpriteSwap();
+        ApplyCurrentBackgroundSprite(true);
+        UpdatePromptTitle();
+        BuildTeamSelectionPlayerIds();
+        InitializeTeamSelectionState();
+        UpdateTeamSelectVisuals(true);
+        BeginTeamLayoutDebug();
+
+        Canvas.ForceUpdateCanvases();
+        ApplyDynamicScaleIfNeeded(true);
+        LogTeamSelectLayout("OpenTeamSelectMenu.AfterInitialLayout", force: true);
+
+        PlayerInputManager input = PlayerInputManager.Instance;
+        while (input != null && HasAnyRelevantHeldInput(input, out _, out _))
+            yield return null;
+
+        bool done = teamSelectionPlayerIds.Count <= 0;
+        while (!done)
+        {
+            int inputPlayerId = GameSession.MinPlayerId;
+            bool moved = false;
+
+            if (input != null)
+            {
+                if (input.GetDown(inputPlayerId, PlayerAction.MoveUp) ||
+                    input.GetDown(inputPlayerId, PlayerAction.MoveLeft))
+                {
+                    selectedTeamIndex = WrapIndex(selectedTeamIndex - 1, TeamIds.Length);
+                    moved = true;
+                }
+                else if (input.GetDown(inputPlayerId, PlayerAction.MoveDown) ||
+                         input.GetDown(inputPlayerId, PlayerAction.MoveRight))
+                {
+                    selectedTeamIndex = WrapIndex(selectedTeamIndex + 1, TeamIds.Length);
+                    moved = true;
+                }
+            }
+
+            if (moved)
+            {
+                PlaySfx(moveCursorSfx, moveCursorSfxVolume);
+                UpdateTeamSelectVisuals(true);
+            }
+            else if (input != null && input.GetDown(inputPlayerId, PlayerAction.ActionB))
+            {
+                if (currentTeamPlayerIndex <= 0)
+                {
+                    teamSelectionReturnedToSkinSelect = true;
+                    PlaySfx(returnSfx, returnSfxVolume);
+                    done = true;
+                }
+                else
+                {
+                    currentTeamPlayerIndex--;
+                    int playerId = teamSelectionPlayerIds[currentTeamPlayerIndex];
+                    teamAssigned[playerId] = false;
+                    if (teamCelebrationTimers != null && playerId >= 0 && playerId < teamCelebrationTimers.Length)
+                        teamCelebrationTimers[playerId] = -1f;
+                    if (teamCelebrationCompleted != null && playerId >= 0 && playerId < teamCelebrationCompleted.Length)
+                        teamCelebrationCompleted[playerId] = false;
+                    selectedTeamIndex = IndexOfTeam(workingTeams[playerId - 1]);
+                    PlaySfx(returnSfx, returnSfxVolume);
+                    UpdateTeamSelectVisuals(true);
+                }
+            }
+            else if (input != null &&
+                     (input.GetDown(inputPlayerId, PlayerAction.ActionA) ||
+                      input.GetDown(inputPlayerId, PlayerAction.Start)))
+            {
+                int playerId = teamSelectionPlayerIds[currentTeamPlayerIndex];
+                BattleModeRules.TeamId selectedTeam = TeamIds[Mathf.Clamp(selectedTeamIndex, 0, TeamIds.Length - 1)];
+                if (IsLastTeamSelectionPlayer() && WouldAllPlayersBeOnSameTeam(playerId, selectedTeam))
+                {
+                    PlaySfx(deniedSfx, deniedSfxVolume);
+                    UpdateTeamSelectVisuals(true);
+                    yield return null;
+                    continue;
+                }
+
+                workingTeams[playerId - 1] = selectedTeam;
+                teamAssigned[playerId] = true;
+                if (teamCelebrationTimers != null && playerId >= 0 && playerId < teamCelebrationTimers.Length)
+                    teamCelebrationTimers[playerId] = 0f;
+                if (teamCelebrationCompleted != null && playerId >= 0 && playerId < teamCelebrationCompleted.Length)
+                    teamCelebrationCompleted[playerId] = false;
+                PlaySfx(confirmSfx, confirmSfxVolume);
+
+                currentTeamPlayerIndex++;
+                if (currentTeamPlayerIndex >= teamSelectionPlayerIds.Count)
+                {
+                    SaveSystem.SetBattleModePlayerTeams(workingTeams);
+                    done = true;
+                }
+                else
+                {
+                    int nextPlayerId = teamSelectionPlayerIds[currentTeamPlayerIndex];
+                    selectedTeamIndex = IndexOfTeam(workingTeams[nextPlayerId - 1]);
+                    UpdateTeamSelectVisuals(true);
+                }
+            }
+
+            teamPreviewTimer += Time.unscaledDeltaTime;
+            TickTeamCelebrationTimers();
+            UpdateTeamSelectVisuals(false);
+            yield return null;
+        }
+
+        if (teamSelectRoot != null)
+            teamSelectRoot.gameObject.SetActive(false);
+
+        state = MenuState.SkinSelect;
+    }
+
+    private void ShowPlayerSelectAfterSkinOrTeamReturn()
+    {
+        if (root != null)
+            root.SetActive(true);
+
+        if (fadeImage != null)
+        {
+            fadeImage.gameObject.SetActive(false);
+            SetFadeAlpha(0f);
+        }
+
+        if (teamSelectRoot != null)
+            teamSelectRoot.gameObject.SetActive(false);
 
         if (leftPanel != null)
         {
@@ -567,8 +803,6 @@ public sealed class BattleModeMenu : MonoBehaviour
         }
 
         Canvas.ForceUpdateCanvases();
-        yield return null;
-        Canvas.ForceUpdateCanvases();
         ApplyDynamicScaleIfNeeded(true);
 
         if (leftPanel != null)
@@ -578,14 +812,499 @@ public sealed class BattleModeMenu : MonoBehaviour
             UpdateOptionVisuals();
             LogOptionCursorPosition("OpenSkinSelectMenu.AfterReturnRevealCursor");
         }
+    }
 
-        PlayerInputManager input = PlayerInputManager.Instance;
-        while (input != null && HasAnyRelevantHeldInput(input, out _, out _))
-            yield return null;
+    private void EnsureTeamSelectBuilt()
+    {
+        if (teamSelectRoot != null)
+        {
+            teamSelectRoot.gameObject.SetActive(true);
+            teamSelectRoot.SetAsLastSibling();
+            return;
+        }
 
-        yield return null;
-        CapturePreviousHeldInputs(input);
-        menuActive = true;
+        Transform parent = referenceRect != null ? referenceRect : (root != null ? root.transform : transform);
+        GameObject rootGo = new("TeamSelectRoot", typeof(RectTransform));
+        rootGo.transform.SetParent(parent, false);
+        teamSelectRoot = rootGo.GetComponent<RectTransform>();
+        teamSelectRoot.anchorMin = new Vector2(0.5f, 0.5f);
+        teamSelectRoot.anchorMax = new Vector2(0.5f, 0.5f);
+        teamSelectRoot.pivot = new Vector2(0.5f, 0.5f);
+        teamSelectRoot.anchoredPosition = Vector2.zero;
+        teamSelectRoot.sizeDelta = Vector2.zero;
+        teamSelectRoot.localScale = Vector3.one * currentUiScale;
+        teamSelectRoot.SetAsLastSibling();
+
+        teamRows.Clear();
+
+        for (int i = 0; i < TeamIds.Length; i++)
+        {
+            BattleModeRules.TeamId teamId = TeamIds[i];
+            TeamRowVisual row = CreateTeamRow(teamId, i);
+            teamRows.Add(row);
+        }
+
+        CreateTeamCursor();
+    }
+
+    private void CreateTeamCursor()
+    {
+        AnimatedSpriteRenderer source = leftPanel != null ? leftPanel.CursorRenderer : null;
+        GameObject cursorGo;
+
+        if (source != null)
+        {
+            cursorGo = Instantiate(source.gameObject, teamSelectRoot, false);
+            cursorGo.name = "TeamCursor";
+            teamCursorRenderer = cursorGo.GetComponent<AnimatedSpriteRenderer>();
+        }
+        else
+        {
+            cursorGo = new GameObject("TeamCursor", typeof(RectTransform));
+        }
+
+        teamCursorRt = cursorGo.transform as RectTransform;
+        if (teamCursorRt == null)
+            teamCursorRt = cursorGo.AddComponent<RectTransform>();
+
+        teamCursorRt.anchorMin = new Vector2(0.5f, 0.5f);
+        teamCursorRt.anchorMax = new Vector2(0.5f, 0.5f);
+        teamCursorRt.pivot = new Vector2(0.5f, 0.5f);
+        teamCursorRt.sizeDelta = teamCursorSize;
+        teamCursorRt.localScale = Vector3.one;
+
+        if (teamCursorRenderer != null)
+        {
+            teamCursorRenderer.idle = true;
+            teamCursorRenderer.loop = true;
+            teamCursorRenderer.CurrentFrame = 0;
+            teamCursorRenderer.RefreshFrame();
+        }
+    }
+
+    private TeamRowVisual CreateTeamRow(BattleModeRules.TeamId teamId, int rowIndex)
+    {
+        GameObject rowGo = new($"TeamRow_{teamId}", typeof(RectTransform), typeof(Image), typeof(Outline));
+        rowGo.transform.SetParent(teamSelectRoot, false);
+
+        RectTransform rowRt = rowGo.GetComponent<RectTransform>();
+        rowRt.anchorMin = new Vector2(0.5f, 0.5f);
+        rowRt.anchorMax = new Vector2(0.5f, 0.5f);
+        rowRt.pivot = new Vector2(0.5f, 0.5f);
+        rowRt.sizeDelta = teamRowSize;
+        rowRt.anchoredPosition = GetTeamRowPosition(rowIndex);
+
+        Image bg = rowGo.GetComponent<Image>();
+        bg.color = GetTeamColor(teamId);
+        bg.raycastTarget = false;
+
+        Outline outline = rowGo.GetComponent<Outline>();
+        outline.effectColor = Color.black;
+        outline.effectDistance = new Vector2(2f, -2f);
+
+        GameObject labelGo = new("Label", typeof(RectTransform), typeof(TextMeshProUGUI));
+        labelGo.transform.SetParent(rowRt, false);
+        TextMeshProUGUI label = labelGo.GetComponent<TextMeshProUGUI>();
+        label.text = GetTeamDisplayName(teamId);
+        label.alignment = TextAlignmentOptions.MidlineLeft;
+        label.fontSize = teamLabelFontSize;
+        label.color = Color.white;
+        label.raycastTarget = false;
+        if (promptTitleText != null && promptTitleText.font != null)
+            label.font = promptTitleText.font;
+        ApplyTeamLabelFont(label);
+
+        RectTransform labelRt = label.rectTransform;
+        labelRt.anchorMin = new Vector2(0f, 0.5f);
+        labelRt.anchorMax = new Vector2(0f, 0.5f);
+        labelRt.pivot = new Vector2(0f, 0.5f);
+        labelRt.anchoredPosition = teamLabelOffsetMin;
+        labelRt.sizeDelta = teamLabelSize;
+
+        return new TeamRowVisual
+        {
+            teamId = teamId,
+            root = rowRt,
+            background = bg,
+            label = label
+        };
+    }
+
+    private Vector2 GetTeamRowPosition(int rowIndex)
+    {
+        float totalHeight = (TeamIds.Length - 1) * (teamRowSize.y + teamRowSpacing);
+        float y = (totalHeight * 0.5f) - (rowIndex * (teamRowSize.y + teamRowSpacing));
+        return teamRowsOffset + new Vector2(0f, y);
+    }
+
+    private void BuildTeamSelectionPlayerIds()
+    {
+        teamSelectionPlayerIds.Clear();
+
+        if (playerModes == null)
+            playerModes = SaveSystem.GetBattleModePlayerControlModes();
+
+        for (int i = 0; i < playerModes.Length && i < GameSession.MaxPlayerId; i++)
+        {
+            if (playerModes[i] != BattleModePlayerControlMode.Off)
+                teamSelectionPlayerIds.Add(i + 1);
+        }
+    }
+
+    private void InitializeTeamSelectionState()
+    {
+        workingTeams = SaveSystem.GetBattleModePlayerTeams();
+        if (workingTeams == null || workingTeams.Length != GameSession.MaxPlayerId)
+            workingTeams = new BattleModeRules.TeamId[GameSession.MaxPlayerId];
+
+        for (int i = 0; i < workingTeams.Length; i++)
+        {
+            if ((int)workingTeams[i] < (int)BattleModeRules.TeamId.Blue ||
+                (int)workingTeams[i] > (int)BattleModeRules.TeamId.Green)
+            {
+                workingTeams[i] = BattleModeRules.GetDefaultTeamForPlayer(i + 1);
+            }
+        }
+
+        teamAssigned = new bool[GameSession.MaxPlayerId + 1];
+        teamCelebrationTimers = new float[GameSession.MaxPlayerId + 1];
+        teamCelebrationCompleted = new bool[GameSession.MaxPlayerId + 1];
+        for (int i = 0; i < teamCelebrationTimers.Length; i++)
+            teamCelebrationTimers[i] = -1f;
+
+        currentTeamPlayerIndex = 0;
+        teamPreviewTimer = 0f;
+
+        int firstPlayerId = teamSelectionPlayerIds.Count > 0 ? teamSelectionPlayerIds[0] : GameSession.MinPlayerId;
+        selectedTeamIndex = IndexOfTeam(workingTeams[firstPlayerId - 1]);
+    }
+
+    private void UpdateTeamSelectVisuals(bool force)
+    {
+        if (teamSelectRoot == null || !teamSelectRoot.gameObject.activeInHierarchy)
+            return;
+
+        for (int i = 0; i < teamRows.Count; i++)
+        {
+            TeamRowVisual row = teamRows[i];
+            if (row == null)
+                continue;
+
+            row.root.anchoredPosition = GetTeamRowPosition(i);
+            row.root.sizeDelta = teamRowSize;
+            row.background.color = GetTeamColor(row.teamId);
+            if (row.label != null)
+            {
+                RectTransform labelRt = row.label.rectTransform;
+                labelRt.anchoredPosition = teamLabelOffsetMin;
+                labelRt.sizeDelta = teamLabelSize;
+                row.label.fontSize = teamLabelFontSize;
+                row.label.alignment = TextAlignmentOptions.MidlineLeft;
+                ApplyTeamLabelFont(row.label);
+            }
+
+            List<int> visiblePlayerIds = GetVisibleTeamMemberPlayerIds(row.teamId);
+            EnsureTeamMemberImageCount(row, visiblePlayerIds.Count);
+
+            int imageIndex = 0;
+            for (int p = 0; p < visiblePlayerIds.Count; p++)
+            {
+                int playerId = visiblePlayerIds[p];
+                bool isCurrent = IsCurrentTeamSelectionPlayer(playerId);
+                bool celebrating = GetTeamCelebrationTime(playerId) >= 0f;
+
+                Image member = row.members[imageIndex++];
+                member.gameObject.SetActive(true);
+                member.sprite = GetTeamMemberSprite(playerId, isCurrent);
+                member.color = GetTeamMemberColor(playerId, isCurrent);
+                member.rectTransform.sizeDelta = teamMemberSize;
+                member.rectTransform.anchoredPosition = GetTeamMemberPosition(
+                    imageIndex - 1,
+                    visiblePlayerIds.Count,
+                    celebrating || HasCompletedTeamCelebration(playerId));
+                member.enabled = member.sprite != null;
+            }
+
+            for (int m = imageIndex; m < row.members.Count; m++)
+                row.members[m].gameObject.SetActive(false);
+        }
+
+        if (teamCursorRt != null)
+        {
+            int rowIndex = Mathf.Clamp(selectedTeamIndex, 0, TeamIds.Length - 1);
+            teamCursorRt.gameObject.SetActive(currentTeamPlayerIndex < teamSelectionPlayerIds.Count);
+            teamCursorRt.sizeDelta = teamCursorSize;
+            teamCursorRt.anchoredPosition = GetTeamRowPosition(rowIndex) + teamCursorOffset;
+        }
+
+        LogTeamSelectLayout(force ? "UpdateTeamSelectVisuals.Forced" : "UpdateTeamSelectVisuals.Tick", force);
+    }
+
+    private int CountMembersForTeam(BattleModeRules.TeamId teamId)
+    {
+        return Mathf.Max(1, GetVisibleTeamMemberPlayerIds(teamId).Count);
+    }
+
+    private List<int> GetVisibleTeamMemberPlayerIds(BattleModeRules.TeamId teamId)
+    {
+        List<int> result = new(GameSession.MaxPlayerId);
+        for (int i = 0; i < teamSelectionPlayerIds.Count; i++)
+        {
+            int playerId = teamSelectionPlayerIds[i];
+            bool isCurrent = i == currentTeamPlayerIndex;
+            if (playerId >= 1 &&
+                playerId < teamAssigned.Length &&
+                teamAssigned[playerId] &&
+                workingTeams[playerId - 1] == teamId)
+            {
+                result.Add(playerId);
+            }
+            else if (isCurrent && TeamIds[Mathf.Clamp(selectedTeamIndex, 0, TeamIds.Length - 1)] == teamId)
+            {
+                result.Add(playerId);
+            }
+        }
+
+        return result;
+    }
+
+    private void EnsureTeamMemberImageCount(TeamRowVisual row, int count)
+    {
+        while (row.members.Count < count)
+        {
+            GameObject go = new($"Member_{row.members.Count}", typeof(RectTransform), typeof(Image));
+            go.transform.SetParent(row.root, false);
+            Image image = go.GetComponent<Image>();
+            image.preserveAspect = true;
+            image.raycastTarget = false;
+            row.members.Add(image);
+        }
+    }
+
+    private bool IsCurrentTeamSelectionPlayer(int playerId)
+    {
+        return currentTeamPlayerIndex >= 0 &&
+               currentTeamPlayerIndex < teamSelectionPlayerIds.Count &&
+               teamSelectionPlayerIds[currentTeamPlayerIndex] == playerId;
+    }
+
+    private void ApplyTeamLabelFont(TextMeshProUGUI label)
+    {
+        if (label == null)
+            return;
+
+        if (leftPanel != null && leftPanel.OptionFontAsset != null)
+            label.font = leftPanel.OptionFontAsset;
+
+        if (leftPanel != null && leftPanel.OptionFontMaterialPreset != null)
+            label.fontMaterial = leftPanel.OptionFontMaterialPreset;
+    }
+
+    private Vector2 GetTeamMemberPosition(int index, int count, bool celebrating)
+    {
+        float spacing = Mathf.Max(1f, teamMemberSpacing);
+        float startX = teamMembersCenterOffsetX - ((Mathf.Max(1, count) - 1) * spacing * 0.5f);
+        float y = celebrating ? teamCelebrationMemberOffsetY : teamWalkingMemberOffsetY;
+        return new Vector2(startX + (index * spacing), y);
+    }
+
+    private Sprite GetTeamMemberSprite(int playerId, bool isCurrent)
+    {
+        BomberSkin skin = PlayerPersistentStats.Get(playerId).Skin;
+        bool assigned = playerId >= 1 && playerId < teamAssigned.Length && teamAssigned[playerId];
+        float celebrationTime = GetTeamCelebrationTime(playerId);
+
+        if (celebrationTime >= 0f)
+        {
+            int frame = Mathf.FloorToInt(celebrationTime / 0.1f);
+            return skinSelectMenu != null
+                ? skinSelectMenu.GetBattleModeTeamCelebrationSprite(skin, frame)
+                : null;
+        }
+
+        if (assigned)
+        {
+            return skinSelectMenu != null
+                ? skinSelectMenu.GetBattleModeTeamCelebrationSprite(skin, int.MaxValue)
+                : null;
+        }
+
+        int previewFrame = Mathf.FloorToInt(teamPreviewTimer / 0.22f);
+        return skinSelectMenu != null
+            ? skinSelectMenu.GetBattleModeTeamPreviewSprite(skin, previewFrame)
+            : null;
+    }
+
+    private Color GetTeamMemberColor(int playerId, bool isCurrent)
+    {
+        Color color = Color.white;
+        bool assigned = playerId >= 1 && playerId < teamAssigned.Length && teamAssigned[playerId];
+
+        if (isCurrent && !assigned)
+        {
+            float pulse = (Mathf.Sin(Time.unscaledTime * Mathf.Max(0.01f, teamCurrentBlinkSpeed)) + 1f) * 0.5f;
+            color.a = Mathf.Lerp(teamCurrentMinAlpha, teamCurrentMaxAlpha, pulse);
+        }
+
+        return color;
+    }
+
+    private void TickTeamCelebrationTimers()
+    {
+        if (teamCelebrationTimers == null)
+            return;
+
+        float duration = Mathf.Max(0f, confirmFeedbackSeconds);
+        for (int i = 0; i < teamCelebrationTimers.Length; i++)
+        {
+            if (teamCelebrationTimers[i] < 0f)
+                continue;
+
+            teamCelebrationTimers[i] += Time.unscaledDeltaTime;
+            if (teamCelebrationTimers[i] >= duration)
+            {
+                teamCelebrationTimers[i] = -1f;
+                if (teamCelebrationCompleted != null && i < teamCelebrationCompleted.Length)
+                    teamCelebrationCompleted[i] = true;
+            }
+        }
+    }
+
+    private float GetTeamCelebrationTime(int playerId)
+    {
+        if (teamCelebrationTimers == null || playerId < 0 || playerId >= teamCelebrationTimers.Length)
+            return -1f;
+
+        return teamCelebrationTimers[playerId];
+    }
+
+    private bool HasCompletedTeamCelebration(int playerId)
+    {
+        return teamCelebrationCompleted != null &&
+               playerId >= 0 &&
+               playerId < teamCelebrationCompleted.Length &&
+               teamCelebrationCompleted[playerId];
+    }
+
+    private static int IndexOfTeam(BattleModeRules.TeamId teamId)
+    {
+        for (int i = 0; i < TeamIds.Length; i++)
+            if (TeamIds[i] == teamId)
+                return i;
+
+        return 0;
+    }
+
+    private bool IsLastTeamSelectionPlayer()
+    {
+        return currentTeamPlayerIndex >= teamSelectionPlayerIds.Count - 1;
+    }
+
+    private bool WouldAllPlayersBeOnSameTeam(int pendingPlayerId, BattleModeRules.TeamId pendingTeam)
+    {
+        if (teamSelectionPlayerIds.Count <= 1)
+            return true;
+
+        BattleModeRules.TeamId? firstTeam = null;
+        for (int i = 0; i < teamSelectionPlayerIds.Count; i++)
+        {
+            int playerId = teamSelectionPlayerIds[i];
+            BattleModeRules.TeamId team = playerId == pendingPlayerId
+                ? pendingTeam
+                : workingTeams[Mathf.Clamp(playerId - 1, 0, workingTeams.Length - 1)];
+
+            if (!firstTeam.HasValue)
+            {
+                firstTeam = team;
+                continue;
+            }
+
+            if (firstTeam.Value != team)
+                return false;
+        }
+
+        return true;
+    }
+
+    private Color GetTeamColor(BattleModeRules.TeamId teamId)
+    {
+        return teamId switch
+        {
+            BattleModeRules.TeamId.Red => teamRedColor,
+            BattleModeRules.TeamId.Green => teamGreenColor,
+            _ => teamBlueColor
+        };
+    }
+
+    private static string GetTeamDisplayName(BattleModeRules.TeamId teamId)
+    {
+        return teamId switch
+        {
+            BattleModeRules.TeamId.Red => "Red",
+            BattleModeRules.TeamId.Green => "Green",
+            _ => "Blue"
+        };
+    }
+
+    private void BeginTeamLayoutDebug()
+    {
+        teamLayoutDebugFramesRemaining = logTeamSelectLayoutDebug ? Mathf.Max(1, teamSelectLayoutDebugFrames) : 0;
+        nextTeamLayoutDebugTime = 0f;
+    }
+
+    private void LogTeamSelectLayout(string context, bool force)
+    {
+        if (!logTeamSelectLayoutDebug)
+            return;
+
+        if (!force)
+        {
+            if (teamLayoutDebugFramesRemaining <= 0 || Time.unscaledTime < nextTeamLayoutDebugTime)
+                return;
+        }
+
+        if (teamLayoutDebugFramesRemaining > 0)
+            teamLayoutDebugFramesRemaining--;
+
+        nextTeamLayoutDebugTime = Time.unscaledTime + Mathf.Max(0.05f, teamSelectLayoutDebugInterval);
+
+        Debug.Log(
+            $"[BattleModeMenu/TeamLayout] frame={Time.frameCount} time={Time.unscaledTime:0.000} " +
+            $"context={context} scale={currentUiScale:0.###} currentIndex={currentTeamPlayerIndex} " +
+            $"selectedTeam={TeamIds[Mathf.Clamp(selectedTeamIndex, 0, TeamIds.Length - 1)]} " +
+            $"root={FormatRectInfo(teamSelectRoot)} cursor={FormatRectInfo(teamCursorRt)}");
+
+        for (int r = 0; r < teamRows.Count; r++)
+        {
+            TeamRowVisual row = teamRows[r];
+            if (row == null)
+                continue;
+
+            string labelInfo = row.label != null ? FormatRectInfo(row.label.rectTransform) : "NULL";
+            Debug.Log(
+                $"[BattleModeMenu/TeamLayout] row={row.teamId} rect={FormatRectInfo(row.root)} " +
+                $"label={labelInfo} members={row.members.Count}");
+
+            for (int m = 0; m < row.members.Count; m++)
+            {
+                Image member = row.members[m];
+                if (member == null || !member.gameObject.activeInHierarchy)
+                    continue;
+
+                Debug.Log(
+                    $"[BattleModeMenu/TeamLayout] row={row.teamId} memberIndex={m} " +
+                    $"rect={FormatRectInfo(member.rectTransform)} sprite={(member.sprite != null ? member.sprite.name : "NULL")} " +
+                    $"alpha={member.color.a:0.###}");
+            }
+        }
+    }
+
+    private static string FormatRectInfo(RectTransform rt)
+    {
+        if (rt == null)
+            return "NULL";
+
+        return $"anchored={FormatVec2(rt.anchoredPosition)} size={FormatVec2(rt.sizeDelta)} local={FormatVec3(rt.localPosition)} world={FormatVec3(rt.position)} active={rt.gameObject.activeInHierarchy}";
     }
 
     private void RefreshPlayerSelectEntries()
@@ -667,30 +1386,6 @@ public sealed class BattleModeMenu : MonoBehaviour
 
     private void LogOptionCursorPosition(string context)
     {
-        if (!logCursorPositionDebug || leftPanel == null)
-            return;
-
-        if (!leftPanel.TryGetCursorDebugInfo(
-                out bool active,
-                out Vector3 localPosition,
-                out Vector2 anchoredPosition,
-                out Vector3 worldPosition,
-                out Vector2 sizeDelta,
-                out string parentName))
-        {
-            Debug.Log(
-                $"[BattleModeMenu/CursorPosition] frame={Time.frameCount} time={Time.unscaledTime:0.000} " +
-                $"context={context} state={state} selectedIndex={selectedIndex} selectedPlayerIndex={selectedPlayerIndex} cursor=NULL",
-                this);
-            return;
-        }
-
-        Debug.Log(
-            $"[BattleModeMenu/CursorPosition] frame={Time.frameCount} time={Time.unscaledTime:0.000} " +
-            $"context={context} state={state} active={active} selectedIndex={selectedIndex} selectedPlayerIndex={selectedPlayerIndex} " +
-            $"parent={parentName} local={FormatVec3(localPosition)} anchored={FormatVec2(anchoredPosition)} " +
-            $"world={FormatVec3(worldPosition)} size={FormatVec2(sizeDelta)}",
-            this);
     }
 
     private void CycleSelectedPlayerMode(int direction)
@@ -732,6 +1427,9 @@ public sealed class BattleModeMenu : MonoBehaviour
 
         if (leftPanel != null)
             leftPanel.HideCursor();
+
+        if (teamSelectRoot != null)
+            teamSelectRoot.gameObject.SetActive(false);
 
         if (root != null)
             root.SetActive(false);
@@ -952,6 +1650,7 @@ public sealed class BattleModeMenu : MonoBehaviour
         {
             MenuState.PlayerSelect => playerSelectPrompt,
             MenuState.SkinSelect => skinSelectPrompt,
+            MenuState.TeamSelect => teamSelectPrompt,
             _ => matchModePrompt
         };
     }
@@ -1095,6 +1794,7 @@ public sealed class BattleModeMenu : MonoBehaviour
         {
             MenuState.PlayerSelect => playerSelectBackgrounds?.sprites,
             MenuState.SkinSelect => skinSelectBackgrounds?.sprites,
+            MenuState.TeamSelect => teamSelectBackgrounds?.sprites,
             _ => matchModeBackgrounds?.sprites
         };
     }
@@ -1231,6 +1931,9 @@ public sealed class BattleModeMenu : MonoBehaviour
 
         if (leftPanel != null)
             leftPanel.SetUiScale(currentUiScale);
+
+        if (teamSelectRoot != null)
+            teamSelectRoot.localScale = Vector3.one * currentUiScale;
     }
 
     private static bool ApproximatelyRect(Rect a, Rect b)

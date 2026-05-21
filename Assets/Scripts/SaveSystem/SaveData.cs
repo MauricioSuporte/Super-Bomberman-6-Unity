@@ -21,6 +21,15 @@ public sealed class SaveData
         (int)BattleModePlayerControlMode.Off,
         (int)BattleModePlayerControlMode.Off
     };
+    public int[] battleModePlayerTeams =
+    {
+        (int)BattleModeRules.TeamId.Blue,
+        (int)BattleModeRules.TeamId.Red,
+        (int)BattleModeRules.TeamId.Green,
+        (int)BattleModeRules.TeamId.Blue,
+        (int)BattleModeRules.TeamId.Red,
+        (int)BattleModeRules.TeamId.Green
+    };
 
     public int player1SelectedSkin = (int)BomberSkin.White;
     public int player2SelectedSkin = (int)BomberSkin.Black;

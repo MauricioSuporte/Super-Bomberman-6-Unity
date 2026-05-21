@@ -149,6 +149,21 @@ public sealed class BattleModeRules : MonoBehaviour
     void ApplySavedMatchMode()
     {
         matchMode = SaveSystem.GetBattleModeMatchMode();
+        ApplySavedTeams();
+    }
+
+    void ApplySavedTeams()
+    {
+        BattleModeRules.TeamId[] savedTeams = SaveSystem.GetBattleModePlayerTeams();
+        EnsureEntries();
+
+        for (int i = 0; i < playerTeams.Length; i++)
+        {
+            playerTeams[i].playerId = i + 1;
+            playerTeams[i].teamId = savedTeams != null && i < savedTeams.Length
+                ? savedTeams[i]
+                : GetDefaultTeamForPlayer(i + 1);
+        }
     }
 
     public TeamId GetTeamForPlayer(int playerId)
