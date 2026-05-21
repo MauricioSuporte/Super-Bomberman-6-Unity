@@ -17,6 +17,7 @@ public sealed class SaveData
     public int battleModeRoundTimerMode = (int)BattleModeRules.RoundTimerMode.TwoMinutes;
     public int battleModeSuddenDeath = (int)BattleModeSuddenDeathSetting.Random;
     public bool battleModeRevengeBomber = false;
+    public int battleModeStageIndex = 1;
     public int[] battleModePlayerControlModes =
     {
         (int)BattleModePlayerControlMode.Man,

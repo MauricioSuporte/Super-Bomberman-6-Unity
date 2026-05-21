@@ -925,6 +925,7 @@ MonoBehaviour:
   skinSelectPrompt: CHARACTER SELECT
   teamSelectPrompt: TEAM MEMBERS
   ruleSelectPrompt: RULE CONFIG
+  stageSelectPrompt: STAGE SELECT
   leftPanel: {fileID: 2134452605}
   skinSelectMenu: {fileID: 300000200}
   matchModeLayout:
@@ -979,6 +980,10 @@ MonoBehaviour:
     sprites:
     - {fileID: 21300000, guid: 29a8f87f9116fe04c8083f11257e08ee, type: 3}
     - {fileID: 21300000, guid: cb717e7dd0887e249a93f4a197712bcd, type: 3}
+  stageSelectBackgrounds:
+    sprites:
+    - {fileID: 21300000, guid: 7fa50fad62d5cc24b9646dfb8318b0e3, type: 3}
+    - {fileID: 21300000, guid: 9127c3976d9271c4d9a7cea38c0628a8, type: 3}
   backgroundSwapInterval: 2
   backgroundSwapLoop: 1
   playerLabelHex: '#00FF3C'
@@ -1020,12 +1025,50 @@ MonoBehaviour:
   ruleBlueHex: '#2F90FF'
   ruleGreenHex: '#00FF3C'
   ruleRedHex: '#FF3030'
-  logTeamSelectLayoutDebug: 0
-  teamSelectLayoutDebugFrames: 12
-  teamSelectLayoutDebugInterval: 0.25
-  logRuleConfigLayoutDebug: 1
-  ruleConfigLayoutDebugFrames: 12
-  ruleConfigLayoutDebugInterval: 0.25
+  battleStageCount: 15
+  battleStageScenePrefix: BattleMode_
+  battleStageThumbnailResourceFormat: BattleMode/BM{0} Miniature
+  battleStageThumbnails:
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  battleStageNames:
+  - NORMAL ZONE
+  - BOMB ZONE
+  - OIL SHOCK
+  - JUMP ZONE
+  - CONVEYOR BELT II
+  - CURVE BOMB
+  - CHOCOLATE WARP
+  - SECRET FLOWER ZONE
+  - DRIVE MY CART
+  - POWER ZONE
+  - GIN GIN DEATHMATCH
+  - MYSTERY CARTS
+  - LIGHT ZONE
+  - CASTLE ZONE
+  - HOLE ZONE
+  stageSelectRootOffset: {x: 0, y: 0}
+  stageTitleOffset: {x: 0, y: 272}
+  stageTitleSize: {x: 520, y: 42}
+  stageThumbnailOffset: {x: 0, y: 0}
+  stageThumbnailSize: {x: 112, y: 112}
+  stageNameOffset: {x: 0, y: -272}
+  stageNameSize: {x: 620, y: 42}
+  stageSelectFontSize: 32
+  stageThumbnailFallbackColor: {r: 0, g: 0, b: 0, a: 0.65}
   selectMusic: {fileID: 8300000, guid: da56bf64ad8b3f346bf9f3a08d30b816, type: 3}
   selectMusicVolume: 0.8
   loopSelectMusic: 1

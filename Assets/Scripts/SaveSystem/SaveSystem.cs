@@ -483,6 +483,24 @@ public static class SaveSystem
         Save();
     }
 
+    public static int GetBattleModeStageIndex()
+    {
+        EnsureLoaded();
+        return Mathf.Clamp(data.battleModeStageIndex, 1, 15);
+    }
+
+    public static void SetBattleModeStageIndex(int stageIndex)
+    {
+        EnsureLoaded();
+
+        int normalized = Mathf.Clamp(stageIndex, 1, 15);
+        if (data.battleModeStageIndex == normalized)
+            return;
+
+        data.battleModeStageIndex = normalized;
+        Save();
+    }
+
     public static float GetBossRushUnlockTargetTime(BossRushDifficulty difficulty)
     {
         EnsureLoaded();
@@ -684,6 +702,7 @@ public static class SaveSystem
         d.battleModeBattlesToWin = Mathf.Clamp(d.battleModeBattlesToWin, 1, 5);
         d.battleModeRoundTimerMode = (int)NormalizeBattleModeRoundTimerMode(d.battleModeRoundTimerMode);
         d.battleModeSuddenDeath = (int)NormalizeBattleModeSuddenDeathSetting(d.battleModeSuddenDeath);
+        d.battleModeStageIndex = Mathf.Clamp(d.battleModeStageIndex, 1, 15);
         EnsureBattleModePlayerControlModes(d);
         EnsureBattleModePlayerTeams(d);
     }

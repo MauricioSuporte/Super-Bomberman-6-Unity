@@ -13,7 +13,8 @@ public sealed class BattleModeMenu : MonoBehaviour
         PlayerSelect = 1,
         SkinSelect = 2,
         TeamSelect = 3,
-        RuleConfig = 4
+        RuleConfig = 4,
+        StageSelect = 5
     }
 
     [System.Serializable]
@@ -86,6 +87,7 @@ public sealed class BattleModeMenu : MonoBehaviour
     [SerializeField] private string skinSelectPrompt = "CHARACTER SELECT";
     [SerializeField] private string teamSelectPrompt = "TEAM MEMBERS";
     [SerializeField] private string ruleSelectPrompt = "RULE CONFIG";
+    [SerializeField] private string stageSelectPrompt = "STAGE SELECT";
 
     [Header("Options Panel")]
     [SerializeField] private SaveFileMenuOptions leftPanel;
@@ -116,6 +118,7 @@ public sealed class BattleModeMenu : MonoBehaviour
     [SerializeField] private BackgroundSet skinSelectBackgrounds = new();
     [SerializeField] private BackgroundSet teamSelectBackgrounds = new();
     [SerializeField] private BackgroundSet ruleConfigBackgrounds = new();
+    [SerializeField] private BackgroundSet stageSelectBackgrounds = new();
     [SerializeField, Min(0.01f)] private float backgroundSwapInterval = 2f;
     [SerializeField] private bool backgroundSwapLoop = true;
 
@@ -164,13 +167,21 @@ public sealed class BattleModeMenu : MonoBehaviour
     [SerializeField] private string ruleGreenHex = "#00FF3C";
     [SerializeField] private string ruleRedHex = "#FF3030";
 
-    [Header("Debug")]
-    [SerializeField] private bool logTeamSelectLayoutDebug = true;
-    [SerializeField, Min(1)] private int teamSelectLayoutDebugFrames = 12;
-    [SerializeField, Min(0.05f)] private float teamSelectLayoutDebugInterval = 0.25f;
-    [SerializeField] private bool logRuleConfigLayoutDebug;
-    [SerializeField, Min(1)] private int ruleConfigLayoutDebugFrames = 12;
-    [SerializeField, Min(0.05f)] private float ruleConfigLayoutDebugInterval = 0.25f;
+    [Header("Stage Select")]
+    [SerializeField, Min(1)] private int battleStageCount = 15;
+    [SerializeField] private string battleStageScenePrefix = "BattleMode_";
+    [SerializeField] private string battleStageThumbnailResourceFormat = "BattleMode/BM{0} Miniature";
+    [SerializeField] private Sprite[] battleStageThumbnails = new Sprite[15];
+    [SerializeField] private string[] battleStageNames = new string[15];
+    [SerializeField] private Vector2 stageSelectRootOffset = Vector2.zero;
+    [SerializeField] private Vector2 stageTitleOffset = new(0f, 272f);
+    [SerializeField] private Vector2 stageTitleSize = new(520f, 42f);
+    [SerializeField] private Vector2 stageThumbnailOffset = Vector2.zero;
+    [SerializeField] private Vector2 stageThumbnailSize = new(112f, 112f);
+    [SerializeField] private Vector2 stageNameOffset = new(0f, -272f);
+    [SerializeField] private Vector2 stageNameSize = new(620f, 42f);
+    [SerializeField] private int stageSelectFontSize = 32;
+    [SerializeField] private Color stageThumbnailFallbackColor = new(0f, 0f, 0f, 0.65f);
 
     [Header("Music")]
     [SerializeField] private AudioClip selectMusic;
@@ -288,8 +299,6 @@ public sealed class BattleModeMenu : MonoBehaviour
     private int selectedTeamIndex;
     private float teamPreviewTimer;
     private bool teamSelectionReturnedToSkinSelect;
-    private int teamLayoutDebugFramesRemaining;
-    private float nextTeamLayoutDebugTime;
     private RectTransform ruleConfigRoot;
     private RectTransform ruleCursorRt;
     private AnimatedSpriteRenderer ruleCursorRenderer;
@@ -301,8 +310,13 @@ public sealed class BattleModeMenu : MonoBehaviour
     private bool ruleRevengeBomber;
     private bool ruleConfigReturnedToSkinSelect;
     private bool ruleConfigReturnedToTeamSelect;
-    private int ruleLayoutDebugFramesRemaining;
-    private float nextRuleLayoutDebugTime;
+    private RectTransform stageSelectRoot;
+    private TextMeshProUGUI stageTitleText;
+    private Image stageThumbnailImage;
+    private TextMeshProUGUI stageNameText;
+    private int selectedStageIndex;
+    private bool stageSelectionReturnedToRuleConfig;
+    private Sprite[] battleStageThumbnailResourceCache;
     private readonly bool[] previousMenuHeld = new bool[PlayerActionCount];
     private readonly bool[] menuHoldConsumed = new bool[PlayerActionCount];
     private readonly float[] nextMenuRepeatTime = new float[PlayerActionCount];
@@ -347,6 +361,8 @@ public sealed class BattleModeMenu : MonoBehaviour
             UpdateTeamSelectVisuals(false);
         else if (state == MenuState.RuleConfig)
             UpdateRuleConfigVisuals();
+        else if (state == MenuState.StageSelect)
+            UpdateStageSelectVisuals();
 
         if (!menuActive || state == MenuState.SkinSelect)
             return;
@@ -501,7 +517,6 @@ public sealed class BattleModeMenu : MonoBehaviour
         {
             PlaySfx(returnSfx, returnSfxVolume);
             cursorConfirmVisual = false;
-            LogOptionCursorPosition("PlayerSelect.ActionB.BeforeBuildMatchMode");
             yield return BuildMatchModeMenuAfterTransition("PlayerSelect.ActionB");
             yield break;
         }
@@ -522,14 +537,11 @@ public sealed class BattleModeMenu : MonoBehaviour
 
         cursorConfirmVisual = true;
         UpdateOptionVisuals();
-        LogOptionCursorPosition("ConfirmMatchMode.BeforeWait");
-
         float wait = Mathf.Max(0f, confirmFeedbackSeconds);
         if (wait > 0f)
             yield return new WaitForSecondsRealtime(wait);
 
         cursorConfirmVisual = false;
-        LogOptionCursorPosition("ConfirmMatchMode.BeforeBuildPlayerSelect");
         yield return BuildPlayerSelectMenuAfterTransition("ConfirmMatchMode");
     }
 
@@ -540,8 +552,6 @@ public sealed class BattleModeMenu : MonoBehaviour
 
         cursorConfirmVisual = true;
         UpdateOptionVisuals();
-        LogOptionCursorPosition("ConfirmPlayerSelect.BeforeWait");
-
         float wait = Mathf.Max(0f, confirmFeedbackSeconds);
         if (wait > 0f)
             yield return new WaitForSecondsRealtime(wait);
@@ -580,7 +590,6 @@ public sealed class BattleModeMenu : MonoBehaviour
         UpdatePromptTitle();
         ApplyCurrentBackgroundSprite(true);
         UpdateOptionVisuals();
-        LogOptionCursorPosition("BuildMatchModeMenu.AfterPosition");
     }
 
     private void BuildPlayerSelectMenu()
@@ -599,7 +608,6 @@ public sealed class BattleModeMenu : MonoBehaviour
         UpdatePromptTitle();
         ApplyCurrentBackgroundSprite(true);
         UpdateOptionVisuals();
-        LogOptionCursorPosition("BuildPlayerSelectMenu.AfterPosition");
     }
 
     private IEnumerator BuildMatchModeMenuAfterTransition(string context)
@@ -622,8 +630,6 @@ public sealed class BattleModeMenu : MonoBehaviour
         else
             BuildMatchModeMenu();
 
-        LogOptionCursorPosition($"{context}.AfterBuildSuppressed");
-
         Canvas.ForceUpdateCanvases();
         yield return null;
         Canvas.ForceUpdateCanvases();
@@ -636,7 +642,6 @@ public sealed class BattleModeMenu : MonoBehaviour
             UpdateOptionVisuals();
         }
 
-        LogOptionCursorPosition($"{context}.AfterRevealCursor");
     }
 
     private IEnumerator OpenSkinSelectMenu()
@@ -648,22 +653,20 @@ public sealed class BattleModeMenu : MonoBehaviour
             state = MenuState.SkinSelect;
             menuActive = false;
             cursorConfirmVisual = false;
-            LogOptionCursorPosition("OpenSkinSelectMenu.BeforeHideOptions");
-
             ApplyBattleModeActivePlayerIds(includeComPlayers: false);
 
             if (teamSelectRoot != null)
                 teamSelectRoot.gameObject.SetActive(false);
             if (ruleConfigRoot != null)
                 ruleConfigRoot.gameObject.SetActive(false);
+            if (stageSelectRoot != null)
+                stageSelectRoot.gameObject.SetActive(false);
 
             if (leftPanel != null)
             {
                 leftPanel.HideCursor();
                 leftPanel.gameObject.SetActive(false);
             }
-
-            LogOptionCursorPosition("OpenSkinSelectMenu.AfterHideOptions");
 
             UpdatePromptTitle();
             ApplyCurrentBackgroundSprite(true);
@@ -678,45 +681,54 @@ public sealed class BattleModeMenu : MonoBehaviour
 
             bool reopenSkinSelect = false;
             bool rulesConfirmed = false;
-            while (!rulesConfirmed)
+            while (!confirmed)
             {
-                if (SelectedMatchMode == BattleModeRules.MatchMode.TagMatch)
+                while (!rulesConfirmed)
                 {
-                    yield return OpenTeamSelectMenu(ruleConfigReturnedToTeamSelect);
+                    if (SelectedMatchMode == BattleModeRules.MatchMode.TagMatch)
+                    {
+                        yield return OpenTeamSelectMenu(ruleConfigReturnedToTeamSelect);
 
-                    if (teamSelectionReturnedToSkinSelect)
+                        if (teamSelectionReturnedToSkinSelect)
+                        {
+                            reopenSkinSelect = true;
+                            break;
+                        }
+                    }
+
+                    yield return OpenRuleConfigMenu();
+
+                    if (ruleConfigReturnedToSkinSelect)
                     {
                         reopenSkinSelect = true;
                         break;
                     }
+
+                    if (ruleConfigReturnedToTeamSelect)
+                        continue;
+
+                    rulesConfirmed = true;
                 }
 
-                yield return OpenRuleConfigMenu();
-
-                if (ruleConfigReturnedToSkinSelect)
-                {
-                    reopenSkinSelect = true;
+                if (reopenSkinSelect)
                     break;
+
+                yield return OpenStageSelectMenu();
+
+                if (stageSelectionReturnedToRuleConfig)
+                {
+                    rulesConfirmed = false;
+                    continue;
                 }
 
-                if (ruleConfigReturnedToTeamSelect)
-                    continue;
-
-                rulesConfirmed = true;
+                break;
             }
 
             if (reopenSkinSelect)
                 continue;
 
-            if (rulesConfirmed &&
-                loadNextSceneAfterSelection &&
-                !string.IsNullOrWhiteSpace(nextSceneName))
-            {
-                confirmed = true;
-                Hide();
-                LoadScene(nextSceneName);
+            if (confirmed)
                 yield break;
-            }
 
             break;
         }
@@ -766,11 +778,8 @@ public sealed class BattleModeMenu : MonoBehaviour
         if (resumeAtLastMember)
             ResumeTeamSelectionAtLastMember();
         UpdateTeamSelectVisuals(true);
-        BeginTeamLayoutDebug();
-
         Canvas.ForceUpdateCanvases();
         ApplyDynamicScaleIfNeeded(true);
-        LogTeamSelectLayout("OpenTeamSelectMenu.AfterInitialLayout", force: true);
 
         PlayerInputManager input = PlayerInputManager.Instance;
         while (input != null && HasAnyRelevantHeldInput(input, out _, out _))
@@ -871,6 +880,8 @@ public sealed class BattleModeMenu : MonoBehaviour
             teamSelectRoot.gameObject.SetActive(false);
         if (ruleConfigRoot != null)
             ruleConfigRoot.gameObject.SetActive(false);
+        if (stageSelectRoot != null)
+            stageSelectRoot.gameObject.SetActive(false);
 
         state = MenuState.SkinSelect;
     }
@@ -890,6 +901,8 @@ public sealed class BattleModeMenu : MonoBehaviour
             teamSelectRoot.gameObject.SetActive(false);
         if (ruleConfigRoot != null)
             ruleConfigRoot.gameObject.SetActive(false);
+        if (stageSelectRoot != null)
+            stageSelectRoot.gameObject.SetActive(false);
 
         if (leftPanel != null)
         {
@@ -898,13 +911,11 @@ public sealed class BattleModeMenu : MonoBehaviour
         }
 
         BuildPlayerSelectMenu();
-        LogOptionCursorPosition("OpenSkinSelectMenu.AfterReturnBuildPlayerSelect");
 
         if (leftPanel != null)
         {
             leftPanel.SetCursorVisibilitySuppressed(true);
             UpdateOptionVisuals();
-            LogOptionCursorPosition("OpenSkinSelectMenu.AfterReturnSuppressCursor");
         }
 
         Canvas.ForceUpdateCanvases();
@@ -915,7 +926,6 @@ public sealed class BattleModeMenu : MonoBehaviour
             UpdateOptionVisuals();
             leftPanel.SetCursorVisibilitySuppressed(false);
             UpdateOptionVisuals();
-            LogOptionCursorPosition("OpenSkinSelectMenu.AfterReturnRevealCursor");
         }
     }
 
@@ -1166,7 +1176,6 @@ public sealed class BattleModeMenu : MonoBehaviour
             teamCursorRt.anchoredPosition = GetTeamRowPosition(rowIndex) + teamCursorOffset;
         }
 
-        LogTeamSelectLayout(force ? "UpdateTeamSelectVisuals.Forced" : "UpdateTeamSelectVisuals.Tick", force);
     }
 
     private int CountMembersForTeam(BattleModeRules.TeamId teamId)
@@ -1375,59 +1384,6 @@ public sealed class BattleModeMenu : MonoBehaviour
         };
     }
 
-    private void BeginTeamLayoutDebug()
-    {
-        teamLayoutDebugFramesRemaining = logTeamSelectLayoutDebug ? Mathf.Max(1, teamSelectLayoutDebugFrames) : 0;
-        nextTeamLayoutDebugTime = 0f;
-    }
-
-    private void LogTeamSelectLayout(string context, bool force)
-    {
-        if (!logTeamSelectLayoutDebug)
-            return;
-
-        if (!force)
-        {
-            if (teamLayoutDebugFramesRemaining <= 0 || Time.unscaledTime < nextTeamLayoutDebugTime)
-                return;
-        }
-
-        if (teamLayoutDebugFramesRemaining > 0)
-            teamLayoutDebugFramesRemaining--;
-
-        nextTeamLayoutDebugTime = Time.unscaledTime + Mathf.Max(0.05f, teamSelectLayoutDebugInterval);
-
-        Debug.Log(
-            $"[BattleModeMenu/TeamLayout] frame={Time.frameCount} time={Time.unscaledTime:0.000} " +
-            $"context={context} scale={currentUiScale:0.###} currentIndex={currentTeamPlayerIndex} " +
-            $"selectedTeam={TeamIds[Mathf.Clamp(selectedTeamIndex, 0, TeamIds.Length - 1)]} " +
-            $"root={FormatRectInfo(teamSelectRoot)} cursor={FormatRectInfo(teamCursorRt)}");
-
-        for (int r = 0; r < teamRows.Count; r++)
-        {
-            TeamRowVisual row = teamRows[r];
-            if (row == null)
-                continue;
-
-            string labelInfo = row.label != null ? FormatRectInfo(row.label.rectTransform) : "NULL";
-            Debug.Log(
-                $"[BattleModeMenu/TeamLayout] row={row.teamId} rect={FormatRectInfo(row.root)} " +
-                $"label={labelInfo} members={row.members.Count}");
-
-            for (int m = 0; m < row.members.Count; m++)
-            {
-                Image member = row.members[m];
-                if (member == null || !member.gameObject.activeInHierarchy)
-                    continue;
-
-                Debug.Log(
-                    $"[BattleModeMenu/TeamLayout] row={row.teamId} memberIndex={m} " +
-                    $"rect={FormatRectInfo(member.rectTransform)} sprite={(member.sprite != null ? member.sprite.name : "NULL")} " +
-                    $"alpha={member.color.a:0.###}");
-            }
-        }
-    }
-
     private IEnumerator OpenRuleConfigMenu()
     {
         ruleConfigReturnedToSkinSelect = false;
@@ -1444,6 +1400,8 @@ public sealed class BattleModeMenu : MonoBehaviour
 
         if (teamSelectRoot != null)
             teamSelectRoot.gameObject.SetActive(false);
+        if (stageSelectRoot != null)
+            stageSelectRoot.gameObject.SetActive(false);
 
         SyncRuleConfigLayoutFromPlayerSelect();
         EnsureRuleConfigBuilt();
@@ -1453,11 +1411,8 @@ public sealed class BattleModeMenu : MonoBehaviour
         ApplyCurrentBackgroundSprite(true);
         UpdatePromptTitle();
         UpdateRuleConfigVisuals();
-        BeginRuleLayoutDebug();
-
         Canvas.ForceUpdateCanvases();
         ApplyDynamicScaleIfNeeded(true);
-        LogRuleConfigLayout("OpenRuleConfigMenu.AfterInitialLayout", force: true);
 
         PlayerInputManager input = PlayerInputManager.Instance;
         while (input != null && HasAnyRelevantHeldInput(input, out _, out _))
@@ -1744,7 +1699,6 @@ public sealed class BattleModeMenu : MonoBehaviour
             ruleCursorRt.anchoredPosition = GetRuleRowPosition(rowIndex) + ruleCursorOffset;
         }
 
-        LogRuleConfigLayout("UpdateRuleConfigVisuals", force: false);
     }
 
     private void CycleSelectedRuleValue(int direction)
@@ -1878,66 +1832,290 @@ public sealed class BattleModeMenu : MonoBehaviour
         return $"<color={colorHex}>{value}</color>";
     }
 
-    private void BeginRuleLayoutDebug()
+    private IEnumerator OpenStageSelectMenu()
     {
-        ruleLayoutDebugFramesRemaining = logRuleConfigLayoutDebug ? Mathf.Max(1, ruleConfigLayoutDebugFrames) : 0;
-        nextRuleLayoutDebugTime = 0f;
+        stageSelectionReturnedToRuleConfig = false;
+        state = MenuState.StageSelect;
+        menuActive = false;
+        cursorConfirmVisual = false;
+
+        if (leftPanel != null)
+        {
+            leftPanel.HideCursor();
+            leftPanel.gameObject.SetActive(false);
+        }
+
+        if (teamSelectRoot != null)
+            teamSelectRoot.gameObject.SetActive(false);
+        if (ruleConfigRoot != null)
+            ruleConfigRoot.gameObject.SetActive(false);
+
+        EnsureStageSelectBuilt();
+        selectedStageIndex = Mathf.Clamp(SaveSystem.GetBattleModeStageIndex() - 1, 0, GetBattleStageCount() - 1);
+        ResetBackgroundSpriteSwap();
+        ApplyCurrentBackgroundSprite(true);
+        UpdatePromptTitle();
+        UpdateStageSelectVisuals();
+
+        Canvas.ForceUpdateCanvases();
+        ApplyDynamicScaleIfNeeded(true);
+
+        PlayerInputManager input = PlayerInputManager.Instance;
+        while (input != null && HasAnyRelevantHeldInput(input, out _, out _))
+            yield return null;
+
+        bool done = false;
+        while (!done)
+        {
+            if (input == null)
+            {
+                input = PlayerInputManager.Instance;
+                yield return null;
+                continue;
+            }
+
+            bool moved = false;
+            if (input.GetDown(GameSession.MinPlayerId, PlayerAction.MoveLeft) ||
+                input.GetDown(GameSession.MinPlayerId, PlayerAction.MoveUp) ||
+                input.GetDown(GameSession.MinPlayerId, PlayerAction.ActionL))
+            {
+                selectedStageIndex = WrapIndex(selectedStageIndex - 1, GetBattleStageCount());
+                moved = true;
+            }
+            else if (input.GetDown(GameSession.MinPlayerId, PlayerAction.MoveRight) ||
+                     input.GetDown(GameSession.MinPlayerId, PlayerAction.MoveDown) ||
+                     input.GetDown(GameSession.MinPlayerId, PlayerAction.ActionR))
+            {
+                selectedStageIndex = WrapIndex(selectedStageIndex + 1, GetBattleStageCount());
+                moved = true;
+            }
+
+            if (moved)
+            {
+                PlaySfx(moveCursorSfx, moveCursorSfxVolume);
+                UpdateStageSelectVisuals();
+            }
+            else if (input.GetDown(GameSession.MinPlayerId, PlayerAction.ActionB))
+            {
+                PlaySfx(returnSfx, returnSfxVolume);
+                stageSelectionReturnedToRuleConfig = true;
+                done = true;
+            }
+            else if (input.GetDown(GameSession.MinPlayerId, PlayerAction.ActionA) ||
+                     input.GetDown(GameSession.MinPlayerId, PlayerAction.Start))
+            {
+                PlaySfx(confirmSfx, confirmSfxVolume);
+                int stageIndex = selectedStageIndex + 1;
+                SaveSystem.SetBattleModeStageIndex(stageIndex);
+                confirmed = true;
+                Hide();
+                LoadScene(GetBattleStageSceneName(stageIndex));
+                yield break;
+            }
+
+            UpdateStageSelectVisuals();
+            yield return null;
+        }
+
+        if (stageSelectRoot != null)
+            stageSelectRoot.gameObject.SetActive(false);
+
+        state = MenuState.RuleConfig;
     }
 
-    private void LogRuleConfigLayout(string context, bool force)
+    private void EnsureStageSelectBuilt()
     {
-        if (!logRuleConfigLayoutDebug)
+        if (stageSelectRoot != null)
+        {
+            stageSelectRoot.gameObject.SetActive(true);
+            stageSelectRoot.SetAsLastSibling();
+            return;
+        }
+
+        Transform parent = referenceRect != null ? referenceRect : (root != null ? root.transform : transform);
+        GameObject rootGo = new("StageSelectRoot", typeof(RectTransform));
+        rootGo.transform.SetParent(parent, false);
+        stageSelectRoot = rootGo.GetComponent<RectTransform>();
+        stageSelectRoot.anchorMin = new Vector2(0.5f, 0.5f);
+        stageSelectRoot.anchorMax = new Vector2(0.5f, 0.5f);
+        stageSelectRoot.pivot = new Vector2(0.5f, 0.5f);
+        stageSelectRoot.anchoredPosition = stageSelectRootOffset;
+        stageSelectRoot.sizeDelta = Vector2.zero;
+        stageSelectRoot.localScale = Vector3.one * currentUiScale;
+        stageSelectRoot.SetAsLastSibling();
+
+        stageTitleText = CreateStageText(stageSelectRoot, "StageTitle", TextAlignmentOptions.Center);
+        stageThumbnailImage = CreateStageThumbnail(stageSelectRoot);
+        stageNameText = CreateStageText(stageSelectRoot, "StageName", TextAlignmentOptions.Center);
+    }
+
+    private TextMeshProUGUI CreateStageText(RectTransform parent, string name, TextAlignmentOptions alignment)
+    {
+        GameObject go = new(name, typeof(RectTransform), typeof(TextMeshProUGUI));
+        go.transform.SetParent(parent, false);
+
+        TextMeshProUGUI text = go.GetComponent<TextMeshProUGUI>();
+        text.alignment = alignment;
+        text.raycastTarget = false;
+        text.textWrappingMode = TextWrappingModes.NoWrap;
+        text.overflowMode = TextOverflowModes.Overflow;
+        ApplyStageTextStyle(text);
+        return text;
+    }
+
+    private Image CreateStageThumbnail(RectTransform parent)
+    {
+        GameObject go = new("StageThumbnail", typeof(RectTransform), typeof(Image), typeof(Outline));
+        go.transform.SetParent(parent, false);
+
+        Image image = go.GetComponent<Image>();
+        image.type = Image.Type.Simple;
+        image.preserveAspect = true;
+        image.raycastTarget = false;
+        image.pixelsPerUnitMultiplier = 1f;
+
+        Outline outline = go.GetComponent<Outline>();
+        outline.effectColor = Color.black;
+        outline.effectDistance = new Vector2(2f, -2f);
+
+        return image;
+    }
+
+    private void UpdateStageSelectVisuals()
+    {
+        if (stageSelectRoot == null || !stageSelectRoot.gameObject.activeInHierarchy)
             return;
 
-        if (!force)
+        stageSelectRoot.anchoredPosition = stageSelectRootOffset;
+
+        int stageIndex = Mathf.Clamp(selectedStageIndex + 1, 1, GetBattleStageCount());
+
+        if (stageTitleText != null)
         {
-            if (ruleLayoutDebugFramesRemaining <= 0 || Time.unscaledTime < nextRuleLayoutDebugTime)
-                return;
+            stageTitleText.text = $"STAGE {stageIndex}";
+            stageTitleText.fontSize = stageSelectFontSize;
+            stageTitleText.rectTransform.anchoredPosition = stageTitleOffset;
+            stageTitleText.rectTransform.sizeDelta = stageTitleSize;
+            ApplyStageTextStyle(stageTitleText);
         }
 
-        if (ruleLayoutDebugFramesRemaining > 0)
-            ruleLayoutDebugFramesRemaining--;
-
-        nextRuleLayoutDebugTime = Time.unscaledTime + Mathf.Max(0.05f, ruleConfigLayoutDebugInterval);
-
-        Debug.Log(
-            $"[BattleModeMenu/RuleLayout] frame={Time.frameCount} time={Time.unscaledTime:0.000} " +
-            $"context={context} scale={currentUiScale:0.###} selectedRuleIndex={selectedRuleIndex} " +
-            $"syncLayoutWithPlayerSelect={syncRuleConfigLayoutWithPlayerSelect} syncFontWithPlayerSelect={syncRuleConfigFontWithPlayerSelect} " +
-            $"playerSelectLayout(font={playerSelectLayout.fontSize}, itemHeight={playerSelectLayout.optionItemHeight:0.##}, spacing={FormatVec2(playerSelectLayout.optionSpacing)}, " +
-            $"cursorOffset={FormatVec2(playerSelectLayout.cursorOffset)}, cursorMin={playerSelectLayout.minCursorSize:0.##}, cursorMult={playerSelectLayout.cursorHeightMultiplier:0.##}) " +
-            $"ruleConfig(rowSize={FormatVec2(ruleRowSize)}, spacing={ruleRowSpacing:0.##}, font={ruleFontSize}, " +
-            $"labelOffset={FormatVec2(ruleLabelOffset)}, valueOffset={FormatVec2(ruleValueOffset)}, cursorOffset={FormatVec2(ruleCursorOffset)}, cursorSize={FormatVec2(ruleCursorSize)}) " +
-            $"root={FormatRectInfo(ruleConfigRoot)} cursor={FormatRectInfo(ruleCursorRt)}");
-
-        for (int i = 0; i < ruleRows.Count; i++)
+        if (stageThumbnailImage != null)
         {
-            RuleRowVisual row = ruleRows[i];
-            if (row == null)
-                continue;
+            RectTransform thumbnailRt = stageThumbnailImage.rectTransform;
+            thumbnailRt.anchorMin = new Vector2(0.5f, 0.5f);
+            thumbnailRt.anchorMax = new Vector2(0.5f, 0.5f);
+            thumbnailRt.pivot = new Vector2(0.5f, 0.5f);
+            thumbnailRt.anchoredPosition = stageThumbnailOffset;
+            thumbnailRt.sizeDelta = GetStageThumbnailUiSize();
+            stageThumbnailImage.sprite = GetBattleStageThumbnail(stageIndex);
+            stageThumbnailImage.color = stageThumbnailImage.sprite != null ? Color.white : stageThumbnailFallbackColor;
+            stageThumbnailImage.enabled = true;
+        }
 
-            Debug.Log(
-                $"[BattleModeMenu/RuleLayout] rowIndex={i} selected={i == selectedRuleIndex} row={FormatRectInfo(row.root)} " +
-                $"label={FormatTextInfo(row.label)} value={FormatTextInfo(row.value)}");
+        if (stageNameText != null)
+        {
+            stageNameText.text = GetBattleStageDisplayName(stageIndex);
+            stageNameText.fontSize = stageSelectFontSize;
+            stageNameText.rectTransform.anchoredPosition = stageNameOffset;
+            stageNameText.rectTransform.sizeDelta = stageNameSize;
+            ApplyStageTextStyle(stageNameText);
         }
     }
 
-    private static string FormatRectInfo(RectTransform rt)
-    {
-        if (rt == null)
-            return "NULL";
-
-        return $"anchored={FormatVec2(rt.anchoredPosition)} size={FormatVec2(rt.sizeDelta)} local={FormatVec3(rt.localPosition)} world={FormatVec3(rt.position)} active={rt.gameObject.activeInHierarchy}";
-    }
-
-    private static string FormatTextInfo(TextMeshProUGUI text)
+    private void ApplyStageTextStyle(TextMeshProUGUI text)
     {
         if (text == null)
-            return "NULL";
+            return;
 
-        string fontName = text.font != null ? text.font.name : "NULL";
-        string materialName = text.fontMaterial != null ? text.fontMaterial.name : "NULL";
-        return $"rect={FormatRectInfo(text.rectTransform)} text=\"{text.text}\" fontSize={text.fontSize:0.##} style={text.fontStyle} alignment={text.alignment} font={fontName} material={materialName} color={text.color}";
+        if (leftPanel != null)
+        {
+            leftPanel.ApplyOptionTextStyleTo(text, Color.white);
+            text.fontSize = stageSelectFontSize;
+            text.richText = true;
+            text.alignment = TextAlignmentOptions.Center;
+            text.UpdateMeshPadding();
+            text.ForceMeshUpdate();
+            text.SetVerticesDirty();
+            return;
+        }
+
+        ApplyTeamLabelFont(text);
+        text.fontSize = stageSelectFontSize;
+        text.richText = true;
+        text.alignment = TextAlignmentOptions.Center;
+    }
+
+    private int GetBattleStageCount()
+    {
+        return Mathf.Clamp(battleStageCount, 1, 15);
+    }
+
+    private string GetBattleStageSceneName(int stageIndex)
+    {
+        int normalized = Mathf.Clamp(stageIndex, 1, 15);
+        return $"{battleStageScenePrefix}{normalized}";
+    }
+
+    private Sprite GetBattleStageThumbnail(int stageIndex)
+    {
+        int index = stageIndex - 1;
+        Sprite resourceSprite = GetBattleStageThumbnailFromResources(index, stageIndex);
+        if (resourceSprite != null)
+            return resourceSprite;
+
+        return battleStageThumbnails != null && index >= 0 && index < battleStageThumbnails.Length
+            ? battleStageThumbnails[index]
+            : null;
+    }
+
+    private Vector2 GetStageThumbnailUiSize()
+    {
+        float authoredScale = Mathf.Max(1, designUpscale);
+        return new Vector2(
+            Mathf.Max(1f, stageThumbnailSize.x) * authoredScale,
+            Mathf.Max(1f, stageThumbnailSize.y) * authoredScale);
+    }
+
+    private Sprite GetBattleStageThumbnailFromResources(int index, int stageIndex)
+    {
+        if (string.IsNullOrWhiteSpace(battleStageThumbnailResourceFormat) || index < 0)
+            return null;
+
+        int count = GetBattleStageCount();
+        if (battleStageThumbnailResourceCache == null || battleStageThumbnailResourceCache.Length != count)
+            battleStageThumbnailResourceCache = new Sprite[count];
+
+        if (index >= battleStageThumbnailResourceCache.Length)
+            return null;
+
+        if (battleStageThumbnailResourceCache[index] != null)
+            return battleStageThumbnailResourceCache[index];
+
+        string resourcePath = string.Format(battleStageThumbnailResourceFormat, stageIndex);
+        Sprite sprite = Resources.Load<Sprite>(resourcePath);
+        if (sprite == null)
+        {
+            Sprite[] sprites = Resources.LoadAll<Sprite>(resourcePath);
+            if (sprites != null && sprites.Length > 0)
+                sprite = sprites[0];
+        }
+
+        battleStageThumbnailResourceCache[index] = sprite;
+        return sprite;
+    }
+
+    private string GetBattleStageDisplayName(int stageIndex)
+    {
+        int index = stageIndex - 1;
+        if (battleStageNames != null &&
+            index >= 0 &&
+            index < battleStageNames.Length &&
+            !string.IsNullOrWhiteSpace(battleStageNames[index]))
+        {
+            return battleStageNames[index];
+        }
+
+        return $"Battle Stage {stageIndex}";
     }
 
     private void RefreshPlayerSelectEntries()
@@ -1948,7 +2126,6 @@ public sealed class BattleModeMenu : MonoBehaviour
             leftPanel.UpdateEntryTexts(playerEntries);
 
         UpdateOptionVisuals();
-        LogOptionCursorPosition("RefreshPlayerSelectEntries.AfterPosition");
     }
 
     private void BuildPlayerEntries()
@@ -2017,10 +2194,6 @@ public sealed class BattleModeMenu : MonoBehaviour
         leftPanel.Initialize(currentUiScale);
     }
 
-    private void LogOptionCursorPosition(string context)
-    {
-    }
-
     private void CycleSelectedPlayerMode(int direction)
     {
         if (playerModes == null || playerModes.Length == 0)
@@ -2065,6 +2238,8 @@ public sealed class BattleModeMenu : MonoBehaviour
             teamSelectRoot.gameObject.SetActive(false);
         if (ruleConfigRoot != null)
             ruleConfigRoot.gameObject.SetActive(false);
+        if (stageSelectRoot != null)
+            stageSelectRoot.gameObject.SetActive(false);
 
         if (root != null)
             root.SetActive(false);
@@ -2113,16 +2288,6 @@ public sealed class BattleModeMenu : MonoBehaviour
             value += count;
 
         return value;
-    }
-
-    private static string FormatVec2(Vector2 value)
-    {
-        return $"({value.x:0.##},{value.y:0.##})";
-    }
-
-    private static string FormatVec3(Vector3 value)
-    {
-        return $"({value.x:0.##},{value.y:0.##},{value.z:0.##})";
     }
 
     private static bool AnyPlayerGet(PlayerInputManager input, PlayerAction action)
@@ -2287,6 +2452,7 @@ public sealed class BattleModeMenu : MonoBehaviour
             MenuState.SkinSelect => skinSelectPrompt,
             MenuState.TeamSelect => teamSelectPrompt,
             MenuState.RuleConfig => ruleSelectPrompt,
+            MenuState.StageSelect => stageSelectPrompt,
             _ => matchModePrompt
         };
     }
@@ -2432,6 +2598,7 @@ public sealed class BattleModeMenu : MonoBehaviour
             MenuState.SkinSelect => skinSelectBackgrounds?.sprites,
             MenuState.TeamSelect => teamSelectBackgrounds?.sprites,
             MenuState.RuleConfig => ruleConfigBackgrounds?.sprites,
+            MenuState.StageSelect => stageSelectBackgrounds?.sprites,
             _ => matchModeBackgrounds?.sprites
         };
     }
@@ -2573,6 +2740,8 @@ public sealed class BattleModeMenu : MonoBehaviour
             teamSelectRoot.localScale = Vector3.one * currentUiScale;
         if (ruleConfigRoot != null)
             ruleConfigRoot.localScale = Vector3.one * currentUiScale;
+        if (stageSelectRoot != null)
+            stageSelectRoot.localScale = Vector3.one * currentUiScale;
     }
 
     private static bool ApproximatelyRect(Rect a, Rect b)
