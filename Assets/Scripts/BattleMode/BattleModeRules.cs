@@ -7,6 +7,20 @@ public enum BattleModePlayerControlMode
     Off = 2
 }
 
+public enum BattleModeComputerLevel
+{
+    Easy = 0,
+    Normal = 1,
+    Hard = 2
+}
+
+public enum BattleModeSuddenDeathSetting
+{
+    Off = 0,
+    On = 1,
+    Random = 2
+}
+
 [DisallowMultipleComponent]
 public sealed class BattleModeRules : MonoBehaviour
 {
@@ -80,6 +94,7 @@ public sealed class BattleModeRules : MonoBehaviour
 
     [Header("Match")]
     [SerializeField] private MatchMode matchMode = MatchMode.SingleMatch;
+    [SerializeField] private BattleModeComputerLevel computerLevel = BattleModeComputerLevel.Normal;
     [SerializeField, Min(1)] private int victoriesToWinMatch = 3;
     [SerializeField] private RoundTimerMode roundTimer = RoundTimerMode.ThreeMinutes;
     [SerializeField] private BattleMusicSelection battleMusic = BattleMusicSelection.Random;
@@ -96,6 +111,7 @@ public sealed class BattleModeRules : MonoBehaviour
 
     public MatchMode CurrentMatchMode => matchMode;
     public bool UsesTeams => matchMode == MatchMode.TagMatch;
+    public BattleModeComputerLevel CurrentComputerLevel => computerLevel;
     public int VictoriesToWinMatch => Mathf.Max(1, victoriesToWinMatch);
     public RoundTimerMode CurrentRoundTimerMode => roundTimer;
     public BattleMusicSelection CurrentBattleMusic => battleMusic;
@@ -149,7 +165,22 @@ public sealed class BattleModeRules : MonoBehaviour
     void ApplySavedMatchMode()
     {
         matchMode = SaveSystem.GetBattleModeMatchMode();
+        computerLevel = SaveSystem.GetBattleModeComputerLevel();
+        victoriesToWinMatch = SaveSystem.GetBattleModeBattlesToWin();
+        roundTimer = SaveSystem.GetBattleModeRoundTimerMode();
+        enableRevengeBomber = SaveSystem.GetBattleModeRevengeBomberEnabled();
+        enableSuddenDeath = ResolveSuddenDeath(SaveSystem.GetBattleModeSuddenDeathSetting());
         ApplySavedTeams();
+    }
+
+    static bool ResolveSuddenDeath(BattleModeSuddenDeathSetting setting)
+    {
+        return setting switch
+        {
+            BattleModeSuddenDeathSetting.Off => false,
+            BattleModeSuddenDeathSetting.On => true,
+            _ => Random.value >= 0.5f
+        };
     }
 
     void ApplySavedTeams()

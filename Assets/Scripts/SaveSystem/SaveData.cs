@@ -12,6 +12,11 @@ public sealed class SaveData
     public bool bossRushUnlocked = false;
     public bool nightmareUnlocked = false;
     public int battleModeMatchMode = (int)BattleModeRules.MatchMode.SingleMatch;
+    public int battleModeComputerLevel = (int)BattleModeComputerLevel.Normal;
+    public int battleModeBattlesToWin = 3;
+    public int battleModeRoundTimerMode = (int)BattleModeRules.RoundTimerMode.TwoMinutes;
+    public int battleModeSuddenDeath = (int)BattleModeSuddenDeathSetting.Random;
+    public bool battleModeRevengeBomber = false;
     public int[] battleModePlayerControlModes =
     {
         (int)BattleModePlayerControlMode.Man,

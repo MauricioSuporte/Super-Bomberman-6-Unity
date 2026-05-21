@@ -12,7 +12,8 @@ public sealed class BattleModeMenu : MonoBehaviour
         MatchMode = 0,
         PlayerSelect = 1,
         SkinSelect = 2,
-        TeamSelect = 3
+        TeamSelect = 3,
+        RuleConfig = 4
     }
 
     [System.Serializable]
@@ -50,6 +51,13 @@ public sealed class BattleModeMenu : MonoBehaviour
         public readonly List<Image> members = new();
     }
 
+    private sealed class RuleRowVisual
+    {
+        public RectTransform root;
+        public TextMeshProUGUI label;
+        public TextMeshProUGUI value;
+    }
+
     [Header("UI Root")]
     [SerializeField] private GameObject root;
     [SerializeField] private Image backgroundImage;
@@ -77,6 +85,7 @@ public sealed class BattleModeMenu : MonoBehaviour
     [SerializeField] private string playerSelectPrompt = "PLAYER SELECT";
     [SerializeField] private string skinSelectPrompt = "CHARACTER SELECT";
     [SerializeField] private string teamSelectPrompt = "TEAM MEMBERS";
+    [SerializeField] private string ruleSelectPrompt = "RULE CONFIG";
 
     [Header("Options Panel")]
     [SerializeField] private SaveFileMenuOptions leftPanel;
@@ -106,6 +115,7 @@ public sealed class BattleModeMenu : MonoBehaviour
     [SerializeField] private BackgroundSet playerSelectBackgrounds = new();
     [SerializeField] private BackgroundSet skinSelectBackgrounds = new();
     [SerializeField] private BackgroundSet teamSelectBackgrounds = new();
+    [SerializeField] private BackgroundSet ruleConfigBackgrounds = new();
     [SerializeField, Min(0.01f)] private float backgroundSwapInterval = 2f;
     [SerializeField] private bool backgroundSwapLoop = true;
 
@@ -137,10 +147,30 @@ public sealed class BattleModeMenu : MonoBehaviour
     [SerializeField] private Color teamBlueColor = new(0.05f, 0.24f, 0.82f, 0.92f);
     [SerializeField] private Color teamGreenColor = new(0.05f, 0.36f, 0.12f, 0.92f);
 
+    [Header("Rule Config")]
+    [SerializeField] private bool syncRuleConfigLayoutWithPlayerSelect = true;
+    [SerializeField] private bool syncRuleConfigFontWithPlayerSelect;
+    [SerializeField] private Vector2 ruleRowsOffset = new(0f, -4f);
+    [SerializeField] private Vector2 ruleRowSize = new(760f, 34f);
+    [SerializeField, Min(0f)] private float ruleRowSpacing = 70f;
+    [SerializeField] private int ruleFontSize = 42;
+    [SerializeField] private Vector2 ruleLabelOffset = new(-300f, 0f);
+    [SerializeField] private Vector2 ruleLabelSize = new(430f, 34f);
+    [SerializeField] private Vector2 ruleValueOffset = new(230f, 0f);
+    [SerializeField] private Vector2 ruleValueSize = new(300f, 34f);
+    [SerializeField] private Vector2 ruleCursorOffset = new(-420f, 0f);
+    [SerializeField] private Vector2 ruleCursorSize = new(62f, 62f);
+    [SerializeField] private string ruleBlueHex = "#2F90FF";
+    [SerializeField] private string ruleGreenHex = "#00FF3C";
+    [SerializeField] private string ruleRedHex = "#FF3030";
+
     [Header("Debug")]
     [SerializeField] private bool logTeamSelectLayoutDebug = true;
     [SerializeField, Min(1)] private int teamSelectLayoutDebugFrames = 12;
     [SerializeField, Min(0.05f)] private float teamSelectLayoutDebugInterval = 0.25f;
+    [SerializeField] private bool logRuleConfigLayoutDebug;
+    [SerializeField, Min(1)] private int ruleConfigLayoutDebugFrames = 12;
+    [SerializeField, Min(0.05f)] private float ruleConfigLayoutDebugInterval = 0.25f;
 
     [Header("Music")]
     [SerializeField] private AudioClip selectMusic;
@@ -180,6 +210,30 @@ public sealed class BattleModeMenu : MonoBehaviour
         BattleModeRules.TeamId.Green
     };
 
+    private static readonly BattleModeComputerLevel[] ComputerLevels =
+    {
+        BattleModeComputerLevel.Easy,
+        BattleModeComputerLevel.Normal,
+        BattleModeComputerLevel.Hard
+    };
+
+    private static readonly BattleModeRules.RoundTimerMode[] RuleTimerModes =
+    {
+        BattleModeRules.RoundTimerMode.OneMinute,
+        BattleModeRules.RoundTimerMode.TwoMinutes,
+        BattleModeRules.RoundTimerMode.ThreeMinutes,
+        BattleModeRules.RoundTimerMode.FourMinutes,
+        BattleModeRules.RoundTimerMode.FiveMinutes,
+        BattleModeRules.RoundTimerMode.Infinite
+    };
+
+    private static readonly BattleModeSuddenDeathSetting[] SuddenDeathSettings =
+    {
+        BattleModeSuddenDeathSetting.Off,
+        BattleModeSuddenDeathSetting.On,
+        BattleModeSuddenDeathSetting.Random
+    };
+
     private const int PlayerActionCount = (int)PlayerAction.ActionR + 1;
 
     private readonly List<string> matchModeEntries = new()
@@ -192,6 +246,7 @@ public sealed class BattleModeMenu : MonoBehaviour
     private readonly List<int> battleEnabledPlayerIds = new(GameSession.MaxPlayerId);
     private readonly List<int> battleHumanPlayerIds = new(GameSession.MaxPlayerId);
     private readonly List<TeamRowVisual> teamRows = new();
+    private readonly List<RuleRowVisual> ruleRows = new();
     private readonly List<int> teamSelectionPlayerIds = new(GameSession.MaxPlayerId);
 
     private readonly List<bool> displayEnabled = new()
@@ -235,6 +290,19 @@ public sealed class BattleModeMenu : MonoBehaviour
     private bool teamSelectionReturnedToSkinSelect;
     private int teamLayoutDebugFramesRemaining;
     private float nextTeamLayoutDebugTime;
+    private RectTransform ruleConfigRoot;
+    private RectTransform ruleCursorRt;
+    private AnimatedSpriteRenderer ruleCursorRenderer;
+    private int selectedRuleIndex;
+    private BattleModeComputerLevel ruleComputerLevel;
+    private int ruleBattlesToWin;
+    private BattleModeRules.RoundTimerMode ruleTimerMode;
+    private BattleModeSuddenDeathSetting ruleSuddenDeath;
+    private bool ruleRevengeBomber;
+    private bool ruleConfigReturnedToSkinSelect;
+    private bool ruleConfigReturnedToTeamSelect;
+    private int ruleLayoutDebugFramesRemaining;
+    private float nextRuleLayoutDebugTime;
     private readonly bool[] previousMenuHeld = new bool[PlayerActionCount];
     private readonly bool[] menuHoldConsumed = new bool[PlayerActionCount];
     private readonly float[] nextMenuRepeatTime = new float[PlayerActionCount];
@@ -277,6 +345,8 @@ public sealed class BattleModeMenu : MonoBehaviour
 
         if (state == MenuState.TeamSelect)
             UpdateTeamSelectVisuals(false);
+        else if (state == MenuState.RuleConfig)
+            UpdateRuleConfigVisuals();
 
         if (!menuActive || state == MenuState.SkinSelect)
             return;
@@ -573,6 +643,8 @@ public sealed class BattleModeMenu : MonoBehaviour
     {
         while (true)
         {
+            ruleConfigReturnedToSkinSelect = false;
+            ruleConfigReturnedToTeamSelect = false;
             state = MenuState.SkinSelect;
             menuActive = false;
             cursorConfirmVisual = false;
@@ -582,6 +654,8 @@ public sealed class BattleModeMenu : MonoBehaviour
 
             if (teamSelectRoot != null)
                 teamSelectRoot.gameObject.SetActive(false);
+            if (ruleConfigRoot != null)
+                ruleConfigRoot.gameObject.SetActive(false);
 
             if (leftPanel != null)
             {
@@ -599,17 +673,42 @@ public sealed class BattleModeMenu : MonoBehaviour
             ApplyBattleModeActivePlayerIds(includeComPlayers: true);
             RestoreRootAfterEmbeddedSkinSelect();
 
-            if (!skinSelectMenu.ReturnToTitleRequested &&
-                SelectedMatchMode == BattleModeRules.MatchMode.TagMatch)
-            {
-                yield return OpenTeamSelectMenu();
+            if (skinSelectMenu.ReturnToTitleRequested)
+                break;
 
-                if (teamSelectionReturnedToSkinSelect)
+            bool reopenSkinSelect = false;
+            bool rulesConfirmed = false;
+            while (!rulesConfirmed)
+            {
+                if (SelectedMatchMode == BattleModeRules.MatchMode.TagMatch)
+                {
+                    yield return OpenTeamSelectMenu(ruleConfigReturnedToTeamSelect);
+
+                    if (teamSelectionReturnedToSkinSelect)
+                    {
+                        reopenSkinSelect = true;
+                        break;
+                    }
+                }
+
+                yield return OpenRuleConfigMenu();
+
+                if (ruleConfigReturnedToSkinSelect)
+                {
+                    reopenSkinSelect = true;
+                    break;
+                }
+
+                if (ruleConfigReturnedToTeamSelect)
                     continue;
+
+                rulesConfirmed = true;
             }
 
-            if (!skinSelectMenu.ReturnToTitleRequested &&
-                !teamSelectionReturnedToSkinSelect &&
+            if (reopenSkinSelect)
+                continue;
+
+            if (rulesConfirmed &&
                 loadNextSceneAfterSelection &&
                 !string.IsNullOrWhiteSpace(nextSceneName))
             {
@@ -645,7 +744,7 @@ public sealed class BattleModeMenu : MonoBehaviour
         }
     }
 
-    private IEnumerator OpenTeamSelectMenu()
+    private IEnumerator OpenTeamSelectMenu(bool resumeAtLastMember = false)
     {
         teamSelectionReturnedToSkinSelect = false;
         state = MenuState.TeamSelect;
@@ -664,6 +763,8 @@ public sealed class BattleModeMenu : MonoBehaviour
         UpdatePromptTitle();
         BuildTeamSelectionPlayerIds();
         InitializeTeamSelectionState();
+        if (resumeAtLastMember)
+            ResumeTeamSelectionAtLastMember();
         UpdateTeamSelectVisuals(true);
         BeginTeamLayoutDebug();
 
@@ -768,6 +869,8 @@ public sealed class BattleModeMenu : MonoBehaviour
 
         if (teamSelectRoot != null)
             teamSelectRoot.gameObject.SetActive(false);
+        if (ruleConfigRoot != null)
+            ruleConfigRoot.gameObject.SetActive(false);
 
         state = MenuState.SkinSelect;
     }
@@ -785,6 +888,8 @@ public sealed class BattleModeMenu : MonoBehaviour
 
         if (teamSelectRoot != null)
             teamSelectRoot.gameObject.SetActive(false);
+        if (ruleConfigRoot != null)
+            ruleConfigRoot.gameObject.SetActive(false);
 
         if (leftPanel != null)
         {
@@ -977,6 +1082,30 @@ public sealed class BattleModeMenu : MonoBehaviour
 
         int firstPlayerId = teamSelectionPlayerIds.Count > 0 ? teamSelectionPlayerIds[0] : GameSession.MinPlayerId;
         selectedTeamIndex = IndexOfTeam(workingTeams[firstPlayerId - 1]);
+    }
+
+    private void ResumeTeamSelectionAtLastMember()
+    {
+        if (teamSelectionPlayerIds.Count <= 0 || teamAssigned == null)
+            return;
+
+        currentTeamPlayerIndex = teamSelectionPlayerIds.Count - 1;
+
+        for (int i = 0; i < teamSelectionPlayerIds.Count; i++)
+        {
+            int playerId = teamSelectionPlayerIds[i];
+            if (playerId < 0 || playerId >= teamAssigned.Length)
+                continue;
+
+            teamAssigned[playerId] = i < currentTeamPlayerIndex;
+            if (teamCelebrationCompleted != null && playerId < teamCelebrationCompleted.Length)
+                teamCelebrationCompleted[playerId] = i < currentTeamPlayerIndex;
+            if (teamCelebrationTimers != null && playerId < teamCelebrationTimers.Length)
+                teamCelebrationTimers[playerId] = -1f;
+        }
+
+        int lastPlayerId = teamSelectionPlayerIds[currentTeamPlayerIndex];
+        selectedTeamIndex = IndexOfTeam(workingTeams[Mathf.Clamp(lastPlayerId - 1, 0, workingTeams.Length - 1)]);
     }
 
     private void UpdateTeamSelectVisuals(bool force)
@@ -1299,12 +1428,516 @@ public sealed class BattleModeMenu : MonoBehaviour
         }
     }
 
+    private IEnumerator OpenRuleConfigMenu()
+    {
+        ruleConfigReturnedToSkinSelect = false;
+        ruleConfigReturnedToTeamSelect = false;
+        state = MenuState.RuleConfig;
+        menuActive = false;
+        cursorConfirmVisual = false;
+
+        if (leftPanel != null)
+        {
+            leftPanel.HideCursor();
+            leftPanel.gameObject.SetActive(false);
+        }
+
+        if (teamSelectRoot != null)
+            teamSelectRoot.gameObject.SetActive(false);
+
+        SyncRuleConfigLayoutFromPlayerSelect();
+        EnsureRuleConfigBuilt();
+        LoadRuleConfigFromSave();
+        selectedRuleIndex = Mathf.Clamp(selectedRuleIndex, 0, ruleRows.Count - 1);
+        ResetBackgroundSpriteSwap();
+        ApplyCurrentBackgroundSprite(true);
+        UpdatePromptTitle();
+        UpdateRuleConfigVisuals();
+        BeginRuleLayoutDebug();
+
+        Canvas.ForceUpdateCanvases();
+        ApplyDynamicScaleIfNeeded(true);
+        LogRuleConfigLayout("OpenRuleConfigMenu.AfterInitialLayout", force: true);
+
+        PlayerInputManager input = PlayerInputManager.Instance;
+        while (input != null && HasAnyRelevantHeldInput(input, out _, out _))
+            yield return null;
+
+        bool done = false;
+        while (!done)
+        {
+            if (input == null)
+            {
+                input = PlayerInputManager.Instance;
+                yield return null;
+                continue;
+            }
+
+            bool moved = false;
+            if (input.GetDown(GameSession.MinPlayerId, PlayerAction.MoveUp))
+            {
+                selectedRuleIndex = WrapIndex(selectedRuleIndex - 1, ruleRows.Count);
+                moved = true;
+            }
+            else if (input.GetDown(GameSession.MinPlayerId, PlayerAction.MoveDown))
+            {
+                selectedRuleIndex = WrapIndex(selectedRuleIndex + 1, ruleRows.Count);
+                moved = true;
+            }
+
+            if (moved)
+            {
+                PlaySfx(moveCursorSfx, moveCursorSfxVolume);
+                UpdateRuleConfigVisuals();
+            }
+
+            bool previousValue = input.GetDown(GameSession.MinPlayerId, PlayerAction.MoveLeft) ||
+                                 input.GetDown(GameSession.MinPlayerId, PlayerAction.ActionL);
+            bool nextValue = input.GetDown(GameSession.MinPlayerId, PlayerAction.MoveRight) ||
+                             input.GetDown(GameSession.MinPlayerId, PlayerAction.ActionR);
+            if (previousValue || nextValue)
+            {
+                CycleSelectedRuleValue(nextValue ? 1 : -1);
+                PlaySfx(moveCursorSfx, moveCursorSfxVolume);
+                UpdateRuleConfigVisuals();
+            }
+            else if (input.GetDown(GameSession.MinPlayerId, PlayerAction.ActionB))
+            {
+                PlaySfx(returnSfx, returnSfxVolume);
+                if (SelectedMatchMode == BattleModeRules.MatchMode.TagMatch)
+                    ruleConfigReturnedToTeamSelect = true;
+                else
+                    ruleConfigReturnedToSkinSelect = true;
+
+                done = true;
+            }
+            else if (input.GetDown(GameSession.MinPlayerId, PlayerAction.ActionA) ||
+                     input.GetDown(GameSession.MinPlayerId, PlayerAction.Start))
+            {
+                PlaySfx(confirmSfx, confirmSfxVolume);
+                SaveRuleConfig();
+                done = true;
+            }
+
+            UpdateRuleConfigVisuals();
+            yield return null;
+        }
+
+        if (ruleConfigRoot != null)
+            ruleConfigRoot.gameObject.SetActive(false);
+
+        state = SelectedMatchMode == BattleModeRules.MatchMode.TagMatch && ruleConfigReturnedToTeamSelect
+            ? MenuState.TeamSelect
+            : MenuState.SkinSelect;
+    }
+
+    private void EnsureRuleConfigBuilt()
+    {
+        SyncRuleConfigLayoutFromPlayerSelect();
+
+        if (ruleConfigRoot != null)
+        {
+            ruleConfigRoot.gameObject.SetActive(true);
+            ruleConfigRoot.SetAsLastSibling();
+            return;
+        }
+
+        Transform parent = referenceRect != null ? referenceRect : (root != null ? root.transform : transform);
+        GameObject rootGo = new("RuleConfigRoot", typeof(RectTransform));
+        rootGo.transform.SetParent(parent, false);
+        ruleConfigRoot = rootGo.GetComponent<RectTransform>();
+        ruleConfigRoot.anchorMin = new Vector2(0.5f, 0.5f);
+        ruleConfigRoot.anchorMax = new Vector2(0.5f, 0.5f);
+        ruleConfigRoot.pivot = new Vector2(0.5f, 0.5f);
+        ruleConfigRoot.anchoredPosition = Vector2.zero;
+        ruleConfigRoot.sizeDelta = Vector2.zero;
+        ruleConfigRoot.localScale = Vector3.one * currentUiScale;
+        ruleConfigRoot.SetAsLastSibling();
+
+        ruleRows.Clear();
+        for (int i = 0; i < 5; i++)
+            ruleRows.Add(CreateRuleRow(i));
+
+        CreateRuleCursor();
+    }
+
+    private void SyncRuleConfigLayoutFromPlayerSelect()
+    {
+        if (!syncRuleConfigLayoutWithPlayerSelect || playerSelectLayout == null)
+            return;
+
+        if (syncRuleConfigFontWithPlayerSelect)
+            ruleFontSize = playerSelectLayout.fontSize;
+
+        ruleRowSize = new Vector2(ruleRowSize.x, playerSelectLayout.optionItemHeight);
+        ruleRowSpacing = Mathf.Max(0f, playerSelectLayout.optionSpacing.y);
+
+        float cursorSize = Mathf.Max(
+            playerSelectLayout.minCursorSize,
+            playerSelectLayout.optionItemHeight * Mathf.Max(0.01f, playerSelectLayout.cursorHeightMultiplier));
+        ruleCursorSize = new Vector2(cursorSize, cursorSize);
+
+        ruleLabelSize = new Vector2(ruleLabelSize.x, playerSelectLayout.optionItemHeight);
+        ruleValueSize = new Vector2(ruleValueSize.x, playerSelectLayout.optionItemHeight);
+    }
+
+    private RuleRowVisual CreateRuleRow(int rowIndex)
+    {
+        GameObject rowGo = new($"RuleRow_{rowIndex}", typeof(RectTransform));
+        rowGo.transform.SetParent(ruleConfigRoot, false);
+
+        RectTransform rowRt = rowGo.GetComponent<RectTransform>();
+        rowRt.anchorMin = new Vector2(0.5f, 0.5f);
+        rowRt.anchorMax = new Vector2(0.5f, 0.5f);
+        rowRt.pivot = new Vector2(0.5f, 0.5f);
+        rowRt.sizeDelta = ruleRowSize;
+        rowRt.anchoredPosition = GetRuleRowPosition(rowIndex);
+
+        TextMeshProUGUI label = CreateRuleText(rowRt, "Label");
+        TextMeshProUGUI value = CreateRuleText(rowRt, "Value");
+
+        return new RuleRowVisual
+        {
+            root = rowRt,
+            label = label,
+            value = value
+        };
+    }
+
+    private TextMeshProUGUI CreateRuleText(RectTransform parent, string name)
+    {
+        GameObject go = new(name, typeof(RectTransform), typeof(TextMeshProUGUI));
+        go.transform.SetParent(parent, false);
+
+        TextMeshProUGUI text = go.GetComponent<TextMeshProUGUI>();
+        text.alignment = TextAlignmentOptions.MidlineLeft;
+        text.fontSize = ruleFontSize;
+        text.color = Color.white;
+        text.raycastTarget = false;
+        text.textWrappingMode = TextWrappingModes.NoWrap;
+        ApplyRuleTextStyle(text);
+        return text;
+    }
+
+    private void CreateRuleCursor()
+    {
+        AnimatedSpriteRenderer source = leftPanel != null ? leftPanel.CursorRenderer : null;
+        GameObject cursorGo;
+
+        if (source != null)
+        {
+            cursorGo = Instantiate(source.gameObject, ruleConfigRoot, false);
+            cursorGo.name = "RuleCursor";
+            ruleCursorRenderer = cursorGo.GetComponent<AnimatedSpriteRenderer>();
+        }
+        else
+        {
+            cursorGo = new GameObject("RuleCursor", typeof(RectTransform));
+        }
+
+        ruleCursorRt = cursorGo.transform as RectTransform;
+        if (ruleCursorRt == null)
+            ruleCursorRt = cursorGo.AddComponent<RectTransform>();
+
+        ruleCursorRt.anchorMin = new Vector2(0.5f, 0.5f);
+        ruleCursorRt.anchorMax = new Vector2(0.5f, 0.5f);
+        ruleCursorRt.pivot = new Vector2(0.5f, 0.5f);
+        ruleCursorRt.sizeDelta = ruleCursorSize;
+        ruleCursorRt.localScale = Vector3.one;
+
+        if (ruleCursorRenderer != null)
+        {
+            ruleCursorRenderer.idle = true;
+            ruleCursorRenderer.loop = true;
+            ruleCursorRenderer.CurrentFrame = 0;
+            ruleCursorRenderer.RefreshFrame();
+        }
+    }
+
+    private Vector2 GetRuleRowPosition(int rowIndex)
+    {
+        float totalHeight = (ruleRows.Count - 1) * (ruleRowSize.y + ruleRowSpacing);
+        float y = (totalHeight * 0.5f) - (rowIndex * (ruleRowSize.y + ruleRowSpacing));
+        return ruleRowsOffset + new Vector2(0f, y);
+    }
+
+    private void LoadRuleConfigFromSave()
+    {
+        ruleComputerLevel = SaveSystem.GetBattleModeComputerLevel();
+        ruleBattlesToWin = SaveSystem.GetBattleModeBattlesToWin();
+        ruleTimerMode = SaveSystem.GetBattleModeRoundTimerMode();
+        ruleSuddenDeath = SaveSystem.GetBattleModeSuddenDeathSetting();
+        ruleRevengeBomber = SaveSystem.GetBattleModeRevengeBomberEnabled();
+    }
+
+    private void SaveRuleConfig()
+    {
+        SaveSystem.SetBattleModeComputerLevel(ruleComputerLevel);
+        SaveSystem.SetBattleModeBattlesToWin(ruleBattlesToWin);
+        SaveSystem.SetBattleModeRoundTimerMode(ruleTimerMode);
+        SaveSystem.SetBattleModeSuddenDeathSetting(ruleSuddenDeath);
+        SaveSystem.SetBattleModeRevengeBomberEnabled(ruleRevengeBomber);
+    }
+
+    private void UpdateRuleConfigVisuals()
+    {
+        if (ruleConfigRoot == null || !ruleConfigRoot.gameObject.activeInHierarchy)
+            return;
+
+        SyncRuleConfigLayoutFromPlayerSelect();
+
+        string[] labels =
+        {
+            "Computer Level",
+            "Battles To Win",
+            "Time Limit",
+            "Sudden Death",
+            "Revenge Bomber"
+        };
+
+        string[] values =
+        {
+            ColorizeRuleValue(GetComputerLevelDisplayName(ruleComputerLevel), GetComputerLevelColor(ruleComputerLevel)),
+            ColorizeRuleValue(ruleBattlesToWin.ToString(), ruleGreenHex),
+            ColorizeRuleValue(GetTimerModeDisplayName(ruleTimerMode), ruleGreenHex),
+            ColorizeRuleValue(GetSuddenDeathDisplayName(ruleSuddenDeath), GetSuddenDeathColor(ruleSuddenDeath)),
+            ColorizeRuleValue(ruleRevengeBomber ? "ON" : "OFF", ruleRevengeBomber ? ruleGreenHex : ruleBlueHex)
+        };
+
+        for (int i = 0; i < ruleRows.Count; i++)
+        {
+            RuleRowVisual row = ruleRows[i];
+            if (row == null)
+                continue;
+
+            row.root.anchoredPosition = GetRuleRowPosition(i);
+            row.root.sizeDelta = ruleRowSize;
+
+            if (row.label != null)
+            {
+                RectTransform labelRt = row.label.rectTransform;
+                labelRt.anchoredPosition = ruleLabelOffset;
+                labelRt.sizeDelta = ruleLabelSize;
+                row.label.fontSize = ruleFontSize;
+                row.label.richText = true;
+                row.label.text = i < labels.Length ? ColorizeRuleValue(labels[i], ruleGreenHex) : "";
+                ApplyRuleTextStyle(row.label);
+            }
+
+            if (row.value != null)
+            {
+                RectTransform valueRt = row.value.rectTransform;
+                valueRt.anchoredPosition = ruleValueOffset;
+                valueRt.sizeDelta = ruleValueSize;
+                row.value.fontSize = ruleFontSize;
+                row.value.richText = true;
+                row.value.text = i < values.Length ? values[i] : "";
+                ApplyRuleTextStyle(row.value);
+            }
+        }
+
+        if (ruleCursorRt != null)
+        {
+            int rowIndex = Mathf.Clamp(selectedRuleIndex, 0, Mathf.Max(0, ruleRows.Count - 1));
+            ruleCursorRt.gameObject.SetActive(ruleRows.Count > 0);
+            ruleCursorRt.sizeDelta = ruleCursorSize;
+            ruleCursorRt.anchoredPosition = GetRuleRowPosition(rowIndex) + ruleCursorOffset;
+        }
+
+        LogRuleConfigLayout("UpdateRuleConfigVisuals", force: false);
+    }
+
+    private void CycleSelectedRuleValue(int direction)
+    {
+        switch (selectedRuleIndex)
+        {
+            case 0:
+                ruleComputerLevel = ComputerLevels[WrapIndex(IndexOfComputerLevel(ruleComputerLevel) + direction, ComputerLevels.Length)];
+                break;
+            case 1:
+                ruleBattlesToWin = WrapIndex((ruleBattlesToWin - 1) + direction, 5) + 1;
+                break;
+            case 2:
+                ruleTimerMode = RuleTimerModes[WrapIndex(IndexOfTimerMode(ruleTimerMode) + direction, RuleTimerModes.Length)];
+                break;
+            case 3:
+                ruleSuddenDeath = SuddenDeathSettings[WrapIndex(IndexOfSuddenDeath(ruleSuddenDeath) + direction, SuddenDeathSettings.Length)];
+                break;
+            case 4:
+                ruleRevengeBomber = !ruleRevengeBomber;
+                break;
+        }
+    }
+
+    private void ApplyRuleTextStyle(TextMeshProUGUI text)
+    {
+        if (text == null)
+            return;
+
+        if (leftPanel != null)
+        {
+            leftPanel.ApplyOptionTextStyleTo(text, Color.white);
+            text.fontSize = ruleFontSize;
+            text.richText = true;
+            text.UpdateMeshPadding();
+            text.ForceMeshUpdate();
+            text.SetVerticesDirty();
+            return;
+        }
+
+        ApplyTeamLabelFont(text);
+        text.fontSize = ruleFontSize;
+        text.richText = true;
+        text.UpdateMeshPadding();
+        text.ForceMeshUpdate();
+        text.SetVerticesDirty();
+    }
+
+    private static int IndexOfComputerLevel(BattleModeComputerLevel level)
+    {
+        for (int i = 0; i < ComputerLevels.Length; i++)
+            if (ComputerLevels[i] == level)
+                return i;
+
+        return 1;
+    }
+
+    private static int IndexOfTimerMode(BattleModeRules.RoundTimerMode timerMode)
+    {
+        for (int i = 0; i < RuleTimerModes.Length; i++)
+            if (RuleTimerModes[i] == timerMode)
+                return i;
+
+        return 1;
+    }
+
+    private static int IndexOfSuddenDeath(BattleModeSuddenDeathSetting setting)
+    {
+        for (int i = 0; i < SuddenDeathSettings.Length; i++)
+            if (SuddenDeathSettings[i] == setting)
+                return i;
+
+        return 2;
+    }
+
+    private static string GetComputerLevelDisplayName(BattleModeComputerLevel level)
+    {
+        return level switch
+        {
+            BattleModeComputerLevel.Easy => "Easy",
+            BattleModeComputerLevel.Hard => "Hard",
+            _ => "Normal"
+        };
+    }
+
+    private string GetComputerLevelColor(BattleModeComputerLevel level)
+    {
+        return level switch
+        {
+            BattleModeComputerLevel.Easy => ruleBlueHex,
+            BattleModeComputerLevel.Hard => ruleRedHex,
+            _ => ruleGreenHex
+        };
+    }
+
+    private static string GetTimerModeDisplayName(BattleModeRules.RoundTimerMode timerMode)
+    {
+        return timerMode switch
+        {
+            BattleModeRules.RoundTimerMode.OneMinute => "1:00",
+            BattleModeRules.RoundTimerMode.TwoMinutes => "2:00",
+            BattleModeRules.RoundTimerMode.ThreeMinutes => "3:00",
+            BattleModeRules.RoundTimerMode.FourMinutes => "4:00",
+            BattleModeRules.RoundTimerMode.FiveMinutes => "5:00",
+            _ => "Infinite"
+        };
+    }
+
+    private static string GetSuddenDeathDisplayName(BattleModeSuddenDeathSetting setting)
+    {
+        return setting switch
+        {
+            BattleModeSuddenDeathSetting.Off => "OFF",
+            BattleModeSuddenDeathSetting.On => "ON",
+            _ => "Random"
+        };
+    }
+
+    private string GetSuddenDeathColor(BattleModeSuddenDeathSetting setting)
+    {
+        return setting switch
+        {
+            BattleModeSuddenDeathSetting.Off => ruleBlueHex,
+            BattleModeSuddenDeathSetting.On => ruleGreenHex,
+            _ => ruleRedHex
+        };
+    }
+
+    private static string ColorizeRuleValue(string value, string colorHex)
+    {
+        return $"<color={colorHex}>{value}</color>";
+    }
+
+    private void BeginRuleLayoutDebug()
+    {
+        ruleLayoutDebugFramesRemaining = logRuleConfigLayoutDebug ? Mathf.Max(1, ruleConfigLayoutDebugFrames) : 0;
+        nextRuleLayoutDebugTime = 0f;
+    }
+
+    private void LogRuleConfigLayout(string context, bool force)
+    {
+        if (!logRuleConfigLayoutDebug)
+            return;
+
+        if (!force)
+        {
+            if (ruleLayoutDebugFramesRemaining <= 0 || Time.unscaledTime < nextRuleLayoutDebugTime)
+                return;
+        }
+
+        if (ruleLayoutDebugFramesRemaining > 0)
+            ruleLayoutDebugFramesRemaining--;
+
+        nextRuleLayoutDebugTime = Time.unscaledTime + Mathf.Max(0.05f, ruleConfigLayoutDebugInterval);
+
+        Debug.Log(
+            $"[BattleModeMenu/RuleLayout] frame={Time.frameCount} time={Time.unscaledTime:0.000} " +
+            $"context={context} scale={currentUiScale:0.###} selectedRuleIndex={selectedRuleIndex} " +
+            $"syncLayoutWithPlayerSelect={syncRuleConfigLayoutWithPlayerSelect} syncFontWithPlayerSelect={syncRuleConfigFontWithPlayerSelect} " +
+            $"playerSelectLayout(font={playerSelectLayout.fontSize}, itemHeight={playerSelectLayout.optionItemHeight:0.##}, spacing={FormatVec2(playerSelectLayout.optionSpacing)}, " +
+            $"cursorOffset={FormatVec2(playerSelectLayout.cursorOffset)}, cursorMin={playerSelectLayout.minCursorSize:0.##}, cursorMult={playerSelectLayout.cursorHeightMultiplier:0.##}) " +
+            $"ruleConfig(rowSize={FormatVec2(ruleRowSize)}, spacing={ruleRowSpacing:0.##}, font={ruleFontSize}, " +
+            $"labelOffset={FormatVec2(ruleLabelOffset)}, valueOffset={FormatVec2(ruleValueOffset)}, cursorOffset={FormatVec2(ruleCursorOffset)}, cursorSize={FormatVec2(ruleCursorSize)}) " +
+            $"root={FormatRectInfo(ruleConfigRoot)} cursor={FormatRectInfo(ruleCursorRt)}");
+
+        for (int i = 0; i < ruleRows.Count; i++)
+        {
+            RuleRowVisual row = ruleRows[i];
+            if (row == null)
+                continue;
+
+            Debug.Log(
+                $"[BattleModeMenu/RuleLayout] rowIndex={i} selected={i == selectedRuleIndex} row={FormatRectInfo(row.root)} " +
+                $"label={FormatTextInfo(row.label)} value={FormatTextInfo(row.value)}");
+        }
+    }
+
     private static string FormatRectInfo(RectTransform rt)
     {
         if (rt == null)
             return "NULL";
 
         return $"anchored={FormatVec2(rt.anchoredPosition)} size={FormatVec2(rt.sizeDelta)} local={FormatVec3(rt.localPosition)} world={FormatVec3(rt.position)} active={rt.gameObject.activeInHierarchy}";
+    }
+
+    private static string FormatTextInfo(TextMeshProUGUI text)
+    {
+        if (text == null)
+            return "NULL";
+
+        string fontName = text.font != null ? text.font.name : "NULL";
+        string materialName = text.fontMaterial != null ? text.fontMaterial.name : "NULL";
+        return $"rect={FormatRectInfo(text.rectTransform)} text=\"{text.text}\" fontSize={text.fontSize:0.##} style={text.fontStyle} alignment={text.alignment} font={fontName} material={materialName} color={text.color}";
     }
 
     private void RefreshPlayerSelectEntries()
@@ -1430,6 +2063,8 @@ public sealed class BattleModeMenu : MonoBehaviour
 
         if (teamSelectRoot != null)
             teamSelectRoot.gameObject.SetActive(false);
+        if (ruleConfigRoot != null)
+            ruleConfigRoot.gameObject.SetActive(false);
 
         if (root != null)
             root.SetActive(false);
@@ -1651,6 +2286,7 @@ public sealed class BattleModeMenu : MonoBehaviour
             MenuState.PlayerSelect => playerSelectPrompt,
             MenuState.SkinSelect => skinSelectPrompt,
             MenuState.TeamSelect => teamSelectPrompt,
+            MenuState.RuleConfig => ruleSelectPrompt,
             _ => matchModePrompt
         };
     }
@@ -1795,6 +2431,7 @@ public sealed class BattleModeMenu : MonoBehaviour
             MenuState.PlayerSelect => playerSelectBackgrounds?.sprites,
             MenuState.SkinSelect => skinSelectBackgrounds?.sprites,
             MenuState.TeamSelect => teamSelectBackgrounds?.sprites,
+            MenuState.RuleConfig => ruleConfigBackgrounds?.sprites,
             _ => matchModeBackgrounds?.sprites
         };
     }
@@ -1934,6 +2571,8 @@ public sealed class BattleModeMenu : MonoBehaviour
 
         if (teamSelectRoot != null)
             teamSelectRoot.localScale = Vector3.one * currentUiScale;
+        if (ruleConfigRoot != null)
+            ruleConfigRoot.localScale = Vector3.one * currentUiScale;
     }
 
     private static bool ApproximatelyRect(Rect a, Rect b)

@@ -394,6 +394,95 @@ public static class SaveSystem
             Save();
     }
 
+    public static BattleModeComputerLevel GetBattleModeComputerLevel()
+    {
+        EnsureLoaded();
+        return NormalizeBattleModeComputerLevel(data.battleModeComputerLevel);
+    }
+
+    public static void SetBattleModeComputerLevel(BattleModeComputerLevel level)
+    {
+        EnsureLoaded();
+
+        BattleModeComputerLevel normalized = NormalizeBattleModeComputerLevel((int)level);
+        if (data.battleModeComputerLevel == (int)normalized)
+            return;
+
+        data.battleModeComputerLevel = (int)normalized;
+        Save();
+    }
+
+    public static int GetBattleModeBattlesToWin()
+    {
+        EnsureLoaded();
+        return Mathf.Clamp(data.battleModeBattlesToWin, 1, 5);
+    }
+
+    public static void SetBattleModeBattlesToWin(int battlesToWin)
+    {
+        EnsureLoaded();
+
+        int normalized = Mathf.Clamp(battlesToWin, 1, 5);
+        if (data.battleModeBattlesToWin == normalized)
+            return;
+
+        data.battleModeBattlesToWin = normalized;
+        Save();
+    }
+
+    public static BattleModeRules.RoundTimerMode GetBattleModeRoundTimerMode()
+    {
+        EnsureLoaded();
+        return NormalizeBattleModeRoundTimerMode(data.battleModeRoundTimerMode);
+    }
+
+    public static void SetBattleModeRoundTimerMode(BattleModeRules.RoundTimerMode timerMode)
+    {
+        EnsureLoaded();
+
+        BattleModeRules.RoundTimerMode normalized = NormalizeBattleModeRoundTimerMode((int)timerMode);
+        if (data.battleModeRoundTimerMode == (int)normalized)
+            return;
+
+        data.battleModeRoundTimerMode = (int)normalized;
+        Save();
+    }
+
+    public static BattleModeSuddenDeathSetting GetBattleModeSuddenDeathSetting()
+    {
+        EnsureLoaded();
+        return NormalizeBattleModeSuddenDeathSetting(data.battleModeSuddenDeath);
+    }
+
+    public static void SetBattleModeSuddenDeathSetting(BattleModeSuddenDeathSetting setting)
+    {
+        EnsureLoaded();
+
+        BattleModeSuddenDeathSetting normalized = NormalizeBattleModeSuddenDeathSetting((int)setting);
+        if (data.battleModeSuddenDeath == (int)normalized)
+            return;
+
+        data.battleModeSuddenDeath = (int)normalized;
+        Save();
+    }
+
+    public static bool GetBattleModeRevengeBomberEnabled()
+    {
+        EnsureLoaded();
+        return data.battleModeRevengeBomber;
+    }
+
+    public static void SetBattleModeRevengeBomberEnabled(bool enabled)
+    {
+        EnsureLoaded();
+
+        if (data.battleModeRevengeBomber == enabled)
+            return;
+
+        data.battleModeRevengeBomber = enabled;
+        Save();
+    }
+
     public static float GetBossRushUnlockTargetTime(BossRushDifficulty difficulty)
     {
         EnsureLoaded();
@@ -591,6 +680,10 @@ public static class SaveSystem
             d.videoSettings.windowSizeMultiplier = 4;
 
         d.battleModeMatchMode = (int)NormalizeBattleModeMatchMode(d.battleModeMatchMode);
+        d.battleModeComputerLevel = (int)NormalizeBattleModeComputerLevel(d.battleModeComputerLevel);
+        d.battleModeBattlesToWin = Mathf.Clamp(d.battleModeBattlesToWin, 1, 5);
+        d.battleModeRoundTimerMode = (int)NormalizeBattleModeRoundTimerMode(d.battleModeRoundTimerMode);
+        d.battleModeSuddenDeath = (int)NormalizeBattleModeSuddenDeathSetting(d.battleModeSuddenDeath);
         EnsureBattleModePlayerControlModes(d);
         EnsureBattleModePlayerTeams(d);
     }
@@ -601,6 +694,33 @@ public static class SaveSystem
             return (BattleModeRules.MatchMode)matchMode;
 
         return BattleModeRules.MatchMode.SingleMatch;
+    }
+
+    private static BattleModeComputerLevel NormalizeBattleModeComputerLevel(int level)
+    {
+        if (Enum.IsDefined(typeof(BattleModeComputerLevel), level))
+            return (BattleModeComputerLevel)level;
+
+        return BattleModeComputerLevel.Normal;
+    }
+
+    private static BattleModeRules.RoundTimerMode NormalizeBattleModeRoundTimerMode(int timerMode)
+    {
+        if (timerMode >= (int)BattleModeRules.RoundTimerMode.OneMinute &&
+            timerMode <= (int)BattleModeRules.RoundTimerMode.Infinite)
+        {
+            return (BattleModeRules.RoundTimerMode)timerMode;
+        }
+
+        return BattleModeRules.RoundTimerMode.TwoMinutes;
+    }
+
+    private static BattleModeSuddenDeathSetting NormalizeBattleModeSuddenDeathSetting(int setting)
+    {
+        if (Enum.IsDefined(typeof(BattleModeSuddenDeathSetting), setting))
+            return (BattleModeSuddenDeathSetting)setting;
+
+        return BattleModeSuddenDeathSetting.Random;
     }
 
     private static void EnsureBattleModePlayerControlModes(SaveData d)

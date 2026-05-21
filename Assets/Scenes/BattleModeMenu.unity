@@ -924,6 +924,7 @@ MonoBehaviour:
   playerSelectPrompt: PLAYER SELECT
   skinSelectPrompt: CHARACTER SELECT
   teamSelectPrompt: TEAM MEMBERS
+  ruleSelectPrompt: RULE CONFIG
   leftPanel: {fileID: 2134452605}
   skinSelectMenu: {fileID: 300000200}
   matchModeLayout:
@@ -974,6 +975,10 @@ MonoBehaviour:
     sprites:
     - {fileID: 21300000, guid: c2f2256560e2b0948a0b0905bb480eab, type: 3}
     - {fileID: 21300000, guid: 72a855177b94d634f8bcd789ed7af4e1, type: 3}
+  ruleConfigBackgrounds:
+    sprites:
+    - {fileID: 21300000, guid: 29a8f87f9116fe04c8083f11257e08ee, type: 3}
+    - {fileID: 21300000, guid: cb717e7dd0887e249a93f4a197712bcd, type: 3}
   backgroundSwapInterval: 2
   backgroundSwapLoop: 1
   playerLabelHex: '#00FF3C'
@@ -1000,9 +1005,27 @@ MonoBehaviour:
   teamRedColor: {r: 0.58, g: 0.03, b: 0.16, a: 0.92}
   teamBlueColor: {r: 0.05, g: 0.24, b: 0.82, a: 0.92}
   teamGreenColor: {r: 0.05, g: 0.36, b: 0.12, a: 0.92}
-  logTeamSelectLayoutDebug: 1
+  syncRuleConfigLayoutWithPlayerSelect: 1
+  syncRuleConfigFontWithPlayerSelect: 0
+  ruleRowsOffset: {x: 0, y: -4}
+  ruleRowSize: {x: 760, y: 34}
+  ruleRowSpacing: 70
+  ruleFontSize: 32
+  ruleLabelOffset: {x: -170, y: 0}
+  ruleLabelSize: {x: 430, y: 32}
+  ruleValueOffset: {x: 330, y: 0}
+  ruleValueSize: {x: 300, y: 32}
+  ruleCursorOffset: {x: -420, y: 0}
+  ruleCursorSize: {x: 62, y: 62}
+  ruleBlueHex: '#2F90FF'
+  ruleGreenHex: '#00FF3C'
+  ruleRedHex: '#FF3030'
+  logTeamSelectLayoutDebug: 0
   teamSelectLayoutDebugFrames: 12
   teamSelectLayoutDebugInterval: 0.25
+  logRuleConfigLayoutDebug: 1
+  ruleConfigLayoutDebugFrames: 12
+  ruleConfigLayoutDebugInterval: 0.25
   selectMusic: {fileID: 8300000, guid: da56bf64ad8b3f346bf9f3a08d30b816, type: 3}
   selectMusicVolume: 0.8
   loopSelectMusic: 1
