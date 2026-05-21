@@ -1065,6 +1065,11 @@ MonoBehaviour:
   stageTitleSize: {x: 520, y: 42}
   stageThumbnailOffset: {x: 0, y: 0}
   stageThumbnailSize: {x: 112, y: 112}
+  stageSideThumbnailOffset: {x: 330, y: 0}
+  stageSideThumbnailScale: 0.333
+  stageCarouselTransitionSeconds: 0.25
+  stageCarouselMaskSize: {x: 0, y: 0}
+  stageCarouselMaskHorizontalInset: 13
   stageNameOffset: {x: 0, y: -272}
   stageNameSize: {x: 620, y: 42}
   stageSelectFontSize: 32

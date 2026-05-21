@@ -178,6 +178,11 @@ public sealed class BattleModeMenu : MonoBehaviour
     [SerializeField] private Vector2 stageTitleSize = new(520f, 42f);
     [SerializeField] private Vector2 stageThumbnailOffset = Vector2.zero;
     [SerializeField] private Vector2 stageThumbnailSize = new(112f, 112f);
+    [SerializeField] private Vector2 stageSideThumbnailOffset = new(330f, 0f);
+    [SerializeField, Min(0.01f)] private float stageSideThumbnailScale = 0.333f;
+    [SerializeField, Min(0.01f)] private float stageCarouselTransitionSeconds = 0.25f;
+    [SerializeField] private Vector2 stageCarouselMaskSize = Vector2.zero;
+    [SerializeField, Min(0f)] private float stageCarouselMaskHorizontalInset = 13f;
     [SerializeField] private Vector2 stageNameOffset = new(0f, -272f);
     [SerializeField] private Vector2 stageNameSize = new(620f, 42f);
     [SerializeField] private int stageSelectFontSize = 32;
@@ -311,10 +316,15 @@ public sealed class BattleModeMenu : MonoBehaviour
     private bool ruleConfigReturnedToSkinSelect;
     private bool ruleConfigReturnedToTeamSelect;
     private RectTransform stageSelectRoot;
+    private RectTransform stageCarouselViewport;
     private TextMeshProUGUI stageTitleText;
-    private Image stageThumbnailImage;
+    private Image[] stageThumbnailImages;
     private TextMeshProUGUI stageNameText;
     private int selectedStageIndex;
+    private int stageCarouselFromIndex;
+    private int stageCarouselDirection;
+    private float stageCarouselElapsed;
+    private bool stageCarouselAnimating;
     private bool stageSelectionReturnedToRuleConfig;
     private Sprite[] battleStageThumbnailResourceCache;
     private readonly bool[] previousMenuHeld = new bool[PlayerActionCount];
@@ -1852,6 +1862,10 @@ public sealed class BattleModeMenu : MonoBehaviour
 
         EnsureStageSelectBuilt();
         selectedStageIndex = Mathf.Clamp(SaveSystem.GetBattleModeStageIndex() - 1, 0, GetBattleStageCount() - 1);
+        stageCarouselFromIndex = selectedStageIndex;
+        stageCarouselDirection = 0;
+        stageCarouselElapsed = 0f;
+        stageCarouselAnimating = false;
         ResetBackgroundSpriteSwap();
         ApplyCurrentBackgroundSprite(true);
         UpdatePromptTitle();
@@ -1875,18 +1889,20 @@ public sealed class BattleModeMenu : MonoBehaviour
             }
 
             bool moved = false;
-            if (input.GetDown(GameSession.MinPlayerId, PlayerAction.MoveLeft) ||
+            if (!stageCarouselAnimating &&
+                (input.GetDown(GameSession.MinPlayerId, PlayerAction.MoveLeft) ||
                 input.GetDown(GameSession.MinPlayerId, PlayerAction.MoveUp) ||
-                input.GetDown(GameSession.MinPlayerId, PlayerAction.ActionL))
+                input.GetDown(GameSession.MinPlayerId, PlayerAction.ActionL)))
             {
-                selectedStageIndex = WrapIndex(selectedStageIndex - 1, GetBattleStageCount());
+                BeginStageCarouselMove(-1);
                 moved = true;
             }
-            else if (input.GetDown(GameSession.MinPlayerId, PlayerAction.MoveRight) ||
+            else if (!stageCarouselAnimating &&
+                     (input.GetDown(GameSession.MinPlayerId, PlayerAction.MoveRight) ||
                      input.GetDown(GameSession.MinPlayerId, PlayerAction.MoveDown) ||
-                     input.GetDown(GameSession.MinPlayerId, PlayerAction.ActionR))
+                     input.GetDown(GameSession.MinPlayerId, PlayerAction.ActionR)))
             {
-                selectedStageIndex = WrapIndex(selectedStageIndex + 1, GetBattleStageCount());
+                BeginStageCarouselMove(1);
                 moved = true;
             }
 
@@ -1945,8 +1961,26 @@ public sealed class BattleModeMenu : MonoBehaviour
         stageSelectRoot.SetAsLastSibling();
 
         stageTitleText = CreateStageText(stageSelectRoot, "StageTitle", TextAlignmentOptions.Center);
-        stageThumbnailImage = CreateStageThumbnail(stageSelectRoot);
+        stageCarouselViewport = CreateStageCarouselViewport(stageSelectRoot);
+        stageThumbnailImages = new Image[5];
+        for (int i = 0; i < stageThumbnailImages.Length; i++)
+            stageThumbnailImages[i] = CreateStageThumbnail(stageCarouselViewport, $"StageThumbnail_{i}");
         stageNameText = CreateStageText(stageSelectRoot, "StageName", TextAlignmentOptions.Center);
+    }
+
+    private RectTransform CreateStageCarouselViewport(RectTransform parent)
+    {
+        GameObject go = new("StageCarouselViewport", typeof(RectTransform), typeof(RectMask2D));
+        go.transform.SetParent(parent, false);
+
+        RectTransform rt = go.GetComponent<RectTransform>();
+        rt.anchorMin = new Vector2(0.5f, 0.5f);
+        rt.anchorMax = new Vector2(0.5f, 0.5f);
+        rt.pivot = new Vector2(0.5f, 0.5f);
+        rt.anchoredPosition = Vector2.zero;
+        rt.sizeDelta = GetStageCarouselMaskUiSize();
+
+        return rt;
     }
 
     private TextMeshProUGUI CreateStageText(RectTransform parent, string name, TextAlignmentOptions alignment)
@@ -1963,9 +1997,9 @@ public sealed class BattleModeMenu : MonoBehaviour
         return text;
     }
 
-    private Image CreateStageThumbnail(RectTransform parent)
+    private Image CreateStageThumbnail(RectTransform parent, string name)
     {
-        GameObject go = new("StageThumbnail", typeof(RectTransform), typeof(Image), typeof(Outline));
+        GameObject go = new(name, typeof(RectTransform), typeof(Image), typeof(Outline));
         go.transform.SetParent(parent, false);
 
         Image image = go.GetComponent<Image>();
@@ -1987,6 +2021,13 @@ public sealed class BattleModeMenu : MonoBehaviour
             return;
 
         stageSelectRoot.anchoredPosition = stageSelectRootOffset;
+        TickStageCarouselAnimation();
+
+        if (stageCarouselViewport != null)
+        {
+            stageCarouselViewport.anchoredPosition = Vector2.zero;
+            stageCarouselViewport.sizeDelta = GetStageCarouselMaskUiSize();
+        }
 
         int stageIndex = Mathf.Clamp(selectedStageIndex + 1, 1, GetBattleStageCount());
 
@@ -1999,18 +2040,7 @@ public sealed class BattleModeMenu : MonoBehaviour
             ApplyStageTextStyle(stageTitleText);
         }
 
-        if (stageThumbnailImage != null)
-        {
-            RectTransform thumbnailRt = stageThumbnailImage.rectTransform;
-            thumbnailRt.anchorMin = new Vector2(0.5f, 0.5f);
-            thumbnailRt.anchorMax = new Vector2(0.5f, 0.5f);
-            thumbnailRt.pivot = new Vector2(0.5f, 0.5f);
-            thumbnailRt.anchoredPosition = stageThumbnailOffset;
-            thumbnailRt.sizeDelta = GetStageThumbnailUiSize();
-            stageThumbnailImage.sprite = GetBattleStageThumbnail(stageIndex);
-            stageThumbnailImage.color = stageThumbnailImage.sprite != null ? Color.white : stageThumbnailFallbackColor;
-            stageThumbnailImage.enabled = true;
-        }
+        UpdateStageCarouselImages();
 
         if (stageNameText != null)
         {
@@ -2020,6 +2050,96 @@ public sealed class BattleModeMenu : MonoBehaviour
             stageNameText.rectTransform.sizeDelta = stageNameSize;
             ApplyStageTextStyle(stageNameText);
         }
+    }
+
+    private void BeginStageCarouselMove(int direction)
+    {
+        int normalizedDirection = direction < 0 ? -1 : 1;
+        stageCarouselFromIndex = Mathf.Clamp(selectedStageIndex, 0, GetBattleStageCount() - 1);
+        selectedStageIndex = WrapIndex(selectedStageIndex + normalizedDirection, GetBattleStageCount());
+        stageCarouselDirection = normalizedDirection;
+        stageCarouselElapsed = 0f;
+        stageCarouselAnimating = true;
+    }
+
+    private void TickStageCarouselAnimation()
+    {
+        if (!stageCarouselAnimating)
+            return;
+
+        stageCarouselElapsed += Time.unscaledDeltaTime;
+        if (stageCarouselElapsed < Mathf.Max(0.01f, stageCarouselTransitionSeconds))
+            return;
+
+        stageCarouselAnimating = false;
+        stageCarouselFromIndex = selectedStageIndex;
+        stageCarouselDirection = 0;
+        stageCarouselElapsed = 0f;
+    }
+
+    private void UpdateStageCarouselImages()
+    {
+        if (stageThumbnailImages == null || stageThumbnailImages.Length == 0)
+            return;
+
+        int count = GetBattleStageCount();
+        int direction = stageCarouselAnimating ? stageCarouselDirection : 0;
+        float progress = stageCarouselAnimating
+            ? Mathf.Clamp01(stageCarouselElapsed / Mathf.Max(0.01f, stageCarouselTransitionSeconds))
+            : 0f;
+        float easedProgress = Mathf.SmoothStep(0f, 1f, progress);
+        int firstOffset = direction < 0 ? -3 : -1;
+        if (!stageCarouselAnimating)
+            firstOffset = -2;
+
+        for (int i = 0; i < stageThumbnailImages.Length; i++)
+        {
+            Image image = stageThumbnailImages[i];
+            if (image == null)
+                continue;
+
+            int offset = firstOffset + i;
+            int zeroBasedStageIndex = WrapIndex(stageCarouselFromIndex + offset, count);
+            float relativePosition = offset - (direction * easedProgress);
+            ApplyStageCarouselImage(image, zeroBasedStageIndex + 1, relativePosition);
+        }
+    }
+
+    private void ApplyStageCarouselImage(Image image, int stageIndex, float relativePosition)
+    {
+        RectTransform thumbnailRt = image.rectTransform;
+        thumbnailRt.anchorMin = new Vector2(0.5f, 0.5f);
+        thumbnailRt.anchorMax = new Vector2(0.5f, 0.5f);
+        thumbnailRt.pivot = new Vector2(0.5f, 0.5f);
+
+        float absRelative = Mathf.Abs(relativePosition);
+        bool visible = absRelative <= 2.01f;
+        image.gameObject.SetActive(visible);
+        if (!visible)
+            return;
+
+        Vector2 sideOffset = new(
+            stageSideThumbnailOffset.x * relativePosition,
+            stageSideThumbnailOffset.y * relativePosition);
+        thumbnailRt.anchoredPosition = stageThumbnailOffset + sideOffset;
+
+        float centerToSide = Mathf.Clamp01(absRelative);
+        Vector2 centerSize = GetStageThumbnailUiSize();
+        float sideScale = Mathf.Max(0.01f, stageSideThumbnailScale);
+        thumbnailRt.sizeDelta = Vector2.Lerp(centerSize, centerSize * sideScale, centerToSide);
+
+        Sprite sprite = GetBattleStageThumbnail(stageIndex);
+        image.sprite = sprite;
+        Color color = sprite != null ? Color.white : stageThumbnailFallbackColor;
+        if (absRelative > 1f)
+            color.a *= Mathf.Clamp01(2f - absRelative);
+
+        image.color = color;
+        image.enabled = true;
+        if (absRelative < 0.5f)
+            image.transform.SetAsLastSibling();
+        else
+            image.transform.SetAsFirstSibling();
     }
 
     private void ApplyStageTextStyle(TextMeshProUGUI text)
@@ -2074,6 +2194,21 @@ public sealed class BattleModeMenu : MonoBehaviour
         return new Vector2(
             Mathf.Max(1f, stageThumbnailSize.x) * authoredScale,
             Mathf.Max(1f, stageThumbnailSize.y) * authoredScale);
+    }
+
+    private Vector2 GetStageCarouselMaskUiSize()
+    {
+        float authoredScale = Mathf.Max(1, designUpscale);
+        Vector2 baseSize = stageCarouselMaskSize;
+        if (baseSize.x <= 0f || baseSize.y <= 0f)
+            baseSize = new Vector2(Mathf.Max(1, referenceWidth), Mathf.Max(1, referenceHeight));
+
+        float horizontalInset = Mathf.Max(0f, stageCarouselMaskHorizontalInset) * 2f;
+        baseSize.x = Mathf.Max(1f, baseSize.x - horizontalInset);
+
+        return new Vector2(
+            Mathf.Max(1f, baseSize.x) * authoredScale,
+            Mathf.Max(1f, baseSize.y) * authoredScale);
     }
 
     private Sprite GetBattleStageThumbnailFromResources(int index, int stageIndex)
