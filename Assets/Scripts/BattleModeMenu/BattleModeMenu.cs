@@ -14,7 +14,8 @@ public sealed class BattleModeMenu : MonoBehaviour
         SkinSelect = 2,
         TeamSelect = 3,
         RuleConfig = 4,
-        StageSelect = 5
+        StageSelect = 5,
+        SpecificSettings = 6
     }
 
     [System.Serializable]
@@ -88,6 +89,7 @@ public sealed class BattleModeMenu : MonoBehaviour
     [SerializeField] private string teamSelectPrompt = "TEAM MEMBERS";
     [SerializeField] private string ruleSelectPrompt = "RULE CONFIG";
     [SerializeField] private string stageSelectPrompt = "STAGE SELECT";
+    [SerializeField] private string specificSettingsPrompt = "SPECIFIC SETTINGS";
 
     [Header("Options Panel")]
     [SerializeField] private SaveFileMenuOptions leftPanel;
@@ -119,6 +121,7 @@ public sealed class BattleModeMenu : MonoBehaviour
     [SerializeField] private BackgroundSet teamSelectBackgrounds = new();
     [SerializeField] private BackgroundSet ruleConfigBackgrounds = new();
     [SerializeField] private BackgroundSet stageSelectBackgrounds = new();
+    [SerializeField] private BackgroundSet specificSettingsBackgrounds = new();
     [SerializeField, Min(0.01f)] private float backgroundSwapInterval = 2f;
     [SerializeField] private bool backgroundSwapLoop = true;
 
@@ -188,6 +191,24 @@ public sealed class BattleModeMenu : MonoBehaviour
     [SerializeField] private int stageSelectFontSize = 32;
     [SerializeField] private Color stageThumbnailFallbackColor = new(0f, 0f, 0f, 0.65f);
 
+    [Header("Specific Settings")]
+    [SerializeField] private Vector2 specificSettingsRootOffset = Vector2.zero;
+    [SerializeField] private Vector2 specificStageImageOffset = new(-280f, 0f);
+    [SerializeField] private Vector2 specificStageImageSize = new(112f, 112f);
+    [SerializeField] private Vector2 specificOptionsOffset = new(250f, 0f);
+    [SerializeField] private Vector2 specificOptionRowSize = new(360f, 42f);
+    [SerializeField] private float specificOptionRowSpacing = 22f;
+    [SerializeField] private int specificSettingsFontSize = 32;
+    [SerializeField] private Vector2 specificCursorOffset = new(-210f, 0f);
+    [SerializeField] private Vector2 specificCursorSize = new(62f, 62f);
+    [SerializeField, Min(0f)] private float specificStartWaitSeconds = 4f;
+    [SerializeField, Min(0.01f)] private float specificStartFadeSeconds = 1f;
+    [SerializeField] private Color specificStageImageFallbackColor = new(0f, 0f, 0f, 0.65f);
+    [SerializeField] private Texture2D battleStartTexture;
+    [SerializeField] private Vector2 battleStartOffset = Vector2.zero;
+    [SerializeField] private Vector2 battleStartSize = new(190f, 19f);
+    [SerializeField, Min(0.01f)] private float battleStartBlinkSeconds = 0.05f;
+
     [Header("Music")]
     [SerializeField] private AudioClip selectMusic;
     [SerializeField, Range(0f, 1f)] private float selectMusicVolume = 1f;
@@ -202,6 +223,8 @@ public sealed class BattleModeMenu : MonoBehaviour
     [SerializeField, Range(0f, 1f)] private float returnSfxVolume = 1f;
     [SerializeField] private AudioClip deniedSfx;
     [SerializeField, Range(0f, 1f)] private float deniedSfxVolume = 1f;
+    [SerializeField] private AudioClip specificStartSfx;
+    [SerializeField, Range(0f, 1f)] private float specificStartSfxVolume = 1f;
 
     [Header("Dynamic Scale (Pixel Perfect SNES)")]
     [SerializeField] private bool dynamicScale = true;
@@ -248,6 +271,14 @@ public sealed class BattleModeMenu : MonoBehaviour
         BattleModeSuddenDeathSetting.Off,
         BattleModeSuddenDeathSetting.On,
         BattleModeSuddenDeathSetting.Random
+    };
+    private static readonly string[] SpecificSettingsOptions =
+    {
+        "Handicap",
+        "Items",
+        "Louies",
+        "Music",
+        "Start"
     };
 
     private const int PlayerActionCount = (int)PlayerAction.ActionR + 1;
@@ -327,6 +358,18 @@ public sealed class BattleModeMenu : MonoBehaviour
     private bool stageCarouselAnimating;
     private bool stageSelectionReturnedToRuleConfig;
     private Sprite[] battleStageThumbnailResourceCache;
+    private RectTransform specificSettingsRoot;
+    private Image specificStageImage;
+    private RawImage battleStartImage;
+    private readonly List<TextMeshProUGUI> specificOptionTexts = new();
+    private RectTransform specificCursorRt;
+    private AnimatedSpriteRenderer specificCursorRenderer;
+    private int selectedSpecificSettingIndex;
+    private bool specificSettingsReturnedToStageSelect;
+    private bool specificStartConfirmed;
+    private Vector2 specificConfirmedCursorPosition;
+    private float battleStartBlinkTimer;
+    private bool battleStartVisible;
     private readonly bool[] previousMenuHeld = new bool[PlayerActionCount];
     private readonly bool[] menuHoldConsumed = new bool[PlayerActionCount];
     private readonly float[] nextMenuRepeatTime = new float[PlayerActionCount];
@@ -373,6 +416,8 @@ public sealed class BattleModeMenu : MonoBehaviour
             UpdateRuleConfigVisuals();
         else if (state == MenuState.StageSelect)
             UpdateStageSelectVisuals();
+        else if (state == MenuState.SpecificSettings)
+            UpdateSpecificSettingsVisuals();
 
         if (!menuActive || state == MenuState.SkinSelect)
             return;
@@ -731,6 +776,11 @@ public sealed class BattleModeMenu : MonoBehaviour
                     continue;
                 }
 
+                yield return OpenSpecificSettingsMenu();
+
+                if (specificSettingsReturnedToStageSelect)
+                    continue;
+
                 break;
             }
 
@@ -892,6 +942,8 @@ public sealed class BattleModeMenu : MonoBehaviour
             ruleConfigRoot.gameObject.SetActive(false);
         if (stageSelectRoot != null)
             stageSelectRoot.gameObject.SetActive(false);
+        if (specificSettingsRoot != null)
+            specificSettingsRoot.gameObject.SetActive(false);
 
         state = MenuState.SkinSelect;
     }
@@ -913,6 +965,8 @@ public sealed class BattleModeMenu : MonoBehaviour
             ruleConfigRoot.gameObject.SetActive(false);
         if (stageSelectRoot != null)
             stageSelectRoot.gameObject.SetActive(false);
+        if (specificSettingsRoot != null)
+            specificSettingsRoot.gameObject.SetActive(false);
 
         if (leftPanel != null)
         {
@@ -1923,10 +1977,7 @@ public sealed class BattleModeMenu : MonoBehaviour
                 PlaySfx(confirmSfx, confirmSfxVolume);
                 int stageIndex = selectedStageIndex + 1;
                 SaveSystem.SetBattleModeStageIndex(stageIndex);
-                confirmed = true;
-                Hide();
-                LoadScene(GetBattleStageSceneName(stageIndex));
-                yield break;
+                done = true;
             }
 
             UpdateStageSelectVisuals();
@@ -2253,6 +2304,530 @@ public sealed class BattleModeMenu : MonoBehaviour
         return $"Battle Stage {stageIndex}";
     }
 
+    private IEnumerator OpenSpecificSettingsMenu()
+    {
+        specificSettingsReturnedToStageSelect = false;
+        specificStartConfirmed = false;
+        battleStartBlinkTimer = 0f;
+        battleStartVisible = false;
+        state = MenuState.SpecificSettings;
+        menuActive = false;
+        cursorConfirmVisual = false;
+
+        if (leftPanel != null)
+        {
+            leftPanel.HideCursor();
+            leftPanel.gameObject.SetActive(false);
+        }
+
+        if (teamSelectRoot != null)
+            teamSelectRoot.gameObject.SetActive(false);
+        if (ruleConfigRoot != null)
+            ruleConfigRoot.gameObject.SetActive(false);
+        if (stageSelectRoot != null)
+            stageSelectRoot.gameObject.SetActive(false);
+
+        EnsureSpecificSettingsBuilt();
+        selectedSpecificSettingIndex = SpecificSettingsOptions.Length - 1;
+        ResetBackgroundSpriteSwap();
+        ApplyCurrentBackgroundSprite(true);
+        UpdatePromptTitle();
+        UpdateSpecificSettingsVisuals();
+
+        Canvas.ForceUpdateCanvases();
+        ApplyDynamicScaleIfNeeded(true);
+
+        PlayerInputManager input = PlayerInputManager.Instance;
+        while (input != null && HasAnyRelevantHeldInput(input, out _, out _))
+            yield return null;
+
+        bool done = false;
+        while (!done)
+        {
+            if (input == null)
+            {
+                input = PlayerInputManager.Instance;
+                yield return null;
+                continue;
+            }
+
+            if (input.GetDown(GameSession.MinPlayerId, PlayerAction.MoveUp))
+            {
+                selectedSpecificSettingIndex = WrapIndex(selectedSpecificSettingIndex - 1, SpecificSettingsOptions.Length);
+                PlaySfx(moveCursorSfx, moveCursorSfxVolume);
+                UpdateSpecificSettingsVisuals();
+            }
+            else if (input.GetDown(GameSession.MinPlayerId, PlayerAction.MoveDown))
+            {
+                selectedSpecificSettingIndex = WrapIndex(selectedSpecificSettingIndex + 1, SpecificSettingsOptions.Length);
+                PlaySfx(moveCursorSfx, moveCursorSfxVolume);
+                UpdateSpecificSettingsVisuals();
+            }
+            else if (input.GetDown(GameSession.MinPlayerId, PlayerAction.ActionB))
+            {
+                PlaySfx(returnSfx, returnSfxVolume);
+                specificSettingsReturnedToStageSelect = true;
+                done = true;
+            }
+            else if (input.GetDown(GameSession.MinPlayerId, PlayerAction.ActionA) ||
+                     input.GetDown(GameSession.MinPlayerId, PlayerAction.Start))
+            {
+                LogSpecificStartTransition("InputConfirm.Down");
+                if (selectedSpecificSettingIndex == SpecificSettingsOptions.Length - 1)
+                {
+                    yield return ConfirmSpecificSettingsStart();
+                    yield break;
+                }
+
+                PlaySfx(deniedSfx, deniedSfxVolume);
+            }
+
+            UpdateSpecificSettingsVisuals();
+            yield return null;
+        }
+
+        if (specificSettingsRoot != null)
+            specificSettingsRoot.gameObject.SetActive(false);
+
+        state = MenuState.StageSelect;
+    }
+
+    private IEnumerator ConfirmSpecificSettingsStart()
+    {
+        specificStartConfirmed = true;
+        battleStartBlinkTimer = 0f;
+        battleStartVisible = true;
+        if (specificCursorRt != null)
+            specificConfirmedCursorPosition = specificCursorRt.anchoredPosition;
+        LogSpecificStartTransition("ConfirmPressed.BeforeFreeze");
+        StartSpecificSettingsCursorConfirmAnimation();
+        LogSpecificStartTransition("ConfirmPressed.AfterFreeze");
+
+        GameMusicController.Instance?.StopMusic();
+        PlaySfx(specificStartSfx != null ? specificStartSfx : confirmSfx, specificStartSfx != null ? specificStartSfxVolume : confirmSfxVolume);
+        confirmed = true;
+        LogSpecificStartTransition("ConfirmPressed.AfterConfirmedFlag");
+
+        if (specificStartWaitSeconds > 0f)
+            yield return ProbeSpecificStartWait();
+
+        LogSpecificStartTransition("BeforeFadeOut");
+        yield return FadeOutRoutine(specificStartFadeSeconds);
+        LogSpecificStartTransition("AfterFadeOut.BeforeHide");
+        Hide();
+        LogSpecificStartTransition("AfterHide.BeforeSceneLoad");
+        LoadScene(GetBattleStageSceneName(SaveSystem.GetBattleModeStageIndex()));
+    }
+
+    private IEnumerator ProbeSpecificStartWait()
+    {
+        float wait = Mathf.Max(0f, specificStartWaitSeconds);
+        if (wait <= 0f)
+            yield break;
+
+        LogSpecificStartTransition("WaitStart");
+        float elapsed = 0f;
+        bool loggedHalf = false;
+
+        while (elapsed < wait)
+        {
+            elapsed += Time.unscaledDeltaTime;
+
+            if (!loggedHalf && elapsed >= wait * 0.5f)
+            {
+                loggedHalf = true;
+                LogSpecificStartTransition("WaitHalf");
+            }
+
+            yield return null;
+        }
+
+        LogSpecificStartTransition("WaitEnd");
+    }
+
+    private void EnsureSpecificSettingsBuilt()
+    {
+        Transform parent = GetMenuContentParent();
+
+        if (specificSettingsRoot != null)
+        {
+            if (parent != null && specificSettingsRoot.parent != parent)
+                specificSettingsRoot.SetParent(parent, false);
+
+            specificSettingsRoot.gameObject.SetActive(true);
+            specificSettingsRoot.SetAsLastSibling();
+            if (battleStartImage == null)
+                CreateBattleStartImage();
+            return;
+        }
+
+        GameObject rootGo = new("SpecificSettingsRoot", typeof(RectTransform));
+        rootGo.transform.SetParent(parent, false);
+        specificSettingsRoot = rootGo.GetComponent<RectTransform>();
+        specificSettingsRoot.anchorMin = new Vector2(0.5f, 0.5f);
+        specificSettingsRoot.anchorMax = new Vector2(0.5f, 0.5f);
+        specificSettingsRoot.pivot = new Vector2(0.5f, 0.5f);
+        specificSettingsRoot.anchoredPosition = specificSettingsRootOffset;
+        specificSettingsRoot.sizeDelta = Vector2.zero;
+        specificSettingsRoot.localScale = Vector3.one * currentUiScale;
+        specificSettingsRoot.SetAsLastSibling();
+
+        GameObject stageGo = new("SpecificStageImage", typeof(RectTransform), typeof(Image), typeof(Outline));
+        stageGo.transform.SetParent(specificSettingsRoot, false);
+        specificStageImage = stageGo.GetComponent<Image>();
+        specificStageImage.type = Image.Type.Simple;
+        specificStageImage.preserveAspect = true;
+        specificStageImage.raycastTarget = false;
+        specificStageImage.pixelsPerUnitMultiplier = 1f;
+        Outline stageOutline = stageGo.GetComponent<Outline>();
+        stageOutline.effectColor = Color.black;
+        stageOutline.effectDistance = new Vector2(2f, -2f);
+
+        CreateBattleStartImage();
+
+        specificOptionTexts.Clear();
+        for (int i = 0; i < SpecificSettingsOptions.Length; i++)
+            specificOptionTexts.Add(CreateSpecificSettingsOptionText(i));
+
+        CreateSpecificSettingsCursor();
+    }
+
+    private void CreateBattleStartImage()
+    {
+        GameObject go = new("BattleStartImage", typeof(RectTransform), typeof(RawImage));
+        go.transform.SetParent(specificSettingsRoot, false);
+
+        battleStartImage = go.GetComponent<RawImage>();
+        battleStartImage.raycastTarget = false;
+        battleStartImage.texture = battleStartTexture;
+        battleStartImage.enabled = false;
+    }
+
+    private TextMeshProUGUI CreateSpecificSettingsOptionText(int rowIndex)
+    {
+        GameObject go = new($"SpecificOption_{rowIndex}", typeof(RectTransform), typeof(TextMeshProUGUI));
+        go.transform.SetParent(specificSettingsRoot, false);
+
+        TextMeshProUGUI text = go.GetComponent<TextMeshProUGUI>();
+        text.alignment = TextAlignmentOptions.MidlineLeft;
+        text.fontSize = specificSettingsFontSize;
+        text.color = Color.white;
+        text.raycastTarget = false;
+        text.textWrappingMode = TextWrappingModes.NoWrap;
+        text.overflowMode = TextOverflowModes.Overflow;
+        ApplySpecificSettingsTextStyle(text);
+        return text;
+    }
+
+    private void CreateSpecificSettingsCursor()
+    {
+        AnimatedSpriteRenderer source = leftPanel != null ? leftPanel.CursorRenderer : null;
+        GameObject cursorGo;
+
+        if (source != null)
+        {
+            cursorGo = Instantiate(source.gameObject, specificSettingsRoot, false);
+            cursorGo.name = "SpecificSettingsCursor";
+            specificCursorRenderer = cursorGo.GetComponent<AnimatedSpriteRenderer>();
+        }
+        else
+        {
+            cursorGo = new GameObject("SpecificSettingsCursor", typeof(RectTransform));
+        }
+
+        specificCursorRt = cursorGo.transform as RectTransform;
+        if (specificCursorRt == null)
+            specificCursorRt = cursorGo.AddComponent<RectTransform>();
+
+        specificCursorRt.anchorMin = new Vector2(0.5f, 0.5f);
+        specificCursorRt.anchorMax = new Vector2(0.5f, 0.5f);
+        specificCursorRt.pivot = new Vector2(0.5f, 0.5f);
+        specificCursorRt.sizeDelta = specificCursorSize;
+        specificCursorRt.localScale = Vector3.one;
+
+        if (specificCursorRenderer != null)
+        {
+            specificCursorRenderer.SetFrozen(false);
+            specificCursorRenderer.frameOffsets = null;
+            specificCursorRenderer.idle = true;
+            specificCursorRenderer.loop = true;
+            specificCursorRenderer.CurrentFrame = 0;
+            specificCursorRenderer.RefreshFrame();
+        }
+    }
+
+    private void UpdateSpecificSettingsVisuals()
+    {
+        if (specificSettingsRoot == null || !specificSettingsRoot.gameObject.activeInHierarchy)
+            return;
+
+        if (specificStartConfirmed)
+        {
+            LockSpecificSettingsCursorPosition();
+            UpdateBattleStartBlink();
+            LayoutBattleStartImage();
+            return;
+        }
+
+        specificSettingsRoot.anchoredPosition = specificSettingsRootOffset;
+
+        int stageIndex = SaveSystem.GetBattleModeStageIndex();
+        if (specificStageImage != null)
+        {
+            RectTransform imageRt = specificStageImage.rectTransform;
+            imageRt.anchorMin = new Vector2(0.5f, 0.5f);
+            imageRt.anchorMax = new Vector2(0.5f, 0.5f);
+            imageRt.pivot = new Vector2(0.5f, 0.5f);
+            imageRt.anchoredPosition = specificStageImageOffset;
+            imageRt.sizeDelta = GetSpecificStageImageUiSize();
+            specificStageImage.sprite = GetBattleStageThumbnail(stageIndex);
+            specificStageImage.color = specificStageImage.sprite != null ? Color.white : specificStageImageFallbackColor;
+            specificStageImage.enabled = true;
+        }
+
+        battleStartBlinkTimer = 0f;
+        battleStartVisible = false;
+        LayoutBattleStartImage();
+
+        for (int i = 0; i < specificOptionTexts.Count; i++)
+        {
+            TextMeshProUGUI text = specificOptionTexts[i];
+            if (text == null)
+                continue;
+
+            RectTransform textRt = text.rectTransform;
+            textRt.anchorMin = new Vector2(0.5f, 0.5f);
+            textRt.anchorMax = new Vector2(0.5f, 0.5f);
+            textRt.pivot = new Vector2(0.5f, 0.5f);
+            textRt.anchoredPosition = GetSpecificOptionPosition(i);
+            textRt.sizeDelta = specificOptionRowSize;
+            text.fontSize = specificSettingsFontSize;
+            text.text = SpecificSettingsOptions[i];
+            text.color = i == SpecificSettingsOptions.Length - 1 ? Color.green : Color.white;
+            ApplySpecificSettingsTextStyle(text);
+        }
+
+        if (specificCursorRt != null)
+        {
+            int rowIndex = Mathf.Clamp(selectedSpecificSettingIndex, 0, specificOptionTexts.Count - 1);
+            specificCursorRt.gameObject.SetActive(specificOptionTexts.Count > 0);
+            specificCursorRt.sizeDelta = specificCursorSize;
+            specificCursorRt.anchoredPosition = GetSpecificOptionPosition(rowIndex) + specificCursorOffset;
+            specificCursorRenderer?.SetExternalBaseLocalPosition(specificCursorRt.localPosition);
+        }
+    }
+
+    private void UpdateBattleStartBlink()
+    {
+        if (battleStartImage == null)
+            return;
+
+        battleStartBlinkTimer += Time.unscaledDeltaTime;
+        float blinkSeconds = Mathf.Max(0.01f, battleStartBlinkSeconds);
+        while (battleStartBlinkTimer >= blinkSeconds)
+        {
+            battleStartBlinkTimer -= blinkSeconds;
+            battleStartVisible = !battleStartVisible;
+        }
+    }
+
+    private void LayoutBattleStartImage()
+    {
+        if (battleStartImage == null)
+            return;
+
+        RectTransform rt = battleStartImage.rectTransform;
+        rt.anchorMin = new Vector2(0.5f, 0.5f);
+        rt.anchorMax = new Vector2(0.5f, 0.5f);
+        rt.pivot = new Vector2(0.5f, 0.5f);
+        rt.anchoredPosition = battleStartOffset;
+        rt.sizeDelta = GetBattleStartUiSize();
+        rt.SetAsLastSibling();
+
+        battleStartImage.texture = battleStartTexture;
+        battleStartImage.color = Color.white;
+        battleStartImage.enabled = specificStartConfirmed && battleStartVisible && battleStartTexture != null;
+    }
+
+    private void StartSpecificSettingsCursorConfirmAnimation()
+    {
+        if (specificCursorRt == null)
+            return;
+
+        specificCursorRt.anchoredPosition = specificConfirmedCursorPosition;
+        specificCursorRt.localScale = Vector3.one;
+        specificCursorRenderer?.SetExternalBaseLocalPosition(specificCursorRt.localPosition);
+
+        AnimatedSpriteRenderer[] renderers = specificCursorRt.GetComponentsInChildren<AnimatedSpriteRenderer>(true);
+        for (int i = 0; i < renderers.Length; i++)
+        {
+            renderers[i].enabled = true;
+            renderers[i].frameOffsets = null;
+            renderers[i].SetFrozen(false);
+            renderers[i].idle = false;
+            renderers[i].loop = true;
+            renderers[i].CurrentFrame = 0;
+            renderers[i].RefreshFrame();
+        }
+
+        Animator[] animators = specificCursorRt.GetComponentsInChildren<Animator>(true);
+        for (int i = 0; i < animators.Length; i++)
+            animators[i].enabled = false;
+
+        Image[] images = specificCursorRt.GetComponentsInChildren<Image>(true);
+        for (int i = 0; i < images.Length; i++)
+            images[i].enabled = true;
+
+        SpriteRenderer[] spriteRenderers = specificCursorRt.GetComponentsInChildren<SpriteRenderer>(true);
+        for (int i = 0; i < spriteRenderers.Length; i++)
+            spriteRenderers[i].enabled = true;
+    }
+
+    private void LockSpecificSettingsCursorPosition()
+    {
+        if (specificCursorRt == null)
+            return;
+
+        specificCursorRt.anchoredPosition = specificConfirmedCursorPosition;
+        specificCursorRt.localScale = Vector3.one;
+        specificCursorRenderer?.SetExternalBaseLocalPosition(specificCursorRt.localPosition);
+    }
+
+    private Transform GetMenuContentParent()
+    {
+        if (root != null)
+            return root.transform;
+
+        if (referenceRect != null)
+            return referenceRect;
+
+        return transform;
+    }
+
+    private Vector2 GetSpecificOptionPosition(int rowIndex)
+    {
+        float totalHeight = (SpecificSettingsOptions.Length - 1) * (specificOptionRowSize.y + specificOptionRowSpacing);
+        float y = (totalHeight * 0.5f) - (rowIndex * (specificOptionRowSize.y + specificOptionRowSpacing));
+        return specificOptionsOffset + new Vector2(0f, y);
+    }
+
+    private Vector2 GetSpecificStageImageUiSize()
+    {
+        float authoredScale = Mathf.Max(1, designUpscale);
+        return new Vector2(
+            Mathf.Max(1f, specificStageImageSize.x) * authoredScale,
+            Mathf.Max(1f, specificStageImageSize.y) * authoredScale);
+    }
+
+    private Vector2 GetBattleStartUiSize()
+    {
+        float authoredScale = Mathf.Max(1, designUpscale);
+        return new Vector2(
+            Mathf.Max(1f, battleStartSize.x) * authoredScale,
+            Mathf.Max(1f, battleStartSize.y) * authoredScale);
+    }
+
+    private void ApplySpecificSettingsTextStyle(TextMeshProUGUI text)
+    {
+        if (text == null)
+            return;
+
+        if (leftPanel != null)
+        {
+            leftPanel.ApplyOptionTextStyleTo(text, text.color);
+            text.fontSize = specificSettingsFontSize;
+            text.alignment = TextAlignmentOptions.MidlineLeft;
+            text.UpdateMeshPadding();
+            text.ForceMeshUpdate();
+            text.SetVerticesDirty();
+            return;
+        }
+
+        ApplyTeamLabelFont(text);
+    }
+
+    private void LogSpecificStartTransition(string context)
+    {
+        Debug.Log(
+            "[BattleModeMenu/StartTransition] " +
+            $"context={context} " +
+            $"frame={Time.frameCount} " +
+            $"time={Time.unscaledTime:0.###} " +
+            $"state={state} " +
+            $"confirmed={confirmed} " +
+            $"selectedIndex={selectedSpecificSettingIndex} " +
+            $"startConfirmed={specificStartConfirmed} " +
+            $"cursor={FormatRectState(specificCursorRt)} " +
+            $"frozenAnchored={FormatVector2(specificConfirmedCursorPosition)} " +
+            $"cursorRenderer={FormatAnimatedRendererState(specificCursorRenderer)} " +
+            $"specificRoot={FormatGameObjectState(specificSettingsRoot != null ? specificSettingsRoot.gameObject : null)} " +
+            $"stageImage={FormatGraphicState(specificStageImage)} " +
+            $"startOption={FormatSpecificOptionState(SpecificSettingsOptions.Length - 1)} " +
+            $"background={FormatGraphicState(backgroundImage)} " +
+            $"fade={FormatGraphicState(fadeImage)} " +
+            $"fadeAlpha={(fadeImage != null ? fadeImage.color.a : -1f):0.###} " +
+            $"fadeSibling={(fadeImage != null ? fadeImage.transform.GetSiblingIndex() : -1)}");
+    }
+
+    private static string FormatVector2(Vector2 v)
+    {
+        return $"({v.x:0.###},{v.y:0.###})";
+    }
+
+    private static string FormatVector3(Vector3 v)
+    {
+        return $"({v.x:0.###},{v.y:0.###},{v.z:0.###})";
+    }
+
+    private static string FormatRectState(RectTransform rt)
+    {
+        if (rt == null)
+            return "null";
+
+        return $"activeSelf={rt.gameObject.activeSelf},activeHierarchy={rt.gameObject.activeInHierarchy}," +
+            $"anchored={FormatVector2(rt.anchoredPosition)},local={FormatVector3(rt.localPosition)}," +
+            $"world={FormatVector3(rt.position)},size={FormatVector2(rt.sizeDelta)},sibling={rt.GetSiblingIndex()}";
+    }
+
+    private static string FormatGameObjectState(GameObject go)
+    {
+        if (go == null)
+            return "null";
+
+        return $"activeSelf={go.activeSelf},activeHierarchy={go.activeInHierarchy},sibling={go.transform.GetSiblingIndex()}";
+    }
+
+    private static string FormatGraphicState(Graphic graphic)
+    {
+        if (graphic == null)
+            return "null";
+
+        return $"activeSelf={graphic.gameObject.activeSelf},activeHierarchy={graphic.gameObject.activeInHierarchy}," +
+            $"enabled={graphic.enabled},alpha={graphic.color.a:0.###},sibling={graphic.transform.GetSiblingIndex()}";
+    }
+
+    private string FormatSpecificOptionState(int optionIndex)
+    {
+        if (optionIndex < 0 || optionIndex >= specificOptionTexts.Count || specificOptionTexts[optionIndex] == null)
+            return "null";
+
+        TextMeshProUGUI text = specificOptionTexts[optionIndex];
+        RectTransform rt = text.rectTransform;
+        return $"text='{text.text}',colorAlpha={text.color.a:0.###}," +
+            $"activeSelf={text.gameObject.activeSelf},activeHierarchy={text.gameObject.activeInHierarchy}," +
+            $"anchored={FormatVector2(rt.anchoredPosition)},size={FormatVector2(rt.sizeDelta)}";
+    }
+
+    private static string FormatAnimatedRendererState(AnimatedSpriteRenderer renderer)
+    {
+        if (renderer == null)
+            return "null";
+
+        return $"enabled={renderer.enabled},idle={renderer.idle},loop={renderer.loop}," +
+            $"frame={renderer.CurrentFrame},timer={renderer.DebugFrameTimer:0.###}," +
+            $"local={FormatVector3(renderer.transform.localPosition)},world={FormatVector3(renderer.transform.position)}";
+    }
+
     private void RefreshPlayerSelectEntries()
     {
         BuildPlayerEntries();
@@ -2375,6 +2950,8 @@ public sealed class BattleModeMenu : MonoBehaviour
             ruleConfigRoot.gameObject.SetActive(false);
         if (stageSelectRoot != null)
             stageSelectRoot.gameObject.SetActive(false);
+        if (specificSettingsRoot != null)
+            specificSettingsRoot.gameObject.SetActive(false);
 
         if (root != null)
             root.SetActive(false);
@@ -2588,6 +3165,7 @@ public sealed class BattleModeMenu : MonoBehaviour
             MenuState.TeamSelect => teamSelectPrompt,
             MenuState.RuleConfig => ruleSelectPrompt,
             MenuState.StageSelect => stageSelectPrompt,
+            MenuState.SpecificSettings => specificSettingsPrompt,
             _ => matchModePrompt
         };
     }
@@ -2626,6 +3204,14 @@ public sealed class BattleModeMenu : MonoBehaviour
         fadeImage.color = c;
     }
 
+    private void BringFadeImageToFront()
+    {
+        if (fadeImage == null)
+            return;
+
+        fadeImage.transform.SetAsLastSibling();
+    }
+
     private IEnumerator FadeInRoutine()
     {
         if (fadeImage == null)
@@ -2647,24 +3233,49 @@ public sealed class BattleModeMenu : MonoBehaviour
 
     private IEnumerator FadeOutRoutine()
     {
+        yield return FadeOutRoutine(fadeDuration);
+    }
+
+    private IEnumerator FadeOutRoutine(float durationSeconds)
+    {
         if (fadeImage == null)
             yield break;
 
-        fadeImage.gameObject.SetActive(true);
-        fadeImage.transform.SetAsLastSibling();
-        SetFadeAlpha(0f);
+        bool probeBattleModeStart = state == MenuState.SpecificSettings && specificStartConfirmed;
+        if (probeBattleModeStart)
+            LogSpecificStartTransition("FadeOut.Enter");
 
-        float duration = Mathf.Max(0.001f, fadeDuration);
+        SetFadeAlpha(0f);
+        fadeImage.gameObject.SetActive(true);
+        BringFadeImageToFront();
+        SetFadeAlpha(0f);
+        Canvas.ForceUpdateCanvases();
+        if (probeBattleModeStart)
+            LogSpecificStartTransition("FadeOut.AfterActivateBeforeFirstYield");
+        yield return null;
+
+        float duration = Mathf.Max(0.001f, durationSeconds);
         float t = 0f;
+        int nextProbeStep = 1;
 
         while (t < duration)
         {
             t += Time.unscaledDeltaTime;
-            SetFadeAlpha(Mathf.Clamp01(t / duration));
+            BringFadeImageToFront();
+            float progress = Mathf.Clamp01(t / duration);
+            SetFadeAlpha(progress);
+            if (probeBattleModeStart && nextProbeStep <= 3 && progress >= nextProbeStep * 0.25f)
+            {
+                LogSpecificStartTransition($"FadeOut.Progress{nextProbeStep * 25}");
+                nextProbeStep++;
+            }
             yield return null;
         }
 
+        BringFadeImageToFront();
         SetFadeAlpha(1f);
+        if (probeBattleModeStart)
+            LogSpecificStartTransition("FadeOut.Complete");
     }
 
     private void ResetBackgroundSpriteSwap()
@@ -2734,6 +3345,7 @@ public sealed class BattleModeMenu : MonoBehaviour
             MenuState.TeamSelect => teamSelectBackgrounds?.sprites,
             MenuState.RuleConfig => ruleConfigBackgrounds?.sprites,
             MenuState.StageSelect => stageSelectBackgrounds?.sprites,
+            MenuState.SpecificSettings => specificSettingsBackgrounds?.sprites,
             _ => matchModeBackgrounds?.sprites
         };
     }
@@ -2877,6 +3489,8 @@ public sealed class BattleModeMenu : MonoBehaviour
             ruleConfigRoot.localScale = Vector3.one * currentUiScale;
         if (stageSelectRoot != null)
             stageSelectRoot.localScale = Vector3.one * currentUiScale;
+        if (specificSettingsRoot != null)
+            specificSettingsRoot.localScale = Vector3.one * currentUiScale;
     }
 
     private static bool ApproximatelyRect(Rect a, Rect b)

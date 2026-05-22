@@ -926,6 +926,7 @@ MonoBehaviour:
   teamSelectPrompt: TEAM MEMBERS
   ruleSelectPrompt: RULE CONFIG
   stageSelectPrompt: STAGE SELECT
+  specificSettingsPrompt: SPECIFIC SETTINGS
   leftPanel: {fileID: 2134452605}
   skinSelectMenu: {fileID: 300000200}
   matchModeLayout:
@@ -984,6 +985,10 @@ MonoBehaviour:
     sprites:
     - {fileID: 21300000, guid: 7fa50fad62d5cc24b9646dfb8318b0e3, type: 3}
     - {fileID: 21300000, guid: 9127c3976d9271c4d9a7cea38c0628a8, type: 3}
+  specificSettingsBackgrounds:
+    sprites:
+    - {fileID: 21300000, guid: bd837a932927eac4ebc35c193196ca5d, type: 3}
+    - {fileID: 21300000, guid: 66f92625b09c3b94b87d10feeb633b6f, type: 3}
   backgroundSwapInterval: 2
   backgroundSwapLoop: 1
   playerLabelHex: '#00FF3C'
@@ -1074,6 +1079,22 @@ MonoBehaviour:
   stageNameSize: {x: 620, y: 42}
   stageSelectFontSize: 32
   stageThumbnailFallbackColor: {r: 0, g: 0, b: 0, a: 0.65}
+  specificSettingsRootOffset: {x: 0, y: 0}
+  specificStageImageOffset: {x: -180, y: 0}
+  specificStageImageSize: {x: 112, y: 112}
+  specificOptionsOffset: {x: 330, y: 0}
+  specificOptionRowSize: {x: 360, y: 42}
+  specificOptionRowSpacing: 22
+  specificSettingsFontSize: 32
+  specificCursorOffset: {x: -220, y: 0}
+  specificCursorSize: {x: 62, y: 62}
+  specificStartWaitSeconds: 4
+  specificStartFadeSeconds: 1
+  specificStageImageFallbackColor: {r: 0, g: 0, b: 0, a: 0.65}
+  battleStartTexture: {fileID: 2800000, guid: 2a09435323dbf524a825460f374796a8, type: 3}
+  battleStartOffset: {x: 0, y: 270}
+  battleStartSize: {x: 190, y: 19}
+  battleStartBlinkSeconds: 0.05
   selectMusic: {fileID: 8300000, guid: da56bf64ad8b3f346bf9f3a08d30b816, type: 3}
   selectMusicVolume: 0.8
   loopSelectMusic: 1
@@ -1085,6 +1106,8 @@ MonoBehaviour:
   returnSfxVolume: 1
   deniedSfx: {fileID: 8300000, guid: 2f98cb783cdc9bb4d8ff3b868291f743, type: 3}
   deniedSfxVolume: 1
+  specificStartSfx: {fileID: 8300000, guid: 65bb48bbd86fe1848bca77982611e394, type: 3}
+  specificStartSfxVolume: 1
   dynamicScale: 1
   referenceWidth: 256
   referenceHeight: 224
