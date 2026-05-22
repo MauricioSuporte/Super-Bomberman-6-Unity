@@ -49,6 +49,19 @@ public class GameManager : MonoBehaviour
         new(BattleModeHiddenDropEntryKind.Item, ItemType.Skull)
     };
 
+    public static readonly MountedType[] BattleModeRandomEggMountTypes =
+    {
+        MountedType.Blue,
+        MountedType.Black,
+        MountedType.Purple,
+        MountedType.Green,
+        MountedType.Yellow,
+        MountedType.Pink,
+        MountedType.Red,
+        MountedType.Mole,
+        MountedType.Tank
+    };
+
     static readonly WaitForSecondsRealtime waitNextStageDelay = new(3f);
     static readonly WaitForSecondsRealtime waitBattleVictoryCheckDelay = new(0.5f);
     static readonly WaitForSecondsRealtime waitBattleVictoryDelay = new(1f);
@@ -611,6 +624,15 @@ public class GameManager : MonoBehaviour
 
         for (int i = 0; i < result.Length; i++)
             result[i] = GetDefaultBattleModeHiddenEntryAmount(BattleModeHiddenDropEntries[i]);
+
+        return result;
+    }
+
+    public static int[] GetDefaultBattleModeLouieAmounts()
+    {
+        int[] result = new int[BattleModeRandomEggMountTypes.Length];
+        for (int i = 0; i < result.Length; i++)
+            result[i] = 1;
 
         return result;
     }
@@ -1833,58 +1855,77 @@ public class GameManager : MonoBehaviour
         ItemType.RedLouieEgg
     };
 
-    private static readonly MountedType[] randomEggMountTypes =
-    {
-        MountedType.Mole,
-        MountedType.Tank
-    };
-
     void TryAssignRandomEggs(List<int> indices, ref int cursor)
     {
         if (randomEggsMax <= 0)
             return;
 
         int amount = UnityEngine.Random.Range(randomEggsMin, randomEggsMax + 1);
-        List<GameObject> mountPrefabs = BuildRandomEggMountPrefabPool();
+        List<GameObject> randomEggPrefabs = BuildRandomEggPrefabPool();
+        if (randomEggPrefabs.Count <= 0)
+            return;
 
         for (int i = 0; i < amount && cursor < indices.Count; i++)
         {
-            int randomIndex = UnityEngine.Random.Range(0, louieEggTypes.Length + mountPrefabs.Count);
-
-            if (randomIndex < louieEggTypes.Length)
-            {
-                ItemType randomEgg = louieEggTypes[randomIndex];
-                ItemPickup prefab = AutoItemDatabase.Get(randomEgg);
-
-                if (prefab != null)
-                    orderToSpawn[indices[cursor++]] = prefab.gameObject;
-            }
-            else
-            {
-                GameObject prefab = mountPrefabs[randomIndex - louieEggTypes.Length];
-
-                if (prefab != null)
-                    orderToSpawn[indices[cursor++]] = prefab;
-            }
+            GameObject prefab = randomEggPrefabs[UnityEngine.Random.Range(0, randomEggPrefabs.Count)];
+            if (prefab != null)
+                orderToSpawn[indices[cursor++]] = prefab;
         }
     }
 
-    List<GameObject> BuildRandomEggMountPrefabPool()
+    List<GameObject> BuildRandomEggPrefabPool()
     {
-        List<GameObject> results = new(randomEggMountTypes.Length);
+        int[] amounts = SaveSystem.GetBattleModeLouieAmounts(GetDefaultBattleModeLouieAmounts());
+        List<GameObject> results = new(BattleModeRandomEggMountTypes.Length);
 
-        for (int i = 0; i < randomEggMountTypes.Length; i++)
+        for (int i = 0; i < BattleModeRandomEggMountTypes.Length; i++)
         {
-            MountedType type = randomEggMountTypes[i];
-            GameObject prefab = ResolveRandomEggMountPrefab(type);
+            int amount = amounts != null && i < amounts.Length ? Mathf.Clamp(amounts[i], 0, 99) : 0;
+            if (amount <= 0)
+                continue;
+
+            MountedType type = BattleModeRandomEggMountTypes[i];
+            GameObject prefab = ResolveRandomEggPrefab(type);
             if (prefab == null)
                 continue;
 
-            results.Add(prefab);
-            hiddenMountPrefabTypes[prefab] = type;
+            for (int copy = 0; copy < amount; copy++)
+                results.Add(prefab);
         }
 
         return results;
+    }
+
+    GameObject ResolveRandomEggPrefab(MountedType type)
+    {
+        if (TryGetEggTypeForMount(type, out ItemType egg))
+        {
+            ItemPickup itemPrefab = AutoItemDatabase.Get(egg);
+            return itemPrefab != null ? itemPrefab.gameObject : null;
+        }
+
+        GameObject mountPrefab = ResolveRandomEggMountPrefab(type);
+        if (mountPrefab != null)
+            hiddenMountPrefabTypes[mountPrefab] = type;
+
+        return mountPrefab;
+    }
+
+    static bool TryGetEggTypeForMount(MountedType type, out ItemType egg)
+    {
+        switch (type)
+        {
+            case MountedType.Blue: egg = ItemType.BlueLouieEgg; return true;
+            case MountedType.Black: egg = ItemType.BlackLouieEgg; return true;
+            case MountedType.Purple: egg = ItemType.PurpleLouieEgg; return true;
+            case MountedType.Green: egg = ItemType.GreenLouieEgg; return true;
+            case MountedType.Yellow: egg = ItemType.YellowLouieEgg; return true;
+            case MountedType.Pink: egg = ItemType.PinkLouieEgg; return true;
+            case MountedType.Red: egg = ItemType.RedLouieEgg; return true;
+            default:
+                egg = default;
+                return false;
+        }
     }
 
     GameObject ResolveRandomEggMountPrefab(MountedType type)

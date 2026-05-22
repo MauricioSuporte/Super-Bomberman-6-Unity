@@ -64,5 +64,6 @@ public sealed class SaveData
 
     public List<BossRushDifficultyTimesSave> bossRushTimes = new();
     public int[] battleModeItemAmounts;
+    public int[] battleModeLouieAmounts;
     public SavedVideoSettings videoSettings = new();
 }

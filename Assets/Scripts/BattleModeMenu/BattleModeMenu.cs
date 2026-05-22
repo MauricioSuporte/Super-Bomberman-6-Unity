@@ -17,7 +17,8 @@ public sealed class BattleModeMenu : MonoBehaviour
         StageSelect = 5,
         SpecificSettings = 6,
         MusicSelect = 7,
-        ItemSelect = 8
+        ItemSelect = 8,
+        LouieSelect = 9
     }
 
     private enum ItemSelectEntryId
@@ -151,6 +152,7 @@ public sealed class BattleModeMenu : MonoBehaviour
     [SerializeField] private BackgroundSet specificSettingsBackgrounds = new();
     [SerializeField] private BackgroundSet musicSelectBackgrounds = new();
     [SerializeField] private BackgroundSet itemSelectBackgrounds = new();
+    [SerializeField] private BackgroundSet louieSelectBackgrounds = new();
     [SerializeField, Min(0.01f)] private float backgroundSwapInterval = 2f;
     [SerializeField] private bool backgroundSwapLoop = true;
 
@@ -289,6 +291,27 @@ public sealed class BattleModeMenu : MonoBehaviour
     [SerializeField] private int itemSelectHintFontSize = 18;
     [SerializeField, Min(0f)] private float itemSelectHintLineSpacing = 18f;
     [SerializeField, Min(0)] private int itemSelectMaxAmount = 99;
+    [SerializeField] private Vector2 louieSelectRootOffset = Vector2.zero;
+    [SerializeField] private Vector2 louieSelectGridOffset = new(0f, 8f);
+    [SerializeField, Min(1)] private int louieSelectColumns = 5;
+    [SerializeField] private Vector2 louieSelectCellSize = new(150f, 100f);
+    [SerializeField] private Vector2 louieSelectIconOffset = new(-42f, 0f);
+    [SerializeField] private Vector2 louieSelectIconSize = new(64f, 64f);
+    [SerializeField, Min(0.01f)] private float louieSelectMountSizeMultiplier = 1f;
+    [SerializeField, Min(0.01f)] private float louieSelectPinkLouieSizeMultiplier = 1f;
+    [SerializeField, Min(0.01f)] private float louieSelectAnimationSpeedMultiplier = 1f;
+    [SerializeField] private Vector2 louieSelectAmountOffset = new(28f, 0f);
+    [SerializeField] private Vector2 louieSelectAmountSize = new(64f, 36f);
+    [SerializeField] private int louieSelectAmountFontSize = 32;
+    [SerializeField] private Vector2 louieSelectCursorOffset = Vector2.zero;
+    [SerializeField] private Vector2 louieSelectCursorSize = new(62f, 62f);
+    [SerializeField] private Vector2 louieSelectHintOffset = new(0f, -300f);
+    [SerializeField] private Vector2 louieSelectHintSize = new(900f, 76f);
+    [SerializeField] private int louieSelectHintFontSize = 32;
+    [SerializeField, Min(0f)] private float louieSelectHintLineSpacing = 18f;
+    [SerializeField, Min(0)] private int louieSelectMaxAmount = 99;
+    [SerializeField] private GameObject[] louieSelectMountPrefabs = new GameObject[9];
+    [SerializeField] private Color louieSelectDisabledTint = new(0.08f, 0.08f, 0.08f, 0.85f);
 
     [Header("Music")]
     [SerializeField] private AudioClip selectMusic;
@@ -465,6 +488,17 @@ public sealed class BattleModeMenu : MonoBehaviour
     private int[] workingBattleItemAmounts;
     private int selectedItemIndex;
     private float itemSelectCursorConfirmTimer;
+    private RectTransform louieSelectRoot;
+    private readonly List<RectTransform> louieSelectCells = new();
+    private readonly List<Image> louieSelectImages = new();
+    private readonly List<AnimatedSpriteRenderer> louieSelectRenderers = new();
+    private readonly List<TextMeshProUGUI> louieSelectAmountTexts = new();
+    private TextMeshProUGUI louieSelectHintText;
+    private RectTransform louieSelectCursorRt;
+    private AnimatedSpriteRenderer louieSelectCursorRenderer;
+    private int[] workingBattleLouieAmounts;
+    private int selectedLouieIndex;
+    private float louieSelectCursorConfirmTimer;
     private BattleModeRules.BattleMusicSelection[] musicSelections;
     private int selectedMusicIndex;
     private int workingBattleMusicSelectionMask;
@@ -551,6 +585,8 @@ public sealed class BattleModeMenu : MonoBehaviour
             UpdateMusicSelectVisuals();
         else if (state == MenuState.ItemSelect)
             UpdateItemSelectVisuals();
+        else if (state == MenuState.LouieSelect)
+            UpdateLouieSelectVisuals();
 
         if (!menuActive || state == MenuState.SkinSelect)
             return;
@@ -1079,6 +1115,10 @@ public sealed class BattleModeMenu : MonoBehaviour
             musicSelectRoot.gameObject.SetActive(false);
         if (itemSelectRoot != null)
             itemSelectRoot.gameObject.SetActive(false);
+        if (louieSelectRoot != null)
+            louieSelectRoot.gameObject.SetActive(false);
+        if (louieSelectRoot != null)
+            louieSelectRoot.gameObject.SetActive(false);
         if (specificSettingsRoot != null)
             specificSettingsRoot.gameObject.SetActive(false);
 
@@ -1108,6 +1148,8 @@ public sealed class BattleModeMenu : MonoBehaviour
             musicSelectRoot.gameObject.SetActive(false);
         if (itemSelectRoot != null)
             itemSelectRoot.gameObject.SetActive(false);
+        if (louieSelectRoot != null)
+            louieSelectRoot.gameObject.SetActive(false);
 
         if (leftPanel != null)
         {
@@ -2527,6 +2569,13 @@ public sealed class BattleModeMenu : MonoBehaviour
                     continue;
                 }
 
+                if (string.Equals(SpecificSettingsOptions[selectedSpecificSettingIndex], "Louies", System.StringComparison.Ordinal))
+                {
+                    PlaySfx(confirmSfx, confirmSfxVolume);
+                    yield return OpenLouieSelectMenu();
+                    continue;
+                }
+
                 if (string.Equals(SpecificSettingsOptions[selectedSpecificSettingIndex], "Music", System.StringComparison.Ordinal))
                 {
                     PlaySfx(confirmSfx, confirmSfxVolume);
@@ -3226,7 +3275,7 @@ public sealed class BattleModeMenu : MonoBehaviour
             hintRt.sizeDelta = itemSelectHintSize;
 
             itemSelectHintText.color = GetMusicSelectTextColor(false);
-            itemSelectHintText.text = "← →↑↓: Choose\nA/C: Change Number\nB: Back";
+            itemSelectHintText.text = "←→↑↓: Choose\nA/C: Change Number\nB: Back";
             ApplySpecificSettingsTextStyle(itemSelectHintText);
             itemSelectHintText.fontSize = itemSelectHintFontSize;
             itemSelectHintText.lineSpacing = itemSelectHintLineSpacing;
@@ -3560,6 +3609,499 @@ public sealed class BattleModeMenu : MonoBehaviour
 
         spriteRenderer = prefab.GetComponentInChildren<SpriteRenderer>(true);
         return spriteRenderer != null ? spriteRenderer.sprite : null;
+    }
+
+    private IEnumerator OpenLouieSelectMenu()
+    {
+        state = MenuState.LouieSelect;
+        selectedLouieIndex = Mathf.Clamp(selectedLouieIndex, 0, Mathf.Max(0, GetLouieSelectEntryCount() - 1));
+        workingBattleLouieAmounts = SaveSystem.GetBattleModeLouieAmounts(GameManager.GetDefaultBattleModeLouieAmounts());
+
+        if (specificSettingsRoot != null)
+            specificSettingsRoot.gameObject.SetActive(false);
+
+        EnsureLouieSelectBuilt();
+        ResetBackgroundSpriteSwap();
+        ApplyCurrentBackgroundSprite(true);
+        UpdatePromptTitle();
+        UpdateLouieSelectVisuals();
+
+        Canvas.ForceUpdateCanvases();
+        ApplyDynamicScaleIfNeeded(true);
+
+        PlayerInputManager input = PlayerInputManager.Instance;
+        while (input != null && HasAnyRelevantHeldInput(input, out _, out _))
+            yield return null;
+
+        bool done = false;
+        while (!done)
+        {
+            if (input == null)
+            {
+                input = PlayerInputManager.Instance;
+                yield return null;
+                continue;
+            }
+
+            int count = GetLouieSelectEntryCount();
+            int columns = Mathf.Max(1, louieSelectColumns);
+            if (input.GetDown(GameSession.MinPlayerId, PlayerAction.MoveLeft))
+            {
+                selectedLouieIndex = WrapIndex(selectedLouieIndex - 1, count);
+                PlaySfx(moveCursorSfx, moveCursorSfxVolume);
+            }
+            else if (input.GetDown(GameSession.MinPlayerId, PlayerAction.MoveRight))
+            {
+                selectedLouieIndex = WrapIndex(selectedLouieIndex + 1, count);
+                PlaySfx(moveCursorSfx, moveCursorSfxVolume);
+            }
+            else if (input.GetDown(GameSession.MinPlayerId, PlayerAction.MoveUp))
+            {
+                selectedLouieIndex = WrapIndex(selectedLouieIndex - columns, count);
+                PlaySfx(moveCursorSfx, moveCursorSfxVolume);
+            }
+            else if (input.GetDown(GameSession.MinPlayerId, PlayerAction.MoveDown))
+            {
+                selectedLouieIndex = WrapIndex(selectedLouieIndex + columns, count);
+                PlaySfx(moveCursorSfx, moveCursorSfxVolume);
+            }
+            else if (input.GetDown(GameSession.MinPlayerId, PlayerAction.ActionB))
+            {
+                PlaySfx(returnSfx, returnSfxVolume);
+                SaveCurrentBattleLouieAmounts();
+                done = true;
+            }
+            else if (input.GetDown(GameSession.MinPlayerId, PlayerAction.ActionA))
+            {
+                ChangeSelectedBattleLouieAmount(1);
+                PlaySfx(confirmSfx, confirmSfxVolume);
+                louieSelectCursorConfirmTimer = Mathf.Max(0.01f, confirmFeedbackSeconds);
+            }
+            else if (input.GetDown(GameSession.MinPlayerId, PlayerAction.ActionC))
+            {
+                ChangeSelectedBattleLouieAmount(-1);
+                PlaySfx(confirmSfx, confirmSfxVolume);
+                louieSelectCursorConfirmTimer = Mathf.Max(0.01f, confirmFeedbackSeconds);
+            }
+
+            UpdateLouieSelectVisuals();
+            louieSelectCursorConfirmTimer = Mathf.Max(0f, louieSelectCursorConfirmTimer - Time.unscaledDeltaTime);
+            yield return null;
+        }
+
+        if (louieSelectRoot != null)
+            louieSelectRoot.gameObject.SetActive(false);
+
+        if (specificSettingsRoot != null)
+            specificSettingsRoot.gameObject.SetActive(true);
+
+        state = MenuState.SpecificSettings;
+        UpdatePromptTitle();
+        UpdateSpecificSettingsVisuals();
+    }
+
+    private void EnsureLouieSelectBuilt()
+    {
+        if (louieSelectRoot != null)
+        {
+            EnsureLouieSelectCellCount();
+            louieSelectRoot.gameObject.SetActive(true);
+            louieSelectRoot.SetAsLastSibling();
+            return;
+        }
+
+        GameObject rootGo = new("LouieSelectRoot", typeof(RectTransform));
+        rootGo.transform.SetParent(GetMenuContentParent(), false);
+        louieSelectRoot = rootGo.GetComponent<RectTransform>();
+        louieSelectRoot.anchorMin = new Vector2(0.5f, 0.5f);
+        louieSelectRoot.anchorMax = new Vector2(0.5f, 0.5f);
+        louieSelectRoot.pivot = new Vector2(0.5f, 0.5f);
+        louieSelectRoot.anchoredPosition = louieSelectRootOffset;
+        louieSelectRoot.sizeDelta = Vector2.zero;
+        louieSelectRoot.localScale = Vector3.one * currentUiScale;
+        louieSelectRoot.SetAsLastSibling();
+
+        louieSelectCells.Clear();
+        louieSelectImages.Clear();
+        louieSelectRenderers.Clear();
+        louieSelectAmountTexts.Clear();
+
+        EnsureLouieSelectCellCount();
+        CreateLouieSelectHintText();
+        CreateLouieSelectCursor();
+    }
+
+    private void EnsureLouieSelectCellCount()
+    {
+        int count = GetLouieSelectEntryCount();
+        while (louieSelectCells.Count < count)
+            CreateLouieSelectCell(louieSelectCells.Count);
+    }
+
+    private void CreateLouieSelectCell(int index)
+    {
+        GameObject cellGo = new($"LouieCell_{index}", typeof(RectTransform));
+        cellGo.transform.SetParent(louieSelectRoot, false);
+        RectTransform cell = cellGo.GetComponent<RectTransform>();
+        cell.anchorMin = new Vector2(0.5f, 0.5f);
+        cell.anchorMax = new Vector2(0.5f, 0.5f);
+        cell.pivot = new Vector2(0.5f, 0.5f);
+        louieSelectCells.Add(cell);
+
+        GameObject imageGo = new($"LouieIcon_{index}", typeof(RectTransform), typeof(Image), typeof(AnimatedSpriteRenderer));
+        imageGo.transform.SetParent(cell, false);
+        Image image = imageGo.GetComponent<Image>();
+        image.preserveAspect = true;
+        image.raycastTarget = false;
+        louieSelectImages.Add(image);
+
+        AnimatedSpriteRenderer renderer = imageGo.GetComponent<AnimatedSpriteRenderer>();
+        ConfigureLouieSelectRenderer(renderer, index);
+        louieSelectRenderers.Add(renderer);
+
+        GameObject amountGo = new($"LouieAmount_{index}", typeof(RectTransform), typeof(TextMeshProUGUI));
+        amountGo.transform.SetParent(cell, false);
+        TextMeshProUGUI amountText = amountGo.GetComponent<TextMeshProUGUI>();
+        amountText.alignment = TextAlignmentOptions.MidlineRight;
+        amountText.raycastTarget = false;
+        amountText.textWrappingMode = TextWrappingModes.NoWrap;
+        amountText.overflowMode = TextOverflowModes.Overflow;
+        louieSelectAmountTexts.Add(amountText);
+    }
+
+    private void CreateLouieSelectHintText()
+    {
+        GameObject go = new("LouieSelectHints", typeof(RectTransform), typeof(TextMeshProUGUI));
+        go.transform.SetParent(louieSelectRoot, false);
+        louieSelectHintText = go.GetComponent<TextMeshProUGUI>();
+        louieSelectHintText.raycastTarget = false;
+        louieSelectHintText.textWrappingMode = TextWrappingModes.NoWrap;
+        louieSelectHintText.overflowMode = TextOverflowModes.Overflow;
+        louieSelectHintText.text = "\u2190\u2192\u2191\u2193: Choose\nA/C: Change Number\nB: Back";
+        ApplySpecificSettingsTextStyle(louieSelectHintText);
+    }
+
+    private void CreateLouieSelectCursor()
+    {
+        AnimatedSpriteRenderer source = specificCursorRenderer != null
+            ? specificCursorRenderer
+            : leftPanel != null ? leftPanel.CursorRenderer : null;
+        GameObject cursorGo = source != null
+            ? Instantiate(source.gameObject, louieSelectRoot, false)
+            : new GameObject("LouieSelectCursor", typeof(RectTransform));
+        cursorGo.name = "LouieSelectCursor";
+
+        louieSelectCursorRt = cursorGo.transform as RectTransform;
+        if (louieSelectCursorRt == null)
+            louieSelectCursorRt = cursorGo.AddComponent<RectTransform>();
+
+        louieSelectCursorRenderer = cursorGo.GetComponent<AnimatedSpriteRenderer>();
+        louieSelectCursorRt.anchorMin = new Vector2(0.5f, 0.5f);
+        louieSelectCursorRt.anchorMax = new Vector2(0.5f, 0.5f);
+        louieSelectCursorRt.pivot = new Vector2(0.5f, 0.5f);
+        louieSelectCursorRt.sizeDelta = louieSelectCursorSize;
+        louieSelectCursorRt.localScale = Vector3.one;
+
+        if (louieSelectCursorRenderer != null)
+        {
+            louieSelectCursorRenderer.SetFrozen(false);
+            louieSelectCursorRenderer.frameOffsets = null;
+            louieSelectCursorRenderer.idle = true;
+            louieSelectCursorRenderer.loop = true;
+            louieSelectCursorRenderer.CurrentFrame = 0;
+            louieSelectCursorRenderer.RefreshFrame();
+        }
+    }
+
+    private void UpdateLouieSelectVisuals()
+    {
+        if (louieSelectRoot == null || !louieSelectRoot.gameObject.activeInHierarchy)
+            return;
+
+        louieSelectRoot.anchoredPosition = louieSelectRootOffset;
+        int count = GetLouieSelectEntryCount();
+        int columns = Mathf.Max(1, louieSelectColumns);
+        int rows = Mathf.Max(1, Mathf.CeilToInt(count / (float)columns));
+
+        for (int i = 0; i < louieSelectCells.Count; i++)
+        {
+            bool active = i < count;
+            RectTransform cell = louieSelectCells[i];
+            if (cell == null)
+                continue;
+
+            cell.gameObject.SetActive(active);
+            if (!active)
+                continue;
+
+            int amount = GetWorkingBattleLouieAmount(i);
+            cell.sizeDelta = louieSelectCellSize;
+            cell.anchoredPosition = GetLouieSelectCellPosition(i, columns, rows);
+
+            if (i < louieSelectImages.Count && louieSelectImages[i] != null)
+            {
+                Image image = louieSelectImages[i];
+                RectTransform imageRt = image.rectTransform;
+                imageRt.anchorMin = new Vector2(0.5f, 0.5f);
+                imageRt.anchorMax = new Vector2(0.5f, 0.5f);
+                imageRt.pivot = new Vector2(0.5f, 0.5f);
+                imageRt.anchoredPosition = louieSelectIconOffset;
+                imageRt.sizeDelta = GetLouieSelectIconSize(i);
+                image.color = amount > 0 ? Color.white : louieSelectDisabledTint;
+            }
+
+            if (i < louieSelectRenderers.Count && louieSelectRenderers[i] != null)
+            {
+                AnimatedSpriteRenderer renderer = louieSelectRenderers[i];
+                if (renderer.animationSprite == null || renderer.animationSprite.Length == 0)
+                    ConfigureLouieSelectRenderer(renderer, i);
+                ApplyLouieSelectRendererTiming(renderer, i);
+                renderer.idle = false;
+                renderer.loop = true;
+            }
+
+            if (i < louieSelectAmountTexts.Count && louieSelectAmountTexts[i] != null)
+            {
+                TextMeshProUGUI amountText = louieSelectAmountTexts[i];
+                RectTransform amountRt = amountText.rectTransform;
+                amountRt.anchorMin = new Vector2(0.5f, 0.5f);
+                amountRt.anchorMax = new Vector2(0.5f, 0.5f);
+                amountRt.pivot = new Vector2(0.5f, 0.5f);
+                amountRt.anchoredPosition = louieSelectAmountOffset;
+                amountRt.sizeDelta = louieSelectAmountSize;
+                amountText.text = amount.ToString();
+                amountText.color = GetMusicSelectTextColor(amount > 0);
+                ApplySpecificSettingsTextStyle(amountText);
+                amountText.fontSize = louieSelectAmountFontSize;
+                amountText.alignment = TextAlignmentOptions.MidlineRight;
+            }
+        }
+
+        if (louieSelectHintText != null)
+        {
+            RectTransform hintRt = louieSelectHintText.rectTransform;
+            hintRt.anchorMin = new Vector2(0.5f, 0.5f);
+            hintRt.anchorMax = new Vector2(0.5f, 0.5f);
+            hintRt.pivot = new Vector2(0.5f, 0.5f);
+            hintRt.anchoredPosition = louieSelectHintOffset;
+            hintRt.sizeDelta = louieSelectHintSize;
+            louieSelectHintText.color = GetMusicSelectTextColor(false);
+            louieSelectHintText.text = "\u2190\u2192\u2191\u2193: Choose\nA/C: Change Number\nB: Back";
+            ApplySpecificSettingsTextStyle(louieSelectHintText);
+            louieSelectHintText.fontSize = louieSelectHintFontSize;
+            louieSelectHintText.alignment = TextAlignmentOptions.Center;
+            louieSelectHintText.lineSpacing = louieSelectHintLineSpacing;
+        }
+
+        if (louieSelectCursorRt != null)
+        {
+            int rowIndex = Mathf.Clamp(selectedLouieIndex, 0, Mathf.Max(0, count - 1));
+            louieSelectCursorRt.gameObject.SetActive(count > 0);
+            louieSelectCursorRt.sizeDelta = louieSelectCursorSize;
+            louieSelectCursorRt.anchoredPosition = GetLouieSelectCellPosition(rowIndex, columns, rows) + louieSelectIconOffset + louieSelectCursorOffset;
+            louieSelectCursorRt.SetAsLastSibling();
+            louieSelectCursorRenderer?.SetExternalBaseLocalPosition(louieSelectCursorRt.localPosition);
+            UpdateLouieSelectCursorAnimationState();
+        }
+    }
+
+    private void ConfigureLouieSelectRenderer(AnimatedSpriteRenderer renderer, int index)
+    {
+        if (renderer == null)
+            return;
+
+        AnimatedSpriteRenderer source = GetLouieDownRenderer(index);
+        if (source != null)
+        {
+            renderer.idleSprite = source.idleSprite;
+            renderer.animationSprite = source.animationSprite;
+            renderer.animationTime = Mathf.Max(0.001f, source.animationTime / Mathf.Max(0.01f, louieSelectAnimationSpeedMultiplier));
+            renderer.useSequenceDuration = source.useSequenceDuration;
+            renderer.sequenceDuration = Mathf.Max(0.001f, source.sequenceDuration / Mathf.Max(0.01f, louieSelectAnimationSpeedMultiplier));
+        }
+
+        renderer.frameOffsets = null;
+        renderer.idle = false;
+        renderer.loop = true;
+        renderer.CurrentFrame = 0;
+        renderer.RefreshFrame();
+    }
+
+    private void ApplyLouieSelectRendererTiming(AnimatedSpriteRenderer renderer, int index)
+    {
+        if (renderer == null)
+            return;
+
+        AnimatedSpriteRenderer source = GetLouieDownRenderer(index);
+        if (source == null)
+            return;
+
+        float speed = Mathf.Max(0.01f, louieSelectAnimationSpeedMultiplier);
+        renderer.animationTime = Mathf.Max(0.001f, source.animationTime / speed);
+        renderer.sequenceDuration = Mathf.Max(0.001f, source.sequenceDuration / speed);
+    }
+
+    private AnimatedSpriteRenderer GetLouieDownRenderer(int index)
+    {
+        GameObject prefab = louieSelectMountPrefabs != null && index >= 0 && index < louieSelectMountPrefabs.Length
+            ? louieSelectMountPrefabs[index]
+            : null;
+
+        if (prefab == null)
+            return null;
+
+        MountedType type = GetLouieSelectMountType(index);
+
+        if (type == MountedType.Mole)
+        {
+            AnimatedSpriteRenderer movimentation = FindAnimatedRendererByName(prefab.transform, "Movimentation");
+            if (movimentation != null)
+                return movimentation;
+        }
+
+        MountMovementController movement = prefab.GetComponent<MountMovementController>();
+        if (movement != null && movement.spriteRendererDown != null)
+            return movement.spriteRendererDown;
+
+        AnimatedSpriteRenderer down = FindAnimatedRendererByName(prefab.transform, "Down");
+        if (down != null)
+            return down;
+
+        return prefab.GetComponentInChildren<AnimatedSpriteRenderer>(true);
+    }
+
+    private static AnimatedSpriteRenderer FindAnimatedRendererByName(Transform rootTransform, string objectName)
+    {
+        if (rootTransform == null || string.IsNullOrEmpty(objectName))
+            return null;
+
+        AnimatedSpriteRenderer[] renderers = rootTransform.GetComponentsInChildren<AnimatedSpriteRenderer>(true);
+        for (int i = 0; i < renderers.Length; i++)
+        {
+            AnimatedSpriteRenderer renderer = renderers[i];
+            if (renderer != null && renderer.gameObject.name == objectName)
+                return renderer;
+        }
+
+        return null;
+    }
+
+    private int GetLouieSelectEntryCount()
+    {
+        return louieSelectMountPrefabs != null && louieSelectMountPrefabs.Length > 0
+            ? louieSelectMountPrefabs.Length
+            : GameManager.BattleModeRandomEggMountTypes.Length;
+    }
+
+    private MountedType GetLouieSelectMountType(int index)
+    {
+        GameObject prefab = louieSelectMountPrefabs != null && index >= 0 && index < louieSelectMountPrefabs.Length
+            ? louieSelectMountPrefabs[index]
+            : null;
+
+        if (prefab != null)
+        {
+            MountedType fromName = ResolveLouieSelectMountTypeFromName(prefab.name);
+            if (fromName != MountedType.None)
+                return fromName;
+        }
+
+        return index >= 0 && index < GameManager.BattleModeRandomEggMountTypes.Length
+            ? GameManager.BattleModeRandomEggMountTypes[index]
+            : MountedType.None;
+    }
+
+    private int GetLouieSelectCanonicalIndex(int visualIndex)
+    {
+        MountedType type = GetLouieSelectMountType(visualIndex);
+        for (int i = 0; i < GameManager.BattleModeRandomEggMountTypes.Length; i++)
+        {
+            if (GameManager.BattleModeRandomEggMountTypes[i] == type)
+                return i;
+        }
+
+        return -1;
+    }
+
+    private static MountedType ResolveLouieSelectMountTypeFromName(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            return MountedType.None;
+
+        string normalized = name.ToLowerInvariant();
+        if (normalized.Contains("blue")) return MountedType.Blue;
+        if (normalized.Contains("black")) return MountedType.Black;
+        if (normalized.Contains("purple")) return MountedType.Purple;
+        if (normalized.Contains("green")) return MountedType.Green;
+        if (normalized.Contains("yellow")) return MountedType.Yellow;
+        if (normalized.Contains("pink")) return MountedType.Pink;
+        if (normalized.Contains("red")) return MountedType.Red;
+        if (normalized.Contains("mole")) return MountedType.Mole;
+        if (normalized.Contains("tank")) return MountedType.Tank;
+        return MountedType.None;
+    }
+
+    private Vector2 GetLouieSelectCellPosition(int index, int columns, int rows)
+    {
+        int col = index % Mathf.Max(1, columns);
+        int row = index / Mathf.Max(1, columns);
+        float x = (col - ((columns - 1) * 0.5f)) * louieSelectCellSize.x;
+        float y = (((rows - 1) * 0.5f) - row) * louieSelectCellSize.y;
+        return louieSelectGridOffset + new Vector2(x, y);
+    }
+
+    private Vector2 GetLouieSelectIconSize(int index)
+    {
+        float multiplier = Mathf.Max(0.01f, louieSelectMountSizeMultiplier);
+        if (GetLouieSelectMountType(index) == MountedType.Pink)
+        {
+            multiplier *= Mathf.Max(0.01f, louieSelectPinkLouieSizeMultiplier);
+        }
+
+        return louieSelectIconSize * multiplier;
+    }
+
+    private void UpdateLouieSelectCursorAnimationState()
+    {
+        if (louieSelectCursorRenderer == null)
+            return;
+
+        bool confirming = louieSelectCursorConfirmTimer > 0f;
+        louieSelectCursorRenderer.idle = !confirming;
+        louieSelectCursorRenderer.loop = true;
+        louieSelectCursorRenderer.SetFrozen(false);
+        louieSelectCursorRenderer.RefreshFrame();
+    }
+
+    private void ChangeSelectedBattleLouieAmount(int delta)
+    {
+        if (workingBattleLouieAmounts == null || workingBattleLouieAmounts.Length == 0)
+            return;
+
+        int index = GetLouieSelectCanonicalIndex(selectedLouieIndex);
+        if (index < 0 || index >= workingBattleLouieAmounts.Length)
+            return;
+
+        int max = Mathf.Max(0, louieSelectMaxAmount);
+        workingBattleLouieAmounts[index] = Mathf.Clamp(workingBattleLouieAmounts[index] + delta, 0, max);
+        SaveCurrentBattleLouieAmounts();
+    }
+
+    private int GetWorkingBattleLouieAmount(int index)
+    {
+        int canonicalIndex = GetLouieSelectCanonicalIndex(index);
+        if (workingBattleLouieAmounts == null || canonicalIndex < 0 || canonicalIndex >= workingBattleLouieAmounts.Length)
+            return 0;
+
+        return workingBattleLouieAmounts[canonicalIndex];
+    }
+
+    private void SaveCurrentBattleLouieAmounts()
+    {
+        if (workingBattleLouieAmounts == null)
+            return;
+
+        SaveSystem.SetBattleModeLouieAmounts(workingBattleLouieAmounts);
     }
 
     private IEnumerator ConfirmSpecificSettingsStart()
@@ -4342,6 +4884,7 @@ public sealed class BattleModeMenu : MonoBehaviour
             MenuState.SpecificSettings => specificSettingsPrompt,
             MenuState.MusicSelect => musicSelectPrompt,
             MenuState.ItemSelect => itemSelectPrompt,
+            MenuState.LouieSelect => "SELECT LOUIES",
             _ => matchModePrompt
         };
     }
@@ -4526,6 +5069,9 @@ public sealed class BattleModeMenu : MonoBehaviour
             MenuState.ItemSelect => GetValidSpriteCount(itemSelectBackgrounds?.sprites) > 0
                 ? itemSelectBackgrounds?.sprites
                 : specificSettingsBackgrounds?.sprites,
+            MenuState.LouieSelect => GetValidSpriteCount(louieSelectBackgrounds?.sprites) > 0
+                ? louieSelectBackgrounds?.sprites
+                : specificSettingsBackgrounds?.sprites,
             _ => matchModeBackgrounds?.sprites
         };
     }
@@ -4675,6 +5221,8 @@ public sealed class BattleModeMenu : MonoBehaviour
             musicSelectRoot.localScale = Vector3.one * currentUiScale;
         if (itemSelectRoot != null)
             itemSelectRoot.localScale = Vector3.one * currentUiScale;
+        if (louieSelectRoot != null)
+            louieSelectRoot.localScale = Vector3.one * currentUiScale;
     }
 
     private static bool ApproximatelyRect(Rect a, Rect b)

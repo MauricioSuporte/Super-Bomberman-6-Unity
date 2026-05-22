@@ -746,6 +746,7 @@ public static class SaveSystem
 
         d.videoSettings ??= new SavedVideoSettings();
         EnsureBattleModeItemAmounts(d, GameManager.GetDefaultBattleModeHiddenItemAmounts());
+        EnsureBattleModeLouieAmounts(d, GameManager.GetDefaultBattleModeLouieAmounts());
 
         if (d.videoSettings.windowSizeMultiplier < 1)
             d.videoSettings.windowSizeMultiplier = 4;
@@ -1056,6 +1057,44 @@ public static class SaveSystem
             Save();
     }
 
+    public static int[] GetBattleModeLouieAmounts(IReadOnlyList<int> fallbackAmounts)
+    {
+        EnsureLoaded();
+        EnsureBattleModeLouieAmounts(data, fallbackAmounts);
+
+        int count = GameManager.BattleModeRandomEggMountTypes.Length;
+        int[] result = new int[count];
+        for (int i = 0; i < count; i++)
+            result[i] = Mathf.Clamp(data.battleModeLouieAmounts[i], 0, 99);
+
+        return result;
+    }
+
+    public static void SetBattleModeLouieAmounts(IReadOnlyList<int> amounts)
+    {
+        EnsureLoaded();
+        EnsureBattleModeLouieAmounts(data, GameManager.GetDefaultBattleModeLouieAmounts());
+
+        int count = GameManager.BattleModeRandomEggMountTypes.Length;
+        bool changed = false;
+        for (int i = 0; i < count; i++)
+        {
+            int value = amounts != null && i < amounts.Count
+                ? amounts[i]
+                : data.battleModeLouieAmounts[i];
+
+            value = Mathf.Clamp(value, 0, 99);
+            if (data.battleModeLouieAmounts[i] == value)
+                continue;
+
+            data.battleModeLouieAmounts[i] = value;
+            changed = true;
+        }
+
+        if (changed)
+            Save();
+    }
+
     private static void EnsureBattleModeItemAmounts(SaveData d, IReadOnlyList<int> fallbackAmounts)
     {
         if (d == null)
@@ -1098,6 +1137,46 @@ public static class SaveSystem
                 changed = true;
                 break;
             }
+        }
+
+        if (changed)
+            Save();
+    }
+
+    private static void EnsureBattleModeLouieAmounts(SaveData d, IReadOnlyList<int> fallbackAmounts)
+    {
+        if (d == null)
+            return;
+
+        int count = GameManager.BattleModeRandomEggMountTypes.Length;
+        if (d.battleModeLouieAmounts == null || d.battleModeLouieAmounts.Length != count)
+        {
+            int[] previous = d.battleModeLouieAmounts;
+            d.battleModeLouieAmounts = new int[count];
+            for (int i = 0; i < count; i++)
+            {
+                int value = previous != null && i < previous.Length
+                    ? previous[i]
+                    : fallbackAmounts != null && i < fallbackAmounts.Count
+                        ? fallbackAmounts[i]
+                        : 1;
+
+                d.battleModeLouieAmounts[i] = Mathf.Clamp(value, 0, 99);
+            }
+
+            Save();
+            return;
+        }
+
+        bool changed = false;
+        for (int i = 0; i < d.battleModeLouieAmounts.Length; i++)
+        {
+            int value = Mathf.Clamp(d.battleModeLouieAmounts[i], 0, 99);
+            if (d.battleModeLouieAmounts[i] == value)
+                continue;
+
+            d.battleModeLouieAmounts[i] = value;
+            changed = true;
         }
 
         if (changed)
