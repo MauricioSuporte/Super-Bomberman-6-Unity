@@ -16,7 +16,31 @@ public sealed class BattleModeMenu : MonoBehaviour
         RuleConfig = 4,
         StageSelect = 5,
         SpecificSettings = 6,
-        MusicSelect = 7
+        MusicSelect = 7,
+        ItemSelect = 8
+    }
+
+    private enum ItemSelectEntryId
+    {
+        ExtraBomb,
+        BlastRadius,
+        SpeedIncrese,
+        BombKick,
+        BombPunch,
+        PierceBomb,
+        ControlBomb,
+        PowerBomb,
+        RubberBomb,
+        MagnetBomb,
+        FullFire,
+        BombPass,
+        DestructiblePass,
+        InvincibleSuit,
+        Heart,
+        PowerGlove,
+        RandomEggsMin,
+        RandomEggsMax,
+        Skull
     }
 
     [System.Serializable]
@@ -92,6 +116,7 @@ public sealed class BattleModeMenu : MonoBehaviour
     [SerializeField] private string stageSelectPrompt = "STAGE SELECT";
     [SerializeField] private string specificSettingsPrompt = "SPECIFIC SETTINGS";
     [SerializeField] private string musicSelectPrompt = "SELECT MUSIC";
+    [SerializeField] private string itemSelectPrompt = "SELECT ITEMS";
 
     [Header("Options Panel")]
     [SerializeField] private SaveFileMenuOptions leftPanel;
@@ -125,6 +150,7 @@ public sealed class BattleModeMenu : MonoBehaviour
     [SerializeField] private BackgroundSet stageSelectBackgrounds = new();
     [SerializeField] private BackgroundSet specificSettingsBackgrounds = new();
     [SerializeField] private BackgroundSet musicSelectBackgrounds = new();
+    [SerializeField] private BackgroundSet itemSelectBackgrounds = new();
     [SerializeField, Min(0.01f)] private float backgroundSwapInterval = 2f;
     [SerializeField] private bool backgroundSwapLoop = true;
 
@@ -222,6 +248,46 @@ public sealed class BattleModeMenu : MonoBehaviour
     [SerializeField] private Vector2 musicSelectCursorOffset = new(-300f, 0f);
     [SerializeField] private Vector2 musicSelectCursorSize = new(62f, 62f);
     [SerializeField, Range(0f, 1f)] private float musicSelectPreviewVolumeMultiplier = 0.6f;
+    [SerializeField] private Vector2 itemSelectRootOffset = Vector2.zero;
+    [SerializeField] private List<ItemSelectEntryId> itemSelectEntryOrder = new()
+    {
+        ItemSelectEntryId.ExtraBomb,
+        ItemSelectEntryId.BlastRadius,
+        ItemSelectEntryId.SpeedIncrese,
+        ItemSelectEntryId.BombKick,
+        ItemSelectEntryId.BombPunch,
+        ItemSelectEntryId.PierceBomb,
+        ItemSelectEntryId.ControlBomb,
+        ItemSelectEntryId.PowerBomb,
+        ItemSelectEntryId.RubberBomb,
+        ItemSelectEntryId.MagnetBomb,
+        ItemSelectEntryId.FullFire,
+        ItemSelectEntryId.BombPass,
+        ItemSelectEntryId.DestructiblePass,
+        ItemSelectEntryId.InvincibleSuit,
+        ItemSelectEntryId.Heart,
+        ItemSelectEntryId.PowerGlove,
+        ItemSelectEntryId.RandomEggsMin,
+        ItemSelectEntryId.RandomEggsMax,
+        ItemSelectEntryId.Skull
+    };
+    [SerializeField] private Vector2 itemSelectGridOffset = new(0f, 8f);
+    [SerializeField, Min(1)] private int itemSelectColumns = 5;
+    [SerializeField] private Vector2 itemSelectCellSize = new(150f, 52f);
+    [SerializeField] private Vector2 itemSelectIconOffset = new(-42f, 0f);
+    [SerializeField] private Vector2 itemSelectIconSize = new(40f, 40f);
+    [SerializeField, Min(0.01f)] private float itemSelectRandomEggIconScale = 1.35f;
+    [SerializeField] private Vector2 itemSelectAmountOffset = new(36f, 0f);
+    [SerializeField] private Vector2 itemSelectAmountSize = new(64f, 36f);
+    [SerializeField] private int itemSelectAmountFontSize = 28;
+    [SerializeField] private Vector2 itemSelectCursorOffset = Vector2.zero;
+    [SerializeField] private Vector2 itemSelectCursorSize = new(54f, 54f);
+    [SerializeField] private Sprite[] itemSelectCursorSprites = new Sprite[3];
+    [SerializeField, Min(0.01f)] private float itemSelectCursorFrameSeconds = 0.08f;
+    [SerializeField] private Vector2 itemSelectHintOffset = new(0f, -300f);
+    [SerializeField] private Vector2 itemSelectHintSize = new(900f, 76f);
+    [SerializeField] private int itemSelectHintFontSize = 18;
+    [SerializeField, Min(0)] private int itemSelectMaxAmount = 99;
 
     [Header("Music")]
     [SerializeField] private AudioClip selectMusic;
@@ -383,6 +449,21 @@ public sealed class BattleModeMenu : MonoBehaviour
     private readonly List<TextMeshProUGUI> musicSelectCheckboxTexts = new();
     private RectTransform musicSelectCursorRt;
     private AnimatedSpriteRenderer musicSelectCursorRenderer;
+    private RectTransform itemSelectRoot;
+    private readonly List<RectTransform> itemSelectCells = new();
+    private readonly List<Image> itemSelectIconImages = new();
+    private readonly List<TextMeshProUGUI> itemSelectIconLabelTexts = new();
+    private readonly List<TextMeshProUGUI> itemSelectAmountTexts = new();
+    private TextMeshProUGUI itemSelectHintText;
+    private RectTransform itemSelectCursorRt;
+    private Image itemSelectCursorImage;
+    private AnimatedSpriteRenderer itemSelectCursorRenderer;
+    private Sprite[] itemSelectIconSprites;
+    private Sprite itemSelectRandomEggSprite;
+    private readonly List<ItemSelectEntryId> resolvedItemSelectEntryOrder = new();
+    private int[] workingBattleItemAmounts;
+    private int selectedItemIndex;
+    private float itemSelectCursorConfirmTimer;
     private BattleModeRules.BattleMusicSelection[] musicSelections;
     private int selectedMusicIndex;
     private int workingBattleMusicSelectionMask;
@@ -399,6 +480,29 @@ public sealed class BattleModeMenu : MonoBehaviour
     private readonly float[] nextMenuRepeatTime = new float[PlayerActionCount];
 
     private BattleModeRules.MatchMode SelectedMatchMode => MatchModes[Mathf.Clamp(selectedIndex, 0, MatchModes.Length - 1)];
+
+    private static readonly ItemSelectEntryId[] DefaultItemSelectEntryOrder =
+    {
+        ItemSelectEntryId.ExtraBomb,
+        ItemSelectEntryId.BlastRadius,
+        ItemSelectEntryId.SpeedIncrese,
+        ItemSelectEntryId.BombKick,
+        ItemSelectEntryId.BombPunch,
+        ItemSelectEntryId.PierceBomb,
+        ItemSelectEntryId.ControlBomb,
+        ItemSelectEntryId.PowerBomb,
+        ItemSelectEntryId.RubberBomb,
+        ItemSelectEntryId.MagnetBomb,
+        ItemSelectEntryId.FullFire,
+        ItemSelectEntryId.BombPass,
+        ItemSelectEntryId.DestructiblePass,
+        ItemSelectEntryId.InvincibleSuit,
+        ItemSelectEntryId.Heart,
+        ItemSelectEntryId.PowerGlove,
+        ItemSelectEntryId.RandomEggsMin,
+        ItemSelectEntryId.RandomEggsMax,
+        ItemSelectEntryId.Skull
+    };
 
     private void Awake()
     {
@@ -444,6 +548,8 @@ public sealed class BattleModeMenu : MonoBehaviour
             UpdateSpecificSettingsVisuals();
         else if (state == MenuState.MusicSelect)
             UpdateMusicSelectVisuals();
+        else if (state == MenuState.ItemSelect)
+            UpdateItemSelectVisuals();
 
         if (!menuActive || state == MenuState.SkinSelect)
             return;
@@ -970,6 +1076,8 @@ public sealed class BattleModeMenu : MonoBehaviour
             stageSelectRoot.gameObject.SetActive(false);
         if (musicSelectRoot != null)
             musicSelectRoot.gameObject.SetActive(false);
+        if (itemSelectRoot != null)
+            itemSelectRoot.gameObject.SetActive(false);
         if (specificSettingsRoot != null)
             specificSettingsRoot.gameObject.SetActive(false);
 
@@ -997,6 +1105,8 @@ public sealed class BattleModeMenu : MonoBehaviour
             specificSettingsRoot.gameObject.SetActive(false);
         if (musicSelectRoot != null)
             musicSelectRoot.gameObject.SetActive(false);
+        if (itemSelectRoot != null)
+            itemSelectRoot.gameObject.SetActive(false);
 
         if (leftPanel != null)
         {
@@ -2409,6 +2519,13 @@ public sealed class BattleModeMenu : MonoBehaviour
                     yield break;
                 }
 
+                if (string.Equals(SpecificSettingsOptions[selectedSpecificSettingIndex], "Items", System.StringComparison.Ordinal))
+                {
+                    PlaySfx(confirmSfx, confirmSfxVolume);
+                    yield return OpenItemSelectMenu();
+                    continue;
+                }
+
                 if (string.Equals(SpecificSettingsOptions[selectedSpecificSettingIndex], "Music", System.StringComparison.Ordinal))
                 {
                     PlaySfx(confirmSfx, confirmSfxVolume);
@@ -2782,6 +2899,668 @@ public sealed class BattleModeMenu : MonoBehaviour
         }
 
         return count;
+    }
+
+    private IEnumerator OpenItemSelectMenu()
+    {
+        state = MenuState.ItemSelect;
+        RefreshItemSelectEntryOrder();
+        selectedItemIndex = Mathf.Clamp(selectedItemIndex, 0, Mathf.Max(0, GetItemSelectEntryCount() - 1));
+
+        workingBattleItemAmounts = SaveSystem.GetBattleModeStageItemAmounts(
+            SaveSystem.GetBattleModeStageIndex(),
+            GameManager.GetDefaultBattleModeHiddenItemAmounts());
+
+        if (specificSettingsRoot != null)
+            specificSettingsRoot.gameObject.SetActive(false);
+
+        EnsureItemSelectBuilt();
+        ResetBackgroundSpriteSwap();
+        ApplyCurrentBackgroundSprite(true);
+        UpdatePromptTitle();
+        UpdateItemSelectVisuals();
+
+        Canvas.ForceUpdateCanvases();
+        ApplyDynamicScaleIfNeeded(true);
+
+        PlayerInputManager input = PlayerInputManager.Instance;
+        while (input != null && HasAnyRelevantHeldInput(input, out _, out _))
+            yield return null;
+
+        bool done = false;
+        while (!done)
+        {
+            if (input == null)
+            {
+                input = PlayerInputManager.Instance;
+                yield return null;
+                continue;
+            }
+
+            int itemCount = GetItemSelectEntryCount();
+            int columns = Mathf.Max(1, itemSelectColumns);
+
+            if (itemCount <= 0)
+            {
+                SaveCurrentBattleItemAmounts();
+                done = true;
+            }
+            else if (input.GetDown(GameSession.MinPlayerId, PlayerAction.MoveLeft))
+            {
+                selectedItemIndex = WrapIndex(selectedItemIndex - 1, itemCount);
+                PlaySfx(moveCursorSfx, moveCursorSfxVolume);
+                UpdateItemSelectVisuals();
+            }
+            else if (input.GetDown(GameSession.MinPlayerId, PlayerAction.MoveRight))
+            {
+                selectedItemIndex = WrapIndex(selectedItemIndex + 1, itemCount);
+                PlaySfx(moveCursorSfx, moveCursorSfxVolume);
+                UpdateItemSelectVisuals();
+            }
+            else if (input.GetDown(GameSession.MinPlayerId, PlayerAction.MoveUp))
+            {
+                selectedItemIndex = WrapIndex(selectedItemIndex - columns, itemCount);
+                PlaySfx(moveCursorSfx, moveCursorSfxVolume);
+                UpdateItemSelectVisuals();
+            }
+            else if (input.GetDown(GameSession.MinPlayerId, PlayerAction.MoveDown))
+            {
+                selectedItemIndex = WrapIndex(selectedItemIndex + columns, itemCount);
+                PlaySfx(moveCursorSfx, moveCursorSfxVolume);
+                UpdateItemSelectVisuals();
+            }
+            else if (input.GetDown(GameSession.MinPlayerId, PlayerAction.ActionB))
+            {
+                PlaySfx(returnSfx, returnSfxVolume);
+                done = true;
+            }
+            else if (input.GetDown(GameSession.MinPlayerId, PlayerAction.Start))
+            {
+                PlaySfx(confirmSfx, confirmSfxVolume);
+                done = true;
+            }
+            else if (input.GetDown(GameSession.MinPlayerId, PlayerAction.ActionA))
+            {
+                ChangeSelectedBattleItemAmount(1);
+                PlaySfx(confirmSfx, confirmSfxVolume);
+                itemSelectCursorConfirmTimer = Mathf.Max(0.01f, confirmFeedbackSeconds);
+                UpdateItemSelectVisuals();
+            }
+            else if (input.GetDown(GameSession.MinPlayerId, PlayerAction.ActionC))
+            {
+                ChangeSelectedBattleItemAmount(-1);
+                PlaySfx(confirmSfx, confirmSfxVolume);
+                itemSelectCursorConfirmTimer = Mathf.Max(0.01f, confirmFeedbackSeconds);
+                UpdateItemSelectVisuals();
+            }
+
+            UpdateItemSelectVisuals();
+            itemSelectCursorConfirmTimer = Mathf.Max(0f, itemSelectCursorConfirmTimer - Time.unscaledDeltaTime);
+            yield return null;
+        }
+
+        SaveCurrentBattleItemAmounts();
+
+        if (itemSelectRoot != null)
+            itemSelectRoot.gameObject.SetActive(false);
+
+        if (specificSettingsRoot != null)
+            specificSettingsRoot.gameObject.SetActive(true);
+
+        state = MenuState.SpecificSettings;
+        UpdatePromptTitle();
+        UpdateSpecificSettingsVisuals();
+    }
+
+    private void EnsureItemSelectBuilt()
+    {
+        RefreshItemSelectEntryOrder();
+
+        if (itemSelectRoot != null)
+        {
+            EnsureItemSelectCellCount();
+            itemSelectRoot.gameObject.SetActive(true);
+            itemSelectRoot.SetAsLastSibling();
+            return;
+        }
+
+        Transform parent = GetMenuContentParent();
+        GameObject rootGo = new("ItemSelectRoot", typeof(RectTransform));
+        rootGo.transform.SetParent(parent, false);
+        itemSelectRoot = rootGo.GetComponent<RectTransform>();
+        itemSelectRoot.anchorMin = new Vector2(0.5f, 0.5f);
+        itemSelectRoot.anchorMax = new Vector2(0.5f, 0.5f);
+        itemSelectRoot.pivot = new Vector2(0.5f, 0.5f);
+        itemSelectRoot.anchoredPosition = itemSelectRootOffset;
+        itemSelectRoot.sizeDelta = Vector2.zero;
+        itemSelectRoot.localScale = Vector3.one * currentUiScale;
+        itemSelectRoot.SetAsLastSibling();
+
+        itemSelectCells.Clear();
+        itemSelectIconImages.Clear();
+        itemSelectIconLabelTexts.Clear();
+        itemSelectAmountTexts.Clear();
+        itemSelectIconSprites = BuildItemSelectIconSprites();
+
+        EnsureItemSelectCellCount();
+        CreateItemSelectHintText();
+        CreateItemSelectCursor();
+    }
+
+    private void EnsureItemSelectCellCount()
+    {
+        int itemCount = GetItemSelectEntryCount();
+        while (itemSelectCells.Count < itemCount)
+            CreateItemSelectCell(itemSelectCells.Count);
+    }
+
+    private void CreateItemSelectCell(int index)
+    {
+        GameObject cellGo = new($"ItemCell_{index}", typeof(RectTransform));
+        cellGo.transform.SetParent(itemSelectRoot, false);
+        RectTransform cell = cellGo.GetComponent<RectTransform>();
+        cell.anchorMin = new Vector2(0.5f, 0.5f);
+        cell.anchorMax = new Vector2(0.5f, 0.5f);
+        cell.pivot = new Vector2(0.5f, 0.5f);
+        itemSelectCells.Add(cell);
+
+        GameObject iconGo = new($"ItemIcon_{index}", typeof(RectTransform), typeof(Image), typeof(Outline));
+        iconGo.transform.SetParent(cell, false);
+        Image icon = iconGo.GetComponent<Image>();
+        icon.preserveAspect = true;
+        icon.raycastTarget = false;
+        Outline outline = iconGo.GetComponent<Outline>();
+        outline.effectColor = Color.black;
+        outline.effectDistance = new Vector2(1f, -1f);
+        itemSelectIconImages.Add(icon);
+
+        GameObject iconLabelGo = new($"ItemIconLabel_{index}", typeof(RectTransform), typeof(TextMeshProUGUI));
+        iconLabelGo.transform.SetParent(cell, false);
+        TextMeshProUGUI iconLabel = iconLabelGo.GetComponent<TextMeshProUGUI>();
+        iconLabel.alignment = TextAlignmentOptions.Center;
+        iconLabel.raycastTarget = false;
+        iconLabel.textWrappingMode = TextWrappingModes.NoWrap;
+        iconLabel.overflowMode = TextOverflowModes.Overflow;
+        itemSelectIconLabelTexts.Add(iconLabel);
+
+        GameObject amountGo = new($"ItemAmount_{index}", typeof(RectTransform), typeof(TextMeshProUGUI));
+        amountGo.transform.SetParent(cell, false);
+        TextMeshProUGUI amountText = amountGo.GetComponent<TextMeshProUGUI>();
+        amountText.alignment = TextAlignmentOptions.MidlineRight;
+        amountText.raycastTarget = false;
+        amountText.textWrappingMode = TextWrappingModes.NoWrap;
+        amountText.overflowMode = TextOverflowModes.Overflow;
+        itemSelectAmountTexts.Add(amountText);
+    }
+
+    private void CreateItemSelectHintText()
+    {
+        GameObject go = new("ItemSelectHints", typeof(RectTransform), typeof(TextMeshProUGUI));
+        go.transform.SetParent(itemSelectRoot, false);
+
+        itemSelectHintText = go.GetComponent<TextMeshProUGUI>();
+        itemSelectHintText.raycastTarget = false;
+        itemSelectHintText.textWrappingMode = TextWrappingModes.NoWrap;
+        itemSelectHintText.overflowMode = TextOverflowModes.Overflow;
+        itemSelectHintText.text = "\u2190 \u2192\u2191\u2193: Choose\nA/C: Change Number\nB: Back";
+        ApplySpecificSettingsTextStyle(itemSelectHintText);
+    }
+
+    private void CreateItemSelectCursor()
+    {
+        GameObject cursorGo = new("ItemSelectCursor", typeof(RectTransform), typeof(Image), typeof(AnimatedSpriteRenderer));
+        cursorGo.transform.SetParent(itemSelectRoot, false);
+        itemSelectCursorRt = cursorGo.transform as RectTransform;
+        itemSelectCursorImage = cursorGo.GetComponent<Image>();
+        itemSelectCursorRenderer = cursorGo.GetComponent<AnimatedSpriteRenderer>();
+
+        itemSelectCursorRt.anchorMin = new Vector2(0.5f, 0.5f);
+        itemSelectCursorRt.anchorMax = new Vector2(0.5f, 0.5f);
+        itemSelectCursorRt.pivot = new Vector2(0.5f, 0.5f);
+        itemSelectCursorRt.sizeDelta = itemSelectCursorSize;
+        itemSelectCursorRt.localScale = Vector3.one;
+
+        if (itemSelectCursorImage != null)
+        {
+            itemSelectCursorImage.raycastTarget = false;
+            itemSelectCursorImage.preserveAspect = true;
+            itemSelectCursorImage.sprite = GetItemSelectCursorSprite(0);
+        }
+
+        if (itemSelectCursorRenderer != null)
+        {
+            Sprite[] animation = GetItemSelectCursorAnimationSprites();
+            itemSelectCursorRenderer.idleSprite = GetItemSelectCursorSprite(0);
+            itemSelectCursorRenderer.animationSprite = animation;
+            itemSelectCursorRenderer.animationTime = itemSelectCursorFrameSeconds;
+            itemSelectCursorRenderer.useSequenceDuration = false;
+            itemSelectCursorRenderer.SetFrozen(false);
+            itemSelectCursorRenderer.frameOffsets = null;
+            itemSelectCursorRenderer.idle = false;
+            itemSelectCursorRenderer.loop = true;
+            itemSelectCursorRenderer.CurrentFrame = 0;
+            itemSelectCursorRenderer.RefreshFrame();
+        }
+    }
+
+    private void UpdateItemSelectVisuals()
+    {
+        if (itemSelectRoot == null || !itemSelectRoot.gameObject.activeInHierarchy)
+            return;
+
+        RefreshItemSelectEntryOrder();
+        itemSelectRoot.anchoredPosition = itemSelectRootOffset;
+        int itemCount = GetItemSelectEntryCount();
+        int columns = Mathf.Max(1, itemSelectColumns);
+        int rows = Mathf.Max(1, Mathf.CeilToInt(itemCount / (float)columns));
+
+        for (int i = 0; i < itemSelectCells.Count; i++)
+        {
+            bool active = i < itemCount;
+            RectTransform cell = itemSelectCells[i];
+            if (cell == null)
+                continue;
+
+            cell.gameObject.SetActive(active);
+            if (!active)
+                continue;
+
+            cell.sizeDelta = itemSelectCellSize;
+            cell.anchoredPosition = GetItemSelectCellPosition(i, columns, rows);
+
+            if (i < itemSelectIconImages.Count && itemSelectIconImages[i] != null)
+            {
+                Image icon = itemSelectIconImages[i];
+                RectTransform iconRt = icon.rectTransform;
+                iconRt.anchorMin = new Vector2(0.5f, 0.5f);
+                iconRt.anchorMax = new Vector2(0.5f, 0.5f);
+                iconRt.pivot = new Vector2(0.5f, 0.5f);
+                iconRt.anchoredPosition = itemSelectIconOffset;
+                iconRt.sizeDelta = GetItemSelectIconSize(i);
+                icon.sprite = GetItemSelectIconSprite(i);
+                icon.enabled = icon.sprite != null;
+                icon.color = Color.white;
+            }
+
+            if (i < itemSelectIconLabelTexts.Count && itemSelectIconLabelTexts[i] != null)
+            {
+                TextMeshProUGUI iconLabel = itemSelectIconLabelTexts[i];
+                RectTransform labelRt = iconLabel.rectTransform;
+                labelRt.anchorMin = new Vector2(0.5f, 0.5f);
+                labelRt.anchorMax = new Vector2(0.5f, 0.5f);
+                labelRt.pivot = new Vector2(0.5f, 0.5f);
+                labelRt.anchoredPosition = itemSelectIconOffset;
+                labelRt.sizeDelta = GetItemSelectIconSize(i);
+                iconLabel.text = GetItemSelectIconLabel(i);
+                iconLabel.enabled = !string.IsNullOrEmpty(iconLabel.text);
+                iconLabel.color = Color.white;
+                ApplySpecificSettingsTextStyle(iconLabel);
+                iconLabel.fontSize = Mathf.Max(8, Mathf.RoundToInt(itemSelectAmountFontSize * 0.55f));
+                iconLabel.alignment = TextAlignmentOptions.Center;
+            }
+
+            if (i < itemSelectAmountTexts.Count && itemSelectAmountTexts[i] != null)
+            {
+                TextMeshProUGUI amountText = itemSelectAmountTexts[i];
+                RectTransform amountRt = amountText.rectTransform;
+                amountRt.anchorMin = new Vector2(0.5f, 0.5f);
+                amountRt.anchorMax = new Vector2(0.5f, 0.5f);
+                amountRt.pivot = new Vector2(0.5f, 0.5f);
+                amountRt.anchoredPosition = itemSelectAmountOffset;
+                amountRt.sizeDelta = itemSelectAmountSize;
+                amountText.text = GetWorkingBattleItemAmount(i).ToString();
+                amountText.color = i == selectedItemIndex ? GetMusicSelectTextColor(true) : GetMusicSelectTextColor(false);
+                ApplySpecificSettingsTextStyle(amountText);
+                amountText.fontSize = itemSelectAmountFontSize;
+                amountText.alignment = TextAlignmentOptions.MidlineRight;
+            }
+        }
+
+        if (itemSelectHintText != null)
+        {
+            RectTransform hintRt = itemSelectHintText.rectTransform;
+            hintRt.anchorMin = new Vector2(0.5f, 0.5f);
+            hintRt.anchorMax = new Vector2(0.5f, 0.5f);
+            hintRt.pivot = new Vector2(0.5f, 0.5f);
+            hintRt.anchoredPosition = itemSelectHintOffset;
+            hintRt.sizeDelta = itemSelectHintSize;
+            itemSelectHintText.color = GetMusicSelectTextColor(false);
+            itemSelectHintText.text = "\u2190 \u2192\u2191\u2193: Choose\nA/C: Change Number\nB: Back";
+            ApplySpecificSettingsTextStyle(itemSelectHintText);
+            itemSelectHintText.fontSize = itemSelectHintFontSize;
+            itemSelectHintText.alignment = TextAlignmentOptions.Center;
+        }
+
+        if (itemSelectCursorRt != null)
+        {
+            int rowIndex = Mathf.Clamp(selectedItemIndex, 0, Mathf.Max(0, itemCount - 1));
+            itemSelectCursorRt.gameObject.SetActive(itemCount > 0);
+            itemSelectCursorRt.sizeDelta = itemSelectCursorSize;
+            itemSelectCursorRt.anchoredPosition = GetItemSelectCellPosition(rowIndex, columns, rows) + itemSelectIconOffset + itemSelectCursorOffset;
+            itemSelectCursorRenderer?.SetExternalBaseLocalPosition(itemSelectCursorRt.localPosition);
+            UpdateItemSelectCursorAnimationState();
+        }
+    }
+
+    private Vector2 GetItemSelectCellPosition(int itemIndex, int columns, int rows)
+    {
+        int col = itemIndex % Mathf.Max(1, columns);
+        int row = itemIndex / Mathf.Max(1, columns);
+        float x = (col - ((columns - 1) * 0.5f)) * itemSelectCellSize.x;
+        float y = (((rows - 1) * 0.5f) - row) * itemSelectCellSize.y;
+        return itemSelectGridOffset + new Vector2(x, y);
+    }
+
+    private Vector2 GetItemSelectIconSize(int index)
+    {
+        return IsRandomEggEntry(index)
+            ? itemSelectIconSize * Mathf.Max(0.01f, itemSelectRandomEggIconScale)
+            : itemSelectIconSize;
+    }
+
+    private Sprite GetItemSelectCursorSprite(int index)
+    {
+        if (itemSelectCursorSprites == null ||
+            index < 0 ||
+            index >= itemSelectCursorSprites.Length)
+        {
+            return null;
+        }
+
+        return itemSelectCursorSprites[index];
+    }
+
+    private Sprite[] GetItemSelectCursorAnimationSprites()
+    {
+        Sprite frame0 = GetItemSelectCursorSprite(0);
+        Sprite frame1 = GetItemSelectCursorSprite(1);
+        Sprite frame2 = GetItemSelectCursorSprite(2);
+
+        if (frame0 == null || frame1 == null || frame2 == null)
+            return System.Array.Empty<Sprite>();
+
+        return new[] { frame0, frame1, frame2, frame1 };
+    }
+
+    private void UpdateItemSelectCursorAnimationState()
+    {
+        if (itemSelectCursorRenderer == null)
+            return;
+
+        Sprite[] animation = GetItemSelectCursorAnimationSprites();
+        if (animation.Length > 0)
+            itemSelectCursorRenderer.animationSprite = animation;
+
+        itemSelectCursorRenderer.idleSprite = GetItemSelectCursorSprite(0);
+        itemSelectCursorRenderer.animationTime = Mathf.Max(0.01f, itemSelectCursorFrameSeconds);
+        itemSelectCursorRenderer.idle = false;
+        itemSelectCursorRenderer.loop = true;
+        itemSelectCursorRenderer.SetFrozen(false);
+
+        itemSelectCursorRenderer.RefreshFrame();
+    }
+
+    private void ChangeSelectedBattleItemAmount(int delta)
+    {
+        if (workingBattleItemAmounts == null || workingBattleItemAmounts.Length == 0)
+            return;
+
+        int index = GetItemSelectCanonicalIndex(selectedItemIndex);
+        if (index < 0 || index >= workingBattleItemAmounts.Length)
+            return;
+
+        int max = Mathf.Max(0, itemSelectMaxAmount);
+        workingBattleItemAmounts[index] = Mathf.Clamp(workingBattleItemAmounts[index] + delta, 0, max);
+
+        NormalizeWorkingRandomEggRange(index);
+        SaveCurrentBattleItemAmounts();
+    }
+
+    private void NormalizeWorkingRandomEggRange(int changedIndex)
+    {
+        if (workingBattleItemAmounts == null)
+            return;
+
+        int minIndex = GetBattleModeHiddenDropEntryIndex(GameManager.BattleModeHiddenDropEntryKind.RandomEggsMin);
+        int maxIndex = GetBattleModeHiddenDropEntryIndex(GameManager.BattleModeHiddenDropEntryKind.RandomEggsMax);
+        if (minIndex < 0 ||
+            maxIndex < 0 ||
+            minIndex >= workingBattleItemAmounts.Length ||
+            maxIndex >= workingBattleItemAmounts.Length)
+        {
+            return;
+        }
+
+        if (changedIndex == minIndex && workingBattleItemAmounts[minIndex] > workingBattleItemAmounts[maxIndex])
+            workingBattleItemAmounts[maxIndex] = workingBattleItemAmounts[minIndex];
+        else if (changedIndex == maxIndex && workingBattleItemAmounts[maxIndex] < workingBattleItemAmounts[minIndex])
+            workingBattleItemAmounts[minIndex] = workingBattleItemAmounts[maxIndex];
+    }
+
+    private static int GetBattleModeHiddenDropEntryIndex(GameManager.BattleModeHiddenDropEntryKind kind)
+    {
+        GameManager.BattleModeHiddenDropEntry[] entries = GameManager.BattleModeHiddenDropEntries;
+        for (int i = 0; i < entries.Length; i++)
+        {
+            if (entries[i].Kind == kind)
+                return i;
+        }
+
+        return -1;
+    }
+
+    private void RefreshItemSelectEntryOrder()
+    {
+        List<ItemSelectEntryId> nextOrder = new(DefaultItemSelectEntryOrder.Length);
+        HashSet<ItemSelectEntryId> used = new();
+
+        if (itemSelectEntryOrder != null)
+        {
+            for (int i = 0; i < itemSelectEntryOrder.Count; i++)
+            {
+                ItemSelectEntryId entryId = itemSelectEntryOrder[i];
+                if (IsKnownItemSelectEntry(entryId) && used.Add(entryId))
+                    nextOrder.Add(entryId);
+            }
+        }
+
+        for (int i = 0; i < DefaultItemSelectEntryOrder.Length; i++)
+        {
+            ItemSelectEntryId entryId = DefaultItemSelectEntryOrder[i];
+            if (used.Add(entryId))
+                nextOrder.Add(entryId);
+        }
+
+        bool changed = resolvedItemSelectEntryOrder.Count != nextOrder.Count;
+        if (!changed)
+        {
+            for (int i = 0; i < nextOrder.Count; i++)
+            {
+                if (resolvedItemSelectEntryOrder[i] == nextOrder[i])
+                    continue;
+
+                changed = true;
+                break;
+            }
+        }
+
+        if (!changed)
+            return;
+
+        resolvedItemSelectEntryOrder.Clear();
+        resolvedItemSelectEntryOrder.AddRange(nextOrder);
+        itemSelectIconSprites = null;
+    }
+
+    private static bool IsKnownItemSelectEntry(ItemSelectEntryId entryId)
+    {
+        for (int i = 0; i < DefaultItemSelectEntryOrder.Length; i++)
+        {
+            if (DefaultItemSelectEntryOrder[i] == entryId)
+                return true;
+        }
+
+        return false;
+    }
+
+    private int GetItemSelectEntryCount()
+    {
+        if (resolvedItemSelectEntryOrder.Count == 0)
+            RefreshItemSelectEntryOrder();
+
+        return resolvedItemSelectEntryOrder.Count;
+    }
+
+    private ItemSelectEntryId GetItemSelectEntryId(int visualIndex)
+    {
+        if (resolvedItemSelectEntryOrder.Count == 0)
+            RefreshItemSelectEntryOrder();
+
+        if (resolvedItemSelectEntryOrder.Count == 0)
+            return ItemSelectEntryId.ExtraBomb;
+
+        return resolvedItemSelectEntryOrder[Mathf.Clamp(visualIndex, 0, resolvedItemSelectEntryOrder.Count - 1)];
+    }
+
+    private GameManager.BattleModeHiddenDropEntry GetItemSelectDropEntry(int visualIndex)
+    {
+        return GetItemSelectDropEntry(GetItemSelectEntryId(visualIndex));
+    }
+
+    private static GameManager.BattleModeHiddenDropEntry GetItemSelectDropEntry(ItemSelectEntryId entryId)
+    {
+        return entryId switch
+        {
+            ItemSelectEntryId.ExtraBomb => new GameManager.BattleModeHiddenDropEntry(GameManager.BattleModeHiddenDropEntryKind.Item, ItemType.ExtraBomb),
+            ItemSelectEntryId.BlastRadius => new GameManager.BattleModeHiddenDropEntry(GameManager.BattleModeHiddenDropEntryKind.Item, ItemType.BlastRadius),
+            ItemSelectEntryId.SpeedIncrese => new GameManager.BattleModeHiddenDropEntry(GameManager.BattleModeHiddenDropEntryKind.Item, ItemType.SpeedIncrese),
+            ItemSelectEntryId.BombKick => new GameManager.BattleModeHiddenDropEntry(GameManager.BattleModeHiddenDropEntryKind.Item, ItemType.BombKick),
+            ItemSelectEntryId.BombPunch => new GameManager.BattleModeHiddenDropEntry(GameManager.BattleModeHiddenDropEntryKind.Item, ItemType.BombPunch),
+            ItemSelectEntryId.PierceBomb => new GameManager.BattleModeHiddenDropEntry(GameManager.BattleModeHiddenDropEntryKind.Item, ItemType.PierceBomb),
+            ItemSelectEntryId.ControlBomb => new GameManager.BattleModeHiddenDropEntry(GameManager.BattleModeHiddenDropEntryKind.Item, ItemType.ControlBomb),
+            ItemSelectEntryId.PowerBomb => new GameManager.BattleModeHiddenDropEntry(GameManager.BattleModeHiddenDropEntryKind.Item, ItemType.PowerBomb),
+            ItemSelectEntryId.RubberBomb => new GameManager.BattleModeHiddenDropEntry(GameManager.BattleModeHiddenDropEntryKind.Item, ItemType.RubberBomb),
+            ItemSelectEntryId.MagnetBomb => new GameManager.BattleModeHiddenDropEntry(GameManager.BattleModeHiddenDropEntryKind.Item, ItemType.MagnetBomb),
+            ItemSelectEntryId.FullFire => new GameManager.BattleModeHiddenDropEntry(GameManager.BattleModeHiddenDropEntryKind.Item, ItemType.FullFire),
+            ItemSelectEntryId.BombPass => new GameManager.BattleModeHiddenDropEntry(GameManager.BattleModeHiddenDropEntryKind.Item, ItemType.BombPass),
+            ItemSelectEntryId.DestructiblePass => new GameManager.BattleModeHiddenDropEntry(GameManager.BattleModeHiddenDropEntryKind.Item, ItemType.DestructiblePass),
+            ItemSelectEntryId.InvincibleSuit => new GameManager.BattleModeHiddenDropEntry(GameManager.BattleModeHiddenDropEntryKind.Item, ItemType.InvincibleSuit),
+            ItemSelectEntryId.Heart => new GameManager.BattleModeHiddenDropEntry(GameManager.BattleModeHiddenDropEntryKind.Item, ItemType.Heart),
+            ItemSelectEntryId.PowerGlove => new GameManager.BattleModeHiddenDropEntry(GameManager.BattleModeHiddenDropEntryKind.Item, ItemType.PowerGlove),
+            ItemSelectEntryId.RandomEggsMin => new GameManager.BattleModeHiddenDropEntry(GameManager.BattleModeHiddenDropEntryKind.RandomEggsMin),
+            ItemSelectEntryId.RandomEggsMax => new GameManager.BattleModeHiddenDropEntry(GameManager.BattleModeHiddenDropEntryKind.RandomEggsMax),
+            ItemSelectEntryId.Skull => new GameManager.BattleModeHiddenDropEntry(GameManager.BattleModeHiddenDropEntryKind.Item, ItemType.Skull),
+            _ => new GameManager.BattleModeHiddenDropEntry(GameManager.BattleModeHiddenDropEntryKind.Item, ItemType.ExtraBomb)
+        };
+    }
+
+    private int GetItemSelectCanonicalIndex(int visualIndex)
+    {
+        GameManager.BattleModeHiddenDropEntry visualEntry = GetItemSelectDropEntry(visualIndex);
+        GameManager.BattleModeHiddenDropEntry[] entries = GameManager.BattleModeHiddenDropEntries;
+        for (int i = 0; i < entries.Length; i++)
+        {
+            if (IsSameBattleModeHiddenDropEntry(entries[i], visualEntry))
+                return i;
+        }
+
+        return -1;
+    }
+
+    private static bool IsSameBattleModeHiddenDropEntry(
+        GameManager.BattleModeHiddenDropEntry a,
+        GameManager.BattleModeHiddenDropEntry b)
+    {
+        return a.Kind == b.Kind &&
+            (a.Kind != GameManager.BattleModeHiddenDropEntryKind.Item || a.ItemType == b.ItemType);
+    }
+
+    private int GetWorkingBattleItemAmount(int index)
+    {
+        int canonicalIndex = GetItemSelectCanonicalIndex(index);
+        if (workingBattleItemAmounts == null || canonicalIndex < 0 || canonicalIndex >= workingBattleItemAmounts.Length)
+            return 0;
+
+        return workingBattleItemAmounts[canonicalIndex];
+    }
+
+    private void SaveCurrentBattleItemAmounts()
+    {
+        if (workingBattleItemAmounts == null)
+        {
+            workingBattleItemAmounts = SaveSystem.GetBattleModeStageItemAmounts(
+                SaveSystem.GetBattleModeStageIndex(),
+                GameManager.GetDefaultBattleModeHiddenItemAmounts());
+        }
+
+        SaveSystem.SetBattleModeStageItemAmounts(
+            SaveSystem.GetBattleModeStageIndex(),
+            workingBattleItemAmounts);
+    }
+
+    private Sprite[] BuildItemSelectIconSprites()
+    {
+        AutoItemDatabase.BuildIfNeeded();
+        int itemCount = GetItemSelectEntryCount();
+        Sprite[] sprites = new Sprite[itemCount];
+        itemSelectRandomEggSprite = GetItemIconSprite(ItemType.BlueLouieEgg);
+        for (int i = 0; i < itemCount; i++)
+        {
+            GameManager.BattleModeHiddenDropEntry entry = GetItemSelectDropEntry(i);
+            sprites[i] = entry.Kind == GameManager.BattleModeHiddenDropEntryKind.Item
+                ? GetItemIconSprite(entry.ItemType)
+                : itemSelectRandomEggSprite;
+        }
+
+        return sprites;
+    }
+
+    private Sprite GetItemSelectIconSprite(int index)
+    {
+        if (itemSelectIconSprites == null || itemSelectIconSprites.Length != GetItemSelectEntryCount())
+            itemSelectIconSprites = BuildItemSelectIconSprites();
+
+        if (index < 0 || index >= itemSelectIconSprites.Length)
+            return null;
+
+        return itemSelectIconSprites[index];
+    }
+
+    private string GetItemSelectIconLabel(int index)
+    {
+        GameManager.BattleModeHiddenDropEntry entry = GetItemSelectDropEntry(index);
+
+        return entry.Kind switch
+        {
+            GameManager.BattleModeHiddenDropEntryKind.RandomEggsMin => "MIN",
+            GameManager.BattleModeHiddenDropEntryKind.RandomEggsMax => "MAX",
+            _ => string.Empty
+        };
+    }
+
+    private bool IsRandomEggEntry(int index)
+    {
+        GameManager.BattleModeHiddenDropEntry entry = GetItemSelectDropEntry(index);
+
+        return entry.Kind == GameManager.BattleModeHiddenDropEntryKind.RandomEggsMin ||
+            entry.Kind == GameManager.BattleModeHiddenDropEntryKind.RandomEggsMax;
+    }
+
+    private static Sprite GetItemIconSprite(ItemType itemType)
+    {
+        ItemPickup prefab = AutoItemDatabase.Get(itemType);
+        if (prefab == null)
+            return null;
+
+        if (prefab.idleRenderer != null && prefab.idleRenderer.idleSprite != null)
+            return prefab.idleRenderer.idleSprite;
+
+        SpriteRenderer spriteRenderer = prefab.GetComponent<SpriteRenderer>();
+        if (spriteRenderer != null && spriteRenderer.sprite != null)
+            return spriteRenderer.sprite;
+
+        spriteRenderer = prefab.GetComponentInChildren<SpriteRenderer>(true);
+        return spriteRenderer != null ? spriteRenderer.sprite : null;
     }
 
     private IEnumerator ConfirmSpecificSettingsStart()
@@ -3344,6 +4123,10 @@ public sealed class BattleModeMenu : MonoBehaviour
             stageSelectRoot.gameObject.SetActive(false);
         if (specificSettingsRoot != null)
             specificSettingsRoot.gameObject.SetActive(false);
+        if (musicSelectRoot != null)
+            musicSelectRoot.gameObject.SetActive(false);
+        if (itemSelectRoot != null)
+            itemSelectRoot.gameObject.SetActive(false);
 
         if (root != null)
             root.SetActive(false);
@@ -3559,6 +4342,7 @@ public sealed class BattleModeMenu : MonoBehaviour
             MenuState.StageSelect => stageSelectPrompt,
             MenuState.SpecificSettings => specificSettingsPrompt,
             MenuState.MusicSelect => musicSelectPrompt,
+            MenuState.ItemSelect => itemSelectPrompt,
             _ => matchModePrompt
         };
     }
@@ -3740,6 +4524,9 @@ public sealed class BattleModeMenu : MonoBehaviour
             MenuState.StageSelect => stageSelectBackgrounds?.sprites,
             MenuState.SpecificSettings => specificSettingsBackgrounds?.sprites,
             MenuState.MusicSelect => musicSelectBackgrounds?.sprites,
+            MenuState.ItemSelect => GetValidSpriteCount(itemSelectBackgrounds?.sprites) > 0
+                ? itemSelectBackgrounds?.sprites
+                : specificSettingsBackgrounds?.sprites,
             _ => matchModeBackgrounds?.sprites
         };
     }
@@ -3887,6 +4674,8 @@ public sealed class BattleModeMenu : MonoBehaviour
             specificSettingsRoot.localScale = Vector3.one * currentUiScale;
         if (musicSelectRoot != null)
             musicSelectRoot.localScale = Vector3.one * currentUiScale;
+        if (itemSelectRoot != null)
+            itemSelectRoot.localScale = Vector3.one * currentUiScale;
     }
 
     private static bool ApproximatelyRect(Rect a, Rect b)

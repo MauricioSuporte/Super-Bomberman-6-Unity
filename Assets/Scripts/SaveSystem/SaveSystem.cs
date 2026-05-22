@@ -3,12 +3,14 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
+using static SaveData;
 
 public static class SaveSystem
 {
     private const string SaveFolderName = "SaveData";
     private const string SaveFileName = "save.dat";
     private const int MaxBossRushTopTimes = 3;
+    private const int BattleModeStageCount = 15;
 
     private static bool loaded;
     private static SaveData data;
@@ -519,6 +521,144 @@ public static class SaveSystem
         Save();
     }
 
+    public static int[] GetBattleModeStageItemAmounts(int stageIndex, IReadOnlyList<int> fallbackAmounts)
+    {
+        EnsureLoaded();
+        EnsureBattleModeStageItemAmounts(data);
+
+        int normalizedStage = Mathf.Clamp(stageIndex, 1, BattleModeStageCount);
+        int itemCount = GameManager.BattleModeHiddenDropEntries.Length;
+        BattleModeStageItemAmountsSave entry = GetBattleModeStageItemAmountsEntry(normalizedStage, create: true);
+
+        if (entry.amounts == null || entry.amounts.Length != itemCount)
+        {
+            entry.amounts = BuildBattleModeStageItemAmountsFromFallback(fallbackAmounts, itemCount);
+            Save();
+        }
+
+        bool changed = false;
+        for (int i = 0; i < itemCount; i++)
+        {
+            int fallbackValue = fallbackAmounts != null && i < fallbackAmounts.Count
+                ? fallbackAmounts[i]
+                : 0;
+
+            int value = i < entry.amounts.Length ? entry.amounts[i] : fallbackValue;
+            int normalizedValue = Mathf.Clamp(value, 0, 99);
+
+            if (entry.amounts[i] == normalizedValue)
+                continue;
+
+            entry.amounts[i] = normalizedValue;
+            changed = true;
+        }
+
+        NormalizeBattleModeRandomEggRange(entry.amounts);
+
+        if (changed)
+            Save();
+
+        int[] result = new int[itemCount];
+        Array.Copy(entry.amounts, result, itemCount);
+        return result;
+    }
+
+    private static int[] BuildBattleModeStageItemAmountsFromFallback(IReadOnlyList<int> fallbackAmounts, int itemCount)
+    {
+        int[] result = new int[itemCount];
+
+        for (int i = 0; i < itemCount; i++)
+        {
+            int value = fallbackAmounts != null && i < fallbackAmounts.Count
+                ? fallbackAmounts[i]
+                : 0;
+
+            result[i] = Mathf.Clamp(value, 0, 99);
+        }
+
+        NormalizeBattleModeRandomEggRange(result);
+        return result;
+    }
+
+    private static void NormalizeBattleModeRandomEggRange(int[] amounts)
+    {
+        if (amounts == null)
+            return;
+
+        int minIndex = GetBattleModeHiddenDropEntryIndex(GameManager.BattleModeHiddenDropEntryKind.RandomEggsMin);
+        int maxIndex = GetBattleModeHiddenDropEntryIndex(GameManager.BattleModeHiddenDropEntryKind.RandomEggsMax);
+
+        if (minIndex < 0 || maxIndex < 0)
+            return;
+
+        if (minIndex >= amounts.Length || maxIndex >= amounts.Length)
+            return;
+
+        amounts[minIndex] = Mathf.Clamp(amounts[minIndex], 0, 99);
+        amounts[maxIndex] = Mathf.Clamp(amounts[maxIndex], 0, 99);
+
+        if (amounts[maxIndex] < amounts[minIndex])
+            amounts[maxIndex] = amounts[minIndex];
+    }
+
+    private static int GetBattleModeHiddenDropEntryIndex(GameManager.BattleModeHiddenDropEntryKind kind)
+    {
+        for (int i = 0; i < GameManager.BattleModeHiddenDropEntries.Length; i++)
+        {
+            if (GameManager.BattleModeHiddenDropEntries[i].Kind == kind)
+                return i;
+        }
+
+        return -1;
+    }
+
+    public static void SetBattleModeStageItemAmounts(int stageIndex, IReadOnlyList<int> amounts)
+    {
+        EnsureLoaded();
+        EnsureBattleModeStageItemAmounts(data);
+
+        int normalizedStage = Mathf.Clamp(stageIndex, 1, BattleModeStageCount);
+        int itemCount = GameManager.BattleModeHiddenDropEntries.Length;
+        BattleModeStageItemAmountsSave entry = GetBattleModeStageItemAmountsEntry(normalizedStage, create: true);
+
+        if (entry.amounts == null || entry.amounts.Length != itemCount)
+            entry.amounts = GameManager.GetDefaultBattleModeHiddenItemAmounts();
+
+        bool changed = false;
+
+        for (int i = 0; i < itemCount; i++)
+        {
+            int value = amounts != null && i < amounts.Count
+                ? amounts[i]
+                : entry.amounts[i];
+
+            value = Mathf.Clamp(value, 0, 99);
+
+            if (entry.amounts[i] == value)
+                continue;
+
+            entry.amounts[i] = value;
+            changed = true;
+        }
+
+        int[] beforeRandomEggNormalize = new int[itemCount];
+        Array.Copy(entry.amounts, beforeRandomEggNormalize, itemCount);
+
+        NormalizeBattleModeRandomEggRange(entry.amounts);
+
+        for (int i = 0; i < itemCount; i++)
+        {
+            if (beforeRandomEggNormalize[i] != entry.amounts[i])
+            {
+                changed = true;
+                break;
+            }
+        }
+
+        if (changed)
+            Save();
+    }
+
     public static float GetBossRushUnlockTargetTime(BossRushDifficulty difficulty)
     {
         EnsureLoaded();
@@ -711,6 +851,7 @@ public static class SaveSystem
             d.activeSlotIndex = -1;
 
         d.videoSettings ??= new SavedVideoSettings();
+        EnsureBattleModeStageItemAmounts(d);
 
         if (d.videoSettings.windowSizeMultiplier < 1)
             d.videoSettings.windowSizeMultiplier = 4;
@@ -775,6 +916,86 @@ public static class SaveSystem
 
         int normalized = mask & validMask;
         return normalized;
+    }
+
+    private static void EnsureBattleModeStageItemAmounts(SaveData d)
+    {
+        if (d == null)
+            return;
+
+        d.battleModeStageItemAmounts ??= new List<BattleModeStageItemAmountsSave>();
+        int itemCount = GameManager.BattleModeHiddenDropEntries.Length;
+
+        for (int i = d.battleModeStageItemAmounts.Count - 1; i >= 0; i--)
+        {
+            BattleModeStageItemAmountsSave entry = d.battleModeStageItemAmounts[i];
+            if (entry == null)
+            {
+                d.battleModeStageItemAmounts.RemoveAt(i);
+                continue;
+            }
+
+            entry.stageIndex = Mathf.Clamp(entry.stageIndex, 1, BattleModeStageCount);
+            entry.amounts ??= new int[itemCount];
+            if (entry.amounts.Length != itemCount)
+                entry.amounts = ConvertBattleModeStageItemAmounts(entry.amounts, itemCount);
+
+            for (int a = 0; a < entry.amounts.Length; a++)
+                entry.amounts[a] = Mathf.Clamp(entry.amounts[a], 0, 99);
+        }
+    }
+
+    private static int[] ConvertBattleModeStageItemAmounts(int[] previous, int itemCount)
+    {
+        int[] converted = GameManager.GetDefaultBattleModeHiddenItemAmounts();
+        if (converted.Length != itemCount)
+            Array.Resize(ref converted, itemCount);
+
+        if (previous == null)
+            return converted;
+
+        if (previous.Length == 25 && itemCount == GameManager.BattleModeHiddenDropEntries.Length)
+        {
+            int copyCount = Mathf.Min(16, Mathf.Min(previous.Length, converted.Length));
+            for (int i = 0; i < copyCount; i++)
+                converted[i] = previous[i];
+
+            if (converted.Length > 18 && previous.Length > 24)
+                converted[18] = previous[24];
+
+            return converted;
+        }
+
+        for (int i = 0; i < converted.Length && i < previous.Length; i++)
+            converted[i] = previous[i];
+
+        return converted;
+    }
+
+    private static BattleModeStageItemAmountsSave GetBattleModeStageItemAmountsEntry(int stageIndex, bool create)
+    {
+        EnsureBattleModeStageItemAmounts(data);
+
+        for (int i = 0; i < data.battleModeStageItemAmounts.Count; i++)
+        {
+            BattleModeStageItemAmountsSave entry = data.battleModeStageItemAmounts[i];
+            if (entry != null && entry.stageIndex == stageIndex)
+                return entry;
+        }
+
+        if (!create)
+            return null;
+
+        BattleModeStageItemAmountsSave created = new()
+        {
+            stageIndex = stageIndex,
+            amounts = GameManager.GetDefaultBattleModeHiddenItemAmounts()
+        };
+
+        NormalizeBattleModeRandomEggRange(created.amounts);
+
+        data.battleModeStageItemAmounts.Add(created);
+        return created;
     }
 
     private static void EnsureBattleModePlayerControlModes(SaveData d)

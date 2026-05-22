@@ -928,6 +928,7 @@ MonoBehaviour:
   stageSelectPrompt: STAGE SELECT
   specificSettingsPrompt: SPECIFIC SETTINGS
   musicSelectPrompt: SELECT MUSIC
+  itemSelectPrompt: SELECT ITEMS
   leftPanel: {fileID: 2134452605}
   skinSelectMenu: {fileID: 300000200}
   matchModeLayout:
@@ -994,6 +995,10 @@ MonoBehaviour:
     sprites:
     - {fileID: 21300000, guid: 5e170c6aa8691964b95230b2f5e15203, type: 3}
     - {fileID: 21300000, guid: f396a7ec1cf82934b93075a3182d2db5, type: 3}
+  itemSelectBackgrounds:
+    sprites:
+    - {fileID: 21300000, guid: 364c7d34fbe0420459b37a3f648411f4, type: 3}
+    - {fileID: 21300000, guid: 85b9006df77ae1943a03c0c87e8e114e, type: 3}
   backgroundSwapInterval: 2
   backgroundSwapLoop: 1
   playerLabelHex: '#00FF3C'
@@ -1111,6 +1116,28 @@ MonoBehaviour:
   musicSelectCursorOffset: {x: -300, y: 0}
   musicSelectCursorSize: {x: 62, y: 62}
   musicSelectPreviewVolumeMultiplier: 0.6
+  itemSelectRootOffset: {x: 0, y: 0}
+  itemSelectEntryOrder: 00000000010000000200000003000000040000000f00000008000000070000000500000006000000090000000a0000000b0000000c0000000d0000000e000000120000001000000011000000
+  itemSelectGridOffset: {x: 0, y: 8}
+  itemSelectColumns: 5
+  itemSelectCellSize: {x: 150, y: 100}
+  itemSelectIconOffset: {x: -42, y: 0}
+  itemSelectIconSize: {x: 64, y: 64}
+  itemSelectRandomEggIconScale: 1.5
+  itemSelectAmountOffset: {x: 28, y: 0}
+  itemSelectAmountSize: {x: 64, y: 36}
+  itemSelectAmountFontSize: 32
+  itemSelectCursorOffset: {x: 0, y: 0}
+  itemSelectCursorSize: {x: 175, y: 175}
+  itemSelectCursorSprites:
+  - {fileID: -2147111915668503422, guid: b807c6cd0a7750a48bf6a607828d3595, type: 3}
+  - {fileID: -3362032097291837162, guid: b807c6cd0a7750a48bf6a607828d3595, type: 3}
+  - {fileID: 5683275989648866004, guid: b807c6cd0a7750a48bf6a607828d3595, type: 3}
+  itemSelectCursorFrameSeconds: 0.5
+  itemSelectHintOffset: {x: 0, y: -320}
+  itemSelectHintSize: {x: 900, y: 76}
+  itemSelectHintFontSize: 28
+  itemSelectMaxAmount: 99
   selectMusic: {fileID: 8300000, guid: da56bf64ad8b3f346bf9f3a08d30b816, type: 3}
   selectMusicVolume: 0.4
   loopSelectMusic: 1

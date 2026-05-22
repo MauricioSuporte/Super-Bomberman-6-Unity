@@ -63,6 +63,13 @@ public sealed class SaveData
     };
 
     public List<BossRushDifficultyTimesSave> bossRushTimes = new();
-
+    public List<BattleModeStageItemAmountsSave> battleModeStageItemAmounts = new();
     public SavedVideoSettings videoSettings = new();
+
+    [Serializable]
+    public sealed class BattleModeStageItemAmountsSave
+    {
+        public int stageIndex = 1;
+        public int[] amounts;
+    }
 }

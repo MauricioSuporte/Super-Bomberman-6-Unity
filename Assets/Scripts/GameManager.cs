@@ -7,6 +7,48 @@ using UnityEngine.Tilemaps;
 
 public class GameManager : MonoBehaviour
 {
+    public enum BattleModeHiddenDropEntryKind
+    {
+        Item,
+        RandomEggsMin,
+        RandomEggsMax
+    }
+
+    public readonly struct BattleModeHiddenDropEntry
+    {
+        public BattleModeHiddenDropEntry(BattleModeHiddenDropEntryKind kind, ItemType itemType = ItemType.ExtraBomb)
+        {
+            Kind = kind;
+            ItemType = itemType;
+        }
+
+        public BattleModeHiddenDropEntryKind Kind { get; }
+        public ItemType ItemType { get; }
+    }
+
+    public static readonly BattleModeHiddenDropEntry[] BattleModeHiddenDropEntries =
+    {
+        new(BattleModeHiddenDropEntryKind.Item, ItemType.ExtraBomb),
+        new(BattleModeHiddenDropEntryKind.Item, ItemType.BlastRadius),
+        new(BattleModeHiddenDropEntryKind.Item, ItemType.SpeedIncrese),
+        new(BattleModeHiddenDropEntryKind.Item, ItemType.BombKick),
+        new(BattleModeHiddenDropEntryKind.Item, ItemType.BombPunch),
+        new(BattleModeHiddenDropEntryKind.Item, ItemType.PierceBomb),
+        new(BattleModeHiddenDropEntryKind.Item, ItemType.ControlBomb),
+        new(BattleModeHiddenDropEntryKind.Item, ItemType.PowerBomb),
+        new(BattleModeHiddenDropEntryKind.Item, ItemType.RubberBomb),
+        new(BattleModeHiddenDropEntryKind.Item, ItemType.MagnetBomb),
+        new(BattleModeHiddenDropEntryKind.Item, ItemType.FullFire),
+        new(BattleModeHiddenDropEntryKind.Item, ItemType.BombPass),
+        new(BattleModeHiddenDropEntryKind.Item, ItemType.DestructiblePass),
+        new(BattleModeHiddenDropEntryKind.Item, ItemType.InvincibleSuit),
+        new(BattleModeHiddenDropEntryKind.Item, ItemType.Heart),
+        new(BattleModeHiddenDropEntryKind.Item, ItemType.PowerGlove),
+        new(BattleModeHiddenDropEntryKind.RandomEggsMin),
+        new(BattleModeHiddenDropEntryKind.RandomEggsMax),
+        new(BattleModeHiddenDropEntryKind.Item, ItemType.Skull)
+    };
+
     static readonly WaitForSecondsRealtime waitNextStageDelay = new(3f);
     static readonly WaitForSecondsRealtime waitBattleVictoryCheckDelay = new(0.5f);
     static readonly WaitForSecondsRealtime waitBattleVictoryDelay = new(1f);
@@ -154,7 +196,10 @@ public class GameManager : MonoBehaviour
             GameSession.Instance.BeginBattleMatch(currentSceneName, IsBattleModeTeamMatch());
 
         if (IsBattleModeScene())
+        {
             PlayerPersistentStats.ResetBattleModeLoadouts(BattleModeRules.Instance);
+            ApplySavedBattleModeHiddenItemAmounts();
+        }
 
         if (BossRushSession.IsActive && BossRushSession.IsBossRushScene(currentSceneName))
             BossRushTimerPresenter.EnsureInScene();
@@ -558,6 +603,135 @@ public class GameManager : MonoBehaviour
 
         TryAssignItem(ItemType.Clock, clockAmount);
         TryAssignItem(ItemType.Skull, skullAmount);
+    }
+
+    public static int[] GetDefaultBattleModeHiddenItemAmounts()
+    {
+        int[] result = new int[BattleModeHiddenDropEntries.Length];
+
+        for (int i = 0; i < result.Length; i++)
+            result[i] = GetDefaultBattleModeHiddenEntryAmount(BattleModeHiddenDropEntries[i]);
+
+        return result;
+    }
+
+    static int GetDefaultBattleModeHiddenEntryAmount(BattleModeHiddenDropEntry entry)
+    {
+        return entry.Kind switch
+        {
+            BattleModeHiddenDropEntryKind.RandomEggsMin => 4,
+            BattleModeHiddenDropEntryKind.RandomEggsMax => 8,
+            BattleModeHiddenDropEntryKind.Item => GetDefaultBattleModeHiddenItemAmount(entry.ItemType),
+            _ => 0
+        };
+    }
+
+    static int GetDefaultBattleModeHiddenItemAmount(ItemType type)
+    {
+        return type switch
+        {
+            ItemType.ExtraBomb => 12,
+            ItemType.BlastRadius => 10,
+            ItemType.SpeedIncrese => 8,
+            ItemType.BombKick => 4,
+            ItemType.BombPunch => 3,
+            ItemType.PierceBomb => 1,
+            ItemType.ControlBomb => 0,
+            ItemType.PowerBomb => 1,
+            ItemType.RubberBomb => 1,
+            ItemType.MagnetBomb => 1,
+            ItemType.FullFire => 1,
+            ItemType.BombPass => 1,
+            ItemType.DestructiblePass => 1,
+            ItemType.InvincibleSuit => 0,
+            ItemType.Heart => 0,
+            ItemType.PowerGlove => 3,
+            ItemType.Skull => 2,
+            _ => 0
+        };
+    }
+
+    void ApplySavedBattleModeHiddenItemAmounts()
+    {
+        int stageIndex = GetBattleModeStageIndexFromScene(SceneManager.GetActiveScene().name);
+        if (stageIndex <= 0)
+            return;
+
+        int[] amounts = SaveSystem.GetBattleModeStageItemAmounts(stageIndex, GetDefaultBattleModeHiddenItemAmounts());
+        ApplyBattleModeHiddenItemAmounts(amounts);
+    }
+
+    void ApplyBattleModeHiddenItemAmounts(IReadOnlyList<int> amounts)
+    {
+        if (amounts == null)
+            return;
+
+        for (int i = 0; i < BattleModeHiddenDropEntries.Length && i < amounts.Count; i++)
+            SetBattleModeHiddenEntryAmount(BattleModeHiddenDropEntries[i], amounts[i]);
+    }
+
+    void SetBattleModeHiddenEntryAmount(BattleModeHiddenDropEntry entry, int amount)
+    {
+        amount = Mathf.Clamp(amount, 0, 99);
+        switch (entry.Kind)
+        {
+            case BattleModeHiddenDropEntryKind.RandomEggsMin:
+                randomEggsMin = amount;
+                break;
+            case BattleModeHiddenDropEntryKind.RandomEggsMax:
+                randomEggsMax = Mathf.Max(randomEggsMin, amount);
+                break;
+            default:
+                SetBattleModeHiddenItemAmount(entry.ItemType, amount);
+                break;
+        }
+    }
+
+    void SetBattleModeHiddenItemAmount(ItemType type, int amount)
+    {
+        amount = Mathf.Clamp(amount, 0, 99);
+        switch (type)
+        {
+            case ItemType.ExtraBomb: extraBombAmount = amount; break;
+            case ItemType.BlastRadius: blastRadiusAmount = amount; break;
+            case ItemType.SpeedIncrese: speedIncreaseAmount = amount; break;
+            case ItemType.BombKick: kickBombAmount = amount; break;
+            case ItemType.BombPunch: punchBombAmount = amount; break;
+            case ItemType.PierceBomb: pierceBombAmount = amount; break;
+            case ItemType.ControlBomb: controlBombAmount = amount; break;
+            case ItemType.PowerBomb: powerBombAmount = amount; break;
+            case ItemType.RubberBomb: rubberBombAmount = amount; break;
+            case ItemType.MagnetBomb: magnetBombAmount = amount; break;
+            case ItemType.FullFire: fullFireAmount = amount; break;
+            case ItemType.BombPass: bombPassAmount = amount; break;
+            case ItemType.DestructiblePass: destructiblePassAmount = amount; break;
+            case ItemType.InvincibleSuit: invincibleSuitAmount = amount; break;
+            case ItemType.Heart: heartAmount = amount; break;
+            case ItemType.PowerGlove: powerGloveAmount = amount; break;
+            case ItemType.BlueLouieEgg: blueLouieEggAmount = amount; break;
+            case ItemType.BlackLouieEgg: blackLouieEggAmount = amount; break;
+            case ItemType.PurpleLouieEgg: purpleLouieEggAmount = amount; break;
+            case ItemType.GreenLouieEgg: greenLouieEggAmount = amount; break;
+            case ItemType.YellowLouieEgg: yellowLouieEggAmount = amount; break;
+            case ItemType.PinkLouieEgg: pinkLouieEggAmount = amount; break;
+            case ItemType.RedLouieEgg: redLouieEggAmount = amount; break;
+            case ItemType.Clock: clockAmount = amount; break;
+            case ItemType.Skull: skullAmount = amount; break;
+        }
+    }
+
+    static int GetBattleModeStageIndexFromScene(string sceneName)
+    {
+        const string prefix = "BattleMode_";
+        if (string.IsNullOrWhiteSpace(sceneName) ||
+            !sceneName.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+        {
+            return 0;
+        }
+
+        return int.TryParse(sceneName[prefix.Length..], out int index)
+            ? Mathf.Clamp(index, 1, 15)
+            : 0;
     }
 
     public GameObject GetSpawnForDestroyedBlock(Vector3Int cell)
