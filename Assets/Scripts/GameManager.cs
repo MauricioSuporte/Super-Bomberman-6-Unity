@@ -653,11 +653,7 @@ public class GameManager : MonoBehaviour
 
     void ApplySavedBattleModeHiddenItemAmounts()
     {
-        int stageIndex = GetBattleModeStageIndexFromScene(SceneManager.GetActiveScene().name);
-        if (stageIndex <= 0)
-            return;
-
-        int[] amounts = SaveSystem.GetBattleModeStageItemAmounts(stageIndex, GetDefaultBattleModeHiddenItemAmounts());
+        int[] amounts = SaveSystem.GetBattleModeItemAmounts(GetDefaultBattleModeHiddenItemAmounts());
         ApplyBattleModeHiddenItemAmounts(amounts);
     }
 

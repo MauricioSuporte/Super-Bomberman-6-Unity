@@ -287,6 +287,7 @@ public sealed class BattleModeMenu : MonoBehaviour
     [SerializeField] private Vector2 itemSelectHintOffset = new(0f, -300f);
     [SerializeField] private Vector2 itemSelectHintSize = new(900f, 76f);
     [SerializeField] private int itemSelectHintFontSize = 18;
+    [SerializeField, Min(0f)] private float itemSelectHintLineSpacing = 18f;
     [SerializeField, Min(0)] private int itemSelectMaxAmount = 99;
 
     [Header("Music")]
@@ -2907,8 +2908,7 @@ public sealed class BattleModeMenu : MonoBehaviour
         RefreshItemSelectEntryOrder();
         selectedItemIndex = Mathf.Clamp(selectedItemIndex, 0, Mathf.Max(0, GetItemSelectEntryCount() - 1));
 
-        workingBattleItemAmounts = SaveSystem.GetBattleModeStageItemAmounts(
-            SaveSystem.GetBattleModeStageIndex(),
+        workingBattleItemAmounts = SaveSystem.GetBattleModeItemAmounts(
             GameManager.GetDefaultBattleModeHiddenItemAmounts());
 
         if (specificSettingsRoot != null)
@@ -3224,10 +3224,12 @@ public sealed class BattleModeMenu : MonoBehaviour
             hintRt.pivot = new Vector2(0.5f, 0.5f);
             hintRt.anchoredPosition = itemSelectHintOffset;
             hintRt.sizeDelta = itemSelectHintSize;
+
             itemSelectHintText.color = GetMusicSelectTextColor(false);
-            itemSelectHintText.text = "\u2190 \u2192\u2191\u2193: Choose\nA/C: Change Number\nB: Back";
+            itemSelectHintText.text = "← →↑↓: Choose\nA/C: Change Number\nB: Back";
             ApplySpecificSettingsTextStyle(itemSelectHintText);
             itemSelectHintText.fontSize = itemSelectHintFontSize;
+            itemSelectHintText.lineSpacing = itemSelectHintLineSpacing;
             itemSelectHintText.alignment = TextAlignmentOptions.Center;
         }
 
@@ -3488,14 +3490,11 @@ public sealed class BattleModeMenu : MonoBehaviour
     {
         if (workingBattleItemAmounts == null)
         {
-            workingBattleItemAmounts = SaveSystem.GetBattleModeStageItemAmounts(
-                SaveSystem.GetBattleModeStageIndex(),
+            workingBattleItemAmounts = SaveSystem.GetBattleModeItemAmounts(
                 GameManager.GetDefaultBattleModeHiddenItemAmounts());
         }
 
-        SaveSystem.SetBattleModeStageItemAmounts(
-            SaveSystem.GetBattleModeStageIndex(),
-            workingBattleItemAmounts);
+        SaveSystem.SetBattleModeItemAmounts(workingBattleItemAmounts);
     }
 
     private Sprite[] BuildItemSelectIconSprites()

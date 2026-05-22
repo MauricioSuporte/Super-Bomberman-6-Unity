@@ -1971,7 +1971,7 @@ MonoBehaviour:
   videoValuesText: {fileID: 0}
   videoValuesRightPadding: 100
   titleMusic: {fileID: 8300000, guid: a9c7a0a0f576cf64691be8cb6b938d93, type: 3}
-  titleMusicVolume: 0.8
+  titleMusicVolume: 0.5
   exitDelayRealtime: 1
   startGameFadeOutDuration: 0.25
   cursorRenderer: {fileID: 544397349}

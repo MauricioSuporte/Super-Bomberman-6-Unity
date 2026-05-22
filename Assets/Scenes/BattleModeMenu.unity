@@ -1134,9 +1134,10 @@ MonoBehaviour:
   - {fileID: -3362032097291837162, guid: b807c6cd0a7750a48bf6a607828d3595, type: 3}
   - {fileID: 5683275989648866004, guid: b807c6cd0a7750a48bf6a607828d3595, type: 3}
   itemSelectCursorFrameSeconds: 0.5
-  itemSelectHintOffset: {x: 0, y: -320}
+  itemSelectHintOffset: {x: 0, y: -300}
   itemSelectHintSize: {x: 900, y: 76}
   itemSelectHintFontSize: 28
+  itemSelectHintLineSpacing: 18
   itemSelectMaxAmount: 99
   selectMusic: {fileID: 8300000, guid: da56bf64ad8b3f346bf9f3a08d30b816, type: 3}
   selectMusicVolume: 0.4
