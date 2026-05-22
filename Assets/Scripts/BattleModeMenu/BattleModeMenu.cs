@@ -2645,7 +2645,7 @@ public sealed class BattleModeMenu : MonoBehaviour
             bool selected = GameMusicController.IsBattleModeMusicSelected(workingBattleMusicSelectionMask, selections[i]);
             text.text = GameMusicController.FormatBattleModeMusicDisplayName(
                 GameMusicController.GetBattleModeMusicDisplayName(selections[i]));
-            text.color = i == selectedMusicIndex ? Color.green : Color.white;
+            text.color = GetMusicSelectTextColor(selected);
             ApplySpecificSettingsTextStyle(text);
 
             if (i >= musicSelectCheckboxTexts.Count || musicSelectCheckboxTexts[i] == null)
@@ -2660,7 +2660,7 @@ public sealed class BattleModeMenu : MonoBehaviour
             checkboxRt.sizeDelta = musicSelectCheckboxColumnSize;
             checkboxText.fontSize = musicSelectFontSize;
             checkboxText.text = selected ? "[x]" : "[ ]";
-            checkboxText.color = i == selectedMusicIndex ? Color.green : Color.white;
+            checkboxText.color = GetMusicSelectTextColor(selected);
             ApplySpecificSettingsTextStyle(checkboxText);
             checkboxText.alignment = TextAlignmentOptions.Center;
         }
@@ -2699,6 +2699,16 @@ public sealed class BattleModeMenu : MonoBehaviour
         }
 
         musicSelectCursorRenderer.RefreshFrame();
+    }
+
+    private Color GetMusicSelectTextColor(bool highlighted)
+    {
+        if (leftPanel != null)
+            return highlighted ? leftPanel.SelectedColor : leftPanel.NormalColor;
+
+        return highlighted
+            ? new Color32(0, 255, 60, 255)
+            : new Color32(0, 180, 0, 255);
     }
 
     private bool ToggleSelectedBattleMusic(out bool shouldPreviewMusic)

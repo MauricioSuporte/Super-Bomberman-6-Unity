@@ -95,6 +95,8 @@ public class SaveFileMenuOptions : MonoBehaviour
     public AnimatedSpriteRenderer CursorRenderer => cursorRenderer;
     public TMP_FontAsset OptionFontAsset => optionFontAsset != null ? optionFontAsset : optionItemPrefab != null ? optionItemPrefab.font : null;
     public Material OptionFontMaterialPreset => optionFontMaterialPreset;
+    public Color NormalColor => normalColor;
+    public Color SelectedColor => selectedColor;
 
     public void ApplyOptionTextStyleTo(TextMeshProUGUI txt, Color faceColor)
     {
