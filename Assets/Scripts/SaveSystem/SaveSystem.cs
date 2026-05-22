@@ -501,6 +501,24 @@ public static class SaveSystem
         Save();
     }
 
+    public static int GetBattleModeMusicSelectionMask()
+    {
+        EnsureLoaded();
+        return NormalizeBattleModeMusicSelectionMask(data.battleModeMusicSelectionMask);
+    }
+
+    public static void SetBattleModeMusicSelectionMask(int selectionMask)
+    {
+        EnsureLoaded();
+
+        int normalized = NormalizeBattleModeMusicSelectionMask(selectionMask);
+        if (data.battleModeMusicSelectionMask == normalized)
+            return;
+
+        data.battleModeMusicSelectionMask = normalized;
+        Save();
+    }
+
     public static float GetBossRushUnlockTargetTime(BossRushDifficulty difficulty)
     {
         EnsureLoaded();
@@ -703,6 +721,7 @@ public static class SaveSystem
         d.battleModeRoundTimerMode = (int)NormalizeBattleModeRoundTimerMode(d.battleModeRoundTimerMode);
         d.battleModeSuddenDeath = (int)NormalizeBattleModeSuddenDeathSetting(d.battleModeSuddenDeath);
         d.battleModeStageIndex = Mathf.Clamp(d.battleModeStageIndex, 1, 15);
+        d.battleModeMusicSelectionMask = NormalizeBattleModeMusicSelectionMask(d.battleModeMusicSelectionMask);
         EnsureBattleModePlayerControlModes(d);
         EnsureBattleModePlayerTeams(d);
     }
@@ -740,6 +759,22 @@ public static class SaveSystem
             return (BattleModeSuddenDeathSetting)setting;
 
         return BattleModeSuddenDeathSetting.Random;
+    }
+
+    private static int NormalizeBattleModeMusicSelectionMask(int mask)
+    {
+        int validMask = 0;
+        foreach (BattleModeRules.BattleMusicSelection selection in Enum.GetValues(typeof(BattleModeRules.BattleMusicSelection)))
+        {
+            if (selection == BattleModeRules.BattleMusicSelection.Random)
+                continue;
+
+            int bit = 1 << ((int)selection - 1);
+            validMask |= bit;
+        }
+
+        int normalized = mask & validMask;
+        return normalized;
     }
 
     private static void EnsureBattleModePlayerControlModes(SaveData d)

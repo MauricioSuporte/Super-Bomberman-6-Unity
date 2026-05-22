@@ -15,7 +15,8 @@ public sealed class BattleModeMenu : MonoBehaviour
         TeamSelect = 3,
         RuleConfig = 4,
         StageSelect = 5,
-        SpecificSettings = 6
+        SpecificSettings = 6,
+        MusicSelect = 7
     }
 
     [System.Serializable]
@@ -90,6 +91,7 @@ public sealed class BattleModeMenu : MonoBehaviour
     [SerializeField] private string ruleSelectPrompt = "RULE CONFIG";
     [SerializeField] private string stageSelectPrompt = "STAGE SELECT";
     [SerializeField] private string specificSettingsPrompt = "SPECIFIC SETTINGS";
+    [SerializeField] private string musicSelectPrompt = "SELECT MUSIC";
 
     [Header("Options Panel")]
     [SerializeField] private SaveFileMenuOptions leftPanel;
@@ -122,6 +124,7 @@ public sealed class BattleModeMenu : MonoBehaviour
     [SerializeField] private BackgroundSet ruleConfigBackgrounds = new();
     [SerializeField] private BackgroundSet stageSelectBackgrounds = new();
     [SerializeField] private BackgroundSet specificSettingsBackgrounds = new();
+    [SerializeField] private BackgroundSet musicSelectBackgrounds = new();
     [SerializeField, Min(0.01f)] private float backgroundSwapInterval = 2f;
     [SerializeField] private bool backgroundSwapLoop = true;
 
@@ -208,6 +211,17 @@ public sealed class BattleModeMenu : MonoBehaviour
     [SerializeField] private Vector2 battleStartOffset = Vector2.zero;
     [SerializeField] private Vector2 battleStartSize = new(190f, 19f);
     [SerializeField, Min(0.01f)] private float battleStartBlinkSeconds = 0.05f;
+    [SerializeField] private Vector2 musicSelectRootOffset = Vector2.zero;
+    [SerializeField] private Vector2 musicSelectOptionsOffset = new(120f, 0f);
+    [SerializeField] private Vector2 musicSelectNameColumnOffset = new(-180f, 0f);
+    [SerializeField] private Vector2 musicSelectCheckboxColumnOffset = new(260f, 0f);
+    [SerializeField] private Vector2 musicSelectNameColumnSize = new(520f, 36f);
+    [SerializeField] private Vector2 musicSelectCheckboxColumnSize = new(110f, 36f);
+    [SerializeField] private float musicSelectOptionRowSpacing = 16f;
+    [SerializeField] private int musicSelectFontSize = 28;
+    [SerializeField] private Vector2 musicSelectCursorOffset = new(-300f, 0f);
+    [SerializeField] private Vector2 musicSelectCursorSize = new(62f, 62f);
+    [SerializeField, Range(0f, 1f)] private float musicSelectPreviewVolumeMultiplier = 0.6f;
 
     [Header("Music")]
     [SerializeField] private AudioClip selectMusic;
@@ -364,6 +378,16 @@ public sealed class BattleModeMenu : MonoBehaviour
     private readonly List<TextMeshProUGUI> specificOptionTexts = new();
     private RectTransform specificCursorRt;
     private AnimatedSpriteRenderer specificCursorRenderer;
+    private RectTransform musicSelectRoot;
+    private readonly List<TextMeshProUGUI> musicSelectOptionTexts = new();
+    private readonly List<TextMeshProUGUI> musicSelectCheckboxTexts = new();
+    private RectTransform musicSelectCursorRt;
+    private AnimatedSpriteRenderer musicSelectCursorRenderer;
+    private BattleModeRules.BattleMusicSelection[] musicSelections;
+    private int selectedMusicIndex;
+    private int workingBattleMusicSelectionMask;
+    private bool musicSelectPreviewPlaying;
+    private float musicSelectCursorConfirmTimer;
     private int selectedSpecificSettingIndex;
     private bool specificSettingsReturnedToStageSelect;
     private bool specificStartConfirmed;
@@ -418,6 +442,8 @@ public sealed class BattleModeMenu : MonoBehaviour
             UpdateStageSelectVisuals();
         else if (state == MenuState.SpecificSettings)
             UpdateSpecificSettingsVisuals();
+        else if (state == MenuState.MusicSelect)
+            UpdateMusicSelectVisuals();
 
         if (!menuActive || state == MenuState.SkinSelect)
             return;
@@ -942,6 +968,8 @@ public sealed class BattleModeMenu : MonoBehaviour
             ruleConfigRoot.gameObject.SetActive(false);
         if (stageSelectRoot != null)
             stageSelectRoot.gameObject.SetActive(false);
+        if (musicSelectRoot != null)
+            musicSelectRoot.gameObject.SetActive(false);
         if (specificSettingsRoot != null)
             specificSettingsRoot.gameObject.SetActive(false);
 
@@ -967,6 +995,8 @@ public sealed class BattleModeMenu : MonoBehaviour
             stageSelectRoot.gameObject.SetActive(false);
         if (specificSettingsRoot != null)
             specificSettingsRoot.gameObject.SetActive(false);
+        if (musicSelectRoot != null)
+            musicSelectRoot.gameObject.SetActive(false);
 
         if (leftPanel != null)
         {
@@ -2379,6 +2409,13 @@ public sealed class BattleModeMenu : MonoBehaviour
                     yield break;
                 }
 
+                if (string.Equals(SpecificSettingsOptions[selectedSpecificSettingIndex], "Music", System.StringComparison.Ordinal))
+                {
+                    PlaySfx(confirmSfx, confirmSfxVolume);
+                    yield return OpenMusicSelectMenu();
+                    continue;
+                }
+
                 PlaySfx(deniedSfx, deniedSfxVolume);
             }
 
@@ -2390,6 +2427,351 @@ public sealed class BattleModeMenu : MonoBehaviour
             specificSettingsRoot.gameObject.SetActive(false);
 
         state = MenuState.StageSelect;
+    }
+
+    private IEnumerator OpenMusicSelectMenu()
+    {
+        state = MenuState.MusicSelect;
+        musicSelectPreviewPlaying = false;
+        selectedMusicIndex = Mathf.Clamp(selectedMusicIndex, 0, GetBattleMusicSelections().Length - 1);
+        workingBattleMusicSelectionMask = SaveSystem.GetBattleModeMusicSelectionMask();
+
+        if (specificSettingsRoot != null)
+            specificSettingsRoot.gameObject.SetActive(false);
+
+        EnsureMusicSelectBuilt();
+        ResetBackgroundSpriteSwap();
+        ApplyCurrentBackgroundSprite(true);
+        UpdatePromptTitle();
+        UpdateMusicSelectVisuals();
+
+        Canvas.ForceUpdateCanvases();
+        ApplyDynamicScaleIfNeeded(true);
+
+        PlayerInputManager input = PlayerInputManager.Instance;
+        while (input != null && HasAnyRelevantHeldInput(input, out _, out _))
+            yield return null;
+
+        bool done = false;
+        while (!done)
+        {
+            if (input == null)
+            {
+                input = PlayerInputManager.Instance;
+                yield return null;
+                continue;
+            }
+
+            if (input.GetDown(GameSession.MinPlayerId, PlayerAction.MoveUp))
+            {
+                selectedMusicIndex = WrapIndex(selectedMusicIndex - 1, GetBattleMusicSelections().Length);
+                PlaySfx(moveCursorSfx, moveCursorSfxVolume);
+                UpdateMusicSelectVisuals();
+            }
+            else if (input.GetDown(GameSession.MinPlayerId, PlayerAction.MoveDown))
+            {
+                selectedMusicIndex = WrapIndex(selectedMusicIndex + 1, GetBattleMusicSelections().Length);
+                PlaySfx(moveCursorSfx, moveCursorSfxVolume);
+                UpdateMusicSelectVisuals();
+            }
+            else if (input.GetDown(GameSession.MinPlayerId, PlayerAction.ActionB))
+            {
+                PlaySfx(returnSfx, returnSfxVolume);
+                SaveSystem.SetBattleModeMusicSelectionMask(workingBattleMusicSelectionMask);
+                done = true;
+            }
+            else if (input.GetDown(GameSession.MinPlayerId, PlayerAction.ActionA) ||
+                     input.GetDown(GameSession.MinPlayerId, PlayerAction.Start))
+            {
+                bool changedMusic = ToggleSelectedBattleMusic(out bool shouldPreviewMusic);
+                PlaySfx(confirmSfx, confirmSfxVolume);
+                if (changedMusic)
+                    musicSelectCursorConfirmTimer = Mathf.Max(0.01f, confirmFeedbackSeconds);
+                if (shouldPreviewMusic)
+                    PreviewSelectedBattleMusic();
+                UpdateMusicSelectVisuals();
+            }
+
+            UpdateMusicSelectVisuals();
+            musicSelectCursorConfirmTimer = Mathf.Max(0f, musicSelectCursorConfirmTimer - Time.unscaledDeltaTime);
+            yield return null;
+        }
+
+        if (musicSelectPreviewPlaying)
+            StartSelectMusic();
+
+        if (musicSelectRoot != null)
+            musicSelectRoot.gameObject.SetActive(false);
+
+        if (specificSettingsRoot != null)
+            specificSettingsRoot.gameObject.SetActive(true);
+
+        state = MenuState.SpecificSettings;
+        UpdatePromptTitle();
+        UpdateSpecificSettingsVisuals();
+    }
+
+    private void EnsureMusicSelectBuilt()
+    {
+        if (musicSelectRoot != null)
+        {
+            if (musicSelectCheckboxTexts.Count != musicSelectOptionTexts.Count)
+            {
+                for (int i = musicSelectCheckboxTexts.Count; i < musicSelectOptionTexts.Count; i++)
+                    musicSelectCheckboxTexts.Add(CreateMusicSelectCheckboxText(i));
+            }
+
+            musicSelectRoot.gameObject.SetActive(true);
+            musicSelectRoot.SetAsLastSibling();
+            return;
+        }
+
+        Transform parent = GetMenuContentParent();
+        GameObject rootGo = new("MusicSelectRoot", typeof(RectTransform));
+        rootGo.transform.SetParent(parent, false);
+        musicSelectRoot = rootGo.GetComponent<RectTransform>();
+        musicSelectRoot.anchorMin = new Vector2(0.5f, 0.5f);
+        musicSelectRoot.anchorMax = new Vector2(0.5f, 0.5f);
+        musicSelectRoot.pivot = new Vector2(0.5f, 0.5f);
+        musicSelectRoot.anchoredPosition = musicSelectRootOffset;
+        musicSelectRoot.sizeDelta = Vector2.zero;
+        musicSelectRoot.localScale = Vector3.one * currentUiScale;
+        musicSelectRoot.SetAsLastSibling();
+
+        musicSelectOptionTexts.Clear();
+        musicSelectCheckboxTexts.Clear();
+        BattleModeRules.BattleMusicSelection[] selections = GetBattleMusicSelections();
+        for (int i = 0; i < selections.Length; i++)
+        {
+            musicSelectOptionTexts.Add(CreateMusicSelectOptionText(i));
+            musicSelectCheckboxTexts.Add(CreateMusicSelectCheckboxText(i));
+        }
+
+        CreateMusicSelectCursor();
+    }
+
+    private TextMeshProUGUI CreateMusicSelectOptionText(int rowIndex)
+    {
+        GameObject go = new($"MusicOption_{rowIndex}", typeof(RectTransform), typeof(TextMeshProUGUI));
+        go.transform.SetParent(musicSelectRoot, false);
+
+        TextMeshProUGUI text = go.GetComponent<TextMeshProUGUI>();
+        text.alignment = TextAlignmentOptions.MidlineLeft;
+        text.fontSize = musicSelectFontSize;
+        text.color = Color.white;
+        text.raycastTarget = false;
+        text.textWrappingMode = TextWrappingModes.NoWrap;
+        text.overflowMode = TextOverflowModes.Overflow;
+        ApplySpecificSettingsTextStyle(text);
+        return text;
+    }
+
+    private TextMeshProUGUI CreateMusicSelectCheckboxText(int rowIndex)
+    {
+        GameObject go = new($"MusicCheckbox_{rowIndex}", typeof(RectTransform), typeof(TextMeshProUGUI));
+        go.transform.SetParent(musicSelectRoot, false);
+
+        TextMeshProUGUI text = go.GetComponent<TextMeshProUGUI>();
+        text.alignment = TextAlignmentOptions.Center;
+        text.fontSize = musicSelectFontSize;
+        text.color = Color.white;
+        text.raycastTarget = false;
+        text.textWrappingMode = TextWrappingModes.NoWrap;
+        text.overflowMode = TextOverflowModes.Overflow;
+        ApplySpecificSettingsTextStyle(text);
+        text.alignment = TextAlignmentOptions.Center;
+        return text;
+    }
+
+    private void CreateMusicSelectCursor()
+    {
+        AnimatedSpriteRenderer source = leftPanel != null ? leftPanel.CursorRenderer : null;
+        GameObject cursorGo;
+
+        if (source != null)
+        {
+            cursorGo = Instantiate(source.gameObject, musicSelectRoot, false);
+            cursorGo.name = "MusicSelectCursor";
+            musicSelectCursorRenderer = cursorGo.GetComponent<AnimatedSpriteRenderer>();
+        }
+        else
+        {
+            cursorGo = new GameObject("MusicSelectCursor", typeof(RectTransform));
+        }
+
+        musicSelectCursorRt = cursorGo.transform as RectTransform;
+        if (musicSelectCursorRt == null)
+            musicSelectCursorRt = cursorGo.AddComponent<RectTransform>();
+
+        musicSelectCursorRt.anchorMin = new Vector2(0.5f, 0.5f);
+        musicSelectCursorRt.anchorMax = new Vector2(0.5f, 0.5f);
+        musicSelectCursorRt.pivot = new Vector2(0.5f, 0.5f);
+        musicSelectCursorRt.sizeDelta = musicSelectCursorSize;
+        musicSelectCursorRt.localScale = Vector3.one;
+
+        if (musicSelectCursorRenderer != null)
+        {
+            musicSelectCursorRenderer.SetFrozen(false);
+            musicSelectCursorRenderer.frameOffsets = null;
+            musicSelectCursorRenderer.idle = true;
+            musicSelectCursorRenderer.loop = true;
+            musicSelectCursorRenderer.CurrentFrame = 0;
+            musicSelectCursorRenderer.RefreshFrame();
+        }
+    }
+
+    private void UpdateMusicSelectVisuals()
+    {
+        if (musicSelectRoot == null || !musicSelectRoot.gameObject.activeInHierarchy)
+            return;
+
+        musicSelectRoot.anchoredPosition = musicSelectRootOffset;
+        BattleModeRules.BattleMusicSelection[] selections = GetBattleMusicSelections();
+
+        for (int i = 0; i < musicSelectOptionTexts.Count; i++)
+        {
+            TextMeshProUGUI text = musicSelectOptionTexts[i];
+            if (text == null)
+                continue;
+
+            RectTransform textRt = text.rectTransform;
+            textRt.anchorMin = new Vector2(0.5f, 0.5f);
+            textRt.anchorMax = new Vector2(0.5f, 0.5f);
+            textRt.pivot = new Vector2(0.5f, 0.5f);
+            textRt.anchoredPosition = GetMusicSelectOptionPosition(i) + musicSelectNameColumnOffset;
+            textRt.sizeDelta = musicSelectNameColumnSize;
+            text.fontSize = musicSelectFontSize;
+
+            bool selected = GameMusicController.IsBattleModeMusicSelected(workingBattleMusicSelectionMask, selections[i]);
+            text.text = GameMusicController.FormatBattleModeMusicDisplayName(
+                GameMusicController.GetBattleModeMusicDisplayName(selections[i]));
+            text.color = i == selectedMusicIndex ? Color.green : Color.white;
+            ApplySpecificSettingsTextStyle(text);
+
+            if (i >= musicSelectCheckboxTexts.Count || musicSelectCheckboxTexts[i] == null)
+                continue;
+
+            TextMeshProUGUI checkboxText = musicSelectCheckboxTexts[i];
+            RectTransform checkboxRt = checkboxText.rectTransform;
+            checkboxRt.anchorMin = new Vector2(0.5f, 0.5f);
+            checkboxRt.anchorMax = new Vector2(0.5f, 0.5f);
+            checkboxRt.pivot = new Vector2(0.5f, 0.5f);
+            checkboxRt.anchoredPosition = GetMusicSelectOptionPosition(i) + musicSelectCheckboxColumnOffset;
+            checkboxRt.sizeDelta = musicSelectCheckboxColumnSize;
+            checkboxText.fontSize = musicSelectFontSize;
+            checkboxText.text = selected ? "[x]" : "[ ]";
+            checkboxText.color = i == selectedMusicIndex ? Color.green : Color.white;
+            ApplySpecificSettingsTextStyle(checkboxText);
+            checkboxText.alignment = TextAlignmentOptions.Center;
+        }
+
+        if (musicSelectCursorRt != null)
+        {
+            int rowIndex = Mathf.Clamp(selectedMusicIndex, 0, Mathf.Max(0, musicSelectOptionTexts.Count - 1));
+            musicSelectCursorRt.gameObject.SetActive(musicSelectOptionTexts.Count > 0);
+            musicSelectCursorRt.sizeDelta = musicSelectCursorSize;
+            musicSelectCursorRt.anchoredPosition = GetMusicSelectOptionPosition(rowIndex) + musicSelectNameColumnOffset + musicSelectCursorOffset;
+            musicSelectCursorRenderer?.SetExternalBaseLocalPosition(musicSelectCursorRt.localPosition);
+            UpdateMusicSelectCursorAnimationState();
+        }
+    }
+
+    private void UpdateMusicSelectCursorAnimationState()
+    {
+        if (musicSelectCursorRenderer == null)
+            return;
+
+        bool confirming = musicSelectCursorConfirmTimer > 0f;
+        if (confirming)
+        {
+            if (musicSelectCursorRenderer.idle)
+            {
+                musicSelectCursorRenderer.idle = false;
+                musicSelectCursorRenderer.loop = true;
+                musicSelectCursorRenderer.CurrentFrame = 0;
+            }
+        }
+        else if (!musicSelectCursorRenderer.idle)
+        {
+            musicSelectCursorRenderer.idle = true;
+            musicSelectCursorRenderer.loop = true;
+            musicSelectCursorRenderer.CurrentFrame = 0;
+        }
+
+        musicSelectCursorRenderer.RefreshFrame();
+    }
+
+    private bool ToggleSelectedBattleMusic(out bool shouldPreviewMusic)
+    {
+        shouldPreviewMusic = false;
+        BattleModeRules.BattleMusicSelection[] selections = GetBattleMusicSelections();
+        if (selections.Length <= 0)
+            return false;
+
+        BattleModeRules.BattleMusicSelection selection = selections[Mathf.Clamp(selectedMusicIndex, 0, selections.Length - 1)];
+        bool currentlySelected = GameMusicController.IsBattleModeMusicSelected(workingBattleMusicSelectionMask, selection);
+
+        if (selection == BattleModeRules.BattleMusicSelection.Random)
+        {
+            if (!currentlySelected)
+            {
+                workingBattleMusicSelectionMask = 0;
+                SaveSystem.SetBattleModeMusicSelectionMask(workingBattleMusicSelectionMask);
+                return true;
+            }
+
+            return false;
+        }
+
+        if (currentlySelected && CountSelectedBattleMusic(workingBattleMusicSelectionMask) <= 1)
+            return false;
+
+        workingBattleMusicSelectionMask = GameMusicController.SetBattleModeMusicSelected(
+            workingBattleMusicSelectionMask,
+            selection,
+            !currentlySelected);
+        SaveSystem.SetBattleModeMusicSelectionMask(workingBattleMusicSelectionMask);
+        shouldPreviewMusic = !currentlySelected;
+        return true;
+    }
+
+    private void PreviewSelectedBattleMusic()
+    {
+        BattleModeRules.BattleMusicSelection[] selections = GetBattleMusicSelections();
+        if (selections.Length <= 0 || GameMusicController.Instance == null)
+            return;
+
+        BattleModeRules.BattleMusicSelection selection = selections[Mathf.Clamp(selectedMusicIndex, 0, selections.Length - 1)];
+        musicSelectPreviewPlaying =
+            GameMusicController.Instance.PlayBattleModeMusicPreview(selection, musicSelectPreviewVolumeMultiplier) ||
+            musicSelectPreviewPlaying;
+    }
+
+    private BattleModeRules.BattleMusicSelection[] GetBattleMusicSelections()
+    {
+        musicSelections ??= GameMusicController.GetBattleModeMusicSelections();
+        return musicSelections;
+    }
+
+    private Vector2 GetMusicSelectOptionPosition(int rowIndex)
+    {
+        float rowHeight = Mathf.Max(musicSelectNameColumnSize.y, musicSelectCheckboxColumnSize.y);
+        float totalHeight = (GetBattleMusicSelections().Length - 1) * (rowHeight + musicSelectOptionRowSpacing);
+        float y = (totalHeight * 0.5f) - (rowIndex * (rowHeight + musicSelectOptionRowSpacing));
+        return musicSelectOptionsOffset + new Vector2(0f, y);
+    }
+
+    private static int CountSelectedBattleMusic(int selectionMask)
+    {
+        int count = 0;
+        BattleModeRules.BattleMusicSelection[] selections = GameMusicController.GetBattleModeMusicSelections();
+        for (int i = 0; i < selections.Length; i++)
+        {
+            if (GameMusicController.IsBattleModeMusicSelected(selectionMask, selections[i]))
+                count++;
+        }
+
+        return count;
     }
 
     private IEnumerator ConfirmSpecificSettingsStart()
@@ -3166,6 +3548,7 @@ public sealed class BattleModeMenu : MonoBehaviour
             MenuState.RuleConfig => ruleSelectPrompt,
             MenuState.StageSelect => stageSelectPrompt,
             MenuState.SpecificSettings => specificSettingsPrompt,
+            MenuState.MusicSelect => musicSelectPrompt,
             _ => matchModePrompt
         };
     }
@@ -3346,6 +3729,7 @@ public sealed class BattleModeMenu : MonoBehaviour
             MenuState.RuleConfig => ruleConfigBackgrounds?.sprites,
             MenuState.StageSelect => stageSelectBackgrounds?.sprites,
             MenuState.SpecificSettings => specificSettingsBackgrounds?.sprites,
+            MenuState.MusicSelect => musicSelectBackgrounds?.sprites,
             _ => matchModeBackgrounds?.sprites
         };
     }
@@ -3491,6 +3875,8 @@ public sealed class BattleModeMenu : MonoBehaviour
             stageSelectRoot.localScale = Vector3.one * currentUiScale;
         if (specificSettingsRoot != null)
             specificSettingsRoot.localScale = Vector3.one * currentUiScale;
+        if (musicSelectRoot != null)
+            musicSelectRoot.localScale = Vector3.one * currentUiScale;
     }
 
     private static bool ApproximatelyRect(Rect a, Rect b)

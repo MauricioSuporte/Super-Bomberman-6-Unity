@@ -176,6 +176,43 @@ public class GameMusicController : MonoBehaviour
         PlayMusicIntroThenLoop(defaultMusic, defaultMusicVolume, defaultMusicLoop, defaultMusicLoopVolume, 1f, restart);
     }
 
+    public bool PlayBattleModeMusicPreview(BattleModeRules.BattleMusicSelection selection, float volumeMultiplier = 1f)
+    {
+        if (selection == BattleModeRules.BattleMusicSelection.Random)
+            return false;
+
+        AudioClip[] battleModeClips = Resources.LoadAll<AudioClip>(BattleModeMusicResourcesPath);
+        if (battleModeClips == null || battleModeClips.Length <= 0)
+            return false;
+
+        for (int i = 0; i < BattleModeMusicConfigs.Length; i++)
+        {
+            BattleModeMusicConfig config = BattleModeMusicConfigs[i];
+            if (config.Selection != selection)
+                continue;
+
+            AudioClip introClip = FindClipByName(battleModeClips, config.IntroClipName);
+            if (introClip == null)
+                return false;
+
+            AudioClip loopClip = string.IsNullOrWhiteSpace(config.LoopClipName)
+                ? null
+                : FindClipByName(battleModeClips, config.LoopClipName);
+
+            float clampedMultiplier = Mathf.Clamp01(volumeMultiplier);
+            PlayMusicIntroThenLoop(
+                introClip,
+                config.IntroVolume * clampedMultiplier,
+                loopClip,
+                config.LoopVolume * clampedMultiplier,
+                1f,
+                true);
+            return true;
+        }
+
+        return false;
+    }
+
     public void PlayDefaultMusicWithPitch(float pitch, bool restart = true)
     {
         if (defaultMusic == null || musicSource == null)
@@ -440,7 +477,88 @@ public class GameMusicController : MonoBehaviour
             }
         }
 
+        int selectedMask = SaveSystem.GetBattleModeMusicSelectionMask();
+        int matchingCount = 0;
+        for (int i = 0; i < availableConfigs.Length; i++)
+        {
+            if (IsBattleModeMusicSelected(selectedMask, availableConfigs[i].Selection))
+                matchingCount++;
+        }
+
+        if (matchingCount <= 0)
+            return availableConfigs[Random.Range(0, availableConfigs.Length)];
+
+        int pick = Random.Range(0, matchingCount);
+        for (int i = 0; i < availableConfigs.Length; i++)
+        {
+            if (!IsBattleModeMusicSelected(selectedMask, availableConfigs[i].Selection))
+                continue;
+
+            if (pick == 0)
+                return availableConfigs[i];
+
+            pick--;
+        }
+
         return availableConfigs[Random.Range(0, availableConfigs.Length)];
+    }
+
+    public static BattleModeRules.BattleMusicSelection[] GetBattleModeMusicSelections()
+    {
+        BattleModeRules.BattleMusicSelection[] result = new BattleModeRules.BattleMusicSelection[BattleModeMusicConfigs.Length + 1];
+        result[0] = BattleModeRules.BattleMusicSelection.Random;
+        for (int i = 0; i < BattleModeMusicConfigs.Length; i++)
+            result[i + 1] = BattleModeMusicConfigs[i].Selection;
+
+        return result;
+    }
+
+    public static string GetBattleModeMusicDisplayName(BattleModeRules.BattleMusicSelection selection)
+    {
+        for (int i = 0; i < BattleModeMusicConfigs.Length; i++)
+        {
+            if (BattleModeMusicConfigs[i].Selection == selection)
+                return BattleModeMusicConfigs[i].IntroClipName;
+        }
+
+        return selection == BattleModeRules.BattleMusicSelection.Random
+            ? "Random"
+            : selection.ToString();
+    }
+
+    public static bool IsBattleModeMusicSelected(int selectionMask, BattleModeRules.BattleMusicSelection selection)
+    {
+        if (selection == BattleModeRules.BattleMusicSelection.Random)
+            return selectionMask == 0;
+
+        int bit = 1 << ((int)selection - 1);
+        return (selectionMask & bit) != 0;
+    }
+
+    public static int SetBattleModeMusicSelected(int selectionMask, BattleModeRules.BattleMusicSelection selection, bool selected)
+    {
+        if (selection == BattleModeRules.BattleMusicSelection.Random)
+            return selected ? 0 : selectionMask;
+
+        int bit = 1 << ((int)selection - 1);
+        return selected ? selectionMask | bit : selectionMask & ~bit;
+    }
+
+    public static string FormatBattleModeMusicDisplayName(string displayName)
+    {
+        if (string.IsNullOrWhiteSpace(displayName))
+            return displayName;
+
+        const string battlePrefix = "Battle";
+        int battleIndex = displayName.IndexOf(battlePrefix, System.StringComparison.OrdinalIgnoreCase);
+        if (battleIndex < 0)
+            return displayName;
+
+        int afterBattle = battleIndex + battlePrefix.Length;
+        if (afterBattle >= displayName.Length || !char.IsDigit(displayName[afterBattle]))
+            return displayName;
+
+        return displayName.Insert(afterBattle, " ");
     }
 
     static bool IsBattleModeScene(Scene scene)

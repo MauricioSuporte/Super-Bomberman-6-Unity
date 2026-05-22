@@ -927,6 +927,7 @@ MonoBehaviour:
   ruleSelectPrompt: RULE CONFIG
   stageSelectPrompt: STAGE SELECT
   specificSettingsPrompt: SPECIFIC SETTINGS
+  musicSelectPrompt: SELECT MUSIC
   leftPanel: {fileID: 2134452605}
   skinSelectMenu: {fileID: 300000200}
   matchModeLayout:
@@ -989,6 +990,10 @@ MonoBehaviour:
     sprites:
     - {fileID: 21300000, guid: bd837a932927eac4ebc35c193196ca5d, type: 3}
     - {fileID: 21300000, guid: 66f92625b09c3b94b87d10feeb633b6f, type: 3}
+  musicSelectBackgrounds:
+    sprites:
+    - {fileID: 21300000, guid: 5e170c6aa8691964b95230b2f5e15203, type: 3}
+    - {fileID: 21300000, guid: f396a7ec1cf82934b93075a3182d2db5, type: 3}
   backgroundSwapInterval: 2
   backgroundSwapLoop: 1
   playerLabelHex: '#00FF3C'
@@ -1095,8 +1100,19 @@ MonoBehaviour:
   battleStartOffset: {x: 0, y: 270}
   battleStartSize: {x: 190, y: 19}
   battleStartBlinkSeconds: 0.05
+  musicSelectRootOffset: {x: 0, y: 0}
+  musicSelectOptionsOffset: {x: 120, y: 0}
+  musicSelectNameColumnOffset: {x: -180, y: 0}
+  musicSelectCheckboxColumnOffset: {x: 260, y: 0}
+  musicSelectNameColumnSize: {x: 520, y: 36}
+  musicSelectCheckboxColumnSize: {x: 110, y: 36}
+  musicSelectOptionRowSpacing: 16
+  musicSelectFontSize: 28
+  musicSelectCursorOffset: {x: -300, y: 0}
+  musicSelectCursorSize: {x: 62, y: 62}
+  musicSelectPreviewVolumeMultiplier: 0.6
   selectMusic: {fileID: 8300000, guid: da56bf64ad8b3f346bf9f3a08d30b816, type: 3}
-  selectMusicVolume: 0.8
+  selectMusicVolume: 0.4
   loopSelectMusic: 1
   moveCursorSfx: {fileID: 8300000, guid: 9095599de31cf8543bb7e82ff2782f12, type: 3}
   moveCursorSfxVolume: 1
