@@ -77,6 +77,7 @@ public class GameManager : MonoBehaviour
     const float BattleRoundWinFinalFadeDuration = 0.5f;
     const string BattleVictorySfxResourcesPath = "Sounds/SB5 Sound Effects (48)";
     const string TitleScreenSceneName = "TitleScreen";
+    const string BattleModeMenuSceneName = "BattleModeMenu";
     static AudioClip battleVictorySfx;
 
     public static GameManager Instance { get; private set; }
@@ -1784,7 +1785,10 @@ public class GameManager : MonoBehaviour
             PlayerPersistentStats.RollbackStage();
 
             StagePreIntroPlayersWalk.SkipOnNextLoad();
-            SceneManager.LoadScene(TitleScreenSceneName);
+
+            BattleModeMenu.OpenDirectlyAtStageSelect = true;
+            SceneManager.LoadScene(BattleModeMenuSceneName);
+
             yield break;
         }
 
