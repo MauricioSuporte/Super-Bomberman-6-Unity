@@ -905,6 +905,10 @@ public sealed class BattleModeMenu : MonoBehaviour
             yield break;
         }
 
+        float wait = Mathf.Min(0.25f, Mathf.Max(0f, confirmFeedbackSeconds));
+        if (wait > 0f)
+            yield return new WaitForSecondsRealtime(wait);
+
         skinSelectMenu.ResumeBattleModeSelectionFromSavedSkins = true;
         yield return skinSelectMenu.SelectSkinRoutine();
 
