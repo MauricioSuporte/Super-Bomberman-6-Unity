@@ -456,6 +456,7 @@ public sealed class BattleModeMenu : MonoBehaviour
     private bool confirmed;
     private bool menuActive;
     private bool cursorConfirmVisual;
+    private bool directCharacterReturnedToPlayerSelect;
 
     private int backgroundSpriteIndex;
     private float backgroundSwapTimer;
@@ -764,30 +765,190 @@ public sealed class BattleModeMenu : MonoBehaviour
 
         fadeInCoroutine = StartCoroutine(FadeInRoutine());
 
+        MenuState flowState = MenuState.StageSelect;
+        bool resumeTeamSelectionAtLastMember = false;
+
         while (!confirmed)
         {
-            yield return OpenStageSelectMenu();
-
-            if (stageSelectionReturnedToRuleConfig)
+            if (flowState == MenuState.StageSelect)
             {
-                stageSelectionReturnedToRuleConfig = false;
+                yield return OpenStageSelectMenu();
 
-                PlaySfx(returnSfx, returnSfxVolume);
-                confirmed = true;
+                if (stageSelectionReturnedToRuleConfig)
+                {
+                    stageSelectionReturnedToRuleConfig = false;
+                    flowState = MenuState.RuleConfig;
+                    continue;
+                }
 
-                yield return FadeOutRoutine();
-                Hide();
-                LoadTitleScene();
+                flowState = MenuState.SpecificSettings;
+                continue;
+            }
+
+            if (flowState == MenuState.SpecificSettings)
+            {
+                yield return OpenSpecificSettingsMenu();
+
+                if (specificSettingsReturnedToStageSelect)
+                {
+                    specificSettingsReturnedToStageSelect = false;
+                    flowState = MenuState.StageSelect;
+                    continue;
+                }
 
                 yield break;
             }
 
-            yield return OpenSpecificSettingsMenu();
+            if (flowState == MenuState.RuleConfig)
+            {
+                yield return OpenRuleConfigMenu();
 
-            if (specificSettingsReturnedToStageSelect)
+                if (ruleConfigReturnedToTeamSelect)
+                {
+                    ruleConfigReturnedToTeamSelect = false;
+                    resumeTeamSelectionAtLastMember = true;
+                    flowState = MenuState.TeamSelect;
+                    continue;
+                }
+
+                if (ruleConfigReturnedToSkinSelect)
+                {
+                    ruleConfigReturnedToSkinSelect = false;
+                    flowState = MenuState.SkinSelect;
+                    continue;
+                }
+
+                flowState = MenuState.StageSelect;
                 continue;
+            }
 
-            break;
+            if (flowState == MenuState.TeamSelect)
+            {
+                yield return OpenTeamSelectMenu(resumeTeamSelectionAtLastMember);
+                resumeTeamSelectionAtLastMember = false;
+
+                if (teamSelectionReturnedToSkinSelect)
+                {
+                    teamSelectionReturnedToSkinSelect = false;
+                    flowState = MenuState.SkinSelect;
+                    continue;
+                }
+
+                flowState = MenuState.RuleConfig;
+                continue;
+            }
+
+            if (flowState == MenuState.SkinSelect)
+            {
+                yield return OpenCharacterSelectOnlyForDirectFlow();
+
+                if (directCharacterReturnedToPlayerSelect)
+                {
+                    directCharacterReturnedToPlayerSelect = false;
+
+                    ShowPlayerSelectAfterSkinOrTeamReturn();
+                    yield return ContinueDirectFlowFromPlayerSelectRoutine();
+
+                    yield break;
+                }
+
+                flowState = SelectedMatchMode == BattleModeRules.MatchMode.TagMatch
+                    ? MenuState.TeamSelect
+                    : MenuState.RuleConfig;
+
+                continue;
+            }
+
+            yield break;
+        }
+    }
+
+    private IEnumerator OpenCharacterSelectOnlyForDirectFlow()
+    {
+        directCharacterReturnedToPlayerSelect = false;
+
+        state = MenuState.SkinSelect;
+        menuActive = false;
+        cursorConfirmVisual = false;
+
+        ApplyBattleModeActivePlayerIds(includeComPlayers: false);
+
+        if (teamSelectRoot != null)
+            teamSelectRoot.gameObject.SetActive(false);
+        if (ruleConfigRoot != null)
+            ruleConfigRoot.gameObject.SetActive(false);
+        if (stageSelectRoot != null)
+            stageSelectRoot.gameObject.SetActive(false);
+        if (specificSettingsRoot != null)
+            specificSettingsRoot.gameObject.SetActive(false);
+        if (musicSelectRoot != null)
+            musicSelectRoot.gameObject.SetActive(false);
+        if (itemSelectRoot != null)
+            itemSelectRoot.gameObject.SetActive(false);
+        if (louieSelectRoot != null)
+            louieSelectRoot.gameObject.SetActive(false);
+        if (handicapSelectRoot != null)
+            handicapSelectRoot.gameObject.SetActive(false);
+
+        if (leftPanel != null)
+        {
+            leftPanel.HideCursor();
+            leftPanel.gameObject.SetActive(false);
+        }
+
+        UpdatePromptTitle();
+        ApplyCurrentBackgroundSprite(true);
+
+        if (skinSelectMenu == null)
+        {
+            directCharacterReturnedToPlayerSelect = true;
+            yield break;
+        }
+
+        yield return skinSelectMenu.SelectSkinRoutine();
+
+        ApplyBattleModeActivePlayerIds(includeComPlayers: true);
+        RestoreRootAfterEmbeddedSkinSelect();
+
+        if (skinSelectMenu.ReturnToTitleRequested)
+        {
+            directCharacterReturnedToPlayerSelect = true;
+            yield break;
+        }
+
+        directCharacterReturnedToPlayerSelect = false;
+    }
+
+    private IEnumerator ContinueDirectFlowFromPlayerSelectRoutine()
+    {
+        PlayerInputManager input = PlayerInputManager.Instance;
+
+        while (input != null && HasAnyRelevantHeldInput(input, out _, out _))
+            yield return null;
+
+        yield return null;
+
+        CapturePreviousHeldInputs(input);
+        menuActive = true;
+
+        while (!confirmed)
+        {
+            if (input == null)
+            {
+                input = PlayerInputManager.Instance;
+                yield return null;
+                continue;
+            }
+
+            if (state == MenuState.MatchMode)
+                yield return TickMatchModeInput(input);
+            else if (state == MenuState.PlayerSelect)
+                yield return TickPlayerSelectInput(input);
+            else
+                yield return null;
+
+            CapturePreviousHeldInputs(input);
+            yield return null;
         }
     }
 
