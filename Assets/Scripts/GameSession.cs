@@ -13,7 +13,7 @@ public sealed class GameSession : MonoBehaviour
     [Header("Players")]
     [Range(MinPlayerId, MaxPlayerId)]
     [SerializeField] private int activePlayerCount = 1;
-    [SerializeField, HideInInspector] private int activePlayerMask;
+    [SerializeField, HideInInspector] private int activePlayerMask = 1;
 
     [Header("Battle Match")]
     [SerializeField, HideInInspector] private bool battleMatchInProgress;
@@ -45,7 +45,7 @@ public sealed class GameSession : MonoBehaviour
     void Reset()
     {
         activePlayerCount = 1;
-        activePlayerMask = CreateMaskFromCount(activePlayerCount);
+        activePlayerMask = PlayerIdToMask(1);
         ResetBattleMatch();
     }
 

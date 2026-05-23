@@ -1245,6 +1245,9 @@ public class ControlsConfigMenu : MonoBehaviour
                     if (bulkStep >= BulkActions.Length)
                     {
                         SaveSystem.SaveControlsFromInputManager();
+
+                        ActivateTargetPlayerAfterSuccessfulRemap();
+
                         bulkSnapshot = null;
                         bulkStep = 0;
                         state = MenuState.SelectPlayer;
@@ -2127,5 +2130,19 @@ public class ControlsConfigMenu : MonoBehaviour
         }
 
         return changed;
+    }
+
+    void ActivateTargetPlayerAfterSuccessfulRemap()
+    {
+        int playerId = Mathf.Clamp(targetPlayerId, 1, MaxConfigurablePlayers);
+
+        var session = GameSession.Instance;
+        if (session == null)
+            return;
+
+        if (session.IsPlayerActive(playerId))
+            return;
+
+        session.SetPlayerActive(playerId, true);
     }
 }

@@ -25,8 +25,8 @@ public sealed class SaveData
         (int)BattleModePlayerControlMode.Com,
         (int)BattleModePlayerControlMode.Com,
         (int)BattleModePlayerControlMode.Com,
-        (int)BattleModePlayerControlMode.Off,
-        (int)BattleModePlayerControlMode.Off
+        (int)BattleModePlayerControlMode.Com,
+        (int)BattleModePlayerControlMode.Com
     };
     public int[] battleModePlayerTeams =
     {
