@@ -1657,18 +1657,15 @@ public class TitleScreenController : MonoBehaviour
 
                     if (menuIndex == OPTIONS_IDX_CONTROLS)
                     {
-                        LogControlsFlow($"Controls option selected scene={controlsSceneName}");
                         ControlsRequested = true;
 
                         HideFooterMessageImmediate();
                         HideBossRushLockedMessageImmediate();
                         StopPushStartBlink();
-                        LogControlsFlow("Title UI hidden before controls scene load");
 
                         if (!string.IsNullOrEmpty(controlsSceneName))
                         {
                             yield return StartControlsSceneFlow();
-                            LogControlsFlow($"Before LoadScene({controlsSceneName})");
                             SceneManager.LoadScene(controlsSceneName);
                             yield break;
                         }
@@ -1861,12 +1858,7 @@ public class TitleScreenController : MonoBehaviour
         StageIntroTransition transition = StageIntroTransition.Instance;
         if (transition != null)
         {
-            LogControlsFlow($"Start controls fade-out duration={d:0.000}");
             transition.StartFadeOut(d, false);
-        }
-        else
-        {
-            LogControlsFlow($"Controls fade-out skipped: no {nameof(StageIntroTransition)}");
         }
 
         yield return new WaitForSecondsRealtime(d);
@@ -2520,14 +2512,6 @@ public class TitleScreenController : MonoBehaviour
         float sy = r.height / Mathf.Max(1f, referenceHeight);
 
         return Mathf.Min(sx, sy);
-    }
-
-    void LogControlsFlow(string message)
-    {
-        Debug.Log(
-            $"{ControlsFlowLogPrefix} {message} | scene={SceneManager.GetActiveScene().name} frame={Time.frameCount} " +
-            $"rt={Time.realtimeSinceStartup:0.000} unscaled={Time.unscaledTime:0.000} dt={Time.unscaledDeltaTime:0.0000}",
-            this);
     }
 
     IEnumerator PlayTitleIntroIfAny()

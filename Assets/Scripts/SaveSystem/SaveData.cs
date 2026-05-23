@@ -15,8 +15,8 @@ public sealed class SaveData
     public int battleModeComputerLevel = (int)BattleModeComputerLevel.Normal;
     public int battleModeBattlesToWin = 3;
     public int battleModeRoundTimerMode = (int)BattleModeRules.RoundTimerMode.TwoMinutes;
-    public int battleModeSuddenDeath = (int)BattleModeSuddenDeathSetting.Random;
-    public bool battleModeRevengeBomber = false;
+    public int battleModeSuddenDeath = (int)BattleModeSuddenDeathSetting.On;
+    public bool battleModeRevengeBomber = true;
     public int battleModeStageIndex = 1;
     public int battleModeMusicSelectionMask = 0;
     public int[] battleModePlayerControlModes =
