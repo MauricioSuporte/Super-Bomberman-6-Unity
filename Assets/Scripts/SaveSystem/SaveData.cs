@@ -65,5 +65,55 @@ public sealed class SaveData
     public List<BossRushDifficultyTimesSave> bossRushTimes = new();
     public int[] battleModeItemAmounts;
     public int[] battleModeLouieAmounts;
+    public BattleModeHandicapSave battleModeHandicapGeneric = new();
+    public BattleModeHandicapSave battleModeHandicapPowerZone = new();
+    public BattleModeHandicapSave battleModeHandicapStage6 = new();
+    public bool battleModeHandicapStage6Initialized;
     public SavedVideoSettings videoSettings = new();
+
+    [Serializable]
+    public sealed class BattleModeHandicapSave
+    {
+        public BattleModeHandicapPlayerSave[] players =
+        {
+            new(),
+            new(),
+            new(),
+            new(),
+            new(),
+            new()
+        };
+    }
+
+    [Serializable]
+    public sealed class BattleModeHandicapPlayerSave
+    {
+        public int mountedLouie = (int)MountedType.None;
+        public int life = 0;
+        public int bombAmount = 1;
+        public int blastRadius = 2;
+        public int speedLevel = 2;
+        public int bombType = (int)BattleModeHandicapBombType.Default;
+        public bool punchBomb;
+        public bool powerGlove;
+        public int movementAbility = (int)BattleModeHandicapMovementAbility.None;
+        public bool fullFire;
+        public bool destructiblePass;
+    }
+}
+
+public enum BattleModeHandicapBombType
+{
+    Default = 0,
+    Power = 1,
+    Rubber = 2,
+    Pierce = 3,
+    Control = 4
+}
+
+public enum BattleModeHandicapMovementAbility
+{
+    None = 0,
+    Kick = 1,
+    BombPass = 2
 }

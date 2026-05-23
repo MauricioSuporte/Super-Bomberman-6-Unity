@@ -756,10 +756,14 @@ public static class PlayerPersistentStats
 
     public static void ResetBattleModeLoadouts(BattleModeRules rules)
     {
+        int battleModeStageIndex = GetActiveBattleModeStageIndex();
+        SaveData.BattleModeHandicapSave handicap = SaveSystem.GetBattleModeHandicapForStage(battleModeStageIndex);
+
         for (int i = 1; i <= 6; i++)
         {
             ResetBattleModeStateKeepingSkin(_p[i - 1]);
             rules?.ApplyStartingLoadout(i, _p[i - 1]);
+            ApplyBattleModeHandicap(i, _p[i - 1], handicap, battleModeStageIndex);
 
             CopyState(_p[i - 1], _stage[i - 1]);
         }
@@ -767,6 +771,98 @@ public static class PlayerPersistentStats
         stageActive = false;
         stageAnyItemPickupCollected = false;
         stageStartedWithDefaultState = false;
+    }
+
+    static int GetActiveBattleModeStageIndex()
+    {
+        string sceneName = SceneManager.GetActiveScene().name;
+        const string prefix = "BattleMode_";
+        if (!string.IsNullOrEmpty(sceneName) &&
+            sceneName.StartsWith(prefix, System.StringComparison.Ordinal) &&
+            int.TryParse(sceneName.Substring(prefix.Length), out int parsed))
+        {
+            return Mathf.Clamp(parsed, 1, 15);
+        }
+
+        return SaveSystem.GetBattleModeStageIndex();
+    }
+
+    static void ApplyBattleModeHandicap(
+        int playerId,
+        PlayerState state,
+        SaveData.BattleModeHandicapSave handicap,
+        int battleModeStageIndex)
+    {
+        if (state == null || handicap?.players == null)
+            return;
+
+        int index = Mathf.Clamp(playerId - 1, 0, handicap.players.Length - 1);
+        SaveData.BattleModeHandicapPlayerSave player = handicap.players[index];
+        if (player == null)
+            return;
+
+        state.Life = 1 + Mathf.Clamp(player.life, 0, 9);
+        state.BombAmount = Mathf.Clamp(player.bombAmount, 1, MaxBombAmount);
+        state.ExplosionRadius = Mathf.Clamp(player.blastRadius, 1, MaxExplosionRadius);
+        state.SpeedInternal = SpeedLevelToInternal(player.speedLevel);
+        state.MountedLouie = EnumIsMountedType(player.mountedLouie)
+            ? (MountedType)player.mountedLouie
+            : MountedType.None;
+
+        state.CanPunchBombs = player.punchBomb;
+        state.HasPowerGlove = player.powerGlove;
+        state.HasFullFire = player.fullFire;
+        state.CanPassDestructibles = player.destructiblePass;
+
+        ApplyHandicapBombType(state, (BattleModeHandicapBombType)player.bombType);
+        ApplyHandicapMovementAbility(state, (BattleModeHandicapMovementAbility)player.movementAbility);
+
+    }
+
+    static bool EnumIsMountedType(int value)
+    {
+        return System.Enum.IsDefined(typeof(MountedType), value);
+    }
+
+    static void ApplyHandicapBombType(PlayerState state, BattleModeHandicapBombType bombType)
+    {
+        state.HasPierceBombs = false;
+        state.HasControlBombs = false;
+        state.HasPowerBomb = false;
+        state.HasRubberBombs = false;
+        state.HasMagnetBomb = false;
+
+        switch (bombType)
+        {
+            case BattleModeHandicapBombType.Power:
+                state.HasPowerBomb = true;
+                break;
+            case BattleModeHandicapBombType.Rubber:
+                state.HasRubberBombs = true;
+                break;
+            case BattleModeHandicapBombType.Pierce:
+                state.HasPierceBombs = true;
+                break;
+            case BattleModeHandicapBombType.Control:
+                state.HasControlBombs = true;
+                break;
+        }
+    }
+
+    static void ApplyHandicapMovementAbility(PlayerState state, BattleModeHandicapMovementAbility movementAbility)
+    {
+        state.CanKickBombs = false;
+        state.CanPassBombs = false;
+
+        switch (movementAbility)
+        {
+            case BattleModeHandicapMovementAbility.Kick:
+                state.CanKickBombs = true;
+                break;
+            case BattleModeHandicapMovementAbility.BombPass:
+                state.CanPassBombs = true;
+                break;
+        }
     }
 
     static void ResetBattleModeStateKeepingSkin(PlayerState s)

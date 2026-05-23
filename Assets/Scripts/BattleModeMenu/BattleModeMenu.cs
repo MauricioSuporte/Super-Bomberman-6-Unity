@@ -18,7 +18,8 @@ public sealed class BattleModeMenu : MonoBehaviour
         SpecificSettings = 6,
         MusicSelect = 7,
         ItemSelect = 8,
-        LouieSelect = 9
+        LouieSelect = 9,
+        HandicapSelect = 10
     }
 
     private enum ItemSelectEntryId
@@ -86,6 +87,18 @@ public sealed class BattleModeMenu : MonoBehaviour
         public TextMeshProUGUI value;
     }
 
+    private sealed class HandicapRowVisual
+    {
+        public RectTransform root;
+        public Image playerImage;
+        public Image mountImage;
+        public Outline mountOutline;
+        public AnimatedSpriteRenderer mountRenderer;
+        public MountedType mountedType = MountedType.None;
+        public readonly List<Image> optionImages = new();
+        public readonly List<TextMeshProUGUI> optionTexts = new();
+    }
+
     [Header("UI Root")]
     [SerializeField] private GameObject root;
     [SerializeField] private Image backgroundImage;
@@ -118,6 +131,7 @@ public sealed class BattleModeMenu : MonoBehaviour
     [SerializeField] private string specificSettingsPrompt = "SPECIFIC SETTINGS";
     [SerializeField] private string musicSelectPrompt = "SELECT MUSIC";
     [SerializeField] private string itemSelectPrompt = "SELECT ITEMS";
+    [SerializeField] private string handicapSelectPrompt = "SELECT HANDICAP";
 
     [Header("Options Panel")]
     [SerializeField] private SaveFileMenuOptions leftPanel;
@@ -153,6 +167,7 @@ public sealed class BattleModeMenu : MonoBehaviour
     [SerializeField] private BackgroundSet musicSelectBackgrounds = new();
     [SerializeField] private BackgroundSet itemSelectBackgrounds = new();
     [SerializeField] private BackgroundSet louieSelectBackgrounds = new();
+    [SerializeField] private BackgroundSet handicapSelectBackgrounds = new();
     [SerializeField, Min(0.01f)] private float backgroundSwapInterval = 2f;
     [SerializeField] private bool backgroundSwapLoop = true;
 
@@ -312,6 +327,28 @@ public sealed class BattleModeMenu : MonoBehaviour
     [SerializeField, Min(0)] private int louieSelectMaxAmount = 99;
     [SerializeField] private GameObject[] louieSelectMountPrefabs = new GameObject[9];
     [SerializeField] private Color louieSelectDisabledTint = new(0.08f, 0.08f, 0.08f, 0.85f);
+    [SerializeField, Range(0f, 1f)] private float handicapSelectEmptyMountAlpha = 0.45f;
+    [SerializeField, Min(0.01f)] private float handicapSelectMountSizeMultiplier = 1f;
+    [SerializeField] private Vector2 handicapSelectRootOffset = Vector2.zero;
+    [SerializeField] private Vector2 handicapSelectRowsOffset = new(0f, 2f);
+    [SerializeField] private Vector2 handicapSelectRowSize = new(900f, 96f);
+    [SerializeField, Min(0f)] private float handicapSelectRowSpacing = 4f;
+    [SerializeField] private Vector2 handicapSelectPlayerOffset = new(-410f, 0f);
+    [SerializeField] private Vector2 handicapSelectPlayerSize = new(96f, 96f);
+    [SerializeField, Min(0.01f)] private float handicapSelectPlayerFrameSeconds = 0.22f;
+    [SerializeField] private Vector2 handicapSelectMountOffset = new(-304f, 0f);
+    [SerializeField] private Vector2 handicapSelectOptionStartOffset = new(-190f, 0f);
+    [SerializeField] private Vector2 handicapSelectOptionSpacing = new(80f, 0f);
+    [SerializeField] private Vector2 handicapSelectOptionIconSize = new(40f, 40f);
+    [SerializeField] private Vector2 handicapSelectOptionNumberOffset = new(0f, 9f);
+    [SerializeField] private Vector2 handicapSelectOptionTextSize = new(60f, 30f);
+    [SerializeField] private int handicapSelectOptionFontSize = 22;
+    [SerializeField] private Vector2 handicapSelectCursorOffset = new(-46f, 0f);
+    [SerializeField] private Vector2 handicapSelectCursorSize = new(62f, 62f);
+    [SerializeField] private Vector2 handicapSelectHintOffset = new(0f, -300f);
+    [SerializeField] private Vector2 handicapSelectHintSize = new(900f, 76f);
+    [SerializeField] private int handicapSelectHintFontSize = 22;
+    [SerializeField, Min(0f)] private float handicapSelectHintLineSpacing = 18f;
 
     [Header("Music")]
     [SerializeField] private AudioClip selectMusic;
@@ -499,6 +536,15 @@ public sealed class BattleModeMenu : MonoBehaviour
     private int[] workingBattleLouieAmounts;
     private int selectedLouieIndex;
     private float louieSelectCursorConfirmTimer;
+    private RectTransform handicapSelectRoot;
+    private readonly List<HandicapRowVisual> handicapRows = new();
+    private TextMeshProUGUI handicapSelectHintText;
+    private RectTransform handicapSelectCursorRt;
+    private AnimatedSpriteRenderer handicapSelectCursorRenderer;
+    private SaveData.BattleModeHandicapSave workingBattleHandicap;
+    private int selectedHandicapRow;
+    private int selectedHandicapColumn;
+    private float handicapSelectCursorConfirmTimer;
     private BattleModeRules.BattleMusicSelection[] musicSelections;
     private int selectedMusicIndex;
     private int workingBattleMusicSelectionMask;
@@ -587,6 +633,8 @@ public sealed class BattleModeMenu : MonoBehaviour
             UpdateItemSelectVisuals();
         else if (state == MenuState.LouieSelect)
             UpdateLouieSelectVisuals();
+        else if (state == MenuState.HandicapSelect)
+            UpdateHandicapSelectVisuals();
 
         if (!menuActive || state == MenuState.SkinSelect)
             return;
@@ -1496,7 +1544,10 @@ public sealed class BattleModeMenu : MonoBehaviour
     private Sprite GetTeamMemberSprite(int playerId, bool isCurrent)
     {
         BomberSkin skin = PlayerPersistentStats.Get(playerId).Skin;
-        bool assigned = playerId >= 1 && playerId < teamAssigned.Length && teamAssigned[playerId];
+        bool assigned = teamAssigned != null &&
+            playerId >= 1 &&
+            playerId < teamAssigned.Length &&
+            teamAssigned[playerId];
         float celebrationTime = GetTeamCelebrationTime(playerId);
 
         if (celebrationTime >= 0f)
@@ -2555,7 +2606,6 @@ public sealed class BattleModeMenu : MonoBehaviour
             else if (input.GetDown(GameSession.MinPlayerId, PlayerAction.ActionA) ||
                      input.GetDown(GameSession.MinPlayerId, PlayerAction.Start))
             {
-                LogSpecificStartTransition("InputConfirm.Down");
                 if (selectedSpecificSettingIndex == SpecificSettingsOptions.Length - 1)
                 {
                     yield return ConfirmSpecificSettingsStart();
@@ -2566,6 +2616,13 @@ public sealed class BattleModeMenu : MonoBehaviour
                 {
                     PlaySfx(confirmSfx, confirmSfxVolume);
                     yield return OpenItemSelectMenu();
+                    continue;
+                }
+
+                if (string.Equals(SpecificSettingsOptions[selectedSpecificSettingIndex], "Handicap", System.StringComparison.Ordinal))
+                {
+                    PlaySfx(confirmSfx, confirmSfxVolume);
+                    yield return OpenHandicapSelectMenu();
                     continue;
                 }
 
@@ -4104,6 +4161,704 @@ public sealed class BattleModeMenu : MonoBehaviour
         SaveSystem.SetBattleModeLouieAmounts(workingBattleLouieAmounts);
     }
 
+    private IEnumerator OpenHandicapSelectMenu()
+    {
+        state = MenuState.HandicapSelect;
+        playerModes = SaveSystem.GetBattleModePlayerControlModes();
+        selectedHandicapRow = Mathf.Clamp(selectedHandicapRow, 0, GameSession.MaxPlayerId - 1);
+        selectedHandicapRow = GetNextVisibleHandicapRow(selectedHandicapRow, 1);
+        selectedHandicapColumn = Mathf.Clamp(selectedHandicapColumn, 0, GetHandicapSelectColumnCount() - 1);
+        workingBattleHandicap = SaveSystem.GetBattleModeHandicapForStage(SaveSystem.GetBattleModeStageIndex());
+
+        if (specificSettingsRoot != null)
+            specificSettingsRoot.gameObject.SetActive(false);
+
+        EnsureHandicapSelectBuilt();
+        ResetBackgroundSpriteSwap();
+        ApplyCurrentBackgroundSprite(true);
+        UpdatePromptTitle();
+        UpdateHandicapSelectVisuals();
+
+        Canvas.ForceUpdateCanvases();
+        ApplyDynamicScaleIfNeeded(true);
+
+        PlayerInputManager input = PlayerInputManager.Instance;
+        while (input != null && HasAnyRelevantHeldInput(input, out _, out _))
+            yield return null;
+
+        bool done = false;
+        while (!done)
+        {
+            if (input == null)
+            {
+                input = PlayerInputManager.Instance;
+                yield return null;
+                continue;
+            }
+
+            if (input.GetDown(GameSession.MinPlayerId, PlayerAction.MoveLeft))
+            {
+                selectedHandicapColumn = WrapIndex(selectedHandicapColumn - 1, GetHandicapSelectColumnCount());
+                PlaySfx(moveCursorSfx, moveCursorSfxVolume);
+            }
+            else if (input.GetDown(GameSession.MinPlayerId, PlayerAction.MoveRight))
+            {
+                selectedHandicapColumn = WrapIndex(selectedHandicapColumn + 1, GetHandicapSelectColumnCount());
+                PlaySfx(moveCursorSfx, moveCursorSfxVolume);
+            }
+            else if (input.GetDown(GameSession.MinPlayerId, PlayerAction.MoveUp))
+            {
+                selectedHandicapRow = GetNextVisibleHandicapRow(selectedHandicapRow - 1, -1);
+                PlaySfx(moveCursorSfx, moveCursorSfxVolume);
+            }
+            else if (input.GetDown(GameSession.MinPlayerId, PlayerAction.MoveDown))
+            {
+                selectedHandicapRow = GetNextVisibleHandicapRow(selectedHandicapRow + 1, 1);
+                PlaySfx(moveCursorSfx, moveCursorSfxVolume);
+            }
+            else if (input.GetDown(GameSession.MinPlayerId, PlayerAction.ActionB))
+            {
+                PlaySfx(returnSfx, returnSfxVolume);
+                done = true;
+            }
+            else if (input.GetDown(GameSession.MinPlayerId, PlayerAction.Start))
+            {
+                PlaySfx(confirmSfx, confirmSfxVolume);
+                done = true;
+            }
+            else if (input.GetDown(GameSession.MinPlayerId, PlayerAction.ActionA))
+            {
+                if (ChangeSelectedHandicapValue(1))
+                {
+                    PlaySfx(confirmSfx, confirmSfxVolume);
+                    handicapSelectCursorConfirmTimer = Mathf.Max(0.01f, confirmFeedbackSeconds);
+                }
+                else
+                {
+                    PlaySfx(deniedSfx, deniedSfxVolume);
+                }
+            }
+            else if (input.GetDown(GameSession.MinPlayerId, PlayerAction.ActionC))
+            {
+                if (ChangeSelectedHandicapValue(-1))
+                {
+                    PlaySfx(confirmSfx, confirmSfxVolume);
+                    handicapSelectCursorConfirmTimer = Mathf.Max(0.01f, confirmFeedbackSeconds);
+                }
+                else
+                {
+                    PlaySfx(deniedSfx, deniedSfxVolume);
+                }
+            }
+
+            UpdateHandicapSelectVisuals();
+            handicapSelectCursorConfirmTimer = Mathf.Max(0f, handicapSelectCursorConfirmTimer - Time.unscaledDeltaTime);
+            yield return null;
+        }
+
+        SaveCurrentBattleHandicap();
+
+        if (handicapSelectRoot != null)
+            handicapSelectRoot.gameObject.SetActive(false);
+
+        if (specificSettingsRoot != null)
+            specificSettingsRoot.gameObject.SetActive(true);
+
+        state = MenuState.SpecificSettings;
+        UpdatePromptTitle();
+        UpdateSpecificSettingsVisuals();
+    }
+
+    private void EnsureHandicapSelectBuilt()
+    {
+        if (handicapSelectRoot != null)
+        {
+            handicapSelectRoot.gameObject.SetActive(true);
+            handicapSelectRoot.SetAsLastSibling();
+            return;
+        }
+
+        Transform parent = GetMenuContentParent();
+        GameObject rootGo = new("HandicapSelectRoot", typeof(RectTransform));
+        rootGo.transform.SetParent(parent, false);
+        handicapSelectRoot = rootGo.GetComponent<RectTransform>();
+        handicapSelectRoot.anchorMin = new Vector2(0.5f, 0.5f);
+        handicapSelectRoot.anchorMax = new Vector2(0.5f, 0.5f);
+        handicapSelectRoot.pivot = new Vector2(0.5f, 0.5f);
+        handicapSelectRoot.anchoredPosition = handicapSelectRootOffset;
+        handicapSelectRoot.sizeDelta = Vector2.zero;
+        handicapSelectRoot.localScale = Vector3.one * currentUiScale;
+        handicapSelectRoot.SetAsLastSibling();
+
+        handicapRows.Clear();
+        for (int i = 0; i < GameSession.MaxPlayerId; i++)
+            handicapRows.Add(CreateHandicapSelectRow(i));
+
+        CreateHandicapSelectHintText();
+        CreateHandicapSelectCursor();
+    }
+
+    private HandicapRowVisual CreateHandicapSelectRow(int rowIndex)
+    {
+        HandicapRowVisual row = new();
+        GameObject rowGo = new($"HandicapRow_{rowIndex}", typeof(RectTransform));
+        rowGo.transform.SetParent(handicapSelectRoot, false);
+        row.root = rowGo.GetComponent<RectTransform>();
+        row.root.anchorMin = new Vector2(0.5f, 0.5f);
+        row.root.anchorMax = new Vector2(0.5f, 0.5f);
+        row.root.pivot = new Vector2(0.5f, 0.5f);
+
+        row.playerImage = CreateHandicapImage(row.root, $"HandicapPlayer_{rowIndex}", false);
+        row.mountImage = CreateHandicapImage(row.root, $"HandicapMount_{rowIndex}", false);
+        row.mountOutline = row.mountImage.gameObject.AddComponent<Outline>();
+        row.mountOutline.effectColor = Color.black;
+        row.mountOutline.effectDistance = new Vector2(1f, -1f);
+        row.mountOutline.enabled = false;
+        row.mountRenderer = row.mountImage.gameObject.AddComponent<AnimatedSpriteRenderer>();
+
+        for (int i = 0; i < GetHandicapOptionColumnCount(); i++)
+        {
+            row.optionImages.Add(CreateHandicapImage(row.root, $"HandicapOption_{rowIndex}_{i}", true));
+            row.optionTexts.Add(CreateHandicapText(row.root, $"HandicapValue_{rowIndex}_{i}"));
+        }
+
+        return row;
+    }
+
+    private Image CreateHandicapImage(Transform parent, string name, bool withOutline)
+    {
+        GameObject go = withOutline
+            ? new GameObject(name, typeof(RectTransform), typeof(Image), typeof(Outline))
+            : new GameObject(name, typeof(RectTransform), typeof(Image));
+        go.transform.SetParent(parent, false);
+        Image image = go.GetComponent<Image>();
+        image.preserveAspect = true;
+        image.raycastTarget = false;
+
+        if (withOutline)
+        {
+            Outline outline = go.GetComponent<Outline>();
+            outline.effectColor = Color.black;
+            outline.effectDistance = new Vector2(1f, -1f);
+        }
+
+        return image;
+    }
+
+    private TextMeshProUGUI CreateHandicapText(Transform parent, string name)
+    {
+        GameObject go = new(name, typeof(RectTransform), typeof(TextMeshProUGUI));
+        go.transform.SetParent(parent, false);
+        TextMeshProUGUI text = go.GetComponent<TextMeshProUGUI>();
+        text.alignment = TextAlignmentOptions.Center;
+        text.raycastTarget = false;
+        text.textWrappingMode = TextWrappingModes.NoWrap;
+        text.overflowMode = TextOverflowModes.Overflow;
+        ApplySpecificSettingsTextStyle(text);
+        return text;
+    }
+
+    private void CreateHandicapSelectHintText()
+    {
+        GameObject go = new("HandicapSelectHints", typeof(RectTransform), typeof(TextMeshProUGUI));
+        go.transform.SetParent(handicapSelectRoot, false);
+
+        handicapSelectHintText = go.GetComponent<TextMeshProUGUI>();
+        handicapSelectHintText.raycastTarget = false;
+        handicapSelectHintText.textWrappingMode = TextWrappingModes.NoWrap;
+        handicapSelectHintText.overflowMode = TextOverflowModes.Overflow;
+        handicapSelectHintText.text = "\u2190\u2192\u2191\u2193: Choose\nA/C: Change Number\nB: Back";
+        handicapSelectHintText.text = "←→↑↓: Choose\nA/C: Change Number\nB: Back";
+
+        handicapSelectHintText.text = "\u2190\u2192\u2191\u2193: Choose\nA/C: Change Number\nB: Back";
+        ApplySpecificSettingsTextStyle(handicapSelectHintText);
+
+        handicapSelectHintText.enableAutoSizing = false;
+        handicapSelectHintText.fontSize = handicapSelectHintFontSize;
+        handicapSelectHintText.lineSpacing = handicapSelectHintLineSpacing;
+        handicapSelectHintText.alignment = TextAlignmentOptions.Center;
+
+    }
+
+    private void CreateHandicapSelectCursor()
+    {
+        AnimatedSpriteRenderer source = leftPanel != null ? leftPanel.CursorRenderer : null;
+        GameObject cursorGo = source != null
+            ? Instantiate(source.gameObject, handicapSelectRoot, false)
+            : new GameObject("HandicapSelectCursor", typeof(RectTransform));
+
+        cursorGo.name = "HandicapSelectCursor";
+        handicapSelectCursorRenderer = cursorGo.GetComponent<AnimatedSpriteRenderer>();
+        handicapSelectCursorRt = cursorGo.transform as RectTransform;
+        if (handicapSelectCursorRt == null)
+            handicapSelectCursorRt = cursorGo.AddComponent<RectTransform>();
+
+        handicapSelectCursorRt.anchorMin = new Vector2(0.5f, 0.5f);
+        handicapSelectCursorRt.anchorMax = new Vector2(0.5f, 0.5f);
+        handicapSelectCursorRt.pivot = new Vector2(0.5f, 0.5f);
+        handicapSelectCursorRt.sizeDelta = handicapSelectCursorSize;
+        handicapSelectCursorRt.localScale = Vector3.one;
+
+        if (handicapSelectCursorRenderer != null)
+        {
+            handicapSelectCursorRenderer.SetFrozen(false);
+            handicapSelectCursorRenderer.frameOffsets = null;
+            handicapSelectCursorRenderer.idle = true;
+            handicapSelectCursorRenderer.loop = true;
+            handicapSelectCursorRenderer.CurrentFrame = 0;
+            handicapSelectCursorRenderer.RefreshFrame();
+        }
+    }
+
+    private void UpdateHandicapSelectVisuals()
+    {
+        if (handicapSelectRoot == null || !handicapSelectRoot.gameObject.activeInHierarchy)
+            return;
+
+        EnsureWorkingBattleHandicap();
+        teamPreviewTimer += Time.unscaledDeltaTime;
+        handicapSelectRoot.anchoredPosition = handicapSelectRootOffset;
+        handicapSelectRoot.localScale = Vector3.one * currentUiScale;
+
+        for (int rowIndex = 0; rowIndex < handicapRows.Count; rowIndex++)
+        {
+            HandicapRowVisual row = handicapRows[rowIndex];
+            if (row?.root == null)
+                continue;
+
+            bool visible = IsHandicapPlayerVisible(rowIndex);
+            row.root.gameObject.SetActive(visible);
+            if (!visible)
+                continue;
+
+            SaveData.BattleModeHandicapPlayerSave player = GetHandicapPlayer(rowIndex);
+            row.root.sizeDelta = handicapSelectRowSize;
+            row.root.anchoredPosition = GetHandicapRowPosition(rowIndex);
+
+            RectTransform playerRt = row.playerImage.rectTransform;
+            playerRt.anchorMin = new Vector2(0.5f, 0.5f);
+            playerRt.anchorMax = new Vector2(0.5f, 0.5f);
+            playerRt.pivot = new Vector2(0.5f, 0.5f);
+            playerRt.anchoredPosition = handicapSelectPlayerOffset;
+            playerRt.sizeDelta = GetHandicapPlayerSize();
+            row.playerImage.sprite = GetHandicapPlayerSprite(rowIndex + 1);
+            row.playerImage.color = Color.white;
+
+            UpdateHandicapMountVisual(row, player);
+            UpdateHandicapOptionVisuals(row, player);
+        }
+
+        if (handicapSelectHintText != null)
+        {
+            RectTransform hintRt = handicapSelectHintText.rectTransform;
+            hintRt.anchorMin = new Vector2(0.5f, 0.5f);
+            hintRt.anchorMax = new Vector2(0.5f, 0.5f);
+            hintRt.pivot = new Vector2(0.5f, 0.5f);
+            hintRt.anchoredPosition = handicapSelectHintOffset;
+            hintRt.sizeDelta = handicapSelectHintSize;
+            handicapSelectHintText.color = GetMusicSelectTextColor(false);
+
+            ApplySpecificSettingsTextStyle(handicapSelectHintText);
+
+            handicapSelectHintText.enableAutoSizing = false;
+            handicapSelectHintText.fontSize = handicapSelectHintFontSize;
+            handicapSelectHintText.lineSpacing = handicapSelectHintLineSpacing;
+            handicapSelectHintText.alignment = TextAlignmentOptions.Center;
+        }
+
+        if (handicapSelectCursorRt != null)
+        {
+            selectedHandicapRow = GetNextVisibleHandicapRow(selectedHandicapRow, 1);
+            handicapSelectCursorRt.gameObject.SetActive(handicapRows.Count > 0 && IsHandicapPlayerVisible(selectedHandicapRow));
+            handicapSelectCursorRt.sizeDelta = handicapSelectCursorSize;
+            handicapSelectCursorRt.anchoredPosition = GetHandicapCellPosition(selectedHandicapRow, selectedHandicapColumn) + handicapSelectCursorOffset;
+            handicapSelectCursorRt.SetAsLastSibling();
+            handicapSelectCursorRenderer?.SetExternalBaseLocalPosition(handicapSelectCursorRt.localPosition);
+            UpdateHandicapSelectCursorAnimationState();
+        }
+    }
+
+    private void UpdateHandicapMountVisual(HandicapRowVisual row, SaveData.BattleModeHandicapPlayerSave player)
+    {
+        MountedType mountedType = player != null ? (MountedType)player.mountedLouie : MountedType.None;
+        int visualIndex = GetHandicapMountVisualIndex(mountedType) - 1;
+        bool hasMount = mountedType != MountedType.None && visualIndex >= 0;
+        int displayIndex = hasMount ? visualIndex : Mathf.Max(0, GetHandicapMountVisualIndex(MountedType.Blue) - 1);
+
+        RectTransform mountRt = row.mountImage.rectTransform;
+        mountRt.anchorMin = new Vector2(0.5f, 0.5f);
+        mountRt.anchorMax = new Vector2(0.5f, 0.5f);
+        mountRt.pivot = new Vector2(0.5f, 0.5f);
+        mountRt.anchoredPosition = handicapSelectMountOffset;
+        mountRt.sizeDelta = GetLouieSelectIconSize(displayIndex) * Mathf.Max(0.01f, handicapSelectMountSizeMultiplier);
+        row.mountImage.enabled = true;
+        row.mountImage.color = hasMount
+            ? Color.white
+            : new Color(0f, 0f, 0f, Mathf.Clamp01(handicapSelectEmptyMountAlpha));
+        if (row.mountOutline != null)
+            row.mountOutline.enabled = !hasMount;
+
+        if (row.mountRenderer == null)
+            return;
+
+        if (displayIndex >= 0)
+        {
+            if (row.mountRenderer.animationSprite == null ||
+                row.mountRenderer.animationSprite.Length == 0 ||
+                row.mountRenderer.idleSprite == null ||
+                row.mountedType != mountedType)
+            {
+                ConfigureLouieSelectRenderer(row.mountRenderer, displayIndex);
+                row.mountedType = mountedType;
+            }
+
+            ApplyLouieSelectRendererTiming(row.mountRenderer, displayIndex);
+            row.mountRenderer.SetExternalBaseLocalPosition(mountRt.localPosition);
+            row.mountRenderer.idle = !hasMount;
+            row.mountRenderer.loop = true;
+            if (!hasMount)
+                row.mountRenderer.RefreshFrame();
+        }
+        else
+        {
+            row.mountRenderer.animationSprite = null;
+            row.mountRenderer.idleSprite = null;
+            row.mountedType = MountedType.None;
+            row.mountRenderer.RefreshFrame();
+        }
+    }
+
+    private Sprite GetHandicapPlayerSprite(int playerId)
+    {
+        if (skinSelectMenu == null)
+            return null;
+
+        BomberSkin skin = PlayerPersistentStats.Get(playerId).Skin;
+        int previewFrame = Mathf.FloorToInt(teamPreviewTimer / Mathf.Max(0.01f, handicapSelectPlayerFrameSeconds));
+        return skinSelectMenu.GetBattleModeTeamPreviewSprite(skin, previewFrame);
+    }
+
+    private void UpdateHandicapOptionVisuals(HandicapRowVisual row, SaveData.BattleModeHandicapPlayerSave player)
+    {
+        for (int i = 0; i < row.optionImages.Count; i++)
+        {
+            Image image = row.optionImages[i];
+            TextMeshProUGUI text = row.optionTexts[i];
+            RectTransform imageRt = image.rectTransform;
+            imageRt.anchorMin = new Vector2(0.5f, 0.5f);
+            imageRt.anchorMax = new Vector2(0.5f, 0.5f);
+            imageRt.pivot = new Vector2(0.5f, 0.5f);
+            imageRt.anchoredPosition = GetHandicapOptionPosition(i);
+            imageRt.sizeDelta = handicapSelectOptionIconSize;
+            image.sprite = GetHandicapOptionSprite(i, player);
+            image.color = IsHandicapOptionEnabled(i, player) ? Color.white : louieSelectDisabledTint;
+            image.enabled = image.sprite != null;
+
+            RectTransform textRt = text.rectTransform;
+            textRt.anchorMin = new Vector2(0.5f, 0.5f);
+            textRt.anchorMax = new Vector2(0.5f, 0.5f);
+            textRt.pivot = new Vector2(0.5f, 0.5f);
+            textRt.anchoredPosition = GetHandicapOptionPosition(i) + handicapSelectOptionNumberOffset;
+            textRt.sizeDelta = handicapSelectOptionTextSize;
+            text.text = GetHandicapOptionText(i, player);
+            text.color = GetMusicSelectTextColor(IsHandicapOptionEnabled(i, player));
+            text.fontSize = handicapSelectOptionFontSize;
+            text.alignment = TextAlignmentOptions.Center;
+            ApplySpecificSettingsTextStyle(text);
+        }
+    }
+
+    private Sprite GetHandicapOptionSprite(int optionIndex, SaveData.BattleModeHandicapPlayerSave player)
+    {
+        return optionIndex switch
+        {
+            0 => GetItemIconSprite(ItemType.Heart),
+            1 => GetItemIconSprite(ItemType.ExtraBomb),
+            2 => GetItemIconSprite(ItemType.BlastRadius),
+            3 => GetItemIconSprite(ItemType.SpeedIncrese),
+            4 => GetHandicapBombTypeSprite(player),
+            5 => GetHandicapMovementSprite(player),
+            6 => GetItemIconSprite(ItemType.BombPunch),
+            7 => GetItemIconSprite(ItemType.PowerGlove),
+            8 => GetItemIconSprite(ItemType.FullFire),
+            9 => GetItemIconSprite(ItemType.DestructiblePass),
+            _ => null
+        };
+    }
+
+    private Sprite GetHandicapBombTypeSprite(SaveData.BattleModeHandicapPlayerSave player)
+    {
+        BattleModeHandicapBombType bombType = player != null
+            ? (BattleModeHandicapBombType)player.bombType
+            : BattleModeHandicapBombType.Default;
+
+        return bombType switch
+        {
+            BattleModeHandicapBombType.Power => GetItemIconSprite(ItemType.PowerBomb),
+            BattleModeHandicapBombType.Rubber => GetItemIconSprite(ItemType.RubberBomb),
+            BattleModeHandicapBombType.Pierce => GetItemIconSprite(ItemType.PierceBomb),
+            BattleModeHandicapBombType.Control => GetItemIconSprite(ItemType.ControlBomb),
+            _ => GetItemIconSprite(ItemType.ExtraBomb)
+        };
+    }
+
+    private Sprite GetHandicapMovementSprite(SaveData.BattleModeHandicapPlayerSave player)
+    {
+        BattleModeHandicapMovementAbility movement = player != null
+            ? (BattleModeHandicapMovementAbility)player.movementAbility
+            : BattleModeHandicapMovementAbility.None;
+
+        return movement == BattleModeHandicapMovementAbility.BombPass
+            ? GetItemIconSprite(ItemType.BombPass)
+            : GetItemIconSprite(ItemType.BombKick);
+    }
+
+    private string GetHandicapOptionText(int optionIndex, SaveData.BattleModeHandicapPlayerSave player)
+    {
+        if (player == null)
+            return string.Empty;
+
+        return optionIndex switch
+        {
+            0 => player.life.ToString(),
+            1 => player.bombAmount.ToString(),
+            2 => player.blastRadius.ToString(),
+            3 => player.speedLevel.ToString(),
+            _ => string.Empty
+        };
+    }
+
+    private static bool IsHandicapOptionEnabled(int optionIndex, SaveData.BattleModeHandicapPlayerSave player)
+    {
+        if (player == null)
+            return false;
+
+        return optionIndex switch
+        {
+            0 => player.life > 0,
+            1 => true,
+            2 => true,
+            3 => true,
+            4 => player.bombType != (int)BattleModeHandicapBombType.Default,
+            5 => IsHandicapKickEnabled(player),
+            6 => player.punchBomb,
+            7 => player.powerGlove,
+            8 => player.fullFire,
+            9 => player.destructiblePass,
+            _ => false
+        };
+    }
+
+    private static bool IsHandicapKickEnabled(SaveData.BattleModeHandicapPlayerSave player)
+    {
+        return player != null && player.movementAbility != (int)BattleModeHandicapMovementAbility.None;
+    }
+
+    private bool ChangeSelectedHandicapValue(int delta)
+    {
+        EnsureWorkingBattleHandicap();
+        SaveData.BattleModeHandicapPlayerSave player = GetHandicapPlayer(selectedHandicapRow);
+        if (player == null || !IsHandicapPlayerVisible(selectedHandicapRow))
+            return false;
+
+        if (IsCurrentBattleModePowerZoneStage())
+            player.mountedLouie = (int)MountedType.None;
+
+        switch (selectedHandicapColumn)
+        {
+            case 0:
+                if (IsCurrentBattleModePowerZoneStage())
+                    return false;
+
+                SetHandicapMountedLouie(player, GetHandicapMountVisualIndex((MountedType)player.mountedLouie) + delta);
+                break;
+            case 1:
+                player.life = WrapValue(player.life + delta, 0, 9);
+                break;
+            case 2:
+                player.bombAmount = WrapValue(player.bombAmount + delta, 1, PlayerPersistentStats.MaxBombAmount);
+                break;
+            case 3:
+                player.blastRadius = WrapValue(player.blastRadius + delta, 1, PlayerPersistentStats.MaxExplosionRadius);
+                break;
+            case 4:
+                player.speedLevel = WrapValue(player.speedLevel + delta, 1, PlayerPersistentStats.MaxSpeedUps + 1);
+                break;
+            case 5:
+                player.bombType = WrapValue(player.bombType + delta, 0, 4);
+                break;
+            case 6:
+                player.movementAbility = WrapValue(player.movementAbility + delta, 0, 2);
+                break;
+            case 7:
+                player.punchBomb = !player.punchBomb;
+                break;
+            case 8:
+                player.powerGlove = !player.powerGlove;
+                break;
+            case 9:
+                player.fullFire = !player.fullFire;
+                break;
+            case 10:
+                player.destructiblePass = !player.destructiblePass;
+                break;
+        }
+
+        SaveCurrentBattleHandicap();
+        return true;
+    }
+
+    private void SetHandicapMountedLouie(SaveData.BattleModeHandicapPlayerSave player, int visualIndexWithNone)
+    {
+        int count = GetLouieSelectEntryCount() + 1;
+        int wrapped = WrapIndex(visualIndexWithNone, count);
+        player.mountedLouie = wrapped == 0
+            ? (int)MountedType.None
+            : (int)GetLouieSelectMountType(wrapped - 1);
+    }
+
+    private int GetHandicapMountVisualIndex(MountedType type)
+    {
+        if (type == MountedType.None)
+            return 0;
+
+        for (int i = 0; i < GetLouieSelectEntryCount(); i++)
+        {
+            if (GetLouieSelectMountType(i) == type)
+                return i + 1;
+        }
+
+        return 0;
+    }
+
+    private static bool IsCurrentBattleModePowerZoneStage()
+    {
+        int stageIndex = SaveSystem.GetBattleModeStageIndex();
+        return stageIndex == 10 || stageIndex == 11;
+    }
+
+    private SaveData.BattleModeHandicapPlayerSave GetHandicapPlayer(int rowIndex)
+    {
+        EnsureWorkingBattleHandicap();
+        if (workingBattleHandicap?.players == null || workingBattleHandicap.players.Length == 0)
+            return null;
+
+        return workingBattleHandicap.players[Mathf.Clamp(rowIndex, 0, workingBattleHandicap.players.Length - 1)];
+    }
+
+    private void EnsureWorkingBattleHandicap()
+    {
+        if (workingBattleHandicap?.players != null && workingBattleHandicap.players.Length == GameSession.MaxPlayerId)
+            return;
+
+        workingBattleHandicap = SaveSystem.GetBattleModeHandicapForStage(SaveSystem.GetBattleModeStageIndex());
+    }
+
+    private void SaveCurrentBattleHandicap()
+    {
+        if (workingBattleHandicap == null)
+            return;
+
+        SaveSystem.SetBattleModeHandicapForStage(SaveSystem.GetBattleModeStageIndex(), workingBattleHandicap);
+        workingBattleHandicap = SaveSystem.GetBattleModeHandicapForStage(SaveSystem.GetBattleModeStageIndex());
+    }
+
+    private void UpdateHandicapSelectCursorAnimationState()
+    {
+        if (handicapSelectCursorRenderer == null)
+            return;
+
+        bool confirming = handicapSelectCursorConfirmTimer > 0f;
+        handicapSelectCursorRenderer.idle = !confirming;
+        handicapSelectCursorRenderer.loop = true;
+        handicapSelectCursorRenderer.SetFrozen(false);
+        handicapSelectCursorRenderer.RefreshFrame();
+    }
+
+    private Vector2 GetHandicapRowPosition(int rowIndex)
+    {
+        float rowStep = handicapSelectRowSize.y + handicapSelectRowSpacing;
+        float totalHeight = (GameSession.MaxPlayerId - 1) * rowStep;
+        float y = (totalHeight * 0.5f) - (rowIndex * rowStep);
+        return handicapSelectRowsOffset + new Vector2(0f, y);
+    }
+
+    private Vector2 GetHandicapPlayerSize()
+    {
+        return handicapSelectPlayerSize == Vector2.zero
+            ? teamMemberSize
+            : handicapSelectPlayerSize;
+    }
+
+    private Vector2 GetHandicapCellPosition(int rowIndex, int columnIndex)
+    {
+        Vector2 rowPosition = GetHandicapRowPosition(Mathf.Clamp(rowIndex, 0, GameSession.MaxPlayerId - 1));
+        if (columnIndex <= 0)
+            return rowPosition + handicapSelectMountOffset;
+
+        return rowPosition + GetHandicapOptionPosition(columnIndex - 1);
+    }
+
+    private Vector2 GetHandicapOptionPosition(int optionIndex)
+    {
+        return handicapSelectOptionStartOffset + (handicapSelectOptionSpacing * optionIndex);
+    }
+
+    private bool IsHandicapPlayerVisible(int rowIndex)
+    {
+        if (rowIndex < 0 || rowIndex >= GameSession.MaxPlayerId)
+            return false;
+
+        if (playerModes == null || playerModes.Length != GameSession.MaxPlayerId)
+            playerModes = SaveSystem.GetBattleModePlayerControlModes();
+
+        if (playerModes == null || rowIndex >= playerModes.Length)
+            return rowIndex == 0;
+
+        return playerModes[rowIndex] != BattleModePlayerControlMode.Off;
+    }
+
+    private int GetNextVisibleHandicapRow(int startRow, int direction)
+    {
+        int count = GameSession.MaxPlayerId;
+        int step = direction < 0 ? -1 : 1;
+        int row = WrapIndex(startRow, count);
+
+        for (int i = 0; i < count; i++)
+        {
+            if (IsHandicapPlayerVisible(row))
+                return row;
+
+            row = WrapIndex(row + step, count);
+        }
+
+        return 0;
+    }
+
+    private static int GetHandicapOptionColumnCount()
+    {
+        return 10;
+    }
+
+    private static int GetHandicapSelectColumnCount()
+    {
+        return GetHandicapOptionColumnCount() + 1;
+    }
+
+    private static int WrapValue(int value, int min, int max)
+    {
+        if (max <= min)
+            return min;
+
+        if (value < min)
+            return max;
+
+        if (value > max)
+            return min;
+
+        return value;
+    }
+
     private IEnumerator ConfirmSpecificSettingsStart()
     {
         specificStartConfirmed = true;
@@ -4111,23 +4866,17 @@ public sealed class BattleModeMenu : MonoBehaviour
         battleStartVisible = true;
         if (specificCursorRt != null)
             specificConfirmedCursorPosition = specificCursorRt.anchoredPosition;
-        LogSpecificStartTransition("ConfirmPressed.BeforeFreeze");
         StartSpecificSettingsCursorConfirmAnimation();
-        LogSpecificStartTransition("ConfirmPressed.AfterFreeze");
 
         GameMusicController.Instance?.StopMusic();
         PlaySfx(specificStartSfx != null ? specificStartSfx : confirmSfx, specificStartSfx != null ? specificStartSfxVolume : confirmSfxVolume);
         confirmed = true;
-        LogSpecificStartTransition("ConfirmPressed.AfterConfirmedFlag");
 
         if (specificStartWaitSeconds > 0f)
             yield return ProbeSpecificStartWait();
 
-        LogSpecificStartTransition("BeforeFadeOut");
         yield return FadeOutRoutine(specificStartFadeSeconds);
-        LogSpecificStartTransition("AfterFadeOut.BeforeHide");
         Hide();
-        LogSpecificStartTransition("AfterHide.BeforeSceneLoad");
         LoadScene(GetBattleStageSceneName(SaveSystem.GetBattleModeStageIndex()));
     }
 
@@ -4137,24 +4886,14 @@ public sealed class BattleModeMenu : MonoBehaviour
         if (wait <= 0f)
             yield break;
 
-        LogSpecificStartTransition("WaitStart");
         float elapsed = 0f;
-        bool loggedHalf = false;
 
         while (elapsed < wait)
         {
             elapsed += Time.unscaledDeltaTime;
 
-            if (!loggedHalf && elapsed >= wait * 0.5f)
-            {
-                loggedHalf = true;
-                LogSpecificStartTransition("WaitHalf");
-            }
-
             yield return null;
         }
-
-        LogSpecificStartTransition("WaitEnd");
     }
 
     private void EnsureSpecificSettingsBuilt()
@@ -4458,29 +5197,6 @@ public sealed class BattleModeMenu : MonoBehaviour
         ApplyTeamLabelFont(text);
     }
 
-    private void LogSpecificStartTransition(string context)
-    {
-        Debug.Log(
-            "[BattleModeMenu/StartTransition] " +
-            $"context={context} " +
-            $"frame={Time.frameCount} " +
-            $"time={Time.unscaledTime:0.###} " +
-            $"state={state} " +
-            $"confirmed={confirmed} " +
-            $"selectedIndex={selectedSpecificSettingIndex} " +
-            $"startConfirmed={specificStartConfirmed} " +
-            $"cursor={FormatRectState(specificCursorRt)} " +
-            $"frozenAnchored={FormatVector2(specificConfirmedCursorPosition)} " +
-            $"cursorRenderer={FormatAnimatedRendererState(specificCursorRenderer)} " +
-            $"specificRoot={FormatGameObjectState(specificSettingsRoot != null ? specificSettingsRoot.gameObject : null)} " +
-            $"stageImage={FormatGraphicState(specificStageImage)} " +
-            $"startOption={FormatSpecificOptionState(SpecificSettingsOptions.Length - 1)} " +
-            $"background={FormatGraphicState(backgroundImage)} " +
-            $"fade={FormatGraphicState(fadeImage)} " +
-            $"fadeAlpha={(fadeImage != null ? fadeImage.color.a : -1f):0.###} " +
-            $"fadeSibling={(fadeImage != null ? fadeImage.transform.GetSiblingIndex() : -1)}");
-    }
-
     private static string FormatVector2(Vector2 v)
     {
         return $"({v.x:0.###},{v.y:0.###})";
@@ -4668,6 +5384,8 @@ public sealed class BattleModeMenu : MonoBehaviour
             musicSelectRoot.gameObject.SetActive(false);
         if (itemSelectRoot != null)
             itemSelectRoot.gameObject.SetActive(false);
+        if (handicapSelectRoot != null)
+            handicapSelectRoot.gameObject.SetActive(false);
 
         if (root != null)
             root.SetActive(false);
@@ -4885,6 +5603,7 @@ public sealed class BattleModeMenu : MonoBehaviour
             MenuState.MusicSelect => musicSelectPrompt,
             MenuState.ItemSelect => itemSelectPrompt,
             MenuState.LouieSelect => "SELECT LOUIES",
+            MenuState.HandicapSelect => handicapSelectPrompt,
             _ => matchModePrompt
         };
     }
@@ -4960,22 +5679,15 @@ public sealed class BattleModeMenu : MonoBehaviour
         if (fadeImage == null)
             yield break;
 
-        bool probeBattleModeStart = state == MenuState.SpecificSettings && specificStartConfirmed;
-        if (probeBattleModeStart)
-            LogSpecificStartTransition("FadeOut.Enter");
-
         SetFadeAlpha(0f);
         fadeImage.gameObject.SetActive(true);
         BringFadeImageToFront();
         SetFadeAlpha(0f);
         Canvas.ForceUpdateCanvases();
-        if (probeBattleModeStart)
-            LogSpecificStartTransition("FadeOut.AfterActivateBeforeFirstYield");
         yield return null;
 
         float duration = Mathf.Max(0.001f, durationSeconds);
         float t = 0f;
-        int nextProbeStep = 1;
 
         while (t < duration)
         {
@@ -4983,18 +5695,11 @@ public sealed class BattleModeMenu : MonoBehaviour
             BringFadeImageToFront();
             float progress = Mathf.Clamp01(t / duration);
             SetFadeAlpha(progress);
-            if (probeBattleModeStart && nextProbeStep <= 3 && progress >= nextProbeStep * 0.25f)
-            {
-                LogSpecificStartTransition($"FadeOut.Progress{nextProbeStep * 25}");
-                nextProbeStep++;
-            }
             yield return null;
         }
 
         BringFadeImageToFront();
         SetFadeAlpha(1f);
-        if (probeBattleModeStart)
-            LogSpecificStartTransition("FadeOut.Complete");
     }
 
     private void ResetBackgroundSpriteSwap()
@@ -5071,6 +5776,9 @@ public sealed class BattleModeMenu : MonoBehaviour
                 : specificSettingsBackgrounds?.sprites,
             MenuState.LouieSelect => GetValidSpriteCount(louieSelectBackgrounds?.sprites) > 0
                 ? louieSelectBackgrounds?.sprites
+                : specificSettingsBackgrounds?.sprites,
+            MenuState.HandicapSelect => GetValidSpriteCount(handicapSelectBackgrounds?.sprites) > 0
+                ? handicapSelectBackgrounds?.sprites
                 : specificSettingsBackgrounds?.sprites,
             _ => matchModeBackgrounds?.sprites
         };
@@ -5223,6 +5931,8 @@ public sealed class BattleModeMenu : MonoBehaviour
             itemSelectRoot.localScale = Vector3.one * currentUiScale;
         if (louieSelectRoot != null)
             louieSelectRoot.localScale = Vector3.one * currentUiScale;
+        if (handicapSelectRoot != null)
+            handicapSelectRoot.localScale = Vector3.one * currentUiScale;
     }
 
     private static bool ApproximatelyRect(Rect a, Rect b)

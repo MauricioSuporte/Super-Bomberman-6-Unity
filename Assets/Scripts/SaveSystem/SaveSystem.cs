@@ -521,6 +521,40 @@ public static class SaveSystem
         Save();
     }
 
+    public static BattleModeHandicapSave GetBattleModeHandicapForStage(int stageIndex)
+    {
+        EnsureLoaded();
+        EnsureBattleModeHandicapProfiles(data);
+
+        BattleModeHandicapSave source = GetBattleModeHandicapProfile(data, stageIndex);
+        return CloneBattleModeHandicap(source, GetBattleModeHandicapProfileKind(stageIndex));
+    }
+
+    public static void SetBattleModeHandicapForStage(int stageIndex, BattleModeHandicapSave handicap)
+    {
+        EnsureLoaded();
+        EnsureBattleModeHandicapProfiles(data);
+
+        BattleModeHandicapProfileKind kind = GetBattleModeHandicapProfileKind(stageIndex);
+        BattleModeHandicapSave normalized = CloneBattleModeHandicap(handicap, kind);
+
+        switch (kind)
+        {
+            case BattleModeHandicapProfileKind.PowerZone:
+                data.battleModeHandicapPowerZone = normalized;
+                break;
+            case BattleModeHandicapProfileKind.Stage6:
+                data.battleModeHandicapStage6 = normalized;
+                data.battleModeHandicapStage6Initialized = true;
+                break;
+            default:
+                data.battleModeHandicapGeneric = normalized;
+                break;
+        }
+
+        Save();
+    }
+
     private static void NormalizeBattleModeRandomEggRange(int[] amounts)
     {
         if (amounts == null)
@@ -747,6 +781,7 @@ public static class SaveSystem
         d.videoSettings ??= new SavedVideoSettings();
         EnsureBattleModeItemAmounts(d, GameManager.GetDefaultBattleModeHiddenItemAmounts());
         EnsureBattleModeLouieAmounts(d, GameManager.GetDefaultBattleModeLouieAmounts());
+        EnsureBattleModeHandicapProfiles(d);
 
         if (d.videoSettings.windowSizeMultiplier < 1)
             d.videoSettings.windowSizeMultiplier = 4;
@@ -1093,6 +1128,236 @@ public static class SaveSystem
 
         if (changed)
             Save();
+    }
+
+    private enum BattleModeHandicapProfileKind
+    {
+        Generic,
+        PowerZone,
+        Stage6
+    }
+
+    private static void EnsureBattleModeHandicapProfiles(SaveData d)
+    {
+        if (d == null)
+            return;
+
+        d.battleModeHandicapGeneric = NormalizeBattleModeHandicap(d.battleModeHandicapGeneric, BattleModeHandicapProfileKind.Generic);
+        d.battleModeHandicapPowerZone = NormalizeBattleModeHandicap(d.battleModeHandicapPowerZone, BattleModeHandicapProfileKind.PowerZone);
+        d.battleModeHandicapStage6 = NormalizeBattleModeHandicap(d.battleModeHandicapStage6, BattleModeHandicapProfileKind.Stage6);
+        if (!d.battleModeHandicapStage6Initialized)
+        {
+            ApplyStage6DefaultHandicap(d.battleModeHandicapStage6);
+            d.battleModeHandicapStage6Initialized = true;
+        }
+    }
+
+    private static BattleModeHandicapSave GetBattleModeHandicapProfile(SaveData d, int stageIndex)
+    {
+        return GetBattleModeHandicapProfileKind(stageIndex) switch
+        {
+            BattleModeHandicapProfileKind.PowerZone => d.battleModeHandicapPowerZone,
+            BattleModeHandicapProfileKind.Stage6 => d.battleModeHandicapStage6,
+            _ => d.battleModeHandicapGeneric
+        };
+    }
+
+    private static BattleModeHandicapProfileKind GetBattleModeHandicapProfileKind(int stageIndex)
+    {
+        int normalizedStage = Mathf.Clamp(stageIndex, 1, BattleModeStageCount);
+        if (normalizedStage == 10 || normalizedStage == 11)
+            return BattleModeHandicapProfileKind.PowerZone;
+
+        if (normalizedStage == 6)
+            return BattleModeHandicapProfileKind.Stage6;
+
+        return BattleModeHandicapProfileKind.Generic;
+    }
+
+    private static BattleModeHandicapSave CloneBattleModeHandicap(
+        BattleModeHandicapSave source,
+        BattleModeHandicapProfileKind profileKind)
+    {
+        return NormalizeBattleModeHandicap(source, profileKind);
+    }
+
+    private static BattleModeHandicapSave NormalizeBattleModeHandicap(
+        BattleModeHandicapSave source,
+        BattleModeHandicapProfileKind profileKind)
+    {
+        BattleModeHandicapSave normalized = new();
+        BattleModeHandicapPlayerSave[] previous = source?.players;
+        bool migrateLegacyDefaultHearts = ShouldMigrateLegacyBattleModeHandicapHearts(previous);
+        normalized.players = new BattleModeHandicapPlayerSave[6];
+
+        for (int i = 0; i < normalized.players.Length; i++)
+        {
+            BattleModeHandicapPlayerSave sourcePlayer = previous != null && i < previous.Length
+                ? previous[i]
+                : null;
+
+            BattleModeHandicapPlayerSave player = new();
+            if (sourcePlayer == null && profileKind == BattleModeHandicapProfileKind.PowerZone)
+                ApplyPowerZoneDefaultHandicap(player);
+
+            if (sourcePlayer != null)
+            {
+                player.mountedLouie = sourcePlayer.mountedLouie;
+                player.life = sourcePlayer.life;
+                player.bombAmount = sourcePlayer.bombAmount;
+                player.blastRadius = sourcePlayer.blastRadius;
+                player.speedLevel = sourcePlayer.speedLevel;
+                player.bombType = sourcePlayer.bombType;
+                player.punchBomb = sourcePlayer.punchBomb;
+                player.powerGlove = sourcePlayer.powerGlove;
+                player.movementAbility = sourcePlayer.movementAbility;
+                player.fullFire = sourcePlayer.fullFire;
+                player.destructiblePass = sourcePlayer.destructiblePass;
+            }
+
+            player.mountedLouie = NormalizeMountedLouie(player.mountedLouie);
+            if (migrateLegacyDefaultHearts)
+                player.life = 0;
+
+            player.life = Mathf.Clamp(player.life, 0, 9);
+            player.bombAmount = Mathf.Clamp(player.bombAmount, 1, PlayerPersistentStats.MaxBombAmount);
+            player.blastRadius = Mathf.Clamp(player.blastRadius, 1, PlayerPersistentStats.MaxExplosionRadius);
+            player.speedLevel = Mathf.Clamp(player.speedLevel, 1, PlayerPersistentStats.MaxSpeedUps + 1);
+            player.bombType = Enum.IsDefined(typeof(BattleModeHandicapBombType), player.bombType)
+                ? player.bombType
+                : (int)BattleModeHandicapBombType.Default;
+            player.movementAbility = Enum.IsDefined(typeof(BattleModeHandicapMovementAbility), player.movementAbility)
+                ? player.movementAbility
+                : (int)BattleModeHandicapMovementAbility.None;
+
+            if (profileKind == BattleModeHandicapProfileKind.PowerZone &&
+                ShouldUsePowerZoneDefaultHandicap(previous))
+            {
+                ApplyPowerZoneDefaultHandicap(player);
+            }
+
+            if (profileKind == BattleModeHandicapProfileKind.PowerZone)
+                player.mountedLouie = (int)MountedType.None;
+
+            normalized.players[i] = player;
+        }
+
+        return normalized;
+    }
+
+    private static bool ShouldMigrateLegacyBattleModeHandicapHearts(BattleModeHandicapPlayerSave[] players)
+    {
+        if (players == null || players.Length != 6)
+            return false;
+
+        for (int i = 0; i < players.Length; i++)
+        {
+            BattleModeHandicapPlayerSave player = players[i];
+            if (player == null)
+                return false;
+
+            if (player.life != 1 ||
+                player.bombAmount != 1 ||
+                player.blastRadius != 2 ||
+                player.speedLevel != 2 ||
+                player.mountedLouie != (int)MountedType.None ||
+                player.bombType != (int)BattleModeHandicapBombType.Default ||
+                player.punchBomb ||
+                player.powerGlove ||
+                (player.movementAbility != (int)BattleModeHandicapMovementAbility.None &&
+                 player.movementAbility != (int)BattleModeHandicapMovementAbility.Kick) ||
+                player.fullFire ||
+                player.destructiblePass)
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private static bool ShouldUsePowerZoneDefaultHandicap(BattleModeHandicapPlayerSave[] players)
+    {
+        if (players == null || players.Length != 6)
+            return true;
+
+        for (int i = 0; i < players.Length; i++)
+        {
+            BattleModeHandicapPlayerSave player = players[i];
+            if (player == null)
+                return true;
+
+            bool defaultHeart = player.life == 0 || player.life == 1;
+            bool defaultMovement =
+                player.movementAbility == (int)BattleModeHandicapMovementAbility.None ||
+                player.movementAbility == (int)BattleModeHandicapMovementAbility.Kick;
+
+            if (!defaultHeart ||
+                player.bombAmount != 1 ||
+                player.blastRadius != 2 ||
+                player.speedLevel != 2 ||
+                player.mountedLouie != (int)MountedType.None ||
+                player.bombType != (int)BattleModeHandicapBombType.Default ||
+                player.punchBomb ||
+                player.powerGlove ||
+                !defaultMovement ||
+                player.fullFire ||
+                player.destructiblePass)
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private static void ApplyPowerZoneDefaultHandicap(BattleModeHandicapPlayerSave player)
+    {
+        if (player == null)
+            return;
+
+        player.life = 0;
+        player.bombAmount = PlayerPersistentStats.MaxBombAmount;
+        player.blastRadius = PlayerPersistentStats.MaxExplosionRadius;
+        player.speedLevel = PlayerPersistentStats.MaxSpeedUps + 1;
+        player.bombType = (int)BattleModeHandicapBombType.Default;
+        player.punchBomb = true;
+        player.powerGlove = true;
+        player.movementAbility = (int)BattleModeHandicapMovementAbility.Kick;
+        player.fullFire = false;
+        player.destructiblePass = false;
+    }
+
+    private static void ApplyStage6DefaultHandicap(BattleModeHandicapSave handicap)
+    {
+        if (handicap?.players == null)
+            return;
+
+        for (int i = 0; i < handicap.players.Length; i++)
+        {
+            if (handicap.players[i] == null)
+                handicap.players[i] = new BattleModeHandicapPlayerSave();
+
+            handicap.players[i].movementAbility = (int)BattleModeHandicapMovementAbility.Kick;
+        }
+    }
+
+    private static int NormalizeMountedLouie(int mountedLouie)
+    {
+        if (!Enum.IsDefined(typeof(MountedType), mountedLouie))
+            return (int)MountedType.None;
+
+        MountedType type = (MountedType)mountedLouie;
+        if (type == MountedType.None)
+            return mountedLouie;
+
+        for (int i = 0; i < GameManager.BattleModeRandomEggMountTypes.Length; i++)
+        {
+            if (GameManager.BattleModeRandomEggMountTypes[i] == type)
+                return mountedLouie;
+        }
+
+        return (int)MountedType.None;
     }
 
     private static void EnsureBattleModeItemAmounts(SaveData d, IReadOnlyList<int> fallbackAmounts)
