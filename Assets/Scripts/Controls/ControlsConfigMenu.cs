@@ -32,6 +32,8 @@ public class ControlsConfigMenu : MonoBehaviour
     [Header("Fade")]
     [SerializeField] Image fadeImage;
     [SerializeField] float fadeDuration = 0.5f;
+    [SerializeField, Range(0.001f, 0.1f)] float maxFadeStepDelta = 0.033f;
+    [SerializeField] bool logOpenFlowDiagnostics = true;
 
     [Header("Music")]
     [SerializeField] AudioClip controlsMusic;
@@ -180,6 +182,8 @@ public class ControlsConfigMenu : MonoBehaviour
 
     Vector3 _cursorBaseLocalScale = Vector3.one;
     bool _cursorBaseScaleCaptured;
+
+    const string OpenFlowLogPrefix = "[ControlsConfigMenu.OpenFlow]";
 
     static readonly PlayerAction[] BulkActions = new[]
     {
@@ -392,6 +396,8 @@ public class ControlsConfigMenu : MonoBehaviour
 
     void Awake()
     {
+        LogOpenFlow("Awake.Enter");
+
         if (root == null)
             root = gameObject;
 
@@ -421,6 +427,8 @@ public class ControlsConfigMenu : MonoBehaviour
 
         _lastCameraRect = new Rect(-999, -999, -999, -999);
         _lastRefPixelRect = new Rect(-999, -999, -999, -999);
+
+        LogOpenFlow("Awake.Exit");
     }
 
     void ApplyMenuTextRectScale()
@@ -864,61 +872,88 @@ public class ControlsConfigMenu : MonoBehaviour
 
     public IEnumerator OpenRoutine(int openerPlayerId, AudioClip restoreMusic, float restoreMusicVolume = 1f)
     {
+        LogOpenFlow($"OpenRoutine.Enter opener={openerPlayerId} restoreMusic={(restoreMusic != null ? restoreMusic.name : "null")}");
+
         ownerPlayerId = Mathf.Clamp(openerPlayerId, 1, MaxConfigurablePlayers);
 
+        LogOpenFlow("Before LoadControlsIntoInputManager");
         SaveSystem.LoadControlsIntoInputManager();
+        LogOpenFlow("After LoadControlsIntoInputManager");
 
         if (root == null) root = gameObject;
-
-        root.transform.SetAsLastSibling();
-        root.SetActive(true);
-
-        if (backgroundImage != null)
-        {
-            backgroundImage.gameObject.SetActive(true);
-            backgroundImage.color = Color.white;
-            backgroundImage.transform.SetAsFirstSibling();
-        }
-
-        SetupMenuTextMaterial();
-        ApplyDynamicScaleIfNeeded(true);
-
-        if (controlsMusic != null && GameMusicController.Instance != null)
-            PlayControlsMusic();
 
         if (fadeImage != null)
         {
             fadeImage.gameObject.SetActive(true);
             fadeImage.transform.SetAsLastSibling();
             SetFadeAlpha(1f);
-            yield return FadeTo(0f, fadeDuration);
-            fadeImage.gameObject.SetActive(false);
+            LogOpenFlow("Pre-show fade guard set alpha=1");
         }
 
-        state = MenuState.SelectPlayer;
-        playerSelectIndex = Mathf.Clamp(ownerPlayerId - 1, 0, MaxConfigurablePlayers - 1);
-        targetPlayerId = playerSelectIndex + 1;
-        bulkStep = 0;
-        bulkSnapshot = null;
+        LogOpenFlow("Before root.SetActive(true)");
+        root.transform.SetAsLastSibling();
+        root.SetActive(true);
+        if (fadeImage != null)
+            fadeImage.transform.SetAsLastSibling();
+        LogOpenFlow("After root.SetActive(true)");
 
-        confirmResetIndex = 1;
-        confirmResetPlayerId = 1;
+        if (backgroundImage != null)
+        {
+            LogOpenFlow("Before background show");
+            backgroundImage.gameObject.SetActive(true);
+            backgroundImage.color = Color.white;
+            backgroundImage.transform.SetAsFirstSibling();
+            LogOpenFlow("After background show");
+        }
 
-        blockedMessageUntil = 0f;
-        blockedMessageLine = null;
+        LogOpenFlow("Before SetupMenuTextMaterial");
+        SetupMenuTextMaterial();
+        LogOpenFlow("After SetupMenuTextMaterial");
 
-        _hasLastMouseScreenPosition = false;
-        _lastMouseScreenPosition = Vector2.zero;
-        blockedMessageLine = null;
+        LogOpenFlow("Before ApplyDynamicScaleIfNeeded(force)");
+        ApplyDynamicScaleIfNeeded(true);
+        LogOpenFlow("After ApplyDynamicScaleIfNeeded(force)");
+
+        if (controlsMusic != null && GameMusicController.Instance != null)
+        {
+            LogOpenFlow("Before PlayControlsMusic");
+            PlayControlsMusic();
+            LogOpenFlow("After PlayControlsMusic");
+        }
+
+        PrepareInitialMenuStateForOpen();
+        LogOpenFlow("After PrepareInitialMenuStateForOpen before fade");
+
+        yield return null;
+        LogOpenFlow("After pre-fade warmup frame");
+
+        if (fadeImage != null)
+        {
+            LogOpenFlow("Before fade-in overlay setup");
+            fadeImage.gameObject.SetActive(true);
+            fadeImage.transform.SetAsLastSibling();
+            LogOpenFlow("After SetFadeAlpha(1) before FadeTo");
+            yield return FadeTo(0f, fadeDuration);
+            LogOpenFlow("After FadeTo(0)");
+            fadeImage.gameObject.SetActive(false);
+            LogOpenFlow("After fadeImage.SetActive(false)");
+        }
+        else
+        {
+            LogOpenFlow("Fade skipped: fadeImage=null");
+        }
 
         if (cursorRenderer != null)
         {
             cursorRenderer.gameObject.SetActive(true);
             cursorRenderer.RefreshFrame();
+            LogOpenFlow("After cursor show");
         }
 
         while (AnyPlayerHeldAnyMenuKey())
             yield return null;
+
+        LogOpenFlow("Input hold gate cleared");
 
         yield return null;
 
@@ -1269,10 +1304,13 @@ public class ControlsConfigMenu : MonoBehaviour
 
         if (fadeImage != null)
         {
+            LogOpenFlow("Before fade-out overlay setup");
             fadeImage.gameObject.SetActive(true);
             fadeImage.transform.SetAsLastSibling();
             SetFadeAlpha(0f);
+            LogOpenFlow("After SetFadeAlpha(0) before FadeTo(1)");
             yield return FadeTo(1f, fadeDuration);
+            LogOpenFlow("After FadeTo(1)");
         }
 
         if (cursorRenderer != null)
@@ -1292,15 +1330,48 @@ public class ControlsConfigMenu : MonoBehaviour
 
         if (restoreMusic != null && GameMusicController.Instance != null)
             GameMusicController.Instance.PlayMusic(restoreMusic, Mathf.Clamp01(restoreMusicVolume), true);
+
+        LogOpenFlow("OpenRoutine.Exit");
+    }
+
+    void PrepareInitialMenuStateForOpen()
+    {
+        state = MenuState.SelectPlayer;
+        playerSelectIndex = Mathf.Clamp(ownerPlayerId - 1, 0, MaxConfigurablePlayers - 1);
+        targetPlayerId = playerSelectIndex + 1;
+        bulkStep = 0;
+        bulkSnapshot = null;
+
+        confirmResetIndex = 1;
+        confirmResetPlayerId = 1;
+
+        blockedMessageUntil = 0f;
+        blockedMessageLine = null;
+
+        _hasLastMouseScreenPosition = false;
+        _lastMouseScreenPosition = Vector2.zero;
+
+        if (cursorRenderer != null)
+        {
+            cursorRenderer.gameObject.SetActive(true);
+            cursorRenderer.RefreshFrame();
+        }
+
+        RefreshText();
     }
 
     void PlayControlsMusic()
     {
         var music = GameMusicController.Instance;
         if (music == null || controlsMusic == null)
+        {
+            LogOpenFlow($"PlayControlsMusic skipped music={(music != null ? "ok" : "null")} controlsMusic={(controlsMusic != null ? controlsMusic.name : "null")}");
             return;
+        }
 
+        LogOpenFlow($"PreloadControlsMusic.Enter introState={controlsMusic.loadState} loopState={(controlsMusicLoop != null ? controlsMusicLoop.loadState.ToString() : "null")}");
         PreloadControlsMusic();
+        LogOpenFlow($"PreloadControlsMusic.Exit introState={controlsMusic.loadState} loopState={(controlsMusicLoop != null ? controlsMusicLoop.loadState.ToString() : "null")}");
 
         if (controlsMusicLoop != null)
         {
@@ -1318,10 +1389,18 @@ public class ControlsConfigMenu : MonoBehaviour
     void PreloadControlsMusic()
     {
         if (controlsMusic != null && controlsMusic.loadState == AudioDataLoadState.Unloaded)
+        {
+            LogOpenFlow($"LoadAudioData intro start clip={controlsMusic.name}");
             controlsMusic.LoadAudioData();
+            LogOpenFlow($"LoadAudioData intro requested clip={controlsMusic.name} state={controlsMusic.loadState}");
+        }
 
         if (controlsMusicLoop != null && controlsMusicLoop.loadState == AudioDataLoadState.Unloaded)
+        {
+            LogOpenFlow($"LoadAudioData loop start clip={controlsMusicLoop.name}");
             controlsMusicLoop.LoadAudioData();
+            LogOpenFlow($"LoadAudioData loop requested clip={controlsMusicLoop.name} state={controlsMusicLoop.loadState}");
+        }
     }
 
     static UniversalControllerInput.DpadHit? ReadAnyDpadDownThisFrame()
@@ -1844,16 +1923,47 @@ public class ControlsConfigMenu : MonoBehaviour
         float d = Mathf.Max(0.001f, duration);
         float start = fadeImage.color.a;
         float t = 0f;
+        int lastLoggedPercent = -1;
+
+        LogOpenFlow($"FadeTo.Enter start={start:0.000} target={targetA:0.000} duration={d:0.000}");
 
         while (t < d)
         {
-            t += Time.unscaledDeltaTime;
+            float stepDelta = Mathf.Min(Time.unscaledDeltaTime, Mathf.Max(0.001f, maxFadeStepDelta));
+            t += stepDelta;
             float a = Mathf.Lerp(start, targetA, Mathf.Clamp01(t / d));
             SetFadeAlpha(a);
+
+            int percent = Mathf.FloorToInt(Mathf.Clamp01(t / d) * 100f);
+            if (lastLoggedPercent < 0 || percent >= 100 || percent / 25 != lastLoggedPercent / 25)
+            {
+                lastLoggedPercent = percent;
+                LogOpenFlow($"FadeTo.Step percent={percent} alpha={a:0.000} delta={Time.unscaledDeltaTime:0.0000} usedDelta={stepDelta:0.0000}");
+            }
+
             yield return null;
         }
 
         SetFadeAlpha(targetA);
+        LogOpenFlow($"FadeTo.Exit alpha={targetA:0.000}");
+    }
+
+    void LogOpenFlow(string message)
+    {
+        if (!logOpenFlowDiagnostics)
+            return;
+
+        float fadeAlpha = fadeImage != null ? fadeImage.color.a : -1f;
+        bool fadeActive = fadeImage != null && fadeImage.gameObject.activeInHierarchy;
+        bool rootActive = root != null && root.activeInHierarchy;
+        bool bgActive = backgroundImage != null && backgroundImage.gameObject.activeInHierarchy;
+        string scene = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
+
+        Debug.Log(
+            $"{OpenFlowLogPrefix} {message} | scene={scene} frame={Time.frameCount} rt={Time.realtimeSinceStartup:0.000} " +
+            $"unscaled={Time.unscaledTime:0.000} dt={Time.unscaledDeltaTime:0.0000} rootActive={rootActive} " +
+            $"fadeActive={fadeActive} fadeAlpha={fadeAlpha:0.000} bgActive={bgActive} screen={Screen.width}x{Screen.height}",
+            this);
     }
 
     static string RepeatNewLine(int count)

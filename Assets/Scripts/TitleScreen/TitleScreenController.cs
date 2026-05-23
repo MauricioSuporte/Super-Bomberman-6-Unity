@@ -247,6 +247,8 @@ public class TitleScreenController : MonoBehaviour
     int _videoWindowMult;
     int _videoWindowMultWindowed;
 
+    const string ControlsFlowLogPrefix = "[TitleScreen.ControlsFlow]";
+
     Coroutine _postResolutionRefreshRoutine;
     Coroutine _fullscreenWatchdog;
 
@@ -1655,14 +1657,18 @@ public class TitleScreenController : MonoBehaviour
 
                     if (menuIndex == OPTIONS_IDX_CONTROLS)
                     {
+                        LogControlsFlow($"Controls option selected scene={controlsSceneName}");
                         ControlsRequested = true;
 
                         HideFooterMessageImmediate();
                         HideBossRushLockedMessageImmediate();
                         StopPushStartBlink();
+                        LogControlsFlow("Title UI hidden before controls scene load");
 
                         if (!string.IsNullOrEmpty(controlsSceneName))
                         {
+                            yield return StartControlsSceneFlow();
+                            LogControlsFlow($"Before LoadScene({controlsSceneName})");
                             SceneManager.LoadScene(controlsSceneName);
                             yield break;
                         }
@@ -1828,6 +1834,40 @@ public class TitleScreenController : MonoBehaviour
         StageIntroTransition transition = StageIntroTransition.Instance;
         if (transition != null)
             transition.StartFadeOut(d, false);
+
+        yield return new WaitForSecondsRealtime(d);
+
+        if (GameMusicController.Instance != null)
+            GameMusicController.Instance.StopMusic();
+
+        if (titleScreenRawImage != null) titleScreenRawImage.gameObject.SetActive(false);
+        if (menuText != null) menuText.gameObject.SetActive(false);
+        if (cursorRenderer != null) cursorRenderer.gameObject.SetActive(false);
+        if (pushStartText != null) pushStartText.gameObject.SetActive(false);
+        if (footerText != null) footerText.gameObject.SetActive(false);
+        if (bossRushLockedText != null) bossRushLockedText.gameObject.SetActive(false);
+        if (videoValuesText != null) videoValuesText.gameObject.SetActive(false);
+        if (titleLogoIntro != null) titleLogoIntro.HideImmediate();
+
+        StopPushStartBlink();
+        HideBossRushLockedMessageImmediate();
+        Running = false;
+    }
+
+    IEnumerator StartControlsSceneFlow()
+    {
+        float d = Mathf.Max(0.01f, startGameFadeOutDuration);
+
+        StageIntroTransition transition = StageIntroTransition.Instance;
+        if (transition != null)
+        {
+            LogControlsFlow($"Start controls fade-out duration={d:0.000}");
+            transition.StartFadeOut(d, false);
+        }
+        else
+        {
+            LogControlsFlow($"Controls fade-out skipped: no {nameof(StageIntroTransition)}");
+        }
 
         yield return new WaitForSecondsRealtime(d);
 
@@ -2480,6 +2520,14 @@ public class TitleScreenController : MonoBehaviour
         float sy = r.height / Mathf.Max(1f, referenceHeight);
 
         return Mathf.Min(sx, sy);
+    }
+
+    void LogControlsFlow(string message)
+    {
+        Debug.Log(
+            $"{ControlsFlowLogPrefix} {message} | scene={SceneManager.GetActiveScene().name} frame={Time.frameCount} " +
+            $"rt={Time.realtimeSinceStartup:0.000} unscaled={Time.unscaledTime:0.000} dt={Time.unscaledDeltaTime:0.0000}",
+            this);
     }
 
     IEnumerator PlayTitleIntroIfAny()
