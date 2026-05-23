@@ -905,6 +905,7 @@ public sealed class BattleModeMenu : MonoBehaviour
             yield break;
         }
 
+        skinSelectMenu.ResumeBattleModeSelectionFromSavedSkins = true;
         yield return skinSelectMenu.SelectSkinRoutine();
 
         ApplyBattleModeActivePlayerIds(includeComPlayers: true);
@@ -1173,6 +1174,16 @@ public sealed class BattleModeMenu : MonoBehaviour
                 ruleConfigRoot.gameObject.SetActive(false);
             if (stageSelectRoot != null)
                 stageSelectRoot.gameObject.SetActive(false);
+            if (specificSettingsRoot != null)
+                specificSettingsRoot.gameObject.SetActive(false);
+            if (musicSelectRoot != null)
+                musicSelectRoot.gameObject.SetActive(false);
+            if (itemSelectRoot != null)
+                itemSelectRoot.gameObject.SetActive(false);
+            if (louieSelectRoot != null)
+                louieSelectRoot.gameObject.SetActive(false);
+            if (handicapSelectRoot != null)
+                handicapSelectRoot.gameObject.SetActive(false);
 
             if (leftPanel != null)
             {
@@ -1193,6 +1204,7 @@ public sealed class BattleModeMenu : MonoBehaviour
 
             bool reopenSkinSelect = false;
             bool rulesConfirmed = false;
+
             while (!confirmed)
             {
                 while (!rulesConfirmed)
@@ -1203,6 +1215,7 @@ public sealed class BattleModeMenu : MonoBehaviour
 
                         if (teamSelectionReturnedToSkinSelect)
                         {
+                            teamSelectionReturnedToSkinSelect = false;
                             reopenSkinSelect = true;
                             break;
                         }
@@ -1212,6 +1225,7 @@ public sealed class BattleModeMenu : MonoBehaviour
 
                     if (ruleConfigReturnedToSkinSelect)
                     {
+                        ruleConfigReturnedToSkinSelect = false;
                         reopenSkinSelect = true;
                         break;
                     }
@@ -1229,6 +1243,7 @@ public sealed class BattleModeMenu : MonoBehaviour
 
                 if (stageSelectionReturnedToRuleConfig)
                 {
+                    stageSelectionReturnedToRuleConfig = false;
                     rulesConfirmed = false;
                     continue;
                 }
@@ -1236,13 +1251,21 @@ public sealed class BattleModeMenu : MonoBehaviour
                 yield return OpenSpecificSettingsMenu();
 
                 if (specificSettingsReturnedToStageSelect)
+                {
+                    specificSettingsReturnedToStageSelect = false;
                     continue;
+                }
 
                 break;
             }
 
             if (reopenSkinSelect)
+            {
+                if (skinSelectMenu != null)
+                    skinSelectMenu.ResumeBattleModeSelectionFromSavedSkins = true;
+
                 continue;
+            }
 
             if (confirmed)
                 yield break;

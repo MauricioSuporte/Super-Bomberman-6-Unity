@@ -179,6 +179,7 @@ public class BomberSkinSelectMenu : MonoBehaviour
 
     Coroutine fadeInCoroutine;
     public bool ReturnToTitleRequested { get; private set; }
+    public bool ResumeBattleModeSelectionFromSavedSkins { get; set; }
 
     RectTransform unlockHintRect;
     Material unlockHintRuntimeMaterial;
@@ -439,22 +440,12 @@ public class BomberSkinSelectMenu : MonoBehaviour
         PreloadIdleSprites();
 
         for (int i = 0; i < players.Count; i++)
+            InitializeCursorSelection(players[i]);
+
+        if (ResumeBattleModeSelectionFromSavedSkins)
         {
-            int pid = players[i].playerId;
-            int idx;
-
-            if (staggerCursorStartByPlayer)
-                idx = (pid - 1) % selectableSkins.Count;
-            else
-            {
-                idx = selectableSkins.IndexOf(PlayerPersistentStats.Get(pid).Skin);
-                if (idx < 0) idx = 0;
-            }
-
-            players[i].index = idx;
-            players[i].selected = PlayerPersistentStats.Get(pid).Skin;
-            players[i].confirmed = false;
-            players[i].selectedIndex = -1;
+            ResumeBattleModeSelectionFromSavedSkins = false;
+            PreconfirmBattleModeSelectionFromSavedSkins();
         }
 
         UpdateSlotVisuals();
@@ -762,6 +753,27 @@ public class BomberSkinSelectMenu : MonoBehaviour
         st.frameIdx = 0;
         st.loopsDone = 0;
         st.stopped = false;
+        st.baseCaptured = false;
+    }
+
+    void StartEndStageFinalForSlot(int slotIndex, BomberSkin skin)
+    {
+        if (!endStageBySlot.TryGetValue(slotIndex, out var st) || st == null)
+        {
+            st = new EndStageState();
+            endStageBySlot[slotIndex] = st;
+        }
+
+        int finalFrameIndex = 0;
+        if (endStageFrames != null && endStageFrames.Length > 0)
+            finalFrameIndex = endStageFrames.Length - 1;
+
+        st.slotIndex = slotIndex;
+        st.skin = skin;
+        st.timer = 0f;
+        st.frameIdx = finalFrameIndex;
+        st.loopsDone = Mathf.Max(1, endStageLoopsToStop);
+        st.stopped = true;
         st.baseCaptured = false;
     }
 
@@ -1264,6 +1276,139 @@ public class BomberSkinSelectMenu : MonoBehaviour
         cursor.selected = PlayerPersistentStats.Get(cursor.playerId).Skin;
         cursor.confirmed = false;
         cursor.selectedIndex = -1;
+    }
+
+    void PreconfirmBattleModeSelectionFromSavedSkins()
+    {
+        if (!useBattleModeComAssignment)
+            return;
+
+        if (battleSkinTargetPlayerIds == null || battleSkinTargetPlayerIds.Count <= 0)
+            return;
+
+        int inputPlayerId = GetDefaultBattleModeResumeInputPlayerId();
+        int lastTargetIndex = battleSkinTargetPlayerIds.Count - 1;
+
+        nextBattleComQueueIndex = 0;
+
+        for (int i = 0; i < battleSkinTargetPlayerIds.Count; i++)
+        {
+            int targetPlayerId = battleSkinTargetPlayerIds[i];
+            bool shouldLeaveUnconfirmed = i == lastTargetIndex;
+
+            PlayerCursorState cursor = GetPlayerState(targetPlayerId);
+
+            if (cursor == null)
+            {
+                cursor = CreateCursorState(inputPlayerId, targetPlayerId, battleComCursor: true);
+                players.Add(cursor);
+                nextBattleComQueueIndex++;
+            }
+
+            cursor.inputPlayerId = cursor.battleComCursor ? inputPlayerId : cursor.playerId;
+
+            ApplySavedSkinToCursor(cursor);
+
+            if (shouldLeaveUnconfirmed)
+            {
+                cursor.confirmed = false;
+                cursor.selectedIndex = -1;
+
+                if (cursor.cursorRt != null)
+                    cursor.cursorRt.gameObject.SetActive(true);
+
+                continue;
+            }
+
+            ForceConfirmCursorWithoutSfx(cursor);
+        }
+
+        UpdateNextBattleComQueueIndexFromCreatedComCursors();
+    }
+
+    int GetDefaultBattleModeResumeInputPlayerId()
+    {
+        if (configuredPlayerIds != null && configuredPlayerIds.Count > 0)
+            return Mathf.Clamp(configuredPlayerIds[0], GameSession.MinPlayerId, GameSession.MaxPlayerId);
+
+        BattleModePlayerControlMode[] modes = SaveSystem.GetBattleModePlayerControlModes();
+
+        if (modes != null)
+        {
+            for (int i = 0; i < modes.Length && i < GameSession.MaxPlayerId; i++)
+            {
+                if (modes[i] == BattleModePlayerControlMode.Man)
+                    return i + 1;
+            }
+        }
+
+        return GameSession.MinPlayerId;
+    }
+
+    void ApplySavedSkinToCursor(PlayerCursorState cursor)
+    {
+        if (cursor == null)
+            return;
+
+        BomberSkin savedSkin = PlayerPersistentStats.Get(cursor.playerId).Skin;
+        int index = selectableSkins.IndexOf(savedSkin);
+
+        if (index < 0)
+            index = Mathf.Clamp(cursor.playerId - 1, 0, selectableSkins.Count - 1);
+
+        cursor.index = index;
+        cursor.selected = selectableSkins[Mathf.Clamp(index, 0, selectableSkins.Count - 1)];
+        cursor.selectedIndex = -1;
+        cursor.confirmed = false;
+    }
+
+    void ForceConfirmCursorWithoutSfx(PlayerCursorState cursor)
+    {
+        if (cursor == null)
+            return;
+
+        int slot = Mathf.Clamp(cursor.index, 0, selectableSkins.Count - 1);
+        BomberSkin skin = selectableSkins[slot];
+
+        if (!UnlockProgress.IsUnlocked(skin))
+            return;
+
+        int owner = GetSelectedOwner(slot);
+        if (owner != 0 && owner != cursor.playerId)
+            return;
+
+        selectedBySlot[slot] = cursor.playerId;
+
+        cursor.selected = skin;
+        cursor.selectedIndex = slot;
+        cursor.confirmed = true;
+
+        PlayerPersistentStats.Get(cursor.playerId).Skin = skin;
+
+        PushBattleConfirmedCursor(cursor);
+
+        StartEndStageFinalForSlot(slot, skin);
+
+        if (cursor.cursorImg != null)
+        {
+            Color c = cursor.cursorImg.color;
+            c.a = 1f;
+            cursor.cursorImg.color = c;
+        }
+    }
+
+    void UpdateNextBattleComQueueIndexFromCreatedComCursors()
+    {
+        int createdComCursors = 0;
+
+        for (int i = 0; i < players.Count; i++)
+        {
+            PlayerCursorState cursor = players[i];
+            if (cursor != null && cursor.battleComCursor)
+                createdComCursors++;
+        }
+
+        nextBattleComQueueIndex = Mathf.Clamp(createdComCursors, 0, battleComQueue.Count);
     }
 
     void PopulateConfiguredPlayerIds(List<int> results)
