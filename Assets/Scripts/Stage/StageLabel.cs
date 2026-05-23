@@ -224,4 +224,50 @@ public class StageLabel : MonoBehaviour
         if (Mathf.Abs(rt.sizeDelta.x - rectW) > 0.01f || Mathf.Abs(rt.sizeDelta.y - rectH) > 0.01f)
             rt.sizeDelta = new Vector2(rectW, rectH);
     }
+
+    public void SetBattleModePauseMenu(int world, int stage, int selectedIndex)
+    {
+        EnsureNoWrap();
+
+        string stageNumber = $"{world}-{stage}";
+
+        string resume = selectedIndex == 0
+            ? "<color=#FF6F31>> RESUME</color>"
+            : "<color=#E8E8E8>  RESUME</color>";
+
+        string restartRound = selectedIndex == 1
+            ? "<color=#FF6F31>> RESTART ROUND</color>"
+            : "<color=#E8E8E8>  RESTART ROUND</color>";
+
+        string stageSelectText = $"RETURN{NBSP}TO{NBSP}STAGE{NBSP}SELECT";
+        string retStageSelect = selectedIndex == 2
+            ? $"<color=#FF6F31>> {stageSelectText}</color>"
+            : $"<color=#E8E8E8>  {stageSelectText}</color>";
+
+        string titleText = $"RETURN{NBSP}TO{NBSP}TITLE";
+        string retTitle = selectedIndex == 3
+            ? $"<color=#FF6F31>> {titleText}</color>"
+            : $"<color=#E8E8E8>  {titleText}</color>";
+
+        stageText.text =
+            "<align=center>" +
+            $"<size={S(SizeStageLabel)}><color=#1ABC00>STAGE</color></size>  " +
+            $"<size={S(SizeStageNumber)}><color=#E8E8E8>{stageNumber}</color></size>\n" +
+            $"<size={S(SizePauseTitle)}><color=#3392FF>PAUSE!</color></size>\n\n" +
+            $"<size={S(SizeMenuItem)}>{resume}</size>\n" +
+            $"<size={S(SizeMenuItem)}>{restartRound}</size>\n" +
+            $"<size={S(SizeMenuItem)}>{retStageSelect}</size>\n" +
+            $"<size={S(SizeMenuItem)}>{retTitle}</size>" +
+            "</align>";
+    }
+
+    public void SetPauseConfirmRestartRound(int world, int stage, int selectedIndex)
+    {
+        SetPauseConfirmQuestion(world, stage, selectedIndex, "Restart Round?");
+    }
+
+    public void SetPauseConfirmReturnToStageSelect(int world, int stage, int selectedIndex)
+    {
+        SetPauseConfirmQuestion(world, stage, selectedIndex, "Return to Stage Select?");
+    }
 }

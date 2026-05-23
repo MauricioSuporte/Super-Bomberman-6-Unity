@@ -14,7 +14,9 @@ public class GamePauseController : MonoBehaviour
         None = 0,
         BossRush = 1,
         WorldMap = 2,
-        TitleScreen = 3
+        TitleScreen = 3,
+        RestartBattleRound = 4,
+        BattleStageSelect = 5
     }
 
     [Header("Pause Availability")]
@@ -40,6 +42,8 @@ public class GamePauseController : MonoBehaviour
     [SerializeField] string worldMapSceneName = "WorldMap";
     [SerializeField] string titleSceneName = "TitleScreen";
     [SerializeField] string bossRushSceneName = "BossRush";
+    [SerializeField] string battleModeMenuSceneName = "BattleModeMenu";
+    [SerializeField] string battleModeStageScenePrefix = "BattleMode_";
 
     int menuIndex;
     bool confirmReturn;
@@ -53,6 +57,33 @@ public class GamePauseController : MonoBehaviour
     int lastScreenH;
 
     public static GamePauseController Instance { get; private set; }
+
+    bool IsBattleModeStageActive
+    {
+        get
+        {
+            Scene scene = SceneManager.GetActiveScene();
+            if (!scene.IsValid())
+                return false;
+
+            string sceneName = scene.name;
+            if (string.IsNullOrEmpty(sceneName))
+                return false;
+
+            return sceneName.StartsWith(
+                battleModeStageScenePrefix,
+                System.StringComparison.OrdinalIgnoreCase);
+        }
+    }
+
+    string CurrentSceneName
+    {
+        get
+        {
+            Scene scene = SceneManager.GetActiveScene();
+            return scene.IsValid() ? scene.name : string.Empty;
+        }
+    }
 
     bool IsBossRushGameplayActive => BossRushSession.IsActive;
 
@@ -249,12 +280,14 @@ public class GamePauseController : MonoBehaviour
             return;
 
         bool confirmPressed = IsStartPressed();
+        bool isBattleModeStage = IsBattleModeStageActive;
+        int menuOptionCount = isBattleModeStage ? 4 : 3;
 
         if (!confirmReturn)
         {
             if (TryGetAnyPlayerDown(PlayerAction.MoveUp, out _))
             {
-                menuIndex = Wrap(menuIndex - 1, 3);
+                menuIndex = Wrap(menuIndex - 1, menuOptionCount);
                 PlayMoveSfx();
                 RefreshPauseUI();
                 return;
@@ -262,7 +295,7 @@ public class GamePauseController : MonoBehaviour
 
             if (TryGetAnyPlayerDown(PlayerAction.MoveDown, out _))
             {
-                menuIndex = Wrap(menuIndex + 1, 3);
+                menuIndex = Wrap(menuIndex + 1, menuOptionCount);
                 PlayMoveSfx();
                 RefreshPauseUI();
                 return;
@@ -279,10 +312,22 @@ public class GamePauseController : MonoBehaviour
                 confirmReturn = true;
                 confirmIndex = 0;
 
-                if (menuIndex == 1)
-                    confirmTarget = IsBossRushGameplayActive ? PauseExitTarget.BossRush : PauseExitTarget.WorldMap;
+                if (isBattleModeStage)
+                {
+                    if (menuIndex == 1)
+                        confirmTarget = PauseExitTarget.RestartBattleRound;
+                    else if (menuIndex == 2)
+                        confirmTarget = PauseExitTarget.BattleStageSelect;
+                    else
+                        confirmTarget = PauseExitTarget.TitleScreen;
+                }
                 else
-                    confirmTarget = PauseExitTarget.TitleScreen;
+                {
+                    if (menuIndex == 1)
+                        confirmTarget = IsBossRushGameplayActive ? PauseExitTarget.BossRush : PauseExitTarget.WorldMap;
+                    else
+                        confirmTarget = PauseExitTarget.TitleScreen;
+                }
 
                 PlaySelectSfx();
                 RefreshPauseUI();
@@ -314,14 +359,40 @@ public class GamePauseController : MonoBehaviour
             {
                 confirmReturn = false;
 
-                if (confirmTarget == PauseExitTarget.BossRush ||
-                    confirmTarget == PauseExitTarget.WorldMap)
+                if (confirmTarget == PauseExitTarget.RestartBattleRound)
+                    menuIndex = 1;
+                else if (confirmTarget == PauseExitTarget.BattleStageSelect)
+                    menuIndex = 2;
+                else if (confirmTarget == PauseExitTarget.BossRush ||
+                         confirmTarget == PauseExitTarget.WorldMap)
                     menuIndex = 1;
                 else
-                    menuIndex = 2;
+                    menuIndex = isBattleModeStage ? 3 : 2;
 
                 PlayBackConfirmSfx();
                 RefreshPauseUI();
+                return;
+            }
+
+            if (confirmTarget == PauseExitTarget.RestartBattleRound)
+            {
+                BeginExitToScene(
+                    CurrentSceneName,
+                    resetSessionForTitle: false,
+                    cancelBossRushRun: false,
+                    resetPlayersToBaseState: false);
+                return;
+            }
+
+            if (confirmTarget == PauseExitTarget.BattleStageSelect)
+            {
+                BattleModeMenu.OpenDirectlyAtStageSelect = true;
+
+                BeginExitToScene(
+                    battleModeMenuSceneName,
+                    resetSessionForTitle: false,
+                    cancelBossRushRun: false,
+                    resetPlayersToBaseState: false);
                 return;
             }
 
@@ -415,13 +486,23 @@ public class GamePauseController : MonoBehaviour
         int w = StageIntroTransition.Instance.world;
         int s = StageIntroTransition.Instance.stageNumber;
 
+        bool isBattleModeStage = IsBattleModeStageActive;
+
         if (!confirmReturn)
         {
-            label.SetPauseMenu(w, s, menuIndex, IsBossRushGameplayActive);
+            if (isBattleModeStage)
+                label.SetBattleModePauseMenu(w, s, menuIndex);
+            else
+                label.SetPauseMenu(w, s, menuIndex, IsBossRushGameplayActive);
+
             return;
         }
 
-        if (confirmTarget == PauseExitTarget.BossRush)
+        if (confirmTarget == PauseExitTarget.RestartBattleRound)
+            label.SetPauseConfirmRestartRound(w, s, confirmIndex);
+        else if (confirmTarget == PauseExitTarget.BattleStageSelect)
+            label.SetPauseConfirmReturnToStageSelect(w, s, confirmIndex);
+        else if (confirmTarget == PauseExitTarget.BossRush)
             label.SetPauseConfirmReturnToBossRush(w, s, confirmIndex);
         else if (confirmTarget == PauseExitTarget.WorldMap)
             label.SetPauseConfirmReturnToWorldMap(w, s, confirmIndex);

@@ -7,6 +7,8 @@ using UnityEngine.UI;
 
 public sealed class BattleModeMenu : MonoBehaviour
 {
+    public static bool OpenDirectlyAtStageSelect { get; set; }
+
     private enum MenuState
     {
         MatchMode = 0,
@@ -606,6 +608,13 @@ public sealed class BattleModeMenu : MonoBehaviour
 
     private void Start()
     {
+        if (OpenDirectlyAtStageSelect)
+        {
+            OpenDirectlyAtStageSelect = false;
+            StartCoroutine(OpenDirectlyAtStageSelectRoutine());
+            return;
+        }
+
         StartCoroutine(OpenMenuRoutine());
     }
 
@@ -709,6 +718,76 @@ public sealed class BattleModeMenu : MonoBehaviour
 
             CapturePreviousHeldInputs(input);
             yield return null;
+        }
+    }
+
+    private IEnumerator OpenDirectlyAtStageSelectRoutine()
+    {
+        if (root == null)
+            root = gameObject;
+
+        root.transform.SetAsLastSibling();
+        root.SetActive(true);
+
+        if (fadeImage != null)
+        {
+            fadeImage.gameObject.SetActive(true);
+            fadeImage.transform.SetAsLastSibling();
+            SetFadeAlpha(1f);
+        }
+
+        confirmed = false;
+        cursorConfirmVisual = false;
+        menuActive = false;
+        state = MenuState.StageSelect;
+
+        if (leftPanel != null)
+        {
+            leftPanel.HideCursor();
+            leftPanel.gameObject.SetActive(false);
+        }
+
+        ResetBackgroundSpriteSwap();
+        ApplyCurrentBackgroundSprite(true);
+        UpdatePromptTitle();
+
+        yield return null;
+        Canvas.ForceUpdateCanvases();
+        yield return new WaitForEndOfFrame();
+        Canvas.ForceUpdateCanvases();
+
+        ApplyDynamicScaleIfNeeded(true);
+        StartSelectMusic();
+
+        if (fadeInCoroutine != null)
+            StopCoroutine(fadeInCoroutine);
+
+        fadeInCoroutine = StartCoroutine(FadeInRoutine());
+
+        while (!confirmed)
+        {
+            yield return OpenStageSelectMenu();
+
+            if (stageSelectionReturnedToRuleConfig)
+            {
+                stageSelectionReturnedToRuleConfig = false;
+
+                PlaySfx(returnSfx, returnSfxVolume);
+                confirmed = true;
+
+                yield return FadeOutRoutine();
+                Hide();
+                LoadTitleScene();
+
+                yield break;
+            }
+
+            yield return OpenSpecificSettingsMenu();
+
+            if (specificSettingsReturnedToStageSelect)
+                continue;
+
+            break;
         }
     }
 
