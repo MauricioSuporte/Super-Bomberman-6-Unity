@@ -54,12 +54,12 @@ public sealed class SaveData
 
     public List<SavedPlayerControls> controls = new()
     {
-        new SavedPlayerControls { playerId = 1 },
-        new SavedPlayerControls { playerId = 2 },
-        new SavedPlayerControls { playerId = 3 },
-        new SavedPlayerControls { playerId = 4 },
-        new SavedPlayerControls { playerId = 5 },
-        new SavedPlayerControls { playerId = 6 }
+        new SavedPlayerControls { playerId = 1, active = true },
+        new SavedPlayerControls { playerId = 2, active = false },
+        new SavedPlayerControls { playerId = 3, active = false },
+        new SavedPlayerControls { playerId = 4, active = false },
+        new SavedPlayerControls { playerId = 5, active = false },
+        new SavedPlayerControls { playerId = 6, active = false }
     };
 
     public List<BossRushDifficultyTimesSave> bossRushTimes = new();

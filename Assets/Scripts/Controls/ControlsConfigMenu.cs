@@ -794,6 +794,7 @@ public class ControlsConfigMenu : MonoBehaviour
     bool ToggleSelectedPlayerActive()
     {
         int playerId = Mathf.Clamp(playerSelectIndex + 1, 1, MaxConfigurablePlayers);
+
         var session = GameSession.Instance;
         if (session == null)
         {
@@ -802,13 +803,10 @@ public class ControlsConfigMenu : MonoBehaviour
         }
 
         bool active = session.IsPlayerActive(playerId);
-        if (active && session.ActivePlayerCount <= 1)
-        {
-            ShowBlockedMessage("AT LEAST ONE PLAYER MUST STAY ON.");
-            return false;
-        }
+        bool nextActive = !active;
 
-        session.SetPlayerActive(playerId, !active);
+        SaveSystem.SetControlPlayerActive(playerId, nextActive);
+
         return session.IsPlayerActive(playerId) != active;
     }
 
@@ -1093,7 +1091,10 @@ public class ControlsConfigMenu : MonoBehaviour
                     {
                         var pReset = PlayerInputManager.Instance.GetPlayer(confirmResetPlayerId);
                         pReset.ResetToDefault();
+
+                        SaveSystem.SetControlPlayerActive(confirmResetPlayerId, false);
                         SaveSystem.SaveControlsFromInputManager();
+
                         PlaySfx(resetSfx, resetVolume);
                         state = MenuState.SelectPlayer;
                         RefreshText();
@@ -2136,13 +2137,6 @@ public class ControlsConfigMenu : MonoBehaviour
     {
         int playerId = Mathf.Clamp(targetPlayerId, 1, MaxConfigurablePlayers);
 
-        var session = GameSession.Instance;
-        if (session == null)
-            return;
-
-        if (session.IsPlayerActive(playerId))
-            return;
-
-        session.SetPlayerActive(playerId, true);
+        SaveSystem.SetControlPlayerActive(playerId, true);
     }
 }

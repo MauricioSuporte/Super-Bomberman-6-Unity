@@ -171,6 +171,9 @@ public static class SaveSystem
             }
 
             savedProfile.playerId = playerId;
+            savedProfile.active = GameSession.Instance != null
+                ? GameSession.Instance.IsPlayerActive(playerId)
+                : savedProfile.active;
             savedProfile.joyIndex = Mathf.Clamp(runtimeProfile.joyIndex, 1, 11);
             savedProfile.gamepadDeviceId = runtimeProfile.gamepadDeviceId;
             savedProfile.gamepadProduct = runtimeProfile.gamepadProduct ?? "";
@@ -252,6 +255,8 @@ public static class SaveSystem
                 runtimeProfile.SetBinding(action, binding);
             }
         }
+
+        LoadControlActivePlayersIntoGameSession();
     }
 
     public static List<float> GetBossRushTopTimes(BossRushDifficulty difficulty)
@@ -356,6 +361,23 @@ public static class SaveSystem
 
         if (changed)
             Save();
+    }
+
+    public static void SetBattleModePlayerControlMode(int playerId, BattleModePlayerControlMode mode)
+    {
+        EnsureLoaded();
+        EnsureBattleModePlayerControlModes(data);
+
+        playerId = Mathf.Clamp(playerId, 1, 6);
+        int index = playerId - 1;
+
+        mode = NormalizeBattleModePlayerControlMode((int)mode);
+
+        if (data.battleModePlayerControlModes[index] == (int)mode)
+            return;
+
+        data.battleModePlayerControlModes[index] = (int)mode;
+        Save();
     }
 
     public static BattleModeRules.TeamId[] GetBattleModePlayerTeams()
@@ -883,14 +905,9 @@ public static class SaveSystem
 
     private static BattleModePlayerControlMode GetDefaultBattleModePlayerControlMode(int playerIndex)
     {
-        return playerIndex switch
-        {
-            0 => BattleModePlayerControlMode.Man,
-            1 => BattleModePlayerControlMode.Com,
-            2 => BattleModePlayerControlMode.Com,
-            3 => BattleModePlayerControlMode.Com,
-            _ => BattleModePlayerControlMode.Off
-        };
+        return playerIndex == 0
+            ? BattleModePlayerControlMode.Man
+            : BattleModePlayerControlMode.Com;
     }
 
     private static void EnsureBattleModePlayerTeams(SaveData d)
@@ -928,15 +945,30 @@ public static class SaveSystem
         d.controls ??= new List<SavedPlayerControls>();
 
         while (d.controls.Count < 6)
-            d.controls.Add(new SavedPlayerControls { playerId = d.controls.Count + 1 });
+        {
+            int playerId = d.controls.Count + 1;
+            d.controls.Add(new SavedPlayerControls
+            {
+                playerId = playerId,
+                active = playerId == 1
+            });
+        }
 
         if (d.controls.Count > 6)
             d.controls.RemoveRange(6, d.controls.Count - 6);
 
+        bool hasAnyActive = false;
+
         for (int i = 0; i < d.controls.Count; i++)
         {
             if (d.controls[i] == null)
-                d.controls[i] = new SavedPlayerControls();
+            {
+                d.controls[i] = new SavedPlayerControls
+                {
+                    playerId = i + 1,
+                    active = i == 0
+                };
+            }
 
             d.controls[i].playerId = i + 1;
 
@@ -945,7 +977,13 @@ public static class SaveSystem
 
             if (d.controls[i].bindings == null)
                 d.controls[i].bindings = new List<SavedBinding>();
+
+            if (d.controls[i].active)
+                hasAnyActive = true;
         }
+
+        if (!hasAnyActive && d.controls.Count > 0)
+            d.controls[0].active = true;
     }
 
     private static void EnsureBossRushTimes(SaveData d)
@@ -1499,5 +1537,76 @@ public static class SaveSystem
     {
         if (!Directory.Exists(SaveDirectoryPath))
             Directory.CreateDirectory(SaveDirectoryPath);
+    }
+
+    public static void LoadControlActivePlayersIntoGameSession()
+    {
+        EnsureLoaded();
+        EnsureControlProfiles(data);
+
+        var session = GameSession.Instance;
+        if (session == null)
+            return;
+
+        List<int> activePlayerIds = new();
+
+        for (int i = 0; i < data.controls.Count && i < 6; i++)
+        {
+            SavedPlayerControls control = data.controls[i];
+            if (control == null)
+                continue;
+
+            if (control.active)
+                activePlayerIds.Add(i + 1);
+        }
+
+        if (activePlayerIds.Count <= 0)
+            activePlayerIds.Add(1);
+
+        session.SetActivePlayerIds(activePlayerIds);
+    }
+
+    public static void SaveControlActivePlayersFromGameSession()
+    {
+        EnsureLoaded();
+        EnsureControlProfiles(data);
+
+        var session = GameSession.Instance;
+        if (session == null)
+            return;
+
+        for (int i = 0; i < data.controls.Count && i < 6; i++)
+        {
+            SavedPlayerControls control = data.controls[i];
+            if (control == null)
+                continue;
+
+            int playerId = i + 1;
+            control.playerId = playerId;
+            control.active = session.IsPlayerActive(playerId);
+        }
+
+        Save();
+    }
+
+    public static void SetControlPlayerActive(int playerId, bool active)
+    {
+        EnsureLoaded();
+        EnsureControlProfiles(data);
+
+        playerId = Mathf.Clamp(playerId, 1, 6);
+        int index = playerId - 1;
+
+        data.controls[index].playerId = playerId;
+        data.controls[index].active = active;
+
+        var session = GameSession.Instance;
+        if (session != null)
+            session.SetPlayerActive(playerId, active);
+
+        SetBattleModePlayerControlMode(
+            playerId,
+            active ? BattleModePlayerControlMode.Man : BattleModePlayerControlMode.Com
+        );
     }
 }
