@@ -4865,6 +4865,7 @@ public sealed class BattleModeMenu : MonoBehaviour
             BattleModeHandicapBombType.Rubber => GetItemIconSprite(ItemType.RubberBomb),
             BattleModeHandicapBombType.Pierce => GetItemIconSprite(ItemType.PierceBomb),
             BattleModeHandicapBombType.Control => GetItemIconSprite(ItemType.ControlBomb),
+            BattleModeHandicapBombType.Magnet => GetItemIconSprite(ItemType.MagnetBomb),
             _ => GetItemIconSprite(ItemType.ExtraBomb)
         };
     }
@@ -4939,33 +4940,43 @@ public sealed class BattleModeMenu : MonoBehaviour
 
                 SetHandicapMountedLouie(player, GetHandicapMountVisualIndex((MountedType)player.mountedLouie) + delta);
                 break;
+
             case 1:
                 player.life = WrapValue(player.life + delta, 0, 9);
                 break;
+
             case 2:
                 player.bombAmount = WrapValue(player.bombAmount + delta, 1, PlayerPersistentStats.MaxBombAmount);
                 break;
+
             case 3:
                 player.blastRadius = WrapValue(player.blastRadius + delta, 1, PlayerPersistentStats.MaxExplosionRadius);
                 break;
+
             case 4:
                 player.speedLevel = WrapValue(player.speedLevel + delta, 1, PlayerPersistentStats.MaxSpeedUps + 1);
                 break;
+
             case 5:
-                player.bombType = WrapValue(player.bombType + delta, 0, 4);
+                player.bombType = WrapValue(player.bombType + delta, 0, 5);
                 break;
+
             case 6:
                 player.movementAbility = WrapValue(player.movementAbility + delta, 0, 2);
                 break;
+
             case 7:
                 player.punchBomb = !player.punchBomb;
                 break;
+
             case 8:
                 player.powerGlove = !player.powerGlove;
                 break;
+
             case 9:
                 player.fullFire = !player.fullFire;
                 break;
+
             case 10:
                 player.destructiblePass = !player.destructiblePass;
                 break;

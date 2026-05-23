@@ -108,7 +108,8 @@ public enum BattleModeHandicapBombType
     Power = 1,
     Rubber = 2,
     Pierce = 3,
-    Control = 4
+    Control = 4,
+    Magnet = 5
 }
 
 public enum BattleModeHandicapMovementAbility

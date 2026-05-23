@@ -837,14 +837,21 @@ public static class PlayerPersistentStats
             case BattleModeHandicapBombType.Power:
                 state.HasPowerBomb = true;
                 break;
+
             case BattleModeHandicapBombType.Rubber:
                 state.HasRubberBombs = true;
                 break;
+
             case BattleModeHandicapBombType.Pierce:
                 state.HasPierceBombs = true;
                 break;
+
             case BattleModeHandicapBombType.Control:
                 state.HasControlBombs = true;
+                break;
+
+            case BattleModeHandicapBombType.Magnet:
+                state.HasMagnetBomb = true;
                 break;
         }
     }
