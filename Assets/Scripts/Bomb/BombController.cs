@@ -2016,6 +2016,14 @@ public partial class BombController : MonoBehaviour
             return;
 
         AudioClip clip = GetExplosionSfx(radius, pierce);
+        PlayExplosionSfxExclusive(source, clip);
+    }
+
+    public void PlayExplosionSfxExclusive(AudioSource source, AudioClip clip)
+    {
+        if (source == null)
+            return;
+
         if (clip == null)
             return;
 

@@ -115,6 +115,7 @@ public class TitleScreenDropIntro : MonoBehaviour
     RectTransform _logoRect;
     readonly List<RectTransform> _characterRects = new();
     readonly List<Image> _characterAlternateExtraImages = new();
+    RectMask2D _viewportMask;
 
     float _pixelFrameScale = 1f;
     IntroVisualState _visualState = IntroVisualState.Hidden;
@@ -1010,7 +1011,19 @@ public class TitleScreenDropIntro : MonoBehaviour
         if (characterDropStartSfx == null)
             return;
 
-        AudioSource.PlayClipAtPoint(characterDropStartSfx, Vector3.zero, characterDropStartSfxVolume);
+        if (GameMusicController.Instance != null)
+        {
+            GameMusicController.Instance.PlaySfx(characterDropStartSfx, characterDropStartSfxVolume);
+            return;
+        }
+
+        AudioSource source = GetComponent<AudioSource>();
+        if (source == null)
+            source = gameObject.AddComponent<AudioSource>();
+
+        source.playOnAwake = false;
+        source.spatialBlend = 0f;
+        source.PlayOneShot(characterDropStartSfx, characterDropStartSfxVolume);
     }
 
     Sprite GetFallingSprite(CharacterDropSlot slot)
@@ -1544,6 +1557,19 @@ public class TitleScreenDropIntro : MonoBehaviour
         self.anchoredPosition = Vector2.zero;
         self.localScale = Vector3.one;
         self.localRotation = Quaternion.identity;
+
+        EnsureViewportMask();
+    }
+
+    void EnsureViewportMask()
+    {
+        if (_viewportMask == null)
+            _viewportMask = GetComponent<RectMask2D>();
+
+        if (_viewportMask == null)
+            _viewportMask = gameObject.AddComponent<RectMask2D>();
+
+        _viewportMask.enabled = true;
     }
 
     public void CompleteImmediate()

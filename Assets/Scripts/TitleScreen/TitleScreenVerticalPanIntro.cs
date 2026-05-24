@@ -5,6 +5,7 @@ using UnityEngine.UI;
 public class TitleScreenVerticalPanIntro : MonoBehaviour
 {
     const string LOG = "[TitleScreenVerticalPanIntro]";
+    const string DefaultPanStartSfxResourcesPath = "Sounds/Space";
 
     [Header("References")]
     [SerializeField] RawImage targetRawImage;
@@ -23,6 +24,10 @@ public class TitleScreenVerticalPanIntro : MonoBehaviour
     [SerializeField, Min(0.01f)] float introDuration = 3f;
     [SerializeField] bool useUnscaledTime = true;
     [SerializeField] AnimationCurve panCurve = null;
+
+    [Header("Audio")]
+    [SerializeField] AudioClip panStartSfx;
+    [SerializeField, Range(0f, 1f)] float panStartSfxVolume = 1f;
 
     [Header("Behavior")]
     [SerializeField] bool applyPointFilter = true;
@@ -110,6 +115,7 @@ public class TitleScreenVerticalPanIntro : MonoBehaviour
         int fromBottom = startBottomPixel;
         int toBottom = GetTargetTopBottomPixel(spriteRect);
 
+        PlayPanStartSfx();
         currentRoutine = StartCoroutine(PlayRoutine(tex, spriteRect, fromBottom, toBottom));
         yield return currentRoutine;
     }
@@ -273,5 +279,16 @@ public class TitleScreenVerticalPanIntro : MonoBehaviour
             targetRawImage.texture = tex;
 
         targetRawImage.uvRect = uv;
+    }
+
+    void PlayPanStartSfx()
+    {
+        if (panStartSfx == null)
+            panStartSfx = Resources.Load<AudioClip>(DefaultPanStartSfxResourcesPath);
+
+        if (panStartSfx == null || GameMusicController.Instance == null)
+            return;
+
+        GameMusicController.Instance.PlaySfx(panStartSfx, panStartSfxVolume);
     }
 }

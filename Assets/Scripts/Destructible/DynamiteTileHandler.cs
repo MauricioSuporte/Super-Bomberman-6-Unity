@@ -5,7 +5,7 @@ using UnityEngine.Tilemaps;
 
 public sealed class DynamiteTileHandler : MonoBehaviour, IDestructibleTileHandler
 {
-    private const int PierceExplosionSfxRadius = 10;
+    private const string DynamiteExplosionSfxResourcesPath = "Sounds/Explosions/Dynamite";
 
     [SerializeField] private int explosionRadius = 2;
     [SerializeField] private float startStepDelaySeconds = 0.1f;
@@ -13,10 +13,14 @@ public sealed class DynamiteTileHandler : MonoBehaviour, IDestructibleTileHandle
     readonly HashSet<Vector3Int> _triggered = new();
     readonly HashSet<Vector3Int> _scheduled = new();
 
+    static AudioClip _dynamiteExplosionSfx;
     AudioSource _audio;
 
     void Awake()
     {
+        if (_dynamiteExplosionSfx == null)
+            _dynamiteExplosionSfx = Resources.Load<AudioClip>(DynamiteExplosionSfxResourcesPath);
+
         _audio = GetComponent<AudioSource>();
         if (_audio == null)
             _audio = gameObject.AddComponent<AudioSource>();
@@ -56,7 +60,7 @@ public sealed class DynamiteTileHandler : MonoBehaviour, IDestructibleTileHandle
 
     void SpawnStartAndExplode(BombController source, Vector2 p)
     {
-        source.PlayExplosionSfxExclusive(_audio, PierceExplosionSfxRadius, pierce: true);
+        source.PlayExplosionSfxExclusive(_audio, _dynamiteExplosionSfx);
         source.SpawnExplosionAreaForEffect(p, explosionRadius, pierce: true);
     }
 

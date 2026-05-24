@@ -512,7 +512,7 @@ MonoBehaviour:
   startBottomPixel: 0
   autoComputeTopFromTexture: 1
   topBottomPixel: 110
-  introDuration: 3
+  introDuration: 2
   useUnscaledTime: 1
   panCurve:
     serializedVersion: 2
@@ -520,6 +520,8 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+  panStartSfx: {fileID: 8300000, guid: 1cb98736a79f7314db8a9266bbe73c76, type: 3}
+  panStartSfxVolume: 1
   applyPointFilter: 1
   clampWrapMode: 1
   setNativeTextureOnPrepare: 1
@@ -936,11 +938,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TitleScreenLogoDropIntro
   logoImage: {fileID: 1797125730}
   logoFrames:
-  - {fileID: 101209642910601267, guid: a353270c23de0d74c8129549ba867977, type: 3}
-  - {fileID: -3936444673696339432, guid: a353270c23de0d74c8129549ba867977, type: 3}
-  - {fileID: 9092564933819195439, guid: a353270c23de0d74c8129549ba867977, type: 3}
-  - {fileID: 3095362166596880681, guid: a353270c23de0d74c8129549ba867977, type: 3}
-  - {fileID: -2291964472640486642, guid: a353270c23de0d74c8129549ba867977, type: 3}
+  - {fileID: 1584859444399050731, guid: b34a1c42ef266ea459e515e028115d97, type: 3}
+  - {fileID: 7898370078986968613, guid: b34a1c42ef266ea459e515e028115d97, type: 3}
+  - {fileID: 371191097891888966, guid: b34a1c42ef266ea459e515e028115d97, type: 3}
+  - {fileID: -3541977968402563015, guid: b34a1c42ef266ea459e515e028115d97, type: 3}
+  - {fileID: 5962710452785465411, guid: b34a1c42ef266ea459e515e028115d97, type: 3}
+  - {fileID: -7456460305171201392, guid: b34a1c42ef266ea459e515e028115d97, type: 3}
   logoFrameDuration: 0.08
   animateLogo: 1
   loopLogoAnimation: 1
@@ -1820,7 +1823,7 @@ RectTransform:
   m_Father: {fileID: 1389130176}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
+  m_AnchorMax: {x: 3, y: 2.25}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
@@ -1970,7 +1973,7 @@ MonoBehaviour:
   windowSizeMultipliers: 02000000030000000400000005000000060000000700000008000000
   videoValuesText: {fileID: 0}
   videoValuesRightPadding: 100
-  titleMusic: {fileID: 8300000, guid: a9c7a0a0f576cf64691be8cb6b938d93, type: 3}
+  titleMusic: {fileID: 8300000, guid: dae13c9558144914a8aad646f9956dc6, type: 3}
   titleMusicVolume: 0.5
   exitDelayRealtime: 1
   startGameFadeOutDuration: 0.25
