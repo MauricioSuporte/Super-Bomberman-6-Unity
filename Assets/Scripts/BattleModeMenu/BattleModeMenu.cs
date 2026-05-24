@@ -117,6 +117,7 @@ public sealed class BattleModeMenu : MonoBehaviour
     [SerializeField] private string nextSceneName = "";
     [SerializeField] private bool loadNextSceneAfterSelection;
     [SerializeField, Min(0f)] private float confirmFeedbackSeconds = 0.5f;
+    [SerializeField, Min(0f)] private float optionCursorAdvanceSeconds = 0.25f;
 
     [Header("Input Timing")]
     [SerializeField, Min(0.01f)] private float directionalRepeatInitialDelay = 0.22f;
@@ -456,6 +457,7 @@ public sealed class BattleModeMenu : MonoBehaviour
     private bool confirmed;
     private bool menuActive;
     private bool cursorConfirmVisual;
+    private bool optionCursorAdvanceAnimating;
     private bool directCharacterReturnedToPlayerSelect;
 
     private int backgroundSpriteIndex;
@@ -1052,13 +1054,7 @@ public sealed class BattleModeMenu : MonoBehaviour
         PlaySfx(confirmSfx, confirmSfxVolume);
         SaveSystem.SetBattleModeMatchMode(SelectedMatchMode);
 
-        cursorConfirmVisual = true;
-        UpdateOptionVisuals();
-        float wait = Mathf.Max(0f, confirmFeedbackSeconds);
-        if (wait > 0f)
-            yield return new WaitForSecondsRealtime(wait);
-
-        cursorConfirmVisual = false;
+        yield return PlayLeftPanelCursorAdvanceAnimation();
         yield return BuildPlayerSelectMenuAfterTransition("ConfirmMatchMode");
     }
 
@@ -1067,13 +1063,7 @@ public sealed class BattleModeMenu : MonoBehaviour
         PlaySfx(confirmSfx, confirmSfxVolume);
         SaveSystem.SetBattleModePlayerControlModes(playerModes);
 
-        cursorConfirmVisual = true;
-        UpdateOptionVisuals();
-        float wait = Mathf.Max(0f, confirmFeedbackSeconds);
-        if (wait > 0f)
-            yield return new WaitForSecondsRealtime(wait);
-
-        cursorConfirmVisual = false;
+        yield return PlayLeftPanelCursorAdvanceAnimation();
 
         if (skinSelectMenu != null)
         {
@@ -1091,6 +1081,96 @@ public sealed class BattleModeMenu : MonoBehaviour
         }
 
         UpdateOptionVisuals();
+    }
+
+    private IEnumerator PlayLeftPanelCursorAdvanceAnimation()
+    {
+        cursorConfirmVisual = true;
+        UpdateOptionVisuals();
+
+        AnimatedSpriteRenderer cursor = leftPanel != null ? leftPanel.CursorRenderer : null;
+        yield return PlayOptionCursorAdvanceAnimation(cursor);
+
+        cursorConfirmVisual = false;
+        UpdateOptionVisuals();
+    }
+
+    private IEnumerator PlayOptionCursorAdvanceAnimation(AnimatedSpriteRenderer cursor)
+    {
+        float duration = Mathf.Max(0f, optionCursorAdvanceSeconds);
+        if (duration <= 0f)
+            yield break;
+
+        if (cursor == null || cursor.animationSprite == null || cursor.animationSprite.Length <= 0 || !cursor.gameObject.activeInHierarchy)
+        {
+            yield return new WaitForSecondsRealtime(duration);
+            yield break;
+        }
+
+        bool previousIdle = cursor.idle;
+        bool previousLoop = cursor.loop;
+        bool previousUseSequenceDuration = cursor.useSequenceDuration;
+        float previousSequenceDuration = cursor.sequenceDuration;
+        float previousAnimationTime = cursor.animationTime;
+
+        optionCursorAdvanceAnimating = true;
+        cursor.SetFrozen(false);
+        cursor.SetManualAnimationUpdate(true);
+        cursor.idle = false;
+        cursor.loop = false;
+        cursor.useSequenceDuration = true;
+        cursor.sequenceDuration = duration;
+        cursor.RestartAnimation();
+
+        int frameCount = cursor.pingPong && cursor.animationSprite.Length > 1
+            ? (cursor.animationSprite.Length * 2) - 2
+            : cursor.animationSprite.Length;
+        float frameSeconds = duration / Mathf.Max(1, frameCount);
+
+        for (int frameStep = 0; frameStep < frameCount; frameStep++)
+        {
+            int frameIndex = GetAdvanceAnimationFrameIndex(cursor, frameStep);
+            cursor.CurrentFrame = frameIndex;
+            cursor.RefreshFrame();
+            yield return new WaitForSecondsRealtime(frameSeconds);
+        }
+
+        cursor.idle = previousIdle;
+        cursor.loop = previousLoop;
+        cursor.useSequenceDuration = previousUseSequenceDuration;
+        cursor.sequenceDuration = previousSequenceDuration;
+        cursor.animationTime = previousAnimationTime;
+        cursor.CurrentFrame = 0;
+        cursor.RefreshFrame();
+        cursor.SetManualAnimationUpdate(false);
+        optionCursorAdvanceAnimating = false;
+    }
+
+    private void RestartOptionCursorAdvanceFeedback(AnimatedSpriteRenderer cursor, ref float timer)
+    {
+        timer = Mathf.Max(0f, optionCursorAdvanceSeconds);
+        if (timer <= 0f || cursor == null || cursor.animationSprite == null || cursor.animationSprite.Length <= 0 || !cursor.gameObject.activeInHierarchy)
+            return;
+
+        cursor.SetFrozen(false);
+        cursor.SetManualAnimationUpdate(false);
+        cursor.idle = false;
+        cursor.loop = false;
+        cursor.useSequenceDuration = true;
+        cursor.sequenceDuration = timer;
+        cursor.RestartAnimation();
+    }
+
+    private static int GetAdvanceAnimationFrameIndex(AnimatedSpriteRenderer cursor, int frameStep)
+    {
+        int frameCount = cursor.animationSprite != null ? cursor.animationSprite.Length : 0;
+        if (frameCount <= 1 || !cursor.pingPong)
+            return Mathf.Clamp(frameStep, 0, Mathf.Max(0, frameCount - 1));
+
+        int lastFrame = frameCount - 1;
+        return frameStep <= lastFrame
+            ? frameStep
+            : Mathf.Max(0, lastFrame - (frameStep - lastFrame));
     }
 
     private void BuildMatchModeMenu()
@@ -1400,14 +1480,15 @@ public sealed class BattleModeMenu : MonoBehaviour
                     teamCelebrationCompleted[playerId] = false;
                 PlaySfx(confirmSfx, confirmSfxVolume);
 
-                currentTeamPlayerIndex++;
-                if (currentTeamPlayerIndex >= teamSelectionPlayerIds.Count)
+                if (IsLastTeamSelectionPlayer())
                 {
+                    yield return PlayOptionCursorAdvanceAnimation(teamCursorRenderer);
                     SaveSystem.SetBattleModePlayerTeams(workingTeams);
                     done = true;
                 }
                 else
                 {
+                    currentTeamPlayerIndex++;
                     int nextPlayerId = teamSelectionPlayerIds[currentTeamPlayerIndex];
                     selectedTeamIndex = IndexOfTeam(workingTeams[nextPlayerId - 1]);
                     UpdateTeamSelectVisuals(true);
@@ -2036,6 +2117,7 @@ public sealed class BattleModeMenu : MonoBehaviour
             {
                 PlaySfx(confirmSfx, confirmSfxVolume);
                 SaveRuleConfig();
+                yield return PlayOptionCursorAdvanceAnimation(ruleCursorRenderer);
                 done = true;
             }
 
@@ -2875,6 +2957,7 @@ public sealed class BattleModeMenu : MonoBehaviour
             {
                 if (selectedSpecificSettingIndex == SpecificSettingsOptions.Length - 1)
                 {
+                    yield return PlayOptionCursorAdvanceAnimation(specificCursorRenderer);
                     yield return ConfirmSpecificSettingsStart();
                     yield break;
                 }
@@ -2882,6 +2965,7 @@ public sealed class BattleModeMenu : MonoBehaviour
                 if (string.Equals(SpecificSettingsOptions[selectedSpecificSettingIndex], "Items", System.StringComparison.Ordinal))
                 {
                     PlaySfx(confirmSfx, confirmSfxVolume);
+                    yield return PlayOptionCursorAdvanceAnimation(specificCursorRenderer);
                     yield return OpenItemSelectMenu();
                     continue;
                 }
@@ -2889,6 +2973,7 @@ public sealed class BattleModeMenu : MonoBehaviour
                 if (string.Equals(SpecificSettingsOptions[selectedSpecificSettingIndex], "Handicap", System.StringComparison.Ordinal))
                 {
                     PlaySfx(confirmSfx, confirmSfxVolume);
+                    yield return PlayOptionCursorAdvanceAnimation(specificCursorRenderer);
                     yield return OpenHandicapSelectMenu();
                     continue;
                 }
@@ -2896,6 +2981,7 @@ public sealed class BattleModeMenu : MonoBehaviour
                 if (string.Equals(SpecificSettingsOptions[selectedSpecificSettingIndex], "Louies", System.StringComparison.Ordinal))
                 {
                     PlaySfx(confirmSfx, confirmSfxVolume);
+                    yield return PlayOptionCursorAdvanceAnimation(specificCursorRenderer);
                     yield return OpenLouieSelectMenu();
                     continue;
                 }
@@ -2903,6 +2989,7 @@ public sealed class BattleModeMenu : MonoBehaviour
                 if (string.Equals(SpecificSettingsOptions[selectedSpecificSettingIndex], "Music", System.StringComparison.Ordinal))
                 {
                     PlaySfx(confirmSfx, confirmSfxVolume);
+                    yield return PlayOptionCursorAdvanceAnimation(specificCursorRenderer);
                     yield return OpenMusicSelectMenu();
                     continue;
                 }
@@ -2924,6 +3011,7 @@ public sealed class BattleModeMenu : MonoBehaviour
     {
         state = MenuState.MusicSelect;
         musicSelectPreviewPlaying = false;
+        musicSelectCursorConfirmTimer = 0f;
         selectedMusicIndex = Mathf.Clamp(selectedMusicIndex, 0, GetBattleMusicSelections().Length - 1);
         workingBattleMusicSelectionMask = SaveSystem.GetBattleModeMusicSelectionMask();
 
@@ -2974,13 +3062,12 @@ public sealed class BattleModeMenu : MonoBehaviour
             else if (input.GetDown(GameSession.MinPlayerId, PlayerAction.ActionA) ||
                      input.GetDown(GameSession.MinPlayerId, PlayerAction.Start))
             {
-                bool changedMusic = ToggleSelectedBattleMusic(out bool shouldPreviewMusic);
+                ToggleSelectedBattleMusic(out bool shouldPreviewMusic);
                 PlaySfx(confirmSfx, confirmSfxVolume);
-                if (changedMusic)
-                    musicSelectCursorConfirmTimer = Mathf.Max(0.01f, confirmFeedbackSeconds);
                 if (shouldPreviewMusic)
                     PreviewSelectedBattleMusic();
                 UpdateMusicSelectVisuals();
+                RestartOptionCursorAdvanceFeedback(musicSelectCursorRenderer, ref musicSelectCursorConfirmTimer);
             }
 
             UpdateMusicSelectVisuals();
@@ -3172,15 +3259,17 @@ public sealed class BattleModeMenu : MonoBehaviour
         if (musicSelectCursorRenderer == null)
             return;
 
+        if (optionCursorAdvanceAnimating)
+            return;
+
         bool confirming = musicSelectCursorConfirmTimer > 0f;
         if (confirming)
         {
-            if (musicSelectCursorRenderer.idle)
-            {
-                musicSelectCursorRenderer.idle = false;
-                musicSelectCursorRenderer.loop = true;
-                musicSelectCursorRenderer.CurrentFrame = 0;
-            }
+            musicSelectCursorRenderer.SetFrozen(false);
+            musicSelectCursorRenderer.idle = false;
+            musicSelectCursorRenderer.loop = false;
+            musicSelectCursorRenderer.useSequenceDuration = true;
+            musicSelectCursorRenderer.sequenceDuration = Mathf.Max(0.01f, optionCursorAdvanceSeconds);
         }
         else if (!musicSelectCursorRenderer.idle)
         {
@@ -3938,6 +4027,7 @@ public sealed class BattleModeMenu : MonoBehaviour
     private IEnumerator OpenLouieSelectMenu()
     {
         state = MenuState.LouieSelect;
+        louieSelectCursorConfirmTimer = 0f;
         selectedLouieIndex = Mathf.Clamp(selectedLouieIndex, 0, Mathf.Max(0, GetLouieSelectEntryCount() - 1));
         workingBattleLouieAmounts = SaveSystem.GetBattleModeLouieAmounts(GameManager.GetDefaultBattleModeLouieAmounts());
 
@@ -3999,13 +4089,15 @@ public sealed class BattleModeMenu : MonoBehaviour
             {
                 ChangeSelectedBattleLouieAmount(1);
                 PlaySfx(confirmSfx, confirmSfxVolume);
-                louieSelectCursorConfirmTimer = Mathf.Max(0.01f, confirmFeedbackSeconds);
+                UpdateLouieSelectVisuals();
+                RestartOptionCursorAdvanceFeedback(louieSelectCursorRenderer, ref louieSelectCursorConfirmTimer);
             }
             else if (input.GetDown(GameSession.MinPlayerId, PlayerAction.ActionC))
             {
                 ChangeSelectedBattleLouieAmount(-1);
                 PlaySfx(confirmSfx, confirmSfxVolume);
-                louieSelectCursorConfirmTimer = Mathf.Max(0.01f, confirmFeedbackSeconds);
+                UpdateLouieSelectVisuals();
+                RestartOptionCursorAdvanceFeedback(louieSelectCursorRenderer, ref louieSelectCursorConfirmTimer);
             }
 
             UpdateLouieSelectVisuals();
@@ -4390,9 +4482,17 @@ public sealed class BattleModeMenu : MonoBehaviour
         if (louieSelectCursorRenderer == null)
             return;
 
+        if (optionCursorAdvanceAnimating)
+            return;
+
         bool confirming = louieSelectCursorConfirmTimer > 0f;
         louieSelectCursorRenderer.idle = !confirming;
-        louieSelectCursorRenderer.loop = true;
+        louieSelectCursorRenderer.loop = !confirming;
+        if (confirming)
+        {
+            louieSelectCursorRenderer.useSequenceDuration = true;
+            louieSelectCursorRenderer.sequenceDuration = Mathf.Max(0.01f, optionCursorAdvanceSeconds);
+        }
         louieSelectCursorRenderer.SetFrozen(false);
         louieSelectCursorRenderer.RefreshFrame();
     }
@@ -4431,6 +4531,7 @@ public sealed class BattleModeMenu : MonoBehaviour
     private IEnumerator OpenHandicapSelectMenu()
     {
         state = MenuState.HandicapSelect;
+        handicapSelectCursorConfirmTimer = 0f;
         playerModes = SaveSystem.GetBattleModePlayerControlModes();
         selectedHandicapRow = Mathf.Clamp(selectedHandicapRow, 0, GameSession.MaxPlayerId - 1);
         selectedHandicapRow = GetNextVisibleHandicapRow(selectedHandicapRow, 1);
@@ -4498,7 +4599,8 @@ public sealed class BattleModeMenu : MonoBehaviour
                 if (ChangeSelectedHandicapValue(1))
                 {
                     PlaySfx(confirmSfx, confirmSfxVolume);
-                    handicapSelectCursorConfirmTimer = Mathf.Max(0.01f, confirmFeedbackSeconds);
+                    UpdateHandicapSelectVisuals();
+                    RestartOptionCursorAdvanceFeedback(handicapSelectCursorRenderer, ref handicapSelectCursorConfirmTimer);
                 }
                 else
                 {
@@ -4510,7 +4612,8 @@ public sealed class BattleModeMenu : MonoBehaviour
                 if (ChangeSelectedHandicapValue(-1))
                 {
                     PlaySfx(confirmSfx, confirmSfxVolume);
-                    handicapSelectCursorConfirmTimer = Mathf.Max(0.01f, confirmFeedbackSeconds);
+                    UpdateHandicapSelectVisuals();
+                    RestartOptionCursorAdvanceFeedback(handicapSelectCursorRenderer, ref handicapSelectCursorConfirmTimer);
                 }
                 else
                 {
@@ -5046,9 +5149,17 @@ public sealed class BattleModeMenu : MonoBehaviour
         if (handicapSelectCursorRenderer == null)
             return;
 
+        if (optionCursorAdvanceAnimating)
+            return;
+
         bool confirming = handicapSelectCursorConfirmTimer > 0f;
         handicapSelectCursorRenderer.idle = !confirming;
-        handicapSelectCursorRenderer.loop = true;
+        handicapSelectCursorRenderer.loop = !confirming;
+        if (confirming)
+        {
+            handicapSelectCursorRenderer.useSequenceDuration = true;
+            handicapSelectCursorRenderer.sequenceDuration = Mathf.Max(0.01f, optionCursorAdvanceSeconds);
+        }
         handicapSelectCursorRenderer.SetFrozen(false);
         handicapSelectCursorRenderer.RefreshFrame();
     }
@@ -5483,55 +5594,6 @@ public sealed class BattleModeMenu : MonoBehaviour
     private static string FormatVector3(Vector3 v)
     {
         return $"({v.x:0.###},{v.y:0.###},{v.z:0.###})";
-    }
-
-    private static string FormatRectState(RectTransform rt)
-    {
-        if (rt == null)
-            return "null";
-
-        return $"activeSelf={rt.gameObject.activeSelf},activeHierarchy={rt.gameObject.activeInHierarchy}," +
-            $"anchored={FormatVector2(rt.anchoredPosition)},local={FormatVector3(rt.localPosition)}," +
-            $"world={FormatVector3(rt.position)},size={FormatVector2(rt.sizeDelta)},sibling={rt.GetSiblingIndex()}";
-    }
-
-    private static string FormatGameObjectState(GameObject go)
-    {
-        if (go == null)
-            return "null";
-
-        return $"activeSelf={go.activeSelf},activeHierarchy={go.activeInHierarchy},sibling={go.transform.GetSiblingIndex()}";
-    }
-
-    private static string FormatGraphicState(Graphic graphic)
-    {
-        if (graphic == null)
-            return "null";
-
-        return $"activeSelf={graphic.gameObject.activeSelf},activeHierarchy={graphic.gameObject.activeInHierarchy}," +
-            $"enabled={graphic.enabled},alpha={graphic.color.a:0.###},sibling={graphic.transform.GetSiblingIndex()}";
-    }
-
-    private string FormatSpecificOptionState(int optionIndex)
-    {
-        if (optionIndex < 0 || optionIndex >= specificOptionTexts.Count || specificOptionTexts[optionIndex] == null)
-            return "null";
-
-        TextMeshProUGUI text = specificOptionTexts[optionIndex];
-        RectTransform rt = text.rectTransform;
-        return $"text='{text.text}',colorAlpha={text.color.a:0.###}," +
-            $"activeSelf={text.gameObject.activeSelf},activeHierarchy={text.gameObject.activeInHierarchy}," +
-            $"anchored={FormatVector2(rt.anchoredPosition)},size={FormatVector2(rt.sizeDelta)}";
-    }
-
-    private static string FormatAnimatedRendererState(AnimatedSpriteRenderer renderer)
-    {
-        if (renderer == null)
-            return "null";
-
-        return $"enabled={renderer.enabled},idle={renderer.idle},loop={renderer.loop}," +
-            $"frame={renderer.CurrentFrame},timer={renderer.DebugFrameTimer:0.###}," +
-            $"local={FormatVector3(renderer.transform.localPosition)},world={FormatVector3(renderer.transform.position)}";
     }
 
     private void RefreshPlayerSelectEntries()
