@@ -464,6 +464,7 @@ public sealed class BattleModeMenu : MonoBehaviour
     private float backgroundSwapTimer;
 
     private Coroutine fadeInCoroutine;
+    private Coroutine revealLeftPanelCursorCoroutine;
 
     private float currentUiScale = 1f;
     private int lastScreenW = -1;
@@ -1407,7 +1408,6 @@ public sealed class BattleModeMenu : MonoBehaviour
         UpdateTeamSelectVisuals(true);
         Canvas.ForceUpdateCanvases();
         ApplyDynamicScaleIfNeeded(true);
-
         PlayerInputManager input = PlayerInputManager.Instance;
         while (input != null && HasAnyRelevantHeldInput(input, out _, out _))
             yield return null;
@@ -1552,7 +1552,7 @@ public sealed class BattleModeMenu : MonoBehaviour
 
         if (leftPanel != null)
         {
-            leftPanel.SetCursorVisibilitySuppressed(false);
+            leftPanel.SetCursorVisibilitySuppressed(true);
             leftPanel.gameObject.SetActive(true);
         }
 
@@ -1560,7 +1560,6 @@ public sealed class BattleModeMenu : MonoBehaviour
 
         if (leftPanel != null)
         {
-            leftPanel.SetCursorVisibilitySuppressed(true);
             UpdateOptionVisuals();
         }
 
@@ -1570,9 +1569,29 @@ public sealed class BattleModeMenu : MonoBehaviour
         if (leftPanel != null)
         {
             UpdateOptionVisuals();
+        }
+
+        if (revealLeftPanelCursorCoroutine != null)
+            StopCoroutine(revealLeftPanelCursorCoroutine);
+
+        revealLeftPanelCursorCoroutine = StartCoroutine(RevealLeftPanelCursorAfterLayoutRoutine());
+    }
+
+    private IEnumerator RevealLeftPanelCursorAfterLayoutRoutine()
+    {
+        yield return new WaitForEndOfFrame();
+
+        Canvas.ForceUpdateCanvases();
+        ApplyDynamicScaleIfNeeded(true);
+        UpdateOptionVisuals();
+
+        if (leftPanel != null)
+        {
             leftPanel.SetCursorVisibilitySuppressed(false);
             UpdateOptionVisuals();
         }
+
+        revealLeftPanelCursorCoroutine = null;
     }
 
     private void EnsureTeamSelectBuilt()
@@ -1636,6 +1655,8 @@ public sealed class BattleModeMenu : MonoBehaviour
 
         if (teamCursorRenderer != null)
         {
+            teamCursorRenderer.SetFrozen(false);
+            teamCursorRenderer.frameOffsets = null;
             teamCursorRenderer.idle = true;
             teamCursorRenderer.loop = true;
             teamCursorRenderer.CurrentFrame = 0;
@@ -1820,6 +1841,7 @@ public sealed class BattleModeMenu : MonoBehaviour
             teamCursorRt.gameObject.SetActive(currentTeamPlayerIndex < teamSelectionPlayerIds.Count);
             teamCursorRt.sizeDelta = teamCursorSize;
             teamCursorRt.anchoredPosition = GetTeamRowPosition(rowIndex) + teamCursorOffset;
+            teamCursorRenderer?.SetExternalBaseLocalPosition(teamCursorRt.localPosition);
         }
 
     }
@@ -2062,7 +2084,6 @@ public sealed class BattleModeMenu : MonoBehaviour
         UpdateRuleConfigVisuals();
         Canvas.ForceUpdateCanvases();
         ApplyDynamicScaleIfNeeded(true);
-
         PlayerInputManager input = PlayerInputManager.Instance;
         while (input != null && HasAnyRelevantHeldInput(input, out _, out _))
             yield return null;
@@ -2252,6 +2273,8 @@ public sealed class BattleModeMenu : MonoBehaviour
 
         if (ruleCursorRenderer != null)
         {
+            ruleCursorRenderer.SetFrozen(false);
+            ruleCursorRenderer.frameOffsets = null;
             ruleCursorRenderer.idle = true;
             ruleCursorRenderer.loop = true;
             ruleCursorRenderer.CurrentFrame = 0;
@@ -2347,6 +2370,7 @@ public sealed class BattleModeMenu : MonoBehaviour
             ruleCursorRt.gameObject.SetActive(ruleRows.Count > 0);
             ruleCursorRt.sizeDelta = ruleCursorSize;
             ruleCursorRt.anchoredPosition = GetRuleRowPosition(rowIndex) + ruleCursorOffset;
+            ruleCursorRenderer?.SetExternalBaseLocalPosition(ruleCursorRt.localPosition);
         }
 
     }
@@ -2513,7 +2537,6 @@ public sealed class BattleModeMenu : MonoBehaviour
 
         Canvas.ForceUpdateCanvases();
         ApplyDynamicScaleIfNeeded(true);
-
         PlayerInputManager input = PlayerInputManager.Instance;
         while (input != null && HasAnyRelevantHeldInput(input, out _, out _))
             yield return null;
@@ -2922,7 +2945,6 @@ public sealed class BattleModeMenu : MonoBehaviour
 
         Canvas.ForceUpdateCanvases();
         ApplyDynamicScaleIfNeeded(true);
-
         PlayerInputManager input = PlayerInputManager.Instance;
         while (input != null && HasAnyRelevantHeldInput(input, out _, out _))
             yield return null;
@@ -3029,7 +3051,6 @@ public sealed class BattleModeMenu : MonoBehaviour
 
         Canvas.ForceUpdateCanvases();
         ApplyDynamicScaleIfNeeded(true);
-
         PlayerInputManager input = PlayerInputManager.Instance;
         while (input != null && HasAnyRelevantHeldInput(input, out _, out _))
             yield return null;
@@ -3387,7 +3408,6 @@ public sealed class BattleModeMenu : MonoBehaviour
 
         Canvas.ForceUpdateCanvases();
         ApplyDynamicScaleIfNeeded(true);
-
         PlayerInputManager input = PlayerInputManager.Instance;
         while (input != null && HasAnyRelevantHeldInput(input, out _, out _))
             yield return null;
@@ -4045,7 +4065,6 @@ public sealed class BattleModeMenu : MonoBehaviour
 
         Canvas.ForceUpdateCanvases();
         ApplyDynamicScaleIfNeeded(true);
-
         PlayerInputManager input = PlayerInputManager.Instance;
         while (input != null && HasAnyRelevantHeldInput(input, out _, out _))
             yield return null;
@@ -4552,7 +4571,6 @@ public sealed class BattleModeMenu : MonoBehaviour
 
         Canvas.ForceUpdateCanvases();
         ApplyDynamicScaleIfNeeded(true);
-
         PlayerInputManager input = PlayerInputManager.Instance;
         while (input != null && HasAnyRelevantHeldInput(input, out _, out _))
             yield return null;
@@ -5587,16 +5605,6 @@ public sealed class BattleModeMenu : MonoBehaviour
         }
 
         ApplyTeamLabelFont(text);
-    }
-
-    private static string FormatVector2(Vector2 v)
-    {
-        return $"({v.x:0.###},{v.y:0.###})";
-    }
-
-    private static string FormatVector3(Vector3 v)
-    {
-        return $"({v.x:0.###},{v.y:0.###},{v.z:0.###})";
     }
 
     private void RefreshPlayerSelectEntries()

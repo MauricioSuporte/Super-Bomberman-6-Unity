@@ -917,6 +917,7 @@ MonoBehaviour:
   nextSceneName: 
   loadNextSceneAfterSelection: 0
   confirmFeedbackSeconds: 0.5
+  optionCursorAdvanceSeconds: 0.25
   directionalRepeatInitialDelay: 0.22
   directionalRepeatInterval: 0.12
   promptTitleText: {fileID: 0}
@@ -1129,7 +1130,7 @@ MonoBehaviour:
   itemSelectEntryOrder: 00000000010000000200000003000000040000000f00000008000000070000000500000006000000090000000a0000000b0000000c0000000d0000000e000000120000001000000011000000
   itemSelectGridOffset: {x: 0, y: 8}
   itemSelectColumns: 5
-  itemSelectCellSize: {x: 150, y: 100}
+  itemSelectCellSize: {x: 170, y: 100}
   itemSelectIconOffset: {x: -42, y: 0}
   itemSelectIconSize: {x: 64, y: 64}
   itemSelectRandomEggIconScale: 1.5
@@ -1708,7 +1709,7 @@ MonoBehaviour:
   - {fileID: 4941462090396089414, guid: 175d8b5c3e0daf04a87f9d3ea2813c5e, type: 3}
   - {fileID: 813685599856363850, guid: 175d8b5c3e0daf04a87f9d3ea2813c5e, type: 3}
   allowFlipX: 0
-  animationTime: 0.16666667
+  animationTime: 0.083333336
   useSequenceDuration: 0
   sequenceDuration: 0.5
   useUnscaledTime: 1
