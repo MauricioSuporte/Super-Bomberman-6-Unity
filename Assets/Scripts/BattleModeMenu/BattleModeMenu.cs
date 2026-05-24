@@ -1288,12 +1288,13 @@ public sealed class BattleModeMenu : MonoBehaviour
 
             bool reopenSkinSelect = false;
             bool rulesConfirmed = false;
+            bool returnToRuleConfigFromStageSelect = false;
 
             while (!confirmed)
             {
                 while (!rulesConfirmed)
                 {
-                    if (SelectedMatchMode == BattleModeRules.MatchMode.TagMatch)
+                    if (SelectedMatchMode == BattleModeRules.MatchMode.TagMatch && !returnToRuleConfigFromStageSelect)
                     {
                         yield return OpenTeamSelectMenu(ruleConfigReturnedToTeamSelect);
 
@@ -1305,6 +1306,7 @@ public sealed class BattleModeMenu : MonoBehaviour
                         }
                     }
 
+                    returnToRuleConfigFromStageSelect = false;
                     yield return OpenRuleConfigMenu();
 
                     if (ruleConfigReturnedToSkinSelect)
@@ -1329,6 +1331,7 @@ public sealed class BattleModeMenu : MonoBehaviour
                 {
                     stageSelectionReturnedToRuleConfig = false;
                     rulesConfirmed = false;
+                    returnToRuleConfigFromStageSelect = true;
                     continue;
                 }
 
