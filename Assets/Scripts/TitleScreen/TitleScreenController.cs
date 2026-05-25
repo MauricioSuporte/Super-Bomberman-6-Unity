@@ -1343,6 +1343,9 @@ public class TitleScreenController : MonoBehaviour
             else
             {
                 yield return StartCoroutine(PlayTitleLogoIntroIfAny());
+
+                if (titleLogoIntro != null && titleLogoIntro.Skipped && titleIntroPan != null)
+                    titleIntroPan.StopPanStartSfx();
             }
         }
 

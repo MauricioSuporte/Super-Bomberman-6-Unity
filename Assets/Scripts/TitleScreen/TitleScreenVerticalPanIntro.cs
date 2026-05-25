@@ -100,6 +100,7 @@ public class TitleScreenVerticalPanIntro : MonoBehaviour
 
         skipRequested = true;
         Skipped = true;
+        StopPanStartSfx();
     }
 
     public IEnumerator PlayIntro()
@@ -290,5 +291,11 @@ public class TitleScreenVerticalPanIntro : MonoBehaviour
             return;
 
         GameMusicController.Instance.PlaySfx(panStartSfx, panStartSfxVolume);
+    }
+
+    public void StopPanStartSfx()
+    {
+        if (GameMusicController.Instance != null)
+            GameMusicController.Instance.StopSfx();
     }
 }
