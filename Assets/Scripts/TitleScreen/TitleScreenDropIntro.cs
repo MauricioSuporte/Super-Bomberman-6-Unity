@@ -270,6 +270,14 @@ public class TitleScreenDropIntro : MonoBehaviour
         _idleRoutines.Clear();
     }
 
+    public void BeginIdleAlternatePoses()
+    {
+        if (_visualState != IntroVisualState.Completed)
+            return;
+
+        StartIdleRoutinesForAllLanded();
+    }
+
     void StartIdleRoutinesForAllLanded()
     {
         StopAllIdleRoutines();
@@ -295,24 +303,6 @@ public class TitleScreenDropIntro : MonoBehaviour
             Coroutine c = StartCoroutine(IdleAlternateRoutine(i, slot));
             _idleRoutines.Add(c);
         }
-    }
-
-    void StartIdleRoutineForCharacter(int index)
-    {
-        if (characterSlots == null || index < 0 || index >= characterSlots.Length)
-            return;
-
-        CharacterDropSlot slot = characterSlots[index];
-        if (slot == null || slot.image == null || slot.alternateSprite == null)
-            return;
-
-        while (_idleRoutines.Count <= index)
-            _idleRoutines.Add(null);
-
-        if (_idleRoutines[index] != null)
-            StopCoroutine(_idleRoutines[index]);
-
-        _idleRoutines[index] = StartCoroutine(IdleAlternateRoutine(index, slot));
     }
 
     IEnumerator IdleAlternateRoutine(int index, CharacterDropSlot slot)
@@ -541,8 +531,6 @@ public class TitleScreenDropIntro : MonoBehaviour
         _visualState = IntroVisualState.Completed;
         ReapplyCurrentResolvedLayout();
 
-        StartIdleRoutinesForAllLanded();
-
         currentRoutine = null;
     }
 
@@ -622,8 +610,6 @@ public class TitleScreenDropIntro : MonoBehaviour
                 ApplyAnchoredPositionScaled(slot.image.rectTransform, _cachedCharacterFinalBasePositions[i]);
                 slot.image.gameObject.SetActive(true);
                 ApplyCharacterSprite(i, true);
-
-                StartIdleRoutineForCharacter(i);
             }
         }
 
@@ -796,8 +782,6 @@ public class TitleScreenDropIntro : MonoBehaviour
         _visualState = IntroVisualState.Completed;
         currentRoutine = null;
         skipRequested = false;
-
-        StartIdleRoutinesForAllLanded();
     }
 
     IEnumerator WaitWithSkip(float seconds)
@@ -1603,8 +1587,6 @@ public class TitleScreenDropIntro : MonoBehaviour
 
         _visualState = IntroVisualState.Completed;
         StopIntro();
-
-        StartIdleRoutinesForAllLanded();
     }
 
     void ApplyCharacterPoseLayout(int index)

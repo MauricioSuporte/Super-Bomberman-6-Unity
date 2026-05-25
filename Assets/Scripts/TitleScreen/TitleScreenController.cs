@@ -1380,6 +1380,9 @@ public class TitleScreenController : MonoBehaviour
         if (titleMusic != null && GameMusicController.Instance != null)
             GameMusicController.Instance.PlayMusic(titleMusic, titleMusicVolume, true);
 
+        if (titleLogoIntro != null)
+            titleLogoIntro.BeginIdleAlternatePoses();
+
         while (Running && !locked)
         {
             int itemCount = GetMenuItemCount();
