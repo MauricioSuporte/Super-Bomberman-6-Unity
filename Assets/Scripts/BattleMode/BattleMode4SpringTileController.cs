@@ -202,23 +202,30 @@ public sealed class BattleMode4SpringTileController : MonoBehaviour, IGroundTile
             if (mover != null)
             {
                 rb.linearVelocity = Vector2.zero;
-                rb.position = end;
                 mover.SetExternalMovementOverride(false);
-                mover.SetInputLocked(prevInputLocked, forceIdle: false);
                 mover.SetVisualOverrideActive(false);
-                mover.EnableExclusiveFromState();
-                mover.SetExplosionInvulnerable(prevPlayerExplosionInvulnerable);
+
+                if (!mover.IsEndingStage)
+                {
+                    rb.position = end;
+                    mover.SetInputLocked(prevInputLocked, forceIdle: false);
+                    mover.EnableExclusiveFromState();
+                    mover.SetExplosionInvulnerable(prevPlayerExplosionInvulnerable);
+                }
             }
 
-            if (mountMovement != null)
+            bool restoreGameplayState = mover == null || !mover.IsEndingStage;
+
+            if (restoreGameplayState && mountMovement != null)
                 mountMovement.SetExplosionInvulnerable(prevMountExplosionInvulnerable);
 
-            ApplyHealthInvulnerability(affectedHealth, false);
+            if (restoreGameplayState)
+                ApplyHealthInvulnerability(affectedHealth, false);
 
-            if (hadBombController && bombController != null)
+            if (restoreGameplayState && hadBombController && bombController != null)
                 bombController.enabled = prevBombEnabled;
 
-            if (playerCollider != null)
+            if (restoreGameplayState && playerCollider != null)
                 playerCollider.enabled = prevColliderEnabled;
 
             if (inputManager != null)
@@ -283,6 +290,9 @@ public sealed class BattleMode4SpringTileController : MonoBehaviour, IGroundTile
         float elapsed = 0f;
         while (elapsed < total)
         {
+            if (mover.IsEndingStage)
+                yield break;
+
             float t = Mathf.Clamp01(elapsed / total);
             Vector2 ground = Vector2.Lerp(start, end, t);
             rb.position = ground;

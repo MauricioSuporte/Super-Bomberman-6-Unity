@@ -3112,6 +3112,9 @@ public class MovementController : MonoBehaviour, IKillable
             cachedRiding.CancelRiding();
 
         isEndingStage = true;
+        SetExternalVisualSuppressed(false);
+        SetVisualOverrideActive(false);
+        SetExternalMovementOverride(false);
         SetExplosionInvulnerable(true);
 
         if (abilitySystem != null)

@@ -357,6 +357,8 @@ public class MountVisualController : MonoBehaviour
             return false;
 
         playingInactivity = false;
+        playingJump = false;
+        playingCartHeadOnly = false;
         playingEndStage = true;
 
         HardExclusive(louieEndStage);
@@ -1527,6 +1529,12 @@ public class MountVisualController : MonoBehaviour
 
         if (!playingJump)
         {
+            if (playingEndStage)
+            {
+                EnsureEndStageExclusive();
+                return;
+            }
+
             if (owner == null)
                 return;
 

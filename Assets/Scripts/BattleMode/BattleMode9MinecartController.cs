@@ -354,6 +354,9 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
         try
         {
             yield return PlayEnterExitVisualRoutine(mover, state, stationWorld, stationWorld, enterFacing, enterAnimationSeconds, "Enter");
+            if (mover == null || mover.IsEndingStage)
+                yield break;
+
             SetRideCompanionsVisible(state, false);
             ShowRiderHeadOnly(state, currentCartDirection);
             PlayRideLoopSfx();
@@ -373,6 +376,9 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
             {
                 yield return MoveCartAroundRail(mover, state);
             }
+
+            if (mover == null || mover.IsEndingStage)
+                yield break;
 
             Vector2 actualExitWorld = state.forcedExit ? state.forcedExitWorld : exitWorld;
             Vector2 actualExitFacing = state.forcedExit ? state.forcedExitFacing : exitFacing;
@@ -394,7 +400,7 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
                 SetCartVisible(false);
             }
 
-            if (mover != null)
+            if (mover != null && !mover.IsEndingStage)
             {
                 mover.SnapToWorldPoint(actualExitWorld, roundToGrid: false);
                 TryResolvePlayerBounceAfterExit(mover, actualExitFacing, actualExitWorld);
@@ -407,7 +413,7 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
         {
             StopRideLoopSfx();
             RestoreRideState(mover, state);
-            if (mover != null)
+            if (mover != null && !mover.IsEndingStage)
             {
                 Vector2 finalFacing = state.forcedExit ? state.forcedExitFacing : exitFacing;
                 mover.ForceFacingDirection(finalFacing);
@@ -550,7 +556,7 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
 
         for (int i = 1; i < path.Count; i++)
         {
-            if (state != null && state.cartDestroyedBySuddenDeath)
+            if ((state != null && state.cartDestroyedBySuddenDeath) || (mover != null && mover.IsEndingStage))
                 yield break;
 
             Vector2 start = QuantizeToPixelGrid(GetCellCenter(path[i - 1]));
@@ -572,7 +578,7 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
 
             while (Vector2.Distance(position, end) > PixelWorldStep * 0.5f)
             {
-                if (state != null && state.cartDestroyedBySuddenDeath)
+                if ((state != null && state.cartDestroyedBySuddenDeath) || (mover != null && mover.IsEndingStage))
                     yield break;
 
                 if (GamePauseController.IsPaused)
@@ -621,6 +627,9 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
         PlayOneShot(portalEnterSfx, portalEnterSfxVolume);
         yield return AnimatePortalSinkRise(mover, state, source, appearing: false);
 
+        if (mover == null || mover.IsEndingStage)
+            yield break;
+
         SetCartVisible(false);
         SetTeleportRiderVisualsVisible(state, false);
         MoveRiderWithCart(mover, source);
@@ -640,6 +649,12 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
             }
 
             if (mover == null || mover.Rigidbody == null)
+            {
+                ClearActiveTeleportStars();
+                yield break;
+            }
+
+            if (mover.IsEndingStage)
             {
                 ClearActiveTeleportStars();
                 yield break;
@@ -718,6 +733,9 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
 
         while (elapsed < duration)
         {
+            if (mover == null || mover.IsEndingStage)
+                yield break;
+
             if (GamePauseController.IsPaused)
             {
                 yield return null;
@@ -1072,16 +1090,22 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
         if (mover != null)
         {
             mover.SetExternalMovementOverride(false);
-            mover.SetInputLocked(state.prevInputLocked, forceIdle: false);
             mover.SetVisualOverrideActive(false);
-            mover.EnableExclusiveFromState();
-            mover.SetExplosionInvulnerable(state.prevPlayerExplosionInvulnerable);
 
             if (mover.Rigidbody != null)
                 mover.Rigidbody.linearVelocity = Vector2.zero;
+
+            if (!mover.IsEndingStage)
+            {
+                mover.SetInputLocked(state.prevInputLocked, forceIdle: false);
+                mover.EnableExclusiveFromState();
+                mover.SetExplosionInvulnerable(state.prevPlayerExplosionInvulnerable);
+            }
         }
 
-        if (state.mountMovement != null)
+        bool restoreGameplayState = mover == null || !mover.IsEndingStage;
+
+        if (restoreGameplayState && state.mountMovement != null)
             state.mountMovement.SetExplosionInvulnerable(state.prevMountExplosionInvulnerable);
 
         if (state.mountVisual != null)
@@ -1090,10 +1114,10 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
             state.mountVisual.ClearCartHeadOnlyOffsets();
         }
 
-        if (state.bombController != null)
+        if (restoreGameplayState && state.bombController != null)
             state.bombController.enabled = state.prevBombEnabled;
 
-        if (state.playerCollider != null)
+        if (restoreGameplayState && state.playerCollider != null)
             state.playerCollider.enabled = state.prevColliderEnabled;
 
         if (state.mountCompanion != null)
@@ -1105,7 +1129,8 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
             state.eggQueue.SnapQueueToOwnerNow(resetHistoryToOwnerNow: true);
         }
 
-        SetHealthInvulnerability(state.healths, false);
+        if (restoreGameplayState)
+            SetHealthInvulnerability(state.healths, false);
     }
 
     void SetRideCompanionsVisible(RideState state, bool visible)
@@ -1183,6 +1208,9 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
             float elapsed = 0f;
             while (elapsed < duration)
             {
+                if (mover.IsEndingStage)
+                    yield break;
+
                 if (GamePauseController.IsPaused)
                 {
                     yield return null;

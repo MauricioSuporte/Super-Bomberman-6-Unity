@@ -193,6 +193,9 @@ public sealed class BattleMode7PortalController : MonoBehaviour
                 if (mover == null || mover.Rigidbody == null)
                     yield break;
 
+                if (mover.IsEndingStage)
+                    yield break;
+
                 if (GamePauseController.IsPaused)
                 {
                     yield return null;
@@ -211,7 +214,7 @@ public sealed class BattleMode7PortalController : MonoBehaviour
                 yield return null;
             }
 
-            if (mover != null)
+            if (mover != null && !mover.IsEndingStage)
             {
                 Vector2 finalPosition = snapToDestinationCenter ? destination : mover.Rigidbody.position;
                 mover.SnapToWorldPoint(finalPosition, roundToGrid: false);
@@ -282,22 +285,28 @@ public sealed class BattleMode7PortalController : MonoBehaviour
         if (mover != null)
         {
             mover.SetExternalMovementOverride(false);
-            mover.SetInputLocked(state.prevInputLocked, forceIdle: false);
             mover.SetVisualOverrideActive(false);
-            mover.EnableExclusiveFromState();
-            mover.SetExplosionInvulnerable(state.prevPlayerExplosionInvulnerable);
 
             if (mover.Rigidbody != null)
                 mover.Rigidbody.linearVelocity = Vector2.zero;
+
+            if (!mover.IsEndingStage)
+            {
+                mover.SetInputLocked(state.prevInputLocked, forceIdle: false);
+                mover.EnableExclusiveFromState();
+                mover.SetExplosionInvulnerable(state.prevPlayerExplosionInvulnerable);
+            }
         }
 
-        if (state.mountMovement != null)
+        bool restoreGameplayState = mover == null || !mover.IsEndingStage;
+
+        if (restoreGameplayState && state.mountMovement != null)
             state.mountMovement.SetExplosionInvulnerable(state.prevMountExplosionInvulnerable);
 
-        if (state.bombController != null)
+        if (restoreGameplayState && state.bombController != null)
             state.bombController.enabled = state.prevBombEnabled;
 
-        if (state.playerCollider != null)
+        if (restoreGameplayState && state.playerCollider != null)
             state.playerCollider.enabled = state.prevColliderEnabled;
 
         if (state.mountCompanion != null)
@@ -309,7 +318,8 @@ public sealed class BattleMode7PortalController : MonoBehaviour
             state.eggQueue.SnapQueueToOwnerNow(resetHistoryToOwnerNow: true);
         }
 
-        SetHealthInvulnerability(state.healths, false);
+        if (restoreGameplayState)
+            SetHealthInvulnerability(state.healths, false);
     }
 
     IEnumerator ReleaseTeleporterAfterGrace(MovementController mover, Vector3Int destinationCell)
