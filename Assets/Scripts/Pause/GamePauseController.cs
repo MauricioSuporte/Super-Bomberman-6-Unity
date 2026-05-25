@@ -380,7 +380,8 @@ public class GamePauseController : MonoBehaviour
                     CurrentSceneName,
                     resetSessionForTitle: false,
                     cancelBossRushRun: false,
-                    resetPlayersToBaseState: false);
+                    resetPlayersToBaseState: false,
+                    endBattleMatch: false);
                 return;
             }
 
@@ -392,7 +393,8 @@ public class GamePauseController : MonoBehaviour
                     battleModeMenuSceneName,
                     resetSessionForTitle: false,
                     cancelBossRushRun: false,
-                    resetPlayersToBaseState: false);
+                    resetPlayersToBaseState: false,
+                    endBattleMatch: true);
                 return;
             }
 
@@ -402,7 +404,8 @@ public class GamePauseController : MonoBehaviour
                     bossRushSceneName,
                     resetSessionForTitle: false,
                     cancelBossRushRun: true,
-                    resetPlayersToBaseState: true);
+                    resetPlayersToBaseState: true,
+                    endBattleMatch: false);
                 return;
             }
 
@@ -412,7 +415,8 @@ public class GamePauseController : MonoBehaviour
                     worldMapSceneName,
                     resetSessionForTitle: false,
                     cancelBossRushRun: false,
-                    resetPlayersToBaseState: true);
+                    resetPlayersToBaseState: true,
+                    endBattleMatch: false);
                 return;
             }
 
@@ -420,11 +424,17 @@ public class GamePauseController : MonoBehaviour
                 titleSceneName,
                 resetSessionForTitle: true,
                 cancelBossRushRun: true,
-                resetPlayersToBaseState: false);
+                resetPlayersToBaseState: false,
+                endBattleMatch: isBattleModeStage);
         }
     }
 
-    void BeginExitToScene(string sceneName, bool resetSessionForTitle, bool cancelBossRushRun, bool resetPlayersToBaseState)
+    void BeginExitToScene(
+        string sceneName,
+        bool resetSessionForTitle,
+        bool cancelBossRushRun,
+        bool resetPlayersToBaseState,
+        bool endBattleMatch)
     {
         if (exitingToScene)
             return;
@@ -439,10 +449,20 @@ public class GamePauseController : MonoBehaviour
         if (exitRoutine != null)
             StopCoroutine(exitRoutine);
 
-        exitRoutine = StartCoroutine(ExitToSceneRoutine(sceneName, resetSessionForTitle, cancelBossRushRun, resetPlayersToBaseState));
+        exitRoutine = StartCoroutine(ExitToSceneRoutine(
+            sceneName,
+            resetSessionForTitle,
+            cancelBossRushRun,
+            resetPlayersToBaseState,
+            endBattleMatch));
     }
 
-    IEnumerator ExitToSceneRoutine(string sceneName, bool resetSessionForTitle, bool cancelBossRushRun, bool resetPlayersToBaseState)
+    IEnumerator ExitToSceneRoutine(
+        string sceneName,
+        bool resetSessionForTitle,
+        bool cancelBossRushRun,
+        bool resetPlayersToBaseState,
+        bool endBattleMatch)
     {
         float wait = Mathf.Max(0f, returnToSceneDelayRealtime);
         if (wait > 0f)
@@ -459,6 +479,9 @@ public class GamePauseController : MonoBehaviour
 
         if (cancelBossRushRun && BossRushSession.IsActive)
             BossRushSession.CancelRun();
+
+        if (endBattleMatch && GameSession.Instance != null)
+            GameSession.Instance.EndBattleMatch();
 
         if (resetSessionForTitle)
         {
