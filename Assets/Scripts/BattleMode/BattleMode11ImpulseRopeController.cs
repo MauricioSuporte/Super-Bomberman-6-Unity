@@ -394,10 +394,14 @@ public sealed class BattleMode11ImpulseRopeController : MonoBehaviour, IIndestru
         StartRopeDeformation(indestructibleTilemap, ropeCell, impactDirection, RopeTileAnimationType.Preparing, prepareDuration);
 
         float prepareElapsed = 0f;
+        bool canceledForEndStage = false;
         while (prepareElapsed < prepareDuration)
         {
-            if (player == null || player.isDead)
+            if (player == null || player.isDead || player.IsEndingStage)
+            {
+                canceledForEndStage = player != null && player.IsEndingStage;
                 break;
+            }
 
             prepareElapsed += Time.deltaTime;
             UpdatePlayerPreparingOffset(preparingVisual, impactDirection, tileSize, prepareElapsed / prepareDuration);
@@ -408,6 +412,12 @@ public sealed class BattleMode11ImpulseRopeController : MonoBehaviour, IIndestru
         HidePlayerPreparingVisual(preparingVisual);
         playersPreparingImpulse.Remove(player);
         player.SetExternalMovementAllowsHazardDamage(false);
+
+        if (canceledForEndStage)
+        {
+            CancelPlayerImpulseForEndStage(player);
+            yield break;
+        }
 
         if (player == null || player.isDead)
         {
@@ -477,10 +487,14 @@ public sealed class BattleMode11ImpulseRopeController : MonoBehaviour, IIndestru
         player.transform.position = start;
 
         float elapsed = 0f;
+        bool canceledForEndStage = false;
         while (elapsed < duration)
         {
-            if (player == null || player.isDead)
+            if (player == null || player.isDead || player.IsEndingStage)
+            {
+                canceledForEndStage = player != null && player.IsEndingStage;
                 break;
+            }
 
             elapsed += Time.fixedDeltaTime;
 
@@ -503,15 +517,33 @@ public sealed class BattleMode11ImpulseRopeController : MonoBehaviour, IIndestru
 
         if (player != null)
         {
+            HidePlayerDashVisual(dashVisual);
+
+            if (canceledForEndStage)
+            {
+                CancelPlayerImpulseForEndStage(player);
+                playersBeingImpulsed.Remove(player);
+                yield break;
+            }
+
             Vector2 final = rb != null ? rb.position : (Vector2)player.transform.position;
             final = SnapToGrid(final, tileSize);
             MovePlayerTo(player, rb, final);
 
-            HidePlayerDashVisual(dashVisual);
             RestorePlayerAfterImpulse(player, launchDirection, mountMovement);
         }
 
         playersBeingImpulsed.Remove(player);
+    }
+
+    static void CancelPlayerImpulseForEndStage(MovementController player)
+    {
+        if (player == null)
+            return;
+
+        player.SetExternalVisualSuppressed(false);
+        player.SetExternalMovementAllowsHazardDamage(false);
+        player.SetExternalMovementOverride(false);
     }
 
     void RestorePlayerAfterImpulse(MovementController player, Vector2 launchDirection, MountMovementController mountMovement)

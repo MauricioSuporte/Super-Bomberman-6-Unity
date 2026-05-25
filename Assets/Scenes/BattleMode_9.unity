@@ -197,11 +197,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 100002, guid: 71b8af9db023483395c592bbb40abee9, type: 3}
       propertyPath: sharedStartingLoadout.powerups.Array.size
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 100002, guid: 71b8af9db023483395c592bbb40abee9, type: 3}
       propertyPath: 'sharedStartingLoadout.powerups.Array.data[0]'
-      value: 7
+      value: 10
       objectReference: {fileID: 0}
     - target: {fileID: 100002, guid: 71b8af9db023483395c592bbb40abee9, type: 3}
       propertyPath: 'sharedStartingLoadout.powerups.Array.data[1]'
@@ -492,6 +492,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 5edcebce86e657142a651b447f32f11f, type: 2}
   - {fileID: 11400000, guid: 8607928d033d2394e9f3e50dcdfd0c87, type: 2}
   - {fileID: 11400000, guid: 4e5b232c8f636e0428f9b55c2ca1b4cb, type: 2}
+  indestructibleGroundShadowCasterTiles: []
   autoResolveStageTilemaps: 1
   restartAfterDeathSeconds: 4
   bossRushSceneName: BossRush
@@ -1667,10 +1668,10 @@ PrefabInstance:
     - target: {fileID: 1271289946209990207, guid: b5c6f6d280a44d5fb48be8cd567c1e62, type: 3}
       propertyPath: m_Sprite
       value: 
-      objectReference: {fileID: 0}
+      objectReference: {fileID: 21300000, guid: 956432824ec41ee4f9dada2ac877bd1b, type: 3}
     - target: {fileID: 1271289946209990207, guid: b5c6f6d280a44d5fb48be8cd567c1e62, type: 3}
       propertyPath: m_Enabled
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 1909958093259148197, guid: b5c6f6d280a44d5fb48be8cd567c1e62, type: 3}
       propertyPath: m_Sprite
@@ -1763,26 +1764,26 @@ PrefabInstance:
     - target: {fileID: 2430658914873831823, guid: b5c6f6d280a44d5fb48be8cd567c1e62, type: 3}
       propertyPath: m_Sprite
       value: 
-      objectReference: {fileID: 0}
+      objectReference: {fileID: 21300000, guid: 93b68aaed86a2d84cafddc020acecdd9, type: 3}
     - target: {fileID: 2430658914873831823, guid: b5c6f6d280a44d5fb48be8cd567c1e62, type: 3}
       propertyPath: m_Enabled
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 2649763139092034220, guid: b5c6f6d280a44d5fb48be8cd567c1e62, type: 3}
       propertyPath: m_Sprite
       value: 
-      objectReference: {fileID: 0}
+      objectReference: {fileID: 21300000, guid: c36fcbd129457ab4596b4cfaef6d8ca3, type: 3}
     - target: {fileID: 2649763139092034220, guid: b5c6f6d280a44d5fb48be8cd567c1e62, type: 3}
       propertyPath: m_Enabled
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 3453724974011753036, guid: b5c6f6d280a44d5fb48be8cd567c1e62, type: 3}
       propertyPath: m_Sprite
       value: 
-      objectReference: {fileID: 0}
+      objectReference: {fileID: 21300000, guid: 93b68aaed86a2d84cafddc020acecdd9, type: 3}
     - target: {fileID: 3453724974011753036, guid: b5c6f6d280a44d5fb48be8cd567c1e62, type: 3}
       propertyPath: m_Enabled
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4596193090454659954, guid: b5c6f6d280a44d5fb48be8cd567c1e62, type: 3}
       propertyPath: m_Sprite
@@ -1795,18 +1796,18 @@ PrefabInstance:
     - target: {fileID: 4642470739555972227, guid: b5c6f6d280a44d5fb48be8cd567c1e62, type: 3}
       propertyPath: m_Sprite
       value: 
-      objectReference: {fileID: 0}
+      objectReference: {fileID: 21300000, guid: c36fcbd129457ab4596b4cfaef6d8ca3, type: 3}
     - target: {fileID: 4642470739555972227, guid: b5c6f6d280a44d5fb48be8cd567c1e62, type: 3}
       propertyPath: m_Enabled
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4670846066677549432, guid: b5c6f6d280a44d5fb48be8cd567c1e62, type: 3}
       propertyPath: m_Sprite
       value: 
-      objectReference: {fileID: 0}
+      objectReference: {fileID: 21300000, guid: 956432824ec41ee4f9dada2ac877bd1b, type: 3}
     - target: {fileID: 4670846066677549432, guid: b5c6f6d280a44d5fb48be8cd567c1e62, type: 3}
       propertyPath: m_Enabled
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4964860625633737738, guid: b5c6f6d280a44d5fb48be8cd567c1e62, type: 3}
       propertyPath: m_Sprite
@@ -1831,10 +1832,10 @@ PrefabInstance:
     - target: {fileID: 5758117326499773164, guid: b5c6f6d280a44d5fb48be8cd567c1e62, type: 3}
       propertyPath: m_Sprite
       value: 
-      objectReference: {fileID: 0}
+      objectReference: {fileID: 21300000, guid: 956432824ec41ee4f9dada2ac877bd1b, type: 3}
     - target: {fileID: 5758117326499773164, guid: b5c6f6d280a44d5fb48be8cd567c1e62, type: 3}
       propertyPath: m_Enabled
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5976918405260490912, guid: b5c6f6d280a44d5fb48be8cd567c1e62, type: 3}
       propertyPath: m_Sprite
@@ -1855,10 +1856,10 @@ PrefabInstance:
     - target: {fileID: 6307630273264470252, guid: b5c6f6d280a44d5fb48be8cd567c1e62, type: 3}
       propertyPath: m_Sprite
       value: 
-      objectReference: {fileID: 0}
+      objectReference: {fileID: 21300000, guid: 93b68aaed86a2d84cafddc020acecdd9, type: 3}
     - target: {fileID: 6307630273264470252, guid: b5c6f6d280a44d5fb48be8cd567c1e62, type: 3}
       propertyPath: m_Enabled
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 6991349842924055328, guid: b5c6f6d280a44d5fb48be8cd567c1e62, type: 3}
       propertyPath: m_Sprite
@@ -1879,10 +1880,10 @@ PrefabInstance:
     - target: {fileID: 7140756365902866019, guid: b5c6f6d280a44d5fb48be8cd567c1e62, type: 3}
       propertyPath: m_Sprite
       value: 
-      objectReference: {fileID: 0}
+      objectReference: {fileID: 21300000, guid: c36fcbd129457ab4596b4cfaef6d8ca3, type: 3}
     - target: {fileID: 7140756365902866019, guid: b5c6f6d280a44d5fb48be8cd567c1e62, type: 3}
       propertyPath: m_Enabled
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 7184509642113375541, guid: b5c6f6d280a44d5fb48be8cd567c1e62, type: 3}
       propertyPath: timerColonSprite
@@ -5740,8 +5741,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1aa1ef842d43d4449a4b672797ff89e5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameSession
-  activePlayerCount: 6
-  activePlayerMask: 63
+  activePlayerCount: 2
+  activePlayerMask: 3
   battleMatchInProgress: 0
   battleMatchSceneName: 
   battleMatchUsesTeams: 0
@@ -6368,6 +6369,31 @@ MonoBehaviour:
     endCell: {x: -5, y: -4}
   - startCell: {x: -4, y: -4}
     endCell: {x: -1, y: -4}
+  battleMode12Routes:
+  - startCell: {x: -5, y: 1}
+    cornerCell: {x: -5, y: -2}
+    portalCell: {x: -3, y: -2}
+  - startCell: {x: -3, y: -4}
+    cornerCell: {x: 1, y: -4}
+    portalCell: {x: 1, y: -2}
+  - startCell: {x: 3, y: -3}
+    cornerCell: {x: 3, y: 0}
+    portalCell: {x: 1, y: 0}
+  - startCell: {x: 1, y: 2}
+    cornerCell: {x: -3, y: 2}
+    portalCell: {x: -3, y: 0}
+  teleportSeconds: 0.5
+  portalSinkSeconds: 0.1
+  spawnTeleportStars: 1
+  teleportStarSprites: []
+  teleportStarCount: 32
+  teleportStarLifetime: 0.5
+  teleportStarScaleRange: {x: 0.24, y: 0.42}
+  teleportStarDriftRange: {x: 0.16, y: 0.42}
+  teleportStarSpinRange: {x: -220, y: 220}
+  teleportStarPathJitter: 0.22
+  teleportStarAnimationFrameTime: 0.1
+  teleportStarSortingOrder: 90
   tilesPerSecond: 10
   enterAnimationSeconds: 0.25
   exitAnimationSeconds: 0.5
@@ -6402,9 +6428,11 @@ MonoBehaviour:
   spawnDestructibleBreakPrefab: 1
   spawnHiddenObjectFromDestroyedBlock: 1
   enterSfx: {fileID: 8300000, guid: 3a73e8e7c5b8f2948bb12b0de90a4538, type: 3}
+  portalEnterSfx: {fileID: 0}
   exitSfx: {fileID: 8300000, guid: a96445640ca1ab0458cb9a2e1f0d231c, type: 3}
   rideLoopSfx: {fileID: 8300000, guid: 32399c2281947be40885f5194b7ed696, type: 3}
   sfxVolume: 0.7
+  portalEnterSfxVolume: 1
 --- !u!82 &2100000004
 AudioSource:
   m_ObjectHideFlags: 0
