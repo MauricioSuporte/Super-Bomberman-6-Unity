@@ -108,6 +108,8 @@ public class BombPunchAbility : MonoBehaviour, IPlayerAbility
 
     private void Update()
     {
+        using var performanceSample = BattleModePerformanceMarkers.AbilityUpdate.Auto();
+
         if (!enabledAbility)
             return;
 

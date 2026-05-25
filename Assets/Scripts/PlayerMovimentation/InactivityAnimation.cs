@@ -71,6 +71,8 @@ public sealed class InactivityAnimation : MonoBehaviour
 
     private void Update()
     {
+        using var performanceSample = BattleModePerformanceMarkers.InactivityAnimationUpdate.Auto();
+
         if (movement == null)
             return;
 
@@ -184,19 +186,7 @@ public sealed class InactivityAnimation : MonoBehaviour
         if (input == null)
             return false;
 
-        int id = movement.PlayerId;
-
-        return
-            input.Get(id, PlayerAction.MoveUp) ||
-            input.Get(id, PlayerAction.MoveDown) ||
-            input.Get(id, PlayerAction.MoveLeft) ||
-            input.Get(id, PlayerAction.MoveRight) ||
-            input.Get(id, PlayerAction.Start) ||
-            input.Get(id, PlayerAction.ActionA) ||
-            input.Get(id, PlayerAction.ActionB) ||
-            input.Get(id, PlayerAction.ActionC) ||
-            input.Get(id, PlayerAction.ActionL) ||
-            input.Get(id, PlayerAction.ActionR);
+        return input.HasAnyHeldInput(movement.PlayerId);
     }
 
     private AnimatedSpriteRenderer ChooseRenderer(AnimatedSpriteRenderer primary, AnimatedSpriteRenderer alternative)

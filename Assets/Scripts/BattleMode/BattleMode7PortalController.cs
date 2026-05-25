@@ -118,6 +118,8 @@ public sealed class BattleMode7PortalController : MonoBehaviour
 
     void Update()
     {
+        using var performanceSample = BattleModePerformanceMarkers.ArenaUpdate.Auto();
+
         if (!IsBattleMode7Active())
             return;
 

@@ -61,6 +61,8 @@ public sealed class BattleMode8RoofController : MonoBehaviour
 
     void Update()
     {
+        using var performanceSample = BattleModePerformanceMarkers.ArenaUpdate.Auto();
+
         if (!IsBattleMode8Active())
             return;
 

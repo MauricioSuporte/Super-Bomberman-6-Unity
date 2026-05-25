@@ -147,6 +147,8 @@ public class AnimatedSpriteRenderer : MonoBehaviour
 
     void Update()
     {
+        using var performanceSample = BattleModePerformanceMarkers.AnimatedSpriteUpdate.Auto();
+
         if (!isActiveAndEnabled)
             return;
 

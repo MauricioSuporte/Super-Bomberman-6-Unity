@@ -133,6 +133,8 @@ public sealed class BattleMode5ConveyorController : MonoBehaviour, IGroundTileHa
 
     void Update()
     {
+        using var performanceSample = BattleModePerformanceMarkers.ArenaUpdate.Auto();
+
         if (!IsBattleMode5Active())
             return;
 
@@ -142,6 +144,8 @@ public sealed class BattleMode5ConveyorController : MonoBehaviour, IGroundTileHa
 
     void FixedUpdate()
     {
+        using var performanceSample = BattleModePerformanceMarkers.ArenaUpdate.Auto();
+
         if (!IsBattleMode5Active())
             return;
 

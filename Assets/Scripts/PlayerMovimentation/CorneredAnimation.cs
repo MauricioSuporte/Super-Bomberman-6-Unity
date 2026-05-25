@@ -105,6 +105,8 @@ public sealed class CorneredAnimation : MonoBehaviour
 
     private void Update()
     {
+        using var performanceSample = BattleModePerformanceMarkers.CorneredAnimationUpdate.Auto();
+
         if (movement == null)
             return;
 
@@ -114,6 +116,14 @@ public sealed class CorneredAnimation : MonoBehaviour
                 StopCornered();
 
             lastInputTime = Time.time;
+            return;
+        }
+
+        if (Bomb.ActiveBombs.Count == 0)
+        {
+            if (isPlaying)
+                StopCornered();
+
             return;
         }
 
@@ -135,6 +145,19 @@ public sealed class CorneredAnimation : MonoBehaviour
             return;
 
         nextCorneredCheckTime = Time.time + corneredCheckInterval;
+
+        Vector2 origin =
+            movement.Rigidbody != null
+                ? movement.Rigidbody.position
+                : (Vector2)transform.position;
+
+        if (!HasNearbyActiveBomb(origin))
+        {
+            if (isPlaying)
+                StopCornered();
+
+            return;
+        }
 
         bool shouldPlay = IsCornered(out bool bombBlocked);
 
@@ -221,6 +244,23 @@ public sealed class CorneredAnimation : MonoBehaviour
         }
 
         return foundBomb;
+    }
+
+    private bool HasNearbyActiveBomb(Vector2 playerOrigin)
+    {
+        float reach = Mathf.Max(0.01f, movement.tileSize) * 1.5f;
+
+        foreach (var bomb in Bomb.ActiveBombs)
+        {
+            if (bomb == null || bomb.HasExploded)
+                continue;
+
+            Vector2 offset = (Vector2)bomb.transform.position - playerOrigin;
+            if (Mathf.Abs(offset.x) <= reach && Mathf.Abs(offset.y) <= reach)
+                return true;
+        }
+
+        return false;
     }
 
     private Vector2 GetProbePosition(Vector2 origin, Vector2 dir)

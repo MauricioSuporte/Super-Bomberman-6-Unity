@@ -181,12 +181,15 @@ public sealed class BattleModeHud : MonoBehaviour
 
     void LateUpdate()
     {
+        using var performanceSample = BattleModePerformanceMarkers.BattleHudLateUpdate.Auto();
+
         if (rootRect == null)
             rootRect = (RectTransform)transform;
 
         SuppressLegacyHudAtRuntime();
         EnsurePortraitsLoaded();
-        EnsureRuntimeUi();
+        if (runtimeRoot == null)
+            EnsureRuntimeUi();
         PopulateActivePlayerIds(activePlayerIdsBuffer);
 
         int visiblePlayerCount = GetVisiblePlayerCount();

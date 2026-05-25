@@ -262,6 +262,8 @@ public sealed class BattleMode9MinecartController : MonoBehaviour
 
     void Update()
     {
+        using var performanceSample = BattleModePerformanceMarkers.ArenaUpdate.Auto();
+
         if (!IsSupportedSceneActive())
             return;
 

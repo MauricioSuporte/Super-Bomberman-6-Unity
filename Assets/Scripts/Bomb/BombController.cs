@@ -307,6 +307,8 @@ public partial class BombController : MonoBehaviour
 
     private void Update()
     {
+        using var performanceSample = BattleModePerformanceMarkers.BombControllerUpdate.Auto();
+
         if (ClownMaskBoss.BossIntroRunning)
             return;
 

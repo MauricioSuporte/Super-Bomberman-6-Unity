@@ -485,6 +485,8 @@ public class MovementController : MonoBehaviour, IKillable
 
     protected virtual void Update()
     {
+        using var performanceSample = BattleModePerformanceMarkers.PlayerUpdate.Auto();
+
         if (inputLocked || GamePauseController.IsPaused || isDead)
             return;
 
@@ -1399,6 +1401,8 @@ public class MovementController : MonoBehaviour, IKillable
 
     protected virtual void FixedUpdate()
     {
+        using var performanceSample = BattleModePerformanceMarkers.PlayerFixedUpdate.Auto();
+
         if (UpdateBombReentryCentering())
             return;
 
@@ -4400,6 +4404,7 @@ public class MovementController : MonoBehaviour, IKillable
         return debugCurvas && (!IsPlayer() || playerId == debugCurvasPlayerId);
     }
 
+    [System.Diagnostics.Conditional("ENABLE_MOVEMENT_DIAGNOSTICS")]
     private void LogCurve(string msg, bool verbose = false)
     {
         if (!ShouldLogCurve())
@@ -4411,6 +4416,7 @@ public class MovementController : MonoBehaviour, IKillable
         Debug.Log($"[MovementCurve][P{playerId}][f:{Time.frameCount}] {msg}", this);
     }
 
+    [System.Diagnostics.Conditional("ENABLE_MOVEMENT_DIAGNOSTICS")]
     private void LogBombEscape(string message, bool verbose = false)
     {
         if (!debugBombEscape)

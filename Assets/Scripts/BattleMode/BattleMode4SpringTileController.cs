@@ -80,6 +80,8 @@ public sealed class BattleMode4SpringTileController : MonoBehaviour, IGroundTile
 
     void Update()
     {
+        using var performanceSample = BattleModePerformanceMarkers.ArenaUpdate.Auto();
+
         if (!IsBattleMode4Active())
             return;
 

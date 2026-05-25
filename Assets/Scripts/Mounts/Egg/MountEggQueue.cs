@@ -173,6 +173,11 @@ public sealed class MountEggQueue : MonoBehaviour
 
     void LateUpdate()
     {
+        using var performanceSample = BattleModePerformanceMarkers.EggQueueUpdate.Auto();
+
+        if (_eggs.Count == 0)
+            return;
+
         ApplyEggLayerNow();
         ApplyEggSortingNow();
 

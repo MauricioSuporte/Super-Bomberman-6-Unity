@@ -124,6 +124,8 @@ public sealed class BattleMode11ImpulseRopeController : MonoBehaviour, IIndestru
 
     void Update()
     {
+        using var performanceSample = BattleModePerformanceMarkers.ArenaUpdate.Auto();
+
         if (!IsBattleMode11Active())
             return;
 

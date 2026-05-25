@@ -56,6 +56,10 @@ public class PlayerInputManager : MonoBehaviour
     private readonly bool[] anyHeldInputCache = new bool[MaxSupportedPlayerId + 1];
     private readonly int[] anyHeldInputCacheStamp = new int[MaxSupportedPlayerId + 1];
 
+    private static readonly Dictionary<KeyCode, KeyControl> keyboardControlsByKeyCode = new();
+    private static Keyboard cachedKeyboard;
+    private static bool keyboardControlCacheReady;
+
     private float nextPlayersMapRefreshTime;
     private int playerStateCacheStamp;
     private int lastForcedPlayersMapRefreshStamp;
@@ -100,6 +104,8 @@ public class PlayerInputManager : MonoBehaviour
 
     void Update()
     {
+        using var performanceSample = BattleModePerformanceMarkers.InputUpdate.Auto();
+
         EnsureProfilesForPlayerCount();
         RefreshPlayerStateCache(forcePlayersMapRefresh: false);
 
@@ -117,6 +123,8 @@ public class PlayerInputManager : MonoBehaviour
 
     void LateUpdate()
     {
+        using var performanceSample = BattleModePerformanceMarkers.InputUpdate.Auto();
+
         for (int id = MinSupportedPlayerId; id <= MaxSupportedPlayerId; id++)
         {
             prevUp[id] = curUp[id];
@@ -439,6 +447,10 @@ public class PlayerInputManager : MonoBehaviour
             (curDown.TryGetValue(playerId, out bool down) && down) ||
             (curLeft.TryGetValue(playerId, out bool left) && left) ||
             (curRight.TryGetValue(playerId, out bool right) && right) ||
+            ReadHeldRawCached(playerId, PlayerAction.MoveUp) ||
+            ReadHeldRawCached(playerId, PlayerAction.MoveDown) ||
+            ReadHeldRawCached(playerId, PlayerAction.MoveLeft) ||
+            ReadHeldRawCached(playerId, PlayerAction.MoveRight) ||
             ReadHeldRawCached(playerId, PlayerAction.Start) ||
             ReadHeldRawCached(playerId, PlayerAction.ActionA) ||
             ReadHeldRawCached(playerId, PlayerAction.ActionB) ||
@@ -628,19 +640,27 @@ public class PlayerInputManager : MonoBehaviour
         if (kb == null)
             return false;
 
+        EnsureKeyboardControlCache(kb);
+        return keyboardControlsByKeyCode.TryGetValue(desiredKeyCode, out key) && key != null;
+    }
+
+    static void EnsureKeyboardControlCache(Keyboard kb)
+    {
+        if (keyboardControlCacheReady && cachedKeyboard == kb)
+            return;
+
+        keyboardControlsByKeyCode.Clear();
+        cachedKeyboard = kb;
+        keyboardControlCacheReady = true;
+
         foreach (var k in kb.allKeys)
         {
             if (k == null)
                 continue;
 
-            if (TryMapInputSystemKeyToUnityKeyCode(k.keyCode, out var kc) && kc == desiredKeyCode)
-            {
-                key = k;
-                return true;
-            }
+            if (TryMapInputSystemKeyToUnityKeyCode(k.keyCode, out var kc))
+                keyboardControlsByKeyCode[kc] = k;
         }
-
-        return false;
     }
 
     static bool TryMapInputSystemKeyToUnityKeyCode(Key key, out KeyCode kc)

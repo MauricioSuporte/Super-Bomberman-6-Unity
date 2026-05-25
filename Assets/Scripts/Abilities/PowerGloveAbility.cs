@@ -112,6 +112,8 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
 
     private void LateUpdate()
     {
+        using var performanceSample = BattleModePerformanceMarkers.AbilityUpdate.Auto();
+
         if (!enabledAbility) return;
         if (!CompareTag("Player")) return;
         if (movement == null) return;
@@ -125,6 +127,8 @@ public sealed class PowerGloveAbility : MonoBehaviour, IPlayerAbility
 
     private void Update()
     {
+        using var performanceSample = BattleModePerformanceMarkers.AbilityUpdate.Auto();
+
         if (!enabledAbility) return;
         if (!CompareTag("Player")) return;
         if (GamePauseController.IsPaused) return;

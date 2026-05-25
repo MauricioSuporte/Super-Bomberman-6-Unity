@@ -78,6 +78,8 @@ public sealed class PlayerRidingController : MonoBehaviour
 
     void LateUpdate()
     {
+        using var performanceSample = BattleModePerformanceMarkers.PlayerAuxUpdate.Auto();
+
         if (!isPlaying)
             return;
 

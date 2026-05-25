@@ -67,6 +67,8 @@ public class BombKickAbility : MonoBehaviour, IMovementAbility
 
     private void Update()
     {
+        using var performanceSample = BattleModePerformanceMarkers.AbilityUpdate.Auto();
+
         if (!enabledAbility)
             return;
 

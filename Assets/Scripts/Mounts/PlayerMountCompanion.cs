@@ -114,6 +114,8 @@ public class PlayerMountCompanion : MonoBehaviour
 
     void Update()
     {
+        using var performanceSample = BattleModePerformanceMarkers.MountCompanionUpdate.Auto();
+
         punchOwned = PlayerPersistentStats.GetRuntime(GetPlayerId()).CanPunchBombs;
 
         bool shouldLock =
