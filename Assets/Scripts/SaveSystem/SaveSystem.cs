@@ -92,13 +92,14 @@ public static class SaveSystem
         return slot.started;
     }
 
-    public static void ResetSlot(int slotIndex)
+    public static void ResetSlot(int slotIndex, NormalGameDifficulty difficulty = NormalGameDifficulty.Normal)
     {
         StageSlot slot = GetSlot(slotIndex);
         if (slot == null)
             return;
 
         slot.started = true;
+        slot.difficulty = (int)NormalizeNormalGameDifficulty((int)difficulty);
         slot.unlockedStages.Clear();
         slot.clearedStages.Clear();
         slot.perfectStages.Clear();
@@ -116,6 +117,7 @@ public static class SaveSystem
             return;
 
         slot.started = false;
+        slot.difficulty = (int)NormalGameDifficulty.Normal;
         slot.unlockedStages.Clear();
         slot.clearedStages.Clear();
         slot.perfectStages.Clear();
@@ -765,6 +767,8 @@ public static class SaveSystem
             if (d.slots[i].stageOrder == null)
                 d.slots[i].stageOrder = new List<string>();
 
+            d.slots[i].difficulty = (int)NormalizeNormalGameDifficulty(d.slots[i].difficulty);
+
             if (d.slots[i].unlockedStages.Count == 0)
                 d.slots[i].unlockedStages.Add("Stage_1-1");
         }
@@ -1128,6 +1132,14 @@ public static class SaveSystem
 
         if (changed)
             Save();
+    }
+
+    private static NormalGameDifficulty NormalizeNormalGameDifficulty(int difficulty)
+    {
+        if (Enum.IsDefined(typeof(NormalGameDifficulty), difficulty))
+            return (NormalGameDifficulty)difficulty;
+
+        return NormalGameDifficulty.Normal;
     }
 
     public static int[] GetBattleModeLouieAmounts(IReadOnlyList<int> fallbackAmounts)

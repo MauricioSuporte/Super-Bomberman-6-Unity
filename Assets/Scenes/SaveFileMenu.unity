@@ -230,6 +230,10 @@ MonoBehaviour:
   groundTilemap: {fileID: 0}
   groundTile: {fileID: 11400000, guid: ada74cfa1fdef9e4c86ccafaa1b2ae66, type: 2}
   groundShadowTile: {fileID: 11400000, guid: e0f633282caacc742af95bdd334dd0cf, type: 2}
+  indestructibleGroundShadowTile: {fileID: 0}
+  shadowDestructibleTile: {fileID: 0}
+  groundShadowIgnoredTiles: []
+  indestructibleGroundShadowCasterTiles: []
   autoResolveStageTilemaps: 1
   restartAfterDeathSeconds: 4
   bossRushSceneName: BossRush
@@ -667,12 +671,14 @@ MonoBehaviour:
   promptTitleText: {fileID: 0}
   mainPrompt: NORMAL GAME
   newGamePrompt: START WHICH FILE?
+  difficultyPrompt: SELECT DIFFICULTY
   continuePrompt: CONTINUE WHICH FILE?
   deletePrompt: DELETE WHICH FILE?
   leftPanel: {fileID: 2134452605}
   slotCount: 3
   slotLabelPrefix: 'File '
   emptySlotDisplay: '- - -'
+  progressColumnSpacing: 4
   deleteFeedbackSeconds: 0.5
   mainMenuBackgrounds:
     sprites:
@@ -682,6 +688,10 @@ MonoBehaviour:
     sprites:
     - {fileID: 21300000, guid: 864b9b6b5efe49d45899170f19dde598, type: 3}
     - {fileID: 21300000, guid: ef20af382c81c974d8af72830ebe1fbc, type: 3}
+  difficultyBackgrounds:
+    sprites:
+    - {fileID: 21300000, guid: e84a0d923bc3f1349ba6f4ca7cfd0a09, type: 3}
+    - {fileID: 21300000, guid: b17c70fb031d5554687a156083ec5fd9, type: 3}
   continueBackgrounds:
     sprites:
     - {fileID: 21300000, guid: c956a44a74dbb164f95ad363992b3ed7, type: 3}
@@ -1481,9 +1491,14 @@ MonoBehaviour:
   normalColor: {r: 0, g: 0.8235294, b: 0, a: 1}
   selectedColor: {r: 0, g: 1, b: 0.23529412, a: 1}
   disabledColor: {r: 0, g: 0.47058824, b: 0, a: 0.7058824}
+  hardDifficultySelectedColor: {r: 0.90588236, g: 0.24705882, b: 0.24705882, a: 1}
+  hardcoreDifficultySelectedColor: {r: 0, g: 0, b: 0, a: 1}
+  hardcoreDifficultyOutlineColor: {r: 0.90588236, g: 0.24705882, b: 0.24705882, a: 1}
+  difficultyColumnSpacing: 28
   optionFontAsset: {fileID: 11400000, guid: ecf098b5ead05a94fa9fde052327d9de, type: 2}
   optionFontMaterialPreset: {fileID: 0}
   forceBold: 1
+  useRichTextEntryColors: 0
   autoSize: 0
   autoSizeMinRatio: 0.75
   useOutline: 1
