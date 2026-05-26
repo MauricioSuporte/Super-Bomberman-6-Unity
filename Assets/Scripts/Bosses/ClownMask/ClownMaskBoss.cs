@@ -1,5 +1,7 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 [RequireComponent(typeof(CharacterHealth))]
 [RequireComponent(typeof(ClownMaskMovement))]
@@ -79,6 +81,24 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
     public float starLifeTime = 3f;
     public float starSpawnRadius = 0.5f;
 
+    [Header("Hard/Hardcore Low Health Chain Attack")]
+    [SerializeField] bool enableHardLowHealthChainAttack = true;
+    [SerializeField] Vector2 hardChainAttackCenter = new(-1f, -1f);
+    [FormerlySerializedAs("hardChainLinksPerArm")]
+    [SerializeField, Min(1)] int hardChainStarsPerArm = 5;
+    [SerializeField, Min(0f)] float hardChainFirstStarDistance = 0.5f;
+    [FormerlySerializedAs("hardChainLinkSpacing")]
+    [SerializeField, Min(0.01f)] float hardChainStarSpacing = 0.8f;
+    [Tooltip("Delay between consecutive stars beginning their orbit, creating the chain whip effect.")]
+    [SerializeField, Min(0f)] float hardChainStarMovementDelay = 0.08f;
+    [SerializeField, Min(0.1f)] float hardChainAttackDuration = 10f;
+    [Tooltip("Time spent extending the chain at the start and retracting it at the end.")]
+    [SerializeField, Min(0.01f)] float hardChainDeployRetractDuration = 2f;
+    [Tooltip("Negative values rotate clockwise.")]
+    [SerializeField] float hardChainAngularSpeedDegrees = -90f;
+    [Tooltip("Delay before the interleaved eight-star burst after low-health hits following the chain attack.")]
+    [SerializeField, Min(0f)] float hardLowHealthSecondBurstDelay = 1f;
+
     [Header("Death")]
     public float deathDuration = 5f;
 
@@ -110,6 +130,8 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
     bool inDamageSequence;
     bool isInHurtWalk;
     bool bossSpawned;
+    bool hardLowHealthChainAttackPerformed;
+    bool hardLowHealthChainAttackRunning;
 
     int initialFightLife;
     bool fightLifeInitialized;
@@ -118,6 +140,8 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
     Coroutine specialRoutine;
     Coroutine damageSequenceRoutine;
     Coroutine deathRoutine;
+    Coroutine hardLowHealthSecondBurstRoutine;
+    readonly List<StarProjectile> hardChainProjectiles = new();
 
     AudioSource audioSource;
     float nextDeathSfxTime;
@@ -289,15 +313,19 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
         if (specialRoutine != null) { StopCoroutine(specialRoutine); specialRoutine = null; }
         if (damageSequenceRoutine != null) { StopCoroutine(damageSequenceRoutine); damageSequenceRoutine = null; }
         if (deathRoutine != null) { StopCoroutine(deathRoutine); deathRoutine = null; }
+        if (hardLowHealthSecondBurstRoutine != null) { StopCoroutine(hardLowHealthSecondBurstRoutine); hardLowHealthSecondBurstRoutine = null; }
 
         isDead = false;
         introFinished = false;
         inDamageSequence = false;
         isInHurtWalk = false;
         bossSpawned = false;
+        hardLowHealthChainAttackPerformed = false;
+        hardLowHealthChainAttackRunning = false;
         fightLifeInitialized = false;
         initialFightLife = 0;
 
+        DestroyHardChainProjectiles();
         ClearLowHealthTint();
 
         if (clownMovement != null)
@@ -992,11 +1020,20 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
         if (clownMovement != null)
             clownMovement.OnHit();
 
-        SpawnStarBurst();
+        bool startHardChainAfterHurt = ShouldStartHardLowHealthChainAttack();
+        if (!startHardChainAfterHurt)
+        {
+            SpawnStarBurst();
+            ScheduleLowHealthSecondBurstAfterChain();
+        }
 
         float invulDuration = characterHealth != null ? characterHealth.hitInvulnerableDuration : 0f;
 
-        if (useHurtIdleDuringInvuln)
+        if (startHardChainAfterHurt && HasHurtAnimation())
+        {
+            PlayMovingHurtAnimation();
+        }
+        else if (useHurtIdleDuringInvuln)
         {
             if (hurtRenderer != null)
             {
@@ -1021,7 +1058,9 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
             }
         }
 
-        if (invulDuration > 0f)
+        if (startHardChainAfterHurt)
+            yield return MoveBossToHardChainAttackCenterDuringInvulnerability(invulDuration);
+        else if (invulDuration > 0f)
             yield return new WaitForSeconds(invulDuration);
 
         if (isDead)
@@ -1031,6 +1070,23 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
             damageSequenceRoutine = null;
             yield break;
         }
+
+        if (startHardChainAfterHurt && ShouldStartHardLowHealthChainAttack())
+        {
+            yield return HardLowHealthChainAttackRoutine();
+
+            isInHurtWalk = false;
+            inDamageSequence = false;
+            damageSequenceRoutine = null;
+
+            if (!isDead && idleRenderer != null)
+                EnableOnly(idleRenderer);
+
+            yield break;
+        }
+
+        if (startHardChainAfterHurt && clownMovement != null && !isDead)
+            clownMovement.enabled = true;
 
         if (hurtRenderer != null && hurtRenderer.animationSprite != null && hurtRenderer.animationSprite.Length > 0)
         {
@@ -1079,6 +1135,161 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
             EnableOnly(idleRenderer);
     }
 
+    bool ShouldStartHardLowHealthChainAttack()
+    {
+        return enableHardLowHealthChainAttack &&
+               !hardLowHealthChainAttackPerformed &&
+               !hardLowHealthChainAttackRunning &&
+               clownStarProjectile != null &&
+               characterHealth != null &&
+               fightLifeInitialized &&
+               characterHealth.life < (initialFightLife * 0.5f) &&
+               UsesHardCampaignModifiers();
+    }
+
+    bool HasHurtAnimation()
+    {
+        return hurtRenderer != null &&
+               hurtRenderer.animationSprite != null &&
+               hurtRenderer.animationSprite.Length > 0;
+    }
+
+    void PlayMovingHurtAnimation()
+    {
+        EnableOnly(hurtRenderer);
+
+        int frames = hurtRenderer.animationSprite.Length;
+        if (hurtAnimationDuration > 0f && frames > 0)
+            hurtRenderer.animationTime = hurtAnimationDuration / frames;
+
+        hurtRenderer.loop = false;
+        hurtRenderer.idle = false;
+        hurtRenderer.RestartAnimation();
+    }
+
+    IEnumerator HardLowHealthChainAttackRoutine()
+    {
+        hardLowHealthChainAttackPerformed = true;
+        hardLowHealthChainAttackRunning = true;
+
+        float duration = Mathf.Max(0.1f, hardChainAttackDuration);
+        int starsPerArm = Mathf.Max(1, hardChainStarsPerArm);
+        float deployRetractDuration = Mathf.Min(
+            Mathf.Max(0.01f, hardChainDeployRetractDuration),
+            duration * 0.5f);
+
+        if (clownMovement != null)
+            clownMovement.enabled = false;
+
+        if (deathRenderer != null)
+        {
+            EnableOnly(deathRenderer);
+            deathRenderer.loop = true;
+            deathRenderer.idle = false;
+            deathRenderer.RestartAnimation();
+        }
+
+        characterHealth.StartTemporaryInvulnerability(duration, withBlink: false);
+
+        SpawnHardChainProjectiles(duration, starsPerArm, deployRetractDuration);
+
+        float elapsed = 0f;
+        while (elapsed < duration && !isDead)
+        {
+            elapsed += Time.deltaTime;
+            yield return null;
+        }
+
+        DestroyHardChainProjectiles();
+        hardLowHealthChainAttackRunning = false;
+
+        if (isDead)
+            yield break;
+
+        if (clownMovement != null)
+            clownMovement.enabled = true;
+    }
+
+    IEnumerator MoveBossToHardChainAttackCenterDuringInvulnerability(float duration)
+    {
+        Vector2 start = bossRb != null ? bossRb.position : (Vector2)transform.position;
+        float moveDuration = Mathf.Max(0.01f, duration);
+        float elapsed = 0f;
+
+        if (clownMovement != null)
+            clownMovement.enabled = false;
+
+        while (elapsed < moveDuration && !isDead)
+        {
+            elapsed += Time.deltaTime;
+            float t = Mathf.Clamp01(elapsed / moveDuration);
+            SetBossPositionForHardChain(Vector2.Lerp(start, hardChainAttackCenter, t));
+            yield return null;
+        }
+
+        if (!isDead)
+            SetBossPositionForHardChain(hardChainAttackCenter);
+    }
+
+    void SetBossPositionForHardChain(Vector2 position)
+    {
+        if (clownMovement != null)
+            position = clownMovement.SnapToPixel(position);
+
+        if (bossRb != null)
+        {
+            bossRb.position = position;
+            bossRb.linearVelocity = Vector2.zero;
+            bossRb.MovePosition(position);
+        }
+        else
+        {
+            transform.position = new Vector3(position.x, position.y, transform.position.z);
+        }
+    }
+
+    void SpawnHardChainProjectiles(float duration, int starsPerArm, float deployRetractDuration)
+    {
+        DestroyHardChainProjectiles();
+
+        float[] angles = { 0f, 90f, 180f, 270f };
+        for (int arm = 0; arm < angles.Length; arm++)
+        {
+            for (int link = 0; link < starsPerArm; link++)
+            {
+                float radius = hardChainFirstStarDistance + hardChainStarSpacing * link;
+                StarProjectile projectile = Instantiate(clownStarProjectile, transform.position, Quaternion.identity);
+                if (projectile == null)
+                    continue;
+
+                projectile.InitializeOrbit(
+                    transform,
+                    radius,
+                    angles[arm],
+                    hardChainAngularSpeedDegrees,
+                    duration,
+                    deployRetractDuration + hardChainStarMovementDelay * link,
+                    hardChainFirstStarDistance,
+                    hardChainStarSpacing,
+                    link,
+                    starsPerArm,
+                    deployRetractDuration);
+                hardChainProjectiles.Add(projectile);
+            }
+        }
+    }
+
+    void DestroyHardChainProjectiles()
+    {
+        for (int i = 0; i < hardChainProjectiles.Count; i++)
+        {
+            if (hardChainProjectiles[i] != null)
+                Destroy(hardChainProjectiles[i].gameObject);
+        }
+
+        hardChainProjectiles.Clear();
+    }
+
     void SpawnStarBurst()
     {
         if (clownStarProjectile == null)
@@ -1099,14 +1310,53 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
         };
 
         for (int i = 0; i < dirs.Length; i++)
-        {
-            Vector2 dir = dirs[i];
-            Vector2 spawnPos = origin + dir * starSpawnRadius;
+            SpawnDirectedStar(origin, dirs[i]);
+    }
 
-            StarProjectile proj = Instantiate(clownStarProjectile, spawnPos, Quaternion.identity);
-            if (proj != null)
-                proj.Initialize(dir, starSpeed, starLifeTime);
+    void ScheduleLowHealthSecondBurstAfterChain()
+    {
+        if (!hardLowHealthChainAttackPerformed ||
+            characterHealth == null ||
+            !fightLifeInitialized ||
+            characterHealth.life >= (initialFightLife * 0.5f) ||
+            !UsesHardCampaignModifiers())
+            return;
+
+        if (hardLowHealthSecondBurstRoutine != null)
+            StopCoroutine(hardLowHealthSecondBurstRoutine);
+
+        hardLowHealthSecondBurstRoutine = StartCoroutine(SpawnLowHealthSecondBurstAfterDelay());
+    }
+
+    IEnumerator SpawnLowHealthSecondBurstAfterDelay()
+    {
+        float delay = Mathf.Max(0f, hardLowHealthSecondBurstDelay);
+        if (delay > 0f)
+            yield return new WaitForSeconds(delay);
+
+        hardLowHealthSecondBurstRoutine = null;
+        if (isDead || clownStarProjectile == null)
+            yield break;
+
+        Vector2 origin = transform.position;
+        const int burstCount = 8;
+        const float angleOffset = 22.5f;
+        for (int i = 0; i < burstCount; i++)
+        {
+            float angle = (angleOffset + 45f * i) * Mathf.Deg2Rad;
+            SpawnDirectedStar(origin, new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)));
         }
+
+    }
+
+    void SpawnDirectedStar(Vector2 origin, Vector2 direction)
+    {
+        Vector2 dir = direction.normalized;
+        Vector2 spawnPos = origin + dir * starSpawnRadius;
+
+        StarProjectile proj = Instantiate(clownStarProjectile, spawnPos, Quaternion.identity);
+        if (proj != null)
+            proj.Initialize(dir, starSpeed, starLifeTime);
     }
 
     void OnHealthDied()
@@ -1120,7 +1370,15 @@ public class ClownMaskBoss : MonoBehaviour, IKillable
             return;
 
         isDead = true;
+        hardLowHealthChainAttackRunning = false;
+        DestroyHardChainProjectiles();
         ClearLowHealthTint();
+
+        if (hardLowHealthSecondBurstRoutine != null)
+        {
+            StopCoroutine(hardLowHealthSecondBurstRoutine);
+            hardLowHealthSecondBurstRoutine = null;
+        }
 
         if (specialRoutine != null)
         {

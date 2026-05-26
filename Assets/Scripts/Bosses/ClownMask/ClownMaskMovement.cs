@@ -60,6 +60,14 @@ public class ClownMaskMovement : MonoBehaviour
         speed *= Mathf.Max(0f, multiplier);
     }
 
+    public Vector2 SnapToPixel(Vector2 world)
+    {
+        float pixelSize = 1f / Mathf.Max(1, pixelsPerUnit);
+        world.x = Mathf.Round(world.x / pixelSize) * pixelSize;
+        world.y = Mathf.Round(world.y / pixelSize) * pixelSize;
+        return world;
+    }
+
     void FixedUpdate()
     {
         if (GamePauseController.IsPaused)
