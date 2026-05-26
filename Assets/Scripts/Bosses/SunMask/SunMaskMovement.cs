@@ -35,6 +35,11 @@ public class SunMaskMovement : MonoBehaviour
         speed *= Mathf.Max(0f, multiplier);
     }
 
+    public Vector2 SnapToPixelPerfect(Vector2 world)
+    {
+        return SnapToPixel(world);
+    }
+
     void Awake()
     {
         rb = GetComponent<Rigidbody2D>();

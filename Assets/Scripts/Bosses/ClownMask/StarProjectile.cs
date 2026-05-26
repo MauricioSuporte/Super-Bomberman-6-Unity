@@ -11,6 +11,7 @@ public class StarProjectile : MonoBehaviour
 
     Rigidbody2D rb;
     Vector2 direction = Vector2.zero;
+    float curvedAngularSpeedDegrees;
     bool initialized;
     bool orbiting;
     Transform orbitCenter;
@@ -43,6 +44,12 @@ public class StarProjectile : MonoBehaviour
 
         initialized = true;
         RestartLifetime();
+    }
+
+    public void InitializeCurved(Vector2 dir, float customSpeed, float customLifetime, float angularSpeedDegrees)
+    {
+        curvedAngularSpeedDegrees = angularSpeedDegrees;
+        Initialize(dir, customSpeed, customLifetime);
     }
 
     public void InitializeOrbit(
@@ -131,6 +138,9 @@ public class StarProjectile : MonoBehaviour
             UpdateOrbitPosition();
             return;
         }
+
+        if (Mathf.Abs(curvedAngularSpeedDegrees) > 0.001f)
+            direction = Quaternion.Euler(0f, 0f, curvedAngularSpeedDegrees * Time.deltaTime) * direction;
 
         transform.position += (Vector3)(direction * speed * Time.deltaTime);
     }

@@ -1152,6 +1152,16 @@ MonoBehaviour:
   heartSpawnRadius: 0.35
   heartFloatAmplitude: 0.08
   heartFloatFrequency: 3.5
+  enableHardLowHealthSpecialAttack: 1
+  hardSpecialCenter: {x: -3, y: -2}
+  hardSpecialMoveDuration: 2
+  hardSpecialClosedHoldDuration: 1
+  hardSpecialDamagedHoldDuration: 1
+  hardSpecialWinkBurstCount: 5
+  hardSpecialWinkBurstInterval: 1
+  hardSpecialStarSpeed: 4
+  hardSpecialStarCurveDegrees: 12
+  hardSpecialSecondHeartSpeedMultiplier: 0.5
   hurtStopDuration: 1
   deathHoldDuration: 5
   deathEyesDamagedDuration: 1

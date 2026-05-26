@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 [RequireComponent(typeof(CharacterHealth))]
 [RequireComponent(typeof(SunMaskMovement))]
@@ -73,6 +74,19 @@ public class SunMaskBoss : MonoBehaviour, IKillable
     [SerializeField, Min(0f)] private float heartFloatAmplitude = 0.08f;
     [SerializeField, Min(0f)] private float heartFloatFrequency = 3.5f;
 
+    [Header("Hard/Hardcore Low Health Special Attack")]
+    [SerializeField] private bool enableHardLowHealthSpecialAttack = true;
+    [SerializeField] private Vector2 hardSpecialCenter = new(-3f, -2f);
+    [SerializeField, Min(0.01f)] private float hardSpecialMoveDuration = 2f;
+    [SerializeField, Min(0f)] private float hardSpecialClosedHoldDuration = 1f;
+    [SerializeField, Min(0f)] private float hardSpecialDamagedHoldDuration = 1f;
+    [SerializeField, Min(1)] private int hardSpecialWinkBurstCount = 5;
+    [SerializeField, Min(0f)] private float hardSpecialWinkBurstInterval = 1f;
+    [SerializeField, Min(0.01f)] private float hardSpecialStarSpeed = 4f;
+    [FormerlySerializedAs("hardSpecialStarTurnSpeedDegrees")]
+    [SerializeField] private float hardSpecialStarCurveDegrees = 12f;
+    [SerializeField, Range(0.01f, 1f)] private float hardSpecialSecondHeartSpeedMultiplier = 0.5f;
+
     [Header("Timings")]
     [Min(0f)] public float hurtStopDuration = 0.5f;
     [Min(0f)] public float deathHoldDuration = 5f;
@@ -139,6 +153,10 @@ public class SunMaskBoss : MonoBehaviour, IKillable
     private bool isDead;
     private bool inWinkAttack;
     private bool inAngry;
+    private bool hardLowHealthSpecialPerformed;
+    private bool hardLowHealthSpecialCompleted;
+    private bool inHardLowHealthSpecial;
+    private bool hardSpecialCanEnterAngry;
 
     private int initialFightLife;
     private bool fightLifeInitialized;
@@ -148,6 +166,7 @@ public class SunMaskBoss : MonoBehaviour, IKillable
     private Coroutine deathExplosionsRoutine;
     private Coroutine winkRoutine;
     private Coroutine angryRoutine;
+    private Coroutine hardLowHealthSpecialRoutine;
 
     private Rigidbody2D rb;
     private AudioSource audioSource;
@@ -345,6 +364,10 @@ public class SunMaskBoss : MonoBehaviour, IKillable
         isDead = false;
         inWinkAttack = false;
         inAngry = false;
+        hardLowHealthSpecialPerformed = false;
+        hardLowHealthSpecialCompleted = false;
+        inHardLowHealthSpecial = false;
+        hardSpecialCanEnterAngry = false;
 
         nextTouchDamageTime = 0f;
         nextDeathSfxTime = 0f;
@@ -360,6 +383,7 @@ public class SunMaskBoss : MonoBehaviour, IKillable
         if (deathExplosionsRoutine != null) { StopCoroutine(deathExplosionsRoutine); deathExplosionsRoutine = null; }
         if (winkRoutine != null) { StopCoroutine(winkRoutine); winkRoutine = null; }
         if (angryRoutine != null) { StopCoroutine(angryRoutine); angryRoutine = null; }
+        if (hardLowHealthSpecialRoutine != null) { StopCoroutine(hardLowHealthSpecialRoutine); hardLowHealthSpecialRoutine = null; }
 
         if (movement != null)
             movement.enabled = true;
@@ -395,9 +419,15 @@ public class SunMaskBoss : MonoBehaviour, IKillable
         if (deathExplosionsRoutine != null) { StopCoroutine(deathExplosionsRoutine); deathExplosionsRoutine = null; }
         if (winkRoutine != null) { StopCoroutine(winkRoutine); winkRoutine = null; }
         if (angryRoutine != null) { StopCoroutine(angryRoutine); angryRoutine = null; }
+        if (hardLowHealthSpecialRoutine != null) { StopCoroutine(hardLowHealthSpecialRoutine); hardLowHealthSpecialRoutine = null; }
 
         inWinkAttack = false;
         inAngry = false;
+        inHardLowHealthSpecial = false;
+        hardSpecialCanEnterAngry = false;
+
+        if (eyes != null)
+            eyes.ClearHardAttackBlackDamagedEyes();
 
         ClearLowHealthTint();
     }
@@ -529,6 +559,25 @@ public class SunMaskBoss : MonoBehaviour, IKillable
         RefreshLowHealthTint();
         PlayDamagedSfx();
 
+        bool startHardLowHealthSpecial = ShouldStartHardLowHealthSpecialAttack();
+        if (startHardLowHealthSpecial)
+        {
+            hardLowHealthSpecialPerformed = true;
+
+            if (angryRoutine != null)
+            {
+                StopCoroutine(angryRoutine);
+                angryRoutine = null;
+            }
+
+            inAngry = false;
+            hardLowHealthSpecialRoutine = StartCoroutine(HardLowHealthSpecialAttackRoutine());
+        }
+        else if (hardLowHealthSpecialCompleted)
+        {
+            SpawnCurvedStarBurst(-Mathf.Abs(hardSpecialStarCurveDegrees), hardSpecialStarSpeed);
+        }
+
         if (inAngry)
             return;
 
@@ -538,6 +587,7 @@ public class SunMaskBoss : MonoBehaviour, IKillable
             StopCoroutine(hurtRoutine);
 
         hurtRoutine = StartCoroutine(HurtStopRoutine());
+
     }
 
     void PlayDamagedSfx()
@@ -592,6 +642,176 @@ public class SunMaskBoss : MonoBehaviour, IKillable
         hurtRoutine = null;
     }
 
+    bool ShouldStartHardLowHealthSpecialAttack()
+    {
+        return enableHardLowHealthSpecialAttack &&
+               !hardLowHealthSpecialPerformed &&
+               !inHardLowHealthSpecial &&
+               characterHealth != null &&
+               fightLifeInitialized &&
+               characterHealth.life < (initialFightLife * 0.5f) &&
+               UsesHardCampaignModifiers();
+    }
+
+    IEnumerator HardLowHealthSpecialAttackRoutine()
+    {
+        yield return null;
+        while (!isDead && characterHealth != null && characterHealth.IsInvulnerable)
+            yield return null;
+
+        if (isDead)
+        {
+            hardLowHealthSpecialRoutine = null;
+            yield break;
+        }
+
+        inHardLowHealthSpecial = true;
+        inWinkAttack = true;
+        hardSpecialCanEnterAngry = false;
+
+        if (hurtRoutine != null) { StopCoroutine(hurtRoutine); hurtRoutine = null; }
+        if (winkRoutine != null) { StopCoroutine(winkRoutine); winkRoutine = null; }
+
+        StopMovement_DisableComponent();
+
+        if (GameMusicController.Instance != null)
+            GameMusicController.Instance.StopMusic();
+
+        EnableOnly(closedRenderer);
+        SetRendererStaticFirstFrame(closedRenderer);
+
+        float moveDuration = Mathf.Max(0.01f, hardSpecialMoveDuration);
+        float closedHoldDuration = Mathf.Max(0f, hardSpecialClosedHoldDuration);
+        float damagedHoldDuration = Mathf.Max(0f, hardSpecialDamagedHoldDuration);
+        int burstCount = Mathf.Max(1, hardSpecialWinkBurstCount);
+        float interval = Mathf.Max(0f, hardSpecialWinkBurstInterval);
+        float attackInvulnerability =
+            moveDuration +
+            closedHoldDuration +
+            damagedHoldDuration +
+            interval * Mathf.Max(0, burstCount - 1);
+        characterHealth.StartTemporaryInvulnerability(attackInvulnerability, withBlink: false);
+
+        yield return MoveToHardSpecialCenter(moveDuration);
+        if (closedHoldDuration > 0f && !isDead)
+            yield return new WaitForSeconds(closedHoldDuration);
+
+        if (isDead)
+        {
+            hardLowHealthSpecialRoutine = null;
+            yield break;
+        }
+
+        if (GameMusicController.Instance != null)
+            GameMusicController.Instance.PlayDefaultMusic(restart: true);
+
+        EnableOnly(hurtRenderer);
+        SetRendererAsLooping(hurtRenderer, looping: true);
+        if (eyes != null)
+            eyes.BeginHardAttackBlackDamagedEyes();
+
+        if (damagedHoldDuration > 0f)
+            yield return new WaitForSeconds(damagedHoldDuration);
+
+        for (int i = 0; i < burstCount && !isDead; i++)
+        {
+            SpawnCurvedStarBurst(
+                i % 2 == 0 ? -hardSpecialStarCurveDegrees : hardSpecialStarCurveDegrees,
+                hardSpecialStarSpeed);
+
+            if (i < burstCount - 1)
+            {
+                if (interval > 0f)
+                    yield return new WaitForSeconds(interval);
+            }
+        }
+
+        if (!isDead)
+        {
+            hardSpecialCanEnterAngry = true;
+            yield return HardSpecialKissFinishRoutine();
+        }
+
+        if (eyes != null)
+            eyes.ClearHardAttackBlackDamagedEyes();
+
+        inHardLowHealthSpecial = false;
+        hardSpecialCanEnterAngry = false;
+        inWinkAttack = false;
+        hardLowHealthSpecialCompleted = true;
+        hardLowHealthSpecialRoutine = null;
+
+        if (!isDead && !inAngry)
+        {
+            if (movement != null)
+                movement.enabled = true;
+
+            EnableOnly(walkRenderer);
+            SetRendererAsLooping(walkRenderer, looping: true);
+        }
+
+        if (!isDead && enableWinkAttack && winkRoutine == null)
+            winkRoutine = StartCoroutine(WinkAttackLoop());
+    }
+
+    IEnumerator MoveToHardSpecialCenter(float duration)
+    {
+        Vector2 start = rb != null ? rb.position : (Vector2)transform.position;
+        float elapsed = 0f;
+
+        while (elapsed < duration && !isDead)
+        {
+            elapsed += Time.deltaTime;
+            Vector2 next = Vector2.Lerp(start, hardSpecialCenter, Mathf.Clamp01(elapsed / duration));
+            if (movement != null)
+                next = movement.SnapToPixelPerfect(next);
+            else
+                next = SnapToPixel(next);
+
+            if (rb != null)
+            {
+                rb.linearVelocity = Vector2.zero;
+                rb.MovePosition(next);
+            }
+            else
+            {
+                transform.position = next;
+            }
+
+            yield return null;
+        }
+
+        if (!isDead)
+        {
+            Vector2 end = movement != null ? movement.SnapToPixelPerfect(hardSpecialCenter) : SnapToPixel(hardSpecialCenter);
+            if (rb != null)
+            {
+                rb.position = end;
+                rb.MovePosition(end);
+            }
+            else
+            {
+                transform.position = end;
+            }
+        }
+    }
+
+    IEnumerator HardSpecialKissFinishRoutine()
+    {
+        if (eyes != null)
+            eyes.ClearHardAttackBlackDamagedEyes();
+
+        EnableOnly(kissRenderer);
+        SetRendererStaticFirstFrame(kissRenderer);
+
+        SpawnHeart(1f);
+        SpawnHeart(hardSpecialSecondHeartSpeedMultiplier);
+
+        float hold = Mathf.Max(0f, winkHoldDuration);
+        if (hold > 0f)
+            yield return new WaitForSeconds(hold);
+    }
+
     void OnDied() => Kill();
 
     public void Kill()
@@ -604,12 +824,18 @@ public class SunMaskBoss : MonoBehaviour, IKillable
         isDead = true;
         inWinkAttack = false;
         inAngry = false;
+        inHardLowHealthSpecial = false;
+        hardSpecialCanEnterAngry = false;
 
         ClearLowHealthTint();
 
         if (winkRoutine != null) { StopCoroutine(winkRoutine); winkRoutine = null; }
         if (hurtRoutine != null) { StopCoroutine(hurtRoutine); hurtRoutine = null; }
         if (angryRoutine != null) { StopCoroutine(angryRoutine); angryRoutine = null; }
+        if (hardLowHealthSpecialRoutine != null) { StopCoroutine(hardLowHealthSpecialRoutine); hardLowHealthSpecialRoutine = null; }
+
+        if (eyes != null)
+            eyes.ClearHardAttackBlackDamagedEyes();
 
         if (deathRoutine != null)
             StopCoroutine(deathRoutine);
@@ -819,6 +1045,7 @@ public class SunMaskBoss : MonoBehaviour, IKillable
             if (!enableWinkAttack) continue;
             if (inWinkAttack) continue;
             if (inAngry) continue;
+            if (inHardLowHealthSpecial) continue;
             if (hurtRoutine != null) continue;
             if (deathRoutine != null) continue;
             if (movement != null && !movement.enabled) continue;
@@ -863,7 +1090,10 @@ public class SunMaskBoss : MonoBehaviour, IKillable
 
             if (!isDead)
             {
-                SpawnStarBurst();
+                if (hardLowHealthSpecialCompleted)
+                    SpawnCurvedStarBurst(-Mathf.Abs(hardSpecialStarCurveDegrees), hardSpecialStarSpeed);
+                else
+                    SpawnStarBurst();
             }
         }
         else
@@ -874,6 +1104,8 @@ public class SunMaskBoss : MonoBehaviour, IKillable
             if (!isDead)
             {
                 SpawnHeart();
+                if (hardLowHealthSpecialCompleted)
+                    SpawnHeart(hardSpecialSecondHeartSpeedMultiplier);
             }
         }
 
@@ -922,7 +1154,26 @@ public class SunMaskBoss : MonoBehaviour, IKillable
         }
     }
 
-    void SpawnHeart()
+    void SpawnCurvedStarBurst(float angularSpeedDegrees, float burstSpeed)
+    {
+        Vector2 origin = transform.position;
+
+        for (int i = 0; i < StarDirs.Length; i++)
+        {
+            Vector2 dir = StarDirs[i];
+            Vector2 spawnPos = SnapToPixel(origin + dir * Mathf.Max(0f, starSpawnRadius));
+
+            StarProjectile proj = Instantiate(starProjectilePrefab, spawnPos, Quaternion.identity);
+            if (proj == null)
+                continue;
+
+            proj.damage = Mathf.Max(1, starDamage);
+            proj.obstacleMask = starObstacleMask;
+            proj.InitializeCurved(dir, Mathf.Max(0.01f, burstSpeed), starLifeTime, angularSpeedDegrees);
+        }
+    }
+
+    void SpawnHeart(float speedMultiplier = 1f)
     {
         Vector2 origin = transform.position;
         Vector2 randomOffset = Random.insideUnitCircle * Mathf.Max(0f, heartSpawnRadius);
@@ -936,7 +1187,7 @@ public class SunMaskBoss : MonoBehaviour, IKillable
         heart.SetBoss(this);
 
         heart.Initialize(
-            speed: heartSpeed,
+            speed: heartSpeed * Mathf.Max(0f, speedMultiplier),
             lifeTime: heartLifeTime,
             floatAmplitude: heartFloatAmplitude,
             floatFrequency: heartFloatFrequency
@@ -946,6 +1197,7 @@ public class SunMaskBoss : MonoBehaviour, IKillable
     public void NotifyHeartDestroyedByPlayer(MovementController playerWhoDestroyed)
     {
         if (isDead) return;
+        if ((inHardLowHealthSpecial || hardLowHealthSpecialRoutine != null) && !hardSpecialCanEnterAngry) return;
         if (playerWhoDestroyed == null) return;
         if (playerWhoDestroyed.isDead || playerWhoDestroyed.IsEndingStage) return;
 
@@ -1158,6 +1410,7 @@ public class SunMaskBoss : MonoBehaviour, IKillable
     void EnableOnly(AnimatedSpriteRenderer target)
     {
         if (walkRenderer != null) walkRenderer.enabled = (target == walkRenderer);
+        if (closedRenderer != null) closedRenderer.enabled = (target == closedRenderer);
         if (angryRenderer != null) angryRenderer.enabled = (target == angryRenderer);
         if (winkRenderer != null) winkRenderer.enabled = (target == winkRenderer);
         if (kissRenderer != null) kissRenderer.enabled = (target == kissRenderer);
