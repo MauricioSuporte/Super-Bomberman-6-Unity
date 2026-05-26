@@ -10,6 +10,9 @@ using UnityEngine;
 [RequireComponent(typeof(CircleCollider2D))]
 public class SunMaskBoss : MonoBehaviour, IKillable
 {
+    const int HardExtraLife = 2;
+    const float HardSpeedMultiplier = 1.5f;
+
     [Header("References")]
     public CharacterHealth characterHealth;
     public SunMaskMovement movement;
@@ -265,6 +268,8 @@ public class SunMaskBoss : MonoBehaviour, IKillable
         if (!movement)
             movement = GetComponent<SunMaskMovement>();
 
+        ApplyCampaignDifficultyModifiers();
+
         eyes = GetComponentInChildren<SunMaskEyesController>(true);
 
         if (characterHealth != null)
@@ -288,6 +293,42 @@ public class SunMaskBoss : MonoBehaviour, IKillable
         {
             transform.position = SnapToPixel(transform.position);
         }
+    }
+
+    void ApplyCampaignDifficultyModifiers()
+    {
+        if (!UsesHardCampaignModifiers())
+            return;
+
+        if (characterHealth != null)
+            characterHealth.AddLife(HardExtraLife);
+
+        if (movement != null)
+            movement.ApplySpeedMultiplier(HardSpeedMultiplier);
+    }
+
+    static bool UsesHardCampaignModifiers()
+    {
+        if (BossRushSession.IsActive ||
+            !string.Equals(
+                UnityEngine.SceneManagement.SceneManager.GetActiveScene().name,
+                "Stage_2-7",
+                System.StringComparison.Ordinal))
+        {
+            return false;
+        }
+
+        Assets.Scripts.SaveSystem.StageSlot slot = SaveSystem.ActiveSlot;
+        if (slot == null || !slot.started)
+            return false;
+
+        Assets.Scripts.SaveSystem.NormalGameDifficulty difficulty =
+            System.Enum.IsDefined(typeof(Assets.Scripts.SaveSystem.NormalGameDifficulty), slot.difficulty)
+                ? (Assets.Scripts.SaveSystem.NormalGameDifficulty)slot.difficulty
+                : Assets.Scripts.SaveSystem.NormalGameDifficulty.Normal;
+
+        return difficulty == Assets.Scripts.SaveSystem.NormalGameDifficulty.Hard ||
+               difficulty == Assets.Scripts.SaveSystem.NormalGameDifficulty.Hardcore;
     }
 
     void OnDestroy()

@@ -55,6 +55,11 @@ public class ClownMaskMovement : MonoBehaviour
     float pixelAccumulatorX;
     float pixelAccumulatorY;
 
+    public void ApplySpeedMultiplier(float multiplier)
+    {
+        speed *= Mathf.Max(0f, multiplier);
+    }
+
     void FixedUpdate()
     {
         if (GamePauseController.IsPaused)

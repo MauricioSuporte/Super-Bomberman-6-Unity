@@ -30,6 +30,11 @@ public class SunMaskMovement : MonoBehaviour
     private const float EPS = 0.0001f;
     private bool initialized;
 
+    public void ApplySpeedMultiplier(float multiplier)
+    {
+        speed *= Mathf.Max(0f, multiplier);
+    }
+
     void Awake()
     {
         rb = GetComponent<Rigidbody2D>();

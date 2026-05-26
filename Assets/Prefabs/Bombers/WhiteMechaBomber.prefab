@@ -135,6 +135,7 @@ MonoBehaviour:
   obstacleMask:
     serializedVersion: 2
     m_Bits: 0
+  hardCampaignExtraLife: 1
   speedInternal: 224
   playerId: 1
   enableDualInput: 1

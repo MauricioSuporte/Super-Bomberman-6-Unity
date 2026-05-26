@@ -1120,6 +1120,8 @@ MonoBehaviour:
   closedRenderer: {fileID: 2515805762123387750}
   hurtRenderer: {fileID: 5292329079700839116}
   deathRenderer: {fileID: 0}
+  tintWhenBelowHalfLife: 1
+  lowHealthTintStrength: 0.4
   angryRenderer: {fileID: 5084572211645712223}
   angryFreezeSeconds: 1
   angryChaseSeconds: 5
@@ -1128,6 +1130,8 @@ MonoBehaviour:
   angryArcSeconds: 1
   angryArcRadius: 1.25
   angryArcClockwise: 1
+  angryRetargetInterval: 0.08
+  angryTurnSpeedDegrees: 220
   enableWinkAttack: 1
   winkMinInterval: 3
   winkMaxInterval: 5
@@ -1239,6 +1243,8 @@ MonoBehaviour:
   useDamagedEyesWhenBossHurt: 1
   useDominantAxisFor8Dir: 1
   diagonalBias: 0.22
+  applyDeathSulOffset: 1
+  deathSulLocalY: 0.06
 --- !u!82 &707636302417938483
 AudioSource:
   m_ObjectHideFlags: 0
@@ -1350,7 +1356,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BossEndStageSequence
   endStageMusic: {fileID: 8300000, guid: 2c3c7b7d0c168a14a844d32e484a0c28, type: 3}
   playRandomGoodSfx: 1
-  goodSfxVolume: 1
+  playSkullForNightmareBomber: 1
+  skullVolume: 1
   delayBeforeStart: 0
   celebrationSeconds: 5
   fadeDuration: 3

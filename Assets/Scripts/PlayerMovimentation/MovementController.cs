@@ -31,6 +31,9 @@ public class MovementController : MonoBehaviour, IKillable
     public LayerMask obstacleMask;
     private int abilitySystemVersion;
 
+    [Header("Normal Game Difficulty")]
+    [SerializeField, Min(0)] private int hardCampaignExtraLife;
+
     [Header("Speed (SB5 Internal)")]
     [SerializeField] private int speedInternal = PlayerPersistentStats.BaseSpeedNormal;
     public int SpeedInternal => speedInternal;
@@ -237,6 +240,7 @@ public class MovementController : MonoBehaviour, IKillable
     private StunReceiver stunReceiver;
 
     private CharacterHealth cachedHealth;
+    private bool hardCampaignExtraLifeApplied;
     private PlayerMountCompanion cachedCompanion;
     private PlayerRidingController cachedRiding;
 
@@ -300,6 +304,7 @@ public class MovementController : MonoBehaviour, IKillable
         }
 
         cachedHealth = GetComponent<CharacterHealth>();
+        ApplyHardCampaignExtraLife();
         TryGetComponent(out cachedCompanion);
         TryGetComponent(out cachedRiding);
         TryGetComponent(out spriteLock);
@@ -314,6 +319,40 @@ public class MovementController : MonoBehaviour, IKillable
 
         CacheMovementAbilities();
         InitRuntimeState(loadPersistent: true);
+    }
+
+    private void ApplyHardCampaignExtraLife()
+    {
+        if (hardCampaignExtraLifeApplied ||
+            hardCampaignExtraLife <= 0 ||
+            cachedHealth == null ||
+            !CompareTag("BossBomber") ||
+            gameObject.layer != LayerMask.NameToLayer("Enemy") ||
+            BossRushSession.IsActive)
+        {
+            return;
+        }
+
+        if (!UnityEngine.SceneManagement.SceneManager.GetActiveScene().name.StartsWith("Stage_", StringComparison.Ordinal))
+            return;
+
+        Assets.Scripts.SaveSystem.StageSlot slot = SaveSystem.ActiveSlot;
+        if (slot == null || !slot.started)
+            return;
+
+        Assets.Scripts.SaveSystem.NormalGameDifficulty difficulty =
+            Enum.IsDefined(typeof(Assets.Scripts.SaveSystem.NormalGameDifficulty), slot.difficulty)
+                ? (Assets.Scripts.SaveSystem.NormalGameDifficulty)slot.difficulty
+                : Assets.Scripts.SaveSystem.NormalGameDifficulty.Normal;
+
+        if (difficulty != Assets.Scripts.SaveSystem.NormalGameDifficulty.Hard &&
+            difficulty != Assets.Scripts.SaveSystem.NormalGameDifficulty.Hardcore)
+        {
+            return;
+        }
+
+        hardCampaignExtraLifeApplied = true;
+        cachedHealth.AddLife(hardCampaignExtraLife);
     }
 
     protected virtual void OnEnable()
