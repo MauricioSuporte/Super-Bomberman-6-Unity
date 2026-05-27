@@ -110,6 +110,7 @@ public class GameManager : MonoBehaviour
     [Min(0)] public int destructiblePassAmount = 0;
     [Min(0)] public int invincibleSuitAmount = 0;
     [Min(0)] public int heartAmount = 0;
+    [Min(0)] public int oneUpAmount = 0;
     [Min(0)] public int powerGloveAmount = 0;
     [Min(0)] public int blueLouieEggAmount = 0;
     [Min(0)] public int blackLouieEggAmount = 0;
@@ -612,6 +613,9 @@ public class GameManager : MonoBehaviour
         TryAssignItem(ItemType.DestructiblePass, destructiblePassAmount);
         TryAssignItem(ItemType.InvincibleSuit, invincibleSuitAmount);
         TryAssignItem(ItemType.Heart, heartAmount);
+        NormalGameDifficulty normalGameDifficulty = SaveSystem.GetActiveNormalGameDifficulty();
+        if (normalGameDifficulty == NormalGameDifficulty.Hard)
+            TryAssignItem(ItemType.OneUp, oneUpAmount);
         TryAssignItem(ItemType.PowerGlove, powerGloveAmount);
 
         TryAssignItem(ItemType.BlueLouieEgg, blueLouieEggAmount);
@@ -733,6 +737,7 @@ public class GameManager : MonoBehaviour
             case ItemType.DestructiblePass: destructiblePassAmount = amount; break;
             case ItemType.InvincibleSuit: invincibleSuitAmount = amount; break;
             case ItemType.Heart: heartAmount = amount; break;
+            case ItemType.OneUp: oneUpAmount = amount; break;
             case ItemType.PowerGlove: powerGloveAmount = amount; break;
             case ItemType.BlueLouieEgg: blueLouieEggAmount = amount; break;
             case ItemType.BlackLouieEgg: blackLouieEggAmount = amount; break;

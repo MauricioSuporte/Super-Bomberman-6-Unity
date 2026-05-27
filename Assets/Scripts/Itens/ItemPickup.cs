@@ -496,7 +496,7 @@ public class ItemPickup : MonoBehaviour
         if (player.TryGetComponent<PlayerIdentity>(out var id) && id != null)
             pid = Mathf.Clamp(id.playerId, 1, 6);
 
-        if (type != ItemType.LandMine && type != ItemType.Clock && type != ItemType.Skull)
+        if (type != ItemType.LandMine && type != ItemType.Clock && type != ItemType.Skull && type != ItemType.OneUp)
             PlayerPersistentStats.StageApplyPickup(pid, type);
 
         switch (type)
@@ -622,6 +622,10 @@ public class ItemPickup : MonoBehaviour
             case ItemType.Heart:
                 if (player.TryGetComponent<CharacterHealth>(out var health))
                     health.AddLife(1);
+                break;
+
+            case ItemType.OneUp:
+                GameSession.Instance?.TryAddHardNormalGameLife(out _);
                 break;
         }
 

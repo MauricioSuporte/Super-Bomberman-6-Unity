@@ -179,6 +179,18 @@ public sealed class GameSession : MonoBehaviour
         return true;
     }
 
+    public bool TryAddHardNormalGameLife(out int remainingLives)
+    {
+        remainingLives = HardNormalGameRemainingLives;
+
+        if (!hardNormalGameRunInProgress || remainingLives >= 9)
+            return false;
+
+        hardNormalGameRemainingLives = Mathf.Min(9, remainingLives + 1);
+        remainingLives = hardNormalGameRemainingLives;
+        return true;
+    }
+
     public void AddBattleMatchWin(int playerId)
     {
         if (!IsValidPlayerId(playerId))
