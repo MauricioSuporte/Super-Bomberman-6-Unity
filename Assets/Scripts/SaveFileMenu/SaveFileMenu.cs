@@ -513,6 +513,7 @@ public class SaveFileMenu : MonoBehaviour
     {
         GamePauseController.ClearPauseFlag();
         Time.timeScale = 1f;
+        GameSession.Instance?.ResetNormalGameLivesSession();
 
         if (useWorldMapAfterSelection && !string.IsNullOrWhiteSpace(worldMapSceneName))
         {

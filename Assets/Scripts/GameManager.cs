@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Assets.Scripts.SaveSystem;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.Tilemaps;
@@ -75,6 +76,7 @@ public class GameManager : MonoBehaviour
     static readonly WaitForSecondsRealtime waitWinMatchBlackScreenDelay = new(2f);
     const float BattleVictoryFadeDuration = 3f;
     const float BattleRoundWinFinalFadeDuration = 0.5f;
+    const float NormalGameDeathFadeDuration = 2f;
     const string BattleVictorySfxResourcesPath = "Sounds/SB5 Sound Effects (48)";
     const string TitleScreenSceneName = "TitleScreen";
     const string BattleModeMenuSceneName = "BattleModeMenu";
@@ -205,6 +207,11 @@ public class GameManager : MonoBehaviour
 
         string currentSceneName = SceneManager.GetActiveScene().name;
         BossRushSession.NotifySceneLoaded(currentSceneName);
+
+        NormalGameDifficulty normalGameDifficulty = SaveSystem.GetActiveNormalGameDifficulty();
+
+        if (!BossRushSession.IsActive && !IsBattleModeScene() && GameSession.Instance != null)
+            GameSession.Instance.EnsureNormalGameLivesSession(normalGameDifficulty);
 
         if (IsBattleModeScene() && GameSession.Instance != null)
             GameSession.Instance.BeginBattleMatch(currentSceneName, IsBattleModeTeamMatch());
@@ -780,7 +787,18 @@ public class GameManager : MonoBehaviour
 
     IEnumerator RestartRoundRoutine()
     {
-        yield return new WaitForSecondsRealtime(restartAfterDeathSeconds);
+        float restartDelay = Mathf.Max(restartAfterDeathSeconds, NormalGameDeathFadeDuration);
+        yield return new WaitForSecondsRealtime(restartDelay);
+
+        if (!BossRushSession.IsActive &&
+            SaveSystem.GetActiveNormalGameDifficulty() == NormalGameDifficulty.Hard)
+        {
+            if (GameSession.Instance == null ||
+                !GameSession.Instance.TryConsumeHardNormalGameLife(out int remainingLives))
+            {
+                yield break;
+            }
+        }
 
         GamePauseController.ClearPauseFlag();
         Time.timeScale = 1f;
@@ -1373,6 +1391,7 @@ public class GameManager : MonoBehaviour
                 return;
             }
 
+            bool shouldRestartRound = ShouldRestartNormalGameAfterPartyDefeat();
             restartingRound = true;
 
             if (GameMusicController.Instance != null &&
@@ -1383,10 +1402,33 @@ public class GameManager : MonoBehaviour
             }
 
             if (StageIntroTransition.Instance != null)
-                StageIntroTransition.Instance.StartFadeOut(2f);
+                StageIntroTransition.Instance.StartFadeOut(NormalGameDeathFadeDuration);
 
-            StartCoroutine(RestartRoundRoutine());
+            if (shouldRestartRound)
+                StartCoroutine(RestartRoundRoutine());
         }
+    }
+
+    bool ShouldRestartNormalGameAfterPartyDefeat()
+    {
+        if (BossRushSession.IsActive)
+            return true;
+
+        NormalGameDifficulty difficulty = SaveSystem.GetActiveNormalGameDifficulty();
+
+        if (difficulty == NormalGameDifficulty.Hardcore)
+        {
+            return false;
+        }
+
+        if (difficulty != NormalGameDifficulty.Hard)
+            return true;
+
+        if (GameSession.Instance != null &&
+            GameSession.Instance.HardNormalGameRemainingLives > 0)
+            return true;
+
+        return false;
     }
 
     bool TryGetWinningTeamSurvivors(

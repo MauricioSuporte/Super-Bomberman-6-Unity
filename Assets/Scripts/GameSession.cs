@@ -1,10 +1,12 @@
 using System.Collections.Generic;
+using Assets.Scripts.SaveSystem;
 using UnityEngine;
 
 public sealed class GameSession : MonoBehaviour
 {
     public const int MinPlayerId = 1;
     public const int MaxPlayerId = 6;
+    public const int HardNormalGameStartingLives = 3;
 
     const int AllPlayersMask = (1 << MaxPlayerId) - 1;
 
@@ -21,8 +23,13 @@ public sealed class GameSession : MonoBehaviour
     [SerializeField, HideInInspector] private bool battleMatchUsesTeams;
     [SerializeField, HideInInspector] private int[] battleMatchWins = new int[MaxPlayerId];
 
+    [Header("Normal Game Run")]
+    [SerializeField, HideInInspector] private bool hardNormalGameRunInProgress;
+    [SerializeField, HideInInspector] private int hardNormalGameRemainingLives = HardNormalGameStartingLives;
+
     public int ActivePlayerCount => CountPlayersInMask(GetEffectiveActivePlayerMask());
     public int ActivePlayerMask => GetEffectiveActivePlayerMask();
+    public int HardNormalGameRemainingLives => Mathf.Clamp(hardNormalGameRemainingLives, 0, 9);
 
     void Awake()
     {
@@ -47,6 +54,7 @@ public sealed class GameSession : MonoBehaviour
         activePlayerCount = 1;
         activePlayerMask = PlayerIdToMask(1);
         ResetBattleMatch();
+        ResetNormalGameLivesSession();
     }
 
     public void SetActivePlayerCount(int count)
@@ -136,6 +144,39 @@ public sealed class GameSession : MonoBehaviour
     public void EndBattleMatch()
     {
         ResetBattleMatch();
+    }
+
+    public void EnsureNormalGameLivesSession(NormalGameDifficulty difficulty)
+    {
+        if (difficulty != NormalGameDifficulty.Hard)
+        {
+            ResetNormalGameLivesSession();
+            return;
+        }
+
+        if (hardNormalGameRunInProgress)
+            return;
+
+        hardNormalGameRunInProgress = true;
+        hardNormalGameRemainingLives = HardNormalGameStartingLives;
+    }
+
+    public void ResetNormalGameLivesSession()
+    {
+        hardNormalGameRunInProgress = false;
+        hardNormalGameRemainingLives = HardNormalGameStartingLives;
+    }
+
+    public bool TryConsumeHardNormalGameLife(out int remainingLives)
+    {
+        remainingLives = HardNormalGameRemainingLives;
+
+        if (!hardNormalGameRunInProgress || remainingLives <= 0)
+            return false;
+
+        hardNormalGameRemainingLives = Mathf.Max(0, remainingLives - 1);
+        remainingLives = hardNormalGameRemainingLives;
+        return true;
     }
 
     public void AddBattleMatchWin(int playerId)

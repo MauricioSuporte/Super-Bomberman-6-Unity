@@ -483,6 +483,9 @@ public class GamePauseController : MonoBehaviour
         if (endBattleMatch && GameSession.Instance != null)
             GameSession.Instance.EndBattleMatch();
 
+        if ((resetSessionForTitle || resetPlayersToBaseState) && GameSession.Instance != null)
+            GameSession.Instance.ResetNormalGameLivesSession();
+
         if (resetSessionForTitle)
         {
             PlayerPersistentStats.ResetSessionForReturnToTitle();

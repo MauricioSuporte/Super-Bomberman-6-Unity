@@ -92,6 +92,14 @@ public static class SaveSystem
         return slot.started;
     }
 
+    public static NormalGameDifficulty GetActiveNormalGameDifficulty()
+    {
+        StageSlot slot = ActiveSlot;
+        return slot != null && slot.started
+            ? NormalizeNormalGameDifficulty(slot.difficulty)
+            : NormalGameDifficulty.Normal;
+    }
+
     public static void ResetSlot(int slotIndex, NormalGameDifficulty difficulty = NormalGameDifficulty.Normal)
     {
         StageSlot slot = GetSlot(slotIndex);
