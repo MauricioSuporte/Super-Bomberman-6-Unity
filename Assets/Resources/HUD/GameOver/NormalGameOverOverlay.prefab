@@ -90,6 +90,11 @@ MonoBehaviour:
   - {fileID: -2744120886631420691, guid: a4a71761d32873b41aabba039b04f379, type: 3}
   - {fileID: 4676124922752445310, guid: a4a71761d32873b41aabba039b04f379, type: 3}
   - {fileID: 5329293198942421691, guid: a4a71761d32873b41aabba039b04f379, type: 3}
+  endBomberSprites:
+  - {fileID: 2189694687008990300, guid: f72e692c1fd8cc7498c70bea6786e526, type: 3}
+  - {fileID: 4577402162591444139, guid: f72e692c1fd8cc7498c70bea6786e526, type: 3}
+  - {fileID: 223371866641554991, guid: f72e692c1fd8cc7498c70bea6786e526, type: 3}
+  - {fileID: 886122725345983342, guid: f72e692c1fd8cc7498c70bea6786e526, type: 3}
   gameOverMusic: {fileID: 8300000, guid: 5986bee0e751c3140af44ce1275882f7, type: 3}
   gameOverMusicVolume: 1
   loopGameOverMusic: 0
@@ -97,7 +102,7 @@ MonoBehaviour:
   moveCursorSfxVolume: 1
   confirmSfx: {fileID: 8300000, guid: f4ca5a046054f404aa2ac2df051e75c0, type: 3}
   confirmSfxVolume: 1
-  waitBeforeFadeInSeconds: 4
+  waitBeforeFadeInSeconds: 1.5
   fadeInSeconds: 1
   fadeOutSeconds: 1
   eyeFrameSeconds: 0.13
@@ -107,5 +112,12 @@ MonoBehaviour:
   continueRunJumpSeconds: 1
   continueRunJumpDistance: 240
   continueRunJumpArcHeight: 48
+  endFallSeconds: 2.2
+  endFallQueueDelaySeconds: 0.08
+  endBlackHolePosition: {x: 0, y: 0}
+  endFallOrbitRadius: 32
+  endFallOrbitDegrees: 540
+  endFallSpriteRotationDegrees: 720
+  endFallFinalScale: 0
   eyesOffsetY: 3
   cursorSize: {x: 16, y: 16}

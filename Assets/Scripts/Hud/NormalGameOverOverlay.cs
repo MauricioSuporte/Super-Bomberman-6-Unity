@@ -28,6 +28,9 @@ public sealed class NormalGameOverOverlay : MonoBehaviour
     [SerializeField] Sprite[] continuePreparingBomberSprites;
     [SerializeField] Sprite[] continueRunningBomberSprites;
 
+    [Header("End Animation Artwork")]
+    [SerializeField] Sprite[] endBomberSprites;
+
     [Header("Game Over Audio")]
     [SerializeField] AudioClip gameOverMusic;
     [SerializeField, Range(0f, 1f)] float gameOverMusicVolume = 1f;
@@ -52,6 +55,15 @@ public sealed class NormalGameOverOverlay : MonoBehaviour
     [SerializeField, Min(0.01f)] float continueRunJumpSeconds = 0.8f;
     [SerializeField, Min(0f)] float continueRunJumpDistance = 240f;
     [SerializeField, Min(0f)] float continueRunJumpArcHeight = 48f;
+
+    [Header("End Animation")]
+    [SerializeField, Min(0.01f)] float endFallSeconds = 2.2f;
+    [SerializeField, Min(0f)] float endFallQueueDelaySeconds = 0.08f;
+    [SerializeField] Vector2 endBlackHolePosition = Vector2.zero;
+    [SerializeField, Min(0f)] float endFallOrbitRadius = 64f;
+    [SerializeField] float endFallOrbitDegrees = 540f;
+    [SerializeField] float endFallSpriteRotationDegrees = 720f;
+    [SerializeField, Range(0f, 1f)] float endFallFinalScale;
 
     [Header("Layout")]
     [SerializeField] float eyesOffsetY = 17f;
@@ -357,8 +369,8 @@ public sealed class NormalGameOverOverlay : MonoBehaviour
 
         if (selectedOption == 0)
             yield return PlayContinueSelectionRoutine();
-        else if (confirmAnimationSeconds > 0f)
-            yield return new WaitForSecondsRealtime(confirmAnimationSeconds);
+        else
+            yield return PlayEndSelectionRoutine();
 
         yield return FadeOutRoutine();
         LoadSelectedScene();
@@ -402,6 +414,78 @@ public sealed class NormalGameOverOverlay : MonoBehaviour
 
             yield return null;
         }
+    }
+
+    IEnumerator PlayEndSelectionRoutine()
+    {
+        SetEyesVisible(false);
+        SetBomberSprites(endBomberSprites);
+
+        Vector2[] originalOffsets = new Vector2[bomberImages.Length];
+        Vector3[] startingScales = new Vector3[bomberImages.Length];
+        Quaternion[] startingRotations = new Quaternion[bomberImages.Length];
+        for (int i = 0; i < bomberImages.Length; i++)
+        {
+            if (bomberImages[i] == null)
+                continue;
+
+            RectTransform rect = bomberImages[i].rectTransform;
+            originalOffsets[i] = rect.anchoredPosition - endBlackHolePosition;
+            startingScales[i] = rect.localScale;
+            startingRotations[i] = rect.localRotation;
+        }
+
+        float duration = Mathf.Max(0.01f, endFallSeconds);
+        float queueDelay = Mathf.Max(0f, endFallQueueDelaySeconds);
+        float elapsed = 0f;
+        float totalDuration = duration + (queueDelay * (bomberImages.Length - 1));
+        while (elapsed < totalDuration)
+        {
+            elapsed += Time.unscaledDeltaTime;
+
+            for (int i = 0; i < bomberImages.Length; i++)
+            {
+                if (bomberImages[i] == null)
+                    continue;
+
+                float localElapsed = elapsed - (queueDelay * i);
+                if (localElapsed < 0f)
+                    continue;
+
+                RectTransform rect = bomberImages[i].rectTransform;
+                float progress = Mathf.Clamp01(localElapsed / duration);
+                float easedProgress = Mathf.SmoothStep(0f, 1f, progress);
+                float remainingRadius = 1f - easedProgress;
+                float orbitAngle = -endFallOrbitDegrees * easedProgress;
+                Vector2 spiralOffset = GetEndFallSpiralOffset(originalOffsets[i], orbitAngle, remainingRadius, easedProgress);
+                Vector3 scale = Vector3.Lerp(startingScales[i], startingScales[i] * endFallFinalScale, easedProgress);
+                float spriteRotation = -endFallSpriteRotationDegrees * easedProgress;
+                rect.localScale = scale;
+                rect.localRotation = startingRotations[i] * Quaternion.Euler(0f, 0f, spriteRotation);
+                rect.anchoredPosition = endBlackHolePosition + spiralOffset;
+            }
+
+            yield return null;
+        }
+    }
+
+    Vector2 GetEndFallSpiralOffset(Vector2 originalOffset, float orbitAngle, float remainingRadius, float progress)
+    {
+        float originalRadius = originalOffset.magnitude;
+        Vector2 direction = originalRadius > 0.01f ? originalOffset / originalRadius : Vector2.left;
+        float enterOrbitProgress = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(progress * 4f));
+        float currentRadius = Mathf.Lerp(originalRadius, endFallOrbitRadius, enterOrbitProgress);
+        return RotateVector(direction * currentRadius, orbitAngle) * remainingRadius;
+    }
+
+    static Vector2 RotateVector(Vector2 vector, float degrees)
+    {
+        float radians = degrees * Mathf.Deg2Rad;
+        float sine = Mathf.Sin(radians);
+        float cosine = Mathf.Cos(radians);
+        return new Vector2(
+            (vector.x * cosine) - (vector.y * sine),
+            (vector.x * sine) + (vector.y * cosine));
     }
 
     IEnumerator FadeOutRoutine()
