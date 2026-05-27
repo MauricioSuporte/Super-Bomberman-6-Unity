@@ -13,7 +13,7 @@ public sealed class HudLifePreviewLayout : MonoBehaviour
 
     [Header("HUD And Counter Logical Size")]
     [SerializeField] private float hudHeight = 23f;
-    [SerializeField] private Vector2 counterFrameSize = new(20f, 12f);
+    [SerializeField] private Vector2 counterFrameSize = new(21f, 12f);
     [SerializeField] private Vector2 counterIconSize = new(9f, 9f);
     [SerializeField] private float overlapHudPixels = 1f;
 
