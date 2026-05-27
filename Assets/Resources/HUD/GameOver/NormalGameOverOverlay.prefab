@@ -75,6 +75,21 @@ MonoBehaviour:
   cursorSprites:
   - {fileID: 4941462090396089414, guid: 175d8b5c3e0daf04a87f9d3ea2813c5e, type: 3}
   - {fileID: 813685599856363850, guid: 175d8b5c3e0daf04a87f9d3ea2813c5e, type: 3}
+  continueWakeUpBomberSprites:
+  - {fileID: 6047014753219688286, guid: 32993f9f2783f6e469d1871e9d04f06f, type: 3}
+  - {fileID: 8247900976574566731, guid: 32993f9f2783f6e469d1871e9d04f06f, type: 3}
+  - {fileID: 740745263426848800, guid: 32993f9f2783f6e469d1871e9d04f06f, type: 3}
+  - {fileID: -5355563409783572962, guid: 32993f9f2783f6e469d1871e9d04f06f, type: 3}
+  continuePreparingBomberSprites:
+  - {fileID: 2722717681019038173, guid: c31bfdb24390efe46aca620254c903b0, type: 3}
+  - {fileID: -2977207752289632425, guid: c31bfdb24390efe46aca620254c903b0, type: 3}
+  - {fileID: -31827304475265179, guid: c31bfdb24390efe46aca620254c903b0, type: 3}
+  - {fileID: -3381891667044105533, guid: c31bfdb24390efe46aca620254c903b0, type: 3}
+  continueRunningBomberSprites:
+  - {fileID: 945614257895978032, guid: a4a71761d32873b41aabba039b04f379, type: 3}
+  - {fileID: -2744120886631420691, guid: a4a71761d32873b41aabba039b04f379, type: 3}
+  - {fileID: 4676124922752445310, guid: a4a71761d32873b41aabba039b04f379, type: 3}
+  - {fileID: 5329293198942421691, guid: a4a71761d32873b41aabba039b04f379, type: 3}
   gameOverMusic: {fileID: 8300000, guid: 5986bee0e751c3140af44ce1275882f7, type: 3}
   gameOverMusicVolume: 1
   loopGameOverMusic: 0
@@ -87,5 +102,10 @@ MonoBehaviour:
   fadeOutSeconds: 1
   eyeFrameSeconds: 0.13
   confirmAnimationSeconds: 0.32
+  continueWakeUpSeconds: 0.25
+  continuePreparingSeconds: 0.25
+  continueRunJumpSeconds: 1
+  continueRunJumpDistance: 240
+  continueRunJumpArcHeight: 48
   eyesOffsetY: 3
   cursorSize: {x: 16, y: 16}

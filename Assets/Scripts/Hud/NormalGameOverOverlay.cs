@@ -23,6 +23,11 @@ public sealed class NormalGameOverOverlay : MonoBehaviour
     [SerializeField] Sprite[] tauntEyeSprites;
     [SerializeField] Sprite[] cursorSprites;
 
+    [Header("Continue Animation Artwork")]
+    [SerializeField] Sprite[] continueWakeUpBomberSprites;
+    [SerializeField] Sprite[] continuePreparingBomberSprites;
+    [SerializeField] Sprite[] continueRunningBomberSprites;
+
     [Header("Game Over Audio")]
     [SerializeField] AudioClip gameOverMusic;
     [SerializeField, Range(0f, 1f)] float gameOverMusicVolume = 1f;
@@ -41,18 +46,30 @@ public sealed class NormalGameOverOverlay : MonoBehaviour
     [SerializeField, Min(0.01f)] float eyeFrameSeconds = 0.13f;
     [SerializeField, Min(0f)] float confirmAnimationSeconds = 0.32f;
 
+    [Header("Continue Animation")]
+    [SerializeField, Min(0f)] float continueWakeUpSeconds = 0.6f;
+    [SerializeField, Min(0f)] float continuePreparingSeconds = 0.5f;
+    [SerializeField, Min(0.01f)] float continueRunJumpSeconds = 0.8f;
+    [SerializeField, Min(0f)] float continueRunJumpDistance = 240f;
+    [SerializeField, Min(0f)] float continueRunJumpArcHeight = 48f;
+
     [Header("Layout")]
     [SerializeField] float eyesOffsetY = 17f;
     [SerializeField] Vector2 cursorSize = new(16f, 16f);
 
+    readonly Image[] bomberImages = new Image[4];
     readonly Image[] eyeImages = new Image[8];
     Image cursorImage;
     CanvasGroup canvasGroup;
+    RectMask2D viewportMask;
     bool inputEnabled;
     bool selectionCommitted;
     int selectedOption;
     float eyeFrameTimer;
     int eyeFrameIndex;
+    bool confirmCursorAnimating;
+    float confirmCursorTimer;
+    int confirmCursorFrameIndex;
 
     public static IEnumerator PlayAfterDeathFadeRoutine()
     {
@@ -190,6 +207,7 @@ public sealed class NormalGameOverOverlay : MonoBehaviour
             return;
 
         TickEyes();
+        TickConfirmCursor();
 
         if (!inputEnabled || selectionCommitted)
             return;
@@ -219,8 +237,20 @@ public sealed class NormalGameOverOverlay : MonoBehaviour
         rect.anchoredPosition = Vector2.zero;
         rect.sizeDelta = new Vector2(ScreenWidth, ScreenHeight);
         rect.localScale = new Vector3(uiScale, uiScale, 1f);
+        EnsureViewportMask();
         transform.SetAsLastSibling();
         Canvas.ForceUpdateCanvases();
+    }
+
+    void EnsureViewportMask()
+    {
+        if (viewportMask == null)
+            viewportMask = GetComponent<RectMask2D>();
+
+        if (viewportMask == null)
+            viewportMask = gameObject.AddComponent<RectMask2D>();
+
+        viewportMask.enabled = true;
     }
 
     void BuildUi()
@@ -234,6 +264,7 @@ public sealed class NormalGameOverOverlay : MonoBehaviour
                 ? seatedBomberSprites[i]
                 : null;
             Image body = CreateImage($"Bomber_{i + 1}", transform, bomber, new Vector2(bomberX[i], -12f), new Vector2(48f, 60f));
+            bomberImages[i] = body;
 
             eyeImages[i * 2] = CreateImage("Eye_Left", body.transform, GetEyeSprite(), new Vector2(-6f, eyesOffsetY), new Vector2(12f, 12f));
             eyeImages[(i * 2) + 1] = CreateImage("Eye_Right", body.transform, GetEyeSprite(), new Vector2(6f, eyesOffsetY), new Vector2(12f, 12f));
@@ -282,6 +313,21 @@ public sealed class NormalGameOverOverlay : MonoBehaviour
         }
     }
 
+    void TickConfirmCursor()
+    {
+        if (!confirmCursorAnimating || cursorImage == null || cursorSprites == null || cursorSprites.Length <= 1)
+            return;
+
+        float frameSeconds = GetConfirmCursorFrameSeconds();
+        confirmCursorTimer += Time.unscaledDeltaTime;
+        while (confirmCursorTimer >= frameSeconds)
+        {
+            confirmCursorTimer -= frameSeconds;
+            confirmCursorFrameIndex = (confirmCursorFrameIndex + 1) % cursorSprites.Length;
+            cursorImage.sprite = cursorSprites[confirmCursorFrameIndex];
+        }
+    }
+
     void PositionCursor()
     {
         if (cursorImage == null)
@@ -307,35 +353,98 @@ public sealed class NormalGameOverOverlay : MonoBehaviour
         selectionCommitted = true;
         inputEnabled = false;
         PlaySfx(confirmSfx, confirmSfxVolume);
+        BeginConfirmCursorLoop();
 
-        float frameSeconds = GetConfirmCursorFrameSeconds();
-        float transitionElapsed = 0f;
-        float totalTransitionSeconds = confirmAnimationSeconds + fadeOutSeconds;
-        float cursorElapsed = 0f;
-        int cursorFrame = 0;
+        if (selectedOption == 0)
+            yield return PlayContinueSelectionRoutine();
+        else if (confirmAnimationSeconds > 0f)
+            yield return new WaitForSecondsRealtime(confirmAnimationSeconds);
 
-        while (transitionElapsed < totalTransitionSeconds)
+        yield return FadeOutRoutine();
+        LoadSelectedScene();
+    }
+
+    IEnumerator PlayContinueSelectionRoutine()
+    {
+        SetEyesVisible(false);
+        SetBomberSprites(continueWakeUpBomberSprites);
+        if (continueWakeUpSeconds > 0f)
+            yield return new WaitForSecondsRealtime(continueWakeUpSeconds);
+
+        SetBomberSprites(continuePreparingBomberSprites);
+        if (continuePreparingSeconds > 0f)
+            yield return new WaitForSecondsRealtime(continuePreparingSeconds);
+
+        SetBomberSprites(continueRunningBomberSprites);
+
+        Vector2[] startingPositions = new Vector2[bomberImages.Length];
+        for (int i = 0; i < bomberImages.Length; i++)
         {
-            float deltaTime = Time.unscaledDeltaTime;
-            transitionElapsed += deltaTime;
-            cursorElapsed += deltaTime;
+            if (bomberImages[i] != null)
+                startingPositions[i] = bomberImages[i].rectTransform.anchoredPosition;
+        }
 
-            while (cursorImage != null &&
-                   cursorSprites != null &&
-                   cursorSprites.Length > 0 &&
-                   cursorElapsed >= frameSeconds)
+        float elapsed = 0f;
+        float duration = Mathf.Max(0.01f, continueRunJumpSeconds);
+        while (elapsed < duration)
+        {
+            elapsed += Time.unscaledDeltaTime;
+            float progress = Mathf.Clamp01(elapsed / duration);
+            Vector2 offset = new(
+                -continueRunJumpDistance * progress,
+                Mathf.Sin(progress * Mathf.PI) * continueRunJumpArcHeight);
+
+            for (int i = 0; i < bomberImages.Length; i++)
             {
-                cursorElapsed -= frameSeconds;
-                cursorFrame = (cursorFrame + 1) % cursorSprites.Length;
-                cursorImage.sprite = cursorSprites[cursorFrame];
+                if (bomberImages[i] != null)
+                    bomberImages[i].rectTransform.anchoredPosition = startingPositions[i] + offset;
             }
 
-            float fadeElapsed = Mathf.Max(0f, transitionElapsed - confirmAnimationSeconds);
-            canvasGroup.alpha = 1f - Mathf.Clamp01(fadeElapsed / fadeOutSeconds);
+            yield return null;
+        }
+    }
+
+    IEnumerator FadeOutRoutine()
+    {
+        float elapsed = 0f;
+        while (elapsed < fadeOutSeconds)
+        {
+            elapsed += Time.unscaledDeltaTime;
+            canvasGroup.alpha = 1f - Mathf.Clamp01(elapsed / fadeOutSeconds);
             yield return null;
         }
 
-        LoadSelectedScene();
+        canvasGroup.alpha = 0f;
+    }
+
+    void BeginConfirmCursorLoop()
+    {
+        confirmCursorAnimating = true;
+        confirmCursorTimer = 0f;
+        confirmCursorFrameIndex = 0;
+        if (cursorImage != null)
+            cursorImage.sprite = GetCursorSprite();
+    }
+
+    void SetEyesVisible(bool visible)
+    {
+        for (int i = 0; i < eyeImages.Length; i++)
+        {
+            if (eyeImages[i] != null)
+                eyeImages[i].gameObject.SetActive(visible);
+        }
+    }
+
+    void SetBomberSprites(Sprite[] sprites)
+    {
+        if (sprites == null)
+            return;
+
+        for (int i = 0; i < bomberImages.Length && i < sprites.Length; i++)
+        {
+            if (bomberImages[i] != null && sprites[i] != null)
+                bomberImages[i].sprite = sprites[i];
+        }
     }
 
     float GetConfirmCursorFrameSeconds()
