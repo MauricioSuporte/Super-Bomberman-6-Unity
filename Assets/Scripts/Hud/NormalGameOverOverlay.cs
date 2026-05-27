@@ -16,6 +16,7 @@ public sealed class NormalGameOverOverlay : MonoBehaviour
     const string SafeFrameName = "SafeFrame4x3";
 
     public static bool IsTransitionActive { get; private set; }
+    static bool autoConfirmEndOnShow;
 
     [Header("Artwork")]
     [SerializeField] Sprite backgroundSprite;
@@ -95,9 +96,10 @@ public sealed class NormalGameOverOverlay : MonoBehaviour
         yield return overlay.Play();
     }
 
-    public static void BeginGameOverTransition()
+    public static void BeginGameOverTransition(bool forceEndSelection = false)
     {
         IsTransitionActive = true;
+        autoConfirmEndOnShow = forceEndSelection;
     }
 
     static NormalGameOverOverlay CreateOverlay()
@@ -184,11 +186,18 @@ public sealed class NormalGameOverOverlay : MonoBehaviour
     {
         IsTransitionActive = true;
         GamePauseController.ClearPauseFlag();
+        bool shouldAutoConfirmEnd = autoConfirmEndOnShow;
+        autoConfirmEndOnShow = false;
 
         canvasGroup = GetComponent<CanvasGroup>();
         RectTransform parentRect = transform.parent as RectTransform;
         ConfigureRoot(parentRect);
         BuildUi();
+        if (shouldAutoConfirmEnd)
+        {
+            selectedOption = 1;
+            PositionCursor();
+        }
         HideNormalGameHudInCurrentScene();
 
         canvasGroup.alpha = 0f;
@@ -210,6 +219,12 @@ public sealed class NormalGameOverOverlay : MonoBehaviour
         }
 
         canvasGroup.alpha = 1f;
+        if (shouldAutoConfirmEnd)
+        {
+            yield return ConfirmSelectionRoutine();
+            yield break;
+        }
+
         inputEnabled = true;
     }
 

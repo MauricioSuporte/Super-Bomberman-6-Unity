@@ -1408,7 +1408,11 @@ public class GameManager : MonoBehaviour
                 StartCoroutine(RestartRoundRoutine());
             else
             {
-                NormalGameOverOverlay.BeginGameOverTransition();
+                bool isHardcoreDefeat = SaveSystem.GetActiveNormalGameDifficulty() == NormalGameDifficulty.Hardcore;
+                NormalGameOverOverlay.BeginGameOverTransition(isHardcoreDefeat);
+                if (isHardcoreDefeat)
+                    DeleteActiveHardcoreSaveSlot();
+
                 StartCoroutine(ShowNormalGameOverAfterDeathFadeRoutine());
             }
         }
@@ -1418,6 +1422,20 @@ public class GameManager : MonoBehaviour
     {
         yield return new WaitForSecondsRealtime(NormalGameDeathFadeDuration);
         yield return NormalGameOverOverlay.PlayAfterDeathFadeRoutine();
+    }
+
+    void DeleteActiveHardcoreSaveSlot()
+    {
+        int activeSlotIndex = SaveSystem.Data.activeSlotIndex;
+        if (activeSlotIndex < 0)
+            return;
+
+        SaveSystem.DeleteSlot(activeSlotIndex);
+        if (SaveSystem.Data.activeSlotIndex == activeSlotIndex)
+        {
+            SaveSystem.Data.activeSlotIndex = -1;
+            SaveSystem.Save();
+        }
     }
 
     bool ShouldRestartNormalGameAfterPartyDefeat()
