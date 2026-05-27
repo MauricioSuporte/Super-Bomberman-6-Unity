@@ -27,6 +27,7 @@ public class GameMusicController : MonoBehaviour
     Coroutine musicTransitionRoutine;
     Coroutine preloadAndPlayRoutine;
     bool musicPausedForGamePause;
+    const float MusicLoadTimeoutSeconds = 5f;
 
     public AudioClip defaultMusic;
     public AudioClip defaultMusicLoop;
@@ -111,6 +112,8 @@ public class GameMusicController : MonoBehaviour
 
         if (sceneMusicController.deathMusic != null)
             deathMusic = sceneMusicController.deathMusic;
+
+        PreloadDefaultMusic();
     }
 
     public void PlayMusic(AudioClip clip, float volume = 1f, bool loop = true, float pitch = 1f, bool restart = true)
@@ -152,6 +155,9 @@ public class GameMusicController : MonoBehaviour
             PlayMusic(introClip, introVolume, true, pitch, restart);
             return;
         }
+
+        PreloadAudioData(introClip);
+        PreloadAudioData(loopClip);
 
         bool sameClip = musicSource.clip == introClip;
 
@@ -325,6 +331,8 @@ public class GameMusicController : MonoBehaviour
 
     IEnumerator PlayLoopAfterIntroRoutine(AudioClip introClip, AudioClip loopClip, float loopVolume, float pitch)
     {
+        PreloadAudioData(loopClip);
+
         while (musicSource != null && musicSource.clip == introClip)
         {
             if (GamePauseController.IsPaused || musicPausedForGamePause)
@@ -339,6 +347,15 @@ public class GameMusicController : MonoBehaviour
             // end of the intro, so returning to the game does not start the loop.
             if (Application.isFocused &&
                 (!musicSource.isPlaying || musicSource.time >= introClip.length))
+                break;
+
+            yield return null;
+        }
+
+        float timeoutAt = Time.realtimeSinceStartup + MusicLoadTimeoutSeconds;
+        while (!IsAudioDataLoaded(loopClip))
+        {
+            if (Time.realtimeSinceStartup >= timeoutAt)
                 break;
 
             yield return null;
@@ -448,6 +465,13 @@ public class GameMusicController : MonoBehaviour
         PreloadAudioData(defaultMusic);
         PreloadAudioData(defaultMusicLoop);
         PreloadAudioData(battleCriticalMusic);
+    }
+
+    void PreloadDefaultMusic()
+    {
+        PreloadAudioData(defaultMusic);
+        PreloadAudioData(defaultMusicLoop);
+        PreloadAudioData(deathMusic);
     }
 
     static void PreloadAudioData(AudioClip clip)
