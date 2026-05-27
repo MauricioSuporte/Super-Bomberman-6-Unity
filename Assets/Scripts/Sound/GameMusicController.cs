@@ -334,7 +334,11 @@ public class GameMusicController : MonoBehaviour
                 continue;
             }
 
-            if (!musicSource.isPlaying || musicSource.time >= introClip.length)
+            // Losing application focus can temporarily make an AudioSource report
+            // that it is not playing. Wait for focus before treating that as the
+            // end of the intro, so returning to the game does not start the loop.
+            if (Application.isFocused &&
+                (!musicSource.isPlaying || musicSource.time >= introClip.length))
                 break;
 
             yield return null;
