@@ -1,0 +1,91 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &100000
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 22400000}
+  - component: {fileID: 22500000}
+  - component: {fileID: 11400000}
+  m_Layer: 5
+  m_Name: NormalGameOverOverlay
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &22400000
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 100000}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 256, y: 224}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!225 &22500000
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 100000}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 0
+  m_BlocksRaycasts: 0
+  m_IgnoreParentGroups: 0
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 100000}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9cc23d9c3fc344e2ab5aa91612d22b5c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::NormalGameOverOverlay
+  backgroundSprite: {fileID: 21300000, guid: 8e93b9e425bef4e488421cc44042f130, type: 3}
+  seatedBomberSprites:
+  - {fileID: 5363689899083879206, guid: cc60aa35147b70b4895efb054e6c3147, type: 3}
+  - {fileID: 7586704242452275006, guid: cc60aa35147b70b4895efb054e6c3147, type: 3}
+  - {fileID: 7390521138990443588, guid: cc60aa35147b70b4895efb054e6c3147, type: 3}
+  - {fileID: 5335988813256389173, guid: cc60aa35147b70b4895efb054e6c3147, type: 3}
+  tauntEyeSprites:
+  - {fileID: 8550902295204960151, guid: 634881f6e88097648a63a158a6e3f5ca, type: 3}
+  - {fileID: 6020009786622063702, guid: 634881f6e88097648a63a158a6e3f5ca, type: 3}
+  - {fileID: -592467618464454074, guid: 634881f6e88097648a63a158a6e3f5ca, type: 3}
+  - {fileID: -6363692746851449938, guid: 634881f6e88097648a63a158a6e3f5ca, type: 3}
+  cursorSprites:
+  - {fileID: 4941462090396089414, guid: 175d8b5c3e0daf04a87f9d3ea2813c5e, type: 3}
+  - {fileID: 813685599856363850, guid: 175d8b5c3e0daf04a87f9d3ea2813c5e, type: 3}
+  gameOverMusic: {fileID: 8300000, guid: 5986bee0e751c3140af44ce1275882f7, type: 3}
+  gameOverMusicVolume: 1
+  loopGameOverMusic: 0
+  moveCursorSfx: {fileID: 8300000, guid: 9095599de31cf8543bb7e82ff2782f12, type: 3}
+  moveCursorSfxVolume: 1
+  confirmSfx: {fileID: 8300000, guid: f4ca5a046054f404aa2ac2df051e75c0, type: 3}
+  confirmSfxVolume: 1
+  waitBeforeFadeInSeconds: 4
+  fadeInSeconds: 1
+  fadeOutSeconds: 1
+  eyeFrameSeconds: 0.13
+  confirmAnimationSeconds: 0.32
+  eyesOffsetY: 3
+  cursorSize: {x: 16, y: 16}

@@ -195,6 +195,9 @@ public class GamePauseController : MonoBehaviour
 
     bool IsPauseBlockedByGameplayState()
     {
+        if (NormalGameOverOverlay.IsTransitionActive)
+            return true;
+
         if (StageIntroTransition.Instance != null)
         {
             if (StageIntroTransition.Instance.IntroRunning ||

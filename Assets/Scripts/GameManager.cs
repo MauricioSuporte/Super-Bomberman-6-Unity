@@ -1406,7 +1406,18 @@ public class GameManager : MonoBehaviour
 
             if (shouldRestartRound)
                 StartCoroutine(RestartRoundRoutine());
+            else
+            {
+                NormalGameOverOverlay.BeginGameOverTransition();
+                StartCoroutine(ShowNormalGameOverAfterDeathFadeRoutine());
+            }
         }
+    }
+
+    IEnumerator ShowNormalGameOverAfterDeathFadeRoutine()
+    {
+        yield return new WaitForSecondsRealtime(NormalGameDeathFadeDuration);
+        yield return NormalGameOverOverlay.PlayAfterDeathFadeRoutine();
     }
 
     bool ShouldRestartNormalGameAfterPartyDefeat()
