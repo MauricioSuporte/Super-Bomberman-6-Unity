@@ -355,37 +355,26 @@ public static class StageUnlockProgress
 
         if (HasClearedAllRegisteredStages())
         {
-            if (UnlockProgress.Unlock(BomberSkin.Orange))
-                changed = true;
+            Assets.Scripts.SaveSystem.NormalGameDifficulty difficulty = SaveSystem.GetActiveNormalGameDifficulty();
+            BomberSkin skinReward = difficulty switch
+            {
+                Assets.Scripts.SaveSystem.NormalGameDifficulty.Hard => BomberSkin.Purple,
+                Assets.Scripts.SaveSystem.NormalGameDifficulty.Hardcore => BomberSkin.Gold,
+                _ => BomberSkin.Orange
+            };
 
-            if (UnlockProgress.Unlock(BomberSkin.Purple))
+            if (UnlockProgress.Unlock(skinReward))
                 changed = true;
 
             if (UnlockProgress.UnlockBossRush())
                 changed = true;
         }
 
-        if (TryUnlockAllPerfectRewards())
-            changed = true;
-
         if (changed)
         {
             for (int p = 1; p <= 4; p++)
                 PlayerPersistentStats.ClampSelectedSkinIfLocked(p);
         }
-
-        return changed;
-    }
-
-    private static bool TryUnlockAllPerfectRewards()
-    {
-        if (!HasPerfectAllRegisteredStages())
-            return false;
-
-        bool changed = false;
-
-        if (UnlockProgress.Unlock(BomberSkin.Gold))
-            changed = true;
 
         return changed;
     }

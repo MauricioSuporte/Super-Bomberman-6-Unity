@@ -7,6 +7,10 @@
 
     public static bool UnlockNightmare()
     {
-        return SaveSystem.UnlockNightmare();
+        bool unlocked = SaveSystem.UnlockNightmare();
+        if (unlocked)
+            UnlockProgress.TryUnlockGoldenBomberIfEligible();
+
+        return unlocked;
     }
 }

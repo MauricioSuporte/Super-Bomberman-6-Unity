@@ -13,22 +13,6 @@ public sealed class AchievementsMenu : MonoBehaviour
         public Sprite[] sprites = new Sprite[2];
     }
 
-    private readonly struct AchievementEntry
-    {
-        public readonly BomberSkin Skin;
-        public readonly string Name;
-        public readonly string Hint;
-        public readonly string RewardText;
-
-        public AchievementEntry(BomberSkin skin, string name, string hint, string rewardText)
-        {
-            Skin = skin;
-            Name = name;
-            Hint = hint;
-            RewardText = rewardText;
-        }
-    }
-
     private sealed class RowVisual
     {
         public RectTransform Root;
@@ -124,7 +108,7 @@ public sealed class AchievementsMenu : MonoBehaviour
     [SerializeField] private float underlayOffsetY = -0.35f;
 
     private readonly List<RowVisual> rows = new();
-    private readonly List<AchievementEntry> entries = new();
+    private readonly List<AchievementCatalog.AchievementInfo> entries = new();
     private readonly bool[] previousMenuHeld = new bool[System.Enum.GetValues(typeof(PlayerAction)).Length];
     private readonly bool[] menuHoldConsumed = new bool[System.Enum.GetValues(typeof(PlayerAction)).Length];
     private readonly float[] nextMenuRepeatTime = new float[System.Enum.GetValues(typeof(PlayerAction)).Length];
@@ -168,22 +152,6 @@ public sealed class AchievementsMenu : MonoBehaviour
     private static readonly int UnderlayOffsetXId = Shader.PropertyToID("_UnderlayOffsetX");
     private static readonly int UnderlayOffsetYId = Shader.PropertyToID("_UnderlayOffsetY");
 
-    private static readonly AchievementEntry[] Catalog =
-    {
-        new(BomberSkin.Gray, "GRAY", SkinUnlockHintCatalog.GetHint(BomberSkin.Gray), "Gray Bomber"),
-        new(BomberSkin.Orange, "ORANGE", SkinUnlockHintCatalog.GetHint(BomberSkin.Orange), "Orange Bomber"),
-        new(BomberSkin.Purple, "PURPLE", SkinUnlockHintCatalog.GetHint(BomberSkin.Purple), "Purple Bomber"),
-        new(BomberSkin.Olive, "OLIVE", SkinUnlockHintCatalog.GetHint(BomberSkin.Olive), "Olive Bomber"),
-        new(BomberSkin.Cyan, "CYAN", SkinUnlockHintCatalog.GetHint(BomberSkin.Cyan), "Cyan Bomber"),
-        new(BomberSkin.Brown, "BROWN", SkinUnlockHintCatalog.GetHint(BomberSkin.Brown), "Brown Bomber"),
-        new(BomberSkin.DarkGreen, "DARK GREEN", SkinUnlockHintCatalog.GetHint(BomberSkin.DarkGreen), "Dark Green Bomber"),
-        new(BomberSkin.DarkBlue, "DARK BLUE", SkinUnlockHintCatalog.GetHint(BomberSkin.DarkBlue), "Dark Blue Bomber"),
-        new(BomberSkin.Magenta, "MAGENTA", SkinUnlockHintCatalog.GetHint(BomberSkin.Magenta), "Magenta Bomber"),
-        new(BomberSkin.Nightmare, "NIGHTMARE", SkinUnlockHintCatalog.GetHint(BomberSkin.Nightmare), "Nightmare Bomber"),
-        new(BomberSkin.Gold, "GOLD", SkinUnlockHintCatalog.GetHint(BomberSkin.Gold), "Gold Bomber"),
-        new(BomberSkin.Golden, "GOLDEN", SkinUnlockHintCatalog.GetHint(BomberSkin.Golden), "Golden Bomber")
-    };
-
     private void Awake()
     {
         if (root != null)
@@ -215,7 +183,7 @@ public sealed class AchievementsMenu : MonoBehaviour
     private void BuildEntries()
     {
         entries.Clear();
-        entries.AddRange(Catalog);
+        entries.AddRange(AchievementCatalog.All);
     }
 
     private void BuildUi()
@@ -369,15 +337,15 @@ public sealed class AchievementsMenu : MonoBehaviour
             if (!hasEntry)
                 continue;
 
-            AchievementEntry entry = entries[entryIndex];
-            bool unlocked = UnlockProgress.IsUnlocked(entry.Skin);
+            AchievementCatalog.AchievementInfo entry = entries[entryIndex];
+            bool unlocked = entry.IsUnlocked != null && entry.IsUnlocked();
             bool selected = entryIndex == selectedIndex;
 
             row.CheckImage.sprite = unlocked ? checkboxCheckedSprite : checkboxUncheckedSprite;
             row.CheckImage.color = Color.white;
-            row.Icon.sprite = UnlockToastCatalog.LoadIcon(entry.Skin);
+            row.Icon.sprite = entry.LoadIcon != null ? entry.LoadIcon() : null;
             row.Icon.color = unlocked ? Color.white : new Color(0.52f, 0.52f, 0.52f, 0.9f);
-            row.Label.text = $"{entryIndex + 1}. {entry.Name} - {entry.Hint}";
+            row.Label.text = entry.Hint;
             row.Label.color = selected ? new Color(1f, 0.95f, 0.32f) : new Color(0.96f, 0.91f, 0.72f);
             row.Background.color = selected ? new Color(0.44f, 0.34f, 0.04f, 0.84f) : (rowIndex % 2 == 0 ? new Color(0.19f, 0.16f, 0.03f, 0.72f) : new Color(0.11f, 0.09f, 0.02f, 0.72f));
         }
@@ -424,7 +392,7 @@ public sealed class AchievementsMenu : MonoBehaviour
         int unlocked = 0;
         for (int i = 0; i < entries.Count; i++)
         {
-            if (UnlockProgress.IsUnlocked(entries[i].Skin))
+            if (entries[i].IsUnlocked != null && entries[i].IsUnlocked())
                 unlocked++;
         }
 
@@ -452,12 +420,12 @@ public sealed class AchievementsMenu : MonoBehaviour
         if (entries.Count <= 0 || selectedIndex < 0 || selectedIndex >= entries.Count)
             return;
 
-        AchievementEntry entry = entries[selectedIndex];
-        bool unlocked = UnlockProgress.IsUnlocked(entry.Skin);
+        AchievementCatalog.AchievementInfo entry = entries[selectedIndex];
+        bool unlocked = entry.IsUnlocked != null && entry.IsUnlocked();
 
         if (detailIcon != null)
         {
-            detailIcon.sprite = UnlockToastCatalog.LoadIcon(entry.Skin);
+            detailIcon.sprite = entry.LoadIcon != null ? entry.LoadIcon() : null;
             detailIcon.color = unlocked ? Color.white : new Color(0.55f, 0.55f, 0.55f, 0.95f);
         }
 

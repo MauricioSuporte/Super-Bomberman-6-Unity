@@ -797,7 +797,7 @@ MonoBehaviour:
   backgroundSwapInterval: 2
   backgroundSwapLoop: 1
   selectMusic: {fileID: 8300000, guid: 0e875ee2b2a0e6742a51df3e81beb465, type: 3}
-  selectMusicVolume: 0.4
+  selectMusicVolume: 0.5
   loopSelectMusic: 1
   moveCursorSfx: {fileID: 8300000, guid: 9095599de31cf8543bb7e82ff2782f12, type: 3}
   moveCursorSfxVolume: 1
@@ -834,10 +834,12 @@ MonoBehaviour:
   detailSize: {x: 880, y: 130}
   rowFontSize: 24
   rowDescriptionFontSize: 20
-  detailFontSize: 22
+  detailFontSize: 20
   progressTextOffset: {x: 0, y: 300}
   progressBarOffset: {x: 0, y: 270}
   progressBarSize: {x: 560, y: 20}
+  checkboxUncheckedSprite: {fileID: 0}
+  checkboxCheckedSprite: {fileID: 0}
   optionFontAsset: {fileID: 11400000, guid: ecf098b5ead05a94fa9fde052327d9de, type: 2}
   optionFontMaterialPreset: {fileID: 0}
   forceBold: 1

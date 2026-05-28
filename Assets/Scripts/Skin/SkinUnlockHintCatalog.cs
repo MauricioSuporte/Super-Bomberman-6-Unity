@@ -8,10 +8,10 @@
                 return @"UNLOCKED BY A CHEAT ""KODE""";
 
             case BomberSkin.Orange:
-                return "CLEAR ALL STAGES";
+                return "CLEAR NORMAL GAME ON NORMAL DIFFICULTY";
 
             case BomberSkin.Purple:
-                return "CLEAR ALL STAGES";
+                return "CLEAR NORMAL GAME ON HARD DIFFICULTY";
 
             case BomberSkin.Olive:
                 return "CLEAR BOSS RUSH ON EASY";
@@ -35,10 +35,10 @@
                 return "CLEAR BOSS RUSH ON NIGHTMARE";
 
             case BomberSkin.Gold:
-                return "CLEAR STAGES WITHOUT ITEMS (EACH STAGE TRACKED SEPARATELY)";
+                return "CLEAR NORMAL GAME ON HARDCORE DIFFICULTY";
 
             case BomberSkin.Golden:
-                return "UNLOCK ALL OTHER BOMBERS";
+                return "UNLOCK ALL OTHER ACHIEVEMENTS";
 
             default:
                 return "";
