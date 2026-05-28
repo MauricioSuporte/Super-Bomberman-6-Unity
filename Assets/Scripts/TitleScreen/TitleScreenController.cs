@@ -163,6 +163,7 @@ public class TitleScreenController : MonoBehaviour
     public bool NormalGameRequested { get; private set; }
     public bool BossRushRequested { get; private set; }
     public bool BattleModeRequested { get; private set; }
+    public bool AchievementsRequested { get; private set; }
     public bool ExitRequested { get; private set; }
 
     bool bossRushInspectorDefaultUnlocked;
@@ -1007,6 +1008,7 @@ public class TitleScreenController : MonoBehaviour
         NormalGameRequested = false;
         BossRushRequested = false;
         BattleModeRequested = false;
+        AchievementsRequested = false;
         ExitRequested = false;
         ControlsRequested = false;
 
@@ -1307,6 +1309,7 @@ public class TitleScreenController : MonoBehaviour
         NormalGameRequested = false;
         BossRushRequested = false;
         BattleModeRequested = false;
+        AchievementsRequested = false;
         ExitRequested = false;
         ControlsRequested = false;
 
@@ -1586,13 +1589,15 @@ public class TitleScreenController : MonoBehaviour
 
                     if (menuIndex == MAIN_IDX_ACHIEVEMENTS)
                     {
-                        PlayDeniedSfx();
+                        locked = true;
+                        PlaySelectSfx();
 
-                        while (AnyPlayerHeld(PlayerAction.Start) || AnyPlayerHeld(PlayerAction.ActionA))
-                            yield return null;
+                        if (cursorRenderer != null)
+                            yield return cursorRenderer.PlayCycles(2);
 
-                        yield return null;
-                        continue;
+                        AchievementsRequested = true;
+                        yield return StartSelectedGameFlow();
+                        yield break;
                     }
 
                     locked = true;

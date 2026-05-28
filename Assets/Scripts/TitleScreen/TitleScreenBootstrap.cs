@@ -24,6 +24,7 @@ public class TitleScreenBootstrap : MonoBehaviour
     [SerializeField] string skinSelectSceneName = "SkinSelect";
     [SerializeField] string bossRushSceneName = "BossRush";
     [SerializeField] string battleModeMenuSceneName = "BattleModeMenu";
+    [SerializeField] string achievementsSceneName = "Achievements";
 
     [Header("Hudson Fade")]
     [SerializeField, Min(0f)] float fadeOpenBeforeHudsonSeconds = 0.20f;
@@ -166,6 +167,15 @@ public class TitleScreenBootstrap : MonoBehaviour
 
             if (titleScreen.ControlsRequested)
                 yield break;
+
+            if (titleScreen.AchievementsRequested)
+            {
+                if (!string.IsNullOrEmpty(achievementsSceneName))
+                {
+                    SceneManager.LoadScene(achievementsSceneName);
+                    yield break;
+                }
+            }
 
             if (titleScreen.BossRushRequested)
             {
