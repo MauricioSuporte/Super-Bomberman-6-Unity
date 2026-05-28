@@ -1875,7 +1875,7 @@ public partial class BombController : MonoBehaviour
             TryHandleGroundExplosionHit(p);
 
             BombExplosion explosion = BombExplosion.Spawn(explosionPrefab, p, Quaternion.identity);
-            explosion.Play(part, direction, 0f, explosionDuration, origin);
+            explosion.Play(part, direction, 0f, explosionDuration, origin, pierce);
         }
     }
 
@@ -2306,7 +2306,7 @@ public partial class BombController : MonoBehaviour
         Vector2 p = SnapToTileCenter(snapTm, origin, out _, out _);
 
         BombExplosion centerExp = BombExplosion.Spawn(explosionPrefab, p, Quaternion.identity);
-        centerExp.Play(BombExplosion.ExplosionPart.Start, Vector2.zero, 0f, explosionDuration, p);
+        centerExp.Play(BombExplosion.ExplosionPart.Start, Vector2.zero, 0f, explosionDuration, p, pierce);
 
         Explode(p, Vector2.up, radius, pierce);
         Explode(p, Vector2.down, radius, pierce);
@@ -2573,10 +2573,10 @@ public partial class BombController : MonoBehaviour
         TryApplyGroundExplosionModifiers(p, ref effectiveRadius, ref effectivePierce);
 
         if (sfxSource != null)
-            PlayExplosionSfxExclusive(sfxSource, effectiveRadius);
+            PlayExplosionSfxExclusive(sfxSource, effectiveRadius, effectivePierce);
 
         BombExplosion centerExp = BombExplosion.Spawn(explosionPrefab, p, Quaternion.identity);
-        centerExp.Play(BombExplosion.ExplosionPart.Start, Vector2.zero, 0f, explosionDuration, p);
+        centerExp.Play(BombExplosion.ExplosionPart.Start, Vector2.zero, 0f, explosionDuration, p, effectivePierce);
 
         Explode(p, Vector2.up, effectiveRadius, effectivePierce);
         Explode(p, Vector2.down, effectiveRadius, effectivePierce);

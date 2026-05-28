@@ -60,8 +60,18 @@ public sealed class DynamiteTileHandler : MonoBehaviour, IDestructibleTileHandle
 
     void SpawnStartAndExplode(BombController source, Vector2 p)
     {
+        int radius = Mathf.Max(0, explosionRadius);
+
         source.PlayExplosionSfxExclusive(_audio, _dynamiteExplosionSfx);
-        source.SpawnExplosionAreaForEffect(p, explosionRadius, pierce: true);
+        source.SpawnExplosionCrossForEffect(p, radius, pierce: true);
+
+        if (radius <= 0)
+            return;
+
+        source.SpawnExplosionCrossForEffect(p + Vector2.up * radius, radius, pierce: true);
+        source.SpawnExplosionCrossForEffect(p + Vector2.down * radius, radius, pierce: true);
+        source.SpawnExplosionCrossForEffect(p + Vector2.left * radius, radius, pierce: true);
+        source.SpawnExplosionCrossForEffect(p + Vector2.right * radius, radius, pierce: true);
     }
 
     static Vector2 GetGroundTileCenter(BombController source, Vector2 worldPos)
