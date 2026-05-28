@@ -455,7 +455,7 @@ public class MovementController : MonoBehaviour, IKillable
         return cachedRiding != null && cachedRiding.IsPlaying;
     }
 
-    private static void SetAnimEnabled(AnimatedSpriteRenderer r, bool on)
+    private void SetAnimEnabled(AnimatedSpriteRenderer r, bool on)
     {
         if (r == null) return;
 
@@ -481,6 +481,31 @@ public class MovementController : MonoBehaviour, IKillable
         SetMany(false,
             mountedSpriteUp, mountedSpriteDown, mountedSpriteLeft, mountedSpriteRight,
             headOnlyUp, headOnlyDown, headOnlyLeft, headOnlyRight);
+    }
+
+    private void EnableOnlyPlayerSpriteOutsideMountVisual(AnimatedSpriteRenderer keep)
+    {
+        AnimatedSpriteRenderer[] anims = GetComponentsInChildren<AnimatedSpriteRenderer>(true);
+        for (int i = 0; i < anims.Length; i++)
+        {
+            AnimatedSpriteRenderer anim = anims[i];
+            if (anim == null)
+                continue;
+
+            if (anim.GetComponentInParent<MountVisualController>(true) != null)
+                continue;
+
+            bool enabled = anim == keep;
+            anim.enabled = enabled;
+
+            if (anim.TryGetComponent<SpriteRenderer>(out var sr) && sr != null)
+                sr.enabled = enabled;
+
+            SpriteRenderer[] childSprites = anim.GetComponentsInChildren<SpriteRenderer>(true);
+            for (int s = 0; s < childSprites.Length; s++)
+                if (childSprites[s] != null)
+                    childSprites[s].enabled = enabled;
+        }
     }
 
     public void SetAllSpritesVisible(bool visible)
@@ -3365,6 +3390,7 @@ public class MovementController : MonoBehaviour, IKillable
 
         if (up != null)
         {
+            EnableOnlyPlayerSpriteOutsideMountVisual(up);
             SetAnimEnabled(up, true);
             up.idle = true;
             up.loop = false;
