@@ -88,8 +88,9 @@ public class WorldMapController : MonoBehaviour
     [Header("Stage Icons")]
     [SerializeField] Sprite lockedStageSprite;
     [SerializeField] Sprite availableStageSprite;
-    [SerializeField] Sprite clearedStageSprite;
-    [SerializeField] Sprite perfectStageSprite;
+    [SerializeField] Sprite hardClearedStageSprite;
+    [SerializeField] Sprite normalClearedStageSprite;
+    [SerializeField] Sprite hardcoreClearedStageSprite;
     [SerializeField] Vector2 baseIconLogicalSize = new Vector2(8f, 8f);
     [SerializeField] Vector2 iconOffset = Vector2.zero;
     [SerializeField] bool preserveAspectOnIcons = true;
@@ -112,8 +113,9 @@ public class WorldMapController : MonoBehaviour
     [Header("Stage Icon Colors")]
     [SerializeField] Color lockedStageColor = Color.white;
     [SerializeField] Color availableStageColor = Color.white;
-    [SerializeField] Color clearedStageColor = Color.white;
-    [SerializeField] Color perfectStageColor = Color.white;
+    [SerializeField] Color hardClearedStageColor = Color.white;
+    [SerializeField] Color normalClearedStageColor = Color.white;
+    [SerializeField] Color hardcoreClearedStageColor = Color.white;
 
     [Header("Fade")]
     [SerializeField] Image fadeImage;
@@ -476,8 +478,7 @@ public class WorldMapController : MonoBehaviour
 
         if (AreAllStagesCleared())
         {
-            if (!TryGetFirstNonPerfectStageInWorld(currentWorldIndex, out targetNodeIndex))
-                targetNodeIndex = GetLastUnlockedNodeIndex(currentWorldIndex);
+            targetNodeIndex = GetLastUnlockedNodeIndex(currentWorldIndex);
         }
         else
         {
@@ -490,33 +491,6 @@ public class WorldMapController : MonoBehaviour
 
         cursorLocalPosition = GetAnchorPositionInMovementArea(node.anchor);
         hoveredNodeIndex = targetNodeIndex;
-    }
-
-    bool TryGetFirstNonPerfectStageInWorld(int worldIndex, out int nodeIndex)
-    {
-        nodeIndex = 0;
-
-        if (worldIndex < 0 || worldIndex >= worlds.Count)
-            return false;
-
-        var world = worlds[worldIndex];
-        if (world == null || world.nodes == null)
-            return false;
-
-        for (int i = 0; i < world.nodes.Count; i++)
-        {
-            var node = world.nodes[i];
-            if (node == null || string.IsNullOrWhiteSpace(node.sceneName))
-                continue;
-
-            if (!StageUnlockProgress.IsPerfect(node.sceneName))
-            {
-                nodeIndex = i;
-                return true;
-            }
-        }
-
-        return false;
     }
 
     void RefreshHoveredStage()
@@ -696,7 +670,6 @@ public class WorldMapController : MonoBehaviour
 
         bool isUnlocked = StageUnlockProgress.IsUnlocked(node.sceneName);
         bool isCleared = StageUnlockProgress.IsCleared(node.sceneName);
-        bool isPerfect = StageUnlockProgress.IsPerfect(node.sceneName);
 
         Sprite sprite;
         Color color;
@@ -706,15 +679,25 @@ public class WorldMapController : MonoBehaviour
             sprite = lockedStageSprite;
             color = lockedStageColor;
         }
-        else if (isPerfect)
-        {
-            sprite = perfectStageSprite;
-            color = perfectStageColor;
-        }
         else if (isCleared)
         {
-            sprite = clearedStageSprite;
-            color = clearedStageColor;
+            switch (StageUnlockProgress.GetClearedDifficulty(node.sceneName))
+            {
+                case Assets.Scripts.SaveSystem.NormalGameDifficulty.Hard:
+                    sprite = hardClearedStageSprite;
+                    color = hardClearedStageColor;
+                    break;
+
+                case Assets.Scripts.SaveSystem.NormalGameDifficulty.Hardcore:
+                    sprite = hardcoreClearedStageSprite;
+                    color = hardcoreClearedStageColor;
+                    break;
+
+                default:
+                    sprite = normalClearedStageSprite;
+                    color = normalClearedStageColor;
+                    break;
+            }
         }
         else
         {
@@ -1371,12 +1354,6 @@ public class WorldMapController : MonoBehaviour
             int allClearWorldIndex;
             int allClearNodeIndex;
 
-            if (TryGetFirstNonPerfectStageAcrossWorlds(out allClearWorldIndex, out allClearNodeIndex))
-            {
-                initialNodeIndex = allClearNodeIndex;
-                return allClearWorldIndex;
-            }
-
             if (TryGetFirstValidStage(out allClearWorldIndex, out allClearNodeIndex))
             {
                 initialNodeIndex = allClearNodeIndex;
@@ -1477,34 +1454,6 @@ public class WorldMapController : MonoBehaviour
             return lastUnlocked;
 
         return Mathf.Clamp(world.defaultNodeIndex, 0, world.nodes.Count - 1);
-    }
-
-    bool TryGetFirstNonPerfectStageAcrossWorlds(out int worldIndex, out int nodeIndex)
-    {
-        for (int w = 0; w < worlds.Count; w++)
-        {
-            var world = worlds[w];
-            if (world == null || world.nodes == null)
-                continue;
-
-            for (int n = 0; n < world.nodes.Count; n++)
-            {
-                var node = world.nodes[n];
-                if (node == null || string.IsNullOrWhiteSpace(node.sceneName))
-                    continue;
-
-                if (!StageUnlockProgress.IsPerfect(node.sceneName))
-                {
-                    worldIndex = w;
-                    nodeIndex = n;
-                    return true;
-                }
-            }
-        }
-
-        worldIndex = 0;
-        nodeIndex = 0;
-        return false;
     }
 
     void RefreshClearedStageSpinAnimations()

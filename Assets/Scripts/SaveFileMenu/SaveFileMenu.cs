@@ -30,7 +30,6 @@ public class SaveFileMenu : MonoBehaviour
         public bool Exists;
         public int RegisteredStageCount;
         public int ClearedStageCount;
-        public int PerfectStageCount;
         public int CompletionPercent;
         public NormalGameDifficulty Difficulty;
     }
@@ -788,7 +787,6 @@ public class SaveFileMenu : MonoBehaviour
             Exists = false,
             RegisteredStageCount = 0,
             ClearedStageCount = 0,
-            PerfectStageCount = 0,
             CompletionPercent = 0,
             Difficulty = NormalGameDifficulty.Normal
         };
@@ -799,23 +797,31 @@ public class SaveFileMenu : MonoBehaviour
         info.Exists = SaveSystem.SlotExists(zeroBasedIndex);
         info.RegisteredStageCount = slot.stageOrder != null ? slot.stageOrder.Count : 0;
         info.ClearedStageCount = slot.clearedStages != null ? slot.clearedStages.Count : 0;
-        info.PerfectStageCount = slot.perfectStages != null ? slot.perfectStages.Count : 0;
-        info.CompletionPercent = ComputeCompletionPercent(info.RegisteredStageCount, info.ClearedStageCount, info.PerfectStageCount);
         info.Difficulty = System.Enum.IsDefined(typeof(NormalGameDifficulty), slot.difficulty)
             ? (NormalGameDifficulty)slot.difficulty
             : NormalGameDifficulty.Normal;
+        info.CompletionPercent = ComputeCompletionPercent(info.RegisteredStageCount, info.ClearedStageCount, info.Difficulty);
 
         return info;
     }
 
-    private int ComputeCompletionPercent(int totalStages, int clearedCount, int perfectCount)
+    private int ComputeCompletionPercent(int totalStages, int clearedCount, NormalGameDifficulty difficulty)
     {
         if (totalStages <= 0)
             return 0;
 
-        float clearedPercent = (Mathf.Clamp(clearedCount, 0, totalStages) / (float)totalStages) * 100f;
-        float perfectPercent = (Mathf.Clamp(perfectCount, 0, totalStages) / (float)totalStages) * 100f;
-        return Mathf.RoundToInt(clearedPercent + perfectPercent);
+        int clampedCleared = Mathf.Clamp(clearedCount, 0, totalStages);
+        if (clampedCleared >= totalStages)
+        {
+            return difficulty switch
+            {
+                NormalGameDifficulty.Hard => 103,
+                NormalGameDifficulty.Hardcore => 105,
+                _ => 100
+            };
+        }
+
+        return Mathf.RoundToInt((clampedCleared / (float)totalStages) * 100f);
     }
 
     private static void EnsureActiveSlotStageOrderExistsFromBuildSettings()

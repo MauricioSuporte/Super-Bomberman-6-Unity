@@ -853,12 +853,7 @@ public class GameManager : MonoBehaviour
 
         CaptureAllPlayersForStageEnd();
 
-        bool isPerfectClear = PlayerPersistentStats.IsCurrentStagePerfectClear();
-
         StageUnlockProgress.UnlockCurrentAndNext(currentSceneName);
-
-        if (isPerfectClear)
-            StageUnlockProgress.MarkPerfect(currentSceneName);
 
         PlayerPersistentStats.CommitStage();
         SaveFileMenu.SaveCurrentProgressToActiveSlot();

@@ -5,8 +5,6 @@ using UnityEngine.SceneManagement;
 public static class PlayerPersistentStats
 {
     static bool sessionBooted;
-    static bool stageAnyItemPickupCollected;
-    static bool stageStartedWithDefaultState;
 
     public const int MaxBombAmount = 9;
     public const int MaxExplosionRadius = 9;
@@ -750,8 +748,6 @@ public static class PlayerPersistentStats
             ResetGameplayStateKeepingSkin(_stage[i]);
 
         stageActive = false;
-        stageAnyItemPickupCollected = false;
-        stageStartedWithDefaultState = false;
     }
 
     public static void ResetBattleModeLoadouts(BattleModeRules rules)
@@ -769,8 +765,6 @@ public static class PlayerPersistentStats
         }
 
         stageActive = false;
-        stageAnyItemPickupCollected = false;
-        stageStartedWithDefaultState = false;
     }
 
     static int GetActiveBattleModeStageIndex()
@@ -912,9 +906,6 @@ public static class PlayerPersistentStats
             CopyState(baseState, st);
         }
 
-        stageAnyItemPickupCollected = false;
-        stageStartedWithDefaultState = AreAllTrackedPlayersInDefaultState(_stage);
-
         stageActive = true;
     }
 
@@ -931,8 +922,6 @@ public static class PlayerPersistentStats
         }
 
         stageActive = false;
-        stageAnyItemPickupCollected = false;
-        stageStartedWithDefaultState = false;
     }
 
     public static void RollbackStage()
@@ -948,8 +937,6 @@ public static class PlayerPersistentStats
         }
 
         stageActive = false;
-        stageAnyItemPickupCollected = false;
-        stageStartedWithDefaultState = false;
     }
 
     static MountedType EggToLouie(ItemType t)
@@ -1338,96 +1325,4 @@ public static class PlayerPersistentStats
         return stageActive ? _stage[playerId - 1] : _p[playerId - 1];
     }
 
-    static bool IsStage1_1OnlyUnlockedStage()
-    {
-        if (!StageUnlockProgress.IsUnlocked("Stage_1-1"))
-            return false;
-
-        return !StageUnlockProgress.IsUnlocked("Stage_1-2");
-    }
-
-    static bool IsValidPerfectExplosionRadiusForCurrentScene(int explosionRadius)
-    {
-        string sceneName = SceneManager.GetActiveScene().name;
-
-        if (sceneName == "Stage_1-1")
-        {
-            int expectedRadius = IsStage1_1OnlyUnlockedStage() ? 1 : 2;
-            return explosionRadius == expectedRadius;
-        }
-
-        return explosionRadius == 1 || explosionRadius == 2;
-    }
-
-    static bool IsDefaultState(PlayerState s)
-    {
-        if (s == null)
-            return false;
-
-        if (s.Life != 1)
-            return false;
-
-        if (s.BombAmount != 1)
-            return false;
-
-        if (!IsValidPerfectExplosionRadiusForCurrentScene(s.ExplosionRadius))
-            return false;
-
-        if (s.SpeedInternal != MinSpeedInternal)
-            return false;
-
-        if (s.CanKickBombs) return false;
-        if (s.CanPunchBombs) return false;
-        if (s.HasPowerGlove) return false;
-        if (s.CanPassBombs) return false;
-        if (s.CanPassDestructibles) return false;
-        if (s.HasPierceBombs) return false;
-        if (s.HasControlBombs) return false;
-        if (s.HasPowerBomb) return false;
-        if (s.HasRubberBombs) return false;
-        if (s.HasMagnetBomb) return false;
-        if (s.HasFullFire) return false;
-
-        if (s.MountedLouie != MountedType.None)
-            return false;
-
-        if (s.QueuedEggs != null && s.QueuedEggs.Count > 0)
-            return false;
-
-        return true;
-    }
-
-    static bool AreAllTrackedPlayersInDefaultState(PlayerState[] states)
-    {
-        if (states == null || states.Length == 0)
-            return false;
-
-        for (int i = 0; i < states.Length; i++)
-        {
-            if (!IsDefaultState(states[i]))
-                return false;
-        }
-
-        return true;
-    }
-
-    public static void NotifyStageItemPickupCollected()
-    {
-        BeginStage();
-        stageAnyItemPickupCollected = true;
-    }
-
-    public static bool IsCurrentStagePerfectClear()
-    {
-        if (!stageActive)
-            return false;
-
-        if (!stageStartedWithDefaultState)
-            return false;
-
-        if (stageAnyItemPickupCollected)
-            return false;
-
-        return AreAllTrackedPlayersInDefaultState(_stage);
-    }
 }

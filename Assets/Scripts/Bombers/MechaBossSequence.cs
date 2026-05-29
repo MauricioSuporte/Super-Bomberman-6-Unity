@@ -785,12 +785,8 @@ public class MechaBossSequence : MonoBehaviour
         progressMarked = true;
 
         string currentSceneName = SceneManager.GetActiveScene().name;
-        bool isPerfectClear = PlayerPersistentStats.IsCurrentStagePerfectClear();
 
         StageUnlockProgress.UnlockCurrentAndNext(currentSceneName);
-
-        if (isPerfectClear)
-            StageUnlockProgress.MarkPerfect(currentSceneName);
     }
 
     bool HasAnyItemPickupsInStage()

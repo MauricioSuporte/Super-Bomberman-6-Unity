@@ -137,7 +137,7 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 887d81091ce7dfe48afea9671326b78e
+      spriteID: 82023c118a91c4147b17221adbe3908c
       internalID: -81104472
       vertices: []
       indices: 
@@ -159,7 +159,7 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: e4daf648976eece4cb8dfcf292073cc2
+      spriteID: 6b9efa85b0ba2b0458819310aca833bc
       internalID: -1440008998
       vertices: []
       indices: 
@@ -181,8 +181,30 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 9d9989afdce90d64fba85e91427736dc
+      spriteID: 8cdb408de84e34141b05a7f3ebf39de6
       internalID: 1732243599
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StageIcon_4
+      rect:
+        serializedVersion: 2
+        x: 32
+        y: 0
+        width: 8
+        height: 8
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: fc044d6691c37c944884433d565590cd
+      internalID: -1798171205
       vertices: []
       indices: 
       edges: []
@@ -207,6 +229,7 @@ TextureImporter:
       StageIcon_1: -81104472
       StageIcon_2: -1440008998
       StageIcon_3: 1732243599
+      StageIcon_4: -1798171205
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

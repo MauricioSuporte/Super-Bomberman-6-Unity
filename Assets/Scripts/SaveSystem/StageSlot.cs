@@ -17,6 +17,9 @@ namespace Assets.Scripts.SaveSystem
         public int difficulty = (int)NormalGameDifficulty.Normal;
         public List<string> unlockedStages = new();
         public List<string> clearedStages = new();
+        public List<string> normalClearedStages = new();
+        public List<string> hardClearedStages = new();
+        public List<string> hardcoreClearedStages = new();
         public List<string> perfectStages = new();
         public List<string> stageOrder = new();
     }

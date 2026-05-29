@@ -10197,8 +10197,9 @@ MonoBehaviour:
   scaleStageDetectRadiusWithSafeFrame: 1
   lockedStageSprite: {fileID: 3724445575597181823, guid: be604b99019ed804ba4a0d0dfc07e674, type: 3}
   availableStageSprite: {fileID: -81104472, guid: be604b99019ed804ba4a0d0dfc07e674, type: 3}
-  clearedStageSprite: {fileID: 1732243599, guid: be604b99019ed804ba4a0d0dfc07e674, type: 3}
-  perfectStageSprite: {fileID: -1440008998, guid: be604b99019ed804ba4a0d0dfc07e674, type: 3}
+  hardClearedStageSprite: {fileID: -1440008998, guid: be604b99019ed804ba4a0d0dfc07e674, type: 3}
+  normalClearedStageSprite: {fileID: 1732243599, guid: be604b99019ed804ba4a0d0dfc07e674, type: 3}
+  hardcoreClearedStageSprite: {fileID: -1798171205, guid: be604b99019ed804ba4a0d0dfc07e674, type: 3}
   baseIconLogicalSize: {x: 8, y: 8}
   iconOffset: {x: 0, y: 0}
   preserveAspectOnIcons: 1
@@ -10215,8 +10216,9 @@ MonoBehaviour:
   maxIconScale: 20
   lockedStageColor: {r: 1, g: 1, b: 1, a: 1}
   availableStageColor: {r: 1, g: 1, b: 1, a: 1}
-  clearedStageColor: {r: 1, g: 1, b: 1, a: 1}
-  perfectStageColor: {r: 1, g: 1, b: 1, a: 1}
+  hardClearedStageColor: {r: 1, g: 1, b: 1, a: 1}
+  normalClearedStageColor: {r: 1, g: 1, b: 1, a: 1}
+  hardcoreClearedStageColor: {r: 1, g: 1, b: 1, a: 1}
   fadeImage: {fileID: 87393867}
   fadeDuration: 0.5
   worldChangeFadeOutDuration: 0.5

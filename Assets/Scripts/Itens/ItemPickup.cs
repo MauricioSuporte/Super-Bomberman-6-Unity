@@ -446,8 +446,6 @@ public class ItemPickup : MonoBehaviour
 
     void OnItemPickup(GameObject player)
     {
-        PlayerPersistentStats.NotifyStageItemPickupCollected();
-
         bool isEgg = IsLouieEgg(type);
         Vector2 mountFacing = ResolveMountFacing(player);
 

@@ -110,6 +110,9 @@ public static class SaveSystem
         slot.difficulty = (int)NormalizeNormalGameDifficulty((int)difficulty);
         slot.unlockedStages.Clear();
         slot.clearedStages.Clear();
+        slot.normalClearedStages.Clear();
+        slot.hardClearedStages.Clear();
+        slot.hardcoreClearedStages.Clear();
         slot.perfectStages.Clear();
         slot.stageOrder.Clear();
 
@@ -128,6 +131,9 @@ public static class SaveSystem
         slot.difficulty = (int)NormalGameDifficulty.Normal;
         slot.unlockedStages.Clear();
         slot.clearedStages.Clear();
+        slot.normalClearedStages.Clear();
+        slot.hardClearedStages.Clear();
+        slot.hardcoreClearedStages.Clear();
         slot.perfectStages.Clear();
         slot.stageOrder.Clear();
 
@@ -840,6 +846,15 @@ public static class SaveSystem
 
             if (d.slots[i].clearedStages == null)
                 d.slots[i].clearedStages = new List<string>();
+
+            if (d.slots[i].normalClearedStages == null)
+                d.slots[i].normalClearedStages = new List<string>();
+
+            if (d.slots[i].hardClearedStages == null)
+                d.slots[i].hardClearedStages = new List<string>();
+
+            if (d.slots[i].hardcoreClearedStages == null)
+                d.slots[i].hardcoreClearedStages = new List<string>();
 
             if (d.slots[i].perfectStages == null)
                 d.slots[i].perfectStages = new List<string>();
