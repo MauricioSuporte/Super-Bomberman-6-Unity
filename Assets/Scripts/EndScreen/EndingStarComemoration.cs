@@ -1,4 +1,3 @@
-﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -6,6 +5,9 @@ using UnityEngine.UI;
 
 public class EndingStarComemoration : MonoBehaviour
 {
+    [Header("Debug")]
+    [SerializeField] bool enableSurgicalLogs = true;
+
     [Header("References")]
     [SerializeField] RectTransform spawnArea;
     [SerializeField] RectTransform starTemplate;
@@ -210,10 +212,14 @@ public class EndingStarComemoration : MonoBehaviour
         }
 
         if (spawnArea == null || starTemplate == null)
+        {
             return;
+        }
 
         if (playing)
+        {
             return;
+        }
 
         playing = true;
         spawnedCount = 0;
@@ -381,55 +387,38 @@ public class EndingStarComemoration : MonoBehaviour
     {
         int totalStages = 0;
         int clearedStages = 0;
-        int perfectStages = 0;
 
         var slot = SaveSystem.ActiveSlot;
         if (slot != null)
         {
             totalStages = slot.stageOrder != null ? slot.stageOrder.Count : 0;
             clearedStages = slot.clearedStages != null ? slot.clearedStages.Count : 0;
-            perfectStages = slot.perfectStages != null ? slot.perfectStages.Count : 0;
         }
 
-        int percent = ComputeCompletionPercent(totalStages, clearedStages, perfectStages);
+        int percent = ComputeCompletionPercent(totalStages, clearedStages);
+        var difficulty = SaveSystem.GetActiveNormalGameDifficulty();
 
-        int totalBombers = Enum.GetValues(typeof(BomberSkin)).Length;
-        int unlockedBombers = CountUnlockedBombers();
-
-        bool allBombersUnlocked = totalBombers > 0 && unlockedBombers >= totalBombers;
-        bool eligible = percent >= 200 && allBombersUnlocked;
+        bool eligible = difficulty == Assets.Scripts.SaveSystem.NormalGameDifficulty.Hardcore;
 
         return eligible;
     }
 
-    int ComputeCompletionPercent(int totalStages, int clearedCount, int perfectCount)
+    int ComputeCompletionPercent(int totalStages, int clearedCount)
     {
         if (totalStages <= 0)
             return 0;
 
-        float clearedPercent = (Mathf.Clamp(clearedCount, 0, totalStages) / (float)totalStages) * 100f;
-        float perfectPercent = (Mathf.Clamp(perfectCount, 0, totalStages) / (float)totalStages) * 100f;
-
-        return Mathf.RoundToInt(clearedPercent + perfectPercent);
-    }
-
-    int CountUnlockedBombers()
-    {
-        if (SaveSystem.Data == null || SaveSystem.Data.unlockedSkins == null)
-            return 0;
-
-        HashSet<string> uniqueUnlocked = new(StringComparer.OrdinalIgnoreCase);
-
-        for (int i = 0; i < SaveSystem.Data.unlockedSkins.Count; i++)
+        int clampedCleared = Mathf.Clamp(clearedCount, 0, totalStages);
+        if (clampedCleared >= totalStages)
         {
-            string skinName = SaveSystem.Data.unlockedSkins[i];
-            if (string.IsNullOrWhiteSpace(skinName))
-                continue;
-
-            if (Enum.TryParse(skinName, true, out BomberSkin parsedSkin))
-                uniqueUnlocked.Add(parsedSkin.ToString());
+            return SaveSystem.GetActiveNormalGameDifficulty() switch
+            {
+                Assets.Scripts.SaveSystem.NormalGameDifficulty.Hard => 103,
+                Assets.Scripts.SaveSystem.NormalGameDifficulty.Hardcore => 105,
+                _ => 100
+            };
         }
 
-        return uniqueUnlocked.Count;
+        return Mathf.RoundToInt((clampedCleared / (float)totalStages) * 100f);
     }
 }

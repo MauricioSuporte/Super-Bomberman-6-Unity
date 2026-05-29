@@ -61,8 +61,7 @@ MonoBehaviour:
   outlineWidth: 0.4
   starComemoration: {fileID: 7227861050984187371}
   titleSceneName: TitleScreen
-  worldCompleteLabel: <size=52><color=#1ABC00>WORLD 2</color>  <color=#E8E8E8>DEMO
-    COMPLETE!</color></size>
+  demoCompleteLabel: <size=52><color=#1ABC00>DEMO 4</color>  <color=#E8E8E8>COMPLETE!</color></size>
   openSourceBlock: '<size=32><color=#3392FF>OPEN SOURCE PROJECT</color></size>
 
     <size=28><color=#E8E8E8>github.com/MauricioSuporte/</color></size>
@@ -72,52 +71,101 @@ MonoBehaviour:
 
     <size=30><color=#E8E8E8>TO
     RETURN TO TITLE SCREEN</color></size>'
-  message100: 'Congratulations!
+  creditsBlock: 'Super Bomberman 6 v0.4.0
 
-    You reached <color=#FFD54A>{PERCENT}%</color>
-    completion.
+    Tribute to Bomberman
 
-    That is only the beginning.
 
-    Can you go beyond 100%, clear
-    every stage without using items,
+    Bomberman
 
-    and unlock the remaining Bombers?'
-  message101To199: 'Amazing work!
+    Copyright 1983
 
-    You pushed the demo to <color=#FFD54A>{PERCENT}%</color>
-    completion.
+    Hudson Soft/Konami
 
-    You are getting closer to total mastery.
 
-    Keep pushing further,
+    Super Bomberman 6
 
-    clear
-    more stages without using items,
 
-    and unlock every Bomber!'
-  message200NotAllBombers: 'Incredible!
+    Coding
 
-    You reached the full <color=#FFD54A>{PERCENT}%</color>
-    completion.
+    MauricioSuporte
 
-    Every stage has been perfected.
 
-    Now finish the last challenge:
+    Sprite Contribution
 
-    unlock
-    every Bomber!'
-  message200AllBombers: 'TRUE COMPLETION!!
+    Srplay
 
-    You reached the full <color=#FFD54A>{PERCENT}%</color>
-    completion.
+    Joao1417
 
-    Every stage has been perfected,
+    WeirdFoxDreams
 
-    and every Bomber has been
-    unlocked.
+    Juliocesargamesbr
 
-    You truly mastered the demo!'
+    Kurobon94
+
+    LeroyUrocyon
+
+
+    Playtesting/Feedback
+
+    Kaaos Gameplays
+
+    Joaololpvp
+
+    Blackingstar
+
+    Júlio Cesar
+
+    Nico Netsumu
+
+    Jei
+
+    Kurobon94
+
+    Tiago Deficigamer
+
+    Ruivo
+
+    Lopez238
+
+    Yamishitsuji
+
+    Luciandro Gamer
+
+    Mackson
+
+    perfig187
+
+    adrianokof games
+
+    Everton Def
+
+    Gleydson Retrogen
+
+    FLPStrike
+
+    Love Vixen
+
+    Juliocesargamesbr
+
+    Rangelukaz
+
+    JonasS JK Ninja
+
+
+    Sounds/Musics
+
+    wolfguarder
+
+
+    Base of the Game
+
+    Zigurous'
+  creditsScrollSpeed: 80
+  creditsStartBottomPadding: 80
+  creditsEndTopPadding: 80
+  finalMessageScrollSpeed: 220
+  finalMessageTargetY: -12
   autoRepositionMessageText: 1
   forceTopAnchor: 1
   topMargin: 12
@@ -567,9 +615,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EndingStarComemoration
   enableSurgicalLogs: 1
-  dumpSpawnAreaOnPlay: 1
-  dumpEachSpawn: 1
-  dumpStarMotionSamples: 1
   spawnArea: {fileID: 6095587562491496810}
   starTemplate: {fileID: 3730897010935685275}
   endingScreenController: {fileID: 836963714056787448}
