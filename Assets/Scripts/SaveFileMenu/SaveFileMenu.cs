@@ -99,6 +99,7 @@ public class SaveFileMenu : MonoBehaviour
     [SerializeField] private string disabledNewGameMessage = "NO EMPTY SLOT";
     [SerializeField] private string disabledContinueMessage = "NO SAVE DATA";
     [SerializeField] private string disabledDeleteMessage = "NO SAVE DATA";
+    [SerializeField] private string disabledHardcoreMessage = "CLEAR NORMAL GAME ON HARD";
     [SerializeField] private float disabledMessageShowSeconds = 1.5f;
     [SerializeField] private int disabledMessageFontSize = 22;
     [SerializeField] private Color disabledMessageFaceColor = new Color32(231, 63, 63, 255);
@@ -599,8 +600,9 @@ public class SaveFileMenu : MonoBehaviour
 
         for (int i = 0; i < _newGameDifficulties.Length; i++)
         {
-            _displayEntries.Add(GetDifficultyDisplayName(_newGameDifficulties[i]));
-            _displayEnabled.Add(true);
+            NormalGameDifficulty difficulty = _newGameDifficulties[i];
+            _displayEntries.Add(GetDifficultyDisplayName(difficulty));
+            _displayEnabled.Add(IsNewGameDifficultyUnlocked(difficulty));
         }
 
         selectedIndex = 0;
@@ -712,6 +714,8 @@ public class SaveFileMenu : MonoBehaviour
             return 0;
 
         int start = Mathf.Clamp(currentIndex, 0, _displayEnabled.Count - 1);
+        if (_state == MenuState.SelectNewGameDifficulty)
+            return (start + 1) % _displayEnabled.Count;
 
         for (int step = 1; step <= _displayEnabled.Count; step++)
         {
@@ -729,6 +733,8 @@ public class SaveFileMenu : MonoBehaviour
             return 0;
 
         int start = Mathf.Clamp(currentIndex, 0, _displayEnabled.Count - 1);
+        if (_state == MenuState.SelectNewGameDifficulty)
+            return (start - 1 + _displayEnabled.Count) % _displayEnabled.Count;
 
         for (int step = 1; step <= _displayEnabled.Count; step++)
         {
@@ -774,6 +780,11 @@ public class SaveFileMenu : MonoBehaviour
             NormalGameDifficulty.Hardcore => "HARDCORE",
             _ => "NORMAL"
         };
+    }
+
+    private bool IsNewGameDifficultyUnlocked(NormalGameDifficulty difficulty)
+    {
+        return difficulty != NormalGameDifficulty.Hardcore || UnlockProgress.IsHardcoreUnlocked();
     }
 
     private SaveSlotInfo GetSaveSlotInfo(int slotIndex)
@@ -1273,6 +1284,7 @@ public class SaveFileMenu : MonoBehaviour
             MenuState.SelectContinueSlot => disabledContinueMessage,
             MenuState.SelectDeleteSlot => disabledDeleteMessage,
             MenuState.SelectNewGameSlot => disabledNewGameMessage,
+            MenuState.SelectNewGameDifficulty => disabledHardcoreMessage,
             _ => disabledContinueMessage
         };
 

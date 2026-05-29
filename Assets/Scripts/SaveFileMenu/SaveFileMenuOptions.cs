@@ -31,6 +31,7 @@ public class SaveFileMenuOptions : MonoBehaviour
     [SerializeField] private Color hardDifficultySelectedColor = new Color32(231, 63, 63, 255);
     [SerializeField] private Color hardcoreDifficultySelectedColor = Color.black;
     [SerializeField] private Color hardcoreDifficultyOutlineColor = new Color32(231, 63, 63, 255);
+    [SerializeField, Range(0.05f, 1f)] private float lockedDifficultySelectedAlpha = 0.35f;
     [SerializeField, Min(0f)] private float difficultyColumnSpacing = 20f;
 
     [Header("TMP")]
@@ -626,6 +627,18 @@ public class SaveFileMenuOptions : MonoBehaviour
 
     private OptionVisualStyle GetOptionVisualStyle(int index, bool isSelected, bool enabled)
     {
+        if (!enabled)
+        {
+            if (_difficultySelectionMode && isSelected && index == 2)
+            {
+                return new OptionVisualStyle(
+                    ApplyLockedDifficultyAlpha(hardcoreDifficultySelectedColor),
+                    ApplyLockedDifficultyAlpha(hardcoreDifficultyOutlineColor));
+            }
+
+            return new OptionVisualStyle(disabledColor, outlineColor);
+        }
+
         if (_difficultySelectionMode)
         {
             if (!isSelected)
@@ -647,10 +660,13 @@ public class SaveFileMenuOptions : MonoBehaviour
             ? Color.white
             : isSelected ? selectedColor : normalColor;
 
-        if (!enabled && !useRichTextEntryColors)
-            faceColor = disabledColor;
-
         return new OptionVisualStyle(faceColor, outlineColor);
+    }
+
+    private Color ApplyLockedDifficultyAlpha(Color color)
+    {
+        color.a *= lockedDifficultySelectedAlpha;
+        return color;
     }
 
     private TextMeshProUGUI CreateDifficultyColumnText(TextMeshProUGUI rowText, int index)

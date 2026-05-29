@@ -723,6 +723,24 @@ public static class SaveSystem
         return true;
     }
 
+    public static bool IsHardcoreUnlocked()
+    {
+        EnsureLoaded();
+        return data.hardcoreUnlocked;
+    }
+
+    public static bool UnlockHardcore()
+    {
+        EnsureLoaded();
+
+        if (data.hardcoreUnlocked)
+            return false;
+
+        data.hardcoreUnlocked = true;
+        Save();
+        return true;
+    }
+
     public static SavedVideoSettings GetVideoSettings()
     {
         EnsureLoaded();
@@ -877,6 +895,9 @@ public static class SaveSystem
             if (!d.unlockedSkins.Contains(skinName))
                 d.unlockedSkins.Add(skinName);
         }
+
+        if (d.unlockedSkins.Contains(BomberSkin.Purple.ToString()))
+            d.hardcoreUnlocked = true;
 
         if (!Enum.IsDefined(typeof(BomberSkin), d.player1SelectedSkin))
             d.player1SelectedSkin = (int)BomberSkin.White;

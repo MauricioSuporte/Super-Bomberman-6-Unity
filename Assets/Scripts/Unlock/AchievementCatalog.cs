@@ -62,6 +62,14 @@ public static class AchievementCatalog
             UnlockToastCatalog.LoadNightmareIcon
         ),
         new(
+            "Hardcore",
+            "HARDCORE",
+            "CLEAR NORMAL GAME ON HARD",
+            "Hardcore Difficulty",
+            UnlockProgress.IsHardcoreUnlocked,
+            UnlockToastCatalog.LoadHardcoreIcon
+        ),
+        new(
             "BattleModeStage11",
             "BATTLE STAGE 11",
             "WIN STAGE 10 IN BATTLE MODE",

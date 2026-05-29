@@ -314,6 +314,12 @@ public static class StageUnlockProgress
             if (UnlockProgress.Unlock(skinReward))
                 changed = true;
 
+            if (difficulty == Assets.Scripts.SaveSystem.NormalGameDifficulty.Hard &&
+                UnlockProgress.UnlockHardcore())
+            {
+                changed = true;
+            }
+
             if (UnlockProgress.UnlockBossRush())
                 changed = true;
         }

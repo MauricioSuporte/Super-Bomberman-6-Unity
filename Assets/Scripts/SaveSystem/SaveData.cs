@@ -11,6 +11,7 @@ public sealed class SaveData
 
     public bool bossRushUnlocked = false;
     public bool nightmareUnlocked = false;
+    public bool hardcoreUnlocked = false;
     public bool battleModeStage11Unlocked = false;
     public bool battleModeStage12Unlocked = false;
     public bool battleModeStage13Unlocked = false;

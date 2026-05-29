@@ -7,6 +7,7 @@ public static class UnlockProgress
 
     public static event Action<BomberSkin> OnSkinUnlocked;
     public static event Action OnBossRushUnlocked;
+    public static event Action OnHardcoreUnlocked;
     public static event Action OnBattleModeStage11Unlocked;
     public static event Action<int> OnBattleModeStageUnlocked;
 
@@ -28,6 +29,11 @@ public static class UnlockProgress
     public static bool IsBossRushUnlocked()
     {
         return SaveSystem.Data.bossRushUnlocked;
+    }
+
+    public static bool IsHardcoreUnlocked()
+    {
+        return SaveSystem.Data.hardcoreUnlocked;
     }
 
     public static bool IsBattleModeStage11Unlocked()
@@ -95,6 +101,28 @@ public static class UnlockProgress
         SLog("UnlockBossRush persisted | invoking event now");
         OnBossRushUnlocked?.Invoke();
         SLog("UnlockBossRush event invocation finished");
+
+        TryUnlockGoldenBomberIfEligible(raiseEvent: true);
+
+        return true;
+    }
+
+    public static bool UnlockHardcore()
+    {
+        SLog($"UnlockHardcore requested | alreadyUnlocked={SaveSystem.Data.hardcoreUnlocked} | listeners={(OnHardcoreUnlocked == null ? 0 : OnHardcoreUnlocked.GetInvocationList().Length)}");
+
+        if (SaveSystem.Data.hardcoreUnlocked)
+        {
+            SLog("UnlockHardcore skipped | already unlocked");
+            return false;
+        }
+
+        SaveSystem.Data.hardcoreUnlocked = true;
+        SaveSystem.Save();
+
+        SLog("UnlockHardcore persisted | invoking event now");
+        OnHardcoreUnlocked?.Invoke();
+        SLog("UnlockHardcore event invocation finished");
 
         TryUnlockGoldenBomberIfEligible(raiseEvent: true);
 

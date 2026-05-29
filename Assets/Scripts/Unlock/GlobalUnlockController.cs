@@ -77,6 +77,9 @@ public class GlobalUnlockController : MonoBehaviour
         UnlockProgress.OnBossRushUnlocked -= HandleBossRushUnlocked;
         UnlockProgress.OnBossRushUnlocked += HandleBossRushUnlocked;
 
+        UnlockProgress.OnHardcoreUnlocked -= HandleHardcoreUnlocked;
+        UnlockProgress.OnHardcoreUnlocked += HandleHardcoreUnlocked;
+
         UnlockProgress.OnBattleModeStage11Unlocked -= HandleBattleModeStage11Unlocked;
         UnlockProgress.OnBattleModeStage11Unlocked += HandleBattleModeStage11Unlocked;
         UnlockProgress.OnBattleModeStageUnlocked -= HandleBattleModeStageUnlocked;
@@ -89,6 +92,7 @@ public class GlobalUnlockController : MonoBehaviour
     {
         UnlockProgress.OnSkinUnlocked -= HandleSkinUnlocked;
         UnlockProgress.OnBossRushUnlocked -= HandleBossRushUnlocked;
+        UnlockProgress.OnHardcoreUnlocked -= HandleHardcoreUnlocked;
         UnlockProgress.OnBattleModeStage11Unlocked -= HandleBattleModeStage11Unlocked;
         UnlockProgress.OnBattleModeStageUnlocked -= HandleBattleModeStageUnlocked;
 
@@ -164,6 +168,12 @@ public class GlobalUnlockController : MonoBehaviour
     private void HandleBossRushUnlocked()
     {
         SLog("HandleBossRushUnlocked");
+        TryPlayUnlockSfx();
+    }
+
+    private void HandleHardcoreUnlocked()
+    {
+        SLog("HandleHardcoreUnlocked");
         TryPlayUnlockSfx();
     }
 

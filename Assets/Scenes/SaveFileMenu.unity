@@ -211,6 +211,7 @@ MonoBehaviour:
   destructiblePassAmount: 0
   invincibleSuitAmount: 1
   heartAmount: 0
+  oneUpAmount: 0
   powerGloveAmount: 0
   blueLouieEggAmount: 0
   blackLouieEggAmount: 0
@@ -718,8 +719,9 @@ MonoBehaviour:
   disabledNewGameMessage: NO EMPTY SLOT
   disabledContinueMessage: NO SAVE DATA
   disabledDeleteMessage: NO SAVE DATA
+  disabledHardcoreMessage: CLEAR NORMAL GAME ON HARD
   disabledMessageShowSeconds: 1.5
-  disabledMessageFontSize: 22
+  disabledMessageFontSize: 32
   disabledMessageFaceColor: {r: 0.90588236, g: 0.24705882, b: 0.24705882, a: 1}
   disabledMessageOutlineColor: {r: 0, g: 0, b: 0, a: 1}
   disabledMessageFontAsset: {fileID: 11400000, guid: 85be15c3c761b0248a9f6b5e84031bc6, type: 2}
@@ -736,7 +738,7 @@ MonoBehaviour:
   disabledMessageUnderlaySoftness: 0
   disabledMessageUnderlayOffsetX: 0.25
   disabledMessageUnderlayOffsetY: -0.25
-  disabledMessageBottomMargin: 12
+  disabledMessageBottomMargin: 150
   dynamicScale: 1
   referenceWidth: 256
   referenceHeight: 224
@@ -780,6 +782,8 @@ MonoBehaviour:
   battleMatchSceneName: 
   battleMatchUsesTeams: 0
   battleMatchWins: 000000000000000000000000000000000000000000000000
+  hardNormalGameRunInProgress: 0
+  hardNormalGameRemainingLives: 3
 --- !u!4 &1334625510
 Transform:
   m_ObjectHideFlags: 0

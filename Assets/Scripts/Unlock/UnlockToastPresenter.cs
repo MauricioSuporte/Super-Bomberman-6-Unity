@@ -178,6 +178,24 @@ public class UnlockToastPresenter : MonoBehaviour
         ShowBattleModeStageUnlocked(11);
     }
 
+    public static void ShowHardcoreUnlocked()
+    {
+        EnsureInScene();
+
+        if (instanceInScene == null)
+        {
+            SLog("ShowHardcoreUnlocked aborted | instance null");
+            return;
+        }
+
+        var info = UnlockToastCatalog.GetHardcore();
+        Sprite icon = UnlockToastCatalog.LoadHardcoreIcon();
+
+        SLog($"ShowHardcoreUnlocked | title={info.Title} | subtitle={info.Subtitle} | iconLoaded={(icon != null)}");
+
+        instanceInScene.Enqueue(info.Title, info.Subtitle, icon);
+    }
+
     public static void ShowBattleModeStageUnlocked(int stageIndex)
     {
         EnsureInScene();
@@ -221,6 +239,9 @@ public class UnlockToastPresenter : MonoBehaviour
         UnlockProgress.OnBossRushUnlocked -= HandleBossRushUnlocked;
         UnlockProgress.OnBossRushUnlocked += HandleBossRushUnlocked;
 
+        UnlockProgress.OnHardcoreUnlocked -= HandleHardcoreUnlocked;
+        UnlockProgress.OnHardcoreUnlocked += HandleHardcoreUnlocked;
+
         UnlockProgress.OnBattleModeStage11Unlocked -= HandleBattleModeStage11Unlocked;
         UnlockProgress.OnBattleModeStage11Unlocked += HandleBattleModeStage11Unlocked;
         UnlockProgress.OnBattleModeStageUnlocked -= HandleBattleModeStageUnlocked;
@@ -244,6 +265,7 @@ public class UnlockToastPresenter : MonoBehaviour
     {
         UnlockProgress.OnSkinUnlocked -= HandleSkinUnlocked;
         UnlockProgress.OnBossRushUnlocked -= HandleBossRushUnlocked;
+        UnlockProgress.OnHardcoreUnlocked -= HandleHardcoreUnlocked;
         UnlockProgress.OnBattleModeStage11Unlocked -= HandleBattleModeStage11Unlocked;
         UnlockProgress.OnBattleModeStageUnlocked -= HandleBattleModeStageUnlocked;
         SceneManager.sceneLoaded -= OnSceneLoaded;
@@ -293,6 +315,12 @@ public class UnlockToastPresenter : MonoBehaviour
     {
         SLog("HandleBossRushUnlocked received");
         ShowBossRushUnlocked();
+    }
+
+    void HandleHardcoreUnlocked()
+    {
+        SLog("HandleHardcoreUnlocked received");
+        ShowHardcoreUnlocked();
     }
 
     void HandleBattleModeStage11Unlocked()

@@ -133,6 +133,15 @@ public static class UnlockToastCatalog
         );
     }
 
+    public static ToastInfo GetHardcore()
+    {
+        return new ToastInfo(
+            "No More Second Chances",
+            "Hardcore Difficulty Unlocked",
+            "UI/Unlocks/Icons/Hardcore"
+        );
+    }
+
     public static ToastInfo GetBattleModeStage(int stageIndex)
     {
         int normalized = Mathf.Clamp(stageIndex, 11, 15);
@@ -195,6 +204,23 @@ public static class UnlockToastCatalog
         Sprite sprite = Resources.Load<Sprite>(info.IconResourcePath);
 
         SLog($"LoadNightmareIcon | path={info.IconResourcePath} | found={(sprite != null)}");
+
+        return sprite;
+    }
+
+    public static Sprite LoadHardcoreIcon()
+    {
+        ToastInfo info = GetHardcore();
+
+        if (string.IsNullOrWhiteSpace(info.IconResourcePath))
+        {
+            SLog("LoadHardcoreIcon | resource path is empty");
+            return null;
+        }
+
+        Sprite sprite = Resources.Load<Sprite>(info.IconResourcePath);
+
+        SLog($"LoadHardcoreIcon | path={info.IconResourcePath} | found={(sprite != null)}");
 
         return sprite;
     }
