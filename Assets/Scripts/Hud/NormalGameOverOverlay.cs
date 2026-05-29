@@ -13,10 +13,12 @@ public sealed class NormalGameOverOverlay : MonoBehaviour
     const string PrefabResourcesPath = "HUD/GameOver/NormalGameOverOverlay";
     const string WorldMapSceneName = "WorldMap";
     const string TitleScreenSceneName = "TitleScreen";
+    const string SaveFileMenuSceneName = "SaveFileMenu";
     const string SafeFrameName = "SafeFrame4x3";
 
     public static bool IsTransitionActive { get; private set; }
     static bool autoConfirmEndOnShow;
+    static bool returnToSaveFileMenuOnEnd;
 
     [Header("Artwork")]
     [SerializeField] Sprite backgroundSprite;
@@ -100,6 +102,7 @@ public sealed class NormalGameOverOverlay : MonoBehaviour
     {
         IsTransitionActive = true;
         autoConfirmEndOnShow = forceEndSelection;
+        returnToSaveFileMenuOnEnd = forceEndSelection;
     }
 
     static NormalGameOverOverlay CreateOverlay()
@@ -569,12 +572,20 @@ public sealed class NormalGameOverOverlay : MonoBehaviour
 
         if (selectedOption == 0)
         {
+            returnToSaveFileMenuOnEnd = false;
             PlayerPersistentStats.ResetGameplayPersistenceToBaseValues();
             SceneManager.LoadScene(WorldMapSceneName);
             return;
         }
 
         PlayerPersistentStats.ResetSessionForReturnToTitle();
+        if (returnToSaveFileMenuOnEnd)
+        {
+            returnToSaveFileMenuOnEnd = false;
+            SceneManager.LoadScene(SaveFileMenuSceneName);
+            return;
+        }
+
         TitleScreenSkip.SkipNextIntro = true;
         SceneManager.LoadScene(TitleScreenSceneName);
     }
