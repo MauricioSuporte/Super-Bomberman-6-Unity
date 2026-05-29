@@ -453,7 +453,6 @@ public class BomberSkinSelectMenu : MonoBehaviour
             LayoutRebuilder.ForceRebuildLayoutImmediate(gridRtBefore);
         Canvas.ForceUpdateCanvases();
 
-        BeginCursorPositionDebug("SelectSkinRoutine.BeforeBuildPlayerCursors");
         BuildPlayerCursors(configuredPlayerIds);
 
         if (!resumeFromSavedSkins)
@@ -498,7 +497,6 @@ public class BomberSkinSelectMenu : MonoBehaviour
         CycleOverlappedCursors();
 
         Canvas.ForceUpdateCanvases();
-        BeginCursorPositionDebug("SelectSkinRoutine.AfterInitialPosition");
 
         if (shouldRestoreCanvasGroupAlpha && temporaryHiddenCanvasGroup != null)
             temporaryHiddenCanvasGroup.alpha = previousCanvasGroupAlpha;
@@ -1631,8 +1629,6 @@ public class BomberSkinSelectMenu : MonoBehaviour
             if (idx < 0 || idx >= slotRoots.Count || slotRoots[idx] == null)
             {
                 ps.cursorRt.gameObject.SetActive(false);
-                if (shouldLog)
-                    LogSkinCursorPosition(ps, idx, null, "InvalidSlot");
                 continue;
             }
 
@@ -1656,45 +1652,10 @@ public class BomberSkinSelectMenu : MonoBehaviour
             ps.cursorRt.sizeDelta = targetSize;
             ps.cursorRt.localScale = Vector3.one;
             ps.cursorRt.localRotation = Quaternion.identity;
-
-            if (shouldLog)
-                LogSkinCursorPosition(ps, idx, slotRt, "Positioned");
         }
 
         if (shouldLog)
             cursorPositionDebugFramesRemaining--;
-    }
-
-    void BeginCursorPositionDebug(string context)
-    {
-        if (!logCursorPositionDebug)
-            return;
-
-        cursorPositionDebugContext = context;
-        cursorPositionDebugFramesRemaining = Mathf.Max(1, cursorPositionDebugFrames);
-        Debug.Log(
-            $"{LOG} CursorPositionDebugStart | frame={Time.frameCount} time={Time.unscaledTime:0.000} " +
-            $"context={context} frames={cursorPositionDebugFramesRemaining} players=[{FormatPlayerIds(configuredPlayerIds)}]",
-            this);
-    }
-
-    void LogSkinCursorPosition(PlayerCursorState ps, int slotIndex, RectTransform slotRt, string phase)
-    {
-        if (ps == null || ps.cursorRt == null)
-            return;
-
-        Vector2 slotAnchored = slotRt != null ? slotRt.anchoredPosition : Vector2.zero;
-        Vector2 slotSize = slotRt != null ? slotRt.rect.size : Vector2.zero;
-        string parentName = ps.cursorRt.parent != null ? ps.cursorRt.parent.name : "NULL";
-
-        Debug.Log(
-            $"{LOG} CursorPosition | frame={Time.frameCount} time={Time.unscaledTime:0.000} " +
-            $"context={cursorPositionDebugContext} phase={phase} player={ps.playerId} slot={slotIndex} " +
-            $"confirmed={ps.confirmed} active={ps.cursorRt.gameObject.activeInHierarchy} parent={parentName} " +
-            $"anchored={FormatVec2(ps.cursorRt.anchoredPosition)} local={FormatVec3(ps.cursorRt.localPosition)} " +
-            $"world={FormatVec3(ps.cursorRt.position)} size={FormatVec2(ps.cursorRt.sizeDelta)} " +
-            $"slotAnchored={FormatVec2(slotAnchored)} slotSize={FormatVec2(slotSize)}",
-            this);
     }
 
     void CycleOverlappedCursors()
@@ -2488,47 +2449,6 @@ public class BomberSkinSelectMenu : MonoBehaviour
         _lastUnlockHintMessage = string.Empty;
     }
 
-    void UpdateUnlockHint()
-    {
-        if (unlockHintText == null)
-            return;
-
-        if (players == null || players.Count == 0)
-        {
-            HideUnlockHintImmediate();
-            return;
-        }
-
-        int index = players[0].index;
-
-        if (index < 0 || index >= selectableSkins.Count)
-        {
-            HideUnlockHintImmediate();
-            return;
-        }
-
-        BomberSkin skin = selectableSkins[index];
-
-        if (UnlockProgress.IsUnlocked(skin))
-        {
-            HideUnlockHintImmediate();
-            return;
-        }
-
-        string hint = SkinUnlockHintCatalog.GetHint(skin);
-
-        if (string.IsNullOrWhiteSpace(hint))
-        {
-            HideUnlockHintImmediate();
-            return;
-        }
-
-        if (_lastUnlockHintMessage == hint && unlockHintText.gameObject.activeSelf)
-            return;
-
-        ShowUnlockHint(hint);
-    }
-
     void DumpHintSpacing(string context)
     {
         if (!enableSurgicalLogs)
@@ -2591,6 +2511,76 @@ public class BomberSkinSelectMenu : MonoBehaviour
             $"bottomGapPx={bottomGapPx:0.###} normalizedBottomGap={normalizedBottomGap:0.######} " +
             $"leftInsetPx={leftInsetPx:0.###} rightInsetPx={rightInsetPx:0.###}"
         );
+    }
+
+    PlayerCursorState GetLowestUnconfirmedCursor()
+    {
+        if (players == null || players.Count == 0)
+            return null;
+
+        PlayerCursorState lowest = null;
+
+        for (int i = 0; i < players.Count; i++)
+        {
+            PlayerCursorState ps = players[i];
+
+            if (ps == null)
+                continue;
+
+            if (ps.confirmed)
+                continue;
+
+            if (ps.index < 0 || ps.index >= selectableSkins.Count)
+                continue;
+
+            if (lowest == null || ps.playerId < lowest.playerId)
+                lowest = ps;
+        }
+
+        return lowest;
+    }
+
+    void UpdateUnlockHint()
+    {
+        if (unlockHintText == null)
+            return;
+
+        PlayerCursorState hintCursor = GetLowestUnconfirmedCursor();
+
+        if (hintCursor == null)
+        {
+            HideUnlockHintImmediate();
+            return;
+        }
+
+        int index = hintCursor.index;
+
+        if (index < 0 || index >= selectableSkins.Count)
+        {
+            HideUnlockHintImmediate();
+            return;
+        }
+
+        BomberSkin skin = selectableSkins[index];
+
+        if (UnlockProgress.IsUnlocked(skin))
+        {
+            HideUnlockHintImmediate();
+            return;
+        }
+
+        string hint = SkinUnlockHintCatalog.GetHint(skin);
+
+        if (string.IsNullOrWhiteSpace(hint))
+        {
+            HideUnlockHintImmediate();
+            return;
+        }
+
+        if (_lastUnlockHintMessage == hint && unlockHintText.gameObject.activeSelf)
+            return;
+
+        ShowUnlockHint(hint);
     }
 
     static void TrySetFloat(Material mat, string prop, float value)
