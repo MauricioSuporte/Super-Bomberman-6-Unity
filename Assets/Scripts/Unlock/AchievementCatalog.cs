@@ -67,7 +67,39 @@ public static class AchievementCatalog
             "WIN STAGE 10 IN BATTLE MODE",
             "Battle Mode Stage 11",
             UnlockProgress.IsBattleModeStage11Unlocked,
-            UnlockToastCatalog.LoadBattleModeStage11Icon
+            () => UnlockToastCatalog.LoadBattleModeStageIcon(11)
+        ),
+        new(
+            "BattleModeStage12",
+            "BATTLE STAGE 12",
+            "WIN STAGES 7 AND 9 IN BATTLE MODE",
+            "Battle Mode Stage 12",
+            UnlockProgress.IsBattleModeStage12Unlocked,
+            () => UnlockToastCatalog.LoadBattleModeStageIcon(12)
+        ),
+        new(
+            "BattleModeStage13",
+            "BATTLE STAGE 13",
+            "WIN ANY STAGE IN BATTLE MODE",
+            "Battle Mode Stage 13",
+            UnlockProgress.IsBattleModeStage13Unlocked,
+            () => UnlockToastCatalog.LoadBattleModeStageIcon(13)
+        ),
+        new(
+            "BattleModeStage14",
+            "BATTLE STAGE 14",
+            "WIN 7 DIFFERENT STAGES IN BATTLE MODE",
+            "Battle Mode Stage 14",
+            UnlockProgress.IsBattleModeStage14Unlocked,
+            () => UnlockToastCatalog.LoadBattleModeStageIcon(14)
+        ),
+        new(
+            "BattleModeStage15",
+            "BATTLE STAGE 15",
+            "WIN ALL OTHER STAGES IN BATTLE MODE",
+            "Battle Mode Stage 15",
+            UnlockProgress.IsBattleModeStage15Unlocked,
+            () => UnlockToastCatalog.LoadBattleModeStageIcon(15)
         ),
         Skin(BomberSkin.Golden, "GOLDEN", "Golden Bomber", requiredForGolden: false)
     };

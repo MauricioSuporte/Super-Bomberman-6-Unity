@@ -8,6 +8,7 @@ public static class UnlockProgress
     public static event Action<BomberSkin> OnSkinUnlocked;
     public static event Action OnBossRushUnlocked;
     public static event Action OnBattleModeStage11Unlocked;
+    public static event Action<int> OnBattleModeStageUnlocked;
 
     public static string SaveDirectoryPath => SaveSystem.SaveDirectoryPath;
     public static string SaveFilePath => SaveSystem.SaveFilePath;
@@ -32,6 +33,26 @@ public static class UnlockProgress
     public static bool IsBattleModeStage11Unlocked()
     {
         return SaveSystem.Data.battleModeStage11Unlocked;
+    }
+
+    public static bool IsBattleModeStage12Unlocked()
+    {
+        return SaveSystem.Data.battleModeStage12Unlocked;
+    }
+
+    public static bool IsBattleModeStage13Unlocked()
+    {
+        return SaveSystem.Data.battleModeStage13Unlocked;
+    }
+
+    public static bool IsBattleModeStage14Unlocked()
+    {
+        return SaveSystem.Data.battleModeStage14Unlocked;
+    }
+
+    public static bool IsBattleModeStage15Unlocked()
+    {
+        return SaveSystem.Data.battleModeStage15Unlocked;
     }
 
     public static bool Unlock(BomberSkin skin)
@@ -82,24 +103,50 @@ public static class UnlockProgress
 
     public static bool UnlockBattleModeStage11()
     {
-        SLog($"UnlockBattleModeStage11 requested | alreadyUnlocked={SaveSystem.Data.battleModeStage11Unlocked} | listeners={(OnBattleModeStage11Unlocked == null ? 0 : OnBattleModeStage11Unlocked.GetInvocationList().Length)}");
+        return UnlockBattleModeStage(11);
+    }
 
-        if (SaveSystem.Data.battleModeStage11Unlocked)
+    public static bool UnlockBattleModeStage(int stageIndex)
+    {
+        int normalized = Mathf.Clamp(stageIndex, 11, 15);
+        SLog($"UnlockBattleModeStage requested | stage={normalized} | alreadyUnlocked={IsBattleModeStageUnlockedFlag(normalized)} | listeners={(OnBattleModeStageUnlocked == null ? 0 : OnBattleModeStageUnlocked.GetInvocationList().Length)}");
+
+        if (IsBattleModeStageUnlockedFlag(normalized))
         {
-            SLog("UnlockBattleModeStage11 skipped | already unlocked");
+            SLog($"UnlockBattleModeStage skipped | stage={normalized} already unlocked");
             return false;
         }
 
-        SaveSystem.Data.battleModeStage11Unlocked = true;
+        SetBattleModeStageUnlockedFlag(normalized);
         SaveSystem.Save();
 
-        SLog("UnlockBattleModeStage11 persisted | invoking event now");
-        OnBattleModeStage11Unlocked?.Invoke();
-        SLog("UnlockBattleModeStage11 event invocation finished");
+        SLog($"UnlockBattleModeStage persisted | stage={normalized} | invoking event now");
+        if (normalized == 11)
+            OnBattleModeStage11Unlocked?.Invoke();
+        OnBattleModeStageUnlocked?.Invoke(normalized);
+        SLog($"UnlockBattleModeStage event invocation finished | stage={normalized}");
 
         TryUnlockGoldenBomberIfEligible(raiseEvent: true);
 
         return true;
+    }
+
+    public static void EvaluateBattleModeStageUnlocks()
+    {
+        if (SaveSystem.HasBattleModeManStageWin(10))
+            UnlockBattleModeStage(11);
+
+        if (SaveSystem.HasBattleModeManStageWin(7) && SaveSystem.HasBattleModeManStageWin(9))
+            UnlockBattleModeStage(12);
+
+        if (SaveSystem.GetBattleModeManStageWinCount() >= 1)
+            UnlockBattleModeStage(13);
+
+        if (SaveSystem.GetBattleModeManStageWinCount() >= 7)
+            UnlockBattleModeStage(14);
+
+        if (SaveSystem.GetBattleModeManStageWinCount(14) >= 14)
+            UnlockBattleModeStage(15);
     }
 
     public static bool TryUnlockGoldenBomberIfEligible()
@@ -155,6 +202,41 @@ public static class UnlockProgress
             OnSkinUnlocked?.Invoke(BomberSkin.Golden);
 
         return true;
+    }
+
+    private static bool IsBattleModeStageUnlockedFlag(int stageIndex)
+    {
+        return stageIndex switch
+        {
+            11 => SaveSystem.Data.battleModeStage11Unlocked,
+            12 => SaveSystem.Data.battleModeStage12Unlocked,
+            13 => SaveSystem.Data.battleModeStage13Unlocked,
+            14 => SaveSystem.Data.battleModeStage14Unlocked,
+            15 => SaveSystem.Data.battleModeStage15Unlocked,
+            _ => true
+        };
+    }
+
+    private static void SetBattleModeStageUnlockedFlag(int stageIndex)
+    {
+        switch (stageIndex)
+        {
+            case 11:
+                SaveSystem.Data.battleModeStage11Unlocked = true;
+                break;
+            case 12:
+                SaveSystem.Data.battleModeStage12Unlocked = true;
+                break;
+            case 13:
+                SaveSystem.Data.battleModeStage13Unlocked = true;
+                break;
+            case 14:
+                SaveSystem.Data.battleModeStage14Unlocked = true;
+                break;
+            case 15:
+                SaveSystem.Data.battleModeStage15Unlocked = true;
+                break;
+        }
     }
 
     private static void SLog(string message)

@@ -556,7 +556,55 @@ public static class SaveSystem
         EnsureLoaded();
 
         int normalized = Mathf.Clamp(stageIndex, 1, BattleModeStageCount);
-        return normalized != 11 || data.battleModeStage11Unlocked;
+        return normalized switch
+        {
+            11 => data.battleModeStage11Unlocked,
+            12 => data.battleModeStage12Unlocked,
+            13 => data.battleModeStage13Unlocked,
+            14 => data.battleModeStage14Unlocked,
+            15 => data.battleModeStage15Unlocked,
+            _ => true
+        };
+    }
+
+    public static bool HasBattleModeManStageWin(int stageIndex)
+    {
+        EnsureLoaded();
+        EnsureBattleModeManStageWins(data);
+
+        int normalized = Mathf.Clamp(stageIndex, 1, BattleModeStageCount);
+        return data.battleModeManStageWins[normalized - 1];
+    }
+
+    public static int GetBattleModeManStageWinCount(int maxStageIndex = BattleModeStageCount)
+    {
+        EnsureLoaded();
+        EnsureBattleModeManStageWins(data);
+
+        int max = Mathf.Clamp(maxStageIndex, 1, BattleModeStageCount);
+        int count = 0;
+        for (int i = 0; i < max; i++)
+        {
+            if (data.battleModeManStageWins[i])
+                count++;
+        }
+
+        return count;
+    }
+
+    public static bool RecordBattleModeManStageWin(int stageIndex)
+    {
+        EnsureLoaded();
+        EnsureBattleModeManStageWins(data);
+
+        int normalized = Mathf.Clamp(stageIndex, 1, BattleModeStageCount);
+        int index = normalized - 1;
+        if (data.battleModeManStageWins[index])
+            return false;
+
+        data.battleModeManStageWins[index] = true;
+        Save();
+        return true;
     }
 
     public static int GetBattleModeMusicSelectionMask()
@@ -853,6 +901,60 @@ public static class SaveSystem
         d.battleModeMusicSelectionMask = NormalizeBattleModeMusicSelectionMask(d.battleModeMusicSelectionMask);
         EnsureBattleModePlayerControlModes(d);
         EnsureBattleModePlayerTeams(d);
+        EnsureBattleModeManStageWins(d);
+        NormalizeBattleModeStageUnlocks(d);
+    }
+
+    private static void NormalizeBattleModeStageUnlocks(SaveData d)
+    {
+        if (d.battleModeStage11Unlocked)
+            d.battleModeManStageWins[9] = true;
+
+        if (d.battleModeManStageWins[9])
+            d.battleModeStage11Unlocked = true;
+
+        if (d.battleModeManStageWins[6] && d.battleModeManStageWins[8])
+            d.battleModeStage12Unlocked = true;
+
+        if (CountBattleModeManStageWins(d, BattleModeStageCount) >= 1)
+            d.battleModeStage13Unlocked = true;
+
+        if (CountBattleModeManStageWins(d, BattleModeStageCount) >= 7)
+            d.battleModeStage14Unlocked = true;
+
+        if (CountBattleModeManStageWins(d, 14) >= 14)
+            d.battleModeStage15Unlocked = true;
+    }
+
+    private static int CountBattleModeManStageWins(SaveData d, int maxStageIndex)
+    {
+        EnsureBattleModeManStageWins(d);
+
+        int max = Mathf.Clamp(maxStageIndex, 1, BattleModeStageCount);
+        int count = 0;
+        for (int i = 0; i < max; i++)
+        {
+            if (d.battleModeManStageWins[i])
+                count++;
+        }
+
+        return count;
+    }
+
+    private static void EnsureBattleModeManStageWins(SaveData d)
+    {
+        if (d.battleModeManStageWins == null || d.battleModeManStageWins.Length != BattleModeStageCount)
+        {
+            bool[] normalized = new bool[BattleModeStageCount];
+            if (d.battleModeManStageWins != null)
+            {
+                int copy = Mathf.Min(d.battleModeManStageWins.Length, normalized.Length);
+                for (int i = 0; i < copy; i++)
+                    normalized[i] = d.battleModeManStageWins[i];
+            }
+
+            d.battleModeManStageWins = normalized;
+        }
     }
 
     private static BattleModeRules.MatchMode NormalizeBattleModeMatchMode(int matchMode)

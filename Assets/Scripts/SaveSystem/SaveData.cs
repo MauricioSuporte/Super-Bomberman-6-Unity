@@ -12,6 +12,10 @@ public sealed class SaveData
     public bool bossRushUnlocked = false;
     public bool nightmareUnlocked = false;
     public bool battleModeStage11Unlocked = false;
+    public bool battleModeStage12Unlocked = false;
+    public bool battleModeStage13Unlocked = false;
+    public bool battleModeStage14Unlocked = false;
+    public bool battleModeStage15Unlocked = false;
     public int battleModeMatchMode = (int)BattleModeRules.MatchMode.SingleMatch;
     public int battleModeComputerLevel = (int)BattleModeComputerLevel.Normal;
     public int battleModeBattlesToWin = 3;
@@ -38,6 +42,7 @@ public sealed class SaveData
         (int)BattleModeRules.TeamId.Red,
         (int)BattleModeRules.TeamId.Green
     };
+    public bool[] battleModeManStageWins = new bool[15];
 
     public int player1SelectedSkin = (int)BomberSkin.White;
     public int player2SelectedSkin = (int)BomberSkin.Black;

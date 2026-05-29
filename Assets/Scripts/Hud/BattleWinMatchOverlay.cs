@@ -352,13 +352,12 @@ public sealed class BattleWinMatchOverlay : MonoBehaviour
         if (winnerPlayerIds.Count <= 0)
             winnerPlayerIds.Add(winnerPlayerId);
 
-        TryUnlockBattleModeStage11FromWinners();
+        RecordBattleModeManStageWinFromWinners();
     }
 
-    void TryUnlockBattleModeStage11FromWinners()
+    void RecordBattleModeManStageWinFromWinners()
     {
-        if (SaveSystem.GetBattleModeStageIndex() != 10)
-            return;
+        int stageIndex = SaveSystem.GetBattleModeStageIndex();
 
         for (int i = 0; i < winnerPlayerIds.Count; i++)
         {
@@ -368,7 +367,8 @@ public sealed class BattleWinMatchOverlay : MonoBehaviour
 
             if (SaveSystem.GetBattleModePlayerControlMode(playerId) == BattleModePlayerControlMode.Man)
             {
-                UnlockProgress.UnlockBattleModeStage11();
+                SaveSystem.RecordBattleModeManStageWin(stageIndex);
+                UnlockProgress.EvaluateBattleModeStageUnlocks();
                 return;
             }
         }

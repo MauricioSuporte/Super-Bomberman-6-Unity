@@ -228,6 +228,9 @@ public sealed class BattleModeMenu : MonoBehaviour
     [SerializeField] private Vector2 stageSelectRootOffset = Vector2.zero;
     [SerializeField] private Vector2 stageTitleOffset = new(0f, 272f);
     [SerializeField] private Vector2 stageTitleSize = new(520f, 42f);
+    [SerializeField] private Vector2 stageWinCheckOffset = new(220f, 272f);
+    [SerializeField] private Vector2 stageWinCheckSize = new(32f, 32f);
+    [SerializeField] private Sprite stageWinCheckSprite;
     [SerializeField] private Vector2 stageThumbnailOffset = Vector2.zero;
     [SerializeField] private Vector2 stageThumbnailSize = new(112f, 112f);
     [SerializeField] private Vector2 stageSideThumbnailOffset = new(330f, 0f);
@@ -238,7 +241,7 @@ public sealed class BattleModeMenu : MonoBehaviour
     [SerializeField] private Vector2 stageNameOffset = new(0f, -272f);
     [SerializeField] private Vector2 stageNameSize = new(620f, 42f);
     [SerializeField] private Vector2 stageLockedHintOffset = new(0f, -324f);
-    [SerializeField] private Vector2 stageLockedHintSize = new(900f, 42f);
+    [SerializeField] private Vector2 stageLockedHintSize = new(620f, 84f);
     [SerializeField] private string stageLockedHintMessage = "WIN STAGE 10 IN BATTLE MODE";
     [SerializeField] private string stageLockedHintHex = "#FF3B30";
     [SerializeField, Min(0f)] private float stageLockedHintShowSeconds = 5f;
@@ -501,6 +504,8 @@ public sealed class BattleModeMenu : MonoBehaviour
     private RectTransform stageSelectRoot;
     private RectTransform stageCarouselViewport;
     private TextMeshProUGUI stageTitleText;
+    private Image stageWinCheckImage;
+    private Sprite runtimeStageWinCheckSprite;
     private Image[] stageThumbnailImages;
     private TextMeshProUGUI stageNameText;
     private TextMeshProUGUI stageLockedHintText;
@@ -2629,6 +2634,8 @@ public sealed class BattleModeMenu : MonoBehaviour
                 stageLockedHintText = CreateStageText(stageSelectRoot, "StageLockedHint", TextAlignmentOptions.Center);
                 stageLockedHintText.gameObject.SetActive(false);
             }
+            if (stageWinCheckImage == null)
+                stageWinCheckImage = CreateStageWinCheckImage(stageSelectRoot);
             return;
         }
 
@@ -2645,6 +2652,7 @@ public sealed class BattleModeMenu : MonoBehaviour
         stageSelectRoot.SetAsLastSibling();
 
         stageTitleText = CreateStageText(stageSelectRoot, "StageTitle", TextAlignmentOptions.Center);
+        stageWinCheckImage = CreateStageWinCheckImage(stageSelectRoot);
         stageCarouselViewport = CreateStageCarouselViewport(stageSelectRoot);
         stageThumbnailImages = new Image[5];
         for (int i = 0; i < stageThumbnailImages.Length; i++)
@@ -2701,6 +2709,20 @@ public sealed class BattleModeMenu : MonoBehaviour
         return image;
     }
 
+    private Image CreateStageWinCheckImage(RectTransform parent)
+    {
+        GameObject go = new("StageWinCheck", typeof(RectTransform), typeof(Image));
+        go.transform.SetParent(parent, false);
+
+        Image image = go.GetComponent<Image>();
+        image.raycastTarget = false;
+        image.preserveAspect = true;
+        image.sprite = GetStageWinCheckSprite();
+        image.color = Color.white;
+        image.gameObject.SetActive(false);
+        return image;
+    }
+
     private void UpdateStageSelectVisuals()
     {
         if (stageSelectRoot == null || !stageSelectRoot.gameObject.activeInHierarchy)
@@ -2724,6 +2746,19 @@ public sealed class BattleModeMenu : MonoBehaviour
             stageTitleText.rectTransform.anchoredPosition = stageTitleOffset;
             stageTitleText.rectTransform.sizeDelta = stageTitleSize;
             ApplyStageTextStyle(stageTitleText);
+        }
+
+        if (stageWinCheckImage != null)
+        {
+            RectTransform checkRt = stageWinCheckImage.rectTransform;
+            checkRt.anchorMin = new Vector2(0.5f, 0.5f);
+            checkRt.anchorMax = new Vector2(0.5f, 0.5f);
+            checkRt.pivot = new Vector2(0.5f, 0.5f);
+            checkRt.anchoredPosition = stageWinCheckOffset;
+            checkRt.sizeDelta = stageWinCheckSize;
+            stageWinCheckImage.sprite = GetStageWinCheckSprite();
+            stageWinCheckImage.color = Color.white;
+            stageWinCheckImage.gameObject.SetActive(SaveSystem.HasBattleModeManStageWin(stageIndex));
         }
 
         UpdateStageCarouselImages();
@@ -2773,11 +2808,14 @@ public sealed class BattleModeMenu : MonoBehaviour
         }
 
         stageLockedHintText.gameObject.SetActive(true);
-        stageLockedHintText.text = $"<color={stageLockedHintHex}>{stageLockedHintMessage}</color>";
+        stageLockedHintText.text = $"<color={stageLockedHintHex}>{GetBattleStageUnlockHint(focusedStageIndex)}</color>";
         stageLockedHintText.fontSize = stageSelectFontSize;
         stageLockedHintText.rectTransform.anchoredPosition = stageLockedHintOffset;
         stageLockedHintText.rectTransform.sizeDelta = stageLockedHintSize;
         ApplyStageTextStyle(stageLockedHintText);
+        stageLockedHintText.textWrappingMode = TextWrappingModes.Normal;
+        stageLockedHintText.overflowMode = TextOverflowModes.Ellipsis;
+        stageLockedHintText.alignment = TextAlignmentOptions.Center;
     }
 
     private void BeginStageCarouselMove(int direction)
@@ -2982,6 +3020,114 @@ public sealed class BattleModeMenu : MonoBehaviour
         }
 
         return $"Battle Stage {stageIndex}";
+    }
+
+    private string GetBattleStageUnlockHint(int stageIndex)
+    {
+        return stageIndex switch
+        {
+            11 => stageLockedHintMessage,
+            12 => "WIN STAGES 7 AND 9 IN BATTLE MODE",
+            13 => "WIN ANY STAGE IN BATTLE MODE",
+            14 => "WIN 7 DIFFERENT STAGES IN BATTLE MODE",
+            15 => "WIN ALL OTHER STAGES IN BATTLE MODE",
+            _ => stageLockedHintMessage
+        };
+    }
+
+    private Sprite GetStageWinCheckSprite()
+    {
+        if (stageWinCheckSprite != null)
+            return stageWinCheckSprite;
+
+        runtimeStageWinCheckSprite ??= CreateStageWinCheckSprite();
+        return runtimeStageWinCheckSprite;
+    }
+
+    private static Sprite CreateStageWinCheckSprite()
+    {
+        const int size = 32;
+        Texture2D texture = new(size, size, TextureFormat.RGBA32, false)
+        {
+            filterMode = FilterMode.Point,
+            wrapMode = TextureWrapMode.Clamp
+        };
+
+        Color clear = new(0f, 0f, 0f, 0f);
+        Color shadow = new(0.03f, 0.025f, 0.01f, 0.92f);
+        Color dark = new(0.07f, 0.055f, 0.015f, 0.96f);
+        Color gold = new(1f, 0.78f, 0.08f, 1f);
+        Color bright = new(1f, 0.95f, 0.34f, 1f);
+        Color check = new(0.42f, 1f, 0.36f, 1f);
+        Color checkShadow = new(0.02f, 0.12f, 0.02f, 1f);
+
+        for (int y = 0; y < size; y++)
+        {
+            for (int x = 0; x < size; x++)
+                texture.SetPixel(x, y, clear);
+        }
+
+        FillTextureRect(texture, 3, 2, 27, 26, shadow);
+        FillTextureRect(texture, 2, 4, 26, 26, gold);
+        FillTextureRect(texture, 5, 7, 20, 20, dark);
+        DrawTextureRect(texture, 4, 6, 22, 22, bright);
+        DrawTexturePixelLine(texture, 9, 15, 13, 11, checkShadow, 3);
+        DrawTexturePixelLine(texture, 13, 11, 23, 22, checkShadow, 3);
+        DrawTexturePixelLine(texture, 8, 16, 12, 12, check, 3);
+        DrawTexturePixelLine(texture, 12, 12, 22, 23, check, 3);
+
+        texture.Apply();
+        Sprite sprite = Sprite.Create(texture, new Rect(0f, 0f, size, size), new Vector2(0.5f, 0.5f), size);
+        sprite.name = "RuntimeStageWinCheck";
+        return sprite;
+    }
+
+    private static void FillTextureRect(Texture2D texture, int x, int y, int width, int height, Color color)
+    {
+        for (int yy = y; yy < y + height; yy++)
+        {
+            for (int xx = x; xx < x + width; xx++)
+            {
+                if (xx >= 0 && yy >= 0 && xx < texture.width && yy < texture.height)
+                    texture.SetPixel(xx, yy, color);
+            }
+        }
+    }
+
+    private static void DrawTextureRect(Texture2D texture, int x, int y, int width, int height, Color color)
+    {
+        FillTextureRect(texture, x, y, width, 1, color);
+        FillTextureRect(texture, x, y + height - 1, width, 1, color);
+        FillTextureRect(texture, x, y, 1, height, color);
+        FillTextureRect(texture, x + width - 1, y, 1, height, color);
+    }
+
+    private static void DrawTexturePixelLine(Texture2D texture, int x0, int y0, int x1, int y1, Color color, int thickness)
+    {
+        int dx = Mathf.Abs(x1 - x0);
+        int dy = -Mathf.Abs(y1 - y0);
+        int sx = x0 < x1 ? 1 : -1;
+        int sy = y0 < y1 ? 1 : -1;
+        int err = dx + dy;
+
+        while (true)
+        {
+            FillTextureRect(texture, x0 - thickness / 2, y0 - thickness / 2, thickness, thickness, color);
+            if (x0 == x1 && y0 == y1)
+                break;
+
+            int e2 = 2 * err;
+            if (e2 >= dy)
+            {
+                err += dy;
+                x0 += sx;
+            }
+            if (e2 <= dx)
+            {
+                err += dx;
+                y0 += sy;
+            }
+        }
     }
 
     private IEnumerator OpenSpecificSettingsMenu()

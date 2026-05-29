@@ -175,18 +175,23 @@ public class UnlockToastPresenter : MonoBehaviour
 
     public static void ShowBattleModeStage11Unlocked()
     {
+        ShowBattleModeStageUnlocked(11);
+    }
+
+    public static void ShowBattleModeStageUnlocked(int stageIndex)
+    {
         EnsureInScene();
 
         if (instanceInScene == null)
         {
-            SLog("ShowBattleModeStage11Unlocked aborted | instance null");
+            SLog($"ShowBattleModeStageUnlocked aborted | instance null | stage={stageIndex}");
             return;
         }
 
-        var info = UnlockToastCatalog.GetBattleModeStage11();
-        Sprite icon = UnlockToastCatalog.LoadBattleModeStage11Icon();
+        var info = UnlockToastCatalog.GetBattleModeStage(stageIndex);
+        Sprite icon = UnlockToastCatalog.LoadBattleModeStageIcon(stageIndex);
 
-        SLog($"ShowBattleModeStage11Unlocked | title={info.Title} | subtitle={info.Subtitle} | iconLoaded={(icon != null)}");
+        SLog($"ShowBattleModeStageUnlocked | stage={stageIndex} | title={info.Title} | subtitle={info.Subtitle} | iconLoaded={(icon != null)}");
 
         instanceInScene.Enqueue(info.Title, info.Subtitle, icon);
     }
@@ -218,6 +223,8 @@ public class UnlockToastPresenter : MonoBehaviour
 
         UnlockProgress.OnBattleModeStage11Unlocked -= HandleBattleModeStage11Unlocked;
         UnlockProgress.OnBattleModeStage11Unlocked += HandleBattleModeStage11Unlocked;
+        UnlockProgress.OnBattleModeStageUnlocked -= HandleBattleModeStageUnlocked;
+        UnlockProgress.OnBattleModeStageUnlocked += HandleBattleModeStageUnlocked;
 
         SceneManager.sceneLoaded -= OnSceneLoaded;
         SceneManager.sceneLoaded += OnSceneLoaded;
@@ -238,6 +245,7 @@ public class UnlockToastPresenter : MonoBehaviour
         UnlockProgress.OnSkinUnlocked -= HandleSkinUnlocked;
         UnlockProgress.OnBossRushUnlocked -= HandleBossRushUnlocked;
         UnlockProgress.OnBattleModeStage11Unlocked -= HandleBattleModeStage11Unlocked;
+        UnlockProgress.OnBattleModeStageUnlocked -= HandleBattleModeStageUnlocked;
         SceneManager.sceneLoaded -= OnSceneLoaded;
         SLog("OnDisable");
     }
@@ -290,7 +298,16 @@ public class UnlockToastPresenter : MonoBehaviour
     void HandleBattleModeStage11Unlocked()
     {
         SLog("HandleBattleModeStage11Unlocked received");
-        ShowBattleModeStage11Unlocked();
+        ShowBattleModeStageUnlocked(11);
+    }
+
+    void HandleBattleModeStageUnlocked(int stageIndex)
+    {
+        if (stageIndex == 11)
+            return;
+
+        SLog($"HandleBattleModeStageUnlocked received | stage={stageIndex}");
+        ShowBattleModeStageUnlocked(stageIndex);
     }
 
     void Enqueue(string title, string subtitle, Sprite icon)

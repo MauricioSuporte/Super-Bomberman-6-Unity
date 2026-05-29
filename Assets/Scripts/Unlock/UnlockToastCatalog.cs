@@ -133,13 +133,19 @@ public static class UnlockToastCatalog
         );
     }
 
+    public static ToastInfo GetBattleModeStage(int stageIndex)
+    {
+        int normalized = Mathf.Clamp(stageIndex, 11, 15);
+        return new ToastInfo(
+            $"Battle Stage {normalized}",
+            $"Battle Mode Stage {normalized} Unlocked",
+            $"UI/Unlocks/Icons/Stage{normalized}"
+        );
+    }
+
     public static ToastInfo GetBattleModeStage11()
     {
-        return new ToastInfo(
-            "Battle Stage 11",
-            "Battle Mode Stage 11 Unlocked",
-            "UI/Unlocks/Icons/Stage11"
-        );
+        return GetBattleModeStage(11);
     }
 
     public static Sprite LoadIcon(BomberSkin skin)
@@ -193,21 +199,26 @@ public static class UnlockToastCatalog
         return sprite;
     }
 
-    public static Sprite LoadBattleModeStage11Icon()
+    public static Sprite LoadBattleModeStageIcon(int stageIndex)
     {
-        ToastInfo info = GetBattleModeStage11();
+        ToastInfo info = GetBattleModeStage(stageIndex);
 
         if (string.IsNullOrWhiteSpace(info.IconResourcePath))
         {
-            SLog("LoadBattleModeStage11Icon | resource path is empty");
+            SLog($"LoadBattleModeStageIcon | stage={stageIndex} | resource path is empty");
             return null;
         }
 
         Sprite sprite = Resources.Load<Sprite>(info.IconResourcePath);
 
-        SLog($"LoadBattleModeStage11Icon | path={info.IconResourcePath} | found={(sprite != null)}");
+        SLog($"LoadBattleModeStageIcon | stage={stageIndex} | path={info.IconResourcePath} | found={(sprite != null)}");
 
         return sprite;
+    }
+
+    public static Sprite LoadBattleModeStage11Icon()
+    {
+        return LoadBattleModeStageIcon(11);
     }
 
     private static void SLog(string message)

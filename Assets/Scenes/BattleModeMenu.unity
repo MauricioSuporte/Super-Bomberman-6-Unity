@@ -211,6 +211,7 @@ MonoBehaviour:
   destructiblePassAmount: 0
   invincibleSuitAmount: 1
   heartAmount: 0
+  oneUpAmount: 0
   powerGloveAmount: 0
   blueLouieEggAmount: 0
   blackLouieEggAmount: 0
@@ -1088,6 +1089,9 @@ MonoBehaviour:
   stageSelectRootOffset: {x: 0, y: 0}
   stageTitleOffset: {x: 0, y: 272}
   stageTitleSize: {x: 520, y: 42}
+  stageWinCheckOffset: {x: 170, y: 272}
+  stageWinCheckSize: {x: 32, y: 32}
+  stageWinCheckSprite: {fileID: 0}
   stageThumbnailOffset: {x: 0, y: 0}
   stageThumbnailSize: {x: 112, y: 112}
   stageSideThumbnailOffset: {x: 330, y: 0}
@@ -1097,6 +1101,11 @@ MonoBehaviour:
   stageCarouselMaskHorizontalInset: 13
   stageNameOffset: {x: 0, y: -272}
   stageNameSize: {x: 620, y: 42}
+  stageLockedHintOffset: {x: 0, y: -324}
+  stageLockedHintSize: {x: 800, y: 84}
+  stageLockedHintMessage: WIN STAGE 10 IN BATTLE MODE
+  stageLockedHintHex: '#FF3B30'
+  stageLockedHintShowSeconds: 5
   stageSelectFontSize: 32
   stageThumbnailFallbackColor: {r: 0, g: 0, b: 0, a: 0.65}
   specificSettingsRootOffset: {x: 0, y: 0}
@@ -1257,6 +1266,8 @@ MonoBehaviour:
   battleMatchSceneName: 
   battleMatchUsesTeams: 0
   battleMatchWins: 000000000000000000000000000000000000000000000000
+  hardNormalGameRunInProgress: 0
+  hardNormalGameRemainingLives: 3
 --- !u!4 &1334625510
 Transform:
   m_ObjectHideFlags: 0
@@ -1968,6 +1979,10 @@ MonoBehaviour:
   normalColor: {r: 0, g: 0.8235294, b: 0, a: 1}
   selectedColor: {r: 0, g: 1, b: 0.23529412, a: 1}
   disabledColor: {r: 0, g: 0.47058824, b: 0, a: 0.7058824}
+  hardDifficultySelectedColor: {r: 0.90588236, g: 0.24705882, b: 0.24705882, a: 1}
+  hardcoreDifficultySelectedColor: {r: 0, g: 0, b: 0, a: 1}
+  hardcoreDifficultyOutlineColor: {r: 0.90588236, g: 0.24705882, b: 0.24705882, a: 1}
+  difficultyColumnSpacing: 20
   optionFontAsset: {fileID: 11400000, guid: ecf098b5ead05a94fa9fde052327d9de, type: 2}
   optionFontMaterialPreset: {fileID: 0}
   forceBold: 1
