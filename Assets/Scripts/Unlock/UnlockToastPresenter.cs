@@ -173,6 +173,24 @@ public class UnlockToastPresenter : MonoBehaviour
         instanceInScene.Enqueue(info.Title, info.Subtitle, icon);
     }
 
+    public static void ShowBattleModeStage11Unlocked()
+    {
+        EnsureInScene();
+
+        if (instanceInScene == null)
+        {
+            SLog("ShowBattleModeStage11Unlocked aborted | instance null");
+            return;
+        }
+
+        var info = UnlockToastCatalog.GetBattleModeStage11();
+        Sprite icon = UnlockToastCatalog.LoadBattleModeStage11Icon();
+
+        SLog($"ShowBattleModeStage11Unlocked | title={info.Title} | subtitle={info.Subtitle} | iconLoaded={(icon != null)}");
+
+        instanceInScene.Enqueue(info.Title, info.Subtitle, icon);
+    }
+
     void Awake()
     {
         if (instanceInScene != null && instanceInScene != this)
@@ -198,6 +216,9 @@ public class UnlockToastPresenter : MonoBehaviour
         UnlockProgress.OnBossRushUnlocked -= HandleBossRushUnlocked;
         UnlockProgress.OnBossRushUnlocked += HandleBossRushUnlocked;
 
+        UnlockProgress.OnBattleModeStage11Unlocked -= HandleBattleModeStage11Unlocked;
+        UnlockProgress.OnBattleModeStage11Unlocked += HandleBattleModeStage11Unlocked;
+
         SceneManager.sceneLoaded -= OnSceneLoaded;
         SceneManager.sceneLoaded += OnSceneLoaded;
 
@@ -216,6 +237,7 @@ public class UnlockToastPresenter : MonoBehaviour
     {
         UnlockProgress.OnSkinUnlocked -= HandleSkinUnlocked;
         UnlockProgress.OnBossRushUnlocked -= HandleBossRushUnlocked;
+        UnlockProgress.OnBattleModeStage11Unlocked -= HandleBattleModeStage11Unlocked;
         SceneManager.sceneLoaded -= OnSceneLoaded;
         SLog("OnDisable");
     }
@@ -263,6 +285,12 @@ public class UnlockToastPresenter : MonoBehaviour
     {
         SLog("HandleBossRushUnlocked received");
         ShowBossRushUnlocked();
+    }
+
+    void HandleBattleModeStage11Unlocked()
+    {
+        SLog("HandleBattleModeStage11Unlocked received");
+        ShowBattleModeStage11Unlocked();
     }
 
     void Enqueue(string title, string subtitle, Sprite icon)

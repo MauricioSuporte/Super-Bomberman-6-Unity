@@ -11,6 +11,7 @@ public sealed class SaveData
 
     public bool bossRushUnlocked = false;
     public bool nightmareUnlocked = false;
+    public bool battleModeStage11Unlocked = false;
     public int battleModeMatchMode = (int)BattleModeRules.MatchMode.SingleMatch;
     public int battleModeComputerLevel = (int)BattleModeComputerLevel.Normal;
     public int battleModeBattlesToWin = 3;

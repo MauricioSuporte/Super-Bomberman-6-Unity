@@ -7,6 +7,7 @@ public static class UnlockProgress
 
     public static event Action<BomberSkin> OnSkinUnlocked;
     public static event Action OnBossRushUnlocked;
+    public static event Action OnBattleModeStage11Unlocked;
 
     public static string SaveDirectoryPath => SaveSystem.SaveDirectoryPath;
     public static string SaveFilePath => SaveSystem.SaveFilePath;
@@ -26,6 +27,11 @@ public static class UnlockProgress
     public static bool IsBossRushUnlocked()
     {
         return SaveSystem.Data.bossRushUnlocked;
+    }
+
+    public static bool IsBattleModeStage11Unlocked()
+    {
+        return SaveSystem.Data.battleModeStage11Unlocked;
     }
 
     public static bool Unlock(BomberSkin skin)
@@ -68,6 +74,28 @@ public static class UnlockProgress
         SLog("UnlockBossRush persisted | invoking event now");
         OnBossRushUnlocked?.Invoke();
         SLog("UnlockBossRush event invocation finished");
+
+        TryUnlockGoldenBomberIfEligible(raiseEvent: true);
+
+        return true;
+    }
+
+    public static bool UnlockBattleModeStage11()
+    {
+        SLog($"UnlockBattleModeStage11 requested | alreadyUnlocked={SaveSystem.Data.battleModeStage11Unlocked} | listeners={(OnBattleModeStage11Unlocked == null ? 0 : OnBattleModeStage11Unlocked.GetInvocationList().Length)}");
+
+        if (SaveSystem.Data.battleModeStage11Unlocked)
+        {
+            SLog("UnlockBattleModeStage11 skipped | already unlocked");
+            return false;
+        }
+
+        SaveSystem.Data.battleModeStage11Unlocked = true;
+        SaveSystem.Save();
+
+        SLog("UnlockBattleModeStage11 persisted | invoking event now");
+        OnBattleModeStage11Unlocked?.Invoke();
+        SLog("UnlockBattleModeStage11 event invocation finished");
 
         TryUnlockGoldenBomberIfEligible(raiseEvent: true);
 

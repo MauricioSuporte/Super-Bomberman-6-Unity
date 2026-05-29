@@ -237,6 +237,11 @@ public sealed class BattleModeMenu : MonoBehaviour
     [SerializeField, Min(0f)] private float stageCarouselMaskHorizontalInset = 13f;
     [SerializeField] private Vector2 stageNameOffset = new(0f, -272f);
     [SerializeField] private Vector2 stageNameSize = new(620f, 42f);
+    [SerializeField] private Vector2 stageLockedHintOffset = new(0f, -324f);
+    [SerializeField] private Vector2 stageLockedHintSize = new(900f, 42f);
+    [SerializeField] private string stageLockedHintMessage = "WIN STAGE 10 IN BATTLE MODE";
+    [SerializeField] private string stageLockedHintHex = "#FF3B30";
+    [SerializeField, Min(0f)] private float stageLockedHintShowSeconds = 5f;
     [SerializeField] private int stageSelectFontSize = 32;
     [SerializeField] private Color stageThumbnailFallbackColor = new(0f, 0f, 0f, 0.65f);
 
@@ -498,12 +503,15 @@ public sealed class BattleModeMenu : MonoBehaviour
     private TextMeshProUGUI stageTitleText;
     private Image[] stageThumbnailImages;
     private TextMeshProUGUI stageNameText;
+    private TextMeshProUGUI stageLockedHintText;
     private int selectedStageIndex;
     private int stageCarouselFromIndex;
     private int stageCarouselDirection;
     private float stageCarouselElapsed;
     private bool stageCarouselAnimating;
     private bool stageSelectionReturnedToRuleConfig;
+    private float stageLockedHintHideRealtime = -1f;
+    private int stageLockedHintStageIndex = -1;
     private Sprite[] battleStageThumbnailResourceCache;
     private RectTransform specificSettingsRoot;
     private Image specificStageImage;
@@ -2525,6 +2533,7 @@ public sealed class BattleModeMenu : MonoBehaviour
             ruleConfigRoot.gameObject.SetActive(false);
 
         EnsureStageSelectBuilt();
+        HideStageLockedHint();
         selectedStageIndex = Mathf.Clamp(SaveSystem.GetBattleModeStageIndex() - 1, 0, GetBattleStageCount() - 1);
         stageCarouselFromIndex = selectedStageIndex;
         stageCarouselDirection = 0;
@@ -2558,6 +2567,7 @@ public sealed class BattleModeMenu : MonoBehaviour
                 input.GetDown(GameSession.MinPlayerId, PlayerAction.ActionL)))
             {
                 BeginStageCarouselMove(-1);
+                HideStageLockedHint();
                 moved = true;
             }
             else if (!stageCarouselAnimating &&
@@ -2566,6 +2576,7 @@ public sealed class BattleModeMenu : MonoBehaviour
                      input.GetDown(GameSession.MinPlayerId, PlayerAction.ActionR)))
             {
                 BeginStageCarouselMove(1);
+                HideStageLockedHint();
                 moved = true;
             }
 
@@ -2583,8 +2594,16 @@ public sealed class BattleModeMenu : MonoBehaviour
             else if (input.GetDown(GameSession.MinPlayerId, PlayerAction.ActionA) ||
                      input.GetDown(GameSession.MinPlayerId, PlayerAction.Start))
             {
-                PlaySfx(confirmSfx, confirmSfxVolume);
                 int stageIndex = selectedStageIndex + 1;
+                if (!SaveSystem.IsBattleModeStageUnlocked(stageIndex))
+                {
+                    PlaySfx(deniedSfx, deniedSfxVolume);
+                    ShowStageLockedHint(stageIndex);
+                    yield return null;
+                    continue;
+                }
+
+                PlaySfx(confirmSfx, confirmSfxVolume);
                 SaveSystem.SetBattleModeStageIndex(stageIndex);
                 done = true;
             }
@@ -2605,6 +2624,11 @@ public sealed class BattleModeMenu : MonoBehaviour
         {
             stageSelectRoot.gameObject.SetActive(true);
             stageSelectRoot.SetAsLastSibling();
+            if (stageLockedHintText == null)
+            {
+                stageLockedHintText = CreateStageText(stageSelectRoot, "StageLockedHint", TextAlignmentOptions.Center);
+                stageLockedHintText.gameObject.SetActive(false);
+            }
             return;
         }
 
@@ -2626,6 +2650,8 @@ public sealed class BattleModeMenu : MonoBehaviour
         for (int i = 0; i < stageThumbnailImages.Length; i++)
             stageThumbnailImages[i] = CreateStageThumbnail(stageCarouselViewport, $"StageThumbnail_{i}");
         stageNameText = CreateStageText(stageSelectRoot, "StageName", TextAlignmentOptions.Center);
+        stageLockedHintText = CreateStageText(stageSelectRoot, "StageLockedHint", TextAlignmentOptions.Center);
+        stageLockedHintText.gameObject.SetActive(false);
     }
 
     private RectTransform CreateStageCarouselViewport(RectTransform parent)
@@ -2710,6 +2736,48 @@ public sealed class BattleModeMenu : MonoBehaviour
             stageNameText.rectTransform.sizeDelta = stageNameSize;
             ApplyStageTextStyle(stageNameText);
         }
+
+        UpdateStageLockedHintVisual(stageIndex);
+    }
+
+    private void ShowStageLockedHint(int stageIndex)
+    {
+        stageLockedHintStageIndex = stageIndex;
+        stageLockedHintHideRealtime = Time.unscaledTime + Mathf.Max(0f, stageLockedHintShowSeconds);
+        UpdateStageLockedHintVisual(stageIndex);
+    }
+
+    private void HideStageLockedHint()
+    {
+        stageLockedHintHideRealtime = -1f;
+        stageLockedHintStageIndex = -1;
+
+        if (stageLockedHintText != null)
+            stageLockedHintText.gameObject.SetActive(false);
+    }
+
+    private void UpdateStageLockedHintVisual(int focusedStageIndex)
+    {
+        if (stageLockedHintText == null)
+            return;
+
+        bool shouldShow = stageLockedHintStageIndex == focusedStageIndex &&
+                          stageLockedHintHideRealtime >= 0f &&
+                          Time.unscaledTime < stageLockedHintHideRealtime &&
+                          !SaveSystem.IsBattleModeStageUnlocked(focusedStageIndex);
+
+        if (!shouldShow)
+        {
+            stageLockedHintText.gameObject.SetActive(false);
+            return;
+        }
+
+        stageLockedHintText.gameObject.SetActive(true);
+        stageLockedHintText.text = $"<color={stageLockedHintHex}>{stageLockedHintMessage}</color>";
+        stageLockedHintText.fontSize = stageSelectFontSize;
+        stageLockedHintText.rectTransform.anchoredPosition = stageLockedHintOffset;
+        stageLockedHintText.rectTransform.sizeDelta = stageLockedHintSize;
+        ApplyStageTextStyle(stageLockedHintText);
     }
 
     private void BeginStageCarouselMove(int direction)
@@ -2790,7 +2858,10 @@ public sealed class BattleModeMenu : MonoBehaviour
 
         Sprite sprite = GetBattleStageThumbnail(stageIndex);
         image.sprite = sprite;
+        bool unlocked = SaveSystem.IsBattleModeStageUnlocked(stageIndex);
         Color color = sprite != null ? Color.white : stageThumbnailFallbackColor;
+        if (!unlocked)
+            color = new Color(0.16f, 0.16f, 0.16f, color.a);
         if (absRelative > 1f)
             color.a *= Mathf.Clamp01(2f - absRelative);
 

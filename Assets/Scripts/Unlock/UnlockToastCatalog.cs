@@ -133,6 +133,15 @@ public static class UnlockToastCatalog
         );
     }
 
+    public static ToastInfo GetBattleModeStage11()
+    {
+        return new ToastInfo(
+            "Battle Stage 11",
+            "Battle Mode Stage 11 Unlocked",
+            "UI/Unlocks/Icons/Stage11"
+        );
+    }
+
     public static Sprite LoadIcon(BomberSkin skin)
     {
         ToastInfo info = Get(skin);
@@ -180,6 +189,23 @@ public static class UnlockToastCatalog
         Sprite sprite = Resources.Load<Sprite>(info.IconResourcePath);
 
         SLog($"LoadNightmareIcon | path={info.IconResourcePath} | found={(sprite != null)}");
+
+        return sprite;
+    }
+
+    public static Sprite LoadBattleModeStage11Icon()
+    {
+        ToastInfo info = GetBattleModeStage11();
+
+        if (string.IsNullOrWhiteSpace(info.IconResourcePath))
+        {
+            SLog("LoadBattleModeStage11Icon | resource path is empty");
+            return null;
+        }
+
+        Sprite sprite = Resources.Load<Sprite>(info.IconResourcePath);
+
+        SLog($"LoadBattleModeStage11Icon | path={info.IconResourcePath} | found={(sprite != null)}");
 
         return sprite;
     }

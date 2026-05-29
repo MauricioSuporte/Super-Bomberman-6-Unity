@@ -351,6 +351,27 @@ public sealed class BattleWinMatchOverlay : MonoBehaviour
 
         if (winnerPlayerIds.Count <= 0)
             winnerPlayerIds.Add(winnerPlayerId);
+
+        TryUnlockBattleModeStage11FromWinners();
+    }
+
+    void TryUnlockBattleModeStage11FromWinners()
+    {
+        if (SaveSystem.GetBattleModeStageIndex() != 10)
+            return;
+
+        for (int i = 0; i < winnerPlayerIds.Count; i++)
+        {
+            int playerId = winnerPlayerIds[i];
+            if (!GameSession.IsValidPlayerId(playerId))
+                continue;
+
+            if (SaveSystem.GetBattleModePlayerControlMode(playerId) == BattleModePlayerControlMode.Man)
+            {
+                UnlockProgress.UnlockBattleModeStage11();
+                return;
+            }
+        }
     }
 
     void BuildVictoryBombers()

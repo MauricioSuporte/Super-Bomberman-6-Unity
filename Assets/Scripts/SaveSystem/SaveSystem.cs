@@ -390,6 +390,15 @@ public static class SaveSystem
         Save();
     }
 
+    public static BattleModePlayerControlMode GetBattleModePlayerControlMode(int playerId)
+    {
+        EnsureLoaded();
+        EnsureBattleModePlayerControlModes(data);
+
+        playerId = Mathf.Clamp(playerId, 1, 6);
+        return NormalizeBattleModePlayerControlMode(data.battleModePlayerControlModes[playerId - 1]);
+    }
+
     public static BattleModeRules.TeamId[] GetBattleModePlayerTeams()
     {
         EnsureLoaded();
@@ -520,7 +529,11 @@ public static class SaveSystem
     public static int GetBattleModeStageIndex()
     {
         EnsureLoaded();
-        return Mathf.Clamp(data.battleModeStageIndex, 1, 15);
+        int stageIndex = Mathf.Clamp(data.battleModeStageIndex, 1, 15);
+        if (!IsBattleModeStageUnlocked(stageIndex))
+            stageIndex = 1;
+
+        return stageIndex;
     }
 
     public static void SetBattleModeStageIndex(int stageIndex)
@@ -528,11 +541,22 @@ public static class SaveSystem
         EnsureLoaded();
 
         int normalized = Mathf.Clamp(stageIndex, 1, 15);
+        if (!IsBattleModeStageUnlocked(normalized))
+            normalized = 1;
+
         if (data.battleModeStageIndex == normalized)
             return;
 
         data.battleModeStageIndex = normalized;
         Save();
+    }
+
+    public static bool IsBattleModeStageUnlocked(int stageIndex)
+    {
+        EnsureLoaded();
+
+        int normalized = Mathf.Clamp(stageIndex, 1, BattleModeStageCount);
+        return normalized != 11 || data.battleModeStage11Unlocked;
     }
 
     public static int GetBattleModeMusicSelectionMask()

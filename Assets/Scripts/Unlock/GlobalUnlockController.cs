@@ -77,6 +77,9 @@ public class GlobalUnlockController : MonoBehaviour
         UnlockProgress.OnBossRushUnlocked -= HandleBossRushUnlocked;
         UnlockProgress.OnBossRushUnlocked += HandleBossRushUnlocked;
 
+        UnlockProgress.OnBattleModeStage11Unlocked -= HandleBattleModeStage11Unlocked;
+        UnlockProgress.OnBattleModeStage11Unlocked += HandleBattleModeStage11Unlocked;
+
         SLog("OnEnable | unlock listeners registered");
     }
 
@@ -84,6 +87,7 @@ public class GlobalUnlockController : MonoBehaviour
     {
         UnlockProgress.OnSkinUnlocked -= HandleSkinUnlocked;
         UnlockProgress.OnBossRushUnlocked -= HandleBossRushUnlocked;
+        UnlockProgress.OnBattleModeStage11Unlocked -= HandleBattleModeStage11Unlocked;
 
         SLog("OnDisable | unlock listeners removed");
     }
@@ -157,6 +161,12 @@ public class GlobalUnlockController : MonoBehaviour
     private void HandleBossRushUnlocked()
     {
         SLog("HandleBossRushUnlocked");
+        TryPlayUnlockSfx();
+    }
+
+    private void HandleBattleModeStage11Unlocked()
+    {
+        SLog("HandleBattleModeStage11Unlocked");
         TryPlayUnlockSfx();
     }
 

@@ -61,6 +61,14 @@ public static class AchievementCatalog
             SaveSystem.IsNightmareUnlocked,
             UnlockToastCatalog.LoadNightmareIcon
         ),
+        new(
+            "BattleModeStage11",
+            "BATTLE STAGE 11",
+            "WIN STAGE 10 IN BATTLE MODE",
+            "Battle Mode Stage 11",
+            UnlockProgress.IsBattleModeStage11Unlocked,
+            UnlockToastCatalog.LoadBattleModeStage11Icon
+        ),
         Skin(BomberSkin.Golden, "GOLDEN", "Golden Bomber", requiredForGolden: false)
     };
 
