@@ -15,12 +15,14 @@ public sealed class BattleModeHud : MonoBehaviour
     const int MaxPlayers = 6;
 
     const float HudWidth = 256f;
-    const float HudHeight = 23f;
+    const float HudHeight = 27f;
+    const float ReferenceScreenWidth = 256f;
+    const float ReferenceScreenHeight = 224f;
 
-    const float UsableAreaLeft = 3f;
-    const float UsableAreaBottom = 1f;
-    const float UsableAreaWidth = 250f;
-    const float UsableAreaHeight = 21f;
+    const float UsableAreaLeft = 5f;
+    const float UsableAreaBottom = 3f;
+    const float UsableAreaWidth = 247f;
+    const float UsableAreaHeight = 22f;
     const float HudSidePadding = (HudWidth - (UsableAreaLeft + UsableAreaWidth));
     const float TeamBackgroundVerticalBleed = 1f;
     const float TeamBackgroundPartitionInset = 1f;
@@ -29,11 +31,17 @@ public sealed class BattleModeHud : MonoBehaviour
     const int TeamBackgroundTrimTop = 1;
     const int TeamBackgroundTrimBottom = 2;
 
-    const float PartitionWidth = 3f;
-    const float PartitionHeight = 21f;
-    const float PartitionYOffset = 1f;
-    const string PartitionAssetPath = "Assets/Sprites/HUD/BattleMode/partition.png";
-    const string BombBlastSpeedAssetPath = "Assets/Sprites/HUD/BattleMode/BombBlastSpeed.png";
+    const float PartitionWidth = 5f;
+    const float PartitionHeight = 23f;
+    const float PartitionBottom = 3f;
+    const string DefaultBackgroundAssetPath = "Assets/Resources/HUD/BattleMode/DefaultBackground.png";
+    const string FrameAssetPath = "Assets/Resources/HUD/BattleMode/Frame.png";
+    const string PartitionAssetPath = "Assets/Resources/HUD/BattleMode/Partition.png";
+    const string BombBlastSpeedAssetPath = "Assets/Resources/HUD/BattleMode/PrincipalItens 1.png";
+    const string DefaultBackgroundResourcesPath = "HUD/BattleMode/DefaultBackground";
+    const string FrameResourcesPath = "HUD/BattleMode/Frame";
+    const string PartitionResourcesPath = "HUD/BattleMode/Partition";
+    const string BombBlastSpeedResourcesPath = "HUD/BattleMode/PrincipalItens 1";
     const string Team1BackgroundAssetPath = "Assets/Sprites/HUD/BattleMode/Background_Team1.png";
     const string Team2BackgroundAssetPath = "Assets/Sprites/HUD/BattleMode/Background_Team2.png";
     const string Team3BackgroundAssetPath = "Assets/Sprites/HUD/BattleMode/Background_Team3.png";
@@ -46,7 +54,8 @@ public sealed class BattleModeHud : MonoBehaviour
     const float OuterHudEdgePadding = 1f;
     const float PortraitToPowerupGap = 2f;
     const float FirstPlayerPortraitExtraOffset = 1f;
-    const float LastPlayerItemsExtraOffset = 2f;
+    const float SubsequentPlayerPortraitOffsetX = -1f;
+    const float NonLastPlayerItemsOffsetX = 1f;
     const float VictoryCounterSize = 7f;
     const float VictoryCounterOffsetX = 9f;
     const float VictoryCounterOffsetY = 0f;
@@ -65,12 +74,12 @@ public sealed class BattleModeHud : MonoBehaviour
     const float AbilityIconSize = 6f;
     const float LifeIconSize = 6f;
 
-    const float StatsPanelY = 1f;
-    const float StatsPanelWidth = 21f;
+    const float StatsPanelY = 0f;
+    const float StatsPanelWidth = 23f;
     const float StatsPanelHeight = 7f;
 
     const float StatsNumberY = 1f;
-    static readonly float[] StatsNumberOffsets = { 1f, 8f, 15f };
+    static readonly float[] StatsNumberOffsets = { 2f, 9f, 16f };
 
     const string RuntimeRootName = "__BattleModeRuntime";
     const string BackgroundName = "Background";
@@ -135,6 +144,9 @@ public sealed class BattleModeHud : MonoBehaviour
     [SerializeField] private int pushStartFontSize = 4;
     [SerializeField] private Color pushStartColor = Color.white;
 
+    [Header("Diagnostics")]
+    [SerializeField] private bool logLayoutDiagnostics = true;
+
     readonly bool[] playerDead = new bool[MaxPlayers];
     readonly CharacterHealth[] playerHealthCache = new CharacterHealth[MaxPlayers];
     readonly List<Sprite> activePowerupBuffer = new List<Sprite>(6);
@@ -159,6 +171,7 @@ public sealed class BattleModeHud : MonoBehaviour
     Image timerColonImage;
     bool portraitsLoaded;
     bool legacyHudSuppressed;
+    string lastLayoutDiagnosticsSignature;
     Sprite trimmedTeam1BackgroundSprite;
     Sprite trimmedTeam2BackgroundSprite;
     Sprite trimmedTeam3BackgroundSprite;
@@ -186,7 +199,9 @@ public sealed class BattleModeHud : MonoBehaviour
         if (rootRect == null)
             rootRect = (RectTransform)transform;
 
+        ApplyTopHudRootRect();
         SuppressLegacyHudAtRuntime();
+        LoadHudSpritesIfNeeded();
         EnsurePortraitsLoaded();
         if (runtimeRoot == null)
             EnsureRuntimeUi();
@@ -197,6 +212,7 @@ public sealed class BattleModeHud : MonoBehaviour
         UpdateLayout(visiblePlayerCount);
         UpdateContent(visiblePlayerCount);
         UpdateTimer();
+        LogLayoutDiagnosticsIfNeeded(visiblePlayerCount);
     }
 
 #if UNITY_EDITOR
@@ -206,6 +222,12 @@ public sealed class BattleModeHud : MonoBehaviour
         trimmedTeam1BackgroundSprite = null;
         trimmedTeam2BackgroundSprite = null;
         trimmedTeam3BackgroundSprite = null;
+
+        if (backgroundSprite == null)
+            backgroundSprite = AssetDatabase.LoadAssetAtPath<Sprite>(DefaultBackgroundAssetPath);
+
+        if (borderSprite == null)
+            borderSprite = AssetDatabase.LoadAssetAtPath<Sprite>(FrameAssetPath);
 
         if (partitionSprite == null)
             partitionSprite = AssetDatabase.LoadAssetAtPath<Sprite>(PartitionAssetPath);
@@ -228,6 +250,39 @@ public sealed class BattleModeHud : MonoBehaviour
         LoadTimerSpritesIfNeeded();
     }
 #endif
+
+    void LoadHudSpritesIfNeeded()
+    {
+        backgroundSprite = LoadPreferredResourceSprite(backgroundSprite, DefaultBackgroundResourcesPath);
+        borderSprite = LoadPreferredResourceSprite(borderSprite, FrameResourcesPath);
+        partitionSprite = LoadPreferredResourceSprite(partitionSprite, PartitionResourcesPath);
+        bombBlastSpeedSprite = LoadPreferredResourceSprite(bombBlastSpeedSprite, BombBlastSpeedResourcesPath);
+    }
+
+    static Sprite LoadPreferredResourceSprite(Sprite current, string resourcePath)
+    {
+        Sprite loaded = Resources.Load<Sprite>(resourcePath);
+        if (loaded != null)
+            return loaded;
+
+        Sprite[] loadedSprites = Resources.LoadAll<Sprite>(resourcePath);
+        return loadedSprites != null && loadedSprites.Length > 0 && loadedSprites[0] != null
+            ? loadedSprites[0]
+            : current;
+    }
+
+    void ApplyTopHudRootRect()
+    {
+        if (rootRect == null)
+            return;
+
+        rootRect.anchorMin = new Vector2(0f, (ReferenceScreenHeight - HudHeight) / ReferenceScreenHeight);
+        rootRect.anchorMax = Vector2.one;
+        rootRect.offsetMin = Vector2.zero;
+        rootRect.offsetMax = Vector2.zero;
+        rootRect.pivot = new Vector2(0.5f, 0.5f);
+        rootRect.localScale = Vector3.one;
+    }
 
     void OnDisable()
     {
@@ -399,7 +454,14 @@ public sealed class BattleModeHud : MonoBehaviour
         ApplyLogicalRect(runtimeRoot, 0f, 0f, HudWidth, HudHeight, HudWidth, HudHeight);
         ApplyLogicalRect(partitionsRoot, 0f, 0f, HudWidth, HudHeight, HudWidth, HudHeight);
         ApplyLogicalRect(timerRoot, 0f, 0f, HudWidth, HudHeight, HudWidth, HudHeight);
-        ApplyLogicalRect((RectTransform)backgroundImage.transform, 0f, 0f, HudWidth, HudHeight, HudWidth, HudHeight);
+        ApplyLogicalRect(
+            (RectTransform)backgroundImage.transform,
+            UsableAreaLeft,
+            UsableAreaBottom,
+            UsableAreaWidth,
+            UsableAreaHeight,
+            HudWidth,
+            HudHeight);
         ApplyLogicalRect((RectTransform)borderImage.transform, 0f, 0f, HudWidth, HudHeight, HudWidth, HudHeight);
 
         float slotWidth = GetSlotWidth(visiblePlayerCount);
@@ -419,7 +481,7 @@ public sealed class BattleModeHud : MonoBehaviour
             ApplyLogicalRect(
                 partition.rectTransform,
                 partitionLeft,
-                UsableAreaBottom + PartitionYOffset,
+                PartitionBottom,
                 PartitionWidth,
                 PartitionHeight,
                 HudWidth,
@@ -440,12 +502,12 @@ public sealed class BattleModeHud : MonoBehaviour
                 continue;
 
             float slotLeft = UsableAreaLeft + i * slotWidth;
-            float lastPlayerItemsOffsetX = i == visiblePlayerCount - 1 ? LastPlayerItemsExtraOffset : 0f;
-            float lastPlayerStatsPanelOffsetX = i == visiblePlayerCount - 1 ? LastPlayerItemsExtraOffset : 0f;
             float statsPanelLeft = GetStatsPanelLeft(i, visiblePlayerCount, slotWidth);
-            float column0X = statsPanelLeft + StatsNumberOffsets[0] + lastPlayerItemsOffsetX;
-            float column1X = statsPanelLeft + StatsNumberOffsets[1] + lastPlayerItemsOffsetX;
-            float column2X = statsPanelLeft + StatsNumberOffsets[2] + lastPlayerItemsOffsetX;
+            float itemsOffsetX = GetItemsOffsetX(i, visiblePlayerCount);
+            float statsPanelDisplayLeft = statsPanelLeft + itemsOffsetX;
+            float column0X = statsPanelLeft + StatsNumberOffsets[0] + itemsOffsetX;
+            float column1X = statsPanelLeft + StatsNumberOffsets[1] + itemsOffsetX;
+            float column2X = statsPanelLeft + StatsNumberOffsets[2] + itemsOffsetX;
             float portraitLeft = GetPortraitLeft(i, visiblePlayerCount, slotWidth, column0X);
             float teamBackgroundLeft = GetTeamBackgroundVisibleLeft(i);
             float teamBackgroundRight = GetTeamBackgroundVisibleRight(i, visiblePlayerCount, slotWidth);
@@ -480,7 +542,7 @@ public sealed class BattleModeHud : MonoBehaviour
 
             ApplyLogicalRect(
                 slot.StatsPanel.rectTransform,
-                statsPanelLeft + lastPlayerStatsPanelOffsetX,
+                statsPanelDisplayLeft,
                 StatsPanelY,
                 StatsPanelWidth,
                 StatsPanelHeight,
@@ -489,7 +551,7 @@ public sealed class BattleModeHud : MonoBehaviour
 
             ApplyLogicalRect(
                 slot.BombNumber.rectTransform,
-                statsPanelLeft + StatsNumberOffsets[0] + lastPlayerItemsOffsetX,
+                column0X,
                 StatsPanelY + StatsNumberY - 1f,
                 NumberSize,
                 NumberSize,
@@ -498,7 +560,7 @@ public sealed class BattleModeHud : MonoBehaviour
 
             ApplyLogicalRect(
                 slot.FireNumber.rectTransform,
-                statsPanelLeft + StatsNumberOffsets[1] + lastPlayerItemsOffsetX,
+                column1X,
                 StatsPanelY + StatsNumberY - 1f,
                 NumberSize,
                 NumberSize,
@@ -507,7 +569,7 @@ public sealed class BattleModeHud : MonoBehaviour
 
             ApplyLogicalRect(
                 slot.SpeedNumber.rectTransform,
-                statsPanelLeft + StatsNumberOffsets[2] + lastPlayerItemsOffsetX,
+                column2X,
                 StatsPanelY + StatsNumberY - 1f,
                 NumberSize,
                 NumberSize,
@@ -706,12 +768,12 @@ public sealed class BattleModeHud : MonoBehaviour
 
     float GetStatsPanelLeft(int visualIndex, int visiblePlayerCount, float slotWidth)
     {
-        float statsPanelLeft = slotWidth - StatsPanelWidth - 1f;
+        return GetSlotContentRight(visualIndex, visiblePlayerCount, slotWidth) - StatsPanelWidth;
+    }
 
-        if (visualIndex == visiblePlayerCount - 1)
-            statsPanelLeft -= 2f;
-
-        return statsPanelLeft;
+    float GetItemsOffsetX(int visualIndex, int visiblePlayerCount)
+    {
+        return visualIndex < visiblePlayerCount - 1 ? NonLastPlayerItemsOffsetX : 0f;
     }
 
     float GetPortraitLeft(int visualIndex, int visiblePlayerCount, float slotWidth, float firstPowerupColumnX)
@@ -723,6 +785,8 @@ public sealed class BattleModeHud : MonoBehaviour
 
         if (visualIndex <= 0)
             portraitLeft += FirstPlayerPortraitExtraOffset;
+        else
+            portraitLeft += SubsequentPlayerPortraitOffsetX;
 
         return portraitLeft;
     }
@@ -1270,6 +1334,57 @@ public sealed class BattleModeHud : MonoBehaviour
         Color color = Color.white;
         color.a = displayedTotalSeconds % 2 == 0 ? 1f : 0f;
         return color;
+    }
+
+    void LogLayoutDiagnosticsIfNeeded(int visiblePlayerCount)
+    {
+        if (!logLayoutDiagnostics)
+            return;
+
+        string signature = BuildLayoutDiagnosticsSignature(visiblePlayerCount);
+        if (signature == lastLayoutDiagnosticsSignature)
+            return;
+
+        lastLayoutDiagnosticsSignature = signature;
+        Debug.Log(signature, this);
+    }
+
+    string BuildLayoutDiagnosticsSignature(int visiblePlayerCount)
+    {
+        RectTransform parent = rootRect != null ? rootRect.parent as RectTransform : null;
+        RectTransform backgroundRect = backgroundImage != null ? backgroundImage.rectTransform : null;
+        RectTransform borderRect = borderImage != null ? borderImage.rectTransform : null;
+        RectTransform firstPartitionRect = partitionImages.Length > 0 && partitionImages[0] != null
+            ? partitionImages[0].rectTransform
+            : null;
+        RectTransform firstSlotRect = slots.Length > 0 && slots[0] != null ? slots[0].Root : null;
+        RectTransform firstStatsRect = slots.Length > 0 && slots[0] != null && slots[0].StatsPanel != null
+            ? slots[0].StatsPanel.rectTransform
+            : null;
+
+        return "[BattleModeHud Layout] "
+            + $"expectedHud={HudWidth:0.###}x{HudHeight:0.###} reference={ReferenceScreenWidth:0.###}x{ReferenceScreenHeight:0.###} "
+            + $"visiblePlayers={visiblePlayerCount} "
+            + $"parent={FormatRect(parent)} "
+            + $"root={FormatRect(rootRect)} "
+            + $"runtime={FormatRect(runtimeRoot)} "
+            + $"background={FormatRect(backgroundRect)} expected=247x22 "
+            + $"frame={FormatRect(borderRect)} expected=256x27 "
+            + $"partition1={FormatRect(firstPartitionRect)} expected=5x23 "
+            + $"slot1={FormatRect(firstSlotRect)} "
+            + $"slot1Items={FormatRect(firstStatsRect)} expected=23x7";
+    }
+
+    static string FormatRect(RectTransform rect)
+    {
+        if (rect == null)
+            return "<null>";
+
+        Rect currentRect = rect.rect;
+        return $"{rect.name} size={currentRect.width:0.###}x{currentRect.height:0.###} "
+            + $"anchors=({rect.anchorMin.x:0.####},{rect.anchorMin.y:0.####})-({rect.anchorMax.x:0.####},{rect.anchorMax.y:0.####}) "
+            + $"offsetMin=({rect.offsetMin.x:0.###},{rect.offsetMin.y:0.###}) "
+            + $"offsetMax=({rect.offsetMax.x:0.###},{rect.offsetMax.y:0.###})";
     }
 
     void SetTimerActive(bool active)
