@@ -48,6 +48,7 @@ public sealed class BattleRevengeSystem : MonoBehaviour
     void Awake()
     {
         Instance = this;
+        BattleRevengeBomberBlocker.Unblock();
         RefreshLaneBounds();
         RefreshPlayerCache(includeInactive: true);
     }
@@ -96,6 +97,7 @@ public sealed class BattleRevengeSystem : MonoBehaviour
 
         cart.ConfigureBounds(minEdgeX, maxEdgeX, minEdgeY, maxEdgeY);
         cart.Activate(this, deadPlayer.PlayerId, deadPlayer, startPosition, inwardDirection);
+        ConfigureComController(cart);
 
         activeCartsByOwner[deadPlayer.PlayerId] = cart;
     }
@@ -179,6 +181,7 @@ public sealed class BattleRevengeSystem : MonoBehaviour
                 victim,
                 newCartPosition,
                 newInwardDirection);
+            ConfigureComController(cart);
 
             GameManager.Instance?.CheckWinState();
         }
@@ -390,6 +393,39 @@ public sealed class BattleRevengeSystem : MonoBehaviour
         return TryGetPredictedLandingPosition(cart, distanceTiles, out Vector2 landingPosition)
             ? landingPosition
             : Vector2.zero;
+    }
+
+    public static void BlockAndRemoveAllActiveCartsForRoundEnd()
+    {
+        BattleRevengeBomberBlocker.Block();
+
+        BattleRevengeSystem[] systems = FindObjectsByType<BattleRevengeSystem>(FindObjectsInactive.Include);
+        for (int i = 0; i < systems.Length; i++)
+        {
+            BattleRevengeSystem system = systems[i];
+            if (system == null)
+                continue;
+
+            system.activeCartsByOwner.Clear();
+            system.cartPool.Clear();
+        }
+
+        BattleRevengeController[] carts = FindObjectsByType<BattleRevengeController>(FindObjectsInactive.Exclude);
+        for (int i = 0; i < carts.Length; i++)
+        {
+            BattleRevengeController cart = carts[i];
+            if (cart == null)
+                continue;
+
+            if (PlayerInputManager.Instance != null && GameSession.IsValidPlayerId(cart.OwnerPlayerId))
+                PlayerInputManager.Instance.ClearSyntheticPlayer(cart.OwnerPlayerId);
+
+            cart.PlayExit(() =>
+            {
+                if (cart != null)
+                    Destroy(cart.gameObject);
+            });
+        }
     }
 
     private bool IsValidRevengeBombLandingPosition(
@@ -737,6 +773,57 @@ public sealed class BattleRevengeSystem : MonoBehaviour
 
         cart.transform.SetParent(null, true);
         return cart;
+    }
+
+    private void ConfigureComController(BattleRevengeController cart)
+    {
+        if (cart == null)
+            return;
+
+        bool shouldUseCom =
+            GameSession.IsValidPlayerId(cart.OwnerPlayerId) &&
+            SaveSystem.GetBattleModePlayerControlMode(cart.OwnerPlayerId) == BattleModePlayerControlMode.Com;
+
+        var com = cart.GetComponent("BattleRevengeComController") as Behaviour;
+        if (shouldUseCom)
+        {
+            if (com == null)
+            {
+                Type comType = ResolveBattleRevengeComControllerType();
+                if (comType != null && typeof(Behaviour).IsAssignableFrom(comType))
+                    com = cart.gameObject.AddComponent(comType) as Behaviour;
+            }
+
+            if (com != null)
+            {
+                com.enabled = true;
+                cart.SendMessage("Initialize", cart, SendMessageOptions.DontRequireReceiver);
+            }
+            return;
+        }
+
+        if (com != null)
+            com.enabled = false;
+
+        if (PlayerInputManager.Instance != null && GameSession.IsValidPlayerId(cart.OwnerPlayerId))
+            PlayerInputManager.Instance.ClearSyntheticPlayer(cart.OwnerPlayerId);
+    }
+
+    private static Type ResolveBattleRevengeComControllerType()
+    {
+        Type type = Type.GetType("BattleRevengeComController");
+        if (type != null)
+            return type;
+
+        var assemblies = AppDomain.CurrentDomain.GetAssemblies();
+        for (int i = 0; i < assemblies.Length; i++)
+        {
+            type = assemblies[i].GetType("BattleRevengeComController");
+            if (type != null)
+                return type;
+        }
+
+        return null;
     }
 
     private void CleanupDestroyedActiveCarts()

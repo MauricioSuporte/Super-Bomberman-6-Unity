@@ -1,0 +1,1846 @@
+using System;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.SceneManagement;
+using UnityEngine.Tilemaps;
+
+public enum BattleModeComActionType
+{
+    Stopped = 0,
+    Patrol = 1,
+    CollectItem = 2,
+    FarmDestructible = 3,
+    CombatPlant = 4,
+    Reposition = 5
+}
+
+[Serializable]
+public sealed class BattleModeComDifficultySettings
+{
+    public BattleModeComputerLevel difficulty;
+    public float decisionInterval = 0.2f;
+    public float dangerDecisionInterval = 0.06f;
+    public int searchDepth = 8;
+    public float dangerReactionSeconds = 0.12f;
+    public float safeTileMinimumSeconds = 0.35f;
+    [Range(0f, 1f)] public float hesitationChance;
+
+    public int stoppedWeight;
+    public int patrolWeight;
+    public int collectItemWeight;
+    public int farmDestructibleWeight;
+    public int combatPlantWeight;
+
+    public static BattleModeComDifficultySettings For(BattleModeComputerLevel level)
+    {
+        switch (level)
+        {
+            case BattleModeComputerLevel.Easy:
+                return new BattleModeComDifficultySettings
+                {
+                    difficulty = level,
+                    decisionInterval = 0.36f,
+                    dangerDecisionInterval = 0.1f,
+                    searchDepth = 6,
+                    dangerReactionSeconds = 0.22f,
+                    safeTileMinimumSeconds = 0.2f,
+                    hesitationChance = 0.12f,
+                    stoppedWeight = 8,
+                    patrolWeight = 30,
+                    collectItemWeight = 35,
+                    farmDestructibleWeight = 20,
+                    combatPlantWeight = 10
+                };
+
+            case BattleModeComputerLevel.Hard:
+                return new BattleModeComDifficultySettings
+                {
+                    difficulty = level,
+                    decisionInterval = 0.14f,
+                    dangerDecisionInterval = 0.035f,
+                    searchDepth = 12,
+                    dangerReactionSeconds = 0.04f,
+                    safeTileMinimumSeconds = 0.45f,
+                    hesitationChance = 0.01f,
+                    stoppedWeight = 1,
+                    patrolWeight = 12,
+                    collectItemWeight = 30,
+                    farmDestructibleWeight = 25,
+                    combatPlantWeight = 45
+                };
+
+            default:
+                return new BattleModeComDifficultySettings
+                {
+                    difficulty = BattleModeComputerLevel.Normal,
+                    decisionInterval = 0.22f,
+                    dangerDecisionInterval = 0.06f,
+                    searchDepth = 9,
+                    dangerReactionSeconds = 0.1f,
+                    safeTileMinimumSeconds = 0.35f,
+                    hesitationChance = 0.04f,
+                    stoppedWeight = 3,
+                    patrolWeight = 20,
+                    collectItemWeight = 35,
+                    farmDestructibleWeight = 25,
+                    combatPlantWeight = 30
+                };
+        }
+    }
+}
+
+public static class BattleModeComDiagnostics
+{
+    public enum LogLevel
+    {
+        Off = 0,
+        Summary = 1,
+        Verbose = 2
+    }
+
+    public static LogLevel DefaultLogLevel
+    {
+        get
+        {
+#if UNITY_EDITOR
+            return LogLevel.Summary;
+#else
+            return LogLevel.Off;
+#endif
+        }
+    }
+
+    public static bool ShouldLog(LogLevel current, LogLevel required)
+    {
+        return current != LogLevel.Off && current >= required;
+    }
+
+    public static string FormatSummary(
+        string scene,
+        int frame,
+        int playerId,
+        BattleModeComputerLevel difficulty,
+        BattleModeComActionType action,
+        string target,
+        Vector2Int position,
+        string danger,
+        string route,
+        string reason,
+        string nextInput)
+    {
+        return $"scene:{scene} frame:{frame} playerId:{playerId} difficulty:{difficulty} " +
+               $"action:{action} target:{target} pos:{position} danger:{danger} route:{route} " +
+               $"reason:{reason} input:{nextInput}";
+    }
+}
+
+[DefaultExecutionOrder(-100)]
+[DisallowMultipleComponent]
+[RequireComponent(typeof(PlayerIdentity))]
+[RequireComponent(typeof(MovementController))]
+[RequireComponent(typeof(BombController))]
+public sealed class BattleModeComController : MonoBehaviour
+{
+    private const float TargetReachDistanceTiles = 0.18f;
+    private const float BombTapCooldownSeconds = 0.35f;
+    private const float ControlBombTapCooldownSeconds = 0.35f;
+    private const float SafetyHoldLogIntervalSeconds = 0.5f;
+    private const float SafeTileCenterTolerance = 0.08f;
+    private const int MaxDecisionBufferEntries = 32;
+
+    private static readonly Vector2Int[] CardinalTiles =
+    {
+        Vector2Int.up,
+        Vector2Int.down,
+        Vector2Int.left,
+        Vector2Int.right
+    };
+
+    private static readonly PlayerAction[] MovementActions =
+    {
+        PlayerAction.MoveUp,
+        PlayerAction.MoveDown,
+        PlayerAction.MoveLeft,
+        PlayerAction.MoveRight
+    };
+
+    [Header("Diagnostics")]
+    [SerializeField] private BattleModeComDiagnostics.LogLevel logLevel = BattleModeComDiagnostics.DefaultLogLevel;
+    [SerializeField, Range(4, MaxDecisionBufferEntries)] private int decisionBufferSize = 16;
+    [SerializeField] private string[] recentDecisionLog = Array.Empty<string>();
+
+    private readonly List<string> recentDecisions = new();
+    private readonly List<PlayerIdentity> activePlayers = new(6);
+    private readonly List<CandidateAction> candidates = new(8);
+    private readonly List<string> rejectedActions = new(16);
+    private readonly Dictionary<Vector2Int, PathNode> visited = new(128);
+    private readonly Queue<Vector2Int> open = new(128);
+    private readonly Collider2D[] obstacleHits = new Collider2D[16];
+    private readonly List<Vector2Int> reachableTiles = new(128);
+
+    private PlayerIdentity identity;
+    private MovementController movement;
+    private BombController bombController;
+    private Collider2D[] ownColliders;
+    private ContactFilter2D obstacleFilter;
+    private GameManager gameManager;
+    private Tilemap groundTilemap;
+    private Tilemap destructibleTilemap;
+    private Tilemap indestructibleTilemap;
+    private int explosionMask;
+    private int playerId = 1;
+    private float tileSize = 1f;
+    private float nextDecisionTime;
+    private float lastBombTapTime = -10f;
+    private float lastControlTapTime = -10f;
+    private BattleModeComActionType currentAction = BattleModeComActionType.Stopped;
+    private Vector2 currentMoveInput;
+    private Vector2Int currentTargetTile;
+    private bool hasCurrentTarget;
+    private string currentReason = "startup";
+    private string currentInputDescription = "none";
+    private float lastSafetyHoldLogTime = -10f;
+    private Vector2Int safeCenterTargetTile;
+    private bool hasSafeCenterTarget;
+    private bool initialized;
+
+    private struct PathNode
+    {
+        public Vector2Int Tile;
+        public Vector2Int Parent;
+        public int Depth;
+    }
+
+    private struct CandidateAction
+    {
+        public BattleModeComActionType Action;
+        public int Weight;
+        public Vector2Int TargetTile;
+        public bool HasTarget;
+        public Vector2 FirstMove;
+        public bool HasRoute;
+        public string Reason;
+        public string InputDescription;
+        public bool TapBomb;
+    }
+
+    public IReadOnlyList<string> RecentDecisionLog => recentDecisions;
+
+    public void Initialize(int id)
+    {
+        playerId = Mathf.Clamp(id, GameSession.MinPlayerId, GameSession.MaxPlayerId);
+        initialized = true;
+        CacheReferences();
+        RefreshRuntimeEnabledState();
+    }
+
+    private void Awake()
+    {
+        CacheReferences();
+    }
+
+    private void OnEnable()
+    {
+        CacheReferences();
+
+        if (!initialized && identity != null)
+            playerId = Mathf.Clamp(identity.playerId, GameSession.MinPlayerId, GameSession.MaxPlayerId);
+
+        RefreshRuntimeEnabledState();
+    }
+
+    private void Start()
+    {
+        CacheReferences();
+        RefreshRuntimeEnabledState();
+    }
+
+    private void OnDisable()
+    {
+        ClearSyntheticInputs();
+    }
+
+    private void CacheReferences()
+    {
+        if (identity == null)
+            TryGetComponent(out identity);
+
+        if (movement == null)
+            TryGetComponent(out movement);
+
+        if (bombController == null)
+            TryGetComponent(out bombController);
+
+        if (identity != null)
+            playerId = Mathf.Clamp(identity.playerId, GameSession.MinPlayerId, GameSession.MaxPlayerId);
+
+        ownColliders = GetComponentsInChildren<Collider2D>(true);
+
+        if (movement != null)
+        {
+            tileSize = Mathf.Max(0.01f, movement.tileSize);
+            obstacleFilter = new ContactFilter2D
+            {
+                useLayerMask = true,
+                useTriggers = true
+            };
+            obstacleFilter.SetLayerMask(movement.obstacleMask);
+        }
+
+        gameManager = GameManager.Instance != null ? GameManager.Instance : FindAnyObjectByType<GameManager>();
+        if (gameManager != null)
+        {
+            groundTilemap = gameManager.groundTilemap;
+            destructibleTilemap = gameManager.destructibleTilemap;
+            indestructibleTilemap = gameManager.indestructibleTilemap;
+        }
+
+        explosionMask = LayerMask.GetMask("Explosion");
+    }
+
+    private void RefreshRuntimeEnabledState()
+    {
+        bool shouldRun = IsBattleModeScene() &&
+                         SaveSystem.GetBattleModePlayerControlMode(playerId) == BattleModePlayerControlMode.Com;
+
+        if (!shouldRun)
+        {
+            ClearSyntheticInputs();
+            enabled = false;
+            return;
+        }
+
+        enabled = true;
+    }
+
+    private void Update()
+    {
+        CacheReferences();
+
+        if (!IsReadyToThink())
+        {
+            SetMovementInput(Vector2.zero);
+            return;
+        }
+
+        BattleModeComputerLevel difficulty = ResolveDifficulty();
+        BattleModeComDifficultySettings settings = BattleModeComDifficultySettings.For(difficulty);
+        Vector2Int myTile = WorldToTile(transform.position);
+        float currentDangerSeconds = GetDangerSeconds(myTile, null);
+        bool inDanger = IsTileThreatened(myTile, null);
+
+        if (inDanger || Time.time >= nextDecisionTime)
+        {
+            Think(settings, myTile, currentDangerSeconds, inDanger);
+            nextDecisionTime = Time.time + (inDanger ? settings.dangerDecisionInterval : settings.decisionInterval);
+        }
+
+        currentMoveInput = ApplySafeTileCentering(myTile, currentMoveInput);
+        currentMoveInput = EnforceSafeMovement(settings, myTile, currentMoveInput);
+        SetMovementInput(currentMoveInput);
+    }
+
+    private bool IsReadyToThink()
+    {
+        if (!enabled || !IsBattleModeScene())
+            return false;
+
+        if (identity == null || movement == null || bombController == null)
+            return false;
+
+        if (SaveSystem.GetBattleModePlayerControlMode(playerId) != BattleModePlayerControlMode.Com)
+            return false;
+
+        if (movement.InputLocked || movement.isDead || movement.IsEndingStage)
+            return false;
+
+        if (GamePauseController.IsPaused)
+            return false;
+
+        if (ClownMaskBoss.BossIntroRunning)
+            return false;
+
+        if (StageIntroTransition.Instance != null &&
+            (StageIntroTransition.Instance.IntroRunning || StageIntroTransition.Instance.EndingRunning))
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+    private void Think(
+        BattleModeComDifficultySettings settings,
+        Vector2Int myTile,
+        float currentDangerSeconds,
+        bool inDanger)
+    {
+        candidates.Clear();
+        rejectedActions.Clear();
+        currentInputDescription = "none";
+
+        if (inDanger)
+        {
+            ExecuteEscape(settings, myTile, currentDangerSeconds);
+            return;
+        }
+
+        if (HasOwnUnresolvedBombOrExplosion())
+        {
+            hasSafeCenterTarget = true;
+            safeCenterTargetTile = myTile;
+
+            SetCurrentDecision(
+                BattleModeComActionType.Stopped,
+                Vector2.zero,
+                false,
+                myTile,
+                "hold safe tile until own bomb resolves",
+                "none",
+                currentDangerSeconds,
+                "safetyHold");
+            return;
+        }
+
+        hasSafeCenterTarget = false;
+
+        if (TryEmitControlBomb(settings, myTile, currentDangerSeconds))
+            return;
+
+        BuildCandidates(settings, myTile);
+
+        if (candidates.Count <= 0)
+        {
+            SetCurrentDecision(
+                BattleModeComActionType.Stopped,
+                Vector2.zero,
+                false,
+                myTile,
+                "no candidate",
+                "none",
+                currentDangerSeconds,
+                "none");
+            return;
+        }
+
+        if (UnityEngine.Random.value < settings.hesitationChance)
+        {
+            SetCurrentDecision(
+                BattleModeComActionType.Stopped,
+                Vector2.zero,
+                false,
+                myTile,
+                "hesitation",
+                "none",
+                currentDangerSeconds,
+                "none");
+            return;
+        }
+
+        CandidateAction selected = PickWeightedCandidate(candidates);
+        currentAction = selected.Action;
+        currentMoveInput = selected.FirstMove;
+        currentTargetTile = selected.TargetTile;
+        hasCurrentTarget = selected.HasTarget;
+        currentReason = selected.Reason;
+        currentInputDescription = selected.InputDescription;
+
+        if (selected.TapBomb && Time.time - lastBombTapTime >= BombTapCooldownSeconds)
+        {
+            Tap(PlayerAction.ActionA);
+            lastBombTapTime = Time.time;
+            currentInputDescription = AppendInput(currentInputDescription, "ActionA");
+        }
+
+        LogDecision(settings, myTile, currentDangerSeconds, selected.HasRoute ? "found" : "none");
+    }
+
+    private void ExecuteEscape(
+        BattleModeComDifficultySettings settings,
+        Vector2Int myTile,
+        float currentDangerSeconds)
+    {
+        if (TryFindEscape(settings, myTile, null, out Vector2 firstMove, out Vector2Int target, out string route))
+        {
+            SetCurrentDecision(
+                BattleModeComActionType.Reposition,
+                firstMove,
+                true,
+                target,
+                "escape danger",
+                FirstMoveDescription(firstMove),
+                currentDangerSeconds,
+                route);
+            return;
+        }
+
+        Vector2 fallback = FindBestFallbackMove(settings, myTile, null, out string fallbackReason);
+        SetCurrentDecision(
+            BattleModeComActionType.Reposition,
+            fallback,
+            false,
+            myTile,
+            fallbackReason,
+            FirstMoveDescription(fallback),
+            currentDangerSeconds,
+            "fallback");
+    }
+
+    private void BuildCandidates(BattleModeComDifficultySettings settings, Vector2Int myTile)
+    {
+        AddCandidate(new CandidateAction
+        {
+            Action = BattleModeComActionType.Stopped,
+            Weight = settings.stoppedWeight,
+            TargetTile = myTile,
+            HasTarget = false,
+            FirstMove = Vector2.zero,
+            HasRoute = true,
+            Reason = "idle weight",
+            InputDescription = "none"
+        });
+
+        if (TryBuildCollectCandidate(settings, myTile, out CandidateAction collect))
+            AddCandidate(collect);
+        else
+            Reject("CollectItem", "no useful reachable item");
+
+        if (TryBuildFarmCandidate(settings, myTile, out CandidateAction farm))
+            AddCandidate(farm);
+        else if (bombController == null || bombController.BombsRemaining <= 0)
+            Reject("FarmDestructible", "sem bomba");
+        else
+            Reject("FarmDestructible", "sem rota segura para farm");
+
+        if (TryBuildCombatCandidate(settings, myTile, out CandidateAction combat))
+            AddCandidate(combat);
+        else if (bombController == null || bombController.BombsRemaining <= 0)
+            Reject("CombatPlant", "sem bomba");
+        else
+            Reject("CombatPlant", "alvo fora de alcance ou sem fuga");
+
+        if (TryBuildPatrolCandidate(settings, myTile, out CandidateAction patrol))
+            AddCandidate(patrol);
+        else
+            Reject("Patrol", "sem tile seguro");
+    }
+
+    private void AddCandidate(CandidateAction candidate)
+    {
+        if (candidate.Weight <= 0)
+            return;
+
+        candidates.Add(candidate);
+    }
+
+    private bool TryBuildCollectCandidate(
+        BattleModeComDifficultySettings settings,
+        Vector2Int myTile,
+        out CandidateAction candidate)
+    {
+        candidate = default;
+        ItemPickup[] items = FindObjectsByType<ItemPickup>(FindObjectsInactive.Exclude);
+        ItemPickup bestItem = null;
+        Vector2 bestMove = Vector2.zero;
+        Vector2Int bestTile = myTile;
+        int bestDistance = int.MaxValue;
+        float bestDanger = 0f;
+
+        for (int i = 0; i < items.Length; i++)
+        {
+            ItemPickup item = items[i];
+            if (item == null || !item.gameObject.activeInHierarchy)
+                continue;
+
+            if (!IsUsefulItem(item.type))
+            {
+                RejectVerbose($"CollectItem item perigoso {item.type}");
+                continue;
+            }
+
+            Vector2Int itemTile = WorldToTile(item.transform.position);
+            if (!IsWalkableTile(itemTile, myTile))
+            {
+                RejectVerbose($"CollectItem item bloqueado {item.type}@{itemTile}");
+                continue;
+            }
+
+            if (!TryFindPath(myTile, itemTile, settings.searchDepth + 5, true, settings, null, out PathResult path))
+            {
+                RejectVerbose($"CollectItem sem rota {item.type}@{itemTile}");
+                continue;
+            }
+
+            float danger = GetDangerSeconds(itemTile, null);
+            if (path.Distance < bestDistance ||
+                (path.Distance == bestDistance && danger > bestDanger))
+            {
+                bestItem = item;
+                bestMove = path.FirstMove;
+                bestTile = itemTile;
+                bestDistance = path.Distance;
+                bestDanger = danger;
+            }
+        }
+
+        if (bestItem == null)
+            return false;
+
+        candidate = new CandidateAction
+        {
+            Action = BattleModeComActionType.CollectItem,
+            Weight = settings.collectItemWeight,
+            TargetTile = bestTile,
+            HasTarget = true,
+            FirstMove = bestMove,
+            HasRoute = true,
+            Reason = $"item {bestItem.type} distance {bestDistance}",
+            InputDescription = FirstMoveDescription(bestMove)
+        };
+        return true;
+    }
+
+    private bool TryBuildFarmCandidate(
+        BattleModeComDifficultySettings settings,
+        Vector2Int myTile,
+        out CandidateAction candidate)
+    {
+        candidate = default;
+
+        if (bombController == null || bombController.BombsRemaining <= 0)
+            return false;
+
+        if (destructibleTilemap == null)
+            return false;
+
+        GatherReachableSafeTiles(myTile, settings.searchDepth + 3, settings);
+
+        Vector2Int bestTile = myTile;
+        Vector2 bestMove = Vector2.zero;
+        int bestDistance = int.MaxValue;
+        bool bestNeedsBombTap = false;
+        Vector2 bestEscapeMove = Vector2.zero;
+
+        for (int i = 0; i < reachableTiles.Count; i++)
+        {
+            Vector2Int tile = reachableTiles[i];
+            if (!CanBombHitDestructible(tile, Mathf.Max(1, bombController.explosionRadius)))
+                continue;
+
+            if (!CanPlantBombWithEscape(tile, Mathf.Max(1, bombController.explosionRadius), settings, out Vector2 escapeMove, out _))
+            {
+                RejectVerbose($"FarmDestructible recusado sem fuga {tile}");
+                continue;
+            }
+
+            if (!TryFindPath(myTile, tile, settings.searchDepth + 3, true, settings, null, out PathResult path))
+                continue;
+
+            if (path.Distance < bestDistance)
+            {
+                bestTile = tile;
+                bestMove = path.FirstMove;
+                bestDistance = path.Distance;
+                bestNeedsBombTap = path.Distance == 0;
+                bestEscapeMove = escapeMove;
+            }
+        }
+
+        if (bestDistance == int.MaxValue)
+            return false;
+
+        candidate = new CandidateAction
+        {
+            Action = BattleModeComActionType.FarmDestructible,
+            Weight = settings.farmDestructibleWeight,
+            TargetTile = bestTile,
+            HasTarget = true,
+            FirstMove = bestNeedsBombTap ? bestEscapeMove : bestMove,
+            HasRoute = true,
+            Reason = bestNeedsBombTap ? "plant farm bomb" : $"move to farm tile distance {bestDistance}",
+            InputDescription = bestNeedsBombTap
+                ? AppendInput("ActionA", FirstMoveDescription(bestEscapeMove))
+                : FirstMoveDescription(bestMove),
+            TapBomb = bestNeedsBombTap
+        };
+        return true;
+    }
+
+    private bool TryBuildCombatCandidate(
+        BattleModeComDifficultySettings settings,
+        Vector2Int myTile,
+        out CandidateAction candidate)
+    {
+        candidate = default;
+
+        if (bombController == null || bombController.BombsRemaining <= 0)
+            return false;
+
+        if (!TryFindNearestEnemy(myTile, out PlayerIdentity target, out Vector2Int targetTile, out int targetDistance))
+            return false;
+
+        int radius = Mathf.Max(1, bombController.explosionRadius);
+        if (IsTileInBlastLineRuntime(myTile, targetTile, radius) &&
+            CanPlantBombWithEscape(myTile, radius, settings, out Vector2 escapeMove, out _))
+        {
+            candidate = new CandidateAction
+            {
+                Action = BattleModeComActionType.CombatPlant,
+                Weight = settings.combatPlantWeight,
+                TargetTile = targetTile,
+                HasTarget = true,
+                FirstMove = escapeMove,
+                HasRoute = true,
+                Reason = $"target P{target.playerId} in blast line",
+                InputDescription = AppendInput("ActionA", FirstMoveDescription(escapeMove)),
+                TapBomb = true
+            };
+            return true;
+        }
+
+        if (targetDistance <= settings.searchDepth + radius + 2 &&
+            TryFindPath(myTile, targetTile, settings.searchDepth + 3, true, settings, null, out PathResult path))
+        {
+            candidate = new CandidateAction
+            {
+                Action = BattleModeComActionType.CombatPlant,
+                Weight = Mathf.Max(1, settings.combatPlantWeight / 2),
+                TargetTile = targetTile,
+                HasTarget = true,
+                FirstMove = path.FirstMove,
+                HasRoute = true,
+                Reason = $"approach target P{target.playerId} distance {targetDistance}",
+                InputDescription = FirstMoveDescription(path.FirstMove)
+            };
+            return true;
+        }
+
+        RejectVerbose($"CombatPlant alvo P{target.playerId} fora de alcance ou sem rota segura");
+        return false;
+    }
+
+    private bool TryBuildPatrolCandidate(
+        BattleModeComDifficultySettings settings,
+        Vector2Int myTile,
+        out CandidateAction candidate)
+    {
+        candidate = default;
+
+        Vector2 move = Vector2.zero;
+        Vector2Int targetTile = myTile;
+        string reason = "safe roam";
+
+        if (TryFindNearestEnemy(myTile, out PlayerIdentity target, out Vector2Int enemyTile, out int enemyDistance) &&
+            TryFindPath(myTile, enemyTile, settings.searchDepth + 4, true, settings, null, out PathResult enemyPath))
+        {
+            move = enemyPath.FirstMove;
+            targetTile = enemyTile;
+            reason = $"patrol toward P{target.playerId} distance {enemyDistance}";
+        }
+        else
+        {
+            move = FindBestFallbackMove(settings, myTile, null, out reason);
+            if (move == Vector2.zero)
+                return false;
+
+            targetTile = myTile + DirectionToTile(move);
+        }
+
+        candidate = new CandidateAction
+        {
+            Action = BattleModeComActionType.Patrol,
+            Weight = settings.patrolWeight,
+            TargetTile = targetTile,
+            HasTarget = true,
+            FirstMove = move,
+            HasRoute = move != Vector2.zero,
+            Reason = reason,
+            InputDescription = FirstMoveDescription(move)
+        };
+        return true;
+    }
+
+    private bool TryEmitControlBomb(
+        BattleModeComDifficultySettings settings,
+        Vector2Int myTile,
+        float currentDangerSeconds)
+    {
+        if (bombController == null || Time.time - lastControlTapTime < ControlBombTapCooldownSeconds)
+            return false;
+
+        foreach (Bomb bomb in Bomb.ActiveBombs)
+        {
+            if (bomb == null || bomb.HasExploded || !bomb.IsControlBomb || bomb.Owner != bombController)
+                continue;
+
+            Vector2Int bombTile = WorldToTile(bomb.GetLogicalPosition());
+            int radius = Mathf.Max(1, bombController.explosionRadius);
+            if (!WouldExplosionHitEnemyWithoutFriendlyRisk(bombTile, radius, myTile, out int enemyId))
+                continue;
+
+            Tap(PlayerAction.ActionB);
+            lastControlTapTime = Time.time;
+
+            SetCurrentDecision(
+                BattleModeComActionType.CombatPlant,
+                currentMoveInput,
+                true,
+                bombTile,
+                $"control bomb hits P{enemyId}",
+                "ActionB",
+                currentDangerSeconds,
+                "controlBomb");
+            return true;
+        }
+
+        RejectVerbose("ControlBomb sem alvo seguro");
+        return false;
+    }
+
+    private CandidateAction PickWeightedCandidate(List<CandidateAction> source)
+    {
+        int total = 0;
+        for (int i = 0; i < source.Count; i++)
+            total += Mathf.Max(0, source[i].Weight);
+
+        if (total <= 0)
+            return source[0];
+
+        int roll = UnityEngine.Random.Range(0, total);
+        int cursor = 0;
+
+        for (int i = 0; i < source.Count; i++)
+        {
+            cursor += Mathf.Max(0, source[i].Weight);
+            if (roll < cursor)
+                return source[i];
+        }
+
+        return source[source.Count - 1];
+    }
+
+    private void SetCurrentDecision(
+        BattleModeComActionType action,
+        Vector2 move,
+        bool hasTarget,
+        Vector2Int target,
+        string reason,
+        string input,
+        float dangerSeconds,
+        string route)
+    {
+        currentAction = action;
+        currentMoveInput = move;
+        hasCurrentTarget = hasTarget;
+        currentTargetTile = target;
+        currentReason = reason;
+        currentInputDescription = input;
+
+        if (action == BattleModeComActionType.Reposition && hasTarget)
+        {
+            hasSafeCenterTarget = true;
+            safeCenterTargetTile = target;
+        }
+
+        BattleModeComDifficultySettings settings = BattleModeComDifficultySettings.For(ResolveDifficulty());
+        LogDecision(settings, WorldToTile(transform.position), dangerSeconds, route);
+    }
+
+    private void LogDecision(
+        BattleModeComDifficultySettings settings,
+        Vector2Int myTile,
+        float dangerSeconds,
+        string route)
+    {
+        if (!BattleModeComDiagnostics.ShouldLog(logLevel, BattleModeComDiagnostics.LogLevel.Summary))
+            return;
+
+        string target = hasCurrentTarget ? currentTargetTile.ToString() : "none";
+        string danger = FormatDanger(dangerSeconds);
+        string scene = SceneManager.GetActiveScene().name;
+        string summary = BattleModeComDiagnostics.FormatSummary(
+            scene,
+            Time.frameCount,
+            playerId,
+            settings.difficulty,
+            currentAction,
+            target,
+            myTile,
+            danger,
+            route,
+            currentReason,
+            currentInputDescription);
+
+        string line = $"[BattleCOM][P{playerId}] {summary}";
+        PushDecision(line);
+        Debug.Log(line, this);
+
+        if (BattleModeComDiagnostics.ShouldLog(logLevel, BattleModeComDiagnostics.LogLevel.Verbose))
+        {
+            Debug.Log($"[BattleCOM][P{playerId}] candidates:{FormatCandidates()} rejected:{string.Join(" | ", rejectedActions)}", this);
+        }
+    }
+
+    private void PushDecision(string line)
+    {
+        recentDecisions.Add(line);
+
+        int max = Mathf.Clamp(decisionBufferSize, 4, MaxDecisionBufferEntries);
+        while (recentDecisions.Count > max)
+            recentDecisions.RemoveAt(0);
+
+        recentDecisionLog = recentDecisions.ToArray();
+    }
+
+    private string FormatCandidates()
+    {
+        if (candidates.Count <= 0)
+            return "none";
+
+        string result = string.Empty;
+        for (int i = 0; i < candidates.Count; i++)
+        {
+            CandidateAction c = candidates[i];
+            if (i > 0)
+                result += ", ";
+
+            result += $"{c.Action}:{c.Weight}:{c.Reason}";
+        }
+
+        return result;
+    }
+
+    private void Reject(string action, string reason)
+    {
+        if (BattleModeComDiagnostics.ShouldLog(logLevel, BattleModeComDiagnostics.LogLevel.Verbose))
+            rejectedActions.Add($"{action}:{reason}");
+    }
+
+    private void RejectVerbose(string reason)
+    {
+        if (BattleModeComDiagnostics.ShouldLog(logLevel, BattleModeComDiagnostics.LogLevel.Verbose))
+            rejectedActions.Add(reason);
+    }
+
+    private bool TryFindEscape(
+        BattleModeComDifficultySettings settings,
+        Vector2Int start,
+        List<Vector2Int> plannedBlastTiles,
+        out Vector2 firstMove,
+        out Vector2Int target,
+        out string route)
+    {
+        firstMove = Vector2.zero;
+        target = start;
+        route = "none";
+
+        visited.Clear();
+        open.Clear();
+
+        visited[start] = new PathNode { Tile = start, Parent = start, Depth = 0 };
+        open.Enqueue(start);
+
+        while (open.Count > 0)
+        {
+            Vector2Int tile = open.Dequeue();
+            PathNode node = visited[tile];
+            float eta = EstimateTraversalSeconds(node.Depth);
+            float dangerSeconds = GetDangerSeconds(tile, plannedBlastTiles);
+            bool plannedDanger = plannedBlastTiles != null && plannedBlastTiles.Contains(tile);
+
+            if (!plannedDanger &&
+                node.Depth > 0 &&
+                float.IsInfinity(dangerSeconds) &&
+                !IsDangerousAt(tile, eta + settings.safeTileMinimumSeconds, settings, plannedBlastTiles) &&
+                dangerSeconds > eta + settings.safeTileMinimumSeconds)
+            {
+                target = tile;
+                firstMove = ReconstructFirstMove(start, tile);
+                route = $"escape depth {node.Depth}";
+                return true;
+            }
+
+            if (node.Depth >= settings.searchDepth + 3)
+                continue;
+
+            for (int i = 0; i < CardinalTiles.Length; i++)
+            {
+                Vector2Int next = tile + CardinalTiles[i];
+                if (visited.ContainsKey(next))
+                    continue;
+
+                if (!IsWalkableTile(next, start))
+                    continue;
+
+                float nextEta = EstimateTraversalSeconds(node.Depth + 1);
+                if (IsDangerousAt(next, nextEta, settings, plannedBlastTiles))
+                    continue;
+
+                visited[next] = new PathNode { Tile = next, Parent = tile, Depth = node.Depth + 1 };
+                open.Enqueue(next);
+            }
+        }
+
+        return false;
+    }
+
+    private Vector2 FindBestFallbackMove(
+        BattleModeComDifficultySettings settings,
+        Vector2Int myTile,
+        List<Vector2Int> plannedBlastTiles,
+        out string reason)
+    {
+        float bestScore = float.NegativeInfinity;
+        Vector2 bestMove = Vector2.zero;
+        reason = "no fallback";
+
+        for (int i = 0; i < CardinalTiles.Length; i++)
+        {
+            Vector2Int next = myTile + CardinalTiles[i];
+            if (!IsWalkableTile(next, myTile))
+                continue;
+
+            float danger = GetDangerSeconds(next, plannedBlastTiles);
+            float score = danger + CountOpenNeighbors(next) * 0.25f;
+            if (plannedBlastTiles != null && plannedBlastTiles.Contains(next))
+                score -= 10f;
+
+            if (score > bestScore)
+            {
+                bestScore = score;
+                bestMove = TileDirectionToVector(CardinalTiles[i]);
+                reason = $"fallback score {score:F2}";
+            }
+        }
+
+        return bestMove;
+    }
+
+    private bool TryFindPath(
+        Vector2Int start,
+        Vector2Int goal,
+        int maxDepth,
+        bool avoidDanger,
+        BattleModeComDifficultySettings settings,
+        List<Vector2Int> plannedBlastTiles,
+        out PathResult result)
+    {
+        result = default;
+
+        if (start == goal)
+        {
+            result = new PathResult
+            {
+                Found = true,
+                FirstMove = Vector2.zero,
+                Distance = 0
+            };
+            return true;
+        }
+
+        visited.Clear();
+        open.Clear();
+
+        visited[start] = new PathNode { Tile = start, Parent = start, Depth = 0 };
+        open.Enqueue(start);
+
+        while (open.Count > 0)
+        {
+            Vector2Int tile = open.Dequeue();
+            PathNode node = visited[tile];
+
+            if (node.Depth >= maxDepth)
+                continue;
+
+            for (int i = 0; i < CardinalTiles.Length; i++)
+            {
+                Vector2Int next = tile + CardinalTiles[i];
+                if (visited.ContainsKey(next))
+                    continue;
+
+                if (!IsWalkableTile(next, start))
+                    continue;
+
+                int nextDepth = node.Depth + 1;
+                if (avoidDanger && IsTileThreatened(next, plannedBlastTiles))
+                    continue;
+
+                visited[next] = new PathNode { Tile = next, Parent = tile, Depth = nextDepth };
+
+                if (next == goal)
+                {
+                    result = new PathResult
+                    {
+                        Found = true,
+                        FirstMove = ReconstructFirstMove(start, goal),
+                        Distance = nextDepth
+                    };
+                    return true;
+                }
+
+                open.Enqueue(next);
+            }
+        }
+
+        RejectVerbose($"pathfinding failed {start}->{goal}");
+        return false;
+    }
+
+    private struct PathResult
+    {
+        public bool Found;
+        public Vector2 FirstMove;
+        public int Distance;
+    }
+
+    private void GatherReachableSafeTiles(Vector2Int start, int maxDepth, BattleModeComDifficultySettings settings)
+    {
+        reachableTiles.Clear();
+        visited.Clear();
+        open.Clear();
+
+        visited[start] = new PathNode { Tile = start, Parent = start, Depth = 0 };
+        open.Enqueue(start);
+        reachableTiles.Add(start);
+
+        while (open.Count > 0)
+        {
+            Vector2Int tile = open.Dequeue();
+            PathNode node = visited[tile];
+            if (node.Depth >= maxDepth)
+                continue;
+
+            for (int i = 0; i < CardinalTiles.Length; i++)
+            {
+                Vector2Int next = tile + CardinalTiles[i];
+                if (visited.ContainsKey(next))
+                    continue;
+
+                if (!IsWalkableTile(next, start))
+                    continue;
+
+                int nextDepth = node.Depth + 1;
+                if (IsTileThreatened(next, null))
+                    continue;
+
+                visited[next] = new PathNode { Tile = next, Parent = tile, Depth = nextDepth };
+                reachableTiles.Add(next);
+                open.Enqueue(next);
+            }
+        }
+    }
+
+    private Vector2 ReconstructFirstMove(Vector2Int start, Vector2Int goal)
+    {
+        if (start == goal)
+            return Vector2.zero;
+
+        Vector2Int cursor = goal;
+        while (visited.TryGetValue(cursor, out PathNode node) && node.Parent != start && node.Parent != cursor)
+            cursor = node.Parent;
+
+        Vector2Int delta = cursor - start;
+        if (Mathf.Abs(delta.x) > Mathf.Abs(delta.y))
+            return delta.x > 0 ? Vector2.right : Vector2.left;
+
+        if (delta.y != 0)
+            return delta.y > 0 ? Vector2.up : Vector2.down;
+
+        return Vector2.zero;
+    }
+
+    private bool CanPlantBombWithEscape(
+        Vector2Int plantTile,
+        int radius,
+        BattleModeComDifficultySettings settings,
+        out Vector2 escapeMove,
+        out Vector2Int escapeTile)
+    {
+        List<Vector2Int> plannedBlast = BuildBlastTiles(plantTile, radius);
+        return TryFindEscape(settings, plantTile, plannedBlast, out escapeMove, out escapeTile, out _);
+    }
+
+    private List<Vector2Int> BuildBlastTiles(Vector2Int origin, int radius)
+    {
+        List<Vector2Int> tiles = new();
+        tiles.Add(origin);
+
+        for (int i = 0; i < CardinalTiles.Length; i++)
+        {
+            Vector2Int dir = CardinalTiles[i];
+            for (int step = 1; step <= radius; step++)
+            {
+                Vector2Int tile = origin + dir * step;
+                tiles.Add(tile);
+
+                if (BlocksExplosion(tile))
+                    break;
+            }
+        }
+
+        return tiles;
+    }
+
+    private bool CanBombHitDestructible(Vector2Int plantTile, int radius)
+    {
+        for (int i = 0; i < CardinalTiles.Length; i++)
+        {
+            Vector2Int dir = CardinalTiles[i];
+            for (int step = 1; step <= radius; step++)
+            {
+                Vector2Int tile = plantTile + dir * step;
+
+                if (HasIndestructibleTile(tile))
+                    break;
+
+                if (HasDestructibleTile(tile))
+                    return true;
+
+                if (IsBombAtTile(tile))
+                    break;
+            }
+        }
+
+        return false;
+    }
+
+    private bool TryFindNearestEnemy(
+        Vector2Int myTile,
+        out PlayerIdentity target,
+        out Vector2Int targetTile,
+        out int distance)
+    {
+        target = null;
+        targetTile = myTile;
+        distance = int.MaxValue;
+
+        activePlayers.Clear();
+        PlayerIdentity.GetActivePlayers(activePlayers);
+
+        for (int i = 0; i < activePlayers.Count; i++)
+        {
+            PlayerIdentity player = activePlayers[i];
+            if (player == null || player == identity)
+                continue;
+
+            if (!player.TryGetComponent<MovementController>(out var targetMovement) ||
+                targetMovement == null ||
+                targetMovement.isDead ||
+                targetMovement.IsEndingStage)
+            {
+                continue;
+            }
+
+            if (IsAlly(player.playerId))
+                continue;
+
+            Vector2Int tile = WorldToTile(player.transform.position);
+            int d = Manhattan(myTile, tile);
+            if (d < distance)
+            {
+                target = player;
+                targetTile = tile;
+                distance = d;
+            }
+        }
+
+        return target != null;
+    }
+
+    private bool WouldExplosionHitEnemyWithoutFriendlyRisk(
+        Vector2Int bombTile,
+        int radius,
+        Vector2Int myTile,
+        out int enemyId)
+    {
+        enemyId = 0;
+        bool hitsEnemy = false;
+
+        activePlayers.Clear();
+        PlayerIdentity.GetActivePlayers(activePlayers);
+
+        for (int i = 0; i < activePlayers.Count; i++)
+        {
+            PlayerIdentity player = activePlayers[i];
+            if (player == null)
+                continue;
+
+            if (!player.TryGetComponent<MovementController>(out var targetMovement) ||
+                targetMovement == null ||
+                targetMovement.isDead ||
+                targetMovement.IsEndingStage)
+            {
+                continue;
+            }
+
+            Vector2Int tile = WorldToTile(player.transform.position);
+            if (!IsTileInBlastLineRuntime(bombTile, tile, radius))
+                continue;
+
+            if (player == identity || IsAlly(player.playerId))
+                return false;
+
+            hitsEnemy = true;
+            enemyId = player.playerId;
+        }
+
+        return hitsEnemy && !IsTileInBlastLineRuntime(bombTile, myTile, radius);
+    }
+
+    private bool IsAlly(int otherPlayerId)
+    {
+        if (BattleModeRules.Instance == null || !BattleModeRules.Instance.UsesTeams)
+            return false;
+
+        return BattleModeRules.Instance.GetTeamForPlayer(playerId) ==
+               BattleModeRules.Instance.GetTeamForPlayer(otherPlayerId);
+    }
+
+    private bool IsUsefulItem(ItemType type)
+    {
+        return type != ItemType.Skull &&
+               type != ItemType.LandMine &&
+               type != ItemType.Clock;
+    }
+
+    private bool IsWalkableTile(Vector2Int tile, Vector2Int startTile)
+    {
+        if (!HasGroundTile(tile))
+            return false;
+
+        if (HasIndestructibleTile(tile) || HasDestructibleTile(tile))
+            return false;
+
+        if (IsBombAtTile(tile) && tile != startTile)
+            return false;
+
+        if (movement != null && movement.obstacleMask.value != 0)
+        {
+            Vector2 center = TileToWorld(tile);
+            Vector2 size = Vector2.one * (tileSize * 0.55f);
+            int hitCount = Physics2D.OverlapBox(center, size, 0f, obstacleFilter, obstacleHits);
+            for (int i = 0; i < hitCount; i++)
+            {
+                Collider2D hit = obstacleHits[i];
+                if (hit == null || IsOwnCollider(hit))
+                    continue;
+
+                if (hit.GetComponentInParent<ItemPickup>() != null)
+                    continue;
+
+                if (hit.GetComponentInParent<PlayerIdentity>() != null)
+                    continue;
+
+                if (tile == startTile && hit.GetComponentInParent<Bomb>() != null)
+                    continue;
+
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private bool IsOwnCollider(Collider2D colliderToCheck)
+    {
+        if (ownColliders == null)
+            return false;
+
+        for (int i = 0; i < ownColliders.Length; i++)
+        {
+            if (ownColliders[i] == colliderToCheck)
+                return true;
+        }
+
+        return false;
+    }
+
+    private bool HasGroundTile(Vector2Int tile)
+    {
+        if (groundTilemap == null)
+            return true;
+
+        return groundTilemap.HasTile(WorldToCell(groundTilemap, tile));
+    }
+
+    private bool HasDestructibleTile(Vector2Int tile)
+    {
+        return destructibleTilemap != null && destructibleTilemap.HasTile(WorldToCell(destructibleTilemap, tile));
+    }
+
+    private bool HasIndestructibleTile(Vector2Int tile)
+    {
+        return indestructibleTilemap != null && indestructibleTilemap.HasTile(WorldToCell(indestructibleTilemap, tile));
+    }
+
+    private bool IsBombAtTile(Vector2Int tile)
+    {
+        foreach (Bomb bomb in Bomb.ActiveBombs)
+        {
+            if (bomb == null || bomb.HasExploded)
+                continue;
+
+            if (WorldToTile(bomb.GetLogicalPosition()) == tile)
+                return true;
+        }
+
+        return false;
+    }
+
+    private bool BlocksExplosion(Vector2Int tile)
+    {
+        return HasIndestructibleTile(tile) || HasDestructibleTile(tile) || IsBombAtTile(tile);
+    }
+
+    private float GetDangerSeconds(Vector2Int tile, List<Vector2Int> plannedBlastTiles)
+    {
+        if (plannedBlastTiles != null && plannedBlastTiles.Contains(tile))
+            return bombController != null ? Mathf.Max(0.5f, bombController.bombFuseTime) : 2f;
+
+        if (explosionMask != 0)
+        {
+            Collider2D explosion = Physics2D.OverlapCircle(TileToWorld(tile), tileSize * 0.25f, explosionMask);
+            if (explosion != null)
+                return 0f;
+        }
+
+        float danger = float.PositiveInfinity;
+        foreach (Bomb bomb in Bomb.ActiveBombs)
+        {
+            if (bomb == null || bomb.HasExploded)
+                continue;
+
+            Vector2Int bombTile = WorldToTile(bomb.GetLogicalPosition());
+            int radius = bomb.Owner != null ? Mathf.Max(1, bomb.Owner.explosionRadius) : 2;
+            if (!IsTileInBlastLineRuntime(bombTile, tile, radius))
+                continue;
+
+            float seconds = bomb.IsControlBomb ? 0.65f : bomb.RemainingFuseSeconds;
+            danger = Mathf.Min(danger, seconds);
+        }
+
+        return danger;
+    }
+
+    private bool IsDangerousAt(
+        Vector2Int tile,
+        float arrivalSeconds,
+        BattleModeComDifficultySettings settings,
+        List<Vector2Int> plannedBlastTiles)
+    {
+        float dangerSeconds = GetDangerSeconds(tile, plannedBlastTiles);
+        if (float.IsInfinity(dangerSeconds))
+            return false;
+
+        return dangerSeconds <= arrivalSeconds + settings.dangerReactionSeconds;
+    }
+
+    private bool IsTileThreatened(Vector2Int tile, List<Vector2Int> plannedBlastTiles)
+    {
+        return !float.IsInfinity(GetDangerSeconds(tile, plannedBlastTiles));
+    }
+
+    private Vector2 EnforceSafeMovement(
+        BattleModeComDifficultySettings settings,
+        Vector2Int currentTile,
+        Vector2 requestedMove)
+    {
+        if (requestedMove == Vector2.zero)
+            return Vector2.zero;
+
+        if (IsTileThreatened(currentTile, null))
+            return requestedMove;
+
+        if (hasSafeCenterTarget && currentTile == safeCenterTargetTile)
+            return requestedMove;
+
+        Vector2Int nextTile = currentTile + DirectionToTile(requestedMove);
+        if (nextTile == currentTile)
+            return Vector2.zero;
+
+        if (!IsWalkableTile(nextTile, currentTile) || IsTileThreatened(nextTile, null))
+        {
+            if (Time.time - lastSafetyHoldLogTime >= SafetyHoldLogIntervalSeconds)
+            {
+                lastSafetyHoldLogTime = Time.time;
+                SetCurrentDecision(
+                    BattleModeComActionType.Stopped,
+                    Vector2.zero,
+                    false,
+                    currentTile,
+                    $"blocked unsafe move to {nextTile}",
+                    "none",
+                    GetDangerSeconds(currentTile, null),
+                    "safetyGate");
+            }
+
+            return Vector2.zero;
+        }
+
+        return requestedMove;
+    }
+
+    private Vector2 ApplySafeTileCentering(Vector2Int currentTile, Vector2 requestedMove)
+    {
+        if (!hasSafeCenterTarget)
+            return requestedMove;
+
+        if (IsTileThreatened(currentTile, null))
+            return requestedMove;
+
+        if (currentTile != safeCenterTargetTile)
+            return requestedMove;
+
+        if (IsCenteredOnTile(currentTile))
+        {
+            hasSafeCenterTarget = false;
+            return Vector2.zero;
+        }
+
+        return GetMoveTowardTileCenter(currentTile);
+    }
+
+    private bool IsCenteredOnTile(Vector2Int tile)
+    {
+        Vector2 delta = TileToWorld(tile) - (Vector2)transform.position;
+        float tolerance = Mathf.Max(0.01f, tileSize * SafeTileCenterTolerance);
+        return Mathf.Abs(delta.x) <= tolerance && Mathf.Abs(delta.y) <= tolerance;
+    }
+
+    private Vector2 GetMoveTowardTileCenter(Vector2Int tile)
+    {
+        Vector2 delta = TileToWorld(tile) - (Vector2)transform.position;
+        float tolerance = Mathf.Max(0.01f, tileSize * SafeTileCenterTolerance);
+
+        if (Mathf.Abs(delta.x) > tolerance && Mathf.Abs(delta.x) >= Mathf.Abs(delta.y))
+            return delta.x > 0f ? Vector2.right : Vector2.left;
+
+        if (Mathf.Abs(delta.y) > tolerance)
+            return delta.y > 0f ? Vector2.up : Vector2.down;
+
+        return Vector2.zero;
+    }
+
+    private bool HasOwnUnresolvedBombOrExplosion()
+    {
+        if (bombController == null)
+            return false;
+
+        foreach (Bomb bomb in Bomb.ActiveBombs)
+        {
+            if (bomb == null || bomb.HasExploded)
+                continue;
+
+            if (bomb.Owner == bombController && !bomb.IsControlBomb)
+                return true;
+        }
+
+        BombExplosion[] explosions = FindObjectsByType<BombExplosion>(FindObjectsInactive.Exclude);
+        for (int i = 0; i < explosions.Length; i++)
+        {
+            BombExplosion explosion = explosions[i];
+            if (explosion != null && explosion.Owner == bombController)
+                return true;
+        }
+
+        return false;
+    }
+
+    private bool IsTileInBlastLineRuntime(Vector2Int origin, Vector2Int tile, int radius)
+    {
+        return IsTileInBlastLine(origin, tile, radius, BlocksExplosion);
+    }
+
+    public static bool DebugIsTileInExplosionLine(
+        Vector2Int origin,
+        Vector2Int tile,
+        int radius,
+        ICollection<Vector2Int> blockingTiles)
+    {
+        return IsTileInBlastLine(origin, tile, radius, t => blockingTiles != null && blockingTiles.Contains(t));
+    }
+
+    public static bool DebugCanPlantBombWithEscape(
+        Vector2Int plantTile,
+        int radius,
+        ICollection<Vector2Int> walkableTiles,
+        ICollection<Vector2Int> blockingTiles,
+        int maxDepth)
+    {
+        if (walkableTiles == null || !walkableTiles.Contains(plantTile))
+            return false;
+
+        List<Vector2Int> plannedBlast = BuildStaticBlastTiles(plantTile, radius, blockingTiles);
+        Queue<Vector2Int> queue = new();
+        Dictionary<Vector2Int, int> depthByTile = new();
+        queue.Enqueue(plantTile);
+        depthByTile[plantTile] = 0;
+
+        while (queue.Count > 0)
+        {
+            Vector2Int tile = queue.Dequeue();
+            int depth = depthByTile[tile];
+
+            if (depth > 0 && !plannedBlast.Contains(tile))
+                return true;
+
+            if (depth >= maxDepth)
+                continue;
+
+            for (int i = 0; i < CardinalTiles.Length; i++)
+            {
+                Vector2Int next = tile + CardinalTiles[i];
+                if (depthByTile.ContainsKey(next))
+                    continue;
+
+                if (!walkableTiles.Contains(next))
+                    continue;
+
+                depthByTile[next] = depth + 1;
+                queue.Enqueue(next);
+            }
+        }
+
+        return false;
+    }
+
+    private static bool IsTileInBlastLine(
+        Vector2Int origin,
+        Vector2Int tile,
+        int radius,
+        Func<Vector2Int, bool> blocksExplosion)
+    {
+        if (radius < 0)
+            return false;
+
+        if (tile == origin)
+            return true;
+
+        Vector2Int delta = tile - origin;
+        bool sameColumn = delta.x == 0 && delta.y != 0;
+        bool sameRow = delta.y == 0 && delta.x != 0;
+
+        if (!sameColumn && !sameRow)
+            return false;
+
+        int distance = Mathf.Abs(delta.x) + Mathf.Abs(delta.y);
+        if (distance > radius)
+            return false;
+
+        Vector2Int dir = new(Math.Sign(delta.x), Math.Sign(delta.y));
+        for (int step = 1; step < distance; step++)
+        {
+            Vector2Int check = origin + dir * step;
+            if (blocksExplosion != null && blocksExplosion(check))
+                return false;
+        }
+
+        return true;
+    }
+
+    private static List<Vector2Int> BuildStaticBlastTiles(
+        Vector2Int origin,
+        int radius,
+        ICollection<Vector2Int> blockingTiles)
+    {
+        List<Vector2Int> tiles = new();
+        tiles.Add(origin);
+
+        for (int i = 0; i < CardinalTiles.Length; i++)
+        {
+            Vector2Int dir = CardinalTiles[i];
+            for (int step = 1; step <= radius; step++)
+            {
+                Vector2Int tile = origin + dir * step;
+                tiles.Add(tile);
+
+                if (blockingTiles != null && blockingTiles.Contains(tile))
+                    break;
+            }
+        }
+
+        return tiles;
+    }
+
+    private Vector3Int WorldToCell(Tilemap tilemap, Vector2Int tile)
+    {
+        return tilemap.WorldToCell(TileToWorld(tile));
+    }
+
+    private Vector2Int WorldToTile(Vector2 world)
+    {
+        float size = Mathf.Max(0.01f, tileSize);
+        return new Vector2Int(
+            Mathf.RoundToInt(world.x / size),
+            Mathf.RoundToInt(world.y / size));
+    }
+
+    private Vector2 TileToWorld(Vector2Int tile)
+    {
+        float size = Mathf.Max(0.01f, tileSize);
+        return new Vector2(tile.x * size, tile.y * size);
+    }
+
+    private int Manhattan(Vector2Int a, Vector2Int b)
+    {
+        return Mathf.Abs(a.x - b.x) + Mathf.Abs(a.y - b.y);
+    }
+
+    private int CountOpenNeighbors(Vector2Int tile)
+    {
+        int count = 0;
+        for (int i = 0; i < CardinalTiles.Length; i++)
+        {
+            if (IsWalkableTile(tile + CardinalTiles[i], tile))
+                count++;
+        }
+
+        return count;
+    }
+
+    private float EstimateTraversalSeconds(int depth)
+    {
+        if (movement == null)
+            return depth * 0.25f;
+
+        float tilesPerSecond = Mathf.Max(1f, movement.speed);
+        return depth / tilesPerSecond;
+    }
+
+    private static Vector2 TileDirectionToVector(Vector2Int direction)
+    {
+        if (direction == Vector2Int.up)
+            return Vector2.up;
+
+        if (direction == Vector2Int.down)
+            return Vector2.down;
+
+        if (direction == Vector2Int.left)
+            return Vector2.left;
+
+        if (direction == Vector2Int.right)
+            return Vector2.right;
+
+        return Vector2.zero;
+    }
+
+    private static Vector2Int DirectionToTile(Vector2 direction)
+    {
+        if (Mathf.Abs(direction.x) > Mathf.Abs(direction.y))
+            return direction.x > 0f ? Vector2Int.right : Vector2Int.left;
+
+        if (Mathf.Abs(direction.y) > 0f)
+            return direction.y > 0f ? Vector2Int.up : Vector2Int.down;
+
+        return Vector2Int.zero;
+    }
+
+    private static string FirstMoveDescription(Vector2 move)
+    {
+        if (move == Vector2.up)
+            return "MoveUp";
+
+        if (move == Vector2.down)
+            return "MoveDown";
+
+        if (move == Vector2.left)
+            return "MoveLeft";
+
+        if (move == Vector2.right)
+            return "MoveRight";
+
+        return "none";
+    }
+
+    private static string AppendInput(string current, string next)
+    {
+        if (string.IsNullOrWhiteSpace(next) || next == "none")
+            return string.IsNullOrWhiteSpace(current) ? "none" : current;
+
+        if (string.IsNullOrWhiteSpace(current) || current == "none")
+            return next;
+
+        if (current.Contains(next, StringComparison.Ordinal))
+            return current;
+
+        return current + "+" + next;
+    }
+
+    private string FormatDanger(float seconds)
+    {
+        if (float.IsInfinity(seconds))
+            return "safe";
+
+        if (seconds <= 0f)
+            return "now";
+
+        return $"{seconds:F2}s";
+    }
+
+    private BattleModeComputerLevel ResolveDifficulty()
+    {
+        return BattleModeRules.Instance != null
+            ? BattleModeRules.Instance.CurrentComputerLevel
+            : SaveSystem.GetBattleModeComputerLevel();
+    }
+
+    private void SetMovementInput(Vector2 move)
+    {
+        PlayerInputManager input = PlayerInputManager.Instance;
+        if (input == null)
+            return;
+
+        PlayerAction heldAction = PlayerAction.Start;
+        bool hasMove = false;
+
+        if (Mathf.Abs(move.x) > Mathf.Abs(move.y))
+        {
+            if (move.x > 0f)
+            {
+                heldAction = PlayerAction.MoveRight;
+                hasMove = true;
+            }
+            else if (move.x < 0f)
+            {
+                heldAction = PlayerAction.MoveLeft;
+                hasMove = true;
+            }
+        }
+        else if (Mathf.Abs(move.y) > 0f)
+        {
+            if (move.y > 0f)
+            {
+                heldAction = PlayerAction.MoveUp;
+                hasMove = true;
+            }
+            else if (move.y < 0f)
+            {
+                heldAction = PlayerAction.MoveDown;
+                hasMove = true;
+            }
+        }
+
+        for (int i = 0; i < MovementActions.Length; i++)
+            input.SetSyntheticHeld(playerId, MovementActions[i], hasMove && MovementActions[i] == heldAction);
+    }
+
+    private void Tap(PlayerAction action)
+    {
+        PlayerInputManager input = PlayerInputManager.Instance;
+        if (input != null)
+            input.TapSynthetic(playerId, action);
+    }
+
+    private void ClearSyntheticInputs()
+    {
+        PlayerInputManager input = PlayerInputManager.Instance;
+        if (input != null)
+            input.ClearSyntheticPlayer(playerId);
+    }
+
+    private static bool IsBattleModeScene()
+    {
+        string sceneName = SceneManager.GetActiveScene().name;
+        return sceneName.StartsWith("BattleMode_", StringComparison.OrdinalIgnoreCase);
+    }
+}

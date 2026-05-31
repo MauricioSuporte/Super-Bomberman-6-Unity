@@ -1759,6 +1759,8 @@ public class GameManager : MonoBehaviour
 
     IEnumerator BattleDrawSequenceRoutine()
     {
+        BattleRevengeSystem.BlockAndRemoveAllActiveCartsForRoundEnd();
+
         BattleSuddenDeathController suddenDeathController = FindAnyObjectByType<BattleSuddenDeathController>();
         if (suddenDeathController != null)
             suddenDeathController.StopSuddenDeathAndClearVisuals();
@@ -1822,6 +1824,8 @@ public class GameManager : MonoBehaviour
 
     IEnumerator BattleVictorySequenceRoutine(MovementController survivingPlayer, bool matchComplete, bool hasNightmareBomberWinner)
     {
+        BattleRevengeSystem.BlockAndRemoveAllActiveCartsForRoundEnd();
+
         if (GameMusicController.Instance != null)
             GameMusicController.Instance.StopMusic();
 

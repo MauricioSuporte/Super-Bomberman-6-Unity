@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public sealed class PlayersSpawner : MonoBehaviour
 {
@@ -181,7 +182,37 @@ public sealed class PlayersSpawner : MonoBehaviour
                 if (skins[s] != null)
                     skins[s].ApplyFromIdentity();
             }
+
+            ConfigureBattleModeComController(go, playerId);
         }
+    }
+
+    void ConfigureBattleModeComController(GameObject playerObject, int playerId)
+    {
+        if (playerObject == null)
+            return;
+
+        bool isBattleModeScene = IsBattleModeScene();
+        BattleModePlayerControlMode controlMode = isBattleModeScene
+            ? SaveSystem.GetBattleModePlayerControlMode(playerId)
+            : BattleModePlayerControlMode.Off;
+
+        if (isBattleModeScene && controlMode == BattleModePlayerControlMode.Com)
+        {
+            var com = playerObject.GetComponent<BattleModeComController>();
+            if (com == null)
+                com = playerObject.AddComponent<BattleModeComController>();
+
+            com.enabled = true;
+            com.Initialize(playerId);
+            return;
+        }
+
+        if (playerObject.TryGetComponent<BattleModeComController>(out var existingCom) && existingCom != null)
+            existingCom.enabled = false;
+
+        if (PlayerInputManager.Instance != null)
+            PlayerInputManager.Instance.ClearSyntheticPlayer(playerId);
     }
 
     void ResolveConfiguredPlayerIds(List<int> results)
@@ -235,5 +266,11 @@ public sealed class PlayersSpawner : MonoBehaviour
 
         Vector3 pos = ResolveSpawnPosition(idx, preset);
         return (Vector2)pos;
+    }
+
+    static bool IsBattleModeScene()
+    {
+        string sceneName = SceneManager.GetActiveScene().name;
+        return sceneName.StartsWith("BattleMode_", StringComparison.OrdinalIgnoreCase);
     }
 }

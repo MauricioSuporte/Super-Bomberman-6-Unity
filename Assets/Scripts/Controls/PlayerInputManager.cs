@@ -53,6 +53,9 @@ public class PlayerInputManager : MonoBehaviour
     private readonly bool[,] rawDownCache = new bool[MaxSupportedPlayerId + 1, PlayerActionCount];
     private readonly int[,] rawHeldCacheStamp = new int[MaxSupportedPlayerId + 1, PlayerActionCount];
     private readonly int[,] rawDownCacheStamp = new int[MaxSupportedPlayerId + 1, PlayerActionCount];
+    private readonly bool[,] syntheticHeld = new bool[MaxSupportedPlayerId + 1, PlayerActionCount];
+    private readonly bool[,] syntheticPreviousHeld = new bool[MaxSupportedPlayerId + 1, PlayerActionCount];
+    private readonly int[,] syntheticTapFrame = new int[MaxSupportedPlayerId + 1, PlayerActionCount];
     private readonly bool[] anyHeldInputCache = new bool[MaxSupportedPlayerId + 1];
     private readonly int[] anyHeldInputCacheStamp = new int[MaxSupportedPlayerId + 1];
 
@@ -131,7 +134,16 @@ public class PlayerInputManager : MonoBehaviour
             prevDown[id] = curDown[id];
             prevLeft[id] = curLeft[id];
             prevRight[id] = curRight[id];
+
+            for (int actionIndex = 0; actionIndex < PlayerActionCount; actionIndex++)
+                syntheticPreviousHeld[id, actionIndex] = syntheticHeld[id, actionIndex];
         }
+    }
+
+    void OnDestroy()
+    {
+        if (Instance == this)
+            Instance = null;
     }
 
     private void EnsureProfilesForPlayerCount()
@@ -237,6 +249,48 @@ public class PlayerInputManager : MonoBehaviour
         InvalidatePlayerStateCache();
     }
 
+    public void SetSyntheticHeld(int playerId, PlayerAction action, bool held)
+    {
+        playerId = Mathf.Clamp(playerId, MinSupportedPlayerId, MaxSupportedPlayerId);
+
+        if (!TryGetActionIndex(action, out int actionIndex))
+            return;
+
+        syntheticHeld[playerId, actionIndex] = held;
+        anyHeldInputCacheStamp[playerId] = 0;
+    }
+
+    public void TapSynthetic(int playerId, PlayerAction action)
+    {
+        playerId = Mathf.Clamp(playerId, MinSupportedPlayerId, MaxSupportedPlayerId);
+
+        if (!TryGetActionIndex(action, out int actionIndex))
+            return;
+
+        syntheticTapFrame[playerId, actionIndex] = Time.frameCount;
+        anyHeldInputCacheStamp[playerId] = 0;
+    }
+
+    public void ClearSyntheticPlayer(int playerId)
+    {
+        playerId = Mathf.Clamp(playerId, MinSupportedPlayerId, MaxSupportedPlayerId);
+
+        for (int actionIndex = 0; actionIndex < PlayerActionCount; actionIndex++)
+        {
+            syntheticHeld[playerId, actionIndex] = false;
+            syntheticPreviousHeld[playerId, actionIndex] = false;
+            syntheticTapFrame[playerId, actionIndex] = 0;
+        }
+
+        anyHeldInputCacheStamp[playerId] = 0;
+    }
+
+    public void ClearAllSyntheticInputs()
+    {
+        for (int id = MinSupportedPlayerId; id <= MaxSupportedPlayerId; id++)
+            ClearSyntheticPlayer(id);
+    }
+
     private bool IsActionBlockedWhileRidingBoat(PlayerAction action)
     {
         return action != PlayerAction.MoveUp &&
@@ -316,7 +370,7 @@ public class PlayerInputManager : MonoBehaviour
         if (ShouldBlockActionBecauseUsingSpringLauncher(playerId, action))
             return false;
 
-        return ReadHeldRawCached(playerId, action);
+        return IsSyntheticHeld(playerId, action) || ReadHeldRawCached(playerId, action);
     }
 
     public bool GetDown(PlayerAction action, int playerId = 1)
@@ -329,7 +383,7 @@ public class PlayerInputManager : MonoBehaviour
         if (ShouldBlockActionBecauseUsingSpringLauncher(playerId, action))
             return false;
 
-        return ReadDownRawCached(playerId, action);
+        return IsSyntheticDown(playerId, action) || ReadDownRawCached(playerId, action);
     }
 
     bool TryGetMobileDirectionalHeld(PlayerAction action, int playerId, out bool held)
@@ -456,11 +510,44 @@ public class PlayerInputManager : MonoBehaviour
             ReadHeldRawCached(playerId, PlayerAction.ActionB) ||
             ReadHeldRawCached(playerId, PlayerAction.ActionC) ||
             ReadHeldRawCached(playerId, PlayerAction.ActionL) ||
-            ReadHeldRawCached(playerId, PlayerAction.ActionR);
+            ReadHeldRawCached(playerId, PlayerAction.ActionR) ||
+            HasAnySyntheticHeld(playerId);
 
         anyHeldInputCache[playerId] = hasInput;
         anyHeldInputCacheStamp[playerId] = frameStamp;
         return hasInput;
+    }
+
+    private bool IsSyntheticHeld(int playerId, PlayerAction action)
+    {
+        if (!TryGetActionIndex(action, out int actionIndex))
+            return false;
+
+        return syntheticHeld[playerId, actionIndex] ||
+               syntheticTapFrame[playerId, actionIndex] == Time.frameCount;
+    }
+
+    private bool IsSyntheticDown(int playerId, PlayerAction action)
+    {
+        if (!TryGetActionIndex(action, out int actionIndex))
+            return false;
+
+        return syntheticTapFrame[playerId, actionIndex] == Time.frameCount ||
+               (syntheticHeld[playerId, actionIndex] && !syntheticPreviousHeld[playerId, actionIndex]);
+    }
+
+    private bool HasAnySyntheticHeld(int playerId)
+    {
+        for (int actionIndex = 0; actionIndex < PlayerActionCount; actionIndex++)
+        {
+            if (syntheticHeld[playerId, actionIndex] ||
+                syntheticTapFrame[playerId, actionIndex] == Time.frameCount)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private bool ReadHeldRawCached(int playerId, PlayerAction action)
