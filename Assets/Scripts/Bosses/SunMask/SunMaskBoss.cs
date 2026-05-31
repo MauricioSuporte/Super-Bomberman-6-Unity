@@ -1244,19 +1244,22 @@ public class SunMaskBoss : MonoBehaviour, IKillable
         if (freeze > 0f)
             yield return new WaitForSeconds(freeze);
 
-        float total = Mathf.Max(0f, angryChaseSeconds);
-        float arcDur = Mathf.Clamp(angryArcSeconds, 0f, total);
-        float chaseDur = Mathf.Max(0f, total - arcDur);
+        float angrySpeed = movement != null ? Mathf.Max(0.01f, movement.speed) : 2.5f;
 
-        if (!isDead && arcDur > 0f && angryArcRadius > 0f && targetPlayer != null && !targetPlayer.isDead && !targetPlayer.IsEndingStage)
+        if (!isDead &&
+            angryArcRadius > 0f &&
+            targetPlayer != null &&
+            !targetPlayer.isDead &&
+            !targetPlayer.IsEndingStage)
         {
-            yield return MoveSemiCircleTowardTarget(targetPlayer, arcDur, angryArcRadius, angryArcClockwise);
+            yield return MoveFullCircleClockwiseTowardTarget(targetPlayer, angryArcRadius, angrySpeed);
         }
 
+        float chaseDur = Mathf.Max(0f, angryChaseSeconds);
         float endTime = Time.time + chaseDur;
 
         Vector2 chaseDir;
-        if (targetPlayer != null)
+        if (targetPlayer != null && rb != null)
         {
             Vector2 initialTo = (Vector2)targetPlayer.transform.position - rb.position;
             if (initialTo.sqrMagnitude > 0.0001f)
@@ -1294,8 +1297,7 @@ public class SunMaskBoss : MonoBehaviour, IKillable
                 Vector3 v = Vector3.RotateTowards(chaseDir, desiredDir, maxRadiansDelta, 0f);
                 chaseDir = (Vector2)v.normalized;
 
-                float spd = (movement != null) ? Mathf.Max(0.01f, movement.speed) : 2.5f;
-                Vector2 step = chaseDir * (spd * Time.fixedDeltaTime);
+                Vector2 step = chaseDir * (angrySpeed * Time.fixedDeltaTime);
                 Vector2 next = SnapToPixel(pos + step);
 
                 rb.MovePosition(next);
@@ -1343,10 +1345,13 @@ public class SunMaskBoss : MonoBehaviour, IKillable
         angryRoutine = null;
     }
 
-    IEnumerator MoveSemiCircleTowardTarget(MovementController target, float duration, float radius, bool clockwise)
+    IEnumerator MoveFullCircleClockwiseTowardTarget(MovementController target, float radius, float moveSpeed)
     {
         if (rb == null || target == null)
             yield break;
+
+        radius = Mathf.Max(0.01f, radius);
+        moveSpeed = Mathf.Max(0.01f, moveSpeed);
 
         Vector2 start = SnapToPixel(rb.position);
         Vector2 toTarget = (Vector2)target.transform.position - start;
@@ -1356,31 +1361,34 @@ public class SunMaskBoss : MonoBehaviour, IKillable
 
         Vector2 dir = toTarget.normalized;
 
-        Vector2 center = SnapToPixel(start + dir * radius);
+        Vector2 center = SnapToPixel(start - dir * radius);
         Vector2 v0 = start - center;
 
-        float sign = clockwise ? -1f : 1f;
+        float angularSpeedDegrees = (moveSpeed / radius) * Mathf.Rad2Deg;
+        float travelledDegrees = 0f;
 
-        float t = 0f;
-        while (!isDead && t < duration)
+        while (!isDead && travelledDegrees < 360f)
         {
             if (target == null || target.isDead || target.IsEndingStage)
                 break;
 
-            float a = (t / duration) * 180f * sign;
-            Vector2 p = center + Rotate(v0, a);
+            float stepDegrees = angularSpeedDegrees * Time.fixedDeltaTime;
+            float nextTravelledDegrees = Mathf.Min(360f, travelledDegrees + stepDegrees);
+
+            float angle = -nextTravelledDegrees;
+            Vector2 p = center + Rotate(v0, angle);
             p = SnapToPixel(p);
 
             rb.MovePosition(p);
 
-            t += Time.fixedDeltaTime;
+            travelledDegrees = nextTravelledDegrees;
+
             yield return new WaitForFixedUpdate();
         }
 
         if (!isDead && target != null && !target.isDead && !target.IsEndingStage)
         {
-            Vector2 endP = center + Rotate(v0, 180f * sign);
-            rb.MovePosition(SnapToPixel(endP));
+            rb.MovePosition(start);
         }
     }
 
