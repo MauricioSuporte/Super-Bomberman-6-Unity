@@ -50,7 +50,9 @@ public sealed class BattleModeHud : MonoBehaviour
     const string Team1BackgroundAssetPath = "Assets/Sprites/HUD/BattleMode/Background_Team1.png";
     const string Team2BackgroundAssetPath = "Assets/Sprites/HUD/BattleMode/Background_Team2.png";
     const string Team3BackgroundAssetPath = "Assets/Sprites/HUD/BattleMode/Background_Team3.png";
-    const string VictoryNumbersAssetPath = "Assets/Sprites/HUD/NormalGame/HudNumbers.png";
+    const string VictoryNumbersAssetPath = "Assets/Resources/HUD/BattleMode/VictoriesCounter.png";
+    const string VictoryNumbersResourcesPath = "HUD/BattleMode/VictoriesCounter";
+    const string VictoryNumbersSpritePrefix = "VictoriesCounter_";
     const string TimerBackgroundResourcesPath = "HUD/BattleMode/TimerPanel";
     const string TimerDigitsResourcesPath = "HUD/BattleMode/TimerDigits";
 
@@ -61,7 +63,8 @@ public sealed class BattleModeHud : MonoBehaviour
     const float FirstPlayerPortraitExtraOffset = 1f;
     const float SubsequentPlayerPortraitOffsetX = -1f;
     const float NonLastPlayerItemsOffsetX = 1f;
-    const float VictoryCounterSize = 7f;
+    const float VictoryCounterWidth = 7f;
+    const float VictoryCounterHeight = 8f;
     const float VictoryCounterOffsetX = 9f;
     const float VictoryCounterOffsetY = 0f;
     const float TimerDigitSize = 7f;
@@ -238,8 +241,8 @@ public sealed class BattleModeHud : MonoBehaviour
         if (team3BackgroundSprite == null)
             team3BackgroundSprite = AssetDatabase.LoadAssetAtPath<Sprite>(Team3BackgroundAssetPath);
 
-        if (victoryDigitSprites == null || victoryDigitSprites.Length != 10 || victoryDigitSprites[0] == null)
-            victoryDigitSprites = LoadOrderedSpritesFromSheet(VictoryNumbersAssetPath, "HudNumbers_", 10);
+        if (victoryDigitSprites == null || victoryDigitSprites.Length != 10 || victoryDigitSprites[0] == null || !victoryDigitSprites[0].name.StartsWith(VictoryNumbersSpritePrefix))
+            victoryDigitSprites = LoadOrderedSpritesFromSheet(VictoryNumbersAssetPath, VictoryNumbersSpritePrefix, 10);
 
         LoadTimerSpritesIfNeeded();
     }
@@ -251,6 +254,7 @@ public sealed class BattleModeHud : MonoBehaviour
         borderSprite = LoadPreferredResourceSprite(borderSprite, FrameResourcesPath);
         partitionSprite = LoadPreferredResourceSprite(partitionSprite, PartitionResourcesPath);
         bombBlastSpeedSprite = LoadPreferredResourceSprite(bombBlastSpeedSprite, BombBlastSpeedResourcesPath);
+        LoadVictorySpritesIfNeeded();
     }
 
     static Sprite LoadPreferredResourceSprite(Sprite current, string resourcePath)
@@ -518,8 +522,8 @@ public sealed class BattleModeHud : MonoBehaviour
                 slot.PlayerNumber.rectTransform,
                 portraitLeft + VictoryCounterOffsetX,
                 PortraitY + VictoryCounterOffsetY,
-                VictoryCounterSize,
-                VictoryCounterSize,
+                VictoryCounterWidth,
+                VictoryCounterHeight,
                 slotWidth,
                 UsableAreaHeight);
 
@@ -1284,17 +1288,59 @@ public sealed class BattleModeHud : MonoBehaviour
         }
     }
 
+    void LoadVictorySpritesIfNeeded()
+    {
+        Sprite[] loadedSprites = Resources.LoadAll<Sprite>(VictoryNumbersResourcesPath);
+        if (loadedSprites == null || loadedSprites.Length <= 0)
+            return;
+
+        Sprite[] orderedSprites = new Sprite[10];
+        for (int i = 0; i < loadedSprites.Length; i++)
+        {
+            Sprite sprite = loadedSprites[i];
+            if (sprite == null)
+                continue;
+
+            if (TryGetIndexedSpriteName(sprite.name, VictoryNumbersSpritePrefix, orderedSprites.Length, out int digitIndex))
+                orderedSprites[digitIndex] = sprite;
+        }
+
+        if (HasAllSprites(orderedSprites))
+            victoryDigitSprites = orderedSprites;
+    }
+
     static bool TryGetTimerDigitIndex(string spriteName, out int digitIndex)
     {
         digitIndex = -1;
         const string prefix = "TimerDigits_";
 
-        if (string.IsNullOrEmpty(spriteName) || !spriteName.StartsWith(prefix))
+        return TryGetIndexedSpriteName(spriteName, prefix, 10, out digitIndex);
+    }
+
+    static bool TryGetIndexedSpriteName(string spriteName, string prefix, int count, out int index)
+    {
+        index = -1;
+
+        if (string.IsNullOrEmpty(spriteName) || string.IsNullOrEmpty(prefix) || !spriteName.StartsWith(prefix))
             return false;
 
-        return int.TryParse(spriteName.Substring(prefix.Length), out digitIndex)
-            && digitIndex >= 0
-            && digitIndex <= 9;
+        return int.TryParse(spriteName.Substring(prefix.Length), out index)
+            && index >= 0
+            && index < count;
+    }
+
+    static bool HasAllSprites(Sprite[] sprites)
+    {
+        if (sprites == null || sprites.Length <= 0)
+            return false;
+
+        for (int i = 0; i < sprites.Length; i++)
+        {
+            if (sprites[i] == null)
+                return false;
+        }
+
+        return true;
     }
 
     static float GetSpriteLogicalWidth(Sprite sprite, float targetHeight, float fallbackWidth)
