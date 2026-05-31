@@ -42,6 +42,11 @@ public class SunMaskBoss : MonoBehaviour, IKillable
     [SerializeField] private bool angryArcClockwise = true;
 
     [Header("Angry - Chase Steering")]
+    [SerializeField, Range(0.1f, 1f)] private float angryChaseSpeedMultiplier = 0.75f;
+    [SerializeField, Min(0f)] private float angryChaseCloseSlowDistance = 7f;
+    [SerializeField, Range(0.1f, 1f)] private float angryChaseCloseSpeedMultiplier = 0.55f;
+    [SerializeField, Min(0f)] private float angryChaseMinimumSpeed = 1.5f;
+    [SerializeField, Range(0.1f, 1f)] private float angryChaseCloseTurnSpeedMultiplier = 0.35f;
     [SerializeField, Min(0.01f)] private float angryRetargetInterval = 0.08f;
     [SerializeField, Min(1f)] private float angryTurnSpeedDegrees = 220f;
 
@@ -1245,6 +1250,8 @@ public class SunMaskBoss : MonoBehaviour, IKillable
             yield return new WaitForSeconds(freeze);
 
         float angrySpeed = movement != null ? Mathf.Max(0.01f, movement.speed) : 2.5f;
+        float chaseSpeed = Mathf.Max(0.01f, angrySpeed * angryChaseSpeedMultiplier);
+        float effectiveChaseSpeed = chaseSpeed;
 
         if (!isDead &&
             angryArcRadius > 0f &&
@@ -1274,6 +1281,7 @@ public class SunMaskBoss : MonoBehaviour, IKillable
 
         float nextRetargetTime = 0f;
         Vector2 desiredDir = chaseDir;
+        Vector2 continuousChasePosition = rb != null ? rb.position : (Vector2)transform.position;
 
         while (!isDead && Time.time < endTime)
         {
@@ -1293,12 +1301,17 @@ public class SunMaskBoss : MonoBehaviour, IKillable
                         desiredDir = to.normalized;
                 }
 
-                float maxRadiansDelta = angryTurnSpeedDegrees * Mathf.Deg2Rad * Time.fixedDeltaTime;
+                float distanceToPlayer = Vector2.Distance(pos, (Vector2)targetPlayer.transform.position);
+                effectiveChaseSpeed = ResolveAngryChaseSpeed(chaseSpeed, distanceToPlayer);
+
+                float effectiveTurnSpeedDegrees = ResolveAngryChaseTurnSpeed(distanceToPlayer);
+                float maxRadiansDelta = effectiveTurnSpeedDegrees * Mathf.Deg2Rad * Time.fixedDeltaTime;
                 Vector3 v = Vector3.RotateTowards(chaseDir, desiredDir, maxRadiansDelta, 0f);
                 chaseDir = (Vector2)v.normalized;
 
-                Vector2 step = chaseDir * (angrySpeed * Time.fixedDeltaTime);
-                Vector2 next = SnapToPixel(pos + step);
+                Vector2 step = chaseDir * (effectiveChaseSpeed * Time.fixedDeltaTime);
+                continuousChasePosition += step;
+                Vector2 next = SnapToPixel(continuousChasePosition);
 
                 rb.MovePosition(next);
             }
@@ -1343,6 +1356,30 @@ public class SunMaskBoss : MonoBehaviour, IKillable
 
         inAngry = false;
         angryRoutine = null;
+    }
+
+    float ResolveAngryChaseSpeed(float baseChaseSpeed, float distanceToPlayer)
+    {
+        float slowDistance = Mathf.Max(7f, angryChaseCloseSlowDistance);
+        if (slowDistance <= 0f || distanceToPlayer >= slowDistance)
+            return baseChaseSpeed;
+
+        float closeMultiplier = Mathf.Clamp(angryChaseCloseSpeedMultiplier, 0.45f, 1f);
+        float t = Mathf.Clamp01(distanceToPlayer / slowDistance);
+        float multiplier = Mathf.Lerp(closeMultiplier, 1f, t);
+        return Mathf.Max(Mathf.Max(0.01f, angryChaseMinimumSpeed), baseChaseSpeed * multiplier);
+    }
+
+    float ResolveAngryChaseTurnSpeed(float distanceToPlayer)
+    {
+        float slowDistance = Mathf.Max(7f, angryChaseCloseSlowDistance);
+        if (slowDistance <= 0f || distanceToPlayer >= slowDistance)
+            return angryTurnSpeedDegrees;
+
+        float closeMultiplier = Mathf.Clamp(angryChaseCloseTurnSpeedMultiplier, 0.1f, 0.45f);
+        float t = Mathf.Clamp01(distanceToPlayer / slowDistance);
+        float multiplier = Mathf.Lerp(closeMultiplier, 1f, t);
+        return Mathf.Max(1f, angryTurnSpeedDegrees * multiplier);
     }
 
     IEnumerator MoveFullCircleClockwiseTowardTarget(MovementController target, float radius, float moveSpeed)
