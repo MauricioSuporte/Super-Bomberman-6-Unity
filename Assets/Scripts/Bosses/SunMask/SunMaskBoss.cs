@@ -53,6 +53,7 @@ public class SunMaskBoss : MonoBehaviour, IKillable
     [SerializeField, Min(0f)] private float winkMinInterval = 3f;
     [SerializeField, Min(0f)] private float winkMaxInterval = 5f;
     [SerializeField, Min(0f)] private float winkHoldDuration = 1f;
+    private bool nextWinkOrKissAttackShouldBeWink = true;
 
     [SerializeField] private AnimatedSpriteRenderer winkRenderer;
     [SerializeField] private AnimatedSpriteRenderer kissRenderer;
@@ -368,6 +369,8 @@ public class SunMaskBoss : MonoBehaviour, IKillable
         hardLowHealthSpecialCompleted = false;
         inHardLowHealthSpecial = false;
         hardSpecialCanEnterAngry = false;
+
+        nextWinkOrKissAttackShouldBeWink = true;
 
         nextTouchDamageTime = 0f;
         nextDeathSfxTime = 0f;
@@ -1030,16 +1033,11 @@ public class SunMaskBoss : MonoBehaviour, IKillable
 
     IEnumerator WinkAttackLoop()
     {
+        const float fixedAttackInterval = 5f;
+
         while (!isDead)
         {
-            float minI = Mathf.Max(0f, winkMinInterval);
-            float maxI = Mathf.Max(minI, winkMaxInterval);
-            float wait = Random.Range(minI, maxI);
-
-            if (wait > 0f)
-                yield return new WaitForSeconds(wait);
-            else
-                yield return null;
+            yield return new WaitForSeconds(fixedAttackInterval);
 
             if (isDead) continue;
             if (!enableWinkAttack) continue;
@@ -1050,8 +1048,8 @@ public class SunMaskBoss : MonoBehaviour, IKillable
             if (deathRoutine != null) continue;
             if (movement != null && !movement.enabled) continue;
 
-            bool canWink = (winkRenderer != null && starProjectilePrefab != null);
-            bool canKiss = (kissRenderer != null && heartPrefab != null);
+            bool canWink = winkRenderer != null && starProjectilePrefab != null;
+            bool canKiss = kissRenderer != null && heartPrefab != null;
 
             if (!canWink && !canKiss)
                 continue;
@@ -1078,10 +1076,17 @@ public class SunMaskBoss : MonoBehaviour, IKillable
 
         AnimatedSpriteRenderer previous = GetCurrentRenderer();
 
-        float roll = Random.value;
         bool doWink;
-        if (canWink && canKiss) doWink = roll < 0.5f;
-        else doWink = canWink;
+
+        if (canWink && canKiss)
+        {
+            doWink = nextWinkOrKissAttackShouldBeWink;
+            nextWinkOrKissAttackShouldBeWink = !nextWinkOrKissAttackShouldBeWink;
+        }
+        else
+        {
+            doWink = canWink;
+        }
 
         if (doWink)
         {
