@@ -1311,6 +1311,7 @@ public class SunMaskBoss : MonoBehaviour, IKillable
 
                 Vector2 step = chaseDir * (effectiveChaseSpeed * Time.fixedDeltaTime);
                 continuousChasePosition += step;
+                ResolveAngryChaseBounds(ref continuousChasePosition, ref chaseDir, ref desiredDir);
                 Vector2 next = SnapToPixel(continuousChasePosition);
 
                 rb.MovePosition(next);
@@ -1380,6 +1381,59 @@ public class SunMaskBoss : MonoBehaviour, IKillable
         float t = Mathf.Clamp01(distanceToPlayer / slowDistance);
         float multiplier = Mathf.Lerp(closeMultiplier, 1f, t);
         return Mathf.Max(1f, angryTurnSpeedDegrees * multiplier);
+    }
+
+    bool ResolveAngryChaseBounds(ref Vector2 position, ref Vector2 chaseDir, ref Vector2 desiredDir)
+    {
+        if (movement == null || !movement.useBounds)
+            return false;
+
+        bool hitX = false;
+        bool hitY = false;
+
+        if (position.x < movement.minBounds.x)
+        {
+            position.x = movement.minBounds.x + (movement.minBounds.x - position.x);
+            hitX = true;
+        }
+        else if (position.x > movement.maxBounds.x)
+        {
+            position.x = movement.maxBounds.x - (position.x - movement.maxBounds.x);
+            hitX = true;
+        }
+
+        if (position.y < movement.minBounds.y)
+        {
+            position.y = movement.minBounds.y + (movement.minBounds.y - position.y);
+            hitY = true;
+        }
+        else if (position.y > movement.maxBounds.y)
+        {
+            position.y = movement.maxBounds.y - (position.y - movement.maxBounds.y);
+            hitY = true;
+        }
+
+        if (!hitX && !hitY)
+            return false;
+
+        if (hitX)
+        {
+            chaseDir.x *= -1f;
+            desiredDir.x *= -1f;
+        }
+
+        if (hitY)
+        {
+            chaseDir.y *= -1f;
+            desiredDir.y *= -1f;
+        }
+
+        position.x = Mathf.Clamp(position.x, movement.minBounds.x, movement.maxBounds.x);
+        position.y = Mathf.Clamp(position.y, movement.minBounds.y, movement.maxBounds.y);
+
+        chaseDir = chaseDir.sqrMagnitude > 0.0001f ? chaseDir.normalized : Vector2.down;
+        desiredDir = desiredDir.sqrMagnitude > 0.0001f ? desiredDir.normalized : chaseDir;
+        return true;
     }
 
     IEnumerator MoveFullCircleClockwiseTowardTarget(MovementController target, float radius, float moveSpeed)
