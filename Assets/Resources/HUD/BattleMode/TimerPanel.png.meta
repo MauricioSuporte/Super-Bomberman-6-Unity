@@ -3,8 +3,8 @@ guid: 1605c6035671b5343b4e0af50c20de87
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -7754988575891523622
-    second: timer_0
+      213: -6667616416538634564
+    second: TimerPanel_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -100,7 +100,7 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: timer_0
+      name: TimerPanel_0
       rect:
         serializedVersion: 2
         x: 0
@@ -115,8 +115,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: ad7f5c85afeb06490800000000000000
-      internalID: -7754988575891523622
+      spriteID: cb6d6a9123ed773a0800000000000000
+      internalID: -6667616416538634564
       vertices: []
       indices: 
       edges: []
@@ -135,7 +135,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      timer_0: -7754988575891523622
+      TimerPanel_0: -6667616416538634564
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

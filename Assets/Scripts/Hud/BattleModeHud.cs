@@ -1443,14 +1443,14 @@ public sealed class BattleModeHud : MonoBehaviour
             }
         }
 
-        if (timerRoot != null)
-            timerRoot.SetAsLastSibling();
-
         if (borderImage != null)
             borderImage.rectTransform.SetAsLastSibling();
 
         if (partitionsRoot != null)
             partitionsRoot.SetAsLastSibling();
+
+        if (timerRoot != null)
+            timerRoot.SetAsLastSibling();
     }
 
     static void DisableLegacyBehaviour(Behaviour behaviour)
