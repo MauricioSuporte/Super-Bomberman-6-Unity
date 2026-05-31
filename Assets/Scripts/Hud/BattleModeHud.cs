@@ -149,9 +149,6 @@ public sealed class BattleModeHud : MonoBehaviour
     [SerializeField] private int pushStartFontSize = 4;
     [SerializeField] private Color pushStartColor = Color.white;
 
-    [Header("Diagnostics")]
-    [SerializeField] private bool logLayoutDiagnostics = true;
-
     readonly bool[] playerDead = new bool[MaxPlayers];
     readonly CharacterHealth[] playerHealthCache = new CharacterHealth[MaxPlayers];
     readonly List<Sprite> activePowerupBuffer = new List<Sprite>(6);
@@ -176,7 +173,6 @@ public sealed class BattleModeHud : MonoBehaviour
     Image timerColonImage;
     bool portraitsLoaded;
     bool legacyHudSuppressed;
-    string lastLayoutDiagnosticsSignature;
 
     sealed class SlotUi
     {
@@ -214,7 +210,6 @@ public sealed class BattleModeHud : MonoBehaviour
         UpdateLayout(visiblePlayerCount);
         UpdateContent(visiblePlayerCount);
         UpdateTimer();
-        LogLayoutDiagnosticsIfNeeded(visiblePlayerCount);
     }
 
 #if UNITY_EDITOR
@@ -1318,83 +1313,6 @@ public sealed class BattleModeHud : MonoBehaviour
         Color color = Color.white;
         color.a = displayedTotalSeconds % 2 == 0 ? 1f : 0f;
         return color;
-    }
-
-    void LogLayoutDiagnosticsIfNeeded(int visiblePlayerCount)
-    {
-        if (!logLayoutDiagnostics)
-            return;
-
-        string signature = BuildLayoutDiagnosticsSignature(visiblePlayerCount);
-        if (signature == lastLayoutDiagnosticsSignature)
-            return;
-
-        lastLayoutDiagnosticsSignature = signature;
-        Debug.Log(signature, this);
-    }
-
-    string BuildLayoutDiagnosticsSignature(int visiblePlayerCount)
-    {
-        RectTransform parent = rootRect != null ? rootRect.parent as RectTransform : null;
-        RectTransform backgroundRect = backgroundImage != null ? backgroundImage.rectTransform : null;
-        RectTransform borderRect = borderImage != null ? borderImage.rectTransform : null;
-        RectTransform firstPartitionRect = partitionImages.Length > 0 && partitionImages[0] != null
-            ? partitionImages[0].rectTransform
-            : null;
-        RectTransform firstSlotRect = slots.Length > 0 && slots[0] != null ? slots[0].Root : null;
-        RectTransform firstStatsRect = slots.Length > 0 && slots[0] != null && slots[0].StatsPanel != null
-            ? slots[0].StatsPanel.rectTransform
-            : null;
-
-        return "[BattleModeHud Layout] "
-            + $"expectedHud={HudWidth:0.###}x{HudHeight:0.###} reference={ReferenceScreenWidth:0.###}x{ReferenceScreenHeight:0.###} "
-            + $"visiblePlayers={visiblePlayerCount} "
-            + $"parent={FormatRect(parent)} "
-            + $"root={FormatRect(rootRect)} "
-            + $"runtime={FormatRect(runtimeRoot)} "
-            + $"background={FormatRect(backgroundRect)} expected=247x22 "
-            + $"frame={FormatRect(borderRect)} expected=256x27 "
-            + $"partition1={FormatRect(firstPartitionRect)} expected=5x23 "
-            + $"slot1={FormatRect(firstSlotRect)} "
-            + BuildTeamBackgroundDiagnostics(visiblePlayerCount)
-            + $"slot1Items={FormatRect(firstStatsRect)} expected=23x7";
-    }
-
-    string BuildTeamBackgroundDiagnostics(int visiblePlayerCount)
-    {
-        float slotWidth = GetSlotWidth(visiblePlayerCount);
-        string result = string.Empty;
-
-        for (int i = 0; i < visiblePlayerCount && i < slots.Length; i++)
-        {
-            SlotUi slot = slots[i];
-            RectTransform backgroundRect = slot != null && slot.TeamBackground != null
-                ? slot.TeamBackground.rectTransform
-                : null;
-            float left = GetTeamBackgroundVisibleLeft(i, visiblePlayerCount);
-            float right = GetTeamBackgroundVisibleRight(i, visiblePlayerCount, slotWidth);
-            float slotGlobalLeft = UsableAreaLeft + i * slotWidth;
-            float globalLeft = slotGlobalLeft + left;
-            float globalRight = slotGlobalLeft + right;
-
-            result += $"teamBg{i + 1}={FormatRect(backgroundRect)} "
-                + $"logicalLocal=({left:0.###},{-TeamBackgroundBottomBleed:0.###})-({right:0.###},{UsableAreaHeight + TeamBackgroundTopBleed:0.###}) "
-                + $"logicalGlobalX={globalLeft:0.###}-{globalRight:0.###} expectedHeight=26 ";
-        }
-
-        return result;
-    }
-
-    static string FormatRect(RectTransform rect)
-    {
-        if (rect == null)
-            return "<null>";
-
-        Rect currentRect = rect.rect;
-        return $"{rect.name} size={currentRect.width:0.###}x{currentRect.height:0.###} "
-            + $"anchors=({rect.anchorMin.x:0.####},{rect.anchorMin.y:0.####})-({rect.anchorMax.x:0.####},{rect.anchorMax.y:0.####}) "
-            + $"offsetMin=({rect.offsetMin.x:0.###},{rect.offsetMin.y:0.###}) "
-            + $"offsetMax=({rect.offsetMax.x:0.###},{rect.offsetMax.y:0.###})";
     }
 
     void SetTimerActive(bool active)

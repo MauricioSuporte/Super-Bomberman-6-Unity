@@ -3792,7 +3792,6 @@ MonoBehaviour:
   pushStartFont: {fileID: 11400000, guid: ecf098b5ead05a94fa9fde052327d9de, type: 2}
   pushStartFontSize: 4
   pushStartColor: {r: 1, g: 1, b: 1, a: 1}
-  logLayoutDiagnostics: 1
 --- !u!1 &5367765726880456166
 GameObject:
   m_ObjectHideFlags: 0
