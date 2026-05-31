@@ -24,12 +24,17 @@ public sealed class BattleModeHud : MonoBehaviour
     const float UsableAreaWidth = 247f;
     const float UsableAreaHeight = 22f;
     const float HudSidePadding = (HudWidth - (UsableAreaLeft + UsableAreaWidth));
-    const float TeamBackgroundVerticalBleed = 1f;
     const float TeamBackgroundPartitionInset = 1f;
-    const int TeamBackgroundTrimLeft = 2;
-    const int TeamBackgroundTrimRight = 2;
-    const int TeamBackgroundTrimTop = 1;
-    const int TeamBackgroundTrimBottom = 2;
+    const float TeamBackgroundFirstLeftBleed = 1f;
+    const float TeamBackgroundInnerLeftBleed = 2f;
+    const float TeamBackgroundLastLeftBleed = 3f;
+    const float TeamBackgroundNonLastRightBleed = 3f;
+    const float TeamBackgroundLastRightBleed = 1f;
+    const float ThreePlayerTeamBackgroundMiddleExtraLeftBleed = 2f;
+    const float ThreePlayerTeamBackgroundLastExtraLeftBleed = 1f;
+    const float ThreePlayerTeamBackgroundNonLastExtraRightBleed = 1f;
+    const float TeamBackgroundBottomBleed = 3f;
+    const float TeamBackgroundTopBleed = 1f;
 
     const float PartitionWidth = 5f;
     const float PartitionHeight = 23f;
@@ -172,9 +177,6 @@ public sealed class BattleModeHud : MonoBehaviour
     bool portraitsLoaded;
     bool legacyHudSuppressed;
     string lastLayoutDiagnosticsSignature;
-    Sprite trimmedTeam1BackgroundSprite;
-    Sprite trimmedTeam2BackgroundSprite;
-    Sprite trimmedTeam3BackgroundSprite;
 
     sealed class SlotUi
     {
@@ -219,9 +221,6 @@ public sealed class BattleModeHud : MonoBehaviour
     void OnValidate()
     {
         portraitsLoaded = false;
-        trimmedTeam1BackgroundSprite = null;
-        trimmedTeam2BackgroundSprite = null;
-        trimmedTeam3BackgroundSprite = null;
 
         if (backgroundSprite == null)
             backgroundSprite = AssetDatabase.LoadAssetAtPath<Sprite>(DefaultBackgroundAssetPath);
@@ -287,13 +286,11 @@ public sealed class BattleModeHud : MonoBehaviour
     void OnDisable()
     {
         CleanupRuntimeUi();
-        ReleaseTrimmedTeamBackgroundSprites();
     }
 
     void OnDestroy()
     {
         CleanupRuntimeUi();
-        ReleaseTrimmedTeamBackgroundSprites();
     }
 
     public void OnPlayerDied(int playerId)
@@ -509,16 +506,16 @@ public sealed class BattleModeHud : MonoBehaviour
             float column1X = statsPanelLeft + StatsNumberOffsets[1] + itemsOffsetX;
             float column2X = statsPanelLeft + StatsNumberOffsets[2] + itemsOffsetX;
             float portraitLeft = GetPortraitLeft(i, visiblePlayerCount, slotWidth, column0X);
-            float teamBackgroundLeft = GetTeamBackgroundVisibleLeft(i);
+            float teamBackgroundLeft = GetTeamBackgroundVisibleLeft(i, visiblePlayerCount);
             float teamBackgroundRight = GetTeamBackgroundVisibleRight(i, visiblePlayerCount, slotWidth);
 
             ApplyLogicalRect(slot.Root, slotLeft, UsableAreaBottom, slotWidth, UsableAreaHeight, HudWidth, HudHeight);
             ApplyLogicalRect(
                 slot.TeamBackground.rectTransform,
                 teamBackgroundLeft,
-                -TeamBackgroundVerticalBleed,
+                -TeamBackgroundBottomBleed,
                 teamBackgroundRight - teamBackgroundLeft,
-                HudHeight,
+                UsableAreaHeight + TeamBackgroundBottomBleed + TeamBackgroundTopBleed,
                 slotWidth,
                 UsableAreaHeight);
             ApplyLogicalRect(slot.Portrait.rectTransform, portraitLeft, PortraitY, PortraitSize, PortraitSize, slotWidth, UsableAreaHeight);
@@ -791,18 +788,54 @@ public sealed class BattleModeHud : MonoBehaviour
         return portraitLeft;
     }
 
-    float GetTeamBackgroundVisibleLeft(int visualIndex)
+    float GetTeamBackgroundVisibleLeft(int visualIndex, int visiblePlayerCount)
     {
-        return visualIndex <= 0
+        float left = visualIndex <= 0
             ? -UsableAreaLeft
             : 0f;
+
+        return left - GetTeamBackgroundLeftBleed(visualIndex, visiblePlayerCount);
     }
 
     float GetTeamBackgroundVisibleRight(int visualIndex, int visiblePlayerCount, float slotWidth)
     {
-        return visualIndex >= visiblePlayerCount - 1
+        float right = visualIndex >= visiblePlayerCount - 1
             ? slotWidth + HudSidePadding
             : slotWidth - TeamBackgroundPartitionInset;
+
+        return right + GetTeamBackgroundRightBleed(visualIndex, visiblePlayerCount);
+    }
+
+    float GetTeamBackgroundLeftBleed(int visualIndex, int visiblePlayerCount)
+    {
+        if (visualIndex >= visiblePlayerCount - 1)
+        {
+            float extraLastBleed = visiblePlayerCount == 3
+                ? ThreePlayerTeamBackgroundLastExtraLeftBleed
+                : 0f;
+            return TeamBackgroundLastLeftBleed + extraLastBleed;
+        }
+
+        float bleed = visualIndex <= 0
+            ? TeamBackgroundFirstLeftBleed
+            : TeamBackgroundInnerLeftBleed;
+
+        if (visiblePlayerCount == 3 && visualIndex > 0)
+            bleed += ThreePlayerTeamBackgroundMiddleExtraLeftBleed;
+
+        return bleed;
+    }
+
+    float GetTeamBackgroundRightBleed(int visualIndex, int visiblePlayerCount)
+    {
+        float bleed = visualIndex >= visiblePlayerCount - 1
+            ? TeamBackgroundLastRightBleed
+            : TeamBackgroundNonLastRightBleed;
+
+        if (visiblePlayerCount == 3 && visualIndex < visiblePlayerCount - 1)
+            bleed += ThreePlayerTeamBackgroundNonLastExtraRightBleed;
+
+        return bleed;
     }
 
     void PopulateActivePlayerIds(List<int> results)
@@ -1120,61 +1153,12 @@ public sealed class BattleModeHud : MonoBehaviour
         switch (teamId)
         {
             case BattleModeRules.TeamId.Red:
-                return GetTrimmedTeamBackgroundSprite(team2BackgroundSprite, ref trimmedTeam2BackgroundSprite);
+                return team2BackgroundSprite;
             case BattleModeRules.TeamId.Green:
-                return GetTrimmedTeamBackgroundSprite(team3BackgroundSprite, ref trimmedTeam3BackgroundSprite);
+                return team3BackgroundSprite;
             default:
-                return GetTrimmedTeamBackgroundSprite(team1BackgroundSprite, ref trimmedTeam1BackgroundSprite);
+                return team1BackgroundSprite;
         }
-    }
-
-    Sprite GetTrimmedTeamBackgroundSprite(Sprite source, ref Sprite cache)
-    {
-        if (source == null)
-            return null;
-
-        if (cache != null)
-            return cache;
-
-        Rect rect = source.rect;
-        float trimmedX = rect.x + TeamBackgroundTrimLeft;
-        float trimmedY = rect.y + TeamBackgroundTrimBottom;
-        float trimmedWidth = rect.width - TeamBackgroundTrimLeft - TeamBackgroundTrimRight;
-        float trimmedHeight = rect.height - TeamBackgroundTrimTop - TeamBackgroundTrimBottom;
-
-        if (trimmedWidth <= 0f || trimmedHeight <= 0f)
-            return source;
-
-        cache = Sprite.Create(
-            source.texture,
-            new Rect(trimmedX, trimmedY, trimmedWidth, trimmedHeight),
-            new Vector2(0.5f, 0.5f),
-            source.pixelsPerUnit,
-            0,
-            SpriteMeshType.FullRect);
-
-        cache.name = source.name + "_TrimmedRuntime";
-        return cache;
-    }
-
-    void ReleaseTrimmedTeamBackgroundSprites()
-    {
-        ReleaseTrimmedSprite(ref trimmedTeam1BackgroundSprite);
-        ReleaseTrimmedSprite(ref trimmedTeam2BackgroundSprite);
-        ReleaseTrimmedSprite(ref trimmedTeam3BackgroundSprite);
-    }
-
-    void ReleaseTrimmedSprite(ref Sprite sprite)
-    {
-        if (sprite == null)
-            return;
-
-        if (Application.isPlaying)
-            Destroy(sprite);
-        else
-            DestroyImmediate(sprite);
-
-        sprite = null;
     }
 
     bool ShouldShowDefaultBackground()
@@ -1372,7 +1356,33 @@ public sealed class BattleModeHud : MonoBehaviour
             + $"frame={FormatRect(borderRect)} expected=256x27 "
             + $"partition1={FormatRect(firstPartitionRect)} expected=5x23 "
             + $"slot1={FormatRect(firstSlotRect)} "
+            + BuildTeamBackgroundDiagnostics(visiblePlayerCount)
             + $"slot1Items={FormatRect(firstStatsRect)} expected=23x7";
+    }
+
+    string BuildTeamBackgroundDiagnostics(int visiblePlayerCount)
+    {
+        float slotWidth = GetSlotWidth(visiblePlayerCount);
+        string result = string.Empty;
+
+        for (int i = 0; i < visiblePlayerCount && i < slots.Length; i++)
+        {
+            SlotUi slot = slots[i];
+            RectTransform backgroundRect = slot != null && slot.TeamBackground != null
+                ? slot.TeamBackground.rectTransform
+                : null;
+            float left = GetTeamBackgroundVisibleLeft(i, visiblePlayerCount);
+            float right = GetTeamBackgroundVisibleRight(i, visiblePlayerCount, slotWidth);
+            float slotGlobalLeft = UsableAreaLeft + i * slotWidth;
+            float globalLeft = slotGlobalLeft + left;
+            float globalRight = slotGlobalLeft + right;
+
+            result += $"teamBg{i + 1}={FormatRect(backgroundRect)} "
+                + $"logicalLocal=({left:0.###},{-TeamBackgroundBottomBleed:0.###})-({right:0.###},{UsableAreaHeight + TeamBackgroundTopBleed:0.###}) "
+                + $"logicalGlobalX={globalLeft:0.###}-{globalRight:0.###} expectedHeight=26 ";
+        }
+
+        return result;
     }
 
     static string FormatRect(RectTransform rect)
@@ -1433,14 +1443,14 @@ public sealed class BattleModeHud : MonoBehaviour
             }
         }
 
-        if (partitionsRoot != null)
-            partitionsRoot.SetAsLastSibling();
-
         if (timerRoot != null)
             timerRoot.SetAsLastSibling();
 
         if (borderImage != null)
             borderImage.rectTransform.SetAsLastSibling();
+
+        if (partitionsRoot != null)
+            partitionsRoot.SetAsLastSibling();
     }
 
     static void DisableLegacyBehaviour(Behaviour behaviour)
