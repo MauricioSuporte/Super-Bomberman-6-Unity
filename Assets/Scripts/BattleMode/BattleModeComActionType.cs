@@ -5,5 +5,6 @@ public enum BattleModeComActionType
     CollectItem = 2,
     FarmDestructible = 3,
     CombatPlant = 4,
-    Reposition = 5
+    Reposition = 5,
+    KickBomb = 6
 }

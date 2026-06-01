@@ -536,6 +536,7 @@ public class ItemPickup : MonoBehaviour
 
             case ItemType.BombKick:
                 GetOrCreateAbilitySystem(player).Enable(BombKickAbility.AbilityId);
+                PlayerPersistentStats.SyncBattleModeComAbilityScripts(player, pid);
                 break;
 
             case ItemType.BombPunch:
@@ -607,6 +608,7 @@ public class ItemPickup : MonoBehaviour
 
             case ItemType.BombPass:
                 GetOrCreateAbilitySystem(player).Enable(BombPassAbility.AbilityId);
+                PlayerPersistentStats.SyncBattleModeComAbilityScripts(player, pid);
                 break;
 
             case ItemType.DestructiblePass:

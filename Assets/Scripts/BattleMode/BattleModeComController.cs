@@ -11,6 +11,8 @@ using UnityEngine.Tilemaps;
 [RequireComponent(typeof(BombController))]
 public sealed class BattleModeComController : MonoBehaviour
 {
+    private static bool EnableGeneralDecisionLogs => false;
+
     private const float BombTapCooldownSeconds = 0.35f;
     private const float ControlBombTapCooldownSeconds = 0.35f;
     private const float SafetyHoldLogIntervalSeconds = 0.5f;
@@ -51,6 +53,7 @@ public sealed class BattleModeComController : MonoBehaviour
     private readonly List<PlayerIdentity> activePlayers = new(6);
     private readonly List<CandidateAction> candidates = new(8);
     private readonly List<string> rejectedActions = new(16);
+    private readonly List<IBattleModeComAbility> comAbilities = new(4);
     private readonly Dictionary<Vector2Int, PathNode> visited = new(128);
     private readonly Queue<Vector2Int> open = new(128);
     private readonly Collider2D[] obstacleHits = new Collider2D[16];
@@ -85,6 +88,8 @@ public sealed class BattleModeComController : MonoBehaviour
     private bool initialized;
     private int personalitySeed;
     private int decisionSerial;
+    private int abilitySystemVersion = -1;
+    private int lastKickLoadDiagnosticFrame = -9999;
 
     private struct PathNode
     {
@@ -104,6 +109,7 @@ public sealed class BattleModeComController : MonoBehaviour
         public string Reason;
         public string InputDescription;
         public bool TapBomb;
+        public bool TapActionR;
     }
 
     public IReadOnlyList<string> RecentDecisionLog => recentDecisions;
@@ -156,6 +162,8 @@ public sealed class BattleModeComController : MonoBehaviour
         if (identity != null)
             playerId = Mathf.Clamp(identity.playerId, GameSession.MinPlayerId, GameSession.MaxPlayerId);
 
+        RefreshComAbilities();
+
         ownColliders = GetComponentsInChildren<Collider2D>(true);
 
         if (movement != null)
@@ -181,6 +189,76 @@ public sealed class BattleModeComController : MonoBehaviour
             suddenDeathController = FindAnyObjectByType<BattleSuddenDeathController>();
 
         explosionMask = LayerMask.GetMask("Explosion");
+    }
+
+    private void RefreshComAbilities()
+    {
+        AbilitySystem abilitySystem = EnsureKnownComAbilityScripts();
+        int currentVersion = abilitySystem != null ? abilitySystem.Version : -1;
+
+        if (currentVersion == abilitySystemVersion && comAbilities.Count > 0)
+            return;
+
+        comAbilities.Clear();
+        var monos = GetComponents<MonoBehaviour>();
+        for (int i = 0; i < monos.Length; i++)
+        {
+            if (monos[i] is IBattleModeComAbility ability)
+                comAbilities.Add(ability);
+        }
+
+        abilitySystemVersion = currentVersion;
+    }
+
+    private AbilitySystem EnsureKnownComAbilityScripts()
+    {
+        TryGetComponent<AbilitySystem>(out var abilitySystem);
+
+        bool persistentKickEnabled = PlayerPersistentStats.GetRuntime(playerId).CanKickBombs;
+        bool isCom = SaveSystem.GetBattleModePlayerControlMode(playerId) == BattleModePlayerControlMode.Com;
+        if (persistentKickEnabled)
+        {
+            if (abilitySystem == null)
+            {
+                abilitySystem = gameObject.AddComponent<AbilitySystem>();
+                LogKickLoadDiagnostic("created AbilitySystem from persistent kick");
+            }
+
+            if (!abilitySystem.IsEnabled(BombKickAbility.AbilityId))
+            {
+                abilitySystem.Enable(BombKickAbility.AbilityId);
+                LogKickLoadDiagnostic("enabled BombKickAbility from persistent kick");
+            }
+        }
+
+        if (abilitySystem != null &&
+            abilitySystem.IsEnabled(BombKickAbility.AbilityId) &&
+            !TryGetComponent<BattleModeComKickBombAbility>(out _))
+        {
+            gameObject.AddComponent<BattleModeComKickBombAbility>();
+            abilitySystemVersion = -2;
+            LogKickLoadDiagnostic("added BattleModeComKickBombAbility");
+        }
+
+        if (isCom && Time.frameCount - lastKickLoadDiagnosticFrame >= 120)
+        {
+            bool kickEnabled = abilitySystem != null && abilitySystem.IsEnabled(BombKickAbility.AbilityId);
+            bool hasKickCom = TryGetComponent<BattleModeComKickBombAbility>(out _);
+            LogKickLoadDiagnostic(
+                $"load check persistentKick:{persistentKickEnabled} abilitySystem:{(abilitySystem != null)} " +
+                $"kickEnabled:{kickEnabled} kickCom:{hasKickCom}");
+        }
+
+        return abilitySystem;
+    }
+
+    private void LogKickLoadDiagnostic(string message)
+    {
+        if (!IsBattleModeScene())
+            return;
+
+        lastKickLoadDiagnosticFrame = Time.frameCount;
+        Debug.Log($"[BattleCOMKick][P{playerId}] {message}", this);
     }
 
     private void RefreshRuntimeEnabledState()
@@ -286,6 +364,12 @@ public sealed class BattleModeComController : MonoBehaviour
                 return;
             }
 
+            if (TryBuildAbilityCandidate(settings, myTile, out CandidateAction abilityWithOwnBomb))
+            {
+                ExecuteSelectedCandidate(settings, myTile, currentDangerSeconds, abilityWithOwnBomb, "ability");
+                return;
+            }
+
             hasSafeCenterTarget = true;
             safeCenterTargetTile = myTile;
 
@@ -361,7 +445,175 @@ public sealed class BattleModeComController : MonoBehaviour
             currentInputDescription = AppendInput(currentInputDescription, "ActionA");
         }
 
+        if (selected.TapActionR && Time.time - lastControlTapTime >= ControlBombTapCooldownSeconds)
+        {
+            Tap(PlayerAction.ActionR);
+            lastControlTapTime = Time.time;
+            currentInputDescription = AppendInput(currentInputDescription, "ActionR");
+        }
+
         LogDecision(settings, myTile, currentDangerSeconds, route);
+    }
+
+    private bool TryBuildAbilityEmergencyCandidate(
+        BattleModeComDifficultySettings settings,
+        Vector2Int myTile,
+        float currentDangerSeconds,
+        out CandidateAction candidate)
+    {
+        candidate = default;
+        RefreshComAbilities();
+
+        if (comAbilities.Count == 0)
+        {
+            AppendAbilityTrace("emergency", "none", BuildNoAbilityScriptsTrace());
+            return false;
+        }
+
+        for (int i = 0; i < comAbilities.Count; i++)
+        {
+            IBattleModeComAbility ability = comAbilities[i];
+            if (ability == null)
+            {
+                AppendAbilityTrace("emergency", "null", "null ability entry");
+                continue;
+            }
+
+            if (!ability.IsAvailable)
+            {
+                AppendAbilityTrace(ability, "emergency unavailable");
+                continue;
+            }
+
+            if (!ability.TryBuildEmergencyDecision(settings, this, myTile, currentDangerSeconds, out var decision))
+            {
+                AppendAbilityTrace(ability, "emergency");
+                continue;
+            }
+
+            candidate = ToCandidateAction(decision);
+            AppendAbilityTrace(ability, "emergency selected");
+            return true;
+        }
+
+        return false;
+    }
+
+    private bool TryBuildAbilityCandidate(
+        BattleModeComDifficultySettings settings,
+        Vector2Int myTile,
+        out CandidateAction candidate)
+    {
+        candidate = default;
+        RefreshComAbilities();
+
+        if (comAbilities.Count == 0)
+        {
+            AppendAbilityTrace("candidate", "none", BuildNoAbilityScriptsTrace());
+            return false;
+        }
+
+        CandidateAction best = default;
+        int bestWeight = 0;
+
+        for (int i = 0; i < comAbilities.Count; i++)
+        {
+            IBattleModeComAbility ability = comAbilities[i];
+            if (ability == null)
+            {
+                AppendAbilityTrace("candidate", "null", "null ability entry");
+                continue;
+            }
+
+            if (!ability.IsAvailable)
+            {
+                AppendAbilityTrace(ability, "candidate unavailable");
+                continue;
+            }
+
+            if (!ability.TryBuildCandidateDecision(settings, this, myTile, out var decision))
+            {
+                AppendAbilityTrace(ability, "candidate");
+                continue;
+            }
+
+            CandidateAction candidateAction = ToCandidateAction(decision);
+            if (candidateAction.Weight <= bestWeight)
+                continue;
+
+            best = candidateAction;
+            bestWeight = candidateAction.Weight;
+            AppendAbilityTrace(ability, "candidate selected");
+        }
+
+        if (bestWeight <= 0)
+            return false;
+
+        candidate = best;
+        return true;
+    }
+
+    private static CandidateAction ToCandidateAction(BattleModeComAbilityDecision decision)
+    {
+        return new CandidateAction
+        {
+            Action = decision.Action,
+            Weight = decision.Weight,
+            TargetTile = decision.TargetTile,
+            HasTarget = decision.HasTarget,
+            FirstMove = decision.FirstMove,
+            HasRoute = true,
+            Reason = decision.Reason,
+            InputDescription = decision.InputDescription,
+            TapBomb = decision.TapBomb,
+            TapActionR = decision.TapActionR
+        };
+    }
+
+    private void AppendAbilityTrace(IBattleModeComAbility ability, string phase)
+    {
+        if (ability == null)
+            return;
+
+        string name = string.IsNullOrWhiteSpace(ability.DiagnosticName)
+            ? ability.GetType().Name
+            : ability.DiagnosticName;
+        string trace = string.IsNullOrWhiteSpace(ability.LastDecisionTrace)
+            ? "no trace"
+            : ability.LastDecisionTrace;
+
+        rejectedActions.Add($"Ability/{phase}/{name}:{trace}");
+    }
+
+    private void AppendAbilityTrace(string phase, string name, string trace)
+    {
+        rejectedActions.Add($"Ability/{phase}/{name}:{trace}");
+    }
+
+    private string BuildNoAbilityScriptsTrace()
+    {
+        bool hasAbilitySystem = TryGetComponent<AbilitySystem>(out var abilitySystem) && abilitySystem != null;
+        bool kickEnabled = hasAbilitySystem && abilitySystem.IsEnabled(BombKickAbility.AbilityId);
+        bool persistentKickEnabled = PlayerPersistentStats.GetRuntime(playerId).CanKickBombs;
+        bool hasKickComponent = TryGetComponent<BattleModeComKickBombAbility>(out _);
+
+        return $"no com ability scripts loaded persistentKick:{persistentKickEnabled} " +
+               $"abilitySystem:{hasAbilitySystem} kickEnabled:{kickEnabled} kickCom:{hasKickComponent}";
+    }
+
+    private bool HasAbilityTrace()
+    {
+        for (int i = 0; i < rejectedActions.Count; i++)
+        {
+            string entry = rejectedActions[i];
+            if (!string.IsNullOrEmpty(entry) &&
+                entry.StartsWith("Ability/", StringComparison.Ordinal))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private void ExecuteEscape(
@@ -380,6 +632,12 @@ public sealed class BattleModeComController : MonoBehaviour
                 FirstMoveDescription(firstMove),
                 currentDangerSeconds,
                 route);
+            return;
+        }
+
+        if (TryBuildAbilityEmergencyCandidate(settings, myTile, currentDangerSeconds, out CandidateAction abilityEmergency))
+        {
+            ExecuteSelectedCandidate(settings, myTile, currentDangerSeconds, abilityEmergency, "ability");
             return;
         }
 
@@ -441,6 +699,11 @@ public sealed class BattleModeComController : MonoBehaviour
             Reject("CombatPlant", "sem bomba");
         else
             Reject("CombatPlant", "alvo fora de alcance ou sem fuga");
+
+        if (TryBuildAbilityCandidate(settings, myTile, out CandidateAction ability))
+            AddCandidate(ability);
+        else
+            Reject("Ability", "sem habilidade aplicavel");
 
         if (TryBuildPatrolCandidate(settings, myTile, out CandidateAction patrol))
             AddCandidate(patrol);
@@ -1088,6 +1351,9 @@ public sealed class BattleModeComController : MonoBehaviour
         float dangerSeconds,
         string route)
     {
+        if (!EnableGeneralDecisionLogs)
+            return;
+
         if (!BattleModeComDiagnostics.ShouldLog(logLevel, BattleModeComDiagnostics.LogLevel.Summary))
             return;
 
@@ -1111,7 +1377,16 @@ public sealed class BattleModeComController : MonoBehaviour
         PushDecision(line);
         Debug.Log(line, this);
 
-        if (BattleModeComDiagnostics.ShouldLog(logLevel, BattleModeComDiagnostics.LogLevel.Verbose))
+        bool shouldLogVerbose = BattleModeComDiagnostics.ShouldLog(logLevel, BattleModeComDiagnostics.LogLevel.Verbose);
+        bool shouldLogAbilityFailure =
+            HasAbilityTrace() &&
+            (string.Equals(route, "fallback", StringComparison.OrdinalIgnoreCase) ||
+             string.Equals(route, "dangerWait", StringComparison.OrdinalIgnoreCase) ||
+             currentReason.Contains("fallback", StringComparison.OrdinalIgnoreCase) ||
+             currentReason.Contains("hold danger tile", StringComparison.OrdinalIgnoreCase) ||
+             currentReason.Contains("no fallback", StringComparison.OrdinalIgnoreCase));
+
+        if (shouldLogVerbose || shouldLogAbilityFailure)
         {
             Debug.Log($"[BattleCOM][P{playerId}] candidates:{FormatCandidates()} rejected:{string.Join(" | ", rejectedActions)}", this);
         }
@@ -2025,6 +2300,12 @@ public sealed class BattleModeComController : MonoBehaviour
         Vector2Int nextTile = currentTile + DirectionToTile(requestedMove);
         if (nextTile == currentTile)
             return Vector2.zero;
+
+        if (currentAction == BattleModeComActionType.KickBomb)
+        {
+            LogKickLoadDiagnostic($"allow KickBomb move {currentTile}->{nextTile} input:{FirstMoveDescription(requestedMove)} reason:{currentReason}");
+            return requestedMove;
+        }
 
         if (!IsWalkableTile(nextTile, currentTile))
         {

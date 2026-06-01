@@ -409,6 +409,45 @@ public static class PlayerPersistentStats
         }
     }
 
+    public static void SyncBattleModeComAbilityScripts(GameObject playerGo, int playerId)
+    {
+        if (playerGo == null)
+            return;
+
+        playerId = Mathf.Clamp(playerId, 1, 6);
+        var s = GetRuntime(playerId);
+
+        if (s.CanKickBombs)
+            EnsureBattleModeComKickBombAbility(playerGo, playerId);
+        else
+            RemoveBattleModeComKickBombAbility(playerGo);
+    }
+
+    static void EnsureBattleModeComKickBombAbility(GameObject playerGo, int playerId)
+    {
+        if (playerGo == null)
+            return;
+
+        if (SaveSystem.GetBattleModePlayerControlMode(playerId) != BattleModePlayerControlMode.Com)
+        {
+            RemoveBattleModeComKickBombAbility(playerGo);
+            return;
+        }
+
+        if (!playerGo.TryGetComponent<BattleModeComKickBombAbility>(out _))
+            playerGo.AddComponent<BattleModeComKickBombAbility>();
+    }
+
+    static void RemoveBattleModeComKickBombAbility(GameObject playerGo)
+    {
+        if (playerGo == null)
+            return;
+
+        var ability = playerGo.GetComponent<BattleModeComKickBombAbility>();
+        if (ability != null)
+            Object.Destroy(ability);
+    }
+
     public static void LoadInto(int playerId, MovementController movement, BombController bomb)
     {
         var s = Get(playerId);
@@ -443,8 +482,16 @@ public static class PlayerPersistentStats
 
             abilitySystem.RebuildCache();
 
-            if (s.CanKickBombs) abilitySystem.Enable(BombKickAbility.AbilityId);
-            else abilitySystem.Disable(BombKickAbility.AbilityId);
+            if (s.CanKickBombs)
+            {
+                abilitySystem.Enable(BombKickAbility.AbilityId);
+                EnsureBattleModeComKickBombAbility(movement.gameObject, playerId);
+            }
+            else
+            {
+                abilitySystem.Disable(BombKickAbility.AbilityId);
+                RemoveBattleModeComKickBombAbility(movement.gameObject);
+            }
 
             bool shouldEnablePunch =
                 s.CanPunchBombs ||
@@ -1233,6 +1280,7 @@ public static class PlayerPersistentStats
         {
             case ItemType.BombKick:
                 abilitySystem.Disable(BombKickAbility.AbilityId);
+                RemoveBattleModeComKickBombAbility(movement.gameObject);
                 break;
             case ItemType.BombPunch:
                 abilitySystem.Disable(BombPunchAbility.AbilityId);
