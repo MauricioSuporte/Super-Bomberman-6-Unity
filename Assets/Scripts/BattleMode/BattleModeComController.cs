@@ -21,6 +21,9 @@ public sealed class BattleModeComController : MonoBehaviour
     private const int ItemPriorityDistance = 7;
     private const int NearbyItemFarmBlockDistance = 5;
     private const int MaxDecisionBufferEntries = 32;
+    private const float PersonalityWeightJitter = 0.18f;
+    private const float ItemTargetJitter = 0.75f;
+    private const float FarmTargetJitter = 0.5f;
 
     private static readonly Vector2Int[] CardinalTiles =
     {
@@ -78,6 +81,8 @@ public sealed class BattleModeComController : MonoBehaviour
     private bool hasSafeCenterTarget;
     private bool currentMoveFollowsEscapeRoute;
     private bool initialized;
+    private int personalitySeed;
+    private int decisionSerial;
 
     private struct PathNode
     {
@@ -257,6 +262,7 @@ public sealed class BattleModeComController : MonoBehaviour
         candidates.Clear();
         rejectedActions.Clear();
         currentInputDescription = "none";
+        EnsurePersonalitySeed();
 
         if (inDanger)
         {
@@ -420,10 +426,33 @@ public sealed class BattleModeComController : MonoBehaviour
 
     private void AddCandidate(CandidateAction candidate)
     {
+        candidate.Weight = GetPersonalizedWeight(candidate);
+        candidate.Weight = ApplyCurrentGoalCommitment(candidate);
         if (candidate.Weight <= 0)
             return;
 
         candidates.Add(candidate);
+    }
+
+    private int ApplyCurrentGoalCommitment(CandidateAction candidate)
+    {
+        if (currentAction != BattleModeComActionType.CollectItem || !hasCurrentTarget)
+            return candidate.Weight;
+
+        if (candidate.Action == BattleModeComActionType.CollectItem &&
+            candidate.HasTarget &&
+            candidate.TargetTile == currentTargetTile)
+        {
+            return candidate.Weight + 90;
+        }
+
+        if (candidate.Action == BattleModeComActionType.Patrol ||
+            candidate.Action == BattleModeComActionType.Stopped)
+        {
+            return Mathf.Max(1, candidate.Weight / 4);
+        }
+
+        return candidate.Weight;
     }
 
     private bool TryBuildCollectCandidate(
@@ -437,7 +466,7 @@ public sealed class BattleModeComController : MonoBehaviour
         Vector2 bestMove = Vector2.zero;
         Vector2Int bestTile = myTile;
         int bestDistance = int.MaxValue;
-        float bestDanger = 0f;
+        float bestScore = float.NegativeInfinity;
 
         for (int i = 0; i < items.Length; i++)
         {
@@ -465,14 +494,18 @@ public sealed class BattleModeComController : MonoBehaviour
             }
 
             float danger = GetDangerSeconds(itemTile, null);
-            if (path.Distance < bestDistance ||
-                (path.Distance == bestDistance && danger > bestDanger))
+            float dangerBonus = float.IsInfinity(danger) ? 2f : Mathf.Clamp(danger, 0f, 2f);
+            float score = -path.Distance * 10f +
+                          dangerBonus * 0.15f +
+                          GetDecisionNoise(1000 + i, ItemTargetJitter);
+
+            if (score > bestScore)
             {
                 bestItem = item;
                 bestMove = path.FirstMove;
                 bestTile = itemTile;
                 bestDistance = path.Distance;
-                bestDanger = danger;
+                bestScore = score;
             }
         }
 
@@ -518,6 +551,7 @@ public sealed class BattleModeComController : MonoBehaviour
         Vector2Int bestTile = myTile;
         Vector2 bestMove = Vector2.zero;
         int bestDistance = int.MaxValue;
+        float bestScore = float.NegativeInfinity;
         bool bestNeedsBombTap = false;
         Vector2 bestEscapeMove = Vector2.zero;
 
@@ -542,11 +576,13 @@ public sealed class BattleModeComController : MonoBehaviour
             if (!TryFindPath(myTile, tile, settings.searchDepth + 3, true, settings, null, out PathResult path))
                 continue;
 
-            if (path.Distance < bestDistance)
+            float score = -path.Distance * 10f + GetDecisionNoise(2000 + i, FarmTargetJitter);
+            if (score > bestScore)
             {
                 bestTile = tile;
                 bestMove = path.FirstMove;
                 bestDistance = path.Distance;
+                bestScore = score;
                 bestNeedsBombTap = path.Distance == 0;
                 bestEscapeMove = escapeMove;
             }
@@ -797,6 +833,7 @@ public sealed class BattleModeComController : MonoBehaviour
 
     private CandidateAction PickWeightedCandidate(List<CandidateAction> source)
     {
+        decisionSerial++;
         int total = 0;
         for (int i = 0; i < source.Count; i++)
             total += Mathf.Max(0, source[i].Weight);
@@ -815,6 +852,60 @@ public sealed class BattleModeComController : MonoBehaviour
         }
 
         return source[source.Count - 1];
+    }
+
+    private int GetPersonalizedWeight(CandidateAction candidate)
+    {
+        int baseWeight = Mathf.Max(0, candidate.Weight);
+        if (baseWeight <= 0)
+            return 0;
+
+        float stableBias = GetStableNoise(3000 + (int)candidate.Action) * PersonalityWeightJitter;
+        float decisionJitter = GetDecisionNoise(4000 + (int)candidate.Action, PersonalityWeightJitter * 0.5f);
+        float multiplier = Mathf.Clamp(1f + stableBias + decisionJitter, 0.65f, 1.35f);
+
+        return Mathf.Max(1, Mathf.RoundToInt(baseWeight * multiplier));
+    }
+
+    private float GetStableNoise(int salt)
+    {
+        EnsurePersonalitySeed();
+        return HashToSignedUnit(personalitySeed, salt);
+    }
+
+    private float GetDecisionNoise(int salt, float amplitude)
+    {
+        EnsurePersonalitySeed();
+        return HashToSignedUnit(personalitySeed, salt + decisionSerial * 101) * amplitude;
+    }
+
+    private void EnsurePersonalitySeed()
+    {
+        if (personalitySeed != 0)
+            return;
+
+        unchecked
+        {
+            int seed = 17;
+            seed = seed * 31 + playerId;
+            seed = seed * 31 + SceneManager.GetActiveScene().buildIndex;
+            personalitySeed = seed != 0 ? seed : 1;
+        }
+    }
+
+    private static float HashToSignedUnit(int seed, int salt)
+    {
+        unchecked
+        {
+            uint hash = (uint)seed;
+            hash ^= (uint)salt + 0x9E3779B9u + (hash << 6) + (hash >> 2);
+            hash ^= hash >> 16;
+            hash *= 0x7FEB352Du;
+            hash ^= hash >> 15;
+            hash *= 0x846CA68Bu;
+            hash ^= hash >> 16;
+            return (hash / (float)uint.MaxValue) * 2f - 1f;
+        }
     }
 
     private void SetCurrentDecision(
@@ -1678,8 +1769,6 @@ public sealed class BattleModeComController : MonoBehaviour
             return false;
 
         int currentDistance = Manhattan(currentTile, currentTargetTile);
-        if (currentDistance > 2)
-            return false;
 
         Vector2Int nextTile = currentTile + requestedDirection;
         if (Manhattan(nextTile, currentTargetTile) >= currentDistance)
